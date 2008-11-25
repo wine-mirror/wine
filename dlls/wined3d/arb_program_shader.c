@@ -3025,7 +3025,7 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
     BOOL use_pshader = use_ps(device);
     BOOL use_vshader = use_vs(device);
     struct ffp_frag_settings settings;
-    struct arbfp_ffp_desc *desc;
+    const struct arbfp_ffp_desc *desc;
     unsigned int i;
 
     if(isStateDirty(context, STATE_RENDER(WINED3DRS_FOGENABLE))) {
@@ -3043,23 +3043,25 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
     if(!use_pshader) {
         /* Find or create a shader implementing the fixed function pipeline settings, then activate it */
         gen_ffp_frag_op(stateblock, &settings, FALSE);
-        desc = (struct arbfp_ffp_desc *) find_ffp_frag_shader(priv->fragment_shaders, &settings);
+        desc = (const struct arbfp_ffp_desc *)find_ffp_frag_shader(priv->fragment_shaders, &settings);
         if(!desc) {
-            desc = HeapAlloc(GetProcessHeap(), 0, sizeof(*desc));
-            if(!desc) {
+            struct arbfp_ffp_desc *new_desc = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_desc));
+            if (!new_desc)
+            {
                 ERR("Out of memory\n");
                 return;
             }
-            desc->num_textures_used = 0;
+            new_desc->num_textures_used = 0;
             for(i = 0; i < GL_LIMITS(texture_stages); i++) {
                 if(settings.op[i].cop == WINED3DTOP_DISABLE) break;
-                desc->num_textures_used = i;
+                new_desc->num_textures_used = i;
             }
 
-            memcpy(&desc->parent.settings, &settings, sizeof(settings));
-            desc->shader = gen_arbfp_ffp_shader(&settings, stateblock);
-            add_ffp_frag_shader(priv->fragment_shaders, &desc->parent);
-            TRACE("Allocated fixed function replacement shader descriptor %p\n", desc);
+            memcpy(&new_desc->parent.settings, &settings, sizeof(settings));
+            new_desc->shader = gen_arbfp_ffp_shader(&settings, stateblock);
+            add_ffp_frag_shader(priv->fragment_shaders, &new_desc->parent);
+            TRACE("Allocated fixed function replacement shader descriptor %p\n", new_desc);
+            desc = new_desc;
         }
 
         /* Now activate the replacement program. GL_FRAGMENT_PROGRAM_ARB is already active(however, note the

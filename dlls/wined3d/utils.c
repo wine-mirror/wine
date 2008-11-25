@@ -465,7 +465,8 @@ void init_type_lookup(WineD3D_GL_Info *gl_info) {
 
 #define GLINFO_LOCATION This->adapter->gl_info
 
-const StaticPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt, WineD3D_GL_Info *gl_info, const GlPixelFormatDesc **glDesc)
+const StaticPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt, const WineD3D_GL_Info *gl_info,
+        const GlPixelFormatDesc **glDesc)
 {
     int idx = getFmtIdx(fmt);
 
@@ -1622,7 +1623,8 @@ void hash_table_destroy(struct hash_table_t *table, void (*free_value)(void *val
     HeapFree(GetProcessHeap(), 0, table);
 }
 
-static inline struct hash_table_entry_t *hash_table_get_by_idx(struct hash_table_t *table, void *key, unsigned int idx)
+static inline struct hash_table_entry_t *hash_table_get_by_idx(struct hash_table_t *table, const void *key,
+        unsigned int idx)
 {
     struct hash_table_entry_t *entry;
 
@@ -1770,7 +1772,7 @@ void hash_table_remove(struct hash_table_t *table, void *key)
     hash_table_put(table, key, NULL);
 }
 
-void *hash_table_get(struct hash_table_t *table, void *key)
+void *hash_table_get(struct hash_table_t *table, const void *key)
 {
     unsigned int idx;
     struct hash_table_entry_t *entry;
@@ -2002,9 +2004,11 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
 }
 #undef GLINFO_LOCATION
 
-struct ffp_frag_desc *find_ffp_frag_shader(struct hash_table_t *fragment_shaders, struct ffp_frag_settings *settings)
+const struct ffp_frag_desc *find_ffp_frag_shader(struct hash_table_t *fragment_shaders,
+        const struct ffp_frag_settings *settings)
 {
-    return (struct ffp_frag_desc *)hash_table_get(fragment_shaders, settings);}
+    return (const struct ffp_frag_desc *)hash_table_get(fragment_shaders, settings);
+}
 
 void add_ffp_frag_shader(struct hash_table_t *shaders, struct ffp_frag_desc *desc) {
     struct ffp_frag_settings *key = HeapAlloc(GetProcessHeap(), 0, sizeof(*key));
@@ -2110,10 +2114,11 @@ void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
 }
 #undef GLINFO_LOCATION
 
-unsigned int ffp_frag_program_key_hash(void *key) {
-    struct ffp_frag_settings *k = (struct ffp_frag_settings *)key;
+unsigned int ffp_frag_program_key_hash(const void *key)
+{
+    const struct ffp_frag_settings *k = (const struct ffp_frag_settings *)key;
     unsigned int hash = 0, i;
-    DWORD *blob;
+    const DWORD *blob;
 
     /* This takes the texture op settings of stage 0 and 1 into account.
      * how exactly depends on the memory laybout of the compiler, but it
@@ -2122,7 +2127,7 @@ unsigned int ffp_frag_program_key_hash(void *key) {
      * the ffp setup has distinct stage 0 and 1 settings.
      */
     for(i = 0; i < 2; i++) {
-        blob = (DWORD *) &k->op[i];
+        blob = (const DWORD *)&k->op[i];
         hash ^= blob[0] ^ blob[1];
     }
 
@@ -2136,9 +2141,10 @@ unsigned int ffp_frag_program_key_hash(void *key) {
     return hash;
 }
 
-BOOL ffp_frag_program_key_compare(void *keya, void *keyb) {
-    struct ffp_frag_settings *ka = (struct ffp_frag_settings *)keya;
-    struct ffp_frag_settings *kb = (struct ffp_frag_settings *)keyb;
+BOOL ffp_frag_program_key_compare(const void *keya, const void *keyb)
+{
+    const struct ffp_frag_settings *ka = (const struct ffp_frag_settings *)keya;
+    const struct ffp_frag_settings *kb = (const struct ffp_frag_settings *)keyb;
 
     return memcmp(ka, kb, sizeof(*ka)) == 0;
 }

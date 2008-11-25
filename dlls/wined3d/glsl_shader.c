@@ -3561,8 +3561,9 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     }
 }
 
-static unsigned int glsl_program_key_hash(void *key) {
-    glsl_program_key_t *k = (glsl_program_key_t *)key;
+static unsigned int glsl_program_key_hash(const void *key)
+{
+    const glsl_program_key_t *k = (const glsl_program_key_t *)key;
 
     unsigned int hash = k->vshader | ((DWORD_PTR) k->pshader) << 16;
     hash += ~(hash << 15);
@@ -3575,9 +3576,10 @@ static unsigned int glsl_program_key_hash(void *key) {
     return hash;
 }
 
-static BOOL glsl_program_key_compare(void *keya, void *keyb) {
-    glsl_program_key_t *ka = (glsl_program_key_t *)keya;
-    glsl_program_key_t *kb = (glsl_program_key_t *)keyb;
+static BOOL glsl_program_key_compare(const void *keya, const void *keyb)
+{
+    const glsl_program_key_t *ka = (const glsl_program_key_t *)keya;
+    const glsl_program_key_t *kb = (const glsl_program_key_t *)keyb;
 
     return ka->vshader == kb->vshader && ka->pshader == kb->pshader &&
            (memcmp(&ka->ps_args, &kb->ps_args, sizeof(kb->ps_args)) == 0);

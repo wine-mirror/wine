@@ -44,8 +44,8 @@
 #include "wine/list.h"
 
 /* Hash table functions */
-typedef unsigned int (hash_function_t)(void *key);
-typedef BOOL (compare_function_t)(void *keya, void *keyb);
+typedef unsigned int (hash_function_t)(const void *key);
+typedef BOOL (compare_function_t)(const void *keya, const void *keyb);
 
 struct hash_table_entry_t {
     void *key;
@@ -69,7 +69,7 @@ struct hash_table_t {
 
 struct hash_table_t *hash_table_create(hash_function_t *hash_function, compare_function_t *compare_function);
 void hash_table_destroy(struct hash_table_t *table, void (*free_value)(void *value, void *cb), void *cb);
-void *hash_table_get(struct hash_table_t *table, void *key);
+void *hash_table_get(struct hash_table_t *table, const void *key);
 void hash_table_put(struct hash_table_t *table, void *key, void *value);
 void hash_table_remove(struct hash_table_t *table, void *key);
 
@@ -876,10 +876,11 @@ struct ffp_frag_desc
 };
 
 void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_settings *settings, BOOL ignore_textype);
-struct ffp_frag_desc *find_ffp_frag_shader(struct hash_table_t *fragment_shaders, struct ffp_frag_settings *settings);
+const struct ffp_frag_desc *find_ffp_frag_shader(struct hash_table_t *fragment_shaders,
+        const struct ffp_frag_settings *settings);
 void add_ffp_frag_shader(struct hash_table_t *shaders, struct ffp_frag_desc *desc);
-BOOL ffp_frag_program_key_compare(void *keya, void *keyb);
-unsigned int ffp_frag_program_key_hash(void *key);
+BOOL ffp_frag_program_key_compare(const void *keya, const void *keyb);
+unsigned int ffp_frag_program_key_hash(const void *key);
 
 /*****************************************************************************
  * IWineD3D implementation structure
@@ -2435,8 +2436,7 @@ typedef struct {
 } StaticPixelFormatDesc;
 
 const StaticPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt,
-        WineD3D_GL_Info *gl_info,
-        const GlPixelFormatDesc **glDesc);
+        const WineD3D_GL_Info *gl_info, const GlPixelFormatDesc **glDesc);
 
 static inline BOOL use_vs(IWineD3DDeviceImpl *device) {
     return (device->vs_selected_mode != SHADER_NONE

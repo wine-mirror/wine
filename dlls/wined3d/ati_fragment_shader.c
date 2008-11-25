@@ -802,30 +802,32 @@ static GLuint gen_ati_shader(struct texture_stage_op op[MAX_TEXTURES], WineD3D_G
 #define GLINFO_LOCATION stateblock->wineD3DDevice->adapter->gl_info
 static void set_tex_op_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     IWineD3DDeviceImpl          *This = stateblock->wineD3DDevice;
-    struct atifs_ffp_desc       *desc;
+    const struct atifs_ffp_desc *desc;
     struct ffp_frag_settings     settings;
     struct atifs_private_data   *priv = (struct atifs_private_data *) This->fragment_priv;
     DWORD mapped_stage;
     unsigned int i;
 
     gen_ffp_frag_op(stateblock, &settings, TRUE);
-    desc = (struct atifs_ffp_desc *) find_ffp_frag_shader(priv->fragment_shaders, &settings);
+    desc = (const struct atifs_ffp_desc *)find_ffp_frag_shader(priv->fragment_shaders, &settings);
     if(!desc) {
-        desc = HeapAlloc(GetProcessHeap(), 0, sizeof(*desc));
-        if(!desc) {
+        struct atifs_ffp_desc *new_desc = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_desc));
+        if (!new_desc)
+        {
             ERR("Out of memory\n");
             return;
         }
-        desc->num_textures_used = 0;
+        new_desc->num_textures_used = 0;
         for(i = 0; i < GL_LIMITS(texture_stages); i++) {
             if(settings.op[i].cop == WINED3DTOP_DISABLE) break;
-            desc->num_textures_used = i;
+            new_desc->num_textures_used = i;
         }
 
-        memcpy(&desc->parent.settings, &settings, sizeof(settings));
-        desc->shader = gen_ati_shader(settings.op, &GLINFO_LOCATION);
-        add_ffp_frag_shader(priv->fragment_shaders, &desc->parent);
-        TRACE("Allocated fixed function replacement shader descriptor %p\n", desc);
+        memcpy(&new_desc->parent.settings, &settings, sizeof(settings));
+        new_desc->shader = gen_ati_shader(settings.op, &GLINFO_LOCATION);
+        add_ffp_frag_shader(priv->fragment_shaders, &new_desc->parent);
+        TRACE("Allocated fixed function replacement shader descriptor %p\n", new_desc);
+        desc = new_desc;
     }
 
     /* GL_ATI_fragment_shader depends on the GL_TEXTURE_xD enable settings. Update the texture stages
