@@ -2293,6 +2293,7 @@ static void test_default_style(IHTMLStyle *style)
     BSTR str;
     HRESULT hres;
     float f;
+    BSTR sOverflowDefault;
 
     test_disp((IUnknown*)style, &DIID_DispHTMLStyle);
     test_ifaces((IUnknown*)style, style_iids);
@@ -2600,6 +2601,48 @@ static void test_default_style(IHTMLStyle *style)
     ok(V_VT(&v) == VT_I4, "V_VT(v)=%d\n", V_VT(&v));
     ok(V_I4(&v) == 1, "V_I4(v) = %d\n", V_I4(&v));
     VariantClear(&v);
+
+    /* overflow */
+    hres = IHTMLStyle_get_overflow(style, NULL);
+    ok(hres == E_INVALIDARG, "get_overflow failed: %08x\n", hres);
+
+    hres = IHTMLStyle_get_overflow(style, &sOverflowDefault);
+    ok(hres == S_OK, "get_overflow failed: %08x\n", hres);
+
+    str = a2bstr("test");
+    hres = IHTMLStyle_put_overflow(style, str);
+    ok(hres == E_INVALIDARG, "put_overflow failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("visible");
+    hres = IHTMLStyle_put_overflow(style, str);
+    ok(hres == S_OK, "put_overflow failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("scroll");
+    hres = IHTMLStyle_put_overflow(style, str);
+    ok(hres == S_OK, "put_overflow failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("hidden");
+    hres = IHTMLStyle_put_overflow(style, str);
+    ok(hres == S_OK, "put_overflow failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("auto");
+    hres = IHTMLStyle_put_overflow(style, str);
+    ok(hres == S_OK, "put_overflow failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle_get_overflow(style, &str);
+    ok(hres == S_OK, "get_overflow failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "auto"), "str=%s\n", dbgstr_w(str));
+    SysFreeString(str);
+
+    /* restore overflow default */
+    hres = IHTMLStyle_put_overflow(style, sOverflowDefault);
+    ok(hres == S_OK, "put_overflow failed: %08x\n", hres);
+    SysFreeString(sOverflowDefault);
 
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);

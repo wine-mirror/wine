@@ -73,6 +73,8 @@ static const WCHAR attrMarginLeft[] =
     {'m','a','r','g','i','n','-','l','e','f','t',0};
 static const WCHAR attrMarginRight[] =
     {'m','a','r','g','i','n','-','r','i','g','h','t',0};
+static const WCHAR attrOverflow[] =
+    {'o','v','e','r','f','l','o','w',0};
 static const WCHAR attrPaddingLeft[] =
     {'p','a','d','d','i','n','g','-','l','e','f','t',0};
 static const WCHAR attrPosition[] =
@@ -115,6 +117,7 @@ static const struct{
     {attrMargin,               DISPID_IHTMLSTYLE_MARGIN},
     {attrMarginLeft,           DISPID_IHTMLSTYLE_MARGINLEFT},
     {attrMarginRight,          DISPID_IHTMLSTYLE_MARGINRIGHT},
+    {attrOverflow,             DISPID_IHTMLSTYLE_OVERFLOW},
     {attrPaddingLeft,          DISPID_IHTMLSTYLE_PADDINGLEFT},
     {attrPosition,             DISPID_IHTMLSTYLE2_POSITION},
     {attrTextAlign,            DISPID_IHTMLSTYLE_TEXTALIGN},
@@ -1733,15 +1736,34 @@ static HRESULT WINAPI HTMLStyle_get_zIndex(IHTMLStyle *iface, VARIANT *p)
 static HRESULT WINAPI HTMLStyle_put_overflow(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    static const WCHAR szVisible[] = {'v','i','s','i','b','l','e',0};
+    static const WCHAR szScroll[]  = {'s','c','r','o','l','l',0};
+    static const WCHAR szHidden[]  = {'h','i','d','d','e','n',0};
+    static const WCHAR szAuto[]    = {'a','u','t','o',0};
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    /* overflow can only be one of the follow values. */
+    if(!v || strcmpiW(szVisible, v) == 0 || strcmpiW(szScroll, v) == 0 ||
+             strcmpiW(szHidden, v) == 0  || strcmpiW(szAuto, v) == 0)
+    {
+        return set_nsstyle_attr(This->nsstyle, STYLEID_OVERFLOW, v, 0);
+    }
+
+    return E_INVALIDARG;
 }
+
 
 static HRESULT WINAPI HTMLStyle_get_overflow(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!p)
+       return E_INVALIDARG;
+
+    return get_style_attr(This, STYLEID_OVERFLOW, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_pageBreakBefore(IHTMLStyle *iface, BSTR v)
