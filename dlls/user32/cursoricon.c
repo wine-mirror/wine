@@ -1008,7 +1008,7 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
     FIXME("Loading all frames for .ani cursors not implemented.\n");
     icon_data = fram_chunk.data + (2 * sizeof(DWORD));
 
-    entry = CURSORICON_FindBestCursorFile( (CURSORICONFILEDIR *) icon_data,
+    entry = CURSORICON_FindBestIconFile( (CURSORICONFILEDIR *) icon_data,
         width, height, colors );
 
     frame_bits = HeapAlloc( GetProcessHeap(), 0, entry->dwDIBSize );
