@@ -1891,25 +1891,26 @@ void __RPC_USER STGMEDIUM_UserFree(ULONG *pFlags, STGMEDIUM *pStgMedium)
 
 ULONG __RPC_USER ASYNC_STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, ASYNC_STGMEDIUM *pStgMedium)
 {
-    FIXME(":stub\n");
-    return StartingSize;
+    TRACE("\n");
+    return STGMEDIUM_UserSize(pFlags, StartingSize, pStgMedium);
 }
 
 unsigned char * __RPC_USER ASYNC_STGMEDIUM_UserMarshal(  ULONG *pFlags, unsigned char *pBuffer, ASYNC_STGMEDIUM *pStgMedium)
 {
-    FIXME(":stub\n");
-    return pBuffer;
+    TRACE("\n");
+    return STGMEDIUM_UserMarshal(pFlags, pBuffer, pStgMedium);
 }
 
 unsigned char * __RPC_USER ASYNC_STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, ASYNC_STGMEDIUM *pStgMedium)
 {
-    FIXME(":stub\n");
-    return pBuffer;
+    TRACE("\n");
+    return STGMEDIUM_UserUnmarshal(pFlags, pBuffer, pStgMedium);
 }
 
 void __RPC_USER ASYNC_STGMEDIUM_UserFree(ULONG *pFlags, ASYNC_STGMEDIUM *pStgMedium)
 {
-    FIXME(":stub\n");
+    TRACE("\n");
+    STGMEDIUM_UserFree(pFlags, pStgMedium);
 }
 
 ULONG __RPC_USER FLAG_STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, FLAG_STGMEDIUM *pStgMedium)
