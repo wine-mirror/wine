@@ -2007,6 +2007,21 @@ extern inline struct _TEB * WINAPI NtCurrentTeb(void)
   __asm mov teb, eax;
   return teb;
 }
+#elif defined(__x86_64__) && defined(__GNUC__)
+extern inline struct _TEB * WINAPI NtCurrentTeb(void)
+{
+    struct _TEB *teb;
+    __asm__(".byte 0x65\n\tmovq (0x30),%0" : "=r" (teb));
+    return teb;
+}
+#elif defined(__x86_64__) && defined (_MSC_VER)
+extern inline struct _TEB * WINAPI NtCurrentTeb(void)
+{
+  struct _TEB *teb;
+  __asm mov rax, gs:[0x30];
+  __asm mov teb, rax;
+  return teb;
+}
 #else
 extern struct _TEB * WINAPI NtCurrentTeb(void);
 #endif
