@@ -159,7 +159,9 @@ static const char *debug_rep(GLuint rep) {
 }
 
 #define GLINFO_LOCATION (*gl_info)
-static GLuint register_for_arg(DWORD arg, WineD3D_GL_Info *gl_info, unsigned int stage, GLuint *mod, GLuint *rep, GLuint tmparg) {
+static GLuint register_for_arg(DWORD arg, const WineD3D_GL_Info *gl_info,
+        unsigned int stage, GLuint *mod, GLuint *rep, GLuint tmparg)
+{
     GLenum ret;
 
     if(mod) *mod = GL_NONE;
@@ -224,7 +226,8 @@ static GLuint register_for_arg(DWORD arg, WineD3D_GL_Info *gl_info, unsigned int
     return ret;
 }
 
-static GLuint find_tmpreg(struct texture_stage_op op[MAX_TEXTURES]) {
+static GLuint find_tmpreg(const struct texture_stage_op op[MAX_TEXTURES])
+{
     int lowest_read = -1;
     int lowest_write = -1;
     int i;
@@ -284,7 +287,8 @@ static GLuint find_tmpreg(struct texture_stage_op op[MAX_TEXTURES]) {
     }
 }
 
-static GLuint gen_ati_shader(struct texture_stage_op op[MAX_TEXTURES], WineD3D_GL_Info *gl_info) {
+static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], const WineD3D_GL_Info *gl_info)
+{
     GLuint ret = GL_EXTCALL(glGenFragmentShadersATI(1));
     unsigned int stage;
     GLuint arg0, arg1, arg2, extrarg;
