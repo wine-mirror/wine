@@ -1393,12 +1393,12 @@ typedef struct tagMLang_impl
     DWORD total_cp, total_scripts;
 } MLang_impl;
 
-static ULONG WINAPI MLang_AddRef( MLang_impl* This)
+static ULONG MLang_AddRef( MLang_impl* This)
 {
     return InterlockedIncrement(&This->ref);
 }
 
-static ULONG WINAPI MLang_Release( MLang_impl* This )
+static ULONG MLang_Release( MLang_impl* This )
 {
     ULONG ref = InterlockedDecrement(&This->ref);
 
@@ -1413,7 +1413,7 @@ static ULONG WINAPI MLang_Release( MLang_impl* This )
     return ref;
 }
 
-static HRESULT WINAPI MLang_QueryInterface(
+static HRESULT MLang_QueryInterface(
         MLang_impl* This,
         REFIID riid,
         void** ppvObject)
