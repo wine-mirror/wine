@@ -156,8 +156,10 @@ static void test_parent_owner(void)
     SetLastError(0xdeadbeef);
     test = CreateWindowExA(0, "ToolWindowClass", "Tool window 1",
                            WS_CHILD, 0, 0, 100, 100, 0, 0, 0, NULL );
-    ok( GetLastError() == ERROR_TLW_WITH_WSCHILD, "CreateWindowExA should call SetLastError\n" );
     ok( !test, "WS_CHILD without parent created\n" );
+    ok( GetLastError() == ERROR_TLW_WITH_WSCHILD ||
+        broken(GetLastError() == 0xdeadbeef), /* win9x */
+        "CreateWindowExA error %u\n", GetLastError() );
 
     /* desktop window */
     check_parents( desktop, 0, 0, 0, 0, 0, 0 );
@@ -2293,10 +2295,12 @@ static void test_SetActiveWindow(HWND hwnd)
 
     hwnd2 = SetActiveWindow(0);
     ok(hwnd2 == hwnd, "SetActiveWindow returned %p instead of %p\n", hwnd2, hwnd);
-    check_wnd_state(0, 0, 0, 0);
-
-    hwnd2 = SetActiveWindow(hwnd);
-    ok(hwnd2 == 0, "SetActiveWindow returned %p instead of 0\n", hwnd2);
+    if (!GetActiveWindow())  /* doesn't always work on vista */
+    {
+        check_wnd_state(0, 0, 0, 0);
+        hwnd2 = SetActiveWindow(hwnd);
+        ok(hwnd2 == 0, "SetActiveWindow returned %p instead of 0\n", hwnd2);
+    }
     check_wnd_state(hwnd, hwnd, hwnd, 0);
 
     SetWindowPos(hwnd,0,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_HIDEWINDOW);
@@ -2349,7 +2353,10 @@ static void test_SetForegroundWindow(HWND hwnd)
 
     hwnd2 = SetActiveWindow(0);
     ok(hwnd2 == hwnd, "SetActiveWindow(0) returned %p instead of %p\n", hwnd2, hwnd);
-    check_wnd_state(0, 0, 0, 0);
+    if (GetActiveWindow() == hwnd)  /* doesn't always work on vista */
+        check_wnd_state(hwnd, hwnd, hwnd, 0);
+    else
+        check_wnd_state(0, 0, 0, 0);
 
     ret = SetForegroundWindow(hwnd);
     ok(ret, "SetForegroundWindow returned FALSE instead of TRUE\n");
@@ -2358,7 +2365,9 @@ static void test_SetForegroundWindow(HWND hwnd)
     SetLastError(0xdeadbeef);
     ret = SetForegroundWindow(0);
     ok(!ret, "SetForegroundWindow returned TRUE instead of FALSE\n");
-    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "got error %d expected ERROR_INVALID_WINDOW_HANDLE\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE ||
+       broken(GetLastError() == 0xdeadbeef),  /* win9x */
+       "got error %d expected ERROR_INVALID_WINDOW_HANDLE\n", GetLastError());
     check_wnd_state(hwnd, hwnd, hwnd, 0);
 
     SetWindowPos(hwnd,0,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_HIDEWINDOW);
@@ -3260,7 +3269,12 @@ static void test_scroll(void)
         100, 100, 200, 200, 0, 0, 0, NULL);
     /* horizontal */
     ret = GetScrollRange( hwnd, SB_HORZ, &min, &max);
-    ok( ret, "GetScrollRange returns FALSE\n");
+    if (!ret)  /* win9x */
+    {
+        win_skip( "GetScrollRange doesn't work\n" );
+        DestroyWindow( hwnd);
+        return;
+    }
     ok( min == 0, "minimum scroll pos is %d (should be zero)\n", min);
     ok( max == 0, "maximum scroll pos is %d (should be zero)\n", min);
     si.cbSize = sizeof( si);
@@ -3969,12 +3983,16 @@ static LRESULT CALLBACK winsizes_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM
         GetWindowRect( hwnd, &rect );
         trace( "hwnd %p msg %x size %dx%d rect %d,%d-%d,%d\n",
                hwnd, msg, cs->cx, cs->cy, rect.left, rect.top, rect.right, rect.bottom );
-        ok( cs->cx == expected_cx, "wrong x size %d/%d\n", cs->cx, expected_cx );
-        ok( cs->cy == expected_cy, "wrong y size %d/%d\n", cs->cy, expected_cy );
+        ok( cs->cx == expected_cx || broken(cs->cx == (short)expected_cx),
+            "wrong x size %d/%d\n", cs->cx, expected_cx );
+        ok( cs->cy == expected_cy || broken(cs->cy == (short)expected_cy),
+            "wrong y size %d/%d\n", cs->cy, expected_cy );
         ok( (rect.right - rect.left == expected_rect.right - expected_rect.left &&
              rect.bottom - rect.top == expected_rect.bottom - expected_rect.top) ||
             broken( rect.right - rect.left == broken_rect.right - broken_rect.left &&
-                    rect.bottom - rect.top == broken_rect.bottom - broken_rect.top),
+                    rect.bottom - rect.top == broken_rect.bottom - broken_rect.top) ||
+            broken( rect.right - rect.left == (short)broken_rect.right - (short)broken_rect.left &&
+                    rect.bottom - rect.top == (short)broken_rect.bottom - (short)broken_rect.top),
             "wrong rect %d,%d-%d,%d / %d,%d-%d,%d\n",
             rect.left, rect.top, rect.right, rect.bottom,
             expected_rect.left, expected_rect.top, expected_rect.right, expected_rect.bottom );
@@ -4272,8 +4290,8 @@ static void test_CreateWindow(void)
     hwnd = CreateWindowExA(0, "Sizes_WndClass", NULL, WS_CHILD, 300000, 300000, 200000, 200000, parent, 0, 0, NULL);
     ok( hwnd != 0, "creation failed err %u\n", GetLastError());
     GetClientRect( hwnd, &rc );
-    ok( rc.right == 200000, "invalid rect right %u\n", rc.right );
-    ok( rc.bottom == 200000, "invalid rect bottom %u\n", rc.bottom );
+    ok( rc.right == 200000 || broken(rc.right == (short)200000), "invalid rect right %u\n", rc.right );
+    ok( rc.bottom == 200000 || broken(rc.bottom == (short)200000), "invalid rect bottom %u\n", rc.bottom );
     DestroyWindow(hwnd);
 
     expected_cx = expected_cy = -10;
@@ -4373,7 +4391,7 @@ static void test_SetWindowLong(void)
 
     SetLastError(0xdeadbeef);
     retval = SetWindowLongPtr(hwndMain, GWLP_WNDPROC, 0);
-    ok((WNDPROC)retval == main_window_procA,
+    ok((WNDPROC)retval == main_window_procA || broken(!retval), /* win9x */
         "SetWindowLongPtr on invalid window proc should have returned address of main_window_procA instead of 0x%lx\n", retval);
     ok(GetLastError() == 0xdeadbeef, "SetWindowLongPtr shouldn't have set the last error, instead of setting it to %d\n", GetLastError());
     retval = GetWindowLongPtr(hwndMain, GWLP_WNDPROC);
@@ -4752,7 +4770,7 @@ static void test_GetWindowModuleFileName(void)
     assert(hwnd);
 
     hinst = (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE);
-    ok(hinst == 0, "expected 0, got %p\n", hinst);
+    ok(hinst == 0 || broken(hinst == GetModuleHandle(0)), /* win9x */ "expected 0, got %p\n", hinst);
 
     buf1[0] = 0;
     SetLastError(0xdeadbeef);
@@ -4764,14 +4782,15 @@ static void test_GetWindowModuleFileName(void)
     ret2 = pGetWindowModuleFileNameA(hwnd, buf2, sizeof(buf2));
     ok(ret2, "GetWindowModuleFileNameA error %u\n", GetLastError());
 
-    ok(ret1 == ret2, "%u != %u\n", ret1, ret2);
+    ok(ret1 == ret2 || broken(ret2 == ret1 + 1), /* win98 */ "%u != %u\n", ret1, ret2);
     ok(!strcmp(buf1, buf2), "%s != %s\n", buf1, buf2);
 
     hinst = GetModuleHandle(0);
 
     SetLastError(0xdeadbeef);
     ret2 = GetModuleFileName(hinst, buf2, ret1 - 2);
-    ok(ret2 == ret1 - 2, "expected %u, got %u\n", ret1 - 2, ret2);
+    ok(ret2 == ret1 - 2 || broken(ret2 == ret1 - 3), /* win98 */
+       "expected %u, got %u\n", ret1 - 2, ret2);
     ok(GetLastError() == 0xdeadbeef /* XP */ ||
        GetLastError() == ERROR_INSUFFICIENT_BUFFER, /* win2k3, vista */
        "expected 0xdeadbeef or ERROR_INSUFFICIENT_BUFFER, got %u\n", GetLastError());
@@ -4785,7 +4804,8 @@ static void test_GetWindowModuleFileName(void)
 
     SetLastError(0xdeadbeef);
     ret2 = pGetWindowModuleFileNameA(hwnd, buf2, ret1 - 2);
-    ok(ret2 == ret1 - 2, "expected %u, got %u\n", ret1 - 2, ret2);
+    ok(ret2 == ret1 - 2 || broken(ret2 == ret1 - 3), /* win98 */
+       "expected %u, got %u\n", ret1 - 2, ret2);
     ok(GetLastError() == 0xdeadbeef /* XP */ ||
        GetLastError() == ERROR_INSUFFICIENT_BUFFER, /* win2k3, vista */
        "expected 0xdeadbeef or ERROR_INSUFFICIENT_BUFFER, got %u\n", GetLastError());
@@ -4804,20 +4824,24 @@ static void test_GetWindowModuleFileName(void)
     SetLastError(0xdeadbeef);
     ret1 = pGetWindowModuleFileNameA(hwnd, buf1, sizeof(buf1));
     ok(!ret1, "expected 0, got %u\n", ret1);
-    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "expected ERROR_INVALID_WINDOW_HANDLE, got %u\n", GetLastError());
-
-    ret1 = GetModuleFileName(0, buf1, sizeof(buf1));
-    hwnd = GetDesktopWindow();
-    ok(IsWindow(hwnd), "got invalid desktop window %p\n", hwnd);
-    SetLastError(0xdeadbeef);
-    ret2 = pGetWindowModuleFileNameA(hwnd, buf2, sizeof(buf2));
-    ok(!ret2 || ret1 == ret2 /* vista */, "expected 0, got %u\n", ret2);
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE || broken(GetLastError() == 0xdeadbeef), /* win9x */
+       "expected ERROR_INVALID_WINDOW_HANDLE, got %u\n", GetLastError());
 
     hwnd = FindWindow("Shell_TrayWnd", NULL);
     ok(IsWindow(hwnd), "got invalid tray window %p\n", hwnd);
     SetLastError(0xdeadbeef);
     ret1 = pGetWindowModuleFileNameA(hwnd, buf1, sizeof(buf1));
-    ok(!ret1, "expected 0, got %u\n", ret1);
+    ok(!ret1 || broken(ret1), /* win98 */ "expected 0, got %u\n", ret1);
+
+    if (!ret1)  /* inter-process GetWindowModuleFileName works on win9x, so don't test the desktop there */
+    {
+        ret1 = GetModuleFileName(0, buf1, sizeof(buf1));
+        hwnd = GetDesktopWindow();
+        ok(IsWindow(hwnd), "got invalid desktop window %p\n", hwnd);
+        SetLastError(0xdeadbeef);
+        ret2 = pGetWindowModuleFileNameA(hwnd, buf2, sizeof(buf2));
+        ok(!ret2 || ret1 == ret2 /* vista */, "expected 0 or %u, got %u %s\n", ret1, ret2, buf2);
+    }
 }
 
 static void test_hwnd_message(void)
@@ -4850,7 +4874,8 @@ static void test_hwnd_message(void)
         ok(parent != desktop, "GetAncestor(GA_PARENT) should not return desktop for message windows\n");
         root = pGetAncestor(hwnd, GA_ROOT);
         ok(root == hwnd, "GetAncestor(GA_ROOT) should return hwnd for message windows\n");
-        ok( !pGetAncestor(parent, GA_PARENT), "parent shouldn't have a parent\n" );
+        ok( !pGetAncestor(parent, GA_PARENT), "parent shouldn't have parent %p\n",
+            pGetAncestor(parent, GA_PARENT) );
         trace("parent %p root %p desktop %p\n", parent, root, desktop);
         if (!GetClassNameA( parent, buffer, sizeof(buffer) )) buffer[0] = 0;
         ok( !lstrcmpi( buffer, "Message" ), "wrong parent class '%s'\n", buffer );
