@@ -2112,8 +2112,8 @@ BOOL WINAPI ChangeServiceConfig2A( SC_HANDLE hService, DWORD dwInfoLevel,
 BOOL WINAPI ChangeServiceConfig2W( SC_HANDLE hService, DWORD dwInfoLevel, 
     LPVOID lpInfo)
 {
-    HKEY hKey;
     struct sc_service *hsvc;
+    DWORD err;
 
     hsvc = sc_handle_get_handle_data(hService, SC_HTYPE_SERVICE);
     if (!hsvc)
@@ -2121,26 +2121,21 @@ BOOL WINAPI ChangeServiceConfig2W( SC_HANDLE hService, DWORD dwInfoLevel,
         SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
     }
-    hKey = hsvc->hkey;
 
-    if (dwInfoLevel == SERVICE_CONFIG_DESCRIPTION)
+    __TRY
     {
-        static const WCHAR szDescription[] = {'D','e','s','c','r','i','p','t','i','o','n',0};
-        LPSERVICE_DESCRIPTIONW sd = (LPSERVICE_DESCRIPTIONW)lpInfo;
-        if (sd->lpDescription)
-        {
-            TRACE("Setting Description to %s\n",debugstr_w(sd->lpDescription));
-            if (sd->lpDescription[0] == 0)
-                RegDeleteValueW(hKey,szDescription);
-            else
-                RegSetValueExW(hKey, szDescription, 0, REG_SZ,
-                                        (LPVOID)sd->lpDescription,
-                                 sizeof(WCHAR)*(strlenW(sd->lpDescription)+1));
-        }
+        err = svcctl_ChangeServiceConfig2W( hsvc->hdr.server_handle, dwInfoLevel, lpInfo );
     }
-    else   
-        FIXME("STUB: %p %d %p\n",hService, dwInfoLevel, lpInfo);
-    return TRUE;
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code(GetExceptionCode());
+    }
+    __ENDTRY
+
+    if (err != ERROR_SUCCESS)
+        SetLastError(err);
+
+    return err == ERROR_SUCCESS;
 }
 
 /******************************************************************************

@@ -89,8 +89,19 @@ typedef struct _SERVICE_STATUS {
 typedef enum _SC_STATUS_TYPE {
   SC_STATUS_PROCESS_INFO      = 0
 } SC_STATUS_TYPE;
+
+typedef struct _SERVICE_DESCRIPTIONW {
+   LPWSTR lpDescription;
+} SERVICE_DESCRIPTIONW,*LPSERVICE_DESCRIPTIONW;
+
+#define SERVICE_CONFIG_DESCRIPTION 1
+
 cpp_quote("#endif")
 
+typedef [switch_type(DWORD)] union
+{
+  [case (SERVICE_CONFIG_DESCRIPTION)] SERVICE_DESCRIPTIONW descr;
+} SERVICE_CONFIG2W;
 
     /* Compatible with Windows function 0x00 */
     DWORD svcctl_CloseServiceHandle(
@@ -276,8 +287,11 @@ cpp_quote("#endif")
     /* Not compatible with Windows function 0x24 */
     DWORD svcctl_ChangeServiceConfig2A(/* FIXME */);
 
-    /* Not compatible with Windows function 0x25 */
-    DWORD svcctl_ChangeServiceConfig2W(/* FIXME */);
+    /* Untested with Windows function 0x25 */
+    DWORD svcctl_ChangeServiceConfig2W(
+        [in] SC_RPC_HANDLE hService,
+        [in] DWORD InfoLevel,
+        [in,switch_is(InfoLevel)] SERVICE_CONFIG2W *config );
 
     /* Not compatible with Windows function 0x26 */
     DWORD svcctl_QueryServiceConfig2A(/* FIXME */);

@@ -609,6 +609,43 @@ DWORD svcctl_SetServiceStatus(
     return ERROR_SUCCESS;
 }
 
+DWORD svcctl_ChangeServiceConfig2W( SC_RPC_HANDLE hService, DWORD level, SERVICE_CONFIG2W *config )
+{
+    struct sc_service_handle *service;
+    DWORD err;
+
+    if ((err = validate_service_handle(hService, SERVICE_CHANGE_CONFIG, &service)) != 0)
+        return err;
+
+    switch (level)
+    {
+    case SERVICE_CONFIG_DESCRIPTION:
+        {
+            WCHAR *descr = NULL;
+
+            if (config->descr.lpDescription[0])
+            {
+                if (!(descr = strdupW( config->descr.lpDescription )))
+                    return ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            WINE_TRACE( "changing service %p descr to %s\n", service, wine_dbgstr_w(descr) );
+            service_lock_exclusive( service->service_entry );
+            HeapFree( GetProcessHeap(), 0, service->service_entry->description );
+            service->service_entry->description = descr;
+            save_service_config( service->service_entry );
+            service_unlock( service->service_entry );
+        }
+        break;
+
+    default:
+        WINE_FIXME("level %u not implemented\n", level);
+        err = ERROR_INVALID_LEVEL;
+        break;
+    }
+    return err;
+}
+
 DWORD svcctl_QueryServiceStatusEx(
     SC_RPC_HANDLE hService,
     SC_STATUS_TYPE InfoLevel,
@@ -1091,13 +1128,6 @@ DWORD svcctl_EnumServiceGroupW(
 }
 
 DWORD svcctl_ChangeServiceConfig2A(
-    void)
-{
-    WINE_FIXME("\n");
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
-DWORD svcctl_ChangeServiceConfig2W(
     void)
 {
     WINE_FIXME("\n");
