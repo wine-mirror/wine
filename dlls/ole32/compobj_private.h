@@ -175,6 +175,7 @@ struct oletls
     struct apartment *apt;
     IErrorInfo       *errorinfo;   /* see errorinfo.c */
     IUnknown         *state;       /* see CoSetState */
+    IInitializeSpy   *spy;         /* The "SPY" from CoInitializeSpy */
     DWORD            inits;        /* number of times CoInitializeEx called */
     DWORD            ole_inits;    /* number of times OleInitialize called */
     GUID             causality_id; /* unique identifier for each COM call */

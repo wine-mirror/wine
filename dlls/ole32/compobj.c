@@ -1014,6 +1014,64 @@ DWORD WINAPI CoBuildVersion(void)
 }
 
 /******************************************************************************
+ *              CoRegisterInitializeSpy [OLE32.@]
+ *
+ * Add a Spy that watches CoInitializeEx calls
+ *
+ * PARAMS
+ *  spy [I] Pointer to IUnknown interface that will be QueryInterface'd.
+ *  cookie [II] cookie receiver
+ *
+ * RETURNS
+ *  Success: S_OK if not already initialized, S_FALSE otherwise.
+ *  Failure: HRESULT code.
+ *
+ * SEE ALSO
+ *   CoInitializeEx
+ */
+HRESULT WINAPI CoRegisterInitializeSpy(IInitializeSpy *spy, ULARGE_INTEGER *cookie)
+{
+    struct oletls *info = COM_CurrentInfo();
+    HRESULT hr;
+
+    TRACE("(%p, %p)\n", spy, cookie);
+
+    if (!spy || !cookie || !info)
+    {
+        if (!info)
+            WARN("Could not allocate tls\n");
+        return E_INVALIDARG;
+    }
+
+    if (info->spy)
+    {
+        FIXME("Already registered?\n");
+        return E_UNEXPECTED;
+    }
+
+    hr = IUnknown_QueryInterface(spy, &IID_IInitializeSpy, (void **) &info->spy);
+    if (SUCCEEDED(hr))
+    {
+        cookie->QuadPart = (DWORD_PTR)spy;
+        return S_OK;
+    }
+    return hr;
+}
+
+HRESULT WINAPI CoRevokeInitializeSpy(ULARGE_INTEGER cookie)
+{
+    struct oletls *info = COM_CurrentInfo();
+    TRACE("(%s)\n", wine_dbgstr_longlong(cookie.QuadPart));
+
+    if (!info || !info->spy || cookie.QuadPart != (DWORD_PTR)info->spy)
+        return E_INVALIDARG;
+
+    IUnknown_Release(info->spy);
+    return S_OK;
+}
+
+
+/******************************************************************************
  *		CoInitialize	[OLE32.@]
  *
  * Initializes the COM libraries by calling CoInitializeEx with
@@ -1069,6 +1127,7 @@ HRESULT WINAPI CoInitialize(LPVOID lpReserved)
  */
 HRESULT WINAPI CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit)
 {
+  struct oletls *info = COM_CurrentInfo();
   HRESULT hr = S_OK;
   APARTMENT *apt;
 
@@ -1096,7 +1155,10 @@ HRESULT WINAPI CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit)
     RunningObjectTableImpl_Initialize();
   }
 
-  if (!(apt = COM_CurrentInfo()->apt))
+  if (info->spy)
+      IInitializeSpy_PreInitialize(info->spy, dwCoInit, info->inits);
+
+  if (!(apt = info->apt))
   {
     apt = apartment_get_or_create(dwCoInit);
     if (!apt) return E_OUTOFMEMORY;
@@ -1113,7 +1175,10 @@ HRESULT WINAPI CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit)
   else
     hr = S_FALSE;
 
-  COM_CurrentInfo()->inits++;
+  info->inits++;
+
+  if (info->spy)
+      IInitializeSpy_PostInitialize(info->spy, hr, dwCoInit, info->inits);
 
   return hr;
 }
@@ -1144,10 +1209,16 @@ void WINAPI CoUninitialize(void)
   /* will only happen on OOM */
   if (!info) return;
 
+  if (info->spy)
+      IInitializeSpy_PreUninitialize(info->spy, info->inits);
+
   /* sanity check */
   if (!info->inits)
   {
     ERR("Mismatched CoUninitialize\n");
+
+    if (info->spy)
+        IInitializeSpy_PostUninitialize(info->spy, info->inits);
     return;
   }
 
@@ -1173,6 +1244,8 @@ void WINAPI CoUninitialize(void)
     ERR( "CoUninitialize() - not CoInitialized.\n" );
     InterlockedExchangeAdd(&s_COMLockCount,1); /* restore the lock count. */
   }
+  if (info->spy)
+      IInitializeSpy_PostUninitialize(info->spy, info->inits);
 }
 
 /******************************************************************************
