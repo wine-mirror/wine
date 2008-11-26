@@ -109,7 +109,7 @@ GpStatus WINAPI GdiplusNotificationHook(ULONG_PTR *token)
 void WINAPI GdiplusNotificationUnhook(ULONG_PTR token)
 {
     FIXME("%ld\n", token);
-    return NotificationUnhook(token);
+    NotificationUnhook(token);
 }
 
 /*****************************************************
