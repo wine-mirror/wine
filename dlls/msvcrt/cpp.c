@@ -131,7 +131,7 @@ static void dump_obj_locator( const rtti_object_locator *ptr )
 }
 
 /* Internal common ctor for exception */
-static void WINAPI EXCEPTION_ctor(exception *_this, const char** name)
+static void EXCEPTION_ctor(exception *_this, const char** name)
 {
   _this->vtable = &MSVCRT_exception_vtable;
   if (*name)
