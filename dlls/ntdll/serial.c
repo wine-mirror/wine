@@ -891,10 +891,10 @@ static NTSTATUS get_irq_info(int fd, serial_irq_info *irq_info)
 }
 
 
-static DWORD WINAPI check_events(int fd, DWORD mask, 
-                                 const serial_irq_info *new, 
-                                 const serial_irq_info *old,
-                                 DWORD new_mstat, DWORD old_mstat)
+static DWORD check_events(int fd, DWORD mask,
+                          const serial_irq_info *new,
+                          const serial_irq_info *old,
+                          DWORD new_mstat, DWORD old_mstat)
 {
     DWORD ret = 0, queue;
 

@@ -948,9 +948,9 @@ ULONG WINAPI RtlFindLastBackwardRunClear(PCRTL_BITMAP lpBits, ULONG ulStart, PUL
  *
  * Internal implementation of RtlFindSetRuns/RtlFindClearRuns.
  */
-static ULONG WINAPI NTDLL_FindRuns(PCRTL_BITMAP lpBits, PRTL_BITMAP_RUN lpSeries,
-                                   ULONG ulCount, BOOLEAN bLongest,
-                                   ULONG (*fn)(PCRTL_BITMAP,ULONG,PULONG))
+static ULONG NTDLL_FindRuns(PCRTL_BITMAP lpBits, PRTL_BITMAP_RUN lpSeries,
+                            ULONG ulCount, BOOLEAN bLongest,
+                            ULONG (*fn)(PCRTL_BITMAP,ULONG,PULONG))
 {
   BOOL bNeedSort = ulCount > 1 ? TRUE : FALSE;
   ULONG ulPos = 0, ulRuns = 0;
