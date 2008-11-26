@@ -145,7 +145,7 @@ void primitiveDeclarationConvertToStridedData(
     BYTE  *data    = NULL;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexDeclarationImpl* vertexDeclaration = (IWineD3DVertexDeclarationImpl *)This->stateBlock->vertexDecl;
-    int i;
+    unsigned int i;
     WINED3DVERTEXELEMENT *element;
     DWORD stride;
     DWORD numPreloadStreams = This->stateBlock->streamIsUP ? 0 : vertexDeclaration->num_streams;
@@ -164,7 +164,7 @@ void primitiveDeclarationConvertToStridedData(
         unsigned int idx;
 
         element = vertexDeclaration->pDeclarationWine + i;
-        TRACE("%p Element %p (%d of %d)\n", vertexDeclaration->pDeclarationWine,
+        TRACE("%p Element %p (%u of %u)\n", vertexDeclaration->pDeclarationWine,
             element,  i + 1, vertexDeclaration->declarationWNumElements - 1);
 
         if (This->stateBlock->streamSource[element->Stream] == NULL)
@@ -293,7 +293,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
     unsigned int               textureNo    = 0;
     const WORD                *pIdxBufS     = NULL;
     const DWORD               *pIdxBufL     = NULL;
-    LONG                       vx_index;
+    ULONG                      vx_index;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     UINT *streamOffset = This->stateBlock->streamOffset;
     long                      SkipnStrides = startVertex + This->stateBlock->loadBaseVertexIndex;
@@ -389,10 +389,10 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
 
             /* Indexed so work out the number of strides to skip */
             if (idxSize == 2) {
-                VTRACE(("Idx for vertex %d = %d\n", vx_index, pIdxBufS[startIdx+vx_index]));
+                VTRACE(("Idx for vertex %u = %u\n", vx_index, pIdxBufS[startIdx+vx_index]));
                 SkipnStrides = pIdxBufS[startIdx + vx_index] + This->stateBlock->loadBaseVertexIndex;
             } else {
-                VTRACE(("Idx for vertex %d = %d\n", vx_index, pIdxBufL[startIdx+vx_index]));
+                VTRACE(("Idx for vertex %u = %u\n", vx_index, pIdxBufL[startIdx+vx_index]));
                 SkipnStrides = pIdxBufL[startIdx + vx_index] + This->stateBlock->loadBaseVertexIndex;
             }
         }
@@ -603,7 +603,7 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, WineDirect3DVertexStridedDa
     long                      SkipnStrides = startVertex + This->stateBlock->loadBaseVertexIndex;
     const WORD                *pIdxBufS     = NULL;
     const DWORD               *pIdxBufL     = NULL;
-    LONG                       vx_index;
+    ULONG                      vx_index;
     int i;
     IWineD3DStateBlockImpl *stateblock = This->stateBlock;
     BYTE *ptr;
@@ -659,8 +659,8 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, WineDirect3DVertexStridedDa
 static inline void drawStridedInstanced(IWineD3DDevice *iface, WineDirect3DVertexStridedData *sd, UINT numberOfVertices,
                                  GLenum glPrimitiveType, const void *idxData, short idxSize, ULONG minIndex,
                                  ULONG startIdx, ULONG startVertex) {
-    UINT numInstances = 0;
-    int numInstancedAttribs = 0, i, j;
+    UINT numInstances = 0, i;
+    int numInstancedAttribs = 0, j;
     UINT instancedData[sizeof(sd->u.input) / sizeof(sd->u.input[0]) /* 16 */];
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DStateBlockImpl *stateblock = This->stateBlock;
@@ -823,7 +823,7 @@ void drawPrimitive(IWineD3DDevice *iface,
 
     IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSurfaceImpl          *target;
-    int i;
+    unsigned int i;
 
     if (NumPrimitives == 0) return;
 

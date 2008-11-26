@@ -1535,7 +1535,7 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
     if (Adapter == 0 && !DEBUG_SINGLE_MODE) { /* Display */
         DEVMODEW DevModeW;
         int ModeIdx = 0;
-        int i = 0;
+        UINT i = 0;
         int j = 0;
 
         ZeroMemory(&DevModeW, sizeof(DevModeW));
