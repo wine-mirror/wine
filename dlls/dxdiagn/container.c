@@ -110,7 +110,7 @@ static HRESULT WINAPI IDxDiagContainerImpl_EnumChildContainerNames(PDXDIAGCONTAI
   return E_INVALIDARG;
 }
 
-static HRESULT WINAPI IDxDiagContainerImpl_GetChildContainerInternal(PDXDIAGCONTAINER iface, LPCWSTR pwszContainer, IDxDiagContainer** ppInstance) {
+static HRESULT IDxDiagContainerImpl_GetChildContainerInternal(PDXDIAGCONTAINER iface, LPCWSTR pwszContainer, IDxDiagContainer** ppInstance) {
   IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
   IDxDiagContainerImpl_SubContainer* p = NULL;
 
