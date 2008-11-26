@@ -2163,7 +2163,7 @@ static void test_EnumSystemLanguageGroupsA(void)
   /* No enumeration proc */
   SetLastError(0);
   ret = pEnumSystemLanguageGroupsA(0, LGRPID_INSTALLED, 0);
-  if (ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+  if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
   {
     win_skip("EnumSystemLanguageGroupsA is not implemented\n");
     return;
