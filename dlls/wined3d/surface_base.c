@@ -685,14 +685,15 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
     return WINED3D_OK;
 }
 
-void convert_r32f_r16f(BYTE *src, BYTE *dst, DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h) {
+void convert_r32f_r16f(const BYTE *src, BYTE *dst, DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h)
+{
     unsigned int x, y;
-    float *src_f;
+    const float *src_f;
     unsigned short *dst_s;
 
     TRACE("Converting %dx%d pixels, pitches %d %d\n", w, h, pitch_in, pitch_out);
     for(y = 0; y < h; y++) {
-        src_f = (float *) (src + y * pitch_in);
+        src_f = (const float *)(src + y * pitch_in);
         dst_s = (unsigned short *) (dst + y * pitch_out);
         for(x = 0; x < w; x++) {
             dst_s[x] = float_32_to_16(src_f + x);
@@ -702,14 +703,16 @@ void convert_r32f_r16f(BYTE *src, BYTE *dst, DWORD pitch_in, DWORD pitch_out, un
 
 struct d3dfmt_convertor_desc {
     WINED3DFORMAT from, to;
-    void (*convert)(BYTE *src, BYTE *dst, DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h);
+    void (*convert)(const BYTE *src, BYTE *dst, DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h);
 };
 
-struct d3dfmt_convertor_desc convertors[] = {
+const struct d3dfmt_convertor_desc convertors[] =
+{
     {WINED3DFMT_R32F,       WINED3DFMT_R16F,        convert_r32f_r16f},
 };
 
-static inline struct d3dfmt_convertor_desc *find_convertor(WINED3DFORMAT from, WINED3DFORMAT to) {
+static inline const struct d3dfmt_convertor_desc *find_convertor(WINED3DFORMAT from, WINED3DFORMAT to)
+{
     unsigned int i;
     for(i = 0; i < (sizeof(convertors) / sizeof(convertors[0])); i++) {
         if(convertors[i].from == from && convertors[i].to == to) {
@@ -732,7 +735,7 @@ static inline struct d3dfmt_convertor_desc *find_convertor(WINED3DFORMAT from, W
  *****************************************************************************/
 IWineD3DSurfaceImpl *surface_convert_format(IWineD3DSurfaceImpl *source, WINED3DFORMAT to_fmt) {
     IWineD3DSurface *ret = NULL;
-    struct d3dfmt_convertor_desc *conv;
+    const struct d3dfmt_convertor_desc *conv;
     WINED3DLOCKED_RECT lock_src, lock_dst;
     HRESULT hr;
 
@@ -877,7 +880,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
     int bpp, srcheight, srcwidth, dstheight, dstwidth, width;
     int x, y;
     const StaticPixelFormatDesc *sEntry, *dEntry;
-    LPBYTE dbuf, sbuf;
+    const BYTE *sbuf;
+    BYTE *dbuf;
     TRACE("(%p)->(%p,%p,%p,%x,%p)\n", This, DestRect, Src, SrcRect, Flags, DDBltFx);
 
     if (TRACE_ON(d3d_surface))
@@ -1168,7 +1172,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
     /* Now the 'with source' blits */
     if (Src)
     {
-        LPBYTE sbase;
+        const BYTE *sbase;
         int sx, xinc, sy, yinc;
 
         if (!dstwidth || !dstheight) /* hmm... stupid program ? */
@@ -1247,7 +1251,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
                     else
                     {
 #define STRETCH_ROW(type) { \
-                        type *s = (type *) sbuf, *d = (type *) dbuf; \
+                        const type *s = (const type *)sbuf; \
+                        type *d = (type *)dbuf; \
                         for (x = sx = 0; x < dstwidth; x++, sx += xinc) \
                         d[x] = s[sx >> 16]; \
                         break; }
@@ -1259,7 +1264,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
                                             case 4: STRETCH_ROW(DWORD)
                             case 3:
                             {
-                                LPBYTE s,d = dbuf;
+                                const BYTE *s;
+                                BYTE *d = dbuf;
                                 for (x = sx = 0; x < dstwidth; x++, sx+= xinc)
                                 {
                                     DWORD pixel;
@@ -1413,9 +1419,10 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
             }
 
 #define COPY_COLORKEY_FX(type) { \
-            type *s, *d = (type *) dbuf, *dx, tmp; \
+            const type *s; \
+            type *d = (type *)dbuf, *dx, tmp; \
             for (y = sy = 0; y < dstheight; y++, sy += yinc) { \
-            s = (type*)(sbase + (sy >> 16) * slock.Pitch); \
+            s = (const type*)(sbase + (sy >> 16) * slock.Pitch); \
             dx = d; \
             for (x = sx = 0; x < dstwidth; x++, sx += xinc) { \
             tmp = s[sx >> 16]; \
@@ -1435,7 +1442,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
                                 case 4: COPY_COLORKEY_FX(DWORD)
                 case 3:
                 {
-                    LPBYTE s,d = dbuf, dx;
+                    const BYTE *s;
+                    BYTE *d = dbuf, *dx;
                     for (y = sy = 0; y < dstheight; y++, sy += yinc)
                     {
                         sbuf = sbase + (sy >> 16) * slock.Pitch;
@@ -1512,7 +1520,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
     HRESULT             ret = WINED3D_OK;
     RECT                rsrc2;
     RECT                lock_src, lock_dst, lock_union;
-    BYTE                *sbuf, *dbuf;
+    const BYTE          *sbuf;
+    BYTE                *dbuf;
     const StaticPixelFormatDesc *sEntry, *dEntry;
 
     if (TRACE_ON(d3d_surface))
@@ -1662,15 +1671,15 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
         }
 
 #define COPYBOX_COLORKEY(type) { \
-        type *d, *s, tmp; \
-        s = (type *) sbuf; \
-        d = (type *) dbuf; \
+        const type *s = (const type *)sbuf; \
+        type *d = (type *)dbuf; \
+        type tmp; \
         for (y = 0; y < h; y++) { \
         for (x = 0; x < w; x++) { \
         tmp = s[x]; \
         if (tmp < keylow || tmp > keyhigh) d[x] = tmp; \
     } \
-        s = (type *)((BYTE *)s + slock.Pitch); \
+        s = (const type *)((const BYTE *)s + slock.Pitch); \
         d = (type *)((BYTE *)d + dlock.Pitch); \
     } \
         break; \
@@ -1682,7 +1691,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
                             case 4: COPYBOX_COLORKEY(DWORD)
             case 3:
             {
-                BYTE *d, *s;
+                const BYTE *s;
+                BYTE *d;
                 DWORD tmp;
                 s = sbuf;
                 d = dbuf;
