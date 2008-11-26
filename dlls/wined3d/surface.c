@@ -2990,7 +2990,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
                     magLookup[Filter - WINED3DTEXF_NONE]);
     checkGLcall("glTexParameteri");
     glTexParameteri(texture_target, GL_TEXTURE_MIN_FILTER,
-                    minMipLookup[Filter][WINED3DTEXF_NONE]);
+                    minMipLookup[Filter].mip[WINED3DTEXF_NONE]);
     checkGLcall("glTexParameteri");
 
     if(!swapchain || (IWineD3DSurface *) Src == swapchain->backBuffer[0]) {
@@ -3530,7 +3530,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
                         magLookup[Filter - WINED3DTEXF_NONE]);
         checkGLcall("glTexParameteri");
         glTexParameteri(Src->glDescription.target, GL_TEXTURE_MIN_FILTER,
-                        minMipLookup[Filter][WINED3DTEXF_NONE]);
+                        minMipLookup[Filter].mip[WINED3DTEXF_NONE]);
         checkGLcall("glTexParameteri");
         glTexParameteri(Src->glDescription.target, GL_TEXTURE_WRAP_S, GL_CLAMP);
         glTexParameteri(Src->glDescription.target, GL_TEXTURE_WRAP_T, GL_CLAMP);
