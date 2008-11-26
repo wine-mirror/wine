@@ -4276,7 +4276,7 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
              ((DestFVF & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZRHW ) ) {
             /* The position first */
             float *p =
-              (float *) (((char *) lpStrideData->u.s.position.lpData) + i * lpStrideData->u.s.position.dwStride);
+                    (float *)(lpStrideData->u.s.position.lpData + i * lpStrideData->u.s.position.dwStride);
             float x, y, z, rhw;
             TRACE("In: ( %06.2f %06.2f %06.2f )\n", p[0], p[1], p[2]);
 
@@ -4392,7 +4392,7 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
         }
         if (DestFVF & WINED3DFVF_NORMAL) {
             float *normal =
-              (float *) (((float *) lpStrideData->u.s.normal.lpData) + i * lpStrideData->u.s.normal.dwStride);
+                    (float *)(lpStrideData->u.s.normal.lpData + i * lpStrideData->u.s.normal.dwStride);
             /* AFAIK this should go into the lighting information */
             FIXME("Didn't expect the destination to have a normal\n");
             copy_and_next(dest_ptr, normal, 3 * sizeof(float));
@@ -4403,7 +4403,7 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
 
         if (DestFVF & WINED3DFVF_DIFFUSE) {
             DWORD *color_d = 
-              (DWORD *) (((char *) lpStrideData->u.s.diffuse.lpData) + i * lpStrideData->u.s.diffuse.dwStride);
+                    (DWORD *)(lpStrideData->u.s.diffuse.lpData + i * lpStrideData->u.s.diffuse.dwStride);
             if(!color_d) {
                 static BOOL warned = FALSE;
 
@@ -4434,7 +4434,7 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
         if (DestFVF & WINED3DFVF_SPECULAR) { 
             /* What's the color value in the feedback buffer? */
             DWORD *color_s = 
-              (DWORD *) (((char *) lpStrideData->u.s.specular.lpData) + i * lpStrideData->u.s.specular.dwStride);
+                    (DWORD *)(lpStrideData->u.s.specular.lpData + i * lpStrideData->u.s.specular.dwStride);
             if(!color_s) {
                 static BOOL warned = FALSE;
 
@@ -4464,7 +4464,7 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
 
         for (tex_index = 0; tex_index < numTextures; tex_index++) {
             float *tex_coord =
-              (float *) (((char *) lpStrideData->u.s.texCoords[tex_index].lpData) + 
+                    (float *)(lpStrideData->u.s.texCoords[tex_index].lpData +
                             i * lpStrideData->u.s.texCoords[tex_index].dwStride);
             if(!tex_coord) {
                 ERR("No source texture, but destination requests one\n");
