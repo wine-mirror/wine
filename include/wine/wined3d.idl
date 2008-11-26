@@ -2967,7 +2967,7 @@ interface IWineD3DDevice : IWineD3DBase
     );
     HRESULT CreatePalette(
         [in] DWORD flags,
-        [in] PALETTEENTRY *palette_entry,
+        [in] const PALETTEENTRY *palette_entry,
         [out] IWineD3DPalette **palette,
         [in] IUnknown *parent
     );
