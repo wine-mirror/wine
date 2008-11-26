@@ -79,6 +79,7 @@ struct regsvr_coclass {
     LPCSTR progid;		/* can be NULL to omit */
     LPCSTR viprogid;		/* can be NULL to omit */
     LPCSTR progid_extra;	/* can be NULL to omit */
+    LPCSTR dllversion;		/* can be NULL to omit */
 };
 
 /* flags for regsvr_coclass.flags */
@@ -122,6 +123,8 @@ static WCHAR const viprogid_keyname[25] = {
     'V', 'e', 'r', 's', 'i', 'o', 'n', 'I', 'n', 'd', 'e', 'p',
     'e', 'n', 'd', 'e', 'n', 't', 'P', 'r', 'o', 'g', 'I', 'D',
     0 };
+static WCHAR const dllversion_keyname[11] = {
+    'D', 'l', 'l', 'V', 'e', 'r', 's', 'i', 'o', 'n', 0 };
 static char const tmodel_valuename[] = "ThreadingModel";
 
 /***********************************************************************
@@ -318,6 +321,22 @@ static HRESULT register_coclasses(struct regsvr_coclass const *list) {
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 	}
 
+        if (list->dllversion) {
+            HKEY dllver_key;
+
+            res = RegCreateKeyExW(clsid_key, dllversion_keyname, 0, NULL, 0,
+                                  KEY_READ | KEY_WRITE, NULL,
+                                  &dllver_key, NULL);
+            if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+
+            res = RegSetValueExA(dllver_key, NULL, 0, REG_SZ,
+                                 (CONST BYTE*)list->dllversion,
+                                 lstrlenA(list->dllversion) + 1);
+            RegCloseKey(dllver_key);
+            if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+
     error_close_clsid_key:
 	RegCloseKey(clsid_key);
     }
@@ -477,6 +496,8 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Apartment",
         PROGID_CLSID,
 	"IMsiServer",
+        NULL,
+        NULL,
 	NULL
     },    
     {     
@@ -488,7 +509,9 @@ static struct regsvr_coclass const coclass_list[] = {
 	NULL,
         PROGID_CLSID,
 	"WindowsInstaller.Message",
-	NULL
+        NULL,
+        NULL,
+        "3.1.4000"
     },
     {     
         &CLSID_IMsiServerX1,
@@ -499,6 +522,8 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Apartment",
         0,
 	"WindowsInstaller.Installer",
+        NULL,
+        NULL,
 	NULL
     },
     {     
@@ -510,6 +535,8 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Apartment",
         PROGID_CLSID,
 	"WindowsInstaller.Installer",
+        NULL,
+        NULL,
 	NULL
     },
     {     
@@ -521,6 +548,8 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Apartment",
         0,
 	"WindowsInstaller.Installer",
+        NULL,
+        NULL,
         NULL
     },
     { NULL }			/* list terminator */
