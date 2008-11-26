@@ -690,8 +690,8 @@ static LPWSTR msi_reg_get_value(HKEY hkey, LPCWSTR name, DWORD *type)
     return strdupW(temp);
 }
 
-static UINT WINAPI MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
-                                      awstring *szValue, LPDWORD pcchValueBuf)
+static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
+                               awstring *szValue, LPDWORD pcchValueBuf)
 {
     UINT r = ERROR_UNKNOWN_PROPERTY;
     HKEY prodkey, userdata, source;
@@ -1748,8 +1748,8 @@ UINT WINAPI MsiVerifyPackageW( LPCWSTR szPackage )
     return r;
 }
 
-static INSTALLSTATE WINAPI MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
-                                                awstring* lpPathBuf, LPDWORD pcchBuf)
+static INSTALLSTATE MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
+                                         awstring* lpPathBuf, LPDWORD pcchBuf)
 {
     WCHAR squished_pc[GUID_SIZE];
     WCHAR squished_comp[GUID_SIZE];
@@ -2292,7 +2292,7 @@ INSTALLSTATE WINAPI MsiUseFeatureA( LPCSTR szProduct, LPCSTR szFeature )
 /***********************************************************************
  * MSI_ProvideQualifiedComponentEx [internal]
  */
-static UINT WINAPI MSI_ProvideQualifiedComponentEx(LPCWSTR szComponent,
+static UINT MSI_ProvideQualifiedComponentEx(LPCWSTR szComponent,
                 LPCWSTR szQualifier, DWORD dwInstallMode, LPCWSTR szProduct,
                 DWORD Unused1, DWORD Unused2, awstring *lpPathBuf,
                 LPDWORD pcchPathBuf)
@@ -2417,7 +2417,7 @@ UINT WINAPI MsiProvideQualifiedComponentA( LPCSTR szComponent,
 /***********************************************************************
  * MSI_GetUserInfo [internal]
  */
-static USERINFOSTATE WINAPI MSI_GetUserInfo(LPCWSTR szProduct,
+static USERINFOSTATE MSI_GetUserInfo(LPCWSTR szProduct,
                 awstring *lpUserNameBuf, LPDWORD pcchUserNameBuf,
                 awstring *lpOrgNameBuf, LPDWORD pcchOrgNameBuf,
                 awstring *lpSerialBuf, LPDWORD pcchSerialBuf)
