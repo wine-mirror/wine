@@ -1432,13 +1432,11 @@ static void test_verify_signature(void) {
     if (result) return;
 
     /* check that we get a bad signature error when the signature is too short*/
+    SetLastError(0xdeadbeef);
     result = CryptVerifySignature(hHash, abSignatureMD2, 64, hPubSignKey, NULL, 0);
-    ok(!result &&
-     (NTE_BAD_SIGNATURE == GetLastError() ||
-     ERROR_INVALID_PARAMETER == GetLastError()),
-     "Expected NTE_BAD_SIGNATURE or ERROR_INVALID_PARAMETER, got %08x\n",
-     GetLastError());
-    if (result) return;
+    ok((!result && NTE_BAD_SIGNATURE == GetLastError()) ||
+     broken(result), /* Win9x, WinMe, NT4 */
+     "Expected NTE_BAD_SIGNATURE, got %08x\n",  GetLastError());
 
     result = CryptVerifySignature(hHash, abSignatureMD2, 128, hPubSignKey, NULL, 0);
     ok(result, "%08x\n", GetLastError());
