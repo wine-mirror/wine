@@ -858,9 +858,15 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_Translate(ID3DXMatrixStack *iface, FL
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_TranslateLocal(ID3DXMatrixStack *iface, FLOAT x, FLOAT y, FLOAT z)
 {
+    D3DXMATRIX temp;
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
-    FIXME("(%p) : stub\n",This);
-    return E_NOTIMPL;
+
+    TRACE("iface %p\n", iface);
+
+    D3DXMatrixTranslation(&temp, x, y, z);
+    D3DXMatrixMultiply(&This->stack[This->current], &temp,&This->stack[This->current]);
+
+    return D3D_OK;
 }
 
 static const ID3DXMatrixStackVtbl ID3DXMatrixStack_Vtbl =
