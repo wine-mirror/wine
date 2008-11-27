@@ -146,9 +146,16 @@ static void clean_up_base_environment(void)
 {
     BOOL result;
 
+    SetLastError(0xdeadbeef);
     result = CryptReleaseContext(hProv, 1);
-    ok(!result && GetLastError()==NTE_BAD_FLAGS, "%08x\n", GetLastError());
+    ok(!result || broken(result) /* Win98 */, "Expected failure\n");
+    ok(GetLastError()==NTE_BAD_FLAGS, "Expected NTE_BAD_FLAGS, got %08x\n", GetLastError());
         
+    /* Just to prove that Win98 also released the CSP */
+    SetLastError(0xdeadbeef);
+    result = CryptReleaseContext(hProv, 0);
+    ok(!result && GetLastError()==ERROR_INVALID_PARAMETER, "%08x\n", GetLastError());
+
     CryptAcquireContext(&hProv, szContainer, szProvider, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
 }
 
