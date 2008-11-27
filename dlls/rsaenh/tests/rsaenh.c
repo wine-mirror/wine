@@ -1775,8 +1775,13 @@ static void test_enum_container(void)
 
     /* If PP_ENUMCONTAINERS is queried with CRYPT_FIRST and abData == NULL, it returns
      * the maximum legal length of container names (which is MAX_PATH + 1 == 261) */
+    SetLastError(0xdeadbeef);
     result = CryptGetProvParam(hProv, PP_ENUMCONTAINERS, NULL, &dwBufferLen, CRYPT_FIRST);
-    ok (result && dwBufferLen == MAX_PATH + 1, "%08x\n", GetLastError());
+    ok (result, "%08x\n", GetLastError());
+    ok (dwBufferLen == MAX_PATH + 1 ||
+        broken(dwBufferLen == 10) || /* Win9x, WinMe */
+        broken(dwBufferLen == 55), /* NT4 */
+        "Expected dwBufferLen to be (MAX_PATH + 1), it was : %d\n", dwBufferLen);
 
     /* If the result fits into abContainerName dwBufferLen is left untouched */
     dwBufferLen = (DWORD)sizeof(abContainerName);
