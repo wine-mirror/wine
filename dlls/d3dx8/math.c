@@ -1,5 +1,6 @@
 /*
  * Copyright 2007 David Adam
+ * Copyright 2008 Jérôme Gardou
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -831,9 +832,15 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_Scale(ID3DXMatrixStack *iface, FLOAT 
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_ScaleLocal(ID3DXMatrixStack *iface, FLOAT x, FLOAT y, FLOAT z)
 {
+    D3DXMATRIX temp;
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
-    FIXME("(%p) : stub\n",This);
-    return E_NOTIMPL;
+
+    TRACE("iface %p\n", iface);
+
+    D3DXMatrixScaling(&temp, x, y, z);
+    D3DXMatrixMultiply(&This->stack[This->current], &temp, &This->stack[This->current]);
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_Translate(ID3DXMatrixStack *iface, FLOAT x, FLOAT y, FLOAT z)
