@@ -418,12 +418,16 @@ static void shader_glsl_load_constants(
                 stateBlock->vertexShaderConstantF, constant_locations, constant_list);
 
         /* Load DirectX 9 integer constants/uniforms for vertex shader */
-        shader_glsl_load_constantsI(vshader, gl_info, prog->vuniformI_locations,
-                stateBlock->vertexShaderConstantI, stateBlock->changed.vertexShaderConstantsI);
+        if(vshader->baseShader.uses_int_consts) {
+            shader_glsl_load_constantsI(vshader, gl_info, prog->vuniformI_locations,
+                    stateBlock->vertexShaderConstantI, stateBlock->changed.vertexShaderConstantsI);
+        }
 
         /* Load DirectX 9 boolean constants/uniforms for vertex shader */
-        shader_glsl_load_constantsB(vshader, gl_info, programId,
-                stateBlock->vertexShaderConstantB, stateBlock->changed.vertexShaderConstantsB);
+        if(vshader->baseShader.uses_bool_consts) {
+            shader_glsl_load_constantsB(vshader, gl_info, programId,
+                    stateBlock->vertexShaderConstantB, stateBlock->changed.vertexShaderConstantsB);
+        }
 
         /* Upload the position fixup params */
         GL_EXTCALL(glUniform4fvARB(prog->posFixup_location, 1, &deviceImpl->posFixup[0]));
@@ -442,12 +446,16 @@ static void shader_glsl_load_constants(
                 stateBlock->pixelShaderConstantF, constant_locations, constant_list);
 
         /* Load DirectX 9 integer constants/uniforms for pixel shader */
-        shader_glsl_load_constantsI(pshader, gl_info, prog->puniformI_locations,
-                stateBlock->pixelShaderConstantI, stateBlock->changed.pixelShaderConstantsI);
+        if(pshader->baseShader.uses_int_consts) {
+            shader_glsl_load_constantsI(pshader, gl_info, prog->puniformI_locations,
+                    stateBlock->pixelShaderConstantI, stateBlock->changed.pixelShaderConstantsI);
+        }
 
         /* Load DirectX 9 boolean constants/uniforms for pixel shader */
-        shader_glsl_load_constantsB(pshader, gl_info, programId,
-                stateBlock->pixelShaderConstantB, stateBlock->changed.pixelShaderConstantsB);
+        if(pshader->baseShader.uses_bool_consts) {
+            shader_glsl_load_constantsB(pshader, gl_info, programId,
+                    stateBlock->pixelShaderConstantB, stateBlock->changed.pixelShaderConstantsB);
+        }
 
         /* Upload the environment bump map matrix if needed. The needsbumpmat member specifies the texture stage to load the matrix from.
          * It can't be 0 for a valid texbem instruction.

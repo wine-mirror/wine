@@ -349,6 +349,8 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
                 max_loop_depth = cur_loop_depth;
             pToken += curOpcode->num_params;
 
+            /* Rep and Loop always use an integer constant for the control parameters */
+            This->baseShader.uses_int_consts = TRUE;
         } else if (WINED3DSIO_ENDLOOP == curOpcode->opcode ||
                    WINED3DSIO_ENDREP == curOpcode->opcode) {
             cur_loop_depth--;
@@ -493,6 +495,12 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
                         }
                         reg_maps->usesrelconstF = TRUE;
                     }
+                }
+                else if(WINED3DSPR_CONSTINT == regtype) {
+                    This->baseShader.uses_int_consts = TRUE;
+                }
+                else if(WINED3DSPR_CONSTBOOL == regtype) {
+                    This->baseShader.uses_bool_consts = TRUE;
                 }
 
                 /* WINED3DSPR_TEXCRDOUT is the same as WINED3DSPR_OUTPUT. _OUTPUT can be > MAX_REG_TEXCRD and is used

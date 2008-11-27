@@ -2194,6 +2194,7 @@ typedef struct IWineD3DBaseShaderClass
     BOOL                            is_compiled;
     UINT                            cur_loop_depth, cur_loop_regno;
     BOOL                            load_local_constsF;
+    BOOL                            uses_bool_consts, uses_int_consts;
 
     /* Type of shader backend */
     int shader_mode;
