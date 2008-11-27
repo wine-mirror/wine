@@ -227,6 +227,7 @@ static void COM_TlsDestroy(void)
         if (info->apt) apartment_release(info->apt);
         if (info->errorinfo) IErrorInfo_Release(info->errorinfo);
         if (info->state) IUnknown_Release(info->state);
+        if (info->spy) IUnknown_Release(info->spy);
         HeapFree(GetProcessHeap(), 0, info);
         NtCurrentTeb()->ReservedForOle = NULL;
     }
@@ -1058,6 +1059,21 @@ HRESULT WINAPI CoRegisterInitializeSpy(IInitializeSpy *spy, ULARGE_INTEGER *cook
     return hr;
 }
 
+/******************************************************************************
+ *              CoRevokeInitializeSpy [OLE32.@]
+ *
+ * Remove a spy that previously watched CoInitializeEx calls
+ *
+ * PARAMS
+ *  cookie [I] The cookie obtained from a previous CoRegisterInitializeSpy call
+ *
+ * RETURNS
+ *  Success: S_OK if a spy is removed
+ *  Failure: E_INVALIDARG
+ *
+ * SEE ALSO
+ *   CoInitializeEx
+ */
 HRESULT WINAPI CoRevokeInitializeSpy(ULARGE_INTEGER cookie)
 {
     struct oletls *info = COM_CurrentInfo();
@@ -1067,6 +1083,7 @@ HRESULT WINAPI CoRevokeInitializeSpy(ULARGE_INTEGER cookie)
         return E_INVALIDARG;
 
     IUnknown_Release(info->spy);
+    info->spy = NULL;
     return S_OK;
 }
 
