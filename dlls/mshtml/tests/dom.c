@@ -40,13 +40,13 @@ static const char range_test2_str[] =
     "<html><body>abc<hr />123<br /><hr />def</body></html>";
 static const char elem_test_str[] =
     "<html><head><title>test</title><style>.body { margin-right: 0px; }</style>"
-    "<body>text test<!-- a comment -->"
+    "<body onload=\"Testing()\">text test<!-- a comment -->"
     "<a href=\"http://test\" name=\"x\">link</a>"
     "<input id=\"in\" class=\"testclass\" tabIndex=\"2\" title=\"test title\" />"
     "<select id=\"s\"><option id=\"x\" value=\"val1\">opt1</option><option id=\"y\">opt2</option></select>"
     "<textarea id=\"X\">text text</textarea>"
     "<table id=\"tbl\"><tbody><tr></tr><tr id=\"row2\"><td>td1 text</td><td>td2 text</td></tr></tbody></table>"
-    "<script id=\"sc\" type=\"text/javascript\"></script>"
+    "<script id=\"sc\" type=\"text/javascript\"><!--\nfunction Testing() {}\n// -->\n</script>"
     "<test />"
     "<img id=\"imgid\"/>"
     "<iframe src=\"about:blank\" id=\"ifr\"></iframe>"
@@ -3459,6 +3459,27 @@ static void test_elems(IHTMLDocument2 *doc)
     test_doc_title(doc, "test");
     test_doc_set_title(doc, "test title");
     test_doc_title(doc, "test title");
+
+    disp = NULL;
+    hres = IHTMLDocument2_get_Script(doc, &disp);
+    ok(hres == S_OK, "get_Script failed: %08x\n", hres);
+    if(hres == S_OK)
+    {
+        IDispatchEx *dispex;
+        hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+        ok(hres == S_OK, "IDispatch_QueryInterface failed: %08x\n", hres);
+        if(hres == S_OK)
+        {
+            DISPID pid = -1;
+            BSTR str = a2bstr("Testing");
+            hres = IDispatchEx_GetDispID(dispex, str, 1, &pid);
+            todo_wine ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
+            todo_wine ok(pid != -1, "pid == -1\n");
+            SysFreeString(str);
+            IDispatchEx_Release(dispex);
+        }
+    }
+    IDispatch_Release(disp);
 }
 
 static void test_create_elems(IHTMLDocument2 *doc)
