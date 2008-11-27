@@ -498,7 +498,7 @@ static WORD get_operator_token(char c)
 static BOOL is_keyword(parse_buffer* buf, const char* keyword)
 {
   DWORD len = strlen(keyword);
-  if (!strncmp((char*)buf->buffer, keyword,len) && is_separator(*(buf->buffer+len)))
+  if (!strncasecmp((char*)buf->buffer, keyword,len) && is_separator(*(buf->buffer+len)))
   {
     buf->buffer += len;
     buf->rem_bytes -= len;
