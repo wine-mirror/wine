@@ -309,6 +309,11 @@ static void test_get_file_info_iconlist(void)
     hSysImageList = (HIMAGELIST) pSHGetFileInfoW((const WCHAR *)pidList, 0,
             &shInfow, sizeof(shInfow),
 	    SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_PIDL);
+    if (!hSysImageList)
+    {
+        win_skip("SHGetFileInfoW is not implemented\n");
+        return;
+    }
     ok(hSysImageList != INVALID_HANDLE_VALUE, "Can't get handle for CSIDL_DESKTOP imagelist\n");
     todo_wine ok(shInfow.hIcon == 0, "SHGetFileInfoW(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) did not clear hIcon\n");
     ok(shInfow.szTypeName[0] == 0, "SHGetFileInfoW(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) did not clear szTypeName[0]\n");
