@@ -481,7 +481,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 	    {
 		ShowWindow(This->hwndListBox, SW_HIDE);
 	    }
-	    break;
+	    return CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
 	case WM_KEYUP:
 	    
 	    GetWindowTextW( hwnd, (LPWSTR)hwndText, 255);
