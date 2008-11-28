@@ -273,7 +273,7 @@ static ULONG WINAPI IKsPrivatePropertySetImpl_Release(LPKSPROPERTYSET iface)
     return ref;
 }
 
-static HRESULT WINAPI DSPROPERTY_WaveDeviceMappingA(
+static HRESULT DSPROPERTY_WaveDeviceMappingA(
     LPVOID pPropData,
     ULONG cbPropData,
     PULONG pcbReturned )
@@ -336,7 +336,7 @@ static HRESULT WINAPI DSPROPERTY_WaveDeviceMappingA(
     return hr;
 }
 
-static HRESULT WINAPI DSPROPERTY_WaveDeviceMappingW(
+static HRESULT DSPROPERTY_WaveDeviceMappingW(
     LPVOID pPropData,
     ULONG cbPropData,
     PULONG pcbReturned )
@@ -399,7 +399,7 @@ static HRESULT WINAPI DSPROPERTY_WaveDeviceMappingW(
     return hr;
 }
 
-static HRESULT WINAPI DSPROPERTY_Description1(
+static HRESULT DSPROPERTY_Description1(
     LPVOID pPropData,
     ULONG cbPropData,
     PULONG pcbReturned )
@@ -579,7 +579,7 @@ static HRESULT WINAPI DSPROPERTY_Description1(
     return S_OK;
 }
 
-static HRESULT WINAPI DSPROPERTY_DescriptionA(
+static HRESULT DSPROPERTY_DescriptionA(
     LPVOID pPropData,
     ULONG cbPropData,
     PULONG pcbReturned )
@@ -819,7 +819,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionA(
     return S_OK;
 }
 
-static HRESULT WINAPI DSPROPERTY_DescriptionW(
+static HRESULT DSPROPERTY_DescriptionW(
     LPVOID pPropData,
     ULONG cbPropData,
     PULONG pcbReturned )
@@ -1060,7 +1060,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
     return S_OK;
 }
 
-static HRESULT WINAPI DSPROPERTY_Enumerate1(
+static HRESULT DSPROPERTY_Enumerate1(
     LPVOID pPropData,
     ULONG cbPropData,
     PULONG pcbReturned )
@@ -1142,7 +1142,7 @@ static HRESULT WINAPI DSPROPERTY_Enumerate1(
     return E_PROP_ID_UNSUPPORTED;
 }
 
-static HRESULT WINAPI DSPROPERTY_EnumerateA(
+static HRESULT DSPROPERTY_EnumerateA(
     LPVOID pPropData,
     ULONG cbPropData,
     PULONG pcbReturned )
@@ -1252,7 +1252,7 @@ static HRESULT WINAPI DSPROPERTY_EnumerateA(
     return E_PROP_ID_UNSUPPORTED;
 }
 
-static HRESULT WINAPI DSPROPERTY_EnumerateW(
+static HRESULT DSPROPERTY_EnumerateW(
     LPVOID pPropData,
     ULONG cbPropData,
     PULONG pcbReturned )
