@@ -742,6 +742,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
     case SystemPerformanceInformation:
         {
             SYSTEM_PERFORMANCE_INFORMATION spi;
+            static BOOL fixme_written = FALSE;
 
             memset(&spi, 0 , sizeof(spi));
             len = sizeof(spi);
@@ -752,7 +753,10 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                 else memcpy( SystemInformation, &spi, len);
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
-            FIXME("info_class SYSTEM_PERFORMANCE_INFORMATION\n");
+            if(!fixme_written) {
+                FIXME("info_class SYSTEM_PERFORMANCE_INFORMATION\n");
+                fixme_written = TRUE;
+            }
         }
         break;
     case SystemTimeOfDayInformation:
