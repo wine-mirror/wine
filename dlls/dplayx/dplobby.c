@@ -58,9 +58,9 @@ static HRESULT DPL_CreateAddress( REFGUID guidSP, REFGUID guidDataType, LPCVOID 
 extern HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, LPCVOID lpAddress,
                                 DWORD dwAddressSize, LPVOID lpContext );
 
-static HRESULT WINAPI DPL_ConnectEx( IDirectPlayLobbyAImpl* This,
-                                     DWORD dwFlags, REFIID riid,
-                                     LPVOID* lplpDP, IUnknown* pUnk );
+static HRESULT DPL_ConnectEx( IDirectPlayLobbyAImpl* This,
+                              DWORD dwFlags, REFIID riid,
+                              LPVOID* lplpDP, IUnknown* pUnk );
 
 static BOOL DPL_CreateAndSetLobbyHandles( DWORD dwDestProcessId, HANDLE hDestProcess,
                                    LPHANDLE lphStart, LPHANDLE lphDeath,
@@ -469,7 +469,7 @@ static ULONG WINAPI DPL_Release
  * Returns an IDirectPlay interface.
  *
  */
-static HRESULT WINAPI DPL_ConnectEx
+static HRESULT DPL_ConnectEx
 ( IDirectPlayLobbyAImpl* This,
   DWORD     dwFlags,
   REFIID    riid,
