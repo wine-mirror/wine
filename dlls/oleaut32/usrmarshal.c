@@ -25,6 +25,7 @@
 #define COBJMACROS
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#define PROXY_DELEGATION
 
 #include "windef.h"
 #include "winbase.h"
@@ -49,6 +50,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 static CStdPSFactoryBuffer PSFactoryBuffer;
 
 CSTDSTUBBUFFERRELEASE(&PSFactoryBuffer)
+CSTDSTUBBUFFER2RELEASE(&PSFactoryBuffer)
 
 extern const ExtendedProxyFileInfo oleaut32_oaidl_ProxyFileInfo;
 extern const ExtendedProxyFileInfo oleaut32_ocidl_ProxyFileInfo;

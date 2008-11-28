@@ -187,6 +187,11 @@ int cant_be_null(const var_t *v)
   return 1;                             /* Default is RPC_FC_RP.  */
 }
 
+static int need_delegation(const type_t *iface)
+{
+    return iface->ref && iface->ref->ref && iface->ref->ignore;
+}
+
 static void proxy_check_pointers( const var_list_t *args )
 {
   const var_t *arg;
@@ -504,7 +509,7 @@ static int write_proxy_methods(type_t *iface, int skip)
   const func_t *cur;
   int i = 0;
 
-  if (iface->ref) i = write_proxy_methods(iface->ref, iface->ref->ref != NULL);
+  if (iface->ref) i = write_proxy_methods(iface->ref, need_delegation(iface));
   if (iface->funcs) LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry ) {
     var_t *def = cur->def;
     if (!is_callas(def->attrs)) {
@@ -615,7 +620,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   print_proxy( "},\n", iface->name);
   print_proxy( "{\n");
   indent++;
-  print_proxy( "CStdStubBuffer_METHODS\n");
+  print_proxy( "CStdStubBuffer_%s\n", need_delegation(iface) ? "DELEGATING_METHODS" : "METHODS");
   indent--;
   print_proxy( "}\n");
   indent--;
@@ -696,6 +701,29 @@ static void write_proxy_iface_name_format(const statement_list_t *stmts, const c
   }
 }
 
+static void write_proxy_iface_base_iids(const statement_list_t *stmts)
+{
+    const statement_t *stmt;
+
+    if (!stmts) return;
+    LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
+    {
+        if (stmt->type == STMT_LIBRARY)
+            write_proxy_iface_base_iids(stmt->u.lib->stmts);
+        else if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
+        {
+            type_t *iface = stmt->u.type;
+            if (iface->ref && iface->funcs && need_proxy(iface))
+            {
+                if (need_delegation(iface))
+                    fprintf( proxy, "    &IID_%s,  /* %s */\n", iface->ref->name, iface->name );
+                else
+                    fprintf( proxy, "    0,\n" );
+            }
+        }
+    }
+}
+
 static void write_iid_lookup(const statement_list_t *stmts, const char *file_id, int *c)
 {
   const statement_t *stmt;
@@ -723,7 +751,7 @@ void write_proxies(const statement_list_t *stmts)
 {
   int expr_eval_routines;
   char *file_id = proxy_token;
-  int c;
+  int c, have_baseiid;
   unsigned int proc_offset = 0;
 
   if (!do_proxies) return;
@@ -768,6 +796,16 @@ void write_proxies(const statement_list_t *stmts)
   fprintf(proxy, "};\n");
   fprintf(proxy, "\n");
 
+  if ((have_baseiid = does_any_iface(stmts, need_delegation)))
+  {
+      fprintf(proxy, "static const IID * _%s_BaseIIDList[] =\n", file_id);
+      fprintf(proxy, "{\n");
+      write_proxy_iface_base_iids(stmts);
+      fprintf(proxy, "    0\n");
+      fprintf(proxy, "};\n");
+      fprintf(proxy, "\n");
+  }
+
   fprintf(proxy, "#define _%s_CHECK_IID(n) IID_GENERIC_CHECK_IID(_%s, pIID, n)\n", file_id, file_id);
   fprintf(proxy, "\n");
   fprintf(proxy, "int __stdcall _%s_IID_Lookup(const IID* pIID, int* pIndex)\n", file_id);
@@ -783,7 +821,8 @@ void write_proxies(const statement_list_t *stmts)
   fprintf(proxy, "    (const PCInterfaceProxyVtblList*)&_%s_ProxyVtblList,\n", file_id);
   fprintf(proxy, "    (const PCInterfaceStubVtblList*)&_%s_StubVtblList,\n", file_id);
   fprintf(proxy, "    _%s_InterfaceNamesList,\n", file_id);
-  fprintf(proxy, "    0,\n");
+  if (have_baseiid) fprintf(proxy, "    _%s_BaseIIDList,\n", file_id);
+  else fprintf(proxy, "    0,\n");
   fprintf(proxy, "    &_%s_IID_Lookup,\n", file_id);
   fprintf(proxy, "    %d,\n", c);
   fprintf(proxy, "    1,\n");
