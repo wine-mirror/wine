@@ -1754,7 +1754,7 @@ typedef void (WINE_GLAPI * PGLFNGLPOINTPARAMETERFVARBPROC) (GLenum pname, const 
 #define GL_MODELVIEW30_ARB                0x873E
 #define GL_MODELVIEW31_ARB                0x873F
 #endif
-typedef void (WINE_GLAPI * PGLFNGLWEIGHTPOINTERARB) (GLint size, GLenum type, GLsizei stride, GLvoid* pointer);
+typedef void (WINE_GLAPI * PGLFNGLWEIGHTPOINTERARB) (GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
 typedef void (WINE_GLAPI * PGLFNGLWEIGHTBV) (GLint size, const GLbyte *weights);
 typedef void (WINE_GLAPI * PGLFNGLWEIGHTSV) (GLint size, const GLshort *weights);
 typedef void (WINE_GLAPI * PGLFNGLWEIGHTIV) (GLint size, const GLint *weights);
