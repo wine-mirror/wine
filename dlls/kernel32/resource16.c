@@ -203,7 +203,7 @@ static DWORD NE_FindNameTableId( NE_MODULE *pModule, LPCSTR typeId, LPCSTR resId
                               pTypeInfo->type_id, pNameInfo->id );
             handle = LoadResource16( pModule->self,
                                      (HRSRC16)((char *)pNameInfo - (char *)pModule) );
-            for(p = (WORD*)LockResource16(handle); p && *p; p = (WORD *)((char*)p+*p))
+            for(p = LockResource16(handle); p && *p; p = (WORD *)((char*)p+*p))
             {
                 TRACE("  type=%04x '%s' id=%04x '%s'\n",
                                   p[1], (char *)(p+3), p[2],

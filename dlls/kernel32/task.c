@@ -209,7 +209,7 @@ static SEGPTR TASK_AllocThunk(void)
             TASK_CreateThunks( sel, 0, MIN_THUNKS );
             pThunk->next = sel;
         }
-        pThunk = (THUNKS *)GlobalLock16( sel );
+        pThunk = GlobalLock16( sel );
         base = 0;
     }
     base += pThunk->free;
@@ -236,7 +236,7 @@ static BOOL TASK_FreeThunk( SEGPTR thunk )
     while (sel && (sel != HIWORD(thunk)))
     {
         sel = pThunk->next;
-        pThunk = (THUNKS *)GlobalLock16( sel );
+        pThunk = GlobalLock16( sel );
         base = 0;
     }
     if (!sel) return FALSE;
@@ -937,7 +937,7 @@ static BOOL TASK_GetCodeSegment( FARPROC16 proc, NE_MODULE **ppModule,
     int segNr=0;
 
     /* Try pair of module handle / segment number */
-    pModule = (NE_MODULE *) GlobalLock16( HIWORD( proc ) );
+    pModule = GlobalLock16( HIWORD( proc ) );
     if ( pModule && pModule->ne_magic == IMAGE_OS2_SIGNATURE )
     {
         segNr = LOWORD( proc );
@@ -1100,7 +1100,7 @@ void WINAPI SwitchStackTo16( WORD seg, WORD ptr, WORD top )
     INSTANCEDATA *pData;
     UINT16 copySize;
 
-    if (!(pData = (INSTANCEDATA *)GlobalLock16( seg ))) return;
+    if (!(pData = GlobalLock16( seg ))) return;
     TRACE("old=%04x:%04x new=%04x:%04x\n",
           SELECTOROF( NtCurrentTeb()->WOW32Reserved ),
           OFFSETOF( NtCurrentTeb()->WOW32Reserved ), seg, ptr );
@@ -1142,7 +1142,7 @@ void WINAPI SwitchStackBack16( CONTEXT86 *context )
     STACK16FRAME *oldFrame, *newFrame;
     INSTANCEDATA *pData;
 
-    if (!(pData = (INSTANCEDATA *)GlobalLock16(SELECTOROF(NtCurrentTeb()->WOW32Reserved))))
+    if (!(pData = GlobalLock16(SELECTOROF(NtCurrentTeb()->WOW32Reserved))))
         return;
     if (!pData->old_ss_sp)
     {
@@ -1243,7 +1243,7 @@ DWORD WINAPI GetCurPID16( DWORD unused )
  */
 INT16 WINAPI GetInstanceData16( HINSTANCE16 instance, WORD buffer, INT16 len )
 {
-    char *ptr = (char *)GlobalLock16( instance );
+    char *ptr = GlobalLock16( instance );
     if (!ptr || !len) return 0;
     if ((int)buffer + len >= 0x10000) len = 0x10000 - buffer;
     memcpy( (char *)GlobalLock16(CURRENT_DS) + buffer, ptr + buffer, len );

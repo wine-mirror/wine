@@ -706,7 +706,7 @@ static HMODULE16 build_module( const void *mapping, SIZE_T mapping_size, LPCSTR 
     if (!hModule) return ERROR_BAD_FORMAT;
 
     FarSetOwner16( hModule, hModule );
-    pModule = (NE_MODULE *)GlobalLock16( hModule );
+    pModule = GlobalLock16( hModule );
     memcpy( pModule, ne_header, sizeof(*ne_header) );
     pModule->count = 0;
     /* check programs for default minimal stack size */
@@ -846,7 +846,7 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
 {
     int i;
     WORD *pModRef = (WORD *)((char *)pModule + pModule->ne_modtab);
-    WORD *pDLLs = (WORD *)GlobalLock16( pModule->dlls_to_init );
+    WORD *pDLLs = GlobalLock16( pModule->dlls_to_init );
 
     for (i = 0; i < pModule->ne_cmod; i++, pModRef++)
     {
@@ -2014,7 +2014,7 @@ static HMODULE16 create_dummy_module( HMODULE module32 )
     if (!hModule) return ERROR_BAD_FORMAT;
 
     FarSetOwner16( hModule, hModule );
-    pModule = (NE_MODULE *)GlobalLock16( hModule );
+    pModule = GlobalLock16( hModule );
 
     /* Set all used entries */
     pModule->ne_magic         = IMAGE_OS2_SIGNATURE;
@@ -2120,11 +2120,11 @@ HMODULE16 WINAPI MapHModuleLS(HMODULE hmod)
         return TASK_GetCurrent()->hInstance;
     if (!HIWORD(hmod))
         return LOWORD(hmod); /* we already have a 16 bit module handle */
-    pModule = (NE_MODULE*)GlobalLock16(hFirstModule);
+    pModule = GlobalLock16(hFirstModule);
     while (pModule)  {
         if (pModule->module32 == hmod)
             return pModule->self;
-        pModule = (NE_MODULE*)GlobalLock16(pModule->next);
+        pModule = GlobalLock16(pModule->next);
     }
     if ((ret = create_dummy_module( hmod )) < 32)
     {
@@ -2145,7 +2145,7 @@ HMODULE WINAPI MapHModuleSL(HMODULE16 hmod)
         TDB *pTask = TASK_GetCurrent();
         hmod = pTask->hModule;
     }
-    pModule = (NE_MODULE*)GlobalLock16(hmod);
+    pModule = GlobalLock16(hmod);
     if ((pModule->ne_magic != IMAGE_OS2_SIGNATURE) || !(pModule->ne_flags & NE_FFLAGS_WIN32))
         return 0;
     return pModule->module32;

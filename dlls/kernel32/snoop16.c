@@ -203,7 +203,7 @@ SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfun) {
 	/* Now search the non-resident names table */
 
 	if (!*cpnt && pModule->nrname_handle) {
-		cpnt = (unsigned char *)GlobalLock16( pModule->nrname_handle );
+		cpnt = GlobalLock16( pModule->nrname_handle );
 		while (*cpnt) {
 			cpnt += *cpnt + 1 + sizeof(WORD);
 			if (*(WORD*)(cpnt+*cpnt+1) == ordinal) {

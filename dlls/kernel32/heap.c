@@ -1142,7 +1142,7 @@ void WINAPI __regs_AllocMappedBuffer(
               CONTEXT86 *context /* [in] EDI register: size of buffer to allocate */
 ) {
     HGLOBAL handle = GlobalAlloc(0, context->Edi + 8);
-    DWORD *buffer = (DWORD *)GlobalLock(handle);
+    DWORD *buffer = GlobalLock(handle);
     DWORD ptr = 0;
 
     if (buffer)
