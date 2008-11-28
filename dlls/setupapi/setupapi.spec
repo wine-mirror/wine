@@ -434,10 +434,10 @@
 @ stdcall SetupInitDefaultQueueCallbackEx(long long long long ptr)
 @ stdcall SetupInitializeFileLogA (str long)
 @ stdcall SetupInitializeFileLogW (wstr long)
-@ stub SetupInstallFileA
+@ stdcall SetupInstallFileA(ptr ptr str str str long ptr ptr)
 @ stub SetupInstallFileExA
 @ stub SetupInstallFileExW
-@ stub SetupInstallFileW
+@ stdcall SetupInstallFileW(ptr ptr wstr wstr wstr long ptr ptr)
 @ stdcall SetupInstallFilesFromInfSectionA(long long long str str long)
 @ stdcall SetupInstallFilesFromInfSectionW(long long long wstr wstr long)
 @ stdcall SetupInstallFromInfSectionA(long long str long long str long ptr ptr long ptr)
