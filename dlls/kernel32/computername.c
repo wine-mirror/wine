@@ -268,7 +268,7 @@ void COMPUTERNAME_Init (void)
         dot = strchr ( hbuf, '.' );
         if ( dot ) *dot = 0;
         hlen = strlen ( hbuf );
-        len = MultiByteToWideChar( CP_ACP, 0, hbuf, hlen + 1, computer_name, MAX_COMPUTERNAME_LENGTH + 1 )
+        len = MultiByteToWideChar( CP_UNIXCP, 0, hbuf, hlen + 1, computer_name, MAX_COMPUTERNAME_LENGTH + 1 )
             * sizeof( WCHAR );
         if ( NtSetValueKey( hsubkey, &nameW, 0, REG_SZ, computer_name, len ) != STATUS_SUCCESS )
             WARN ( "failed to set ComputerName\n" );
