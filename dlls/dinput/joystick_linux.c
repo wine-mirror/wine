@@ -1141,7 +1141,7 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
 	XCAST(SetDataFormat)IDirectInputDevice2AImpl_SetDataFormat,
 	XCAST(SetEventNotification)IDirectInputDevice2AImpl_SetEventNotification,
 	XCAST(SetCooperativeLevel)IDirectInputDevice2AImpl_SetCooperativeLevel,
-	IDirectInputDevice2WImpl_GetObjectInfo,
+        JoystickWImpl_GetObjectInfo,
 	JoystickWImpl_GetDeviceInfo,
 	XCAST(RunControlPanel)IDirectInputDevice2AImpl_RunControlPanel,
 	XCAST(Initialize)IDirectInputDevice2AImpl_Initialize,
