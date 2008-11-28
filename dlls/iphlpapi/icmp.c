@@ -27,8 +27,6 @@
  * - Not all IP options are supported.
  * - Are ICMP handles real handles, i.e. inheritable and all? There might be some
  *   more work to do here, including server side stuff with synchronization.
- * - Is it correct to use malloc for the internal buffer, for allocating the
- *   handle's structure?
  * - This API should probably be thread safe. Is it really?
  * - Using the winsock functions has not been tested.
  */
