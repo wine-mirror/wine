@@ -21,7 +21,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmloader);
 
-static HRESULT WINAPI DMUSIC_SetLoaderSettings (LPDIRECTMUSICLOADER8 iface, REFGUID pClassID, WCHAR* wszSearchPath, LPBOOL pbCache);
+static HRESULT DMUSIC_SetLoaderSettings (LPDIRECTMUSICLOADER8 iface, REFGUID pClassID, WCHAR* wszSearchPath, LPBOOL pbCache);
 
 /*****************************************************************************
  * IDirectMusicLoaderImpl implementation
@@ -893,7 +893,7 @@ HRESULT WINAPI DMUSIC_GetLoaderSettings (LPDIRECTMUSICLOADER8 iface, REFGUID pCl
 }
 
 /* help function for setting search path and caching option for certain class */
-static HRESULT WINAPI DMUSIC_SetLoaderSettings (LPDIRECTMUSICLOADER8 iface, REFGUID pClassID, WCHAR* wszSearchPath, LPBOOL pbCache) {
+static HRESULT DMUSIC_SetLoaderSettings (LPDIRECTMUSICLOADER8 iface, REFGUID pClassID, WCHAR* wszSearchPath, LPBOOL pbCache) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
 	struct list *pEntry;
 	HRESULT result = S_FALSE; /* in case pClassID != GUID_DirectMusicAllTypes and not a valid CLSID */
