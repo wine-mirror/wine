@@ -153,6 +153,8 @@ GpStatus WINGDIPAPI GdipCreateFont(GDIPCONST GpFontFamily *fontFamily,
 
     (*font)->unit = unit;
     (*font)->emSize = emSize;
+    (*font)->height = tmw->ntmSizeEM;
+    (*font)->line_spacing = tmw->tmAscent + tmw->tmDescent + tmw->tmExternalLeading;
 
     return Ok;
 }
@@ -193,6 +195,9 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
 
     (*font)->lfw.lfHeight = -textmet.tmHeight;
     (*font)->lfw.lfWeight = textmet.tmWeight;
+
+    (*font)->height = 1; /* FIXME: need NEWTEXTMETRIC.ntmSizeEM here */
+    (*font)->line_spacing = textmet.tmAscent + textmet.tmDescent + textmet.tmExternalLeading;
 
     SelectObject(hdc, oldfont);
     DeleteObject(hfont);
@@ -444,15 +449,31 @@ GpStatus WINGDIPAPI GdipGetFontHeight(GDIPCONST GpFont *font,
  */
 GpStatus WINGDIPAPI GdipGetFontHeightGivenDPI(GDIPCONST GpFont *font, REAL dpi, REAL *height)
 {
+    REAL font_height;
+
     TRACE("%p (%s), %f, %p\n", font,
             debugstr_w(font->lfw.lfFaceName), dpi, height);
 
     if (!(font && height)) return InvalidParameter;
 
+    font_height = font->line_spacing * (font->emSize / font->height);
+
     switch (font->unit)
     {
         case UnitPixel:
-            *height = font->emSize;
+            *height = font_height;
+            break;
+        case UnitPoint:
+            *height = font_height * dpi * inch_per_point;
+            break;
+        case UnitInch:
+            *height = font_height * dpi;
+            break;
+        case UnitDocument:
+            *height = font_height * (dpi / 300.0);
+            break;
+        case UnitMillimeter:
+            *height = font_height * (dpi / mm_per_inch);
             break;
         default:
             FIXME("Unhandled unit type: %d\n", font->unit);
