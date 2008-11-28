@@ -154,8 +154,16 @@ static const shader_backend_t *select_shader_backend(UINT Adapter, WINED3DDEVTYP
 static const struct blit_shader *select_blit_implementation(UINT Adapter, WINED3DDEVTYPE DeviceType);
 
 /* lookup tables */
-int minLookup[MAX_LOOKUPS];
-int maxLookup[MAX_LOOKUPS];
+const int minLookup[MAX_LOOKUPS] =
+{
+    WINED3DTADDRESS_WRAP, /* WINELOOKUP_WARPPARAM */
+};
+
+const int maxLookup[MAX_LOOKUPS] =
+{
+    WINED3DTADDRESS_MIRRORONCE, /* WINELOOKUP_WARPPARAM */
+};
+
 DWORD *stateLookup[MAX_LOOKUPS];
 
 struct min_lookup minMipLookup[WINED3DTEXF_ANISOTROPIC + 1];
@@ -368,12 +376,8 @@ static ULONG WINAPI IWineD3DImpl_Release(IWineD3D *iface) {
 /* Set the shader type for this device, depending on the given capabilities,
  * the device type, and the user preferences in wined3d_settings */
 
-void select_shader_mode(
-    WineD3D_GL_Info *gl_info,
-    WINED3DDEVTYPE DeviceType,
-    int* ps_selected,
-    int* vs_selected) {
-
+void select_shader_mode(const WineD3D_GL_Info *gl_info, WINED3DDEVTYPE DeviceType, int *ps_selected, int *vs_selected)
+{
     if (wined3d_settings.vs_mode == VS_NONE) {
         *vs_selected = SHADER_NONE;
     } else if (gl_info->supported[ARB_VERTEX_SHADER] && wined3d_settings.glslRequested) {
@@ -451,7 +455,8 @@ static void select_shader_max_constants(
  **********************************************************/
 
 #define GLINFO_LOCATION (*gl_info)
-static inline BOOL test_arb_vs_offset_limit(WineD3D_GL_Info *gl_info) {
+static inline BOOL test_arb_vs_offset_limit(const WineD3D_GL_Info *gl_info)
+{
     GLuint prog;
     BOOL ret = FALSE;
     const char *testcode =
@@ -1342,11 +1347,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     else
         gl_info->vidmem = WINE_DEFAULT_VIDMEM;
 
-    /* Load all the lookup tables
-    TODO: It may be a good idea to make minLookup and maxLookup const and populate them in wined3d_private.h where they are declared */
-    minLookup[WINELOOKUP_WARPPARAM] = WINED3DTADDRESS_WRAP;
-    maxLookup[WINELOOKUP_WARPPARAM] = WINED3DTADDRESS_MIRRORONCE;
-
+    /* Load all the lookup tables */
     for (i = 0; i < MAX_LOOKUPS; i++) {
         stateLookup[i] = HeapAlloc(GetProcessHeap(), 0, sizeof(*stateLookup[i]) * (1 + maxLookup[i] - minLookup[i]) );
     }
@@ -1775,7 +1776,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
                                                    WINED3DFORMAT DepthStencilFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     int nCfgs;
-    WineD3D_PixelFormat *cfgs;
+    const WineD3D_PixelFormat *cfgs;
     int it;
 
     WARN_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%x,%s), AdptFmt:(%x,%s), RendrTgtFmt:(%x,%s), DepthStencilFmt:(%x,%s))\n",
@@ -1843,7 +1844,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, U
 
     if(glDesc->Flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)) {
         int i, nCfgs;
-        WineD3D_PixelFormat *cfgs;
+        const WineD3D_PixelFormat *cfgs;
 
         cfgs = Adapters[Adapter].cfgs;
         nCfgs = Adapters[Adapter].nCfgs;
@@ -1864,7 +1865,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, U
     else if(glDesc->Flags & WINED3DFMT_FLAG_RENDERTARGET) {
         short redSize, greenSize, blueSize, alphaSize, colorBits;
         int i, nCfgs;
-        WineD3D_PixelFormat *cfgs;
+        const WineD3D_PixelFormat *cfgs;
 
         if(!getColorBits(SurfaceFormat, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits)) {
             ERR("Unable to color bits for format %#x, can't check multisampling capability!\n", SurfaceFormat);
@@ -3746,7 +3747,8 @@ ULONG WINAPI D3DCB_DefaultDestroyVolume(IWineD3DVolume *pVolume) {
     return IUnknown_Release(volumeParent);
 }
 
-static BOOL implementation_is_apple(WineD3D_GL_Info *gl_info) {
+static BOOL implementation_is_apple(const WineD3D_GL_Info *gl_info)
+{
     /* MacOS has various specialities in the extensions it advertises. Some have to be loaded from
      * the opengl 1.2+ core, while other extensions are advertised, but software emulated. So try to
      * detect the Apple OpenGL implementation to apply some extension fixups afterwards.
@@ -3985,12 +3987,14 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info) {
     }
 }
 
-static void WINE_GLAPI invalid_func(void *data) {
+static void WINE_GLAPI invalid_func(const void *data)
+{
     ERR("Invalid vertex attribute function called\n");
     DebugBreak();
 }
 
-static void WINE_GLAPI invalid_texcoord_func(GLenum unit, void * data) {
+static void WINE_GLAPI invalid_texcoord_func(GLenum unit, const void *data)
+{
     ERR("Invalid texcoord function called\n");
     DebugBreak();
 }
@@ -4000,8 +4004,9 @@ static void WINE_GLAPI invalid_texcoord_func(GLenum unit, void * data) {
 /* Helper functions for providing vertex data to opengl. The arrays are initialized based on
  * the extension detection and are used in drawStridedSlow
  */
-static void WINE_GLAPI position_d3dcolor(void *data) {
-    DWORD pos = *((DWORD *) data);
+static void WINE_GLAPI position_d3dcolor(const void *data)
+{
+    DWORD pos = *((const DWORD *)data);
 
     FIXME("Add a test for fixed function position from d3dcolor type\n");
     glVertex4s(D3DCOLOR_B_R(pos),
@@ -4009,8 +4014,10 @@ static void WINE_GLAPI position_d3dcolor(void *data) {
                D3DCOLOR_B_B(pos),
                D3DCOLOR_B_A(pos));
 }
-static void WINE_GLAPI position_float4(void *data) {
-    GLfloat *pos = (float *) data;
+
+static void WINE_GLAPI position_float4(const void *data)
+{
+    const GLfloat *pos = data;
 
     if (pos[3] < eps && pos[3] > -eps)
         glVertex3fv(pos);
@@ -4021,8 +4028,9 @@ static void WINE_GLAPI position_float4(void *data) {
     }
 }
 
-static void WINE_GLAPI diffuse_d3dcolor(void *data) {
-    DWORD diffuseColor = *((DWORD *) data);
+static void WINE_GLAPI diffuse_d3dcolor(const void *data)
+{
+    DWORD diffuseColor = *((const DWORD *)data);
 
     glColor4ub(D3DCOLOR_B_R(diffuseColor),
                D3DCOLOR_B_G(diffuseColor),
@@ -4030,18 +4038,22 @@ static void WINE_GLAPI diffuse_d3dcolor(void *data) {
                D3DCOLOR_B_A(diffuseColor));
 }
 
-static void WINE_GLAPI specular_d3dcolor(void *data) {
-    DWORD specularColor = *((DWORD *) data);
+static void WINE_GLAPI specular_d3dcolor(const void *data)
+{
+    DWORD specularColor = *((const DWORD *)data);
 
     GL_EXTCALL(glSecondaryColor3ubEXT)(D3DCOLOR_B_R(specularColor),
                                        D3DCOLOR_B_G(specularColor),
                                        D3DCOLOR_B_B(specularColor));
 }
-static void WINE_GLAPI warn_no_specular_func(void *data) {
+
+static void WINE_GLAPI warn_no_specular_func(const void *data)
+{
     WARN("GL_EXT_secondary_color not supported\n");
 }
 
-void fillGLAttribFuncs(WineD3D_GL_Info *gl_info) {
+void fillGLAttribFuncs(const WineD3D_GL_Info *gl_info)
+{
     position_funcs[WINED3DDECLTYPE_FLOAT1]      = invalid_func;
     position_funcs[WINED3DDECLTYPE_FLOAT2]      = invalid_func;
     position_funcs[WINED3DDECLTYPE_FLOAT3]      = (glAttribFunc)glVertex3fv;

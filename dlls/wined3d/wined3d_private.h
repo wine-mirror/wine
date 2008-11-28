@@ -107,8 +107,8 @@ typedef enum _WINELOOKUP {
     MAX_LOOKUPS          = 1
 } WINELOOKUP;
 
-extern int minLookup[MAX_LOOKUPS];
-extern int maxLookup[MAX_LOOKUPS];
+extern const int minLookup[MAX_LOOKUPS];
+extern const int maxLookup[MAX_LOOKUPS];
 extern DWORD *stateLookup[MAX_LOOKUPS];
 
 struct min_lookup
@@ -556,8 +556,8 @@ void primitiveDeclarationConvertToStridedData(
 
 DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
 
-typedef void (WINE_GLAPI *glAttribFunc)(void *data);
-typedef void (WINE_GLAPI *glMultiTexCoordFunc)(GLenum unit, void *data);
+typedef void (WINE_GLAPI *glAttribFunc)(const void *data);
+typedef void (WINE_GLAPI *glMultiTexCoordFunc)(GLenum unit, const void *data);
 extern glAttribFunc position_funcs[WINED3DDECLTYPE_UNUSED];
 extern glAttribFunc diffuse_funcs[WINED3DDECLTYPE_UNUSED];
 extern glAttribFunc specular_funcs[WINED3DDECLTYPE_UNUSED];
