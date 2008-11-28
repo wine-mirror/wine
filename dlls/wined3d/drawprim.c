@@ -142,7 +142,7 @@ void primitiveDeclarationConvertToStridedData(
 
      /* We need to deal with frequency data!*/
 
-    BYTE  *data    = NULL;
+    const BYTE *data = NULL;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexDeclarationImpl* vertexDeclaration = (IWineD3DVertexDeclarationImpl *)This->stateBlock->vertexDecl;
     unsigned int i;
@@ -299,8 +299,8 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
     long                      SkipnStrides = startVertex + This->stateBlock->loadBaseVertexIndex;
     BOOL                      pixelShader = use_ps(This);
 
-    BYTE *texCoords[WINED3DDP_MAXTEXCOORD];
-    BYTE *diffuse = NULL, *specular = NULL, *normal = NULL, *position = NULL;
+    const BYTE *texCoords[WINED3DDP_MAXTEXCOORD];
+    const BYTE *diffuse = NULL, *specular = NULL, *normal = NULL, *position = NULL;
 
     TRACE("Using slow vertex array code\n");
 
@@ -409,7 +409,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
             if (This->stateBlock->textures[textureNo] != NULL || pixelShader) {
                 int    coordIdx = This->stateBlock->textureState[textureNo][WINED3DTSS_TEXCOORDINDEX];
                 int texture_idx = This->texUnitMap[textureNo];
-                void *ptrToCoords;
+                const void *ptrToCoords;
 
                 if (coordIdx > 7) {
                     VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
@@ -441,11 +441,11 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
 
         /* Diffuse -------------------------------- */
         if (diffuse) {
-            DWORD *ptrToCoords = (DWORD *)(diffuse + (SkipnStrides * sd->u.s.diffuse.dwStride));
+            const void *ptrToCoords = diffuse + SkipnStrides * sd->u.s.diffuse.dwStride;
 
-            diffuse_funcs[sd->u.s.diffuse.dwType]((void *) ptrToCoords);
+            diffuse_funcs[sd->u.s.diffuse.dwType](ptrToCoords);
             if(This->activeContext->num_untracked_materials) {
-                DWORD diffuseColor = ptrToCoords[0];
+                DWORD diffuseColor = ((const DWORD *)ptrToCoords)[0];
                 unsigned char i;
                 float color[4];
 
@@ -462,14 +462,14 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
 
         /* Specular ------------------------------- */
         if (specular) {
-            DWORD *ptrToCoords = (DWORD *)(specular + (SkipnStrides * sd->u.s.specular.dwStride));
+            const void *ptrToCoords = specular + SkipnStrides * sd->u.s.specular.dwStride;
 
             /* special case where the fog density is stored in the specular alpha channel */
             if(This->stateBlock->renderState[WINED3DRS_FOGENABLE] &&
               (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE || sd->u.s.position.dwType == WINED3DDECLTYPE_FLOAT4 )&&
               This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
                 if(GL_SUPPORT(EXT_FOG_COORD)) {
-                    DWORD specularColor = ptrToCoords[0];
+                    DWORD specularColor = ((const DWORD *)ptrToCoords)[0];
                     GL_EXTCALL(glFogCoordfEXT(specularColor >> 24));
                 } else {
                     static BOOL warned = FALSE;
@@ -481,18 +481,18 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                 }
             }
 
-            specular_funcs[sd->u.s.specular.dwType]((void *) ptrToCoords);
+            specular_funcs[sd->u.s.specular.dwType](ptrToCoords);
         }
 
         /* Normal -------------------------------- */
         if (normal != NULL) {
-            float *ptrToCoords = (float *)(normal + (SkipnStrides * sd->u.s.normal.dwStride));
+            const void *ptrToCoords = normal + SkipnStrides * sd->u.s.normal.dwStride;
             normal_funcs[sd->u.s.normal.dwType](ptrToCoords);
         }
 
         /* Position -------------------------------- */
         if (position) {
-            float *ptrToCoords = (float *)(position + (SkipnStrides * sd->u.s.position.dwStride));
+            const void *ptrToCoords = position + SkipnStrides * sd->u.s.position.dwStride;
             position_funcs[sd->u.s.position.dwType](ptrToCoords);
         }
 
@@ -606,7 +606,7 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, WineDirect3DVertexStridedDa
     ULONG                      vx_index;
     int i;
     IWineD3DStateBlockImpl *stateblock = This->stateBlock;
-    BYTE *ptr;
+    const BYTE *ptr;
 
     if (idxSize != 0) {
         /* Immediate mode drawing can't make use of indices in a vbo - get the data from the index buffer.
@@ -704,7 +704,7 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, WineDirect3DVerte
     for(i = 0; i < numInstances; i++) {
         /* Specify the instanced attributes using immediate mode calls */
         for(j = 0; j < numInstancedAttribs; j++) {
-            BYTE *ptr = sd->u.input[instancedData[j]].lpData +
+            const BYTE *ptr = sd->u.input[instancedData[j]].lpData +
                         sd->u.input[instancedData[j]].dwStride * i +
                         stateblock->streamOffset[sd->u.input[instancedData[j]].streamNo];
             if(sd->u.input[instancedData[j]].VBO) {
@@ -1005,7 +1005,7 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     unsigned int i, j, num_quads, out_vertex_size, buffer_size, d3d_out_vertex_size;
     float max_x = 0.0, max_y = 0.0, max_z = 0.0, neg_z = 0.0;
     WineDirect3DVertexStridedData strided;
-    BYTE *data;
+    const BYTE *data;
     WINED3DRECTPATCH_INFO *info = &patch->RectPatchInfo;
     DWORD vtxStride;
     GLenum feedback_type;
@@ -1048,7 +1048,7 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     /* First, get the boundary cube of the input data */
     for(j = 0; j < info->Height; j++) {
         for(i = 0; i < info->Width; i++) {
-            float *v = (float *) (data + vtxStride * i + vtxStride * info->Stride * j);
+            const float *v = (const float *)(data + vtxStride * i + vtxStride * info->Stride * j);
             if(fabs(v[0]) > max_x) max_x = fabs(v[0]);
             if(fabs(v[1]) > max_y) max_y = fabs(v[1]);
             if(fabs(v[2]) > max_z) max_z = fabs(v[2]);
@@ -1172,13 +1172,13 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     glMap2f(GL_MAP2_VERTEX_3,
             0, 1, vtxStride / sizeof(float), info->Width,
             0, 1, info->Stride * vtxStride / sizeof(float), info->Height,
-            (float *) data);
+            (const GLfloat *)data);
     checkGLcall("glMap2f");
     if(patch->has_texcoords) {
         glMap2f(GL_MAP2_TEXTURE_COORD_4,
                 0, 1, vtxStride / sizeof(float), info->Width,
                 0, 1, info->Stride * vtxStride / sizeof(float), info->Height,
-                (float *) data);
+                (const GLfloat *)data);
         checkGLcall("glMap2f");
     }
     glMapGrid2f(ceilf(patch->numSegs[0]), 0.0, 1.0, ceilf(patch->numSegs[1]), 0.0, 1.0);
