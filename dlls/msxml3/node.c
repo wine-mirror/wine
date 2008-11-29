@@ -920,7 +920,7 @@ static HRESULT WINAPI xmlnode_put_text(
     BSTR text)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
-    xmlChar *str, *str2, *str3;
+    xmlChar *str, *str2;
 
     TRACE("%p\n", This);
 
@@ -937,11 +937,9 @@ static HRESULT WINAPI xmlnode_put_text(
     /* Escape the string. */
     str2 = xmlEncodeEntitiesReentrant(This->node->doc, str);
     HeapFree(GetProcessHeap(), 0, str);
-    str3 = xmlEncodeSpecialChars(This->node->doc, str2);
-    xmlFree(str2);
 
-    xmlNodeSetContent(This->node, str3);
-    xmlFree(str3);
+    xmlNodeSetContent(This->node, str2);
+    xmlFree(str2);
 
     return S_OK;
 }

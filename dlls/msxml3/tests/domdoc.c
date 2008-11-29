@@ -176,6 +176,8 @@ static WCHAR szElementXML[]  = {'<','E','l','e','T','e','s','t','/','>',0 };
 static WCHAR szElementXML2[] = {'<','E','l','e','T','e','s','t',' ','A','t','t','r','=','"','"','/','>',0 };
 static WCHAR szElementXML3[] = {'<','E','l','e','T','e','s','t',' ','A','t','t','r','=','"','"','>',
                                 'T','e','s','t','i','n','g','N','o','d','e','<','/','E','l','e','T','e','s','t','>',0 };
+static WCHAR szElementXML4[] = {'<','E','l','e','T','e','s','t',' ','A','t','t','r','=','"','"','>',
+                                '&','a','m','p',';','x',' ',0x2103,'<','/','E','l','e','T','e','s','t','>',0 };
 
 static WCHAR szAttribute[] = {'A','t','t','r',0 };
 static WCHAR szAttributeXML[] = {'A','t','t','r','=','"','"',0 };
@@ -190,6 +192,7 @@ static WCHAR szDocFragmentText[] = {'#','d','o','c','u','m','e','n','t','-','f',
 
 static WCHAR szEntityRef[] = {'e','n','t','i','t','y','r','e','f',0 };
 static WCHAR szEntityRefXML[] = {'&','e','n','t','i','t','y','r','e','f',';',0 };
+static WCHAR szStrangeChars[] = {'&','x',' ',0x2103, 0};
 
 #define expect_bstr_eq_and_free(bstr, expect) { \
     BSTR bstrExp = alloc_str_from_narrow(expect); \
@@ -2891,6 +2894,22 @@ static void test_xmlTypes(void)
                 hr = IXMLDOMElement_get_xml(pElement, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
                 ok( !lstrcmpW( str, szElementXML3 ), "incorrect element xml\n");
+                SysFreeString(str);
+
+                /* Test for reversible escaping */
+                str = SysAllocString( szStrangeChars );
+                hr = IXMLDOMElement_put_text(pElement, str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                SysFreeString( str );
+
+                hr = IXMLDOMElement_get_xml(pElement, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, szElementXML4 ), "incorrect element xml\n");
+                SysFreeString(str);
+
+                hr = IXMLDOMElement_get_text(pElement, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, szStrangeChars ), "incorrect element text\n");
                 SysFreeString(str);
 
                 IXMLDOMElement_Release(pElement);
