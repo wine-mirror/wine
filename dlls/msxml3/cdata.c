@@ -69,6 +69,12 @@ static HRESULT WINAPI domcdata_QueryInterface(
     {
         return IUnknown_QueryInterface(This->node_unk, riid, ppvObject);
     }
+    else if ( IsEqualGUID( riid, &IID_IXMLDOMText ) ||
+              IsEqualGUID( riid, &IID_IXMLDOMElement ) )
+    {
+        TRACE("Unsupported interface\n");
+        return E_NOINTERFACE;
+    }
     else
     {
         FIXME("Unsupported interface %s\n", debugstr_guid(riid));
