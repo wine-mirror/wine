@@ -2146,7 +2146,7 @@ static void test_SetEntriesInAcl(void)
 
     if (!pSetEntriesInAclW)
     {
-        skip("SetEntriesInAclW is not available\n");
+        win_skip("SetEntriesInAclW is not available\n");
         return;
     }
 
@@ -2154,7 +2154,7 @@ static void test_SetEntriesInAcl(void)
     res = pSetEntriesInAclW(0, NULL, NULL, &NewAcl);
     if(res == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("SetEntriesInAclW is not implemented\n");
+        win_skip("SetEntriesInAclW is not implemented\n");
         return;
     }
     ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
@@ -2164,7 +2164,7 @@ static void test_SetEntriesInAcl(void)
     res = InitializeAcl(OldAcl, 256, ACL_REVISION);
     if(!res && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("ACLs not implemented - skipping tests\n");
+        win_skip("ACLs not implemented - skipping tests\n");
         HeapFree(GetProcessHeap(), 0, OldAcl);
         return;
     }
@@ -2209,15 +2209,17 @@ static void test_SetEntriesInAcl(void)
         ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_BAD_FORM;
         res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
         ok(res == ERROR_INVALID_PARAMETER, "SetEntriesInAclW failed: %u\n", res);
-        ok(NewAcl == NULL, "returned acl wasn't NULL: %p\n", NewAcl);
-        LocalFree(NewAcl);
+        ok(NewAcl == NULL ||
+            broken(NewAcl != NULL), /* NT4 */
+            "returned acl wasn't NULL: %p\n", NewAcl);
 
         ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_USER;
         ExplicitAccess.Trustee.MultipleTrusteeOperation = TRUSTEE_IS_IMPERSONATE;
         res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
         ok(res == ERROR_INVALID_PARAMETER, "SetEntriesInAclW failed: %u\n", res);
-        ok(NewAcl == NULL, "returned acl wasn't NULL: %p\n", NewAcl);
-        LocalFree(NewAcl);
+        ok(NewAcl == NULL ||
+            broken(NewAcl != NULL), /* NT4 */
+            "returned acl wasn't NULL: %p\n", NewAcl);
 
         ExplicitAccess.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
         ExplicitAccess.grfAccessMode = SET_ACCESS;
@@ -2804,6 +2806,13 @@ static void test_GetSecurityInfo(void)
     ok(IsValidAcl(dacl), "GetSecurityInfo\n");
 
     LocalFree(sd);
+
+    if (!pCreateWellKnownSid)
+    {
+        win_skip("NULL parameter test would crash on NT4\n");
+        CloseHandle(obj);
+        return;
+    }
 
     /* If we don't ask for the security descriptor, Windows will still give us
        the other stuff, leaving us no way to free it.  */
