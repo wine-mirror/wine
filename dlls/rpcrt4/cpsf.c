@@ -223,6 +223,8 @@ HRESULT WINAPI NdrDllRegisterProxy(HMODULE hDll,
   static const WCHAR clsid32W[] = {'P','r','o','x','y','S','t','u','b','C','l','s','i','d','3','2',0};
   static const WCHAR interfaceW[] = {'I','n','t','e','r','f','a','c','e','\\',0};
   static const WCHAR psfactoryW[] = {'P','S','F','a','c','t','o','r','y','B','u','f','f','e','r',0};
+  static const WCHAR numformatW[] = {'%','u',0};
+  static const WCHAR nummethodsW[] = {'N','u','m','M','e','t','h','o','d','s',0};
   static const WCHAR inprocserverW[] = {'I','n','P','r','o','c','S','e','r','v','e','r','3','2',0};
   static const WCHAR threadingmodelW[] = {'T','h','r','e','a','d','i','n','g','M','o','d','e','l',0};
   WCHAR clsid[39], keyname[50], module[MAX_PATH];
@@ -245,9 +247,12 @@ HRESULT WINAPI NdrDllRegisterProxy(HMODULE hDll,
       strcpyW( keyname, interfaceW );
       format_clsid( keyname + strlenW(keyname), proxy->header.piid );
       if (RegCreateKeyW(HKEY_CLASSES_ROOT, keyname, &key) == ERROR_SUCCESS) {
+        WCHAR num[10];
         if (name)
           RegSetValueExA(key, NULL, 0, REG_SZ, (const BYTE *)name, strlen(name)+1);
         RegSetValueW( key, clsid32W, REG_SZ, clsid, 0 );
+        sprintfW(num, numformatW, proxy->header.DispatchTableCount);
+        RegSetValueW( key, nummethodsW, REG_SZ, num, 0 );
         RegCloseKey(key);
       }
     }
