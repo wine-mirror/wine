@@ -85,20 +85,6 @@ xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type )
     return This->node;
 }
 
-void attach_xmlnode( IXMLDOMNode *node, xmlNodePtr xml )
-{
-    xmlnode *This = impl_from_IXMLDOMNode( node );
-
-    if(This->node)
-        xmldoc_release(This->node->doc);
-
-    This->node = xml;
-    if(This->node)
-        xmldoc_add_ref(This->node->doc);
-
-    return;
-}
-
 static HRESULT WINAPI xmlnode_QueryInterface(
     IXMLDOMNode *iface,
     REFIID riid,

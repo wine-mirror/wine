@@ -209,6 +209,20 @@ HRESULT xmldoc_remove_orphan(xmlDocPtr doc, xmlNodePtr node)
     return S_FALSE;
 }
 
+static void attach_xmlnode( IXMLDOMNode *node, xmlNodePtr xml )
+{
+    xmlnode *This = impl_from_IXMLDOMNode( node );
+
+    if(This->node)
+        xmldoc_release(This->node->doc);
+
+    This->node = xml;
+    if(This->node)
+        xmldoc_add_ref(This->node->doc);
+
+    return;
+}
+
 static inline domdoc *impl_from_IXMLDOMDocument2( IXMLDOMDocument2 *iface )
 {
     return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpVtbl));

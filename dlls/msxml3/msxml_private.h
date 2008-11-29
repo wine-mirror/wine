@@ -54,8 +54,6 @@ extern IUnknown         *create_doc_entity_ref( xmlNodePtr entity );
 
 extern HRESULT queryresult_create( xmlNodePtr, LPWSTR, IXMLDOMNodeList ** );
 
-extern void attach_xmlnode( IXMLDOMNode *node, xmlNodePtr xmlnode );
-
 /* data accessors */
 xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type );
 
