@@ -1364,8 +1364,6 @@ static HRESULT WINAPI domdoc_load(
 
     assert( This->node );
 
-    attach_xmldoc(This->node, NULL);
-
     switch( V_VT(&xmlSource) )
     {
     case VT_BSTR:
@@ -1548,8 +1546,6 @@ static HRESULT WINAPI domdoc_loadXML(
     TRACE("%p %s %p\n", This, debugstr_w( bstrXML ), isSuccessful );
 
     assert ( This->node );
-
-    attach_xmldoc( This->node, NULL );
 
     if ( isSuccessful )
     {
