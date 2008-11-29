@@ -209,14 +209,14 @@ HRESULT xmldoc_remove_orphan(xmlDocPtr doc, xmlNodePtr node)
     return S_FALSE;
 }
 
-static void attach_xmlnode( IXMLDOMNode *node, xmlNodePtr xml )
+static void attach_xmldoc( IXMLDOMNode *node, xmlDocPtr xml )
 {
     xmlnode *This = impl_from_IXMLDOMNode( node );
 
     if(This->node)
         xmldoc_release(This->node->doc);
 
-    This->node = xml;
+    This->node = (xmlNodePtr) xml;
     if(This->node)
         xmldoc_add_ref(This->node->doc);
 
@@ -345,7 +345,7 @@ static HRESULT WINAPI xmldoc_IPersistStream_Load(
     }
 
     xmldoc->_private = create_priv();
-    attach_xmlnode( This->node, (xmlNodePtr)xmldoc );
+    attach_xmldoc( This->node, xmldoc );
 
     return S_OK;
 }
@@ -1324,7 +1324,7 @@ static HRESULT domdoc_onDataAvailable(void *obj, char *ptr, DWORD len)
     xmldoc = doparse( ptr, len );
     if(xmldoc) {
         xmldoc->_private = create_priv();
-        attach_xmlnode(This->node, (xmlNodePtr) xmldoc);
+        attach_xmldoc(This->node, xmldoc);
     }
 
     return S_OK;
@@ -1364,7 +1364,7 @@ static HRESULT WINAPI domdoc_load(
 
     assert( This->node );
 
-    attach_xmlnode(This->node, NULL);
+    attach_xmldoc(This->node, NULL);
 
     switch( V_VT(&xmlSource) )
     {
@@ -1379,7 +1379,7 @@ static HRESULT WINAPI domdoc_load(
             {
                 domdoc *newDoc = impl_from_IXMLDOMDocument2( pNewDoc );
                 xmldoc = xmlCopyDoc(get_doc(newDoc), 1);
-                attach_xmlnode(This->node, (xmlNodePtr) xmldoc);
+                attach_xmldoc(This->node, xmldoc);
 
                 *isSuccessful = VARIANT_TRUE;
 
@@ -1440,7 +1440,7 @@ static HRESULT WINAPI domdoc_load(
     if(!filename || FAILED(hr)) {
         xmldoc = xmlNewDoc(NULL);
         xmldoc->_private = create_priv();
-        attach_xmlnode(This->node, (xmlNodePtr) xmldoc);
+        attach_xmldoc(This->node, xmldoc);
         hr = S_FALSE;
     }
 
@@ -1549,7 +1549,7 @@ static HRESULT WINAPI domdoc_loadXML(
 
     assert ( This->node );
 
-    attach_xmlnode( This->node, NULL );
+    attach_xmldoc( This->node, NULL );
 
     if ( isSuccessful )
     {
@@ -1572,7 +1572,7 @@ static HRESULT WINAPI domdoc_loadXML(
         xmldoc = xmlNewDoc(NULL);
 
     xmldoc->_private = create_priv();
-    attach_xmlnode( This->node, (xmlNodePtr) xmldoc );
+    attach_xmldoc( This->node, xmldoc );
 
     return hr;
 }
