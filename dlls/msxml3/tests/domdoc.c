@@ -3856,6 +3856,7 @@ static void test_NodeTypeValue(void)
             hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
             ok(hr == S_OK, "ret %08x\n", hr );
             ok(!lstrcmpW( V_BSTR(&v), _bstr_("Wine") ), "incorrect value\n");
+            VariantClear( &v );
 
             IXMLDOMNode_Release(pNode);
         }
