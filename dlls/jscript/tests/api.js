@@ -296,6 +296,15 @@ ok(tmp === "<B>test</B>", "'test'.bold() = " + tmp);
 tmp = "test".bold(3);
 ok(tmp === "<B>test</B>", "'test'.bold(3) = " + tmp);
 
+tmp = "".fixed();
+ok(tmp === "<TT></TT>", "''.fixed() = " + tmp);
+tmp = "".fixed(3);
+ok(tmp === "<TT></TT>", "''.fixed(3) = " + tmp);
+tmp = "test".fixed();
+ok(tmp === "<TT>test</TT>", "'test'.fixed() = " + tmp);
+tmp = "test".fixed(3);
+ok(tmp === "<TT>test</TT>", "'test'.fixed(3) = " + tmp);
+
 var arr = new Array();
 ok(typeof(arr) === "object", "arr () is not object");
 ok((arr.length === 0), "arr.length is not 0");
