@@ -123,6 +123,33 @@ static HRESULT String_valueOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
     return String_toString(dispex, lcid, flags, dp, retv, ei, sp);
 }
 
+static HRESULT do_attributeless_tag_format(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp, const WCHAR *tagname)
+{
+    static const WCHAR tagfmt[] = {'<','%','s','>','%','s','<','/','%','s','>',0};
+    StringInstance *string;
+    BSTR ret;
+
+    if(!is_class(dispex, JSCLASS_STRING)) {
+        WARN("this is not a string object\n");
+        return E_NOTIMPL;
+    }
+
+    string = (StringInstance*)dispex;
+
+    if(retv) {
+        ret = SysAllocStringLen(NULL, string->length + 2*strlenW(tagname) + 5);
+        if(!ret)
+            return E_OUTOFMEMORY;
+
+        sprintfW(ret, tagfmt, tagname, string->str, tagname);
+
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = ret;
+    }
+    return S_OK;
+}
+
 static HRESULT String_anchor(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
@@ -133,8 +160,8 @@ static HRESULT String_anchor(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
 static HRESULT String_big(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    static const WCHAR bigtagW[] = {'B','I','G',0};
+    return do_attributeless_tag_format(dispex, lcid, flags, dp, retv, ei, sp, bigtagW);
 }
 
 static HRESULT String_blink(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
