@@ -867,8 +867,8 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
 {
     ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
     HRESULT hr;
-    AM_MEDIA_TYPE* mt;
-    IEnumMediaTypes* penummt;
+    AM_MEDIA_TYPE* mt = NULL;
+    IEnumMediaTypes* penummt = NULL;
     ULONG nbmt;
     IEnumPins* penumpins;
     IEnumMoniker* pEnumMoniker;
@@ -1095,10 +1095,11 @@ error:
         }
     }
 
-    IEnumMediaTypes_Release(penummt);
-    DeleteMediaType(mt);
-
 out:
+    if (penummt)
+        IEnumMediaTypes_Release(penummt);
+    if (mt)
+        DeleteMediaType(mt);
     --This->recursioncount;
     LeaveCriticalSection(&This->cs);
     TRACE("--> %08x\n", hr);
