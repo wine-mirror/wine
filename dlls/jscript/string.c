@@ -997,8 +997,8 @@ static HRESULT String_split(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
 static HRESULT String_strike(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    static const WCHAR striketagW[] = {'S','T','R','I','K','E',0};
+    return do_attributeless_tag_format(dispex, lcid, flags, dp, retv, ei, sp, striketagW);
 }
 
 static HRESULT String_sub(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
