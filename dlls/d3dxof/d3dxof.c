@@ -1177,6 +1177,40 @@ static BOOL parse_template_parts(parse_buffer * buf)
   return TRUE;
 }
 
+static void go_to_next_definition(parse_buffer * buf)
+{
+  while (buf->rem_bytes)
+  {
+    char c = *buf->buffer;
+    if ((c == '#') || (c == '/'))
+    {
+      read_bytes(buf, &c, 1);
+      /* Handle comment (# or //) */
+      if (c == '/')
+      {
+        if (!read_bytes(buf, &c, 1))
+          return;
+        if (c != '/')
+          return;
+      }
+      c = 0;
+      while (c != 0x0A)
+      {
+        if (!read_bytes(buf, &c, 1))
+          return;
+      }
+      continue;
+    }
+    else if (is_space(*buf->buffer))
+    {
+      buf->buffer++;
+      buf->rem_bytes--;
+    }
+    else
+      break;
+  }
+}
+
 static BOOL parse_template(parse_buffer * buf)
 {
   if (get_TOKEN(buf) != TOKEN_TEMPLATE)
@@ -1196,11 +1230,7 @@ static BOOL parse_template(parse_buffer * buf)
   if (buf->txt)
   {
     /* Go to the next template */
-    while (buf->rem_bytes && is_space(*buf->buffer))
-    {
-      buf->buffer++;
-      buf->rem_bytes--;
-    }
+    go_to_next_definition(buf);
   }
 
   TRACE("%d - %s - %s\n", buf->pdxf->nb_xtemplates, buf->pdxf->xtemplates[buf->pdxf->nb_xtemplates].name, debugstr_guid(&buf->pdxf->xtemplates[buf->pdxf->nb_xtemplates].class_id));
@@ -2136,11 +2166,7 @@ static BOOL parse_object(parse_buffer * buf)
   if (buf->txt)
   {
     /* Go to the next object */
-    while (buf->rem_bytes && is_space(*buf->buffer))
-    {
-      buf->buffer++;
-      buf->rem_bytes--;
-    }
+    go_to_next_definition(buf);
   }
 
   return TRUE;
