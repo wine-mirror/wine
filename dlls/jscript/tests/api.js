@@ -305,6 +305,15 @@ ok(tmp === "<TT>test</TT>", "'test'.fixed() = " + tmp);
 tmp = "test".fixed(3);
 ok(tmp === "<TT>test</TT>", "'test'.fixed(3) = " + tmp);
 
+tmp = "".italics();
+ok(tmp === "<I></I>", "''.italics() = " + tmp);
+tmp = "".italics(3);
+ok(tmp === "<I></I>", "''.italics(3) = " + tmp);
+tmp = "test".italics();
+ok(tmp === "<I>test</I>", "'test'.italics() = " + tmp);
+tmp = "test".italics(3);
+ok(tmp === "<I>test</I>", "'test'.italics(3) = " + tmp);
+
 var arr = new Array();
 ok(typeof(arr) === "object", "arr () is not object");
 ok((arr.length === 0), "arr.length is not 0");

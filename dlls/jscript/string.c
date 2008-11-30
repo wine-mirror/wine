@@ -418,8 +418,8 @@ static HRESULT String_indexOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
 static HRESULT String_italics(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    static const WCHAR italicstagW[] = {'I',0};
+    return do_attributeless_tag_format(dispex, lcid, flags, dp, retv, ei, sp, italicstagW);
 }
 
 static HRESULT String_lastIndexOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
