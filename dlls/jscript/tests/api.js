@@ -287,6 +287,15 @@ ok(tmp === "<BLINK>test</BLINK>", "'test'.blink() = " + tmp);
 tmp = "test".blink(3);
 ok(tmp === "<BLINK>test</BLINK>", "'test'.blink(3) = " + tmp);
 
+tmp = "".bold();
+ok(tmp === "<B></B>", "''.bold() = " + tmp);
+tmp = "".bold(3);
+ok(tmp === "<B></B>", "''.bold(3) = " + tmp);
+tmp = "test".bold();
+ok(tmp === "<B>test</B>", "'test'.bold() = " + tmp);
+tmp = "test".bold(3);
+ok(tmp === "<B>test</B>", "'test'.bold(3) = " + tmp);
+
 var arr = new Array();
 ok(typeof(arr) === "object", "arr () is not object");
 ok((arr.length === 0), "arr.length is not 0");

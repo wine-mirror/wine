@@ -174,8 +174,8 @@ static HRESULT String_blink(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
 static HRESULT String_bold(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    static const WCHAR boldtagW[] = {'B',0};
+    return do_attributeless_tag_format(dispex, lcid, flags, dp, retv, ei, sp, boldtagW);
 }
 
 /* ECMA-262 3rd Edition    15.5.4.5 */
