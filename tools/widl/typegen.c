@@ -2713,7 +2713,7 @@ void print_phase_basetype(FILE *file, int indent, const char *local_var_prefix,
     }
 
     print_file(file, indent, "__frame->_StubMsg.Buffer += sizeof(");
-    write_type_decl(file, var->type, NULL);
+    write_type_decl(file, is_ptr(type) ? type->ref : type, NULL);
     fprintf(file, ");\n");
 }
 
@@ -2963,47 +2963,29 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func, const
         case RPC_FC_BOGUS_STRUCT:
             print_phase_function(file, indent, "ComplexStruct", local_var_prefix, phase, var, start_offset);
             break;
-        case RPC_FC_RP:
-            if (is_base_type( var->type->ref->type ))
-            {
-                print_phase_basetype(file, indent, local_var_prefix, phase, pass, var, var->name);
-            }
-            else if (var->type->ref->type == RPC_FC_STRUCT)
-            {
-                if (phase != PHASE_BUFFERSIZE && phase != PHASE_FREE)
-                    print_phase_function(file, indent, local_var_prefix, "SimpleStruct", phase, var, start_offset + 4);
-            }
-            else
-            {
-                expr_t *iid;
-                if ((iid = get_attrp( var->attrs, ATTR_IIDIS )))
-                {
-                    print_file( file, indent, "__frame->_StubMsg.MaxCount = (unsigned long) " );
-                    write_expr( file, iid, 1, 1, NULL, NULL, local_var_prefix );
-                    fprintf( file, ";\n\n" );
-                }
-                print_phase_function(file, indent, "Pointer", local_var_prefix, phase, var, start_offset);
-            }
-            break;
         default:
             error("write_remoting_arguments: Unsupported type: %s (0x%02x)\n", var->name, rtype);
         }
     }
     else
     {
-        if (last_ptr(var->type) && (pointer_type == RPC_FC_RP) && is_base_type(rtype))
+        const type_t *ref = type->ref;
+        if (type->type == RPC_FC_RP && is_base_type(ref->type))
         {
             if (phase != PHASE_FREE)
                 print_phase_basetype(file, indent, local_var_prefix, phase, pass, var, var->name);
         }
-        else if (last_ptr(var->type) && (pointer_type == RPC_FC_RP) && (rtype == RPC_FC_STRUCT))
+        else if (type->type == RPC_FC_RP && ref->type == RPC_FC_STRUCT &&
+                 !is_user_type(ref))
         {
             if (phase != PHASE_BUFFERSIZE && phase != PHASE_FREE)
-                print_phase_function(file, indent, "SimpleStruct", local_var_prefix, phase, var, start_offset + 4);
+                print_phase_function(file, indent, "SimpleStruct",
+                                     local_var_prefix, phase, var,
+                                     ref->typestring_offset);
         }
         else
         {
-            if (var->type->ref->type == RPC_FC_IP)
+            if (ref->type == RPC_FC_IP)
                 print_phase_function(file, indent, "InterfacePointer", local_var_prefix, phase, var, start_offset);
             else
                 print_phase_function(file, indent, "Pointer", local_var_prefix, phase, var, start_offset);
