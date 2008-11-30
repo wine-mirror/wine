@@ -195,7 +195,7 @@
 # @ stub NtLockRegistryKey
 @ stdcall NtLockVirtualMemory(long ptr ptr long)
 # @ stub NtMakePermanentObject
-@ stub NtMakeTemporaryObject
+@ stdcall NtMakeTemporaryObject(long)
 # @ stub NtMapUserPhysicalPages
 # @ stub NtMapUserPhysicalPagesScatter
 @ stdcall NtMapViewOfSection(long long ptr long long ptr ptr long long long)
@@ -1039,7 +1039,7 @@
 # @ stub ZwLockRegistryKey
 @ stdcall ZwLockVirtualMemory(long ptr ptr long) NtLockVirtualMemory
 # @ stub ZwMakePermanentObject
-@ stub ZwMakeTemporaryObject
+@ stdcall ZwMakeTemporaryObject(long) NtMakeTemporaryObject
 # @ stub ZwMapUserPhysicalPages
 # @ stub ZwMapUserPhysicalPagesScatter
 @ stdcall ZwMapViewOfSection(long long ptr long long ptr ptr long long long) NtMapViewOfSection

@@ -616,3 +616,22 @@ NTSTATUS WINAPI NtAllocateUuids(
         FIXME("(%p,%p,%p), stub.\n", Time, Range, Sequence);
 	return 0;
 }
+
+/**************************************************************************
+ *  NtMakeTemporaryObject	[NTDLL.@]
+ *  ZwMakeTemporaryObject	[NTDLL.@]
+ *
+ * Make a permanent object temporary.
+ *
+ * PARAMS
+ *  Handle [I] handle to permanent object
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS.
+ *  Failure: An NTSTATUS error code.
+ */
+NTSTATUS WINAPI NtMakeTemporaryObject( HANDLE Handle )
+{
+    FIXME("(%p), stub.\n", Handle);
+    return STATUS_SUCCESS;
+}
