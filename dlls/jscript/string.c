@@ -167,8 +167,8 @@ static HRESULT String_big(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS 
 static HRESULT String_blink(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    static const WCHAR blinktagW[] = {'B','L','I','N','K',0};
+    return do_attributeless_tag_format(dispex, lcid, flags, dp, retv, ei, sp, blinktagW);
 }
 
 static HRESULT String_bold(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
