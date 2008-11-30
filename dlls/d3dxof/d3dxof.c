@@ -81,7 +81,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dxof);
 #define CLSIDFMT "<%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X>"
 
 #define MAX_INPUT_SIZE 2000000
-#define MAX_DATA_SIZE 200000
+#define MAX_DATA_SIZE 400000
 
 static const struct IDirectXFileVtbl IDirectXFile_Vtbl;
 static const struct IDirectXFileBinaryVtbl IDirectXFileBinary_Vtbl;

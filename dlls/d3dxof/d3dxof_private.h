@@ -36,10 +36,10 @@
 #define MAX_NAME_LEN 32
 #define MAX_ARRAY_DIM 4
 #define MAX_MEMBERS 50
-#define MAX_CHILDS 20
+#define MAX_CHILDS 100
 #define MAX_TEMPLATES 200
 #define MAX_OBJECTS 500
-#define MAX_SUBOBJECTS 120
+#define MAX_SUBOBJECTS 500
 #define MAX_STRINGS_BUFFER 200
 
 typedef struct {
