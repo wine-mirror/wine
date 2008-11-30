@@ -1874,7 +1874,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
         else
         {
           /* Allow comma omission */
-          if (!((token == TOKEN_FLOAT)))
+          if (!((token == TOKEN_FLOAT) || (token == TOKEN_INTEGER)))
             return FALSE;
         }
       }
@@ -1996,10 +1996,10 @@ static BOOL parse_object_members_list(parse_buffer * buf)
       }
     }
 
-    if (buf->txt)
+    if (buf->txt && (check_TOKEN(buf) != TOKEN_CBRACE))
     {
       token = get_TOKEN(buf);
-      if (token != TOKEN_SEMICOLON)
+      if ((token != TOKEN_SEMICOLON) && (token != TOKEN_COMMA))
       {
         /* Allow comma instead of semicolon in some specific cases */
         if (!((token == TOKEN_COMMA) && ((i+1) < pt->nb_members) && (pt->members[i].type == pt->members[i+1].type)
