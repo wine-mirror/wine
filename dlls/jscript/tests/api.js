@@ -314,6 +314,15 @@ ok(tmp === "<I>test</I>", "'test'.italics() = " + tmp);
 tmp = "test".italics(3);
 ok(tmp === "<I>test</I>", "'test'.italics(3) = " + tmp);
 
+tmp = "".small();
+ok(tmp === "<SMALL></SMALL>", "''.small() = " + tmp);
+tmp = "".small(3);
+ok(tmp === "<SMALL></SMALL>", "''.small(3) = " + tmp);
+tmp = "test".small();
+ok(tmp === "<SMALL>test</SMALL>", "'test'.small() = " + tmp);
+tmp = "test".small(3);
+ok(tmp === "<SMALL>test</SMALL>", "'test'.small(3) = " + tmp);
+
 var arr = new Array();
 ok(typeof(arr) === "object", "arr () is not object");
 ok((arr.length === 0), "arr.length is not 0");
