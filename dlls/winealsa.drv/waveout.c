@@ -588,7 +588,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     snd_pcm_format_t            format = -1;
     unsigned int                rate;
     unsigned int                buffer_time = 120000;
-    unsigned int                period_time = 20000;
+    unsigned int                period_time = 22000;
     snd_pcm_uframes_t           buffer_size;
     snd_pcm_uframes_t           period_size;
     int                         flags;
