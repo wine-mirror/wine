@@ -225,7 +225,7 @@ static void testGetIpAddrTable(void)
      "GetIpAddrTable(NULL, &dwSize, FALSE) returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
      apiReturn);
     if (apiReturn == ERROR_INSUFFICIENT_BUFFER) {
-      PMIB_IPADDRTABLE buf = (PMIB_IPADDRTABLE)malloc(dwSize);
+      PMIB_IPADDRTABLE buf = HeapAlloc(GetProcessHeap(), 0, dwSize);
 
       apiReturn = gGetIpAddrTable(buf, &dwSize, FALSE);
       ok(apiReturn == NO_ERROR,
@@ -233,7 +233,7 @@ static void testGetIpAddrTable(void)
        apiReturn);
       if (apiReturn == NO_ERROR && buf->dwNumEntries)
         testGetIfEntry(buf->table[0].dwIndex);
-      free(buf);
+      HeapFree(GetProcessHeap(), 0, buf);
     }
   }
 }
@@ -257,13 +257,13 @@ static void testGetIfTable(void)
      "GetIfTable(NULL, &dwSize, FALSE) returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
      apiReturn);
     if (apiReturn == ERROR_INSUFFICIENT_BUFFER) {
-      PMIB_IFTABLE buf = (PMIB_IFTABLE)malloc(dwSize);
+      PMIB_IFTABLE buf = HeapAlloc(GetProcessHeap(), 0, dwSize);
 
       apiReturn = gGetIfTable(buf, &dwSize, FALSE);
       ok(apiReturn == NO_ERROR,
        "GetIfTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n\n",
        apiReturn);
-      free(buf);
+      HeapFree(GetProcessHeap(), 0, buf);
     }
   }
 }
@@ -287,13 +287,13 @@ static void testGetIpForwardTable(void)
      "GetIpForwardTable(NULL, &dwSize, FALSE) returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
      apiReturn);
     if (apiReturn == ERROR_INSUFFICIENT_BUFFER) {
-      PMIB_IPFORWARDTABLE buf = (PMIB_IPFORWARDTABLE)malloc(dwSize);
+      PMIB_IPFORWARDTABLE buf = HeapAlloc(GetProcessHeap(), 0, dwSize);
 
       apiReturn = gGetIpForwardTable(buf, &dwSize, FALSE);
       ok(apiReturn == NO_ERROR,
        "GetIpForwardTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n",
        apiReturn);
-      free(buf);
+      HeapFree(GetProcessHeap(), 0, buf);
     }
   }
 }
@@ -319,13 +319,13 @@ static void testGetIpNetTable(void)
     if (apiReturn == ERROR_NO_DATA)
       ; /* empty ARP table's okay */
     else if (apiReturn == ERROR_INSUFFICIENT_BUFFER) {
-      PMIB_IPNETTABLE buf = (PMIB_IPNETTABLE)malloc(dwSize);
+      PMIB_IPNETTABLE buf = HeapAlloc(GetProcessHeap(), 0, dwSize);
 
       apiReturn = gGetIpNetTable(buf, &dwSize, FALSE);
       ok(apiReturn == NO_ERROR,
        "GetIpNetTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n",
        apiReturn);
-      free(buf);
+      HeapFree(GetProcessHeap(), 0, buf);
     }
   }
 }
@@ -437,13 +437,13 @@ static void testGetTcpTable(void)
      "GetTcpTable(NULL, &dwSize, FALSE) returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
      apiReturn);
     if (apiReturn == ERROR_INSUFFICIENT_BUFFER) {
-      PMIB_TCPTABLE buf = (PMIB_TCPTABLE)malloc(dwSize);
+      PMIB_TCPTABLE buf = HeapAlloc(GetProcessHeap(), 0, dwSize);
 
       apiReturn = gGetTcpTable(buf, &dwSize, FALSE);
       ok(apiReturn == NO_ERROR,
        "GetTcpTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n",
        apiReturn);
-      free(buf);
+      HeapFree(GetProcessHeap(), 0, buf);
     }
   }
 }
@@ -467,13 +467,13 @@ static void testGetUdpTable(void)
      "GetUdpTable(NULL, &dwSize, FALSE) returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
      apiReturn);
     if (apiReturn != ERROR_INSUFFICIENT_BUFFER) {
-      PMIB_UDPTABLE buf = (PMIB_UDPTABLE)malloc(dwSize);
+      PMIB_UDPTABLE buf = HeapAlloc(GetProcessHeap(), 0, dwSize);
 
       apiReturn = gGetUdpTable(buf, &dwSize, FALSE);
       ok(apiReturn == NO_ERROR,
        "GetUdpTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n",
        apiReturn);
-      free(buf);
+      HeapFree(GetProcessHeap(), 0, buf);
     }
   }
 }
@@ -527,13 +527,13 @@ static void testGetInterfaceInfo(void)
      "GetInterfaceInfo returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
      apiReturn);
     if (apiReturn == ERROR_INSUFFICIENT_BUFFER) {
-      PIP_INTERFACE_INFO buf = (PIP_INTERFACE_INFO)malloc(len);
+      PIP_INTERFACE_INFO buf = HeapAlloc(GetProcessHeap(), 0, len);
 
       apiReturn = gGetInterfaceInfo(buf, &len);
       ok(apiReturn == NO_ERROR,
        "GetInterfaceInfo(buf, &dwSize) returned %d, expected NO_ERROR\n",
        apiReturn);
-      free(buf);
+      HeapFree(GetProcessHeap(), 0, buf);
     }
   }
 }
@@ -559,13 +559,13 @@ static void testGetAdaptersInfo(void)
     if (apiReturn == ERROR_NO_DATA)
       ; /* no adapter's, that's okay */
     else if (apiReturn == ERROR_BUFFER_OVERFLOW) {
-      PIP_ADAPTER_INFO buf = (PIP_ADAPTER_INFO)malloc(len);
+      PIP_ADAPTER_INFO buf = HeapAlloc(GetProcessHeap(), 0, len);
 
       apiReturn = gGetAdaptersInfo(buf, &len);
       ok(apiReturn == NO_ERROR,
        "GetAdaptersInfo(buf, &dwSize) returned %d, expected NO_ERROR\n",
        apiReturn);
-      free(buf);
+      HeapFree(GetProcessHeap(), 0, buf);
     }
   }
 }
@@ -589,13 +589,13 @@ static void testGetNetworkParams(void)
      "GetNetworkParams returned %d, expected ERROR_BUFFER_OVERFLOW\n",
      apiReturn);
     if (apiReturn == ERROR_BUFFER_OVERFLOW) {
-      PFIXED_INFO buf = (PFIXED_INFO)malloc(len);
+      PFIXED_INFO buf = HeapAlloc(GetProcessHeap(), 0, len);
 
       apiReturn = gGetNetworkParams(buf, &len);
       ok(apiReturn == NO_ERROR,
        "GetNetworkParams(buf, &dwSize) returned %d, expected NO_ERROR\n",
        apiReturn);
-      free(buf);
+      HeapFree(GetProcessHeap(), 0, buf);
     }
   }
 }
