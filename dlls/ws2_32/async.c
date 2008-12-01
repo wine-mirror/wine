@@ -203,15 +203,15 @@ static int WS_copy_he(char *p_to,char *p_base,int t_size,struct hostent* p_he, i
 	struct WS_hostent *p_to32 = (struct WS_hostent*)p_to;
 	int	size = hostent_size(p_he) +
 		(
-		(flag & AQ_WIN16) ? sizeof(struct ws_hostent16) : sizeof(struct WS_hostent)
+		 (flag & AQ_WIN32) ? sizeof(struct WS_hostent) : sizeof(struct ws_hostent16)
 		- sizeof(struct hostent)
 		);
 
 	if (t_size < size)
 		return -size;
 	p = p_to;
-	p += (flag & AQ_WIN16) ?
-		sizeof(struct ws_hostent16) : sizeof(struct WS_hostent);
+	p += (flag & AQ_WIN32) ?
+	     sizeof(struct WS_hostent) : sizeof(struct ws_hostent16);
 	p_name = p;
 	strcpy(p, p_he->h_name); p += strlen(p) + 1;
 	p_aliases = p;
@@ -219,21 +219,21 @@ static int WS_copy_he(char *p_to,char *p_base,int t_size,struct hostent* p_he, i
 	p_addr = p;
 	list_dup(p_he->h_addr_list, p, p_base + (p - p_to), p_he->h_length);
 
-	if (flag & AQ_WIN16)
-	{
-	    p_to16->h_addrtype = (INT16)p_he->h_addrtype;
-	    p_to16->h_length = (INT16)p_he->h_length;
-	    p_to16->h_name = (SEGPTR)(p_base + (p_name - p_to));
-	    p_to16->h_aliases = (SEGPTR)(p_base + (p_aliases - p_to));
-	    p_to16->h_addr_list = (SEGPTR)(p_base + (p_addr - p_to));
-	}
-	else
+	if (flag & AQ_WIN32)
 	{
 	    p_to32->h_addrtype = p_he->h_addrtype;
 	    p_to32->h_length = p_he->h_length;
 	    p_to32->h_name = (p_base + (p_name - p_to));
 	    p_to32->h_aliases = (char **)(p_base + (p_aliases - p_to));
 	    p_to32->h_addr_list = (char **)(p_base + (p_addr - p_to));
+	}
+	else
+	{
+	    p_to16->h_addrtype = (INT16)p_he->h_addrtype;
+	    p_to16->h_length = (INT16)p_he->h_length;
+	    p_to16->h_name = (SEGPTR)(p_base + (p_name - p_to));
+	    p_to16->h_aliases = (SEGPTR)(p_base + (p_aliases - p_to));
+	    p_to16->h_addr_list = (SEGPTR)(p_base + (p_addr - p_to));
 	}
 
 	return size;
@@ -261,31 +261,30 @@ static int WS_copy_pe(char *p_to,char *p_base,int t_size,struct protoent* p_pe, 
 	struct WS_protoent *p_to32 = (struct WS_protoent*)p_to;
 	int	size = protoent_size(p_pe) +
 		(
-		(flag & AQ_WIN16) ? sizeof(struct ws_protoent16) : sizeof(struct WS_protoent)
+		 (flag & AQ_WIN32) ? sizeof(struct WS_protoent) : sizeof(struct ws_protoent16)
 		- sizeof(struct protoent)
 		);
 
 	if (t_size < size)
 		return -size;
 	p = p_to;
-	p += (flag & AQ_WIN16) ?
-		sizeof(struct ws_protoent16) : sizeof(struct WS_protoent);
+	p += (flag & AQ_WIN32) ? sizeof(struct WS_protoent) : sizeof(struct ws_protoent16);
 	p_name = p;
 	strcpy(p, p_pe->p_name); p += strlen(p) + 1;
 	p_aliases = p;
 	list_dup(p_pe->p_aliases, p, p_base + (p - p_to), 0);
 
-	if (flag & AQ_WIN16)
-	{
-	    p_to16->p_proto = (INT16)p_pe->p_proto;
-	    p_to16->p_name = (SEGPTR)(p_base) + (p_name - p_to);
-	    p_to16->p_aliases = (SEGPTR)((p_base) + (p_aliases - p_to));
-	}
-	else
+	if (flag & AQ_WIN32)
 	{
 	    p_to32->p_proto = p_pe->p_proto;
 	    p_to32->p_name = (p_base) + (p_name - p_to);
 	    p_to32->p_aliases = (char **)((p_base) + (p_aliases - p_to));
+	}
+	else
+	{
+	    p_to16->p_proto = (INT16)p_pe->p_proto;
+	    p_to16->p_name = (SEGPTR)(p_base) + (p_name - p_to);
+	    p_to16->p_aliases = (SEGPTR)((p_base) + (p_aliases - p_to));
 	}
 
 	return size;
@@ -315,15 +314,14 @@ static int WS_copy_se(char *p_to,char *p_base,int t_size,struct servent* p_se, i
 	struct WS_servent *p_to32 = (struct WS_servent*)p_to;
 	int	size = servent_size(p_se) +
 		(
-		(flag & AQ_WIN16) ? sizeof(struct ws_servent16) : sizeof(struct WS_servent)
+		 (flag & AQ_WIN32) ? sizeof(struct WS_servent) : sizeof(struct ws_servent16)
 		- sizeof(struct servent)
 		);
 
 	if (t_size < size)
 		return -size;
 	p = p_to;
-	p += (flag & AQ_WIN16) ?
-		sizeof(struct ws_servent16) : sizeof(struct WS_servent);
+	p += (flag & AQ_WIN32) ? sizeof(struct WS_servent) : sizeof(struct ws_servent16);
 	p_name = p;
 	strcpy(p, p_se->s_name); p += strlen(p) + 1;
 	p_proto = p;
@@ -331,19 +329,19 @@ static int WS_copy_se(char *p_to,char *p_base,int t_size,struct servent* p_se, i
 	p_aliases = p;
 	list_dup(p_se->s_aliases, p, p_base + (p - p_to), 0);
 
-	if (flag & AQ_WIN16)
-	{
-	    p_to16->s_port = (INT16)p_se->s_port;
-	    p_to16->s_name = (SEGPTR)(p_base + (p_name - p_to));
-	    p_to16->s_proto = (SEGPTR)(p_base + (p_proto - p_to));
-	    p_to16->s_aliases = (SEGPTR)(p_base + (p_aliases - p_to));
-	}
-	else
+	if (flag & AQ_WIN32)
 	{
 	    p_to32->s_port = p_se->s_port;
 	    p_to32->s_name = (p_base + (p_name - p_to));
 	    p_to32->s_proto = (p_base + (p_proto - p_to));
 	    p_to32->s_aliases = (char **)(p_base + (p_aliases - p_to));
+	}
+	else
+	{
+	    p_to16->s_port = (INT16)p_se->s_port;
+	    p_to16->s_name = (SEGPTR)(p_base + (p_name - p_to));
+	    p_to16->s_proto = (SEGPTR)(p_base + (p_proto - p_to));
+	    p_to16->s_aliases = (SEGPTR)(p_base + (p_aliases - p_to));
 	}
 
 	return size;
