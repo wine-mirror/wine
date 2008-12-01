@@ -92,7 +92,7 @@ static void print_glsl_info_log(const WineD3D_GL_Info *gl_info, GLhandleARB obj)
 {
     int infologLength = 0;
     char *infoLog;
-    int i;
+    unsigned int i;
     BOOL is_spam;
 
     const char *spam[] = {
@@ -299,13 +299,13 @@ static void shader_glsl_load_constantsI(IWineD3DBaseShaderImpl *This, const Wine
         GLhandleARB programId, const GLhandleARB locations[MAX_CONST_I], unsigned int max_constants,
         const int *constants, const BOOL *constants_set)
 {
-    int i;
+    unsigned int i;
     struct list* ptr;
 
     for (i=0; i<max_constants; ++i) {
         if (NULL == constants_set || constants_set[i]) {
 
-            TRACE_(d3d_constants)("Loading constants %i: %i, %i, %i, %i\n",
+            TRACE_(d3d_constants)("Loading constants %u: %i, %i, %i, %i\n",
                   i, constants[i*4], constants[i*4+1], constants[i*4+2], constants[i*4+3]);
 
             /* We found this uniform name in the program - go ahead and send the data */
@@ -339,7 +339,7 @@ static void shader_glsl_load_constantsB(IWineD3DBaseShaderImpl *This, const Wine
         GLhandleARB programId, unsigned int max_constants, const BOOL *constants, const BOOL *constants_set)
 {
     GLhandleARB tmp_loc;
-    int i;
+    unsigned int i;
     char tmp_name[8];
     char is_pshader = shader_is_pshader_version(This->baseShader.hex_version);
     const char* prefix = is_pshader? "PB":"VB";
@@ -348,11 +348,11 @@ static void shader_glsl_load_constantsB(IWineD3DBaseShaderImpl *This, const Wine
     for (i=0; i<max_constants; ++i) {
         if (NULL == constants_set || constants_set[i]) {
 
-            TRACE_(d3d_constants)("Loading constants %i: %i;\n", i, constants[i]);
+            TRACE_(d3d_constants)("Loading constants %u: %i;\n", i, constants[i]);
 
             /* TODO: Benchmark and see if it would be beneficial to store the 
              * locations of the constants to avoid looking up each time */
-            snprintf(tmp_name, sizeof(tmp_name), "%s[%i]", prefix, i);
+            snprintf(tmp_name, sizeof(tmp_name), "%s[%u]", prefix, i);
             tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
             if (tmp_loc != -1) {
                 /* We found this uniform name in the program - go ahead and send the data */
@@ -401,7 +401,7 @@ static void shader_glsl_load_constants(
     const struct list *constant_list;
     GLhandleARB programId;
     const struct glsl_shader_prog_link *prog = priv->glsl_program;
-    unsigned int i;
+    int i;
 
     if (!prog) {
         /* No GLSL program set - nothing to do. */
@@ -503,8 +503,7 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
-    int i;
-    unsigned int extra_constants_needed = 0;
+    unsigned int i, extra_constants_needed = 0;
     const local_constant *lconst;
 
     /* There are some minor differences between pixel and vertex shaders */
