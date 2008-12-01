@@ -748,6 +748,16 @@ GpStatus WINGDIPAPI GdipGetImageHorizontalResolution(GpImage *image, REAL *res)
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipGetImagePaletteSize(GpImage *image, INT *size)
+{
+    FIXME("%p %p\n", image, size);
+
+    if(!image || !size)
+        return InvalidParameter;
+
+    return NotImplemented;
+}
+
 /* FIXME: test this function for non-bitmap types */
 GpStatus WINGDIPAPI GdipGetImagePixelFormat(GpImage *image, PixelFormat *format)
 {
