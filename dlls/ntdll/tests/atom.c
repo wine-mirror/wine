@@ -307,7 +307,7 @@ static void test_NtIntAtom(void)
     {
         /* According to the kernel32 functions, integer atoms are only allowed from
          * 0x0001 to 0xbfff and not 0xc000 to 0xffff, which is correct */
-        res = pRtlAddAtomToAtomTable(AtomTable, (PWSTR)0, &testAtom);
+        res = pRtlAddAtomToAtomTable(AtomTable, NULL, &testAtom);
         ok(res == STATUS_INVALID_PARAMETER, "Didn't get expected result from adding 0 int atom, retval: %x\n", res);
         for (i = 1; i <= 0xbfff; i++)
         {
