@@ -936,7 +936,9 @@ static void test_RtlDeleteTimer(void)
 {
     NTSTATUS ret;
     ret = pRtlDeleteTimer(NULL, NULL, NULL);
-    ok(ret == STATUS_INVALID_PARAMETER_1, "expected STATUS_INVALID_PARAMETER_1, got %x\n", ret);
+    ok(ret == STATUS_INVALID_PARAMETER_1 ||
+       ret == STATUS_INVALID_PARAMETER, /* W2K */
+       "expected STATUS_INVALID_PARAMETER_1 or STATUS_INVALID_PARAMETER, got %x\n", ret);
 }
 
 START_TEST(rtl)
