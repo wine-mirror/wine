@@ -150,7 +150,7 @@ typedef struct
 extern BOOL COMBO_FlipListbox( LPHEADCOMBO, BOOL, BOOL ) DECLSPEC_HIDDEN;
 
 /* Dialog info structure */
-typedef struct
+typedef struct tagDIALOGINFO
 {
     HWND      hwndFocus;   /* Current control with focus */
     HFONT     hUserFont;   /* Dialog font */
@@ -164,9 +164,6 @@ typedef struct
 
 #define DF_END  0x0001
 #define DF_OWNERENABLED 0x0002
-
-/* offset of DIALOGINFO ptr in dialog extra bytes */
-#define DWLP_WINE_DIALOGINFO (DWLP_USER+sizeof(ULONG_PTR))
 
 extern DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create ) DECLSPEC_HIDDEN;
 extern void DIALOG_EnableOwner( HWND hOwner ) DECLSPEC_HIDDEN;

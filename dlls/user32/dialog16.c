@@ -434,9 +434,9 @@ static HWND DIALOG_CreateIndirect16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
     }
     wndPtr = WIN_GetPtr( hwnd );
     wndPtr->flags |= WIN_ISDIALOG;
+    wndPtr->dlgInfo = dlgInfo;
     WIN_ReleasePtr( wndPtr );
 
-    SetWindowLongPtrW( hwnd, DWLP_WINE_DIALOGINFO, (LONG_PTR)dlgInfo );
     SetWindowLong16( HWND_16(hwnd), DWLP_DLGPROC, (LONG)dlgProc );
 
     if (dlgInfo->hUserFont)

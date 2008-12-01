@@ -31,6 +31,7 @@
 #define WND_MAGIC     0x444e4957  /* 'WIND' */
 
 struct tagCLASS;
+struct tagDIALOGINFO;
 
 typedef struct tagWND
 {
@@ -60,6 +61,7 @@ typedef struct tagWND
     HMENU          hSysMenu;      /* window's copy of System Menu */
     HICON          hIcon;         /* window's icon */
     HICON          hIconSmall;    /* window's small icon */
+    struct tagDIALOGINFO *dlgInfo;/* Dialog additional info (dialogs only) */
     int            cbWndExtra;    /* class cbWndExtra at window creation */
     DWORD_PTR      userdata;      /* User private data */
     DWORD          wExtra[1];     /* Window extra bytes */
