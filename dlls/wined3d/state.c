@@ -702,7 +702,7 @@ state_specularenable(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCon
             checkGLcall("glFinalCombinerInputNV()");
         }
     } else {
-        float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+        const GLfloat black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
         /* for the case of enabled lighting: */
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &black[0]);
@@ -1224,7 +1224,7 @@ static void state_fogdensity(DWORD state, IWineD3DStateBlockImpl *stateblock, Wi
 static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     GLenum Parm = 0;
-    WineDirect3DStridedData *diffuse = &device->strided_streams.u.s.diffuse;
+    const WineDirect3DStridedData *diffuse = &device->strided_streams.u.s.diffuse;
     BOOL isDiffuseSupplied;
 
     /* Depends on the decoded vertex declaration to read the existence of diffuse data.
@@ -1323,7 +1323,7 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
                 glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*)&device->updateStateBlock->material.Specular);
                 checkGLcall("glMaterialfv");
             } else {
-                float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+                const GLfloat black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
                 glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &black[0]);
                 checkGLcall("glMaterialfv");
             }
@@ -3119,8 +3119,9 @@ static void unloadTexCoords(IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
-static void loadTexCoords(IWineD3DStateBlockImpl *stateblock, WineDirect3DVertexStridedData *sd, GLint *curVBO) {
-    UINT *offset = stateblock->streamOffset;
+static void loadTexCoords(IWineD3DStateBlockImpl *stateblock, const WineDirect3DVertexStridedData *sd, GLint *curVBO)
+{
+    const UINT *offset = stateblock->streamOffset;
     unsigned int mapped_stage = 0;
     unsigned int textureNo = 0;
 
@@ -3174,6 +3175,10 @@ static void loadTexCoords(IWineD3DStateBlockImpl *stateblock, WineDirect3DVertex
 static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[stage];
+    const GLfloat s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
+    const GLfloat t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
+    const GLfloat r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
+    const GLfloat q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
 
     if (mapped_stage == -1) {
         TRACE("No texture unit mapped to stage %d. Skipping texture coordinates.\n", stage);
@@ -3223,10 +3228,6 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
          * equates roughly to EYE_LINEAR
          */
         {
-            float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
-            float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
-            float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
-            float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
             TRACE("WINED3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
 
             glMatrixMode(GL_MODELVIEW);
@@ -3257,10 +3258,6 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     case WINED3DTSS_TCI_CAMERASPACENORMAL:
         {
             if (GL_SUPPORT(NV_TEXGEN_REFLECTION)) {
-                float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
-                float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
-                float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
-                float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
                 TRACE("WINED3DTSS_TCI_CAMERASPACENORMAL - Set eye plane\n");
 
                 glMatrixMode(GL_MODELVIEW);
@@ -3291,10 +3288,6 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     case WINED3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR:
         {
             if (GL_SUPPORT(NV_TEXGEN_REFLECTION)) {
-            float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
-            float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
-            float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
-            float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
             TRACE("WINED3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR - Set eye plane\n");
 
             glMatrixMode(GL_MODELVIEW);
@@ -3713,7 +3706,7 @@ static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
      * NOTE2: Apparently texture transforms do NOT need reapplying
      */
 
-    PLIGHTINFOEL *light = NULL;
+    const PLIGHTINFOEL *light = NULL;
 
     glMatrixMode(GL_MODELVIEW);
     checkGLcall("glMatrixMode(GL_MODELVIEW)");
@@ -3931,10 +3924,11 @@ static inline void unloadNumberedArrays(IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
-static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, WineDirect3DVertexStridedData *strided) {
+static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, const WineDirect3DVertexStridedData *strided)
+{
     GLint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? -1 : 0;
     int i;
-    UINT *offset = stateblock->streamOffset;
+    const UINT *offset = stateblock->streamOffset;
     IWineD3DVertexBufferImpl *vb;
     DWORD_PTR shift_index;
 
@@ -4037,13 +4031,13 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, WineDi
 
                 case WINED3DDECLTYPE_SHORT2N:
                 {
-                    GLshort s[4] = {((const GLshort *)ptr)[0], ((const GLshort *)ptr)[1], 0, 1};
+                    const GLshort s[4] = {((const GLshort *)ptr)[0], ((const GLshort *)ptr)[1], 0, 1};
                     GL_EXTCALL(glVertexAttrib4NsvARB(i, s));
                     break;
                 }
                 case WINED3DDECLTYPE_USHORT2N:
                 {
-                    GLushort s[4] = {((const GLushort *)ptr)[0], ((const GLushort *)ptr)[1], 0, 1};
+                    const GLushort s[4] = {((const GLushort *)ptr)[0], ((const GLushort *)ptr)[1], 0, 1};
                     GL_EXTCALL(glVertexAttrib4NusvARB(i, s));
                     break;
                 }
@@ -4085,8 +4079,9 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, WineDi
 }
 
 /* Used from 2 different functions, and too big to justify making it inlined */
-static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVertexStridedData *sd) {
-    UINT *offset = stateblock->streamOffset;
+static void loadVertexData(IWineD3DStateBlockImpl *stateblock, const WineDirect3DVertexStridedData *sd)
+{
+    const UINT *offset = stateblock->streamOffset;
     GLint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? -1 : 0;
 
     TRACE("Using fast vertex array code\n");
@@ -4293,9 +4288,8 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
     loadTexCoords(stateblock, sd, &curVBO);
 }
 
-static inline void drawPrimitiveTraceDataLocations(
-    WineDirect3DVertexStridedData *dataLocations) {
-
+static inline void drawPrimitiveTraceDataLocations(const WineDirect3DVertexStridedData *dataLocations)
+{
     /* Dump out what parts we have supplied */
     TRACE("Strided Data:\n");
     TRACE_STRIDED((dataLocations), position);
@@ -4603,7 +4597,7 @@ static void viewport_vertexpart(DWORD state, IWineD3DStateBlockImpl *stateblock,
 
 static void light(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     UINT Index = state - STATE_ACTIVELIGHT(0);
-    PLIGHTINFOEL *lightInfo = stateblock->activeLights[Index];
+    const PLIGHTINFOEL *lightInfo = stateblock->activeLights[Index];
 
     if(!lightInfo) {
         glDisable(GL_LIGHT0 + Index);
@@ -5492,7 +5486,8 @@ const struct fragment_pipeline ffp_fragment_pipeline = {
     FALSE /* we cannot disable projected textures. The vertex pipe has to do it */
 };
 
-static int num_handlers(APPLYSTATEFUNC *funcs) {
+static unsigned int num_handlers(const APPLYSTATEFUNC *funcs)
+{
     unsigned int i;
     for(i = 0; funcs[i]; i++);
     return i;
@@ -5509,12 +5504,10 @@ static void multistate_apply_3(DWORD state, IWineD3DStateBlockImpl *stateblock, 
     stateblock->wineD3DDevice->multistate_funcs[state][2](state, stateblock, context);
 }
 
-void compile_state_table(struct StateEntry *StateTable,
-                         APPLYSTATEFUNC **dev_multistate_funcs,
-                         WineD3D_GL_Info *gl_info,
-                         const struct StateEntryTemplate *vertex,
-                         const struct fragment_pipeline *fragment,
-                         const struct StateEntryTemplate *misc) {
+void compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_multistate_funcs,
+        const WineD3D_GL_Info *gl_info, const struct StateEntryTemplate *vertex,
+        const struct fragment_pipeline *fragment, const struct StateEntryTemplate *misc)
+{
     unsigned int i, type, handlers;
     APPLYSTATEFUNC multistate_funcs[STATE_HIGHEST + 1][3];
     const struct StateEntryTemplate *cur;
