@@ -650,9 +650,12 @@ static void test_rename(void)
     shfo.pFrom = "test1.txt\0test2.txt\0";
     shfo.pTo = "a.txt\0";
     retval = SHFileOperationA(&shfo);
-    ok(retval == ERROR_GEN_FAILURE, "Expected ERROR_GEN_FAILURE, got %d\n", retval);
+    ok(retval == ERROR_GEN_FAILURE ||
+       broken(!retval), /* Win9x */
+       "Expected ERROR_GEN_FAILURE, got %d\n", retval);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
     ok(file_exists("test2.txt"), "Expected test2.txt to exist\n");
+    ok(!file_exists("a.txt"), "Expected a.txt to not exist\n");
 
     /* pFrom doesn't exist */
     shfo.pFrom = "idontexist\0";
