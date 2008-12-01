@@ -25,7 +25,6 @@
 #define COBJMACROS
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#define PROXY_DELEGATION
 
 #include "windef.h"
 #include "winbase.h"
@@ -35,7 +34,6 @@
 
 #include "ole2.h"
 #include "oleauto.h"
-#include "rpcproxy.h"
 #include "typelib.h"
 #include "ocidl.h"
 #include "wine/debug.h"
@@ -46,26 +44,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 #define ALIGNED_POINTER(_Ptr, _Align) ((LPVOID)ALIGNED_LENGTH((ULONG_PTR)(_Ptr), _Align))
 #define ALIGN_LENGTH(_Len, _Align) _Len = ALIGNED_LENGTH(_Len, _Align)
 #define ALIGN_POINTER(_Ptr, _Align) _Ptr = ALIGNED_POINTER(_Ptr, _Align)
-
-static CStdPSFactoryBuffer PSFactoryBuffer;
-
-CSTDSTUBBUFFERRELEASE(&PSFactoryBuffer)
-CSTDSTUBBUFFER2RELEASE(&PSFactoryBuffer)
-
-extern const ExtendedProxyFileInfo oleaut32_oaidl_ProxyFileInfo;
-extern const ExtendedProxyFileInfo oleaut32_ocidl_ProxyFileInfo;
-
-static const ProxyFileInfo *OLEAUT32_ProxyFileList[] = {
-  &oleaut32_oaidl_ProxyFileInfo,
-  &oleaut32_ocidl_ProxyFileInfo,
-  NULL
-};
-
-HRESULT OLEAUTPS_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
-{
-  return NdrDllGetClassObject(rclsid, riid, ppv, OLEAUT32_ProxyFileList,
-                              &CLSID_PSDispatch, &PSFactoryBuffer);
-}
 
 static void dump_user_flags(const ULONG *pFlags)
 {
