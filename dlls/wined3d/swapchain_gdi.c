@@ -239,18 +239,6 @@ static HRESULT WINAPI IWineGDISwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     return WINED3D_OK;
 }
 
-/* FIXME: This should not be needed, the base version is OK */
-HRESULT WINAPI IWineGDIBaseSwapChainImpl_GetDisplayMode(IWineD3DSwapChain *iface, WINED3DDISPLAYMODE*pMode) {
-    IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
-    IWineD3DDeviceImpl *device = This->wineD3DDevice;
-
-    pMode->Width = device->ddraw_width;
-    pMode->Height = device->ddraw_height;
-    pMode->Format = device->ddraw_format;
-    pMode->RefreshRate = 0;
-    return WINED3D_OK;
-}
-
 const IWineD3DSwapChainVtbl IWineGDISwapChain_Vtbl =
 {
     /* IUnknown */

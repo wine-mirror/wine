@@ -132,7 +132,7 @@ static DWORD WINAPI IWineD3DVolumeImpl_GetPriority(IWineD3DVolume *iface) {
 }
 
 static void WINAPI IWineD3DVolumeImpl_PreLoad(IWineD3DVolume *iface) {
-    IWineD3DResourceImpl_PreLoad((IWineD3DResource *)iface);
+    FIXME("iface %p stub!\n", iface);
 }
 
 static void WINAPI IWineD3DVolumeImpl_UnLoad(IWineD3DVolume *iface) {

@@ -1078,7 +1078,6 @@ typedef struct PrivateData
 
     GUID tag;
     DWORD flags; /* DDSPD_* */
-    DWORD uniqueness_value;
 
     union
     {
@@ -1278,8 +1277,6 @@ typedef struct IWineD3DCubeTextureImpl
 
     /* IWineD3DCubeTexture */
     IWineD3DSurface          *surfaces[6][MAX_LEVELS];
-
-    UINT                      edgeLength;
 } IWineD3DCubeTextureImpl;
 
 extern const IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl;
@@ -1328,10 +1325,6 @@ typedef struct IWineD3DVolumeTextureImpl
 
     /* IWineD3DVolumeTexture */
     IWineD3DVolume           *volumes[MAX_LEVELS];
-
-    UINT                      width;
-    UINT                      height;
-    UINT                      depth;
 } IWineD3DVolumeTextureImpl;
 
 extern const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl;
@@ -1938,11 +1931,7 @@ unsigned int count_bits(unsigned int mask);
  *
  * Note: Only require classes which are subclassed, ie resource, basetexture, 
  */
-    /*** IUnknown methods ***/
-    extern HRESULT WINAPI IWineD3DResourceImpl_QueryInterface(IWineD3DResource *iface, REFIID riid, void** ppvObject);
-    extern ULONG WINAPI IWineD3DResourceImpl_AddRef(IWineD3DResource *iface);
-    extern ULONG WINAPI IWineD3DResourceImpl_Release(IWineD3DResource *iface);
-    /*** IWineD3DResource methods ***/
+    /* IWineD3DResource */
     extern HRESULT WINAPI IWineD3DResourceImpl_GetParent(IWineD3DResource *iface, IUnknown **pParent);
     extern HRESULT WINAPI IWineD3DResourceImpl_GetDevice(IWineD3DResource *iface, IWineD3DDevice ** ppDevice);
     extern HRESULT WINAPI IWineD3DResourceImpl_SetPrivateData(IWineD3DResource *iface, REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags);
@@ -1950,28 +1939,12 @@ unsigned int count_bits(unsigned int mask);
     extern HRESULT WINAPI IWineD3DResourceImpl_FreePrivateData(IWineD3DResource *iface, REFGUID  refguid);
     extern DWORD WINAPI IWineD3DResourceImpl_SetPriority(IWineD3DResource *iface, DWORD  PriorityNew);
     extern DWORD WINAPI IWineD3DResourceImpl_GetPriority(IWineD3DResource *iface);
-    extern void WINAPI IWineD3DResourceImpl_PreLoad(IWineD3DResource *iface);
-    extern void WINAPI IWineD3DResourceImpl_UnLoad(IWineD3DResource *iface);
     extern WINED3DRESOURCETYPE WINAPI IWineD3DResourceImpl_GetType(IWineD3DResource *iface);
-    /*** class static members ***/
     void IWineD3DResourceImpl_CleanUp(IWineD3DResource *iface);
 
-    /*** IUnknown methods ***/
-    extern HRESULT WINAPI IWineD3DBaseTextureImpl_QueryInterface(IWineD3DBaseTexture *iface, REFIID riid, void** ppvObject);
-    extern ULONG WINAPI IWineD3DBaseTextureImpl_AddRef(IWineD3DBaseTexture *iface);
-    extern ULONG WINAPI IWineD3DBaseTextureImpl_Release(IWineD3DBaseTexture *iface);
-    /*** IWineD3DResource methods ***/
-    extern HRESULT WINAPI IWineD3DBaseTextureImpl_GetParent(IWineD3DBaseTexture *iface, IUnknown **pParent);
-    extern HRESULT WINAPI IWineD3DBaseTextureImpl_GetDevice(IWineD3DBaseTexture *iface, IWineD3DDevice ** ppDevice);
-    extern HRESULT WINAPI IWineD3DBaseTextureImpl_SetPrivateData(IWineD3DBaseTexture *iface, REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags);
-    extern HRESULT WINAPI IWineD3DBaseTextureImpl_GetPrivateData(IWineD3DBaseTexture *iface, REFGUID  refguid, void * pData, DWORD * pSizeOfData);
-    extern HRESULT WINAPI IWineD3DBaseTextureImpl_FreePrivateData(IWineD3DBaseTexture *iface, REFGUID  refguid);
-    extern DWORD WINAPI IWineD3DBaseTextureImpl_SetPriority(IWineD3DBaseTexture *iface, DWORD  PriorityNew);
-    extern DWORD WINAPI IWineD3DBaseTextureImpl_GetPriority(IWineD3DBaseTexture *iface);
-    extern void WINAPI IWineD3DBaseTextureImpl_PreLoad(IWineD3DBaseTexture *iface);
+    /* IWineD3DBaseTexture */
+    void IWineD3DBaseTextureImpl_CleanUp(IWineD3DBaseTexture *iface);
     extern void WINAPI IWineD3DBaseTextureImpl_UnLoad(IWineD3DBaseTexture *iface);
-    extern WINED3DRESOURCETYPE WINAPI IWineD3DBaseTextureImpl_GetType(IWineD3DBaseTexture *iface);
-    /*** IWineD3DBaseTexture methods ***/
     extern DWORD WINAPI IWineD3DBaseTextureImpl_SetLOD(IWineD3DBaseTexture *iface, DWORD LODNew);
     extern DWORD WINAPI IWineD3DBaseTextureImpl_GetLOD(IWineD3DBaseTexture *iface);
     extern DWORD WINAPI IWineD3DBaseTextureImpl_GetLevelCount(IWineD3DBaseTexture *iface);
@@ -1980,14 +1953,11 @@ unsigned int count_bits(unsigned int mask);
     extern void WINAPI IWineD3DBaseTextureImpl_GenerateMipSubLevels(IWineD3DBaseTexture *iface);
     extern BOOL WINAPI IWineD3DBaseTextureImpl_SetDirty(IWineD3DBaseTexture *iface, BOOL);
     extern BOOL WINAPI IWineD3DBaseTextureImpl_GetDirty(IWineD3DBaseTexture *iface);
-
-    extern const BYTE *IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer* iface, DWORD iOffset, GLint *vbo);
-    extern HRESULT WINAPI IWineD3DVertexBufferImpl_ReleaseMemory(IWineD3DVertexBuffer* iface);
     extern HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface);
     extern void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface, const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1], const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]);
-    /*** class static members ***/
-    void IWineD3DBaseTextureImpl_CleanUp(IWineD3DBaseTexture *iface);
 
+    /* IWineD3DVertexBuffer */
+    extern const BYTE *IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer* iface, DWORD iOffset, GLint *vbo);
 
 /* TODO: Make this dynamic, based on shader limits ? */
 #define MAX_REG_ADDR 1

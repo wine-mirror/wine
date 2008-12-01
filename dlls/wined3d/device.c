@@ -932,10 +932,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     TRACE("(%p) : W(%d) H(%d) D(%d), Lvl(%d) Usage(%d), Fmt(%u,%s), Pool(%s)\n", This, Width, Height,
           Depth, Levels, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
 
-    object->width  = Width;
-    object->height = Height;
-    object->depth  = Depth;
-
     /* Is NP2 support for volumes needed? */
     object->baseTexture.pow2Matrix[ 0] = 1.0;
     object->baseTexture.pow2Matrix[ 5] = 1.0;
@@ -1080,8 +1076,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     /* Find the nearest pow2 match */
     pow2EdgeLength = 1;
     while (pow2EdgeLength < EdgeLength) pow2EdgeLength <<= 1;
-
-    object->edgeLength           = EdgeLength;
 
     if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO)) {
         /* Precalculated scaling for 'faked' non power of two texture coords */

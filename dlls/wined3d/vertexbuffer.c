@@ -816,7 +816,3 @@ const BYTE* IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer* iface, DWOR
         return (const BYTE *)iOffset;
     }
 }
-
-HRESULT WINAPI IWineD3DVertexBufferImpl_ReleaseMemory(IWineD3DVertexBuffer* iface) {
-  return WINED3D_OK;
-}
