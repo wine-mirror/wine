@@ -1143,7 +1143,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 
             aux_long += sizeof(DROPFILES) + 1;
             hDrop = GlobalAlloc( GMEM_SHARE, aux_long );
-            lpDrop = (DROPFILES*)GlobalLock( hDrop );
+            lpDrop = GlobalLock( hDrop );
 
             if( lpDrop )
             {
@@ -1237,7 +1237,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 
       drop_len += sizeof(DROPFILES) + 1;
       hDrop = GlobalAlloc( GMEM_SHARE, drop_len );
-      lpDrop = (DROPFILES *) GlobalLock( hDrop );
+      lpDrop = GlobalLock( hDrop );
 
       if( lpDrop && (win_data = X11DRV_get_win_data( hWnd )))
       {

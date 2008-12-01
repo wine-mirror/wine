@@ -2360,7 +2360,7 @@ static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, 
         goto create_failed; /* unexpected error */
     }
     TRACE("->(%p)\n", object);
-    return (HPBUFFERARB) object;
+    return object;
 
 create_failed:
     HeapFree(GetProcessHeap(), 0, object);

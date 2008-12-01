@@ -705,7 +705,7 @@ static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData)
 
       if (lpData->hData16)
       {
-        METAFILEPICT16* lpMetaPict = (METAFILEPICT16 *) GlobalLock16(lpData->hData16);
+        METAFILEPICT16* lpMetaPict = GlobalLock16(lpData->hData16);
 
         if (lpMetaPict)
         {
@@ -970,11 +970,11 @@ static BOOL X11DRV_CLIPBOARD_RenderSynthesizedText(Display *display, UINT wForma
 
     if (lpSource->hData32)
     {
-        lpstrS = (LPSTR)GlobalLock(lpSource->hData32);
+        lpstrS = GlobalLock(lpSource->hData32);
     }
     else
     {
-        lpstrS = (LPSTR)GlobalLock16(lpSource->hData16);
+        lpstrS = GlobalLock16(lpSource->hData16);
     }
 
     if (!lpstrS)
@@ -1005,7 +1005,7 @@ static BOOL X11DRV_CLIPBOARD_RenderSynthesizedText(Display *display, UINT wForma
     hData32 = GlobalAlloc(GMEM_ZEROINIT | GMEM_MOVEABLE | 
         GMEM_DDESHARE, alloc_size);
 
-    lpstrT = (LPSTR)GlobalLock(hData32);
+    lpstrT = GlobalLock(hData32);
 
     if (lpstrT)
     {
@@ -1095,7 +1095,7 @@ static BOOL X11DRV_CLIPBOARD_RenderSynthesizedBitmap(Display *display)
             LPBITMAPINFOHEADER lpbmih;
 
             hdc = GetDC(NULL);
-            lpbmih = (LPBITMAPINFOHEADER) GlobalLock(lpSource->hData32);
+            lpbmih = GlobalLock(lpSource->hData32);
 
             offset = sizeof(BITMAPINFOHEADER)
                   + ((lpbmih->biBitCount <= 8) ? (sizeof(RGBQUAD) *
@@ -1330,7 +1330,7 @@ HANDLE X11DRV_CLIPBOARD_ImportMetaFilePict(Display *display, Window w, Atom prop
     if (X11DRV_CLIPBOARD_ReadProperty(display, w, prop, &lpdata, &cbytes))
     {
         if (cbytes)
-            hClipData = X11DRV_CLIPBOARD_SerializeMetafile(CF_METAFILEPICT, (HANDLE)lpdata, (LPDWORD)&cbytes, FALSE);
+            hClipData = X11DRV_CLIPBOARD_SerializeMetafile(CF_METAFILEPICT, lpdata, (LPDWORD)&cbytes, FALSE);
 
         /* Free the retrieved property data */
         HeapFree(GetProcessHeap(), 0, lpdata);
@@ -1354,7 +1354,7 @@ HANDLE X11DRV_CLIPBOARD_ImportEnhMetaFile(Display *display, Window w, Atom prop)
     if (X11DRV_CLIPBOARD_ReadProperty(display, w, prop, &lpdata, &cbytes))
     {
         if (cbytes)
-            hClipData = X11DRV_CLIPBOARD_SerializeMetafile(CF_ENHMETAFILE, (HANDLE)lpdata, (LPDWORD)&cbytes, FALSE);
+            hClipData = X11DRV_CLIPBOARD_SerializeMetafile(CF_ENHMETAFILE, lpdata, (LPDWORD)&cbytes, FALSE);
 
         /* Free the retrieved property data */
         HeapFree(GetProcessHeap(), 0, lpdata);
@@ -2170,7 +2170,7 @@ static HANDLE X11DRV_CLIPBOARD_SerializeMetafile(INT wformat, HANDLE hdata, LPDW
 
         if (wformat == CF_METAFILEPICT)
         {
-            LPMETAFILEPICT lpmfp = (LPMETAFILEPICT) GlobalLock(hdata);
+            LPMETAFILEPICT lpmfp = GlobalLock(hdata);
             unsigned int size = GetMetaFileBitsEx(lpmfp->hMF, 0, NULL);
 
             h = GlobalAlloc(0, size + sizeof(METAFILEPICT));
@@ -2212,7 +2212,7 @@ static HANDLE X11DRV_CLIPBOARD_SerializeMetafile(INT wformat, HANDLE hdata, LPDW
             if (h)
             {
                 unsigned int wiresize, size;
-                LPMETAFILEPICT lpmfp = (LPMETAFILEPICT) GlobalLock(h);
+                LPMETAFILEPICT lpmfp = GlobalLock(h);
 
                 memcpy(lpmfp, hdata, sizeof(METAFILEPICT));
                 wiresize = *lpcbytes - sizeof(METAFILEPICT);
