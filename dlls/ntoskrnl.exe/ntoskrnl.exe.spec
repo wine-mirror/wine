@@ -1316,7 +1316,7 @@
 @ stub ZwIsProcessInJob
 @ stdcall ZwLoadDriver(ptr) ntdll.ZwLoadDriver
 @ stdcall ZwLoadKey(ptr ptr) ntdll.ZwLoadKey
-@ stub ZwMakeTemporaryObject
+@ stdcall ZwMakeTemporaryObject(long) ntdll.ZwMakeTemporaryObject
 @ stdcall ZwMapViewOfSection(long long ptr long long ptr ptr long long long) ntdll.ZwMapViewOfSection
 @ stdcall ZwNotifyChangeKey(long long ptr ptr ptr long long ptr long long) ntdll.ZwNotifyChangeKey
 @ stdcall ZwOpenDirectoryObject(long long long) ntdll.ZwOpenDirectoryObject
