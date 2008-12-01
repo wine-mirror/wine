@@ -29,6 +29,7 @@
 #include "wincrypt.h"
 #include "wintrust.h"
 #include "winuser.h"
+#include "objbase.h"
 #include "cryptdlg.h"
 #include "cryptuiapi.h"
 #include "wine/debug.h"
