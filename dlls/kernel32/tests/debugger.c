@@ -158,7 +158,11 @@ static void doDebugger(int argc, char** argv)
     else
         blackbox.debug_rc=TRUE;
 
-    get_events(logfile, &start_event, &done_event);
+    if (logfile)
+    {
+        get_events(logfile, &start_event, &done_event);
+    }
+
     if (strstr(myARGV[2], "order"))
     {
         trace("debugger: waiting for the start signal...\n");
@@ -185,7 +189,10 @@ static void doDebugger(int argc, char** argv)
     else
         blackbox.detach_rc=TRUE;
 
-    save_blackbox(logfile, &blackbox, sizeof(blackbox));
+    if (logfile)
+    {
+        save_blackbox(logfile, &blackbox, sizeof(blackbox));
+    }
     trace("debugger: done debugging...\n");
     SetEvent(done_event);
 
