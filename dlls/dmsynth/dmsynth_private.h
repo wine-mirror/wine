@@ -109,16 +109,7 @@ typedef struct {
 #define FE(x) { x, #x }	
 #define GE(x) { &x, #x }
 
-/* FOURCC to string conversion for debug messages */
-extern const char *debugstr_fourcc (DWORD fourcc);
-/* DMUS_VERSION struct to string conversion for debug messages */
-extern const char *debugstr_dmversion (LPDMUS_VERSION version);
 /* returns name of given GUID */
 extern const char *debugstr_dmguid (const GUID *id);
-/* returns name of given error code */
-extern const char *debugstr_dmreturn (DWORD code);
-/* generic flags-dumping function */
-extern const char *debugstr_flags (DWORD flags, const flag_info* names, size_t num_names);
-
 
 #endif	/* __WINE_DMSYNTH_PRIVATE_H */
