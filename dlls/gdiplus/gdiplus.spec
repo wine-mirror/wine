@@ -240,7 +240,7 @@
 @ stdcall GdipGetAdjustableArrowCapHeight(ptr ptr)
 @ stdcall GdipGetAdjustableArrowCapMiddleInset(ptr ptr)
 @ stdcall GdipGetAdjustableArrowCapWidth(ptr ptr)
-@ stub GdipGetAllPropertyItems
+@ stdcall GdipGetAllPropertyItems(ptr long long ptr)
 @ stdcall GdipGetBrushType(ptr ptr)
 @ stdcall GdipGetCellAscent(ptr long ptr)
 @ stdcall GdipGetCellDescent(ptr long ptr)
