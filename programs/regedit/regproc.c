@@ -888,6 +888,26 @@ static void REGPROC_resize_char_buffer(WCHAR **buffer, DWORD *len, DWORD require
 }
 
 /******************************************************************************
+ * Same as REGPROC_resize_char_buffer() but on a regular buffer.
+ *
+ * Parameters:
+ * buffer - pointer to a buffer
+ * len - current size of the buffer in bytes
+ * required_size - size of the data to place in the buffer in bytes
+ */
+static void REGPROC_resize_binary_buffer(BYTE **buffer, DWORD *size, DWORD required_size)
+{
+    if (required_size > *size) {
+        *size = required_size;
+        if (!*buffer)
+            *buffer = HeapAlloc(GetProcessHeap(), 0, *size);
+        else
+            *buffer = HeapReAlloc(GetProcessHeap(), 0, *buffer, *size);
+        CHECK_ENOUGH_MEMORY(*buffer);
+    }
+}
+
+/******************************************************************************
  * Prints string str to file
  */
 static void REGPROC_export_string(WCHAR **line_buf, DWORD *line_buf_size, DWORD *line_len, WCHAR *str, DWORD str_len)
@@ -1056,13 +1076,7 @@ static void export_hkey(FILE *file, HKEY key,
                                max_sub_key_len + curr_len + 1);
     REGPROC_resize_char_buffer(val_name_buf, val_name_size,
                                max_val_name_len);
-    if (max_val_size > *val_size) {
-        *val_size = max_val_size;
-        if (!*val_buf) *val_buf = HeapAlloc(GetProcessHeap(), 0, *val_size);
-        else *val_buf = HeapReAlloc(GetProcessHeap(), 0, *val_buf, *val_size);
-        CHECK_ENOUGH_MEMORY(val_buf);
-    }
-
+    REGPROC_resize_binary_buffer(val_buf, val_size, max_val_size);
     REGPROC_resize_char_buffer(line_buf, line_buf_size, lstrlenW(*reg_key_name_buf) + 4);
     /* output data for the current key */
     sprintfW(*line_buf, key_format, *reg_key_name_buf);
@@ -1077,7 +1091,11 @@ static void export_hkey(FILE *file, HKEY key,
         DWORD val_size1 = *val_size;
         ret = RegEnumValueW(key, i, *val_name_buf, &val_name_size1, NULL,
                            &value_type, *val_buf, &val_size1);
-        if (ret != ERROR_SUCCESS) {
+        if (ret == ERROR_MORE_DATA) {
+            /* Increase the size of the buffers and retry */
+            REGPROC_resize_char_buffer(val_name_buf, val_name_size, val_name_size1);
+            REGPROC_resize_binary_buffer(val_buf, val_size, val_size1);
+        } else if (ret != ERROR_SUCCESS) {
             more_data = FALSE;
             if (ret != ERROR_NO_MORE_ITEMS) {
                 REGPROC_print_error();
@@ -1168,7 +1186,10 @@ static void export_hkey(FILE *file, HKEY key,
 
         ret = RegEnumKeyExW(key, i, *reg_key_name_buf + curr_len + 1, &buf_size,
                            NULL, NULL, NULL, NULL);
-        if (ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA) {
+        if (ret == ERROR_MORE_DATA) {
+            /* Increase the size of the buffer and retry */
+            REGPROC_resize_char_buffer(reg_key_name_buf, reg_key_name_size, curr_len + 1 + buf_size);
+        } else if (ret != ERROR_SUCCESS) {
             more_data = FALSE;
             if (ret != ERROR_NO_MORE_ITEMS) {
                 REGPROC_print_error();
