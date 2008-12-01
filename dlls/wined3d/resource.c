@@ -262,22 +262,3 @@ void dumpResources(struct list *list) {
         FIXME("Leftover resource %p with type %d,%s\n", resource, IWineD3DResource_GetType((IWineD3DResource *) resource), debug_d3dresourcetype(IWineD3DResource_GetType((IWineD3DResource *) resource)));
     }
 }
-
-static const IWineD3DResourceVtbl IWineD3DResource_Vtbl =
-{
-    /* IUnknown */
-    IWineD3DResourceImpl_QueryInterface,
-    IWineD3DResourceImpl_AddRef,
-    IWineD3DResourceImpl_Release,
-    /* IWineD3DResource */
-    IWineD3DResourceImpl_GetParent,
-    IWineD3DResourceImpl_GetDevice,
-    IWineD3DResourceImpl_SetPrivateData,
-    IWineD3DResourceImpl_GetPrivateData,
-    IWineD3DResourceImpl_FreePrivateData,
-    IWineD3DResourceImpl_SetPriority,
-    IWineD3DResourceImpl_GetPriority,
-    IWineD3DResourceImpl_PreLoad,
-    IWineD3DResourceImpl_UnLoad,
-    IWineD3DResourceImpl_GetType
-};

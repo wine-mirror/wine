@@ -487,38 +487,3 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
         This->baseTexture.states[WINED3DTEXSTA_MAXANISOTROPY] = samplerStates[WINED3DSAMP_MAXANISOTROPY];
     }
 }
-
-
-static const IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl =
-{
-    /* IUnknown */
-    IWineD3DBaseTextureImpl_QueryInterface,
-    IWineD3DBaseTextureImpl_AddRef,
-    IWineD3DBaseTextureImpl_Release,
-    /* IWineD3DResource */
-    IWineD3DBaseTextureImpl_GetParent,
-    IWineD3DBaseTextureImpl_GetDevice,
-    IWineD3DBaseTextureImpl_SetPrivateData,
-    IWineD3DBaseTextureImpl_GetPrivateData,
-    IWineD3DBaseTextureImpl_FreePrivateData,
-    IWineD3DBaseTextureImpl_SetPriority,
-    IWineD3DBaseTextureImpl_GetPriority,
-    IWineD3DBaseTextureImpl_PreLoad,
-    IWineD3DBaseTextureImpl_UnLoad,
-    IWineD3DBaseTextureImpl_GetType,
-    /*IWineD3DBaseTexture*/
-    IWineD3DBaseTextureImpl_SetLOD,
-    IWineD3DBaseTextureImpl_GetLOD,
-    IWineD3DBaseTextureImpl_GetLevelCount,
-    IWineD3DBaseTextureImpl_SetAutoGenFilterType,
-    IWineD3DBaseTextureImpl_GetAutoGenFilterType,
-    IWineD3DBaseTextureImpl_GenerateMipSubLevels,
-    IWineD3DBaseTextureImpl_SetDirty,
-    IWineD3DBaseTextureImpl_GetDirty,
-    /* internal */
-    IWineD3DBaseTextureImpl_BindTexture,
-    IWineD3DBaseTextureImpl_GetTextureDimensions,
-    IWineD3DBaseTextureImpl_IsCondNP2,
-    IWineD3DBaseTextureImpl_ApplyStateChanges
-
-};
