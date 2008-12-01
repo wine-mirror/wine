@@ -5767,10 +5767,11 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetCurrentTexturePalette(IWineD3DDevi
 
 static HRESULT  WINAPI  IWineD3DDeviceImpl_SetSoftwareVertexProcessing(IWineD3DDevice *iface, BOOL bSoftware) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    static BOOL showFixmes = TRUE;
-    if (showFixmes) {
+    static BOOL warned;
+    if (!warned)
+    {
         FIXME("(%p) : stub\n", This);
-        showFixmes = FALSE;
+        warned = TRUE;
     }
 
     This->softwareVertexProcessing = bSoftware;
@@ -5780,10 +5781,11 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetSoftwareVertexProcessing(IWineD3DD
 
 static BOOL     WINAPI  IWineD3DDeviceImpl_GetSoftwareVertexProcessing(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    static BOOL showFixmes = TRUE;
-    if (showFixmes) {
+    static BOOL warned;
+    if (!warned)
+    {
         FIXME("(%p) : stub\n", This);
-        showFixmes = FALSE;
+        warned = TRUE;
     }
     return This->softwareVertexProcessing;
 }
@@ -5809,11 +5811,12 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetRasterStatus(IWineD3DDevice *iface
 
 static HRESULT  WINAPI  IWineD3DDeviceImpl_SetNPatchMode(IWineD3DDevice *iface, float nSegments) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    static BOOL showfixmes = TRUE;
+    static BOOL warned;
     if(nSegments != 0.0f) {
-        if( showfixmes) {
+        if (!warned)
+        {
             FIXME("(%p) : stub nSegments(%f)\n", This, nSegments);
-            showfixmes = FALSE;
+            warned = TRUE;
         }
     }
     return WINED3D_OK;
@@ -5821,10 +5824,11 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetNPatchMode(IWineD3DDevice *iface, 
 
 static float    WINAPI  IWineD3DDeviceImpl_GetNPatchMode(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    static BOOL showfixmes = TRUE;
-    if( showfixmes) {
+    static BOOL warned;
+    if (!warned)
+    {
         FIXME("(%p) : stub returning(%f)\n", This, 0.0f);
-        showfixmes = FALSE;
+        warned = TRUE;
     }
     return 0.0f;
 }

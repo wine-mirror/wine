@@ -1566,10 +1566,10 @@ static void state_lastpixel(DWORD state, IWineD3DStateBlockImpl *stateblock, Win
     if(stateblock->renderState[WINED3DRS_LASTPIXEL]) {
         TRACE("Last Pixel Drawing Enabled\n");
     } else {
-        static BOOL first = TRUE;
-        if(first) {
+        static BOOL warned;
+        if (!warned) {
             FIXME("Last Pixel Drawing Disabled, not handled yet\n");
-            first = FALSE;
+            warned = TRUE;
         } else {
             TRACE("Last Pixel Drawing Disabled, not handled yet\n");
         }
@@ -4127,10 +4127,11 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
             checkGLcall("glWeightPointerARB");
 
             if((sd->u.s.blendMatrixIndices.lpData) || (sd->u.s.blendMatrixIndices.VBO)){
-                static BOOL showfixme = TRUE;
-                if(showfixme){
+                static BOOL warned;
+                if (!warned)
+                {
                     FIXME("blendMatrixIndices support\n");
-                    showfixme = FALSE;
+                    warned = TRUE;
                 }
             }
         } else {

@@ -864,10 +864,10 @@ void drawPrimitive(IWineD3DDevice *iface,
         if(!use_vs(This)) {
             if(!This->strided_streams.u.s.position_transformed && This->activeContext->num_untracked_materials &&
                 This->stateBlock->renderState[WINED3DRS_LIGHTING]) {
-                static BOOL first = TRUE;
-                if(first) {
+                static BOOL warned;
+                if (!warned) {
                     FIXME("Using software emulation because not all material properties could be tracked\n");
-                    first = FALSE;
+                    warned = TRUE;
                 } else {
                     TRACE("Using software emulation because not all material properties could be tracked\n");
                 }
@@ -877,10 +877,10 @@ void drawPrimitive(IWineD3DDevice *iface,
                 /* Either write a pipeline replacement shader or convert the specular alpha from unsigned byte
                  * to a float in the vertex buffer
                  */
-                static BOOL first = TRUE;
-                if(first) {
+                static BOOL warned;
+                if (!warned) {
                     FIXME("Using software emulation because manual fog coordinates are provided\n");
-                    first = FALSE;
+                    warned = TRUE;
                 } else {
                     TRACE("Using software emulation because manual fog coordinates are provided\n");
                 }
@@ -897,10 +897,10 @@ void drawPrimitive(IWineD3DDevice *iface,
         if (This->useDrawStridedSlow || emulation) {
             /* Immediate mode drawing */
             if(use_vs(This)) {
-                static BOOL first = TRUE;
-                if(first) {
+                static BOOL warned;
+                if (!warned) {
                     FIXME("Using immediate mode with vertex shaders for half float emulation\n");
-                    first = FALSE;
+                    warned = TRUE;
                 } else {
                     TRACE("Using immediate mode with vertex shaders for half float emulation\n");
                 }
