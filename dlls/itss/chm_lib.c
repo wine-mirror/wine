@@ -723,7 +723,7 @@ struct chmFile *chm_openW(const WCHAR *filename)
     /* read and verify header */
     sremain = _CHM_ITSF_V3_LEN;
     sbufpos = sbuffer;
-    if (_chm_fetch_bytes(newHandle, sbuffer, (UInt64)0, sremain) != sremain    ||
+    if (_chm_fetch_bytes(newHandle, sbuffer, 0, sremain) != sremain    ||
         !_unmarshal_itsf_header(&sbufpos, &sremain, &itsfHeader))
     {
         chm_close(newHandle);
@@ -1210,7 +1210,7 @@ static Int64 _chm_decompress_block(struct chmFile *h,
                     fprintf(stderr, "   (DECOMPRESS FAILED!)\n");
 #endif
                     HeapFree(GetProcessHeap(), 0, cbuffer);
-                    return (Int64)0;
+                    return 0;
                 }
 
                 h->lzx_last_block = (int)curBlockIdx;
@@ -1250,7 +1250,7 @@ static Int64 _chm_decompress_block(struct chmFile *h,
         fprintf(stderr, "   (DECOMPRESS FAILED!)\n");
 #endif
         HeapFree(GetProcessHeap(), 0, cbuffer);
-        return (Int64)0;
+        return 0;
     }
     h->lzx_last_block = (int)block;
 
@@ -1273,7 +1273,7 @@ static Int64 _chm_decompress_region(struct chmFile *h,
     UChar *ubuffer = NULL;
 
         if (len <= 0)
-                return (Int64)0;
+                return 0;
 
     /* figure out what we need to read */
     nBlock = start / h->reset_table.block_len;
@@ -1323,11 +1323,11 @@ LONGINT64 chm_retrieve_object(struct chmFile *h,
 {
     /* must be valid file handle */
     if (h == NULL)
-        return (Int64)0;
+        return 0;
 
     /* starting address must be in correct range */
     if (addr >= ui->length)
-        return (Int64)0;
+        return 0;
 
     /* clip length */
     if (addr + len > ui->length)
