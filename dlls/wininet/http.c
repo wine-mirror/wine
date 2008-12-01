@@ -773,8 +773,8 @@ BOOL WINAPI HttpEndRequestA(HINTERNET hRequest,
 
     ptr = lpBuffersOut;
     if (ptr)
-        lpBuffersOutW = (LPINTERNET_BUFFERSW)HeapAlloc(GetProcessHeap(),
-                HEAP_ZERO_MEMORY, sizeof(INTERNET_BUFFERSW));
+        lpBuffersOutW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                sizeof(INTERNET_BUFFERSW));
     else
         lpBuffersOutW = NULL;
 

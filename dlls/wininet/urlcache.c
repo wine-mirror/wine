@@ -2794,7 +2794,7 @@ HANDLE WINAPI RetrieveUrlCacheEntryStreamA(
 
     pStream->hFile = hFile;
     strcpy(pStream->lpszUrl, lpszUrlName);
-    return (HANDLE)pStream;
+    return pStream;
 }
 
 /***********************************************************************

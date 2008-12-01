@@ -786,7 +786,7 @@ HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
 BOOL WINAPI InternetGetLastResponseInfoA(LPDWORD lpdwError,
     LPSTR lpszBuffer, LPDWORD lpdwBufferLength)
 {
-    LPWITHREADERROR lpwite = (LPWITHREADERROR)TlsGetValue(g_dwTlsErrIndex);
+    LPWITHREADERROR lpwite = TlsGetValue(g_dwTlsErrIndex);
 
     TRACE("\n");
 
@@ -823,7 +823,7 @@ BOOL WINAPI InternetGetLastResponseInfoA(LPDWORD lpdwError,
 BOOL WINAPI InternetGetLastResponseInfoW(LPDWORD lpdwError,
     LPWSTR lpszBuffer, LPDWORD lpdwBufferLength)
 {
-    LPWITHREADERROR lpwite = (LPWITHREADERROR)TlsGetValue(g_dwTlsErrIndex);
+    LPWITHREADERROR lpwite = TlsGetValue(g_dwTlsErrIndex);
 
     TRACE("\n");
 
@@ -3049,7 +3049,7 @@ static LPWITHREADERROR INTERNET_AllocThreadError(void)
  */
 void INTERNET_SetLastError(DWORD dwError)
 {
-    LPWITHREADERROR lpwite = (LPWITHREADERROR)TlsGetValue(g_dwTlsErrIndex);
+    LPWITHREADERROR lpwite = TlsGetValue(g_dwTlsErrIndex);
 
     if (!lpwite)
         lpwite = INTERNET_AllocThreadError();
@@ -3070,7 +3070,7 @@ void INTERNET_SetLastError(DWORD dwError)
  */
 DWORD INTERNET_GetLastError(void)
 {
-    LPWITHREADERROR lpwite = (LPWITHREADERROR)TlsGetValue(g_dwTlsErrIndex);
+    LPWITHREADERROR lpwite = TlsGetValue(g_dwTlsErrIndex);
     if (!lpwite) return 0;
     /* TlsGetValue clears last error, so set it again here */
     SetLastError(lpwite->dwError);
@@ -3143,7 +3143,7 @@ BOOL INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest)
  */
 LPSTR INTERNET_GetResponseBuffer(void)
 {
-    LPWITHREADERROR lpwite = (LPWITHREADERROR)TlsGetValue(g_dwTlsErrIndex);
+    LPWITHREADERROR lpwite = TlsGetValue(g_dwTlsErrIndex);
     if (!lpwite)
         lpwite = INTERNET_AllocThreadError();
     TRACE("\n");
