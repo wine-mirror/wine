@@ -1279,6 +1279,15 @@ static const char okmsg[] =
 "Server: winetest\r\n"
 "\r\n";
 
+static const char okmsg2[] =
+"HTTP/1.1 200 OK\r\n"
+"Date: Mon, 01 Dec 2008 13:44:34 GMT\r\n"
+"Server: winetest\r\n"
+"Content-Length: 0\r\n"
+"Set-Cookie: one\r\n"
+"Set-Cookie: two\r\n"
+"\r\n";
+
 static const char notokmsg[] =
 "HTTP/1.1 400 Bad Request\r\n"
 "Server: winetest\r\n"
@@ -1467,6 +1476,10 @@ static DWORD CALLBACK server_thread(LPVOID param)
                 send(c, okmsg, sizeof okmsg-1, 0);
             else
                 send(c, notokmsg, sizeof notokmsg-1, 0);
+        }
+        if (strstr(buffer, "/testD"))
+        {
+            send(c, okmsg2, sizeof okmsg2-1, 0);
         }
         if (strstr(buffer, "GET /quit"))
         {
@@ -1869,6 +1882,110 @@ static void test_basic_authentication(int port)
     InternetCloseHandle(session);
 }
 
+static void test_HttpQueryInfo(int port)
+{
+    HINTERNET hi, hc, hr;
+    DWORD size, index;
+    char buffer[1024];
+    BOOL ret;
+
+    hi = InternetOpen(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(hi != NULL, "InternetOpen failed\n");
+
+    hc = InternetConnect(hi, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(hc != NULL, "InternetConnect failed\n");
+
+    hr = HttpOpenRequest(hc, NULL, "/testD", NULL, NULL, NULL, 0, 0);
+    ok(hr != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpSendRequest(hr, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed\n");
+
+    index = 0;
+    size = sizeof(buffer);
+    ret = HttpQueryInfo(hr, HTTP_QUERY_HOST | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, &index);
+    ok(ret, "HttpQueryInfo failed %u\n", GetLastError());
+    ok(index == 1, "expected 1 got %u\n", index);
+
+    index = 0;
+    size = sizeof(buffer);
+    ret = HttpQueryInfo(hr, HTTP_QUERY_DATE | HTTP_QUERY_FLAG_SYSTEMTIME, buffer, &size, &index);
+    ok(ret, "HttpQueryInfo failed %u\n", GetLastError());
+    ok(index == 1, "expected 1 got %u\n", index);
+
+    index = 0;
+    size = sizeof(buffer);
+    ret = HttpQueryInfo(hr, HTTP_QUERY_RAW_HEADERS, buffer, &size, &index);
+    ok(ret, "HttpQueryInfo failed %u\n", GetLastError());
+    ok(index == 0, "expected 0 got %u\n", index);
+
+    size = sizeof(buffer);
+    ret = HttpQueryInfo(hr, HTTP_QUERY_RAW_HEADERS, buffer, &size, &index);
+    ok(ret, "HttpQueryInfo failed %u\n", GetLastError());
+    ok(index == 0, "expected 0 got %u\n", index);
+
+    size = sizeof(buffer);
+    ret = HttpQueryInfo(hr, HTTP_QUERY_RAW_HEADERS_CRLF, buffer, &size, &index);
+    ok(ret, "HttpQueryInfo failed %u\n", GetLastError());
+    ok(index == 0, "expected 0 got %u\n", index);
+
+    size = sizeof(buffer);
+    ret = HttpQueryInfo(hr, HTTP_QUERY_STATUS_TEXT, buffer, &size, &index);
+    ok(ret, "HttpQueryInfo failed %u\n", GetLastError());
+    ok(index == 0, "expected 0 got %u\n", index);
+
+    size = sizeof(buffer);
+    ret = HttpQueryInfo(hr, HTTP_QUERY_VERSION, buffer, &size, &index);
+    ok(ret, "HttpQueryInfo failed %u\n", GetLastError());
+    ok(index == 0, "expected 0 got %u\n", index);
+
+    index = 0;
+    size = sizeof(buffer);
+    ret = HttpQueryInfo(hr, HTTP_QUERY_STATUS_CODE, buffer, &size, &index);
+    ok(ret, "HttpQueryInfo failed %u\n", GetLastError());
+    ok(index == 0, "expected 0 got %u\n", index);
+
+    index = 0;
+    size = sizeof(buffer);
+    ret = HttpQueryInfo(hr, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, buffer, &size, &index);
+    ok(ret, "HttpQueryInfo failed %u\n", GetLastError());
+    ok(index == 0, "expected 0 got %u\n", index);
+
+    index = 0xdeadbeef;
+    size = sizeof(buffer);
+    ret = HttpQueryInfo(hr, HTTP_QUERY_FORWARDED, buffer, &size, &index);
+    ok(!ret, "HttpQueryInfo succeeded\n");
+    ok(index == 0xdeadbeef, "expected 0xdeadbeef got %u\n", index);
+
+    index = 0;
+    size = sizeof(buffer);
+    ret = HttpQueryInfo(hr, HTTP_QUERY_SERVER, buffer, &size, &index);
+    ok(ret, "HttpQueryInfo failed %u\n", GetLastError());
+    ok(index == 1, "expected 1 got %u\n", index);
+
+    index = 0;
+    size = sizeof(buffer);
+    strcpy(buffer, "Server");
+    ret = HttpQueryInfo(hr, HTTP_QUERY_CUSTOM, buffer, &size, &index);
+    ok(ret, "HttpQueryInfo failed %u\n", GetLastError());
+    ok(index == 1, "expected 1 got %u\n", index);
+
+    index = 0;
+    size = sizeof(buffer);
+    ret = HttpQueryInfo(hr, HTTP_QUERY_SET_COOKIE, buffer, &size, &index);
+    ok(ret, "HttpQueryInfo failed %u\n", GetLastError());
+    ok(index == 1, "expected 1 got %u\n", index);
+
+    size = sizeof(buffer);
+    ret = HttpQueryInfo(hr, HTTP_QUERY_SET_COOKIE, buffer, &size, &index);
+    ok(ret, "HttpQueryInfo failed %u\n", GetLastError());
+    ok(index == 2, "expected 2 got %u\n", index);
+
+    InternetCloseHandle(hr);
+    InternetCloseHandle(hc);
+    InternetCloseHandle(hi);
+}
+
 static void test_http_connection(void)
 {
     struct server_info si;
@@ -1896,6 +2013,7 @@ static void test_http_connection(void)
     test_http1_1(si.port);
     test_cookie_header(si.port);
     test_basic_authentication(si.port);
+    test_HttpQueryInfo(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "GET", "/quit");
