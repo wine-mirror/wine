@@ -266,7 +266,7 @@ static void write_dispatchtable(type_t *iface)
     print_server("0\n");
     indent--;
     print_server("};\n");
-    print_server("RPC_DISPATCH_TABLE %s_v%d_%d_DispatchTable =\n", iface->name, MAJORVERSION(ver), MINORVERSION(ver));
+    print_server("static RPC_DISPATCH_TABLE %s_v%d_%d_DispatchTable =\n", iface->name, MAJORVERSION(ver), MINORVERSION(ver));
     print_server("{\n");
     indent++;
     print_server("%u,\n", method_count);
@@ -330,7 +330,7 @@ static void write_serverinterfacedecl(type_t *iface)
 
     if (endpoints) write_endpoints( server, iface->name, endpoints );
 
-    print_server("extern RPC_DISPATCH_TABLE %s_v%d_%d_DispatchTable;\n", iface->name, MAJORVERSION(ver), MINORVERSION(ver));
+    print_server("static RPC_DISPATCH_TABLE %s_v%d_%d_DispatchTable;\n", iface->name, MAJORVERSION(ver), MINORVERSION(ver));
     fprintf(server, "\n");
     print_server("static const RPC_SERVER_INTERFACE %s___RpcServerInterface =\n", iface->name );
     print_server("{\n");
@@ -358,10 +358,10 @@ static void write_serverinterfacedecl(type_t *iface)
     indent--;
     print_server("};\n");
     if (old_names)
-        print_server("RPC_IF_HANDLE %s_ServerIfHandle = (RPC_IF_HANDLE)& %s___RpcServerInterface;\n",
+        print_server("RPC_IF_HANDLE %s_ServerIfHandle DECLSPEC_HIDDEN = (RPC_IF_HANDLE)& %s___RpcServerInterface;\n",
                      iface->name, iface->name);
     else
-        print_server("RPC_IF_HANDLE %s%s_v%d_%d_s_ifspec = (RPC_IF_HANDLE)& %s___RpcServerInterface;\n",
+        print_server("RPC_IF_HANDLE %s%s_v%d_%d_s_ifspec DECLSPEC_HIDDEN = (RPC_IF_HANDLE)& %s___RpcServerInterface;\n",
                      prefix_server, iface->name, MAJORVERSION(ver), MINORVERSION(ver), iface->name);
     fprintf(server, "\n");
 }
@@ -379,6 +379,10 @@ static void init_server(void)
     fprintf(server, "\n");
     print_server("#include \"%s\"\n", header_name);
     print_server("\n");
+    print_server( "#ifndef DECLSPEC_HIDDEN\n");
+    print_server( "#define DECLSPEC_HIDDEN\n");
+    print_server( "#endif\n");
+    print_server( "\n");
     write_exceptions( server );
     print_server("\n");
     print_server("struct __server_frame\n");
