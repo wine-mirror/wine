@@ -316,11 +316,9 @@ static inline void find_swizzled_attribs(IWineD3DVertexDeclaration *declaration,
 }
 /** Generate a vertex shader string using either GL_VERTEX_PROGRAM_ARB
     or GLSL and send it to the card */
-static VOID IWineD3DVertexShaderImpl_GenerateShader(
-    IWineD3DVertexShader *iface,
-    shader_reg_maps* reg_maps,
-    CONST DWORD *pFunction) {
-
+static void IWineD3DVertexShaderImpl_GenerateShader(IWineD3DVertexShader *iface,
+        const struct shader_reg_maps* reg_maps, const DWORD *pFunction)
+{
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     IWineD3DVertexDeclaration *decl = ((IWineD3DDeviceImpl *) This->baseShader.device)->stateBlock->vertexDecl;
     SHADER_BUFFER buffer;
@@ -485,7 +483,7 @@ static void WINAPI IWineD3DVertexShaderImpl_FakeSemantics(IWineD3DVertexShader *
 
     int i;
     for (i = 0; i < vdecl->declarationWNumElements - 1; ++i) {
-        WINED3DVERTEXELEMENT* element = vdecl->pDeclarationWine + i;
+        const WINED3DVERTEXELEMENT *element = vdecl->pDeclarationWine + i;
         vshader_set_input(This, element->Reg, element->Usage, element->UsageIndex);
     }
 }

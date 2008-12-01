@@ -3374,12 +3374,12 @@ interface IWineD3DDevice : IWineD3DBase
     HRESULT DrawPrimitiveStrided(
         [in] WINED3DPRIMITIVETYPE primitive_type,
         [in] UINT primitive_count,
-        [in] WineDirect3DVertexStridedData *strided_data
+        [in] const WineDirect3DVertexStridedData *strided_data
     );
     HRESULT DrawIndexedPrimitiveStrided(
         [in] WINED3DPRIMITIVETYPE primitive_type,
         [in] UINT primitive_count,
-        [in] WineDirect3DVertexStridedData *strided_data,
+        [in] const WineDirect3DVertexStridedData *strided_data,
         [in] UINT vertex_count,
         [in] const void *index_data,
         [in] WINED3DFORMAT index_data_format

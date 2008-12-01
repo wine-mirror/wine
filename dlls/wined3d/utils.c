@@ -1623,7 +1623,7 @@ void hash_table_destroy(struct hash_table_t *table, void (*free_value)(void *val
     HeapFree(GetProcessHeap(), 0, table);
 }
 
-static inline struct hash_table_entry_t *hash_table_get_by_idx(struct hash_table_t *table, const void *key,
+static inline struct hash_table_entry_t *hash_table_get_by_idx(const struct hash_table_t *table, const void *key,
         unsigned int idx)
 {
     struct hash_table_entry_t *entry;
@@ -1772,7 +1772,7 @@ void hash_table_remove(struct hash_table_t *table, void *key)
     hash_table_put(table, key, NULL);
 }
 
-void *hash_table_get(struct hash_table_t *table, const void *key)
+void *hash_table_get(const struct hash_table_t *table, const void *key)
 {
     unsigned int idx;
     struct hash_table_entry_t *entry;
@@ -2004,7 +2004,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
 }
 #undef GLINFO_LOCATION
 
-const struct ffp_frag_desc *find_ffp_frag_shader(struct hash_table_t *fragment_shaders,
+const struct ffp_frag_desc *find_ffp_frag_shader(const struct hash_table_t *fragment_shaders,
         const struct ffp_frag_settings *settings)
 {
     return (const struct ffp_frag_desc *)hash_table_get(fragment_shaders, settings);

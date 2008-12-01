@@ -368,7 +368,8 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     return WINED3D_OK;
 }
 
-GLuint pixelshader_compile(IWineD3DPixelShaderImpl *This, struct ps_compile_args *args) {
+static GLuint pixelshader_compile(IWineD3DPixelShaderImpl *This, const struct ps_compile_args *args)
+{
     CONST DWORD *function = This->baseShader.function;
     HRESULT hr;
     GLuint retval;
@@ -457,7 +458,8 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImp
     }
 }
 
-GLuint find_gl_pshader(IWineD3DPixelShaderImpl *shader, struct ps_compile_args *args) {
+GLuint find_gl_pshader(IWineD3DPixelShaderImpl *shader, const struct ps_compile_args *args)
+{
     UINT i;
     struct ps_compiled_shader *old_array;
 

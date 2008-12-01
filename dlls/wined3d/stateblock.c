@@ -63,11 +63,8 @@ HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object) {
 }
 
 /** Copy all members of one stateblock to another */
-void stateblock_savedstates_copy(
-    IWineD3DStateBlock* iface,
-    SAVEDSTATES* dest,
-    SAVEDSTATES* source) {
-    
+void stateblock_savedstates_copy(IWineD3DStateBlock* iface, SAVEDSTATES *dest, const SAVEDSTATES *source)
+{
     IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
     unsigned bsize = sizeof(BOOL);
 
@@ -710,7 +707,7 @@ static inline void apply_lights(IWineD3DDevice *pDevice, IWineD3DStateBlockImpl 
         struct list *e;
 
         LIST_FOR_EACH(e, &This->lightMap[i]) {
-            PLIGHTINFOEL *light = LIST_ENTRY(e, PLIGHTINFOEL, entry);
+            const PLIGHTINFOEL *light = LIST_ENTRY(e, PLIGHTINFOEL, entry);
 
             if(light->changed) {
                 IWineD3DDevice_SetLight(pDevice, light->OriginalIndex, &light->OriginalParms);

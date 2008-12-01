@@ -143,7 +143,8 @@ static inline void fixup_transformed_pos(float *p) {
     p[3] = w;
 }
 
-DWORD *find_conversion_shift(IWineD3DVertexBufferImpl *This, WineDirect3DVertexStridedData *strided, DWORD stride) {
+DWORD *find_conversion_shift(IWineD3DVertexBufferImpl *This, const WineDirect3DVertexStridedData *strided, DWORD stride)
+{
     DWORD *ret, i, shift, j, type;
     DWORD orig_type_size;
 
@@ -622,7 +623,7 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
                     case CONV_FLOAT16_2:
                     {
                         float *out = (float *) (&data[This->conv_stride * i + j + This->conv_shift[j]]);
-                        WORD *in = (WORD *) (&This->resource.allocatedMemory[i * This->stride + j]);
+                        const WORD *in = (WORD *) (&This->resource.allocatedMemory[i * This->stride + j]);
 
                         out[1] = float_16_to_32(in + 1);
                         out[0] = float_16_to_32(in + 0);
@@ -796,7 +797,8 @@ const IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl =
     IWineD3DVertexBufferImpl_GetDesc
 };
 
-BYTE* WINAPI IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer* iface, DWORD iOffset, GLint *vbo) {
+const BYTE* IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer* iface, DWORD iOffset, GLint *vbo)
+{
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
 
     *vbo = This->vbo;
@@ -806,12 +808,12 @@ BYTE* WINAPI IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer* iface, DWO
             This->Flags &= ~VBFLAG_CREATEVBO;
             if(This->vbo) {
                 *vbo = This->vbo;
-                return (BYTE *) iOffset;
+                return (const BYTE *)iOffset;
             }
         }
         return This->resource.allocatedMemory + iOffset;
     } else {
-        return (BYTE *) iOffset;
+        return (const BYTE *)iOffset;
     }
 }
 

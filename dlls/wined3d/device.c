@@ -5407,7 +5407,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveStrided (IWineD3DDevice *iface, WINED3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, WineDirect3DVertexStridedData *DrawPrimStrideData) {
+static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveStrided(IWineD3DDevice *iface,
+        WINED3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount,
+        const WineDirect3DVertexStridedData *DrawPrimStrideData)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
 
     /* Mark the state dirty until we have nicer tracking
@@ -5423,7 +5426,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveStrided (IWineD3DDevice *i
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveStrided(IWineD3DDevice *iface, WINED3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, WineDirect3DVertexStridedData *DrawPrimStrideData, UINT NumVertices, CONST void *pIndexData, WINED3DFORMAT IndexDataFormat) {
+static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveStrided(IWineD3DDevice *iface,
+        WINED3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount,
+        const WineDirect3DVertexStridedData *DrawPrimStrideData, UINT NumVertices, const void *pIndexData,
+        WINED3DFORMAT IndexDataFormat)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     DWORD idxSize = (IndexDataFormat == WINED3DFMT_INDEX32 ? 4 : 2);
 

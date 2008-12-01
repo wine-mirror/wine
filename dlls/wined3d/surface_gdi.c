@@ -340,7 +340,7 @@ const char* filename)
         alpha_shift = get_shift(formatEntry->alphaMask);
 
         for (y = 0; y < This->pow2Height; y++) {
-            unsigned char *src = This->resource.allocatedMemory + (y * 1 * IWineD3DSurface_GetPitch(iface));
+            const unsigned char *src = This->resource.allocatedMemory + (y * 1 * IWineD3DSurface_GetPitch(iface));
             for (x = 0; x < This->pow2Width; x++) {	    
                 unsigned int color;
                 unsigned int comp;
@@ -405,7 +405,7 @@ HRESULT WINAPI IWineGDISurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
     if(This->resource.format == WINED3DFMT_P8 ||
        This->resource.format == WINED3DFMT_A8P8) {
         unsigned int n;
-        PALETTEENTRY *pal = NULL;
+        const PALETTEENTRY *pal = NULL;
 
         if(This->palette) {
             pal = This->palette->palents;

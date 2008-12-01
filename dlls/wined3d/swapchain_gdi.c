@@ -80,7 +80,8 @@ static void WINAPI IWineGDISwapChainImpl_Destroy(IWineD3DSwapChain *iface, D3DCB
  *  rc: Rectangle to copy
  *
  *****************************************************************************/
-void x11_copy_to_screen(IWineD3DSwapChainImpl *This, LPRECT rc) {
+void x11_copy_to_screen(IWineD3DSwapChainImpl *This, const RECT *rc)
+{
     IWineD3DSurfaceImpl *front = (IWineD3DSurfaceImpl *) This->frontBuffer;
 
     if(front->resource.usage & WINED3DUSAGE_RENDERTARGET) {

@@ -69,7 +69,7 @@ struct hash_table_t {
 
 struct hash_table_t *hash_table_create(hash_function_t *hash_function, compare_function_t *compare_function);
 void hash_table_destroy(struct hash_table_t *table, void (*free_value)(void *value, void *cb), void *cb);
-void *hash_table_get(struct hash_table_t *table, const void *key);
+void *hash_table_get(const struct hash_table_t *table, const void *key);
 void hash_table_put(struct hash_table_t *table, void *key, void *value);
 void hash_table_remove(struct hash_table_t *table, void *key);
 
@@ -878,7 +878,7 @@ struct ffp_frag_desc
 };
 
 void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_settings *settings, BOOL ignore_textype);
-const struct ffp_frag_desc *find_ffp_frag_shader(struct hash_table_t *fragment_shaders,
+const struct ffp_frag_desc *find_ffp_frag_shader(const struct hash_table_t *fragment_shaders,
         const struct ffp_frag_settings *settings);
 void add_ffp_frag_shader(struct hash_table_t *shaders, struct ffp_frag_desc *desc);
 BOOL ffp_frag_program_key_compare(const void *keya, const void *keyb);
@@ -1039,7 +1039,7 @@ struct IWineD3DDeviceImpl
 
     /* Stream source management */
     WineDirect3DVertexStridedData strided_streams;
-    WineDirect3DVertexStridedData *up_strided;
+    const WineDirect3DVertexStridedData *up_strided;
     BOOL                      useDrawStridedSlow;
     BOOL                      instancedDraw;
 
@@ -1775,10 +1775,7 @@ extern void stateblock_savedstates_set(
     SAVEDSTATES* states,
     BOOL value);
 
-extern void stateblock_savedstates_copy(
-    IWineD3DStateBlock* iface,
-    SAVEDSTATES* dest,
-    SAVEDSTATES* source);
+extern void stateblock_savedstates_copy(IWineD3DStateBlock *iface, SAVEDSTATES *dest, const SAVEDSTATES *source);
 
 extern void stateblock_copy(
     IWineD3DStateBlock* destination,
@@ -1867,7 +1864,7 @@ typedef struct IWineD3DSwapChainImpl
 
 extern const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl;
 const IWineD3DSwapChainVtbl IWineGDISwapChain_Vtbl;
-void x11_copy_to_screen(IWineD3DSwapChainImpl *This, LPRECT rc);
+void x11_copy_to_screen(IWineD3DSwapChainImpl *This, const RECT *rc);
 
 HRESULT WINAPI IWineD3DBaseSwapChainImpl_QueryInterface(IWineD3DSwapChain *iface, REFIID riid, LPVOID *ppobj);
 ULONG WINAPI IWineD3DBaseSwapChainImpl_AddRef(IWineD3DSwapChain *iface);
@@ -1984,7 +1981,7 @@ unsigned int count_bits(unsigned int mask);
     extern BOOL WINAPI IWineD3DBaseTextureImpl_SetDirty(IWineD3DBaseTexture *iface, BOOL);
     extern BOOL WINAPI IWineD3DBaseTextureImpl_GetDirty(IWineD3DBaseTexture *iface);
 
-    extern BYTE* WINAPI IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer* iface, DWORD iOffset, GLint *vbo);
+    extern const BYTE *IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer* iface, DWORD iOffset, GLint *vbo);
     extern HRESULT WINAPI IWineD3DVertexBufferImpl_ReleaseMemory(IWineD3DVertexBuffer* iface);
     extern HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface);
     extern void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface, const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1], const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]);
@@ -2386,7 +2383,7 @@ typedef struct IWineD3DPixelShaderImpl {
 
 extern const SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[];
 extern const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl;
-GLuint find_gl_pshader(IWineD3DPixelShaderImpl *shader, struct ps_compile_args *args);
+GLuint find_gl_pshader(IWineD3DPixelShaderImpl *shader, const struct ps_compile_args *args);
 void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImpl *stateblock, struct ps_compile_args *args);
 
 /* sRGB correction constants */
