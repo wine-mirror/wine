@@ -528,7 +528,7 @@ enum CV_HREG_e
     CV_AMD64_R13        = 341,
     CV_AMD64_R14        = 342,
     CV_AMD64_R15        = 343,
-} CV_HREG_e;
+};
 
 typedef enum
 {
