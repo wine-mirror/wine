@@ -60,21 +60,12 @@ typedef struct {
 #define FE(x) { x, #x }	
 #define GE(x) { &x, #x }
 
-/* check whether the given DWORD is even (return 0) or odd (return 1) */
-extern int even_or_odd (DWORD number);
-/* check whether chunkID is valid dmobject form chunk */
-extern BOOL IS_VALID_DMFORM (FOURCC chunkID);
 /* FOURCC to string conversion for debug messages */
 extern const char *debugstr_fourcc (DWORD fourcc);
 /* returns name of given GUID */
 extern const char *debugstr_dmguid (const GUID *id);
-/* returns name of given error code */
-extern const char *debugstr_dmreturn (DWORD code);
 
 /* dump whole DMUS_OBJECTDESC struct */
 extern const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc);
-extern void        debug_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc);
-extern const char *debugstr_DMUS_IO_CONTAINER_HEADER (LPDMUS_IO_CONTAINER_HEADER pHeader);
-extern const char *debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER (LPDMUS_IO_CONTAINED_OBJECT_HEADER pHeader);
 
 #endif /* __WINE_DMUTILS_H */
