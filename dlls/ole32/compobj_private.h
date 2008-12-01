@@ -309,6 +309,9 @@ extern HINSTANCE OLE32_hInstance; /* FIXME: make static */
 
 #define WINE_CLSCTX_DONT_HOST   0x80000000
 
+/* from dlldata.c */
+extern HRESULT WINAPI OLE32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv) DECLSPEC_HIDDEN;
+
 /* Exported non-interface Data Advise Holder functions */
 HRESULT DataAdviseHolder_OnConnect(IDataAdviseHolder *iface, IDataObject *pDelegate);
 void DataAdviseHolder_OnDisconnect(IDataAdviseHolder *iface);
