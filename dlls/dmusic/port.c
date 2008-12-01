@@ -213,7 +213,7 @@ static HRESULT WINAPI IDirectMusicPortImpl_GetFormat (LPDIRECTMUSICPORT iface, L
 	return S_OK;
 }
 
-const IDirectMusicPortVtbl DirectMusicPort_Vtbl = {
+static const IDirectMusicPortVtbl DirectMusicPort_Vtbl = {
 	IDirectMusicPortImpl_QueryInterface,
 	IDirectMusicPortImpl_AddRef,
 	IDirectMusicPortImpl_Release,

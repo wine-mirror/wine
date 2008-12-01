@@ -230,23 +230,6 @@ static const IDirectMusic8Vtbl DirectMusic8_Vtbl = {
 	IDirectMusic8Impl_SetExternalMasterClock
 };
 
-/* helper stuff */
-void register_waveport (LPGUID lpGUID, LPCSTR lpszDesc, LPCSTR lpszDrvName, LPVOID lpContext) {
-	LPDMUS_PORTCAPS pPortCaps = (LPDMUS_PORTCAPS)lpContext;
-	
-	pPortCaps->dwSize = sizeof(DMUS_PORTCAPS);
-	pPortCaps->dwFlags = DMUS_PC_DLS | DMUS_PC_SOFTWARESYNTH | DMUS_PC_DIRECTSOUND | DMUS_PC_DLS2 | DMUS_PC_AUDIOPATH | DMUS_PC_WAVE;
-	pPortCaps->guidPort = *lpGUID;
-	pPortCaps->dwClass = DMUS_PC_OUTPUTCLASS;
-	pPortCaps->dwType = DMUS_PORT_WINMM_DRIVER;
-	pPortCaps->dwMemorySize = DMUS_PC_SYSTEMMEMORY;
-	pPortCaps->dwMaxChannelGroups = 2;
-	pPortCaps->dwMaxVoices = -1;
-	pPortCaps->dwMaxAudioChannels = -1;
-	pPortCaps->dwEffectFlags = DMUS_EFFECT_REVERB | DMUS_EFFECT_CHORUS | DMUS_EFFECT_DELAY;
-	MultiByteToWideChar (CP_ACP, 0, lpszDesc, -1, pPortCaps->wszDescription, sizeof(pPortCaps->wszDescription)/sizeof(WCHAR));
-}
-
 /* for ClassFactory */
 HRESULT WINAPI DMUSIC_CreateDirectMusicImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
 	IDirectMusic8Impl *dmusic;
