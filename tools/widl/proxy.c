@@ -508,6 +508,18 @@ static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
   print_proxy("\n");
 }
 
+static int count_methods(type_t *iface)
+{
+    const func_t *cur;
+    int count = 0;
+
+    if (iface->ref) count = count_methods(iface->ref);
+    if (iface->funcs)
+        LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry )
+            if (!is_callas(cur->def->attrs)) count++;
+    return count;
+}
+
 static int write_proxy_methods(type_t *iface, int skip)
 {
   const func_t *cur;
@@ -548,17 +560,15 @@ static int write_stub_methods(type_t *iface, int skip)
 
 static void write_proxy(type_t *iface, unsigned int *proc_offset)
 {
-  int midx = -1, stubs;
+  int midx = -1, count;
   const func_t *cur;
-
-  if (!iface->funcs) return;
 
   /* FIXME: check for [oleautomation], shouldn't generate proxies/stubs if specified */
 
   fprintf(proxy, "/*****************************************************************************\n");
   fprintf(proxy, " * %s interface\n", iface->name);
   fprintf(proxy, " */\n");
-  LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry )
+  if (iface->funcs) LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry )
   {
     const var_t *def = cur->def;
     if (!is_local(def->attrs)) {
@@ -583,8 +593,11 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
     }
   }
 
+  count = count_methods(iface);
+  if (midx != -1 && midx != count) error("invalid count %u/%u\n", count, midx);
+
   /* proxy vtable */
-  print_proxy( "static const CINTERFACE_PROXY_VTABLE(%d) _%sProxyVtbl =\n", midx, iface->name);
+  print_proxy( "static const CINTERFACE_PROXY_VTABLE(%d) _%sProxyVtbl =\n", count, iface->name);
   print_proxy( "{\n");
   indent++;
   print_proxy( "{\n", iface->name);
@@ -606,7 +619,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   print_proxy( "static const PRPC_STUB_FUNCTION %s_table[] =\n", iface->name);
   print_proxy( "{\n");
   indent++;
-  stubs = write_stub_methods(iface, FALSE);
+  write_stub_methods(iface, FALSE);
   fprintf(proxy, "\n");
   indent--;
   fprintf(proxy, "};\n");
@@ -619,7 +632,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   indent++;
   print_proxy( "&IID_%s,\n", iface->name);
   print_proxy( "0,\n");
-  print_proxy( "%d,\n", stubs+3);
+  print_proxy( "%d,\n", count);
   print_proxy( "&%s_table[-3],\n", iface->name);
   indent--;
   print_proxy( "},\n", iface->name);
@@ -700,7 +713,7 @@ static void write_proxy_iface_name_format(const statement_list_t *stmts, const c
     else if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
     {
       type_t *iface = stmt->u.type;
-      if (iface->ref && iface->funcs && need_proxy(iface))
+      if (iface->ref && need_proxy(iface))
         fprintf(proxy, format, iface->name);
     }
   }
@@ -718,7 +731,7 @@ static void write_proxy_iface_base_iids(const statement_list_t *stmts)
         else if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
         {
             type_t *iface = stmt->u.type;
-            if (iface->ref && iface->funcs && need_proxy(iface))
+            if (iface->ref && need_proxy(iface))
             {
                 if (need_delegation(iface))
                     fprintf( proxy, "    &IID_%s,  /* %s */\n", iface->ref->name, iface->name );
@@ -739,7 +752,7 @@ static void write_iid_lookup(const statement_list_t *stmts, const char *file_id,
     else if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
     {
       type_t *iface = stmt->u.type;
-      if(iface->ref && iface->funcs && need_proxy(iface))
+      if(iface->ref && need_proxy(iface))
       {
         fprintf(proxy, "    if (!_%s_CHECK_IID(%d))\n", file_id, *c);
         fprintf(proxy, "    {\n");
