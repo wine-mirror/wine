@@ -129,19 +129,10 @@ typedef struct {
 
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 
-/* check whether the given DWORD is even (return 0) or odd (return 1) */
-extern int even_or_odd (DWORD number);
 /* FOURCC to string conversion for debug messages */
 extern const char *debugstr_fourcc (DWORD fourcc);
-/* DMUS_VERSION struct to string conversion for debug messages */
-extern const char *debugstr_dmversion (const DMUS_VERSION *version);
 /* returns name of given GUID */
 extern const char *debugstr_dmguid (const GUID *id);
-/* returns name of given error code */
-extern const char *debugstr_dmreturn (DWORD code);
-/* generic flags-dumping function */
-extern const char *debugstr_flags (DWORD flags, const flag_info* names, size_t num_names);
-extern const char *debugstr_DMUS_OBJ_FLAGS (DWORD flagmask);
 /* dump whole DMUS_OBJECTDESC struct */
 extern const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc);
 
