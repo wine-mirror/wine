@@ -20,7 +20,7 @@
 @ stub StopWsdpService
 @ stub SvchostPushServiceGlobals
 @ stdcall TransmitFile(long long long long ptr ptr long)
-@ stub WSARecvEx
+@ stdcall WSARecvEx(long ptr long ptr)
 @ stub WSPStartup
 @ stub dn_expand
 @ stub getnetbyname
