@@ -3487,6 +3487,9 @@ static BOOL calc_url_length(LPURL_COMPONENTSW lpUrlComponents,
     if (lpUrlComponents->lpszUrlPath)
         *lpdwUrlLength += URL_GET_COMP_LENGTH(lpUrlComponents, UrlPath);
 
+    if (lpUrlComponents->lpszExtraInfo)
+        *lpdwUrlLength += URL_GET_COMP_LENGTH(lpUrlComponents, ExtraInfo);
+
     return TRUE;
 }
 
@@ -3735,11 +3738,17 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
         }
     }
 
-
     if (lpUrlComponents->lpszUrlPath)
     {
         dwLen = URL_GET_COMP_LENGTH(lpUrlComponents, UrlPath);
         memcpy(lpszUrl, lpUrlComponents->lpszUrlPath, dwLen * sizeof(WCHAR));
+        lpszUrl += dwLen;
+    }
+
+    if (lpUrlComponents->lpszExtraInfo)
+    {
+        dwLen = URL_GET_COMP_LENGTH(lpUrlComponents, ExtraInfo);
+        memcpy(lpszUrl, lpUrlComponents->lpszExtraInfo, dwLen * sizeof(WCHAR));
         lpszUrl += dwLen;
     }
 

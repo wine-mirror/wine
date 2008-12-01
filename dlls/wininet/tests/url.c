@@ -52,6 +52,7 @@
 #define CREATE_URL10 "about://host/blank"
 #define CREATE_URL11 "about:"
 #define CREATE_URL12 "http://www.winehq.org:65535"
+#define CREATE_URL13 "http://localhost/?test=123"
 
 static void copy_compsA(
     URL_COMPONENTSA *src, 
@@ -455,9 +456,12 @@ static void InternetCreateUrlA_test(void)
                     http[]       = "http",
                     https[]      = "https",
                     winehq[]     = "www.winehq.org",
+                    localhost[]  = "localhost",
                     username[]   = "username",
                     password[]   = "password",
+                    root[]       = "/",
                     site_about[] = "/site/about",
+                    extra_info[] = "?test=123",
                     about[]      = "about",
                     blank[]      = "blank",
                     host[]       = "host";
@@ -771,6 +775,26 @@ static void InternetCreateUrlA_test(void)
 	ok(!strcmp(szUrl, CREATE_URL12), "Expected %s, got %s\n", CREATE_URL12, szUrl);
 
 	HeapFree(GetProcessHeap(), 0, szUrl);
+
+    memset(&urlComp, 0, sizeof(urlComp));
+    urlComp.dwStructSize = sizeof(URL_COMPONENTS);
+    urlComp.lpszScheme = http;
+    urlComp.dwSchemeLength = strlen(urlComp.lpszScheme);
+    urlComp.lpszHostName = localhost;
+    urlComp.dwHostNameLength = strlen(urlComp.lpszHostName);
+    urlComp.nPort = 80;
+    urlComp.lpszUrlPath = root;
+    urlComp.dwUrlPathLength = strlen(urlComp.lpszUrlPath);
+    urlComp.lpszExtraInfo = extra_info;
+    urlComp.dwExtraInfoLength = strlen(urlComp.lpszExtraInfo);
+    len = 256;
+    szUrl = HeapAlloc(GetProcessHeap(), 0, len);
+    InternetCreateUrlA(&urlComp, ICU_ESCAPE, szUrl, &len);
+    ok(ret, "Expected success\n");
+    ok(len == strlen(CREATE_URL13), "Expected len %u, got %u\n", strlen(CREATE_URL13), len);
+    ok(!strcmp(szUrl, CREATE_URL13), "Expected \"%s\", got \"%s\"\n", CREATE_URL13, szUrl);
+
+    HeapFree(GetProcessHeap(), 0, szUrl);
 }
 
 START_TEST(url)
