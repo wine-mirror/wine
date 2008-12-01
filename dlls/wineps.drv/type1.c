@@ -193,12 +193,12 @@ BOOL T1_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
     LOGFONTW lf;
     RECT rc;
 
-    char glyph_def_begin[] =
+    static const char glyph_def_begin[] =
       "/%s findfont dup\n"
       "/Private get begin\n"
       "/CharStrings get begin\n"
       "/%s %d RD\n";
-    char glyph_def_end[] =
+    static const char glyph_def_end[] =
       "ND\n"
       "end end\n";
 
