@@ -39,7 +39,7 @@ WINE_DECLARE_DEBUG_CHANNEL(fps);
 static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface, D3DCB_DESTROYSURFACEFN D3DCB_DestroyRenderTarget) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     WINED3DDISPLAYMODE mode;
-    int i;
+    unsigned int i;
 
     TRACE("Destroying swapchain %p\n", iface);
 
@@ -54,7 +54,7 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface, D3DCB
     }
 
     if(This->backBuffer) {
-        int i;
+        UINT i;
         for(i = 0; i < This->presentParms.BackBufferCount; i++) {
             IWineD3DSurface_SetContainer(This->backBuffer[i], 0);
             if(D3DCB_DestroyRenderTarget(This->backBuffer[i]) > 0) {

@@ -288,7 +288,7 @@ const char* filename)
     UINT y = 0, x = 0;
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     static char *output = NULL;
-    static int size = 0;
+    static UINT size = 0;
     const StaticPixelFormatDesc *formatEntry = getFormatDescEntry(This->resource.format, NULL, NULL);
 
     if (This->pow2Width > size) {

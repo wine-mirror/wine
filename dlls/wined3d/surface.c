@@ -211,7 +211,7 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
         if (This->Flags & SFLAG_NONPOW2) {
             const BYTE *src_data;
             BYTE *dst_data;
-            int y;
+            UINT y;
             /*
              * Some games (e.g. warhammer 40k) don't work properly with the odd pitches, preventing
              * the surface pitch from being used to box non-power2 textures. Instead we have to use a hack to
@@ -2132,7 +2132,7 @@ static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4]
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     BOOL index_in_alpha = FALSE;
     int dxVersion = ( (IWineD3DImpl *) device->wineD3D)->dxVersion;
-    int i;
+    unsigned int i;
 
     /* Old games like StarCraft, C&C, Red Alert and others use P8 render targets.
     * Reading back the RGB output each lockrect (each frame as they lock the whole screen)
@@ -2435,12 +2435,11 @@ static void WINAPI IWineD3DSurfaceImpl_BindTexture(IWineD3DSurface *iface) {
 static HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const char* filename)
 {
     FILE* f = NULL;
-    UINT i, y;
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     char *allocatedMemory;
     const char *textureRow;
     IWineD3DSwapChain *swapChain = NULL;
-    int width, height;
+    int width, height, i, y;
     GLuint tmpTexture = 0;
     DWORD color;
     /*FIXME:

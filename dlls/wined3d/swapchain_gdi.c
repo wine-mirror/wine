@@ -44,7 +44,7 @@ static void WINAPI IWineGDISwapChainImpl_Destroy(IWineD3DSwapChain *iface, D3DCB
     }
 
     if(This->backBuffer) {
-        int i;
+        UINT i;
         for(i = 0; i < This->presentParms.BackBufferCount; i++) {
             IWineD3DSurface_SetContainer(This->backBuffer[i], 0);
             if(D3DCB_DestroyRenderback(This->backBuffer[i]) > 0) {
