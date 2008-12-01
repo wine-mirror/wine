@@ -44,7 +44,6 @@ HRESULT DPLAYX_SetConnectionSettingsW ( DWORD dwFlags,
                                         const DPLCONNECTION *lpConn );
 
 BOOL DPLAYX_CreateLobbyApplication( DWORD dwAppID );
-BOOL DPLAYX_DestroyLobbyApplication( DWORD dwAppID );
 
 BOOL DPLAYX_WaitForConnectionSettings( BOOL bWait );
 BOOL DPLAYX_AnyLobbiesWaitingForConnSettings(void);
@@ -52,19 +51,9 @@ BOOL DPLAYX_AnyLobbiesWaitingForConnSettings(void);
 BOOL DPLAYX_SetLobbyHandles( DWORD dwAppID,
                              HANDLE hStart, HANDLE hDeath, HANDLE hConnRead );
 
-LPDPSESSIONDESC2 DPLAYX_CopyAndAllocateLocalSession( UINT* index );
-BOOL DPLAYX_CopyLocalSession( UINT* index, LPDPSESSIONDESC2 lpsd );
 void DPLAYX_SetLocalSession( LPCDPSESSIONDESC2 lpsd );
 
 BOOL DPLAYX_SetLobbyMsgThreadId( DWORD dwAppId, DWORD dwThreadId );
-
-/* FIXME: This should not be here */
-LPVOID DPLAYX_PrivHeapAlloc( DWORD flags, DWORD size );
-void DPLAYX_PrivHeapFree( LPVOID addr );
-
-LPSTR DPLAYX_strdupA( DWORD flags, LPCSTR str );
-LPWSTR DPLAYX_strdupW( DWORD flags, LPCWSTR str );
-/* FIXME: End shared data alloc which should be local */
 
 
 /* Convert a DP or DPL HRESULT code into a string for human consumption */

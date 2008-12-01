@@ -89,8 +89,7 @@ typedef struct
 
 static DPLAYX_MEM_SLICE* lpMemArea;
 
-void DPLAYX_PrivHeapFree( LPVOID addr );
-void DPLAYX_PrivHeapFree( LPVOID addr )
+static void DPLAYX_PrivHeapFree( LPVOID addr )
 {
   LPVOID lpAddrStart;
   DWORD dwBlockUsed;
@@ -107,9 +106,7 @@ void DPLAYX_PrivHeapFree( LPVOID addr )
   lpMemArea[ dwBlockUsed ].used = 0;
 }
 
-/* FIXME: This should be static, but is being used for a hack right now */
-LPVOID DPLAYX_PrivHeapAlloc( DWORD flags, DWORD size );
-LPVOID DPLAYX_PrivHeapAlloc( DWORD flags, DWORD size )
+static LPVOID DPLAYX_PrivHeapAlloc( DWORD flags, DWORD size )
 {
   LPVOID lpvArea = NULL;
   UINT   uBlockUsed;
@@ -142,27 +139,6 @@ LPVOID DPLAYX_PrivHeapAlloc( DWORD flags, DWORD size )
   }
 
   return lpvArea;
-}
-
-LPSTR DPLAYX_strdupA( DWORD flags, LPCSTR str );
-LPSTR DPLAYX_strdupA( DWORD flags, LPCSTR str )
-{
-  LPSTR p = DPLAYX_PrivHeapAlloc( flags, strlen(str) + 1 );
-  if(p) {
-    strcpy( p, str );
-  }
-  return p;
-}
-
-LPWSTR DPLAYX_strdupW( DWORD flags, LPCWSTR str );
-LPWSTR DPLAYX_strdupW( DWORD flags, LPCWSTR str )
-{
-  INT len = strlenW(str) + 1;
-  LPWSTR p = DPLAYX_PrivHeapAlloc( flags, len * sizeof(WCHAR) );
-  if(p) {
-    strcpyW( p, str );
-  }
-  return p;
 }
 
 
@@ -1062,15 +1038,6 @@ DWORD DPLAYX_SizeOfLobbyDataW( const DPLCONNECTION *lpConn )
 
 
 
-static LPDPSESSIONDESC2 DPLAYX_CopyAndAllocateSessionDesc2A( LPCDPSESSIONDESC2 lpSessionSrc )
-{
-   LPDPSESSIONDESC2 lpSessionDest =
-     HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *lpSessionSrc ) );
-   DPLAYX_CopyIntoSessionDesc2A( lpSessionDest, lpSessionSrc );
-
-   return lpSessionDest;
-}
-
 /* Copy an ANSI session desc structure to the given buffer */
 BOOL DPLAYX_CopyIntoSessionDesc2A( LPDPSESSIONDESC2  lpSessionDest,
                                    LPCDPSESSIONDESC2 lpSessionSrc )
@@ -1091,38 +1058,6 @@ BOOL DPLAYX_CopyIntoSessionDesc2A( LPDPSESSIONDESC2  lpSessionDest,
   }
 
   return TRUE;
-}
-
-/* Start the index at 0. index will be updated to equal that which should
-   be passed back into this function for the next element */
-LPDPSESSIONDESC2 DPLAYX_CopyAndAllocateLocalSession( UINT* index )
-{
-  for( ; (*index) < numSupportedSessions; (*index)++ )
-  {
-    if( sessionData[(*index)].dwSize != 0 )
-    {
-      return DPLAYX_CopyAndAllocateSessionDesc2A( &sessionData[(*index)++] );
-    }
-  }
-
-  /* No more sessions */
-  return NULL;
-}
-
-/* Start the index at 0. index will be updated to equal that which should
-   be passed back into this function for the next element */
-BOOL DPLAYX_CopyLocalSession( UINT* index, LPDPSESSIONDESC2 lpsd )
-{
-  for( ; (*index) < numSupportedSessions; (*index)++ )
-  {
-    if( sessionData[(*index)].dwSize != 0 )
-    {
-      return DPLAYX_CopyIntoSessionDesc2A( lpsd, &sessionData[(*index)++] );
-    }
-  }
-
-  /* No more sessions */
-  return FALSE;
 }
 
 void DPLAYX_SetLocalSession( LPCDPSESSIONDESC2 lpsd )

@@ -202,7 +202,7 @@ static BOOL DP_BuildSPCompoundAddr( LPGUID lpcSpGuid, LPVOID* lplpAddrBuf,
 static inline DPID DP_NextObjectId(void);
 static DPID DP_GetRemoteNextObjectId(void);
 
-
+static DWORD DP_CalcSessionDescSize( LPCDPSESSIONDESC2 lpSessDesc, BOOL bAnsi );
 static void DP_CopySessionDesc( LPDPSESSIONDESC2 destSessionDesc,
                                 LPCDPSESSIONDESC2 srcSessDesc, BOOL bAnsi );
 
@@ -3349,7 +3349,7 @@ static HRESULT WINAPI DirectPlay2WImpl_SetSessionDesc
 }
 
 /* FIXME: See about merging some of this stuff with dplayx_global.c stuff */
-DWORD DP_CalcSessionDescSize( LPCDPSESSIONDESC2 lpSessDesc, BOOL bAnsi )
+static DWORD DP_CalcSessionDescSize( LPCDPSESSIONDESC2 lpSessDesc, BOOL bAnsi )
 {
   DWORD dwSize = 0;
 
