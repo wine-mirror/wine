@@ -703,23 +703,16 @@ static void write_proxy_stmts(const statement_list_t *stmts, unsigned int *proc_
   }
 }
 
-static void write_proxy_iface_name_format(const statement_list_t *stmts, const char *format)
+static int cmp_iid( const void *ptr1, const void *ptr2 )
 {
-  const statement_t *stmt;
-  if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
-  {
-    if (stmt->type == STMT_LIBRARY)
-      write_proxy_iface_name_format(stmt->u.lib->stmts, format);
-    else if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
-    {
-      type_t *iface = stmt->u.type;
-      if (iface->ref && need_proxy(iface))
-        fprintf(proxy, format, iface->name);
-    }
-  }
+    const type_t * const *iface1 = ptr1;
+    const type_t * const *iface2 = ptr2;
+    const UUID *uuid1 = get_attrp( (*iface1)->attrs, ATTR_UUID );
+    const UUID *uuid2 = get_attrp( (*iface2)->attrs, ATTR_UUID );
+    return memcmp( uuid1, uuid2, sizeof(UUID) );
 }
 
-static void write_proxy_iface_base_iids(const statement_list_t *stmts)
+static void build_iface_list( const statement_list_t *stmts, type_t **ifaces[], int *count )
 {
     const statement_t *stmt;
 
@@ -727,50 +720,36 @@ static void write_proxy_iface_base_iids(const statement_list_t *stmts)
     LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
     {
         if (stmt->type == STMT_LIBRARY)
-            write_proxy_iface_base_iids(stmt->u.lib->stmts);
+            build_iface_list(stmt->u.lib->stmts, ifaces, count);
         else if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
         {
             type_t *iface = stmt->u.type;
             if (iface->ref && need_proxy(iface))
             {
-                if (need_delegation(iface))
-                    fprintf( proxy, "    &IID_%s,  /* %s */\n", iface->ref->name, iface->name );
-                else
-                    fprintf( proxy, "    0,\n" );
+                *ifaces = xrealloc( *ifaces, (*count + 1) * sizeof(*ifaces) );
+                (*ifaces)[(*count)++] = iface;
             }
         }
     }
 }
 
-static void write_iid_lookup(const statement_list_t *stmts, const char *file_id, int *c)
+static type_t **sort_interfaces( const statement_list_t *stmts, int *count )
 {
-  const statement_t *stmt;
-  if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
-  {
-    if (stmt->type == STMT_LIBRARY)
-      write_iid_lookup(stmt->u.lib->stmts, file_id, c);
-    else if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
-    {
-      type_t *iface = stmt->u.type;
-      if(iface->ref && need_proxy(iface))
-      {
-        fprintf(proxy, "    if (!_%s_CHECK_IID(%d))\n", file_id, *c);
-        fprintf(proxy, "    {\n");
-        fprintf(proxy, "        *pIndex = %d;\n", *c);
-        fprintf(proxy, "        return 1;\n");
-        fprintf(proxy, "    }\n");
-        (*c)++;
-      }
-    }
-  }
+    type_t **ifaces = NULL;
+
+    *count = 0;
+    build_iface_list( stmts, &ifaces, count );
+    qsort( ifaces, *count, sizeof(*ifaces), cmp_iid );
+    return ifaces;
 }
 
 void write_proxies(const statement_list_t *stmts)
 {
   int expr_eval_routines;
   char *file_id = proxy_token;
-  int c, have_baseiid;
+  int i, count, have_baseiid;
   unsigned int proc_offset = 0;
+  type_t **interfaces;
 
   if (!do_proxies) return;
   if (do_everything && !need_proxy_file(stmts)) return;
@@ -793,23 +772,27 @@ void write_proxies(const statement_list_t *stmts)
   write_procformatstring(proxy, stmts, need_proxy);
   write_typeformatstring(proxy, stmts, need_proxy);
 
+  interfaces = sort_interfaces(stmts, &count);
   fprintf(proxy, "static const CInterfaceProxyVtbl* const _%s_ProxyVtblList[] =\n", file_id);
   fprintf(proxy, "{\n");
-  write_proxy_iface_name_format(stmts, "    (const CInterfaceProxyVtbl*)&_%sProxyVtbl,\n");
+  for (i = 0; i < count; i++)
+      fprintf(proxy, "    (const CInterfaceProxyVtbl*)&_%sProxyVtbl,\n", interfaces[i]->name);
   fprintf(proxy, "    0\n");
   fprintf(proxy, "};\n");
   fprintf(proxy, "\n");
 
   fprintf(proxy, "static const CInterfaceStubVtbl* const _%s_StubVtblList[] =\n", file_id);
   fprintf(proxy, "{\n");
-  write_proxy_iface_name_format(stmts, "    &_%sStubVtbl,\n");
+  for (i = 0; i < count; i++)
+      fprintf(proxy, "    &_%sStubVtbl,\n", interfaces[i]->name);
   fprintf(proxy, "    0\n");
   fprintf(proxy, "};\n");
   fprintf(proxy, "\n");
 
   fprintf(proxy, "static PCInterfaceName const _%s_InterfaceNamesList[] =\n", file_id);
   fprintf(proxy, "{\n");
-  write_proxy_iface_name_format(stmts, "    \"%s\",\n");
+  for (i = 0; i < count; i++)
+      fprintf(proxy, "    \"%s\",\n", interfaces[i]->name);
   fprintf(proxy, "    0\n");
   fprintf(proxy, "};\n");
   fprintf(proxy, "\n");
@@ -818,18 +801,30 @@ void write_proxies(const statement_list_t *stmts)
   {
       fprintf(proxy, "static const IID * _%s_BaseIIDList[] =\n", file_id);
       fprintf(proxy, "{\n");
-      write_proxy_iface_base_iids(stmts);
+      for (i = 0; i < count; i++)
+      {
+          if (need_delegation(interfaces[i]))
+              fprintf( proxy, "    &IID_%s,  /* %s */\n", interfaces[i]->ref->name, interfaces[i]->name );
+          else
+              fprintf( proxy, "    0,\n" );
+      }
       fprintf(proxy, "    0\n");
       fprintf(proxy, "};\n");
       fprintf(proxy, "\n");
   }
 
-  fprintf(proxy, "#define _%s_CHECK_IID(n) IID_GENERIC_CHECK_IID(_%s, pIID, n)\n", file_id, file_id);
-  fprintf(proxy, "\n");
-  fprintf(proxy, "int __stdcall _%s_IID_Lookup(const IID* pIID, int* pIndex)\n", file_id);
+  fprintf(proxy, "static int __stdcall _%s_IID_Lookup(const IID* pIID, int* pIndex)\n", file_id);
   fprintf(proxy, "{\n");
-  c = 0;
-  write_iid_lookup(stmts, file_id, &c);
+  fprintf(proxy, "    int low = 0, high = %d;\n", count - 1);
+  fprintf(proxy, "\n");
+  fprintf(proxy, "    while (low <= high)\n");
+  fprintf(proxy, "    {\n");
+  fprintf(proxy, "        int pos = (low + high) / 2;\n");
+  fprintf(proxy, "        int res = IID_GENERIC_CHECK_IID(_%s, pIID, pos);\n", file_id);
+  fprintf(proxy, "        if (!res) { *pIndex = pos; return 1; }\n");
+  fprintf(proxy, "        if (res > 0) low = pos + 1;\n");
+  fprintf(proxy, "        else high = pos - 1;\n");
+  fprintf(proxy, "    }\n");
   fprintf(proxy, "    return 0;\n");
   fprintf(proxy, "}\n");
   fprintf(proxy, "\n");
@@ -842,7 +837,7 @@ void write_proxies(const statement_list_t *stmts)
   if (have_baseiid) fprintf(proxy, "    _%s_BaseIIDList,\n", file_id);
   else fprintf(proxy, "    0,\n");
   fprintf(proxy, "    &_%s_IID_Lookup,\n", file_id);
-  fprintf(proxy, "    %d,\n", c);
+  fprintf(proxy, "    %d,\n", count);
   fprintf(proxy, "    1,\n");
   fprintf(proxy, "    0,\n");
   fprintf(proxy, "    0,\n");
