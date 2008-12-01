@@ -1380,7 +1380,7 @@ DECL_HANDLER(open_console)
     struct object      *obj = NULL;
 
     reply->handle = 0;
-    if (req->from == (obj_handle_t)0)
+    if (!req->from)
     {
         if (current->process->console && current->process->console->renderer)
             obj = grab_object( (struct object*)current->process->console );
