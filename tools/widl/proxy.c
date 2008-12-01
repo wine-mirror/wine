@@ -607,7 +607,8 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   indent--;
   fprintf(proxy, "};\n");
   print_proxy( "\n");
-  print_proxy( "static const CInterfaceStubVtbl _%sStubVtbl =\n", iface->name);
+  print_proxy( "static %sCInterfaceStubVtbl _%sStubVtbl =\n",
+               need_delegation(iface) ? "" : "const ", iface->name);
   print_proxy( "{\n");
   indent++;
   print_proxy( "{\n");
@@ -784,7 +785,7 @@ void write_proxies(const statement_list_t *stmts)
 
   fprintf(proxy, "static const CInterfaceStubVtbl* const _%s_StubVtblList[] =\n", file_id);
   fprintf(proxy, "{\n");
-  write_proxy_iface_name_format(stmts, "    (const CInterfaceStubVtbl*)&_%sStubVtbl,\n");
+  write_proxy_iface_name_format(stmts, "    &_%sStubVtbl,\n");
   fprintf(proxy, "    0\n");
   fprintf(proxy, "};\n");
   fprintf(proxy, "\n");
