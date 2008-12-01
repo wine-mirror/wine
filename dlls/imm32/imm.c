@@ -423,7 +423,7 @@ static HIMCC ImmCreateBlankCompStr(void)
     HIMCC rc;
     LPCOMPOSITIONSTRING ptr;
     rc = ImmCreateIMCC(sizeof(COMPOSITIONSTRING));
-    ptr = (LPCOMPOSITIONSTRING)ImmLockIMCC(rc);
+    ptr = ImmLockIMCC(rc);
     memset(ptr,0,sizeof(COMPOSITIONSTRING));
     ptr->dwSize = sizeof(COMPOSITIONSTRING);
     ImmUnlockIMCC(rc);
@@ -451,7 +451,7 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
 
     if (hWnd)
     {
-        old = (HIMC)RemovePropW(hWnd,szwWineIMCProperty);
+        old = RemovePropW(hWnd,szwWineIMCProperty);
 
         if (old == NULL)
             old = IMM_GetThreadData()->defaultContext;
@@ -463,7 +463,7 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
             if (hIMC == NULL) /* Meaning disable imm for that window*/
                 SetPropW(hWnd,szwWineIMCProperty,(HANDLE)-1);
             else
-                SetPropW(hWnd,szwWineIMCProperty,(HANDLE)hIMC);
+                SetPropW(hWnd,szwWineIMCProperty,hIMC);
         }
 
         if (old)
@@ -626,7 +626,7 @@ HIMC WINAPI ImmCreateContext(void)
     new_context->immKbd->uSelected++;
     TRACE("Created context 0x%x\n",(UINT)new_context);
 
-    return (HIMC)new_context;
+    return new_context;
 }
 
 static BOOL IMM_DestroyContext(HIMC hIMC)
@@ -1298,7 +1298,7 @@ HIMC WINAPI ImmGetContext(HWND hWnd)
     if (!IMM_GetThreadData()->defaultContext)
         IMM_GetThreadData()->defaultContext = ImmCreateContext();
 
-    rc = (HIMC)GetPropW(hWnd,szwWineIMCProperty);
+    rc = GetPropW(hWnd,szwWineIMCProperty);
     if (rc == (HIMC)-1)
         rc = NULL;
     else if (rc == NULL)
@@ -2531,7 +2531,7 @@ HIMCC  WINAPI ImmCreateIMCC(DWORD size)
         return NULL;
 
     internal->dwSize = size;
-    return  (HIMCC)internal;
+    return  internal;
 }
 
 /***********************************************************************
@@ -2618,7 +2618,7 @@ BOOL WINAPI ImmGenerateMessage(HIMC hIMC)
         LPTRANSMSG lpTransMsg;
         DWORD i;
 
-        lpTransMsg = (LPTRANSMSG)ImmLockIMCC(data->IMC.hMsgBuf);
+        lpTransMsg = ImmLockIMCC(data->IMC.hMsgBuf);
         for (i = 0; i < data->IMC.dwNumMsgBuf; i++)
             ImmInternalPostIMEMessage(data, lpTransMsg[i].message, lpTransMsg[i].wParam, lpTransMsg[i].lParam);
 
