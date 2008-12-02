@@ -355,9 +355,14 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
     long cbSrcStream = 0;
     REFERENCE_TIME tStart, tStop;
     HRESULT hr;
+
     EnterCriticalSection(&This->csFilter);
+
     if (This->pInputPin->flushing || This->pInputPin->end_of_stream)
-        hr = S_FALSE;
+    {
+        LeaveCriticalSection(&This->csFilter);
+        return S_FALSE;
+    }
 
     if (This->state == State_Stopped)
     {
