@@ -110,8 +110,8 @@ struct statement_list_t {
    statement_t *tail;
 };
 
-statement_list_t *new_statement_list(parser_ctx_t*,statement_t*);
-statement_list_t *statement_list_add(statement_list_t*,statement_t*);
+static statement_list_t *new_statement_list(parser_ctx_t*,statement_t*);
+static statement_list_t *statement_list_add(statement_list_t*,statement_t*);
 
 typedef struct _parameter_list_t {
     parameter_t *head;
@@ -1493,7 +1493,7 @@ static source_elements_t *source_elements_add_statement(source_elements_t *sourc
     return source_elements;
 }
 
-statement_list_t *new_statement_list(parser_ctx_t *ctx, statement_t *statement)
+static statement_list_t *new_statement_list(parser_ctx_t *ctx, statement_t *statement)
 {
     statement_list_t *ret =  parser_alloc_tmp(ctx, sizeof(statement_list_t));
 
@@ -1502,7 +1502,7 @@ statement_list_t *new_statement_list(parser_ctx_t *ctx, statement_t *statement)
     return ret;
 }
 
-statement_list_t *statement_list_add(statement_list_t *list, statement_t *statement)
+static statement_list_t *statement_list_add(statement_list_t *list, statement_t *statement)
 {
     list->tail = list->tail->next = statement;
 

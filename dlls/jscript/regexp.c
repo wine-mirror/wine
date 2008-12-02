@@ -181,7 +181,7 @@ typedef enum REOp {
 
 #define REOP_IS_SIMPLE(op)  ((op) <= REOP_NCLASS)
 
-const char *reop_names[] = {
+static const char *reop_names[] = {
     "empty",
     "bol",
     "eol",

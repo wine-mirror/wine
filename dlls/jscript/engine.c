@@ -278,7 +278,7 @@ static HRESULT disp_cmp(IDispatch *disp1, IDispatch *disp2, BOOL *ret)
 }
 
 /* ECMA-262 3rd Edition    11.9.6 */
-HRESULT equal2_values(VARIANT *lval, VARIANT *rval, BOOL *ret)
+static HRESULT equal2_values(VARIANT *lval, VARIANT *rval, BOOL *ret)
 {
     TRACE("\n");
 
