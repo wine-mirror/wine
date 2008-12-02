@@ -1617,6 +1617,16 @@ static DWORD HTTPREQ_SetOption(WININETHANDLEHEADER *hdr, DWORD option, void *buf
 
         return NETCON_set_timeout(&req->netConnection, option == INTERNET_OPTION_SEND_TIMEOUT,
                     *(DWORD*)buffer);
+
+    case INTERNET_OPTION_USERNAME:
+        HeapFree(GetProcessHeap(), 0, req->lpHttpSession->lpszUserName);
+        if (!(req->lpHttpSession->lpszUserName = WININET_strdupW(buffer))) return ERROR_OUTOFMEMORY;
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_PASSWORD:
+        HeapFree(GetProcessHeap(), 0, req->lpHttpSession->lpszPassword);
+        if (!(req->lpHttpSession->lpszPassword = WININET_strdupW(buffer))) return ERROR_OUTOFMEMORY;
+        return ERROR_SUCCESS;
     }
 
     return ERROR_INTERNET_INVALID_OPTION;
