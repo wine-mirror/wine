@@ -3518,12 +3518,14 @@ static DWORD HTTPSESSION_SetOption(WININETHANDLEHEADER *hdr, DWORD option, void 
     switch(option) {
     case INTERNET_OPTION_USERNAME:
     {
-        if (!(ses->lpszUserName = WININET_strdupW(buffer))) break;
+        HeapFree(GetProcessHeap(), 0, ses->lpszUserName);
+        if (!(ses->lpszUserName = WININET_strdupW(buffer))) return ERROR_OUTOFMEMORY;
         return ERROR_SUCCESS;
     }
     case INTERNET_OPTION_PASSWORD:
     {
-        if (!(ses->lpszPassword = WININET_strdupW(buffer))) break;
+        HeapFree(GetProcessHeap(), 0, ses->lpszPassword);
+        if (!(ses->lpszPassword = WININET_strdupW(buffer))) return ERROR_OUTOFMEMORY;
         return ERROR_SUCCESS;
     }
     default: break;
