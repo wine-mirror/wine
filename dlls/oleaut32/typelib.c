@@ -5685,7 +5685,7 @@ _invoke(FARPROC func,CALLCONV callconv, int nrargs, DWORD *args) {
 /* The size of the argument on the stack in DWORD units (in all x86 call
  * convetions the arguments on the stack are DWORD-aligned)
  */
-int _dispargsize(VARTYPE vt)
+static int _dispargsize(VARTYPE vt)
 {
     switch (vt) {
     case VT_I8:
