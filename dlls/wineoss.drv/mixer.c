@@ -787,8 +787,8 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEW lpMl, DWORD fdwInfo)
     }
 
     if (lpMl->cbStruct != sizeof(*lpMl)) {
-        WARN("invalid parameter: lpMl->cbStruct = %d != %d\n",
-             lpMl->cbStruct, sizeof(*lpMl));
+        WARN("invalid parameter: lpMl->cbStruct = %d\n",
+             lpMl->cbStruct);
 	return MMSYSERR_INVALPARAM;
     }
 
@@ -963,14 +963,14 @@ static	DWORD	MIX_GetLineControls(WORD wDevID, LPMIXERLINECONTROLSW lpMlc,
     }
 
     if (lpMlc->cbStruct < sizeof(*lpMlc)) {
-        WARN("invalid parameter: lpMlc->cbStruct = %d < %d\n",
-             lpMlc->cbStruct, sizeof(*lpMlc));
+        WARN("invalid parameter: lpMlc->cbStruct = %d\n",
+             lpMlc->cbStruct);
 	return MMSYSERR_INVALPARAM;
     }
 
     if (lpMlc->cbmxctrl < sizeof(MIXERCONTROLW)) {
-        WARN("invalid parameter: lpMlc->cbmxctrl = %d < %d\n",
-             lpMlc->cbmxctrl, sizeof(MIXERCONTROLW));
+        WARN("invalid parameter: lpMlc->cbmxctrl = %d\n",
+             lpMlc->cbmxctrl);
 	return MMSYSERR_INVALPARAM;
     }
 
@@ -1098,8 +1098,8 @@ static	DWORD	MIX_GetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
 
                     if (lpmcd->cbDetails !=
                         sizeof(MIXERCONTROLDETAILS_UNSIGNED)) {
-                        WARN("invalid parameter: cbDetails != %d\n",
-                             sizeof(MIXERCONTROLDETAILS_UNSIGNED));
+                        WARN("invalid parameter: cbDetails = %d\n",
+                             lpmcd->cbDetails);
                         return MMSYSERR_INVALPARAM;
                     }
 
@@ -1145,8 +1145,8 @@ static	DWORD	MIX_GetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
 
                     if (lpmcd->cbDetails !=
                         sizeof(MIXERCONTROLDETAILS_BOOLEAN)) {
-                        WARN("invalid parameter: cbDetails != %d\n",
-                             sizeof(MIXERCONTROLDETAILS_BOOLEAN));
+                        WARN("invalid parameter: cbDetails = %d\n",
+                             lpmcd->cbDetails);
                         return MMSYSERR_INVALPARAM;
                     }
 
@@ -1167,8 +1167,8 @@ static	DWORD	MIX_GetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
 
                     if (lpmcd->cbDetails !=
                         sizeof(MIXERCONTROLDETAILS_BOOLEAN)) {
-                        WARN("invalid parameter: cbDetails != %d\n",
-                             sizeof(MIXERCONTROLDETAILS_BOOLEAN));
+                        WARN("invalid parameter: cbDetails = %d\n",
+                             lpmcd->cbDetails);
                         return MMSYSERR_INVALPARAM;
                     }
 
@@ -1299,8 +1299,8 @@ static	DWORD	MIX_SetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
 
                     if (lpmcd->cbDetails !=
                         sizeof(MIXERCONTROLDETAILS_UNSIGNED)) {
-                        WARN("invalid parameter: cbDetails != %d\n",
-                             sizeof(MIXERCONTROLDETAILS_UNSIGNED));
+                        WARN("invalid parameter: cbDetails = %d\n",
+                             lpmcd->cbDetails);
                         return MMSYSERR_INVALPARAM;
                     }
 
@@ -1351,8 +1351,8 @@ static	DWORD	MIX_SetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
 
                     if (lpmcd->cbDetails !=
                         sizeof(MIXERCONTROLDETAILS_BOOLEAN)) {
-                        WARN("invalid parameter: cbDetails != %d\n",
-                             sizeof(MIXERCONTROLDETAILS_BOOLEAN));
+                        WARN("invalid parameter: cbDetails = %d\n",
+                             lpmcd->cbDetails);
                         return MMSYSERR_INVALPARAM;
                     }
 
@@ -1395,8 +1395,8 @@ static	DWORD	MIX_SetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
 
                     if (lpmcd->cbDetails !=
                         sizeof(MIXERCONTROLDETAILS_BOOLEAN)) {
-                        WARN("invalid parameter: cbDetails != %d\n",
-                             sizeof(MIXERCONTROLDETAILS_BOOLEAN));
+                        WARN("invalid parameter: cbDetails = %d\n",
+                             lpmcd->cbDetails);
                         return MMSYSERR_INVALPARAM;
                     }
 
