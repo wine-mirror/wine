@@ -108,7 +108,7 @@ BOOL load_backend(void)
  * unload_backend [internal]
  *
  */
-void unload_backend(void)
+static void unload_backend(void)
 {
     EnterCriticalSection(&backend_cs);
     backend = NULL;
