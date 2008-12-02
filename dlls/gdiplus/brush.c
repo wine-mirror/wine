@@ -1239,6 +1239,20 @@ GpStatus WINGDIPAPI GdipTranslateLineTransform(GpLineGradient* brush,
     return NotImplemented;
 }
 
+/******************************************************************************
+ * GdipTranslateTextureTransform [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipTranslateTextureTransform(GpTexture* brush, REAL dx, REAL dy,
+    GpMatrixOrder order)
+{
+    TRACE("(%p, %.2f, %.2f, %d)\n", brush, dx, dy, order);
+
+    if(!brush)
+        return InvalidParameter;
+
+    return GdipTranslateMatrix(brush->transform, dx, dy, order);
+}
+
 GpStatus WINGDIPAPI GdipGetLineRect(GpLineGradient *brush, GpRectF *rect)
 {
     TRACE("(%p, %p)\n", brush, rect);
