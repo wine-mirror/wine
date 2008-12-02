@@ -99,7 +99,7 @@ static void CALLBACK TIMER_TimerProc( HWND     hwnd,
     }
     else
     {
-        int i;
+        DWORD i;
 
         /* Calculate the number of valid timer interrupts we can generate */
         DWORD count = delta / TIMER_millis;
