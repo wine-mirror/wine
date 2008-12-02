@@ -685,7 +685,8 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
     return WINED3D_OK;
 }
 
-void convert_r32f_r16f(const BYTE *src, BYTE *dst, DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h)
+static void convert_r32f_r16f(const BYTE *src, BYTE *dst, DWORD pitch_in, DWORD pitch_out,
+                              unsigned int w, unsigned int h)
 {
     unsigned int x, y;
     const float *src_f;
@@ -706,7 +707,7 @@ struct d3dfmt_convertor_desc {
     void (*convert)(const BYTE *src, BYTE *dst, DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h);
 };
 
-const struct d3dfmt_convertor_desc convertors[] =
+static const struct d3dfmt_convertor_desc convertors[] =
 {
     {WINED3DFMT_R32F,       WINED3DFMT_R16F,        convert_r32f_r16f},
 };
@@ -733,7 +734,7 @@ static inline const struct d3dfmt_convertor_desc *find_convertor(WINED3DFORMAT f
  *  fmt: Requested destination format
  *
  *****************************************************************************/
-IWineD3DSurfaceImpl *surface_convert_format(IWineD3DSurfaceImpl *source, WINED3DFORMAT to_fmt) {
+static IWineD3DSurfaceImpl *surface_convert_format(IWineD3DSurfaceImpl *source, WINED3DFORMAT to_fmt) {
     IWineD3DSurface *ret = NULL;
     const struct d3dfmt_convertor_desc *conv;
     WINED3DLOCKED_RECT lock_src, lock_dst;

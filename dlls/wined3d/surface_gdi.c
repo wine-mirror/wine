@@ -42,7 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
  * to destroy all the GL things.
  *
  *****************************************************************************/
-ULONG WINAPI IWineGDISurfaceImpl_Release(IWineD3DSurface *iface) {
+static ULONG WINAPI IWineGDISurfaceImpl_Release(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->resource.ref);
     TRACE("(%p) : Releasing from %d\n", This, ref + 1);
@@ -245,7 +245,7 @@ IWineGDISurfaceImpl_Flip(IWineD3DSurface *iface,
  *  D3DERR_INVALIDCALL
  *
  *****************************************************************************/
-HRESULT WINAPI
+static HRESULT WINAPI
 IWineGDISurfaceImpl_LoadTexture(IWineD3DSurface *iface, BOOL srgb_mode)
 {
     ERR("Unsupported on X11 surfaces\n");
@@ -280,7 +280,7 @@ static int get_shift(DWORD color_mask) {
 }
 
 
-HRESULT WINAPI
+static HRESULT WINAPI
 IWineGDISurfaceImpl_SaveSnapshot(IWineD3DSurface *iface,
 const char* filename)
 {
@@ -366,7 +366,7 @@ const char* filename)
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineGDISurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
+static HRESULT WINAPI IWineGDISurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     WINED3DLOCKED_RECT lock;
     HRESULT hr;
@@ -436,7 +436,7 @@ HRESULT WINAPI IWineGDISurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineGDISurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
+static HRESULT WINAPI IWineGDISurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
     TRACE("(%p)->(%p)\n",This,hDC);
@@ -457,7 +457,7 @@ HRESULT WINAPI IWineGDISurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineGDISurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
+static HRESULT WINAPI IWineGDISurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     RGBQUAD col[256];
     IWineD3DPaletteImpl *pal = This->palette;
@@ -507,7 +507,7 @@ HRESULT WINAPI IWineGDISurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
  *  The return values of called methods on failure
  *
  *****************************************************************************/
-HRESULT WINAPI
+static HRESULT WINAPI
 IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
@@ -534,13 +534,13 @@ IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
     return WINED3D_OK;
 }
 
-void WINAPI IWineGDISurfaceImpl_GetGlDesc(IWineD3DSurface *iface, glDescriptor **glDescription) {
+static void WINAPI IWineGDISurfaceImpl_GetGlDesc(IWineD3DSurface *iface, glDescriptor **glDescription) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     FIXME("(%p) : Should not be called on a GDI surface\n", This);
     *glDescription = NULL;
 }
 
-HRESULT WINAPI IWineGDISurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, CONST RECT* pDirtyRect) {
+static HRESULT WINAPI IWineGDISurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, CONST RECT* pDirtyRect) {
     /* GDI surface data can only be in one location, the system memory dib section. So they are
      * always clean by definition.
      */
@@ -548,7 +548,7 @@ HRESULT WINAPI IWineGDISurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, CONST RE
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineGDISurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
+static HRESULT WINAPI IWineGDISurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
 
     /* Render targets depend on their hdc, and we can't create an hdc on a user pointer */

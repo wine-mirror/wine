@@ -376,7 +376,7 @@ static ULONG WINAPI IWineD3DImpl_Release(IWineD3D *iface) {
 /* Set the shader type for this device, depending on the given capabilities,
  * the device type, and the user preferences in wined3d_settings */
 
-void select_shader_mode(const WineD3D_GL_Info *gl_info, WINED3DDEVTYPE DeviceType, int *ps_selected, int *vs_selected)
+static void select_shader_mode(const WineD3D_GL_Info *gl_info, WINED3DDEVTYPE DeviceType, int *ps_selected, int *vs_selected)
 {
     if (wined3d_settings.vs_mode == VS_NONE) {
         *vs_selected = SHADER_NONE;
@@ -500,7 +500,7 @@ static DWORD ver_for_ext(GL_SupportedExt ext)
     return 0;
 }
 
-BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
+static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     const char *GL_Extensions    = NULL;
     const char *WGL_Extensions   = NULL;
     const char *gl_string        = NULL;
@@ -4052,7 +4052,7 @@ static void WINE_GLAPI warn_no_specular_func(const void *data)
     WARN("GL_EXT_secondary_color not supported\n");
 }
 
-void fillGLAttribFuncs(const WineD3D_GL_Info *gl_info)
+static void fillGLAttribFuncs(const WineD3D_GL_Info *gl_info)
 {
     position_funcs[WINED3DDECLTYPE_FLOAT1]      = invalid_func;
     position_funcs[WINED3DDECLTYPE_FLOAT2]      = invalid_func;

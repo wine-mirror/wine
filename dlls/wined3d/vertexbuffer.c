@@ -143,7 +143,7 @@ static inline void fixup_transformed_pos(float *p) {
     p[3] = w;
 }
 
-DWORD *find_conversion_shift(IWineD3DVertexBufferImpl *This, const WineDirect3DVertexStridedData *strided, DWORD stride)
+static DWORD *find_conversion_shift(IWineD3DVertexBufferImpl *This, const WineDirect3DVertexStridedData *strided, DWORD stride)
 {
     DWORD *ret, i, shift, j, type;
     DWORD orig_type_size;
@@ -280,7 +280,7 @@ static inline BOOL check_attribute(IWineD3DVertexBufferImpl *This, const WineDir
     return ret;
 }
 
-inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *This)
+static inline BOOL IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *This)
 {
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     BOOL ret = FALSE;
@@ -744,7 +744,7 @@ static HRESULT  WINAPI IWineD3DVertexBufferImpl_Lock(IWineD3DVertexBuffer *iface
     /* TODO: check Flags compatibility with This->currentDesc.Usage (see MSDN) */
     return WINED3D_OK;
 }
-HRESULT  WINAPI IWineD3DVertexBufferImpl_Unlock(IWineD3DVertexBuffer *iface) {
+static HRESULT WINAPI IWineD3DVertexBufferImpl_Unlock(IWineD3DVertexBuffer *iface) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *) iface;
     LONG lockcount;
     TRACE("(%p)\n", This);
