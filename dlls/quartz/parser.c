@@ -747,7 +747,7 @@ static HRESULT WINAPI Parser_PullPin_Disconnect(IPin * iface)
     return hr;
 }
 
-HRESULT WINAPI Parser_PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI Parser_PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
     HRESULT hr;
 

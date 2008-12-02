@@ -81,7 +81,7 @@ struct IAMFilterData
 {
     const IAMFilterDataVtbl *lpVtbl;
 };
-const GUID IID_IAMFilterData = {
+static const GUID IID_IAMFilterData = {
  0x97f7c4d4, 0x547b, 0x4a5f, { 0x83,0x32, 0x53,0x64,0x30,0xad,0x2e,0x4d }
 };
 

@@ -241,26 +241,6 @@ const char * qzdebugstr_guid( const GUID * id )
     return debugstr_guid(id);
 }
 
-/***********************************************************************
- *              qzdebugstr_State (internal)
- *
- * Gives a text version of the FILTER_STATE enumeration
- */
-const char * qzdebugstr_State(FILTER_STATE state)
-{
-    switch (state)
-    {
-    case State_Stopped:
-        return "State_Stopped";
-    case State_Running:
-        return "State_Running";
-    case State_Paused:
-        return "State_Paused";
-    default:
-        return "State_Unknown";
-    }
-}
-
 LONG WINAPI AmpFactorToDB(LONG ampfactor)
 {
     FIXME("(%d) Stub!\n", ampfactor);
