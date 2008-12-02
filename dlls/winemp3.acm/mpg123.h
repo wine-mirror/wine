@@ -161,9 +161,6 @@ extern void make_decode_tables(long scale);
 extern void dct64(real *,real *,real *);
 
 extern unsigned char *conv16to8;
-extern const long freqs[9];
 extern real muls[27][64];
 extern real decwin[512+32];
 extern real *pnts[5];
-
-extern const struct parameter param;
