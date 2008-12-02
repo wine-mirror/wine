@@ -420,6 +420,7 @@ extern int num_lock;
 
 /* Checking of API calls */
 /* --------------------- */
+#ifndef WINE_NO_DEBUG_MSGS
 #define checkGLcall(A)                                          \
 {                                                               \
     GLint err = glGetError();                                   \
@@ -431,7 +432,10 @@ extern int num_lock;
             debug_glerror(err), err, A, __FILE__, __LINE__);    \
        err = glGetError();                                      \
     } while (err != GL_NO_ERROR);                               \
-} 
+}
+#else
+#define checkGLcall(A) do {} while(0);
+#endif
 
 /* Trace routines / diagnostics */
 /* ---------------------------- */
