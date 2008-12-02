@@ -48,7 +48,7 @@
 @ stub KefReleaseSpinLockFromDpcLevel
 @ stub KiAcquireSpinLock
 @ stub KiReleaseSpinLock
-@ stdcall ObfDereferenceObject(ptr)
+@ stdcall -norelay ObfDereferenceObject(ptr)
 @ stub ObfReferenceObject
 @ stub RtlPrefetchMemoryNonTemporal
 @ cdecl -i386 -norelay RtlUlongByteSwap() ntdll.RtlUlongByteSwap

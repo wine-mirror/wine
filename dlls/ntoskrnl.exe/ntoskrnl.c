@@ -999,7 +999,12 @@ NTSTATUS WINAPI ObReferenceObjectByHandle( HANDLE obj, ACCESS_MASK access,
 /***********************************************************************
  *           ObfDereferenceObject   (NTOSKRNL.EXE.@)
  */
+#ifdef DEFINE_FASTCALL1_ENTRYPOINT
+DEFINE_FASTCALL1_ENTRYPOINT( ObfDereferenceObject )
+void WINAPI __regs_ObfDereferenceObject( VOID *obj )
+#else
 void WINAPI ObfDereferenceObject( VOID *obj )
+#endif
 {
     FIXME( "stub: %p\n", obj );
 }
