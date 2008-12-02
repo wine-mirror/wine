@@ -41,8 +41,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 static BOOL BSTR_bCache = TRUE; /* Cache allocations to minimise alloc calls? */
 
-HMODULE OLEAUT32_hModule = NULL;
-
 /******************************************************************************
  * BSTR  {OLEAUT32}
  *
@@ -697,6 +695,7 @@ HRESULT WINAPI OleTranslateColor(
 }
 
 extern HRESULT WINAPI OLEAUTPS_DllGetClassObject(REFCLSID, REFIID, LPVOID *) DECLSPEC_HIDDEN;
+extern BOOL WINAPI OLEAUTPS_DllMain(HINSTANCE, DWORD, LPVOID) DECLSPEC_HIDDEN;
 
 extern void _get_STDFONT_CF(LPVOID *);
 extern void _get_STDPIC_CF(LPVOID *);
@@ -830,18 +829,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
  */
 BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD fdwReason, LPVOID lpvReserved)
 {
-  TRACE("(%p,%d,%p)\n", hInstDll, fdwReason, lpvReserved);
-
-  switch (fdwReason) {
-  case DLL_PROCESS_ATTACH:
-    DisableThreadLibraryCalls(hInstDll);
-    OLEAUT32_hModule = hInstDll;
-    break;
-  case DLL_PROCESS_DETACH:
-    break;
-  };
-
-  return TRUE;
+    return OLEAUTPS_DllMain( hInstDll, fdwReason, lpvReserved );
 }
 
 /***********************************************************************
