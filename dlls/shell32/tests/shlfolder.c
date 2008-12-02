@@ -1488,6 +1488,123 @@ static void testSHGetFolderPathAndSubDirA(void)
     RemoveDirectoryA(testpath);
 }
 
+static const char *wine_dbgstr_w(LPCWSTR str)
+{
+    static char buf[512];
+    if (!str)
+        return "(null)";
+    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, sizeof(buf), NULL, NULL);
+    return buf;
+}
+
+static void test_LocalizedNames(void)
+{
+    static char cCurrDirA[MAX_PATH];
+    WCHAR cCurrDirW[MAX_PATH], tempbufW[25];
+    IShellFolder *IDesktopFolder, *testIShellFolder;
+    ITEMIDLIST *newPIDL;
+    int len;
+    HRESULT hr;
+    static char resourcefile[MAX_PATH];
+    DWORD res;
+    HANDLE file;
+    STRRET strret;
+
+    static const char desktopini_contents1[] =
+        "[.ShellClassInfo]\r\n"
+        "LocalizedResourceName=@";
+    static const char desktopini_contents2[] =
+        ",-1\r\n";
+    static WCHAR foldernameW[] = {'t','e','s','t','f','o','l','d','e','r',0};
+    static const WCHAR folderdisplayW[] = {'F','o','l','d','e','r',' ','N','a','m','e',' ','R','e','s','o','u','r','c','e',0};
+
+    /* create folder with desktop.ini and localized name in GetModuleFileNameA(NULL) */
+    CreateDirectoryA(".\\testfolder", NULL);
+
+    SetFileAttributesA(".\\testfolder", GetFileAttributesA(".\\testfolder")|FILE_ATTRIBUTE_SYSTEM);
+
+    GetModuleFileNameA(NULL, resourcefile, MAX_PATH);
+
+    file = CreateFileA(".\\testfolder\\desktop.ini", GENERIC_WRITE, 0, NULL,
+                         CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileA failed %i\n", GetLastError());
+    ok(WriteFile(file, desktopini_contents1, strlen(desktopini_contents1), &res, NULL) &&
+       WriteFile(file, resourcefile, strlen(resourcefile), &res, NULL) &&
+       WriteFile(file, desktopini_contents2, strlen(desktopini_contents2), &res, NULL),
+       "WriteFile failed %i\n", GetLastError());
+    CloseHandle(file);
+
+    /* get IShellFolder for parent */
+    GetCurrentDirectoryA(MAX_PATH, cCurrDirA);
+    len = lstrlenA(cCurrDirA);
+
+    if (len == 0) {
+        trace("GetCurrentDirectoryA returned empty string. Skipping test_LocalizedNames\n");
+        goto cleanup;
+    }
+    if(cCurrDirA[len-1] == '\\')
+        cCurrDirA[len-1] = 0;
+
+    MultiByteToWideChar(CP_ACP, 0, cCurrDirA, -1, cCurrDirW, MAX_PATH);
+
+    hr = SHGetDesktopFolder(&IDesktopFolder);
+    ok(hr == S_OK, "SHGetDesktopfolder failed %08x\n", hr);
+
+    hr = IShellFolder_ParseDisplayName(IDesktopFolder, NULL, NULL, cCurrDirW, NULL, &newPIDL, 0);
+    ok(hr == S_OK, "ParseDisplayName failed %08x\n", hr);
+
+    hr = IShellFolder_BindToObject(IDesktopFolder, newPIDL, NULL, (REFIID)&IID_IShellFolder, (LPVOID *)&testIShellFolder);
+    ok(hr == S_OK, "BindToObject failed %08x\n", hr);
+
+    IMalloc_Free(ppM, newPIDL);
+
+    /* windows reads the display name from the resource */
+    hr = IShellFolder_ParseDisplayName(testIShellFolder, NULL, NULL, foldernameW, NULL, &newPIDL, 0);
+    ok(hr == S_OK, "ParseDisplayName failed %08x\n", hr);
+
+    hr = IShellFolder_GetDisplayNameOf(testIShellFolder, newPIDL, SHGDN_INFOLDER, &strret);
+    ok(hr == S_OK, "ParseDisplayName failed %08x\n", hr);
+
+    if (SUCCEEDED(hr) && pStrRetToBufW)
+    {
+        hr = pStrRetToBufW(&strret, newPIDL, tempbufW, sizeof(tempbufW)/sizeof(WCHAR));
+        ok (SUCCEEDED(hr), "StrRetToBufW failed! hr = %08x\n", hr);
+        todo_wine ok (!lstrcmpiW(tempbufW, folderdisplayW), "GetDisplayNameOf returned %s\n", wine_dbgstr_w(tempbufW));
+    }
+
+    /* editing name is also read from the resource */
+    hr = IShellFolder_GetDisplayNameOf(testIShellFolder, newPIDL, SHGDN_INFOLDER|SHGDN_FOREDITING, &strret);
+    ok(hr == S_OK, "ParseDisplayName failed %08x\n", hr);
+
+    if (SUCCEEDED(hr) && pStrRetToBufW)
+    {
+        hr = pStrRetToBufW(&strret, newPIDL, tempbufW, sizeof(tempbufW)/sizeof(WCHAR));
+        ok (SUCCEEDED(hr), "StrRetToBufW failed! hr = %08x\n", hr);
+        todo_wine ok (!lstrcmpiW(tempbufW, folderdisplayW), "GetDisplayNameOf returned %s\n", wine_dbgstr_w(tempbufW));
+    }
+
+    /* parsing name is unchanged */
+    hr = IShellFolder_GetDisplayNameOf(testIShellFolder, newPIDL, SHGDN_INFOLDER|SHGDN_FORPARSING, &strret);
+    ok(hr == S_OK, "ParseDisplayName failed %08x\n", hr);
+
+    if (SUCCEEDED(hr) && pStrRetToBufW)
+    {
+        hr = pStrRetToBufW(&strret, newPIDL, tempbufW, sizeof(tempbufW)/sizeof(WCHAR));
+        ok (SUCCEEDED(hr), "StrRetToBufW failed! hr = %08x\n", hr);
+        ok (!lstrcmpiW(tempbufW, foldernameW), "GetDisplayNameOf returned %s\n", wine_dbgstr_w(tempbufW));
+    }
+
+    IShellFolder_Release(IDesktopFolder);
+    IShellFolder_Release(testIShellFolder);
+
+    IMalloc_Free(ppM, newPIDL);
+
+cleanup:
+    DeleteFileA(".\\testfolder\\desktop.ini");
+    SetFileAttributesA(".\\testfolder", GetFileAttributesA(".\\testfolder")&~FILE_ATTRIBUTE_SYSTEM);
+    RemoveDirectoryA(".\\testfolder");
+}
+
 
 START_TEST(shlfolder)
 {
@@ -1509,6 +1626,7 @@ START_TEST(shlfolder)
         testSHGetFolderPathAndSubDirA();
     else
         skip("SHGetFolderPathAndSubDirA not present\n");
+    test_LocalizedNames();
 
     OleUninitialize();
 }
