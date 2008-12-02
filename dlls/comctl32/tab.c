@@ -2662,7 +2662,10 @@ static inline LRESULT TAB_SetMinTabWidth (TAB_INFO *infoPtr, INT cx)
 
   TRACE("(%p,%d)\n", infoPtr, cx);
 
-  oldcx = infoPtr->tabMinWidth;
+  if (infoPtr->tabMinWidth < 0)
+    oldcx = DEFAULT_MIN_TAB_WIDTH;
+  else
+    oldcx = infoPtr->tabMinWidth;
   infoPtr->tabMinWidth = cx;
   TAB_SetItemBounds(infoPtr);
   return oldcx;

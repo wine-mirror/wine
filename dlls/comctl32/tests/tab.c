@@ -509,6 +509,9 @@ static void test_tab(INT nMinTabWidth)
 
     hwTab = create_tabcontrol(TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE);
     SendMessage(hwTab, TCM_SETMINTABWIDTH, 0, nMinTabWidth);
+    /* Get System default MinTabWidth */
+    if (nMinTabWidth < 0)
+        nMinTabWidth = SendMessage(hwTab, TCM_SETMINTABWIDTH, 0, nMinTabWidth);
 
     hdc = GetDC(hwTab);
     dpi = GetDeviceCaps(hdc, LOGPIXELSX);
@@ -663,10 +666,7 @@ static void test_getters_setters(HWND parent_wnd, INT nTabs)
                     "Parent after sequence, adding tab control to parent", TRUE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    todo_wine{
-        expect(DEFAULT_MIN_TAB_WIDTH, (int)SendMessage(hTab, TCM_SETMINTABWIDTH, 0, -1));
-    }
-    ok_sequence(sequences, TAB_SEQ_INDEX, set_min_tab_width_seq, "Set minTabWidth test sequence", FALSE);
+    ok(SendMessage(hTab, TCM_SETMINTABWIDTH, 0, -1) > 0,"TCM_SETMINTABWIDTH returned < 0\n");
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Set minTabWidth test parent sequence", FALSE);
 
     /* Testing GetItemCount */
