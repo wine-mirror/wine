@@ -1243,6 +1243,21 @@ typedef struct IWineD3DBaseTextureImpl
 
 } IWineD3DBaseTextureImpl;
 
+void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
+        const DWORD texture_states[WINED3D_HIGHEST_TEXTURE_STATE + 1],
+        const DWORD sampler_states[WINED3D_HIGHEST_SAMPLER_STATE + 1]);
+HRESULT basetexture_bind(IWineD3DBaseTexture *iface);
+void basetexture_cleanup(IWineD3DBaseTexture *iface);
+void basetexture_generate_mipmaps(IWineD3DBaseTexture *iface);
+WINED3DTEXTUREFILTERTYPE basetexture_get_autogen_filter_type(IWineD3DBaseTexture *iface);
+BOOL basetexture_get_dirty(IWineD3DBaseTexture *iface);
+DWORD basetexture_get_level_count(IWineD3DBaseTexture *iface);
+DWORD basetexture_get_lod(IWineD3DBaseTexture *iface);
+HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTexture *iface, WINED3DTEXTUREFILTERTYPE filter_type);
+BOOL basetexture_set_dirty(IWineD3DBaseTexture *iface, BOOL dirty);
+DWORD basetexture_set_lod(IWineD3DBaseTexture *iface, DWORD new_lod);
+void basetexture_unload(IWineD3DBaseTexture *iface);
+
 /*****************************************************************************
  * IWineD3DTexture implementation structure (extends IWineD3DBaseTextureImpl)
  */
@@ -1941,20 +1956,6 @@ unsigned int count_bits(unsigned int mask);
     extern DWORD WINAPI IWineD3DResourceImpl_GetPriority(IWineD3DResource *iface);
     extern WINED3DRESOURCETYPE WINAPI IWineD3DResourceImpl_GetType(IWineD3DResource *iface);
     void IWineD3DResourceImpl_CleanUp(IWineD3DResource *iface);
-
-    /* IWineD3DBaseTexture */
-    void IWineD3DBaseTextureImpl_CleanUp(IWineD3DBaseTexture *iface);
-    extern void WINAPI IWineD3DBaseTextureImpl_UnLoad(IWineD3DBaseTexture *iface);
-    extern DWORD WINAPI IWineD3DBaseTextureImpl_SetLOD(IWineD3DBaseTexture *iface, DWORD LODNew);
-    extern DWORD WINAPI IWineD3DBaseTextureImpl_GetLOD(IWineD3DBaseTexture *iface);
-    extern DWORD WINAPI IWineD3DBaseTextureImpl_GetLevelCount(IWineD3DBaseTexture *iface);
-    extern HRESULT WINAPI IWineD3DBaseTextureImpl_SetAutoGenFilterType(IWineD3DBaseTexture *iface, WINED3DTEXTUREFILTERTYPE FilterType);
-    extern WINED3DTEXTUREFILTERTYPE WINAPI IWineD3DBaseTextureImpl_GetAutoGenFilterType(IWineD3DBaseTexture *iface);
-    extern void WINAPI IWineD3DBaseTextureImpl_GenerateMipSubLevels(IWineD3DBaseTexture *iface);
-    extern BOOL WINAPI IWineD3DBaseTextureImpl_SetDirty(IWineD3DBaseTexture *iface, BOOL);
-    extern BOOL WINAPI IWineD3DBaseTextureImpl_GetDirty(IWineD3DBaseTexture *iface);
-    extern HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface);
-    extern void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface, const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1], const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]);
 
     /* IWineD3DVertexBuffer */
     extern const BYTE *IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer* iface, DWORD iOffset, GLint *vbo);

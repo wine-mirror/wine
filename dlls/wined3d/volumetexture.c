@@ -145,7 +145,7 @@ static void WINAPI IWineD3DVolumeTextureImpl_UnLoad(IWineD3DVolumeTexture *iface
         IWineD3DVolume_UnLoad(This->volumes[i]);
     }
 
-    IWineD3DBaseTextureImpl_UnLoad((IWineD3DBaseTexture *) iface);
+    basetexture_unload((IWineD3DBaseTexture *)iface);
 }
 
 static WINED3DRESOURCETYPE WINAPI IWineD3DVolumeTextureImpl_GetType(IWineD3DVolumeTexture *iface) {
@@ -160,42 +160,42 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetParent(IWineD3DVolumeTexture 
    IWineD3DVolumeTexture IWineD3DBaseTexture parts follow
    ****************************************************** */
 static DWORD WINAPI IWineD3DVolumeTextureImpl_SetLOD(IWineD3DVolumeTexture *iface, DWORD LODNew) {
-    return IWineD3DBaseTextureImpl_SetLOD((IWineD3DBaseTexture *)iface, LODNew);
+    return basetexture_set_lod((IWineD3DBaseTexture *)iface, LODNew);
 }
 
 static DWORD WINAPI IWineD3DVolumeTextureImpl_GetLOD(IWineD3DVolumeTexture *iface) {
-    return IWineD3DBaseTextureImpl_GetLOD((IWineD3DBaseTexture *)iface);
+    return basetexture_get_lod((IWineD3DBaseTexture *)iface);
 }
 
 static DWORD WINAPI IWineD3DVolumeTextureImpl_GetLevelCount(IWineD3DVolumeTexture *iface) {
-    return IWineD3DBaseTextureImpl_GetLevelCount((IWineD3DBaseTexture *)iface);
+    return basetexture_get_level_count((IWineD3DBaseTexture *)iface);
 }
 
 static HRESULT WINAPI IWineD3DVolumeTextureImpl_SetAutoGenFilterType(IWineD3DVolumeTexture *iface, WINED3DTEXTUREFILTERTYPE FilterType) {
-  return IWineD3DBaseTextureImpl_SetAutoGenFilterType((IWineD3DBaseTexture *)iface, FilterType);
+  return basetexture_set_autogen_filter_type((IWineD3DBaseTexture *)iface, FilterType);
 }
 
 static WINED3DTEXTUREFILTERTYPE WINAPI IWineD3DVolumeTextureImpl_GetAutoGenFilterType(IWineD3DVolumeTexture *iface) {
-  return IWineD3DBaseTextureImpl_GetAutoGenFilterType((IWineD3DBaseTexture *)iface);
+  return basetexture_get_autogen_filter_type((IWineD3DBaseTexture *)iface);
 }
 
 static void WINAPI IWineD3DVolumeTextureImpl_GenerateMipSubLevels(IWineD3DVolumeTexture *iface) {
-    IWineD3DBaseTextureImpl_GenerateMipSubLevels((IWineD3DBaseTexture *)iface);
+    basetexture_generate_mipmaps((IWineD3DBaseTexture *)iface);
 }
 
 /* Internal function, No d3d mapping */
 static BOOL WINAPI IWineD3DVolumeTextureImpl_SetDirty(IWineD3DVolumeTexture *iface, BOOL dirty) {
-    return IWineD3DBaseTextureImpl_SetDirty((IWineD3DBaseTexture *)iface, dirty);
+    return basetexture_set_dirty((IWineD3DBaseTexture *)iface, dirty);
 }
 
 static BOOL WINAPI IWineD3DVolumeTextureImpl_GetDirty(IWineD3DVolumeTexture *iface) {
-    return IWineD3DBaseTextureImpl_GetDirty((IWineD3DBaseTexture *)iface);
+    return basetexture_get_dirty((IWineD3DBaseTexture *)iface);
 }
 
 static HRESULT WINAPI IWineD3DVolumeTextureImpl_BindTexture(IWineD3DVolumeTexture *iface) {
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
     TRACE("(%p) : relay to BaseTexture\n", This);
-    return IWineD3DBaseTextureImpl_BindTexture((IWineD3DBaseTexture *)iface);
+    return basetexture_bind((IWineD3DBaseTexture *)iface);
 }
 
 static UINT WINAPI IWineD3DVolumeTextureImpl_GetTextureDimensions(IWineD3DVolumeTexture *iface) {
@@ -216,7 +216,7 @@ static void WINAPI IWineD3DVolumeTextureImpl_ApplyStateChanges(IWineD3DVolumeTex
                                                         const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]) {
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
     TRACE("(%p) : nothing to do, passing to base texture\n", This);
-    IWineD3DBaseTextureImpl_ApplyStateChanges((IWineD3DBaseTexture *)iface, textureStates, samplerStates);
+    basetexture_apply_state_changes((IWineD3DBaseTexture *)iface, textureStates, samplerStates);
 }
 
 
@@ -234,7 +234,7 @@ static void WINAPI IWineD3DVolumeTextureImpl_Destroy(IWineD3DVolumeTexture *ifac
             D3DCB_DestroyVolume(This->volumes[i]);
         }
     }
-    IWineD3DBaseTextureImpl_CleanUp((IWineD3DBaseTexture *) iface);
+    basetexture_cleanup((IWineD3DBaseTexture *)iface);
     HeapFree(GetProcessHeap(), 0, This);
 }
 
