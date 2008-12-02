@@ -1837,7 +1837,7 @@ static void III_hybrid(real fsIn[SBLIMIT][SSLIMIT],real tsOut[SSLIMIT][SBLIMIT],
    int *blc = mp->hybrid_blc;
    real *rawout1,*rawout2;
    int bt;
-   int sb = 0;
+   unsigned int sb = 0;
 
    {
      int b = blc[ch];
@@ -1986,7 +1986,7 @@ int do_layer3(struct frame *fr,unsigned char *pcm_sample,int *pcm_point)
       switch(single) {
         case 3:
           {
-            register int i;
+            register unsigned int i;
             register real *in0 = (real *) hybridIn[0],*in1 = (real *) hybridIn[1];
             for(i=0;i<SSLIMIT*gr_info->maxb;i++,in0++)
               *in0 = (*in0 + *in1++); /* *0.5 done by pow-scale */
@@ -1994,7 +1994,7 @@ int do_layer3(struct frame *fr,unsigned char *pcm_sample,int *pcm_point)
           break;
         case 1:
           {
-            register int i;
+            register unsigned int i;
             register real *in0 = (real *) hybridIn[0],*in1 = (real *) hybridIn[1];
             for(i=0;i<SSLIMIT*gr_info->maxb;i++)
               *in0++ = *in1++;
