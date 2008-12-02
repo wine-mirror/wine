@@ -97,7 +97,6 @@ extern HRESULT DXDiag_CreateDXDiagProvider(LPCLASSFACTORY iface, LPUNKNOWN punkO
 
 /** internal factory */
 extern HRESULT DXDiag_CreateDXDiagContainer(REFIID riid, LPVOID *ppobj);
-extern HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont);
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dxdiagn.dll

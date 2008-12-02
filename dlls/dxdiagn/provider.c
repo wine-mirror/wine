@@ -37,6 +37,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
 
+static HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont);
+
 /* IDxDiagProvider IUnknown parts follow: */
 static HRESULT WINAPI IDxDiagProviderImpl_QueryInterface(PDXDIAGPROVIDER iface, REFIID riid, LPVOID *ppobj)
 {
@@ -699,7 +701,7 @@ out_show_filters:
   return hr;
 }
 
-HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont) {
+static HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont) {
   HRESULT hr = S_OK;
   static const WCHAR DxDiag_SystemInfo[] = {'D','x','D','i','a','g','_','S','y','s','t','e','m','I','n','f','o',0};
   static const WCHAR DxDiag_SystemDevices[] = {'D','x','D','i','a','g','_','S','y','s','t','e','m','D','e','v','i','c','e','s',0};
