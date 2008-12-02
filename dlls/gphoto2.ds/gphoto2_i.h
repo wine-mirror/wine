@@ -103,16 +103,6 @@ struct tagActiveDS
 /* Helper functions */
 extern TW_UINT16 GPHOTO2_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action);
 
-/*  */
-extern TW_UINT16 GPHOTO2_ControlGroupHandler (
-	pTW_IDENTITY pOrigin, TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData);
-extern TW_UINT16 GPHOTO2_ImageGroupHandler (
-	pTW_IDENTITY pOrigin, TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData);
-extern TW_UINT16 GPHOTO2_AudioGroupHandler (
-	pTW_IDENTITY pOrigin, TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData);
-extern TW_UINT16 GPHOTO2_SourceManagerHandler (
-	pTW_IDENTITY pOrigin, TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData);
-
 /* Implementation of operation triplets
  * From Application to Source (Control Information) */
 TW_UINT16 GPHOTO2_CapabilityGet (pTW_IDENTITY pOrigin, TW_MEMREF pData);

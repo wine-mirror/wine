@@ -39,8 +39,8 @@
 #include "wine/debug.h"
 #include "resource.h"
 
-LPCSTR settings_key = "Software\\Wine\\Gphoto2";
-LPCSTR settings_value = "SkipUI";
+static const char settings_key[] = "Software\\Wine\\Gphoto2";
+static const char settings_value[] = "SkipUI";
 static BOOL disable_dialog;
 static HBITMAP static_bitmap;
 
