@@ -389,7 +389,7 @@ void ALSA_copyFormat(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2)
     else
         iLength = sizeof(WAVEFORMATEX) + wf1->cbSize;
     if (iLength > sizeof(WAVEFORMATPCMEX)) {
-        ERR("calculated %u bytes, capping to %u bytes\n", iLength, sizeof(WAVEFORMATPCMEX));
+        ERR("calculated %u bytes, capping\n", iLength);
         iLength = sizeof(WAVEFORMATPCMEX);
     }
     memcpy(wf2, wf1, iLength);
