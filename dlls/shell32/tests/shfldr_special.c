@@ -33,6 +33,9 @@
 /* Tests for My Network Places */
 static void test_parse_for_entire_network(void)
 {
+    static WCHAR my_network_places_path[] = {
+        ':',':','{','2','0','8','D','2','C','6','0','-','3','A','E','A','-',
+                    '1','0','6','9','-','A','2','D','7','-','0','8','0','0','2','B','3','0','3','0','9','D','}', 0 };
     static WCHAR entire_network_path[] = {
         ':',':','{','2','0','8','D','2','C','6','0','-','3','A','E','A','-',
                     '1','0','6','9','-','A','2','D','7','-','0','8','0','0','2','B','3','0','3','0','9','D',
@@ -48,7 +51,30 @@ static void test_parse_for_entire_network(void)
     hr = SHGetDesktopFolder(&psfDesktop);
     ok(hr == S_OK, "SHGetDesktopFolder failed with error 0x%x\n", hr);
 
+    hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, my_network_places_path, &eaten, &pidl, &attr);
+    ok(hr == S_OK, "IShellFolder_ParseDisplayName failed with error 0x%x\n", hr);
+    todo_wine
+    ok(eaten == 0xdeadbeef, "eaten should not have been set to %u\n", eaten);
+    expected_attr = SFGAO_HASSUBFOLDER|SFGAO_FOLDER|SFGAO_FILESYSANCESTOR|SFGAO_DROPTARGET|SFGAO_HASPROPSHEET|SFGAO_CANRENAME|SFGAO_CANLINK;
+    todo_wine
+    ok((attr == expected_attr) || /* Win9x, NT4 */
+       (attr == (expected_attr | SFGAO_STREAM)) || /* W2K */
+       (attr == (expected_attr | SFGAO_CANDELETE)) || /* XP, W2K3 */
+       (attr == (expected_attr | SFGAO_CANDELETE | SFGAO_NONENUMERATED)), /* Vista */
+       "Unexpected attributes : %08x\n", attr);
+
+    ILFree(pidl);
+
+    /* Start clean again */
+    eaten = 0xdeadbeef;
+    attr = ~0;
+
     hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, entire_network_path, &eaten, &pidl, &attr);
+    if (hr == HRESULT_FROM_WIN32(ERROR_BAD_NET_NAME) || hr == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER))
+    {
+        win_skip("'EntireNetwork' is not available on Win9x, NT4 and Vista\n");
+        return;
+    }
     ok(hr == S_OK, "IShellFolder_ParseDisplayName failed with error 0x%x\n", hr);
     todo_wine
     ok(eaten == 0xdeadbeef, "eaten should not have been set to %u\n", eaten);
