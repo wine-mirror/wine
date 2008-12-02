@@ -457,12 +457,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         object->num_contained_ps_consts_f = GL_LIMITS(pshader_constantsF);
         for (i = 0; i < MAX_CONST_B; ++i) {
             object->contained_ps_consts_b[i] = i;
-            object->changed.pixelShaderConstantsB[i] = TRUE;
+            object->changed.pixelShaderConstantsB |= (1 << i);
         }
         object->num_contained_ps_consts_b = MAX_CONST_B;
         for (i = 0; i < MAX_CONST_I; ++i) {
             object->contained_ps_consts_i[i] = i;
-            object->changed.pixelShaderConstantsI[i] = TRUE;
+            object->changed.pixelShaderConstantsI |= (1 << i);
         }
         object->num_contained_ps_consts_i = MAX_CONST_I;
 
@@ -514,13 +514,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         }
         object->num_contained_vs_consts_f = GL_LIMITS(vshader_constantsF);
         for (i = 0; i < MAX_CONST_B; ++i) {
-            object->changed.vertexShaderConstantsB[i] = TRUE;
             object->contained_vs_consts_b[i] = i;
+            object->changed.vertexShaderConstantsB |= (1 << i);
         }
         object->num_contained_vs_consts_b = MAX_CONST_B;
         for (i = 0; i < MAX_CONST_I; ++i) {
-            object->changed.vertexShaderConstantsI[i] = TRUE;
             object->contained_vs_consts_i[i] = i;
+            object->changed.vertexShaderConstantsI |= (1 << i);
         }
         object->num_contained_vs_consts_i = MAX_CONST_I;
         for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; i++) {
@@ -3538,7 +3538,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantB(
         TRACE("Set BOOL constant %u to %s\n", start + i, srcData[i]? "true":"false");
 
     for (i = start; i < cnt + start; ++i) {
-        This->updateStateBlock->changed.vertexShaderConstantsB[i] = TRUE;
+        This->updateStateBlock->changed.vertexShaderConstantsB |= (1 << i);
     }
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VERTEXSHADERCONSTANT);
@@ -3586,7 +3586,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantI(
            srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
 
     for (i = start; i < cnt + start; ++i) {
-        This->updateStateBlock->changed.vertexShaderConstantsI[i] = TRUE;
+        This->updateStateBlock->changed.vertexShaderConstantsI |= (1 << i);
     }
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VERTEXSHADERCONSTANT);
@@ -3971,7 +3971,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantB(
         TRACE("Set BOOL constant %u to %s\n", start + i, srcData[i]? "true":"false");
 
     for (i = start; i < cnt + start; ++i) {
-        This->updateStateBlock->changed.pixelShaderConstantsB[i] = TRUE;
+        This->updateStateBlock->changed.pixelShaderConstantsB |= (1 << i);
     }
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADERCONSTANT);
@@ -4019,7 +4019,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantI(
            srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
 
     for (i = start; i < cnt + start; ++i) {
-        This->updateStateBlock->changed.pixelShaderConstantsI[i] = TRUE;
+        This->updateStateBlock->changed.pixelShaderConstantsI |= (1 << i);
     }
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADERCONSTANT);
@@ -4903,25 +4903,29 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface, IW
         }
     }
     for(i = 0; i < MAX_CONST_I; i++) {
-        if(object->changed.vertexShaderConstantsI[i]) {
+        if (object->changed.vertexShaderConstantsI & (1 << i))
+        {
             object->contained_vs_consts_i[object->num_contained_vs_consts_i] = i;
             object->num_contained_vs_consts_i++;
         }
     }
     for(i = 0; i < MAX_CONST_B; i++) {
-        if(object->changed.vertexShaderConstantsB[i]) {
+        if (object->changed.vertexShaderConstantsB & (1 << i))
+        {
             object->contained_vs_consts_b[object->num_contained_vs_consts_b] = i;
             object->num_contained_vs_consts_b++;
         }
     }
     for(i = 0; i < MAX_CONST_I; i++) {
-        if(object->changed.pixelShaderConstantsI[i]) {
+        if (object->changed.pixelShaderConstantsI & (1 << i))
+        {
             object->contained_ps_consts_i[object->num_contained_ps_consts_i] = i;
             object->num_contained_ps_consts_i++;
         }
     }
     for(i = 0; i < MAX_CONST_B; i++) {
-        if(object->changed.pixelShaderConstantsB[i]) {
+        if (object->changed.pixelShaderConstantsB & (1 << i))
+        {
             object->contained_ps_consts_b[object->num_contained_ps_consts_b] = i;
             object->num_contained_ps_consts_b++;
         }

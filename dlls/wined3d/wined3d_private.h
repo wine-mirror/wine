@@ -1662,12 +1662,12 @@ typedef struct SAVEDSTATES {
         BOOL                      clipplane[MAX_CLIPPLANES];
         BOOL                      vertexDecl;
         BOOL                      pixelShader;
-        BOOL                      pixelShaderConstantsB[MAX_CONST_B];
-        BOOL                      pixelShaderConstantsI[MAX_CONST_I];
+        WORD                      pixelShaderConstantsB;
+        WORD                      pixelShaderConstantsI;
         BOOL                     *pixelShaderConstantsF;
         BOOL                      vertexShader;
-        BOOL                      vertexShaderConstantsB[MAX_CONST_B];
-        BOOL                      vertexShaderConstantsI[MAX_CONST_I];
+        WORD                      vertexShaderConstantsB;
+        WORD                      vertexShaderConstantsI;
         BOOL                     *vertexShaderConstantsF;
         BOOL                      scissorRect;
 } SAVEDSTATES;
