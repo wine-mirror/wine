@@ -82,11 +82,6 @@ typedef struct
 
 MediaCatMoniker * DEVENUM_IMediaCatMoniker_Construct(void);
 HRESULT DEVENUM_IEnumMoniker_Construct(HKEY hkey, IEnumMoniker ** ppEnumMoniker);
-HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
-    ICreateDevEnum * iface,
-    REFCLSID clsidDeviceClass,
-    IEnumMoniker **ppEnumMoniker,
-    DWORD dwFlags);
 
 extern ClassFactoryImpl DEVENUM_ClassFactory;
 extern CreateDevEnumImpl DEVENUM_CreateDevEnum;

@@ -318,7 +318,7 @@ static void DEVENUM_ReadPins(HKEY hkeyFilterClass, REGFILTER2 *rgf2)
     rgf2->u.s.rgPins = rgPins;
 }
 
-static HRESULT DEVENUM_RegisterLegacyAmFilters()
+static HRESULT DEVENUM_RegisterLegacyAmFilters(void)
 {
     HKEY hkeyFilter = NULL;
     DWORD dwFilterSubkeys, i;
@@ -453,7 +453,7 @@ static HRESULT DEVENUM_RegisterLegacyAmFilters()
 /**********************************************************************
  * DEVENUM_ICreateDevEnum_CreateClassEnumerator
  */
-HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
+static HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     ICreateDevEnum * iface,
     REFCLSID clsidDeviceClass,
     IEnumMoniker **ppEnumMoniker,
