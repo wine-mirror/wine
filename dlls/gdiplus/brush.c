@@ -929,6 +929,20 @@ GpStatus WINGDIPAPI GdipGetTextureWrapMode(GpTexture *brush, GpWrapMode *wrapmod
 }
 
 /******************************************************************************
+ * GdipMultiplyTextureTransform [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipMultiplyTextureTransform(GpTexture* brush,
+    GDIPCONST GpMatrix *matrix, GpMatrixOrder order)
+{
+    TRACE("(%p, %p, %d)\n", brush, matrix, order);
+
+    if(!brush || !matrix)
+        return InvalidParameter;
+
+    return GdipMultiplyMatrix(brush->transform, matrix, order);
+}
+
+/******************************************************************************
  * GdipResetTextureTransform [GDIPLUS.@]
  */
 GpStatus WINGDIPAPI GdipResetTextureTransform(GpTexture* brush)

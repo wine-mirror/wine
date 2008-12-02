@@ -446,7 +446,7 @@
 @ stdcall GdipMultiplyMatrix(ptr ptr long)
 @ stub GdipMultiplyPathGradientTransform
 @ stub GdipMultiplyPenTransform
-@ stub GdipMultiplyTextureTransform
+@ stdcall GdipMultiplyTextureTransform(ptr ptr long)
 @ stdcall GdipMultiplyWorldTransform(ptr ptr long)
 @ stdcall GdipNewInstalledFontCollection(ptr)
 @ stdcall GdipNewPrivateFontCollection(ptr)
