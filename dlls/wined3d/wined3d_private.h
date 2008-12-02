@@ -1119,6 +1119,18 @@ typedef struct IWineD3DResourceImpl
     IWineD3DResourceClass   resource;
 } IWineD3DResourceImpl;
 
+void resource_cleanup(IWineD3DResource *iface);
+HRESULT resource_free_private_data(IWineD3DResource *iface, REFGUID guid);
+HRESULT resource_get_device(IWineD3DResource *iface, IWineD3DDevice **device);
+HRESULT resource_get_parent(IWineD3DResource *iface, IUnknown **parent);
+DWORD resource_get_priority(IWineD3DResource *iface);
+HRESULT resource_get_private_data(IWineD3DResource *iface, REFGUID guid,
+        void *data, DWORD *data_size);
+WINED3DRESOURCETYPE resource_get_type(IWineD3DResource *iface);
+DWORD resource_set_priority(IWineD3DResource *iface, DWORD new_priority);
+HRESULT resource_set_private_data(IWineD3DResource *iface, REFGUID guid,
+        const void *data, DWORD data_size, DWORD flags);
+
 /* Tests show that the start address of resources is 32 byte aligned */
 #define RESOURCE_ALIGNMENT 32
 
@@ -1946,16 +1958,6 @@ unsigned int count_bits(unsigned int mask);
  *
  * Note: Only require classes which are subclassed, ie resource, basetexture, 
  */
-    /* IWineD3DResource */
-    extern HRESULT WINAPI IWineD3DResourceImpl_GetParent(IWineD3DResource *iface, IUnknown **pParent);
-    extern HRESULT WINAPI IWineD3DResourceImpl_GetDevice(IWineD3DResource *iface, IWineD3DDevice ** ppDevice);
-    extern HRESULT WINAPI IWineD3DResourceImpl_SetPrivateData(IWineD3DResource *iface, REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags);
-    extern HRESULT WINAPI IWineD3DResourceImpl_GetPrivateData(IWineD3DResource *iface, REFGUID  refguid, void * pData, DWORD * pSizeOfData);
-    extern HRESULT WINAPI IWineD3DResourceImpl_FreePrivateData(IWineD3DResource *iface, REFGUID  refguid);
-    extern DWORD WINAPI IWineD3DResourceImpl_SetPriority(IWineD3DResource *iface, DWORD  PriorityNew);
-    extern DWORD WINAPI IWineD3DResourceImpl_GetPriority(IWineD3DResource *iface);
-    extern WINED3DRESOURCETYPE WINAPI IWineD3DResourceImpl_GetType(IWineD3DResource *iface);
-    void IWineD3DResourceImpl_CleanUp(IWineD3DResource *iface);
 
     /* IWineD3DVertexBuffer */
     extern const BYTE *IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer* iface, DWORD iOffset, GLint *vbo);

@@ -40,7 +40,8 @@ void basetexture_cleanup(IWineD3DBaseTexture *iface)
         glDeleteTextures(1, &This->baseTexture.textureName);
         LEAVE_GL();
     }
-    IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
+
+    resource_cleanup((IWineD3DResource *)iface);
 }
 
 void basetexture_unload(IWineD3DBaseTexture *iface)

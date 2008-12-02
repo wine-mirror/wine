@@ -62,7 +62,7 @@ static ULONG WINAPI IWineGDISurfaceImpl_Release(IWineD3DSurface *iface) {
 
         HeapFree(GetProcessHeap(), 0, This->palette9);
 
-        IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
+        resource_cleanup((IWineD3DResource *)iface);
 
         if(This->overlay_dest) {
             list_remove(&This->overlay_entry);
