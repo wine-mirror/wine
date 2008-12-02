@@ -3434,7 +3434,8 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
          */
         LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
         {
-            if(!strcmpiW(font_link->font_name, FaceName))
+            if(!strcmpiW(font_link->font_name, FaceName) ||
+               (psub && !strcmpiW(font_link->font_name,psub->to.name)))
             {
                 TRACE("found entry in system list\n");
                 LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
