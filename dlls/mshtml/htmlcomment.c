@@ -139,7 +139,7 @@ static const IHTMLCommentElementVtbl HTMLCommentElementVtbl = {
 
 #define HTMLCOMMENT_NODE_THIS(iface) DEFINE_THIS2(HTMLCommentElement, element.node, iface)
 
-HRESULT HTMLCommentElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static HRESULT HTMLCommentElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
     HTMLCommentElement *This = HTMLCOMMENT_NODE_THIS(iface);
 
@@ -156,7 +156,7 @@ HRESULT HTMLCommentElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     return S_OK;
 }
 
-void HTMLCommentElement_destructor(HTMLDOMNode *iface)
+static void HTMLCommentElement_destructor(HTMLDOMNode *iface)
 {
     HTMLCommentElement *This = HTMLCOMMENT_NODE_THIS(iface);
 

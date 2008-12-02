@@ -655,7 +655,6 @@ void remove_doc_tasks(const HTMLDocument*);
 DWORD set_task_timer(HTMLDocument*,DWORD,BOOL,IDispatch*);
 HRESULT clear_task_timer(HTMLDocument*,BOOL,DWORD);
 
-HRESULT get_typeinfo(tid_t,ITypeInfo**);
 void release_typelib(void);
 void call_disp_func(HTMLDocument*,IDispatch*,IDispatch*);
 

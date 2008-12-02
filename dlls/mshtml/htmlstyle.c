@@ -281,7 +281,7 @@ HRESULT get_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, BSTR
     return S_OK;
 }
 
-HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *p, DWORD flags)
+static HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *p, DWORD flags)
 {
     nsAString str_value;
     const PRUnichar *value;
@@ -366,7 +366,7 @@ static inline HRESULT set_style_pos(HTMLStyle *This, styleid_t sid, float value)
     return set_style_attr(This, sid, szValue, 0);
 }
 
-HRESULT get_nsstyle_pos(HTMLStyle *This, styleid_t sid, float *p)
+static HRESULT get_nsstyle_pos(HTMLStyle *This, styleid_t sid, float *p)
 {
     nsAString str_value;
     HRESULT hres;

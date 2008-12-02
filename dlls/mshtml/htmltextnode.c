@@ -149,7 +149,7 @@ static const IHTMLDOMTextNodeVtbl HTMLDOMTextNodeVtbl = {
 
 #define HTMLTEXT_NODE_THIS(iface) DEFINE_THIS2(HTMLDOMTextNode, node, iface)
 
-HRESULT HTMLDOMTextNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static HRESULT HTMLDOMTextNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
     HTMLDOMTextNode *This = HTMLTEXT_NODE_THIS(iface);
 
@@ -166,7 +166,7 @@ HRESULT HTMLDOMTextNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     return S_OK;
 }
 
-void HTMLDOMTextNode_destructor(HTMLDOMNode *iface)
+static void HTMLDOMTextNode_destructor(HTMLDOMNode *iface)
 {
     HTMLDOMTextNode *This = HTMLTEXT_NODE_THIS(iface);
 

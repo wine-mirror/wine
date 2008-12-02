@@ -119,7 +119,7 @@ static REFIID tid_ids[] = {
     &IID_IOmNavigator
 };
 
-HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
+static HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
 {
     HRESULT hres;
 
