@@ -81,9 +81,9 @@ enum win_wm_message {
 };
 
 typedef struct {
-    enum win_wm_message 	msg;	/* message identifier */
-    DWORD	                param;  /* parameter for this message */
-    HANDLE	                hEvent;	/* if message is synchronous, handle of event for synchro */
+    enum win_wm_message msg; /* message identifier */
+    DWORD_PTR param;         /* parameter for this message */
+    HANDLE hEvent;           /* if message is synchronous, handle of event for synchro */
 } ALSA_MSG;
 
 /* implement an in-process message ring for better performance
@@ -178,9 +178,9 @@ int	ALSA_InitRingMessage(ALSA_MSG_RING* omr);
 int	ALSA_DestroyRingMessage(ALSA_MSG_RING* omr);
 void	ALSA_ResetRingMessage(ALSA_MSG_RING* omr);
 void	ALSA_WaitRingMessage(ALSA_MSG_RING* omr, DWORD sleep);
-int	ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWORD param, BOOL wait);
-int	ALSA_RetrieveRingMessage(ALSA_MSG_RING* omr, enum win_wm_message *msg, DWORD *param, HANDLE *hEvent);
-int	ALSA_PeekRingMessage(ALSA_MSG_RING* omr, enum win_wm_message *msg, DWORD *param, HANDLE *hEvent);
+int	ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWORD_PTR param, BOOL wait);
+int	ALSA_RetrieveRingMessage(ALSA_MSG_RING* omr, enum win_wm_message *msg, DWORD_PTR *param, HANDLE *hEvent);
+int	ALSA_PeekRingMessage(ALSA_MSG_RING* omr, enum win_wm_message *msg, DWORD_PTR *param, HANDLE *hEvent);
 int	ALSA_CheckSetVolume(snd_hctl_t *hctl, int *out_left, int *out_right, int *out_min, int *out_max, int *out_step, int *new_left, int *new_right);
 
 const char * ALSA_getCmdString(enum win_wm_message msg);

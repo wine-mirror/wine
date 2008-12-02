@@ -69,9 +69,9 @@ DWORD            ALSA_WodNumDevs;
 /**************************************************************************
  * 			wodNotifyClient			[internal]
  */
-static DWORD wodNotifyClient(WINE_WAVEDEV* wwo, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
+static DWORD wodNotifyClient(WINE_WAVEDEV* wwo, WORD wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    TRACE("wMsg = 0x%04x dwParm1 = %04X dwParam2 = %04X\n", wMsg, dwParam1, dwParam2);
+    TRACE("wMsg = 0x%04x dwParm1 = %lx dwParam2 = %lx\n", wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
     case WOM_OPEN:
@@ -306,7 +306,7 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEDEV* wwo, BOOL force)
 	lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 	lpWaveHdr->dwFlags |= WHDR_DONE;
 
-	wodNotifyClient(wwo, WOM_DONE, (DWORD)lpWaveHdr, 0);
+	wodNotifyClient(wwo, WOM_DONE, (DWORD_PTR)lpWaveHdr, 0);
     }
     return  (lpWaveHdr && lpWaveHdr != wwo->lpPlayPtr && lpWaveHdr != wwo->lpLoopPtr) ?
         wodPlayer_NotifyWait(wwo, lpWaveHdr) : INFINITE;
@@ -341,7 +341,7 @@ static	void	wodPlayer_Reset(WINE_WAVEDEV* wwo, BOOL reset)
 
     if (reset) {
         enum win_wm_message	msg;
-        DWORD		        param;
+        DWORD_PTR	        param;
         HANDLE		        ev;
 
         /* remove any buffer */
@@ -404,12 +404,12 @@ static void wodPlayer_ProcessMessages(WINE_WAVEDEV* wwo)
 {
     LPWAVEHDR           lpWaveHdr;
     enum win_wm_message	msg;
-    DWORD		param;
+    DWORD_PTR		param;
     HANDLE		ev;
     int                 err;
 
     while (ALSA_RetrieveRingMessage(&wwo->msgRing, &msg, &param, &ev)) {
-     TRACE("Received %s %x\n", ALSA_getCmdString(msg), param);
+     TRACE("Received %s %lx\n", ALSA_getCmdString(msg), param);
 
 	switch (msg) {
 	case WINE_WM_PAUSING:
@@ -520,7 +520,7 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEDEV* wwo)
  */
 static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 {
-    WORD	  uDevID = (DWORD)pmt;
+    WORD	  uDevID = (DWORD_PTR)pmt;
     WINE_WAVEDEV* wwo = (WINE_WAVEDEV*)&WOutDev[uDevID];
     DWORD         dwNextFeedTime = INFINITE;   /* Time before DSP needs feeding */
     DWORD         dwNextNotifyTime = INFINITE; /* Time before next wave completion */
@@ -796,7 +796,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     ALSA_InitRingMessage(&wwo->msgRing);
 
     wwo->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-    wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
+    wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD_PTR)wDevID, 0, &(wwo->dwThreadID));
     if (wwo->hThread)
         SetThreadPriority(wwo->hThread, THREAD_PRIORITY_TIME_CRITICAL);
     else
@@ -926,7 +926,7 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     lpWaveHdr->dwFlags |= WHDR_INQUEUE;
     lpWaveHdr->lpNext = 0;
 
-    ALSA_AddRingMessage(&WOutDev[wDevID].msgRing, WINE_WM_HEADER, (DWORD)lpWaveHdr, FALSE);
+    ALSA_AddRingMessage(&WOutDev[wDevID].msgRing, WINE_WM_HEADER, (DWORD_PTR)lpWaveHdr, FALSE);
 
     return MMSYSERR_NOERROR;
 }
@@ -1167,10 +1167,10 @@ static DWORD wodDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 /**************************************************************************
  * 				wodMessage (WINEALSA.@)
  */
-DWORD WINAPI ALSA_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
-                             DWORD dwParam1, DWORD dwParam2)
+DWORD WINAPI ALSA_wodMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
+                             DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    TRACE("(%u, %s, %08X, %08X, %08X);\n",
+    TRACE("(%u, %s, %08lX, %08lX, %08lX);\n",
 	  wDevID, ALSA_getMessage(wMsg), dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {

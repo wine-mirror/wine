@@ -124,7 +124,7 @@ void ALSA_WaitRingMessage(ALSA_MSG_RING* omr, DWORD sleep)
  *
  * Inserts a new message into the ring (should be called from DriverProc derived routines)
  */
-int ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWORD param, BOOL wait)
+int ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWORD_PTR param, BOOL wait)
 {
     HANDLE	hEvent = INVALID_HANDLE_VALUE;
 
@@ -192,8 +192,8 @@ int ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWORD param
  *
  * Get a message from the ring. Should be called by the playback/record thread.
  */
-int ALSA_RetrieveRingMessage(ALSA_MSG_RING* omr,
-                                   enum win_wm_message *msg, DWORD *param, HANDLE *hEvent)
+int ALSA_RetrieveRingMessage(ALSA_MSG_RING* omr, enum win_wm_message *msg,
+                             DWORD_PTR *param, HANDLE *hEvent)
 {
     EnterCriticalSection(&omr->msg_crst);
 
@@ -220,15 +220,15 @@ int ALSA_RetrieveRingMessage(ALSA_MSG_RING* omr,
  * Should be called by the playback/record thread.
  */
 int ALSA_PeekRingMessage(ALSA_MSG_RING* omr,
-                               enum win_wm_message *msg,
-                               DWORD *param, HANDLE *hEvent)
+                         enum win_wm_message *msg,
+                         DWORD_PTR *param, HANDLE *hEvent)
 {
     EnterCriticalSection(&omr->msg_crst);
 
     if (omr->msg_toget == omr->msg_tosave) /* buffer empty ? */
     {
-	LeaveCriticalSection(&omr->msg_crst);
-	return 0;
+        LeaveCriticalSection(&omr->msg_crst);
+        return 0;
     }
 
     *msg = omr->messages[omr->msg_toget].msg;

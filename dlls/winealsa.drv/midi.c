@@ -173,14 +173,14 @@ static	int 	MIDI_AlsaToWindowsDeviceType(int type)
  * 			MIDI_NotifyClient			[internal]
  */
 static DWORD MIDI_NotifyClient(UINT wDevID, WORD wMsg,
-			       DWORD dwParam1, DWORD dwParam2)
+			       DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     DWORD 		dwCallBack;
     UINT 		uFlags;
     HANDLE		hDev;
     DWORD 		dwInstance;
 
-    TRACE("wDevID = %04X wMsg = %d dwParm1 = %04X dwParam2 = %04X\n",
+    TRACE("wDevID = %04X wMsg = %d dwParm1 = %04lX dwParam2 = %04lX\n",
 	  wDevID, wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
@@ -388,7 +388,7 @@ static DWORD WINAPI midRecThread(LPVOID arg)
 				    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
 				    lpMidiHdr->dwFlags |= MHDR_DONE;
 				    MidiInDev[wDevID].lpQueueHdr = (LPMIDIHDR)lpMidiHdr->lpNext;
-				    if (MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD)lpMidiHdr, dwTime) != MMSYSERR_NOERROR)
+				    if (MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD_PTR)lpMidiHdr, dwTime) != MMSYSERR_NOERROR)
 					WARN("Couldn't notify client\n");
 				}
 			    } else
@@ -653,7 +653,7 @@ static DWORD midReset(WORD wDevID)
 	MidiInDev[wDevID].lpQueueHdr->dwFlags |= MHDR_DONE;
 	/* FIXME: when called from 16 bit, lpQueueHdr needs to be a segmented ptr */
 	if (MIDI_NotifyClient(wDevID, MIM_LONGDATA,
-			      (DWORD)MidiInDev[wDevID].lpQueueHdr, dwTime) != MMSYSERR_NOERROR) {
+			      (DWORD_PTR)MidiInDev[wDevID].lpQueueHdr, dwTime) != MMSYSERR_NOERROR) {
 	    WARN("Couldn't notify client\n");
 	}
 	MidiInDev[wDevID].lpQueueHdr = (LPMIDIHDR)MidiInDev[wDevID].lpQueueHdr->lpNext;
@@ -1024,7 +1024,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 
     lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
     lpMidiHdr->dwFlags |= MHDR_DONE;
-    if (MIDI_NotifyClient(wDevID, MOM_DONE, (DWORD)lpMidiHdr, 0L) != MMSYSERR_NOERROR) {
+    if (MIDI_NotifyClient(wDevID, MOM_DONE, (DWORD_PTR)lpMidiHdr, 0L) != MMSYSERR_NOERROR) {
 	WARN("can't notify client !\n");
 	return MMSYSERR_INVALPARAM;
     }
@@ -1313,10 +1313,10 @@ LONG ALSA_MidiInit(void)
 /**************************************************************************
  * 			midMessage (WINEOSS.4)
  */
-DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
-			    DWORD dwParam1, DWORD dwParam2)
+DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
+			    DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    TRACE("(%04X, %04X, %08X, %08X, %08X);\n",
+    TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
     switch (wMsg) {
 #ifdef HAVE_ALSA
@@ -1356,10 +1356,10 @@ DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 /**************************************************************************
  * 				modMessage (WINEOSS.5)
  */
-DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
-			    DWORD dwParam1, DWORD dwParam2)
+DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
+                             DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    TRACE("(%04X, %04X, %08X, %08X, %08X);\n",
+    TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
