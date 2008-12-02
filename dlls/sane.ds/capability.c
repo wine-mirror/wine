@@ -31,6 +31,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
+static TW_UINT16 SANE_ICAPXferMech (pTW_CAPABILITY pCapability, TW_UINT16 action);
+
 TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
     TW_UINT16 twCC = TWCC_SUCCESS;
@@ -205,7 +207,7 @@ static TW_BOOL TWAIN_OneValueGet (pTW_CAPABILITY pCapability, TW_UINT32 *pValue)
 }
 
 /* ICAP_XFERMECH */
-TW_UINT16 SANE_ICAPXferMech (pTW_CAPABILITY pCapability, TW_UINT16 action)
+static TW_UINT16 SANE_ICAPXferMech (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
     TRACE("ICAP_XFERMECH\n");
 

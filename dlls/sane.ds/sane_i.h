@@ -77,14 +77,6 @@ struct tagActiveDS
 /* Helper functions */
 extern TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action);
 
-/*  */
-extern TW_UINT16 SANE_ControlGroupHandler (
-	pTW_IDENTITY pOrigin, TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData);
-extern TW_UINT16 SANE_ImageGroupHandler (
-	pTW_IDENTITY pOrigin, TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData);
-extern TW_UINT16 SANE_SourceManagerHandler (
-	pTW_IDENTITY pOrigin, TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData);
-
 /* Implementation of operation triplets
  * From Application to Source (Control Information) */
 TW_UINT16 SANE_CapabilityGet (pTW_IDENTITY pOrigin, TW_MEMREF pData);
@@ -213,9 +205,6 @@ TW_UINT16 SANE_RGBResponseReset
     (pTW_IDENTITY pOrigin, TW_MEMREF pData);
 TW_UINT16 SANE_RGBResponseSet
     (pTW_IDENTITY pOrigin, TW_MEMREF pData);
-
-/* Implementation of TWAIN capabilities */
-TW_UINT16 SANE_ICAPXferMech (pTW_CAPABILITY pCapability, TW_UINT16 action);
 
 /* UI function */
 BOOL DoScannerUI(void);

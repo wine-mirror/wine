@@ -372,7 +372,7 @@ static TW_UINT16 SANE_SourceControlHandler (
 }
 
 
-TW_UINT16 SANE_ImageGroupHandler (
+static TW_UINT16 SANE_ImageGroupHandler (
            pTW_IDENTITY pOrigin,
            TW_UINT16    DAT,
            TW_UINT16    MSG,
