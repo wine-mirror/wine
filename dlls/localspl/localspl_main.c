@@ -898,7 +898,7 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
  *  All Files for the Monitor must already be copied to %winsysdir% ("%SystemRoot%\system32")
  *
  */
-BOOL WINAPI fpAddMonitor(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
+static BOOL WINAPI fpAddMonitor(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
 {
     monitor_t * pm = NULL;
     LPMONITOR_INFO_2W mi2w;
@@ -1034,7 +1034,7 @@ static BOOL WINAPI fpAddPrinterDriverEx(LPWSTR pName, DWORD level, LPBYTE pDrive
  *
  */
 
-BOOL WINAPI fpDeleteMonitor(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMonitorName)
+static BOOL WINAPI fpDeleteMonitor(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMonitorName)
 {
     HKEY    hroot = NULL;
     LONG    lres;
@@ -1096,8 +1096,8 @@ BOOL WINAPI fpDeleteMonitor(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMonitorNa
  *  Windows reads the Registry once and cache the Results.
  *
  */
-BOOL WINAPI fpEnumMonitors(LPWSTR pName, DWORD Level, LPBYTE pMonitors, DWORD cbBuf,
-                            LPDWORD pcbNeeded, LPDWORD pcReturned)
+static BOOL WINAPI fpEnumMonitors(LPWSTR pName, DWORD Level, LPBYTE pMonitors, DWORD cbBuf,
+                                  LPDWORD pcbNeeded, LPDWORD pcReturned)
 {
     DWORD   numentries = 0;
     DWORD   needed = 0;
