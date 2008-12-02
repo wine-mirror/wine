@@ -1198,6 +1198,20 @@ GpStatus WINGDIPAPI GdipGetLineColors(GpLineGradient *brush, ARGB *colors)
     return Ok;
 }
 
+/******************************************************************************
+ * GdipRotateTextureTransform [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipRotateTextureTransform(GpTexture* brush, REAL angle,
+    GpMatrixOrder order)
+{
+    TRACE("(%p, %.2f, %d)\n", brush, angle, order);
+
+    if(!brush)
+        return InvalidParameter;
+
+    return GdipRotateMatrix(brush->transform, angle, order);
+}
+
 GpStatus WINGDIPAPI GdipSetLineLinearBlend(GpLineGradient *brush, REAL focus,
     REAL scale)
 {
