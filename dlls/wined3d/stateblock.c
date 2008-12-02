@@ -63,7 +63,7 @@ HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object) {
 }
 
 /** Copy all members of one stateblock to another */
-void stateblock_savedstates_copy(IWineD3DStateBlock* iface, SAVEDSTATES *dest, const SAVEDSTATES *source)
+static void stateblock_savedstates_copy(IWineD3DStateBlock* iface, SAVEDSTATES *dest, const SAVEDSTATES *source)
 {
     IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
     unsigned bsize = sizeof(BOOL);

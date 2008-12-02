@@ -1795,8 +1795,6 @@ extern void stateblock_savedstates_set(
     SAVEDSTATES* states,
     BOOL value);
 
-extern void stateblock_savedstates_copy(IWineD3DStateBlock *iface, SAVEDSTATES *dest, const SAVEDSTATES *source);
-
 extern void stateblock_copy(
     IWineD3DStateBlock* destination,
     IWineD3DStateBlock* source);
@@ -2169,28 +2167,9 @@ extern HRESULT shader_get_registers_used(
 extern void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
         const shader_reg_maps *reg_maps, const DWORD *pFunction);
 
-extern void shader_dump_ins_modifiers(
-    const DWORD output);
-
-extern void shader_dump_param(
-    IWineD3DBaseShader *iface,
-    const DWORD param,
-    const DWORD addr_token,
-    int input);
-
 extern void shader_trace_init(
     IWineD3DBaseShader *iface,
     const DWORD* pFunction);
-
-extern int shader_get_param(
-    IWineD3DBaseShader* iface,
-    const DWORD* pToken,
-    DWORD* param,
-    DWORD* addr_token);
-
-extern int shader_skip_unrecognized(
-    IWineD3DBaseShader* iface,
-    const DWORD* pToken);
 
 static inline int shader_get_regtype(const DWORD param) {
     return (((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT) |
@@ -2200,8 +2179,6 @@ static inline int shader_get_regtype(const DWORD param) {
 static inline int shader_get_writemask(const DWORD param) {
     return param & WINED3DSP_WRITEMASK_ALL;
 }
-
-extern unsigned int shader_get_float_offset(const DWORD reg);
 
 static inline BOOL shader_is_pshader_version(DWORD token) {
     return 0xFFFF0000 == (token & 0xFFFF0000);

@@ -32,6 +32,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 #define GLNAME_REQUIRE_GLSL  ((const char *)1)
 
+static void shader_dump_param(IWineD3DBaseShader *iface, const DWORD param, const DWORD addr_token, int input);
+
 static inline BOOL shader_is_version_token(DWORD token) {
     return shader_is_pshader_version(token) ||
            shader_is_vshader_version(token);
@@ -99,12 +101,8 @@ const SHADER_OPCODE* shader_get_opcode(
 /* Read a parameter opcode from the input stream,
  * and possibly a relative addressing token.
  * Return the number of tokens read */
-int shader_get_param(
-    IWineD3DBaseShader* iface,
-    const DWORD* pToken,
-    DWORD* param,
-    DWORD* addr_token) {
-
+static int shader_get_param(IWineD3DBaseShader *iface, const DWORD *pToken, DWORD *param, DWORD *addr_token)
+{
     /* PS >= 3.0 have relative addressing (with token)
      * VS >= 2.0 have relative addressing (with token)
      * VS >= 1.0 < 2.0 have relative addressing (without token)
@@ -139,11 +137,8 @@ static inline int shader_skip_opcode(
  * Note: This function assumes source or destination token format.
  * It will not work with specially-formatted tokens like DEF or DCL, 
  * but hopefully those would be recognized */
-
-int shader_skip_unrecognized(
-    IWineD3DBaseShader* iface,
-    const DWORD* pToken) {
-
+static int shader_skip_unrecognized(IWineD3DBaseShader *iface, const DWORD *pToken)
+{
     int tokens_read = 0;
     int i = 0;
 
@@ -165,9 +160,8 @@ int shader_skip_unrecognized(
 
 /* Convert floating point offset relative
  * to a register file to an absolute offset for float constants */
-
-unsigned int shader_get_float_offset(const DWORD reg) {
-
+static unsigned int shader_get_float_offset(const DWORD reg)
+{
      unsigned int regnum = reg & WINED3DSP_REGNUM_MASK;
      int regtype = shader_get_regtype(reg);
 
@@ -602,12 +596,8 @@ static void shader_dump_arr_entry(
          TRACE("]");
 }
 
-void shader_dump_param(
-    IWineD3DBaseShader *iface,
-    const DWORD param, 
-    const DWORD addr_token,
-    int input) {
-
+static void shader_dump_param(IWineD3DBaseShader *iface, const DWORD param, const DWORD addr_token, int input)
+{
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     static const char * const rastout_reg_names[] = { "oPos", "oFog", "oPts" };
     static const char * const misctype_reg_names[] = { "vPos", "vFace"};
@@ -896,8 +886,8 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
     }
 }
 
-void shader_dump_ins_modifiers(const DWORD output) {
-
+static void shader_dump_ins_modifiers(const DWORD output)
+{
     DWORD shift = (output & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
     DWORD mmask = output & WINED3DSP_DSTMOD_MASK;
 
