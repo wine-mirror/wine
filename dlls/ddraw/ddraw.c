@@ -3567,8 +3567,9 @@ const IDirectDraw7Vtbl IDirectDraw7_Vtbl =
     IDirectDrawImpl_WaitForVerticalBlank,
     /*** IDirectDraw2 ***/
     IDirectDrawImpl_GetAvailableVidMem,
-    /*** IDirectDraw7 ***/
+    /*** IDirectDraw3 ***/
     IDirectDrawImpl_GetSurfaceFromDC,
+    /*** IDirectDraw4 ***/
     IDirectDrawImpl_RestoreAllSurfaces,
     IDirectDrawImpl_TestCooperativeLevel,
     IDirectDrawImpl_GetDeviceIdentifier,
