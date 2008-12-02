@@ -303,14 +303,16 @@ static inline GUID COM_CurrentCausalityId(void)
 # define DEBUG_SET_CRITSEC_NAME(cs, name) (cs)->DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": " name)
 # define DEBUG_CLEAR_CRITSEC_NAME(cs) (cs)->DebugInfo->Spare[0] = 0
 
-extern HINSTANCE OLE32_hInstance; /* FIXME: make static */
-
 #define CHARS_IN_GUID 39 /* including NULL */
 
 #define WINE_CLSCTX_DONT_HOST   0x80000000
 
 /* from dlldata.c */
+extern HINSTANCE hProxyDll DECLSPEC_HIDDEN;
+extern BOOL WINAPI OLE32_DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI OLE32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI OLE32_DllRegisterServer(void) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI OLE32_DllUnregisterServer(void) DECLSPEC_HIDDEN;
 
 /* Exported non-interface Data Advise Holder functions */
 HRESULT DataAdviseHolder_OnConnect(IDataAdviseHolder *iface, IDataObject *pDelegate);

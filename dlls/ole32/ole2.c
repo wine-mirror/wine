@@ -2119,19 +2119,19 @@ static void OLEDD_TrackMouseMove(TrackerWindowInfo* trackerInfo)
   {
     if (*trackerInfo->pdwEffect & DROPEFFECT_MOVE)
     {
-      SetCursor(LoadCursorA(OLE32_hInstance, MAKEINTRESOURCEA(1)));
+      SetCursor(LoadCursorA(hProxyDll, MAKEINTRESOURCEA(1)));
     }
     else if (*trackerInfo->pdwEffect & DROPEFFECT_COPY)
     {
-      SetCursor(LoadCursorA(OLE32_hInstance, MAKEINTRESOURCEA(2)));
+      SetCursor(LoadCursorA(hProxyDll, MAKEINTRESOURCEA(2)));
     }
     else if (*trackerInfo->pdwEffect & DROPEFFECT_LINK)
     {
-      SetCursor(LoadCursorA(OLE32_hInstance, MAKEINTRESOURCEA(3)));
+      SetCursor(LoadCursorA(hProxyDll, MAKEINTRESOURCEA(3)));
     }
     else
     {
-      SetCursor(LoadCursorA(OLE32_hInstance, MAKEINTRESOURCEA(0)));
+      SetCursor(LoadCursorA(hProxyDll, MAKEINTRESOURCEA(0)));
     }
   }
 }

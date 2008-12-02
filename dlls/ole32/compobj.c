@@ -63,8 +63,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-HINSTANCE OLE32_hInstance = 0;
-
 #define ARRAYSIZE(array) (sizeof(array)/sizeof((array)[0]))
 
 /****************************************************************************
@@ -209,14 +207,14 @@ static void COMPOBJ_InitProcess( void )
      */
     memset(&wclass, 0, sizeof(wclass));
     wclass.lpfnWndProc = apartment_wndproc;
-    wclass.hInstance = OLE32_hInstance;
+    wclass.hInstance = hProxyDll;
     wclass.lpszClassName = wszAptWinClass;
     RegisterClassW(&wclass);
 }
 
 static void COMPOBJ_UninitProcess( void )
 {
-    UnregisterClassW(wszAptWinClass, OLE32_hInstance);
+    UnregisterClassW(wszAptWinClass, hProxyDll);
 }
 
 static void COM_TlsDestroy(void)
@@ -729,7 +727,7 @@ HRESULT apartment_createwindowifneeded(struct apartment *apt)
     {
         HWND hwnd = CreateWindowW(wszAptWinClass, NULL, 0,
                                   0, 0, 0, 0,
-                                  HWND_MESSAGE, 0, OLE32_hInstance, NULL);
+                                  HWND_MESSAGE, 0, hProxyDll, NULL);
         if (!hwnd)
         {
             ERR("CreateWindow failed with error %d\n", GetLastError());
@@ -3861,7 +3859,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:
-        OLE32_hInstance = hinstDLL;
+        hProxyDll = hinstDLL;
         COMPOBJ_InitProcess();
 	if (TRACE_ON(ole)) CoRegisterMallocSpy((LPVOID)-1);
 	break;
@@ -3872,7 +3870,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
         COMPOBJ_UninitProcess();
         RPC_UnregisterAllChannelHooks();
         COMPOBJ_DllList_Free();
-        OLE32_hInstance = 0;
 	break;
 
     case DLL_THREAD_DETACH:
