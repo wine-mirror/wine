@@ -30,6 +30,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
+static void DDRAW_dump_pixelformat(const DDPIXELFORMAT *pf);
 
 /*****************************************************************************
  * PixelFormat_WineD3DtoDD
@@ -724,7 +725,7 @@ void DDRAW_dump_DDSCAPS2(const DDSCAPS2 *in)
     DDRAW_dump_flags(in->dwCaps2, flags2, sizeof(flags2)/sizeof(flags2[0]));
 }
 
-void
+static void
 DDRAW_dump_DDSCAPS(const DDSCAPS *in)
 {
     DDSCAPS2 in_bis;
@@ -779,7 +780,7 @@ DDRAW_dump_members(DWORD flags,
     }
 }
 
-void
+static void
 DDRAW_dump_pixelformat(const DDPIXELFORMAT *pf)
 {
     TRACE("( ");
