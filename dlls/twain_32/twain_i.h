@@ -44,22 +44,8 @@ TW_UINT16 DSM_currentState;     /* current state of Source Manager */
 TW_UINT16 DSM_twCC;             /* current condition code of Source Manager */
 TW_UINT32 DSM_sourceId;         /* source id generator */
 TW_UINT16 DSM_currentDevice;    /* keep track of device during enumeration */
-HINSTANCE DSM_instance;
 
 activeDS *activeSources;	/* list of active data sources */
-
-/* Device Source Manager Control handlers */
-extern TW_UINT16 TWAIN_ControlGroupHandler (
-	pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
-    TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData);
-extern TW_UINT16 TWAIN_ImageGroupHandler (
-	pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
-	TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData);
-extern TW_UINT16 TWAIN_AudioGroupHandler (
-	pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
-	TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData);
-extern TW_UINT16 TWAIN_SourceManagerHandler (
-	pTW_IDENTITY pOrigin, TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData);
 
 /* Implementation of operation triplets (From Application to Source Manager) */
 extern TW_UINT16 TWAIN_CloseDS

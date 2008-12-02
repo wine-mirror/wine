@@ -62,7 +62,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
-TW_UINT16 TWAIN_SourceManagerHandler (
+static TW_UINT16 TWAIN_SourceManagerHandler (
            pTW_IDENTITY pOrigin,
            TW_UINT16   DAT,
            TW_UINT16   MSG,
