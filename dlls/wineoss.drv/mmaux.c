@@ -219,10 +219,10 @@ static DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
 /**************************************************************************
  *		auxMessage (WINEOSS.2)
  */
-DWORD WINAPI OSS_auxMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
-			    DWORD dwParam1, DWORD dwParam2)
+DWORD WINAPI OSS_auxMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
+			    DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    TRACE("(%04X, %04X, %08X, %08X, %08X);\n",
+    TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
 #ifdef HAVE_OSS

@@ -319,8 +319,8 @@ static HRESULT WINAPI IDsCaptureDriverNotifyImpl_SetNotificationPositions(
     if (TRACE_ON(dscapture)) {
         int i;
         for (i=0;i<howmuch;i++)
-            TRACE("notify at %d to 0x%08x\n",
-                notify[i].dwOffset,(DWORD)notify[i].hEventNotify);
+            TRACE("notify at %d to 0x%08lx\n",
+                notify[i].dwOffset,(DWORD_PTR)notify[i].hEventNotify);
     }
 
     /* Make an internal copy of the caller-supplied array.

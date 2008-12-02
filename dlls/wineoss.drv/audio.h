@@ -62,7 +62,7 @@ enum win_wm_message {
 
 typedef struct {
     enum win_wm_message 	msg;	/* message identifier */
-    DWORD	                param;  /* parameter for this message */
+    DWORD_PTR                   param;  /* parameter for this message */
     HANDLE	                hEvent;	/* if message is synchronous, handle of event for synchro */
 } OSS_MSG;
 
