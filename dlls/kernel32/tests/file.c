@@ -778,6 +778,16 @@ static void test_CreateFileW(void)
                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     ok(hFile == INVALID_HANDLE_VALUE && GetLastError() == ERROR_FILE_NOT_FOUND,
        "CreateFileW on invalid VxD name returned ret=%p error=%d\n",hFile,GetLastError());
+
+    ret = CreateDirectoryW(filename, NULL);
+    ok(ret == TRUE, "couldn't create temporary directory\n");
+    hFile = CreateFileW(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+			OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS, NULL);
+    todo_wine ok(hFile != INVALID_HANDLE_VALUE,
+       "expected CreateFile to succeed on existing directory, error: %d\n", GetLastError());
+    CloseHandle(hFile);
+    ret = RemoveDirectoryW(filename);
+    ok(ret, "DeleteFileW: error %d\n", GetLastError());
 }
 
 static void test_GetTempFileNameA(void)
