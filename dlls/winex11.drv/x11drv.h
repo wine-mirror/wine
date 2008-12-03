@@ -278,7 +278,6 @@ extern BOOL destroy_glxpixmap(Display *display, XID glxpixmap);
 /* IME support */
 extern void IME_UnregisterClasses(void);
 extern void IME_SetOpenStatus(BOOL fOpen);
-extern LRESULT IME_SendMessageToSelectedHWND(UINT msg, WPARAM wParam, LPARAM lParam);
 extern INT IME_GetCursorPos();
 extern void IME_SetCursorPos(DWORD pos);
 extern void IME_UpdateAssociation(HWND focus);

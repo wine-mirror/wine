@@ -221,7 +221,6 @@ typedef struct
 
 extern fontObject* XFONT_GetFontObject( X_PHYSFONT pFont );
 extern XFontStruct* XFONT_GetFontStruct( X_PHYSFONT pFont );
-extern LPIFONTINFO16 XFONT_GetFontInfo( X_PHYSFONT pFont );
 
 /* internal charset(hibyte must be set) */
 /* lobyte is DEFAULT_CHARSET(=0). */

@@ -3180,15 +3180,6 @@ XFontStruct* XFONT_GetFontStruct( X_PHYSFONT pFont )
     return NULL;
 }
 
-/***********************************************************************
- *           XFONT_GetFontInfo
- */
-LPIFONTINFO16 XFONT_GetFontInfo( X_PHYSFONT pFont )
-{
-    if( CHECK_PFONT(pFont) ) return &(__PFONT(pFont)->fi->df);
-    return NULL;
-}
-
 
 
 /* X11DRV Interface ****************************************************
