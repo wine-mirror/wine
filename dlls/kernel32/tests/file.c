@@ -783,7 +783,7 @@ static void test_CreateFileW(void)
     ok(ret == TRUE, "couldn't create temporary directory\n");
     hFile = CreateFileW(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
 			OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS, NULL);
-    todo_wine ok(hFile != INVALID_HANDLE_VALUE,
+    ok(hFile != INVALID_HANDLE_VALUE,
        "expected CreateFile to succeed on existing directory, error: %d\n", GetLastError());
     CloseHandle(hFile);
     ret = RemoveDirectoryW(filename);

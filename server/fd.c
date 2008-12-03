@@ -1582,7 +1582,7 @@ struct fd *open_fd( const char *name, int flags, mode_t *mode, unsigned int acce
         /* if we tried to open a directory for write access, retry read-only */
         if (errno != EISDIR ||
             !(access & FILE_UNIX_WRITE_ACCESS) ||
-            (fd->unix_fd = open( name, O_RDONLY | (flags & ~O_TRUNC), *mode )) == -1)
+            (fd->unix_fd = open( name, O_RDONLY | (flags & ~(O_TRUNC | O_CREAT | O_EXCL)), *mode )) == -1)
         {
             file_set_error();
             goto error;
