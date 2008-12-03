@@ -483,7 +483,7 @@ BOOL WINAPI IsLFNDriveAW(LPCVOID lpszPath)
 /*************************************************************************
  * PathMakeUniqueNameA	[internal]
  */
-BOOL WINAPI PathMakeUniqueNameA(
+static BOOL PathMakeUniqueNameA(
 	LPSTR lpszBuffer,
 	DWORD dwBuffSize,
 	LPCSTR lpszShortName,
@@ -499,7 +499,7 @@ BOOL WINAPI PathMakeUniqueNameA(
 /*************************************************************************
  * PathMakeUniqueNameW	[internal]
  */
-BOOL WINAPI PathMakeUniqueNameW(
+static BOOL PathMakeUniqueNameW(
 	LPWSTR lpszBuffer,
 	DWORD dwBuffSize,
 	LPCWSTR lpszShortName,
@@ -636,7 +636,7 @@ int WINAPI PathCleanupSpec( LPCWSTR lpszPathW, LPWSTR lpszFileW )
 /*************************************************************************
  * PathQualifyA		[SHELL32]
  */
-BOOL WINAPI PathQualifyA(LPCSTR pszPath)
+static BOOL PathQualifyA(LPCSTR pszPath)
 {
 	FIXME("%s\n",pszPath);
 	return 0;
@@ -645,7 +645,7 @@ BOOL WINAPI PathQualifyA(LPCSTR pszPath)
 /*************************************************************************
  * PathQualifyW		[SHELL32]
  */
-BOOL WINAPI PathQualifyW(LPCWSTR pszPath)
+static BOOL PathQualifyW(LPCWSTR pszPath)
 {
 	FIXME("%s\n",debugstr_w(pszPath));
 	return 0;
@@ -661,7 +661,7 @@ BOOL WINAPI PathQualifyAW(LPCVOID pszPath)
 	return PathQualifyA(pszPath);
 }
 
-BOOL WINAPI PathResolveA(
+static BOOL PathResolveA(
 	LPSTR lpszPath,
 	LPCSTR *alpszPaths,
 	DWORD dwFlags)
@@ -671,7 +671,7 @@ BOOL WINAPI PathResolveA(
 	return 0;
 }
 
-BOOL WINAPI PathResolveW(
+static BOOL PathResolveW(
 	LPWSTR lpszPath,
 	LPCWSTR *alpszPaths,
 	DWORD dwFlags)
@@ -695,9 +695,9 @@ BOOL WINAPI PathResolveAW(
 }
 
 /*************************************************************************
-*	PathProcessCommandA	[SHELL32.653]
+*	PathProcessCommandA
 */
-LONG WINAPI PathProcessCommandA (
+static LONG PathProcessCommandA (
 	LPCSTR lpszPath,
 	LPSTR lpszBuff,
 	DWORD dwBuffSize,
@@ -713,7 +713,7 @@ LONG WINAPI PathProcessCommandA (
 /*************************************************************************
 *	PathProcessCommandW
 */
-LONG WINAPI PathProcessCommandW (
+static LONG PathProcessCommandW (
 	LPCWSTR lpszPath,
 	LPWSTR lpszBuff,
 	DWORD dwBuffSize,

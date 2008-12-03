@@ -223,14 +223,6 @@ BOOL    _ILIsEmpty              (LPCITEMIDLIST pidl) { return _ILIsDesktop(pidl)
  * simple pidls
  */
 
-/* Basic PIDL constructor.  Allocates size + 5 bytes, where:
- * - two bytes are SHITEMID.cb
- * - one byte is PIDLDATA.type
- * - two bytes are the NULL PIDL terminator
- * Sets type of the returned PIDL to type.
- */
-LPITEMIDLIST	_ILAlloc(PIDLTYPE type, unsigned int size);
-
 /* Creates a PIDL with guid format and type type, which must be one of PT_GUID,
  * PT_SHELLEXT, or PT_YAGUID.
  */

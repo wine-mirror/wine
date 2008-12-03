@@ -79,7 +79,7 @@ BOOL WINAPI PickIconDlg(
  * SEE ALSO
  *   RunFileDlgAW
  */
-void WINAPI RunFileDlgW(
+static void RunFileDlgW(
 	HWND hwndOwner,
 	HICON hIcon,
 	LPCWSTR lpstrDirectory,
@@ -440,7 +440,7 @@ static void FillList (HWND hCb, char *pszLatest, BOOL fShowDefault)
  * SEE ALSO
  *   RunFileDlgAW
  */
-void WINAPI RunFileDlgA(
+static void RunFileDlgA(
 	HWND hwndOwner,
 	HICON hIcon,
 	LPCSTR lpstrDirectory,
