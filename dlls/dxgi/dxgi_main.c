@@ -110,7 +110,7 @@ HRESULT WINAPI CreateDXGIFactory(REFIID riid, void **factory)
 
     for (i = 0; i < object->adapter_count; ++i)
     {
-        struct dxgi_adapter *adapter = HeapAlloc(GetProcessHeap(), 0, sizeof(**object->adapters));
+        struct dxgi_adapter *adapter = HeapAlloc(GetProcessHeap(), 0, sizeof(*adapter));
         if (!adapter)
         {
             UINT j;
