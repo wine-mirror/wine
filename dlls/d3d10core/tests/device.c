@@ -32,7 +32,6 @@ static ID3D10Device *create_device(void)
     HRESULT hr;
 
     hr = CreateDXGIFactory(&IID_IDXGIFactory, (void *)&factory);
-    ok(SUCCEEDED(hr), "CreateDXGIFactory failed, hr %#x\n", hr);
     if (FAILED(hr)) goto cleanup;
 
     hr = IDXGIFactory_EnumAdapters(factory, 0, &adapter);
