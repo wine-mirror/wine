@@ -220,6 +220,8 @@ static HRESULT GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl,DWORD dwFlags,LPWST
 IShellFolder* GetShellFolderFromPidl(LPITEMIDLIST pidlAbs);
 LPITEMIDLIST  GetParentPidl(LPITEMIDLIST pidl);
 static LPITEMIDLIST GetPidlFromName(IShellFolder *psf,LPWSTR lpcstrFileName);
+static BOOL IsPidlFolder (LPSHELLFOLDER psf, LPCITEMIDLIST pidl);
+static UINT GetNumSelected( IDataObject *doSelected );
 
 /* Shell memory allocation */
 static void *MemAlloc(UINT size);
@@ -312,7 +314,7 @@ static BOOL GetFileName95(FileOpenDlgInfos *fodInfos)
  * IN  : The OPENFILENAMEA initialisation structure passed to
  *       GetOpenFileNameA win api function (see filedlg.c)
  */
-BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
+static BOOL GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
 {
   BOOL ret;
   FileOpenDlgInfos fodInfos;
@@ -449,7 +451,7 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
  * Call GetFileName95 with this structure and clean the memory.
  *
  */
-BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
+static BOOL GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
 {
   BOOL ret;
   FileOpenDlgInfos fodInfos;
@@ -3291,7 +3293,7 @@ LPITEMIDLIST GetPidlFromDataObject ( IDataObject *doSelected, UINT nPidlIndex)
  * Return the number of selected items in the DataObject.
  *
 */
-UINT GetNumSelected( IDataObject *doSelected )
+static UINT GetNumSelected( IDataObject *doSelected )
 {
     UINT retVal = 0;
     STGMEDIUM medium;
@@ -3430,7 +3432,7 @@ static LPITEMIDLIST GetPidlFromName(IShellFolder *lpsf,LPWSTR lpcstrFileName)
 
 /*
 */
-BOOL IsPidlFolder (LPSHELLFOLDER psf, LPCITEMIDLIST pidl)
+static BOOL IsPidlFolder (LPSHELLFOLDER psf, LPCITEMIDLIST pidl)
 {
 	ULONG uAttr  = SFGAO_FOLDER | SFGAO_HASSUBFOLDER;
 	HRESULT ret;
