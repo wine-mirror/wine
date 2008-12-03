@@ -363,6 +363,26 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
         }
     }
 
+    dst = getFmtIdx(WINED3DFMT_R16F);
+    gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
+            0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
+
+    dst = getFmtIdx(WINED3DFMT_R32F);
+    gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
+            0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
+
+    dst = getFmtIdx(WINED3DFMT_G16R16);
+    gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
+            0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
+
+    dst = getFmtIdx(WINED3DFMT_G16R16F);
+    gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
+            0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
+
+    dst = getFmtIdx(WINED3DFMT_G32R32F);
+    gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
+            0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
+
     /* V8U8 is supported natively by GL_ATI_envmap_bumpmap and GL_NV_texture_shader.
      * V16U16 is only supported by GL_NV_texture_shader. The formats need fixup if
      * their extensions are not available. GL_ATI_envmap_bumpmap is not used because

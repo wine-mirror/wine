@@ -36,7 +36,6 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4], BOOL colorkey);
 static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES convert);
-static inline void clear_unused_channels(IWineD3DSurfaceImpl *This);
 static void surface_remove_pbo(IWineD3DSurfaceImpl *This);
 
 void surface_force_reload(IWineD3DSurface *iface)
@@ -945,8 +944,6 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This)
                                  This->pow2Height, format, type);
     }
 
-    clear_unused_channels(This);
-
     ENTER_GL();
     /* If !SrcIsUpsideDown we should flip the surface.
      * This can be done using glCopyTexSubImage2D but this
@@ -1703,38 +1700,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             *target_bpp = 2;
             break;
 
-        case WINED3DFMT_R32F:
-            /* Can be loaded in theory with fmt=GL_RED, type=GL_FLOAT, but this fails. The reason
-             * is that D3D expects the undefined green, blue and alpha channels to return 1.0
-             * when sampling, but OpenGL sets green and blue to 0.0 instead. Thus we have to inject
-             * 1.0 instead.
-             *
-             * The alpha channel defaults to 1.0 in opengl, so nothing has to be done about it.
-             */
-            *convert = CONVERT_R32F;
-            *format = GL_RGB;
-            *internal = GL_RGB32F_ARB;
-            *type = GL_FLOAT;
-            *target_bpp = 12;
-            break;
-
-        case WINED3DFMT_R16F:
-            /* Similar to R32F */
-            *convert = CONVERT_R16F;
-            *format = GL_RGB;
-            *internal = GL_RGB16F_ARB;
-            *type = GL_HALF_FLOAT_ARB;
-            *target_bpp = 6;
-            break;
-
-        case WINED3DFMT_G16R16:
-            *convert = CONVERT_G16R16;
-            *format = GL_RGB;
-            *internal = GL_RGB16_EXT;
-            *type = GL_UNSIGNED_SHORT;
-            *target_bpp = 6;
-            break;
-
         default:
             break;
     }
@@ -2062,66 +2027,6 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
             break;
         }
 
-        case CONVERT_R32F:
-        {
-            unsigned int x, y;
-            const float *Source;
-            float *Dest;
-            for(y = 0; y < height; y++) {
-                Source = (const float *)(src + y * pitch);
-                Dest = (float *) (dst + y * outpitch);
-                for (x = 0; x < width; x++ ) {
-                    float color = (*Source++);
-                    Dest[0] = color;
-                    Dest[1] = 1.0;
-                    Dest[2] = 1.0;
-                    Dest += 3;
-                }
-            }
-            break;
-        }
-
-        case CONVERT_R16F:
-        {
-            unsigned int x, y;
-            const WORD *Source;
-            WORD *Dest;
-            const WORD one = 0x3c00;
-            for(y = 0; y < height; y++) {
-                Source = (const WORD *)(src + y * pitch);
-                Dest = (WORD *) (dst + y * outpitch);
-                for (x = 0; x < width; x++ ) {
-                    WORD color = (*Source++);
-                    Dest[0] = color;
-                    Dest[1] = one;
-                    Dest[2] = one;
-                    Dest += 3;
-                }
-            }
-            break;
-        }
-
-        case CONVERT_G16R16:
-        {
-            unsigned int x, y;
-            const WORD *Source;
-            WORD *Dest;
-
-            for(y = 0; y < height; y++) {
-                Source = (const WORD *)(src + y * pitch);
-                Dest = (WORD *) (dst + y * outpitch);
-                for (x = 0; x < width; x++ ) {
-                    WORD green = (*Source++);
-                    WORD red = (*Source++);
-                    Dest[0] = green;
-                    Dest[1] = red;
-                    Dest[2] = 0xffff;
-                    Dest += 3;
-                }
-            }
-            break;
-        }
-
         default:
             ERR("Unsupported conversation type %d\n", convert);
     }
@@ -2271,41 +2176,6 @@ BOOL palette9_changed(IWineD3DSurfaceImpl *This) {
     }
     memcpy(This->palette9, &device->palettes[device->currentPalette], sizeof(PALETTEENTRY) * 256);
     return TRUE;
-}
-
-static inline void clear_unused_channels(IWineD3DSurfaceImpl *This) {
-    GLboolean oldwrite[4];
-
-    /* Some formats have only some color channels, and the others are 1.0.
-     * since our rendering renders to all channels, and those pixel formats
-     * are emulated by using a full texture with the other channels set to 1.0
-     * manually, clear the unused channels.
-     *
-     * This could be done with hacking colorwriteenable to mask the colors,
-     * but before drawing the buffer would have to be cleared too, so there's
-     * no gain in that
-     */
-    switch(This->resource.format) {
-        case WINED3DFMT_R16F:
-        case WINED3DFMT_R32F:
-            TRACE("R16F or R32F format, clearing green, blue and alpha to 1.0\n");
-            /* Do not activate a context, the correct drawable is active already
-             * though just the read buffer is set, make sure to have the correct draw
-             * buffer too
-             */
-            glDrawBuffer(This->resource.wineD3DDevice->offscreenBuffer);
-            glDisable(GL_SCISSOR_TEST);
-            glGetBooleanv(GL_COLOR_WRITEMASK, oldwrite);
-            glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
-            glClearColor(0.0, 1.0, 1.0, 1.0);
-            glClear(GL_COLOR_BUFFER_BIT);
-            glColorMask(oldwrite[0], oldwrite[1], oldwrite[2], oldwrite[3]);
-            if(!This->resource.wineD3DDevice->render_offscreen) glDrawBuffer(GL_BACK);
-            checkGLcall("Unused channel clear\n");
-            break;
-
-        default: break;
-    }
 }
 
 static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BOOL srgb_mode) {
