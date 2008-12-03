@@ -251,6 +251,47 @@ static void test_ImmGetCompositionString(void)
     ImmReleaseContext(hwnd, imc);
 }
 
+static void test_ImmSetCompositionString(void)
+{
+    HIMC imc;
+    BOOL ret;
+
+    SetLastError(0xdeadbeef);
+    imc = ImmGetContext(hwnd);
+    ok(imc, "ImmGetContext() failed. Last error: %u\n", GetLastError());
+    if (!imc)
+        return;
+
+    SetLastError(0xdeadbeef);
+    ret = ImmSetCompositionStringW(imc, SCS_SETSTR, NULL, 0, NULL, 0);
+    todo_wine
+    ok(!ret, "ImmSetCompositionStringW() failed. Last error: %u\n",
+        GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = ImmSetCompositionStringW(imc, SCS_SETSTR | SCS_CHANGEATTR,
+        NULL, 0, NULL, 0);
+    todo_wine
+    ok(!ret, "ImmSetCompositionStringW() failed. Last error: %u\n",
+        GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = ImmSetCompositionStringW(imc, SCS_SETSTR | SCS_CHANGECLAUSE,
+        NULL, 0, NULL, 0);
+    todo_wine
+    ok(!ret, "ImmSetCompositionStringW() failed. Last error: %u\n",
+        GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = ImmSetCompositionStringW(imc, SCS_CHANGEATTR | SCS_CHANGECLAUSE,
+        NULL, 0, NULL, 0);
+    todo_wine
+    ok(!ret, "ImmSetCompositionStringW() failed. Last error: %u\n",
+        GetLastError());
+
+    ImmReleaseContext(hwnd, imc);
+}
+
 static void test_ImmIME(void)
 {
     HIMC imc;
@@ -272,6 +313,7 @@ START_TEST(imm32) {
     {
         test_ImmNotifyIME();
         test_ImmGetCompositionString();
+        test_ImmSetCompositionString();
         test_ImmIME();
     }
     cleanup();
