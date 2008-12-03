@@ -1365,6 +1365,15 @@ START_TEST(device)
     ok(pDirect3DCreate8 != NULL, "Failed to get address of Direct3DCreate8\n");
     if (pDirect3DCreate8)
     {
+        IDirect3D8 *d3d8;
+        d3d8 = pDirect3DCreate8( D3D_SDK_VERSION );
+        if(!d3d8)
+        {
+            skip("could not create D3D8\n");
+            return;
+        }
+        IDirect3D8_Release(d3d8);
+
         test_display_modes();
         test_shader_versions();
         test_swapchain();

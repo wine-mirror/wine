@@ -44,8 +44,11 @@ static IDirect3DDevice8 *init_d3d8(HMODULE d3d8_handle)
     if (!d3d8_create) return NULL;
 
     d3d8_ptr = d3d8_create(D3D_SDK_VERSION);
-    ok(d3d8_ptr != NULL, "Failed to create IDirect3D8 object\n");
-    if (!d3d8_ptr) return NULL;
+    if (!d3d8_ptr)
+    {
+        skip("could not create D3D8\n");
+        return NULL;
+    }
 
     IDirect3D8_GetAdapterDisplayMode(d3d8_ptr, D3DADAPTER_DEFAULT, &d3ddm );
     ZeroMemory(&present_parameters, sizeof(present_parameters));

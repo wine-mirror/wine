@@ -117,8 +117,11 @@ static IDirect3DDevice8 *init_d3d8(void)
     if (!d3d8_create) return NULL;
 
     d3d8_ptr = d3d8_create(D3D_SDK_VERSION);
-    ok(d3d8_ptr != NULL, "Failed to create IDirect3D8 object\n");
-    if (!d3d8_ptr) return NULL;
+    if (!d3d8_ptr)
+    {
+        skip("could not create D3D8\n");
+        return NULL;
+    }
 
     ZeroMemory(&present_parameters, sizeof(present_parameters));
     present_parameters.Windowed = FALSE;
