@@ -796,7 +796,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
                  local_rect.right - local_rect.left,
                  local_rect.bottom - local_rect.top,
                  fmt, type, mem);
-    vcheckGLcall("glReadPixels");
+    checkGLcall("glReadPixels");
 
     if(This->Flags & SFLAG_PBO) {
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
@@ -959,7 +959,7 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This)
     checkGLcall("glCopyTexSubImage2D");
 
     glReadBuffer(prevRead);
-    vcheckGLcall("glReadBuffer");
+    checkGLcall("glReadBuffer");
 
     LEAVE_GL();
     TRACE("Updated target %d\n", This->glDescription.target);
@@ -1207,18 +1207,18 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
     }
 
     glGetIntegerv(GL_PACK_SWAP_BYTES, &prev_store);
-    vcheckGLcall("glIntegerv");
+    checkGLcall("glIntegerv");
     glGetIntegerv(GL_CURRENT_RASTER_POSITION, &prev_rasterpos[0]);
-    vcheckGLcall("glIntegerv");
+    checkGLcall("glIntegerv");
     glPixelZoom(1.0, -1.0);
-    vcheckGLcall("glPixelZoom");
+    checkGLcall("glPixelZoom");
 
     /* If not fullscreen, we need to skip a number of bytes to find the next row of data */
     glGetIntegerv(GL_UNPACK_ROW_LENGTH, &skipBytes);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, This->currentDesc.Width);
 
     glRasterPos3i(This->lockedRect.left, This->lockedRect.top, 1);
-    vcheckGLcall("glRasterPos2f");
+    checkGLcall("glRasterPos2f");
 
     /* Some drivers(radeon dri, others?) don't like exceptions during
      * glDrawPixels. If the surface is a DIB section, it might be in GDIMode
@@ -1261,14 +1261,14 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
     }
 
     glPixelZoom(1.0,1.0);
-    vcheckGLcall("glPixelZoom");
+    checkGLcall("glPixelZoom");
 
     glRasterPos3iv(&prev_rasterpos[0]);
-    vcheckGLcall("glRasterPos3iv");
+    checkGLcall("glRasterPos3iv");
 
     /* Reset to previous pack row length */
     glPixelStorei(GL_UNPACK_ROW_LENGTH, skipBytes);
-    vcheckGLcall("glPixelStorei GL_UNPACK_ROW_LENGTH");
+    checkGLcall("glPixelStorei GL_UNPACK_ROW_LENGTH");
 
     if(!swapchain) {
         glDrawBuffer(myDevice->offscreenBuffer);
@@ -2354,9 +2354,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, c
                         NULL);
 
         glGetIntegerv(GL_READ_BUFFER, &prevRead);
-        vcheckGLcall("glGetIntegerv");
+        checkGLcall("glGetIntegerv");
         glReadBuffer(swapChain ? GL_BACK : This->resource.wineD3DDevice->offscreenBuffer);
-        vcheckGLcall("glReadBuffer");
+        checkGLcall("glReadBuffer");
         glCopyTexImage2D(GL_TEXTURE_2D,
                             0,
                             GL_RGBA,
@@ -2775,7 +2775,7 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
             }
         }
     }
-    vcheckGLcall("glCopyTexSubImage2D");
+    checkGLcall("glCopyTexSubImage2D");
 
     LEAVE_GL();
 }

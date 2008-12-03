@@ -4264,9 +4264,9 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, const WineDirect3
                                                    WINED3D_ATR_GLTYPE(sd->u.s.specular.dwType),
                                                    sd->u.s.specular.dwStride,
                                                    sd->u.s.specular.lpData + stateblock->loadBaseVertexIndex * sd->u.s.specular.dwStride + offset[sd->u.s.specular.streamNo]);
-            vcheckGLcall("glSecondaryColorPointerEXT(4, GL_UNSIGNED_BYTE, ...)");
+            checkGLcall("glSecondaryColorPointerEXT(4, GL_UNSIGNED_BYTE, ...)");
             glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
-            vcheckGLcall("glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
+            checkGLcall("glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
         } else {
 
         /* Missing specular color is not critical, no warnings */

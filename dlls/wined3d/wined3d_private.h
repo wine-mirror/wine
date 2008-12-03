@@ -576,21 +576,6 @@ extern const float identity[16];
 # define VTRACE(A) 
 #endif
 
-/* Checking of per-vertex related GL calls */
-/* --------------------- */
-#define vcheckGLcall(A)                                         \
-do {                                                            \
-    GLint err = glGetError();                                   \
-    if (err == GL_NO_ERROR) {                                   \
-       VTRACE(("%s call ok %s / %d\n", A, __FILE__, __LINE__)); \
-                                                                \
-    } else do {                                                 \
-        FIXME(">>>>>>>>>>>>>>>>> %s (%#x) from %s @ %s / %d\n", \
-            debug_glerror(err), err, A, __FILE__, __LINE__);    \
-       err = glGetError();                                      \
-    } while (err != GL_NO_ERROR);                               \
-} while(0)
-
 /* TODO: Confirm each of these works when wined3d move completed */
 #if 0 /* NOTE: Must be 0 in cvs */
   /* To avoid having to get gigabytes of trace, the following can be compiled in, and at the start
