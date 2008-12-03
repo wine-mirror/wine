@@ -3627,12 +3627,12 @@ static void transform_worldex(DWORD state, IWineD3DStateBlockImpl *stateblock, W
      */
     if(stateblock->wineD3DDevice->view_ident) {
         glLoadMatrixf(&stateblock->transforms[WINED3DTS_WORLDMATRIX(matrix)].u.m[0][0]);
-        checkGLcall("glLoadMatrixf")
+        checkGLcall("glLoadMatrixf");
     } else {
         glLoadMatrixf(&stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
-        checkGLcall("glLoadMatrixf")
+        checkGLcall("glLoadMatrixf");
         glMultMatrixf(&stateblock->transforms[WINED3DTS_WORLDMATRIX(matrix)].u.m[0][0]);
-        checkGLcall("glMultMatrixf")
+        checkGLcall("glMultMatrixf");
     }
 }
 

@@ -402,11 +402,12 @@ extern int num_lock;
 #define D3DCOLOR_B(dw) (((float) (((dw) >>  0) & 0xFF)) / 255.0f)
 #define D3DCOLOR_A(dw) (((float) (((dw) >> 24) & 0xFF)) / 255.0f)
 
-#define D3DCOLORTOGLFLOAT4(dw, vec) \
+#define D3DCOLORTOGLFLOAT4(dw, vec) do { \
   (vec)[0] = D3DCOLOR_R(dw); \
   (vec)[1] = D3DCOLOR_G(dw); \
   (vec)[2] = D3DCOLOR_B(dw); \
-  (vec)[3] = D3DCOLOR_A(dw);
+  (vec)[3] = D3DCOLOR_A(dw); \
+} while(0)
 
 /* DirectX Device Limits */
 /* --------------------- */
@@ -422,7 +423,7 @@ extern int num_lock;
 /* --------------------- */
 #ifndef WINE_NO_DEBUG_MSGS
 #define checkGLcall(A)                                          \
-{                                                               \
+do {                                                            \
     GLint err = glGetError();                                   \
     if (err == GL_NO_ERROR) {                                   \
        TRACE("%s call ok %s / %d\n", A, __FILE__, __LINE__);    \
@@ -432,9 +433,9 @@ extern int num_lock;
             debug_glerror(err), err, A, __FILE__, __LINE__);    \
        err = glGetError();                                      \
     } while (err != GL_NO_ERROR);                               \
-}
+} while(0)
 #else
-#define checkGLcall(A) do {} while(0);
+#define checkGLcall(A) do {} while(0)
 #endif
 
 /* Trace routines / diagnostics */
@@ -452,13 +453,13 @@ do {                                                                            
 
 /* Macro to dump out the current state of the light chain */
 #define DUMP_LIGHT_CHAIN()                    \
-{                                             \
+do {                                          \
   PLIGHTINFOEL *el = This->stateBlock->lights;\
   while (el) {                                \
     TRACE("Light %p (glIndex %ld, d3dIndex %ld, enabled %d)\n", el, el->glIndex, el->OriginalIndex, el->lightEnabled);\
     el = el->next;                            \
   }                                           \
-}
+} while(0)
 
 /* Trace vector and strided data information */
 #define TRACE_VECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w);
@@ -494,7 +495,7 @@ extern const float identity[16];
 /* Checking of per-vertex related GL calls */
 /* --------------------- */
 #define vcheckGLcall(A)                                         \
-{                                                               \
+do {                                                            \
     GLint err = glGetError();                                   \
     if (err == GL_NO_ERROR) {                                   \
        VTRACE(("%s call ok %s / %d\n", A, __FILE__, __LINE__)); \
@@ -504,7 +505,7 @@ extern const float identity[16];
             debug_glerror(err), err, A, __FILE__, __LINE__);    \
        err = glGetError();                                      \
     } while (err != GL_NO_ERROR);                               \
-}
+} while(0)
 
 /* TODO: Confirm each of these works when wined3d move completed */
 #if 0 /* NOTE: Must be 0 in cvs */
