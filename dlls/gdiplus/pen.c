@@ -67,6 +67,24 @@ static DWORD gdip_to_gdi_join(GpLineJoin join)
     }
 }
 
+static GpPenType bt_to_pt(GpBrushType bt)
+{
+    switch(bt){
+        case BrushTypeSolidColor:
+            return PenTypeSolidColor;
+        case BrushTypeHatchFill:
+            return PenTypeHatchFill;
+        case BrushTypeTextureFill:
+            return PenTypeTextureFill;
+        case BrushTypePathGradient:
+            return PenTypePathGradient;
+        case BrushTypeLinearGradient:
+            return PenTypeLinearGradient;
+        default:
+            return PenTypeUnknown;
+    }
+}
+
 GpStatus WINGDIPAPI GdipClonePen(GpPen *pen, GpPen **clonepen)
 {
     TRACE("(%p, %p)\n", pen, clonepen);
@@ -279,6 +297,18 @@ GpStatus WINGDIPAPI GdipGetPenEndCap(GpPen *pen, GpLineCap *endCap)
         return InvalidParameter;
 
     *endCap = pen->endcap;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetPenFillType(GpPen *pen, GpPenType* type)
+{
+    TRACE("(%p, %p)\n", pen, type);
+
+    if(!pen || !type)
+        return InvalidParameter;
+
+    *type = bt_to_pt(pen->brush->bt);
 
     return Ok;
 }

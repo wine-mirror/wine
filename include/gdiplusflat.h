@@ -487,6 +487,7 @@ GpStatus WINGDIPAPI GdipSetPenDashCap197819(GpPen*,GpDashCap);
 GpStatus WINGDIPAPI GdipSetPenDashOffset(GpPen*,REAL);
 GpStatus WINGDIPAPI GdipSetPenDashStyle(GpPen*,GpDashStyle);
 GpStatus WINGDIPAPI GdipSetPenEndCap(GpPen*,GpLineCap);
+GpStatus WINGDIPAPI GdipGetPenFillType(GpPen*,GpPenType*);
 GpStatus WINGDIPAPI GdipSetPenLineCap197819(GpPen*,GpLineCap,GpLineCap,GpDashCap);
 GpStatus WINGDIPAPI GdipSetPenLineJoin(GpPen*,GpLineJoin);
 GpStatus WINGDIPAPI GdipSetPenMode(GpPen*,GpPenAlignment);

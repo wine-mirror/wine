@@ -76,6 +76,16 @@ enum PathPointType{
     PathPointTypeBezier3        = 3
 };
 
+enum PenType
+{
+   PenTypeSolidColor       = BrushTypeSolidColor,
+   PenTypeHatchFill        = BrushTypeHatchFill,
+   PenTypeTextureFill      = BrushTypeTextureFill,
+   PenTypePathGradient     = BrushTypePathGradient,
+   PenTypeLinearGradient   = BrushTypeLinearGradient,
+   PenTypeUnknown          = -1
+};
+
 enum LineJoin
 {
     LineJoinMiter           = 0,
@@ -384,6 +394,7 @@ typedef enum FlushIntention FlushIntention;
 typedef enum CoordinateSpace CoordinateSpace;
 typedef enum GpTestControlEnum GpTestControlEnum;
 typedef enum MetafileFrameUnit MetafileFrameUnit;
+typedef enum PenType PenType;
 
 #endif /* end of c typedefs */
 

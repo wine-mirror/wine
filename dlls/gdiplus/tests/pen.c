@@ -275,6 +275,56 @@ static void test_customcap(void)
     GdipDeletePen(pen);
 }
 
+static void test_penfilltype(void)
+{
+    GpPen *pen;
+    GpSolidFill *solid;
+    GpLineGradient *line;
+    GpPointF a, b;
+    GpStatus status;
+    GpPenType type;
+
+    /* NULL */
+    status = GdipGetPenFillType(NULL, NULL);
+    expect(InvalidParameter, status);
+
+    status = GdipCreatePen1((ARGB)0xffff00ff, 10.0f, UnitPixel, &pen);
+    expect(Ok, status);
+    status = GdipGetPenFillType(pen, NULL);
+    expect(InvalidParameter, status);
+
+    /* created with GdipCreatePen1() */
+    status = GdipGetPenFillType(pen, &type);
+    expect(Ok, status);
+    expect(PenTypeSolidColor, type);
+    GdipDeletePen(pen);
+
+    /* based on SolidBrush */
+    status = GdipCreateSolidFill((ARGB)0xffff00ff, &solid);
+    expect(Ok, status);
+    status = GdipCreatePen2((GpBrush*)solid, 10.0f, UnitPixel, &pen);
+    expect(Ok, status);
+    status = GdipGetPenFillType(pen, &type);
+    expect(Ok, status);
+    expect(PenTypeSolidColor, type);
+    GdipDeletePen(pen);
+    GdipDeleteBrush((GpBrush*)solid);
+
+    /* based on LinearGradientBrush */
+    a.X = a.Y = 0.0;
+    b.X = b.Y = 10.0;
+    status = GdipCreateLineBrush(&a, &b, (ARGB)0xffff00ff, (ARGB)0xffff0000,
+                                 WrapModeTile, &line);
+    expect(Ok, status);
+    status = GdipCreatePen2((GpBrush*)line, 10.0f, UnitPixel, &pen);
+    expect(Ok, status);
+    status = GdipGetPenFillType(pen, &type);
+    expect(Ok, status);
+    expect(PenTypeLinearGradient, type);
+    GdipDeletePen(pen);
+    GdipDeleteBrush((GpBrush*)line);
+}
+
 START_TEST(pen)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -294,6 +344,7 @@ START_TEST(pen)
     test_brushfill();
     test_dasharray();
     test_customcap();
+    test_penfilltype();
 
     GdiplusShutdown(gdiplusToken);
 }

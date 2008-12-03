@@ -90,5 +90,6 @@ typedef WrapMode GpWrapMode;
 typedef Color GpColor;
 typedef FlushIntention GpFlushIntention;
 typedef CoordinateSpace GpCoordinateSpace;
+typedef PenType GpPenType;
 
 #endif
