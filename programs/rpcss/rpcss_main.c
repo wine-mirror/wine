@@ -44,12 +44,14 @@
  */
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <limits.h>
 #include <assert.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "rpcss.h"
+#include "windef.h"
+#include "winbase.h"
 #include "winnt.h"
 #include "irot.h"
 #include "epm.h"
