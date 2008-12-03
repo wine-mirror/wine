@@ -701,7 +701,8 @@ static void OSS_Info(int fd)
 static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
 {
     int rc,arg;
-    int f,c,r;
+    int f,c;
+    unsigned int r;
     BOOL has_mixer = FALSE;
     TRACE("(%p) %s\n", ossdev, ossdev->dev_name);
 
@@ -876,7 +877,8 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
 static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
 {
     int rc,arg;
-    int f,c,r;
+    int f,c;
+    unsigned int r;
     TRACE("(%p) %s\n", ossdev, ossdev->dev_name);
 
     if (OSS_OpenDevice(ossdev, O_RDONLY, NULL, 0,-1,-1,-1) != 0)
@@ -1004,7 +1006,8 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
 static void OSS_WaveFullDuplexInit(OSS_DEVICE* ossdev)
 {
     int rc,arg;
-    int f,c,r;
+    int f,c;
+    unsigned int r;
     int caps;
     BOOL has_mixer = FALSE;
     TRACE("(%p) %s\n", ossdev, ossdev->dev_name);
@@ -1149,7 +1152,7 @@ static char* StrDup(const char* str, const char* def)
 LRESULT OSS_WaveInit(void)
 {
     char* str;
-    int i;
+    unsigned int i;
 
     /* FIXME: Remove unneeded members of WOutDev and WInDev */
     TRACE("()\n");
@@ -1172,9 +1175,9 @@ LRESULT OSS_WaveInit(void)
         for (i = 1; i < MAX_WAVEDRV; ++i)
         {
             WOutDev[i].ossdev.dev_name = WInDev[i].ossdev.dev_name = HeapAlloc(GetProcessHeap(),0,11);
-            sprintf(WOutDev[i].ossdev.dev_name, "/dev/dsp%d", i);
+            sprintf(WOutDev[i].ossdev.dev_name, "/dev/dsp%u", i);
             WOutDev[i].ossdev.mixer_name = WInDev[i].ossdev.mixer_name = HeapAlloc(GetProcessHeap(),0,13);
-            sprintf(WOutDev[i].ossdev.mixer_name, "/dev/mixer%d", i);
+            sprintf(WOutDev[i].ossdev.mixer_name, "/dev/mixer%u", i);
         }
     }
 
@@ -1213,13 +1216,13 @@ LRESULT OSS_WaveInit(void)
 
     TRACE("%d wave out devices\n", numOutDev);
     for (i = 0; i < numOutDev; i++) {
-        TRACE("%d: %s, %s, %s\n", i, WOutDev[i].ossdev.dev_name,
+        TRACE("%u: %s, %s, %s\n", i, WOutDev[i].ossdev.dev_name,
               WOutDev[i].ossdev.mixer_name, WOutDev[i].ossdev.interface_name);
     }
 
     TRACE("%d wave in devices\n", numInDev);
     for (i = 0; i < numInDev; i++) {
-        TRACE("%d: %s, %s, %s\n", i, WInDev[i].ossdev.dev_name,
+        TRACE("%u: %s, %s, %s\n", i, WInDev[i].ossdev.dev_name,
               WInDev[i].ossdev.mixer_name, WInDev[i].ossdev.interface_name);
     }
 
