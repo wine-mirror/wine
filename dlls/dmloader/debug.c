@@ -22,11 +22,6 @@
 
 #include "dmloader_private.h"
 
-/* check whether the given DWORD is even (return 0) or odd (return 1) */
-int even_or_odd (DWORD number) {
-	return (number & 0x1); /* basically, check if bit 0 is set ;) */
-}
-
 /* figures out whether given FOURCC is valid DirectMusic form ID */
 BOOL IS_VALID_DMFORM (FOURCC chunkID) {
 	if ((chunkID == DMUS_FOURCC_AUDIOPATH_FORM) || (chunkID == DMUS_FOURCC_BAND_FORM) || (chunkID == DMUS_FOURCC_CHORDMAP_FORM)

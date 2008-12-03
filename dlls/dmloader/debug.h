@@ -41,8 +41,6 @@ typedef struct {
 #define FE(x) { x, #x }	
 #define GE(x) { &x, #x }
 
-/* check whether the given DWORD is even (return 0) or odd (return 1) */
-extern int even_or_odd (DWORD number);
 /* check whether chunkID is valid dmobject form chunk */
 extern BOOL IS_VALID_DMFORM (FOURCC chunkID);
 /* translate STREAM_SEEK flag to string */
