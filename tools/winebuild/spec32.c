@@ -561,7 +561,7 @@ void BuildDef32File( DLLSPEC *spec )
         case TYPE_STDCALL:
         {
             int at_param = strlen(odp->u.func.arg_types) * get_ptr_size();
-            if (!kill_at) output( "@%d", at_param );
+            if (!kill_at && target_cpu == CPU_x86) output( "@%d", at_param );
             if  (odp->flags & FLAG_FORWARD)
             {
                 output( "=%s", odp->link_name );
@@ -569,7 +569,7 @@ void BuildDef32File( DLLSPEC *spec )
             else if (strcmp(name, odp->link_name)) /* try to reduce output */
             {
                 output( "=%s", odp->link_name );
-                if (!kill_at) output( "@%d", at_param );
+                if (!kill_at && target_cpu == CPU_x86) output( "@%d", at_param );
             }
             break;
         }
