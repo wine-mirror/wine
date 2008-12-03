@@ -77,7 +77,6 @@ extern DWORD get_config_key(HKEY, HKEY, const char*, char*, DWORD);
 
 /* Routines to do DataFormat / WineFormat conversions */
 extern void fill_DataFormat(void *out, DWORD size, const void *in, const DataFormat *df) ;
-extern HRESULT create_DataFormat(LPCDIDATAFORMAT asked_format, DataFormat *format);
 extern void release_DataFormat(DataFormat *df) ;
 extern void queue_event(LPDIRECTINPUTDEVICE8A iface, int ofs, DWORD data, DWORD time, DWORD seq);
 /* Helper functions to work with data format */
@@ -120,8 +119,6 @@ extern const GUID DInput_Wine_Keyboard_GUID;
 extern const GUID DInput_Wine_Mouse_GUID;
 
 /* Various debug tools */
-extern void _dump_cooperativelevel_DI(DWORD dwFlags) ;
-extern void _dump_EnumObjects_flags(DWORD dwFlags) ;
 extern void _dump_DIPROPHEADER(LPCDIPROPHEADER diph) ;
 extern void _dump_OBJECTINSTANCEA(const DIDEVICEOBJECTINSTANCEA *ddoi) ;
 extern void _dump_OBJECTINSTANCEW(const DIDEVICEOBJECTINSTANCEW *ddoi) ;
@@ -165,12 +162,6 @@ extern HRESULT WINAPI IDirectInputDevice2WImpl_GetObjectInfo(LPDIRECTINPUTDEVICE
 							     DWORD dwHow);
 extern HRESULT WINAPI IDirectInputDevice2AImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
         DWORD dodsize, LPDIDEVICEOBJECTDATA dod, LPDWORD entries, DWORD flags);
-extern HRESULT WINAPI IDirectInputDevice2AImpl_GetDeviceInfo(
-	LPDIRECTINPUTDEVICE8A iface,
-	LPDIDEVICEINSTANCEA pdidi) ;
-extern HRESULT WINAPI IDirectInputDevice2WImpl_GetDeviceInfo(
-	LPDIRECTINPUTDEVICE8W iface,
-	LPDIDEVICEINSTANCEW pdidi) ;
 extern HRESULT WINAPI IDirectInputDevice2AImpl_RunControlPanel(
 	LPDIRECTINPUTDEVICE8A iface,
 	HWND hwndOwner,

@@ -44,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 /******************************************************************************
  *	Various debugging tools
  */
-void _dump_cooperativelevel_DI(DWORD dwFlags) {
+static void _dump_cooperativelevel_DI(DWORD dwFlags) {
     if (TRACE_ON(dinput)) {
 	unsigned int   i;
 	static const struct {
@@ -67,7 +67,7 @@ void _dump_cooperativelevel_DI(DWORD dwFlags) {
     }
 }
 
-void _dump_EnumObjects_flags(DWORD dwFlags) {
+static void _dump_EnumObjects_flags(DWORD dwFlags) {
     if (TRACE_ON(dinput)) {
 	unsigned int   i;
 	DWORD type, instance;
@@ -342,13 +342,13 @@ void release_DataFormat(DataFormat * format)
     format->user_df = NULL;
 }
 
-inline LPDIOBJECTDATAFORMAT dataformat_to_odf(LPCDIDATAFORMAT df, int idx)
+static inline LPDIOBJECTDATAFORMAT dataformat_to_odf(LPCDIDATAFORMAT df, int idx)
 {
     if (idx < 0 || idx >= df->dwNumObjs) return NULL;
     return (LPDIOBJECTDATAFORMAT)((LPBYTE)df->rgodf + idx * df->dwObjSize);
 }
 
-HRESULT create_DataFormat(LPCDIDATAFORMAT asked_format, DataFormat *format)
+static HRESULT create_DataFormat(LPCDIDATAFORMAT asked_format, DataFormat *format)
 {
     DataTransform *dt;
     unsigned int i, j;
@@ -1130,26 +1130,6 @@ HRESULT WINAPI IDirectInputDevice2AImpl_GetDeviceData(
 
     TRACE("Returning %d events queued\n", *entries);
     return ret;
-}
-
-HRESULT WINAPI IDirectInputDevice2AImpl_GetDeviceInfo(
-	LPDIRECTINPUTDEVICE8A iface,
-	LPDIDEVICEINSTANCEA pdidi)
-{
-    FIXME("(this=%p,%p): stub!\n",
-	  iface, pdidi);
-    
-    return DI_OK;
-}
-
-HRESULT WINAPI IDirectInputDevice2WImpl_GetDeviceInfo(
-	LPDIRECTINPUTDEVICE8W iface,
-	LPDIDEVICEINSTANCEW pdidi)
-{
-    FIXME("(this=%p,%p): stub!\n",
-	  iface, pdidi);
-    
-    return DI_OK;
 }
 
 HRESULT WINAPI IDirectInputDevice2AImpl_RunControlPanel(
