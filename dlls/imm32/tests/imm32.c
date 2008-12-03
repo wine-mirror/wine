@@ -182,7 +182,7 @@ static void cleanup(void) {
     UnregisterClass(wndcls, GetModuleHandle(0));
 }
 
-static int test_ImmNotifyIME(void) {
+static void test_ImmNotifyIME(void) {
     static const char string[] = "wine";
     char resstr[16] = "";
     HIMC imc;
@@ -225,11 +225,9 @@ static int test_ImmNotifyIME(void) {
 
     msg_spy_flush_msgs();
     ImmReleaseContext(hwnd, imc);
-
-    return 0;
 }
 
-static int test_ImmGetCompositionString(void)
+static void test_ImmGetCompositionString(void)
 {
     HIMC imc;
     static const WCHAR string[] = {'w','i','n','e',0x65e5,0x672c,0x8a9e};
@@ -251,10 +249,9 @@ static int test_ImmGetCompositionString(void)
         ok(len==alen,"GCS_COMPATTR(A) not returning correct count\n");
     }
     ImmReleaseContext(hwnd, imc);
-    return 0;
 }
 
-static int test_ImmIME(void)
+static void test_ImmIME(void)
 {
     HIMC imc;
 
@@ -268,7 +265,6 @@ static int test_ImmIME(void)
         ok (rc == 0, "ImmConfigureIMEW did not fail\n");
     }
     ImmReleaseContext(hwnd,imc);
-    return 0;
 }
 
 START_TEST(imm32) {
