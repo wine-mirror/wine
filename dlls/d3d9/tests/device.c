@@ -2153,6 +2153,14 @@ START_TEST(device)
     ok(pDirect3DCreate9 != NULL, "Failed to get address of Direct3DCreate9\n");
     if (pDirect3DCreate9)
     {
+        IDirect3D9 *d3d9 = pDirect3DCreate9( D3D_SDK_VERSION );
+        if(!d3d9)
+        {
+            skip("could not create D3D9 object\n");
+            return;
+        }
+        IDirect3D9_Release(d3d9);
+
         test_display_formats();
         test_display_modes();
         test_swapchain();

@@ -50,8 +50,11 @@ static HRESULT init_d3d9(
     if (!d3d9_create) return E_FAIL;
     
     d3d9_ptr = d3d9_create(D3D_SDK_VERSION);
-    ok(d3d9_ptr != NULL, "Failed to create IDirect3D9 object\n");
-    if (!d3d9_ptr) return E_FAIL;
+    if (!d3d9_ptr)
+    {
+        skip("could not create D3D9\n");
+        return E_FAIL;
+    }
 
     window = create_window();
 
