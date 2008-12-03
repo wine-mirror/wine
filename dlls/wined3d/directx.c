@@ -1994,24 +1994,18 @@ static BOOL CheckBumpMapCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
         case WINED3DFMT_L6V5U5:
         case WINED3DFMT_X8L8V8U8:
         case WINED3DFMT_Q8W8V8U8:
+            /* Ask the fixed function pipeline implementation if it can deal
+             * with the conversion. If we've got a GL extension giving native
+             * support this will be an identity conversion. */
             getFormatDescEntry(CheckFormat, &GLINFO_LOCATION, &glDesc);
-            if(glDesc->conversion_group == WINED3DFMT_UNKNOWN) {
-                /* We have a GL extension giving native support */
-                TRACE_(d3d_caps)("[OK]\n");
-                return TRUE;
-            }
-
-            /* No native support: Ask the fixed function pipeline implementation if it
-             * can deal with the conversion
-             */
             fp = select_fragment_implementation(Adapter, DeviceType);
-            if(fp->conv_supported(CheckFormat)) {
+            if (fp->color_fixup_supported(glDesc->color_fixup))
+            {
                 TRACE_(d3d_caps)("[OK]\n");
                 return TRUE;
-            } else {
-                TRACE_(d3d_caps)("[FAILED]\n");
-                return FALSE;
             }
+            TRACE_(d3d_caps)("[FAILED]\n");
+            return FALSE;
 
         default:
             TRACE_(d3d_caps)("[FAILED]\n");
@@ -2281,25 +2275,18 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
         case WINED3DFMT_L6V5U5:
         case WINED3DFMT_Q8W8V8U8:
         case WINED3DFMT_V16U16:
-        case WINED3DFMT_W11V11U10:
+            /* Ask the shader backend if it can deal with the conversion. If
+             * we've got a GL extension giving native support this will be an
+             * identity conversion. */
             getFormatDescEntry(CheckFormat, &GLINFO_LOCATION, &glDesc);
-            if(glDesc->conversion_group == WINED3DFMT_UNKNOWN) {
-                /* We have a GL extension giving native support */
-                TRACE_(d3d_caps)("[OK]\n");
-                return TRUE;
-            }
-
-            /* No native support: Ask the fixed function pipeline implementation if it
-             * can deal with the conversion
-             */
             shader_backend = select_shader_backend(Adapter, DeviceType);
-            if(shader_backend->shader_conv_supported(CheckFormat)) {
+            if (shader_backend->shader_color_fixup_supported(glDesc->color_fixup))
+            {
                 TRACE_(d3d_caps)("[OK]\n");
                 return TRUE;
-            } else {
-                TRACE_(d3d_caps)("[FAILED]\n");
-                return FALSE;
             }
+            TRACE_(d3d_caps)("[FAILED]\n");
+            return FALSE;
 
         case WINED3DFMT_DXT1:
         case WINED3DFMT_DXT2:
@@ -2322,6 +2309,7 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
         case WINED3DFMT_INDEX32:
         case WINED3DFMT_Q16W16V16U16:
         case WINED3DFMT_A2W10V10U10:
+        case WINED3DFMT_W11V11U10:
             TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
             return FALSE;
 
@@ -2404,10 +2392,12 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
         /* Vendor specific formats */
         case WINED3DFMT_ATI2N:
             if(GL_SUPPORT(ATI_TEXTURE_COMPRESSION_3DC) || GL_SUPPORT(EXT_TEXTURE_COMPRESSION_RGTC)) {
+                getFormatDescEntry(CheckFormat, &GLINFO_LOCATION, &glDesc);
                 shader_backend = select_shader_backend(Adapter, DeviceType);
                 fp = select_fragment_implementation(Adapter, DeviceType);
-                if(shader_backend->shader_conv_supported(CheckFormat) &&
-                   fp->conv_supported(CheckFormat)) {
+                if (shader_backend->shader_color_fixup_supported(glDesc->color_fixup)
+                        && fp->color_fixup_supported(glDesc->color_fixup))
+                {
                     TRACE_(d3d_caps)("[OK]\n");
                     return TRUE;
                 }
@@ -2440,6 +2430,7 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
 }
 
 static BOOL CheckSurfaceCapability(UINT Adapter, WINED3DFORMAT AdapterFormat, WINED3DDEVTYPE DeviceType, WINED3DFORMAT CheckFormat, WINED3DSURFTYPE SurfaceType) {
+    const struct GlPixelFormatDesc *format_desc;
     const struct blit_shader *blitter;
 
     if(SurfaceType == SURFACE_GDI) {
@@ -2476,8 +2467,10 @@ static BOOL CheckSurfaceCapability(UINT Adapter, WINED3DFORMAT AdapterFormat, WI
     if(CheckDepthStencilCapability(Adapter, AdapterFormat, CheckFormat)) return TRUE;
 
     /* If opengl can't process the format natively, the blitter may be able to convert it */
+    getFormatDescEntry(CheckFormat, &GLINFO_LOCATION, &format_desc);
     blitter = select_blit_implementation(Adapter, DeviceType);
-    if(blitter->conv_supported(CheckFormat)) {
+    if (blitter->color_fixup_supported(format_desc->color_fixup))
+    {
         TRACE_(d3d_caps)("[OK]\n");
         return TRUE;
     }

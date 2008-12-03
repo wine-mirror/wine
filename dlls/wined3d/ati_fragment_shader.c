@@ -26,6 +26,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
+WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 /* Some private defines, Constant associations, etc.
  * Env bump matrix and per stage constant should be independent,
@@ -343,21 +344,30 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
 
     /* Pass 2: Generate perturbation calculations */
     for(stage = 0; stage < GL_LIMITS(textures); stage++) {
+        GLuint argmodextra_x, argmodextra_y;
+        struct color_fixup_desc fixup;
+
         if(op[stage].cop == WINED3DTOP_DISABLE) break;
         if(op[stage].cop != WINED3DTOP_BUMPENVMAP &&
            op[stage].cop != WINED3DTOP_BUMPENVMAPLUMINANCE) continue;
 
-        /* Nice thing, we get the color correction for free :-) */
-        if(op[stage].color_correction == WINED3DFMT_V8U8) {
-            argmodextra = GL_2X_BIT_ATI | GL_BIAS_BIT_ATI;
-        } else {
-            argmodextra = 0;
+        if (fixup.x_source != CHANNEL_SOURCE_X || fixup.y_source != CHANNEL_SOURCE_Y)
+        {
+            FIXME("Swizzles not implemented\n");
+            argmodextra_x = GL_NONE;
+            argmodextra_y = GL_NONE;
+        }
+        else
+        {
+            /* Nice thing, we get the color correction for free :-) */
+            argmodextra_x = fixup.x_sign_fixup ? GL_2X_BIT_ATI | GL_BIAS_BIT_ATI : GL_NONE;
+            argmodextra_y = fixup.y_sign_fixup ? GL_2X_BIT_ATI | GL_BIAS_BIT_ATI : GL_NONE;
         }
 
         TRACE("glColorFragmentOp3ATI(GL_DOT2_ADD_ATI, GL_REG_%d_ATI, GL_RED_BIT_ATI, GL_NONE, GL_REG_%d_ATI, GL_NONE, %s, ATI_FFP_CONST_BUMPMAT(%d), GL_NONE, GL_NONE, GL_REG_%d_ATI, GL_RED, GL_NONE)\n",
-              stage + 1, stage, debug_argmod(argmodextra), stage, stage + 1);
+              stage + 1, stage, debug_argmod(argmodextra_x), stage, stage + 1);
         GL_EXTCALL(glColorFragmentOp3ATI(GL_DOT2_ADD_ATI, GL_REG_0_ATI + stage + 1, GL_RED_BIT_ATI, GL_NONE,
-                                         GL_REG_0_ATI + stage, GL_NONE, argmodextra,
+                                         GL_REG_0_ATI + stage, GL_NONE, argmodextra_x,
                                          ATI_FFP_CONST_BUMPMAT(stage), GL_NONE, GL_2X_BIT_ATI | GL_BIAS_BIT_ATI,
                                          GL_REG_0_ATI + stage + 1, GL_RED, GL_NONE));
 
@@ -376,9 +386,9 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
         GL_EXTCALL(glColorFragmentOp1ATI(GL_MOV_ATI, GL_REG_5_ATI, GL_GREEN_BIT_ATI, GL_NONE,
                                         ATI_FFP_CONST_BUMPMAT(stage), GL_ALPHA, GL_NONE));
         TRACE("glColorFragmentOp3ATI(GL_DOT2_ADD_ATI, GL_REG_%d_ATI, GL_GREEN_BIT_ATI, GL_NONE, GL_REG_%d_ATI, GL_NONE, %s, GL_REG_5_ATI, GL_NONE, GL_NONE, GL_REG_%d_ATI, GL_GREEN, GL_NONE)\n",
-              stage + 1, stage, debug_argmod(argmodextra), stage + 1);
+              stage + 1, stage, debug_argmod(argmodextra_y), stage + 1);
         GL_EXTCALL(glColorFragmentOp3ATI(GL_DOT2_ADD_ATI, GL_REG_0_ATI + stage + 1, GL_GREEN_BIT_ATI, GL_NONE,
-                                         GL_REG_0_ATI + stage, GL_NONE, argmodextra,
+                                         GL_REG_0_ATI + stage, GL_NONE, argmodextra_y,
                                          GL_REG_5_ATI, GL_NONE, GL_2X_BIT_ATI | GL_BIAS_BIT_ATI,
                                          GL_REG_0_ATI + stage + 1, GL_GREEN, GL_NONE));
     }
@@ -1108,17 +1118,25 @@ static void atifs_free(IWineD3DDevice *iface) {
 }
 #undef GLINFO_LOCATION
 
-static BOOL atifs_conv_supported(WINED3DFORMAT fmt) {
-    TRACE("Checking shader format support for format %s:", debug_d3dformat(fmt));
-    switch(fmt) {
-        case WINED3DFMT_V8U8:
-        case WINED3DFMT_V16U16:
-            TRACE("[OK]\n");
-            return TRUE;
-        default:
-            TRACE("[FAILED\n");
-            return FALSE;
+static BOOL atifs_color_fixup_supported(struct color_fixup_desc fixup)
+{
+    if (TRACE_ON(d3d_shader) && TRACE_ON(d3d))
+    {
+        TRACE("Checking support for fixup:\n");
+        dump_color_fixup_desc(fixup);
     }
+
+    /* We only support sign fixup of the first two channels. */
+    if (fixup.x_source == CHANNEL_SOURCE_X && fixup.y_source == CHANNEL_SOURCE_Y
+            && fixup.z_source == CHANNEL_SOURCE_Z && fixup.w_source == CHANNEL_SOURCE_W
+            && !fixup.z_sign_fixup && !fixup.w_sign_fixup)
+    {
+        TRACE("[OK]\n");
+        return TRUE;
+    }
+
+    TRACE("[FAILED]\n");
+    return FALSE;
 }
 
 const struct fragment_pipeline atifs_fragment_pipeline = {
@@ -1126,7 +1144,7 @@ const struct fragment_pipeline atifs_fragment_pipeline = {
     atifs_get_caps,
     atifs_alloc,
     atifs_free,
-    atifs_conv_supported,
+    atifs_color_fixup_supported,
     atifs_fragmentstate_template,
     TRUE /* We can disable projected textures */
 };

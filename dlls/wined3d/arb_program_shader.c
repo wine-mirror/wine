@@ -36,6 +36,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_constants);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
+WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 #define GLINFO_LOCATION      (*gl_info)
 
@@ -595,228 +596,80 @@ static void shader_hw_sample(const SHADER_OPCODE_ARG *arg, DWORD sampler_idx, co
     }
 }
 
-static void gen_color_correction(SHADER_BUFFER *buffer, const char *reg, const char *writemask,
-                                 const char *one, const char *two, WINED3DFORMAT fmt,
-                                 const WineD3D_GL_Info *gl_info)
+static const char *shader_arb_get_fixup_swizzle(enum fixup_channel_source channel_source)
 {
-    switch(fmt) {
-        case WINED3DFMT_V8U8:
-        case WINED3DFMT_V16U16:
-            if(GL_SUPPORT(NV_TEXTURE_SHADER) && fmt == WINED3DFMT_V8U8) {
-                /* The 3rd channel returns 1.0 in d3d, but 0.0 in gl. Fix this while we're at it :-)
-                 * The dx7 sdk BumpEarth demo needs it because it uses BUMPENVMAPLUMINANCE with V8U8.
-                 * With the luminance(b) value = 1.0, BUMPENVMAPLUMINANCE == BUMPENVMAP, but if b is
-                 * 0.0(without this fixup), the rendering breaks.
-                 */
-                if(strlen(writemask) >= 4) {
-                    shader_addline(buffer, "MOV %s.%c, %s;\n", reg, writemask[3], one);
-                }
-            } else {
-                /* Correct the sign, but leave the blue as it is - it was loaded correctly already
-                 * ARB shaders are a bit picky wrt writemasks and swizzles. If we're free to scale
-                 * all registers, do so, this saves an instruction.
-                 */
-                if(strlen(writemask) >= 5) {
-                    shader_addline(buffer, "MAD %s, %s, %s, -%s;\n", reg, reg, two, one);
-                } else if(strlen(writemask) >= 3) {
-                    shader_addline(buffer, "MAD %s.%c, %s.%c, %s, -%s;\n",
-                                   reg, writemask[1],
-                                   reg, writemask[1],
-                                   two, one);
-                    shader_addline(buffer, "MAD %s.%c, %s.%c, %s, -%s;\n",
-                                   reg, writemask[2],
-                                   reg, writemask[2],
-                                   two, one);
-                } else if(strlen(writemask) == 2) {
-                    shader_addline(buffer, "MAD %s.%c, %s.%c, %s, -%s;\n", reg, writemask[1],
-                                   reg, writemask[1], two, one);
-                }
-            }
-            break;
-
-        case WINED3DFMT_X8L8V8U8:
-            if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
-                /* Red and blue are the signed channels, fix them up; Blue(=L) is correct already,
-                 * and a(X) is always 1.0. Cannot do a full conversion due to L(blue)
-                 */
-                if(strlen(writemask) >= 3) {
-                    shader_addline(buffer, "MAD %s.%c, %s.%c, %s, -%s;\n",
-                                   reg, writemask[1],
-                                   reg, writemask[1],
-                                   two, one);
-                    shader_addline(buffer, "MAD %s.%c, %s.%c, %s, -%s;\n",
-                                   reg, writemask[2],
-                                   reg, writemask[2],
-                                   two, one);
-                } else if(strlen(writemask) == 2) {
-                    shader_addline(buffer, "MAD %s.%c, %s.%c, %s, -%s;\n",
-                                   reg, writemask[1],
-                                   reg, writemask[1],
-                                   two, one);
-                }
-            }
-            break;
-
-        case WINED3DFMT_L6V5U5:
-            if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
-                if(strlen(writemask) >= 4) {
-                    /* Swap y and z (U and L), and do a sign conversion on x and the new y(V and U) */
-                    shader_addline(buffer, "MOV TMP.g, %s.%c;\n",
-                                   reg, writemask[2]);
-                    shader_addline(buffer, "MAD %s.%c%c, %s.%c%c%c%c, %s, -%s;\n",
-                                   reg, writemask[1], writemask[2],
-                                   reg, writemask[3], writemask[1], writemask[3], writemask[1],
-                                   two, one);
-                    shader_addline(buffer, "MOV %s.%c, TMP.g;\n", reg,
-                                   writemask[3]);
-                } else if(strlen(writemask) == 3) {
-                    /* This is bad: We have VL, but we need VU */
-                    FIXME("2 components sampled from a converted L6V5U5 texture\n");
-                } else {
-                    shader_addline(buffer, "MAD %s.%c, %s.%c, %s, -%s;\n",
-                                   reg, writemask[1],
-                                   reg, writemask[1],
-                                   two, one);
-                }
-            }
-            break;
-
-        case WINED3DFMT_Q8W8V8U8:
-            if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
-                /* Correct the sign in all channels */
-                switch(strlen(writemask)) {
-                    case 4:
-                        shader_addline(buffer, "MAD %s.%c, %s.%c, coefmul.x, -one;\n",
-                                       reg, writemask[3],
-                                       reg, writemask[3]);
-                        /* drop through */
-                    case 3:
-                        shader_addline(buffer, "MAD %s.%c, %s.%c, coefmul.x, -one;\n",
-                                       reg, writemask[2],
-                                       reg, writemask[2]);
-                        /* drop through */
-                    case 2:
-                        shader_addline(buffer, "MAD %s.%c, %s.%c, coefmul.x, -one;\n",
-                                       reg, writemask[1],
-                                       reg, writemask[1]);
-                        break;
-
-                        /* Should not occur, since it's at minimum '.' and a letter */
-                    case 1:
-                        ERR("Unexpected writemask: \"%s\"\n", writemask);
-                        break;
-
-                    case 5:
-                    default:
-                        shader_addline(buffer, "MAD %s, %s, coefmul.x, -one;\n", reg, reg);
-                }
-            }
-            break;
-
-        case WINED3DFMT_ATI2N:
-            /* GL_ATI_texture_compression_3dc returns the two channels as luminance-alpha,
-             * which means the first one is replicated across .rgb, and the 2nd one is in
-             * .a. We need the 2nd in .g
-             *
-             * GL_EXT_texture_compression_rgtc returns the values in .rg, however, they
-             * are swapped compared to d3d. So swap red and green.
-             */
-            if(GL_SUPPORT(EXT_TEXTURE_COMPRESSION_RGTC)) {
-                shader_addline(buffer, "SWZ %s, %s, %c, %c, 1, 0;\n",
-                               reg, reg, writemask[2], writemask[1]);
-            } else {
-                if(strlen(writemask) == 5) {
-                    shader_addline(buffer, "MOV %s.%c, %s.%c;\n",
-                                reg, writemask[2], reg, writemask[4]);
-                } else if(strlen(writemask) == 2) {
-                    /* Nothing to do */
-                } else {
-                    /* This is bad: We have VL, but we need VU */
-                    FIXME("2 or 3 components sampled from a converted ATI2N texture\n");
-                }
-            }
-            break;
-
-            /* stupid compiler */
+    switch(channel_source)
+    {
+        case CHANNEL_SOURCE_ZERO: return "0";
+        case CHANNEL_SOURCE_ONE: return "1";
+        case CHANNEL_SOURCE_X: return "x";
+        case CHANNEL_SOURCE_Y: return "y";
+        case CHANNEL_SOURCE_Z: return "z";
+        case CHANNEL_SOURCE_W: return "w";
         default:
-            break;
+            FIXME("Unhandled channel source %#x\n", channel_source);
+            return "undefined";
     }
 }
 
-static void shader_arb_color_correction(const SHADER_OPCODE_ARG* arg)
+static void gen_color_correction(SHADER_BUFFER *buffer, const char *reg, DWORD dst_mask,
+        const char *one, const char *two, struct color_fixup_desc fixup)
 {
-    IWineD3DBaseShaderImpl* shader = (IWineD3DBaseShaderImpl*) arg->shader;
-    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) shader->baseShader.device;
-    const WineD3D_GL_Info *gl_info = &deviceImpl->adapter->gl_info;
-    WINED3DFORMAT fmt;
-    WINED3DFORMAT conversion_group;
-    IWineD3DBaseTextureImpl *texture;
-    UINT i;
-    BOOL recorded = FALSE;
-    DWORD sampler_idx;
-    DWORD hex_version = shader->baseShader.hex_version;
-    char reg[256];
-    char writemask[6];
+    DWORD mask;
 
-    switch(arg->opcode->opcode) {
-        case WINED3DSIO_TEX:
-            if (hex_version < WINED3DPS_VERSION(2,0)) {
-                sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
-            } else {
-                sampler_idx = arg->src[1] & WINED3DSP_REGNUM_MASK;
-            }
-            break;
-
-        case WINED3DSIO_TEXLDL:
-            FIXME("Add color fixup for vertex texture WINED3DSIO_TEXLDL\n");
-            return;
-
-        case WINED3DSIO_TEXDP3TEX:
-        case WINED3DSIO_TEXM3x3TEX:
-        case WINED3DSIO_TEXM3x3SPEC:
-        case WINED3DSIO_TEXM3x3VSPEC:
-        case WINED3DSIO_TEXBEM:
-        case WINED3DSIO_TEXREG2AR:
-        case WINED3DSIO_TEXREG2GB:
-        case WINED3DSIO_TEXREG2RGB:
-            sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
-            break;
-
-        default:
-            /* Not a texture sampling instruction, nothing to do */
-            return;
-    };
-
-    texture = (IWineD3DBaseTextureImpl *) deviceImpl->stateBlock->textures[sampler_idx];
-    if(texture) {
-        fmt = texture->resource.format;
-        conversion_group = texture->baseTexture.shader_conversion_group;
-    } else {
-        fmt = WINED3DFMT_UNKNOWN;
-        conversion_group = WINED3DFMT_UNKNOWN;
+    if (is_yuv_fixup(fixup))
+    {
+        enum yuv_fixup yuv_fixup = get_yuv_fixup(fixup);
+        FIXME("YUV fixup (%#x) not supported\n", yuv_fixup);
+        return;
     }
 
-    /* before doing anything, record the sampler with the format in the format conversion list,
-     * but check if it's not there already
-     */
-    for(i = 0; i < shader->baseShader.num_sampled_samplers; i++) {
-        if(shader->baseShader.sampled_samplers[i] == sampler_idx) {
-            recorded = TRUE;
+    mask = 0;
+    if (fixup.x_source != CHANNEL_SOURCE_X) mask |= WINED3DSP_WRITEMASK_0;
+    if (fixup.y_source != CHANNEL_SOURCE_Y) mask |= WINED3DSP_WRITEMASK_1;
+    if (fixup.z_source != CHANNEL_SOURCE_Z) mask |= WINED3DSP_WRITEMASK_2;
+    if (fixup.w_source != CHANNEL_SOURCE_W) mask |= WINED3DSP_WRITEMASK_3;
+    mask &= dst_mask;
+
+    if (mask)
+    {
+        shader_addline(buffer, "SWZ %s, %s, %s, %s, %s, %s;\n", reg, reg,
+                shader_arb_get_fixup_swizzle(fixup.x_source), shader_arb_get_fixup_swizzle(fixup.y_source),
+                shader_arb_get_fixup_swizzle(fixup.z_source), shader_arb_get_fixup_swizzle(fixup.w_source));
+    }
+
+    mask = 0;
+    if (fixup.x_sign_fixup) mask |= WINED3DSP_WRITEMASK_0;
+    if (fixup.y_sign_fixup) mask |= WINED3DSP_WRITEMASK_1;
+    if (fixup.z_sign_fixup) mask |= WINED3DSP_WRITEMASK_2;
+    if (fixup.w_sign_fixup) mask |= WINED3DSP_WRITEMASK_3;
+    mask &= dst_mask;
+
+    if (mask)
+    {
+        char reg_mask[6];
+        char *ptr = reg_mask;
+
+        if (mask != WINED3DSP_WRITEMASK_ALL)
+        {
+            *ptr++ = '.';
+            if (mask & WINED3DSP_WRITEMASK_0) *ptr++ = 'x';
+            if (mask & WINED3DSP_WRITEMASK_1) *ptr++ = 'y';
+            if (mask & WINED3DSP_WRITEMASK_2) *ptr++ = 'z';
+            if (mask & WINED3DSP_WRITEMASK_3) *ptr++ = 'w';
         }
+        *ptr = '\0';
+
+        shader_addline(buffer, "MAD %s%s, %s, %s, -%s;\n", reg, reg_mask, reg, two, one);
     }
-    if(!recorded) {
-        shader->baseShader.sampled_samplers[shader->baseShader.num_sampled_samplers] = sampler_idx;
-        shader->baseShader.num_sampled_samplers++;
-    }
-
-    pshader_get_register_name(arg->shader, arg->dst, reg);
-    shader_arb_get_write_mask(arg, arg->dst, writemask);
-    if(strlen(writemask) == 0) strcpy(writemask, ".xyzw");
-
-    gen_color_correction(arg->buffer, reg, writemask, "one", "coefmul.x", fmt, gl_info);
-
 }
 
+static void shader_arb_color_correction(const struct SHADER_OPCODE_ARG* arg, struct color_fixup_desc fixup)
+{
+    char reg[256];
+    pshader_get_register_name(arg->shader, arg->dst, reg);
+    gen_color_correction(arg->buffer, reg, arg->dst & WINED3DSP_WRITEMASK_ALL, "one", "coefmul.x", fixup);
+}
 
 static void pshader_gen_input_modifier_line (
     IWineD3DBaseShader *iface,
@@ -2218,21 +2071,23 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *g
     }
 }
 
-static BOOL shader_arb_conv_supported(WINED3DFORMAT fmt) {
-    TRACE("Checking shader format support for format %s:", debug_d3dformat(fmt));
-    switch(fmt) {
-        case WINED3DFMT_V8U8:
-        case WINED3DFMT_V16U16:
-        case WINED3DFMT_X8L8V8U8:
-        case WINED3DFMT_L6V5U5:
-        case WINED3DFMT_Q8W8V8U8:
-        case WINED3DFMT_ATI2N:
-            TRACE("[OK]\n");
-            return TRUE;
-        default:
-            TRACE("[FAILED\n");
-            return FALSE;
+static BOOL shader_arb_color_fixup_supported(struct color_fixup_desc fixup)
+{
+    if (TRACE_ON(d3d_shader) && TRACE_ON(d3d))
+    {
+        TRACE("Checking support for color_fixup:\n");
+        dump_color_fixup_desc(fixup);
     }
+
+    /* We support everything except YUV conversions. */
+    if (!is_yuv_fixup(fixup))
+    {
+        TRACE("[OK]\n");
+        return TRUE;
+    }
+
+    TRACE("[FAILED]\n");
+    return FALSE;
 }
 
 static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABLE_SIZE] =
@@ -2337,7 +2192,7 @@ const shader_backend_t arb_program_shader_backend = {
     shader_arb_generate_pshader,
     shader_arb_generate_vshader,
     shader_arb_get_caps,
-    shader_arb_conv_supported,
+    shader_arb_color_fixup_supported,
 };
 
 /* ARB_fragment_program fixed function pipeline replacement definitions */
@@ -2955,8 +2810,8 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
         }
 
         sprintf(colorcor_dst, "tex%u", stage);
-        gen_color_correction(&buffer, colorcor_dst, ".rgba", "const.x", "const.y",
-                                settings->op[stage].color_correction, &GLINFO_LOCATION);
+        gen_color_correction(&buffer, colorcor_dst, WINED3DSP_WRITEMASK_ALL, "const.x", "const.y",
+                settings->op[stage].color_correction);
     }
 
     /* Generate the main shader */
@@ -3290,7 +3145,7 @@ const struct fragment_pipeline arbfp_fragment_pipeline = {
     arbfp_get_caps,
     arbfp_alloc,
     arbfp_free,
-    shader_arb_conv_supported,
+    shader_arb_color_fixup_supported,
     arbfp_fragmentstate_template,
     TRUE /* We can disable projected textures */
 };
@@ -3327,11 +3182,12 @@ static void arbfp_blit_free(IWineD3DDevice *iface) {
     LEAVE_GL();
 }
 
-static BOOL gen_planar_yuv_read(SHADER_BUFFER *buffer, WINED3DFORMAT fmt, GLenum textype, char *luminance) {
+static BOOL gen_planar_yuv_read(SHADER_BUFFER *buffer, enum yuv_fixup yuv_fixup, GLenum textype, char *luminance)
+{
     char chroma;
     const char *tex, *texinstr;
 
-    if(fmt == WINED3DFMT_UYVY) {
+    if (yuv_fixup == YUV_FIXUP_UYVY) {
         chroma = 'r';
         *luminance = 'a';
     } else {
@@ -3413,7 +3269,8 @@ static BOOL gen_planar_yuv_read(SHADER_BUFFER *buffer, WINED3DFORMAT fmt, GLenum
     return TRUE;
 }
 
-static BOOL gen_yv12_read(SHADER_BUFFER *buffer, WINED3DFORMAT fmt, GLenum textype, char *luminance) {
+static BOOL gen_yv12_read(SHADER_BUFFER *buffer, GLenum textype, char *luminance)
+{
     const char *tex;
 
     switch(textype) {
@@ -3558,7 +3415,8 @@ static BOOL gen_yv12_read(SHADER_BUFFER *buffer, WINED3DFORMAT fmt, GLenum texty
     return TRUE;
 }
 
-static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, WINED3DFORMAT fmt, GLenum textype) {
+static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum yuv_fixup yuv_fixup, GLenum textype)
+{
     GLenum shader;
     SHADER_BUFFER buffer;
     char luminance_component;
@@ -3626,16 +3484,29 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, WINED3DFORMAT fmt, GLen
     shader_addline(&buffer, "PARAM yuv_coef = {1.403, 0.344, 0.714, 1.770};\n");
     shader_addline(&buffer, "PARAM size = program.local[0];\n");
 
-    if(fmt == WINED3DFMT_UYVY || fmt ==WINED3DFMT_YUY2) {
-        if(gen_planar_yuv_read(&buffer, fmt, textype, &luminance_component) == FALSE) {
+    switch (yuv_fixup)
+    {
+        case YUV_FIXUP_UYVY:
+        case YUV_FIXUP_YUY2:
+            if (!gen_planar_yuv_read(&buffer, yuv_fixup, textype, &luminance_component))
+            {
+                HeapFree(GetProcessHeap(), 0, buffer.buffer);
+                return 0;
+            }
+            break;
+
+        case YUV_FIXUP_YV12:
+            if (!gen_yv12_read(&buffer, textype, &luminance_component))
+            {
+                HeapFree(GetProcessHeap(), 0, buffer.buffer);
+                return 0;
+            }
+            break;
+
+        default:
+            FIXME("Unsupported YUV fixup %#x\n", yuv_fixup);
             HeapFree(GetProcessHeap(), 0, buffer.buffer);
             return 0;
-        }
-    } else {
-        if(gen_yv12_read(&buffer, fmt, textype, &luminance_component) == FALSE) {
-            HeapFree(GetProcessHeap(), 0, buffer.buffer);
-            return 0;
-        }
     }
 
     /* Calculate the final result. Formula is taken from
@@ -3662,25 +3533,24 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, WINED3DFORMAT fmt, GLen
     HeapFree(GetProcessHeap(), 0, buffer.buffer);
     LEAVE_GL();
 
-    if(fmt == WINED3DFMT_YUY2) {
-        if(textype == GL_TEXTURE_RECTANGLE_ARB) {
-            priv->yuy2_rect_shader = shader;
-        } else {
-            priv->yuy2_2d_shader = shader;
-        }
-    } else if(fmt == WINED3DFMT_UYVY) {
-        if(textype == GL_TEXTURE_RECTANGLE_ARB) {
-            priv->uyvy_rect_shader = shader;
-        } else {
-            priv->uyvy_2d_shader = shader;
-        }
-    } else {
-        if(textype == GL_TEXTURE_RECTANGLE_ARB) {
-            priv->yv12_rect_shader = shader;
-        } else {
-            priv->yv12_2d_shader = shader;
-        }
+    switch (yuv_fixup)
+    {
+        case YUV_FIXUP_YUY2:
+            if (textype == GL_TEXTURE_RECTANGLE_ARB) priv->yuy2_rect_shader = shader;
+            else priv->yuy2_2d_shader = shader;
+            break;
+
+        case YUV_FIXUP_UYVY:
+            if (textype == GL_TEXTURE_RECTANGLE_ARB) priv->uyvy_rect_shader = shader;
+            else priv->uyvy_2d_shader = shader;
+            break;
+
+        case YUV_FIXUP_YV12:
+            if (textype == GL_TEXTURE_RECTANGLE_ARB) priv->yv12_rect_shader = shader;
+            else priv->yv12_2d_shader = shader;
+            break;
     }
+
     return shader;
 }
 
@@ -3690,12 +3560,14 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum t
     float size[4] = {width, height, 1, 1};
     struct arbfp_blit_priv *priv = (struct arbfp_blit_priv *) device->blit_priv;
     const struct GlPixelFormatDesc *glDesc;
+    enum yuv_fixup yuv_fixup;
 
     getFormatDescEntry(fmt, &GLINFO_LOCATION, &glDesc);
 
-    if(glDesc->conversion_group != WINED3DFMT_YUY2 && glDesc->conversion_group != WINED3DFMT_UYVY &&
-       glDesc->conversion_group != WINED3DFMT_YV12) {
-        TRACE("Format: %s\n", debug_d3dformat(glDesc->conversion_group));
+    if (!is_yuv_fixup(glDesc->color_fixup))
+    {
+        TRACE("Fixup:\n");
+        dump_color_fixup_desc(glDesc->color_fixup);
         /* Don't bother setting up a shader for unconverted formats */
         ENTER_GL();
         glEnable(textype);
@@ -3704,29 +3576,32 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum t
         return WINED3D_OK;
     }
 
-    if(glDesc->conversion_group == WINED3DFMT_YUY2) {
-        if(textype == GL_TEXTURE_RECTANGLE_ARB) {
-            shader = priv->yuy2_rect_shader;
-        } else {
-            shader = priv->yuy2_2d_shader;
-        }
-    } else if(glDesc->conversion_group == WINED3DFMT_UYVY) {
-        if(textype == GL_TEXTURE_RECTANGLE_ARB) {
-            shader = priv->uyvy_rect_shader;
-        } else {
-            shader = priv->uyvy_2d_shader;
-        }
-    } else {
-        if(textype == GL_TEXTURE_RECTANGLE_ARB) {
-            shader = priv->yv12_rect_shader;
-        } else {
-            shader = priv->yv12_2d_shader;
-        }
+    yuv_fixup = get_yuv_fixup(glDesc->color_fixup);
+
+    switch(yuv_fixup)
+    {
+        case YUV_FIXUP_YUY2:
+            shader = textype == GL_TEXTURE_RECTANGLE_ARB ? priv->yuy2_rect_shader : priv->yuy2_2d_shader;
+            break;
+
+        case YUV_FIXUP_UYVY:
+            shader = textype == GL_TEXTURE_RECTANGLE_ARB ? priv->uyvy_rect_shader : priv->uyvy_2d_shader;
+            break;
+
+        case YUV_FIXUP_YV12:
+            shader = textype == GL_TEXTURE_RECTANGLE_ARB ? priv->yv12_rect_shader : priv->yv12_2d_shader;
+            break;
+
+        default:
+            FIXME("Unsupported YUV fixup %#x, not setting a shader\n", yuv_fixup);
+            ENTER_GL();
+            glEnable(textype);
+            checkGLcall("glEnable(textype)");
+            LEAVE_GL();
+            return E_NOTIMPL;
     }
 
-    if(!shader) {
-        shader = gen_yuv_shader(device, glDesc->conversion_group, textype);
-    }
+    if (!shader) shader = gen_yuv_shader(device, yuv_fixup, textype);
 
     ENTER_GL();
     glEnable(GL_FRAGMENT_PROGRAM_ARB);
@@ -3759,15 +3634,40 @@ static void arbfp_blit_unset(IWineD3DDevice *iface) {
     LEAVE_GL();
 }
 
-static BOOL arbfp_blit_conv_supported(WINED3DFORMAT fmt) {
-    TRACE("Checking blit format support for format %s:", debug_d3dformat(fmt));
-    switch(fmt) {
-        case WINED3DFMT_YUY2:
-        case WINED3DFMT_UYVY:
-        case WINED3DFMT_YV12:
+static BOOL arbfp_blit_color_fixup_supported(struct color_fixup_desc fixup)
+{
+    enum yuv_fixup yuv_fixup;
+
+    if (TRACE_ON(d3d_shader) && TRACE_ON(d3d))
+    {
+        TRACE("Checking support for fixup:\n");
+        dump_color_fixup_desc(fixup);
+    }
+
+    if (is_identity_fixup(fixup))
+    {
+        TRACE("[OK]\n");
+        return TRUE;
+    }
+
+    /* We only support YUV conversions. */
+    if (!is_yuv_fixup(fixup))
+    {
+        TRACE("[FAILED]\n");
+        return FALSE;
+    }
+
+    yuv_fixup = get_yuv_fixup(fixup);
+    switch(yuv_fixup)
+    {
+        case YUV_FIXUP_YUY2:
+        case YUV_FIXUP_UYVY:
+        case YUV_FIXUP_YV12:
             TRACE("[OK]\n");
             return TRUE;
+
         default:
+            FIXME("Unsupported YUV fixup %#x\n", yuv_fixup);
             TRACE("[FAILED]\n");
             return FALSE;
     }
@@ -3778,7 +3678,7 @@ const struct blit_shader arbfp_blit = {
     arbfp_blit_free,
     arbfp_blit_set,
     arbfp_blit_unset,
-    arbfp_blit_conv_supported
+    arbfp_blit_color_fixup_supported,
 };
 
 #undef GLINFO_LOCATION

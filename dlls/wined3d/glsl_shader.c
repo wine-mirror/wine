@@ -35,6 +35,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_constants);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
+WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 #define GLINFO_LOCATION      (*gl_info)
 
@@ -1162,197 +1163,111 @@ static void shader_glsl_get_sample_function(DWORD sampler_type, BOOL projected, 
     }
 }
 
-static void shader_glsl_color_correction(const SHADER_OPCODE_ARG *arg)
+static void shader_glsl_append_fixup_arg(char *arguments, const char *reg_name,
+        BOOL sign_fixup, enum fixup_channel_source channel_source)
 {
-    IWineD3DBaseShaderImpl* shader = (IWineD3DBaseShaderImpl*) arg->shader;
-    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) shader->baseShader.device;
-    const WineD3D_GL_Info *gl_info = &deviceImpl->adapter->gl_info;
+    switch(channel_source)
+    {
+        case CHANNEL_SOURCE_ZERO:
+            strcat(arguments, "0.0");
+            break;
+
+        case CHANNEL_SOURCE_ONE:
+            strcat(arguments, "1.0");
+            break;
+
+        case CHANNEL_SOURCE_X:
+            strcat(arguments, reg_name);
+            strcat(arguments, ".x");
+            break;
+
+        case CHANNEL_SOURCE_Y:
+            strcat(arguments, reg_name);
+            strcat(arguments, ".y");
+            break;
+
+        case CHANNEL_SOURCE_Z:
+            strcat(arguments, reg_name);
+            strcat(arguments, ".z");
+            break;
+
+        case CHANNEL_SOURCE_W:
+            strcat(arguments, reg_name);
+            strcat(arguments, ".w");
+            break;
+
+        default:
+            FIXME("Unhandled channel source %#x\n", channel_source);
+            strcat(arguments, "undefined");
+            break;
+    }
+
+    if (sign_fixup) strcat(arguments, " * 2.0 - 1.0");
+}
+
+static void shader_glsl_color_correction(const struct SHADER_OPCODE_ARG *arg, struct color_fixup_desc fixup)
+{
+    unsigned int mask_size, remaining;
     glsl_dst_param_t dst_param;
-    glsl_dst_param_t dst_param2;
-    WINED3DFORMAT fmt;
-    WINED3DFORMAT conversion_group;
-    IWineD3DBaseTextureImpl *texture;
-    DWORD mask, mask_size;
-    UINT i;
-    BOOL recorded = FALSE;
-    DWORD sampler_idx;
-    DWORD hex_version = shader->baseShader.hex_version;
+    char arguments[256];
+    DWORD mask;
+    BOOL dummy;
 
-    switch(arg->opcode->opcode) {
-        case WINED3DSIO_TEX:
-            if (hex_version < WINED3DPS_VERSION(2,0)) {
-                sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
-            } else {
-                sampler_idx = arg->src[1] & WINED3DSP_REGNUM_MASK;
-            }
-            break;
+    mask = 0;
+    if (fixup.x_sign_fixup || fixup.x_source != CHANNEL_SOURCE_X) mask |= WINED3DSP_WRITEMASK_0;
+    if (fixup.y_sign_fixup || fixup.y_source != CHANNEL_SOURCE_Y) mask |= WINED3DSP_WRITEMASK_1;
+    if (fixup.z_sign_fixup || fixup.z_source != CHANNEL_SOURCE_Z) mask |= WINED3DSP_WRITEMASK_2;
+    if (fixup.w_sign_fixup || fixup.w_source != CHANNEL_SOURCE_W) mask |= WINED3DSP_WRITEMASK_3;
+    mask &= arg->dst;
 
-        case WINED3DSIO_TEXLDL:
-            FIXME("Add color fixup for vertex texture WINED3DSIO_TEXLDL\n");
-            return;
+    if (!mask) return; /* Nothing to do */
 
-        case WINED3DSIO_TEXDP3TEX:
-        case WINED3DSIO_TEXM3x3TEX:
-        case WINED3DSIO_TEXM3x3SPEC:
-        case WINED3DSIO_TEXM3x3VSPEC:
-        case WINED3DSIO_TEXBEM:
-        case WINED3DSIO_TEXREG2AR:
-        case WINED3DSIO_TEXREG2GB:
-        case WINED3DSIO_TEXREG2RGB:
-            sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
-            break;
-
-        default:
-            /* Not a texture sampling instruction, nothing to do */
-            return;
-    };
-
-    texture = (IWineD3DBaseTextureImpl *) deviceImpl->stateBlock->textures[sampler_idx];
-    if(texture) {
-        fmt = texture->resource.format;
-        conversion_group = texture->baseTexture.shader_conversion_group;
-    } else {
-        fmt = WINED3DFMT_UNKNOWN;
-        conversion_group = WINED3DFMT_UNKNOWN;
+    if (is_yuv_fixup(fixup))
+    {
+        enum yuv_fixup yuv_fixup = get_yuv_fixup(fixup);
+        FIXME("YUV fixup (%#x) not supported\n", yuv_fixup);
+        return;
     }
 
-    /* before doing anything, record the sampler with the format in the format conversion list,
-     * but check if it's not there already
-     */
-    for(i = 0; i < shader->baseShader.num_sampled_samplers; i++) {
-        if(shader->baseShader.sampled_samplers[i] == sampler_idx) {
-            recorded = TRUE;
-            break;
-        }
+    mask_size = shader_glsl_get_write_mask_size(mask);
+
+    dst_param.mask_str[0] = '\0';
+    shader_glsl_get_write_mask(mask, dst_param.mask_str);
+
+    dst_param.reg_name[0] = '\0';
+    shader_glsl_get_register_name(arg->dst, arg->dst_addr, dst_param.reg_name, &dummy, arg);
+
+    arguments[0] = '\0';
+    remaining = mask_size;
+    if (mask & WINED3DSP_WRITEMASK_0)
+    {
+        shader_glsl_append_fixup_arg(arguments, dst_param.reg_name, fixup.x_sign_fixup, fixup.x_source);
+        if (--remaining) strcat(arguments, ", ");
     }
-    if(!recorded) {
-        shader->baseShader.sampled_samplers[shader->baseShader.num_sampled_samplers] = sampler_idx;
-        shader->baseShader.num_sampled_samplers++;
+    if (mask & WINED3DSP_WRITEMASK_1)
+    {
+        shader_glsl_append_fixup_arg(arguments, dst_param.reg_name, fixup.y_sign_fixup, fixup.y_source);
+        if (--remaining) strcat(arguments, ", ");
+    }
+    if (mask & WINED3DSP_WRITEMASK_2)
+    {
+        shader_glsl_append_fixup_arg(arguments, dst_param.reg_name, fixup.z_sign_fixup, fixup.z_source);
+        if (--remaining) strcat(arguments, ", ");
+    }
+    if (mask & WINED3DSP_WRITEMASK_3)
+    {
+        shader_glsl_append_fixup_arg(arguments, dst_param.reg_name, fixup.w_sign_fixup, fixup.w_source);
+        if (--remaining) strcat(arguments, ", ");
     }
 
-    switch(fmt) {
-        case WINED3DFMT_V8U8:
-        case WINED3DFMT_V16U16:
-            if(GL_SUPPORT(NV_TEXTURE_SHADER) && fmt == WINED3DFMT_V8U8) {
-                /* The 3rd channel returns 1.0 in d3d, but 0.0 in gl. Fix this while we're at it :-) */
-                mask = shader_glsl_add_dst_param(arg, arg->dst, WINED3DSP_WRITEMASK_2, &dst_param);
-                mask_size = shader_glsl_get_write_mask_size(mask);
-                if(mask_size >= 3) {
-                    shader_addline(arg->buffer, "%s.%c = 1.0;\n", dst_param.reg_name, dst_param.mask_str[3]);
-                }
-            } else {
-                /* Correct the sign, but leave the blue as it is - it was loaded correctly already */
-                mask = shader_glsl_add_dst_param(arg, arg->dst,
-                                          WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1,
-                                          &dst_param);
-                mask_size = shader_glsl_get_write_mask_size(mask);
-                if(mask_size >= 2) {
-                    shader_addline(arg->buffer, "%s.%c%c = %s.%c%c * 2.0 - 1.0;\n",
-                    dst_param.reg_name, dst_param.mask_str[1], dst_param.mask_str[2],
-                    dst_param.reg_name, dst_param.mask_str[1], dst_param.mask_str[2]);
-                } else if(mask_size == 1) {
-                    shader_addline(arg->buffer, "%s.%c = %s.%c * 2.0 - 1.0;\n", dst_param.reg_name, dst_param.mask_str[1],
-                    dst_param.reg_name, dst_param.mask_str[1]);
-                }
-            }
-            break;
-
-        case WINED3DFMT_X8L8V8U8:
-            if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
-                /* Red and blue are the signed channels, fix them up; Blue(=L) is correct already,
-                 * and a(X) is always 1.0
-                 */
-                mask = shader_glsl_add_dst_param(arg, arg->dst, WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1, &dst_param);
-                mask_size = shader_glsl_get_write_mask_size(mask);
-                if(mask_size >= 2) {
-                    shader_addline(arg->buffer, "%s.%c%c = %s.%c%c * 2.0 - 1.0;\n",
-                                   dst_param.reg_name, dst_param.mask_str[1], dst_param.mask_str[2],
-                                   dst_param.reg_name, dst_param.mask_str[1], dst_param.mask_str[2]);
-                } else if(mask_size == 1) {
-                    shader_addline(arg->buffer, "%s.%c = %s.%c * 2.0 - 1.0;\n",
-                                   dst_param.reg_name, dst_param.mask_str[1],
-                                   dst_param.reg_name, dst_param.mask_str[1]);
-                }
-            }
-            break;
-
-        case WINED3DFMT_L6V5U5:
-            if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
-                mask = shader_glsl_add_dst_param(arg, arg->dst, WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1, &dst_param);
-                mask_size = shader_glsl_get_write_mask_size(mask);
-                shader_glsl_add_dst_param(arg, arg->dst, WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_2, &dst_param2);
-                if(mask_size >= 3) {
-                    /* Swap y and z (U and L), and do a sign conversion on x and the new y(V and U) */
-                    shader_addline(arg->buffer, "tmp0.g = %s.%c;\n",
-                                   dst_param.reg_name, dst_param.mask_str[2]);
-                    shader_addline(arg->buffer, "%s.%c%c = %s.%c%c * 2.0 - 1.0;\n",
-                                   dst_param.reg_name, dst_param.mask_str[2], dst_param.mask_str[1],
-                                   dst_param2.reg_name, dst_param.mask_str[1], dst_param.mask_str[3]);
-                    shader_addline(arg->buffer, "%s.%c = tmp0.g;\n", dst_param.reg_name,
-                                   dst_param.mask_str[3]);
-                } else if(mask_size == 2) {
-                    /* This is bad: We have VL, but we need VU */
-                    FIXME("2 components sampled from a converted L6V5U5 texture\n");
-                } else {
-                    shader_addline(arg->buffer, "%s.%c = %s.%c * 2.0 - 1.0;\n",
-                                   dst_param.reg_name, dst_param.mask_str[1],
-                                   dst_param2.reg_name, dst_param.mask_str[1]);
-                }
-            }
-            break;
-
-        case WINED3DFMT_Q8W8V8U8:
-            if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
-                /* Correct the sign in all channels. The writemask just applies as-is, no
-                 * need for checking the mask size
-                 */
-                shader_glsl_add_dst_param(arg, arg->dst,
-                                          WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 |
-                                          WINED3DSP_WRITEMASK_2 | WINED3DSP_WRITEMASK_3,
-                                          &dst_param);
-                shader_addline(arg->buffer, "%s%s = %s%s * 2.0 - 1.0;\n", dst_param.reg_name, dst_param.mask_str,
-                               dst_param.reg_name, dst_param.mask_str);
-            }
-            break;
-
-        case WINED3DFMT_ATI2N:
-            /* GL_ATI_texture_compression_3dc returns the two channels as luminance-alpha,
-             * which means the first one is replicated across .rgb, and the 2nd one is in
-             * .a. We need the 2nd in .g
-             *
-             * GL_EXT_texture_compression_rgtc returns the values in .rg, however, they
-             * are swapped compared to d3d. So swap red and green.
-             */
-            mask = shader_glsl_add_dst_param(arg, arg->dst, WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1, &dst_param);
-            mask_size = shader_glsl_get_write_mask_size(mask);
-            if(GL_SUPPORT(EXT_TEXTURE_COMPRESSION_RGTC)) {
-                if(mask_size >= 2) {
-                    shader_addline(arg->buffer, "%s.%c%c = %s.%c%c;\n",
-                                dst_param.reg_name, dst_param.mask_str[1],
-                                                    dst_param.mask_str[2],
-                                dst_param.reg_name, dst_param.mask_str[2],
-                                                    dst_param.mask_str[1]);
-                } else {
-                    FIXME("%u components sampled from a converted ATI2N texture\n", mask_size);
-                }
-            } else {
-                if(mask_size == 4) {
-                    /* Swap y and z (U and L), and do a sign conversion on x and the new y(V and U) */
-                    shader_addline(arg->buffer, "%s.%c = %s.%c;\n",
-                                dst_param.reg_name, dst_param.mask_str[2],
-                                dst_param.reg_name, dst_param.mask_str[4]);
-                } else if(mask_size == 1) {
-                    /* Nothing to do */
-                } else {
-                    FIXME("%u components sampled from a converted ATI2N texture\n", mask_size);
-                    /* This is bad: We have .r[gb], but we need .ra */
-                }
-            }
-            break;
-
-            /* stupid compiler */
-        default:
-            break;
+    if (mask_size > 1)
+    {
+        shader_addline(arg->buffer, "%s%s = vec%u(%s);\n",
+                dst_param.reg_name, dst_param.mask_str, mask_size, arguments);
+    }
+    else
+    {
+        shader_addline(arg->buffer, "%s%s = %s;\n", dst_param.reg_name, dst_param.mask_str, arguments);
     }
 }
 
@@ -3834,21 +3749,23 @@ static void shader_glsl_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *
     TRACE_(d3d_caps)("Hardware pixel shader version %d.%d enabled (GLSL)\n", (pCaps->PixelShaderVersion >> 8) & 0xff, pCaps->PixelShaderVersion & 0xff);
 }
 
-static BOOL shader_glsl_conv_supported(WINED3DFORMAT fmt) {
-    TRACE("Checking shader format support for format %s:", debug_d3dformat(fmt));
-    switch(fmt) {
-        case WINED3DFMT_V8U8:
-        case WINED3DFMT_V16U16:
-        case WINED3DFMT_X8L8V8U8:
-        case WINED3DFMT_L6V5U5:
-        case WINED3DFMT_Q8W8V8U8:
-        case WINED3DFMT_ATI2N:
-            TRACE("[OK]\n");
-            return TRUE;
-        default:
-            TRACE("[FAILED\n");
-            return FALSE;
+static BOOL shader_glsl_color_fixup_supported(struct color_fixup_desc fixup)
+{
+    if (TRACE_ON(d3d_shader) && TRACE_ON(d3d))
+    {
+        TRACE("Checking support for fixup:\n");
+        dump_color_fixup_desc(fixup);
     }
+
+    /* We support everything except YUV conversions. */
+    if (!is_yuv_fixup(fixup))
+    {
+        TRACE("[OK]\n");
+        return TRUE;
+    }
+
+    TRACE("[FAILED]\n");
+    return FALSE;
 }
 
 static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TABLE_SIZE] =
@@ -3953,5 +3870,5 @@ const shader_backend_t glsl_shader_backend = {
     shader_glsl_generate_pshader,
     shader_glsl_generate_vshader,
     shader_glsl_get_caps,
-    shader_glsl_conv_supported,
+    shader_glsl_color_fixup_supported,
 };

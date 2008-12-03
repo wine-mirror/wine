@@ -435,15 +435,15 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImp
 
     args->srgb_correction = stateblock->renderState[WINED3DRS_SRGBWRITEENABLE] ? 1 : 0;
 
-    memset(args->format_conversion, 0, sizeof(args->format_conversion));
+    memset(args->color_fixup, 0, sizeof(args->color_fixup));
     for(i = 0; i < shader->baseShader.num_sampled_samplers; i++) {
         sampler = shader->baseShader.sampled_samplers[i];
         tex = (IWineD3DBaseTextureImpl *) stateblock->textures[sampler];
         if(!tex) {
-            args->format_conversion[sampler] = WINED3DFMT_UNKNOWN;
+            args->color_fixup[sampler] = COLOR_FIXUP_IDENTITY;
             continue;
         }
-        args->format_conversion[sampler] = tex->baseTexture.shader_conversion_group;
+        args->color_fixup[sampler] = tex->baseTexture.shader_color_fixup;
     }
     if(shader->baseShader.hex_version >= WINED3DPS_VERSION(3,0)) {
         if(((IWineD3DDeviceImpl *) shader->baseShader.device)->strided_streams.u.s.position_transformed) {

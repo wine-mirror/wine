@@ -43,6 +43,90 @@
 #include "wined3d_gl.h"
 #include "wine/list.h"
 
+/* Texture format fixups */
+
+enum fixup_channel_source
+{
+    CHANNEL_SOURCE_ZERO = 0,
+    CHANNEL_SOURCE_ONE = 1,
+    CHANNEL_SOURCE_X = 2,
+    CHANNEL_SOURCE_Y = 3,
+    CHANNEL_SOURCE_Z = 4,
+    CHANNEL_SOURCE_W = 5,
+    CHANNEL_SOURCE_YUV0 = 6,
+    CHANNEL_SOURCE_YUV1 = 7,
+};
+
+enum yuv_fixup
+{
+    YUV_FIXUP_YUY2 = 0,
+    YUV_FIXUP_UYVY = 1,
+    YUV_FIXUP_YV12 = 2,
+};
+
+#include <pshpack2.h>
+struct color_fixup_desc
+{
+    unsigned x_sign_fixup : 1;
+    unsigned x_source : 3;
+    unsigned y_sign_fixup : 1;
+    unsigned y_source : 3;
+    unsigned z_sign_fixup : 1;
+    unsigned z_source : 3;
+    unsigned w_sign_fixup : 1;
+    unsigned w_source : 3;
+};
+#include <poppack.h>
+
+static const struct color_fixup_desc COLOR_FIXUP_IDENTITY =
+        {0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_Z, 0, CHANNEL_SOURCE_W};
+
+static inline struct color_fixup_desc create_color_fixup_desc(
+        int sign0, enum fixup_channel_source src0, int sign1, enum fixup_channel_source src1,
+        int sign2, enum fixup_channel_source src2, int sign3, enum fixup_channel_source src3)
+{
+    struct color_fixup_desc fixup =
+    {
+        sign0, src0,
+        sign1, src1,
+        sign2, src2,
+        sign3, src3,
+    };
+    return fixup;
+}
+
+static inline struct color_fixup_desc create_yuv_fixup_desc(enum yuv_fixup yuv_fixup)
+{
+    struct color_fixup_desc fixup =
+    {
+        0, yuv_fixup & (1 << 0) ? CHANNEL_SOURCE_YUV1 : CHANNEL_SOURCE_YUV0,
+        0, yuv_fixup & (1 << 1) ? CHANNEL_SOURCE_YUV1 : CHANNEL_SOURCE_YUV0,
+        0, yuv_fixup & (1 << 2) ? CHANNEL_SOURCE_YUV1 : CHANNEL_SOURCE_YUV0,
+        0, yuv_fixup & (1 << 3) ? CHANNEL_SOURCE_YUV1 : CHANNEL_SOURCE_YUV0,
+    };
+    return fixup;
+}
+
+static inline BOOL is_identity_fixup(struct color_fixup_desc fixup)
+{
+    return !memcmp(&fixup, &COLOR_FIXUP_IDENTITY, sizeof(fixup));
+}
+
+static inline BOOL is_yuv_fixup(struct color_fixup_desc fixup)
+{
+    return fixup.x_source == CHANNEL_SOURCE_YUV0 || fixup.x_source == CHANNEL_SOURCE_YUV1;
+}
+
+static inline enum yuv_fixup get_yuv_fixup(struct color_fixup_desc fixup)
+{
+    enum yuv_fixup yuv_fixup = 0;
+    if (fixup.x_source == CHANNEL_SOURCE_YUV1) yuv_fixup |= (1 << 0);
+    if (fixup.y_source == CHANNEL_SOURCE_YUV1) yuv_fixup |= (1 << 1);
+    if (fixup.z_source == CHANNEL_SOURCE_YUV1) yuv_fixup |= (1 << 2);
+    if (fixup.w_source == CHANNEL_SOURCE_YUV1) yuv_fixup |= (1 << 3);
+    return yuv_fixup;
+}
+
 /* Hash table functions */
 typedef unsigned int (hash_function_t)(const void *key);
 typedef BOOL (compare_function_t)(const void *keya, const void *keyb);
@@ -350,7 +434,7 @@ typedef struct {
     void (*shader_deselect_depth_blt)(IWineD3DDevice *iface);
     void (*shader_load_constants)(IWineD3DDevice *iface, char usePS, char useVS);
     void (*shader_cleanup)(IWineD3DDevice *iface);
-    void (*shader_color_correction)(const struct SHADER_OPCODE_ARG *arg);
+    void (*shader_color_correction)(const struct SHADER_OPCODE_ARG *arg, struct color_fixup_desc fixup);
     void (*shader_destroy)(IWineD3DBaseShader *iface);
     HRESULT (*shader_alloc_private)(IWineD3DDevice *iface);
     void (*shader_free_private)(IWineD3DDevice *iface);
@@ -358,7 +442,7 @@ typedef struct {
     GLuint (*shader_generate_pshader)(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer);
     void (*shader_generate_vshader)(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer);
     void (*shader_get_caps)(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct shader_caps *caps);
-    BOOL (*shader_conv_supported)(WINED3DFORMAT conv);
+    BOOL (*shader_color_fixup_supported)(struct color_fixup_desc fixup);
 } shader_backend_t;
 
 extern const shader_backend_t glsl_shader_backend;
@@ -655,7 +739,7 @@ struct fragment_pipeline {
     void (*get_caps)(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct fragment_caps *caps);
     HRESULT (*alloc_private)(IWineD3DDevice *iface);
     void (*free_private)(IWineD3DDevice *iface);
-    BOOL (*conv_supported)(WINED3DFORMAT conv);
+    BOOL (*color_fixup_supported)(struct color_fixup_desc fixup);
     const struct StateEntryTemplate *states;
     BOOL ffp_proj_control;
 };
@@ -679,7 +763,7 @@ struct blit_shader {
     void (*free_private)(IWineD3DDevice *iface);
     HRESULT (*set_shader)(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum textype, UINT width, UINT height);
     void (*unset_shader)(IWineD3DDevice *iface);
-    BOOL (*conv_supported)(WINED3DFORMAT conv);
+    BOOL (*color_fixup_supported)(struct color_fixup_desc fixup);
 };
 
 extern const struct blit_shader ffp_blit;
@@ -852,17 +936,24 @@ enum dst_arg
 /*****************************************************************************
  * Fixed function pipeline replacements
  */
+#define ARG_UNUSED          0x3f
 struct texture_stage_op
 {
-    unsigned                cop : 5, aop : 5;
-#define ARG_UNUSED          0x3f
-    unsigned                carg1 : 6, carg2 : 6, carg0 : 6;
+    unsigned                cop : 8;
+    unsigned                carg1 : 8;
+    unsigned                carg2 : 8;
+    unsigned                carg0 : 8;
+
+    unsigned                aop : 8;
+    unsigned                aarg1 : 8;
+    unsigned                aarg2 : 8;
+    unsigned                aarg0 : 8;
+
+    struct color_fixup_desc color_correction;
     unsigned                tex_type : 3;
-    unsigned                dst : 1;                        /* Total of 32 bits */
-    unsigned                aarg1 : 6, aarg2 : 6, aarg0 : 6;
+    unsigned                dst : 1;
     unsigned                projected : 2;
-    unsigned                padding : 12;                   /* Total of 64 bits */
-    WINED3DFORMAT           color_correction;
+    unsigned                padding : 10;
 };
 
 struct ffp_frag_settings {
@@ -1235,20 +1326,20 @@ typedef enum winetexturestates {
  */
 typedef struct IWineD3DBaseTextureClass
 {
+    DWORD                   states[MAX_WINETEXTURESTATES];
     UINT                    levels;
     BOOL                    dirty;
     UINT                    textureName;
+    float                   pow2Matrix[16];
     UINT                    LOD;
     WINED3DTEXTUREFILTERTYPE filterType;
-    DWORD                   states[MAX_WINETEXTURESTATES];
     LONG                    bindCount;
     DWORD                   sampler;
     BOOL                    is_srgb;
     UINT                    srgb_mode_change_count;
-    WINED3DFORMAT           shader_conversion_group;
-    float                   pow2Matrix[16];
     const struct min_lookup *minMipLookup;
     const GLenum            *magLookup;
+    struct color_fixup_desc shader_color_fixup;
 } IWineD3DBaseTextureClass;
 
 typedef struct IWineD3DBaseTextureImpl
@@ -1929,6 +2020,9 @@ const char *debug_glerror(GLenum error);
 const char *debug_d3dbasis(WINED3DBASISTYPE basis);
 const char *debug_d3ddegree(WINED3DDEGREETYPE order);
 const char* debug_d3dtop(WINED3DTEXTUREOP d3dtop);
+const char *debug_fixup_channel_source(enum fixup_channel_source source);
+const char *debug_yuv_fixup(enum yuv_fixup yuv_fixup);
+void dump_color_fixup_desc(struct color_fixup_desc fixup);
 
 /* Routines for GL <-> D3D values */
 GLenum StencilOp(DWORD op);
@@ -2291,8 +2385,8 @@ struct stb_const_desc {
  * into the shader code
  */
 struct ps_compile_args {
+    struct color_fixup_desc     color_fixup[MAX_FRAGMENT_SAMPLERS];
     BOOL                        srgb_correction;
-    WINED3DFORMAT               format_conversion[MAX_FRAGMENT_SAMPLERS];
     enum vertexprocessing_mode  vp_mode;
     /* Projected textures(ps 1.0-1.3) */
     /* Texture types(2D, Cube, 3D) in ps 1.x */
@@ -2380,9 +2474,9 @@ struct GlPixelFormatDesc
     GLint rtInternal;
     GLint glFormat;
     GLint glType;
-    WINED3DFORMAT conversion_group;
     unsigned int Flags;
     float heightscale;
+    struct color_fixup_desc color_fixup;
 };
 
 typedef struct {

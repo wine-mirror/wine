@@ -31,6 +31,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
+WINE_DECLARE_DEBUG_CHANNEL(d3d);
 #define GLINFO_LOCATION This->resource.wineD3DDevice->adapter->gl_info
 
 static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4], BOOL colorkey);
@@ -4847,8 +4848,22 @@ static void ffp_blit_unset(IWineD3DDevice *iface) {
     }
 }
 
-static BOOL ffp_blit_conv_supported(WINED3DFORMAT fmt) {
-    TRACE("Checking blit format support for format %s: [FAILED]\n", debug_d3dformat(fmt));
+static BOOL ffp_blit_color_fixup_supported(struct color_fixup_desc fixup)
+{
+    if (TRACE_ON(d3d_surface) && TRACE_ON(d3d))
+    {
+        TRACE("Checking support for fixup:\n");
+        dump_color_fixup_desc(fixup);
+    }
+
+    /* We only support identity conversions. */
+    if (is_identity_fixup(fixup))
+    {
+        TRACE("[OK]\n");
+        return TRUE;
+    }
+
+    TRACE("[FAILED]\n");
     return FALSE;
 }
 
@@ -4857,5 +4872,5 @@ const struct blit_shader ffp_blit =  {
     ffp_blit_free,
     ffp_blit_set,
     ffp_blit_unset,
-    ffp_blit_conv_supported
+    ffp_blit_color_fixup_supported
 };

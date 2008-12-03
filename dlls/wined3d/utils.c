@@ -318,7 +318,7 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
         gl_info->gl_formats[dst].glGammaInternal = gl_formats_template[src].glGammaInternal;
         gl_info->gl_formats[dst].glFormat        = gl_formats_template[src].glFormat;
         gl_info->gl_formats[dst].glType          = gl_formats_template[src].glType;
-        gl_info->gl_formats[dst].conversion_group= WINED3DFMT_UNKNOWN;
+        gl_info->gl_formats[dst].color_fixup     = COLOR_FIXUP_IDENTITY;
         gl_info->gl_formats[dst].Flags           = gl_formats_template[src].Flags;
         gl_info->gl_formats[dst].heightscale     = 1.0;
 
@@ -372,21 +372,38 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
      * returns 0.0 when sampling from it, DirectX 1.0. So we always have in-shader
      * conversion for this format.
      */
-    dst = getFmtIdx(WINED3DFMT_V8U8);
-    gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V8U8;
-    dst = getFmtIdx(WINED3DFMT_V16U16);
-    gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V8U8;
+    if (!GL_SUPPORT(NV_TEXTURE_SHADER))
+    {
+        dst = getFmtIdx(WINED3DFMT_V8U8);
+        gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
+                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
+        dst = getFmtIdx(WINED3DFMT_V16U16);
+        gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
+                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
+    }
+    else
+    {
+        dst = getFmtIdx(WINED3DFMT_V8U8);
+        gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
+                0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
+        dst = getFmtIdx(WINED3DFMT_V16U16);
+        gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
+                0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
+    }
 
     if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
         /* If GL_NV_texture_shader is not supported, those formats are converted, incompatibly
          * with each other
          */
         dst = getFmtIdx(WINED3DFMT_L6V5U5);
-        gl_info->gl_formats[dst].conversion_group = WINED3DFMT_L6V5U5;
+        gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
+                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Z, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE);
         dst = getFmtIdx(WINED3DFMT_X8L8V8U8);
-        gl_info->gl_formats[dst].conversion_group = WINED3DFMT_X8L8V8U8;
+        gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
+                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_Z, 0, CHANNEL_SOURCE_W);
         dst = getFmtIdx(WINED3DFMT_Q8W8V8U8);
-        gl_info->gl_formats[dst].conversion_group = WINED3DFMT_Q8W8V8U8;
+        gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
+                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 1, CHANNEL_SOURCE_Z, 1, CHANNEL_SOURCE_W);
     } else {
         /* If GL_NV_texture_shader is supported, WINED3DFMT_L6V5U5 and WINED3DFMT_X8L8V8U8
          * are converted at surface loading time, but they do not need any modification in
@@ -399,12 +416,14 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
         dst = getFmtIdx(WINED3DFMT_ATI2N);
         gl_info->gl_formats[dst].glInternal = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
         gl_info->gl_formats[dst].glGammaInternal = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
-        gl_info->gl_formats[dst].conversion_group= WINED3DFMT_ATI2N;
+        gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
+                0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
     } else if(GL_SUPPORT(ATI_TEXTURE_COMPRESSION_3DC)) {
         dst = getFmtIdx(WINED3DFMT_ATI2N);
         gl_info->gl_formats[dst].glInternal = GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI;
         gl_info->gl_formats[dst].glGammaInternal = GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI;
-        gl_info->gl_formats[dst].conversion_group= WINED3DFMT_ATI2N;
+        gl_info->gl_formats[dst].color_fixup= create_color_fixup_desc(
+                0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_W, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
     }
 
     if(!GL_SUPPORT(APPLE_YCBCR_422)) {
@@ -413,19 +432,19 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
         gl_info->gl_formats[dst].glGammaInternal = GL_LUMINANCE_ALPHA; /* not srgb */
         gl_info->gl_formats[dst].glFormat = GL_LUMINANCE_ALPHA;
         gl_info->gl_formats[dst].glType = GL_UNSIGNED_BYTE;
-        gl_info->gl_formats[dst].conversion_group = WINED3DFMT_YUY2;
+        gl_info->gl_formats[dst].color_fixup = create_yuv_fixup_desc(YUV_FIXUP_YUY2);
 
         dst = getFmtIdx(WINED3DFMT_UYVY);
         gl_info->gl_formats[dst].glInternal = GL_LUMINANCE_ALPHA;
         gl_info->gl_formats[dst].glGammaInternal = GL_LUMINANCE_ALPHA; /* not srgb */
         gl_info->gl_formats[dst].glFormat = GL_LUMINANCE_ALPHA;
         gl_info->gl_formats[dst].glType = GL_UNSIGNED_BYTE;
-        gl_info->gl_formats[dst].conversion_group = WINED3DFMT_UYVY;
+        gl_info->gl_formats[dst].color_fixup = create_yuv_fixup_desc(YUV_FIXUP_UYVY);
     }
 
     dst = getFmtIdx(WINED3DFMT_YV12);
     gl_info->gl_formats[dst].heightscale = 1.5;
-    gl_info->gl_formats[dst].conversion_group = WINED3DFMT_YV12;
+    gl_info->gl_formats[dst].color_fixup = create_yuv_fixup_desc(YUV_FIXUP_YV12);
 
     return TRUE;
 }
@@ -1113,6 +1132,55 @@ const char *debug_d3ddegree(WINED3DDEGREETYPE degree) {
         case WINED3DDEGREE_QUINTIC:     return "WINED3DDEGREE_QUINTIC";
         default:                        return "unrecognized";
     }
+}
+
+const char *debug_fixup_channel_source(enum fixup_channel_source source)
+{
+    switch(source)
+    {
+#define WINED3D_TO_STR(x) case x: return #x
+        WINED3D_TO_STR(CHANNEL_SOURCE_ZERO);
+        WINED3D_TO_STR(CHANNEL_SOURCE_ONE);
+        WINED3D_TO_STR(CHANNEL_SOURCE_X);
+        WINED3D_TO_STR(CHANNEL_SOURCE_Y);
+        WINED3D_TO_STR(CHANNEL_SOURCE_Z);
+        WINED3D_TO_STR(CHANNEL_SOURCE_W);
+        WINED3D_TO_STR(CHANNEL_SOURCE_YUV0);
+        WINED3D_TO_STR(CHANNEL_SOURCE_YUV1);
+#undef WINED3D_TO_STR
+        default:
+            FIXME("Unrecognized fixup_channel_source %#x\n", source);
+            return "unrecognized";
+    }
+}
+
+const char *debug_yuv_fixup(enum yuv_fixup yuv_fixup)
+{
+    switch(yuv_fixup)
+    {
+#define WINED3D_TO_STR(x) case x: return #x
+        WINED3D_TO_STR(YUV_FIXUP_YUY2);
+        WINED3D_TO_STR(YUV_FIXUP_UYVY);
+        WINED3D_TO_STR(YUV_FIXUP_YV12);
+#undef WINED3D_TO_STR
+        default:
+            FIXME("Unrecognized YUV fixup %#x\n", yuv_fixup);
+            return "unrecognized";
+    }
+}
+
+void dump_color_fixup_desc(struct color_fixup_desc fixup)
+{
+    if (is_yuv_fixup(fixup))
+    {
+        TRACE("\tYUV: %s\n", debug_yuv_fixup(get_yuv_fixup(fixup)));
+        return;
+    }
+
+    TRACE("\tX: %s%s\n", debug_fixup_channel_source(fixup.x_source), fixup.x_sign_fixup ? ", SIGN_FIXUP" : "");
+    TRACE("\tY: %s%s\n", debug_fixup_channel_source(fixup.y_source), fixup.y_sign_fixup ? ", SIGN_FIXUP" : "");
+    TRACE("\tZ: %s%s\n", debug_fixup_channel_source(fixup.z_source), fixup.z_sign_fixup ? ", SIGN_FIXUP" : "");
+    TRACE("\tW: %s%s\n", debug_fixup_channel_source(fixup.w_source), fixup.w_sign_fixup ? ", SIGN_FIXUP" : "");
 }
 
 /*****************************************************************************
@@ -1829,7 +1897,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
             settings->op[i].aop = WINED3DTOP_DISABLE;
             settings->op[i].carg0 = settings->op[i].carg1 = settings->op[i].carg2 = ARG_UNUSED;
             settings->op[i].aarg0 = settings->op[i].aarg1 = settings->op[i].aarg2 = ARG_UNUSED;
-            settings->op[i].color_correction = WINED3DFMT_UNKNOWN;
+            settings->op[i].color_correction = COLOR_FIXUP_IDENTITY;
             settings->op[i].dst = resultreg;
             settings->op[i].tex_type = tex_1d;
             settings->op[i].projected = proj_none;
@@ -1839,7 +1907,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
 
         texture = (IWineD3DBaseTextureImpl *) stateblock->textures[i];
         if(texture) {
-            settings->op[i].color_correction = texture->baseTexture.shader_conversion_group;
+            settings->op[i].color_correction = texture->baseTexture.shader_color_fixup;
             if(ignore_textype) {
                 settings->op[i].tex_type = tex_1d;
             } else {
@@ -1862,7 +1930,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
                 }
             }
         } else {
-            settings->op[i].color_correction = WINED3DFMT_UNKNOWN;
+            settings->op[i].color_correction = COLOR_FIXUP_IDENTITY;
             settings->op[i].tex_type = tex_1d;
         }
 

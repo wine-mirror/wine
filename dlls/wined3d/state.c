@@ -5471,8 +5471,22 @@ static void ffp_fragment_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info 
 
 static HRESULT ffp_fragment_alloc(IWineD3DDevice *iface) { return WINED3D_OK; }
 static void ffp_fragment_free(IWineD3DDevice *iface) {}
-static BOOL ffp_conv_supported(WINED3DFORMAT fmt) {
-    TRACE("Checking shader format support for format %s: [FAILED]\n", debug_d3dformat(fmt));
+static BOOL ffp_color_fixup_supported(struct color_fixup_desc fixup)
+{
+    if (TRACE_ON(d3d))
+    {
+        TRACE("Checking support for fixup:\n");
+        dump_color_fixup_desc(fixup);
+    }
+
+    /* We only support identity conversions. */
+    if (is_identity_fixup(fixup))
+    {
+        TRACE("[OK]\n");
+        return TRUE;
+    }
+
+    TRACE("[FAILED]\n");
     return FALSE;
 }
 
@@ -5481,7 +5495,7 @@ const struct fragment_pipeline ffp_fragment_pipeline = {
     ffp_fragment_get_caps,
     ffp_fragment_alloc,
     ffp_fragment_free,
-    ffp_conv_supported,
+    ffp_color_fixup_supported,
     ffp_fragmentstate_template,
     FALSE /* we cannot disable projected textures. The vertex pipe has to do it */
 };

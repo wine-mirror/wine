@@ -673,8 +673,22 @@ static void nvrc_fragment_free(IWineD3DDevice *iface) {}
  * register combiners extension(Pre-GF3).
  */
 
-static BOOL nvts_conv_supported(WINED3DFORMAT fmt) {
-    TRACE("Checking shader format support for format %s: [FAILED]\n", debug_d3dformat(fmt));
+static BOOL nvts_color_fixup_supported(struct color_fixup_desc fixup)
+{
+    if (TRACE_ON(d3d))
+    {
+        TRACE("Checking support for fixup:\n");
+        dump_color_fixup_desc(fixup);
+    }
+
+    /* We only support identity conversions. */
+    if (is_identity_fixup(fixup))
+    {
+        TRACE("[OK]\n");
+        return TRUE;
+    }
+
+    TRACE("[FAILED]\n");
     return FALSE;
 }
 
@@ -810,7 +824,7 @@ const struct fragment_pipeline nvts_fragment_pipeline = {
     nvrc_fragment_get_caps,
     nvrc_fragment_alloc,
     nvrc_fragment_free,
-    nvts_conv_supported,
+    nvts_color_fixup_supported,
     nvrc_fragmentstate_template,
     FALSE /* we cannot disable projected textures. The vertex pipe has to do it */
 };
@@ -820,7 +834,7 @@ const struct fragment_pipeline nvrc_fragment_pipeline = {
     nvrc_fragment_get_caps,
     nvrc_fragment_alloc,
     nvrc_fragment_free,
-    nvts_conv_supported,
+    nvts_color_fixup_supported,
     nvrc_fragmentstate_template,
     FALSE /* we cannot disable projected textures. The vertex pipe has to do it */
 };
