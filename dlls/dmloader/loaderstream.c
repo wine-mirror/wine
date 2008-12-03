@@ -64,6 +64,14 @@ static ULONG WINAPI IDirectMusicLoaderGenericStream_IDirectMusicGetLoader_AddRef
  * IDirectMusicLoaderFileStream implementation
  */
 /* Custom : */
+
+static void IDirectMusicLoaderFileStream_Detach (LPSTREAM iface) {
+    ICOM_THIS_MULTI(IDirectMusicLoaderFileStream, StreamVtbl, iface);
+    TRACE("(%p)\n", This);
+    if (This->hFile != INVALID_HANDLE_VALUE) CloseHandle(This->hFile);
+    This->wzFileName[0] = '\0';
+}
+
 HRESULT WINAPI IDirectMusicLoaderFileStream_Attach (LPSTREAM iface, LPCWSTR wzFile, LPDIRECTMUSICLOADER8 pLoader) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderFileStream, StreamVtbl, iface);
     TRACE("(%p, %s, %p)\n", This, debugstr_w(wzFile), pLoader);
@@ -78,15 +86,6 @@ HRESULT WINAPI IDirectMusicLoaderFileStream_Attach (LPSTREAM iface, LPCWSTR wzFi
     lstrcpynW (This->wzFileName, wzFile, MAX_PATH);
     TRACE(": succeeded\n");
     return S_OK;
-}
-
-void WINAPI IDirectMusicLoaderFileStream_Detach (LPSTREAM iface) {
-	ICOM_THIS_MULTI(IDirectMusicLoaderFileStream, StreamVtbl, iface);
-	TRACE("(%p)\n", This);
-	if (This->hFile != INVALID_HANDLE_VALUE) {
-        CloseHandle(This->hFile);
-    }
-    This->wzFileName[0] = '\0';
 }
 
 
@@ -311,6 +310,15 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderFileStream (LPVOID* ppobj) {
  * IDirectMusicLoaderResourceStream implementation
  */
 /* Custom : */
+
+static void IDirectMusicLoaderResourceStream_Detach (LPSTREAM iface) {
+	ICOM_THIS_MULTI(IDirectMusicLoaderResourceStream, StreamVtbl, iface);
+	TRACE("(%p)\n", This);
+
+	This->pbMemData = NULL;
+	This->llMemLength = 0;
+}
+
 HRESULT WINAPI IDirectMusicLoaderResourceStream_Attach (LPSTREAM iface, LPBYTE pbMemData, LONGLONG llMemLength, LONGLONG llPos, LPDIRECTMUSICLOADER8 pLoader) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderResourceStream, StreamVtbl, iface);
     
@@ -326,14 +334,6 @@ HRESULT WINAPI IDirectMusicLoaderResourceStream_Attach (LPSTREAM iface, LPBYTE p
 	This->pLoader = pLoader;
 	
     return S_OK;
-}
-
-void WINAPI IDirectMusicLoaderResourceStream_Detach (LPSTREAM iface) {
-	ICOM_THIS_MULTI(IDirectMusicLoaderResourceStream, StreamVtbl, iface);
-	TRACE("(%p)\n", This);
-	
-	This->pbMemData = NULL;
-	This->llMemLength = 0;
 }
 
 
@@ -567,6 +567,15 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderResourceStream (LPVOID* ppobj) {
  * IDirectMusicLoaderGenericStream implementation
  */
 /* Custom : */
+
+static void IDirectMusicLoaderGenericStream_Detach (LPSTREAM iface) {
+	ICOM_THIS_MULTI(IDirectMusicLoaderGenericStream, StreamVtbl, iface);
+
+	if (This->pStream)
+		IStream_Release (This->pStream);
+	This->pStream = NULL;
+}
+
 HRESULT WINAPI IDirectMusicLoaderGenericStream_Attach (LPSTREAM iface, LPSTREAM pStream, LPDIRECTMUSICLOADER8 pLoader) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderGenericStream, StreamVtbl, iface);
     
@@ -585,14 +594,6 @@ HRESULT WINAPI IDirectMusicLoaderGenericStream_Attach (LPSTREAM iface, LPSTREAM 
 	This->pLoader = pLoader;
 	
     return S_OK;
-}
-
-void WINAPI IDirectMusicLoaderGenericStream_Detach (LPSTREAM iface) {
-	ICOM_THIS_MULTI(IDirectMusicLoaderGenericStream, StreamVtbl, iface);
-	
-	if (This->pStream)
-		IStream_Release (This->pStream);
-	This->pStream = NULL;
 }
 
 
