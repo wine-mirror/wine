@@ -1723,12 +1723,11 @@ static BOOL WINAPI CRYPT_FormatCRLDistPoints(DWORD dwCertEncodingType,
      pbEncoded, cbEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size)))
     {
         static const WCHAR numFmt[] = { '%','d',0 };
-        static const WCHAR commaSep[] = { ',',' ',0 };
         static const WCHAR colon[] = { ':',0 };
         static BOOL stringsLoaded = FALSE;
         DWORD bytesNeeded = sizeof(WCHAR); /* space for NULL terminator */
         BOOL haveAnEntry = FALSE;
-        LPCWSTR headingSep, distPointSep, nameSep;
+        LPCWSTR headingSep, nameSep;
         WCHAR distPointNum[11];
         DWORD i;
 
@@ -1751,13 +1750,11 @@ static BOOL WINAPI CRYPT_FormatCRLDistPoints(DWORD dwCertEncodingType,
         if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
         {
             headingSep = crlf;
-            distPointSep = crlf;
             nameSep = colonCrlf;
         }
         else
         {
             headingSep = colonSep;
-            distPointSep = commaSep;
             nameSep = colon;
         }
 
