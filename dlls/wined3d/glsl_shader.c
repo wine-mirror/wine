@@ -1228,7 +1228,6 @@ static void shader_glsl_color_correction(const SHADER_OPCODE_ARG *arg)
     if(!recorded) {
         shader->baseShader.sampled_samplers[shader->baseShader.num_sampled_samplers] = sampler_idx;
         shader->baseShader.num_sampled_samplers++;
-        shader->baseShader.sampled_format[sampler_idx] = conversion_group;
     }
 
     switch(fmt) {

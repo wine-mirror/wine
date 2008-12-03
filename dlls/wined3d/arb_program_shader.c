@@ -807,7 +807,6 @@ static void shader_arb_color_correction(const SHADER_OPCODE_ARG* arg)
     if(!recorded) {
         shader->baseShader.sampled_samplers[shader->baseShader.num_sampled_samplers] = sampler_idx;
         shader->baseShader.num_sampled_samplers++;
-        shader->baseShader.sampled_format[sampler_idx] = conversion_group;
     }
 
     pshader_get_register_name(arg->shader, arg->dst, reg);

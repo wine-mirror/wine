@@ -2132,12 +2132,6 @@ typedef struct IWineD3DBaseShaderClass
     struct list constantsI;
     shader_reg_maps reg_maps;
 
-    /* Pixel formats of sampled textures, for format conversion. This
-     * represents the formats found during compilation, it is not initialized
-     * on the first parser pass. It is needed to check if the shader
-     * needs recompilation to adjust the format conversion
-     */
-    WINED3DFORMAT       sampled_format[MAX_COMBINED_SAMPLERS];
     UINT                sampled_samplers[MAX_COMBINED_SAMPLERS];
     UINT                num_sampled_samplers;
 
