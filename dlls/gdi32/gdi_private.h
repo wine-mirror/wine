@@ -511,7 +511,6 @@ extern BOOL PATH_Polygon(DC *dc, const POINT *pt, DWORD cbCount) DECLSPEC_HIDDEN
 extern BOOL PATH_PolyPolyline(DC *dc, const POINT *pt, const DWORD *counts, DWORD polylines) DECLSPEC_HIDDEN;
 extern BOOL PATH_PolyPolygon(DC *dc, const POINT *pt, const INT *counts, UINT polygons) DECLSPEC_HIDDEN;
 extern BOOL PATH_RoundRect(DC *dc, INT x1, INT y1, INT x2, INT y2, INT ell_width, INT ell_height) DECLSPEC_HIDDEN;
-extern BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags) DECLSPEC_HIDDEN;
 
 /* painting.c */
 extern POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut ) DECLSPEC_HIDDEN;

@@ -92,6 +92,7 @@ typedef struct tagFLOAT_POINT
 } FLOAT_POINT;
 
 
+static BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags);
 static BOOL PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode,
    HRGN *pHrgn);
 static void   PATH_EmptyPath(GdiPath *pPath);
@@ -1502,7 +1503,7 @@ static void PATH_EmptyPath(GdiPath *pPath)
  * or PT_BEZIERTO, optionally ORed with PT_CLOSEFIGURE. Returns TRUE if
  * successful, FALSE otherwise (e.g. if not enough memory was available).
  */
-BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags)
+static BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags)
 {
    assert(pPath!=NULL);
 
