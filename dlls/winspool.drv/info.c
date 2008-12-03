@@ -7603,24 +7603,24 @@ static BOOL schedule_cups(LPCWSTR printer_name, LPCWSTR filename, LPCWSTR docume
 #ifdef SONAME_LIBCUPS
     if(pcupsPrintFile)
     {
-        char *unixname, *queue, *doc_titleA;
+        char *unixname, *queue, *unix_doc_title;
         DWORD len;
         BOOL ret;
 
         if(!(unixname = wine_get_unix_file_name(filename)))
             return FALSE;
 
-        len = WideCharToMultiByte(CP_ACP, 0, printer_name, -1, NULL, 0, NULL, NULL);
+        len = WideCharToMultiByte(CP_UNIXCP, 0, printer_name, -1, NULL, 0, NULL, NULL);
         queue = HeapAlloc(GetProcessHeap(), 0, len);
-        WideCharToMultiByte(CP_ACP, 0, printer_name, -1, queue, len, NULL, NULL);
+        WideCharToMultiByte(CP_UNIXCP, 0, printer_name, -1, queue, len, NULL, NULL);
 
-        len = WideCharToMultiByte(CP_ACP, 0, document_title, -1, NULL, 0, NULL, NULL);
-        doc_titleA = HeapAlloc(GetProcessHeap(), 0, len);
-        WideCharToMultiByte(CP_ACP, 0, document_title, -1, doc_titleA, len, NULL, NULL);
+        len = WideCharToMultiByte(CP_UNIXCP, 0, document_title, -1, NULL, 0, NULL, NULL);
+        unix_doc_title = HeapAlloc(GetProcessHeap(), 0, len);
+        WideCharToMultiByte(CP_UNIXCP, 0, document_title, -1, unix_doc_title, len, NULL, NULL);
 
         TRACE("printing via cups\n");
-        ret = pcupsPrintFile(queue, unixname, doc_titleA, 0, NULL);
-        HeapFree(GetProcessHeap(), 0, doc_titleA);
+        ret = pcupsPrintFile(queue, unixname, unix_doc_title, 0, NULL);
+        HeapFree(GetProcessHeap(), 0, unix_doc_title);
         HeapFree(GetProcessHeap(), 0, queue);
         HeapFree(GetProcessHeap(), 0, unixname);
         return ret;
@@ -7739,9 +7739,9 @@ static BOOL schedule_pipe(LPCWSTR cmd, LPCWSTR filename)
     if(!(unixname = wine_get_unix_file_name(filename)))
         return FALSE;
 
-    len = WideCharToMultiByte(CP_ACP, 0, cmd, -1, NULL, 0, NULL, NULL);
+    len = WideCharToMultiByte(CP_UNIXCP, 0, cmd, -1, NULL, 0, NULL, NULL);
     cmdA = HeapAlloc(GetProcessHeap(), 0, len);
-    WideCharToMultiByte(CP_ACP, 0, cmd, -1, cmdA, len, NULL, NULL);
+    WideCharToMultiByte(CP_UNIXCP, 0, cmd, -1, cmdA, len, NULL, NULL);
 
     TRACE("printing with: %s\n", cmdA);
 
@@ -7800,9 +7800,9 @@ static BOOL schedule_unixfile(LPCWSTR output, LPCWSTR filename)
     if(!(unixname = wine_get_unix_file_name(filename)))
         return FALSE;
 
-    len = WideCharToMultiByte(CP_ACP, 0, output, -1, NULL, 0, NULL, NULL);
+    len = WideCharToMultiByte(CP_UNIXCP, 0, output, -1, NULL, 0, NULL, NULL);
     outputA = HeapAlloc(GetProcessHeap(), 0, len);
-    WideCharToMultiByte(CP_ACP, 0, output, -1, outputA, len, NULL, NULL);
+    WideCharToMultiByte(CP_UNIXCP, 0, output, -1, outputA, len, NULL, NULL);
     
     out_fd = open(outputA, O_CREAT | O_TRUNC | O_WRONLY, 0666);
     in_fd = open(unixname, O_RDONLY);
