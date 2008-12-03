@@ -33,10 +33,6 @@
 
 void X11DRV_XF86VM_Init(void);
 void X11DRV_XF86VM_Cleanup(void);
-void X11DRV_XF86VM_SetExclusiveMode(int lock);
-
-BOOL X11DRV_XF86VM_GetGammaRamp(LPDDGAMMARAMP ramp);
-BOOL X11DRV_XF86VM_SetGammaRamp(LPDDGAMMARAMP ramp);
 
 #endif /* SONAME_LIBXXF86VM */
 #endif /* __WINE_XVIDMODE_H */

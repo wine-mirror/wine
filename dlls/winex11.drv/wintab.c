@@ -359,7 +359,7 @@ static void trace_axes(XValuatorInfoPtr val)
         TRACE("        Axis %d: [resolution %d|min_value %d|max_value %d]\n", i, axis->resolution, axis->min_value, axis->max_value);
 }
 
-BOOL match_token(const char *haystack, const char *needle)
+static BOOL match_token(const char *haystack, const char *needle)
 {
     const char *p, *q;
     for (p = haystack; *p; )

@@ -57,7 +57,7 @@ static unsigned int dd_mode_count;
 static XF86VidModeModeInfo** real_xf86vm_modes;
 static unsigned int real_xf86vm_mode_count;
 
-#define MAKE_FUNCPTR(f) typeof(f) * p##f;
+#define MAKE_FUNCPTR(f) static typeof(f) * p##f;
 MAKE_FUNCPTR(XF86VidModeGetAllModeLines)
 MAKE_FUNCPTR(XF86VidModeGetModeLine)
 MAKE_FUNCPTR(XF86VidModeLockModeSwitch)
@@ -356,7 +356,7 @@ static BOOL ComputeGammaFromRamp(WORD ramp[256], float *gamma)
 /* Hmm... should gamma control be available in desktop mode or not?
  * I'll assume that it should */
 
-BOOL X11DRV_XF86VM_GetGammaRamp(LPDDGAMMARAMP ramp)
+static BOOL X11DRV_XF86VM_GetGammaRamp(LPDDGAMMARAMP ramp)
 {
 #ifdef X_XF86VidModeSetGamma
   XF86VidModeGamma gamma;
@@ -390,7 +390,7 @@ BOOL X11DRV_XF86VM_GetGammaRamp(LPDDGAMMARAMP ramp)
   return FALSE;
 }
 
-BOOL X11DRV_XF86VM_SetGammaRamp(LPDDGAMMARAMP ramp)
+static BOOL X11DRV_XF86VM_SetGammaRamp(LPDDGAMMARAMP ramp)
 {
 #ifdef X_XF86VidModeSetGamma
   XF86VidModeGamma gamma;
