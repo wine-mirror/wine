@@ -1,4 +1,4 @@
-EXTRADEFS = -DWINE_NO_UNICODE_MACROS
+EXTRADEFS = -D__WINESRC__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
