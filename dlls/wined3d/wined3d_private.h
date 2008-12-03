@@ -2378,6 +2378,19 @@ extern WINED3DFORMAT pixelformat_for_depth(DWORD depth);
 /*****************************************************************************
  * Pixel format management
  */
+
+struct GlPixelFormatDesc
+{
+    GLint glInternal;
+    GLint glGammaInternal;
+    GLint rtInternal;
+    GLint glFormat;
+    GLint glType;
+    WINED3DFORMAT conversion_group;
+    unsigned int Flags;
+    float heightscale;
+};
+
 typedef struct {
     WINED3DFORMAT           format;
     DWORD                   alphaMask, redMask, greenMask, blueMask;
@@ -2387,7 +2400,7 @@ typedef struct {
 } StaticPixelFormatDesc;
 
 const StaticPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt,
-        const WineD3D_GL_Info *gl_info, const GlPixelFormatDesc **glDesc);
+        const WineD3D_GL_Info *gl_info, const struct GlPixelFormatDesc **glDesc);
 
 static inline BOOL use_vs(IWineD3DDeviceImpl *device) {
     return (device->vs_selected_mode != SHADER_NONE

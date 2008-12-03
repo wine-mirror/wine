@@ -466,7 +466,7 @@ void init_type_lookup(WineD3D_GL_Info *gl_info) {
 #define GLINFO_LOCATION This->adapter->gl_info
 
 const StaticPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt, const WineD3D_GL_Info *gl_info,
-        const GlPixelFormatDesc **glDesc)
+        const struct GlPixelFormatDesc **glDesc)
 {
     int idx = getFmtIdx(fmt);
 
@@ -481,7 +481,7 @@ const StaticPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt, const WineD3D
              * all gl caps check return "unsupported" than catching the lack of gl all over the code. ANSI C requires
              * static variables to be initialized to 0.
              */
-            static const GlPixelFormatDesc dummyFmt;
+            static const struct GlPixelFormatDesc dummyFmt;
             *glDesc = &dummyFmt;
         } else {
             *glDesc = &gl_info->gl_formats[idx];

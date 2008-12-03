@@ -244,7 +244,7 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE]      ||
         stateblock->renderState[WINED3DRS_EDGEANTIALIAS]         ||
         stateblock->renderState[WINED3DRS_ANTIALIASEDLINEENABLE]) {
-        const GlPixelFormatDesc *glDesc;
+        const struct GlPixelFormatDesc *glDesc;
         getFormatDescEntry(target->resource.format, &GLINFO_LOCATION, &glDesc);
 
         /* Disable blending in all cases even without pixelshaders. With blending on we could face a big performance penalty.

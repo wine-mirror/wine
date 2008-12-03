@@ -3690,7 +3690,7 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum t
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
     float size[4] = {width, height, 1, 1};
     struct arbfp_blit_priv *priv = (struct arbfp_blit_priv *) device->blit_priv;
-    const GlPixelFormatDesc *glDesc;
+    const struct GlPixelFormatDesc *glDesc;
 
     getFormatDescEntry(fmt, &GLINFO_LOCATION, &glDesc);
 

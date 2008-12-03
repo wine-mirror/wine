@@ -1811,7 +1811,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, U
                                                        BOOL Windowed, WINED3DMULTISAMPLE_TYPE MultiSampleType, DWORD*   pQualityLevels) {
 
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    const GlPixelFormatDesc *glDesc;
+    const struct GlPixelFormatDesc *glDesc;
     const StaticPixelFormatDesc *desc;
 
     TRACE_(d3d_caps)("(%p)-> (Adptr:%d, DevType:(%x,%s), SurfFmt:(%x,%s), Win?%d, MultiSamp:%x, pQual:%p)\n",
@@ -1986,7 +1986,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
 static BOOL CheckBumpMapCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINED3DFORMAT CheckFormat)
 {
     const struct fragment_pipeline *fp;
-    const GlPixelFormatDesc *glDesc;
+    const struct GlPixelFormatDesc *glDesc;
 
     switch(CheckFormat) {
         case WINED3DFMT_V8U8:
@@ -2023,7 +2023,7 @@ static BOOL CheckBumpMapCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
 static BOOL CheckDepthStencilCapability(UINT Adapter, WINED3DFORMAT DisplayFormat, WINED3DFORMAT DepthStencilFormat)
 {
     int it=0;
-    const GlPixelFormatDesc *glDesc;
+    const struct GlPixelFormatDesc *glDesc;
     const StaticPixelFormatDesc *desc = getFormatDescEntry(DepthStencilFormat, &GLINFO_LOCATION, &glDesc);
 
     /* Fail if we weren't able to get a description of the format */
@@ -2049,7 +2049,7 @@ static BOOL CheckDepthStencilCapability(UINT Adapter, WINED3DFORMAT DisplayForma
 
 static BOOL CheckFilterCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
 {
-    const GlPixelFormatDesc *glDesc;
+    const struct GlPixelFormatDesc *glDesc;
     const StaticPixelFormatDesc *desc = getFormatDescEntry(CheckFormat, &GLINFO_LOCATION, &glDesc);
 
     /* Fail if we weren't able to get a description of the format */
@@ -2067,7 +2067,7 @@ static BOOL CheckFilterCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
 static BOOL CheckRenderTargetCapability(WINED3DFORMAT AdapterFormat, WINED3DFORMAT CheckFormat)
 {
     UINT Adapter = 0;
-    const GlPixelFormatDesc *glDesc;
+    const struct GlPixelFormatDesc *glDesc;
     const StaticPixelFormatDesc *desc = getFormatDescEntry(CheckFormat, &GLINFO_LOCATION, &glDesc);
 
     /* Fail if we weren't able to get a description of the format */
@@ -2174,7 +2174,7 @@ static BOOL CheckSrgbWriteCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WI
 /* Check if a format support blending in combination with pixel shaders */
 static BOOL CheckPostPixelShaderBlendingCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
 {
-    const GlPixelFormatDesc *glDesc;
+    const struct GlPixelFormatDesc *glDesc;
     const StaticPixelFormatDesc *desc = getFormatDescEntry(CheckFormat, &GLINFO_LOCATION, &glDesc);
 
     /* Fail if we weren't able to get a description of the format */
@@ -2206,7 +2206,7 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
 {
     const shader_backend_t *shader_backend;
     const struct fragment_pipeline *fp;
-    const GlPixelFormatDesc *glDesc;
+    const struct GlPixelFormatDesc *glDesc;
 
     switch (CheckFormat) {
 

@@ -3813,13 +3813,6 @@ typedef BOOL (WINAPI * WINED3D_PFNWGLSETPIXELFORMATWINE) (HDC hdc, int iPixelFor
  * Structures
  ****************************************************/
 
-typedef struct {
-    GLint                   glInternal, glGammaInternal, rtInternal, glFormat, glType;
-    WINED3DFORMAT           conversion_group;
-    unsigned int            Flags;
-    float                   heightscale;
-} GlPixelFormatDesc;
-
 typedef struct _WINED3DGLTYPE {
     int         d3dType;
     GLint       size;
@@ -3889,7 +3882,7 @@ typedef struct _WineD3D_GL_Info {
   /** OpenGL WGL functions ptr */
   WGL_EXT_FUNCS_GEN
 
-  GlPixelFormatDesc *gl_formats;
+  struct GlPixelFormatDesc *gl_formats;
 
   /* Vertex data types */
   WINED3DGLTYPE glTypeLookup[WINED3DDECLTYPE_UNUSED];
