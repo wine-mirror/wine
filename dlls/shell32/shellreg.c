@@ -129,17 +129,6 @@ HRESULT WINAPI SHRegQueryValueExW (
 }
 
 /*************************************************************************
- * SHRegDeleteKeyA   [SHELL32.?]
- */
-HRESULT WINAPI SHRegDeleteKeyA(
-	HKEY hkey,
-	LPCSTR pszSubKey)
-{
-	FIXME("hkey=%p, %s\n", hkey, debugstr_a(pszSubKey));
-	return 0;
-}
-
-/*************************************************************************
  * SHRegDeleteKeyW   [SHELL32.512]
  */
 HRESULT WINAPI SHRegDeleteKeyW(

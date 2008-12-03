@@ -103,53 +103,6 @@ HRESULT WINAPI IFileSystemBindData_Constructor(const WIN32_FIND_DATAW *pfd, LPBC
     return ret;
 }
 
-HRESULT WINAPI FileSystemBindData_GetFindData(LPBC pbc, WIN32_FIND_DATAW *pfd)
-{
-    LPUNKNOWN pUnk;
-    IFileSystemBindData *pfsbd = NULL;
-    HRESULT ret;
-
-    TRACE("%p, %p\n", pbc, pfd);
-
-    if (!pfd)
-        return E_INVALIDARG;
-
-    ret = IBindCtx_GetObjectParam(pbc, (LPOLESTR)wFileSystemBindData, &pUnk);
-    if (SUCCEEDED(ret))
-    {
-        ret = IUnknown_QueryInterface(pUnk, &IID_IFileSystemBindData, (LPVOID *)&pfsbd);
-        if (SUCCEEDED(ret))
-        {
-            ret = IFileSystemBindData_GetFindData(pfsbd, pfd);
-            IFileSystemBindData_Release(pfsbd);
-        }
-        IUnknown_Release(pUnk);
-    }
-    return ret;
-}
-
-HRESULT WINAPI FileSystemBindData_SetFindData(LPBC pbc, const WIN32_FIND_DATAW *pfd)
-{
-    LPUNKNOWN pUnk;
-    IFileSystemBindData *pfsbd = NULL;
-    HRESULT ret;
-    
-    TRACE("%p, %p\n", pbc, pfd);
-
-    ret = IBindCtx_GetObjectParam(pbc, (LPOLESTR)wFileSystemBindData, &pUnk);
-    if (SUCCEEDED(ret))
-    {
-        ret = IUnknown_QueryInterface(pUnk, &IID_IFileSystemBindData, (LPVOID *)&pfsbd);
-        if (SUCCEEDED(ret))
-        {
-            ret = IFileSystemBindData_SetFindData(pfsbd, pfd);
-            IFileSystemBindData_Release(pfsbd);
-        }
-        IUnknown_Release(pUnk);
-    }
-    return ret;
-}
-
 static HRESULT WINAPI IFileSystemBindData_fnQueryInterface(
                 IFileSystemBindData *iface, REFIID riid, LPVOID *ppV)
 {

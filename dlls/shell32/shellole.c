@@ -47,7 +47,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
-extern HRESULT WINAPI IFSFolder_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv);
+extern INT WINAPI SHStringFromGUIDW(REFGUID guid, LPWSTR lpszDest, INT cchMax);  /* shlwapi.24 */
 
 /**************************************************************************
  * Default ClassFactory types
@@ -77,23 +77,6 @@ static const struct {
 };
 
 
-/* FIXME: this should be SHLWAPI.24 since we can't yet import by ordinal */
-
-DWORD WINAPI __SHGUIDToStringW (REFGUID guid, LPWSTR str)
-{
-    WCHAR sFormat[52] = {'{','%','0','8','l','x','-','%','0','4',
-		         'x','-','%','0','4','x','-','%','0','2',
-                         'x','%','0','2','x','-','%','0','2','x',
-			 '%','0','2','x','%','0','2','x','%','0',
-			 '2','x','%','0','2','x','%','0','2','x',
-			 '}','\0'};
-
-    return wsprintfW ( str, sFormat,
-             guid->Data1, guid->Data2, guid->Data3,
-             guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
-             guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
-
-}
 
 /*************************************************************************
  * SHCoCreateInstance [SHELL32.102]
@@ -153,7 +136,7 @@ HRESULT WINAPI SHCoCreateInstance(
         }
 
 	/* we look up the dll path in the registry */
-        __SHGUIDToStringW(myclsid, sClassID);
+        SHStringFromGUIDW(myclsid, sClassID, sizeof(sClassID)/sizeof(WCHAR));
 	lstrcpyW(sKeyName, sCLSID);
 	lstrcatW(sKeyName, sClassID);
 	lstrcatW(sKeyName, sInProcServer32);
