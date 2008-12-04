@@ -156,10 +156,6 @@ typedef struct {
 } IDirectXFileSaveObjectImpl;
 
 HRESULT IDirectXFileImpl_Create(IUnknown *pUnkOuter, LPVOID *ppObj);
-HRESULT IDirectXFileBinaryImpl_Create(IDirectXFileBinaryImpl** ppObj);
-HRESULT IDirectXFileDataImpl_Create(IDirectXFileDataImpl** ppObj);
-HRESULT IDirectXFileDataReferenceImpl_Create(IDirectXFileDataReferenceImpl** ppObj);
-HRESULT IDirectXFileEnumObjectImpl_Create(IDirectXFileEnumObjectImpl** ppObj);
 HRESULT IDirectXFileFileObjectImpl_Create(IDirectXFileObjectImpl** ppObj);
 HRESULT IDirectXFileFileSaveObjectImpl_Create(IDirectXFileSaveObjectImpl** ppObj);
 

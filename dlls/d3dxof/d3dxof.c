@@ -96,6 +96,8 @@ static BOOL parse_object(parse_buffer * buf);
 static const char* get_primitive_string(WORD token);
 static WORD check_TOKEN(parse_buffer * buf);
 static BOOL parse_template(parse_buffer * buf);
+static HRESULT IDirectXFileDataReferenceImpl_Create(IDirectXFileDataReferenceImpl** ppObj);
+static HRESULT IDirectXFileEnumObjectImpl_Create(IDirectXFileEnumObjectImpl** ppObj);
 
 static void dump_template(xtemplate* templates_array, xtemplate* ptemplate)
 {
@@ -1336,22 +1338,6 @@ static const IDirectXFileVtbl IDirectXFile_Vtbl =
   IDirectXFileImpl_RegisterTemplates
 };
 
-HRESULT IDirectXFileBinaryImpl_Create(IDirectXFileBinaryImpl** ppObj)
-{
-    IDirectXFileBinaryImpl* object;
-
-    TRACE("(%p)\n", ppObj);
-      
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectXFileBinaryImpl));
-    
-    object->lpVtbl.lpVtbl = &IDirectXFileBinary_Vtbl;
-    object->ref = 1;
-
-    *ppObj = object;
-    
-    return DXFILE_OK;
-}
-
 /*** IUnknown methods ***/
 static HRESULT WINAPI IDirectXFileBinaryImpl_QueryInterface(IDirectXFileBinary* iface, REFIID riid, void** ppvObject)
 {
@@ -1459,7 +1445,7 @@ static const IDirectXFileBinaryVtbl IDirectXFileBinary_Vtbl =
     IDirectXFileBinaryImpl_Read
 };
 
-HRESULT IDirectXFileDataImpl_Create(IDirectXFileDataImpl** ppObj)
+static HRESULT IDirectXFileDataImpl_Create(IDirectXFileDataImpl** ppObj)
 {
     IDirectXFileDataImpl* object;
 
@@ -1679,7 +1665,7 @@ static const IDirectXFileDataVtbl IDirectXFileData_Vtbl =
     IDirectXFileDataImpl_AddBinaryObject
 };
 
-HRESULT IDirectXFileDataReferenceImpl_Create(IDirectXFileDataReferenceImpl** ppObj)
+static HRESULT IDirectXFileDataReferenceImpl_Create(IDirectXFileDataReferenceImpl** ppObj)
 {
     IDirectXFileDataReferenceImpl* object;
 
@@ -1807,7 +1793,7 @@ static const IDirectXFileDataReferenceVtbl IDirectXFileDataReference_Vtbl =
     IDirectXFileDataReferenceImpl_Resolve
 };
 
-HRESULT IDirectXFileEnumObjectImpl_Create(IDirectXFileEnumObjectImpl** ppObj)
+static HRESULT IDirectXFileEnumObjectImpl_Create(IDirectXFileEnumObjectImpl** ppObj)
 {
     IDirectXFileEnumObjectImpl* object;
 
@@ -2276,22 +2262,6 @@ static const IDirectXFileEnumObjectVtbl IDirectXFileEnumObject_Vtbl =
     IDirectXFileEnumObjectImpl_GetDataObjectByName
 };
 
-HRESULT IDirectXFileObjectImpl_Create(IDirectXFileObjectImpl** ppObj)
-{
-    IDirectXFileObjectImpl* object;
-
-    TRACE("(%p)\n", ppObj);
-      
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectXFileObjectImpl));
-    
-    object->lpVtbl.lpVtbl = &IDirectXFileObject_Vtbl;
-    object->ref = 1;
-
-    *ppObj = object;
-    
-    return S_OK;
-}
-
 /*** IUnknown methods ***/
 static HRESULT WINAPI IDirectXFileObjectImpl_QueryInterface(IDirectXFileObject* iface, REFIID riid, void** ppvObject)
 {
@@ -2361,22 +2331,6 @@ static const IDirectXFileObjectVtbl IDirectXFileObject_Vtbl =
     IDirectXFileObjectImpl_GetName,
     IDirectXFileObjectImpl_GetId
 };
-
-HRESULT IDirectXFileSaveObjectImpl_Create(IDirectXFileSaveObjectImpl** ppObj)
-{
-    IDirectXFileSaveObjectImpl* object;
-
-    TRACE("(%p)\n", ppObj);
-
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectXFileSaveObjectImpl));
-    
-    object->lpVtbl.lpVtbl = &IDirectXFileSaveObject_Vtbl;
-    object->ref = 1;
-
-    *ppObj = object;
-    
-    return S_OK;
-}
 
 /*** IUnknown methods ***/
 static HRESULT WINAPI IDirectXFileSaveObjectImpl_QueryInterface(IDirectXFileSaveObject* iface, REFIID riid, void** ppvObject)
