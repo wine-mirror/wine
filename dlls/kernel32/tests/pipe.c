@@ -21,7 +21,6 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <time.h>
 
 #include <windef.h>
 #include <winbase.h>

@@ -23,7 +23,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <float.h>
-#include <time.h>
 
 #include "windef.h"
 #include "winbase.h"
