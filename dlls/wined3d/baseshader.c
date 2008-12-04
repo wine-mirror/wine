@@ -33,7 +33,7 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 #define GLNAME_REQUIRE_GLSL  ((const char *)1)
 
-static void shader_dump_param(IWineD3DBaseShader *iface, const DWORD param, const DWORD addr_token, int input);
+static void shader_dump_param(const DWORD param, const DWORD addr_token, int input, DWORD shader_version);
 
 static inline BOOL shader_is_version_token(DWORD token) {
     return shader_is_pshader_version(token) ||
@@ -139,6 +139,7 @@ static inline int shader_skip_opcode(
  * but hopefully those would be recognized */
 static int shader_skip_unrecognized(IWineD3DBaseShader *iface, const DWORD *pToken)
 {
+    DWORD shader_version = ((IWineD3DBaseShaderImpl *)iface)->baseShader.hex_version;
     int tokens_read = 0;
     int i = 0;
 
@@ -151,7 +152,7 @@ static int shader_skip_unrecognized(IWineD3DBaseShader *iface, const DWORD *pTok
 
         FIXME("Unrecognized opcode param: token=0x%08x "
             "addr_token=0x%08x name=", param, addr_token);
-        shader_dump_param(iface, param, addr_token, i);
+        shader_dump_param(param, addr_token, i, shader_version);
         FIXME("\n");
         ++i;
     }
@@ -571,20 +572,16 @@ static void shader_dump_decl_usage(DWORD decl, DWORD param, DWORD shader_version
     }
 }
 
-static void shader_dump_arr_entry(
-    IWineD3DBaseShader *iface,
-    const DWORD param,
-    const DWORD addr_token,
-    unsigned int reg,
-    int input) {
-
+static void shader_dump_arr_entry(const DWORD param, const DWORD addr_token,
+        unsigned int reg, int input, DWORD shader_version)
+{
     char relative =
         ((param & WINED3DSHADER_ADDRESSMODE_MASK) == WINED3DSHADER_ADDRMODE_RELATIVE);
 
     if (relative) {
         TRACE("[");
         if (addr_token)
-            shader_dump_param(iface, addr_token, 0, input);
+            shader_dump_param(addr_token, 0, input, shader_version);
         else
             TRACE("a0.x");
         TRACE(" + ");
@@ -594,9 +591,8 @@ static void shader_dump_arr_entry(
          TRACE("]");
 }
 
-static void shader_dump_param(IWineD3DBaseShader *iface, const DWORD param, const DWORD addr_token, int input)
+static void shader_dump_param(const DWORD param, const DWORD addr_token, int input, DWORD shader_version)
 {
-    IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     static const char * const rastout_reg_names[] = { "oPos", "oFog", "oPts" };
     static const char * const misctype_reg_names[] = { "vPos", "vFace"};
     char swizzle_reg_chars[4];
@@ -606,7 +602,7 @@ static void shader_dump_param(IWineD3DBaseShader *iface, const DWORD param, cons
     DWORD modifier = param & WINED3DSP_SRCMOD_MASK;
 
     /* There are some minor differences between pixel and vertex shaders */
-    char pshader = shader_is_pshader_version(This->baseShader.hex_version);
+    char pshader = shader_is_pshader_version(shader_version);
 
     /* For one, we'd prefer color components to be shown for pshaders.
      * FIXME: use the swizzle function for this */
@@ -638,14 +634,14 @@ static void shader_dump_param(IWineD3DBaseShader *iface, const DWORD param, cons
             break;
         case WINED3DSPR_INPUT:
             TRACE("v");
-            shader_dump_arr_entry(iface, param, addr_token, reg, input);
+            shader_dump_arr_entry(param, addr_token, reg, input, shader_version);
             break;
         case WINED3DSPR_CONST:
         case WINED3DSPR_CONST2:
         case WINED3DSPR_CONST3:
         case WINED3DSPR_CONST4:
             TRACE("c");
-            shader_dump_arr_entry(iface, param, addr_token, shader_get_float_offset(param), input);
+            shader_dump_arr_entry(param, addr_token, shader_get_float_offset(param), input, shader_version);
             break;
         case WINED3DSPR_TEXTURE: /* vs: case D3DSPR_ADDR */
             TRACE("%c%u", (pshader? 't':'a'), reg);
@@ -667,20 +663,20 @@ static void shader_dump_param(IWineD3DBaseShader *iface, const DWORD param, cons
             /* Vertex shaders >= 3.0 use general purpose output registers
              * (WINED3DSPR_OUTPUT), which can include an address token */
 
-            if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 3) {
+            if (WINED3DSHADER_VERSION_MAJOR(shader_version) >= 3) {
                 TRACE("o");
-                shader_dump_arr_entry(iface, param, addr_token, reg, input);
+                shader_dump_arr_entry(param, addr_token, reg, input, shader_version);
             }
             else 
                TRACE("oT%u", reg);
             break;
         case WINED3DSPR_CONSTINT:
             TRACE("i");
-            shader_dump_arr_entry(iface, param, addr_token, reg, input);
+            shader_dump_arr_entry(param, addr_token, reg, input, shader_version);
             break;
         case WINED3DSPR_CONSTBOOL:
             TRACE("b");
-            shader_dump_arr_entry(iface, param, addr_token, reg, input);
+            shader_dump_arr_entry(param, addr_token, reg, input, shader_version);
             break;
         case WINED3DSPR_LABEL:
             TRACE("l%u", reg);
@@ -1026,7 +1022,7 @@ void shader_trace_init(
                     shader_dump_decl_usage(usage, param, This->baseShader.hex_version);
                     shader_dump_ins_modifiers(param);
                     TRACE(" ");
-                    shader_dump_param(iface, param, 0, 0);
+                    shader_dump_param(param, 0, 0, This->baseShader.hex_version);
                     pToken += 2;
                     len += 2;
 
@@ -1070,7 +1066,7 @@ void shader_trace_init(
                      * the destination token. */
                     if (opcode_token & WINED3DSHADER_INSTRUCTION_PREDICATED) {
                         TRACE("(");
-                        shader_dump_param(iface, *(pToken + 2), 0, 1);
+                        shader_dump_param(*(pToken + 2), 0, 1, This->baseShader.hex_version);
                         TRACE(") ");
                     }
                     if (opcode_token & WINED3DSI_COISSUE) {
@@ -1109,7 +1105,7 @@ void shader_trace_init(
 
                         shader_dump_ins_modifiers(param);
                         TRACE(" ");
-                        shader_dump_param(iface, param, addr_token, 0);
+                        shader_dump_param(param, addr_token, 0, This->baseShader.hex_version);
                     }
 
                     /* Predication token - already printed out, just skip it */
@@ -1126,7 +1122,7 @@ void shader_trace_init(
                         len += tokens_read;
 
                         TRACE((i == 0)? " " : ", ");
-                        shader_dump_param(iface, param, addr_token, 1);
+                        shader_dump_param(param, addr_token, 1, This->baseShader.hex_version);
                     }
                 }
                 TRACE("\n");
