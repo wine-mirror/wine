@@ -283,7 +283,7 @@ static NTSTATUS query_unix_drive( const void *in_buff, SIZE_T insize,
     const char *device, *mount_point;
     int letter = tolowerW( input->letter );
     NTSTATUS status;
-    DWORD size, type;
+    DWORD size, type = DEVICE_UNKNOWN;
     enum device_type device_type;
     char *ptr;
 
