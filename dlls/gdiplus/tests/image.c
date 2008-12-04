@@ -42,20 +42,17 @@ static void test_Scan0(void)
     bm = (GpBitmap*)0xdeadbeef;
     stat = GdipCreateBitmapFromScan0(10, -10, 10, PixelFormat24bppRGB, NULL, &bm);
     expect(InvalidParameter, stat);
-
-    expect(NULL, bm);
+    ok( !bm, "expected null bitmap\n" );
 
     bm = (GpBitmap*)0xdeadbeef;
     stat = GdipCreateBitmapFromScan0(-10, 10, 10, PixelFormat24bppRGB, NULL, &bm);
     expect(InvalidParameter, stat);
-
-    expect(NULL, bm);
+    ok( !bm, "expected null bitmap\n" );
 
     bm = (GpBitmap*)0xdeadbeef;
     stat = GdipCreateBitmapFromScan0(10, 0, 10, PixelFormat24bppRGB, NULL, &bm);
     expect(InvalidParameter, stat);
-
-    expect(NULL, bm);
+    ok( !bm, "expected null bitmap\n" );
 
     bm = NULL;
     stat = GdipCreateBitmapFromScan0(10, 10, 12, PixelFormat24bppRGB, buff, &bm);
@@ -67,12 +64,12 @@ static void test_Scan0(void)
     bm = (GpBitmap*) 0xdeadbeef;
     stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat24bppRGB, buff, &bm);
     expect(InvalidParameter, stat);
-    expect(NULL, bm);
+    ok( !bm, "expected null bitmap\n" );
 
     bm = (GpBitmap*)0xdeadbeef;
     stat = GdipCreateBitmapFromScan0(10, 10, 0, PixelFormat24bppRGB, buff, &bm);
     expect(InvalidParameter, stat);
-    expect(0xdeadbeef, bm);
+    ok( bm == (GpBitmap*)0xdeadbeef, "expected deadbeef bitmap\n" );
 
     bm = NULL;
     stat = GdipCreateBitmapFromScan0(10, 10, -8, PixelFormat24bppRGB, buff, &bm);
@@ -86,7 +83,7 @@ static void test_Scan0(void)
     bm = (GpBitmap*)0xdeadbeef;
     stat = GdipCreateBitmapFromScan0(10, 10, -10, PixelFormat24bppRGB, buff, &bm);
     expect(InvalidParameter, stat);
-    expect(NULL, bm);
+    ok( !bm, "expected null bitmap\n" );
 }
 
 static void test_GetImageDimension(void)
