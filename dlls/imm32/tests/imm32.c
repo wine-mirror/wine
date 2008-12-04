@@ -258,7 +258,7 @@ static void test_ImmSetCompositionString(void)
 
     SetLastError(0xdeadbeef);
     imc = ImmGetContext(hwnd);
-    ok(imc, "ImmGetContext() failed. Last error: %u\n", GetLastError());
+    ok(imc != 0, "ImmGetContext() failed. Last error: %u\n", GetLastError());
     if (!imc)
         return;
 
