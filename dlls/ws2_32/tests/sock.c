@@ -317,7 +317,7 @@ static void server_start ( server_params *par )
 {
     int i;
     test_params *gen = par->general;
-    server_memory *mem = (LPVOID) LocalAlloc ( LPTR, sizeof (server_memory));
+    server_memory *mem = LocalAlloc ( LPTR, sizeof ( server_memory ) );
 
     TlsSetValue ( tls, mem );
     mem->s = WSASocketA ( AF_INET, gen->sock_type, gen->sock_prot,
@@ -331,7 +331,7 @@ static void server_start ( server_params *par )
     for (i = 0; i < MAX_CLIENTS; i++)
     {
         mem->sock[i].s = INVALID_SOCKET;
-        mem->sock[i].buf = (LPVOID) LocalAlloc ( LPTR, gen->n_chunks * gen->chunk_size );
+        mem->sock[i].buf = LocalAlloc ( LPTR, gen->n_chunks * gen->chunk_size );
         mem->sock[i].n_recvd = 0;
         mem->sock[i].n_sent = 0;
     }
@@ -347,12 +347,12 @@ static void server_stop (void)
 
     for (i = 0; i < MAX_CLIENTS; i++ )
     {
-        LocalFree ( (HANDLE) mem->sock[i].buf );
+        LocalFree ( mem->sock[i].buf );
         if ( mem->sock[i].s != INVALID_SOCKET )
             closesocket ( mem->sock[i].s );
     }
     ok ( closesocket ( mem->s ) == 0, "closesocket failed\n" );
-    LocalFree ( (HANDLE) mem );
+    LocalFree ( mem );
     ExitThread ( GetCurrentThreadId () );
 }
 
@@ -361,7 +361,7 @@ static void server_stop (void)
 static void client_start ( client_params *par )
 {
     test_params *gen = par->general;
-    client_memory *mem = (LPVOID) LocalAlloc (LPTR, sizeof (client_memory));
+    client_memory *mem = LocalAlloc (LPTR, sizeof (client_memory));
 
     TlsSetValue ( tls, mem );
 
@@ -376,7 +376,7 @@ static void client_start ( client_params *par )
 
     ok ( mem->s != INVALID_SOCKET, "Client: WSASocket failed\n" );
 
-    mem->send_buf = (LPVOID) LocalAlloc ( LPTR, 2 * gen->n_chunks * gen->chunk_size );
+    mem->send_buf = LocalAlloc ( LPTR, 2 * gen->n_chunks * gen->chunk_size );
     mem->recv_buf = mem->send_buf + gen->n_chunks * gen->chunk_size;
     fill_buffer ( mem->send_buf, gen->chunk_size, gen->n_chunks );
 
@@ -389,8 +389,8 @@ static void client_stop (void)
 {
     client_memory *mem = TlsGetValue ( tls );
     wsa_ok ( closesocket ( mem->s ), 0 ==, "closesocket error (%x): %d\n" );
-    LocalFree ( (HANDLE) mem->send_buf );
-    LocalFree ( (HANDLE) mem );
+    LocalFree ( mem->send_buf );
+    LocalFree ( mem );
     ExitThread(0);
 }
 
