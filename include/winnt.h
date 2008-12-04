@@ -1454,6 +1454,8 @@ typedef struct _CONTEXT
 
 typedef CONTEXT *PCONTEXT;
 
+NTSYSAPI void WINAPI RtlCaptureContext(CONTEXT*);
+
 /*
  * Language IDs
  */

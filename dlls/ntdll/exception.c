@@ -381,6 +381,26 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
 }
 
 /***********************************************************************
+ *		RtlCaptureContext (NTDLL.@)
+ */
+void WINAPI __regs_RtlCaptureContext( CONTEXT *context_out, CONTEXT *context_in )
+{
+    *context_out = *context_in;
+}
+
+/**********************************************************************/
+
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( RtlCaptureContext, 4, 4 )
+#else
+void WINAPI RtlCaptureContext( CONTEXT *context_out )
+{
+    memset( context_out, 0, sizeof(*context_out) );
+}
+#endif
+
+
+/***********************************************************************
  *		RtlRaiseException (NTDLL.@)
  */
 void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
@@ -405,7 +425,7 @@ DEFINE_REGS_ENTRYPOINT( RtlRaiseException, 4, 4 )
 void WINAPI RtlRaiseException( EXCEPTION_RECORD *rec )
 {
     CONTEXT context;
-    memset( &context, 0, sizeof(context) );
+    RtlCaptureContext( &context );
     __regs_RtlRaiseException( rec, &context );
 }
 #endif
@@ -498,7 +518,7 @@ void WINAPI RtlUnwind( PVOID pEndFrame, PVOID unusedEip,
                        PEXCEPTION_RECORD pRecord, PVOID returnEax )
 {
     CONTEXT context;
-    memset( &context, 0, sizeof(context) );
+    RtlCaptureContext( &context );
     __regs_RtlUnwind( pEndFrame, unusedEip, pRecord, returnEax, &context );
 }
 #endif

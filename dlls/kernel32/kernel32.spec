@@ -920,7 +920,7 @@
 @ stdcall ResetWriteWatch(ptr long)
 @ stdcall RestoreLastError(long) ntdll.RtlRestoreLastWin32Error
 @ stdcall ResumeThread(long)
-# @ stub RtlCaptureContext ( -> ntdll.RtlCaptureContext)
+@ stdcall -register RtlCaptureContext(ptr) ntdll.RtlCaptureContext
 # @ stub RtlCaptureStackBackTrace ( -> ntdll.RtlCaptureStackBackTrace)
 @ stdcall RtlFillMemory(ptr long long) ntdll.RtlFillMemory
 @ stdcall RtlMoveMemory(ptr ptr long) ntdll.RtlMoveMemory
