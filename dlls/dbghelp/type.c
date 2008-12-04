@@ -432,7 +432,7 @@ struct enum_types_AtoW
     PSYM_ENUMERATESYMBOLS_CALLBACKW     callback;
 };
 
-BOOL CALLBACK enum_types_AtoW(PSYMBOL_INFO si, ULONG addr, PVOID _et)
+static BOOL CALLBACK enum_types_AtoW(PSYMBOL_INFO si, ULONG addr, PVOID _et)
 {
     struct enum_types_AtoW*     et = _et;
     SYMBOL_INFOW*               siW = (SYMBOL_INFOW*)et->buffer;
