@@ -89,7 +89,7 @@ static void OnEnterMenuLoop(HWND hWnd)
     nParts = -1;
     SendMessageW(hStatusBar, SB_SETPARTS, 1, (long)&nParts);
     bInMenuLoop = TRUE;
-    SendMessageW(hStatusBar, SB_SETTEXTW, (WPARAM)0, (LPARAM)&empty);
+    SendMessageW(hStatusBar, SB_SETTEXTW, 0, (LPARAM)&empty);
 }
 
 static void OnExitMenuLoop(HWND hWnd)

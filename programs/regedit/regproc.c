@@ -860,7 +860,7 @@ static void REGPROC_print_error(void)
         exit(1);
     }
     puts(lpMsgBuf);
-    LocalFree((HLOCAL)lpMsgBuf);
+    LocalFree(lpMsgBuf);
     exit(1);
 }
 

@@ -92,7 +92,7 @@ static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
                              0/*hbrBackground*/,
                              0/*lpszMenuName*/,
                              szFrameClass,
-                             (HICON)LoadImage(hInstance, MAKEINTRESOURCE(IDI_REGEDIT), IMAGE_ICON,
+                             LoadImage(hInstance, MAKEINTRESOURCE(IDI_REGEDIT), IMAGE_ICON,
                                               GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED)
                          };
     ATOM hFrameWndClass = RegisterClassEx(&wcFrame); /* register frame window class */
@@ -109,7 +109,7 @@ static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
                              0/*hbrBackground*/,
                              0/*lpszMenuName*/,
                              szChildClass,
-                             (HICON)LoadImage(hInstance, MAKEINTRESOURCE(IDI_REGEDIT), IMAGE_ICON,
+                             LoadImage(hInstance, MAKEINTRESOURCE(IDI_REGEDIT), IMAGE_ICON,
                                               GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED)
 
                          };
