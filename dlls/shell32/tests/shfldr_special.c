@@ -100,7 +100,6 @@ static void test_parse_for_control_panel(void)
     DWORD eaten = 0xdeadbeef;
     LPITEMIDLIST pidl;
     DWORD attr = ~0;
-    DWORD expected_attr;
 
     hr = SHGetDesktopFolder(&psfDesktop);
     ok(hr == S_OK, "SHGetDesktopFolder failed with error 0x%x\n", hr);
@@ -108,9 +107,13 @@ static void test_parse_for_control_panel(void)
     hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, control_panel_path, &eaten, &pidl, &attr);
     ok(hr == S_OK, "IShellFolder_ParseDisplayName failed with error 0x%x\n", hr);
     todo_wine ok(eaten == 0xdeadbeef, "eaten should not have been set to %u\n", eaten);
-
-    expected_attr = SFGAO_CANLINK | SFGAO_FOLDER | SFGAO_HASSUBFOLDER;
-    todo_wine ok(attr == expected_attr, "attr should be 0x%x, not 0x%x\n", expected_attr, attr);
+    todo_wine
+    ok((attr == (SFGAO_CANLINK | SFGAO_FOLDER)) || /* Win9x, NT4 */
+       (attr == (SFGAO_CANLINK | SFGAO_FOLDER | SFGAO_HASSUBFOLDER | SFGAO_STREAM)) || /* W2K */
+       (attr == (SFGAO_CANLINK | SFGAO_FOLDER | SFGAO_HASSUBFOLDER)) || /* W2K, XP, W2K3 */
+       (attr == (SFGAO_CANLINK | SFGAO_NONENUMERATED)) || /* Vista */
+       (attr == SFGAO_CANLINK), /* Vista, W2K8 */
+       "Unexpected attributes : %08x\n", attr);
 
     ILFree(pidl);
 }
