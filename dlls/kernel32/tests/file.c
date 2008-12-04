@@ -20,12 +20,12 @@
  *
  */
 
+/* ReplaceFile requires Windows 2000 or newer */
+#define _WIN32_WINNT 0x0500
+
 #include <stdarg.h>
 #include <stdlib.h>
 #include <time.h>
-
-/* ReplaceFile requires Windows 2000 or newer */
-#define _WIN32_WINNT 0x0500
 
 #include "wine/test.h"
 #include "windef.h"

@@ -17,10 +17,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define _WIN32_WINNT 0x0501 /* For SetWindowSubclass/etc */
+
 #include <assert.h>
 #include <stdarg.h>
-
-#define _WIN32_WINNT 0x0501 /* For SetWindowSubclass/etc */
 
 #include "windef.h"
 #include "winbase.h"

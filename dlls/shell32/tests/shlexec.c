@@ -32,13 +32,13 @@
  *   we could check
  */
 
-#include <stdio.h>
-#include <assert.h>
-
 /* Needed to get SEE_MASK_NOZONECHECKS with the PSDK */
 #define NTDDI_WINXPSP1 0x05010100
 #define NTDDI_VERSION NTDDI_WINXPSP1
 #define _WIN32_WINNT 0x0501
+
+#include <stdio.h>
+#include <assert.h>
 
 #include "wtypes.h"
 #include "winbase.h"
