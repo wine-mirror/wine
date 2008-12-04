@@ -87,9 +87,10 @@ const SHADER_OPCODE* shader_get_opcode(
 
     /** TODO: use dichotomic search */
     while (NULL != shader_ins[i].name) {
-        if (((code & WINED3DSI_OPCODE_MASK) == shader_ins[i].opcode) &&
-            (((hex_version >= shader_ins[i].min_version) && (hex_version <= shader_ins[i].max_version)) ||
-            ((shader_ins[i].min_version == 0) && (shader_ins[i].max_version == 0)))) {
+        if ((code & WINED3DSI_OPCODE_MASK) == shader_ins[i].opcode
+                && hex_version >= shader_ins[i].min_version
+                && (!shader_ins[i].max_version || hex_version <= shader_ins[i].max_version))
+        {
             return &shader_ins[i];
         }
         ++i;
