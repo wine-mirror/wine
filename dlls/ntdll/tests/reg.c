@@ -134,11 +134,11 @@ static NTSTATUS (WINAPI * pNtSetValueKey)( PHKEY, const PUNICODE_STRING, ULONG,
                                ULONG, const PVOID, ULONG  );
 static NTSTATUS (WINAPI * pRtlFormatCurrentUserKeyPath)(PUNICODE_STRING);
 static NTSTATUS (WINAPI * pRtlCreateUnicodeString)( PUNICODE_STRING, LPCWSTR);
-static NTSTATUS (WINAPI * pRtlReAllocateHeap)(IN PVOID, IN ULONG, IN PVOID, IN ULONG);
+static LPVOID   (WINAPI * pRtlReAllocateHeap)(IN PVOID, IN ULONG, IN PVOID, IN ULONG);
 static NTSTATUS (WINAPI * pRtlAppendUnicodeToString)(PUNICODE_STRING, PCWSTR);
 static NTSTATUS (WINAPI * pRtlUnicodeStringToAnsiString)(PSTRING, PUNICODE_STRING, BOOL);
 static NTSTATUS (WINAPI * pRtlFreeHeap)(PVOID, ULONG, PVOID);
-static NTSTATUS (WINAPI * pRtlAllocateHeap)(PVOID,ULONG,ULONG);
+static LPVOID   (WINAPI * pRtlAllocateHeap)(PVOID,ULONG,ULONG);
 static NTSTATUS (WINAPI * pRtlZeroMemory)(PVOID, ULONG);
 static NTSTATUS (WINAPI * pRtlpNtQueryValueKey)(HANDLE,ULONG*,PBYTE,DWORD*);
 
@@ -200,7 +200,7 @@ static NTSTATUS WINAPI QueryRoutine (IN PCWSTR ValueName, IN ULONG ValueType, IN
     {
         ValueNameLength = lstrlenW(ValueName);
 
-        ValName = (LPSTR)pRtlAllocateHeap(GetProcessHeap(), 0, ValueNameLength);
+        ValName = pRtlAllocateHeap(GetProcessHeap(), 0, ValueNameLength);
 
         WideCharToMultiByte(0, 0, ValueName, ValueNameLength+1,ValName, ValueNameLength, 0, 0);
 
@@ -213,12 +213,12 @@ static NTSTATUS WINAPI QueryRoutine (IN PCWSTR ValueName, IN ULONG ValueType, IN
     {
             case REG_NONE:
                 trace("ValueType: REG_NONE\n");
-                trace("ValueData: %d\n", (int)ValueData);
+                trace("ValueData: %p\n", ValueData);
                 break;
 
             case REG_BINARY:
                 trace("ValueType: REG_BINARY\n");
-                trace("ValueData: %d\n", (int)ValueData);
+                trace("ValueData: %p\n", ValueData);
                 break;
 
             case REG_SZ:
@@ -238,7 +238,7 @@ static NTSTATUS WINAPI QueryRoutine (IN PCWSTR ValueName, IN ULONG ValueType, IN
 
             case REG_DWORD:
                 trace("ValueType: REG_DWORD\n");
-                trace("ValueData: %d\n", (int)ValueData);
+                trace("ValueData: %p\n", ValueData);
                 break;
     };
     trace("ValueLength: %d\n", (int)ValueLength);
@@ -295,7 +295,7 @@ static void test_RtlQueryRegistryValues(void)
     PRTL_QUERY_REGISTRY_TABLE QueryTable = NULL;
     RelativeTo = RTL_REGISTRY_ABSOLUTE;/*Only using absolute - no need to test all relativeto variables*/
 
-    QueryTable = (PRTL_QUERY_REGISTRY_TABLE)pRtlAllocateHeap(GetProcessHeap(), 0, sizeof(RTL_QUERY_REGISTRY_TABLE)*26);
+    QueryTable = pRtlAllocateHeap(GetProcessHeap(), 0, sizeof(RTL_QUERY_REGISTRY_TABLE)*26);
 
     pRtlZeroMemory( QueryTable, sizeof(RTL_QUERY_REGISTRY_TABLE) * 26);
 
@@ -601,7 +601,7 @@ START_TEST(reg)
     if(!InitFunctionPtrs())
         return;
     pRtlFormatCurrentUserKeyPath(&winetestpath);
-    winetestpath.Buffer = (PWSTR)pRtlReAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, winetestpath.Buffer,
+    winetestpath.Buffer = pRtlReAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, winetestpath.Buffer,
                            winetestpath.MaximumLength + sizeof(winetest)*sizeof(WCHAR));
     winetestpath.MaximumLength = winetestpath.MaximumLength + sizeof(winetest)*sizeof(WCHAR);
 
