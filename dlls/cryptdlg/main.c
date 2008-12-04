@@ -32,9 +32,13 @@
 #include "objbase.h"
 #include "cryptdlg.h"
 #include "cryptuiapi.h"
+#include "cryptres.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cryptdlg);
+
+static HINSTANCE hInstance;
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -46,6 +50,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             return FALSE;    /* prefer native version */
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls(hinstDLL);
+            hInstance = hinstDLL;
             break;
         case DLL_PROCESS_DETACH:
             break;
@@ -463,6 +468,661 @@ BOOL WINAPI CertViewPropertiesW(CERT_VIEWPROPERTIES_STRUCT_W *info)
     }
     else
         ret = FALSE;
+    return ret;
+}
+
+static BOOL CRYPT_FormatHexString(const BYTE *pbEncoded, DWORD cbEncoded,
+ WCHAR *str, DWORD *pcchStr)
+{
+    BOOL ret;
+    DWORD charsNeeded;
+
+    if (cbEncoded)
+        charsNeeded = (cbEncoded * 3);
+    else
+        charsNeeded = 1;
+    if (!str)
+    {
+        *pcchStr = charsNeeded;
+        ret = TRUE;
+    }
+    else if (*pcchStr < charsNeeded)
+    {
+        *pcchStr = charsNeeded;
+        SetLastError(ERROR_MORE_DATA);
+        ret = FALSE;
+    }
+    else
+    {
+        static const WCHAR fmt[] = { '%','0','2','x',' ',0 };
+        static const WCHAR endFmt[] = { '%','0','2','x',0 };
+        DWORD i;
+        LPWSTR ptr = str;
+
+        *pcchStr = charsNeeded;
+        if (cbEncoded)
+        {
+            for (i = 0; i < cbEncoded; i++)
+            {
+                if (i < cbEncoded - 1)
+                    ptr += sprintfW(ptr, fmt, pbEncoded[i]);
+                else
+                    ptr += sprintfW(ptr, endFmt, pbEncoded[i]);
+            }
+        }
+        else
+            *ptr = 0;
+        ret = TRUE;
+    }
+    return ret;
+}
+
+static const WCHAR indent[] = { ' ',' ',' ',' ',' ',0 };
+static const WCHAR colonCrlf[] = { ':','\r','\n',0 };
+static const WCHAR colonSpace[] = { ':',' ',0 };
+static const WCHAR crlf[] = { '\r','\n',0 };
+static const WCHAR commaSep[] = { ',',' ',0 };
+
+static BOOL CRYPT_FormatCPS(DWORD dwCertEncodingType,
+ DWORD dwFormatStrType, const BYTE *pbEncoded, DWORD cbEncoded,
+ WCHAR *str, DWORD *pcchStr)
+{
+    BOOL ret;
+    DWORD size, charsNeeded = 1;
+    CERT_NAME_VALUE *cpsValue;
+
+    if ((ret = CryptDecodeObjectEx(dwCertEncodingType, X509_UNICODE_ANY_STRING,
+     pbEncoded, cbEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL, &cpsValue, &size)))
+    {
+        LPCWSTR headingSep, sep;
+        DWORD headingSepLen, sepLen;
+
+        if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+        {
+            headingSep = colonCrlf;
+            sep = crlf;
+        }
+        else
+        {
+            headingSep = colonSpace;
+            sep = commaSep;
+        }
+        sepLen = strlenW(sep);
+        headingSepLen = strlenW(headingSep);
+
+        if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+        {
+            charsNeeded += 3 * strlenW(indent);
+            if (str && *pcchStr >= charsNeeded)
+            {
+                strcpyW(str, indent);
+                str += strlenW(indent);
+                strcpyW(str, indent);
+                str += strlenW(indent);
+                strcpyW(str, indent);
+                str += strlenW(indent);
+            }
+        }
+        charsNeeded += cpsValue->Value.cbData / sizeof(WCHAR);
+        if (str && *pcchStr >= charsNeeded)
+        {
+            strcpyW(str, (LPWSTR)cpsValue->Value.pbData);
+            str += cpsValue->Value.cbData / sizeof(WCHAR);
+        }
+        charsNeeded += sepLen;
+        if (str && *pcchStr >= charsNeeded)
+        {
+            strcpyW(str, sep);
+            str += sepLen;
+        }
+        LocalFree(cpsValue);
+        if (!str)
+            *pcchStr = charsNeeded;
+        else if (*pcchStr < charsNeeded)
+        {
+            *pcchStr = charsNeeded;
+            SetLastError(ERROR_MORE_DATA);
+            ret = FALSE;
+        }
+        else
+            *pcchStr = charsNeeded;
+    }
+    return ret;
+}
+
+static BOOL CRYPT_FormatUserNotice(DWORD dwCertEncodingType,
+ DWORD dwFormatStrType, const BYTE *pbEncoded, DWORD cbEncoded,
+ WCHAR *str, DWORD *pcchStr)
+{
+    BOOL ret;
+    DWORD size, charsNeeded = 1;
+    CERT_POLICY_QUALIFIER_USER_NOTICE *notice;
+
+    if ((ret = CryptDecodeObjectEx(dwCertEncodingType,
+     X509_PKIX_POLICY_QUALIFIER_USERNOTICE, pbEncoded, cbEncoded,
+     CRYPT_DECODE_ALLOC_FLAG, NULL, &notice, &size)))
+    {
+        static const WCHAR numFmt[] = { '%','d',0 };
+        CERT_POLICY_QUALIFIER_NOTICE_REFERENCE *pNoticeRef =
+         notice->pNoticeReference;
+        LPCWSTR headingSep, sep;
+        DWORD headingSepLen, sepLen;
+        LPWSTR noticeRef, organization, noticeNum, noticeText;
+        DWORD noticeRefLen, organizationLen, noticeNumLen, noticeTextLen;
+        WCHAR noticeNumStr[11];
+
+        noticeRefLen = LoadStringW(hInstance, IDS_NOTICE_REF,
+         (LPWSTR)&noticeRef, 0);
+        organizationLen = LoadStringW(hInstance, IDS_ORGANIZATION,
+         (LPWSTR)&organization, 0);
+        noticeNumLen = LoadStringW(hInstance, IDS_NOTICE_NUM,
+         (LPWSTR)&noticeNum, 0);
+        noticeTextLen = LoadStringW(hInstance, IDS_NOTICE_TEXT,
+         (LPWSTR)&noticeText, 0);
+        if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+        {
+            headingSep = colonCrlf;
+            sep = crlf;
+        }
+        else
+        {
+            headingSep = colonSpace;
+            sep = commaSep;
+        }
+        sepLen = strlenW(sep);
+        headingSepLen = strlenW(headingSep);
+
+        if (pNoticeRef)
+        {
+            DWORD k;
+            LPCSTR src;
+
+            if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+            {
+                charsNeeded += 3 * strlenW(indent);
+                if (str && *pcchStr >= charsNeeded)
+                {
+                    strcpyW(str, indent);
+                    str += strlenW(indent);
+                    strcpyW(str, indent);
+                    str += strlenW(indent);
+                    strcpyW(str, indent);
+                    str += strlenW(indent);
+                }
+            }
+            charsNeeded += noticeRefLen;
+            if (str && *pcchStr >= charsNeeded)
+            {
+                memcpy(str, noticeRef, noticeRefLen * sizeof(WCHAR));
+                str += noticeRefLen;
+            }
+            charsNeeded += headingSepLen;
+            if (str && *pcchStr >= charsNeeded)
+            {
+                strcpyW(str, headingSep);
+                str += headingSepLen;
+            }
+            if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+            {
+                charsNeeded += 4 * strlenW(indent);
+                if (str && *pcchStr >= charsNeeded)
+                {
+                    strcpyW(str, indent);
+                    str += strlenW(indent);
+                    strcpyW(str, indent);
+                    str += strlenW(indent);
+                    strcpyW(str, indent);
+                    str += strlenW(indent);
+                    strcpyW(str, indent);
+                    str += strlenW(indent);
+                }
+            }
+            charsNeeded += organizationLen;
+            if (str && *pcchStr >= charsNeeded)
+            {
+                memcpy(str, organization, organizationLen * sizeof(WCHAR));
+                str += organizationLen;
+            }
+            charsNeeded += strlen(pNoticeRef->pszOrganization);
+            if (str && *pcchStr >= charsNeeded)
+                for (src = pNoticeRef->pszOrganization; src && *src;
+                 src++, str++)
+                    *str = *src;
+            charsNeeded += sepLen;
+            if (str && *pcchStr >= charsNeeded)
+            {
+                strcpyW(str, sep);
+                str += sepLen;
+            }
+            for (k = 0; k < pNoticeRef->cNoticeNumbers; k++)
+            {
+                if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+                {
+                    charsNeeded += 4 * strlenW(indent);
+                    if (str && *pcchStr >= charsNeeded)
+                    {
+                        strcpyW(str, indent);
+                        str += strlenW(indent);
+                        strcpyW(str, indent);
+                        str += strlenW(indent);
+                        strcpyW(str, indent);
+                        str += strlenW(indent);
+                        strcpyW(str, indent);
+                        str += strlenW(indent);
+                    }
+                }
+                charsNeeded += noticeNumLen;
+                if (str && *pcchStr >= charsNeeded)
+                {
+                    memcpy(str, noticeNum, noticeNumLen * sizeof(WCHAR));
+                    str += noticeNumLen;
+                }
+                sprintfW(noticeNumStr, numFmt, k + 1);
+                charsNeeded += strlenW(noticeNumStr);
+                if (str && *pcchStr >= charsNeeded)
+                {
+                    strcpyW(str, noticeNumStr);
+                    str += strlenW(noticeNumStr);
+                }
+                charsNeeded += sepLen;
+                if (str && *pcchStr >= charsNeeded)
+                {
+                    strcpyW(str, sep);
+                    str += sepLen;
+                }
+            }
+        }
+        if (notice->pszDisplayText)
+        {
+            if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+            {
+                charsNeeded += 3 * strlenW(indent);
+                if (str && *pcchStr >= charsNeeded)
+                {
+                    strcpyW(str, indent);
+                    str += strlenW(indent);
+                    strcpyW(str, indent);
+                    str += strlenW(indent);
+                    strcpyW(str, indent);
+                    str += strlenW(indent);
+                }
+            }
+            charsNeeded += noticeTextLen;
+            if (str && *pcchStr >= charsNeeded)
+            {
+                memcpy(str, noticeText, noticeTextLen * sizeof(WCHAR));
+                str += noticeTextLen;
+            }
+            charsNeeded += strlenW(notice->pszDisplayText);
+            if (str && *pcchStr >= charsNeeded)
+            {
+                strcpyW(str, notice->pszDisplayText);
+                str += strlenW(notice->pszDisplayText);
+            }
+            charsNeeded += sepLen;
+            if (str && *pcchStr >= charsNeeded)
+            {
+                strcpyW(str, sep);
+                str += sepLen;
+            }
+        }
+        LocalFree(notice);
+        if (!str)
+            *pcchStr = charsNeeded;
+        else if (*pcchStr < charsNeeded)
+        {
+            *pcchStr = charsNeeded;
+            SetLastError(ERROR_MORE_DATA);
+            ret = FALSE;
+        }
+        else
+            *pcchStr = charsNeeded;
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *		FormatVerisignExtension (CRYPTDLG.@)
+ */
+BOOL WINAPI FormatVerisignExtension(DWORD dwCertEncodingType,
+ DWORD dwFormatType, DWORD dwFormatStrType, void *pFormatStruct,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, void *pbFormat,
+ DWORD *pcbFormat)
+{
+    CERT_POLICIES_INFO *policies;
+    DWORD size;
+    BOOL ret = FALSE;
+
+    if (!cbEncoded)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if ((ret = CryptDecodeObjectEx(dwCertEncodingType, X509_CERT_POLICIES,
+     pbEncoded, cbEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL, &policies, &size)))
+    {
+        static const WCHAR numFmt[] = { '%','d',0 };
+        DWORD charsNeeded = 1; /* space for NULL terminator */
+        LPCWSTR headingSep, sep;
+        DWORD headingSepLen, sepLen;
+        WCHAR policyNum[11], policyQualifierNum[11];
+        LPWSTR certPolicy, policyId, policyQualifierInfo, policyQualifierId;
+        LPWSTR cps, userNotice, qualifier;
+        DWORD certPolicyLen, policyIdLen, policyQualifierInfoLen;
+        DWORD policyQualifierIdLen, cpsLen, userNoticeLen, qualifierLen;
+        DWORD i;
+        LPWSTR str = pbFormat;
+
+        certPolicyLen = LoadStringW(hInstance, IDS_CERT_POLICY,
+         (LPWSTR)&certPolicy, 0);
+        policyIdLen = LoadStringW(hInstance, IDS_POLICY_ID, (LPWSTR)&policyId,
+         0);
+        policyQualifierInfoLen = LoadStringW(hInstance,
+         IDS_POLICY_QUALIFIER_INFO, (LPWSTR)&policyQualifierInfo, 0);
+        policyQualifierIdLen = LoadStringW(hInstance, IDS_POLICY_QUALIFIER_ID,
+         (LPWSTR)&policyQualifierId, 0);
+        cpsLen = LoadStringW(hInstance, IDS_CPS, (LPWSTR)&cps, 0);
+        userNoticeLen = LoadStringW(hInstance, IDS_USER_NOTICE,
+         (LPWSTR)&userNotice, 0);
+        qualifierLen = LoadStringW(hInstance, IDS_QUALIFIER,
+         (LPWSTR)&qualifier, 0);
+        if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+        {
+            headingSep = colonCrlf;
+            sep = crlf;
+        }
+        else
+        {
+            headingSep = colonSpace;
+            sep = commaSep;
+        }
+        sepLen = strlenW(sep);
+        headingSepLen = strlenW(headingSep);
+
+        for (i = 0; ret && i < policies->cPolicyInfo; i++)
+        {
+            CERT_POLICY_INFO *policy = &policies->rgPolicyInfo[i];
+            DWORD j;
+            LPCSTR src;
+
+            charsNeeded += 1; /* '['*/
+            if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                *str++ = '[';
+            sprintfW(policyNum, numFmt, i + 1);
+            charsNeeded += strlenW(policyNum);
+            if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+            {
+                strcpyW(str, policyNum);
+                str += strlenW(policyNum);
+            }
+            charsNeeded += 1; /* ']'*/
+            if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                *str++ = ']';
+            charsNeeded += certPolicyLen;
+            if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+            {
+                memcpy(str, certPolicy, certPolicyLen * sizeof(WCHAR));
+                str += certPolicyLen;
+            }
+            charsNeeded += headingSepLen;
+            if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+            {
+                strcpyW(str, headingSep);
+                str += headingSepLen;
+            }
+            if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+            {
+                charsNeeded += strlenW(indent);
+                if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                {
+                    strcpyW(str, indent);
+                    str += strlenW(indent);
+                }
+            }
+            charsNeeded += policyIdLen;
+            if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+            {
+                memcpy(str, policyId, policyIdLen * sizeof(WCHAR));
+                str += policyIdLen;
+            }
+            charsNeeded += strlen(policy->pszPolicyIdentifier);
+            if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+            {
+                for (src = policy->pszPolicyIdentifier; src && *src;
+                 src++, str++)
+                    *str = *src;
+            }
+            charsNeeded += sepLen;
+            if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+            {
+                strcpyW(str, sep);
+                str += sepLen;
+            }
+            for (j = 0; j < policy->cPolicyQualifier; j++)
+            {
+                CERT_POLICY_QUALIFIER_INFO *qualifierInfo =
+                 &policy->rgPolicyQualifier[j];
+                DWORD sizeRemaining;
+
+                if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+                {
+                    charsNeeded += strlenW(indent);
+                    if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                    {
+                        strcpyW(str, indent);
+                        str += strlenW(indent);
+                    }
+                }
+                charsNeeded += 1; /* '['*/
+                if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                    *str++ = '[';
+                charsNeeded += strlenW(policyNum);
+                if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                {
+                    strcpyW(str, policyNum);
+                    str += strlenW(policyNum);
+                }
+                charsNeeded += 1; /* ','*/
+                if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                    *str++ = ',';
+                sprintfW(policyQualifierNum, numFmt, j + 1);
+                charsNeeded += strlenW(policyQualifierNum);
+                if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                {
+                    strcpyW(str, policyQualifierNum);
+                    str += strlenW(policyQualifierNum);
+                }
+                charsNeeded += 1; /* ']'*/
+                if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                    *str++ = ']';
+                charsNeeded += policyQualifierInfoLen;
+                if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                {
+                    memcpy(str, policyQualifierInfo,
+                     policyQualifierInfoLen * sizeof(WCHAR));
+                    str += policyQualifierInfoLen;
+                }
+                charsNeeded += headingSepLen;
+                if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                {
+                    strcpyW(str, headingSep);
+                    str += headingSepLen;
+                }
+                if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+                {
+                    charsNeeded += 2 * strlenW(indent);
+                    if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                    {
+                        strcpyW(str, indent);
+                        str += strlenW(indent);
+                        strcpyW(str, indent);
+                        str += strlenW(indent);
+                    }
+                }
+                charsNeeded += policyQualifierIdLen;
+                if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                {
+                    memcpy(str, policyQualifierId,
+                     policyQualifierIdLen * sizeof(WCHAR));
+                    str += policyQualifierIdLen;
+                }
+                if (!strcmp(qualifierInfo->pszPolicyQualifierId,
+                 szOID_PKIX_POLICY_QUALIFIER_CPS))
+                {
+                    charsNeeded += cpsLen;
+                    if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                    {
+                        memcpy(str, cps, cpsLen * sizeof(WCHAR));
+                        str += cpsLen;
+                    }
+                }
+                else if (!strcmp(qualifierInfo->pszPolicyQualifierId,
+                 szOID_PKIX_POLICY_QUALIFIER_USERNOTICE))
+                {
+                    charsNeeded += userNoticeLen;
+                    if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                    {
+                        memcpy(str, userNotice, userNoticeLen * sizeof(WCHAR));
+                        str += userNoticeLen;
+                    }
+                }
+                else
+                {
+                    charsNeeded += strlen(qualifierInfo->pszPolicyQualifierId);
+                    if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                    {
+                        for (src = qualifierInfo->pszPolicyQualifierId;
+                         src && *src; src++, str++)
+                            *str = *src;
+                    }
+                }
+                charsNeeded += sepLen;
+                if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                {
+                    strcpyW(str, sep);
+                    str += sepLen;
+                }
+                if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+                {
+                    charsNeeded += 2 * strlenW(indent);
+                    if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                    {
+                        strcpyW(str, indent);
+                        str += strlenW(indent);
+                        strcpyW(str, indent);
+                        str += strlenW(indent);
+                    }
+                }
+                charsNeeded += qualifierLen;
+                if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                {
+                    memcpy(str, qualifier, qualifierLen * sizeof(WCHAR));
+                    str += qualifierLen;
+                }
+                charsNeeded += headingSepLen;
+                if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
+                {
+                    strcpyW(str, headingSep);
+                    str += headingSepLen;
+                }
+                /* This if block is deliberately redundant with the same if
+                 * block above, in order to keep the code more readable (the
+                 * code flow follows the order in which the strings are output.)
+                 */
+                if (!strcmp(qualifierInfo->pszPolicyQualifierId,
+                 szOID_PKIX_POLICY_QUALIFIER_CPS))
+                {
+                    if (!str || *pcbFormat < charsNeeded * sizeof(WCHAR))
+                    {
+                        /* Insufficient space, determine how much is needed. */
+                        ret = CRYPT_FormatCPS(dwCertEncodingType,
+                         dwFormatStrType, qualifierInfo->Qualifier.pbData,
+                         qualifierInfo->Qualifier.cbData, NULL, &size);
+                        if (ret)
+                            charsNeeded += size - 1;
+                    }
+                    else
+                    {
+                        sizeRemaining = *pcbFormat / sizeof(WCHAR);
+                        sizeRemaining -= str - (LPWSTR)pbFormat;
+                        ret = CRYPT_FormatCPS(dwCertEncodingType,
+                         dwFormatStrType, qualifierInfo->Qualifier.pbData,
+                         qualifierInfo->Qualifier.cbData, str, &sizeRemaining);
+                        if (ret || GetLastError() == ERROR_MORE_DATA)
+                        {
+                            charsNeeded += sizeRemaining - 1;
+                            str += sizeRemaining - 1;
+                        }
+                    }
+                }
+                else if (!strcmp(qualifierInfo->pszPolicyQualifierId,
+                 szOID_PKIX_POLICY_QUALIFIER_USERNOTICE))
+                {
+                    if (!str || *pcbFormat < charsNeeded * sizeof(WCHAR))
+                    {
+                        /* Insufficient space, determine how much is needed. */
+                        ret = CRYPT_FormatUserNotice(dwCertEncodingType,
+                         dwFormatStrType, qualifierInfo->Qualifier.pbData,
+                         qualifierInfo->Qualifier.cbData, NULL, &size);
+                        if (ret)
+                            charsNeeded += size - 1;
+                    }
+                    else
+                    {
+                        sizeRemaining = *pcbFormat / sizeof(WCHAR);
+                        sizeRemaining -= str - (LPWSTR)pbFormat;
+                        ret = CRYPT_FormatUserNotice(dwCertEncodingType,
+                         dwFormatStrType, qualifierInfo->Qualifier.pbData,
+                         qualifierInfo->Qualifier.cbData, str, &sizeRemaining);
+                        if (ret || GetLastError() == ERROR_MORE_DATA)
+                        {
+                            charsNeeded += sizeRemaining - 1;
+                            str += sizeRemaining - 1;
+                        }
+                    }
+                }
+                else
+                {
+                    if (!str || *pcbFormat < charsNeeded * sizeof(WCHAR))
+                    {
+                        /* Insufficient space, determine how much is needed. */
+                        ret = CRYPT_FormatHexString(
+                         qualifierInfo->Qualifier.pbData,
+                         qualifierInfo->Qualifier.cbData, NULL, &size);
+                        if (ret)
+                            charsNeeded += size - 1;
+                    }
+                    else
+                    {
+                        sizeRemaining = *pcbFormat / sizeof(WCHAR);
+                        sizeRemaining -= str - (LPWSTR)pbFormat;
+                        ret = CRYPT_FormatHexString(
+                         qualifierInfo->Qualifier.pbData,
+                         qualifierInfo->Qualifier.cbData, str, &sizeRemaining);
+                        if (ret || GetLastError() == ERROR_MORE_DATA)
+                        {
+                            charsNeeded += sizeRemaining - 1;
+                            str += sizeRemaining - 1;
+                        }
+                    }
+                }
+            }
+        }
+        LocalFree(policies);
+        if (ret)
+        {
+            if (!pbFormat)
+                *pcbFormat = charsNeeded * sizeof(WCHAR);
+            else if (*pcbFormat < charsNeeded * sizeof(WCHAR))
+            {
+                *pcbFormat = charsNeeded * sizeof(WCHAR);
+                SetLastError(ERROR_MORE_DATA);
+                ret = FALSE;
+            }
+            else
+                *pcbFormat = charsNeeded * sizeof(WCHAR);
+        }
+    }
     return ret;
 }
 

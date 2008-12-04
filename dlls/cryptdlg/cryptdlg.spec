@@ -9,7 +9,7 @@
 9 stub EncodeAttrSequence
 10 stub EncodeRecipientID
 11 stub FormatPKIXEmailProtection
-12 stub FormatVerisignExtension
+12 stdcall FormatVerisignExtension(long long long ptr str ptr long ptr ptr)
 13 stub CertModifyCertificatesToTrust
 14 stub CertSelectCertificateA
 15 stub CertSelectCertificateW
