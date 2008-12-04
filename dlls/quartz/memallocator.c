@@ -55,7 +55,7 @@ typedef struct BaseMemAllocator
 static const IMemAllocatorVtbl BaseMemAllocator_VTable;
 static const IMediaSample2Vtbl StdMediaSample2_VTable;
 
-#define AM_SAMPLE2_PROP_SIZE_WRITABLE (unsigned int)(&((AM_SAMPLE2_PROPERTIES *)0)->pbBuffer)
+#define AM_SAMPLE2_PROP_SIZE_WRITABLE FIELD_OFFSET(AM_SAMPLE2_PROPERTIES, pbBuffer)
 
 #define INVALID_MEDIA_TIME (((ULONGLONG)0x7fffffff << 32) | 0xffffffff)
 
