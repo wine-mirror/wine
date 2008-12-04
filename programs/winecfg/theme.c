@@ -302,7 +302,7 @@ static BOOL fill_theme_list (HWND comboTheme, HWND comboColor, HWND comboSize)
 
     for (i = 0; i < themeFilesCount; i++)
     {
-	ThemeFile* item = (ThemeFile*)DSA_GetItemPtr (themeFiles, i);
+        ThemeFile* item = DSA_GetItemPtr (themeFiles, i);
 	SendMessageW (comboTheme, CB_ADDSTRING, 0, 
 	    (LPARAM)item->fancyName);
     }
@@ -316,7 +316,7 @@ static BOOL fill_theme_list (HWND comboTheme, HWND comboColor, HWND comboSize)
 	BOOL found = FALSE;
 	for (i = 0; i < themeFilesCount; i++)
 	{
-	    theme = (ThemeFile*)DSA_GetItemPtr (themeFiles, i);
+            theme = DSA_GetItemPtr (themeFiles, i);
 	    if (lstrcmpiW (theme->themeFileName, currentTheme) == 0)
 	    {
 		found = TRUE;
@@ -332,8 +332,7 @@ static BOOL fill_theme_list (HWND comboTheme, HWND comboColor, HWND comboSize)
 	    myEnumThemeProc (NULL, currentTheme, currentTheme, 
 		currentTheme, NULL, NULL);
 	    themeIndex = themeFilesCount;
-	    theme = (ThemeFile*)DSA_GetItemPtr (themeFiles, 
-		themeFilesCount-1);
+            theme = DSA_GetItemPtr (themeFiles, themeFilesCount-1);
 	}
 	fill_color_size_combos (theme, comboColor, comboSize);
 	select_color_and_size (theme, currentColor, comboColor,
@@ -364,8 +363,7 @@ static BOOL update_color_and_size (int themeIndex, HWND comboColor,
 	WCHAR currentTheme[MAX_PATH];
 	WCHAR currentColor[MAX_PATH];
 	WCHAR currentSize[MAX_PATH];
-	ThemeFile* theme = 
-	    (ThemeFile*)DSA_GetItemPtr (themeFiles, themeIndex - 1);
+	ThemeFile* theme = DSA_GetItemPtr (themeFiles, themeIndex - 1);
     
 	fill_color_size_combos (theme, comboColor, comboSize);
       
@@ -399,8 +397,7 @@ static void do_apply_theme (int themeIndex, int colorIndex, int sizeIndex)
     }
     else
     {
-	ThemeFile* theme = 
-	    (ThemeFile*)DSA_GetItemPtr (themeFiles, themeIndex-1);
+        ThemeFile* theme = DSA_GetItemPtr (themeFiles, themeIndex-1);
 	const WCHAR* themeFileName = theme->themeFileName;
 	const WCHAR* colorName = NULL;
 	const WCHAR* sizeName = NULL;

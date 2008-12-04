@@ -495,7 +495,7 @@ static void on_add_click(HWND dialog)
 
     load_library_settings(dialog);
 
-    SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_SELECTSTRING, (WPARAM) 0, (LPARAM) buffer);
+    SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_SELECTSTRING, 0, (LPARAM) buffer);
 
     set_controls_from_selection(dialog);
 }
