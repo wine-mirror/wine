@@ -2013,21 +2013,27 @@ static void test_bitmapinfoheadersize(void)
 
     SetLastError(0xdeadbeef);
     hdib = CreateDIBSection(hdc, &bmi, 0, NULL, NULL, 0);
-    ok(hdib != NULL, "CreateDIBSection error %d\n", GetLastError());
+    ok(hdib != NULL ||
+       broken(!hdib), /* Win98, WinMe */
+       "CreateDIBSection error %d\n", GetLastError());
     DeleteObject(hdib);
 
     bmi.bmiHeader.biSize = sizeof(BITMAPINFO);
 
     SetLastError(0xdeadbeef);
     hdib = CreateDIBSection(hdc, &bmi, 0, NULL, NULL, 0);
-    ok(hdib != NULL, "CreateDIBSection error %d\n", GetLastError());
+    ok(hdib != NULL ||
+       broken(!hdib), /* Win98, WinMe */
+       "CreateDIBSection error %d\n", GetLastError());
     DeleteObject(hdib);
 
     bmi.bmiHeader.biSize++;
 
     SetLastError(0xdeadbeef);
     hdib = CreateDIBSection(hdc, &bmi, 0, NULL, NULL, 0);
-    ok(hdib != NULL, "CreateDIBSection error %d\n", GetLastError());
+    ok(hdib != NULL ||
+       broken(!hdib), /* Win98, WinMe */
+       "CreateDIBSection error %d\n", GetLastError());
     DeleteObject(hdib);
 
     bmi.bmiHeader.biSize = sizeof(BITMAPV4HEADER);
@@ -2041,7 +2047,9 @@ static void test_bitmapinfoheadersize(void)
 
     SetLastError(0xdeadbeef);
     hdib = CreateDIBSection(hdc, &bmi, 0, NULL, NULL, 0);
-    ok(hdib != NULL, "CreateDIBSection error %d\n", GetLastError());
+    ok(hdib != NULL ||
+       broken(!hdib), /* Win95 */
+       "CreateDIBSection error %d\n", GetLastError());
     DeleteObject(hdib);
 
     memset(&bci, 0, sizeof(BITMAPCOREINFO));
