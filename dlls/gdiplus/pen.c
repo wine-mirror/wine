@@ -409,6 +409,17 @@ GpStatus WINGDIPAPI GdipSetPenColor(GpPen *pen, ARGB argb)
     return GdipSetSolidFillColor(((GpSolidFill*)pen->brush), argb);
 }
 
+GpStatus WINGDIPAPI GdipSetPenCompoundArray(GpPen *pen, GDIPCONST REAL *dash,
+    INT count)
+{
+    FIXME("(%p, %p, %i): stub", pen, dash, count);
+
+    if (!pen || !dash || count < 2 || count%2 == 1)
+        return InvalidParameter;
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSetPenCustomEndCap(GpPen *pen, GpCustomLineCap* customCap)
 {
     GpCustomLineCap * cap;

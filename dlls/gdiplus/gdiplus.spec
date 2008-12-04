@@ -564,7 +564,7 @@
 @ stdcall GdipSetPathMarker(ptr)
 @ stdcall GdipSetPenBrushFill(ptr ptr)
 @ stdcall GdipSetPenColor(ptr long)
-@ stub GdipSetPenCompoundArray
+@ stdcall GdipSetPenCompoundArray(ptr ptr long)
 @ stdcall GdipSetPenCustomEndCap(ptr ptr)
 @ stdcall GdipSetPenCustomStartCap(ptr ptr)
 @ stdcall GdipSetPenDashArray(ptr ptr long)

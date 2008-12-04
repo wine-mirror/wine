@@ -325,6 +325,33 @@ static void test_penfilltype(void)
     GdipDeleteBrush((GpBrush*)line);
 }
 
+static void test_compoundarray(void)
+{
+    GpStatus status;
+    GpPen *pen;
+    static const REAL testvalues[] = {0.2, 0.4, 0.6, 0.8};
+
+    status = GdipSetPenCompoundArray(NULL, testvalues, 4);
+    expect(InvalidParameter, status);
+
+    status = GdipCreatePen1((ARGB)0xffff00ff, 10.0f, UnitPixel, &pen);
+    expect(Ok, status);
+
+    status = GdipSetPenCompoundArray(pen, NULL, 4);
+    expect(InvalidParameter, status);
+    status = GdipSetPenCompoundArray(pen, testvalues, 3);
+    expect(InvalidParameter, status);
+    status = GdipSetPenCompoundArray(pen, testvalues, 0);
+    expect(InvalidParameter, status);
+    status = GdipSetPenCompoundArray(pen, testvalues, -2);
+    expect(InvalidParameter, status);
+
+    status = GdipSetPenCompoundArray(pen, testvalues, 4);
+    todo_wine expect(Ok, status);
+
+    GdipDeletePen(pen);
+}
+
 START_TEST(pen)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -345,6 +372,7 @@ START_TEST(pen)
     test_dasharray();
     test_customcap();
     test_penfilltype();
+    test_compoundarray();
 
     GdiplusShutdown(gdiplusToken);
 }
