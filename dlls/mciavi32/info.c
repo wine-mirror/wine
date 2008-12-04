@@ -28,7 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mciavi);
 /**************************************************************************
  * 				MCIAVI_ConvertFrameToTimeFormat	[internal]
  */
-DWORD 	MCIAVI_ConvertFrameToTimeFormat(WINE_MCIAVI* wma, DWORD val, LPDWORD lpRet)
+static DWORD MCIAVI_ConvertFrameToTimeFormat(WINE_MCIAVI* wma, DWORD val, LPDWORD lpRet)
 {
     DWORD	   ret = 0;
 
