@@ -297,9 +297,11 @@ static void drawStridedSlow(IWineD3DDevice *iface, const WineDirect3DVertexStrid
     const UINT *streamOffset = This->stateBlock->streamOffset;
     long                      SkipnStrides = startVertex + This->stateBlock->loadBaseVertexIndex;
     BOOL                      pixelShader = use_ps(This);
-
+    BOOL specular_fog = FALSE;
+    UINT texture_stages = GL_LIMITS(texture_stages);
     const BYTE *texCoords[WINED3DDP_MAXTEXCOORD];
     const BYTE *diffuse = NULL, *specular = NULL, *normal = NULL, *position = NULL;
+    DWORD tex_mask = 0;
 
     TRACE("Using slow vertex array code\n");
 
@@ -320,56 +322,92 @@ static void drawStridedSlow(IWineD3DDevice *iface, const WineDirect3DVertexStrid
         return;
     }
 
-    /* Adding the stream offset once is cheaper than doing it every iteration. Do not modify the strided data, it is a pointer
-     * to the strided Data in the device and might be needed intact on the next draw
-     */
-    for (textureNo = 0; textureNo < GL_LIMITS(texture_stages); ++textureNo) {
-        if(sd->u.s.texCoords[textureNo].lpData) {
-            texCoords[textureNo] = sd->u.s.texCoords[textureNo].lpData + streamOffset[sd->u.s.texCoords[textureNo].streamNo];
-        } else {
-            texCoords[textureNo] = NULL;
-        }
-    }
-    if(sd->u.s.diffuse.lpData) {
-        diffuse = sd->u.s.diffuse.lpData + streamOffset[sd->u.s.diffuse.streamNo];
-    }
-    if(sd->u.s.specular.lpData) {
-        specular = sd->u.s.specular.lpData + streamOffset[sd->u.s.specular.streamNo];
-    }
-    if(sd->u.s.normal.lpData) {
-        normal = sd->u.s.normal.lpData + streamOffset[sd->u.s.normal.streamNo];
-    }
-    if(sd->u.s.position.lpData) {
-        position = sd->u.s.position.lpData + streamOffset[sd->u.s.position.streamNo];
-    }
-
-    if(FIXME_ON(d3d_draw)) {
-        if(specular && This->stateBlock->renderState[WINED3DRS_FOGENABLE] &&
-           (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE || sd->u.s.position_transformed )&&
-           This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
-            if(GL_SUPPORT(EXT_FOG_COORD) && sd->u.s.specular.dwType != WINED3DDECLTYPE_D3DCOLOR) {
-                FIXME("Implement fog coordinates from %s\n", debug_d3ddecltype(sd->u.s.specular.dwType));
-            }
-        }
-        if(This->activeContext->num_untracked_materials && sd->u.s.diffuse.dwType != WINED3DDECLTYPE_D3DCOLOR) {
-            FIXME("Implement diffuse color tracking from %s\n", debug_d3ddecltype(sd->u.s.diffuse.dwType));
-        }
-    }
-
     /* Start drawing in GL */
     VTRACE(("glBegin(%x)\n", glPrimType));
     glBegin(glPrimType);
 
-    /* Default settings for data that is not passed */
-    if (sd->u.s.normal.lpData == NULL) {
-        glNormal3f(0, 0, 0);
+    if (sd->u.s.position.lpData) position = sd->u.s.position.lpData + streamOffset[sd->u.s.position.streamNo];
+
+    if (sd->u.s.normal.lpData) normal = sd->u.s.normal.lpData + streamOffset[sd->u.s.normal.streamNo];
+    else glNormal3f(0, 0, 0);
+
+    if (sd->u.s.diffuse.lpData) diffuse = sd->u.s.diffuse.lpData + streamOffset[sd->u.s.diffuse.streamNo];
+    else glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    if (This->activeContext->num_untracked_materials && sd->u.s.diffuse.dwType != WINED3DDECLTYPE_D3DCOLOR)
+        FIXME("Implement diffuse color tracking from %s\n", debug_d3ddecltype(sd->u.s.diffuse.dwType));
+
+    if (sd->u.s.specular.lpData)
+    {
+        specular = sd->u.s.specular.lpData + streamOffset[sd->u.s.specular.streamNo];
+
+        /* special case where the fog density is stored in the specular alpha channel */
+        if (This->stateBlock->renderState[WINED3DRS_FOGENABLE]
+                && (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE
+                    || sd->u.s.position.dwType == WINED3DDECLTYPE_FLOAT4)
+                && This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
+        {
+            if (GL_SUPPORT(EXT_FOG_COORD))
+            {
+                if (sd->u.s.specular.dwType == WINED3DDECLTYPE_D3DCOLOR) specular_fog = TRUE;
+                else FIXME("Implement fog coordinates from %s\n", debug_d3ddecltype(sd->u.s.specular.dwType));
+            }
+            else
+            {
+                static BOOL warned;
+
+                if (!warned)
+                {
+                    /* TODO: Use the fog table code from old ddraw */
+                    FIXME("Implement fog for transformed vertices in software\n");
+                    warned = TRUE;
+                }
+            }
+        }
     }
-    if(sd->u.s.diffuse.lpData == NULL) {
-        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    else if (GL_SUPPORT(EXT_SECONDARY_COLOR))
+    {
+        GL_EXTCALL(glSecondaryColor3fEXT)(0, 0, 0);
     }
-    if(sd->u.s.specular.lpData == NULL) {
-        if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
-            GL_EXTCALL(glSecondaryColor3fEXT)(0, 0, 0);
+
+    for (textureNo = 0; textureNo < texture_stages; ++textureNo)
+    {
+        int coordIdx = This->stateBlock->textureState[textureNo][WINED3DTSS_TEXCOORDINDEX];
+        int texture_idx = This->texUnitMap[textureNo];
+
+        if (!GL_SUPPORT(ARB_MULTITEXTURE) && textureNo > 0)
+        {
+            FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+            continue;
+        }
+
+        if (!pixelShader && !This->stateBlock->textures[textureNo]) continue;
+
+        if (texture_idx == -1) continue;
+
+        if (coordIdx > 7)
+        {
+            TRACE("tex: %d - Skip tex coords, as being system generated\n", textureNo);
+            continue;
+        }
+        else if (coordIdx < 0)
+        {
+            FIXME("tex: %d - Coord index %d is less than zero, expect a crash.\n", textureNo, coordIdx);
+            continue;
+        }
+
+        if(sd->u.s.texCoords[textureNo].lpData)
+        {
+            texCoords[textureNo] =
+                    sd->u.s.texCoords[textureNo].lpData + streamOffset[sd->u.s.texCoords[textureNo].streamNo];
+            tex_mask |= (1 << textureNo);
+        }
+        else
+        {
+            TRACE("tex: %d - Skipping tex coords, as no data supplied\n", textureNo);
+            if (GL_SUPPORT(ARB_MULTITEXTURE))
+                GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + texture_idx, 0, 0, 0, 1));
+            else
+                glTexCoord4f(0, 0, 0, 1);
         }
     }
 
@@ -379,6 +417,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const WineDirect3DVertexStrid
 
     /* For each primitive */
     for (vx_index = 0; vx_index < NumVertexes; ++vx_index) {
+        UINT texture, tmp_tex_mask;
         /* Blending data and Point sizes are not supported by this function. They are not supported by the fixed
          * function pipeline at all. A Fixme for them is printed after decoding the vertex declaration
          */
@@ -396,47 +435,27 @@ static void drawStridedSlow(IWineD3DDevice *iface, const WineDirect3DVertexStrid
             }
         }
 
-        /* Texture coords --------------------------- */
-        for (textureNo = 0; textureNo < GL_LIMITS(texture_stages); ++textureNo) {
+        tmp_tex_mask = tex_mask;
+        for (texture = 0; tmp_tex_mask; tmp_tex_mask >>= 1, ++texture)
+        {
+            int coord_idx;
+            const void *ptr;
 
-            if (!GL_SUPPORT(ARB_MULTITEXTURE) && textureNo > 0) {
-                FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
-                continue ;
+            if (!(tmp_tex_mask & 1)) continue;
+
+            coord_idx = This->stateBlock->textureState[texture][WINED3DTSS_TEXCOORDINDEX];
+            ptr = texCoords[coord_idx] + (SkipnStrides * sd->u.s.texCoords[coord_idx].dwStride);
+
+            if (GL_SUPPORT(ARB_MULTITEXTURE))
+            {
+                int texture_idx = This->texUnitMap[texture];
+                multi_texcoord_funcs[sd->u.s.texCoords[coord_idx].dwType](GL_TEXTURE0_ARB + texture_idx, ptr);
             }
-
-            /* Query tex coords */
-            if (This->stateBlock->textures[textureNo] != NULL || pixelShader) {
-                int    coordIdx = This->stateBlock->textureState[textureNo][WINED3DTSS_TEXCOORDINDEX];
-                int texture_idx = This->texUnitMap[textureNo];
-                const void *ptrToCoords;
-
-                if (coordIdx > 7) {
-                    VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
-                    continue;
-                } else if (coordIdx < 0) {
-                    FIXME("tex: %d - Coord index %d is less than zero, expect a crash.\n", textureNo, coordIdx);
-                    continue;
-                }
-
-                if (texture_idx == -1) continue;
-
-                if (texCoords[coordIdx] == NULL) {
-                    TRACE("tex: %d - Skipping tex coords, as no data supplied\n", textureNo);
-                    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                        GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + texture_idx, 0, 0, 0, 1));
-                    } else {
-                        glTexCoord4f(0, 0, 0, 1);
-                    }
-                    continue;
-                }
-
-                ptrToCoords = texCoords[coordIdx] + (SkipnStrides * sd->u.s.texCoords[coordIdx].dwStride);
-                if (GL_SUPPORT(ARB_MULTITEXTURE))
-                    multi_texcoord_funcs[sd->u.s.texCoords[coordIdx].dwType](GL_TEXTURE0_ARB + texture_idx, ptrToCoords);
-                else
-                    texcoord_funcs[sd->u.s.texCoords[coordIdx].dwType](ptrToCoords);
+            else
+            {
+                texcoord_funcs[sd->u.s.texCoords[coord_idx].dwType](ptr);
             }
-        } /* End of textures */
+        }
 
         /* Diffuse -------------------------------- */
         if (diffuse) {
@@ -463,24 +482,13 @@ static void drawStridedSlow(IWineD3DDevice *iface, const WineDirect3DVertexStrid
         if (specular) {
             const void *ptrToCoords = specular + SkipnStrides * sd->u.s.specular.dwStride;
 
-            /* special case where the fog density is stored in the specular alpha channel */
-            if(This->stateBlock->renderState[WINED3DRS_FOGENABLE] &&
-              (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE || sd->u.s.position.dwType == WINED3DDECLTYPE_FLOAT4 )&&
-              This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
-                if(GL_SUPPORT(EXT_FOG_COORD)) {
-                    DWORD specularColor = ((const DWORD *)ptrToCoords)[0];
-                    GL_EXTCALL(glFogCoordfEXT(specularColor >> 24));
-                } else {
-                    static BOOL warned = FALSE;
-                    if(!warned) {
-                        /* TODO: Use the fog table code from old ddraw */
-                        FIXME("Implement fog for transformed vertices in software\n");
-                        warned = TRUE;
-                    }
-                }
-            }
-
             specular_funcs[sd->u.s.specular.dwType](ptrToCoords);
+
+            if (specular_fog)
+            {
+                DWORD specularColor = *(const DWORD *)ptrToCoords;
+                GL_EXTCALL(glFogCoordfEXT(specularColor >> 24));
+            }
         }
 
         /* Normal -------------------------------- */
