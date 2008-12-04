@@ -101,8 +101,8 @@ static LRESULT CALLBACK CustomDrawWndProc(HWND hWnd, UINT msg, WPARAM wParam, LP
     case WM_NOTIFY:
         if (((NMHDR *)lParam)->code == NM_CUSTOMDRAW) {
             NMTTCUSTOMDRAW *ttcd = (NMTTCUSTOMDRAW*) lParam;
-            ok(ttcd->nmcd.hdr.hwndFrom == g_hwnd, "Unexpected hwnd source %x (%x)\n",
-                 (int)ttcd->nmcd.hdr.hwndFrom, (int) g_hwnd);
+            ok(ttcd->nmcd.hdr.hwndFrom == g_hwnd, "Unexpected hwnd source %p (%p)\n",
+                 ttcd->nmcd.hdr.hwndFrom, g_hwnd);
             ok(ttcd->nmcd.hdr.idFrom == 0x1234ABCD, "Unexpected id %x\n", (int)ttcd->nmcd.hdr.idFrom);
 
             switch (ttcd->nmcd.dwDrawStage) {
