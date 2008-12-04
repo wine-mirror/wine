@@ -1485,6 +1485,9 @@ static void shader_hw_mnxn(const SHADER_OPCODE_ARG *arg)
     int i;
     int nComponents = 0;
     SHADER_OPCODE_ARG tmpArg;
+    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)arg->shader;
+    const SHADER_OPCODE *opcode_table = shader->baseShader.shader_ins;
+    DWORD shader_version = shader->baseShader.hex_version;
 
     memset(&tmpArg, 0, sizeof(SHADER_OPCODE_ARG));
 
@@ -1499,23 +1502,23 @@ static void shader_hw_mnxn(const SHADER_OPCODE_ARG *arg)
     switch(arg->opcode->opcode) {
     case WINED3DSIO_M4x4:
         nComponents = 4;
-        tmpArg.opcode = shader_get_opcode(arg->shader, WINED3DSIO_DP4);
+        tmpArg.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP4);
         break;
     case WINED3DSIO_M4x3:
         nComponents = 3;
-        tmpArg.opcode = shader_get_opcode(arg->shader, WINED3DSIO_DP4);
+        tmpArg.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP4);
         break;
     case WINED3DSIO_M3x4:
         nComponents = 4;
-        tmpArg.opcode = shader_get_opcode(arg->shader, WINED3DSIO_DP3);
+        tmpArg.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP3);
         break;
     case WINED3DSIO_M3x3:
         nComponents = 3;
-        tmpArg.opcode = shader_get_opcode(arg->shader, WINED3DSIO_DP3);
+        tmpArg.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP3);
         break;
     case WINED3DSIO_M3x2:
         nComponents = 2;
-        tmpArg.opcode = shader_get_opcode(arg->shader, WINED3DSIO_DP3);
+        tmpArg.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP3);
         break;
     default:
         break;

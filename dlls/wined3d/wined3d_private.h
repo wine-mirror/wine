@@ -2161,9 +2161,7 @@ extern int shader_addline(
     SHADER_BUFFER* buffer,
     const char* fmt, ...) PRINTF_ATTR(2,3);
 
-extern const SHADER_OPCODE* shader_get_opcode(
-    IWineD3DBaseShader *iface, 
-    const DWORD code);
+const SHADER_OPCODE *shader_get_opcode(const SHADER_OPCODE *shader_ins, DWORD shader_version, DWORD code);
 
 /* Vertex shader utility functions */
 extern BOOL vshader_get_input(

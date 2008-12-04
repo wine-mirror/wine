@@ -76,27 +76,25 @@ int shader_addline(
     return 0;
 }
 
-const SHADER_OPCODE* shader_get_opcode(
-    IWineD3DBaseShader *iface, const DWORD code) {
-
-    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl*) iface;
-
+const SHADER_OPCODE *shader_get_opcode(const SHADER_OPCODE *opcode_table, DWORD shader_version, DWORD code)
+{
     DWORD i = 0;
-    DWORD hex_version = This->baseShader.hex_version;
-    const SHADER_OPCODE *shader_ins = This->baseShader.shader_ins;
 
     /** TODO: use dichotomic search */
-    while (NULL != shader_ins[i].name) {
-        if ((code & WINED3DSI_OPCODE_MASK) == shader_ins[i].opcode
-                && hex_version >= shader_ins[i].min_version
-                && (!shader_ins[i].max_version || hex_version <= shader_ins[i].max_version))
+    while (opcode_table[i].name)
+    {
+        if ((code & WINED3DSI_OPCODE_MASK) == opcode_table[i].opcode
+                && shader_version >= opcode_table[i].min_version
+                && (!opcode_table[i].max_version || shader_version <= opcode_table[i].max_version))
         {
-            return &shader_ins[i];
+            return &opcode_table[i];
         }
         ++i;
     }
-    FIXME("Unsupported opcode %#x(%d) masked %#x, shader version %#x\n", 
-       code, code, code & WINED3DSI_OPCODE_MASK, hex_version);
+
+    FIXME("Unsupported opcode %#x(%d) masked %#x, shader version %#x\n",
+            code, code, code & WINED3DSI_OPCODE_MASK, shader_version);
+
     return NULL;
 }
 
@@ -204,6 +202,8 @@ HRESULT shader_get_registers_used(
     IWineD3DStateBlockImpl *stateBlock) {
 
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
+    const SHADER_OPCODE *shader_ins = This->baseShader.shader_ins;
+    DWORD shader_version = This->baseShader.hex_version;
     unsigned int cur_loop_depth = 0, max_loop_depth = 0;
 
     /* There are some minor differences between pixel and vertex shaders */
@@ -241,7 +241,7 @@ HRESULT shader_get_registers_used(
 
         /* Fetch opcode */
         opcode_token = *pToken++;
-        curOpcode = shader_get_opcode(iface, opcode_token);
+        curOpcode = shader_get_opcode(shader_ins, shader_version, opcode_token);
 
         /* Unhandled opcode, and its parameters */
         if (NULL == curOpcode) {
@@ -840,7 +840,9 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device; /* To access shader backend callbacks */
+    const SHADER_OPCODE *opcode_table = This->baseShader.shader_ins;
     const SHADER_HANDLER *handler_table = device->shader_backend->shader_instruction_handler_table;
+    DWORD shader_version = This->baseShader.hex_version;
     const DWORD *pToken = pFunction;
     const SHADER_OPCODE *curOpcode = NULL;
     SHADER_HANDLER hw_fct = NULL;
@@ -874,7 +876,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
 
             /* Read opcode */
             hw_arg.opcode_token = *pToken++;
-            curOpcode = shader_get_opcode(iface, hw_arg.opcode_token);
+            curOpcode = shader_get_opcode(opcode_table, shader_version, hw_arg.opcode_token);
 
             /* Select handler */
             if (curOpcode == NULL)
@@ -1009,7 +1011,7 @@ void shader_trace_init(
                 continue;
             }
             opcode_token = *pToken++;
-            curOpcode = shader_get_opcode(iface, opcode_token);
+            curOpcode = shader_get_opcode(This->baseShader.shader_ins, This->baseShader.hex_version, opcode_token);
             len++;
 
             if (NULL == curOpcode) {
