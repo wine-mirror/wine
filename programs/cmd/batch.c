@@ -89,7 +89,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HAN
  */
 
   prev_context = context;
-  context = (BATCH_CONTEXT *)LocalAlloc (LMEM_FIXED, sizeof (BATCH_CONTEXT));
+  context = LocalAlloc (LMEM_FIXED, sizeof (BATCH_CONTEXT));
   context -> h = h;
   context -> command = command;
   memset(context -> shift_count, 0x00, sizeof(context -> shift_count));
@@ -122,7 +122,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HAN
  *	to the caller's caller.
  */
 
-  LocalFree ((HANDLE)context);
+  LocalFree (context);
   if ((prev_context != NULL) && (!called)) {
     prev_context -> skip_rest = TRUE;
     context = prev_context;

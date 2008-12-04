@@ -1348,7 +1348,7 @@ void WCMD_print_error (void) {
 
   WCMD_output_asis_len(lpMsgBuf, lstrlen(lpMsgBuf),
                        GetStdHandle(STD_ERROR_HANDLE));
-  LocalFree ((HLOCAL)lpMsgBuf);
+  LocalFree (lpMsgBuf);
   WCMD_output_asis_len (newline, lstrlen(newline),
                         GetStdHandle(STD_ERROR_HANDLE));
   return;

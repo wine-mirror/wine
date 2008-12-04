@@ -938,7 +938,7 @@ void WCMD_getfileowner(WCHAR *filename, WCHAR *owner, int ownerlen) {
         ULONG domainLen = MAXSTRING;
         SID_NAME_USE nameuse;
 
-        secBuffer = (LPBYTE) HeapAlloc(GetProcessHeap(),0,sizeNeeded * sizeof(BYTE));
+        secBuffer = HeapAlloc(GetProcessHeap(),0,sizeNeeded * sizeof(BYTE));
         if(!secBuffer) return;
 
         /* Get the owners security descriptor */
