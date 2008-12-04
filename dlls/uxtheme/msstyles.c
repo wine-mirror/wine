@@ -43,9 +43,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(uxtheme);
  * Defines and global variables
  */
 
-BOOL MSSTYLES_GetNextInteger(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, int *value);
-BOOL MSSTYLES_GetNextToken(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, LPWSTR lpBuff, DWORD buffSize);
-void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics);
+static BOOL MSSTYLES_GetNextInteger(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, int *value);
+static BOOL MSSTYLES_GetNextToken(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, LPWSTR lpBuff, DWORD buffSize);
+static void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics);
 static HRESULT MSSTYLES_GetFont (LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, LOGFONTW* logfont);
 
 extern HINSTANCE hDllInst;
@@ -852,7 +852,7 @@ static void parse_apply_nonclient (struct PARSENONCLIENTSTATE* state)
  * PARAMS
  *     tf                  Theme to parse
  */
-void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics)
+static void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics)
 {
     static const WCHAR szSysMetrics[] = {'S','y','s','M','e','t','r','i','c','s','\0'};
     static const WCHAR szGlobals[] = {'g','l','o','b','a','l','s','\0'};
@@ -1139,7 +1139,7 @@ HBITMAP MSSTYLES_LoadBitmap (PTHEME_CLASS tc, LPCWSTR lpFilename, BOOL* hasAlpha
     return img->image;
 }
 
-BOOL MSSTYLES_GetNextInteger(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, int *value)
+static BOOL MSSTYLES_GetNextInteger(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, int *value)
 {
     LPCWSTR cur = lpStringStart;
     int total = 0;
@@ -1163,7 +1163,7 @@ BOOL MSSTYLES_GetNextInteger(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR
     return TRUE;
 }
 
-BOOL MSSTYLES_GetNextToken(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, LPWSTR lpBuff, DWORD buffSize) {
+static BOOL MSSTYLES_GetNextToken(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, LPWSTR lpBuff, DWORD buffSize) {
     LPCWSTR cur = lpStringStart;
     LPCWSTR start;
     LPCWSTR end;
