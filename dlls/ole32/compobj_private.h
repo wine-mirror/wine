@@ -212,7 +212,6 @@ struct stub_manager *get_stub_manager_from_object(APARTMENT *apt, void *object);
 BOOL stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ipid);
 BOOL stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid);
 void stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs, const IPID *ipid, BOOL tableweak);
-HRESULT ipid_to_stub_manager(const IPID *ipid, APARTMENT **stub_apt, struct stub_manager **stubmgr_ret);
 HRESULT ipid_get_dispatch_params(const IPID *ipid, APARTMENT **stub_apt, IRpcStubBuffer **stub, IRpcChannelBuffer **chan, IID *iid, IUnknown **iface);
 HRESULT start_apartment_remote_unknown(void);
 
@@ -309,7 +308,6 @@ static inline GUID COM_CurrentCausalityId(void)
 
 /* from dlldata.c */
 extern HINSTANCE hProxyDll DECLSPEC_HIDDEN;
-extern BOOL WINAPI OLE32_DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI OLE32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI OLE32_DllRegisterServer(void) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI OLE32_DllUnregisterServer(void) DECLSPEC_HIDDEN;
