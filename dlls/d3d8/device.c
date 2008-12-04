@@ -1606,7 +1606,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 
     return hrc;
 }
 
-IWineD3DVertexDeclaration *IDirect3DDevice8Impl_FindDecl(IDirect3DDevice8Impl *This, DWORD fvf)
+static IWineD3DVertexDeclaration *IDirect3DDevice8Impl_FindDecl(IDirect3DDevice8Impl *This, DWORD fvf)
 {
     HRESULT hr;
     IWineD3DVertexDeclaration* pDecl = NULL;
