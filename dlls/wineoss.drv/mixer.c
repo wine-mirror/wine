@@ -1561,7 +1561,7 @@ DWORD WINAPI OSS_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	return MMSYSERR_NOTSUPPORTED;
     }
 #else
-    TRACE("(%04X, %04X, %08X, %08X, %08X);\n", wDevID, wMsg,
+    TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n", wDevID, wMsg,
           dwUser, dwParam1, dwParam2);
 
     return MMSYSERR_NOTENABLED;
