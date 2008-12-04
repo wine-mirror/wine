@@ -40,7 +40,7 @@ MAIN_MENU MENU
  POPUP "Inf&ormacije" {
   MENUITEM "&Licenčna pogodba ...", IDM_LICENSE
   MENUITEM "&BREZ GARANCIJE ...", IDM_NOWARRANTY
-  MENUITEM "&O Uri...", IDM_ABOUT
+  MENUITEM "&O Uri ...", IDM_ABOUT
  }
 }
 
