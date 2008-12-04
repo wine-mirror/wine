@@ -45,7 +45,7 @@ static const unsigned int heights[] = {200, 300, 384, 480, 600,  768,  864, 1024
 /* create the mode structures */
 static void make_modes(void)
 {
-    int i;
+    unsigned int i;
     /* original specified desktop size */
     X11DRV_Settings_AddOneMode(screen_width, screen_height, 0, 60);
     for (i=0; i<NUM_DESKTOP_MODES; i++)

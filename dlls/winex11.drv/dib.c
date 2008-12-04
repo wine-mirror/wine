@@ -441,7 +441,7 @@ static int *X11DRV_DIB_BuildColorMap( X11DRV_PDEVICE *physDev, WORD coloruse, WO
  */
 static int X11DRV_DIB_MapColor( int *physMap, int nPhysMap, int phys, int oldcol )
 {
-    unsigned int color;
+    int color;
 
     if ((oldcol < nPhysMap) && (physMap[oldcol] == phys))
         return oldcol;
@@ -4314,7 +4314,7 @@ void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physD
         freeColorMap = FALSE;
       } else {
 	  const BITMAPINFO* info = (BITMAPINFO*)&dib.dsBmih;
-	  int i;
+	  unsigned int i;
 
 	  nColorMap = X11DRV_DIB_GetColorCount(info);
 	  x11ColorMap = HeapAlloc(GetProcessHeap(), 0, nColorMap * sizeof(int));

@@ -505,7 +505,7 @@ static void GenerateIMECHARMessages(HIMC hIMC, LPWSTR String, DWORD length)
 {
     LPINPUTCONTEXT lpIMC;
     LPTRANSMSG lpTransMsg;
-    INT i;
+    DWORD i;
 
     if (length <= 0)
         return;
