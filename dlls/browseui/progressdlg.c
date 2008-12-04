@@ -115,7 +115,7 @@ static void set_progress_marquee(ProgressDialog *This)
         GetWindowLongW(hProgress, GWL_STYLE)|PBS_MARQUEE);
 }
 
-void update_dialog(ProgressDialog *This, DWORD dwUpdate)
+static void update_dialog(ProgressDialog *This, DWORD dwUpdate)
 {
     WCHAR empty[] = {0};
 
