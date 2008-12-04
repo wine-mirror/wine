@@ -791,7 +791,7 @@ static void InternetCreateUrlA_test(void)
     szUrl = HeapAlloc(GetProcessHeap(), 0, len);
     InternetCreateUrlA(&urlComp, ICU_ESCAPE, szUrl, &len);
     ok(ret, "Expected success\n");
-    ok(len == strlen(CREATE_URL13), "Expected len %u, got %u\n", strlen(CREATE_URL13), len);
+    ok(len == strlen(CREATE_URL13), "Got len %u\n", len);
     ok(!strcmp(szUrl, CREATE_URL13), "Expected \"%s\", got \"%s\"\n", CREATE_URL13, szUrl);
 
     HeapFree(GetProcessHeap(), 0, szUrl);
