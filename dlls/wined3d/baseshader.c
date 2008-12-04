@@ -491,11 +491,8 @@ HRESULT shader_get_registers_used(
     return WINED3D_OK;
 }
 
-static void shader_dump_decl_usage(
-    IWineD3DBaseShaderImpl* This,
-    DWORD decl, 
-    DWORD param) {
-
+static void shader_dump_decl_usage(DWORD decl, DWORD param, DWORD shader_version)
+{
     DWORD regtype = shader_get_regtype(param);
 
     TRACE("dcl");
@@ -516,8 +513,7 @@ static void shader_dump_decl_usage(
         DWORD idx = (decl & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
 
         /* Pixel shaders 3.0 don't have usage semantics */
-        char pshader = shader_is_pshader_version(This->baseShader.hex_version);
-        if (pshader && This->baseShader.hex_version < WINED3DPS_VERSION(3,0))
+        if (shader_is_pshader_version(shader_version) && shader_version < WINED3DPS_VERSION(3,0))
             return;
         else
             TRACE("_");
@@ -1027,7 +1023,7 @@ void shader_trace_init(
                     DWORD usage = *pToken;
                     DWORD param = *(pToken + 1);
 
-                    shader_dump_decl_usage(This, usage, param);
+                    shader_dump_decl_usage(usage, param, This->baseShader.hex_version);
                     shader_dump_ins_modifiers(param);
                     TRACE(" ");
                     shader_dump_param(iface, param, 0, 0);
