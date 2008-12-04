@@ -123,7 +123,7 @@ static const char manifest[] =
 
 static const char manifest_filename[] = ARCH "_" NAME "_" PUBLIC_KEY "_" VERSION "_none_deadbeef.manifest";
 
-LRESULT WINAPI COMCTL32_SubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+static LRESULT WINAPI COMCTL32_SubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 LPWSTR  COMCTL32_wSubclass = NULL;
 HMODULE COMCTL32_hModule = 0;
@@ -1284,7 +1284,7 @@ BOOL WINAPI RemoveWindowSubclass(HWND hWnd, SUBCLASSPROC pfnSubclass, UINT_PTR u
  * Window procedure for all subclassed windows. 
  * Saves the current subclassing stack position to support nested messages
  */
-LRESULT WINAPI COMCTL32_SubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT WINAPI COMCTL32_SubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
    LPSUBCLASS_INFO stack;
    LPSUBCLASSPROCS proc;
