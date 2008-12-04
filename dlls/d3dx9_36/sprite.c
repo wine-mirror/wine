@@ -117,7 +117,7 @@ static HRESULT WINAPI ID3DXSpriteImpl_SetWorldViewLH(LPD3DXSPRITE iface, CONST D
 }
 
 /* Helper function */
-void set_states(ID3DXSpriteImpl *object)
+static void set_states(ID3DXSpriteImpl *object)
 {
     D3DXMATRIX mat;
     D3DVIEWPORT9 vp;
