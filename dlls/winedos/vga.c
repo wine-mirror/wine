@@ -1090,7 +1090,7 @@ void VGA_SetBright(BOOL bright)
  * Select if output is enabled or disabled
  * This is a property of the CGA controller
  */
-void VGA_SetEnabled(BOOL enabled)
+static void VGA_SetEnabled(BOOL enabled)
 {
   TRACE("%i\n", enabled);
 
