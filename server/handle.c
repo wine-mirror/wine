@@ -64,6 +64,7 @@ static struct handle_table *global_table;
 #define RESERVED_ALL           (RESERVED_INHERIT | RESERVED_CLOSE_PROTECT)
 
 #define MIN_HANDLE_ENTRIES  32
+#define MAX_HANDLE_ENTRIES  0x00ffffff
 
 
 /* handle to table index conversion */
@@ -191,13 +192,12 @@ struct handle_table *alloc_handle_table( struct process *process, int count )
 static int grow_handle_table( struct handle_table *table )
 {
     struct handle_entry *new_entries;
-    int count = table->count;
+    int count = min( table->count * 2, MAX_HANDLE_ENTRIES );
 
-    if (count >= INT_MAX / 2) return 0;
-    count *= 2;
-    if (!(new_entries = realloc( table->entries, count * sizeof(struct handle_entry) )))
+    if (count == table->count ||
+        !(new_entries = realloc( table->entries, count * sizeof(struct handle_entry) )))
     {
-        set_error( STATUS_NO_MEMORY );
+        set_error( STATUS_INSUFFICIENT_RESOURCES );
         return 0;
     }
     table->entries = new_entries;
