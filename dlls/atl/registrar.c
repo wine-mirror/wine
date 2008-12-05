@@ -439,7 +439,7 @@ static HRESULT resource_register(Registrar *This, LPCOLESTR resFileName,
     if(hins) {
         src = FindResourceW(hins, szID, szType);
         if(src) {
-            regstra = (LPSTR)LoadResource(hins, src);
+            regstra = LoadResource(hins, src);
             reslen = SizeofResource(hins, src);
             if(regstra) {
                 len = MultiByteToWideChar(CP_ACP, 0, regstra, reslen, NULL, 0)+1;

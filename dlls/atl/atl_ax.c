@@ -1244,7 +1244,7 @@ HWND WINAPI AtlAxCreateDialogW(HINSTANCE hInst, LPCWSTR name, HWND owner, DLGPRO
     hgl = LoadResource (hInst, hrsrc);
     if ( !hgl )
         return NULL;
-    ptr = (LPCDLGTEMPLATEW)LockResource ( hgl );
+    ptr = LockResource ( hgl );
     if (!ptr)
     {
         FreeResource( hgl );
