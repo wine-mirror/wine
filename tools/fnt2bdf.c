@@ -47,21 +47,13 @@
 
 /* global options */
 
-int dump_bdf( fnt_fontS* cpe_font_struct, unsigned char* file_buffer);
-int dump_bdf_hdr(FILE* fs, fnt_fontS* cpe_font_struct, unsigned char* file_buffer);
+static int dump_bdf( fnt_fontS* cpe_font_struct, unsigned char* file_buffer);
+static int dump_bdf_hdr(FILE* fs, fnt_fontS* cpe_font_struct, unsigned char* file_buffer);
 
-char*	g_lpstrFileName = NULL;
-char*	g_lpstrCharSet = NULL;
-char*   g_lpstrInputFile = NULL;
-int     g_outputPoints = 0;
-
-static const char*  errorDLLRead = "Unable to read Windows DLL.\n";
-static const char*  errorFNTRead = "Unable to read .FNT file.\n";
-static const char*  errorOpenFile = "Unable to open file.\n";
-static const char*  errorMemory = "Memory allocation error.\n";
-static const char*  errorFile = "Corrupt or invalid file.\n";
-static const char*  errorFontData = "Unable to parse font data: Error ";
-static const char*  errorEmpty = "No fonts found.\n";
+static char* g_lpstrFileName = NULL;
+static char* g_lpstrCharSet = NULL;
+static char* g_lpstrInputFile = NULL;
+static int   g_outputPoints = 0;
 
 /* info */
 
@@ -202,7 +194,7 @@ static int parse_fnt_data(unsigned char* file_buffer, int length)
   return t;
 }
 
-int dump_bdf( fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
+static int dump_bdf( fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
 {
   FILE*   fp;
   int	  ic;
@@ -311,7 +303,7 @@ return 0;
 }
 
 
-int dump_bdf_hdr(FILE* fs, fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
+static int dump_bdf_hdr(FILE* fs, fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
 {
 int	l_fchar = return_data_value(dfChar, &cpe_font_struct->hdr.fi.dfFirstChar),
 	l_lchar = return_data_value(dfChar, &cpe_font_struct->hdr.fi.dfLastChar);
@@ -595,20 +587,20 @@ int main(int argc, char **argv)
 
 		    if( !(lpfont = (unsigned char*) realloc( lpfont, length )) )
 		    {
-			fprintf(stderr, errorMemory );
+			fprintf(stderr, "Memory allocation error.\n" );
 			exit(1);
 		    }
 
 		    lseek( fd, offset, SEEK_SET );
 		    if( read(fd, lpfont, length) != length )
 		    {
-			fprintf(stderr, errorDLLRead );
+			fprintf(stderr, "Unable to read Windows DLL.\n" );
 			exit(1);
 		    }
 
 		    if( (i = parse_fnt_data( lpfont, length )) )
 		    {
-			fprintf(stderr, "%s%d\n", errorFontData, i );
+			fprintf(stderr, "Unable to parse font data: Error %d\n", i );
 			exit(1);
 		    }
 		 }
@@ -617,14 +609,14 @@ int main(int argc, char **argv)
 	       }
 	       else
 	       {
-		 fprintf(stderr, errorEmpty );
+                 fprintf(stderr, "No fonts found.\n" );
 		 exit(1);
 	       }
 	       free( lpdata );
 	     }
 	     else
 	     {
-	       fprintf(stderr, errorDLLRead);
+               fprintf(stderr, "Unable to read Windows DLL.\n" );
 	       exit(1);
 	     }
 	     break;
@@ -634,20 +626,20 @@ int main(int argc, char **argv)
 	     {
 	       if( (i = parse_fnt_data( lpdata, file_stat.st_size )) )
 	       {
-		   fprintf(stderr, "%s%d\n", errorFontData, i );
+                   fprintf(stderr, "Unable to parse font data: Error %d\n", i );
 		   exit(1);
 	       }
 	       free( lpdata );
 	     }
 	     else
 	     {
-	       fprintf(stderr, errorFNTRead);
+               fprintf(stderr, "Unable to read .FNT file.\n" );
 	       exit(1);
 	     }
 	     break;
 
 	case FILE_ERROR:
-	     fprintf(stderr, errorFile );
+             fprintf(stderr, "Corrupt or invalid file.\n" );
 	     exit(1);
     }
     close(fd);
@@ -655,7 +647,7 @@ int main(int argc, char **argv)
   }
   else
   {
-    fprintf(stderr, errorOpenFile );
+    fprintf(stderr, "Unable to open '%s'.\n", g_lpstrInputFile );
     exit(1);
   }
 }
