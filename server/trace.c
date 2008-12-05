@@ -67,7 +67,7 @@ static void dump_uints( const int *ptr, int len )
 
 static void dump_timeout( const timeout_t *time )
 {
-    fprintf( stderr, get_timeout_str(*time) );
+    fputs( get_timeout_str(*time), stderr );
 }
 
 static void dump_file_pos( const file_pos_t *pos )
