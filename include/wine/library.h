@@ -93,7 +93,7 @@ extern void *wine_ldt_get_ptr( unsigned short sel, unsigned long offset );
 extern unsigned short wine_ldt_alloc_entries( int count );
 extern unsigned short wine_ldt_realloc_entries( unsigned short sel, int oldcount, int newcount );
 extern void wine_ldt_free_entries( unsigned short sel, int count );
-#ifdef __i386__
+#if defined(__i386__) && !defined(__MINGW32__) && !defined(_MSC_VER)
 extern unsigned short wine_ldt_alloc_fs(void);
 extern void wine_ldt_init_fs( unsigned short sel, const LDT_ENTRY *entry );
 extern void wine_ldt_free_fs( unsigned short sel );
@@ -178,7 +178,15 @@ static inline int wine_ldt_is_empty( const LDT_ENTRY *ent )
 /* segment register access */
 
 #ifdef __i386__
-# ifdef __GNUC__
+# ifdef __MINGW32__
+#  define __DEFINE_GET_SEG(seg) \
+    static inline unsigned short wine_get_##seg(void); \
+    static inline unsigned short wine_get_##seg(void) \
+    { unsigned short res; __asm__ __volatile__("movw %%" #seg ",%w0" : "=r"(res)); return res; }
+#  define __DEFINE_SET_SEG(seg) \
+    static inline void wine_set_##seg(int val); \
+    static inline void wine_set_##seg(int val) { __asm__("movw %w0,%%" #seg : : "r" (val)); }
+# elif defined(__GNUC__)
 #  define __DEFINE_GET_SEG(seg) \
     extern inline unsigned short wine_get_##seg(void); \
     extern inline unsigned short wine_get_##seg(void) \
