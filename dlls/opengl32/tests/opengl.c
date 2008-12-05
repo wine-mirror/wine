@@ -555,7 +555,12 @@ START_TEST(opengl)
         hdc = GetDC(hwnd);
 
         iPixelFormat = ChoosePixelFormat(hdc, &pfd);
-        ok(iPixelFormat > 0, "No pixelformat found!\n"); /* This should never happen as ChoosePixelFormat always returns a closest match */
+        if(iPixelFormat == 0)
+        {
+            /* This should never happen as ChoosePixelFormat always returns a closest match, but currently this fails in Wine if we don't have glX */
+            win_skip("Unable to find pixel format.\n");
+            goto cleanup;
+        }
 
         /* We shouldn't be able to create a context from a hdc which doesn't have a pixel format set */
         hglrc = wglCreateContext(hdc);
@@ -615,6 +620,8 @@ START_TEST(opengl)
         else
             trace("WGL_ARB_pbuffer not supported, skipping pbuffer test\n");
 
+cleanup:
+        ReleaseDC(hwnd, hdc);
         DestroyWindow(hwnd);
     }
 }
