@@ -340,7 +340,7 @@ void CDECL MSVCRT__tzset(void)
         struct tm *tmp;
         long zone_january, zone_july;
 
-        t = (time((time_t *)0) / seconds_in_year) * seconds_in_year;
+        t = (time(NULL) / seconds_in_year) * seconds_in_year;
         tmp = localtime(&t);
         zone_january = -tmp->tm_gmtoff;
         t += seconds_in_year / 2;
