@@ -1313,7 +1313,7 @@ static void test_dde_aw_transaction(void)
 
     dde_inst = 0;
     ret = DdeInitializeA(&dde_inst, client_dde_callback, APPCMD_CLIENTONLY, 0);
-    ok(ret == DMLERR_NO_ERROR, "DdeInitializeW failed with error %04x (%x)\n",
+    ok(ret == DMLERR_NO_ERROR, "DdeInitializeA failed with error %04x (%x)\n",
        ret, DdeGetLastError(dde_inst));
 
     hsz_server = DdeCreateStringHandleW(dde_inst, TEST_DDE_SERVICE, CP_WINUNICODE);
@@ -1701,7 +1701,7 @@ static void test_DdeCreateStringHandle(void)
     ret = DdeInitializeW(&dde_inst, client_ddeml_callback, APPCMD_CLIENTONLY, 0);
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("DdeInitialize is unimplemented\n");
+        win_skip("DdeInitializeW is unimplemented\n");
         return;
     }
 
