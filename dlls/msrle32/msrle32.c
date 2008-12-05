@@ -1136,7 +1136,7 @@ static CodecInfo* Open(LPICOPEN icinfo)
     return NULL;
   }
 
-  pi = (CodecInfo*)LocalAlloc(LPTR, sizeof(CodecInfo));
+  pi = LocalAlloc(LPTR, sizeof(CodecInfo));
 
   if (pi != NULL) {
     pi->fccHandler  = icinfo->fccHandler;
@@ -1165,7 +1165,7 @@ static LRESULT Close(CodecInfo *pi)
   if (pi->pPrevFrame != NULL || pi->pCurFrame != NULL)
     CompressEnd(pi);
 
-  LocalFree((HLOCAL)pi);
+  LocalFree(pi);
   return 1;
 }
 
@@ -1419,7 +1419,7 @@ static LRESULT CompressBegin(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
   switch (lpbiOut->biBitCount) {
   case 4:
   case 8:
-    pi->palette_map = (LPBYTE)LocalAlloc(LPTR, lpbiIn->biClrUsed);
+    pi->palette_map = LocalAlloc(LPTR, lpbiIn->biClrUsed);
     if (pi->palette_map == NULL) {
       CompressEnd(pi);
       return ICERR_MEMORY;
@@ -1669,7 +1669,7 @@ static LRESULT DecompressBegin(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
   switch (lpbiOut->biBitCount) {
   case 4:
   case 8:
-    pi->palette_map = (LPBYTE)LocalAlloc(LPTR, lpbiIn->biClrUsed);
+    pi->palette_map = LocalAlloc(LPTR, lpbiIn->biClrUsed);
     if (pi->palette_map == NULL)
       return ICERR_MEMORY;
 
@@ -1679,7 +1679,7 @@ static LRESULT DecompressBegin(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
     break;
   case 15:
   case 16:
-    pi->palette_map = (LPBYTE)LocalAlloc(LPTR, lpbiIn->biClrUsed * 2);
+    pi->palette_map = LocalAlloc(LPTR, lpbiIn->biClrUsed * 2);
     if (pi->palette_map == NULL)
       return ICERR_MEMORY;
 
@@ -1699,7 +1699,7 @@ static LRESULT DecompressBegin(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
     break;
   case 24:
   case 32:
-    pi->palette_map = (LPBYTE)LocalAlloc(LPTR, lpbiIn->biClrUsed * sizeof(RGBQUAD));
+    pi->palette_map = LocalAlloc(LPTR, lpbiIn->biClrUsed * sizeof(RGBQUAD));
     if (pi->palette_map == NULL)
       return ICERR_MEMORY;
     memcpy(pi->palette_map, rgbIn, lpbiIn->biClrUsed * sizeof(RGBQUAD));
@@ -1753,7 +1753,7 @@ static LRESULT DecompressEnd(CodecInfo *pi)
   pi->bDecompress = FALSE;
 
   if (pi->palette_map != NULL) {
-    LocalFree((HLOCAL)pi->palette_map);
+    LocalFree(pi->palette_map);
     pi->palette_map = NULL;
   }
 
