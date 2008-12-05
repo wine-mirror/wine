@@ -746,8 +746,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
 		for(j = 0; j < pitch * 8; j++) {
 	            strcat(output, (line[j / 8] & (1 << (7 - (j % 8)))) ? "#" : " ");
 		}
-		strcat(output, "\n");
-		TRACE(output);
+		TRACE("%s\n", output);
 	    }
 	} else {
 	    static const char blks[] = " .:;!o*#";
@@ -762,8 +761,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
 		    str[0] = blks[line[j] >> 5];
 		    strcat(output, str);
 		}
-		strcat(output, "\n");
-		TRACE(output);
+		TRACE("%s\n", output);
 	    }
 	}
     }
