@@ -2748,6 +2748,22 @@ static void SurfaceCapsTest(void)
     }
 }
 
+static BOOL can_create_primary_surface(void)
+{
+    DDSURFACEDESC ddsd;
+    IDirectDrawSurface *surface;
+    HRESULT hr;
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+    hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &surface, NULL);
+    if(FAILED(hr)) return FALSE;
+    IDirectDrawSurface_Release(surface);
+    return TRUE;
+}
+
 START_TEST(dsurface)
 {
     HRESULT ret;
@@ -2764,6 +2780,12 @@ START_TEST(dsurface)
         return;
     }
     IDirectDraw_Release(dd4);
+
+    if(!can_create_primary_surface())
+    {
+        skip("Unable to create primary surface\n");
+        return;
+    }
 
     MipMapCreationTest();
     SrcColorKey32BlitTest();

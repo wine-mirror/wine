@@ -89,8 +89,7 @@ static BOOL createObjects(void)
     ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE;
     ddsd.dwBackBufferCount = 1;
     hr = IDirectDraw7_CreateSurface(DirectDraw, &ddsd, &Surface, NULL);
-    ok(hr==DD_OK, "CreateSurface returned: %08x\n", hr);
-    if(!Surface) goto err;
+    if(FAILED(hr)) goto err;
 
     hr = IDirect3D7_CreateDevice(Direct3D, &IID_IDirect3DTnLHalDevice, Surface, &Direct3DDevice);
     if(FAILED(hr))
