@@ -292,8 +292,8 @@ WNASPI32_DoPosting( SRB_ExecSCSICmd *lpPRB, DWORD status )
 			(*SRB_PostProc)(lpPRB);
 		}
 		else if (SRB_Flags & SRB_EVENT_NOTIFY) {
-			TRACE("Setting event %p\n", (HANDLE)SRB_PostProc);
-			SetEvent((HANDLE)SRB_PostProc);
+			TRACE("Setting event %p\n", SRB_PostProc);
+			SetEvent(SRB_PostProc);
 		}
 	}
 	return SS_PENDING;
@@ -598,7 +598,7 @@ DWORD __cdecl GetASPI32DLLVersion(void)
         return (DWORD)1;
 #else
 	FIXME("Please add SCSI support for your operating system, returning 0\n");
-        return (DWORD)0;
+        return 0;
 #endif
 }
 
