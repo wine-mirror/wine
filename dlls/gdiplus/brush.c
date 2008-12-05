@@ -954,6 +954,20 @@ GpStatus WINGDIPAPI GdipResetTextureTransform(GpTexture* brush)
     return GdipSetMatrixElements(brush->transform, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 }
 
+/******************************************************************************
+ * GdipScaleTextureTransform [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipScaleTextureTransform(GpTexture* brush,
+    REAL sx, REAL sy, GpMatrixOrder order)
+{
+    TRACE("(%p, %.2f, %.2f, %d)\n", brush, sx, sy, order);
+
+    if(!brush)
+        return InvalidParameter;
+
+    return GdipScaleMatrix(brush->transform, sx, sy, order);
+}
+
 GpStatus WINGDIPAPI GdipSetLineBlend(GpLineGradient *brush,
     GDIPCONST REAL *blend, GDIPCONST REAL* positions, INT count)
 {
