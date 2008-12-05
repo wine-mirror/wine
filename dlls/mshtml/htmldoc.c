@@ -214,8 +214,6 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
             NSContainer_Release(This->nscontainer);
 
         heap_free(This);
-
-        UNLOCK_MODULE();
     }
 
     return ref;
@@ -1809,8 +1807,6 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     IHTMLDocument_Release(HTMLDOC(doc));
     if(FAILED(hres))
         return hres;
-
-    LOCK_MODULE();
 
     doc->nscontainer = NSContainer_Create(doc, NULL);
     update_nsdocument(doc);

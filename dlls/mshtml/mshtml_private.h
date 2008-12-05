@@ -668,10 +668,6 @@ DEFINE_GUID(CLSID_SysimageProtocol, 0x76E67A63, 0x06E9, 0x11D2, 0xA8,0x40, 0x00,
 
 DEFINE_GUID(CLSID_CMarkup,0x3050f4fb,0x98b5,0x11cf,0xbb,0x82,0x00,0xaa,0x00,0xbd,0xce,0x0b);
 
-extern LONG module_ref;
-#define LOCK_MODULE()   InterlockedIncrement(&module_ref)
-#define UNLOCK_MODULE() InterlockedDecrement(&module_ref)
-
 /* memory allocation functions */
 
 static inline void * __WINE_ALLOC_SIZE(1) heap_alloc(size_t len)

@@ -44,7 +44,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 HINSTANCE hInst;
-LONG module_ref = 0;
 DWORD mshtml_tls = 0;
 
 static HINSTANCE shdoclc = NULL;
@@ -141,7 +140,6 @@ static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 
     if(!ref) {
         heap_free(This);
-        UNLOCK_MODULE();
     }
 
     return ref;
@@ -158,11 +156,7 @@ static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
 {
     TRACE("(%p)->(%x)\n", iface, dolock);
 
-    if(dolock)
-        LOCK_MODULE();
-    else
-        UNLOCK_MODULE();
-
+    /* We never unload the DLL. See DllCanUnloadNow(). */
     return S_OK;
 }
 
@@ -184,9 +178,7 @@ static HRESULT ClassFactory_Create(REFIID riid, void **ppv, CreateInstanceFunc f
     ret->fnCreateInstance = fnCreateInstance;
 
     hres = IClassFactory_QueryInterface((IClassFactory*)ret, riid, ppv);
-    if(SUCCEEDED(hres)) {
-        LOCK_MODULE();
-    }else {
+    if(FAILED(hres)) {
         heap_free(ret);
         *ppv = NULL;
     }
@@ -230,8 +222,9 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    TRACE("() ref=%d\n", module_ref);
-    return module_ref ? S_FALSE : S_OK;
+    TRACE("()\n");
+    /* The cost of keeping this DLL in memory is small. */
+    return S_FALSE;
 }
 
 /***********************************************************************
