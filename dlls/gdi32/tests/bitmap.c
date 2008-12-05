@@ -1956,11 +1956,17 @@ static void test_CreateBitmap(void)
         bmp.bmPlanes = 1;
         bmp.bmBitsPixel = i;
         bmp.bmBits = NULL;
+        SetLastError(0xdeadbeef);
         bm = CreateBitmapIndirect(&bmp);
         if(i > 32) {
             DWORD error = GetLastError();
-            ok(bm == 0, "CreateBitmapIndirect for %d bpp succeeded\n", i);
-            ok(error == ERROR_INVALID_PARAMETER, "Got error %d, expected ERROR_INVALID_PARAMETER\n", error);
+            ok(bm == 0 ||
+               broken(bm != 0), /* Win9x and WinMe */
+               "CreateBitmapIndirect for %d bpp succeeded\n", i);
+            ok(error == ERROR_INVALID_PARAMETER ||
+               broken(error == 0xdeadbeef), /* Win9x and WinME */
+               "Got error %d, expected ERROR_INVALID_PARAMETER\n", error);
+            DeleteObject(bm);
             continue;
         }
         ok(bm != 0, "CreateBitmapIndirect error %u\n", GetLastError());
@@ -1978,7 +1984,9 @@ static void test_CreateBitmap(void)
         } else if(i <= 32) {
             expect = 32;
         }
-        ok(bmp.bmBitsPixel == expect, "CreateBitmapIndirect for a %d bpp bitmap created a %d bpp bitmap, expected %d\n",
+        ok(bmp.bmBitsPixel == expect ||
+           broken(bmp.bmBitsPixel == i), /* Win9x and WinMe */
+           "CreateBitmapIndirect for a %d bpp bitmap created a %d bpp bitmap, expected %d\n",
            i, bmp.bmBitsPixel, expect);
         DeleteObject(bm);
     }
