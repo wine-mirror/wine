@@ -98,10 +98,23 @@ esac
 dnl enable_win16 defaults to yes on x86, to no on other CPUs
 case $host_cpu in
   *i[[3456789]]86*)
-    if test "x$enable_win16" != "xno" 
-    then
-      enable_win16="yes"
-    fi
+    enable_win16=${enable_win16:-yes}
+    ;;
+  *)
+    enable_win16=${enable_win16:-no}
+dnl disable some modules by default on non-x86
+    enable_ifsmgr_vxd=${enable_ifsmgr_vxd:-no}
+    enable_mmdevldr_vxd=${enable_mmdevldr_vxd:-no}
+    enable_monodebg_vxd=${enable_monodebg_vxd:-no}
+    enable_vdhcp_vxd=${enable_vdhcp_vxd:-no}
+    enable_vmm_vxd=${enable_vmm_vxd:-no}
+    enable_vnbt_vxd=${enable_vnbt_vxd:-no}
+    enable_vnetbios_vxd=${enable_vnetbios_vxd:-no}
+    enable_vtdapi_vxd=${enable_vtdapi_vxd:-no}
+    enable_vwin32_vxd=${enable_vwin32_vxd:-no}
+    enable_w32skrnl=${enable_w32skrnl:-no}
+    enable_winedos=${enable_winedos:-no}
+    enable_winevdm=${enable_winevdm:-no}
     ;;
 esac
    
