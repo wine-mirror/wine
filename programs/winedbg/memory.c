@@ -677,7 +677,7 @@ BOOL memory_get_register(DWORD regno, DWORD** value, char* buffer, int len)
             else
                 *value = div->pval;
 
-            if (buffer) snprintf(buffer, len, div->name);
+            if (buffer) lstrcpynA(buffer, div->name, len);
             return TRUE;
         }
     }

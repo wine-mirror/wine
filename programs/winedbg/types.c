@@ -716,7 +716,7 @@ int types_print_type(const struct dbg_type* type, BOOL details)
         dbg_printf(")");
         break;
     case SymTagTypedef:
-        dbg_printf(name);
+        dbg_printf("%s", name);
         break;
     default:
         WINE_ERR("Unknown type %u for %s\n", tag, name);

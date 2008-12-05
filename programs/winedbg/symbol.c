@@ -650,7 +650,7 @@ void symbol_print_local(const SYMBOL_INFO* sym, ULONG base,
     }
     else
     {
-        dbg_printf(buffer);
+        dbg_printf("%s", buffer);
         if (detailed)
             dbg_printf(" (%s)",
                        (sym->Flags & SYMFLAG_PARAMETER) ? "parameter" : "local");

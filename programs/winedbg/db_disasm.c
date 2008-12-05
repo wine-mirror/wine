@@ -1261,7 +1261,7 @@ static void db_disasm_esc( ADDRESS64* addr, int inst, int short_addr,
 	     * Normal address modes.
 	     */
 	    db_read_address( addr, short_addr, regmodrm, &address);
-	    dbg_printf(fp->f_name);
+	    dbg_printf("%s", fp->f_name);
 	    switch(fp->f_size) {
 		case SNGL: p = "s"; break;
 		case DBLR: p = "l"; break;
@@ -1463,15 +1463,15 @@ void be_i386_disasm_one_insn(ADDRESS64 *addr, int display)
 	  if( db_display )
 	    {
 	      if (size == WORD)
-		dbg_printf(i_name);
+		dbg_printf("%s", i_name);
 	      else
-		dbg_printf(ip->i_extra);
+		dbg_printf("%s", ip->i_extra);
 	    }
 	}
 	else {
 	  if( db_display )
 	    {
-	      dbg_printf(i_name);
+	      dbg_printf("%s", i_name);
 	    }
 	    if (i_size != NONE) {
 		if (i_size == BYTE) {
