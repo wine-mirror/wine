@@ -23,7 +23,11 @@
 extern "C" {
 #endif
 
+typedef struct _HCLUSTER *HCLUSTER;
+
+BOOL WINAPI CloseCluster(HCLUSTER hCluster);
 DWORD WINAPI GetNodeClusterState(LPCWSTR lpszNodeName, LPDWORD pdwClusterState);
+HCLUSTER WINAPI OpenCluster(LPCWSTR lpszClusterName);
 
 #ifdef __cplusplus
 }

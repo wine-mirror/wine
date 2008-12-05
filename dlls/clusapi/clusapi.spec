@@ -3,7 +3,7 @@
 @ stub BackupClusterDatabase
 @ stub CanResourceBeDependent
 @ stub ChangeClusterResourceGroup
-@ stub CloseCluster
+@ stdcall CloseCluster(ptr)
 @ stub CloseClusterGroup
 @ stub CloseClusterNetInterface
 @ stub CloseClusterNetwork
@@ -93,7 +93,7 @@
 @ stub OfflineClusterResource
 @ stub OnlineClusterGroup
 @ stub OnlineClusterResource
-@ stub OpenCluster
+@ stdcall OpenCluster(wstr)
 @ stub OpenClusterGroup
 @ stub OpenClusterNetInterface
 @ stub OpenClusterNetwork

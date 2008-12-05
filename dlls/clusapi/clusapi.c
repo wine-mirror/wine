@@ -47,6 +47,27 @@ DWORD WINAPI GetNodeClusterState(LPCWSTR lpszNodeName, LPDWORD pdwClusterState)
     return ERROR_SUCCESS;
 }
 
+/***********************************************************************
+ *             OpenCluster   (CLUSAPI.@)
+ *
+ */
+HCLUSTER WINAPI OpenCluster(LPCWSTR lpszClusterName)
+{
+    FIXME("(%s) stub!\n", debugstr_w(lpszClusterName));
+
+    return (HCLUSTER)0xdeadbeef;
+}
+
+/***********************************************************************
+ *             CloseCluster   (CLUSAPI.@)
+ *
+ */
+BOOL WINAPI CloseCluster(HCLUSTER hCluster)
+{
+    FIXME("(%p) stub!\n", hCluster);
+
+    return TRUE;
+}
 
 /***********************************************************************
  *             DllMain   (CLUSAPI.@)
