@@ -62,7 +62,7 @@ KIRQL WINAPI KfAcquireSpinLock(PKSPIN_LOCK SpinLock)
 {
     FIXME( "(%p) stub!\n", SpinLock );
 
-    return (KIRQL)0;
+    return 0;
 }
 
 
@@ -86,7 +86,7 @@ KIRQL WINAPI KfRaiseIrql(KIRQL NewIrql)
 {
     FIXME( "(%u) stub!\n", NewIrql );
 
-    return (KIRQL)0;
+    return 0;
 }
 
 
