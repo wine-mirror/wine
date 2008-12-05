@@ -47,7 +47,7 @@ static void createwindow(void)
     wc.hInstance = GetModuleHandleA(0);
     wc.hIcon = LoadIconA(wc.hInstance, IDI_APPLICATION);
     wc.hCursor = LoadCursorA(NULL, IDC_ARROW);
-    wc.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
+    wc.hbrBackground = GetStockObject(BLACK_BRUSH);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = "TestWindowClass";
     if(!RegisterClassA(&wc))

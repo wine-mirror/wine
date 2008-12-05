@@ -267,7 +267,7 @@ DDRAW_Create(const GUID *guid,
     This->wnd_class.hInstance = GetModuleHandleA(0);
     This->wnd_class.hIcon = 0;
     This->wnd_class.hCursor = 0;
-    This->wnd_class.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
+    This->wnd_class.hbrBackground = GetStockObject(BLACK_BRUSH);
     This->wnd_class.lpszMenuName = NULL;
     This->wnd_class.lpszClassName = This->classname;
     if(!RegisterClassA(&This->wnd_class))
