@@ -31,27 +31,20 @@
 /* Deprecated Error Code */
 #define XML_E_INVALIDATROOTLEVEL    0xc00ce556
 
-static void append_str(char **str, const char *data)
-{
-    sprintf(*str, data);
-    *str += strlen(*str);
-}
-
 static void create_xml_file(LPCSTR filename)
 {
-    char data[1024];
-    char *ptr = data;
     DWORD dwNumberOfBytesWritten;
     HANDLE hf = CreateFile(filename, GENERIC_WRITE, 0, NULL,
                            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
-    append_str(&ptr, "<?xml version=\"1.0\" ?>\n");
-    append_str(&ptr, "<BankAccount>\n");
-    append_str(&ptr, "  <Number>1234</Number>\n");
-    append_str(&ptr, "  <Name>Captain Ahab</Name>\n");
-    append_str(&ptr, "</BankAccount>");
+    static const char data[] =
+        "<?xml version=\"1.0\" ?>\n"
+        "<BankAccount>\n"
+        "  <Number>1234</Number>\n"
+        "  <Name>Captain Ahab</Name>\n"
+        "</BankAccount>";
 
-    WriteFile(hf, data, ptr - data, &dwNumberOfBytesWritten, NULL);
+    WriteFile(hf, data, sizeof(data) - 1, &dwNumberOfBytesWritten, NULL);
     CloseHandle(hf);
 }
 
