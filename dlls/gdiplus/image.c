@@ -96,9 +96,8 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
 {
     BOOL bm_is_selected;
     INT stride, bitspp = PIXELFORMATBPP(format);
-    OLE_HANDLE hbm;
     HDC hdc;
-    HBITMAP old = NULL;
+    HBITMAP hbm, old = NULL;
     BITMAPINFO *pbmi;
     BYTE *buff = NULL;
     UINT abs_height;
@@ -128,7 +127,7 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
     if(bitmap->lockmode)
         return WrongState;
 
-    IPicture_get_Handle(bitmap->image.picture, &hbm);
+    IPicture_get_Handle(bitmap->image.picture, (OLE_HANDLE*)&hbm);
     IPicture_get_CurDC(bitmap->image.picture, &hdc);
     bm_is_selected = (hdc != 0);
 
@@ -140,11 +139,11 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
 
     if(!bm_is_selected){
         hdc = CreateCompatibleDC(0);
-        old = SelectObject(hdc, (HBITMAP)hbm);
+        old = SelectObject(hdc, hbm);
     }
 
     /* fill out bmi */
-    GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
+    GetDIBits(hdc, hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
 
     abs_height = abs(pbmi->bmiHeader.biHeight);
     stride = pbmi->bmiHeader.biWidth * bitspp / 8;
@@ -155,7 +154,7 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
     pbmi->bmiHeader.biBitCount = bitspp;
 
     if(buff)
-        GetDIBits(hdc, (HBITMAP)hbm, 0, abs_height, buff, pbmi, DIB_RGB_COLORS);
+        GetDIBits(hdc, hbm, 0, abs_height, buff, pbmi, DIB_RGB_COLORS);
 
     if(!bm_is_selected){
         SelectObject(hdc, old);
@@ -194,9 +193,8 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
 GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     BitmapData* lockeddata)
 {
-    OLE_HANDLE hbm;
     HDC hdc;
-    HBITMAP old = NULL;
+    HBITMAP hbm, old = NULL;
     BOOL bm_is_selected;
     BITMAPINFO *pbmi;
 
@@ -218,7 +216,7 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
         return Ok;
     }
 
-    IPicture_get_Handle(bitmap->image.picture, &hbm);
+    IPicture_get_Handle(bitmap->image.picture, (OLE_HANDLE*)&hbm);
     IPicture_get_CurDC(bitmap->image.picture, &hdc);
     bm_is_selected = (hdc != 0);
 
@@ -228,12 +226,12 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
 
     if(!bm_is_selected){
         hdc = CreateCompatibleDC(0);
-        old = SelectObject(hdc, (HBITMAP)hbm);
+        old = SelectObject(hdc, hbm);
     }
 
-    GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
+    GetDIBits(hdc, hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
     pbmi->bmiHeader.biBitCount = PIXELFORMATBPP(lockeddata->PixelFormat);
-    SetDIBits(hdc, (HBITMAP)hbm, 0, abs(pbmi->bmiHeader.biHeight),
+    SetDIBits(hdc, hbm, 0, abs(pbmi->bmiHeader.biHeight),
               bitmap->bitmapbits, pbmi, DIB_RGB_COLORS);
 
     if(!bm_is_selected){
@@ -1035,7 +1033,7 @@ GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream* stream, GpImage **image)
     if(type == PICTYPE_BITMAP){
         BITMAPINFO *pbmi;
         BITMAPCOREHEADER* bmch;
-        OLE_HANDLE hbm;
+        HBITMAP hbm;
         HDC hdc;
 
         pbmi = GdipAlloc(sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
@@ -1052,7 +1050,7 @@ GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream* stream, GpImage **image)
         (*((GpBitmap**) image))->height = ipicture_pixel_height(pic);
 
         /* get the pixel format */
-        IPicture_get_Handle(pic, &hbm);
+        IPicture_get_Handle(pic, (OLE_HANDLE*)&hbm);
         IPicture_get_CurDC(pic, &hdc);
 
         bmch = (BITMAPCOREHEADER*) (&pbmi->bmiHeader);
@@ -1061,13 +1059,13 @@ GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream* stream, GpImage **image)
         if(!hdc){
             HBITMAP old;
             hdc = CreateCompatibleDC(0);
-            old = SelectObject(hdc, (HBITMAP)hbm);
-            GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
+            old = SelectObject(hdc, hbm);
+            GetDIBits(hdc, hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
             SelectObject(hdc, old);
             DeleteDC(hdc);
         }
         else
-            GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
+            GetDIBits(hdc, hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
 
         (*((GpBitmap**) image))->format = (bmch->bcBitCount << 8) | PixelFormatGDI;
         GdipFree(pbmi);

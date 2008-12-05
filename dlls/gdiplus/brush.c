@@ -478,8 +478,7 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
     REAL height, GpTexture **texture)
 {
     HDC hdc;
-    OLE_HANDLE hbm;
-    HBITMAP old = NULL;
+    HBITMAP hbm, old = NULL;
     BITMAPINFO *pbmi;
     BITMAPINFOHEADER *bmih;
     INT n_x, n_y, n_width, n_height, abs_height, stride, image_stride, i, bytespp;
@@ -507,7 +506,7 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
        n_y + n_height > ((GpBitmap*)image)->height)
         return InvalidParameter;
 
-    IPicture_get_Handle(image->picture, &hbm);
+    IPicture_get_Handle(image->picture, (OLE_HANDLE*)&hbm);
     if(!hbm)   return GenericError;
     IPicture_get_CurDC(image->picture, &hdc);
     bm_is_selected = (hdc != 0);
@@ -520,11 +519,11 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
 
     if(!bm_is_selected){
         hdc = CreateCompatibleDC(0);
-        old = SelectObject(hdc, (HBITMAP)hbm);
+        old = SelectObject(hdc, hbm);
     }
 
     /* fill out bmi */
-    GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
+    GetDIBits(hdc, hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
 
     bytespp = pbmi->bmiHeader.biBitCount / 8;
     abs_height = abs(pbmi->bmiHeader.biHeight);
@@ -538,7 +537,7 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
     dibits = GdipAlloc(pbmi->bmiHeader.biSizeImage);
 
     if(dibits)  /* this is not a good place to error out */
-        GetDIBits(hdc, (HBITMAP)hbm, 0, abs_height, dibits, pbmi, DIB_RGB_COLORS);
+        GetDIBits(hdc, hbm, 0, abs_height, dibits, pbmi, DIB_RGB_COLORS);
 
     if(!bm_is_selected){
         SelectObject(hdc, old);
