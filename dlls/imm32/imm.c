@@ -498,14 +498,48 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
     return old;
 }
 
+
+/*
+ * Helper function for ImmAssociateContextEx
+ */
+static BOOL CALLBACK _ImmAssociateContextExEnumProc(HWND hwnd, LPARAM lParam)
+{
+    HIMC hImc = (HIMC)lParam;
+    ImmAssociateContext(hwnd,hImc);
+    return TRUE;
+}
+
 /***********************************************************************
  *              ImmAssociateContextEx (IMM32.@)
  */
 BOOL WINAPI ImmAssociateContextEx(HWND hWnd, HIMC hIMC, DWORD dwFlags)
 {
-    FIXME("(%p, %p, %d): stub\n", hWnd, hIMC, dwFlags);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    TRACE("(%p, %p, %d): stub\n", hWnd, hIMC, dwFlags);
+
+    if (!IMM_GetThreadData()->defaultContext)
+        IMM_GetThreadData()->defaultContext = ImmCreateContext();
+
+    if (dwFlags == IACE_DEFAULT)
+    {
+        ImmAssociateContext(hWnd,IMM_GetThreadData()->defaultContext);
+        return TRUE;
+    }
+    else if (dwFlags == IACE_IGNORENOCONTEXT)
+    {
+        if (GetPropW(hWnd,szwWineIMCProperty) > 0)
+            ImmAssociateContext(hWnd,hIMC);
+        return TRUE;
+    }
+    else if (dwFlags == IACE_CHILDREN)
+    {
+        EnumChildWindows(hWnd,_ImmAssociateContextExEnumProc,(LPARAM)hIMC);
+        return TRUE;
+    }
+    else
+    {
+        ERR("Unknown dwFlags 0x%x\n",dwFlags);
+        return FALSE;
+    }
 }
 
 /***********************************************************************
