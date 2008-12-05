@@ -257,7 +257,7 @@ BSTR bstr_from_xmlChar( const xmlChar *buf )
         return NULL;
 
     len = MultiByteToWideChar( CP_UTF8, 0, (LPCSTR) buf, -1, NULL, 0 );
-    str = (LPWSTR) HeapAlloc( GetProcessHeap(), 0, len * sizeof (WCHAR) );
+    str = HeapAlloc( GetProcessHeap(), 0, len * sizeof (WCHAR) );
     if ( !str )
         return NULL;
     MultiByteToWideChar( CP_UTF8, 0, (LPCSTR) buf, -1, str, len );

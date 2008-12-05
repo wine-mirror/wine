@@ -478,7 +478,7 @@ static HRESULT WINAPI domelem_get_tagName(
     len = MultiByteToWideChar( CP_UTF8, 0, (LPCSTR) element->name, -1, NULL, 0 );
     if (element->ns)
         len += MultiByteToWideChar( CP_UTF8, 0, (LPCSTR) element->ns->prefix, -1, NULL, 0 );
-    str = (LPWSTR) HeapAlloc( GetProcessHeap(), 0, len * sizeof (WCHAR) );
+    str = HeapAlloc( GetProcessHeap(), 0, len * sizeof (WCHAR) );
     if ( !str )
         return E_OUTOFMEMORY;
     if (element->ns)

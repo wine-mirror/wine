@@ -161,7 +161,7 @@ static BSTR bstr_from_xmlCharN(const xmlChar *buf, int len)
 
     dLen = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)buf, len, NULL, 0);
     if(len != -1) dLen++;
-    str = (LPWSTR)HeapAlloc(GetProcessHeap(), 0, dLen * sizeof (WCHAR));
+    str = HeapAlloc(GetProcessHeap(), 0, dLen * sizeof (WCHAR));
     if (!str)
         return NULL;
     MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)buf, len, str, dLen);
