@@ -370,7 +370,8 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromResource(HINSTANCE hInstance,
         return InvalidParameter;
 
     /* load DIB */
-    hbm = (HBITMAP)LoadImageW(hInstance,lpBitmapName,IMAGE_BITMAP,0,0,LR_CREATEDIBSECTION);
+    hbm = LoadImageW(hInstance, lpBitmapName, IMAGE_BITMAP, 0, 0,
+                     LR_CREATEDIBSECTION);
 
     if(hbm){
         stat = GdipCreateBitmapFromHBITMAP(hbm, NULL, bitmap);

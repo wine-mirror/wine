@@ -765,7 +765,7 @@ todo_wine{
     }
 
     GdipDeleteRegion(region);
-    DeleteObject((HGDIOBJ)hrgn);
+    DeleteObject(hrgn);
 
     /* ellipse */
     hrgn = CreateEllipticRgn(0, 0, 100, 10);
@@ -791,7 +791,7 @@ todo_wine{
     expect_dword(buf + 8, 0x00006000); /* ?? */
 }
     GdipDeleteRegion(region);
-    DeleteObject((HGDIOBJ)hrgn);
+    DeleteObject(hrgn);
 }
 
 static void test_gethrgn(void)

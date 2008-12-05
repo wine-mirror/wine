@@ -256,7 +256,7 @@ GpStatus WINGDIPAPI GdipCreateFontFromDC(HDC hdc, GpFont **font)
     if(!font)
         return InvalidParameter;
 
-    hfont = (HFONT)GetCurrentObject(hdc, OBJ_FONT);
+    hfont = GetCurrentObject(hdc, OBJ_FONT);
     if(!hfont)
         return GenericError;
 
