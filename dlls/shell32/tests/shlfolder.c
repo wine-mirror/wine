@@ -1563,29 +1563,35 @@ static void test_LocalizedNames(void)
     ok(hr == S_OK, "ParseDisplayName failed %08x\n", hr);
 
     hr = IShellFolder_GetDisplayNameOf(testIShellFolder, newPIDL, SHGDN_INFOLDER, &strret);
-    ok(hr == S_OK, "ParseDisplayName failed %08x\n", hr);
+    ok(hr == S_OK, "GetDisplayNameOf failed %08x\n", hr);
 
     if (SUCCEEDED(hr) && pStrRetToBufW)
     {
         hr = pStrRetToBufW(&strret, newPIDL, tempbufW, sizeof(tempbufW)/sizeof(WCHAR));
         ok (SUCCEEDED(hr), "StrRetToBufW failed! hr = %08x\n", hr);
-        todo_wine ok (!lstrcmpiW(tempbufW, folderdisplayW), "GetDisplayNameOf returned %s\n", wine_dbgstr_w(tempbufW));
+        todo_wine
+        ok (!lstrcmpiW(tempbufW, folderdisplayW) ||
+            broken(!lstrcmpiW(tempbufW, foldernameW)), /* W2K */
+            "GetDisplayNameOf returned %s\n", wine_dbgstr_w(tempbufW));
     }
 
     /* editing name is also read from the resource */
     hr = IShellFolder_GetDisplayNameOf(testIShellFolder, newPIDL, SHGDN_INFOLDER|SHGDN_FOREDITING, &strret);
-    ok(hr == S_OK, "ParseDisplayName failed %08x\n", hr);
+    ok(hr == S_OK, "GetDisplayNameOf failed %08x\n", hr);
 
     if (SUCCEEDED(hr) && pStrRetToBufW)
     {
         hr = pStrRetToBufW(&strret, newPIDL, tempbufW, sizeof(tempbufW)/sizeof(WCHAR));
         ok (SUCCEEDED(hr), "StrRetToBufW failed! hr = %08x\n", hr);
-        todo_wine ok (!lstrcmpiW(tempbufW, folderdisplayW), "GetDisplayNameOf returned %s\n", wine_dbgstr_w(tempbufW));
+        todo_wine
+        ok (!lstrcmpiW(tempbufW, folderdisplayW) ||
+            broken(!lstrcmpiW(tempbufW, foldernameW)), /* W2K */
+            "GetDisplayNameOf returned %s\n", wine_dbgstr_w(tempbufW));
     }
 
     /* parsing name is unchanged */
     hr = IShellFolder_GetDisplayNameOf(testIShellFolder, newPIDL, SHGDN_INFOLDER|SHGDN_FORPARSING, &strret);
-    ok(hr == S_OK, "ParseDisplayName failed %08x\n", hr);
+    ok(hr == S_OK, "GetDisplayNameOf failed %08x\n", hr);
 
     if (SUCCEEDED(hr) && pStrRetToBufW)
     {
