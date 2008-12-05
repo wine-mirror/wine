@@ -351,6 +351,7 @@ static void test_persist_save_data(const char *testname, IHlink *lnk,
     const unsigned char *data;
     DWORD i;
     BOOL same;
+    unsigned int expected_data_win9x_size = 0;
 
     hr = IHlink_QueryInterface(lnk, &IID_IPersistStream, (void **)&ps);
     ok(hr == S_OK, "IHlink_QueryInterface failed with error 0x%08x\n", hr);
@@ -368,8 +369,13 @@ static void test_persist_save_data(const char *testname, IHlink *lnk,
 
     data = GlobalLock(hglobal);
 
+    if (expected_data_size % 4)
+        expected_data_win9x_size =  4 * ((expected_data_size / 4) + 1);
+
     /* first check we have the right amount of data */
-    ok((data_size == expected_data_size) || (data_size == expected_data_alt_size),
+    ok((data_size == expected_data_size) ||
+       (data_size == expected_data_alt_size) ||
+       broken(data_size == expected_data_win9x_size), /* Win9x and WinMe */
        "%s: Size of saved data differs (expected %d or %d, actual %d)\n",
        testname, expected_data_size, expected_data_alt_size, data_size);
 
