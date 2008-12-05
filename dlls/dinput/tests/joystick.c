@@ -384,7 +384,7 @@ static BOOL CALLBACK EnumJoysticks(
               js.rgbButtons[9]>>7, js.rgbButtons[10]>>7, js.rgbButtons[11]>>7);
         if (strcmp(oldstate, curstate) != 0)
         {
-            trace(curstate);
+            trace("%s\n", curstate);
             strcpy(oldstate, curstate);
         }
         Sleep(100);
