@@ -94,7 +94,7 @@ static LRESULT WINAPI nsembed_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
         This = *(NSContainer**)lParam;
         SetPropW(hwnd, wszTHIS, This);
     }else {
-        This = (NSContainer*)GetPropW(hwnd, wszTHIS);
+        This = GetPropW(hwnd, wszTHIS);
     }
 
     switch(msg) {

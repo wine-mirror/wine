@@ -189,7 +189,7 @@ static LRESULT WINAPI serverwnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
         This = *(HTMLDocument**)lParam;
         SetPropW(hwnd, wszTHIS, This);
     }else {
-        This = (HTMLDocument*)GetPropW(hwnd, wszTHIS);
+        This = GetPropW(hwnd, wszTHIS);
     }
 
     switch(msg) {
