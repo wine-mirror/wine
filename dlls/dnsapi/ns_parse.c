@@ -136,7 +136,7 @@ dns_ns_parserr(ns_msg *handle, ns_sect section, int rrnum, ns_rr *rr) {
 	int b;
 
 	/* Make section right. */
-	if (section < 0 || section >= ns_s_max)
+	if (section >= ns_s_max)
 		RETERR(ENODEV);
 	if (section != handle->_sect)
 		setsection(handle, section);
