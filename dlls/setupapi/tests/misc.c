@@ -47,29 +47,22 @@ static BOOL (WINAPI *pSetupGetFileCompressionInfoExA)(PCSTR, PSTR, DWORD, PDWORD
 static BOOL (WINAPI *pSetupCopyOEMInfA)(PCSTR, PCSTR, DWORD, DWORD, PSTR, DWORD, PDWORD, PSTR *);
 static BOOL (WINAPI *pSetupQueryInfOriginalFileInformationA)(PSP_INF_INFORMATION, UINT, PSP_ALTPLATFORM_INFO, PSP_ORIGINAL_FILE_INFO_A);
 
-static void append_str(char **str, const char *data)
-{
-    sprintf(*str, data);
-    *str += strlen(*str);
-}
-
 static void create_inf_file(LPCSTR filename)
 {
-    char data[1024];
-    char *ptr = data;
     DWORD dwNumberOfBytesWritten;
     HANDLE hf = CreateFile(filename, GENERIC_WRITE, 0, NULL,
                            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
-    append_str(&ptr, "[Version]\n");
-    append_str(&ptr, "Signature=\"$Chicago$\"\n");
-    append_str(&ptr, "AdvancedINF=2.5\n");
-    append_str(&ptr, "[DefaultInstall]\n");
-    append_str(&ptr, "RegisterOCXs=RegisterOCXsSection\n");
-    append_str(&ptr, "[RegisterOCXsSection]\n");
-    append_str(&ptr, "%%11%%\\ole32.dll\n");
+    static const char data[] =
+        "[Version]\n"
+        "Signature=\"$Chicago$\"\n"
+        "AdvancedINF=2.5\n"
+        "[DefaultInstall]\n"
+        "RegisterOCXs=RegisterOCXsSection\n"
+        "[RegisterOCXsSection]\n"
+        "%%11%%\\ole32.dll\n";
 
-    WriteFile(hf, data, ptr - data, &dwNumberOfBytesWritten, NULL);
+    WriteFile(hf, data, sizeof(data) - 1, &dwNumberOfBytesWritten, NULL);
     CloseHandle(hf);
 }
 

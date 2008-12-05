@@ -43,56 +43,48 @@ static void get_directories(void)
         WIN_DIR[len-1] = 0;
 }
 
-static void append_str(char **str, const char *data)
-{
-    sprintf(*str, data);
-    *str += strlen(*str);
-}
-
 static void create_inf_file(LPSTR filename)
 {
-    char data[1024];
-    char *ptr = data;
     DWORD dwNumberOfBytesWritten;
     HANDLE hf = CreateFile(filename, GENERIC_WRITE, 0, NULL,
                            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
-    append_str(&ptr, "[Version]\n");
-    append_str(&ptr, "Signature=\"$Chicago$\"\n");
-    append_str(&ptr, "AdvancedINF=2.5\n");
-    append_str(&ptr, "[SourceDisksNames]\n");
-    append_str(&ptr, "2 = %%SrcDiskName%%, LANCOM\\LANtools\\lanconf.cab\n");
-    append_str(&ptr, "[SourceDisksFiles]\n");
-    append_str(&ptr, "lanconf.exe = 2\n");
-    append_str(&ptr, "[DestinationDirs]\n");
-    append_str(&ptr, "DefaultDestDir = 24, %%DefaultDest%%\n");
-    append_str(&ptr, "[Strings]\n");
-    append_str(&ptr, "LangDir = english\n");
-    append_str(&ptr, "DefaultDest = LANCOM\n");
-    append_str(&ptr, "SrcDiskName = \"LANCOM Software CD\"\n");
+    static const char data[] =
+        "[Version]\n"
+        "Signature=\"$Chicago$\"\n"
+        "AdvancedINF=2.5\n"
+        "[SourceDisksNames]\n"
+        "2 = %SrcDiskName%, LANCOM\\LANtools\\lanconf.cab\n"
+        "[SourceDisksFiles]\n"
+        "lanconf.exe = 2\n"
+        "[DestinationDirs]\n"
+        "DefaultDestDir = 24, %DefaultDest%\n"
+        "[Strings]\n"
+        "LangDir = english\n"
+        "DefaultDest = LANCOM\n"
+        "SrcDiskName = \"LANCOM Software CD\"\n";
 
-    WriteFile(hf, data, ptr - data, &dwNumberOfBytesWritten, NULL);
+    WriteFile(hf, data, sizeof(data) - 1, &dwNumberOfBytesWritten, NULL);
     CloseHandle(hf);
 }
 
 static void create_inf_file2(LPSTR filename)
 {
-    char data[1024];
-    char *ptr = data;
     DWORD dwNumberOfBytesWritten;
     HANDLE hf = CreateFile(filename, GENERIC_WRITE, 0, NULL,
                            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
-    append_str(&ptr, "[SourceFileInfo]\n");
-    append_str(&ptr, "sp1qfe\\bitsinst.exe=250B3702C7CCD7C2F9E4DAA1555C933E,000600060A28062C,27136,SP1QFE\n");
-    append_str(&ptr, "sp1qfe\\bitsprx2.dll=4EBEA67F4BB4EB402E725CA7CA2857AE,000600060A280621,7680,SP1QFE\n");
-    append_str(&ptr, "sp1qfe\\bitsprx3.dll=C788A1D9330DA011EF25E95D3BC7BDE5,000600060A280621,7168,SP1QFE\n");
-    append_str(&ptr, "sp1qfe\\qmgr.dll=696AC82FB290A03F205901442E0E9589,000600060A280621,361984,SP1QFE\n");
-    append_str(&ptr, "sp1qfe\\qmgrprxy.dll=8B5848144829E1BC985EA4C3D8CA7E3F,000600060A280621,17408,SP1QFE\n");
-    append_str(&ptr, "sp1qfe\\winhttp.dll=3EC6F518114606CA59D4160322077437,000500010A280615,331776,SP1QFE\n");
-    append_str(&ptr, "sp1qfe\\xpob2res.dll=DB83156B9F496F20D1EA70E4ABEC0166,000500010A280622,158720,SP1QFE\n");
+    static const char data[] =
+        "[SourceFileInfo]\n"
+        "sp1qfe\\bitsinst.exe=250B3702C7CCD7C2F9E4DAA1555C933E,000600060A28062C,27136,SP1QFE\n"
+        "sp1qfe\\bitsprx2.dll=4EBEA67F4BB4EB402E725CA7CA2857AE,000600060A280621,7680,SP1QFE\n"
+        "sp1qfe\\bitsprx3.dll=C788A1D9330DA011EF25E95D3BC7BDE5,000600060A280621,7168,SP1QFE\n"
+        "sp1qfe\\qmgr.dll=696AC82FB290A03F205901442E0E9589,000600060A280621,361984,SP1QFE\n"
+        "sp1qfe\\qmgrprxy.dll=8B5848144829E1BC985EA4C3D8CA7E3F,000600060A280621,17408,SP1QFE\n"
+        "sp1qfe\\winhttp.dll=3EC6F518114606CA59D4160322077437,000500010A280615,331776,SP1QFE\n"
+        "sp1qfe\\xpob2res.dll=DB83156B9F496F20D1EA70E4ABEC0166,000500010A280622,158720,SP1QFE\n";
 
-    WriteFile(hf, data, ptr - data, &dwNumberOfBytesWritten, NULL);
+    WriteFile(hf, data, sizeof(data) - 1, &dwNumberOfBytesWritten, NULL);
     CloseHandle(hf);
 }
 

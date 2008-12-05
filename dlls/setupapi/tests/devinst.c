@@ -320,30 +320,23 @@ static void test_SetupDiOpenClassRegKeyExA(void)
         trace("failed to open classes key\n");
 }
 
-static void append_str(char **str, const char *data)
-{
-    sprintf(*str, data);
-    *str += strlen(*str);
-}
-
 static void create_inf_file(LPCSTR filename)
 {
-    char data[1024];
-    char *ptr = data;
     DWORD dwNumberOfBytesWritten;
     HANDLE hf = CreateFile(filename, GENERIC_WRITE, 0, NULL,
                            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
-    append_str(&ptr, "[Version]\n");
-    append_str(&ptr, "Signature=\"$Chicago$\"\n");
-    append_str(&ptr, "Class=Bogus\n");
-    append_str(&ptr, "ClassGUID={6a55b5a4-3f65-11db-b704-0011955c2bdb}\n");
-    append_str(&ptr, "[ClassInstall32]\n");
-    append_str(&ptr, "AddReg=BogusClass.NT.AddReg\n");
-    append_str(&ptr, "[BogusClass.NT.AddReg]\n");
-    append_str(&ptr, "HKR,,,,\"Wine test devices\"\n");
+    static const char data[] =
+        "[Version]\n"
+        "Signature=\"$Chicago$\"\n"
+        "Class=Bogus\n"
+        "ClassGUID={6a55b5a4-3f65-11db-b704-0011955c2bdb}\n"
+        "[ClassInstall32]\n"
+        "AddReg=BogusClass.NT.AddReg\n"
+        "[BogusClass.NT.AddReg]\n"
+        "HKR,,,,\"Wine test devices\"\n";
 
-    WriteFile(hf, data, ptr - data, &dwNumberOfBytesWritten, NULL);
+    WriteFile(hf, data, sizeof(data) - 1, &dwNumberOfBytesWritten, NULL);
     CloseHandle(hf);
 }
 
