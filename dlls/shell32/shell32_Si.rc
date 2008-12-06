@@ -110,7 +110,7 @@ BEGIN
 
     POPUP "&Help"
     BEGIN
-        MENUITEM "&About Control Panel...", IDM_CPANEL_ABOUT
+        MENUITEM "&O Nadzorni plošči ...", IDM_CPANEL_ABOUT
     END
 END
 
@@ -237,13 +237,19 @@ STRINGTABLE
 	    "Datoteke v ciljni mapi, ki imajo enaka imena kot datoteke v izvorni mapi\n"\
 	    "bodo prepisane. Ali še vedno želite premakniti oziroma kopirati mapo?"
 
-        /* message box strings */
-        IDS_RESTART_TITLE       "Ponoven zagon"
-        IDS_RESTART_PROMPT      "Ali želite simulirati ponoven zagon Oken?"
-        IDS_SHUTDOWN_TITLE      "Izklop"
-        IDS_SHUTDOWN_PROMPT     "Ali želite zaključiti vašo Wine sejo?"
+    /* message box strings */
+    IDS_RESTART_TITLE       "Ponoven zagon"
+    IDS_RESTART_PROMPT      "Ali želite simulirati ponoven zagon Oken?"
+    IDS_SHUTDOWN_TITLE      "Izklop"
+    IDS_SHUTDOWN_PROMPT     "Ali želite zaključiti vašo Wine sejo?"
 
-        /* shell folder path default values */
+    /* Run File dialog */
+    IDS_RUNDLG_ERROR           "Dialoga 'Zagon programa' ni mogoče prikazati (notranja napaka)"
+    IDS_RUNDLG_BROWSE_ERROR    "Dialoga 'Brskanje' ni mogoče prikazati (notranja napaka)"
+    IDS_RUNDLG_BROWSE_CAPTION  "Brskanje"
+    IDS_RUNDLG_BROWSE_FILTER   "Izvršljive datoteke\0*.exe\0All Files\0*.*\0\0"
+
+    /* shell folder path default values */
 	IDS_PROGRAMS                "Meni Start\\Programi"
 	IDS_PERSONAL                "Moji dokumenti"
 	IDS_FAVORITES               "Priljubljene"
