@@ -111,8 +111,8 @@ static int XRandRErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
 /* create the mode structures */
 static void make_modes(void)
 {
-    unsigned int i;
-    int j;
+    int i, j;
+
     for (i=0; i<real_xrandr_sizes_count; i++)
     {
         if (real_xrandr_rates_count[i])
@@ -240,8 +240,7 @@ static LONG X11DRV_XRandR_SetCurrentMode(int mode)
 void X11DRV_XRandR_Init(void)
 {
     Bool ok;
-    int nmodes = 0;
-    unsigned int i;
+    int i, nmodes = 0;
 
     if (xrandr_major) return; /* already initialized? */
     if (!usexrandr) return; /* disabled in config */
@@ -272,7 +271,7 @@ void X11DRV_XRandR_Init(void)
         for (i=0; i < real_xrandr_sizes_count; i++)
         {
             real_xrandr_rates[i] = pXRRRates (gdi_display, DefaultScreen(gdi_display), i, &(real_xrandr_rates_count[i]));
-	    TRACE("- at %u: %dx%d (%d rates):", i, real_xrandr_sizes[i].width, real_xrandr_sizes[i].height, real_xrandr_rates_count[i]);
+	    TRACE("- at %d: %dx%d (%d rates):", i, real_xrandr_sizes[i].width, real_xrandr_sizes[i].height, real_xrandr_rates_count[i]);
             if (real_xrandr_rates_count[i])
             {
                 int j;

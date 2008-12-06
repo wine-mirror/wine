@@ -151,7 +151,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     {
         /* have to render character by character. */
         double offset = 0.0;
-        int i;
+        UINT i;
 
         for (i=0; i<count; i++)
         {

@@ -1892,8 +1892,7 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc, DWORD first, DWORD count, DWORD 
 {
      /* We are running using client-side rendering fonts... */
      GLYPHMETRICS gm;
-     unsigned int glyph;
-     int size = 0;
+     unsigned int glyph, size = 0;
      void *bitmap = NULL, *gl_bitmap = NULL;
      int org_alignment;
 
@@ -1904,7 +1903,7 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc, DWORD first, DWORD count, DWORD 
 
      for (glyph = first; glyph < first + count; glyph++) {
          unsigned int needed_size = GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, 0, NULL, NULL);
-         int height, width_int;
+         unsigned int height, width_int;
 
          TRACE("Glyph : %3d / List : %d\n", glyph, listBase);
          if (needed_size == GDI_ERROR) {
@@ -1955,7 +1954,7 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc, DWORD first, DWORD count, DWORD 
          if (needed_size != 0) {
              width_int = (gm.gmBlackBoxX + 31) / 32;
              for (height = 0; height < gm.gmBlackBoxY; height++) {
-                 int width;
+                 unsigned int width;
                  for (width = 0; width < width_int; width++) {
                      ((int *) gl_bitmap)[(gm.gmBlackBoxY - height - 1) * width_int + width] =
                      ((int *) bitmap)[height * width_int + width];
@@ -2603,10 +2602,10 @@ static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAtt
     int nAttribs = 0;
     GLXFBConfig* cfgs = NULL;
     int nCfgs = 0;
-    UINT it;
+    int it;
     int fmt_id;
     WineGLPixelFormat *fmt;
-    int pfmt_it = 0;
+    UINT pfmt_it = 0;
     int run;
 
     TRACE("(%p, %p, %p, %d, %p, %p): hackish\n", hdc, piAttribIList, pfAttribFList, nMaxFormats, piFormats, nNumFormats);
@@ -2925,7 +2924,7 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribfvARB(HDC hdc, int iPixelF
 {
     int *attr;
     int ret;
-    int i;
+    UINT i;
 
     TRACE("(%p, %d, %d, %d, %p, %p)\n", hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, pfValues);
 
