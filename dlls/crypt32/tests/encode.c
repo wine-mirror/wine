@@ -661,8 +661,9 @@ static void test_decodeFiletime(DWORD dwEncoding)
         size = sizeof(ft1);
         ret = pCryptDecodeObjectEx(dwEncoding, X509_CHOICE_OF_TIME,
          bogusTimes[i], bogusTimes[i][1] + 2, 0, NULL, &ft1, &size);
-        ok(!ret && (GetLastError() == CRYPT_E_ASN1_CORRUPT ||
-         GetLastError() == OSS_DATA_ERROR /* Win9x */),
+        ok((!ret && (GetLastError() == CRYPT_E_ASN1_CORRUPT ||
+                     GetLastError() == OSS_DATA_ERROR /* Win9x */)) ||
+           broken(ret), /* Win9x and NT4 for bin38 */
          "Expected CRYPT_E_ASN1_CORRUPT or OSS_DATA_ERROR, got %08x\n",
          GetLastError());
     }
