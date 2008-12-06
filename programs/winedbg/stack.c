@@ -289,7 +289,7 @@ static void backtrace(void)
     {
         dbg_printf("%s%d ", 
                    (cf == dbg_curr_thread->curr_frame ? "=>" : "  "),
-                   dbg_curr_thread->curr_frame + 1);
+                   dbg_curr_thread->curr_frame);
         stack_print_addr_and_args(dbg_curr_thread->curr_frame);
         dbg_printf(" (");
         print_bare_address(&dbg_curr_thread->frames[dbg_curr_thread->curr_frame].addr_frame);
