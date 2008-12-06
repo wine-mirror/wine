@@ -9,7 +9,6 @@ EXTRAINCL = @GPHOTO2INCL@
 
 C_SRCS = \
 	capability.c \
-	ds_ctrl.c \
 	ds_image.c \
 	gphoto2_main.c \
 	ui.c
