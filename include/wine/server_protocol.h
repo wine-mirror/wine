@@ -4009,7 +4009,7 @@ struct get_directory_entry_request
 struct get_directory_entry_reply
 {
     struct reply_header __header;
-    size_t         name_len;
+    data_size_t    name_len;
     /* VARARG(name,unicode_str,name_len); */
     /* VARARG(type,unicode_str); */
 };

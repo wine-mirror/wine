@@ -3560,7 +3560,7 @@ static void dump_get_directory_entry_request( const struct get_directory_entry_r
 
 static void dump_get_directory_entry_reply( const struct get_directory_entry_reply *req )
 {
-    fprintf( stderr, " name_len=%lu,", (unsigned long)req->name_len );
+    fprintf( stderr, " name_len=%u,", req->name_len );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( min(cur_size,req->name_len) );
     fputc( ',', stderr );
