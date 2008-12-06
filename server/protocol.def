@@ -1525,7 +1525,6 @@ enum char_info_mode
     unsigned int access;       /* desired access rights */
     unsigned int attributes;   /* object attributes */
     unsigned int options;      /* creation options */
-    time_t       modif;        /* last modification time */
     data_size_t  namelen;      /* length of key name in bytes */
     VARARG(name,unicode_str,namelen);  /* key name */
     VARARG(class,unicode_str);         /* class name */
@@ -1569,7 +1568,7 @@ enum char_info_mode
     int          values;       /* number of values */
     int          max_value;    /* longest value name */
     int          max_data;     /* longest value data */
-    time_t       modif;        /* last modification time */
+    timeout_t    modif;        /* last modification time */
     data_size_t  total;        /* total length needed for full name and class */
     data_size_t  namelen;      /* length of key name in bytes */
     VARARG(name,unicode_str,namelen);  /* key name */

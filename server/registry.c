@@ -75,7 +75,7 @@ struct key
     int               nb_values;   /* count of allocated values in array */
     struct key_value *values;      /* values array */
     unsigned int      flags;       /* flags */
-    time_t            modif;       /* last modification time */
+    timeout_t         modif;       /* last modification time */
     struct list       notify_list; /* list of notifications */
 };
 
@@ -103,6 +103,7 @@ struct key_value
 /* the root of the registry tree */
 static struct key *root_key;
 
+static const timeout_t ticks_1601_to_1970 = (timeout_t)86400 * (369 * 365 + 89) * TICKS_PER_SEC;
 static const timeout_t save_period = 30 * -TICKS_PER_SEC;  /* delay between periodic saves */
 static struct timeout_user *save_timeout_user;  /* saving timer */
 
@@ -245,7 +246,7 @@ static void save_subkeys( const struct key *key, const struct key *base, FILE *f
     {
         fprintf( f, "\n[" );
         if (key != base) dump_path( key, base, f );
-        fprintf( f, "] %ld\n", (long)key->modif );
+        fprintf( f, "] %u\n", (unsigned int)((key->modif - ticks_1601_to_1970) / TICKS_PER_SEC) );
         for (i = 0; i <= key->last_value; i++) dump_value( &key->values[i], f );
     }
     for (i = 0; i <= key->last_subkey; i++) save_subkeys( key->subkeys[i], base, f );
@@ -391,7 +392,7 @@ static struct unicode_str *get_path_token( const struct unicode_str *path, struc
 }
 
 /* allocate a key object */
-static struct key *alloc_key( const struct unicode_str *name, time_t modif )
+static struct key *alloc_key( const struct unicode_str *name, timeout_t modif )
 {
     struct key *key;
     if ((key = alloc_object( &key_ops )))
@@ -459,7 +460,7 @@ static void touch_key( struct key *key, unsigned int change )
 {
     struct key *k;
 
-    key->modif = time(NULL);
+    key->modif = current_time;
     make_dirty( key );
 
     /* do notifications */
@@ -495,7 +496,7 @@ static int grow_subkeys( struct key *key )
 
 /* allocate a subkey for a given key, and return its index */
 static struct key *alloc_subkey( struct key *parent, const struct unicode_str *name,
-                                 int index, time_t modif )
+                                 int index, timeout_t modif )
 {
     struct key *key;
     int i;
@@ -600,7 +601,7 @@ static struct key *open_key( struct key *key, const struct unicode_str *name )
 
 /* create a subkey */
 static struct key *create_key( struct key *key, const struct unicode_str *name,
-                               const struct unicode_str *class, int flags, time_t modif, int *created )
+                               const struct unicode_str *class, int flags, timeout_t modif, int *created )
 {
     struct key *base;
     int index;
@@ -616,7 +617,6 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
         set_error( STATUS_CHILD_MUST_BE_VOLATILE );
         return NULL;
     }
-    if (!modif) modif = time(NULL);
 
     token.str = NULL;
     if (!get_path_token( name, &token )) return NULL;
@@ -1105,12 +1105,13 @@ static int get_data_type( const char *buffer, int *type, int *parse_type )
 
 /* load and create a key from the input file */
 static struct key *load_key( struct key *base, const char *buffer, int flags,
-                             int prefix_len, struct file_load_info *info,
-                             int default_modif )
+                             int prefix_len, struct file_load_info *info )
 {
     WCHAR *p;
     struct unicode_str name;
-    int res, modif;
+    int res;
+    unsigned int mod;
+    timeout_t modif = current_time;
     data_size_t len;
 
     if (!get_file_tmp_space( info, strlen(buffer) * sizeof(WCHAR) )) return NULL;
@@ -1121,7 +1122,8 @@ static struct key *load_key( struct key *base, const char *buffer, int flags,
         file_read_error( "Malformed key", info );
         return NULL;
     }
-    if (sscanf( buffer + res, " %d", &modif ) != 1) modif = default_modif;
+    if (sscanf( buffer + res, " %u", &mod ) == 1)
+        modif = (timeout_t)mod * TICKS_PER_SEC + ticks_1601_to_1970;
 
     p = info->tmp;
     while (prefix_len && *p) { if (*p++ == '\\') prefix_len--; }
@@ -1302,7 +1304,6 @@ static void load_keys( struct key *key, const char *filename, FILE *f, int prefi
     struct key *subkey = NULL;
     struct file_load_info info;
     char *p;
-    int default_modif = time(NULL);
     int flags = (key->flags & KEY_VOLATILE) ? KEY_VOLATILE : KEY_DIRTY;
 
     info.filename = filename;
@@ -1333,7 +1334,7 @@ static void load_keys( struct key *key, const char *filename, FILE *f, int prefi
         case '[':   /* new key */
             if (subkey) release_object( subkey );
             if (prefix_len == -1) prefix_len = get_prefix_len( key, p + 1, &info );
-            if (!(subkey = load_key( key, p + 1, flags, prefix_len, &info, default_modif )))
+            if (!(subkey = load_key( key, p + 1, flags, prefix_len, &info )))
                 file_read_error( "Error creating key", &info );
             break;
         case '@':   /* default value */
@@ -1444,13 +1445,13 @@ void init_registry(void)
     if (fchdir( config_dir_fd ) == -1) fatal_perror( "chdir to config dir" );
 
     /* create the root key */
-    root_key = alloc_key( &root_name, time(NULL) );
+    root_key = alloc_key( &root_name, current_time );
     assert( root_key );
     make_object_static( &root_key->obj );
 
     /* load system.reg into Registry\Machine */
 
-    if (!(key = create_key( root_key, &HKLM_name, NULL, 0, time(NULL), &dummy )))
+    if (!(key = create_key( root_key, &HKLM_name, NULL, 0, current_time, &dummy )))
         fatal_error( "could not create Machine registry key\n" );
 
     load_init_registry_from_file( "system.reg", key );
@@ -1458,7 +1459,7 @@ void init_registry(void)
 
     /* load userdef.reg into Registry\User\.Default */
 
-    if (!(key = create_key( root_key, &HKU_name, NULL, 0, time(NULL), &dummy )))
+    if (!(key = create_key( root_key, &HKU_name, NULL, 0, current_time, &dummy )))
         fatal_error( "could not create User\\.Default registry key\n" );
 
     load_init_registry_from_file( "userdef.reg", key );
@@ -1469,7 +1470,7 @@ void init_registry(void)
     /* FIXME: match default user in token.c. should get from process token instead */
     current_user_path = format_user_registry_path( security_interactive_sid, &current_user_str );
     if (!current_user_path ||
-        !(key = create_key( root_key, &current_user_str, NULL, 0, time(NULL), &dummy )))
+        !(key = create_key( root_key, &current_user_str, NULL, 0, current_time, &dummy )))
         fatal_error( "could not create HKEY_CURRENT_USER registry key\n" );
     free( current_user_path );
     load_init_registry_from_file( "user.reg", key );
@@ -1664,7 +1665,7 @@ DECL_HANDLER(create_key)
     {
         int flags = (req->options & REG_OPTION_VOLATILE) ? KEY_VOLATILE : KEY_DIRTY;
 
-        if ((key = create_key( parent, &name, &class, flags, req->modif, &reply->created )))
+        if ((key = create_key( parent, &name, &class, flags, current_time, &reply->created )))
         {
             reply->hkey = alloc_handle( current->process, key, access, req->attributes );
             release_object( key );
@@ -1819,7 +1820,7 @@ DECL_HANDLER(load_registry)
     {
         int dummy;
         get_req_path( &name, !req->hkey );
-        if ((key = create_key( parent, &name, NULL, KEY_DIRTY, time(NULL), &dummy )))
+        if ((key = create_key( parent, &name, NULL, KEY_DIRTY, current_time, &dummy )))
         {
             load_registry( key, req->file );
             release_object( key );

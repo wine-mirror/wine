@@ -1981,7 +1981,6 @@ struct create_key_request
     unsigned int access;
     unsigned int attributes;
     unsigned int options;
-    time_t       modif;
     data_size_t  namelen;
     /* VARARG(name,unicode_str,namelen); */
     /* VARARG(class,unicode_str); */
@@ -2050,7 +2049,7 @@ struct enum_key_reply
     int          values;
     int          max_value;
     int          max_data;
-    time_t       modif;
+    timeout_t    modif;
     data_size_t  total;
     data_size_t  namelen;
     /* VARARG(name,unicode_str,namelen); */
@@ -5072,6 +5071,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 346
+#define SERVER_PROTOCOL_VERSION 347
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

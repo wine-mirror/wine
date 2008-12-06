@@ -68,7 +68,6 @@ NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
         req->access     = access;
         req->attributes = attr->Attributes;
         req->options    = options;
-        req->modif      = 0;
         req->namelen    = attr->ObjectName->Length;
         wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
         if (class) wine_server_add_data( req, class->Buffer, class->Length );
@@ -232,17 +231,13 @@ static NTSTATUS enumerate_key( HANDLE handle, int index, KEY_INFORMATION_CLASS i
         if (length > fixed_size) wine_server_set_reply( req, data_ptr, length - fixed_size );
         if (!(ret = wine_server_call( req )))
         {
-            LARGE_INTEGER modif;
-
-            RtlSecondsSince1970ToTime( reply->modif, &modif );
-
             switch(info_class)
             {
             case KeyBasicInformation:
                 {
                     KEY_BASIC_INFORMATION keyinfo;
                     fixed_size = (char *)keyinfo.Name - (char *)&keyinfo;
-                    keyinfo.LastWriteTime = modif;
+                    keyinfo.LastWriteTime.QuadPart = reply->modif;
                     keyinfo.TitleIndex = 0;
                     keyinfo.NameLength = reply->namelen;
                     memcpy( info, &keyinfo, min( length, fixed_size ) );
@@ -252,7 +247,7 @@ static NTSTATUS enumerate_key( HANDLE handle, int index, KEY_INFORMATION_CLASS i
                 {
                     KEY_FULL_INFORMATION keyinfo;
                     fixed_size = (char *)keyinfo.Class - (char *)&keyinfo;
-                    keyinfo.LastWriteTime = modif;
+                    keyinfo.LastWriteTime.QuadPart = reply->modif;
                     keyinfo.TitleIndex = 0;
                     keyinfo.ClassLength = wine_server_reply_size(reply);
                     keyinfo.ClassOffset = keyinfo.ClassLength ? fixed_size : -1;
@@ -269,7 +264,7 @@ static NTSTATUS enumerate_key( HANDLE handle, int index, KEY_INFORMATION_CLASS i
                 {
                     KEY_NODE_INFORMATION keyinfo;
                     fixed_size = (char *)keyinfo.Name - (char *)&keyinfo;
-                    keyinfo.LastWriteTime = modif;
+                    keyinfo.LastWriteTime.QuadPart = reply->modif;
                     keyinfo.TitleIndex = 0;
                     if (reply->namelen < wine_server_reply_size(reply))
                     {

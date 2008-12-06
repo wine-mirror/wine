@@ -1970,7 +1970,6 @@ static void dump_create_key_request( const struct create_key_request *req )
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " options=%08x,", req->options );
-    fprintf( stderr, " modif=%ld,", (long)req->modif );
     fprintf( stderr, " namelen=%u,", req->namelen );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( min(cur_size,req->namelen) );
@@ -2024,7 +2023,9 @@ static void dump_enum_key_reply( const struct enum_key_reply *req )
     fprintf( stderr, " values=%d,", req->values );
     fprintf( stderr, " max_value=%d,", req->max_value );
     fprintf( stderr, " max_data=%d,", req->max_data );
-    fprintf( stderr, " modif=%ld,", (long)req->modif );
+    fprintf( stderr, " modif=" );
+    dump_timeout( &req->modif );
+    fprintf( stderr, "," );
     fprintf( stderr, " total=%u,", req->total );
     fprintf( stderr, " namelen=%u,", req->namelen );
     fprintf( stderr, " name=" );
