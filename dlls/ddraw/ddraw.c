@@ -544,7 +544,7 @@ IDirectDrawImpl_SetDisplayModeNoOverride(IDirectDraw7 *iface,
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
     WINED3DDISPLAYMODE Mode;
     HRESULT hr;
-    TRACE("(%p)->(%d,%d,%d,%d,%x: Relay!\n", This, Width, Height, BPP, RefreshRate, Flags);
+    TRACE("(%p)->(%d,%d,%d,%d,%x): Relay!\n", This, Width, Height, BPP, RefreshRate, Flags);
 
     EnterCriticalSection(&ddraw_cs);
     if( !Width || !Height )
