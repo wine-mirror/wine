@@ -47,7 +47,7 @@ struct appbar_cmd
 struct appbar_response
 {
     UINT_PTR result;
-    RECT rc;
+    APPBARDATA abd;
 };
 
 static HWND appbarmsg_window = NULL;
@@ -195,7 +195,13 @@ static UINT_PTR handle_appbarmessage(DWORD msg, PAPPBARDATA abd)
         return ABS_ALWAYSONTOP | ABS_AUTOHIDE;
     case ABM_GETTASKBARPOS:
         WINE_FIXME("SHAppBarMessage(ABM_GETTASKBARPOS, hwnd=%p): stub\n", abd->hWnd);
-        return FALSE;
+        /* Report the taskbar is at the bottom of the screen. */
+        abd->rc.left = 0;
+        abd->rc.right = GetSystemMetrics(SM_CXSCREEN);
+        abd->rc.bottom = GetSystemMetrics(SM_CYSCREEN);
+        abd->rc.top = abd->rc.bottom-1;
+        abd->uEdge = ABE_BOTTOM;
+        return TRUE;
     case ABM_ACTIVATE:
         WINE_FIXME("SHAppBarMessage(ABM_ACTIVATE, hwnd=%p, lparam=%lx): stub\n", abd->hWnd, abd->lParam);
         return TRUE;
@@ -256,7 +262,7 @@ LRESULT CALLBACK appbar_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             {
                 response = (struct appbar_response*)return_view;
                 response->result = result;
-                response->rc = cmd.abd.rc;
+                response->abd = cmd.abd;
 
                 UnmapViewOfFile(return_view);
             }

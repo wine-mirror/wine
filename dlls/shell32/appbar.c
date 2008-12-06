@@ -46,7 +46,7 @@ struct appbar_cmd
 struct appbar_response
 {
     UINT_PTR result;
-    RECT rc;
+    APPBARDATA abd;
 };
 
 /*************************************************************************
@@ -112,7 +112,7 @@ UINT_PTR WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
     response = (struct appbar_response*)return_view;
 
     ret = response->result;
-    data->rc = response->rc;
+    *data = response->abd;
 
     UnmapViewOfFile(return_view);
 

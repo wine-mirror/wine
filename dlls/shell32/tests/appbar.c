@@ -400,11 +400,8 @@ static void test_appbarget(void)
     if(ret)
     {
         ok(abd.hWnd == (HWND)0xcccccccc, "hWnd overwritten\n");
-todo_wine
-{
         ok(abd.uEdge <= ABE_BOTTOM, "uEdge not returned\n");
         ok(abd.rc.left != 0xcccccccc, "rc not updated\n");
-}
     }
 
     return;
