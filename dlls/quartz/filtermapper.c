@@ -560,20 +560,20 @@ static HRESULT FM2_WriteFilterData(const REGFILTER2 * prf2, BYTE **ppData, ULONG
         for (j = 0; j < rgPin2.nMediaTypes; j++)
         {
             struct REG_TYPE rt;
+            const CLSID * clsMinorType = rgPin2.lpMediaType[j].clsMinorType ? rgPin2.lpMediaType[j].clsMinorType : &MEDIASUBTYPE_NULL;
             rt.signature[0] = '0';
             rt.signature[1] = 't';
             rt.signature[2] = 'y';
             rt.signature[3] = '3';
             rt.signature[0] += j;
-
             rt.dwUnused = 0;
             rt.dwOffsetMajor = find_data(&clsidStore, (const BYTE*)rgPin2.lpMediaType[j].clsMajorType, sizeof(CLSID));
             if (rt.dwOffsetMajor == -1)
                 rt.dwOffsetMajor = add_data(&clsidStore, (const BYTE*)rgPin2.lpMediaType[j].clsMajorType, sizeof(CLSID));
             rt.dwOffsetMajor += size;
-            rt.dwOffsetMinor = find_data(&clsidStore, (const BYTE*)rgPin2.lpMediaType[j].clsMinorType, sizeof(CLSID));
+            rt.dwOffsetMinor = find_data(&clsidStore, (const BYTE*)clsMinorType, sizeof(CLSID));
             if (rt.dwOffsetMinor == -1)
-                rt.dwOffsetMinor = add_data(&clsidStore, (const BYTE*)rgPin2.lpMediaType[j].clsMinorType, sizeof(CLSID));
+                rt.dwOffsetMinor = add_data(&clsidStore, (const BYTE*)clsMinorType, sizeof(CLSID));
             rt.dwOffsetMinor += size;
 
             add_data(&mainStore, (LPBYTE)&rt, sizeof(rt));

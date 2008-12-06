@@ -343,6 +343,86 @@ static void test_ifiltermapper_from_filtergraph(void)
     if (pgraph2) IFilterGraph2_Release(pgraph2);
 }
 
+static void test_register_filter_with_null_clsMinorType(void)
+{
+    IFilterMapper2 *pMapper = NULL;
+    HRESULT hr;
+    REGFILTER2 rgf2;
+    REGFILTERPINS rgPins;
+    REGFILTERPINS2 rgPins2;
+    REGPINTYPES rgPinType;
+    static WCHAR wszPinName[] = {'P', 'i', 'n', 0 };
+    static const WCHAR wszFilterName1[] = {'T', 'e', 's', 't', 'f', 'i', 'l', 't', 'e', 'r', '1', 0 };
+    static const WCHAR wszFilterName2[] = {'T', 'e', 's', 't', 'f', 'i', 'l', 't', 'e', 'r', '2', 0 };
+    CLSID clsidFilter1;
+    CLSID clsidFilter2;
+
+    hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterMapper2, (LPVOID*)&pMapper);
+    ok(hr == S_OK, "CoCreateInstance failed with %x\n", hr);
+    if (FAILED(hr)) goto out;
+
+    hr = CoCreateGuid(&clsidFilter1);
+    ok(hr == S_OK, "CoCreateGuid failed with %x\n", hr);
+    hr = CoCreateGuid(&clsidFilter2);
+    ok(hr == S_OK, "CoCreateGuid failed with %x\n", hr);
+
+    rgPinType.clsMajorType = &GUID_NULL;
+    /* Make sure quartz accepts it without crashing */
+    rgPinType.clsMinorType = NULL;
+
+    /* Test with pin descript version 1 */
+    ZeroMemory(&rgf2, sizeof(rgf2));
+    rgf2.dwVersion = 1;
+    rgf2.dwMerit = MERIT_UNLIKELY;
+    S(U(rgf2)).cPins = 1;
+    S(U(rgf2)).rgPins = &rgPins;
+
+    rgPins.strName = wszPinName;
+    rgPins.bRendered = 1;
+    rgPins.bOutput = 0;
+    rgPins.bZero = 0;
+    rgPins.bMany = 0;
+    rgPins.clsConnectsToFilter = NULL;
+    rgPins.strConnectsToPin = NULL;
+    rgPins.nMediaTypes = 1;
+    rgPins.lpMediaType = &rgPinType;
+
+    hr = IFilterMapper2_RegisterFilter(pMapper, &clsidFilter1, wszFilterName1, NULL,
+                    &CLSID_LegacyAmFilterCategory, NULL, &rgf2);
+    ok(hr == S_OK, "IFilterMapper2_RegisterFilter failed with %x\n", hr);
+
+    hr = IFilterMapper2_UnregisterFilter(pMapper, &CLSID_LegacyAmFilterCategory, NULL, &clsidFilter1);
+    ok(hr == S_OK, "FilterMapper_UnregisterFilter failed with %x\n", hr);
+
+    /* Test with pin descript version 2 */
+    ZeroMemory(&rgf2, sizeof(rgf2));
+    rgf2.dwVersion = 2;
+    rgf2.dwMerit = MERIT_UNLIKELY;
+    S1(U(rgf2)).cPins2 = 1;
+    S1(U(rgf2)).rgPins2 = &rgPins2;
+
+    rgPins2.dwFlags = REG_PINFLAG_B_RENDERER;
+    rgPins2.cInstances = 1;
+    rgPins2.nMediaTypes = 1;
+    rgPins2.lpMediaType = &rgPinType;
+    rgPins2.nMediums = 0;
+    rgPins2.lpMedium = NULL;
+    rgPins2.clsPinCategory = NULL;
+
+    hr = IFilterMapper2_RegisterFilter(pMapper, &clsidFilter2, wszFilterName2, NULL,
+                    &CLSID_LegacyAmFilterCategory, NULL, &rgf2);
+    ok(hr == S_OK, "IFilterMapper2_RegisterFilter failed with %x\n", hr);
+
+    hr = IFilterMapper2_UnregisterFilter(pMapper, &CLSID_LegacyAmFilterCategory, NULL, &clsidFilter2);
+    ok(hr == S_OK, "FilterMapper_UnregisterFilter failed with %x\n", hr);
+
+    out:
+
+    if (pMapper) IFilterMapper2_Release(pMapper);
+}
+
+
 START_TEST(filtermapper)
 {
     CoInitialize(NULL);
@@ -350,6 +430,7 @@ START_TEST(filtermapper)
     test_fm2_enummatchingfilters();
     test_legacy_filter_registration();
     test_ifiltermapper_from_filtergraph();
+    test_register_filter_with_null_clsMinorType();
 
     CoUninitialize();
 }
