@@ -836,7 +836,7 @@ void write_proxies(const statement_list_t *stmts)
   fprintf(proxy, "    _%s_InterfaceNamesList,\n", file_id);
   if (have_baseiid) fprintf(proxy, "    _%s_BaseIIDList,\n", file_id);
   else fprintf(proxy, "    0,\n");
-  fprintf(proxy, "    &_%s_IID_Lookup,\n", file_id);
+  fprintf(proxy, "    _%s_IID_Lookup,\n", file_id);
   fprintf(proxy, "    %d,\n", count);
   fprintf(proxy, "    1,\n");
   fprintf(proxy, "    0,\n");
