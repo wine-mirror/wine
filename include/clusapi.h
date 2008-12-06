@@ -24,10 +24,14 @@ extern "C" {
 #endif
 
 typedef struct _HCLUSTER *HCLUSTER;
+typedef struct _HCLUSENUM *HCLUSENUM;
 
 BOOL WINAPI CloseCluster(HCLUSTER hCluster);
 DWORD WINAPI GetNodeClusterState(LPCWSTR lpszNodeName, LPDWORD pdwClusterState);
 HCLUSTER WINAPI OpenCluster(LPCWSTR lpszClusterName);
+HCLUSENUM WINAPI ClusterOpenEnum(HCLUSTER hCluster, DWORD dwType);
+DWORD WINAPI ClusterEnum(HCLUSENUM hEnum, DWORD dwIndex, LPDWORD lpdwType, LPWSTR lpszName, LPDWORD lpcchName);
+DWORD WINAPI ClusterCloseEnum(HCLUSENUM hEnum);
 
 #ifdef __cplusplus
 }

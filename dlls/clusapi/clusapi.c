@@ -70,6 +70,39 @@ BOOL WINAPI CloseCluster(HCLUSTER hCluster)
 }
 
 /***********************************************************************
+ *             ClusterOpenEnum   (CLUSAPI.@)
+ *
+ */
+HCLUSENUM WINAPI ClusterOpenEnum(HCLUSTER hCluster, DWORD dwType)
+{
+    FIXME("(%p, %u) stub!\n", hCluster,dwType);
+
+    return (HCLUSENUM)0xdeadbeef;
+}
+
+/***********************************************************************
+ *             ClusterCloseEnum   (CLUSAPI.@)
+ *
+ */
+DWORD WINAPI ClusterCloseEnum(HCLUSENUM hEnum)
+{
+    FIXME("(%p) stub!\n", hEnum);
+
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *             ClusterEnum   (CLUSAPI.@)
+ *
+ */
+DWORD WINAPI ClusterEnum(HCLUSENUM hEnum, DWORD dwIndex, LPDWORD lpdwType, LPWSTR lpszName, LPDWORD lpcchName)
+{
+    FIXME("(%p, %u, %u, %s, %u) stub!\n", hEnum, dwIndex, *lpdwType, debugstr_w(lpszName), *lpcchName);
+
+    return ERROR_NO_MORE_ITEMS;
+}
+
+/***********************************************************************
  *             DllMain   (CLUSAPI.@)
  *
  */

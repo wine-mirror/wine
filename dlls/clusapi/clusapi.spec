@@ -10,9 +10,9 @@
 @ stub CloseClusterNode
 @ stub CloseClusterNotifyPort
 @ stub CloseClusterResource
-@ stub ClusterCloseEnum
+@ stdcall ClusterCloseEnum(ptr)
 @ stub ClusterControl
-@ stub ClusterEnum
+@ stdcall ClusterEnum(ptr long ptr wstr ptr)
 @ stub ClusterGetEnumCount
 @ stub ClusterGroupCloseEnum
 @ stub ClusterGroupControl
@@ -30,7 +30,7 @@
 @ stub ClusterNodeEnum
 @ stub ClusterNodeGetEnumCount
 @ stub ClusterNodeOpenEnum
-@ stub ClusterOpenEnum
+@ stdcall ClusterOpenEnum(ptr long)
 @ stub ClusterRegCloseKey
 @ stub ClusterRegCreateKey
 @ stub ClusterRegDeleteKey
