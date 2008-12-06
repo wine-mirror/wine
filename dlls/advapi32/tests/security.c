@@ -760,13 +760,14 @@ static void test_FileSecurity(void)
     sd = HeapAlloc (GetProcessHeap (), 0, sdSize);
 
     /* Get security descriptor for real */
-    retSize = 0;
+    retSize = -1;
     SetLastError(0xdeadbeef);
     rc = pGetFileSecurityA (file, request, sd, sdSize, &retSize);
     ok (rc, "GetFileSecurityA "
         "was not expected to fail '%s': %d\n", file, GetLastError());
-    ok (retSize == sdSize, "GetFileSecurityA "
-        "returned size %d; expected %d\n", retSize, sdSize);
+    ok (retSize == sdSize ||
+        broken(retSize == 0), /* NT4 */
+        "GetFileSecurityA returned size %d; expected %d\n", retSize, sdSize);
 
     /* Use it to set security descriptor */
     SetLastError(0xdeadbeef);
@@ -792,13 +793,14 @@ static void test_FileSecurity(void)
     sd = HeapAlloc (GetProcessHeap (), 0, sdSize);
 
     /* Get security descriptor for real */
-    retSize = 0;
+    retSize = -1;
     SetLastError(0xdeadbeef);
     rc = pGetFileSecurityA (path, request, sd, sdSize, &retSize);
     ok (rc, "GetFileSecurityA "
         "was not expected to fail '%s': %d\n", path, GetLastError());
-    ok (retSize == sdSize, "GetFileSecurityA "
-        "returned size %d; expected %d\n", retSize, sdSize);
+    ok (retSize == sdSize ||
+        broken(retSize == 0), /* NT4 */
+        "GetFileSecurityA returned size %d; expected %d\n", retSize, sdSize);
 
     /* Use it to set security descriptor */
     SetLastError(0xdeadbeef);
@@ -2158,7 +2160,10 @@ static void test_SetEntriesInAcl(void)
         return;
     }
     ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
-    ok(NewAcl == NULL, "NewAcl=%p, expected NULL\n", NewAcl);
+    ok(NewAcl == NULL ||
+        broken(NewAcl != NULL), /* NT4 */
+        "NewAcl=%p, expected NULL\n", NewAcl);
+    LocalFree(NewAcl);
 
     OldAcl = HeapAlloc(GetProcessHeap(), 0, 256);
     res = InitializeAcl(OldAcl, 256, ACL_REVISION);
@@ -2208,7 +2213,9 @@ static void test_SetEntriesInAcl(void)
 
         ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_BAD_FORM;
         res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
-        ok(res == ERROR_INVALID_PARAMETER, "SetEntriesInAclW failed: %u\n", res);
+        ok(res == ERROR_INVALID_PARAMETER ||
+            broken(res == ERROR_NOT_SUPPORTED), /* NT4 */
+            "SetEntriesInAclW failed: %u\n", res);
         ok(NewAcl == NULL ||
             broken(NewAcl != NULL), /* NT4 */
             "returned acl wasn't NULL: %p\n", NewAcl);
@@ -2216,7 +2223,9 @@ static void test_SetEntriesInAcl(void)
         ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_USER;
         ExplicitAccess.Trustee.MultipleTrusteeOperation = TRUSTEE_IS_IMPERSONATE;
         res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
-        ok(res == ERROR_INVALID_PARAMETER, "SetEntriesInAclW failed: %u\n", res);
+        ok(res == ERROR_INVALID_PARAMETER ||
+            broken(res == ERROR_NOT_SUPPORTED), /* NT4 */
+            "SetEntriesInAclW failed: %u\n", res);
         ok(NewAcl == NULL ||
             broken(NewAcl != NULL), /* NT4 */
             "returned acl wasn't NULL: %p\n", NewAcl);
@@ -2755,11 +2764,17 @@ static void test_acls(void)
     ret = IsValidAcl(pAcl);
     ok(ret, "IsValidAcl failed with error %d\n", GetLastError());
 
+    SetLastError(0xdeadbeef);
     ret = InitializeAcl(pAcl, sizeof(buffer), ACL_REVISION4);
-    ok(ret, "InitializeAcl(ACL_REVISION4) failed with error %d\n", GetLastError());
+    if (GetLastError() != ERROR_INVALID_PARAMETER)
+    {
+        ok(ret, "InitializeAcl(ACL_REVISION4) failed with error %d\n", GetLastError());
 
-    ret = IsValidAcl(pAcl);
-    ok(ret, "IsValidAcl failed with error %d\n", GetLastError());
+        ret = IsValidAcl(pAcl);
+        ok(ret, "IsValidAcl failed with error %d\n", GetLastError());
+    }
+    else
+        win_skip("ACL_REVISION4 is not implemented on NT4\n");
 
     SetLastError(0xdeadbeef);
     ret = InitializeAcl(pAcl, sizeof(buffer), -1);
