@@ -40,7 +40,7 @@
 #define MAX_TEMPLATES 200
 #define MAX_OBJECTS 500
 #define MAX_SUBOBJECTS 500
-#define MAX_STRINGS_BUFFER 200
+#define MAX_STRINGS_BUFFER 1000
 
 typedef struct {
     DWORD type;
