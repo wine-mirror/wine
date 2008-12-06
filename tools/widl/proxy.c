@@ -831,8 +831,8 @@ void write_proxies(const statement_list_t *stmts)
 
   fprintf(proxy, "const ExtendedProxyFileInfo %s_ProxyFileInfo DECLSPEC_HIDDEN =\n", file_id);
   fprintf(proxy, "{\n");
-  fprintf(proxy, "    (const PCInterfaceProxyVtblList*)&_%s_ProxyVtblList,\n", file_id);
-  fprintf(proxy, "    (const PCInterfaceStubVtblList*)&_%s_StubVtblList,\n", file_id);
+  fprintf(proxy, "    (const PCInterfaceProxyVtblList*)_%s_ProxyVtblList,\n", file_id);
+  fprintf(proxy, "    (const PCInterfaceStubVtblList*)_%s_StubVtblList,\n", file_id);
   fprintf(proxy, "    _%s_InterfaceNamesList,\n", file_id);
   if (have_baseiid) fprintf(proxy, "    _%s_BaseIIDList,\n", file_id);
   else fprintf(proxy, "    0,\n");
