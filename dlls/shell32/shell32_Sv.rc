@@ -1,5 +1,6 @@
 /*
  * Copyright 1998 Juergen Schmied
+ * Copyright 2008 Daniel Nylander <po@danielnylander.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,40 +26,40 @@ MENU_SHV_FILE MENU DISCARDABLE
 BEGIN
 	POPUP ""
 	BEGIN
-	  MENUITEM "&Select"		FCIDM_SHVIEW_OPEN
-	  MENUITEM "E&xplore",		FCIDM_SHVIEW_EXPLORE
-	  MENUITEM "&Open",		FCIDM_SHVIEW_OPEN
+	  MENUITEM "&Välj"		FCIDM_SHVIEW_OPEN
+	  MENUITEM "U&tforska",		FCIDM_SHVIEW_EXPLORE
+	  MENUITEM "&Öppna",		FCIDM_SHVIEW_OPEN
 	  MENUITEM SEPARATOR
-	  MENUITEM "C&ut",		FCIDM_SHVIEW_CUT
-	  MENUITEM "&Copy",		FCIDM_SHVIEW_COPY
+	  MENUITEM "Klipp &ut",		FCIDM_SHVIEW_CUT
+	  MENUITEM "&Kopiera",		FCIDM_SHVIEW_COPY
 	  MENUITEM SEPARATOR
-	  MENUITEM "Create &Link",	FCIDM_SHVIEW_CREATELINK
-	  MENUITEM "&Delete",		FCIDM_SHVIEW_DELETE
-	  MENUITEM "&Rename",		FCIDM_SHVIEW_RENAME
+	  MENUITEM "Skapa &länk",	FCIDM_SHVIEW_CREATELINK
+	  MENUITEM "&Ta bort",		FCIDM_SHVIEW_DELETE
+	  MENUITEM "&Byt namn",		FCIDM_SHVIEW_RENAME
 	  MENUITEM SEPARATOR
-	  MENUITEM "&Properties",	FCIDM_SHVIEW_PROPERTIES
+	  MENUITEM "&Egenskaper",	FCIDM_SHVIEW_PROPERTIES
 	END
 END
 
 MENU_CPANEL MENU
 BEGIN
-    POPUP "&File"
+    POPUP "&Arkiv"
     BEGIN
         MENUITEM SEPARATOR
-        MENUITEM "E&xit", IDM_CPANEL_EXIT
+        MENUITEM "A&vsluta", IDM_CPANEL_EXIT
     END
 
-    POPUP "&View"
+    POPUP "&Visa"
     BEGIN
-        MENUITEM "Lar&ge Icons", FCIDM_SHVIEW_BIGICON
-        MENUITEM "S&mall Icons", FCIDM_SHVIEW_SMALLICON
-        MENUITEM "&List", FCIDM_SHVIEW_LISTVIEW
-        MENUITEM "&Details", FCIDM_SHVIEW_REPORTVIEW
+        MENUITEM "St&ora ikoner", FCIDM_SHVIEW_BIGICON
+        MENUITEM "S&må ikoner", FCIDM_SHVIEW_SMALLICON
+        MENUITEM "&Lista", FCIDM_SHVIEW_LISTVIEW
+        MENUITEM "&Detaljer", FCIDM_SHVIEW_REPORTVIEW
     END
 
-    POPUP "&Help"
+    POPUP "&Hjälp"
     BEGIN
-        MENUITEM "&About Control Panel...", IDM_CPANEL_ABOUT
+        MENUITEM "&Om Kontrollpanelen...", IDM_CPANEL_ABOUT
     END
 END
 
@@ -68,12 +69,12 @@ CAPTION "Om %s"
 FONT 10, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 153, 133, 60, 12, WS_TABSTOP
- PUSHBUTTON "Wine &license...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
+ PUSHBUTTON "Wine-&licens...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
  LISTBOX IDC_ABOUT_LISTBOX, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
  ICON "", stc1, 10, 10, 30, 30
  LTEXT "", IDC_ABOUT_STATIC_TEXT1, 40, 10, 170, 10
  LTEXT "", IDC_ABOUT_STATIC_TEXT2, 40, 22, 170, 10
- LTEXT "Running on %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
+ LTEXT "Kör på %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
  LTEXT "Wine hade inte varit möjligt utan dessa personer:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
 }
 
@@ -83,7 +84,7 @@ CAPTION ""
 FONT 8, "MS Shell Dlg"
 {
  ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "Skriv namnet på ett program, en mapp eller ett dokument och wine kommer att öppna det för dig.", 12289, 36, 11, 182, 18
+ LTEXT "Skriv namnet på ett program, en mapp eller ett dokument och Wine kommer att öppna det för dig.", 12289, 36, 11, 182, 18
  LTEXT "&Öppna:", 12305, 7, 39, 24, 10
  CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
@@ -93,6 +94,6 @@ FONT 8, "MS Shell Dlg"
 
 STRINGTABLE
 {
-    IDS_CPANEL_NAME             "Name"
-    IDS_CPANEL_DESCRIPTION      "Description"
+    IDS_CPANEL_NAME             "Namn"
+    IDS_CPANEL_DESCRIPTION      "Beskrivning"
 }
