@@ -2,7 +2,7 @@
  * WineCfg resources
  * Swedish Language Support
  *
- * Copyright 2007 Daniel Nylander <po@danielnylander.se>
+ * Copyright 2007, 2008 Daniel Nylander <po@danielnylander.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -39,9 +39,9 @@ BEGIN
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
     LTEXT           "Detta bibliotek är fri programvara. Du kan distribuera det och/eller modifiera det under villkoren i GNU Lesser General Public License, publicerad av Free Software Foundation, antingen version 2.1 eller (om du så vill) någon senare version.",
                     IDC_STATIC,119,44,124,72
-    GROUPBOX        " Windows Registration Information ", IDC_STATIC, 15, 110, 230, 55
-    LTEXT           "Owner:", IDC_STATIC, 22, 126, 40, 20
-    LTEXT           "Organization:", IDC_STATIC, 22, 140, 50, 20
+    GROUPBOX        " Registreringsinformation för Windows ", IDC_STATIC, 15, 110, 230, 55
+    LTEXT           "Ägare:", IDC_STATIC, 22, 126, 40, 20
+    LTEXT           "Organisation:", IDC_STATIC, 22, 140, 50, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 126, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
     EDITTEXT        IDC_ABT_ORG, 75, 140, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
@@ -67,7 +67,7 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX    " Fönsterinställningar ",IDC_STATIC,8,4,244,84
     CONTROL     "Tillåt DirectX-program att stoppa &musen som lämnar dess fönster",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
-    CONTROL     "Allow the window manager to &decorate the windows",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
+    CONTROL     "Tillåt fönsterhanteraren att &dekorera fönstren",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
     CONTROL     "Tillåt &fönsterhanteraren att styra fönstren",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
     CONTROL     "Emulera ett virtuellt skriv&bord",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
@@ -85,7 +85,7 @@ BEGIN
     CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
     EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
     LTEXT       "dpi",IDC_STATIC,235,163,10,8
-    LTEXT       "This is a sample text using 10 point Tahoma",IDC_RES_FONT_PREVIEW,15,181,230,55
+    LTEXT       "Denna exempeltext använder 10-punkters Tahoma",IDC_RES_FONT_PREVIEW,15,181,230,55
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -124,12 +124,12 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Enhets&mappningar ",IDC_STATIC,8,4,244,240
-    LTEXT           "Failed to connect to the mount manager, the drive configuration cannot be edited.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,220,76
+    LTEXT           "Misslyckades med att ansluta till monteringshanteraren. Enhetskonfigurationen kan inte redigeras.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,220,76
     CONTROL         "Listvy",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "&Lägg till...",IDC_BUTTON_ADD,15,98,37,14
     PUSHBUTTON      "&Ta bort",IDC_BUTTON_REMOVE,56,98,37,14
-    PUSHBUTTON      "Auto&detect...",IDC_BUTTON_AUTODETECT,197,98,49,14
+    PUSHBUTTON      "Upptäck aut&omatiskt...",IDC_BUTTON_AUTODETECT,197,98,49,14
 
     /* editing drive details */
     LTEXT           "&Sökväg:",IDC_STATIC_PATH,15,123,20,9
@@ -249,7 +249,7 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DRIVE_UNKNOWN           "Autodetect"
+    IDS_DRIVE_UNKNOWN           "Upptäck automatiskt"
     IDS_DRIVE_FIXED             "Lokal hårddisk"
     IDS_DRIVE_REMOTE            "Nätverksutdelning"
     IDS_DRIVE_REMOVABLE         "Diskett"
@@ -289,20 +289,20 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDC_SYSPARAMS_BUTTON            "Controls Background"
-    IDC_SYSPARAMS_BUTTON_TEXT       "Controls Text"
+    IDC_SYSPARAMS_BUTTON            "Kontrollerar bakgrunden"
+    IDC_SYSPARAMS_BUTTON_TEXT       "Kontrollerar text"
     IDC_SYSPARAMS_DESKTOP           "Skrivbord"
     IDC_SYSPARAMS_MENU              "Menybakgrund"
     IDC_SYSPARAMS_MENU_TEXT         "Menytext"
-    IDC_SYSPARAMS_SCROLLBAR         "Scrollbar"
-    IDC_SYSPARAMS_SELECTION         "Selection Background"
-    IDC_SYSPARAMS_SELECTION_TEXT    "Selection Text"
-    IDC_SYSPARAMS_TOOLTIP           "ToolTip Background"
-    IDC_SYSPARAMS_TOOLTIP_TEXT      "ToolTip Text"
-    IDC_SYSPARAMS_WINDOW            "Window Background"
-    IDC_SYSPARAMS_WINDOW_TEXT       "Window Text"
-    IDC_SYSPARAMS_ACTIVE_TITLE      "Active Title Bar"
-    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Active Title Text"
-    IDC_SYSPARAMS_INACTIVE_TITLE    "Inactive Title Bar"
-    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Inactive Title Text"
+    IDC_SYSPARAMS_SCROLLBAR         "Rullningslist"
+    IDC_SYSPARAMS_SELECTION         "Bakgrund för markering"
+    IDC_SYSPARAMS_SELECTION_TEXT    "Text för markering"
+    IDC_SYSPARAMS_TOOLTIP           "Bakgrund för verktygstips"
+    IDC_SYSPARAMS_TOOLTIP_TEXT      "Text för verktygstips"
+    IDC_SYSPARAMS_WINDOW            "Fönsterbakgrund"
+    IDC_SYSPARAMS_WINDOW_TEXT       "Fönstertext"
+    IDC_SYSPARAMS_ACTIVE_TITLE      "Aktiv titellist"
+    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Aktiv titellist"
+    IDC_SYSPARAMS_INACTIVE_TITLE    "Inaktiv titellist"
+    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Inaktiv titellist"
 END
