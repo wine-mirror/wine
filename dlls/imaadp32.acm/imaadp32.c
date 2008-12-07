@@ -472,17 +472,17 @@ static	LRESULT ADPCM_DriverDetails(PACMDRIVERDETAILSW add)
 {
     add->fccType = ACMDRIVERDETAILS_FCCTYPE_AUDIOCODEC;
     add->fccComp = ACMDRIVERDETAILS_FCCCOMP_UNDEFINED;
-    add->wMid = 0xFF;
-    add->wPid = 0x00;
-    add->vdwACM = 0x01000000;
-    add->vdwDriver = 0x01000000;
+    add->wMid = 0x1;
+    add->wPid = 0x22;
+    add->vdwACM = 0x3320000;
+    add->vdwDriver = 0x04000000;
     add->fdwSupport = ACMDRIVERDETAILS_SUPPORTF_CODEC;
     add->cFormatTags = 2; /* PCM, IMA ADPCM */
     add->cFilterTags = 0;
     add->hicon = NULL;
-    MultiByteToWideChar( CP_ACP, 0, "WINE-ADPCM", -1,
+    MultiByteToWideChar( CP_ACP, 0, "Microsoft IMA ADPCM", -1,
                          add->szShortName, sizeof(add->szShortName)/sizeof(WCHAR) );
-    MultiByteToWideChar( CP_ACP, 0, "Wine IMA ADPCM converter", -1,
+    MultiByteToWideChar( CP_ACP, 0, "Microsoft IMA ADPCM CODEC", -1,
                          add->szLongName, sizeof(add->szLongName)/sizeof(WCHAR) );
     MultiByteToWideChar( CP_ACP, 0, "Brought to you by the Wine team...", -1,
                          add->szCopyright, sizeof(add->szCopyright)/sizeof(WCHAR) );
@@ -500,7 +500,7 @@ static	LRESULT ADPCM_DriverDetails(PACMDRIVERDETAILSW add)
 static	LRESULT	ADPCM_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
 {
     static const WCHAR szPcm[]={'P','C','M',0};
-    static const WCHAR szImaAdPcm[]={'I','M','A',' ','A','d','P','C','M',0};
+    static const WCHAR szImaAdPcm[]={'I','M','A',' ','A','D','P','C','M',0};
 
     switch (dwQuery)
     {
