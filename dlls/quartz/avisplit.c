@@ -359,8 +359,10 @@ static DWORD WINAPI AVISplitter_thread_reader(LPVOID data)
             AVISplitter_SendEndOfFile(This, streamnumber);
     } while (hr == S_OK);
 
-    FIXME("Thread %u terminated with hr %08x!\n", streamnumber, hr);
-
+    if (hr != S_FALSE)
+        FIXME("Thread %u terminated with hr %08x!\n", streamnumber, hr);
+    else
+        TRACE("Thread %u terminated properly\n", streamnumber);
     return hr;
 }
 
@@ -472,7 +474,7 @@ static HRESULT AVISplitter_first_request(LPVOID iface)
         args->This = This;
         args->stream = x;
         This->streams[x].thread = CreateThread(NULL, 0, AVISplitter_thread_reader, args, 0, &tid);
-        FIXME("Created stream %u thread 0x%08x\n", x, tid);
+        TRACE("Created stream %u thread 0x%08x\n", x, tid);
     }
 
     if (FAILED(hr))
@@ -491,7 +493,7 @@ static HRESULT AVISplitter_done_process(LPVOID iface)
     {
         StreamData *stream = This->streams + x;
 
-        FIXME("Waiting for %u to terminate\n", x);
+        TRACE("Waiting for %u to terminate\n", x);
         /* Make the thread return first */
         SetEvent(stream->packet_queued);
         assert(WaitForSingleObject(stream->thread, 100000) != WAIT_TIMEOUT);
@@ -504,7 +506,7 @@ static HRESULT AVISplitter_done_process(LPVOID iface)
 
         ResetEvent(stream->packet_queued);
     }
-    FIXME("All threads are now terminated\n");
+    TRACE("All threads are now terminated\n");
 
     return S_OK;
 }
@@ -1194,7 +1196,7 @@ static HRESULT AVISplitter_Flush(LPVOID iface)
     AVISplitterImpl *This = (AVISplitterImpl*)iface;
     DWORD x;
 
-    ERR("(%p)->()\n", This);
+    TRACE("(%p)->()\n", This);
 
     for (x = 0; x < This->Parser.cStreams; ++x)
     {
