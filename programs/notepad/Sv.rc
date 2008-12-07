@@ -4,6 +4,7 @@
  *  Copyright 1997,98 Marcel Baur <mbaur@g26.ethz.ch>
  *  Proofread 1998 by David Lee Lambert <lamber45@egr.msu.edu>
  *  Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
+ *  Copyright 2007, 2008 Daniel Nylander <po@danielnylander.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -59,7 +60,7 @@ POPUP "&Hjälp" {
   MENUITEM "&Sök...",           CMD_HELP_SEARCH
   MENUITEM "Användning &av hjälp",    CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&About Notepad", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "&Om Anteckningar", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 
@@ -97,15 +98,15 @@ STRING_PAGESETUP_FOOTERVALUE,   "Sida &p"
 
 STRING_NOTEPAD,                                 "Anteckningar"
 STRING_ERROR,                                   "FEL"
-STRING_WARNING,                                 "WARNING"
+STRING_WARNING,                                 "VARNING"
 STRING_INFO,                                    "Information"
 
 STRING_UNTITLED,                                "(namnlös)"
 
 STRING_ALL_FILES,                               "Alla filer (*.*)"
-STRING_TEXT_FILES_TXT,                  "Textfiler (*.txt)"
+STRING_TEXT_FILES_TXT,                  	"Textfiler (*.txt)"
 
-STRING_TOOLARGE,                                "Filen '%s' är för stor för notepad.\n \
+STRING_TOOLARGE,                                "Filen '%s' är för stor för Anteckningar.\n \
 Använd en annan redigerare."
 STRING_NOTEXT,                                  "Du skrev inte in någon text. \
 \nSkriv något och försök sedan igen"
@@ -113,8 +114,8 @@ STRING_DOESNOTEXIST,                            "Filen '%s'\nfinns inte\n\n \
 Vill du skapa en ny fil?"
 STRING_NOTSAVED,                                "Filen '%s'\nhar ändrats\n\n \
 Vill du spara ändringarna?"
-STRING_NOTFOUND,                                        "'%s' hittades inte."
-STRING_OUT_OF_MEMORY,                   "Inte tillräckligt med minne för att slutföra \
+STRING_NOTFOUND,                                "'%s' hittades inte."
+STRING_OUT_OF_MEMORY,                   "Det finns inte tillräckligt med minne för att slutföra \
 den här uppgiften.\nAvsluta ett eller flera program för att öka mängden\nledigt \
 minne."
 
