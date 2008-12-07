@@ -346,7 +346,7 @@ static	LRESULT ADPCM_DriverDetails(PACMDRIVERDETAILSW add)
 static	LRESULT	ADPCM_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
 {
     static const WCHAR szPcm[]={'P','C','M',0};
-    static const WCHAR szMsAdPcm[]={'M','S',' ','A','d','P','C','M',0};
+    static const WCHAR szMsAdPcm[]={'M','i','c','r','o','s','o','f','t',' ','A','D','P','C','M',0};
 
     switch (dwQuery)
     {
