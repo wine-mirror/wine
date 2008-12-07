@@ -452,7 +452,7 @@
 @ stub GetConsoleAliasExesLengthA
 @ stub GetConsoleAliasExesLengthW
 @ stub GetConsoleAliasExesW
-@ stub GetConsoleAliasW
+@ stdcall GetConsoleAliasW(wstr ptr long wstr)
 @ stub GetConsoleAliasesA
 @ stub GetConsoleAliasesLengthA
 @ stub GetConsoleAliasesLengthW
