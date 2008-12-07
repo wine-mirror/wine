@@ -1,7 +1,7 @@
 /*
  * Clock (Swedish resources)
  *
- * Copyright 2007 Daniel Nylander
+ * Copyright 2007, 2008 Daniel Nylander
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -38,35 +38,35 @@ MAIN_MENU MENU
  POPUP "Inf&o" {
   MENUITEM "&Licens...", IDM_LICENSE
   MENUITEM "&INGEN GARANTI...", IDM_NOWARRANTY
-  MENUITEM "&Om Clock...", IDM_ABOUT
+  MENUITEM "&Om Klocka...", IDM_ABOUT
  }
 }
 
 STRINGTABLE DISCARDABLE
 {
-IDS_CLOCK, "Clock"
+IDS_CLOCK, "Klocka"
 }
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 {
 IDS_LICENSE_CAPTION,            "LICENS"
 IDS_LICENSE,
-"This program is free software; you can redistribute it and/or \
-modify it under the terms of the GNU Lesser General Public \
-License as published by the Free Software Foundation; either \
-version 2.1 of the License, or (at your option) any later version.\n\
-This program is distributed in the hope that it will be useful, \
-but WITHOUT ANY WARRANTY; without even the implied warranty of \
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
-Lesser General Public License for more details.\n\
-You should have received a copy of the GNU Lesser General Public \
-License along with this program; if not, write to the Free Software \
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA"
+"Detta program är fri programvara. Du kan distribuera det och/eller \
+modifiera det under villkoren i GNU General Public License, publicerad \
+av Free Software Foundation, antingen version 2.1 eller (om du så vill) \
+någon senare version. Detta program distribueras i hopp om att det ska \
+vara användbart,men UTAN NÅGON SOM HELST GARANTI, även utan \
+underförstådd garanti om SÄLJBARHET eller LÄMPLIGHET FÖR NÅGOT \
+SPECIELLT ÄNDAMÅL. Se GNU General Public License för ytterligare \
+information. \n\
+Du bör ha fått en kopia av GNU General Public License tillsammans \
+med detta program. Om inte, skriv till Free Software Foundation, \
+Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA"
 
 IDS_WARRANTY_CAPTION, "INGEN GARANTI"
 IDS_WARRANTY,
-"This program is distributed in the hope that it will be useful, \
-but WITHOUT ANY WARRANTY; without even the implied warranty of \
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
-Lesser General Public License for more details."
+"Detta program distribueras i hopp om att det ska vara användbart, \
+men UTAN NÅGON SOM HELST GARANTI, även utan underförstådd garanti \
+om SÄLJBARHET eller LÄMPLIGHET FÖR NÅGOT SPECIELLT ÄNDAMÅL. \
+Se GNU General Public License för ytterligare information."
 }
