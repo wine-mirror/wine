@@ -778,6 +778,16 @@ UINT WINAPI ImmEnumRegisterWordW(
         return 0;
 }
 
+static inline BOOL EscapeRequiresWA(UINT uEscape)
+{
+        if (uEscape == IME_ESC_GET_EUDC_DICTIONARY ||
+            uEscape == IME_ESC_SET_EUDC_DICTIONARY ||
+            uEscape == IME_ESC_IME_NAME ||
+            uEscape == IME_ESC_GETHELPFILENAME)
+        return TRUE;
+    return FALSE;
+}
+
 /***********************************************************************
  *		ImmEscapeA (IMM32.@)
  */
@@ -790,13 +800,23 @@ LRESULT WINAPI ImmEscapeA(
 
     if (immHkl->hIME && immHkl->pImeEscape)
     {
-        if (!is_kbd_ime_unicode(immHkl))
+        if (!EscapeRequiresWA(uEscape) || !is_kbd_ime_unicode(immHkl))
             return immHkl->pImeEscape(hIMC,uEscape,lpData);
         else
         {
-            FIXME("A procedure called with W ime back end\n");
-            SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-            return 0;
+            WCHAR buffer[81]; /* largest required buffer should be 80 */
+            LRESULT rc;
+            if (uEscape == IME_ESC_SET_EUDC_DICTIONARY)
+            {
+                MultiByteToWideChar(CP_ACP,0,(LPSTR)lpData,-1,buffer,81);
+                rc = immHkl->pImeEscape(hIMC,uEscape,buffer);
+            }
+            else
+            {
+                rc = immHkl->pImeEscape(hIMC,uEscape,buffer);
+                WideCharToMultiByte(CP_ACP,0,buffer,-1,(LPSTR)lpData,80, NULL, NULL);
+            }
+            return rc;
         }
     }
     else
@@ -815,13 +835,23 @@ LRESULT WINAPI ImmEscapeW(
 
     if (immHkl->hIME && immHkl->pImeEscape)
     {
-        if (is_kbd_ime_unicode(immHkl))
+        if (!EscapeRequiresWA(uEscape) || is_kbd_ime_unicode(immHkl))
             return immHkl->pImeEscape(hIMC,uEscape,lpData);
         else
         {
-            FIXME("W procedure called with A ime back end\n");
-            SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-            return 0;
+            CHAR buffer[81]; /* largest required buffer should be 80 */
+            LRESULT rc;
+            if (uEscape == IME_ESC_SET_EUDC_DICTIONARY)
+            {
+                WideCharToMultiByte(CP_ACP,0,(LPWSTR)lpData,-1,buffer,81, NULL, NULL);
+                rc = immHkl->pImeEscape(hIMC,uEscape,buffer);
+            }
+            else
+            {
+                rc = immHkl->pImeEscape(hIMC,uEscape,buffer);
+                MultiByteToWideChar(CP_ACP,0,buffer,-1,(LPWSTR)lpData,80);
+            }
+            return rc;
         }
     }
     else
