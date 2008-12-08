@@ -543,7 +543,7 @@ static int write_stub_methods(type_t *iface, int skip)
   const func_t *cur;
   int i = 0;
 
-  if (iface->ref) i = write_stub_methods(iface->ref, TRUE);
+  if (iface->ref) i = write_stub_methods(iface->ref, need_delegation(iface));
   else return i; /* skip IUnknown */
 
   if (iface->funcs) LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry ) {
