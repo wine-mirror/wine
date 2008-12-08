@@ -1158,7 +1158,7 @@ HINF WINAPI SetupOpenInfFileW( PCWSTR name, PCWSTR class, DWORD style, UINT *err
     TRACE( "%s -> %p\n", debugstr_w(path), file );
     file->filename = path;
     SetLastError( 0 );
-    return (HINF)file;
+    return file;
 }
 
 

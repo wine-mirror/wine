@@ -1091,7 +1091,7 @@ static void testRegisterAndGetDetail(void)
          "\\\\?\\root#legacy_bogus#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}\\";
         PSP_DEVICE_INTERFACE_DETAIL_DATA_A detail = NULL;
 
-        detail = (PSP_DEVICE_INTERFACE_DETAIL_DATA_A)HeapAlloc(GetProcessHeap(), 0, dwSize);
+        detail = HeapAlloc(GetProcessHeap(), 0, dwSize);
         if (detail)
         {
             detail->cbSize = FIELD_OFFSET(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath) + sizeof(char);

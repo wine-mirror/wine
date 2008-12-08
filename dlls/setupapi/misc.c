@@ -727,7 +727,7 @@ DWORD WINAPI TakeOwnershipOfFile(LPCWSTR lpFileName)
         goto fail;
     }
 
-    pOwner = (PTOKEN_OWNER)MyMalloc(dwSize);
+    pOwner = MyMalloc(dwSize);
     if (pOwner == NULL)
     {
         CloseHandle(hToken);

@@ -82,7 +82,7 @@ HDSKSPC WINAPI SetupCreateDiskSpaceListW(PVOID Reserved1, DWORD Reserved2, UINT 
         }
        ptr += lstrlenW(ptr) + 1;
     }
-    return  (HANDLE)list;
+    return list;
 }
 
 

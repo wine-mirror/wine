@@ -561,8 +561,8 @@ static BOOL SETUPDI_AddDeviceToSet(struct DeviceInfoSet *set,
             devInst->data.DevInst = devInfo->devId;
             devInst->data.Reserved = (ULONG_PTR)devInfo;
             SETUPDI_GuidToString(guid, classGuidStr);
-            SetupDiSetDeviceRegistryPropertyW((HDEVINFO)set,
-                &devInst->data, SPDRP_CLASSGUID, (const BYTE *)classGuidStr,
+            SetupDiSetDeviceRegistryPropertyW(set, &devInst->data,
+                SPDRP_CLASSGUID, (const BYTE *)classGuidStr,
                 lstrlenW(classGuidStr) * sizeof(WCHAR));
             if (dev) *dev = &devInst->data;
             ret = TRUE;
@@ -1190,7 +1190,7 @@ SetupDiCreateDeviceInfoListExW(const GUID *ClassGuid,
     list->cDevices = 0;
     list_init(&list->devices);
 
-    return (HDEVINFO)list;
+    return list;
 }
 
 /***********************************************************************
