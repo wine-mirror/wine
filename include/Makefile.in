@@ -287,6 +287,7 @@ SRCDIR_INCLUDES = \
 	msidefs.h \
 	msiquery.h \
 	mssip.h \
+	mstcpip.h \
 	msvcrt/conio.h \
 	msvcrt/crtdbg.h \
 	msvcrt/ctype.h \

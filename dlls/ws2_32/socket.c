@@ -132,6 +132,7 @@
 #include "ws2tcpip.h"
 #include "ws2spi.h"
 #include "wsipx.h"
+#include "mstcpip.h"
 #include "winnt.h"
 #include "iphlpapi.h"
 #include "wine/server.h"
@@ -2317,6 +2318,49 @@ INT WINAPI WSAIoctl(SOCKET s,
        WSASetLastError(WSAEOPNOTSUPP);
        return SOCKET_ERROR;
 
+   case WS_SIO_KEEPALIVE_VALS:
+   {
+        int fd;
+        struct tcp_keepalive *k = lpvInBuffer;
+        int keepalive = k->onoff ? 1 : 0;
+        int keepidle = k->keepalivetime / 1000;
+        int keepintvl = k->keepaliveinterval / 1000;
+
+        if (!lpvInBuffer)
+        {
+            WSASetLastError(WSAEINVAL);
+            return SOCKET_ERROR;
+        }
+
+        TRACE("onoff: %d, keepalivetime: %d, keepaliveinterval: %d\n", keepalive, keepidle, keepintvl);
+
+        fd = get_sock_fd(s, 0, NULL);
+        if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keepalive, sizeof(int)) == -1)
+        {
+            release_sock_fd(s, fd);
+            WSASetLastError(WSAEINVAL);
+            return SOCKET_ERROR;
+        }
+#if defined(TCP_KEEPIDLE) && defined(TCP_KEEPINTVL)
+        if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, (void *)&keepidle, sizeof(int)) == -1)
+        {
+            release_sock_fd(s, fd);
+            WSASetLastError(WSAEINVAL);
+            return SOCKET_ERROR;
+        }
+        if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, (void *)&keepintvl, sizeof(int)) == -1)
+        {
+            release_sock_fd(s, fd);
+            WSASetLastError(WSAEINVAL);
+            return SOCKET_ERROR;
+        }
+#else
+        FIXME("ignoring keepalive interval and timeout\n");
+#endif
+
+        release_sock_fd(s, fd);
+        break;
+   }
    default:
        FIXME("unsupported WS_IOCTL cmd (%08x)\n", dwIoControlCode);
        WSASetLastError(WSAEOPNOTSUPP);
