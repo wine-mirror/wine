@@ -2205,7 +2205,7 @@ static BOOL HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLevel,
     BOOL bSuccess = FALSE;
     BOOL request_only = dwInfoLevel & HTTP_QUERY_FLAG_REQUEST_HEADERS;
     INT requested_index = lpdwIndex ? *lpdwIndex : 0;
-    INT level = (dwInfoLevel & ~HTTP_QUERY_MODIFIER_FLAGS_MASK);
+    DWORD level = (dwInfoLevel & ~HTTP_QUERY_MODIFIER_FLAGS_MASK);
     INT index = -1;
 
     /* Find requested header structure */
@@ -2327,7 +2327,7 @@ static BOOL HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLevel,
     default:
         assert (LAST_TABLE_HEADER == (HTTP_QUERY_UNLESS_MODIFIED_SINCE + 1));
 
-        if (level >= 0 && level < LAST_TABLE_HEADER && header_lookup[level])
+        if (level < LAST_TABLE_HEADER && header_lookup[level])
             index = HTTP_GetCustomHeaderIndex(lpwhr, header_lookup[level],
                                               requested_index,request_only);
     }

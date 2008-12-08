@@ -462,8 +462,8 @@ static void dump_INTERNET_FLAGS(DWORD dwFlags)
         FE(INTERNET_FLAG_TRANSFER_BINARY)
     };
 #undef FE
-    int i;
-    
+    unsigned int i;
+
     for (i = 0; i < (sizeof(flag) / sizeof(flag[0])); i++) {
 	if (flag[i].val & dwFlags) {
 	    TRACE(" %s", flag[i].name);
