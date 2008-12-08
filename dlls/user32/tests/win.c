@@ -5311,6 +5311,43 @@ static void test_thick_child_size(HWND parentWindow)
     ok(UnregisterClass(className, GetModuleHandleA(0)),"UnregisterClass call failed\n");
 }
 
+static void test_handles( HWND full_hwnd )
+{
+    HWND hwnd = full_hwnd;
+    BOOL ret;
+    RECT rect;
+
+    SetLastError( 0xdeadbeef );
+    ret = GetWindowRect( hwnd, &rect );
+    ok( ret, "GetWindowRect failed for %p err %u\n", hwnd, GetLastError() );
+
+#ifdef _WIN64
+    if ((ULONG_PTR)full_hwnd >> 32)
+        hwnd = (HWND)((ULONG_PTR)full_hwnd & ~0u);
+    else
+        hwnd = (HWND)((ULONG_PTR)full_hwnd | ((ULONG_PTR)~0u << 32));
+    SetLastError( 0xdeadbeef );
+    ret = GetWindowRect( hwnd, &rect );
+    ok( ret, "GetWindowRect failed for %p err %u\n", hwnd, GetLastError() );
+
+    hwnd = (HWND)(((ULONG_PTR)full_hwnd & ~0u) | ((ULONG_PTR)0x1234 << 32));
+    SetLastError( 0xdeadbeef );
+    ret = GetWindowRect( hwnd, &rect );
+    ok( ret, "GetWindowRect failed for %p err %u\n", hwnd, GetLastError() );
+
+    hwnd = (HWND)(((ULONG_PTR)full_hwnd & 0xffff) | ((ULONG_PTR)0x9876 << 16));
+    SetLastError( 0xdeadbeef );
+    ret = GetWindowRect( hwnd, &rect );
+    ok( !ret, "GetWindowRect succeeded for %p\n", hwnd );
+    ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError() );
+
+    hwnd = (HWND)(((ULONG_PTR)full_hwnd & 0xffff) | ((ULONG_PTR)0x12345678 << 16));
+    SetLastError( 0xdeadbeef );
+    ret = GetWindowRect( hwnd, &rect );
+    ok( !ret, "GetWindowRect succeeded for %p\n", hwnd );
+    ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError() );
+#endif
+}
 
 START_TEST(win)
 {
@@ -5390,6 +5427,7 @@ START_TEST(win)
 
     test_SetForegroundWindow(hwndMain);
     test_shell_window();
+    test_handles( hwndMain );
 
     /* add the tests above this line */
     UnhookWindowsHookEx(hhook);
