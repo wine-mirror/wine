@@ -595,7 +595,7 @@ DWORD __cdecl GetASPI32DLLVersion(void)
 {
 #ifdef linux
 	TRACE("Returning version 1\n");
-        return (DWORD)1;
+        return 1;
 #else
 	FIXME("Please add SCSI support for your operating system, returning 0\n");
         return 0;
