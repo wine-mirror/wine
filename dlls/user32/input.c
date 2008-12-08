@@ -272,6 +272,8 @@ HWND WINAPI GetCapture(void)
  */
 SHORT WINAPI GetAsyncKeyState(INT nKey)
 {
+    if (nKey < 0 || nKey > 256)
+        return 0;
     return USER_Driver->pGetAsyncKeyState( nKey );
 }
 

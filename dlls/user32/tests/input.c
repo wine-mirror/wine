@@ -1240,6 +1240,13 @@ static void test_ToUnicode(void)
     todo_wine ok(ret == 0, "ToUnicode for CTRL + SHIFT + Return didn't return 0 (was %i)\n", ret);
 }
 
+static void test_get_async_key_state(void)
+{
+    /* input value sanity checks */
+    ok(0 == GetAsyncKeyState(1000000), "GetAsyncKeyState did not return 0\n");
+    ok(0 == GetAsyncKeyState(-1000000), "GetAsyncKeyState did not return 0\n");
+}
+
 START_TEST(input)
 {
     init_function_pointers();
@@ -1254,6 +1261,7 @@ START_TEST(input)
     test_mouse_ll_hook();
     test_key_map();
     test_ToUnicode();
+    test_get_async_key_state();
 
     if(pGetMouseMovePointsEx)
         test_GetMouseMovePointsEx();
