@@ -142,7 +142,7 @@ static void error_handler(const char* file, int line, const char* function, int 
  * return the Windows equivalent to a Unix Device Type
  *
  */
-static	int 	MIDI_AlsaToWindowsDeviceType(int type)
+static	int 	MIDI_AlsaToWindowsDeviceType(unsigned int type)
 {
     /* MOD_MIDIPORT     output port
      * MOD_SYNTH        generic internal synth
@@ -1113,7 +1113,7 @@ static DWORD modReset(WORD wDevID)
  *
  * Helper for ALSA_MidiInit
  */
-static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* pinfo, int cap, int type)
+static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* pinfo, unsigned int cap, unsigned int type)
 {
     char midiPortName[MAXPNAMELEN];
 
@@ -1174,12 +1174,12 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
 	MidiOutDev[MODM_NumDevs].bEnabled    = TRUE;
 
 	TRACE("MidiOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%d\n"
-            "\tALSA info: midi dev-type=%lx, capa=%lx\n",
+            "\tALSA info: midi dev-type=%x, capa=0\n",
               MODM_NumDevs, wine_dbgstr_w(MidiOutDev[MODM_NumDevs].caps.szPname),
               MidiOutDev[MODM_NumDevs].caps.wTechnology,
               MidiOutDev[MODM_NumDevs].caps.wVoices, MidiOutDev[MODM_NumDevs].caps.wNotes,
               MidiOutDev[MODM_NumDevs].caps.wChannelMask, MidiOutDev[MODM_NumDevs].caps.dwSupport,
-              (long)type, (long)0);
+              type);
 		
 	MODM_NumDevs++;
     }
@@ -1229,10 +1229,10 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
 	MidiInDev[MIDM_NumDevs].state = 0;
 
 	TRACE("MidiIn [%d]\tname='%s' support=%d\n"
-              "\tALSA info: midi dev-type=%lx, capa=%lx\n",
+              "\tALSA info: midi dev-type=%x, capa=0\n",
               MIDM_NumDevs, wine_dbgstr_w(MidiInDev[MIDM_NumDevs].caps.szPname),
               MidiInDev[MIDM_NumDevs].caps.dwSupport,
-              (long)type, (long)0);
+              type);
 
 	MIDM_NumDevs++;
     }
@@ -1280,8 +1280,8 @@ LONG ALSA_MidiInit(void)
         snd_seq_port_info_set_client(pinfo, snd_seq_client_info_get_client(cinfo));
 	snd_seq_port_info_set_port(pinfo, -1);
 	while (snd_seq_query_next_port(midiSeq, pinfo) >= 0) {
-            int cap = snd_seq_port_info_get_capability(pinfo);
-	    int type = snd_seq_port_info_get_type(pinfo);
+	    unsigned int cap = snd_seq_port_info_get_capability(pinfo);
+	    unsigned int type = snd_seq_port_info_get_type(pinfo);
 	    if (!(type & SND_SEQ_PORT_TYPE_PORT))
 	        ALSA_AddMidiPort(cinfo, pinfo, cap, type);
 	}
@@ -1293,8 +1293,8 @@ LONG ALSA_MidiInit(void)
         snd_seq_port_info_set_client(pinfo, snd_seq_client_info_get_client(cinfo));
 	snd_seq_port_info_set_port(pinfo, -1);
 	while (snd_seq_query_next_port(midiSeq, pinfo) >= 0) {
-            int cap = snd_seq_port_info_get_capability(pinfo);
-	    int type = snd_seq_port_info_get_type(pinfo);
+	    unsigned int cap = snd_seq_port_info_get_capability(pinfo);
+	    unsigned int type = snd_seq_port_info_get_type(pinfo);
 	    if (type & SND_SEQ_PORT_TYPE_PORT)
 	        ALSA_AddMidiPort(cinfo, pinfo, cap, type);
 	}
