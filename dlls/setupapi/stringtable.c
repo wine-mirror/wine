@@ -431,7 +431,7 @@ StringTableGetExtraData(HSTRING_TABLE hStringTable,
         return FALSE;
     }
 
-    if (pStringTable->pSlots[dwId - 1].dwSize < dwExtraDataSize)
+    if (pStringTable->pSlots[dwId - 1].dwSize > dwExtraDataSize)
     {
         ERR("Data size is too large!\n");
         return FALSE;
