@@ -104,23 +104,6 @@ static enum exec_mode_values exec_mode = MODE_NONE;
 static const struct
 {
     const char *name;
-    enum target_cpu cpu;
-} cpu_names[] =
-{
-    { "i386",    CPU_x86 },
-    { "i486",    CPU_x86 },
-    { "i586",    CPU_x86 },
-    { "i686",    CPU_x86 },
-    { "i786",    CPU_x86 },
-    { "x86_64",  CPU_x86_64 },
-    { "sparc",   CPU_SPARC },
-    { "alpha",   CPU_ALPHA },
-    { "powerpc", CPU_POWERPC }
-};
-
-static const struct
-{
-    const char *name;
     enum target_platform platform;
 } platform_names[] =
 {
@@ -182,13 +165,8 @@ static void set_target( const char *target )
 
     if (!(p = strchr( spec, '-' ))) fatal_error( "Invalid target specification '%s'\n", target );
     *p++ = 0;
-    for (i = 0; i < sizeof(cpu_names)/sizeof(cpu_names[0]); i++)
-    {
-        if (!strcmp( cpu_names[i].name, spec )) break;
-    }
-    if (i < sizeof(cpu_names)/sizeof(cpu_names[0])) target_cpu = cpu_names[i].cpu;
-    else fatal_error( "Unrecognized CPU '%s'\n", spec );
-
+    if ((target_cpu = get_cpu_from_name( spec )) == -1)
+        fatal_error( "Unrecognized CPU '%s'\n", spec );
     platform = p;
     if ((p = strrchr( p, '-' ))) platform = p + 1;
 

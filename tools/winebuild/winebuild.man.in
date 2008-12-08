@@ -269,9 +269,6 @@ The function returns a 16-bit value (Win16 only).
 .B -ret64
 The function returns a 64-bit value (Win32 only).
 .TP
-.B -i386
-The entry point is only available on i386 platforms.
-.TP
 .B -register
 The function uses CPU register to pass arguments.
 .TP
@@ -282,6 +279,9 @@ accessed through GetProcAddress.
 .B -ordinal
 The entry point will be imported by ordinal instead of by name. The
 name is still exported.
+.TP
+.BI -arch= cpu[,cpu]
+The entry point is only available on the specified CPU architecture(s).
 .SS "Function ordinals"
 Syntax:
 .br
