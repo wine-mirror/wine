@@ -309,16 +309,16 @@ typedef struct _PROCESS_HEAP_ENTRY
 #define PROCESS_HEAP_ENTRY_MOVEABLE           0x0010
 #define PROCESS_HEAP_ENTRY_DDESHARE           0x0020
 
-#define INVALID_HANDLE_VALUE     ((HANDLE)~0UL)
-#define INVALID_FILE_SIZE        ((DWORD)~0UL)
-#define INVALID_SET_FILE_POINTER ((DWORD)~0UL)
-#define INVALID_FILE_ATTRIBUTES  ((DWORD)~0UL)
+#define INVALID_HANDLE_VALUE     ((HANDLE)~(ULONG_PTR)0)
+#define INVALID_FILE_SIZE        (~0u)
+#define INVALID_SET_FILE_POINTER (~0u)
+#define INVALID_FILE_ATTRIBUTES  (~0u)
 
 #define LOCKFILE_FAIL_IMMEDIATELY   1
 #define LOCKFILE_EXCLUSIVE_LOCK     2
 
-#define FLS_OUT_OF_INDEXES ((DWORD)~0UL)
-#define TLS_OUT_OF_INDEXES ((DWORD)~0UL)
+#define FLS_OUT_OF_INDEXES (~0u)
+#define TLS_OUT_OF_INDEXES (~0u)
 
 #define SHUTDOWN_NORETRY 1
 
@@ -2436,8 +2436,8 @@ static inline PVOID WINAPI InterlockedExchangePointer( PVOID volatile *dest, PVO
 }
 
 #ifdef __WINESRC__
-#define GetCurrentProcess() ((HANDLE)0xffffffff)
-#define GetCurrentThread()  ((HANDLE)0xfffffffe)
+#define GetCurrentProcess() ((HANDLE)~(ULONG_PTR)0)
+#define GetCurrentThread()  ((HANDLE)~(ULONG_PTR)1)
 #endif
 
 /* WinMain(entry point) must be declared in winbase.h. */

@@ -557,7 +557,7 @@ VOID WINAPI VWin32_BoostThreadStatic( DWORD threadId, INT boost )
 #undef GetCurrentThread
 HANDLE WINAPI GetCurrentThread(void)
 {
-    return (HANDLE)0xfffffffe;
+    return (HANDLE)~(ULONG_PTR)1;
 }
 
 

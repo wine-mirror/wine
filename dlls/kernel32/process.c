@@ -3141,7 +3141,7 @@ BOOL WINAPI IsWow64Process(HANDLE hProcess, PBOOL Wow64Process)
 #undef GetCurrentProcess
 HANDLE WINAPI GetCurrentProcess(void)
 {
-    return (HANDLE)0xffffffff;
+    return (HANDLE)~(ULONG_PTR)0;
 }
 
 /***********************************************************************

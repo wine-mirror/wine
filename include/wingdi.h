@@ -3253,8 +3253,8 @@ typedef struct _BLENDFUNCTION
 #define GRADIENT_FILL_TRIANGLE    0x00000002
 #define GRADIENT_FILL_OP_FLAG     0x000000ff
 
-#define GDI_ERROR                               (0xFFFFFFFFL)
-#define HGDI_ERROR                              ((HANDLE)0xFFFFFFFFL)
+#define GDI_ERROR                               (~0u)
+#define HGDI_ERROR                              ((HANDLE)~(ULONG_PTR)0)
 
 /* AddFontResourceEx flags */
 #define FR_PRIVATE  0x10

@@ -40,10 +40,10 @@
 #endif
 
 #ifndef INVALID_FILE_ATTRIBUTES
-#define INVALID_FILE_ATTRIBUTES  ((DWORD)~0UL)
+#define INVALID_FILE_ATTRIBUTES  (~0u)
 #endif
 #ifndef INVALID_SET_FILE_POINTER
-#define INVALID_SET_FILE_POINTER ((DWORD)~0UL)
+#define INVALID_SET_FILE_POINTER (~0u)
 #endif
 
 /* debug level */
