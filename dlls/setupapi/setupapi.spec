@@ -554,6 +554,7 @@
 @ stub pSetupGetVersionDatum
 @ stub pSetupGuidFromString
 @ stub pSetupIsGuidNull
+@ stdcall pSetupIsUserAdmin() IsUserAdmin
 @ stub pSetupMakeSurePathExists
 @ stdcall pSetupSetGlobalFlags(long)
 @ stdcall pSetupSetQueueFlags(ptr long)
