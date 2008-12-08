@@ -643,10 +643,10 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
 
 	      if (outp)
 		/* FIXME: Check segment is readable.  */
-		(void)0;
+		;
 	      else
 		/* FIXME: Check segment is writable.  */
-		(void)0;
+		;
 
 	      if (repX)
               {
