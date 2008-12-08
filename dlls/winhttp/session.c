@@ -276,7 +276,7 @@ end:
 static void request_destroy( object_header_t *hdr )
 {
     request_t *request = (request_t *)hdr;
-    int i;
+    DWORD i;
 
     TRACE("%p\n", request);
 
