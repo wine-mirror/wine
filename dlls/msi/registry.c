@@ -168,6 +168,15 @@ static const WCHAR szUserDataProd_fmt[] = {
 'U','s','e','r','D','a','t','a','\\',
 '%','s','\\','P','r','o','d','u','c','t','s','\\','%','s',0};
 
+static const WCHAR szUserDataPatch_fmt[] = {
+'S','o','f','t','w','a','r','e','\\',
+'M','i','c','r','o','s','o','f','t','\\',
+'W','i','n','d','o','w','s','\\',
+'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'U','s','e','r','D','a','t','a','\\',
+'%','s','\\','P','a','t','c','h','e','s','\\','%','s',0};
+
 static const WCHAR szInstallProperties_fmt[] = {
 'S','o','f','t','w','a','r','e','\\',
 'M','i','c','r','o','s','o','f','t','\\',
@@ -240,6 +249,9 @@ static const WCHAR localsid[] = {'S','-','1','-','5','-','1','8',0};
 BOOL unsquash_guid(LPCWSTR in, LPWSTR out)
 {
     DWORD i,n=0;
+
+    if (lstrlenW(in) != 32)
+        return FALSE;
 
     out[n++]='{';
     for(i=0; i<8; i++)
@@ -850,6 +862,32 @@ UINT MSIREG_OpenUserDataProductKey(LPCWSTR szProduct, HKEY *key, BOOL create)
     }
 
     sprintfW(keypath, szUserDataProd_fmt, usersid, squished_pc);
+
+    if (create)
+        rc = RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+    else
+        rc = RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+
+    LocalFree(usersid);
+    return rc;
+}
+
+UINT MSIREG_OpenUserDataPatchKey(LPWSTR patch, HKEY *key, BOOL create)
+{
+    UINT rc;
+    WCHAR keypath[0x200];
+    LPWSTR usersid;
+
+    TRACE("\n");
+
+    rc = get_user_sid(&usersid);
+    if (rc != ERROR_SUCCESS || !usersid)
+    {
+        ERR("Failed to retrieve user SID: %d\n", rc);
+        return rc;
+    }
+
+    sprintfW(keypath, szUserDataPatch_fmt, usersid, patch);
 
     if (create)
         rc = RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
@@ -1727,19 +1765,287 @@ done:
     return r;
 }
 
+static UINT msi_get_patch_state(LPCWSTR prodcode, LPCWSTR usersid,
+                                LPWSTR patch, MSIPATCHSTATE *state)
+{
+    DWORD type, val, size;
+    HKEY prod, hkey = 0;
+    HKEY udpatch = 0;
+    LONG res;
+    UINT r = ERROR_NO_MORE_ITEMS;
+
+    static const WCHAR szPatches[] = {'P','a','t','c','h','e','s',0};
+    static const WCHAR szState[] = {'S','t','a','t','e',0};
+
+    /* FIXME: usersid might not be current user */
+    r = MSIREG_OpenUserDataProductKey(prodcode, &prod, FALSE);
+    if (r != ERROR_SUCCESS)
+        return ERROR_NO_MORE_ITEMS;
+
+    res = RegOpenKeyExW(prod, szPatches, 0, KEY_READ, &hkey);
+    if (res != ERROR_SUCCESS)
+        goto done;
+
+    res = RegOpenKeyExW(hkey, patch, 0, KEY_READ, &udpatch);
+    if (res != ERROR_SUCCESS)
+        goto done;
+
+    size = sizeof(DWORD);
+    res = RegGetValueW(udpatch, NULL, szState, RRF_RT_DWORD, &type, &val, &size);
+    if (res != ERROR_SUCCESS ||
+        val < MSIPATCHSTATE_APPLIED || val > MSIPATCHSTATE_REGISTERED)
+    {
+        r = ERROR_BAD_CONFIGURATION;
+        goto done;
+    }
+
+    *state = val;
+    r = ERROR_SUCCESS;
+
+done:
+    RegCloseKey(udpatch);
+    RegCloseKey(hkey);
+    RegCloseKey(prod);
+
+    return r;
+}
+
+static UINT msi_check_product_patches(LPCWSTR prodcode, LPCWSTR usersid,
+        MSIINSTALLCONTEXT context, DWORD filter, DWORD index, DWORD *idx,
+        LPWSTR patch, LPWSTR targetprod, MSIINSTALLCONTEXT *targetctx,
+        LPWSTR targetsid, DWORD *sidsize)
+{
+    MSIPATCHSTATE state;
+    LPWSTR ptr, patches = NULL;
+    HKEY prod, patchkey = 0;
+    HKEY localprod = 0, localpatch = 0;
+    DWORD type, size;
+    LONG res;
+    UINT temp, r = ERROR_NO_MORE_ITEMS;
+
+    static const WCHAR szPatches[] = {'P','a','t','c','h','e','s',0};
+    static const WCHAR szState[] = {'S','t','a','t','e',0};
+    static const WCHAR szEmpty[] = {0};
+
+    if (MSIREG_OpenProductKey(prodcode, context, &prod, FALSE) != ERROR_SUCCESS)
+        return ERROR_NO_MORE_ITEMS;
+
+    size = 0;
+    res = RegGetValueW(prod, szPatches, szPatches, RRF_RT_ANY, &type, NULL,
+                       &size);
+    if (res != ERROR_SUCCESS)
+        goto done;
+
+    if (type != REG_MULTI_SZ)
+    {
+        r = ERROR_BAD_CONFIGURATION;
+        goto done;
+    }
+
+    patches = msi_alloc(size);
+    if (!patches)
+    {
+        r = ERROR_OUTOFMEMORY;
+        goto done;
+    }
+
+    res = RegGetValueW(prod, szPatches, szPatches, RRF_RT_ANY, &type,
+                       patches, &size);
+    if (res != ERROR_SUCCESS)
+        goto done;
+
+    ptr = patches;
+    for (ptr = patches; *ptr && r == ERROR_NO_MORE_ITEMS; ptr += lstrlenW(ptr))
+    {
+        if (!unsquash_guid(ptr, patch))
+        {
+            r = ERROR_BAD_CONFIGURATION;
+            goto done;
+        }
+
+        size = 0;
+        res = RegGetValueW(prod, szPatches, ptr, RRF_RT_REG_SZ,
+                           &type, NULL, &size);
+        if (res != ERROR_SUCCESS)
+            continue;
+
+        if (context == MSIINSTALLCONTEXT_USERMANAGED)
+        {
+            if (!(filter & MSIPATCHSTATE_APPLIED))
+            {
+                temp = msi_get_patch_state(prodcode, usersid, ptr, &state);
+                if (temp == ERROR_BAD_CONFIGURATION)
+                {
+                    r = ERROR_BAD_CONFIGURATION;
+                    goto done;
+                }
+
+                if (temp != ERROR_SUCCESS || !(filter & state))
+                    continue;
+            }
+        }
+        else if (context == MSIINSTALLCONTEXT_USERUNMANAGED)
+        {
+            if (!(filter & MSIPATCHSTATE_APPLIED))
+            {
+                temp = msi_get_patch_state(prodcode, usersid, ptr, &state);
+                if (temp == ERROR_BAD_CONFIGURATION)
+                {
+                    r = ERROR_BAD_CONFIGURATION;
+                    goto done;
+                }
+
+                if (temp != ERROR_SUCCESS || !(filter & state))
+                    continue;
+            }
+            else
+            {
+                temp = MSIREG_OpenUserDataPatchKey(ptr, &patchkey, FALSE);
+                RegCloseKey(patchkey);
+                if (temp != ERROR_SUCCESS)
+                    continue;
+            }
+        }
+        else if (context == MSIINSTALLCONTEXT_MACHINE)
+        {
+            usersid = szEmpty;
+
+            if (MSIREG_OpenLocalUserDataProductKey(prodcode, &localprod, FALSE) == ERROR_SUCCESS &&
+                RegOpenKeyExW(localprod, szPatches, 0, KEY_READ, &localpatch) == ERROR_SUCCESS &&
+                RegOpenKeyExW(localpatch, ptr, 0, KEY_READ, &patchkey) == ERROR_SUCCESS)
+            {
+                res = RegGetValueW(patchkey, NULL, szState, RRF_RT_REG_DWORD,
+                                   &type, &state, &size);
+
+                if (!(filter & state))
+                    res = ERROR_NO_MORE_ITEMS;
+
+                RegCloseKey(patchkey);
+            }
+
+            RegCloseKey(localpatch);
+            RegCloseKey(localprod);
+
+            if (res != ERROR_SUCCESS)
+                continue;
+        }
+
+        if (*idx < index)
+        {
+            (*idx)++;
+            continue;
+        }
+
+        r = ERROR_SUCCESS;
+        lstrcpyW(targetprod, prodcode);
+
+        if (targetctx)
+            *targetctx = context;
+
+        if (targetsid)
+        {
+            lstrcpynW(targetsid, usersid, *sidsize);
+            if (lstrlenW(usersid) >= *sidsize)
+                r = ERROR_MORE_DATA;
+        }
+
+        if (sidsize)
+        {
+            *sidsize = lstrlenW(usersid);
+            if (!targetsid)
+                *sidsize *= sizeof(WCHAR);
+        }
+    }
+
+done:
+    RegCloseKey(prod);
+    msi_free(patches);
+
+    return r;
+}
+
 /***********************************************************************
- * MsiEnumPatchesW            [MSI.@]
+ * MsiEnumPatchesExW            [MSI.@]
  */
 UINT WINAPI MsiEnumPatchesExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
         DWORD dwContext, DWORD dwFilter, DWORD dwIndex, LPWSTR szPatchCode,
         LPWSTR szTargetProductCode, MSIINSTALLCONTEXT *pdwTargetProductContext,
         LPWSTR szTargetUserSid, LPDWORD pcchTargetUserSid)
 {
-    FIXME("(%s, %s, %d, %d, %d, %p, %p, %p, %p, %p) stub!\n",
+    WCHAR squished_pc[GUID_SIZE];
+    DWORD idx = 0;
+    UINT r;
+
+    static int last_index = 0;
+
+    TRACE("(%s, %s, %d, %d, %d, %p, %p, %p, %p, %p)\n",
           debugstr_w(szProductCode), debugstr_w(szUserSid), dwContext, dwFilter,
           dwIndex, szPatchCode, szTargetProductCode, pdwTargetProductContext,
           szTargetUserSid, pcchTargetUserSid);
-    return ERROR_NO_MORE_ITEMS;
+
+    if (!szProductCode || !squash_guid(szProductCode, squished_pc))
+        return ERROR_INVALID_PARAMETER;
+
+    if (!lstrcmpW(szUserSid, localsid))
+        return ERROR_INVALID_PARAMETER;
+
+    if (dwContext & MSIINSTALLCONTEXT_MACHINE && szUserSid)
+        return ERROR_INVALID_PARAMETER;
+
+    if (dwContext <= MSIINSTALLCONTEXT_NONE ||
+        dwContext > MSIINSTALLCONTEXT_ALL)
+        return ERROR_INVALID_PARAMETER;
+
+    if (dwFilter <= MSIPATCHSTATE_INVALID || dwFilter > MSIPATCHSTATE_ALL)
+        return ERROR_INVALID_PARAMETER;
+
+    if (dwIndex && dwIndex - last_index != 1)
+        return ERROR_INVALID_PARAMETER;
+
+    if (dwIndex == 0)
+        last_index = 0;
+
+    if (dwContext & MSIINSTALLCONTEXT_USERMANAGED)
+    {
+        r = msi_check_product_patches(szProductCode, szUserSid,
+                                      MSIINSTALLCONTEXT_USERMANAGED, dwFilter,
+                                      dwIndex, &idx, szPatchCode,
+                                      szTargetProductCode,
+                                      pdwTargetProductContext,
+                                      szTargetUserSid, pcchTargetUserSid);
+        if (r != ERROR_NO_MORE_ITEMS)
+            goto done;
+    }
+
+    if (dwContext & MSIINSTALLCONTEXT_USERUNMANAGED)
+    {
+        r = msi_check_product_patches(szProductCode, szUserSid,
+                                      MSIINSTALLCONTEXT_USERUNMANAGED, dwFilter,
+                                      dwIndex, &idx, szPatchCode,
+                                      szTargetProductCode,
+                                      pdwTargetProductContext,
+                                      szTargetUserSid, pcchTargetUserSid);
+        if (r != ERROR_NO_MORE_ITEMS)
+            goto done;
+    }
+
+    if (dwContext & MSIINSTALLCONTEXT_MACHINE)
+    {
+        r = msi_check_product_patches(szProductCode, szUserSid,
+                                      MSIINSTALLCONTEXT_MACHINE, dwFilter,
+                                      dwIndex, &idx, szPatchCode,
+                                      szTargetProductCode,
+                                      pdwTargetProductContext,
+                                      szTargetUserSid, pcchTargetUserSid);
+        if (r != ERROR_NO_MORE_ITEMS)
+            goto done;
+    }
+
+done:
+    if (r == ERROR_SUCCESS)
+        last_index = dwIndex;
+
+    return r;
 }
 
 /***********************************************************************
