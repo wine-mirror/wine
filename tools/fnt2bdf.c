@@ -209,7 +209,7 @@ static int dump_bdf( fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
     if( (ic = make_bdf_filename(l_filename, cpe_font_struct, file_buffer)) )
 	return ic;
 
-    if((fp = fopen(l_filename, "w")) == (FILE *) 0)
+    if((fp = fopen(l_filename, "w")) == NULL)
     {
       fprintf(stderr, "Couldn't open \"%s\" for output.\n", l_filename);
       return ERROR_FILE;
