@@ -153,7 +153,7 @@ static HRESULT VARIANT_FromDisp(IDispatch* pdispIn, LCID lcid, void* pOut,
 
 /* Compiler cast where input cannot be negative */
 #define NEGTST(dest, src, func) RETTYP _##func(src in, dest* out) { \
-  if (in < (src)0) return DISP_E_OVERFLOW; *out = in; return S_OK; }
+  if (in < 0) return DISP_E_OVERFLOW; *out = in; return S_OK; }
 
 /* Compiler cast where input cannot be > some number */
 #define POSTST(dest, src, func, tst) RETTYP _##func(src in, dest* out) { \
