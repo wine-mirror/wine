@@ -588,6 +588,12 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOpera
     }
     else
     {
+        /* Did we get something? Anything? */
+        if (xlpFile[0]==0)
+        {
+            TRACE("Returning SE_ERR_FNF\n");
+            return SE_ERR_FNF;
+        }
         /* First thing we need is the file's extension */
         extension = strrchrW(xlpFile, '.'); /* Assume last "." is the one; */
         /* File->Run in progman uses */

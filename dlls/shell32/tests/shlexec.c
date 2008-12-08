@@ -627,8 +627,8 @@ typedef struct
 static filename_tests_t filename_tests[]=
 {
     /* Test bad / nonexistent filenames */
-    {NULL,           "%s\\nonexistent.shlexec", 0x11, SE_ERR_FNF},
-    {NULL,           "%s\\nonexistent.noassoc", 0x11, SE_ERR_FNF},
+    {NULL,           "%s\\nonexistent.shlexec", 0x0, SE_ERR_FNF},
+    {NULL,           "%s\\nonexistent.noassoc", 0x0, SE_ERR_FNF},
 
     /* Standard tests */
     {NULL,           "%s\\test file.shlexec",   0x0, 33},
@@ -644,7 +644,7 @@ static filename_tests_t filename_tests[]=
     {NULL,           "%s\\test file.shlexec.noassoc", 0x0, SE_ERR_NOASSOC},
 
     /* Test alternate verbs */
-    {"LowerL",       "%s\\nonexistent.shlexec", 0x11, SE_ERR_FNF},
+    {"LowerL",       "%s\\nonexistent.shlexec", 0x0, SE_ERR_FNF},
     {"LowerL",       "%s\\test file.noassoc",   0x0,  SE_ERR_NOASSOC},
 
     {"QuotedLowerL", "%s\\test file.shlexec",   0x0, 33},
@@ -868,7 +868,7 @@ static void test_find_executable(void)
     ok(rc > 32, "FindExecutable(%s) returned %d\n", filename, rc);
 
     rc=(int)FindExecutableA("test file.sfe", NULL, command);
-    todo_wine ok(rc == SE_ERR_FNF, "FindExecutable(%s) returned %d\n", filename, rc);
+    ok(rc == SE_ERR_FNF, "FindExecutable(%s) returned %d\n", filename, rc);
 
     delete_test_association(".sfe");
 
