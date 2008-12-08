@@ -3897,10 +3897,27 @@ static inline void unloadVertexData(IWineD3DStateBlockImpl *stateblock) {
     unloadTexCoords(stateblock);
 }
 
+static inline void unload_numbered_array(IWineD3DStateBlockImpl *stateblock, WineD3DContext *context, int i)
+{
+    GL_EXTCALL(glDisableVertexAttribArrayARB(i));
+    checkGLcall("glDisableVertexAttribArrayARB(reg)");
+    /* Some Windows drivers(NV GF 7) use the latest value that was used when drawing with the now
+     * deactivated stream disabled, some other drivers(ATI, NV GF 8) set the undefined values to 0x00.
+     * Let's set them to 0x00 to avoid hitting some undefined aspects of OpenGL. All that is really
+     * important here is the glDisableVertexAttribArrayARB call above. The test shows that the refrast
+     * keeps dereferencing the pointers, which would cause crashes in some games like Half Life 2: Episode Two.
+     */
+    GL_EXTCALL(glVertexAttrib4NubARB(i, 0, 0, 0, 0));
+    checkGLcall("glVertexAttrib4NubARB(i, 0, 0, 0, 0)");
+
+    context->numbered_array_mask &= ~(1 << i);
+}
+
 /* This should match any arrays loaded in loadNumberedArrays
  * TODO: Only load / unload arrays if we have to.
  */
-static inline void unloadNumberedArrays(IWineD3DStateBlockImpl *stateblock) {
+static inline void unloadNumberedArrays(IWineD3DStateBlockImpl *stateblock, WineD3DContext *context)
+{
     /* disable any attribs (this is the same for both GLSL and ARB modes) */
     GLint maxAttribs = 16;
     int i;
@@ -3911,20 +3928,12 @@ static inline void unloadNumberedArrays(IWineD3DStateBlockImpl *stateblock) {
     if (glGetError() != GL_NO_ERROR)
         maxAttribs = 16;
     for (i = 0; i < maxAttribs; ++i) {
-        GL_EXTCALL(glDisableVertexAttribArrayARB(i));
-        checkGLcall("glDisableVertexAttribArrayARB(reg)");
-        /* Some Windows drivers(NV GF 7) use the latest value that was used when drawing with the now
-         * deactivated stream disabled, some other drivers(ATI, NV GF 8) set the undefined values to 0x00.
-         * Let's set them to 0x00 to avoid hitting some undefined aspects of OpenGL. All that is really
-         * important here is the glDisableVertexAttribArrayARB call above. The test shows that the refrast
-         * keeps dereferencing the pointers, which would cause crashes in some games like Half Life 2: Episode Two.
-         */
-        GL_EXTCALL(glVertexAttrib4NubARB(i, 0, 0, 0, 0));
-        checkGLcall("glVertexAttrib4NubARB(i, 0, 0, 0, 0)");
+        unload_numbered_array(stateblock, context, i);
     }
 }
 
-static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, const WineDirect3DVertexStridedData *strided)
+static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock,
+        const WineDirect3DVertexStridedData *strided, WineD3DContext *context)
 {
     GLint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? -1 : 0;
     int i;
@@ -3936,13 +3945,15 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, const 
     stateblock->wineD3DDevice->instancedDraw = FALSE;
 
     for (i = 0; i < MAX_ATTRIBS; i++) {
-
-        if (!strided->u.input[i].lpData && !strided->u.input[i].VBO)
+        if (!strided->u.input[i].VBO && !strided->u.input[i].lpData)
+        {
+            if (context->numbered_array_mask & (1 << i)) unload_numbered_array(stateblock, context, i);
             continue;
+        }
 
         /* Do not load instance data. It will be specified using glTexCoord by drawprim */
         if(stateblock->streamFlags[strided->u.input[i].streamNo] & WINED3DSTREAMSOURCE_INSTANCEDATA) {
-            GL_EXTCALL(glDisableVertexAttribArrayARB(i));
+            if (context->numbered_array_mask & (1 << i)) unload_numbered_array(stateblock, context, i);
             stateblock->wineD3DDevice->instancedDraw = TRUE;
             continue;
         }
@@ -3987,8 +3998,13 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, const 
                                 strided->u.input[i].lpData +
                                 stateblock->loadBaseVertexIndex * strided->u.input[i].dwStride +
                                 offset[strided->u.input[i].streamNo]) );
-                }
-            GL_EXTCALL(glEnableVertexAttribArrayARB(i));
+            }
+
+            if (!(context->numbered_array_mask & (1 << i)))
+            {
+                GL_EXTCALL(glEnableVertexAttribArrayARB(i));
+                context->numbered_array_mask |= (1 << i);
+            }
         } else {
             /* Stride = 0 means always the same values. glVertexAttribPointerARB doesn't do that. Instead disable the pointer and
              * set up the attribute statically. But we have to figure out the system memory address.
@@ -3998,7 +4014,8 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, const 
                 vb = (IWineD3DVertexBufferImpl *) stateblock->streamSource[strided->u.input[i].streamNo];
                 ptr += (long) vb->resource.allocatedMemory;
             }
-            GL_EXTCALL(glDisableVertexAttribArrayARB(i));
+
+            if (context->numbered_array_mask & (1 << i)) unload_numbered_array(stateblock, context, i);
 
             switch(strided->u.input[i].dwType) {
                 case WINED3DDECLTYPE_FLOAT1:
@@ -4324,6 +4341,8 @@ static void streamsrc(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
     BOOL fixup = FALSE;
     WineDirect3DVertexStridedData *dataLocations = &device->strided_streams;
     BOOL useVertexShaderFunction;
+    BOOL load_numbered = FALSE;
+    BOOL load_named = FALSE;
 
     if (device->vs_selected_mode != SHADER_NONE && stateblock->vertexShader &&
         ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.function != NULL) {
@@ -4357,39 +4376,49 @@ static void streamsrc(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
         useVertexShaderFunction = FALSE;
     }
 
-    /* Unload the old arrays before loading the new ones to get old junk out */
-    if(context->numberedArraysLoaded) {
-        unloadNumberedArrays(stateblock);
-        context->numberedArraysLoaded = FALSE;
-    }
-    if(context->namedArraysLoaded) {
-        unloadVertexData(stateblock);
-        context->namedArraysLoaded = FALSE;
-    }
-
     if(useVertexShaderFunction) {
         if(((IWineD3DVertexDeclarationImpl *) stateblock->vertexDecl)->half_float_conv_needed && !fixup) {
             TRACE("Using drawStridedSlow with vertex shaders for FLOAT16 conversion\n");
             device->useDrawStridedSlow = TRUE;
-            context->numberedArraysLoaded = FALSE;
         } else {
-            TRACE("Loading numbered arrays\n");
-            loadNumberedArrays(stateblock, dataLocations);
+            load_numbered = TRUE;
             device->useDrawStridedSlow = FALSE;
-            context->numberedArraysLoaded = TRUE;
         }
     } else if (fixup ||
                (dataLocations->u.s.pSize.lpData == NULL &&
                 dataLocations->u.s.diffuse.lpData == NULL &&
                 dataLocations->u.s.specular.lpData == NULL)) {
         /* Load the vertex data using named arrays */
-        TRACE("Loading vertex data\n");
-        loadVertexData(stateblock, dataLocations);
+        load_named = TRUE;
         device->useDrawStridedSlow = FALSE;
-        context->namedArraysLoaded = TRUE;
     } else {
         TRACE("Not loading vertex data\n");
         device->useDrawStridedSlow = TRUE;
+    }
+
+    if (context->numberedArraysLoaded && !load_numbered)
+    {
+        unloadNumberedArrays(stateblock, context);
+        context->numberedArraysLoaded = FALSE;
+        context->numbered_array_mask = 0;
+    }
+    else if (context->namedArraysLoaded)
+    {
+        unloadVertexData(stateblock);
+        context->namedArraysLoaded = FALSE;
+    }
+
+    if (load_numbered)
+    {
+        TRACE("Loading numbered arrays\n");
+        loadNumberedArrays(stateblock, dataLocations, context);
+        context->numberedArraysLoaded = TRUE;
+    }
+    else if (load_named)
+    {
+        TRACE("Loading vertex data\n");
+        loadVertexData(stateblock, dataLocations);
+        context->namedArraysLoaded = TRUE;
     }
 
 /* Generate some fixme's if unsupported functionality is being used */

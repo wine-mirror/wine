@@ -776,6 +776,7 @@ struct WineD3DContext {
     BOOL                    last_was_vshader;
     BOOL                    last_was_foggy_shader;
     BOOL                    namedArraysLoaded, numberedArraysLoaded;
+    DWORD                   numbered_array_mask;
     BOOL                    lastWasPow2Texture[MAX_TEXTURES];
     GLenum                  tracking_parm;     /* Which source is tracking current colour         */
     unsigned char           num_untracked_materials;
