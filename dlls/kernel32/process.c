@@ -1276,8 +1276,10 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline, const WCHA
             hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
         }
 
-        if (is_console_handle( hstdin ))  hstdin  = console_handle_unmap( hstdin );
-        if (is_console_handle( hstdout )) hstdout = console_handle_unmap( hstdout );
+        if (is_console_handle( hstdin ))
+            hstdin = wine_server_ptr_handle( console_handle_unmap( hstdin ));
+        if (is_console_handle( hstdout ))
+            hstdout = wine_server_ptr_handle( console_handle_unmap( hstdout ));
         wine_server_handle_to_fd( hstdin, FILE_READ_DATA, &stdin_fd, NULL );
         wine_server_handle_to_fd( hstdout, FILE_WRITE_DATA, &stdout_fd, NULL );
     }
@@ -1492,30 +1494,30 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         req->inherit_all    = inherit;
         req->create_flags   = flags;
         req->socket_fd      = socketfd[1];
-        req->exe_file       = hFile;
+        req->exe_file       = wine_server_obj_handle( hFile );
         req->process_access = PROCESS_ALL_ACCESS;
         req->process_attr   = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle) ? OBJ_INHERIT : 0;
         req->thread_access  = THREAD_ALL_ACCESS;
         req->thread_attr    = (tsa && (tsa->nLength >= sizeof(*tsa)) && tsa->bInheritHandle) ? OBJ_INHERIT : 0;
-        req->hstdin         = params->hStdInput;
-        req->hstdout        = params->hStdOutput;
-        req->hstderr        = params->hStdError;
+        req->hstdin         = wine_server_obj_handle( params->hStdInput );
+        req->hstdout        = wine_server_obj_handle( params->hStdOutput );
+        req->hstderr        = wine_server_obj_handle( params->hStdError );
 
         if ((flags & (CREATE_NEW_CONSOLE | DETACHED_PROCESS)) != 0)
         {
             /* this is temporary (for console handles). We have no way to control that the handle is invalid in child process otherwise */
-            if (is_console_handle(req->hstdin))  req->hstdin  = INVALID_HANDLE_VALUE;
-            if (is_console_handle(req->hstdout)) req->hstdout = INVALID_HANDLE_VALUE;
-            if (is_console_handle(req->hstderr)) req->hstderr = INVALID_HANDLE_VALUE;
+            if (is_console_handle(params->hStdInput))  req->hstdin  = wine_server_obj_handle( INVALID_HANDLE_VALUE );
+            if (is_console_handle(params->hStdOutput)) req->hstdout = wine_server_obj_handle( INVALID_HANDLE_VALUE );
+            if (is_console_handle(params->hStdError))  req->hstderr = wine_server_obj_handle( INVALID_HANDLE_VALUE );
             hstdin = hstdout = 0;
         }
         else
         {
-            if (is_console_handle(req->hstdin))  req->hstdin  = console_handle_unmap(req->hstdin);
-            if (is_console_handle(req->hstdout)) req->hstdout = console_handle_unmap(req->hstdout);
-            if (is_console_handle(req->hstderr)) req->hstderr = console_handle_unmap(req->hstderr);
-            hstdin  = req->hstdin;
-            hstdout = req->hstdout;
+            if (is_console_handle(params->hStdInput))  req->hstdin  = console_handle_unmap(params->hStdInput);
+            if (is_console_handle(params->hStdOutput)) req->hstdout = console_handle_unmap(params->hStdOutput);
+            if (is_console_handle(params->hStdError))  req->hstderr = console_handle_unmap(params->hStdError);
+            hstdin  = wine_server_ptr_handle( req->hstdin );
+            hstdout = wine_server_ptr_handle( req->hstdout );
         }
 
         wine_server_add_data( req, params, params->Size );
@@ -1524,10 +1526,10 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         {
             info->dwProcessId = (DWORD)reply->pid;
             info->dwThreadId  = (DWORD)reply->tid;
-            info->hProcess    = reply->phandle;
-            info->hThread     = reply->thandle;
+            info->hProcess    = wine_server_ptr_handle( reply->phandle );
+            info->hThread     = wine_server_ptr_handle( reply->thandle );
         }
-        process_info = reply->info;
+        process_info = wine_server_ptr_handle( reply->info );
     }
     SERVER_END_REQ;
 
@@ -1610,7 +1612,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     WaitForSingleObject( process_info, INFINITE );
     SERVER_START_REQ( get_new_process_info )
     {
-        req->info = process_info;
+        req->info = wine_server_obj_handle( process_info );
         wine_server_call( req );
         success = reply->success;
         err = reply->exit_code;

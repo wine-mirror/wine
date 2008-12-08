@@ -180,10 +180,10 @@ static NTSTATUS init_user_process_params( SIZE_T info_size, HANDLE *exe_file )
         if (!(status = wine_server_call( req )))
         {
             info_size = wine_server_reply_size( reply );
-            *exe_file = reply->exe_file;
-            params->hStdInput  = reply->hstdin;
-            params->hStdOutput = reply->hstdout;
-            params->hStdError  = reply->hstderr;
+            *exe_file = wine_server_ptr_handle( reply->exe_file );
+            params->hStdInput  = wine_server_ptr_handle( reply->hstdin );
+            params->hStdOutput = wine_server_ptr_handle( reply->hstdout );
+            params->hStdError  = wine_server_ptr_handle( reply->hstderr );
         }
     }
     SERVER_END_REQ;
@@ -386,7 +386,7 @@ static void DECLSPEC_NORETURN call_thread_func( PRTL_THREAD_START_ROUTINE rtl_fu
     /* send the exit code to the server */
     SERVER_START_REQ( terminate_thread )
     {
-        req->handle    = GetCurrentThread();
+        req->handle    = wine_server_obj_handle( GetCurrentThread() );
         req->exit_code = exit_code;
         wine_server_call( req );
         last = reply->last;
@@ -494,8 +494,8 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
         if (result.create_thread.status == STATUS_SUCCESS)
         {
             if (id) id->UniqueThread = ULongToHandle(result.create_thread.tid);
-            if (handle_ptr) *handle_ptr = result.create_thread.handle;
-            else NtClose( result.create_thread.handle );
+            if (handle_ptr) *handle_ptr = wine_server_ptr_handle( result.create_thread.handle );
+            else NtClose( wine_server_ptr_handle( result.create_thread.handle ));
         }
         return result.create_thread.status;
     }
@@ -512,7 +512,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
         req->request_fd = request_pipe[0];
         if (!(status = wine_server_call( req )))
         {
-            handle = reply->handle;
+            handle = wine_server_ptr_handle( reply->handle );
             tid = reply->tid;
         }
         close( request_pipe[0] );
@@ -610,7 +610,7 @@ void WINAPI RtlExitUserThread( ULONG status )
     SERVER_START_REQ( terminate_thread )
     {
         /* send the exit code to the server */
-        req->handle    = GetCurrentThread();
+        req->handle    = wine_server_obj_handle( GetCurrentThread() );
         req->exit_code = status;
         wine_server_call( req );
         last = reply->last;
@@ -645,7 +645,7 @@ NTSTATUS WINAPI NtOpenThread( HANDLE *handle, ACCESS_MASK access,
         req->access     = access;
         req->attributes = attr ? attr->Attributes : 0;
         ret = wine_server_call( req );
-        *handle = reply->handle;
+        *handle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
     return ret;
@@ -662,7 +662,7 @@ NTSTATUS WINAPI NtSuspendThread( HANDLE handle, PULONG count )
 
     SERVER_START_REQ( suspend_thread )
     {
-        req->handle = handle;
+        req->handle = wine_server_obj_handle( handle );
         if (!(ret = wine_server_call( req ))) *count = reply->count;
     }
     SERVER_END_REQ;
@@ -680,7 +680,7 @@ NTSTATUS WINAPI NtResumeThread( HANDLE handle, PULONG count )
 
     SERVER_START_REQ( resume_thread )
     {
-        req->handle = handle;
+        req->handle = wine_server_obj_handle( handle );
         if (!(ret = wine_server_call( req ))) *count = reply->count;
     }
     SERVER_END_REQ;
@@ -721,7 +721,7 @@ NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code )
 
     SERVER_START_REQ( terminate_thread )
     {
-        req->handle    = handle;
+        req->handle    = wine_server_obj_handle( handle );
         req->exit_code = exit_code;
         ret = wine_server_call( req );
         self = !ret && reply->self;
@@ -747,7 +747,7 @@ NTSTATUS WINAPI NtQueueApcThread( HANDLE handle, PNTAPCFUNC func, ULONG_PTR arg1
     NTSTATUS ret;
     SERVER_START_REQ( queue_apc )
     {
-        req->thread = handle;
+        req->thread = wine_server_obj_handle( handle );
         if (func)
         {
             req->call.type         = APC_USER;
@@ -790,7 +790,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     {
         SERVER_START_REQ( set_thread_context )
         {
-            req->handle  = handle;
+            req->handle  = wine_server_obj_handle( handle );
             req->flags   = context->ContextFlags;
             req->suspend = 0;
             wine_server_add_data( req, context, sizeof(*context) );
@@ -807,7 +807,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
                 {
                     SERVER_START_REQ( set_thread_context )
                     {
-                        req->handle  = handle;
+                        req->handle  = wine_server_obj_handle( handle );
                         req->flags   = context->ContextFlags;
                         req->suspend = 0;
                         wine_server_add_data( req, context, sizeof(*context) );
@@ -1089,7 +1089,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
     {
         SERVER_START_REQ( get_thread_context )
         {
-            req->handle  = handle;
+            req->handle  = wine_server_obj_handle( handle );
             req->flags   = context->ContextFlags;
             req->suspend = 0;
             wine_server_set_reply( req, &ctx, sizeof(ctx) );
@@ -1106,7 +1106,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
                 {
                     SERVER_START_REQ( get_thread_context )
                     {
-                        req->handle  = handle;
+                        req->handle  = wine_server_obj_handle( handle );
                         req->flags   = context->ContextFlags;
                         req->suspend = 0;
                         wine_server_set_reply( req, &ctx, sizeof(ctx) );
@@ -1173,7 +1173,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
 
             SERVER_START_REQ( get_thread_info )
             {
-                req->handle = handle;
+                req->handle = wine_server_obj_handle( handle );
                 req->tid_in = 0;
                 if (!(status = wine_server_call( req )))
                 {
@@ -1201,7 +1201,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
             /* This works on any thread */
             SERVER_START_REQ( get_thread_info )
             {
-                req->handle = handle;
+                req->handle = wine_server_obj_handle( handle );
                 req->tid_in = 0;
                 status = wine_server_call( req );
                 if (status == STATUS_SUCCESS)
@@ -1281,7 +1281,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
             {
                 SERVER_START_REQ( get_selector_entry )
                 {
-                    req->handle = handle;
+                    req->handle = wine_server_obj_handle( handle );
                     req->entry = tdi->Selector >> 3;
                     status = wine_server_call( req );
                     if (!status)
@@ -1310,7 +1310,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         {
             SERVER_START_REQ(get_thread_info)
             {
-                req->handle = handle;
+                req->handle = wine_server_obj_handle( handle );
                 req->tid_in = 0;
                 status = wine_server_call( req );
                 if (status == STATUS_SUCCESS)
@@ -1396,8 +1396,8 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
             TRACE("Setting ThreadImpersonationToken handle to %p\n", *phToken );
             SERVER_START_REQ( set_thread_info )
             {
-                req->handle   = handle;
-                req->token    = *phToken;
+                req->handle   = wine_server_obj_handle( handle );
+                req->token    = wine_server_obj_handle( *phToken );
                 req->mask     = SET_THREAD_INFO_TOKEN;
                 status = wine_server_call( req );
             }
@@ -1410,7 +1410,7 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
             if (length != sizeof(DWORD)) return STATUS_INVALID_PARAMETER;
             SERVER_START_REQ( set_thread_info )
             {
-                req->handle   = handle;
+                req->handle   = wine_server_obj_handle( handle );
                 req->priority = *pprio;
                 req->mask     = SET_THREAD_INFO_PRIORITY;
                 status = wine_server_call( req );
@@ -1426,7 +1426,7 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
             if (*paff & ~affinity_mask) return STATUS_INVALID_PARAMETER;
             SERVER_START_REQ( set_thread_info )
             {
-                req->handle   = handle;
+                req->handle   = wine_server_obj_handle( handle );
                 req->affinity = *paff;
                 req->mask     = SET_THREAD_INFO_AFFINITY;
                 status = wine_server_call( req );

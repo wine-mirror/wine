@@ -295,13 +295,13 @@ HANDLE WINAPI OpenConsoleW(LPCWSTR name, DWORD access, BOOL inherit, DWORD creat
 
     SERVER_START_REQ( open_console )
     {
-        req->from       = output;
+        req->from       = wine_server_obj_handle( output );
         req->access     = access;
         req->attributes = inherit ? OBJ_INHERIT : 0;
         req->share      = FILE_SHARE_READ | FILE_SHARE_WRITE;
         SetLastError(0);
         wine_server_call_err( req );
-        ret = reply->handle;
+        ret = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
     if (ret)
@@ -353,7 +353,7 @@ HANDLE WINAPI DuplicateConsoleHandle(HANDLE handle, DWORD access, BOOL inherit,
     HANDLE      ret;
 
     if (!is_console_handle(handle) ||
-        !DuplicateHandle(GetCurrentProcess(), console_handle_unmap(handle), 
+        !DuplicateHandle(GetCurrentProcess(), wine_server_ptr_handle(console_handle_unmap(handle)),
                          GetCurrentProcess(), &ret, access, inherit, options))
         return INVALID_HANDLE_VALUE;
     return console_handle_map(ret);
@@ -371,7 +371,7 @@ BOOL WINAPI CloseConsoleHandle(HANDLE handle)
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    return CloseHandle(console_handle_unmap(handle));
+    return CloseHandle(wine_server_ptr_handle(console_handle_unmap(handle)));
 }
 
 /******************************************************************
@@ -385,7 +385,8 @@ HANDLE WINAPI GetConsoleInputWaitHandle(void)
     {
         SERVER_START_REQ(get_console_wait_event)
         {
-            if (!wine_server_call_err( req )) console_wait_event = reply->handle;
+            if (!wine_server_call_err( req ))
+                console_wait_event = wine_server_ptr_handle( reply->handle );
         }
         SERVER_END_REQ;
     }
@@ -1794,7 +1795,8 @@ HANDLE WINAPI CreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode
         req->access     = dwDesiredAccess;
         req->attributes = (sa && sa->bInheritHandle) ? OBJ_INHERIT : 0;
         req->share      = dwShareMode;
-        if (!wine_server_call_err( req )) ret = console_handle_map(reply->handle_out);
+        if (!wine_server_call_err( req ))
+            ret = console_handle_map( wine_server_ptr_handle( reply->handle_out ));
     }
     SERVER_END_REQ;
 
@@ -1857,7 +1859,7 @@ BOOL WINAPI SetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
     {
         req->handle    = 0;
         req->mask      = SET_CONSOLE_INPUT_INFO_ACTIVE_SB;
-        req->active_sb = hConsoleOutput;
+        req->active_sb = wine_server_obj_handle( hConsoleOutput );
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;

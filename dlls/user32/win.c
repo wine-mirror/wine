@@ -236,7 +236,7 @@ static HWND *list_window_children( HDESK desktop, HWND hwnd, LPCWSTR class, DWOR
 
         SERVER_START_REQ( get_window_children )
         {
-            req->desktop = desktop;
+            req->desktop = wine_server_obj_handle( desktop );
             req->parent = hwnd;
             req->tid = tid;
             req->atom = atom;

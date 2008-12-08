@@ -52,7 +52,7 @@ NTSTATUS WINAPI NtTerminateProcess( HANDLE handle, LONG exit_code )
     BOOL self;
     SERVER_START_REQ( terminate_process )
     {
-        req->handle    = handle;
+        req->handle    = wine_server_obj_handle( handle );
         req->exit_code = exit_code;
         ret = wine_server_call( req );
         self = !ret && reply->self;
@@ -82,7 +82,7 @@ HANDLE __wine_make_process_system(void)
     HANDLE ret = 0;
     SERVER_START_REQ( make_process_system )
     {
-        if (!wine_server_call( req )) ret = reply->event;
+        if (!wine_server_call( req )) ret = wine_server_ptr_handle( reply->event );
     }
     SERVER_END_REQ;
     return ret;
@@ -158,7 +158,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
                 {
                     SERVER_START_REQ(get_process_info)
                     {
-                        req->handle = ProcessHandle;
+                        req->handle = wine_server_obj_handle( ProcessHandle );
                         if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
                         {
                             pbi.ExitStatus = reply->exit_code;
@@ -251,7 +251,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
 
                     SERVER_START_REQ(get_process_info)
                     {
-                      req->handle = ProcessHandle;
+                      req->handle = wine_server_obj_handle( ProcessHandle );
                       if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
                       {
                           pti.CreateTime.QuadPart = reply->start_time;
@@ -314,7 +314,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
         {
             UNICODE_STRING *image_file_name_str = ProcessInformation;
 
-            req->handle = ProcessHandle;
+            req->handle = wine_server_obj_handle( ProcessHandle );
             req->base_address = NULL; /* main module */
             wine_server_set_reply( req, image_file_name_str ? image_file_name_str + 1 : NULL,
                                    ProcessInformationLength > sizeof(UNICODE_STRING) ? ProcessInformationLength - sizeof(UNICODE_STRING) : 0 );
@@ -364,7 +364,7 @@ NTSTATUS WINAPI NtSetInformationProcess(
             return STATUS_INVALID_PARAMETER;
         SERVER_START_REQ( set_process_info )
         {
-            req->handle   = ProcessHandle;
+            req->handle   = wine_server_obj_handle( ProcessHandle );
             req->affinity = *(PDWORD_PTR)ProcessInformation;
             req->mask     = SET_PROCESS_INFO_AFFINITY;
             ret = wine_server_call( req );
@@ -380,7 +380,7 @@ NTSTATUS WINAPI NtSetInformationProcess(
 
             SERVER_START_REQ( set_process_info )
             {
-                req->handle   = ProcessHandle;
+                req->handle   = wine_server_obj_handle( ProcessHandle );
                 /* FIXME Foreground isn't used */
                 req->priority = ppc->PriorityClass;
                 req->mask     = SET_PROCESS_INFO_PRIORITY;
@@ -453,7 +453,7 @@ NTSTATUS  WINAPI NtOpenProcess(PHANDLE handle, ACCESS_MASK access,
         req->access     = access;
         req->attributes = attr ? attr->Attributes : 0;
         status = wine_server_call( req );
-        if (!status) *handle = reply->handle;
+        if (!status) *handle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
     return status;

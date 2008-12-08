@@ -89,7 +89,7 @@ NTSTATUS WINAPI RtlDeleteAtomFromAtomTable( RTL_ATOM_TABLE table, RTL_ATOM atom 
         SERVER_START_REQ( delete_atom )
         {
             req->atom = atom;
-            req->table = table;
+            req->table = wine_server_obj_handle( table );
             status = wine_server_call( req );
         }
         SERVER_END_REQ;
@@ -138,7 +138,7 @@ NTSTATUS WINAPI RtlQueryAtomInAtomTable( RTL_ATOM_TABLE table, RTL_ATOM atom, UL
         SERVER_START_REQ( get_atom_information )
         {
             req->atom = atom;
-            req->table = table;
+            req->table = wine_server_obj_handle( table );
             if (len && *len && name)
                 wine_server_set_reply( req, name, *len );
             status = wine_server_call( req );
@@ -185,7 +185,7 @@ NTSTATUS WINAPI RtlCreateAtomTable( ULONG size, RTL_ATOM_TABLE* table )
         {
             req->entries = size;
             status = wine_server_call( req );
-            *table = reply->table;
+            *table = wine_server_ptr_handle( reply->table );
         }
         SERVER_END_REQ;
     }
@@ -218,7 +218,7 @@ NTSTATUS WINAPI RtlAddAtomToAtomTable( RTL_ATOM_TABLE table, const WCHAR* name, 
             SERVER_START_REQ( add_atom )
             {
                 wine_server_add_data( req, name, len * sizeof(WCHAR) );
-                req->table = table;
+                req->table = wine_server_obj_handle( table );
                 status = wine_server_call( req );
                 *atom = reply->atom;
             }
@@ -248,7 +248,7 @@ NTSTATUS WINAPI RtlLookupAtomInAtomTable( RTL_ATOM_TABLE table, const WCHAR* nam
             SERVER_START_REQ( find_atom )
             {
                 wine_server_add_data( req, name, len * sizeof(WCHAR) );
-                req->table = table;
+                req->table = wine_server_obj_handle( table );
                 status = wine_server_call( req );
                 *atom = reply->atom;
             }
@@ -272,7 +272,7 @@ NTSTATUS WINAPI RtlEmptyAtomTable( RTL_ATOM_TABLE table, BOOLEAN delete_pinned )
     {
         SERVER_START_REQ( empty_atom_table )
         {
-            req->table = table;
+            req->table = wine_server_obj_handle( table );
             req->if_pinned = delete_pinned;
             status = wine_server_call( req );
         }
@@ -293,7 +293,7 @@ NTSTATUS WINAPI RtlPinAtomInAtomTable( RTL_ATOM_TABLE table, RTL_ATOM atom )
 
     SERVER_START_REQ( set_atom_information )
     {
-        req->table = table;
+        req->table = wine_server_obj_handle( table );
         req->atom = atom;
         req->pinned = TRUE;
         status = wine_server_call( req );
@@ -320,7 +320,7 @@ NTSTATUS WINAPI NtAddAtom( const WCHAR* name, ULONG length, RTL_ATOM* atom )
         SERVER_START_REQ( add_atom )
         {
             wine_server_add_data( req, name, length );
-            req->table = NULL;
+            req->table = 0;
             status = wine_server_call( req );
             *atom = reply->atom;
         }
@@ -341,7 +341,7 @@ NTSTATUS WINAPI NtDeleteAtom(RTL_ATOM atom)
     SERVER_START_REQ( delete_atom )
     {
         req->atom = atom;
-        req->table = NULL;
+        req->table = 0;
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -361,7 +361,7 @@ NTSTATUS WINAPI NtFindAtom( const WCHAR* name, ULONG length, RTL_ATOM* atom )
         SERVER_START_REQ( find_atom )
         {
             wine_server_add_data( req, name, length );
-            req->table = NULL;
+            req->table = 0;
             status = wine_server_call( req );
             *atom = reply->atom;
         }
@@ -407,7 +407,7 @@ NTSTATUS WINAPI NtQueryInformationAtom( RTL_ATOM atom, ATOM_INFORMATION_CLASS cl
                 SERVER_START_REQ( get_atom_information )
                 {
                     req->atom = atom;
-                    req->table = NULL;
+                    req->table = 0;
                     if (name_len) wine_server_set_reply( req, abi->Name, name_len );
                     status = wine_server_call( req );
                     if (status == STATUS_SUCCESS)

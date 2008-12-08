@@ -422,7 +422,7 @@ static void _enable_event( HANDLE s, unsigned int event,
 {
     SERVER_START_REQ( enable_socket_event )
     {
-        req->handle = s;
+        req->handle = wine_server_obj_handle( s );
         req->mask   = event;
         req->sstate = sstate;
         req->cstate = cstate;
@@ -436,7 +436,7 @@ static int _is_blocking(SOCKET s)
     int ret;
     SERVER_START_REQ( get_socket_event )
     {
-        req->handle  = SOCKET2HANDLE(s);
+        req->handle  = wine_server_obj_handle( SOCKET2HANDLE(s) );
         req->service = FALSE;
         req->c_event = 0;
         wine_server_call( req );
@@ -451,7 +451,7 @@ static unsigned int _get_sock_mask(SOCKET s)
     unsigned int ret;
     SERVER_START_REQ( get_socket_event )
     {
-        req->handle  = SOCKET2HANDLE(s);
+        req->handle  = wine_server_obj_handle( SOCKET2HANDLE(s) );
         req->service = FALSE;
         req->c_event = 0;
         wine_server_call( req );
@@ -474,7 +474,7 @@ static int _get_sock_error(SOCKET s, unsigned int bit)
 
     SERVER_START_REQ( get_socket_event )
     {
-        req->handle  = SOCKET2HANDLE(s);
+        req->handle  = wine_server_obj_handle( SOCKET2HANDLE(s) );
         req->service = FALSE;
         req->c_event = 0;
         wine_server_set_reply( req, events, sizeof(events) );
@@ -1325,7 +1325,7 @@ static int WS2_register_async_shutdown( SOCKET s, int type )
 
     SERVER_START_REQ( register_async )
     {
-        req->handle = wsa->hSocket;
+        req->handle = wine_server_obj_handle( wsa->hSocket );
         req->type   = type;
         req->async.callback = WS2_async_shutdown;
         req->async.iosb     = &wsa->local_iosb;
@@ -1371,11 +1371,11 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
         }
         SERVER_START_REQ( accept_socket )
         {
-            req->lhandle    = SOCKET2HANDLE(s);
+            req->lhandle    = wine_server_obj_handle( SOCKET2HANDLE(s) );
             req->access     = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
             req->attributes = OBJ_INHERIT;
             set_error( wine_server_call( req ) );
-            as = HANDLE2SOCKET( reply->handle );
+            as = HANDLE2SOCKET( wine_server_ptr_handle( reply->handle ));
         }
         SERVER_END_REQ;
         if (as)
@@ -2609,7 +2609,7 @@ static void WS_AddCompletion( SOCKET sock, ULONG_PTR CompletionValue, NTSTATUS C
 
     SERVER_START_REQ( add_fd_completion )
     {
-        req->handle      = SOCKET2HANDLE(sock);
+        req->handle      = wine_server_obj_handle( SOCKET2HANDLE(sock) );
         req->cvalue      = CompletionValue;
         req->status      = CompletionStatus;
         req->information = Information;
@@ -2734,13 +2734,13 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
             SERVER_START_REQ( register_async )
             {
-                req->handle = wsa->hSocket;
+                req->handle = wine_server_obj_handle( wsa->hSocket );
                 req->type   = ASYNC_TYPE_WRITE;
                 req->async.callback = WS2_async_send;
                 req->async.iosb     = iosb;
                 req->async.arg      = wsa;
                 req->async.apc      = ws2_async_apc;
-                req->async.event    = lpCompletionRoutine ? 0 : lpOverlapped->hEvent;
+                req->async.event    = wine_server_obj_handle( lpCompletionRoutine ? 0 : lpOverlapped->hEvent );
                 req->async.cvalue   = cvalue;
                 err = wine_server_call( req );
             }
@@ -3625,9 +3625,9 @@ int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lp
 
     SERVER_START_REQ( get_socket_event )
     {
-        req->handle  = SOCKET2HANDLE(s);
+        req->handle  = wine_server_obj_handle( SOCKET2HANDLE(s) );
         req->service = TRUE;
-        req->c_event = hEvent;
+        req->c_event = wine_server_obj_handle( hEvent );
         wine_server_set_reply( req, lpEvent->iErrorCode, sizeof(lpEvent->iErrorCode) );
         if (!(ret = wine_server_call(req))) lpEvent->lNetworkEvents = reply->pmask & reply->mask;
     }
@@ -3648,9 +3648,9 @@ int WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEvent, LONG lEvent)
 
     SERVER_START_REQ( set_socket_event )
     {
-        req->handle = SOCKET2HANDLE(s);
+        req->handle = wine_server_obj_handle( SOCKET2HANDLE(s) );
         req->mask   = lEvent;
-        req->event  = hEvent;
+        req->event  = wine_server_obj_handle( hEvent );
         req->window = 0;
         req->msg    = 0;
         ret = wine_server_call( req );
@@ -3717,7 +3717,7 @@ INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent)
 
     SERVER_START_REQ( set_socket_event )
     {
-        req->handle = SOCKET2HANDLE(s);
+        req->handle = wine_server_obj_handle( SOCKET2HANDLE(s) );
         req->mask   = lEvent;
         req->event  = 0;
         req->window = hWnd;
@@ -3840,7 +3840,7 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
         req->attributes = OBJ_INHERIT;
         req->flags      = dwFlags;
         set_error( wine_server_call( req ) );
-        ret = HANDLE2SOCKET( reply->handle );
+        ret = HANDLE2SOCKET( wine_server_ptr_handle( reply->handle ));
     }
     SERVER_END_REQ;
     if (ret)
@@ -4257,13 +4257,13 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
                 SERVER_START_REQ( register_async )
                 {
-                    req->handle = wsa->hSocket;
+                    req->handle = wine_server_obj_handle( wsa->hSocket );
                     req->type   = ASYNC_TYPE_READ;
                     req->async.callback = WS2_async_recv;
                     req->async.iosb     = iosb;
                     req->async.arg      = wsa;
                     req->async.apc      = ws2_async_apc;
-                    req->async.event    = lpCompletionRoutine ? 0 : lpOverlapped->hEvent;
+                    req->async.event    = wine_server_obj_handle( lpCompletionRoutine ? 0 : lpOverlapped->hEvent );
                     req->async.cvalue   = cvalue;
                     err = wine_server_call( req );
                 }
@@ -4412,8 +4412,8 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
                case CF_DEFER:
                        SERVER_START_REQ( set_socket_deferred )
                        {
-                           req->handle = SOCKET2HANDLE(s);
-                           req->deferred = SOCKET2HANDLE(cs);
+                           req->handle = wine_server_obj_handle( SOCKET2HANDLE(s) );
+                           req->deferred = wine_server_obj_handle( SOCKET2HANDLE(cs) );
                            if ( !wine_server_call_err ( req ) )
                            {
                                SetLastError( WSATRY_AGAIN );

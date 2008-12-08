@@ -1568,7 +1568,7 @@ NtAccessCheck(
         DWORD revision;
         SECURITY_DESCRIPTOR_CONTROL control;
 
-        req->handle = ClientToken;
+        req->handle = wine_server_obj_handle( ClientToken );
         req->desired_access = DesiredAccess;
         req->mapping_read = GenericMapping->GenericRead;
         req->mapping_write = GenericMapping->GenericWrite;
@@ -1681,7 +1681,7 @@ NTSTATUS WINAPI NtSetSecurityObject(HANDLE Handle,
 
     SERVER_START_REQ( set_security_object )
     {
-        req->handle = Handle;
+        req->handle = wine_server_obj_handle( Handle );
         req->security_info = SecurityInformation;
 
         wine_server_add_data( req, &sd, sizeof(sd) );

@@ -374,7 +374,7 @@ static NTSTATUS get_timeouts(HANDLE handle, SERIAL_TIMEOUTS* st)
     NTSTATUS    status;
     SERVER_START_REQ( get_serial_info )
     {
-        req->handle = handle;
+        req->handle = wine_server_obj_handle( handle );
         if (!(status = wine_server_call( req )))
         {
             st->ReadIntervalTimeout         = reply->readinterval;
@@ -394,7 +394,7 @@ static NTSTATUS get_wait_mask(HANDLE hDevice, DWORD* mask)
 
     SERVER_START_REQ( get_serial_info )
     {
-        req->handle = hDevice;
+        req->handle = wine_server_obj_handle( hDevice );
         if (!(status = wine_server_call( req )))
             *mask = reply->eventmask;
     }
@@ -772,7 +772,7 @@ static NTSTATUS set_timeouts(HANDLE handle, const SERIAL_TIMEOUTS* st)
 
     SERVER_START_REQ( set_serial_info )
     {
-        req->handle       = handle;
+        req->handle       = wine_server_obj_handle( handle );
         req->flags        = SERIALINFO_SET_TIMEOUTS;
         req->readinterval = st->ReadIntervalTimeout ;
         req->readmult     = st->ReadTotalTimeoutMultiplier ;
@@ -791,7 +791,7 @@ static NTSTATUS set_wait_mask(HANDLE hDevice, DWORD mask)
 
     SERVER_START_REQ( set_serial_info )
     {
-        req->handle    = hDevice;
+        req->handle    = wine_server_obj_handle( hDevice );
         req->flags     = SERIALINFO_SET_MASK;
         req->eventmask = mask;
         status = wine_server_call( req );

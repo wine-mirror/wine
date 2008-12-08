@@ -166,12 +166,12 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
         {
             req->access     = access;
             req->attributes = attr->Attributes;
-            req->rootdir    = attr->RootDirectory;
+            req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
             req->sharing    = sharing;
             req->options    = options;
             wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
             io->u.Status = wine_server_call( req );
-            *handle = reply->handle;
+            *handle = wine_server_ptr_handle( reply->handle );
         }
         SERVER_END_REQ;
         if (io->u.Status == STATUS_SUCCESS) io->Information = FILE_OPENED;
@@ -215,7 +215,7 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
             if (objattr.sd_len) wine_server_add_data( req, sd, objattr.sd_len );
             wine_server_add_data( req, unix_name.Buffer, unix_name.Length );
             io->u.Status = wine_server_call( req );
-            *handle = reply->handle;
+            *handle = wine_server_ptr_handle( reply->handle );
         }
         SERVER_END_REQ;
         NTDLL_free_struct_sd( sd );
@@ -448,7 +448,7 @@ static NTSTATUS get_io_timeouts( HANDLE handle, enum server_fd_type type, ULONG 
             timeouts->interval = 0;  /* return as soon as we got something */
             SERVER_START_REQ( set_mailslot_info )
             {
-                req->handle = handle;
+                req->handle = wine_server_obj_handle( handle );
                 req->flags = 0;
                 if (!(status = wine_server_call( req )) &&
                     reply->read_timeout != TIMEOUT_INFINITE)
@@ -652,14 +652,14 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
 
             SERVER_START_REQ( register_async )
             {
-                req->handle = hFile;
+                req->handle = wine_server_obj_handle( hFile );
                 req->type   = ASYNC_TYPE_READ;
                 req->count  = length;
                 req->async.callback = FILE_AsyncReadService;
                 req->async.iosb     = io_status;
                 req->async.arg      = fileio;
                 req->async.apc      = fileio_apc;
-                req->async.event    = hEvent;
+                req->async.event    = wine_server_obj_handle( hEvent );
                 req->async.cvalue   = cvalue;
                 status = wine_server_call( req );
             }
@@ -976,14 +976,14 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 
             SERVER_START_REQ( register_async )
             {
-                req->handle = hFile;
+                req->handle = wine_server_obj_handle( hFile );
                 req->type   = ASYNC_TYPE_WRITE;
                 req->count  = length;
                 req->async.callback = FILE_AsyncWriteService;
                 req->async.iosb     = io_status;
                 req->async.arg      = fileio;
                 req->async.apc      = fileio_apc;
-                req->async.event    = hEvent;
+                req->async.event    = wine_server_obj_handle( hEvent );
                 req->async.cvalue   = cvalue;
                 status = wine_server_call( req );
             }
@@ -1154,7 +1154,7 @@ static NTSTATUS ioctl_completion( void *arg, IO_STATUS_BLOCK *io, NTSTATUS statu
     {
         SERVER_START_REQ( get_ioctl_result )
         {
-            req->handle   = async->handle;
+            req->handle   = wine_server_obj_handle( async->handle );
             req->user_arg = async;
             wine_server_set_reply( req, async->buffer, async->size );
             if (!(status = wine_server_call( req )))
@@ -1197,19 +1197,19 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
 
     SERVER_START_REQ( ioctl )
     {
-        req->handle         = handle;
+        req->handle         = wine_server_obj_handle( handle );
         req->code           = code;
         req->async.callback = ioctl_completion;
         req->async.iosb     = io;
         req->async.arg      = async;
         req->async.apc      = (apc || event) ? ioctl_apc : NULL;
-        req->async.event    = event;
+        req->async.event    = wine_server_obj_handle( event );
         req->async.cvalue   = cvalue;
         wine_server_add_data( req, in_buffer, in_size );
         wine_server_set_reply( req, out_buffer, out_size );
         if (!(status = wine_server_call( req )))
             io->Information = wine_server_reply_size( reply );
-        wait_handle = reply->wait;
+        wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
     }
     SERVER_END_REQ;
@@ -1688,7 +1688,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
 
             SERVER_START_REQ( set_mailslot_info )
             {
-                req->handle = hFile;
+                req->handle = wine_server_obj_handle( hFile );
                 req->flags = 0;
                 io->u.Status = wine_server_call( req );
                 if( io->u.Status == STATUS_SUCCESS )
@@ -1727,7 +1727,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
 
             SERVER_START_REQ( get_named_pipe_info )
             {
-                req->handle = hFile;
+                req->handle = wine_server_obj_handle( hFile );
                 if (!(io->u.Status = wine_server_call( req )))
                 {
                     pli->NamedPipeType = (reply->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE) ? 
@@ -1901,7 +1901,7 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
 
             SERVER_START_REQ( set_mailslot_info )
             {
-                req->handle = handle;
+                req->handle = wine_server_obj_handle( handle );
                 req->flags = MAILSLOT_SET_READ_TIMEOUT;
                 req->read_timeout = info->ReadTimeout.QuadPart;
                 io->u.Status = wine_server_call( req );
@@ -1917,8 +1917,8 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
 
             SERVER_START_REQ( set_completion_info )
             {
-                req->handle   = handle;
-                req->chandle  = info->CompletionPort;
+                req->handle   = wine_server_obj_handle( handle );
+                req->chandle  = wine_server_obj_handle( info->CompletionPort );
                 req->ckey     = info->CompletionKey;
                 io->u.Status  = wine_server_call( req );
             }
@@ -2384,9 +2384,9 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK* IoStatusBlock
 
     SERVER_START_REQ( flush_file )
     {
-        req->handle = hFile;
+        req->handle = wine_server_obj_handle( hFile );
         ret = wine_server_call( req );
-        hEvent = reply->event;
+        hEvent = wine_server_ptr_handle( reply->event );
     }
     SERVER_END_REQ;
     if (!ret && hEvent)
@@ -2429,13 +2429,13 @@ NTSTATUS WINAPI NtLockFile( HANDLE hFile, HANDLE lock_granted_event,
     {
         SERVER_START_REQ( lock_file )
         {
-            req->handle      = hFile;
+            req->handle      = wine_server_obj_handle( hFile );
             req->offset      = offset->QuadPart;
             req->count       = count->QuadPart;
             req->shared      = !exclusive;
             req->wait        = !dont_wait;
             ret = wine_server_call( req );
-            handle = reply->handle;
+            handle = wine_server_ptr_handle( reply->handle );
             async  = reply->overlapped;
         }
         SERVER_END_REQ;
@@ -2491,7 +2491,7 @@ NTSTATUS WINAPI NtUnlockFile( HANDLE hFile, PIO_STATUS_BLOCK io_status,
 
     SERVER_START_REQ( unlock_file )
     {
-        req->handle = hFile;
+        req->handle = wine_server_obj_handle( hFile );
         req->offset = offset->QuadPart;
         req->count  = count->QuadPart;
         status = wine_server_call( req );
@@ -2528,7 +2528,7 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
     {
         req->access  = access;
         req->attributes = attr->Attributes;
-        req->rootdir = attr->RootDirectory;
+        req->rootdir = wine_server_obj_handle( attr->RootDirectory );
         req->options = options;
         req->flags = 
             (pipe_type) ? NAMED_PIPE_MESSAGE_STREAM_WRITE : 0 |
@@ -2541,7 +2541,7 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
         wine_server_add_data( req, attr->ObjectName->Buffer,
                               attr->ObjectName->Length );
         status = wine_server_call( req );
-        if (!status) *handle = reply->handle;
+        if (!status) *handle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
     return status;
@@ -2580,7 +2580,7 @@ NTSTATUS WINAPI NtCancelIoFile( HANDLE hFile, PIO_STATUS_BLOCK io_status )
 
     SERVER_START_REQ( cancel_async )
     {
-        req->handle = hFile;
+        req->handle = wine_server_obj_handle( hFile );
         wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -2638,14 +2638,14 @@ NTSTATUS WINAPI NtCreateMailslotFile(PHANDLE pHandle, ULONG DesiredAccess,
     {
         req->access = DesiredAccess;
         req->attributes = attr->Attributes;
-        req->rootdir = attr->RootDirectory;
+        req->rootdir = wine_server_obj_handle( attr->RootDirectory );
         req->max_msgsize = MaxMessageSize;
         req->read_timeout = timeout.QuadPart;
         wine_server_add_data( req, attr->ObjectName->Buffer,
                               attr->ObjectName->Length );
         ret = wine_server_call( req );
         if( ret == STATUS_SUCCESS )
-            *pHandle = reply->handle;
+            *pHandle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
  

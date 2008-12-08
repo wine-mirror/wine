@@ -21,6 +21,8 @@
 #ifndef __WINE_KERNEL_PRIVATE_H
 #define __WINE_KERNEL_PRIVATE_H
 
+#include "wine/server.h"
+
 struct tagSYSLEVEL;
 
 struct kernel_thread_data
@@ -56,9 +58,9 @@ static inline HANDLE console_handle_map(HANDLE h)
 }
 
 /* map a kernel32 console handle onto a real wineserver handle */
-static inline HANDLE console_handle_unmap(HANDLE h)
+static inline obj_handle_t console_handle_unmap(HANDLE h)
 {
-    return h != INVALID_HANDLE_VALUE ? (HANDLE)((UINT_PTR)h ^ 3) : INVALID_HANDLE_VALUE;
+    return wine_server_obj_handle( h != INVALID_HANDLE_VALUE ? (HANDLE)((UINT_PTR)h ^ 3) : INVALID_HANDLE_VALUE );
 }
 
 extern HMODULE kernel32_handle;

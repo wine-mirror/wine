@@ -80,13 +80,13 @@ NTSTATUS WINAPI NtDuplicateToken(
 
     SERVER_START_REQ( duplicate_token )
     {
-        req->handle              = ExistingToken;
+        req->handle              = wine_server_obj_handle( ExistingToken );
         req->access              = DesiredAccess;
         req->attributes          = ObjectAttributes ? ObjectAttributes->Attributes : 0;
         req->primary             = (TokenType == TokenPrimary);
         req->impersonation_level = ImpersonationLevel;
         status = wine_server_call( req );
-        if (!status) *NewToken = reply->new_handle;
+        if (!status) *NewToken = wine_server_ptr_handle( reply->new_handle );
     }
     SERVER_END_REQ;
 
@@ -118,12 +118,12 @@ NTSTATUS WINAPI NtOpenProcessTokenEx( HANDLE process, DWORD access, DWORD attrib
 
     SERVER_START_REQ( open_token )
     {
-        req->handle     = process;
+        req->handle     = wine_server_obj_handle( process );
         req->access     = access;
         req->attributes = attributes;
         req->flags      = 0;
         ret = wine_server_call( req );
-        if (!ret) *handle = reply->token;
+        if (!ret) *handle = wine_server_ptr_handle( reply->token );
     }
     SERVER_END_REQ;
     return ret;
@@ -155,13 +155,13 @@ NTSTATUS WINAPI NtOpenThreadTokenEx( HANDLE thread, DWORD access, BOOLEAN as_sel
 
     SERVER_START_REQ( open_token )
     {
-        req->handle     = thread;
+        req->handle     = wine_server_obj_handle( thread );
         req->access     = access;
         req->attributes = attributes;
         req->flags      = OPEN_TOKEN_THREAD;
         if (as_self) req->flags |= OPEN_TOKEN_AS_SELF;
         ret = wine_server_call( req );
-        if (!ret) *handle = reply->token;
+        if (!ret) *handle = wine_server_ptr_handle( reply->token );
     }
     SERVER_END_REQ;
 
@@ -189,7 +189,7 @@ NTSTATUS WINAPI NtAdjustPrivilegesToken(
 
     SERVER_START_REQ( adjust_token_privileges )
     {
-        req->handle = TokenHandle;
+        req->handle = wine_server_obj_handle( TokenHandle );
         req->disable_all = DisableAllPrivileges;
         req->get_modified_state = (PreviousState != NULL);
         if (!DisableAllPrivileges)
@@ -276,7 +276,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
             PSID sid = (PSID) (tuser + 1);
             DWORD sid_len = tokeninfolength < sizeof(TOKEN_USER) ? 0 : tokeninfolength - sizeof(TOKEN_USER);
 
-            req->handle = token;
+            req->handle = wine_server_obj_handle( token );
             wine_server_set_reply( req, sid, sid_len );
             status = wine_server_call( req );
             if (retlen) *retlen = reply->user_len + sizeof(TOKEN_USER);
@@ -304,7 +304,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
             {
                 TOKEN_GROUPS *groups = tokeninfo;
 
-                req->handle = token;
+                req->handle = wine_server_obj_handle( token );
                 wine_server_set_reply( req, buffer, server_buf_len );
                 status = wine_server_call( req );
                 if (status == STATUS_BUFFER_TOO_SMALL)
@@ -369,7 +369,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
         SERVER_START_REQ( get_token_privileges )
         {
             TOKEN_PRIVILEGES *tpriv = tokeninfo;
-            req->handle = token;
+            req->handle = wine_server_obj_handle( token );
             if (tpriv && tokeninfolength > FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges ))
                 wine_server_set_reply( req, tpriv->Privileges, tokeninfolength - FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges ) );
             status = wine_server_call( req );
@@ -393,7 +393,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
         SERVER_START_REQ( get_token_impersonation_level )
         {
             SECURITY_IMPERSONATION_LEVEL *impersonation_level = tokeninfo;
-            req->handle = token;
+            req->handle = wine_server_obj_handle( token );
             status = wine_server_call( req );
             if (status == STATUS_SUCCESS)
                 *impersonation_level = reply->impersonation_level;
@@ -404,7 +404,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
         SERVER_START_REQ( get_token_statistics )
         {
             TOKEN_STATISTICS *statistics = tokeninfo;
-            req->handle = token;
+            req->handle = wine_server_obj_handle( token );
             status = wine_server_call( req );
             if (status == STATUS_SUCCESS)
             {
@@ -433,7 +433,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
         SERVER_START_REQ( get_token_statistics )
         {
             TOKEN_TYPE *token_type = tokeninfo;
-            req->handle = token;
+            req->handle = wine_server_obj_handle( token );
             status = wine_server_call( req );
             if (status == STATUS_SUCCESS)
                 *token_type = reply->primary ? TokenPrimary : TokenImpersonation;
@@ -493,7 +493,7 @@ NTSTATUS WINAPI NtPrivilegeCheck(
     NTSTATUS status;
     SERVER_START_REQ( check_token_privileges )
     {
-        req->handle = ClientToken;
+        req->handle = wine_server_obj_handle( ClientToken );
         req->all_required = ((RequiredPrivileges->Control & PRIVILEGE_SET_ALL_NECESSARY) ? TRUE : FALSE);
         wine_server_add_data( req, RequiredPrivileges->Privilege,
             RequiredPrivileges->PrivilegeCount * sizeof(RequiredPrivileges->Privilege[0]) );
@@ -788,7 +788,8 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                 req->flags      = SNAP_PROCESS | SNAP_THREAD;
                 req->attributes = 0;
                 req->pid        = 0;
-                if (!(ret = wine_server_call( req ))) hSnap = reply->handle;
+                if (!(ret = wine_server_call( req )))
+                    hSnap = wine_server_ptr_handle( reply->handle );
             }
             SERVER_END_REQ;
             len = 0;
@@ -796,7 +797,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             {
                 SERVER_START_REQ( next_process )
                 {
-                    req->handle = hSnap;
+                    req->handle = wine_server_obj_handle( hSnap );
                     req->reset = (len == 0);
                     wine_server_set_reply( req, procname, sizeof(procname)-sizeof(WCHAR) );
                     if (!(ret = wine_server_call( req )))
@@ -854,7 +855,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                     {
                         SERVER_START_REQ( next_thread )
                         {
-                            req->handle = hSnap;
+                            req->handle = wine_server_obj_handle( hSnap );
                             req->reset = (j == 0);
                             if (!(ret = wine_server_call( req )))
                             {

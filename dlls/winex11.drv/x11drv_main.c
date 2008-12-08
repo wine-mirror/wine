@@ -605,7 +605,7 @@ static void set_queue_display_fd( Display *display )
     }
     SERVER_START_REQ( set_queue_fd )
     {
-        req->handle = handle;
+        req->handle = wine_server_obj_handle( handle );
         ret = wine_server_call( req );
     }
     SERVER_END_REQ;

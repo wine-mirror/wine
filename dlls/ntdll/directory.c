@@ -2311,7 +2311,7 @@ static NTSTATUS read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, NTSTATUS st
 
     SERVER_START_REQ( read_change )
     {
-        req->handle = info->FileHandle;
+        req->handle = wine_server_obj_handle( info->FileHandle );
         wine_server_set_reply( req, path, PATH_MAX );
         ret = wine_server_call( req );
         action = reply->action;
@@ -2396,7 +2396,7 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
 
     SERVER_START_REQ( read_directory_changes )
     {
-        req->handle     = FileHandle;
+        req->handle     = wine_server_obj_handle( FileHandle );
         req->filter     = CompletionFilter;
         req->want_data  = (Buffer != NULL);
         req->subtree    = WatchTree;
@@ -2404,7 +2404,7 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
         req->async.iosb     = IoStatusBlock;
         req->async.arg      = info;
         req->async.apc      = read_changes_user_apc;
-        req->async.event    = Event;
+        req->async.event    = wine_server_obj_handle( Event );
         req->async.cvalue   = cvalue;
         status = wine_server_call( req );
     }

@@ -153,7 +153,7 @@ void wait_suspend( CONTEXT *context )
     /* store the context we got at suspend time */
     SERVER_START_REQ( set_thread_context )
     {
-        req->handle  = GetCurrentThread();
+        req->handle  = wine_server_obj_handle( GetCurrentThread() );
         req->flags   = CONTEXT_FULL;
         req->suspend = 1;
         wine_server_add_data( req, context, sizeof(*context) );
@@ -168,7 +168,7 @@ void wait_suspend( CONTEXT *context )
     /* retrieve the new context */
     SERVER_START_REQ( get_thread_context )
     {
-        req->handle  = GetCurrentThread();
+        req->handle  = wine_server_obj_handle( GetCurrentThread() );
         req->flags   = CONTEXT_FULL;
         req->suspend = 1;
         wine_server_set_reply( req, context, sizeof(*context) );
@@ -197,7 +197,7 @@ static NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTE
         req->first   = first_chance;
         wine_server_add_data( req, context, sizeof(*context) );
         wine_server_add_data( req, rec, sizeof(*rec) );
-        if (!wine_server_call( req )) handle = reply->handle;
+        if (!wine_server_call( req )) handle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
     if (!handle) return 0;
@@ -206,7 +206,7 @@ static NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTE
 
     SERVER_START_REQ( get_exception_status )
     {
-        req->handle = handle;
+        req->handle = wine_server_obj_handle( handle );
         wine_server_set_reply( req, context, sizeof(*context) );
         ret = wine_server_call( req );
     }

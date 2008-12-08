@@ -96,7 +96,7 @@ HWINSTA WINAPI CreateWindowStationW( LPCWSTR name, DWORD reserved, ACCESS_MASK a
         wine_server_add_data( req, name, len * sizeof(WCHAR) );
         /* it doesn't seem to set last error */
         wine_server_call( req );
-        ret = reply->handle;
+        ret = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
     return ret;
@@ -138,7 +138,7 @@ HWINSTA WINAPI OpenWindowStationW( LPCWSTR name, BOOL inherit, ACCESS_MASK acces
         req->access     = access;
         req->attributes = OBJ_CASE_INSENSITIVE | (inherit ? OBJ_INHERIT : 0);
         wine_server_add_data( req, name, len * sizeof(WCHAR) );
-        if (!wine_server_call_err( req )) ret = reply->handle;
+        if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
     return ret;
@@ -153,7 +153,7 @@ BOOL WINAPI CloseWindowStation( HWINSTA handle )
     BOOL ret;
     SERVER_START_REQ( close_winstation )
     {
-        req->handle = handle;
+        req->handle = wine_server_obj_handle( handle );
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
@@ -170,7 +170,8 @@ HWINSTA WINAPI GetProcessWindowStation(void)
 
     SERVER_START_REQ( get_process_winstation )
     {
-        if (!wine_server_call_err( req )) ret = reply->handle;
+        if (!wine_server_call_err( req ))
+            ret = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
     return ret;
@@ -186,7 +187,7 @@ BOOL WINAPI SetProcessWindowStation( HWINSTA handle )
 
     SERVER_START_REQ( set_process_winstation )
     {
-        req->handle = handle;
+        req->handle = wine_server_obj_handle( handle );
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
@@ -292,7 +293,7 @@ HDESK WINAPI CreateDesktopW( LPCWSTR name, LPCWSTR device, LPDEVMODEW devmode,
         wine_server_add_data( req, name, len * sizeof(WCHAR) );
         /* it doesn't seem to set last error */
         wine_server_call( req );
-        ret = reply->handle;
+        ret = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
     return ret;
@@ -328,12 +329,12 @@ HDESK open_winstation_desktop( HWINSTA hwinsta, LPCWSTR name, DWORD flags, BOOL 
     }
     SERVER_START_REQ( open_desktop )
     {
-        req->winsta     = hwinsta;
+        req->winsta     = wine_server_obj_handle( hwinsta );
         req->flags      = flags;
         req->access     = access;
         req->attributes = OBJ_CASE_INSENSITIVE | (inherit ? OBJ_INHERIT : 0);
         wine_server_add_data( req, name, len * sizeof(WCHAR) );
-        if (!wine_server_call( req )) ret = reply->handle;
+        if (!wine_server_call( req )) ret = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
     return ret;
@@ -357,7 +358,7 @@ BOOL WINAPI CloseDesktop( HDESK handle )
     BOOL ret;
     SERVER_START_REQ( close_desktop )
     {
-        req->handle = handle;
+        req->handle = wine_server_obj_handle( handle );
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
@@ -375,7 +376,7 @@ HDESK WINAPI GetThreadDesktop( DWORD thread )
     SERVER_START_REQ( get_thread_desktop )
     {
         req->tid = thread;
-        if (!wine_server_call_err( req )) ret = reply->handle;
+        if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
     return ret;
@@ -391,7 +392,7 @@ BOOL WINAPI SetThreadDesktop( HDESK handle )
 
     SERVER_START_REQ( set_thread_desktop )
     {
-        req->handle = handle;
+        req->handle = wine_server_obj_handle( handle );
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
@@ -434,7 +435,7 @@ BOOL WINAPI EnumDesktopsW( HWINSTA winsta, DESKTOPENUMPROCW func, LPARAM lparam 
     {
         SERVER_START_REQ( enum_desktop )
         {
-            req->winstation = winsta;
+            req->winstation = wine_server_obj_handle( winsta );
             req->index      = index;
             wine_server_set_reply( req, name, sizeof(name) - sizeof(WCHAR) );
             status = wine_server_call( req );
@@ -514,7 +515,7 @@ BOOL WINAPI GetUserObjectInformationW( HANDLE handle, INT index, LPVOID info, DW
             }
             SERVER_START_REQ( set_user_object_info )
             {
-                req->handle    = handle;
+                req->handle    = wine_server_obj_handle( handle );
                 req->flags     = 0;
                 ret = !wine_server_call_err( req );
                 if (ret)
@@ -530,7 +531,7 @@ BOOL WINAPI GetUserObjectInformationW( HANDLE handle, INT index, LPVOID info, DW
     case UOI_TYPE:
         SERVER_START_REQ( set_user_object_info )
         {
-            req->handle = handle;
+            req->handle = wine_server_obj_handle( handle );
             req->flags  = 0;
             ret = !wine_server_call_err( req );
             if (ret)
@@ -553,7 +554,7 @@ BOOL WINAPI GetUserObjectInformationW( HANDLE handle, INT index, LPVOID info, DW
             WCHAR buffer[MAX_PATH];
             SERVER_START_REQ( set_user_object_info )
             {
-                req->handle = handle;
+                req->handle = wine_server_obj_handle( handle );
                 req->flags  = 0;
                 wine_server_set_reply( req, buffer, sizeof(buffer) - sizeof(WCHAR) );
                 ret = !wine_server_call_err( req );
@@ -610,7 +611,7 @@ BOOL WINAPI SetUserObjectInformationW( HANDLE handle, INT index, LPVOID info, DW
     /* FIXME: inherit flag */
     SERVER_START_REQ( set_user_object_info )
     {
-        req->handle    = handle;
+        req->handle    = wine_server_obj_handle( handle );
         req->flags     = SET_USER_OBJECT_FLAGS;
         req->obj_flags = obj_flags->dwFlags;
         ret = !wine_server_call_err( req );

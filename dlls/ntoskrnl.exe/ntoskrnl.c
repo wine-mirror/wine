@@ -96,7 +96,7 @@ static HANDLE get_device_manager(void)
         {
             req->access     = SYNCHRONIZE;
             req->attributes = 0;
-            if (!wine_server_call( req )) handle = reply->handle;
+            if (!wine_server_call( req )) handle = wine_server_ptr_handle( reply->handle );
         }
         SERVER_END_REQ;
 
@@ -194,7 +194,7 @@ static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff,
 NTSTATUS wine_ntoskrnl_main_loop( HANDLE stop_event )
 {
     HANDLE manager = get_device_manager();
-    HANDLE ioctl = 0;
+    obj_handle_t ioctl = 0;
     NTSTATUS status = STATUS_SUCCESS;
     ULONG code = 0;
     void *in_buff, *out_buff = NULL;
@@ -215,7 +215,7 @@ NTSTATUS wine_ntoskrnl_main_loop( HANDLE stop_event )
     {
         SERVER_START_REQ( get_next_device_request )
         {
-            req->manager = manager;
+            req->manager = wine_server_obj_handle( manager );
             req->prev = ioctl;
             req->status = status;
             wine_server_add_data( req, out_buff, out_size );
@@ -464,10 +464,10 @@ NTSTATUS WINAPI IoCreateDevice( DRIVER_OBJECT *driver, ULONG ext_size,
         req->access     = 0;
         req->attributes = 0;
         req->rootdir    = 0;
-        req->manager    = manager;
+        req->manager    = wine_server_obj_handle( manager );
         req->user_ptr   = device;
         if (name) wine_server_add_data( req, name->Buffer, name->Length );
-        if (!(status = wine_server_call( req ))) handle = reply->handle;
+        if (!(status = wine_server_call( req ))) handle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
 
@@ -501,7 +501,7 @@ void WINAPI IoDeleteDevice( DEVICE_OBJECT *device )
 
     SERVER_START_REQ( delete_device )
     {
-        req->handle = device->Reserved;
+        req->handle = wine_server_obj_handle( device->Reserved );
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -558,7 +558,7 @@ NTSTATUS WINAPI IoDeleteSymbolicLink( UNICODE_STRING *name )
     {
         SERVER_START_REQ( unlink_object )
         {
-            req->handle = handle;
+            req->handle = wine_server_obj_handle( handle );
             status = wine_server_call( req );
         }
         SERVER_END_REQ;

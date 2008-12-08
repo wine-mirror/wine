@@ -476,9 +476,9 @@ struct fd_cache_entry
 static struct fd_cache_entry *fd_cache[FD_CACHE_ENTRIES];
 static struct fd_cache_entry fd_cache_initial_block[FD_CACHE_BLOCK_SIZE];
 
-static inline unsigned int handle_to_index( obj_handle_t handle, unsigned int *entry )
+static inline unsigned int handle_to_index( HANDLE handle, unsigned int *entry )
 {
-    unsigned long idx = ((unsigned long)handle >> 2) - 1;
+    unsigned int idx = (wine_server_obj_handle(handle) >> 2) - 1;
     *entry = idx / FD_CACHE_BLOCK_SIZE;
     return idx % FD_CACHE_BLOCK_SIZE;
 }
@@ -489,7 +489,7 @@ static inline unsigned int handle_to_index( obj_handle_t handle, unsigned int *e
  *
  * Caller must hold fd_cache_section.
  */
-static int add_fd_to_cache( obj_handle_t handle, int fd, enum server_fd_type type,
+static int add_fd_to_cache( HANDLE handle, int fd, enum server_fd_type type,
                             unsigned int access, unsigned int options )
 {
     unsigned int entry, idx = handle_to_index( handle, &entry );
@@ -527,7 +527,7 @@ static int add_fd_to_cache( obj_handle_t handle, int fd, enum server_fd_type typ
  *
  * Caller must hold fd_cache_section.
  */
-static inline int get_cached_fd( obj_handle_t handle, enum server_fd_type *type,
+static inline int get_cached_fd( HANDLE handle, enum server_fd_type *type,
                                  unsigned int *access, unsigned int *options )
 {
     unsigned int entry, idx = handle_to_index( handle, &entry );
@@ -547,7 +547,7 @@ static inline int get_cached_fd( obj_handle_t handle, enum server_fd_type *type,
 /***********************************************************************
  *           server_remove_fd_from_cache
  */
-int server_remove_fd_from_cache( obj_handle_t handle )
+int server_remove_fd_from_cache( HANDLE handle )
 {
     unsigned int entry, idx = handle_to_index( handle, &entry );
     int fd = -1;
@@ -564,7 +564,7 @@ int server_remove_fd_from_cache( obj_handle_t handle )
  *
  * The returned unix_fd should be closed iff needs_close is non-zero.
  */
-int server_get_unix_fd( obj_handle_t handle, unsigned int wanted_access, int *unix_fd,
+int server_get_unix_fd( HANDLE handle, unsigned int wanted_access, int *unix_fd,
                         int *needs_close, enum server_fd_type *type, unsigned int *options )
 {
     sigset_t sigset;
@@ -583,7 +583,7 @@ int server_get_unix_fd( obj_handle_t handle, unsigned int wanted_access, int *un
 
     SERVER_START_REQ( get_handle_fd )
     {
-        req->handle = handle;
+        req->handle = wine_server_obj_handle( handle );
         if (!(ret = wine_server_call( req )))
         {
             if (type) *type = reply->type;
@@ -591,7 +591,7 @@ int server_get_unix_fd( obj_handle_t handle, unsigned int wanted_access, int *un
             access = reply->access;
             if ((fd = receive_fd( &fd_handle )) != -1)
             {
-                assert( fd_handle == handle );
+                assert( wine_server_ptr_handle(fd_handle) == handle );
                 *needs_close = (reply->removable ||
                                 !add_fd_to_cache( handle, fd, reply->type,
                                                   reply->access, reply->options ));
@@ -627,7 +627,7 @@ done:
  * RETURNS
  *     NTSTATUS code
  */
-int wine_server_fd_to_handle( int fd, unsigned int access, unsigned int attributes, obj_handle_t *handle )
+int wine_server_fd_to_handle( int fd, unsigned int access, unsigned int attributes, HANDLE *handle )
 {
     int ret;
 
@@ -639,7 +639,7 @@ int wine_server_fd_to_handle( int fd, unsigned int access, unsigned int attribut
         req->access     = access;
         req->attributes = attributes;
         req->fd         = fd;
-        if (!(ret = wine_server_call( req ))) *handle = reply->handle;
+        if (!(ret = wine_server_call( req ))) *handle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
     return ret;
@@ -660,7 +660,7 @@ int wine_server_fd_to_handle( int fd, unsigned int access, unsigned int attribut
  * RETURNS
  *     NTSTATUS code
  */
-int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *unix_fd,
+int wine_server_handle_to_fd( HANDLE handle, unsigned int access, int *unix_fd,
                               unsigned int *options )
 {
     int needs_close, ret = server_get_unix_fd( handle, access, unix_fd, &needs_close, NULL, options );
@@ -685,7 +685,7 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
  * RETURNS
  *     nothing
  */
-void wine_server_release_fd( obj_handle_t handle, int unix_fd )
+void wine_server_release_fd( HANDLE handle, int unix_fd )
 {
     close( unix_fd );
 }

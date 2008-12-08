@@ -2232,7 +2232,7 @@ static HANDLE get_server_queue_handle(void)
         SERVER_START_REQ( get_msg_queue )
         {
             wine_server_call( req );
-            ret = reply->handle;
+            ret = wine_server_ptr_handle( reply->handle );
         }
         SERVER_END_REQ;
         thread_info->server_queue = ret;
@@ -3273,8 +3273,9 @@ DWORD WINAPI WaitForInputIdle( HANDLE hProcess, DWORD dwTimeOut )
     handles[0] = hProcess;
     SERVER_START_REQ( get_process_idle_event )
     {
-        req->handle = hProcess;
-        if (!(ret = wine_server_call_err( req ))) handles[1] = reply->event;
+        req->handle = wine_server_obj_handle( hProcess );
+        if (!(ret = wine_server_call_err( req )))
+            handles[1] = wine_server_ptr_handle( reply->event );
     }
     SERVER_END_REQ;
     if (ret) return WAIT_FAILED;  /* error */

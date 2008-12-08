@@ -875,7 +875,7 @@ static SIZE_T get_committed_size( struct file_view *view, void *base, BYTE *vpro
         SIZE_T ret = 0;
         SERVER_START_REQ( get_mapping_committed_range )
         {
-            req->handle = view->mapping;
+            req->handle = wine_server_obj_handle( view->mapping );
             req->offset = start << page_shift;
             if (!wine_server_call( req ))
             {
@@ -1696,7 +1696,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
         {
             SERVER_START_REQ( add_mapping_committed_range )
             {
-                req->handle = view->mapping;
+                req->handle = wine_server_obj_handle( view->mapping );
                 req->offset = (char *)base - (char *)view->base;
                 req->size   = size;
                 wine_server_call( req );
@@ -2135,7 +2135,7 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
 
     if (len > MAX_PATH*sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
 
-    objattr.rootdir = attr ? attr->RootDirectory : 0;
+    objattr.rootdir = wine_server_obj_handle( attr ? attr->RootDirectory : 0 );
     objattr.sd_len = 0;
     objattr.name_len = len;
     if (attr)
@@ -2155,14 +2155,14 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
     {
         req->access      = access;
         req->attributes  = (attr) ? attr->Attributes : 0;
-        req->file_handle = file;
+        req->file_handle = wine_server_obj_handle( file );
         req->size        = size ? size->QuadPart : 0;
         req->protect     = vprot;
         wine_server_add_data( req, &objattr, sizeof(objattr) );
         if (objattr.sd_len) wine_server_add_data( req, sd, objattr.sd_len );
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         ret = wine_server_call( req );
-        *handle = reply->handle;
+        *handle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
 
@@ -2187,9 +2187,9 @@ NTSTATUS WINAPI NtOpenSection( HANDLE *handle, ACCESS_MASK access, const OBJECT_
     {
         req->access  = access;
         req->attributes = attr->Attributes;
-        req->rootdir = attr->RootDirectory;
+        req->rootdir = wine_server_obj_handle( attr->RootDirectory );
         wine_server_add_data( req, attr->ObjectName->Buffer, len );
-        if (!(ret = wine_server_call( req ))) *handle = reply->handle;
+        if (!(ret = wine_server_call( req ))) *handle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
     return ret;
@@ -2236,7 +2236,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         memset( &call, 0, sizeof(call) );
 
         call.map_view.type        = APC_MAP_VIEW;
-        call.map_view.handle      = handle;
+        call.map_view.handle      = wine_server_obj_handle( handle );
         call.map_view.addr        = *addr_ptr;
         call.map_view.size        = *size_ptr;
         call.map_view.offset      = offset.QuadPart;
@@ -2276,15 +2276,15 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     SERVER_START_REQ( get_mapping_info )
     {
-        req->handle = handle;
+        req->handle = wine_server_obj_handle( handle );
         req->access = access;
         res = wine_server_call( req );
         map_vprot   = reply->protect;
         base        = reply->base;
         full_size   = reply->size;
         header_size = reply->header_size;
-        dup_mapping = reply->mapping;
-        shared_file = reply->shared_file;
+        dup_mapping = wine_server_ptr_handle( reply->mapping );
+        shared_file = wine_server_ptr_handle( reply->shared_file );
     }
     SERVER_END_REQ;
     if (res) return res;
@@ -2538,7 +2538,7 @@ NTSTATUS WINAPI NtReadVirtualMemory( HANDLE process, const void *addr, void *buf
 
     SERVER_START_REQ( read_process_memory )
     {
-        req->handle = process;
+        req->handle = wine_server_obj_handle( process );
         req->addr   = (void *)addr;
         wine_server_set_reply( req, buffer, size );
         if ((status = wine_server_call( req ))) size = 0;
@@ -2560,7 +2560,7 @@ NTSTATUS WINAPI NtWriteVirtualMemory( HANDLE process, void *addr, const void *bu
 
     SERVER_START_REQ( write_process_memory )
     {
-        req->handle     = process;
+        req->handle     = wine_server_obj_handle( process );
         req->addr       = addr;
         wine_server_add_data( req, buffer, size );
         if ((status = wine_server_call( req ))) size = 0;

@@ -149,8 +149,8 @@ static DWORD wait_input_idle( HANDLE process, DWORD timeout )
     handles[0] = process;
     SERVER_START_REQ( get_process_idle_event )
     {
-        req->handle = process;
-        if (!(ret = wine_server_call_err( req ))) handles[1] = reply->event;
+        req->handle = wine_server_obj_handle(process);
+        if (!(ret = wine_server_call_err( req ))) handles[1] = wine_server_ptr_handle( reply->event );
     }
     SERVER_END_REQ;
     if (ret) return WAIT_FAILED;  /* error */
