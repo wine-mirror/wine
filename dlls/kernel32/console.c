@@ -142,7 +142,7 @@ HWND WINAPI GetConsoleWindow(VOID)
     SERVER_START_REQ(get_console_input_info)
     {
         req->handle = 0;
-        if (!wine_server_call_err(req)) hWnd = reply->win;
+        if (!wine_server_call_err(req)) hWnd = wine_server_ptr_handle( reply->win );
     }
     SERVER_END_REQ;
 

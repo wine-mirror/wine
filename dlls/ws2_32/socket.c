@@ -3720,7 +3720,7 @@ INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent)
         req->handle = wine_server_obj_handle( SOCKET2HANDLE(s) );
         req->mask   = lEvent;
         req->event  = 0;
-        req->window = hWnd;
+        req->window = wine_server_user_handle( hWnd );
         req->msg    = uMsg;
         ret = wine_server_call( req );
     }

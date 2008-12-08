@@ -96,6 +96,12 @@ static inline obj_handle_t wine_server_obj_handle( HANDLE handle )
     return (INT_PTR)handle;
 }
 
+/* convert a user handle to a server handle */
+static inline user_handle_t wine_server_user_handle( HANDLE handle )
+{
+    return (UINT_PTR)handle;
+}
+
 /* convert a server handle to a generic handle */
 static inline HANDLE wine_server_ptr_handle( obj_handle_t handle )
 {

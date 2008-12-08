@@ -125,7 +125,7 @@ static void update_visible_region( struct dce *dce )
 
         SERVER_START_REQ( get_visible_region )
         {
-            req->window  = dce->hwnd;
+            req->window  = wine_server_user_handle( dce->hwnd );
             req->flags   = flags;
             wine_server_set_reply( req, data->Buffer, size );
             if (!(status = wine_server_call( req )))
@@ -137,7 +137,7 @@ static void update_visible_region( struct dce *dce )
                 data->rdh.nRgnSize = reply_size;
                 vis_rgn = ExtCreateRegion( NULL, size, data );
 
-                top_win         = reply->top_win;
+                top_win         = wine_server_ptr_handle( reply->top_win );
                 win_rect.left   = reply->win_rect.left;
                 win_rect.top    = reply->win_rect.top;
                 win_rect.right  = reply->win_rect.right;
@@ -535,8 +535,8 @@ static HRGN get_update_region( HWND hwnd, UINT *flags, HWND *child )
 
         SERVER_START_REQ( get_update_region )
         {
-            req->window     = hwnd;
-            req->from_child = child ? *child : 0;
+            req->window     = wine_server_user_handle( hwnd );
+            req->from_child = wine_server_user_handle( child ? *child : 0 );
             req->flags      = *flags;
             wine_server_set_reply( req, data->Buffer, size );
             if (!(status = wine_server_call( req )))
@@ -547,7 +547,7 @@ static HRGN get_update_region( HWND hwnd, UINT *flags, HWND *child )
                 data->rdh.nCount   = reply_size / sizeof(RECT);
                 data->rdh.nRgnSize = reply_size;
                 hrgn = ExtCreateRegion( NULL, size, data );
-                if (child) *child = reply->child;
+                if (child) *child = wine_server_ptr_handle( reply->child );
                 *flags = reply->flags;
             }
             else size = reply->total_size;
@@ -572,12 +572,12 @@ static BOOL get_update_flags( HWND hwnd, HWND *child, UINT *flags )
 
     SERVER_START_REQ( get_update_region )
     {
-        req->window     = hwnd;
-        req->from_child = child ? *child : 0;
+        req->window     = wine_server_user_handle( hwnd );
+        req->from_child = wine_server_user_handle( child ? *child : 0 );
         req->flags      = *flags | UPDATE_NOREGION;
         if ((ret = !wine_server_call_err( req )))
         {
-            if (child) *child = reply->child;
+            if (child) *child = wine_server_ptr_handle( reply->child );
             *flags = reply->flags;
         }
     }
@@ -600,7 +600,7 @@ static BOOL redraw_window_rects( HWND hwnd, UINT flags, const RECT *rects, UINT 
 
     SERVER_START_REQ( redraw_window )
     {
-        req->window = hwnd;
+        req->window = wine_server_user_handle( hwnd );
         req->flags  = flags;
         wine_server_add_data( req, rects, count * sizeof(RECT) );
         ret = !wine_server_call_err( req );

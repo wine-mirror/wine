@@ -191,7 +191,7 @@ static HHOOK set_windows_hook( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid,
 
         if (!wine_server_call_err( req ))
         {
-            handle = reply->handle;
+            handle = wine_server_ptr_handle( reply->handle );
             get_user_thread_info()->active_hooks = reply->active_hooks;
         }
     }
@@ -417,7 +417,7 @@ LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL uni
         if (!wine_server_call( req ))
         {
             info.module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
-            info.handle       = reply->handle;
+            info.handle       = wine_server_ptr_handle( reply->handle );
             info.pid          = reply->pid;
             info.tid          = reply->tid;
             info.proc         = reply->proc;
@@ -520,7 +520,7 @@ BOOL WINAPI UnhookWindowsHookEx( HHOOK hhook )
 
     SERVER_START_REQ( remove_hook )
     {
-        req->handle = hhook;
+        req->handle = wine_server_user_handle( hhook );
         req->id     = 0;
         ret = !wine_server_call_err( req );
         if (ret) get_user_thread_info()->active_hooks = reply->active_hooks;
@@ -543,14 +543,14 @@ LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lpar
 
     SERVER_START_REQ( get_hook_info )
     {
-        req->handle = thread_info->hook;
+        req->handle = wine_server_user_handle( thread_info->hook );
         req->get_next = 1;
         req->event = EVENT_MIN;
         wine_server_set_reply( req, info.module, sizeof(info.module)-sizeof(WCHAR) );
         if (!wine_server_call_err( req ))
         {
             info.module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
-            info.handle       = reply->handle;
+            info.handle       = wine_server_ptr_handle( reply->handle );
             info.id           = reply->id;
             info.pid          = reply->pid;
             info.tid          = reply->tid;
@@ -573,14 +573,14 @@ LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam )
 
     SERVER_START_REQ( get_hook_info )
     {
-        req->handle = hhook;
+        req->handle = wine_server_user_handle( hhook );
         req->get_next = 0;
         req->event = EVENT_MIN;
         wine_server_set_reply( req, info.module, sizeof(info.module)-sizeof(WCHAR) );
         if (!wine_server_call_err( req ))
         {
             info.module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
-            info.handle       = reply->handle;
+            info.handle       = wine_server_ptr_handle( reply->handle );
             info.id           = reply->id;
             info.pid          = reply->pid;
             info.tid          = reply->tid;
@@ -683,7 +683,7 @@ HWINEVENTHOOK WINAPI SetWinEventHook(DWORD event_min, DWORD event_max,
 
         if (!wine_server_call_err( req ))
         {
-            handle = reply->handle;
+            handle = wine_server_ptr_handle( reply->handle );
             get_user_thread_info()->active_hooks = reply->active_hooks;
         }
     }
@@ -712,7 +712,7 @@ BOOL WINAPI UnhookWinEvent(HWINEVENTHOOK hEventHook)
 
     SERVER_START_REQ( remove_hook )
     {
-        req->handle = hEventHook;
+        req->handle = wine_server_user_handle( hEventHook );
         req->id     = WH_WINEVENT;
         ret = !wine_server_call_err( req );
         if (ret) get_user_thread_info()->active_hooks = reply->active_hooks;
@@ -737,7 +737,7 @@ static inline BOOL find_first_hook(DWORD id, DWORD event, HWND hwnd, LONG object
     {
         req->id = id;
         req->event = event;
-        req->window = hwnd;
+        req->window = wine_server_user_handle( hwnd );
         req->object_id = object_id;
         req->child_id = child_id;
         wine_server_set_reply( req, info->module, sizeof(info->module)-sizeof(WCHAR) );
@@ -745,7 +745,7 @@ static inline BOOL find_first_hook(DWORD id, DWORD event, HWND hwnd, LONG object
         if (ret)
         {
             info->module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
-            info->handle    = reply->handle;
+            info->handle    = wine_server_ptr_handle( reply->handle );
             info->proc      = reply->proc;
             info->tid       = reply->tid;
             thread_info->active_hooks = reply->active_hooks;
@@ -762,10 +762,10 @@ static inline BOOL find_next_hook(DWORD event, HWND hwnd, LONG object_id,
 
     SERVER_START_REQ( get_hook_info )
     {
-        req->handle = info->handle;
+        req->handle = wine_server_user_handle( info->handle );
         req->get_next = 1;
         req->event = event;
-        req->window = hwnd;
+        req->window = wine_server_user_handle( hwnd );
         req->object_id = object_id;
         req->child_id = child_id;
         wine_server_set_reply( req, info->module, sizeof(info->module)-sizeof(WCHAR) );
@@ -773,7 +773,7 @@ static inline BOOL find_next_hook(DWORD event, HWND hwnd, LONG object_id,
         if (ret)
         {
             info->module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
-            info->handle    = reply->handle;
+            info->handle    = wine_server_ptr_handle( reply->handle );
             info->proc      = reply->proc;
             info->tid       = reply->tid;
         }

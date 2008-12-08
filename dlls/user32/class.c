@@ -129,7 +129,7 @@ static BOOL set_server_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size )
 
     SERVER_START_REQ( set_class_info )
     {
-        req->window = hwnd;
+        req->window = wine_server_user_handle( hwnd );
         req->extra_offset = -1;
         switch(offset)
         {
@@ -653,7 +653,7 @@ WORD WINAPI GetClassWord( HWND hwnd, INT offset )
     {
         SERVER_START_REQ( set_class_info )
         {
-            req->window = hwnd;
+            req->window = wine_server_user_handle( hwnd );
             req->flags = 0;
             req->extra_offset = offset;
             req->extra_size = sizeof(retvalue);
@@ -690,7 +690,7 @@ static ULONG_PTR CLASS_GetClassLong( HWND hwnd, INT offset, UINT size,
     {
         SERVER_START_REQ( set_class_info )
         {
-            req->window = hwnd;
+            req->window = wine_server_user_handle( hwnd );
             req->flags = 0;
             req->extra_offset = (offset >= 0) ? offset : -1;
             req->extra_size = (offset >= 0) ? size : 0;
@@ -845,7 +845,7 @@ WORD WINAPI SetClassWord( HWND hwnd, INT offset, WORD newval )
 
     SERVER_START_REQ( set_class_info )
     {
-        req->window = hwnd;
+        req->window = wine_server_user_handle( hwnd );
         req->flags = SET_CLASS_EXTRA;
         req->extra_offset = offset;
         req->extra_size = sizeof(newval);

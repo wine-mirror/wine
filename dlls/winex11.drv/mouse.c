@@ -196,7 +196,7 @@ static void update_mouse_state( HWND hwnd, Window window, int x, int y, unsigned
     {
         SERVER_START_REQ( update_window_zorder )
         {
-            req->window      = hwnd;
+            req->window      = wine_server_user_handle( hwnd );
             req->rect.left   = pt->x;
             req->rect.top    = pt->y;
             req->rect.right  = pt->x + 1;
@@ -255,7 +255,7 @@ static void queue_raw_mouse_message( UINT message, HWND hwnd, DWORD x, DWORD y,
     SERVER_START_REQ( send_hardware_message )
     {
         req->id       = (injected_flags & LLMHF_INJECTED) ? 0 : GetCurrentThreadId();
-        req->win      = hwnd;
+        req->win      = wine_server_user_handle( hwnd );
         req->msg      = message;
         req->wparam   = MAKEWPARAM( get_key_state(), data );
         req->lparam   = 0;

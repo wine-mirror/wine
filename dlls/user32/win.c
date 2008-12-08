@@ -100,9 +100,8 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
 {
     WORD index;
     WND *win;
-    HWND full_parent = 0, full_owner = 0;
+    HWND handle = 0, full_parent = 0, full_owner = 0;
     struct tagCLASS *class = NULL;
-    user_handle_t handle = 0;
     int extra_bytes = 0;
 
     /* if 16-bit instance, map to module handle */
@@ -111,16 +110,16 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
 
     SERVER_START_REQ( create_window )
     {
-        req->parent   = parent;
-        req->owner    = owner;
+        req->parent   = wine_server_user_handle( parent );
+        req->owner    = wine_server_user_handle( owner );
         req->instance = instance;
         if (!(req->atom = get_int_atom_value( name )) && name)
             wine_server_add_data( req, name, strlenW(name)*sizeof(WCHAR) );
         if (!wine_server_call_err( req ))
         {
-            handle = reply->handle;
-            full_parent = reply->parent;
-            full_owner  = reply->owner;
+            handle = wine_server_ptr_handle( reply->handle );
+            full_parent = wine_server_ptr_handle( reply->parent );
+            full_owner  = wine_server_ptr_handle( reply->owner );
             extra_bytes = reply->extra;
             class = reply->class_ptr;
         }
@@ -138,7 +137,7 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
     {
         SERVER_START_REQ( destroy_window )
         {
-            req->handle = handle;
+            req->handle = wine_server_user_handle( handle );
             wine_server_call( req );
         }
         SERVER_END_REQ;
@@ -196,7 +195,7 @@ static WND *free_window_handle( HWND hwnd )
     {
         SERVER_START_REQ( destroy_window )
         {
-            req->handle = hwnd;
+            req->handle = wine_server_user_handle( hwnd );
             if (!wine_server_call_err( req ))
             {
                 user_handles[index] = NULL;
@@ -222,7 +221,7 @@ static WND *free_window_handle( HWND hwnd )
 static HWND *list_window_children( HDESK desktop, HWND hwnd, LPCWSTR class, DWORD tid )
 {
     HWND *list;
-    int size = 128;
+    int i, size = 128;
     ATOM atom = get_int_atom_value( class );
 
     /* empty class is not the same as NULL class */
@@ -237,16 +236,19 @@ static HWND *list_window_children( HDESK desktop, HWND hwnd, LPCWSTR class, DWOR
         SERVER_START_REQ( get_window_children )
         {
             req->desktop = wine_server_obj_handle( desktop );
-            req->parent = hwnd;
+            req->parent = wine_server_user_handle( hwnd );
             req->tid = tid;
             req->atom = atom;
             if (!atom && class) wine_server_add_data( req, class, strlenW(class)*sizeof(WCHAR) );
-            wine_server_set_reply( req, list, (size-1) * sizeof(HWND) );
+            wine_server_set_reply( req, list, (size-1) * sizeof(user_handle_t) );
             if (!wine_server_call( req )) count = reply->count;
         }
         SERVER_END_REQ;
         if (count && count < size)
         {
+            /* start from the end since HWND is potentially larger than user_handle_t */
+            for (i = count - 1; i >= 0; i--)
+                list[i] = wine_server_ptr_handle( ((user_handle_t *)list)[i] );
             list[count] = 0;
             return list;
         }
@@ -268,7 +270,7 @@ static HWND *list_window_parents( HWND hwnd )
 {
     WND *win;
     HWND current, *list;
-    int pos = 0, size = 16, count = 0;
+    int i, pos = 0, size = 16, count = 0;
 
     if (!(list = HeapAlloc( GetProcessHeap(), 0, size * sizeof(HWND) ))) return NULL;
 
@@ -303,14 +305,17 @@ static HWND *list_window_parents( HWND hwnd )
         count = 0;
         SERVER_START_REQ( get_window_parents )
         {
-            req->handle = hwnd;
-            wine_server_set_reply( req, list, (size-1) * sizeof(HWND) );
+            req->handle = wine_server_user_handle( hwnd );
+            wine_server_set_reply( req, list, (size-1) * sizeof(user_handle_t) );
             if (!wine_server_call( req )) count = reply->count;
         }
         SERVER_END_REQ;
         if (!count) goto empty;
         if (size > count)
         {
+            /* start from the end since HWND is potentially larger than user_handle_t */
+            for (i = count - 1; i >= 0; i--)
+                list[i] = wine_server_ptr_handle( ((user_handle_t *)list)[i] );
             list[count] = 0;
             return list;
         }
@@ -352,7 +357,7 @@ static void get_server_window_text( HWND hwnd, LPWSTR text, INT count )
 
     SERVER_START_REQ( get_window_text )
     {
-        req->handle = hwnd;
+        req->handle = wine_server_user_handle( hwnd );
         wine_server_set_reply( req, text, (count - 1) * sizeof(WCHAR) );
         if (!wine_server_call_err( req )) len = wine_server_reply_size(reply);
     }
@@ -491,8 +496,8 @@ HWND WIN_Handle32( HWND16 hwnd16 )
     {
         SERVER_START_REQ( get_window_info )
         {
-            req->handle = hwnd;
-            if (!wine_server_call_err( req )) hwnd = reply->full_handle;
+            req->handle = wine_server_user_handle( hwnd );
+            if (!wine_server_call_err( req )) hwnd = wine_server_ptr_handle( reply->full_handle );
         }
         SERVER_END_REQ;
     }
@@ -518,12 +523,12 @@ HWND WIN_SetOwner( HWND hwnd, HWND owner )
     }
     SERVER_START_REQ( set_window_owner )
     {
-        req->handle = hwnd;
-        req->owner  = owner;
+        req->handle = wine_server_user_handle( hwnd );
+        req->owner  = wine_server_user_handle( owner );
         if (!wine_server_call( req ))
         {
-            win->owner = reply->full_owner;
-            ret = reply->prev_owner;
+            win->owner = wine_server_ptr_handle( reply->full_owner );
+            ret = wine_server_ptr_handle( reply->prev_owner );
         }
     }
     SERVER_END_REQ;
@@ -560,7 +565,7 @@ ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
     }
     SERVER_START_REQ( set_window_info )
     {
-        req->handle = hwnd;
+        req->handle = wine_server_user_handle( hwnd );
         req->flags  = SET_WIN_STYLE;
         req->style  = style.styleNew;
         req->extra_offset = -1;
@@ -613,7 +618,7 @@ BOOL WIN_GetRectangles( HWND hwnd, RECT *rectWindow, RECT *rectClient )
     {
         SERVER_START_REQ( get_window_rectangles )
         {
-            req->handle = hwnd;
+            req->handle = wine_server_user_handle( hwnd );
             if ((ret = !wine_server_call( req )))
             {
                 if (rectWindow)
@@ -673,7 +678,7 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     /* Unlink now so we won't bother with the children later on */
     SERVER_START_REQ( set_parent )
     {
-        req->handle = hwnd;
+        req->handle = wine_server_user_handle( hwnd );
         req->parent = 0;
         wine_server_call( req );
     }
@@ -1110,7 +1115,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, UINT flags
 
     SERVER_START_REQ( set_window_info )
     {
-        req->handle    = hwnd;
+        req->handle    = wine_server_user_handle( hwnd );
         req->flags     = SET_WIN_STYLE | SET_WIN_EXSTYLE | SET_WIN_INSTANCE | SET_WIN_UNICODE;
         req->style     = wndPtr->dwStyle;
         req->ex_style  = wndPtr->dwExStyle;
@@ -1692,8 +1697,8 @@ HWND WINAPI GetDesktopWindow(void)
         req->force = 0;
         if (!wine_server_call( req ))
         {
-            thread_info->top_window = reply->top_window;
-            thread_info->msg_window = reply->msg_window;
+            thread_info->top_window = wine_server_ptr_handle( reply->top_window );
+            thread_info->msg_window = wine_server_ptr_handle( reply->msg_window );
         }
     }
     SERVER_END_REQ;
@@ -1735,8 +1740,8 @@ HWND WINAPI GetDesktopWindow(void)
             req->force = 1;
             if (!wine_server_call( req ))
             {
-                thread_info->top_window = reply->top_window;
-                thread_info->msg_window = reply->msg_window;
+                thread_info->top_window = wine_server_ptr_handle( reply->top_window );
+                thread_info->msg_window = wine_server_ptr_handle( reply->msg_window );
             }
         }
         SERVER_END_REQ;
@@ -1828,7 +1833,7 @@ BOOL WINAPI IsWindowUnicode( HWND hwnd )
     {
         SERVER_START_REQ( get_window_info )
         {
-            req->handle = hwnd;
+            req->handle = wine_server_user_handle( hwnd );
             if (!wine_server_call_err( req )) retvalue = reply->is_unicode;
         }
         SERVER_END_REQ;
@@ -1869,7 +1874,7 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, UINT size, BOOL unicod
         }
         SERVER_START_REQ( set_window_info )
         {
-            req->handle = hwnd;
+            req->handle = wine_server_user_handle( hwnd );
             req->flags  = 0;  /* don't set anything, just retrieve */
             req->extra_offset = (offset >= 0) ? offset : -1;
             req->extra_size = (offset >= 0) ? size : 0;
@@ -2066,7 +2071,7 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
 
     SERVER_START_REQ( set_window_info )
     {
-        req->handle = hwnd;
+        req->handle = wine_server_user_handle( hwnd );
         req->extra_offset = -1;
         switch(offset)
         {
@@ -2520,7 +2525,7 @@ BOOL WINAPI IsWindow( HWND hwnd )
     /* check other processes */
     SERVER_START_REQ( get_window_info )
     {
-        req->handle = hwnd;
+        req->handle = wine_server_user_handle( hwnd );
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
@@ -2554,7 +2559,7 @@ DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
     /* check other processes */
     SERVER_START_REQ( get_window_info )
     {
-        req->handle = hwnd;
+        req->handle = wine_server_user_handle( hwnd );
         if (!wine_server_call_err( req ))
         {
             tid = (DWORD)reply->tid;
@@ -2587,11 +2592,11 @@ HWND WINAPI GetParent( HWND hwnd )
         {
             SERVER_START_REQ( get_window_tree )
             {
-                req->handle = hwnd;
+                req->handle = wine_server_user_handle( hwnd );
                 if (!wine_server_call_err( req ))
                 {
-                    if (style & WS_POPUP) retvalue = reply->owner;
-                    else if (style & WS_CHILD) retvalue = reply->parent;
+                    if (style & WS_POPUP) retvalue = wine_server_ptr_handle( reply->owner );
+                    else if (style & WS_CHILD) retvalue = wine_server_ptr_handle( reply->parent );
                 }
             }
             SERVER_END_REQ;
@@ -2633,8 +2638,8 @@ HWND WINAPI GetAncestor( HWND hwnd, UINT type )
         {
             SERVER_START_REQ( get_window_tree )
             {
-                req->handle = hwnd;
-                if (!wine_server_call_err( req )) ret = reply->parent;
+                req->handle = wine_server_user_handle( hwnd );
+                if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->parent );
             }
             SERVER_END_REQ;
         }
@@ -2714,12 +2719,12 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
 
     SERVER_START_REQ( set_parent )
     {
-        req->handle = hwnd;
-        req->parent = parent;
+        req->handle = wine_server_user_handle( hwnd );
+        req->parent = wine_server_user_handle( parent );
         if ((ret = !wine_server_call( req )))
         {
-            old_parent = reply->old_parent;
-            wndPtr->parent = parent = reply->full_parent;
+            old_parent = wine_server_ptr_handle( reply->old_parent );
+            wndPtr->parent = parent = wine_server_ptr_handle( reply->full_parent );
         }
 
     }
@@ -2849,28 +2854,28 @@ HWND WINAPI GetWindow( HWND hwnd, UINT rel )
 
     SERVER_START_REQ( get_window_tree )
     {
-        req->handle = hwnd;
+        req->handle = wine_server_user_handle( hwnd );
         if (!wine_server_call_err( req ))
         {
             switch(rel)
             {
             case GW_HWNDFIRST:
-                retval = reply->first_sibling;
+                retval = wine_server_ptr_handle( reply->first_sibling );
                 break;
             case GW_HWNDLAST:
-                retval = reply->last_sibling;
+                retval = wine_server_ptr_handle( reply->last_sibling );
                 break;
             case GW_HWNDNEXT:
-                retval = reply->next_sibling;
+                retval = wine_server_ptr_handle( reply->next_sibling );
                 break;
             case GW_HWNDPREV:
-                retval = reply->prev_sibling;
+                retval = wine_server_ptr_handle( reply->prev_sibling );
                 break;
             case GW_OWNER:
-                retval = reply->owner;
+                retval = wine_server_ptr_handle( reply->owner );
                 break;
             case GW_CHILD:
-                retval = reply->first_child;
+                retval = wine_server_ptr_handle( reply->first_child );
                 break;
             }
         }
@@ -2939,8 +2944,8 @@ HWND WINAPI GetLastActivePopup( HWND hwnd )
 
     SERVER_START_REQ( get_window_info )
     {
-        req->handle = hwnd;
-        if (!wine_server_call_err( req )) retval = reply->last_active;
+        req->handle = wine_server_user_handle( hwnd );
+        if (!wine_server_call_err( req )) retval = wine_server_ptr_handle( reply->last_active );
     }
     SERVER_END_REQ;
     return retval;
@@ -3337,7 +3342,7 @@ BOOL WINAPI SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWO
 
     SERVER_START_REQ( set_window_layered_info )
     {
-        req->handle = hwnd;
+        req->handle = wine_server_user_handle( hwnd );
         req->color_key = key;
         req->alpha = alpha;
         req->flags = flags;
@@ -3360,7 +3365,7 @@ BOOL WINAPI GetLayeredWindowAttributes( HWND hwnd, COLORREF *key, BYTE *alpha, D
 
     SERVER_START_REQ( get_window_layered_info )
     {
-        req->handle = hwnd;
+        req->handle = wine_server_user_handle( hwnd );
         if ((ret = !wine_server_call_err( req )))
         {
             if (key) *key = reply->color_key;

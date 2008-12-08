@@ -126,7 +126,7 @@ int WINAPI GetWindowRgn ( HWND hwnd, HRGN hrgn )
         }
         SERVER_START_REQ( get_window_region )
         {
-            req->window = hwnd;
+            req->window = wine_server_user_handle( hwnd );
             wine_server_set_reply( req, data->Buffer, size );
             if (!(status = wine_server_call( req )))
             {
@@ -178,7 +178,7 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
         }
         SERVER_START_REQ( set_window_region )
         {
-            req->window = hwnd;
+            req->window = wine_server_user_handle( hwnd );
             req->redraw = (bRedraw != 0);
             if (data->rdh.nCount)
                 wine_server_add_data( req, data->Buffer, data->rdh.nCount * sizeof(RECT) );
@@ -192,7 +192,7 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
     {
         SERVER_START_REQ( set_window_region )
         {
-            req->window = hwnd;
+            req->window = wine_server_user_handle( hwnd );
             req->redraw = (bRedraw != 0);
             ret = !wine_server_call_err( req );
         }
@@ -259,7 +259,7 @@ BOOL WINAPI ScreenToClient( HWND hwnd, LPPOINT lppnt )
 static HWND *list_children_from_point( HWND hwnd, POINT pt )
 {
     HWND *list;
-    int size = 128;
+    int i, size = 128;
 
     for (;;)
     {
@@ -269,15 +269,18 @@ static HWND *list_children_from_point( HWND hwnd, POINT pt )
 
         SERVER_START_REQ( get_window_children_from_point )
         {
-            req->parent = hwnd;
+            req->parent = wine_server_user_handle( hwnd );
             req->x = pt.x;
             req->y = pt.y;
-            wine_server_set_reply( req, list, (size-1) * sizeof(HWND) );
+            wine_server_set_reply( req, list, (size-1) * sizeof(user_handle_t) );
             if (!wine_server_call( req )) count = reply->count;
         }
         SERVER_END_REQ;
         if (count && count < size)
         {
+            /* start from the end since HWND is potentially larger than user_handle_t */
+            for (i = count - 1; i >= 0; i--)
+                list[i] = wine_server_ptr_handle( ((user_handle_t *)list)[i] );
             list[count] = 0;
             return list;
         }
@@ -473,8 +476,8 @@ static void WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, POINT *offset )
     offset->x = offset->y = 0;
     SERVER_START_REQ( get_windows_offset )
     {
-        req->from = hwndFrom;
-        req->to   = hwndTo;
+        req->from = wine_server_user_handle( hwndFrom );
+        req->to   = wine_server_user_handle( hwndTo );
         if (!wine_server_call( req ))
         {
             offset->x = reply->x;
@@ -1894,8 +1897,8 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     old_window_rect = win->rectWindow;
     SERVER_START_REQ( set_window_pos )
     {
-        req->handle        = hwnd;
-        req->previous      = insert_after;
+        req->handle        = wine_server_user_handle( hwnd );
+        req->previous      = wine_server_user_handle( insert_after );
         req->flags         = swp_flags;
         req->window.left   = window_rect->left;
         req->window.top    = window_rect->top;

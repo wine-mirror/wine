@@ -81,23 +81,15 @@ static BOOL bCBHasChanged = FALSE;
  */
 static BOOL CLIPBOARD_SetClipboardOwner(HWND hWnd)
 {
-    BOOL bRet = FALSE;
+    BOOL bRet;
 
     TRACE(" hWnd(%p)\n", hWnd);
 
     SERVER_START_REQ( set_clipboard_info )
     {
         req->flags = SET_CB_OWNER;
-        req->owner = WIN_GetFullHandle( hWnd );
-
-        if (wine_server_call_err( req ))
-        {
-            ERR("Failed to set clipboard owner to %p\n", hWnd);
-        }
-        else
-        {
-            bRet = TRUE;
-        }
+        req->owner = wine_server_user_handle( hWnd );
+        bRet = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
 
@@ -110,25 +102,19 @@ static BOOL CLIPBOARD_SetClipboardOwner(HWND hWnd)
  */
 static BOOL CLIPBOARD_GetClipboardInfo(LPCLIPBOARDINFO cbInfo)
 {
-    BOOL bRet = FALSE;
+    BOOL bRet;
 
     SERVER_START_REQ( set_clipboard_info )
     {
         req->flags = 0;
 
-        if (wine_server_call_err( req ))
+        if (((bRet = !wine_server_call_err( req ))))
         {
-            ERR("Failed to get clipboard info\n");
-        }
-        else
-        {
-            cbInfo->hWndOpen = reply->old_clipboard;
-            cbInfo->hWndOwner = reply->old_owner;
-            cbInfo->hWndViewer = reply->old_viewer;
+            cbInfo->hWndOpen = wine_server_ptr_handle( reply->old_clipboard );
+            cbInfo->hWndOwner = wine_server_ptr_handle( reply->old_owner );
+            cbInfo->hWndViewer = wine_server_ptr_handle( reply->old_viewer );
             cbInfo->seqno = reply->seqno;
             cbInfo->flags = reply->flags;
-
-            bRet = TRUE;
         }
     }
     SERVER_END_REQ;
@@ -168,15 +154,13 @@ BOOL CLIPBOARD_ReleaseOwner(void)
  */
 static BOOL CLIPBOARD_OpenClipboard(HWND hWnd)
 {
-    BOOL bRet = FALSE;
+    BOOL bRet;
 
     SERVER_START_REQ( set_clipboard_info )
     {
         req->flags = SET_CB_OPEN;
-        req->clipboard = WIN_GetFullHandle( hWnd );
-
-        if (!wine_server_call( req ))
-            bRet = TRUE;
+        req->clipboard = wine_server_user_handle( hWnd );
+        bRet = !wine_server_call( req );
     }
     SERVER_END_REQ;
 
@@ -189,28 +173,15 @@ static BOOL CLIPBOARD_OpenClipboard(HWND hWnd)
  */
 static BOOL CLIPBOARD_CloseClipboard(void)
 {
-    BOOL bRet = FALSE;
+    BOOL bRet;
 
     TRACE(" Changed=%d\n", bCBHasChanged);
 
     SERVER_START_REQ( set_clipboard_info )
     {
         req->flags = SET_CB_CLOSE;
-
-        if (bCBHasChanged)
-        {
-            req->flags |= SET_CB_SEQNO;
-            TRACE("Clipboard data changed\n");
-        }
-
-        if (wine_server_call_err( req ))
-        {
-            ERR("Failed to set clipboard.\n");
-        }
-        else
-        {
-            bRet = TRUE;
-        }
+        if (bCBHasChanged) req->flags |= SET_CB_SEQNO;
+        bRet = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
 
@@ -384,7 +355,7 @@ HWND WINAPI GetClipboardOwner(void)
     SERVER_START_REQ( set_clipboard_info )
     {
         req->flags = 0;
-        if (!wine_server_call_err( req )) hWndOwner = reply->old_owner;
+        if (!wine_server_call_err( req )) hWndOwner = wine_server_ptr_handle( reply->old_owner );
     }
     SERVER_END_REQ;
 
@@ -404,7 +375,7 @@ HWND WINAPI GetOpenClipboardWindow(void)
     SERVER_START_REQ( set_clipboard_info )
     {
         req->flags = 0;
-        if (!wine_server_call_err( req )) hWndOpen = reply->old_clipboard;
+        if (!wine_server_call_err( req )) hWndOpen = wine_server_ptr_handle( reply->old_clipboard );
     }
     SERVER_END_REQ;
 
@@ -424,16 +395,9 @@ HWND WINAPI SetClipboardViewer( HWND hWnd )
     SERVER_START_REQ( set_clipboard_info )
     {
         req->flags = SET_CB_VIEWER;
-        req->viewer = WIN_GetFullHandle(hWnd);
-
-        if (wine_server_call_err( req ))
-        {
-            ERR("Failed to set clipboard.\n");
-        }
-        else
-        {
-            hwndPrev = reply->old_viewer;
-        }
+        req->viewer = wine_server_user_handle( hWnd );
+        if (!wine_server_call_err( req ))
+            hwndPrev = wine_server_ptr_handle( reply->old_viewer );
     }
     SERVER_END_REQ;
 
@@ -453,7 +417,7 @@ HWND WINAPI GetClipboardViewer(void)
     SERVER_START_REQ( set_clipboard_info )
     {
         req->flags = 0;
-        if (!wine_server_call_err( req )) hWndViewer = reply->old_viewer;
+        if (!wine_server_call_err( req )) hWndViewer = wine_server_ptr_handle( reply->old_viewer );
     }
     SERVER_END_REQ;
 

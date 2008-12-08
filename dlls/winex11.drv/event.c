@@ -724,7 +724,7 @@ static void X11DRV_Expose( HWND hwnd, XEvent *xev )
     {
         SERVER_START_REQ( update_window_zorder )
         {
-            req->window      = hwnd;
+            req->window      = wine_server_user_handle( hwnd );
             req->rect.left   = rect.left;
             req->rect.top    = rect.top;
             req->rect.right  = rect.right;

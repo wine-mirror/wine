@@ -90,12 +90,12 @@ BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret )
 
     SERVER_START_REQ( set_capture_window )
     {
-        req->handle = hwnd;
+        req->handle = wine_server_user_handle( hwnd );
         req->flags  = flags;
         if ((ret = !wine_server_call_err( req )))
         {
-            previous = reply->previous;
-            hwnd = reply->full_handle;
+            previous = wine_server_ptr_handle( reply->previous );
+            hwnd = wine_server_ptr_handle( reply->full_handle );
         }
     }
     SERVER_END_REQ;
@@ -256,7 +256,7 @@ HWND WINAPI GetCapture(void)
     SERVER_START_REQ( get_thread_input )
     {
         req->tid = GetCurrentThreadId();
-        if (!wine_server_call_err( req )) ret = reply->capture;
+        if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->capture );
     }
     SERVER_END_REQ;
     return ret;

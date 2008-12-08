@@ -53,7 +53,7 @@ static property_data_t *get_properties( HWND hwnd, int *count )
         *count = 0;
         SERVER_START_REQ( get_window_properties )
         {
-            req->window = hwnd;
+            req->window = wine_server_user_handle( hwnd );
             wine_server_set_reply( req, data, total * sizeof(*data) );
             if (!wine_server_call( req )) res = reply->total;
         }
@@ -134,7 +134,7 @@ HANDLE WINAPI GetPropW( HWND hwnd, LPCWSTR str )
 
     SERVER_START_REQ( get_window_property )
     {
-        req->window = hwnd;
+        req->window = wine_server_user_handle( hwnd );
         if (!HIWORD(str)) req->atom = LOWORD(str);
         else wine_server_add_data( req, str, strlenW(str) * sizeof(WCHAR) );
         if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->handle );
@@ -166,7 +166,7 @@ BOOL WINAPI SetPropW( HWND hwnd, LPCWSTR str, HANDLE handle )
 
     SERVER_START_REQ( set_window_property )
     {
-        req->window = hwnd;
+        req->window = wine_server_user_handle( hwnd );
         req->handle = wine_server_obj_handle( handle );
         if (!HIWORD(str)) req->atom = LOWORD(str);
         else wine_server_add_data( req, str, strlenW(str) * sizeof(WCHAR) );
@@ -199,7 +199,7 @@ HANDLE WINAPI RemovePropW( HWND hwnd, LPCWSTR str )
 
     SERVER_START_REQ( remove_window_property )
     {
-        req->window = hwnd;
+        req->window = wine_server_user_handle( hwnd );
         if (!HIWORD(str)) req->atom = LOWORD(str);
         else wine_server_add_data( req, str, strlenW(str) * sizeof(WCHAR) );
         if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->handle );

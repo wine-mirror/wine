@@ -563,9 +563,9 @@ static BOOL X11DRV_CLIPBOARD_GetClipboardInfo(LPCLIPBOARDINFO cbInfo)
         }
         else
         {
-            cbInfo->hWndOpen = reply->old_clipboard;
-            cbInfo->hWndOwner = reply->old_owner;
-            cbInfo->hWndViewer = reply->old_viewer;
+            cbInfo->hWndOpen = wine_server_ptr_handle( reply->old_clipboard );
+            cbInfo->hWndOwner = wine_server_ptr_handle( reply->old_owner );
+            cbInfo->hWndViewer = wine_server_ptr_handle( reply->old_viewer );
             cbInfo->seqno = reply->seqno;
             cbInfo->flags = reply->flags;
 

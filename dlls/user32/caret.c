@@ -82,14 +82,14 @@ static void CALLBACK CARET_Callback( HWND hwnd, UINT msg, UINT_PTR id, DWORD cti
     SERVER_START_REQ( set_caret_info )
     {
         req->flags  = SET_CARET_STATE;
-        req->handle = hwnd;
+        req->handle = wine_server_user_handle( hwnd );
         req->x      = 0;
         req->y      = 0;
         req->hide   = 0;
         req->state  = -1;  /* toggle current state */
         if ((ret = !wine_server_call( req )))
         {
-            hwnd      = reply->full_handle;
+            hwnd      = wine_server_ptr_handle( reply->full_handle );
             r.left    = reply->old_rect.left;
             r.top     = reply->old_rect.top;
             r.right   = reply->old_rect.right;
@@ -166,12 +166,12 @@ BOOL WINAPI CreateCaret( HWND hwnd, HBITMAP bitmap, INT width, INT height )
 
     SERVER_START_REQ( set_caret_window )
     {
-        req->handle = hwnd;
+        req->handle = wine_server_user_handle( hwnd );
         req->width  = width;
         req->height = height;
         if ((ret = !wine_server_call_err( req )))
         {
-            prev      = reply->previous;
+            prev      = wine_server_ptr_handle( reply->previous );
             r.left    = reply->old_rect.left;
             r.top     = reply->old_rect.top;
             r.right   = reply->old_rect.right;
@@ -215,7 +215,7 @@ BOOL WINAPI DestroyCaret(void)
         req->height = 0;
         if ((ret = !wine_server_call_err( req )))
         {
-            prev      = reply->previous;
+            prev      = wine_server_ptr_handle( reply->previous );
             r.left    = reply->old_rect.left;
             r.top     = reply->old_rect.top;
             r.right   = reply->old_rect.right;
@@ -259,7 +259,7 @@ BOOL WINAPI SetCaretPos( INT x, INT y )
         req->state  = 1;
         if ((ret = !wine_server_call_err( req )))
         {
-            hwnd      = reply->full_handle;
+            hwnd      = wine_server_ptr_handle( reply->full_handle );
             r.left    = reply->old_rect.left;
             r.top     = reply->old_rect.top;
             r.right   = reply->old_rect.right;
@@ -296,14 +296,14 @@ BOOL WINAPI HideCaret( HWND hwnd )
     SERVER_START_REQ( set_caret_info )
     {
         req->flags  = SET_CARET_HIDE|SET_CARET_STATE;
-        req->handle = hwnd;
+        req->handle = wine_server_user_handle( hwnd );
         req->x      = 0;
         req->y      = 0;
         req->hide   = 1;
         req->state  = 0;
         if ((ret = !wine_server_call_err( req )))
         {
-            hwnd      = reply->full_handle;
+            hwnd      = wine_server_ptr_handle( reply->full_handle );
             r.left    = reply->old_rect.left;
             r.top     = reply->old_rect.top;
             r.right   = reply->old_rect.right;
@@ -335,14 +335,14 @@ BOOL WINAPI ShowCaret( HWND hwnd )
     SERVER_START_REQ( set_caret_info )
     {
         req->flags  = SET_CARET_HIDE|SET_CARET_STATE;
-        req->handle = hwnd;
+        req->handle = wine_server_user_handle( hwnd );
         req->x      = 0;
         req->y      = 0;
         req->hide   = -1;
         req->state  = 1;
         if ((ret = !wine_server_call_err( req )))
         {
-            hwnd      = reply->full_handle;
+            hwnd      = wine_server_ptr_handle( reply->full_handle );
             r.left    = reply->old_rect.left;
             r.top     = reply->old_rect.top;
             r.right   = reply->old_rect.right;

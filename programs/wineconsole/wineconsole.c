@@ -681,7 +681,7 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
         SERVER_START_REQ( set_console_input_info )
         {
             req->handle = wine_server_obj_handle( data->hConIn );
-            req->win = data->hWnd;
+            req->win = wine_server_user_handle( data->hWnd );
             req->mask = SET_CONSOLE_INPUT_INFO_TITLE |
                         SET_CONSOLE_INPUT_INFO_WIN;
             wine_server_add_data( req, appname, lstrlenW(appname) * sizeof(WCHAR) );

@@ -1495,7 +1495,7 @@ static BOOL post_dde_message( struct packed_message *data, const struct send_mes
         req->id      = info->dest_tid;
         req->type    = info->type;
         req->flags   = 0;
-        req->win     = info->hwnd;
+        req->win     = wine_server_user_handle( info->hwnd );
         req->msg     = info->msg;
         req->wparam  = info->wparam;
         req->lparam  = lp;
@@ -1683,7 +1683,7 @@ static void accept_hardware_message( UINT hw_id, BOOL remove, HWND new_hwnd )
     {
         req->hw_id   = hw_id;
         req->remove  = remove;
-        req->new_win = new_hwnd;
+        req->new_win = wine_server_user_handle( new_hwnd );
         if (wine_server_call( req ))
             FIXME("Failed to reply to MSG_HARDWARE message. Message may not be removed from queue.\n");
     }
@@ -2043,7 +2043,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
         SERVER_START_REQ( get_message )
         {
             req->flags     = flags;
-            req->get_win   = hwnd;
+            req->get_win   = wine_server_user_handle( hwnd );
             req->get_first = first;
             req->get_last  = last;
             req->hw_id     = hw_id;
@@ -2054,7 +2054,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
             {
                 size = wine_server_reply_size( reply );
                 info.type        = reply->type;
-                info.msg.hwnd    = reply->win;
+                info.msg.hwnd    = wine_server_ptr_handle( reply->win );
                 info.msg.message = reply->msg;
                 info.msg.wParam  = reply->wparam;
                 info.msg.lParam  = reply->lparam;
@@ -2125,16 +2125,16 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                 }
 
                 if (TRACE_ON(relay))
-                    DPRINTF( "%04x:Call winevent proc %p (hook=%p,event=%x,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04x,time=%x)\n",
+                    DPRINTF( "%04x:Call winevent proc %p (hook=%04x,event=%x,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04x,time=%x)\n",
                              GetCurrentThreadId(), hook_proc,
                              data->hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
                              info.msg.lParam, data->tid, info.msg.time);
 
-                hook_proc( data->hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
-                                 info.msg.lParam, data->tid, info.msg.time );
+                hook_proc( wine_server_ptr_handle( data->hook ), info.msg.message,
+                           info.msg.hwnd, info.msg.wParam, info.msg.lParam, data->tid, info.msg.time );
 
                 if (TRACE_ON(relay))
-                    DPRINTF( "%04x:Ret  winevent proc %p (hook=%p,event=%x,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04x,time=%x)\n",
+                    DPRINTF( "%04x:Ret  winevent proc %p (hook=%04x,event=%x,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04x,time=%x)\n",
                              GetCurrentThreadId(), hook_proc,
                              data->hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
                              info.msg.lParam, data->tid, info.msg.time);
@@ -2339,7 +2339,7 @@ static BOOL put_message_in_queue( const struct send_message_info *info, size_t *
         req->id      = info->dest_tid;
         req->type    = info->type;
         req->flags   = 0;
-        req->win     = info->hwnd;
+        req->win     = wine_server_user_handle( info->hwnd );
         req->msg     = info->msg;
         req->wparam  = info->wparam;
         req->lparam  = info->lparam;
@@ -3569,7 +3569,7 @@ UINT_PTR WINAPI SetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc )
 
     SERVER_START_REQ( set_win_timer )
     {
-        req->win    = hwnd;
+        req->win    = wine_server_user_handle( hwnd );
         req->msg    = WM_TIMER;
         req->id     = id;
         req->rate   = max( timeout, SYS_TIMER_RATE );
@@ -3600,7 +3600,7 @@ UINT_PTR WINAPI SetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC 
 
     SERVER_START_REQ( set_win_timer )
     {
-        req->win    = hwnd;
+        req->win    = wine_server_user_handle( hwnd );
         req->msg    = WM_SYSTIMER;
         req->id     = id;
         req->rate   = max( timeout, SYS_TIMER_RATE );
@@ -3628,7 +3628,7 @@ BOOL WINAPI KillTimer( HWND hwnd, UINT_PTR id )
 
     SERVER_START_REQ( kill_win_timer )
     {
-        req->win = hwnd;
+        req->win = wine_server_user_handle( hwnd );
         req->msg = WM_TIMER;
         req->id  = id;
         ret = !wine_server_call_err( req );
@@ -3647,7 +3647,7 @@ BOOL WINAPI KillSystemTimer( HWND hwnd, UINT_PTR id )
 
     SERVER_START_REQ( kill_win_timer )
     {
-        req->win = hwnd;
+        req->win = wine_server_user_handle( hwnd );
         req->msg = WM_SYSTIMER;
         req->id  = id;
         ret = !wine_server_call_err( req );
@@ -3670,12 +3670,12 @@ BOOL WINAPI GetGUIThreadInfo( DWORD id, GUITHREADINFO *info )
         if ((ret = !wine_server_call_err( req )))
         {
             info->flags          = 0;
-            info->hwndActive     = reply->active;
-            info->hwndFocus      = reply->focus;
-            info->hwndCapture    = reply->capture;
-            info->hwndMenuOwner  = reply->menu_owner;
-            info->hwndMoveSize   = reply->move_size;
-            info->hwndCaret      = reply->caret;
+            info->hwndActive     = wine_server_ptr_handle( reply->active );
+            info->hwndFocus      = wine_server_ptr_handle( reply->focus );
+            info->hwndCapture    = wine_server_ptr_handle( reply->capture );
+            info->hwndMenuOwner  = wine_server_ptr_handle( reply->menu_owner );
+            info->hwndMoveSize   = wine_server_ptr_handle( reply->move_size );
+            info->hwndCaret      = wine_server_ptr_handle( reply->caret );
             info->rcCaret.left   = reply->rect.left;
             info->rcCaret.top    = reply->rect.top;
             info->rcCaret.right  = reply->rect.right;
@@ -3700,7 +3700,7 @@ BOOL WINAPI IsHungAppWindow( HWND hWnd )
 
     SERVER_START_REQ( is_window_hung )
     {
-        req->win = hWnd;
+        req->win = wine_server_user_handle( hWnd );
         ret = !wine_server_call_err( req ) && reply->is_hung;
     }
     SERVER_END_REQ;

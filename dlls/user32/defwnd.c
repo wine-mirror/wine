@@ -97,7 +97,7 @@ static void DEFWND_SetTextA( HWND hwnd, LPCSTR text )
         MultiByteToWideChar( CP_ACP, 0, text, -1, textW, count );
         SERVER_START_REQ( set_window_text )
         {
-            req->handle = hwnd;
+            req->handle = wine_server_user_handle( hwnd );
             wine_server_add_data( req, textW, (count-1) * sizeof(WCHAR) );
             wine_server_call( req );
         }
@@ -131,7 +131,7 @@ static void DEFWND_SetTextW( HWND hwnd, LPCWSTR text )
         strcpyW( wndPtr->text, text );
         SERVER_START_REQ( set_window_text )
         {
-            req->handle = hwnd;
+            req->handle = wine_server_user_handle( hwnd );
             wine_server_add_data( req, wndPtr->text, (count-1) * sizeof(WCHAR) );
             wine_server_call( req );
         }
