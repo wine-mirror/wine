@@ -1009,7 +1009,7 @@ mp_count_bits (const mp_int * a)
   
   /* take the last digit and count the bits in it */
   q = a->dp[a->used - 1];
-  while (q > ((mp_digit) 0)) {
+  while (q > 0) {
     ++r;
     q >>= ((mp_digit) 1);
   }
@@ -4351,7 +4351,7 @@ s_mp_sqr (const mp_int * a, mp_int * b)
       u       = (mp_digit)(r >> ((mp_word) DIGIT_BIT));
     }
     /* propagate upwards */
-    while (u != ((mp_digit) 0)) {
+    while (u != 0) {
       r       = ((mp_word) *tmpt) + ((mp_word) u);
       *tmpt++ = (mp_digit) (r & ((mp_word) MP_MASK));
       u       = (mp_digit)(r >> ((mp_word) DIGIT_BIT));
