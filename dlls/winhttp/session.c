@@ -468,11 +468,24 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
     if (!netconn_init( &request->netconn, request->hdr.flags & WINHTTP_FLAG_SECURE )) goto end;
 
     if (!verb || !verb[0]) verb = getW;
-    if (!object || !object[0]) object = slashW;
-    if (!version || !version[0]) version = http1_1;
-
     if (!(request->verb = strdupW( verb ))) goto end;
-    if (!(request->path = strdupW( object ))) goto end;
+
+    if (object)
+    {
+        WCHAR *path, *p;
+        unsigned int len;
+
+        len = strlenW( object ) + 1;
+        if (object[0] != '/') len++;
+        if (!(p = path = heap_alloc( len * sizeof(WCHAR) ))) goto end;
+
+        if (object[0] != '/') *p++ = '/';
+        strcpyW( p, object );
+        request->path = path;
+    }
+    else if (!(request->path = strdupW( slashW ))) goto end;
+
+    if (!version || !version[0]) version = http1_1;
     if (!(request->version = strdupW( version ))) goto end;
 
     if (!(hrequest = alloc_handle( &request->hdr ))) goto end;
