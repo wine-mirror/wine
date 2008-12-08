@@ -605,9 +605,9 @@ UINT WINAPI MsiEnumPatchesW(LPCWSTR, DWORD, LPWSTR, LPWSTR, LPDWORD);
 #define     MsiEnumPatches WINELIB_NAME_AW(MsiEnumPatches)
 
 UINT WINAPI MsiEnumPatchesExA(LPCSTR, LPCSTR, DWORD, DWORD, DWORD, LPSTR, LPSTR,
-                              MSIINSTALLCONTEXT*, LPSTR, LPSTR);
+                              MSIINSTALLCONTEXT*, LPSTR, LPDWORD);
 UINT WINAPI MsiEnumPatchesExW(LPCWSTR, LPCWSTR, DWORD, DWORD, DWORD, LPWSTR, LPWSTR,
-                              MSIINSTALLCONTEXT*, LPWSTR, LPWSTR);
+                              MSIINSTALLCONTEXT*, LPWSTR, LPDWORD);
 #define     MsiEnumPatchesEx WINELIB_NAME_AW(MsiEnumPatchesEx)
 
 UINT WINAPI MsiGetFileHashA(LPCSTR, DWORD, PMSIFILEHASHINFO);

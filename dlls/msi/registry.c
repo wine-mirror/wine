@@ -1654,7 +1654,7 @@ UINT WINAPI MsiEnumRelatedProductsA(LPCSTR szUpgradeCode, DWORD dwReserved,
 UINT WINAPI MsiEnumPatchesExA(LPCSTR szProductCode, LPCSTR szUserSid,
         DWORD dwContext, DWORD dwFilter, DWORD dwIndex, LPSTR szPatchCode,
         LPSTR szTargetProductCode, MSIINSTALLCONTEXT *pdwTargetProductContext,
-        LPSTR szTargetUserSid, LPSTR pcchTargetUserSid)
+        LPSTR szTargetUserSid, LPDWORD pcchTargetUserSid)
 {
     FIXME("(%s, %s, %d, %d, %d, %p, %p, %p, %p, %p) stub!\n",
           debugstr_a(szProductCode), debugstr_a(szUserSid), dwContext, dwFilter,
@@ -1669,7 +1669,7 @@ UINT WINAPI MsiEnumPatchesExA(LPCSTR szProductCode, LPCSTR szUserSid,
 UINT WINAPI MsiEnumPatchesExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
         DWORD dwContext, DWORD dwFilter, DWORD dwIndex, LPWSTR szPatchCode,
         LPWSTR szTargetProductCode, MSIINSTALLCONTEXT *pdwTargetProductContext,
-        LPWSTR szTargetUserSid, LPWSTR pcchTargetUserSid)
+        LPWSTR szTargetUserSid, LPDWORD pcchTargetUserSid)
 {
     FIXME("(%s, %s, %d, %d, %d, %p, %p, %p, %p, %p) stub!\n",
           debugstr_w(szProductCode), debugstr_w(szUserSid), dwContext, dwFilter,
