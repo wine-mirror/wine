@@ -753,7 +753,7 @@ LPWSTR GetLastErrorText(LPWSTR lpwszBuf, DWORD dwSize)
         sprintfW(lpwszBuf, wszFormat, lpwszTemp, GetLastError());
     }
     if (lpwszTemp) {
-        LocalFree((HLOCAL)lpwszTemp);
+        LocalFree(lpwszTemp);
     }
     return lpwszBuf;
 }
