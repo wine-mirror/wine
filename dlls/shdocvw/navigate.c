@@ -791,7 +791,7 @@ HRESULT go_home(DocHost *This)
         return navigate_url(This, wszAboutBlank, NULL, NULL, NULL, NULL);
 
     size = sizeof(wszPageName);
-    res = RegQueryValueExW(hkey, wszStartPage, NULL, &type, (LPBYTE)&wszPageName, &size);
+    res = RegQueryValueExW(hkey, wszStartPage, NULL, &type, (LPBYTE)wszPageName, &size);
     RegCloseKey(hkey);
     if (res != ERROR_SUCCESS || type != REG_SZ)
         return navigate_url(This, wszAboutBlank, NULL, NULL, NULL, NULL);
