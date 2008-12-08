@@ -395,10 +395,10 @@ static void drawStridedSlow(IWineD3DDevice *iface, const WineDirect3DVertexStrid
             continue;
         }
 
-        if(sd->u.s.texCoords[textureNo].lpData)
+        if(sd->u.s.texCoords[coordIdx].lpData)
         {
-            texCoords[textureNo] =
-                    sd->u.s.texCoords[textureNo].lpData + streamOffset[sd->u.s.texCoords[textureNo].streamNo];
+            texCoords[coordIdx] =
+                    sd->u.s.texCoords[coordIdx].lpData + streamOffset[sd->u.s.texCoords[coordIdx].streamNo];
             tex_mask |= (1 << textureNo);
         }
         else
