@@ -7764,7 +7764,7 @@ static BOOL schedule_pipe(LPCWSTR cmd, LPCWSTR filename)
         signal(SIGPIPE, SIG_DFL);
         signal(SIGCHLD, SIG_DFL);
 
-        execl("/bin/sh", "/bin/sh", "-c", cmdA, (char*)0);
+        execl("/bin/sh", "/bin/sh", "-c", cmdA, NULL);
         _exit(1);
     }
 
