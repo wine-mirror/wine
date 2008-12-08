@@ -709,7 +709,7 @@ static int get_quit_message( struct msg_queue *queue, unsigned int flags,
     {
         reply->total  = 0;
         reply->type   = MSG_POSTED;
-        reply->win    = NULL;
+        reply->win    = 0;
         reply->msg    = WM_QUIT;
         reply->wparam = queue->exit_code;
         reply->lparam = 0;
@@ -889,7 +889,7 @@ static void msg_queue_poll_event( struct fd *fd, int event )
 static void thread_input_dump( struct object *obj, int verbose )
 {
     struct thread_input *input = (struct thread_input *)obj;
-    fprintf( stderr, "Thread input focus=%p capture=%p active=%p\n",
+    fprintf( stderr, "Thread input focus=%08x capture=%08x active=%08x\n",
              input->focus, input->capture, input->active );
 }
 
@@ -1545,7 +1545,7 @@ void post_win_event( struct thread *thread, unsigned int event,
             msg->data_size = sizeof(*data) + module_size;
 
             if (debug_level > 1)
-                fprintf( stderr, "post_win_event: tid %04x event %04x win %p object_id %d child_id %d\n",
+                fprintf( stderr, "post_win_event: tid %04x event %04x win %08x object_id %d child_id %d\n",
                          get_thread_id(thread), event, win, object_id, child_id );
             list_add_tail( &thread->queue->msg_list[SEND_MESSAGE], &msg->entry );
             set_queue_bits( thread->queue, QS_SENDMESSAGE );
@@ -1950,7 +1950,7 @@ DECL_HANDLER(set_win_timer)
     {
         queue = get_current_queue();
         /* look for a timer with this id */
-        if (id && (timer = find_timer( queue, NULL, req->msg, id )))
+        if (id && (timer = find_timer( queue, 0, req->msg, id )))
         {
             /* free and reuse id */
             free_timer( queue, timer );

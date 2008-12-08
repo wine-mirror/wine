@@ -36,10 +36,10 @@ static int allocated_handles;
 static struct user_handle *handle_to_entry( user_handle_t handle )
 {
     unsigned short generation;
-    int index = (((unsigned long)handle & 0xffff) - FIRST_USER_HANDLE) >> 1;
+    int index = ((handle & 0xffff) - FIRST_USER_HANDLE) >> 1;
     if (index < 0 || index >= nb_handles) return NULL;
     if (!handles[index].type) return NULL;
-    generation = (unsigned long)handle >> 16;
+    generation = handle >> 16;
     if (generation == handles[index].generation || !generation || generation == 0xffff)
         return &handles[index];
     return NULL;
@@ -47,8 +47,8 @@ static struct user_handle *handle_to_entry( user_handle_t handle )
 
 static inline user_handle_t entry_to_handle( struct user_handle *ptr )
 {
-    int index = ptr - handles;
-    return (user_handle_t)((((unsigned long)index << 1) + FIRST_USER_HANDLE) + (ptr->generation << 16));
+    unsigned int index = ptr - handles;
+    return (index << 1) + FIRST_USER_HANDLE + (ptr->generation << 16);
 }
 
 static inline struct user_handle *alloc_user_entry(void)
@@ -113,7 +113,7 @@ user_handle_t get_user_full_handle( user_handle_t handle )
 {
     struct user_handle *entry;
 
-    if ((unsigned long)handle >> 16) return handle;
+    if (handle >> 16) return handle;
     if (!(entry = handle_to_entry( handle ))) return handle;
     return entry_to_handle( entry );
 }
@@ -149,7 +149,7 @@ void *next_user_handle( user_handle_t *handle, enum user_object type )
     if (!*handle) entry = handles;
     else
     {
-        int index = (((unsigned long)*handle & 0xffff) - FIRST_USER_HANDLE) >> 1;
+        int index = ((*handle & 0xffff) - FIRST_USER_HANDLE) >> 1;
         if (index < 0 || index >= nb_handles) return NULL;
         entry = handles + index + 1;  /* start from the next one */
     }

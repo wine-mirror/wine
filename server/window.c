@@ -2031,7 +2031,7 @@ DECL_HANDLER(set_window_pos)
 
     if (!(flags & SWP_NOZORDER))
     {
-        switch ((int)(unsigned long)req->previous)
+        switch ((int)req->previous)
         {
         case 0:   /* HWND_TOP */
             previous = WINPTR_TOP;

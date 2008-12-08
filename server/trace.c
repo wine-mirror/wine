@@ -350,7 +350,7 @@ static void dump_varargs_user_handles( data_size_t size )
     fputc( '{', stderr );
     while (len > 0)
     {
-        fprintf( stderr, "%p", *data++ );
+        fprintf( stderr, "%08x", *data++ );
         if (--len) fputc( ',', stderr );
     }
     fputc( '}', stderr );
@@ -1412,7 +1412,7 @@ static void dump_set_socket_event_request( const struct set_socket_event_request
     fprintf( stderr, " handle=%04x,", req->handle );
     fprintf( stderr, " mask=%08x,", req->mask );
     fprintf( stderr, " event=%04x,", req->event );
-    fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " window=%08x,", req->window );
     fprintf( stderr, " msg=%08x", req->msg );
 }
 
@@ -1522,7 +1522,7 @@ static void dump_set_console_input_info_request( const struct set_console_input_
     fprintf( stderr, " edition_mode=%d,", req->edition_mode );
     fprintf( stderr, " input_cp=%d,", req->input_cp );
     fprintf( stderr, " output_cp=%d,", req->output_cp );
-    fprintf( stderr, " win=%p,", req->win );
+    fprintf( stderr, " win=%08x,", req->win );
     fprintf( stderr, " title=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -1540,7 +1540,7 @@ static void dump_get_console_input_info_reply( const struct get_console_input_in
     fprintf( stderr, " edition_mode=%d,", req->edition_mode );
     fprintf( stderr, " input_cp=%d,", req->input_cp );
     fprintf( stderr, " output_cp=%d,", req->output_cp );
-    fprintf( stderr, " win=%p,", req->win );
+    fprintf( stderr, " win=%08x,", req->win );
     fprintf( stderr, " title=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -2345,7 +2345,7 @@ static void dump_send_message_request( const struct send_message_request *req )
     fprintf( stderr, " id=%04x,", req->id );
     fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " flags=%d,", req->flags );
-    fprintf( stderr, " win=%p,", req->win );
+    fprintf( stderr, " win=%08x,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " wparam=%lx,", req->wparam );
     fprintf( stderr, " lparam=%lx,", req->lparam );
@@ -2364,7 +2364,7 @@ static void dump_post_quit_message_request( const struct post_quit_message_reque
 static void dump_send_hardware_message_request( const struct send_hardware_message_request *req )
 {
     fprintf( stderr, " id=%04x,", req->id );
-    fprintf( stderr, " win=%p,", req->win );
+    fprintf( stderr, " win=%08x,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " time=%08x,", req->time );
     fprintf( stderr, " wparam=%lx,", req->wparam );
@@ -2377,7 +2377,7 @@ static void dump_send_hardware_message_request( const struct send_hardware_messa
 static void dump_get_message_request( const struct get_message_request *req )
 {
     fprintf( stderr, " flags=%08x,", req->flags );
-    fprintf( stderr, " get_win=%p,", req->get_win );
+    fprintf( stderr, " get_win=%08x,", req->get_win );
     fprintf( stderr, " get_first=%08x,", req->get_first );
     fprintf( stderr, " get_last=%08x,", req->get_last );
     fprintf( stderr, " hw_id=%08x,", req->hw_id );
@@ -2387,7 +2387,7 @@ static void dump_get_message_request( const struct get_message_request *req )
 
 static void dump_get_message_reply( const struct get_message_reply *req )
 {
-    fprintf( stderr, " win=%p,", req->win );
+    fprintf( stderr, " win=%08x,", req->win );
     fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " wparam=%lx,", req->wparam );
@@ -2415,7 +2415,7 @@ static void dump_accept_hardware_message_request( const struct accept_hardware_m
 {
     fprintf( stderr, " hw_id=%08x,", req->hw_id );
     fprintf( stderr, " remove=%d,", req->remove );
-    fprintf( stderr, " new_win=%p", req->new_win );
+    fprintf( stderr, " new_win=%08x", req->new_win );
 }
 
 static void dump_get_message_reply_request( const struct get_message_reply_request *req )
@@ -2432,7 +2432,7 @@ static void dump_get_message_reply_reply( const struct get_message_reply_reply *
 
 static void dump_set_win_timer_request( const struct set_win_timer_request *req )
 {
-    fprintf( stderr, " win=%p,", req->win );
+    fprintf( stderr, " win=%08x,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " rate=%08x,", req->rate );
     fprintf( stderr, " id=%lx,", req->id );
@@ -2446,14 +2446,14 @@ static void dump_set_win_timer_reply( const struct set_win_timer_reply *req )
 
 static void dump_kill_win_timer_request( const struct kill_win_timer_request *req )
 {
-    fprintf( stderr, " win=%p,", req->win );
+    fprintf( stderr, " win=%08x,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " id=%lx", req->id );
 }
 
 static void dump_is_window_hung_request( const struct is_window_hung_request *req )
 {
-    fprintf( stderr, " win=%p", req->win );
+    fprintf( stderr, " win=%08x", req->win );
 }
 
 static void dump_is_window_hung_reply( const struct is_window_hung_reply *req )
@@ -2573,8 +2573,8 @@ static void dump_get_named_pipe_info_reply( const struct get_named_pipe_info_rep
 
 static void dump_create_window_request( const struct create_window_request *req )
 {
-    fprintf( stderr, " parent=%p,", req->parent );
-    fprintf( stderr, " owner=%p,", req->owner );
+    fprintf( stderr, " parent=%08x,", req->parent );
+    fprintf( stderr, " owner=%08x,", req->owner );
     fprintf( stderr, " atom=%04x,", req->atom );
     fprintf( stderr, " instance=%p,", req->instance );
     fprintf( stderr, " class=" );
@@ -2583,16 +2583,16 @@ static void dump_create_window_request( const struct create_window_request *req 
 
 static void dump_create_window_reply( const struct create_window_reply *req )
 {
-    fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " parent=%p,", req->parent );
-    fprintf( stderr, " owner=%p,", req->owner );
+    fprintf( stderr, " handle=%08x,", req->handle );
+    fprintf( stderr, " parent=%08x,", req->parent );
+    fprintf( stderr, " owner=%08x,", req->owner );
     fprintf( stderr, " extra=%d,", req->extra );
     fprintf( stderr, " class_ptr=%p", req->class_ptr );
 }
 
 static void dump_destroy_window_request( const struct destroy_window_request *req )
 {
-    fprintf( stderr, " handle=%p", req->handle );
+    fprintf( stderr, " handle=%08x", req->handle );
 }
 
 static void dump_get_desktop_window_request( const struct get_desktop_window_request *req )
@@ -2602,31 +2602,31 @@ static void dump_get_desktop_window_request( const struct get_desktop_window_req
 
 static void dump_get_desktop_window_reply( const struct get_desktop_window_reply *req )
 {
-    fprintf( stderr, " top_window=%p,", req->top_window );
-    fprintf( stderr, " msg_window=%p", req->msg_window );
+    fprintf( stderr, " top_window=%08x,", req->top_window );
+    fprintf( stderr, " msg_window=%08x", req->msg_window );
 }
 
 static void dump_set_window_owner_request( const struct set_window_owner_request *req )
 {
-    fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " owner=%p", req->owner );
+    fprintf( stderr, " handle=%08x,", req->handle );
+    fprintf( stderr, " owner=%08x", req->owner );
 }
 
 static void dump_set_window_owner_reply( const struct set_window_owner_reply *req )
 {
-    fprintf( stderr, " full_owner=%p,", req->full_owner );
-    fprintf( stderr, " prev_owner=%p", req->prev_owner );
+    fprintf( stderr, " full_owner=%08x,", req->full_owner );
+    fprintf( stderr, " prev_owner=%08x", req->prev_owner );
 }
 
 static void dump_get_window_info_request( const struct get_window_info_request *req )
 {
-    fprintf( stderr, " handle=%p", req->handle );
+    fprintf( stderr, " handle=%08x", req->handle );
 }
 
 static void dump_get_window_info_reply( const struct get_window_info_reply *req )
 {
-    fprintf( stderr, " full_handle=%p,", req->full_handle );
-    fprintf( stderr, " last_active=%p,", req->last_active );
+    fprintf( stderr, " full_handle=%08x,", req->full_handle );
+    fprintf( stderr, " last_active=%08x,", req->last_active );
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " atom=%04x,", req->atom );
@@ -2636,7 +2636,7 @@ static void dump_get_window_info_reply( const struct get_window_info_reply *req 
 static void dump_set_window_info_request( const struct set_window_info_request *req )
 {
     fprintf( stderr, " flags=%08x,", req->flags );
-    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " handle=%08x,", req->handle );
     fprintf( stderr, " style=%08x,", req->style );
     fprintf( stderr, " ex_style=%08x,", req->ex_style );
     fprintf( stderr, " id=%08x,", req->id );
@@ -2660,19 +2660,19 @@ static void dump_set_window_info_reply( const struct set_window_info_reply *req 
 
 static void dump_set_parent_request( const struct set_parent_request *req )
 {
-    fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " parent=%p", req->parent );
+    fprintf( stderr, " handle=%08x,", req->handle );
+    fprintf( stderr, " parent=%08x", req->parent );
 }
 
 static void dump_set_parent_reply( const struct set_parent_reply *req )
 {
-    fprintf( stderr, " old_parent=%p,", req->old_parent );
-    fprintf( stderr, " full_parent=%p", req->full_parent );
+    fprintf( stderr, " old_parent=%08x,", req->old_parent );
+    fprintf( stderr, " full_parent=%08x", req->full_parent );
 }
 
 static void dump_get_window_parents_request( const struct get_window_parents_request *req )
 {
-    fprintf( stderr, " handle=%p", req->handle );
+    fprintf( stderr, " handle=%08x", req->handle );
 }
 
 static void dump_get_window_parents_reply( const struct get_window_parents_reply *req )
@@ -2685,7 +2685,7 @@ static void dump_get_window_parents_reply( const struct get_window_parents_reply
 static void dump_get_window_children_request( const struct get_window_children_request *req )
 {
     fprintf( stderr, " desktop=%04x,", req->desktop );
-    fprintf( stderr, " parent=%p,", req->parent );
+    fprintf( stderr, " parent=%08x,", req->parent );
     fprintf( stderr, " atom=%04x,", req->atom );
     fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " class=" );
@@ -2701,7 +2701,7 @@ static void dump_get_window_children_reply( const struct get_window_children_rep
 
 static void dump_get_window_children_from_point_request( const struct get_window_children_from_point_request *req )
 {
-    fprintf( stderr, " parent=%p,", req->parent );
+    fprintf( stderr, " parent=%08x,", req->parent );
     fprintf( stderr, " x=%d,", req->x );
     fprintf( stderr, " y=%d", req->y );
 }
@@ -2715,26 +2715,26 @@ static void dump_get_window_children_from_point_reply( const struct get_window_c
 
 static void dump_get_window_tree_request( const struct get_window_tree_request *req )
 {
-    fprintf( stderr, " handle=%p", req->handle );
+    fprintf( stderr, " handle=%08x", req->handle );
 }
 
 static void dump_get_window_tree_reply( const struct get_window_tree_reply *req )
 {
-    fprintf( stderr, " parent=%p,", req->parent );
-    fprintf( stderr, " owner=%p,", req->owner );
-    fprintf( stderr, " next_sibling=%p,", req->next_sibling );
-    fprintf( stderr, " prev_sibling=%p,", req->prev_sibling );
-    fprintf( stderr, " first_sibling=%p,", req->first_sibling );
-    fprintf( stderr, " last_sibling=%p,", req->last_sibling );
-    fprintf( stderr, " first_child=%p,", req->first_child );
-    fprintf( stderr, " last_child=%p", req->last_child );
+    fprintf( stderr, " parent=%08x,", req->parent );
+    fprintf( stderr, " owner=%08x,", req->owner );
+    fprintf( stderr, " next_sibling=%08x,", req->next_sibling );
+    fprintf( stderr, " prev_sibling=%08x,", req->prev_sibling );
+    fprintf( stderr, " first_sibling=%08x,", req->first_sibling );
+    fprintf( stderr, " last_sibling=%08x,", req->last_sibling );
+    fprintf( stderr, " first_child=%08x,", req->first_child );
+    fprintf( stderr, " last_child=%08x", req->last_child );
 }
 
 static void dump_set_window_pos_request( const struct set_window_pos_request *req )
 {
     fprintf( stderr, " flags=%08x,", req->flags );
-    fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " previous=%p,", req->previous );
+    fprintf( stderr, " handle=%08x,", req->handle );
+    fprintf( stderr, " previous=%08x,", req->previous );
     fprintf( stderr, " window=" );
     dump_rectangle( &req->window );
     fprintf( stderr, "," );
@@ -2753,7 +2753,7 @@ static void dump_set_window_pos_reply( const struct set_window_pos_reply *req )
 
 static void dump_get_window_rectangles_request( const struct get_window_rectangles_request *req )
 {
-    fprintf( stderr, " handle=%p", req->handle );
+    fprintf( stderr, " handle=%08x", req->handle );
 }
 
 static void dump_get_window_rectangles_reply( const struct get_window_rectangles_reply *req )
@@ -2770,7 +2770,7 @@ static void dump_get_window_rectangles_reply( const struct get_window_rectangles
 
 static void dump_get_window_text_request( const struct get_window_text_request *req )
 {
-    fprintf( stderr, " handle=%p", req->handle );
+    fprintf( stderr, " handle=%08x", req->handle );
 }
 
 static void dump_get_window_text_reply( const struct get_window_text_reply *req )
@@ -2781,15 +2781,15 @@ static void dump_get_window_text_reply( const struct get_window_text_reply *req 
 
 static void dump_set_window_text_request( const struct set_window_text_request *req )
 {
-    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " handle=%08x,", req->handle );
     fprintf( stderr, " text=" );
     dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_get_windows_offset_request( const struct get_windows_offset_request *req )
 {
-    fprintf( stderr, " from=%p,", req->from );
-    fprintf( stderr, " to=%p", req->to );
+    fprintf( stderr, " from=%08x,", req->from );
+    fprintf( stderr, " to=%08x", req->to );
 }
 
 static void dump_get_windows_offset_reply( const struct get_windows_offset_reply *req )
@@ -2800,13 +2800,13 @@ static void dump_get_windows_offset_reply( const struct get_windows_offset_reply
 
 static void dump_get_visible_region_request( const struct get_visible_region_request *req )
 {
-    fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " window=%08x,", req->window );
     fprintf( stderr, " flags=%08x", req->flags );
 }
 
 static void dump_get_visible_region_reply( const struct get_visible_region_reply *req )
 {
-    fprintf( stderr, " top_win=%p,", req->top_win );
+    fprintf( stderr, " top_win=%08x,", req->top_win );
     fprintf( stderr, " top_rect=" );
     dump_rectangle( &req->top_rect );
     fprintf( stderr, "," );
@@ -2820,7 +2820,7 @@ static void dump_get_visible_region_reply( const struct get_visible_region_reply
 
 static void dump_get_window_region_request( const struct get_window_region_request *req )
 {
-    fprintf( stderr, " window=%p", req->window );
+    fprintf( stderr, " window=%08x", req->window );
 }
 
 static void dump_get_window_region_reply( const struct get_window_region_reply *req )
@@ -2832,7 +2832,7 @@ static void dump_get_window_region_reply( const struct get_window_region_reply *
 
 static void dump_set_window_region_request( const struct set_window_region_request *req )
 {
-    fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " window=%08x,", req->window );
     fprintf( stderr, " redraw=%d,", req->redraw );
     fprintf( stderr, " region=" );
     dump_varargs_rectangles( cur_size );
@@ -2840,14 +2840,14 @@ static void dump_set_window_region_request( const struct set_window_region_reque
 
 static void dump_get_update_region_request( const struct get_update_region_request *req )
 {
-    fprintf( stderr, " window=%p,", req->window );
-    fprintf( stderr, " from_child=%p,", req->from_child );
+    fprintf( stderr, " window=%08x,", req->window );
+    fprintf( stderr, " from_child=%08x,", req->from_child );
     fprintf( stderr, " flags=%08x", req->flags );
 }
 
 static void dump_get_update_region_reply( const struct get_update_region_reply *req )
 {
-    fprintf( stderr, " child=%p,", req->child );
+    fprintf( stderr, " child=%08x,", req->child );
     fprintf( stderr, " flags=%08x,", req->flags );
     fprintf( stderr, " total_size=%u,", req->total_size );
     fprintf( stderr, " region=" );
@@ -2856,14 +2856,14 @@ static void dump_get_update_region_reply( const struct get_update_region_reply *
 
 static void dump_update_window_zorder_request( const struct update_window_zorder_request *req )
 {
-    fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " window=%08x,", req->window );
     fprintf( stderr, " rect=" );
     dump_rectangle( &req->rect );
 }
 
 static void dump_redraw_window_request( const struct redraw_window_request *req )
 {
-    fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " window=%08x,", req->window );
     fprintf( stderr, " flags=%08x,", req->flags );
     fprintf( stderr, " region=" );
     dump_varargs_rectangles( cur_size );
@@ -2871,7 +2871,7 @@ static void dump_redraw_window_request( const struct redraw_window_request *req 
 
 static void dump_set_window_property_request( const struct set_window_property_request *req )
 {
-    fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " window=%08x,", req->window );
     fprintf( stderr, " atom=%04x,", req->atom );
     fprintf( stderr, " handle=%04x,", req->handle );
     fprintf( stderr, " name=" );
@@ -2880,7 +2880,7 @@ static void dump_set_window_property_request( const struct set_window_property_r
 
 static void dump_remove_window_property_request( const struct remove_window_property_request *req )
 {
-    fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " window=%08x,", req->window );
     fprintf( stderr, " atom=%04x,", req->atom );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
@@ -2893,7 +2893,7 @@ static void dump_remove_window_property_reply( const struct remove_window_proper
 
 static void dump_get_window_property_request( const struct get_window_property_request *req )
 {
-    fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " window=%08x,", req->window );
     fprintf( stderr, " atom=%04x,", req->atom );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
@@ -2906,7 +2906,7 @@ static void dump_get_window_property_reply( const struct get_window_property_rep
 
 static void dump_get_window_properties_request( const struct get_window_properties_request *req )
 {
-    fprintf( stderr, " window=%p", req->window );
+    fprintf( stderr, " window=%08x", req->window );
 }
 
 static void dump_get_window_properties_reply( const struct get_window_properties_reply *req )
@@ -3065,13 +3065,13 @@ static void dump_get_thread_input_request( const struct get_thread_input_request
 
 static void dump_get_thread_input_reply( const struct get_thread_input_reply *req )
 {
-    fprintf( stderr, " focus=%p,", req->focus );
-    fprintf( stderr, " capture=%p,", req->capture );
-    fprintf( stderr, " active=%p,", req->active );
-    fprintf( stderr, " foreground=%p,", req->foreground );
-    fprintf( stderr, " menu_owner=%p,", req->menu_owner );
-    fprintf( stderr, " move_size=%p,", req->move_size );
-    fprintf( stderr, " caret=%p,", req->caret );
+    fprintf( stderr, " focus=%08x,", req->focus );
+    fprintf( stderr, " capture=%08x,", req->capture );
+    fprintf( stderr, " active=%08x,", req->active );
+    fprintf( stderr, " foreground=%08x,", req->foreground );
+    fprintf( stderr, " menu_owner=%08x,", req->menu_owner );
+    fprintf( stderr, " move_size=%08x,", req->move_size );
+    fprintf( stderr, " caret=%08x,", req->caret );
     fprintf( stderr, " rect=" );
     dump_rectangle( &req->rect );
 }
@@ -3107,58 +3107,58 @@ static void dump_set_key_state_request( const struct set_key_state_request *req 
 
 static void dump_set_foreground_window_request( const struct set_foreground_window_request *req )
 {
-    fprintf( stderr, " handle=%p", req->handle );
+    fprintf( stderr, " handle=%08x", req->handle );
 }
 
 static void dump_set_foreground_window_reply( const struct set_foreground_window_reply *req )
 {
-    fprintf( stderr, " previous=%p,", req->previous );
+    fprintf( stderr, " previous=%08x,", req->previous );
     fprintf( stderr, " send_msg_old=%d,", req->send_msg_old );
     fprintf( stderr, " send_msg_new=%d", req->send_msg_new );
 }
 
 static void dump_set_focus_window_request( const struct set_focus_window_request *req )
 {
-    fprintf( stderr, " handle=%p", req->handle );
+    fprintf( stderr, " handle=%08x", req->handle );
 }
 
 static void dump_set_focus_window_reply( const struct set_focus_window_reply *req )
 {
-    fprintf( stderr, " previous=%p", req->previous );
+    fprintf( stderr, " previous=%08x", req->previous );
 }
 
 static void dump_set_active_window_request( const struct set_active_window_request *req )
 {
-    fprintf( stderr, " handle=%p", req->handle );
+    fprintf( stderr, " handle=%08x", req->handle );
 }
 
 static void dump_set_active_window_reply( const struct set_active_window_reply *req )
 {
-    fprintf( stderr, " previous=%p", req->previous );
+    fprintf( stderr, " previous=%08x", req->previous );
 }
 
 static void dump_set_capture_window_request( const struct set_capture_window_request *req )
 {
-    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " handle=%08x,", req->handle );
     fprintf( stderr, " flags=%08x", req->flags );
 }
 
 static void dump_set_capture_window_reply( const struct set_capture_window_reply *req )
 {
-    fprintf( stderr, " previous=%p,", req->previous );
-    fprintf( stderr, " full_handle=%p", req->full_handle );
+    fprintf( stderr, " previous=%08x,", req->previous );
+    fprintf( stderr, " full_handle=%08x", req->full_handle );
 }
 
 static void dump_set_caret_window_request( const struct set_caret_window_request *req )
 {
-    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " handle=%08x,", req->handle );
     fprintf( stderr, " width=%d,", req->width );
     fprintf( stderr, " height=%d", req->height );
 }
 
 static void dump_set_caret_window_reply( const struct set_caret_window_reply *req )
 {
-    fprintf( stderr, " previous=%p,", req->previous );
+    fprintf( stderr, " previous=%08x,", req->previous );
     fprintf( stderr, " old_rect=" );
     dump_rectangle( &req->old_rect );
     fprintf( stderr, "," );
@@ -3169,7 +3169,7 @@ static void dump_set_caret_window_reply( const struct set_caret_window_reply *re
 static void dump_set_caret_info_request( const struct set_caret_info_request *req )
 {
     fprintf( stderr, " flags=%08x,", req->flags );
-    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " handle=%08x,", req->handle );
     fprintf( stderr, " x=%d,", req->x );
     fprintf( stderr, " y=%d,", req->y );
     fprintf( stderr, " hide=%d,", req->hide );
@@ -3178,7 +3178,7 @@ static void dump_set_caret_info_request( const struct set_caret_info_request *re
 
 static void dump_set_caret_info_reply( const struct set_caret_info_reply *req )
 {
-    fprintf( stderr, " full_handle=%p,", req->full_handle );
+    fprintf( stderr, " full_handle=%08x,", req->full_handle );
     fprintf( stderr, " old_rect=" );
     dump_rectangle( &req->old_rect );
     fprintf( stderr, "," );
@@ -3202,13 +3202,13 @@ static void dump_set_hook_request( const struct set_hook_request *req )
 
 static void dump_set_hook_reply( const struct set_hook_reply *req )
 {
-    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " handle=%08x,", req->handle );
     fprintf( stderr, " active_hooks=%08x", req->active_hooks );
 }
 
 static void dump_remove_hook_request( const struct remove_hook_request *req )
 {
-    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " handle=%08x,", req->handle );
     fprintf( stderr, " id=%d,", req->id );
     fprintf( stderr, " proc=%p", req->proc );
 }
@@ -3222,14 +3222,14 @@ static void dump_start_hook_chain_request( const struct start_hook_chain_request
 {
     fprintf( stderr, " id=%d,", req->id );
     fprintf( stderr, " event=%d,", req->event );
-    fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " window=%08x,", req->window );
     fprintf( stderr, " object_id=%d,", req->object_id );
     fprintf( stderr, " child_id=%d", req->child_id );
 }
 
 static void dump_start_hook_chain_reply( const struct start_hook_chain_reply *req )
 {
-    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " handle=%08x,", req->handle );
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " proc=%p,", req->proc );
@@ -3246,17 +3246,17 @@ static void dump_finish_hook_chain_request( const struct finish_hook_chain_reque
 
 static void dump_get_hook_info_request( const struct get_hook_info_request *req )
 {
-    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " handle=%08x,", req->handle );
     fprintf( stderr, " get_next=%d,", req->get_next );
     fprintf( stderr, " event=%d,", req->event );
-    fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " window=%08x,", req->window );
     fprintf( stderr, " object_id=%d,", req->object_id );
     fprintf( stderr, " child_id=%d", req->child_id );
 }
 
 static void dump_get_hook_info_reply( const struct get_hook_info_reply *req )
 {
-    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " handle=%08x,", req->handle );
     fprintf( stderr, " id=%d,", req->id );
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " tid=%04x,", req->tid );
@@ -3299,7 +3299,7 @@ static void dump_destroy_class_reply( const struct destroy_class_reply *req )
 
 static void dump_set_class_info_request( const struct set_class_info_request *req )
 {
-    fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " window=%08x,", req->window );
     fprintf( stderr, " flags=%08x,", req->flags );
     fprintf( stderr, " atom=%04x,", req->atom );
     fprintf( stderr, " style=%08x,", req->style );
@@ -3323,18 +3323,18 @@ static void dump_set_class_info_reply( const struct set_class_info_reply *req )
 static void dump_set_clipboard_info_request( const struct set_clipboard_info_request *req )
 {
     fprintf( stderr, " flags=%08x,", req->flags );
-    fprintf( stderr, " clipboard=%p,", req->clipboard );
-    fprintf( stderr, " owner=%p,", req->owner );
-    fprintf( stderr, " viewer=%p,", req->viewer );
+    fprintf( stderr, " clipboard=%08x,", req->clipboard );
+    fprintf( stderr, " owner=%08x,", req->owner );
+    fprintf( stderr, " viewer=%08x,", req->viewer );
     fprintf( stderr, " seqno=%08x", req->seqno );
 }
 
 static void dump_set_clipboard_info_reply( const struct set_clipboard_info_reply *req )
 {
     fprintf( stderr, " flags=%08x,", req->flags );
-    fprintf( stderr, " old_clipboard=%p,", req->old_clipboard );
-    fprintf( stderr, " old_owner=%p,", req->old_owner );
-    fprintf( stderr, " old_viewer=%p,", req->old_viewer );
+    fprintf( stderr, " old_clipboard=%08x,", req->old_clipboard );
+    fprintf( stderr, " old_owner=%08x,", req->old_owner );
+    fprintf( stderr, " old_viewer=%08x,", req->old_viewer );
     fprintf( stderr, " seqno=%08x", req->seqno );
 }
 
@@ -3354,18 +3354,18 @@ static void dump_open_token_reply( const struct open_token_reply *req )
 static void dump_set_global_windows_request( const struct set_global_windows_request *req )
 {
     fprintf( stderr, " flags=%08x,", req->flags );
-    fprintf( stderr, " shell_window=%p,", req->shell_window );
-    fprintf( stderr, " shell_listview=%p,", req->shell_listview );
-    fprintf( stderr, " progman_window=%p,", req->progman_window );
-    fprintf( stderr, " taskman_window=%p", req->taskman_window );
+    fprintf( stderr, " shell_window=%08x,", req->shell_window );
+    fprintf( stderr, " shell_listview=%08x,", req->shell_listview );
+    fprintf( stderr, " progman_window=%08x,", req->progman_window );
+    fprintf( stderr, " taskman_window=%08x", req->taskman_window );
 }
 
 static void dump_set_global_windows_reply( const struct set_global_windows_reply *req )
 {
-    fprintf( stderr, " old_shell_window=%p,", req->old_shell_window );
-    fprintf( stderr, " old_shell_listview=%p,", req->old_shell_listview );
-    fprintf( stderr, " old_progman_window=%p,", req->old_progman_window );
-    fprintf( stderr, " old_taskman_window=%p", req->old_taskman_window );
+    fprintf( stderr, " old_shell_window=%08x,", req->old_shell_window );
+    fprintf( stderr, " old_shell_listview=%08x,", req->old_shell_listview );
+    fprintf( stderr, " old_progman_window=%08x,", req->old_progman_window );
+    fprintf( stderr, " old_taskman_window=%08x", req->old_taskman_window );
 }
 
 static void dump_adjust_token_privileges_request( const struct adjust_token_privileges_request *req )
@@ -3807,7 +3807,7 @@ static void dump_add_fd_completion_request( const struct add_fd_completion_reque
 
 static void dump_get_window_layered_info_request( const struct get_window_layered_info_request *req )
 {
-    fprintf( stderr, " handle=%p", req->handle );
+    fprintf( stderr, " handle=%08x", req->handle );
 }
 
 static void dump_get_window_layered_info_reply( const struct get_window_layered_info_reply *req )
@@ -3819,7 +3819,7 @@ static void dump_get_window_layered_info_reply( const struct get_window_layered_
 
 static void dump_set_window_layered_info_request( const struct set_window_layered_info_request *req )
 {
-    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " handle=%08x,", req->handle );
     fprintf( stderr, " color_key=%08x,", req->color_key );
     fprintf( stderr, " alpha=%08x,", req->alpha );
     fprintf( stderr, " flags=%08x", req->flags );

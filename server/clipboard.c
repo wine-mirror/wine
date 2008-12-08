@@ -76,7 +76,7 @@ static void clipboard_dump( struct object *obj, int verbose )
 {
     struct clipboard *clipboard = (struct clipboard *)obj;
 
-    fprintf( stderr, "Clipboard open_thread=%p open_win=%p owner_thread=%p owner_win=%p viewer=%p seq=%u\n",
+    fprintf( stderr, "Clipboard open_thread=%p open_win=%08x owner_thread=%p owner_win=%08x viewer=%08x seq=%u\n",
              clipboard->open_thread, clipboard->open_win, clipboard->owner_thread,
              clipboard->owner_win, clipboard->viewer, clipboard->seqno );
 }
