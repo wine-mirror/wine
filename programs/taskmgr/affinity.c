@@ -25,7 +25,6 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include <memory.h>
 #include <winnt.h>
 #include <stdio.h>

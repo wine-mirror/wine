@@ -24,7 +24,6 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
 #include <stdio.h>
@@ -122,10 +121,11 @@ void PerfDataRefresh(void)
         return;
 
     /* Get processor time information */
-    SysProcessorTimeInfo = (PSYSTEM_PROCESSORTIME_INFO)malloc(sizeof(SYSTEM_PROCESSORTIME_INFO) * SystemBasicInfo.bKeNumberProcessors);
+    SysProcessorTimeInfo = HeapAlloc(GetProcessHeap(), 0,
+                                sizeof(SYSTEM_PROCESSORTIME_INFO) * SystemBasicInfo.bKeNumberProcessors);
     status = NtQuerySystemInformation(SystemProcessorTimeInformation, SysProcessorTimeInfo, sizeof(SYSTEM_PROCESSORTIME_INFO) * SystemBasicInfo.bKeNumberProcessors, &ulSize);
     if (status != NO_ERROR) {
-        free(SysProcessorTimeInfo);
+        HeapFree(GetProcessHeap(), 0, SysProcessorTimeInfo);
         return;
     }
 
@@ -137,12 +137,12 @@ void PerfDataRefresh(void)
     do
     {
         BufferSize += 0x10000;
-        SysHandleInfoData = (LPBYTE)malloc(BufferSize);
+        SysHandleInfoData = HeapAlloc(GetProcessHeap(), 0, BufferSize);
 
         status = NtQuerySystemInformation(SystemHandleInformation, SysHandleInfoData, BufferSize, &ulSize);
 
         if (status == 0xC0000004 /*STATUS_INFO_LENGTH_MISMATCH*/) {
-            free(SysHandleInfoData);
+            HeapFree(GetProcessHeap(), 0, SysHandleInfoData);
         }
 
     } while (status == 0xC0000004 /*STATUS_INFO_LENGTH_MISMATCH*/);
@@ -155,12 +155,12 @@ void PerfDataRefresh(void)
     do
     {
         BufferSize += 0x10000;
-        pBuffer = (LPBYTE)malloc(BufferSize);
+        pBuffer = HeapAlloc(GetProcessHeap(), 0, BufferSize);
 
         status = NtQuerySystemInformation(SystemProcessInformation, pBuffer, BufferSize, &ulSize);
 
         if (status == 0xC0000004 /*STATUS_INFO_LENGTH_MISMATCH*/) {
-            free(pBuffer);
+            HeapFree(GetProcessHeap(), 0, pBuffer);
         }
 
     } while (status == 0xC0000004 /*STATUS_INFO_LENGTH_MISMATCH*/);
@@ -180,14 +180,14 @@ void PerfDataRefresh(void)
     /*
      * Save system processor time info
      */
-    free(SystemProcessorTimeInfo);
+    HeapFree(GetProcessHeap(), 0, SystemProcessorTimeInfo);
     SystemProcessorTimeInfo = SysProcessorTimeInfo;
     
     /*
      * Save system handle info
      */
     memcpy(&SystemHandleInfo, SysHandleInfoData, sizeof(SYSTEM_HANDLE_INFORMATION));
-    free(SysHandleInfoData);
+    HeapFree(GetProcessHeap(), 0, SysHandleInfoData);
     
     for (CurrentKernelTime=0, Idx=0; Idx<SystemBasicInfo.bKeNumberProcessors; Idx++) {
         CurrentKernelTime += Li2Double(SystemProcessorTimeInfo[Idx].KernelTime);
@@ -231,9 +231,9 @@ void PerfDataRefresh(void)
     }
 
     /* Now alloc a new PERFDATA array and fill in the data */
-    free(pPerfDataOld);
+    HeapFree(GetProcessHeap(), 0, pPerfDataOld);
     pPerfDataOld = pPerfData;
-    pPerfData = (PPERFDATA)malloc(sizeof(PERFDATA) * ProcessCount);
+    pPerfData = HeapAlloc(GetProcessHeap(), 0, sizeof(PERFDATA) * ProcessCount);
     pSPI = (PSYSTEM_PROCESS_INFORMATION)pBuffer;
     for (Idx=0; Idx<ProcessCount; Idx++) {
         /* Get the old perf data for this process (if any) */
@@ -321,7 +321,7 @@ int MultiByteToWideChar(
         pPerfData[Idx].KernelTime.QuadPart = pSPI->KernelTime.QuadPart;
         pSPI = (PSYSTEM_PROCESS_INFORMATION)((LPBYTE)pSPI + pSPI->RelativeOffset);
     }
-    free(pBuffer);
+    HeapFree(GetProcessHeap(), 0, pBuffer);
     LeaveCriticalSection(&PerfDataCriticalSection);
 }
 

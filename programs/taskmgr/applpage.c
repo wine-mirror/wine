@@ -25,7 +25,6 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include <memory.h>
 #include <stdio.h>
 
@@ -173,7 +172,7 @@ static void AddOrUpdateHwnd(HWND hWnd, WCHAR *wszTitle, HICON hIcon, BOOL bHung)
     /* It is not already in the list so add it */
     else
     {
-        pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)malloc(sizeof(APPLICATION_PAGE_LIST_ITEM));
+        pAPLI = HeapAlloc(GetProcessHeap(), 0, sizeof(APPLICATION_PAGE_LIST_ITEM));
 
         pAPLI->hWnd = hWnd;
         pAPLI->hIcon = hIcon;
@@ -212,7 +211,7 @@ static void AddOrUpdateHwnd(HWND hWnd, WCHAR *wszTitle, HICON hIcon, BOOL bHung)
             ImageList_Remove(hImageListSmall, item.iItem);
 
             SendMessage(hApplicationPageListCtrl, LVM_DELETEITEM, item.iItem, 0);
-            free(pAPLI);
+            HeapFree(GetProcessHeap(), 0, pAPLI);
             bItemRemoved = TRUE;
         }
     }
@@ -715,7 +714,8 @@ void ApplicationPage_OnWindowsTileHorizontally(void)
     HWND*                           hWndArray;
     int                             nWndCount;
 
-    hWndArray = (HWND*)malloc(sizeof(HWND) * ListView_GetItemCount(hApplicationPageListCtrl));
+    hWndArray = HeapAlloc(GetProcessHeap(), 0,
+                    sizeof(HWND) * ListView_GetItemCount(hApplicationPageListCtrl));
     nWndCount = 0;
 
     for (i=0; i<ListView_GetItemCount(hApplicationPageListCtrl); i++) {
@@ -735,7 +735,7 @@ void ApplicationPage_OnWindowsTileHorizontally(void)
         }
     }
     TileWindows(NULL, MDITILE_HORIZONTAL, NULL, nWndCount, hWndArray);
-    free(hWndArray);
+    HeapFree(GetProcessHeap(), 0, hWndArray);
 }
 
 void ApplicationPage_OnWindowsTileVertically(void)
@@ -746,7 +746,8 @@ void ApplicationPage_OnWindowsTileVertically(void)
     HWND*                           hWndArray;
     int                             nWndCount;
 
-    hWndArray = (HWND*)malloc(sizeof(HWND) * ListView_GetItemCount(hApplicationPageListCtrl));
+    hWndArray = HeapAlloc(GetProcessHeap(), 0,
+                    sizeof(HWND) * ListView_GetItemCount(hApplicationPageListCtrl));
     nWndCount = 0;
 
     for (i=0; i<ListView_GetItemCount(hApplicationPageListCtrl); i++) {
@@ -766,7 +767,7 @@ void ApplicationPage_OnWindowsTileVertically(void)
     }
 
     TileWindows(NULL, MDITILE_VERTICAL, NULL, nWndCount, hWndArray);
-    free(hWndArray);
+    HeapFree(GetProcessHeap(), 0, hWndArray);
 }
 
 void ApplicationPage_OnWindowsMinimize(void)
@@ -819,7 +820,8 @@ void ApplicationPage_OnWindowsCascade(void)
     HWND*                           hWndArray;
     int                             nWndCount;
 
-    hWndArray = (HWND*)malloc(sizeof(HWND) * ListView_GetItemCount(hApplicationPageListCtrl));
+    hWndArray = HeapAlloc(GetProcessHeap(), 0,
+                    sizeof(HWND) * ListView_GetItemCount(hApplicationPageListCtrl));
     nWndCount = 0;
 
     for (i=0; i<ListView_GetItemCount(hApplicationPageListCtrl); i++) {
@@ -837,7 +839,7 @@ void ApplicationPage_OnWindowsCascade(void)
         }
     }
     CascadeWindows(NULL, 0, NULL, nWndCount, hWndArray);
-    free(hWndArray);
+    HeapFree(GetProcessHeap(), 0, hWndArray);
 }
 
 void ApplicationPage_OnWindowsBringToFront(void)

@@ -26,7 +26,6 @@
 #include <ctype.h>
 #include <commctrl.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include <memory.h>
 #include <stdio.h>
 #include <winnt.h>
