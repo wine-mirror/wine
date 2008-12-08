@@ -1656,11 +1656,75 @@ UINT WINAPI MsiEnumPatchesExA(LPCSTR szProductCode, LPCSTR szUserSid,
         LPSTR szTargetProductCode, MSIINSTALLCONTEXT *pdwTargetProductContext,
         LPSTR szTargetUserSid, LPDWORD pcchTargetUserSid)
 {
-    FIXME("(%s, %s, %d, %d, %d, %p, %p, %p, %p, %p) stub!\n",
+    LPWSTR prodcode = NULL;
+    LPWSTR usersid = NULL;
+    LPWSTR targsid = NULL;
+    WCHAR patch[GUID_SIZE];
+    WCHAR targprod[GUID_SIZE];
+    DWORD len;
+    UINT r;
+
+    TRACE("(%s, %s, %d, %d, %d, %p, %p, %p, %p, %p)\n",
           debugstr_a(szProductCode), debugstr_a(szUserSid), dwContext, dwFilter,
           dwIndex, szPatchCode, szTargetProductCode, pdwTargetProductContext,
           szTargetUserSid, pcchTargetUserSid);
-    return ERROR_NO_MORE_ITEMS;
+
+    if (szTargetUserSid && !pcchTargetUserSid)
+        return ERROR_INVALID_PARAMETER;
+
+    if (szProductCode) prodcode = strdupAtoW(szProductCode);
+    if (szUserSid) usersid = strdupAtoW(szUserSid);
+
+    r = MsiEnumPatchesExW(prodcode, usersid, dwContext, dwFilter, dwIndex,
+                          patch, targprod, pdwTargetProductContext,
+                          NULL, &len);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    WideCharToMultiByte(CP_ACP, 0, patch, -1, szPatchCode,
+                        GUID_SIZE, NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, targprod, -1, szTargetProductCode,
+                        GUID_SIZE, NULL, NULL);
+
+    if (!szTargetUserSid)
+    {
+        if (pcchTargetUserSid)
+            *pcchTargetUserSid = len;
+
+        goto done;
+    }
+
+    targsid = msi_alloc(++len * sizeof(WCHAR));
+    if (!targsid)
+    {
+        r = ERROR_OUTOFMEMORY;
+        goto done;
+    }
+
+    r = MsiEnumPatchesExW(prodcode, usersid, dwContext, dwFilter, dwIndex,
+                          patch, targprod, pdwTargetProductContext,
+                          targsid, &len);
+    if (r != ERROR_SUCCESS || !szTargetUserSid)
+        goto done;
+
+    WideCharToMultiByte(CP_ACP, 0, targsid, -1, szTargetUserSid,
+                        *pcchTargetUserSid, NULL, NULL);
+
+    len = lstrlenW(targsid);
+    if (*pcchTargetUserSid < len + 1)
+    {
+        r = ERROR_MORE_DATA;
+        *pcchTargetUserSid = len * sizeof(WCHAR);
+    }
+    else
+        *pcchTargetUserSid = len;
+
+done:
+    msi_free(prodcode);
+    msi_free(usersid);
+    msi_free(targsid);
+
+    return r;
 }
 
 /***********************************************************************
