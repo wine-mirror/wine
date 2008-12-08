@@ -2,6 +2,7 @@
  * cryptdlg dll resources
  *
  * Copyright 2008 Juan Lang
+ * Copyright 2008 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,10 +18,20 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "cryptres.h"
 
-#include "cryptdlg_En.rc"
-#include "cryptdlg_Ko.rc"
+LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_CERT_POLICY "인증 정책"
+    IDS_POLICY_ID "정책 식별자: "
+    IDS_POLICY_QUALIFIER_INFO "정책 구별자 정보"
+    IDS_POLICY_QUALIFIER_ID "정책 구별자 아이디="
+    IDS_CPS "CPS"
+    IDS_USER_NOTICE "사용자 통지"
+    IDS_QUALIFIER "구별자"
+    IDS_NOTICE_REF "통지 참조"
+    IDS_ORGANIZATION "기관="
+    IDS_NOTICE_NUM "통지 번호="
+    IDS_NOTICE_TEXT "통지 텍스트="
+}
