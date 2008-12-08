@@ -380,7 +380,7 @@ extern int spawnvp(int mode, const char *cmdname, const char * const argv[]);
 
 /* Interlocked functions */
 
-#if defined(__i386__) && defined(__GNUC__)
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
 extern inline int interlocked_cmpxchg( int *dest, int xchg, int compare );
 extern inline void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare );
@@ -400,8 +400,13 @@ extern inline int interlocked_cmpxchg( int *dest, int xchg, int compare )
 extern inline void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare )
 {
     void *ret;
+#ifdef __x86_64__
+    __asm__ __volatile__( "lock; cmpxchgq %2,(%1)"
+                          : "=a" (ret) : "r" (dest), "r" (xchg), "0" (compare) : "memory" );
+#else
     __asm__ __volatile__( "lock; cmpxchgl %2,(%1)"
                           : "=a" (ret) : "r" (dest), "r" (xchg), "0" (compare) : "memory" );
+#endif
     return ret;
 }
 
@@ -416,8 +421,13 @@ extern inline int interlocked_xchg( int *dest, int val )
 extern inline void *interlocked_xchg_ptr( void **dest, void *val )
 {
     void *ret;
+#ifdef __x86_64__
+    __asm__ __volatile__( "lock; xchgq %0,(%1)"
+                          : "=r" (ret) :"r" (dest), "0" (val) : "memory" );
+#else
     __asm__ __volatile__( "lock; xchgl %0,(%1)"
                           : "=r" (ret) : "r" (dest), "0" (val) : "memory" );
+#endif
     return ret;
 }
 
@@ -429,7 +439,7 @@ extern inline int interlocked_xchg_add( int *dest, int incr )
     return ret;
 }
 
-#else  /* __i386___ && __GNUC__ */
+#else  /* __GNUC__ */
 
 extern int interlocked_cmpxchg( int *dest, int xchg, int compare );
 extern void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare );
@@ -438,7 +448,7 @@ extern int interlocked_xchg( int *dest, int val );
 extern void *interlocked_xchg_ptr( void **dest, void *val );
 extern int interlocked_xchg_add( int *dest, int incr );
 
-#endif  /* __i386___ && __GNUC__ */
+#endif  /* __GNUC__ */
 
 #else /* NO_LIBWINE_PORT */
 

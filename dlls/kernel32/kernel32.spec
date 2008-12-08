@@ -722,12 +722,12 @@
 @ stdcall InitializeCriticalSectionAndSpinCount(ptr long)
 @ stdcall InitializeCriticalSectionEx(ptr long long)
 @ stdcall InitializeSListHead(ptr) ntdll.RtlInitializeSListHead
-@ stdcall InterlockedCompareExchange (ptr long long)
-@ stdcall InterlockedDecrement(ptr)
-@ stdcall InterlockedExchange(ptr long)
-@ stdcall InterlockedExchangeAdd (ptr long )
+@ stdcall -arch=i386 InterlockedCompareExchange (ptr long long)
+@ stdcall -arch=i386 InterlockedDecrement(ptr)
+@ stdcall -arch=i386 InterlockedExchange(ptr long)
+@ stdcall -arch=i386 InterlockedExchangeAdd (ptr long )
 @ stdcall InterlockedFlushSList(ptr) ntdll.RtlInterlockedFlushSList
-@ stdcall InterlockedIncrement(ptr)
+@ stdcall -arch=i386 InterlockedIncrement(ptr)
 @ stdcall InterlockedPopEntrySList(ptr) ntdll.RtlInterlockedPopEntrySList
 @ stdcall InterlockedPushEntrySList(ptr ptr) ntdll.RtlInterlockedPushEntrySList
 @ stub InvalidateConsoleDIBits
