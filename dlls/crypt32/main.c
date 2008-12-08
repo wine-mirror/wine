@@ -179,7 +179,7 @@ HCRYPTPROV WINAPI I_CryptGetDefaultCryptProv(DWORD reserved)
     if (reserved)
     {
         SetLastError(E_INVALIDARG);
-        return (HCRYPTPROV)0;
+        return 0;
     }
     ret = CRYPT_GetDefaultProvider();
     CryptContextAddRef(ret, NULL, 0);
