@@ -743,7 +743,6 @@ static void test_Get_Release_DC(void)
     GdipDeleteBrush((GpBrush*)brush);
     GdipDeleteRegion(region);
     GdipDeleteMatrix(m);
-    GdipDeleteRegion(region);
 
     ReleaseDC(0, hdc);
 }
