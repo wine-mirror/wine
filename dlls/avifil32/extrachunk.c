@@ -182,7 +182,7 @@ HRESULT FindChunkAndKeepExtras(LPEXTRACHUNKS extra,HMMIO hmmio,MMCKINFO *lpck,
 
     /* Have we found what we search for? */
     if ((lpck->ckid == ckid) &&
-	(fccType == (FOURCC)0 || lpck->fccType == fccType))
+	(fccType == 0 || lpck->fccType == fccType))
       return AVIERR_OK;
 
     /* Skip padding chunks, the others put into the extrachunk-structure */
