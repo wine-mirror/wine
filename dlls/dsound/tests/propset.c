@@ -188,7 +188,7 @@ static void propset_private_tests(void)
 
     /* try direct sound first */
     /* DSOUND: Error: Invalid interface buffer */
-    rc = (pDllGetClassObject)(&CLSID_DirectSound, &IID_IClassFactory, (void **)0);
+    rc = (pDllGetClassObject)(&CLSID_DirectSound, &IID_IClassFactory, NULL);
     ok(rc==DSERR_INVALIDPARAM,"DllGetClassObject(CLSID_DirectSound, "
        "IID_IClassFactory) should have returned DSERR_INVALIDPARAM, "
        "returned: %08x\n",rc);
@@ -211,7 +211,7 @@ static void propset_private_tests(void)
     /* direct sound doesn't have an IKsPropertySet */
     /* DSOUND: Error: Invalid interface buffer */
     rc = IClassFactory_CreateInstance(pcf, NULL, &IID_IKsPropertySet,
-                                     (void **)0);
+                                     NULL);
     ok(rc==DSERR_INVALIDPARAM, "CreateInstance(IID_IKsPropertySet) should have "
        "returned DSERR_INVALIDPARAM, returned: %08x\n",rc);
 
