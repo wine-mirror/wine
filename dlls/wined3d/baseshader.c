@@ -101,15 +101,14 @@ const SHADER_OPCODE *shader_get_opcode(const SHADER_OPCODE *opcode_table, DWORD 
 /* Read a parameter opcode from the input stream,
  * and possibly a relative addressing token.
  * Return the number of tokens read */
-static int shader_get_param(IWineD3DBaseShader *iface, const DWORD *pToken, DWORD *param, DWORD *addr_token)
+static int shader_get_param(const DWORD *pToken, DWORD shader_version, DWORD *param, DWORD *addr_token)
 {
     /* PS >= 3.0 have relative addressing (with token)
      * VS >= 2.0 have relative addressing (with token)
      * VS >= 1.0 < 2.0 have relative addressing (without token)
      * The version check below should work in general */
 
-    IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
-    char rel_token = WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2 &&
+    char rel_token = WINED3DSHADER_VERSION_MAJOR(shader_version) >= 2 &&
         ((*pToken & WINED3DSHADER_ADDRESSMODE_MASK) == WINED3DSHADER_ADDRMODE_RELATIVE);
 
     *param = *pToken;
@@ -147,7 +146,7 @@ static int shader_skip_unrecognized(IWineD3DBaseShader *iface, const DWORD *pTok
     while (*pToken & 0x80000000) {
 
         DWORD param, addr_token;
-        tokens_read += shader_get_param(iface, pToken, &param, &addr_token);
+        tokens_read += shader_get_param(pToken, shader_version, &param, &addr_token);
         pToken += tokens_read;
 
         FIXME("Unrecognized opcode param: token=0x%08x "
@@ -422,7 +421,7 @@ HRESULT shader_get_registers_used(
             for (i = 0; i < limit; ++i) {
 
                 DWORD param, addr_token, reg, regtype;
-                pToken += shader_get_param(iface, pToken, &param, &addr_token);
+                pToken += shader_get_param(pToken, shader_version, &param, &addr_token);
 
                 regtype = shader_get_regtype(param);
                 reg = param & WINED3DSP_REGNUM_MASK;
@@ -901,7 +900,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
                 if (curOpcode->dst_token) {
 
                     DWORD param, addr_token = 0;
-                    pToken += shader_get_param(iface, pToken, &param, &addr_token);
+                    pToken += shader_get_param(pToken, shader_version, &param, &addr_token);
                     hw_arg.dst = param;
                     hw_arg.dst_addr = addr_token;
                 }
@@ -914,7 +913,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
                 for (i = 0; i < (curOpcode->num_params - curOpcode->dst_token); i++) {
 
                     DWORD param, addr_token = 0; 
-                    pToken += shader_get_param(iface, pToken, &param, &addr_token);
+                    pToken += shader_get_param(pToken, shader_version, &param, &addr_token);
                     hw_arg.src[i] = param;
                     hw_arg.src_addr[i] = addr_token;
                 }
@@ -1099,7 +1098,7 @@ void shader_trace_init(
                     if (curOpcode->dst_token) {
 
                         /* Destination token */
-                        tokens_read = shader_get_param(iface, pToken, &param, &addr_token);
+                        tokens_read = shader_get_param(pToken, This->baseShader.hex_version, &param, &addr_token);
                         pToken += tokens_read;
                         len += tokens_read;
 
@@ -1117,7 +1116,7 @@ void shader_trace_init(
                     /* Other source tokens */
                     for (i = curOpcode->dst_token; i < curOpcode->num_params; ++i) {
 
-                        tokens_read = shader_get_param(iface, pToken, &param, &addr_token);
+                        tokens_read = shader_get_param(pToken, This->baseShader.hex_version, &param, &addr_token);
                         pToken += tokens_read;
                         len += tokens_read;
 
