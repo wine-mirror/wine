@@ -1909,15 +1909,25 @@ static HRESULT WINAPI HTMLStyle_get_posLeft(IHTMLStyle *iface, float *p)
 static HRESULT WINAPI HTMLStyle_put_posWidth(IHTMLStyle *iface, float v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%f)\n", This, v);
+
+    return set_style_pos(This, STYLEID_WIDTH, v);
 }
 
 static HRESULT WINAPI HTMLStyle_get_posWidth(IHTMLStyle *iface, float *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!p)
+        return E_POINTER;
+
+    if(get_nsstyle_pos(This, STYLEID_WIDTH, p) != S_OK)
+        *p = 0.0f;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle_put_posHeight(IHTMLStyle *iface, float v)

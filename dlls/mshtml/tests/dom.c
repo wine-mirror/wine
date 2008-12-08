@@ -2340,11 +2340,25 @@ static void test_default_style(IHTMLStyle *style)
     ok(hres == S_OK, "get_textDecorationLineThrough failed: %08x\n", hres);
     ok(b == VARIANT_FALSE, "textDecorationLineThrough = %x\n", b);
 
+    hres = IHTMLStyle_get_posWidth(style, NULL);
+    ok(hres == E_POINTER, "get_posWidth failed: %08x\n", hres);
+
+    hres = IHTMLStyle_get_posWidth(style, &f);
+    ok(hres == S_OK, "get_posWidth failed: %08x\n", hres);
+    ok(f == 0.0f, "f = %f\n", f);
+
     V_VT(&v) = VT_EMPTY;
     hres = IHTMLStyle_get_width(style, &v);
     ok(hres == S_OK, "get_width failed: %08x\n", hres);
     ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
     ok(!V_BSTR(&v), "V_BSTR(v)=%p\n", V_BSTR(&v));
+
+    hres = IHTMLStyle_put_posWidth(style, 2.2);
+    ok(hres == S_OK, "get_posWidth failed: %08x\n", hres);
+
+    hres = IHTMLStyle_get_posWidth(style, &f);
+    ok(hres == S_OK, "get_posWidth failed: %08x\n", hres);
+    ok(f == 2.0f, "f = %f\n", f);
 
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = a2bstr("auto");
