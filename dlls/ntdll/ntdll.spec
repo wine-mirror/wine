@@ -730,6 +730,7 @@
 @ stdcall RtlLookupAtomInAtomTable(ptr wstr ptr)
 @ stub RtlLookupElementGenericTable
 # @ stub RtlLookupElementGenericTableAvl
+@ stdcall -arch=x86_64 RtlLookupFunctionEntry(long ptr ptr)
 @ stdcall RtlMakeSelfRelativeSD(ptr ptr ptr)
 @ stdcall RtlMapGenericMask(long ptr)
 # @ stub RtlMapSecurityErrorToNtStatus
@@ -908,6 +909,7 @@
 @ stub RtlValidateProcessHeaps
 # @ stub RtlValidateUnicodeString
 @ stdcall RtlVerifyVersionInfo(ptr long double)
+@ stdcall -arch=x86_64 RtlVirtualUnwind(long long long ptr ptr ptr ptr ptr)
 @ stub RtlWalkFrameChain
 @ stdcall RtlWalkHeap(long ptr)
 @ stub RtlWriteMemoryStream

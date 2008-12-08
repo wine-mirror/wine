@@ -518,6 +518,30 @@ void signal_init_process(void)
 
 
 /**********************************************************************
+ *              RtlLookupFunctionEntry   (NTDLL.@)
+ */
+PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG64 pc, ULONG64 *base,
+                                                 UNWIND_HISTORY_TABLE *table )
+{
+    FIXME("stub\n");
+    return NULL;
+}
+
+
+/**********************************************************************
+ *              RtlVirtualUnwind   (NTDLL.@)
+ */
+PVOID WINAPI RtlVirtualUnwind ( ULONG type, ULONG64 base, ULONG64 pc,
+                                RUNTIME_FUNCTION *function, CONTEXT *context,
+                                PVOID *data, ULONG64 *frame,
+                                KNONVOLATILE_CONTEXT_POINTERS *ctx_ptr )
+{
+    FIXME("stub\n");
+    return NULL;
+}
+
+
+/**********************************************************************
  *              __wine_enter_vm86   (NTDLL.@)
  */
 void __wine_enter_vm86( CONTEXT *context )

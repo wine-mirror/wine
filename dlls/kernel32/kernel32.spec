@@ -923,8 +923,10 @@
 @ stdcall -register RtlCaptureContext(ptr) ntdll.RtlCaptureContext
 # @ stub RtlCaptureStackBackTrace ( -> ntdll.RtlCaptureStackBackTrace)
 @ stdcall RtlFillMemory(ptr long long) ntdll.RtlFillMemory
+@ stdcall -arch=x86_64 RtlLookupFunctionEntry(long ptr ptr) ntdll.RtlLookupFunctionEntry
 @ stdcall RtlMoveMemory(ptr ptr long) ntdll.RtlMoveMemory
 @ stdcall RtlUnwind(ptr ptr ptr long) ntdll.RtlUnwind
+@ stdcall -arch=x86_64 RtlVirtualUnwind(long long long ptr ptr ptr ptr ptr) ntdll.RtlVirtualUnwind
 @ stdcall RtlZeroMemory(ptr long) ntdll.RtlZeroMemory
 @ stdcall -i386 -norelay SMapLS()
 @ stdcall -i386 -norelay SMapLS_IP_EBP_12()
