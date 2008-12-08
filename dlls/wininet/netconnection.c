@@ -769,7 +769,7 @@ DWORD NETCON_set_timeout(WININET_NETCONNECTION *connection, BOOL send, int value
     tv.tv_usec = (value % 1000) * 1000;
 
     result = setsockopt(connection->socketFD, SOL_SOCKET,
-                        send ? SO_SNDTIMEO : SO_RCVTIMEO, &tv,
+                        send ? SO_SNDTIMEO : SO_RCVTIMEO, (void*)&tv,
                         sizeof(tv));
 
     if (result == -1)
