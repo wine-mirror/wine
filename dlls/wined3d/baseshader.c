@@ -136,9 +136,8 @@ static inline int shader_skip_opcode(
  * Note: This function assumes source or destination token format.
  * It will not work with specially-formatted tokens like DEF or DCL, 
  * but hopefully those would be recognized */
-static int shader_skip_unrecognized(IWineD3DBaseShader *iface, const DWORD *pToken)
+static int shader_skip_unrecognized(const DWORD *pToken, DWORD shader_version)
 {
-    DWORD shader_version = ((IWineD3DBaseShaderImpl *)iface)->baseShader.hex_version;
     int tokens_read = 0;
     int i = 0;
 
@@ -878,7 +877,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
             /* Unknown opcode and its parameters */
             if (NULL == curOpcode) {
                 FIXME("Unrecognized opcode: token=0x%08x\n", hw_arg.opcode_token);
-                pToken += shader_skip_unrecognized(iface, pToken); 
+                pToken += shader_skip_unrecognized(pToken, shader_version);
 
             /* Nothing to do */
             } else if (WINED3DSIO_DCL == curOpcode->opcode ||
@@ -1008,7 +1007,7 @@ void shader_trace_init(
             if (NULL == curOpcode) {
                 int tokens_read;
                 FIXME("Unrecognized opcode: token=0x%08x\n", opcode_token);
-                tokens_read = shader_skip_unrecognized(iface, pToken);
+                tokens_read = shader_skip_unrecognized(pToken, This->baseShader.hex_version);
                 pToken += tokens_read;
                 len += tokens_read;
 
