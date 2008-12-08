@@ -72,11 +72,11 @@ static struct handle_table *global_table;
 /* handles are a multiple of 4 under NT; handle 0 is not used */
 static inline obj_handle_t index_to_handle( int index )
 {
-    return (obj_handle_t)((unsigned long)(index + 1) << 2);
+    return (obj_handle_t)((index + 1) << 2);
 }
 static inline int handle_to_index( obj_handle_t handle )
 {
-    return ((unsigned long)handle >> 2) - 1;
+    return (handle >> 2) - 1;
 }
 
 /* global handle conversion */
@@ -85,16 +85,16 @@ static inline int handle_to_index( obj_handle_t handle )
 
 static inline int handle_is_global( obj_handle_t handle)
 {
-    return ((unsigned long)handle ^ HANDLE_OBFUSCATOR) < 0x10000;
+    return (handle ^ HANDLE_OBFUSCATOR) <= (MAX_HANDLE_ENTRIES << 2);
 }
 static inline obj_handle_t handle_local_to_global( obj_handle_t handle )
 {
     if (!handle) return 0;
-    return (obj_handle_t)((unsigned long)handle ^ HANDLE_OBFUSCATOR);
+    return handle ^ HANDLE_OBFUSCATOR;
 }
 static inline obj_handle_t handle_global_to_local( obj_handle_t handle )
 {
-    return (obj_handle_t)((unsigned long)handle ^ HANDLE_OBFUSCATOR);
+    return handle ^ HANDLE_OBFUSCATOR;
 }
 
 
@@ -137,7 +137,7 @@ static void handle_table_dump( struct object *obj, int verbose )
     for (i = 0; i <= table->last; i++, entry++)
     {
         if (!entry->ptr) continue;
-        fprintf( stderr, "    %p: %p %08x ",
+        fprintf( stderr, "    %04x: %p %08x ",
                  index_to_handle(i), entry->ptr, entry->access );
         entry->ptr->ops->dump( entry->ptr, 0 );
     }
@@ -381,7 +381,7 @@ int close_handle( struct process *process, obj_handle_t handle )
 /* retrieve the object corresponding to one of the magic pseudo-handles */
 static inline struct object *get_magic_handle( obj_handle_t handle )
 {
-    switch((unsigned long)handle)
+    switch(handle)
     {
         case 0xfffffffe:  /* current thread pseudo-handle */
             return &current->obj;

@@ -31,7 +31,7 @@
 #include <windef.h>
 #include <winbase.h>
 
-typedef void *obj_handle_t;
+typedef unsigned int obj_handle_t;
 typedef void *user_handle_t;
 typedef unsigned short atom_t;
 typedef unsigned int process_id_t;

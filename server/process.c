@@ -477,7 +477,7 @@ static void startup_info_dump( struct object *obj, int verbose )
     struct startup_info *info = (struct startup_info *)obj;
     assert( obj->ops == &startup_info_ops );
 
-    fprintf( stderr, "Startup info in=%p out=%p err=%p\n",
+    fprintf( stderr, "Startup info in=%04x out=%04x err=%04x\n",
              info->hstdin, info->hstdout, info->hstderr );
 }
 

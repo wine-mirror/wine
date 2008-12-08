@@ -432,7 +432,7 @@ int send_client_fd( struct process *process, int fd, obj_handle_t handle )
     int ret;
 
     if (debug_level)
-        fprintf( stderr, "%04x: *fd* %p -> %d\n",
+        fprintf( stderr, "%04x: *fd* %04x -> %d\n",
                  current ? current->id : process->id, handle, fd );
 
 #ifdef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
