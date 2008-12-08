@@ -3877,9 +3877,9 @@ static unsigned INT21_FindHelper(LPCWSTR fullPath, unsigned drive, unsigned coun
         if (count) return 0;
         path[0] = drive + 'A';
         if (!GetVolumeInformationW(path, entry->cAlternateFileName, 13, NULL, NULL, NULL, NULL, 0)) return 0;
-        RtlSecondsSince1970ToTime( (time_t)0, (LARGE_INTEGER *)&entry->ftCreationTime );
-        RtlSecondsSince1970ToTime( (time_t)0, (LARGE_INTEGER *)&entry->ftLastAccessTime );
-        RtlSecondsSince1970ToTime( (time_t)0, (LARGE_INTEGER *)&entry->ftLastWriteTime );
+        RtlSecondsSince1970ToTime( 0, (LARGE_INTEGER *)&entry->ftCreationTime );
+        RtlSecondsSince1970ToTime( 0, (LARGE_INTEGER *)&entry->ftLastAccessTime );
+        RtlSecondsSince1970ToTime( 0, (LARGE_INTEGER *)&entry->ftLastWriteTime );
         entry->dwFileAttributes = FA_LABEL;
         entry->nFileSizeHigh = entry->nFileSizeLow = 0;
         TRACE("returning %s as label\n", debugstr_w(entry->cAlternateFileName));
