@@ -1526,7 +1526,9 @@ static void test_Handles(void)
     BOOL ret;
     DWORD code;
 
-    ok( handle == (HANDLE)~(ULONG_PTR)0, "invalid current process handle %p\n", handle );
+    ok( handle == (HANDLE)~(ULONG_PTR)0 ||
+        handle == (HANDLE)(ULONG_PTR)0x7fffffff /* win9x */,
+        "invalid current process handle %p\n", handle );
     ret = GetExitCodeProcess( handle, &code );
     ok( ret, "GetExitCodeProcess failed err %u\n", GetLastError() );
 #ifdef _WIN64
