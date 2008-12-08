@@ -98,7 +98,7 @@ static void wprint_mac(WCHAR* buffer, int len, const MIB_IFROW *ifRow)
         else
             buffer[2*i+1] = (WCHAR)((val & 0xf) + '0');
     }
-    buffer[2*i]=(WCHAR)0;
+    buffer[2*i]=0;
 }
 
 /* Theoretically this could be too short, except that MS defines
