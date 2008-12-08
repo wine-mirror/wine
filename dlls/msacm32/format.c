@@ -360,7 +360,7 @@ MMRESULT WINAPI acmFormatDetailsW(HACMDRIVER had, PACMFORMATDETAILSW pafd, DWORD
 	break;
     }
 
-    if (mmr == MMSYSERR_NOERROR && pafd->szFormat[0] == (WCHAR)0) {
+    if (mmr == MMSYSERR_NOERROR && pafd->szFormat[0] == 0) {
 	wsprintfW(pafd->szFormat, fmt1, pafd->pwfx->nSamplesPerSec);
 	if (pafd->pwfx->wBitsPerSample) {
 	    wsprintfW(pafd->szFormat + lstrlenW(pafd->szFormat), fmt2,
