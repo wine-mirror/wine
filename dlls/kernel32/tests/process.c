@@ -1520,6 +1520,36 @@ static void test_GetProcessVersion(void)
     CloseHandle(pi.hThread);
 }
 
+static void test_Handles(void)
+{
+    HANDLE handle = GetCurrentProcess();
+    BOOL ret;
+    DWORD code;
+
+    ok( handle == (HANDLE)~(ULONG_PTR)0, "invalid current process handle %p\n", handle );
+    ret = GetExitCodeProcess( handle, &code );
+    ok( ret, "GetExitCodeProcess failed err %u\n", GetLastError() );
+#ifdef _WIN64
+    /* truncated handle */
+    SetLastError( 0xdeadbeef );
+    handle = (HANDLE)((ULONG_PTR)handle & ~0u);
+    ret = GetExitCodeProcess( handle, &code );
+    ok( !ret, "GetExitCodeProcess succeeded for %p\n", handle );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
+    /* sign-extended handle */
+    SetLastError( 0xdeadbeef );
+    handle = (HANDLE)((LONG_PTR)(int)(ULONG_PTR)handle);
+    ret = GetExitCodeProcess( handle, &code );
+    ok( ret, "GetExitCodeProcess failed err %u\n", GetLastError() );
+    /* invalid high-word */
+    SetLastError( 0xdeadbeef );
+    handle = (HANDLE)(((ULONG_PTR)handle & ~0u) + ((ULONG_PTR)1 << 32));
+    ret = GetExitCodeProcess( handle, &code );
+    ok( !ret, "GetExitCodeProcess succeeded for %p\n", handle );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
+#endif
+}
+
 START_TEST(process)
 {
     int b = init();
@@ -1541,6 +1571,7 @@ START_TEST(process)
     test_ExitCode();
     test_OpenProcess();
     test_GetProcessVersion();
+    test_Handles();
     /* things that can be tested:
      *  lookup:         check the way program to be executed is searched
      *  handles:        check the handle inheritance stuff (+sec options)
