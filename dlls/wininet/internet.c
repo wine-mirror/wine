@@ -2844,6 +2844,8 @@ static HINTERNET INTERNET_InternetOpenUrlW(LPWININETAPPINFOW hIC, LPCWSTR lpszUr
 	    else
 		urlComponents.nPort = INTERNET_DEFAULT_HTTPS_PORT;
 	}
+        if (urlComponents.nScheme == INTERNET_SCHEME_HTTPS) dwFlags |= INTERNET_FLAG_SECURE;
+
         /* FIXME: should use pointers, not handles, as handles are not thread-safe */
 	client = HTTP_Connect(hIC, hostName, urlComponents.nPort,
 			      userName, password, dwFlags, dwContext, INET_OPENURL);
