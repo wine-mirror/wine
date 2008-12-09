@@ -685,9 +685,9 @@ static BOOL parse_handle_color_property (struct PARSECOLORSTATE* state,
 {
     int r,g,b;
     LPCWSTR lpValueEnd = lpValue + dwValueLen;
-    MSSTYLES_GetNextInteger(lpValue, lpValueEnd, &lpValue, &r);
-    MSSTYLES_GetNextInteger(lpValue, lpValueEnd, &lpValue, &g);
-    if(MSSTYLES_GetNextInteger(lpValue, lpValueEnd, &lpValue, &b)) {
+    if(MSSTYLES_GetNextInteger(lpValue, lpValueEnd, &lpValue, &r) &&
+    MSSTYLES_GetNextInteger(lpValue, lpValueEnd, &lpValue, &g) &&
+    MSSTYLES_GetNextInteger(lpValue, lpValueEnd, &lpValue, &b)) {
 	state->colorElements[state->colorCount] = iPropertyId - TMT_FIRSTCOLOR;
 	state->colorRgb[state->colorCount++] = RGB(r,g,b);
 	switch (iPropertyId)
@@ -1210,8 +1210,14 @@ HRESULT MSSTYLES_GetPropertyColor(PTHEME_PROPERTY tp, COLORREF *pColor)
     lpCur = tp->lpValue;
     lpEnd = tp->lpValue + tp->dwValueLen;
 
-    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &red);
-    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &green);
+    if(!MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &red)) {
+        TRACE("Could not parse color property\n");
+        return E_PROP_ID_UNSUPPORTED;
+    }
+    if(!MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &green)) {
+        TRACE("Could not parse color property\n");
+        return E_PROP_ID_UNSUPPORTED;
+    }
     if(!MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &blue)) {
         TRACE("Could not parse color property\n");
         return E_PROP_ID_UNSUPPORTED;
@@ -1316,7 +1322,10 @@ HRESULT MSSTYLES_GetPropertyPosition(PTHEME_PROPERTY tp, POINT *pPoint)
     LPCWSTR lpCur = tp->lpValue;
     LPCWSTR lpEnd = tp->lpValue + tp->dwValueLen;
 
-    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &x);
+    if(!MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &x)) {
+        TRACE("Could not parse position property\n");
+        return E_PROP_ID_UNSUPPORTED;
+    }
     if(!MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &y)) {
         TRACE("Could not parse position property\n");
         return E_PROP_ID_UNSUPPORTED;
