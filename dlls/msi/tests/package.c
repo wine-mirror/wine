@@ -149,6 +149,25 @@ static BOOL squash_guid(LPCWSTR in, LPWSTR out)
     return TRUE;
 }
 
+static void create_test_guid(LPSTR prodcode, LPSTR squashed)
+{
+    WCHAR guidW[MAX_PATH];
+    WCHAR squashedW[MAX_PATH];
+    GUID guid;
+    HRESULT hr;
+    int size;
+
+    hr = CoCreateGuid(&guid);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+
+    size = StringFromGUID2(&guid, (LPOLESTR)guidW, MAX_PATH);
+    ok(size == 39, "Expected 39, got %d\n", hr);
+
+    WideCharToMultiByte(CP_ACP, 0, guidW, size, prodcode, MAX_PATH, NULL, NULL);
+    squash_guid(guidW, squashedW);
+    WideCharToMultiByte(CP_ACP, 0, squashedW, -1, squashed, MAX_PATH, NULL, NULL);
+}
+
 static void set_component_path(LPCSTR filename, MSIINSTALLCONTEXT context,
                                LPCSTR guid, LPSTR usersid, BOOL dir)
 {
@@ -9490,6 +9509,218 @@ static void test_emptypackage(void)
     MsiCloseHandle(hpkg);
 }
 
+static void test_MsiGetProductProperty(void)
+{
+    MSIHANDLE hprod, hdb;
+    CHAR val[MAX_PATH];
+    CHAR path[MAX_PATH];
+    CHAR query[MAX_PATH];
+    CHAR keypath[MAX_PATH*2];
+    CHAR prodcode[MAX_PATH];
+    CHAR prod_squashed[MAX_PATH];
+    HKEY prodkey, userkey, props;
+    LPSTR usersid;
+    DWORD size;
+    LONG res;
+    UINT r;
+
+    GetCurrentDirectoryA(MAX_PATH, path);
+    lstrcatA(path, "\\");
+
+    create_test_guid(prodcode, prod_squashed);
+    get_user_sid(&usersid);
+
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiDatabaseCommit(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = set_summary_info(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = run_query(hdb,
+            "CREATE TABLE `Directory` ( "
+            "`Directory` CHAR(255) NOT NULL, "
+            "`Directory_Parent` CHAR(255), "
+            "`DefaultDir` CHAR(255) NOT NULL "
+            "PRIMARY KEY `Directory`)");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = run_query(hdb,
+            "CREATE TABLE `Property` ( "
+            "`Property` CHAR(72) NOT NULL, "
+            "`Value` CHAR(255) "
+            "PRIMARY KEY `Property`)");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    sprintf(query, "INSERT INTO `Property` "
+            "(`Property`, `Value`) "
+            "VALUES( 'ProductCode', '%s' )", prodcode);
+    r = run_query(hdb, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiDatabaseCommit(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    MsiCloseHandle(hdb);
+
+    lstrcpyA(keypath, "Software\\Classes\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
+    lstrcatA(keypath, "Installer\\UserData\\S-1-5-18\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &userkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    res = RegCreateKeyA(userkey, "InstallProperties", &props);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    lstrcpyA(val, path);
+    lstrcatA(val, "\\winetest.msi");
+    res = RegSetValueExA(props, "LocalPackage", 0, REG_SZ,
+                         (const BYTE *)val, lstrlenA(val) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA(prodcode, &hprod);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(hprod != 0 && hprod != 0xdeadbeef, "Expected a valid product handle\n");
+
+    /* hProduct is invalid */
+    size = MAX_PATH;
+    lstrcpyA(val, "apple");
+    r = MsiGetProductPropertyA(0xdeadbeef, "ProductCode", val, &size);
+    ok(r == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", r);
+    ok(!lstrcmpA(val, "apple"),
+       "Expected val to be unchanged, got \"%s\"\n", val);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* szProperty is NULL */
+    size = MAX_PATH;
+    lstrcpyA(val, "apple");
+    r = MsiGetProductPropertyA(hprod, NULL, val, &size);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(val, "apple"),
+       "Expected val to be unchanged, got \"%s\"\n", val);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* szProperty is empty */
+    size = MAX_PATH;
+    lstrcpyA(val, "apple");
+    r = MsiGetProductPropertyA(hprod, "", val, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(val, ""), "Expected \"\", got \"%s\"\n", val);
+    ok(size == 0, "Expected 0, got %d\n", size);
+
+    /* get the property */
+    size = MAX_PATH;
+    lstrcpyA(val, "apple");
+    r = MsiGetProductPropertyA(hprod, "ProductCode", val, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(val, prodcode),
+       "Expected \"%s\", got \"%s\"\n", prodcode, val);
+    ok(size == lstrlenA(prodcode),
+       "Expected %d, got %d\n", lstrlenA(prodcode), size);
+
+    /* lpValueBuf is NULL */
+    size = MAX_PATH;
+    r = MsiGetProductPropertyA(hprod, "ProductCode", NULL, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(size == lstrlenA(prodcode),
+       "Expected %d, got %d\n", lstrlenA(prodcode), size);
+
+    /* pcchValueBuf is NULL */
+    lstrcpyA(val, "apple");
+    r = MsiGetProductPropertyA(hprod, "ProductCode", val, NULL);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(val, "apple"),
+       "Expected val to be unchanged, got \"%s\"\n", val);
+    ok(size == lstrlenA(prodcode),
+       "Expected %d, got %d\n", lstrlenA(prodcode), size);
+
+    /* pcchValueBuf is too small */
+    size = 4;
+    lstrcpyA(val, "apple");
+    r = MsiGetProductPropertyA(hprod, "ProductCode", val, &size);
+    ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
+    ok(!strncmp(val, prodcode, 3),
+       "Expected first 3 chars of \"%s\", got \"%s\"\n", prodcode, val);
+    ok(size == lstrlenA(prodcode),
+       "Expected %d, got %d\n", lstrlenA(prodcode), size);
+
+    /* pcchValueBuf does not leave room for NULL terminator */
+    size = lstrlenA(prodcode);
+    lstrcpyA(val, "apple");
+    r = MsiGetProductPropertyA(hprod, "ProductCode", val, &size);
+    ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
+    ok(!strncmp(val, prodcode, lstrlenA(prodcode) - 1),
+       "Expected first 37 chars of \"%s\", got \"%s\"\n", prodcode, val);
+    ok(size == lstrlenA(prodcode),
+       "Expected %d, got %d\n", lstrlenA(prodcode), size);
+
+    /* pcchValueBuf has enough room for NULL terminator */
+    size = lstrlenA(prodcode) + 1;
+    lstrcpyA(val, "apple");
+    r = MsiGetProductPropertyA(hprod, "ProductCode", val, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(val, prodcode),
+       "Expected \"%s\", got \"%s\"\n", prodcode, val);
+    ok(size == lstrlenA(prodcode),
+       "Expected %d, got %d\n", lstrlenA(prodcode), size);
+
+    /* nonexistent property */
+    size = MAX_PATH;
+    lstrcpyA(val, "apple");
+    r = MsiGetProductPropertyA(hprod, "IDontExist", val, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(val, ""), "Expected \"\", got \"%s\"\n", val);
+    ok(size == 0, "Expected 0, got %d\n", size);
+
+    r = MsiSetPropertyA(hprod, "NewProperty", "value");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* non-product property set */
+    size = MAX_PATH;
+    lstrcpyA(val, "apple");
+    r = MsiGetProductPropertyA(hprod, "NewProperty", val, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(val, ""), "Expected \"\", got \"%s\"\n", val);
+    ok(size == 0, "Expected 0, got %d\n", size);
+
+    r = MsiSetPropertyA(hprod, "ProductCode", "value");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* non-product property that is also a product property set */
+    size = MAX_PATH;
+    lstrcpyA(val, "apple");
+    r = MsiGetProductPropertyA(hprod, "ProductCode", val, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(val, prodcode),
+       "Expected \"%s\", got \"%s\"\n", prodcode, val);
+    ok(size == lstrlenA(prodcode),
+       "Expected %d, got %d\n", lstrlenA(prodcode), size);
+
+    MsiCloseHandle(hprod);
+
+    RegDeleteValueA(props, "LocalPackage");
+    RegDeleteKeyA(props, "");
+    RegCloseKey(props);
+    RegDeleteKeyA(userkey, "");
+    RegCloseKey(userkey);
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+    DeleteFileA(msifile);
+}
+
 START_TEST(package)
 {
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
@@ -9521,4 +9752,5 @@ START_TEST(package)
     test_sourcedir();
     test_access();
     test_emptypackage();
+    test_MsiGetProductProperty();
 }
