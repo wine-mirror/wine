@@ -42,16 +42,12 @@
 struct snapshot
 {
     struct object             obj;           /* object header */
-    struct process           *process;       /* process of this snapshot (for modules and heaps) */
     struct process_snapshot  *processes;     /* processes snapshot */
     int                       process_count; /* count of processes */
     int                       process_pos;   /* current position in proc snapshot */
     struct thread_snapshot   *threads;       /* threads snapshot */
     int                       thread_count;  /* count of threads */
     int                       thread_pos;    /* current position in thread snapshot */
-    struct module_snapshot   *modules;       /* modules snapshot */
-    int                       module_count;  /* count of modules */
-    int                       module_pos;    /* current position in module snapshot */
 };
 
 static void snapshot_dump( struct object *obj, int verbose );
@@ -79,25 +75,11 @@ static const struct object_ops snapshot_ops =
 
 
 /* create a new snapshot */
-static struct snapshot *create_snapshot( process_id_t pid, int flags )
+static struct snapshot *create_snapshot( unsigned int flags )
 {
-    struct process *process = NULL;
     struct snapshot *snapshot;
 
-    /* need a process for modules and heaps */
-    if (flags & (SNAP_MODULE|SNAP_HEAPLIST))
-    {
-        if (!pid) process = (struct process *)grab_object( current->process );
-        else if (!(process = get_process_from_id( pid ))) return NULL;
-    }
-
-    if (!(snapshot = alloc_object( &snapshot_ops )))
-    {
-        if (process) release_object( process );
-        return NULL;
-    }
-
-    snapshot->process = process;
+    if (!(snapshot = alloc_object( &snapshot_ops ))) return NULL;
 
     snapshot->process_pos = 0;
     snapshot->process_count = 0;
@@ -108,11 +90,6 @@ static struct snapshot *create_snapshot( process_id_t pid, int flags )
     snapshot->thread_count = 0;
     if (flags & SNAP_THREAD)
         snapshot->threads = thread_snap( &snapshot->thread_count );
-
-    snapshot->module_pos = 0;
-    snapshot->module_count = 0;
-    if (flags & SNAP_MODULE)
-        snapshot->modules = module_snap( process, &snapshot->module_count );
 
     return snapshot;
 }
@@ -137,8 +114,6 @@ static int snapshot_next_process( struct snapshot *snapshot, struct next_process
     reply->count    = ptr->count;
     reply->pid      = get_process_id( ptr->process );
     reply->ppid     = ptr->process->parent ? get_process_id( ptr->process->parent ) : 0;
-    reply->heap     = NULL;  /* FIXME */
-    reply->module   = NULL;  /* FIXME */
     reply->threads  = ptr->threads;
     reply->priority = ptr->priority;
     reply->handles  = ptr->handles;
@@ -174,39 +149,12 @@ static int snapshot_next_thread( struct snapshot *snapshot, struct next_thread_r
     return 1;
 }
 
-/* get the next module in the snapshot */
-static int snapshot_next_module( struct snapshot *snapshot, struct next_module_reply *reply )
-{
-    struct module_snapshot *ptr;
-
-    if (!snapshot->module_count)
-    {
-        set_error( STATUS_INVALID_PARAMETER );  /* FIXME */
-        return 0;
-    }
-    if (snapshot->module_pos >= snapshot->module_count)
-    {
-        set_error( STATUS_NO_MORE_FILES );
-        return 0;
-    }
-    ptr = &snapshot->modules[snapshot->module_pos++];
-    reply->pid  = get_process_id( snapshot->process );
-    reply->base = ptr->base;
-    reply->size = ptr->size;
-    if (ptr->filename)
-    {
-        data_size_t len = min( ptr->namelen, get_reply_max_size() );
-        set_reply_data( ptr->filename, len );
-    }
-    return 1;
-}
-
 static void snapshot_dump( struct object *obj, int verbose )
 {
     struct snapshot *snapshot = (struct snapshot *)obj;
     assert( obj->ops == &snapshot_ops );
-    fprintf( stderr, "Snapshot: %d procs %d threads %d modules\n",
-             snapshot->process_count, snapshot->thread_count, snapshot->module_count );
+    fprintf( stderr, "Snapshot: %d procs %d threads\n",
+             snapshot->process_count, snapshot->thread_count );
 }
 
 static void snapshot_destroy( struct object *obj )
@@ -226,13 +174,6 @@ static void snapshot_destroy( struct object *obj )
             release_object( snapshot->threads[i].thread );
         free( snapshot->threads );
     }
-    if (snapshot->module_count)
-    {
-        for (i = 0; i < snapshot->module_count; i++)
-            free( snapshot->modules[i].filename );
-        free( snapshot->modules );
-    }
-    if (snapshot->process) release_object( snapshot->process );
 }
 
 /* create a snapshot */
@@ -241,7 +182,7 @@ DECL_HANDLER(create_snapshot)
     struct snapshot *snapshot;
 
     reply->handle = 0;
-    if ((snapshot = create_snapshot( req->pid, req->flags )))
+    if ((snapshot = create_snapshot( req->flags )))
     {
         reply->handle = alloc_handle( current->process, snapshot, 0, req->attributes );
         release_object( snapshot );
@@ -272,20 +213,6 @@ DECL_HANDLER(next_thread)
     {
         if (req->reset) snapshot->thread_pos = 0;
         snapshot_next_thread( snapshot, reply );
-        release_object( snapshot );
-    }
-}
-
-/* get the next module from a snapshot */
-DECL_HANDLER(next_module)
-{
-    struct snapshot *snapshot;
-
-    if ((snapshot = (struct snapshot *)get_handle_obj( current->process, req->handle,
-                                                       0, &snapshot_ops )))
-    {
-        if (req->reset) snapshot->module_pos = 0;
-        snapshot_next_module( snapshot, reply );
         release_object( snapshot );
     }
 }

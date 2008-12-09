@@ -93,14 +93,6 @@ struct process_snapshot
     int             handles;  /* number of handles */
 };
 
-struct module_snapshot
-{
-    void           *base;     /* module base addr */
-    size_t          size;     /* module size */
-    data_size_t     namelen;  /* length of file name */
-    WCHAR          *filename; /* module file name */
-};
-
 /* process functions */
 
 extern unsigned int alloc_ptid( void *ptr );
@@ -127,7 +119,6 @@ extern void kill_debugged_processes( struct thread *debugger, int exit_code );
 extern void break_process( struct process *process );
 extern void detach_debugged_processes( struct thread *debugger );
 extern struct process_snapshot *process_snap( int *count );
-extern struct module_snapshot *module_snap( struct process *process, int *count );
 extern void enum_processes( int (*cb)(struct process*, void*), void *user);
 
 /* console functions */

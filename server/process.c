@@ -861,30 +861,6 @@ struct process_snapshot *process_snap( int *count )
     return snapshot;
 }
 
-/* take a snapshot of the modules of a process */
-struct module_snapshot *module_snap( struct process *process, int *count )
-{
-    struct module_snapshot *snapshot, *ptr;
-    struct process_dll *dll;
-    int total = 0;
-
-    LIST_FOR_EACH_ENTRY( dll, &process->dlls, struct process_dll, entry ) total++;
-    if (!(snapshot = mem_alloc( sizeof(*snapshot) * total ))) return NULL;
-
-    ptr = snapshot;
-    LIST_FOR_EACH_ENTRY( dll, &process->dlls, struct process_dll, entry )
-    {
-        ptr->base     = dll->base;
-        ptr->size     = dll->size;
-        ptr->namelen  = dll->namelen;
-        ptr->filename = memdup( dll->filename, dll->namelen );
-        ptr++;
-    }
-    *count = total;
-    return snapshot;
-}
-
-
 /* create a new process */
 DECL_HANDLER(new_process)
 {

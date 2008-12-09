@@ -189,7 +189,6 @@ DECL_HANDLER(add_mapping_committed_range);
 DECL_HANDLER(create_snapshot);
 DECL_HANDLER(next_process);
 DECL_HANDLER(next_thread);
-DECL_HANDLER(next_module);
 DECL_HANDLER(wait_debug_event);
 DECL_HANDLER(queue_exception_event);
 DECL_HANDLER(get_exception_status);
@@ -432,7 +431,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_create_snapshot,
     (req_handler)req_next_process,
     (req_handler)req_next_thread,
-    (req_handler)req_next_module,
     (req_handler)req_wait_debug_event,
     (req_handler)req_queue_exception_event,
     (req_handler)req_get_exception_status,

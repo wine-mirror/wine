@@ -1813,8 +1813,7 @@ static void dump_add_mapping_committed_range_request( const struct add_mapping_c
 static void dump_create_snapshot_request( const struct create_snapshot_request *req )
 {
     fprintf( stderr, " attributes=%08x,", req->attributes );
-    fprintf( stderr, " flags=%d,", req->flags );
-    fprintf( stderr, " pid=%04x", req->pid );
+    fprintf( stderr, " flags=%08x", req->flags );
 }
 
 static void dump_create_snapshot_reply( const struct create_snapshot_reply *req )
@@ -1833,8 +1832,6 @@ static void dump_next_process_reply( const struct next_process_reply *req )
     fprintf( stderr, " count=%d,", req->count );
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " ppid=%04x,", req->ppid );
-    fprintf( stderr, " heap=%p,", req->heap );
-    fprintf( stderr, " module=%p,", req->module );
     fprintf( stderr, " threads=%d,", req->threads );
     fprintf( stderr, " priority=%d,", req->priority );
     fprintf( stderr, " handles=%d,", req->handles );
@@ -1855,21 +1852,6 @@ static void dump_next_thread_reply( const struct next_thread_reply *req )
     fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " base_pri=%d,", req->base_pri );
     fprintf( stderr, " delta_pri=%d", req->delta_pri );
-}
-
-static void dump_next_module_request( const struct next_module_request *req )
-{
-    fprintf( stderr, " handle=%04x,", req->handle );
-    fprintf( stderr, " reset=%d", req->reset );
-}
-
-static void dump_next_module_reply( const struct next_module_reply *req )
-{
-    fprintf( stderr, " pid=%04x,", req->pid );
-    fprintf( stderr, " base=%p,", req->base );
-    fprintf( stderr, " size=%lu,", (unsigned long)req->size );
-    fprintf( stderr, " filename=" );
-    dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_wait_debug_event_request( const struct wait_debug_event_request *req )
@@ -3904,7 +3886,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_snapshot_request,
     (dump_func)dump_next_process_request,
     (dump_func)dump_next_thread_request,
-    (dump_func)dump_next_module_request,
     (dump_func)dump_wait_debug_event_request,
     (dump_func)dump_queue_exception_event_request,
     (dump_func)dump_get_exception_status_request,
@@ -4144,7 +4125,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_snapshot_reply,
     (dump_func)dump_next_process_reply,
     (dump_func)dump_next_thread_reply,
-    (dump_func)dump_next_module_reply,
     (dump_func)dump_wait_debug_event_reply,
     (dump_func)dump_queue_exception_event_reply,
     (dump_func)dump_get_exception_status_reply,
@@ -4384,7 +4364,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_snapshot",
     "next_process",
     "next_thread",
-    "next_module",
     "wait_debug_event",
     "queue_exception_event",
     "get_exception_status",

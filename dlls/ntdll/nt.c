@@ -787,7 +787,6 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             {
                 req->flags      = SNAP_PROCESS | SNAP_THREAD;
                 req->attributes = 0;
-                req->pid        = 0;
                 if (!(ret = wine_server_call( req )))
                     hSnap = wine_server_ptr_handle( reply->handle );
             }

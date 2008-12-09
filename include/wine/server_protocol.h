@@ -1760,17 +1760,14 @@ struct add_mapping_committed_range_reply
 };
 
 
-#define SNAP_HEAPLIST   0x00000001
-#define SNAP_PROCESS    0x00000002
-#define SNAP_THREAD     0x00000004
-#define SNAP_MODULE     0x00000008
+#define SNAP_PROCESS    0x00000001
+#define SNAP_THREAD     0x00000002
 
 struct create_snapshot_request
 {
     struct request_header __header;
     unsigned int attributes;
-    int          flags;
-    process_id_t pid;
+    unsigned int flags;
 };
 struct create_snapshot_reply
 {
@@ -1792,8 +1789,6 @@ struct next_process_reply
     int          count;
     process_id_t pid;
     process_id_t ppid;
-    void*        heap;
-    void*        module;
     int          threads;
     int          priority;
     int          handles;
@@ -1816,23 +1811,6 @@ struct next_thread_reply
     thread_id_t  tid;
     int          base_pri;
     int          delta_pri;
-};
-
-
-
-struct next_module_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-    int          reset;
-};
-struct next_module_reply
-{
-    struct reply_header __header;
-    process_id_t pid;
-    void*        base;
-    size_t       size;
-    /* VARARG(filename,unicode_str); */
 };
 
 
@@ -4424,7 +4402,6 @@ enum request
     REQ_create_snapshot,
     REQ_next_process,
     REQ_next_thread,
-    REQ_next_module,
     REQ_wait_debug_event,
     REQ_queue_exception_event,
     REQ_get_exception_status,
@@ -4668,7 +4645,6 @@ union generic_request
     struct create_snapshot_request create_snapshot_request;
     struct next_process_request next_process_request;
     struct next_thread_request next_thread_request;
-    struct next_module_request next_module_request;
     struct wait_debug_event_request wait_debug_event_request;
     struct queue_exception_event_request queue_exception_event_request;
     struct get_exception_status_request get_exception_status_request;
@@ -4910,7 +4886,6 @@ union generic_reply
     struct create_snapshot_reply create_snapshot_reply;
     struct next_process_reply next_process_reply;
     struct next_thread_reply next_thread_reply;
-    struct next_module_reply next_module_reply;
     struct wait_debug_event_reply wait_debug_event_reply;
     struct queue_exception_event_reply queue_exception_event_reply;
     struct get_exception_status_reply get_exception_status_reply;
@@ -5071,6 +5046,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 347
+#define SERVER_PROTOCOL_VERSION 348
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
