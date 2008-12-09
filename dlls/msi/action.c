@@ -2922,9 +2922,9 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
         else if (ACTION_VerifyComponentForAction(comp, INSTALLSTATE_ABSENT))
         {
             if (package->Context == MSIINSTALLCONTEXT_MACHINE)
-                MSIREG_DeleteLocalUserDataComponentKey(comp->ComponentId);
+                MSIREG_DeleteUserDataComponentKey(comp->ComponentId, szLocalSid);
             else
-                MSIREG_DeleteUserDataComponentKey(comp->ComponentId);
+                MSIREG_DeleteUserDataComponentKey(comp->ComponentId, NULL);
         }
 
         /* UI stuff */

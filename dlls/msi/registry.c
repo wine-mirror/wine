@@ -733,20 +733,6 @@ UINT MSIREG_OpenUserComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create)
     return rc;
 }
 
-UINT MSIREG_DeleteLocalUserDataComponentKey(LPCWSTR szComponent)
-{
-    WCHAR comp[GUID_SIZE];
-    WCHAR keypath[0x200];
-
-    TRACE("%s\n", debugstr_w(szComponent));
-    if (!squash_guid(szComponent, comp))
-        return ERROR_FUNCTION_FAILED;
-    TRACE("squished (%s)\n", debugstr_w(comp));
-
-    sprintfW(keypath, szUserDataComp_fmt, szLocalSid, comp);
-    return RegDeleteTreeW(HKEY_LOCAL_MACHINE, keypath);
-}
-
 UINT MSIREG_OpenUserDataComponentKey(LPCWSTR szComponent, LPCWSTR szUserSid,
                                      HKEY *key, BOOL create)
 {
@@ -783,7 +769,7 @@ UINT MSIREG_OpenUserDataComponentKey(LPCWSTR szComponent, LPCWSTR szUserSid,
     return rc;
 }
 
-UINT MSIREG_DeleteUserDataComponentKey(LPCWSTR szComponent)
+UINT MSIREG_DeleteUserDataComponentKey(LPCWSTR szComponent, LPCWSTR szUserSid)
 {
     UINT rc;
     WCHAR comp[GUID_SIZE];
@@ -795,16 +781,21 @@ UINT MSIREG_DeleteUserDataComponentKey(LPCWSTR szComponent)
         return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(comp));
 
-    rc = get_user_sid(&usersid);
-    if (rc != ERROR_SUCCESS || !usersid)
+    if (!szUserSid)
     {
-        ERR("Failed to retrieve user SID: %d\n", rc);
-        return rc;
+        rc = get_user_sid(&usersid);
+        if (rc != ERROR_SUCCESS || !usersid)
+        {
+            ERR("Failed to retrieve user SID: %d\n", rc);
+            return rc;
+        }
+
+        sprintfW(keypath, szUserDataComp_fmt, usersid, comp);
+        LocalFree(usersid);
     }
+    else
+        sprintfW(keypath, szUserDataComp_fmt, szUserSid, comp);
 
-    sprintfW(keypath, szUserDataComp_fmt, usersid, comp);
-
-    LocalFree(usersid);
     return RegDeleteTreeW(HKEY_LOCAL_MACHINE, keypath);
 }
 
