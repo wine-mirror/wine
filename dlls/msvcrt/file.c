@@ -1167,9 +1167,9 @@ int CDECL MSVCRT__fstat64(int fd, struct MSVCRT__stat64* buf)
       msvcrt_set_errno(ERROR_INVALID_PARAMETER);
       return -1;
     }
-    buf->st_mode = S_IFREG | S_IREAD;
+    buf->st_mode = S_IFREG | 0444;
     if (!(hfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
-      buf->st_mode |= S_IWRITE;
+      buf->st_mode |= 0222;
     buf->st_size  = ((__int64)hfi.nFileSizeHigh << 32) + hfi.nFileSizeLow;
     RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastAccessTime, &dw);
     buf->st_atime = dw;
