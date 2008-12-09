@@ -166,6 +166,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
+#if !defined(__MINGW32__) && !defined(_MSC_VER)
+
 #define ADJUST_THIS(c,m,p) ((c*)(((long)p)-(long)&(((c*)0)->lp##m##Vtbl)))
 #define STATIC_CAST(i,p) ((i*)&p->lp##i##Vtbl)
 
@@ -200,32 +202,6 @@ typedef struct _UnixFolder {
 
 /* Will hold the registered clipboard format identifier for ITEMIDLISTS. */
 static UINT cfShellIDList = 0;
-
-/******************************************************************************
- * UNIXFS_is_rooted_at_desktop [Internal]
- *
- * Checks if the unixfs namespace extension is rooted at desktop level.
- *
- * RETURNS
- *  TRUE, if unixfs is rooted at desktop level
- *  FALSE, if not.
- */
-BOOL UNIXFS_is_rooted_at_desktop(void) {
-    HKEY hKey;
-    WCHAR wszRootedAtDesktop[69 + CHARS_IN_GUID] = { 
-        'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-        'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-        'E','x','p','l','o','r','e','r','\\','D','e','s','k','t','o','p','\\',
-        'N','a','m','e','S','p','a','c','e','\\',0 }; 
-
-    if (StringFromGUID2(&CLSID_UnixDosFolder, wszRootedAtDesktop + 69, CHARS_IN_GUID) &&
-        RegOpenKeyExW(HKEY_LOCAL_MACHINE, wszRootedAtDesktop, 0, KEY_READ, &hKey) == ERROR_SUCCESS) 
-    {
-        RegCloseKey(hKey);
-        return TRUE;
-    }
-    return FALSE;
-}
 
 /******************************************************************************
  * UNIXFS_filename_from_shitemid [Internal]
@@ -2224,11 +2200,6 @@ HRESULT WINAPI MyDocuments_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID 
     return CreateUnixFolder(pUnkOuter, riid, ppv, &CLSID_MyDocuments);
 }
 
-HRESULT WINAPI ShellFSFolder_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv) {
-    TRACE("(pUnkOuter=%p, riid=%p, ppv=%p)\n", pUnkOuter, riid, ppv);
-    return CreateUnixFolder(pUnkOuter, riid, ppv, &CLSID_ShellFSFolder);
-}
-
 /******************************************************************************
  * UnixSubFolderIterator
  *
@@ -2401,4 +2372,54 @@ static IUnknown *UnixSubFolderIterator_Constructor(UnixFolder *pUnixFolder, SHCO
     UnixSubFolderIterator_IEnumIDList_AddRef((IEnumIDList*)iterator);
     
     return (IUnknown*)iterator;
+}
+
+#else /* __MINGW32__ || _MSC_VER */
+
+HRESULT WINAPI UnixFolder_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv)
+{
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI UnixDosFolder_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv)
+{
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI FolderShortcut_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv)
+{
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI MyDocuments_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv)
+{
+    return E_NOTIMPL;
+}
+
+#endif /* __MINGW32__ || _MSC_VER */
+
+/******************************************************************************
+ * UNIXFS_is_rooted_at_desktop [Internal]
+ *
+ * Checks if the unixfs namespace extension is rooted at desktop level.
+ *
+ * RETURNS
+ *  TRUE, if unixfs is rooted at desktop level
+ *  FALSE, if not.
+ */
+BOOL UNIXFS_is_rooted_at_desktop(void) {
+    HKEY hKey;
+    WCHAR wszRootedAtDesktop[69 + CHARS_IN_GUID] = {
+        'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+        'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+        'E','x','p','l','o','r','e','r','\\','D','e','s','k','t','o','p','\\',
+        'N','a','m','e','S','p','a','c','e','\\',0 };
+
+    if (StringFromGUID2(&CLSID_UnixDosFolder, wszRootedAtDesktop + 69, CHARS_IN_GUID) &&
+        RegOpenKeyExW(HKEY_LOCAL_MACHINE, wszRootedAtDesktop, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+    {
+        RegCloseKey(hKey);
+        return TRUE;
+    }
+    return FALSE;
 }
