@@ -715,7 +715,7 @@ static ScriptHost *get_script_host(HTMLDocument *doc, const GUID *guid)
 {
     ScriptHost *iter;
 
-    if(IsEqualGUID(&CLSID_JScript, &guid) && doc->scriptmode != SCRIPTMODE_ACTIVESCRIPT) {
+    if(IsEqualGUID(&CLSID_JScript, guid) && doc->scriptmode != SCRIPTMODE_ACTIVESCRIPT) {
         TRACE("Ignoring JScript\n");
         return NULL;
     }
