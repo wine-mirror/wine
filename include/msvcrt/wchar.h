@@ -42,7 +42,7 @@ typedef unsigned short wchar_t;
 #endif
 
 #if !defined(_MSC_VER) && !defined(__int64)
-# ifdef _WIN64
+# if defined(_WIN64) && !defined(__MINGW64__)
 #   define __int64 long
 # else
 #   define __int64 long long

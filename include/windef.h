@@ -37,16 +37,17 @@ extern "C" {
 
 /* Calling conventions definitions */
 
-#if defined(__i386__) && !defined(_X86_)
-# define _X86_
-#endif
-
-#if defined(_X86_) && !defined(__i386__)
-# define __i386__
-#endif
-
 #if defined(__x86_64__) && !defined(_WIN64)
 #define _WIN64
+#endif
+
+#ifndef _WIN64
+# if defined(__i386__) && !defined(_X86_)
+#  define _X86_
+# endif
+# if defined(_X86_) && !defined(__i386__)
+#  define __i386__
+# endif
 #endif
 
 #ifndef __stdcall
