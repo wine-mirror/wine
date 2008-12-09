@@ -753,24 +753,6 @@ UINT MSIREG_OpenUserComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create)
     return rc;
 }
 
-UINT MSIREG_OpenLocalUserDataComponentKey(LPCWSTR szComponent, HKEY *key, BOOL create)
-{
-    WCHAR comp[GUID_SIZE];
-    WCHAR keypath[0x200];
-
-    TRACE("%s\n", debugstr_w(szComponent));
-    if (!squash_guid(szComponent, comp))
-        return ERROR_FUNCTION_FAILED;
-    TRACE("squished (%s)\n", debugstr_w(comp));
-
-    sprintfW(keypath, szUserDataComp_fmt, szLocalSid, comp);
-
-    if (create)
-        return RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
-
-    return RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
-}
-
 UINT MSIREG_DeleteLocalUserDataComponentKey(LPCWSTR szComponent)
 {
     WCHAR comp[GUID_SIZE];
@@ -785,7 +767,8 @@ UINT MSIREG_DeleteLocalUserDataComponentKey(LPCWSTR szComponent)
     return RegDeleteTreeW(HKEY_LOCAL_MACHINE, keypath);
 }
 
-UINT MSIREG_OpenUserDataComponentKey(LPCWSTR szComponent, HKEY *key, BOOL create)
+UINT MSIREG_OpenUserDataComponentKey(LPCWSTR szComponent, LPCWSTR szUserSid,
+                                     HKEY *key, BOOL create)
 {
     UINT rc;
     WCHAR comp[GUID_SIZE];
@@ -797,21 +780,26 @@ UINT MSIREG_OpenUserDataComponentKey(LPCWSTR szComponent, HKEY *key, BOOL create
         return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(comp));
 
-    rc = get_user_sid(&usersid);
-    if (rc != ERROR_SUCCESS || !usersid)
+    if (!szUserSid)
     {
-        ERR("Failed to retrieve user SID: %d\n", rc);
-        return rc;
-    }
+        rc = get_user_sid(&usersid);
+        if (rc != ERROR_SUCCESS || !usersid)
+        {
+            ERR("Failed to retrieve user SID: %d\n", rc);
+            return rc;
+        }
 
-    sprintfW(keypath, szUserDataComp_fmt, usersid, comp);
+        sprintfW(keypath, szUserDataComp_fmt, usersid, comp);
+        LocalFree(usersid);
+    }
+    else
+        sprintfW(keypath, szUserDataComp_fmt, szUserSid, comp);
 
     if (create)
         rc = RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
     else
         rc = RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
 
-    LocalFree(usersid);
     return rc;
 }
 
@@ -1433,7 +1421,7 @@ UINT WINAPI MsiEnumClientsW(LPCWSTR szComponent, DWORD index, LPWSTR szProduct)
     if (!szComponent || !*szComponent || !szProduct)
         return ERROR_INVALID_PARAMETER;
 
-    if (MSIREG_OpenUserDataComponentKey(szComponent, &hkeyComp, FALSE) != ERROR_SUCCESS &&
+    if (MSIREG_OpenUserDataComponentKey(szComponent, NULL, &hkeyComp, FALSE) != ERROR_SUCCESS &&
         MSIREG_OpenLocalSystemComponentKey(szComponent, &hkeyComp, FALSE) != ERROR_SUCCESS)
         return ERROR_UNKNOWN_COMPONENT;
 

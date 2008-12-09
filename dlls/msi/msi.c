@@ -618,7 +618,7 @@ UINT WINAPI MsiGetProductCodeW(LPCWSTR szComponent, LPWSTR szBuffer)
     if (!squash_guid(szComponent, squished_comp))
         return ERROR_INVALID_PARAMETER;
 
-    if (MSIREG_OpenUserDataComponentKey(szComponent, &compkey, FALSE) != ERROR_SUCCESS &&
+    if (MSIREG_OpenUserDataComponentKey(szComponent, NULL, &compkey, FALSE) != ERROR_SUCCESS &&
         MSIREG_OpenLocalSystemComponentKey(szComponent, &compkey, FALSE) != ERROR_SUCCESS)
     {
         return ERROR_UNKNOWN_COMPONENT;
@@ -1326,7 +1326,7 @@ static BOOL msi_comp_find_prodcode(LPWSTR squished_pc,
     if (context == MSIINSTALLCONTEXT_MACHINE)
         r = MSIREG_OpenLocalSystemComponentKey(comp, &hkey, FALSE);
     else
-        r = MSIREG_OpenUserDataComponentKey(comp, &hkey, FALSE);
+        r = MSIREG_OpenUserDataComponentKey(comp, NULL, &hkey, FALSE);
 
     if (r != ERROR_SUCCESS)
         return FALSE;
@@ -1777,7 +1777,7 @@ static INSTALLSTATE MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
     state = INSTALLSTATE_UNKNOWN;
 
     if (MSIREG_OpenLocalSystemComponentKey(szComponent, &hkey, FALSE) == ERROR_SUCCESS ||
-        MSIREG_OpenUserDataComponentKey(szComponent, &hkey, FALSE) == ERROR_SUCCESS)
+        MSIREG_OpenUserDataComponentKey(szComponent, NULL, &hkey, FALSE) == ERROR_SUCCESS)
     {
         path = msi_reg_get_val_str(hkey, squished_pc);
         RegCloseKey(hkey);
@@ -1803,7 +1803,7 @@ static INSTALLSTATE MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
         RegCloseKey(hkey);
 
         if (MSIREG_OpenLocalSystemComponentKey(szComponent, &hkey, FALSE) == ERROR_SUCCESS ||
-            MSIREG_OpenUserDataComponentKey(szComponent, &hkey, FALSE) == ERROR_SUCCESS)
+            MSIREG_OpenUserDataComponentKey(szComponent, NULL, &hkey, FALSE) == ERROR_SUCCESS)
         {
             msi_free(path);
             path = msi_reg_get_val_str(hkey, squished_pc);
@@ -1991,9 +1991,9 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
         StringFromGUID2(&guid, comp, GUID_SIZE);
 
         if (machine)
-            rc = MSIREG_OpenLocalUserDataComponentKey(comp, &hkey, FALSE);
+            rc = MSIREG_OpenUserDataComponentKey(comp, szLocalSid, &hkey, FALSE);
         else
-            rc = MSIREG_OpenUserDataComponentKey(comp, &hkey, FALSE);
+            rc = MSIREG_OpenUserDataComponentKey(comp, NULL, &hkey, FALSE);
 
         if (rc != ERROR_SUCCESS)
         {
