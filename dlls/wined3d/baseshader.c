@@ -1158,6 +1158,18 @@ void shader_trace_init(
     This->baseShader.functionLength = (len + 1) * sizeof(DWORD);
 }
 
+void shader_cleanup(IWineD3DBaseShader *iface)
+{
+    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)iface;
+
+    ((IWineD3DDeviceImpl *)This->baseShader.device)->shader_backend->shader_destroy(iface);
+    HeapFree(GetProcessHeap(), 0, This->baseShader.function);
+    shader_delete_constant_list(&This->baseShader.constantsF);
+    shader_delete_constant_list(&This->baseShader.constantsB);
+    shader_delete_constant_list(&This->baseShader.constantsI);
+    list_remove(&This->baseShader.shader_list_entry);
+}
+
 static const SHADER_HANDLER shader_none_instruction_handler_table[WINED3DSIH_TABLE_SIZE] = {0};
 static void shader_none_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {}
 static void shader_none_select_depth_blt(IWineD3DDevice *iface, enum tex_types tex_type) {}
@@ -1222,46 +1234,3 @@ const shader_backend_t none_shader_backend = {
     shader_none_get_caps,
     shader_none_color_fixup_supported,
 };
-
-/* *******************************************
-   IWineD3DPixelShader IUnknown parts follow
-   ******************************************* */
-HRESULT  WINAPI IWineD3DBaseShaderImpl_QueryInterface(IWineD3DBaseShader *iface, REFIID riid, LPVOID *ppobj)
-{
-    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)iface;
-    TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
-    if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IWineD3DBase)
-        || IsEqualGUID(riid, &IID_IWineD3DBaseShader)
-        || IsEqualGUID(riid, &IID_IWineD3DPixelShader)) {
-        IUnknown_AddRef(iface);
-        *ppobj = This;
-        return S_OK;
-    }
-    *ppobj = NULL;
-    return E_NOINTERFACE;
-}
-
-ULONG  WINAPI IWineD3DBaseShaderImpl_AddRef(IWineD3DBaseShader *iface) {
-    IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
-    TRACE("(%p) : AddRef increasing from %d\n", This, This->baseShader.ref);
-    return InterlockedIncrement(&This->baseShader.ref);
-}
-
-ULONG  WINAPI IWineD3DBaseShaderImpl_Release(IWineD3DBaseShader *iface) {
-    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)iface;
-    IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl *) This->baseShader.device;
-    ULONG ref;
-    TRACE("(%p) : Releasing from %d\n", This, This->baseShader.ref);
-    ref = InterlockedDecrement(&This->baseShader.ref);
-    if (ref == 0) {
-        deviceImpl->shader_backend->shader_destroy(iface);
-        HeapFree(GetProcessHeap(), 0, This->baseShader.function);
-        shader_delete_constant_list(&This->baseShader.constantsF);
-        shader_delete_constant_list(&This->baseShader.constantsB);
-        shader_delete_constant_list(&This->baseShader.constantsI);
-        list_remove(&This->baseShader.shader_list_entry);
-        HeapFree(GetProcessHeap(), 0, This);
-    }
-    return ref;
-}

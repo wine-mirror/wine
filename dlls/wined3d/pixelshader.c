@@ -37,15 +37,46 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 #define GLNAME_REQUIRE_GLSL  ((const char *)1)
 
 static HRESULT  WINAPI IWineD3DPixelShaderImpl_QueryInterface(IWineD3DPixelShader *iface, REFIID riid, LPVOID *ppobj) {
-    return IWineD3DBaseShaderImpl_QueryInterface((IWineD3DBaseShader *) iface, riid, ppobj);
+    TRACE("iface %p, riid %s, ppobj %p\n", iface, debugstr_guid(riid), ppobj);
+
+    if (IsEqualGUID(riid, &IID_IWineD3DPixelShader)
+            || IsEqualGUID(riid, &IID_IWineD3DBaseShader)
+            || IsEqualGUID(riid, &IID_IWineD3DBase)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IUnknown_AddRef(iface);
+        *ppobj = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
+
+    *ppobj = NULL;
+    return E_NOINTERFACE;
 }
 
 static ULONG  WINAPI IWineD3DPixelShaderImpl_AddRef(IWineD3DPixelShader *iface) {
-    return IWineD3DBaseShaderImpl_AddRef((IWineD3DBaseShader *) iface);
+    IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
+    ULONG refcount = InterlockedIncrement(&This->baseShader.ref);
+
+    TRACE("%p increasing refcount to %u\n", This, refcount);
+
+    return refcount;
 }
 
 static ULONG  WINAPI IWineD3DPixelShaderImpl_Release(IWineD3DPixelShader *iface) {
-    return IWineD3DBaseShaderImpl_Release((IWineD3DBaseShader *) iface);
+    IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
+    ULONG refcount = InterlockedDecrement(&This->baseShader.ref);
+
+    TRACE("%p decreasing refcount to %u\n", This, refcount);
+
+    if (!refcount)
+    {
+        shader_cleanup((IWineD3DBaseShader *)iface);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return refcount;
 }
 
 /* *******************************************

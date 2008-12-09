@@ -334,15 +334,46 @@ static void IWineD3DVertexShaderImpl_GenerateShader(IWineD3DVertexShader *iface,
    IWineD3DVertexShader IUnknown parts follow
    ******************************************* */
 static HRESULT  WINAPI IWineD3DVertexShaderImpl_QueryInterface(IWineD3DVertexShader *iface, REFIID riid, LPVOID *ppobj) {
-    return IWineD3DBaseShaderImpl_QueryInterface((IWineD3DBaseShader *) iface, riid, ppobj);
+    TRACE("iface %p, riid %s, ppobj %p\n", iface, debugstr_guid(riid), ppobj);
+
+    if (IsEqualGUID(riid, &IID_IWineD3DVertexShader)
+            || IsEqualGUID(riid, &IID_IWineD3DBaseShader)
+            || IsEqualGUID(riid, &IID_IWineD3DBase)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IUnknown_AddRef(iface);
+        *ppobj = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
+
+    *ppobj = NULL;
+    return E_NOINTERFACE;
 }
 
 static ULONG  WINAPI IWineD3DVertexShaderImpl_AddRef(IWineD3DVertexShader *iface) {
-    return IWineD3DBaseShaderImpl_AddRef((IWineD3DBaseShader *) iface);
+    IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
+    ULONG refcount = InterlockedIncrement(&This->baseShader.ref);
+
+    TRACE("%p increasing refcount to %u\n", This, refcount);
+
+    return refcount;
 }
 
 static ULONG WINAPI IWineD3DVertexShaderImpl_Release(IWineD3DVertexShader *iface) {
-    return IWineD3DBaseShaderImpl_Release((IWineD3DBaseShader *) iface);
+    IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
+    ULONG refcount = InterlockedDecrement(&This->baseShader.ref);
+
+    TRACE("%p decreasing refcount to %u\n", This, refcount);
+
+    if (!refcount)
+    {
+        shader_cleanup((IWineD3DBaseShader *)iface);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return refcount;
 }
 
 /* *******************************************
