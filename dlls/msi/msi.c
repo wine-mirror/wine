@@ -1762,11 +1762,81 @@ done:
     return r;
 }
 
-UINT WINAPI MsiGetProductPropertyW( MSIHANDLE hProduct, LPCWSTR szProperty,
-                                    LPWSTR szValue, LPDWORD pccbValue )
+/******************************************************************
+ * MsiGetProductPropertyW      [MSI.@]
+ */
+UINT WINAPI MsiGetProductPropertyW(MSIHANDLE hProduct, LPCWSTR szProperty,
+                                   LPWSTR szValue, LPDWORD pccbValue)
 {
-    FIXME("%ld %s %p %p\n", hProduct, debugstr_w(szProperty), szValue, pccbValue);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    MSIPACKAGE *package;
+    MSIQUERY *view = NULL;
+    MSIRECORD *rec = NULL;
+    LPCWSTR val;
+    UINT r;
+
+    static const WCHAR query[] = {
+       'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+       '`','P','r','o','p','e','r','t','y','`',' ','W','H','E','R','E',' ',
+       '`','P','r','o','p','e','r','t','y','`','=','\'','%','s','\'',0};
+
+    TRACE("(%ld, %s, %p, %p)\n", hProduct, debugstr_w(szProperty),
+          szValue, pccbValue);
+
+    if (!szProperty)
+        return ERROR_INVALID_PARAMETER;
+
+    if (szValue && !pccbValue)
+        return ERROR_INVALID_PARAMETER;
+
+    package = msihandle2msiinfo(hProduct, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    r = MSI_OpenQuery(package->db, &view, query, szProperty);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    r = MSI_ViewExecute(view, 0);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    r = MSI_ViewFetch(view, &rec);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    val = MSI_RecordGetString(rec, 2);
+    if (!val)
+        goto done;
+
+    if (lstrlenW(val) >= *pccbValue)
+    {
+        lstrcpynW(szValue, val, *pccbValue);
+        *pccbValue = lstrlenW(val);
+        r = ERROR_MORE_DATA;
+    }
+    else
+    {
+        lstrcpyW(szValue, val);
+        *pccbValue = lstrlenW(val);
+        r = ERROR_SUCCESS;
+    }
+
+done:
+    if (view)
+    {
+        MSI_ViewClose(view);
+        msiobj_release(&view->hdr);
+        if (rec) msiobj_release(&rec->hdr);
+    }
+
+    if (!rec)
+    {
+        if (szValue) *szValue = '\0';
+        if (pccbValue) *pccbValue = 0;
+        r = ERROR_SUCCESS;
+    }
+
+    return r;
 }
 
 UINT WINAPI MsiVerifyPackageA( LPCSTR szPackage )
