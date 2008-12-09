@@ -890,8 +890,8 @@ UINT MSIREG_OpenUserDataPatchKey(LPWSTR patch, HKEY *key, BOOL create)
     return rc;
 }
 
-static UINT MSIREG_OpenInstallProps(LPCWSTR szProduct, LPCWSTR szUserSID,
-                                    HKEY *key, BOOL create)
+UINT MSIREG_OpenInstallProps(LPCWSTR szProduct, LPCWSTR szUserSID,
+                             HKEY *key, BOOL create)
 {
     UINT rc;
     WCHAR squished_pc[GUID_SIZE];
@@ -929,12 +929,6 @@ UINT MSIREG_OpenCurrentUserInstallProps(LPCWSTR szProduct, HKEY *key,
 
     LocalFree(usersid);
     return rc;
-}
-
-UINT MSIREG_OpenLocalSystemInstallProps(LPCWSTR szProduct, HKEY *key,
-                                        BOOL create)
-{
-    return MSIREG_OpenInstallProps(szProduct, szLocalSid, key, create);
 }
 
 UINT MSIREG_DeleteUserDataProductKey(LPCWSTR szProduct)

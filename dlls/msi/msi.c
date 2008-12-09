@@ -108,7 +108,7 @@ static UINT MSI_OpenProductW(LPCWSTR szProduct, MSIPACKAGE **package)
         return r;
 
     if (context == MSIINSTALLCONTEXT_MACHINE)
-        r = MSIREG_OpenLocalSystemInstallProps(szProduct, &props, FALSE);
+        r = MSIREG_OpenInstallProps(szProduct, szLocalSid, &props, FALSE);
     else if (context == MSIINSTALLCONTEXT_USERMANAGED ||
              context == MSIINSTALLCONTEXT_USERUNMANAGED)
         r = MSIREG_OpenCurrentUserInstallProps(szProduct, &props, FALSE);
@@ -407,7 +407,7 @@ static UINT msi_open_package(LPCWSTR product, MSIINSTALLCONTEXT context,
         'L','o','c','a','l','P','a','c','k','a','g','e',0};
 
     if (context == MSIINSTALLCONTEXT_MACHINE)
-        r = MSIREG_OpenLocalSystemInstallProps(product, &props, FALSE);
+        r = MSIREG_OpenInstallProps(product, szLocalSid, &props, FALSE);
     else
         r = MSIREG_OpenCurrentUserInstallProps(product, &props, FALSE);
 
@@ -1448,7 +1448,7 @@ INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
     }
     else
     {
-        r = MSIREG_OpenLocalSystemInstallProps(szProduct, &userdata, FALSE);
+        r = MSIREG_OpenInstallProps(szProduct, szLocalSid, &userdata, FALSE);
         if (r != ERROR_SUCCESS)
             goto done;
     }
@@ -2449,7 +2449,7 @@ static USERINFOSTATE MSI_GetUserInfo(LPCWSTR szProduct,
     }
 
     if (MSIREG_OpenCurrentUserInstallProps(szProduct, &props, FALSE) != ERROR_SUCCESS &&
-        MSIREG_OpenLocalSystemInstallProps(szProduct, &props, FALSE) != ERROR_SUCCESS)
+        MSIREG_OpenInstallProps(szProduct, szLocalSid, &props, FALSE) != ERROR_SUCCESS)
     {
         RegCloseKey(hkey);
         return USERINFOSTATE_ABSENT;
