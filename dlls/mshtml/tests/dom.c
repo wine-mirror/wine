@@ -3343,6 +3343,11 @@ static void test_elems(IHTMLDocument2 *doc)
         ok(type == 1, "type=%ld\n", type);
 
         IHTMLSelectElement_Release(select);
+
+        hres = IHTMLElement_get_document(elem, &disp);
+        ok(hres == S_OK, "get_document failed: %08x\n", hres);
+        ok(iface_cmp((IUnknown*)disp, (IUnknown*)doc), "disp != doc\n");
+
         IHTMLElement_Release(elem);
     }
 

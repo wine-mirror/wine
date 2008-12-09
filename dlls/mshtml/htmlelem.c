@@ -585,7 +585,7 @@ static HRESULT WINAPI HTMLElement_get_document(IHTMLElement *iface, IDispatch **
     if(!p)
         return E_POINTER;
 
-    *p = (IDispatch*)This->node.doc;
+    *p = (IDispatch*)HTMLDOC(This->node.doc);
     IDispatch_AddRef(*p);
 
     return S_OK;
