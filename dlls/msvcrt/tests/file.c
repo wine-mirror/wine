@@ -903,23 +903,13 @@ static void test_stat(void)
     fd = open("stat.tst", O_WRONLY | O_CREAT | O_BINARY, _S_IREAD |_S_IWRITE);
     if (fd >= 0)
     {
-        if (fstat(fd, &buf) == 0)
-        {
-            if ((buf.st_mode & _S_IFMT) == _S_IFREG)
-            {
-                ok(buf.st_dev == 0, "st_dev is %d, expected 0\n", buf.st_dev);
-                ok(buf.st_dev == buf.st_rdev, "st_dev (%d) and st_rdev (%d) differ\n",
-                    buf.st_dev, buf.st_rdev);
-                ok(buf.st_nlink == 1, "st_nlink is %d, expected 1\n",
-                    buf.st_nlink);
-                ok(buf.st_size == 0, "st_size is %d, expected 0\n",
-                    buf.st_size);
-            }
-            else
-                skip("file is not a file?\n");
-        }
-        else
-            skip("fstat failed, errno %d\n", errno);
+        ok(fstat(fd, &buf) == 0, "fstat failed: errno=%d", errno);
+        ok((buf.st_mode & _S_IFMT) == _S_IFREG, "bad format = %06o\n", buf.st_mode);
+        ok(buf.st_dev == 0, "st_dev is %d, expected 0\n", buf.st_dev);
+        ok(buf.st_dev == buf.st_rdev, "st_dev (%d) and st_rdev (%d) differ\n", buf.st_dev, buf.st_rdev);
+        ok(buf.st_nlink == 1, "st_nlink is %d, expected 1\n", buf.st_nlink);
+        ok(buf.st_size == 0, "st_size is %d, expected 0\n", buf.st_size);
+
         close(fd);
         remove("stat.tst");
     }
@@ -929,19 +919,16 @@ static void test_stat(void)
     /* Tests for a char device */
     if (_dup2(0, 10) == 0)
     {
-        if (fstat(10, &buf) == 0)
+        ok(fstat(10, &buf) == 0, "fstat(stdin) failed: errno=%d\n", errno);
+        if ((buf.st_mode & _S_IFMT) == _S_IFCHR)
         {
-            if (buf.st_mode == _S_IFCHR)
-            {
-                ok(buf.st_dev == 10, "st_dev is %d, expected 10\n", buf.st_dev);
-                ok(buf.st_rdev == 10, "st_rdev is %d, expected 10\n", buf.st_rdev);
-                ok(buf.st_nlink == 1, "st_nlink is %d, expected 1\n", buf.st_nlink);
-            }
-            else
-                skip("stdin is not a char device?\n");
+            ok(buf.st_mode == _S_IFCHR, "bad st_mode=%06o\n", buf.st_mode);
+            ok(buf.st_dev == 10, "st_dev is %d, expected 10\n", buf.st_dev);
+            ok(buf.st_rdev == 10, "st_rdev is %d, expected 10\n", buf.st_rdev);
+            ok(buf.st_nlink == 1, "st_nlink is %d, expected 1\n", buf.st_nlink);
         }
         else
-            skip("fstat failed with errno %d\n", errno);
+            skip("stdin is not a char device? st_mode=%06o\n", buf.st_mode);
         close(10);
     }
     else
@@ -950,22 +937,11 @@ static void test_stat(void)
     /* Tests for pipes */
     if (_pipe(pipes, 1024, O_BINARY) == 0)
     {
-        if (fstat(pipes[0], &buf) == 0)
-        {
-            if (buf.st_mode == _S_IFIFO)
-            {
-                ok(buf.st_dev == pipes[0], "st_dev is %d, expected %d\n",
-                    buf.st_dev, pipes[0]);
-                ok(buf.st_rdev == pipes[0], "st_rdev is %d, expected %d\n",
-                    buf.st_rdev, pipes[0]);
-                ok(buf.st_nlink == 1, "st_nlink is %d, expected 1\n",
-                    buf.st_nlink);
-            }
-            else
-                skip("pipe() didn't make a pipe?\n");
-        }
-        else
-            skip("fstat failed with errno %d\n", errno);
+        ok(fstat(pipes[0], &buf) == 0, "fstat(pipe) failed: errno=%d\n", errno);
+        ok(buf.st_mode == _S_IFIFO, "bad st_mode=%06o\n", buf.st_mode);
+        ok(buf.st_dev == pipes[0], "st_dev is %d, expected %d\n", buf.st_dev, pipes[0]);
+        ok(buf.st_rdev == pipes[0], "st_rdev is %d, expected %d\n", buf.st_rdev, pipes[0]);
+        ok(buf.st_nlink == 1, "st_nlink is %d, expected 1\n", buf.st_nlink);
         close(pipes[0]);
         close(pipes[1]);
     }
