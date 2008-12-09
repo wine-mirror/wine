@@ -56,8 +56,19 @@ typedef unsigned int size_t;
 extern "C" {
 #endif
 
+#ifndef _CRT_MEMORY_DEFINED
+#define _CRT_MEMORY_DEFINED
+void*       memchr(const void*,int,size_t);
+int         memcmp(const void*,const void*,size_t);
+void*       memcpy(void*,const void*,size_t);
+void*       memset(void*,int,size_t);
 void*       _memccpy(void*,const void*,int,unsigned int);
 int         _memicmp(const void*,const void*,unsigned int);
+
+static inline int memicmp(const void* s1, const void* s2, size_t len) { return _memicmp(s1, s2, len); }
+static inline void* memccpy(void *s1, const void *s2, int c, size_t n) { return _memccpy(s1, s2, c, n); }
+#endif /* _CRT_MEMORY_DEFINED */
+
 int         _strcmpi(const char*,const char*);
 char*       _strdup(const char*);
 char*       _strerror(const char*);
@@ -70,11 +81,7 @@ char*       _strrev(char*);
 char*       _strset(char*,int);
 char*       _strupr(char*);
 
-void*       memchr(const void*,int,size_t);
-int         memcmp(const void*,const void*,size_t);
-void*       memcpy(void*,const void*,size_t);
 void*       memmove(void*,const void*,size_t);
-void*       memset(void*,int,size_t);
 char*       strcat(char*,const char*);
 char*       strchr(const char*,int);
 int         strcmp(const char*,const char*);
@@ -128,8 +135,6 @@ size_t  wcsxfrm(wchar_t*,const wchar_t*,size_t);
 #endif
 
 
-static inline void* memccpy(void *s1, const void *s2, int c, size_t n) { return _memccpy(s1, s2, c, n); }
-static inline int memicmp(const void* s1, const void* s2, size_t len) { return _memicmp(s1, s2, len); }
 static inline int strcasecmp(const char* s1, const char* s2) { return _stricmp(s1, s2); }
 static inline int strcmpi(const char* s1, const char* s2) { return _strcmpi(s1, s2); }
 static inline char* strdup(const char* buf) { return _strdup(buf); }

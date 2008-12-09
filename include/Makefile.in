@@ -304,6 +304,7 @@ SRCDIR_INCLUDES = \
 	msvcrt/math.h \
 	msvcrt/mbctype.h \
 	msvcrt/mbstring.h \
+	msvcrt/memory.h \
 	msvcrt/process.h \
 	msvcrt/search.h \
 	msvcrt/setjmp.h \
