@@ -9062,6 +9062,634 @@ static void test_MsiEnumPatchesEx(void)
     RegCloseKey(prodkey);
 }
 
+static void test_MsiEnumPatches(void)
+{
+    CHAR keypath[MAX_PATH], patch[MAX_PATH];
+    CHAR patchcode[MAX_PATH], patch_squashed[MAX_PATH];
+    CHAR prodcode[MAX_PATH], prod_squashed[MAX_PATH];
+    CHAR transforms[MAX_PATH];
+    HKEY prodkey, patches, udprod;
+    HKEY userkey, hpatch, udpatch;
+    DWORD size, data;
+    LPSTR usersid;
+    LONG res;
+    UINT r;
+
+    create_test_guid(prodcode, prod_squashed);
+    create_test_guid(patchcode, patch_squashed);
+    get_user_sid(&usersid);
+
+    /* NULL szProduct */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(NULL, 0, patch, transforms, &size);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* empty szProduct */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA("", 0, patch, transforms, &size);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* garbage szProduct */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA("garbage", 0, patch, transforms, &size);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* guid without brackets */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA("6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D", 0, patch,
+                        transforms, &size);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* guid with brackets */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA("{6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D}", 0, patch,
+                        transforms, &size);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* same length as guid, but random */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA("A938G02JF-2NF3N93-VN3-2NNF-3KGKALDNF93", 0, patch,
+                        transforms, &size);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* MSIINSTALLCONTEXT_USERMANAGED */
+
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Managed\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* managed product key exists */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    res = RegCreateKeyA(prodkey, "Patches", &patches);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* patches key exists */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    res = RegSetValueExA(patches, "Patches", 0, REG_SZ,
+                         (const BYTE *)patch_squashed,
+                         lstrlenA(patch_squashed) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Patches value exists, is not REG_MULTI_SZ */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_BAD_CONFIGURATION,
+       "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    res = RegSetValueExA(patches, "Patches", 0, REG_MULTI_SZ,
+                         (const BYTE *)"a\0b\0c\0\0", 7);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Patches value exists, is not a squashed guid */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_BAD_CONFIGURATION,
+       "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    res = RegSetValueExA(patches, "Patches", 0, REG_MULTI_SZ,
+                         (const BYTE *)patch_squashed,
+                         lstrlenA(patch_squashed) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Patches value exists */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    res = RegSetValueExA(patches, patch_squashed, 0, REG_SZ,
+                         (const BYTE *)"whatever", 9);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* patch squashed value exists */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(patch, patchcode),
+       "Expected \"%s\", got \"%s\"\n", patchcode, patch);
+    ok(!lstrcmpA(transforms, "whatever"),
+       "Expected \"whatever\", got \"%s\"\n", transforms);
+    ok(size == 8, "Expected 8, got %d\n", size);
+
+    /* lpPatchBuf is NULL */
+    size = MAX_PATH;
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, NULL, transforms, &size);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* lpTransformsBuf is NULL, pcchTransformsBuf is not */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    r = MsiEnumPatchesA(prodcode, 0, patch, NULL, &size);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* pcchTransformsBuf is NULL, lpTransformsBuf is not */
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, NULL);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+
+    /* pcchTransformsBuf is too small */
+    size = 6;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
+    ok(!lstrcmpA(patch, patchcode),
+       "Expected \"%s\", got \"%s\"\n", patchcode, patch);
+    ok(!lstrcmpA(transforms, "whate"),
+       "Expected \"whate\", got \"%s\"\n", transforms);
+    ok(size == 16, "Expected 16, got %d\n", size);
+
+    /* increase the index */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 1, patch, transforms, &size);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* increase again */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 2, patch, transforms, &size);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    RegDeleteValueA(patches, "Patches");
+    RegDeleteKeyA(patches, "");
+    RegCloseKey(patches);
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+
+    /* MSIINSTALLCONTEXT_USERUNMANAGED */
+
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_CURRENT_USER, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* current user product key exists */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    res = RegCreateKeyA(prodkey, "Patches", &patches);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Patches key exists */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    res = RegSetValueExA(patches, "Patches", 0, REG_SZ,
+                         (const BYTE *)patch_squashed,
+                         lstrlenA(patch_squashed) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Patches value exists, is not REG_MULTI_SZ */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_BAD_CONFIGURATION,
+       "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    res = RegSetValueExA(patches, "Patches", 0, REG_MULTI_SZ,
+                         (const BYTE *)"a\0b\0c\0\0", 7);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Patches value exists, is not a squashed guid */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_BAD_CONFIGURATION,
+       "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    res = RegSetValueExA(patches, "Patches", 0, REG_MULTI_SZ,
+                         (const BYTE *)patch_squashed,
+                         lstrlenA(patch_squashed) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Patches value exists */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    res = RegSetValueExA(patches, patch_squashed, 0, REG_SZ,
+                         (const BYTE *)"whatever", 9);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* patch code value exists */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Patches\\");
+    lstrcatA(keypath, patch_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &userkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* userdata patch key exists */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(patch, patchcode),
+       "Expected \"%s\", got \"%s\"\n", patchcode, patch);
+    ok(!lstrcmpA(transforms, "whatever"),
+       "Expected \"whatever\", got \"%s\"\n", transforms);
+    ok(size == 8, "Expected 8, got %d\n", size);
+
+    RegDeleteKeyA(userkey, "");
+    RegCloseKey(userkey);
+    RegDeleteValueA(patches, patch_squashed);
+    RegDeleteValueA(patches, "Patches");
+    RegDeleteKeyA(patches, "");
+    RegCloseKey(patches);
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+
+    /* MSIINSTALLCONTEXT_MACHINE */
+
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    lstrcpyA(keypath, "Software\\Classes\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* local product key exists */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    res = RegCreateKeyA(prodkey, "Patches", &patches);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Patches key exists */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    res = RegSetValueExA(patches, "Patches", 0, REG_SZ,
+                         (const BYTE *)patch_squashed,
+                         lstrlenA(patch_squashed) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Patches value exists, is not REG_MULTI_SZ */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_BAD_CONFIGURATION,
+       "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    res = RegSetValueExA(patches, "Patches", 0, REG_MULTI_SZ,
+                         (const BYTE *)"a\0b\0c\0\0", 7);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Patches value exists, is not a squashed guid */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_BAD_CONFIGURATION,
+       "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    res = RegSetValueExA(patches, "Patches", 0, REG_MULTI_SZ,
+                         (const BYTE *)patch_squashed,
+                         lstrlenA(patch_squashed) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Patches value exists */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    res = RegSetValueExA(patches, patch_squashed, 0, REG_SZ,
+                         (const BYTE *)"whatever", 9);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* patch code value exists */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(patch, patchcode),
+       "Expected \"%s\", got \"%s\"\n", patchcode, patch);
+    ok(!lstrcmpA(transforms, "whatever"),
+       "Expected \"whatever\", got \"%s\"\n", transforms);
+    ok(size == 8, "Expected 8, got %d\n", size);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
+    lstrcatA(keypath, "Installer\\UserData\\S-1-5-18\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &udprod);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* local UserData product key exists */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(patch, patchcode),
+       "Expected \"%s\", got \"%s\"\n", patchcode, patch);
+    ok(!lstrcmpA(transforms, "whatever"),
+       "Expected \"whatever\", got \"%s\"\n", transforms);
+    ok(size == 8, "Expected 8, got %d\n", size);
+
+    res = RegCreateKeyA(udprod, "Patches", &udpatch);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* local UserData Patches key exists */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(patch, patchcode),
+       "Expected \"%s\", got \"%s\"\n", patchcode, patch);
+    ok(!lstrcmpA(transforms, "whatever"),
+       "Expected \"whatever\", got \"%s\"\n", transforms);
+    ok(size == 8, "Expected 8, got %d\n", size);
+
+    res = RegCreateKeyA(udpatch, patch_squashed, &hpatch);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* local UserData Product patch key exists */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    ok(!lstrcmpA(patch, "apple"),
+       "Expected lpPatchBuf to be unchanged, got \"%s\"\n", patch);
+    ok(!lstrcmpA(transforms, "banana"),
+       "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    data = MSIPATCHSTATE_APPLIED;
+    res = RegSetValueExA(hpatch, "State", 0, REG_DWORD,
+                         (const BYTE *)&data, sizeof(DWORD));
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* State value exists */
+    size = MAX_PATH;
+    lstrcpyA(patch, "apple");
+    lstrcpyA(transforms, "banana");
+    r = MsiEnumPatchesA(prodcode, 0, patch, transforms, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(patch, patchcode),
+       "Expected \"%s\", got \"%s\"\n", patchcode, patch);
+    ok(!lstrcmpA(transforms, "whatever"),
+       "Expected \"whatever\", got \"%s\"\n", transforms);
+    ok(size == 8, "Expected 8, got %d\n", size);
+
+    RegDeleteValueA(patches, patch_squashed);
+    RegDeleteValueA(patches, "Patches");
+    RegDeleteKeyA(patches, "");
+    RegCloseKey(patches);
+    RegDeleteValueA(hpatch, "State");
+    RegDeleteKeyA(hpatch, "");
+    RegCloseKey(hpatch);
+    RegDeleteKeyA(udpatch, "");
+    RegCloseKey(udpatch);
+    RegDeleteKeyA(udprod, "");
+    RegCloseKey(udprod);
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+}
+
 START_TEST(msi)
 {
     init_functionpointers();
@@ -9087,6 +9715,7 @@ START_TEST(msi)
         test_MsiGetUserInfo();
         test_MsiOpenProduct();
         test_MsiEnumPatchesEx();
+        test_MsiEnumPatches();
     }
 
     test_MsiGetFileVersion();
