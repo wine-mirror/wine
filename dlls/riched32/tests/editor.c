@@ -83,8 +83,7 @@ static void test_WM_SETTEXT()
      - \r with text or other characters (except \n) past it, is a line break. That
        is, a run of \r{N} without a terminating \n is considered N line breaks
      - \r at the end of the text is NOT a line break. This differs from riched20,
-       where \r at the end of the text is a proper line break. This causes
-       TestItem2 to fail its test.
+       where \r at the end of the text is a proper line break.
    */
 
 #define TEST_SETTEXT(a, b, nlines, is_todo, is_todo2) \
