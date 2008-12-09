@@ -619,7 +619,7 @@ UINT WINAPI MsiGetProductCodeW(LPCWSTR szComponent, LPWSTR szBuffer)
         return ERROR_INVALID_PARAMETER;
 
     if (MSIREG_OpenUserDataComponentKey(szComponent, NULL, &compkey, FALSE) != ERROR_SUCCESS &&
-        MSIREG_OpenLocalSystemComponentKey(szComponent, &compkey, FALSE) != ERROR_SUCCESS)
+        MSIREG_OpenUserDataComponentKey(szComponent, szLocalSid, &compkey, FALSE) != ERROR_SUCCESS)
     {
         return ERROR_UNKNOWN_COMPONENT;
     }
@@ -1324,7 +1324,7 @@ static BOOL msi_comp_find_prodcode(LPWSTR squished_pc,
     UINT r;
 
     if (context == MSIINSTALLCONTEXT_MACHINE)
-        r = MSIREG_OpenLocalSystemComponentKey(comp, &hkey, FALSE);
+        r = MSIREG_OpenUserDataComponentKey(comp, szLocalSid, &hkey, FALSE);
     else
         r = MSIREG_OpenUserDataComponentKey(comp, NULL, &hkey, FALSE);
 
@@ -1776,7 +1776,7 @@ static INSTALLSTATE MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
 
     state = INSTALLSTATE_UNKNOWN;
 
-    if (MSIREG_OpenLocalSystemComponentKey(szComponent, &hkey, FALSE) == ERROR_SUCCESS ||
+    if (MSIREG_OpenUserDataComponentKey(szComponent, szLocalSid, &hkey, FALSE) == ERROR_SUCCESS ||
         MSIREG_OpenUserDataComponentKey(szComponent, NULL, &hkey, FALSE) == ERROR_SUCCESS)
     {
         path = msi_reg_get_val_str(hkey, squished_pc);
@@ -1802,7 +1802,7 @@ static INSTALLSTATE MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
     {
         RegCloseKey(hkey);
 
-        if (MSIREG_OpenLocalSystemComponentKey(szComponent, &hkey, FALSE) == ERROR_SUCCESS ||
+        if (MSIREG_OpenUserDataComponentKey(szComponent, szLocalSid, &hkey, FALSE) == ERROR_SUCCESS ||
             MSIREG_OpenUserDataComponentKey(szComponent, NULL, &hkey, FALSE) == ERROR_SUCCESS)
         {
             msi_free(path);

@@ -786,7 +786,6 @@ extern UINT MSIREG_OpenUserUpgradeCodesKey(LPCWSTR szProduct, HKEY* key, BOOL cr
 extern UINT MSIREG_DeleteProductKey(LPCWSTR szProduct);
 extern UINT MSIREG_DeleteUserProductKey(LPCWSTR szProduct);
 extern UINT MSIREG_DeleteUserDataProductKey(LPCWSTR szProduct);
-extern UINT MSIREG_OpenLocalSystemComponentKey(LPCWSTR szComponent, HKEY *key, BOOL create);
 extern UINT MSIREG_DeleteUserFeaturesKey(LPCWSTR szProduct);
 extern UINT MSIREG_DeleteLocalUserDataComponentKey(LPCWSTR szComponent);
 extern UINT MSIREG_DeleteUserDataComponentKey(LPCWSTR szComponent);
