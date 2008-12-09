@@ -9721,7 +9721,7 @@ fi
 
 if test "$cross_compiling" = "no" -a "$LIBEXT" != "dll"
 then
-    for ac_prog in i586-mingw32msvc-gcc i386-mingw32msvc-gcc i686-mingw32-gcc i586-mingw32-gcc i486-mingw32-gcc i386-mingw32-gcc mingw32-gcc i686-pc-mingw32-gcc mingw-gcc
+    for ac_prog in $host_cpu-pc-mingw32-gcc i586-mingw32msvc-gcc i386-mingw32msvc-gcc i686-mingw32-gcc i586-mingw32-gcc i486-mingw32-gcc i386-mingw32-gcc mingw32-gcc i686-pc-mingw32-gcc mingw-gcc
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -9764,7 +9764,7 @@ fi
 done
 test -n "$CROSSCC" || CROSSCC="false"
 
-    for ac_prog in i586-mingw32msvc-dlltool i386-mingw32msvc-dlltool i686-mingw32-dlltool i586-mingw32-dlltool i486-mingw32-dlltool i386-mingw32-dlltool mingw32-dlltool i686-pc-mingw32-dlltool mingw-dlltool
+    for ac_prog in $host_cpu-pc-mingw32-dlltool i586-mingw32msvc-dlltool i386-mingw32msvc-dlltool i686-mingw32-dlltool i586-mingw32-dlltool i486-mingw32-dlltool i386-mingw32-dlltool mingw32-dlltool i686-pc-mingw32-dlltool mingw-dlltool
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -9807,7 +9807,7 @@ fi
 done
 test -n "$DLLTOOL" || DLLTOOL="false"
 
-    for ac_prog in i586-mingw32msvc-windres i386-mingw32msvc-windres i686-mingw32-windres i586-mingw32-windres i486-mingw32-windres i386-mingw32-windres mingw32-windres i686-pc-mingw32-windres mingw-windres
+    for ac_prog in $host_cpu-pc-mingw32-windres i586-mingw32msvc-windres i386-mingw32msvc-windres i686-mingw32-windres i586-mingw32-windres i486-mingw32-windres i386-mingw32-windres mingw32-windres i686-pc-mingw32-windres mingw-windres
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -9850,7 +9850,7 @@ fi
 done
 test -n "$CROSSWINDRES" || CROSSWINDRES="false"
 
-    for ac_prog in i586-mingw32msvc-ar i386-mingw32msvc-ar i686-mingw32-ar i586-mingw32-ar i486-mingw32-ar i386-mingw32-ar mingw32-ar i686-pc-mingw32-ar mingw-ar
+    for ac_prog in $host_cpu-pc-mingw32-ar i586-mingw32msvc-ar i386-mingw32msvc-ar i686-mingw32-ar i586-mingw32-ar i486-mingw32-ar i386-mingw32-ar mingw32-ar i686-pc-mingw32-ar mingw-ar
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
