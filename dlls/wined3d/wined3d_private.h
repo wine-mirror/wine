@@ -922,7 +922,7 @@ enum dst_arg
 /*****************************************************************************
  * Fixed function pipeline replacements
  */
-#define ARG_UNUSED          0x3f
+#define ARG_UNUSED          0xff
 struct texture_stage_op
 {
     unsigned                cop : 8;

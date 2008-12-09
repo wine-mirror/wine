@@ -1957,14 +1957,14 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
         cop = stateblock->textureState[i][WINED3DTSS_COLOROP];
         aop = stateblock->textureState[i][WINED3DTSS_ALPHAOP];
 
-        carg1 = (args[cop] & ARG1) ? stateblock->textureState[i][WINED3DTSS_COLORARG1] : 0xffffffff;
-        carg2 = (args[cop] & ARG2) ? stateblock->textureState[i][WINED3DTSS_COLORARG2] : 0xffffffff;
-        carg0 = (args[cop] & ARG0) ? stateblock->textureState[i][WINED3DTSS_COLORARG0] : 0xffffffff;
+        carg1 = (args[cop] & ARG1) ? stateblock->textureState[i][WINED3DTSS_COLORARG1] : ARG_UNUSED;
+        carg2 = (args[cop] & ARG2) ? stateblock->textureState[i][WINED3DTSS_COLORARG2] : ARG_UNUSED;
+        carg0 = (args[cop] & ARG0) ? stateblock->textureState[i][WINED3DTSS_COLORARG0] : ARG_UNUSED;
 
         if(is_invalid_op(stateblock->wineD3DDevice, i, cop,
                          carg1, carg2, carg0)) {
-            carg0 = 0xffffffff;
-            carg2 = 0xffffffff;
+            carg0 = ARG_UNUSED;
+            carg2 = ARG_UNUSED;
             carg1 = WINED3DTA_CURRENT;
             cop = WINED3DTOP_SELECTARG1;
         }
@@ -1978,9 +1978,9 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
             aarg2 = carg2;
             aarg0 = carg0;
         } else {
-            aarg1 = (args[aop] & ARG1) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG1] : 0xffffffff;
-            aarg2 = (args[aop] & ARG2) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG2] : 0xffffffff;
-            aarg0 = (args[aop] & ARG0) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG0] : 0xffffffff;
+            aarg1 = (args[aop] & ARG1) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG1] : ARG_UNUSED;
+            aarg2 = (args[aop] & ARG2) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG2] : ARG_UNUSED;
+            aarg0 = (args[aop] & ARG0) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG0] : ARG_UNUSED;
         }
 
         if(i == 0 && stateblock->textures[0] &&
@@ -2015,8 +2015,8 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
 
         if(is_invalid_op(stateblock->wineD3DDevice, i, aop,
            aarg1, aarg2, aarg0)) {
-               aarg0 = 0xffffffff;
-               aarg2 = 0xffffffff;
+               aarg0 = ARG_UNUSED;
+               aarg2 = ARG_UNUSED;
                aarg1 = WINED3DTA_CURRENT;
                aop = WINED3DTOP_SELECTARG1;
         }
