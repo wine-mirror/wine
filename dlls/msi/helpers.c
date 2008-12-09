@@ -41,6 +41,7 @@ const WCHAR cszSourceDir[] = {'S','o','u','r','c','e','D','i','r',0};
 const WCHAR cszSOURCEDIR[] = {'S','O','U','R','C','E','D','I','R',0};
 const WCHAR cszRootDrive[] = {'R','O','O','T','D','R','I','V','E',0};
 const WCHAR cszbs[]={'\\',0};
+const WCHAR szLocalSid[] = {'S','-','1','-','5','-','1','8',0};
 
 LPWSTR build_icon_path(MSIPACKAGE *package, LPCWSTR icon_name )
 {

@@ -3589,13 +3589,15 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
 
     if (package->Context == MSIINSTALLCONTEXT_MACHINE)
     {
-        rc = MSIREG_OpenLocalUserDataProductKey(package->ProductCode, &hudkey, TRUE);
+        rc = MSIREG_OpenUserDataProductKey(package->ProductCode, szLocalSid,
+                                           &hudkey, TRUE);
         if (rc != ERROR_SUCCESS)
             goto end;
     }
     else
     {
-        rc = MSIREG_OpenUserDataProductKey(package->ProductCode, &hudkey, TRUE);
+        rc = MSIREG_OpenUserDataProductKey(package->ProductCode, NULL,
+                                           &hudkey, TRUE);
         if (rc != ERROR_SUCCESS)
             goto end;
     }
