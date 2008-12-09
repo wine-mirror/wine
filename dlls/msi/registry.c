@@ -1777,6 +1777,8 @@ static UINT msi_get_patch_state(LPCWSTR prodcode, LPCWSTR usersid,
     static const WCHAR szPatches[] = {'P','a','t','c','h','e','s',0};
     static const WCHAR szState[] = {'S','t','a','t','e',0};
 
+    *state = MSIPATCHSTATE_INVALID;
+
     /* FIXME: usersid might not be current user */
     r = MSIREG_OpenUserDataProductKey(prodcode, &prod, FALSE);
     if (r != ERROR_SUCCESS)
