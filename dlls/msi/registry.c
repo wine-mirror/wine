@@ -1952,12 +1952,61 @@ done:
 /***********************************************************************
  * MsiEnumPatchesA            [MSI.@]
  */
-UINT WINAPI MsiEnumPatchesA( LPCSTR szProduct, DWORD iPatchIndex,
+UINT WINAPI MsiEnumPatchesA(LPCSTR szProduct, DWORD iPatchIndex,
         LPSTR lpPatchBuf, LPSTR lpTransformsBuf, LPDWORD pcchTransformsBuf)
 {
-    FIXME("%s %d %p %p %p\n", debugstr_a(szProduct),
-          iPatchIndex, lpPatchBuf, lpTransformsBuf, pcchTransformsBuf);
-    return ERROR_NO_MORE_ITEMS;
+    LPWSTR product, transforms = NULL;
+    WCHAR patch[GUID_SIZE];
+    DWORD len;
+    UINT r;
+
+    TRACE("(%s %d %p %p %p)\n", debugstr_a(szProduct), iPatchIndex,
+          lpPatchBuf, lpTransformsBuf, pcchTransformsBuf);
+
+    if (!szProduct || !lpPatchBuf || !lpTransformsBuf || !pcchTransformsBuf)
+        return ERROR_INVALID_PARAMETER;
+
+    product = strdupAtoW(szProduct);
+    if (!product)
+        return ERROR_OUTOFMEMORY;
+
+    len = 0;
+    r = MsiEnumPatchesW(product, iPatchIndex, patch, patch, &len);
+    if (r != ERROR_MORE_DATA)
+        goto done;
+
+    transforms = msi_alloc(len);
+    if (!transforms)
+    {
+        r = ERROR_OUTOFMEMORY;
+        goto done;
+    }
+
+    r = MsiEnumPatchesW(product, iPatchIndex, patch, transforms, &len);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    WideCharToMultiByte(CP_ACP, 0, patch, -1, lpPatchBuf,
+                        GUID_SIZE, NULL, NULL);
+
+    WideCharToMultiByte(CP_ACP, 0, transforms, -1, lpTransformsBuf,
+                        *pcchTransformsBuf - 1, NULL, NULL);
+
+    len = lstrlenW(transforms);
+    if (*pcchTransformsBuf < len + 1)
+    {
+        r = ERROR_MORE_DATA;
+        lpTransformsBuf[*pcchTransformsBuf - 1] = '\0';
+        *pcchTransformsBuf = len * sizeof(WCHAR);
+    }
+    else
+        *pcchTransformsBuf = len;
+
+done:
+    msi_free(transforms);
+    msi_free(product);
+
+    return r;
 }
 
 /***********************************************************************
