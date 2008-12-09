@@ -1022,7 +1022,7 @@ void __wine_kernel_init(void)
 
     if (boot_event)
     {
-        if (WaitForSingleObject( boot_event, 30000 )) WARN( "boot event wait timed out\n" );
+        if (WaitForSingleObject( boot_event, 30000 )) ERR( "boot event wait timed out\n" );
         CloseHandle( boot_event );
         /* if we didn't find environment section, try again now that wineboot has run */
         if (!got_environment)
