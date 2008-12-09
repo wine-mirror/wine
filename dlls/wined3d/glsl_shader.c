@@ -2958,10 +2958,7 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
     char reg_mask[6];
     const struct semantic *semantics_out, *semantics_in;
 
-    buffer.buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, SHADER_PGMSIZE);
-    buffer.bsize = 0;
-    buffer.lineNo = 0;
-    buffer.newline = TRUE;
+    shader_buffer_init(&buffer);
 
     shader_addline(&buffer, "#version 120\n");
 
@@ -3093,7 +3090,7 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
     GL_EXTCALL(glCompileShaderARB(ret));
     checkGLcall("glCompileShaderARB(ret)");
 
-    HeapFree(GetProcessHeap(), 0, buffer.buffer);
+    shader_buffer_free(&buffer);
     return ret;
 }
 

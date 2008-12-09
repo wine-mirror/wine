@@ -277,14 +277,9 @@ static inline GLuint IWineD3DPixelShaderImpl_GenerateShader(
     SHADER_BUFFER buffer;
     GLuint shader;
 
-    buffer.buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, SHADER_PGMSIZE);
-    buffer.bsize = 0;
-    buffer.lineNo = 0;
-    buffer.newline = TRUE;
-
+    shader_buffer_init(&buffer);
     shader = ((IWineD3DDeviceImpl *)This->baseShader.device)->shader_backend->shader_generate_pshader((IWineD3DPixelShader *)This, &buffer);
-
-    HeapFree(GetProcessHeap(), 0, buffer.buffer);
+    shader_buffer_free(&buffer);
 
     return shader;
 }

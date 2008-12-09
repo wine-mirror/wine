@@ -2229,6 +2229,8 @@ typedef struct IWineD3DBaseShaderImpl {
 HRESULT  WINAPI IWineD3DBaseShaderImpl_QueryInterface(IWineD3DBaseShader *iface, REFIID riid, LPVOID *ppobj);
 ULONG  WINAPI IWineD3DBaseShaderImpl_AddRef(IWineD3DBaseShader *iface);
 ULONG  WINAPI IWineD3DBaseShaderImpl_Release(IWineD3DBaseShader *iface);
+void shader_buffer_init(struct SHADER_BUFFER *buffer);
+void shader_buffer_free(struct SHADER_BUFFER *buffer);
 
 extern HRESULT shader_get_registers_used(
     IWineD3DBaseShader *iface,

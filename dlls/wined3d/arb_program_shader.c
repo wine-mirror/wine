@@ -2694,10 +2694,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
     }
 
     /* Shader header */
-    buffer.bsize = 0;
-    buffer.lineNo = 0;
-    buffer.newline = TRUE;
-    buffer.buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, SHADER_PGMSIZE);
+    shader_buffer_init(&buffer);
 
     shader_addline(&buffer, "!!ARBfp1.0\n");
 
@@ -2888,7 +2885,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
         FIXME("Fragment program error at position %d: %s\n", pos,
               debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
     }
-    HeapFree(GetProcessHeap(), 0, buffer.buffer);
+    shader_buffer_free(&buffer);
     return ret;
 }
 
@@ -3426,10 +3423,7 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum yuv_fixup yuv_fixu
     struct arbfp_blit_priv *priv = (struct arbfp_blit_priv *) device->blit_priv;
 
     /* Shader header */
-    buffer.bsize = 0;
-    buffer.lineNo = 0;
-    buffer.newline = TRUE;
-    buffer.buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, SHADER_PGMSIZE);
+    shader_buffer_init(&buffer);
 
     ENTER_GL();
     GL_EXTCALL(glGenProgramsARB(1, &shader));
@@ -3438,7 +3432,7 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum yuv_fixup yuv_fixu
     checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader)");
     LEAVE_GL();
     if(!shader) {
-        HeapFree(GetProcessHeap(), 0, buffer.buffer);
+        shader_buffer_free(&buffer);
         return 0;
     }
 
@@ -3493,7 +3487,7 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum yuv_fixup yuv_fixu
         case YUV_FIXUP_YUY2:
             if (!gen_planar_yuv_read(&buffer, yuv_fixup, textype, &luminance_component))
             {
-                HeapFree(GetProcessHeap(), 0, buffer.buffer);
+                shader_buffer_free(&buffer);
                 return 0;
             }
             break;
@@ -3501,14 +3495,14 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum yuv_fixup yuv_fixu
         case YUV_FIXUP_YV12:
             if (!gen_yv12_read(&buffer, textype, &luminance_component))
             {
-                HeapFree(GetProcessHeap(), 0, buffer.buffer);
+                shader_buffer_free(&buffer);
                 return 0;
             }
             break;
 
         default:
             FIXME("Unsupported YUV fixup %#x\n", yuv_fixup);
-            HeapFree(GetProcessHeap(), 0, buffer.buffer);
+            shader_buffer_free(&buffer);
             return 0;
     }
 
@@ -3533,7 +3527,7 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum yuv_fixup yuv_fixu
         FIXME("Fragment program error at position %d: %s\n", pos,
               debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
     }
-    HeapFree(GetProcessHeap(), 0, buffer.buffer);
+    shader_buffer_free(&buffer);
     LEAVE_GL();
 
     switch (yuv_fixup)

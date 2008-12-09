@@ -325,14 +325,9 @@ static void IWineD3DVertexShaderImpl_GenerateShader(IWineD3DVertexShader *iface,
 
     find_swizzled_attribs(decl, This);
 
-    buffer.buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, SHADER_PGMSIZE); 
-    buffer.bsize = 0;
-    buffer.lineNo = 0;
-    buffer.newline = TRUE;
-
+    shader_buffer_init(&buffer);
     ((IWineD3DDeviceImpl *)This->baseShader.device)->shader_backend->shader_generate_vshader(iface, &buffer);
-
-    HeapFree(GetProcessHeap(), 0, buffer.buffer);
+    shader_buffer_free(&buffer);
 }
 
 /* *******************************************

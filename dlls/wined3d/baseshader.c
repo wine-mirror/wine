@@ -40,6 +40,20 @@ static inline BOOL shader_is_version_token(DWORD token) {
            shader_is_vshader_version(token);
 }
 
+void shader_buffer_init(struct SHADER_BUFFER *buffer)
+{
+    buffer->buffer = HeapAlloc(GetProcessHeap(), 0, SHADER_PGMSIZE);
+    buffer->buffer[0] = '\0';
+    buffer->bsize = 0;
+    buffer->lineNo = 0;
+    buffer->newline = TRUE;
+}
+
+void shader_buffer_free(struct SHADER_BUFFER *buffer)
+{
+    HeapFree(GetProcessHeap(), 0, buffer->buffer);
+}
+
 int shader_addline(
     SHADER_BUFFER* buffer,  
     const char *format, ...) {
