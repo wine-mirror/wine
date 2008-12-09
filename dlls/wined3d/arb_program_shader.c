@@ -3402,7 +3402,7 @@ static BOOL gen_yv12_read(SHADER_BUFFER *buffer, GLenum textype, char *luminance
         shader_addline(buffer, "MIN texcrd.y, temp.y, texcrd.y;\n");
         shader_addline(buffer, "TEX luminance, texcrd, texture[0], %s;\n", tex);
     } else {
-        /* Reading from texture_rectangles is pretty streightforward, just use the unmodified
+        /* Reading from texture_rectangles is pretty straightforward, just use the unmodified
          * texture coordinate. It is still a good idea to clamp it though, since the opengl texture
          * is bigger
          */
@@ -3446,7 +3446,7 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum yuv_fixup yuv_fixu
      * contains the luminance and alpha the chroma. With UYVY it is vice versa. Thus
      * take the format into account when generating the read swizzles
      *
-     * Reading the Y value is streightforward - just sample the texture. The hardware
+     * Reading the Y value is straightforward - just sample the texture. The hardware
      * takes care of filtering in the horizontal and vertical direction.
      *
      * Reading the U and V values is harder. We have to avoid filtering horizontally,

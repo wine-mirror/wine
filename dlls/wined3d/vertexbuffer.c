@@ -328,7 +328,7 @@ static inline BOOL IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
      * depend on the semantic as well, for example a FLOAT4 texcoord needs no conversion while a FLOAT4 positiont needs one
      */
     if(use_vs(device)) {
-        TRACE("vhsader\n");
+        TRACE("vshader\n");
         /* If the current vertex declaration is marked for no half float conversion don't bother to
          * analyse the strided streams in depth, just set them up for no conversion. Return decl changed
          * if we used conversion before
