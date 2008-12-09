@@ -121,8 +121,11 @@ static int CALLBACK eto_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         const EMREXTTEXTOUTW *emr_ExtTextOutW = (const EMREXTTEXTOUTW *)emr;
         dx = (const INT *)((const char *)emr + emr_ExtTextOutW->emrtext.offDx);
 
+        SetLastError(0xdeadbeef);
         ret = GetObjectA(GetCurrentObject(hdc, OBJ_FONT), sizeof(device_lf), &device_lf);
-        ok( ret == sizeof(device_lf), "GetObjectA error %d\n", GetLastError());
+        ok( ret == sizeof(device_lf) ||
+            broken(ret == (sizeof(device_lf) - LF_FACESIZE + strlen(device_lf.lfFaceName) + 1)), /* NT4 */
+            "GetObjectA error %d\n", GetLastError());
 
         /* compare up to lfOutPrecision, other values are not interesting,
          * and in fact sometimes arbitrary adapted by Win9x.
