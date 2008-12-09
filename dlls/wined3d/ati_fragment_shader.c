@@ -159,7 +159,96 @@ static const char *debug_rep(GLuint rep) {
     }
 }
 
+static const char *debug_op(GLuint op) {
+    switch(op) {
+        case GL_MOV_ATI:                return "GL_MOV_ATI";
+        case GL_ADD_ATI:                return "GL_ADD_ATI";
+        case GL_MUL_ATI:                return "GL_MUL_ATI";
+        case GL_SUB_ATI:                return "GL_SUB_ATI";
+        case GL_DOT3_ATI:               return "GL_DOT3_ATI";
+        case GL_DOT4_ATI:               return "GL_DOT4_ATI";
+        case GL_MAD_ATI:                return "GL_MAD_ATI";
+        case GL_LERP_ATI:               return "GL_LERP_ATI";
+        case GL_CND_ATI:                return "GL_CND_ATI";
+        case GL_CND0_ATI:               return "GL_CND0_ATI";
+        case GL_DOT2_ADD_ATI:           return "GL_DOT2_ADD_ATI";
+        default:                        return "unexpected op";
+    }
+}
+
+static const char *debug_mask(GLuint mask) {
+    switch(mask) {
+        case GL_NONE:                           return "GL_NONE";
+        case GL_RED_BIT_ATI:                    return "GL_RED_BIT_ATI";
+        case GL_GREEN_BIT_ATI:                  return "GL_GREEN_BIT_ATI";
+        case GL_BLUE_BIT_ATI:                   return "GL_BLUE_BIT_ATI";
+        case GL_RED_BIT_ATI | GL_GREEN_BIT_ATI: return "GL_RED_BIT_ATI | GL_GREEN_BIT_ATI";
+        case GL_RED_BIT_ATI | GL_BLUE_BIT_ATI:  return "GL_RED_BIT_ATI | GL_BLUE_BIT_ATI";
+        case GL_GREEN_BIT_ATI | GL_BLUE_BIT_ATI:return "GL_GREEN_BIT_ATI | GL_BLUE_BIT_ATI";
+        case GL_RED_BIT_ATI | GL_GREEN_BIT_ATI | GL_BLUE_BIT_ATI:return "GL_RED_BIT_ATI | GL_GREEN_BIT_ATI | GL_BLUE_BIT_ATI";
+        default:                                return "Unexpected writemask";
+    }
+}
 #define GLINFO_LOCATION (*gl_info)
+
+static void wrap_op1(const WineD3D_GL_Info *gl_info, GLuint op, GLuint dst, GLuint dstMask, GLuint dstMod,
+                     GLuint arg1, GLuint arg1Rep, GLuint arg1Mod) {
+    if(dstMask == GL_ALPHA) {
+        TRACE("glAlphaFragmentOp1ATI(%s, %s, %s, %s, %s, %s)\n", debug_op(op), debug_register(dst), debug_dstmod(dstMod),
+              debug_register(arg1), debug_rep(arg1Rep), debug_argmod(arg1Mod));
+        GL_EXTCALL(glAlphaFragmentOp1ATI(op, dst, dstMod, arg1, arg1Rep, arg1Mod));
+    } else {
+        TRACE("glColorFragmentOp1ATI(%s, %s, %s, %s, %s, %s, %s)\n", debug_op(op), debug_register(dst),
+              debug_mask(dstMask), debug_dstmod(dstMod),
+              debug_register(arg1), debug_rep(arg1Rep), debug_argmod(arg1Mod));
+        GL_EXTCALL(glColorFragmentOp1ATI(op, dst, dstMask, dstMod, arg1, arg1Rep, arg1Mod));
+    }
+}
+
+static void wrap_op2(const WineD3D_GL_Info *gl_info, GLuint op, GLuint dst, GLuint dstMask, GLuint dstMod,
+                     GLuint arg1, GLuint arg1Rep, GLuint arg1Mod,
+                     GLuint arg2, GLuint arg2Rep, GLuint arg2Mod) {
+    if(dstMask == GL_ALPHA) {
+        TRACE("glAlphaFragmentOp2ATI(%s, %s, %s, %s, %s, %s, %s, %s, %s)\n", debug_op(op), debug_register(dst), debug_dstmod(dstMod),
+              debug_register(arg1), debug_rep(arg1Rep), debug_argmod(arg1Mod),
+              debug_register(arg2), debug_rep(arg2Rep), debug_argmod(arg2Mod));
+        GL_EXTCALL(glAlphaFragmentOp2ATI(op, dst, dstMod, arg1, arg1Rep, arg1Mod, arg2, arg2Rep, arg2Mod));
+    } else {
+        TRACE("glColorFragmentOp2ATI(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)\n", debug_op(op), debug_register(dst),
+              debug_mask(dstMask), debug_dstmod(dstMod),
+              debug_register(arg1), debug_rep(arg1Rep), debug_argmod(arg1Mod),
+              debug_register(arg2), debug_rep(arg2Rep), debug_argmod(arg2Mod));
+        GL_EXTCALL(glColorFragmentOp2ATI(op, dst, dstMask, dstMod, arg1, arg1Rep, arg1Mod, arg2, arg2Rep, arg2Mod));
+    }
+}
+
+static void wrap_op3(const WineD3D_GL_Info *gl_info, GLuint op, GLuint dst, GLuint dstMask, GLuint dstMod,
+                     GLuint arg1, GLuint arg1Rep, GLuint arg1Mod,
+                     GLuint arg2, GLuint arg2Rep, GLuint arg2Mod,
+                     GLuint arg3, GLuint arg3Rep, GLuint arg3Mod) {
+    if(dstMask == GL_ALPHA) {
+        /* Leave some free space to fit "GL_NONE, " in to align most alpha and color op lines */
+        TRACE("glAlphaFragmentOp3ATI(%s, %s,          %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)\n", debug_op(op), debug_register(dst), debug_dstmod(dstMod),
+              debug_register(arg1), debug_rep(arg1Rep), debug_argmod(arg1Mod),
+              debug_register(arg2), debug_rep(arg2Rep), debug_argmod(arg2Mod),
+              debug_register(arg3), debug_rep(arg3Rep), debug_argmod(arg3Mod));
+        GL_EXTCALL(glAlphaFragmentOp3ATI(op, dst, dstMod,
+                                         arg1, arg1Rep, arg1Mod,
+                                         arg2, arg2Rep, arg2Mod,
+                                         arg3, arg3Rep, arg3Mod));
+    } else {
+        TRACE("glColorFragmentOp3ATI(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)\n", debug_op(op), debug_register(dst),
+              debug_mask(dstMask), debug_dstmod(dstMod),
+              debug_register(arg1), debug_rep(arg1Rep), debug_argmod(arg1Mod),
+              debug_register(arg2), debug_rep(arg2Rep), debug_argmod(arg2Mod),
+              debug_register(arg3), debug_rep(arg3Rep), debug_argmod(arg3Mod));
+        GL_EXTCALL(glColorFragmentOp3ATI(op, dst, dstMask, dstMod,
+                                         arg1, arg1Rep, arg1Mod,
+                                         arg2, arg2Rep, arg2Mod,
+                                         arg3, arg3Rep, arg3Mod));
+    }
+}
+
 static GLuint register_for_arg(DWORD arg, const WineD3D_GL_Info *gl_info,
         unsigned int stage, GLuint *mod, GLuint *rep, GLuint tmparg)
 {
@@ -365,12 +454,10 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
             argmodextra_y = fixup.y_sign_fixup ? GL_2X_BIT_ATI | GL_BIAS_BIT_ATI : GL_NONE;
         }
 
-        TRACE("glColorFragmentOp3ATI(GL_DOT2_ADD_ATI, GL_REG_%d_ATI, GL_RED_BIT_ATI, GL_NONE, GL_REG_%d_ATI, GL_NONE, %s, ATI_FFP_CONST_BUMPMAT(%d), GL_NONE, GL_NONE, GL_REG_%d_ATI, GL_RED, GL_NONE)\n",
-              stage + 1, stage, debug_argmod(argmodextra_x), stage, stage + 1);
-        GL_EXTCALL(glColorFragmentOp3ATI(GL_DOT2_ADD_ATI, GL_REG_0_ATI + stage + 1, GL_RED_BIT_ATI, GL_NONE,
-                                         GL_REG_0_ATI + stage, GL_NONE, argmodextra_x,
-                                         ATI_FFP_CONST_BUMPMAT(stage), GL_NONE, GL_2X_BIT_ATI | GL_BIAS_BIT_ATI,
-                                         GL_REG_0_ATI + stage + 1, GL_RED, GL_NONE));
+        wrap_op3(gl_info, GL_DOT2_ADD_ATI, GL_REG_0_ATI + stage + 1, GL_RED_BIT_ATI, GL_NONE,
+                 GL_REG_0_ATI + stage, GL_NONE, argmodextra_x,
+                 ATI_FFP_CONST_BUMPMAT(stage), GL_NONE, GL_2X_BIT_ATI | GL_BIAS_BIT_ATI,
+                 GL_REG_0_ATI + stage + 1, GL_RED, GL_NONE);
 
         /* FIXME: How can I make GL_DOT2_ADD_ATI read the factors from blue and alpha? It defaults to red and green,
          * and it is fairly easy to make it read GL_BLUE or BL_ALPHA, but I can't get an R * B + G * A. So we're wasting
@@ -380,18 +467,14 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
          * NOTE: GL_BLUE | GL_ALPHA is not possible. It doesn't throw a compilation error, but an OR operation on the
          * constants doesn't make sense, considering their values.
          */
-        TRACE("glColorFragmentOp1ATI(GL_MOV_ATI, GL_REG_5_ATI, GL_RED_BIT_ATI, GL_NONE, ATI_FFP_CONST_BUMPMAT(%d), GL_BLUE, GL_NONE)\n", stage);
-        GL_EXTCALL(glColorFragmentOp1ATI(GL_MOV_ATI, GL_REG_5_ATI, GL_RED_BIT_ATI, GL_NONE,
-                                         ATI_FFP_CONST_BUMPMAT(stage), GL_BLUE, GL_NONE));
-        TRACE("glColorFragmentOp1ATI(GL_MOV_ATI, GL_REG_5_ATI, GL_GREEN_BIT_ATI, GL_NONE, ATI_FFP_CONST_BUMPMAT(%d), GL_ALPHA, GL_NONE)\n", stage);
-        GL_EXTCALL(glColorFragmentOp1ATI(GL_MOV_ATI, GL_REG_5_ATI, GL_GREEN_BIT_ATI, GL_NONE,
-                                        ATI_FFP_CONST_BUMPMAT(stage), GL_ALPHA, GL_NONE));
-        TRACE("glColorFragmentOp3ATI(GL_DOT2_ADD_ATI, GL_REG_%d_ATI, GL_GREEN_BIT_ATI, GL_NONE, GL_REG_%d_ATI, GL_NONE, %s, GL_REG_5_ATI, GL_NONE, GL_NONE, GL_REG_%d_ATI, GL_GREEN, GL_NONE)\n",
-              stage + 1, stage, debug_argmod(argmodextra_y), stage + 1);
-        GL_EXTCALL(glColorFragmentOp3ATI(GL_DOT2_ADD_ATI, GL_REG_0_ATI + stage + 1, GL_GREEN_BIT_ATI, GL_NONE,
-                                         GL_REG_0_ATI + stage, GL_NONE, argmodextra_y,
-                                         GL_REG_5_ATI, GL_NONE, GL_2X_BIT_ATI | GL_BIAS_BIT_ATI,
-                                         GL_REG_0_ATI + stage + 1, GL_GREEN, GL_NONE));
+        wrap_op1(gl_info, GL_MOV_ATI, GL_REG_5_ATI, GL_RED_BIT_ATI, GL_NONE,
+                 ATI_FFP_CONST_BUMPMAT(stage), GL_BLUE, GL_NONE);
+        wrap_op1(gl_info, GL_MOV_ATI, GL_REG_5_ATI, GL_GREEN_BIT_ATI, GL_NONE,
+                 ATI_FFP_CONST_BUMPMAT(stage), GL_ALPHA, GL_NONE);
+        wrap_op3(gl_info, GL_DOT2_ADD_ATI, GL_REG_0_ATI + stage + 1, GL_GREEN_BIT_ATI, GL_NONE,
+                 GL_REG_0_ATI + stage, GL_NONE, argmodextra_y,
+                 GL_REG_5_ATI, GL_NONE, GL_2X_BIT_ATI | GL_BIAS_BIT_ATI,
+                 GL_REG_0_ATI + stage + 1, GL_GREEN, GL_NONE);
     }
 
     /* Pass 3: Generate sampling instructions for regular textures */
@@ -439,12 +522,10 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
         if(op[stage].cop == WINED3DTOP_DISABLE) {
             if(stage == 0) {
                 /* Handle complete texture disabling gracefully */
-                TRACE("glColorFragmentOp1ATI(GL_MOV_ATI, GL_REG_0_ATI, GL_NONE, GL_NONE, GL_PRIMARY_COLOR, GL_NONE, GL_NONE)\n");
-                GL_EXTCALL(glColorFragmentOp1ATI(GL_MOV_ATI, GL_REG_0_ATI, GL_NONE, GL_NONE,
-                                                 GL_PRIMARY_COLOR, GL_NONE, GL_NONE));
-                TRACE("glAlphaFragmentOp1ATI(GL_MOV_ATI, GL_REG_0_ATI, GL_NONE, GL_PRIMARY_COLOR, GL_NONE, GL_NONE)\n");
-                GL_EXTCALL(glAlphaFragmentOp1ATI(GL_MOV_ATI, GL_REG_0_ATI, GL_NONE,
-                                                 GL_PRIMARY_COLOR, GL_NONE, GL_NONE));
+                wrap_op1(gl_info, GL_MOV_ATI, GL_REG_0_ATI, GL_NONE, GL_NONE,
+                         GL_PRIMARY_COLOR, GL_NONE, GL_NONE);
+                wrap_op1(gl_info, GL_MOV_ATI, GL_REG_0_ATI, GL_ALPHA, GL_NONE,
+                         GL_PRIMARY_COLOR, GL_NONE, GL_NONE);
             }
             break;
         }
@@ -473,10 +554,8 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
                 argmod1 = argmod2;
                 rep1 = rep2;
             case WINED3DTOP_SELECTARG1:
-                TRACE("glColorFragmentOp1ATI(GL_MOV_ATI, %s, GL_NONE, GL_NONE, %s, %s, %s)\n",
-                      debug_register(dstreg), debug_register(arg1), debug_rep(rep1), debug_argmod(argmod1));
-                GL_EXTCALL(glColorFragmentOp1ATI(GL_MOV_ATI, dstreg, GL_NONE, GL_NONE,
-                                                 arg1, rep1, argmod1));
+                wrap_op1(gl_info, GL_MOV_ATI, dstreg, GL_NONE, GL_NONE,
+                         arg1, rep1, argmod1);
                 break;
 
             case WINED3DTOP_MODULATE4X:
@@ -485,13 +564,9 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
                 if(dstmod == GL_NONE) dstmod = GL_2X_BIT_ATI;
                 dstmod |= GL_SATURATE_BIT_ATI;
             case WINED3DTOP_MODULATE:
-                TRACE("glColorFragmentOp2ATI(GL_MUL_ATI, %s, GL_NONE, %s, %s, %s, %s, %s, %s, %s)\n",
-                      debug_register(dstreg), debug_dstmod(dstmod),
-                      debug_register(arg1), debug_rep(rep1), debug_argmod(argmod1),
-                      debug_register(arg2), debug_rep(rep2), debug_argmod(argmod2));
-                GL_EXTCALL(glColorFragmentOp2ATI(GL_MUL_ATI, dstreg, GL_NONE, dstmod,
-                                                 arg1, rep1, argmod1,
-                                                 arg2, rep2, argmod2));
+                wrap_op2(gl_info, GL_MUL_ATI, dstreg, GL_NONE, dstmod,
+                         arg1, rep1, argmod1,
+                         arg2, rep2, argmod2);
                 break;
 
             case WINED3DTOP_ADDSIGNED2X:
@@ -500,40 +575,27 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
                 argmodextra = GL_BIAS_BIT_ATI;
             case WINED3DTOP_ADD:
                 dstmod |= GL_SATURATE_BIT_ATI;
-                TRACE("glColorFragmentOp2ATI(GL_ADD_ATI, %s, GL_NONE, %s, %s, %s, %s, %s, %s, %s)\n",
-                      debug_register(dstreg), debug_dstmod(dstmod),
-                      debug_register(arg1), debug_rep(rep1), debug_argmod(argmod1),
-                      debug_register(arg2), debug_rep(rep2), debug_argmod(argmodextra | argmod2));
-                GL_EXTCALL(glColorFragmentOp2ATI(GL_ADD_ATI, GL_REG_0_ATI, GL_NONE, dstmod,
-                                                 arg1, rep1, argmod1,
-                                                 arg2, rep2, argmodextra | argmod2));
+                wrap_op2(gl_info, GL_ADD_ATI, GL_REG_0_ATI, GL_NONE, dstmod,
+                         arg1, rep1, argmod1,
+                         arg2, rep2, argmodextra | argmod2);
                 break;
 
             case WINED3DTOP_SUBTRACT:
                 dstmod |= GL_SATURATE_BIT_ATI;
-                TRACE("glColorFragmentOp2ATI(GL_SUB_ATI, %s, GL_NONE, %s, %s, %s, %s, %s, %s, %s)\n",
-                      debug_register(dstreg), debug_dstmod(dstmod),
-                      debug_register(arg1), debug_rep(rep1), debug_argmod(argmod1),
-                      debug_register(arg2), debug_rep(rep2), debug_argmod(argmod2));
-                GL_EXTCALL(glColorFragmentOp2ATI(GL_SUB_ATI, dstreg, GL_NONE, dstmod,
-                                                 arg1, rep1, argmod1,
-                                                 arg2, rep2, argmod2));
+                wrap_op2(gl_info, GL_SUB_ATI, dstreg, GL_NONE, dstmod,
+                         arg1, rep1, argmod1,
+                         arg2, rep2, argmod2);
                 break;
 
             case WINED3DTOP_ADDSMOOTH:
                 argmodextra = argmod1 & GL_COMP_BIT_ATI ? argmod1 & ~GL_COMP_BIT_ATI : argmod1 | GL_COMP_BIT_ATI;
-                TRACE("glColorFragmentOp3ATI(GL_MAD_ATI, %s, GL_NONE, GL_SATURATE_BIT_ATI, %s, %s, %s, %s, %s, %s, %s, %s, %s)\n",
-                      debug_register(dstreg),
-                      debug_register(arg2), debug_rep(rep2), debug_argmod(argmod2),
-                      debug_register(arg1), debug_rep(rep1), debug_argmod(argmodextra),
-                      debug_register(arg1), debug_rep(rep1), debug_argmod(argmod1));
                 /* Dst = arg1 + * arg2(1 -arg 1)
                  *     = arg2 * (1 - arg1) + arg1
                  */
-                GL_EXTCALL(glColorFragmentOp3ATI(GL_MAD_ATI, dstreg, GL_NONE, GL_SATURATE_BIT_ATI,
-                                                 arg2, rep2, argmod2,
-                                                 arg1, rep1, argmodextra,
-                                                 arg1, rep1, argmod1));
+                wrap_op3(gl_info, GL_MAD_ATI, dstreg, GL_NONE, GL_SATURATE_BIT_ATI,
+                         arg2, rep2, argmod2,
+                         arg1, rep1, argmodextra,
+                         arg1, rep1, argmod1);
                 break;
 
             case WINED3DTOP_BLENDCURRENTALPHA:
@@ -544,28 +606,18 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
                 if(extrarg == GL_NONE) extrarg = register_for_arg(WINED3DTA_TEXTURE, gl_info, stage, NULL, NULL, -1);
             case WINED3DTOP_BLENDDIFFUSEALPHA:
                 if(extrarg == GL_NONE) extrarg = register_for_arg(WINED3DTA_DIFFUSE, gl_info, stage, NULL, NULL, -1);
-                TRACE("glColorFragmentOp3ATI(GL_LERP_ATI, %s, GL_NONE, GL_NONE, %s, GL_ALPHA, GL_NONE, %s, %s, %s, %s, %s, %s)\n",
-                      debug_register(dstreg),
-                      debug_register(extrarg),
-                      debug_register(arg1), debug_rep(rep1), debug_argmod(argmod1),
-                      debug_register(arg2), debug_rep(rep2), debug_argmod(argmod2));
-                GL_EXTCALL(glColorFragmentOp3ATI(GL_LERP_ATI, dstreg, GL_NONE, GL_NONE,
-                                                 extrarg, GL_ALPHA, GL_NONE,
-                                                 arg1, rep1, argmod1,
-                                                 arg2, rep2, argmod2));
+                wrap_op3(gl_info, GL_LERP_ATI, dstreg, GL_NONE, GL_NONE,
+                         extrarg, GL_ALPHA, GL_NONE,
+                         arg1, rep1, argmod1,
+                         arg2, rep2, argmod2);
                 break;
 
             case WINED3DTOP_BLENDTEXTUREALPHAPM:
                 arg0 = register_for_arg(WINED3DTA_TEXTURE, gl_info, stage, NULL, NULL, -1);
-                TRACE("glColorFragmentOp3ATI(GL_MAD_ATI, %s, GL_NONE, GL_NONE, %s, %s, %s, %s, GL_ALPHA, GL_COMP_BIT_ATI, %s, %s, %s)\n",
-                      debug_register(dstreg),
-                      debug_register(arg2), debug_rep(rep2), debug_argmod(argmod2),
-                      debug_register(arg0),
-                      debug_register(arg1), debug_rep(rep1), debug_argmod(argmod1));
-                GL_EXTCALL(glColorFragmentOp3ATI(GL_MAD_ATI, dstreg, GL_NONE, GL_NONE,
-                                                 arg2, rep2,  argmod2,
-                                                 arg0, GL_ALPHA, GL_COMP_BIT_ATI,
-                                                 arg1, rep1,  argmod1));
+                wrap_op3(gl_info, GL_MAD_ATI, dstreg, GL_NONE, GL_NONE,
+                         arg2, rep2,  argmod2,
+                         arg0, GL_ALPHA, GL_COMP_BIT_ATI,
+                         arg1, rep1,  argmod1);
                 break;
 
             /* D3DTOP_PREMODULATE ???? */
@@ -574,63 +626,40 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
                 argmodextra = argmod1 & GL_COMP_BIT_ATI ? argmod1 & ~GL_COMP_BIT_ATI : argmod1 | GL_COMP_BIT_ATI;
             case WINED3DTOP_MODULATEALPHA_ADDCOLOR:
                 if(!argmodextra) argmodextra = argmod1;
-                TRACE("glColorFragmentOp3ATI(GL_MAD_ATI, %s, GL_NONE, GL_SATURATE_BIT_ATI, %s, %s, %s, %s, GL_ALPHA, %s, %s, %s, %s)\n",
-                      debug_register(dstreg),
-                      debug_register(arg2), debug_rep(rep2), debug_argmod(argmod2),
-                      debug_register(arg1), debug_argmod(argmodextra), debug_register(arg1), debug_rep(rep1), debug_argmod(arg1));
-                GL_EXTCALL(glColorFragmentOp3ATI(GL_MAD_ATI, dstreg, GL_NONE, GL_SATURATE_BIT_ATI,
-                                                 arg2, rep2,  argmod2,
-                                                 arg1, GL_ALPHA, argmodextra,
-                                                 arg1, rep1,  argmod1));
+                wrap_op3(gl_info, GL_MAD_ATI, dstreg, GL_NONE, GL_SATURATE_BIT_ATI,
+                         arg2, rep2,  argmod2,
+                         arg1, GL_ALPHA, argmodextra,
+                         arg1, rep1,  argmod1);
                 break;
 
             case WINED3DTOP_MODULATEINVCOLOR_ADDALPHA:
                 argmodextra = argmod1 & GL_COMP_BIT_ATI ? argmod1 & ~GL_COMP_BIT_ATI : argmod1 | GL_COMP_BIT_ATI;
             case WINED3DTOP_MODULATECOLOR_ADDALPHA:
                 if(!argmodextra) argmodextra = argmod1;
-                TRACE("glColorFragmentOp3ATI(GL_MAD_ATI, %s, GL_NONE, GL_SATURATE_BIT_ATI, %s, %s, %s, %s, %s, %s, %s, GL_ALPHA, %s)\n",
-                      debug_register(dstreg),
-                      debug_register(arg2), debug_rep(rep2), debug_argmod(argmod2),
-                      debug_register(arg1), debug_rep(rep1), debug_argmod(argmodextra),
-                      debug_register(arg1), debug_argmod(argmod1));
-                GL_EXTCALL(glColorFragmentOp3ATI(GL_MAD_ATI, dstreg, GL_NONE, GL_SATURATE_BIT_ATI,
-                                                 arg2, rep2,  argmod2,
-                                                 arg1, rep1,  argmodextra,
-                                                 arg1, GL_ALPHA, argmod1));
+                wrap_op3(gl_info, GL_MAD_ATI, dstreg, GL_NONE, GL_SATURATE_BIT_ATI,
+                         arg2, rep2,  argmod2,
+                         arg1, rep1,  argmodextra,
+                         arg1, GL_ALPHA, argmod1);
                 break;
 
             case WINED3DTOP_DOTPRODUCT3:
-                TRACE("glColorFragmentOp2ATI(GL_DOT3_ATI, %s, GL_NONE, GL_4X_BIT_ATI | GL_SATURATE_BIT_ATI, %s, %s, %s, %s, %s, %s)\n",
-                      debug_register(dstreg),
-                      debug_register(arg1), debug_rep(rep1), debug_argmod(argmod1 | GL_BIAS_BIT_ATI),
-                      debug_register(arg2), debug_rep(rep2), debug_argmod(argmod2 | GL_BIAS_BIT_ATI));
-                GL_EXTCALL(glColorFragmentOp2ATI(GL_DOT3_ATI, dstreg, GL_NONE, GL_4X_BIT_ATI | GL_SATURATE_BIT_ATI,
-                                                 arg1, rep1, argmod1 | GL_BIAS_BIT_ATI,
-                                                 arg2, rep2, argmod2 | GL_BIAS_BIT_ATI));
+                wrap_op2(gl_info, GL_DOT3_ATI, dstreg, GL_NONE, GL_4X_BIT_ATI | GL_SATURATE_BIT_ATI,
+                         arg1, rep1, argmod1 | GL_BIAS_BIT_ATI,
+                         arg2, rep2, argmod2 | GL_BIAS_BIT_ATI);
                 break;
 
             case WINED3DTOP_MULTIPLYADD:
-                TRACE("glColorFragmentOp3ATI(GL_MAD_ATI, %s, GL_NONE, GL_SATURATE_BIT_ATI, %s, %s, %s, %s, %s, %s, %s, %s, %s)\n",
-                      debug_register(dstreg),
-                      debug_register(arg1), debug_rep(rep1), debug_argmod(argmod1),
-                      debug_register(arg2), debug_rep(rep2), debug_argmod(argmod2),
-                      debug_register(arg0), debug_rep(rep0), debug_argmod(argmod0));
-                GL_EXTCALL(glColorFragmentOp3ATI(GL_MAD_ATI, dstreg, GL_NONE, GL_SATURATE_BIT_ATI,
-                                                 arg1, rep1, argmod1,
-                                                 arg2, rep2, argmod2,
-                                                 arg0, rep0, argmod0));
+                wrap_op3(gl_info, GL_MAD_ATI, dstreg, GL_NONE, GL_SATURATE_BIT_ATI,
+                         arg1, rep1, argmod1,
+                         arg2, rep2, argmod2,
+                         arg0, rep0, argmod0);
                 break;
 
             case WINED3DTOP_LERP:
-                TRACE("glColorFragmentOp3ATI(GL_LERP_ATI, %s, GL_NONE, GL_NONE, %s, %s, %s, %s, %s, %s, %s, %s, %s)\n",
-                      debug_register(dstreg),
-                      debug_register(arg1), debug_rep(rep1), debug_argmod(argmod1),
-                      debug_register(arg2), debug_rep(rep2), debug_argmod(argmod2),
-                      debug_register(arg0), debug_rep(rep0), debug_argmod(argmod0));
-                GL_EXTCALL(glColorFragmentOp3ATI(GL_LERP_ATI, dstreg, GL_NONE, GL_NONE,
-                                                 arg0, rep0, argmod0,
-                                                 arg1, rep1, argmod1,
-                                                 arg2, rep2, argmod2));
+                wrap_op3(gl_info, GL_LERP_ATI, dstreg, GL_NONE, GL_NONE,
+                         arg0, rep0, argmod0,
+                         arg1, rep1, argmod1,
+                         arg2, rep2, argmod2);
                 break;
 
             case WINED3DTOP_BUMPENVMAP:
@@ -652,9 +681,8 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
             case WINED3DTOP_DISABLE:
                 /* Get the primary color to the output if on stage 0, otherwise leave register 0 untouched */
                 if(stage == 0) {
-                    TRACE("glAlphaFragmentOp1ATI(GL_MOV_ATI, GL_REG_0_ATI, GL_NONE, GL_PRIMARY_COLOR, GL_NONE, GL_NONE)\n");
-                    GL_EXTCALL(glAlphaFragmentOp1ATI(GL_MOV_ATI, GL_REG_0_ATI, GL_NONE,
-                               GL_PRIMARY_COLOR, GL_NONE, GL_NONE));
+                    wrap_op1(gl_info, GL_MOV_ATI, GL_REG_0_ATI, GL_ALPHA, GL_NONE,
+                             GL_PRIMARY_COLOR, GL_NONE, GL_NONE);
                 }
                 break;
 
@@ -662,11 +690,8 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
                 arg1 = arg2;
                 argmod1 = argmod2;
             case WINED3DTOP_SELECTARG1:
-                TRACE("glAlphaFragmentOp1ATI(GL_MOV_ATI, %s,          GL_NONE, %s, GL_NONE, %s)\n",
-                      debug_register(dstreg),
-                      debug_register(arg1), debug_argmod(argmod1));
-                GL_EXTCALL(glAlphaFragmentOp1ATI(GL_MOV_ATI, dstreg, GL_NONE,
-                                                 arg1, GL_NONE, argmod1));
+                wrap_op1(gl_info, GL_MOV_ATI, dstreg, GL_ALPHA, GL_NONE,
+                         arg1, GL_NONE, argmod1);
                 break;
 
             case WINED3DTOP_MODULATE4X:
@@ -675,13 +700,9 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
                 if(dstmod == GL_NONE) dstmod = GL_2X_BIT_ATI;
                 dstmod |= GL_SATURATE_BIT_ATI;
             case WINED3DTOP_MODULATE:
-                TRACE("glAlphaFragmentOp2ATI(GL_MUL_ATI, %s,          %s, %s, GL_NONE, %s, %s, GL_NONE, %s)\n",
-                      debug_register(dstreg), debug_dstmod(dstmod),
-                      debug_register(arg1), debug_argmod(argmod1),
-                      debug_register(arg2), debug_argmod(argmod2));
-                GL_EXTCALL(glAlphaFragmentOp2ATI(GL_MUL_ATI, dstreg, dstmod,
-                                                 arg1, GL_NONE, argmod1,
-                                                 arg2, GL_NONE, argmod2));
+                wrap_op2(gl_info, GL_MUL_ATI, dstreg, GL_ALPHA, dstmod,
+                         arg1, GL_NONE, argmod1,
+                         arg2, GL_NONE, argmod2);
                 break;
 
             case WINED3DTOP_ADDSIGNED2X:
@@ -690,40 +711,27 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
                 argmodextra = GL_BIAS_BIT_ATI;
             case WINED3DTOP_ADD:
                 dstmod |= GL_SATURATE_BIT_ATI;
-                TRACE("glAlphaFragmentOp2ATI(GL_ADD_ATI, %s,          %s, %s, GL_NONE, %s, %s, GL_NONE, %s)\n",
-                      debug_register(dstreg), debug_dstmod(dstmod),
-                      debug_register(arg1), debug_argmod(argmod1),
-                      debug_register(arg2), debug_argmod(argmodextra | argmod2));
-                GL_EXTCALL(glAlphaFragmentOp2ATI(GL_ADD_ATI, dstreg, dstmod,
-                                                 arg1, GL_NONE, argmod1,
-                                                 arg2, GL_NONE, argmodextra | argmod2));
+                wrap_op2(gl_info, GL_ADD_ATI, dstreg, GL_ALPHA, dstmod,
+                         arg1, GL_NONE, argmod1,
+                         arg2, GL_NONE, argmodextra | argmod2);
                 break;
 
             case WINED3DTOP_SUBTRACT:
                 dstmod |= GL_SATURATE_BIT_ATI;
-                TRACE("glAlphaFragmentOp2ATI(GL_SUB_ATI, %s, GL_NONE, %s, %s, GL_NONE, %s, %s, GL_NONE, %s)\n",
-                      debug_register(dstreg), debug_dstmod(dstmod),
-                      debug_register(arg1), debug_argmod(argmod1),
-                      debug_register(arg2), debug_argmod(argmod2));
-                GL_EXTCALL(glAlphaFragmentOp2ATI(GL_SUB_ATI, dstreg, dstmod,
-                                                 arg1, GL_NONE, argmod1,
-                                                 arg2, GL_NONE, argmod2));
+                wrap_op2(gl_info, GL_SUB_ATI, dstreg, GL_ALPHA, dstmod,
+                         arg1, GL_NONE, argmod1,
+                         arg2, GL_NONE, argmod2);
                 break;
 
             case WINED3DTOP_ADDSMOOTH:
                 argmodextra = argmod1 & GL_COMP_BIT_ATI ? argmod1 & ~GL_COMP_BIT_ATI : argmod1 | GL_COMP_BIT_ATI;
-                TRACE("glAlphaFragmentOp3ATI(GL_MAD_ATI, %s,          GL_SATURATE_BIT_ATI, %s, GL_NONE, %s, %s, GL_NONE, %s, %s, GL_NONE, %s)\n",
-                      debug_register(dstreg),
-                      debug_register(arg2), debug_argmod(argmod2),
-                      debug_register(arg1), debug_argmod(argmodextra),
-                      debug_register(arg1), debug_argmod(argmod1));
                 /* Dst = arg1 + * arg2(1 -arg 1)
                  *     = arg2 * (1 - arg1) + arg1
                  */
-                GL_EXTCALL(glAlphaFragmentOp3ATI(GL_MAD_ATI, dstreg, GL_SATURATE_BIT_ATI,
-                                                 arg2, GL_NONE, argmod2,
-                                                 arg1, GL_NONE, argmodextra,
-                                                 arg1, GL_NONE, argmod1));
+                wrap_op3(gl_info, GL_MAD_ATI, dstreg, GL_ALPHA, GL_SATURATE_BIT_ATI,
+                         arg2, GL_NONE, argmod2,
+                         arg1, GL_NONE, argmodextra,
+                         arg1, GL_NONE, argmod1);
                 break;
 
             case WINED3DTOP_BLENDCURRENTALPHA:
@@ -734,64 +742,40 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
                 if(extrarg == GL_NONE) extrarg = register_for_arg(WINED3DTA_TEXTURE, gl_info, stage, NULL, NULL, -1);
             case WINED3DTOP_BLENDDIFFUSEALPHA:
                 if(extrarg == GL_NONE) extrarg = register_for_arg(WINED3DTA_DIFFUSE, gl_info, stage, NULL, NULL, -1);
-                TRACE("glAlphaFragmentOp3ATI(GL_LERP_ATI, %s,          GL_NONE, %s, GL_ALPHA, GL_NONE, %s, GL_NONE, %s, %s, GL_NONE, %s)\n",
-                      debug_register(dstreg),
-                      debug_register(extrarg),
-                      debug_register(arg1), debug_argmod(argmod1),
-                      debug_register(arg2), debug_argmod(argmod2));
-                GL_EXTCALL(glAlphaFragmentOp3ATI(GL_LERP_ATI, dstreg, GL_NONE,
-                                                 extrarg, GL_ALPHA, GL_NONE,
-                                                 arg1, GL_NONE, argmod1,
-                                                 arg2, GL_NONE, argmod2));
+                wrap_op3(gl_info, GL_LERP_ATI, dstreg, GL_ALPHA, GL_NONE,
+                         extrarg, GL_ALPHA, GL_NONE,
+                         arg1, GL_NONE, argmod1,
+                         arg2, GL_NONE, argmod2);
                 break;
 
             case WINED3DTOP_BLENDTEXTUREALPHAPM:
                 arg0 = register_for_arg(WINED3DTA_TEXTURE, gl_info, stage, NULL, NULL, -1);
-                TRACE("glAlphaFragmentOp3ATI(GL_MAD_ATI, %s,          GL_NONE, %s, GL_NONE, %s, %s, GL_ALPHA, GL_COMP_BIT_ATI, %s, GL_NONE, %s)\n",
-                      debug_register(dstreg),
-                      debug_register(arg2), debug_argmod(argmod2),
-                      debug_register(arg0),
-                      debug_register(arg1), debug_argmod(argmod1));
-                GL_EXTCALL(glAlphaFragmentOp3ATI(GL_MAD_ATI, dstreg, GL_NONE,
-                                                 arg2, GL_NONE,  argmod2,
-                                                 arg0, GL_ALPHA, GL_COMP_BIT_ATI,
-                                                 arg1, GL_NONE,  argmod1));
+                wrap_op3(gl_info, GL_MAD_ATI, dstreg, GL_ALPHA, GL_NONE,
+                         arg2, GL_NONE,  argmod2,
+                         arg0, GL_ALPHA, GL_COMP_BIT_ATI,
+                         arg1, GL_NONE,  argmod1);
                 break;
 
             /* D3DTOP_PREMODULATE ???? */
 
             case WINED3DTOP_DOTPRODUCT3:
-                TRACE("glAlphaFragmentOp2ATI(GL_DOT3_ATI, %s,          GL_4X_BIT_ATI | GL_SATURATE_BIT_ATI, %s, GL_NONE, %s, %s, GL_NONE, %s)\n",
-                      debug_register(dstreg),
-                      debug_register(arg1), debug_argmod(argmod1 | GL_BIAS_BIT_ATI),
-                      debug_register(arg2), debug_argmod(argmod2 | GL_BIAS_BIT_ATI));
-                GL_EXTCALL(glAlphaFragmentOp2ATI(GL_DOT3_ATI, dstreg, GL_4X_BIT_ATI | GL_SATURATE_BIT_ATI,
-                                                 arg1, GL_NONE, argmod1 | GL_BIAS_BIT_ATI,
-                                                 arg2, GL_NONE, argmod2 | GL_BIAS_BIT_ATI));
+                wrap_op2(gl_info, GL_DOT3_ATI, dstreg, GL_ALPHA, GL_4X_BIT_ATI | GL_SATURATE_BIT_ATI,
+                         arg1, GL_NONE, argmod1 | GL_BIAS_BIT_ATI,
+                         arg2, GL_NONE, argmod2 | GL_BIAS_BIT_ATI);
                 break;
 
             case WINED3DTOP_MULTIPLYADD:
-                TRACE("glAlphaFragmentOp3ATI(GL_MAD_ATI, %s,          GL_SATURATE_BIT_ATI, %s, GL_NONE, %s, %s, GL_NONE, %s, %s, GL_NONE, %s)\n",
-                      debug_register(dstreg),
-                      debug_register(arg1), debug_argmod(argmod1),
-                      debug_register(arg2), debug_argmod(argmod2),
-                      debug_register(arg0), debug_argmod(argmod0));
-                GL_EXTCALL(glAlphaFragmentOp3ATI(GL_MAD_ATI, dstreg,          GL_SATURATE_BIT_ATI,
-                           arg1, GL_NONE, argmod1,
-                           arg2, GL_NONE, argmod2,
-                           arg0, GL_NONE, argmod0));
+                wrap_op3(gl_info, GL_MAD_ATI, dstreg, GL_ALPHA, GL_SATURATE_BIT_ATI,
+                         arg1, GL_NONE, argmod1,
+                         arg2, GL_NONE, argmod2,
+                         arg0, GL_NONE, argmod0);
                 break;
 
             case WINED3DTOP_LERP:
-                TRACE("glAlphaFragmentOp3ATI(GL_LERP_ATI, %s,          GL_SATURATE_BIT_ATI, %s, GL_NONE, %s, %s, GL_NONE, %s, %s, GL_NONE, %s)\n",
-                      debug_register(dstreg),
-                      debug_register(arg1), debug_argmod(argmod1),
-                      debug_register(arg2), debug_argmod(argmod2),
-                      debug_register(arg0), debug_argmod(argmod0));
-                GL_EXTCALL(glAlphaFragmentOp3ATI(GL_LERP_ATI, dstreg, GL_SATURATE_BIT_ATI,
-                                                 arg1, GL_NONE, argmod1,
-                                                 arg2, GL_NONE, argmod2,
-                                                 arg0, GL_NONE, argmod0));
+                wrap_op3(gl_info, GL_LERP_ATI, dstreg, GL_ALPHA, GL_SATURATE_BIT_ATI,
+                         arg1, GL_NONE, argmod1,
+                         arg2, GL_NONE, argmod2,
+                         arg0, GL_NONE, argmod0);
                 break;
 
             case WINED3DTOP_MODULATEINVALPHA_ADDCOLOR:
