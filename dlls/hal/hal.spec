@@ -1,5 +1,5 @@
-@ stub ExAcquireFastMutex
-@ stub ExReleaseFastMutex
+@ stdcall -norelay ExAcquireFastMutex(ptr)
+@ stdcall -norelay ExReleaseFastMutex(ptr)
 @ stub ExTryToAcquireFastMutex
 @ stub HalClearSoftwareInterrupt
 @ stub HalRequestSoftwareInterrupt

@@ -132,6 +132,15 @@ typedef struct _IO_WORKITEM *PIO_WORKITEM;
 typedef struct _OBJECT_TYPE *POBJECT_TYPE;
 typedef struct _OBJECT_HANDLE_INFORMATION *POBJECT_HANDLE_INFORMATION;
 
+typedef struct _FAST_MUTEX
+{
+    LONG Count;
+    PKTHREAD Owner;
+    ULONG Contention;
+    KEVENT Gate;
+    ULONG OldIrql;
+} FAST_MUTEX, *PFAST_MUTEX;
+
 #define MAXIMUM_VOLUME_LABEL_LENGTH       (32 * sizeof(WCHAR))
 
 typedef struct _VPB {
