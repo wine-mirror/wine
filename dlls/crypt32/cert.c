@@ -476,7 +476,7 @@ static BOOL CertContext_SetProperty(void *context, DWORD dwPropId,
         {
             if (pvData)
             {
-                const CRYPT_DATA_BLOB *blob = (const CRYPT_DATA_BLOB *)pvData;
+                const CRYPT_DATA_BLOB *blob = pvData;
 
                 ret = ContextPropertyList_SetProperty(properties, dwPropId,
                  blob->pbData, blob->cbData);
@@ -491,7 +491,7 @@ static BOOL CertContext_SetProperty(void *context, DWORD dwPropId,
         case CERT_DATE_STAMP_PROP_ID:
             if (pvData)
                 ret = ContextPropertyList_SetProperty(properties, dwPropId,
-                 (const BYTE *)pvData, sizeof(FILETIME));
+                 pvData, sizeof(FILETIME));
             else
             {
                 ContextPropertyList_RemoveProperty(properties, dwPropId);
@@ -502,7 +502,7 @@ static BOOL CertContext_SetProperty(void *context, DWORD dwPropId,
         {
             if (pvData)
             {
-                const CERT_KEY_CONTEXT *keyContext = (const CERT_KEY_CONTEXT *)pvData;
+                const CERT_KEY_CONTEXT *keyContext = pvData;
 
                 if (keyContext->cbSize != sizeof(CERT_KEY_CONTEXT))
                 {
@@ -522,8 +522,7 @@ static BOOL CertContext_SetProperty(void *context, DWORD dwPropId,
         }
         case CERT_KEY_PROV_INFO_PROP_ID:
             if (pvData)
-                ret = CertContext_SetKeyProvInfoProperty(properties,
-                 (const CRYPT_KEY_PROV_INFO *)pvData);
+                ret = CertContext_SetKeyProvInfoProperty(properties, pvData);
             else
             {
                 ContextPropertyList_RemoveProperty(properties, dwPropId);
