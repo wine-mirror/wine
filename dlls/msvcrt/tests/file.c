@@ -910,6 +910,12 @@ static void test_stat(void)
         ok(buf.st_nlink == 1, "st_nlink is %d, expected 1\n", buf.st_nlink);
         ok(buf.st_size == 0, "st_size is %d, expected 0\n", buf.st_size);
 
+        ok(stat("stat.tst", &buf) == 0, "stat failed: errno=%d", errno);
+        ok((buf.st_mode & _S_IFMT) == _S_IFREG, "bad format = %06o\n", buf.st_mode);
+        ok(buf.st_dev == buf.st_rdev, "st_dev (%d) and st_rdev (%d) differ\n", buf.st_dev, buf.st_rdev);
+        ok(buf.st_nlink == 1, "st_nlink is %d, expected 1\n", buf.st_nlink);
+        ok(buf.st_size == 0, "st_size is %d, expected 0\n", buf.st_size);
+
         close(fd);
         remove("stat.tst");
     }
