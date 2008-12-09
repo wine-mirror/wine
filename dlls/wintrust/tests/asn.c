@@ -786,6 +786,90 @@ static void test_decodeCatNameValue(void)
     }
 }
 
+static const WCHAR progName[] = { 'A',' ','p','r','o','g','r','a','m',0 };
+static const BYTE spOpusInfoWithProgramName[] = {
+0x30,0x16,0xa0,0x14,0x80,0x12,0x00,0x41,0x00,0x20,0x00,0x70,0x00,0x72,0x00,0x6f,
+0x00,0x67,0x00,0x72,0x00,0x61,0x00,0x6d };
+static WCHAR winehq[] = { 'h','t','t','p',':','/','/','w','i','n','e','h','q',
+ '.','o','r','g','/',0 };
+static const BYTE spOpusInfoWithMoreInfo[] = {
+0x30,0x16,0xa1,0x14,0x80,0x12,0x68,0x74,0x74,0x70,0x3a,0x2f,0x2f,0x77,0x69,0x6e,
+0x65,0x68,0x71,0x2e,0x6f,0x72,0x67,0x2f };
+static const BYTE spOpusInfoWithPublisherInfo[] = {
+0x30,0x16,0xa2,0x14,0x80,0x12,0x68,0x74,0x74,0x70,0x3a,0x2f,0x2f,0x77,0x69,0x6e,
+0x65,0x68,0x71,0x2e,0x6f,0x72,0x67,0x2f };
+
+static void test_encodeSpOpusInfo(void)
+{
+    BOOL ret;
+    LPBYTE buf;
+    DWORD size;
+    SPC_SP_OPUS_INFO info;
+    SPC_LINK moreInfo;
+
+    memset(&info, 0, sizeof(info));
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_SP_OPUS_INFO_STRUCT,
+     (LPBYTE)&info, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(emptySequence), "unexpected size %d\n", size);
+        ok(!memcmp(buf, emptySequence, size), "unexpected value\n");
+        LocalFree(buf);
+    }
+    info.pwszProgramName = progName;
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_SP_OPUS_INFO_STRUCT,
+     (LPBYTE)&info, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(spOpusInfoWithProgramName), "unexpected size %d\n",
+         size);
+        ok(!memcmp(buf, spOpusInfoWithProgramName, size),
+         "unexpected value\n");
+        LocalFree(buf);
+    }
+    info.pwszProgramName = NULL;
+    memset(&moreInfo, 0, sizeof(moreInfo));
+    info.pMoreInfo = &moreInfo;
+    SetLastError(0xdeadbeef);
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_SP_OPUS_INFO_STRUCT,
+     (LPBYTE)&info, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "expected E_INVALIDARG, got %08x\n", GetLastError());
+    moreInfo.dwLinkChoice = SPC_URL_LINK_CHOICE;
+    moreInfo.pwszUrl = winehq;
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_SP_OPUS_INFO_STRUCT,
+     (LPBYTE)&info, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(spOpusInfoWithMoreInfo),
+         "unexpected size %d\n", size);
+        ok(!memcmp(buf, spOpusInfoWithMoreInfo, size),
+         "unexpected value\n");
+        LocalFree(buf);
+    }
+    info.pMoreInfo = NULL;
+    info.pPublisherInfo = &moreInfo;
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_SP_OPUS_INFO_STRUCT,
+     (LPBYTE)&info, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(spOpusInfoWithPublisherInfo),
+         "unexpected size %d\n", size);
+        ok(!memcmp(buf, spOpusInfoWithPublisherInfo, size),
+         "unexpected value\n");
+        LocalFree(buf);
+    }
+}
+
 START_TEST(asn)
 {
     HMODULE hCrypt32 = LoadLibraryA("crypt32.dll");
@@ -802,6 +886,7 @@ START_TEST(asn)
     test_decodeCatMemberInfo();
     test_encodeCatNameValue();
     test_decodeCatNameValue();
+    test_encodeSpOpusInfo();
 
     FreeLibrary(hCrypt32);
 }
