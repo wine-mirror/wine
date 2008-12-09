@@ -258,6 +258,7 @@ AC_CHECK_HEADERS(\
 	float.h \
 	fontconfig/fontconfig.h \
 	getopt.h \
+	grp.h \
 	ieeefp.h \
 	io.h \
 	jack/jack.h \

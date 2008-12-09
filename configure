@@ -7436,6 +7436,7 @@ done
 
 
 
+
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
@@ -7456,6 +7457,7 @@ for ac_header in \
 	float.h \
 	fontconfig/fontconfig.h \
 	getopt.h \
+	grp.h \
 	ieeefp.h \
 	io.h \
 	jack/jack.h \

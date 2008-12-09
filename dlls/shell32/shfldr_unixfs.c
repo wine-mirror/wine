@@ -141,7 +141,9 @@
 #ifdef HAVE_PWD_H
 # include <pwd.h>
 #endif
-#include <grp.h>
+#ifdef HAVE_GRP_H
+# include <grp.h>
+#endif
 
 #define COBJMACROS
 #define NONAMELESSUNION
