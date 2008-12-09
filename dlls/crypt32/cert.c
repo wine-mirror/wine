@@ -540,13 +540,17 @@ static BOOL CertContext_SetProperty(void *context, DWORD dwPropId,
             {
                 if (!(dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG))
                     CryptReleaseContext(keyContext.hCryptProv, 0);
-                if (pvData)
-                    keyContext.hCryptProv = *(const HCRYPTPROV *)pvData;
-                else
-                    keyContext.hCryptProv = 0;
-                ret = CertContext_SetProperty(context, CERT_KEY_CONTEXT_PROP_ID,
-                 0, &keyContext);
             }
+            keyContext.cbSize = sizeof(keyContext);
+            if (pvData)
+                keyContext.hCryptProv = *(const HCRYPTPROV *)pvData;
+            else
+            {
+                keyContext.hCryptProv = 0;
+                keyContext.dwKeySpec = AT_SIGNATURE;
+            }
+            ret = CertContext_SetProperty(context, CERT_KEY_CONTEXT_PROP_ID,
+             0, &keyContext);
             break;
         }
         default:
