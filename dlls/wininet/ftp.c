@@ -30,6 +30,10 @@
 #include "config.h"
 #include "wine/port.h"
 
+#if defined(__MINGW32__) || defined (_MSC_VER)
+#include <ws2tcpip.h>
+#endif
+
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>

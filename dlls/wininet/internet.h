@@ -43,7 +43,6 @@
 #endif
 
 #if defined(__MINGW32__) || defined (_MSC_VER)
-#include "ws2tcpip.h"
 #ifndef MSG_WAITALL
 #define MSG_WAITALL 0
 #endif

@@ -23,6 +23,10 @@
 #include "config.h"
 #include "wine/port.h"
 
+#if defined(__MINGW32__) || defined (_MSC_VER)
+#include <ws2tcpip.h>
+#endif
+
 #include <sys/types.h>
 #ifdef HAVE_POLL_H
 #include <poll.h>

@@ -31,6 +31,10 @@
 
 #define MAXHOSTNAME 100 /* from http.c */
 
+#if defined(__MINGW32__) || defined (_MSC_VER)
+#include <ws2tcpip.h>
+#endif
+
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
