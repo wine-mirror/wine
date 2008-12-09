@@ -1700,11 +1700,66 @@ HRESULT WINAPI MsiGetFileSignatureInformationW( LPCWSTR szSignedObjectPath,
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-UINT WINAPI MsiGetProductPropertyA( MSIHANDLE hProduct, LPCSTR szProperty,
-                                    LPSTR szValue, LPDWORD pccbValue )
+/******************************************************************
+ * MsiGetProductPropertyA      [MSI.@]
+ */
+UINT WINAPI MsiGetProductPropertyA(MSIHANDLE hProduct, LPCSTR szProperty,
+                                   LPSTR szValue, LPDWORD pccbValue)
 {
-    FIXME("%ld %s %p %p\n", hProduct, debugstr_a(szProperty), szValue, pccbValue);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    LPWSTR prop = NULL, val = NULL;
+    DWORD len;
+    UINT r;
+
+    TRACE("(%ld, %s, %p, %p)\n", hProduct, debugstr_a(szProperty),
+          szValue, pccbValue);
+
+    if (szValue && !pccbValue)
+        return ERROR_INVALID_PARAMETER;
+
+    if (szProperty) prop = strdupAtoW(szProperty);
+
+    len = 0;
+    r = MsiGetProductPropertyW(hProduct, prop, NULL, &len);
+    if (r != ERROR_SUCCESS && r != ERROR_MORE_DATA)
+        goto done;
+
+    if (r == ERROR_SUCCESS)
+    {
+        if (szValue) *szValue = '\0';
+        if (pccbValue) *pccbValue = 0;
+        goto done;
+    }
+
+    val = msi_alloc(++len * sizeof(WCHAR));
+    if (!val)
+    {
+        r = ERROR_OUTOFMEMORY;
+        goto done;
+    }
+
+    r = MsiGetProductPropertyW(hProduct, prop, val, &len);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    len = WideCharToMultiByte(CP_ACP, 0, val, -1, NULL, 0, NULL, NULL);
+
+    if (szValue)
+        WideCharToMultiByte(CP_ACP, 0, val, -1, szValue,
+                            *pccbValue, NULL, NULL);
+
+    if (pccbValue)
+    {
+        if (len > *pccbValue)
+            r = ERROR_MORE_DATA;
+
+        *pccbValue = len - 1;
+    }
+
+done:
+    msi_free(prop);
+    msi_free(val);
+
+    return r;
 }
 
 UINT WINAPI MsiGetProductPropertyW( MSIHANDLE hProduct, LPCWSTR szProperty,
