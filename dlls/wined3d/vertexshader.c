@@ -325,27 +325,14 @@ static void IWineD3DVertexShaderImpl_GenerateShader(IWineD3DVertexShader *iface,
 
     find_swizzled_attribs(decl, This);
 
-#if 0 /* FIXME: Use the buffer that is held by the device, this is ok since fixups will be skipped for software shaders
-        it also requires entering a critical section but cuts down the runtime footprint of wined3d and any memory fragmentation that may occur... */
-    if (This->device->fixupVertexBufferSize < SHADER_PGMSIZE) {
-        HeapFree(GetProcessHeap(), 0, This->fixupVertexBuffer);
-        This->fixupVertexBuffer = HeapAlloc(GetProcessHeap() , 0, SHADER_PGMSIZE);
-        This->fixupVertexBufferSize = PGMSIZE;
-        This->fixupVertexBuffer[0] = 0;
-    }
-    buffer.buffer = This->device->fixupVertexBuffer;
-#else
     buffer.buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, SHADER_PGMSIZE); 
-#endif
     buffer.bsize = 0;
     buffer.lineNo = 0;
     buffer.newline = TRUE;
 
     ((IWineD3DDeviceImpl *)This->baseShader.device)->shader_backend->shader_generate_vshader(iface, &buffer);
 
-#if 1 /* if were using the data buffer of device then we don't need to free it */
-  HeapFree(GetProcessHeap(), 0, buffer.buffer);
-#endif
+    HeapFree(GetProcessHeap(), 0, buffer.buffer);
 }
 
 /* *******************************************
