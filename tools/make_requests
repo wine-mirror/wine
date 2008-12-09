@@ -31,7 +31,6 @@ my %formats =
     "unsigned int"  => "%08x",
     "unsigned long" => "%lx",
     "void*"         => "%p",
-    "size_t"        => "%lu (unsigned long)",
     "data_size_t"   => "%u",
     "obj_handle_t"  => "%04x",
     "atom_t"        => "%04x",

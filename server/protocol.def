@@ -618,8 +618,8 @@ typedef union
     obj_handle_t handle;       /* process handle */
     void*        base_address; /* base address of module */
 @REPLY
-    size_t       size;          /* module size */
     void*        entry_point;
+    data_size_t  size;            /* module size */
     data_size_t  filename_len;    /* buffer len in bytes required to store filename */
     VARARG(filename,unicode_str); /* file name of module */
 @END
@@ -645,10 +645,10 @@ typedef union
 @REQ(load_dll)
     obj_handle_t handle;       /* file handle */
     void*        base;         /* base address */
-    size_t       size;         /* dll size */
+    void*        name;         /* ptr to ptr to name (in process addr space) */
+    data_size_t  size;         /* dll size */
     int          dbg_offset;   /* debug info offset */
     int          dbg_size;     /* debug info size */
-    void*        name;         /* ptr to ptr to name (in process addr space) */
     VARARG(filename,unicode_str); /* file name of dll */
 @END
 
