@@ -105,7 +105,7 @@
 @ stub WVTAsn1SpcSpAgencyInfoDecode
 @ stub WVTAsn1SpcSpAgencyInfoEncode
 @ stdcall WVTAsn1SpcSpOpusInfoDecode(long str ptr long long ptr ptr)
-@ stub WVTAsn1SpcSpOpusInfoEncode
+@ stdcall WVTAsn1SpcSpOpusInfoEncode(long str ptr ptr ptr)
 @ stub WVTAsn1SpcStatementTypeDecode
 @ stub WVTAsn1SpcStatementTypeEncode
 @ stdcall WinVerifyTrust(long ptr ptr)

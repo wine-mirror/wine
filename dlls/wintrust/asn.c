@@ -740,6 +740,15 @@ BOOL WINAPI WVTAsn1SpcIndirectDataContentEncode(DWORD dwCertEncodingType,
     return ret;
 }
 
+BOOL WINAPI WVTAsn1SpcSpOpusInfoEncode(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, BYTE *pbEncoded,
+ DWORD *pcbEncoded)
+{
+    FIXME("(0x%08x, %s, %p, %p, %p): stub\n", dwCertEncodingType,
+     debugstr_a(lpszStructType), pvStructInfo, pbEncoded, pcbEncoded);
+    return FALSE;
+}
+
 static BOOL WINAPI CRYPT_AsnEncodeBMPString(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, BYTE *pbEncoded,
  DWORD *pcbEncoded)
