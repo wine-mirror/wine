@@ -90,6 +90,7 @@
 #  undef FD_SET
 #  undef FD_ZERO
 #  undef FD_ISSET
+#  undef _TIMEVAL_DEFINED
 
 #  define WS_DEFINE_SELECT
 # endif /* FD_CLR */
@@ -120,7 +121,7 @@ typedef unsigned long  WS_u_long;
 #else
 typedef unsigned int   WS_u_long;
 #endif
-#elif (defined(_MSC_VER) || defined(__MINGW_H) || defined(__WATCOMC__)) && !defined(_BSDTYPES_DEFINED)
+#elif (defined(_MSC_VER) || defined(__MINGW32__) || defined(__WATCOMC__)) && !defined(_BSDTYPES_DEFINED)
 /* MinGW doesn't define the u_xxx types */
 typedef unsigned char  u_char;
 typedef unsigned short u_short;

@@ -132,9 +132,9 @@ WINE_LDT_EXTERN struct __wine_ldt_copy
 /* helper functions to manipulate the LDT_ENTRY structure */
 static inline void wine_ldt_set_base( LDT_ENTRY *ent, const void *base )
 {
-    ent->BaseLow               = (WORD)(unsigned long)base;
-    ent->HighWord.Bits.BaseMid = (BYTE)((unsigned long)base >> 16);
-    ent->HighWord.Bits.BaseHi  = (BYTE)((unsigned long)base >> 24);
+    ent->BaseLow               = (WORD)(ULONG_PTR)base;
+    ent->HighWord.Bits.BaseMid = (BYTE)((ULONG_PTR)base >> 16);
+    ent->HighWord.Bits.BaseHi  = (BYTE)((ULONG_PTR)base >> 24);
 }
 static inline void wine_ldt_set_limit( LDT_ENTRY *ent, unsigned int limit )
 {
@@ -145,8 +145,8 @@ static inline void wine_ldt_set_limit( LDT_ENTRY *ent, unsigned int limit )
 static inline void *wine_ldt_get_base( const LDT_ENTRY *ent )
 {
     return (void *)(ent->BaseLow |
-                    (unsigned long)ent->HighWord.Bits.BaseMid << 16 |
-                    (unsigned long)ent->HighWord.Bits.BaseHi << 24);
+                    (ULONG_PTR)ent->HighWord.Bits.BaseMid << 16 |
+                    (ULONG_PTR)ent->HighWord.Bits.BaseHi << 24);
 }
 static inline unsigned int wine_ldt_get_limit( const LDT_ENTRY *ent )
 {

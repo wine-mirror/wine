@@ -246,6 +246,7 @@ extern "C" {
 
 /* C99 unaligned support */
 
+#ifndef UNALIGNED
 #if defined(_MSC_VER) && (defined(_M_MRX000) || defined(_M_ALPHA) || defined(_M_PPC) || defined(_M_IA64) || defined(_M_AMD64))
 # define UNALIGNED __unaligned
 # ifdef _WIN64
@@ -256,6 +257,7 @@ extern "C" {
 #else
 # define UNALIGNED
 # define UNALIGNED64
+#endif
 #endif
 
 /* Alignment macros */
