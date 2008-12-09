@@ -2460,7 +2460,7 @@ static inline LONG WINAPI InterlockedDecrement( LONG volatile *dest )
 
 /* A few optimizations for gcc */
 
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64))
+#if defined(__GNUC__) && !defined(__MINGW32__) && (defined(__i386__) || defined(__x86_64__))
 
 extern inline DWORD WINAPI GetLastError(void);
 extern inline DWORD WINAPI GetLastError(void)
