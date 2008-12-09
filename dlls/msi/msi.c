@@ -733,7 +733,7 @@ static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
     }
 
     if (classes)
-        MSIREG_OpenLocalSystemProductKey(szProduct, &userdata, FALSE);
+        MSIREG_OpenInstallProps(szProduct, szLocalSid, &userdata, FALSE);
     else
         MSIREG_OpenCurrentUserInstallProps(szProduct, &userdata, FALSE);
 
@@ -1062,7 +1062,7 @@ UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
     else if (dwContext == MSIINSTALLCONTEXT_MACHINE)
     {
         package = INSTALLPROPERTY_LOCALPACKAGEW;
-        MSIREG_OpenLocalSystemProductKey(szProductCode, &props, FALSE);
+        MSIREG_OpenInstallProps(szProductCode, szLocalSid, &props, FALSE);
         MSIREG_OpenProductKey(szProductCode, dwContext, &classes, FALSE);
 
         if (!props && !classes)
@@ -1296,7 +1296,7 @@ static BOOL msi_comp_find_package(LPCWSTR prodcode, MSIINSTALLCONTEXT context)
     };
 
     if (context == MSIINSTALLCONTEXT_MACHINE)
-        r = MSIREG_OpenLocalSystemProductKey(prodcode, &hkey, FALSE);
+        r = MSIREG_OpenInstallProps(prodcode, szLocalSid, &hkey, FALSE);
     else
         r = MSIREG_OpenCurrentUserInstallProps(prodcode, &hkey, FALSE);
 
@@ -1784,7 +1784,7 @@ static INSTALLSTATE MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
 
         state = INSTALLSTATE_ABSENT;
 
-        if ((MSIREG_OpenLocalSystemProductKey(szProduct, &hkey, FALSE) == ERROR_SUCCESS ||
+        if ((MSIREG_OpenInstallProps(szProduct, szLocalSid, &hkey, FALSE) == ERROR_SUCCESS ||
             MSIREG_OpenUserDataProductKey(szProduct, NULL, &hkey, FALSE) == ERROR_SUCCESS) &&
             msi_reg_get_val_dword(hkey, wininstaller, &version) &&
             GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES)
