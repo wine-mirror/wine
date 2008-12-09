@@ -2291,7 +2291,8 @@ static void test_GetNamedSecurityInfoA(void)
 
     ret = GetSecurityDescriptorControl(pSecDesc, &control, &revision);
     ok(ret, "GetSecurityDescriptorControl failed with error %d\n", GetLastError());
-    ok((control & (SE_SELF_RELATIVE|SE_DACL_PRESENT)) == (SE_SELF_RELATIVE|SE_DACL_PRESENT),
+    ok((control & (SE_SELF_RELATIVE|SE_DACL_PRESENT)) == (SE_SELF_RELATIVE|SE_DACL_PRESENT) ||
+        broken((control & (SE_SELF_RELATIVE|SE_DACL_PRESENT)) == SE_DACL_PRESENT), /* NT4 */
         "control (0x%x) doesn't have (SE_SELF_RELATIVE|SE_DACL_PRESENT) flags set\n", control);
     ok(revision == SECURITY_DESCRIPTOR_REVISION1, "revision was %d instead of 1\n", revision);
     ret = GetSecurityDescriptorOwner(pSecDesc, &owner, &owner_defaulted);
@@ -2300,6 +2301,7 @@ static void test_GetNamedSecurityInfoA(void)
     ret = GetSecurityDescriptorGroup(pSecDesc, &group, &group_defaulted);
     ok(ret, "GetSecurityDescriptorGroup failed with error %d\n", GetLastError());
     ok(group != NULL, "group should not be NULL\n");
+    LocalFree(pSecDesc);
 }
 
 static void test_ConvertStringSecurityDescriptor(void)
