@@ -999,6 +999,9 @@
 /* Define if Xrender has the XRenderSetPictureTransform function */
 #undef HAVE_XRENDERSETPICTURETRANSFORM
 
+/* Define to 1 if you have the `_mkdir' function. */
+#undef HAVE__MKDIR
+
 /* Define to 1 if you have the `_pclose' function. */
 #undef HAVE__PCLOSE
 

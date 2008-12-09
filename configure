@@ -17912,7 +17912,9 @@ esac
 
 
 
+
 for ac_func in \
+	_mkdir \
 	_pclose \
 	_popen \
 	_snprintf \

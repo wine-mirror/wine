@@ -1370,6 +1370,7 @@ esac
 dnl **** Check for functions ****
 
 AC_CHECK_FUNCS(\
+	_mkdir \
 	_pclose \
 	_popen \
 	_snprintf \
