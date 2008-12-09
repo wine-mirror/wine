@@ -1728,25 +1728,33 @@ static void test_LookupAccountName(void)
     sid_use = 0xcafebabe;
     SetLastError(0xdeadbeef);
     ret = LookupAccountNameA(NULL, NULL, NULL, &sid_size, NULL, &domain_size, &sid_use);
-    ok(!ret, "Expected 0, got %d\n", ret);
-    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
-    ok(sid_size != 0, "Expected non-zero sid size\n");
-    ok(domain_size != 0, "Expected non-zero domain size\n");
-    ok(sid_use == 0xcafebabe, "Expected 0xcafebabe, got %d\n", sid_use);
+    if (!ret && GetLastError() != ERROR_NONE_MAPPED)
+    {
+        ok(!ret, "Expected 0, got %d\n", ret);
+        ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+           "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+        ok(sid_size != 0, "Expected non-zero sid size\n");
+        ok(domain_size != 0, "Expected non-zero domain size\n");
+        ok(sid_use == 0xcafebabe, "Expected 0xcafebabe, got %d\n", sid_use);
 
-    psid = HeapAlloc(GetProcessHeap(), 0, sid_size);
-    domain = HeapAlloc(GetProcessHeap(), 0, domain_size);
+        psid = HeapAlloc(GetProcessHeap(), 0, sid_size);
+        domain = HeapAlloc(GetProcessHeap(), 0, domain_size);
 
-    /* try NULL account name */
-    ret = LookupAccountNameA(NULL, NULL, psid, &sid_size, domain, &domain_size, &sid_use);
-    get_sid_info(psid, &account, &sid_dom);
-    ok(ret, "Failed to lookup account name\n");
-    /* Using a fixed string will not work on different locales */
-    ok(!lstrcmp(account, domain),
-       "Got %s for account and %s for domain, these should be the same\n",
-       account, domain);
-    ok(sid_use == SidTypeDomain, "Expected SidTypeDomain (%d), got %d\n", SidTypeDomain, sid_use);
+        /* try NULL account name */
+        ret = LookupAccountNameA(NULL, NULL, psid, &sid_size, domain, &domain_size, &sid_use);
+        get_sid_info(psid, &account, &sid_dom);
+        ok(ret, "Failed to lookup account name\n");
+        /* Using a fixed string will not work on different locales */
+        ok(!lstrcmp(account, domain),
+           "Got %s for account and %s for domain, these should be the same\n",
+           account, domain);
+        ok(sid_use == SidTypeDomain, "Expected SidTypeDomain (%d), got %d\n", SidTypeDomain, sid_use);
+
+        HeapFree(GetProcessHeap(), 0, psid);
+        HeapFree(GetProcessHeap(), 0, domain);
+    }
+    else
+        win_skip("NULL account name doesn't work on NT4\n");
 
     /* try an invalid account name */
     SetLastError(0xdeadbeef);
@@ -1770,9 +1778,6 @@ static void test_LookupAccountName(void)
        "Expected RPC_S_SERVER_UNAVAILABLE or RPC_S_INVALID_NET_ADDR, got %d\n", GetLastError());
     ok(sid_size == 0, "Expected 0, got %d\n", sid_size);
     ok(domain_size == 0, "Expected 0, got %d\n", domain_size);
-
-    HeapFree(GetProcessHeap(), 0, psid);
-    HeapFree(GetProcessHeap(), 0, domain);
 }
 
 static void test_security_descriptor(void)
