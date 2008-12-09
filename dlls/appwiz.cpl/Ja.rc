@@ -38,8 +38,6 @@ STRINGTABLE
    IDS_COLUMN_VERSION, "バージョン"
 }
 
-/* TODO: it's best to use the constant WC_LISTVIEW instead of SysListView32 directly, but the Wine resource compiler doesn't seem to like that... */
-
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "インストールとアンインストール"
