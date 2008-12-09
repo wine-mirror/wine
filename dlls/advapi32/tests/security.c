@@ -1728,7 +1728,9 @@ static void test_LookupAccountName(void)
     sid_use = 0xcafebabe;
     SetLastError(0xdeadbeef);
     ret = LookupAccountNameA(NULL, NULL, NULL, &sid_size, NULL, &domain_size, &sid_use);
-    if (!ret && GetLastError() != ERROR_NONE_MAPPED)
+    if (!ret && GetLastError() == ERROR_NONE_MAPPED)
+        win_skip("NULL account name doesn't work on NT4\n");
+    else
     {
         ok(!ret, "Expected 0, got %d\n", ret);
         ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
@@ -1753,8 +1755,6 @@ static void test_LookupAccountName(void)
         HeapFree(GetProcessHeap(), 0, psid);
         HeapFree(GetProcessHeap(), 0, domain);
     }
-    else
-        win_skip("NULL account name doesn't work on NT4\n");
 
     /* try an invalid account name */
     SetLastError(0xdeadbeef);
