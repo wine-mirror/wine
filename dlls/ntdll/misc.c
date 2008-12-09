@@ -22,6 +22,9 @@
 
 #include <time.h>
 #include <math.h>
+#ifdef HAVE_SYS_UTSNAME_H
+#include <sys/utsname.h>
+#endif
 
 #include "wine/library.h"
 #include "wine/debug.h"
@@ -153,6 +156,28 @@ const char * CDECL NTDLL_wine_get_version(void)
 const char * CDECL NTDLL_wine_get_build_id(void)
 {
     return wine_get_build_id();
+}
+
+/*********************************************************************
+ *                  wine_get_host_version   (NTDLL.@)
+ */
+void CDECL NTDLL_wine_get_host_version( const char **sysname, const char **release )
+{
+#ifdef HAVE_SYS_UTSNAME_H
+    static struct utsname buf;
+    static int init_done;
+
+    if (!init_done)
+    {
+        uname( &buf );
+        init_done = 1;
+    }
+    if (sysname) *sysname = buf.sysname;
+    if (release) *release = buf.release;
+#else
+    if (sysname) *sysname = "";
+    if (release) *release = "";
+#endif
 }
 
 /*********************************************************************

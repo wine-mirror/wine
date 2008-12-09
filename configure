@@ -7437,6 +7437,7 @@ done
 
 
 
+
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
@@ -7543,6 +7544,7 @@ for ac_header in \
 	sys/times.h \
 	sys/uio.h \
 	sys/un.h \
+	sys/utsname.h \
 	sys/vm86.h \
 	sys/wait.h \
 	syscall.h \

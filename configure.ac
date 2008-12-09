@@ -344,6 +344,7 @@ AC_CHECK_HEADERS(\
 	sys/times.h \
 	sys/uio.h \
 	sys/un.h \
+	sys/utsname.h \
 	sys/vm86.h \
 	sys/wait.h \
 	syscall.h \
