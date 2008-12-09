@@ -149,7 +149,7 @@ static BOOL expect_InPlaceUIWindow_SetActiveObject_active = TRUE;
 static BOOL ipsex;
 static BOOL set_clientsite = FALSE, container_locked = FALSE;
 static BOOL readystate_set_loading = FALSE, load_from_stream;
-static BOOL editmode = FALSE;
+static BOOL editmode = FALSE, show_failed;
 static int stream_read, protocol_read;
 static enum load_state_t {
     LD_DOLOAD,
@@ -1732,6 +1732,14 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 expect_status_text = (load_state == LD_COMPLETE ? (LPCOLESTR)0xdeadbeef : NULL);
 
                 hres = IOleDocumentView_Show(view, TRUE);
+                if(FAILED(hres)) {
+                    win_skip("Show failed\n");
+                    if(activeobj)
+                        IOleInPlaceActiveObject_Release(activeobj);
+                    IOleDocument_Release(document);
+                    show_failed = TRUE;
+                    return S_OK;
+                }
                 ok(hres == S_OK, "Show failed: %08x\n", hres);
 
                 CHECK_CALLED(CanInPlaceActivate);
@@ -3891,6 +3899,10 @@ static void test_HTMLDocument_hlink(void)
     test_GetCurMoniker(unk, NULL, NULL);
     test_Persist(unk);
     test_Navigate(unk);
+    if(show_failed) {
+        IUnknown_Release(unk);
+        return;
+    }
 
     test_download(FALSE, TRUE, TRUE);
 
@@ -4126,12 +4138,14 @@ START_TEST(htmldoc)
     container_hwnd = create_container_window();
     register_protocol();
 
-    test_HTMLDocument(FALSE);
-    test_HTMLDocument(TRUE);
     test_HTMLDocument_hlink();
-    test_HTMLDocument_StreamLoad();
-    test_editing_mode(FALSE);
-    test_editing_mode(TRUE);
+    if(!show_failed) {
+        test_HTMLDocument(FALSE);
+        test_HTMLDocument(TRUE);
+        test_HTMLDocument_StreamLoad();
+        test_editing_mode(FALSE);
+        test_editing_mode(TRUE);
+    }
 
     DestroyWindow(container_hwnd);
     CoUninitialize();
