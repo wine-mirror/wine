@@ -1917,7 +1917,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
             settings->op[i].aop = WINED3DTOP_DISABLE;
             settings->op[i].carg0 = settings->op[i].carg1 = settings->op[i].carg2 = ARG_UNUSED;
             settings->op[i].aarg0 = settings->op[i].aarg1 = settings->op[i].aarg2 = ARG_UNUSED;
-            settings->op[i].color_correction = COLOR_FIXUP_IDENTITY;
+            settings->op[i].color_fixup = COLOR_FIXUP_IDENTITY;
             settings->op[i].dst = resultreg;
             settings->op[i].tex_type = tex_1d;
             settings->op[i].projected = proj_none;
@@ -1927,7 +1927,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
 
         texture = (IWineD3DBaseTextureImpl *) stateblock->textures[i];
         if(texture) {
-            settings->op[i].color_correction = texture->baseTexture.shader_color_fixup;
+            settings->op[i].color_fixup = texture->baseTexture.shader_color_fixup;
             if(ignore_textype) {
                 settings->op[i].tex_type = tex_1d;
             } else {
@@ -1950,7 +1950,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
                 }
             }
         } else {
-            settings->op[i].color_correction = COLOR_FIXUP_IDENTITY;
+            settings->op[i].color_fixup = COLOR_FIXUP_IDENTITY;
             settings->op[i].tex_type = tex_1d;
         }
 

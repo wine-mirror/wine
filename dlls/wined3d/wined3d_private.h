@@ -935,7 +935,7 @@ struct texture_stage_op
     unsigned                aarg2 : 8;
     unsigned                aarg0 : 8;
 
-    struct color_fixup_desc color_correction;
+    struct color_fixup_desc color_fixup;
     unsigned                tex_type : 3;
     unsigned                dst : 1;
     unsigned                projected : 2;

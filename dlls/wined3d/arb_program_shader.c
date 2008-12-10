@@ -2811,7 +2811,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
 
         sprintf(colorcor_dst, "tex%u", stage);
         gen_color_correction(&buffer, colorcor_dst, WINED3DSP_WRITEMASK_ALL, "const.x", "const.y",
-                settings->op[stage].color_correction);
+                settings->op[stage].color_fixup);
     }
 
     /* Generate the main shader */
