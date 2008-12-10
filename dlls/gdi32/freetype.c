@@ -132,6 +132,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
 #ifdef HAVE_FREETYPE_FTMODAPI_H
 #include <freetype/ftmodapi.h>
 #endif
+#ifdef HAVE_FREETYPE_FTLCDFIL_H
+#include <freetype/ftlcdfil.h>
+#endif
 
 #ifndef HAVE_FT_TRUETYPEENGINETYPE
 typedef enum
@@ -179,7 +182,9 @@ MAKE_FUNCPTR(FT_Select_Charmap);
 MAKE_FUNCPTR(FT_Set_Charmap);
 MAKE_FUNCPTR(FT_Set_Pixel_Sizes);
 MAKE_FUNCPTR(FT_Vector_Transform);
+MAKE_FUNCPTR(FT_Render_Glyph);
 static void (*pFT_Library_Version)(FT_Library,FT_Int*,FT_Int*,FT_Int*);
+static FT_Error (*pFT_Library_SetLcdFilter)(FT_Library, FT_LcdFilter);
 static FT_Error (*pFT_Load_Sfnt_Table)(FT_Face,FT_ULong,FT_Long,FT_Byte*,FT_ULong*);
 static FT_ULong (*pFT_Get_First_Char)(FT_Face,FT_UInt*);
 static FT_ULong (*pFT_Get_Next_Char)(FT_Face,FT_ULong,FT_UInt*);
@@ -2481,10 +2486,12 @@ static BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Set_Charmap)
     LOAD_FUNCPTR(FT_Set_Pixel_Sizes)
     LOAD_FUNCPTR(FT_Vector_Transform)
+    LOAD_FUNCPTR(FT_Render_Glyph)
 
 #undef LOAD_FUNCPTR
     /* Don't warn if these ones are missing */
     pFT_Library_Version = wine_dlsym(ft_handle, "FT_Library_Version", NULL, 0);
+    pFT_Library_SetLcdFilter = wine_dlsym(ft_handle, "FT_Library_SetLcdFilter", NULL, 0);
     pFT_Load_Sfnt_Table = wine_dlsym(ft_handle, "FT_Load_Sfnt_Table", NULL, 0);
     pFT_Get_First_Char = wine_dlsym(ft_handle, "FT_Get_First_Char", NULL, 0);
     pFT_Get_Next_Char = wine_dlsym(ft_handle, "FT_Get_Next_Char", NULL, 0);
@@ -4491,8 +4498,12 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
         needsTransform = TRUE;
     }
 
-    if (needsTransform || (format != GGO_METRICS && format != GGO_BITMAP && format != WINE_GGO_GRAY16_BITMAP))
+    if (needsTransform || (format == GGO_NATIVE || format == GGO_BEZIER ||
+                           format == GGO_GRAY2_BITMAP || format == GGO_GRAY4_BITMAP ||
+                           format == GGO_GRAY8_BITMAP))
+    {
         load_flags |= FT_LOAD_NO_BITMAP;
+    }
 
     err = pFT_Load_Glyph(ft_face, glyph_index, load_flags);
 
@@ -4563,7 +4574,9 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
           wine_dbgstr_point(&lpgm->gmptGlyphOrigin),
           lpgm->gmCellIncX, lpgm->gmCellIncY);
 
-    if ((format == GGO_METRICS || format == GGO_BITMAP || format ==  WINE_GGO_GRAY16_BITMAP) &&
+    if ((format == GGO_METRICS || format == GGO_BITMAP || format ==  WINE_GGO_GRAY16_BITMAP ||
+         format == WINE_GGO_HRGB_BITMAP || format == WINE_GGO_HBGR_BITMAP ||
+         format == WINE_GGO_VRGB_BITMAP || format == WINE_GGO_VBGR_BITMAP ) &&
         (!lpmat || is_identity_MAT2(lpmat))) /* don't cache custom transforms */
     {
         FONT_GM(font,original_index)->gm = *lpgm;
@@ -4579,7 +4592,11 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
         return 1; /* FIXME */
     }
 
-    if(ft_face->glyph->format != ft_glyph_format_outline && format != GGO_BITMAP && format != WINE_GGO_GRAY16_BITMAP) {
+    if(ft_face->glyph->format != ft_glyph_format_outline &&
+       (needsTransform || format == GGO_NATIVE || format == GGO_BEZIER ||
+                          format == GGO_GRAY2_BITMAP || format == GGO_GRAY4_BITMAP ||
+                          format == GGO_GRAY8_BITMAP))
+    {
         TRACE("loaded a bitmap\n");
         LeaveCriticalSection( &freetype_cs );
 	return GDI_ERROR;
@@ -4712,6 +4729,112 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
 	    start += pitch;
 	}
 	break;
+      }
+
+    case WINE_GGO_HRGB_BITMAP:
+    case WINE_GGO_HBGR_BITMAP:
+    case WINE_GGO_VRGB_BITMAP:
+    case WINE_GGO_VBGR_BITMAP:
+      {
+        width  = lpgm->gmBlackBoxX;
+        height = lpgm->gmBlackBoxY;
+        pitch  = width * 4;
+        needed = pitch * height;
+
+        if (!buf || !buflen) break;
+
+        memset(buf, 0, buflen);
+
+        switch (ft_face->glyph->format)
+        {
+        case FT_GLYPH_FORMAT_BITMAP:
+          {
+            BYTE *src = ft_face->glyph->bitmap.buffer, *dst = buf;
+            INT src_pitch = ft_face->glyph->bitmap.pitch;
+            INT x;
+
+            while ( height-- )
+            {
+                for (x = 0; x < width; x++)
+                {
+                    if ( src[x / 8] & (1 << ( (7 - (x % 8)))) )
+                        ((unsigned int *)dst)[x] = ~0u;
+                }
+                src += src_pitch;
+                dst += pitch;
+            }
+
+            break;
+          }
+
+        case FT_GLYPH_FORMAT_OUTLINE:
+          {
+            unsigned int *dst = (unsigned int *) buf;
+            BYTE *src;
+            INT x, src_pitch, rgb_interval, hmul, vmul;
+            BOOL rgb = (format == WINE_GGO_HRGB_BITMAP || format == WINE_GGO_VRGB_BITMAP);
+            FT_LcdFilter lcdfilter = FT_LCD_FILTER_DEFAULT;
+            FT_Render_Mode render_mode =
+                (format == WINE_GGO_HRGB_BITMAP || format == WINE_GGO_HBGR_BITMAP)?
+                    FT_RENDER_MODE_LCD: FT_RENDER_MODE_LCD_V;
+
+            if ( needsTransform )
+                pFT_Outline_Transform (&ft_face->glyph->outline, &transMat);
+            pFT_Outline_Translate (&ft_face->glyph->outline, -left, -bottom );
+            if ( pFT_Library_SetLcdFilter )
+                pFT_Library_SetLcdFilter( library, lcdfilter );
+            pFT_Render_Glyph (ft_face->glyph, render_mode);
+
+            src = ft_face->glyph->bitmap.buffer;
+            src_pitch = ft_face->glyph->bitmap.pitch;
+            if ( render_mode == FT_RENDER_MODE_LCD)
+            {
+                rgb_interval = 1;
+                hmul = 3;
+                vmul = 1;
+            }
+            else
+            {
+                rgb_interval = src_pitch;
+                hmul = 1;
+                vmul = 3;
+            }
+
+            if ( lcdfilter == FT_LCD_FILTER_DEFAULT || lcdfilter == FT_LCD_FILTER_LIGHT )
+                src += rgb_interval * 3;
+            while ( height-- )
+            {
+                for ( x = 0; x < width; x++ )
+                {
+                    if ( rgb )
+                    {
+                        dst[x] = ((unsigned int)src[hmul * x + rgb_interval * 0] << 16) |
+                                 ((unsigned int)src[hmul * x + rgb_interval * 1] <<  8) |
+                                 ((unsigned int)src[hmul * x + rgb_interval * 2] <<  0) |
+                                 ((unsigned int)src[hmul * x + rgb_interval * 1] << 24) ;
+                    }
+                    else
+                    {
+                        dst[x] = ((unsigned int)src[hmul * x + rgb_interval * 2] << 16) |
+                                 ((unsigned int)src[hmul * x + rgb_interval * 1] <<  8) |
+                                 ((unsigned int)src[hmul * x + rgb_interval * 0] <<  0) |
+                                 ((unsigned int)src[hmul * x + rgb_interval * 1] << 24) ;
+                    }
+                }
+                src += src_pitch * vmul;
+                dst += pitch / 4;
+            }
+
+            break;
+          }
+
+        default:
+            FIXME ("loaded glyph format %x\n", ft_face->glyph->format);
+            LeaveCriticalSection ( &freetype_cs );
+            return GDI_ERROR;
+        }
+
+        break;
       }
 
     case GGO_NATIVE:
@@ -5792,12 +5915,24 @@ static BOOL is_hinting_enabled(void)
     return FALSE;
 }
 
+static BOOL is_subpixel_rendering_enabled( void )
+{
+    if ( !pFT_Library_SetLcdFilter )
+        return FALSE;
+
+    if ( pFT_Library_SetLcdFilter ( NULL, 0 ) == FT_Err_Unimplemented_Feature )
+        return FALSE;
+
+    return TRUE;
+}
+
 /*************************************************************************
  *             GetRasterizerCaps   (GDI32.@)
  */
 BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
 {
     static int hinting = -1;
+    static int subpixel = -1;
 
     if(hinting == -1)
     {
@@ -5805,8 +5940,16 @@ BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
         TRACE("hinting is %senabled\n", hinting ? "" : "NOT ");
     }
 
+    if ( subpixel == -1 )
+    {
+        subpixel = is_subpixel_rendering_enabled();
+        TRACE("subpixel rendering is %senabled\n", subpixel ? "" : "NOT ");
+    }
+
     lprs->nSize = sizeof(RASTERIZER_STATUS);
     lprs->wFlags = TT_AVAILABLE | TT_ENABLED | (hinting ? WINE_TT_HINTER_ENABLED : 0);
+    if ( subpixel )
+        lprs->wFlags |= WINE_TT_SUBPIXEL_RENDERING_ENABLED;
     lprs->nLanguageID = 0;
     return TRUE;
 }

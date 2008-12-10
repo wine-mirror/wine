@@ -14591,6 +14591,7 @@ for ac_header in ft2build.h \
                          freetype/ftoutln.h \
                          freetype/ftwinfnt.h \
                          freetype/ftmodapi.h \
+                         freetype/ftlcdfil.h \
                          freetype/internal/sfnt.h
 do
 as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`

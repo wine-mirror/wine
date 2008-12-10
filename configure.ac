@@ -1040,6 +1040,7 @@ then
                          freetype/ftoutln.h \
                          freetype/ftwinfnt.h \
                          freetype/ftmodapi.h \
+                         freetype/ftlcdfil.h \
                          freetype/internal/sfnt.h,,,
                          [#ifdef HAVE_FT2BUILD_H
                           # include <ft2build.h>

@@ -142,8 +142,10 @@ static CRITICAL_SECTION xrender_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 #ifdef WORDS_BIGENDIAN
 #define get_be_word(x) (x)
+#define NATIVE_BYTE_ORDER MSBFirst
 #else
 #define get_be_word(x) RtlUshortByteSwap(x)
+#define NATIVE_BYTE_ORDER LSBFirst
 #endif
 
 /***********************************************************************
@@ -456,6 +458,7 @@ static int GetCacheEntry(X11DRV_PDEVICE *physDev, LFANDSIZE *plfsz)
     gsCacheEntry *entry;
     WORD flags;
     static int hinter = -1;
+    static int subpixel = -1;
 
     if((ret = LookupEntry(plfsz)) != -1) return ret;
 
@@ -468,13 +471,24 @@ static int GetCacheEntry(X11DRV_PDEVICE *physDev, LFANDSIZE *plfsz)
 
     if(antialias && plfsz->lf.lfQuality != NONANTIALIASED_QUALITY)
     {
-        if(hinter == -1)
+        if(hinter == -1 || subpixel == -1)
         {
             RASTERIZER_STATUS status;
             GetRasterizerCaps(&status, sizeof(status));
             hinter = status.wFlags & WINE_TT_HINTER_ENABLED;
+            subpixel = status.wFlags & WINE_TT_SUBPIXEL_RENDERING_ENABLED;
         }
-        if(!hinter || !get_gasp_flags(physDev, &flags) || flags & GASP_DOGRAY)
+
+        /* FIXME: Use the following registry information
+           [HKEY_CURRENT_USER\Control Panel\Desktop]
+           "FontSmoothing"="2"                       ; 0=>Off, 2=>On
+           "FontSmoothingType"=dword:00000002        ; 1=>Standard, 2=>Cleartype
+           "FontSmoothingOrientation"=dword:00000001 ; 0=>BGR, 1=>RGB
+           "FontSmoothingGamma"=dword:00000578
+         */
+        if ( subpixel && X11DRV_XRender_Installed)
+            entry->aa_default = AA_RGB;
+        else if(!hinter || !get_gasp_flags(physDev, &flags) || flags & GASP_DOGRAY)
             entry->aa_default = AA_Grey;
         else
             entry->aa_default = AA_None;
@@ -610,11 +624,24 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
     gsCacheEntryFormat *formatEntry;
     UINT ggo_format = GGO_GLYPH_INDEX;
     XRenderPictFormat pf;
+    unsigned long pf_mask;
     static const char zero[4];
 
     switch(format) {
     case AA_Grey:
 	ggo_format |= WINE_GGO_GRAY16_BITMAP;
+	break;
+    case AA_RGB:
+	ggo_format |= WINE_GGO_HRGB_BITMAP;
+	break;
+    case AA_BGR:
+	ggo_format |= WINE_GGO_HBGR_BITMAP;
+	break;
+    case AA_VRGB:
+	ggo_format |= WINE_GGO_VRGB_BITMAP;
+	break;
+    case AA_VBGR:
+	ggo_format |= WINE_GGO_VBGR_BITMAP;
 	break;
 
     default:
@@ -630,8 +657,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
         if(format != AA_None) {
             format = AA_None;
             entry->aa_default = AA_None;
-            ggo_format &= ~WINE_GGO_GRAY16_BITMAP;
-            ggo_format |= GGO_BITMAP;
+            ggo_format = GGO_GLYPH_INDEX | GGO_BITMAP;
             buflen = GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, 0, NULL,
                                       NULL);
         }
@@ -689,29 +715,45 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
     if(formatEntry->glyphset == 0 && X11DRV_XRender_Installed) {
         switch(format) {
 	case AA_Grey:
+	    pf_mask = PictFormatType | PictFormatDepth | PictFormatAlpha | PictFormatAlphaMask,
+	    pf.type = PictTypeDirect;
 	    pf.depth = 8;
+	    pf.direct.alpha = 0;
 	    pf.direct.alphaMask = 0xff;
 	    break;
+
+        case AA_RGB:
+        case AA_BGR:
+        case AA_VRGB:
+        case AA_VBGR:
+	    pf_mask = PictFormatType | PictFormatDepth | PictFormatRed | PictFormatRedMask |
+                      PictFormatGreen | PictFormatGreenMask | PictFormatBlue |
+                      PictFormatBlueMask | PictFormatAlpha | PictFormatAlphaMask;
+            pf.type             = PictTypeDirect;
+            pf.depth            = 32;
+            pf.direct.red       = 16;
+            pf.direct.redMask   = 0xff;
+            pf.direct.green     = 8;
+            pf.direct.greenMask = 0xff;
+            pf.direct.blue      = 0;
+            pf.direct.blueMask  = 0xff;
+            pf.direct.alpha     = 24;
+            pf.direct.alphaMask = 0xff;
+            break;
 
 	default:
 	    ERR("aa = %d - not implemented\n", format);
 	case AA_None:
+	    pf_mask = PictFormatType | PictFormatDepth | PictFormatAlpha | PictFormatAlphaMask,
+	    pf.type = PictTypeDirect;
 	    pf.depth = 1;
+	    pf.direct.alpha = 0;
 	    pf.direct.alphaMask = 1;
 	    break;
 	}
 
-	pf.type = PictTypeDirect;
-	pf.direct.alpha = 0;
-
 	wine_tsx11_lock();
-	formatEntry->font_format = pXRenderFindFormat(gdi_display,
-						PictFormatType |
-						PictFormatDepth |
-						PictFormatAlpha |
-						PictFormatAlphaMask,
-						&pf, 0);
-
+	formatEntry->font_format = pXRenderFindFormat(gdi_display, pf_mask, &pf, 0);
 	formatEntry->glyphset = pXRenderCreateGlyphSet(gdi_display, formatEntry->font_format);
 	wine_tsx11_unlock();
     }
@@ -783,6 +825,12 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
 		*byte++ = c;
 	    }
 	}
+        else if ( format != AA_Grey &&
+                  ImageByteOrder (gdi_display) != NATIVE_BYTE_ORDER)
+        {
+            unsigned int i, *data = (unsigned int *)buf;
+            for (i = buflen / sizeof(int); i; i--, data++) *data = RtlUlongByteSwap(*data);
+        }
 	gid = glyph;
 
         /*

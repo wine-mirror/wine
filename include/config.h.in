@@ -117,6 +117,9 @@
 /* Define to 1 if you have the <freetype/ftglyph.h> header file. */
 #undef HAVE_FREETYPE_FTGLYPH_H
 
+/* Define to 1 if you have the <freetype/ftlcdfil.h> header file. */
+#undef HAVE_FREETYPE_FTLCDFIL_H
+
 /* Define to 1 if you have the <freetype/ftmodapi.h> header file. */
 #undef HAVE_FREETYPE_FTMODAPI_H
 
