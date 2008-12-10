@@ -191,7 +191,6 @@ static HRESULT invoke_constructor(FunctionInstance *function, LCID lcid, DISPPAR
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     DispatchEx *this_obj;
-    VARIANT var;
     HRESULT hres;
 
     hres = create_object(function->dispex.ctx, &function->dispex, &this_obj);
@@ -203,7 +202,6 @@ static HRESULT invoke_constructor(FunctionInstance *function, LCID lcid, DISPPAR
     if(FAILED(hres))
         return hres;
 
-    VariantClear(&var);
     V_VT(retv) = VT_DISPATCH;
     V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(this_obj);
     return S_OK;

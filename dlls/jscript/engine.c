@@ -1499,7 +1499,7 @@ HRESULT new_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, j
 HRESULT call_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
     call_expression_t *expr = (call_expression_t*)_expr;
-    VARIANT func, var;
+    VARIANT var;
     exprval_t exprval;
     DISPPARAMS dp;
     HRESULT hres;
@@ -1520,7 +1520,7 @@ HRESULT call_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, 
                 V_VT(&var) = VT_EMPTY;
             break;
         default:
-            FIXME("unimplemented type %d\n", V_VT(&func));
+            FIXME("unimplemented type %d\n", exprval.type);
             hres = E_NOTIMPL;
         }
 
