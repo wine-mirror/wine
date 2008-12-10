@@ -543,13 +543,11 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         }
 
         for (i = 0; i < GL_LIMITS(clipplanes); i++) {
-            if (This->changed.clipplane[i] && memcmp(targetStateBlock->clipplane[i],
-                                                        This->clipplane[i],
-                                                        sizeof(This->clipplane)) != 0) {
-
+            if (This->changed.clipplane[i]
+                    && memcmp(targetStateBlock->clipplane[i], This->clipplane[i], sizeof(*This->clipplane)))
+            {
                 TRACE("Updating clipplane %d\n", i);
-                memcpy(This->clipplane[i], targetStateBlock->clipplane[i],
-                                        sizeof(This->clipplane));
+                memcpy(This->clipplane[i], targetStateBlock->clipplane[i], sizeof(*This->clipplane));
             }
         }
 
