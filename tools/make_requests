@@ -22,31 +22,31 @@
 use strict;
 
 my %formats =
-(
-    "int"           => "%d",
-    "short int"     => "%d",
-    "char"          => "%c",
-    "unsigned char" => "%02x",
-    "unsigned short"=> "%04x",
-    "unsigned int"  => "%08x",
-    "unsigned long" => "%lx",
-    "void*"         => "%p",
-    "data_size_t"   => "%u",
-    "obj_handle_t"  => "%04x",
-    "atom_t"        => "%04x",
-    "user_handle_t" => "%08x",
-    "process_id_t"  => "%04x",
-    "thread_id_t"   => "%04x",
-    "lparam_t"      => "%lx",
-    "timeout_t"     => "&dump_timeout",
-    "rectangle_t"   => "&dump_rectangle",
-    "char_info_t"   => "&dump_char_info",
-    "apc_call_t"    => "&dump_apc_call",
-    "apc_result_t"  => "&dump_apc_result",
-    "async_data_t"  => "&dump_async_data",
-    "luid_t"        => "&dump_luid",
-    "ioctl_code_t"  => "&dump_ioctl_code",
-    "file_pos_t"    => "&dump_file_pos",
+(                     # size align format
+    "int"           => [  4,   4,  "%d" ],
+    "short int"     => [  2,   2,  "%d" ],
+    "char"          => [  1,   1,  "%c" ],
+    "unsigned char" => [  1,   1,  "%02x" ],
+    "unsigned short"=> [  2,   2,  "%04x" ],
+    "unsigned int"  => [  4,   4,  "%08x" ],
+    "unsigned long" => [  4,   4,  "%lx" ],
+    "void*"         => [  4,   4,  "%p" ],
+    "data_size_t"   => [  4,   4,  "%u" ],
+    "obj_handle_t"  => [  4,   4,  "%04x" ],
+    "atom_t"        => [  2,   2,  "%04x" ],
+    "user_handle_t" => [  4,   4,  "%08x" ],
+    "process_id_t"  => [  4,   4,  "%04x" ],
+    "thread_id_t"   => [  4,   4,  "%04x" ],
+    "lparam_t"      => [  4,   4,  "%lx" ],
+    "timeout_t"     => [  8,   8,  "&dump_timeout" ],
+    "rectangle_t"   => [  16,  4,  "&dump_rectangle" ],
+    "char_info_t"   => [  4,   2,  "&dump_char_info" ],
+    "apc_call_t"    => [  32,  4,  "&dump_apc_call" ],
+    "apc_result_t"  => [  28,  4,  "&dump_apc_result" ],
+    "async_data_t"  => [  28,  4,  "&dump_async_data" ],
+    "luid_t"        => [  8,   4,  "&dump_luid" ],
+    "ioctl_code_t"  => [  4,   4,  "&dump_ioctl_code" ],
+    "file_pos_t"    => [  8,   8,  "&dump_file_pos" ],
 );
 
 my @requests = ();
@@ -54,7 +54,9 @@ my %replies = ();
 
 my @trace_lines = ();
 
+my $max_req_size = 64;
 
+my $warnings = scalar(@ARGV) && $ARGV[0] eq "-w";
 
 ### Generate a dumping function
 
@@ -69,14 +71,15 @@ sub DO_DUMP_FUNC($$@)
 	my $var = shift;
 	if (defined($formats{$type}))
 	{
-            if ($formats{$type} =~ /^&(.*)/)
+            my $fmt = ${$formats{$type}}[2];
+            if ($fmt =~ /^&(.*)/)
             {
                 my $func = $1;
                 push @trace_lines, "    fprintf( stderr, \" $var=\" );\n";
                 push @trace_lines, "    $func( &req->$var );\n";
                 push @trace_lines, "    fprintf( stderr, \",\" );\n" if ($#_ > 0);
             }
-            elsif ($formats{$type} =~ /^(%.*)\s+\((.*)\)/)
+            elsif ($fmt =~ /^(%.*)\s+\((.*)\)/)
             {
                 my ($format, $cast) = ($1, $2);
                 push @trace_lines, "    fprintf( stderr, \" $var=$format";
@@ -85,7 +88,7 @@ sub DO_DUMP_FUNC($$@)
             }
             else
             {
-                push @trace_lines, "    fprintf( stderr, \" $var=$formats{$type}";
+                push @trace_lines, "    fprintf( stderr, \" $var=$fmt";
                 push @trace_lines, "," if ($#_ > 0);
                 push @trace_lines, "\", req->$var );\n";
             }
@@ -107,6 +110,7 @@ sub PARSE_REQUESTS()
 {
     # states: 0 = header 1 = declarations 2 = inside @REQ 3 = inside @REPLY
     my $state = 0;
+    my $offset = 0;
     my $name = "";
     my @in_struct = ();
     my @out_struct = ();
@@ -138,6 +142,7 @@ sub PARSE_REQUESTS()
             # start a new request
             @in_struct = ();
             @out_struct = ();
+            $offset = 12;
             print SERVER_PROT "struct ${name}_request\n{\n";
             print SERVER_PROT "    struct request_header __header;\n";
             $state++;
@@ -150,6 +155,8 @@ sub PARSE_REQUESTS()
             print SERVER_PROT "};\n";
             print SERVER_PROT "struct ${name}_reply\n{\n";
             print SERVER_PROT "    struct reply_header __header;\n";
+            die "request $name too large ($offset)" if ($offset > $max_req_size);
+            $offset = 8;
             $state++;
             next;
         }
@@ -161,11 +168,15 @@ sub PARSE_REQUESTS()
 
             if ($state == 2)  # build dummy reply struct
             {
+                die "request $name too large ($offset)" if ($offset > $max_req_size);
                 print SERVER_PROT "struct ${name}_reply\n{\n";
                 print SERVER_PROT "    struct reply_header __header;\n";
                 print SERVER_PROT "};\n";
             }
-
+            else
+            {
+                die "reply $name too large ($offset)" if ($offset > $max_req_size);
+            }
             # got a complete request
             push @requests, $name;
             DO_DUMP_FUNC( $name, "request", @in_struct);
@@ -204,6 +215,13 @@ sub PARSE_REQUESTS()
                 $type = $1;
                 $var = $3;
                 die "Unrecognized type $type" unless defined($formats{$type});
+                my @fmt = @{$formats{$type}};
+                if ($offset & ($fmt[1] - 1))
+                {
+                    print "protocol.def:$.: warning: $name $offset $type $var needs padding\n" if $warnings;
+                }
+                $offset = ($offset + $fmt[1] - 1) & ~($fmt[1] - 1);
+                $offset += $fmt[0];
             }
             else
             {
