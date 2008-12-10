@@ -637,6 +637,10 @@ static HRESULT WINAPI OLEPictureImpl_Render(IPicture *iface, HDC hdc,
     TRACE("prcWBounds (%d,%d) - (%d,%d)\n", prcWBounds->left, prcWBounds->top,
 	  prcWBounds->right, prcWBounds->bottom);
 
+  if(cx == 0 || cy == 0 || cxSrc == 0 || cySrc == 0){
+    return CTL_E_INVALIDPROPERTYVALUE;
+  }
+
   /*
    * While the documentation suggests this to be here (or after rendering?)
    * it does cause an endless recursion in my sample app. -MM 20010804
@@ -644,6 +648,10 @@ static HRESULT WINAPI OLEPictureImpl_Render(IPicture *iface, HDC hdc,
    */
 
   switch(This->desc.picType) {
+  case PICTYPE_UNINITIALIZED:
+  case PICTYPE_NONE:
+    /* nothing to do */
+    return S_OK;
   case PICTYPE_BITMAP:
     {
       HBITMAP hbmpOld;

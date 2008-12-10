@@ -25,6 +25,7 @@
 #include <float.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include "wine/test.h"
 #include <windef.h>
@@ -587,6 +588,69 @@ static void test_enhmetafile(void)
     GlobalFree(hglob);
 }
 
+static void test_Render(void)
+{
+    IPicture *pic;
+    HRESULT hres;
+    short type;
+    PICTDESC desc;
+    HDC hdc = GetDC(0);
+
+    /* test IPicture::Render return code on uninitialized picture */
+    OleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, (VOID**)&pic);
+    hres = IPicture_get_Type(pic, &type);
+    ok(hres == S_OK, "IPicture_get_Type does not return S_OK, but 0x%08x\n", hres);
+    ok(type == PICTYPE_UNINITIALIZED, "Expected type = PICTYPE_UNINITIALIZED, got = %d\n", type);
+    /* zero dimensions */
+    hres = IPicture_Render(pic, hdc, 0, 0, 0, 0, 0, 0, 0, 0, NULL);
+    ole_expect(hres, CTL_E_INVALIDPROPERTYVALUE);
+    hres = IPicture_Render(pic, hdc, 0, 0, 10, 10, 0, 0, 10, 0, NULL);
+    ole_expect(hres, CTL_E_INVALIDPROPERTYVALUE);
+    hres = IPicture_Render(pic, hdc, 0, 0, 10, 10, 0, 0, 0, 10, NULL);
+    ole_expect(hres, CTL_E_INVALIDPROPERTYVALUE);
+    hres = IPicture_Render(pic, hdc, 0, 0, 10, 10, 0, 0, 0, 0, NULL);
+    ole_expect(hres, CTL_E_INVALIDPROPERTYVALUE);
+    hres = IPicture_Render(pic, hdc, 0, 0, 0, 10, 0, 0, 10, 10, NULL);
+    ole_expect(hres, CTL_E_INVALIDPROPERTYVALUE);
+    hres = IPicture_Render(pic, hdc, 0, 0, 10, 0, 0, 0, 10, 10, NULL);
+    ole_expect(hres, CTL_E_INVALIDPROPERTYVALUE);
+    hres = IPicture_Render(pic, hdc, 0, 0, 0, 0, 0, 0, 10, 10, NULL);
+    ole_expect(hres, CTL_E_INVALIDPROPERTYVALUE);
+    /* nonzero dimensions, PICTYPE_UNINITIALIZED */
+    hres = IPicture_Render(pic, hdc, 0, 0, 10, 10, 0, 0, 10, 10, NULL);
+    ole_expect(hres, S_OK);
+    IPicture_Release(pic);
+
+    desc.cbSizeofstruct = sizeof(PICTDESC);
+    desc.picType = PICTYPE_ICON;
+    desc.u.icon.hicon = LoadIcon(NULL, IDI_APPLICATION);
+    if(!desc.u.icon.hicon){
+        win_skip("LoadIcon failed. Skipping...\n");
+        ReleaseDC(NULL, hdc);
+        return;
+    }
+
+    OleCreatePictureIndirect(&desc, &IID_IPicture, TRUE, (VOID**)&pic);
+    /* zero dimensions, PICTYPE_ICON */
+    hres = IPicture_Render(pic, hdc, 0, 0, 0, 0, 0, 0, 0, 0, NULL);
+    ole_expect(hres, CTL_E_INVALIDPROPERTYVALUE);
+    hres = IPicture_Render(pic, hdc, 0, 0, 10, 10, 0, 0, 10, 0, NULL);
+    ole_expect(hres, CTL_E_INVALIDPROPERTYVALUE);
+    hres = IPicture_Render(pic, hdc, 0, 0, 10, 10, 0, 0, 0, 10, NULL);
+    ole_expect(hres, CTL_E_INVALIDPROPERTYVALUE);
+    hres = IPicture_Render(pic, hdc, 0, 0, 10, 10, 0, 0, 0, 0, NULL);
+    ole_expect(hres, CTL_E_INVALIDPROPERTYVALUE);
+    hres = IPicture_Render(pic, hdc, 0, 0, 0, 10, 0, 0, 10, 10, NULL);
+    ole_expect(hres, CTL_E_INVALIDPROPERTYVALUE);
+    hres = IPicture_Render(pic, hdc, 0, 0, 10, 0, 0, 0, 10, 10, NULL);
+    ole_expect(hres, CTL_E_INVALIDPROPERTYVALUE);
+    hres = IPicture_Render(pic, hdc, 0, 0, 0, 0, 0, 0, 10, 10, NULL);
+    ole_expect(hres, CTL_E_INVALIDPROPERTYVALUE);
+    IPicture_Release(pic);
+
+    ReleaseDC(NULL, hdc);
+}
+
 START_TEST(olepicture)
 {
 	hOleaut32 = GetModuleHandleA("oleaut32.dll");
@@ -613,6 +677,7 @@ START_TEST(olepicture)
 
 	test_Invoke();
         test_OleCreatePictureIndirect();
+        test_Render();
 }
 
 
