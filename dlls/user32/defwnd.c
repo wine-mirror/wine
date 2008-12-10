@@ -758,6 +758,20 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             SendMessageW( hwnd, WM_HELP, 0, (LPARAM)&hi );
             break;
         }
+
+    case WM_INPUTLANGCHANGE:
+        {
+            int count = 0;
+            HWND *win_array = WIN_ListChildren( hwnd );
+
+            if (!win_array)
+                break;
+            while (win_array[count])
+                SendMessageW( win_array[count++], WM_INPUTLANGCHANGE, wParam, lParam);
+            HeapFree(GetProcessHeap(),0,win_array);
+            break;
+        }
+
     }
 
     return 0;
