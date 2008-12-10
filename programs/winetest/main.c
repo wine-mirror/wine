@@ -147,10 +147,23 @@ static int running_on_visible_desktop (void)
 
 static void print_version (void)
 {
+#ifdef __i386__
+    static const char platform[] = "i386";
+#elif defined(__x86_64__)
+    static const char platform[] = "x86_64";
+#elif defined(__sparc__)
+    static const char platform[] = "sparc";
+#elif defined(__ALPHA__)
+    static const char platform[] = "alpha";
+#elif defined(__powerpc__)
+    static const char platform[] = "powerpc";
+#endif
     OSVERSIONINFOEX ver;
-    BOOL ext;
+    BOOL ext, wow64;
     int is_win2k3_r2;
-    const char *(*wine_get_build_id)(void);
+    const char *(CDECL *wine_get_build_id)(void);
+    void (CDECL *wine_get_host_version)( const char **sysname, const char **release );
+    BOOL (WINAPI *pIsWow64Process)(HANDLE hProcess, PBOOL Wow64Process);
 
     ver.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
     if (!(ext = GetVersionEx ((OSVERSIONINFO *) &ver)))
@@ -159,7 +172,10 @@ static void print_version (void)
 	if (!GetVersionEx ((OSVERSIONINFO *) &ver))
 	    report (R_FATAL, "Can't get OS version.");
     }
+    pIsWow64Process = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"),"IsWow64Process");
+    if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &wow64 )) wow64 = FALSE;
 
+    xprintf ("    Platform=%s%s\n", platform, wow64 ? " (WOW64)" : "");
     xprintf ("    bRunningUnderWine=%d\n", running_under_wine ());
     xprintf ("    bRunningOnVisibleDesktop=%d\n", running_on_visible_desktop ());
     xprintf ("    dwMajorVersion=%u\n    dwMinorVersion=%u\n"
@@ -168,8 +184,14 @@ static void print_version (void)
              ver.dwPlatformId, ver.szCSDVersion);
 
     wine_get_build_id = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_build_id");
+    wine_get_host_version = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_host_version");
     if (wine_get_build_id) xprintf( "    WineBuild=%s\n", wine_get_build_id() );
-
+    if (wine_get_host_version)
+    {
+        const char *sysname, *release;
+        wine_get_host_version( &sysname, &release );
+        xprintf( "    Host system=%s\n    Host version=%s\n", sysname, release );
+    }
     is_win2k3_r2 = GetSystemMetrics(SM_SERVERR2);
     if(is_win2k3_r2)
         xprintf("    R2 build number=%d\n", is_win2k3_r2);
