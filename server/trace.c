@@ -590,8 +590,8 @@ static void dump_varargs_properties( data_size_t size )
     fputc( '{', stderr );
     while (len > 0)
     {
-        fprintf( stderr, "{atom=%04x,str=%d,handle=%04x}",
-                 prop->atom, prop->string, prop->handle );
+        fprintf( stderr, "{atom=%04x,str=%d,data=%lx}",
+                 prop->atom, prop->string, prop->data );
         prop++;
         if (--len) fputc( ',', stderr );
     }
@@ -2855,7 +2855,7 @@ static void dump_set_window_property_request( const struct set_window_property_r
 {
     fprintf( stderr, " window=%08x,", req->window );
     fprintf( stderr, " atom=%04x,", req->atom );
-    fprintf( stderr, " handle=%04x,", req->handle );
+    fprintf( stderr, " data=%lx,", req->data );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -2870,7 +2870,7 @@ static void dump_remove_window_property_request( const struct remove_window_prop
 
 static void dump_remove_window_property_reply( const struct remove_window_property_reply *req )
 {
-    fprintf( stderr, " handle=%04x", req->handle );
+    fprintf( stderr, " data=%lx", req->data );
 }
 
 static void dump_get_window_property_request( const struct get_window_property_request *req )
@@ -2883,7 +2883,7 @@ static void dump_get_window_property_request( const struct get_window_property_r
 
 static void dump_get_window_property_reply( const struct get_window_property_reply *req )
 {
-    fprintf( stderr, " handle=%04x", req->handle );
+    fprintf( stderr, " data=%lx", req->data );
 }
 
 static void dump_get_window_properties_request( const struct get_window_properties_request *req )

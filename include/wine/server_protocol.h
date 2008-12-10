@@ -144,7 +144,7 @@ typedef struct
 {
     atom_t         atom;
     short          string;
-    obj_handle_t   handle;
+    lparam_t       data;
 } property_data_t;
 
 
@@ -3144,7 +3144,7 @@ struct set_window_property_request
     struct request_header __header;
     user_handle_t  window;
     atom_t         atom;
-    obj_handle_t   handle;
+    lparam_t       data;
     /* VARARG(name,unicode_str); */
 };
 struct set_window_property_reply
@@ -3164,7 +3164,7 @@ struct remove_window_property_request
 struct remove_window_property_reply
 {
     struct reply_header __header;
-    obj_handle_t   handle;
+    lparam_t       data;
 };
 
 
@@ -3179,7 +3179,7 @@ struct get_window_property_request
 struct get_window_property_reply
 {
     struct reply_header __header;
-    obj_handle_t   handle;
+    lparam_t       data;
 };
 
 

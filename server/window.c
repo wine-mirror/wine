@@ -44,7 +44,7 @@ struct property
 {
     unsigned short type;     /* property type (see below) */
     atom_t         atom;     /* property atom */
-    obj_handle_t   handle;   /* property handle (user-defined storage) */
+    lparam_t       data;     /* property data (user-defined storage) */
 };
 
 enum property_type
@@ -262,7 +262,7 @@ static int add_handle_to_array( struct user_handle_array *array, user_handle_t h
 }
 
 /* set a window property */
-static void set_property( struct window *win, atom_t atom, obj_handle_t handle, enum property_type type )
+static void set_property( struct window *win, atom_t atom, lparam_t data, enum property_type type )
 {
     int i, free = -1;
     struct property *new_props;
@@ -278,7 +278,7 @@ static void set_property( struct window *win, atom_t atom, obj_handle_t handle, 
         if (win->properties[i].atom == atom)
         {
             win->properties[i].type = type;
-            win->properties[i].handle = handle;
+            win->properties[i].data = data;
             return;
         }
     }
@@ -303,13 +303,13 @@ static void set_property( struct window *win, atom_t atom, obj_handle_t handle, 
         }
         free = win->prop_inuse++;
     }
-    win->properties[free].atom   = atom;
-    win->properties[free].type   = type;
-    win->properties[free].handle = handle;
+    win->properties[free].atom = atom;
+    win->properties[free].type = type;
+    win->properties[free].data = data;
 }
 
 /* remove a window property */
-static obj_handle_t remove_property( struct window *win, atom_t atom )
+static lparam_t remove_property( struct window *win, atom_t atom )
 {
     int i;
 
@@ -320,7 +320,7 @@ static obj_handle_t remove_property( struct window *win, atom_t atom )
         {
             release_global_atom( NULL, atom );
             win->properties[i].type = PROP_TYPE_FREE;
-            return win->properties[i].handle;
+            return win->properties[i].data;
         }
     }
     /* FIXME: last error? */
@@ -328,14 +328,14 @@ static obj_handle_t remove_property( struct window *win, atom_t atom )
 }
 
 /* find a window property */
-static obj_handle_t get_property( struct window *win, atom_t atom )
+static lparam_t get_property( struct window *win, atom_t atom )
 {
     int i;
 
     for (i = 0; i < win->prop_inuse; i++)
     {
         if (win->properties[i].type == PROP_TYPE_FREE) continue;
-        if (win->properties[i].atom == atom) return win->properties[i].handle;
+        if (win->properties[i].atom == atom) return win->properties[i].data;
     }
     /* FIXME: last error? */
     return 0;
@@ -2358,11 +2358,11 @@ DECL_HANDLER(set_window_property)
         atom_t atom = add_global_atom( NULL, &name );
         if (atom)
         {
-            set_property( win, atom, req->handle, PROP_TYPE_STRING );
+            set_property( win, atom, req->data, PROP_TYPE_STRING );
             release_global_atom( NULL, atom );
         }
     }
-    else set_property( win, req->atom, req->handle, PROP_TYPE_ATOM );
+    else set_property( win, req->atom, req->data, PROP_TYPE_ATOM );
 }
 
 
@@ -2376,7 +2376,7 @@ DECL_HANDLER(remove_window_property)
     if (win)
     {
         atom_t atom = name.len ? find_global_atom( NULL, &name ) : req->atom;
-        if (atom) reply->handle = remove_property( win, atom );
+        if (atom) reply->data = remove_property( win, atom );
     }
 }
 
@@ -2391,7 +2391,7 @@ DECL_HANDLER(get_window_property)
     if (win)
     {
         atom_t atom = name.len ? find_global_atom( NULL, &name ) : req->atom;
-        if (atom) reply->handle = get_property( win, atom );
+        if (atom) reply->data = get_property( win, atom );
     }
 }
 
@@ -2418,7 +2418,7 @@ DECL_HANDLER(get_window_properties)
         if (win->properties[i].type == PROP_TYPE_FREE) continue;
         data->atom   = win->properties[i].atom;
         data->string = (win->properties[i].type == PROP_TYPE_STRING);
-        data->handle = win->properties[i].handle;
+        data->data   = win->properties[i].data;
         data++;
         count--;
     }
