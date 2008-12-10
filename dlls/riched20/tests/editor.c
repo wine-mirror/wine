@@ -148,80 +148,79 @@ struct find_s {
   const char *needle;
   int flags;
   int expected_loc;
-  int _todo_wine;
 };
 
 
 struct find_s find_tests[] = {
   /* Find in empty text */
-  {0, -1, "foo", FR_DOWN, -1, 0},
-  {0, -1, "foo", 0, -1, 0},
-  {0, -1, "", FR_DOWN, -1, 0},
-  {20, 5, "foo", FR_DOWN, -1, 0},
-  {5, 20, "foo", FR_DOWN, -1, 0}
+  {0, -1, "foo", FR_DOWN, -1},
+  {0, -1, "foo", 0, -1},
+  {0, -1, "", FR_DOWN, -1},
+  {20, 5, "foo", FR_DOWN, -1},
+  {5, 20, "foo", FR_DOWN, -1}
 };
 
 struct find_s find_tests2[] = {
   /* No-result find */
-  {0, -1, "foo", FR_DOWN | FR_MATCHCASE, -1, 0},
-  {5, 20, "WINE", FR_DOWN | FR_MATCHCASE, -1, 0},
+  {0, -1, "foo", FR_DOWN | FR_MATCHCASE, -1},
+  {5, 20, "WINE", FR_DOWN | FR_MATCHCASE, -1},
 
   /* Subsequent finds */
-  {0, -1, "Wine", FR_DOWN | FR_MATCHCASE, 4, 0},
-  {5, 31, "Wine", FR_DOWN | FR_MATCHCASE, 13, 0},
-  {14, 31, "Wine", FR_DOWN | FR_MATCHCASE, 23, 0},
-  {24, 31, "Wine", FR_DOWN | FR_MATCHCASE, 27, 0},
+  {0, -1, "Wine", FR_DOWN | FR_MATCHCASE, 4},
+  {5, 31, "Wine", FR_DOWN | FR_MATCHCASE, 13},
+  {14, 31, "Wine", FR_DOWN | FR_MATCHCASE, 23},
+  {24, 31, "Wine", FR_DOWN | FR_MATCHCASE, 27},
 
   /* Find backwards */
-  {19, 20, "Wine", FR_MATCHCASE, 13, 0},
-  {10, 20, "Wine", FR_MATCHCASE, 4, 0},
-  {20, 10, "Wine", FR_MATCHCASE, 13, 0},
+  {19, 20, "Wine", FR_MATCHCASE, 13},
+  {10, 20, "Wine", FR_MATCHCASE, 4},
+  {20, 10, "Wine", FR_MATCHCASE, 13},
 
   /* Case-insensitive */
-  {1, 31, "wInE", FR_DOWN, 4, 0},
-  {1, 31, "Wine", FR_DOWN, 4, 0},
+  {1, 31, "wInE", FR_DOWN, 4},
+  {1, 31, "Wine", FR_DOWN, 4},
 
   /* High-to-low ranges */
-  {20, 5, "Wine", FR_DOWN, -1, 0},
-  {2, 1, "Wine", FR_DOWN, -1, 0},
-  {30, 29, "Wine", FR_DOWN, -1, 0},
-  {20, 5, "Wine", 0, 13, 0},
+  {20, 5, "Wine", FR_DOWN, -1},
+  {2, 1, "Wine", FR_DOWN, -1},
+  {30, 29, "Wine", FR_DOWN, -1},
+  {20, 5, "Wine", 0, 13},
 
   /* Find nothing */
-  {5, 10, "", FR_DOWN, -1, 0},
-  {10, 5, "", FR_DOWN, -1, 0},
-  {0, -1, "", FR_DOWN, -1, 0},
-  {10, 5, "", 0, -1, 0},
+  {5, 10, "", FR_DOWN, -1},
+  {10, 5, "", FR_DOWN, -1},
+  {0, -1, "", FR_DOWN, -1},
+  {10, 5, "", 0, -1},
 
   /* Whole-word search */
-  {0, -1, "wine", FR_DOWN | FR_WHOLEWORD, 18, 0},
-  {0, -1, "win", FR_DOWN | FR_WHOLEWORD, -1, 0},
-  {13, -1, "wine", FR_DOWN | FR_WHOLEWORD, 18, 0},
-  {0, -1, "winewine", FR_DOWN | FR_WHOLEWORD, 0, 0},
-  {10, -1, "winewine", FR_DOWN | FR_WHOLEWORD, 23, 0},
-  {11, -1, "winewine", FR_WHOLEWORD, 0, 0},
-  {31, -1, "winewine", FR_WHOLEWORD, 23, 0},
+  {0, -1, "wine", FR_DOWN | FR_WHOLEWORD, 18},
+  {0, -1, "win", FR_DOWN | FR_WHOLEWORD, -1},
+  {13, -1, "wine", FR_DOWN | FR_WHOLEWORD, 18},
+  {0, -1, "winewine", FR_DOWN | FR_WHOLEWORD, 0},
+  {10, -1, "winewine", FR_DOWN | FR_WHOLEWORD, 23},
+  {11, -1, "winewine", FR_WHOLEWORD, 0},
+  {31, -1, "winewine", FR_WHOLEWORD, 23},
   
   /* Bad ranges */
-  {5, 200, "XXX", FR_DOWN, -1, 0},
-  {-20, 20, "Wine", FR_DOWN, -1, 0},
-  {-20, 20, "Wine", FR_DOWN, -1, 0},
-  {-15, -20, "Wine", FR_DOWN, -1, 0},
-  {1<<12, 1<<13, "Wine", FR_DOWN, -1, 0},
+  {5, 200, "XXX", FR_DOWN, -1},
+  {-20, 20, "Wine", FR_DOWN, -1},
+  {-20, 20, "Wine", FR_DOWN, -1},
+  {-15, -20, "Wine", FR_DOWN, -1},
+  {1<<12, 1<<13, "Wine", FR_DOWN, -1},
 
   /* Check the case noted in bug 4479 where matches at end aren't recognized */
-  {23, 31, "Wine", FR_DOWN | FR_MATCHCASE, 23, 0},
-  {27, 31, "Wine", FR_DOWN | FR_MATCHCASE, 27, 0},
-  {27, 32, "Wine", FR_DOWN | FR_MATCHCASE, 27, 0},
-  {13, 31, "WineWine", FR_DOWN | FR_MATCHCASE, 23, 0},
-  {13, 32, "WineWine", FR_DOWN | FR_MATCHCASE, 23, 0},
+  {23, 31, "Wine", FR_DOWN | FR_MATCHCASE, 23},
+  {27, 31, "Wine", FR_DOWN | FR_MATCHCASE, 27},
+  {27, 32, "Wine", FR_DOWN | FR_MATCHCASE, 27},
+  {13, 31, "WineWine", FR_DOWN | FR_MATCHCASE, 23},
+  {13, 32, "WineWine", FR_DOWN | FR_MATCHCASE, 23},
 
   /* The backwards case of bug 4479; bounds look right
    * Fails because backward find is wrong */
-  {19, 20, "WINE", FR_MATCHCASE, 0, 0},
-  {0, 20, "WINE", FR_MATCHCASE, -1, 0},
+  {19, 20, "WINE", FR_MATCHCASE, 0},
+  {0, 20, "WINE", FR_MATCHCASE, -1},
 
-  {0, -1, "wineWine wine", 0, -1, 0},
+  {0, -1, "wineWine wine", 0, -1},
 };
 
 static void check_EM_FINDTEXT(HWND hwnd, const char *name, struct find_s *f, int id) {
@@ -267,15 +266,8 @@ static void run_tests_EM_FINDTEXT(HWND hwnd, const char *name, struct find_s *fi
   int i;
 
   for (i = 0; i < num_tests; i++) {
-    if (find[i]._todo_wine) {
-      todo_wine {
-        check_EM_FINDTEXT(hwnd, name, &find[i], i);
-        check_EM_FINDTEXTEX(hwnd, name, &find[i], i);
-      }
-    } else {
-        check_EM_FINDTEXT(hwnd, name, &find[i], i);
-        check_EM_FINDTEXTEX(hwnd, name, &find[i], i);
-    }
+      check_EM_FINDTEXT(hwnd, name, &find[i], i);
+      check_EM_FINDTEXTEX(hwnd, name, &find[i], i);
   }
 }
 
