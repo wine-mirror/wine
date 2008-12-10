@@ -995,33 +995,15 @@ static void dump_EMREXTTEXTOUT(const EMREXTTEXTOUTW *eto)
 }
 
 static BOOL match_emf_record(const ENHMETARECORD *emr1, const ENHMETARECORD *emr2,
-                             const char *desc, BOOL ignore_scaling, BOOL todo)
+                             const char *desc, BOOL ignore_scaling)
 {
     int diff;
 
-    if (emr1->iType != emr2->iType && todo)
-    {
-        todo_wine
-        {
-            ok(emr1->iType == emr2->iType, "%s: emr->iType %u != %u\n",
-               desc, emr1->iType, emr2->iType);
-        }
-    }
-    else
-        ok(emr1->iType == emr2->iType, "%s: emr->iType %u != %u\n",
-           desc, emr1->iType, emr2->iType);
+    ok(emr1->iType == emr2->iType, "%s: emr->iType %u != %u\n",
+       desc, emr1->iType, emr2->iType);
 
-    if (emr1->nSize != emr2->nSize && todo)
-    {
-        todo_wine
-        {
-            ok(emr1->nSize == emr2->nSize, "%s: emr->nSize %u != %u\n",
-               desc, emr1->nSize, emr2->nSize);
-        }
-    }
-    else
-        ok(emr1->nSize == emr2->nSize, "%s: emr->nSize %u != %u\n",
-           desc, emr1->nSize, emr2->nSize);
+    ok(emr1->nSize == emr2->nSize, "%s: emr->nSize %u != %u\n",
+       desc, emr1->nSize, emr2->nSize);
 
     /* iType and nSize mismatches are fatal */
     if (emr1->iType != emr2->iType || emr1->nSize != emr2->nSize) return FALSE;
@@ -1060,13 +1042,8 @@ static BOOL match_emf_record(const ENHMETARECORD *emr1, const ENHMETARECORD *emr
     }
     else
         diff = memcmp(emr1, emr2, emr1->nSize);
-    if (diff && todo)
-    {
-        todo_wine
-            ok(diff == 0, "%s: contents of record %u don't match\n", desc, emr1->iType);
-    }
-    else
-        ok(diff == 0, "%s: contents of record %u don't match\n", desc, emr1->iType);
+
+    ok(diff == 0, "%s: contents of record %u don't match\n", desc, emr1->iType);
 
     if (diff)
     {
@@ -1074,7 +1051,7 @@ static BOOL match_emf_record(const ENHMETARECORD *emr1, const ENHMETARECORD *emr
         dump_emf_record(emr2, "actual bits");
     }
 
-    return diff == 0 || todo; /* report all non-fatal record mismatches */
+    return diff == 0; /* report all non-fatal record mismatches */
 }
 
 /* Compare the EMF produced by a test function with the
@@ -1085,7 +1062,7 @@ static BOOL match_emf_record(const ENHMETARECORD *emr1, const ENHMETARECORD *emr
  */
 static int compare_emf_bits(const HENHMETAFILE mf, const unsigned char *bits,
                             UINT bsize, const char *desc,
-                            BOOL ignore_scaling, BOOL todo)
+                            BOOL ignore_scaling)
 {
     unsigned char buf[MF_BUFSIZE];
     UINT mfsize, offset;
@@ -1096,12 +1073,6 @@ static int compare_emf_bits(const HENHMETAFILE mf, const unsigned char *bits,
 
     if (mfsize < MF_BUFSIZE)
     {
-        if (mfsize != bsize && todo)
-        {
-        todo_wine
-        ok(mfsize == bsize, "%s: mfsize=%d, bsize=%d\n", desc, mfsize, bsize);
-        }
-        else
         ok(mfsize == bsize, "%s: mfsize=%d, bsize=%d\n", desc, mfsize, bsize);
     }
     else
@@ -1119,20 +1090,8 @@ static int compare_emf_bits(const HENHMETAFILE mf, const unsigned char *bits,
     ok(emh1->iType == emh2->iType, "expected EMR_HEADER, got %u\n", emh2->iType);
     ok(emh1->nSize == emh2->nSize, "expected nSize %u, got %u\n", emh1->nSize, emh2->nSize);
     ok(emh1->dSignature == emh2->dSignature, "expected dSignature %u, got %u\n", emh1->dSignature, emh2->dSignature);
-    if (todo && emh1->nBytes != emh2->nBytes)
-    {
-        todo_wine
-            ok(emh1->nBytes == emh2->nBytes, "expected nBytes %u, got %u\n", emh1->nBytes, emh2->nBytes);
-    }
-    else
-        ok(emh1->nBytes == emh2->nBytes, "expected nBytes %u, got %u\n", emh1->nBytes, emh2->nBytes);
-    if (todo && emh1->nRecords != emh2->nRecords)
-    {
-        todo_wine
-            ok(emh1->nRecords == emh2->nRecords, "expected nBytes %u, got %u\n", emh1->nRecords, emh2->nRecords);
-    }
-    else
-        ok(emh1->nRecords == emh2->nRecords, "expected nBytes %u, got %u\n", emh1->nRecords, emh2->nRecords);
+    ok(emh1->nBytes == emh2->nBytes, "expected nBytes %u, got %u\n", emh1->nBytes, emh2->nBytes);
+    ok(emh1->nRecords == emh2->nRecords, "expected nBytes %u, got %u\n", emh1->nRecords, emh2->nRecords);
 
     offset = emh1->nSize;
     while (offset < emh1->nBytes)
@@ -1143,7 +1102,7 @@ static int compare_emf_bits(const HENHMETAFILE mf, const unsigned char *bits,
 	trace("EMF record %u, size %u/record %u, size %u\n",
               emr1->iType, emr1->nSize, emr2->iType, emr2->nSize);
 
-        if (!match_emf_record(emr1, emr2, desc, ignore_scaling, todo)) return -1;
+        if (!match_emf_record(emr1, emr2, desc, ignore_scaling)) return -1;
 
 	offset += emr1->nSize;
     }
@@ -1483,7 +1442,7 @@ static void test_emf_ExtTextOut_on_path(void)
      * are there, but their contents don't match for different reasons.
      */
     if (compare_emf_bits(hMetafile, EMF_TEXTOUT_ON_PATH_BITS, sizeof(EMF_TEXTOUT_ON_PATH_BITS),
-        "emf_TextOut_on_path", FALSE, FALSE) != 0)
+        "emf_TextOut_on_path", FALSE) != 0)
     {
         dump_emf_bits(hMetafile, "emf_TextOut_on_path");
         dump_emf_records(hMetafile, "emf_TextOut_on_path");
@@ -1679,7 +1638,7 @@ static void test_emf_clipping(void)
     ok(hemf != 0, "CloseEnhMetaFile error %d\n", GetLastError());
 
     if (compare_emf_bits(hemf, EMF_CLIPPING, sizeof(EMF_CLIPPING),
-        "emf_clipping", FALSE, FALSE) != 0)
+        "emf_clipping", FALSE) != 0)
     {
         dump_emf_bits(hemf, "emf_clipping");
         dump_emf_records(hemf, "emf_clipping");
@@ -1788,7 +1747,7 @@ static void test_mf_conversions(void)
         hemf = create_converted_emf(&mfp);
 
         if (compare_emf_bits(hemf, EMF_LINETO_MM_ANISOTROPIC_BITS, sizeof(EMF_LINETO_MM_ANISOTROPIC_BITS),
-                             "emf_LineTo MM_ANISOTROPIC", TRUE, FALSE) != 0)
+                             "emf_LineTo MM_ANISOTROPIC", TRUE) != 0)
         {
             dump_emf_bits(hemf, "emf_LineTo MM_ANISOTROPIC");
             dump_emf_records(hemf, "emf_LineTo MM_ANISOTROPIC");
@@ -1813,7 +1772,7 @@ static void test_mf_conversions(void)
         hemf = create_converted_emf(&mfp);
 
         if (compare_emf_bits(hemf, EMF_LINETO_MM_TEXT_BITS, sizeof(EMF_LINETO_MM_TEXT_BITS),
-                             "emf_LineTo MM_TEXT", TRUE, FALSE) != 0)
+                             "emf_LineTo MM_TEXT", TRUE) != 0)
         {
             dump_emf_bits(hemf, "emf_LineTo MM_TEXT");
             dump_emf_records(hemf, "emf_LineTo MM_TEXT");
@@ -1833,7 +1792,7 @@ static void test_mf_conversions(void)
         hemf = create_converted_emf(NULL);
 
         if (compare_emf_bits(hemf, EMF_LINETO_BITS, sizeof(EMF_LINETO_BITS),
-                             "emf_LineTo NULL", TRUE, FALSE) != 0)
+                             "emf_LineTo NULL", TRUE) != 0)
         {
             dump_emf_bits(hemf, "emf_LineTo NULL");
             dump_emf_records(hemf, "emf_LineTo NULL");
