@@ -278,8 +278,8 @@ static void sock_wake_up( struct sock *sock, int pollev )
             int event = event_bitorder[i];
             if (sock->pmask & (1 << event))
             {
-                unsigned int lparam = (1 << event) | (sock->errors[event] << 16);
-                post_message( sock->window, sock->message, (unsigned long)sock->wparam, lparam );
+                lparam_t lparam = (1 << event) | (sock->errors[event] << 16);
+                post_message( sock->window, sock->message, sock->wparam, lparam );
             }
         }
         sock->pmask = 0;

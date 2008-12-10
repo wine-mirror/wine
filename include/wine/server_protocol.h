@@ -22,6 +22,7 @@ typedef unsigned int process_id_t;
 typedef unsigned int thread_id_t;
 typedef unsigned int data_size_t;
 typedef unsigned int ioctl_code_t;
+typedef unsigned long lparam_t;
 typedef unsigned __int64 file_pos_t;
 
 struct request_header
@@ -171,8 +172,8 @@ typedef struct
 struct callback_msg_data
 {
     void           *callback;
-    unsigned long   data;
-    unsigned long   result;
+    lparam_t        data;
+    lparam_t        result;
 };
 
 struct winevent_msg_data
@@ -2449,8 +2450,8 @@ struct send_message_request
     int             flags;
     user_handle_t   win;
     unsigned int    msg;
-    unsigned long   wparam;
-    unsigned long   lparam;
+    lparam_t        wparam;
+    lparam_t        lparam;
     timeout_t       timeout;
     /* VARARG(data,message_data); */
 };
@@ -2492,9 +2493,9 @@ struct send_hardware_message_request
     user_handle_t   win;
     unsigned int    msg;
     unsigned int    time;
-    unsigned long   wparam;
-    unsigned long   lparam;
-    unsigned long   info;
+    lparam_t        wparam;
+    lparam_t        lparam;
+    lparam_t        info;
     int             x;
     int             y;
 };
@@ -2522,9 +2523,9 @@ struct get_message_reply
     user_handle_t   win;
     int             type;
     unsigned int    msg;
-    unsigned long   wparam;
-    unsigned long   lparam;
-    unsigned long   info;
+    lparam_t        wparam;
+    lparam_t        lparam;
+    lparam_t        info;
     int             x;
     int             y;
     unsigned int    time;
@@ -2539,7 +2540,7 @@ struct get_message_reply
 struct reply_message_request
 {
     struct request_header __header;
-    unsigned long   result;
+    lparam_t        result;
     int             remove;
     /* VARARG(data,bytes); */
 };
@@ -2572,7 +2573,7 @@ struct get_message_reply_request
 struct get_message_reply_reply
 {
     struct reply_header __header;
-    unsigned long   result;
+    lparam_t        result;
     /* VARARG(data,bytes); */
 };
 
@@ -2584,13 +2585,13 @@ struct set_win_timer_request
     user_handle_t   win;
     unsigned int    msg;
     unsigned int    rate;
-    unsigned long   id;
-    unsigned long   lparam;
+    lparam_t        id;
+    lparam_t        lparam;
 };
 struct set_win_timer_reply
 {
     struct reply_header __header;
-    unsigned long   id;
+    lparam_t        id;
 };
 
 
@@ -2600,7 +2601,7 @@ struct kill_win_timer_request
     struct request_header __header;
     user_handle_t   win;
     unsigned int    msg;
-    unsigned long   id;
+    lparam_t        id;
 };
 struct kill_win_timer_reply
 {
@@ -2857,10 +2858,10 @@ struct set_window_info_request
     unsigned int   id;
     int            is_unicode;
     void*          instance;
-    unsigned long  user_data;
+    lparam_t       user_data;
     int            extra_offset;
     data_size_t    extra_size;
-    unsigned long  extra_value;
+    lparam_t       extra_value;
 };
 struct set_window_info_reply
 {
@@ -2869,8 +2870,8 @@ struct set_window_info_reply
     unsigned int   old_ex_style;
     unsigned int   old_id;
     void*          old_instance;
-    unsigned long  old_user_data;
-    unsigned long  old_extra_value;
+    lparam_t       old_user_data;
+    lparam_t       old_extra_value;
 };
 #define SET_WIN_STYLE     0x01
 #define SET_WIN_EXSTYLE   0x02
@@ -3692,7 +3693,7 @@ struct set_class_info_request
     void*          instance;
     int            extra_offset;
     data_size_t    extra_size;
-    unsigned long  extra_value;
+    lparam_t       extra_value;
 };
 struct set_class_info_reply
 {
@@ -3702,7 +3703,7 @@ struct set_class_info_reply
     int            old_extra;
     int            old_win_extra;
     void*          old_instance;
-    unsigned long  old_extra_value;
+    lparam_t       old_extra_value;
 };
 #define SET_CLASS_ATOM      0x0001
 #define SET_CLASS_STYLE     0x0002

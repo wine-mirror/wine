@@ -37,6 +37,7 @@ my %formats =
     "user_handle_t" => "%08x",
     "process_id_t"  => "%04x",
     "thread_id_t"   => "%04x",
+    "lparam_t"      => "%lx",
     "timeout_t"     => "&dump_timeout",
     "rectangle_t"   => "&dump_rectangle",
     "char_info_t"   => "&dump_char_info",

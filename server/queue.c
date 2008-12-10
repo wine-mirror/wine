@@ -57,7 +57,7 @@ struct message_result
     struct msg_queue      *receiver;      /* receiver queue */
     int                    replied;       /* has it been replied to? */
     unsigned int           error;         /* error code to pass back to sender */
-    unsigned long          result;        /* reply result */
+    lparam_t               result;        /* reply result */
     struct message        *callback_msg;  /* message to queue for callback */
     void                  *data;          /* message reply data */
     unsigned int           data_size;     /* size of message reply data */
@@ -70,9 +70,9 @@ struct message
     enum message_type      type;      /* message type */
     user_handle_t          win;       /* window handle */
     unsigned int           msg;       /* message code */
-    unsigned long          wparam;    /* parameters */
-    unsigned long          lparam;    /* parameters */
-    unsigned long          info;      /* extra info */
+    lparam_t               wparam;    /* parameters */
+    lparam_t               lparam;    /* parameters */
+    lparam_t               info;      /* extra info */
     int                    x;         /* x position */
     int                    y;         /* y position */
     unsigned int           time;      /* message time */
@@ -89,8 +89,8 @@ struct timer
     unsigned int    rate;      /* timer rate in ms */
     user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message to post */
-    unsigned long   id;        /* timer id */
-    unsigned long   lparam;    /* lparam for message */
+    lparam_t        id;        /* timer id */
+    lparam_t        lparam;    /* lparam for message */
 };
 
 struct thread_input
@@ -127,7 +127,7 @@ struct msg_queue
     struct message_result *recv_result;     /* stack of received messages waiting for result */
     struct list            pending_timers;  /* list of pending timers */
     struct list            expired_timers;  /* list of expired timers */
-    unsigned long          next_timer_id;   /* id for the next timer with a 0 window */
+    lparam_t               next_timer_id;   /* id for the next timer with a 0 window */
     struct timeout_user   *timeout;         /* timeout for next timer to expire */
     struct thread_input   *input;           /* thread input descriptor */
     struct hook_table     *hooks;           /* hook table */
@@ -442,8 +442,7 @@ static inline void remove_result_from_sender( struct message_result *result )
 }
 
 /* store the message result in the appropriate structure */
-static void store_message_result( struct message_result *res, unsigned long result,
-                                  unsigned int error )
+static void store_message_result( struct message_result *res, lparam_t result, unsigned int error )
 {
     res->result  = result;
     res->error   = error;
@@ -631,7 +630,7 @@ static void receive_message( struct msg_queue *queue, struct message *msg,
 }
 
 /* set the result of the current received message */
-static void reply_message( struct msg_queue *queue, unsigned long result,
+static void reply_message( struct msg_queue *queue, lparam_t result,
                            unsigned int error, int remove, const void *data, data_size_t len )
 {
     struct message_result *res = queue->recv_result;
@@ -1009,7 +1008,7 @@ static void set_next_timer( struct msg_queue *queue )
 
 /* find a timer from its window and id */
 static struct timer *find_timer( struct msg_queue *queue, user_handle_t win,
-                                 unsigned int msg, unsigned long id )
+                                 unsigned int msg, lparam_t id )
 {
     struct list *ptr;
 
@@ -1481,8 +1480,7 @@ void queue_cleanup_window( struct thread *thread, user_handle_t win )
 }
 
 /* post a message to a window; used by socket handling */
-void post_message( user_handle_t win, unsigned int message,
-                   unsigned long wparam, unsigned long lparam )
+void post_message( user_handle_t win, unsigned int message, lparam_t wparam, lparam_t lparam )
 {
     struct message *msg;
     struct thread *thread = get_window_thread( win );
@@ -1927,7 +1925,7 @@ DECL_HANDLER(set_win_timer)
     struct msg_queue *queue;
     struct thread *thread = NULL;
     user_handle_t win = 0;
-    unsigned long id = req->id;
+    lparam_t id = req->id;
 
     if (req->win)
     {

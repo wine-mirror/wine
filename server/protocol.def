@@ -38,6 +38,7 @@ typedef unsigned int process_id_t;
 typedef unsigned int thread_id_t;
 typedef unsigned int data_size_t;
 typedef unsigned int ioctl_code_t;
+typedef unsigned long lparam_t;
 typedef unsigned __int64 file_pos_t;
 
 struct request_header
@@ -187,8 +188,8 @@ typedef struct
 struct callback_msg_data
 {
     void           *callback;   /* callback function */
-    unsigned long   data;       /* user data for callback */
-    unsigned long   result;     /* message result */
+    lparam_t        data;       /* user data for callback */
+    lparam_t        result;     /* message result */
 };
 
 struct winevent_msg_data
@@ -1821,8 +1822,8 @@ enum char_info_mode
     int             flags;     /* message flags (see below) */
     user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message code */
-    unsigned long   wparam;    /* parameters */
-    unsigned long   lparam;    /* parameters */
+    lparam_t        wparam;    /* parameters */
+    lparam_t        lparam;    /* parameters */
     timeout_t       timeout;   /* timeout for reply */
     VARARG(data,message_data); /* message data for sent messages */
 @END
@@ -1852,9 +1853,9 @@ enum message_type
     user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message code */
     unsigned int    time;      /* message time */
-    unsigned long   wparam;    /* parameters */
-    unsigned long   lparam;    /* parameters */
-    unsigned long   info;      /* extra info */
+    lparam_t        wparam;    /* parameters */
+    lparam_t        lparam;    /* parameters */
+    lparam_t        info;      /* extra info */
     int             x;         /* x position */
     int             y;         /* y position */
 @END
@@ -1873,9 +1874,9 @@ enum message_type
     user_handle_t   win;       /* window handle */
     int             type;      /* message type */
     unsigned int    msg;       /* message code */
-    unsigned long   wparam;    /* parameters */
-    unsigned long   lparam;    /* parameters */
-    unsigned long   info;      /* extra info */
+    lparam_t        wparam;    /* parameters */
+    lparam_t        lparam;    /* parameters */
+    lparam_t        info;      /* extra info */
     int             x;         /* x position */
     int             y;         /* y position */
     unsigned int    time;      /* message time */
@@ -1888,7 +1889,7 @@ enum message_type
 
 /* Reply to a sent message */
 @REQ(reply_message)
-    unsigned long   result;    /* message result */
+    lparam_t        result;    /* message result */
     int             remove;    /* should we remove the message? */
     VARARG(data,bytes);        /* message data for sent messages */
 @END
@@ -1906,7 +1907,7 @@ enum message_type
 @REQ(get_message_reply)
     int             cancel;    /* cancel message if not ready? */
 @REPLY
-    unsigned long   result;    /* message result */
+    lparam_t        result;    /* message result */
     VARARG(data,bytes);        /* message data for sent messages */
 @END
 
@@ -1916,10 +1917,10 @@ enum message_type
     user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message to post */
     unsigned int    rate;      /* timer rate in ms */
-    unsigned long   id;        /* timer id */
-    unsigned long   lparam;    /* message lparam (callback proc) */
+    lparam_t        id;        /* timer id */
+    lparam_t        lparam;    /* message lparam (callback proc) */
 @REPLY
-    unsigned long   id;        /* timer id */
+    lparam_t        id;        /* timer id */
 @END
 
 
@@ -1927,7 +1928,7 @@ enum message_type
 @REQ(kill_win_timer)
     user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message to post */
-    unsigned long   id;        /* timer id */
+    lparam_t        id;        /* timer id */
 @END
 
 
@@ -2104,17 +2105,17 @@ enum message_type
     unsigned int   id;            /* window id */
     int            is_unicode;    /* ANSI or unicode */
     void*          instance;      /* creator instance */
-    unsigned long  user_data;     /* user-specific data */
+    lparam_t       user_data;     /* user-specific data */
     int            extra_offset;  /* offset to set in extra bytes */
     data_size_t    extra_size;    /* size to set in extra bytes */
-    unsigned long  extra_value;   /* value to set in extra bytes */
+    lparam_t       extra_value;   /* value to set in extra bytes */
 @REPLY
     unsigned int   old_style;     /* old window style */
     unsigned int   old_ex_style;  /* old window extended style */
     unsigned int   old_id;        /* old window id */
     void*          old_instance;  /* old creator instance */
-    unsigned long  old_user_data; /* old user-specific data */
-    unsigned long  old_extra_value; /* old value in extra bytes */
+    lparam_t       old_user_data; /* old user-specific data */
+    lparam_t       old_extra_value; /* old value in extra bytes */
 @END
 #define SET_WIN_STYLE     0x01
 #define SET_WIN_EXSTYLE   0x02
@@ -2667,14 +2668,14 @@ enum message_type
     void*          instance;       /* module instance */
     int            extra_offset;   /* offset to set in extra bytes */
     data_size_t    extra_size;     /* size to set in extra bytes */
-    unsigned long  extra_value;    /* value to set in extra bytes */
+    lparam_t       extra_value;    /* value to set in extra bytes */
 @REPLY
     atom_t         old_atom;       /* previous class atom */
     unsigned int   old_style;      /* previous class style */
     int            old_extra;      /* previous number of class extra bytes */
     int            old_win_extra;  /* previous number of window extra bytes */
     void*          old_instance;   /* previous module instance */
-    unsigned long  old_extra_value; /* old value in extra bytes */
+    lparam_t       old_extra_value; /* old value in extra bytes */
 @END
 #define SET_CLASS_ATOM      0x0001
 #define SET_CLASS_STYLE     0x0002

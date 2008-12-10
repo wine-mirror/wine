@@ -83,7 +83,7 @@ struct window
     unsigned int     color_key;       /* color key for a layered window */
     unsigned int     alpha;           /* alpha value for a layered window */
     unsigned int     layered_flags;   /* flags for a layered window */
-    unsigned long    user_data;       /* user-specific data */
+    lparam_t         user_data;       /* user-specific data */
     WCHAR           *text;            /* window caption text */
     unsigned int     paint_flags;     /* various painting flags */
     int              prop_inuse;      /* number of in-use window properties */
