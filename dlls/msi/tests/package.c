@@ -9523,6 +9523,15 @@ static void test_MsiGetProductProperty(void)
     DWORD size;
     LONG res;
     UINT r;
+    SC_HANDLE scm;
+
+    scm = OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT);
+    if (!scm && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+    {
+        win_skip("Different registry keys on Win9x and WinMe\n");
+        return;
+    }
+    CloseServiceHandle(scm);
 
     GetCurrentDirectoryA(MAX_PATH, path);
     lstrcatA(path, "\\");
