@@ -1716,6 +1716,13 @@ static HRESULT WINAPI HTMLStyle_put_zIndex(IHTMLStyle *iface, VARIANT v)
     switch(V_VT(&v)) {
     case VT_BSTR:
         return set_style_attr(This, STYLEID_Z_INDEX, V_BSTR(&v), 0);
+    case VT_I4: {
+        WCHAR value[14];
+        static const WCHAR format[] = {'%','d',0};
+
+        wsprintfW(value, format, V_I4(&v));
+        return set_style_attr(This, STYLEID_Z_INDEX, value, 0);
+    }
     default:
         FIXME("unimplemented vt %d\n", V_VT(&v));
         return E_NOTIMPL;
