@@ -31,7 +31,7 @@
 
 #include "wine/test.h"
 
-#define TEST_URL "http://www.winehq.org/site/about"
+#define TEST_URL "http://test.winehq.org/hello.html"
 
 static BOOL first_connection_to_test_url = TRUE;
 
@@ -263,7 +263,7 @@ static void InternetReadFile_test(int flags)
     SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
 
     trace("InternetConnectA <--\n");
-    hic=InternetConnectA(hi, "www.winehq.org", INTERNET_INVALID_PORT_NUMBER,
+    hic=InternetConnectA(hi, "test.winehq.org", INTERNET_INVALID_PORT_NUMBER,
                          NULL, NULL, INTERNET_SERVICE_HTTP, 0x0, 0xdeadbeef);
     ok((hic != 0x0),"InternetConnect failed with error %u\n", GetLastError());
     trace("InternetConnectA -->\n");
@@ -274,7 +274,7 @@ static void InternetReadFile_test(int flags)
     SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
 
     trace("HttpOpenRequestA <--\n");
-    hor = HttpOpenRequestA(hic, "GET", "/about/", NULL, NULL, types,
+    hor = HttpOpenRequestA(hic, "GET", "/testredirect", NULL, NULL, types,
                            INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_RESYNCHRONIZE,
                            0xdeadbead);
     if (hor == 0x0 && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED) {
@@ -294,7 +294,7 @@ static void InternetReadFile_test(int flags)
     length = sizeof(buffer);
     res = InternetQueryOptionA(hor, INTERNET_OPTION_URL, buffer, &length);
     ok(res, "InternetQueryOptionA(INTERNET_OPTION_URL) failed: %u\n", GetLastError());
-    ok(!strcmp(buffer, "http://www.winehq.org/about/"), "Wrong URL %s\n", buffer);
+    ok(!strcmp(buffer, "http://test.winehq.org/testredirect"), "Wrong URL %s\n", buffer);
 
     length = sizeof(buffer);
     res = HttpQueryInfoA(hor, HTTP_QUERY_RAW_HEADERS, buffer, &length, 0x0);
@@ -388,7 +388,7 @@ static void InternetReadFile_test(int flags)
     length = sizeof(buffer);
     res = InternetQueryOptionA(hor, INTERNET_OPTION_URL, buffer, &length);
     ok(res, "InternetQueryOptionA(INTERNET_OPTION_URL) failed: %u\n", GetLastError());
-    ok(!strcmp(buffer, "http://www.winehq.org/site/about"), "Wrong URL %s\n", buffer);
+    ok(!strcmp(buffer, "http://test.winehq.org/hello.html"), "Wrong URL %s\n", buffer);
 
     length = 16;
     res = HttpQueryInfoA(hor,HTTP_QUERY_CONTENT_LENGTH,&buffer,&length,0x0);
@@ -452,11 +452,13 @@ static void InternetReadFile_test(int flags)
     CLEAR_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
     CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
 abort:
+    trace("aborting\n");
     SET_EXPECT2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
     if (hor != 0x0) {
         SET_WINE_ALLOW(INTERNET_STATUS_CLOSING_CONNECTION);
         SET_WINE_ALLOW(INTERNET_STATUS_CONNECTION_CLOSED);
         SetLastError(0xdeadbeef);
+        trace("closing\n");
         res = InternetCloseHandle(hor);
         ok (res, "InternetCloseHandle of handle opened by HttpOpenRequestA failed\n");
         SetLastError(0xdeadbeef);
@@ -472,13 +474,14 @@ abort:
      * INTERNET_STATUS_HANDLE_CLOSING notifications matches the number expected. */
     if (hi != 0x0) {
       SET_WINE_ALLOW(INTERNET_STATUS_HANDLE_CLOSING);
+        trace("closing 2\n");
       res = InternetCloseHandle(hi);
       ok (res, "InternetCloseHandle of handle opened by InternetOpenA failed\n");
       if (flags & INTERNET_FLAG_ASYNC)
           Sleep(100);
     }
     CHECK_NOTIFIED2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
-    if (hor != 0x0 && (flags & INTERNET_FLAG_ASYNC)) todo_wine
+    if (hor != 0x0) todo_wine
     {
         CHECK_NOT_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
         CHECK_NOT_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
@@ -516,7 +519,7 @@ static void InternetReadFileExA_test(int flags)
     SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
 
     trace("InternetConnectA <--\n");
-    hic=InternetConnectA(hi, "www.winehq.org", INTERNET_INVALID_PORT_NUMBER,
+    hic=InternetConnectA(hi, "test.winehq.org", INTERNET_INVALID_PORT_NUMBER,
                          NULL, NULL, INTERNET_SERVICE_HTTP, 0x0, 0xdeadbeef);
     ok((hic != 0x0),"InternetConnect failed with error %u\n", GetLastError());
     trace("InternetConnectA -->\n");
@@ -527,7 +530,7 @@ static void InternetReadFileExA_test(int flags)
     SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
 
     trace("HttpOpenRequestA <--\n");
-    hor = HttpOpenRequestA(hic, "GET", "/about/", NULL, NULL, types,
+    hor = HttpOpenRequestA(hic, "GET", "/testredirect", NULL, NULL, types,
                            INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_RESYNCHRONIZE,
                            0xdeadbead);
     if (hor == 0x0 && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED) {
@@ -720,7 +723,7 @@ static void InternetReadFileExA_test(int flags)
 
         length += inetbuffers.dwBufferLength;
     }
-    todo_wine ok(length > 0, "failed to read any of the document\n");
+    ok(length > 0, "failed to read any of the document\n");
     trace("Finished. Read %d bytes\n", length);
 
     /* WinXP does not send, but Win98 does */
@@ -871,9 +874,9 @@ static void InternetOpenRequest_test(void)
     ok(connect == NULL, "InternetConnectA should have failed\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "InternetConnectA with blank server named should have failed with ERROR_INVALID_PARAMETER instead of %d\n", GetLastError());
 
-    connect = InternetConnectA(session, "winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL,
+    connect = InternetConnectA(session, "test.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL,
                               INTERNET_SERVICE_HTTP, 0, 0);
-    ok(connect != NULL, "Unable to connect to http://winehq.org with error %d\n", GetLastError());
+    ok(connect != NULL, "Unable to connect to http://test.winehq.org with error %d\n", GetLastError());
 
     request = HttpOpenRequestA(connect, NULL, "/", NULL, NULL, types, INTERNET_FLAG_NO_CACHE_WRITE, 0);
     if (!request && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED)
@@ -913,11 +916,11 @@ static void test_http_cache(void)
     session = InternetOpenA("Wine Regression Test", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
     ok(session != NULL ,"Unable to open Internet session\n");
 
-    connect = InternetConnectA(session, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL,
+    connect = InternetConnectA(session, "test.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL,
                               INTERNET_SERVICE_HTTP, 0, 0);
-    ok(connect != NULL, "Unable to connect to http://winehq.org with error %d\n", GetLastError());
+    ok(connect != NULL, "Unable to connect to http://test.winehq.org with error %d\n", GetLastError());
 
-    request = HttpOpenRequestA(connect, NULL, "/site/about", NULL, NULL, types, INTERNET_FLAG_NEED_FILE, 0);
+    request = HttpOpenRequestA(connect, NULL, "/hello.html", NULL, NULL, types, INTERNET_FLAG_NEED_FILE, 0);
     if (!request && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED)
     {
         skip( "Network unreachable, skipping test\n" );
@@ -932,7 +935,7 @@ static void test_http_cache(void)
     size = sizeof(url);
     ret = InternetQueryOptionA(request, INTERNET_OPTION_URL, url, &size);
     ok(ret, "InternetQueryOptionA(INTERNET_OPTION_url) failed: %u\n", GetLastError());
-    ok(!strcmp(url, "http://www.winehq.org/site/about"), "Wrong URL %s\n", url);
+    ok(!strcmp(url, "http://test.winehq.org/hello.html"), "Wrong URL %s\n", url);
 
     size = sizeof(file_name);
     ret = InternetQueryOptionA(request, INTERNET_OPTION_DATAFILE_NAME, file_name, &size);
@@ -1598,7 +1601,7 @@ static void test_proxy_direct(int port)
     ok(hi != NULL, "open failed\n");
 
     /* try connect without authorization */
-    hc = InternetConnect(hi, "www.winehq.org/", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    hc = InternetConnect(hi, "test.winehq.org/", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
     ok(hc != NULL, "connect failed\n");
 
     hr = HttpOpenRequest(hc, NULL, "/test2", NULL, NULL, NULL, 0, 0);
@@ -2033,10 +2036,10 @@ static void test_user_agent_header(void)
     ses = InternetOpen("Gizmo5", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
     ok(ses != NULL, "InternetOpen failed\n");
 
-    con = InternetConnect(ses, "www.winehq.org", 80, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    con = InternetConnect(ses, "test.winehq.org", 80, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
     ok(con != NULL, "InternetConnect failed\n");
 
-    req = HttpOpenRequest(con, "GET", "/", "HTTP/1.0", NULL, NULL, 0, 0);
+    req = HttpOpenRequest(con, "GET", "/hello.html", "HTTP/1.0", NULL, NULL, 0, 0);
     ok(req != NULL, "HttpOpenRequest failed\n");
 
     size = sizeof(buffer);
@@ -2163,7 +2166,7 @@ static void test_open_url_async(void)
     pInternetSetStatusCallbackA(ses, cb);
     ResetEvent(ctx.event);
 
-    req = InternetOpenUrl(ses, "http://www.winehq.org", NULL, 0, 0, (DWORD_PTR)&ctx);
+    req = InternetOpenUrl(ses, "http://test.winehq.org", NULL, 0, 0, (DWORD_PTR)&ctx);
     ok(!req && GetLastError() == ERROR_IO_PENDING, "InternetOpenUrl failed\n");
 
     WaitForSingleObject(ctx.event, INFINITE);
