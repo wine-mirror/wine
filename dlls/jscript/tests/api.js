@@ -341,6 +341,15 @@ ok(tmp === "<SUB>test</SUB>", "'test'.sub() = " + tmp);
 tmp = "test".sub(3);
 ok(tmp === "<SUB>test</SUB>", "'test'.sub(3) = " + tmp);
 
+tmp = "".sup();
+ok(tmp === "<SUP></SUP>", "''.sup() = " + tmp);
+tmp = "".sup(3);
+ok(tmp === "<SUP></SUP>", "''.sup(3) = " + tmp);
+tmp = "test".sup();
+ok(tmp === "<SUP>test</SUP>", "'test'.sup() = " + tmp);
+tmp = "test".sup(3);
+ok(tmp === "<SUP>test</SUP>", "'test'.sup(3) = " + tmp);
+
 var arr = new Array();
 ok(typeof(arr) === "object", "arr () is not object");
 ok((arr.length === 0), "arr.length is not 0");
