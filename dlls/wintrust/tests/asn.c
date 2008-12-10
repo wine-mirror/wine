@@ -810,7 +810,6 @@ static void test_encodeSpOpusInfo(void)
     memset(&info, 0, sizeof(info));
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_SP_OPUS_INFO_STRUCT,
      (LPBYTE)&info, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -821,7 +820,6 @@ static void test_encodeSpOpusInfo(void)
     info.pwszProgramName = progName;
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_SP_OPUS_INFO_STRUCT,
      (LPBYTE)&info, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -837,14 +835,12 @@ static void test_encodeSpOpusInfo(void)
     SetLastError(0xdeadbeef);
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_SP_OPUS_INFO_STRUCT,
      (LPBYTE)&info, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     moreInfo.dwLinkChoice = SPC_URL_LINK_CHOICE;
     moreInfo.pwszUrl = winehq;
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_SP_OPUS_INFO_STRUCT,
      (LPBYTE)&info, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -858,7 +854,6 @@ static void test_encodeSpOpusInfo(void)
     info.pPublisherInfo = &moreInfo;
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_SP_OPUS_INFO_STRUCT,
      (LPBYTE)&info, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {

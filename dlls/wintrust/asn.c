@@ -740,15 +740,6 @@ BOOL WINAPI WVTAsn1SpcIndirectDataContentEncode(DWORD dwCertEncodingType,
     return ret;
 }
 
-BOOL WINAPI WVTAsn1SpcSpOpusInfoEncode(DWORD dwCertEncodingType,
- LPCSTR lpszStructType, const void *pvStructInfo, BYTE *pbEncoded,
- DWORD *pcbEncoded)
-{
-    FIXME("(0x%08x, %s, %p, %p, %p): stub\n", dwCertEncodingType,
-     debugstr_a(lpszStructType), pvStructInfo, pbEncoded, pcbEncoded);
-    return FALSE;
-}
-
 static BOOL WINAPI CRYPT_AsnEncodeBMPString(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, BYTE *pbEncoded,
  DWORD *pcbEncoded)
@@ -785,6 +776,106 @@ static BOOL WINAPI CRYPT_AsnEncodeBMPString(DWORD dwCertEncodingType,
             *pbEncoded++ = str[i] & 0x00ff;
         }
     }
+    return ret;
+}
+
+struct AsnEncodeTagSwappedItem
+{
+    BYTE                  tag;
+    const void           *pvStructInfo;
+    CryptEncodeObjectFunc encodeFunc;
+};
+
+/* Sort of a wacky hack, it encodes something using the struct
+ * AsnEncodeTagSwappedItem's encodeFunc, then replaces the tag byte with the tag
+ * given in the struct AsnEncodeTagSwappedItem.
+ */
+static BOOL WINAPI CRYPT_AsnEncodeSwapTag(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, BYTE *pbEncoded,
+ DWORD *pcbEncoded)
+{
+    BOOL ret;
+    const struct AsnEncodeTagSwappedItem *item = pvStructInfo;
+
+    ret = item->encodeFunc(dwCertEncodingType, lpszStructType,
+     item->pvStructInfo, pbEncoded, pcbEncoded);
+    if (ret && pbEncoded)
+        *pbEncoded = item->tag;
+    return ret;
+}
+
+BOOL WINAPI WVTAsn1SpcSpOpusInfoEncode(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, BYTE *pbEncoded,
+ DWORD *pcbEncoded)
+{
+    BOOL ret = FALSE;
+
+    TRACE("(0x%08x, %s, %p, %p, %p)\n", dwCertEncodingType,
+     debugstr_a(lpszStructType), pvStructInfo, pbEncoded, pcbEncoded);
+
+    __TRY
+    {
+        const SPC_SP_OPUS_INFO *info = pvStructInfo;
+
+        if (info->pMoreInfo &&
+         info->pMoreInfo->dwLinkChoice != SPC_URL_LINK_CHOICE &&
+         info->pMoreInfo->dwLinkChoice != SPC_MONIKER_LINK_CHOICE &&
+         info->pMoreInfo->dwLinkChoice != SPC_FILE_LINK_CHOICE)
+            SetLastError(E_INVALIDARG);
+        else if (info->pPublisherInfo &&
+         info->pPublisherInfo->dwLinkChoice != SPC_URL_LINK_CHOICE &&
+         info->pPublisherInfo->dwLinkChoice != SPC_MONIKER_LINK_CHOICE &&
+         info->pPublisherInfo->dwLinkChoice != SPC_FILE_LINK_CHOICE)
+            SetLastError(E_INVALIDARG);
+        else
+        {
+            struct AsnEncodeSequenceItem items[3] = { { 0 } };
+            struct AsnConstructedItem constructed[3] = { { 0 } };
+            struct AsnEncodeTagSwappedItem swapped;
+            DWORD cItem = 0, cConstructed = 0;
+
+            if (info->pwszProgramName)
+            {
+                swapped.tag = ASN_CONTEXT;
+                swapped.pvStructInfo = info->pwszProgramName;
+                swapped.encodeFunc = CRYPT_AsnEncodeBMPString;
+                constructed[cConstructed].tag = 0;
+                constructed[cConstructed].pvStructInfo = &swapped;
+                constructed[cConstructed].encodeFunc = CRYPT_AsnEncodeSwapTag;
+                items[cItem].pvStructInfo = &constructed[cConstructed];
+                items[cItem].encodeFunc = CRYPT_AsnEncodeConstructed;
+                cConstructed++;
+                cItem++;
+            }
+            if (info->pMoreInfo)
+            {
+                constructed[cConstructed].tag = 1;
+                constructed[cConstructed].pvStructInfo = info->pMoreInfo;
+                constructed[cConstructed].encodeFunc = WVTAsn1SpcLinkEncode;
+                items[cItem].pvStructInfo = &constructed[cConstructed];
+                items[cItem].encodeFunc = CRYPT_AsnEncodeConstructed;
+                cConstructed++;
+                cItem++;
+            }
+            if (info->pPublisherInfo)
+            {
+                constructed[cConstructed].tag = 2;
+                constructed[cConstructed].pvStructInfo = info->pPublisherInfo;
+                constructed[cConstructed].encodeFunc = WVTAsn1SpcLinkEncode;
+                items[cItem].pvStructInfo = &constructed[cConstructed];
+                items[cItem].encodeFunc = CRYPT_AsnEncodeConstructed;
+                cConstructed++;
+                cItem++;
+            }
+            ret = CRYPT_AsnEncodeSequence(X509_ASN_ENCODING,
+             items, cItem, pbEncoded, pcbEncoded);
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
     return ret;
 }
 
