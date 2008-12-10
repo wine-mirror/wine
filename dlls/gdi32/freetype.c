@@ -2276,7 +2276,7 @@ static const struct nls_update_font_list
     /* Chinese Simplified */
     { 936, 936, "vga936.fon", "svgafix.fon", "svgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
-      "Tahoma", "Times New Roman", /* FIXME unverified */
+      "SimSun", "NSimSun",
       NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
       { 0 }, { 0 }, { 0 }
     },
