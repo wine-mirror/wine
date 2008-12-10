@@ -86,7 +86,7 @@ static void test_WM_SETTEXT()
        where \r at the end of the text is a proper line break.
    */
 
-#define TEST_SETTEXT(a, b, nlines, is_todo, is_todo2) \
+#define TEST_SETTEXT(a, b, nlines) \
   result = SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) a); \
   ok (result == 1, "WM_SETTEXT returned %ld instead of 1\n", result); \
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buf); \
@@ -94,36 +94,27 @@ static void test_WM_SETTEXT()
 	"WM_GETTEXT returned %ld instead of expected %u\n", \
 	result, lstrlen(buf)); \
   result = strcmp(b, buf); \
-  if (is_todo) todo_wine { \
   ok(result == 0, \
         "WM_SETTEXT round trip: strcmp = %ld\n", result); \
-  } else { \
-  ok(result == 0, \
-        "WM_SETTEXT round trip: strcmp = %ld\n", result); \
-  } \
   result = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0); \
-  if (is_todo2) todo_wine { \
-  ok(result == nlines, "EM_GETLINECOUNT returned %ld, expected %d\n", result, nlines); \
-  } else { \
-  ok(result == nlines, "EM_GETLINECOUNT returned %ld, expected %d\n", result, nlines); \
-  }
+  ok(result == nlines, "EM_GETLINECOUNT returned %ld, expected %d\n", result, nlines);
 
-  TEST_SETTEXT(TestItem1, TestItem1, 1, 0, 0)
-  TEST_SETTEXT(TestItem2, TestItem2, 1, 0, 0)
-  TEST_SETTEXT(TestItem3, TestItem3, 2, 0, 0)
-  TEST_SETTEXT(TestItem4, TestItem4, 3, 0, 0)
-  TEST_SETTEXT(TestItem5, TestItem5, 2, 0, 0)
-  TEST_SETTEXT(TestItem6, TestItem6, 3, 0, 0)
-  TEST_SETTEXT(TestItem7, TestItem7, 4, 0, 0)
-  TEST_SETTEXT(TestItem8, TestItem8, 2, 0, 0)
-  TEST_SETTEXT(TestItem9, TestItem9, 3, 0, 0)
-  TEST_SETTEXT(TestItem10, TestItem10, 3, 0, 0)
-  TEST_SETTEXT(TestItem11, TestItem11, 1, 0, 0)
-  TEST_SETTEXT(TestItem12, TestItem12, 2, 0, 0)
-  TEST_SETTEXT(TestItem13, TestItem13, 3, 0, 0)
-  TEST_SETTEXT(TestItem14, TestItem14, 2, 0, 0)
-  TEST_SETTEXT(TestItem15, TestItem15, 3, 0, 0)
-  TEST_SETTEXT(TestItem16, TestItem16, 4, 0, 0)
+  TEST_SETTEXT(TestItem1, TestItem1, 1)
+  TEST_SETTEXT(TestItem2, TestItem2, 1)
+  TEST_SETTEXT(TestItem3, TestItem3, 2)
+  TEST_SETTEXT(TestItem4, TestItem4, 3)
+  TEST_SETTEXT(TestItem5, TestItem5, 2)
+  TEST_SETTEXT(TestItem6, TestItem6, 3)
+  TEST_SETTEXT(TestItem7, TestItem7, 4)
+  TEST_SETTEXT(TestItem8, TestItem8, 2)
+  TEST_SETTEXT(TestItem9, TestItem9, 3)
+  TEST_SETTEXT(TestItem10, TestItem10, 3)
+  TEST_SETTEXT(TestItem11, TestItem11, 1)
+  TEST_SETTEXT(TestItem12, TestItem12, 2)
+  TEST_SETTEXT(TestItem13, TestItem13, 3)
+  TEST_SETTEXT(TestItem14, TestItem14, 2)
+  TEST_SETTEXT(TestItem15, TestItem15, 3)
+  TEST_SETTEXT(TestItem16, TestItem16, 4)
 
 #undef TEST_SETTEXT
   DestroyWindow(hwndRichEdit);
@@ -364,17 +355,16 @@ static const struct getline_s {
   int line;
   size_t buffer_len;
   const char *text;
-  int wine_todo;
 } gl[] = {
-  {0, 10, "foo bar\r\n", 0},
-  {1, 10, "\n", 0},
-  {2, 10, "bar\n", 0},
-  {3, 10, "\r\n", 0},
+  {0, 10, "foo bar\r\n"},
+  {1, 10, "\n"},
+  {2, 10, "bar\n"},
+  {3, 10, "\r\n"},
 
   /* Buffer smaller than line length */
-  {0, 2, "foo bar\r", 0},
-  {0, 1, "foo bar\r", 0},
-  {0, 0, "foo bar\r", 0}
+  {0, 2, "foo bar\r"},
+  {0, 1, "foo bar\r"},
+  {0, 0, "foo bar\r"}
 };
 
 static void test_EM_GETLINE(void)
@@ -401,10 +391,6 @@ static void test_EM_GETLINE(void)
     /* EM_GETLINE appends a "\r\0" to the end of the line
      * nCopied counts up to and including the '\r' */
     nCopied = SendMessage(hwndRichEdit, EM_GETLINE, gl[i].line, (LPARAM) dest);
-    if (gl[i].wine_todo) todo_wine {
-    ok(nCopied == expected_nCopied, "%d: %d!=%d\n", i, nCopied,
-       expected_nCopied);
-    } else
     ok(nCopied == expected_nCopied, "%d: %d!=%d\n", i, nCopied,
        expected_nCopied);
     /* two special cases since a parameter is passed via dest */
@@ -416,21 +402,11 @@ static void test_EM_GETLINE(void)
          !strncmp(dest+2, origdest+2, nBuf-2), "buffer_len=1\n");
     else
     {
-      if (gl[i].wine_todo) todo_wine {
       ok(!strncmp(dest, gl[i].text, expected_bytes_written),
          "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
       ok(!strncmp(dest + expected_bytes_written, origdest
                   + expected_bytes_written, nBuf - expected_bytes_written),
          "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
-      }
-      else
-      {
-      ok(!strncmp(dest, gl[i].text, expected_bytes_written),
-         "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
-      ok(!strncmp(dest + expected_bytes_written, origdest
-                  + expected_bytes_written, nBuf - expected_bytes_written),
-         "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
-      }
     }
   }
 
@@ -543,84 +519,83 @@ struct find_s {
   const char *needle;
   int flags;
   int expected_loc;
-  int _todo_wine;
 };
 
 
 struct find_s find_tests[] = {
   /* Find in empty text */
-  {0, -1, "foo", FR_DOWN, -1, 0},
-  {0, -1, "foo", 0, -1, 0},
-  {0, -1, "", FR_DOWN, -1, 0},
-  {20, 5, "foo", FR_DOWN, -1, 0},
-  {5, 20, "foo", FR_DOWN, -1, 0}
+  {0, -1, "foo", FR_DOWN, -1},
+  {0, -1, "foo", 0, -1},
+  {0, -1, "", FR_DOWN, -1},
+  {20, 5, "foo", FR_DOWN, -1},
+  {5, 20, "foo", FR_DOWN, -1}
 };
 
 struct find_s find_tests2[] = {
   /* No-result find */
-  {0, -1, "foo", FR_DOWN | FR_MATCHCASE, -1, 0},
-  {5, 20, "WINE", FR_DOWN | FR_MATCHCASE, -1, 0},
+  {0, -1, "foo", FR_DOWN | FR_MATCHCASE, -1},
+  {5, 20, "WINE", FR_DOWN | FR_MATCHCASE, -1},
 
   /* Subsequent finds */
-  {0, -1, "Wine", FR_DOWN | FR_MATCHCASE, 4, 0},
-  {5, 31, "Wine", FR_DOWN | FR_MATCHCASE, 13, 0},
-  {14, 31, "Wine", FR_DOWN | FR_MATCHCASE, 23, 0},
-  {24, 31, "Wine", FR_DOWN | FR_MATCHCASE, 27, 0},
+  {0, -1, "Wine", FR_DOWN | FR_MATCHCASE, 4},
+  {5, 31, "Wine", FR_DOWN | FR_MATCHCASE, 13},
+  {14, 31, "Wine", FR_DOWN | FR_MATCHCASE, 23},
+  {24, 31, "Wine", FR_DOWN | FR_MATCHCASE, 27},
 
   /* Find backwards */
-  {19, 20, "Wine", FR_MATCHCASE, -1, 0},
-  {10, 20, "Wine", FR_MATCHCASE, 13, 0},
-  {20, 10, "Wine", FR_MATCHCASE, -1, 0},
+  {19, 20, "Wine", FR_MATCHCASE, -1},
+  {10, 20, "Wine", FR_MATCHCASE, 13},
+  {20, 10, "Wine", FR_MATCHCASE, -1},
 
   /* Case-insensitive */
-  {1, 31, "wInE", FR_DOWN, 4, 0},
-  {1, 31, "Wine", FR_DOWN, 4, 0},
+  {1, 31, "wInE", FR_DOWN, 4},
+  {1, 31, "Wine", FR_DOWN, 4},
 
   /* High-to-low ranges */
-  {20, 5, "Wine", FR_DOWN, -1, 0},
-  {2, 1, "Wine", FR_DOWN, -1, 0},
-  {30, 29, "Wine", FR_DOWN, -1, 0},
-  {20, 5, "Wine", 0, /*13*/ -1, 0},
+  {20, 5, "Wine", FR_DOWN, -1},
+  {2, 1, "Wine", FR_DOWN, -1},
+  {30, 29, "Wine", FR_DOWN, -1},
+  {20, 5, "Wine", 0, /*13*/ -1},
 
   /* Find nothing */
-  {5, 10, "", FR_DOWN, -1, 0},
-  {10, 5, "", FR_DOWN, -1, 0},
-  {0, -1, "", FR_DOWN, -1, 0},
-  {10, 5, "", 0, -1, 0},
+  {5, 10, "", FR_DOWN, -1},
+  {10, 5, "", FR_DOWN, -1},
+  {0, -1, "", FR_DOWN, -1},
+  {10, 5, "", 0, -1},
 
   /* Whole-word search */
-  {0, -1, "wine", FR_DOWN | FR_WHOLEWORD, 18, 0},
-  {0, -1, "win", FR_DOWN | FR_WHOLEWORD, -1, 0},
-  {13, -1, "wine", FR_DOWN | FR_WHOLEWORD, 18, 0},
-  {0, -1, "winewine", FR_DOWN | FR_WHOLEWORD, 0, 0},
-  {10, -1, "winewine", FR_DOWN | FR_WHOLEWORD, 23, 0},
-  {11, -1, "winewine", FR_WHOLEWORD, 23, 0},
-  {31, -1, "winewine", FR_WHOLEWORD, -1, 0},
+  {0, -1, "wine", FR_DOWN | FR_WHOLEWORD, 18},
+  {0, -1, "win", FR_DOWN | FR_WHOLEWORD, -1},
+  {13, -1, "wine", FR_DOWN | FR_WHOLEWORD, 18},
+  {0, -1, "winewine", FR_DOWN | FR_WHOLEWORD, 0},
+  {10, -1, "winewine", FR_DOWN | FR_WHOLEWORD, 23},
+  {11, -1, "winewine", FR_WHOLEWORD, 23},
+  {31, -1, "winewine", FR_WHOLEWORD, -1},
 
   /* Bad ranges */
-  {5, 200, "XXX", FR_DOWN, -1, 0},
-  {-20, 20, "Wine", FR_DOWN, -1, 0},
-  {-20, 20, "Wine", FR_DOWN, -1, 0},
-  {-15, -20, "Wine", FR_DOWN, -1, 0},
-  {1<<12, 1<<13, "Wine", FR_DOWN, -1, 0},
+  {5, 200, "XXX", FR_DOWN, -1},
+  {-20, 20, "Wine", FR_DOWN, -1},
+  {-20, 20, "Wine", FR_DOWN, -1},
+  {-15, -20, "Wine", FR_DOWN, -1},
+  {1<<12, 1<<13, "Wine", FR_DOWN, -1},
 
   /* Check the case noted in bug 4479 where matches at end aren't recognized */
-  {23, 31, "Wine", FR_DOWN | FR_MATCHCASE, 23, 0},
-  {27, 31, "Wine", FR_DOWN | FR_MATCHCASE, 27, 0},
-  {27, 32, "Wine", FR_DOWN | FR_MATCHCASE, 27, 0},
-  {13, 31, "WineWine", FR_DOWN | FR_MATCHCASE, 23, 0},
-  {13, 32, "WineWine", FR_DOWN | FR_MATCHCASE, 23, 0},
+  {23, 31, "Wine", FR_DOWN | FR_MATCHCASE, 23},
+  {27, 31, "Wine", FR_DOWN | FR_MATCHCASE, 27},
+  {27, 32, "Wine", FR_DOWN | FR_MATCHCASE, 27},
+  {13, 31, "WineWine", FR_DOWN | FR_MATCHCASE, 23},
+  {13, 32, "WineWine", FR_DOWN | FR_MATCHCASE, 23},
 
   /* The backwards case of bug 4479; bounds look right
    * Fails because backward find is wrong */
-  {19, 20, "WINE", FR_MATCHCASE, -1, 0},
-  {0, 20, "WINE", FR_MATCHCASE, 0, 0},
+  {19, 20, "WINE", FR_MATCHCASE, -1},
+  {0, 20, "WINE", FR_MATCHCASE, 0},
 
-  {0, -1, "wineWine wine", FR_DOWN, 0, 0},
-  {0, -1, "wineWine wine", 0, 0, 0},
-  {0, -1, "INEW", 0, 1, 0},
-  {0, 31, "INEW", 0, 1, 0},
-  {4, -1, "INEW", 0, 10, 0},
+  {0, -1, "wineWine wine", FR_DOWN, 0},
+  {0, -1, "wineWine wine", 0, 0},
+  {0, -1, "INEW", 0, 1},
+  {0, 31, "INEW", 0, 1},
+  {4, -1, "INEW", 0, 10},
 };
 
 static void check_EM_FINDTEXT(HWND hwnd, const char *name, struct find_s *f, int id) {
@@ -666,15 +641,8 @@ static void run_tests_EM_FINDTEXT(HWND hwnd, const char *name, struct find_s *fi
   int i;
 
   for (i = 0; i < num_tests; i++) {
-    if (find[i]._todo_wine) {
-      todo_wine {
-        check_EM_FINDTEXT(hwnd, name, &find[i], i);
-        check_EM_FINDTEXTEX(hwnd, name, &find[i], i);
-      }
-    } else {
-        check_EM_FINDTEXT(hwnd, name, &find[i], i);
-        check_EM_FINDTEXTEX(hwnd, name, &find[i], i);
-    }
+    check_EM_FINDTEXT(hwnd, name, &find[i], i);
+    check_EM_FINDTEXTEX(hwnd, name, &find[i], i);
   }
 }
 
