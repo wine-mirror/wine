@@ -332,6 +332,15 @@ ok(tmp === "<STRIKE>test</STRIKE>", "'test'.strike() = " + tmp);
 tmp = "test".strike(3);
 ok(tmp === "<STRIKE>test</STRIKE>", "'test'.strike(3) = " + tmp);
 
+tmp = "".sub();
+ok(tmp === "<SUB></SUB>", "''.sub() = " + tmp);
+tmp = "".sub(3);
+ok(tmp === "<SUB></SUB>", "''.sub(3) = " + tmp);
+tmp = "test".sub();
+ok(tmp === "<SUB>test</SUB>", "'test'.sub() = " + tmp);
+tmp = "test".sub(3);
+ok(tmp === "<SUB>test</SUB>", "'test'.sub(3) = " + tmp);
+
 var arr = new Array();
 ok(typeof(arr) === "object", "arr () is not object");
 ok((arr.length === 0), "arr.length is not 0");

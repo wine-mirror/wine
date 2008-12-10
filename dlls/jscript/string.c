@@ -1004,8 +1004,8 @@ static HRESULT String_strike(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
 static HRESULT String_sub(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    static const WCHAR subtagW[] = {'S','U','B',0};
+    return do_attributeless_tag_format(dispex, lcid, flags, dp, retv, ei, sp, subtagW);
 }
 
 /* ECMA-262 3rd Edition    15.5.4.15 */
