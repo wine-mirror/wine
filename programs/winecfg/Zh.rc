@@ -36,7 +36,7 @@ END
 
 IDD_ABOUTCFG DIALOGEX 0, 0, 260, 270
 STYLE WS_CHILD
-FONT 9, "MS Song"
+FONT 9, "MS Shell Dlg"
 BEGIN
     LTEXT           PACKAGE_STRING,IDC_STATIC,119,17,120,8
     CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP ,15,17,157,111
@@ -52,7 +52,7 @@ END
 
 IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 9, "MS Song"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 应用程序设置 ",IDC_STATIC, 8,4,244,240
     LTEXT           "Wine 可以对不同程序假装成不同版本的 Windows. 「函数库」与「显示」页签将连结到这个页签, 除了调整默认设置, 也能调整个别程序的设置。",
@@ -67,7 +67,7 @@ END
 
 IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 9, "MS Song"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX    " 视窗设置 ",IDC_STATIC,8,4,244,84
     CONTROL     "允许 DirectX 程序防止光标离开它的视窗(&m)",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
@@ -94,7 +94,7 @@ END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 9, "MS Song"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " DLL 顶替 ",IDC_STATIC,8,4,244,240
     LTEXT           "动态连结函数库可以个别设置, 来选择使用 Wine 提供的内建版本, 还是使用取自 Windows 或程序所提供的原装版本。"
@@ -111,7 +111,7 @@ END
 IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 110, 92
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "编辑顶替"
-FONT 9, "MS Song"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 载入顺序 ",IDC_STATIC,8,4,94,66
     CONTROL         "内建(Wine)(&B)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
@@ -125,7 +125,7 @@ END
 
 IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 9, "MS Song"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 驱动器映射(&m) ",IDC_STATIC,8,4,244,240
     LTEXT           "Failed to connect to the mount manager, the drive configuration cannot be edited.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,220,76
@@ -163,7 +163,7 @@ END
 
 IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 9, "MS Song"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 驱动程序选择 ",IDC_STATIC,8,4,244,195
     LTEXT           "请选择想要的驱动程序。不选择任何驱动程序将停用音效。 不建议同时选择多个驱动程序。 按下鼠标右键来对驱动程序设置。",IDC_STATIC,15,20,227,30
@@ -182,7 +182,7 @@ END
 
 IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 9, "MS Song"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 外观 ",IDC_STATIC,8,4,244,106
     LTEXT           "布景主题(&T):",IDC_STATIC,15,16,130,8
@@ -322,7 +322,7 @@ END
 
 IDD_ABOUTCFG DIALOGEX 0, 0, 260, 270
 STYLE WS_CHILD
-FONT 8, "PMingLiu"
+FONT 9, "MS Shell Dlg"
 BEGIN
     LTEXT           PACKAGE_STRING,IDC_STATIC,119,17,120,8
     CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP ,15,17,157,111
@@ -338,7 +338,7 @@ END
 
 IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 8, "PMingLiu"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 應用程式設定 ",IDC_STATIC, 8,4,244,240
     LTEXT           "Wine 可以對不同程式假裝成不同版本的 Windows 。 「函式庫」 與 「顯示」 頁籤將連結到這個頁籤， 除了調整預設設定， 也能調整個別程式的設定。",
@@ -353,7 +353,7 @@ END
 
 IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 8, "PMingLiu"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX    " 視窗設定 ",IDC_STATIC,8,4,244,84
     CONTROL     "允許 DirectX 程式防止游標離開它的視窗(&m)",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
@@ -380,7 +380,7 @@ END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 8, "PMingLiu"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " DLL 頂替 ",IDC_STATIC,8,4,244,240
     LTEXT           "動態連結函式庫可以個別設定，來指定要使用 Wine 提供的內建版本，還是使用取自 Windows 或程式所提供的原生版本。"
@@ -397,7 +397,7 @@ END
 IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 110, 92
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "編輯頂替"
-FONT 8, "PMingLiu"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 載入順序 ",IDC_STATIC,8,4,94,66
     CONTROL         "內建(Wine)(&B)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
@@ -411,7 +411,7 @@ END
 
 IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 8, "PMingLiu"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 儲存槽對映(&m) ",IDC_STATIC,8,4,244,240
     CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
@@ -448,7 +448,7 @@ END
 
 IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 8, "PMingLiu"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 驅動程式選擇 ",IDC_STATIC,8,4,244,195
     LTEXT           "請選擇想要的驅動程式。不選擇任何驅動程式將停用音效。不建議同時選擇多個驅動程式。按下滑鼠右鍵來對驅動程式設定。",IDC_STATIC,15,20,227,30
@@ -467,7 +467,7 @@ END
 
 IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 8, "PMingLiu"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 外觀 ",IDC_STATIC,8,4,244,106
     LTEXT           "佈景主題(&T)：",IDC_STATIC,15,16,130,8
