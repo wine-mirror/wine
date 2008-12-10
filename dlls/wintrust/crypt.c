@@ -349,7 +349,7 @@ static BOOL WINTRUST_GetSignedMsgFromCabFile(SIP_SUBJECTINFO *pSubjectInfo,
     /* get basic offset & size info */
     base_offset = SetFilePointer(pSubjectInfo->hFile, 0L, NULL, SEEK_CUR);
 
-    if (SetFilePointer(pSubjectInfo->hFile, 0, NULL, SEEK_END) == -1)
+    if (SetFilePointer(pSubjectInfo->hFile, 0, NULL, SEEK_END) == INVALID_SET_FILE_POINTER)
     {
         TRACE("seek error\n");
         return FALSE;
@@ -357,7 +357,7 @@ static BOOL WINTRUST_GetSignedMsgFromCabFile(SIP_SUBJECTINFO *pSubjectInfo,
 
     cabsize = SetFilePointer(pSubjectInfo->hFile, 0L, NULL, SEEK_CUR);
     if ((cabsize == -1) || (base_offset == -1) ||
-     (SetFilePointer(pSubjectInfo->hFile, base_offset, NULL, SEEK_SET) == -1))
+     (SetFilePointer(pSubjectInfo->hFile, base_offset, NULL, SEEK_SET) == INVALID_SET_FILE_POINTER))
     {
         TRACE("seek error\n");
         return FALSE;
@@ -453,7 +453,7 @@ static BOOL WINTRUST_GetSignedMsgFromCabFile(SIP_SUBJECTINFO *pSubjectInfo,
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
-    if (SetFilePointer(pSubjectInfo->hFile, cert_offset, NULL, SEEK_SET) == -1)
+    if (SetFilePointer(pSubjectInfo->hFile, cert_offset, NULL, SEEK_SET) == INVALID_SET_FILE_POINTER)
     {
         ERR("couldn't seek to cert location\n");
         return FALSE;

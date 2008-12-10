@@ -2195,7 +2195,8 @@ static BOOL WINAPI CRYPT_AsnDecodeInt(DWORD dwCertEncodingType,
         }
         else
         {
-            int val, i;
+            int val;
+            DWORD i;
 
             *pcbStructInfo = sizeof(int);
             if (blob->pbData[blob->cbData - 1] & 0x80)
