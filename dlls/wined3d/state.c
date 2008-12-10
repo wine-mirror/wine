@@ -702,7 +702,7 @@ state_specularenable(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCon
             checkGLcall("glFinalCombinerInputNV()");
         }
     } else {
-        const GLfloat black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+        static const GLfloat black[] = {0.0f, 0.0f, 0.0f, 0.0f};
 
         /* for the case of enabled lighting: */
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &black[0]);
@@ -1323,7 +1323,7 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
                 glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*)&device->updateStateBlock->material.Specular);
                 checkGLcall("glMaterialfv");
             } else {
-                const GLfloat black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+                static const GLfloat black[] = {0.0f, 0.0f, 0.0f, 0.0f};
                 glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &black[0]);
                 checkGLcall("glMaterialfv");
             }
@@ -3175,10 +3175,10 @@ static void loadTexCoords(IWineD3DStateBlockImpl *stateblock, const WineDirect3D
 static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[stage];
-    const GLfloat s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
-    const GLfloat t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
-    const GLfloat r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
-    const GLfloat q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
+    static const GLfloat s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
+    static const GLfloat t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
+    static const GLfloat r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
+    static const GLfloat q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
 
     if (mapped_stage == -1) {
         TRACE("No texture unit mapped to stage %d. Skipping texture coordinates.\n", stage);

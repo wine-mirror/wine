@@ -1631,7 +1631,7 @@ static GLuint create_arb_blt_vertex_program(const WineD3D_GL_Info *gl_info)
 static GLuint create_arb_blt_fragment_program(const WineD3D_GL_Info *gl_info, enum tex_types tex_type)
 {
     GLuint program_id = 0;
-    const char *blt_fprograms[tex_type_count] =
+    static const char * const blt_fprograms[tex_type_count] =
     {
         /* tex_1d */
         NULL,

@@ -96,7 +96,8 @@ static void print_glsl_info_log(const WineD3D_GL_Info *gl_info, GLhandleARB obj)
     unsigned int i;
     BOOL is_spam;
 
-    const char *spam[] = {
+    static const char * const spam[] =
+    {
         "Vertex shader was successfully compiled to run on hardware.\n",    /* fglrx          */
         "Fragment shader was successfully compiled to run on hardware.\n",  /* fglrx          */
         "Fragment shader(s) linked, vertex shader(s) linked. \n ",          /* fglrx, with \n */
@@ -3306,7 +3307,8 @@ static GLhandleARB create_glsl_blt_shader(const WineD3D_GL_Info *gl_info, enum t
 {
     GLhandleARB program_id;
     GLhandleARB vshader_id, pshader_id;
-    const char *blt_vshader[] = {
+    static const char *blt_vshader[] =
+    {
         "#version 120\n"
         "void main(void)\n"
         "{\n"
@@ -3316,7 +3318,8 @@ static GLhandleARB create_glsl_blt_shader(const WineD3D_GL_Info *gl_info, enum t
         "}\n"
     };
 
-    const char *blt_pshaders[tex_type_count] = {
+    static const char *blt_pshaders[tex_type_count] =
+    {
         /* tex_1d */
         NULL,
         /* tex_2d */
