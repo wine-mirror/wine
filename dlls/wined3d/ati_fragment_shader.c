@@ -351,6 +351,7 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
         if(op[stage].cop != WINED3DTOP_BUMPENVMAP &&
            op[stage].cop != WINED3DTOP_BUMPENVMAPLUMINANCE) continue;
 
+        fixup = op[stage].color_correction;
         if (fixup.x_source != CHANNEL_SOURCE_X || fixup.y_source != CHANNEL_SOURCE_Y)
         {
             FIXME("Swizzles not implemented\n");
