@@ -543,7 +543,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
  */
 static int convert_sockopt(INT *level, INT *optname)
 {
-  int i;
+  unsigned int i;
   switch (*level)
   {
      case WS_SOL_SOCKET:
@@ -659,7 +659,7 @@ static inline int do_block( int fd, int events, int timeout )
 
 static int
 convert_af_w2u(int windowsaf) {
-    int i;
+    unsigned int i;
 
     for (i=0;i<sizeof(ws_af_map)/sizeof(ws_af_map[0]);i++)
     	if (ws_af_map[i][0] == windowsaf)
@@ -670,7 +670,7 @@ convert_af_w2u(int windowsaf) {
 
 static int
 convert_af_u2w(int unixaf) {
-    int i;
+    unsigned int i;
 
     for (i=0;i<sizeof(ws_af_map)/sizeof(ws_af_map[0]);i++)
     	if (ws_af_map[i][1] == unixaf)
@@ -681,7 +681,7 @@ convert_af_u2w(int unixaf) {
 
 static int
 convert_proto_w2u(int windowsproto) {
-    int i;
+    unsigned int i;
 
     for (i=0;i<sizeof(ws_proto_map)/sizeof(ws_proto_map[0]);i++)
     	if (ws_proto_map[i][0] == windowsproto)
@@ -692,7 +692,7 @@ convert_proto_w2u(int windowsproto) {
 
 static int
 convert_proto_u2w(int unixproto) {
-    int i;
+    unsigned int i;
 
     for (i=0;i<sizeof(ws_proto_map)/sizeof(ws_proto_map[0]);i++)
     	if (ws_proto_map[i][1] == unixproto)
@@ -703,7 +703,7 @@ convert_proto_u2w(int unixproto) {
 
 static int
 convert_socktype_w2u(int windowssocktype) {
-    int i;
+    unsigned int i;
 
     for (i=0;i<sizeof(ws_socktype_map)/sizeof(ws_socktype_map[0]);i++)
     	if (ws_socktype_map[i][0] == windowssocktype)
@@ -714,7 +714,7 @@ convert_socktype_w2u(int windowssocktype) {
 
 static int
 convert_socktype_u2w(int unixsocktype) {
-    int i;
+    unsigned int i;
 
     for (i=0;i<sizeof(ws_socktype_map)/sizeof(ws_socktype_map[0]);i++)
     	if (ws_socktype_map[i][1] == unixsocktype)
@@ -2523,7 +2523,7 @@ int WINAPI WS_recvfrom(SOCKET s, char *buf, INT len, int flags,
 static struct pollfd *fd_sets_to_poll( const WS_fd_set *readfds, const WS_fd_set *writefds,
                                        const WS_fd_set *exceptfds, int *count_ptr )
 {
-    int i, j = 0, count = 0;
+    unsigned int i, j = 0, count = 0;
     struct pollfd *fds;
 
     if (readfds) count += readfds->fd_count;
@@ -2561,7 +2561,7 @@ static struct pollfd *fd_sets_to_poll( const WS_fd_set *readfds, const WS_fd_set
 static void release_poll_fds( const WS_fd_set *readfds, const WS_fd_set *writefds,
                               const WS_fd_set *exceptfds, struct pollfd *fds )
 {
-    int i, j = 0;
+    unsigned int i, j = 0;
 
     if (readfds)
     {
@@ -2589,7 +2589,7 @@ static void release_poll_fds( const WS_fd_set *readfds, const WS_fd_set *writefd
 static int get_poll_results( WS_fd_set *readfds, WS_fd_set *writefds, WS_fd_set *exceptfds,
                              const struct pollfd *fds )
 {
-    int i, j = 0, k, total = 0;
+    unsigned int i, j = 0, k, total = 0;
 
     if (readfds)
     {
@@ -3418,7 +3418,8 @@ void WINAPI WS_freeaddrinfo(struct WS_addrinfo *res)
 
 /* helper functions for getaddrinfo()/getnameinfo() */
 static int convert_aiflag_w2u(int winflags) {
-    int i, unixflags = 0;
+    unsigned int i;
+    int unixflags = 0;
 
     for (i=0;i<sizeof(ws_aiflag_map)/sizeof(ws_aiflag_map[0]);i++)
         if (ws_aiflag_map[i][0] & winflags) {
@@ -3431,7 +3432,8 @@ static int convert_aiflag_w2u(int winflags) {
 }
 
 static int convert_niflag_w2u(int winflags) {
-    int i, unixflags = 0;
+    unsigned int i;
+    int unixflags = 0;
 
     for (i=0;i<sizeof(ws_niflag_map)/sizeof(ws_niflag_map[0]);i++)
         if (ws_niflag_map[i][0] & winflags) {
@@ -3444,7 +3446,8 @@ static int convert_niflag_w2u(int winflags) {
 }
 
 static int convert_aiflag_u2w(int unixflags) {
-    int i, winflags = 0;
+    unsigned int i;
+    int winflags = 0;
 
     for (i=0;i<sizeof(ws_aiflag_map)/sizeof(ws_aiflag_map[0]);i++)
         if (ws_aiflag_map[i][1] & unixflags) {
@@ -4752,7 +4755,7 @@ INT WINAPI WSAAddressToStringA( LPSOCKADDR sockaddr, DWORD len,
                                 LPWSAPROTOCOL_INFOA info, LPSTR string,
                                 LPDWORD lenstr )
 {
-    INT size;
+    DWORD size;
     CHAR buffer[22]; /* 12 digits + 3 dots + ':' + 5 digits + '\0' */
     CHAR *p;
 
@@ -4813,7 +4816,7 @@ INT WINAPI WSAAddressToStringW( LPSOCKADDR sockaddr, DWORD len,
                                 LPWSAPROTOCOL_INFOW info, LPWSTR string,
                                 LPDWORD lenstr )
 {
-    INT size;
+    DWORD size;
     WCHAR buffer[22]; /* 12 digits + 3 dots + ':' + 5 digits + '\0' */
     static const WCHAR format[] = { '%','u','.','%','u','.','%','u','.','%','u',':','%','u',0 };
     WCHAR *p;
@@ -4836,7 +4839,7 @@ INT WINAPI WSAAddressToStringW( LPSOCKADDR sockaddr, DWORD len,
     p = strchrW( buffer, ':' );
     if (!((SOCKADDR_IN *)sockaddr)->sin_port) *p = 0;
 
-    size = lstrlenW( buffer );
+    size = strlenW( buffer );
 
     if (*lenstr <  size)
     {
