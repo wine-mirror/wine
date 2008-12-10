@@ -865,6 +865,79 @@ static void test_encodeSpOpusInfo(void)
     }
 }
 
+static void test_decodeSpOpusInfo(void)
+{
+    BOOL ret;
+    DWORD size;
+    SPC_SP_OPUS_INFO *info;
+
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_SP_OPUS_INFO_STRUCT,
+     emptySequence, sizeof(emptySequence), CRYPT_DECODE_ALLOC_FLAG, NULL,
+     &info, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(!info->pwszProgramName, "expected NULL\n");
+        ok(!info->pMoreInfo, "expected NULL\n");
+        ok(!info->pPublisherInfo, "expected NULL\n");
+        LocalFree(info);
+    }
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_SP_OPUS_INFO_STRUCT,
+     spOpusInfoWithProgramName, sizeof(spOpusInfoWithProgramName),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(info->pwszProgramName && !lstrcmpW(info->pwszProgramName,
+         progName), "unexpected program name\n");
+        ok(!info->pMoreInfo, "expected NULL\n");
+        ok(!info->pPublisherInfo, "expected NULL\n");
+        LocalFree(info);
+    }
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_SP_OPUS_INFO_STRUCT,
+     spOpusInfoWithMoreInfo, sizeof(spOpusInfoWithMoreInfo),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(!info->pwszProgramName, "expected NULL\n");
+        ok(info->pMoreInfo != NULL, "expected a value for pMoreInfo\n");
+        if (info->pMoreInfo)
+        {
+            ok(info->pMoreInfo->dwLinkChoice == SPC_URL_LINK_CHOICE,
+             "unexpected link choice %d\n", info->pMoreInfo->dwLinkChoice);
+            ok(!lstrcmpW(info->pMoreInfo->pwszUrl, winehq),
+             "unexpected link value\n");
+        }
+        ok(!info->pPublisherInfo, "expected NULL\n");
+        LocalFree(info);
+    }
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_SP_OPUS_INFO_STRUCT,
+     spOpusInfoWithPublisherInfo, sizeof(spOpusInfoWithPublisherInfo),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(!info->pwszProgramName, "expected NULL\n");
+        ok(!info->pMoreInfo, "expected NULL\n");
+        ok(info->pPublisherInfo != NULL,
+         "expected a value for pPublisherInfo\n");
+        if (info->pPublisherInfo)
+        {
+            ok(info->pPublisherInfo->dwLinkChoice == SPC_URL_LINK_CHOICE,
+             "unexpected link choice %d\n",
+             info->pPublisherInfo->dwLinkChoice);
+            ok(!lstrcmpW(info->pPublisherInfo->pwszUrl, winehq),
+             "unexpected link value\n");
+        }
+        LocalFree(info);
+    }
+}
+
 START_TEST(asn)
 {
     HMODULE hCrypt32 = LoadLibraryA("crypt32.dll");
@@ -882,6 +955,7 @@ START_TEST(asn)
     test_encodeCatNameValue();
     test_decodeCatNameValue();
     test_encodeSpOpusInfo();
+    test_decodeSpOpusInfo();
 
     FreeLibrary(hCrypt32);
 }
