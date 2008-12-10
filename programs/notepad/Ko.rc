@@ -68,7 +68,7 @@ POPUP "도움말(&H)" {
 
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-FONT 8, "MS Shell Dlg"
+FONT 9, "MS Shell Dlg"
 CAPTION "페이지 설정"
 {
 LTEXT    "머리글(&H):",  0x140,   10, 07, 40, 15
