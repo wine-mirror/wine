@@ -682,6 +682,44 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
 
 
 /*************************************************************************
+ *		is_dll_native_subsystem
+ *
+ * Check if dll is a proper native driver.
+ * Some dlls (corpol.dll from IE6 for instance) are incorrectly marked as native
+ * while being perfectly normal DLLs.  This heuristic should catch such breakages.
+ */
+static BOOL is_dll_native_subsystem( HMODULE module, const IMAGE_NT_HEADERS *nt, LPCWSTR filename )
+{
+    static const WCHAR ntdllW[]    = {'n','t','d','l','l','.','d','l','l',0};
+    static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
+    const IMAGE_IMPORT_DESCRIPTOR *imports;
+    DWORD i, size;
+    WCHAR buffer[16];
+
+    if (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_NATIVE) return FALSE;
+    if (nt->OptionalHeader.SectionAlignment < getpagesize()) return TRUE;
+
+    if ((imports = RtlImageDirectoryEntryToData( module, TRUE,
+                                                 IMAGE_DIRECTORY_ENTRY_IMPORT, &size )))
+    {
+        for (i = 0; imports[i].Name; i++)
+        {
+            const char *name = get_rva( module, imports[i].Name );
+            DWORD len = strlen(name);
+            if (len * sizeof(WCHAR) >= sizeof(buffer)) continue;
+            ascii_to_unicode( buffer, name, len + 1 );
+            if (!strcmpiW( buffer, ntdllW ) || !strcmpiW( buffer, kernel32W ))
+            {
+                TRACE( "%s imports %s, assuming not native\n", debugstr_w(filename), debugstr_w(buffer) );
+                return FALSE;
+            }
+        }
+    }
+    return TRUE;
+}
+
+
+/*************************************************************************
  *		alloc_module
  *
  * Allocate a WINE_MODREF structure and add it to the process list
@@ -715,8 +753,7 @@ static WINE_MODREF *alloc_module( HMODULE hModule, LPCWSTR filename )
     else p = wm->ldr.FullDllName.Buffer;
     RtlInitUnicodeString( &wm->ldr.BaseDllName, p );
 
-    if (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_NATIVE &&
-        (nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
+    if ((nt->FileHeader.Characteristics & IMAGE_FILE_DLL) && !is_dll_native_subsystem( hModule, nt, p ))
     {
         wm->ldr.Flags |= LDR_IMAGE_IS_DLL;
         if (nt->OptionalHeader.AddressOfEntryPoint)
