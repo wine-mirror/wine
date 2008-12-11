@@ -37,11 +37,30 @@
 #include "setupapi_private.h"
 #include "fdi.h"
 #include "wine/unicode.h"
-
-#include "msvcrt/fcntl.h"
-#include "msvcrt/share.h"
-
 #include "wine/debug.h"
+
+/* from msvcrt */
+#define _O_RDONLY      0
+#define _O_WRONLY      1
+#define _O_RDWR        2
+#define _O_ACCMODE     (_O_RDONLY|_O_WRONLY|_O_RDWR)
+#define _O_APPEND      0x0008
+#define _O_RANDOM      0x0010
+#define _O_SEQUENTIAL  0x0020
+#define _O_TEMPORARY   0x0040
+#define _O_NOINHERIT   0x0080
+#define _O_CREAT       0x0100
+#define _O_TRUNC       0x0200
+#define _O_EXCL        0x0400
+#define _O_SHORT_LIVED 0x1000
+#define _O_TEXT        0x4000
+#define _O_BINARY      0x8000
+
+#define	_SH_COMPAT     0x00
+#define	_SH_DENYRW     0x10
+#define	_SH_DENYWR     0x20
+#define	_SH_DENYRD     0x30
+#define	_SH_DENYNO     0x40
 
 OSVERSIONINFOW OsVersionInfo;
 
