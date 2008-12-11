@@ -1464,7 +1464,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
     size.QuadPart = 0;
 
     status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ,
-                              &attr, &size, 0, SEC_IMAGE, file );
+                              &attr, &size, PAGE_READONLY, SEC_IMAGE, file );
     if (status != STATUS_SUCCESS) return status;
 
     module = NULL;

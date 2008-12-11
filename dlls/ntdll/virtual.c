@@ -503,7 +503,7 @@ static DWORD VIRTUAL_GetWin32Prot( BYTE vprot )
 
 
 /***********************************************************************
- *           VIRTUAL_GetProt
+ *           get_vprot_flags
  *
  * Build page protections from Win32 flags.
  *
@@ -513,41 +513,40 @@ static DWORD VIRTUAL_GetWin32Prot( BYTE vprot )
  * RETURNS
  *	Value of page protection flags
  */
-static BYTE VIRTUAL_GetProt( DWORD protect )
+static NTSTATUS get_vprot_flags( DWORD protect, unsigned int *vprot )
 {
-    BYTE vprot;
-
     switch(protect & 0xff)
     {
     case PAGE_READONLY:
-        vprot = VPROT_READ;
+        *vprot = VPROT_READ;
         break;
     case PAGE_READWRITE:
-        vprot = VPROT_READ | VPROT_WRITE;
+        *vprot = VPROT_READ | VPROT_WRITE;
         break;
     case PAGE_WRITECOPY:
-        vprot = VPROT_READ | VPROT_WRITECOPY;
+        *vprot = VPROT_READ | VPROT_WRITECOPY;
         break;
     case PAGE_EXECUTE:
-        vprot = VPROT_EXEC;
+        *vprot = VPROT_EXEC;
         break;
     case PAGE_EXECUTE_READ:
-        vprot = VPROT_EXEC | VPROT_READ;
+        *vprot = VPROT_EXEC | VPROT_READ;
         break;
     case PAGE_EXECUTE_READWRITE:
-        vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITE;
+        *vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITE;
         break;
     case PAGE_EXECUTE_WRITECOPY:
-        vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITECOPY;
+        *vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITECOPY;
         break;
     case PAGE_NOACCESS:
-    default:
-        vprot = 0;
+        *vprot = 0;
         break;
+    default:
+        return STATUS_INVALID_PARAMETER;
     }
-    if (protect & PAGE_GUARD) vprot |= VPROT_GUARD;
-    if (protect & PAGE_NOCACHE) vprot |= VPROT_NOCACHE;
-    return vprot;
+    if (protect & PAGE_GUARD) *vprot |= VPROT_GUARD;
+    if (protect & PAGE_NOCACHE) *vprot |= VPROT_NOCACHE;
+    return STATUS_SUCCESS;
 }
 
 
@@ -1632,7 +1631,8 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
 
     if (is_beyond_limit( 0, size, working_set_limit )) return STATUS_WORKING_SET_LIMIT_RANGE;
 
-    vprot = VIRTUAL_GetProt( protect ) | VPROT_VALLOC;
+    if ((status = get_vprot_flags( protect, &vprot ))) return status;
+    vprot |= VPROT_VALLOC;
     if (type & MEM_COMMIT) vprot |= VPROT_COMMITTED;
 
     if (*ret)
@@ -1811,6 +1811,7 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
     NTSTATUS status = STATUS_SUCCESS;
     char *base;
     BYTE vprot;
+    unsigned int new_vprot;
     SIZE_T size = *size_ptr;
     LPVOID addr = *addr_ptr;
 
@@ -1843,6 +1844,8 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
 
     size = ROUND_SIZE( addr, size );
     base = ROUND_ADDR( addr, page_mask );
+    if ((status = get_vprot_flags( new_prot, &new_vprot ))) return status;
+    new_vprot |= VPROT_COMMITTED;
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
@@ -1856,8 +1859,7 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
         if (get_committed_size( view, base, &vprot ) >= size && (vprot & VPROT_COMMITTED))
         {
             if (old_prot) *old_prot = VIRTUAL_GetWin32Prot( vprot );
-            vprot = VIRTUAL_GetProt( new_prot ) | VPROT_COMMITTED;
-            if (!VIRTUAL_SetProt( view, base, size, vprot )) status = STATUS_ACCESS_DENIED;
+            if (!VIRTUAL_SetProt( view, base, size, new_vprot )) status = STATUS_ACCESS_DENIED;
         }
         else status = STATUS_NOT_COMMITTED;
     }
@@ -2135,6 +2137,8 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
 
     if (len > MAX_PATH*sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
 
+    if ((ret = get_vprot_flags( protect, &vprot ))) return ret;
+
     objattr.rootdir = wine_server_obj_handle( attr ? attr->RootDirectory : 0 );
     objattr.sd_len = 0;
     objattr.name_len = len;
@@ -2144,7 +2148,6 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
         if (ret != STATUS_SUCCESS) return ret;
     }
 
-    vprot = VIRTUAL_GetProt( protect );
     if (!(sec_flags & SEC_RESERVE)) vprot |= VPROT_COMMITTED;
     if (sec_flags & SEC_NOCACHE) vprot |= VPROT_NOCACHE;
     if (sec_flags & SEC_IMAGE) vprot |= VPROT_IMAGE;
@@ -2331,7 +2334,8 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
-    vprot = VIRTUAL_GetProt( protect ) | (map_vprot & VPROT_COMMITTED);
+    get_vprot_flags( protect, &vprot );
+    vprot |= (map_vprot & VPROT_COMMITTED);
     res = map_view( &view, *addr_ptr, size, mask, FALSE, vprot );
     if (res)
     {

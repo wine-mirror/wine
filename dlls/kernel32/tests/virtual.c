@@ -255,6 +255,32 @@ static void test_VirtualAlloc(void)
     ok(old_prot == PAGE_READONLY,
         "wrong old protection: got %04x instead of PAGE_READONLY\n", old_prot);
 
+    /* invalid protection values */
+    SetLastError(0xdeadbeef);
+    addr2 = VirtualAlloc(NULL, 0x1000, MEM_RESERVE, 0);
+    ok(!addr2, "VirtualAlloc succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    addr2 = VirtualAlloc(NULL, 0x1000, MEM_COMMIT, 0);
+    ok(!addr2, "VirtualAlloc succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    addr2 = VirtualAlloc(addr1, 0x1000, MEM_COMMIT, PAGE_READONLY | PAGE_EXECUTE);
+    ok(!addr2, "VirtualAlloc succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ok(!VirtualProtect(addr1, 0x1000, PAGE_READWRITE | PAGE_EXECUTE_WRITECOPY, &old_prot),
+       "VirtualProtect succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ok(!VirtualProtect(addr1, 0x1000, 0, &old_prot), "VirtualProtect succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
     ok(!VirtualFree(addr1, 0x10000, 0), "VirtualFree should fail with type 0\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
         "got %d, expected ERROR_INVALID_PARAMETER\n", GetLastError());
