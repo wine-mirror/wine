@@ -29,7 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
 static const WCHAR EW[] = {'E',0};
 static const WCHAR LOG2EW[] = {'L','O','G','2','E',0};
-static const WCHAR LOG10EW[] = {'L','O','G','1','0',0};
+static const WCHAR LOG10EW[] = {'L','O','G','1','0','E',0};
 static const WCHAR LN2W[] = {'L','N','2',0};
 static const WCHAR LN10W[] = {'L','N','1','0',0};
 static const WCHAR PIW[] = {'P','I',0};
@@ -85,11 +85,12 @@ static HRESULT Math_LOG2E(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS 
     return math_constant(M_LOG2E, flags, retv);
 }
 
+/* ECMA-262 3rd Edition    15.8.1.4 */
 static HRESULT Math_LOG10E(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return math_constant(M_LOG10E, flags, retv);
 }
 
 static HRESULT Math_LN2(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
