@@ -990,7 +990,6 @@ void shader_trace_init(
     const DWORD* pToken = pFunction;
     const SHADER_OPCODE* curOpcode = NULL;
     DWORD opcode_token;
-    unsigned int len = 0;
     DWORD i;
 
     TRACE("(%p) : Parsing program\n", This);
@@ -1011,7 +1010,6 @@ void shader_trace_init(
                 WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version),
                 WINED3DSHADER_VERSION_MINOR(This->baseShader.hex_version));
             ++pToken;
-            ++len;
             continue;
         }
         if (shader_is_comment(*pToken)) /* comment */
@@ -1020,12 +1018,10 @@ void shader_trace_init(
             ++pToken;
             TRACE("//%s\n", (const char*)pToken);
             pToken += comment_len;
-            len += comment_len + 1;
             continue;
         }
         opcode_token = *pToken++;
         curOpcode = shader_get_opcode(This->baseShader.shader_ins, This->baseShader.hex_version, opcode_token);
-        len++;
 
         if (!curOpcode)
         {
@@ -1033,7 +1029,6 @@ void shader_trace_init(
             FIXME("Unrecognized opcode: token=0x%08x\n", opcode_token);
             tokens_read = shader_skip_unrecognized(pToken, This->baseShader.hex_version);
             pToken += tokens_read;
-            len += tokens_read;
         }
         else
         {
@@ -1047,7 +1042,6 @@ void shader_trace_init(
                 TRACE(" ");
                 shader_dump_param(param, 0, 0, This->baseShader.hex_version);
                 pToken += 2;
-                len += 2;
             }
             else if (curOpcode->opcode == WINED3DSIO_DEF)
             {
@@ -1059,7 +1053,6 @@ void shader_trace_init(
                         *(const float *)(pToken + 3),
                         *(const float *)(pToken + 4));
                 pToken += 5;
-                len += 5;
             }
             else if (curOpcode->opcode == WINED3DSIO_DEFI)
             {
@@ -1069,14 +1062,12 @@ void shader_trace_init(
                         *(pToken + 3),
                         *(pToken + 4));
                 pToken += 5;
-                len += 5;
             }
             else if (curOpcode->opcode == WINED3DSIO_DEFB)
             {
                 TRACE("defb b%u = %s", *pToken & WINED3DSP_REGNUM_MASK,
                         *(pToken + 1)? "true": "false");
                 pToken += 2;
-                len += 2;
             }
             else
             {
@@ -1127,7 +1118,6 @@ void shader_trace_init(
                 {
                     tokens_read = shader_get_param(pToken, This->baseShader.hex_version, &param, &addr_token);
                     pToken += tokens_read;
-                    len += tokens_read;
 
                     shader_dump_ins_modifiers(param);
                     TRACE(" ");
@@ -1138,7 +1128,6 @@ void shader_trace_init(
                 if (opcode_token & WINED3DSHADER_INSTRUCTION_PREDICATED)
                 {
                     pToken++;
-                    len++;
                 }
 
                 /* Other source tokens */
@@ -1146,7 +1135,6 @@ void shader_trace_init(
                 {
                     tokens_read = shader_get_param(pToken, This->baseShader.hex_version, &param, &addr_token);
                     pToken += tokens_read;
-                    len += tokens_read;
 
                     TRACE((i == 0)? " " : ", ");
                     shader_dump_param(param, addr_token, 1, This->baseShader.hex_version);
@@ -1155,7 +1143,9 @@ void shader_trace_init(
             TRACE("\n");
         }
     }
-    This->baseShader.functionLength = (len + 1) * sizeof(DWORD);
+    ++pToken;
+
+    This->baseShader.functionLength = ((char *)pToken - (char *)pFunction);
 }
 
 void shader_cleanup(IWineD3DBaseShader *iface)
