@@ -61,15 +61,46 @@ static BOOL CRYPT_ReadBlobFromFile(LPCWSTR fileName, PCERT_BLOB blob)
     return ret;
 }
 
+static BOOL CRYPT_QueryContextBlob(const CERT_BLOB *blob,
+ DWORD dwExpectedContentTypeFlags, HCERTSTORE store,
+ DWORD *contentType, const void **ppvContext)
+{
+    BOOL ret = FALSE;
+
+    if (dwExpectedContentTypeFlags & CERT_QUERY_CONTENT_FLAG_CERT)
+    {
+        ret = pCertInterface->addEncodedToStore(store, X509_ASN_ENCODING,
+         blob->pbData, blob->cbData, CERT_STORE_ADD_ALWAYS, ppvContext);
+        if (ret && contentType)
+            *contentType = CERT_QUERY_CONTENT_CERT;
+    }
+    if (!ret && (dwExpectedContentTypeFlags & CERT_QUERY_CONTENT_FLAG_CRL))
+    {
+        ret = pCRLInterface->addEncodedToStore(store, X509_ASN_ENCODING,
+         blob->pbData, blob->cbData, CERT_STORE_ADD_ALWAYS, ppvContext);
+        if (ret && contentType)
+            *contentType = CERT_QUERY_CONTENT_CRL;
+    }
+    if (!ret && (dwExpectedContentTypeFlags & CERT_QUERY_CONTENT_FLAG_CTL))
+    {
+        ret = pCTLInterface->addEncodedToStore(store, X509_ASN_ENCODING,
+         blob->pbData, blob->cbData, CERT_STORE_ADD_ALWAYS, ppvContext);
+        if (ret && contentType)
+            *contentType = CERT_QUERY_CONTENT_CTL;
+    }
+    return ret;
+}
+
 static BOOL CRYPT_QueryContextObject(DWORD dwObjectType, const void *pvObject,
- DWORD dwExpectedContentTypeFlags, DWORD *pdwMsgAndCertEncodingType,
- DWORD *pdwContentType, HCERTSTORE *phCertStore, const void **ppvContext)
+ DWORD dwExpectedContentTypeFlags, DWORD dwExpectedFormatTypeFlags,
+ DWORD *pdwMsgAndCertEncodingType, DWORD *pdwContentType, DWORD *pdwFormatType,
+ HCERTSTORE *phCertStore, const void **ppvContext)
 {
     CERT_BLOB fileBlob;
     const CERT_BLOB *blob;
     HCERTSTORE store;
-    DWORD contentType;
     BOOL ret;
+    DWORD formatType = 0;
 
     switch (dwObjectType)
     {
@@ -91,36 +122,54 @@ static BOOL CRYPT_QueryContextObject(DWORD dwObjectType, const void *pvObject,
     if (!ret)
         return FALSE;
 
+    ret = FALSE;
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
-    ret = FALSE;
-    if (dwExpectedContentTypeFlags & CERT_QUERY_CONTENT_FLAG_CERT)
+    if (dwExpectedFormatTypeFlags & CERT_QUERY_FORMAT_FLAG_BINARY)
     {
-        ret = pCertInterface->addEncodedToStore(store, X509_ASN_ENCODING,
-         blob->pbData, blob->cbData, CERT_STORE_ADD_ALWAYS, ppvContext);
+        ret = CRYPT_QueryContextBlob(blob, dwExpectedContentTypeFlags, store,
+         pdwContentType, ppvContext);
         if (ret)
-            contentType = CERT_QUERY_CONTENT_CERT;
+            formatType = CERT_QUERY_FORMAT_BINARY;
     }
-    if (!ret && (dwExpectedContentTypeFlags & CERT_QUERY_CONTENT_FLAG_CRL))
+    if (!ret &&
+     (dwExpectedFormatTypeFlags & CERT_QUERY_FORMAT_FLAG_BASE64_ENCODED))
     {
-        ret = pCRLInterface->addEncodedToStore(store, X509_ASN_ENCODING,
-         blob->pbData, blob->cbData, CERT_STORE_ADD_ALWAYS, ppvContext);
+        CRYPT_DATA_BLOB trimmed = { blob->cbData, blob->pbData };
+        CRYPT_DATA_BLOB decoded;
+
+        while (trimmed.cbData && !trimmed.pbData[trimmed.cbData - 1])
+            trimmed.cbData--;
+        ret = CryptStringToBinaryA((LPSTR)trimmed.pbData, trimmed.cbData,
+         CRYPT_STRING_BASE64_ANY, NULL, &decoded.cbData, NULL, NULL);
         if (ret)
-            contentType = CERT_QUERY_CONTENT_CRL;
-    }
-    if (!ret && (dwExpectedContentTypeFlags & CERT_QUERY_CONTENT_FLAG_CTL))
-    {
-        ret = pCTLInterface->addEncodedToStore(store, X509_ASN_ENCODING,
-         blob->pbData, blob->cbData, CERT_STORE_ADD_ALWAYS, ppvContext);
-        if (ret)
-            contentType = CERT_QUERY_CONTENT_CTL;
+        {
+            decoded.pbData = CryptMemAlloc(decoded.cbData);
+            if (decoded.pbData)
+            {
+                ret = CryptStringToBinaryA((LPSTR)trimmed.pbData,
+                 trimmed.cbData, CRYPT_STRING_BASE64_ANY, decoded.pbData,
+                 &decoded.cbData, NULL, NULL);
+                if (ret)
+                {
+                    ret = CRYPT_QueryContextBlob(&decoded,
+                     dwExpectedContentTypeFlags, store, pdwContentType,
+                     ppvContext);
+                    if (ret)
+                        formatType = CERT_QUERY_FORMAT_BASE64_ENCODED;
+                }
+                CryptMemFree(decoded.pbData);
+            }
+            else
+                ret = FALSE;
+        }
     }
     if (ret)
     {
         if (pdwMsgAndCertEncodingType)
             *pdwMsgAndCertEncodingType = X509_ASN_ENCODING;
-        if (pdwContentType)
-            *pdwContentType = contentType;
+        if (pdwFormatType)
+            *pdwFormatType = formatType;
         if (phCertStore)
             *phCertStore = CertDuplicateStore(store);
     }
@@ -509,15 +558,9 @@ BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void *pvObject,
     if (dwExpectedContentTypeFlags & unimplementedTypes)
         WARN("unimplemented for types %08x\n",
          dwExpectedContentTypeFlags & unimplementedTypes);
-    if (!(dwExpectedFormatTypeFlags & CERT_QUERY_FORMAT_FLAG_BINARY))
-    {
-        FIXME("unimplemented for anything but binary\n");
-        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-        return FALSE;
-    }
+
     if (pdwFormatType)
         *pdwFormatType = CERT_QUERY_FORMAT_BINARY;
-
     if (phCertStore)
         *phCertStore = NULL;
     if (phMsg)
@@ -531,8 +574,9 @@ BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void *pvObject,
      (dwExpectedContentTypeFlags & CERT_QUERY_CONTENT_FLAG_CTL))
     {
         ret = CRYPT_QueryContextObject(dwObjectType, pvObject,
-         dwExpectedContentTypeFlags, pdwMsgAndCertEncodingType, pdwContentType,
-         phCertStore, ppvContext);
+         dwExpectedContentTypeFlags, dwExpectedFormatTypeFlags,
+         pdwMsgAndCertEncodingType, pdwContentType, pdwFormatType, phCertStore,
+         ppvContext);
     }
     if (!ret &&
      (dwExpectedContentTypeFlags & CERT_QUERY_CONTENT_FLAG_SERIALIZED_STORE))
