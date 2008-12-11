@@ -32,7 +32,6 @@
 
 #include "msvcrt.h"
 #include "mtdll.h"
-#include "msvcrt/mbctype.h"
 
 #include "wine/debug.h"
 

@@ -26,7 +26,6 @@
 #include "msvcrt.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
-#include "msvcrt/mbctype.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 

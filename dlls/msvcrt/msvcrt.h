@@ -598,6 +598,36 @@ typedef void (*MSVCRT___sighandler_t)(int);
 #define MSVCRT_SIG_IGN ((MSVCRT___sighandler_t)1)
 #define MSVCRT_SIG_ERR ((MSVCRT___sighandler_t)-1)
 
+#define MSVCRT__FPE_INVALID            0x81
+#define MSVCRT__FPE_DENORMAL           0x82
+#define MSVCRT__FPE_ZERODIVIDE         0x83
+#define MSVCRT__FPE_OVERFLOW           0x84
+#define MSVCRT__FPE_UNDERFLOW          0x85
+#define MSVCRT__FPE_INEXACT            0x86
+#define MSVCRT__FPE_UNEMULATED         0x87
+#define MSVCRT__FPE_SQRTNEG            0x88
+#define MSVCRT__FPE_STACKOVERFLOW      0x8a
+#define MSVCRT__FPE_STACKUNDERFLOW     0x8b
+#define MSVCRT__FPE_EXPLICITGEN        0x8c
+
+#define _MS     0x01
+#define _MP     0x02
+#define _M1     0x04
+#define _M2     0x08
+
+#define _SBUP   0x10
+#define _SBLOW  0x20
+
+#define _MBC_SINGLE     0
+#define _MBC_LEAD       1
+#define _MBC_TRAIL      2
+#define _MBC_ILLEGAL    -1
+
+#define _MB_CP_SBCS     0
+#define _MB_CP_OEM      -2
+#define _MB_CP_ANSI     -3
+#define _MB_CP_LOCALE   -4
+
 void  __cdecl    MSVCRT_free(void*);
 void* __cdecl    MSVCRT_malloc(MSVCRT_size_t);
 void* __cdecl    MSVCRT_calloc(MSVCRT_size_t,MSVCRT_size_t);
@@ -637,6 +667,7 @@ int            __cdecl MSVCRT_raise(int sig);
 #ifndef __WINE_MSVCRT_TEST
 int            __cdecl MSVCRT__write(int,const void*,unsigned int);
 int            __cdecl _getch(void);
+int            __cdecl _ismbblead(unsigned int);
 int            __cdecl _ismbstrail(const unsigned char* start, const unsigned char* str);
 MSVCRT_intptr_t __cdecl _spawnve(int,const char*,const char* const *,const char* const *);
 MSVCRT_intptr_t __cdecl _spawnvpe(int,const char*,const char* const *,const char* const *);
@@ -657,6 +688,7 @@ MSVCRT_wchar_t* __cdecl _wcsdup(const MSVCRT_wchar_t*);
 MSVCRT_wchar_t*** __cdecl __p__wenviron(void);
 char*   __cdecl _strdate(char* date);
 char*   __cdecl _strtime(char* date);
+int     __cdecl _setmbcp(int);
 void    __cdecl _ftime(struct MSVCRT__timeb *buf);
 int     __cdecl MSVCRT__close(int);
 int     __cdecl MSVCRT__dup(int);

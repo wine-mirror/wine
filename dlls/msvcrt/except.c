@@ -33,7 +33,6 @@
 #include "msvcrt.h"
 #include "excpt.h"
 #include "wincon.h"
-#include "msvcrt/float.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
@@ -433,13 +432,13 @@ static const struct
     NTSTATUS status;
     int signal;
 } float_exception_map[] = {
- { EXCEPTION_FLT_DENORMAL_OPERAND, _FPE_DENORMAL },
- { EXCEPTION_FLT_DIVIDE_BY_ZERO, _FPE_ZERODIVIDE },
- { EXCEPTION_FLT_INEXACT_RESULT, _FPE_INEXACT },
- { EXCEPTION_FLT_INVALID_OPERATION, _FPE_INVALID },
- { EXCEPTION_FLT_OVERFLOW, _FPE_OVERFLOW },
- { EXCEPTION_FLT_STACK_CHECK, _FPE_STACKOVERFLOW },
- { EXCEPTION_FLT_UNDERFLOW, _FPE_UNDERFLOW },
+ { EXCEPTION_FLT_DENORMAL_OPERAND, MSVCRT__FPE_DENORMAL },
+ { EXCEPTION_FLT_DIVIDE_BY_ZERO, MSVCRT__FPE_ZERODIVIDE },
+ { EXCEPTION_FLT_INEXACT_RESULT, MSVCRT__FPE_INEXACT },
+ { EXCEPTION_FLT_INVALID_OPERATION, MSVCRT__FPE_INVALID },
+ { EXCEPTION_FLT_OVERFLOW, MSVCRT__FPE_OVERFLOW },
+ { EXCEPTION_FLT_STACK_CHECK, MSVCRT__FPE_STACKOVERFLOW },
+ { EXCEPTION_FLT_UNDERFLOW, MSVCRT__FPE_UNDERFLOW },
 };
 
 static LONG WINAPI msvcrt_exception_filter(struct _EXCEPTION_POINTERS *except)
@@ -479,7 +478,7 @@ static LONG WINAPI msvcrt_exception_filter(struct _EXCEPTION_POINTERS *except)
             if (handler != MSVCRT_SIG_IGN)
             {
                 unsigned int i;
-                int float_signal = _FPE_INVALID;
+                int float_signal = MSVCRT__FPE_INVALID;
 
                 sighandlers[MSVCRT_SIGFPE] = MSVCRT_SIG_DFL;
                 for (i = 0; i < sizeof(float_exception_map) /
@@ -581,7 +580,7 @@ int CDECL MSVCRT_raise(int sig)
         {
             sighandlers[sig] = MSVCRT_SIG_DFL;
             if (sig == MSVCRT_SIGFPE)
-                ((float_handler)handler)(sig, _FPE_EXPLICITGEN);
+                ((float_handler)handler)(sig, MSVCRT__FPE_EXPLICITGEN);
             else
                 handler(sig);
         }
