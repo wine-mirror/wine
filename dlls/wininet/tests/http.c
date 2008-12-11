@@ -325,8 +325,8 @@ static void InternetReadFile_test(int flags)
     SET_EXPECT2(INTERNET_STATUS_REQUEST_SENT, 2);
     SET_EXPECT2(INTERNET_STATUS_RECEIVING_RESPONSE, 2);
     SET_EXPECT2(INTERNET_STATUS_RESPONSE_RECEIVED, 2);
-    SET_OPTIONAL(INTERNET_STATUS_CLOSING_CONNECTION);
-    SET_OPTIONAL(INTERNET_STATUS_CONNECTION_CLOSED);
+    SET_EXPECT2(INTERNET_STATUS_CLOSING_CONNECTION, 2);
+    SET_EXPECT2(INTERNET_STATUS_CONNECTION_CLOSED, 2);
     SET_EXPECT(INTERNET_STATUS_REDIRECT);
     SET_OPTIONAL(INTERNET_STATUS_CONNECTING_TO_SERVER);
     SET_OPTIONAL(INTERNET_STATUS_CONNECTED_TO_SERVER);
@@ -363,6 +363,8 @@ static void InternetReadFile_test(int flags)
     CHECK_NOTIFIED2(INTERNET_STATUS_REQUEST_SENT, 2);
     CHECK_NOTIFIED2(INTERNET_STATUS_RECEIVING_RESPONSE, 2);
     CHECK_NOTIFIED2(INTERNET_STATUS_RESPONSE_RECEIVED, 2);
+    todo_wine CHECK_NOTIFIED2(INTERNET_STATUS_CLOSING_CONNECTION, 2);
+    todo_wine CHECK_NOTIFIED2(INTERNET_STATUS_CONNECTION_CLOSED, 2);
     CHECK_NOTIFIED(INTERNET_STATUS_REDIRECT);
     if (flags & INTERNET_FLAG_ASYNC)
         CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
@@ -570,8 +572,8 @@ static void InternetReadFileExA_test(int flags)
     SET_EXPECT2(INTERNET_STATUS_REQUEST_SENT, 2);
     SET_EXPECT2(INTERNET_STATUS_RECEIVING_RESPONSE, 2);
     SET_EXPECT2(INTERNET_STATUS_RESPONSE_RECEIVED, 2);
-    SET_OPTIONAL(INTERNET_STATUS_CLOSING_CONNECTION);
-    SET_OPTIONAL(INTERNET_STATUS_CONNECTION_CLOSED);
+    SET_EXPECT2(INTERNET_STATUS_CLOSING_CONNECTION, 2);
+    SET_EXPECT2(INTERNET_STATUS_CONNECTION_CLOSED, 2);
     SET_EXPECT(INTERNET_STATUS_REDIRECT);
     SET_OPTIONAL(INTERNET_STATUS_CONNECTING_TO_SERVER);
     SET_OPTIONAL(INTERNET_STATUS_CONNECTED_TO_SERVER);
@@ -608,6 +610,8 @@ static void InternetReadFileExA_test(int flags)
     CHECK_NOTIFIED2(INTERNET_STATUS_REQUEST_SENT, 2);
     CHECK_NOTIFIED2(INTERNET_STATUS_RECEIVING_RESPONSE, 2);
     CHECK_NOTIFIED2(INTERNET_STATUS_RESPONSE_RECEIVED, 2);
+    todo_wine CHECK_NOTIFIED2(INTERNET_STATUS_CLOSING_CONNECTION, 2);
+    todo_wine CHECK_NOTIFIED2(INTERNET_STATUS_CONNECTION_CLOSED, 2);
     CHECK_NOTIFIED(INTERNET_STATUS_REDIRECT);
     if (flags & INTERNET_FLAG_ASYNC)
         CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
@@ -639,10 +643,10 @@ static void InternetReadFileExA_test(int flags)
     inetbuffers.lpvBuffer = NULL;
     inetbuffers.dwOffsetHigh = 1234;
     inetbuffers.dwOffsetLow = 5678;
-    SET_WINE_ALLOW(INTERNET_STATUS_RECEIVING_RESPONSE);
-    SET_WINE_ALLOW(INTERNET_STATUS_RESPONSE_RECEIVED);
-    SET_WINE_ALLOW(INTERNET_STATUS_CLOSING_CONNECTION);
-    SET_WINE_ALLOW(INTERNET_STATUS_CONNECTION_CLOSED);
+    SET_EXPECT(INTERNET_STATUS_RECEIVING_RESPONSE);
+    SET_EXPECT(INTERNET_STATUS_RESPONSE_RECEIVED);
+    SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
+    SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
     rc = InternetReadFileEx(hor, &inetbuffers, 0, 0xdeadcafe);
     ok(rc, "InternetReadFileEx failed with error %u\n", GetLastError());
         trace("read %i bytes\n", inetbuffers.dwBufferLength);
@@ -670,9 +674,11 @@ static void InternetReadFileExA_test(int flags)
         inetbuffers.dwOffsetHigh = 1234;
         inetbuffers.dwOffsetLow = 5678;
 
-        SET_EXPECT(INTERNET_STATUS_RECEIVING_RESPONSE);
+        SET_WINE_ALLOW(INTERNET_STATUS_RECEIVING_RESPONSE);
+        SET_WINE_ALLOW(INTERNET_STATUS_RESPONSE_RECEIVED);
+        SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
+        SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
         SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
-        SET_EXPECT(INTERNET_STATUS_RESPONSE_RECEIVED);
         rc = InternetReadFileExA(hor, &inetbuffers, IRF_ASYNC | IRF_USE_CONTEXT, 0xcafebabe);
         if (!rc)
         {
@@ -698,8 +704,10 @@ static void InternetReadFileExA_test(int flags)
             CHECK_NOT_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
             if (inetbuffers.dwBufferLength)
             {
-                CHECK_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
-                CHECK_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
+                todo_wine {
+                CHECK_NOT_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
+                CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
+                }
             }
             else
             {
@@ -954,26 +962,28 @@ static void test_http_cache(void)
                       FILE_ATTRIBUTE_NORMAL, NULL);
     ok(file != INVALID_HANDLE_VALUE, "Could not create file: %u\n", GetLastError());
     file_size = GetFileSize(file, NULL);
-    ok(file_size == 0, "file size=%d\n", file_size);
+    todo_wine ok(file_size == 106, "file size = %u\n", file_size);
 
+    size = sizeof(buf);
     ret = InternetReadFile(request, buf, sizeof(buf), &size);
     ok(ret, "InternetReadFile failed: %u\n", GetLastError());
-    ok(size == sizeof(buf), "size=%d\n", size);
+    ok(size == 100, "size = %u\n", size);
 
     file_size = GetFileSize(file, NULL);
-    ok(file_size == sizeof(buf), "file size=%d\n", file_size);
+    todo_wine ok(file_size == 106, "file size = %u\n", file_size);
     CloseHandle(file);
 
     ok(InternetCloseHandle(request), "Close request handle failed\n");
 
     file = CreateFile(file_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
                       FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(file == INVALID_HANDLE_VALUE, "CreateFile succeeded\n");
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "GetLastError()=%u, expected ERROR_FILE_NOT_FOUND\n", GetLastError());
+    todo_wine ok(file != INVALID_HANDLE_VALUE, "CreateFile succeeded\n");
+    CloseHandle(file);
 
     request = HttpOpenRequestA(connect, NULL, "/", NULL, NULL, types, INTERNET_FLAG_NO_CACHE_WRITE, 0);
     ok(request != NULL, "Failed to open request handle err %u\n", GetLastError());
 
+    size = sizeof(file_name);
     ret = InternetQueryOptionA(request, INTERNET_OPTION_DATAFILE_NAME, file_name, &size);
     ok(!ret, "InternetQueryOptionA(INTERNET_OPTION_DATAFILE_NAME) succeeded\n");
     ok(GetLastError() == ERROR_INTERNET_ITEM_NOT_FOUND, "GetLastError()=%u\n", GetLastError());
@@ -984,17 +994,14 @@ static void test_http_cache(void)
 
     size = sizeof(file_name);
     ret = InternetQueryOptionA(request, INTERNET_OPTION_DATAFILE_NAME, file_name, &size);
-    ok(!ret, "InternetQueryOptionA(INTERNET_OPTION_DATAFILE_NAME) succeeded\n");
-    ok(GetLastError() == ERROR_INTERNET_ITEM_NOT_FOUND, "GetLastError()=%u\n", GetLastError());
-    ok(!size, "size = %d\n", size);
+    todo_wine ok(ret, "InternetQueryOptionA(INTERNET_OPTION_DATAFILE_NAME) failed %u\n", GetLastError());
 
     file = CreateFile(file_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
                       FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(file == INVALID_HANDLE_VALUE, "CreateFile succeeded\n");
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "GetLastError()=%u, expected ERROR_FILE_NOT_FOUND\n", GetLastError());
+    todo_wine ok(file != INVALID_HANDLE_VALUE, "CreateFile succeeded\n");
+    CloseHandle(file);
 
     ok(InternetCloseHandle(request), "Close request handle failed\n");
-
     ok(InternetCloseHandle(connect), "Close connect handle failed\n");
     ok(InternetCloseHandle(session), "Close session handle failed\n");
 }
