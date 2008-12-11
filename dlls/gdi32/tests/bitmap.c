@@ -339,7 +339,7 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
 
     /* test various buffer sizes for GetObject */
     ret = GetObject(hbm, 0, NULL);
-    ok(ret == sizeof(bm), "wrong size %d\n", ret);
+    ok(ret == sizeof(bm) || broken(ret == sizeof(DIBSECTION) /* Win9x */), "wrong size %d\n", ret);
 
     ret = GetObject(hbm, sizeof(*dsa) * 2, dsa);
     ok(ret == sizeof(*dsa) || broken(ret == sizeof(*dsa) * 2 /* Win9x */), "wrong size %d\n", ret);
@@ -367,7 +367,7 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
 
     memset(&ds, 0xAA, sizeof(ds));
     ret = GetObject(hbm, sizeof(ds) - 4, &ds);
-    ok(ret == sizeof(ds.dsBm), "wrong size %d\n", ret);
+    ok(ret == sizeof(ds.dsBm) || broken(ret == (sizeof(ds) - 4) /* Win9x */), "wrong size %d\n", ret);
     ok(ds.dsBm.bmWidth == bmih->biWidth, "%u != %u\n", ds.dsBmih.biWidth, bmih->biWidth);
     ok(ds.dsBm.bmHeight == bmih->biHeight, "%u != %u\n", ds.dsBmih.biHeight, bmih->biHeight);
     ok(ds.dsBm.bmBits == bits, "%p != %p\n", ds.dsBm.bmBits, bits);
@@ -376,7 +376,7 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
     ok(ret == 0, "%d != 0\n", ret);
 
     ret = GetObject(hbm, 1, &ds);
-    ok(ret == 0, "%d != 0\n", ret);
+    ok(ret == 0 || broken(ret == 1 /* Win9x */), "%d != 0\n", ret);
 }
 
 #define test_color_todo(got, exp, txt, todo) \
@@ -2150,7 +2150,7 @@ void test_GdiAlphaBlend()
 
     if (!pGdiAlphaBlend)
     {
-        skip("GdiAlphaBlend() is not implemented\n");
+        win_skip("GdiAlphaBlend() is not implemented\n");
         return;
     }
 
