@@ -2229,6 +2229,7 @@ typedef struct IWineD3DBaseShaderImpl {
 void shader_buffer_init(struct SHADER_BUFFER *buffer);
 void shader_buffer_free(struct SHADER_BUFFER *buffer);
 void shader_cleanup(IWineD3DBaseShader *iface);
+void shader_trace_init(const DWORD *byte_code, const SHADER_OPCODE *opcode_table);
 
 extern HRESULT shader_get_registers_used(
     IWineD3DBaseShader *iface,
@@ -2240,10 +2241,6 @@ extern HRESULT shader_get_registers_used(
 
 extern void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
         const shader_reg_maps *reg_maps, const DWORD *pFunction);
-
-extern void shader_trace_init(
-    IWineD3DBaseShader *iface,
-    const DWORD* pFunction);
 
 static inline int shader_get_regtype(const DWORD param) {
     return (((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT) |

@@ -435,8 +435,7 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     TRACE("(%p) : pFunction %p\n", iface, pFunction);
 
     /* First pass: trace shader */
-    shader_trace_init((IWineD3DBaseShader*) This, pFunction);
-    vshader_set_limits(This);
+    shader_trace_init(pFunction, This->baseShader.shader_ins);
 
     /* Initialize immediate constant lists */
     list_init(&This->baseShader.constantsF);
@@ -450,6 +449,8 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     hr = shader_get_registers_used((IWineD3DBaseShader*) This, reg_maps,
        This->semantics_in, This->semantics_out, pFunction, NULL);
     if (hr != WINED3D_OK) return hr;
+
+    vshader_set_limits(This);
 
     This->baseShader.shader_mode = deviceImpl->vs_selected_mode;
 

@@ -316,67 +316,67 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
 
     IWineD3DPixelShaderImpl *This =(IWineD3DPixelShaderImpl *)iface;
     IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl *) This->baseShader.device;
+    unsigned int i, highest_reg_used = 0, num_regs_used = 0;
+    shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
+    HRESULT hr;
 
     TRACE("(%p) : pFunction %p\n", iface, pFunction);
 
     /* First pass: trace shader */
-    shader_trace_init((IWineD3DBaseShader*) This, pFunction);
-    pshader_set_limits(This);
+    shader_trace_init(pFunction, This->baseShader.shader_ins);
 
     /* Initialize immediate constant lists */
     list_init(&This->baseShader.constantsF);
     list_init(&This->baseShader.constantsB);
     list_init(&This->baseShader.constantsI);
 
-    if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) > 1) {
-        shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
-        HRESULT hr;
-        unsigned int i, j, highest_reg_used = 0, num_regs_used = 0;
+    /* Second pass: figure out which registers are used, what the semantics are, etc.. */
+    memset(reg_maps, 0, sizeof(shader_reg_maps));
+    hr = shader_get_registers_used((IWineD3DBaseShader *)This, reg_maps,
+            This->semantics_in, NULL, pFunction, deviceImpl->stateBlock);
+    if (FAILED(hr)) return hr;
 
-        /* Second pass: figure out which registers are used, what the semantics are, etc.. */
-        memset(reg_maps, 0, sizeof(shader_reg_maps));
-        hr = shader_get_registers_used((IWineD3DBaseShader*) This, reg_maps,
-            This->semantics_in, NULL, pFunction, NULL);
-        if (FAILED(hr)) return hr;
-        /* FIXME: validate reg_maps against OpenGL */
+    pshader_set_limits(This);
 
-        for(i = 0; i < MAX_REG_INPUT; i++) {
-            if(This->input_reg_used[i]) {
-                num_regs_used++;
-                highest_reg_used = i;
-            }
-        }
-
-        /* Don't do any register mapping magic if it is not needed, or if we can't
-         * achieve anything anyway
-         */
-        if(highest_reg_used < (GL_LIMITS(glsl_varyings) / 4) ||
-           num_regs_used > (GL_LIMITS(glsl_varyings) / 4) ) {
-            if(num_regs_used > (GL_LIMITS(glsl_varyings) / 4)) {
-                /* This happens with relative addressing. The input mapper function
-                 * warns about this if the higher registers are declared too, so
-                 * don't write a FIXME here
-                 */
-                WARN("More varying registers used than supported\n");
-            }
-
-            for(i = 0; i < MAX_REG_INPUT; i++) {
-                This->input_reg_map[i] = i;
-            }
-            This->declared_in_count = highest_reg_used + 1;
-        } else {
-            j = 0;
-            for(i = 0; i < MAX_REG_INPUT; i++) {
-                if(This->input_reg_used[i]) {
-                    This->input_reg_map[i] = j;
-                    j++;
-                } else {
-                    This->input_reg_map[i] = -1;
-                }
-            }
-            This->declared_in_count = j;
+    for (i = 0; i < MAX_REG_INPUT; ++i)
+    {
+        if (This->input_reg_used[i])
+        {
+            ++num_regs_used;
+            highest_reg_used = i;
         }
     }
+
+    /* Don't do any register mapping magic if it is not needed, or if we can't
+     * achieve anything anyway */
+    if (highest_reg_used < (GL_LIMITS(glsl_varyings) / 4)
+            || num_regs_used > (GL_LIMITS(glsl_varyings) / 4))
+    {
+        if (num_regs_used > (GL_LIMITS(glsl_varyings) / 4))
+        {
+            /* This happens with relative addressing. The input mapper function
+             * warns about this if the higher registers are declared too, so
+             * don't write a FIXME here */
+            WARN("More varying registers used than supported\n");
+        }
+
+        for (i = 0; i < MAX_REG_INPUT; ++i)
+        {
+            This->input_reg_map[i] = i;
+        }
+
+        This->declared_in_count = highest_reg_used + 1;
+    }
+    else
+    {
+        This->declared_in_count = 0;
+        for (i = 0; i < MAX_REG_INPUT; ++i)
+        {
+            if (This->input_reg_used[i]) This->input_reg_map[i] = This->declared_in_count++;
+            else This->input_reg_map[i] = -1;
+        }
+    }
+
     This->baseShader.load_local_constsF = FALSE;
 
     This->baseShader.shader_mode = deviceImpl->ps_selected_mode;
