@@ -52,6 +52,7 @@ static const char tmpfilename[] = ".\\tmp.inf";
 #define A400 "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" \
              "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" \
              "aaaaaaaaaaaaaaaa" A256
+#define A1200 A400 A400 A400
 #define A511 A255 A256
 #define A4097 "a" A256 A256 A256 A256 A256 A256 A256 A256 A256 A256 A256 A256 A256 A256 A256 A256
 
@@ -61,7 +62,7 @@ static const char tmpfilename[] = ".\\tmp.inf";
                     "per%%cent=abcd\nper=1\ncent=2\n22=foo\n" \
                     "big=" A400 "\n" \
                     "mydrive=\"C:\\\"\n" \
-                    "verybig=" A400 A400 A400 "\n"
+                    "verybig=" A1200 "\n"
 
 /* create a new file with specified contents and open it */
 static HINF test_file_contents( const char *data, UINT *err_line )
@@ -315,7 +316,7 @@ static const struct
  { "loop=%loop%\n" STR_SECTION,     "loop",  { "%loop2%" } },
  { "%per%%cent%=100\n" STR_SECTION, "12",    { "100" } },
  { "a=%big%\n" STR_SECTION,         "a",     { A400 } },
- { "a=%verybig%\n" STR_SECTION,     "a",     { A511 } },  /* truncated to 511 */
+ { "a=%verybig%\n" STR_SECTION,     "a",     { A511 } },  /* truncated to 511, not on Vista/W2K8 */
  { "a=%big%%big%%big%%big%\n" STR_SECTION,   "a", { A400 A400 A400 A400 } },
  { "a=%big%%big%%big%%big%%big%%big%%big%%big%%big%\n" STR_SECTION,   "a", { A400 A400 A400 A400 A400 A400 A400 A400 A400 } },
  { "a=%big%%big%%big%%big%%big%%big%%big%%big%%big%%big%%big%\n" STR_SECTION,   "a", { A4097 /*MAX_INF_STRING_LENGTH+1*/ } },
@@ -384,8 +385,16 @@ static void test_key_names(void)
             {
                 ok( err == 0, "line %u: bad error %u\n", i, err );
                 if (key_names[i].fields[index])
-                    ok( !strcmp( field, key_names[i].fields[index] ), "line %u: bad field %s/%s\n",
-                        i, field, key_names[i].fields[index] );
+                {
+                    if (i == 49)
+                        ok( !strcmp( field, key_names[i].fields[index] ) ||
+                            !strcmp( field, A1200), /* Vista, W2K8 */
+                            "line %u: bad field %s/%s\n",
+                            i, field, key_names[i].fields[index] );
+                    else
+                        ok( !strcmp( field, key_names[i].fields[index] ), "line %u: bad field %s/%s\n",
+                            i, field, key_names[i].fields[index] );
+                }
                 else
                     ok( 0, "line %u: got extra field %s\n", i, field );
                 strcat( buffer, "," );
