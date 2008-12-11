@@ -2505,7 +2505,7 @@ static void gen_ffp_instr(SHADER_BUFFER *buffer, unsigned int stage, BOOL color,
 
     switch(op) {
         case WINED3DTOP_DISABLE:
-            if(stage == 1) shader_addline(buffer, "MOV %s%s, fragment.color.primary;\n", dstreg, dstmask);
+            if(stage == 0) shader_addline(buffer, "MOV %s%s, fragment.color.primary;\n", dstreg, dstmask);
             break;
 
         case WINED3DTOP_SELECTARG2:
