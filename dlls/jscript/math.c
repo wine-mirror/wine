@@ -69,11 +69,12 @@ static HRESULT math_constant(DOUBLE val, WORD flags, VARIANT *retv)
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.8.1.1 */
 static HRESULT Math_E(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return math_constant(M_E, flags, retv);
 }
 
 static HRESULT Math_LOG2E(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

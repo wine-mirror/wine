@@ -614,4 +614,9 @@ ok(Math.floor(Math.PI*100) === 314, "Math.PI = " + Math.PI);
 Math.PI = "test";
 ok(Math.floor(Math.PI*100) === 314, "modified Math.PI = " + Math.PI);
 
+ok(typeof(Math.E) === "number", "typeof(Math.E) = " + typeof(Math.E));
+ok(Math.floor(Math.E*100) === 271, "Math.E = " + Math.E);
+Math.E = "test";
+ok(Math.floor(Math.E*100) === 271, "modified Math.E = " + Math.E);
+
 reportSuccess();
