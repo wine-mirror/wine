@@ -377,7 +377,7 @@ MSVCRT_size_t CDECL MSVCRT_wcsftime( MSVCRT_wchar_t *str, MSVCRT_size_t max,
     char *s, *fmt;
     MSVCRT_size_t len;
 
-    TRACE("%p %d %s %p\n", str, max, debugstr_w(format), mstm );
+    TRACE("%p %ld %s %p\n", str, max, debugstr_w(format), mstm );
 
     len = WideCharToMultiByte( CP_UNIXCP, 0, format, -1, NULL, 0, NULL, NULL );
     if (!(fmt = MSVCRT_malloc( len ))) return 0;

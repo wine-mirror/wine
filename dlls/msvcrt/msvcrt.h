@@ -51,9 +51,9 @@ typedef unsigned __int64 MSVCRT_size_t;
 typedef __int64 MSVCRT_intptr_t;
 typedef unsigned __int64 MSVCRT_uintptr_t;
 #else
-typedef unsigned int MSVCRT_size_t;
-typedef int MSVCRT_intptr_t;
-typedef unsigned int MSVCRT_uintptr_t;
+typedef unsigned long MSVCRT_size_t;
+typedef long MSVCRT_intptr_t;
+typedef unsigned long MSVCRT_uintptr_t;
 #endif
 typedef unsigned int   MSVCRT__dev_t;
 typedef int  MSVCRT__off_t;
@@ -132,7 +132,7 @@ MSVCRT_wchar_t *msvcrt_wstrdupa(const char *);
  */
 int __cdecl MSVCRT__set_new_mode(int mode);
 
-void* __cdecl MSVCRT_operator_new(unsigned long size);
+void* __cdecl MSVCRT_operator_new(MSVCRT_size_t);
 void __cdecl MSVCRT_operator_delete(void*);
 
 typedef void* (*__cdecl malloc_func_t)(MSVCRT_size_t);

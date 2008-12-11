@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
       ~(alignment - 1)) - offset))
 
 
-typedef void (*MSVCRT_new_handler_func)(unsigned long size);
+typedef void (*MSVCRT_new_handler_func)(MSVCRT_size_t size);
 
 static MSVCRT_new_handler_func MSVCRT_new_handler;
 static int MSVCRT_new_mode;
@@ -52,7 +52,7 @@ static MSVCRT_size_t MSVCRT_sbh_threshold = 0;
 /*********************************************************************
  *		??2@YAPAXI@Z (MSVCRT.@)
  */
-void* CDECL MSVCRT_operator_new(unsigned long size)
+void* CDECL MSVCRT_operator_new(MSVCRT_size_t size)
 {
   void *retval = HeapAlloc(GetProcessHeap(), 0, size);
   TRACE("(%ld) returning %p\n", size, retval);
@@ -130,7 +130,7 @@ int CDECL MSVCRT__set_new_mode(int mode)
 /*********************************************************************
  *		_callnewh (MSVCRT.@)
  */
-int CDECL _callnewh(unsigned long size)
+int CDECL _callnewh(MSVCRT_size_t size)
 {
   if(MSVCRT_new_handler)
     (*MSVCRT_new_handler)(size);
@@ -237,7 +237,7 @@ int CDECL _heapset(unsigned int value)
  */
 int CDECL _heapadd(void* mem, MSVCRT_size_t size)
 {
-  TRACE("(%p,%d) unsupported in Win32\n", mem,size);
+  TRACE("(%p,%ld) unsupported in Win32\n", mem,size);
   *MSVCRT__errno() = MSVCRT_ENOSYS;
   return -1;
 }
@@ -247,8 +247,8 @@ int CDECL _heapadd(void* mem, MSVCRT_size_t size)
  */
 MSVCRT_size_t CDECL _msize(void* mem)
 {
-  long size = HeapSize(GetProcessHeap(),0,mem);
-  if (size == -1)
+  MSVCRT_size_t size = HeapSize(GetProcessHeap(),0,mem);
+  if (size == ~(MSVCRT_size_t)0)
   {
     WARN(":Probably called with non wine-allocated memory, ret = -1\n");
     /* At least the Win32 crtdll/msvcrt also return -1 in this case */
@@ -342,7 +342,7 @@ void CDECL _aligned_free(void *memblock)
 void * CDECL _aligned_offset_malloc(MSVCRT_size_t size, MSVCRT_size_t alignment, MSVCRT_size_t offset)
 {
     void *memblock, *temp, **saved;
-    TRACE("(%u, %u, %u)\n", size, alignment, offset);
+    TRACE("(%lu, %lu, %lu)\n", size, alignment, offset);
 
     /* alignment must be a power of 2 */
     if ((alignment & (alignment - 1)) != 0)
@@ -384,7 +384,7 @@ void * CDECL _aligned_offset_malloc(MSVCRT_size_t size, MSVCRT_size_t alignment,
  */
 void * CDECL _aligned_malloc(MSVCRT_size_t size, MSVCRT_size_t alignment)
 {
-    TRACE("(%u, %u)\n", size, alignment);
+    TRACE("(%lu, %lu)\n", size, alignment);
     return _aligned_offset_malloc(size, alignment, 0);
 }
 
@@ -396,7 +396,7 @@ void * CDECL _aligned_offset_realloc(void *memblock, MSVCRT_size_t size,
 {
     void * temp, **saved;
     MSVCRT_size_t old_padding, new_padding, old_size;
-    TRACE("(%p, %u, %u, %u)\n", memblock, size, alignment, offset);
+    TRACE("(%p, %lu, %lu, %lu)\n", memblock, size, alignment, offset);
 
     if (!memblock)
         return _aligned_offset_malloc(size, alignment, offset);
@@ -508,6 +508,6 @@ void * CDECL _aligned_offset_realloc(void *memblock, MSVCRT_size_t size,
  */
 void * CDECL _aligned_realloc(void *memblock, MSVCRT_size_t size, MSVCRT_size_t alignment)
 {
-    TRACE("(%p, %u, %u)\n", memblock, size, alignment);
+    TRACE("(%p, %lu, %lu)\n", memblock, size, alignment);
     return _aligned_offset_realloc(memblock, size, alignment, 0);
 }

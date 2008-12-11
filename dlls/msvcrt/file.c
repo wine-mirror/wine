@@ -1244,12 +1244,12 @@ int CDECL _futime(int fd, struct MSVCRT__utimbuf *t)
 /*********************************************************************
  *		_get_osfhandle (MSVCRT.@)
  */
-long CDECL _get_osfhandle(int fd)
+MSVCRT_intptr_t CDECL _get_osfhandle(int fd)
 {
   HANDLE hand = msvcrt_fdtoh(fd);
   TRACE(":fd (%d) handle (%p)\n",fd,hand);
 
-  return (long)hand;
+  return (MSVCRT_intptr_t)hand;
 }
 
 /*********************************************************************
@@ -1599,7 +1599,7 @@ int CDECL _wcreat(const MSVCRT_wchar_t *path, int flags)
 /*********************************************************************
  *		_open_osfhandle (MSVCRT.@)
  */
-int CDECL _open_osfhandle(long handle, int oflags)
+int CDECL _open_osfhandle(MSVCRT_intptr_t handle, int oflags)
 {
   int fd;
 
