@@ -421,7 +421,7 @@ const char *wine_get_build_id(void)
 /* exec a binary using the preloader if requested; helper for wine_exec_wine_binary */
 static void preloader_exec( char **argv, int use_preloader )
 {
-#ifdef linux
+#if defined(linux) && defined(__i386__)
     if (use_preloader)
     {
         static const char preloader[] = "wine-preloader";
