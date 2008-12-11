@@ -15,6 +15,7 @@ CTESTS = \
 	main.c \
 	message.c \
 	msg.c \
+	object.c \
 	oid.c \
 	protectdata.c \
 	sip.c \
