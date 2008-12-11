@@ -81,8 +81,13 @@ extern "C" {
 #endif
 
 #ifndef _STDIO_DEFINED
-FILE*        __p__iob(void);
-#define _iob               (__p__iob())
+# ifdef _WIN64  /* __p__iob is not exported in Win64 */
+FILE* __iob_func(void);
+#  define _iob (__iob_func())
+# else
+FILE* __p__iob(void);
+#  define _iob (__p__iob())
+# endif /* _WIN64 */
 #endif /* _STDIO_DEFINED */
 
 #define stdin              (_iob+STDIN_FILENO)

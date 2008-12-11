@@ -451,9 +451,9 @@ static void msvcrt_int_to_base32(int num, char *str)
 }
 
 /*********************************************************************
- *		__p__iob(MSVCRT.@)
+ *		__iob_func(MSVCRT.@)
  */
-MSVCRT_FILE * CDECL __p__iob(void)
+MSVCRT_FILE * CDECL MSVCRT___iob_func(void)
 {
  return &MSVCRT__iob[0];
 }

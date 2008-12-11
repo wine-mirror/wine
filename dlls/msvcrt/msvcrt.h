@@ -650,7 +650,7 @@ char* __cdecl    MSVCRT_getenv(const char*);
 char* __cdecl    MSVCRT_setlocale(int,const char*);
 int __cdecl      MSVCRT_fclose(MSVCRT_FILE*);
 void __cdecl     MSVCRT_terminate(void);
-MSVCRT_FILE* __cdecl MSVCRT__p__iob(void);
+MSVCRT_FILE* __cdecl MSVCRT__iob_func(void);
 MSVCRT_time_t __cdecl MSVCRT_mktime(struct MSVCRT_tm *t);
 struct MSVCRT_tm* __cdecl MSVCRT_localtime(const MSVCRT_time_t* secs);
 struct MSVCRT_tm* __cdecl MSVCRT_gmtime(const MSVCRT_time_t* secs);

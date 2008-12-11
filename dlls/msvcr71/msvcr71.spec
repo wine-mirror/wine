@@ -135,7 +135,7 @@
 @ cdecl __p__environ() msvcrt.__p__environ
 @ cdecl __p__fileinfo() msvcrt.__p__fileinfo
 @ cdecl __p__fmode() msvcrt.__p__fmode
-@ cdecl __p__iob() msvcrt.__p__iob
+@ cdecl -arch=i386 __p__iob() msvcrt.__p__iob
 @ cdecl __p__mbcasemap() msvcrt.__p__mbcasemap
 @ cdecl __p__mbctype() msvcrt.__p__mbctype
 @ cdecl __p__osver() msvcrt.__p__osver
