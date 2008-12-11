@@ -152,13 +152,13 @@ static void test_query_object(void)
     ret = CryptQueryObject(CERT_QUERY_OBJECT_BLOB, &blob,
      CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_ALL, 0, NULL, NULL,
      NULL, NULL, NULL, NULL);
+    todo_wine
     ok(ret, "CryptQueryObject failed: %08x\n", GetLastError());
     /* The same base64-encoded cert, restricting the format types */
     SetLastError(0xdeadbeef);
     ret = CryptQueryObject(CERT_QUERY_OBJECT_BLOB, &blob,
      CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_BINARY, 0, NULL, NULL,
      NULL, NULL, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
      "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
@@ -174,7 +174,6 @@ static void test_query_object(void)
     ret = CryptQueryObject(CERT_QUERY_OBJECT_BLOB, &blob,
      CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_ALL, 0, NULL, NULL,
      NULL, NULL, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
      "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
     /* For brevity, not tested here, but tested on Windows:  same failure
@@ -195,6 +194,7 @@ static void test_query_object(void)
     ret = CryptQueryObject(CERT_QUERY_OBJECT_BLOB, &blob,
      CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_ALL, 0, NULL, NULL,
      NULL, NULL, NULL, NULL);
+    todo_wine
     ok(ret, "CryptQueryObject failed: %08x\n", GetLastError());
     /* A valid signed message, encoded as a wide character base64 string, can
      * be queried successfully.
@@ -205,12 +205,12 @@ static void test_query_object(void)
     ret = CryptQueryObject(CERT_QUERY_OBJECT_BLOB, &blob,
      CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_ALL, 0, NULL, NULL,
      NULL, NULL, NULL, NULL);
+    todo_wine
     ok(ret, "CryptQueryObject failed: %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptQueryObject(CERT_QUERY_OBJECT_BLOB, &blob,
      CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_BINARY, 0, NULL, NULL,
      NULL, NULL, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
      "expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);

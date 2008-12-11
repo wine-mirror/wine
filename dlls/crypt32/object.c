@@ -163,6 +163,7 @@ static BOOL CRYPT_QuerySerializedContextObject(DWORD dwObjectType,
     if (!ret)
         return FALSE;
 
+    ret = FALSE;
     context = CRYPT_ReadSerializedElement(blob->pbData, blob->cbData,
      CERT_STORE_ALL_CONTEXT_FLAG, &contextType);
     if (context)
@@ -563,6 +564,8 @@ BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void *pvObject,
          dwExpectedContentTypeFlags, pdwMsgAndCertEncodingType, pdwContentType,
          phCertStore, phMsg);
     }
+    if (!ret)
+        SetLastError(CRYPT_E_NO_MATCH);
     TRACE("returning %d\n", ret);
     return ret;
 }
