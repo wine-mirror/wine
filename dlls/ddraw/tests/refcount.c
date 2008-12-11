@@ -48,7 +48,7 @@ static void test_ddraw_objects(void)
     IDirectDraw2 *DDraw2;
     IDirectDraw  *DDraw1;
     IDirectDrawPalette *palette;
-    IDirectDrawSurface7 *surface;
+    IDirectDrawSurface7 *surface = NULL;
     IDirectDrawSurface *surface1;
     IDirectDrawSurface4 *surface4;
     PALETTEENTRY Table[256];
@@ -94,6 +94,12 @@ static void test_ddraw_objects(void)
     U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 8;
 
     hr = IDirectDraw7_CreateSurface(DDraw7, &ddsd, &surface, NULL);
+    if (!surface)
+    {
+        win_skip("Could not create surface : %08x\n", hr);
+        IDirectDraw7_Release(DDraw7);
+        return;
+    }
     ok(hr == DD_OK, "CreateSurface failed with %08x\n", hr);
 
     /* DDraw refcount increased by 1 */
@@ -434,7 +440,7 @@ START_TEST(refcount)
     init_function_pointers();
     if(!pDirectDrawCreateEx)
     {
-        skip("function DirectDrawCreateEx not available\n");
+        win_skip("function DirectDrawCreateEx not available\n");
         return;
     }
     test_ddraw_objects();
