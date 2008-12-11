@@ -715,13 +715,16 @@ static BOOL open_connection( request_t *request )
     connect_t *connect;
     char address[32];
     WCHAR *addressW;
+    INTERNET_PORT port;
 
     if (netconn_connected( &request->netconn )) return TRUE;
+
     connect = request->connect;
+    port = connect->hostport ? connect->hostport : (request->hdr.flags & WINHTTP_FLAG_SECURE ? 443 : 80);
 
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, connect->servername, strlenW(connect->servername) + 1 );
 
-    if (!netconn_resolve( connect->servername, connect->serverport, &connect->sockaddr )) return FALSE;
+    if (!netconn_resolve( connect->servername, port, &connect->sockaddr )) return FALSE;
     inet_ntop( connect->sockaddr.sin_family, &connect->sockaddr.sin_addr, address, sizeof(address) );
     addressW = strdupAW( address );
 
@@ -764,20 +767,24 @@ void close_connection( request_t *request )
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED, 0, 0 );
 }
 
-static BOOL add_host_header( request_t *request, WCHAR *hostname, INTERNET_PORT port, DWORD modifier )
+static BOOL add_host_header( request_t *request, DWORD modifier )
 {
     BOOL ret;
     DWORD len;
     WCHAR *host;
     static const WCHAR fmt[] = {'%','s',':','%','u',0};
+    connect_t *connect = request->connect;
+    INTERNET_PORT port;
+
+    port = connect->hostport ? connect->hostport : (request->hdr.flags & WINHTTP_FLAG_SECURE ? 443 : 80);
 
     if (port == INTERNET_DEFAULT_HTTP_PORT || port == INTERNET_DEFAULT_HTTPS_PORT)
     {
-        return process_header( request, attr_host, hostname, modifier, TRUE );
+        return process_header( request, attr_host, connect->hostname, modifier, TRUE );
     }
-    len = strlenW( hostname ) + 7; /* sizeof(":65335") */
+    len = strlenW( connect->hostname ) + 7; /* sizeof(":65335") */
     if (!(host = heap_alloc( len * sizeof(WCHAR) ))) return FALSE;
-    sprintfW( host, fmt, hostname, port );
+    sprintfW( host, fmt, connect->hostname, port );
     ret = process_header( request, attr_host, host, modifier, TRUE );
     heap_free( host );
     return ret;
@@ -802,7 +809,7 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
         process_header( request, attr_user_agent, session->agent, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
 
     if (connect->hostname)
-        add_host_header( request, connect->hostname, connect->hostport, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW );
+        add_host_header( request, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW );
 
     if (total_len || (request->verb && !strcmpW( request->verb, postW )))
     {
@@ -1092,14 +1099,16 @@ static BOOL handle_redirect( request_t *request )
         port = uc.nPort ? uc.nPort : (uc.nScheme == INTERNET_SCHEME_HTTPS ? 443 : 80);
         if (strcmpiW( connect->servername, hostname ) || connect->serverport != port)
         {
+            heap_free( connect->hostname );
+            connect->hostname = hostname;
             heap_free( connect->servername );
-            connect->servername = hostname;
+            connect->servername = strdupW( connect->hostname );
             connect->serverport = connect->hostport = port;
 
             netconn_close( &request->netconn );
             if (!(ret = netconn_init( &request->netconn, request->hdr.flags & WINHTTP_FLAG_SECURE ))) goto end;
         }
-        if (!(ret = add_host_header( request, hostname, port, WINHTTP_ADDREQ_FLAG_REPLACE ))) goto end;
+        if (!(ret = add_host_header( request, WINHTTP_ADDREQ_FLAG_REPLACE ))) goto end;
         if (!(ret = open_connection( request ))) goto end;
 
         heap_free( request->path );

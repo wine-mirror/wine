@@ -253,10 +253,10 @@ HINTERNET WINAPI WinHttpConnect( HINTERNET hsession, LPCWSTR server, INTERNET_PO
     list_add_head( &session->hdr.children, &connect->hdr.entry );
 
     if (server && !(connect->hostname = strdupW( server ))) goto end;
-    connect->hostport = port ? port : (connect->hdr.flags & WINHTTP_FLAG_SECURE ? 443 : 80);
+    connect->hostport = port;
 
     if (server && !(connect->servername = strdupW( server ))) goto end;
-    connect->serverport = port ? port : (connect->hdr.flags & WINHTTP_FLAG_SECURE ? 443 : 80);
+    connect->serverport = port;
 
     if (!(hconnect = alloc_handle( &connect->hdr ))) goto end;
     connect->hdr.handle = hconnect;
