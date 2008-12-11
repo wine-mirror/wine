@@ -320,7 +320,7 @@
 @ stdcall GdipGetMetafileHeaderFromMetafile(ptr ptr)
 @ stub GdipGetMetafileHeaderFromStream
 @ stub GdipGetMetafileHeaderFromWmf
-@ stub GdipGetNearestColor
+@ stdcall GdipGetNearestColor(ptr ptr)
 @ stdcall GdipGetPageScale(ptr ptr)
 @ stdcall GdipGetPageUnit(ptr ptr)
 @ stdcall GdipGetPathData(ptr ptr)
