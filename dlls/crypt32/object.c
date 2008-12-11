@@ -413,7 +413,7 @@ static BOOL CRYPT_QueryEmbeddedMessageObject(DWORD dwObjectType,
 
     if (dwObjectType != CERT_QUERY_OBJECT_FILE)
     {
-        FIXME("don't know what to do for type %d embedded signed messages\n",
+        WARN("don't know what to do for type %d embedded signed messages\n",
          dwObjectType);
         SetLastError(E_INVALIDARG);
         return FALSE;
