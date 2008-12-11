@@ -492,6 +492,19 @@ BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void *pvObject,
      dwExpectedFormatTypeFlags, dwFlags, pdwMsgAndCertEncodingType,
      pdwContentType, pdwFormatType, phCertStore, phMsg, ppvContext);
 
+    if (dwObjectType != CERT_QUERY_OBJECT_BLOB &&
+     dwObjectType != CERT_QUERY_OBJECT_FILE)
+    {
+        WARN("unsupported type %d\n", dwObjectType);
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if (!pvObject)
+    {
+        WARN("missing required argument\n");
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
     if (dwExpectedContentTypeFlags & unimplementedTypes)
         WARN("unimplemented for types %08x\n",
          dwExpectedContentTypeFlags & unimplementedTypes);

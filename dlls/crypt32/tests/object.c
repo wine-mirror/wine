@@ -130,13 +130,11 @@ static void test_query_object(void)
     SetLastError(0xdeadbeef);
     ret = CryptQueryObject(0, NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL,
      NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptQueryObject(CERT_QUERY_OBJECT_BLOB, NULL, 0, 0, 0, NULL, NULL,
      NULL, NULL, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     /* Test with a simple cert */
