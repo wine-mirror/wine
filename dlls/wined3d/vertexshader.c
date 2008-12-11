@@ -415,9 +415,6 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_GetFunction(IWineD3DVertexShader*
         TRACE("(%p) : GetFunction no User Function defined using NULL to %p\n", This, pData);
         (*(DWORD **) pData) = NULL;
     } else {
-        if(This->baseShader.functionLength == 0){
-
-        }
         TRACE("(%p) : GetFunction copying to %p\n", This, pData);
         memcpy(pData, This->baseShader.function, This->baseShader.functionLength);
     }
