@@ -997,7 +997,7 @@ void shader_trace_init(
     if (!pFunction)
     {
         WARN("Got a NULL pFunction, returning.\n");
-        This->baseShader.functionLength = 1; /* no Function defined use fixed function vertex processing */
+        This->baseShader.functionLength = 0; /* no Function defined use fixed function vertex processing */
         return;
     }
 
