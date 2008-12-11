@@ -39,7 +39,6 @@
 #include "fdi.h"
 #include "msi.h"
 #include "msidefs.h"
-#include "msvcrt/fcntl.h"
 #include "msipriv.h"
 #include "winuser.h"
 #include "winreg.h"
