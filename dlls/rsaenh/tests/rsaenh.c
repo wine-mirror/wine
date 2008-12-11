@@ -1786,8 +1786,7 @@ static void test_enum_container(void)
     result = CryptGetProvParam(hProv, PP_ENUMCONTAINERS, NULL, &dwBufferLen, CRYPT_FIRST);
     ok (result, "%08x\n", GetLastError());
     ok (dwBufferLen == MAX_PATH + 1 ||
-        broken(dwBufferLen == 10) || /* Win9x, WinMe */
-        broken(dwBufferLen == 55), /* NT4 */
+        broken(dwBufferLen != MAX_PATH + 1), /* Win9x, WinMe, NT4 */
         "Expected dwBufferLen to be (MAX_PATH + 1), it was : %d\n", dwBufferLen);
 
     /* If the result fits into abContainerName dwBufferLen is left untouched */
