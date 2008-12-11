@@ -77,11 +77,12 @@ static HRESULT Math_E(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
     return math_constant(M_E, flags, retv);
 }
 
+/* ECMA-262 3rd Edition    15.8.1.4 */
 static HRESULT Math_LOG2E(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return math_constant(M_LOG2E, flags, retv);
 }
 
 static HRESULT Math_LOG10E(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
@@ -403,10 +404,10 @@ static HRESULT Math_tan(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *d
 
 static const builtin_prop_t Math_props[] = {
     {EW,        Math_E,        0},
-    {LOG2EW,    Math_LOG2E,    0},
-    {LOG10EW,   Math_LOG10E,   0},
-    {LN2W,      Math_LN2,      0},
     {LN10W,     Math_LN10,     0},
+    {LN2W,      Math_LN2,      0},
+    {LOG10EW,   Math_LOG10E,   0},
+    {LOG2EW,    Math_LOG2E,    0},
     {PIW,       Math_PI,       0},
     {SQRT1_2W,  Math_SQRT1_2,  0},
     {SQRT2W,    Math_SQRT2,    0},

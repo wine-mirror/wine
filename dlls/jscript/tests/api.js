@@ -619,4 +619,9 @@ ok(Math.floor(Math.E*100) === 271, "Math.E = " + Math.E);
 Math.E = "test";
 ok(Math.floor(Math.E*100) === 271, "modified Math.E = " + Math.E);
 
+ok(typeof(Math.LOG2E) === "number", "typeof(Math.LOG2E) = " + typeof(Math.LOG2E));
+ok(Math.floor(Math.LOG2E*100) === 144, "Math.LOG2E = " + Math.LOG2E);
+Math.LOG2E = "test";
+ok(Math.floor(Math.LOG2E*100) === 144, "modified Math.LOG2E = " + Math.LOG2E);
+
 reportSuccess();
