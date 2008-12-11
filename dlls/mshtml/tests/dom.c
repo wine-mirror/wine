@@ -2294,6 +2294,7 @@ static void test_default_style(IHTMLStyle *style)
     HRESULT hres;
     float f;
     BSTR sOverflowDefault;
+    BSTR sDefault;
 
     test_disp((IUnknown*)style, &DIID_DispHTMLStyle);
     test_ifaces((IUnknown*)style, style_iids);
@@ -2635,6 +2636,33 @@ static void test_default_style(IHTMLStyle *style)
     ok(V_VT(&v) == VT_I4, "V_VT(v)=%d\n", V_VT(&v));
     ok(V_I4(&v) == 1, "V_I4(v) = %d\n", V_I4(&v));
     VariantClear(&v);
+
+    /* fontStyle */
+    hres = IHTMLStyle_get_fontStyle(style, &sDefault);
+    ok(hres == S_OK, "get_fontStyle failed: %08x\n", hres);
+
+    str = a2bstr("test");
+    hres = IHTMLStyle_put_fontStyle(style, str);
+    ok(hres == E_INVALIDARG, "put_fontStyle failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("italic");
+    hres = IHTMLStyle_put_fontStyle(style, str);
+    ok(hres == S_OK, "put_fontStyle failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("oblique");
+    hres = IHTMLStyle_put_fontStyle(style, str);
+    ok(hres == S_OK, "put_fontStyle failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("normal");
+    hres = IHTMLStyle_put_fontStyle(style, str);
+    ok(hres == S_OK, "put_fontStyle failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle_put_fontStyle(style, sDefault);
+    ok(hres == S_OK, "get_fontStyle failed: %08x\n", hres);
 
     /* overflow */
     hres = IHTMLStyle_get_overflow(style, NULL);

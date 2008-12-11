@@ -133,6 +133,8 @@ static const WCHAR valLineThrough[] =
     {'l','i','n','e','-','t','h','r','o','u','g','h',0};
 static const WCHAR valUnderline[] =
     {'u','n','d','e','r','l','i','n','e',0};
+static const WCHAR szNormal[] =
+    {'n','o','r','m','a','l',0};
 
 static const WCHAR px_formatW[] = {'%','d','p','x',0};
 static const WCHAR emptyW[] = {0};
@@ -515,8 +517,19 @@ static HRESULT WINAPI HTMLStyle_get_fontFamily(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_fontStyle(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    static const WCHAR szItalic[]  = {'i','t','a','l','i','c',0};
+    static const WCHAR szOblique[]  = {'o','b','l','i','q','u','e',0};
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    /* fontStyle can only be one of the follow values. */
+    if(!v || strcmpiW(szNormal, v) == 0 || strcmpiW(szItalic, v) == 0 ||
+             strcmpiW(szOblique, v) == 0)
+    {
+        return set_nsstyle_attr(This->nsstyle, STYLEID_FONT_STYLE, v, 0);
+    }
+
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI HTMLStyle_get_fontStyle(IHTMLStyle *iface, BSTR *p)
