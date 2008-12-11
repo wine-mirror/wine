@@ -51,6 +51,8 @@ static int (*pstrcpy_s)(char *dst, size_t len, const char *src);
 static int (*pstrcat_s)(char *dst, size_t len, const char *src);
 static int (*p_mbsnbcpy_s)(unsigned char * dst, size_t size, const unsigned char * src, size_t count);
 static int (*p_wcscpy_s)(wchar_t *wcDest, size_t size, const wchar_t *wcSrc);
+static int *p__mb_cur_max;
+static unsigned char *p_mbctype;
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
@@ -111,14 +113,14 @@ static void test_codepage(int cp)
 
     ok(_setmbcp(cp) == 0, "Couldn't set mbcp\n");
 
-    prev = _mbctype[0];
+    prev = p_mbctype[0];
     printf("static int result_cp_%d_mbctype[] = { ", cp);
     for (i = 1; i < 257; i++)
     {
-        if (_mbctype[i] != prev)
+        if (p_mbctype[i] != prev)
         {
             printf("0x%x,%d, ", prev, count);
-            prev = _mbctype[i];
+            prev = p_mbctype[i];
             count = 1;
         }
         else
@@ -160,11 +162,11 @@ void test_cp_table(int cp, int *result, int *todo)
         }
 	if (i == *todo + 1)
 	{
-            todo_wine ok(_mbctype[i] == curr, "CP%d: Mismatch in ctype for character %d - %d instead of %d\n", cp, i-1, _mbctype[i], curr);
+            todo_wine ok(p_mbctype[i] == curr, "CP%d: Mismatch in ctype for character %d - %d instead of %d\n", cp, i-1, p_mbctype[i], curr);
             todo++;
 	}
 	else
-            ok(_mbctype[i] == curr, "CP%d: Mismatch in ctype for character %d - %d instead of %d\n", cp, i-1, _mbctype[i], curr);
+            ok(p_mbctype[i] == curr, "CP%d: Mismatch in ctype for character %d - %d instead of %d\n", cp, i-1, p_mbctype[i], curr);
         count--;
     }
 }
@@ -176,7 +178,7 @@ void test_cp_table(int cp, int *result, int *todo)
 
 static void test_mbcp(void)
 {
-    int mb_orig_max = __mb_cur_max;
+    int mb_orig_max = *p__mb_cur_max;
     int curr_mbcp = _getmbcp();
     unsigned char *mbstring = (unsigned char *)"\xb0\xb1\xb2 \xb3\xb4 \xb5"; /* incorrect string */
     unsigned char *mbstring2 = (unsigned char *)"\xb0\xb1\xb2\xb3Q\xb4\xb5"; /* correct string */
@@ -190,17 +192,17 @@ static void test_mbcp(void)
      * between versions of Windows. Also Windows 9x seems to ignore the codepage and always uses
      * CP1252 (or the ACP?) so we test only a few ASCII characters */
     _setmbcp(1252);
-    expect_eq(_mbctype[10], 0, char, "%x");
-    expect_eq(_mbctype[50], 0, char, "%x");
-    expect_eq(_mbctype[66], _SBUP, char, "%x");
-    expect_eq(_mbctype[100], _SBLOW, char, "%x");
-    expect_eq(_mbctype[128], 0, char, "%x");
+    expect_eq(p_mbctype[10], 0, char, "%x");
+    expect_eq(p_mbctype[50], 0, char, "%x");
+    expect_eq(p_mbctype[66], _SBUP, char, "%x");
+    expect_eq(p_mbctype[100], _SBLOW, char, "%x");
+    expect_eq(p_mbctype[128], 0, char, "%x");
     _setmbcp(1250);
-    expect_eq(_mbctype[10], 0, char, "%x");
-    expect_eq(_mbctype[50], 0, char, "%x");
-    expect_eq(_mbctype[66], _SBUP, char, "%x");
-    expect_eq(_mbctype[100], _SBLOW, char, "%x");
-    expect_eq(_mbctype[128], 0, char, "%x");
+    expect_eq(p_mbctype[10], 0, char, "%x");
+    expect_eq(p_mbctype[50], 0, char, "%x");
+    expect_eq(p_mbctype[66], _SBUP, char, "%x");
+    expect_eq(p_mbctype[100], _SBLOW, char, "%x");
+    expect_eq(p_mbctype[128], 0, char, "%x");
 
     /* double byte code pages */
     test_codepage_todo(932, todo_cp_932);
@@ -209,7 +211,7 @@ static void test_mbcp(void)
     test_codepage(950);
 
     _setmbcp(936);
-    ok(__mb_cur_max == mb_orig_max, "__mb_cur_max shouldn't be updated (is %d != %d)\n", __mb_cur_max, mb_orig_max);
+    ok(*p__mb_cur_max == mb_orig_max, "__mb_cur_max shouldn't be updated (is %d != %d)\n", *p__mb_cur_max, mb_orig_max);
     ok(_ismbblead('\354'), "\354 should be a lead byte\n");
     ok(_ismbblead(' ') == FALSE, "' ' should not be a lead byte\n");
     ok(_ismbblead(0x1234b0), "0x1234b0 should not be a lead byte\n");
@@ -346,7 +348,7 @@ static void test_mbcp(void)
      * we hope the current locale to be SBCS because setlocale(LC_ALL, ".1252") seems not to work yet
      * (as of Wine 0.9.43)
      */
-    if (__mb_cur_max == 1)
+    if (*p__mb_cur_max == 1)
     {
         expect_eq(mblen((char *)mbstring, 3), 1, int, "%x");
         expect_eq(_mbstrlen((char *)mbstring2), 7, int, "%d");
@@ -619,6 +621,8 @@ START_TEST(string)
     ok(hMsvcrt != 0, "GetModuleHandleA failed\n");
     SET(pmemcpy,"memcpy");
     SET(pmemcmp,"memcmp");
+    SET(p_mbctype,"_mbctype");
+    SET(p__mb_cur_max,"__mb_cur_max");
     pstrcpy_s = (void *)GetProcAddress( hMsvcrt,"strcpy_s" );
     pstrcat_s = (void *)GetProcAddress( hMsvcrt,"strcat_s" );
     p_mbsnbcpy_s = (void *)GetProcAddress( hMsvcrt,"_mbsnbcpy_s" );
