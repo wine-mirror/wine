@@ -49,10 +49,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(heap);
  * better compatibility with NT.
  */
 
-/* FIXME: use SIZE_T for 'size' structure members, but we need to make sure
- * that there is no unaligned accesses to structure fields.
- */
-
 typedef struct tagARENA_INUSE
 {
     DWORD  size;                    /* Block size; must be the first field */
@@ -90,17 +86,19 @@ typedef struct
 #define ARENA_INUSE_FILLER     0x55
 #define ARENA_FREE_FILLER      0xaa
 
-#define ALIGNMENT              8   /* everything is aligned on 8 byte boundaries */
+/* everything is aligned on 8 byte boundaries (16 for Win64) */
+#define ALIGNMENT              (2*sizeof(void*))
 #define LARGE_ALIGNMENT        16  /* large blocks have stricter alignment */
+#define ARENA_OFFSET           (ALIGNMENT - sizeof(ARENA_INUSE))
 
-#define ROUND_SIZE(size)       (((size) + ALIGNMENT - 1) & ~(ALIGNMENT-1))
+#define ROUND_SIZE(size)       ((((size) + ALIGNMENT - 1) & ~(ALIGNMENT-1)) + ARENA_OFFSET)
 
 #define QUIET                  1           /* Suppress messages  */
 #define NOISY                  0           /* Report all errors  */
 
 /* minimum data size (without arenas) of an allocated block */
 /* make sure that it's larger than a free list entry */
-#define HEAP_MIN_DATA_SIZE    (2 * sizeof(struct list))
+#define HEAP_MIN_DATA_SIZE    ROUND_SIZE(2 * sizeof(struct list))
 /* minimum size that must remain to shrink an allocated block */
 #define HEAP_MIN_SHRINK_SIZE  (HEAP_MIN_DATA_SIZE+sizeof(ARENA_FREE))
 /* minimum size to start allocating large blocks */
@@ -113,9 +111,10 @@ static const SIZE_T HEAP_freeListSizes[] =
 };
 #define HEAP_NB_FREE_LISTS  (sizeof(HEAP_freeListSizes)/sizeof(HEAP_freeListSizes[0]))
 
-typedef struct
+typedef union
 {
     ARENA_FREE  arena;
+    void       *alignment[4];
 } FREE_LIST_ENTRY;
 
 struct tagHEAP;
@@ -771,6 +770,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         totalSize  = (totalSize + 0xffff) & 0xffff0000;
         commitSize = (commitSize + 0xffff) & 0xffff0000;
         if (!commitSize) commitSize = 0x10000;
+        totalSize = min( totalSize, 0xffff0000 );  /* don't allow a heap larger than 4Gb */
         if (totalSize < commitSize) totalSize = commitSize;
         if (flags & HEAP_SHARED) commitSize = totalSize;  /* always commit everything in a shared heap */
 
@@ -960,7 +960,7 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
     char *heapEnd = (char *)subheap->base + subheap->size;
 
     /* Check for unaligned pointers */
-    if ( (ULONG_PTR)pArena % ALIGNMENT != 0 )
+    if ((ULONG_PTR)pArena % ALIGNMENT != ARENA_OFFSET)
     {
         ERR("Heap %p: unaligned arena pointer %p\n", subheap->heap, pArena );
         return FALSE;
@@ -1051,7 +1051,7 @@ static BOOL HEAP_ValidateInUseArena( const SUBHEAP *subheap, const ARENA_INUSE *
     const char *heapEnd = (const char *)subheap->base + subheap->size;
 
     /* Check for unaligned pointers */
-    if ( (ULONG_PTR)pArena % ALIGNMENT != 0 )
+    if ((ULONG_PTR)pArena % ALIGNMENT != ARENA_OFFSET)
     {
         if ( quiet == NOISY )
         {
@@ -1262,7 +1262,7 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, SIZE_T totalSize, SIZE_T c
         processHeap = subheap->heap;  /* assume the first heap we create is the process main heap */
         list_init( &processHeap->entry );
         /* make sure structure alignment is correct */
-        assert( (ULONG_PTR)processHeap->freeList % ALIGNMENT == 0 );
+        assert( (ULONG_PTR)processHeap->freeList % ALIGNMENT == ARENA_OFFSET );
         assert( sizeof(ARENA_LARGE) % LARGE_ALIGNMENT == 0 );
     }
 
