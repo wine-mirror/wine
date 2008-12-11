@@ -609,4 +609,9 @@ date = new Date(100);
 ok(date.getTime() === 100, "date.getTime() = " + date.getTime());
 ok(Date.prototype.getTime() === 0, "date.prototype.getTime() = " + Date.prototype.getTime());
 
+ok(typeof(Math.PI) === "number", "typeof(Math.PI) = " + typeof(Math.PI));
+ok(Math.floor(Math.PI*100) === 314, "Math.PI = " + Math.PI);
+Math.PI = "test";
+ok(Math.floor(Math.PI*100) === 314, "modified Math.PI = " + Math.PI);
+
 reportSuccess();
