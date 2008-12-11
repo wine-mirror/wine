@@ -34,10 +34,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
 static const WCHAR scheme_http[] = {'h','t','t','p',0};
 static const WCHAR scheme_https[] = {'h','t','t','p','s',0};
 
-static BOOL set_component( WCHAR **str, DWORD *str_len, WCHAR *value, DWORD len )
+static BOOL set_component( WCHAR **str, DWORD *str_len, WCHAR *value, DWORD len, DWORD flags )
 {
     if (!*str)
     {
+        if (len && (flags & ICU_DECODE))
+        {
+            set_last_error( ERROR_INVALID_PARAMETER );
+            return FALSE;
+        }
         *str = value;
         *str_len = len;
     }
@@ -89,12 +94,6 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
         WCHAR *url_tmp;
         DWORD url_len = len + 1;
 
-        if (!uc->lpszScheme || !uc->lpszUserName || !uc->lpszPassword ||
-            !uc->lpszHostName || !uc->lpszUrlPath || !uc-> lpszExtraInfo)
-        {
-            set_last_error( ERROR_INVALID_PARAMETER );
-            return FALSE;
-        }
         if (!(url_tmp = HeapAlloc( GetProcessHeap(), 0, url_len * sizeof(WCHAR) )))
         {
             set_last_error( ERROR_OUTOFMEMORY );
@@ -121,7 +120,7 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
     else if (p - url == 5 && !strncmpiW( url, scheme_https, 5 )) uc->nScheme = INTERNET_SCHEME_HTTPS;
     else goto exit;
 
-    if (!(set_component( &uc->lpszScheme, &uc->dwSchemeLength, (WCHAR *)url, p - url ))) goto exit;
+    if (!(set_component( &uc->lpszScheme, &uc->dwSchemeLength, (WCHAR *)url, p - url, flags ))) goto exit;
 
     p++; /* skip ':' */
     if (!p[0] || p[0] != '/' || p[1] != '/') goto exit;
@@ -132,42 +131,42 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
     {
         if ((r = memchrW( p, ':', q - p )))
         {
-            if (!(set_component( &uc->lpszUserName, &uc->dwUserNameLength, p, r - p ))) goto exit;
+            if (!(set_component( &uc->lpszUserName, &uc->dwUserNameLength, p, r - p, flags ))) goto exit;
             r++;
-            if (!(set_component( &uc->lpszPassword, &uc->dwPasswordLength, r, q - r ))) goto exit;
+            if (!(set_component( &uc->lpszPassword, &uc->dwPasswordLength, r, q - r, flags ))) goto exit;
         }
         else
         {
-            if (!(set_component( &uc->lpszUserName, &uc->dwUserNameLength, p, q - p ))) goto exit;
-            if (!(set_component( &uc->lpszPassword, &uc->dwPasswordLength, NULL, 0 ))) goto exit;
+            if (!(set_component( &uc->lpszUserName, &uc->dwUserNameLength, p, q - p, flags ))) goto exit;
+            if (!(set_component( &uc->lpszPassword, &uc->dwPasswordLength, NULL, 0, flags ))) goto exit;
         }
         p = q + 1;
     }
     else
     {
-        if (!(set_component( &uc->lpszUserName, &uc->dwUserNameLength, NULL, 0 ))) goto exit;
-        if (!(set_component( &uc->lpszPassword, &uc->dwPasswordLength, NULL, 0 ))) goto exit;
+        if (!(set_component( &uc->lpszUserName, &uc->dwUserNameLength, NULL, 0, flags ))) goto exit;
+        if (!(set_component( &uc->lpszPassword, &uc->dwPasswordLength, NULL, 0, flags ))) goto exit;
     }
     if ((q = memchrW( p, '/', len - (p - url) )))
     {
-        if (!(set_component( &uc->lpszHostName, &uc->dwHostNameLength, p, q - p ))) goto exit;
+        if (!(set_component( &uc->lpszHostName, &uc->dwHostNameLength, p, q - p, flags ))) goto exit;
 
         if ((r = memchrW( q, '?', len - (q - url) )))
         {
-            if (!(set_component( &uc->lpszUrlPath, &uc->dwUrlPathLength, q, r - q ))) goto exit;
-            if (!(set_component( &uc->lpszExtraInfo, &uc->dwExtraInfoLength, r, len - (r - url) ))) goto exit;
+            if (!(set_component( &uc->lpszUrlPath, &uc->dwUrlPathLength, q, r - q, flags ))) goto exit;
+            if (!(set_component( &uc->lpszExtraInfo, &uc->dwExtraInfoLength, r, len - (r - url), flags ))) goto exit;
         }
         else
         {
-            if (!(set_component( &uc->lpszUrlPath, &uc->dwUrlPathLength, q, len - (q - url) ))) goto exit;
-            if (!(set_component( &uc->lpszExtraInfo, &uc->dwExtraInfoLength, (WCHAR *)url + len, 0 ))) goto exit;
+            if (!(set_component( &uc->lpszUrlPath, &uc->dwUrlPathLength, q, len - (q - url), flags ))) goto exit;
+            if (!(set_component( &uc->lpszExtraInfo, &uc->dwExtraInfoLength, (WCHAR *)url + len, 0, flags ))) goto exit;
         }
     }
     else
     {
-        if (!(set_component( &uc->lpszHostName, &uc->dwHostNameLength, p, len - (p - url) ))) goto exit;
-        if (!(set_component( &uc->lpszUrlPath, &uc->dwUrlPathLength, (WCHAR *)url + len, 0 ))) goto exit;
-        if (!(set_component( &uc->lpszExtraInfo, &uc->dwExtraInfoLength, (WCHAR *)url + len, 0 ))) goto exit;
+        if (!(set_component( &uc->lpszHostName, &uc->dwHostNameLength, p, len - (p - url), flags ))) goto exit;
+        if (!(set_component( &uc->lpszUrlPath, &uc->dwUrlPathLength, (WCHAR *)url + len, 0, flags ))) goto exit;
+        if (!(set_component( &uc->lpszExtraInfo, &uc->dwExtraInfoLength, (WCHAR *)url + len, 0, flags ))) goto exit;
     }
 
     ret = TRUE;
