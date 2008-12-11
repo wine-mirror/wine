@@ -2513,7 +2513,7 @@ extern inline HANDLE WINAPI GetProcessHeap(void)
 {
     HANDLE *pdb;
 #ifdef __x86_64__
-    __asm__ __volatile__( ".byte 0x64\n\tmovq 0x60,%0" : "=r" (pdb) );
+    __asm__ __volatile__( ".byte 0x65\n\tmovq 0x60,%0" : "=r" (pdb) );
     return pdb[0x30 / sizeof(HANDLE)];  /* get dword at offset 0x30 in pdb */
 #else
     __asm__ __volatile__( ".byte 0x64\n\tmovl 0x30,%0" : "=r" (pdb) );
