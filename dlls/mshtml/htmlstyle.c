@@ -61,6 +61,8 @@ static const WCHAR attrFontSize[] =
     {'f','o','n','t','-','s','i','z','e',0};
 static const WCHAR attrFontStyle[] =
     {'f','o','n','t','-','s','t','y','l','e',0};
+static const WCHAR attrFontVariant[] =
+    {'f','o','n','t','-','v','a','r','i','a','n','t',0};
 static const WCHAR attrFontWeight[] =
     {'f','o','n','t','-','w','e','i','g','h','t',0};
 static const WCHAR attrHeight[] =
@@ -111,6 +113,7 @@ static const struct{
     {attrFontFamily,           DISPID_IHTMLSTYLE_FONTFAMILY},
     {attrFontSize,             DISPID_IHTMLSTYLE_FONTSIZE},
     {attrFontStyle,            DISPID_IHTMLSTYLE_FONTSTYLE},
+    {attrFontVariant,          DISPID_IHTMLSTYLE_FONTVARIANT},
     {attrFontWeight,           DISPID_IHTMLSTYLE_FONTWEIGHT},
     {attrHeight,               DISPID_IHTMLSTYLE_HEIGHT},
     {attrLeft,                 DISPID_IHTMLSTYLE_LEFT},
@@ -544,15 +547,28 @@ static HRESULT WINAPI HTMLStyle_get_fontStyle(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_fontVariant(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    static const WCHAR szCaps[]  = {'s','m','a','l','l','-','c','a','p','s',0};
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    /* fontVariant can only be one of the follow values. */
+    if(!v || strcmpiW(szNormal, v) == 0 || strcmpiW(szCaps, v) == 0)
+    {
+        return set_nsstyle_attr(This->nsstyle, STYLEID_FONT_VARIANT, v, 0);
+    }
+
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI HTMLStyle_get_fontVariant(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!p)
+       return E_INVALIDARG;
+
+    return get_style_attr(This, STYLEID_FONT_VARIANT, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_fontWeight(IHTMLStyle *iface, BSTR v)

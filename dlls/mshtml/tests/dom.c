@@ -2309,6 +2309,32 @@ static void test_default_style(IHTMLStyle *style)
     ok(hres == S_OK, "get_fontWeight failed: %08x\n", hres);
     ok(!str, "fontWeight = %s\n", dbgstr_w(str));
 
+    /* font Variant */
+    hres = IHTMLStyle_get_fontVariant(style, NULL);
+    ok(hres == E_INVALIDARG, "get_fontVariant failed: %08x\n", hres);
+
+    hres = IHTMLStyle_get_fontVariant(style, &sDefault);
+    ok(hres == S_OK, "get_fontVariant failed: %08x\n", hres);
+
+    str = a2bstr("test");
+    hres = IHTMLStyle_put_fontVariant(style, str);
+    ok(hres == E_INVALIDARG, "fontVariant failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("small-caps");
+    hres = IHTMLStyle_put_fontVariant(style, str);
+    ok(hres == S_OK, "fontVariant failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("normal");
+    hres = IHTMLStyle_put_fontVariant(style, str);
+    ok(hres == S_OK, "fontVariant failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle_put_fontVariant(style, sDefault);
+    ok(hres == S_OK, "fontVariant failed: %08x\n", hres);
+    SysFreeString(sDefault);
+
     str = (void*)0xdeadbeef;
     hres = IHTMLStyle_get_display(style, &str);
     ok(hres == S_OK, "get_display failed: %08x\n", hres);
