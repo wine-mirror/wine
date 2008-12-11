@@ -19,9 +19,8 @@
  */
 #ifndef __WINE_EH_H
 #define __WINE_EH_H
-#ifndef __WINE_USE_MSVCRT
-#define __WINE_USE_MSVCRT
-#endif
+
+#include <crtdefs.h>
 
 #if !defined(__cplusplus) && !defined(__WINE_MSVCRT_TEST)
 #error "eh.h is meant only for C++ applications"

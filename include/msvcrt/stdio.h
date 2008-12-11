@@ -7,27 +7,14 @@
  */
 #ifndef __WINE_STDIO_H
 #define __WINE_STDIO_H
-#ifndef __WINE_USE_MSVCRT
-#define __WINE_USE_MSVCRT
-#endif
 
-#include <pshpack8.h>
+#include <crtdefs.h>
 
 #ifndef RC_INVOKED
 #include <stdarg.h>
 #endif
 
-#if defined(__x86_64__) && !defined(_WIN64)
-#define _WIN64
-#endif
-
-#if !defined(_MSC_VER) && !defined(__int64)
-# if defined(_WIN64) && !defined(__MINGW64__)
-#   define __int64 long
-# else
-#   define __int64 long long
-# endif
-#endif
+#include <pshpack8.h>
 
 /* file._flag flags */
 #define _IOREAD          0x0001
@@ -87,28 +74,6 @@ typedef struct _iobuf
 #ifndef _FPOS_T_DEFINED
 typedef __int64 fpos_t;
 #define _FPOS_T_DEFINED
-#endif
-
-#ifndef _SIZE_T_DEFINED
-#ifdef _WIN64
-typedef unsigned __int64 size_t;
-#else
-typedef unsigned int size_t;
-#endif
-#define _SIZE_T_DEFINED
-#endif
-
-#ifndef _WCHAR_T_DEFINED
-#define _WCHAR_T_DEFINED
-#ifndef __cplusplus
-typedef unsigned short wchar_t;
-#endif
-#endif
-
-#ifndef _WCTYPE_T_DEFINED
-typedef unsigned short  wint_t;
-typedef unsigned short  wctype_t;
-#define _WCTYPE_T_DEFINED
 #endif
 
 #ifdef __cplusplus

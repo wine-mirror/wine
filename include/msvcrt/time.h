@@ -19,44 +19,10 @@
  */
 #ifndef __WINE_TIME_H
 #define __WINE_TIME_H
-#ifndef __WINE_USE_MSVCRT
-#define __WINE_USE_MSVCRT
-#endif
+
+#include <crtdefs.h>
 
 #include <pshpack8.h>
-
-#ifndef _WCHAR_T_DEFINED
-#define _WCHAR_T_DEFINED
-#ifndef __cplusplus
-typedef unsigned short wchar_t;
-#endif
-#endif
-
-#if defined(__x86_64__) && !defined(_WIN64)
-#define _WIN64
-#endif
-
-#if !defined(_MSC_VER) && !defined(__int64)
-# if defined(_WIN64) && !defined(__MINGW64__)
-#   define __int64 long
-# else
-#   define __int64 long long
-# endif
-#endif
-
-#ifndef _SIZE_T_DEFINED
-#ifdef _WIN64
-typedef unsigned __int64 size_t;
-#else
-typedef unsigned int size_t;
-#endif
-#define _SIZE_T_DEFINED
-#endif
-
-#ifndef _TIME_T_DEFINED
-typedef long time_t;
-#define _TIME_T_DEFINED
-#endif
 
 #ifndef _CLOCK_T_DEFINED
 typedef long clock_t;

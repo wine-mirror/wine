@@ -290,6 +290,7 @@ SRCDIR_INCLUDES = \
 	mstcpip.h \
 	msvcrt/conio.h \
 	msvcrt/crtdbg.h \
+	msvcrt/crtdefs.h \
 	msvcrt/ctype.h \
 	msvcrt/direct.h \
 	msvcrt/dirent.h \

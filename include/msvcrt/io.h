@@ -7,30 +7,10 @@
  */
 #ifndef __WINE_IO_H
 #define __WINE_IO_H
-#ifndef __WINE_USE_MSVCRT
-#define __WINE_USE_MSVCRT
-#endif
+
+#include <crtdefs.h>
 
 #include <pshpack8.h>
-
-#ifndef _WCHAR_T_DEFINED
-#define _WCHAR_T_DEFINED
-#ifndef __cplusplus
-typedef unsigned short wchar_t;
-#endif
-#endif
-
-#if defined(__x86_64__) && !defined(_WIN64)
-#define _WIN64
-#endif
-
-#if !defined(_MSC_VER) && !defined(__int64)
-# if defined(_WIN64) && !defined(__MINGW64__)
-#   define __int64 long
-# else
-#   define __int64 long long
-# endif
-#endif
 
 /* The following are also defined in dos.h */
 #define _A_NORMAL 0x00000000
@@ -40,11 +20,6 @@ typedef unsigned short wchar_t;
 #define _A_VOLID  0x00000008
 #define _A_SUBDIR 0x00000010
 #define _A_ARCH   0x00000020
-
-#ifndef _TIME_T_DEFINED
-typedef long time_t;
-#define _TIME_T_DEFINED
-#endif
 
 #ifndef _FSIZE_T_DEFINED
 typedef unsigned long _fsize_t;

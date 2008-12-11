@@ -19,18 +19,10 @@
  */
 #ifndef __WINE_WCTYPE_H
 #define __WINE_WCTYPE_H
-#ifndef __WINE_USE_MSVCRT
-#define __WINE_USE_MSVCRT
-#endif
+
+#include <crtdefs.h>
 
 #include <pshpack8.h>
-
-#ifndef _WCHAR_T_DEFINED
-#define _WCHAR_T_DEFINED
-#ifndef __cplusplus
-typedef unsigned short wchar_t;
-#endif
-#endif
 
 /* ASCII char classification table - binary compatible */
 #define _UPPER        0x0001  /* C1_UPPER */
@@ -46,12 +38,6 @@ typedef unsigned short wchar_t;
 
 #ifndef WEOF
 #define WEOF        (wint_t)(0xFFFF)
-#endif
-
-#ifndef _WCTYPE_T_DEFINED
-typedef unsigned short  wint_t;
-typedef unsigned short  wctype_t;
-#define _WCTYPE_T_DEFINED
 #endif
 
 /* FIXME: there's something to do with __p__pctype and __p__pwctype */

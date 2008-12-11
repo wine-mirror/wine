@@ -19,16 +19,8 @@
  */
 #ifndef __WINE_LOCALE_H
 #define __WINE_LOCALE_H
-#ifndef __WINE_USE_MSVCRT
-#define __WINE_USE_MSVCRT
-#endif
 
-#ifndef _WCHAR_T_DEFINED
-#define _WCHAR_T_DEFINED
-#ifndef __cplusplus
-typedef unsigned short wchar_t;
-#endif
-#endif
+#include <crtdefs.h>
 
 #define LC_ALL                 0
 #define LC_COLLATE             1

@@ -19,21 +19,8 @@
  */
 #ifndef __WINE_SYS_TYPES_H
 #define __WINE_SYS_TYPES_H
-#ifndef __WINE_USE_MSVCRT
-#define __WINE_USE_MSVCRT
-#endif
 
-#if defined(__x86_64__) && !defined(_WIN64)
-#define _WIN64
-#endif
-
-#if !defined(_MSC_VER) && !defined(__int64)
-# if defined(_WIN64) && !defined(__MINGW64__)
-#   define __int64 long
-# else
-#   define __int64 long long
-# endif
-#endif
+#include <crtdefs.h>
 
 #ifndef _DEV_T_DEFINED
 typedef unsigned int   _dev_t;
@@ -53,16 +40,6 @@ typedef unsigned short _mode_t;
 #ifndef _OFF_T_DEFINED
 typedef int _off_t;
 #define _OFF_T_DEFINED
-#endif
-
-#ifndef _TIME_T_DEFINED
-typedef long time_t;
-#define _TIME_T_DEFINED
-#endif
-
-#ifndef _TIME64_T_DEFINED
-#define _TIME64_T_DEFINED
-typedef __int64 __time64_t;
 #endif
 
 #ifndef _BSDTYPES_DEFINED

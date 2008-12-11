@@ -19,64 +19,8 @@
  */
 #ifndef __WINE_STDDEF_H
 #define __WINE_STDDEF_H
-#ifndef __WINE_USE_MSVCRT
-#define __WINE_USE_MSVCRT
-#endif
 
-#if defined(__x86_64__) && !defined(_WIN64)
-#define _WIN64
-#endif
-
-#if !defined(_MSC_VER) && !defined(__int64)
-# if defined(_WIN64) && !defined(__MINGW64__)
-#   define __int64 long
-# else
-#   define __int64 long long
-# endif
-#endif
-
-#ifndef _WCHAR_T_DEFINED
-#define _WCHAR_T_DEFINED
-#ifndef __cplusplus
-typedef unsigned short wchar_t;
-#endif
-#endif
-
-#ifndef _INTPTR_T_DEFINED
-#ifdef  _WIN64
-typedef __int64 intptr_t;
-#else
-typedef int intptr_t;
-#endif
-#define _INTPTR_T_DEFINED
-#endif
-
-#ifndef _UINTPTR_T_DEFINED
-#ifdef  _WIN64
-typedef unsigned __int64 uintptr_t;
-#else
-typedef unsigned int uintptr_t;
-#endif
-#define _UINTPTR_T_DEFINED
-#endif
-
-#ifndef _PTRDIFF_T_DEFINED
-#ifdef _WIN64
-typedef __int64 ptrdiff_t;
-#else
-typedef int ptrdiff_t;
-#endif
-#define _PTRDIFF_T_DEFINED
-#endif
-
-#ifndef _SIZE_T_DEFINED
-#ifdef _WIN64
-typedef unsigned __int64 size_t;
-#else
-typedef unsigned int size_t;
-#endif
-#define _SIZE_T_DEFINED
-#endif
+#include <crtdefs.h>
 
 #ifndef NULL
 #ifdef __cplusplus

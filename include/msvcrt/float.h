@@ -8,9 +8,8 @@
 
 #ifndef __WINE_FLOAT_H
 #define __WINE_FLOAT_H
-#ifndef __WINE_USE_MSVCRT
-#define __WINE_USE_MSVCRT
-#endif
+
+#include <crtdefs.h>
 
 #ifdef __cplusplus
 extern "C" {

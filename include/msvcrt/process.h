@@ -7,16 +7,8 @@
  */
 #ifndef __WINE_PROCESS_H
 #define __WINE_PROCESS_H
-#ifndef __WINE_USE_MSVCRT
-#define __WINE_USE_MSVCRT
-#endif
 
-#ifndef _WCHAR_T_DEFINED
-#define _WCHAR_T_DEFINED
-#ifndef __cplusplus
-typedef unsigned short wchar_t;
-#endif
-#endif
+#include <crtdefs.h>
 
 /* Process creation flags */
 #define _P_WAIT    0
@@ -27,26 +19,6 @@ typedef unsigned short wchar_t;
 
 #define _WAIT_CHILD      0
 #define _WAIT_GRANDCHILD 1
-
-#ifndef __stdcall
-# ifdef __i386__
-#  ifdef __GNUC__
-#   ifdef __APPLE__ /* Mac OS X uses a 16-byte aligned stack and not a 4-byte one */
-#    define __stdcall __attribute__((__stdcall__)) __attribute__((__force_align_arg_pointer__))
-#   else
-#    define __stdcall __attribute__((__stdcall__))
-#   endif
-#  elif defined(_MSC_VER)
-    /* Nothing needs to be done. __stdcall already exists */
-#  else
-#   error You need to define __stdcall for your compiler
-#  endif
-# elif defined(__x86_64__) && defined (__GNUC__)
-#  define __stdcall __attribute__((ms_abi))
-# else
-#  define __stdcall
-# endif
-#endif /* __stdcall */
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,6 +1,8 @@
 #ifndef __WINE_LIMITS_H
 #define __WINE_LIMITS_H
 
+#include <crtdefs.h>
+
 #define CHAR_BIT 8
 #define MB_LEN_MAX 2
 

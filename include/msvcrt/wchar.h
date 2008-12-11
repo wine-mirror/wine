@@ -7,23 +7,14 @@
  */
 #ifndef __WINE_WCHAR_H
 #define __WINE_WCHAR_H
-#ifndef __WINE_USE_MSVCRT
-#define __WINE_USE_MSVCRT
-#endif
+
+#include <crtdefs.h>
+#include <stdarg.h>
 
 #include <pshpack8.h>
 
-#include <stdarg.h>
-
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifndef _WCHAR_T_DEFINED
-#define _WCHAR_T_DEFINED
-#ifndef __cplusplus
-typedef unsigned short wchar_t;
-#endif
 #endif
 
 #ifndef NULL
@@ -37,18 +28,6 @@ typedef unsigned short wchar_t;
 #define WCHAR_MIN 0
 #define WCHAR_MAX ((wchar_t)-1)
 
-#if defined(__x86_64__) && !defined(_WIN64)
-#define _WIN64
-#endif
-
-#if !defined(_MSC_VER) && !defined(__int64)
-# if defined(_WIN64) && !defined(__MINGW64__)
-#   define __int64 long
-# else
-#   define __int64 long long
-# endif
-#endif
-
 #ifndef DECLSPEC_ALIGN
 # if defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(MIDL_PASS)
 #  define DECLSPEC_ALIGN(x) __declspec(align(x))
@@ -60,21 +39,6 @@ typedef unsigned short wchar_t;
 #endif
 
 typedef int mbstate_t;
-
-#ifndef _SIZE_T_DEFINED
-#ifdef _WIN64
-typedef unsigned __int64 size_t;
-#else
-typedef unsigned int size_t;
-#endif
-#define _SIZE_T_DEFINED
-#endif
-
-#ifndef _WCTYPE_T_DEFINED
-typedef unsigned short  wint_t;
-typedef unsigned short  wctype_t;
-#define _WCTYPE_T_DEFINED
-#endif
 
 #ifndef WEOF
 #define WEOF        (wint_t)(0xFFFF)
@@ -98,16 +62,6 @@ typedef unsigned short _ino_t;
 #ifndef _OFF_T_DEFINED
 typedef int _off_t;
 #define _OFF_T_DEFINED
-#endif
-
-#ifndef _TIME_T_DEFINED
-typedef long time_t;
-#define _TIME_T_DEFINED
-#endif
-
-#ifndef _TIME64_T_DEFINED
-#define _TIME64_T_DEFINED
-typedef __int64 __time64_t;
 #endif
 
 #ifndef _TM_DEFINED

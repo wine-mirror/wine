@@ -7,9 +7,8 @@
  */
 #ifndef __WINE_STDLIB_H
 #define __WINE_STDLIB_H
-#ifndef __WINE_USE_MSVCRT
-#define __WINE_USE_MSVCRT
-#endif
+
+#include <crtdefs.h>
 
 #include <pshpack8.h>
 
@@ -20,14 +19,6 @@
 #define NULL  ((void*)0)
 #endif
 #endif
-
-#ifndef _WCHAR_T_DEFINED
-#define _WCHAR_T_DEFINED
-#ifndef __cplusplus
-typedef unsigned short wchar_t;
-#endif
-#endif
-
 
 typedef struct
 {
@@ -43,18 +34,6 @@ typedef struct
 {
     unsigned char ld[10];
 } _LDOUBLE;
-
-#if defined(__x86_64__) && !defined(_WIN64)
-#define _WIN64
-#endif
-
-#if !defined(_MSC_VER) && !defined(__int64)
-# if defined(_WIN64) && !defined(__MINGW64__)
-#   define __int64 long
-# else
-#   define __int64 long long
-# endif
-#endif
 
 #define EXIT_SUCCESS        0
 #define EXIT_FAILURE        -1
@@ -78,15 +57,6 @@ typedef struct _ldiv_t {
     long quot;
     long rem;
 } ldiv_t;
-
-#ifndef _SIZE_T_DEFINED
-#ifdef _WIN64
-typedef unsigned __int64 size_t;
-#else
-typedef unsigned int size_t;
-#endif
-#define _SIZE_T_DEFINED
-#endif
 
 #define __max(a,b) (((a) > (b)) ? (a) : (b))
 #define __min(a,b) (((a) < (b)) ? (a) : (b))

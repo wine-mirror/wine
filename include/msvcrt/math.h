@@ -8,9 +8,8 @@
 
 #ifndef __WINE_MATH_H
 #define __WINE_MATH_H
-#ifndef __WINE_USE_MSVCRT
-#define __WINE_USE_MSVCRT
-#endif
+
+#include <crtdefs.h>
 
 #include <pshpack8.h>
 

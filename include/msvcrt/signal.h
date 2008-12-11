@@ -19,9 +19,8 @@
  */
 #ifndef _WINE_SIGNAL_H
 #define _WINE_SIGNAL_H
-#ifndef __WINE_USE_MSVCRT
-#define __WINE_USE_MSVCRT
-#endif
+
+#include <crtdefs.h>
 
 #define SIGINT   2
 #define SIGILL   4

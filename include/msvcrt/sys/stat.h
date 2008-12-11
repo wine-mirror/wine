@@ -7,20 +7,11 @@
  */
 #ifndef __WINE_SYS_STAT_H
 #define __WINE_SYS_STAT_H
-#ifndef __WINE_USE_MSVCRT
-#define __WINE_USE_MSVCRT
-#endif
 
-#include <pshpack8.h>
-
+#include <crtdefs.h>
 #include <sys/types.h>
 
-#ifndef _WCHAR_T_DEFINED
-#define _WCHAR_T_DEFINED
-#ifndef __cplusplus
-typedef unsigned short wchar_t;
-#endif
-#endif
+#include <pshpack8.h>
 
 #ifndef _DEV_T_DEFINED
 typedef unsigned int _dev_t;
@@ -30,11 +21,6 @@ typedef unsigned int _dev_t;
 #ifndef _INO_T_DEFINED
 typedef unsigned short _ino_t;
 #define _INO_T_DEFINED
-#endif
-
-#ifndef _TIME_T_DEFINED
-typedef long time_t;
-#define _TIME_T_DEFINED
 #endif
 
 #ifndef _OFF_T_DEFINED

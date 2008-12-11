@@ -19,9 +19,8 @@
  */
 #ifndef __WINE_CRTDBG_H_
 #define __WINE_CRTDBG_H_
-#ifndef __WINE_USE_MSVCRT
-#define __WINE_USE_MSVCRT
-#endif
+
+#include <crtdefs.h>
 
 /* The debug API is not implemented in Winelib.
  * Redirect everything to the regular APIs.
