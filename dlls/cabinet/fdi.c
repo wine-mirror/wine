@@ -2279,8 +2279,7 @@ static void free_decompression_temps(HFDI hfdi, struct fdi_folder *fol,
 }
 
 static void free_decompression_mem(HFDI hfdi, struct fdi_folder *fol,
-  fdi_decomp_state *decomp_state, fdi_decomp_state *sentinel_decomp_state,
-  struct fdi_file *file)
+  fdi_decomp_state *decomp_state, struct fdi_file *file)
 {
   while (decomp_state) {
     fdi_decomp_state *prev_fds;
@@ -2306,8 +2305,7 @@ static void free_decompression_mem(HFDI hfdi, struct fdi_folder *fol,
     }
     prev_fds = decomp_state;
     decomp_state = CAB(next);
-    if (prev_fds != sentinel_decomp_state)
-      PFDI_FREE(hfdi, prev_fds);
+    PFDI_FREE(hfdi, prev_fds);
   }
 }
 
@@ -2495,8 +2493,7 @@ BOOL __cdecl FDICopy(
   cab_UBYTE         buf[64];
   struct fdi_folder *fol = NULL, *linkfol = NULL; 
   struct fdi_file   *file = NULL, *linkfile = NULL;
-  fdi_decomp_state _decomp_state;
-  fdi_decomp_state *decomp_state = &_decomp_state;
+  fdi_decomp_state *decomp_state;
 
   TRACE("(hfdi == ^%p, pszCabinet == ^%p, pszCabPath == ^%p, flags == %0d, "
         "pfnfdin == ^%p, pfnfdid == ^%p, pvUser == ^%p)\n",
@@ -2507,6 +2504,11 @@ BOOL __cdecl FDICopy(
     return FALSE;
   }
 
+  if (!(decomp_state = PFDI_ALLOC(hfdi, sizeof(fdi_decomp_state))))
+  {
+      SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+      return FALSE;
+  }
   ZeroMemory(decomp_state, sizeof(fdi_decomp_state));
 
   pathlen = (pszCabPath) ? strlen(pszCabPath) : 0;
@@ -2893,7 +2895,7 @@ BOOL __cdecl FDICopy(
   }
 
   free_decompression_temps(hfdi, fol, decomp_state);
-  free_decompression_mem(hfdi, fol, decomp_state, &_decomp_state, file);
+  free_decompression_mem(hfdi, fol, decomp_state, file);
  
   return TRUE;
 
@@ -2903,7 +2905,7 @@ BOOL __cdecl FDICopy(
 
   if (filehf) PFDI_CLOSE(hfdi, filehf);
 
-  free_decompression_mem(hfdi, fol, decomp_state, &_decomp_state, file);
+  free_decompression_mem(hfdi, fol, decomp_state, file);
 
   return FALSE;
 }
