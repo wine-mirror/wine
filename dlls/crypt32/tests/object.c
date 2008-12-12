@@ -192,7 +192,6 @@ static void test_query_object(void)
     ret = CryptQueryObject(CERT_QUERY_OBJECT_BLOB, &blob,
      CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_ALL, 0, NULL, NULL,
      NULL, NULL, NULL, NULL);
-    todo_wine
     ok(ret, "CryptQueryObject failed: %08x\n", GetLastError());
     /* A valid signed message, encoded as a wide character base64 string, can
      * be queried successfully.

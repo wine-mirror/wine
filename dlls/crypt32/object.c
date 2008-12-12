@@ -428,14 +428,21 @@ static BOOL CRYPT_QueryUnsignedMessage(const CRYPT_DATA_BLOB *blob,
 
 /* Used to decode non-embedded messages */
 static BOOL CRYPT_QueryMessageObject(DWORD dwObjectType, const void *pvObject,
- DWORD dwExpectedContentTypeFlags, DWORD *pdwMsgAndCertEncodingType,
- DWORD *pdwContentType, HCERTSTORE *phCertStore, HCRYPTMSG *phMsg)
+ DWORD dwExpectedContentTypeFlags, DWORD dwExpectedFormatTypeFlags,
+ DWORD *pdwMsgAndCertEncodingType, DWORD *pdwContentType, DWORD *pdwFormatType,
+ HCERTSTORE *phCertStore, HCRYPTMSG *phMsg)
 {
     CERT_BLOB fileBlob;
     const CERT_BLOB *blob;
     BOOL ret;
     HCRYPTMSG msg = NULL;
     DWORD encodingType = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
+    DWORD formatType = 0;
+
+    TRACE("(%d, %p, %08x, %08x, %p, %p, %p, %p, %p)\n", dwObjectType, pvObject,
+     dwExpectedContentTypeFlags, dwExpectedFormatTypeFlags,
+     pdwMsgAndCertEncodingType, pdwContentType, pdwFormatType, phCertStore,
+     phMsg);
 
     switch (dwObjectType)
     {
@@ -458,17 +465,63 @@ static BOOL CRYPT_QueryMessageObject(DWORD dwObjectType, const void *pvObject,
         return FALSE;
 
     ret = FALSE;
-    /* Try it first as a signed message */
-    if (dwExpectedContentTypeFlags & CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED)
-        ret = CRYPT_QuerySignedMessage(blob, pdwMsgAndCertEncodingType,
-         pdwContentType, &msg);
-    /* Failing that, try as an unsigned message */
+    if (dwExpectedFormatTypeFlags & CERT_QUERY_FORMAT_FLAG_BINARY)
+    {
+        /* Try it first as a signed message */
+        if (dwExpectedContentTypeFlags & CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED)
+            ret = CRYPT_QuerySignedMessage(blob, pdwMsgAndCertEncodingType,
+             pdwContentType, &msg);
+        /* Failing that, try as an unsigned message */
+        if (!ret &&
+         (dwExpectedContentTypeFlags & CERT_QUERY_CONTENT_FLAG_PKCS7_UNSIGNED))
+            ret = CRYPT_QueryUnsignedMessage(blob, pdwMsgAndCertEncodingType,
+             pdwContentType, &msg);
+        if (ret)
+            formatType = CERT_QUERY_FORMAT_BINARY;
+    }
     if (!ret &&
-     (dwExpectedContentTypeFlags & CERT_QUERY_CONTENT_FLAG_PKCS7_UNSIGNED))
-        ret = CRYPT_QueryUnsignedMessage(blob, pdwMsgAndCertEncodingType,
-         pdwContentType, &msg);
+     (dwExpectedFormatTypeFlags & CERT_QUERY_FORMAT_FLAG_BASE64_ENCODED))
+    {
+        CRYPT_DATA_BLOB trimmed = { blob->cbData, blob->pbData };
+        CRYPT_DATA_BLOB decoded;
+
+        while (trimmed.cbData && !trimmed.pbData[trimmed.cbData - 1])
+            trimmed.cbData--;
+        ret = CryptStringToBinaryA((LPSTR)trimmed.pbData, trimmed.cbData,
+         CRYPT_STRING_BASE64_ANY, NULL, &decoded.cbData, NULL, NULL);
+        if (ret)
+        {
+            decoded.pbData = CryptMemAlloc(decoded.cbData);
+            if (decoded.pbData)
+            {
+                ret = CryptStringToBinaryA((LPSTR)trimmed.pbData,
+                 trimmed.cbData, CRYPT_STRING_BASE64_ANY, decoded.pbData,
+                 &decoded.cbData, NULL, NULL);
+                if (ret)
+                {
+                    /* Try it first as a signed message */
+                    if (dwExpectedContentTypeFlags &
+                     CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED)
+                        ret = CRYPT_QuerySignedMessage(&decoded,
+                         pdwMsgAndCertEncodingType, pdwContentType, &msg);
+                    /* Failing that, try as an unsigned message */
+                    if (!ret && (dwExpectedContentTypeFlags &
+                     CERT_QUERY_CONTENT_FLAG_PKCS7_UNSIGNED))
+                        ret = CRYPT_QueryUnsignedMessage(&decoded,
+                         pdwMsgAndCertEncodingType, pdwContentType, &msg);
+                    if (ret)
+                        formatType = CERT_QUERY_FORMAT_BASE64_ENCODED;
+                }
+                CryptMemFree(decoded.pbData);
+            }
+            else
+                ret = FALSE;
+        }
+    }
     if (ret)
     {
+        if (pdwFormatType)
+            *pdwFormatType = formatType;
         if (phMsg)
             *phMsg = msg;
         if (phCertStore)
@@ -536,8 +589,9 @@ static BOOL CRYPT_QueryEmbeddedMessageObject(DWORD dwObjectType,
                             ret = CRYPT_QueryMessageObject(
                              CERT_QUERY_OBJECT_BLOB, &blob,
                              CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED,
-                             pdwMsgAndCertEncodingType, NULL, phCertStore,
-                             phMsg);
+                             CERT_QUERY_FORMAT_FLAG_BINARY,
+                             pdwMsgAndCertEncodingType, NULL, NULL,
+                             phCertStore, phMsg);
                             if (ret && pdwContentType)
                                 *pdwContentType =
                                  CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED;
@@ -630,7 +684,8 @@ BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void *pvObject,
      (dwExpectedContentTypeFlags & CERT_QUERY_CONTENT_FLAG_PKCS7_UNSIGNED)))
     {
         ret = CRYPT_QueryMessageObject(dwObjectType, pvObject,
-         dwExpectedContentTypeFlags, pdwMsgAndCertEncodingType, pdwContentType,
+         dwExpectedContentTypeFlags, dwExpectedFormatTypeFlags,
+         pdwMsgAndCertEncodingType, pdwContentType, pdwFormatType,
          phCertStore, phMsg);
     }
     if (!ret &&
