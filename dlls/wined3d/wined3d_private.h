@@ -2230,15 +2230,9 @@ typedef struct IWineD3DBaseShaderImpl {
 void shader_buffer_init(struct SHADER_BUFFER *buffer);
 void shader_buffer_free(struct SHADER_BUFFER *buffer);
 void shader_cleanup(IWineD3DBaseShader *iface);
+HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_maps *reg_maps,
+        struct semantic *semantics_in, struct semantic *semantics_out, const DWORD *byte_code);
 void shader_trace_init(const DWORD *byte_code, const SHADER_OPCODE *opcode_table);
-
-extern HRESULT shader_get_registers_used(
-    IWineD3DBaseShader *iface,
-    shader_reg_maps* reg_maps,
-    semantic* semantics_in,
-    semantic* semantics_out,
-    CONST DWORD* pToken,
-    IWineD3DStateBlockImpl *stateBlock);
 
 extern void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
         const shader_reg_maps *reg_maps, const DWORD *pFunction);
@@ -2407,6 +2401,8 @@ extern const SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[];
 extern const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl;
 GLuint find_gl_pshader(IWineD3DPixelShaderImpl *shader, const struct ps_compile_args *args);
 void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImpl *stateblock, struct ps_compile_args *args);
+void pixelshader_update_samplers(struct shader_reg_maps *reg_maps, IWineD3DBaseTexture * const *textures,
+        DWORD shader_version);
 
 /* sRGB correction constants */
 static const float srgb_cmp = 0.0031308;

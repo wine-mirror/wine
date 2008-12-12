@@ -2825,8 +2825,6 @@ interface IWineD3DVertexShader : IWineD3DBaseShader
 ]
 interface IWineD3DPixelShader : IWineD3DBaseShader
 {
-    HRESULT UpdateSamplers(
-    );
     HRESULT GetDevice(
         [out] IWineD3DDevice **device
     );

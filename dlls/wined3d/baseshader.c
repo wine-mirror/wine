@@ -207,8 +207,7 @@ static void shader_delete_constant_list(struct list* clist) {
  * as an address register. */
 
 HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_maps *reg_maps,
-        struct semantic *semantics_in, struct semantic *semantics_out, const DWORD *byte_code,
-        IWineD3DStateBlockImpl *stateBlock)
+        struct semantic *semantics_in, struct semantic *semantics_out, const DWORD *byte_code)
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     const SHADER_OPCODE *shader_ins = This->baseShader.shader_ins;
@@ -384,33 +383,8 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
                 /* Fake sampler usage, only set reserved bit and ttype */
                 DWORD sampler_code = *pToken & WINED3DSP_REGNUM_MASK;
 
-                if(!stateBlock->textures[sampler_code]) {
-                    ERR("No texture bound to sampler %d\n", sampler_code);
-                    reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_2D;
-                } else {
-                    int texType = IWineD3DBaseTexture_GetTextureDimensions(stateBlock->textures[sampler_code]);
-                    switch(texType) {
-                        /* We have to select between texture rectangles and 2D textures later because 2.0 and
-                         * 3.0 shaders only have WINED3DSTT_2D as well
-                         */
-                        case GL_TEXTURE_RECTANGLE_ARB:
-                        case GL_TEXTURE_2D:
-                            reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_2D;
-                            break;
-
-                        case GL_TEXTURE_3D:
-                            reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_VOLUME;
-                            break;
-
-                        case GL_TEXTURE_CUBE_MAP_ARB:
-                            reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_CUBE;
-                            break;
-
-                        default:
-                            ERR("Unexpected gl texture type found: %d\n", texType);
-                            reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_2D;
-                    }
-                }
+                TRACE("Setting fake 2D sampler for 1.x pixelshader\n");
+                reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_2D;
 
                 /* texbem is only valid with < 1.4 pixel shaders */
                 if(WINED3DSIO_TEXBEM  == curOpcode->opcode ||

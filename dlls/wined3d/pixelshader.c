@@ -332,8 +332,7 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
 
     /* Second pass: figure out which registers are used, what the semantics are, etc.. */
     memset(reg_maps, 0, sizeof(shader_reg_maps));
-    hr = shader_get_registers_used((IWineD3DBaseShader *)This, reg_maps,
-            This->semantics_in, NULL, pFunction, deviceImpl->stateBlock);
+    hr = shader_get_registers_used((IWineD3DBaseShader *)This, reg_maps, This->semantics_in, NULL, pFunction);
     if (FAILED(hr)) return hr;
 
     pshader_set_limits(This);
@@ -396,19 +395,60 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     return WINED3D_OK;
 }
 
+void pixelshader_update_samplers(struct shader_reg_maps *reg_maps, IWineD3DBaseTexture * const *textures,
+        DWORD shader_version)
+{
+    DWORD *samplers = reg_maps->samplers;
+    unsigned int i;
+
+    if (WINED3DSHADER_VERSION_MAJOR(shader_version) != 1) return;
+
+    for (i = 0; i < max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS); ++i)
+    {
+        /* We don't sample from this sampler */
+        if (!samplers[i]) continue;
+
+        if (!textures[i])
+        {
+            ERR("No texture bound to sampler %u, using 2D\n", i);
+            samplers[i] = (0x1 << 31) | WINED3DSTT_2D;
+            continue;
+        }
+
+        switch (IWineD3DBaseTexture_GetTextureDimensions(textures[i]))
+        {
+            case GL_TEXTURE_RECTANGLE_ARB:
+            case GL_TEXTURE_2D:
+                /* We have to select between texture rectangles and 2D textures later because 2.0 and
+                 * 3.0 shaders only have WINED3DSTT_2D as well */
+                samplers[i] = (1 << 31) | WINED3DSTT_2D;
+                break;
+
+            case GL_TEXTURE_3D:
+                samplers[i] = (1 << 31) | WINED3DSTT_VOLUME;
+                break;
+
+            case GL_TEXTURE_CUBE_MAP_ARB:
+                samplers[i] = (1 << 31) | WINED3DSTT_CUBE;
+                break;
+
+            default:
+                FIXME("Unrecognized texture type %#x, using 2D\n",
+                        IWineD3DBaseTexture_GetTextureDimensions(textures[i]));
+                samplers[i] = (0x1 << 31) | WINED3DSTT_2D;
+        }
+    }
+}
+
 static GLuint pixelshader_compile(IWineD3DPixelShaderImpl *This, const struct ps_compile_args *args)
 {
     CONST DWORD *function = This->baseShader.function;
-    HRESULT hr;
     GLuint retval;
 
     TRACE("(%p) : function %p\n", This, function);
 
-    hr = IWineD3DPixelShader_UpdateSamplers((IWineD3DPixelShader *) This);
-    if(FAILED(hr)) {
-        ERR("Failed to update sampler information\n");
-        return 0;
-    }
+    pixelshader_update_samplers(&This->baseShader.reg_maps,
+            ((IWineD3DDeviceImpl *)This->baseShader.device)->stateBlock->textures, This->baseShader.hex_version);
 
     /* Reset fields tracking stateblock values being hardcoded in the shader */
     This->baseShader.num_sampled_samplers = 0;
@@ -422,25 +462,6 @@ static GLuint pixelshader_compile(IWineD3DPixelShaderImpl *This, const struct ps
     return retval;
 }
 
-static HRESULT WINAPI IWineD3DPixelShaderImpl_UpdateSamplers(IWineD3DPixelShader *iface) {
-    IWineD3DPixelShaderImpl *This =(IWineD3DPixelShaderImpl *)iface;
-
-    if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1) {
-        IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
-        shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
-        HRESULT hr;
-
-        /* Second pass: figure out which registers are used, what the semantics are, etc.. */
-        memset(reg_maps, 0, sizeof(shader_reg_maps));
-        hr = shader_get_registers_used((IWineD3DBaseShader*)This, reg_maps,
-                                        This->semantics_in, NULL, This->baseShader.function, deviceImpl->stateBlock);
-        return hr;
-        /* FIXME: validate reg_maps against OpenGL */
-    } else {
-        return WINED3D_OK;
-    }
-}
-
 const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl =
 {
     /*** IUnknown methods ***/
@@ -452,7 +473,6 @@ const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl =
     /*** IWineD3DBaseShader methods ***/
     IWineD3DPixelShaderImpl_SetFunction,
     /*** IWineD3DPixelShader methods ***/
-    IWineD3DPixelShaderImpl_UpdateSamplers,
     IWineD3DPixelShaderImpl_GetDevice,
     IWineD3DPixelShaderImpl_GetFunction
 };
