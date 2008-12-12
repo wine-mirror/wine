@@ -38,28 +38,39 @@ HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object) {
     
     IWineD3DStateBlockImpl *This = object;
 
-#define WINED3D_MEMCHECK(_object) if (NULL == _object) { FIXME("Out of memory!\n"); return E_OUTOFMEMORY; }
-
     /* Allocate space for floating point constants */
     object->pixelShaderConstantF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(float) * GL_LIMITS(pshader_constantsF) * 4);
-    WINED3D_MEMCHECK(object->pixelShaderConstantF);
+    if (!object->pixelShaderConstantF) goto fail;
+
     object->changed.pixelShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BOOL) * GL_LIMITS(pshader_constantsF));
-    WINED3D_MEMCHECK(object->changed.pixelShaderConstantsF);
+    if (!object->changed.pixelShaderConstantsF) goto fail;
+
     object->vertexShaderConstantF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(float) * GL_LIMITS(vshader_constantsF) * 4);
-    WINED3D_MEMCHECK(object->vertexShaderConstantF);
+    if (!object->vertexShaderConstantF) goto fail;
+
     object->changed.vertexShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BOOL) * GL_LIMITS(vshader_constantsF));
-    WINED3D_MEMCHECK(object->changed.vertexShaderConstantsF);
+    if (!object->changed.vertexShaderConstantsF) goto fail;
+
     object->contained_vs_consts_f = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) * GL_LIMITS(vshader_constantsF));
-    WINED3D_MEMCHECK(object->contained_vs_consts_f);
+    if (!object->contained_vs_consts_f) goto fail;
+
     object->contained_ps_consts_f = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) * GL_LIMITS(pshader_constantsF));
-    WINED3D_MEMCHECK(object->contained_ps_consts_f);
+    if (!object->contained_ps_consts_f) goto fail;
 
     list_init(&object->set_vconstantsF);
     list_init(&object->set_pconstantsF);
 
-#undef WINED3D_MEMCHECK
-
     return WINED3D_OK;
+
+fail:
+    ERR("Failed to allocate memory\n");
+    HeapFree(GetProcessHeap(), 0, object->pixelShaderConstantF);
+    HeapFree(GetProcessHeap(), 0, object->changed.pixelShaderConstantsF);
+    HeapFree(GetProcessHeap(), 0, object->vertexShaderConstantF);
+    HeapFree(GetProcessHeap(), 0, object->changed.vertexShaderConstantsF);
+    HeapFree(GetProcessHeap(), 0, object->contained_vs_consts_f);
+    HeapFree(GetProcessHeap(), 0, object->contained_ps_consts_f);
+    return E_OUTOFMEMORY;
 }
 
 /** Copy all members of one stateblock to another */
