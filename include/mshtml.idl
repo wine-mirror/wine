@@ -20188,7 +20188,7 @@ interface IMarkupPointer : IUnknown
 [
     object,
     pointer_default(unique),
-    uuid(83f65030-b598-cf11-bb82-00aa00bdce0b)
+    uuid(3050f683-98b5-11cf-bb82-00aa00bdce0b)
 ]
 interface ISegment : IUnknown
 {
@@ -20220,7 +20220,7 @@ interface IElementSegment : ISegment
 [
     object,
     pointer_default(unique),
-    uuid(99f65030-b598-cf11-bb82-00aa00bdce0b)
+    uuid(3050f699-98b5-11cf-bb82-00aa00bdce0b)
 ]
 interface ISelectionServicesListener : IUnknown
 {
