@@ -2131,7 +2131,7 @@ static void test_get16dibits(void)
     ReleaseDC(NULL, screen_dc);
 }
 
-void test_GdiAlphaBlend()
+static void test_GdiAlphaBlend(void)
 {
     /* test out-of-bound parameters for GdiAlphaBlend */
     HDC hdcNull;
