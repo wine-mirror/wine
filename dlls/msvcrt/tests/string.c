@@ -146,7 +146,7 @@ static int result_cp_950_mbctype[] = { 0x0,65, 0x8,1, 0x18,26, 0x8,6, 0x28,26, 0
 static int todo_none[] = { -2 };
 static int todo_cp_932[] = { 254, -2 };
 
-void test_cp_table(int cp, int *result, int *todo)
+static void test_cp_table(int cp, int *result, int *todo)
 {
     int i;
     int count = 0;
