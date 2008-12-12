@@ -774,7 +774,7 @@ static void dump_dcb(const DCB* lpdcb)
           lpdcb->ByteSize, lpdcb->BaudRate, lpdcb->fParity, lpdcb->Parity,
           (lpdcb->StopBits == ONESTOPBIT) ? 1 :
           (lpdcb->StopBits == TWOSTOPBITS) ? 2 : 0);
-    TRACE("%sIXON %sIXOFF\n", (lpdcb->fInX) ? "" : "~", (lpdcb->fOutX) ? "" : "~");
+    TRACE("%sIXON %sIXOFF\n", (lpdcb->fOutX) ? "" : "~", (lpdcb->fInX) ? "" : "~");
     TRACE("fOutxCtsFlow=%d fRtsControl=%d\n", lpdcb->fOutxCtsFlow, lpdcb->fRtsControl);
     TRACE("fOutxDsrFlow=%d fDtrControl=%d\n", lpdcb->fOutxDsrFlow, lpdcb->fDtrControl);
     if (lpdcb->fOutxCtsFlow || lpdcb->fRtsControl == RTS_CONTROL_HANDSHAKE)
