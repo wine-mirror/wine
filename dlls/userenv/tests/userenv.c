@@ -118,7 +118,7 @@ const char *wine_dbgstr_w( const WCHAR *s )
     return default_dbgstr_wn( s, -1, TRUE);
 }
 
-const char *userenv_dbgstr_w( const WCHAR *s )
+static const char *userenv_dbgstr_w( const WCHAR *s )
 {
     return default_dbgstr_wn( s, -1, FALSE);
 }
