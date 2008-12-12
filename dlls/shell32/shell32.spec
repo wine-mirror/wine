@@ -34,7 +34,7 @@
   35 stdcall -noname PathRemoveFileSpec(ptr) PathRemoveFileSpecAW
   36 stdcall -noname PathAppend(ptr ptr) PathAppendAW
   37 stdcall -noname PathCombine(ptr ptr ptr) PathCombineAW
-  38 stdcall -noname PathStripPath(ptr)PathStripPathAW
+  38 stdcall -noname PathStripPath(ptr) PathStripPathAW
   39 stdcall -noname PathIsUNC(ptr) PathIsUNCAW
   40 stdcall -noname PathIsRelative(ptr) PathIsRelativeAW
   41 stdcall -noname IsLFNDriveA(str)
@@ -42,7 +42,7 @@
   43 stdcall -noname PathIsExe(ptr) PathIsExeAW
   45 stdcall -noname PathFileExists(ptr) PathFileExistsAW
   46 stdcall -noname PathMatchSpec(ptr ptr) PathMatchSpecAW
-  47 stdcall -noname PathMakeUniqueName(ptr long ptr ptr ptr)PathMakeUniqueNameAW
+  47 stdcall -noname PathMakeUniqueName(ptr long ptr ptr ptr) PathMakeUniqueNameAW
   48 stdcall -noname PathSetDlgItemPath(long long ptr) PathSetDlgItemPathAW
   49 stdcall -noname PathQualify(ptr) PathQualifyAW
   50 stdcall -noname PathStripToRoot(ptr) PathStripToRootAW
