@@ -737,7 +737,7 @@ static  BOOL	MMDRV_ExitPerType(LPWINE_MM_DRIVER lpDrv, UINT type)
  */
 void    MMDRV_Exit(void)
 {
-    int i;
+    unsigned int i;
     TRACE("()\n");
 
     for (i = 0; i < sizeof(MM_MLDrvs) / sizeof(MM_MLDrvs[0]); i++)
@@ -753,7 +753,8 @@ void    MMDRV_Exit(void)
     }
 
     /* unload driver, in reverse order of loading */
-    for (i = sizeof(MMDrvs) / sizeof(MMDrvs[0]) - 1; i >= 0; i--)
+    i = sizeof(MMDrvs) / sizeof(MMDrvs[0]);
+    while (i-- > 0)
     {
         MMDRV_ExitPerType(&MMDrvs[i], MMDRV_AUX);
         MMDRV_ExitPerType(&MMDrvs[i], MMDRV_MIXER);
