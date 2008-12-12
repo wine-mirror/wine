@@ -706,8 +706,7 @@ STORAGE_look_for_named_pps(stream_access16*str,int n,LPOLESTR name) {
 /******************************************************************************
  *		STORAGE_dump_pps_entry	[Internal]
  *
- * FIXME
- *    Function is unused
+ * This function is there to simplify debugging. It is otherwise unused.
  */
 void
 STORAGE_dump_pps_entry(struct storage_pps_entry *stde) {
