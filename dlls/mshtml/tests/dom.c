@@ -3433,10 +3433,26 @@ static void test_elems(IHTMLDocument2 *doc)
         hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLScriptElement, (void**)&script);
         ok(hres == S_OK, "Could not get IHTMLScriptElement interface: %08x\n", hres);
 
-        hres = IHTMLScriptElement_get_type(script, &type);
-        ok(hres == S_OK, "get_type failed: %08x\n", hres);
-        ok(!lstrcmpW(type, text_javascriptW), "Unexpected type %s\n", dbgstr_w(type));
-        SysFreeString(type);
+        if(hres == S_OK)
+        {
+            VARIANT_BOOL vb;
+
+            hres = IHTMLScriptElement_get_type(script, &type);
+            ok(hres == S_OK, "get_type failed: %08x\n", hres);
+            ok(!lstrcmpW(type, text_javascriptW), "Unexpected type %s\n", dbgstr_w(type));
+            SysFreeString(type);
+
+            /* test defer */
+            hres = IHTMLScriptElement_put_defer(script, VARIANT_TRUE);
+            ok(hres == S_OK, "get_type failed: %08x\n", hres);
+
+            hres = IHTMLScriptElement_get_defer(script, &vb);
+            ok(hres == S_OK, "get_type failed: %08x\n", hres);
+            ok(vb == VARIANT_TRUE, "get_type failed: %08x\n", hres);
+
+            hres = IHTMLScriptElement_put_defer(script, VARIANT_FALSE);
+            ok(hres == S_OK, "get_type failed: %08x\n", hres);
+        }
 
         IHTMLScriptElement_Release(script);
     }

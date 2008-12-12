@@ -154,15 +154,40 @@ static HRESULT WINAPI HTMLScriptElement_get_text(IHTMLScriptElement *iface, BSTR
 static HRESULT WINAPI HTMLScriptElement_put_defer(IHTMLScriptElement *iface, VARIANT_BOOL v)
 {
     HTMLScriptElement *This = HTMLSCRIPT_THIS(iface);
-    FIXME("(%p)->(%x)\n", This, v);
-    return E_NOTIMPL;
+    HRESULT hr = S_OK;
+    nsresult nsres;
+
+    TRACE("(%p)->(%x)\n", This, v);
+
+    nsres = nsIDOMHTMLScriptElement_SetDefer(This->nsscript, v != VARIANT_FALSE);
+    if(NS_FAILED(nsres))
+    {
+        hr = E_FAIL;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI HTMLScriptElement_get_defer(IHTMLScriptElement *iface, VARIANT_BOOL *p)
 {
     HTMLScriptElement *This = HTMLSCRIPT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRBool defer = FALSE;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!p)
+        return E_INVALIDARG;
+
+    nsres = nsIDOMHTMLScriptElement_GetDefer(This->nsscript, &defer);
+    if(NS_FAILED(nsres)) {
+        ERR("GetSrc failed: %08x\n", nsres);
+    }
+
+    *p = defer ? VARIANT_TRUE : VARIANT_FALSE;
+
+    TRACE("*p = %d\n", *p);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLScriptElement_get_readyState(IHTMLScriptElement *iface, BSTR *p)
