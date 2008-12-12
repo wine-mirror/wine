@@ -517,6 +517,46 @@ static BOOL CRYPT_QueryMessageObject(DWORD dwObjectType, const void *pvObject,
             else
                 ret = FALSE;
         }
+        if (!ret && !(blob->cbData % sizeof(WCHAR)))
+        {
+            CRYPT_DATA_BLOB decoded;
+            LPWSTR str = (LPWSTR)blob->pbData;
+            DWORD strLen = blob->cbData / sizeof(WCHAR);
+
+            /* Try again, assuming the input string is UTF-16 base64 */
+            while (strLen && !str[strLen - 1])
+                strLen--;
+            ret = CryptStringToBinaryW(str, strLen, CRYPT_STRING_BASE64_ANY,
+             NULL, &decoded.cbData, NULL, NULL);
+            if (ret)
+            {
+                decoded.pbData = CryptMemAlloc(decoded.cbData);
+                if (decoded.pbData)
+                {
+                    ret = CryptStringToBinaryW(str, strLen,
+                     CRYPT_STRING_BASE64_ANY, decoded.pbData, &decoded.cbData,
+                     NULL, NULL);
+                    if (ret)
+                    {
+                        /* Try it first as a signed message */
+                        if (dwExpectedContentTypeFlags &
+                         CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED)
+                            ret = CRYPT_QuerySignedMessage(&decoded,
+                             pdwMsgAndCertEncodingType, pdwContentType, &msg);
+                        /* Failing that, try as an unsigned message */
+                        if (!ret && (dwExpectedContentTypeFlags &
+                         CERT_QUERY_CONTENT_FLAG_PKCS7_UNSIGNED))
+                            ret = CRYPT_QueryUnsignedMessage(&decoded,
+                             pdwMsgAndCertEncodingType, pdwContentType, &msg);
+                        if (ret)
+                            formatType = CERT_QUERY_FORMAT_BASE64_ENCODED;
+                    }
+                    CryptMemFree(decoded.pbData);
+                }
+                else
+                    ret = FALSE;
+            }
+        }
     }
     if (ret)
     {
