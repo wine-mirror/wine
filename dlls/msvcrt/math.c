@@ -1194,17 +1194,6 @@ void _adj_fptan(void)
 }
 
 /***********************************************************************
- *		_adjust_fdiv (MSVCRT.@)
- * FIXME
- *    I _think_ this function should be a variable indicating whether
- *    Pentium fdiv bug safe code should be used.
- */
-void _adjust_fdiv(void)
-{
-  TRACE("(): stub\n");
-}
-
-/***********************************************************************
  *		_safe_fdiv (MSVCRT.@)
  * FIXME
  *    This function is likely to have the wrong number of arguments.
