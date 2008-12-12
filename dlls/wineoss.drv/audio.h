@@ -174,9 +174,7 @@ extern DWORD OSS_OpenDevice(OSS_DEVICE* ossdev, unsigned req_access,
 
 extern void OSS_CloseDevice(OSS_DEVICE* ossdev);
 
-extern DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags);
 extern DWORD wodSetVolume(WORD wDevID, DWORD dwParam);
-extern DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags);
 
 /* dscapture.c */
 extern DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv);

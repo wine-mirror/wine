@@ -1958,7 +1958,7 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 /**************************************************************************
  * 				wodOpen				[internal]
  */
-DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
+static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
     int			audio_fragment;
     WINE_WAVEOUT*	wwo;
@@ -2848,7 +2848,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 /**************************************************************************
  * 				widOpen				[internal]
  */
-DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
+static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
     WINE_WAVEIN*	wwi;
     audio_buf_info      info;
