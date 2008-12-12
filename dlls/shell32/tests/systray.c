@@ -28,7 +28,7 @@
 static HWND hMainWnd;
 static BOOL (WINAPI *pShell_NotifyIconW)(DWORD,PNOTIFYICONDATAW);
 
-void test_cbsize(void)
+static void test_cbsize(void)
 {
     NOTIFYICONDATAA nidA;
     BOOL ret;
