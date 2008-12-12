@@ -336,6 +336,15 @@ UINT16 WINAPI WIN16_lread( HFILE16 hFile, SEGPTR buffer, UINT16 count )
 
 
 /***********************************************************************
+ *           _hwrite   (KERNEL.350)
+ */
+LONG WINAPI _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
+{
+    return _hwrite( (HFILE)DosFileHandleToWin32Handle(hFile), buffer, count );
+}
+
+
+/***********************************************************************
  *           GetTempDrive   (KERNEL.92)
  * A closer look at krnl386.exe shows what the SDK doesn't mention:
  *
@@ -527,24 +536,6 @@ BOOL16 WINAPI DeleteFile16( LPCSTR path )
 UINT16 WINAPI SetHandleCount16( UINT16 count )
 {
     return SetHandleCount( count );
-}
-
-
-/***********************************************************************
- *           _hread16   (KERNEL.349)
- */
-LONG WINAPI _hread16( HFILE16 hFile, LPVOID buffer, LONG count)
-{
-    return _lread( (HFILE)DosFileHandleToWin32Handle(hFile), buffer, count );
-}
-
-
-/***********************************************************************
- *           _hwrite   (KERNEL.350)
- */
-LONG WINAPI _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
-{
-    return _hwrite( (HFILE)DosFileHandleToWin32Handle(hFile), buffer, count );
 }
 
 
