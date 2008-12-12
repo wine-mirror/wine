@@ -199,7 +199,7 @@ static void run_exception_test(void *handler, const void* context,
     pNtCurrentTeb()->Tib.ExceptionList = exc_frame.frame.Prev;
 }
 
-LONG CALLBACK rtlraiseexception_vectored_handler(EXCEPTION_POINTERS *ExceptionInfo)
+static LONG CALLBACK rtlraiseexception_vectored_handler(EXCEPTION_POINTERS *ExceptionInfo)
 {
     PCONTEXT context = ExceptionInfo->ContextRecord;
     PEXCEPTION_RECORD rec = ExceptionInfo->ExceptionRecord;
