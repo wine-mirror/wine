@@ -45,7 +45,7 @@
 @ cdecl -i386 -norelay ?before@type_info@@QBEHABV1@@Z(ptr) __thiscall_MSVCRT_type_info_before
 @ cdecl -i386 -norelay ?name@type_info@@QBEPBDXZ() __thiscall_MSVCRT_type_info_name
 @ cdecl -i386 -norelay ?raw_name@type_info@@QBEPBDXZ() __thiscall_MSVCRT_type_info_raw_name
-@ cdecl ?set_new_handler@@YAP6AXXZP6AXXZ@Z(ptr) MSVCRT__set_new_handler
+@ cdecl ?set_new_handler@@YAP6AXXZP6AXXZ@Z(ptr) MSVCRT_set_new_handler
 @ cdecl ?set_terminate@@YAP6AXXZP6AXXZ@Z(ptr) MSVCRT_set_terminate
 @ cdecl ?set_unexpected@@YAP6AXXZP6AXXZ@Z(ptr) MSVCRT_set_unexpected
 @ cdecl ?terminate@@YAXXZ() MSVCRT_terminate
