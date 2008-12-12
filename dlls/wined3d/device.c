@@ -855,15 +855,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
         }
         object->baseTexture.levels = 1;
     } else if (Levels == 0) {
-        TRACE("calculating levels %d\n", object->baseTexture.levels);
-        object->baseTexture.levels++;
-        tmpW = Width;
-        tmpH = Height;
-        while (tmpW > 1 || tmpH > 1) {
-            tmpW = max(1, tmpW >> 1);
-            tmpH = max(1, tmpH >> 1);
-            object->baseTexture.levels++;
-        }
+        object->baseTexture.levels = wined3d_log2i(max(Width, Height)) + 1;
         TRACE("Calculated levels = %d\n", object->baseTexture.levels);
     }
 
@@ -958,16 +950,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
         }
         object->baseTexture.levels = 1;
     } else if (Levels == 0) {
-        object->baseTexture.levels++;
-        tmpW = Width;
-        tmpH = Height;
-        tmpD = Depth;
-        while (tmpW > 1 || tmpH > 1 || tmpD > 1) {
-            tmpW = max(1, tmpW >> 1);
-            tmpH = max(1, tmpH >> 1);
-            tmpD = max(1, tmpD >> 1);
-            object->baseTexture.levels++;
-        }
+        object->baseTexture.levels = wined3d_log2i(max(max(Width, Height), Depth)) + 1;
         TRACE("Calculated levels = %d\n", object->baseTexture.levels);
     }
 
@@ -1117,12 +1100,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
         }
         object->baseTexture.levels = 1;
     } else if (Levels == 0) {
-        object->baseTexture.levels++;
-        tmpW = EdgeLength;
-        while (tmpW > 1) {
-            tmpW = max(1, tmpW >> 1);
-            object->baseTexture.levels++;
-        }
+        object->baseTexture.levels = wined3d_log2i(EdgeLength) + 1;
         TRACE("Calculated levels = %d\n", object->baseTexture.levels);
     }
 
