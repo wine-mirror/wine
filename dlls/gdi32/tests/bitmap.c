@@ -1018,9 +1018,12 @@ static void test_bitmap(void)
 
     SetLastError(0xdeadbeef);
     hbmp = CreateBitmap(0x7ffffff + 1, 1, 1, 1, NULL);
-    ok(!hbmp, "CreateBitmap should fail\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER,
-       "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+    ok(!hbmp || broken(hbmp != NULL /* Win9x */), "CreateBitmap should fail\n");
+    if (!hbmp)
+        ok(GetLastError() == ERROR_INVALID_PARAMETER,
+           "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+    else
+        DeleteObject(hbmp);
 
     hbmp = CreateBitmap(15, 15, 1, 1, NULL);
     assert(hbmp != NULL);
@@ -1040,7 +1043,8 @@ static void test_bitmap(void)
     assert(sizeof(buf) == sizeof(buf_cmp));
 
     ret = GetBitmapBits(hbmp, 0, NULL);
-    ok(ret == bm.bmWidthBytes * bm.bmHeight, "%d != %d\n", ret, bm.bmWidthBytes * bm.bmHeight);
+    ok(ret == bm.bmWidthBytes * bm.bmHeight || broken(ret == 0 /* Win9x */),
+        "%d != %d\n", ret, bm.bmWidthBytes * bm.bmHeight);
 
     memset(buf_cmp, 0xAA, sizeof(buf_cmp));
     memset(buf_cmp, 0, bm.bmWidthBytes * bm.bmHeight);
@@ -1323,6 +1327,8 @@ static void test_GetDIBits_selected_DDB(BOOL monochrome)
 
         /* Get the palette indices */
         res = GetDIBits(dc, ddb, 0, 0, NULL, info2, DIB_PAL_COLORS);
+        if (res == 0 && GetLastError() == ERROR_INVALID_PARAMETER) /* Win9x */
+            res = GetDIBits(dc, ddb, 0, height, NULL, info2, DIB_PAL_COLORS);
         ok(res, "GetDIBits failed\n");
 
         for (i=0;i < 1 << info->bmiHeader.biSizeImage; i++)
@@ -1465,7 +1471,7 @@ static void test_GetDIBits(void)
     ok(!bm.bmBits, "wrong bmBits %p\n", bm.bmBits);
 
     bytes = GetBitmapBits(hbmp, 0, NULL);
-    ok(bytes == sizeof(bmp_bits_1), "expected 16*2 got %d bytes\n", bytes);
+    ok(bytes == sizeof(bmp_bits_1) || broken(bytes == 0 /* Win9x */), "expected 16*2 got %d bytes\n", bytes);
     bytes = GetBitmapBits(hbmp, sizeof(buf), buf);
     ok(bytes == sizeof(bmp_bits_1), "expected 16*2 got %d bytes\n", bytes);
     ok(!memcmp(buf, bmp_bits_1, sizeof(bmp_bits_1)), "bitmap bits don't match\n");
