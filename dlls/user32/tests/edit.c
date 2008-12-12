@@ -2001,7 +2001,7 @@ static void UnregisterWindowClasses (void)
     UnregisterClassA(szEditTextPositionClass, hinst);
 }
 
-void test_fontsize(void)
+static void test_fontsize(void)
 {
     HWND hwEdit;
     HFONT hfont;

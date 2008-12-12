@@ -5310,7 +5310,7 @@ static void register_wmime_keydown_class(void)
     if (!RegisterClassA(&cls)) assert(0);
 }
 
-void test_wmime_keydown_message(void)
+static void test_wmime_keydown_message(void)
 {
     HWND hwnd;
     MSG msg;
@@ -7114,7 +7114,7 @@ static LRESULT WINAPI ShowWindowProcA(HWND hwnd, UINT message, WPARAM wParam, LP
     return ret;
 }
 
-LRESULT WINAPI PaintLoopProcA(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT WINAPI PaintLoopProcA(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg)
     {
