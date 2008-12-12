@@ -903,7 +903,7 @@ static void test_stat(void)
     fd = open("stat.tst", O_WRONLY | O_CREAT | O_BINARY, _S_IREAD |_S_IWRITE);
     if (fd >= 0)
     {
-        ok(fstat(fd, &buf) == 0, "fstat failed: errno=%d", errno);
+        ok(fstat(fd, &buf) == 0, "fstat failed: errno=%d\n", errno);
         ok((buf.st_mode & _S_IFMT) == _S_IFREG, "bad format = %06o\n", buf.st_mode);
         ok((buf.st_mode & 0777) == 0666, "bad st_mode = %06o\n", buf.st_mode);
         ok(buf.st_dev == 0, "st_dev is %d, expected 0\n", buf.st_dev);
@@ -911,7 +911,7 @@ static void test_stat(void)
         ok(buf.st_nlink == 1, "st_nlink is %d, expected 1\n", buf.st_nlink);
         ok(buf.st_size == 0, "st_size is %d, expected 0\n", buf.st_size);
 
-        ok(stat("stat.tst", &buf) == 0, "stat failed: errno=%d", errno);
+        ok(stat("stat.tst", &buf) == 0, "stat failed: errno=%d\n", errno);
         ok((buf.st_mode & _S_IFMT) == _S_IFREG, "bad format = %06o\n", buf.st_mode);
         ok((buf.st_mode & 0777) == 0666, "bad st_mode = %06o\n", buf.st_mode);
         ok(buf.st_dev == buf.st_rdev, "st_dev (%d) and st_rdev (%d) differ\n", buf.st_dev, buf.st_rdev);
