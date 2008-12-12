@@ -5774,7 +5774,7 @@ static void pshader_version_varying_test(IDirect3DDevice9 *device) {
     if(texture) IDirect3DTexture9_Release(texture);
 }
 
-void test_compare_instructions(IDirect3DDevice9 *device)
+static void test_compare_instructions(IDirect3DDevice9 *device)
 {
     DWORD shader_sge_vec_code[] = {
         0xfffe0101,                                         /* vs_1_1                   */
@@ -5912,7 +5912,7 @@ void test_compare_instructions(IDirect3DDevice9 *device)
     IDirect3DVertexShader9_Release(shader_slt_scalar);
 }
 
-void test_vshader_input(IDirect3DDevice9 *device)
+static void test_vshader_input(IDirect3DDevice9 *device)
 {
     DWORD swapped_shader_code_3[] = {
         0xfffe0300,                                         /* vs_3_0               */
