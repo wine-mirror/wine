@@ -42,11 +42,7 @@
 # include <sys/socket.h>
 #endif
 
-#if defined(__MINGW32__) || defined (_MSC_VER)
-#ifndef MSG_WAITALL
-#define MSG_WAITALL 0
-#endif
-#else
+#if !defined(__MINGW32__) && !defined(_MSC_VER)
 #define closesocket close
 #define ioctlsocket ioctl
 #endif /* __MINGW32__ */
