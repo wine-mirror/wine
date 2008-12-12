@@ -1835,7 +1835,6 @@ struct IWineD3DStateBlockImpl
 
     /* Texture */
     IWineD3DBaseTexture      *textures[MAX_COMBINED_SAMPLERS];
-    int                       textureDimensions[MAX_COMBINED_SAMPLERS];
 
     /* Texture State Stage */
     DWORD                     textureState[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];

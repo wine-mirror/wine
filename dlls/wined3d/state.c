@@ -470,27 +470,29 @@ static void state_alpha(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     float ref;
     BOOL enable_ckey = FALSE;
 
-    IWineD3DSurfaceImpl *surf;
-
     /* Find out if the texture on the first stage has a ckey set
      * The alpha state func reads the texture settings, even though alpha and texture are not grouped
      * together. This is to avoid making a huge alpha+texture+texture stage+ckey block due to the hardly
      * used WINED3DRS_COLORKEYENABLE state(which is d3d <= 3 only). The texture function will call alpha
      * in case it finds some texture+colorkeyenable combination which needs extra care.
      */
-    if(stateblock->textures[0] && (
-       stateblock->textureDimensions[0] == GL_TEXTURE_2D ||
-       stateblock->textureDimensions[0] == GL_TEXTURE_RECTANGLE_ARB)) {
-        surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *)stateblock->textures[0])->surfaces[0];
+    if (stateblock->textures[0])
+    {
+        UINT texture_dimensions = IWineD3DBaseTexture_GetTextureDimensions(stateblock->textures[0]);
 
-        if(surf->CKeyFlags & WINEDDSD_CKSRCBLT) {
-            const StaticPixelFormatDesc *fmt = getFormatDescEntry(surf->resource.format, NULL, NULL);
-            /* The surface conversion does not do color keying conversion for surfaces that have an alpha
-             * channel on their own. Likewise, the alpha test shouldn't be set up for color keying if the
-             * surface has alpha bits
-             */
-            if(fmt->alphaMask == 0x00000000) {
-                enable_ckey = TRUE;
+        if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
+        {
+            IWineD3DSurfaceImpl *surf;
+
+            surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *)stateblock->textures[0])->surfaces[0];
+
+            if (surf->CKeyFlags & WINEDDSD_CKSRCBLT)
+            {
+                const StaticPixelFormatDesc *fmt = getFormatDescEntry(surf->resource.format, NULL, NULL);
+                /* The surface conversion does not do color keying conversion for surfaces that have an alpha
+                 * channel on their own. Likewise, the alpha test shouldn't be set up for color keying if the
+                 * surface has alpha bits */
+                if (fmt->alphaMask == 0x00000000) enable_ckey = TRUE;
             }
         }
     }
@@ -2999,50 +3001,64 @@ void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext
     arg2 = stateblock->textureState[stage][WINED3DTSS_ALPHAARG2];
     arg0 = stateblock->textureState[stage][WINED3DTSS_ALPHAARG0];
 
-    if(stateblock->renderState[WINED3DRS_COLORKEYENABLE] && stage == 0 &&
-       stateblock->textures[0] &&
-       (stateblock->textureDimensions[0] == GL_TEXTURE_2D || stateblock->textureDimensions[0] == GL_TEXTURE_RECTANGLE_ARB)) {
-        IWineD3DSurfaceImpl *surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *) stateblock->textures[0])->surfaces[0];
+    if (stateblock->renderState[WINED3DRS_COLORKEYENABLE] && stage == 0 && stateblock->textures[0])
+    {
+        UINT texture_dimensions = IWineD3DBaseTexture_GetTextureDimensions(stateblock->textures[0]);
 
-        if(surf->CKeyFlags & WINEDDSD_CKSRCBLT &&
-           getFormatDescEntry(surf->resource.format, NULL, NULL)->alphaMask == 0x00000000) {
+        if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
+        {
+            IWineD3DSurfaceImpl *surf;
 
-            /* Color keying needs to pass alpha values from the texture through to have the alpha test work properly.
-             * On the other hand applications can still use texture combiners apparently. This code takes care that apps
-             * cannot remove the texture's alpha channel entirely.
-             *
-             * The fixup is required for Prince of Persia 3D(prison bars), while Moto racer 2 requires D3DTOP_MODULATE to work
-             * on color keyed surfaces. Aliens vs Predator 1 uses color keyed textures and alpha component of diffuse color to
-             * draw things like translucent text and perform other blending effects.
-             *
-             * Aliens vs Predator 1 relies on diffuse alpha having an effect, so it cannot be ignored. To provide the
-             * behavior expected by the game, while emulating the colorkey, diffuse alpha must be modulated with texture alpha.
-             * OTOH, Moto racer 2 at some points sets alphaop/alphaarg to SELECTARG/CURRENT, yet puts garbage in diffuse alpha
-             * (zeroes). This works on native, because the game disables alpha test and alpha blending. Alpha test is overwritten by
-             * wine's for purposes of color-keying though, so this will lead to missing geometry if texture alpha is modulated
-             * (pixels fail alpha test). To get around this, ALPHABLENDENABLE state is checked: if the app enables alpha blending,
-             * it can be expected to provide meaningful values in diffuse alpha, so it should be modulated with texture alpha;
-             * otherwise, selecting diffuse alpha is ignored in favour of texture alpha.
+            surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *) stateblock->textures[0])->surfaces[0];
 
-             * What to do with multitexturing? So far no app has been found that uses color keying with multitexturing
-             */
-            if(op == WINED3DTOP_DISABLE) {
-                arg1 = WINED3DTA_TEXTURE;
-                op = WINED3DTOP_SELECTARG1;
-            }
-            else if(op == WINED3DTOP_SELECTARG1 && arg1 != WINED3DTA_TEXTURE) {
-                if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE]) {
-                    arg2 = WINED3DTA_TEXTURE;
-                    op = WINED3DTOP_MODULATE;
-                }
-                else arg1 = WINED3DTA_TEXTURE;
-            }
-            else if(op == WINED3DTOP_SELECTARG2 && arg2 != WINED3DTA_TEXTURE) {
-                if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE]) {
+            if (surf->CKeyFlags & WINEDDSD_CKSRCBLT
+                    && getFormatDescEntry(surf->resource.format, NULL, NULL)->alphaMask == 0x00000000)
+            {
+                /* Color keying needs to pass alpha values from the texture through to have the alpha test work
+                 * properly. On the other hand applications can still use texture combiners apparently. This code
+                 * takes care that apps cannot remove the texture's alpha channel entirely.
+                 *
+                 * The fixup is required for Prince of Persia 3D(prison bars), while Moto racer 2 requires
+                 * D3DTOP_MODULATE to work on color keyed surfaces. Aliens vs Predator 1 uses color keyed textures
+                 * and alpha component of diffuse color to draw things like translucent text and perform other
+                 * blending effects.
+                 *
+                 * Aliens vs Predator 1 relies on diffuse alpha having an effect, so it cannot be ignored. To
+                 * provide the behavior expected by the game, while emulating the colorkey, diffuse alpha must be
+                 * modulated with texture alpha. OTOH, Moto racer 2 at some points sets alphaop/alphaarg to
+                 * SELECTARG/CURRENT, yet puts garbage in diffuse alpha (zeroes). This works on native, because the
+                 * game disables alpha test and alpha blending. Alpha test is overwritten by wine's for purposes of
+                 * color-keying though, so this will lead to missing geometry if texture alpha is modulated (pixels
+                 * fail alpha test). To get around this, ALPHABLENDENABLE state is checked: if the app enables alpha
+                 * blending, it can be expected to provide meaningful values in diffuse alpha, so it should be
+                 * modulated with texture alpha; otherwise, selecting diffuse alpha is ignored in favour of texture
+                 * alpha.
+                 *
+                 * What to do with multitexturing? So far no app has been found that uses color keying with
+                 * multitexturing */
+                if (op == WINED3DTOP_DISABLE)
+                {
                     arg1 = WINED3DTA_TEXTURE;
-                    op = WINED3DTOP_MODULATE;
+                    op = WINED3DTOP_SELECTARG1;
                 }
-                else arg2 = WINED3DTA_TEXTURE;
+                else if(op == WINED3DTOP_SELECTARG1 && arg1 != WINED3DTA_TEXTURE)
+                {
+                    if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE])
+                    {
+                        arg2 = WINED3DTA_TEXTURE;
+                        op = WINED3DTOP_MODULATE;
+                    }
+                    else arg1 = WINED3DTA_TEXTURE;
+                }
+                else if(op == WINED3DTOP_SELECTARG2 && arg2 != WINED3DTA_TEXTURE)
+                {
+                    if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE])
+                    {
+                        arg1 = WINED3DTA_TEXTURE;
+                        op = WINED3DTOP_MODULATE;
+                    }
+                    else arg2 = WINED3DTA_TEXTURE;
+                }
             }
         }
     }
@@ -3388,13 +3404,17 @@ static void sampler_texmatrix(DWORD state, IWineD3DStateBlockImpl *stateblock, W
      * misc pipeline
      */
     if(sampler < MAX_TEXTURES) {
-        if(stateblock->textureDimensions[sampler] == GL_TEXTURE_2D ||
-           stateblock->textureDimensions[sampler] == GL_TEXTURE_RECTANGLE_ARB) {
+        UINT texture_dimensions = IWineD3DBaseTexture_GetTextureDimensions(texture);
+
+        if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
+        {
             if(((IWineD3DTextureImpl *)texture)->baseTexture.pow2Matrix[0] != 1.0 ||
                ((IWineD3DTextureImpl *)texture)->baseTexture.pow2Matrix[5] != 1.0 ) {
                 texIsPow2 = TRUE;
             }
-        } else if(stateblock->textureDimensions[sampler] == GL_TEXTURE_CUBE_MAP_ARB) {
+        }
+        else if (texture_dimensions == GL_TEXTURE_CUBE_MAP_ARB)
+        {
             if(((IWineD3DCubeTextureImpl *)texture)->baseTexture.pow2Matrix[0] != 1.0) {
                 texIsPow2 = TRUE;
             }

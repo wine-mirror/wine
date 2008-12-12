@@ -41,7 +41,7 @@ static void nvts_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateb
     }
 
     if(stateblock->textures[stage]) {
-        switch(stateblock->textureDimensions[stage]) {
+        switch(IWineD3DBaseTexture_GetTextureDimensions(stateblock->textures[stage])) {
             case GL_TEXTURE_2D:
                 glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, bumpmap ? GL_OFFSET_TEXTURE_2D_NV : GL_TEXTURE_2D);
                 checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, ...)");

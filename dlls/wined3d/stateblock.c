@@ -203,7 +203,6 @@ void stateblock_copy(
     memcpy(Dest->clipplane,    This->clipplane,    sizeof(double) * MAX_CLIPPLANES * 4);
     memcpy(Dest->renderState,  This->renderState,  sizeof(DWORD) * (WINEHIGHEST_RENDER_STATE + 1));
     memcpy(Dest->textures,     This->textures,     sizeof(IWineD3DBaseTexture*) * MAX_COMBINED_SAMPLERS);
-    memcpy(Dest->textureDimensions, This->textureDimensions, sizeof(int) * MAX_COMBINED_SAMPLERS);
     memcpy(Dest->textureState, This->textureState, sizeof(DWORD) * MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE + 1));
     memcpy(Dest->samplerState, This->samplerState, sizeof(DWORD) * MAX_COMBINED_SAMPLERS * (WINED3D_HIGHEST_SAMPLER_STATE + 1));
 
@@ -613,7 +612,6 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         memcpy(This->pixelShaderConstantF, targetStateBlock->pixelShaderConstantF, sizeof(float) * GL_LIMITS(pshader_constantsF) * 4);
         memcpy(This->renderState, targetStateBlock->renderState, sizeof(This->renderState));
         memcpy(This->textures, targetStateBlock->textures, sizeof(This->textures));
-        memcpy(This->textureDimensions, targetStateBlock->textureDimensions, sizeof(This->textureDimensions));
         memcpy(This->textureState, targetStateBlock->textureState, sizeof(This->textureState));
         memcpy(This->samplerState, targetStateBlock->samplerState, sizeof(This->samplerState));
         This->scissorRect = targetStateBlock->scissorRect;

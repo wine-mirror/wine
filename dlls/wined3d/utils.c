@@ -1931,7 +1931,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
             if(ignore_textype) {
                 settings->op[i].tex_type = tex_1d;
             } else {
-                switch(stateblock->textureDimensions[i]) {
+                switch (IWineD3DBaseTexture_GetTextureDimensions((IWineD3DBaseTexture *)texture)) {
                     case GL_TEXTURE_1D:
                         settings->op[i].tex_type = tex_1d;
                         break;
@@ -1983,32 +1983,41 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
             aarg0 = (args[aop] & ARG0) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG0] : ARG_UNUSED;
         }
 
-        if(i == 0 && stateblock->textures[0] &&
-                  stateblock->renderState[WINED3DRS_COLORKEYENABLE] &&
-                 (stateblock->textureDimensions[0] == GL_TEXTURE_2D ||
-                  stateblock->textureDimensions[0] == GL_TEXTURE_RECTANGLE_ARB)) {
-            IWineD3DSurfaceImpl *surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *) stateblock->textures[0])->surfaces[0];
+        if (i == 0 && stateblock->textures[0] && stateblock->renderState[WINED3DRS_COLORKEYENABLE])
+        {
+            UINT texture_dimensions = IWineD3DBaseTexture_GetTextureDimensions(stateblock->textures[0]);
 
-            if(surf->CKeyFlags & WINEDDSD_CKSRCBLT &&
-               getFormatDescEntry(surf->resource.format, NULL, NULL)->alphaMask == 0x00000000) {
+            if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
+            {
+                IWineD3DSurfaceImpl *surf;
+                surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *) stateblock->textures[0])->surfaces[0];
 
-                if(aop == WINED3DTOP_DISABLE) {
-                   aarg1 = WINED3DTA_TEXTURE;
-                   aop = WINED3DTOP_SELECTARG1;
-                }
-                else if(aop == WINED3DTOP_SELECTARG1 && aarg1 != WINED3DTA_TEXTURE) {
-                    if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE]) {
-                        aarg2 = WINED3DTA_TEXTURE;
-                        aop = WINED3DTOP_MODULATE;
+                if (surf->CKeyFlags & WINEDDSD_CKSRCBLT
+                        && getFormatDescEntry(surf->resource.format, NULL, NULL)->alphaMask == 0x00000000)
+                {
+                    if (aop == WINED3DTOP_DISABLE)
+                    {
+                       aarg1 = WINED3DTA_TEXTURE;
+                       aop = WINED3DTOP_SELECTARG1;
                     }
-                    else aarg1 = WINED3DTA_TEXTURE;
-                }
-                else if(aop == WINED3DTOP_SELECTARG2 && aarg2 != WINED3DTA_TEXTURE) {
-                    if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE]) {
-                        aarg1 = WINED3DTA_TEXTURE;
-                        aop = WINED3DTOP_MODULATE;
+                    else if (aop == WINED3DTOP_SELECTARG1 && aarg1 != WINED3DTA_TEXTURE)
+                    {
+                        if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE])
+                        {
+                            aarg2 = WINED3DTA_TEXTURE;
+                            aop = WINED3DTOP_MODULATE;
+                        }
+                        else aarg1 = WINED3DTA_TEXTURE;
                     }
-                    else aarg2 = WINED3DTA_TEXTURE;
+                    else if (aop == WINED3DTOP_SELECTARG2 && aarg2 != WINED3DTA_TEXTURE)
+                    {
+                        if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE])
+                        {
+                            aarg1 = WINED3DTA_TEXTURE;
+                            aop = WINED3DTOP_MODULATE;
+                        }
+                        else aarg2 = WINED3DTA_TEXTURE;
+                    }
                 }
             }
         }
@@ -2115,7 +2124,7 @@ void add_ffp_frag_shader(struct hash_table_t *shaders, struct ffp_frag_desc *des
 #define GLINFO_LOCATION stateblock->wineD3DDevice->adapter->gl_info
 void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     if(stateblock->textures[stage]) {
-        switch(stateblock->textureDimensions[stage]) {
+        switch (IWineD3DBaseTexture_GetTextureDimensions(stateblock->textures[stage])) {
             case GL_TEXTURE_2D:
                 glDisable(GL_TEXTURE_3D);
                 checkGLcall("glDisable(GL_TEXTURE_3D)");

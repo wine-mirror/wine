@@ -2064,7 +2064,6 @@ static void create_dummy_textures(IWineD3DDeviceImpl *This) {
 
         /* Generate a dummy 2d texture (not using 1d because they cause many
         * DRI drivers fall back to sw) */
-        This->stateBlock->textureDimensions[i] = GL_TEXTURE_2D;
         glBindTexture(GL_TEXTURE_2D, This->dummyTextureName[i]);
         checkGLcall("glBindTexture");
 
@@ -4673,14 +4672,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD
 
     oldTexture = This->updateStateBlock->textures[Stage];
 
-    if(pTexture != NULL) {
-        /* SetTexture isn't allowed on textures in WINED3DPOOL_SCRATCH; 
-         */
-        if(((IWineD3DTextureImpl*)pTexture)->resource.pool == WINED3DPOOL_SCRATCH) {
-            WARN("(%p) Attempt to set scratch texture rejected\n", pTexture);
-            return WINED3DERR_INVALIDCALL;
-        }
-        This->stateBlock->textureDimensions[Stage] = IWineD3DBaseTexture_GetTextureDimensions(pTexture);
+    /* SetTexture isn't allowed on textures in WINED3DPOOL_SCRATCH */
+    if (pTexture && ((IWineD3DTextureImpl*)pTexture)->resource.pool == WINED3DPOOL_SCRATCH)
+    {
+        WARN("(%p) Attempt to set scratch texture rejected\n", pTexture);
+        return WINED3DERR_INVALIDCALL;
     }
 
     TRACE("GL_LIMITS %d\n",GL_LIMITS(sampler_stages));
