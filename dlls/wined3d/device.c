@@ -3861,9 +3861,8 @@ static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps) {
     if (ps) {
         IWineD3DPixelShaderImpl *pshader = (IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader;
 
-        /* Make sure the shader's reg_maps are up to date. This is only relevant for 1.x pixelshaders. */
-        pixelshader_update_samplers(&pshader->baseShader.reg_maps, This->stateBlock->textures,
-                pshader->baseShader.hex_version);
+        /* Note that we only care if a sampler is sampled or not, not the sampler's specific type.
+         * Otherwise we'd need to call shader_update_samplers() here for 1.x pixelshaders. */
         pshader_sampler_tokens = pshader->baseShader.reg_maps.samplers;
     }
 

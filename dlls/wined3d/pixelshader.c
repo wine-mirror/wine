@@ -395,7 +395,7 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     return WINED3D_OK;
 }
 
-void pixelshader_update_samplers(struct shader_reg_maps *reg_maps, IWineD3DBaseTexture * const *textures,
+static void pixelshader_update_samplers(struct shader_reg_maps *reg_maps, IWineD3DBaseTexture * const *textures,
         DWORD shader_version)
 {
     DWORD *samplers = reg_maps->samplers;
