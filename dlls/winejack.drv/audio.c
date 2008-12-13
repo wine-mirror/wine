@@ -270,7 +270,7 @@ static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
 /* Alsaplayer function that applies volume changes to a buffer */
 /* (C) Andy Lo A Foe */
 /* Length is in terms of 32 bit samples */
-void volume_effect32(void *buffer, int length, int left, int right)
+static void volume_effect32(void *buffer, int length, int left, int right)
 {
         short *data = (short *)buffer;
         int i, v;
@@ -286,7 +286,7 @@ void volume_effect32(void *buffer, int length, int left, int right)
 }
 
 /* move 16 bit mono/stereo to 16 bit stereo */
-void sample_move_d16_d16(short *dst, short *src,
+static void sample_move_d16_d16(short *dst, short *src,
                   unsigned long nsamples, int nChannels)
 {
   while(nsamples--)
@@ -308,7 +308,7 @@ void sample_move_d16_d16(short *dst, short *src,
 /* channels to a buffer that will hold a single channel stream */
 /* nsamples is in terms of 16bit samples */
 /* src_skip is in terms of 16bit samples */
-void sample_move_d16_s16 (sample_t *dst, short *src,
+static void sample_move_d16_s16 (sample_t *dst, short *src,
                         unsigned long nsamples, unsigned long src_skip)
 {
   /* ALERT: signed sign-extension portability !!! */
@@ -325,7 +325,7 @@ void sample_move_d16_s16 (sample_t *dst, short *src,
 /* to stereo data with alternating left/right channels */
 /* nsamples is in terms of float samples */
 /* dst_skip is in terms of 16bit samples */
-void sample_move_s16_d16 (short *dst, sample_t *src,
+static void sample_move_s16_d16 (short *dst, sample_t *src,
                         unsigned long nsamples, unsigned long dst_skip)
 {
   /* ALERT: signed sign-extension portability !!! */
@@ -340,7 +340,7 @@ void sample_move_s16_d16 (short *dst, sample_t *src,
 
 
 /* fill dst buffer with nsamples worth of silence */
-void sample_silence_dS (sample_t *dst, unsigned long nsamples)
+static void sample_silence_dS (sample_t *dst, unsigned long nsamples)
 {
   /* ALERT: signed sign-extension portability !!! */
   while (nsamples--)
@@ -356,7 +356,7 @@ void sample_silence_dS (sample_t *dst, unsigned long nsamples)
 /* everytime the jack server wants something from us it calls this 
 function, so we either deliver it some sound to play or deliver it nothing 
 to play */
-int JACK_callback_wwo (nframes_t nframes, void *arg)
+static int JACK_callback_wwo (nframes_t nframes, void *arg)
 {
   sample_t* out_l;
   sample_t* out_r;
@@ -492,7 +492,7 @@ int JACK_callback_wwo (nframes_t nframes, void *arg)
  *		Called whenever the jack server changes the max number
  *		of frames passed to JACK_callback
  */
-int JACK_bufsize_wwo (nframes_t nframes, void *arg)
+static int JACK_bufsize_wwo (nframes_t nframes, void *arg)
 {
   WINE_WAVEOUT* wwo = (WINE_WAVEOUT*)arg;
   DWORD buffer_required;
@@ -540,7 +540,7 @@ int JACK_bufsize_wwo (nframes_t nframes, void *arg)
  *		Called whenever the jack server changes the max number
  *		of frames passed to JACK_callback
  */
-int JACK_bufsize_wwi (nframes_t nframes, void *arg)
+static int JACK_bufsize_wwi (nframes_t nframes, void *arg)
 {
   TRACE("the maximum buffer size is now %u frames\n", nframes);
   return 0;
@@ -549,7 +549,7 @@ int JACK_bufsize_wwi (nframes_t nframes, void *arg)
 /******************************************************************
  *		JACK_srate
  */
-int JACK_srate (nframes_t nframes, void *arg)
+static int JACK_srate (nframes_t nframes, void *arg)
 {
   TRACE("the sample rate is now %u/sec\n", nframes);
   return 0;
@@ -560,7 +560,7 @@ int JACK_srate (nframes_t nframes, void *arg)
  *		JACK_shutdown_wwo
  */
 /* if this is called then jack shut down... handle this appropriately */
-void JACK_shutdown_wwo(void* arg)
+static void JACK_shutdown_wwo(void* arg)
 {
   WINE_WAVEOUT* wwo = (WINE_WAVEOUT*)arg;
 
@@ -580,7 +580,7 @@ void JACK_shutdown_wwo(void* arg)
  *		JACK_shutdown_wwi
  */
 /* if this is called then jack shut down... handle this appropriately */
-void JACK_shutdown_wwi(void* arg)
+static void JACK_shutdown_wwi(void* arg)
 {
   WINE_WAVEIN* wwi = (WINE_WAVEIN*)arg;
 
@@ -1779,7 +1779,7 @@ static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD 
  */
 /* everytime the jack server wants something from us it calls this 
    function */
-int JACK_callback_wwi (nframes_t nframes, void *arg)
+static int JACK_callback_wwi (nframes_t nframes, void *arg)
 {
     sample_t* in_l;
     sample_t* in_r = 0;
