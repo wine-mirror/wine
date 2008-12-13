@@ -241,7 +241,7 @@ static const char *wodPlayerCmdString[] = {
 
 /* Volume functions derived from Alsaplayer source */
 /* length is the number of 16 bit samples */
-void volume_effect16(void *bufin, void* bufout, int length, int left,
+static void volume_effect16(void *bufin, void* bufout, int length, int left,
 		int right, int 	nChannels)
 {
   short *d_out = (short *)bufout;
@@ -368,7 +368,7 @@ static BOOL supportedFormat(LPWAVEFORMATEX wf)
     return FALSE;
 }
 
-void copy_format(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2)
+static void copy_format(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2)
 {
     ZeroMemory(wf2, sizeof(wf2));
     if (wf1->wFormatTag == WAVE_FORMAT_PCM)
@@ -383,7 +383,7 @@ void copy_format(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2)
  *		ESD_CloseWaveOutDevice
  *
  */
-void		ESD_CloseWaveOutDevice(WINE_WAVEOUT* wwo)
+static void	ESD_CloseWaveOutDevice(WINE_WAVEOUT* wwo)
 {
 	esd_close(wwo->esd_fd); 	/* close the esd socket fd */
 	wwo->esd_fd = -1;
@@ -398,7 +398,7 @@ void		ESD_CloseWaveOutDevice(WINE_WAVEOUT* wwo)
  *		ESD_CloseWaveInDevice
  *
  */
-void		ESD_CloseWaveInDevice(WINE_WAVEIN* wwi)
+static void	ESD_CloseWaveInDevice(WINE_WAVEIN* wwi)
 {
 	esd_close(wwi->esd_fd); 	/* close the esd socket fd */
 	wwi->esd_fd = -1;
