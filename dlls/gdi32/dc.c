@@ -327,7 +327,7 @@ void DC_UpdateXforms( DC *dc )
 /***********************************************************************
  *           GetDCState   (Not a Windows API)
  */
-HDC WINAPI GetDCState( HDC hdc )
+static HDC GetDCState( HDC hdc )
 {
     DC * newdc, * dc;
     HGDIOBJ handle;
@@ -428,7 +428,7 @@ HDC WINAPI GetDCState( HDC hdc )
 /***********************************************************************
  *           SetDCState   (Not a Windows API)
  */
-void WINAPI SetDCState( HDC hdc, HDC hdcs )
+static void SetDCState( HDC hdc, HDC hdcs )
 {
     DC *dc, *dcs;
 
