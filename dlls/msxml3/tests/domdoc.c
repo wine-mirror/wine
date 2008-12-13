@@ -958,9 +958,19 @@ static void test_domnode( void )
         ok( V_VT(&var) == VT_NULL || V_VT(&var) == VT_EMPTY, "vt = %x\n", V_VT(&var));
         VariantClear(&var);
 
+        r = IXMLDOMElement_getAttributeNode( element, str, NULL);
+        ok( r == E_FAIL, "getAttributeNode ret %08x\n", r );
+
         attr = (IXMLDOMAttribute*)0xdeadbeef;
         r = IXMLDOMElement_getAttributeNode( element, str, &attr);
         ok( r == E_FAIL, "getAttributeNode ret %08x\n", r );
+        ok( attr == NULL, "getAttributeNode ret %p, expected NULL\n", attr );
+        SysFreeString( str );
+
+        attr = (IXMLDOMAttribute*)0xdeadbeef;
+        str = _bstr_("nonExisitingAttribute");
+        r = IXMLDOMElement_getAttributeNode( element, str, &attr);
+        ok( r == S_FALSE, "getAttributeNode ret %08x\n", r );
         ok( attr == NULL, "getAttributeNode ret %p, expected NULL\n", attr );
         SysFreeString( str );
 
