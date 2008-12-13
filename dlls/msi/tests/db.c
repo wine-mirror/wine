@@ -4694,7 +4694,7 @@ static const struct {
     {_StringPool, data14, sizeof data14},
 };
 
-void enum_stream_names(IStorage *stg)
+static void enum_stream_names(IStorage *stg)
 {
     IEnumSTATSTG *stgenum = NULL;
     IStream *stm;

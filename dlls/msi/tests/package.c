@@ -54,7 +54,7 @@ static void get_user_sid(LPSTR *usersid)
 }
 
 /* RegDeleteTreeW from dlls/advapi32/registry.c */
-LSTATUS WINAPI package_RegDeleteTreeW(HKEY hKey, LPCWSTR lpszSubKey)
+static LSTATUS package_RegDeleteTreeW(HKEY hKey, LPCWSTR lpszSubKey)
 {
     LONG ret;
     DWORD dwMaxSubkeyLen, dwMaxValueLen;
