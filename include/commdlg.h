@@ -26,7 +26,9 @@ extern "C" {
 #endif
 
 #include <prsht.h>
+#ifndef _WIN64
 #include <pshpack1.h>
+#endif
 
 #ifndef SNDMSG
 #ifdef __cplusplus
@@ -770,7 +772,9 @@ BOOL  WINAPI ChooseFontW(LPCHOOSEFONTW);
 void COMDLG32_SetCommDlgExtendedError(DWORD err);
 
 
+#ifndef _WIN64
 #include <poppack.h>
+#endif
 
 #ifdef __cplusplus
 }
