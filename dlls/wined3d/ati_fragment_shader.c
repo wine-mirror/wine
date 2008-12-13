@@ -881,6 +881,30 @@ static void textransform(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3
     }
 }
 
+static void atifs_apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
+    BOOL use_vshader = use_vs(device);
+
+    /* The ATIFS code does not support pixel shaders currently, but we have to provide a state handler
+     * to call shader_select to select a vertex shader if one is applied because the vertex shader state
+     * may defer calling the shader backend if the pshader state is dirty.
+     *
+     * In theory the application should not be able to mark the pixel shader dirty because it cannot
+     * create a shader, and thus has no way to set the state to something != NULL. However, a different
+     * pipeline part may link a different state to its pixelshader handler, thus a pshader state exists
+     * and can be dirtified. Also the pshader is always dirtified at startup, and blitting disables all
+     * shaders and dirtifies all shader states. If atifs can deal with this it keeps the rest of the code
+     * simpler.
+     */
+    if(!isStateDirty(context, device->StateTable[STATE_VSHADER].representative)) {
+        device->shader_backend->shader_select((IWineD3DDevice *)stateblock->wineD3DDevice, FALSE, use_vshader);
+
+        if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && use_vshader) {
+            device->StateTable[STATE_VERTEXSHADERCONSTANT].apply(STATE_VERTEXSHADERCONSTANT, stateblock, context);
+        }
+    }
+}
+
 #undef GLINFO_LOCATION
 
 static const struct StateEntryTemplate atifs_fragmentstate_template[] = {
@@ -1005,6 +1029,7 @@ static const struct StateEntryTemplate atifs_fragmentstate_template[] = {
     {STATE_TEXTURESTAGE(5,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(5, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, 0                               },
     {STATE_TEXTURESTAGE(6,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(6, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, 0                               },
     {STATE_TEXTURESTAGE(7,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(7, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, 0                               },
+    {STATE_PIXELSHADER,                                   { STATE_PIXELSHADER,                                  atifs_apply_pixelshader }, 0                               },
     {0 /* Terminate */,                                   { 0,                                                  0                       }, 0                               },
 };
 
