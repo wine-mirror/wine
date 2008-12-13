@@ -1,4 +1,3 @@
-
 /*
  * Direct3D state management
  *
