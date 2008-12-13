@@ -150,7 +150,7 @@ static BOOL remove_device(void)
 }
 
 /* RegDeleteTreeW from dlls/advapi32/registry.c */
-LSTATUS WINAPI devinst_RegDeleteTreeW(HKEY hKey, LPCWSTR lpszSubKey)
+static LSTATUS devinst_RegDeleteTreeW(HKEY hKey, LPCWSTR lpszSubKey)
 {
     LONG ret;
     DWORD dwMaxSubkeyLen, dwMaxValueLen;
