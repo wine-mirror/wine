@@ -1897,7 +1897,7 @@ WORD WINAPI EngineGetCharWidth16(LPFONTINFO16 lpFontInfo, BYTE firstChar, BYTE l
 /***********************************************************************
  *		EngineSetFontContext (GDI.304)
  */
-WORD WINAPI EngineSetFontContext(LPFONTINFO16 lpFontInfo, WORD data)
+WORD WINAPI EngineSetFontContext16(LPFONTINFO16 lpFontInfo, WORD data)
 {
    FIXME("stub?\n");
    return 0;
@@ -1906,7 +1906,7 @@ WORD WINAPI EngineSetFontContext(LPFONTINFO16 lpFontInfo, WORD data)
 /***********************************************************************
  *		EngineGetGlyphBMP (GDI.305)
  */
-WORD WINAPI EngineGetGlyphBMP(WORD word, LPFONTINFO16 lpFontInfo, WORD w1, WORD w2,
+WORD WINAPI EngineGetGlyphBMP16(WORD word, LPFONTINFO16 lpFontInfo, WORD w1, WORD w2,
                               LPSTR string, DWORD dword, /*LPBITMAPMETRICS16*/ LPVOID metrics)
 {
     FIXME("stub?\n");
@@ -1917,7 +1917,7 @@ WORD WINAPI EngineGetGlyphBMP(WORD word, LPFONTINFO16 lpFontInfo, WORD w1, WORD 
 /***********************************************************************
  *		EngineMakeFontDir (GDI.306)
  */
-DWORD WINAPI EngineMakeFontDir(HDC16 hdc, LPFONTDIR16 fontdir, LPCSTR string)
+DWORD WINAPI EngineMakeFontDir16(HDC16 hdc, LPFONTDIR16 fontdir, LPCSTR string)
 {
     FIXME(" stub! (always fails)\n");
     return ~0UL; /* error */

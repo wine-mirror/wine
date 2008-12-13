@@ -231,9 +231,9 @@
 301 pascal -ret16 EngineDeleteFont(ptr) EngineDeleteFont16
 302 pascal   EngineRealizeFont(ptr ptr ptr) EngineRealizeFont16
 303 pascal -ret16 EngineGetCharWidth(ptr word word ptr) EngineGetCharWidth16
-304 stub ENGINESETFONTCONTEXT
-305 stub ENGINEGETGLYPHBMP
-306 stub ENGINEMAKEFONTDIR
+304 pascal -ret16 EngineSetFontContext(ptr word) EngineSetFontContext16
+305 pascal -ret16 EngineGetGlyphBMP(word ptr word word ptr long ptr) EngineGetGlyphBMP16
+306 pascal   EngineMakeFontDir(word ptr ptr) EngineMakeFontDir16
 307 pascal -ret16 GetCharABCWidths(word word word ptr) GetCharABCWidths16
 308 pascal -ret16 GetOutlineTextMetrics(word word ptr) GetOutlineTextMetrics16
 309 pascal   GetGlyphOutline(word word word ptr long ptr ptr) GetGlyphOutline16
