@@ -1025,7 +1025,7 @@ static void EnumTest(void)
     IDirectDrawSurface_Release(surface);
 }
 
-HRESULT WINAPI SurfaceCounter(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *desc, void *context)
+static HRESULT WINAPI SurfaceCounter(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *desc, void *context)
 {
     UINT *num = context;
     (*num)++;
@@ -1418,7 +1418,7 @@ struct compare
     UINT mips;
 };
 
-HRESULT WINAPI CubeTestLvl2Enum(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *desc, void *context)
+static HRESULT WINAPI CubeTestLvl2Enum(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *desc, void *context)
 {
     UINT *mips = context;
 
@@ -1430,7 +1430,7 @@ HRESULT WINAPI CubeTestLvl2Enum(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *de
     return DDENUMRET_OK;
 }
 
-HRESULT WINAPI CubeTestLvl1Enum(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *desc, void *context)
+static HRESULT WINAPI CubeTestLvl1Enum(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *desc, void *context)
 {
     UINT mips = 0;
     UINT *num = (UINT *) context;
