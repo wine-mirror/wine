@@ -1975,9 +1975,9 @@ BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars,
 /***************************************************************************
  * WCMD_DumpCommands
  *
- *	Domps out the parsed command line to ensure syntax is correct
+ *	Dumps out the parsed command line to ensure syntax is correct
  */
-void WCMD_DumpCommands(CMD_LIST *commands) {
+static void WCMD_DumpCommands(CMD_LIST *commands) {
     WCHAR buffer[MAXSTRING];
     CMD_LIST *thisCmd = commands;
     const WCHAR fmt[] = {'%','p',' ','%','d',' ','%','2','.','2','d',' ',
