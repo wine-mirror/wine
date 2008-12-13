@@ -220,7 +220,7 @@ static UINT_PTR handle_appbarmessage(DWORD msg, PAPPBARDATA abd)
     }
 }
 
-LRESULT CALLBACK appbar_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+static LRESULT CALLBACK appbar_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
     {
