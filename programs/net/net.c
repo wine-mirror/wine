@@ -25,7 +25,7 @@
 #define NET_START 0001
 #define NET_STOP  0002
 
-int output_string(int msg, ...)
+static int output_string(int msg, ...)
 {
     char msg_buffer[8192];
     va_list arguments;
@@ -37,7 +37,7 @@ int output_string(int msg, ...)
     return 0;
 }
 
-BOOL output_error_string(DWORD error)
+static BOOL output_error_string(DWORD error)
 {
     LPSTR pBuffer;
     if (FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM |
