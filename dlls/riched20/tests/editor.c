@@ -59,7 +59,7 @@ static HWND new_richedit(HWND parent) {
 
 /* Keeps the window reponsive for the deley_time in seconds.
  * This is useful for debugging a test to see what is happening. */
-void keep_responsive(time_t delay_time)
+static void keep_responsive(time_t delay_time)
 {
     MSG msg;
     time_t end;
@@ -5542,7 +5542,7 @@ static void test_undo_coalescing(void)
     DestroyWindow(hwnd);
 }
 
-LONG CALLBACK customWordBreakProc(WCHAR *text, int pos, int bytes, int code)
+static LONG CALLBACK customWordBreakProc(WCHAR *text, int pos, int bytes, int code)
 {
     int length;
 
