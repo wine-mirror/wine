@@ -36,6 +36,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
+static HRESULT WINAPI D3D8CB_CreateSurface(IUnknown*,IUnknown*,UINT,UINT,WINED3DFORMAT,DWORD,WINED3DPOOL,UINT,WINED3DCUBEMAP_FACES,IWineD3DSurface**,HANDLE*);
+
+
 /* Shader handle functions */
 static shader_handle *alloc_shader_handle(IDirect3DDevice8Impl *This) {
     if (This->free_shader_handles) {
@@ -2207,7 +2210,7 @@ const IDirect3DDevice8Vtbl Direct3DDevice8_Vtbl =
 };
 
 /* Internal function called back during the CreateDevice to create a render target  */
-HRESULT WINAPI D3D8CB_CreateSurface(IUnknown *device, IUnknown *pSuperior, UINT Width, UINT Height,
+static HRESULT WINAPI D3D8CB_CreateSurface(IUnknown *device, IUnknown *pSuperior, UINT Width, UINT Height,
                                          WINED3DFORMAT Format, DWORD Usage, WINED3DPOOL Pool, UINT Level,
                                          WINED3DCUBEMAP_FACES Face, IWineD3DSurface **ppSurface,
                                          HANDLE *pSharedHandle) {
