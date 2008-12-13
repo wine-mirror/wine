@@ -297,7 +297,7 @@ typedef struct Widget
     IUnknown *pDispatchUnknown;
 } Widget;
 
-HRESULT WINAPI Widget_QueryInterface(
+static HRESULT WINAPI Widget_QueryInterface(
     IWidget *iface,
     /* [in] */ REFIID riid,
     /* [iid_is][out] */ void __RPC_FAR *__RPC_FAR *ppvObject)
@@ -315,7 +315,7 @@ HRESULT WINAPI Widget_QueryInterface(
     }
 }
 
-ULONG WINAPI Widget_AddRef(
+static ULONG WINAPI Widget_AddRef(
     IWidget *iface)
 {
     Widget *This = (Widget *)iface;
@@ -323,7 +323,7 @@ ULONG WINAPI Widget_AddRef(
     return InterlockedIncrement(&This->refs);
 }
 
-ULONG WINAPI Widget_Release(
+static ULONG WINAPI Widget_Release(
     IWidget *iface)
 {
     Widget *This = (Widget *)iface;
@@ -339,7 +339,7 @@ ULONG WINAPI Widget_Release(
     return refs;
 }
 
-HRESULT WINAPI Widget_GetTypeInfoCount(
+static HRESULT WINAPI Widget_GetTypeInfoCount(
     IWidget *iface,
     /* [out] */ UINT __RPC_FAR *pctinfo)
 {
@@ -354,7 +354,7 @@ HRESULT WINAPI Widget_GetTypeInfoCount(
     return hr;
 }
 
-HRESULT WINAPI Widget_GetTypeInfo(
+static HRESULT WINAPI Widget_GetTypeInfo(
     IWidget __RPC_FAR * iface,
     /* [in] */ UINT iTInfo,
     /* [in] */ LCID lcid,
@@ -371,7 +371,7 @@ HRESULT WINAPI Widget_GetTypeInfo(
     return hr;
 }
 
-HRESULT WINAPI Widget_GetIDsOfNames(
+static HRESULT WINAPI Widget_GetIDsOfNames(
     IWidget __RPC_FAR * iface,
     /* [in] */ REFIID riid,
     /* [size_is][in] */ LPOLESTR __RPC_FAR *rgszNames,
@@ -390,7 +390,7 @@ HRESULT WINAPI Widget_GetIDsOfNames(
     return hr;
 }
 
-HRESULT WINAPI Widget_Invoke(
+static HRESULT WINAPI Widget_Invoke(
     IWidget __RPC_FAR * iface,
     /* [in] */ DISPID dispIdMember,
     /* [in] */ REFIID riid,
@@ -412,7 +412,7 @@ HRESULT WINAPI Widget_Invoke(
     return hr;
 }
 
-HRESULT WINAPI Widget_put_Name(
+static HRESULT WINAPI Widget_put_Name(
     IWidget __RPC_FAR * iface,
     /* [in] */ BSTR name)
 {
@@ -420,7 +420,7 @@ HRESULT WINAPI Widget_put_Name(
     return S_OK;
 }
 
-HRESULT WINAPI Widget_get_Name(
+static HRESULT WINAPI Widget_get_Name(
     IWidget __RPC_FAR * iface,
     /* [out] */ BSTR __RPC_FAR *name)
 {
@@ -430,7 +430,7 @@ HRESULT WINAPI Widget_get_Name(
     return S_OK;
 }
 
-HRESULT WINAPI Widget_DoSomething(
+static HRESULT WINAPI Widget_DoSomething(
     IWidget __RPC_FAR * iface,
     /* [in] */ double number,
     /* [out] */ BSTR *str1,
@@ -449,7 +449,7 @@ HRESULT WINAPI Widget_DoSomething(
     return S_FALSE;
 }
 
-HRESULT WINAPI Widget_get_State(
+static HRESULT WINAPI Widget_get_State(
     IWidget __RPC_FAR * iface,
     /* [retval][out] */ STATE __RPC_FAR *state)
 {
@@ -458,7 +458,7 @@ HRESULT WINAPI Widget_get_State(
     return S_OK;
 }
 
-HRESULT WINAPI Widget_put_State(
+static HRESULT WINAPI Widget_put_State(
     IWidget __RPC_FAR * iface,
     /* [in] */ STATE state)
 {
@@ -466,7 +466,7 @@ HRESULT WINAPI Widget_put_State(
     return S_OK;
 }
 
-HRESULT WINAPI Widget_Map(
+static HRESULT WINAPI Widget_Map(
     IWidget * iface,
     BSTR bstrId,
     BSTR *sValue)
@@ -476,7 +476,7 @@ HRESULT WINAPI Widget_Map(
     return S_OK;
 }
 
-HRESULT WINAPI Widget_SetOleColor(
+static HRESULT WINAPI Widget_SetOleColor(
     IWidget * iface,
     OLE_COLOR val)
 {
@@ -484,7 +484,7 @@ HRESULT WINAPI Widget_SetOleColor(
     return S_OK;
 }
 
-HRESULT WINAPI Widget_GetOleColor(
+static HRESULT WINAPI Widget_GetOleColor(
     IWidget * iface,
     OLE_COLOR *pVal)
 {
@@ -493,7 +493,7 @@ HRESULT WINAPI Widget_GetOleColor(
     return S_FALSE;
 }
 
-HRESULT WINAPI Widget_Clone(
+static HRESULT WINAPI Widget_Clone(
     IWidget *iface,
     IWidget **ppVal)
 {
@@ -501,7 +501,7 @@ HRESULT WINAPI Widget_Clone(
     return Widget_QueryInterface(iface, &IID_IWidget, (void **)ppVal);
 }
 
-HRESULT WINAPI Widget_CloneDispatch(
+static HRESULT WINAPI Widget_CloneDispatch(
     IWidget *iface,
     IDispatch **ppVal)
 {
@@ -509,7 +509,7 @@ HRESULT WINAPI Widget_CloneDispatch(
     return Widget_QueryInterface(iface, &IID_IWidget, (void **)ppVal);
 }
 
-HRESULT WINAPI Widget_CloneCoclass(
+static HRESULT WINAPI Widget_CloneCoclass(
     IWidget *iface,
     ApplicationObject2 **ppVal)
 {
@@ -517,7 +517,7 @@ HRESULT WINAPI Widget_CloneCoclass(
     return S_OK;
 }
 
-HRESULT WINAPI Widget_Value(
+static HRESULT WINAPI Widget_Value(
     IWidget __RPC_FAR * iface,
     VARIANT *value,
     VARIANT *retval)
@@ -530,7 +530,7 @@ HRESULT WINAPI Widget_Value(
     return S_OK;
 }
 
-HRESULT WINAPI Widget_Array(
+static HRESULT WINAPI Widget_Array(
     IWidget * iface,
     SAFEARRAY * values)
 {
@@ -538,7 +538,7 @@ HRESULT WINAPI Widget_Array(
     return S_OK;
 }
 
-HRESULT WINAPI Widget_VariantArrayPtr(
+static HRESULT WINAPI Widget_VariantArrayPtr(
     IWidget * iface,
     SAFEARRAY ** values)
 {
@@ -546,7 +546,7 @@ HRESULT WINAPI Widget_VariantArrayPtr(
     return S_OK;
 }
 
-void WINAPI Widget_Variant(
+static void WINAPI Widget_Variant(
     IWidget __RPC_FAR * iface,
     VARIANT var)
 {
@@ -556,7 +556,7 @@ void WINAPI Widget_Variant(
     ok(S(V_CY(&var)).Lo == 0xdeadbeef, "V_CY(&var).Lo was 0x%x\n", S(V_CY(&var)).Lo);
 }
 
-void WINAPI Widget_VarArg(
+static void WINAPI Widget_VarArg(
     IWidget * iface,
     int numexpect,
     SAFEARRAY * values)
@@ -588,7 +588,7 @@ void WINAPI Widget_VarArg(
     ok(hr == S_OK, "SafeArrayUnaccessData failed with %x\n", hr);
 }
 
-void WINAPI Widget_StructArgs(
+static void WINAPI Widget_StructArgs(
     IWidget * iface,
     MYSTRUCT byval,
     MYSTRUCT *byptr,
@@ -600,14 +600,14 @@ void WINAPI Widget_StructArgs(
 }
 
 
-HRESULT WINAPI Widget_Error(
+static HRESULT WINAPI Widget_Error(
     IWidget __RPC_FAR * iface)
 {
     trace("Error()\n");
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI Widget_CloneInterface(
+static HRESULT WINAPI Widget_CloneInterface(
     IWidget __RPC_FAR * iface,
     ISomethingFromDispatch **ppVal)
 {
@@ -791,7 +791,7 @@ static IWidget *Widget_Create(void)
     }
 }
 
-HRESULT WINAPI KindaEnum_QueryInterface(
+static HRESULT WINAPI KindaEnum_QueryInterface(
     IKindaEnumWidget *iface,
     /* [in] */ REFIID riid,
     /* [iid_is][out] */ void __RPC_FAR *__RPC_FAR *ppvObject)
@@ -809,7 +809,7 @@ HRESULT WINAPI KindaEnum_QueryInterface(
     }
 }
 
-ULONG WINAPI KindaEnum_AddRef(
+static ULONG WINAPI KindaEnum_AddRef(
     IKindaEnumWidget *iface)
 {
     KindaEnum *This = (KindaEnum *)iface;
@@ -817,7 +817,7 @@ ULONG WINAPI KindaEnum_AddRef(
     return InterlockedIncrement(&This->refs);
 }
 
-ULONG WINAPI KindaEnum_Release(
+static ULONG WINAPI KindaEnum_Release(
     IKindaEnumWidget *iface)
 {
     KindaEnum *This = (KindaEnum *)iface;
@@ -832,7 +832,7 @@ ULONG WINAPI KindaEnum_Release(
     return refs;
 }
 
-HRESULT WINAPI KindaEnum_Next(
+static HRESULT WINAPI KindaEnum_Next(
     IKindaEnumWidget *iface,
     /* [out] */ IWidget __RPC_FAR *__RPC_FAR *widget)
 {
@@ -843,20 +843,20 @@ HRESULT WINAPI KindaEnum_Next(
         return E_OUTOFMEMORY;
 }
 
-HRESULT WINAPI KindaEnum_Count(
+static HRESULT WINAPI KindaEnum_Count(
     IKindaEnumWidget *iface,
     /* [out] */ unsigned long __RPC_FAR *count)
 {
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI KindaEnum_Reset(
+static HRESULT WINAPI KindaEnum_Reset(
     IKindaEnumWidget *iface)
 {
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI KindaEnum_Clone(
+static HRESULT WINAPI KindaEnum_Clone(
     IKindaEnumWidget *iface,
     /* [out] */ IKindaEnumWidget __RPC_FAR *__RPC_FAR *ppenum)
 {
