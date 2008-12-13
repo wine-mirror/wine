@@ -281,7 +281,7 @@ sub parse_spec_file($$) {
 	my $ordinal;
 	if(/^(\d+|@)\s+
 	   (pascal|stdcall|cdecl|varargs)\s+
-	   ((?:(?:-noname|-norelay|-i386|-ret16|-ret64|-register|-interrupt|-private)\s+)*)(\S+)\s*\(\s*(.*?)\s*\)\s*(\S*)$/x)
+	   ((?:(?:-arch=(?:i386|x86_64)|-noname|-norelay|-i386|-ret16|-ret64|-register|-interrupt|-private)\s+)*)(\S+)\s*\(\s*(.*?)\s*\)\s*(\S*)$/x)
 	{
 	    my $calling_convention = $2;
 	    my $flags = $3;
