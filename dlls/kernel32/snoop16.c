@@ -42,8 +42,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(snoop);
 
 #include "pshpack1.h"
 
-void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context);
-void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context);
+static void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context);
+static void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context);
 
 typedef	struct tagSNOOP16_FUN {
 	/* code part */
@@ -241,7 +241,7 @@ SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfun) {
 }
 
 #define CALLER1REF (*(DWORD*)(MapSL( MAKESEGPTR(context->SegSs,LOWORD(context->Esp)+4))))
-void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
+static void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 	DWORD		ordinal=0;
 	DWORD		entry=(DWORD)MapSL( MAKESEGPTR(context->SegCs,LOWORD(context->Eip)) )-5;
 	WORD		xcs = context->SegCs;
@@ -308,7 +308,7 @@ void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 	DPRINTF(") ret=%04x:%04x\n",HIWORD(ret->origreturn),LOWORD(ret->origreturn));
 }
 
-void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
+static void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 	SNOOP16_RETURNENTRY	*ret = (SNOOP16_RETURNENTRY*)((char *) MapSL( MAKESEGPTR(context->SegCs,LOWORD(context->Eip)) )-5);
 
 	/* We haven't found out the nrofargs yet. If we called a cdecl
