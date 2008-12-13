@@ -711,7 +711,7 @@ static void IMLangFontLink_Test(IMLangFontLink* iMLFL)
 }
 
 /* copied from libs/wine/string.c */
-WCHAR *strstrW(const WCHAR *str, const WCHAR *sub)
+static WCHAR *strstrW(const WCHAR *str, const WCHAR *sub)
 {
     while (*str)
     {
