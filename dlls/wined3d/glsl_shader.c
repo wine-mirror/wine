@@ -3844,7 +3844,9 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface, SHADER_BU
         switch(args->fog) {
             case FOG_OFF: break;
             case FOG_LINEAR:
-                shader_addline(buffer, "float Fog = clamp(gl_FogFragCoord * gl_Fog.start + gl_Fog.end, 0.0, 1.0);\n");
+                shader_addline(buffer, "float fogstart = -1.0 / (gl_Fog.end - gl_Fog.start);\n");
+                shader_addline(buffer, "float fogend = gl_Fog.end * -fogstart;\n");
+                shader_addline(buffer, "float Fog = clamp(gl_FogFragCoord * fogstart + fogend, 0.0, 1.0);\n");
                 shader_addline(buffer, "%s.xyz = mix(gl_Fog.color.xyz, %s.xyz, Fog);\n", fragcolor, fragcolor);
                 break;
             case FOG_EXP:

@@ -897,9 +897,6 @@ static void state_stencilwrite(DWORD state, IWineD3DStateBlockImpl *stateblock, 
 }
 
 static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    BOOL fogenable = stateblock->renderState[WINED3DRS_FOGENABLE];
-    IWineD3DPixelShaderImpl *ps_impl = (IWineD3DPixelShaderImpl *)stateblock->pixelShader;
-    BOOL is_ps3 = use_ps(stateblock) && ps_impl->baseShader.reg_maps.shader_version >= WINED3DPS_VERSION(3,0);
     float fogstart, fogend;
 
     union {
@@ -907,7 +904,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
         float f;
     } tmpvalue;
 
-    if (!fogenable) {
+    if (!stateblock->renderState[WINED3DRS_FOGENABLE]) {
         /* No fog? Disable it, and we're done :-) */
         glDisable(GL_FOG);
         checkGLcall("glDisable GL_FOG");
@@ -955,19 +952,9 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
      * without shaders).
      */
 
-    if( is_ps3 ) {
-        if (!use_vs(stateblock) && stateblock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
-        {
-            FIXME("Implement vertex fog for pixel shader >= 3.0 and fixed function pipeline\n");
-        }
-    }
-
-    if (use_vs(stateblock) && ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.reg_maps.fog)
-    {
+    if (use_vs(stateblock) && ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.reg_maps.fog) {
         if( stateblock->renderState[WINED3DRS_FOGTABLEMODE] != WINED3DFOG_NONE ) {
-            if(!is_ps3) FIXME("Implement table fog for foggy vertex shader\n");
-            /* Disable fog */
-            fogenable = FALSE;
+            FIXME("vertex shader with table fog used\n");
         } else {
             /* Set fog computation in the rasterizer to pass through the value (just blend it) */
             glFogi(GL_FOG_MODE, GL_LINEAR);
@@ -982,47 +969,6 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
             context->fog_coord = FALSE;
         }
         context->last_was_foggy_shader = TRUE;
-    }
-    else if (use_ps(stateblock))
-    {
-        /* NOTE: For pixel shader, GL_FOG_START and GL_FOG_END don't hold fog start s and end e but
-         * -1/(e-s) and e/(e-s) respectively to simplify fog computation in the shader.
-         */
-        WINED3DFOGMODE mode;
-        context->last_was_foggy_shader = FALSE;
-
-        /* If both fogmodes are set use the table fog mode */
-        if(stateblock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
-            mode = stateblock->renderState[WINED3DRS_FOGVERTEXMODE];
-        else
-            mode = stateblock->renderState[WINED3DRS_FOGTABLEMODE];
-
-        switch (mode) {
-            case WINED3DFOG_EXP:
-            case WINED3DFOG_EXP2:
-                if(!is_ps3) FIXME("Implement non linear fog for pixel shader < 3.0\n");
-                /* Disable fog */
-                fogenable = FALSE;
-                break;
-
-            case WINED3DFOG_LINEAR:
-                fogstart = -1.0f/(fogend-fogstart);
-                fogend *= -fogstart;
-                break;
-
-            case WINED3DFOG_NONE:
-                if(!is_ps3) FIXME("Implement software vertex fog for pixel shader < 3.0\n");
-                /* Disable fog */
-                fogenable = FALSE;
-                break;
-            default: FIXME("Unexpected WINED3DRS_FOGVERTEXMODE %d\n", stateblock->renderState[WINED3DRS_FOGVERTEXMODE]);
-        }
-
-        if(context->fog_coord) {
-            glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-            checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
-            context->fog_coord = FALSE;
-        }
     }
     /* DX 7 sdk: "If both render states(vertex and table fog) are set to valid modes,
      * the system will apply only pixel(=table) fog effects."
@@ -1130,33 +1076,28 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
         }
     }
 
-    if(fogenable) {
-        glEnable(GL_FOG);
-        checkGLcall("glEnable GL_FOG");
+    glEnable(GL_FOG);
+    checkGLcall("glEnable GL_FOG");
 
-        if(fogstart != fogend)
-        {
-            glFogfv(GL_FOG_START, &fogstart);
-            checkGLcall("glFogf(GL_FOG_START, fogstart)");
-            TRACE("Fog Start == %f\n", fogstart);
+    if(fogstart != fogend)
+    {
+        glFogfv(GL_FOG_START, &fogstart);
+        checkGLcall("glFogf(GL_FOG_START, fogstart)");
+        TRACE("Fog Start == %f\n", fogstart);
 
-            glFogfv(GL_FOG_END, &fogend);
-            checkGLcall("glFogf(GL_FOG_END, fogend)");
-            TRACE("Fog End == %f\n", fogend);
-        }
-        else
-        {
-            glFogf(GL_FOG_START, -1.0 / 0.0);
-            checkGLcall("glFogf(GL_FOG_START, fogstart)");
-            TRACE("Fog Start == %f\n", fogstart);
+        glFogfv(GL_FOG_END, &fogend);
+        checkGLcall("glFogf(GL_FOG_END, fogend)");
+        TRACE("Fog End == %f\n", fogend);
+    }
+    else
+    {
+        glFogf(GL_FOG_START, -1.0 / 0.0);
+        checkGLcall("glFogf(GL_FOG_START, fogstart)");
+        TRACE("Fog Start == %f\n", fogstart);
 
-            glFogf(GL_FOG_END, 0.0);
-            checkGLcall("glFogf(GL_FOG_END, fogend)");
-            TRACE("Fog End == %f\n", fogend);
-        }
-    } else {
-        glDisable(GL_FOG);
-        checkGLcall("glDisable GL_FOG");
+        glFogf(GL_FOG_END, 0.0);
+        checkGLcall("glFogf(GL_FOG_END, fogend)");
+        TRACE("Fog End == %f\n", fogend);
     }
 }
 

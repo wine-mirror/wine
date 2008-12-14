@@ -1969,9 +1969,12 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUF
                 shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
                 break;
             case FOG_LINEAR:
-                shader_addline(buffer, "MAD_SAT TMP_FOG, fragment.fogcoord, state.fog.params.y, state.fog.params.z;\n");
-                shader_addline(buffer, "LRP result.color.xyz, TMP_FOG.x, %s, state.fog.color;\n", fragcolor);
-                shader_addline(buffer, "MOV result.color.w, %s.w;\n", fragcolor);
+                shader_addline(buffer, "SUB TMP_FOG.x, state.fog.params.z, state.fog.params.y;\n");
+                shader_addline(buffer, "RCP TMP_FOG, -TMP_FOG.x;\n");
+                shader_addline(buffer, "MUL TMP_FOG.y, -TMP_FOG.y, state.fog.params.z;\n");
+                shader_addline(buffer, "MAD_SAT TMP_FOG, fragment.fogcoord, TMP_FOG.x, TMP_FOG.y;\n");
+                shader_addline(buffer, "LRP result.color.rgb, TMP_FOG.x, %s, state.fog.color;\n", fragcolor);
+                shader_addline(buffer, "MOV result.color.a, %s.a;\n", fragcolor);
                 break;
             case FOG_EXP:
                 FIXME("Implement EXP fog in ARB\n");
