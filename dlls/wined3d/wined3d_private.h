@@ -427,6 +427,28 @@ enum tex_types
     tex_type_count = 5,
 };
 
+enum vertexprocessing_mode {
+    fixedfunction,
+    vertexshader,
+    pretransformed
+};
+
+struct stb_const_desc {
+    char                    texunit;
+    UINT                    const_num;
+};
+
+/* Stateblock dependent parameters which have to be hardcoded
+ * into the shader code
+ */
+struct ps_compile_args {
+    struct color_fixup_desc     color_fixup[MAX_FRAGMENT_SAMPLERS];
+    BOOL                        srgb_correction;
+    enum vertexprocessing_mode  vp_mode;
+    /* Projected textures(ps 1.0-1.3) */
+    /* Texture types(2D, Cube, 3D) in ps 1.x */
+};
+
 typedef struct {
     const SHADER_HANDLER *shader_instruction_handler_table;
     void (*shader_select)(IWineD3DDevice *iface, BOOL usePS, BOOL useVS);
@@ -440,7 +462,7 @@ typedef struct {
     HRESULT (*shader_alloc_private)(IWineD3DDevice *iface);
     void (*shader_free_private)(IWineD3DDevice *iface);
     BOOL (*shader_dirtifyable_constants)(IWineD3DDevice *iface);
-    GLuint (*shader_generate_pshader)(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer);
+    GLuint (*shader_generate_pshader)(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer, const struct ps_compile_args *args);
     void (*shader_generate_vshader)(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer);
     void (*shader_get_caps)(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct shader_caps *caps);
     BOOL (*shader_color_fixup_supported)(struct color_fixup_desc fixup);
@@ -2347,29 +2369,6 @@ HRESULT IWineD3DVertexShaderImpl_CompileShader(IWineD3DVertexShader *iface);
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure
  */
-
-enum vertexprocessing_mode {
-    fixedfunction,
-    vertexshader,
-    pretransformed
-};
-
-struct stb_const_desc {
-    char                    texunit;
-    UINT                    const_num;
-};
-
-/* Stateblock dependent parameters which have to be hardcoded
- * into the shader code
- */
-struct ps_compile_args {
-    struct color_fixup_desc     color_fixup[MAX_FRAGMENT_SAMPLERS];
-    BOOL                        srgb_correction;
-    enum vertexprocessing_mode  vp_mode;
-    /* Projected textures(ps 1.0-1.3) */
-    /* Texture types(2D, Cube, 3D) in ps 1.x */
-};
-
 struct ps_compiled_shader {
     struct ps_compile_args      args;
     GLuint                      prgId;

@@ -423,6 +423,7 @@ static GLuint pixelshader_compile(IWineD3DPixelShaderImpl *This, const struct ps
     CONST DWORD *function = This->baseShader.function;
     GLuint retval;
     SHADER_BUFFER buffer;
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
 
     TRACE("(%p) : function %p\n", This, function);
 
@@ -435,7 +436,7 @@ static GLuint pixelshader_compile(IWineD3DPixelShaderImpl *This, const struct ps
     /* Generate the HW shader */
     TRACE("(%p) : Generating hardware program\n", This);
     shader_buffer_init(&buffer);
-    retval = ((IWineD3DDeviceImpl *)This->baseShader.device)->shader_backend->shader_generate_pshader((IWineD3DPixelShader *)This, &buffer);
+    retval = device->shader_backend->shader_generate_pshader((IWineD3DPixelShader *)This, &buffer, args);
     shader_buffer_free(&buffer);
 
     This->baseShader.is_compiled = TRUE;
