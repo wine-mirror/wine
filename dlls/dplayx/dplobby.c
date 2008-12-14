@@ -1834,7 +1834,7 @@ static const IDirectPlayLobby2Vtbl directPlayLobby2AVT =
 
 /* Note: Hack so we can reuse the old functions without compiler warnings */
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlayLobby2AVT.fun))
+# define XCAST(fun)     (typeof(directPlayLobby2WVT.fun))
 #else
 # define XCAST(fun)     (void*)
 #endif
