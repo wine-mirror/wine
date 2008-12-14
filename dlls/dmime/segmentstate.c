@@ -26,6 +26,9 @@ static HRESULT WINAPI IDirectMusicSegmentState8Impl_QueryInterface (LPDIRECTMUSI
 	IDirectMusicSegmentState8Impl *This = (IDirectMusicSegmentState8Impl *)iface;
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
+	if (!riid || !ppobj)
+	    return E_POINTER;
+
 	if (IsEqualIID(riid, &IID_IUnknown) || 
 	    IsEqualIID(riid, &IID_IDirectMusicSegmentState) ||
 	    IsEqualIID(riid, &IID_IDirectMusicSegmentState8)) {
