@@ -10,8 +10,8 @@
 @ stdcall GdipAddPathClosedCurveI(ptr ptr long)
 @ stdcall GdipAddPathCurve2(ptr ptr long long)
 @ stdcall GdipAddPathCurve2I(ptr ptr long long)
-@ stub GdipAddPathCurve3
-@ stub GdipAddPathCurve3I
+@ stdcall GdipAddPathCurve3(ptr ptr long long long long)
+@ stdcall GdipAddPathCurve3I(ptr ptr long long long long)
 @ stdcall GdipAddPathCurve(ptr ptr long)
 @ stdcall GdipAddPathCurveI(ptr ptr long)
 @ stdcall GdipAddPathEllipse(ptr long long long long)
