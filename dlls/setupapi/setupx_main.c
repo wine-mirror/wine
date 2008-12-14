@@ -587,6 +587,17 @@ RETERR16 WINAPI CtlGetLddPath16(LOGDISKID16 ldid, LPSTR szPath)
 }
 
 /***********************************************************************
+ *		DiInstallClass		(SETUPX.321)
+ *
+ * Install Class from an INF file (in [ClassInstall] section)
+ */
+RETERR16 WINAPI DiInstallClass16(LPCSTR lpszInfFileName, DWORD dwFlags)
+{
+    FIXME("(%s, %u), stub.\n", lpszInfFileName, dwFlags);
+    return 0;
+}
+
+/***********************************************************************
  *		CtlSetLddPath		(SETUPX.508)
  *
  * Sets the path of an LDD.
