@@ -9,6 +9,7 @@ C_SRCS = \
 	amstream.c \
 	main.c \
 	mediastream.c \
+	mediastreamfilter.c \
 	regsvr.c
 
 RC_SRCS = version.rc
