@@ -61,7 +61,12 @@ HRESULT MediaStream_create(IMultiMediaStream* Parent, const MSPID* pPurposeId, S
     TRACE("(%p,%p,%p)\n", Parent, pPurposeId, ppMediaStream);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IMediaStreamImpl));
-    
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        return E_OUTOFMEMORY;
+    }
+
     object->lpVtbl.lpVtbl = &MediaStream_Vtbl;
     object->ref = 1;
 
@@ -70,7 +75,7 @@ HRESULT MediaStream_create(IMultiMediaStream* Parent, const MSPID* pPurposeId, S
     object->StreamType = StreamType;
 
     *ppMediaStream = (IMediaStream*)object;
-    
+
     return S_OK;
 }
 
@@ -82,7 +87,7 @@ static HRESULT WINAPI IMediaStreamImpl_QueryInterface(IMediaStream* iface, REFII
     TRACE("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ppvObject);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IAMMultiMediaStream))
+        IsEqualGUID(riid, &IID_IMediaStream))
     {
       IClassFactory_AddRef(iface);
       *ppvObject = This;
@@ -120,7 +125,7 @@ static HRESULT WINAPI IMediaStreamImpl_GetMultiMediaStream(IMediaStream* iface, 
 {
     IMediaStreamImpl *This = (IMediaStreamImpl *)iface;
 
-    FIXME("(%p/%p)->(%p) stub!\n", This, iface, ppMultiMediaStream); 
+    FIXME("(%p/%p)->(%p) stub!\n", This, iface, ppMultiMediaStream);
 
     return S_FALSE;
 }
@@ -196,6 +201,11 @@ HRESULT DirectDrawMediaStream_create(IMultiMediaStream* Parent, const MSPID* pPu
     TRACE("(%p,%p,%p)\n", Parent, pPurposeId, ppMediaStream);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IMediaStreamImpl));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        return E_OUTOFMEMORY;
+    }
 
     object->lpVtbl.lpVtbl = &DirectDrawMediaStream_Vtbl;
     object->ref = 1;
