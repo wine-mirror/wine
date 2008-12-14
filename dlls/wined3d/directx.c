@@ -713,7 +713,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     gl_info->max_texture_stages = 1;
     gl_info->max_fragment_samplers = 1;
     gl_info->max_vertex_samplers = 0;
-    gl_info->max_combined_samplers = 0;
+    gl_info->max_combined_samplers = gl_info->max_fragment_samplers + gl_info->max_vertex_samplers;
     gl_info->max_sampler_stages = 1;
     gl_info->ps_arb_version = PS_VERSION_NOT_SUPPORTED;
     gl_info->ps_arb_max_temps = 0;
