@@ -2021,6 +2021,8 @@ void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock
 void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
 void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
 void apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
+void state_fogcolor(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
+void state_fogdensity(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
 
 void surface_force_reload(IWineD3DSurface *iface);
 GLenum surface_get_gl_buffer(IWineD3DSurface *iface, IWineD3DSwapChain *swapchain);

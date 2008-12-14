@@ -909,6 +909,8 @@ static void atifs_apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *statebl
 
 static const struct StateEntryTemplate atifs_fragmentstate_template[] = {
     {STATE_RENDER(WINED3DRS_TEXTUREFACTOR),               { STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              state_texfactor_atifs   }, 0                               },
+    { STATE_RENDER(WINED3DRS_FOGCOLOR),                   { STATE_RENDER(WINED3DRS_FOGCOLOR),                   state_fogcolor      }, 0                               },
+    { STATE_RENDER(WINED3DRS_FOGDENSITY),                 { STATE_RENDER(WINED3DRS_FOGDENSITY),                 state_fogdensity    }, 0                               },
     {STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),           { STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          set_tex_op_atifs        }, 0                               },
     {STATE_TEXTURESTAGE(0, WINED3DTSS_COLORARG1),         { STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          set_tex_op_atifs        }, 0                               },
     {STATE_TEXTURESTAGE(0, WINED3DTSS_COLORARG2),         { STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          set_tex_op_atifs        }, 0                               },
