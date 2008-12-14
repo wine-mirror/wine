@@ -1924,13 +1924,29 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUF
     const shader_reg_maps* reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
     DWORD shader_version = reg_maps->shader_version;
-    const char *fragcolor;
     const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
     const local_constant *lconst;
     GLuint retval;
+    const char *fragcolor;
 
     /*  Create the hw ARB shader */
     shader_addline(buffer, "!!ARBfp1.0\n");
+
+    if (shader_version < WINED3DPS_VERSION(3,0)) {
+        switch(args->fog) {
+            case FOG_OFF:
+                break;
+            case FOG_LINEAR:
+                shader_addline(buffer, "OPTION ARB_fog_linear;\n");
+                break;
+            case FOG_EXP:
+                shader_addline(buffer, "OPTION ARB_fog_exp;\n");
+                break;
+            case FOG_EXP2:
+                shader_addline(buffer, "OPTION ARB_fog_exp2;\n");
+                break;
+        }
+    }
 
     shader_addline(buffer, "TEMP TMP;\n");     /* Used in matrix ops */
     shader_addline(buffer, "TEMP TMP2;\n");    /* Used in matrix ops */
@@ -1941,52 +1957,23 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUF
     shader_addline(buffer, "PARAM coefmul = { 2, 4, 8, 16 };\n");
     shader_addline(buffer, "PARAM one = { 1.0, 1.0, 1.0, 1.0 };\n");
 
+    if (shader_version < WINED3DPS_VERSION(2,0)) {
+        fragcolor = "R0";
+    } else {
+        shader_addline(buffer, "TEMP TMP_COLOR;\n");
+        fragcolor = "TMP_COLOR";
+    }
+
     /* Base Declarations */
     shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION);
-
-    /* We need two variables for fog blending */
-    if(args->fog != FOG_OFF) shader_addline(buffer, "TEMP TMP_FOG;\n");
-    if (shader_version >= WINED3DPS_VERSION(2,0)) shader_addline(buffer, "TEMP TMP_COLOR;\n");
 
     /* Base Shader Body */
     shader_generate_main( (IWineD3DBaseShader*) This, buffer, reg_maps, function);
 
-    if (shader_version < WINED3DPS_VERSION(2,0)) {
-        fragcolor = "R0";
-    } else {
-        fragcolor = "TMP_COLOR";
-    }
     if(args->srgb_correction) {
         arbfp_add_sRGB_correction(buffer, fragcolor, "TMP", "TMP2", "TA", "TB");
     }
-    if (shader_version < WINED3DPS_VERSION(3,0)) {
-        /* calculate fog and blend it
-         * NOTE: state.fog.params.y and state.fog.params.z don't hold fog start s and end e but
-         * -1/(e-s) and e/(e-s) respectively.
-         */
-        switch(args->fog) {
-            case FOG_OFF:
-                shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
-                break;
-            case FOG_LINEAR:
-                shader_addline(buffer, "SUB TMP_FOG.x, state.fog.params.z, state.fog.params.y;\n");
-                shader_addline(buffer, "RCP TMP_FOG, -TMP_FOG.x;\n");
-                shader_addline(buffer, "MUL TMP_FOG.y, -TMP_FOG.y, state.fog.params.z;\n");
-                shader_addline(buffer, "MAD_SAT TMP_FOG, fragment.fogcoord, TMP_FOG.x, TMP_FOG.y;\n");
-                shader_addline(buffer, "LRP result.color.rgb, TMP_FOG.x, %s, state.fog.color;\n", fragcolor);
-                shader_addline(buffer, "MOV result.color.a, %s.a;\n", fragcolor);
-                break;
-            case FOG_EXP:
-                FIXME("Implement EXP fog in ARB\n");
-                shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
-                break;
-            case FOG_EXP2:
-                FIXME("Implement EXP2 fog in ARB\n");
-                shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
-                break;
-        }
-    }
-
+    shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
     shader_addline(buffer, "END\n");
 
     /* TODO: change to resource.glObjectHandle or something like that */
