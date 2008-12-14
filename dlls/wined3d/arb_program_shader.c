@@ -1919,7 +1919,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUF
 
     fragcolor = (shader_version < WINED3DPS_VERSION(2,0)) ? "R0" : "TMP_COLOR";
 
-    if(((IWineD3DDeviceImpl *)This->baseShader.device)->stateBlock->renderState[WINED3DRS_SRGBWRITEENABLE]) {
+    if(args->srgb_correction) {
         arbfp_add_sRGB_correction(buffer, fragcolor, "TMP", "TMP2", "TA", "TB");
     }
     if (shader_version < WINED3DPS_VERSION(3,0))
