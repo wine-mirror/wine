@@ -253,6 +253,8 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_PlaySegment (LPDIRECTMUSICPER
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
 	FIXME("(%p, %p, %d, 0x%s, %p): stub\n", This, pSegment, dwFlags,
 	    wine_dbgstr_longlong(i64StartTime), ppSegmentState);
+	if (ppSegmentState)
+	  return DMUSIC_CreateDirectMusicSegmentStateImpl(&IID_IDirectMusicSegmentState, (LPVOID*)ppSegmentState, NULL);
 	return S_OK;
 }
 
@@ -787,7 +789,9 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_PlaySegmentEx (LPDIRECTMUSICP
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
 	FIXME("(%p, %p, %p, %p, %d, 0x%s, %p, %p, %p): stub\n", This, pSource, pwzSegmentName,
 	    pTransition, dwFlags, wine_dbgstr_longlong(i64StartTime), ppSegmentState, pFrom, pAudioPath);
-	return DMUS_E_SEGMENT_INIT_FAILED;
+	if (ppSegmentState)
+	  return DMUSIC_CreateDirectMusicSegmentStateImpl(&IID_IDirectMusicSegmentState, (LPVOID*)ppSegmentState, NULL);
+	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_StopEx (LPDIRECTMUSICPERFORMANCE8 iface, IUnknown* pObjectToStop, __int64 i64StopTime, DWORD dwFlags) {
