@@ -147,7 +147,12 @@ HRESULT IDirectXFileImpl_Create(IUnknown* pUnkOuter, LPVOID* ppObj)
     TRACE("(%p,%p)\n", pUnkOuter, ppObj);
       
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectXFileImpl));
-    
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        return DXFILEERR_BADALLOC;
+    }
+
     object->lpVtbl.lpVtbl = &IDirectXFile_Vtbl;
     object->ref = 1;
 
@@ -310,7 +315,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
     object->buf.buffer = HeapAlloc(GetProcessHeap(), 0, MAX_INPUT_SIZE+1);
     if (!object->buf.buffer)
     {
-      WARN("Out of memory\n");
+      ERR("Out of memory\n");
       hr = DXFILEERR_BADALLOC;
       goto error;
     }
@@ -1452,7 +1457,12 @@ static HRESULT IDirectXFileDataImpl_Create(IDirectXFileDataImpl** ppObj)
     TRACE("(%p)\n", ppObj);
       
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectXFileDataImpl));
-    
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        return DXFILEERR_BADALLOC;
+    }
+
     object->lpVtbl.lpVtbl = &IDirectXFileData_Vtbl;
     object->ref = 1;
 
@@ -1597,8 +1607,8 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetNextObject(IDirectXFileData* iface
     IDirectXFileDataReferenceImpl *object;
 
     hr = IDirectXFileDataReferenceImpl_Create(&object);
-    if (hr != S_OK)
-      return DXFILEERR_BADVALUE;
+    if (FAILED(hr))
+      return hr;
 
     object->ptarget = This->pobj->childs[This->cur_enum_object++]->ptarget;
 
@@ -1609,8 +1619,8 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetNextObject(IDirectXFileData* iface
     IDirectXFileDataImpl *object;
 
     hr = IDirectXFileDataImpl_Create(&object);
-    if (hr != S_OK)
-      return DXFILEERR_BADVALUE;
+    if (FAILED(hr))
+      return hr;
 
     object->pobj = This->pobj->childs[This->cur_enum_object++];
     object->cur_enum_object = 0;
@@ -1672,6 +1682,11 @@ static HRESULT IDirectXFileDataReferenceImpl_Create(IDirectXFileDataReferenceImp
     TRACE("(%p)\n", ppObj);
       
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectXFileDataReferenceImpl));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        return DXFILEERR_BADALLOC;
+    }
     
     object->lpVtbl.lpVtbl = &IDirectXFileDataReference_Vtbl;
     object->ref = 1;
@@ -1770,8 +1785,8 @@ static HRESULT WINAPI IDirectXFileDataReferenceImpl_Resolve(IDirectXFileDataRefe
     return DXFILEERR_BADVALUE;
 
   hr = IDirectXFileDataImpl_Create(&object);
-  if (hr != S_OK)
-    return DXFILEERR_BADVALUE;
+  if (FAILED(hr))
+    return hr;
 
   object->pobj = This->ptarget;
   object->cur_enum_object = 0;
@@ -1800,6 +1815,11 @@ static HRESULT IDirectXFileEnumObjectImpl_Create(IDirectXFileEnumObjectImpl** pp
     TRACE("(%p)\n", ppObj);
       
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectXFileEnumObjectImpl));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        return DXFILEERR_BADALLOC;
+    }
     
     object->lpVtbl.lpVtbl = &IDirectXFileEnumObject_Vtbl;
     object->ref = 1;
@@ -2192,7 +2212,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   pdata = HeapAlloc(GetProcessHeap(), 0, MAX_DATA_SIZE);
   if (!pdata)
   {
-    WARN("Out of memory\n");
+    ERR("Out of memory\n");
     return DXFILEERR_BADALLOC;
   }
   This->buf.cur_pdata = This->buf.pdata = pdata;
@@ -2200,7 +2220,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   pstrings = HeapAlloc(GetProcessHeap(), 0, MAX_STRINGS_BUFFER);
   if (!pstrings)
   {
-    WARN("Out of memory\n");
+    ERR("Out of memory\n");
     HeapFree(GetProcessHeap(), 0, This->buf.pxo->pdata);
     return DXFILEERR_BADALLOC;
   }
