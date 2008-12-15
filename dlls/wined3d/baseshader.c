@@ -131,17 +131,12 @@ static int shader_get_param(const DWORD *pToken, DWORD shader_version, DWORD *pa
 }
 
 /* Return the number of parameters to skip for an opcode */
-static inline int shader_skip_opcode(
-    IWineD3DBaseShaderImpl* This,
-    const SHADER_OPCODE* curOpcode,
-    DWORD opcode_token) {
-
+static inline int shader_skip_opcode(const SHADER_OPCODE *curOpcode, DWORD opcode_token, DWORD shader_version)
+{
    /* Shaders >= 2.0 may contain address tokens, but fortunately they
     * have a useful length mask - use it here. Shaders 1.0 contain no such tokens */
-
-    return (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2)?
-        ((opcode_token & WINED3DSI_INSTLENGTH_MASK) >> WINED3DSI_INSTLENGTH_SHIFT):
-        curOpcode->num_params;
+    return (WINED3DSHADER_VERSION_MAJOR(shader_version) >= 2)
+            ? ((opcode_token & WINED3DSI_INSTLENGTH_MASK) >> WINED3DSI_INSTLENGTH_SHIFT) : curOpcode->num_params;
 }
 
 /* Read the parameters of an unrecognized opcode from the input stream
@@ -767,9 +762,8 @@ static void shader_dump_param(const DWORD param, const DWORD addr_token, int inp
 }
 
 static void shader_color_correction(IWineD3DBaseShaderImpl *shader,
-        IWineD3DDeviceImpl *device, const struct SHADER_OPCODE_ARG *arg)
+        IWineD3DDeviceImpl *device, const struct SHADER_OPCODE_ARG *arg, DWORD shader_version)
 {
-    DWORD hex_version = shader->baseShader.hex_version;
     IWineD3DBaseTextureImpl *texture;
     struct color_fixup_desc fixup;
     BOOL recorded = FALSE;
@@ -779,7 +773,7 @@ static void shader_color_correction(IWineD3DBaseShaderImpl *shader,
     switch(arg->opcode->opcode)
     {
         case WINED3DSIO_TEX:
-            if (hex_version < WINED3DPS_VERSION(2,0)) sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
+            if (WINED3DSHADER_VERSION_MAJOR(shader_version) < 2) sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
             else sampler_idx = arg->src[1] & WINED3DSP_REGNUM_MASK;
             break;
 
@@ -894,7 +888,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
                        WINED3DSIO_PHASE == curOpcode->opcode ||
                        WINED3DSIO_RET == curOpcode->opcode) {
 
-                pToken += shader_skip_opcode(This, curOpcode, hw_arg.opcode_token);
+                pToken += shader_skip_opcode(curOpcode, hw_arg.opcode_token, shader_version);
 
             /* If a generator function is set for current shader target, use it */
             } else if (hw_fct != NULL) {
@@ -927,7 +921,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
                 hw_fct(&hw_arg);
 
                 /* Add color correction if needed */
-                shader_color_correction(This, device, &hw_arg);
+                shader_color_correction(This, device, &hw_arg, shader_version);
 
                 /* Process instruction modifiers for GLSL apps ( _sat, etc. ) */
                 /* FIXME: This should be internal to the shader backend.
@@ -939,7 +933,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
             } else {
 
                 FIXME("Can't handle opcode %s in hwShader\n", curOpcode->name);
-                pToken += shader_skip_opcode(This, curOpcode, hw_arg.opcode_token);
+                pToken += shader_skip_opcode(curOpcode, hw_arg.opcode_token, shader_version);
             }
         }
         /* TODO: What about result.depth? */
