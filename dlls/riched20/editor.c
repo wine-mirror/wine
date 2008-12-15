@@ -3545,9 +3545,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     pt.x += editor->selofs;
     pt.x++; /* for some reason native offsets x by one */
 
-    si.cbSize = sizeof(si);
-    si.fMask = SIF_POS;
-    if (GetScrollInfo(editor->hWnd, SB_VERT, &si)) pt.y -= si.nPos;
+    pt.y -= editor->vert_si.nPos;
     si.cbSize = sizeof(si);
     si.fMask = SIF_POS;
     if (GetScrollInfo(editor->hWnd, SB_HORZ, &si)) pt.x -= si.nPos;
