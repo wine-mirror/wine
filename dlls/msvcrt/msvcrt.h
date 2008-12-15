@@ -695,7 +695,7 @@ MSVCRT_wchar_t*** __cdecl __p__wenviron(void);
 char*   __cdecl _strdate(char* date);
 char*   __cdecl _strtime(char* date);
 int     __cdecl _setmbcp(int);
-void    __cdecl _ftime(struct MSVCRT__timeb *buf);
+void    __cdecl MSVCRT__ftime(struct MSVCRT__timeb *buf);
 int     __cdecl MSVCRT__close(int);
 int     __cdecl MSVCRT__dup(int);
 int     __cdecl MSVCRT__dup2(int, int);

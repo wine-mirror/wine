@@ -262,7 +262,7 @@
 @ cdecl _fstat(long ptr) MSVCRT__fstat
 @ cdecl _fstat64(long ptr) MSVCRT__fstat64
 @ cdecl _fstati64(long ptr) MSVCRT__fstati64
-@ cdecl _ftime(ptr)
+@ cdecl _ftime(ptr) MSVCRT__ftime
 @ cdecl -ret64 _ftol() ntdll._ftol
 @ cdecl _fullpath(ptr str long)
 @ cdecl _futime(long ptr)

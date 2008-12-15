@@ -233,7 +233,7 @@ double CDECL MSVCRT_difftime(MSVCRT_time_t time1, MSVCRT_time_t time2)
 /*********************************************************************
  *		_ftime (MSVCRT.@)
  */
-void CDECL _ftime(struct MSVCRT__timeb *buf)
+void CDECL MSVCRT__ftime(struct MSVCRT__timeb *buf)
 {
   TIME_ZONE_INFORMATION tzinfo;
   FILETIME ft;
@@ -260,7 +260,7 @@ MSVCRT_time_t CDECL MSVCRT_time(MSVCRT_time_t* buf)
   MSVCRT_time_t curtime;
   struct MSVCRT__timeb tb;
 
-  _ftime(&tb);
+  MSVCRT__ftime(&tb);
 
   curtime = tb.time;
   return buf ? *buf = curtime : curtime;
