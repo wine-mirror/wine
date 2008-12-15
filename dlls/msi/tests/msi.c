@@ -10255,9 +10255,9 @@ static void test_MsiGetPatchInfoEx(void)
 
     /* pcchValue is too small, lpValue is NULL */
     size = 0;
-    r = MsiGetPatchInfoExA(patchcode, prodcode, usersid,
-                           MSIINSTALLCONTEXT_USERMANAGED,
-                           INSTALLPROPERTY_MOREINFOURL, NULL, &size);
+    r = pMsiGetPatchInfoExA(patchcode, prodcode, usersid,
+                            MSIINSTALLCONTEXT_USERMANAGED,
+                            INSTALLPROPERTY_MOREINFOURL, NULL, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(size == 16, "Expected 16, got %d\n", size);
 
