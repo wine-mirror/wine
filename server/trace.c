@@ -3745,7 +3745,7 @@ static void dump_add_completion_request( const struct add_completion_request *re
     fprintf( stderr, " handle=%04x,", req->handle );
     fprintf( stderr, " ckey=%lx,", req->ckey );
     fprintf( stderr, " cvalue=%lx,", req->cvalue );
-    fprintf( stderr, " information=%lx,", req->information );
+    fprintf( stderr, " information=%08x,", req->information );
     fprintf( stderr, " status=%08x", req->status );
 }
 
@@ -3758,7 +3758,7 @@ static void dump_remove_completion_reply( const struct remove_completion_reply *
 {
     fprintf( stderr, " ckey=%lx,", req->ckey );
     fprintf( stderr, " cvalue=%lx,", req->cvalue );
-    fprintf( stderr, " information=%lx,", req->information );
+    fprintf( stderr, " information=%08x,", req->information );
     fprintf( stderr, " status=%08x", req->status );
 }
 
@@ -3784,7 +3784,7 @@ static void dump_add_fd_completion_request( const struct add_fd_completion_reque
     fprintf( stderr, " handle=%04x,", req->handle );
     fprintf( stderr, " cvalue=%lx,", req->cvalue );
     fprintf( stderr, " status=%08x,", req->status );
-    fprintf( stderr, " information=%lx", req->information );
+    fprintf( stderr, " information=%08x", req->information );
 }
 
 static void dump_get_window_layered_info_request( const struct get_window_layered_info_request *req )

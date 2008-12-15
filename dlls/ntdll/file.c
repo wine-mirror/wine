@@ -334,7 +334,7 @@ NTSTATUS FILE_GetNtStatus(void)
 /***********************************************************************
  *             FILE_AsyncReadService      (INTERNAL)
  */
-static NTSTATUS FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, NTSTATUS status, ULONG_PTR *total)
+static NTSTATUS FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, NTSTATUS status, ULONG *total)
 {
     async_fileio_read *fileio = user;
     int fd, needs_close, result;
@@ -812,7 +812,7 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
 /***********************************************************************
  *             FILE_AsyncWriteService      (INTERNAL)
  */
-static NTSTATUS FILE_AsyncWriteService(void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status, ULONG_PTR *total)
+static NTSTATUS FILE_AsyncWriteService(void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status, ULONG *total)
 {
     async_fileio_write *fileio = user;
     int result, fd, needs_close;
@@ -1146,7 +1146,7 @@ struct async_ioctl
 };
 
 /* callback for ioctl async I/O completion */
-static NTSTATUS ioctl_completion( void *arg, IO_STATUS_BLOCK *io, NTSTATUS status )
+static NTSTATUS ioctl_completion( void *arg, IO_STATUS_BLOCK *io, NTSTATUS status, ULONG *total )
 {
     struct async_ioctl *async = arg;
 
@@ -1158,7 +1158,7 @@ static NTSTATUS ioctl_completion( void *arg, IO_STATUS_BLOCK *io, NTSTATUS statu
             req->user_arg = async;
             wine_server_set_reply( req, async->buffer, async->size );
             if (!(status = wine_server_call( req )))
-                io->Information = wine_server_reply_size( reply );
+                io->Information = *total = wine_server_reply_size( reply );
         }
         SERVER_END_REQ;
     }

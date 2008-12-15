@@ -1124,7 +1124,7 @@ static int WS2_recv( int fd, struct ws2_async *wsa )
  *
  * Handler for overlapped recv() operations.
  */
-static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS status, ULONG_PTR *total )
+static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS status, ULONG *total )
 {
     ws2_async* wsa = user;
     int result = 0, fd;
@@ -1225,7 +1225,7 @@ static int WS2_send( int fd, struct ws2_async *wsa )
  *
  * Handler for overlapped send() operations.
  */
-static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS status, ULONG_PTR *total )
+static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS status, ULONG *total )
 {
     ws2_async* wsa = user;
     int result = 0, fd;
@@ -1280,7 +1280,7 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
  *
  * Handler for shutdown() operations on overlapped sockets.
  */
-static NTSTATUS WS2_async_shutdown( void* user, PIO_STATUS_BLOCK iosb, NTSTATUS status )
+static NTSTATUS WS2_async_shutdown( void* user, PIO_STATUS_BLOCK iosb, NTSTATUS status, ULONG *total )
 {
     ws2_async* wsa = user;
     int fd, err = 1;
@@ -1300,6 +1300,7 @@ static NTSTATUS WS2_async_shutdown( void* user, PIO_STATUS_BLOCK iosb, NTSTATUS 
         status = err ? wsaErrno() : STATUS_SUCCESS;
         break;
     }
+    *total = 0;
     iosb->u.Status = status;
     return status;
 }
@@ -2647,7 +2648,8 @@ int WINAPI WS_select(int nfds, WS_fd_set *ws_readfds,
 }
 
 /* helper to send completion messages for client-only i/o operation case */
-static void WS_AddCompletion( SOCKET sock, ULONG_PTR CompletionValue, NTSTATUS CompletionStatus, ULONG_PTR Information )
+static void WS_AddCompletion( SOCKET sock, ULONG_PTR CompletionValue, NTSTATUS CompletionStatus,
+                              ULONG Information )
 {
     NTSTATUS status;
 

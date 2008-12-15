@@ -1393,7 +1393,8 @@ NTSTATUS WINAPI NtQueryIoCompletion( HANDLE CompletionPort, IO_COMPLETION_INFORM
     return status;
 }
 
-NTSTATUS NTDLL_AddCompletion( HANDLE hFile, ULONG_PTR CompletionValue, NTSTATUS CompletionStatus, ULONG_PTR Information )
+NTSTATUS NTDLL_AddCompletion( HANDLE hFile, ULONG_PTR CompletionValue,
+                              NTSTATUS CompletionStatus, ULONG Information )
 {
     NTSTATUS status;
 

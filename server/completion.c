@@ -81,7 +81,7 @@ struct comp_msg
     struct   list queue_entry;
     apc_param_t   ckey;
     apc_param_t   cvalue;
-    unsigned long information;
+    unsigned int  information;
     unsigned int  status;
 };
 
@@ -142,7 +142,7 @@ struct completion *get_completion_obj( struct process *process, obj_handle_t han
 }
 
 void add_completion( struct completion *completion, apc_param_t ckey, apc_param_t cvalue,
-                     unsigned int status, unsigned long information )
+                     unsigned int status, unsigned int information )
 {
     struct comp_msg *msg = mem_alloc( sizeof( *msg ) );
 

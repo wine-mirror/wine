@@ -2302,7 +2302,7 @@ static void WINAPI read_changes_user_apc( void *arg, IO_STATUS_BLOCK *io, ULONG 
     RtlFreeHeap( GetProcessHeap(), 0, info );
 }
 
-static NTSTATUS read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, NTSTATUS status, ULONG_PTR *total )
+static NTSTATUS read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, NTSTATUS status, ULONG *total )
 {
     struct read_changes_info *info = user;
     char path[PATH_MAX];

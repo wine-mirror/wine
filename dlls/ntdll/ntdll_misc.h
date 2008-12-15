@@ -211,6 +211,7 @@ static inline struct ntdll_thread_regs *ntdll_get_thread_regs(void)
 }
 
 /* Completion */
-extern NTSTATUS NTDLL_AddCompletion( HANDLE hFile, ULONG_PTR CompletionValue, NTSTATUS CompletionStatus, ULONG_PTR Information );
+extern NTSTATUS NTDLL_AddCompletion( HANDLE hFile, ULONG_PTR CompletionValue,
+                                     NTSTATUS CompletionStatus, ULONG Information );
 
 #endif

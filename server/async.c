@@ -234,7 +234,7 @@ void async_set_timeout( struct async *async, timeout_t timeout, unsigned int sta
 }
 
 /* store the result of the client-side async callback */
-void async_set_result( struct object *obj, unsigned int status, unsigned long total )
+void async_set_result( struct object *obj, unsigned int status, unsigned int total )
 {
     struct async *async = (struct async *)obj;
 

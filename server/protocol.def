@@ -289,7 +289,7 @@ typedef union
     struct
     {
         enum apc_type    type;     /* APC_ASYNC_IO */
-        unsigned int   (*func)(void*, void*, unsigned int, unsigned long *);
+        unsigned int   (*func)(void*, void*, unsigned int, unsigned int *);
         void            *user;     /* user pointer */
         void            *sb;       /* status block */
         unsigned int     status;   /* I/O status */
@@ -374,7 +374,7 @@ typedef union
     {
         enum apc_type    type;      /* APC_ASYNC_IO */
         unsigned int     status;    /* new status of async operation */
-        unsigned long    total;     /* bytes transferred */
+        unsigned int     total;     /* bytes transferred */
     } async_io;
     struct
     {
@@ -3034,7 +3034,7 @@ enum message_type
     obj_handle_t  handle;         /* port handle */
     apc_param_t   ckey;           /* completion key */
     apc_param_t   cvalue;         /* completion value */
-    unsigned long information;    /* IO_STATUS_BLOCK Information */
+    unsigned int  information;    /* IO_STATUS_BLOCK Information */
     unsigned int  status;         /* completion result */
 @END
 
@@ -3045,7 +3045,7 @@ enum message_type
 @REPLY
     apc_param_t   ckey;           /* completion key */
     apc_param_t   cvalue;         /* completion value */
-    unsigned long information;    /* IO_STATUS_BLOCK Information */
+    unsigned int  information;    /* IO_STATUS_BLOCK Information */
     unsigned int  status;         /* completion result */
 @END
 
@@ -3071,7 +3071,7 @@ enum message_type
     obj_handle_t   handle;        /* async' object */
     apc_param_t    cvalue;        /* completion value */
     unsigned int   status;        /* completion status */
-    unsigned long  information;   /* IO_STATUS_BLOCK Information */
+    unsigned int   information;   /* IO_STATUS_BLOCK Information */
 @END
 
 

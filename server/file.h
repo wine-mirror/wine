@@ -125,7 +125,7 @@ extern struct object *create_dir_obj( struct fd *fd );
 
 extern struct completion *get_completion_obj( struct process *process, obj_handle_t handle, unsigned int access );
 extern void add_completion( struct completion *completion, apc_param_t ckey, apc_param_t cvalue,
-                            unsigned int status, unsigned long information );
+                            unsigned int status, unsigned int information );
 
 /* serial port functions */
 
@@ -138,7 +138,7 @@ extern void free_async_queue( struct async_queue *queue );
 extern struct async *create_async( struct thread *thread, struct async_queue *queue,
                                    const async_data_t *data );
 extern void async_set_timeout( struct async *async, timeout_t timeout, unsigned int status );
-extern void async_set_result( struct object *obj, unsigned int status, unsigned long total );
+extern void async_set_result( struct object *obj, unsigned int status, unsigned int total );
 extern int async_waiting( struct async_queue *queue );
 extern void async_terminate( struct async *async, unsigned int status );
 extern void async_wake_up( struct async_queue *queue, unsigned int status );

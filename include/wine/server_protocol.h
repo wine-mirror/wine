@@ -273,7 +273,7 @@ typedef union
     struct
     {
         enum apc_type    type;
-        unsigned int   (*func)(void*, void*, unsigned int, unsigned long *);
+        unsigned int   (*func)(void*, void*, unsigned int, unsigned int *);
         void            *user;
         void            *sb;
         unsigned int     status;
@@ -358,7 +358,7 @@ typedef union
     {
         enum apc_type    type;
         unsigned int     status;
-        unsigned long    total;
+        unsigned int     total;
     } async_io;
     struct
     {
@@ -4227,7 +4227,7 @@ struct add_completion_request
     obj_handle_t  handle;
     apc_param_t   ckey;
     apc_param_t   cvalue;
-    unsigned long information;
+    unsigned int  information;
     unsigned int  status;
 };
 struct add_completion_reply
@@ -4247,7 +4247,7 @@ struct remove_completion_reply
     struct reply_header __header;
     apc_param_t   ckey;
     apc_param_t   cvalue;
-    unsigned long information;
+    unsigned int  information;
     unsigned int  status;
 };
 
@@ -4286,7 +4286,7 @@ struct add_fd_completion_request
     obj_handle_t   handle;
     apc_param_t    cvalue;
     unsigned int   status;
-    unsigned long  information;
+    unsigned int   information;
 };
 struct add_fd_completion_reply
 {
