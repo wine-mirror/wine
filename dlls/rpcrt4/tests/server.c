@@ -38,6 +38,8 @@ static HANDLE stop_event;
 
 static void (WINAPI *pNDRSContextMarshall2)(RPC_BINDING_HANDLE, NDR_SCONTEXT, void*, NDR_RUNDOWN, void*, ULONG);
 static NDR_SCONTEXT (WINAPI *pNDRSContextUnmarshall2)(RPC_BINDING_HANDLE, void*, ULONG, void*, ULONG);
+static RPC_STATUS (WINAPI *pRpcServerRegisterIfEx)(RPC_IF_HANDLE,UUID*, RPC_MGR_EPV*, unsigned int,
+                   unsigned int,RPC_IF_CALLBACK_FN*);
 
 static void InitFunctionPointers(void)
 {
@@ -45,6 +47,7 @@ static void InitFunctionPointers(void)
 
     pNDRSContextMarshall2 = (void *)GetProcAddress(hrpcrt4, "NDRSContextMarshall2");
     pNDRSContextUnmarshall2 = (void *)GetProcAddress(hrpcrt4, "NDRSContextUnmarshall2");
+    pRpcServerRegisterIfEx = (void *)GetProcAddress(hrpcrt4, "RpcServerRegisterIfEx");
 }
 
 void __RPC_FAR *__RPC_USER
@@ -1288,8 +1291,6 @@ server(void)
   static unsigned char np[] = "ncacn_np";
   static unsigned char pipe[] = PIPE;
   RPC_STATUS status, iptcp_status, np_status;
-  RPC_STATUS (RPC_ENTRY *pRpcServerRegisterIfEx)(RPC_IF_HANDLE,UUID*,
-    RPC_MGR_EPV*, unsigned int,unsigned int,RPC_IF_CALLBACK_FN*);
   DWORD ret;
 
   iptcp_status = RpcServerUseProtseqEp(iptcp, 20, port, NULL);
@@ -1300,7 +1301,6 @@ server(void)
   else
     ok(np_status == RPC_S_OK, "RpcServerUseProtseqEp(ncacn_np) failed with status %ld\n", np_status);
 
-  pRpcServerRegisterIfEx = (void *)GetProcAddress(GetModuleHandle("rpcrt4.dll"), "RpcServerRegisterIfEx");
   if (pRpcServerRegisterIfEx)
   {
     trace("Using RpcServerRegisterIfEx\n");
