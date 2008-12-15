@@ -822,10 +822,8 @@ static void shader_color_correction(IWineD3DBaseShaderImpl *shader,
     device->shader_backend->shader_color_correction(arg, fixup);
 }
 
-/** Shared code in order to generate the bulk of the shader string.
-    Use the shader_header_fct & shader_footer_fct to add strings
-    that are specific to pixel or vertex functions
-    NOTE: A description of how to parse tokens can be found on msdn */
+/* Shared code in order to generate the bulk of the shader string.
+ * NOTE: A description of how to parse tokens can be found on msdn */
 void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
         const shader_reg_maps* reg_maps, CONST DWORD* pFunction)
 {
@@ -835,8 +833,8 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
     const SHADER_HANDLER *handler_table = device->shader_backend->shader_instruction_handler_table;
     DWORD shader_version = reg_maps->shader_version;
     const DWORD *pToken = pFunction;
-    const SHADER_OPCODE *curOpcode = NULL;
-    SHADER_HANDLER hw_fct = NULL;
+    const SHADER_OPCODE *curOpcode;
+    SHADER_HANDLER hw_fct;
     DWORD i;
     SHADER_OPCODE_ARG hw_arg;
 
@@ -846,99 +844,94 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
     hw_arg.reg_maps = reg_maps;
     This->baseShader.parse_state.current_row = 0;
 
-    /* Second pass, process opcodes */
-    if (NULL != pToken) {
-        while (WINED3DPS_END() != *pToken) {
+    if (!pToken) return;
 
-            /* Skip version token */
-            if (shader_is_version_token(*pToken)) {
-                ++pToken;
-                continue;
-            }
-
-            /* Skip comment tokens */
-            if (shader_is_comment(*pToken)) {
-                DWORD comment_len = (*pToken & WINED3DSI_COMMENTSIZE_MASK) >> WINED3DSI_COMMENTSIZE_SHIFT;
-                ++pToken;
-                TRACE("#%s\n", (const char*)pToken);
-                pToken += comment_len;
-                continue;
-            }
-
-            /* Read opcode */
-            hw_arg.opcode_token = *pToken++;
-            curOpcode = shader_get_opcode(opcode_table, shader_version, hw_arg.opcode_token);
-
-            /* Select handler */
-            if (curOpcode == NULL)
-                hw_fct = NULL;
-            else
-                hw_fct = handler_table[curOpcode->handler_idx];
-
-            /* Unknown opcode and its parameters */
-            if (NULL == curOpcode) {
-                FIXME("Unrecognized opcode: token=0x%08x\n", hw_arg.opcode_token);
-                pToken += shader_skip_unrecognized(pToken, shader_version);
-
-            /* Nothing to do */
-            } else if (WINED3DSIO_DCL == curOpcode->opcode ||
-                       WINED3DSIO_NOP == curOpcode->opcode ||
-                       WINED3DSIO_DEF == curOpcode->opcode ||
-                       WINED3DSIO_DEFI == curOpcode->opcode ||
-                       WINED3DSIO_DEFB == curOpcode->opcode ||
-                       WINED3DSIO_PHASE == curOpcode->opcode ||
-                       WINED3DSIO_RET == curOpcode->opcode) {
-
-                pToken += shader_skip_opcode(curOpcode, hw_arg.opcode_token, shader_version);
-
-            /* If a generator function is set for current shader target, use it */
-            } else if (hw_fct != NULL) {
-
-                hw_arg.opcode = curOpcode;
-
-                /* Destination token */
-                if (curOpcode->dst_token) {
-
-                    DWORD param, addr_token = 0;
-                    pToken += shader_get_param(pToken, shader_version, &param, &addr_token);
-                    hw_arg.dst = param;
-                    hw_arg.dst_addr = addr_token;
-                }
-
-                /* Predication token */
-                if (hw_arg.opcode_token & WINED3DSHADER_INSTRUCTION_PREDICATED) 
-                    hw_arg.predicate = *pToken++;
-
-                /* Other source tokens */
-                for (i = 0; i < (curOpcode->num_params - curOpcode->dst_token); i++) {
-
-                    DWORD param, addr_token = 0; 
-                    pToken += shader_get_param(pToken, shader_version, &param, &addr_token);
-                    hw_arg.src[i] = param;
-                    hw_arg.src_addr[i] = addr_token;
-                }
-
-                /* Call appropriate function for output target */
-                hw_fct(&hw_arg);
-
-                /* Add color correction if needed */
-                shader_color_correction(This, device, &hw_arg, shader_version);
-
-                /* Process instruction modifiers for GLSL apps ( _sat, etc. ) */
-                /* FIXME: This should be internal to the shader backend.
-                 * Also, right now this is the only reason "shader_mode" exists. */
-                if (This->baseShader.shader_mode == SHADER_GLSL)
-                    shader_glsl_add_instruction_modifiers(&hw_arg);
-
-            /* Unhandled opcode */
-            } else {
-
-                FIXME("Can't handle opcode %s in hwShader\n", curOpcode->name);
-                pToken += shader_skip_opcode(curOpcode, hw_arg.opcode_token, shader_version);
-            }
+    while (WINED3DPS_END() != *pToken)
+    {
+        /* Skip version token */
+        if (shader_is_version_token(*pToken))
+        {
+            ++pToken;
+            continue;
         }
-        /* TODO: What about result.depth? */
 
+        /* Skip comment tokens */
+        if (shader_is_comment(*pToken))
+        {
+            pToken += (*pToken & WINED3DSI_COMMENTSIZE_MASK) >> WINED3DSI_COMMENTSIZE_SHIFT;
+            ++pToken;
+            continue;
+        }
+
+        /* Read opcode */
+        hw_arg.opcode_token = *pToken++;
+        curOpcode = shader_get_opcode(opcode_table, shader_version, hw_arg.opcode_token);
+
+        /* Unknown opcode and its parameters */
+        if (!curOpcode)
+        {
+            FIXME("Unrecognized opcode: token=0x%08x\n", hw_arg.opcode_token);
+            pToken += shader_skip_unrecognized(pToken, shader_version);
+            continue;
+        }
+
+        /* Nothing to do */
+        if (WINED3DSIO_DCL == curOpcode->opcode
+                || WINED3DSIO_NOP == curOpcode->opcode
+                || WINED3DSIO_DEF == curOpcode->opcode
+                || WINED3DSIO_DEFI == curOpcode->opcode
+                || WINED3DSIO_DEFB == curOpcode->opcode
+                || WINED3DSIO_PHASE == curOpcode->opcode
+                || WINED3DSIO_RET == curOpcode->opcode)
+        {
+            pToken += shader_skip_opcode(curOpcode, hw_arg.opcode_token, shader_version);
+            continue;
+        }
+
+        /* Select handler */
+        hw_fct = handler_table[curOpcode->handler_idx];
+
+        /* Unhandled opcode */
+        if (!hw_fct)
+        {
+            FIXME("Can't handle opcode %s in hwShader\n", curOpcode->name);
+            pToken += shader_skip_opcode(curOpcode, hw_arg.opcode_token, shader_version);
+            continue;
+        }
+
+        hw_arg.opcode = curOpcode;
+
+        /* Destination token */
+        if (curOpcode->dst_token)
+        {
+            DWORD param, addr_token = 0;
+            pToken += shader_get_param(pToken, shader_version, &param, &addr_token);
+            hw_arg.dst = param;
+            hw_arg.dst_addr = addr_token;
+        }
+
+        /* Predication token */
+        if (hw_arg.opcode_token & WINED3DSHADER_INSTRUCTION_PREDICATED) hw_arg.predicate = *pToken++;
+
+        /* Other source tokens */
+        for (i = 0; i < (curOpcode->num_params - curOpcode->dst_token); ++i)
+        {
+            DWORD param, addr_token = 0;
+            pToken += shader_get_param(pToken, shader_version, &param, &addr_token);
+            hw_arg.src[i] = param;
+            hw_arg.src_addr[i] = addr_token;
+        }
+
+        /* Call appropriate function for output target */
+        hw_fct(&hw_arg);
+
+        /* Add color correction if needed */
+        shader_color_correction(This, device, &hw_arg, shader_version);
+
+        /* Process instruction modifiers for GLSL apps ( _sat, etc. ) */
+        /* FIXME: This should be internal to the shader backend.
+         * Also, right now this is the only reason "shader_mode" exists. */
+        if (This->baseShader.shader_mode == SHADER_GLSL) shader_glsl_add_instruction_modifiers(&hw_arg);
     }
 }
 
