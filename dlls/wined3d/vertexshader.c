@@ -412,13 +412,10 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_GetFunction(IWineD3DVertexShader*
          * return D3DERR_MOREDATA. That's not actually true. */
         return WINED3DERR_INVALIDCALL;
     }
-    if (NULL == This->baseShader.function) { /* no function defined */
-        TRACE("(%p) : GetFunction no User Function defined using NULL to %p\n", This, pData);
-        (*(DWORD **) pData) = NULL;
-    } else {
-        TRACE("(%p) : GetFunction copying to %p\n", This, pData);
-        memcpy(pData, This->baseShader.function, This->baseShader.functionLength);
-    }
+
+    TRACE("(%p) : GetFunction copying to %p\n", This, pData);
+    memcpy(pData, This->baseShader.function, This->baseShader.functionLength);
+
     return WINED3D_OK;
 }
 
@@ -474,16 +471,9 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     This->baseShader.load_local_constsF = This->baseShader.reg_maps.usesrelconstF && !list_empty(&This->baseShader.constantsF);
 
     /* copy the function ... because it will certainly be released by application */
-    if (NULL != pFunction) {
-        void *function;
-
-        function = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->baseShader.functionLength);
-        if (!function) return E_OUTOFMEMORY;
-        memcpy(function, pFunction, This->baseShader.functionLength);
-        This->baseShader.function = function;
-    } else {
-        This->baseShader.function = NULL;
-    }
+    This->baseShader.function = HeapAlloc(GetProcessHeap(), 0, This->baseShader.functionLength);
+    if (!This->baseShader.function) return E_OUTOFMEMORY;
+    memcpy(This->baseShader.function, pFunction, This->baseShader.functionLength);
 
     return WINED3D_OK;
 }
@@ -609,12 +599,6 @@ HRESULT IWineD3DVertexShaderImpl_CompileShader(IWineD3DVertexShader *iface) {
         }
 
         deviceImpl->shader_backend->shader_destroy((IWineD3DBaseShader *) iface);
-    }
-
-    /* We don't need to compile */
-    if (!function) {
-        This->baseShader.is_compiled = TRUE;
-        return WINED3D_OK;
     }
 
     /* Generate the HW shader */

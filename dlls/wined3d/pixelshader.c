@@ -115,13 +115,10 @@ static HRESULT  WINAPI IWineD3DPixelShaderImpl_GetFunction(IWineD3DPixelShader* 
      * return D3DERR_MOREDATA. That's not actually true. */
     return WINED3DERR_INVALIDCALL;
   }
-  if (NULL == This->baseShader.function) { /* no function defined */
-    TRACE("(%p) : GetFunction no User Function defined using NULL to %p\n", This, pData);
-    (*(DWORD **) pData) = NULL;
-  } else {
-    TRACE("(%p) : GetFunction copying to %p\n", This, pData);
-    memcpy(pData, This->baseShader.function, This->baseShader.functionLength);
-  }
+
+  TRACE("(%p) : GetFunction copying to %p\n", This, pData);
+  memcpy(pData, This->baseShader.function, This->baseShader.functionLength);
+
   return WINED3D_OK;
 }
 
@@ -382,16 +379,10 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     This->baseShader.shader_mode = deviceImpl->ps_selected_mode;
 
     TRACE("(%p) : Copying the function\n", This);
-    if (NULL != pFunction) {
-        void *function;
 
-        function = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->baseShader.functionLength);
-        if (!function) return E_OUTOFMEMORY;
-        memcpy(function, pFunction, This->baseShader.functionLength);
-        This->baseShader.function = function;
-    } else {
-        This->baseShader.function = NULL;
-    }
+    This->baseShader.function = HeapAlloc(GetProcessHeap(), 0, This->baseShader.functionLength);
+    if (!This->baseShader.function) return E_OUTOFMEMORY;
+    memcpy(This->baseShader.function, pFunction, This->baseShader.functionLength);
 
     return WINED3D_OK;
 }

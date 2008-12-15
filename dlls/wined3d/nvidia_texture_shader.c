@@ -457,11 +457,8 @@ static void nvrc_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3
 
     TRACE("Setting color op for stage %d\n", stage);
 
-    if (stateblock->pixelShader && stateblock->wineD3DDevice->ps_selected_mode != SHADER_NONE &&
-        ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function) {
-        /* Using a pixel shader? Don't care for anything here, the shader applying does it */
-        return;
-    }
+    /* Using a pixel shader? Don't care for anything here, the shader applying does it */
+    if (use_ps(stateblock->wineD3DDevice)) return;
 
     if (stage != mapped_stage) WARN("Using non 1:1 mapping: %d -> %d!\n", stage, mapped_stage);
 

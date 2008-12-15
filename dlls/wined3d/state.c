@@ -2917,11 +2917,8 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 
     TRACE("Setting color op for stage %d\n", stage);
 
-    if (stateblock->pixelShader && stateblock->wineD3DDevice->ps_selected_mode != SHADER_NONE &&
-        ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function) {
-        /* Using a pixel shader? Don't care for anything here, the shader applying does it */
-        return;
-    }
+    /* Using a pixel shader? Don't care for anything here, the shader applying does it */
+    if (use_ps(stateblock->wineD3DDevice)) return;
 
     if (stage != mapped_stage) WARN("Using non 1:1 mapping: %d -> %d!\n", stage, mapped_stage);
 
@@ -4365,13 +4362,7 @@ static void streamsrc(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
     BOOL load_numbered = FALSE;
     BOOL load_named = FALSE;
 
-    if (device->vs_selected_mode != SHADER_NONE && stateblock->vertexShader &&
-        ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.function != NULL) {
-        useVertexShaderFunction = TRUE;
-    } else {
-        useVertexShaderFunction = FALSE;
-    }
-
+    useVertexShaderFunction = (device->vs_selected_mode != SHADER_NONE && stateblock->vertexShader) ? TRUE : FALSE;
 
     if(device->up_strided) {
         /* Note: this is a ddraw fixed-function code path */
@@ -4459,8 +4450,7 @@ static void streamsrc(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
 
 static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     BOOL useVertexShaderFunction = FALSE, updateFog = FALSE;
-    BOOL usePixelShaderFunction = stateblock->wineD3DDevice->ps_selected_mode != SHADER_NONE && stateblock->pixelShader
-            && ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function;
+    BOOL usePixelShaderFunction = use_ps(stateblock->wineD3DDevice);
     BOOL transformed;
     /* Some stuff is in the device until we have per context tracking */
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;

@@ -2465,14 +2465,12 @@ const StaticPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt,
 static inline BOOL use_vs(IWineD3DDeviceImpl *device) {
     return (device->vs_selected_mode != SHADER_NONE
             && device->stateBlock->vertexShader
-            && ((IWineD3DVertexShaderImpl *)device->stateBlock->vertexShader)->baseShader.function
             && !device->strided_streams.u.s.position_transformed);
 }
 
 static inline BOOL use_ps(IWineD3DDeviceImpl *device) {
     return (device->ps_selected_mode != SHADER_NONE
-            && device->stateBlock->pixelShader
-            && ((IWineD3DPixelShaderImpl *)device->stateBlock->pixelShader)->baseShader.function);
+            && device->stateBlock->pixelShader);
 }
 
 void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED3DRECT *src_rect,

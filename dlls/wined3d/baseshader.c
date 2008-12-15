@@ -216,13 +216,6 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
     memset(reg_maps->bumpmat, 0, sizeof(reg_maps->bumpmat));
     memset(reg_maps->luminanceparams, 0, sizeof(reg_maps->luminanceparams));
 
-    if (!pToken)
-    {
-        WARN("Got a NULL pFunction, returning.\n");
-        This->baseShader.functionLength = 0;
-        return WINED3D_OK;
-    }
-
     /* get_registers_used is called on every compile on some 1.x shaders, which can result
      * in stacking up a collection of local constants. Delete the old constants if existing
      */
@@ -844,8 +837,6 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
     hw_arg.reg_maps = reg_maps;
     This->baseShader.parse_state.current_row = 0;
 
-    if (!pToken) return;
-
     while (WINED3DPS_END() != *pToken)
     {
         /* Skip version token */
@@ -969,12 +960,6 @@ void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table
     DWORD i;
 
     TRACE("Parsing %p\n", pFunction);
-
-    if (!pFunction)
-    {
-        WARN("Got a NULL pFunction, returning.\n");
-        return;
-    }
 
     /* The version token is supposed to be the first token */
     if (!shader_is_version_token(*pToken))
