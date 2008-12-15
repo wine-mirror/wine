@@ -2653,7 +2653,8 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
  */
 int SPY_Init(void)
 {
-    int i, j;
+    int i;
+    UINT j;
     char buffer[1024];
     const SPY_NOTIFY *p;
     const USER_MSG *q;
@@ -2700,7 +2701,7 @@ int SPY_Init(void)
     p = &spnfy_array[0];
     j = 0xffffffff;
     while (p->name) {
-        if ((UINT)p->value > (UINT)j) {
+        if (p->value > j) {
             ERR("Notify message array out of order\n");
             ERR("  between values [%08x] %s and [%08x] %s\n",
                 j, (p-1)->name, p->value, p->name);

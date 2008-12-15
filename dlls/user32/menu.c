@@ -1111,7 +1111,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
 {
     MENUITEM *lpitem;
     HDC hdc;
-    int start, i;
+    UINT start, i;
     int orgX, orgY, maxX, maxTab, maxTabWidth, maxHeight;
 
     lppop->Width = lppop->Height = 0;
@@ -1199,7 +1199,8 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
                                   LPPOPUPMENU lppop, HWND hwndOwner )
 {
     MENUITEM *lpitem;
-    int start, i, orgX, orgY, maxY, helpPos;
+    UINT start, i, helpPos;
+    int orgX, orgY, maxY;
 
     if ((lprect == NULL) || (lppop == NULL)) return;
     if (lppop->nItems == 0) return;
@@ -1208,7 +1209,7 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
     lppop->Height = 0;
     maxY = lprect->top+1;
     start = 0;
-    helpPos = -1;
+    helpPos = ~0U;
     lppop->maxBmpSize.cx = 0;
     lppop->maxBmpSize.cy = 0;
     while (start < lppop->nItems)
@@ -1220,7 +1221,7 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
 	  /* Parse items until line break or end of menu */
 	for (i = start; i < lppop->nItems; i++, lpitem++)
 	{
-	    if ((helpPos == -1) && (lpitem->fType & MF_RIGHTJUSTIFY)) helpPos = i;
+	    if ((helpPos == ~0U) && (lpitem->fType & MF_RIGHTJUSTIFY)) helpPos = i;
 	    if ((i != start) &&
 		(lpitem->fType & (MF_MENUBREAK | MF_MENUBARBREAK))) break;
 
@@ -1246,12 +1247,11 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
 
     /* Flush right all items between the MF_RIGHTJUSTIFY and */
     /* the last item (if several lines, only move the last line) */
+    if (helpPos == ~0U) return;
     lpitem = &lppop->items[lppop->nItems-1];
     orgY = lpitem->rect.top;
     orgX = lprect->right;
     for (i = lppop->nItems - 1; i >= helpPos; i--, lpitem--) {
-        if ( (helpPos==-1) || (helpPos>i) )
-            break;				/* done */
         if (lpitem->rect.top != orgY) break;	/* Other line */
         if (lpitem->rect.right >= orgX) break;	/* Too far right already */
         lpitem->rect.left += orgX - lpitem->rect.right;
@@ -2671,7 +2671,7 @@ static LRESULT MENU_DoNextMenu( MTRACKER* pmt, UINT vk, UINT wFlags )
        icons such as MDI maximize, restore or close)             */
     else if ((vk == VK_RIGHT) && !IS_SYSTEM_MENU(menu))
     {
-        int i = menu->FocusedItem + 1;
+        UINT i = menu->FocusedItem + 1;
         while (i < menu->nItems) {
             if ((menu->items[i].wID >= SC_SIZE &&
                  menu->items[i].wID <= SC_RESTORE)) {
