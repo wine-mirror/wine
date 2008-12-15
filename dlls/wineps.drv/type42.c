@@ -166,7 +166,7 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
       "currentdict end dup /FontName get exch definefont pop\n";
 
 
-    t42 = HeapAlloc(GetProcessHeap(), 0, sizeof(*t42));
+    t42 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*t42));
     memcpy(t42->tables, tables_templ, sizeof(tables_templ));
     t42->loca_tab = t42->glyf_tab = t42->head_tab = t42->hmtx_tab = -1;
     t42->emsize = emsize;
