@@ -1470,7 +1470,6 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
       memset(&parser, 0, sizeof parser);
       RTFSetEditStream(&parser, &inStream);
       parser.rtfFormat = format&(SF_TEXT|SF_RTF);
-      parser.hwndEdit = editor->hWnd;
       parser.editor = editor;
       parser.style = style;
       WriterInit(&parser);
