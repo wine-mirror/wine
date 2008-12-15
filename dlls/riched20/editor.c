@@ -2182,7 +2182,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
 /* Process the message and calculate the new click count.
  *
  * returns: The click count if it is mouse down event, else returns 0. */
-static int ME_CalculateClickCount(HWND hWnd, UINT msg, WPARAM wParam,
+static int ME_CalculateClickCount(ME_TextEditor *editor, UINT msg, WPARAM wParam,
                                   LPARAM lParam)
 {
     static int clickNum = 0;
@@ -2204,7 +2204,9 @@ static int ME_CalculateClickCount(HWND hWnd, UINT msg, WPARAM wParam,
     {
         static MSG prevClickMsg;
         MSG clickMsg;
-        clickMsg.hwnd = hWnd;
+        /* Compare the editor instead of the hwnd so that the this
+         * can still be done for windowless richedit controls. */
+        clickMsg.hwnd = (HWND)editor;
         clickMsg.message = msg;
         clickMsg.wParam = wParam;
         clickMsg.lParam = lParam;
@@ -3596,7 +3598,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       return 0;
     SetFocus(hWnd);
     ME_LButtonDown(editor, (short)LOWORD(lParam), (short)HIWORD(lParam),
-                   ME_CalculateClickCount(hWnd, msg, wParam, lParam));
+                   ME_CalculateClickCount(editor, msg, wParam, lParam));
     SetCapture(hWnd);
     ME_LinkNotify(editor,msg,wParam,lParam);
     if (!ME_SetCursor(editor)) goto do_default;
