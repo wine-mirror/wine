@@ -3,22 +3,22 @@
 @ cdecl ??2@YAPAXI@Z(long) msvcrt.??2@YAPAXI@Z
 @ cdecl ??3@YAXPAX@Z(ptr) msvcrt.??3@YAXPAX@Z
 @ cdecl ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z(ptr) msvcrt.?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z
-@ cdecl _CIacos() msvcrt._CIacos
-@ cdecl _CIasin() msvcrt._CIasin
-@ cdecl _CIatan() msvcrt._CIatan
-@ cdecl _CIatan2() msvcrt._CIatan2
-@ cdecl _CIcos() msvcrt._CIcos
-@ cdecl _CIcosh() msvcrt._CIcosh
-@ cdecl _CIexp() msvcrt._CIexp
-@ cdecl _CIfmod() msvcrt._CIfmod
-@ cdecl _CIlog() msvcrt._CIlog
-@ cdecl _CIlog10() msvcrt._CIlog10
-@ cdecl _CIpow() msvcrt._CIpow
-@ cdecl _CIsin() msvcrt._CIsin
-@ cdecl _CIsinh() msvcrt._CIsinh
-@ cdecl _CIsqrt() msvcrt._CIsqrt
-@ cdecl _CItan() msvcrt._CItan
-@ cdecl _CItanh() msvcrt._CItanh
+@ cdecl -arch=i386 _CIacos() msvcrt._CIacos
+@ cdecl -arch=i386 _CIasin() msvcrt._CIasin
+@ cdecl -arch=i386 _CIatan() msvcrt._CIatan
+@ cdecl -arch=i386 _CIatan2() msvcrt._CIatan2
+@ cdecl -arch=i386 _CIcos() msvcrt._CIcos
+@ cdecl -arch=i386 _CIcosh() msvcrt._CIcosh
+@ cdecl -arch=i386 _CIexp() msvcrt._CIexp
+@ cdecl -arch=i386 _CIfmod() msvcrt._CIfmod
+@ cdecl -arch=i386 _CIlog() msvcrt._CIlog
+@ cdecl -arch=i386 _CIlog10() msvcrt._CIlog10
+@ cdecl -arch=i386 _CIpow() msvcrt._CIpow
+@ cdecl -arch=i386 _CIsin() msvcrt._CIsin
+@ cdecl -arch=i386 _CIsinh() msvcrt._CIsinh
+@ cdecl -arch=i386 _CIsqrt() msvcrt._CIsqrt
+@ cdecl -arch=i386 _CItan() msvcrt._CItan
+@ cdecl -arch=i386 _CItanh() msvcrt._CItanh
 @ extern _HUGE_dll msvcrt._HUGE
 @ cdecl _XcptFilter(long ptr) msvcrt._XcptFilter
 @ cdecl __GetMainArgs(ptr ptr ptr long)

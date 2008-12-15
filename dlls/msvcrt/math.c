@@ -357,29 +357,6 @@ double CDECL _CItanh(void)
   return MSVCRT_tanh(x);
 }
 
-#else /* defined(__GNUC__) && defined(__i386__) */
-
-/* The above cannot be called on non x86 platforms, stub them for linking */
-
-#define IX86_ONLY(func) double func(void) { return 0.0; }
-
-IX86_ONLY(_CIacos)
-IX86_ONLY(_CIasin)
-IX86_ONLY(_CIatan)
-IX86_ONLY(_CIatan2)
-IX86_ONLY(_CIcos)
-IX86_ONLY(_CIcosh)
-IX86_ONLY(_CIexp)
-IX86_ONLY(_CIfmod)
-IX86_ONLY(_CIlog)
-IX86_ONLY(_CIlog10)
-IX86_ONLY(_CIpow)
-IX86_ONLY(_CIsin)
-IX86_ONLY(_CIsinh)
-IX86_ONLY(_CIsqrt)
-IX86_ONLY(_CItan)
-IX86_ONLY(_CItanh)
-
 #endif /* defined(__GNUC__) && defined(__i386__) */
 
 /*********************************************************************
