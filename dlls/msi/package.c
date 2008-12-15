@@ -731,6 +731,7 @@ static MSIPACKAGE *msi_alloc_package( void )
         list_init( &package->sourcelist_info );
         list_init( &package->sourcelist_media );
 
+        package->patch = NULL;
         package->ActionFormat = NULL;
         package->LastAction = NULL;
         package->dialog = NULL;

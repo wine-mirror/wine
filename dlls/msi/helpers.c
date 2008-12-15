@@ -661,6 +661,13 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         msi_free(package->script);
     }
 
+    if (package->patch)
+    {
+        msi_free(package->patch->patchcode);
+        msi_free(package->patch->transforms);
+        msi_free(package->patch);
+    }
+
     msi_free(package->BaseURL);
     msi_free(package->PackagePath);
     msi_free(package->ProductCode);

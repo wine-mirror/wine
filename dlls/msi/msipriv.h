@@ -144,6 +144,12 @@ typedef struct tagMSIMEDIAINFO
     WCHAR source[MAX_PATH];
 } MSIMEDIAINFO;
 
+typedef struct tagMSIPATCHINFO
+{
+    LPWSTR patchcode;
+    LPWSTR transforms;
+} MSIPATCHINFO;
+
 typedef struct _column_info
 {
     LPCWSTR table;
@@ -294,6 +300,7 @@ typedef struct tagMSIPACKAGE
 {
     MSIOBJECTHDR hdr;
     MSIDATABASE *db;
+    MSIPATCHINFO *patch;
     struct list components;
     struct list features;
     struct list files;

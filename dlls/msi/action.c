@@ -490,18 +490,29 @@ static UINT msi_parse_patch_summary( MSIPACKAGE *package, MSIDATABASE *patch_db 
     if (!si)
         return ERROR_FUNCTION_FAILED;
 
-    msi_check_patch_applicable( package, si );
+    if (msi_check_patch_applicable( package, si ) != ERROR_SUCCESS)
+    {
+        TRACE("Patch not applicable\n");
+        return ERROR_SUCCESS;
+    }
+
+    package->patch = msi_alloc(sizeof(MSIPATCHINFO));
+    if (!package->patch)
+        return ERROR_OUTOFMEMORY;
+
+    package->patch->patchcode = msi_suminfo_dup_string(si, PID_REVNUMBER);
+    if (!package->patch->patchcode)
+        return ERROR_OUTOFMEMORY;
 
     /* enumerate the substorage */
     str = msi_suminfo_dup_string( si, PID_LASTAUTHOR );
+    package->patch->transforms = str;
+
     substorage = msi_split_string( str, ';' );
     for ( i = 0; substorage && substorage[i] && r == ERROR_SUCCESS; i++ )
         r = msi_apply_substorage_transform( package, patch_db, substorage[i] );
+
     msi_free( substorage );
-    msi_free( str );
-
-    /* FIXME: parse the sources in PID_REVNUMBER and do something with them... */
-
     msiobj_release( &si->hdr );
 
     return r;
@@ -3568,6 +3579,39 @@ static BOOL msi_check_unpublish(MSIPACKAGE *package)
     return TRUE;
 }
 
+static UINT msi_publish_patch(MSIPACKAGE *package, HKEY prodkey, HKEY hudkey)
+{
+    WCHAR patch_squashed[GUID_SIZE];
+    HKEY patches;
+    LONG res;
+    UINT r = ERROR_FUNCTION_FAILED;
+
+    static const WCHAR szPatches[] = {'P','a','t','c','h','e','s',0};
+
+    res = RegCreateKeyExW(prodkey, szPatches, 0, NULL, 0, KEY_ALL_ACCESS, NULL,
+                          &patches, NULL);
+    if (res != ERROR_SUCCESS)
+        return ERROR_FUNCTION_FAILED;
+
+    squash_guid(package->patch->patchcode, patch_squashed);
+
+    res = RegSetValueExW(patches, szPatches, 0, REG_MULTI_SZ,
+                         (const BYTE *)patch_squashed,
+                         (lstrlenW(patch_squashed) + 1) * sizeof(WCHAR));
+    if (res != ERROR_SUCCESS)
+        goto done;
+
+    res = RegSetValueExW(patches, patch_squashed, 0, REG_SZ,
+                         (const BYTE *)package->patch->transforms,
+                         (lstrlenW(package->patch->transforms) + 1) * sizeof(WCHAR));
+    if (res == ERROR_SUCCESS)
+        r = ERROR_SUCCESS;
+
+done:
+    RegCloseKey(patches);
+    return r;
+}
+
 /*
  * 99% of the work done here is only done for 
  * advertised installs. However this is where the
@@ -3597,6 +3641,13 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     rc = msi_publish_upgrade_code(package);
     if (rc != ERROR_SUCCESS)
         goto end;
+
+    if (package->patch)
+    {
+        rc = msi_publish_patch(package, hukey, hudkey);
+        if (rc != ERROR_SUCCESS)
+            goto end;
+    }
 
     rc = msi_publish_product_properties(package, hukey);
     if (rc != ERROR_SUCCESS)
