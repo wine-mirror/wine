@@ -1527,11 +1527,11 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC 
     TRACE("(%p)->(%p)\n",This,hDC);
 
     if (!(This->Flags & SFLAG_DCINUSE))
-        return WINED3DERR_INVALIDCALL;
+        return WINEDDERR_NODC;
 
     if (This->hDC !=hDC) {
         WARN("Application tries to release an invalid DC(%p), surface dc is %p\n", hDC, This->hDC);
-        return WINED3DERR_INVALIDCALL;
+        return WINEDDERR_NODC;
     }
 
     if((This->Flags & SFLAG_PBO) && This->resource.allocatedMemory) {

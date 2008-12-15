@@ -263,7 +263,10 @@ static HRESULT WINAPI IDirect3DSurface9Impl_ReleaseDC(LPDIRECT3DSURFACE9 iface, 
     EnterCriticalSection(&d3d9_cs);
     hr = IWineD3DSurface_ReleaseDC(This->wineD3DSurface, hdc);
     LeaveCriticalSection(&d3d9_cs);
-    return hr;
+    switch(hr) {
+        case WINEDDERR_NODC:    return WINED3DERR_INVALIDCALL;
+        default:                return hr;
+    }
 }
 
 
