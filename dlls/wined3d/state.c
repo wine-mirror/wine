@@ -4449,19 +4449,16 @@ static void streamsrc(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
 }
 
 static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    BOOL useVertexShaderFunction = FALSE, updateFog = FALSE;
+    BOOL updateFog = FALSE;
+    BOOL useVertexShaderFunction = use_vs(stateblock->wineD3DDevice);
     BOOL usePixelShaderFunction = use_ps(stateblock->wineD3DDevice);
     BOOL transformed;
     /* Some stuff is in the device until we have per context tracking */
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     BOOL wasrhw = context->last_was_rhw;
 
-    /* Shaders can be implemented using ARB_PROGRAM, GLSL, or software -
-     * here simply check whether a shader was set, or the user disabled shaders
-     */
-    if (use_vs(device)) {
-        useVertexShaderFunction = TRUE;
-
+    if (useVertexShaderFunction)
+    {
         if(((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.reg_maps.fog != context->last_was_foggy_shader) {
             updateFog = TRUE;
         }
@@ -4470,8 +4467,6 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     }
 
     transformed = device->strided_streams.u.s.position_transformed;
-    if (transformed) useVertexShaderFunction = FALSE;
-
     if(transformed != context->last_was_rhw && !useVertexShaderFunction) {
         updateFog = TRUE;
     }
