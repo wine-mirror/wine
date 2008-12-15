@@ -869,6 +869,7 @@ static void test_shader(void)
     DWORD                        hPixelShader2 = 0, hVertexShader2 = 0;
     DWORD                        hTempHandle;
     D3DCAPS8                     caps;
+    DWORD fvf = D3DFVF_XYZ | D3DFVF_DIFFUSE;
     DWORD data_size;
     void *data;
 
@@ -928,7 +929,16 @@ static void test_shader(void)
     }
     IDirect3DDevice8_GetDeviceCaps(pDevice, &caps);
 
+    /* Test setting and retrieving a FVF */
+    hr = IDirect3DDevice8_SetVertexShader(pDevice, fvf);
+    ok(SUCCEEDED(hr), "IDirect3DDevice8_SetVertexShader returned %#08x\n", hr);
+    hr = IDirect3DDevice8_GetVertexShader(pDevice, &hTempHandle);
+    ok(SUCCEEDED(hr), "IDirect3DDevice8_GetVertexShader returned %#08x\n", hr);
+    ok(hTempHandle == fvf, "Vertex shader %#08x is set, expected %#08x\n", hTempHandle, fvf);
+
     /* First create a vertex shader */
+    hr = IDirect3DDevice8_SetVertexShader(pDevice, 0);
+    ok(SUCCEEDED(hr), "IDirect3DDevice8_SetVertexShader returned %#08x\n", hr);
     hr = IDirect3DDevice8_CreateVertexShader(pDevice, dwVertexDecl, simple_vs, &hVertexShader, 0);
     ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned %#08x\n", hr);
     /* Msdn says that the new vertex shader is set immediately. This is wrong, apparently */
