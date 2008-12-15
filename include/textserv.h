@@ -315,7 +315,7 @@ DECLARE_INTERFACE_(ITextHost,IUnknown)
     STDMETHOD(TxGetMaxLength)( THIS_
         DWORD* plength) PURE;
 
-    STDMETHOD(TxGetScrollbars)( THIS_
+    STDMETHOD(TxGetScrollBars)( THIS_
         DWORD* pdwScrollBar) PURE;
 
     STDMETHOD(TxGetPasswordChar)( THIS_
@@ -386,7 +386,7 @@ DECLARE_INTERFACE_(ITextHost,IUnknown)
 #define ITextHost_TxGetSysColor(p,a) (p)->lpVtbl->TxGetSysColor(p,a)
 #define ITextHost_TxGetBackStyle(p,a) (p)->lpVtbl->TxGetBackStyle(p,a)
 #define ITextHost_TxGetMaxLength(p,a) (p)->lpVtbl->TxGetMaxLength(p,a)
-#define ITextHost_TxGetScrollbars(p,a) (p)->lpVtbl->TxGetScrollbars(p,a)
+#define ITextHost_TxGetScrollBars(p,a) (p)->lpVtbl->TxGetScrollBars(p,a)
 #define ITextHost_TxGetPasswordChar(p,a) (p)->lpVtbl->TxGetPasswordChar(p,a)
 #define ITextHost_TxGetAcceleratorPos(p,a) (p)->lpVtbl->TxGetAcceleratorPos(p,a)
 #define ITextHost_TxGetExtent(p,a) (p)->lpVtbl->TxGetExtent(p,a)

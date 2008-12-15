@@ -349,11 +349,11 @@ static HRESULT WINAPI ITextHostImpl_TxGetMaxLength(ITextHost *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextHostImpl_TxGetScrollbars(ITextHost *iface,
+static HRESULT WINAPI ITextHostImpl_TxGetScrollBars(ITextHost *iface,
                                              DWORD *pdwScrollBar)
 {
     ITextHostTestImpl *This = (ITextHostTestImpl *)iface;
-    TRACECALL("Call to TxGetScrollbars(%p, pdwScrollBar=%p)\n",
+    TRACECALL("Call to TxGetScrollBars(%p, pdwScrollBar=%p)\n",
                This, pdwScrollBar);
     return E_NOTIMPL;
 }
@@ -475,7 +475,7 @@ static ITextHostVtbl itextHostVtbl = {
     ITextHostImpl_TxGetSysColor,
     ITextHostImpl_TxGetBackStyle,
     ITextHostImpl_TxGetMaxLength,
-    ITextHostImpl_TxGetScrollbars,
+    ITextHostImpl_TxGetScrollBars,
     ITextHostImpl_TxGetPasswordChar,
     ITextHostImpl_TxGetAcceleratorPos,
     ITextHostImpl_TxGetExtent,
