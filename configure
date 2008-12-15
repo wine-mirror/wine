@@ -25781,6 +25781,14 @@ dlls/pdh/tests/Makefile: dlls/pdh/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/pdh/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/pidgen/Makefile"
+test "x$enable_pidgen" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	pidgen"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/pidgen/Makefile: dlls/pidgen/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/pidgen/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/powrprof/Makefile"
 test "x$enable_powrprof" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	powrprof"
@@ -28230,6 +28238,7 @@ do
     "dlls/opengl32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/opengl32/tests/Makefile" ;;
     "dlls/pdh/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/pdh/Makefile" ;;
     "dlls/pdh/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/pdh/tests/Makefile" ;;
+    "dlls/pidgen/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/pidgen/Makefile" ;;
     "dlls/powrprof/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/powrprof/Makefile" ;;
     "dlls/printui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/printui/Makefile" ;;
     "dlls/propsys/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/propsys/Makefile" ;;
