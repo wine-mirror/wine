@@ -800,6 +800,12 @@ struct WineD3DContext {
     struct fbo_entry        *current_fbo;
     GLuint                  src_fbo;
     GLuint                  dst_fbo;
+
+    /* Extension emulation */
+    BOOL                    fog_enabled;
+    GLint                   gl_fog_source;
+    GLfloat                 fog_coord_value;
+    GLfloat                 color[4], fogstart, fogend, fogcolor[4];
 };
 
 typedef enum ContextUsage {
@@ -810,6 +816,7 @@ typedef enum ContextUsage {
 } ContextUsage;
 
 void ActivateContext(IWineD3DDeviceImpl *device, IWineD3DSurface *target, ContextUsage usage);
+WineD3DContext *getActiveContext(void);
 WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, HWND win, BOOL create_pbuffer, const WINED3DPRESENT_PARAMETERS *pPresentParms);
 void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context);
 void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource, WINED3DRESOURCETYPE type);
