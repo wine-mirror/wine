@@ -4215,6 +4215,9 @@ BOOL InitAdapters(void) {
     glFlush = (void*)pwglGetProcAddress("wglFlush");
 #endif
 
+    glEnableWINE = glEnable;
+    glDisableWINE = glDisable;
+
     /* For now only one default adapter */
     {
         int iPixelFormat;

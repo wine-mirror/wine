@@ -439,14 +439,14 @@ void add_gl_compat_wrappers(WineD3D_GL_Info *gl_info) {
         if(old_fogcoord_glEnable) {
             FIXME("GL_EXT_fogcoord glEnable hook already applied\n");
         } else {
-            old_fogcoord_glEnable = glEnable;
-            glEnable = wine_glEnable;
+            old_fogcoord_glEnable = glEnableWINE;
+            glEnableWINE = wine_glEnable;
         }
         if(old_fogcoord_glDisable) {
             FIXME("GL_EXT_fogcoord glDisable hook already applied\n");
         } else {
-            old_fogcoord_glDisable = glDisable;
-            glDisable = wine_glDisable;
+            old_fogcoord_glDisable = glDisableWINE;
+            glDisableWINE = wine_glDisable;
         }
 
         if(old_fogcoord_glVertex4f) {

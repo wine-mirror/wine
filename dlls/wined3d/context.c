@@ -1142,7 +1142,7 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     glDisable(GL_DEPTH_TEST);
     checkGLcall("glDisable GL_DEPTH_TEST");
     Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ZENABLE), StateTable);
-    glDisable(GL_FOG);
+    glDisableWINE(GL_FOG);
     checkGLcall("glDisable GL_FOG");
     Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_FOGENABLE), StateTable);
     glDisable(GL_BLEND);

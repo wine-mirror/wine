@@ -983,7 +983,7 @@ void state_fog_fragpart(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 
     if (!stateblock->renderState[WINED3DRS_FOGENABLE]) {
         /* No fog? Disable it, and we're done :-) */
-        glDisable(GL_FOG);
+        glDisableWINE(GL_FOG);
         checkGLcall("glDisable GL_FOG");
         return;
     }
@@ -1112,7 +1112,7 @@ void state_fog_fragpart(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
         }
     }
 
-    glEnable(GL_FOG);
+    glEnableWINE(GL_FOG);
     checkGLcall("glEnable GL_FOG");
     if(new_source != context->fog_source) {
         context->fog_source = new_source;
