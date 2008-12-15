@@ -199,7 +199,7 @@ struct fd
     struct async_queue  *write_q;     /* async writers of this fd */
     struct async_queue  *wait_q;      /* other async waiters of this fd */
     struct completion   *completion;  /* completion object attached to this fd */
-    unsigned long        comp_key;    /* completion key to set in completion events */
+    apc_param_t          comp_key;    /* completion key to set in completion events */
 };
 
 static void fd_dump( struct object *obj, int verbose );
@@ -1940,7 +1940,7 @@ static struct fd *get_handle_fd_obj( struct process *process, obj_handle_t handl
     return fd;
 }
 
-void fd_assign_completion( struct fd *fd, struct completion **p_port, unsigned long *p_key )
+void fd_assign_completion( struct fd *fd, struct completion **p_port, apc_param_t *p_key )
 {
     *p_key = fd->comp_key;
     *p_port = fd->completion ? (struct completion *)grab_object( fd->completion ) : NULL;

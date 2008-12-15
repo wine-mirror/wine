@@ -38,6 +38,7 @@ my %formats =
     "process_id_t"  => [  4,   4,  "%04x" ],
     "thread_id_t"   => [  4,   4,  "%04x" ],
     "lparam_t"      => [  4,   4,  "%lx" ],
+    "apc_param_t"   => [  4,   4,  "%lx" ],
     "timeout_t"     => [  8,   8,  "&dump_timeout" ],
     "rectangle_t"   => [  16,  4,  "&dump_rectangle" ],
     "char_info_t"   => [  4,   2,  "&dump_char_info" ],

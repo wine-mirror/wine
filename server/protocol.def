@@ -39,6 +39,7 @@ typedef unsigned int thread_id_t;
 typedef unsigned int data_size_t;
 typedef unsigned int ioctl_code_t;
 typedef unsigned long lparam_t;
+typedef unsigned long apc_param_t;
 typedef unsigned __int64 file_pos_t;
 
 struct request_header
@@ -180,7 +181,7 @@ typedef struct
     void           *arg;           /* opaque user data to pass to callback */
     void           *apc;           /* user apc to call */
     obj_handle_t    event;         /* event to signal when done */
-    unsigned long   cvalue;        /* completion value to use for completion events */
+    apc_param_t     cvalue;        /* completion value to use for completion events */
 } async_data_t;
 
 /* structures for extra message data */
@@ -276,7 +277,7 @@ typedef union
     {
         enum apc_type    type;     /* APC_USER */
         void (__stdcall *func)(unsigned long,unsigned long,unsigned long);
-        unsigned long    args[3];  /* arguments for user function */
+        apc_param_t      args[3];  /* arguments for user function */
     } user;
     struct
     {
@@ -3031,8 +3032,8 @@ enum message_type
 /* add completion to completion port */
 @REQ(add_completion)
     obj_handle_t  handle;         /* port handle */
-    unsigned long ckey;           /* completion key */
-    unsigned long cvalue;         /* completion value */
+    apc_param_t   ckey;           /* completion key */
+    apc_param_t   cvalue;         /* completion value */
     unsigned long information;    /* IO_STATUS_BLOCK Information */
     unsigned int  status;         /* completion result */
 @END
@@ -3042,8 +3043,8 @@ enum message_type
 @REQ(remove_completion)
     obj_handle_t handle;          /* port handle */
 @REPLY
-    unsigned long ckey;           /* completion key */
-    unsigned long cvalue;         /* completion value */
+    apc_param_t   ckey;           /* completion key */
+    apc_param_t   cvalue;         /* completion value */
     unsigned long information;    /* IO_STATUS_BLOCK Information */
     unsigned int  status;         /* completion result */
 @END
@@ -3061,14 +3062,14 @@ enum message_type
 @REQ(set_completion_info)
     obj_handle_t  handle;         /* object handle */
     obj_handle_t  chandle;        /* port handle */
-    unsigned long ckey;           /* completion key */
+    apc_param_t   ckey;           /* completion key */
 @END
 
 
 /* check for associated completion and push msg */
 @REQ(add_fd_completion)
     obj_handle_t   handle;        /* async' object */
-    unsigned long  cvalue;        /* completion value */
+    apc_param_t    cvalue;        /* completion value */
     unsigned int   status;        /* completion status */
     unsigned long  information;   /* IO_STATUS_BLOCK Information */
 @END

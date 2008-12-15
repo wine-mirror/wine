@@ -43,7 +43,7 @@ struct async
     unsigned int         timeout_status;  /* status to report upon timeout */
     struct event        *event;
     struct completion   *completion;
-    unsigned long        comp_key;
+    apc_param_t          comp_key;
     async_data_t         data;            /* data for async I/O call */
 };
 
@@ -266,8 +266,8 @@ void async_set_result( struct object *obj, unsigned int status, unsigned long to
             memset( &data, 0, sizeof(data) );
             data.type         = APC_USER;
             data.user.func    = async->data.apc;
-            data.user.args[0] = (unsigned long)async->data.arg;
-            data.user.args[1] = (unsigned long)async->data.iosb;
+            data.user.args[0] = (apc_param_t)async->data.arg;
+            data.user.args[1] = (apc_param_t)async->data.iosb;
             data.user.args[2] = 0;
             thread_queue_apc( async->thread, NULL, &data );
         }

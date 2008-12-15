@@ -23,6 +23,7 @@ typedef unsigned int thread_id_t;
 typedef unsigned int data_size_t;
 typedef unsigned int ioctl_code_t;
 typedef unsigned long lparam_t;
+typedef unsigned long apc_param_t;
 typedef unsigned __int64 file_pos_t;
 
 struct request_header
@@ -164,7 +165,7 @@ typedef struct
     void           *arg;
     void           *apc;
     obj_handle_t    event;
-    unsigned long   cvalue;
+    apc_param_t     cvalue;
 } async_data_t;
 
 
@@ -260,7 +261,7 @@ typedef union
     {
         enum apc_type    type;
         void (__stdcall *func)(unsigned long,unsigned long,unsigned long);
-        unsigned long    args[3];
+        apc_param_t      args[3];
     } user;
     struct
     {
@@ -4224,8 +4225,8 @@ struct add_completion_request
 {
     struct request_header __header;
     obj_handle_t  handle;
-    unsigned long ckey;
-    unsigned long cvalue;
+    apc_param_t   ckey;
+    apc_param_t   cvalue;
     unsigned long information;
     unsigned int  status;
 };
@@ -4244,8 +4245,8 @@ struct remove_completion_request
 struct remove_completion_reply
 {
     struct reply_header __header;
-    unsigned long ckey;
-    unsigned long cvalue;
+    apc_param_t   ckey;
+    apc_param_t   cvalue;
     unsigned long information;
     unsigned int  status;
 };
@@ -4270,7 +4271,7 @@ struct set_completion_info_request
     struct request_header __header;
     obj_handle_t  handle;
     obj_handle_t  chandle;
-    unsigned long ckey;
+    apc_param_t   ckey;
 };
 struct set_completion_info_reply
 {
@@ -4283,7 +4284,7 @@ struct add_fd_completion_request
 {
     struct request_header __header;
     obj_handle_t   handle;
-    unsigned long  cvalue;
+    apc_param_t    cvalue;
     unsigned int   status;
     unsigned long  information;
 };
