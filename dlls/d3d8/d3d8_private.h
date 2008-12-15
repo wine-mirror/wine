@@ -170,7 +170,7 @@ typedef void * shader_handle;
 struct FvfToDecl
 {
     DWORD fvf;
-    IWineD3DVertexDeclaration *decl;
+    struct IDirect3DVertexDeclaration8 *decl;
 };
 
 struct IDirect3DDevice8Impl
