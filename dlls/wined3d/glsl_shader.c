@@ -544,7 +544,8 @@ static void shader_glsl_update_float_pixel_constants(IWineD3DDevice *iface, UINT
 
 /** Generate the variable & register declarations for the GLSL output target */
 static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const shader_reg_maps *reg_maps,
-        SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_info)
+        SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_info,
+        const struct ps_compile_args *ps_args)
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
@@ -618,7 +619,7 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
             ps_impl->numbumpenvmatconsts++;
         }
 
-        if(device->stateBlock->renderState[WINED3DRS_SRGBWRITEENABLE]) {
+        if(ps_args->srgb_correction) {
             shader_addline(buffer, "const vec4 srgb_mul_low = vec4(%f, %f, %f, %f);\n",
                             srgb_mul_low, srgb_mul_low, srgb_mul_low, srgb_mul_low);
             shader_addline(buffer, "const vec4 srgb_comparison = vec4(%f, %f, %f, %f);\n",
@@ -3633,16 +3634,11 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface, SHADER_BU
     }
 
     /* Base Declarations */
-    shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION);
+    shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION, args);
 
     /* Pack 3.0 inputs */
-    if (reg_maps->shader_version >= WINED3DPS_VERSION(3,0))
-    {
-        if(((IWineD3DDeviceImpl *) This->baseShader.device)->strided_streams.u.s.position_transformed) {
-            pshader_glsl_input_pack(buffer, This->semantics_in, iface, pretransformed);
-        } else if(!use_vs((IWineD3DDeviceImpl *) This->baseShader.device)) {
-            pshader_glsl_input_pack(buffer, This->semantics_in, iface, fixedfunction);
-        }
+    if (reg_maps->shader_version >= WINED3DPS_VERSION(3,0) && args->vp_mode != vertexshader) {
+        pshader_glsl_input_pack(buffer, This->semantics_in, iface, args->vp_mode);
     }
 
     /* Base Shader Body */
@@ -3708,7 +3704,7 @@ static void shader_glsl_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUF
     shader_addline(buffer, "#version 120\n");
 
     /* Base Declarations */
-    shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION);
+    shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION, NULL);
 
     /* Base Shader Body */
     shader_generate_main( (IWineD3DBaseShader*) This, buffer, reg_maps, function);
