@@ -839,12 +839,6 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
 
     checkGLcall("glClear");
 
-    glColor3f(1.0, 1.0, 1.0);
-    checkGLcall("glColor3f");
-
-    glEnable(GL_LIGHTING);
-    checkGLcall("glEnable");
-
     glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
     checkGLcall("glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);");
 
