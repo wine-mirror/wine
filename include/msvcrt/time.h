@@ -60,6 +60,7 @@ struct tm {
 extern "C" {
 #endif
 
+#ifdef __i386__
 #define _daylight (*__p__daylight())
 #define _dstbias (*__p__dstbias())
 #define _timezone (*__p__timezone())
@@ -69,6 +70,12 @@ int *__p__daylight(void);
 long *__p__dstbias(void);
 long *__p__timezone(void);
 char **__p__tzname(void);
+#else
+extern int _daylight;
+extern long _dstbias;
+extern long _timezone;
+extern char *_tzname;
+#endif
 
 unsigned    _getsystime(struct tm*);
 unsigned    _setsystime(struct tm*,unsigned);

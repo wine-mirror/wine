@@ -43,8 +43,12 @@ typedef struct _heapinfo
 } _HEAPINFO;
 #endif /* _HEAPINFO_DEFINED */
 
+#ifdef __i386__
 extern unsigned int* __p__amblksiz(void);
 #define _amblksiz (*__p__amblksiz());
+#else
+extern unsigned int _amblksiz;
+#endif
 
 #ifdef __cplusplus
 extern "C" {

@@ -76,39 +76,55 @@ typedef struct _ldiv_t {
 extern "C" {
 #endif
 
-extern unsigned int*         __p__osver(void);
-extern unsigned int*         __p__winver(void);
-extern unsigned int*         __p__winmajor(void);
-extern unsigned int*         __p__winminor(void);
-#define _osver             (*__p__osver())
-#define _winver            (*__p__winver())
-#define _winmajor          (*__p__winmajor())
-#define _winminor          (*__p__winminor())
+#ifdef __i386__
 
+extern unsigned int*         __p__osver(void);
+#define _osver             (*__p__osver())
+extern unsigned int*         __p__winver(void);
+#define _winver            (*__p__winver())
+extern unsigned int*         __p__winmajor(void);
+#define _winmajor          (*__p__winmajor())
+extern unsigned int*         __p__winminor(void);
+#define _winminor          (*__p__winminor())
 extern int*                  __p___argc(void);
+#define __argc             (*__p___argc())
 extern char***               __p___argv(void);
-extern wchar_t***    __p___wargv(void);
+#define __argv             (*__p___argv())
+extern wchar_t***            __p___wargv(void);
+#define __wargv            (*__p___wargv())
 extern char***               __p__environ(void);
-extern wchar_t***    __p__wenviron(void);
-extern int*                  ___mb_cur_max_func(void);
-extern unsigned long*        __doserrno(void);
+#define _environ           (*__p__environ())
+extern wchar_t***            __p__wenviron(void);
+#define _wenviron          (*__p__wenviron())
 extern unsigned int*         __p__fmode(void);
+#define _fmode             (*__p__fmode())
+
+#else  /* __i386__ */
+
+extern unsigned int _osver;
+extern unsigned int _winver;
+extern unsigned int _winmajor;
+extern unsigned int _winminor;
+extern int __argc;
+extern char **__argv;
+extern wchar_t **__wargv;
+extern char **_environ;
+extern wchar_t **_wenviron;
+extern unsigned int _fmode;
+
+#endif  /* __i386__ */
+
+extern int*             ___mb_cur_max_func(void);
+#define __mb_cur_max  (*___mb_cur_max_func())
+extern unsigned long*   __doserrno(void);
+#define _doserrno     (*__doserrno())
+extern int*             _errno(void);
+#define errno         (*_errno())
+
 /* FIXME: We need functions to access these:
  * int _sys_nerr;
  * char** _sys_errlist;
  */
-#define __argc             (*__p___argc())
-#define __argv             (*__p___argv())
-#define __wargv            (*__p___wargv())
-#define _environ           (*__p__environ())
-#define _wenviron          (*__p__wenviron())
-#define __mb_cur_max       (*___mb_cur_max_func())
-#define _doserrno          (*__doserrno())
-#define _fmode             (*_fmode)
-
-
-extern int*           _errno(void);
-#define errno        (*_errno())
 
 
 typedef int (*_onexit_t)(void);

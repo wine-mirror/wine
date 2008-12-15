@@ -26,8 +26,12 @@
 extern "C" {
 #endif
 
+#ifdef __i386__
 unsigned char* __p__mbctype(void);
 #define _mbctype                   (__p__mbctype())
+#else
+extern unsigned char MSVCRT_mbctype[];
+#endif
 
 #define _MS     0x01
 #define _MP     0x02
