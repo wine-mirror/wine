@@ -1988,7 +1988,8 @@ static INSTALLSTATE MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
         state = INSTALLSTATE_ABSENT;
 
         if ((MSIREG_OpenInstallProps(szProduct, szLocalSid, &hkey, FALSE) == ERROR_SUCCESS ||
-            MSIREG_OpenUserDataProductKey(szProduct, NULL, &hkey, FALSE) == ERROR_SUCCESS) &&
+            MSIREG_OpenUserDataProductKey(szProduct, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                          NULL, &hkey, FALSE) == ERROR_SUCCESS) &&
             msi_reg_get_val_dword(hkey, wininstaller, &version) &&
             GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES)
         {

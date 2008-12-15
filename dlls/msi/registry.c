@@ -799,8 +799,8 @@ UINT MSIREG_DeleteUserDataComponentKey(LPCWSTR szComponent, LPCWSTR szUserSid)
     return RegDeleteTreeW(HKEY_LOCAL_MACHINE, keypath);
 }
 
-UINT MSIREG_OpenUserDataProductKey(LPCWSTR szProduct, LPCWSTR szUserSid,
-                                   HKEY *key, BOOL create)
+UINT MSIREG_OpenUserDataProductKey(LPCWSTR szProduct, MSIINSTALLCONTEXT dwContext,
+                                   LPCWSTR szUserSid, HKEY *key, BOOL create)
 {
     UINT rc;
     WCHAR squished_pc[GUID_SIZE];
@@ -812,7 +812,11 @@ UINT MSIREG_OpenUserDataProductKey(LPCWSTR szProduct, LPCWSTR szUserSid,
         return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
-    if (!szUserSid)
+    if (dwContext == MSIINSTALLCONTEXT_MACHINE)
+        sprintfW(keypath, szUserDataProd_fmt, szLocalSid, squished_pc);
+    else if (szUserSid)
+        sprintfW(keypath, szUserDataProd_fmt, usersid, squished_pc);
+    else
     {
         rc = get_user_sid(&usersid);
         if (rc != ERROR_SUCCESS || !usersid)
@@ -824,8 +828,6 @@ UINT MSIREG_OpenUserDataProductKey(LPCWSTR szProduct, LPCWSTR szUserSid,
         sprintfW(keypath, szUserDataProd_fmt, usersid, squished_pc);
         LocalFree(usersid);
     }
-    else
-        sprintfW(keypath, szUserDataProd_fmt, szUserSid, squished_pc);
 
     if (create)
         rc = RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
@@ -1679,7 +1681,8 @@ static UINT msi_get_patch_state(LPCWSTR prodcode, LPCWSTR usersid,
     *state = MSIPATCHSTATE_INVALID;
 
     /* FIXME: usersid might not be current user */
-    r = MSIREG_OpenUserDataProductKey(prodcode, NULL, &prod, FALSE);
+    r = MSIREG_OpenUserDataProductKey(prodcode, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      NULL, &prod, FALSE);
     if (r != ERROR_SUCCESS)
         return ERROR_NO_MORE_ITEMS;
 
@@ -1826,7 +1829,7 @@ static UINT msi_check_product_patches(LPCWSTR prodcode, LPCWSTR usersid,
         {
             usersid = szEmpty;
 
-            if (MSIREG_OpenUserDataProductKey(prodcode, szLocalSid, &localprod, FALSE) == ERROR_SUCCESS &&
+            if (MSIREG_OpenUserDataProductKey(prodcode, context, NULL, &localprod, FALSE) == ERROR_SUCCESS &&
                 RegOpenKeyExW(localprod, szPatches, 0, KEY_READ, &localpatch) == ERROR_SUCCESS &&
                 RegOpenKeyExW(localpatch, ptr, 0, KEY_READ, &patchkey) == ERROR_SUCCESS)
             {

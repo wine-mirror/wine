@@ -776,8 +776,8 @@ extern UINT MSIREG_OpenUserComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL cr
 extern UINT MSIREG_OpenUserDataComponentKey(LPCWSTR szComponent, LPCWSTR szUserSid,
                                             HKEY *key, BOOL create);
 extern UINT MSIREG_OpenPatchesKey(LPCWSTR szPatch, HKEY* key, BOOL create);
-extern UINT MSIREG_OpenUserDataProductKey(LPCWSTR szProduct, LPCWSTR szUserSid,
-                                          HKEY* key, BOOL create);
+extern UINT MSIREG_OpenUserDataProductKey(LPCWSTR szProduct, MSIINSTALLCONTEXT dwContext,
+                                          LPCWSTR szUserSid, HKEY *key, BOOL create);
 extern UINT MSIREG_OpenCurrentUserInstallProps(LPCWSTR szProduct, HKEY* key, BOOL create);
 extern UINT MSIREG_OpenInstallProps(LPCWSTR szProduct, LPCWSTR szUserSID,
                                     HKEY *key, BOOL create);

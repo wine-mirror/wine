@@ -3589,20 +3589,10 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         goto end;
 
-    if (package->Context == MSIINSTALLCONTEXT_MACHINE)
-    {
-        rc = MSIREG_OpenUserDataProductKey(package->ProductCode, szLocalSid,
-                                           &hudkey, TRUE);
-        if (rc != ERROR_SUCCESS)
-            goto end;
-    }
-    else
-    {
-        rc = MSIREG_OpenUserDataProductKey(package->ProductCode, NULL,
-                                           &hudkey, TRUE);
-        if (rc != ERROR_SUCCESS)
-            goto end;
-    }
+    rc = MSIREG_OpenUserDataProductKey(package->ProductCode, package->Context,
+                                       NULL, &hudkey, TRUE);
+    if (rc != ERROR_SUCCESS)
+        goto end;
 
     rc = msi_publish_upgrade_code(package);
     if (rc != ERROR_SUCCESS)
