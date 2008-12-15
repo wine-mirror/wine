@@ -480,6 +480,44 @@ static UINT msi_check_patch_applicable( MSIPACKAGE *package, MSISUMMARYINFO *si 
     return ret;
 }
 
+static UINT msi_set_media_source_prop(MSIPACKAGE *package)
+{
+    MSIQUERY *view;
+    MSIRECORD *rec = NULL;
+    LPWSTR patch;
+    LPCWSTR prop;
+    UINT r;
+
+    static const WCHAR szPatch[] = {'P','A','T','C','H',0};
+    static const WCHAR query[] = {'S','E','L','E','C','T',' ',
+        '`','S','o','u','r','c','e','`',' ','F','R','O','M',' ',
+        '`','M','e','d','i','a','`',' ','W','H','E','R','E',' ',
+        '`','S','o','u','r','c','e','`',' ','I','S',' ',
+        'N','O','T',' ','N','U','L','L',0};
+
+    r = MSI_DatabaseOpenViewW(package->db, query, &view);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    r = MSI_ViewExecute(view, 0);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    if (MSI_ViewFetch(view, &rec) == ERROR_SUCCESS)
+    {
+        prop = MSI_RecordGetString(rec, 1);
+        patch = msi_dup_property(package, szPatch);
+        MSI_SetPropertyW(package, prop, patch);
+        msi_free(patch);
+    }
+
+done:
+    if (rec) msiobj_release(&rec->hdr);
+    msiobj_release(&view->hdr);
+
+    return r;
+}
+
 static UINT msi_parse_patch_summary( MSIPACKAGE *package, MSIDATABASE *patch_db )
 {
     MSISUMMARYINFO *si;
@@ -514,6 +552,8 @@ static UINT msi_parse_patch_summary( MSIPACKAGE *package, MSIDATABASE *patch_db 
 
     msi_free( substorage );
     msiobj_release( &si->hdr );
+
+    msi_set_media_source_prop(package);
 
     return r;
 }
