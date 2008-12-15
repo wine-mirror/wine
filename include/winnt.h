@@ -2261,7 +2261,7 @@ extern inline struct _TEB * WINAPI NtCurrentTeb(void)
   return teb;
 }
 #elif defined(__x86_64__) && defined(__GNUC__)
-extern inline struct _TEB * WINAPI NtCurrentTeb(void)
+static inline struct _TEB * WINAPI NtCurrentTeb(void)
 {
     struct _TEB *teb;
     __asm__(".byte 0x65\n\tmovq (0x30),%0" : "=r" (teb));

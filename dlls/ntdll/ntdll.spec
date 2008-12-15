@@ -144,7 +144,7 @@
 @ stdcall NtCreateTimer(ptr long ptr long)
 @ stub NtCreateToken
 # @ stub NtCreateWaitablePort
-@ stdcall NtCurrentTeb()
+@ stdcall -arch=i386,sparc,alpha,powerpc NtCurrentTeb()
 # @ stub NtDebugActiveProcess
 # @ stub NtDebugContinue
 @ stdcall NtDelayExecution(long ptr)

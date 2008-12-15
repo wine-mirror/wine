@@ -1465,6 +1465,10 @@ __ASM_GLOBAL_FUNC( NtCurrentTeb, ".byte 0x64\n\tmovl 0x18,%eax\n\tret" )
 
 /* Nothing needs to be done. MS C "magically" exports the inline version from winnt.h */
 
+#elif defined(__x86_64__) && defined(__GNUC__)
+
+/* not exported on x86_64 */
+
 #else
 
 /**********************************************************************/
