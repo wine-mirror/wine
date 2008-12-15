@@ -1447,6 +1447,16 @@ static UINT_PTR SHELL_execute_url( LPCWSTR lpFile, LPCWSTR wFile, LPCWSTR wcmd, 
     return retval;
 }
 
+static void do_error_dialog( UINT_PTR retval, HWND hwnd )
+{
+    WCHAR msg[2048];
+    int error_code=GetLastError();
+
+    FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, error_code, 0, msg, sizeof(msg)/sizeof(WCHAR), NULL);
+
+    MessageBoxW(hwnd, msg, NULL, MB_ICONERROR);
+}
+
 /*************************************************************************
  *	SHELL_execute [Internal]
  */
@@ -1458,7 +1468,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     static const WCHAR wHttp[] = {'h','t','t','p',':','/','/',0};
     static const DWORD unsupportedFlags =
         SEE_MASK_INVOKEIDLIST  | SEE_MASK_ICON         | SEE_MASK_HOTKEY |
-        SEE_MASK_CONNECTNETDRV | SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI |
+        SEE_MASK_CONNECTNETDRV | SEE_MASK_FLAG_DDEWAIT |
         SEE_MASK_UNICODE       | SEE_MASK_ASYNCOK      | SEE_MASK_HMONITOR;
 
     WCHAR parametersBuffer[1024], dirBuffer[MAX_PATH], wcmdBuffer[1024];
@@ -1592,6 +1602,8 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     {
         retval = SHELL_execute_class( wszApplicationName, &sei_tmp, sei,
                                       execfunc );
+        if (retval <= 32 && !(sei_tmp.fMask & SEE_MASK_FLAG_NO_UI))
+            do_error_dialog(retval, sei_tmp.hwnd);
         HeapFree(GetProcessHeap(), 0, wszApplicationName);
         if (wszParameters != parametersBuffer)
             HeapFree(GetProcessHeap(), 0, wszParameters);
@@ -1815,6 +1827,9 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         HeapFree(GetProcessHeap(), 0, wcmd);
 
     sei->hInstApp = (HINSTANCE)(retval > 32 ? 33 : retval);
+
+    if (retval <= 32 && !(sei_tmp.fMask & SEE_MASK_FLAG_NO_UI))
+        do_error_dialog(retval, sei_tmp.hwnd);
     return retval > 32;
 }
 
