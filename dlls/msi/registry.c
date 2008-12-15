@@ -837,30 +837,38 @@ UINT MSIREG_OpenUserDataProductKey(LPCWSTR szProduct, MSIINSTALLCONTEXT dwContex
     return rc;
 }
 
-UINT MSIREG_OpenUserDataPatchKey(LPWSTR patch, HKEY *key, BOOL create)
+UINT MSIREG_OpenUserDataPatchKey(LPCWSTR szPatch, MSIINSTALLCONTEXT dwContext,
+                                 HKEY *key, BOOL create)
 {
     UINT rc;
+    WCHAR squished_patch[GUID_SIZE];
     WCHAR keypath[0x200];
     LPWSTR usersid;
 
-    TRACE("\n");
+    TRACE("%s\n", debugstr_w(szPatch));
+    if (!squash_guid(szPatch, squished_patch))
+        return ERROR_FUNCTION_FAILED;
+    TRACE("squished (%s)\n", debugstr_w(squished_patch));
 
-    rc = get_user_sid(&usersid);
-    if (rc != ERROR_SUCCESS || !usersid)
+    if (dwContext == MSIINSTALLCONTEXT_MACHINE)
+        sprintfW(keypath, szUserDataPatch_fmt, szLocalSid, squished_patch);
+    else
     {
-        ERR("Failed to retrieve user SID: %d\n", rc);
-        return rc;
+        rc = get_user_sid(&usersid);
+        if (rc != ERROR_SUCCESS || !usersid)
+        {
+            ERR("Failed to retrieve user SID: %d\n", rc);
+            return rc;
+        }
+
+        sprintfW(keypath, szUserDataPatch_fmt, usersid, squished_patch);
+        LocalFree(usersid);
     }
 
-    sprintfW(keypath, szUserDataPatch_fmt, usersid, patch);
-
     if (create)
-        rc = RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
-    else
-        rc = RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+        return RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
 
-    LocalFree(usersid);
-    return rc;
+    return RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
 }
 
 UINT MSIREG_OpenInstallProps(LPCWSTR szProduct, LPCWSTR szUserSID,
@@ -1819,7 +1827,8 @@ static UINT msi_check_product_patches(LPCWSTR prodcode, LPCWSTR usersid,
             }
             else
             {
-                temp = MSIREG_OpenUserDataPatchKey(ptr, &patchkey, FALSE);
+                temp = MSIREG_OpenUserDataPatchKey(patch, context,
+                                                   &patchkey, FALSE);
                 RegCloseKey(patchkey);
                 if (temp != ERROR_SUCCESS)
                     continue;
