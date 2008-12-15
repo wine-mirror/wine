@@ -236,8 +236,8 @@
 240 stub MsiApplyMultiplePatchesW
 241 stub MsiExtractPatchXMLDataA
 242 stub MsiExtractPatchXMLDataW
-243 stub MsiGetPatchInfoExA
-244 stub MsiGetPatchInfoExW
+243 stdcall MsiGetPatchInfoExA(str str str long str ptr ptr)
+244 stdcall MsiGetPatchInfoExW(wstr wstr wstr long wstr ptr ptr)
 245 stdcall MsiEnumProductsExA(str str long long ptr ptr ptr ptr)
 246 stdcall MsiEnumProductsExW(wstr wstr long long ptr ptr ptr ptr)
 247 stdcall MsiGetProductInfoExA(str str long str ptr ptr)

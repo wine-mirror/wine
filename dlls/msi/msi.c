@@ -1190,6 +1190,28 @@ done:
     return r;
 }
 
+UINT WINAPI MsiGetPatchInfoExA(LPCSTR szPatchCode, LPCSTR szProductCode,
+                               LPCSTR szUserSid, MSIINSTALLCONTEXT dwContext,
+                               LPCSTR szProperty, LPSTR lpValue, DWORD *pcchValue)
+{
+    FIXME("(%s, %s, %s, %d, %s, %p, %p): stub!\n", debugstr_a(szPatchCode),
+          debugstr_a(szProductCode), debugstr_a(szUserSid), dwContext,
+          debugstr_a(szProperty), lpValue, pcchValue);
+
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiGetPatchInfoExW(LPCWSTR szPatchCode, LPCWSTR szProductCode,
+                               LPCWSTR szUserSid, MSIINSTALLCONTEXT dwContext,
+                               LPCWSTR szProperty, LPWSTR lpValue, DWORD *pcchValue)
+{
+    FIXME("(%s, %s, %s, %d, %s, %p, %p): stub!\n", debugstr_w(szPatchCode),
+          debugstr_w(szProductCode), debugstr_w(szUserSid), dwContext,
+          debugstr_w(szProperty), lpValue, pcchValue);
+
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 UINT WINAPI MsiEnableLogA(DWORD dwLogMode, LPCSTR szLogFile, DWORD attributes)
 {
     LPWSTR szwLogFile = NULL;
