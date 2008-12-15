@@ -33,7 +33,6 @@ unsigned char MSVCRT_mbctype[257] = { 0 };
 static int g_mbcp_is_multibyte = 0;
 
 int MSVCRT___mb_cur_max = 1;
-extern int MSVCRT___lc_collate_cp;
 
 /* It seems that the data about valid trail bytes is not available from kernel32
  * so we have to store is here. The format is the same as for lead bytes in CPINFO */
@@ -144,9 +143,9 @@ unsigned char* CDECL __p__mbctype(void)
 }
 
 /*********************************************************************
- *		__p___mb_cur_max(MSVCRT.@)
+ *		___mb_cur_max_func(MSVCRT.@)
  */
-int* CDECL __p___mb_cur_max(void)
+int* CDECL MSVCRT____mb_cur_max_func(void)
 {
   return &MSVCRT___mb_cur_max;
 }

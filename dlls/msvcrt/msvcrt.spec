@@ -84,6 +84,12 @@
 @ cdecl __RTDynamicCast(ptr long ptr ptr long) MSVCRT___RTDynamicCast
 @ cdecl __RTtypeid(ptr) MSVCRT___RTtypeid
 @ cdecl __STRINGTOLD(ptr ptr str long)
+@ stub ___lc_codepage_func
+@ stub ___lc_collate_cp_func
+@ stub ___lc_handle_func
+@ cdecl ___mb_cur_max_func() MSVCRT____mb_cur_max_func
+@ cdecl ___setlc_active_func() MSVCRT____setlc_active_func
+@ cdecl ___unguarded_readlc_active_add_func() MSVCRT____unguarded_readlc_active_add_func
 @ extern __argc MSVCRT___argc
 @ extern __argv MSVCRT___argv
 @ extern __badioinfo MSVCRT___badioinfo
@@ -110,7 +116,7 @@
 @ cdecl __p___argc()
 @ cdecl __p___argv()
 @ cdecl __p___initenv()
-@ cdecl __p___mb_cur_max()
+@ cdecl __p___mb_cur_max() MSVCRT____mb_cur_max_func
 @ cdecl __p___wargv()
 @ cdecl __p___winitenv()
 @ cdecl __p__acmdln()
@@ -125,7 +131,7 @@
 @ stub __p__mbcasemap #()
 @ cdecl __p__mbctype()
 @ cdecl __p__osver()
-@ cdecl __p__pctype()
+@ cdecl __p__pctype() MSVCRT___pctype_func
 @ cdecl __p__pgmptr()
 @ stub __p__pwctype #()
 @ cdecl __p__timezone() MSVCRT___p__timezone
@@ -136,11 +142,11 @@
 @ cdecl __p__winminor()
 @ cdecl __p__winver()
 @ cdecl __p__wpgmptr()
+@ cdecl __pctype_func() MSVCRT___pctype_func
 @ extern __pioinfo MSVCRT___pioinfo
 @ stub __pxcptinfoptrs #()
 @ cdecl __set_app_type(long) MSVCRT___set_app_type
 @ extern __setlc_active MSVCRT___setlc_active
-@ cdecl ___setlc_active_func() MSVCRT____setlc_active_func
 @ cdecl __setusermatherr(ptr) MSVCRT___setusermatherr
 @ cdecl __threadhandle() kernel32.GetCurrentThread
 @ cdecl __threadid() kernel32.GetCurrentThreadId
@@ -148,7 +154,6 @@
 @ cdecl __unDName(ptr str long ptr ptr long)
 @ cdecl __unDNameEx(ptr str long ptr ptr ptr long)
 @ extern __unguarded_readlc_active MSVCRT___unguarded_readlc_active
-@ cdecl ___unguarded_readlc_active_add_func() MSVCRT____unguarded_readlc_active_add_func
 @ extern __wargv MSVCRT___wargv
 @ cdecl __wgetmainargs(ptr ptr ptr long ptr)
 @ extern __winitenv MSVCRT___winitenv

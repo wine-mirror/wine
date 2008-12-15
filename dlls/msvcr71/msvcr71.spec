@@ -90,10 +90,10 @@
 @ cdecl __RTDynamicCast(ptr long ptr ptr long) msvcrt.__RTDynamicCast
 @ cdecl __RTtypeid(ptr) msvcrt.__RTtypeid
 @ cdecl __STRINGTOLD(ptr ptr str long) msvcrt.__STRINGTOLD
-@ stub ___lc_codepage_func
-@ stub ___lc_collate_cp_func
-@ stub ___lc_handle_func
-@ stub ___mb_cur_max_func
+@ cdecl ___lc_codepage_func() msvcrt.___lc_codepage_func
+@ cdecl ___lc_collate_cp_func() msvcrt.___lc_collate_cp_func
+@ cdecl ___lc_handle_func() msvcrt.___lc_handle_func
+@ cdecl ___mb_cur_max_func() msvcrt.___mb_cur_max_func
 @ cdecl ___setlc_active_func() msvcrt.___setlc_active_func
 @ cdecl ___unguarded_readlc_active_add_func() msvcrt.___unguarded_readlc_active_add_func
 @ extern __argc msvcrt.__argc
@@ -150,7 +150,7 @@
 @ cdecl __p__winminor() msvcrt.__p__winminor
 @ cdecl __p__winver() msvcrt.__p__winver
 @ cdecl __p__wpgmptr() msvcrt.__p__wpgmptr
-@ cdecl __pctype_func() msvcrt.__p__pctype
+@ cdecl __pctype_func() msvcrt.__pctype_func
 @ extern __pioinfo msvcrt.__pioinfo
 @ stub __pwctype_func
 @ cdecl __pxcptinfoptrs() msvcrt.__pxcptinfoptrs

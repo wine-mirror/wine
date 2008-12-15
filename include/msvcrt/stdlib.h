@@ -90,7 +90,7 @@ extern char***               __p___argv(void);
 extern wchar_t***    __p___wargv(void);
 extern char***               __p__environ(void);
 extern wchar_t***    __p__wenviron(void);
-extern int*                  __p___mb_cur_max(void);
+extern int*                  ___mb_cur_max_func(void);
 extern unsigned long*        __doserrno(void);
 extern unsigned int*         __p__fmode(void);
 /* FIXME: We need functions to access these:
@@ -102,7 +102,7 @@ extern unsigned int*         __p__fmode(void);
 #define __wargv            (*__p___wargv())
 #define _environ           (*__p__environ())
 #define _wenviron          (*__p__wenviron())
-#define __mb_cur_max       (*__p___mb_cur_max())
+#define __mb_cur_max       (*___mb_cur_max_func())
 #define _doserrno          (*__doserrno())
 #define _fmode             (*_fmode)
 

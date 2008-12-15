@@ -100,6 +100,7 @@
 @ cdecl __RTDynamicCast(ptr long ptr ptr long) msvcrt.__RTDynamicCast
 @ cdecl __RTtypeid(ptr) msvcrt.__RTtypeid
 @ cdecl __STRINGTOLD(ptr ptr str long) msvcrt.__STRINGTOLD
+@ cdecl ___mb_cur_max_func() msvcrt.___mb_cur_max_func
 @ extern __argc msvcrt.__argc
 @ extern __argv msvcrt.__argv
 @ extern __badioinfo msvcrt.__badioinfo
@@ -151,6 +152,7 @@
 @ cdecl __p__winminor() msvcrt.__p__winminor
 @ cdecl __p__winver() msvcrt.__p__winver
 @ cdecl __p__wpgmptr() msvcrt.__p__wpgmptr
+@ cdecl __pctype_func() msvcrt.__pctype_func
 @ extern __pioinfo msvcrt.__pioinfo
 @ cdecl __pxcptinfoptrs() msvcrt.__pxcptinfoptrs
 @ cdecl __set_app_type(long) msvcrt.__set_app_type

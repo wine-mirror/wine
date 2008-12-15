@@ -60,14 +60,10 @@ WORD MSVCRT_current_ctype[257];
  */
 WORD* MSVCRT__pctype = MSVCRT_current_ctype + 1;
 
-/* mbctype data */
-extern int MSVCRT___mb_cur_max;
-extern LCID MSVCRT_current_lc_all_lcid;
-
 /*********************************************************************
- *		__p__pctype (MSVCRT.@)
+ *		__pctype_func (MSVCRT.@)
  */
-WORD** CDECL __p__pctype(void)
+WORD** CDECL MSVCRT___pctype_func(void)
 {
   return &MSVCRT__pctype;
 }

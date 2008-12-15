@@ -113,6 +113,12 @@ typedef struct __thread_data thread_data_t;
 extern thread_data_t *msvcrt_get_thread_data(void);
 
 extern int MSVCRT___lc_codepage;
+extern int MSVCRT___lc_collate_cp;
+extern int MSVCRT___mb_cur_max;
+extern LCID MSVCRT_current_lc_all_lcid;
+extern WORD MSVCRT__ctype [257];
+extern WORD MSVCRT_current_ctype[257];
+extern WORD* MSVCRT__pctype;
 
 void   msvcrt_set_errno(int);
 
