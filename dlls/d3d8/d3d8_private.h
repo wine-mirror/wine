@@ -531,6 +531,7 @@ typedef struct {
     DWORD elements_size; /* Size of elements, in bytes */
 
     IWineD3DVertexDeclaration *wined3d_vertex_declaration;
+    DWORD shader_handle;
 } IDirect3DVertexDeclaration8Impl;
 
 
@@ -600,7 +601,6 @@ struct IDirect3DVertexShader8Impl {
   const IDirect3DVertexShader8Vtbl *lpVtbl;
   LONG ref;
 
-  DWORD                             handle;
   IDirect3DVertexDeclaration8      *vertex_declaration;
   IWineD3DVertexShader             *wineD3DVertexShader;
 };
