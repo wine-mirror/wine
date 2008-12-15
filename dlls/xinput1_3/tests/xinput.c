@@ -94,15 +94,15 @@ START_TEST(xinput)
     HMODULE hXinput;
     hXinput = LoadLibraryA( "xinput1_3.dll" );
 
-    if (hXinput)
+    if (!hXinput)
     {
-        pXInputGetState = (void*)GetProcAddress(hXinput, "XInputGetState");
-        pXInputGetCapabilities = (void*)GetProcAddress(hXinput, "XInputGetCapabilities");
-        test_get_state();
-        test_get_capabilities();
+        win_skip("Could not load xinput1_3.dll\n");
+        return;
     }
-    else
-    {
-        skip("Could not load xinput1_3.dll\n");
-    }
+
+    pXInputGetState = (void*)GetProcAddress(hXinput, "XInputGetState");
+    pXInputGetCapabilities = (void*)GetProcAddress(hXinput, "XInputGetCapabilities");
+    test_get_state();
+    test_get_capabilities();
+    FreeLibrary(hXinput);
 }
