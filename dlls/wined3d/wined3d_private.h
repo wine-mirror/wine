@@ -776,6 +776,12 @@ struct blit_shader {
 extern const struct blit_shader ffp_blit;
 extern const struct blit_shader arbfp_blit;
 
+enum fogsource {
+    FOGSOURCE_FFP,
+    FOGSOURCE_VS,
+    FOGSOURCE_COORD,
+};
+
 /* The new context manager that should deal with onscreen and offscreen rendering */
 struct WineD3DContext {
     /* State dirtification
@@ -812,6 +818,7 @@ struct WineD3DContext {
     GLenum                  tracking_parm;     /* Which source is tracking current colour         */
     GLenum                  untracked_materials[2];
     UINT                    blit_w, blit_h;
+    enum fogsource          fog_source;
 
     char                    *vshader_const_dirty, *pshader_const_dirty;
 
@@ -2023,6 +2030,8 @@ void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext
 void apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
 void state_fogcolor(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
 void state_fogdensity(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
+void state_fogstartend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
+void state_fog_fragpart(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
 
 void surface_force_reload(IWineD3DSurface *iface);
 GLenum surface_get_gl_buffer(IWineD3DSurface *iface, IWineD3DSwapChain *swapchain);

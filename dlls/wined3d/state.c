@@ -896,13 +896,90 @@ static void state_stencilwrite(DWORD state, IWineD3DStateBlockImpl *stateblock, 
     checkGLcall("glStencilMask");
 }
 
-static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    float fogstart, fogend;
+static void state_fog_vertexpart(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    if (!stateblock->renderState[WINED3DRS_FOGENABLE]) return;
 
+    /* Table fog on: Never use fog coords, and use per-fragment fog */
+    if(stateblock->renderState[WINED3DRS_FOGTABLEMODE] != WINED3DFOG_NONE) {
+        glHint(GL_FOG_HINT, GL_NICEST);
+        if(context->fog_coord) {
+            glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
+            checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
+            context->fog_coord = FALSE;
+        }
+        return;
+    }
+
+    /* Otherwise use per-vertex fog in any case */
+    glHint(GL_FOG_HINT, GL_FASTEST);
+
+    if(stateblock->renderState[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE || context->last_was_rhw) {
+        /* No fog at all, or transformed vertices: Use fog coord */
+        if(!context->fog_coord) {
+            glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT);
+            checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT)");
+            context->fog_coord = TRUE;
+        }
+    } else {
+        /* Otherwise, use the fragment depth */
+        if(context->fog_coord) {
+            glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
+            checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
+            context->fog_coord = FALSE;
+        }
+    }
+}
+
+void state_fogstartend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    float fogstart, fogend;
     union {
         DWORD d;
         float f;
     } tmpvalue;
+
+    switch(context->fog_source) {
+        case FOGSOURCE_VS:
+            fogstart = 1.0;
+            fogend = 0.0;
+            break;
+
+        case FOGSOURCE_COORD:
+            fogstart = 255.0;
+            fogend = 0.0;
+            break;
+
+        case FOGSOURCE_FFP:
+            tmpvalue.d = stateblock->renderState[WINED3DRS_FOGSTART];
+            fogstart = tmpvalue.f;
+            tmpvalue.d = stateblock->renderState[WINED3DRS_FOGEND];
+            fogend = tmpvalue.f;
+            /* In GL, fogstart == fogend disables fog, in D3D everything's fogged.*/
+            if(fogstart == fogend) {
+                fogstart = -1.0 / 0.0;
+                fogend = 0.0;
+            }
+            break;
+
+        default:
+            /* This should not happen.context->fog_source is set in wined3d, not the app.
+             * Still this is needed to make the compiler happy
+             */
+            ERR("Unexpected fog coordinate source\n");
+            fogstart = 0.0;
+            fogend = 0.0;
+    }
+
+    glFogf(GL_FOG_START, fogstart);
+    checkGLcall("glFogf(GL_FOG_START, fogstart)");
+    TRACE("Fog Start == %f\n", fogstart);
+
+    glFogf(GL_FOG_END, fogend);
+    checkGLcall("glFogf(GL_FOG_END, fogend)");
+    TRACE("Fog End == %f\n", fogend);
+}
+
+void state_fog_fragpart(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    enum fogsource new_source;
 
     if (!stateblock->renderState[WINED3DRS_FOGENABLE]) {
         /* No fog? Disable it, and we're done :-) */
@@ -910,11 +987,6 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
         checkGLcall("glDisable GL_FOG");
         return;
     }
-
-    tmpvalue.d = stateblock->renderState[WINED3DRS_FOGSTART];
-    fogstart = tmpvalue.f;
-    tmpvalue.d = stateblock->renderState[WINED3DRS_FOGEND];
-    fogend = tmpvalue.f;
 
     /* Fog Rules:
      *
@@ -959,115 +1031,79 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
             /* Set fog computation in the rasterizer to pass through the value (just blend it) */
             glFogi(GL_FOG_MODE, GL_LINEAR);
             checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
-            fogstart = 1.0;
-            fogend = 0.0;
-        }
-
-        if(context->fog_coord) {
-            glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-            checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
-            context->fog_coord = FALSE;
         }
         context->last_was_foggy_shader = TRUE;
+        new_source = FOGSOURCE_VS;
     }
     /* DX 7 sdk: "If both render states(vertex and table fog) are set to valid modes,
      * the system will apply only pixel(=table) fog effects."
      */
     else if(stateblock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
-        glHint(GL_FOG_HINT, GL_FASTEST);
-        checkGLcall("glHint(GL_FOG_HINT, GL_FASTEST)");
         context->last_was_foggy_shader = FALSE;
 
         switch (stateblock->renderState[WINED3DRS_FOGVERTEXMODE]) {
             /* If processed vertices are used, fall through to the NONE case */
-            case WINED3DFOG_EXP:  {
+            case WINED3DFOG_EXP:
                 if(!context->last_was_rhw) {
                     glFogi(GL_FOG_MODE, GL_EXP);
                     checkGLcall("glFogi(GL_FOG_MODE, GL_EXP)");
-                    if(context->fog_coord) {
-                        glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-                        checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
-                        context->fog_coord = FALSE;
-                    }
+                    new_source = FOGSOURCE_FFP;
                     break;
                 }
-            }
-            case WINED3DFOG_EXP2: {
+                /* drop through */
+
+            case WINED3DFOG_EXP2:
                 if(!context->last_was_rhw) {
                     glFogi(GL_FOG_MODE, GL_EXP2);
                     checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2)");
-                    if(context->fog_coord) {
-                        glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-                        checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
-                        context->fog_coord = FALSE;
-                    }
+                    new_source = FOGSOURCE_FFP;
                     break;
                 }
-            }
-            case WINED3DFOG_LINEAR: {
+                /* drop through */
+
+            case WINED3DFOG_LINEAR:
                 if(!context->last_was_rhw) {
                     glFogi(GL_FOG_MODE, GL_LINEAR);
                     checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
-                    if(context->fog_coord) {
-                        glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-                        checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
-                        context->fog_coord = FALSE;
-                    }
+                    new_source = FOGSOURCE_FFP;
                     break;
                 }
-            }
-            case WINED3DFOG_NONE: {
+                /* drop through */
+
+            case WINED3DFOG_NONE:
                 /* Both are none? According to msdn the alpha channel of the specular
                  * color contains a fog factor. Set it in drawStridedSlow.
                  * Same happens with Vertexfog on transformed vertices
                  */
-                if(context->fog_coord == FALSE) {
-                    glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT);
-                    checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT)");
-                    context->fog_coord = TRUE;
-                }
+                new_source = FOGSOURCE_COORD;
                 glFogi(GL_FOG_MODE, GL_LINEAR);
                 checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
-                fogstart = 0xff;
-                fogend = 0x0;
                 break;
-            }
-            default: FIXME("Unexpected WINED3DRS_FOGVERTEXMODE %d\n", stateblock->renderState[WINED3DRS_FOGVERTEXMODE]);
+
+            default:
+                FIXME("Unexpected WINED3DRS_FOGVERTEXMODE %d\n", stateblock->renderState[WINED3DRS_FOGVERTEXMODE]);
+                new_source = FOGSOURCE_FFP; /* Make the compiler happy */
         }
     } else {
         glHint(GL_FOG_HINT, GL_NICEST);
         checkGLcall("glHint(GL_FOG_HINT, GL_NICEST)");
         context->last_was_foggy_shader = FALSE;
+        new_source = FOGSOURCE_FFP;
 
         switch (stateblock->renderState[WINED3DRS_FOGTABLEMODE]) {
             case WINED3DFOG_EXP:
                 glFogi(GL_FOG_MODE, GL_EXP);
                 checkGLcall("glFogi(GL_FOG_MODE, GL_EXP)");
-                if(context->fog_coord) {
-                    glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-                    checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
-                    context->fog_coord = FALSE;
-                }
                 break;
 
             case WINED3DFOG_EXP2:
                 glFogi(GL_FOG_MODE, GL_EXP2);
                 checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2)");
-                if(context->fog_coord) {
-                    glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-                    checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
-                    context->fog_coord = FALSE;
-                }
                 break;
 
             case WINED3DFOG_LINEAR:
                 glFogi(GL_FOG_MODE, GL_LINEAR);
                 checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
-                if(context->fog_coord) {
-                    glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-                    checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
-                    context->fog_coord = FALSE;
-                }
                 break;
 
             case WINED3DFOG_NONE:   /* Won't happen */
@@ -1078,26 +1114,9 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
 
     glEnable(GL_FOG);
     checkGLcall("glEnable GL_FOG");
-
-    if(fogstart != fogend)
-    {
-        glFogfv(GL_FOG_START, &fogstart);
-        checkGLcall("glFogf(GL_FOG_START, fogstart)");
-        TRACE("Fog Start == %f\n", fogstart);
-
-        glFogfv(GL_FOG_END, &fogend);
-        checkGLcall("glFogf(GL_FOG_END, fogend)");
-        TRACE("Fog End == %f\n", fogend);
-    }
-    else
-    {
-        glFogf(GL_FOG_START, -1.0 / 0.0);
-        checkGLcall("glFogf(GL_FOG_START, fogstart)");
-        TRACE("Fog Start == %f\n", fogstart);
-
-        glFogf(GL_FOG_END, 0.0);
-        checkGLcall("glFogf(GL_FOG_END, fogend)");
-        TRACE("Fog End == %f\n", fogend);
+    if(new_source != context->fog_source) {
+        context->fog_source = new_source;
+        state_fogstartend(STATE_RENDER(WINED3DRS_FOGSTART), stateblock, context);
     }
 }
 
@@ -4444,7 +4463,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     context->last_was_vshader = useVertexShaderFunction;
 
     if(updateFog) {
-        state_fog(STATE_RENDER(WINED3DRS_FOGENABLE), stateblock, context);
+        device->StateTable[STATE_RENDER(WINED3DRS_FOGVERTEXMODE)].apply(STATE_RENDER(WINED3DRS_FOGVERTEXMODE), stateblock, context);
     }
     if(!useVertexShaderFunction) {
         int i;
@@ -5160,11 +5179,9 @@ const struct StateEntryTemplate ffp_vertexstate_template[] = {
     { STATE_TEXTURESTAGE(6, WINED3DTSS_TEXCOORDINDEX),    { STATE_TEXTURESTAGE(6, WINED3DTSS_TEXCOORDINDEX),    tex_coordindex      }, 0                               },
     { STATE_TEXTURESTAGE(7, WINED3DTSS_TEXCOORDINDEX),    { STATE_TEXTURESTAGE(7, WINED3DTSS_TEXCOORDINDEX),    tex_coordindex      }, 0                               },
       /* Fog */
-    { STATE_RENDER(WINED3DRS_FOGENABLE),                  { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           }, 0                               },
-    { STATE_RENDER(WINED3DRS_FOGTABLEMODE),               { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           }, 0                               },
-    { STATE_RENDER(WINED3DRS_FOGSTART),                   { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           }, 0                               },
-    { STATE_RENDER(WINED3DRS_FOGEND),                     { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           }, 0                               },
-    { STATE_RENDER(WINED3DRS_FOGVERTEXMODE),              { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           }, 0                               },
+    { STATE_RENDER(WINED3DRS_FOGENABLE),                  { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog_vertexpart}, 0                               },
+    { STATE_RENDER(WINED3DRS_FOGTABLEMODE),               { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog_vertexpart}, 0                               },
+    { STATE_RENDER(WINED3DRS_FOGVERTEXMODE),              { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog_vertexpart}, 0                               },
     { STATE_RENDER(WINED3DRS_RANGEFOGENABLE),             { STATE_RENDER(WINED3DRS_RANGEFOGENABLE),             state_rangefog      }, NV_FOG_DISTANCE                 },
     { STATE_RENDER(WINED3DRS_RANGEFOGENABLE),             { STATE_RENDER(WINED3DRS_RANGEFOGENABLE),             state_rangefog_w    }, 0                               },
     { STATE_RENDER(WINED3DRS_CLIPPING),                   { STATE_RENDER(WINED3DRS_CLIPPING),                   state_clipping      }, 0                               },
@@ -5311,6 +5328,11 @@ static const struct StateEntryTemplate ffp_fragmentstate_template[] = {
     { STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              { STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              state_texfactor     }, 0                               },
     { STATE_RENDER(WINED3DRS_FOGCOLOR),                   { STATE_RENDER(WINED3DRS_FOGCOLOR),                   state_fogcolor      }, 0                               },
     { STATE_RENDER(WINED3DRS_FOGDENSITY),                 { STATE_RENDER(WINED3DRS_FOGDENSITY),                 state_fogdensity    }, 0                               },
+    { STATE_RENDER(WINED3DRS_FOGENABLE),                  { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog_fragpart  }, 0                               },
+    { STATE_RENDER(WINED3DRS_FOGTABLEMODE),               { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog_fragpart  }, 0                               },
+    { STATE_RENDER(WINED3DRS_FOGVERTEXMODE),              { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog_fragpart  }, 0                               },
+    { STATE_RENDER(WINED3DRS_FOGSTART),                   { STATE_RENDER(WINED3DRS_FOGSTART),                   state_fogstartend   }, 0                               },
+    { STATE_RENDER(WINED3DRS_FOGEND),                     { STATE_RENDER(WINED3DRS_FOGSTART),                   state_fogstartend   }, 0                               },
     { STATE_SAMPLER(0),                                   { STATE_SAMPLER(0),                                   sampler_texdim      }, 0                               },
     { STATE_SAMPLER(1),                                   { STATE_SAMPLER(1),                                   sampler_texdim      }, 0                               },
     { STATE_SAMPLER(2),                                   { STATE_SAMPLER(2),                                   sampler_texdim      }, 0                               },

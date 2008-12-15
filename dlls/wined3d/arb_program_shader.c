@@ -3043,8 +3043,35 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
  * fragment_prog_arbfp function being called because FOGENABLE is dirty, which calls this function here
  */
 static void state_arbfp_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    enum fogsource new_source;
+
     if(!isStateDirty(context, STATE_PIXELSHADER)) {
         fragment_prog_arbfp(state, stateblock, context);
+    }
+
+    if(!stateblock->renderState[WINED3DRS_FOGENABLE]) return;
+
+    if(use_vs(stateblock)
+       && ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.reg_maps.fog) {
+        if( stateblock->renderState[WINED3DRS_FOGTABLEMODE] != WINED3DFOG_NONE ) {
+            FIXME("vertex shader with table fog used\n");
+        }
+        context->last_was_foggy_shader = TRUE;
+        new_source = FOGSOURCE_VS;
+    } else if(stateblock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
+        context->last_was_foggy_shader = FALSE;
+        if(stateblock->renderState[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE || context->last_was_rhw) {
+            new_source = FOGSOURCE_COORD;
+        } else {
+            new_source = FOGSOURCE_FFP;
+        }
+    } else {
+        context->last_was_foggy_shader = FALSE;
+        new_source = FOGSOURCE_FFP;
+    }
+    if(new_source != context->fog_source) {
+        context->fog_source = new_source;
+        state_fogstartend(STATE_RENDER(WINED3DRS_FOGSTART), stateblock, context);
     }
 }
 
@@ -3190,6 +3217,8 @@ static const struct StateEntryTemplate arbfp_fragmentstate_template[] = {
     { STATE_RENDER(WINED3DRS_FOGENABLE),                  { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_arbfp_fog         }, 0                               },
     { STATE_RENDER(WINED3DRS_FOGTABLEMODE),               { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_arbfp_fog         }, 0                               },
     { STATE_RENDER(WINED3DRS_FOGVERTEXMODE),              { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_arbfp_fog         }, 0                               },
+    { STATE_RENDER(WINED3DRS_FOGSTART),                   { STATE_RENDER(WINED3DRS_FOGSTART),                   state_fogstartend       }, 0                               },
+    { STATE_RENDER(WINED3DRS_FOGEND),                     { STATE_RENDER(WINED3DRS_FOGSTART),                   state_fogstartend       }, 0                               },
     { STATE_RENDER(WINED3DRS_SRGBWRITEENABLE),            { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
     { STATE_RENDER(WINED3DRS_FOGCOLOR),                   { STATE_RENDER(WINED3DRS_FOGCOLOR),                   state_fogcolor      }, 0                               },
     { STATE_RENDER(WINED3DRS_FOGDENSITY),                 { STATE_RENDER(WINED3DRS_FOGDENSITY),                 state_fogdensity    }, 0                               },
