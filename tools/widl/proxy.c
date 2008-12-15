@@ -249,7 +249,7 @@ static void free_variable( const var_t *arg, const char *local_var_prefix )
     iid = get_attrp( arg->attrs, ATTR_IIDIS );
     if( iid )
     {
-      print_proxy( "__frame->_StubMsg.MaxCount = (unsigned long) " );
+      print_proxy( "__frame->_StubMsg.MaxCount = (ULONG_PTR) " );
       write_expr(proxy, iid, 1, 1, NULL, NULL, local_var_prefix);
       print_proxy( ";\n\n" );
     }

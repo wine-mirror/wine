@@ -2676,8 +2676,8 @@ void print_phase_basetype(FILE *file, int indent, const char *local_var_prefix,
     }
 
     if (phase == PHASE_MARSHAL)
-        print_file(file, indent, "MIDL_memset(__frame->_StubMsg.Buffer, 0, (0x%x - (long)__frame->_StubMsg.Buffer) & 0x%x);\n", alignment, alignment - 1);
-    print_file(file, indent, "__frame->_StubMsg.Buffer = (unsigned char *)(((long)__frame->_StubMsg.Buffer + %u) & ~0x%x);\n",
+        print_file(file, indent, "MIDL_memset(__frame->_StubMsg.Buffer, 0, (0x%x - (ULONG_PTR)__frame->_StubMsg.Buffer) & 0x%x);\n", alignment, alignment - 1);
+    print_file(file, indent, "__frame->_StubMsg.Buffer = (unsigned char *)(((ULONG_PTR)__frame->_StubMsg.Buffer + %u) & ~0x%x);\n",
                 alignment - 1, alignment - 1);
 
     if (phase == PHASE_MARSHAL)
@@ -2759,14 +2759,14 @@ static void write_parameter_conf_or_var_exprs(FILE *file, int indent, const char
             {
                 if (type->size_is)
                 {
-                    print_file(file, indent, "__frame->_StubMsg.MaxCount = (unsigned long)");
+                    print_file(file, indent, "__frame->_StubMsg.MaxCount = (ULONG_PTR)");
                     write_expr(file, type->size_is, 1, 1, NULL, NULL, local_var_prefix);
                     fprintf(file, ";\n\n");
                 }
                 if (type->length_is)
                 {
-                    print_file(file, indent, "__frame->_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
-                    print_file(file, indent, "__frame->_StubMsg.ActualCount = (unsigned long)");
+                    print_file(file, indent, "__frame->_StubMsg.Offset = 0;\n"); /* FIXME */
+                    print_file(file, indent, "__frame->_StubMsg.ActualCount = (ULONG_PTR)");
                     write_expr(file, type->length_is, 1, 1, NULL, NULL, local_var_prefix);
                     fprintf(file, ";\n\n");
                 }
@@ -2777,7 +2777,7 @@ static void write_parameter_conf_or_var_exprs(FILE *file, int indent, const char
         {
             if (is_conformance_needed_for_phase(phase))
             {
-                print_file(file, indent, "__frame->_StubMsg.MaxCount = (unsigned long)");
+                print_file(file, indent, "__frame->_StubMsg.MaxCount = (ULONG_PTR)");
                 write_expr(file, get_attrp(var->attrs, ATTR_SWITCHIS), 1, 1, NULL, NULL, local_var_prefix);
                 fprintf(file, ";\n\n");
             }
@@ -2789,7 +2789,7 @@ static void write_parameter_conf_or_var_exprs(FILE *file, int indent, const char
 
             if (is_conformance_needed_for_phase(phase) && (iid = get_attrp( var->attrs, ATTR_IIDIS )))
             {
-                print_file( file, indent, "__frame->_StubMsg.MaxCount = (unsigned long) " );
+                print_file( file, indent, "__frame->_StubMsg.MaxCount = (ULONG_PTR) " );
                 write_expr( file, iid, 1, 1, NULL, NULL, local_var_prefix );
                 fprintf( file, ";\n\n" );
             }
@@ -3215,7 +3215,7 @@ int write_expr_eval_routines(FILE *file, const char *iface)
         print_file (file, 1, "%s *%s = (%s *)(pStubMsg->StackTop - %u);\n",
                     name, var_name, name, eval->baseoff);
         print_file(file, 1, "pStubMsg->Offset = 0;\n"); /* FIXME */
-        print_file(file, 1, "pStubMsg->MaxCount = (unsigned long)");
+        print_file(file, 1, "pStubMsg->MaxCount = (ULONG_PTR)");
         write_expr(file, eval->expr, 1, 1, var_name_expr, eval->structure, "");
         fprintf(file, ";\n");
         print_file(file, 0, "}\n\n");
