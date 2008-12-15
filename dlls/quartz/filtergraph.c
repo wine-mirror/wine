@@ -1318,7 +1318,7 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *ppinOut)
             GUID clsid;
             IPin* ppinfilter;
             IBaseFilter* pfilter = NULL;
-            IEnumPins* penumpins;
+            IEnumPins* penumpins = NULL;
             ULONG pin;
 
             hr = GetFilterInfo(pMoniker, &clsid, &var);
@@ -1348,40 +1348,61 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *ppinOut)
                 WARN("Splitter Enumpins (%x)\n", hr);
                 goto error;
             }
-            hr = IEnumPins_Next(penumpins, 1, &ppinfilter, &pin);
-            IEnumPins_Release(penumpins);
-            if (FAILED(hr)) {
-                WARN("Next (%x)\n", hr);
-                goto error;
+
+            while ((hr = IEnumPins_Next(penumpins, 1, &ppinfilter, &pin)) == S_OK)
+            {
+                PIN_DIRECTION dir;
+
+                if (pin == 0) {
+                    WARN("No Pin\n");
+                    hr = E_FAIL;
+                    goto error;
+                }
+
+                hr = IPin_QueryDirection(ppinfilter, &dir);
+                if (FAILED(hr)) {
+                    IPin_Release(ppinfilter);
+                    WARN("QueryDirection failed (%x)\n", hr);
+                    goto error;
+                }
+                if (dir != PINDIR_INPUT) {
+                    IPin_Release(ppinfilter);
+                    continue; /* Wrong direction */
+                }
+
+                /* Connect the pin to the "Renderer" */
+                hr = IPin_Connect(ppinOut, ppinfilter, NULL);
+                IPin_Release(ppinfilter);
+
+                if (FAILED(hr)) {
+                    WARN("Unable to connect %s to renderer (%x)\n", debugstr_w(V_UNION(&var, bstrVal)), hr);
+                    goto error;
+                }
+                TRACE("Connected, recursing %s\n",  debugstr_w(V_UNION(&var, bstrVal)));
+
+                VariantClear(&var);
+
+                hr = FilterGraph2_RenderRecurse(This, ppinfilter);
+                if (FAILED(hr)) {
+                    WARN("Unable to connect recursively (%x)\n", hr);
+                    goto error;
+                }
+                IBaseFilter_Release(pfilter);
+                break;
             }
-            if (pin == 0) {
-                WARN("No Pin\n");
-                hr = E_FAIL;
-                goto error;
+            if (SUCCEEDED(hr)) {
+                IEnumPins_Release(penumpins);
+                break; /* out of IEnumMoniker_Next loop */
             }
 
-            /* Connect the pin to the "Renderer" */
-            hr = IPin_Connect(ppinOut, ppinfilter, NULL);
-            IPin_Release(ppinfilter);
-
-            if (FAILED(hr)) {
-                WARN("Unable to connect %s to renderer (%x)\n", debugstr_w(V_UNION(&var, bstrVal)), hr);
-                goto error;
-            }
-            TRACE("Connected, recursing %s\n",  debugstr_w(V_UNION(&var, bstrVal)));
-
-            VariantClear(&var);
-
-            hr = FilterGraph2_RenderRecurse(This, ppinfilter);
-            if (FAILED(hr)) {
-                WARN("Unable to connect recursively (%x)\n", hr);
-                goto error;
-            }
-            IBaseFilter_Release(pfilter);
-            break;
+            /* IEnumPins_Next failed, all other failure case caught by goto error */
+            WARN("IEnumPins_Next (%x)\n", hr);
+            /* goto error */
 
 error:
             VariantClear(&var);
+            if (penumpins)
+                IEnumPins_Release(penumpins);
             if (pfilter) {
                 IFilterGraph2_RemoveFilter(iface, pfilter);
                 IBaseFilter_Release(pfilter);
