@@ -1696,6 +1696,14 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             *target_bpp = 2;
             break;
 
+        case WINED3DFMT_G16R16:
+            *convert = CONVERT_G16R16;
+            *format = GL_RGB;
+            *internal = GL_RGB16_EXT;
+            *type = GL_UNSIGNED_SHORT;
+            *target_bpp = 6;
+            break;
+
         default:
             break;
     }
@@ -2018,6 +2026,27 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                     /* A */ Dest[1] = (color & 0xf0) << 0;
                     /* L */ Dest[0] = (color & 0x0f) << 4;
                     Dest += 2;
+                }
+            }
+            break;
+        }
+
+        case CONVERT_G16R16:
+        {
+            unsigned int x, y;
+            const WORD *Source;
+            WORD *Dest;
+
+            for(y = 0; y < height; y++) {
+                Source = (const WORD *)(src + y * pitch);
+                Dest = (WORD *) (dst + y * outpitch);
+                for (x = 0; x < width; x++ ) {
+                    WORD green = (*Source++);
+                    WORD red = (*Source++);
+                    Dest[0] = green;
+                    Dest[1] = red;
+                    Dest[2] = 0xffff;
+                    Dest += 3;
                 }
             }
             break;
