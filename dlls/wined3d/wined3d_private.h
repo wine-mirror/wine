@@ -438,6 +438,13 @@ struct stb_const_desc {
     UINT                    const_num;
 };
 
+enum fogmode {
+    FOG_OFF,
+    FOG_LINEAR,
+    FOG_EXP,
+    FOG_EXP2
+};
+
 /* Stateblock dependent parameters which have to be hardcoded
  * into the shader code
  */
@@ -445,6 +452,7 @@ struct ps_compile_args {
     struct color_fixup_desc     color_fixup[MAX_FRAGMENT_SAMPLERS];
     BOOL                        srgb_correction;
     enum vertexprocessing_mode  vp_mode;
+    enum fogmode                fog;
     /* Projected textures(ps 1.0-1.3) */
     /* Texture types(2D, Cube, 3D) in ps 1.x */
 };
@@ -974,12 +982,7 @@ struct texture_stage_op
 
 struct ffp_frag_settings {
     struct texture_stage_op     op[MAX_TEXTURES];
-    enum {
-        FOG_OFF,
-        FOG_LINEAR,
-        FOG_EXP,
-        FOG_EXP2
-    } fog;
+    enum fogmode fog;
     /* Use an int instead of a char to get dword alignment */
     unsigned int sRGB_write;
 };

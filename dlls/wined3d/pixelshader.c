@@ -463,9 +463,9 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImp
     UINT i, sampler;
     IWineD3DBaseTextureImpl *tex;
 
+    memset(args, 0, sizeof(*args)); /* FIXME: Make sure all bits are set */
     args->srgb_correction = stateblock->renderState[WINED3DRS_SRGBWRITEENABLE] ? 1 : 0;
 
-    memset(args->color_fixup, 0, sizeof(args->color_fixup));
     for(i = 0; i < shader->baseShader.num_sampled_samplers; i++) {
         sampler = shader->baseShader.sampled_samplers[i];
         tex = (IWineD3DBaseTextureImpl *) stateblock->textures[sampler];
@@ -484,8 +484,32 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImp
         } else {
             args->vp_mode = fixedfunction;
         }
+        args->fog = FOG_OFF;
     } else {
         args->vp_mode = vertexshader;
+        if(stateblock->renderState[WINED3DRS_FOGENABLE]) {
+            switch(stateblock->renderState[WINED3DRS_FOGTABLEMODE]) {
+                case WINED3DFOG_NONE:
+                    if(((IWineD3DDeviceImpl *) shader->baseShader.device)->strided_streams.u.s.position_transformed ||
+                         use_vs((IWineD3DDeviceImpl *) shader->baseShader.device)) {
+                        args->fog = FOG_LINEAR;
+                        break;
+                    }
+                    switch(stateblock->renderState[WINED3DRS_FOGVERTEXMODE]) {
+                        case WINED3DFOG_NONE: /* Drop through */
+                        case WINED3DFOG_LINEAR: args->fog = FOG_LINEAR; break;
+                        case WINED3DFOG_EXP:    args->fog = FOG_EXP;    break;
+                        case WINED3DFOG_EXP2:   args->fog = FOG_EXP2;   break;
+                    }
+                    break;
+
+                case WINED3DFOG_LINEAR: args->fog = FOG_LINEAR; break;
+                case WINED3DFOG_EXP:    args->fog = FOG_EXP;    break;
+                case WINED3DFOG_EXP2:   args->fog = FOG_EXP2;   break;
+            }
+        } else {
+            args->fog = FOG_OFF;
+        }
     }
 }
 

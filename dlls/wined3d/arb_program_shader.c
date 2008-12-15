@@ -1905,27 +1905,43 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUF
     shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION);
 
     /* We need two variables for fog blending */
-    shader_addline(buffer, "TEMP TMP_FOG;\n");
+    if(args->fog != FOG_OFF) shader_addline(buffer, "TEMP TMP_FOG;\n");
     if (shader_version >= WINED3DPS_VERSION(2,0)) shader_addline(buffer, "TEMP TMP_COLOR;\n");
 
     /* Base Shader Body */
     shader_generate_main( (IWineD3DBaseShader*) This, buffer, reg_maps, function);
 
-    /* calculate fog and blend it
-     * NOTE: state.fog.params.y and state.fog.params.z don't hold fog start s and end e but
-     * -1/(e-s) and e/(e-s) respectively.
-     */
-    shader_addline(buffer, "MAD_SAT TMP_FOG, fragment.fogcoord, state.fog.params.y, state.fog.params.z;\n");
-
-    fragcolor = (shader_version < WINED3DPS_VERSION(2,0)) ? "R0" : "TMP_COLOR";
-
+    if (shader_version < WINED3DPS_VERSION(2,0)) {
+        fragcolor = "R0";
+    } else {
+        fragcolor = "TMP_COLOR";
+    }
     if(args->srgb_correction) {
         arbfp_add_sRGB_correction(buffer, fragcolor, "TMP", "TMP2", "TA", "TB");
     }
-    if (shader_version < WINED3DPS_VERSION(3,0))
-    {
-        shader_addline(buffer, "LRP result.color.rgb, TMP_FOG.x, %s, state.fog.color;\n", fragcolor);
-        shader_addline(buffer, "MOV result.color.a, %s.a;\n", fragcolor);
+    if (shader_version < WINED3DPS_VERSION(3,0)) {
+        /* calculate fog and blend it
+         * NOTE: state.fog.params.y and state.fog.params.z don't hold fog start s and end e but
+         * -1/(e-s) and e/(e-s) respectively.
+         */
+        switch(args->fog) {
+            case FOG_OFF:
+                shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
+                break;
+            case FOG_LINEAR:
+                shader_addline(buffer, "MAD_SAT TMP_FOG, fragment.fogcoord, state.fog.params.y, state.fog.params.z;\n");
+                shader_addline(buffer, "LRP result.color.rgb, TMP_FOG.x, %s, state.fog.color;\n", fragcolor);
+                shader_addline(buffer, "MOV result.color.a, %s.a;\n", fragcolor);
+                break;
+            case FOG_EXP:
+                FIXME("Implement EXP fog in ARB\n");
+                shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
+                break;
+            case FOG_EXP2:
+                FIXME("Implement EXP2 fog in ARB\n");
+                shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
+                break;
+        }
     }
 
     shader_addline(buffer, "END\n");

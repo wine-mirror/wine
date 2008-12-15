@@ -911,18 +911,6 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
         /* No fog? Disable it, and we're done :-) */
         glDisable(GL_FOG);
         checkGLcall("glDisable GL_FOG");
-        if (use_ps(stateblock->wineD3DDevice)
-                && ps_impl->baseShader.reg_maps.shader_version < WINED3DPS_VERSION(3,0))
-        {
-            /* disable fog in the pixel shader
-             * NOTE: For pixel shader, GL_FOG_START and GL_FOG_END don't hold fog start s and end e but
-             * -1/(e-s) and e/(e-s) respectively.
-             */
-            glFogf(GL_FOG_START, 0.0f);
-            checkGLcall("glFogf(GL_FOG_START, fogstart)");
-            glFogf(GL_FOG_END, 1.0f);
-            checkGLcall("glFogf(GL_FOG_END, fogend)");
-        }
         return;
     }
 
@@ -1168,16 +1156,6 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
     } else {
         glDisable(GL_FOG);
         checkGLcall("glDisable GL_FOG");
-        if( use_ps(stateblock->wineD3DDevice) ) {
-            /* disable fog in the pixel shader
-             * NOTE: For pixel shader, GL_FOG_START and GL_FOG_END don't hold fog start s and end e but
-             * -1/(e-s) and e/(e-s) respectively.
-             */
-            glFogf(GL_FOG_START, 0.0f);
-            checkGLcall("glFogf(GL_FOG_START, fogstart)");
-            glFogf(GL_FOG_END, 1.0f);
-            checkGLcall("glFogf(GL_FOG_END, fogend)");
-        }
     }
 }
 
