@@ -1177,16 +1177,10 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y)
       memcmp(&editor->pCursors[1], &editor->pCursors[3], sizeof(ME_Cursor)))
   {
       /* The scroll the cursor towards the other end, since it was the one
-       * extended by ME_ExtendAnchorSelection
-       */
-      ME_Cursor tmpCursor = editor->pCursors[0];
-      editor->pCursors[0] = editor->pCursors[1];
-      editor->pCursors[1] = tmpCursor;
-      SendMessageW(editor->hWnd, EM_SCROLLCARET, 0, 0);
-      editor->pCursors[1] = editor->pCursors[0];
-      editor->pCursors[0] = tmpCursor;
+       * extended by ME_ExtendAnchorSelection */
+      ME_EnsureVisible(editor, editor->pCursors[1].pRun);
   } else {
-      SendMessageW(editor->hWnd, EM_SCROLLCARET, 0, 0);
+      ME_EnsureVisible(editor, editor->pCursors[0].pRun);
   }
 
   ME_InvalidateSelection(editor);

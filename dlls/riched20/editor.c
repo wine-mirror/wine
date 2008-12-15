@@ -3064,23 +3064,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     return len;
   }
   case EM_SCROLLCARET:
-  {
-    int top, bottom; /* row's edges relative to document top */
-    int nPos;
-    ME_DisplayItem *para, *row;
-    
-    nPos = ME_GetYScrollPos(editor);
-    row = ME_RowStart(editor->pCursors[0].pRun);
-    para = ME_GetParagraph(row);
-    top = para->member.para.pt.y + row->member.row.pt.y;
-    bottom = top + row->member.row.nHeight;
-    
-    if (top < nPos) /* caret above window */
-      ME_ScrollAbs(editor,  top);
-    else if (nPos + editor->sizeWindow.cy < bottom) /*below*/
-      ME_ScrollAbs(editor, bottom - editor->sizeWindow.cy);
+    ME_EnsureVisible(editor, editor->pCursors[0].pRun);
     return 0;
-  }
   case WM_SETFONT:
   {
     LOGFONTW lf;
