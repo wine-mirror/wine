@@ -135,6 +135,9 @@ static inline void wine_ldt_set_base( LDT_ENTRY *ent, const void *base )
     ent->BaseLow               = (WORD)(ULONG_PTR)base;
     ent->HighWord.Bits.BaseMid = (BYTE)((ULONG_PTR)base >> 16);
     ent->HighWord.Bits.BaseHi  = (BYTE)((ULONG_PTR)base >> 24);
+#ifdef _WIN64
+    ent->BaseHigh              = (ULONG_PTR)base >> 32;
+#endif
 }
 static inline void wine_ldt_set_limit( LDT_ENTRY *ent, unsigned int limit )
 {
@@ -145,6 +148,9 @@ static inline void wine_ldt_set_limit( LDT_ENTRY *ent, unsigned int limit )
 static inline void *wine_ldt_get_base( const LDT_ENTRY *ent )
 {
     return (void *)(ent->BaseLow |
+#ifdef _WIN64
+                    (ULONG_PTR)ent->BaseHigh << 32 |
+#endif
                     (ULONG_PTR)ent->HighWord.Bits.BaseMid << 16 |
                     (ULONG_PTR)ent->HighWord.Bits.BaseHi << 24);
 }
