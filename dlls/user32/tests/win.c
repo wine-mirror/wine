@@ -5431,4 +5431,7 @@ START_TEST(win)
 
     /* add the tests above this line */
     UnhookWindowsHookEx(hhook);
+
+    DestroyWindow(hwndMain2);
+    DestroyWindow(hwndMain);
 }
