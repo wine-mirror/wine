@@ -1874,6 +1874,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
     IWineD3DDeviceImpl       *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexShaderImpl *object;  /* NOTE: impl usage is ok, this is a create */
     HRESULT hr = WINED3D_OK;
+
+    if (!pFunction) return WINED3DERR_INVALIDCALL;
+
     D3DCREATESHADEROBJECTINSTANCE(object, VertexShader)
     object->baseShader.shader_ins = IWineD3DVertexShaderImpl_shader_ins;
 
@@ -1899,6 +1902,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DPixelShaderImpl *object; /* NOTE: impl allowed, this is a create */
     HRESULT hr = WINED3D_OK;
+
+    if (!pFunction) return WINED3DERR_INVALIDCALL;
 
     D3DCREATESHADEROBJECTINSTANCE(object, PixelShader)
     object->baseShader.shader_ins = IWineD3DPixelShaderImpl_shader_ins;
