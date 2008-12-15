@@ -63,39 +63,10 @@ static ULONG WINAPI IDirect3DVertexShader8Impl_Release(IDirect3DVertexShader8 *i
     return ref;
 }
 
-/* IDirect3DVertexShader8 Interface follow: */
-static HRESULT WINAPI IDirect3DVertexShader8Impl_GetDevice(IDirect3DVertexShader8 *iface, IDirect3DDevice8** ppDevice) {
-    IDirect3DVertexShader8Impl *This = (IDirect3DVertexShader8Impl *)iface;
-    IWineD3DDevice *myDevice = NULL;
-    HRESULT hr;
-    TRACE("(%p) : Relay\n", This);
-
-    hr = IWineD3DVertexShader_GetDevice(This->wineD3DVertexShader, &myDevice);
-    if (WINED3D_OK == hr && myDevice != NULL) {
-        hr = IWineD3DDevice_GetParent(myDevice, (IUnknown **)ppDevice);
-        IWineD3DDevice_Release(myDevice);
-    } else {
-        *ppDevice = NULL;
-    }
-    TRACE("(%p) returning (%p)\n", This, *ppDevice);
-    return hr;
-}
-
-static HRESULT WINAPI IDirect3DVertexShader8Impl_GetFunction(IDirect3DVertexShader8 *iface, VOID* pData, UINT* pSizeOfData) {
-    IDirect3DVertexShader8Impl *This = (IDirect3DVertexShader8Impl *)iface;
-
-    TRACE("(%p) : Relay\n", This);
-    return IWineD3DVertexShader_GetFunction(This->wineD3DVertexShader, pData, pSizeOfData);
-}
-
-
 const IDirect3DVertexShader8Vtbl Direct3DVertexShader8_Vtbl =
 {
     /* IUnknown */
     IDirect3DVertexShader8Impl_QueryInterface,
     IDirect3DVertexShader8Impl_AddRef,
     IDirect3DVertexShader8Impl_Release,
-    /* IDirect3DVertexShader8 */
-    IDirect3DVertexShader8Impl_GetDevice,
-    IDirect3DVertexShader8Impl_GetFunction
 };
