@@ -1194,11 +1194,67 @@ UINT WINAPI MsiGetPatchInfoExA(LPCSTR szPatchCode, LPCSTR szProductCode,
                                LPCSTR szUserSid, MSIINSTALLCONTEXT dwContext,
                                LPCSTR szProperty, LPSTR lpValue, DWORD *pcchValue)
 {
-    FIXME("(%s, %s, %s, %d, %s, %p, %p): stub!\n", debugstr_a(szPatchCode),
+    LPWSTR patch = NULL, product = NULL, usersid = NULL;
+    LPWSTR property = NULL, val = NULL;
+    DWORD len;
+    UINT r;
+
+    TRACE("(%s, %s, %s, %d, %s, %p, %p)\n", debugstr_a(szPatchCode),
           debugstr_a(szProductCode), debugstr_a(szUserSid), dwContext,
           debugstr_a(szProperty), lpValue, pcchValue);
 
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    if (lpValue && !pcchValue)
+        return ERROR_INVALID_PARAMETER;
+
+    if (szPatchCode) patch = strdupAtoW(szPatchCode);
+    if (szProductCode) product = strdupAtoW(szProductCode);
+    if (szUserSid) usersid = strdupAtoW(szUserSid);
+    if (szProperty) property = strdupAtoW(szProperty);
+
+    len = 0;
+    r = MsiGetPatchInfoExW(patch, product, usersid, dwContext, property,
+                           NULL, &len);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    val = msi_alloc(++len * sizeof(WCHAR));
+    if (!val)
+    {
+        r = ERROR_OUTOFMEMORY;
+        goto done;
+    }
+
+    r = MsiGetPatchInfoExW(patch, product, usersid, dwContext, property,
+                           val, &len);
+    if (r != ERROR_SUCCESS || !pcchValue)
+        goto done;
+
+    if (lpValue)
+        WideCharToMultiByte(CP_ACP, 0, val, -1, lpValue,
+                            *pcchValue - 1, NULL, NULL);
+
+    len = lstrlenW(val);
+    if ((*val && *pcchValue < len + 1) || !lpValue)
+    {
+        if (lpValue)
+        {
+            r = ERROR_MORE_DATA;
+            lpValue[*pcchValue - 1] = '\0';
+        }
+
+        *pcchValue = len * sizeof(WCHAR);
+    }
+    else
+        *pcchValue = len;
+
+done:
+    msi_free(val);
+    msi_free(patch);
+    msi_free(product);
+    msi_free(usersid);
+    msi_free(property);
+
+    return r;
 }
 
 UINT WINAPI MsiGetPatchInfoExW(LPCWSTR szPatchCode, LPCWSTR szProductCode,
