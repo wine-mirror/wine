@@ -1082,7 +1082,7 @@ static HRESULT HTMLInputElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
         *ppv = HTMLINPUT(This);
     }else if(IsEqualGUID(&IID_IHTMLInputTextElement, riid)) {
         TRACE("(%p)->(IID_IHTMLInputTextElement %p)\n", This, ppv);
-        *ppv = HTMLINPUT(This);
+        *ppv = HTMLINPUTTEXT(This);
     }
 
     if(*ppv) {
@@ -1145,6 +1145,7 @@ HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement *nselem)
     nsresult nsres;
 
     ret->lpHTMLInputElementVtbl = &HTMLInputElementVtbl;
+    ret->lpHTMLInputTextElementVtbl = &HTMLInputTextElementVtbl;
     ret->element.node.vtbl = &HTMLInputElementImplVtbl;
 
     init_dispex(&ret->element.node.dispex, (IUnknown*)HTMLINPUT(ret), &HTMLInputElement_dispex);
