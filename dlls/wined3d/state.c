@@ -901,8 +901,9 @@ static void state_stencilwrite(DWORD state, IWineD3DStateBlockImpl *stateblock, 
 
 static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     BOOL fogenable = stateblock->renderState[WINED3DRS_FOGENABLE];
+    IWineD3DPixelShaderImpl *ps_impl = (IWineD3DPixelShaderImpl *)stateblock->pixelShader;
     BOOL is_ps3 = use_ps(stateblock->wineD3DDevice)
-                  && ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.hex_version >= WINED3DPS_VERSION(3,0);
+            && ps_impl->baseShader.reg_maps.shader_version >= WINED3DPS_VERSION(3,0);
     float fogstart, fogend;
 
     union {
@@ -914,8 +915,9 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
         /* No fog? Disable it, and we're done :-) */
         glDisable(GL_FOG);
         checkGLcall("glDisable GL_FOG");
-        if( use_ps(stateblock->wineD3DDevice)
-                && ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.hex_version < WINED3DPS_VERSION(3,0) ) {
+        if (use_ps(stateblock->wineD3DDevice)
+                && ps_impl->baseShader.reg_maps.shader_version < WINED3DPS_VERSION(3,0))
+        {
             /* disable fog in the pixel shader
              * NOTE: For pixel shader, GL_FOG_START and GL_FOG_END don't hold fog start s and end e but
              * -1/(e-s) and e/(e-s) respectively.

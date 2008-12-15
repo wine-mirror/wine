@@ -206,7 +206,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     const SHADER_OPCODE *shader_ins = This->baseShader.shader_ins;
-    DWORD shader_version = This->baseShader.hex_version;
+    DWORD shader_version;
     unsigned int cur_loop_depth = 0, max_loop_depth = 0;
     const DWORD* pToken = byte_code;
     char pshader;
@@ -236,8 +236,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
         FIXME("First token is not a version token, invalid shader.\n");
         return WINED3DERR_INVALIDCALL;
     }
-    shader_version = *pToken++;
-    This->baseShader.hex_version = shader_version;
+    reg_maps->shader_version = shader_version = *pToken++;
     pshader = shader_is_pshader_version(shader_version);
 
     while (WINED3DVS_END() != *pToken) {
@@ -302,7 +301,8 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
             memcpy(lconst->value, pToken + 1, 4 * sizeof(DWORD));
 
             /* In pixel shader 1.X shaders, the constants are clamped between [-1;1] */
-            if(WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 && pshader) {
+            if (WINED3DSHADER_VERSION_MAJOR(shader_version) == 1 && pshader)
+            {
                 float *value = (float *) lconst->value;
                 if(value[0] < -1.0) value[0] = -1.0;
                 else if(value[0] >  1.0) value[0] =  1.0;
@@ -361,20 +361,20 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
             int i, limit;
 
             /* Declare 1.X samplers implicitly, based on the destination reg. number */
-            if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 &&
-                pshader /* Filter different instructions with the same enum values in VS */ &&
-                (WINED3DSIO_TEX == curOpcode->opcode ||
-                 WINED3DSIO_TEXBEM == curOpcode->opcode ||
-                 WINED3DSIO_TEXBEML == curOpcode->opcode ||
-                 WINED3DSIO_TEXDP3TEX == curOpcode->opcode ||
-                 WINED3DSIO_TEXM3x2TEX == curOpcode->opcode ||
-                 WINED3DSIO_TEXM3x3SPEC == curOpcode->opcode ||
-                 WINED3DSIO_TEXM3x3TEX == curOpcode->opcode ||
-                 WINED3DSIO_TEXM3x3VSPEC == curOpcode->opcode ||
-                 WINED3DSIO_TEXREG2AR == curOpcode->opcode ||
-                 WINED3DSIO_TEXREG2GB == curOpcode->opcode ||
-                 WINED3DSIO_TEXREG2RGB == curOpcode->opcode)) {
-
+            if (WINED3DSHADER_VERSION_MAJOR(shader_version) == 1
+                    && pshader /* Filter different instructions with the same enum values in VS */
+                    && (WINED3DSIO_TEX == curOpcode->opcode
+                        || WINED3DSIO_TEXBEM == curOpcode->opcode
+                        || WINED3DSIO_TEXBEML == curOpcode->opcode
+                        || WINED3DSIO_TEXDP3TEX == curOpcode->opcode
+                        || WINED3DSIO_TEXM3x2TEX == curOpcode->opcode
+                        || WINED3DSIO_TEXM3x3SPEC == curOpcode->opcode
+                        || WINED3DSIO_TEXM3x3TEX == curOpcode->opcode
+                        || WINED3DSIO_TEXM3x3VSPEC == curOpcode->opcode
+                        || WINED3DSIO_TEXREG2AR == curOpcode->opcode
+                        || WINED3DSIO_TEXREG2GB == curOpcode->opcode
+                        || WINED3DSIO_TEXREG2RGB == curOpcode->opcode))
+            {
                 /* Fake sampler usage, only set reserved bit and ttype */
                 DWORD sampler_code = *pToken & WINED3DSP_REGNUM_MASK;
 
@@ -476,8 +476,9 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
                  * in >= 3.0 shaders. Filter 3.0 shaders to prevent overflows, and also filter pixel shaders because TECRDOUT
                  * isn't used in them, but future register types might cause issues
                  */
-                else if(WINED3DSPR_TEXCRDOUT == regtype && i == 0 /* Only look at writes */ &&
-                        !pshader && WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) < 3) {
+                else if (WINED3DSPR_TEXCRDOUT == regtype && i == 0 /* Only look at writes */
+                        && !pshader && WINED3DSHADER_VERSION_MAJOR(shader_version) < 3)
+                {
                     reg_maps->texcoord_mask[reg] |= shader_get_writemask(param);
                 }
             }
@@ -832,7 +833,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device; /* To access shader backend callbacks */
     const SHADER_OPCODE *opcode_table = This->baseShader.shader_ins;
     const SHADER_HANDLER *handler_table = device->shader_backend->shader_instruction_handler_table;
-    DWORD shader_version = This->baseShader.hex_version;
+    DWORD shader_version = reg_maps->shader_version;
     const DWORD *pToken = pFunction;
     const SHADER_OPCODE *curOpcode = NULL;
     SHADER_HANDLER hw_fct = NULL;

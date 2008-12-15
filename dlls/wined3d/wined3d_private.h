@@ -2067,7 +2067,7 @@ typedef struct local_constant {
 } local_constant;
 
 typedef struct shader_reg_maps {
-
+    DWORD shader_version;
     char texcoord[MAX_REG_TEXCRD];          /* pixel < 3.0 */
     char temporary[MAX_REG_TEMP];           /* pixel, vertex */
     char address[MAX_REG_ADDR];             /* vertex */
@@ -2185,7 +2185,6 @@ extern void shader_glsl_add_instruction_modifiers(const SHADER_OPCODE_ARG *arg);
 typedef struct IWineD3DBaseShaderClass
 {
     LONG                            ref;
-    DWORD                           hex_version;
     SHADER_LIMITS                   limits;
     SHADER_PARSE_STATE              parse_state;
     CONST SHADER_OPCODE             *shader_ins;

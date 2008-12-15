@@ -120,7 +120,8 @@ static void vshader_set_limits(
       /* Must match D3DCAPS9.MaxVertexShaderConst: at least 256 for vs_2_0 */
       This->baseShader.limits.constant_float = GL_LIMITS(vshader_constantsF);
 
-      switch (This->baseShader.hex_version) {
+      switch (This->baseShader.reg_maps.shader_version)
+      {
           case WINED3DVS_VERSION(1,0):
           case WINED3DVS_VERSION(1,1):
                    This->baseShader.limits.temporary = 12;
@@ -161,7 +162,7 @@ static void vshader_set_limits(
                    This->baseShader.limits.sampler = 0;
                    This->baseShader.limits.label = 16;
                    FIXME("Unrecognized vertex shader version %#x\n",
-                       This->baseShader.hex_version);
+                           This->baseShader.reg_maps.shader_version);
       }
 }
 

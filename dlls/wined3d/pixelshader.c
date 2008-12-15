@@ -226,7 +226,8 @@ static void pshader_set_limits(
       This->baseShader.limits.address = 0;
       This->baseShader.limits.packed_output = 0;
 
-      switch (This->baseShader.hex_version) {
+      switch (This->baseShader.reg_maps.shader_version)
+      {
           case WINED3DPS_VERSION(1,0):
           case WINED3DPS_VERSION(1,1):
           case WINED3DPS_VERSION(1,2):
@@ -293,8 +294,8 @@ static void pshader_set_limits(
                    This->baseShader.limits.sampler = 16;
                    This->baseShader.limits.packed_input = 0;
                    This->baseShader.limits.label = 0;
-                   FIXME("Unrecognized pixel shader version %#x\n", 
-                       This->baseShader.hex_version);
+                   FIXME("Unrecognized pixel shader version %#x\n",
+                           This->baseShader.reg_maps.shader_version);
       }
 }
 
@@ -395,9 +396,9 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     return WINED3D_OK;
 }
 
-static void pixelshader_update_samplers(struct shader_reg_maps *reg_maps, IWineD3DBaseTexture * const *textures,
-        DWORD shader_version)
+static void pixelshader_update_samplers(struct shader_reg_maps *reg_maps, IWineD3DBaseTexture * const *textures)
 {
+    DWORD shader_version = reg_maps->shader_version;
     DWORD *samplers = reg_maps->samplers;
     unsigned int i;
 
@@ -448,7 +449,7 @@ static GLuint pixelshader_compile(IWineD3DPixelShaderImpl *This, const struct ps
     TRACE("(%p) : function %p\n", This, function);
 
     pixelshader_update_samplers(&This->baseShader.reg_maps,
-            ((IWineD3DDeviceImpl *)This->baseShader.device)->stateBlock->textures, This->baseShader.hex_version);
+            ((IWineD3DDeviceImpl *)This->baseShader.device)->stateBlock->textures);
 
     /* Reset fields tracking stateblock values being hardcoded in the shader */
     This->baseShader.num_sampled_samplers = 0;
@@ -493,7 +494,8 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImp
         }
         args->color_fixup[sampler] = tex->baseTexture.shader_color_fixup;
     }
-    if(shader->baseShader.hex_version >= WINED3DPS_VERSION(3,0)) {
+    if (shader->baseShader.reg_maps.shader_version >= WINED3DPS_VERSION(3,0))
+    {
         if(((IWineD3DDeviceImpl *) shader->baseShader.device)->strided_streams.u.s.position_transformed) {
             args->vp_mode = pretransformed;
         } else if(use_vs((IWineD3DDeviceImpl *) shader->baseShader.device)) {

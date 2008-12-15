@@ -70,6 +70,7 @@ struct shader_arb_priv {
 static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, const WineD3D_GL_Info *gl_info,
         GLuint target_type, unsigned int max_constants, const float *constants, char *dirty_consts)
 {
+    DWORD shader_version = This->baseShader.reg_maps.shader_version;
     local_constant* lconst;
     DWORD i, j;
     unsigned int ret;
@@ -83,8 +84,8 @@ static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, con
         }
     }
     /* In 1.X pixel shaders constants are implicitly clamped in the range [-1;1] */
-    if(target_type == GL_FRAGMENT_PROGRAM_ARB &&
-       WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1) {
+    if (target_type == GL_FRAGMENT_PROGRAM_ARB && WINED3DSHADER_VERSION_MAJOR(shader_version) == 1)
+    {
         float lcl_const[4];
         for(i = 0; i < max_constants; i++) {
             if(!dirty_consts[i]) continue;
@@ -232,7 +233,7 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
     DWORD i, cur;
-    char pshader = shader_is_pshader_version(This->baseShader.hex_version);
+    char pshader = shader_is_pshader_version(reg_maps->shader_version);
     unsigned max_constantsF = min(This->baseShader.limits.constant_float, 
             (pshader ? GL_LIMITS(pshader_constantsF) : GL_LIMITS(vshader_constantsF)));
     UINT extra_constants_needed = 0;
@@ -360,9 +361,8 @@ static const char * const shift_tab[] = {
 
 static void shader_arb_get_write_mask(const SHADER_OPCODE_ARG *arg, const DWORD param, char *write_mask)
 {
-    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *) arg->shader;
     char *ptr = write_mask;
-    char vshader = shader_is_vshader_version(This->baseShader.hex_version);
+    char vshader = shader_is_vshader_version(arg->reg_maps->shader_version);
 
     if(vshader && shader_get_regtype(param) == WINED3DSPR_ADDR) {
         *ptr++ = '.';
@@ -787,7 +787,6 @@ static void pshader_hw_bem(const SHADER_OPCODE_ARG *arg)
 
 static void pshader_hw_cnd(const SHADER_OPCODE_ARG *arg)
 {
-    IWineD3DBaseShaderImpl* shader = (IWineD3DBaseShaderImpl*) arg->shader;
     SHADER_BUFFER* buffer = arg->buffer;
     char dst_wmask[20];
     char dst_name[50];
@@ -807,8 +806,8 @@ static void pshader_hw_cnd(const SHADER_OPCODE_ARG *arg)
     pshader_gen_input_modifier_line(arg->shader, buffer, arg->src[2], 2, src_name[2]);
 
     /* The coissue flag changes the semantic of the cnd instruction in <= 1.3 shaders */
-    if (shader->baseShader.hex_version <= WINED3DPS_VERSION(1, 3) &&
-        arg->opcode_token & WINED3DSI_COISSUE) {
+    if (arg->reg_maps->shader_version <= WINED3DPS_VERSION(1, 3) && arg->opcode_token & WINED3DSI_COISSUE)
+    {
         shader_addline(buffer, "MOV%s %s%s, %s;\n", sat ? "_SAT" : "", dst_name, dst_wmask, src_name[1]);
     } else {
         shader_addline(buffer, "ADD TMP, -%s, coefdiv.x;\n", src_name[0]);
@@ -877,7 +876,6 @@ static void pshader_hw_dp2add(const SHADER_OPCODE_ARG *arg)
 /* Map the opcode 1-to-1 to the GL code */
 static void shader_hw_map2gl(const SHADER_OPCODE_ARG *arg)
 {
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl*)arg->shader;
     CONST SHADER_OPCODE* curOpcode = arg->opcode;
     SHADER_BUFFER* buffer = arg->buffer;
     DWORD dst = arg->dst;
@@ -885,7 +883,7 @@ static void shader_hw_map2gl(const SHADER_OPCODE_ARG *arg)
     char arguments[256];
     unsigned int i;
 
-    if (shader_is_pshader_version(shader->baseShader.hex_version))
+    if (shader_is_pshader_version(arg->reg_maps->shader_version))
     {
         /* Output token related */
         char output_rname[256];
@@ -963,8 +961,8 @@ static void shader_hw_mov(const SHADER_OPCODE_ARG *arg)
 {
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl*)arg->shader;
 
-    if ((WINED3DSHADER_VERSION_MAJOR(shader->baseShader.hex_version) == 1
-            && !shader_is_pshader_version(shader->baseShader.hex_version)
+    if ((WINED3DSHADER_VERSION_MAJOR(arg->reg_maps->shader_version) == 1
+            && !shader_is_pshader_version(arg->reg_maps->shader_version)
             && shader_get_regtype(arg->dst) == WINED3DSPR_ADDR)
             || arg->opcode->opcode == WINED3DSIO_MOVA)
     {
@@ -1008,8 +1006,7 @@ static void shader_hw_mov(const SHADER_OPCODE_ARG *arg)
 
 static void pshader_hw_texkill(const SHADER_OPCODE_ARG *arg)
 {
-    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
-    DWORD hex_version = This->baseShader.hex_version;
+    DWORD shader_version = arg->reg_maps->shader_version;
     SHADER_BUFFER* buffer = arg->buffer;
     char reg_dest[40];
 
@@ -1018,7 +1015,8 @@ static void pshader_hw_texkill(const SHADER_OPCODE_ARG *arg)
      */
     pshader_get_register_name(arg->shader, arg->dst, reg_dest);
 
-    if(hex_version >= WINED3DPS_VERSION(2,0)) {
+    if (shader_version >= WINED3DPS_VERSION(2,0))
+    {
         /* The arb backend doesn't claim ps 2.0 support, but try to eat what the app feeds to us */
         shader_addline(buffer, "KIL %s;\n", reg_dest);
     } else {
@@ -1039,7 +1037,7 @@ static void pshader_hw_tex(const SHADER_OPCODE_ARG *arg)
     DWORD dst = arg->dst;
     const DWORD *src = arg->src;
     SHADER_BUFFER* buffer = arg->buffer;
-    DWORD hex_version = This->baseShader.hex_version;
+    DWORD shader_version = arg->reg_maps->shader_version;
     BOOL projected = FALSE, bias = FALSE;
 
     char reg_dest[40];
@@ -1053,14 +1051,14 @@ static void pshader_hw_tex(const SHADER_OPCODE_ARG *arg)
 
     /* 1.0-1.3: Use destination register as coordinate source.
        1.4+: Use provided coordinate source register. */
-   if (hex_version < WINED3DPS_VERSION(1,4))
+   if (shader_version < WINED3DPS_VERSION(1,4))
       strcpy(reg_coord, reg_dest);
    else
       pshader_gen_input_modifier_line(arg->shader, buffer, src[0], 0, reg_coord);
 
   /* 1.0-1.4: Use destination register number as texture code.
      2.0+: Use provided sampler number as texure code. */
-  if (hex_version < WINED3DPS_VERSION(2,0))
+  if (shader_version < WINED3DPS_VERSION(2,0))
      reg_sampler_code = reg_dest_code;
   else
      reg_sampler_code = src[1] & WINED3DSP_REGNUM_MASK;
@@ -1070,7 +1068,8 @@ static void pshader_hw_tex(const SHADER_OPCODE_ARG *arg)
    * 1.4: Use WINED3DSPSM_DZ or WINED3DSPSM_DW on src[0]
    * 2.0+: Use WINED3DSI_TEXLD_PROJECT on the opcode
    */
-  if(hex_version < WINED3DPS_VERSION(1,4)) {
+  if (shader_version < WINED3DPS_VERSION(1,4))
+  {
       DWORD flags = 0;
       if(reg_sampler_code < MAX_TEXTURES) {
         flags = deviceImpl->stateBlock->textureState[reg_sampler_code][WINED3DTSS_TEXTURETRANSFORMFLAGS];
@@ -1078,7 +1077,9 @@ static void pshader_hw_tex(const SHADER_OPCODE_ARG *arg)
       if (flags & WINED3DTTFF_PROJECTED) {
           projected = TRUE;
       }
-  } else if(hex_version < WINED3DPS_VERSION(2,0)) {
+  }
+  else if (shader_version < WINED3DPS_VERSION(2,0))
+  {
       DWORD src_mod = arg->src[0] & WINED3DSP_SRCMOD_MASK;
       if (src_mod == WINED3DSPSM_DZ) {
           projected = TRUE;
@@ -1098,14 +1099,13 @@ static void pshader_hw_tex(const SHADER_OPCODE_ARG *arg)
 
 static void pshader_hw_texcoord(const SHADER_OPCODE_ARG *arg)
 {
-    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     DWORD dst = arg->dst;
     SHADER_BUFFER* buffer = arg->buffer;
-    DWORD hex_version = This->baseShader.hex_version;
 
     char tmp[20];
     shader_arb_get_write_mask(arg, dst, tmp);
-    if (hex_version != WINED3DPS_VERSION(1,4)) {
+    if (arg->reg_maps->shader_version != WINED3DPS_VERSION(1,4))
+    {
         DWORD reg = dst & WINED3DSP_REGNUM_MASK;
         shader_addline(buffer, "MOV_SAT T%u%s, fragment.texcoord[%u];\n", reg, tmp, reg);
     } else {
@@ -1487,7 +1487,7 @@ static void shader_hw_mnxn(const SHADER_OPCODE_ARG *arg)
     SHADER_OPCODE_ARG tmpArg;
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)arg->shader;
     const SHADER_OPCODE *opcode_table = shader->baseShader.shader_ins;
-    DWORD shader_version = shader->baseShader.hex_version;
+    DWORD shader_version = arg->reg_maps->shader_version;
 
     memset(&tmpArg, 0, sizeof(SHADER_OPCODE_ARG));
 
@@ -1787,9 +1787,9 @@ static void shader_arb_cleanup(IWineD3DDevice *iface) {
 static void shader_arb_destroy(IWineD3DBaseShader *iface) {
     IWineD3DBaseShaderImpl *baseShader = (IWineD3DBaseShaderImpl *) iface;
     const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)baseShader->baseShader.device)->adapter->gl_info;
-    char pshader = shader_is_pshader_version(baseShader->baseShader.hex_version);
 
-    if(pshader) {
+    if (shader_is_pshader_version(baseShader->baseShader.reg_maps.shader_version))
+    {
         IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *) iface;
         UINT i;
 
@@ -1868,6 +1868,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUF
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     const shader_reg_maps* reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
+    DWORD shader_version = reg_maps->shader_version;
     const char *fragcolor;
     const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
     const local_constant *lconst;
@@ -1890,9 +1891,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUF
 
     /* We need two variables for fog blending */
     shader_addline(buffer, "TEMP TMP_FOG;\n");
-    if (This->baseShader.hex_version >= WINED3DPS_VERSION(2,0)) {
-        shader_addline(buffer, "TEMP TMP_COLOR;\n");
-    }
+    if (shader_version >= WINED3DPS_VERSION(2,0)) shader_addline(buffer, "TEMP TMP_COLOR;\n");
 
     /* Base Shader Body */
     shader_generate_main( (IWineD3DBaseShader*) This, buffer, reg_maps, function);
@@ -1903,15 +1902,13 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUF
      */
     shader_addline(buffer, "MAD_SAT TMP_FOG, fragment.fogcoord, state.fog.params.y, state.fog.params.z;\n");
 
-    if (This->baseShader.hex_version < WINED3DPS_VERSION(2,0)) {
-        fragcolor = "R0";
-    } else {
-        fragcolor = "TMP_COLOR";
-    }
+    fragcolor = (shader_version < WINED3DPS_VERSION(2,0)) ? "R0" : "TMP_COLOR";
+
     if(((IWineD3DDeviceImpl *)This->baseShader.device)->stateBlock->renderState[WINED3DRS_SRGBWRITEENABLE]) {
         arbfp_add_sRGB_correction(buffer, fragcolor, "TMP", "TMP2", "TA", "TB");
     }
-    if (This->baseShader.hex_version < WINED3DPS_VERSION(3,0)) {
+    if (shader_version < WINED3DPS_VERSION(3,0))
+    {
         shader_addline(buffer, "LRP result.color.rgb, TMP_FOG.x, %s, state.fog.color;\n", fragcolor);
         shader_addline(buffer, "MOV result.color.a, %s.a;\n", fragcolor);
     }
