@@ -871,10 +871,11 @@ UINT MSIREG_OpenUserDataPatchKey(LPCWSTR szPatch, MSIINSTALLCONTEXT dwContext,
     return RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
 }
 
-UINT MSIREG_OpenInstallProps(LPCWSTR szProduct, LPCWSTR szUserSID,
-                             HKEY *key, BOOL create)
+UINT MSIREG_OpenInstallProps(LPCWSTR szProduct, MSIINSTALLCONTEXT dwContext,
+                             LPCWSTR szUserSid, HKEY *key, BOOL create)
 {
     UINT rc;
+    LPWSTR usersid;
     WCHAR squished_pc[GUID_SIZE];
     WCHAR keypath[0x200];
 
@@ -883,33 +884,27 @@ UINT MSIREG_OpenInstallProps(LPCWSTR szProduct, LPCWSTR szUserSID,
         return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
-    sprintfW(keypath, szInstallProperties_fmt, szUserSID, squished_pc);
-
-    if (create)
-        rc = RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+    if (dwContext == MSIINSTALLCONTEXT_MACHINE)
+        sprintfW(keypath, szInstallProperties_fmt, szLocalSid, squished_pc);
+    else if (szUserSid)
+        sprintfW(keypath, szInstallProperties_fmt, szUserSid, squished_pc);
     else
-        rc = RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
-
-    return rc;
-}
-
-UINT MSIREG_OpenCurrentUserInstallProps(LPCWSTR szProduct, HKEY *key,
-                                               BOOL create)
-{
-    UINT rc;
-    LPWSTR usersid;
-
-    rc = get_user_sid(&usersid);
-    if (rc != ERROR_SUCCESS || !usersid)
     {
-        ERR("Failed to retrieve user SID: %d\n", rc);
-        return rc;
+        rc = get_user_sid(&usersid);
+        if (rc != ERROR_SUCCESS || !usersid)
+        {
+            ERR("Failed to retrieve user SID: %d\n", rc);
+            return rc;
+        }
+
+        sprintfW(keypath, szInstallProperties_fmt, usersid, squished_pc);
+        LocalFree(usersid);
     }
 
-    rc = MSIREG_OpenInstallProps(szProduct, usersid, key, create);
+    if (create)
+        return RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
 
-    LocalFree(usersid);
-    return rc;
+    return RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
 }
 
 UINT MSIREG_DeleteUserDataProductKey(LPCWSTR szProduct)

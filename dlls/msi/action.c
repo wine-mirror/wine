@@ -4158,19 +4158,10 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         return rc;
 
-    if (package->Context == MSIINSTALLCONTEXT_MACHINE)
-    {
-        rc = MSIREG_OpenInstallProps(package->ProductCode, szLocalSid,
-                                     &props, TRUE);
-        if (rc != ERROR_SUCCESS)
-            goto done;
-    }
-    else
-    {
-        rc = MSIREG_OpenCurrentUserInstallProps(package->ProductCode, &props, TRUE);
-        if (rc != ERROR_SUCCESS)
-            goto done;
-    }
+    rc = MSIREG_OpenInstallProps(package->ProductCode, package->Context,
+                                 NULL, &props, TRUE);
+    if (rc != ERROR_SUCCESS)
+        goto done;
 
     msi_make_package_local(package, props);
 
@@ -4428,11 +4419,8 @@ static UINT ACTION_RegisterUser(MSIPACKAGE *package)
     if (!productid)
         return ERROR_SUCCESS;
 
-    if (package->Context == MSIINSTALLCONTEXT_MACHINE)
-        rc = MSIREG_OpenInstallProps(package->ProductCode, szLocalSid, &hkey, TRUE);
-    else
-        rc = MSIREG_OpenCurrentUserInstallProps(package->ProductCode, &hkey, TRUE);
-
+    rc = MSIREG_OpenInstallProps(package->ProductCode, package->Context,
+                                 NULL, &hkey, TRUE);
     if (rc != ERROR_SUCCESS)
         goto end;
 

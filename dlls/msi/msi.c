@@ -107,12 +107,7 @@ static UINT MSI_OpenProductW(LPCWSTR szProduct, MSIPACKAGE **package)
     if (r != ERROR_SUCCESS)
         return r;
 
-    if (context == MSIINSTALLCONTEXT_MACHINE)
-        r = MSIREG_OpenInstallProps(szProduct, szLocalSid, &props, FALSE);
-    else if (context == MSIINSTALLCONTEXT_USERMANAGED ||
-             context == MSIINSTALLCONTEXT_USERUNMANAGED)
-        r = MSIREG_OpenCurrentUserInstallProps(szProduct, &props, FALSE);
-
+    r = MSIREG_OpenInstallProps(szProduct, context, NULL, &props, FALSE);
     if (r != ERROR_SUCCESS)
         return ERROR_UNKNOWN_PRODUCT;
 
@@ -406,11 +401,8 @@ static UINT msi_open_package(LPCWSTR product, MSIINSTALLCONTEXT context,
     static const WCHAR szLocalPackage[] = {
         'L','o','c','a','l','P','a','c','k','a','g','e',0};
 
-    if (context == MSIINSTALLCONTEXT_MACHINE)
-        r = MSIREG_OpenInstallProps(product, szLocalSid, &props, FALSE);
-    else
-        r = MSIREG_OpenCurrentUserInstallProps(product, &props, FALSE);
 
+    r = MSIREG_OpenInstallProps(product, context, NULL, &props, FALSE);
     if (r != ERROR_SUCCESS)
         return ERROR_BAD_CONFIGURATION;
 
@@ -693,12 +685,12 @@ static LPWSTR msi_reg_get_value(HKEY hkey, LPCWSTR name, DWORD *type)
 static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
                                awstring *szValue, LPDWORD pcchValueBuf)
 {
+    MSIINSTALLCONTEXT context = MSIINSTALLCONTEXT_USERUNMANAGED;
     UINT r = ERROR_UNKNOWN_PROPERTY;
     HKEY prodkey, userdata, source;
     LPWSTR val = NULL;
     WCHAR squished_pc[GUID_SIZE];
     WCHAR packagecode[GUID_SIZE];
-    BOOL classes = FALSE;
     BOOL badconfig = FALSE;
     LONG res;
     DWORD save, type = REG_NONE;
@@ -729,13 +721,10 @@ static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
         (r = MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_MACHINE,
                                       &prodkey, FALSE)) == ERROR_SUCCESS)
     {
-        classes = TRUE;
+        context = MSIINSTALLCONTEXT_MACHINE;
     }
 
-    if (classes)
-        MSIREG_OpenInstallProps(szProduct, szLocalSid, &userdata, FALSE);
-    else
-        MSIREG_OpenCurrentUserInstallProps(szProduct, &userdata, FALSE);
+    MSIREG_OpenInstallProps(szProduct, context, NULL, &userdata, FALSE);
 
     if (!lstrcmpW(szAttribute, INSTALLPROPERTY_HELPLINKW) ||
         !lstrcmpW(szAttribute, INSTALLPROPERTY_HELPTELEPHONEW) ||
@@ -1038,15 +1027,17 @@ UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
     if (dwContext == MSIINSTALLCONTEXT_MACHINE && szUserSid)
         return ERROR_INVALID_PARAMETER;
 
+    /* FIXME: dwContext is provided, no need to search for it */
     MSIREG_OpenProductKey(szProductCode, MSIINSTALLCONTEXT_USERMANAGED,
                           &managed, FALSE);
     MSIREG_OpenProductKey(szProductCode, MSIINSTALLCONTEXT_USERUNMANAGED,
                           &prod, FALSE);
 
+    MSIREG_OpenInstallProps(szProductCode, dwContext, NULL, &props, FALSE);
+
     if (dwContext == MSIINSTALLCONTEXT_USERUNMANAGED)
     {
         package = INSTALLPROPERTY_LOCALPACKAGEW;
-        MSIREG_OpenCurrentUserInstallProps(szProductCode, &props, FALSE);
 
         if (!props && !prod)
             goto done;
@@ -1054,7 +1045,6 @@ UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
     else if (dwContext == MSIINSTALLCONTEXT_USERMANAGED)
     {
         package = managed_local_package;
-        MSIREG_OpenCurrentUserInstallProps(szProductCode, &props, FALSE);
 
         if (!props && !managed)
             goto done;
@@ -1062,7 +1052,6 @@ UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
     else if (dwContext == MSIINSTALLCONTEXT_MACHINE)
     {
         package = INSTALLPROPERTY_LOCALPACKAGEW;
-        MSIREG_OpenInstallProps(szProductCode, szLocalSid, &props, FALSE);
         MSIREG_OpenProductKey(szProductCode, dwContext, &classes, FALSE);
 
         if (!props && !classes)
@@ -1373,11 +1362,7 @@ static BOOL msi_comp_find_package(LPCWSTR prodcode, MSIINSTALLCONTEXT context)
         'M','a','n','a','g','e','d','L','o','c','a','l','P','a','c','k','a','g','e',0
     };
 
-    if (context == MSIINSTALLCONTEXT_MACHINE)
-        r = MSIREG_OpenInstallProps(prodcode, szLocalSid, &hkey, FALSE);
-    else
-        r = MSIREG_OpenCurrentUserInstallProps(prodcode, &hkey, FALSE);
-
+    r = MSIREG_OpenInstallProps(prodcode, context, NULL, &hkey, FALSE);
     if (r != ERROR_SUCCESS)
         return FALSE;
 
@@ -1491,9 +1476,9 @@ INSTALLSTATE WINAPI MsiQueryProductStateA(LPCSTR szProduct)
 
 INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
 {
+    MSIINSTALLCONTEXT context = MSIINSTALLCONTEXT_USERUNMANAGED;
     INSTALLSTATE state = INSTALLSTATE_ADVERTISED;
     HKEY prodkey = 0, userdata = 0;
-    BOOL user = TRUE;
     DWORD val;
     UINT r;
 
@@ -1515,21 +1500,12 @@ INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
         MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_MACHINE,
                               &prodkey, FALSE) == ERROR_SUCCESS)
     {
-        user = FALSE;
+        context = MSIINSTALLCONTEXT_MACHINE;
     }
 
-    if (user)
-    {
-        r = MSIREG_OpenCurrentUserInstallProps(szProduct, &userdata, FALSE);
-        if (r != ERROR_SUCCESS)
-            goto done;
-    }
-    else
-    {
-        r = MSIREG_OpenInstallProps(szProduct, szLocalSid, &userdata, FALSE);
-        if (r != ERROR_SUCCESS)
-            goto done;
-    }
+    r = MSIREG_OpenInstallProps(szProduct, context, NULL, &userdata, FALSE);
+    if (r != ERROR_SUCCESS)
+        goto done;
 
     if (!msi_reg_get_val_dword(userdata, szWindowsInstaller, &val))
         goto done;
@@ -1987,7 +1963,8 @@ static INSTALLSTATE MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
 
         state = INSTALLSTATE_ABSENT;
 
-        if ((MSIREG_OpenInstallProps(szProduct, szLocalSid, &hkey, FALSE) == ERROR_SUCCESS ||
+        if ((MSIREG_OpenInstallProps(szProduct, MSIINSTALLCONTEXT_MACHINE, NULL,
+                                     &hkey, FALSE) == ERROR_SUCCESS ||
             MSIREG_OpenUserDataProductKey(szProduct, MSIINSTALLCONTEXT_USERUNMANAGED,
                                           NULL, &hkey, FALSE) == ERROR_SUCCESS) &&
             msi_reg_get_val_dword(hkey, wininstaller, &version) &&
@@ -2652,8 +2629,10 @@ static USERINFOSTATE MSI_GetUserInfo(LPCWSTR szProduct,
         return USERINFOSTATE_UNKNOWN;
     }
 
-    if (MSIREG_OpenCurrentUserInstallProps(szProduct, &props, FALSE) != ERROR_SUCCESS &&
-        MSIREG_OpenInstallProps(szProduct, szLocalSid, &props, FALSE) != ERROR_SUCCESS)
+    if (MSIREG_OpenInstallProps(szProduct, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                NULL, &props, FALSE) != ERROR_SUCCESS &&
+        MSIREG_OpenInstallProps(szProduct, MSIINSTALLCONTEXT_MACHINE,
+                                NULL, &props, FALSE) != ERROR_SUCCESS)
     {
         RegCloseKey(hkey);
         return USERINFOSTATE_ABSENT;
