@@ -351,6 +351,7 @@ static void cleanup(void)
         DispatchMessageA(&msg);
     }
     
+    DestroyWindow(hComboExParentWnd);
     UnregisterClassA(ComboExTestClass, GetModuleHandleA(NULL));
 }
 
