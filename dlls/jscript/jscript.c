@@ -144,6 +144,9 @@ static HRESULT set_ctx_site(JScript *This)
     if(FAILED(hres))
         return hres;
 
+    IActiveScriptSite_AddRef(This->site);
+    This->ctx->site = This->site;
+
     change_state(This, SCRIPTSTATE_INITIALIZED);
     return S_OK;
 }
@@ -325,13 +328,19 @@ static HRESULT WINAPI JScript_Close(IActiveScript *iface)
             while(iter) {
                 iter2 = iter->next;
 
-                IDispatch_Release(iter->disp);
+                if(iter->disp)
+                    IDispatch_Release(iter->disp);
                 heap_free(iter->name);
                 heap_free(iter);
                 iter = iter2;
             }
 
             This->ctx->named_items = NULL;
+        }
+
+        if(This->ctx->site) {
+            IActiveScriptSite_Release(This->ctx->site);
+            This->ctx->site = NULL;
         }
 
         if (This->site)
@@ -361,8 +370,7 @@ static HRESULT WINAPI JScript_AddNamedItem(IActiveScript *iface,
 {
     JScript *This = ACTSCRIPT_THIS(iface);
     named_item_t *item;
-    IDispatch *disp;
-    IUnknown *unk;
+    IDispatch *disp = NULL;
     HRESULT hres;
 
     TRACE("(%p)->(%s %x)\n", This, debugstr_w(pstrName), dwFlags);
@@ -370,22 +378,27 @@ static HRESULT WINAPI JScript_AddNamedItem(IActiveScript *iface,
     if(This->thread_id != GetCurrentThreadId() || !This->ctx || This->ctx->state == SCRIPTSTATE_CLOSED)
         return E_UNEXPECTED;
 
-    hres = IActiveScriptSite_GetItemInfo(This->site, pstrName, SCRIPTINFO_IUNKNOWN, &unk, NULL);
-    if(FAILED(hres)) {
-        WARN("GetItemInfo failed: %08x\n", hres);
-        return hres;
-    }
+    if(dwFlags & SCRIPTITEM_GLOBALMEMBERS) {
+        IUnknown *unk;
 
-    hres = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&disp);
-    IUnknown_Release(unk);
-    if(FAILED(hres)) {
-        WARN("object does not implement IDispatch\n");
-        return hres;
+        hres = IActiveScriptSite_GetItemInfo(This->site, pstrName, SCRIPTINFO_IUNKNOWN, &unk, NULL);
+        if(FAILED(hres)) {
+            WARN("GetItemInfo failed: %08x\n", hres);
+            return hres;
+        }
+
+        hres = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&disp);
+        IUnknown_Release(unk);
+        if(FAILED(hres)) {
+            WARN("object does not implement IDispatch\n");
+            return hres;
+        }
     }
 
     item = heap_alloc(sizeof(*item));
     if(!item) {
-        IDispatch_Release(disp);
+        if(disp)
+            IDispatch_Release(disp);
         return E_OUTOFMEMORY;
     }
 

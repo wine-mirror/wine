@@ -459,6 +459,27 @@ static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, ex
 
     for(item = ctx->parser->script->named_items; item; item = item->next) {
         if((item->flags & SCRIPTITEM_ISVISIBLE) && !strcmpW(item->name, identifier)) {
+            if(!item->disp) {
+                IUnknown *unk;
+
+                if(!ctx->parser->script->site)
+                    break;
+
+                hres = IActiveScriptSite_GetItemInfo(ctx->parser->script->site, identifier,
+                                                     SCRIPTINFO_IUNKNOWN, &unk, NULL);
+                if(FAILED(hres)) {
+                    WARN("GetItemInfo failed: %08x\n", hres);
+                    break;
+                }
+
+                hres = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&item->disp);
+                IUnknown_Release(unk);
+                if(FAILED(hres)) {
+                    WARN("object does not implement IDispatch\n");
+                    break;
+                }
+            }
+
             ret->type = EXPRVAL_VARIANT;
             V_VT(&ret->u.var) = VT_DISPATCH;
             V_DISPATCH(&ret->u.var) = item->disp;

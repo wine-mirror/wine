@@ -165,6 +165,7 @@ struct _script_ctx_t {
     SCRIPTSTATE state;
     exec_ctx_t *exec_ctx;
     named_item_t *named_items;
+    IActiveScriptSite *site;
     LCID lcid;
 
     jsheap_t tmp_heap;

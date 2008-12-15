@@ -64,6 +64,7 @@ DEFINE_EXPECT(global_propput_i);
 DEFINE_EXPECT(global_success_d);
 DEFINE_EXPECT(global_success_i);
 DEFINE_EXPECT(testobj_delete);
+DEFINE_EXPECT(GetItemInfo_testVal);
 
 #define DISPID_GLOBAL_TESTPROPGET   0x1000
 #define DISPID_GLOBAL_TESTPROPPUT   0x1001
@@ -74,6 +75,7 @@ DEFINE_EXPECT(testobj_delete);
 #define DISPID_GLOBAL_TESTOBJ       0x1006
 
 static const WCHAR testW[] = {'t','e','s','t',0};
+static const WCHAR test_valW[] = {'t','e','s','t','V','a','l',0};
 
 static BOOL strict_dispid_check;
 static const char *test_name = "(null)";
@@ -485,9 +487,13 @@ static HRESULT WINAPI ActiveScriptSite_GetLCID(IActiveScriptSite *iface, LCID *p
 static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPCOLESTR pstrName,
         DWORD dwReturnMask, IUnknown **ppiunkItem, ITypeInfo **ppti)
 {
-    ok(!lstrcmpW(pstrName, testW), "unexpected pstrName %s\n", debugstr_w(pstrName));
     ok(dwReturnMask == SCRIPTINFO_IUNKNOWN, "unexpected dwReturnMask %x\n", dwReturnMask);
     ok(!ppti, "ppti != NULL\n");
+
+    if(!lstrcmpW(pstrName, test_valW))
+        CHECK_EXPECT(GetItemInfo_testVal);
+    else if(lstrcmpW(pstrName, testW))
+        ok(0, "unexpected pstrName %s\n", debugstr_w(pstrName));
 
     *ppiunkItem = (IUnknown*)&Global;
     return S_OK;
@@ -673,6 +679,54 @@ static void run_from_res(const char *name)
     SysFreeString(str);
 }
 
+static void test_isvisible(BOOL global_members)
+{
+    IActiveScriptParse *parser;
+    IActiveScript *engine;
+    HRESULT hres;
+
+    static const WCHAR script_textW[] =
+        {'v','a','r',' ','v',' ','=',' ','t','e','s','t','V','a','l',';',0};
+
+    engine = create_script();
+    if(!engine)
+        return;
+
+    hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+
+    hres = IActiveScriptParse_InitNew(parser);
+    ok(hres == S_OK, "InitNew failed: %08x\n", hres);
+
+    hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+
+    if(global_members)
+        SET_EXPECT(GetItemInfo_testVal);
+    hres = IActiveScript_AddNamedItem(engine, test_valW,
+            SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|
+            (global_members ? SCRIPTITEM_GLOBALMEMBERS : 0));
+    ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
+    if(global_members)
+        CHECK_CALLED(GetItemInfo_testVal);
+
+    hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
+
+    if(!global_members)
+        SET_EXPECT(GetItemInfo_testVal);
+    hres = IActiveScriptParse_ParseScriptText(parser, script_textW, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    if(!global_members)
+        CHECK_CALLED(GetItemInfo_testVal);
+
+    hres = IActiveScriptParse_ParseScriptText(parser, script_textW, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+
+    IActiveScript_Release(engine);
+    IActiveScriptParse_Release(parser);
+}
+
 static void run_tests(void)
 {
     strict_dispid_check = TRUE;
@@ -707,6 +761,9 @@ static void run_tests(void)
     run_from_res("lang.js");
     run_from_res("api.js");
     run_from_res("regexp.js");
+
+    test_isvisible(FALSE);
+    test_isvisible(TRUE);
 }
 
 START_TEST(run)
