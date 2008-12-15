@@ -296,20 +296,6 @@ static void pshader_set_limits(
       }
 }
 
-/** Generate a pixel shader string using either GL_FRAGMENT_PROGRAM_ARB
-    or GLSL and send it to the card */
-static inline GLuint IWineD3DPixelShaderImpl_GenerateShader(
-    IWineD3DPixelShaderImpl *This) {
-    SHADER_BUFFER buffer;
-    GLuint shader;
-
-    shader_buffer_init(&buffer);
-    shader = ((IWineD3DDeviceImpl *)This->baseShader.device)->shader_backend->shader_generate_pshader((IWineD3DPixelShader *)This, &buffer);
-    shader_buffer_free(&buffer);
-
-    return shader;
-}
-
 static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
 
     IWineD3DPixelShaderImpl *This =(IWineD3DPixelShaderImpl *)iface;
@@ -436,6 +422,7 @@ static GLuint pixelshader_compile(IWineD3DPixelShaderImpl *This, const struct ps
 {
     CONST DWORD *function = This->baseShader.function;
     GLuint retval;
+    SHADER_BUFFER buffer;
 
     TRACE("(%p) : function %p\n", This, function);
 
@@ -447,7 +434,9 @@ static GLuint pixelshader_compile(IWineD3DPixelShaderImpl *This, const struct ps
 
     /* Generate the HW shader */
     TRACE("(%p) : Generating hardware program\n", This);
-    retval = IWineD3DPixelShaderImpl_GenerateShader(This);
+    shader_buffer_init(&buffer);
+    retval = ((IWineD3DDeviceImpl *)This->baseShader.device)->shader_backend->shader_generate_pshader((IWineD3DPixelShader *)This, &buffer);
+    shader_buffer_free(&buffer);
 
     This->baseShader.is_compiled = TRUE;
 
