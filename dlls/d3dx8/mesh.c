@@ -20,10 +20,6 @@
 #include "wingdi.h"
 #include "d3dx8.h"
 
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
-
 BOOL WINAPI D3DXBoxBoundProbe(CONST D3DXVECTOR3 *pmin, CONST D3DXVECTOR3 *pmax, CONST D3DXVECTOR3 *prayposition, CONST D3DXVECTOR3 *praydirection)
 
 /* Algorithm taken from the article: An Efficient and Robust Ray-Box Intersection Algoritm
