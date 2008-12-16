@@ -204,7 +204,7 @@ void xinerama_init( unsigned int width, unsigned int height )
 /***********************************************************************
  *		X11DRV_GetMonitorInfo  (X11DRV.@)
  */
-BOOL X11DRV_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
+BOOL CDECL X11DRV_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
 {
     int i = monitor_to_index( handle );
 
@@ -225,7 +225,7 @@ BOOL X11DRV_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
 /***********************************************************************
  *		X11DRV_EnumDisplayMonitors  (X11DRV.@)
  */
-BOOL X11DRV_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
+BOOL CDECL X11DRV_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
 {
     int i;
 

@@ -60,8 +60,8 @@ static void dump_region( const char *p, HRGN hrgn)
 /*************************************************************************
  *		ScrollDC   (X11DRV.@)
  */
-BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *lprcScroll,
-                      const RECT *lprcClip, HRGN hrgnUpdate, LPRECT lprcUpdate )
+BOOL CDECL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *lprcScroll,
+                            const RECT *lprcClip, HRGN hrgnUpdate, LPRECT lprcUpdate )
 {
     RECT rcSrc, rcClip, offset;
     INT dxdev, dydev, res;

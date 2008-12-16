@@ -390,8 +390,8 @@ static int process_events( Display *display, Bool (*filter)(), ULONG_PTR arg )
 /***********************************************************************
  *           MsgWaitForMultipleObjectsEx   (X11DRV.@)
  */
-DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
-                                          DWORD timeout, DWORD mask, DWORD flags )
+DWORD CDECL X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
+                                                DWORD timeout, DWORD mask, DWORD flags )
 {
     DWORD ret;
     struct x11drv_thread_data *data = TlsGetValue( thread_data_tls_index );
@@ -1361,7 +1361,7 @@ static void X11DRV_ClientMessage( HWND hwnd, XEvent *xev )
 /***********************************************************************
  *		X11DRV_SendInput  (X11DRV.@)
  */
-UINT X11DRV_SendInput( UINT count, LPINPUT inputs, int size )
+UINT CDECL X11DRV_SendInput( UINT count, LPINPUT inputs, int size )
 {
     UINT i;
 

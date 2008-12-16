@@ -145,8 +145,8 @@ static int selectionAcquired = 0;              /* Contains the current selection
 static Window selectionWindow = None;          /* The top level X window which owns the selection */
 static Atom selectionCacheSrc = XA_PRIMARY;    /* The selection source from which the clipboard cache was filled */
 
-void X11DRV_EmptyClipboard(BOOL keepunowned);
-void X11DRV_EndClipboardUpdate(void);
+void CDECL X11DRV_EmptyClipboard(BOOL keepunowned);
+void CDECL X11DRV_EndClipboardUpdate(void);
 static HANDLE X11DRV_CLIPBOARD_ImportClipboardData(Display *d, Window w, Atom prop);
 static HANDLE X11DRV_CLIPBOARD_ImportEnhMetaFile(Display *d, Window w, Atom prop);
 static HANDLE X11DRV_CLIPBOARD_ImportMetaFilePict(Display *d, Window w, Atom prop);
@@ -2330,7 +2330,7 @@ static BOOL X11DRV_CLIPBOARD_IsSelectionOwner(void)
  * Registers a custom X clipboard format
  * Returns: Format id or 0 on failure
  */
-UINT X11DRV_RegisterClipboardFormat(LPCWSTR FormatName)
+UINT CDECL X11DRV_RegisterClipboardFormat(LPCWSTR FormatName)
 {
     LPWINE_CLIPFORMAT lpFormat;
 
@@ -2343,7 +2343,7 @@ UINT X11DRV_RegisterClipboardFormat(LPCWSTR FormatName)
 /**************************************************************************
  *		X11DRV_GetClipboardFormatName
  */
-INT X11DRV_GetClipboardFormatName(UINT wFormat, LPWSTR retStr, INT maxlen)
+INT CDECL X11DRV_GetClipboardFormatName(UINT wFormat, LPWSTR retStr, INT maxlen)
 {
     LPWINE_CLIPFORMAT lpFormat;
 
@@ -2373,7 +2373,7 @@ INT X11DRV_GetClipboardFormatName(UINT wFormat, LPWSTR retStr, INT maxlen)
 /**************************************************************************
  *		AcquireClipboard (X11DRV.@)
  */
-int X11DRV_AcquireClipboard(HWND hWndClipWindow)
+int CDECL X11DRV_AcquireClipboard(HWND hWndClipWindow)
 {
     DWORD procid;
     Window owner;
@@ -2443,7 +2443,7 @@ int X11DRV_AcquireClipboard(HWND hWndClipWindow)
  *
  * Empty cached clipboard data. 
  */
-void X11DRV_EmptyClipboard(BOOL keepunowned)
+void CDECL X11DRV_EmptyClipboard(BOOL keepunowned)
 {
     if (ClipData)
     {
@@ -2482,7 +2482,7 @@ void X11DRV_EmptyClipboard(BOOL keepunowned)
 /**************************************************************************
  *		X11DRV_SetClipboardData
  */
-BOOL X11DRV_SetClipboardData(UINT wFormat, HANDLE16 hData16, HANDLE hData32, BOOL owner)
+BOOL CDECL X11DRV_SetClipboardData(UINT wFormat, HANDLE16 hData16, HANDLE hData32, BOOL owner)
 {
     DWORD flags = 0;
     BOOL bResult = TRUE;
@@ -2513,7 +2513,7 @@ BOOL X11DRV_SetClipboardData(UINT wFormat, HANDLE16 hData16, HANDLE hData32, BOO
 /**************************************************************************
  *		CountClipboardFormats
  */
-INT X11DRV_CountClipboardFormats(void)
+INT CDECL X11DRV_CountClipboardFormats(void)
 {
     CLIPBOARDINFO cbinfo;
 
@@ -2528,7 +2528,7 @@ INT X11DRV_CountClipboardFormats(void)
 /**************************************************************************
  *		X11DRV_EnumClipboardFormats
  */
-UINT X11DRV_EnumClipboardFormats(UINT wFormat)
+UINT CDECL X11DRV_EnumClipboardFormats(UINT wFormat)
 {
     CLIPBOARDINFO cbinfo;
     UINT wNextFormat = 0;
@@ -2557,7 +2557,7 @@ UINT X11DRV_EnumClipboardFormats(UINT wFormat)
 /**************************************************************************
  *		X11DRV_IsClipboardFormatAvailable
  */
-BOOL X11DRV_IsClipboardFormatAvailable(UINT wFormat)
+BOOL CDECL X11DRV_IsClipboardFormatAvailable(UINT wFormat)
 {
     BOOL bRet = FALSE;
     CLIPBOARDINFO cbinfo;
@@ -2578,7 +2578,7 @@ BOOL X11DRV_IsClipboardFormatAvailable(UINT wFormat)
 /**************************************************************************
  *		GetClipboardData (USER.142)
  */
-BOOL X11DRV_GetClipboardData(UINT wFormat, HANDLE16* phData16, HANDLE* phData32)
+BOOL CDECL X11DRV_GetClipboardData(UINT wFormat, HANDLE16* phData16, HANDLE* phData32)
 {
     CLIPBOARDINFO cbinfo;
     LPWINE_CLIPDATA lpRender;
@@ -2773,7 +2773,7 @@ static BOOL X11DRV_CLIPBOARD_SynthesizeData(UINT wFormatID)
  * TODO:
  *  Add locale if it hasn't already been added
  */
-void X11DRV_EndClipboardUpdate(void)
+void CDECL X11DRV_EndClipboardUpdate(void)
 {
     INT count = ClipDataCount;
 

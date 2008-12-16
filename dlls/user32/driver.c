@@ -152,169 +152,169 @@ void USER_unload_driver(void)
  * These are fallbacks for entry points that are not implemented in the real driver.
  */
 
-static HKL nulldrv_ActivateKeyboardLayout( HKL layout, UINT flags )
+static HKL CDECL nulldrv_ActivateKeyboardLayout( HKL layout, UINT flags )
 {
     return 0;
 }
 
-static void nulldrv_Beep(void)
+static void CDECL nulldrv_Beep(void)
 {
 }
 
-static SHORT nulldrv_GetAsyncKeyState( INT key )
-{
-    return 0;
-}
-
-static INT nulldrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
+static SHORT CDECL nulldrv_GetAsyncKeyState( INT key )
 {
     return 0;
 }
 
-static HKL nulldrv_GetKeyboardLayout( DWORD layout )
+static INT CDECL nulldrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
 {
     return 0;
 }
 
-static BOOL nulldrv_GetKeyboardLayoutName( LPWSTR name )
+static HKL CDECL nulldrv_GetKeyboardLayout( DWORD layout )
+{
+    return 0;
+}
+
+static BOOL CDECL nulldrv_GetKeyboardLayoutName( LPWSTR name )
 {
     return FALSE;
 }
 
-static HKL nulldrv_LoadKeyboardLayout( LPCWSTR name, UINT flags )
+static HKL CDECL nulldrv_LoadKeyboardLayout( LPCWSTR name, UINT flags )
 {
     return 0;
 }
 
-static UINT nulldrv_MapVirtualKeyEx( UINT code, UINT type, HKL layout )
+static UINT CDECL nulldrv_MapVirtualKeyEx( UINT code, UINT type, HKL layout )
 {
     return 0;
 }
 
-static UINT nulldrv_SendInput( UINT count, LPINPUT inputs, int size )
+static UINT CDECL nulldrv_SendInput( UINT count, LPINPUT inputs, int size )
 {
     return 0;
 }
 
-static INT nulldrv_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state, LPWSTR str,
-                                int size, UINT flags, HKL layout )
+static INT CDECL nulldrv_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state, LPWSTR str,
+                                      int size, UINT flags, HKL layout )
 {
     return 0;
 }
 
-static BOOL nulldrv_UnloadKeyboardLayout( HKL layout )
+static BOOL CDECL nulldrv_UnloadKeyboardLayout( HKL layout )
 {
     return 0;
 }
 
-static SHORT nulldrv_VkKeyScanEx( WCHAR ch, HKL layout )
+static SHORT CDECL nulldrv_VkKeyScanEx( WCHAR ch, HKL layout )
 {
     return -1;
 }
 
-static void nulldrv_SetCursor( struct tagCURSORICONINFO *info )
+static void CDECL nulldrv_SetCursor( struct tagCURSORICONINFO *info )
 {
 }
 
-static BOOL nulldrv_GetCursorPos( LPPOINT pt )
-{
-    return FALSE;
-}
-
-static BOOL nulldrv_SetCursorPos( INT x, INT y )
+static BOOL CDECL nulldrv_GetCursorPos( LPPOINT pt )
 {
     return FALSE;
 }
 
-static BOOL nulldrv_ClipCursor( LPCRECT clip )
+static BOOL CDECL nulldrv_SetCursorPos( INT x, INT y )
 {
     return FALSE;
 }
 
-static BOOL nulldrv_GetScreenSaveActive(void)
+static BOOL CDECL nulldrv_ClipCursor( LPCRECT clip )
 {
     return FALSE;
 }
 
-static void nulldrv_SetScreenSaveActive( BOOL on )
+static BOOL CDECL nulldrv_GetScreenSaveActive(void)
+{
+    return FALSE;
+}
+
+static void CDECL nulldrv_SetScreenSaveActive( BOOL on )
 {
 }
 
-static INT nulldrv_AcquireClipboard( HWND hwnd )
+static INT CDECL nulldrv_AcquireClipboard( HWND hwnd )
 {
     return 0;
 }
 
-static BOOL nulldrv_CountClipboardFormats(void)
+static BOOL CDECL nulldrv_CountClipboardFormats(void)
 {
     return 0;
 }
 
-static void nulldrv_EmptyClipboard( BOOL keepunowned )
+static void CDECL nulldrv_EmptyClipboard( BOOL keepunowned )
 {
 }
 
-static void nulldrv_EndClipboardUpdate(void)
+static void CDECL nulldrv_EndClipboardUpdate(void)
 {
 }
 
-static UINT nulldrv_EnumClipboardFormats( UINT format )
-{
-    return 0;
-}
-
-static BOOL nulldrv_GetClipboardData( UINT format, HANDLE16 *h16, HANDLE *h32 )
-{
-    return FALSE;
-}
-
-static INT nulldrv_GetClipboardFormatName( UINT format, LPWSTR buffer, UINT len )
-{
-    return FALSE;
-}
-
-static BOOL nulldrv_IsClipboardFormatAvailable( UINT format )
-{
-    return FALSE;
-}
-
-static UINT nulldrv_RegisterClipboardFormat( LPCWSTR name )
+static UINT CDECL nulldrv_EnumClipboardFormats( UINT format )
 {
     return 0;
 }
 
-static BOOL nulldrv_SetClipboardData( UINT format, HANDLE16 h16, HANDLE h32, BOOL owner )
+static BOOL CDECL nulldrv_GetClipboardData( UINT format, HANDLE16 *h16, HANDLE *h32 )
 {
     return FALSE;
 }
 
-static LONG nulldrv_ChangeDisplaySettingsEx( LPCWSTR name, LPDEVMODEW mode, HWND hwnd,
+static INT CDECL nulldrv_GetClipboardFormatName( UINT format, LPWSTR buffer, UINT len )
+{
+    return FALSE;
+}
+
+static BOOL CDECL nulldrv_IsClipboardFormatAvailable( UINT format )
+{
+    return FALSE;
+}
+
+static UINT CDECL nulldrv_RegisterClipboardFormat( LPCWSTR name )
+{
+    return 0;
+}
+
+static BOOL CDECL nulldrv_SetClipboardData( UINT format, HANDLE16 h16, HANDLE h32, BOOL owner )
+{
+    return FALSE;
+}
+
+static LONG CDECL nulldrv_ChangeDisplaySettingsEx( LPCWSTR name, LPDEVMODEW mode, HWND hwnd,
                                              DWORD flags, LPVOID lparam )
 {
     return DISP_CHANGE_FAILED;
 }
 
-static BOOL nulldrv_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
+static BOOL CDECL nulldrv_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
 {
     return FALSE;
 }
 
-static BOOL nulldrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW mode, DWORD flags )
+static BOOL CDECL nulldrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW mode, DWORD flags )
 {
     return FALSE;
 }
 
-static BOOL nulldrv_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
+static BOOL CDECL nulldrv_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
 {
     return FALSE;
 }
 
-static BOOL nulldrv_CreateDesktopWindow( HWND hwnd )
+static BOOL CDECL nulldrv_CreateDesktopWindow( HWND hwnd )
 {
     return TRUE;
 }
 
-static BOOL nulldrv_CreateWindow( HWND hwnd )
+static BOOL CDECL nulldrv_CreateWindow( HWND hwnd )
 {
     static int warned;
     if (warned++)
@@ -336,89 +336,89 @@ static BOOL nulldrv_CreateWindow( HWND hwnd )
     return FALSE;
 }
 
-static void nulldrv_DestroyWindow( HWND hwnd )
+static void CDECL nulldrv_DestroyWindow( HWND hwnd )
 {
 }
 
-static void nulldrv_GetDC( HDC hdc, HWND hwnd, HWND top_win, const RECT *win_rect,
-                           const RECT *top_rect, DWORD flags )
+static void CDECL nulldrv_GetDC( HDC hdc, HWND hwnd, HWND top_win, const RECT *win_rect,
+                                 const RECT *top_rect, DWORD flags )
 {
 }
 
-static DWORD nulldrv_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
-                                                  DWORD mask, DWORD flags )
+static DWORD CDECL nulldrv_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
+                                                        DWORD mask, DWORD flags )
 {
     return WaitForMultipleObjectsEx( count, handles, flags & MWMO_WAITALL,
                                      timeout, flags & MWMO_ALERTABLE );
 }
 
-static void nulldrv_ReleaseDC( HWND hwnd, HDC hdc )
+static void CDECL nulldrv_ReleaseDC( HWND hwnd, HDC hdc )
 {
 }
 
-static BOOL nulldrv_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
-                              HRGN hrgn, LPRECT update )
+static BOOL CDECL nulldrv_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
+                                    HRGN hrgn, LPRECT update )
 {
     return FALSE;
 }
 
-static void nulldrv_SetCapture( HWND hwnd, UINT flags )
+static void CDECL nulldrv_SetCapture( HWND hwnd, UINT flags )
 {
 }
 
-static void nulldrv_SetFocus( HWND hwnd )
+static void CDECL nulldrv_SetFocus( HWND hwnd )
 {
 }
 
-static void nulldrv_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
+static void CDECL nulldrv_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
 {
 }
 
-static void nulldrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
+static void CDECL nulldrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
 {
 }
 
-static int nulldrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
+static int CDECL nulldrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 {
     return 1;
 }
 
-static void nulldrv_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
+static void CDECL nulldrv_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
 {
 }
 
-static void nulldrv_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
+static void CDECL nulldrv_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
 {
 }
 
-static void nulldrv_SetWindowText( HWND hwnd, LPCWSTR text )
+static void CDECL nulldrv_SetWindowText( HWND hwnd, LPCWSTR text )
 {
 }
 
-static UINT nulldrv_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
+static UINT CDECL nulldrv_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
 {
     return swp;
 }
 
-static LRESULT nulldrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
+static LRESULT CDECL nulldrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
     return -1;
 }
 
-static LRESULT nulldrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+static LRESULT CDECL nulldrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     return 0;
 }
 
-static void nulldrv_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
-                                       const RECT *window_rect, const RECT *client_rect,
-                                       RECT *visible_rect )
+static void CDECL nulldrv_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
+                                             const RECT *window_rect, const RECT *client_rect,
+                                             RECT *visible_rect )
 {
 }
 
-static void nulldrv_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
-                                      const RECT *window_rect, const RECT *client_rect,
-                                      const RECT *visible_rect, const RECT *valid_rects )
+static void CDECL nulldrv_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
+                                            const RECT *window_rect, const RECT *client_rect,
+                                            const RECT *visible_rect, const RECT *valid_rects )
 {
 }
 
@@ -492,272 +492,272 @@ static USER_DRIVER null_driver =
  * Each entry point simply loads the real driver and chains to it.
  */
 
-static HKL loaderdrv_ActivateKeyboardLayout( HKL layout, UINT flags )
+static HKL CDECL loaderdrv_ActivateKeyboardLayout( HKL layout, UINT flags )
 {
     return load_driver()->pActivateKeyboardLayout( layout, flags );
 }
 
-static void loaderdrv_Beep(void)
+static void CDECL loaderdrv_Beep(void)
 {
     load_driver()->pBeep();
 }
 
-static SHORT loaderdrv_GetAsyncKeyState( INT key )
+static SHORT CDECL loaderdrv_GetAsyncKeyState( INT key )
 {
     return load_driver()->pGetAsyncKeyState( key );
 }
 
-static INT loaderdrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
+static INT CDECL loaderdrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
 {
     return load_driver()->pGetKeyNameText( lparam, buffer, size );
 }
 
-static HKL loaderdrv_GetKeyboardLayout( DWORD layout )
+static HKL CDECL loaderdrv_GetKeyboardLayout( DWORD layout )
 {
     return load_driver()->pGetKeyboardLayout( layout );
 }
 
-static BOOL loaderdrv_GetKeyboardLayoutName( LPWSTR name )
+static BOOL CDECL loaderdrv_GetKeyboardLayoutName( LPWSTR name )
 {
     return load_driver()->pGetKeyboardLayoutName( name );
 }
 
-static HKL loaderdrv_LoadKeyboardLayout( LPCWSTR name, UINT flags )
+static HKL CDECL loaderdrv_LoadKeyboardLayout( LPCWSTR name, UINT flags )
 {
     return load_driver()->pLoadKeyboardLayout( name, flags );
 }
 
-static UINT loaderdrv_MapVirtualKeyEx( UINT code, UINT type, HKL layout )
+static UINT CDECL loaderdrv_MapVirtualKeyEx( UINT code, UINT type, HKL layout )
 {
     return load_driver()->pMapVirtualKeyEx( code, type, layout );
 }
 
-static UINT loaderdrv_SendInput( UINT count, LPINPUT inputs, int size )
+static UINT CDECL loaderdrv_SendInput( UINT count, LPINPUT inputs, int size )
 {
     return load_driver()->pSendInput( count, inputs, size );
 }
 
-static INT loaderdrv_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state, LPWSTR str,
+static INT CDECL loaderdrv_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state, LPWSTR str,
                                   int size, UINT flags, HKL layout )
 {
     return load_driver()->pToUnicodeEx( virt, scan, state, str, size, flags, layout );
 }
 
-static BOOL loaderdrv_UnloadKeyboardLayout( HKL layout )
+static BOOL CDECL loaderdrv_UnloadKeyboardLayout( HKL layout )
 {
     return load_driver()->pUnloadKeyboardLayout( layout );
 }
 
-static SHORT loaderdrv_VkKeyScanEx( WCHAR ch, HKL layout )
+static SHORT CDECL loaderdrv_VkKeyScanEx( WCHAR ch, HKL layout )
 {
     return load_driver()->pVkKeyScanEx( ch, layout );
 }
 
-static void loaderdrv_SetCursor( struct tagCURSORICONINFO *info )
+static void CDECL loaderdrv_SetCursor( struct tagCURSORICONINFO *info )
 {
     load_driver()->pSetCursor( info );
 }
 
-static BOOL loaderdrv_GetCursorPos( LPPOINT pt )
+static BOOL CDECL loaderdrv_GetCursorPos( LPPOINT pt )
 {
     return load_driver()->pGetCursorPos( pt );
 }
 
-static BOOL loaderdrv_SetCursorPos( INT x, INT y )
+static BOOL CDECL loaderdrv_SetCursorPos( INT x, INT y )
 {
     return load_driver()->pSetCursorPos( x, y );
 }
 
-static BOOL loaderdrv_ClipCursor( LPCRECT clip )
+static BOOL CDECL loaderdrv_ClipCursor( LPCRECT clip )
 {
     return load_driver()->pClipCursor( clip );
 }
 
-static BOOL loaderdrv_GetScreenSaveActive(void)
+static BOOL CDECL loaderdrv_GetScreenSaveActive(void)
 {
     return load_driver()->pGetScreenSaveActive();
 }
 
-static void loaderdrv_SetScreenSaveActive( BOOL on )
+static void CDECL loaderdrv_SetScreenSaveActive( BOOL on )
 {
     load_driver()->pSetScreenSaveActive( on );
 }
 
-static INT loaderdrv_AcquireClipboard( HWND hwnd )
+static INT CDECL loaderdrv_AcquireClipboard( HWND hwnd )
 {
     return load_driver()->pAcquireClipboard( hwnd );
 }
 
-static BOOL loaderdrv_CountClipboardFormats(void)
+static BOOL CDECL loaderdrv_CountClipboardFormats(void)
 {
     return load_driver()->pCountClipboardFormats();
 }
 
-static void loaderdrv_EmptyClipboard( BOOL keepunowned )
+static void CDECL loaderdrv_EmptyClipboard( BOOL keepunowned )
 {
     load_driver()->pEmptyClipboard( keepunowned );
 }
 
-static void loaderdrv_EndClipboardUpdate(void)
+static void CDECL loaderdrv_EndClipboardUpdate(void)
 {
     load_driver()->pEndClipboardUpdate();
 }
 
-static UINT loaderdrv_EnumClipboardFormats( UINT format )
+static UINT CDECL loaderdrv_EnumClipboardFormats( UINT format )
 {
     return load_driver()->pEnumClipboardFormats( format );
 }
 
-static BOOL loaderdrv_GetClipboardData( UINT format, HANDLE16 *h16, HANDLE *h32 )
+static BOOL CDECL loaderdrv_GetClipboardData( UINT format, HANDLE16 *h16, HANDLE *h32 )
 {
     return load_driver()->pGetClipboardData( format, h16, h32 );
 }
 
-static INT loaderdrv_GetClipboardFormatName( UINT format, LPWSTR buffer, UINT len )
+static INT CDECL loaderdrv_GetClipboardFormatName( UINT format, LPWSTR buffer, UINT len )
 {
     return load_driver()->pGetClipboardFormatName( format, buffer, len );
 }
 
-static BOOL loaderdrv_IsClipboardFormatAvailable( UINT format )
+static BOOL CDECL loaderdrv_IsClipboardFormatAvailable( UINT format )
 {
     return load_driver()->pIsClipboardFormatAvailable( format );
 }
 
-static UINT loaderdrv_RegisterClipboardFormat( LPCWSTR name )
+static UINT CDECL loaderdrv_RegisterClipboardFormat( LPCWSTR name )
 {
     return load_driver()->pRegisterClipboardFormat( name );
 }
 
-static BOOL loaderdrv_SetClipboardData( UINT format, HANDLE16 h16, HANDLE h32, BOOL owner )
+static BOOL CDECL loaderdrv_SetClipboardData( UINT format, HANDLE16 h16, HANDLE h32, BOOL owner )
 {
     return load_driver()->pSetClipboardData( format, h16, h32, owner );
 }
 
-static LONG loaderdrv_ChangeDisplaySettingsEx( LPCWSTR name, LPDEVMODEW mode, HWND hwnd,
-                                               DWORD flags, LPVOID lparam )
+static LONG CDECL loaderdrv_ChangeDisplaySettingsEx( LPCWSTR name, LPDEVMODEW mode, HWND hwnd,
+                                                     DWORD flags, LPVOID lparam )
 {
     return load_driver()->pChangeDisplaySettingsEx( name, mode, hwnd, flags, lparam );
 }
 
-static BOOL loaderdrv_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
+static BOOL CDECL loaderdrv_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
 {
     return load_driver()->pEnumDisplayMonitors( hdc, rect, proc, lp );
 }
 
-static BOOL loaderdrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW mode, DWORD flags )
+static BOOL CDECL loaderdrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW mode, DWORD flags )
 {
     return load_driver()->pEnumDisplaySettingsEx( name, num, mode, flags );
 }
 
-static BOOL loaderdrv_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
+static BOOL CDECL loaderdrv_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
 {
     return load_driver()->pGetMonitorInfo( handle, info );
 }
 
-static BOOL loaderdrv_CreateDesktopWindow( HWND hwnd )
+static BOOL CDECL loaderdrv_CreateDesktopWindow( HWND hwnd )
 {
     return load_driver()->pCreateDesktopWindow( hwnd );
 }
 
-static BOOL loaderdrv_CreateWindow( HWND hwnd )
+static BOOL CDECL loaderdrv_CreateWindow( HWND hwnd )
 {
     return load_driver()->pCreateWindow( hwnd );
 }
 
-static void loaderdrv_DestroyWindow( HWND hwnd )
+static void CDECL loaderdrv_DestroyWindow( HWND hwnd )
 {
     load_driver()->pDestroyWindow( hwnd );
 }
 
-static void loaderdrv_GetDC( HDC hdc, HWND hwnd, HWND top_win, const RECT *win_rect,
-                             const RECT *top_rect, DWORD flags )
+static void CDECL loaderdrv_GetDC( HDC hdc, HWND hwnd, HWND top_win, const RECT *win_rect,
+                                   const RECT *top_rect, DWORD flags )
 {
     load_driver()->pGetDC( hdc, hwnd, top_win, win_rect, top_rect, flags );
 }
 
-static DWORD loaderdrv_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
-                                                    DWORD mask, DWORD flags )
+static DWORD CDECL loaderdrv_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
+                                                          DWORD mask, DWORD flags )
 {
     return load_driver()->pMsgWaitForMultipleObjectsEx( count, handles, timeout, mask, flags );
 }
 
-static void loaderdrv_ReleaseDC( HWND hwnd, HDC hdc )
+static void CDECL loaderdrv_ReleaseDC( HWND hwnd, HDC hdc )
 {
     load_driver()->pReleaseDC( hwnd, hdc );
 }
 
-static BOOL loaderdrv_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
-                                HRGN hrgn, LPRECT update )
+static BOOL CDECL loaderdrv_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
+                                      HRGN hrgn, LPRECT update )
 {
     return load_driver()->pScrollDC( hdc, dx, dy, scroll, clip, hrgn, update );
 }
 
-static void loaderdrv_SetCapture( HWND hwnd, UINT flags )
+static void CDECL loaderdrv_SetCapture( HWND hwnd, UINT flags )
 {
     load_driver()->pSetCapture( hwnd, flags );
 }
 
-static void loaderdrv_SetFocus( HWND hwnd )
+static void CDECL loaderdrv_SetFocus( HWND hwnd )
 {
     load_driver()->pSetFocus( hwnd );
 }
 
-static void loaderdrv_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
+static void CDECL loaderdrv_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
 {
     load_driver()->pSetLayeredWindowAttributes( hwnd, key, alpha, flags );
 }
 
-static void loaderdrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
+static void CDECL loaderdrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
 {
     load_driver()->pSetParent( hwnd, parent, old_parent );
 }
 
-static int loaderdrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
+static int CDECL loaderdrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 {
     return load_driver()->pSetWindowRgn( hwnd, hrgn, redraw );
 }
 
-static void loaderdrv_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
+static void CDECL loaderdrv_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
 {
     load_driver()->pSetWindowIcon( hwnd, type, icon );
 }
 
-static void loaderdrv_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
+static void CDECL loaderdrv_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
 {
     load_driver()->pSetWindowStyle( hwnd, offset, style );
 }
 
-static void loaderdrv_SetWindowText( HWND hwnd, LPCWSTR text )
+static void CDECL loaderdrv_SetWindowText( HWND hwnd, LPCWSTR text )
 {
     load_driver()->pSetWindowText( hwnd, text );
 }
 
-static UINT loaderdrv_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
+static UINT CDECL loaderdrv_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
 {
     return load_driver()->pShowWindow( hwnd, cmd, rect, swp );
 }
 
-static LRESULT loaderdrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
+static LRESULT CDECL loaderdrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
     return load_driver()->pSysCommand( hwnd, wparam, lparam );
 }
 
-static LRESULT loaderdrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+static LRESULT CDECL loaderdrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     return load_driver()->pWindowMessage( hwnd, msg, wparam, lparam );
 }
 
-static void loaderdrv_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
-                                         const RECT *window_rect, const RECT *client_rect,
-                                         RECT *visible_rect )
+static void CDECL loaderdrv_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
+                                               const RECT *window_rect, const RECT *client_rect,
+                                               RECT *visible_rect )
 {
     load_driver()->pWindowPosChanging( hwnd, insert_after, swp_flags,
                                        window_rect, client_rect, visible_rect );
 }
 
-static void loaderdrv_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
-                                        const RECT *window_rect, const RECT *client_rect,
-                                        const RECT *visible_rect, const RECT *valid_rects )
+static void CDECL loaderdrv_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
+                                              const RECT *window_rect, const RECT *client_rect,
+                                              const RECT *visible_rect, const RECT *valid_rects )
 {
     load_driver()->pWindowPosChanged( hwnd, insert_after, swp_flags, window_rect,
                                       client_rect, visible_rect, valid_rects );

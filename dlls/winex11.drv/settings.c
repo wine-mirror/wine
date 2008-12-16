@@ -266,7 +266,7 @@ static BOOL write_registry_settings(const DEVMODEW *dm)
  *		EnumDisplaySettingsEx  (X11DRV.@)
  *
  */
-BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags)
+BOOL CDECL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags)
 {
     static const WCHAR dev_name[CCHDEVICENAME] =
         { 'W','i','n','e',' ','X','1','1',' ','d','r','i','v','e','r',0 };
@@ -348,8 +348,8 @@ static const char * _DM_fields(DWORD fields)
  *		ChangeDisplaySettingsEx  (X11DRV.@)
  *
  */
-LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
-                                     HWND hwnd, DWORD flags, LPVOID lpvoid )
+LONG CDECL X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
+                                           HWND hwnd, DWORD flags, LPVOID lpvoid )
 {
     DWORD i, dwBpp = 0;
     DEVMODEW dm;

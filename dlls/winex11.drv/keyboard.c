@@ -1887,7 +1887,7 @@ static BOOL match_x11_keyboard_layout(HKL hkl)
 /**********************************************************************
  *		GetAsyncKeyState (X11DRV.@)
  */
-SHORT X11DRV_GetAsyncKeyState(INT key)
+SHORT CDECL X11DRV_GetAsyncKeyState(INT key)
 {
     SHORT retval;
 
@@ -1905,7 +1905,7 @@ SHORT X11DRV_GetAsyncKeyState(INT key)
 /***********************************************************************
  *		GetKeyboardLayout (X11DRV.@)
  */
-HKL X11DRV_GetKeyboardLayout(DWORD dwThreadid)
+HKL CDECL X11DRV_GetKeyboardLayout(DWORD dwThreadid)
 {
     if (!dwThreadid || dwThreadid == GetCurrentThreadId())
     {
@@ -1922,7 +1922,7 @@ HKL X11DRV_GetKeyboardLayout(DWORD dwThreadid)
 /***********************************************************************
  *		GetKeyboardLayoutName (X11DRV.@)
  */
-BOOL X11DRV_GetKeyboardLayoutName(LPWSTR name)
+BOOL CDECL X11DRV_GetKeyboardLayoutName(LPWSTR name)
 {
     static const WCHAR formatW[] = {'%','0','8','l','x',0};
     DWORD layout;
@@ -1945,7 +1945,7 @@ BOOL X11DRV_GetKeyboardLayoutName(LPWSTR name)
 /***********************************************************************
  *		LoadKeyboardLayout (X11DRV.@)
  */
-HKL X11DRV_LoadKeyboardLayout(LPCWSTR name, UINT flags)
+HKL CDECL X11DRV_LoadKeyboardLayout(LPCWSTR name, UINT flags)
 {
     FIXME("%s, %04x: stub!\n", debugstr_w(name), flags);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -1956,7 +1956,7 @@ HKL X11DRV_LoadKeyboardLayout(LPCWSTR name, UINT flags)
 /***********************************************************************
  *		UnloadKeyboardLayout (X11DRV.@)
  */
-BOOL X11DRV_UnloadKeyboardLayout(HKL hkl)
+BOOL CDECL X11DRV_UnloadKeyboardLayout(HKL hkl)
 {
     FIXME("%p: stub!\n", hkl);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -1967,7 +1967,7 @@ BOOL X11DRV_UnloadKeyboardLayout(HKL hkl)
 /***********************************************************************
  *		ActivateKeyboardLayout (X11DRV.@)
  */
-HKL X11DRV_ActivateKeyboardLayout(HKL hkl, UINT flags)
+HKL CDECL X11DRV_ActivateKeyboardLayout(HKL hkl, UINT flags)
 {
     HKL oldHkl = 0;
     struct x11drv_thread_data *thread_data = x11drv_init_thread_data();
@@ -2030,7 +2030,7 @@ void X11DRV_MappingNotify( HWND dummy, XEvent *event )
  *
  * Note: Windows ignores HKL parameter and uses current active layout instead
  */
-SHORT X11DRV_VkKeyScanEx(WCHAR wChar, HKL hkl)
+SHORT CDECL X11DRV_VkKeyScanEx(WCHAR wChar, HKL hkl)
 {
     Display *display = thread_init_display();
     KeyCode keycode;
@@ -2122,7 +2122,7 @@ SHORT X11DRV_VkKeyScanEx(WCHAR wChar, HKL hkl)
 /***********************************************************************
  *		MapVirtualKeyEx (X11DRV.@)
  */
-UINT X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
+UINT CDECL X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 {
     Display *display = thread_init_display();
 
@@ -2265,7 +2265,7 @@ UINT X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 /***********************************************************************
  *		GetKeyNameText (X11DRV.@)
  */
-INT X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
+INT CDECL X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
 {
   Display *display = thread_init_display();
   int vkey, ansi, scanCode;
@@ -2457,8 +2457,8 @@ static char KEYBOARD_MapDeadKeysym(KeySym keysym)
  * FIXME : should do the above (return 2 for non matching deadchar+char combinations)
  *
  */
-INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
-		     LPWSTR bufW, int bufW_size, UINT flags, HKL hkl)
+INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
+                             LPWSTR bufW, int bufW_size, UINT flags, HKL hkl)
 {
     Display *display = thread_init_display();
     XKeyEvent e;
@@ -2728,7 +2728,7 @@ found:
 /***********************************************************************
  *		Beep (X11DRV.@)
  */
-void X11DRV_Beep(void)
+void CDECL X11DRV_Beep(void)
 {
     wine_tsx11_lock();
     XBell(gdi_display, 0);

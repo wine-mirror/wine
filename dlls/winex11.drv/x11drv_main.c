@@ -689,7 +689,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
  *
  * Returns the active status of the screen saver
  */
-BOOL X11DRV_GetScreenSaveActive(void)
+BOOL CDECL X11DRV_GetScreenSaveActive(void)
 {
     int timeout, temp;
     wine_tsx11_lock();
@@ -703,7 +703,7 @@ BOOL X11DRV_GetScreenSaveActive(void)
  *
  * Activate/Deactivate the screen saver
  */
-void X11DRV_SetScreenSaveActive(BOOL bActivate)
+void CDECL X11DRV_SetScreenSaveActive(BOOL bActivate)
 {
     int timeout, interval, prefer_blanking, allow_exposures;
     static int last_timeout = 15 * 60;

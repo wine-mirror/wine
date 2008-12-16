@@ -89,7 +89,7 @@ POINT cursor_pos;
 static DWORD last_time_modified;
 static RECT cursor_clip; /* Cursor clipping rect */
 
-BOOL X11DRV_SetCursorPos( INT x, INT y );
+BOOL CDECL X11DRV_SetCursorPos( INT x, INT y );
 
 
 /***********************************************************************
@@ -933,7 +933,7 @@ static Cursor create_cursor( Display *display, CURSORICONINFO *ptr )
 /***********************************************************************
  *		SetCursor (X11DRV.@)
  */
-void X11DRV_SetCursor( CURSORICONINFO *lpCursor )
+void CDECL X11DRV_SetCursor( CURSORICONINFO *lpCursor )
 {
     struct x11drv_thread_data *data = x11drv_init_thread_data();
     Cursor cursor;
@@ -965,7 +965,7 @@ void X11DRV_SetCursor( CURSORICONINFO *lpCursor )
 /***********************************************************************
  *		SetCursorPos (X11DRV.@)
  */
-BOOL X11DRV_SetCursorPos( INT x, INT y )
+BOOL CDECL X11DRV_SetCursorPos( INT x, INT y )
 {
     Display *display = thread_init_display();
     POINT pt;
@@ -994,7 +994,7 @@ BOOL X11DRV_SetCursorPos( INT x, INT y )
 /***********************************************************************
  *		GetCursorPos (X11DRV.@)
  */
-BOOL X11DRV_GetCursorPos(LPPOINT pos)
+BOOL CDECL X11DRV_GetCursorPos(LPPOINT pos)
 {
     Display *display = thread_init_display();
     Window root, child;
@@ -1024,7 +1024,7 @@ BOOL X11DRV_GetCursorPos(LPPOINT pos)
  *
  * Set the cursor clipping rectangle.
  */
-BOOL X11DRV_ClipCursor( LPCRECT clip )
+BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
 {
     if (!IntersectRect( &cursor_clip, &virtual_screen_rect, clip ))
         cursor_clip = virtual_screen_rect;
