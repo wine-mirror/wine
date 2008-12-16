@@ -1502,7 +1502,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
 /***********************************************************************
  *           X11DRV_PatBlt
  */
-BOOL X11DRV_PatBlt( X11DRV_PDEVICE *physDev, INT left, INT top, INT width, INT height, DWORD rop )
+BOOL CDECL X11DRV_PatBlt( X11DRV_PDEVICE *physDev, INT left, INT top, INT width, INT height, DWORD rop )
 {
     BOOL result;
 
@@ -1637,7 +1637,7 @@ static BOOL X11DRV_ClientSideDIBCopy( X11DRV_PDEVICE *physDevSrc, INT xSrc, INT 
 /***********************************************************************
  *           X11DRV_BitBlt
  */
-BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
+BOOL CDECL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
                     INT width, INT height, X11DRV_PDEVICE *physDevSrc,
                     INT xSrc, INT ySrc, DWORD rop )
 {
@@ -1736,10 +1736,10 @@ END:
 /***********************************************************************
  *           X11DRV_StretchBlt
  */
-BOOL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
-                        INT widthDst, INT heightDst,
-                        X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
-                        INT widthSrc, INT heightSrc, DWORD rop )
+BOOL CDECL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
+                              INT widthDst, INT heightDst,
+                              X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
+                              INT widthSrc, INT heightSrc, DWORD rop )
 {
     BOOL result;
 

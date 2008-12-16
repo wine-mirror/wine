@@ -118,8 +118,8 @@ void X11DRV_GDI_Finalize(void)
 /**********************************************************************
  *	     X11DRV_CreateDC
  */
-BOOL X11DRV_CreateDC( HDC hdc, X11DRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR device,
-                      LPCWSTR output, const DEVMODEW* initData )
+BOOL CDECL X11DRV_CreateDC( HDC hdc, X11DRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR device,
+                            LPCWSTR output, const DEVMODEW* initData )
 {
     X11DRV_PDEVICE *physDev;
 
@@ -165,7 +165,7 @@ BOOL X11DRV_CreateDC( HDC hdc, X11DRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR de
 /**********************************************************************
  *	     X11DRV_DeleteDC
  */
-BOOL X11DRV_DeleteDC( X11DRV_PDEVICE *physDev )
+BOOL CDECL X11DRV_DeleteDC( X11DRV_PDEVICE *physDev )
 {
     if(physDev->xrender)
       X11DRV_XRender_DeleteDC( physDev );
@@ -181,7 +181,7 @@ BOOL X11DRV_DeleteDC( X11DRV_PDEVICE *physDev )
 /***********************************************************************
  *           GetDeviceCaps    (X11DRV.@)
  */
-INT X11DRV_GetDeviceCaps( X11DRV_PDEVICE *physDev, INT cap )
+INT CDECL X11DRV_GetDeviceCaps( X11DRV_PDEVICE *physDev, INT cap )
 {
     switch(cap)
     {
@@ -276,8 +276,8 @@ INT X11DRV_GetDeviceCaps( X11DRV_PDEVICE *physDev, INT cap )
 /**********************************************************************
  *           ExtEscape  (X11DRV.@)
  */
-INT X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID in_data,
-                      INT out_count, LPVOID out_data )
+INT CDECL X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID in_data,
+                            INT out_count, LPVOID out_data )
 {
     switch(escape)
     {

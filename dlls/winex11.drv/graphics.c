@@ -155,7 +155,7 @@ RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp )
 /***********************************************************************
  *           X11DRV_SetDeviceClipping
  */
-void X11DRV_SetDeviceClipping( X11DRV_PDEVICE *physDev, HRGN vis_rgn, HRGN clip_rgn )
+void CDECL X11DRV_SetDeviceClipping( X11DRV_PDEVICE *physDev, HRGN vis_rgn, HRGN clip_rgn )
 {
     RGNDATA *data;
 
@@ -433,7 +433,7 @@ INT X11DRV_YWStoDS( X11DRV_PDEVICE *physDev, INT height )
 /***********************************************************************
  *           X11DRV_LineTo
  */
-BOOL
+BOOL CDECL
 X11DRV_LineTo( X11DRV_PDEVICE *physDev, INT x, INT y )
 {
     POINT pt[2];
@@ -629,7 +629,7 @@ X11DRV_DrawArc( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
 /***********************************************************************
  *           X11DRV_Arc
  */
-BOOL
+BOOL CDECL
 X11DRV_Arc( X11DRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom,
             INT xstart, INT ystart, INT xend, INT yend )
 {
@@ -641,7 +641,7 @@ X11DRV_Arc( X11DRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           X11DRV_Pie
  */
-BOOL
+BOOL CDECL
 X11DRV_Pie( X11DRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom,
             INT xstart, INT ystart, INT xend, INT yend )
 {
@@ -652,7 +652,7 @@ X11DRV_Pie( X11DRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           X11DRV_Chord
  */
-BOOL
+BOOL CDECL
 X11DRV_Chord( X11DRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom,
               INT xstart, INT ystart, INT xend, INT yend )
 {
@@ -664,7 +664,7 @@ X11DRV_Chord( X11DRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           X11DRV_Ellipse
  */
-BOOL
+BOOL CDECL
 X11DRV_Ellipse( X11DRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom )
 {
     INT width, oldwidth;
@@ -728,7 +728,7 @@ X11DRV_Ellipse( X11DRV_PDEVICE *physDev, INT left, INT top, INT right, INT botto
 /***********************************************************************
  *           X11DRV_Rectangle
  */
-BOOL
+BOOL CDECL
 X11DRV_Rectangle(X11DRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom)
 {
     INT width, oldwidth, oldjoinstyle;
@@ -801,7 +801,7 @@ X11DRV_Rectangle(X11DRV_PDEVICE *physDev, INT left, INT top, INT right, INT bott
 /***********************************************************************
  *           X11DRV_RoundRect
  */
-BOOL
+BOOL CDECL
 X11DRV_RoundRect( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
                   INT bottom, INT ell_width, INT ell_height )
 {
@@ -1011,7 +1011,7 @@ X11DRV_RoundRect( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
 /***********************************************************************
  *           X11DRV_SetPixel
  */
-COLORREF
+COLORREF CDECL
 X11DRV_SetPixel( X11DRV_PDEVICE *physDev, INT x, INT y, COLORREF color )
 {
     unsigned long pixel;
@@ -1043,7 +1043,7 @@ X11DRV_SetPixel( X11DRV_PDEVICE *physDev, INT x, INT y, COLORREF color )
 /***********************************************************************
  *           X11DRV_GetPixel
  */
-COLORREF
+COLORREF CDECL
 X11DRV_GetPixel( X11DRV_PDEVICE *physDev, INT x, INT y )
 {
     static Pixmap pixmap = 0;
@@ -1090,7 +1090,7 @@ X11DRV_GetPixel( X11DRV_PDEVICE *physDev, INT x, INT y )
 /***********************************************************************
  *           X11DRV_PaintRgn
  */
-BOOL
+BOOL CDECL
 X11DRV_PaintRgn( X11DRV_PDEVICE *physDev, HRGN hrgn )
 {
     if (X11DRV_SetupGCForBrush( physDev ))
@@ -1120,7 +1120,7 @@ X11DRV_PaintRgn( X11DRV_PDEVICE *physDev, HRGN hrgn )
 /**********************************************************************
  *          X11DRV_Polyline
  */
-BOOL
+BOOL CDECL
 X11DRV_Polyline( X11DRV_PDEVICE *physDev, const POINT* pt, INT count )
 {
     int i;
@@ -1157,7 +1157,7 @@ X11DRV_Polyline( X11DRV_PDEVICE *physDev, const POINT* pt, INT count )
 /**********************************************************************
  *          X11DRV_Polygon
  */
-BOOL
+BOOL CDECL
 X11DRV_Polygon( X11DRV_PDEVICE *physDev, const POINT* pt, INT count )
 {
     register int i;
@@ -1209,7 +1209,7 @@ X11DRV_Polygon( X11DRV_PDEVICE *physDev, const POINT* pt, INT count )
 /**********************************************************************
  *          X11DRV_PolyPolygon
  */
-BOOL
+BOOL CDECL
 X11DRV_PolyPolygon( X11DRV_PDEVICE *physDev, const POINT* pt, const INT* counts, UINT polygons)
 {
     HRGN hrgn;
@@ -1267,7 +1267,7 @@ X11DRV_PolyPolygon( X11DRV_PDEVICE *physDev, const POINT* pt, const INT* counts,
 /**********************************************************************
  *          X11DRV_PolyPolyline
  */
-BOOL
+BOOL CDECL
 X11DRV_PolyPolyline( X11DRV_PDEVICE *physDev, const POINT* pt, const DWORD* counts, DWORD polylines )
 {
     if (X11DRV_SetupGCForPen ( physDev ))
@@ -1386,7 +1386,7 @@ static int ExtFloodFillXGetImageErrorHandler( Display *dpy, XErrorEvent *event, 
 /**********************************************************************
  *          X11DRV_ExtFloodFill
  */
-BOOL
+BOOL CDECL
 X11DRV_ExtFloodFill( X11DRV_PDEVICE *physDev, INT x, INT y, COLORREF color,
                      UINT fillType )
 {
@@ -1440,7 +1440,7 @@ X11DRV_ExtFloodFill( X11DRV_PDEVICE *physDev, INT x, INT y, COLORREF color,
 /**********************************************************************
  *          X11DRV_SetBkColor
  */
-COLORREF
+COLORREF CDECL
 X11DRV_SetBkColor( X11DRV_PDEVICE *physDev, COLORREF color )
 {
     physDev->backgroundPixel = X11DRV_PALETTE_ToPhysical( physDev, color );
@@ -1450,7 +1450,7 @@ X11DRV_SetBkColor( X11DRV_PDEVICE *physDev, COLORREF color )
 /**********************************************************************
  *          X11DRV_SetTextColor
  */
-COLORREF
+COLORREF CDECL
 X11DRV_SetTextColor( X11DRV_PDEVICE *physDev, COLORREF color )
 {
     physDev->textPixel = X11DRV_PALETTE_ToPhysical( physDev, color );
@@ -1460,7 +1460,7 @@ X11DRV_SetTextColor( X11DRV_PDEVICE *physDev, COLORREF color )
 /***********************************************************************
  *           GetDCOrgEx   (X11DRV.@)
  */
-BOOL X11DRV_GetDCOrgEx( X11DRV_PDEVICE *physDev, LPPOINT lpp )
+BOOL CDECL X11DRV_GetDCOrgEx( X11DRV_PDEVICE *physDev, LPPOINT lpp )
 {
     lpp->x = physDev->dc_rect.left + physDev->drawable_rect.left;
     lpp->y = physDev->dc_rect.top + physDev->drawable_rect.top;
@@ -1471,7 +1471,7 @@ BOOL X11DRV_GetDCOrgEx( X11DRV_PDEVICE *physDev, LPPOINT lpp )
 /***********************************************************************
  *           SetDCOrg   (X11DRV.@)
  */
-DWORD X11DRV_SetDCOrg( X11DRV_PDEVICE *physDev, INT x, INT y )
+DWORD CDECL X11DRV_SetDCOrg( X11DRV_PDEVICE *physDev, INT x, INT y )
 {
     DWORD ret = MAKELONG( physDev->dc_rect.left + physDev->drawable_rect.left,
                           physDev->dc_rect.top + physDev->drawable_rect.top );
@@ -1516,7 +1516,7 @@ extern void WINAPI A_SHAFinal( sha_ctx *, unsigned char * );
 /***********************************************************************
  *              GetICMProfile (X11DRV.@)
  */
-BOOL X11DRV_GetICMProfile( X11DRV_PDEVICE *physDev, LPDWORD size, LPWSTR filename )
+BOOL CDECL X11DRV_GetICMProfile( X11DRV_PDEVICE *physDev, LPDWORD size, LPWSTR filename )
 {
     static const WCHAR path[] =
         {'\\','s','p','o','o','l','\\','d','r','i','v','e','r','s',

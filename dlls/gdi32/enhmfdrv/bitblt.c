@@ -27,8 +27,8 @@
 #include "enhmetafiledrv.h"
 #include "wine/debug.h"
 
-BOOL EMFDRV_PatBlt( PHYSDEV dev, INT left, INT top,
-                    INT width, INT height, DWORD rop )
+BOOL CDECL EMFDRV_PatBlt( PHYSDEV dev, INT left, INT top,
+                          INT width, INT height, DWORD rop )
 {
     EMRBITBLT emr;
     BOOL ret;
@@ -173,7 +173,7 @@ static BOOL EMFDRV_BitBlockTransfer(
     return ret;
 }
 
-BOOL EMFDRV_BitBlt( 
+BOOL CDECL EMFDRV_BitBlt(
     PHYSDEV devDst, INT xDst, INT yDst, INT width, INT height,
     PHYSDEV devSrc, INT xSrc, INT ySrc, DWORD rop)
 {
@@ -182,7 +182,7 @@ BOOL EMFDRV_BitBlt(
                                     rop, EMR_BITBLT );
 }
 
-BOOL EMFDRV_StretchBlt( 
+BOOL CDECL EMFDRV_StretchBlt(
     PHYSDEV devDst, INT xDst, INT yDst, INT widthDst, INT heightDst,  
     PHYSDEV devSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, DWORD rop )
 {
@@ -191,7 +191,7 @@ BOOL EMFDRV_StretchBlt(
                                     rop, EMR_STRETCHBLT );
 }
 
-INT EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
+INT CDECL EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
                                       INT heightDst, INT xSrc, INT ySrc,
                                       INT widthSrc, INT heightSrc,
                                       const void *bits, const BITMAPINFO *info,
@@ -254,7 +254,7 @@ INT EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
     return ret ? heightSrc : GDI_ERROR;
 }
 
-INT EMFDRV_SetDIBitsToDevice( 
+INT CDECL EMFDRV_SetDIBitsToDevice(
     PHYSDEV dev, INT xDst, INT yDst, DWORD width, DWORD height,
     INT xSrc, INT ySrc, UINT startscan, UINT lines,
     LPCVOID bits, const BITMAPINFO *info, UINT wUsage )

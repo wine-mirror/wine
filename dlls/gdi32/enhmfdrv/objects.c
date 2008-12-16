@@ -74,7 +74,7 @@ static UINT EMFDRV_FindObject( PHYSDEV dev, HGDIOBJ obj )
 /******************************************************************
  *         EMFDRV_DeleteObject
  */
-BOOL EMFDRV_DeleteObject( PHYSDEV dev, HGDIOBJ obj )
+BOOL CDECL EMFDRV_DeleteObject( PHYSDEV dev, HGDIOBJ obj )
 {
     EMRDELETEOBJECT emr;
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
@@ -99,7 +99,7 @@ BOOL EMFDRV_DeleteObject( PHYSDEV dev, HGDIOBJ obj )
 /***********************************************************************
  *           EMFDRV_SelectBitmap
  */
-HBITMAP EMFDRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
+HBITMAP CDECL EMFDRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
 {
     return 0;
 }
@@ -273,7 +273,7 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
 /***********************************************************************
  *           EMFDRV_SelectBrush
  */
-HBRUSH EMFDRV_SelectBrush(PHYSDEV dev, HBRUSH hBrush )
+HBRUSH CDECL EMFDRV_SelectBrush(PHYSDEV dev, HBRUSH hBrush )
 {
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
     EMRSELECTOBJECT emr;
@@ -350,7 +350,7 @@ static BOOL EMFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont )
 /***********************************************************************
  *           EMFDRV_SelectFont
  */
-HFONT EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont, HANDLE gdiFont )
+HFONT CDECL EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont, HANDLE gdiFont )
 {
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
     EMRSELECTOBJECT emr;
@@ -429,7 +429,7 @@ static DWORD EMFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen)
 /******************************************************************
  *         EMFDRV_SelectPen
  */
-HPEN EMFDRV_SelectPen(PHYSDEV dev, HPEN hPen )
+HPEN CDECL EMFDRV_SelectPen(PHYSDEV dev, HPEN hPen )
 {
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
     EMRSELECTOBJECT emr;
@@ -495,7 +495,7 @@ static DWORD EMFDRV_CreatePalette(PHYSDEV dev, HPALETTE hPal)
 /******************************************************************
  *         EMFDRV_SelectPalette
  */
-HPALETTE EMFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPal, BOOL force )
+HPALETTE CDECL EMFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPal, BOOL force )
 {
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
     EMRSELECTPALETTE emr;
@@ -524,7 +524,7 @@ found:
 /******************************************************************
  *         EMFDRV_GdiComment
  */
-BOOL EMFDRV_GdiComment(PHYSDEV dev, UINT bytes, CONST BYTE *buffer)
+BOOL CDECL EMFDRV_GdiComment(PHYSDEV dev, UINT bytes, CONST BYTE *buffer)
 {
     EMRGDICOMMENT *emr;
     UINT total, rounded_size;

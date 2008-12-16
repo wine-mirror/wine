@@ -586,8 +586,8 @@ BOOL MFDRV_MetaParam8(PHYSDEV dev, short func, short param1, short param2,
 /**********************************************************************
  *           MFDRV_ExtEscape
  */
-INT MFDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
-                     INT cbOutput, LPVOID out_data )
+INT CDECL MFDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
+                           INT cbOutput, LPVOID out_data )
 {
     METARECORD *mr;
     DWORD len;
@@ -613,7 +613,7 @@ INT MFDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
  *
  *A very simple implementation that returns DT_METAFILE
  */
-INT MFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
+INT CDECL MFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
 {
     switch(cap)
     {

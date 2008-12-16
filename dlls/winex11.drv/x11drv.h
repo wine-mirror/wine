@@ -66,8 +66,8 @@ typedef int Status;
 
 struct tagCURSORICONINFO;
 
-extern void wine_tsx11_lock(void);
-extern void wine_tsx11_unlock(void);
+extern void CDECL wine_tsx11_lock(void);
+extern void CDECL wine_tsx11_unlock(void);
 
   /* X physical pen */
 typedef struct
@@ -152,82 +152,80 @@ extern X_PHYSBITMAP BITMAP_stock_phys_bitmap;  /* phys bitmap for the default st
 
 /* Wine driver X11 functions */
 
-extern BOOL X11DRV_AlphaBlend( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
-                               INT widthDst, INT heightDst,
-                               X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
-                               INT widthSrc, INT heightSrc, BLENDFUNCTION blendfn );
-extern BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
-                             INT width, INT height, X11DRV_PDEVICE *physDevSrc,
-                             INT xSrc, INT ySrc, DWORD rop );
-extern BOOL X11DRV_EnumDeviceFonts( X11DRV_PDEVICE *physDev, LPLOGFONTW plf,
-                                    FONTENUMPROCW dfeproc, LPARAM lp );
-extern LONG X11DRV_GetBitmapBits( HBITMAP hbitmap, void *bits, LONG count );
-extern BOOL X11DRV_GetCharWidth( X11DRV_PDEVICE *physDev, UINT firstChar,
-                                   UINT lastChar, LPINT buffer );
-extern BOOL X11DRV_GetDCOrgEx( X11DRV_PDEVICE *physDev, LPPOINT lpp );
-extern BOOL X11DRV_GetTextExtentExPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
-                                  INT maxExt, LPINT lpnFit, LPINT alpDx, LPSIZE size );
-extern BOOL X11DRV_GetTextMetrics(X11DRV_PDEVICE *physDev, TEXTMETRICW *metrics);
-extern BOOL X11DRV_PatBlt( X11DRV_PDEVICE *physDev, INT left, INT top,
-                             INT width, INT height, DWORD rop );
-extern BOOL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
-                                 INT widthDst, INT heightDst,
-                                 X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
-                                 INT widthSrc, INT heightSrc, DWORD rop );
-extern BOOL X11DRV_LineTo( X11DRV_PDEVICE *physDev, INT x, INT y);
-extern BOOL X11DRV_Arc( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
-			  INT bottom, INT xstart, INT ystart, INT xend,
-			  INT yend );
-extern BOOL X11DRV_Pie( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
-			  INT bottom, INT xstart, INT ystart, INT xend,
-			  INT yend );
-extern BOOL X11DRV_Chord( X11DRV_PDEVICE *physDev, INT left, INT top,
-			    INT right, INT bottom, INT xstart,
-			    INT ystart, INT xend, INT yend );
-extern BOOL X11DRV_Ellipse( X11DRV_PDEVICE *physDev, INT left, INT top,
-			      INT right, INT bottom );
-extern BOOL X11DRV_Rectangle(X11DRV_PDEVICE *physDev, INT left, INT top,
-			      INT right, INT bottom);
-extern BOOL X11DRV_RoundRect( X11DRV_PDEVICE *physDev, INT left, INT top,
-				INT right, INT bottom, INT ell_width,
-				INT ell_height );
-extern COLORREF X11DRV_SetPixel( X11DRV_PDEVICE *physDev, INT x, INT y,
-				 COLORREF color );
-extern COLORREF X11DRV_GetPixel( X11DRV_PDEVICE *physDev, INT x, INT y);
-extern BOOL X11DRV_PaintRgn( X11DRV_PDEVICE *physDev, HRGN hrgn );
-extern BOOL X11DRV_Polyline( X11DRV_PDEVICE *physDev,const POINT* pt,INT count);
-extern BOOL X11DRV_Polygon( X11DRV_PDEVICE *physDev, const POINT* pt, INT count );
-extern BOOL X11DRV_PolyPolygon( X11DRV_PDEVICE *physDev, const POINT* pt,
-				  const INT* counts, UINT polygons);
-extern BOOL X11DRV_PolyPolyline( X11DRV_PDEVICE *physDev, const POINT* pt,
-				  const DWORD* counts, DWORD polylines);
+extern BOOL CDECL X11DRV_AlphaBlend( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
+                                     INT widthDst, INT heightDst,
+                                     X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
+                                     INT widthSrc, INT heightSrc, BLENDFUNCTION blendfn );
+extern BOOL CDECL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
+                                 INT width, INT height, X11DRV_PDEVICE *physDevSrc,
+                                 INT xSrc, INT ySrc, DWORD rop );
+extern BOOL CDECL X11DRV_EnumDeviceFonts( X11DRV_PDEVICE *physDev, LPLOGFONTW plf,
+                                          FONTENUMPROCW dfeproc, LPARAM lp );
+extern LONG CDECL X11DRV_GetBitmapBits( HBITMAP hbitmap, void *bits, LONG count );
+extern BOOL CDECL X11DRV_GetCharWidth( X11DRV_PDEVICE *physDev, UINT firstChar,
+                                       UINT lastChar, LPINT buffer );
+extern BOOL CDECL X11DRV_GetDCOrgEx( X11DRV_PDEVICE *physDev, LPPOINT lpp );
+extern BOOL CDECL X11DRV_GetTextExtentExPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
+                                               INT maxExt, LPINT lpnFit, LPINT alpDx, LPSIZE size );
+extern BOOL CDECL X11DRV_GetTextMetrics(X11DRV_PDEVICE *physDev, TEXTMETRICW *metrics);
+extern BOOL CDECL X11DRV_PatBlt( X11DRV_PDEVICE *physDev, INT left, INT top,
+                                 INT width, INT height, DWORD rop );
+extern BOOL CDECL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
+                                     INT widthDst, INT heightDst,
+                                     X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
+                                     INT widthSrc, INT heightSrc, DWORD rop );
+extern BOOL CDECL X11DRV_LineTo( X11DRV_PDEVICE *physDev, INT x, INT y);
+extern BOOL CDECL X11DRV_Arc( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
+                              INT bottom, INT xstart, INT ystart, INT xend, INT yend );
+extern BOOL CDECL X11DRV_Pie( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
+                              INT bottom, INT xstart, INT ystart, INT xend,
+                              INT yend );
+extern BOOL CDECL X11DRV_Chord( X11DRV_PDEVICE *physDev, INT left, INT top,
+                                INT right, INT bottom, INT xstart,
+                                INT ystart, INT xend, INT yend );
+extern BOOL CDECL X11DRV_Ellipse( X11DRV_PDEVICE *physDev, INT left, INT top,
+                                  INT right, INT bottom );
+extern BOOL CDECL X11DRV_Rectangle(X11DRV_PDEVICE *physDev, INT left, INT top,
+                                   INT right, INT bottom);
+extern BOOL CDECL X11DRV_RoundRect( X11DRV_PDEVICE *physDev, INT left, INT top,
+                                    INT right, INT bottom, INT ell_width,
+                                    INT ell_height );
+extern COLORREF CDECL X11DRV_SetPixel( X11DRV_PDEVICE *physDev, INT x, INT y, COLORREF color );
+extern COLORREF CDECL X11DRV_GetPixel( X11DRV_PDEVICE *physDev, INT x, INT y);
+extern BOOL CDECL X11DRV_PaintRgn( X11DRV_PDEVICE *physDev, HRGN hrgn );
+extern BOOL CDECL X11DRV_Polyline( X11DRV_PDEVICE *physDev,const POINT* pt,INT count);
+extern BOOL CDECL X11DRV_Polygon( X11DRV_PDEVICE *physDev, const POINT* pt, INT count );
+extern BOOL CDECL X11DRV_PolyPolygon( X11DRV_PDEVICE *physDev, const POINT* pt,
+                                      const INT* counts, UINT polygons);
+extern BOOL CDECL X11DRV_PolyPolyline( X11DRV_PDEVICE *physDev, const POINT* pt,
+                                       const DWORD* counts, DWORD polylines);
 
-extern COLORREF X11DRV_SetBkColor( X11DRV_PDEVICE *physDev, COLORREF color );
-extern COLORREF X11DRV_SetTextColor( X11DRV_PDEVICE *physDev, COLORREF color );
-extern BOOL X11DRV_ExtFloodFill( X11DRV_PDEVICE *physDev, INT x, INT y,
-				   COLORREF color, UINT fillType );
-extern BOOL X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y,
-				 UINT flags, const RECT *lprect,
-				 LPCWSTR str, UINT count, const INT *lpDx );
-extern LONG X11DRV_SetBitmapBits( HBITMAP hbitmap, const void *bits, LONG count );
-extern void X11DRV_SetDeviceClipping( X11DRV_PDEVICE *physDev, HRGN vis_rgn, HRGN clip_rgn );
-extern INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest,
-				       INT yDest, DWORD cx, DWORD cy,
-				       INT xSrc, INT ySrc,
-				       UINT startscan, UINT lines,
-				       LPCVOID bits, const BITMAPINFO *info,
-				       UINT coloruse );
-extern BOOL X11DRV_GetDeviceGammaRamp( X11DRV_PDEVICE *physDev, LPVOID ramp );
-extern BOOL X11DRV_SetDeviceGammaRamp( X11DRV_PDEVICE *physDev, LPVOID ramp );
+extern COLORREF CDECL X11DRV_SetBkColor( X11DRV_PDEVICE *physDev, COLORREF color );
+extern COLORREF CDECL X11DRV_SetTextColor( X11DRV_PDEVICE *physDev, COLORREF color );
+extern BOOL CDECL X11DRV_ExtFloodFill( X11DRV_PDEVICE *physDev, INT x, INT y,
+                                       COLORREF color, UINT fillType );
+extern BOOL CDECL X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y,
+                                     UINT flags, const RECT *lprect,
+                                     LPCWSTR str, UINT count, const INT *lpDx );
+extern LONG CDECL X11DRV_SetBitmapBits( HBITMAP hbitmap, const void *bits, LONG count );
+extern void CDECL X11DRV_SetDeviceClipping( X11DRV_PDEVICE *physDev, HRGN vis_rgn, HRGN clip_rgn );
+extern INT CDECL X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest,
+                                           INT yDest, DWORD cx, DWORD cy,
+                                           INT xSrc, INT ySrc,
+                                           UINT startscan, UINT lines,
+                                           LPCVOID bits, const BITMAPINFO *info,
+                                           UINT coloruse );
+extern BOOL CDECL X11DRV_GetDeviceGammaRamp( X11DRV_PDEVICE *physDev, LPVOID ramp );
+extern BOOL CDECL X11DRV_SetDeviceGammaRamp( X11DRV_PDEVICE *physDev, LPVOID ramp );
 
 /* OpenGL / X11 driver functions */
-extern int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
+extern int CDECL X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
 		                      const PIXELFORMATDESCRIPTOR *pppfd);
-extern int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
+extern int CDECL X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
 		                        int iPixelFormat, UINT nBytes,
 					PIXELFORMATDESCRIPTOR *ppfd);
-extern int X11DRV_GetPixelFormat(X11DRV_PDEVICE *physDev);
-extern BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev);
+extern int CDECL X11DRV_GetPixelFormat(X11DRV_PDEVICE *physDev);
+extern BOOL CDECL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev);
 
 /* X11 driver internal functions */
 

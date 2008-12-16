@@ -25,7 +25,7 @@
 /***********************************************************************
  *           MFDRV_SetMapMode
  */
-INT MFDRV_SetMapMode( PHYSDEV dev, INT mode )
+INT CDECL MFDRV_SetMapMode( PHYSDEV dev, INT mode )
 {
     if(!MFDRV_MetaParam1( dev, META_SETMAPMODE, mode ))
         return FALSE;
@@ -36,7 +36,7 @@ INT MFDRV_SetMapMode( PHYSDEV dev, INT mode )
 /***********************************************************************
  *           MFDRV_SetViewportExt
  */
-INT MFDRV_SetViewportExt( PHYSDEV dev, INT x, INT y )
+INT CDECL MFDRV_SetViewportExt( PHYSDEV dev, INT x, INT y )
 {
     if(!MFDRV_MetaParam2( dev, META_SETVIEWPORTEXT, x, y ))
         return FALSE;
@@ -47,7 +47,7 @@ INT MFDRV_SetViewportExt( PHYSDEV dev, INT x, INT y )
 /***********************************************************************
  *           MFDRV_SetViewportOrg
  */
-INT MFDRV_SetViewportOrg( PHYSDEV dev, INT x, INT y )
+INT CDECL MFDRV_SetViewportOrg( PHYSDEV dev, INT x, INT y )
 {
     if(!MFDRV_MetaParam2( dev, META_SETVIEWPORTORG, x, y ))
         return FALSE;
@@ -58,7 +58,7 @@ INT MFDRV_SetViewportOrg( PHYSDEV dev, INT x, INT y )
 /***********************************************************************
  *           MFDRV_SetWindowExt
  */
-INT MFDRV_SetWindowExt( PHYSDEV dev, INT x, INT y )
+INT CDECL MFDRV_SetWindowExt( PHYSDEV dev, INT x, INT y )
 {
     if(!MFDRV_MetaParam2( dev, META_SETWINDOWEXT, x, y ))
         return FALSE;
@@ -69,7 +69,7 @@ INT MFDRV_SetWindowExt( PHYSDEV dev, INT x, INT y )
 /***********************************************************************
  *           MFDRV_SetWindowOrg
  */
-INT MFDRV_SetWindowOrg( PHYSDEV dev, INT x, INT y )
+INT CDECL MFDRV_SetWindowOrg( PHYSDEV dev, INT x, INT y )
 {
     if(!MFDRV_MetaParam2( dev, META_SETWINDOWORG, x, y ))
         return FALSE;
@@ -80,7 +80,7 @@ INT MFDRV_SetWindowOrg( PHYSDEV dev, INT x, INT y )
 /***********************************************************************
  *           MFDRV_OffsetViewportOrg
  */
-INT MFDRV_OffsetViewportOrg( PHYSDEV dev, INT x, INT y )
+INT CDECL MFDRV_OffsetViewportOrg( PHYSDEV dev, INT x, INT y )
 {
     if(!MFDRV_MetaParam2( dev, META_OFFSETVIEWPORTORG, x, y ))
         return FALSE;
@@ -91,7 +91,7 @@ INT MFDRV_OffsetViewportOrg( PHYSDEV dev, INT x, INT y )
 /***********************************************************************
  *           MFDRV_OffsetWindowOrg
  */
-INT MFDRV_OffsetWindowOrg( PHYSDEV dev, INT x, INT y )
+INT CDECL MFDRV_OffsetWindowOrg( PHYSDEV dev, INT x, INT y )
 {
     if(!MFDRV_MetaParam2( dev, META_OFFSETWINDOWORG, x, y ))
         return FALSE;
@@ -102,7 +102,7 @@ INT MFDRV_OffsetWindowOrg( PHYSDEV dev, INT x, INT y )
 /***********************************************************************
  *           MFDRV_ScaleViewportExt
  */
-INT MFDRV_ScaleViewportExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT yDenom )
+INT CDECL MFDRV_ScaleViewportExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT yDenom )
 {
     if(!MFDRV_MetaParam4( dev, META_SCALEVIEWPORTEXT, xNum, xDenom, yNum, yDenom ))
         return FALSE;
@@ -113,7 +113,7 @@ INT MFDRV_ScaleViewportExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT yDe
 /***********************************************************************
  *           MFDRV_ScaleWindowExt
  */
-INT MFDRV_ScaleWindowExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT yDenom )
+INT CDECL MFDRV_ScaleWindowExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT yDenom )
 {
     if(!MFDRV_MetaParam4( dev, META_SCALEWINDOWEXT, xNum, xDenom, yNum, yDenom ))
         return FALSE;

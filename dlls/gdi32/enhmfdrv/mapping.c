@@ -20,7 +20,7 @@
 
 #include "enhmfdrv/enhmetafiledrv.h"
 
-INT EMFDRV_SetMapMode( PHYSDEV dev, INT mode )
+INT CDECL EMFDRV_SetMapMode( PHYSDEV dev, INT mode )
 {
     EMRSETMAPMODE emr;
     emr.emr.iType = EMR_SETMAPMODE;
@@ -30,7 +30,7 @@ INT EMFDRV_SetMapMode( PHYSDEV dev, INT mode )
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-INT EMFDRV_SetViewportExt( PHYSDEV dev, INT cx, INT cy )
+INT CDECL EMFDRV_SetViewportExt( PHYSDEV dev, INT cx, INT cy )
 {
     EMRSETVIEWPORTEXTEX emr;
 
@@ -42,7 +42,7 @@ INT EMFDRV_SetViewportExt( PHYSDEV dev, INT cx, INT cy )
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-INT EMFDRV_SetWindowExt( PHYSDEV dev, INT cx, INT cy )
+INT CDECL EMFDRV_SetWindowExt( PHYSDEV dev, INT cx, INT cy )
 {
     EMRSETWINDOWEXTEX emr;
 
@@ -54,7 +54,7 @@ INT EMFDRV_SetWindowExt( PHYSDEV dev, INT cx, INT cy )
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-INT EMFDRV_SetViewportOrg( PHYSDEV dev, INT x, INT y )
+INT CDECL EMFDRV_SetViewportOrg( PHYSDEV dev, INT x, INT y )
 {
     EMRSETVIEWPORTORGEX emr;
 
@@ -66,7 +66,7 @@ INT EMFDRV_SetViewportOrg( PHYSDEV dev, INT x, INT y )
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-INT EMFDRV_SetWindowOrg( PHYSDEV dev, INT x, INT y )
+INT CDECL EMFDRV_SetWindowOrg( PHYSDEV dev, INT x, INT y )
 {
     EMRSETWINDOWORGEX emr;
 
@@ -78,8 +78,8 @@ INT EMFDRV_SetWindowOrg( PHYSDEV dev, INT x, INT y )
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-INT EMFDRV_ScaleViewportExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
-			     INT yDenom )
+INT CDECL EMFDRV_ScaleViewportExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
+                                   INT yDenom )
 {
     EMRSCALEVIEWPORTEXTEX emr;
 
@@ -93,8 +93,8 @@ INT EMFDRV_ScaleViewportExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-INT EMFDRV_ScaleWindowExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
-			   INT yDenom )
+INT CDECL EMFDRV_ScaleWindowExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
+                                 INT yDenom )
 {
     EMRSCALEWINDOWEXTEX emr;
 
@@ -108,7 +108,7 @@ INT EMFDRV_ScaleWindowExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-BOOL EMFDRV_SetWorldTransform( PHYSDEV dev, const XFORM *xform)
+BOOL CDECL EMFDRV_SetWorldTransform( PHYSDEV dev, const XFORM *xform)
 {
     EMRSETWORLDTRANSFORM emr;
 
@@ -119,7 +119,7 @@ BOOL EMFDRV_SetWorldTransform( PHYSDEV dev, const XFORM *xform)
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-BOOL EMFDRV_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, INT mode)
+BOOL CDECL EMFDRV_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, INT mode)
 {
     EMRMODIFYWORLDTRANSFORM emr;
 
@@ -131,7 +131,7 @@ BOOL EMFDRV_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, INT mode)
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-INT EMFDRV_OffsetViewportOrg( PHYSDEV dev, INT x, INT y )
+INT CDECL EMFDRV_OffsetViewportOrg( PHYSDEV dev, INT x, INT y )
 {
     POINT pt;
     EMRSETVIEWPORTORGEX emr;
@@ -147,7 +147,7 @@ INT EMFDRV_OffsetViewportOrg( PHYSDEV dev, INT x, INT y )
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-INT EMFDRV_OffsetWindowOrg( PHYSDEV dev, INT x, INT y )
+INT CDECL EMFDRV_OffsetWindowOrg( PHYSDEV dev, INT x, INT y )
 {
     POINT pt;
     EMRSETWINDOWORGEX emr;

@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(text);
 /***********************************************************************
  *           X11DRV_ExtTextOut
  */
-BOOL
+BOOL CDECL
 X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
                    const RECT *lprect, LPCWSTR wstr, UINT count,
                    const INT *lpDx )
@@ -201,8 +201,8 @@ END:
 /***********************************************************************
  *           X11DRV_GetTextExtentExPoint
  */
-BOOL X11DRV_GetTextExtentExPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
-                                  INT maxExt, LPINT lpnFit, LPINT alpDx, LPSIZE size )
+BOOL CDECL X11DRV_GetTextExtentExPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
+                                        INT maxExt, LPINT lpnFit, LPINT alpDx, LPSIZE size )
 {
     fontObject* pfo = XFONT_GetFontObject( physDev->font );
 

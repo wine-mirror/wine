@@ -28,7 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 /***********************************************************************
  *           MFDRV_PatBlt
  */
-BOOL MFDRV_PatBlt( PHYSDEV dev, INT left, INT top, INT width, INT height, DWORD rop )
+BOOL  CDECL MFDRV_PatBlt( PHYSDEV dev, INT left, INT top, INT width, INT height, DWORD rop )
 {
     MFDRV_MetaParam6( dev, META_PATBLT, left, top, width, height, HIWORD(rop), LOWORD(rop) );
     return TRUE;
@@ -38,8 +38,8 @@ BOOL MFDRV_PatBlt( PHYSDEV dev, INT left, INT top, INT width, INT height, DWORD 
 /***********************************************************************
  *           MFDRV_BitBlt
  */
-BOOL MFDRV_BitBlt( PHYSDEV devDst, INT xDst, INT yDst, INT width, INT height,
-		   PHYSDEV devSrc, INT xSrc, INT ySrc, DWORD rop )
+BOOL  CDECL MFDRV_BitBlt( PHYSDEV devDst, INT xDst, INT yDst, INT width, INT height,
+                          PHYSDEV devSrc, INT xSrc, INT ySrc, DWORD rop )
 {
     return MFDRV_StretchBlt(devDst, xDst, yDst, width, height, devSrc,
                             xSrc, ySrc, width, height, rop);
@@ -55,9 +55,9 @@ BOOL MFDRV_BitBlt( PHYSDEV devDst, INT xDst, INT yDst, INT width, INT height,
  */
 #define STRETCH_VIA_DIB
 
-BOOL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
-		       INT heightDst, PHYSDEV devSrc, INT xSrc, INT ySrc,
-		       INT widthSrc, INT heightSrc, DWORD rop )
+BOOL  CDECL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
+                              INT heightDst, PHYSDEV devSrc, INT xSrc, INT ySrc,
+                              INT widthSrc, INT heightSrc, DWORD rop )
 {
     BOOL ret;
     DWORD len;
@@ -141,10 +141,10 @@ BOOL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
 /***********************************************************************
  *           MFDRV_StretchDIBits
  */
-INT MFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
-			 INT heightDst, INT xSrc, INT ySrc, INT widthSrc,
-			 INT heightSrc, const void *bits,
-			 const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
+INT  CDECL MFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
+                                INT heightDst, INT xSrc, INT ySrc, INT widthSrc,
+                                INT heightSrc, const void *bits,
+                                const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
 {
     DWORD len, infosize, imagesize;
     METARECORD *mr;
@@ -182,10 +182,10 @@ INT MFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
 /***********************************************************************
  *           MFDRV_SetDIBitsToDeivce
  */
-INT MFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD cx,
-			     DWORD cy, INT xSrc, INT ySrc, UINT startscan,
-			     UINT lines, LPCVOID bits, const BITMAPINFO *info,
-			     UINT coloruse )
+INT  CDECL MFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD cx,
+                                    DWORD cy, INT xSrc, INT ySrc, UINT startscan,
+                                    UINT lines, LPCVOID bits, const BITMAPINFO *info,
+                                    UINT coloruse )
 
 {
     DWORD len, infosize, imagesize;

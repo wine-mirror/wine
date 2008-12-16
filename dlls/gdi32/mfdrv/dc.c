@@ -20,128 +20,128 @@
 
 #include "mfdrv/metafiledrv.h"
 
-INT MFDRV_SaveDC( PHYSDEV dev )
+INT  CDECL MFDRV_SaveDC( PHYSDEV dev )
 {
     return MFDRV_MetaParam0( dev, META_SAVEDC );
 }
 
-BOOL MFDRV_RestoreDC( PHYSDEV dev, INT level )
+BOOL  CDECL MFDRV_RestoreDC( PHYSDEV dev, INT level )
 {
     if(level != -1) return FALSE;
     return MFDRV_MetaParam1( dev, META_RESTOREDC, level );
 }
 
-UINT MFDRV_SetTextAlign( PHYSDEV dev, UINT align )
+UINT  CDECL MFDRV_SetTextAlign( PHYSDEV dev, UINT align )
 {
     return MFDRV_MetaParam2( dev, META_SETTEXTALIGN, HIWORD(align), LOWORD(align));
 }
 
-INT MFDRV_SetBkMode( PHYSDEV dev, INT mode )
+INT  CDECL MFDRV_SetBkMode( PHYSDEV dev, INT mode )
 {
     return MFDRV_MetaParam1( dev, META_SETBKMODE, (WORD)mode);
 }
 
-INT MFDRV_SetROP2( PHYSDEV dev, INT rop )
+INT  CDECL MFDRV_SetROP2( PHYSDEV dev, INT rop )
 {
     return MFDRV_MetaParam1( dev, META_SETROP2, (WORD)rop);
 }
 
-INT MFDRV_SetRelAbs( PHYSDEV dev, INT mode )
+INT  CDECL MFDRV_SetRelAbs( PHYSDEV dev, INT mode )
 {
     return MFDRV_MetaParam1( dev, META_SETRELABS, (WORD)mode);
 }
 
-INT MFDRV_SetPolyFillMode( PHYSDEV dev, INT mode )
+INT  CDECL MFDRV_SetPolyFillMode( PHYSDEV dev, INT mode )
 {
     return MFDRV_MetaParam1( dev, META_SETPOLYFILLMODE, (WORD)mode);
 }
 
-INT MFDRV_SetStretchBltMode( PHYSDEV dev, INT mode )
+INT  CDECL MFDRV_SetStretchBltMode( PHYSDEV dev, INT mode )
 {
     return MFDRV_MetaParam1( dev, META_SETSTRETCHBLTMODE, (WORD)mode);
 }
 
-INT MFDRV_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+INT  CDECL MFDRV_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     return MFDRV_MetaParam4( dev, META_INTERSECTCLIPRECT, left, top, right,
 			     bottom );
 }
 
-INT MFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+INT  CDECL MFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     return MFDRV_MetaParam4( dev, META_EXCLUDECLIPRECT, left, top, right,
 			     bottom );
 }
 
-INT MFDRV_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
+INT  CDECL MFDRV_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
 {
     return MFDRV_MetaParam2( dev, META_OFFSETCLIPRGN, x, y );
 }
 
-INT MFDRV_SetTextJustification( PHYSDEV dev, INT extra, INT breaks )
+INT  CDECL MFDRV_SetTextJustification( PHYSDEV dev, INT extra, INT breaks )
 {
     return MFDRV_MetaParam2( dev, META_SETTEXTJUSTIFICATION, extra, breaks );
 }
 
-INT MFDRV_SetTextCharacterExtra( PHYSDEV dev, INT extra )
+INT  CDECL MFDRV_SetTextCharacterExtra( PHYSDEV dev, INT extra )
 {
     if(!MFDRV_MetaParam1( dev, META_SETTEXTCHAREXTRA, extra ))
         return 0x80000000;
     return TRUE;
 }
 
-DWORD MFDRV_SetMapperFlags( PHYSDEV dev, DWORD flags )
+DWORD  CDECL MFDRV_SetMapperFlags( PHYSDEV dev, DWORD flags )
 {
     return MFDRV_MetaParam2( dev, META_SETMAPPERFLAGS, HIWORD(flags),
 			     LOWORD(flags) );
 }
 
-BOOL MFDRV_AbortPath( PHYSDEV dev )
+BOOL  CDECL MFDRV_AbortPath( PHYSDEV dev )
 {
     return FALSE;
 }
 
-BOOL MFDRV_BeginPath( PHYSDEV dev )
+BOOL  CDECL MFDRV_BeginPath( PHYSDEV dev )
 {
     return FALSE;
 }
 
-BOOL MFDRV_CloseFigure( PHYSDEV dev )
+BOOL  CDECL MFDRV_CloseFigure( PHYSDEV dev )
 {
     return FALSE;
 }
 
-BOOL MFDRV_EndPath( PHYSDEV dev )
+BOOL  CDECL MFDRV_EndPath( PHYSDEV dev )
 {
     return FALSE;
 }
 
-BOOL MFDRV_FillPath( PHYSDEV dev )
+BOOL  CDECL MFDRV_FillPath( PHYSDEV dev )
 {
     return FALSE;
 }
 
-BOOL MFDRV_FlattenPath( PHYSDEV dev )
+BOOL  CDECL MFDRV_FlattenPath( PHYSDEV dev )
 {
     return FALSE;
 }
 
-BOOL MFDRV_SelectClipPath( PHYSDEV dev, INT iMode )
+BOOL  CDECL MFDRV_SelectClipPath( PHYSDEV dev, INT iMode )
 {
     return FALSE;
 }
 
-BOOL MFDRV_StrokeAndFillPath( PHYSDEV dev )
+BOOL  CDECL MFDRV_StrokeAndFillPath( PHYSDEV dev )
 {
     return FALSE;
 }
 
-BOOL MFDRV_StrokePath( PHYSDEV dev )
+BOOL  CDECL MFDRV_StrokePath( PHYSDEV dev )
 {
     return FALSE;
 }
 
-BOOL MFDRV_WidenPath( PHYSDEV dev )
+BOOL  CDECL MFDRV_WidenPath( PHYSDEV dev )
 {
     return FALSE;
 }

@@ -69,7 +69,7 @@ void X11DRV_BITMAP_Init(void)
 /***********************************************************************
  *           SelectBitmap   (X11DRV.@)
  */
-HBITMAP X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
+HBITMAP CDECL X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 {
     X_PHYSBITMAP *physBitmap;
     BITMAP bitmap;
@@ -111,7 +111,7 @@ HBITMAP X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
  *
  * Returns TRUE on success else FALSE
  */
-BOOL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, LPVOID bmBits )
+BOOL CDECL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, LPVOID bmBits )
 {
     X_PHYSBITMAP *physBitmap;
     BITMAP bitmap;
@@ -175,7 +175,7 @@ BOOL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, LPVOID bmBit
  *    Success: Number of bytes copied
  *    Failure: 0
  */
-LONG X11DRV_GetBitmapBits( HBITMAP hbitmap, void *buffer, LONG count )
+LONG CDECL X11DRV_GetBitmapBits( HBITMAP hbitmap, void *buffer, LONG count )
 {
     BITMAP bitmap;
     X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( hbitmap );
@@ -298,7 +298,7 @@ LONG X11DRV_GetBitmapBits( HBITMAP hbitmap, void *buffer, LONG count )
  *    Success: Number of bytes used in setting the bitmap bits
  *    Failure: 0
  */
-LONG X11DRV_SetBitmapBits( HBITMAP hbitmap, const void *bits, LONG count )
+LONG CDECL X11DRV_SetBitmapBits( HBITMAP hbitmap, const void *bits, LONG count )
 {
     BITMAP bitmap;
     X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( hbitmap );
@@ -417,7 +417,7 @@ LONG X11DRV_SetBitmapBits( HBITMAP hbitmap, const void *bits, LONG count )
 /***********************************************************************
  *           DeleteBitmap   (X11DRV.@)
  */
-BOOL X11DRV_DeleteBitmap( HBITMAP hbitmap )
+BOOL CDECL X11DRV_DeleteBitmap( HBITMAP hbitmap )
 {
     X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( hbitmap );
 

@@ -1531,9 +1531,9 @@ done_unlock:
 /******************************************************************************
  * AlphaBlend         (x11drv.@)
  */
-BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
-                       X11DRV_PDEVICE *devSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
-                       BLENDFUNCTION blendfn)
+BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
+                             X11DRV_PDEVICE *devSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
+                             BLENDFUNCTION blendfn)
 {
     XRenderPictureAttributes pa;
     XRenderPictFormat *src_format;
