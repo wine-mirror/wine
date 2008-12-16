@@ -75,6 +75,7 @@ PUBLIC_IDL_H_SRCS = \
 	wine/itss.idl \
 	wine/svcctl.idl \
 	wtypes.idl \
+	wuapi.idl \
 	xmldom.idl \
 	xmldso.idl
 
