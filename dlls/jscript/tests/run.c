@@ -75,7 +75,9 @@ DEFINE_EXPECT(GetItemInfo_testVal);
 #define DISPID_GLOBAL_TESTOBJ       0x1006
 
 static const WCHAR testW[] = {'t','e','s','t',0};
+static const CHAR testA[] = "test";
 static const WCHAR test_valW[] = {'t','e','s','t','V','a','l',0};
+static const CHAR test_valA[] = "testVal";
 
 static BOOL strict_dispid_check;
 static const char *test_name = "(null)";
@@ -490,9 +492,9 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
     ok(dwReturnMask == SCRIPTINFO_IUNKNOWN, "unexpected dwReturnMask %x\n", dwReturnMask);
     ok(!ppti, "ppti != NULL\n");
 
-    if(!lstrcmpW(pstrName, test_valW))
+    if(!strcmp_wa(pstrName, test_valA))
         CHECK_EXPECT(GetItemInfo_testVal);
-    else if(lstrcmpW(pstrName, testW))
+    else if(strcmp_wa(pstrName, testA))
         ok(0, "unexpected pstrName %s\n", debugstr_w(pstrName));
 
     *ppiunkItem = (IUnknown*)&Global;
