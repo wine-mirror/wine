@@ -309,7 +309,7 @@
 @ stub IoAdapterObjectType
 @ stub IoAllocateAdapterChannel
 @ stub IoAllocateController
-@ stub IoAllocateDriverObjectExtension
+@ stdcall IoAllocateDriverObjectExtension(ptr ptr long ptr)
 @ stub IoAllocateErrorLogEntry
 @ stdcall IoAllocateIrp(long long)
 @ stdcall IoAllocateMdl(ptr long long long ptr)
@@ -387,7 +387,7 @@
 @ stub IoGetDeviceToVerify
 @ stub IoGetDiskDeviceObject
 @ stub IoGetDmaAdapter
-@ stub IoGetDriverObjectExtension
+@ stdcall IoGetDriverObjectExtension(ptr ptr)
 @ stub IoGetFileObjectGenericMapping
 @ stub IoGetInitialStack
 @ stub IoGetLowerDeviceObject

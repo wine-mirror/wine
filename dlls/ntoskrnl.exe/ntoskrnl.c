@@ -260,6 +260,31 @@ NTSTATUS wine_ntoskrnl_main_loop( HANDLE stop_event )
 
 
 /***********************************************************************
+ *           IoAllocateDriverObjectExtension  (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoAllocateDriverObjectExtension( PDRIVER_OBJECT DriverObject,
+                                                 PVOID ClientIdentificationAddress,
+                                                 ULONG DriverObjectExtensionSize,
+                                                 PVOID *DriverObjectExtension )
+{
+    FIXME( "%p, %p, %u, %p\n", DriverObject, ClientIdentificationAddress,
+            DriverObjectExtensionSize, DriverObjectExtension );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
+ *           IoGetDriverObjectExtension  (NTOSKRNL.EXE.@)
+ */
+PVOID WINAPI IoGetDriverObjectExtension( PDRIVER_OBJECT DriverObject,
+                                         PVOID ClientIdentificationAddress )
+{
+    FIXME( "%p, %p\n", DriverObject, ClientIdentificationAddress );
+    return NULL;
+}
+
+
+/***********************************************************************
  *           IoInitializeIrp  (NTOSKRNL.EXE.@)
  */
 void WINAPI IoInitializeIrp( IRP *irp, USHORT size, CCHAR stack_size )
