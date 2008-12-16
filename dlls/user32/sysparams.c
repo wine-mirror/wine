@@ -368,7 +368,7 @@ static const WORD wPattern55AA[] = { 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xa
 
 HBRUSH SYSCOLOR_55AABrush = 0;
 
-extern void __wine_make_gdi_object_system( HGDIOBJ handle, BOOL set );
+extern void CDECL __wine_make_gdi_object_system( HGDIOBJ handle, BOOL set );
 
 
 /* This function is a copy of the one in objects/font.c */

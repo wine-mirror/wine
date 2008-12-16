@@ -442,7 +442,7 @@ static const struct DefaultFontInfo default_fonts[] =
  * For a description of the GDI object magics and their flags,
  * see "Undocumented Windows" (wrong about the OBJECT_NOSYSTEM flag, though).
  */
-void __wine_make_gdi_object_system( HGDIOBJ handle, BOOL set)
+void CDECL __wine_make_gdi_object_system( HGDIOBJ handle, BOOL set)
 {
     GDIOBJHDR *ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
 
