@@ -1674,7 +1674,7 @@ DECLARE_INTERFACE_(IDirectDraw4,IUnknown)
 #define IDirectDraw4_GetAvailableVidMem(p,a,b,c) (p)->lpVtbl->GetAvailableVidMem(p,a,b,c)
 /*** IDirectDraw4 methods ***/
 #define IDirectDraw4_GetSurfaceFromDC(p,a,b)    (p)->lpVtbl->GetSurfaceFromDC(p,a,b)
-#define IDirectDraw4_RestoreAllSurfaces(pc)     (p)->lpVtbl->RestoreAllSurfaces(p)
+#define IDirectDraw4_RestoreAllSurfaces(p)      (p)->lpVtbl->RestoreAllSurfaces(p)
 #define IDirectDraw4_TestCooperativeLevel(p)    (p)->lpVtbl->TestCooperativeLevel(p)
 #define IDirectDraw4_GetDeviceIdentifier(p,a,b) (p)->lpVtbl->GetDeviceIdentifier(p,a,b)
 #else
