@@ -142,8 +142,8 @@ static int parse_options(const WCHAR *argv[])
  */
 int wmain(int argc, const WCHAR *argv[])
 {
-    LPSTR (*wine_get_unix_file_name_ptr)(LPCWSTR) = NULL;
-    LPWSTR (*wine_get_dos_file_name_ptr)(LPCSTR) = NULL;
+    LPSTR (*CDECL wine_get_unix_file_name_ptr)(LPCWSTR) = NULL;
+    LPWSTR (*CDECL wine_get_dos_file_name_ptr)(LPCSTR) = NULL;
     WCHAR dos_pathW[MAX_PATH];
     char path[MAX_PATH];
     int outputformats;

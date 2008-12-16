@@ -956,7 +956,7 @@ static void set_process_name( int argc, char *argv[] )
  *
  * Wine initialisation: load and start the main exe file.
  */
-void __wine_kernel_init(void)
+void CDECL __wine_kernel_init(void)
 {
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2',0};
     static const WCHAR dotW[] = {'.',0};

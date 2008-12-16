@@ -1583,7 +1583,7 @@ BOOL WINAPI NeedCurrentDirectoryForExePathA( LPCSTR name )
  * Return the full Unix file name for a given path.
  * Returned buffer must be freed by caller.
  */
-char *wine_get_unix_file_name( LPCWSTR dosW )
+char CDECL *wine_get_unix_file_name( LPCWSTR dosW )
 {
     UNICODE_STRING nt_name;
     ANSI_STRING unix_name;
@@ -1607,7 +1607,7 @@ char *wine_get_unix_file_name( LPCWSTR dosW )
  * Return the full DOS file name for a given Unix path.
  * Returned buffer must be freed by caller.
  */
-WCHAR *wine_get_dos_file_name( LPCSTR str )
+WCHAR CDECL *wine_get_dos_file_name( LPCSTR str )
 {
     UNICODE_STRING nt_name;
     ANSI_STRING unix_name;

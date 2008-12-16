@@ -258,7 +258,7 @@ int wmain (int argc, WCHAR *argv[])
 	sei.lpParameters = args;
 
 	if (unix_mode) {
-		LPWSTR (*wine_get_dos_file_name_ptr)(LPCSTR);
+		LPWSTR (*CDECL wine_get_dos_file_name_ptr)(LPCSTR);
 		char* multibyte_unixpath;
 		int multibyte_unixpath_len;
 
