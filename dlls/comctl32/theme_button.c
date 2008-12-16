@@ -30,9 +30,6 @@
 #include "uxtheme.h"
 #include "tmschema.h"
 #include "comctl32.h"
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(themingbutton);
 
 #define BUTTON_TYPE 0x0f /* bit mask for the available button types */
 
