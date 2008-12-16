@@ -44,6 +44,8 @@ static CHAR string1[MAX_PATH], string2[MAX_PATH], string3[MAX_PATH];
 
 static HMODULE hmoduleRichEdit;
 
+static int is_win9x = 0;
+
 static HWND new_window(LPCTSTR lpClassName, DWORD dwStyle, HWND parent) {
   HWND hwnd;
   hwnd = CreateWindow(lpClassName, NULL, dwStyle|WS_POPUP|WS_HSCROLL|WS_VSCROLL
@@ -4911,9 +4913,7 @@ static void test_unicode_conversions(void)
     char bufA[64];
     WCHAR bufW[64];
     HWND hwnd;
-    int is_win9x, em_settextex_supported, ret;
-
-    is_win9x = GetVersion() & 0x80000000;
+    int em_settextex_supported, ret;
 
 #define set_textA(hwnd, wm_set_text, txt) \
     do { \
@@ -5146,8 +5146,12 @@ static void test_EM_GETTEXTLENGTHEX(void)
     char buffer[64] = {0};
 
     /* single line */
-    hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP,
-                           0, 0, 200, 60, 0, 0, 0, 0);
+    if (!is_win9x)
+        hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP,
+                               0, 0, 200, 60, 0, 0, 0, 0);
+    else
+        hwnd = CreateWindowExA(0, "RichEdit20A", NULL, WS_POPUP,
+                               0, 0, 200, 60, 0, 0, 0, 0);
     ok(hwnd != 0, "CreateWindowExA error %u\n", GetLastError());
 
     gtl.flags = GTL_NUMCHARS | GTL_PRECISE | GTL_USECRLF;
@@ -5191,8 +5195,12 @@ static void test_EM_GETTEXTLENGTHEX(void)
     DestroyWindow(hwnd);
 
     /* multi line */
-    hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP | ES_MULTILINE,
-                           0, 0, 200, 60, 0, 0, 0, 0);
+    if (!is_win9x)
+        hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP | ES_MULTILINE,
+                               0, 0, 200, 60, 0, 0, 0, 0);
+    else
+        hwnd = CreateWindowExA(0, "RichEdit20A", NULL, WS_POPUP | ES_MULTILINE,
+                               0, 0, 200, 60, 0, 0, 0, 0);
     ok(hwnd != 0, "CreateWindowExA error %u\n", GetLastError());
 
     gtl.flags = GTL_NUMCHARS | GTL_PRECISE | GTL_USECRLF;
@@ -5431,8 +5439,12 @@ static void test_undo_coalescing(void)
     char buffer[64] = {0};
 
     /* multi-line control inserts CR normally */
-    hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP|ES_MULTILINE,
-                           0, 0, 200, 60, 0, 0, 0, 0);
+    if (!is_win9x)
+        hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP|ES_MULTILINE,
+                               0, 0, 200, 60, 0, 0, 0, 0);
+    else
+        hwnd = CreateWindowExA(0, "RichEdit20A", NULL, WS_POPUP|ES_MULTILINE,
+                               0, 0, 200, 60, 0, 0, 0, 0);
     ok(hwnd != 0, "CreateWindowExA error %u\n", GetLastError());
 
     result = SendMessage(hwnd, EM_CANUNDO, 0, 0);
@@ -5652,15 +5664,15 @@ static void test_word_movement(void)
 
     /* Make sure the behaviour is the same with a unicode richedit window,
      * and using unicode functions. */
-    SetLastError(0xdeadbeef);
+    if (is_win9x)
+    {
+        skip("Cannot test with unicode richedit window\n");
+        return;
+    }
+
     hwnd = CreateWindowW(RICHEDIT_CLASS20W, NULL,
                         ES_MULTILINE|WS_POPUP|WS_HSCROLL|WS_VSCROLL|WS_VISIBLE,
                         0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
-    if (!hwnd && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        win_skip("Needed unicode functions are not implemented\n");
-        return;
-    }
 
     /* Test with a custom word break procedure that uses X as the delimiter. */
     result = SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)textW);
@@ -5829,6 +5841,9 @@ START_TEST( editor )
    * RICHED20.DLL, so the linker doesn't actually link to it. */
   hmoduleRichEdit = LoadLibrary("RICHED20.DLL");
   ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
+
+  is_win9x = GetVersion() & 0x80000000;
+
   test_WM_CHAR();
   test_EM_FINDTEXT();
   test_EM_GETLINE();
