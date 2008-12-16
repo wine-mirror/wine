@@ -99,15 +99,11 @@ static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *This) {
      *
      * TODO: Track the current active texture per GL context instead of using glGet
      */
-    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-        GLint active_texture;
-        ENTER_GL();
-        glGetIntegerv(GL_ACTIVE_TEXTURE, &active_texture);
-        LEAVE_GL();
-        active_sampler = This->resource.wineD3DDevice->rev_tex_unit_map[active_texture - GL_TEXTURE0_ARB];
-    } else {
-        active_sampler = 0;
-    }
+    GLint active_texture;
+    ENTER_GL();
+    glGetIntegerv(GL_ACTIVE_TEXTURE, &active_texture);
+    LEAVE_GL();
+    active_sampler = This->resource.wineD3DDevice->rev_tex_unit_map[active_texture - GL_TEXTURE0_ARB];
 
     if (active_sampler != -1) {
         IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(active_sampler));

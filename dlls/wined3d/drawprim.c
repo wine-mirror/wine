@@ -440,21 +440,15 @@ static void drawStridedSlow(IWineD3DDevice *iface, const WineDirect3DVertexStrid
         {
             int coord_idx;
             const void *ptr;
+            int texture_idx;
 
             if (!(tmp_tex_mask & 1)) continue;
 
             coord_idx = This->stateBlock->textureState[texture][WINED3DTSS_TEXCOORDINDEX];
             ptr = texCoords[coord_idx] + (SkipnStrides * sd->u.s.texCoords[coord_idx].dwStride);
 
-            if (GL_SUPPORT(ARB_MULTITEXTURE))
-            {
-                int texture_idx = This->texUnitMap[texture];
-                multi_texcoord_funcs[sd->u.s.texCoords[coord_idx].dwType](GL_TEXTURE0_ARB + texture_idx, ptr);
-            }
-            else
-            {
-                texcoord_funcs[sd->u.s.texCoords[coord_idx].dwType](ptr);
-            }
+            texture_idx = This->texUnitMap[texture];
+            multi_texcoord_funcs[sd->u.s.texCoords[coord_idx].dwType](GL_TEXTURE0_ARB + texture_idx, ptr);
         }
 
         /* Diffuse -------------------------------- */

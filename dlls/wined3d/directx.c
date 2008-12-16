@@ -187,7 +187,6 @@ glAttribFunc diffuse_funcs[WINED3DDECLTYPE_UNUSED];
 glAttribFunc specular_funcs[WINED3DDECLTYPE_UNUSED];
 glAttribFunc normal_funcs[WINED3DDECLTYPE_UNUSED];
 glMultiTexCoordFunc multi_texcoord_funcs[WINED3DDECLTYPE_UNUSED];
-glAttribFunc texcoord_funcs[WINED3DDECLTYPE_UNUSED];
 
 /**
  * Note: GL seems to trap if GetDeviceCaps is called before any HWND's created,
@@ -4154,30 +4153,6 @@ static void fillGLAttribFuncs(const WineD3D_GL_Info *gl_info)
         multi_texcoord_funcs[WINED3DDECLTYPE_FLOAT16_2] = invalid_texcoord_func;
         multi_texcoord_funcs[WINED3DDECLTYPE_FLOAT16_4] = invalid_texcoord_func;
     }
-
-    texcoord_funcs[WINED3DDECLTYPE_FLOAT1]      = (glAttribFunc)glTexCoord1fv;
-    texcoord_funcs[WINED3DDECLTYPE_FLOAT2]      = (glAttribFunc)glTexCoord2fv;
-    texcoord_funcs[WINED3DDECLTYPE_FLOAT3]      = (glAttribFunc)glTexCoord3fv;
-    texcoord_funcs[WINED3DDECLTYPE_FLOAT4]      = (glAttribFunc)glTexCoord4fv;
-    texcoord_funcs[WINED3DDECLTYPE_D3DCOLOR]    = invalid_func;
-    texcoord_funcs[WINED3DDECLTYPE_UBYTE4]      = invalid_func;
-    texcoord_funcs[WINED3DDECLTYPE_SHORT2]      = (glAttribFunc)glTexCoord2sv;
-    texcoord_funcs[WINED3DDECLTYPE_SHORT4]      = (glAttribFunc)glTexCoord4sv;
-    texcoord_funcs[WINED3DDECLTYPE_UBYTE4N]     = invalid_func;
-    texcoord_funcs[WINED3DDECLTYPE_SHORT2N]     = invalid_func;
-    texcoord_funcs[WINED3DDECLTYPE_SHORT4N]     = invalid_func;
-    texcoord_funcs[WINED3DDECLTYPE_USHORT2N]    = invalid_func;
-    texcoord_funcs[WINED3DDECLTYPE_USHORT4N]    = invalid_func;
-    texcoord_funcs[WINED3DDECLTYPE_UDEC3]       = invalid_func;
-    texcoord_funcs[WINED3DDECLTYPE_DEC3N]       = invalid_func;
-    if (GL_SUPPORT(NV_HALF_FLOAT))
-    {
-        texcoord_funcs[WINED3DDECLTYPE_FLOAT16_2]   = (glAttribFunc)GL_EXTCALL(glTexCoord2hvNV);
-        texcoord_funcs[WINED3DDECLTYPE_FLOAT16_4]   = (glAttribFunc)GL_EXTCALL(glTexCoord4hvNV);
-    } else {
-        texcoord_funcs[WINED3DDECLTYPE_FLOAT16_2]   = invalid_func;
-        texcoord_funcs[WINED3DDECLTYPE_FLOAT16_4]   = invalid_func;
-    }
 }
 
 #define PUSH1(att)        attribs[nAttribs++] = (att);
@@ -4375,6 +4350,7 @@ BOOL InitAdapters(void) {
         }
 
         fixup_extensions(&Adapters[0].gl_info);
+        add_gl_compat_wrappers(&Adapters[0].gl_info);
 
         WineD3D_ReleaseFakeGLContext();
 
