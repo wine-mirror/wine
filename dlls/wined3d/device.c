@@ -4868,6 +4868,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface, IW
             object->num_contained_vs_consts_b++;
         }
     }
+    for (i = 0; i < GL_LIMITS(pshader_constantsF); ++i)
+    {
+        if (object->changed.pixelShaderConstantsF[i])
+        {
+            object->contained_ps_consts_f[object->num_contained_ps_consts_f] = i;
+            ++object->num_contained_ps_consts_f;
+        }
+    }
     for(i = 0; i < MAX_CONST_I; i++) {
         if (object->changed.pixelShaderConstantsI & (1 << i))
         {
