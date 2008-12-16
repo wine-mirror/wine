@@ -1347,6 +1347,27 @@ static const IDirectXFileVtbl IDirectXFile_Vtbl =
   IDirectXFileImpl_RegisterTemplates
 };
 
+static HRESULT IDirectXFileBinaryImpl_Create(IDirectXFileBinaryImpl** ppObj)
+{
+    IDirectXFileBinaryImpl* object;
+
+    TRACE("(%p)\n", ppObj);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectXFileBinaryImpl));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        return DXFILEERR_BADALLOC;
+    }
+
+    object->lpVtbl.lpVtbl = &IDirectXFileBinary_Vtbl;
+    object->ref = 1;
+
+    *ppObj = object;
+
+    return DXFILE_OK;
+}
+
 /*** IUnknown methods ***/
 static HRESULT WINAPI IDirectXFileBinaryImpl_QueryInterface(IDirectXFileBinary* iface, REFIID riid, void** ppvObject)
 {
@@ -1606,7 +1627,17 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetNextObject(IDirectXFileData* iface
     return DXFILEERR_NOMOREOBJECTS;
   }
 
-  if (This->pobj->childs[This->cur_enum_object]->ptarget)
+  if (This->pobj->childs[This->cur_enum_object]->binary)
+  {
+    IDirectXFileBinaryImpl *object;
+
+    hr = IDirectXFileBinaryImpl_Create(&object);
+    if (FAILED(hr))
+      return hr;
+
+    *ppChildObj = (LPDIRECTXFILEOBJECT)object;
+  }
+  else if (This->pobj->childs[This->cur_enum_object]->ptarget)
   {
     IDirectXFileDataReferenceImpl *object;
 
