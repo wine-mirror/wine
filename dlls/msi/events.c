@@ -104,7 +104,7 @@ static UINT ControlEvent_EndDialog(MSIPACKAGE* package, LPCWSTR argument,
     else if (lstrcmpW(argument, szRetry) == 0)
         package->CurrentInstallState = ERROR_INSTALL_SUSPEND;
     else if (lstrcmpW(argument, szIgnore) == 0)
-        package->CurrentInstallState = -1;
+        package->CurrentInstallState = ERROR_SUCCESS;
     else if (lstrcmpW(argument, szReturn) == 0)
     {
         msi_dialog *parent = msi_dialog_get_parent(dialog);
