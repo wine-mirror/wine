@@ -306,6 +306,44 @@ static void test_asciimode(void)
     unlink("ascii.tst");
 }
 
+static void test_asciimode2(void)
+{
+    /* Error sequence from one app was getchar followed by small fread
+     * with one \r removed had last byte of buffer filled with
+     * next byte of *unbuffered* data rather than next byte from buffer
+     * Test case is a short string of one byte followed by a newline
+     * followed by filler to fill out the sector, then a sector of
+     * some different byte.
+     */
+
+    FILE *fp;
+    char ibuf[4];
+    int i;
+    static const char obuf[] =
+"00\n\
+000000000000000000000000000000000000000000000000000000000000000000000000000000\n\
+000000000000000000000000000000000000000000000000000000000000000000000000000000\n\
+000000000000000000000000000000000000000000000000000000000000000000000000000000\n\
+000000000000000000000000000000000000000000000000000000000000000000000000000000\n\
+000000000000000000000000000000000000000000000000000000000000000000000000000000\n\
+000000000000000000000000000000000000000000000000000000000000000000000000000000\n\
+000000000000000000\n\
+1111111111111111111";
+
+    fp = fopen("ascii2.tst", "wt");
+    fwrite(obuf, 1, sizeof(obuf), fp);
+    fclose(fp);
+
+    fp = fopen("ascii2.tst", "rt");
+    ok(getc(fp) == '0', "first char not 0");
+    memset(ibuf, 0, sizeof(ibuf));
+    i = fread(ibuf, 1, sizeof(ibuf), fp);
+    ok(i == sizeof(ibuf), "fread i %d != sizeof(ibuf) %d\n", i, sizeof(ibuf));
+    ok(0 == strncmp(ibuf, obuf+1, sizeof(ibuf)), "ibuf != obuf\n");
+    fclose(fp);
+    unlink("ascii2.tst");
+}
+
 static WCHAR* AtoW( const char* p )
 {
     WCHAR* buffer;
@@ -1113,6 +1151,7 @@ START_TEST(file)
     test_fopen_fclose_fcloseall();
     test_fileops();
     test_asciimode();
+    test_asciimode2();
     test_readmode(FALSE); /* binary mode */
     test_readmode(TRUE);  /* ascii mode */
     test_fgetc();

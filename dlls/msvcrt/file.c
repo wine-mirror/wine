@@ -2597,6 +2597,7 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
 
   /* first buffered data */
   if(file->_cnt>0) {
+     while (file->_cnt>0 && rcnt > 0) {
 	int pcnt= (rcnt>file->_cnt)? file->_cnt:rcnt;
 	memcpy(ptr, file->_ptr, pcnt);
 	file->_cnt -= pcnt;
@@ -2606,6 +2607,7 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
 	read += pcnt ;
 	rcnt -= pcnt ;
         ptr = (char*)ptr + pcnt;
+     }
   } else if(!(file->_flag & MSVCRT__IOREAD )) {
 	if(file->_flag & MSVCRT__IORW) {
 		file->_flag |= MSVCRT__IOREAD;
