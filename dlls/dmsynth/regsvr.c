@@ -19,6 +19,7 @@
  */
 
 #include "dmsynth_private.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
@@ -142,7 +143,7 @@ static HRESULT register_interfaces(struct regsvr_interface const *list) {
 				  KEY_READ | KEY_WRITE, NULL, &key, NULL);
 	    if (res != ERROR_SUCCESS) goto error_close_iid_key;
 
-	    wsprintfW(buf, fmt, list->num_methods);
+	    sprintfW(buf, fmt, list->num_methods);
 	    res = RegSetValueExW(key, NULL, 0, REG_SZ,
 				 (CONST BYTE*)buf,
 				 (lstrlenW(buf) + 1) * sizeof(WCHAR));
