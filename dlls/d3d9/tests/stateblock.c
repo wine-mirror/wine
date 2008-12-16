@@ -581,7 +581,7 @@ static const shader_constant_data shader_constant_default_data = {
 
 static const shader_constant_data shader_constant_test_data = {
     { 0xdead0000, 0xdead0001, 0xdead0002, 0xdead0003 },
-    { 0.0f, 0.0f, 0.0f, 0.0f },
+    { 5.0f, 6.0f, 7.0f, 8.0f },
     { TRUE, FALSE, FALSE, TRUE }
 };
 
