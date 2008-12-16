@@ -1192,45 +1192,64 @@ void output_stubs( DLLSPEC *spec )
         output( "\t%s\n", func_declaration(name) );
         output( "%s:\n", asm_name(name) );
 
-        /* flesh out the stub a bit to make safedisc happy */
-        output(" \tnop\n" );
-        output(" \tnop\n" );
-        output(" \tnop\n" );
-        output(" \tnop\n" );
-        output(" \tnop\n" );
-        output(" \tnop\n" );
-        output(" \tnop\n" );
-        output(" \tnop\n" );
-        output(" \tnop\n" );
+        switch (target_cpu)
+        {
+        case CPU_x86:
+            /* flesh out the stub a bit to make safedisc happy */
+            output(" \tnop\n" );
+            output(" \tnop\n" );
+            output(" \tnop\n" );
+            output(" \tnop\n" );
+            output(" \tnop\n" );
+            output(" \tnop\n" );
+            output(" \tnop\n" );
+            output(" \tnop\n" );
+            output(" \tnop\n" );
 
-        output( "\tsubl $4,%%esp\n" );
-        if (UsePIC)
-        {
-            output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
-            output( "1:" );
-            if (exp_name)
+            output( "\tsubl $4,%%esp\n" );
+            if (UsePIC)
             {
-                output( "\tleal .L%s_string-1b(%%eax),%%ecx\n", name );
+                output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
+                output( "1:" );
+                if (exp_name)
+                {
+                    output( "\tleal .L%s_string-1b(%%eax),%%ecx\n", name );
+                    output( "\tpushl %%ecx\n" );
+                    count++;
+                }
+                else
+                    output( "\tpushl $%d\n", odp->ordinal );
+                output( "\tleal .L__wine_spec_file_name-1b(%%eax),%%ecx\n" );
                 output( "\tpushl %%ecx\n" );
-                count++;
             }
             else
-                output( "\tpushl $%d\n", odp->ordinal );
-            output( "\tleal .L__wine_spec_file_name-1b(%%eax),%%ecx\n" );
-            output( "\tpushl %%ecx\n" );
-        }
-        else
-        {
+            {
+                if (exp_name)
+                {
+                    output( "\tpushl $.L%s_string\n", name );
+                    count++;
+                }
+                else
+                    output( "\tpushl $%d\n", odp->ordinal );
+                output( "\tpushl $.L__wine_spec_file_name\n" );
+            }
+            output( "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
+            break;
+        case CPU_x86_64:
+            output( "\tleaq .L__wine_spec_file_name(%%rip),%%rdi\n" );
             if (exp_name)
             {
-                output( "\tpushl $.L%s_string\n", name );
+                output( "leaq .L%s_string(%%rip),%%rsi\n", name );
                 count++;
             }
             else
-                output( "\tpushl $%d\n", odp->ordinal );
-            output( "\tpushl $.L__wine_spec_file_name\n" );
+                output( "\tmovq $%d,%%rsi\n", odp->ordinal );
+            output( "\tsubq $8,%%rsp\n" );
+            output( "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
+            break;
+        default:
+            assert(0);
         }
-        output( "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
         output_function_size( name );
     }
 
