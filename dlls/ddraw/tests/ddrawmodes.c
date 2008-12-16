@@ -385,6 +385,21 @@ static void testcooperativelevels_exclusive(void)
     /* All done */
 }
 
+static void testddraw3(void)
+{
+    const GUID My_IID_IDirectDraw3 = {
+        0x618f8ad4,
+        0x8b7a,
+        0x11d0,
+        { 0x8f,0xcc,0x0,0xc0,0x4f,0xd9,0x18,0x9d }
+    };
+    IDirectDraw3 *dd3;
+    HRESULT hr;
+    hr = IDirectDraw_QueryInterface(lpDD, &My_IID_IDirectDraw3, (void **) &dd3);
+    ok(hr == E_NOINTERFACE, "QueryInterface for IID_IDirectDraw3 returned 0x%08x, expected E_NOINTERFACE\n", hr);
+    if(SUCCEEDED(hr) && dd3) IDirectDraw3_Release(dd3);
+}
+
 START_TEST(ddrawmodes)
 {
     createwindow();
@@ -394,6 +409,7 @@ START_TEST(ddrawmodes)
     if (winetest_interactive)
         testdisplaymodes();
     flushdisplaymodes();
+    testddraw3();
     releasedirectdraw();
 
     createdirectdraw();

@@ -121,8 +121,11 @@ IDirectDrawImpl_QueryInterface(IDirectDraw7 *iface,
     }
     else if ( IsEqualGUID( &IID_IDirectDraw3, refiid ) )
     {
-        *obj = ICOM_INTERFACE(This, IDirectDraw3);
-        TRACE("(%p) Returning IDirectDraw3 interface at %p\n", This, *obj);
+        /* This Interface exists in ddrawex.dll, it is implemented in a wrapper */
+        WARN("IDirectDraw3 is not valid in ddraw.dll\n");
+        *obj = NULL;
+        LeaveCriticalSection(&ddraw_cs);
+        return E_NOINTERFACE;
     }
     else if ( IsEqualGUID( &IID_IDirectDraw2, refiid ) )
     {
