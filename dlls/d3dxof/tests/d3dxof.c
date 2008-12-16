@@ -261,9 +261,7 @@ static void test_dump(void)
     CloseHandle(hFile);
 
 exit:
-
-    if (pvData)
-        HeapFree(GetProcessHeap(), 0, pvData);
+    HeapFree(GetProcessHeap(), 0, pvData);
 }
 
 START_TEST(d3dxof)
