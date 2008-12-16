@@ -1938,6 +1938,25 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
   return -1;
 }
 
+static int ME_GetTextRange(ME_TextEditor *editor, TEXTRANGEW *rng, BOOL unicode)
+{
+    if (unicode)
+      return ME_GetTextW(editor, rng->lpstrText, rng->chrg.cpMin,
+                         rng->chrg.cpMax-rng->chrg.cpMin, 0);
+    else
+    {
+      int nLen = rng->chrg.cpMax-rng->chrg.cpMin;
+      WCHAR *p = ALLOC_N_OBJ(WCHAR, nLen+1);
+      int nChars = ME_GetTextW(editor, p, rng->chrg.cpMin, nLen, 0);
+      /* FIXME this is a potential security hole (buffer overrun)
+         if you know more about wchar->mbyte conversion please explain
+      */
+      WideCharToMultiByte(CP_ACP, 0, p, nChars+1, (char *)rng->lpstrText, nLen+1, NULL, NULL);
+      FREE_OBJ(p);
+      return nChars;
+    }
+}
+
 typedef struct tagME_GlobalDestStruct
 {
   HGLOBAL hData;
@@ -3259,7 +3278,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     tr.chrg.cpMin = from;
     tr.chrg.cpMax = to;
     tr.lpstrText = (WCHAR *)lParam;
-    return RichEditWndProc_common(hWnd, EM_GETTEXTRANGE, 0, (LPARAM)&tr, unicode);
+    return ME_GetTextRange(editor, &tr, unicode);
   }
   case EM_GETSCROLLPOS:
   {
@@ -3274,20 +3293,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     TRACE("EM_GETTEXTRANGE min=%d max=%d unicode=%d emul1.0=%d length=%d\n",
       rng->chrg.cpMin, rng->chrg.cpMax, unicode,
       editor->bEmulateVersion10, ME_GetTextLength(editor));
-    if (unicode)
-      return ME_GetTextW(editor, rng->lpstrText, rng->chrg.cpMin, rng->chrg.cpMax-rng->chrg.cpMin, 0);
-    else
-    {
-      int nLen = rng->chrg.cpMax-rng->chrg.cpMin;
-      WCHAR *p = ALLOC_N_OBJ(WCHAR, nLen+1);
-      int nChars = ME_GetTextW(editor, p, rng->chrg.cpMin, nLen, 0);
-      /* FIXME this is a potential security hole (buffer overrun) 
-         if you know more about wchar->mbyte conversion please explain
-      */
-      WideCharToMultiByte(CP_ACP, 0, p, nChars+1, (char *)rng->lpstrText, nLen+1, NULL, NULL);
-      FREE_OBJ(p);
-      return nChars;
-    }
+    return ME_GetTextRange(editor, rng, unicode);
   }
   case EM_GETLINE:
   {
