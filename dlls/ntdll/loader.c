@@ -172,24 +172,20 @@ static inline BOOL call_dll_entry_point( DLLENTRYPROC proc, void *module,
 #endif /* __i386__ */
 
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 /*************************************************************************
  *		stub_entry_point
  *
  * Entry point for stub functions.
  */
-static void stub_entry_point( const char *dll, const char *name, ... )
+static void stub_entry_point( const char *dll, const char *name, void *ret_addr )
 {
     EXCEPTION_RECORD rec;
 
     rec.ExceptionCode           = EXCEPTION_WINE_STUB;
     rec.ExceptionFlags          = EH_NONCONTINUABLE;
     rec.ExceptionRecord         = NULL;
-#ifdef __GNUC__
-    rec.ExceptionAddress        = __builtin_return_address(0);
-#else
-    rec.ExceptionAddress        = *((void **)&dll - 1);
-#endif
+    rec.ExceptionAddress        = ret_addr;
     rec.NumberParameters        = 2;
     rec.ExceptionInformation[0] = (ULONG_PTR)dll;
     rec.ExceptionInformation[1] = (ULONG_PTR)name;
@@ -198,17 +194,29 @@ static void stub_entry_point( const char *dll, const char *name, ... )
 
 
 #include "pshpack1.h"
+#ifdef __i386__
 struct stub
 {
-    BYTE        popl_eax;   /* popl %eax */
     BYTE        pushl1;     /* pushl $name */
     const char *name;
     BYTE        pushl2;     /* pushl $dll */
     const char *dll;
-    BYTE        pushl_eax;  /* pushl %eax */
-    BYTE        jmp;        /* jmp stub_entry_point */
+    BYTE        call;       /* call stub_entry_point */
     DWORD       entry;
 };
+#else
+struct stub
+{
+    BYTE movq_rdi[2];      /* movq $dll,%rdi */
+    const char *dll;
+    BYTE movq_rsi[2];      /* movq $name,%rsi */
+    const char *name;
+    BYTE movq_rsp_rdx[4];  /* movq (%rsp),%rdx */
+    BYTE movq_rax[2];      /* movq $entry, %rax */
+    const void* entry;
+    BYTE jmpq_rax[2];      /* jmp %rax */
+};
+#endif
 #include "poppack.h"
 
 /*************************************************************************
@@ -233,14 +241,30 @@ static ULONG_PTR allocate_stub( const char *dll, const char *name )
             return 0xdeadbeef;
     }
     stub = &stubs[nb_stubs++];
-    stub->popl_eax  = 0x58;  /* popl %eax */
+#ifdef __i386__
     stub->pushl1    = 0x68;  /* pushl $name */
     stub->name      = name;
     stub->pushl2    = 0x68;  /* pushl $dll */
     stub->dll       = dll;
-    stub->pushl_eax = 0x50;  /* pushl %eax */
-    stub->jmp       = 0xe9;  /* jmp stub_entry_point */
+    stub->call      = 0xe8;  /* call stub_entry_point */
     stub->entry     = (BYTE *)stub_entry_point - (BYTE *)(&stub->entry + 1);
+#else
+    stub->movq_rdi[0]     = 0x48;  /* movq $dll,%rdi */
+    stub->movq_rdi[1]     = 0xbf;
+    stub->dll             = dll;
+    stub->movq_rsi[0]     = 0x48;  /* movq $name,%rsi */
+    stub->movq_rsi[1]     = 0xbe;
+    stub->name            = name;
+    stub->movq_rsp_rdx[0] = 0x48;  /* movq (%rsp),%rdx */
+    stub->movq_rsp_rdx[1] = 0x8b;
+    stub->movq_rsp_rdx[2] = 0x14;
+    stub->movq_rsp_rdx[3] = 0x24;
+    stub->movq_rax[0]     = 0x48;  /* movq $entry, %rax */
+    stub->movq_rax[1]     = 0xb8;
+    stub->entry           = stub_entry_point;
+    stub->jmpq_rax[0]     = 0xff;  /* jmp %rax */
+    stub->jmpq_rax[1]     = 0xe0;
+#endif
     return (ULONG_PTR)stub;
 }
 
