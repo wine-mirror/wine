@@ -10,7 +10,8 @@ C_SRCS = \
 	downloader.c \
 	installer.c \
 	main.c \
-	searcher.c
+	searcher.c \
+	updates.c
 
 @MAKE_DLL_RULES@
 
