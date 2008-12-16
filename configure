@@ -26660,6 +26660,14 @@ dlls/wtsapi32/Makefile: dlls/wtsapi32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/wtsapi32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/wuapi/Makefile"
+test "x$enable_wuapi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	wuapi"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/wuapi/Makefile: dlls/wuapi/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/wuapi/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/xinput1_1/Makefile"
 test "x$enable_xinput1_1" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	xinput1_1"
@@ -28235,6 +28243,7 @@ do
     "dlls/ws2_32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ws2_32/tests/Makefile" ;;
     "dlls/wsock32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wsock32/Makefile" ;;
     "dlls/wtsapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wtsapi32/Makefile" ;;
+    "dlls/wuapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wuapi/Makefile" ;;
     "dlls/xinput1_1/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/xinput1_1/Makefile" ;;
     "dlls/xinput1_2/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/xinput1_2/Makefile" ;;
     "dlls/xinput1_3/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/xinput1_3/Makefile" ;;
