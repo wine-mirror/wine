@@ -111,7 +111,7 @@ static int query_screens(void)
 {
     int i, count, event_base, error_base;
     XineramaScreenInfo *screens;
-    RECT rc_work;
+    RECT rc_work = {0, 0, 0, 0};
 
     if (!monitors)  /* first time around */
         load_xinerama();
