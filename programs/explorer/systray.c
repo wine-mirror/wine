@@ -35,7 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(systray);
 #define IS_OPTION_FALSE(ch) \
     ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
 
-static int (*wine_notify_icon)(DWORD,NOTIFYICONDATAW *);
+static int (CDECL *wine_notify_icon)(DWORD,NOTIFYICONDATAW *);
 
 /* an individual systray icon, unpacked from the NOTIFYICONDATA and always in unicode */
 struct icon

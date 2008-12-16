@@ -105,7 +105,7 @@ static unsigned long create_desktop( const WCHAR *name, unsigned int width, unsi
     HMODULE x11drv = GetModuleHandleA( "winex11.drv" );
     HDESK desktop;
     unsigned long xwin = 0;
-    unsigned long (*create_desktop_func)(unsigned int, unsigned int);
+    unsigned long (CDECL *create_desktop_func)(unsigned int, unsigned int);
 
     desktop = CreateDesktopW( name, NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );
     if (!desktop)

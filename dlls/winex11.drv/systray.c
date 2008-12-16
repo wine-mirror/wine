@@ -415,7 +415,7 @@ static BOOL delete_icon( struct tray_icon *icon )
  *
  * Driver-side implementation of Shell_NotifyIcon.
  */
-int wine_notify_icon( DWORD msg, NOTIFYICONDATAW *data )
+int CDECL wine_notify_icon( DWORD msg, NOTIFYICONDATAW *data )
 {
     BOOL ret = FALSE;
     struct tray_icon *icon;

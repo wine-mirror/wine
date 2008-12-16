@@ -128,7 +128,7 @@ void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
  *
  * Create the X11 desktop window for the desktop mode.
  */
-Window X11DRV_create_desktop( UINT width, UINT height )
+Window CDECL X11DRV_create_desktop( UINT width, UINT height )
 {
     XSetWindowAttributes win_attr;
     Window win;
