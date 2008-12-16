@@ -3,12 +3,14 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = cryptui.dll
-IMPORTS   = crypt32 kernel32
+IMPORTS   = crypt32 comctl32 user32 kernel32
 DELAYIMPORTS = wintrust
 IMPORTLIB = cryptui
 
 C_SRCS = \
 	main.c
+
+RC_SRCS = cryptui.rc
 
 @MAKE_DLL_RULES@
 

@@ -1,0 +1,46 @@
+/*
+ * cryptui dll resources
+ *
+ * Copyright 2008 Juan Lang
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_CERTIFICATE "Certificate"
+}
+
+IDD_GENERAL DIALOG DISCARDABLE 0, 0, 255, 236
+CAPTION "General"
+STYLE WS_VISIBLE
+FONT 8, "MS Shell Dlg"
+BEGIN
+  CONTROL "", IDC_STATIC, "Static", WS_BORDER|SS_WHITERECT, 6,10,241,200
+  CONTROL "", IDC_CERTIFICATE_ICON,"RichEdit20W",
+    ES_READONLY|WS_DISABLED,8,11,26,26
+  CONTROL "", IDC_CERTIFICATE_INFO,"RichEdit20W",
+    ES_READONLY|WS_DISABLED,34,11,212,26
+  CONTROL "", IDC_STATIC, "Static", SS_BLACKFRAME, 16,37,222,1
+  CONTROL "", IDC_CERTIFICATE_STATUS,"RichEdit20W",
+    ES_READONLY|ES_MULTILINE|WS_DISABLED,8,38,238,78
+  CONTROL "", IDC_STATIC, "Static", SS_BLACKFRAME, 16,116,222,1
+  CONTROL "", IDC_CERTIFICATE_NAMES,"RichEdit20W",
+    ES_READONLY|ES_MULTILINE|WS_DISABLED,8,117,238,91
+  PUSHBUTTON "&Install Certificate...", IDC_ADDTOSTORE,103,216,70,14
+  PUSHBUTTON "Issuer &Statement", IDC_ISSUERSTATEMENT,177,216,70,14
+END

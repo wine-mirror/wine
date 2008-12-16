@@ -28,9 +28,12 @@
 #include "winuser.h"
 #include "softpub.h"
 #include "cryptuiapi.h"
+#include "cryptuires.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cryptui);
+
+static HINSTANCE hInstance;
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -41,6 +44,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_WINE_PREATTACH:
             return FALSE;    /* prefer native version */
         case DLL_PROCESS_ATTACH:
+            hInstance = hinstDLL;
             DisableThreadLibraryCalls(hinstDLL);
             break;
         case DLL_PROCESS_DETACH:
@@ -99,6 +103,166 @@ BOOL WINAPI CryptUIDlgViewCertificateA(
     ret = CryptUIDlgViewCertificateW(&viewInfo, pfPropertiesChanged);
     HeapFree(GetProcessHeap(), 0, title);
 error:
+    return ret;
+}
+
+static LRESULT CALLBACK general_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+ LPARAM lp)
+{
+    PROPSHEETPAGEW *page;
+    PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo;
+
+    TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        page = (PROPSHEETPAGEW *)lp;
+        pCertViewInfo = (PCCRYPTUI_VIEWCERTIFICATE_STRUCTW)page->lParam;
+        if (pCertViewInfo->dwFlags & CRYPTUI_DISABLE_ADDTOSTORE)
+            ShowWindow(GetDlgItem(hwnd, IDC_ADDTOSTORE), FALSE);
+        EnableWindow(GetDlgItem(hwnd, IDC_ISSUERSTATEMENT), FALSE);
+        FIXME("show cert properties\n");
+        break;
+    case WM_COMMAND:
+        switch (wp)
+        {
+        case IDC_ADDTOSTORE:
+            FIXME("call CryptUIWizImport\n");
+            break;
+        }
+        break;
+    }
+    return 0;
+}
+
+static void init_general_page(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
+ PROPSHEETPAGEW *page)
+{
+    memset(page, 0, sizeof(PROPSHEETPAGEW));
+    page->dwSize = sizeof(PROPSHEETPAGEW);
+    page->hInstance = hInstance;
+    page->u.pszTemplate = MAKEINTRESOURCEW(IDD_GENERAL);
+    page->pfnDlgProc = general_dlg_proc;
+    page->lParam = (LPARAM)pCertViewInfo;
+}
+
+static int CALLBACK cert_prop_sheet_proc(HWND hwnd, UINT msg, LPARAM lp)
+{
+    RECT rc;
+    POINT topLeft;
+
+    TRACE("(%p, %08x, %08lx)\n", hwnd, msg, lp);
+
+    switch (msg)
+    {
+    case PSCB_INITIALIZED:
+        /* Get cancel button's position.. */
+        GetWindowRect(GetDlgItem(hwnd, IDCANCEL), &rc);
+        topLeft.x = rc.left;
+        topLeft.y = rc.top;
+        ScreenToClient(hwnd, &topLeft);
+        /* hide the cancel button.. */
+        ShowWindow(GetDlgItem(hwnd, IDCANCEL), FALSE);
+        /* get the OK button's size.. */
+        GetWindowRect(GetDlgItem(hwnd, IDOK), &rc);
+        /* and move the OK button to the cancel button's original position. */
+        MoveWindow(GetDlgItem(hwnd, IDOK), topLeft.x, topLeft.y,
+         rc.right - rc.left, rc.bottom - rc.top, FALSE);
+        GetWindowRect(GetDlgItem(hwnd, IDOK), &rc);
+        break;
+    }
+    return 0;
+}
+
+static BOOL show_cert_dialog(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
+ CRYPT_PROVIDER_CERT *provCert, BOOL *pfPropertiesChanged)
+{
+    static const WCHAR riched[] = { 'r','i','c','h','e','d','2','0',0 };
+    DWORD nPages;
+    PROPSHEETPAGEW *pages;
+    BOOL ret = FALSE;
+    HMODULE lib = LoadLibraryW(riched);
+
+    nPages = pCertViewInfo->cPropSheetPages + 1; /* one for the General tab */
+    if (!(pCertViewInfo->dwFlags & CRYPTUI_HIDE_DETAILPAGE))
+        FIXME("show detail page\n");
+    if (!(pCertViewInfo->dwFlags & CRYPTUI_HIDE_HIERARCHYPAGE))
+        FIXME("show hierarchy page\n");
+    pages = HeapAlloc(GetProcessHeap(), 0, nPages * sizeof(PROPSHEETPAGEW));
+    if (pages)
+    {
+        PROPSHEETHEADERW hdr;
+        CRYPTUI_INITDIALOG_STRUCT *init = NULL;
+        DWORD i;
+
+        memset(&hdr, 0, sizeof(hdr));
+        hdr.dwSize = sizeof(hdr);
+        hdr.dwFlags = PSH_NOAPPLYNOW | PSH_PROPSHEETPAGE | PSH_USECALLBACK;
+        hdr.hInstance = hInstance;
+        if (pCertViewInfo->szTitle)
+            hdr.pszCaption = pCertViewInfo->szTitle;
+        else
+            hdr.pszCaption = MAKEINTRESOURCEW(IDS_CERTIFICATE);
+        init_general_page(pCertViewInfo, &pages[hdr.nPages++]);
+        /* Copy each additional page, and create the init dialog struct for it
+         */
+        if (pCertViewInfo->cPropSheetPages)
+        {
+            init = HeapAlloc(GetProcessHeap(), 0,
+             pCertViewInfo->cPropSheetPages *
+             sizeof(CRYPTUI_INITDIALOG_STRUCT));
+            if (init)
+            {
+                for (i = 0; i < pCertViewInfo->cPropSheetPages; i++)
+                {
+                    memcpy(&pages[hdr.nPages + i],
+                     &pCertViewInfo->rgPropSheetPages[i],
+                     sizeof(PROPSHEETPAGEW));
+                    init[i].lParam = pCertViewInfo->rgPropSheetPages[i].lParam;
+                    init[i].pCertContext = pCertViewInfo->pCertContext;
+                    pages[hdr.nPages + i].lParam = (LPARAM)&init[i];
+                }
+                if (pCertViewInfo->nStartPage & 0x8000)
+                {
+                    /* Start page index is relative to the number of default
+                     * pages
+                     */
+                    hdr.u2.nStartPage = pCertViewInfo->nStartPage + hdr.nPages;
+                }
+                else
+                    hdr.u2.nStartPage = pCertViewInfo->nStartPage;
+                hdr.nPages = nPages;
+                ret = TRUE;
+            }
+            else
+                SetLastError(ERROR_OUTOFMEMORY);
+        }
+        else
+        {
+            /* Ignore the relative flag if there aren't any additional pages */
+            hdr.u2.nStartPage = pCertViewInfo->nStartPage & 0x7fff;
+            ret = TRUE;
+        }
+        if (ret)
+        {
+            INT_PTR l;
+
+            hdr.u3.ppsp = pages;
+            hdr.pfnCallback = cert_prop_sheet_proc;
+            l = PropertySheetW(&hdr);
+            if (l == 0)
+            {
+                SetLastError(ERROR_CANCELLED);
+                ret = FALSE;
+            }
+        }
+        HeapFree(GetProcessHeap(), 0, init);
+        HeapFree(GetProcessHeap(), 0, pages);
+    }
+    else
+        SetLastError(ERROR_OUTOFMEMORY);
+    FreeLibrary(lib);
     return ret;
 }
 
@@ -166,8 +330,7 @@ BOOL WINAPI CryptUIDlgViewCertificateW(
     }
     if (ret)
     {
-        FIXME("show cert dialog\n");
-        ret = FALSE;
+        ret = show_cert_dialog(&viewInfo, provCert, pfPropertiesChanged);
         if (!viewInfo.u.hWVTStateData)
         {
             wvt.dwStateAction = WTD_STATEACTION_CLOSE;
