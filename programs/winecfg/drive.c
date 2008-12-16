@@ -187,7 +187,7 @@ static void set_drive_serial( char letter, DWORD serial )
     HANDLE hFile;
 
     filename[0] = letter;
-    WINE_TRACE("Putting serial number of %08x into file '%s'\n", serial, filename);
+    WINE_TRACE("Putting serial number of %08X into file '%s'\n", serial, filename);
     hFile = CreateFile(filename, GENERIC_WRITE, FILE_SHARE_READ, NULL,
                        CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile != INVALID_HANDLE_VALUE)

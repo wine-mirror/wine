@@ -520,10 +520,11 @@ static void on_edit_changed(HWND dialog, WORD id)
             char *serial;
 
             serial = get_text(dialog, id);
-            current_drive->serial = strtoul( serial, NULL, 16 );
+            current_drive->serial = serial ? strtoul( serial, NULL, 16 ) : 0;
+            HeapFree(GetProcessHeap(), 0, serial);
             current_drive->modified = TRUE;
 
-            WINE_TRACE("set serial to %08x\n", current_drive->serial);
+            WINE_TRACE("set serial to %08X\n", current_drive->serial);
 
             /* enable the apply button  */
             SendMessage(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);
@@ -775,7 +776,8 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
                     current_drive->label = str;
 
                     str = get_textW(dialog, IDC_EDIT_SERIAL);
-                    current_drive->serial = strtoulW( str, NULL, 16 );
+                    current_drive->serial = str ? strtoulW( str, NULL, 16 ) : 0;
+                    HeapFree(GetProcessHeap(), 0, str);
                     current_drive->modified = TRUE;
 
                     /* TODO: we don't have a device at this point */
