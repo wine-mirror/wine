@@ -77,7 +77,7 @@ PEB * WINAPI RtlGetCurrentPeb(void)
  * Mark the current process as a system process.
  * Returns the event that is signaled when all non-system processes have exited.
  */
-HANDLE __wine_make_process_system(void)
+HANDLE CDECL __wine_make_process_system(void)
 {
     HANDLE ret = 0;
     SERVER_START_REQ( make_process_system )

@@ -2857,8 +2857,8 @@ int WINAPI lstrcmpiW(LPCWSTR str1, LPCWSTR str2)
  */
 void LOCALE_Init(void)
 {
-    extern void __wine_init_codepages( const union cptable *ansi_cp, const union cptable *oem_cp,
-                                       const union cptable *unix_cp );
+    extern void CDECL __wine_init_codepages( const union cptable *ansi_cp, const union cptable *oem_cp,
+                                             const union cptable *unix_cp );
 
     UINT ansi_cp = 1252, oem_cp = 437, mac_cp = 10000, unix_cp;
 

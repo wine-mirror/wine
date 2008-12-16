@@ -43,7 +43,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 
-extern  int __wine_set_signal_handler(unsigned, int (*)(unsigned));
+extern int CDECL __wine_set_signal_handler(unsigned, int (*)(unsigned));
 
 static ULONGLONG server_start_time;
 

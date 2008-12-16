@@ -786,7 +786,7 @@ done:
  */
 static void init_windows_dirs(void)
 {
-    extern void __wine_init_windows_dir( const WCHAR *windir, const WCHAR *sysdir );
+    extern void CDECL __wine_init_windows_dir( const WCHAR *windir, const WCHAR *sysdir );
 
     static const WCHAR windirW[] = {'w','i','n','d','i','r',0};
     static const WCHAR winsysdirW[] = {'w','i','n','s','y','s','d','i','r',0};

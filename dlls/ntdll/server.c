@@ -358,7 +358,7 @@ void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sig
  * RETURNS
  *     nothing
  */
-void wine_server_send_fd( int fd )
+void CDECL wine_server_send_fd( int fd )
 {
 #ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
     struct cmsg_fd cmsg;
@@ -627,7 +627,7 @@ done:
  * RETURNS
  *     NTSTATUS code
  */
-int wine_server_fd_to_handle( int fd, unsigned int access, unsigned int attributes, HANDLE *handle )
+int CDECL wine_server_fd_to_handle( int fd, unsigned int access, unsigned int attributes, HANDLE *handle )
 {
     int ret;
 
@@ -660,7 +660,7 @@ int wine_server_fd_to_handle( int fd, unsigned int access, unsigned int attribut
  * RETURNS
  *     NTSTATUS code
  */
-int wine_server_handle_to_fd( HANDLE handle, unsigned int access, int *unix_fd,
+int CDECL wine_server_handle_to_fd( HANDLE handle, unsigned int access, int *unix_fd,
                               unsigned int *options )
 {
     int needs_close, ret = server_get_unix_fd( handle, access, unix_fd, &needs_close, NULL, options );
@@ -685,7 +685,7 @@ int wine_server_handle_to_fd( HANDLE handle, unsigned int access, int *unix_fd,
  * RETURNS
  *     nothing
  */
-void wine_server_release_fd( HANDLE handle, int unix_fd )
+void CDECL wine_server_release_fd( HANDLE handle, int unix_fd )
 {
     close( unix_fd );
 }

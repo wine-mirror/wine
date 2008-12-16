@@ -815,7 +815,7 @@ static const struct option long_options[] =
 
 int main( int argc, char *argv[] )
 {
-    extern HANDLE __wine_make_process_system(void);
+    extern HANDLE CDECL __wine_make_process_system(void);
     static const WCHAR wineboot_eventW[] = {'_','_','w','i','n','e','b','o','o','t','_','e','v','e','n','t',0};
 
     /* First, set the current directory to SystemRoot */

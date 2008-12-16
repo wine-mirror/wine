@@ -34,7 +34,7 @@
 #include "services.h"
 #include "svcctl.h"
 
-extern HANDLE __wine_make_process_system(void);
+extern HANDLE CDECL __wine_make_process_system(void);
 
 WINE_DEFAULT_DEBUG_CHANNEL(service);
 

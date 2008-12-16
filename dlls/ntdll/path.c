@@ -1015,7 +1015,7 @@ NTSTATUS WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING* dir)
 /******************************************************************
  *           wine_unix_to_nt_file_name  (NTDLL.@) Not a Windows API
  */
-NTSTATUS wine_unix_to_nt_file_name( const ANSI_STRING *name, UNICODE_STRING *nt )
+NTSTATUS CDECL wine_unix_to_nt_file_name( const ANSI_STRING *name, UNICODE_STRING *nt )
 {
     static const WCHAR prefixW[] = {'\\','?','?','\\','A',':','\\'};
     unsigned int lenW, lenA = name->Length;

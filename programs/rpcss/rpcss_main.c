@@ -62,7 +62,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 static HANDLE exit_event;
 
-extern HANDLE __wine_make_process_system(void);
+extern HANDLE CDECL __wine_make_process_system(void);
 
 static BOOL RPCSS_Initialize(void)
 {

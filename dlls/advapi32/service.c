@@ -102,7 +102,7 @@ static service_data **services;
 static unsigned int nb_services;
 static HANDLE service_event;
 
-extern HANDLE __wine_make_process_system(void);
+extern HANDLE CDECL __wine_make_process_system(void);
 
 /******************************************************************************
  * SC_HANDLEs

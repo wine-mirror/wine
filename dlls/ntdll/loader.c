@@ -2612,7 +2612,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
  *
  * Windows and system dir initialization once kernel32 has been loaded.
  */
-void __wine_init_windows_dir( const WCHAR *windir, const WCHAR *sysdir )
+void CDECL __wine_init_windows_dir( const WCHAR *windir, const WCHAR *sysdir )
 {
     PLIST_ENTRY mark, entry;
     LPWSTR buffer, p;

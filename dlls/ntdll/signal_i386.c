@@ -1560,7 +1560,7 @@ size_t get_signal_stack_total_size(void)
 /***********************************************************************
  *           __wine_set_signal_handler   (NTDLL.@)
  */
-int __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
+int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
 {
     if (sig >= sizeof(handlers) / sizeof(handlers[0])) return -1;
     if (handlers[sig] != NULL) return -2;

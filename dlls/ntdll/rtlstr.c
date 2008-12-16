@@ -54,8 +54,8 @@ static const union cptable* unix_table; /* NULL if UTF8 */
  *
  * Set the code page once kernel32 is loaded. Should be done differently.
  */
-void __wine_init_codepages( const union cptable *ansi, const union cptable *oem,
-                            const union cptable *ucp)
+void CDECL __wine_init_codepages( const union cptable *ansi, const union cptable *oem,
+                                  const union cptable *ucp)
 {
     ansi_table = ansi;
     oem_table = oem;
