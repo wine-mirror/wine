@@ -408,6 +408,24 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
  */
 static XcursorImage *create_cursor_image( CURSORICONINFO *ptr )
 {
+    static const unsigned char convert_5to8[] =
+    {
+        0x00, 0x08, 0x10, 0x19, 0x21, 0x29, 0x31, 0x3a,
+        0x42, 0x4a, 0x52, 0x5a, 0x63, 0x6b, 0x73, 0x7b,
+        0x84, 0x8c, 0x94, 0x9c, 0xa5, 0xad, 0xb5, 0xbd,
+        0xc5, 0xce, 0xd6, 0xde, 0xe6, 0xef, 0xf7, 0xff,
+    };
+    static const unsigned char convert_6to8[] =
+    {
+        0x00, 0x04, 0x08, 0x0c, 0x10, 0x14, 0x18, 0x1c,
+        0x20, 0x24, 0x28, 0x2d, 0x31, 0x35, 0x39, 0x3d,
+        0x41, 0x45, 0x49, 0x4d, 0x51, 0x55, 0x59, 0x5d,
+        0x61, 0x65, 0x69, 0x6d, 0x71, 0x75, 0x79, 0x7d,
+        0x82, 0x86, 0x8a, 0x8e, 0x92, 0x96, 0x9a, 0x9e,
+        0xa2, 0xa6, 0xaa, 0xae, 0xb2, 0xb6, 0xba, 0xbe,
+        0xc2, 0xc6, 0xca, 0xce, 0xd2, 0xd7, 0xdb, 0xdf,
+        0xe3, 0xe7, 0xeb, 0xef, 0xf3, 0xf7, 0xfb, 0xff,
+    };
     int x;
     int y;
     int and_size;
@@ -415,6 +433,7 @@ static XcursorImage *create_cursor_image( CURSORICONINFO *ptr )
     int and_width_bytes, xor_width_bytes;
     XcursorPixel *pixel_ptr;
     XcursorImage *image;
+    unsigned char tmp;
     BOOL alpha_zero = TRUE;
 
     and_width_bytes = ptr->nWidth / 8;
@@ -500,11 +519,12 @@ static XcursorImage *create_cursor_image( CURSORICONINFO *ptr )
 
                 case 16:
                     /* BGR, 5 red, 6 green, 5 blue */
-                    *pixel_ptr = *xor_ptr * 0x1f;
-                    *pixel_ptr |= (*xor_ptr & 0xe0) << 3;
-                    ++xor_ptr;
-                    *pixel_ptr |= (*xor_ptr & 0x07) << 11;
-                    *pixel_ptr |= (*xor_ptr & 0xf8) << 13;
+                    /* [gggbbbbb][rrrrrggg] -> [xxxxxxxx][rrrrrrrr][gggggggg][bbbbbbbb] */
+                    *pixel_ptr = convert_5to8[*xor_ptr & 0x1f];
+                    tmp = (*xor_ptr++ & 0xe0) >> 5;
+                    tmp |= (*xor_ptr & 0x07) << 3;
+                    *pixel_ptr |= convert_6to8[tmp] << 16;
+                    *pixel_ptr |= convert_5to8[*xor_ptr & 0xf8] << 24;
                     break;
 
                 case 1:
