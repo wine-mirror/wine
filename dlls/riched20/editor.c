@@ -1938,6 +1938,54 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
   return -1;
 }
 
+static int ME_GetTextEx(ME_TextEditor *editor, GETTEXTEX *ex, LPARAM pText)
+{
+    int nStart, nCount; /* in chars */
+
+    if (ex->flags & ~(GT_SELECTION | GT_USECRLF))
+      FIXME("GETTEXTEX flags 0x%08x not supported\n", ex->flags & ~(GT_SELECTION | GT_USECRLF));
+
+    if (ex->flags & GT_SELECTION)
+    {
+      ME_GetSelection(editor, &nStart, &nCount);
+      nCount -= nStart;
+    }
+    else
+    {
+      nStart = 0;
+      nCount = 0x7fffffff;
+    }
+    if (ex->codepage == 1200)
+    {
+      nCount = min(nCount, ex->cb / sizeof(WCHAR) - 1);
+      return ME_GetTextW(editor, (LPWSTR)pText, nStart, nCount, ex->flags & GT_USECRLF);
+    }
+    else
+    {
+      /* potentially each char may be a CR, why calculate the exact value with O(N) when
+        we can just take a bigger buffer? :)
+        The above assumption still holds with CR/LF counters, since CR->CRLF expansion
+        occurs only in richedit 2.0 mode, in which line breaks have only one CR
+       */
+      int crlfmul = (ex->flags & GT_USECRLF) ? 2 : 1;
+      LPWSTR buffer;
+      DWORD buflen = ex->cb;
+      LRESULT rc;
+      DWORD flags = 0;
+
+      nCount = min(nCount, ex->cb - 1);
+      buffer = heap_alloc((crlfmul*nCount + 1) * sizeof(WCHAR));
+
+      buflen = ME_GetTextW(editor, buffer, nStart, nCount, ex->flags & GT_USECRLF);
+      rc = WideCharToMultiByte(ex->codepage, flags, buffer, buflen+1,
+                               (LPSTR)pText, ex->cb, ex->lpDefaultChar, ex->lpUsedDefChar);
+      if (rc) rc--; /* do not count 0 terminator */
+
+      heap_free(buffer);
+      return rc;
+    }
+}
+
 static int ME_GetTextRange(ME_TextEditor *editor, TEXTRANGEW *rng, BOOL unicode)
 {
     if (unicode)
@@ -3207,7 +3255,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     ex.codepage = unicode ? 1200 : CP_ACP;
     ex.lpDefaultChar = NULL;
     ex.lpUsedDefChar = NULL;
-    rc = RichEditWndProc_common(hWnd, EM_GETTEXTEX, (WPARAM)&ex, unicode ? (LPARAM)bufferW : (LPARAM)bufferA, unicode);
+
+    rc = ME_GetTextEx(editor, &ex, unicode ? (LPARAM)bufferW : (LPARAM)bufferA);
 
     if (unicode)
     {
@@ -3224,52 +3273,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     return rc;
   }
   case EM_GETTEXTEX:
-  {
-    GETTEXTEX *ex = (GETTEXTEX*)wParam;
-    int nStart, nCount; /* in chars */
-
-    if (ex->flags & ~(GT_SELECTION | GT_USECRLF))
-      FIXME("GETTEXTEX flags 0x%08x not supported\n", ex->flags & ~(GT_SELECTION | GT_USECRLF));
-
-    if (ex->flags & GT_SELECTION)
-    {
-      ME_GetSelection(editor, &nStart, &nCount);
-      nCount -= nStart;
-    }
-    else
-    {
-      nStart = 0;
-      nCount = 0x7fffffff;
-    }
-    if (ex->codepage == 1200)
-    {
-      nCount = min(nCount, ex->cb / sizeof(WCHAR) - 1);
-      return ME_GetTextW(editor, (LPWSTR)lParam, nStart, nCount, ex->flags & GT_USECRLF);
-    }
-    else
-    {
-      /* potentially each char may be a CR, why calculate the exact value with O(N) when
-        we can just take a bigger buffer? :)
-        The above assumption still holds with CR/LF counters, since CR->CRLF expansion
-        occurs only in richedit 2.0 mode, in which line breaks have only one CR
-       */
-      int crlfmul = (ex->flags & GT_USECRLF) ? 2 : 1;
-      LPWSTR buffer;
-      DWORD buflen = ex->cb;
-      LRESULT rc;
-      DWORD flags = 0;
-
-      nCount = min(nCount, ex->cb - 1);
-      buffer = heap_alloc((crlfmul*nCount + 1) * sizeof(WCHAR));
-
-      buflen = ME_GetTextW(editor, buffer, nStart, nCount, ex->flags & GT_USECRLF);
-      rc = WideCharToMultiByte(ex->codepage, flags, buffer, buflen+1, (LPSTR)lParam, ex->cb, ex->lpDefaultChar, ex->lpUsedDefChar);
-      if (rc) rc--; /* do not count 0 terminator */
-
-      heap_free(buffer);
-      return rc;
-    }
-  }
+    return ME_GetTextEx(editor, (GETTEXTEX*)wParam, lParam);
   case EM_GETSELTEXT:
   {
     int from, to;
