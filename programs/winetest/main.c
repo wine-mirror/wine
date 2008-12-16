@@ -665,28 +665,28 @@ usage (void)
 "  -t TAG   include TAG of characters [-.0-9a-zA-Z] in the report\n");
 }
 
-int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
-                    LPSTR cmdLine, int cmdShow)
+int main( int argc, char *argv[] )
 {
     char *logname = NULL;
     const char *cp, *submit = NULL;
     int reset_env = 1;
     int poweroff = 0;
     int interactive = 1;
+    int i;
 
     if (!LoadStringA( 0, IDS_BUILD_ID, build_id, sizeof(build_id) )) build_id[0] = 0;
 
-    cmdLine = strtok (cmdLine, whitespace);
-    while (cmdLine) {
-        if (cmdLine[0] != '-' || cmdLine[2]) {
+    for (i = 1; argv[i]; i++)
+    {
+        if (argv[i][0] != '-' || argv[i][2]) {
             if (nb_filters == sizeof(filters)/sizeof(filters[0]))
             {
                 report (R_ERROR, "Too many test filters specified");
                 exit (2);
             }
-            filters[nb_filters++] = xstrdup( cmdLine );
+            filters[nb_filters++] = argv[i];
         }
-        else switch (cmdLine[1]) {
+        else switch (argv[i][1]) {
         case 'c':
             report (R_TEXTMODE);
             interactive = 0;
@@ -706,16 +706,28 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
             interactive = 0;
             break;
         case 's':
-            submit = strtok (NULL, whitespace);
+            if (!(submit = argv[++i]))
+            {
+                usage();
+                exit( 2 );
+            }
             if (tag)
                 report (R_WARNING, "ignoring tag for submission");
             send_file (submit);
             break;
         case 'o':
-            logname = strtok (NULL, whitespace);
+            if (!(logname = argv[++i]))
+            {
+                usage();
+                exit( 2 );
+            }
             break;
         case 't':
-            tag = strtok (NULL, whitespace);
+            if (!(tag = argv[++i]))
+            {
+                usage();
+                exit( 2 );
+            }
             if (strlen (tag) > MAXTAGLEN)
                 report (R_FATAL, "tag is too long (maximum %d characters)",
                         MAXTAGLEN);
@@ -727,11 +739,10 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
             }
             break;
         default:
-            report (R_ERROR, "invalid option: -%c", cmdLine[1]);
+            report (R_ERROR, "invalid option: -%c", argv[i][1]);
             usage ();
             exit (2);
         }
-        cmdLine = strtok (NULL, whitespace);
     }
     if (!submit) {
         report (R_STATUS, "Starting up");
