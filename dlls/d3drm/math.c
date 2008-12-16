@@ -30,10 +30,6 @@
 #include "wingdi.h"
 #include "d3drmdef.h"
 
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
-
 /* Create a RGB color from its components */
 D3DCOLOR WINAPI D3DRMCreateColorRGB(D3DVALUE red, D3DVALUE green, D3DVALUE blue)
 {
