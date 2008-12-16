@@ -38,7 +38,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winedevice);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
-extern NTSTATUS wine_ntoskrnl_main_loop( HANDLE stop_event );
+extern NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event );
 
 static WCHAR *driver_name;
 static SERVICE_STATUS_HANDLE service_handle;

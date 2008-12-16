@@ -191,7 +191,7 @@ static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff,
 /***********************************************************************
  *           wine_ntoskrnl_main_loop   (Not a Windows API)
  */
-NTSTATUS wine_ntoskrnl_main_loop( HANDLE stop_event )
+NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
 {
     HANDLE manager = get_device_manager();
     obj_handle_t ioctl = 0;
