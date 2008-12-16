@@ -36,10 +36,10 @@ static const WCHAR
   WC_TABLETCLASSNAME[] = {'W','i','n','e','T','a','b','l','e','t','C','l','a','s','s',0};
 CRITICAL_SECTION csTablet;
 
-int (*pLoadTabletInfo)(HWND hwnddefault) = NULL;
-int (*pGetCurrentPacket)(LPWTPACKET packet) = NULL;
-int (*pAttachEventQueueToTablet)(HWND hOwner) = NULL;
-UINT (*pWTInfoW)(UINT wCategory, UINT nIndex, LPVOID lpOutput) = NULL;
+int  (CDECL *pLoadTabletInfo)(HWND hwnddefault) = NULL;
+int  (CDECL *pGetCurrentPacket)(LPWTPACKET packet) = NULL;
+int  (CDECL *pAttachEventQueueToTablet)(HWND hOwner) = NULL;
+UINT (CDECL *pWTInfoW)(UINT wCategory, UINT nIndex, LPVOID lpOutput) = NULL;
 
 static LRESULT WINAPI TABLET_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                                           LPARAM lParam);

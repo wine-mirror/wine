@@ -151,10 +151,10 @@ int TABLET_PostTabletMessage(LPOPENCONTEXT newcontext, UINT msg, WPARAM wParam,
 LPOPENCONTEXT AddPacketToContextQueue(LPWTPACKET packet, HWND hwnd);
 
 /* X11drv functions */
-extern int (*pLoadTabletInfo)(HWND hwnddefault);
-extern int (*pGetCurrentPacket)(LPWTPACKET packet);
-extern int (*pAttachEventQueueToTablet)(HWND hOwner);
-extern UINT (*pWTInfoW)(UINT wCategory, UINT nIndex, LPVOID lpOutput);
+extern int  (CDECL *pLoadTabletInfo)(HWND hwnddefault);
+extern int  (CDECL *pGetCurrentPacket)(LPWTPACKET packet);
+extern int  (CDECL *pAttachEventQueueToTablet)(HWND hOwner);
+extern UINT (CDECL *pWTInfoW)(UINT wCategory, UINT nIndex, LPVOID lpOutput);
 
 extern HWND hwndDefault;
 extern CRITICAL_SECTION csTablet;

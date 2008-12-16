@@ -484,7 +484,7 @@ static void disable_system_cursors(void)
 /***********************************************************************
  *             X11DRV_LoadTabletInfo (X11DRV.@)
  */
-void X11DRV_LoadTabletInfo(HWND hwnddefault)
+void CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
 {
     const WCHAR SZ_CONTEXT_NAME[] = {'W','i','n','e',' ','T','a','b','l','e','t',' ','C','o','n','t','e','x','t',0};
     const WCHAR SZ_DEVICE_NAME[] = {'W','i','n','e',' ','T','a','b','l','e','t',' ','D','e','v','i','c','e',0};
@@ -959,7 +959,7 @@ static void proximity_event( HWND hwnd, XEvent *event )
 /***********************************************************************
  *		X11DRV_AttachEventQueueToTablet (X11DRV.@)
  */
-int X11DRV_AttachEventQueueToTablet(HWND hOwner)
+int CDECL X11DRV_AttachEventQueueToTablet(HWND hOwner)
 {
     struct x11drv_thread_data *data = x11drv_init_thread_data();
     int             num_devices;
@@ -1041,7 +1041,7 @@ int X11DRV_AttachEventQueueToTablet(HWND hOwner)
 /***********************************************************************
  *		X11DRV_GetCurrentPacket (X11DRV.@)
  */
-int X11DRV_GetCurrentPacket(LPWTPACKET packet)
+int CDECL X11DRV_GetCurrentPacket(LPWTPACKET packet)
 {
     *packet = gMsgPacket;
     return 1;
@@ -1062,7 +1062,7 @@ static inline int CopyTabletData(LPVOID target, LPCVOID src, INT size)
 /***********************************************************************
  *		X11DRV_WTInfoW (X11DRV.@)
  */
-UINT X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
+UINT CDECL X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
 {
     /*
      * It is valid to call WTInfoA with lpOutput == NULL, as per standard.
@@ -1488,7 +1488,7 @@ UINT X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
 /***********************************************************************
  *		AttachEventQueueToTablet (X11DRV.@)
  */
-int X11DRV_AttachEventQueueToTablet(HWND hOwner)
+int CDECL X11DRV_AttachEventQueueToTablet(HWND hOwner)
 {
     return 0;
 }
@@ -1496,7 +1496,7 @@ int X11DRV_AttachEventQueueToTablet(HWND hOwner)
 /***********************************************************************
  *		GetCurrentPacket (X11DRV.@)
  */
-int X11DRV_GetCurrentPacket(LPWTPACKET packet)
+int CDECL X11DRV_GetCurrentPacket(LPWTPACKET packet)
 {
     return 0;
 }
@@ -1504,14 +1504,14 @@ int X11DRV_GetCurrentPacket(LPWTPACKET packet)
 /***********************************************************************
  *		LoadTabletInfo (X11DRV.@)
  */
-void X11DRV_LoadTabletInfo(HWND hwnddefault)
+void CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
 {
 }
 
 /***********************************************************************
  *		WTInfoW (X11DRV.@)
  */
-UINT X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
+UINT CDECL X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
 {
     return 0;
 }
