@@ -525,8 +525,6 @@ static void test_apm()
     ole_expect(IPicture_get_hPal(pict, &handle), E_FAIL);
     IPicture_Release(pict);
     IStream_Release(stream);
-    GlobalUnlock(hglob);
-    GlobalFree(hglob);
 }
 
 static void test_metafile(void)
@@ -545,8 +543,6 @@ static void test_metafile(void)
     ole_expect(OleLoadPictureEx(stream, sizeof(metafile), TRUE, &IID_IPicture, 100, 100, 0, (LPVOID *)&pict), E_FAIL);
 
     IStream_Release(stream);
-    GlobalUnlock(hglob);
-    GlobalFree(hglob);
 }
 
 static void test_enhmetafile(void)
@@ -584,8 +580,6 @@ static void test_enhmetafile(void)
 
     IPicture_Release(pict);
     IStream_Release(stream);
-    GlobalUnlock(hglob);
-    GlobalFree(hglob);
 }
 
 static void test_Render(void)
