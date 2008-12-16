@@ -1737,7 +1737,6 @@ extern const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl;
 typedef struct SAVEDSTATES {
         BOOL                      indices;
         BOOL                      material;
-        BOOL                      fvf;
         BOOL                      streamSource[MAX_STREAMS];
         BOOL                      streamFreq[MAX_STREAMS];
         BOOL                      textures[MAX_COMBINED_SAMPLERS];
@@ -1786,8 +1785,6 @@ struct IWineD3DStateBlockImpl
     struct list               set_vconstantsF;
     struct list               set_pconstantsF;
 
-    /* Drawing - Vertex Shader or FVF related */
-    DWORD                     fvf;
     /* Vertex Shader Declaration */
     IWineD3DVertexDeclaration *vertexDecl;
 

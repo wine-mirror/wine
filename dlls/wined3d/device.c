@@ -2538,36 +2538,6 @@ static UINT WINAPI IWineD3DDeviceImpl_GetAvailableTextureMem(IWineD3DDevice *ifa
     return (This->adapter->TextureRam - This->adapter->UsedTextureRam);
 }
 
-
-
-/*****
- * Get / Set FVF
- *****/
-static HRESULT WINAPI IWineD3DDeviceImpl_SetFVF(IWineD3DDevice *iface, DWORD fvf) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    /* Update the current state block */
-    This->updateStateBlock->changed.fvf      = TRUE;
-
-    if(This->updateStateBlock->fvf == fvf) {
-        TRACE("Application is setting the old fvf over, nothing to do\n");
-        return WINED3D_OK;
-    }
-
-    This->updateStateBlock->fvf              = fvf;
-    TRACE("(%p) : FVF Shader FVF set to %x\n", This, fvf);
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
-    return WINED3D_OK;
-}
-
-
-static HRESULT WINAPI IWineD3DDeviceImpl_GetFVF(IWineD3DDevice *iface, DWORD *pfvf) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) : GetFVF returning %x\n", This, This->stateBlock->fvf);
-    *pfvf = This->stateBlock->fvf;
-    return WINED3D_OK;
-}
-
 /*****
  * Get / Set Stream Source
  *****/
@@ -7542,8 +7512,6 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetCurrentTexturePalette,
     IWineD3DDeviceImpl_SetDepthStencilSurface,
     IWineD3DDeviceImpl_GetDepthStencilSurface,
-    IWineD3DDeviceImpl_SetFVF,
-    IWineD3DDeviceImpl_GetFVF,
     IWineD3DDeviceImpl_SetGammaRamp,
     IWineD3DDeviceImpl_GetGammaRamp,
     IWineD3DDeviceImpl_SetIndices,
@@ -7687,8 +7655,6 @@ const IWineD3DDeviceVtbl IWineD3DDevice_DirtyConst_Vtbl =
     IWineD3DDeviceImpl_GetCurrentTexturePalette,
     IWineD3DDeviceImpl_SetDepthStencilSurface,
     IWineD3DDeviceImpl_GetDepthStencilSurface,
-    IWineD3DDeviceImpl_SetFVF,
-    IWineD3DDeviceImpl_GetFVF,
     IWineD3DDeviceImpl_SetGammaRamp,
     IWineD3DDeviceImpl_GetGammaRamp,
     IWineD3DDeviceImpl_SetIndices,

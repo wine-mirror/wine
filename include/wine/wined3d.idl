@@ -3070,12 +3070,6 @@ interface IWineD3DDevice : IWineD3DBase
     HRESULT GetDepthStencilSurface(
         [out] IWineD3DSurface **depth_stencil
     );
-    HRESULT SetFVF(
-        [in] DWORD fvf
-    );
-    HRESULT GetFVF(
-        [out] DWORD *fvf
-    );
     void SetGammaRamp(
         [in] UINT swapchain_idx,
         [in] DWORD flags,

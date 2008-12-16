@@ -82,7 +82,6 @@ static void stateblock_savedstates_copy(IWineD3DStateBlock* iface, SAVEDSTATES *
     /* Single values */
     dest->indices = source->indices;
     dest->material = source->material;
-    dest->fvf = source->fvf;
     dest->viewport = source->viewport;
     dest->vertexDecl = source->vertexDecl;
     dest->pixelShader = source->pixelShader;
@@ -120,7 +119,6 @@ void stateblock_savedstates_set(
     /* Single values */
     states->indices = value;
     states->material = value;
-    states->fvf = value;
     states->viewport = value;
     states->vertexDecl = value;
     states->pixelShader = value;
@@ -167,7 +165,6 @@ void stateblock_copy(
     stateblock_savedstates_copy(source, &Dest->changed, &This->changed);
 
     /* Single items */
-    Dest->fvf = This->fvf;
     Dest->vertexDecl = This->vertexDecl;
     Dest->vertexShader = This->vertexShader;
     Dest->streamIsUP = This->streamIsUP;
@@ -504,10 +501,6 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
             This->vertexDecl = targetStateBlock->vertexDecl;
         }
 
-        if(This->changed.fvf && This->fvf != targetStateBlock->fvf){
-            This->fvf = targetStateBlock->fvf;
-        }
-
         if (This->changed.material && memcmp(&targetStateBlock->material,
                                                     &This->material,
                                                     sizeof(WINED3DMATERIAL)) != 0) {
@@ -810,10 +803,6 @@ should really perform a delta so that only the changes get updated*/
             IWineD3DDevice_SetBaseVertexIndex(pDevice, This->baseVertexIndex);
         }
 
-        if (This->changed.fvf) {
-            IWineD3DDevice_SetFVF(pDevice, This->fvf);
-        }
-
         if (This->changed.vertexDecl) {
             IWineD3DDevice_SetVertexDeclaration(pDevice, This->vertexDecl);
         }
@@ -986,7 +975,6 @@ should really perform a delta so that only the changes get updated*/
         }
         IWineD3DDevice_SetIndices(pDevice, This->pIndexData);
         IWineD3DDevice_SetBaseVertexIndex(pDevice, This->baseVertexIndex);
-        IWineD3DDevice_SetFVF(pDevice, This->fvf);
         IWineD3DDevice_SetVertexDeclaration(pDevice, This->vertexDecl);
         IWineD3DDevice_SetMaterial(pDevice, &This->material);
         IWineD3DDevice_SetViewport(pDevice, &This->viewport);

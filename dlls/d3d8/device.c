@@ -1702,8 +1702,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetVertexShader(LPDIRECT3DDEVICE8 ifa
     TRACE("(%p) : Relay\n", This);
     EnterCriticalSection(&d3d8_cs);
     if (VS_HIGHESTFIXEDFXF >= pShader) {
-        TRACE("Setting FVF, %d %d\n", VS_HIGHESTFIXEDFXF, pShader);
-        IWineD3DDevice_SetFVF(This->WineD3DDevice, pShader);
+        TRACE("Setting FVF, %#x\n", pShader);
         IWineD3DDevice_SetVertexDeclaration(This->WineD3DDevice,
                 IDirect3DDevice8Impl_FindDecl(This, pShader)->wined3d_vertex_declaration);
         IWineD3DDevice_SetVertexShader(This->WineD3DDevice, NULL);

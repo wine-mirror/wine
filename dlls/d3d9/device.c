@@ -1314,7 +1314,6 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetFVF(LPDIRECT3DDEVICE9EX iface, DWO
              return hr;
          }
     }
-    hr = IWineD3DDevice_SetFVF(This->WineD3DDevice, FVF);
     LeaveCriticalSection(&d3d9_cs);
 
     return hr;
@@ -1322,12 +1321,21 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetFVF(LPDIRECT3DDEVICE9EX iface, DWO
 
 static HRESULT WINAPI IDirect3DDevice9Impl_GetFVF(LPDIRECT3DDEVICE9EX iface, DWORD* pFVF) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    IDirect3DVertexDeclaration9 *decl;
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
-    hr = IWineD3DDevice_GetFVF(This->WineD3DDevice, pFVF);
-    LeaveCriticalSection(&d3d9_cs);
+    hr = IDirect3DDevice9_GetVertexDeclaration(iface, &decl);
+    if (FAILED(hr))
+    {
+        WARN("Failed to get vertex declaration, %#x\n", hr);
+        *pFVF = 0;
+        return hr;
+    }
+
+    *pFVF = ((IDirect3DVertexDeclaration9Impl *)decl)->convFVF;
+    TRACE("Returning FVF %#x\n", *pFVF);
+
     return hr;
 }
 
