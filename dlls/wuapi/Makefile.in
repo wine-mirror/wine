@@ -4,12 +4,13 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wuapi.dll
-IMPORTS   = uuid kernel32
+IMPORTS   = uuid ole32 advapi32 kernel32
 
 C_SRCS = \
 	downloader.c \
 	installer.c \
 	main.c \
+	regsvr.c \
 	searcher.c \
 	session.c \
 	updates.c
