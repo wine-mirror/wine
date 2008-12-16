@@ -1708,6 +1708,7 @@ static BOOL init_xdg(void)
         xdg_config_dir = heap_printf("%s/.config/menus/applications-merged", getenv("HOME"));
     if (xdg_config_dir)
     {
+        create_directories(xdg_config_dir);
         if (getenv("XDG_DATA_HOME"))
             xdg_data_dir = heap_printf("%s", getenv("XDG_DATA_HOME"));
         else
