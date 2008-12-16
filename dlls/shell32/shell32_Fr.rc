@@ -229,7 +229,7 @@ STRINGTABLE
 	IDS_DELETEITEM_CAPTION "Confirmer la suppression du fichier"
 	IDS_DELETEFOLDER_CAPTION "Confirmer la suppression du dossier"
 	IDS_DELETEITEM_TEXT "Êtes-vous sûr de vouloir supprimer '%1'?"
-	IDS_DELETEMULTIPLE_TEXT "Êtes-vous sûr de vouloir supprimer ces %1 éléments ?"
+	IDS_DELETEMULTIPLE_TEXT "Êtes-vous sûr de vouloir supprimer ces %1 éléments ?"
 	IDS_DELETESELECTED_TEXT "Êtes-vous sûr de vouloir supprimer le(les) élément(s) séléectionné(s) ?"
 	IDS_TRASHITEM_TEXT "Êtes-vous sûr de vouloir mettre « %1 » dans la corbeille ?"
 	IDS_TRASHFOLDER_TEXT "Êtes-vous sûr de vouloir mettre « %1 » et tout ce qu'il contient dans la corbeille ?"
@@ -247,6 +247,12 @@ STRINGTABLE
        IDS_RESTART_PROMPT      "Voulez-vous simuler le redémarrage de Windows ?"
        IDS_SHUTDOWN_TITLE      "Arrêter"
        IDS_SHUTDOWN_PROMPT     "Voulez-vous fermer la session Wine ?"
+
+        /* Run File dialog */
+        IDS_RUNDLG_ERROR           "Impossible d'afficher la boîte de dialogue « Exécuter » (erreur interne)"
+        IDS_RUNDLG_BROWSE_ERROR    "Impossible d'afficher la boîte de dialogue « Parcourir » (erreur interne)"
+        IDS_RUNDLG_BROWSE_CAPTION  "Parcourir"
+        IDS_RUNDLG_BROWSE_FILTER   "Fichiers exécutables\0*.exe\0Tous les fichiers\0*.*\0\0"
 
 /* shell folder path default values */
  IDS_PROGRAMS                "Menu Démarrer\\Programmes"
