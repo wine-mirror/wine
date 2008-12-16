@@ -27,6 +27,8 @@
 #include "winnls.h"
 #include "winuser.h"
 #include "softpub.h"
+#include "wingdi.h"
+#include "richedit.h"
 #include "cryptuiapi.h"
 #include "cryptuires.h"
 #include "wine/debug.h"
@@ -106,6 +108,184 @@ error:
     return ret;
 }
 
+struct ReadStringStruct
+{
+    LPCWSTR buf;
+    LONG pos;
+    LONG len;
+};
+
+static DWORD CALLBACK read_text_callback(DWORD_PTR dwCookie, LPBYTE buf,
+ LONG cb, LONG *pcb)
+{
+    struct ReadStringStruct *string = (struct ReadStringStruct *)dwCookie;
+    LONG cch = min(cb / sizeof(WCHAR), string->len - string->pos);
+
+    TRACE("(%p, %p, %d, %p)\n", string, buf, cb, pcb);
+
+    memmove(buf, string->buf + string->pos, cch * sizeof(WCHAR));
+    string->pos += cch;
+    *pcb = cch * sizeof(WCHAR);
+    return 0;
+}
+
+static void add_unformatted_text_to_control(HWND hwnd, LPCWSTR text, LONG len)
+{
+    struct ReadStringStruct string;
+    EDITSTREAM editstream;
+
+    TRACE("(%p, %s)\n", hwnd, debugstr_wn(text, len));
+
+    string.buf = text;
+    string.pos = 0;
+    string.len = len;
+    editstream.dwCookie = (DWORD_PTR)&string;
+    editstream.dwError = 0;
+    editstream.pfnCallback = read_text_callback;
+    SendMessageW(hwnd, EM_STREAMIN, SF_TEXT | SFF_SELECTION | SF_UNICODE,
+     (LPARAM)&editstream);
+}
+
+static void add_string_resource_to_control(HWND hwnd, int id)
+{
+    LPWSTR str;
+    LONG len;
+
+    len = LoadStringW(hInstance, id, (LPWSTR)&str, 0);
+    add_unformatted_text_to_control(hwnd, str, len);
+}
+
+static void add_text_with_paraformat_to_control(HWND hwnd, LPCWSTR text,
+ LONG len, const PARAFORMAT2 *fmt)
+{
+    add_unformatted_text_to_control(hwnd, text, len);
+    SendMessageW(hwnd, EM_SETPARAFORMAT, 0, (LPARAM)fmt);
+}
+
+static void add_string_resource_with_paraformat_to_control(HWND hwnd, int id,
+ const PARAFORMAT2 *fmt)
+{
+    LPWSTR str;
+    LONG len;
+
+    len = LoadStringW(hInstance, id, (LPWSTR)&str, 0);
+    add_text_with_paraformat_to_control(hwnd, str, len, fmt);
+}
+
+static LPWSTR get_cert_name_string(PCCERT_CONTEXT pCertContext, DWORD dwType,
+ DWORD dwFlags)
+{
+    LPWSTR buf = NULL;
+    DWORD len;
+
+    len = CertGetNameStringW(pCertContext, dwType, dwFlags, NULL, NULL, 0);
+    if (len)
+    {
+        buf = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (buf)
+            CertGetNameStringW(pCertContext, dwType, dwFlags, NULL, buf, len);
+    }
+    return buf;
+}
+
+static void add_cert_string_to_control(HWND hwnd, PCCERT_CONTEXT pCertContext,
+ DWORD dwType, DWORD dwFlags)
+{
+    LPWSTR name = get_cert_name_string(pCertContext, dwType, dwFlags);
+
+    if (name)
+    {
+        /* Don't include NULL-terminator in output */
+        DWORD len = lstrlenW(name);
+
+        add_unformatted_text_to_control(hwnd, name, len);
+        HeapFree(GetProcessHeap(), 0, name);
+    }
+}
+
+#define MY_INDENT 200
+
+static void set_cert_name_string(HWND hwnd, PCCERT_CONTEXT cert,
+ DWORD nameFlags, int heading)
+{
+    WCHAR nl = '\n';
+    HWND text = GetDlgItem(hwnd, IDC_CERTIFICATE_NAMES);
+    CHARFORMATW charFmt;
+    PARAFORMAT2 parFmt;
+
+    memset(&charFmt, 0, sizeof(charFmt));
+    charFmt.cbSize = sizeof(charFmt);
+    charFmt.dwMask = CFM_BOLD;
+    charFmt.dwEffects = CFE_BOLD;
+    SendMessageW(text, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&charFmt);
+    parFmt.cbSize = sizeof(parFmt);
+    parFmt.dwMask = PFM_STARTINDENT;
+    parFmt.dxStartIndent = MY_INDENT * 3;
+    add_string_resource_with_paraformat_to_control(text, heading, &parFmt);
+    charFmt.dwEffects = 0;
+    SendMessageW(text, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&charFmt);
+    add_cert_string_to_control(text, cert, CERT_NAME_SIMPLE_DISPLAY_TYPE,
+     nameFlags);
+    add_unformatted_text_to_control(text, &nl, 1);
+    add_unformatted_text_to_control(text, &nl, 1);
+    add_unformatted_text_to_control(text, &nl, 1);
+
+}
+
+static void add_date_string_to_control(HWND hwnd, const FILETIME *fileTime)
+{
+    WCHAR dateFmt[80]; /* sufficient for all versions of LOCALE_SSHORTDATE */
+    WCHAR date[80];
+    SYSTEMTIME sysTime;
+
+    GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_SSHORTDATE, dateFmt,
+     sizeof(dateFmt) / sizeof(dateFmt[0]));
+    FileTimeToSystemTime(fileTime, &sysTime);
+    GetDateFormatW(LOCALE_SYSTEM_DEFAULT, 0, &sysTime, dateFmt, date,
+     sizeof(date) / sizeof(date[0]));
+    add_unformatted_text_to_control(hwnd, date, lstrlenW(date));
+}
+
+static void set_cert_validity_period(HWND hwnd, PCCERT_CONTEXT cert)
+{
+    WCHAR nl = '\n';
+    HWND text = GetDlgItem(hwnd, IDC_CERTIFICATE_NAMES);
+    CHARFORMATW charFmt;
+    PARAFORMAT2 parFmt;
+
+    memset(&charFmt, 0, sizeof(charFmt));
+    charFmt.cbSize = sizeof(charFmt);
+    charFmt.dwMask = CFM_BOLD;
+    charFmt.dwEffects = CFE_BOLD;
+    SendMessageW(text, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&charFmt);
+    parFmt.cbSize = sizeof(parFmt);
+    parFmt.dwMask = PFM_STARTINDENT;
+    parFmt.dxStartIndent = MY_INDENT * 3;
+    add_string_resource_with_paraformat_to_control(text, IDS_VALID_FROM,
+     &parFmt);
+    charFmt.dwEffects = 0;
+    SendMessageW(text, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&charFmt);
+    add_date_string_to_control(text, &cert->pCertInfo->NotBefore);
+    charFmt.dwEffects = CFE_BOLD;
+    SendMessageW(text, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&charFmt);
+    add_string_resource_to_control(text, IDS_VALID_TO);
+    charFmt.dwEffects = 0;
+    SendMessageW(text, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&charFmt);
+    add_date_string_to_control(text, &cert->pCertInfo->NotAfter);
+    add_unformatted_text_to_control(text, &nl, 1);
+}
+
+static void set_general_info(HWND hwnd,
+ PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo)
+{
+    FIXME("set cert general info\n");
+    set_cert_name_string(hwnd, pCertViewInfo->pCertContext, 0,
+     IDS_SUBJECT_HEADING);
+    set_cert_name_string(hwnd, pCertViewInfo->pCertContext,
+     CERT_NAME_ISSUER_FLAG, IDS_ISSUER_HEADING);
+    set_cert_validity_period(hwnd, pCertViewInfo->pCertContext);
+}
+
 static LRESULT CALLBACK general_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
@@ -122,7 +302,7 @@ static LRESULT CALLBACK general_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         if (pCertViewInfo->dwFlags & CRYPTUI_DISABLE_ADDTOSTORE)
             ShowWindow(GetDlgItem(hwnd, IDC_ADDTOSTORE), FALSE);
         EnableWindow(GetDlgItem(hwnd, IDC_ISSUERSTATEMENT), FALSE);
-        FIXME("show cert properties\n");
+        set_general_info(hwnd, pCertViewInfo);
         break;
     case WM_COMMAND:
         switch (wp)
