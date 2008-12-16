@@ -3446,12 +3446,6 @@ static void shader_glsl_deselect_depth_blt(IWineD3DDevice *iface) {
     checkGLcall("glUseProgramObjectARB");
 }
 
-static void shader_glsl_cleanup(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
-    GL_EXTCALL(glUseProgramObjectARB(0));
-}
-
 static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     const struct list *linked_programs;
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *) iface;
@@ -3873,7 +3867,6 @@ const shader_backend_t glsl_shader_backend = {
     shader_glsl_select_depth_blt,
     shader_glsl_deselect_depth_blt,
     shader_glsl_load_constants,
-    shader_glsl_cleanup,
     shader_glsl_color_correction,
     shader_glsl_destroy,
     shader_glsl_alloc,

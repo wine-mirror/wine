@@ -433,7 +433,6 @@ typedef struct {
     void (*shader_select_depth_blt)(IWineD3DDevice *iface, enum tex_types tex_type);
     void (*shader_deselect_depth_blt)(IWineD3DDevice *iface);
     void (*shader_load_constants)(IWineD3DDevice *iface, char usePS, char useVS);
-    void (*shader_cleanup)(IWineD3DDevice *iface);
     void (*shader_color_correction)(const struct SHADER_OPCODE_ARG *arg, struct color_fixup_desc fixup);
     void (*shader_destroy)(IWineD3DBaseShader *iface);
     HRESULT (*shader_alloc_private)(IWineD3DDevice *iface);

@@ -1777,13 +1777,6 @@ static void shader_arb_deselect_depth_blt(IWineD3DDevice *iface) {
     }
 }
 
-static void shader_arb_cleanup(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
-    if (GL_SUPPORT(ARB_VERTEX_PROGRAM)) glDisable(GL_VERTEX_PROGRAM_ARB);
-    if (GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) glDisable(GL_FRAGMENT_PROGRAM_ARB);
-}
-
 static void shader_arb_destroy(IWineD3DBaseShader *iface) {
     IWineD3DBaseShaderImpl *baseShader = (IWineD3DBaseShaderImpl *) iface;
     const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)baseShader->baseShader.device)->adapter->gl_info;
@@ -2183,7 +2176,6 @@ const shader_backend_t arb_program_shader_backend = {
     shader_arb_select_depth_blt,
     shader_arb_deselect_depth_blt,
     shader_arb_load_constants,
-    shader_arb_cleanup,
     shader_arb_color_correction,
     shader_arb_destroy,
     shader_arb_alloc,
