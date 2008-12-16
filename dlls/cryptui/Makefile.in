@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = cryptui.dll
-IMPORTS   = crypt32 comctl32 user32 kernel32
+IMPORTS   = uuid crypt32 ole32 comctl32 user32 kernel32
 DELAYIMPORTS = wintrust
 IMPORTLIB = cryptui
 

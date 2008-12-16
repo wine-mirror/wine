@@ -25,4 +25,13 @@
 
 #include "cryptuires.h"
 
+/* @makedep: cert.bmp */
+IDB_CERT BITMAP LOADONCALL DISCARDABLE cert.bmp
+
+/* @makedep: certerror.bmp */
+IDB_CERT_ERROR BITMAP LOADONCALL DISCARDABLE certerror.bmp
+
+/* @makedep: certwarning.bmp */
+IDB_CERT_WARNING BITMAP LOADONCALL DISCARDABLE certwarning.bmp
+
 #include "cryptui_En.rc"

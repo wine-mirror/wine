@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 
+#define COBJMACROS
 #define NONAMELESSUNION
 
 #include "windef.h"
@@ -29,6 +30,8 @@
 #include "softpub.h"
 #include "wingdi.h"
 #include "richedit.h"
+#include "ole2.h"
+#include "richole.h"
 #include "cryptuiapi.h"
 #include "cryptuires.h"
 #include "wine/debug.h"
@@ -203,7 +206,143 @@ static void add_cert_string_to_control(HWND hwnd, PCCERT_CONTEXT pCertContext,
     }
 }
 
+static void add_icon_to_control(HWND hwnd, int id)
+{
+    HRESULT hr;
+    LPRICHEDITOLE richEditOle = NULL;
+    LPOLEOBJECT object = NULL;
+    CLSID clsid;
+    LPOLECACHE oleCache = NULL;
+    FORMATETC formatEtc;
+    DWORD conn;
+    LPDATAOBJECT dataObject = NULL;
+    HBITMAP bitmap = NULL;
+    RECT rect;
+    STGMEDIUM stgm;
+    REOBJECT reObject;
+
+    TRACE("(%p, %d)\n", hwnd, id);
+
+    SendMessageW(hwnd, EM_GETOLEINTERFACE, 0, (LPARAM)&richEditOle);
+    if (!richEditOle)
+        goto end;
+    hr = OleCreateDefaultHandler(&CLSID_NULL, NULL, &IID_IOleObject,
+     (void**)&object);
+    if (FAILED(hr))
+        goto end;
+    hr = IOleObject_GetUserClassID(object, &clsid);
+    if (FAILED(hr))
+        goto end;
+    hr = IOleObject_QueryInterface(object, &IID_IOleCache, (void**)&oleCache);
+    if (FAILED(hr))
+        goto end;
+    formatEtc.cfFormat = CF_BITMAP;
+    formatEtc.ptd = NULL;
+    formatEtc.dwAspect = DVASPECT_CONTENT;
+    formatEtc.lindex = -1;
+    formatEtc.tymed = TYMED_GDI;
+    hr = IOleCache_Cache(oleCache, &formatEtc, 0, &conn);
+    if (FAILED(hr))
+        goto end;
+    hr = IOleObject_QueryInterface(object, &IID_IDataObject,
+     (void**)&dataObject);
+    if (FAILED(hr))
+        goto end;
+    bitmap = LoadImageW(hInstance, MAKEINTRESOURCEW(id), IMAGE_BITMAP, 0, 0,
+     LR_DEFAULTSIZE | LR_LOADTRANSPARENT);
+    if (!bitmap)
+        goto end;
+    rect.left = rect.top = 0;
+    rect.right = GetSystemMetrics(SM_CXICON);
+    rect.bottom = GetSystemMetrics(SM_CYICON);
+    stgm.tymed = TYMED_GDI;
+    stgm.u.hBitmap = bitmap;
+    stgm.pUnkForRelease = NULL;
+    hr = IDataObject_SetData(dataObject, &formatEtc, &stgm, TRUE);
+    if (FAILED(hr))
+        goto end;
+
+    reObject.cbStruct = sizeof(reObject);
+    reObject.cp = REO_CP_SELECTION;
+    reObject.clsid = clsid;
+    reObject.poleobj = object;
+    reObject.pstg = NULL;
+    reObject.polesite = NULL;
+    reObject.sizel.cx = reObject.sizel.cy = 0;
+    reObject.dvaspect = DVASPECT_CONTENT;
+    reObject.dwFlags = 0;
+    reObject.dwUser = 0;
+
+    IRichEditOle_InsertObject(richEditOle, &reObject);
+
+end:
+    if (dataObject)
+        IDataObject_Release(dataObject);
+    if (oleCache)
+        IOleCache_Release(oleCache);
+    if (object)
+        IOleObject_Release(object);
+    if (richEditOle)
+        IRichEditOle_Release(richEditOle);
+}
+
 #define MY_INDENT 200
+
+static void set_cert_info(HWND hwnd,
+ PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo)
+{
+    CHARFORMATW charFmt;
+    PARAFORMAT2 parFmt;
+    HWND icon = GetDlgItem(hwnd, IDC_CERTIFICATE_ICON);
+    HWND text = GetDlgItem(hwnd, IDC_CERTIFICATE_INFO);
+    CRYPT_PROVIDER_SGNR *provSigner = WTHelperGetProvSignerFromChain(
+     (CRYPT_PROVIDER_DATA *)pCertViewInfo->u.pCryptProviderData,
+     pCertViewInfo->idxSigner, pCertViewInfo->fCounterSigner,
+     pCertViewInfo->idxCounterSigner);
+    CRYPT_PROVIDER_CERT *root =
+     &provSigner->pasCertChain[provSigner->csCertChain - 1];
+
+    if (provSigner->pChainContext->TrustStatus.dwErrorStatus &
+     CERT_TRUST_IS_PARTIAL_CHAIN)
+        add_icon_to_control(icon, IDB_CERT_WARNING);
+    else if (!root->fTrustedRoot)
+        add_icon_to_control(icon, IDB_CERT_ERROR);
+    else
+        add_icon_to_control(icon, IDB_CERT);
+
+    memset(&charFmt, 0, sizeof(charFmt));
+    charFmt.cbSize = sizeof(charFmt);
+    charFmt.dwMask = CFM_BOLD;
+    charFmt.dwEffects = CFE_BOLD;
+    SendMessageW(text, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&charFmt);
+    /* FIXME: vertically center text */
+    parFmt.cbSize = sizeof(parFmt);
+    parFmt.dwMask = PFM_STARTINDENT;
+    parFmt.dxStartIndent = MY_INDENT;
+    add_string_resource_with_paraformat_to_control(text,
+     IDS_CERTIFICATEINFORMATION, &parFmt);
+
+    text = GetDlgItem(hwnd, IDC_CERTIFICATE_STATUS);
+    SendMessageW(text, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&charFmt);
+    if (provSigner->dwError == TRUST_E_CERT_SIGNATURE)
+        add_string_resource_with_paraformat_to_control(text,
+         IDS_CERT_INFO_BAD_SIG, &parFmt);
+    else if (provSigner->pChainContext->TrustStatus.dwErrorStatus &
+     CERT_TRUST_IS_PARTIAL_CHAIN)
+        add_string_resource_with_paraformat_to_control(text,
+         IDS_CERT_INFO_PARTIAL_CHAIN, &parFmt);
+    else if (!root->fTrustedRoot)
+    {
+        if (provSigner->csCertChain == 1 && root->fSelfSigned)
+            add_string_resource_with_paraformat_to_control(text,
+             IDS_CERT_INFO_UNTRUSTED_CA, &parFmt);
+        else
+            add_string_resource_with_paraformat_to_control(text,
+             IDS_CERT_INFO_UNTRUSTED_ROOT, &parFmt);
+    }
+    else
+        FIXME("show policies and issuer statement\n");
+}
 
 static void set_cert_name_string(HWND hwnd, PCCERT_CONTEXT cert,
  DWORD nameFlags, int heading)
@@ -278,7 +417,7 @@ static void set_cert_validity_period(HWND hwnd, PCCERT_CONTEXT cert)
 static void set_general_info(HWND hwnd,
  PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo)
 {
-    FIXME("set cert general info\n");
+    set_cert_info(hwnd, pCertViewInfo);
     set_cert_name_string(hwnd, pCertViewInfo->pCertContext, 0,
      IDS_SUBJECT_HEADING);
     set_cert_name_string(hwnd, pCertViewInfo->pCertContext,
