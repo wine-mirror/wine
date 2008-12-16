@@ -732,6 +732,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicWaveImpl (LPCGUID lpcGUID, LPVOID* ppobj,
 		return E_OUTOFMEMORY;
 	}
 	obj->UnknownVtbl = &DirectMusicWave_Unknown_Vtbl;
+	obj->SegmentVtbl = &DirectMusicSegment8_Segment_Vtbl;
 	obj->ObjectVtbl = &DirectMusicWave_Object_Vtbl;
 	obj->PersistStreamVtbl = &DirectMusicWave_PersistStream_Vtbl;
 	obj->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
