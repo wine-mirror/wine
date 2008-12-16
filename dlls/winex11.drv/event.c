@@ -803,7 +803,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
 
     if (!hwnd) return;
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
-    if (!data->mapped || data->iconic) return;
+    if (!data->mapped || data->iconic || !data->managed) return;
 
     /* Get geometry */
 

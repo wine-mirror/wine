@@ -307,8 +307,9 @@ static int get_window_attributes( Display *display, struct x11drv_win_data *data
     attr->backing_store     = NotUseful;
     attr->event_mask        = (ExposureMask | PointerMotionMask |
                                ButtonPressMask | ButtonReleaseMask | EnterWindowMask |
-                               KeyPressMask | KeyReleaseMask | FocusChangeMask | KeymapStateMask);
-    if (data->managed) attr->event_mask |= StructureNotifyMask | PropertyChangeMask;
+                               KeyPressMask | KeyReleaseMask | FocusChangeMask |
+                               KeymapStateMask | StructureNotifyMask);
+    if (data->managed) attr->event_mask |= PropertyChangeMask;
 
     return (CWOverrideRedirect | CWSaveUnder | CWColormap | CWCursor |
             CWEventMask | CWBitGravity | CWBackingStore);
