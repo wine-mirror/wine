@@ -98,6 +98,7 @@ static WORD check_TOKEN(parse_buffer * buf);
 static BOOL parse_template(parse_buffer * buf);
 static HRESULT IDirectXFileDataReferenceImpl_Create(IDirectXFileDataReferenceImpl** ppObj);
 static HRESULT IDirectXFileEnumObjectImpl_Create(IDirectXFileEnumObjectImpl** ppObj);
+static HRESULT IDirectXFileSaveObjectImpl_Create(IDirectXFileSaveObjectImpl** ppObj);
 
 static void dump_template(xtemplate* templates_array, xtemplate* ptemplate)
 {
@@ -377,9 +378,12 @@ static HRESULT WINAPI IDirectXFileImpl_CreateSaveObject(IDirectXFile* iface, LPC
 {
   IDirectXFileImpl *This = (IDirectXFileImpl *)iface;
 
-  FIXME("(%p/%p)->(%s,%x,%p) stub!\n", This, iface, szFileName, dwFileFormat, ppSaveObj);
+  FIXME("(%p/%p)->(%s,%x,%p) partial stub!\n", This, iface, szFileName, dwFileFormat, ppSaveObj);
 
-  return DXFILEERR_BADVALUE;
+  if (!szFileName || !ppSaveObj)
+    return E_POINTER;
+
+  return IDirectXFileSaveObjectImpl_Create((IDirectXFileSaveObjectImpl**)ppSaveObj);
 }
 
 static BOOL read_bytes(parse_buffer * buf, LPVOID data, DWORD size)
@@ -2351,6 +2355,27 @@ static const IDirectXFileObjectVtbl IDirectXFileObject_Vtbl =
     IDirectXFileObjectImpl_GetName,
     IDirectXFileObjectImpl_GetId
 };
+
+static HRESULT IDirectXFileSaveObjectImpl_Create(IDirectXFileSaveObjectImpl** ppObj)
+{
+    IDirectXFileSaveObjectImpl* object;
+
+    TRACE("(%p)\n", ppObj);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectXFileSaveObjectImpl));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        return DXFILEERR_BADALLOC;
+    }
+
+    object->lpVtbl.lpVtbl = &IDirectXFileSaveObject_Vtbl;
+    object->ref = 1;
+
+    *ppObj = object;
+
+    return S_OK;
+}
 
 /*** IUnknown methods ***/
 static HRESULT WINAPI IDirectXFileSaveObjectImpl_QueryInterface(IDirectXFileSaveObject* iface, REFIID riid, void** ppvObject)
