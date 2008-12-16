@@ -1426,7 +1426,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
     ME_DisplayItem *para_item;
     style = editor->pBuffer->pDefaultStyle;
     ME_AddRefStyle(style);
-    SendMessageA(editor->hWnd, EM_SETSEL, 0, 0);    
+    ME_SetSelection(editor, 0, 0);
     ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor), FALSE);
     from = to = 0;
     ME_ClearTempStyle(editor);
@@ -1559,7 +1559,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
     ME_GetSelection(editor, &to, &to2);
     /* put the cursor at the top */
     if (!(format & SFF_SELECTION))
-      SendMessageA(editor->hWnd, EM_SETSEL, 0, 0);
+      ME_SetSelection(editor, 0, 0);
   }
 
   /* Restore saved undo mode */
@@ -4063,7 +4063,12 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     LRESULT ret;
     int mask = 0;
     int changes = 0;
-    ret = RichEditWndProc_common(hWnd, WM_GETTEXTLENGTH, 0, 0, unicode);
+    GETTEXTLENGTHEX how;
+
+    /* CR/LF conversion required in 2.0 mode, verbatim in 1.0 mode */
+    how.flags = GTL_CLOSE | (editor->bEmulateVersion10 ? 0 : GTL_USECRLF) | GTL_NUMCHARS;
+    how.codepage = unicode ? 1200 : CP_ACP;
+    ret = ME_GetTextLengthEx(editor, &how);
     if (!ret)
     {
       /*Check for valid wParam*/

@@ -1565,11 +1565,9 @@ void ME_SendSelChange(ME_TextEditor *editor)
 
   if (!(editor->nEventMask & ENM_SELCHANGE))
     return;
-  
-  sc.nmhdr.hwndFrom = editor->hWnd;
-  sc.nmhdr.idFrom = GetWindowLongW(editor->hWnd, GWLP_ID);
+
   sc.nmhdr.code = EN_SELCHANGE;
-  SendMessageW(editor->hWnd, EM_EXGETSEL, 0, (LPARAM)&sc.chrg);
+  ME_GetSelection(editor, &sc.chrg.cpMin, &sc.chrg.cpMax);
   sc.seltyp = SEL_EMPTY;
   if (sc.chrg.cpMin != sc.chrg.cpMax)
     sc.seltyp |= SEL_TEXT;
