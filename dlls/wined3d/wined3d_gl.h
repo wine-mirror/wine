@@ -2288,10 +2288,10 @@ typedef void (WINE_GLAPI * PGLFNBLENDEQUATIONSEPARATEEXTPROC) (GLenum modeRGB, G
 #define GL_FOG_COORDINATE_ARRAY_POINTER_EXT     0x8456
 #define GL_FOG_COORDINATE_ARRAY_EXT             0x8457
 #endif /* GL_EXT_fog_coord */
-typedef void (WINE_GLAPI * PGLFNGLFOGCOORDFEXTPROC) (GLfloat intesity);
-typedef void (WINE_GLAPI * PGLFNGLFOGCOORDFVEXTPROC) (GLfloat intesity);
-typedef void (WINE_GLAPI * PGLFNGLFOGCOORDDEXTPROC) (GLfloat intesity);
-typedef void (WINE_GLAPI * PGLFNGLFOGCOORDDVEXTPROC) (GLfloat intesity);
+typedef void (WINE_GLAPI * PGLFNGLFOGCOORDFEXTPROC) (GLfloat coord);
+typedef void (WINE_GLAPI * PGLFNGLFOGCOORDFVEXTPROC) (const GLfloat *coord);
+typedef void (WINE_GLAPI * PGLFNGLFOGCOORDDEXTPROC) (GLdouble coord);
+typedef void (WINE_GLAPI * PGLFNGLFOGCOORDDVEXTPROC) (const GLdouble *coord);
 typedef void (WINE_GLAPI * PGLFNGLFOGCOORDPOINTEREXTPROC) (GLenum type, GLsizei stride, GLvoid *data);
 /* GL_ARB_shader_objects (GLSL) */
 #ifndef GL_ARB_shader_objects
@@ -3471,7 +3471,7 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNGLFOGCOORDFEXTPROC,                            glFogCoordfEXT,                             EXT_FOG_COORD,          NULL )\
     USE_GL_FUNC(PGLFNGLFOGCOORDFVEXTPROC,                           glFogCoordfvEXT,                            EXT_FOG_COORD,          NULL )\
     USE_GL_FUNC(PGLFNGLFOGCOORDDEXTPROC,                            glFogCoorddEXT,                             EXT_FOG_COORD,          NULL )\
-    USE_GL_FUNC(PGLFNGLFOGCOORDDVEXTPROC,                           glFogCoordvEXT,                             EXT_FOG_COORD,          NULL )\
+    USE_GL_FUNC(PGLFNGLFOGCOORDDVEXTPROC,                           glFogCoorddvEXT,                            EXT_FOG_COORD,          NULL )\
     USE_GL_FUNC(PGLFNGLFOGCOORDPOINTEREXTPROC,                      glFogCoordPointerEXT,                       EXT_FOG_COORD,          NULL )\
     /* GL_EXT_framebuffer_object */ \
     USE_GL_FUNC(PGLFNGLISRENDERBUFFEREXTPROC,                       glIsRenderbufferEXT,                        EXT_FRAMEBUFFER_OBJECT, NULL )\
