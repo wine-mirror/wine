@@ -9,7 +9,8 @@ IMPORTS   = uuid kernel32
 C_SRCS = \
 	downloader.c \
 	installer.c \
-	main.c
+	main.c \
+	searcher.c
 
 @MAKE_DLL_RULES@
 
