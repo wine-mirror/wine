@@ -4,9 +4,10 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wuapi.dll
-IMPORTS   = kernel32
+IMPORTS   = uuid kernel32
 
 C_SRCS = \
+	downloader.c \
 	main.c
 
 @MAKE_DLL_RULES@
