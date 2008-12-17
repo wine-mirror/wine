@@ -2037,6 +2037,39 @@ typedef void (WINE_GLAPI * PGLFNGLTEXSUBIMAGE3DEXTPROC) (GLenum target, GLint le
 #define GL_RGBA16F_ARB                    0x881A
 #define GL_RGB16F_ARB                     0x881B
 #endif
+/* GL_ARB_texture_rg */
+#ifndef GL_ARB_texture_rg
+#define GL_RG                             0x8227
+#define GL_RG_INTEGER                     0x8228
+#define GL_R8                             0x8229
+#define GL_R16                            0x822A
+#define GL_RG8                            0x822B
+#define GL_RG16                           0x822C
+#define GL_R16F                           0x822D
+#define GL_R32F                           0x822E
+#define GL_RG16F                          0x822F
+#define GL_RG32F                          0x8230
+#define GL_R8I                            0x8231
+#define GL_R8UI                           0x8232
+#define GL_R16I                           0x8233
+#define GL_R16UI                          0x8234
+#define GL_R32I                           0x8235
+#define GL_R32UI                          0x8236
+#define GL_RG8I                           0x8237
+#define GL_RG8UI                          0x8238
+#define GL_RG16I                          0x8239
+#define GL_RG16UI                         0x823A
+#define GL_RG32I                          0x823B
+#define GL_RG32UI                         0x823C
+#endif
+/* GL_EXT_texture_swizzle */
+#ifndef GL_EXT_texture_swizzle
+#define GL_TEXTURE_SWIZZLE_R_EXT          0x8E42
+#define GL_TEXTURE_SWIZZLE_G_EXT          0x8E43
+#define GL_TEXTURE_SWIZZLE_B_EXT          0x8E44
+#define GL_TEXTURE_SWIZZLE_A_EXT          0x8E45
+#define GL_TEXTURE_SWIZZLE_RGBA_EXT       0x8E46
+#endif
 /* GL_ARB_half_float_pixel */
 #ifndef GL_ARB_half_float_pixel
 #define GL_ARB_half_float_pixel
@@ -3317,6 +3350,7 @@ typedef enum _GL_SupportedExt {
   ARB_TEXTURE_MIRRORED_REPEAT,
   ARB_TEXTURE_NON_POWER_OF_TWO,
   ARB_TEXTURE_RECTANGLE,
+  ARB_TEXTURE_RG,
   ARB_VERTEX_PROGRAM,
   ARB_VERTEX_BLEND,
   ARB_VERTEX_BUFFER_OBJECT,
@@ -3347,6 +3381,7 @@ typedef enum _GL_SupportedExt {
   EXT_TEXTURE_ENV_COMBINE,
   EXT_TEXTURE_ENV_DOT3,
   EXT_TEXTURE_SRGB,
+  EXT_TEXTURE_SWIZZLE,
   EXT_GPU_PROGRAM_PARAMETERS,
   /* NVIDIA */
   NV_HALF_FLOAT,
