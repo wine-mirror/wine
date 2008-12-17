@@ -1741,6 +1741,78 @@ static BOOL init_detail_page(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
     return ret;
 }
 
+struct hierarchy_data
+{
+    PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo;
+    DWORD selectedCert;
+};
+
+static void show_cert_hierarchy(HWND hwnd, struct hierarchy_data *data)
+{
+    /* Disable view certificate button until a certificate is selected */
+    EnableWindow(GetDlgItem(hwnd, IDC_VIEWCERTIFICATE), FALSE);
+    FIXME("show cert chain\n");
+}
+
+static LRESULT CALLBACK hierarchy_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+ LPARAM lp)
+{
+    PROPSHEETPAGEW *page;
+    struct hierarchy_data *data;
+
+    TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        page = (PROPSHEETPAGEW *)lp;
+        data = (struct hierarchy_data *)page->lParam;
+        show_cert_hierarchy(hwnd, data);
+        break;
+    }
+    return 0;
+}
+
+static UINT CALLBACK hierarchy_callback(HWND hwnd, UINT msg,
+ PROPSHEETPAGEW *page)
+{
+    struct hierarchy_data *data;
+
+    switch (msg)
+    {
+    case PSPCB_RELEASE:
+        data = (struct hierarchy_data *)page->lParam;
+        HeapFree(GetProcessHeap(), 0, data);
+        break;
+    }
+    return 0;
+}
+
+static BOOL init_hierarchy_page(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
+ PROPSHEETPAGEW *page)
+{
+    struct hierarchy_data *data = HeapAlloc(GetProcessHeap(), 0,
+     sizeof(struct hierarchy_data));
+    BOOL ret = FALSE;
+
+    if (data)
+    {
+        data->pCertViewInfo = pCertViewInfo;
+        data->selectedCert = 0xffffffff;
+
+        memset(page, 0, sizeof(PROPSHEETPAGEW));
+        page->dwSize = sizeof(PROPSHEETPAGEW);
+        page->dwFlags = PSP_USECALLBACK;
+        page->hInstance = hInstance;
+        page->u.pszTemplate = MAKEINTRESOURCEW(IDD_HIERARCHY);
+        page->pfnDlgProc = hierarchy_dlg_proc;
+        page->lParam = (LPARAM)data;
+        page->pfnCallback = hierarchy_callback;
+        ret = TRUE;
+    }
+    return ret;
+}
+
 static int CALLBACK cert_prop_sheet_proc(HWND hwnd, UINT msg, LPARAM lp)
 {
     RECT rc;
@@ -1782,7 +1854,7 @@ static BOOL show_cert_dialog(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
     if (!(pCertViewInfo->dwFlags & CRYPTUI_HIDE_DETAILPAGE))
         nPages++;
     if (!(pCertViewInfo->dwFlags & CRYPTUI_HIDE_HIERARCHYPAGE))
-        FIXME("show hierarchy page\n");
+        nPages++;
     pages = HeapAlloc(GetProcessHeap(), 0, nPages * sizeof(PROPSHEETPAGEW));
     if (pages)
     {
@@ -1803,6 +1875,11 @@ static BOOL show_cert_dialog(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
         {
             if (init_detail_page(pCertViewInfo, pfPropertiesChanged,
              &pages[hdr.nPages]))
+                hdr.nPages++;
+        }
+        if (!(pCertViewInfo->dwFlags & CRYPTUI_HIDE_HIERARCHYPAGE))
+        {
+            if (init_hierarchy_page(pCertViewInfo, &pages[hdr.nPages]))
                 hdr.nPages++;
         }
         /* Copy each additional page, and create the init dialog struct for it
