@@ -28,11 +28,8 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "wine/debug.h"
 
 #include "d3dx9.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 /***********************************************************************
  * DllMain.
