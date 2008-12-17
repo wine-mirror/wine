@@ -1261,10 +1261,156 @@ static void add_v1_fields(HWND hwnd, struct detail_data *data)
         add_v1_field(hwnd, data, &v1_fields[i]);
 }
 
+static WCHAR *crypt_format_extension(PCERT_EXTENSION ext, DWORD formatStrType)
+{
+    WCHAR *str = NULL;
+    DWORD size;
+
+    if (CryptFormatObject(X509_ASN_ENCODING, 0, formatStrType, NULL,
+     ext->pszObjId, ext->Value.pbData, ext->Value.cbData, NULL, &size))
+    {
+        str = HeapAlloc(GetProcessHeap(), 0, size);
+        CryptFormatObject(X509_ASN_ENCODING, 0, formatStrType, NULL,
+         ext->pszObjId, ext->Value.pbData, ext->Value.cbData, str, &size);
+    }
+    return str;
+}
+
+static WCHAR *field_format_extension_hex_with_ascii(PCERT_EXTENSION ext)
+{
+    WCHAR *str = NULL;
+
+    if (ext->Value.cbData)
+    {
+        /* The output is formatted as:
+         * <hex bytes>  <ascii bytes>\n
+         * where <hex bytes> is a string of up to 8 bytes, output as %02x,
+         * and <ascii bytes> is the ASCII equivalent of each byte, or '.' if
+         * the byte is not printable.
+         * So, for example, the extension value consisting of the following
+         * bytes:
+         *   0x30,0x14,0x31,0x12,0x30,0x10,0x06,0x03,0x55,0x04,0x03,
+         *   0x13,0x09,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67
+         * is output as:
+         *   30 14 31 12 30 10 06 03  0.1.0...
+         *   55 04 03 13 09 4a 75 61  U....Jua
+         *   6e 20 4c 61 6e 67        n Lang
+         * The allocation size therefore requires:
+         * - 4 characters per character in an 8-byte line
+         *   (2 for the hex format, one for the space, one for the ASCII value)
+         * - 3 more characters per 8-byte line (two spaces and a newline)
+         * - 1 character for the terminating nul
+         * FIXME: should use a fixed-width font for this
+         */
+        DWORD lines = (ext->Value.cbData + 7) / 8;
+
+        str = HeapAlloc(GetProcessHeap(), 0,
+         (lines * 8 * 4 + lines * 3 + 1) * sizeof(WCHAR));
+        if (str)
+        {
+            static const WCHAR fmt[] = { '%','0','2','x',' ',0 };
+            DWORD i, j;
+            WCHAR *ptr;
+
+            for (i = 0, ptr = str; i < ext->Value.cbData; i += 8)
+            {
+                /* Output as hex bytes first */
+                for (j = i; j < min(i + 8, ext->Value.cbData); j++, ptr += 3)
+                    sprintfW(ptr, fmt, ext->Value.pbData[j]);
+                /* Pad the hex output with spaces for alignment */
+                if (j == ext->Value.cbData && j % 8)
+                {
+                    static const WCHAR pad[] = { ' ',' ',' ' };
+
+                    for (; j % 8; j++, ptr += sizeof(pad) / sizeof(pad[0]))
+                        memcpy(ptr, pad, sizeof(pad));
+                }
+                /* The last sprintfW included a space, so just insert one
+                 * more space between the hex bytes and the ASCII output
+                 */
+                *ptr++ = ' ';
+                /* Output as ASCII bytes */
+                for (j = i; j < min(i + 8, ext->Value.cbData); j++, ptr++)
+                {
+                    if (isprintW(ext->Value.pbData[j]) &&
+                     !isspaceW(ext->Value.pbData[j]))
+                        *ptr = ext->Value.pbData[j];
+                    else
+                        *ptr = '.';
+                }
+                *ptr++ = '\n';
+            }
+            *ptr++ = '\0';
+        }
+    }
+    return str;
+}
+
+static WCHAR *field_format_detailed_extension(PCCERT_CONTEXT cert, void *param)
+{
+    PCERT_EXTENSION ext = param;
+    LPWSTR str = crypt_format_extension(ext,
+     CRYPT_FORMAT_STR_MULTI_LINE | CRYPT_FORMAT_STR_NO_HEX);
+
+    if (!str)
+        str = field_format_extension_hex_with_ascii(ext);
+    return str;
+}
+
+static void add_cert_extension_detail(HWND hwnd, struct detail_data *data,
+ PCERT_EXTENSION ext)
+{
+    PCCRYPT_OID_INFO oidInfo = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY,
+     ext->pszObjId, 0);
+    LPWSTR val = crypt_format_extension(ext, 0);
+
+    if (oidInfo)
+        add_field_and_value_to_list(hwnd, data, (LPWSTR)oidInfo->pwszName,
+         val, field_format_detailed_extension, ext);
+    else
+    {
+        DWORD len = strlen(ext->pszObjId);
+        LPWSTR oidW = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+
+        if (oidW)
+        {
+            DWORD i;
+
+            for (i = 0; i <= len; i++)
+                oidW[i] = ext->pszObjId[i];
+            add_field_and_value_to_list(hwnd, data, oidW, val,
+             field_format_detailed_extension, ext);
+            HeapFree(GetProcessHeap(), 0, oidW);
+        }
+    }
+    HeapFree(GetProcessHeap(), 0, val);
+}
+
+static void add_all_extensions(HWND hwnd, struct detail_data *data)
+{
+    DWORD i;
+    PCCERT_CONTEXT cert = data->pCertViewInfo->pCertContext;
+
+    for (i = 0; i < cert->pCertInfo->cExtension; i++)
+        add_cert_extension_detail(hwnd, data, &cert->pCertInfo->rgExtension[i]);
+}
+
+static void add_critical_extensions(HWND hwnd, struct detail_data *data)
+{
+    DWORD i;
+    PCCERT_CONTEXT cert = data->pCertViewInfo->pCertContext;
+
+    for (i = 0; i < cert->pCertInfo->cExtension; i++)
+        if (cert->pCertInfo->rgExtension[i].fCritical)
+            add_cert_extension_detail(hwnd, data,
+             &cert->pCertInfo->rgExtension[i]);
+}
+
 static void add_all_fields(HWND hwnd, struct detail_data *data)
 {
     add_v1_fields(hwnd, data);
-    FIXME("add extensions and properties\n");
+    add_all_extensions(hwnd, data);
+    FIXME("add properties\n");
 }
 
 struct selection_list_item
@@ -1276,8 +1422,8 @@ struct selection_list_item
 const struct selection_list_item listItems[] = {
  { IDS_FIELDS_ALL, add_all_fields },
  { IDS_FIELDS_V1, add_v1_fields },
- { IDS_FIELDS_EXTENSIONS, NULL },
- { IDS_FIELDS_CRITICAL_EXTENSIONS, NULL },
+ { IDS_FIELDS_EXTENSIONS, add_all_extensions },
+ { IDS_FIELDS_CRITICAL_EXTENSIONS, add_critical_extensions },
  { IDS_FIELDS_PROPERTIES, NULL },
 };
 
