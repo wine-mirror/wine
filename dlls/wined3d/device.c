@@ -3496,7 +3496,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantB(
         This->updateStateBlock->changed.vertexShaderConstantsB |= (1 << i);
     }
 
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VERTEXSHADERCONSTANT);
+    if (!This->isRecordingState) IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VERTEXSHADERCONSTANT);
 
     return WINED3D_OK;
 }
@@ -3544,7 +3544,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantI(
         This->updateStateBlock->changed.vertexShaderConstantsI |= (1 << i);
     }
 
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VERTEXSHADERCONSTANT);
+    if (!This->isRecordingState) IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VERTEXSHADERCONSTANT);
 
     return WINED3D_OK;
 }
@@ -3591,19 +3591,28 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantF(
                 srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
     }
 
-    for (i = start; i < count + start; ++i) {
-        if (!This->updateStateBlock->changed.vertexShaderConstantsF[i]) {
-            constants_entry *ptr = LIST_ENTRY(list_head(&This->updateStateBlock->set_vconstantsF), constants_entry, entry);
-            if (!ptr || ptr->count >= sizeof(ptr->idx) / sizeof(*ptr->idx)) {
-                ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(constants_entry));
-                list_add_head(&This->updateStateBlock->set_vconstantsF, &ptr->entry);
+    if (!This->isRecordingState)
+    {
+        for (i = start; i < count + start; ++i)
+        {
+            if (!This->stateBlock->changed.vertexShaderConstantsF[i])
+            {
+                constants_entry *ptr = LIST_ENTRY(list_head(&This->stateBlock->set_vconstantsF),
+                        constants_entry, entry);
+                if (!ptr || ptr->count >= sizeof(ptr->idx) / sizeof(*ptr->idx))
+                {
+                    ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(constants_entry));
+                    list_add_head(&This->stateBlock->set_vconstantsF, &ptr->entry);
+                }
+                ptr->idx[ptr->count++] = i;
             }
-            ptr->idx[ptr->count++] = i;
-            This->updateStateBlock->changed.vertexShaderConstantsF[i] = TRUE;
         }
+
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VERTEXSHADERCONSTANT);
     }
 
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VERTEXSHADERCONSTANT);
+    memset(This->updateStateBlock->changed.vertexShaderConstantsF + start, 1,
+            sizeof(*This->updateStateBlock->changed.vertexShaderConstantsF) * count);
 
     return WINED3D_OK;
 }
@@ -3631,14 +3640,17 @@ UINT count) {
                     srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
     }
 
-    /* We don't want shader constant dirtification to be an O(contexts), so just dirtify the active
-     * context. On a context switch the old context will be fully dirtified
-     */
-    memset(This->activeContext->vshader_const_dirty + start, 1,
-           sizeof(*This->activeContext->vshader_const_dirty) * count);
-    This->highest_dirty_vs_const = max(This->highest_dirty_vs_const, start+count+1);
+    if (!This->isRecordingState)
+    {
+        /* We don't want shader constant dirtification to be an O(contexts), so just dirtify the active
+         * context. On a context switch the old context will be fully dirtified */
+        memset(This->activeContext->vshader_const_dirty + start, 1,
+                sizeof(*This->activeContext->vshader_const_dirty) * count);
+        This->highest_dirty_vs_const = max(This->highest_dirty_vs_const, start+count+1);
 
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VERTEXSHADERCONSTANT);
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VERTEXSHADERCONSTANT);
+    }
+
     memset(This->updateStateBlock->changed.vertexShaderConstantsF + start, 1,
             sizeof(*This->updateStateBlock->changed.vertexShaderConstantsF) * count);
 
@@ -3931,7 +3943,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantB(
         This->updateStateBlock->changed.pixelShaderConstantsB |= (1 << i);
     }
 
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADERCONSTANT);
+    if (!This->isRecordingState) IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADERCONSTANT);
 
     return WINED3D_OK;
 }
@@ -3979,7 +3991,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantI(
         This->updateStateBlock->changed.pixelShaderConstantsI |= (1 << i);
     }
 
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADERCONSTANT);
+    if (!This->isRecordingState) IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADERCONSTANT);
 
     return WINED3D_OK;
 }
@@ -4026,19 +4038,28 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantF(
                 srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
     }
 
-    for (i = start; i < count + start; ++i) {
-        if (!This->updateStateBlock->changed.pixelShaderConstantsF[i]) {
-            constants_entry *ptr = LIST_ENTRY(list_head(&This->updateStateBlock->set_pconstantsF), constants_entry, entry);
-            if (!ptr || ptr->count >= sizeof(ptr->idx) / sizeof(*ptr->idx)) {
-                ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(constants_entry));
-                list_add_head(&This->updateStateBlock->set_pconstantsF, &ptr->entry);
+    if (!This->isRecordingState)
+    {
+        for (i = start; i < count + start; ++i)
+        {
+            if (!This->stateBlock->changed.pixelShaderConstantsF[i])
+            {
+                constants_entry *ptr = LIST_ENTRY(list_head(&This->stateBlock->set_pconstantsF),
+                        constants_entry, entry);
+                if (!ptr || ptr->count >= sizeof(ptr->idx) / sizeof(*ptr->idx))
+                {
+                    ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(constants_entry));
+                    list_add_head(&This->stateBlock->set_pconstantsF, &ptr->entry);
+                }
+                ptr->idx[ptr->count++] = i;
             }
-            ptr->idx[ptr->count++] = i;
-            This->updateStateBlock->changed.pixelShaderConstantsF[i] = TRUE;
         }
+
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADERCONSTANT);
     }
 
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADERCONSTANT);
+    memset(This->updateStateBlock->changed.pixelShaderConstantsF + start, 1,
+            sizeof(*This->updateStateBlock->changed.pixelShaderConstantsF) * count);
 
     return WINED3D_OK;
 }
@@ -4066,14 +4087,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantF_DirtyConst(
                     srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
     }
 
-    /* We don't want shader constant dirtification to be an O(contexts), so just dirtify the active
-     * context. On a context switch the old context will be fully dirtified
-     */
-    memset(This->activeContext->pshader_const_dirty + start, 1,
-           sizeof(*This->activeContext->pshader_const_dirty) * count);
-    This->highest_dirty_ps_const = max(This->highest_dirty_ps_const, start+count+1);
+    if (!This->isRecordingState)
+    {
+        /* We don't want shader constant dirtification to be an O(contexts), so just dirtify the active
+         * context. On a context switch the old context will be fully dirtified */
+        memset(This->activeContext->pshader_const_dirty + start, 1,
+                sizeof(*This->activeContext->pshader_const_dirty) * count);
+        This->highest_dirty_ps_const = max(This->highest_dirty_ps_const, start+count+1);
 
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADERCONSTANT);
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADERCONSTANT);
+    }
+
     memset(This->updateStateBlock->changed.pixelShaderConstantsF + start, 1,
             sizeof(*This->updateStateBlock->changed.pixelShaderConstantsF) * count);
 
