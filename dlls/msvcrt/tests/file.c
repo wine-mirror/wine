@@ -335,7 +335,7 @@ static void test_asciimode2(void)
     fclose(fp);
 
     fp = fopen("ascii2.tst", "rt");
-    ok(getc(fp) == '0', "first char not 0");
+    ok(getc(fp) == '0', "first char not 0\n");
     memset(ibuf, 0, sizeof(ibuf));
     i = fread(ibuf, 1, sizeof(ibuf), fp);
     ok(i == sizeof(ibuf), "fread i %d != sizeof(ibuf) %d\n", i, sizeof(ibuf));
