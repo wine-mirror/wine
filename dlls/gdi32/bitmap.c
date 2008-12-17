@@ -274,7 +274,7 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
     /* Windows ignores the provided bm.bmWidthBytes */
     bm.bmWidthBytes = BITMAP_GetWidthBytes( bm.bmWidth, bm.bmBitsPixel );
     /* XP doesn't allow to create bitmaps larger than 128 Mb */
-    if (bm.bmHeight * bm.bmWidthBytes > 128 * 1024 * 1024)
+    if (bm.bmHeight > 128 * 1024 * 1024 / bm.bmWidthBytes)
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return 0;
