@@ -81,8 +81,13 @@ extern "C" {
 #endif
 
 #ifndef _STDIO_DEFINED
+# ifdef __i386__
+FILE* __cdecl __p__iob(void);
+#  define _iob (__p__iob())
+# else
 FILE* __cdecl __iob_func(void);
-# define _iob (__iob_func())
+#  define _iob (__iob_func())
+# endif
 #endif /* _STDIO_DEFINED */
 
 #define stdin              (_iob+STDIN_FILENO)
