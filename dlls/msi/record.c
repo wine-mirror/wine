@@ -358,15 +358,16 @@ UINT MSI_RecordGetStringA(MSIRECORD *rec, UINT iField,
     case MSIFIELD_WSTR:
         len = WideCharToMultiByte( CP_ACP, 0, rec->fields[iField].u.szwVal, -1,
                              NULL, 0 , NULL, NULL);
-        WideCharToMultiByte( CP_ACP, 0, rec->fields[iField].u.szwVal, -1,
-                             szValue, *pcchValue, NULL, NULL);
+        if (szValue)
+            WideCharToMultiByte( CP_ACP, 0, rec->fields[iField].u.szwVal, -1,
+                                 szValue, *pcchValue, NULL, NULL);
         if( szValue && *pcchValue && len>*pcchValue )
             szValue[*pcchValue-1] = 0;
         if( len )
             len--;
         break;
     case MSIFIELD_NULL:
-        if( *pcchValue > 0 )
+        if( szValue && *pcchValue > 0 )
             szValue[0] = 0;
         break;
     default:

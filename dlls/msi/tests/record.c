@@ -362,6 +362,11 @@ static void test_MsiRecordGetString(void)
     ok(rec != 0, "Expected a valid handle\n");
 
     sz = MAX_PATH;
+    r = MsiRecordGetString(rec, 1, NULL, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n",r);
+    ok(sz == 0, "Expected 0, got %d\n",sz);
+
+    sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiRecordGetString(rec, 1, buf, &sz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -382,6 +387,11 @@ static void test_MsiRecordGetString(void)
 
     r = MsiRecordSetInteger(rec, 1, 5);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    sz = MAX_PATH;
+    r = MsiRecordGetString(rec, 1, NULL, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n",r);
+    ok(sz == 1, "Expected 1, got %d\n",sz);
 
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
