@@ -188,6 +188,6 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_EndStateBlock(LPDIRECT3DDEVICE9EX iface, I
     IDirect3DDevice9Ex_AddRef(iface);
     object->parentDevice = iface;
     *ppSB=(IDirect3DStateBlock9*)object;
-    TRACE("(%p)Returning %p %p\n", This, *ppSB, wineD3DStateBlock);
+    TRACE("(%p) Returning *ppSB %p, wineD3DStateBlock %p\n", This, *ppSB, wineD3DStateBlock);
     return D3D_OK;
 }
