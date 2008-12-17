@@ -92,7 +92,7 @@ static void WINE_GLAPI wine_glMultiTexCoord4fvARB(GLenum target, const GLfloat *
     glTexCoord4fv(v);
 }
 
-static void WINE_GLAPI wine_glMultiTexCoord2svARB(GLenum target, const const GLshort *v) {
+static void WINE_GLAPI wine_glMultiTexCoord2svARB(GLenum target, const GLshort *v) {
     if(target != GL_TEXTURE0) {
         ERR("Texture unit > 0 used, but GL_ARB_multitexture is not supported\n");
         return;
@@ -100,7 +100,7 @@ static void WINE_GLAPI wine_glMultiTexCoord2svARB(GLenum target, const const GLs
     glTexCoord2sv(v);
 }
 
-static void WINE_GLAPI wine_glMultiTexCoord4svARB(GLenum target, const const GLshort *v) {
+static void WINE_GLAPI wine_glMultiTexCoord4svARB(GLenum target, const GLshort *v) {
     if(target != GL_TEXTURE0) {
         ERR("Texture unit > 0 used, but GL_ARB_multitexture is not supported\n");
         return;
