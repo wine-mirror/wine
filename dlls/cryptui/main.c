@@ -35,6 +35,7 @@
 #include "cryptuiapi.h"
 #include "cryptuires.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cryptui);
 
@@ -288,6 +289,331 @@ end:
 
 #define MY_INDENT 200
 
+static void add_oid_text_to_control(HWND hwnd, char *oid)
+{
+    WCHAR nl = '\n';
+    PCCRYPT_OID_INFO oidInfo = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, oid, 0);
+    PARAFORMAT2 parFmt;
+
+    parFmt.cbSize = sizeof(parFmt);
+    parFmt.dwMask = PFM_STARTINDENT;
+    parFmt.dxStartIndent = MY_INDENT * 3;
+    if (oidInfo)
+    {
+        add_text_with_paraformat_to_control(hwnd, oidInfo->pwszName,
+         lstrlenW(oidInfo->pwszName), &parFmt);
+        add_unformatted_text_to_control(hwnd, &nl, 1);
+    }
+}
+
+#define MAX_STRING_LEN 512
+
+struct OIDToString
+{
+    LPCSTR oid;
+    int    id;
+};
+
+/* The following list MUST be lexicographically sorted by OID */
+static struct OIDToString oidMap[] = {
+ /* 1.3.6.1.4.1.311.10.3.1 */
+ { szOID_KP_CTL_USAGE_SIGNING, IDS_PURPOSE_CTL_USAGE_SIGNING },
+ /* 1.3.6.1.4.1.311.10.3.4 */
+ { szOID_KP_EFS, IDS_PURPOSE_EFS },
+ /* 1.3.6.1.4.1.311.10.3.4.1 */
+ { szOID_EFS_RECOVERY, IDS_PURPOSE_EFS_RECOVERY },
+ /* 1.3.6.1.4.1.311.10.3.5 */
+ { szOID_WHQL_CRYPTO, IDS_PURPOSE_WHQL },
+ /* 1.3.6.1.4.1.311.10.3.6 */
+ { szOID_NT5_CRYPTO, IDS_PURPOSE_NT5 },
+ /* 1.3.6.1.4.1.311.10.3.7 */
+ { szOID_OEM_WHQL_CRYPTO, IDS_PURPOSE_OEM_WHQL },
+ /* 1.3.6.1.4.1.311.10.3.8 */
+ { szOID_EMBEDDED_NT_CRYPTO, IDS_PURPOSE_EMBEDDED_NT },
+ /* 1.3.6.1.4.1.311.10.3.9 */
+ { szOID_ROOT_LIST_SIGNER, IDS_PURPOSE_ROOT_LIST_SIGNER },
+ /* 1.3.6.1.4.1.311.10.3.10 */
+ { szOID_KP_QUALIFIED_SUBORDINATION, IDS_PURPOSE_QUALIFIED_SUBORDINATION },
+ /* 1.3.6.1.4.1.311.10.3.11 */
+ { szOID_KP_KEY_RECOVERY, IDS_PURPOSE_KEY_RECOVERY },
+ /* 1.3.6.1.4.1.311.10.3.12 */
+ { szOID_KP_DOCUMENT_SIGNING, IDS_PURPOSE_DOCUMENT_SIGNING },
+ /* 1.3.6.1.4.1.311.10.3.13 */
+ { szOID_KP_LIFETIME_SIGNING, IDS_PURPOSE_LIFETIME_SIGNING },
+ /* 1.3.6.1.4.1.311.10.5.1 */
+ { szOID_DRM, IDS_PURPOSE_DRM },
+ /* 1.3.6.1.4.1.311.10.6.1 */
+ { szOID_LICENSES, IDS_PURPOSE_LICENSES },
+ /* 1.3.6.1.4.1.311.10.6.2 */
+ { szOID_LICENSE_SERVER, IDS_PURPOSE_LICENSE_SERVER },
+ /* 1.3.6.1.4.1.311.20.2.1 */
+ { szOID_ENROLLMENT_AGENT, IDS_PURPOSE_ENROLLMENT_AGENT },
+ /* 1.3.6.1.4.1.311.20.2.2 */
+ { szOID_KP_SMARTCARD_LOGON, IDS_PURPOSE_SMARTCARD_LOGON },
+ /* 1.3.6.1.4.1.311.21.5 */
+ { szOID_KP_CA_EXCHANGE, IDS_PURPOSE_CA_EXCHANGE },
+ /* 1.3.6.1.4.1.311.21.6 */
+ { szOID_KP_KEY_RECOVERY_AGENT, IDS_PURPOSE_KEY_RECOVERY_AGENT },
+ /* 1.3.6.1.4.1.311.21.19 */
+ { szOID_DS_EMAIL_REPLICATION, IDS_PURPOSE_DS_EMAIL_REPLICATION },
+ /* 1.3.6.1.5.5.7.3.1 */
+ { szOID_PKIX_KP_SERVER_AUTH, IDS_PURPOSE_SERVER_AUTH },
+ /* 1.3.6.1.5.5.7.3.2 */
+ { szOID_PKIX_KP_CLIENT_AUTH, IDS_PURPOSE_CLIENT_AUTH },
+ /* 1.3.6.1.5.5.7.3.3 */
+ { szOID_PKIX_KP_CODE_SIGNING, IDS_PURPOSE_CODE_SIGNING },
+ /* 1.3.6.1.5.5.7.3.4 */
+ { szOID_PKIX_KP_EMAIL_PROTECTION, IDS_PURPOSE_EMAIL_PROTECTION },
+ /* 1.3.6.1.5.5.7.3.5 */
+ { szOID_PKIX_KP_IPSEC_END_SYSTEM, IDS_PURPOSE_IPSEC },
+ /* 1.3.6.1.5.5.7.3.6 */
+ { szOID_PKIX_KP_IPSEC_TUNNEL, IDS_PURPOSE_IPSEC },
+ /* 1.3.6.1.5.5.7.3.7 */
+ { szOID_PKIX_KP_IPSEC_USER, IDS_PURPOSE_IPSEC },
+ /* 1.3.6.1.5.5.7.3.8 */
+ { szOID_PKIX_KP_TIMESTAMP_SIGNING, IDS_PURPOSE_TIMESTAMP_SIGNING },
+};
+
+static struct OIDToString *findSupportedOID(LPCSTR oid)
+{
+    int indexHigh = sizeof(oidMap) / sizeof(oidMap[0]) - 1, indexLow = 0, i;
+    struct OIDToString *ret = NULL;
+
+    for (i = (indexLow + indexHigh) / 2; !ret && indexLow <= indexHigh;
+     i = (indexLow + indexHigh) / 2)
+    {
+        int cmp;
+
+        cmp = strcmp(oid, oidMap[i].oid);
+        if (!cmp)
+            ret = &oidMap[i];
+        else if (cmp > 0)
+            indexLow = i + 1;
+        else
+            indexHigh = i - 1;
+    }
+    return ret;
+}
+
+static void add_local_oid_text_to_control(HWND text, LPCSTR oid)
+{
+    struct OIDToString *entry;
+    WCHAR nl = '\n';
+    PARAFORMAT2 parFmt;
+
+    parFmt.cbSize = sizeof(parFmt);
+    parFmt.dwMask = PFM_STARTINDENT;
+    parFmt.dxStartIndent = MY_INDENT * 3;
+    if ((entry = findSupportedOID(oid)))
+    {
+        WCHAR *str, *linebreak, *ptr;
+        BOOL multiline = FALSE;
+        int len;
+
+        len = LoadStringW(hInstance, entry->id, (LPWSTR)&str, 0);
+        ptr = str;
+        do {
+            if ((linebreak = memchrW(ptr, '\n', len)))
+            {
+                WCHAR copy[MAX_STRING_LEN];
+
+                multiline = TRUE;
+                /* The source string contains a newline, which the richedit
+                 * control won't find since it's interpreted as a paragraph
+                 * break.  Therefore copy up to the newline.  lstrcpynW always
+                 * NULL-terminates, so pass one more than the length of the
+                 * source line so the copy includes the entire line and the
+                 * NULL-terminator.
+                 */
+                lstrcpynW(copy, ptr, linebreak - ptr + 1);
+                add_text_with_paraformat_to_control(text, copy,
+                 linebreak - ptr, &parFmt);
+                ptr = linebreak + 1;
+                add_unformatted_text_to_control(text, &nl, 1);
+            }
+            else if (multiline && *ptr)
+            {
+                /* Add the last line */
+                add_text_with_paraformat_to_control(text, ptr,
+                 len - (ptr - str), &parFmt);
+                add_unformatted_text_to_control(text, &nl, 1);
+            }
+        } while (linebreak);
+        if (!multiline)
+        {
+            add_text_with_paraformat_to_control(text, str, len, &parFmt);
+            add_unformatted_text_to_control(text, &nl, 1);
+        }
+    }
+    else
+    {
+        WCHAR *oidW = HeapAlloc(GetProcessHeap(), 0,
+         (strlen(oid) + 1) * sizeof(WCHAR));
+
+        if (oidW)
+        {
+            LPCSTR src;
+            WCHAR *dst;
+
+            for (src = oid, dst = oidW; *src; src++, dst++)
+                *dst = *src;
+            *dst = 0;
+            add_text_with_paraformat_to_control(text, oidW, lstrlenW(oidW),
+             &parFmt);
+            add_unformatted_text_to_control(text, &nl, 1);
+            HeapFree(GetProcessHeap(), 0, oidW);
+        }
+    }
+}
+
+static void display_app_usages(HWND text, PCCERT_CONTEXT cert,
+ BOOL *anyUsageAdded)
+{
+    static char any_app_policy[] = szOID_ANY_APPLICATION_POLICY;
+    WCHAR nl = '\n';
+    CHARFORMATW charFmt;
+    PCERT_EXTENSION policyExt;
+    if (!*anyUsageAdded)
+    {
+        PARAFORMAT2 parFmt;
+
+        parFmt.cbSize = sizeof(parFmt);
+        parFmt.dwMask = PFM_STARTINDENT;
+        parFmt.dxStartIndent = MY_INDENT;
+        add_string_resource_with_paraformat_to_control(text,
+         IDS_CERT_INFO_PURPOSES, &parFmt);
+        add_unformatted_text_to_control(text, &nl, 1);
+        *anyUsageAdded = TRUE;
+    }
+    memset(&charFmt, 0, sizeof(charFmt));
+    charFmt.cbSize = sizeof(charFmt);
+    charFmt.dwMask = CFM_BOLD;
+    charFmt.dwEffects = 0;
+    SendMessageW(text, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&charFmt);
+    if ((policyExt = CertFindExtension(szOID_APPLICATION_CERT_POLICIES,
+     cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
+    {
+        CERT_POLICIES_INFO *policies;
+        DWORD size;
+
+        if (CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CERT_POLICIES,
+         policyExt->Value.pbData, policyExt->Value.cbData,
+         CRYPT_DECODE_ALLOC_FLAG, NULL, &policies, &size))
+        {
+            DWORD i;
+
+            for (i = 0; i < policies->cPolicyInfo; i++)
+            {
+                DWORD j;
+
+                for (j = 0; j < policies->rgPolicyInfo[i].cPolicyQualifier; j++)
+                    add_local_oid_text_to_control(text,
+                     policies->rgPolicyInfo[i].rgPolicyQualifier[j].
+                     pszPolicyQualifierId);
+            }
+            LocalFree(policies);
+        }
+    }
+    else
+        add_oid_text_to_control(text, any_app_policy);
+}
+
+static BOOL display_cert_usages(HWND text, PCCERT_CONTEXT cert,
+ BOOL *anyUsageAdded)
+{
+    WCHAR nl = '\n';
+    DWORD size;
+    BOOL badUsages = FALSE;
+
+    if (CertGetEnhancedKeyUsage(cert, 0, NULL, &size))
+    {
+        CHARFORMATW charFmt;
+        static char any_cert_policy[] = szOID_ANY_CERT_POLICY;
+        PCERT_ENHKEY_USAGE usage = HeapAlloc(GetProcessHeap(), 0, size);
+
+        if (usage)
+        {
+            if (CertGetEnhancedKeyUsage(cert, 0, usage, &size))
+            {
+                DWORD i;
+
+                if (!*anyUsageAdded)
+                {
+                    PARAFORMAT2 parFmt;
+
+                    parFmt.cbSize = sizeof(parFmt);
+                    parFmt.dwMask = PFM_STARTINDENT;
+                    parFmt.dxStartIndent = MY_INDENT;
+                    add_string_resource_with_paraformat_to_control(text,
+                     IDS_CERT_INFO_PURPOSES, &parFmt);
+                    add_unformatted_text_to_control(text, &nl, 1);
+                    *anyUsageAdded = TRUE;
+                }
+                memset(&charFmt, 0, sizeof(charFmt));
+                charFmt.cbSize = sizeof(charFmt);
+                charFmt.dwMask = CFM_BOLD;
+                charFmt.dwEffects = 0;
+                SendMessageW(text, EM_SETCHARFORMAT, SCF_SELECTION,
+                 (LPARAM)&charFmt);
+                if (!usage->cUsageIdentifier)
+                    add_oid_text_to_control(text, any_cert_policy);
+                else
+                    for (i = 0; i < usage->cUsageIdentifier; i++)
+                        add_local_oid_text_to_control(text,
+                         usage->rgpszUsageIdentifier[i]);
+            }
+            else
+                badUsages = TRUE;
+            HeapFree(GetProcessHeap(), 0, usage);
+        }
+        else
+            badUsages = TRUE;
+    }
+    else
+        badUsages = TRUE;
+    return badUsages;
+}
+
+static void set_policy_text(HWND text,
+ PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo)
+{
+    BOOL includeCertUsages = FALSE, includeAppUsages = FALSE;
+    BOOL badUsages = FALSE, anyUsageAdded = FALSE;
+
+    if (pCertViewInfo->cPurposes)
+    {
+        DWORD i;
+
+        for (i = 0; i < pCertViewInfo->cPurposes; i++)
+        {
+            if (!strcmp(pCertViewInfo->rgszPurposes[i], szOID_ANY_CERT_POLICY))
+                includeCertUsages = TRUE;
+            else if (!strcmp(pCertViewInfo->rgszPurposes[i],
+             szOID_ANY_APPLICATION_POLICY))
+                includeAppUsages = TRUE;
+            else
+                badUsages = TRUE;
+        }
+    }
+    else
+        includeAppUsages = includeCertUsages = TRUE;
+    if (includeAppUsages)
+        display_app_usages(text, pCertViewInfo->pCertContext, &anyUsageAdded);
+    if (includeCertUsages)
+        badUsages = display_cert_usages(text, pCertViewInfo->pCertContext,
+         &anyUsageAdded);
+    if (badUsages)
+    {
+        PARAFORMAT2 parFmt;
+
+        parFmt.cbSize = sizeof(parFmt);
+        parFmt.dwMask = PFM_STARTINDENT;
+        parFmt.dxStartIndent = MY_INDENT;
+        add_string_resource_with_paraformat_to_control(text,
+         IDS_CERT_INFO_BAD_PURPOSES, &parFmt);
+    }
+}
+
 static void set_cert_info(HWND hwnd,
  PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo)
 {
@@ -341,7 +667,10 @@ static void set_cert_info(HWND hwnd,
              IDS_CERT_INFO_UNTRUSTED_ROOT, &parFmt);
     }
     else
-        FIXME("show policies and issuer statement\n");
+    {
+        set_policy_text(text, pCertViewInfo);
+        FIXME("show issuer statement\n");
+    }
 }
 
 static void set_cert_name_string(HWND hwnd, PCCERT_CONTEXT cert,
