@@ -1042,9 +1042,35 @@ static WCHAR *field_format_issuer(PCCERT_CONTEXT cert)
      CERT_NAME_ISSUER_FLAG);
 }
 
+static WCHAR *field_format_detailed_cert_name(PCERT_NAME_BLOB name)
+{
+    WCHAR *str = NULL;
+    DWORD len = CertNameToStrW(X509_ASN_ENCODING, name,
+     CERT_X500_NAME_STR | CERT_NAME_STR_CRLF_FLAG, NULL, 0);
+
+    if (len)
+    {
+        str = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (str)
+            CertNameToStrW(X509_ASN_ENCODING, name,
+             CERT_X500_NAME_STR | CERT_NAME_STR_CRLF_FLAG, str, len);
+    }
+    return str;
+}
+
+static WCHAR *field_format_detailed_issuer(PCCERT_CONTEXT cert, void *param)
+{
+    return field_format_detailed_cert_name(&cert->pCertInfo->Issuer);
+}
+
 static WCHAR *field_format_subject(PCCERT_CONTEXT cert)
 {
     return get_cert_name_string(cert, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0);
+}
+
+static WCHAR *field_format_detailed_subject(PCCERT_CONTEXT cert, void *param)
+{
+    return field_format_detailed_cert_name(&cert->pCertInfo->Subject);
 }
 
 static WCHAR *format_long_date(const FILETIME *fileTime)
@@ -1115,6 +1141,13 @@ static WCHAR *field_format_public_key(PCCERT_CONTEXT cert)
     return buf;
 }
 
+static WCHAR *field_format_detailed_public_key(PCCERT_CONTEXT cert, void *param)
+{
+    return format_hex_string(
+     cert->pCertInfo->SubjectPublicKeyInfo.PublicKey.pbData,
+     cert->pCertInfo->SubjectPublicKeyInfo.PublicKey.cbData);
+}
+
 struct field_value_data;
 struct detail_data
 {
@@ -1126,12 +1159,17 @@ struct detail_data
 
 typedef void (*add_fields_func)(HWND hwnd, struct detail_data *data);
 
+typedef WCHAR *(*create_detailed_value_func)(PCCERT_CONTEXT cert, void *param);
+
 struct field_value_data
 {
+    create_detailed_value_func create;
+    LPWSTR detailed_value;
     void *param;
 };
 
-static void add_field_value_data(struct detail_data *data, void *param)
+static void add_field_value_data(struct detail_data *data,
+ create_detailed_value_func create, void *param)
 {
     if (data->cFields)
         data->fields = HeapReAlloc(GetProcessHeap(), 0, data->fields,
@@ -1141,13 +1179,15 @@ static void add_field_value_data(struct detail_data *data, void *param)
          sizeof(struct field_value_data));
     if (data->fields)
     {
+        data->fields[data->cFields].create = create;
+        data->fields[data->cFields].detailed_value = NULL;
         data->fields[data->cFields].param = param;
         data->cFields++;
     }
 }
 
 static void add_field_and_value_to_list(HWND hwnd, struct detail_data *data,
- LPWSTR field, LPWSTR value, void *param)
+ LPWSTR field, LPWSTR value, create_detailed_value_func create, void *param)
 {
     LVITEMW item;
     int iItem = SendMessageW(hwnd, LVM_GETITEMCOUNT, 0, 0);
@@ -1164,22 +1204,23 @@ static void add_field_and_value_to_list(HWND hwnd, struct detail_data *data,
         item.iSubItem = 1;
         SendMessageW(hwnd, LVM_SETITEMTEXTW, iItem, (LPARAM)&item);
     }
-    add_field_value_data(data, param);
+    add_field_value_data(data, create, param);
 }
 
 static void add_string_id_and_value_to_list(HWND hwnd, struct detail_data *data,
- int id, LPWSTR value, void *param)
+ int id, LPWSTR value, create_detailed_value_func create, void *param)
 {
     WCHAR buf[MAX_STRING_LEN];
 
     LoadStringW(hInstance, id, buf, sizeof(buf) / sizeof(buf[0]));
-    add_field_and_value_to_list(hwnd, data, buf, value, param);
+    add_field_and_value_to_list(hwnd, data, buf, value, create, param);
 }
 
 struct v1_field
 {
     int id;
     field_format_func format;
+    create_detailed_value_func create_detailed_value;
 };
 
 static void add_v1_field(HWND hwnd, struct detail_data *data,
@@ -1189,19 +1230,21 @@ static void add_v1_field(HWND hwnd, struct detail_data *data,
 
     if (val)
     {
-        add_string_id_and_value_to_list(hwnd, data, field->id, val, NULL);
+        add_string_id_and_value_to_list(hwnd, data, field->id, val,
+         field->create_detailed_value, NULL);
         HeapFree(GetProcessHeap(), 0, val);
     }
 }
 
 static const struct v1_field v1_fields[] = {
- { IDS_FIELD_VERSION, field_format_version },
- { IDS_FIELD_SERIAL_NUMBER, field_format_serial_number },
- { IDS_FIELD_ISSUER, field_format_issuer },
- { IDS_FIELD_VALID_FROM, field_format_from_date },
- { IDS_FIELD_VALID_TO, field_format_to_date },
- { IDS_FIELD_SUBJECT, field_format_subject },
- { IDS_FIELD_PUBLIC_KEY, field_format_public_key }
+ { IDS_FIELD_VERSION, field_format_version, NULL },
+ { IDS_FIELD_SERIAL_NUMBER, field_format_serial_number, NULL },
+ { IDS_FIELD_ISSUER, field_format_issuer, field_format_detailed_issuer },
+ { IDS_FIELD_VALID_FROM, field_format_from_date, NULL },
+ { IDS_FIELD_VALID_TO, field_format_to_date, NULL },
+ { IDS_FIELD_SUBJECT, field_format_subject, field_format_detailed_subject },
+ { IDS_FIELD_PUBLIC_KEY, field_format_public_key,
+   field_format_detailed_public_key }
 };
 
 static void add_v1_fields(HWND hwnd, struct detail_data *data)
@@ -1295,6 +1338,10 @@ static void create_cert_details_list(HWND hwnd, struct detail_data *data)
 
 static void free_detail_fields(struct detail_data *data)
 {
+    DWORD i;
+
+    for (i = 0; i < data->cFields; i++)
+        HeapFree(GetProcessHeap(), 0, data->fields[i].detailed_value);
     HeapFree(GetProcessHeap(), 0, data->fields);
     data->fields = NULL;
     data->cFields = 0;
@@ -1332,6 +1379,51 @@ static LRESULT CALLBACK detail_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         if (data->pCertViewInfo->dwFlags & CRYPTUI_DISABLE_EXPORT)
             EnableWindow(GetDlgItem(hwnd, IDC_EXPORT), FALSE);
         break;
+    case WM_NOTIFY:
+    {
+        NMITEMACTIVATE *nm;
+        HWND list = GetDlgItem(hwnd, IDC_DETAIL_LIST);
+
+        nm = (NMITEMACTIVATE*)lp;
+        if (nm->hdr.hwndFrom == list && nm->uNewState & LVN_ITEMACTIVATE
+         && nm->hdr.code == LVN_ITEMCHANGED)
+        {
+            data = (struct detail_data *)nm->lParam;
+            if (nm->iItem >= 0 && data && nm->iItem < data->cFields)
+            {
+                WCHAR buf[MAX_STRING_LEN], *val = NULL;
+                HWND valueCtl = GetDlgItem(hwnd, IDC_DETAIL_VALUE);
+
+                if (data->fields[nm->iItem].create)
+                    val = data->fields[nm->iItem].create(
+                     data->pCertViewInfo->pCertContext,
+                     data->fields[nm->iItem].param);
+                else
+                {
+                    LVITEMW item;
+                    int res;
+
+                    item.cchTextMax = sizeof(buf) / sizeof(buf[0]);
+                    item.mask = LVIF_TEXT;
+                    item.pszText = buf;
+                    item.iItem = nm->iItem;
+                    item.iSubItem = 1;
+                    res = SendMessageW(list, LVM_GETITEMW, 0, (LPARAM)&item);
+                    if (res)
+                        val = buf;
+                }
+                /* Select all the text in the control, the next update will
+                 * replace it
+                 */
+                SendMessageW(valueCtl, EM_SETSEL, 0, -1);
+                add_unformatted_text_to_control(valueCtl, val,
+                 val ? strlenW(val) : 0);
+                if (val != buf)
+                    HeapFree(GetProcessHeap(), 0, val);
+            }
+        }
+        break;
+    }
     case WM_COMMAND:
         switch (wp)
         {
