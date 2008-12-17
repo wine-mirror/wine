@@ -498,6 +498,50 @@ static void shader_glsl_load_constants(
     }
 }
 
+static void shader_glsl_update_float_vertex_constants(IWineD3DDevice *iface, UINT start, UINT count)
+{
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    UINT i;
+
+    for (i = start; i < count + start; ++i)
+    {
+        if (!This->stateBlock->changed.vertexShaderConstantsF[i])
+        {
+            constants_entry *ptr = LIST_ENTRY(list_head(&This->stateBlock->set_vconstantsF),
+                    constants_entry, entry);
+
+            if (!ptr || ptr->count >= sizeof(ptr->idx) / sizeof(*ptr->idx))
+            {
+                ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(constants_entry));
+                list_add_head(&This->stateBlock->set_vconstantsF, &ptr->entry);
+            }
+            ptr->idx[ptr->count++] = i;
+        }
+    }
+}
+
+static void shader_glsl_update_float_pixel_constants(IWineD3DDevice *iface, UINT start, UINT count)
+{
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    UINT i;
+
+    for (i = start; i < count + start; ++i)
+    {
+        if (!This->stateBlock->changed.pixelShaderConstantsF[i])
+        {
+            constants_entry *ptr = LIST_ENTRY(list_head(&This->stateBlock->set_pconstantsF),
+                    constants_entry, entry);
+
+            if (!ptr || ptr->count >= sizeof(ptr->idx) / sizeof(*ptr->idx))
+            {
+                ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(constants_entry));
+                list_add_head(&This->stateBlock->set_pconstantsF, &ptr->entry);
+            }
+            ptr->idx[ptr->count++] = i;
+        }
+    }
+}
+
 /** Generate the variable & register declarations for the GLSL output target */
 static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const shader_reg_maps *reg_maps,
         SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_info)
@@ -3866,6 +3910,8 @@ const shader_backend_t glsl_shader_backend = {
     shader_glsl_select,
     shader_glsl_select_depth_blt,
     shader_glsl_deselect_depth_blt,
+    shader_glsl_update_float_vertex_constants,
+    shader_glsl_update_float_pixel_constants,
     shader_glsl_load_constants,
     shader_glsl_color_correction,
     shader_glsl_destroy,

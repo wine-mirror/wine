@@ -3687,14 +3687,6 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
 
     object->blitter = select_blit_implementation(Adapter, DeviceType);
 
-    /* Prefer the vtable with functions optimized for single dirtifyable objects if the shader
-     * model can deal with that. It is essentially the same, just with adjusted
-     * Set*ShaderConstantF implementations
-     */
-    if(object->shader_backend->shader_dirtifyable_constants((IWineD3DDevice *) object)) {
-        object->lpVtbl  = &IWineD3DDevice_DirtyConst_Vtbl;
-    }
-
     /* set the state of the device to valid */
     object->state = WINED3D_OK;
 
