@@ -285,10 +285,11 @@ static void test_calchash(void)
     CloseHandle(file);
 
     /* All OK, requesting the size of the hash */
-    file = CreateFileA(selfname, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+    file = CreateFileA(selfname, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed %u\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminCalcHashFromFileHandle(file, &hashsize, NULL, 0);
-    ok(ret, "Expected success\n");
+    ok(ret, "Expected success %u\n", GetLastError());
     todo_wine
     {
     ok(hashsize == 20," Expected a hash size of 20, got %d\n", hashsize);
@@ -300,12 +301,12 @@ static void test_calchash(void)
     /* All OK, retrieve the hash
      * Double the hash buffer to see what happens to the size parameter
      */
-    file = CreateFileA(selfname, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+    file = CreateFileA(selfname, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
     hashsize *= 2;
     hash = HeapAlloc(GetProcessHeap(), 0, hashsize);
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminCalcHashFromFileHandle(file, &hashsize, hash, 0);
-    ok(ret, "Expected success\n");
+    ok(ret, "Expected success %u\n", GetLastError());
     todo_wine
     {
     ok(hashsize == 20," Expected a hash size of 20, got %d\n", hashsize);
