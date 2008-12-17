@@ -40,6 +40,7 @@ typedef unsigned int data_size_t;
 typedef unsigned int ioctl_code_t;
 typedef unsigned long lparam_t;
 typedef unsigned long apc_param_t;
+typedef unsigned long mem_size_t;
 typedef unsigned __int64 file_pos_t;
 
 struct request_header
@@ -298,7 +299,7 @@ typedef union
     {
         enum apc_type    type;      /* APC_VIRTUAL_ALLOC */
         void            *addr;      /* requested address */
-        unsigned long    size;      /* allocation size */
+        mem_size_t       size;      /* allocation size */
         unsigned int     zero_bits; /* allocation alignment */
         unsigned int     op_type;   /* type of operation */
         unsigned int     prot;      /* memory protection flags */
@@ -307,7 +308,7 @@ typedef union
     {
         enum apc_type    type;      /* APC_VIRTUAL_FREE */
         void            *addr;      /* requested address */
-        unsigned long    size;      /* allocation size */
+        mem_size_t       size;      /* allocation size */
         unsigned int     op_type;   /* type of operation */
     } virtual_free;
     struct
@@ -319,33 +320,33 @@ typedef union
     {
         enum apc_type    type;      /* APC_VIRTUAL_PROTECT */
         void            *addr;      /* requested address */
-        unsigned long    size;      /* requested address */
+        mem_size_t       size;      /* requested size */
         unsigned int     prot;      /* new protection flags */
     } virtual_protect;
     struct
     {
         enum apc_type    type;      /* APC_VIRTUAL_FLUSH */
         const void      *addr;      /* requested address */
-        unsigned long    size;      /* requested address */
+        mem_size_t       size;      /* requested size */
     } virtual_flush;
     struct
     {
         enum apc_type    type;      /* APC_VIRTUAL_LOCK */
         void            *addr;      /* requested address */
-        unsigned long    size;      /* requested address */
+        mem_size_t       size;      /* requested size */
     } virtual_lock;
     struct
     {
         enum apc_type    type;      /* APC_VIRTUAL_UNLOCK */
         void            *addr;      /* requested address */
-        unsigned long    size;      /* requested address */
+        mem_size_t       size;      /* requested size */
     } virtual_unlock;
     struct
     {
         enum apc_type    type;      /* APC_MAP_VIEW */
         obj_handle_t     handle;    /* mapping handle */
         void            *addr;      /* requested address */
-        unsigned long    size;      /* allocation size */
+        mem_size_t       size;      /* allocation size */
         file_pos_t       offset;    /* file offset */
         unsigned int     zero_bits; /* allocation alignment */
         unsigned int     alloc_type;/* allocation type */
@@ -361,8 +362,8 @@ typedef union
         enum apc_type    type;      /* APC_CREATE_THREAD */
         void (__stdcall *func)(void*);  /* start function */
         void            *arg;       /* argument for start function */
-        unsigned long    reserve;   /* reserve size for thread stack */
-        unsigned long    commit;    /* commit size for thread stack */
+        mem_size_t       reserve;   /* reserve size for thread stack */
+        mem_size_t       commit;    /* commit size for thread stack */
         int              suspend;   /* suspended thread? */
     } create_thread;
 } apc_call_t;
@@ -381,14 +382,14 @@ typedef union
         enum apc_type    type;      /* APC_VIRTUAL_ALLOC */
         unsigned int     status;    /* status returned by call */
         void            *addr;      /* resulting address */
-        unsigned long    size;      /* resulting size */
+        mem_size_t       size;      /* resulting size */
     } virtual_alloc;
     struct
     {
         enum apc_type    type;      /* APC_VIRTUAL_FREE */
         unsigned int     status;    /* status returned by call */
         void            *addr;      /* resulting address */
-        unsigned long    size;      /* resulting size */
+        mem_size_t       size;      /* resulting size */
     } virtual_free;
     struct
     {
@@ -396,7 +397,7 @@ typedef union
         unsigned int     status;    /* status returned by call */
         void            *base;      /* resulting base address */
         void            *alloc_base;/* resulting allocation base */
-        unsigned long    size;      /* resulting region size */
+        mem_size_t       size;      /* resulting region size */
         unsigned int     state;     /* resulting region state */
         unsigned int     prot;      /* resulting region protection */
         unsigned int     alloc_prot;/* resulting allocation protection */
@@ -407,7 +408,7 @@ typedef union
         enum apc_type    type;      /* APC_VIRTUAL_PROTECT */
         unsigned int     status;    /* status returned by call */
         void            *addr;      /* resulting address */
-        unsigned long    size;      /* resulting size */
+        mem_size_t       size;      /* resulting size */
         unsigned int     prot;      /* old protection flags */
     } virtual_protect;
     struct
@@ -415,28 +416,28 @@ typedef union
         enum apc_type    type;      /* APC_VIRTUAL_FLUSH */
         unsigned int     status;    /* status returned by call */
         const void      *addr;      /* resulting address */
-        unsigned long    size;      /* resulting size */
+        mem_size_t       size;      /* resulting size */
     } virtual_flush;
     struct
     {
         enum apc_type    type;      /* APC_VIRTUAL_LOCK */
         unsigned int     status;    /* status returned by call */
         void            *addr;      /* resulting address */
-        unsigned long    size;      /* resulting size */
+        mem_size_t       size;      /* resulting size */
     } virtual_lock;
     struct
     {
         enum apc_type    type;      /* APC_VIRTUAL_UNLOCK */
         unsigned int     status;    /* status returned by call */
         void            *addr;      /* resulting address */
-        unsigned long    size;      /* resulting size */
+        mem_size_t       size;      /* resulting size */
     } virtual_unlock;
     struct
     {
         enum apc_type    type;      /* APC_MAP_VIEW */
         unsigned int     status;    /* status returned by call */
         void            *addr;      /* resulting address */
-        unsigned long    size;      /* resulting size */
+        mem_size_t       size;      /* resulting size */
     } map_view;
     struct
     {

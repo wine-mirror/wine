@@ -24,6 +24,7 @@ typedef unsigned int data_size_t;
 typedef unsigned int ioctl_code_t;
 typedef unsigned long lparam_t;
 typedef unsigned long apc_param_t;
+typedef unsigned long mem_size_t;
 typedef unsigned __int64 file_pos_t;
 
 struct request_header
@@ -282,7 +283,7 @@ typedef union
     {
         enum apc_type    type;
         void            *addr;
-        unsigned long    size;
+        mem_size_t       size;
         unsigned int     zero_bits;
         unsigned int     op_type;
         unsigned int     prot;
@@ -291,7 +292,7 @@ typedef union
     {
         enum apc_type    type;
         void            *addr;
-        unsigned long    size;
+        mem_size_t       size;
         unsigned int     op_type;
     } virtual_free;
     struct
@@ -303,33 +304,33 @@ typedef union
     {
         enum apc_type    type;
         void            *addr;
-        unsigned long    size;
+        mem_size_t       size;
         unsigned int     prot;
     } virtual_protect;
     struct
     {
         enum apc_type    type;
         const void      *addr;
-        unsigned long    size;
+        mem_size_t       size;
     } virtual_flush;
     struct
     {
         enum apc_type    type;
         void            *addr;
-        unsigned long    size;
+        mem_size_t       size;
     } virtual_lock;
     struct
     {
         enum apc_type    type;
         void            *addr;
-        unsigned long    size;
+        mem_size_t       size;
     } virtual_unlock;
     struct
     {
         enum apc_type    type;
         obj_handle_t     handle;
         void            *addr;
-        unsigned long    size;
+        mem_size_t       size;
         file_pos_t       offset;
         unsigned int     zero_bits;
         unsigned int     alloc_type;
@@ -345,8 +346,8 @@ typedef union
         enum apc_type    type;
         void (__stdcall *func)(void*);
         void            *arg;
-        unsigned long    reserve;
-        unsigned long    commit;
+        mem_size_t       reserve;
+        mem_size_t       commit;
         int              suspend;
     } create_thread;
 } apc_call_t;
@@ -365,14 +366,14 @@ typedef union
         enum apc_type    type;
         unsigned int     status;
         void            *addr;
-        unsigned long    size;
+        mem_size_t       size;
     } virtual_alloc;
     struct
     {
         enum apc_type    type;
         unsigned int     status;
         void            *addr;
-        unsigned long    size;
+        mem_size_t       size;
     } virtual_free;
     struct
     {
@@ -380,7 +381,7 @@ typedef union
         unsigned int     status;
         void            *base;
         void            *alloc_base;
-        unsigned long    size;
+        mem_size_t       size;
         unsigned int     state;
         unsigned int     prot;
         unsigned int     alloc_prot;
@@ -391,7 +392,7 @@ typedef union
         enum apc_type    type;
         unsigned int     status;
         void            *addr;
-        unsigned long    size;
+        mem_size_t       size;
         unsigned int     prot;
     } virtual_protect;
     struct
@@ -399,28 +400,28 @@ typedef union
         enum apc_type    type;
         unsigned int     status;
         const void      *addr;
-        unsigned long    size;
+        mem_size_t       size;
     } virtual_flush;
     struct
     {
         enum apc_type    type;
         unsigned int     status;
         void            *addr;
-        unsigned long    size;
+        mem_size_t       size;
     } virtual_lock;
     struct
     {
         enum apc_type    type;
         unsigned int     status;
         void            *addr;
-        unsigned long    size;
+        mem_size_t       size;
     } virtual_unlock;
     struct
     {
         enum apc_type    type;
         unsigned int     status;
         void            *addr;
-        unsigned long    size;
+        mem_size_t       size;
     } map_view;
     struct
     {
