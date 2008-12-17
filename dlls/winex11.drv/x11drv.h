@@ -516,6 +516,7 @@ struct x11drv_thread_data
     XIM      xim;                  /* input method */
     XFontSet font_set;             /* international text drawing font set */
     Window   selection_wnd;        /* window used for selection interactions */
+    HKL      kbd_layout;           /* active keyboard layout */
 };
 
 extern struct x11drv_thread_data *x11drv_init_thread_data(void);

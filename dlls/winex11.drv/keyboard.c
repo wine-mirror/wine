@@ -69,7 +69,6 @@ static WORD keyc2vkey[256], keyc2scan[256];
 static int NumLockMask, ScrollLockMask, AltGrMask; /* mask in the XKeyEvent state */
 
 static char KEYBOARD_MapDeadKeysym(KeySym keysym);
-HKL X11DRV_GetKeyboardLayout(DWORD dwThreadid);
 
 /* Keyboard translation tables */
 #define MAIN_LEN 49
@@ -1600,6 +1599,40 @@ X11DRV_KEYBOARD_DetectLayout( Display *display )
   TRACE("detected layout is \"%s\"\n", main_key_tab[kbd_layout].comment);
 }
 
+static HKL get_locale_kbd_layout(void)
+{
+    ULONG_PTR layout;
+    LANGID langid;
+
+    /* FIXME:
+     *
+     * layout = main_key_tab[kbd_layout].lcid;
+     *
+     * Winword uses return value of GetKeyboardLayout as a codepage
+     * to translate ANSI keyboard messages to unicode. But we have
+     * a problem with it: for instance Polish keyboard layout is
+     * identical to the US one, and therefore instead of the Polish
+     * locale id we return the US one.
+     */
+
+    layout = GetUserDefaultLCID();
+
+    /*
+     * Microsoft Office expects this value to be something specific
+     * for Japanese and Korean Windows with an IME the value is 0xe001
+     * We should probably check to see if an IME exists and if so then
+     * set this word properly.
+     */
+    langid = PRIMARYLANGID(LANGIDFROMLCID(layout));
+    if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
+        layout |= 0xe001 << 16; /* IME */
+    else
+        layout |= layout << 16;
+
+    return (HKL)layout;
+}
+
+
 /**********************************************************************
  *		X11DRV_InitKeyboard
  */
@@ -1842,7 +1875,7 @@ void X11DRV_InitKeyboard( Display *display )
 static BOOL match_x11_keyboard_layout(HKL hkl)
 {
     const DWORD isIME = 0xE0000000;
-    HKL  xHkl = X11DRV_GetKeyboardLayout(0);
+    HKL xHkl = get_locale_kbd_layout();
 
     /* if the layout is an IME, only match the low word (LCID) */
     if (((ULONG_PTR)hkl & isIME) == isIME)
@@ -1910,37 +1943,15 @@ UINT X11DRV_GetKeyboardLayoutList(INT size, HKL *hkl)
  */
 HKL X11DRV_GetKeyboardLayout(DWORD dwThreadid)
 {
-    ULONG_PTR layout;
-    LANGID langid;
-
-    if (dwThreadid && dwThreadid != GetCurrentThreadId())
+    if (!dwThreadid || dwThreadid == GetCurrentThreadId())
+    {
+        struct x11drv_thread_data *thread_data = x11drv_thread_data();
+        if (thread_data && thread_data->kbd_layout) return thread_data->kbd_layout;
+    }
+    else
         FIXME("couldn't return keyboard layout for thread %04x\n", dwThreadid);
 
-#if 0
-    layout = main_key_tab[kbd_layout].lcid;
-#else
-    /* FIXME:
-     * Winword uses return value of GetKeyboardLayout as a codepage
-     * to translate ANSI keyboard messages to unicode. But we have
-     * a problem with it: for instance Polish keyboard layout is
-     * identical to the US one, and therefore instead of the Polish
-     * locale id we return the US one.
-     */
-    layout = GetUserDefaultLCID();
-#endif
-    /* 
-     * Microsoft Office expects this value to be something specific
-     * for Japanese and Korean Windows with an IME the value is 0xe001
-     * We should probably check to see if an IME exists and if so then
-     * set this word properly.
-     */
-    langid = PRIMARYLANGID(LANGIDFROMLCID(layout));
-    if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
-        layout |= 0xe001 << 16; /* FIXME */
-    else
-        layout |= layout << 16;
-
-    return (HKL)layout;
+    return get_locale_kbd_layout();
 }
 
 
@@ -1954,7 +1965,7 @@ BOOL X11DRV_GetKeyboardLayoutName(LPWSTR name)
     LANGID langid;
 
     layout = main_key_tab[kbd_layout].lcid;
-    /* see comment for GetKeyboardLayout */
+    /* see comment for get_locale_kbd_layout */
     langid = PRIMARYLANGID(LANGIDFROMLCID(layout));
     if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
         layout |= 0xe001 << 16; /* FIXME */
@@ -1994,9 +2005,40 @@ BOOL X11DRV_UnloadKeyboardLayout(HKL hkl)
  */
 HKL X11DRV_ActivateKeyboardLayout(HKL hkl, UINT flags)
 {
-    FIXME("%p, %04x: stub!\n", hkl, flags);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
+    HKL oldHkl = 0;
+    struct x11drv_thread_data *thread_data = x11drv_init_thread_data();
+
+    FIXME("%p, %04x: semi-stub!\n", hkl, flags);
+    if (flags & KLF_SETFORPROCESS)
+    {
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        FIXME("KLF_SETFORPROCESS not supported\n");
+        return 0;
+    }
+
+    if (flags)
+        FIXME("flags %x not supported\n",flags);
+
+    if (hkl == (HKL)HKL_NEXT || hkl == (HKL)HKL_PREV)
+    {
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        FIXME("HKL_NEXT and HKL_PREV not supported\n");
+        return 0;
+    }
+
+    if (!match_x11_keyboard_layout(hkl))
+    {
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        FIXME("setting keyboard of different locales not supported\n");
+        return 0;
+    }
+
+    oldHkl = thread_data->kbd_layout;
+    if (!oldHkl) oldHkl = get_locale_kbd_layout();
+
+    thread_data->kbd_layout = hkl;
+
+    return oldHkl;
 }
 
 
