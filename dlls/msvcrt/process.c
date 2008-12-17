@@ -271,52 +271,34 @@ static MSVCRT_wchar_t *msvcrt_argvtos_aw(const char * const *arg, MSVCRT_wchar_t
  */
 static MSVCRT_wchar_t *msvcrt_valisttos(const MSVCRT_wchar_t *arg0, va_list alist, MSVCRT_wchar_t delim)
 {
-  va_list alist2;
-  unsigned long len;
-  const MSVCRT_wchar_t *arg;
-  MSVCRT_wchar_t *p, *ret;
+    unsigned int size = 0, pos = 0;
+    const MSVCRT_wchar_t *arg;
+    MSVCRT_wchar_t *new, *ret = NULL;
 
-#ifdef HAVE_VA_COPY
-  va_copy(alist2,alist);
-#else
-# ifdef HAVE___VA_COPY
-  __va_copy(alist2,alist);
-# else
-  alist2 = alist;
-# endif
-#endif
-
-  if (!arg0)
-  {
-      /* Return NULL for an empty environment list */
-      return NULL;
-  }
-
-  /* get length */
-  arg = arg0;
-  len = 0;
-  do {
-      len += strlenW(arg) + 1;
-      arg = va_arg(alist, MSVCRT_wchar_t*);
-  } while (arg != NULL);
-
-  ret = MSVCRT_malloc((len + 1) * sizeof(MSVCRT_wchar_t));
-  if (!ret)
-    return NULL;
-
-  /* fill string */
-  arg = arg0;
-  p = ret;
-  do {
-      len = strlenW(arg);
-      memcpy(p, arg, len * sizeof(MSVCRT_wchar_t));
-      p += len;
-      *p++ = delim;
-      arg = va_arg(alist2, MSVCRT_wchar_t*);
-  } while (arg != NULL);
-  if (delim && p > ret) p[-1] = 0;
-  else *p = 0;
-  return ret;
+    for (arg = arg0; arg; arg = va_arg( alist, MSVCRT_wchar_t * ))
+    {
+        unsigned int len = strlenW( arg ) + 1;
+        if (pos + len >= size)
+        {
+            size = max( 256, size * 2 );
+            size = max( size, pos + len + 1 );
+            if (!(new = MSVCRT_realloc( ret, size * sizeof(MSVCRT_wchar_t) )))
+            {
+                MSVCRT_free( ret );
+                return NULL;
+            }
+            ret = new;
+        }
+        strcpyW( ret + pos, arg );
+        pos += len;
+        ret[pos - 1] = delim;
+    }
+    if (pos)
+    {
+        if (delim) ret[pos - 1] = 0;
+        else ret[pos] = 0;
+    }
+    return ret;
 }
 
 /* INTERNAL: Convert ansi va_list to a single 'delim'-separated wide string, with an
@@ -324,50 +306,33 @@ static MSVCRT_wchar_t *msvcrt_valisttos(const MSVCRT_wchar_t *arg0, va_list alis
  */
 static MSVCRT_wchar_t *msvcrt_valisttos_aw(const char *arg0, va_list alist, MSVCRT_wchar_t delim)
 {
-  va_list alist2;
-  unsigned long len;
-  const char *arg;
-  MSVCRT_wchar_t *p, *ret;
+    unsigned int size = 0, pos = 0;
+    const char *arg;
+    MSVCRT_wchar_t *new, *ret = NULL;
 
-#ifdef HAVE_VA_COPY
-  va_copy(alist2,alist);
-#else
-# ifdef HAVE___VA_COPY
-  __va_copy(alist2,alist);
-# else
-  alist2 = alist;
-# endif
-#endif
-
-  if (!arg0)
-  {
-      /* Return NULL for an empty environment list */
-      return NULL;
-  }
-
-  /* get length */
-  arg = arg0;
-  len = 0;
-  do {
-      len += MultiByteToWideChar(CP_ACP, 0, arg, -1, NULL, 0);
-      arg = va_arg(alist, char*);
-  } while (arg != NULL);
-
-  ret = MSVCRT_malloc((len + 1) * sizeof(MSVCRT_wchar_t));
-  if (!ret)
-    return NULL;
-
-  /* fill string */
-  arg = arg0;
-  p = ret;
-  do {
-      p += MultiByteToWideChar(CP_ACP, 0, arg, strlen(arg), p, len - (p - ret));
-      *p++ = delim;
-      arg = va_arg(alist2, char*);
-  } while (arg != NULL);
-  if (delim && p > ret) p[-1] = 0;
-  else *p = 0;
-  return ret;
+    for (arg = arg0; arg; arg = va_arg( alist, char * ))
+    {
+        unsigned int len = MultiByteToWideChar( CP_ACP, 0, arg, -1, NULL, 0 );
+        if (pos + len >= size)
+        {
+            size = max( 256, size * 2 );
+            size = max( size, pos + len + 1 );
+            if (!(new = MSVCRT_realloc( ret, size * sizeof(MSVCRT_wchar_t) )))
+            {
+                MSVCRT_free( ret );
+                return NULL;
+            }
+            ret = new;
+        }
+        pos += MultiByteToWideChar( CP_ACP, 0, arg, -1, ret + pos, size - pos );
+        ret[pos - 1] = delim;
+    }
+    if (pos)
+    {
+        if (delim) ret[pos - 1] = 0;
+        else ret[pos] = 0;
+    }
+    return ret;
 }
 
 /* INTERNAL: retrieve COMSPEC environment variable */
