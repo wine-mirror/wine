@@ -942,9 +942,6 @@
 /* Define to 1 if you have the <valgrind/valgrind.h> header file. */
 #undef HAVE_VALGRIND_VALGRIND_H
 
-/* Define if we have va_copy */
-#undef HAVE_VA_COPY
-
 /* Define to 1 if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF
 
@@ -1037,9 +1034,6 @@
 
 /* Define to 1 if you have the `_vsnprintf' function. */
 #undef HAVE__VSNPRINTF
-
-/* Define if we have __va_copy */
-#undef HAVE___VA_COPY
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
