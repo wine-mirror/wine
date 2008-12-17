@@ -23,7 +23,7 @@ typedef unsigned int thread_id_t;
 typedef unsigned int data_size_t;
 typedef unsigned int ioctl_code_t;
 typedef unsigned long lparam_t;
-typedef unsigned long apc_param_t;
+typedef unsigned __int64 apc_param_t;
 typedef unsigned __int64 mem_size_t;
 typedef unsigned __int64 file_pos_t;
 
@@ -5049,6 +5049,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 350
+#define SERVER_PROTOCOL_VERSION 351
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

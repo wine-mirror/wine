@@ -114,8 +114,13 @@ static void dump_apc_call( const apc_call_t *call )
         fprintf( stderr, "APC_NONE" );
         break;
     case APC_USER:
-        fprintf( stderr, "APC_USER,args={%lx,%lx,%lx}",
-                 call->user.args[0], call->user.args[1], call->user.args[2] );
+        fprintf( stderr, "APC_USER,args={" );
+        dump_uint64( &call->user.args[0] );
+        fputc( ',', stderr );
+        dump_uint64( &call->user.args[1] );
+        fputc( ',', stderr );
+        dump_uint64( &call->user.args[2] );
+        fputc( '}', stderr );
         break;
     case APC_TIMER:
         fprintf( stderr, "APC_TIMER,time=" );
@@ -3753,8 +3758,12 @@ static void dump_open_completion_reply( const struct open_completion_reply *req 
 static void dump_add_completion_request( const struct add_completion_request *req )
 {
     fprintf( stderr, " handle=%04x,", req->handle );
-    fprintf( stderr, " ckey=%lx,", req->ckey );
-    fprintf( stderr, " cvalue=%lx,", req->cvalue );
+    fprintf( stderr, " ckey=" );
+    dump_uint64( &req->ckey );
+    fprintf( stderr, "," );
+    fprintf( stderr, " cvalue=" );
+    dump_uint64( &req->cvalue );
+    fprintf( stderr, "," );
     fprintf( stderr, " information=%08x,", req->information );
     fprintf( stderr, " status=%08x", req->status );
 }
@@ -3766,8 +3775,12 @@ static void dump_remove_completion_request( const struct remove_completion_reque
 
 static void dump_remove_completion_reply( const struct remove_completion_reply *req )
 {
-    fprintf( stderr, " ckey=%lx,", req->ckey );
-    fprintf( stderr, " cvalue=%lx,", req->cvalue );
+    fprintf( stderr, " ckey=" );
+    dump_uint64( &req->ckey );
+    fprintf( stderr, "," );
+    fprintf( stderr, " cvalue=" );
+    dump_uint64( &req->cvalue );
+    fprintf( stderr, "," );
     fprintf( stderr, " information=%08x,", req->information );
     fprintf( stderr, " status=%08x", req->status );
 }
@@ -3786,13 +3799,16 @@ static void dump_set_completion_info_request( const struct set_completion_info_r
 {
     fprintf( stderr, " handle=%04x,", req->handle );
     fprintf( stderr, " chandle=%04x,", req->chandle );
-    fprintf( stderr, " ckey=%lx", req->ckey );
+    fprintf( stderr, " ckey=" );
+    dump_uint64( &req->ckey );
 }
 
 static void dump_add_fd_completion_request( const struct add_fd_completion_request *req )
 {
     fprintf( stderr, " handle=%04x,", req->handle );
-    fprintf( stderr, " cvalue=%lx,", req->cvalue );
+    fprintf( stderr, " cvalue=" );
+    dump_uint64( &req->cvalue );
+    fprintf( stderr, "," );
     fprintf( stderr, " status=%08x,", req->status );
     fprintf( stderr, " information=%08x", req->information );
 }
