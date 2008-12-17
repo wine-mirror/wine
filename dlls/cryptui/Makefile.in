@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = cryptui.dll
 IMPORTS   = uuid crypt32 ole32 comctl32 user32 kernel32
-DELAYIMPORTS = wintrust
+DELAYIMPORTS = wintrust urlmon
 IMPORTLIB = cryptui
 
 C_SRCS = \

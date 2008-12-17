@@ -34,6 +34,8 @@
 #include "richole.h"
 #include "cryptuiapi.h"
 #include "cryptuires.h"
+#include "urlmon.h"
+#include "hlink.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
@@ -614,6 +616,117 @@ static void set_policy_text(HWND text,
     }
 }
 
+static CRYPT_OBJID_BLOB *find_policy_qualifier(CERT_POLICIES_INFO *policies,
+ LPCSTR policyOid)
+{
+    CRYPT_OBJID_BLOB *ret = NULL;
+    DWORD i;
+
+    for (i = 0; !ret && i < policies->cPolicyInfo; i++)
+    {
+        DWORD j;
+
+        for (j = 0; !ret && j < policies->rgPolicyInfo[i].cPolicyQualifier; j++)
+            if (!strcmp(policies->rgPolicyInfo[i].rgPolicyQualifier[j].
+             pszPolicyQualifierId, policyOid))
+                ret = &policies->rgPolicyInfo[i].rgPolicyQualifier[j].
+                 Qualifier;
+    }
+    return ret;
+}
+
+static WCHAR *get_cps_str_from_qualifier(CRYPT_OBJID_BLOB *qualifier)
+{
+    LPWSTR qualifierStr = NULL;
+    CERT_NAME_VALUE *qualifierValue;
+    DWORD size;
+
+    if (CryptDecodeObjectEx(X509_ASN_ENCODING, X509_NAME_VALUE,
+     qualifier->pbData, qualifier->cbData, CRYPT_DECODE_ALLOC_FLAG, NULL,
+     &qualifierValue, &size))
+    {
+        size = CertRDNValueToStrW(qualifierValue->dwValueType,
+         &qualifierValue->Value, NULL, 0);
+        qualifierStr = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+        if (qualifierStr)
+            CertRDNValueToStrW(qualifierValue->dwValueType,
+             &qualifierValue->Value, qualifierStr, size);
+        LocalFree(qualifierValue);
+    }
+    return qualifierStr;
+}
+
+static WCHAR *get_user_notice_from_qualifier(CRYPT_OBJID_BLOB *qualifier)
+{
+    LPWSTR str = NULL;
+    CERT_POLICY_QUALIFIER_USER_NOTICE *qualifierValue;
+    DWORD size;
+
+    if (CryptDecodeObjectEx(X509_ASN_ENCODING,
+     X509_PKIX_POLICY_QUALIFIER_USERNOTICE,
+     qualifier->pbData, qualifier->cbData, CRYPT_DECODE_ALLOC_FLAG, NULL,
+     &qualifierValue, &size))
+    {
+        str = HeapAlloc(GetProcessHeap(), 0,
+         (strlenW(qualifierValue->pszDisplayText) + 1) * sizeof(WCHAR));
+        if (str)
+            strcpyW(str, qualifierValue->pszDisplayText);
+        LocalFree(qualifierValue);
+    }
+    return str;
+}
+
+struct IssuerStatement
+{
+    LPWSTR cps;
+    LPWSTR userNotice;
+};
+
+static void set_issuer_statement(HWND hwnd,
+ PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo)
+{
+    PCERT_EXTENSION policyExt;
+
+    if (!(pCertViewInfo->dwFlags & CRYPTUI_DISABLE_ISSUERSTATEMENT) &&
+     (policyExt = CertFindExtension(szOID_CERT_POLICIES,
+     pCertViewInfo->pCertContext->pCertInfo->cExtension,
+     pCertViewInfo->pCertContext->pCertInfo->rgExtension)))
+    {
+        CERT_POLICIES_INFO *policies;
+        DWORD size;
+
+        if (CryptDecodeObjectEx(X509_ASN_ENCODING, policyExt->pszObjId,
+         policyExt->Value.pbData, policyExt->Value.cbData,
+         CRYPT_DECODE_ALLOC_FLAG, NULL, &policies, &size))
+        {
+            CRYPT_OBJID_BLOB *qualifier;
+            LPWSTR cps = NULL, userNotice = NULL;
+
+            if ((qualifier = find_policy_qualifier(policies,
+             szOID_PKIX_POLICY_QUALIFIER_CPS)))
+                cps = get_cps_str_from_qualifier(qualifier);
+            if ((qualifier = find_policy_qualifier(policies,
+             szOID_PKIX_POLICY_QUALIFIER_USERNOTICE)))
+                userNotice = get_user_notice_from_qualifier(qualifier);
+            if (cps || userNotice)
+            {
+                struct IssuerStatement *issuerStatement =
+                 HeapAlloc(GetProcessHeap(), 0, sizeof(struct IssuerStatement));
+
+                if (issuerStatement)
+                {
+                    issuerStatement->cps = cps;
+                    issuerStatement->userNotice = userNotice;
+                    EnableWindow(GetDlgItem(hwnd, IDC_ISSUERSTATEMENT), TRUE);
+                    SetWindowLongPtrW(hwnd, DWLP_USER,
+                     (ULONG_PTR)issuerStatement);
+                }
+            }
+            LocalFree(policies);
+        }
+    }
+}
+
 static void set_cert_info(HWND hwnd,
  PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo)
 {
@@ -669,7 +782,7 @@ static void set_cert_info(HWND hwnd,
     else
     {
         set_policy_text(text, pCertViewInfo);
-        FIXME("show issuer statement\n");
+        set_issuer_statement(hwnd, pCertViewInfo);
     }
 }
 
@@ -754,6 +867,55 @@ static void set_general_info(HWND hwnd,
     set_cert_validity_period(hwnd, pCertViewInfo->pCertContext);
 }
 
+static LRESULT CALLBACK user_notice_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+ LPARAM lp)
+{
+    LRESULT ret = 0;
+    HWND text;
+    struct IssuerStatement *issuerStatement;
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        text = GetDlgItem(hwnd, IDC_USERNOTICE);
+        issuerStatement = (struct IssuerStatement *)lp;
+        add_unformatted_text_to_control(text, issuerStatement->userNotice,
+         strlenW(issuerStatement->userNotice));
+        if (issuerStatement->cps)
+            SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)issuerStatement->cps);
+        else
+            EnableWindow(GetDlgItem(hwnd, IDC_CPS), FALSE);
+        break;
+    case WM_COMMAND:
+        switch (wp)
+        {
+        case IDOK:
+            EndDialog(hwnd, IDOK);
+            ret = TRUE;
+            break;
+        case IDC_CPS:
+        {
+            IBindCtx *bctx = NULL;
+            LPWSTR cps;
+
+            CreateBindCtx(0, &bctx);
+            cps = (LPWSTR)GetWindowLongPtrW(hwnd, DWLP_USER);
+            HlinkSimpleNavigateToString(cps, NULL, NULL, NULL, bctx, NULL,
+             HLNF_OPENINNEWWINDOW, 0);
+            IBindCtx_Release(bctx);
+            break;
+        }
+        }
+    }
+    return ret;
+}
+
+static void show_user_notice(HWND hwnd, struct IssuerStatement *issuerStatement)
+{
+    DialogBoxParamW(hInstance, MAKEINTRESOURCEW(IDD_USERNOTICE), hwnd,
+     user_notice_dlg_proc, (LPARAM)issuerStatement);
+}
+
 static LRESULT CALLBACK general_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
@@ -778,10 +940,52 @@ static LRESULT CALLBACK general_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         case IDC_ADDTOSTORE:
             FIXME("call CryptUIWizImport\n");
             break;
+        case IDC_ISSUERSTATEMENT:
+        {
+            struct IssuerStatement *issuerStatement =
+             (struct IssuerStatement *)GetWindowLongPtrW(hwnd, DWLP_USER);
+
+            if (issuerStatement)
+            {
+                if (issuerStatement->userNotice)
+                    show_user_notice(hwnd, issuerStatement);
+                else if (issuerStatement->cps)
+                {
+                    IBindCtx *bctx = NULL;
+
+                    CreateBindCtx(0, &bctx);
+                    HlinkSimpleNavigateToString(issuerStatement->cps, NULL,
+                     NULL, NULL, bctx, NULL, HLNF_OPENINNEWWINDOW, 0);
+                    IBindCtx_Release(bctx);
+                }
+            }
+            break;
+        }
         }
         break;
     }
     return 0;
+}
+
+static UINT CALLBACK general_callback_proc(HWND hwnd, UINT msg,
+ PROPSHEETPAGEW *page)
+{
+    struct IssuerStatement *issuerStatement;
+
+    switch (msg)
+    {
+    case PSPCB_RELEASE:
+        issuerStatement =
+         (struct IssuerStatement *)GetWindowLongPtrW(hwnd, DWLP_USER);
+        if (issuerStatement)
+        {
+            HeapFree(GetProcessHeap(), 0, issuerStatement->cps);
+            HeapFree(GetProcessHeap(), 0, issuerStatement->userNotice);
+            HeapFree(GetProcessHeap(), 0, issuerStatement);
+        }
+        break;
+    }
+    return 1;
 }
 
 static void init_general_page(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
@@ -789,6 +993,8 @@ static void init_general_page(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
 {
     memset(page, 0, sizeof(PROPSHEETPAGEW));
     page->dwSize = sizeof(PROPSHEETPAGEW);
+    page->dwFlags = PSP_USECALLBACK;
+    page->pfnCallback = general_callback_proc;
     page->hInstance = hInstance;
     page->u.pszTemplate = MAKEINTRESOURCEW(IDD_GENERAL);
     page->pfnDlgProc = general_dlg_proc;
