@@ -32,6 +32,7 @@
 #include "richedit.h"
 #include "ole2.h"
 #include "richole.h"
+#include "commctrl.h"
 #include "cryptuiapi.h"
 #include "cryptuires.h"
 #include "urlmon.h"
@@ -1007,6 +1008,62 @@ struct detail_data
     BOOL *pfPropertiesChanged;
 };
 
+struct selection_list_item
+{
+    int id;
+};
+
+const struct selection_list_item listItems[] = {
+ { IDS_FIELDS_ALL },
+ { IDS_FIELDS_V1 },
+ { IDS_FIELDS_EXTENSIONS },
+ { IDS_FIELDS_CRITICAL_EXTENSIONS },
+ { IDS_FIELDS_PROPERTIES },
+};
+
+static void create_show_list(HWND hwnd, struct detail_data *data)
+{
+    HWND cb = GetDlgItem(hwnd, IDC_DETAIL_SELECT);
+    WCHAR buf[MAX_STRING_LEN];
+    int i;
+
+    for (i = 0; i < sizeof(listItems) / sizeof(listItems[0]); i++)
+    {
+        int index;
+
+        LoadStringW(hInstance, listItems[i].id, buf,
+         sizeof(buf) / sizeof(buf[0]));
+        index = SendMessageW(cb, CB_INSERTSTRING, -1, (LPARAM)buf);
+        SendMessageW(cb, CB_SETITEMDATA, index, (LPARAM)data);
+    }
+    SendMessageW(cb, CB_SETCURSEL, 0, 0);
+}
+
+static void create_listview_columns(HWND hwnd)
+{
+    HWND lv = GetDlgItem(hwnd, IDC_DETAIL_LIST);
+    RECT rc;
+    WCHAR buf[MAX_STRING_LEN];
+    LVCOLUMNW column;
+
+    SendMessageW(lv, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+    GetWindowRect(lv, &rc);
+    LoadStringW(hInstance, IDS_FIELD, buf, sizeof(buf) / sizeof(buf[0]));
+    column.mask = LVCF_WIDTH | LVCF_TEXT;
+    column.cx = (rc.right - rc.left) / 2 - 2;
+    column.pszText = buf;
+    SendMessageW(lv, LVM_INSERTCOLUMNW, 0, (LPARAM)&column);
+    LoadStringW(hInstance, IDS_VALUE, buf, sizeof(buf) / sizeof(buf[0]));
+    SendMessageW(lv, LVM_INSERTCOLUMNW, 1, (LPARAM)&column);
+}
+
+static void create_cert_details_list(HWND hwnd, struct detail_data *data)
+{
+    create_show_list(hwnd, data);
+    create_listview_columns(hwnd);
+    FIXME("add cert details\n");
+}
+
 static LRESULT CALLBACK detail_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
@@ -1020,7 +1077,7 @@ static LRESULT CALLBACK detail_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
     case WM_INITDIALOG:
         page = (PROPSHEETPAGEW *)lp;
         data = (struct detail_data *)page->lParam;
-        FIXME("add cert details\n");
+        create_cert_details_list(hwnd, data);
         if (!(data->pCertViewInfo->dwFlags & CRYPTUI_ENABLE_EDITPROPERTIES))
             EnableWindow(GetDlgItem(hwnd, IDC_EDITPROPERTIES), FALSE);
         if (data->pCertViewInfo->dwFlags & CRYPTUI_DISABLE_EXPORT)
