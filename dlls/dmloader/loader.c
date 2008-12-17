@@ -26,7 +26,7 @@ static HRESULT DMUSIC_GetLoaderSettings (LPDIRECTMUSICLOADER8 iface, REFGUID pCl
 static HRESULT DMUSIC_SetLoaderSettings (LPDIRECTMUSICLOADER8 iface, REFGUID pClassID, WCHAR* wszSearchPath, LPBOOL pbCache);
 
 static HRESULT DMUSIC_CopyDescriptor (LPDMUS_OBJECTDESC pDst, LPDMUS_OBJECTDESC pSrc) {
-	TRACE(": copy \n%s", debugstr_DMUS_OBJECTDESC(pSrc));
+	TRACE(": copy \n%s\n", debugstr_DMUS_OBJECTDESC(pSrc));
 	/* copy field by field */
 	if (pSrc->dwValidData & DMUS_OBJ_CLASS) pDst->guidClass = pSrc->guidClass;
 	if (pSrc->dwValidData & DMUS_OBJ_OBJECT) pDst->guidObject = pSrc->guidObject;
