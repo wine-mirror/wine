@@ -69,7 +69,6 @@
 @ cdecl GetAsyncKeyState(long) X11DRV_GetAsyncKeyState
 @ cdecl GetKeyNameText(long ptr long) X11DRV_GetKeyNameText
 @ cdecl GetKeyboardLayout(long) X11DRV_GetKeyboardLayout
-@ cdecl GetKeyboardLayoutList(long ptr) X11DRV_GetKeyboardLayoutList
 @ cdecl GetKeyboardLayoutName(ptr) X11DRV_GetKeyboardLayoutName
 @ cdecl LoadKeyboardLayout(wstr long) X11DRV_LoadKeyboardLayout
 @ cdecl MapVirtualKeyEx(long long long) X11DRV_MapVirtualKeyEx

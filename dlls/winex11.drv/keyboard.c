@@ -1903,42 +1903,6 @@ SHORT X11DRV_GetAsyncKeyState(INT key)
 
 
 /***********************************************************************
- *		GetKeyboardLayoutList (X11DRV.@)
- */
-UINT X11DRV_GetKeyboardLayoutList(INT size, HKL *hkl)
-{
-    INT i;
-
-    TRACE("%d, %p\n", size, hkl);
-
-    if (!size)
-    {
-        size = 4096; /* hope we will never have that many */
-        hkl = NULL;
-    }
-
-    for (i = 0; main_key_tab[i].comment && (i < size); i++)
-    {
-        if (hkl)
-        {
-            ULONG_PTR layout = main_key_tab[i].lcid;
-            LANGID langid;
-
-            /* see comment for GetKeyboardLayout */
-            langid = PRIMARYLANGID(LANGIDFROMLCID(layout));
-            if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
-                layout |= 0xe001 << 16; /* FIXME */
-            else
-                layout |= layout << 16;
-
-            hkl[i] = (HKL)layout;
-        }
-    }
-    return i;
-}
-
-
-/***********************************************************************
  *		GetKeyboardLayout (X11DRV.@)
  */
 HKL X11DRV_GetKeyboardLayout(DWORD dwThreadid)

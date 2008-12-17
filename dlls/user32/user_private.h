@@ -109,7 +109,6 @@ typedef struct tagUSER_DRIVER {
     SHORT  (*pGetAsyncKeyState)(INT);
     INT    (*pGetKeyNameText)(LONG, LPWSTR, INT);
     HKL    (*pGetKeyboardLayout)(DWORD);
-    UINT   (*pGetKeyboardLayoutList)(INT, HKL *);
     BOOL   (*pGetKeyboardLayoutName)(LPWSTR);
     HKL    (*pLoadKeyboardLayout)(LPCWSTR, UINT);
     UINT   (*pMapVirtualKeyEx)(UINT, UINT, HKL);

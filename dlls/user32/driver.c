@@ -77,7 +77,6 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(GetAsyncKeyState);
         GET_USER_FUNC(GetKeyNameText);
         GET_USER_FUNC(GetKeyboardLayout);
-        GET_USER_FUNC(GetKeyboardLayoutList);
         GET_USER_FUNC(GetKeyboardLayoutName);
         GET_USER_FUNC(LoadKeyboardLayout);
         GET_USER_FUNC(MapVirtualKeyEx);
@@ -173,11 +172,6 @@ static INT nulldrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
 }
 
 static HKL nulldrv_GetKeyboardLayout( DWORD layout )
-{
-    return 0;
-}
-
-static UINT nulldrv_GetKeyboardLayoutList( INT count, HKL *layouts )
 {
     return 0;
 }
@@ -436,7 +430,6 @@ static USER_DRIVER null_driver =
     nulldrv_GetAsyncKeyState,
     nulldrv_GetKeyNameText,
     nulldrv_GetKeyboardLayout,
-    nulldrv_GetKeyboardLayoutList,
     nulldrv_GetKeyboardLayoutName,
     nulldrv_LoadKeyboardLayout,
     nulldrv_MapVirtualKeyEx,
@@ -522,11 +515,6 @@ static INT loaderdrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
 static HKL loaderdrv_GetKeyboardLayout( DWORD layout )
 {
     return load_driver()->pGetKeyboardLayout( layout );
-}
-
-static UINT loaderdrv_GetKeyboardLayoutList( INT count, HKL *layouts )
-{
-    return load_driver()->pGetKeyboardLayoutList( count, layouts );
 }
 
 static BOOL loaderdrv_GetKeyboardLayoutName( LPWSTR name )
@@ -783,7 +771,6 @@ static USER_DRIVER lazy_load_driver =
     loaderdrv_GetAsyncKeyState,
     loaderdrv_GetKeyNameText,
     loaderdrv_GetKeyboardLayout,
-    loaderdrv_GetKeyboardLayoutList,
     loaderdrv_GetKeyboardLayoutName,
     loaderdrv_LoadKeyboardLayout,
     loaderdrv_MapVirtualKeyEx,
