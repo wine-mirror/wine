@@ -1954,12 +1954,57 @@ static LRESULT CALLBACK hierarchy_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
              data->pCertViewInfo->idxSigner,
              data->pCertViewInfo->fCounterSigner,
              data->pCertViewInfo->idxCounterSigner);
+            EnableWindow(GetDlgItem(hwnd, IDC_VIEWCERTIFICATE), selection != 0);
             set_certificate_status(GetDlgItem(hwnd, IDC_CERTIFICATESTATUSTEXT),
              &provSigner->pasCertChain[selection]);
             break;
         }
         break;
     }
+    case WM_COMMAND:
+        switch (wp)
+        {
+        case IDC_VIEWCERTIFICATE:
+        {
+            TVITEMW item;
+            CRYPT_PROVIDER_SGNR *provSigner;
+            CRYPTUI_VIEWCERTIFICATE_STRUCTW viewInfo;
+            BOOL changed = FALSE;
+
+            memset(&item, 0, sizeof(item));
+            item.mask = TVIF_HANDLE | TVIF_PARAM;
+            item.hItem = (HTREEITEM)SendMessageW(tree, TVM_GETNEXTITEM,
+             TVGN_CARET, (LPARAM)NULL);
+            SendMessageW(tree, TVM_GETITEMW, 0, (LPARAM)&item);
+            data = get_hierarchy_data_from_tree_item(tree, item.hItem);
+            selection = lparam_to_index(data, item.lParam);
+            provSigner = WTHelperGetProvSignerFromChain(
+             (CRYPT_PROVIDER_DATA *)data->pCertViewInfo->u.pCryptProviderData,
+             data->pCertViewInfo->idxSigner,
+             data->pCertViewInfo->fCounterSigner,
+             data->pCertViewInfo->idxCounterSigner);
+            memset(&viewInfo, 0, sizeof(viewInfo));
+            viewInfo.dwSize = sizeof(viewInfo);
+            viewInfo.dwFlags = data->pCertViewInfo->dwFlags;
+            viewInfo.szTitle = data->pCertViewInfo->szTitle;
+            viewInfo.pCertContext = provSigner->pasCertChain[selection].pCert;
+            viewInfo.cStores = data->pCertViewInfo->cStores;
+            viewInfo.rghStores = data->pCertViewInfo->rghStores;
+            viewInfo.cPropSheetPages = data->pCertViewInfo->cPropSheetPages;
+            viewInfo.rgPropSheetPages = data->pCertViewInfo->rgPropSheetPages;
+            viewInfo.nStartPage = data->pCertViewInfo->nStartPage;
+            CryptUIDlgViewCertificateW(&viewInfo, &changed);
+            if (changed)
+            {
+                /* Delete the contents of the tree */
+                SendMessageW(tree, TVM_DELETEITEM, 0, (LPARAM)TVI_ROOT);
+                /* Reinitialize the tree */
+                show_cert_hierarchy(hwnd, data);
+            }
+            break;
+        }
+        }
+        break;
     }
     return 0;
 }
