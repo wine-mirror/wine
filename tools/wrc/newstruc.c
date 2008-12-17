@@ -745,21 +745,21 @@ static void handle_ani_icon(riff_tag_t *rtp, enum res_e type, int isswapped)
 
 	if(type == res_anicur && ctype != 2 && !once)
 	{
-		parser_warning("Animated cursor contains invalid \"icon\" tag cursor-file (%d->%s)",
+		parser_warning("Animated cursor contains invalid \"icon\" tag cursor-file (%d->%s)\n",
 				ctype,
 				ctype == 1 ? "icontype" : "?");
 		once++;
 	}
 	else if(type == res_aniico && ctype != 1 && !once)
 	{
-		parser_warning("Animated icon contains invalid \"icon\" tag icon-file (%d->%s)",
+		parser_warning("Animated icon contains invalid \"icon\" tag icon-file (%d->%s)\n",
 				ctype,
 				ctype == 2 ? "cursortype" : "?");
 		once++;
 	}
 	else if(ctype != 1 && ctype != 2 && !once)
 	{
-		parser_warning("Animated %s contains invalid \"icon\" tag file-type (%d; neither icon nor cursor)", anistr, ctype);
+		parser_warning("Animated %s contains invalid \"icon\" tag file-type (%d; neither icon nor cursor)\n", anistr, ctype);
 		once++;
 	}
 
@@ -811,7 +811,7 @@ static void handle_ani_list(riff_tag_t *lst, enum res_e type, int isswapped)
 			rtp = NEXT_TAG(rtp);
 		}
 		else
-			internal_error(__FILE__, __LINE__, "Unknown tag \"%c%c%c%c\" in RIFF file",
+			internal_error(__FILE__, __LINE__, "Unknown tag \"%c%c%c%c\" in RIFF file\n",
 				       isprint(rtp->tag[0]) ? rtp->tag[0] : '.',
 				       isprint(rtp->tag[1]) ? rtp->tag[1] : '.',
 				       isprint(rtp->tag[2]) ? rtp->tag[2] : '.',
@@ -921,7 +921,7 @@ ani_curico_t *new_ani_curico(enum res_e type, raw_data_t *rd, int *memopt)
 				rtp = NEXT_TAG(rtp);
 			}
 			else
-				internal_error(__FILE__, __LINE__, "Unknown tag \"%c%c%c%c\" in RIFF file",
+				internal_error(__FILE__, __LINE__, "Unknown tag \"%c%c%c%c\" in RIFF file\n",
 				       isprint(rtp->tag[0]) ? rtp->tag[0] : '.',
 				       isprint(rtp->tag[1]) ? rtp->tag[1] : '.',
 				       isprint(rtp->tag[2]) ? rtp->tag[2] : '.',
