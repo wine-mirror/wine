@@ -1828,12 +1828,43 @@ static void show_cert_chain(HWND hwnd, struct hierarchy_data *data)
     }
 }
 
+static void set_certificate_status(HWND hwnd, CRYPT_PROVIDER_CERT *cert)
+{
+    /* Select all the text in the control, the next update will replace it */
+    SendMessageW(hwnd, EM_SETSEL, 0, -1);
+    /* Set the highest priority error messages first. */
+    if (!(cert->dwConfidence & CERT_CONFIDENCE_SIG))
+        add_string_resource_to_control(hwnd, IDS_CERTIFICATE_BAD_SIGNATURE);
+    else if (!(cert->dwConfidence & CERT_CONFIDENCE_TIME))
+        add_string_resource_to_control(hwnd, IDS_CERTIFICATE_BAD_TIME);
+    else if (!(cert->dwConfidence & CERT_CONFIDENCE_TIMENEST))
+        add_string_resource_to_control(hwnd, IDS_CERTIFICATE_BAD_TIMENEST);
+    else if (cert->dwRevokedReason)
+        add_string_resource_to_control(hwnd, IDS_CERTIFICATE_REVOKED);
+    else
+        add_string_resource_to_control(hwnd, IDS_CERTIFICATE_VALID);
+}
+
+static void set_certificate_status_for_end_cert(HWND hwnd,
+ PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo)
+{
+    HWND status = GetDlgItem(hwnd, IDC_CERTIFICATESTATUSTEXT);
+    CRYPT_PROVIDER_SGNR *provSigner = WTHelperGetProvSignerFromChain(
+     (CRYPT_PROVIDER_DATA *)pCertViewInfo->u.pCryptProviderData,
+     pCertViewInfo->idxSigner, pCertViewInfo->fCounterSigner,
+     pCertViewInfo->idxCounterSigner);
+    CRYPT_PROVIDER_CERT *provCert = WTHelperGetProvCertFromChain(provSigner,
+     pCertViewInfo->idxCert);
+
+    set_certificate_status(status, provCert);
+}
+
 static void show_cert_hierarchy(HWND hwnd, struct hierarchy_data *data)
 {
     /* Disable view certificate button until a certificate is selected */
     EnableWindow(GetDlgItem(hwnd, IDC_VIEWCERTIFICATE), FALSE);
     show_cert_chain(hwnd, data);
-    FIXME("show cert status\n");
+    set_certificate_status_for_end_cert(hwnd, data->pCertViewInfo);
 }
 
 static LRESULT CALLBACK hierarchy_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
