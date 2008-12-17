@@ -1598,8 +1598,7 @@ static void set_fields_selection(HWND hwnd, struct detail_data *data, int sel)
     if (sel >= 0 && sel < sizeof(listItems) / sizeof(listItems[0]))
     {
         SendMessageW(list, LVM_DELETEALLITEMS, 0, 0);
-        if (listItems[sel].add)
-            listItems[sel].add(list, data);
+        listItems[sel].add(list, data);
     }
 }
 
