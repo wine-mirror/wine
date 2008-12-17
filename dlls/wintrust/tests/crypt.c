@@ -102,12 +102,8 @@ static void test_context(void)
        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     /* NULL GUID */
-    SetLastError(0xdeadbeef);
     ret = pCryptCATAdminAcquireContext(&hca, NULL, 0);
     ok(ret, "Expected success\n");
-    ok(GetLastError() == ERROR_SUCCESS ||
-       GetLastError() == 0xdeadbeef /* Vista */,
-       "Expected ERROR_SUCCESS or 0xdeadbeef, got %d\n", GetLastError());
     ok(hca != NULL, "Expected a context handle, got NULL\n");
 
     /* All NULL */
@@ -154,12 +150,8 @@ static void test_context(void)
      * save to remove files and directories from CatRoot/CatRoot2.
      */
 
-    SetLastError(0xdeadbeef);
     ret = pCryptCATAdminAcquireContext(&hca, &dummy, 0);
     ok(ret, "Expected success\n");
-    ok(GetLastError() == ERROR_SUCCESS ||
-       GetLastError() == 0xdeadbeef /* Vista */,
-       "Expected ERROR_SUCCESS or 0xdeadbeef, got %d\n", GetLastError());
     ok(hca != NULL, "Expected a context handle, got NULL\n");
 
     GetWindowsDirectoryA(windir, MAX_PATH);
@@ -199,24 +191,16 @@ static void test_context(void)
     ok(ret, "Expected success\n");
 
     /* Correct context handle and GUID */
-    SetLastError(0xdeadbeef);
     ret = pCryptCATAdminAcquireContext(&hca, &unknown, 0);
     ok(ret, "Expected success\n");
-    ok(GetLastError() == ERROR_SUCCESS ||
-       GetLastError() == 0xdeadbeef /* Vista */,
-       "Expected ERROR_SUCCESS or 0xdeadbeef, got %d\n", GetLastError());
     ok(hca != NULL, "Expected a context handle, got NULL\n");
 
     ret = pCryptCATAdminReleaseContext(hca, 0);
     ok(ret, "Expected success\n");
 
     /* Flags not equal to 0 */
-    SetLastError(0xdeadbeef);
     ret = pCryptCATAdminAcquireContext(&hca, &unknown, 1);
     ok(ret, "Expected success\n");
-    ok(GetLastError() == ERROR_SUCCESS ||
-       GetLastError() == 0xdeadbeef /* Vista */,
-       "Expected ERROR_SUCCESS or 0xdeadbeef, got %d\n", GetLastError());
     ok(hca != NULL, "Expected a context handle, got NULL\n");
 
     ret = pCryptCATAdminReleaseContext(hca, 0);
