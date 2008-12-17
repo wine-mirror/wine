@@ -183,8 +183,17 @@ BOOL WINAPI CryptCATAdminReleaseCatalogContext(HCATADMIN hCatAdmin,
  */
 BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )
 {
-    FIXME("%p %x\n", hCatAdmin, dwFlags);
-    return TRUE;
+    struct catadmin *ca = hCatAdmin;
+
+    TRACE("%p %x\n", hCatAdmin, dwFlags);
+
+    if (!ca || ca->magic != CATADMIN_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    ca->magic = 0;
+    return HeapFree(GetProcessHeap(), 0, ca);
 }
 
 /***********************************************************************

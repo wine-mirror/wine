@@ -109,12 +109,9 @@ static void test_context(void)
     /* All NULL */
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminReleaseContext(NULL, 0);
-    todo_wine
-    {
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    }
 
     /* Proper release */
     SetLastError(0xdeadbeef);
@@ -126,12 +123,9 @@ static void test_context(void)
     /* Try to release a second time */
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminReleaseContext(hca, 0);
-    todo_wine
-    {
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    }
 
     /* NULL context handle and dummy GUID */
     SetLastError(0xdeadbeef);
