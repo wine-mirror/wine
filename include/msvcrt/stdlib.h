@@ -78,25 +78,25 @@ extern "C" {
 
 #ifdef __i386__
 
-extern unsigned int*         __p__osver(void);
+extern unsigned int* __cdecl __p__osver(void);
 #define _osver             (*__p__osver())
-extern unsigned int*         __p__winver(void);
+extern unsigned int* __cdecl __p__winver(void);
 #define _winver            (*__p__winver())
-extern unsigned int*         __p__winmajor(void);
+extern unsigned int* __cdecl __p__winmajor(void);
 #define _winmajor          (*__p__winmajor())
-extern unsigned int*         __p__winminor(void);
+extern unsigned int* __cdecl __p__winminor(void);
 #define _winminor          (*__p__winminor())
-extern int*                  __p___argc(void);
+extern int*          __cdecl __p___argc(void);
 #define __argc             (*__p___argc())
-extern char***               __p___argv(void);
+extern char***       __cdecl __p___argv(void);
 #define __argv             (*__p___argv())
-extern wchar_t***            __p___wargv(void);
+extern wchar_t***    __cdecl __p___wargv(void);
 #define __wargv            (*__p___wargv())
-extern char***               __p__environ(void);
+extern char***       __cdecl __p__environ(void);
 #define _environ           (*__p__environ())
-extern wchar_t***            __p__wenviron(void);
+extern wchar_t***    __cdecl __p__wenviron(void);
 #define _wenviron          (*__p__wenviron())
-extern unsigned int*         __p__fmode(void);
+extern unsigned int* __cdecl __p__fmode(void);
 #define _fmode             (*__p__fmode())
 
 #else  /* __i386__ */
@@ -114,12 +114,12 @@ extern unsigned int _fmode;
 
 #endif  /* __i386__ */
 
-extern int*             ___mb_cur_max_func(void);
-#define __mb_cur_max  (*___mb_cur_max_func())
-extern unsigned long*   __doserrno(void);
-#define _doserrno     (*__doserrno())
-extern int*             _errno(void);
-#define errno         (*_errno())
+extern int*           __cdecl ___mb_cur_max_func(void);
+#define __mb_cur_max        (*___mb_cur_max_func())
+extern unsigned long* __cdecl __doserrno(void);
+#define _doserrno           (*__doserrno())
+extern int*           __cdecl _errno(void);
+#define errno               (*_errno())
 
 /* FIXME: We need functions to access these:
  * int _sys_nerr;
@@ -127,97 +127,95 @@ extern int*             _errno(void);
  */
 
 
-typedef int (*_onexit_t)(void);
+typedef int (__cdecl *_onexit_t)(void);
 
 
-int         _atodbl(_CRT_DOUBLE*,char*);
-int         _atoflt(_CRT_FLOAT*,char*);
-__int64     _atoi64(const char*);
-long double _atold(const char*);
-int         _atoldbl(_LDOUBLE*,char*);
-void        _beep(unsigned int,unsigned int);
-char*       _ecvt(double,int,int*,int*);
-char*       _fcvt(double,int,int*,int*);
-char*       _fullpath(char*,const char*,size_t);
-char*       _gcvt(double,int,char*);
-char*       _i64toa(__int64,char*,int);
-char*       _itoa(int,char*,int);
-char*       _ltoa(long,char*,int);
-unsigned long _lrotl(unsigned long,int);
-unsigned long _lrotr(unsigned long,int);
-void        _makepath(char*,const char*,const char*,const char*,const char*);
-size_t _mbstrlen(const char*);
-_onexit_t _onexit(_onexit_t);
-int         _putenv(const char*);
-unsigned int _rotl(unsigned int,int);
-unsigned int _rotr(unsigned int,int);
-void        _searchenv(const char*,const char*,char*);
-int         _set_error_mode(int);
-void        _seterrormode(int);
-void        _sleep(unsigned long);
-void        _splitpath(const char*,char*,char*,char*,char*);
-long double _strtold(const char*,char**);
-void        _swab(char*,char*,int);
-char*       _ui64toa(unsigned __int64,char*,int);
-char*       _ultoa(unsigned long,char*,int);
+int           __cdecl _atodbl(_CRT_DOUBLE*,char*);
+int           __cdecl _atoflt(_CRT_FLOAT*,char*);
+__int64       __cdecl _atoi64(const char*);
+long double   __cdecl _atold(const char*);
+int           __cdecl _atoldbl(_LDOUBLE*,char*);
+void          __cdecl _beep(unsigned int,unsigned int);
+char*         __cdecl _ecvt(double,int,int*,int*);
+char*         __cdecl _fcvt(double,int,int*,int*);
+char*         __cdecl _fullpath(char*,const char*,size_t);
+char*         __cdecl _gcvt(double,int,char*);
+char*         __cdecl _i64toa(__int64,char*,int);
+char*         __cdecl _itoa(int,char*,int);
+char*         __cdecl _ltoa(long,char*,int);
+unsigned long __cdecl _lrotl(unsigned long,int);
+unsigned long __cdecl _lrotr(unsigned long,int);
+void          __cdecl _makepath(char*,const char*,const char*,const char*,const char*);
+size_t        __cdecl _mbstrlen(const char*);
+_onexit_t     __cdecl _onexit(_onexit_t);
+int           __cdecl _putenv(const char*);
+unsigned int  __cdecl _rotl(unsigned int,int);
+unsigned int  __cdecl _rotr(unsigned int,int);
+void          __cdecl _searchenv(const char*,const char*,char*);
+int           __cdecl _set_error_mode(int);
+void          __cdecl _seterrormode(int);
+void          __cdecl _sleep(unsigned long);
+void          __cdecl _splitpath(const char*,char*,char*,char*,char*);
+long double   __cdecl _strtold(const char*,char**);
+void          __cdecl _swab(char*,char*,int);
+char*         __cdecl _ui64toa(unsigned __int64,char*,int);
+char*         __cdecl _ultoa(unsigned long,char*,int);
 
-void        _exit(int);
-void        abort(void);
-int         abs(int);
-int         atexit(void (*)(void));
-double      atof(const char*);
-int         atoi(const char*);
-long        atol(const char*);
-void*       calloc(size_t,size_t);
+void          __cdecl _exit(int);
+void          __cdecl abort(void);
+int           __cdecl abs(int);
+int           __cdecl atexit(void (*)(void));
+double        __cdecl atof(const char*);
+int           __cdecl atoi(const char*);
+long          __cdecl atol(const char*);
+void*         __cdecl calloc(size_t,size_t);
 #ifndef __i386__
-div_t div(int,int);
-ldiv_t ldiv(long,long);
+div_t  __cdecl div(int,int);
+ldiv_t __cdecl ldiv(long,long);
 #endif
-void        exit(int);
-void        free(void*);
-char*       getenv(const char*);
-long        labs(long);
-void*       malloc(size_t);
-int         mblen(const char*,size_t);
-void        perror(const char*);
-int         rand(void);
-void*       realloc(void*,size_t);
-void        srand(unsigned int);
-double      strtod(const char*,char**);
-long        strtol(const char*,char**,int);
-unsigned long strtoul(const char*,char**,int);
-int         system(const char*);
-void*       bsearch(const void*,const void*,size_t,size_t,
-                            int (*)(const void*,const void*));
-void        qsort(void*,size_t,size_t,
-                          int (*)(const void*,const void*));
+void          __cdecl exit(int);
+void          __cdecl free(void*);
+char*         __cdecl getenv(const char*);
+long          __cdecl labs(long);
+void*         __cdecl malloc(size_t);
+int           __cdecl mblen(const char*,size_t);
+void          __cdecl perror(const char*);
+int           __cdecl rand(void);
+void*         __cdecl realloc(void*,size_t);
+void          __cdecl srand(unsigned int);
+double        __cdecl strtod(const char*,char**);
+long          __cdecl strtol(const char*,char**,int);
+unsigned long __cdecl strtoul(const char*,char**,int);
+int           __cdecl system(const char*);
+void*         __cdecl bsearch(const void*,const void*,size_t,size_t,int (*)(const void*,const void*));
+void          __cdecl qsort(void*,size_t,size_t,int (*)(const void*,const void*));
 
 #ifndef _WSTDLIB_DEFINED
 #define _WSTDLIB_DEFINED
-wchar_t*_itow(int,wchar_t*,int);
-wchar_t*_i64tow(__int64,wchar_t*,int);
-wchar_t*_ltow(long,wchar_t*,int);
-wchar_t*_ui64tow(unsigned __int64,wchar_t*,int);
-wchar_t*_ultow(unsigned long,wchar_t*,int);
-wchar_t*_wfullpath(wchar_t*,const wchar_t*,size_t);
-wchar_t*_wgetenv(const wchar_t*);
-void            _wmakepath(wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*);
-void            _wperror(const wchar_t*);
-int             _wputenv(const wchar_t*);
-void            _wsearchenv(const wchar_t*,const wchar_t*,wchar_t*);
-void            _wsplitpath(const wchar_t*,wchar_t*,wchar_t*,wchar_t*,wchar_t*);
-int             _wsystem(const wchar_t*);
-int             _wtoi(const wchar_t*);
-__int64         _wtoi64(const wchar_t*);
-long            _wtol(const wchar_t*);
+wchar_t*      __cdecl _itow(int,wchar_t*,int);
+wchar_t*      __cdecl _i64tow(__int64,wchar_t*,int);
+wchar_t*      __cdecl _ltow(long,wchar_t*,int);
+wchar_t*      __cdecl _ui64tow(unsigned __int64,wchar_t*,int);
+wchar_t*      __cdecl _ultow(unsigned long,wchar_t*,int);
+wchar_t*      __cdecl _wfullpath(wchar_t*,const wchar_t*,size_t);
+wchar_t*      __cdecl _wgetenv(const wchar_t*);
+void          __cdecl _wmakepath(wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*);
+void          __cdecl _wperror(const wchar_t*);
+int           __cdecl _wputenv(const wchar_t*);
+void          __cdecl _wsearchenv(const wchar_t*,const wchar_t*,wchar_t*);
+void          __cdecl _wsplitpath(const wchar_t*,wchar_t*,wchar_t*,wchar_t*,wchar_t*);
+int           __cdecl _wsystem(const wchar_t*);
+int           __cdecl _wtoi(const wchar_t*);
+__int64       __cdecl _wtoi64(const wchar_t*);
+long          __cdecl _wtol(const wchar_t*);
 
-size_t mbstowcs(wchar_t*,const char*,size_t);
-int            mbtowc(wchar_t*,const char*,size_t);
-double         wcstod(const wchar_t*,wchar_t**);
-long           wcstol(const wchar_t*,wchar_t**,int);
-size_t wcstombs(char*,const wchar_t*,size_t);
-unsigned long  wcstoul(const wchar_t*,wchar_t**,int);
-int            wctomb(char*,wchar_t);
+size_t        __cdecl mbstowcs(wchar_t*,const char*,size_t);
+int           __cdecl mbtowc(wchar_t*,const char*,size_t);
+double        __cdecl wcstod(const wchar_t*,wchar_t**);
+long          __cdecl wcstol(const wchar_t*,wchar_t**,int);
+size_t        __cdecl wcstombs(char*,const wchar_t*,size_t);
+unsigned long __cdecl wcstoul(const wchar_t*,wchar_t**,int);
+int           __cdecl wctomb(char*,wchar_t);
 #endif /* _WSTDLIB_DEFINED */
 
 #ifdef __cplusplus

@@ -30,18 +30,18 @@
 
 struct _EXCEPTION_POINTERS;
 
-typedef void (*terminate_handler)(void);
-typedef void (*terminate_function)(void);
-typedef void (*unexpected_handler)(void);
-typedef void (*unexpected_function)(void);
-typedef void (*_se_translator_function)(unsigned int code, struct _EXCEPTION_POINTERS *info);
+typedef void (__cdecl *terminate_handler)(void);
+typedef void (__cdecl *terminate_function)(void);
+typedef void (__cdecl *unexpected_handler)(void);
+typedef void (__cdecl *unexpected_function)(void);
+typedef void (__cdecl *_se_translator_function)(unsigned int code, struct _EXCEPTION_POINTERS *info);
 
-terminate_function set_terminate(terminate_function func);
-unexpected_function set_unexpected(unexpected_function func);
-_se_translator_function _set_se_translator(_se_translator_function func);
+terminate_function __cdecl set_terminate(terminate_function func);
+unexpected_function __cdecl set_unexpected(unexpected_function func);
+_se_translator_function __cdecl set_se_translator(_se_translator_function func);
 
-void        terminate(void);
-void        unexpected(void);
+void __cdecl terminate(void);
+void __cdecl unexpected(void);
 
 #include <poppack.h>
 

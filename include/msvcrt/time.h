@@ -66,10 +66,10 @@ extern "C" {
 #define _timezone (*__p__timezone())
 #define _tzname (__p__tzname())
 
-int *__p__daylight(void);
-long *__p__dstbias(void);
-long *__p__timezone(void);
-char **__p__tzname(void);
+int *   __cdecl __p__daylight(void);
+long *  __cdecl __p__dstbias(void);
+long *  __cdecl __p__timezone(void);
+char ** __cdecl __p__tzname(void);
 #else
 extern int _daylight;
 extern long _dstbias;
@@ -77,29 +77,29 @@ extern long _timezone;
 extern char *_tzname;
 #endif
 
-unsigned    _getsystime(struct tm*);
-unsigned    _setsystime(struct tm*,unsigned);
-char*       _strdate(char*);
-char*       _strtime(char*);
-void        _tzset(void);
+unsigned    __cdecl _getsystime(struct tm*);
+unsigned    __cdecl _setsystime(struct tm*,unsigned);
+char*       __cdecl _strdate(char*);
+char*       __cdecl _strtime(char*);
+void        __cdecl _tzset(void);
 
-char*       asctime(const struct tm*);
-clock_t clock(void);
-char*       ctime(const time_t*);
-double      difftime(time_t,time_t);
-struct tm* gmtime(const time_t*);
-struct tm* localtime(const time_t*);
-time_t mktime(struct tm*);
-size_t      strftime(char*,size_t,const char*,const struct tm*);
-time_t time(time_t*);
+char*       __cdecl asctime(const struct tm*);
+clock_t     __cdecl clock(void);
+char*       __cdecl ctime(const time_t*);
+double      __cdecl difftime(time_t,time_t);
+struct tm*  __cdecl gmtime(const time_t*);
+struct tm*  __cdecl localtime(const time_t*);
+time_t      __cdecl mktime(struct tm*);
+size_t      __cdecl strftime(char*,size_t,const char*,const struct tm*);
+time_t      __cdecl time(time_t*);
 
 #ifndef _WTIME_DEFINED
 #define _WTIME_DEFINED
-wchar_t* _wasctime(const struct tm*);
-size_t  wcsftime(wchar_t*,size_t,const wchar_t*,const struct tm*);
-wchar_t*_wctime(const time_t*);
-wchar_t*_wstrdate(wchar_t*);
-wchar_t*_wstrtime(wchar_t*);
+wchar_t* __cdecl _wasctime(const struct tm*);
+size_t   __cdecl wcsftime(wchar_t*,size_t,const wchar_t*,const struct tm*);
+wchar_t* __cdecl _wctime(const time_t*);
+wchar_t* __cdecl _wstrdate(wchar_t*);
+wchar_t* __cdecl _wstrtime(wchar_t*);
 #endif /* _WTIME_DEFINED */
 
 #ifdef __cplusplus

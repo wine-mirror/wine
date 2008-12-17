@@ -41,9 +41,9 @@
 extern "C" {
 #endif
 
-unsigned long               __threadid(void);
-unsigned long               __threadhandle(void);
-#define _threadid          (__threadid())
+unsigned long __cdecl __threadid(void);
+unsigned long __cdecl __threadhandle(void);
+#define _threadid    (__threadid())
 
 #ifdef __cplusplus
 }

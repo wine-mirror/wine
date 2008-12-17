@@ -37,10 +37,9 @@ struct _utimbuf
 extern "C" {
 #endif
 
-int         _futime(int,struct _utimbuf*);
-int         _utime(const char*,struct _utimbuf*);
-
-int         _wutime(const wchar_t*,struct _utimbuf*);
+int __cdecl _futime(int,struct _utimbuf*);
+int __cdecl _utime(const char*,struct _utimbuf*);
+int __cdecl _wutime(const wchar_t*,struct _utimbuf*);
 
 #ifdef __cplusplus
 }

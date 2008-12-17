@@ -61,12 +61,12 @@ struct lconv
 extern "C" {
 #endif
 
-char*       setlocale(int,const char*);
-struct lconv* localeconv(void);
+char*         __cdecl setlocale(int,const char*);
+struct lconv* __cdecl localeconv(void);
 
 #ifndef _WLOCALE_DEFINED
 #define _WLOCALE_DEFINED
-wchar_t* _wsetlocale(int,const wchar_t*);
+wchar_t* __cdecl _wsetlocale(int,const wchar_t*);
 #endif /* _WLOCALE_DEFINED */
 
 #ifdef __cplusplus

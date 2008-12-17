@@ -45,39 +45,39 @@ struct _complex
 };
 #endif /* _COMPLEX_DEFINED */
 
-double sin(double);
-double cos(double);
-double tan(double);
-double sinh(double);
-double cosh(double);
-double tanh(double);
-double asin(double);
-double acos(double);
-double atan(double);
-double atan2(double, double);
-double exp(double);
-double log(double);
-double log10(double);
-double pow(double, double);
-double sqrt(double);
-double ceil(double);
-double floor(double);
-double fabs(double);
-double ldexp(double, int);
-double frexp(double, int*);
-double modf(double, double*);
-double fmod(double, double);
+double __cdecl sin(double);
+double __cdecl cos(double);
+double __cdecl tan(double);
+double __cdecl sinh(double);
+double __cdecl cosh(double);
+double __cdecl tanh(double);
+double __cdecl asin(double);
+double __cdecl acos(double);
+double __cdecl atan(double);
+double __cdecl atan2(double, double);
+double __cdecl exp(double);
+double __cdecl log(double);
+double __cdecl log10(double);
+double __cdecl pow(double, double);
+double __cdecl sqrt(double);
+double __cdecl ceil(double);
+double __cdecl floor(double);
+double __cdecl fabs(double);
+double __cdecl ldexp(double, int);
+double __cdecl frexp(double, int*);
+double __cdecl modf(double, double*);
+double __cdecl fmod(double, double);
 
-double hypot(double, double);
-double j0(double);
-double j1(double);
-double jn(int, double);
-double y0(double);
-double y1(double);
-double yn(int, double);
+double __cdecl hypot(double, double);
+double __cdecl j0(double);
+double __cdecl j1(double);
+double __cdecl jn(int, double);
+double __cdecl y0(double);
+double __cdecl y1(double);
+double __cdecl yn(int, double);
 
-int _matherr(struct _exception*);
-double _cabs(struct _complex);
+int __cdecl _matherr(struct _exception*);
+double __cdecl _cabs(struct _complex);
 
 #ifndef HUGE_VAL
 #  if defined(__GNUC__) && (__GNUC__ >= 3)

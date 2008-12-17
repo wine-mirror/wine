@@ -65,7 +65,7 @@
 extern "C" {
 #endif
 
-extern int* _errno(void);
+extern int* __cdecl _errno(void);
 
 #ifdef __cplusplus
 }

@@ -40,7 +40,7 @@ struct _timeb
 extern "C" {
 #endif
 
-void        _ftime(struct _timeb*);
+void __cdecl _ftime(struct _timeb*);
 
 #ifdef __cplusplus
 }

@@ -84,14 +84,14 @@ extern int _crtAssertBusy;
 extern int _crtBreakAlloc;
 extern int _crtDbgFlag;
 
-int   _CrtCheckMemory(void);
-int   _CrtDbgReport(int reportType, const char *filename, int linenumber,
-                    const char *moduleName, const char *format, ...);
-int   _CrtDumpMemoryLeaks(void);
-int   _CrtSetBreakAlloc(int new);
-int   _CrtSetDbgFlag(int new);
-void *_CrtSetDumpClient(void *dumpClient);
-int   _CrtSetReportMode(int reportType, int reportMode);
+int   __cdecl _CrtCheckMemory(void);
+int   __cdecl _CrtDbgReport(int reportType, const char *filename, int linenumber,
+                            const char *moduleName, const char *format, ...);
+int   __cdecl _CrtDumpMemoryLeaks(void);
+int   __cdecl _CrtSetBreakAlloc(int new);
+int   __cdecl _CrtSetDbgFlag(int new);
+void *__cdecl _CrtSetDumpClient(void *dumpClient);
+int   __cdecl _CrtSetReportMode(int reportType, int reportMode);
 
 #ifdef __cplusplus
 }

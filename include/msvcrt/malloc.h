@@ -44,7 +44,7 @@ typedef struct _heapinfo
 #endif /* _HEAPINFO_DEFINED */
 
 #ifdef __i386__
-extern unsigned int* __p__amblksiz(void);
+extern unsigned int* __cdecl __p__amblksiz(void);
 #define _amblksiz (*__p__amblksiz());
 #else
 extern unsigned int _amblksiz;
@@ -54,28 +54,28 @@ extern unsigned int _amblksiz;
 extern "C" {
 #endif
 
-void*       _expand(void*,size_t);
-int         _heapadd(void*,size_t);
-int         _heapchk(void);
-int         _heapmin(void);
-int         _heapset(unsigned int);
-size_t _heapused(size_t*,size_t*);
-int         _heapwalk(_HEAPINFO*);
-size_t _msize(void*);
+void*  __cdecl _expand(void*,size_t);
+int    __cdecl _heapadd(void*,size_t);
+int    __cdecl _heapchk(void);
+int    __cdecl _heapmin(void);
+int    __cdecl _heapset(unsigned int);
+size_t __cdecl _heapused(size_t*,size_t*);
+int    __cdecl _heapwalk(_HEAPINFO*);
+size_t __cdecl _msize(void*);
 
-void*       calloc(size_t,size_t);
-void        free(void*);
-void*       malloc(size_t);
-void*       realloc(void*,size_t);
+void*  __cdecl calloc(size_t,size_t);
+void   __cdecl free(void*);
+void*  __cdecl malloc(size_t);
+void*  __cdecl realloc(void*,size_t);
 
-void        _aligned_free(void*);
-void*       _aligned_malloc(size_t,size_t);
-void*       _aligned_offset_malloc(size_t,size_t,size_t);
-void*       _aligned_realloc(void*,size_t,size_t);
-void*       _aligned_offset_realloc(void*,size_t,size_t,size_t);
+void   __cdecl _aligned_free(void*);
+void*  __cdecl _aligned_malloc(size_t,size_t);
+void*  __cdecl _aligned_offset_malloc(size_t,size_t,size_t);
+void*  __cdecl _aligned_realloc(void*,size_t,size_t);
+void*  __cdecl _aligned_offset_realloc(void*,size_t,size_t,size_t);
 
-size_t _get_sbh_threshold(void);
-int _set_sbh_threshold(size_t size);
+size_t __cdecl _get_sbh_threshold(void);
+int    __cdecl _set_sbh_threshold(size_t size);
 
 #ifdef __cplusplus
 }

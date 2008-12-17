@@ -18,11 +18,10 @@
 
 #include <stdarg.h>
 
-#include "mtdll.h"
-
 #include "wine/debug.h"
 #include "windef.h"
 #include "winbase.h"
+#include "mtdll.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 

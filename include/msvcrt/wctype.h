@@ -49,23 +49,23 @@ extern "C" {
 
 #ifndef _WCTYPE_DEFINED
 #define _WCTYPE_DEFINED
-int is_wctype(wint_t,wctype_t);
-int isleadbyte(int);
-int iswalnum(wint_t);
-int iswalpha(wint_t);
-int iswascii(wint_t);
-int iswcntrl(wint_t);
-int iswctype(wint_t,wctype_t);
-int iswdigit(wint_t);
-int iswgraph(wint_t);
-int iswlower(wint_t);
-int iswprint(wint_t);
-int iswpunct(wint_t);
-int iswspace(wint_t);
-int iswupper(wint_t);
-int iswxdigit(wint_t);
-wchar_t towlower(wchar_t);
-wchar_t towupper(wchar_t);
+int __cdecl is_wctype(wint_t,wctype_t);
+int __cdecl isleadbyte(int);
+int __cdecl iswalnum(wint_t);
+int __cdecl iswalpha(wint_t);
+int __cdecl iswascii(wint_t);
+int __cdecl iswcntrl(wint_t);
+int __cdecl iswctype(wint_t,wctype_t);
+int __cdecl iswdigit(wint_t);
+int __cdecl iswgraph(wint_t);
+int __cdecl iswlower(wint_t);
+int __cdecl iswprint(wint_t);
+int __cdecl iswpunct(wint_t);
+int __cdecl iswspace(wint_t);
+int __cdecl iswupper(wint_t);
+int __cdecl iswxdigit(wint_t);
+wchar_t __cdecl towlower(wchar_t);
+wchar_t __cdecl towupper(wchar_t);
 #endif /* _WCTYPE_DEFINED */
 
 #ifdef __cplusplus

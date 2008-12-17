@@ -24,8 +24,8 @@
 #define _mlock(locknum)   _lock(locknum)
 #define _munlock(locknum) _unlock(locknum)
 
-void _unlock( int locknum );
-void _lock( int locknum );
+void __cdecl _unlock( int locknum );
+void __cdecl _lock( int locknum );
 
 #else
 

@@ -122,7 +122,6 @@ void CDECL __GetMainArgs( int *argc, char ***argv, char ***envp, int expand_wild
  */
 int CDECL CRTDLL__fstat(int fd, struct crtdll_stat* buf)
 {
-    extern int _fstat(int,struct _stat*);
     struct _stat st;
     int ret;
 
@@ -136,7 +135,6 @@ int CDECL CRTDLL__fstat(int fd, struct crtdll_stat* buf)
  */
 int CDECL CRTDLL__stat(const char* path, struct crtdll_stat * buf)
 {
-    extern int _stat(const char*,struct _stat*);
     struct _stat st;
     int ret;
 

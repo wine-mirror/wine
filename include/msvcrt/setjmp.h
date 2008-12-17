@@ -53,8 +53,8 @@ typedef _JBTYPE                    jmp_buf[_JBLEN];
 extern "C" {
 #endif
 
-int         _setjmp(jmp_buf);
-int         longjmp(jmp_buf,int);
+int __cdecl _setjmp(jmp_buf);
+int __cdecl longjmp(jmp_buf,int);
 
 #ifdef __cplusplus
 }

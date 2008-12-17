@@ -26,14 +26,10 @@
 extern "C" {
 #endif
 
-void*       _lfind(const void*,const void*,unsigned int*,unsigned int,
-                   int (*)(const void*,const void*));
-void*       _lsearch(const void*,void*,unsigned int*,unsigned int,
-                     int (*)(const void*,const void*));
-void*       bsearch(const void*,const void*,size_t,size_t,
-                            int (*)(const void*,const void*));
-void        qsort(void*,size_t,size_t,
-                          int (*)(const void*,const void*));
+void* __cdecl _lfind(const void*,const void*,unsigned int*,unsigned int,int (*)(const void*,const void*));
+void* __cdecl _lsearch(const void*,void*,unsigned int*,unsigned int,int (*)(const void*,const void*));
+void* __cdecl bsearch(const void*,const void*,size_t,size_t,int (*)(const void*,const void*));
+void  __cdecl qsort(void*,size_t,size_t,int (*)(const void*,const void*));
 
 #ifdef __cplusplus
 }

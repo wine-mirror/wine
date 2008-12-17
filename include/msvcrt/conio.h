@@ -14,23 +14,23 @@
 extern "C" {
 #endif
 
-char*       _cgets(char*);
-int         _cprintf(const char*,...);
-int         _cputs(const char*);
-int         _cscanf(const char*,...);
-int         _getch(void);
-int         _getche(void);
-int         _kbhit(void);
-int         _putch(int);
-int         _ungetch(int);
+char* __cdecl _cgets(char*);
+int   __cdecl _cprintf(const char*,...);
+int   __cdecl _cputs(const char*);
+int   __cdecl _cscanf(const char*,...);
+int   __cdecl _getch(void);
+int   __cdecl _getche(void);
+int   __cdecl _kbhit(void);
+int   __cdecl _putch(int);
+int   __cdecl _ungetch(int);
 
 #ifdef _M_IX86
-int         _inp(unsigned short);
-unsigned long _inpd(unsigned short);
-unsigned short _inpw(unsigned short);
-int         _outp(unsigned short, int);
-unsigned long _outpd(unsigned short, unsigned long);
-unsigned short _outpw(unsigned short, unsigned short);
+int            __cdecl _inp(unsigned short);
+unsigned long  __cdecl _inpd(unsigned short);
+unsigned short __cdecl _inpw(unsigned short);
+int            __cdecl _outp(unsigned short, int);
+unsigned long  __cdecl _outpd(unsigned short, unsigned long);
+unsigned short __cdecl _outpw(unsigned short, unsigned short);
 #endif
 
 #ifdef __cplusplus
@@ -53,8 +53,8 @@ static inline unsigned short outpw(unsigned short i, unsigned short j) { return 
 #endif
 
 #if defined(__GNUC__) && (__GNUC__ < 4)
-extern int cprintf(const char*,...) __attribute__((alias("_cprintf"),format(printf,1,2)));
-extern int cscanf(const char*,...) __attribute__((alias("_cscanf"),format(scanf,1,2)));
+extern int __cdecl cprintf(const char*,...) __attribute__((alias("_cprintf"),format(printf,1,2)));
+extern int __cdecl cscanf(const char*,...) __attribute__((alias("_cscanf"),format(scanf,1,2)));
 #else
 #define cprintf _cprintf
 #define cscanf _cscanf
