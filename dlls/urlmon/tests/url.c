@@ -2321,7 +2321,7 @@ static void test_BindToObject(int protocol, BOOL emul)
         todo_wine ok(IMoniker_Release(mon) == 0, "mon should be destroyed here\n");
 
         if(bindf & BINDF_ASYNCHRONOUS)
-            ok(IBindCtx_Release(bctx) != 0, "bctx should not be destroyed here\n");
+            IBindCtx_Release(bctx);
         else
             todo_wine ok(IBindCtx_Release(bctx) == 0, "bctx should be destroyed here\n");
     }
