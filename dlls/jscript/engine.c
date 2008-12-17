@@ -489,9 +489,11 @@ static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, ex
     }
 
     for(item = ctx->parser->script->named_items; item; item = item->next) {
-        hres = disp_get_id(item->disp, identifier, 0, &id);
-        if(SUCCEEDED(hres))
-            break;
+        if(item->flags & SCRIPTITEM_GLOBALMEMBERS) {
+            hres = disp_get_id(item->disp, identifier, 0, &id);
+            if(SUCCEEDED(hres))
+                break;
+        }
     }
 
     if(item) {
