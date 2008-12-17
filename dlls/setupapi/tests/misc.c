@@ -160,8 +160,9 @@ static void test_SetupCopyOEMInf(void)
     res = pSetupCopyOEMInfA("", NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
-       GetLastError() == ERROR_BAD_PATHNAME, /* Win98 */
-       "Expected ERROR_FILE_NOT_FOUND or ERROR_BAD_PATHNAME, got %d\n", GetLastError());
+       GetLastError() == ERROR_BAD_PATHNAME || /* Win98 */
+       GetLastError() == ERROR_INVALID_PARAMETER, /* Vista, W2K8 */
+       "Unexpected error : %d\n", GetLastError());
 
     /* try a relative nonexistent SourceInfFileName */
     SetLastError(0xdeadbeef);
@@ -196,6 +197,17 @@ static void test_SetupCopyOEMInf(void)
     SetLastError(0xdeadbeef);
     res = pSetupCopyOEMInfA(tmpfile, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
+    if (GetLastError() == ERROR_WRONG_INF_TYPE)
+    {
+       /* FIXME:
+        * Vista needs a [Manufacturer] entry in the inf file. Doing this will give some
+        * popups during the installation though as it also needs a catalog file (signed?).
+        */
+       win_skip("Needs a different inf file on Vista/W2K8\n");
+       DeleteFile(tmpfile);
+       return;
+    }
+
     ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
        GetLastError() == ERROR_FILE_EXISTS, /* Win98 */
        "Expected ERROR_FILE_NOT_FOUND or ERROR_FILE_EXISTS, got %d\n", GetLastError());
