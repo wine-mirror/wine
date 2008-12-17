@@ -32,8 +32,17 @@
 #include "imagehlp.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
+
+#define CATADMIN_MAGIC 0x43415441 /* 'CATA' */
+
+struct catadmin
+{
+    DWORD magic;
+    WCHAR path[MAX_PATH];
+};
 
 /***********************************************************************
  *      CryptCATAdminAcquireContext (WINTRUST.@)
@@ -42,7 +51,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
  *
  * PARAMS
  *   catAdmin  [O] Pointer to the context handle.
- *   sysSystem [I] Pointer to a GUID for the needed subsystem.
+ *   sys       [I] Pointer to a GUID for the needed subsystem.
  *   dwFlags   [I] Reserved.
  *
  * RETURNS
@@ -50,19 +59,52 @@ WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
  *   Failure: FALSE.
  *
  */
-BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN* catAdmin,
-                    const GUID *sysSystem, DWORD dwFlags )
+BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN *catAdmin,
+                                        const GUID *sys, DWORD dwFlags)
 {
-    FIXME("%p %s %x\n", catAdmin, debugstr_guid(sysSystem), dwFlags);
+    static const WCHAR catroot[] =
+        {'\\','c','a','t','r','o','o','t',0};
+    static const WCHAR fmt[] =
+        {'%','s','\\','{','%','0','8','x','-','%','0','4','x','-','%','0',
+         '4','x','-','%','0','2','x','%','0','2','x','-','%','0','2','x',
+         '%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x',
+         '%','0','2','x','}',0};
+    static const GUID defsys =
+        {0x127d0a1d,0x4ef2,0x11d1,{0x86,0x08,0x00,0xc0,0x4f,0xc2,0x95,0xee}};
+
+    WCHAR catroot_dir[MAX_PATH];
+    struct catadmin *ca;
+
+    TRACE("%p %s %x\n", catAdmin, debugstr_guid(sys), dwFlags);
 
     if (!catAdmin)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
+    if (!(ca = HeapAlloc(GetProcessHeap(), 0, sizeof(*ca))))
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
 
-    *catAdmin = (HCATADMIN)0xdeadbeef;
+    GetSystemDirectoryW(catroot_dir, MAX_PATH);
+    strcatW(catroot_dir, catroot);
 
+    /* create the directory if it doesn't exist */
+    CreateDirectoryW(catroot_dir, NULL);
+
+    if (!sys) sys = &defsys;
+    sprintfW(ca->path, fmt, catroot_dir, sys->Data1, sys->Data2,
+             sys->Data3, sys->Data4[0], sys->Data4[1], sys->Data4[2],
+             sys->Data4[3], sys->Data4[4], sys->Data4[5], sys->Data4[6],
+             sys->Data4[7]);
+
+    /* create the directory if it doesn't exist */
+    CreateDirectoryW(ca->path, NULL);
+
+    ca->magic = CATADMIN_MAGIC;
+    *catAdmin = ca;
     return TRUE;
 }
 

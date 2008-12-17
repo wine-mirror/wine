@@ -164,17 +164,14 @@ static void test_context(void)
     /* On a clean Wine this will fail. When a native wintrust.dll was used in the past
      * some tests will succeed.
      */
-    todo_wine
-        ok(attrs != INVALID_FILE_ATTRIBUTES,
-            "Expected the CatRoot directory to exist\n");
+    ok(attrs != INVALID_FILE_ATTRIBUTES, "Expected the CatRoot directory to exist\n");
 
     /* Windows creates the GUID directory in capitals */
     lstrcpyA(dummydir, catroot);
     lstrcatA(dummydir, "\\{DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF}");
     attrs = GetFileAttributes(dummydir);
-    todo_wine
-        ok(attrs != INVALID_FILE_ATTRIBUTES,
-            "Expected CatRoot\\{DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF} directory to exist\n");
+    ok(attrs != INVALID_FILE_ATTRIBUTES,
+       "Expected CatRoot\\{DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF} directory to exist\n");
 
     /* Only present on XP or higher. */
     attrs = GetFileAttributes(catroot2);
