@@ -38,6 +38,8 @@ my %formats =
     "thread_id_t"   => [  4,   4,  "%04x" ],
     "lparam_t"      => [  4,   4,  "%lx" ],
     "apc_param_t"   => [  4,   4,  "%lx" ],
+    "file_pos_t"    => [  8,   8,  "&dump_uint64" ],
+    "mem_size_t"    => [  8,   8,  "&dump_uint64" ],
     "timeout_t"     => [  8,   8,  "&dump_timeout" ],
     "rectangle_t"   => [  16,  4,  "&dump_rectangle" ],
     "char_info_t"   => [  4,   2,  "&dump_char_info" ],
@@ -46,7 +48,6 @@ my %formats =
     "async_data_t"  => [  24,  4,  "&dump_async_data" ],
     "luid_t"        => [  8,   4,  "&dump_luid" ],
     "ioctl_code_t"  => [  4,   4,  "&dump_ioctl_code" ],
-    "file_pos_t"    => [  8,   8,  "&dump_uint64" ],
 );
 
 my @requests = ();

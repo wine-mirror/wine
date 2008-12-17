@@ -1318,7 +1318,7 @@ enum char_info_mode
 @REQ(create_mapping)
     unsigned int access;        /* wanted access rights */
     unsigned int attributes;    /* object attributes */
-    file_pos_t   size;          /* mapping size */
+    mem_size_t   size;          /* mapping size */
     unsigned int protect;       /* protection flags (see below) */
     obj_handle_t file_handle;   /* file handle */
     VARARG(objattr,object_attributes); /* object attributes */
@@ -1357,7 +1357,7 @@ enum char_info_mode
     obj_handle_t handle;        /* handle to the mapping */
     unsigned int access;        /* wanted access rights */
 @REPLY
-    file_pos_t   size;          /* mapping size */
+    mem_size_t   size;          /* mapping size */
     int          protect;       /* protection flags */
     int          header_size;   /* header size (for VPROT_IMAGE mapping) */
     void*        base;          /* default base addr (for VPROT_IMAGE mapping) */
@@ -1371,7 +1371,7 @@ enum char_info_mode
     obj_handle_t handle;        /* handle to the mapping */
     file_pos_t   offset;        /* starting offset (page-aligned, in bytes) */
 @REPLY
-    file_pos_t   size;          /* size of range starting at offset (page-aligned, in bytes) */
+    mem_size_t   size;          /* size of range starting at offset (page-aligned, in bytes) */
     int          committed;     /* whether it is a committed range */
 @END
 
@@ -1380,7 +1380,7 @@ enum char_info_mode
 @REQ(add_mapping_committed_range)
     obj_handle_t handle;        /* handle to the mapping */
     file_pos_t   offset;        /* starting offset (page-aligned, in bytes) */
-    file_pos_t   size;          /* size to set (page-aligned, in bytes) or 0 if only retrieving */
+    mem_size_t   size;          /* size to set (page-aligned, in bytes) or 0 if only retrieving */
 @END
 
 

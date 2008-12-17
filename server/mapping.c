@@ -54,7 +54,7 @@ struct ranges
 struct mapping
 {
     struct object   obj;             /* object header */
-    file_pos_t      size;            /* mapping size */
+    mem_size_t      size;            /* mapping size */
     int             protect;         /* protection flags */
     struct file    *file;            /* file mapped */
     int             header_size;     /* size of headers (for PE image mapping) */
@@ -199,7 +199,7 @@ static void add_committed_range( struct mapping *mapping, file_pos_t start, file
 }
 
 /* find the range containing start and return whether it's committed */
-static int find_committed_range( struct mapping *mapping, file_pos_t start, file_pos_t *size )
+static int find_committed_range( struct mapping *mapping, file_pos_t start, mem_size_t *size )
 {
     unsigned int i;
     struct range *ranges;
@@ -231,7 +231,7 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
                                  IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
 {
     unsigned int i;
-    file_pos_t total_size;
+    mem_size_t total_size;
     size_t file_size, map_size, max_size;
     off_t shared_pos, read_pos, write_pos;
     char *buffer = NULL;
@@ -360,7 +360,7 @@ static int get_image_params( struct mapping *mapping )
 }
 
 /* get the size of the unix file associated with the mapping */
-static inline int get_file_size( struct file *file, file_pos_t *size )
+static inline int get_file_size( struct file *file, mem_size_t *size )
 {
     struct stat st;
     int unix_fd = get_file_unix_fd( file );
@@ -371,7 +371,7 @@ static inline int get_file_size( struct file *file, file_pos_t *size )
 }
 
 static struct object *create_mapping( struct directory *root, const struct unicode_str *name,
-                                      unsigned int attr, file_pos_t size, int protect,
+                                      unsigned int attr, mem_size_t size, int protect,
                                       obj_handle_t handle, const struct security_descriptor *sd )
 {
     struct mapping *mapping;
@@ -440,7 +440,7 @@ static struct object *create_mapping( struct directory *root, const struct unico
         if (!(mapping->file = create_temp_file( access ))) goto error;
         if (!grow_file( mapping->file, size )) goto error;
     }
-    mapping->size    = (size + page_mask) & ~((file_pos_t)page_mask);
+    mapping->size    = (size + page_mask) & ~((mem_size_t)page_mask);
     mapping->protect = protect;
     return &mapping->obj;
 

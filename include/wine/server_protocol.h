@@ -1673,7 +1673,7 @@ struct create_mapping_request
     struct request_header __header;
     unsigned int access;
     unsigned int attributes;
-    file_pos_t   size;
+    mem_size_t   size;
     unsigned int protect;
     obj_handle_t file_handle;
     /* VARARG(objattr,object_attributes); */
@@ -1725,7 +1725,7 @@ struct get_mapping_info_request
 struct get_mapping_info_reply
 {
     struct reply_header __header;
-    file_pos_t   size;
+    mem_size_t   size;
     int          protect;
     int          header_size;
     void*        base;
@@ -1744,7 +1744,7 @@ struct get_mapping_committed_range_request
 struct get_mapping_committed_range_reply
 {
     struct reply_header __header;
-    file_pos_t   size;
+    mem_size_t   size;
     int          committed;
 };
 
@@ -1755,7 +1755,7 @@ struct add_mapping_committed_range_request
     struct request_header __header;
     obj_handle_t handle;
     file_pos_t   offset;
-    file_pos_t   size;
+    mem_size_t   size;
 };
 struct add_mapping_committed_range_reply
 {

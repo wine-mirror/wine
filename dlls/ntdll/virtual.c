@@ -2210,7 +2210,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
                                     SECTION_INHERIT inherit, ULONG alloc_type, ULONG protect )
 {
     NTSTATUS res;
-    ULONGLONG full_size;
+    mem_size_t full_size;
     ACCESS_MASK access;
     SIZE_T size = 0;
     SIZE_T mask = get_mask( zero_bits );
@@ -2295,9 +2295,13 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     if (res) return res;
 
     size = full_size;
-    if (sizeof(size) < sizeof(full_size) && (size != full_size))
-        ERR( "Sizes larger than 4Gb (%x%08x) not supported on this platform\n",
-             (DWORD)(full_size >> 32), (DWORD)full_size );
+    if (size != full_size)
+    {
+        WARN( "Sizes larger than 4Gb (%s) not supported on this platform\n",
+              wine_dbgstr_longlong(full_size) );
+        if (dup_mapping) NtClose( dup_mapping );
+        return STATUS_INVALID_PARAMETER;
+    }
 
     if ((res = server_get_unix_fd( handle, 0, &unix_handle, &needs_close, NULL, NULL ))) goto done;
 
