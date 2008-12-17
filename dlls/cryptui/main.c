@@ -1002,23 +1002,240 @@ static void init_general_page(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
     page->lParam = (LPARAM)pCertViewInfo;
 }
 
+typedef WCHAR * (*field_format_func)(PCCERT_CONTEXT cert);
+
+static WCHAR *field_format_version(PCCERT_CONTEXT cert)
+{
+    static const WCHAR fmt[] = { 'V','%','d',0 };
+    WCHAR *buf = HeapAlloc(GetProcessHeap(), 0, 12 * sizeof(WCHAR));
+
+    if (buf)
+        sprintfW(buf, fmt, cert->pCertInfo->dwVersion);
+    return buf;
+}
+
+static WCHAR *format_hex_string(void *pb, DWORD cb)
+{
+    WCHAR *buf = HeapAlloc(GetProcessHeap(), 0, (cb * 3 + 1) * sizeof(WCHAR));
+
+    if (buf)
+    {
+        static const WCHAR fmt[] = { '%','0','2','x',' ',0 };
+        DWORD i;
+        WCHAR *ptr;
+
+        for (i = 0, ptr = buf; i < cb; i++, ptr += 3)
+            sprintfW(ptr, fmt, ((BYTE *)pb)[i]);
+    }
+    return buf;
+}
+
+static WCHAR *field_format_serial_number(PCCERT_CONTEXT cert)
+{
+    return format_hex_string(cert->pCertInfo->SerialNumber.pbData,
+     cert->pCertInfo->SerialNumber.cbData);
+}
+
+static WCHAR *field_format_issuer(PCCERT_CONTEXT cert)
+{
+    return get_cert_name_string(cert, CERT_NAME_SIMPLE_DISPLAY_TYPE,
+     CERT_NAME_ISSUER_FLAG);
+}
+
+static WCHAR *field_format_subject(PCCERT_CONTEXT cert)
+{
+    return get_cert_name_string(cert, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0);
+}
+
+static WCHAR *format_long_date(const FILETIME *fileTime)
+{
+    WCHAR dateFmt[80]; /* long enough for LOCALE_SLONGDATE */
+    DWORD len;
+    WCHAR *buf = NULL;
+    SYSTEMTIME sysTime;
+
+    /* FIXME: format isn't quite right, want time too */
+    GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_SLONGDATE, dateFmt,
+     sizeof(dateFmt) / sizeof(dateFmt[0]));
+    FileTimeToSystemTime(fileTime, &sysTime);
+    len = GetDateFormatW(LOCALE_SYSTEM_DEFAULT, 0, &sysTime, dateFmt, NULL, 0);
+    if (len)
+    {
+        buf = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (buf)
+            GetDateFormatW(LOCALE_SYSTEM_DEFAULT, 0, &sysTime, dateFmt, buf,
+             len);
+    }
+    return buf;
+}
+
+static WCHAR *field_format_from_date(PCCERT_CONTEXT cert)
+{
+    return format_long_date(&cert->pCertInfo->NotBefore);
+}
+
+static WCHAR *field_format_to_date(PCCERT_CONTEXT cert)
+{
+    return format_long_date(&cert->pCertInfo->NotAfter);
+}
+
+static WCHAR *field_format_public_key(PCCERT_CONTEXT cert)
+{
+    PCCRYPT_OID_INFO oidInfo;
+    WCHAR *buf = NULL;
+
+    oidInfo = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY,
+     cert->pCertInfo->SubjectPublicKeyInfo.Algorithm.pszObjId, 0);
+    if (oidInfo)
+    {
+        WCHAR fmt[MAX_STRING_LEN];
+
+        if (LoadStringW(hInstance, IDS_FIELD_PUBLIC_KEY_FORMAT, fmt,
+         sizeof(fmt) / sizeof(fmt[0])))
+        {
+            /* Allocate the output buffer.  Use the number of bytes in the
+             * public key as a conservative (high) estimate for the number of
+             * digits in its output.
+             * The output is of the form (in English)
+             * "<public key algorithm> (<public key bit length> bits)".
+             * Ordinarily having two positional parameters in a string is not a
+             * good idea, but as this isn't a sentence fragment, it shouldn't
+             * be word-order dependent.
+             */
+            buf = HeapAlloc(GetProcessHeap(), 0,
+             (strlenW(fmt) + strlenW(oidInfo->pwszName) +
+             cert->pCertInfo->SubjectPublicKeyInfo.PublicKey.cbData * 8)
+             * sizeof(WCHAR));
+            if (buf)
+                sprintfW(buf, fmt, oidInfo->pwszName,
+                 CertGetPublicKeyLength(X509_ASN_ENCODING,
+                  &cert->pCertInfo->SubjectPublicKeyInfo));
+        }
+    }
+    return buf;
+}
+
+struct field_value_data;
 struct detail_data
 {
     PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo;
     BOOL *pfPropertiesChanged;
+    int cFields;
+    struct field_value_data *fields;
 };
+
+typedef void (*add_fields_func)(HWND hwnd, struct detail_data *data);
+
+struct field_value_data
+{
+    void *param;
+};
+
+static void add_field_value_data(struct detail_data *data, void *param)
+{
+    if (data->cFields)
+        data->fields = HeapReAlloc(GetProcessHeap(), 0, data->fields,
+         (data->cFields + 1) * sizeof(struct field_value_data));
+    else
+        data->fields = HeapAlloc(GetProcessHeap(), 0,
+         sizeof(struct field_value_data));
+    if (data->fields)
+    {
+        data->fields[data->cFields].param = param;
+        data->cFields++;
+    }
+}
+
+static void add_field_and_value_to_list(HWND hwnd, struct detail_data *data,
+ LPWSTR field, LPWSTR value, void *param)
+{
+    LVITEMW item;
+    int iItem = SendMessageW(hwnd, LVM_GETITEMCOUNT, 0, 0);
+
+    item.mask = LVIF_TEXT | LVIF_PARAM;
+    item.iItem = iItem;
+    item.iSubItem = 0;
+    item.pszText = field;
+    item.lParam = (LPARAM)data;
+    SendMessageW(hwnd, LVM_INSERTITEMW, 0, (LPARAM)&item);
+    if (value)
+    {
+        item.pszText = value;
+        item.iSubItem = 1;
+        SendMessageW(hwnd, LVM_SETITEMTEXTW, iItem, (LPARAM)&item);
+    }
+    add_field_value_data(data, param);
+}
+
+static void add_string_id_and_value_to_list(HWND hwnd, struct detail_data *data,
+ int id, LPWSTR value, void *param)
+{
+    WCHAR buf[MAX_STRING_LEN];
+
+    LoadStringW(hInstance, id, buf, sizeof(buf) / sizeof(buf[0]));
+    add_field_and_value_to_list(hwnd, data, buf, value, param);
+}
+
+struct v1_field
+{
+    int id;
+    field_format_func format;
+};
+
+static void add_v1_field(HWND hwnd, struct detail_data *data,
+ const struct v1_field *field)
+{
+    WCHAR *val = field->format(data->pCertViewInfo->pCertContext);
+
+    if (val)
+    {
+        add_string_id_and_value_to_list(hwnd, data, field->id, val, NULL);
+        HeapFree(GetProcessHeap(), 0, val);
+    }
+}
+
+static const struct v1_field v1_fields[] = {
+ { IDS_FIELD_VERSION, field_format_version },
+ { IDS_FIELD_SERIAL_NUMBER, field_format_serial_number },
+ { IDS_FIELD_ISSUER, field_format_issuer },
+ { IDS_FIELD_VALID_FROM, field_format_from_date },
+ { IDS_FIELD_VALID_TO, field_format_to_date },
+ { IDS_FIELD_SUBJECT, field_format_subject },
+ { IDS_FIELD_PUBLIC_KEY, field_format_public_key }
+};
+
+static void add_v1_fields(HWND hwnd, struct detail_data *data)
+{
+    int i;
+    PCCERT_CONTEXT cert = data->pCertViewInfo->pCertContext;
+
+    /* The last item in v1_fields is the public key, which is not in the loop
+     * because it's a special case.
+     */
+    for (i = 0; i < sizeof(v1_fields) / sizeof(v1_fields[0]) - 1; i++)
+        add_v1_field(hwnd, data, &v1_fields[i]);
+    if (cert->pCertInfo->SubjectPublicKeyInfo.PublicKey.cbData)
+        add_v1_field(hwnd, data, &v1_fields[i]);
+}
+
+static void add_all_fields(HWND hwnd, struct detail_data *data)
+{
+    add_v1_fields(hwnd, data);
+    FIXME("add extensions and properties\n");
+}
 
 struct selection_list_item
 {
     int id;
+    add_fields_func add;
 };
 
 const struct selection_list_item listItems[] = {
- { IDS_FIELDS_ALL },
- { IDS_FIELDS_V1 },
- { IDS_FIELDS_EXTENSIONS },
- { IDS_FIELDS_CRITICAL_EXTENSIONS },
- { IDS_FIELDS_PROPERTIES },
+ { IDS_FIELDS_ALL, add_all_fields },
+ { IDS_FIELDS_V1, add_v1_fields },
+ { IDS_FIELDS_EXTENSIONS, NULL },
+ { IDS_FIELDS_CRITICAL_EXTENSIONS, NULL },
+ { IDS_FIELDS_PROPERTIES, NULL },
 };
 
 static void create_show_list(HWND hwnd, struct detail_data *data)
@@ -1057,11 +1274,43 @@ static void create_listview_columns(HWND hwnd)
     SendMessageW(lv, LVM_INSERTCOLUMNW, 1, (LPARAM)&column);
 }
 
+static void set_fields_selection(HWND hwnd, struct detail_data *data, int sel)
+{
+    HWND list = GetDlgItem(hwnd, IDC_DETAIL_LIST);
+
+    if (sel >= 0 && sel < sizeof(listItems) / sizeof(listItems[0]))
+    {
+        SendMessageW(list, LVM_DELETEALLITEMS, 0, 0);
+        if (listItems[sel].add)
+            listItems[sel].add(list, data);
+    }
+}
+
 static void create_cert_details_list(HWND hwnd, struct detail_data *data)
 {
     create_show_list(hwnd, data);
     create_listview_columns(hwnd);
-    FIXME("add cert details\n");
+    set_fields_selection(hwnd, data, 0);
+}
+
+static void free_detail_fields(struct detail_data *data)
+{
+    HeapFree(GetProcessHeap(), 0, data->fields);
+    data->fields = NULL;
+    data->cFields = 0;
+}
+
+static void refresh_details_view(HWND hwnd)
+{
+    HWND cb = GetDlgItem(hwnd, IDC_DETAIL_SELECT);
+    int curSel;
+    struct detail_data *data;
+
+    curSel = SendMessageW(cb, CB_GETCURSEL, 0, 0);
+    /* Actually, any index will do, since they all store the same data value */
+    data = (struct detail_data *)SendMessageW(cb, CB_GETITEMDATA, curSel, 0);
+    free_detail_fields(data);
+    set_fields_selection(hwnd, data, curSel);
 }
 
 static LRESULT CALLBACK detail_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
@@ -1092,6 +1341,9 @@ static LRESULT CALLBACK detail_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         case IDC_EDITPROPERTIES:
             FIXME("show edit properties dialog\n");
             break;
+        case ((CBN_SELCHANGE << 16) | IDC_DETAIL_SELECT):
+            refresh_details_view(hwnd);
+            break;
         }
         break;
     }
@@ -1109,6 +1361,8 @@ static BOOL init_detail_page(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
     {
         data->pCertViewInfo = pCertViewInfo;
         data->pfPropertiesChanged = pfPropertiesChanged;
+        data->cFields = 0;
+        data->fields = NULL;
         memset(page, 0, sizeof(PROPSHEETPAGEW));
         page->dwSize = sizeof(PROPSHEETPAGEW);
         page->hInstance = hInstance;
