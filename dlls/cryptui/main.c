@@ -1001,6 +1001,70 @@ static void init_general_page(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
     page->lParam = (LPARAM)pCertViewInfo;
 }
 
+struct detail_data
+{
+    PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo;
+    BOOL *pfPropertiesChanged;
+};
+
+static LRESULT CALLBACK detail_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+ LPARAM lp)
+{
+    PROPSHEETPAGEW *page;
+    struct detail_data *data;
+
+    TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        page = (PROPSHEETPAGEW *)lp;
+        data = (struct detail_data *)page->lParam;
+        FIXME("add cert details\n");
+        if (!(data->pCertViewInfo->dwFlags & CRYPTUI_ENABLE_EDITPROPERTIES))
+            EnableWindow(GetDlgItem(hwnd, IDC_EDITPROPERTIES), FALSE);
+        if (data->pCertViewInfo->dwFlags & CRYPTUI_DISABLE_EXPORT)
+            EnableWindow(GetDlgItem(hwnd, IDC_EXPORT), FALSE);
+        break;
+    case WM_COMMAND:
+        switch (wp)
+        {
+        case IDC_EXPORT:
+            FIXME("call CryptUIWizExport\n");
+            break;
+        case IDC_EDITPROPERTIES:
+            FIXME("show edit properties dialog\n");
+            break;
+        }
+        break;
+    }
+    return 0;
+}
+
+static BOOL init_detail_page(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
+ BOOL *pfPropertiesChanged, PROPSHEETPAGEW *page)
+{
+    BOOL ret;
+    struct detail_data *data = HeapAlloc(GetProcessHeap(), 0,
+     sizeof(struct detail_data));
+
+    if (data)
+    {
+        data->pCertViewInfo = pCertViewInfo;
+        data->pfPropertiesChanged = pfPropertiesChanged;
+        memset(page, 0, sizeof(PROPSHEETPAGEW));
+        page->dwSize = sizeof(PROPSHEETPAGEW);
+        page->hInstance = hInstance;
+        page->u.pszTemplate = MAKEINTRESOURCEW(IDD_DETAIL);
+        page->pfnDlgProc = detail_dlg_proc;
+        page->lParam = (LPARAM)data;
+        ret = TRUE;
+    }
+    else
+        ret = FALSE;
+    return ret;
+}
+
 static int CALLBACK cert_prop_sheet_proc(HWND hwnd, UINT msg, LPARAM lp)
 {
     RECT rc;
@@ -1040,7 +1104,7 @@ static BOOL show_cert_dialog(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
 
     nPages = pCertViewInfo->cPropSheetPages + 1; /* one for the General tab */
     if (!(pCertViewInfo->dwFlags & CRYPTUI_HIDE_DETAILPAGE))
-        FIXME("show detail page\n");
+        nPages++;
     if (!(pCertViewInfo->dwFlags & CRYPTUI_HIDE_HIERARCHYPAGE))
         FIXME("show hierarchy page\n");
     pages = HeapAlloc(GetProcessHeap(), 0, nPages * sizeof(PROPSHEETPAGEW));
@@ -1059,6 +1123,12 @@ static BOOL show_cert_dialog(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
         else
             hdr.pszCaption = MAKEINTRESOURCEW(IDS_CERTIFICATE);
         init_general_page(pCertViewInfo, &pages[hdr.nPages++]);
+        if (!(pCertViewInfo->dwFlags & CRYPTUI_HIDE_DETAILPAGE))
+        {
+            if (init_detail_page(pCertViewInfo, pfPropertiesChanged,
+             &pages[hdr.nPages]))
+                hdr.nPages++;
+        }
         /* Copy each additional page, and create the init dialog struct for it
          */
         if (pCertViewInfo->cPropSheetPages)
