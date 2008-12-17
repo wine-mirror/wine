@@ -70,9 +70,12 @@ static void dump_timeout( const timeout_t *time )
     fputs( get_timeout_str(*time), stderr );
 }
 
-static void dump_file_pos( const file_pos_t *pos )
+static void dump_uint64( const unsigned __int64 *val )
 {
-    fprintf( stderr, "%x%08x", (unsigned int)(*pos >> 32), (unsigned int)*pos );
+    if ((unsigned int)*val != *val)
+        fprintf( stderr, "%x%08x", (unsigned int)(*val >> 32), (unsigned int)*val );
+    else
+        fprintf( stderr, "%08x", (unsigned int)*val );
 }
 
 static void dump_rectangle( const rectangle_t *rect )
@@ -125,50 +128,56 @@ static void dump_apc_call( const apc_call_t *call )
                  get_status_name(call->async_io.status) );
         break;
     case APC_VIRTUAL_ALLOC:
-        fprintf( stderr, "APC_VIRTUAL_ALLOC,addr=%p,size=%lu,zero_bits=%u,op_type=%x,prot=%x",
-                 call->virtual_alloc.addr, call->virtual_alloc.size,
+        fprintf( stderr, "APC_VIRTUAL_ALLOC,addr=%p,size=", call->virtual_alloc.addr );
+        dump_uint64( &call->virtual_alloc.size );
+        fprintf( stderr, ",zero_bits=%u,op_type=%x,prot=%x",
                  call->virtual_alloc.zero_bits, call->virtual_alloc.op_type,
                  call->virtual_alloc.prot );
         break;
     case APC_VIRTUAL_FREE:
-        fprintf( stderr, "APC_VIRTUAL_FREE,addr=%p,size=%lu,op_type=%x",
-                 call->virtual_free.addr, call->virtual_free.size,
-                 call->virtual_free.op_type );
+        fprintf( stderr, "APC_VIRTUAL_FREE,addr=%p,size=", call->virtual_free.addr );
+        dump_uint64( &call->virtual_free.size );
+        fprintf( stderr, ",op_type=%x", call->virtual_free.op_type );
         break;
     case APC_VIRTUAL_QUERY:
         fprintf( stderr, "APC_VIRTUAL_QUERY,addr=%p", call->virtual_query.addr );
         break;
     case APC_VIRTUAL_PROTECT:
-        fprintf( stderr, "APC_VIRTUAL_PROTECT,addr=%p,size=%lu,prot=%x",
-                 call->virtual_protect.addr, call->virtual_protect.size,
-                 call->virtual_protect.prot );
+        fprintf( stderr, "APC_VIRTUAL_PROTECT,addr=%p,size=", call->virtual_protect.addr );
+        dump_uint64( &call->virtual_protect.size );
+        fprintf( stderr, ",prot=%x", call->virtual_protect.prot );
         break;
     case APC_VIRTUAL_FLUSH:
-        fprintf( stderr, "APC_VIRTUAL_FLUSH,addr=%p,size=%lu",
-                 call->virtual_flush.addr, call->virtual_flush.size );
+        fprintf( stderr, "APC_VIRTUAL_FLUSH,addr=%p,size=", call->virtual_flush.addr );
+        dump_uint64( &call->virtual_flush.size );
         break;
     case APC_VIRTUAL_LOCK:
-        fprintf( stderr, "APC_VIRTUAL_LOCK,addr=%p,size=%lu",
-                 call->virtual_lock.addr, call->virtual_lock.size );
+        fprintf( stderr, "APC_VIRTUAL_LOCK,addr=%p,size=", call->virtual_lock.addr );
+        dump_uint64( &call->virtual_lock.size );
         break;
     case APC_VIRTUAL_UNLOCK:
-        fprintf( stderr, "APC_VIRTUAL_UNLOCK,addr=%p,size=%lu",
-                 call->virtual_unlock.addr, call->virtual_unlock.size );
+        fprintf( stderr, "APC_VIRTUAL_UNLOCK,addr=%p,size=", call->virtual_unlock.addr );
+        dump_uint64( &call->virtual_unlock.size );
         break;
     case APC_MAP_VIEW:
-        fprintf( stderr, "APC_MAP_VIEW,handle=%04x,addr=%p,size=%lu,offset=%x%08x,zero_bits=%u,alloc_type=%x,prot=%x",
-                 call->map_view.handle, call->map_view.addr, call->map_view.size,
-                 (unsigned int)(call->map_view.offset >> 32), (unsigned int)call->map_view.offset,
+        fprintf( stderr, "APC_MAP_VIEW,handle=%04x,addr=%p,size=",
+                 call->map_view.handle, call->map_view.addr );
+        dump_uint64( &call->map_view.size );
+        fprintf( stderr, ",offset=" );
+        dump_uint64( &call->map_view.offset );
+        fprintf( stderr, ",zero_bits=%u,alloc_type=%x,prot=%x",
                  call->map_view.zero_bits, call->map_view.alloc_type, call->map_view.prot );
         break;
     case APC_UNMAP_VIEW:
         fprintf( stderr, "APC_UNMAP_VIEW,addr=%p", call->unmap_view.addr );
         break;
     case APC_CREATE_THREAD:
-        fprintf( stderr, "APC_CREATE_THREAD,func=%p,arg=%p,reserve=%lx,commit=%lx,suspend=%u",
-                 call->create_thread.func, call->create_thread.arg,
-                 call->create_thread.reserve, call->create_thread.commit,
-                 call->create_thread.suspend );
+        fprintf( stderr, "APC_CREATE_THREAD,func=%p,arg=%p,reserve=",
+                 call->create_thread.func, call->create_thread.arg );
+        dump_uint64( &call->create_thread.reserve );
+        fprintf( stderr, ",commit=" );
+        dump_uint64( &call->create_thread.commit );
+        fprintf( stderr, ",suspend=%u", call->create_thread.suspend );
         break;
     default:
         fprintf( stderr, "type=%u", call->type );
@@ -189,48 +198,49 @@ static void dump_apc_result( const apc_result_t *result )
                  get_status_name( result->async_io.status ) );
         break;
     case APC_VIRTUAL_ALLOC:
-        fprintf( stderr, "APC_VIRTUAL_ALLOC,status=%s,addr=%p,size=%lu",
-                 get_status_name( result->virtual_alloc.status ),
-                 result->virtual_alloc.addr, result->virtual_alloc.size );
+        fprintf( stderr, "APC_VIRTUAL_ALLOC,status=%s,addr=%p,size=",
+                 get_status_name( result->virtual_alloc.status ), result->virtual_alloc.addr );
+        dump_uint64( &result->virtual_alloc.size );
         break;
     case APC_VIRTUAL_FREE:
-        fprintf( stderr, "APC_VIRTUAL_FREE,status=%s,addr=%p,size=%lu",
-                 get_status_name( result->virtual_free.status ),
-                 result->virtual_free.addr, result->virtual_free.size );
+        fprintf( stderr, "APC_VIRTUAL_FREE,status=%s,addr=%p,size=",
+                 get_status_name( result->virtual_free.status ), result->virtual_free.addr );
+        dump_uint64( &result->virtual_free.size );
         break;
     case APC_VIRTUAL_QUERY:
-        fprintf( stderr, "APC_VIRTUAL_QUERY,status=%s,base=%p,alloc_base=%p,size=%lu,state=%x,prot=%x,alloc_prot=%x,alloc_type=%x",
+        fprintf( stderr, "APC_VIRTUAL_QUERY,status=%s,base=%p,alloc_base=%p,size=",
                  get_status_name( result->virtual_query.status ),
-                 result->virtual_query.base, result->virtual_query.alloc_base,
-                 result->virtual_query.size, result->virtual_query.state,
-                 result->virtual_query.prot, result->virtual_query.alloc_prot,
-                 result->virtual_query.alloc_type );
+                 result->virtual_query.base, result->virtual_query.alloc_base );
+        dump_uint64( &result->virtual_query.size );
+        fprintf( stderr, ",state=%x,prot=%x,alloc_prot=%x,alloc_type=%x",
+                 result->virtual_query.state, result->virtual_query.prot,
+                 result->virtual_query.alloc_prot, result->virtual_query.alloc_type );
         break;
     case APC_VIRTUAL_PROTECT:
-        fprintf( stderr, "APC_VIRTUAL_PROTECT,status=%s,addr=%p,size=%lu,prot=%x",
-                 get_status_name( result->virtual_protect.status ),
-                 result->virtual_protect.addr, result->virtual_protect.size,
-                 result->virtual_protect.prot );
+        fprintf( stderr, "APC_VIRTUAL_PROTECT,status=%s,addr=%p,size=",
+                 get_status_name( result->virtual_protect.status ), result->virtual_protect.addr );
+        dump_uint64( &result->virtual_protect.size );
+        fprintf( stderr, ",prot=%x", result->virtual_protect.prot );
         break;
     case APC_VIRTUAL_FLUSH:
-        fprintf( stderr, "APC_VIRTUAL_FLUSH,status=%s,addr=%p,size=%lu",
-                 get_status_name( result->virtual_flush.status ),
-                 result->virtual_flush.addr, result->virtual_flush.size );
+        fprintf( stderr, "APC_VIRTUAL_FLUSH,status=%s,addr=%p,size=",
+                 get_status_name( result->virtual_flush.status ), result->virtual_flush.addr );
+        dump_uint64( &result->virtual_flush.size );
         break;
     case APC_VIRTUAL_LOCK:
-        fprintf( stderr, "APC_VIRTUAL_LOCK,status=%s,addr=%p,size=%lu",
-                 get_status_name( result->virtual_lock.status ),
-                 result->virtual_lock.addr, result->virtual_lock.size );
+        fprintf( stderr, "APC_VIRTUAL_LOCK,status=%s,addr=%p,size=",
+                 get_status_name( result->virtual_lock.status ), result->virtual_lock.addr );
+        dump_uint64( &result->virtual_lock.size );
         break;
     case APC_VIRTUAL_UNLOCK:
-        fprintf( stderr, "APC_VIRTUAL_UNLOCK,status=%s,addr=%p,size=%lu",
-                 get_status_name( result->virtual_unlock.status ),
-                 result->virtual_unlock.addr, result->virtual_unlock.size );
+        fprintf( stderr, "APC_VIRTUAL_UNLOCK,status=%s,addr=%p,size=",
+                 get_status_name( result->virtual_unlock.status ), result->virtual_unlock.addr );
+        dump_uint64( &result->virtual_unlock.size );
         break;
     case APC_MAP_VIEW:
-        fprintf( stderr, "APC_MAP_VIEW,status=%s,addr=%p,size=%lu",
-                 get_status_name( result->map_view.status ),
-                 result->map_view.addr, result->map_view.size );
+        fprintf( stderr, "APC_MAP_VIEW,status=%s,addr=%p,size=",
+                 get_status_name( result->map_view.status ), result->map_view.addr );
+        dump_uint64( &result->map_view.size );
         break;
     case APC_UNMAP_VIEW:
         fprintf( stderr, "APC_UNMAP_VIEW,status=%s",
@@ -1355,10 +1365,10 @@ static void dump_lock_file_request( const struct lock_file_request *req )
 {
     fprintf( stderr, " handle=%04x,", req->handle );
     fprintf( stderr, " offset=" );
-    dump_file_pos( &req->offset );
+    dump_uint64( &req->offset );
     fprintf( stderr, "," );
     fprintf( stderr, " count=" );
-    dump_file_pos( &req->count );
+    dump_uint64( &req->count );
     fprintf( stderr, "," );
     fprintf( stderr, " shared=%d,", req->shared );
     fprintf( stderr, " wait=%d", req->wait );
@@ -1374,10 +1384,10 @@ static void dump_unlock_file_request( const struct unlock_file_request *req )
 {
     fprintf( stderr, " handle=%04x,", req->handle );
     fprintf( stderr, " offset=" );
-    dump_file_pos( &req->offset );
+    dump_uint64( &req->offset );
     fprintf( stderr, "," );
     fprintf( stderr, " count=" );
-    dump_file_pos( &req->count );
+    dump_uint64( &req->count );
 }
 
 static void dump_create_socket_request( const struct create_socket_request *req )
@@ -1740,7 +1750,7 @@ static void dump_create_mapping_request( const struct create_mapping_request *re
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " size=" );
-    dump_file_pos( &req->size );
+    dump_uint64( &req->size );
     fprintf( stderr, "," );
     fprintf( stderr, " protect=%08x,", req->protect );
     fprintf( stderr, " file_handle=%04x,", req->file_handle );
@@ -1776,7 +1786,7 @@ static void dump_get_mapping_info_request( const struct get_mapping_info_request
 static void dump_get_mapping_info_reply( const struct get_mapping_info_reply *req )
 {
     fprintf( stderr, " size=" );
-    dump_file_pos( &req->size );
+    dump_uint64( &req->size );
     fprintf( stderr, "," );
     fprintf( stderr, " protect=%d,", req->protect );
     fprintf( stderr, " header_size=%d,", req->header_size );
@@ -1789,13 +1799,13 @@ static void dump_get_mapping_committed_range_request( const struct get_mapping_c
 {
     fprintf( stderr, " handle=%04x,", req->handle );
     fprintf( stderr, " offset=" );
-    dump_file_pos( &req->offset );
+    dump_uint64( &req->offset );
 }
 
 static void dump_get_mapping_committed_range_reply( const struct get_mapping_committed_range_reply *req )
 {
     fprintf( stderr, " size=" );
-    dump_file_pos( &req->size );
+    dump_uint64( &req->size );
     fprintf( stderr, "," );
     fprintf( stderr, " committed=%d", req->committed );
 }
@@ -1804,10 +1814,10 @@ static void dump_add_mapping_committed_range_request( const struct add_mapping_c
 {
     fprintf( stderr, " handle=%04x,", req->handle );
     fprintf( stderr, " offset=" );
-    dump_file_pos( &req->offset );
+    dump_uint64( &req->offset );
     fprintf( stderr, "," );
     fprintf( stderr, " size=" );
-    dump_file_pos( &req->size );
+    dump_uint64( &req->size );
 }
 
 static void dump_create_snapshot_request( const struct create_snapshot_request *req )

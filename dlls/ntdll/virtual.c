@@ -1967,6 +1967,8 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
             info->Protect           = result.virtual_query.prot;
             info->AllocationProtect = result.virtual_query.alloc_prot;
             info->Type              = result.virtual_query.alloc_type;
+            if (info->RegionSize != result.virtual_query.size)  /* truncated */
+                return STATUS_INVALID_PARAMETER;  /* FIXME */
             if (res_len) *res_len = sizeof(*info);
         }
         return result.virtual_query.status;

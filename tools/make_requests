@@ -41,12 +41,12 @@ my %formats =
     "timeout_t"     => [  8,   8,  "&dump_timeout" ],
     "rectangle_t"   => [  16,  4,  "&dump_rectangle" ],
     "char_info_t"   => [  4,   2,  "&dump_char_info" ],
-    "apc_call_t"    => [  32,  4,  "&dump_apc_call" ],
-    "apc_result_t"  => [  28,  4,  "&dump_apc_result" ],
-    "async_data_t"  => [  28,  4,  "&dump_async_data" ],
+    "apc_call_t"    => [  40,  8,  "&dump_apc_call" ],
+    "apc_result_t"  => [  40,  8,  "&dump_apc_result" ],
+    "async_data_t"  => [  24,  4,  "&dump_async_data" ],
     "luid_t"        => [  8,   4,  "&dump_luid" ],
     "ioctl_code_t"  => [  4,   4,  "&dump_ioctl_code" ],
-    "file_pos_t"    => [  8,   8,  "&dump_file_pos" ],
+    "file_pos_t"    => [  8,   8,  "&dump_uint64" ],
 );
 
 my @requests = ();

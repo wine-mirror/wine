@@ -843,6 +843,7 @@ static int wait_reply( void *cookie )
 static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
 {
     BOOL user_apc = FALSE;
+    SIZE_T size;
 
     memset( result, 0, sizeof(*result) );
 
@@ -868,22 +869,31 @@ static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
     case APC_VIRTUAL_ALLOC:
         result->type = call->type;
         result->virtual_alloc.addr = call->virtual_alloc.addr;
-        result->virtual_alloc.size = call->virtual_alloc.size;
-        result->virtual_alloc.status = NtAllocateVirtualMemory( NtCurrentProcess(),
-                                                                &result->virtual_alloc.addr,
-                                                                call->virtual_alloc.zero_bits,
-                                                                &result->virtual_alloc.size,
-                                                                call->virtual_alloc.op_type,
-                                                                call->virtual_alloc.prot );
+        size = call->virtual_alloc.size;
+        if (size == call->virtual_alloc.size)  /* not truncated */
+        {
+            result->virtual_alloc.status = NtAllocateVirtualMemory( NtCurrentProcess(),
+                                                                    &result->virtual_alloc.addr,
+                                                                    call->virtual_alloc.zero_bits,
+                                                                    &size,
+                                                                    call->virtual_alloc.op_type,
+                                                                    call->virtual_alloc.prot );
+            result->virtual_alloc.size = size;
+        }
+        else result->virtual_alloc.status = STATUS_WORKING_SET_LIMIT_RANGE;
         break;
     case APC_VIRTUAL_FREE:
         result->type = call->type;
         result->virtual_free.addr = call->virtual_free.addr;
-        result->virtual_free.size = call->virtual_free.size;
-        result->virtual_free.status = NtFreeVirtualMemory( NtCurrentProcess(),
-                                                           &result->virtual_free.addr,
-                                                           &result->virtual_free.size,
-                                                           call->virtual_free.op_type );
+        size = call->virtual_free.size;
+        if (size == call->virtual_free.size)  /* not truncated */
+        {
+            result->virtual_free.status = NtFreeVirtualMemory( NtCurrentProcess(),
+                                                               &result->virtual_free.addr, &size,
+                                                               call->virtual_free.op_type );
+            result->virtual_free.size = size;
+        }
+        else result->virtual_free.status = STATUS_INVALID_PARAMETER;
         break;
     case APC_VIRTUAL_QUERY:
     {
@@ -908,49 +918,71 @@ static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
     case APC_VIRTUAL_PROTECT:
         result->type = call->type;
         result->virtual_protect.addr = call->virtual_protect.addr;
-        result->virtual_protect.size = call->virtual_protect.size;
-        result->virtual_protect.status = NtProtectVirtualMemory( NtCurrentProcess(),
-                                                                 &result->virtual_protect.addr,
-                                                                 &result->virtual_protect.size,
-                                                                 call->virtual_protect.prot,
-                                                                 &result->virtual_protect.prot );
+        size = call->virtual_protect.size;
+        if (size == call->virtual_protect.size)  /* not truncated */
+        {
+            result->virtual_protect.status = NtProtectVirtualMemory( NtCurrentProcess(),
+                                                                     &result->virtual_protect.addr,
+                                                                     &size,
+                                                                     call->virtual_protect.prot,
+                                                                     &result->virtual_protect.prot );
+            result->virtual_protect.size = size;
+        }
+        else result->virtual_protect.status = STATUS_INVALID_PARAMETER;
         break;
     case APC_VIRTUAL_FLUSH:
         result->type = call->type;
         result->virtual_flush.addr = call->virtual_flush.addr;
-        result->virtual_flush.size = call->virtual_flush.size;
-        result->virtual_flush.status = NtFlushVirtualMemory( NtCurrentProcess(),
-                                                             &result->virtual_flush.addr,
-                                                             &result->virtual_flush.size, 0 );
+        size = call->virtual_flush.size;
+        if (size == call->virtual_flush.size)  /* not truncated */
+        {
+            result->virtual_flush.status = NtFlushVirtualMemory( NtCurrentProcess(),
+                                                                 &result->virtual_flush.addr, &size, 0 );
+            result->virtual_flush.size = size;
+        }
+        else result->virtual_flush.status = STATUS_INVALID_PARAMETER;
         break;
     case APC_VIRTUAL_LOCK:
         result->type = call->type;
         result->virtual_lock.addr = call->virtual_lock.addr;
-        result->virtual_lock.size = call->virtual_lock.size;
-        result->virtual_lock.status = NtLockVirtualMemory( NtCurrentProcess(),
-                                                           &result->virtual_lock.addr,
-                                                           &result->virtual_lock.size, 0 );
+        size = call->virtual_lock.size;
+        if (size == call->virtual_lock.size)  /* not truncated */
+        {
+            result->virtual_lock.status = NtLockVirtualMemory( NtCurrentProcess(),
+                                                               &result->virtual_lock.addr, &size, 0 );
+            result->virtual_lock.size = size;
+        }
+        else result->virtual_lock.status = STATUS_INVALID_PARAMETER;
         break;
     case APC_VIRTUAL_UNLOCK:
         result->type = call->type;
         result->virtual_unlock.addr = call->virtual_unlock.addr;
-        result->virtual_unlock.size = call->virtual_unlock.size;
-        result->virtual_unlock.status = NtUnlockVirtualMemory( NtCurrentProcess(),
-                                                               &result->virtual_unlock.addr,
-                                                               &result->virtual_unlock.size, 0 );
+        size = call->virtual_unlock.size;
+        if (size == call->virtual_unlock.size)  /* not truncated */
+        {
+            result->virtual_unlock.status = NtUnlockVirtualMemory( NtCurrentProcess(),
+                                                                   &result->virtual_unlock.addr, &size, 0 );
+            result->virtual_unlock.size = size;
+        }
+        else result->virtual_unlock.status = STATUS_INVALID_PARAMETER;
         break;
     case APC_MAP_VIEW:
     {
         LARGE_INTEGER offset;
         result->type = call->type;
         result->map_view.addr   = call->map_view.addr;
-        result->map_view.size   = call->map_view.size;
         offset.QuadPart         = call->map_view.offset;
-        result->map_view.status = NtMapViewOfSection( wine_server_ptr_handle(call->map_view.handle),
-                                                      NtCurrentProcess(), &result->map_view.addr,
-                                                      call->map_view.zero_bits, 0, &offset,
-                                                      &result->map_view.size, ViewShare,
-                                                      call->map_view.alloc_type, call->map_view.prot );
+        size = call->map_view.size;
+        if (size == call->map_view.size)  /* not truncated */
+        {
+            result->map_view.status = NtMapViewOfSection( wine_server_ptr_handle(call->map_view.handle),
+                                                          NtCurrentProcess(), &result->map_view.addr,
+                                                          call->map_view.zero_bits, 0,
+                                                          &offset, &size, ViewShare,
+                                                          call->map_view.alloc_type, call->map_view.prot );
+            result->map_view.size   = size;
+        }
+        else result->map_view.status = STATUS_INVALID_PARAMETER;
         NtClose( wine_server_ptr_handle(call->map_view.handle) );
         break;
     }
@@ -962,16 +994,22 @@ static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
     {
         CLIENT_ID id;
         HANDLE handle;
+        SIZE_T reserve = call->create_thread.reserve;
+        SIZE_T commit = call->create_thread.commit;
+
         result->type = call->type;
-        result->create_thread.status = RtlCreateUserThread( NtCurrentProcess(), NULL,
-                                                            call->create_thread.suspend, NULL,
-                                                            call->create_thread.reserve,
-                                                            call->create_thread.commit,
-                                                            call->create_thread.func,
-                                                            call->create_thread.arg,
-                                                            &handle, &id );
-        result->create_thread.handle = wine_server_obj_handle( handle );
-        result->create_thread.tid = HandleToULong(id.UniqueThread);
+        if (reserve == call->create_thread.reserve && commit == call->create_thread.commit)
+        {
+            result->create_thread.status = RtlCreateUserThread( NtCurrentProcess(), NULL,
+                                                                call->create_thread.suspend, NULL,
+                                                                reserve, commit,
+                                                                call->create_thread.func,
+                                                                call->create_thread.arg,
+                                                                &handle, &id );
+            result->create_thread.handle = wine_server_obj_handle( handle );
+            result->create_thread.tid = HandleToULong(id.UniqueThread);
+        }
+        else result->create_thread.status = STATUS_INVALID_PARAMETER;
         break;
     }
     default:
