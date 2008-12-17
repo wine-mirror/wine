@@ -1744,14 +1744,96 @@ static BOOL init_detail_page(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
 struct hierarchy_data
 {
     PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo;
+    HIMAGELIST imageList;
     DWORD selectedCert;
 };
+
+static WCHAR *get_cert_property_as_string(PCCERT_CONTEXT cert, DWORD prop)
+{
+    WCHAR *name = NULL;
+    DWORD cb;
+
+    if (CertGetCertificateContextProperty(cert, prop, NULL, &cb))
+    {
+        name = HeapAlloc(GetProcessHeap(), 0, cb);
+        if (name)
+        {
+            if (!CertGetCertificateContextProperty(cert, prop, (LPBYTE)name,
+             &cb))
+            {
+                HeapFree(GetProcessHeap(), 0, name);
+                name = NULL;
+            }
+        }
+    }
+    return name;
+}
+
+static WCHAR *get_cert_display_name(PCCERT_CONTEXT cert)
+{
+    WCHAR *name = get_cert_property_as_string(cert, CERT_FRIENDLY_NAME_PROP_ID);
+
+    if (!name)
+        name = get_cert_name_string(cert, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0);
+    return name;
+}
+
+static void show_cert_chain(HWND hwnd, struct hierarchy_data *data)
+{
+    HWND tree = GetDlgItem(hwnd, IDC_CERTPATH);
+    CRYPT_PROVIDER_SGNR *provSigner = WTHelperGetProvSignerFromChain(
+     (CRYPT_PROVIDER_DATA *)data->pCertViewInfo->u.pCryptProviderData,
+     data->pCertViewInfo->idxSigner, data->pCertViewInfo->fCounterSigner,
+     data->pCertViewInfo->idxCounterSigner);
+    DWORD i;
+    HTREEITEM parent = NULL;
+
+    SendMessageW(tree, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)data->imageList);
+    for (i = provSigner->csCertChain; i; i--)
+    {
+        LPWSTR name;
+
+        name = get_cert_display_name(provSigner->pasCertChain[i - 1].pCert);
+        if (name)
+        {
+            TVINSERTSTRUCTW tvis;
+
+            tvis.hParent = parent;
+            tvis.hInsertAfter = TVI_LAST;
+            tvis.u.item.mask = TVIF_TEXT | TVIF_STATE | TVIF_IMAGE |
+             TVIF_SELECTEDIMAGE;
+            tvis.u.item.pszText = name;
+            tvis.u.item.state = TVIS_EXPANDED;
+            tvis.u.item.stateMask = TVIS_EXPANDED;
+            if (i == 1 &&
+             (provSigner->pChainContext->TrustStatus.dwErrorStatus &
+             CERT_TRUST_IS_PARTIAL_CHAIN))
+            {
+                /* The root of the chain has a special case:  if the chain is
+                 * a partial chain, the icon is a warning icon rather than an
+                 * error icon.
+                 */
+                tvis.u.item.iImage = 2;
+            }
+            else if (provSigner->pasCertChain[i - 1].pChainElement->TrustStatus.
+             dwErrorStatus == 0)
+                tvis.u.item.iImage = 0;
+            else
+                tvis.u.item.iImage = 1;
+            tvis.u.item.iSelectedImage = tvis.u.item.iImage;
+            parent = (HTREEITEM)SendMessageW(tree, TVM_INSERTITEMW, 0,
+             (LPARAM)&tvis);
+            HeapFree(GetProcessHeap(), 0, name);
+        }
+    }
+}
 
 static void show_cert_hierarchy(HWND hwnd, struct hierarchy_data *data)
 {
     /* Disable view certificate button until a certificate is selected */
     EnableWindow(GetDlgItem(hwnd, IDC_VIEWCERTIFICATE), FALSE);
-    FIXME("show cert chain\n");
+    show_cert_chain(hwnd, data);
+    FIXME("show cert status\n");
 }
 
 static LRESULT CALLBACK hierarchy_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
@@ -1782,6 +1864,7 @@ static UINT CALLBACK hierarchy_callback(HWND hwnd, UINT msg,
     {
     case PSPCB_RELEASE:
         data = (struct hierarchy_data *)page->lParam;
+        ImageList_Destroy(data->imageList);
         HeapFree(GetProcessHeap(), 0, data);
         break;
     }
@@ -1797,18 +1880,32 @@ static BOOL init_hierarchy_page(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
 
     if (data)
     {
-        data->pCertViewInfo = pCertViewInfo;
-        data->selectedCert = 0xffffffff;
+        data->imageList = ImageList_Create(16, 16, ILC_COLOR4 | ILC_MASK, 2, 0);
+        if (data->imageList)
+        {
+            HBITMAP bmp;
+            COLORREF backColor = RGB(255, 0, 255);
 
-        memset(page, 0, sizeof(PROPSHEETPAGEW));
-        page->dwSize = sizeof(PROPSHEETPAGEW);
-        page->dwFlags = PSP_USECALLBACK;
-        page->hInstance = hInstance;
-        page->u.pszTemplate = MAKEINTRESOURCEW(IDD_HIERARCHY);
-        page->pfnDlgProc = hierarchy_dlg_proc;
-        page->lParam = (LPARAM)data;
-        page->pfnCallback = hierarchy_callback;
-        ret = TRUE;
+            data->pCertViewInfo = pCertViewInfo;
+            data->selectedCert = 0xffffffff;
+
+            bmp = LoadBitmapW(hInstance, MAKEINTRESOURCEW(IDB_SMALL_ICONS));
+            ImageList_AddMasked(data->imageList, bmp, backColor);
+            DeleteObject(bmp);
+            ImageList_SetBkColor(data->imageList, CLR_NONE);
+
+            memset(page, 0, sizeof(PROPSHEETPAGEW));
+            page->dwSize = sizeof(PROPSHEETPAGEW);
+            page->dwFlags = PSP_USECALLBACK;
+            page->hInstance = hInstance;
+            page->u.pszTemplate = MAKEINTRESOURCEW(IDD_HIERARCHY);
+            page->pfnDlgProc = hierarchy_dlg_proc;
+            page->lParam = (LPARAM)data;
+            page->pfnCallback = hierarchy_callback;
+            ret = TRUE;
+        }
+        else
+            HeapFree(GetProcessHeap(), 0, data);
     }
     return ret;
 }

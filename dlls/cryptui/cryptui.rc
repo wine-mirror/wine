@@ -25,6 +25,9 @@
 
 #include "cryptuires.h"
 
+/* @makedep: smallicons.bmp */
+IDB_SMALL_ICONS BITMAP LOADONCALL DISCARDABLE smallicons.bmp
+
 /* @makedep: cert.bmp */
 IDB_CERT BITMAP LOADONCALL DISCARDABLE cert.bmp
 
