@@ -69,6 +69,7 @@ static WORD keyc2vkey[256], keyc2scan[256];
 static int NumLockMask, ScrollLockMask, AltGrMask; /* mask in the XKeyEvent state */
 
 static char KEYBOARD_MapDeadKeysym(KeySym keysym);
+HKL X11DRV_GetKeyboardLayout(DWORD dwThreadid);
 
 /* Keyboard translation tables */
 #define MAIN_LEN 49
@@ -1838,6 +1839,17 @@ void X11DRV_InitKeyboard( Display *display )
     wine_tsx11_unlock();
 }
 
+static BOOL match_x11_keyboard_layout(HKL hkl)
+{
+    const DWORD isIME = 0xE0000000;
+    HKL  xHkl = X11DRV_GetKeyboardLayout(0);
+
+    /* if the layout is an IME, only match the low word (LCID) */
+    if (((ULONG_PTR)hkl & isIME) == isIME)
+        return (LOWORD(hkl) == LOWORD(xHkl));
+    else
+        return (hkl == xHkl);
+}
 
 /**********************************************************************
  *		GetAsyncKeyState (X11DRV.@)
@@ -2111,7 +2123,7 @@ UINT X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 #define returnMVK(value) { TRACE("returning 0x%x.\n",value); return value; }
 
     TRACE("wCode=0x%x, wMapType=%d, hkl %p\n", wCode, wMapType, hkl);
-    if (hkl != X11DRV_GetKeyboardLayout(0))
+    if (!match_x11_keyboard_layout(hkl))
         FIXME("keyboard layout %p is not supported\n", hkl);
 
     switch(wMapType)
@@ -2459,7 +2471,7 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
         return 0;
     }
 
-    if (hkl != X11DRV_GetKeyboardLayout(0))
+    if (!match_x11_keyboard_layout(hkl))
         FIXME("keyboard layout %p is not supported\n", hkl);
 
     if ((lpKeyState[VK_MENU] & 0x80) && (lpKeyState[VK_CONTROL] & 0x80))
