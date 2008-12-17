@@ -1748,6 +1748,59 @@ struct hierarchy_data
     DWORD selectedCert;
 };
 
+static LPARAM index_to_lparam(struct hierarchy_data *data, DWORD index)
+{
+    CRYPT_PROVIDER_SGNR *provSigner = WTHelperGetProvSignerFromChain(
+     (CRYPT_PROVIDER_DATA *)data->pCertViewInfo->u.pCryptProviderData,
+     data->pCertViewInfo->idxSigner, data->pCertViewInfo->fCounterSigner,
+     data->pCertViewInfo->idxCounterSigner);
+
+    /* Takes advantage of the fact that a pointer is 32-bit aligned, and
+     * therefore always even.
+     */
+    if (index == provSigner->csCertChain - 1)
+        return (LPARAM)data;
+    return index << 1 | 1;
+}
+
+static inline DWORD lparam_to_index(struct hierarchy_data *data, LPARAM lp)
+{
+    CRYPT_PROVIDER_SGNR *provSigner = WTHelperGetProvSignerFromChain(
+     (CRYPT_PROVIDER_DATA *)data->pCertViewInfo->u.pCryptProviderData,
+     data->pCertViewInfo->idxSigner, data->pCertViewInfo->fCounterSigner,
+     data->pCertViewInfo->idxCounterSigner);
+
+    if (!(lp & 1))
+        return provSigner->csCertChain - 1;
+    return lp >> 1;
+}
+
+static struct hierarchy_data *get_hierarchy_data_from_tree_item(HWND tree,
+ HTREEITEM hItem)
+{
+    struct hierarchy_data *data = NULL;
+    HTREEITEM root = NULL;
+
+    do {
+        HTREEITEM parent = (HTREEITEM)SendMessageW(tree, TVM_GETNEXTITEM,
+         TVGN_PARENT, (LPARAM)hItem);
+
+        if (!parent)
+            root = hItem;
+        hItem = parent;
+    } while (hItem);
+    if (root)
+    {
+        TVITEMW item;
+
+        item.mask = TVIF_PARAM;
+        item.hItem = root;
+        SendMessageW(tree, TVM_GETITEMW, 0, (LPARAM)&item);
+        data = (struct hierarchy_data *)item.lParam;
+    }
+    return data;
+}
+
 static WCHAR *get_cert_property_as_string(PCCERT_CONTEXT cert, DWORD prop)
 {
     WCHAR *name = NULL;
@@ -1801,7 +1854,7 @@ static void show_cert_chain(HWND hwnd, struct hierarchy_data *data)
             tvis.hParent = parent;
             tvis.hInsertAfter = TVI_LAST;
             tvis.u.item.mask = TVIF_TEXT | TVIF_STATE | TVIF_IMAGE |
-             TVIF_SELECTEDIMAGE;
+             TVIF_SELECTEDIMAGE | TVIF_PARAM;
             tvis.u.item.pszText = name;
             tvis.u.item.state = TVIS_EXPANDED;
             tvis.u.item.stateMask = TVIS_EXPANDED;
@@ -1821,6 +1874,7 @@ static void show_cert_chain(HWND hwnd, struct hierarchy_data *data)
             else
                 tvis.u.item.iImage = 1;
             tvis.u.item.iSelectedImage = tvis.u.item.iImage;
+            tvis.u.item.lParam = index_to_lparam(data, i - 1);
             parent = (HTREEITEM)SendMessageW(tree, TVM_INSERTITEMW, 0,
              (LPARAM)&tvis);
             HeapFree(GetProcessHeap(), 0, name);
@@ -1872,6 +1926,8 @@ static LRESULT CALLBACK hierarchy_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
 {
     PROPSHEETPAGEW *page;
     struct hierarchy_data *data;
+    HWND tree = GetDlgItem(hwnd, IDC_CERTPATH);
+    DWORD selection;
 
     TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
 
@@ -1882,6 +1938,28 @@ static LRESULT CALLBACK hierarchy_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         data = (struct hierarchy_data *)page->lParam;
         show_cert_hierarchy(hwnd, data);
         break;
+    case WM_NOTIFY:
+    {
+        NMTREEVIEWW *nm;
+        CRYPT_PROVIDER_SGNR *provSigner;
+
+        nm = (NMTREEVIEWW*)lp;
+        switch (nm->hdr.code)
+        {
+        case TVN_SELCHANGEDW:
+            data = get_hierarchy_data_from_tree_item(tree, nm->itemNew.hItem);
+            selection = lparam_to_index(data, nm->itemNew.lParam);
+            provSigner = WTHelperGetProvSignerFromChain(
+             (CRYPT_PROVIDER_DATA *)data->pCertViewInfo->u.pCryptProviderData,
+             data->pCertViewInfo->idxSigner,
+             data->pCertViewInfo->fCounterSigner,
+             data->pCertViewInfo->idxCounterSigner);
+            set_certificate_status(GetDlgItem(hwnd, IDC_CERTIFICATESTATUSTEXT),
+             &provSigner->pasCertChain[selection]);
+            break;
+        }
+        break;
+    }
     }
     return 0;
 }
