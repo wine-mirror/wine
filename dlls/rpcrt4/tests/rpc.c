@@ -400,7 +400,7 @@ static void test_towers(void)
        broken(ret != RPC_S_OK), /* win2k, indeterminate */
        "TowerExplode failed with error %ld\n", ret);
     /* Windows XP SP3 sets address to NULL */
-    ok(!address || !strcmp(address, ""), "address was \"%s\" instead of \"\"\n or NULL (XP SP3)", address);
+    ok(!address || !strcmp(address, ""), "address was \"%s\" instead of \"\" or NULL (XP SP3)\n", address);
 
     I_RpcFree(address);
     I_RpcFree(tower);
