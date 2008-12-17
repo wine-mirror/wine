@@ -1406,11 +1406,139 @@ static void add_critical_extensions(HWND hwnd, struct detail_data *data)
              &cert->pCertInfo->rgExtension[i]);
 }
 
+typedef WCHAR * (*prop_to_value_func)(void *pb, DWORD cb);
+
+struct prop_id_to_string_id
+{
+    DWORD prop;
+    int id;
+    BOOL prop_is_string;
+    prop_to_value_func prop_to_value;
+};
+
+static WCHAR *format_enhanced_key_usage_value(void *pb, DWORD cb)
+{
+    static const WCHAR sep[] = { ',',' ',0 };
+    const CERT_ENHKEY_USAGE *usage = (const CERT_ENHKEY_USAGE *)pb;
+    static WCHAR *str = NULL;
+    DWORD i, chars = 0;
+
+    for (i = 0; i < usage->cUsageIdentifier; i++)
+    {
+        PCCRYPT_OID_INFO info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY,
+         usage->rgpszUsageIdentifier[i], CRYPT_ENHKEY_USAGE_OID_GROUP_ID);
+
+        if (info)
+        {
+            chars += strlenW(info->pwszName);
+            if (i < usage->cUsageIdentifier - 1)
+                chars += strlenW(sep);
+            if (!str)
+            {
+                str = HeapAlloc(GetProcessHeap(), 0,
+                 (chars + 1) * sizeof(WCHAR));
+                if (str)
+                    *str = '\0';
+            }
+            else
+                str = HeapReAlloc(GetProcessHeap(), 0, str,
+                 (chars + 1) * sizeof(WCHAR));
+            if (str)
+            {
+                if (i < usage->cUsageIdentifier - 1)
+                    strcatW(str, sep);
+                strcatW(str, info->pwszName);
+            }
+        }
+        else
+        {
+            chars += strlen(usage->rgpszUsageIdentifier[i]);
+            if (i < usage->cUsageIdentifier - 1)
+                chars += strlenW(sep);
+            if (!str)
+            {
+                str = HeapAlloc(GetProcessHeap(), 0,
+                 (chars + 1) * sizeof(WCHAR));
+                if (str)
+                    *str = '\0';
+            }
+            else
+                str = HeapReAlloc(GetProcessHeap(), 0, str,
+                 (chars + 1) * sizeof(WCHAR));
+            if (str)
+            {
+                WCHAR *dst;
+                const char *src;
+
+                if (i < usage->cUsageIdentifier - 1)
+                    strcatW(str, sep);
+                for (src = usage->rgpszUsageIdentifier[i],
+                 dst = str + strlenW(str); *src; src++, dst++)
+                    *dst = *src;
+                *dst = '\0';
+            }
+        }
+    }
+    return str;
+}
+
+/* Logically the access state should also be checked, and IDC_EDITPROPERTIES
+ * disabled for read-only certificates, but native doesn't appear to do that.
+ */
+static const struct prop_id_to_string_id prop_id_map[] = {
+ { CERT_HASH_PROP_ID, IDS_PROP_HASH, FALSE, format_hex_string },
+ { CERT_FRIENDLY_NAME_PROP_ID, IDS_PROP_FRIENDLY_NAME, TRUE, NULL },
+ { CERT_DESCRIPTION_PROP_ID, IDS_PROP_DESCRIPTION, TRUE, NULL },
+ { CERT_ENHKEY_USAGE_PROP_ID, IDS_PROP_ENHKEY_USAGE, FALSE,
+   format_enhanced_key_usage_value },
+};
+
+static void add_properties(HWND hwnd, struct detail_data *data)
+{
+    DWORD i;
+    PCCERT_CONTEXT cert = data->pCertViewInfo->pCertContext;
+
+    for (i = 0; i < sizeof(prop_id_map) / sizeof(prop_id_map[0]); i++)
+    {
+        DWORD cb;
+
+        if (CertGetCertificateContextProperty(cert, prop_id_map[i].prop, NULL,
+         &cb))
+        {
+            BYTE *pb;
+            WCHAR *val = NULL;
+
+            /* FIXME: MS adds a separate value for the signature hash
+             * algorithm.
+             */
+            pb = HeapAlloc(GetProcessHeap(), 0, cb);
+            if (pb)
+            {
+                if (CertGetCertificateContextProperty(cert,
+                 prop_id_map[i].prop, pb, &cb))
+                {
+                    if (prop_id_map[i].prop_is_string)
+                    {
+                        val = (LPWSTR)pb;
+                        /* Don't double-free pb */
+                        pb = NULL;
+                    }
+                    else
+                        val = prop_id_map[i].prop_to_value(pb, cb);
+                }
+                HeapFree(GetProcessHeap(), 0, pb);
+            }
+            add_string_id_and_value_to_list(hwnd, data, prop_id_map[i].id, val,
+             NULL, NULL);
+        }
+    }
+}
+
 static void add_all_fields(HWND hwnd, struct detail_data *data)
 {
     add_v1_fields(hwnd, data);
     add_all_extensions(hwnd, data);
-    FIXME("add properties\n");
+    add_properties(hwnd, data);
 }
 
 struct selection_list_item
@@ -1424,7 +1552,7 @@ const struct selection_list_item listItems[] = {
  { IDS_FIELDS_V1, add_v1_fields },
  { IDS_FIELDS_EXTENSIONS, add_all_extensions },
  { IDS_FIELDS_CRITICAL_EXTENSIONS, add_critical_extensions },
- { IDS_FIELDS_PROPERTIES, NULL },
+ { IDS_FIELDS_PROPERTIES, add_properties },
 };
 
 static void create_show_list(HWND hwnd, struct detail_data *data)
