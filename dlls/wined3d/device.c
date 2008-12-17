@@ -3639,6 +3639,8 @@ UINT count) {
     This->highest_dirty_vs_const = max(This->highest_dirty_vs_const, start+count+1);
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VERTEXSHADERCONSTANT);
+    memset(This->updateStateBlock->changed.vertexShaderConstantsF + start, 1,
+            sizeof(*This->updateStateBlock->changed.vertexShaderConstantsF) * count);
 
     return WINED3D_OK;
 }
@@ -4072,6 +4074,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantF_DirtyConst(
     This->highest_dirty_ps_const = max(This->highest_dirty_ps_const, start+count+1);
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADERCONSTANT);
+    memset(This->updateStateBlock->changed.pixelShaderConstantsF + start, 1,
+            sizeof(*This->updateStateBlock->changed.pixelShaderConstantsF) * count);
 
     return WINED3D_OK;
 }
