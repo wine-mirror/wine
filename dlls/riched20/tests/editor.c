@@ -5835,6 +5835,188 @@ static void test_auto_yscroll(void)
     DestroyWindow(hwnd);
 }
 
+
+static void test_format_rect(void)
+{
+    HWND hwnd;
+    RECT rc, expected, clientRect;
+    int n;
+    DWORD options;
+
+    hwnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
+                          ES_MULTILINE|WS_POPUP|WS_HSCROLL|WS_VSCROLL|WS_VISIBLE,
+                          0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
+
+    GetClientRect(hwnd, &clientRect);
+
+    expected = clientRect;
+    expected.left += 1;
+    expected.right -= 1;
+    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    todo_wine ok(rc.top == expected.top && rc.left == expected.left &&
+       rc.bottom == expected.bottom && rc.right == expected.right,
+       "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
+       rc.top, rc.left, rc.bottom, rc.right,
+       expected.top, expected.left, expected.bottom, expected.right);
+
+    for (n = -3; n <= 3; n++)
+    {
+      rc = clientRect;
+      rc.top += n;
+      rc.left += n;
+      rc.bottom -= n;
+      rc.right -= n;
+      SendMessageW(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
+
+      expected = rc;
+      expected.top = max(0, rc.top);
+      expected.left = max(0, rc.left);
+      expected.bottom = min(clientRect.bottom, rc.bottom);
+      expected.right = min(clientRect.right, rc.right);
+      SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+      if (n >= 0)
+        ok(rc.top == expected.top && rc.left == expected.left &&
+           rc.bottom == expected.bottom && rc.right == expected.right,
+           "[n=%d] rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
+           n, rc.top, rc.left, rc.bottom, rc.right,
+           expected.top, expected.left, expected.bottom, expected.right);
+      else
+        todo_wine ok(rc.top == expected.top && rc.left == expected.left &&
+           rc.bottom == expected.bottom && rc.right == expected.right,
+           "[n=%d] rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
+           n, rc.top, rc.left, rc.bottom, rc.right,
+           expected.top, expected.left, expected.bottom, expected.right);
+    }
+
+    rc = clientRect;
+    SendMessageW(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
+    expected = clientRect;
+    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    ok(rc.top == expected.top && rc.left == expected.left &&
+       rc.bottom == expected.bottom && rc.right == expected.right,
+       "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
+       rc.top, rc.left, rc.bottom, rc.right,
+       expected.top, expected.left, expected.bottom, expected.right);
+
+    /* Adding the selectionbar adds the selectionbar width to the left side. */
+    SendMessageW(hwnd, EM_SETOPTIONS, ECOOP_OR, ECO_SELECTIONBAR);
+    options = SendMessageW(hwnd, EM_GETOPTIONS, 0, 0);
+    todo_wine ok(options & ECO_SELECTIONBAR, "EM_SETOPTIONS failed to add selectionbar.\n");
+    expected.left += 8; /* selection bar width */
+    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    todo_wine ok(rc.top == expected.top && rc.left == expected.left &&
+       rc.bottom == expected.bottom && rc.right == expected.right,
+       "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
+       rc.top, rc.left, rc.bottom, rc.right,
+       expected.top, expected.left, expected.bottom, expected.right);
+
+    rc = clientRect;
+    SendMessageW(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
+    expected = clientRect;
+    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    ok(rc.top == expected.top && rc.left == expected.left &&
+       rc.bottom == expected.bottom && rc.right == expected.right,
+       "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
+       rc.top, rc.left, rc.bottom, rc.right,
+       expected.top, expected.left, expected.bottom, expected.right);
+
+    /* Removing the selectionbar subtracts the selectionbar width from the left side,
+     * even if the left side is already 0. */
+    SendMessageW(hwnd, EM_SETOPTIONS, ECOOP_AND, ~ECO_SELECTIONBAR);
+    options = SendMessageW(hwnd, EM_GETOPTIONS, 0, 0);
+    ok(!(options & ECO_SELECTIONBAR), "EM_SETOPTIONS failed to remove selectionbar.\n");
+    expected.left -= 8; /* selection bar width */
+    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    todo_wine ok(rc.top == expected.top && rc.left == expected.left &&
+       rc.bottom == expected.bottom && rc.right == expected.right,
+       "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
+       rc.top, rc.left, rc.bottom, rc.right,
+       expected.top, expected.left, expected.bottom, expected.right);
+
+    /* Set the absolute value of the formatting rectangle. */
+    rc = clientRect;
+    SendMessageW(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
+    expected = clientRect;
+    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    ok(rc.top == expected.top && rc.left == expected.left &&
+       rc.bottom == expected.bottom && rc.right == expected.right,
+       "[n=%d] rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
+       n, rc.top, rc.left, rc.bottom, rc.right,
+       expected.top, expected.left, expected.bottom, expected.right);
+
+    /* MSDN documents the EM_SETRECT message as using the rectangle provided in
+     * LPARAM as being a relative offset when the WPARAM value is 1, but these
+     * tests show that this isn't true. */
+    rc.top = 15;
+    rc.left = 15;
+    rc.bottom = clientRect.bottom - 15;
+    rc.right = clientRect.right - 15;
+    expected = rc;
+    SendMessageW(hwnd, EM_SETRECT, 1, (LPARAM)&rc);
+    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    todo_wine ok(rc.top == expected.top && rc.left == expected.left &&
+       rc.bottom == expected.bottom && rc.right == expected.right,
+       "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
+       rc.top, rc.left, rc.bottom, rc.right,
+       expected.top, expected.left, expected.bottom, expected.right);
+
+    /* For some reason it does not limit the values to the client rect with
+     * a WPARAM value of 1. */
+    rc.top = -15;
+    rc.left = -15;
+    rc.bottom = clientRect.bottom + 15;
+    rc.right = clientRect.right + 15;
+    expected = rc;
+    SendMessageW(hwnd, EM_SETRECT, 1, (LPARAM)&rc);
+    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    todo_wine ok(rc.top == expected.top && rc.left == expected.left &&
+       rc.bottom == expected.bottom && rc.right == expected.right,
+       "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
+       rc.top, rc.left, rc.bottom, rc.right,
+       expected.top, expected.left, expected.bottom, expected.right);
+
+    DestroyWindow(hwnd);
+
+    /* The extended window style affects the formatting rectangle. */
+    hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, RICHEDIT_CLASS, NULL,
+                          ES_MULTILINE|WS_POPUP|WS_HSCROLL|WS_VSCROLL|WS_VISIBLE,
+                          0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
+
+    GetClientRect(hwnd, &clientRect);
+
+    expected = clientRect;
+    expected.left += 1;
+    expected.top += 1;
+    expected.right -= 1;
+    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    todo_wine ok(rc.top == expected.top && rc.left == expected.left &&
+       rc.bottom == expected.bottom && rc.right == expected.right,
+       "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
+       rc.top, rc.left, rc.bottom, rc.right,
+       expected.top, expected.left, expected.bottom, expected.right);
+
+    rc = clientRect;
+    rc.top += 5;
+    rc.left += 5;
+    rc.bottom -= 5;
+    rc.right -= 5;
+    expected = rc;
+    expected.top -= 1;
+    expected.left -= 1;
+    expected.right += 1;
+    SendMessageW(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
+    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    todo_wine ok(rc.top == expected.top && rc.left == expected.left &&
+       rc.bottom == expected.bottom && rc.right == expected.right,
+       "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
+       rc.top, rc.left, rc.bottom, rc.right,
+       expected.top, expected.left, expected.bottom, expected.right);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST( editor )
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -5887,6 +6069,7 @@ START_TEST( editor )
   test_SETPARAFORMAT();
   test_word_wrap();
   test_auto_yscroll();
+  test_format_rect();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
