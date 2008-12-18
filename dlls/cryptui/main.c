@@ -1967,6 +1967,28 @@ static void set_general_cert_properties(HWND hwnd, struct detail_data *data)
     show_cert_usages(hwnd, data);
 }
 
+static void toggle_usage(HWND hwnd, int iItem)
+{
+    LVITEMW item;
+    int res;
+    HWND lv = GetDlgItem(hwnd, IDC_CERTIFICATE_USAGES);
+
+    item.mask = LVIF_STATE;
+    item.iItem = iItem;
+    item.iSubItem = 0;
+    item.stateMask = LVIS_STATEIMAGEMASK;
+    res = SendMessageW(lv, LVM_GETITEMW, 0, (LPARAM)&item);
+    if (res)
+    {
+        int state = item.state >> 12;
+
+        item.state = INDEXTOSTATEIMAGEMASK(
+         state == CheckBitmapIndexChecked ? CheckBitmapIndexUnchecked :
+         CheckBitmapIndexChecked);
+        SendMessageW(lv, LVM_SETITEMSTATE, iItem, (LPARAM)&item);
+    }
+}
+
 #define MAX_FRIENDLY_NAME 40
 #define MAX_DESCRIPTION 255
 
@@ -1992,6 +2014,21 @@ static LRESULT CALLBACK cert_properties_general_dlg_proc(HWND hwnd, UINT msg,
         ShowScrollBar(description, SB_VERT, FALSE);
         set_general_cert_properties(hwnd, data);
         SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
+        break;
+    }
+    case WM_NOTIFY:
+    {
+        NMHDR *hdr = (NMHDR *)lp;
+        NMITEMACTIVATE *nm;
+
+        switch (hdr->code)
+        {
+        case NM_CLICK:
+            nm = (NMITEMACTIVATE *)lp;
+            toggle_usage(hwnd, nm->iItem);
+            SendMessageW(GetParent(hwnd), PSM_CHANGED, (WPARAM)hwnd, 0);
+            break;
+        }
         break;
     }
     case WM_COMMAND:
