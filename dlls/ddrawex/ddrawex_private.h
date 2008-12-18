@@ -100,6 +100,9 @@ typedef struct
     /* The interface we're forwarding to */
     IDirectDrawSurface4 *parent;
 
+    BOOL permanent_dc;
+    HDC hdc;
+
     /* An UUID we use to store the outer surface as private data in the inner surface */
 #define IID_DDrawexPriv IID_IDirectDrawSurface4
 
@@ -107,5 +110,6 @@ typedef struct
 
 IDirectDrawSurface4 *dds_get_outer(IDirectDrawSurface4 *inner);
 IDirectDrawSurface4 *dds_get_inner(IDirectDrawSurface4 *outer);
+HRESULT prepare_permanent_dc(IDirectDrawSurface4 *iface);
 
 #endif /* __WINE_DLLS_DDRAWEX_DDRAWEX_PRIVATE_H */

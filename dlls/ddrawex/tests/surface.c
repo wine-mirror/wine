@@ -161,7 +161,7 @@ static void CapsTest(void)
     ddsd.dwWidth = 64;
     ddsd.dwHeight = 64;
     hr = IDirectDraw_CreateSurface(dd1, &ddsd, &surf, NULL);
-    todo_wine ok(hr == DD_OK, "Creating a SYSMEM | VIDMEM surface returned 0x%08x, expected DD_OK\n", hr);
+    ok(hr == DD_OK, "Creating a SYSMEM | VIDMEM surface returned 0x%08x, expected DD_OK\n", hr);
     if(surf) IDirectDrawSurface_Release(surf);
 
     IDirectDraw_Release(dd1);

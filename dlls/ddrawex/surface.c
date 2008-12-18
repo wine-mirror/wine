@@ -563,7 +563,16 @@ IDirectDrawSurface4Impl_GetDC(IDirectDrawSurface4 *iface,
 {
     IDirectDrawSurfaceImpl *This = impl_from_dds4(iface);
     TRACE("(%p)->(%p)\n", This, hdc);
-    return IDirectDrawSurface4_GetDC(This->parent, hdc);
+    if(This->permanent_dc)
+    {
+        TRACE("Returning stored dc %p\n", This->hdc);
+        *hdc = This->hdc;
+        return DD_OK;
+    }
+    else
+    {
+        return IDirectDrawSurface4_GetDC(This->parent, hdc);
+    }
 }
 
 static HRESULT WINAPI
@@ -654,8 +663,17 @@ IDirectDrawSurface4Impl_GetSurfaceDesc(IDirectDrawSurface4 *iface,
                                        DDSURFACEDESC2 *DDSD)
 {
     IDirectDrawSurfaceImpl *This = impl_from_dds4(iface);
+    HRESULT hr;
     TRACE("(%p)->(%p)\n", This, DDSD);
-    return IDirectDrawSurface4_GetSurfaceDesc(This->parent, DDSD);
+    hr = IDirectDrawSurface4_GetSurfaceDesc(This->parent, DDSD);
+
+    if(SUCCEEDED(hr) && This->permanent_dc)
+    {
+        DDSD->ddsCaps.dwCaps |= DDSCAPS_VIDEOMEMORY;
+        DDSD->ddsCaps.dwCaps &= ~DDSCAPS_OWNDC;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI
@@ -731,8 +749,17 @@ IDirectDrawSurface4Impl_Lock(IDirectDrawSurface4 *iface,
                              HANDLE h)
 {
     IDirectDrawSurfaceImpl *This = impl_from_dds4(iface);
+    HRESULT hr;
     TRACE("(%p)->(%p,%p,0x%08x,%p)\n", This, Rect, DDSD, Flags, h);
-    return IDirectDrawSurface4_Lock(This->parent, Rect, DDSD, Flags, h);
+    hr = IDirectDrawSurface4_Lock(This->parent, Rect, DDSD, Flags, h);
+
+    if(SUCCEEDED(hr) && This->permanent_dc)
+    {
+        DDSD->ddsCaps.dwCaps |= DDSCAPS_VIDEOMEMORY;
+        DDSD->ddsCaps.dwCaps &= ~DDSCAPS_OWNDC;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI
@@ -759,7 +786,15 @@ IDirectDrawSurface4Impl_ReleaseDC(IDirectDrawSurface4 *iface,
 {
     IDirectDrawSurfaceImpl *This = impl_from_dds4(iface);
     TRACE("(%p)->(%p)\n", This, hdc);
-    return IDirectDrawSurface4_ReleaseDC(This->parent, hdc);
+    if(This->permanent_dc)
+    {
+        TRACE("Surface has a permanent DC, not doing anything\n");
+        return DD_OK;
+    }
+    else
+    {
+        return IDirectDrawSurface4_ReleaseDC(This->parent, hdc);
+    }
 }
 
 static HRESULT WINAPI
@@ -1258,4 +1293,16 @@ IDirectDrawSurface4 *dds_get_inner(IDirectDrawSurface4 *outer)
     IDirectDrawSurfaceImpl *This = impl_from_dds4(outer);
     if(This == NULL) return NULL;
     return This->parent;
+}
+
+HRESULT prepare_permanent_dc(IDirectDrawSurface4 *iface)
+{
+    IDirectDrawSurfaceImpl *This = impl_from_dds4(iface);
+    HRESULT hr;
+    This->permanent_dc = TRUE;
+
+    hr = IDirectDrawSurface4_GetDC(This->parent, &This->hdc);
+    if(FAILED(hr)) return hr;
+    hr = IDirectDrawSurface4_ReleaseDC(This->parent, This->hdc);
+    return hr;
 }

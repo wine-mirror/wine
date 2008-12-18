@@ -387,6 +387,8 @@ IDirectDraw4Impl_CreateSurface(IDirectDraw4 *iface,
 {
     IDirectDrawImpl *This = impl_from_dd4(iface);
     HRESULT hr;
+    const DWORD perm_dc_flags = DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY;
+    BOOL permanent_dc;
     TRACE("(%p)(%p, %p, %p)\n", This, DDSD, Surf, UnkOuter);
 
     if(UnkOuter != NULL)
@@ -395,8 +397,25 @@ IDirectDraw4Impl_CreateSurface(IDirectDraw4 *iface,
         FIXME("Implement aggregation for ddrawex surfaces\n");
     }
 
+    /* plain ddraw.dll refuses to create a surface that has both VIDMEM and SYSMEM flags
+     * set. In ddrawex this succeeds, and the GetDC() call changes the behavior. The DC
+     * is permanently valid, and the surface can be locked between GetDC() and ReleaseDC()
+     * calls. GetDC() can be called more than once too
+     */
+    if((DDSD->ddsCaps.dwCaps & perm_dc_flags) == perm_dc_flags)
+    {
+        permanent_dc = TRUE;
+        DDSD->ddsCaps.dwCaps &= ~DDSCAPS_VIDEOMEMORY;
+        DDSD->ddsCaps.dwCaps |= DDSCAPS_OWNDC;
+    }
+    else
+    {
+        permanent_dc = FALSE;
+    }
+
     hr = IDirectDraw4_CreateSurface(This->parent, DDSD, Surf, UnkOuter);
     *Surf = dds_get_outer(*Surf);
+    if(permanent_dc) prepare_permanent_dc(*Surf);
     return hr;
 }
 
