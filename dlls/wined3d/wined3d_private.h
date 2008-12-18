@@ -483,8 +483,8 @@ extern const shader_backend_t none_shader_backend;
 
 /* X11 locking */
 
-extern void (*wine_tsx11_lock_ptr)(void);
-extern void (*wine_tsx11_unlock_ptr)(void);
+extern void (* CDECL wine_tsx11_lock_ptr)(void);
+extern void (* CDECL wine_tsx11_unlock_ptr)(void);
 
 /* As GLX relies on X, this is needed */
 extern int num_lock;

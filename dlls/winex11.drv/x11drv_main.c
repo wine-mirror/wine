@@ -271,7 +271,7 @@ static int error_handler( Display *display, XErrorEvent *error_evt )
 /***********************************************************************
  *		wine_tsx11_lock   (X11DRV.@)
  */
-void wine_tsx11_lock(void)
+void CDECL wine_tsx11_lock(void)
 {
     EnterCriticalSection( &X11DRV_CritSection );
 }
@@ -279,7 +279,7 @@ void wine_tsx11_lock(void)
 /***********************************************************************
  *		wine_tsx11_unlock   (X11DRV.@)
  */
-void wine_tsx11_unlock(void)
+void CDECL wine_tsx11_unlock(void)
 {
     LeaveCriticalSection( &X11DRV_CritSection );
 }
