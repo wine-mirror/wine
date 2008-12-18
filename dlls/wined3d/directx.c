@@ -2361,6 +2361,10 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
 
         case WINED3DFMT_G16R16F:
         case WINED3DFMT_G32R32F:
+            if(GL_SUPPORT(ARB_TEXTURE_RG)) {
+                TRACE_(d3d_caps)("[OK]\n");
+                return TRUE;
+            }
             TRACE_(d3d_caps)("[FAILED]\n");
             return FALSE;
 
