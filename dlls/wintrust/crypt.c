@@ -176,10 +176,59 @@ HCATINFO WINAPI CryptCATAdminAddCatalog(HCATADMIN catAdmin, PWSTR catalogFile,
 BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD* pcbHash,
                                                 BYTE* pbHash, DWORD dwFlags )
 {
-    FIXME("%p %p %p %x\n", hFile, pcbHash, pbHash, dwFlags);
+    BOOL ret = FALSE;
 
-    if (pbHash && pcbHash) memset(pbHash, 0, *pcbHash);
-    return TRUE;
+    TRACE("%p %p %p %x\n", hFile, pcbHash, pbHash, dwFlags);
+
+    if (!hFile || !pcbHash || dwFlags)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (*pcbHash < 20)
+    {
+        *pcbHash = 20;
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return TRUE;
+    }
+
+    *pcbHash = 20;
+    if (pbHash)
+    {
+        HCRYPTPROV prov;
+        HCRYPTHASH hash;
+        DWORD bytes_read;
+        BYTE *buffer;
+
+        if (!(buffer = HeapAlloc(GetProcessHeap(), 0, 4096)))
+        {
+            SetLastError(ERROR_OUTOFMEMORY);
+            return FALSE;
+        }
+        ret = CryptAcquireContextW(&prov, NULL, MS_DEF_PROV_W, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+        if (!ret)
+        {
+            HeapFree(GetProcessHeap(), 0, buffer);
+            return FALSE;
+        }
+        ret = CryptCreateHash(prov, CALG_SHA1, 0, 0, &hash);
+        if (!ret)
+        {
+            HeapFree(GetProcessHeap(), 0, buffer);
+            CryptReleaseContext(prov, 0);
+            return FALSE;
+        }
+        while ((ret = ReadFile(hFile, buffer, 4096, &bytes_read, NULL)) && bytes_read)
+        {
+            CryptHashData(hash, buffer, bytes_read, 0);
+        }
+        if (ret) ret = CryptGetHashParam(hash, HP_HASHVAL, pbHash, pcbHash, 0);
+
+        HeapFree(GetProcessHeap(), 0, buffer);
+        CryptDestroyHash(hash);
+        CryptReleaseContext(prov, 0);
+    }
+    return ret;
 }
 
 /***********************************************************************

@@ -271,45 +271,33 @@ static void test_calchash(void)
     /* All NULL */
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminCalcHashFromFileHandle(NULL, NULL, NULL, 0);
-    todo_wine
-    {
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    }
 
     /* NULL filehandle, rest is legal */
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminCalcHashFromFileHandle(NULL, &hashsize, NULL, 0);
-    todo_wine
-    {
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    }
 
     /* Correct filehandle, rest is NULL */
     file = CreateFileA(selfname, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminCalcHashFromFileHandle(file, NULL, NULL, 0);
-    todo_wine
-    {
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    }
     CloseHandle(file);
 
     /* All OK, but dwFlags set to 1 */
     file = CreateFileA(selfname, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminCalcHashFromFileHandle(file, &hashsize, NULL, 1);
-    todo_wine
-    {
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    }
     CloseHandle(file);
 
     /* All OK, requesting the size of the hash */
@@ -318,12 +306,9 @@ static void test_calchash(void)
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminCalcHashFromFileHandle(file, &hashsize, NULL, 0);
     ok(ret, "Expected success %u\n", GetLastError());
-    todo_wine
-    {
     ok(hashsize == 20," Expected a hash size of 20, got %d\n", hashsize);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
-    }
     CloseHandle(file);
 
     /* All OK, retrieve the hash
@@ -335,12 +320,9 @@ static void test_calchash(void)
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminCalcHashFromFileHandle(file, &hashsize, hash, 0);
     ok(ret, "Expected success %u\n", GetLastError());
-    todo_wine
-    {
     ok(hashsize == 20," Expected a hash size of 20, got %d\n", hashsize);
     ok(GetLastError() == ERROR_SUCCESS,
        "Expected ERROR_SUCCESS, got %d\n", GetLastError());
-    }
     CloseHandle(file);
     HeapFree(GetProcessHeap(), 0, hash);
 
@@ -360,14 +342,11 @@ static void test_calchash(void)
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminCalcHashFromFileHandle(file, &hashsize, hash, 0);
     ok(ret, "Expected success\n");
-    todo_wine
-    {
     ok(GetLastError() == ERROR_SUCCESS,
        "Expected ERROR_SUCCESS, got %d\n", GetLastError());
     ok(hashsize == sizeof(expectedhash) &&
        !memcmp(hash, expectedhash, sizeof(expectedhash)),
        "Hashes didn't match\n");
-    }
     CloseHandle(file);
 
     HeapFree(GetProcessHeap(), 0, hash);
