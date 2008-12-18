@@ -34,9 +34,6 @@
 #include "winternl.h"
 #include "wine/exception.h"
 #include "wine/library.h"
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(fiber);
 
 struct fiber_data
 {
