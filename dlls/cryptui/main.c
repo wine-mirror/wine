@@ -1866,13 +1866,58 @@ static void show_cert_hierarchy(HWND hwnd, struct hierarchy_data *data)
     set_certificate_status_for_end_cert(hwnd, data->pCertViewInfo);
 }
 
+static void show_dialog_for_selected_cert(HWND hwnd)
+{
+    HWND tree = GetDlgItem(hwnd, IDC_CERTPATH);
+    TVITEMW item;
+    struct hierarchy_data *data;
+    DWORD selection;
+
+    memset(&item, 0, sizeof(item));
+    item.mask = TVIF_HANDLE | TVIF_PARAM;
+    item.hItem = (HTREEITEM)SendMessageW(tree, TVM_GETNEXTITEM, TVGN_CARET,
+     (LPARAM)NULL);
+    SendMessageW(tree, TVM_GETITEMW, 0, (LPARAM)&item);
+    data = get_hierarchy_data_from_tree_item(tree, item.hItem);
+    selection = lparam_to_index(data, item.lParam);
+    if (selection != 0)
+    {
+        CRYPT_PROVIDER_SGNR *provSigner;
+        CRYPTUI_VIEWCERTIFICATE_STRUCTW viewInfo;
+        BOOL changed = FALSE;
+
+        provSigner = WTHelperGetProvSignerFromChain(
+         (CRYPT_PROVIDER_DATA *)data->pCertViewInfo->u.pCryptProviderData,
+         data->pCertViewInfo->idxSigner,
+         data->pCertViewInfo->fCounterSigner,
+         data->pCertViewInfo->idxCounterSigner);
+        memset(&viewInfo, 0, sizeof(viewInfo));
+        viewInfo.dwSize = sizeof(viewInfo);
+        viewInfo.dwFlags = data->pCertViewInfo->dwFlags;
+        viewInfo.szTitle = data->pCertViewInfo->szTitle;
+        viewInfo.pCertContext = provSigner->pasCertChain[selection].pCert;
+        viewInfo.cStores = data->pCertViewInfo->cStores;
+        viewInfo.rghStores = data->pCertViewInfo->rghStores;
+        viewInfo.cPropSheetPages = data->pCertViewInfo->cPropSheetPages;
+        viewInfo.rgPropSheetPages = data->pCertViewInfo->rgPropSheetPages;
+        viewInfo.nStartPage = data->pCertViewInfo->nStartPage;
+        CryptUIDlgViewCertificateW(&viewInfo, &changed);
+        if (changed)
+        {
+            /* Delete the contents of the tree */
+            SendMessageW(tree, TVM_DELETEITEM, 0, (LPARAM)TVI_ROOT);
+            /* Reinitialize the tree */
+            show_cert_hierarchy(hwnd, data);
+        }
+    }
+}
+
 static LRESULT CALLBACK hierarchy_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
     PROPSHEETPAGEW *page;
     struct hierarchy_data *data;
-    HWND tree = GetDlgItem(hwnd, IDC_CERTPATH);
-    DWORD selection;
+    LRESULT ret = 0;
 
     TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
 
@@ -1885,13 +1930,18 @@ static LRESULT CALLBACK hierarchy_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         break;
     case WM_NOTIFY:
     {
-        NMTREEVIEWW *nm;
-        CRYPT_PROVIDER_SGNR *provSigner;
+        NMHDR *hdr;
 
-        nm = (NMTREEVIEWW*)lp;
-        switch (nm->hdr.code)
+        hdr = (NMHDR *)lp;
+        switch (hdr->code)
         {
         case TVN_SELCHANGEDW:
+        {
+            NMTREEVIEWW *nm = (NMTREEVIEWW*)lp;
+            HWND tree = GetDlgItem(hwnd, IDC_CERTPATH);
+            DWORD selection;
+            CRYPT_PROVIDER_SGNR *provSigner;
+
             data = get_hierarchy_data_from_tree_item(tree, nm->itemNew.hItem);
             selection = lparam_to_index(data, nm->itemNew.lParam);
             provSigner = WTHelperGetProvSignerFromChain(
@@ -1904,54 +1954,24 @@ static LRESULT CALLBACK hierarchy_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
              &provSigner->pasCertChain[selection]);
             break;
         }
+        case NM_DBLCLK:
+            show_dialog_for_selected_cert(hwnd);
+            SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, 1);
+            ret = 1;
+            break;
+        }
         break;
     }
     case WM_COMMAND:
         switch (wp)
         {
         case IDC_VIEWCERTIFICATE:
-        {
-            TVITEMW item;
-            CRYPT_PROVIDER_SGNR *provSigner;
-            CRYPTUI_VIEWCERTIFICATE_STRUCTW viewInfo;
-            BOOL changed = FALSE;
-
-            memset(&item, 0, sizeof(item));
-            item.mask = TVIF_HANDLE | TVIF_PARAM;
-            item.hItem = (HTREEITEM)SendMessageW(tree, TVM_GETNEXTITEM,
-             TVGN_CARET, (LPARAM)NULL);
-            SendMessageW(tree, TVM_GETITEMW, 0, (LPARAM)&item);
-            data = get_hierarchy_data_from_tree_item(tree, item.hItem);
-            selection = lparam_to_index(data, item.lParam);
-            provSigner = WTHelperGetProvSignerFromChain(
-             (CRYPT_PROVIDER_DATA *)data->pCertViewInfo->u.pCryptProviderData,
-             data->pCertViewInfo->idxSigner,
-             data->pCertViewInfo->fCounterSigner,
-             data->pCertViewInfo->idxCounterSigner);
-            memset(&viewInfo, 0, sizeof(viewInfo));
-            viewInfo.dwSize = sizeof(viewInfo);
-            viewInfo.dwFlags = data->pCertViewInfo->dwFlags;
-            viewInfo.szTitle = data->pCertViewInfo->szTitle;
-            viewInfo.pCertContext = provSigner->pasCertChain[selection].pCert;
-            viewInfo.cStores = data->pCertViewInfo->cStores;
-            viewInfo.rghStores = data->pCertViewInfo->rghStores;
-            viewInfo.cPropSheetPages = data->pCertViewInfo->cPropSheetPages;
-            viewInfo.rgPropSheetPages = data->pCertViewInfo->rgPropSheetPages;
-            viewInfo.nStartPage = data->pCertViewInfo->nStartPage;
-            CryptUIDlgViewCertificateW(&viewInfo, &changed);
-            if (changed)
-            {
-                /* Delete the contents of the tree */
-                SendMessageW(tree, TVM_DELETEITEM, 0, (LPARAM)TVI_ROOT);
-                /* Reinitialize the tree */
-                show_cert_hierarchy(hwnd, data);
-            }
+            show_dialog_for_selected_cert(hwnd);
             break;
-        }
         }
         break;
     }
-    return 0;
+    return ret;
 }
 
 static UINT CALLBACK hierarchy_callback(HWND hwnd, UINT msg,
