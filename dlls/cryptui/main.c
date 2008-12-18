@@ -1716,6 +1716,7 @@ static void show_cert_usages(HWND hwnd, struct detail_data *data)
     PCCRYPT_OID_INFO *usages;
     RECT rc;
     LVCOLUMNW column;
+    PurposeSelection purposeSelection;
 
     GetWindowRect(lv, &rc);
     column.mask = LVCF_WIDTH;
@@ -1738,6 +1739,10 @@ static void show_cert_usages(HWND hwnd, struct detail_data *data)
             HeapFree(GetProcessHeap(), 0, usage);
             usage = NULL;
         }
+        else if (usage->cUsageIdentifier)
+            purposeSelection = PurposeEnableSelected;
+        else
+            purposeSelection = PurposeDisableAll;
     }
     else if (CertGetEnhancedKeyUsage(cert, CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG,
      NULL, &size))
@@ -1749,9 +1754,16 @@ static void show_cert_usages(HWND hwnd, struct detail_data *data)
             HeapFree(GetProcessHeap(), 0, usage);
             usage = NULL;
         }
+        else if (usage->cUsageIdentifier)
+            purposeSelection = PurposeEnableAll;
+        else
+            purposeSelection = PurposeDisableAll;
     }
     else
+    {
+        purposeSelection = PurposeEnableAll;
         usage = NULL;
+    }
     if (usage)
     {
         DWORD i;
@@ -1779,7 +1791,9 @@ static void show_cert_usages(HWND hwnd, struct detail_data *data)
             WTHelperGetKnownUsages(2, &usages);
         }
     }
-    select_purposes(hwnd, PurposeEnableAll);
+    select_purposes(hwnd, purposeSelection);
+    SendMessageW(GetDlgItem(hwnd, IDC_ENABLE_ALL_PURPOSES + purposeSelection),
+     BM_CLICK, 0, 0);
 }
 
 static void set_general_cert_properties(HWND hwnd, struct detail_data *data)
@@ -1800,7 +1814,6 @@ static void set_general_cert_properties(HWND hwnd, struct detail_data *data)
         HeapFree(GetProcessHeap(), 0, str);
     }
     show_cert_usages(hwnd, data);
-    SendMessageW(GetDlgItem(hwnd, IDC_ENABLE_ALL_PURPOSES), BM_CLICK, 0, 0);
 }
 
 #define MAX_FRIENDLY_NAME 40
