@@ -21,6 +21,13 @@
 
 /* FIXME: #include <cfg.h> */
 
+/* cfgmgr32 doesn't use the normal convention, it adds an underscore before A/W */
+#ifdef WINE_NO_UNICODE_MACROS
+# define DECL_WINELIB_CFGMGR32_TYPE_AW(type)  /* nothing */
+#else
+# define DECL_WINELIB_CFGMGR32_TYPE_AW(type)  typedef WINELIB_NAME_AW(type##_) type;
+#endif
+
 #define CMAPI
 typedef DWORD CONFIGRET;
 
@@ -97,6 +104,11 @@ typedef DWORD CONFIGRET;
 typedef DWORD DEVINST, *PDEVINST;
 typedef DWORD DEVNODE, *PDEVNODE;
 typedef HANDLE HMACHINE, *PHMACHINE;
+typedef CHAR *DEVNODEID_A, *DEVINSTID_A;
+typedef WCHAR *DEVNODEID_W, *DEVINSTID_W;
+
+DECL_WINELIB_CFGMGR32_TYPE_AW(DEVNODEID)
+DECL_WINELIB_CFGMGR32_TYPE_AW(DEVINSTID)
 
 #ifdef __cplusplus
 extern "C" {
@@ -121,5 +133,7 @@ CMAPI CONFIGRET WINAPI CM_Get_Device_ID_Size_Ex(PULONG,DEVINST,ULONG,HMACHINE);
 #ifdef __cplusplus
 }
 #endif
+
+#undef DECL_WINELIB_CFGMGR32_TYPE_AW
 
 #endif /* _CFGMGR32_H_ */
