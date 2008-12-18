@@ -1665,6 +1665,31 @@ static void redraw_states(HWND list, BOOL enabled)
     }
 }
 
+typedef enum {
+    PurposeEnableAll = 0,
+    PurposeDisableAll,
+    PurposeEnableSelected
+} PurposeSelection;
+
+static void select_purposes(HWND hwnd, PurposeSelection selection)
+{
+    HWND lv = GetDlgItem(hwnd, IDC_CERTIFICATE_USAGES);
+
+    switch (selection)
+    {
+    case PurposeEnableAll:
+    case PurposeDisableAll:
+        EnableWindow(lv, FALSE);
+        redraw_states(lv, FALSE);
+        EnableWindow(GetDlgItem(hwnd, IDC_ADD_PURPOSE), FALSE);
+        break;
+    case PurposeEnableSelected:
+        EnableWindow(lv, TRUE);
+        redraw_states(lv, TRUE);
+        EnableWindow(GetDlgItem(hwnd, IDC_ADD_PURPOSE), TRUE);
+    }
+}
+
 extern BOOL WINAPI WTHelperGetKnownUsages(DWORD action,
  PCCRYPT_OID_INFO **usages);
 
@@ -1754,8 +1779,7 @@ static void show_cert_usages(HWND hwnd, struct detail_data *data)
             WTHelperGetKnownUsages(2, &usages);
         }
     }
-    EnableWindow(lv, FALSE);
-    redraw_states(lv, FALSE);
+    select_purposes(hwnd, PurposeEnableAll);
 }
 
 static void set_general_cert_properties(HWND hwnd, struct detail_data *data)
@@ -1776,7 +1800,6 @@ static void set_general_cert_properties(HWND hwnd, struct detail_data *data)
         HeapFree(GetProcessHeap(), 0, str);
     }
     show_cert_usages(hwnd, data);
-    EnableWindow(GetDlgItem(hwnd, IDC_ADD_PURPOSE), FALSE);
     SendMessageW(GetDlgItem(hwnd, IDC_ENABLE_ALL_PURPOSES), BM_CLICK, 0, 0);
 }
 
@@ -1821,6 +1844,17 @@ static LRESULT CALLBACK cert_properties_general_dlg_proc(HWND hwnd, UINT msg,
                 int lines = SendMessageW(description, EM_GETLINECOUNT, 0, 0);
 
                 ShowScrollBar(description, SB_VERT, lines > 1);
+            }
+            break;
+        case BN_CLICKED:
+            switch (LOWORD(wp))
+            {
+            case IDC_ENABLE_ALL_PURPOSES:
+            case IDC_DISABLE_ALL_PURPOSES:
+            case IDC_ENABLE_SELECTED_PURPOSES:
+                SendMessageW(GetParent(hwnd), PSM_CHANGED, (WPARAM)hwnd, 0);
+                select_purposes(hwnd, LOWORD(wp) - IDC_ENABLE_ALL_PURPOSES);
+                break;
             }
             break;
         }
