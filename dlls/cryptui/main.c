@@ -2004,6 +2004,15 @@ static void set_cert_string_property(PCCERT_CONTEXT cert, DWORD prop,
         CertSetCertificateContextProperty(cert, prop, 0, NULL);
 }
 
+#define WM_REFRESH_VIEW WM_USER + 0
+
+static BOOL CALLBACK refresh_propsheet_pages(HWND hwnd, LPARAM lParam)
+{
+    if ((GetClassLongW(hwnd, GCW_ATOM) == WC_DIALOG))
+        SendMessageW(hwnd, WM_REFRESH_VIEW, 0, 0);
+    return TRUE;
+}
+
 #define MAX_FRIENDLY_NAME 40
 #define MAX_DESCRIPTION 255
 
@@ -2070,6 +2079,7 @@ static void apply_general_changes(HWND hwnd)
         CertSetEnhancedKeyUsage(data->pCertViewInfo->pCertContext, &usage);
         HeapFree(GetProcessHeap(), 0, usage.rgpszUsageIdentifier);
     }
+    EnumChildWindows(GetParent(GetParent(hwnd)), refresh_propsheet_pages, 0);
     if (data->pfPropertiesChanged)
         *data->pfPropertiesChanged = TRUE;
 }
@@ -2329,6 +2339,9 @@ static LRESULT CALLBACK detail_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             refresh_details_view(hwnd);
             break;
         }
+        break;
+    case WM_REFRESH_VIEW:
+        refresh_details_view(hwnd);
         break;
     }
     return 0;
@@ -2601,6 +2614,7 @@ static LRESULT CALLBACK hierarchy_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
     PROPSHEETPAGEW *page;
     struct hierarchy_data *data;
     LRESULT ret = 0;
+    HWND tree = GetDlgItem(hwnd, IDC_CERTPATH);
 
     TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
 
@@ -2621,7 +2635,6 @@ static LRESULT CALLBACK hierarchy_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         case TVN_SELCHANGEDW:
         {
             NMTREEVIEWW *nm = (NMTREEVIEWW*)lp;
-            HWND tree = GetDlgItem(hwnd, IDC_CERTPATH);
             DWORD selection;
             CRYPT_PROVIDER_SGNR *provSigner;
 
@@ -2653,6 +2666,22 @@ static LRESULT CALLBACK hierarchy_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             break;
         }
         break;
+    case WM_REFRESH_VIEW:
+    {
+        TVITEMW item;
+
+        /* Get hierarchy data */
+        memset(&item, 0, sizeof(item));
+        item.mask = TVIF_HANDLE | TVIF_PARAM;
+        item.hItem = (HTREEITEM)SendMessageW(tree, TVM_GETNEXTITEM, TVGN_ROOT,
+         (LPARAM)NULL);
+        data = get_hierarchy_data_from_tree_item(tree, item.hItem);
+        /* Delete the contents of the tree */
+        SendMessageW(tree, TVM_DELETEITEM, 0, (LPARAM)TVI_ROOT);
+        /* Reinitialize the tree */
+        show_cert_hierarchy(hwnd, data);
+        break;
+    }
     }
     return ret;
 }
