@@ -352,6 +352,13 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
     DWORD error, written;
     BOOL ret;
 
+    if (!pCryptCATAdminRemoveCatalog)
+    {
+        /* NT4 and W2K do have CryptCATAdminAddCatalog !! */
+        win_skip("CryptCATAdminRemoveCatalog is not available\n");
+        return;
+    }
+
     if (!GetTempFileNameA(CURR_DIR, "cat", 0, tmpfile)) return;
     DeleteFileA(tmpfile);
     file = CreateFileA(tmpfile, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
