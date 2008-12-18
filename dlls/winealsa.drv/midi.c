@@ -374,27 +374,34 @@ static DWORD WINAPI midRecThread(LPVOID arg)
                     break;
 		case SND_SEQ_EVENT_SYSEX:
 		    {
+			int pos = 0;
 			int len = ev->data.ext.len;
 			LPBYTE ptr = (BYTE*) ev->data.ext.ptr;
 			LPMIDIHDR lpMidiHdr;
 
-			/* FIXME: Should handle sysex greater than lpMidiHdr->dwBufferLength */
 			EnterCriticalSection(&crit_sect);
-			if ((lpMidiHdr = MidiInDev[wDevID].lpQueueHdr) != NULL) {
-			    if (lpMidiHdr->dwBytesRecorded + len <= lpMidiHdr->dwBufferLength) {
-				memcpy(lpMidiHdr->lpData + lpMidiHdr->dwBytesRecorded, ptr, len);
-				lpMidiHdr->dwBytesRecorded += len;
-				if (*(ptr + (len-1)) == 0xF7) {
+			while (len) {
+			    if ((lpMidiHdr = MidiInDev[wDevID].lpQueueHdr) != NULL) {
+				int copylen = min(len, lpMidiHdr->dwBufferLength - lpMidiHdr->dwBytesRecorded);
+				memcpy(lpMidiHdr->lpData + lpMidiHdr->dwBytesRecorded, ptr + pos, copylen);
+				lpMidiHdr->dwBytesRecorded += copylen;
+				len -= copylen;
+				pos += copylen;
+				/* We check if we reach the end of buffer or the end of sysex before notifying
+				 * to handle the case where ALSA splitted the sysex into several events */
+				if ((lpMidiHdr->dwBytesRecorded == lpMidiHdr->dwBufferLength) ||
+				    (*(BYTE*)(lpMidiHdr->lpData + lpMidiHdr->dwBytesRecorded - 1) == 0xF7)) {
 				    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
 				    lpMidiHdr->dwFlags |= MHDR_DONE;
 				    MidiInDev[wDevID].lpQueueHdr = (LPMIDIHDR)lpMidiHdr->lpNext;
 				    if (MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD_PTR)lpMidiHdr, dwTime) != MMSYSERR_NOERROR)
 					WARN("Couldn't notify client\n");
 				}
-			    } else
-				FIXME("No enough space in the buffer to store sysex!\n");
-			} else
-			    FIXME("Sysex received but no buffer to store it!\n");
+			    } else {
+				FIXME("Sysex data received but no buffer to store it!\n");
+				break;
+			    }
+			}
 			LeaveCriticalSection(&crit_sect);
 		    }
 		    break;
