@@ -1612,6 +1612,18 @@ static LRESULT CALLBACK add_purpose_dlg_proc(HWND hwnd, UINT msg,
     case WM_COMMAND:
         switch (HIWORD(wp))
         {
+        case EN_CHANGE:
+            if (LOWORD(wp) == IDC_NEW_PURPOSE)
+            {
+                /* Show/hide scroll bar on description depending on how much
+                 * text it has.
+                 */
+                HWND description = GetDlgItem(hwnd, IDC_NEW_PURPOSE);
+                int lines = SendMessageW(description, EM_GETLINECOUNT, 0, 0);
+
+                ShowScrollBar(description, SB_VERT, lines > 1);
+            }
+            break;
         case BN_CLICKED:
             switch (LOWORD(wp))
             {
