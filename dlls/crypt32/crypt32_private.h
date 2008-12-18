@@ -379,8 +379,6 @@ void *ContextList_Enum(struct ContextList *list, void *pPrev);
 
 void ContextList_Delete(struct ContextList *list, void *context);
 
-void ContextList_Empty(struct ContextList *list);
-
 void ContextList_Free(struct ContextList *list);
 
 /**

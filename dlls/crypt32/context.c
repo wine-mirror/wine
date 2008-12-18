@@ -288,7 +288,7 @@ void ContextList_Delete(struct ContextList *list, void *context)
     list->contextInterface->free(context);
 }
 
-void ContextList_Empty(struct ContextList *list)
+static void ContextList_Empty(struct ContextList *list)
 {
     struct list *entry, *next;
 
