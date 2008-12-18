@@ -37,4 +37,7 @@ IDB_CERT_ERROR BITMAP LOADONCALL DISCARDABLE certerror.bmp
 /* @makedep: certwarning.bmp */
 IDB_CERT_WARNING BITMAP LOADONCALL DISCARDABLE certwarning.bmp
 
+/* @makedep: checks.bmp */
+IDB_CHECKS BITMAP LOADONCALL DISCARDABLE checks.bmp
+
 #include "cryptui_En.rc"

@@ -1155,6 +1155,7 @@ struct detail_data
     BOOL *pfPropertiesChanged;
     int cFields;
     struct field_value_data *fields;
+    HIMAGELIST imageList;
 };
 
 typedef void (*add_fields_func)(HWND hwnd, struct detail_data *data);
@@ -1554,6 +1555,44 @@ static void create_cert_details_list(HWND hwnd, struct detail_data *data)
     set_fields_selection(hwnd, data, 0);
 }
 
+typedef enum {
+    CheckBitmapIndexUnchecked = 1,
+    CheckBitmapIndexChecked = 2,
+    CheckBitmapIndexDisabledUnchecked = 3,
+    CheckBitmapIndexDisabledChecked = 4
+} CheckBitmapIndex;
+
+static void add_purpose(HWND hwnd, LPCSTR oid)
+{
+    HWND lv = GetDlgItem(hwnd, IDC_CERTIFICATE_USAGES);
+    PCRYPT_OID_INFO info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+     sizeof(CRYPT_OID_INFO));
+
+    if (info)
+    {
+        char *oidCopy = HeapAlloc(GetProcessHeap(), 0, strlen(oid) + 1);
+
+        if (oidCopy)
+        {
+            LVITEMA item;
+
+            strcpy(oidCopy, oid);
+            info->cbSize = sizeof(CRYPT_OID_INFO);
+            info->pszOID = oidCopy;
+            item.mask = LVIF_TEXT | LVIF_STATE | LVIF_PARAM;
+            item.state = INDEXTOSTATEIMAGEMASK(CheckBitmapIndexChecked);
+            item.stateMask = LVIS_STATEIMAGEMASK;
+            item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
+            item.iSubItem = 0;
+            item.lParam = (LPARAM)info;
+            item.pszText = oidCopy;
+            SendMessageA(lv, LVM_INSERTITEMA, 0, (LPARAM)&item);
+        }
+        else
+            HeapFree(GetProcessHeap(), 0, info);
+    }
+}
+
 static WCHAR *get_cert_property_as_string(PCCERT_CONTEXT cert, DWORD prop)
 {
     WCHAR *name = NULL;
@@ -1575,6 +1614,150 @@ static WCHAR *get_cert_property_as_string(PCCERT_CONTEXT cert, DWORD prop)
     return name;
 }
 
+static void redraw_states(HWND list, BOOL enabled)
+{
+    int items = SendMessageW(list, LVM_GETITEMCOUNT, 0, 0), i;
+
+    for (i = 0; i < items; i++)
+    {
+        BOOL change = FALSE;
+        int state;
+
+        state = SendMessageW(list, LVM_GETITEMSTATE, i, LVIS_STATEIMAGEMASK);
+        /* This reverses the INDEXTOSTATEIMAGEMASK shift.  There doesn't appear
+         * to be a handy macro for it.
+         */
+        state >>= 12;
+        if (enabled)
+        {
+            if (state == CheckBitmapIndexDisabledChecked)
+            {
+                state = CheckBitmapIndexChecked;
+                change = TRUE;
+            }
+            if (state == CheckBitmapIndexDisabledUnchecked)
+            {
+                state = CheckBitmapIndexUnchecked;
+                change = TRUE;
+            }
+        }
+        else
+        {
+            if (state == CheckBitmapIndexChecked)
+            {
+                state = CheckBitmapIndexDisabledChecked;
+                change = TRUE;
+            }
+            if (state == CheckBitmapIndexUnchecked)
+            {
+                state = CheckBitmapIndexDisabledUnchecked;
+                change = TRUE;
+            }
+        }
+        if (change)
+        {
+            LVITEMW item;
+
+            item.state = INDEXTOSTATEIMAGEMASK(state);
+            item.stateMask = LVIS_STATEIMAGEMASK;
+            SendMessageW(list, LVM_SETITEMSTATE, i, (LPARAM)&item);
+        }
+    }
+}
+
+extern BOOL WINAPI WTHelperGetKnownUsages(DWORD action,
+ PCCRYPT_OID_INFO **usages);
+
+static void add_known_usage(HWND lv, PCCRYPT_OID_INFO info)
+{
+    LVITEMW item;
+
+    item.mask = LVIF_TEXT | LVIF_STATE | LVIF_PARAM;
+    item.state = INDEXTOSTATEIMAGEMASK(CheckBitmapIndexDisabledChecked);
+    item.stateMask = LVIS_STATEIMAGEMASK;
+    item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
+    item.iSubItem = 0;
+    item.lParam = (LPARAM)info;
+    item.pszText = (LPWSTR)info->pwszName;
+    SendMessageW(lv, LVM_INSERTITEMW, 0, (LPARAM)&item);
+}
+
+static void show_cert_usages(HWND hwnd, struct detail_data *data)
+{
+    PCCERT_CONTEXT cert = data->pCertViewInfo->pCertContext;
+    HWND lv = GetDlgItem(hwnd, IDC_CERTIFICATE_USAGES);
+    PCERT_ENHKEY_USAGE usage;
+    DWORD size;
+    PCCRYPT_OID_INFO *usages;
+    RECT rc;
+    LVCOLUMNW column;
+
+    GetWindowRect(lv, &rc);
+    column.mask = LVCF_WIDTH;
+    column.cx = rc.right - rc.left;
+    SendMessageW(lv, LVM_INSERTCOLUMNW, 0, (LPARAM)&column);
+    SendMessageW(lv, LVM_SETIMAGELIST, LVSIL_STATE, (LPARAM)data->imageList);
+
+    /* Get enhanced key usage.  Have to check for a property and an extension
+     * separately, because CertGetEnhancedKeyUsage will succeed and return an
+     * empty usage if neither is set.  Unfortunately an empty usage implies
+     * no usage is allowed, so we have to distinguish between the two cases.
+     */
+    if (CertGetEnhancedKeyUsage(cert, CERT_FIND_PROP_ONLY_ENHKEY_USAGE_FLAG,
+     NULL, &size))
+    {
+        usage = HeapAlloc(GetProcessHeap(), 0, size);
+        if (!CertGetEnhancedKeyUsage(cert,
+         CERT_FIND_PROP_ONLY_ENHKEY_USAGE_FLAG, usage, &size))
+        {
+            HeapFree(GetProcessHeap(), 0, usage);
+            usage = NULL;
+        }
+    }
+    else if (CertGetEnhancedKeyUsage(cert, CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG,
+     NULL, &size))
+    {
+        usage = HeapAlloc(GetProcessHeap(), 0, size);
+        if (!CertGetEnhancedKeyUsage(cert,
+         CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG, usage, &size))
+        {
+            HeapFree(GetProcessHeap(), 0, usage);
+            usage = NULL;
+        }
+    }
+    else
+        usage = NULL;
+    if (usage)
+    {
+        DWORD i;
+
+        for (i = 0; i < usage->cUsageIdentifier; i++)
+        {
+            PCCRYPT_OID_INFO info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY,
+             usage->rgpszUsageIdentifier[i], CRYPT_ENHKEY_USAGE_OID_GROUP_ID);
+
+            if (info)
+                add_known_usage(lv, info);
+            else
+                add_purpose(hwnd, usage->rgpszUsageIdentifier[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, usage);
+    }
+    else
+    {
+        if (WTHelperGetKnownUsages(1, &usages))
+        {
+            PCCRYPT_OID_INFO *ptr;
+
+            for (ptr = usages; *ptr; ptr++)
+                add_known_usage(lv, *ptr);
+            WTHelperGetKnownUsages(2, &usages);
+        }
+    }
+    EnableWindow(lv, FALSE);
+    redraw_states(lv, FALSE);
+}
+
 static void set_general_cert_properties(HWND hwnd, struct detail_data *data)
 {
     PCCERT_CONTEXT cert = data->pCertViewInfo->pCertContext;
@@ -1592,7 +1775,7 @@ static void set_general_cert_properties(HWND hwnd, struct detail_data *data)
          (LPARAM)str);
         HeapFree(GetProcessHeap(), 0, str);
     }
-    FIXME("show cert usages\n");
+    show_cert_usages(hwnd, data);
     EnableWindow(GetDlgItem(hwnd, IDC_ADD_PURPOSE), FALSE);
     SendMessageW(GetDlgItem(hwnd, IDC_ENABLE_ALL_PURPOSES), BM_CLICK, 0, 0);
 }
@@ -1646,6 +1829,40 @@ static LRESULT CALLBACK cert_properties_general_dlg_proc(HWND hwnd, UINT msg,
     return 0;
 }
 
+static UINT CALLBACK cert_properties_general_callback(HWND hwnd, UINT msg,
+ PROPSHEETPAGEW *page)
+{
+    HWND lv;
+    int cItem, i;
+
+    switch (msg)
+    {
+    case PSPCB_RELEASE:
+        lv = GetDlgItem(hwnd, IDC_CERTIFICATE_USAGES);
+        cItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
+        for (i = 0; i < cItem; i++)
+        {
+            LVITEMW item;
+
+            item.mask = LVIF_PARAM;
+            item.iItem = i;
+            item.iSubItem = 0;
+            if (SendMessageW(lv, LVM_GETITEMW, 0, (LPARAM)&item) && item.lParam)
+            {
+                PCRYPT_OID_INFO info = (PCRYPT_OID_INFO)item.lParam;
+
+                if (info->cbSize == sizeof(CRYPT_OID_INFO) && !info->dwGroupId)
+                {
+                    HeapFree(GetProcessHeap(), 0, (LPSTR)info->pszOID);
+                    HeapFree(GetProcessHeap(), 0, info);
+                }
+            }
+        }
+        break;
+    }
+    return 1;
+}
+
 static void show_edit_cert_properties_dialog(HWND parent,
  struct detail_data *data)
 {
@@ -1656,6 +1873,8 @@ static void show_edit_cert_properties_dialog(HWND parent,
 
     memset(&page, 0, sizeof(PROPSHEETPAGEW));
     page.dwSize = sizeof(page);
+    page.dwFlags = PSP_USECALLBACK;
+    page.pfnCallback = cert_properties_general_callback;
     page.hInstance = hInstance;
     page.u.pszTemplate = MAKEINTRESOURCEW(IDD_CERT_PROPERTIES_GENERAL);
     page.pfnDlgProc = cert_properties_general_dlg_proc;
@@ -1789,6 +2008,23 @@ static LRESULT CALLBACK detail_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
     return 0;
 }
 
+static UINT CALLBACK detail_callback(HWND hwnd, UINT msg,
+ PROPSHEETPAGEW *page)
+{
+    struct detail_data *data;
+
+    switch (msg)
+    {
+    case PSPCB_RELEASE:
+        data = (struct detail_data *)page->lParam;
+        free_detail_fields(data);
+        ImageList_Destroy(data->imageList);
+        HeapFree(GetProcessHeap(), 0, data);
+        break;
+    }
+    return 0;
+}
+
 static BOOL init_detail_page(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
  BOOL *pfPropertiesChanged, PROPSHEETPAGEW *page)
 {
@@ -1802,8 +2038,21 @@ static BOOL init_detail_page(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
         data->pfPropertiesChanged = pfPropertiesChanged;
         data->cFields = 0;
         data->fields = NULL;
+        data->imageList = ImageList_Create(16, 16, ILC_COLOR4 | ILC_MASK, 4, 0);
+        if (data->imageList)
+        {
+            HBITMAP bmp;
+            COLORREF backColor = RGB(255, 0, 255);
+
+            bmp = LoadBitmapW(hInstance, MAKEINTRESOURCEW(IDB_CHECKS));
+            ImageList_AddMasked(data->imageList, bmp, backColor);
+            DeleteObject(bmp);
+            ImageList_SetBkColor(data->imageList, CLR_NONE);
+        }
         memset(page, 0, sizeof(PROPSHEETPAGEW));
         page->dwSize = sizeof(PROPSHEETPAGEW);
+        page->dwFlags = PSP_USECALLBACK;
+        page->pfnCallback = detail_callback;
         page->hInstance = hInstance;
         page->u.pszTemplate = MAKEINTRESOURCEW(IDD_DETAIL);
         page->pfnDlgProc = detail_dlg_proc;
