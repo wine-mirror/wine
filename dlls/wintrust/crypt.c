@@ -37,11 +37,18 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
 
 #define CATADMIN_MAGIC 0x43415441 /* 'CATA' */
+#define CATINFO_MAGIC  0x43415449 /* 'CATI' */
 
 struct catadmin
 {
     DWORD magic;
     WCHAR path[MAX_PATH];
+};
+
+struct catinfo
+{
+    DWORD magic;
+    WCHAR file[MAX_PATH];
 };
 
 /***********************************************************************
@@ -114,9 +121,53 @@ BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN *catAdmin,
 HCATINFO WINAPI CryptCATAdminAddCatalog(HCATADMIN catAdmin, PWSTR catalogFile,
                                         PWSTR selectBaseName, DWORD flags)
 {
-    FIXME("%p %s %s %d\n", catAdmin, debugstr_w(catalogFile),
+    static const WCHAR slashW[] = {'\\',0};
+    struct catadmin *ca = catAdmin;
+    struct catinfo *ci;
+    WCHAR *target;
+    DWORD len;
+
+    TRACE("%p %s %s %d\n", catAdmin, debugstr_w(catalogFile),
           debugstr_w(selectBaseName), flags);
-    return (HCATINFO) 0xdeeeaaadL;
+
+    if (!selectBaseName)
+    {
+        FIXME("NULL basename not handled\n");
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (!ca || ca->magic != CATADMIN_MAGIC || !catalogFile || flags)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    len = strlenW(ca->path) + strlenW(selectBaseName) + 2;
+    if (!(target = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
+    strcpyW(target, ca->path);
+    strcatW(target, slashW);
+    strcatW(target, selectBaseName);
+
+    if (!CopyFileW(catalogFile, target, FALSE))
+    {
+        HeapFree(GetProcessHeap(), 0, target);
+        return NULL;
+    }
+    if (!(ci = HeapAlloc(GetProcessHeap(), 0, sizeof(*ci))))
+    {
+        HeapFree(GetProcessHeap(), 0, target);
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
+    ci->magic = CATINFO_MAGIC;
+    strcpyW(ci->file, selectBaseName);
+
+    HeapFree(GetProcessHeap(), 0, target);
+    return ci;
 }
 
 /***********************************************************************
@@ -156,15 +207,25 @@ HCATINFO WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN hCatAdmin,
  *
  * RETURNS
  *   Success: TRUE.
- *   Failure: FAIL.
+ *   Failure: FALSE.
  *
  */
 BOOL WINAPI CryptCATAdminReleaseCatalogContext(HCATADMIN hCatAdmin,
                                                HCATINFO hCatInfo,
                                                DWORD dwFlags)
 {
-    FIXME("%p %p %x\n", hCatAdmin, hCatInfo, dwFlags);
-    return TRUE;
+    struct catinfo *ci = hCatInfo;
+    struct catadmin *ca = hCatAdmin;
+
+    TRACE("%p %p %x\n", hCatAdmin, hCatInfo, dwFlags);
+
+    if (!ca || ca->magic != CATADMIN_MAGIC || !ci || ci->magic != CATINFO_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    ci->magic = 0;
+    return HeapFree(GetProcessHeap(), 0, ci);
 }
 
 /***********************************************************************
@@ -178,7 +239,7 @@ BOOL WINAPI CryptCATAdminReleaseCatalogContext(HCATADMIN hCatAdmin,
  *
  * RETURNS
  *   Success: TRUE.
- *   Failure: FAIL.
+ *   Failure: FALSE.
  *
  */
 BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )
@@ -213,7 +274,15 @@ BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )
  */
 BOOL WINAPI CryptCATAdminRemoveCatalog(HCATADMIN hCatAdmin, LPCWSTR pwszCatalogFile, DWORD dwFlags)
 {
-    FIXME("%p %s %x\n", hCatAdmin, debugstr_w(pwszCatalogFile), dwFlags);
+    struct catadmin *ca = hCatAdmin;
+
+    TRACE("%p %s %x\n", hCatAdmin, debugstr_w(pwszCatalogFile), dwFlags);
+
+    if (!ca || ca->magic != CATADMIN_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
     return DeleteFileW(pwszCatalogFile);
 }
 
