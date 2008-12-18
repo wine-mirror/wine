@@ -75,7 +75,7 @@ static ULONG WINAPI httprequest_AddRef(IXMLHTTPRequest *iface)
     return InterlockedIncrement( &This->ref );
 }
 
-ULONG WINAPI httprequest_Release(IXMLHTTPRequest *iface)
+static ULONG WINAPI httprequest_Release(IXMLHTTPRequest *iface)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
     ULONG ref;

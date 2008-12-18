@@ -67,7 +67,6 @@ extern HRESULT xmldoc_add_orphan( xmlDocPtr doc, xmlNodePtr node );
 extern HRESULT xmldoc_remove_orphan( xmlDocPtr doc, xmlNodePtr node );
 
 extern HRESULT XMLElement_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj );
-extern HRESULT XMLElementCollection_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj );
 
 extern xmlDocPtr parse_xml(char *ptr, int len);
 
