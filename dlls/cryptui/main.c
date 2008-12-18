@@ -2021,7 +2021,55 @@ static void apply_general_changes(HWND hwnd)
      sizeof(buf) / sizeof(buf[0]), (LPARAM)buf);
     set_cert_string_property(data->pCertViewInfo->pCertContext,
      CERT_DESCRIPTION_PROP_ID, buf);
-    FIXME("apply usage state\n");
+    if (IsDlgButtonChecked(hwnd, IDC_ENABLE_ALL_PURPOSES))
+    {
+        /* Setting a NULL usage removes the enhanced key usage property. */
+        CertSetEnhancedKeyUsage(data->pCertViewInfo->pCertContext, NULL);
+    }
+    else if (IsDlgButtonChecked(hwnd, IDC_DISABLE_ALL_PURPOSES))
+    {
+        CERT_ENHKEY_USAGE usage = { 0, NULL };
+
+        CertSetEnhancedKeyUsage(data->pCertViewInfo->pCertContext, &usage);
+    }
+    else if (IsDlgButtonChecked(hwnd, IDC_ENABLE_SELECTED_PURPOSES))
+    {
+        HWND lv = GetDlgItem(hwnd, IDC_CERTIFICATE_USAGES);
+        CERT_ENHKEY_USAGE usage = { 0, NULL };
+        int purposes = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0), i;
+        LVITEMW item;
+
+        item.mask = LVIF_STATE | LVIF_PARAM;
+        item.iSubItem = 0;
+        item.stateMask = LVIS_STATEIMAGEMASK;
+        for (i = 0; i < purposes; i++)
+        {
+            item.iItem = i;
+            if (SendMessageW(lv, LVM_GETITEMW, 0, (LPARAM)&item))
+            {
+                int state = item.state >> 12;
+
+                if (state == CheckBitmapIndexChecked)
+                {
+                    CRYPT_OID_INFO *info = (CRYPT_OID_INFO *)item.lParam;
+
+                    if (usage.cUsageIdentifier)
+                        usage.rgpszUsageIdentifier =
+                         HeapReAlloc(GetProcessHeap(), 0,
+                         usage.rgpszUsageIdentifier,
+                         (usage.cUsageIdentifier + 1) * sizeof(LPSTR));
+                    else
+                        usage.rgpszUsageIdentifier =
+                         HeapAlloc(GetProcessHeap(), 0, sizeof(LPSTR));
+                    if (usage.rgpszUsageIdentifier)
+                        usage.rgpszUsageIdentifier[usage.cUsageIdentifier++] =
+                         (LPSTR)info->pszOID;
+                }
+            }
+        }
+        CertSetEnhancedKeyUsage(data->pCertViewInfo->pCertContext, &usage);
+        HeapFree(GetProcessHeap(), 0, usage.rgpszUsageIdentifier);
+    }
     if (data->pfPropertiesChanged)
         *data->pfPropertiesChanged = TRUE;
 }
