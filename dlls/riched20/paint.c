@@ -37,7 +37,7 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, const RECT *
   c.pt.y -= yoffset;
   while(item != editor->pBuffer->pLast) {
     int yTextOffset = 0;
-    int ye;
+    int ys, ye;
     assert(item->type == diParagraph);
     if (item->member.para.pCell
         != item->member.para.next_para->member.para.pCell)
@@ -63,14 +63,20 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, const RECT *
     }
     if (!bOnlyNew || (item->member.para.nFlags & MEPF_REPAINT))
     {
+      /* Draw the pargraph if any of the paragraph is in the update region. */
       BOOL bPaint = (rcUpdate == NULL);
+      ys = c.pt.y;
       if (rcUpdate)
-        bPaint = c.pt.y<rcUpdate->bottom && ye>rcUpdate->top;
+        bPaint = ys + c.rcView.top < rcUpdate->bottom &&
+                 ye + c.rcView.top > rcUpdate->top;
       if (bPaint)
       {
         c.pt.y += yTextOffset;
         ME_DrawParagraph(&c, item);
-        if (!rcUpdate || (rcUpdate->top<=c.pt.y-yTextOffset && rcUpdate->bottom>=ye))
+        /* Clear the repaint flag if the whole paragraph is in the
+         * update region. */
+        if (!rcUpdate || (rcUpdate->top <= ys + c.rcView.top &&
+                          rcUpdate->bottom >= ye + c.rcView.top))
           item->member.para.nFlags &= ~MEPF_REPAINT;
       }
     }
@@ -103,30 +109,34 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, const RECT *
     }
     item = item->member.para.next_para;
   }
-  if (c.pt.y<c.rcView.bottom) {
-    RECT rc;
-    int xs = c.rcView.left, xe = c.rcView.right;
-    int ys = c.pt.y, ye = c.rcView.bottom;
-    
+  if (c.pt.y < c.rcView.bottom - c.rcView.top)
+  {
+    /* Fill space after the end of the text. */
+    int xs = c.rcView.left,          xe = c.rcView.right;
+    int ys = c.rcView.top + c.pt.y,  ye = c.rcView.bottom;
+
     if (bOnlyNew)
     {
+      /* Only erase region drawn from previous call to ME_PaintContent */
       int y1 = editor->nTotalLength-yoffset, y2 = editor->nLastTotalLength-yoffset;
       if (y1<y2)
         ys = y1, ye = y2+1;
       else
-        ys = ye;
-    }
-    
-    if (rcUpdate && ys!=ye)
-    {
-      xs = rcUpdate->left, xe = rcUpdate->right;
-      if (rcUpdate->top > ys)
-        ys = rcUpdate->top;
-      if (rcUpdate->bottom < ye)
-        ye = rcUpdate->bottom;
+        ys = ye; /* empty fill area */
     }
 
-    if (ye>ys) {
+    if (rcUpdate)
+    {
+      /* Clip to update region */
+      xs = max(xs, rcUpdate->left);
+      xe = min(xe, rcUpdate->right);
+      ys = max(ys, rcUpdate->top);
+      ye = min(ye, rcUpdate->bottom);
+    }
+
+    if (xe > xs && ye > ys)
+    {
+      RECT rc;
       rc.left = xs;
       rc.top = ys;
       rc.right = xe;
@@ -441,7 +451,7 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
     if (runofs >= nSelFrom && runofs < nSelTo)
     {
       ME_HighlightSpace(c, x, y, wszSpace, 1, run->style, 0, 0, 1,
-                        c->pt.y + start->member.row.pt.y,
+                        c->rcView.top + c->pt.y + start->member.row.pt.y,
                         start->member.row.nHeight);
     }
     return;
@@ -452,8 +462,8 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
     /* wszSpace is used instead of the tab character because otherwise
      * an unwanted symbol can be inserted instead. */
     ME_DrawTextWithStyle(c, x, y, wszSpace, 1, run->style, run->nWidth,
-                         nSelFrom-runofs,nSelTo-runofs,
-                         c->pt.y + start->member.row.pt.y,
+                         nSelFrom-runofs, nSelTo-runofs,
+                         c->rcView.top + c->pt.y + start->member.row.pt.y,
                          start->member.row.nHeight);
     return;
   }
@@ -467,13 +477,17 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
       ME_String *szMasked = ME_MakeStringR(c->editor->cPasswordMask,ME_StrVLen(run->strText));
       ME_DrawTextWithStyle(c, x, y,
         szMasked->szData, ME_StrVLen(szMasked), run->style, run->nWidth,
-        nSelFrom-runofs,nSelTo-runofs, c->pt.y+start->member.row.pt.y, start->member.row.nHeight);
+        nSelFrom-runofs,nSelTo-runofs,
+        c->rcView.top + c->pt.y + start->member.row.pt.y,
+        start->member.row.nHeight);
       ME_DestroyString(szMasked);
     }
     else
       ME_DrawTextWithStyle(c, x, y,
         run->strText->szData, ME_StrVLen(run->strText), run->style, run->nWidth,
-        nSelFrom-runofs,nSelTo-runofs, c->pt.y+start->member.row.pt.y, start->member.row.nHeight);
+        nSelFrom-runofs,nSelTo-runofs,
+        c->rcView.top + c->pt.y + start->member.row.pt.y,
+        start->member.row.nHeight);
   }
 }
 
@@ -728,11 +742,11 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
       int width;
       BOOL atTop = (para->pCell != para->prev_para->member.para.pCell);
       BOOL atBottom = (para->pCell != para->next_para->member.para.pCell);
-      int top = (atTop ? cell->pt.y : para->pt.y) - ME_GetYScrollPos(c->editor);
+      int top = c->rcView.top + (atTop ? cell->pt.y : para->pt.y) - ME_GetYScrollPos(c->editor);
       int bottom = (atBottom ?
-                    cell->pt.y + cell->nHeight - ME_GetYScrollPos(c->editor):
+                    c->rcView.top + cell->pt.y + cell->nHeight - ME_GetYScrollPos(c->editor):
                     top + para->nHeight + (atTop ? cell->yTextOffset : 0));
-      rc.left = cell->pt.x;
+      rc.left = c->rcView.left + cell->pt.x;
       rc.right = rc.left + cell->nWidth;
       if (atTop) {
         /* Erase gap before text if not all borders are the same height. */
@@ -798,10 +812,10 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
           ME_DisplayItem *nextEndCell;
           nextEndCell = ME_FindItemBack(ME_GetTableRowEnd(paraAfterRow), diCell);
           assert(nextEndCell && !nextEndCell->member.cell.next_cell);
-          rc.left = nextEndCell->member.cell.pt.x;
+          rc.left = c->rcView.left + nextEndCell->member.cell.pt.x;
           /* FIXME: Native draws FROM the bottom of the table rather than
            * TO the bottom of the table in this case, but just doing so here
-           * will case the next row to erase the border. */
+           * will cause the next row to erase the border. */
           /*
           rc.top = bottom;
           rc.bottom = rc.top + width;
@@ -860,12 +874,12 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
       oldpen = SelectObject(c->hDC, pen);
 
       /* Find the start relative to the text */
-      firstX = ME_FindItemFwd(paragraph, diRun)->member.run.pt.x;
+      firstX = c->rcView.left + ME_FindItemFwd(paragraph, diRun)->member.run.pt.x;
       /* Go back by the horizontal gap, which is stored in dxOffset */
       firstX -= ME_twips2pointsX(c, para->pFmt->dxOffset);
       /* The left edge, stored in dxStartIndent affected just the first edge */
       startX = firstX - ME_twips2pointsX(c, para->pFmt->dxStartIndent);
-      rowY = c->pt.y;
+      rowY = c->rcView.top + c->pt.y;
       if (para->pFmt->dwMask & PFM_SPACEBEFORE)
         rowY += ME_twips2pointsY(c, para->pFmt->dySpaceBefore);
       nHeight = ME_FindItemFwd(paragraph, diStartRow)->member.row.nHeight;
@@ -907,13 +921,14 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
   }
 }
 
-void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
+void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph)
+{
   int align = SetTextAlign(c->hDC, TA_BASELINE);
   ME_DisplayItem *p;
   ME_Run *run;
   ME_Paragraph *para = NULL;
   RECT rc, bounds;
-  int y = c->pt.y;
+  int y = c->rcView.top + c->pt.y;
   int height = 0, baseline = 0, no=0;
   BOOL visible = FALSE;
 
@@ -928,15 +943,15 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
         if (para->pCell)
         {
           ME_Cell *cell = &para->pCell->member.cell;
-          rc.left = cell->pt.x;
+          rc.left = c->rcView.left + cell->pt.x;
           rc.right = rc.left + cell->nWidth;
         }
         if (para->nFlags & MEPF_ROWSTART) {
           ME_Cell *cell = &para->next_para->member.para.pCell->member.cell;
-          rc.right = cell->pt.x;
+          rc.right = c->rcView.left + cell->pt.x;
         } else if (para->nFlags & MEPF_ROWEND) {
           ME_Cell *cell = &para->prev_para->member.para.pCell->member.cell;
-          rc.left = cell->pt.x + cell->nWidth;
+          rc.left = c->rcView.left + cell->pt.x + cell->nWidth;
         }
         ME_DrawParaDecoration(c, para, y, &bounds);
         y += bounds.top;
@@ -953,7 +968,7 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
           ME_Cell *cell = &para->prev_para->member.para.pCell->member.cell;
           rc.bottom = y + cell->nHeight;
         } else {
-          rc.bottom = y+p->member.row.nHeight;
+          rc.bottom = y + p->member.row.nHeight;
         }
         visible = RectVisible(c->hDC, &rc);
         if (visible) {
@@ -976,10 +991,10 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
         assert(para);
         run = &p->member.run;
         if (visible && me_debug) {
-          rc.left = c->rcView.left+run->pt.x;
-          rc.right = c->rcView.left+run->pt.x+run->nWidth;
-          rc.top = c->pt.y+run->pt.y;
-          rc.bottom = c->pt.y+run->pt.y+height;
+          rc.left = c->rcView.left + run->pt.x;
+          rc.right = rc.left + run->nWidth;
+          rc.top = c->rcView.top + c->pt.y + run->pt.y;
+          rc.bottom = rc.bottom + height;
           TRACE("rc = (%d, %d, %d, %d)\n", rc.left, rc.top, rc.right, rc.bottom);
           if (run->nFlags & MERF_SKIPPED)
             DrawFocusRect(c->hDC, &rc);
@@ -987,7 +1002,9 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
             FrameRect(c->hDC, &rc, GetSysColorBrush(COLOR_GRAYTEXT));
         }
         if (visible)
-          ME_DrawRun(c, run->pt.x, c->pt.y+run->pt.y+baseline, p, &paragraph->member.para);
+          ME_DrawRun(c, c->rcView.left + run->pt.x,
+                     c->rcView.top + c->pt.y + run->pt.y + baseline,
+                     p, &paragraph->member.para);
         if (me_debug)
         {
           /* I'm using %ls, hope wsprintfW is not going to use wrong (4-byte) WCHAR version */
@@ -995,7 +1012,7 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
           WCHAR buf[2560];
           POINT pt;
           pt.x = run->pt.x;
-          pt.y = c->pt.y + run->pt.y;
+          pt.y = c->rcView.top + c->pt.y + run->pt.y;
           wsprintfW(buf, wszRunDebug, no, p->member.run.nFlags, p->member.run.strText->szData);
           ME_DebugWrite(c->hDC, &pt, buf);
         }
@@ -1007,8 +1024,8 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
           break;
         y += height;
         rc.top = y;
-        rc.bottom = p->member.cell.pt.y + p->member.cell.nHeight
-                    - ME_GetYScrollPos(c->editor);
+        rc.bottom = c->rcView.top + p->member.cell.pt.y
+                    + p->member.cell.nHeight - ME_GetYScrollPos(c->editor);
         if (RectVisible(c->hDC, &rc))
         {
           FillRect(c->hDC, &rc, c->editor->hbrBackground);

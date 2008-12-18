@@ -2492,9 +2492,26 @@ static BOOL ME_SetCursor(ME_TextEditor *editor)
   }
   ScreenToClient(editor->hWnd, &pt);
 
-  if ((GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_SELECTIONBAR) &&
-      (pt.x < editor->selofs ||
-       (editor->nSelectionType == stLine && GetCapture() == editor->hWnd)))
+  if (editor->nSelectionType == stLine && GetCapture() == editor->hWnd) {
+      SetCursor(hLeft);
+      return TRUE;
+  }
+  if (!editor->bEmulateVersion10 /* v4.1 */ &&
+      pt.y < editor->rcFormat.top &&
+      pt.x < editor->rcFormat.left)
+  {
+      SetCursor(hLeft);
+      return TRUE;
+  }
+  if (pt.y < editor->rcFormat.top || pt.y > editor->rcFormat.bottom)
+  {
+      if (editor->bEmulateVersion10) /* v1.0 - 3.0 */
+          SetCursor(LoadCursorW(NULL, (WCHAR*)IDC_ARROW));
+      else /* v4.1 */
+          SetCursor(LoadCursorW(NULL, (WCHAR*)IDC_IBEAM));
+      return TRUE;
+  }
+  if (pt.x < editor->rcFormat.left)
   {
       SetCursor(hLeft);
       return TRUE;
@@ -2528,6 +2545,16 @@ static BOOL ME_SetCursor(ME_TextEditor *editor)
   }
   SetCursor(LoadCursorW(NULL, (WCHAR*)IDC_IBEAM));
   return TRUE;
+}
+
+static void ME_SetDefaultFormatRect(ME_TextEditor *editor)
+{
+  DWORD exstyle = GetWindowLongW(editor->hWnd, GWL_EXSTYLE);
+
+  GetClientRect(editor->hWnd, &editor->rcFormat);
+  editor->rcFormat.top += (exstyle & WS_EX_CLIENTEDGE ? 1 : 0);
+  editor->rcFormat.left += 1 + editor->selofs;
+  editor->rcFormat.right -= 1;
 }
 
 static BOOL ME_ShowContextMenu(ME_TextEditor *editor, int x, int y)
@@ -2614,6 +2641,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
     ed->selofs = SELECTIONBAR_WIDTH;
   else
     ed->selofs = 0;
+  ed->bDefaultFormatRect = TRUE;
   ed->nSelectionType = stPosition;
 
   if (GetWindowLongW(hWnd, GWL_STYLE) & ES_PASSWORD)
@@ -2961,7 +2989,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   {
     /* these flags are equivalent to the ES_* counterparts */
     DWORD mask = ECO_VERTICAL | ECO_AUTOHSCROLL | ECO_AUTOVSCROLL |
-                 ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN;
+                 ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN | ECO_SELECTIONBAR;
     DWORD settings = GetWindowLongW(hWnd, GWL_STYLE) & mask;
 
     return settings;
@@ -2976,6 +3004,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
                  ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN | ECO_SELECTIONBAR;
     DWORD raw = GetWindowLongW(hWnd, GWL_STYLE);
     DWORD settings = mask & raw;
+    DWORD oldSettings = settings;
+    DWORD changedSettings;
 
     switch(wParam)
     {
@@ -2993,13 +3023,21 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     }
     SetWindowLongW(hWnd, GWL_STYLE, (raw & ~mask) | (settings & mask));
 
+    changedSettings = oldSettings ^ settings;
+
     if (settings & ECO_AUTOWORDSELECTION)
       FIXME("ECO_AUTOWORDSELECTION not implemented yet!\n");
-    if (settings & ECO_SELECTIONBAR)
+
+    if (oldSettings ^ settings) {
+      if (settings & ECO_SELECTIONBAR) {
         editor->selofs = SELECTIONBAR_WIDTH;
-    else
+        editor->rcFormat.left += SELECTIONBAR_WIDTH;
+      } else {
         editor->selofs = 0;
-    ME_WrapMarkedParagraphs(editor);
+        editor->rcFormat.left -= SELECTIONBAR_WIDTH;
+      }
+      ME_WrapMarkedParagraphs(editor);
+    }
 
     if (settings & ECO_VERTICAL)
       FIXME("ECO_VERTICAL not implemented yet!\n");
@@ -3716,9 +3754,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     assert(pRun->type == diRun);
     pt.y = pRun->member.run.pt.y;
     pt.x = pRun->member.run.pt.x + ME_PointFromChar(editor, &pRun->member.run, nOffset);
-    pt.y += ME_GetParagraph(pRun)->member.para.pt.y;
-    pt.x += editor->selofs;
-    pt.x++; /* for some reason native offsets x by one */
+    pt.y += ME_GetParagraph(pRun)->member.para.pt.y + editor->rcFormat.top;
+    pt.x += editor->rcFormat.left;
 
     pt.y -= editor->vert_si.nPos;
     si.cbSize = sizeof(si);
@@ -3734,7 +3771,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   {
     SCROLLINFO si;
 
-    GetClientRect(hWnd, &editor->rcFormat);
+    ME_SetDefaultFormatRect(editor);
     if (GetWindowLongW(hWnd, GWL_STYLE) & WS_HSCROLL)
     { /* Squelch the default horizontal scrollbar it would make */
       ShowScrollBar(editor->hWnd, SB_HORZ, FALSE);
@@ -3816,9 +3853,37 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   case WM_PAINT:
     {
       HDC hDC;
+      RECT rc;
       PAINTSTRUCT ps;
 
       hDC = BeginPaint(hWnd, &ps);
+      /* Erase area outside of the formatting rectangle */
+      if (ps.rcPaint.top < editor->rcFormat.top)
+      {
+        rc = ps.rcPaint;
+        rc.bottom = editor->rcFormat.top;
+        FillRect(hDC, &rc, editor->hbrBackground);
+        ps.rcPaint.top = editor->rcFormat.top;
+      }
+      if (ps.rcPaint.bottom > editor->rcFormat.bottom) {
+        rc = ps.rcPaint;
+        rc.top = editor->rcFormat.bottom;
+        FillRect(hDC, &rc, editor->hbrBackground);
+        ps.rcPaint.bottom = editor->rcFormat.bottom;
+      }
+      if (ps.rcPaint.left < editor->rcFormat.left) {
+        rc = ps.rcPaint;
+        rc.right = editor->rcFormat.left;
+        FillRect(hDC, &rc, editor->hbrBackground);
+        ps.rcPaint.left = editor->rcFormat.left;
+      }
+      if (ps.rcPaint.right > editor->rcFormat.right) {
+        rc = ps.rcPaint;
+        rc.left = editor->rcFormat.right;
+        FillRect(hDC, &rc, editor->hbrBackground);
+        ps.rcPaint.right = editor->rcFormat.right;
+      }
+
       ME_PaintContent(editor, hDC, FALSE, &ps.rcPaint);
       EndPaint(hWnd, &ps);
     }
@@ -3940,6 +4005,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   case EM_GETRECT:
   {
     *((RECT *)lParam) = editor->rcFormat;
+    if (editor->bDefaultFormatRect)
+      ((RECT *)lParam)->left -= editor->selofs;
     return 0;
   }
   case EM_SETRECT:
@@ -3947,23 +4014,36 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   {
     if (lParam)
     {
+      DWORD exstyle = GetWindowLongW(hWnd, GWL_EXSTYLE);
+      int border = (exstyle & WS_EX_CLIENTEDGE) ? 1 : 0;
+      RECT clientRect;
       RECT *rc = (RECT *)lParam;
-      
-      if (wParam)
+
+      GetClientRect(hWnd, &clientRect);
+      if (wParam == 0)
       {
-        editor->rcFormat.left += rc->left;
-        editor->rcFormat.top += rc->top;
-        editor->rcFormat.right += rc->right;
-        editor->rcFormat.bottom += rc->bottom;
+        editor->rcFormat.top = max(0, rc->top - border);
+        editor->rcFormat.left = max(0, rc->left - border);
+        editor->rcFormat.bottom = min(clientRect.bottom, rc->bottom);
+        editor->rcFormat.right = min(clientRect.right, rc->right + border);
+      } else if (wParam == 1) {
+        /* MSDN incorrectly says a wParam value of 1 causes the
+         * lParam rect to be used as a relative offset,
+         * however, the tests show it just prevents min/max bound
+         * checking. */
+        editor->rcFormat.top = rc->top - border;
+        editor->rcFormat.left = rc->left - border;
+        editor->rcFormat.bottom = rc->bottom;
+        editor->rcFormat.right = rc->right + border;
+      } else {
+        return 0;
       }
-      else
-      {
-        editor->rcFormat = *rc;
-      }
+      editor->bDefaultFormatRect = FALSE;
     }
     else
     {
-      GetClientRect(hWnd, &editor->rcFormat);
+      ME_SetDefaultFormatRect(editor);
+      editor->bDefaultFormatRect = TRUE;
     }
     if (msg != EM_SETRECTNP)
       ME_RewrapRepaint(editor);
@@ -3976,7 +4056,16 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     return DefWindowProcW(hWnd, msg, wParam, lParam);
   case WM_SIZE:
   {
-    GetClientRect(hWnd, &editor->rcFormat);
+    RECT clientRect;
+
+    GetClientRect(hWnd, &clientRect);
+    if (editor->bDefaultFormatRect) {
+      ME_SetDefaultFormatRect(editor);
+    } else {
+      editor->rcFormat.right += clientRect.right - editor->prevClientRect.right;
+      editor->rcFormat.bottom += clientRect.bottom - editor->prevClientRect.bottom;
+    }
+    editor->prevClientRect = clientRect;
     ME_RewrapRepaint(editor);
     return DefWindowProcW(hWnd, msg, wParam, lParam);
   }
