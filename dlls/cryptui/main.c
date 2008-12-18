@@ -1554,6 +1554,76 @@ static void create_cert_details_list(HWND hwnd, struct detail_data *data)
     set_fields_selection(hwnd, data, 0);
 }
 
+#define MAX_FRIENDLY_NAME 40
+#define MAX_DESCRIPTION 255
+
+static LRESULT CALLBACK cert_properties_general_dlg_proc(HWND hwnd, UINT msg,
+ WPARAM wp, LPARAM lp)
+{
+    PROPSHEETPAGEW *page;
+    struct detail_data *data;
+
+    TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+    {
+        HWND description = GetDlgItem(hwnd, IDC_DESCRIPTION);
+
+        page = (PROPSHEETPAGEW *)lp;
+        data = (struct detail_data *)page->lParam;
+        SendMessageW(GetDlgItem(hwnd, IDC_FRIENDLY_NAME), EM_SETLIMITTEXT,
+         MAX_FRIENDLY_NAME, 0);
+        SendMessageW(description, EM_SETLIMITTEXT, MAX_DESCRIPTION, 0);
+        ShowScrollBar(description, SB_VERT, FALSE);
+        FIXME("set general properties\n");
+        SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
+        break;
+    }
+    case WM_COMMAND:
+        switch (HIWORD(wp))
+        {
+        case BN_CLICKED:
+            switch (LOWORD(wp))
+            {
+            case IDC_ADD_PURPOSE:
+                FIXME("show add purpose dialog\n");
+                break;
+            }
+            break;
+        }
+        break;
+    }
+    return 0;
+}
+
+static void show_edit_cert_properties_dialog(HWND parent,
+ struct detail_data *data)
+{
+    PROPSHEETHEADERW hdr;
+    PROPSHEETPAGEW page; /* FIXME: need to add a cross-certificate page */
+
+    TRACE("(%p)\n", data);
+
+    memset(&page, 0, sizeof(PROPSHEETPAGEW));
+    page.dwSize = sizeof(page);
+    page.hInstance = hInstance;
+    page.u.pszTemplate = MAKEINTRESOURCEW(IDD_CERT_PROPERTIES_GENERAL);
+    page.pfnDlgProc = cert_properties_general_dlg_proc;
+    page.lParam = (LPARAM)data;
+
+    memset(&hdr, 0, sizeof(hdr));
+    hdr.dwSize = sizeof(hdr);
+    hdr.hwndParent = parent;
+    hdr.dwFlags = PSH_PROPSHEETPAGE;
+    hdr.hInstance = hInstance;
+    hdr.pszCaption = MAKEINTRESOURCEW(IDS_CERTIFICATE_PROPERTIES);
+    hdr.u3.ppsp = &page;
+    hdr.nPages = 1;
+    PropertySheetW(&hdr);
+}
+
 static void free_detail_fields(struct detail_data *data)
 {
     DWORD i;
@@ -1649,8 +1719,19 @@ static LRESULT CALLBACK detail_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             FIXME("call CryptUIWizExport\n");
             break;
         case IDC_EDITPROPERTIES:
-            FIXME("show edit properties dialog\n");
+        {
+            HWND cb = GetDlgItem(hwnd, IDC_DETAIL_SELECT);
+            int curSel;
+
+            curSel = SendMessageW(cb, CB_GETCURSEL, 0, 0);
+            /* Actually, any index will do, since they all store the same
+             * data value
+             */
+            data = (struct detail_data *)SendMessageW(cb, CB_GETITEMDATA,
+             curSel, 0);
+            show_edit_cert_properties_dialog(GetParent(hwnd), data);
             break;
+        }
         case ((CBN_SELCHANGE << 16) | IDC_DETAIL_SELECT):
             refresh_details_view(hwnd);
             break;
