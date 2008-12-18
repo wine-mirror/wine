@@ -1989,8 +1989,42 @@ static void toggle_usage(HWND hwnd, int iItem)
     }
 }
 
+static void set_cert_string_property(PCCERT_CONTEXT cert, DWORD prop,
+ LPWSTR str)
+{
+    if (str && strlenW(str))
+    {
+        CRYPT_DATA_BLOB blob;
+
+        blob.pbData = (BYTE *)str;
+        blob.cbData = (strlenW(str) + 1) * sizeof(WCHAR);
+        CertSetCertificateContextProperty(cert, prop, 0, &blob);
+    }
+    else
+        CertSetCertificateContextProperty(cert, prop, 0, NULL);
+}
+
 #define MAX_FRIENDLY_NAME 40
 #define MAX_DESCRIPTION 255
+
+static void apply_general_changes(HWND hwnd)
+{
+    WCHAR buf[MAX_DESCRIPTION + 1];
+    struct detail_data *data =
+     (struct detail_data *)GetWindowLongPtrW(hwnd, DWLP_USER);
+
+    SendMessageW(GetDlgItem(hwnd, IDC_FRIENDLY_NAME), WM_GETTEXT,
+     sizeof(buf) / sizeof(buf[0]), (LPARAM)buf);
+    set_cert_string_property(data->pCertViewInfo->pCertContext,
+     CERT_FRIENDLY_NAME_PROP_ID, buf);
+    SendMessageW(GetDlgItem(hwnd, IDC_DESCRIPTION), WM_GETTEXT,
+     sizeof(buf) / sizeof(buf[0]), (LPARAM)buf);
+    set_cert_string_property(data->pCertViewInfo->pCertContext,
+     CERT_DESCRIPTION_PROP_ID, buf);
+    FIXME("apply usage state\n");
+    if (data->pfPropertiesChanged)
+        *data->pfPropertiesChanged = TRUE;
+}
 
 static LRESULT CALLBACK cert_properties_general_dlg_proc(HWND hwnd, UINT msg,
  WPARAM wp, LPARAM lp)
@@ -2027,6 +2061,9 @@ static LRESULT CALLBACK cert_properties_general_dlg_proc(HWND hwnd, UINT msg,
             nm = (NMITEMACTIVATE *)lp;
             toggle_usage(hwnd, nm->iItem);
             SendMessageW(GetParent(hwnd), PSM_CHANGED, (WPARAM)hwnd, 0);
+            break;
+        case PSN_APPLY:
+            apply_general_changes(hwnd);
             break;
         }
         break;
