@@ -116,12 +116,6 @@ static void test_context(void)
     CHAR windir[MAX_PATH], catroot[MAX_PATH], catroot2[MAX_PATH], dummydir[MAX_PATH];
     DWORD attrs;
 
-    if (!pCryptCATAdminAcquireContext || !pCryptCATAdminReleaseContext)
-    {
-        skip("CryptCATAdminAcquireContext and/or CryptCATAdminReleaseContext are not available\n");
-        return;
-    }
-
     /* When CryptCATAdminAcquireContext is successful it will create
      * several directories if they don't exist:
      *
@@ -262,12 +256,6 @@ static void test_calchash(void)
     CHAR temp[MAX_PATH];
     DWORD written;
 
-    if (!pCryptCATAdminCalcHashFromFileHandle)
-    {
-        skip("CryptCATAdminCalcHashFromFileHandle is not available\n");
-        return;
-    }
-    
     /* All NULL */
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminCalcHashFromFileHandle(NULL, NULL, NULL, 0);
@@ -437,6 +425,12 @@ START_TEST(crypt)
     char** myARGV;
 
     InitFunctionPtrs();
+
+    if (!pCryptCATAdminAcquireContext)
+    {
+        win_skip("CryptCATAdmin functions are not available\n");
+        return;
+    }
 
     myARGC = winetest_get_mainargs(&myARGV);
     strcpy(selfname, myARGV[0]);
