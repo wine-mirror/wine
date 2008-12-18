@@ -1593,6 +1593,59 @@ static void add_purpose(HWND hwnd, LPCSTR oid)
     }
 }
 
+#define MAX_PURPOSE 255
+
+static LRESULT CALLBACK add_purpose_dlg_proc(HWND hwnd, UINT msg,
+ WPARAM wp, LPARAM lp)
+{
+    LRESULT ret = 0;
+    char buf[MAX_PURPOSE + 1];
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        SendMessageW(GetDlgItem(hwnd, IDC_NEW_PURPOSE), EM_SETLIMITTEXT,
+         MAX_PURPOSE, 0);
+        ShowScrollBar(GetDlgItem(hwnd, IDC_NEW_PURPOSE), SB_VERT, FALSE);
+        SetWindowLongPtrW(hwnd, DWLP_USER, lp);
+        break;
+    case WM_COMMAND:
+        switch (HIWORD(wp))
+        {
+        case BN_CLICKED:
+            switch (LOWORD(wp))
+            {
+            case IDOK:
+                SendMessageA(GetDlgItem(hwnd, IDC_NEW_PURPOSE), WM_GETTEXT,
+                 sizeof(buf) / sizeof(buf[0]), (LPARAM)buf);
+                if (!buf[0])
+                {
+                    /* An empty purpose is the same as cancelling */
+                    EndDialog(hwnd, IDCANCEL);
+                    ret = TRUE;
+                }
+                else
+                {
+                    HWND parent = (HWND)GetWindowLongPtrW(hwnd, DWLP_USER);
+
+                    FIXME("validate %s\n", debugstr_a(buf));
+                    add_purpose(parent, buf);
+                    EndDialog(hwnd, wp);
+                    ret = TRUE;
+                }
+                break;
+            case IDCANCEL:
+                EndDialog(hwnd, wp);
+                ret = TRUE;
+                break;
+            }
+            break;
+        }
+        break;
+    }
+    return ret;
+}
+
 static WCHAR *get_cert_property_as_string(PCCERT_CONTEXT cert, DWORD prop)
 {
     WCHAR *name = NULL;
@@ -1862,6 +1915,12 @@ static LRESULT CALLBACK cert_properties_general_dlg_proc(HWND hwnd, UINT msg,
         case BN_CLICKED:
             switch (LOWORD(wp))
             {
+            case IDC_ADD_PURPOSE:
+                if (DialogBoxParamW(hInstance,
+                 MAKEINTRESOURCEW(IDD_ADD_CERT_PURPOSE), hwnd,
+                 add_purpose_dlg_proc, (LPARAM)hwnd) == IDOK)
+                    SendMessageW(GetParent(hwnd), PSM_CHANGED, (WPARAM)hwnd, 0);
+                break;
             case IDC_ENABLE_ALL_PURPOSES:
             case IDC_DISABLE_ALL_PURPOSES:
             case IDC_ENABLE_SELECTED_PURPOSES:
