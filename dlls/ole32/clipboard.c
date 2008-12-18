@@ -78,6 +78,8 @@
 
 #include "storage32.h"
 
+#include "compobj_private.h"
+
 #define HANDLE_ERROR(err) { hr = err; TRACE("(HRESULT=%x)\n", (HRESULT)err); goto CLEANUP; }
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -313,12 +315,19 @@ HRESULT WINAPI OleSetClipboard(IDataObject* pDataObj)
   IEnumFORMATETC* penumFormatetc = NULL;
   FORMATETC rgelt;
   BOOL bClipboardOpen = FALSE;
+  struct oletls *info = COM_CurrentInfo();
 /*
   HGLOBAL hDataObject = 0;
   OLEClipbrd **ppDataObject;
 */
 
   TRACE("(%p)\n", pDataObj);
+
+  if(!info)
+    WARN("Could not allocate tls\n");
+  else
+    if(!info->ole_inits)
+      return CO_E_NOTINITIALIZED;
 
   /*
    * Make sure we have a clipboard object
