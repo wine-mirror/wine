@@ -348,6 +348,7 @@ typedef struct {
     nsIInputStream *post_data_stream;
     nsILoadGroup *load_group;
     nsIInterfaceRequestor *notif_callback;
+    nsISupports *owner;
     nsLoadFlags load_flags;
     nsIURI *original_uri;
     char *content_type;

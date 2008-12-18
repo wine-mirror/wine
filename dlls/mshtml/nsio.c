@@ -417,8 +417,11 @@ static nsresult NSAPI nsChannel_GetOwner(nsIHttpChannel *iface, nsISupports **aO
     if(This->channel)
         return nsIChannel_GetOwner(This->channel, aOwner);
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    if(This->owner)
+        nsISupports_AddRef(This->owner);
+    *aOwner = This->owner;
+
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_SetOwner(nsIHttpChannel *iface, nsISupports *aOwner)
@@ -430,8 +433,13 @@ static nsresult NSAPI nsChannel_SetOwner(nsIHttpChannel *iface, nsISupports *aOw
     if(This->channel)
         return nsIChannel_SetOwner(This->channel, aOwner);
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    if(aOwner)
+        nsISupports_AddRef(aOwner);
+    if(This->owner)
+        nsISupports_Release(This->owner);
+    This->owner = aOwner;
+
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_GetNotificationCallbacks(nsIHttpChannel *iface,
