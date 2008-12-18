@@ -168,7 +168,7 @@ IWineGDISurfaceImpl_UnlockRect(IWineD3DSurface *iface)
     if (!(This->Flags & SFLAG_LOCKED))
     {
         WARN("trying to Unlock an unlocked surf@%p\n", This);
-        return WINED3DERR_INVALIDCALL;
+        return WINEDDERR_NOTLOCKED;
     }
 
     /* Can be useful for debugging */

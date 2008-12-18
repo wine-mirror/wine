@@ -241,7 +241,11 @@ static HRESULT WINAPI IDirect3DSurface9Impl_UnlockRect(LPDIRECT3DSURFACE9 iface)
     EnterCriticalSection(&d3d9_cs);
     hr = IWineD3DSurface_UnlockRect(This->wineD3DSurface);
     LeaveCriticalSection(&d3d9_cs);
-    return hr;
+    switch(hr)
+    {
+        case WINEDDERR_NOTLOCKED:       return D3DERR_INVALIDCALL;
+        default:                        return hr;
+    }
 }
 
 static HRESULT WINAPI IDirect3DSurface9Impl_GetDC(LPDIRECT3DSURFACE9 iface, HDC* phdc) {

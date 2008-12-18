@@ -1320,7 +1320,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
 
     if (!(This->Flags & SFLAG_LOCKED)) {
         WARN("trying to Unlock an unlocked surf@%p\n", This);
-        return WINED3DERR_INVALIDCALL;
+        return WINEDDERR_NOTLOCKED;
     }
 
     if (This->Flags & SFLAG_PBO) {

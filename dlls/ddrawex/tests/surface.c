@@ -60,7 +60,7 @@ static void dctest_surf(IDirectDrawSurface *surf, int ddsdver) {
     ok(dc2 == (HDC) 0x1234, "The failed GetDC call changed the dc: %p\n", dc2);
 
     hr = IDirectDrawSurface_Lock(surf, NULL, ddsdver == 1 ? &ddsd : ((DDSURFACEDESC *) &ddsd2), 0, NULL);
-    ok(hr == DDERR_SURFACEBUSY, "IDirectDrawSurface_Lock returned 0x%08x, expected DDERR_ALREADYLOCKED\n", hr);
+    ok(hr == DDERR_SURFACEBUSY, "IDirectDrawSurface_Lock returned 0x%08x, expected DDERR_SURFACEBUSY\n", hr);
 
     hr = IDirectDrawSurface_ReleaseDC(surf, dc);
     ok(hr == DD_OK, "IDirectDrawSurface_ReleaseDC failed: 0x%08x\n", hr);
@@ -170,6 +170,65 @@ static void CapsTest(void)
     IDirectDraw_Release(dd1);
 }
 
+static void dctest_sysvidmem(IDirectDrawSurface *surf, int ddsdver) {
+    HRESULT hr;
+    HDC dc, dc2 = (HDC) 0x1234;
+    DDSURFACEDESC ddsd;
+    DDSURFACEDESC2 ddsd2;
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    memset(&ddsd2, 0, sizeof(ddsd2));
+    ddsd2.dwSize = sizeof(ddsd2);
+
+    hr = IDirectDrawSurface_GetDC(surf, &dc);
+    ok(hr == DD_OK, "IDirectDrawSurface_GetDC failed: 0x%08x\n", hr);
+
+    hr = IDirectDrawSurface_GetDC(surf, &dc2);
+    ok(hr == DD_OK, "IDirectDrawSurface_GetDC failed: 0x%08x\n", hr);
+    ok(dc == dc2, "Got two different DCs\n");
+
+    hr = IDirectDrawSurface_Lock(surf, NULL, ddsdver == 1 ? &ddsd : ((DDSURFACEDESC *) &ddsd2), 0, NULL);
+    ok(hr == DD_OK, "IDirectDrawSurface_Lock returned 0x%08x, expected DD_OK\n", hr);
+
+    hr = IDirectDrawSurface_Lock(surf, NULL, ddsdver == 1 ? &ddsd : ((DDSURFACEDESC *) &ddsd2), 0, NULL);
+    ok(hr == DDERR_SURFACEBUSY, "IDirectDrawSurface_Lock returned 0x%08x, expected DDERR_SURFACEBUSY\n", hr);
+
+    hr = IDirectDrawSurface_Unlock(surf, NULL);
+    ok(hr == DD_OK, "IDirectDrawSurface_Unlock returned 0x%08x, expected DD_OK\n", hr);
+    hr = IDirectDrawSurface_Unlock(surf, NULL);
+    ok(hr == DDERR_NOTLOCKED, "IDirectDrawSurface_Unlock returned 0x%08x, expected DDERR_NOTLOCKED\n", hr);
+
+    hr = IDirectDrawSurface_ReleaseDC(surf, dc);
+    ok(hr == DD_OK, "IDirectDrawSurface_ReleaseDC failed: 0x%08x\n", hr);
+    hr = IDirectDrawSurface_ReleaseDC(surf, dc);
+    ok(hr == DD_OK, "IDirectDrawSurface_ReleaseDC failed: 0x%08x\n", hr);
+    /* That works any number of times... */
+    hr = IDirectDrawSurface_ReleaseDC(surf, dc);
+    ok(hr == DD_OK, "IDirectDrawSurface_ReleaseDC failed: 0x%08x\n", hr);
+}
+
+static void SysVidMemTest(void)
+{
+    DDSURFACEDESC ddsd;
+    DDSURFACEDESC2 ddsd2;
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    ddsd.dwWidth = 64;
+    ddsd.dwHeight = 64;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_VIDEOMEMORY;
+    memset(&ddsd2, 0, sizeof(ddsd2));
+    ddsd2.dwSize = sizeof(ddsd2);
+    ddsd2.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    ddsd2.dwWidth = 64;
+    ddsd2.dwHeight = 64;
+    ddsd2.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_VIDEOMEMORY;
+
+    GetDCTest_main(&ddsd, &ddsd2, dctest_sysvidmem);
+}
+
 START_TEST(surface)
 {
     IClassFactory *classfactory = NULL;
@@ -193,6 +252,7 @@ START_TEST(surface)
 
     GetDCTest();
     CapsTest();
+    SysVidMemTest();
 
     if(factory) {
         ref = IDirectDrawFactory_Release(factory);

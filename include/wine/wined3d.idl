@@ -74,6 +74,7 @@ cpp_quote("#define WINED3DERR_INVALIDCALL                      MAKE_WINED3DHRESU
 cpp_quote("#define WINED3DERR_DRIVERINVALIDCALL                MAKE_WINED3DHRESULT(2157)")
 cpp_quote("#define WINED3DERR_WASSTILLDRAWING                  MAKE_WINED3DHRESULT(540)")
 cpp_quote("#define WINEDDERR_NOTAOVERLAYSURFACE                MAKE_WINED3DHRESULT(580)")
+cpp_quote("#define WINEDDERR_NOTLOCKED                         MAKE_WINED3DHRESULT(584)")
 cpp_quote("#define WINEDDERR_NODC                              MAKE_WINED3DHRESULT(586)")
 cpp_quote("#define WINEDDERR_DCALREADYCREATED                  MAKE_WINED3DHRESULT(620)")
 cpp_quote("#define WINEDDERR_NOTFLIPPABLE                      MAKE_WINED3DHRESULT(582)")
