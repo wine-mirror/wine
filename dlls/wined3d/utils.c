@@ -376,6 +376,12 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
     dst = getFmtIdx(WINED3DFMT_R32F);
     gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
             0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
+    /* When ARB_texture_rg is supported we only require 32-bit for R32F instead of 128-bit RGBA32F */
+    if(GL_SUPPORT(ARB_TEXTURE_RG))
+    {
+        gl_info->gl_formats[dst].glInternal = GL_R32F;
+        gl_info->gl_formats[dst].glGammaInternal = GL_R32F;
+    }
 
     dst = getFmtIdx(WINED3DFMT_G16R16);
     gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
