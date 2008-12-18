@@ -5853,7 +5853,7 @@ static void test_format_rect(void)
     expected = clientRect;
     expected.left += 1;
     expected.right -= 1;
-    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
     ok(rc.top == expected.top && rc.left == expected.left &&
        rc.bottom == expected.bottom && rc.right == expected.right,
        "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
@@ -5867,14 +5867,14 @@ static void test_format_rect(void)
       rc.left += n;
       rc.bottom -= n;
       rc.right -= n;
-      SendMessageW(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
+      SendMessageA(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
 
       expected = rc;
       expected.top = max(0, rc.top);
       expected.left = max(0, rc.left);
       expected.bottom = min(clientRect.bottom, rc.bottom);
       expected.right = min(clientRect.right, rc.right);
-      SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+      SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
       ok(rc.top == expected.top && rc.left == expected.left &&
          rc.bottom == expected.bottom && rc.right == expected.right,
          "[n=%d] rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
@@ -5883,9 +5883,9 @@ static void test_format_rect(void)
     }
 
     rc = clientRect;
-    SendMessageW(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
+    SendMessageA(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
     expected = clientRect;
-    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
     ok(rc.top == expected.top && rc.left == expected.left &&
        rc.bottom == expected.bottom && rc.right == expected.right,
        "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
@@ -5893,11 +5893,11 @@ static void test_format_rect(void)
        expected.top, expected.left, expected.bottom, expected.right);
 
     /* Adding the selectionbar adds the selectionbar width to the left side. */
-    SendMessageW(hwnd, EM_SETOPTIONS, ECOOP_OR, ECO_SELECTIONBAR);
-    options = SendMessageW(hwnd, EM_GETOPTIONS, 0, 0);
+    SendMessageA(hwnd, EM_SETOPTIONS, ECOOP_OR, ECO_SELECTIONBAR);
+    options = SendMessageA(hwnd, EM_GETOPTIONS, 0, 0);
     ok(options & ECO_SELECTIONBAR, "EM_SETOPTIONS failed to add selectionbar.\n");
     expected.left += 8; /* selection bar width */
-    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
     ok(rc.top == expected.top && rc.left == expected.left &&
        rc.bottom == expected.bottom && rc.right == expected.right,
        "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
@@ -5905,9 +5905,9 @@ static void test_format_rect(void)
        expected.top, expected.left, expected.bottom, expected.right);
 
     rc = clientRect;
-    SendMessageW(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
+    SendMessageA(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
     expected = clientRect;
-    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
     ok(rc.top == expected.top && rc.left == expected.left &&
        rc.bottom == expected.bottom && rc.right == expected.right,
        "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
@@ -5916,11 +5916,11 @@ static void test_format_rect(void)
 
     /* Removing the selectionbar subtracts the selectionbar width from the left side,
      * even if the left side is already 0. */
-    SendMessageW(hwnd, EM_SETOPTIONS, ECOOP_AND, ~ECO_SELECTIONBAR);
-    options = SendMessageW(hwnd, EM_GETOPTIONS, 0, 0);
+    SendMessageA(hwnd, EM_SETOPTIONS, ECOOP_AND, ~ECO_SELECTIONBAR);
+    options = SendMessageA(hwnd, EM_GETOPTIONS, 0, 0);
     ok(!(options & ECO_SELECTIONBAR), "EM_SETOPTIONS failed to remove selectionbar.\n");
     expected.left -= 8; /* selection bar width */
-    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
     ok(rc.top == expected.top && rc.left == expected.left &&
        rc.bottom == expected.bottom && rc.right == expected.right,
        "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
@@ -5929,9 +5929,9 @@ static void test_format_rect(void)
 
     /* Set the absolute value of the formatting rectangle. */
     rc = clientRect;
-    SendMessageW(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
+    SendMessageA(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
     expected = clientRect;
-    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
     ok(rc.top == expected.top && rc.left == expected.left &&
        rc.bottom == expected.bottom && rc.right == expected.right,
        "[n=%d] rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
@@ -5946,8 +5946,8 @@ static void test_format_rect(void)
     rc.bottom = clientRect.bottom - 15;
     rc.right = clientRect.right - 15;
     expected = rc;
-    SendMessageW(hwnd, EM_SETRECT, 1, (LPARAM)&rc);
-    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    SendMessageA(hwnd, EM_SETRECT, 1, (LPARAM)&rc);
+    SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
     ok(rc.top == expected.top && rc.left == expected.left &&
        rc.bottom == expected.bottom && rc.right == expected.right,
        "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
@@ -5961,8 +5961,8 @@ static void test_format_rect(void)
     rc.bottom = clientRect.bottom + 15;
     rc.right = clientRect.right + 15;
     expected = rc;
-    SendMessageW(hwnd, EM_SETRECT, 1, (LPARAM)&rc);
-    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    SendMessageA(hwnd, EM_SETRECT, 1, (LPARAM)&rc);
+    SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
     ok(rc.top == expected.top && rc.left == expected.left &&
        rc.bottom == expected.bottom && rc.right == expected.right,
        "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
@@ -5983,7 +5983,7 @@ static void test_format_rect(void)
     expected.left += 1;
     expected.top += 1;
     expected.right -= 1;
-    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
     ok(rc.top == expected.top && rc.left == expected.left &&
        rc.bottom == expected.bottom && rc.right == expected.right,
        "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
@@ -5999,8 +5999,8 @@ static void test_format_rect(void)
     expected.top -= 1;
     expected.left -= 1;
     expected.right += 1;
-    SendMessageW(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
-    SendMessageW(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    SendMessageA(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
+    SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
     ok(rc.top == expected.top && rc.left == expected.left &&
        rc.bottom == expected.bottom && rc.right == expected.right,
        "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
