@@ -132,22 +132,13 @@ struct IDirectMusicDownloadImpl {
 };
 
 /*****************************************************************************
- * IDirectMusicPortDownloadImpl implementation structure
- */
-struct IDirectMusicPortDownloadImpl {
-  /* IUnknown fields */
-  const IDirectMusicPortDownloadVtbl *lpVtbl;
-  LONG           ref;
-
-  /* IDirectMusicPortDownloadImpl fields */
-};
-
-/*****************************************************************************
  * IDirectMusicPortImpl implementation structure
  */
 struct IDirectMusicPortImpl {
   /* IUnknown fields */
   const IDirectMusicPortVtbl *lpVtbl;
+  const IDirectMusicPortDownloadVtbl *lpDownloadVtbl;
+  const IDirectMusicThruVtbl *lpThruVtbl;
   LONG           ref;
 
   /* IDirectMusicPortImpl fields */
@@ -164,17 +155,6 @@ extern HRESULT WINAPI IDirectMusicPortImpl_Activate (LPDIRECTMUSICPORT iface, BO
 
 /** Internal factory */
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicPortImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter, LPDMUS_PORTPARAMS pPortParams, LPDMUS_PORTCAPS pPortCaps);
-
-/*****************************************************************************
- * IDirectMusicThruImpl implementation structure
- */
-struct IDirectMusicThruImpl {
-  /* IUnknown fields */
-  const IDirectMusicThruVtbl *lpVtbl;
-  LONG           ref;
-
-  /* IDirectMusicThruImpl fields */
-};
 
 /*****************************************************************************
  * IReferenceClockImpl implementation structure

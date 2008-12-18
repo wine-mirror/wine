@@ -15,9 +15,7 @@ C_SRCS = \
 	downloadedinstrument.c \
 	instrument.c \
 	port.c \
-	portdownload.c \
-	regsvr.c \
-	thru.c
+	regsvr.c
 
 RC_SRCS = version.rc
 
