@@ -1554,6 +1554,49 @@ static void create_cert_details_list(HWND hwnd, struct detail_data *data)
     set_fields_selection(hwnd, data, 0);
 }
 
+static WCHAR *get_cert_property_as_string(PCCERT_CONTEXT cert, DWORD prop)
+{
+    WCHAR *name = NULL;
+    DWORD cb;
+
+    if (CertGetCertificateContextProperty(cert, prop, NULL, &cb))
+    {
+        name = HeapAlloc(GetProcessHeap(), 0, cb);
+        if (name)
+        {
+            if (!CertGetCertificateContextProperty(cert, prop, (LPBYTE)name,
+             &cb))
+            {
+                HeapFree(GetProcessHeap(), 0, name);
+                name = NULL;
+            }
+        }
+    }
+    return name;
+}
+
+static void set_general_cert_properties(HWND hwnd, struct detail_data *data)
+{
+    PCCERT_CONTEXT cert = data->pCertViewInfo->pCertContext;
+    WCHAR *str;
+
+    if ((str = get_cert_property_as_string(cert, CERT_FRIENDLY_NAME_PROP_ID)))
+    {
+        SendMessageW(GetDlgItem(hwnd, IDC_FRIENDLY_NAME), WM_SETTEXT, 0,
+         (LPARAM)str);
+        HeapFree(GetProcessHeap(), 0, str);
+    }
+    if ((str = get_cert_property_as_string(cert, CERT_DESCRIPTION_PROP_ID)))
+    {
+        SendMessageW(GetDlgItem(hwnd, IDC_DESCRIPTION), WM_SETTEXT, 0,
+         (LPARAM)str);
+        HeapFree(GetProcessHeap(), 0, str);
+    }
+    FIXME("show cert usages\n");
+    EnableWindow(GetDlgItem(hwnd, IDC_ADD_PURPOSE), FALSE);
+    SendMessageW(GetDlgItem(hwnd, IDC_ENABLE_ALL_PURPOSES), BM_CLICK, 0, 0);
+}
+
 #define MAX_FRIENDLY_NAME 40
 #define MAX_DESCRIPTION 255
 
@@ -1577,23 +1620,10 @@ static LRESULT CALLBACK cert_properties_general_dlg_proc(HWND hwnd, UINT msg,
          MAX_FRIENDLY_NAME, 0);
         SendMessageW(description, EM_SETLIMITTEXT, MAX_DESCRIPTION, 0);
         ShowScrollBar(description, SB_VERT, FALSE);
-        FIXME("set general properties\n");
+        set_general_cert_properties(hwnd, data);
         SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
         break;
     }
-    case WM_COMMAND:
-        switch (HIWORD(wp))
-        {
-        case BN_CLICKED:
-            switch (LOWORD(wp))
-            {
-            case IDC_ADD_PURPOSE:
-                FIXME("show add purpose dialog\n");
-                break;
-            }
-            break;
-        }
-        break;
     }
     return 0;
 }
@@ -1825,27 +1855,6 @@ static struct hierarchy_data *get_hierarchy_data_from_tree_item(HWND tree,
         data = (struct hierarchy_data *)item.lParam;
     }
     return data;
-}
-
-static WCHAR *get_cert_property_as_string(PCCERT_CONTEXT cert, DWORD prop)
-{
-    WCHAR *name = NULL;
-    DWORD cb;
-
-    if (CertGetCertificateContextProperty(cert, prop, NULL, &cb))
-    {
-        name = HeapAlloc(GetProcessHeap(), 0, cb);
-        if (name)
-        {
-            if (!CertGetCertificateContextProperty(cert, prop, (LPBYTE)name,
-             &cb))
-            {
-                HeapFree(GetProcessHeap(), 0, name);
-                name = NULL;
-            }
-        }
-    }
-    return name;
 }
 
 static WCHAR *get_cert_display_name(PCCERT_CONTEXT cert)
