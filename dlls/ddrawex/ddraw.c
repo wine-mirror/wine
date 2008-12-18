@@ -386,6 +386,7 @@ IDirectDraw4Impl_CreateSurface(IDirectDraw4 *iface,
                                IUnknown *UnkOuter)
 {
     IDirectDrawImpl *This = impl_from_dd4(iface);
+    HRESULT hr;
     TRACE("(%p)(%p, %p, %p)\n", This, DDSD, Surf, UnkOuter);
 
     if(UnkOuter != NULL)
@@ -394,10 +395,12 @@ IDirectDraw4Impl_CreateSurface(IDirectDraw4 *iface,
         FIXME("Implement aggregation for ddrawex surfaces\n");
     }
 
-    return IDirectDraw4_CreateSurface(This->parent, DDSD, Surf, UnkOuter);
+    hr = IDirectDraw4_CreateSurface(This->parent, DDSD, Surf, UnkOuter);
+    *Surf = dds_get_outer(*Surf);
+    return hr;
 }
 
-static void DDSD_to_DDSD2(const DDSURFACEDESC *in, DDSURFACEDESC2 *out)
+void DDSD_to_DDSD2(const DDSURFACEDESC *in, DDSURFACEDESC2 *out)
 {
     memset(out, 0, sizeof(*out));
     out->dwSize = sizeof(*out);
@@ -410,7 +413,8 @@ static void DDSD_to_DDSD2(const DDSURFACEDESC *in, DDSURFACEDESC2 *out)
     if(in->dwFlags & DDSD_BACKBUFFERCOUNT) out->dwBackBufferCount = in->dwBackBufferCount;
     if(in->dwFlags & DDSD_ZBUFFERBITDEPTH) out->dwMipMapCount = in->dwZBufferBitDepth; /* same union */
     if(in->dwFlags & DDSD_ALPHABITDEPTH) out->dwAlphaBitDepth = in->dwAlphaBitDepth;
-    if(in->dwFlags & DDSD_LPSURFACE) out->lpSurface = in->lpSurface;
+    /* DDraw(native, and wine) does not set the DDSD_LPSURFACE, so always copy */
+    out->lpSurface = in->lpSurface;
     if(in->dwFlags & DDSD_CKDESTOVERLAY) out->ddckCKDestOverlay = in->ddckCKDestOverlay;
     if(in->dwFlags & DDSD_CKDESTBLT) out->ddckCKDestBlt = in->ddckCKDestBlt;
     if(in->dwFlags & DDSD_CKSRCOVERLAY) out->ddckCKSrcOverlay = in->ddckCKSrcOverlay;
@@ -423,7 +427,7 @@ static void DDSD_to_DDSD2(const DDSURFACEDESC *in, DDSURFACEDESC2 *out)
      */
 }
 
-static void DDSD2_to_DDSD(const DDSURFACEDESC2 *in, DDSURFACEDESC *out)
+void DDSD2_to_DDSD(const DDSURFACEDESC2 *in, DDSURFACEDESC *out)
 {
     memset(out, 0, sizeof(*out));
     out->dwSize = sizeof(*out);
@@ -436,7 +440,8 @@ static void DDSD2_to_DDSD(const DDSURFACEDESC2 *in, DDSURFACEDESC *out)
     if(in->dwFlags & DDSD_BACKBUFFERCOUNT) out->dwBackBufferCount = in->dwBackBufferCount;
     if(in->dwFlags & DDSD_ZBUFFERBITDEPTH) out->dwZBufferBitDepth = in->dwMipMapCount; /* same union */
     if(in->dwFlags & DDSD_ALPHABITDEPTH) out->dwAlphaBitDepth = in->dwAlphaBitDepth;
-    if(in->dwFlags & DDSD_LPSURFACE) out->lpSurface = in->lpSurface;
+    /* DDraw(native, and wine) does not set the DDSD_LPSURFACE, so always copy */
+    out->lpSurface = in->lpSurface;
     if(in->dwFlags & DDSD_CKDESTOVERLAY) out->ddckCKDestOverlay = in->ddckCKDestOverlay;
     if(in->dwFlags & DDSD_CKDESTBLT) out->ddckCKDestBlt = in->ddckCKDestBlt;
     if(in->dwFlags & DDSD_CKSRCOVERLAY) out->ddckCKSrcOverlay = in->ddckCKSrcOverlay;
@@ -474,6 +479,7 @@ IDirectDraw3Impl_CreateSurface(IDirectDraw3 *iface,
         return hr;
     }
 
+    TRACE("Got surface %p\n", surf4);
     IDirectDrawSurface4_QueryInterface(surf4, &IID_IDirectDrawSurface, (void **) Surf);
     IDirectDrawSurface4_Release(surf4);
     return hr;
@@ -507,9 +513,9 @@ IDirectDraw4Impl_DuplicateSurface(IDirectDraw4 *iface,
                                   IDirectDrawSurface4 **dst)
 {
     IDirectDrawImpl *This = impl_from_dd4(iface);
-    TRACE("(%p)->(%p,%p)\n", This, src, dst);
+    FIXME("(%p)->(%p,%p). Create a wrapper surface\n", This, src, dst);
 
-    return IDirectDraw4_DuplicateSurface(This->parent, src, dst);
+    return IDirectDraw4_DuplicateSurface(This->parent, dds_get_inner(src), dst);
 }
 
 static HRESULT WINAPI
@@ -628,6 +634,23 @@ IDirectDrawImpl_EnumDisplayModes(IDirectDraw *iface,
     return IDirectDraw3_EnumDisplayModes(dd3_from_impl(This), Flags, DDSD, Context, cb);
 }
 
+struct enumsurfaces4_ctx
+{
+    LPDDENUMSURFACESCALLBACK2 orig_cb;
+    void *orig_ctx;
+};
+
+static HRESULT WINAPI
+enum_surfaces_wrapper(IDirectDrawSurface4 *surf4, DDSURFACEDESC2 *ddsd2, void *vctx)
+{
+    struct enumsurfaces4_ctx *ctx = (struct enumsurfaces4_ctx *) vctx;
+    IDirectDrawSurface4 *outer = dds_get_outer(surf4);
+    IDirectDrawSurface4_AddRef(outer);
+    IDirectDrawSurface4_Release(surf4);
+    TRACE("Returning wrapper surface %p for enumerated inner surface %p\n", outer, surf4);
+    return ctx->orig_cb(outer, ddsd2, ctx->orig_ctx);
+}
+
 static HRESULT WINAPI
 IDirectDraw4Impl_EnumSurfaces(IDirectDraw4 *iface,
                               DWORD Flags,
@@ -636,9 +659,12 @@ IDirectDraw4Impl_EnumSurfaces(IDirectDraw4 *iface,
                               LPDDENUMSURFACESCALLBACK2 Callback)
 {
     IDirectDrawImpl *This = impl_from_dd4(iface);
+    struct enumsurfaces4_ctx *ctx;
     TRACE("(%p)->(0x%08x,%p,%p,%p)\n", This, Flags, DDSD, Context, Callback);
 
-    return IDirectDraw4Impl_EnumSurfaces(This->parent, Flags, DDSD, Context, Callback);
+    ctx->orig_cb = Callback;
+    ctx->orig_ctx = Context;
+    return IDirectDraw4Impl_EnumSurfaces(This->parent, Flags, DDSD, &ctx, enum_surfaces_wrapper);
 }
 
 struct enumsurfaces_ctx
@@ -864,8 +890,22 @@ IDirectDraw4Impl_GetGDISurface(IDirectDraw4 *iface,
                                IDirectDrawSurface4 **GDISurface)
 {
     IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawSurface4 *inner = NULL;
+    HRESULT hr;
     TRACE("(%p)->(%p)\n", This, GDISurface);
-    return IDirectDraw4_GetGDISurface(This->parent, GDISurface);
+
+    hr = IDirectDraw4_GetGDISurface(This->parent, &inner);
+    if(SUCCEEDED(hr))
+    {
+        *GDISurface = dds_get_outer(inner);
+        IDirectDrawSurface4_AddRef(*GDISurface);
+        IDirectDrawSurface4_Release(inner);
+    }
+    else
+    {
+        *GDISurface = NULL;
+    }
+    return hr;
 }
 
 static HRESULT WINAPI
@@ -1258,8 +1298,22 @@ IDirectDraw4Impl_GetSurfaceFromDC(IDirectDraw4 *iface,
                                   IDirectDrawSurface4 **Surface)
 {
     IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawSurface4 *inner;
+    HRESULT hr;
     TRACE("(%p)->(%p, %p)\n", This, hdc, Surface);
-    return IDirectDraw4_GetSurfaceFromDC(This->parent,hdc, Surface);
+    hr = IDirectDraw4_GetSurfaceFromDC(This->parent,hdc, &inner);
+    if(SUCCEEDED(hr))
+    {
+        *Surface = dds_get_outer(inner);
+        IDirectDrawSurface4_AddRef(*Surface);
+        IDirectDrawSurface4_Release(inner);
+    }
+    else
+    {
+        *Surface = NULL;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI
@@ -1481,4 +1535,10 @@ err:
     if(object) HeapFree(GetProcessHeap(), 0, object);
     *ppDirectDraw = NULL;
     return hr;
+}
+
+IDirectDraw4 *dd_get_inner(IDirectDraw4 *outer)
+{
+    IDirectDrawImpl *This = impl_from_dd4(outer);
+    return This->parent;
 }

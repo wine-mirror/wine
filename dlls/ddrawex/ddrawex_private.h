@@ -67,6 +67,9 @@ HRESULT WINAPI IDirectDrawFactoryImpl_CreateDirectDraw(IDirectDrawFactory* iface
     GUID * pGUID, HWND hWnd, DWORD dwCoopLevelFlags, DWORD dwReserved, IUnknown *pUnkOuter,
     IDirectDraw **ppDirectDraw);
 
+void DDSD_to_DDSD2(const DDSURFACEDESC *in, DDSURFACEDESC2 *out);
+void DDSD2_to_DDSD(const DDSURFACEDESC2 *in, DDSURFACEDESC *out);
+
 /******************************************************************************
  * IDirectDraw wrapper implementation
  ******************************************************************************/
@@ -81,5 +84,28 @@ typedef struct
     /* The interface we're forwarding to */
     IDirectDraw4 *parent;
 } IDirectDrawImpl;
+
+IDirectDraw4 *dd_get_outer(IDirectDraw4 *inner);
+IDirectDraw4 *dd_get_inner(IDirectDraw4 *outer);
+
+/******************************************************************************
+ * IDirectDrawSurface implementation
+ ******************************************************************************/
+typedef struct
+{
+    const IDirectDrawSurface3Vtbl *IDirectDrawSurface3_Vtbl;
+    const IDirectDrawSurface4Vtbl *IDirectDrawSurface4_Vtbl;
+    LONG ref;
+
+    /* The interface we're forwarding to */
+    IDirectDrawSurface4 *parent;
+
+    /* An UUID we use to store the outer surface as private data in the inner surface */
+#define IID_DDrawexPriv IID_IDirectDrawSurface4
+
+} IDirectDrawSurfaceImpl;
+
+IDirectDrawSurface4 *dds_get_outer(IDirectDrawSurface4 *inner);
+IDirectDrawSurface4 *dds_get_inner(IDirectDrawSurface4 *outer);
 
 #endif /* __WINE_DLLS_DDRAWEX_DDRAWEX_PRIVATE_H */
