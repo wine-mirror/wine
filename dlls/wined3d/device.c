@@ -340,6 +340,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         list_init(&object->lightMap[i]);
     }
 
+    temp_result = allocate_shader_constants(object);
+    if (FAILED(temp_result))
+    {
+        HeapFree(GetProcessHeap(), 0, object);
+        return temp_result;
+    }
+
     /* Special case - Used during initialization to produce a placeholder stateblock
           so other functions called can update a state block                         */
     if (Type == WINED3DSBT_INIT) {
@@ -347,10 +354,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
            be freed due to circular dependencies                                   */
         return WINED3D_OK;
     }
-    
-    temp_result = allocate_shader_constants(object);
-    if (WINED3D_OK != temp_result)
-        return temp_result;
 
     /* Otherwise, might as well set the whole state block to the appropriate values  */
     if (This->stateBlock != NULL)
@@ -2084,11 +2087,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     TRACE("(%p) : Created stateblock (%p)\n", This, This->stateBlock);
     This->updateStateBlock = This->stateBlock;
     IWineD3DStateBlock_AddRef((IWineD3DStateBlock*)This->updateStateBlock);
-
-    hr = allocate_shader_constants(This->updateStateBlock);
-    if (WINED3D_OK != hr) {
-        goto err_out;
-    }
 
     This->render_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DSurface *) * GL_LIMITS(buffers));
     This->draw_buffers = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(GLenum) * GL_LIMITS(buffers));
