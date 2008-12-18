@@ -59,6 +59,8 @@ STRINGTABLE DISCARDABLE
     IDS_PROP_FRIENDLY_NAME "Friendly name"
     IDS_PROP_DESCRIPTION "Description"
     IDS_CERTIFICATE_PROPERTIES "Certificate Properties"
+    IDS_CERTIFICATE_PURPOSE_ERROR "Please enter an OID in the form 1.2.3.4"
+    IDS_CERTIFICATE_PURPOSE_EXISTS "The OID you entered already exists."
     IDS_PURPOSE_SERVER_AUTH "Ensures the identify of a remote computer"
     IDS_PURPOSE_CLIENT_AUTH "Proves your identity to a remote computer"
     IDS_PURPOSE_CODE_SIGNING "Ensures software came from software publisher\nProtects software from alteration after publication"

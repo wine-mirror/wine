@@ -1593,6 +1593,72 @@ static void add_purpose(HWND hwnd, LPCSTR oid)
     }
 }
 
+static BOOL is_valid_oid(LPCSTR oid)
+{
+    BOOL ret;
+
+    if (oid[0] != '0' && oid[0] != '1' && oid[0] != '2')
+        ret = FALSE;
+    else if (oid[1] != '.')
+        ret = FALSE;
+    else if (!oid[2])
+        ret = FALSE;
+    else
+    {
+        const char *ptr;
+        BOOL expectNum = TRUE;
+
+        for (ptr = oid + 2, ret = TRUE; ret && *ptr; ptr++)
+        {
+            if (expectNum)
+            {
+                if (!isdigit(*ptr))
+                    ret = FALSE;
+                else if (*(ptr + 1) == '.')
+                    expectNum = FALSE;
+            }
+            else
+            {
+                if (*ptr != '.')
+                    ret = FALSE;
+                else if (!(*(ptr + 1)))
+                    ret = FALSE;
+                else
+                    expectNum = TRUE;
+            }
+        }
+    }
+    return ret;
+}
+
+static BOOL is_oid_in_list(HWND hwnd, LPCSTR oid)
+{
+    HWND lv = GetDlgItem(hwnd, IDC_CERTIFICATE_USAGES);
+    PCCRYPT_OID_INFO oidInfo = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY,
+     (void *)oid, CRYPT_ENHKEY_USAGE_OID_GROUP_ID);
+    BOOL ret = FALSE;
+
+    if (oidInfo)
+    {
+        LVFINDINFOW findInfo;
+
+        findInfo.flags = LVFI_PARAM;
+        findInfo.lParam = (LPARAM)oidInfo;
+        if (SendMessageW(lv, LVM_FINDITEMW, -1, (LPARAM)&findInfo) != -1)
+            ret = TRUE;
+    }
+    else
+    {
+        LVFINDINFOA findInfo;
+
+        findInfo.flags = LVFI_STRING;
+        findInfo.psz = oid;
+        if (SendMessageW(lv, LVM_FINDITEMA, -1, (LPARAM)&findInfo) != -1)
+            ret = TRUE;
+    }
+    return ret;
+}
+
 #define MAX_PURPOSE 255
 
 static LRESULT CALLBACK add_purpose_dlg_proc(HWND hwnd, UINT msg,
@@ -1636,11 +1702,31 @@ static LRESULT CALLBACK add_purpose_dlg_proc(HWND hwnd, UINT msg,
                     EndDialog(hwnd, IDCANCEL);
                     ret = TRUE;
                 }
+                else if (!is_valid_oid(buf))
+                {
+                    WCHAR title[MAX_STRING_LEN], error[MAX_STRING_LEN];
+
+                    LoadStringW(hInstance, IDS_CERTIFICATE_PURPOSE_ERROR, error,
+                     sizeof(error) / sizeof(error[0]));
+                    LoadStringW(hInstance, IDS_CERTIFICATE_PROPERTIES, title,
+                     sizeof(title) / sizeof(title[0]));
+                    MessageBoxW(hwnd, error, title, MB_ICONERROR | MB_OK);
+                }
+                else if (is_oid_in_list(
+                 (HWND)GetWindowLongPtrW(hwnd, DWLP_USER), buf))
+                {
+                    WCHAR title[MAX_STRING_LEN], error[MAX_STRING_LEN];
+
+                    LoadStringW(hInstance, IDS_CERTIFICATE_PURPOSE_EXISTS,
+                     error, sizeof(error) / sizeof(error[0]));
+                    LoadStringW(hInstance, IDS_CERTIFICATE_PROPERTIES, title,
+                     sizeof(title) / sizeof(title[0]));
+                    MessageBoxW(hwnd, error, title, MB_ICONEXCLAMATION | MB_OK);
+                }
                 else
                 {
                     HWND parent = (HWND)GetWindowLongPtrW(hwnd, DWLP_USER);
 
-                    FIXME("validate %s\n", debugstr_a(buf));
                     add_purpose(parent, buf);
                     EndDialog(hwnd, wp);
                     ret = TRUE;
