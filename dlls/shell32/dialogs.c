@@ -240,6 +240,7 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                             MessageBoxA (hwnd, szMsg, "Nix", MB_OK | MB_ICONEXCLAMATION) ;
 
                             HeapFree(GetProcessHeap(), 0, psz);
+                            HeapFree(GetProcessHeap(), 0, parent);
                             SendMessageA (htxt, CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
                             return TRUE ;
                             }
