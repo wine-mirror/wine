@@ -57,7 +57,11 @@ static BOOL enum_find_filter(const WCHAR *wszFilterName, IEnumMoniker *pEnum)
 
         if (SUCCEEDED(hr))
         {
-            if (!lstrcmpW((WCHAR*)V_UNION(&var, bstrVal), wszFilterName)) found = TRUE;
+            CHAR val1[512], val2[512];
+
+            WideCharToMultiByte(CP_ACP, 0, (WCHAR*)V_UNION(&var, bstrVal), -1, val1, sizeof(val1), 0, 0);
+            WideCharToMultiByte(CP_ACP, 0, wszFilterName, -1, val2, sizeof(val2), 0, 0);
+            if (!lstrcmpA(val1, val2)) found = TRUE;
         }
 
         IPropertyBag_Release(pPropBagCat);
@@ -179,10 +183,13 @@ static void test_legacy_filter_registration(void)
     IFilterMapper *pMapper = NULL;
     HRESULT hr;
     static const WCHAR wszFilterName[] = {'T', 'e', 's', 't', 'f', 'i', 'l', 't', 'e', 'r', 0 };
+    static const CHAR szFilterName[] = "Testfilter";
     static const WCHAR wszPinName[] = {'P', 'i', 'n', '1', 0 };
     CLSID clsidFilter;
     WCHAR wszRegKey[MAX_PATH];
+    CHAR szRegKey[MAX_PATH];
     static const WCHAR wszClsid[] = {'C','L','S','I','D', 0};
+    static const CHAR szClsid[] = "CLSID";
     static const WCHAR wszSlash[] = {'\\', 0};
     LONG lRet;
     HKEY hKey = NULL;
@@ -211,15 +218,16 @@ static void test_legacy_filter_registration(void)
     lRet = StringFromGUID2(&clsidFilter, wszRegKey + lstrlenW(wszRegKey), MAX_PATH - lstrlenW(wszRegKey));
     ok(lRet > 0, "StringFromGUID2 failed\n");
     if (!lRet) goto out;
+    WideCharToMultiByte(CP_ACP, 0, wszRegKey, -1, szRegKey, sizeof(szRegKey), 0, 0);
 
     /* Register---- functions need a filter class key to write pin and pin media type data to. Create a bogus
      * class key for it. */
-    lRet = RegCreateKeyExW(HKEY_CLASSES_ROOT, wszRegKey, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
-    ok(lRet == ERROR_SUCCESS, "RegCreateKeyExW failed with %x\n", HRESULT_FROM_WIN32(lRet));
+    lRet = RegCreateKeyExA(HKEY_CLASSES_ROOT, szRegKey, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
+    ok(lRet == ERROR_SUCCESS, "RegCreateKeyExA failed with %x\n", HRESULT_FROM_WIN32(lRet));
 
     /* Set default value - this is interpreted as "friendly name" later. */
-    lRet = RegSetValueExW(hKey, NULL, 0, REG_SZ, (LPBYTE)wszFilterName, (lstrlenW(wszFilterName) + 1) * 2);
-    ok(lRet == ERROR_SUCCESS, "RegSetValueExW failed with %x\n", HRESULT_FROM_WIN32(lRet));
+    lRet = RegSetValueExA(hKey, NULL, 0, REG_SZ, (LPBYTE)szFilterName, lstrlenA(szFilterName) + 1);
+    ok(lRet == ERROR_SUCCESS, "RegSetValueExA failed with %x\n", HRESULT_FROM_WIN32(lRet));
 
     if (hKey) RegCloseKey(hKey);
     hKey = NULL;
@@ -256,7 +264,10 @@ static void test_legacy_filter_registration(void)
 
         while(!found && IEnumRegFilters_Next(pRegEnum, 1, &prgf, &cFetched) == S_OK)
         {
-            if (!lstrcmpW(prgf->Name, wszFilterName)) found = TRUE;
+            CHAR val[512];
+
+            WideCharToMultiByte(CP_ACP, 0, prgf->Name, -1, val, sizeof(val), 0, 0);
+            if (!lstrcmpA(val, szFilterName)) found = TRUE;
 
             CoTaskMemFree(prgf);
         }
@@ -268,14 +279,15 @@ static void test_legacy_filter_registration(void)
     hr = IFilterMapper_UnregisterFilter(pMapper, clsidFilter);
     ok(hr == S_OK, "FilterMapper_UnregisterFilter failed with %x\n", hr);
 
-    lRet = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszClsid, 0, KEY_WRITE | DELETE, &hKey);
-    ok(lRet == ERROR_SUCCESS, "RegOpenKeyExW failed with %x\n", HRESULT_FROM_WIN32(lRet));
+    lRet = RegOpenKeyExA(HKEY_CLASSES_ROOT, szClsid, 0, KEY_WRITE | DELETE, &hKey);
+    ok(lRet == ERROR_SUCCESS, "RegOpenKeyExA failed with %x\n", HRESULT_FROM_WIN32(lRet));
 
     lRet = StringFromGUID2(&clsidFilter, wszRegKey, MAX_PATH);
     ok(lRet > 0, "StringFromGUID2 failed\n");
+    WideCharToMultiByte(CP_ACP, 0, wszRegKey, -1, szRegKey, sizeof(szRegKey), 0, 0);
 
-    lRet = RegDeleteKeyW(hKey, wszRegKey);
-    ok(lRet == ERROR_SUCCESS, "RegDeleteKeyW failed with %x\n", HRESULT_FROM_WIN32(lRet));
+    lRet = RegDeleteKeyA(hKey, szRegKey);
+    ok(lRet == ERROR_SUCCESS, "RegDeleteKeyA failed with %x\n", HRESULT_FROM_WIN32(lRet));
 
     if (hKey) RegCloseKey(hKey);
     hKey = NULL;
