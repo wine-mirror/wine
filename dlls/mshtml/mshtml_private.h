@@ -500,6 +500,7 @@ BOOL load_gecko(BOOL);
 void close_gecko(void);
 void register_nsservice(nsIComponentRegistrar*,nsIServiceManager*);
 void init_nsio(nsIComponentManager*,nsIComponentRegistrar*);
+void release_nsio(void);
 BOOL install_wine_gecko(BOOL);
 
 HRESULT nsuri_to_url(LPCWSTR,BSTR*);

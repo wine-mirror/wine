@@ -47,6 +47,7 @@ static const IID NS_IOSERVICE_CID =
     {0x9ac9e770, 0x18bc, 0x11d3, {0x93, 0x37, 0x00, 0x10, 0x4b, 0xa0, 0xfd, 0x40}};
 
 static nsIIOService *nsio = NULL;
+static nsINetUtil *net_util;
 
 static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
 
@@ -2260,21 +2261,9 @@ static nsrefcnt NSAPI nsNetUtil_Release(nsINetUtil *iface)
 static nsresult NSAPI nsNetUtil_ParseContentType(nsINetUtil *iface, const nsACString *aTypeHeader,
         nsACString *aCharset, PRBool *aHadCharset, nsACString *aContentType)
 {
-    nsINetUtil *net_util;
-    nsresult nsres;
-
     TRACE("(%p %p %p %p)\n", aTypeHeader, aCharset, aHadCharset, aContentType);
 
-    nsres = nsIIOService_QueryInterface(nsio, &IID_nsINetUtil, (void**)&net_util);
-    if(NS_FAILED(nsres)) {
-        WARN("Could not get nsINetUtil interface: %08x\n", nsres);
-        return nsres;
-    }
-
-    nsres = nsINetUtil_ParseContentType(net_util, aTypeHeader, aCharset, aHadCharset, aContentType);
-
-    nsINetUtil_Release(net_util);
-    return nsres;
+    return nsINetUtil_ParseContentType(net_util, aTypeHeader, aCharset, aHadCharset, aContentType);
 }
 
 static const nsINetUtilVtbl nsNetUtilVtbl = {
@@ -2380,6 +2369,13 @@ void init_nsio(nsIComponentManager *component_manager, nsIComponentRegistrar *re
         return;
     }
 
+    nsres = nsIIOService_QueryInterface(nsio, &IID_nsINetUtil, (void**)&net_util);
+    if(NS_FAILED(nsres)) {
+        WARN("Could not get nsINetUtil interface: %08x\n", nsres);
+        nsIIOService_Release(nsio);
+        return;
+    }
+
     nsres = nsIComponentRegistrar_UnregisterFactory(registrar, &NS_IOSERVICE_CID, old_factory);
     nsIFactory_Release(old_factory);
     if(NS_FAILED(nsres))
@@ -2389,4 +2385,17 @@ void init_nsio(nsIComponentManager *component_manager, nsIComponentRegistrar *re
             NS_IOSERVICE_CLASSNAME, NS_IOSERVICE_CONTRACTID, &nsIOServiceFactory);
     if(NS_FAILED(nsres))
         ERR("RegisterFactory failed: %08x\n", nsres);
+}
+
+void release_nsio(void)
+{
+    if(net_util) {
+        nsINetUtil_Release(net_util);
+        net_util = NULL;
+    }
+
+    if(nsio) {
+        nsIIOService_Release(nsio);
+        nsio = NULL;
+    }
 }

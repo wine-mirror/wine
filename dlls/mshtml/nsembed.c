@@ -865,6 +865,8 @@ void close_gecko(void)
 {
     TRACE("()\n");
 
+    release_nsio();
+
     if(pCompMgr)
         nsIComponentManager_Release(pCompMgr);
 
