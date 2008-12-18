@@ -1418,68 +1418,13 @@ struct prop_id_to_string_id
 
 static WCHAR *format_enhanced_key_usage_value(void *pb, DWORD cb)
 {
-    static const WCHAR sep[] = { ',',' ',0 };
-    const CERT_ENHKEY_USAGE *usage = (const CERT_ENHKEY_USAGE *)pb;
-    static WCHAR *str = NULL;
-    DWORD i, chars = 0;
+    CERT_EXTENSION ext;
 
-    for (i = 0; i < usage->cUsageIdentifier; i++)
-    {
-        PCCRYPT_OID_INFO info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY,
-         usage->rgpszUsageIdentifier[i], CRYPT_ENHKEY_USAGE_OID_GROUP_ID);
-
-        if (info)
-        {
-            chars += strlenW(info->pwszName);
-            if (i < usage->cUsageIdentifier - 1)
-                chars += strlenW(sep);
-            if (!str)
-            {
-                str = HeapAlloc(GetProcessHeap(), 0,
-                 (chars + 1) * sizeof(WCHAR));
-                if (str)
-                    *str = '\0';
-            }
-            else
-                str = HeapReAlloc(GetProcessHeap(), 0, str,
-                 (chars + 1) * sizeof(WCHAR));
-            if (str)
-            {
-                if (i < usage->cUsageIdentifier - 1)
-                    strcatW(str, sep);
-                strcatW(str, info->pwszName);
-            }
-        }
-        else
-        {
-            chars += strlen(usage->rgpszUsageIdentifier[i]);
-            if (i < usage->cUsageIdentifier - 1)
-                chars += strlenW(sep);
-            if (!str)
-            {
-                str = HeapAlloc(GetProcessHeap(), 0,
-                 (chars + 1) * sizeof(WCHAR));
-                if (str)
-                    *str = '\0';
-            }
-            else
-                str = HeapReAlloc(GetProcessHeap(), 0, str,
-                 (chars + 1) * sizeof(WCHAR));
-            if (str)
-            {
-                WCHAR *dst;
-                const char *src;
-
-                if (i < usage->cUsageIdentifier - 1)
-                    strcatW(str, sep);
-                for (src = usage->rgpszUsageIdentifier[i],
-                 dst = str + strlenW(str); *src; src++, dst++)
-                    *dst = *src;
-                *dst = '\0';
-            }
-        }
-    }
-    return str;
+    ext.pszObjId = (LPSTR)X509_ENHANCED_KEY_USAGE;
+    ext.fCritical = FALSE;
+    ext.Value.pbData = pb;
+    ext.Value.cbData = cb;
+    return crypt_format_extension(&ext, 0);
 }
 
 /* Logically the access state should also be checked, and IDC_EDITPROPERTIES
