@@ -138,6 +138,9 @@ static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID 
     }else if(IsEqualGUID(&IID_IPersistPropertyBag, riid)) {
         TRACE("(%p)->(IID_IPersistPropertyBag %p) returning NULL\n", This, ppvObject);
         return E_NOINTERFACE;
+    }else if(IsEqualGUID(&IID_IMarshal, riid)) {
+        TRACE("(%p)->(IID_IMarshal %p) returning NULL\n", This, ppvObject);
+        return E_NOINTERFACE;
     }else if(dispex_query_interface(&This->dispex, riid, ppvObject)) {
         return *ppvObject ? S_OK : E_NOINTERFACE;
     }
