@@ -1831,7 +1831,7 @@ HINSTANCE WINAPI ShellExecuteA(HWND hWnd, LPCSTR lpOperation,LPCSTR lpFile,
           debugstr_a(lpParameters), debugstr_a(lpDirectory), iShowCmd);
 
     sei.cbSize = sizeof(sei);
-    sei.fMask = 0;
+    sei.fMask = SEE_MASK_FLAG_NO_UI;
     sei.hwnd = hWnd;
     sei.lpVerb = lpOperation;
     sei.lpFile = lpFile;
@@ -1917,7 +1917,7 @@ HINSTANCE WINAPI ShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile,
 
     TRACE("\n");
     sei.cbSize = sizeof(sei);
-    sei.fMask = 0;
+    sei.fMask = SEE_MASK_FLAG_NO_UI;
     sei.hwnd = hwnd;
     sei.lpVerb = lpOperation;
     sei.lpFile = lpFile;
