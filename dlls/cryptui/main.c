@@ -1624,6 +1624,24 @@ static LRESULT CALLBACK cert_properties_general_dlg_proc(HWND hwnd, UINT msg,
         SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
         break;
     }
+    case WM_COMMAND:
+        switch (HIWORD(wp))
+        {
+        case EN_CHANGE:
+            SendMessageW(GetParent(hwnd), PSM_CHANGED, (WPARAM)hwnd, 0);
+            if (LOWORD(wp) == IDC_DESCRIPTION)
+            {
+                /* Show/hide scroll bar on description depending on how much
+                 * text it has.
+                 */
+                HWND description = GetDlgItem(hwnd, IDC_DESCRIPTION);
+                int lines = SendMessageW(description, EM_GETLINECOUNT, 0, 0);
+
+                ShowScrollBar(description, SB_VERT, lines > 1);
+            }
+            break;
+        }
+        break;
     }
     return 0;
 }
