@@ -224,7 +224,6 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                         sei.hwnd = hwnd;
                         sei.nShow = SW_SHOWNORMAL;
                         sei.lpFile = psz;
-                        sei.fMask = SEE_MASK_FLAG_NO_UI;
 
                         if (prfdp->lpstrDirectory)
                             sei.lpDirectory = prfdp->lpstrDirectory;
@@ -233,20 +232,6 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
 
                         if (ShellExecuteExW( &sei ) < 33)
                             {
-                            char *pszSysMsg = NULL ;
-                            char szMsg[256];
-                            FormatMessageA (
-                                FORMAT_MESSAGE_ALLOCATE_BUFFER |
-                                FORMAT_MESSAGE_FROM_SYSTEM |
-                                FORMAT_MESSAGE_IGNORE_INSERTS,
-                                NULL, GetLastError (),
-                                MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                                (LPSTR)&pszSysMsg, 0, NULL
-                                ) ;
-                            sprintf (szMsg, "Error: %s", pszSysMsg) ;
-                            LocalFree ((HLOCAL)pszSysMsg) ;
-                            MessageBoxA (hwnd, szMsg, "Nix", MB_OK | MB_ICONEXCLAMATION) ;
-
                             HeapFree(GetProcessHeap(), 0, psz);
                             HeapFree(GetProcessHeap(), 0, parent);
                             SendMessageA (htxt, CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
