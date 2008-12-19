@@ -1152,8 +1152,8 @@ static void pshader_hw_texreg2ar(const SHADER_OPCODE_ARG *arg)
 
      sprintf(dst_str, "T%u", reg1);
      pshader_gen_input_modifier_line(arg->shader, buffer, arg->src[0], 0, src_str);
-     shader_addline(buffer, "MOV TMP.r, %s.a;\n", src_str);
-     shader_addline(buffer, "MOV TMP.g, %s.r;\n", src_str);
+     shader_addline(buffer, "MOV TMP.x, %s.w;\n", src_str);
+     shader_addline(buffer, "MOV TMP.y, %s.x;\n", src_str);
      flags = reg1 < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg1][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
      shader_hw_sample(arg, reg1, dst_str, "TMP", flags & WINED3DTTFF_PROJECTED, FALSE);
 }
@@ -1168,8 +1168,8 @@ static void pshader_hw_texreg2gb(const SHADER_OPCODE_ARG *arg)
 
      sprintf(dst_str, "T%u", reg1);
      pshader_gen_input_modifier_line(arg->shader, buffer, arg->src[0], 0, src_str);
-     shader_addline(buffer, "MOV TMP.r, %s.g;\n", src_str);
-     shader_addline(buffer, "MOV TMP.g, %s.b;\n", src_str);
+     shader_addline(buffer, "MOV TMP.x, %s.y;\n", src_str);
+     shader_addline(buffer, "MOV TMP.y, %s.z;\n", src_str);
      shader_hw_sample(arg, reg1, dst_str, "TMP", FALSE, FALSE);
 }
 
@@ -1221,20 +1221,20 @@ static void pshader_hw_texbem(const SHADER_OPCODE_ARG *arg)
         /* Sampling the perturbation map in Tsrc was done already, including the signedness correction if needed */
 
         shader_addline(buffer, "SWZ TMP2, bumpenvmat%d, x, z, 0, 0;\n", reg_dest_code);
-        shader_addline(buffer, "DP3 TMP.r, TMP2, T%u;\n", src);
+        shader_addline(buffer, "DP3 TMP.x, TMP2, T%u;\n", src);
         shader_addline(buffer, "SWZ TMP2, bumpenvmat%d, y, w, 0, 0;\n", reg_dest_code);
-        shader_addline(buffer, "DP3 TMP.g, TMP2, T%u;\n", src);
+        shader_addline(buffer, "DP3 TMP.y, TMP2, T%u;\n", src);
 
         /* with projective textures, texbem only divides the static texture coord, not the displacement,
          * so we can't let the GL handle this.
          */
         if (((IWineD3DDeviceImpl*) This->baseShader.device)->stateBlock->textureState[reg_dest_code][WINED3DTSS_TEXTURETRANSFORMFLAGS]
               & WINED3DTTFF_PROJECTED) {
-            shader_addline(buffer, "RCP TMP2.a, %s.a;\n", reg_coord);
-            shader_addline(buffer, "MUL TMP2.rg, %s, TMP2.a;\n", reg_coord);
-            shader_addline(buffer, "ADD TMP.rg, TMP, TMP2;\n");
+            shader_addline(buffer, "RCP TMP2.w, %s.w;\n", reg_coord);
+            shader_addline(buffer, "MUL TMP2.xy, %s, TMP2.w;\n", reg_coord);
+            shader_addline(buffer, "ADD TMP.xy, TMP, TMP2;\n");
         } else {
-            shader_addline(buffer, "ADD TMP.rg, TMP, %s;\n", reg_coord);
+            shader_addline(buffer, "ADD TMP.xy, TMP, %s;\n", reg_coord);
         }
 
         shader_hw_sample(arg, reg_dest_code, reg_coord, "TMP", FALSE, FALSE);
@@ -1406,15 +1406,15 @@ static void pshader_hw_texdepth(const SHADER_OPCODE_ARG *arg)
     /* According to the msdn, the source register(must be r5) is unusable after
      * the texdepth instruction, so we're free to modify it
      */
-    shader_addline(buffer, "MIN %s.g, %s.g, one.g;\n", dst_name, dst_name);
+    shader_addline(buffer, "MIN %s.y, %s.y, one.y;\n", dst_name, dst_name);
 
     /* How to deal with the special case dst_name.g == 0? if r != 0, then
      * the r * (1 / 0) will give infinity, which is clamped to 1.0, the correct
      * result. But if r = 0.0, then 0 * inf = 0, which is incorrect.
      */
-    shader_addline(buffer, "RCP %s.g, %s.g;\n", dst_name, dst_name);
-    shader_addline(buffer, "MUL TMP.x, %s.r, %s.g;\n", dst_name, dst_name);
-    shader_addline(buffer, "MIN TMP.x, TMP.x, one.r;\n");
+    shader_addline(buffer, "RCP %s.y, %s.y;\n", dst_name, dst_name);
+    shader_addline(buffer, "MUL TMP.x, %s.x, %s.y;\n", dst_name, dst_name);
+    shader_addline(buffer, "MIN TMP.x, TMP.x, one.x;\n");
     shader_addline(buffer, "MAX result.depth, TMP.x, 0.0;\n");
 }
 
@@ -1496,7 +1496,7 @@ static void pshader_hw_texm3x2depth(const SHADER_OPCODE_ARG *arg)
      */
     shader_addline(buffer, "RCP TMP.y, TMP.y;\n");
     shader_addline(buffer, "MUL TMP.x, TMP.x, TMP.y;\n");
-    shader_addline(buffer, "MIN TMP.x, TMP.x, one.r;\n");
+    shader_addline(buffer, "MIN TMP.x, TMP.x, one.x;\n");
     shader_addline(buffer, "MAX result.depth, TMP.x, 0.0;\n");
 }
 
@@ -1930,8 +1930,8 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUF
                 break;
             case FOG_LINEAR:
                 shader_addline(buffer, "MAD_SAT TMP_FOG, fragment.fogcoord, state.fog.params.y, state.fog.params.z;\n");
-                shader_addline(buffer, "LRP result.color.rgb, TMP_FOG.x, %s, state.fog.color;\n", fragcolor);
-                shader_addline(buffer, "MOV result.color.a, %s.a;\n", fragcolor);
+                shader_addline(buffer, "LRP result.color.xyz, TMP_FOG.x, %s, state.fog.color;\n", fragcolor);
+                shader_addline(buffer, "MOV result.color.w, %s.w;\n", fragcolor);
                 break;
             case FOG_EXP:
                 FIXME("Implement EXP fog in ARB\n");
@@ -2510,7 +2510,7 @@ static const char *get_argreg(SHADER_BUFFER *buffer, DWORD argnum, unsigned int 
         if(argnum == 2) ret = "arg2";
     }
     if(arg & WINED3DTA_ALPHAREPLICATE) {
-        shader_addline(buffer, "MOV arg%u, %s.a;\n", argnum, ret);
+        shader_addline(buffer, "MOV arg%u, %s.w;\n", argnum, ret);
         if(argnum == 0) ret = "arg0";
         if(argnum == 1) ret = "arg1";
         if(argnum == 2) ret = "arg2";
@@ -2525,8 +2525,8 @@ static void gen_ffp_instr(SHADER_BUFFER *buffer, unsigned int stage, BOOL color,
     BOOL mul_final_dest = FALSE;
 
     if(color && alpha) dstmask = "";
-    else if(color) dstmask = ".rgb";
-    else dstmask = ".a";
+    else if(color) dstmask = ".xyz";
+    else dstmask = ".w";
 
     if(dst == tempreg) dstreg = "tempreg";
     else dstreg = "ret";
@@ -2582,42 +2582,42 @@ static void gen_ffp_instr(SHADER_BUFFER *buffer, unsigned int stage, BOOL color,
 
         case WINED3DTOP_BLENDCURRENTALPHA:
             arg0 = get_argreg(buffer, 0, stage, WINED3DTA_CURRENT);
-            shader_addline(buffer, "LRP %s%s, %s.a, %s, %s;\n", dstreg, dstmask, arg0, arg1, arg2);
+            shader_addline(buffer, "LRP %s%s, %s.w, %s, %s;\n", dstreg, dstmask, arg0, arg1, arg2);
             break;
         case WINED3DTOP_BLENDFACTORALPHA:
             arg0 = get_argreg(buffer, 0, stage, WINED3DTA_TFACTOR);
-            shader_addline(buffer, "LRP %s%s, %s.a, %s, %s;\n", dstreg, dstmask, arg0, arg1, arg2);
+            shader_addline(buffer, "LRP %s%s, %s.w, %s, %s;\n", dstreg, dstmask, arg0, arg1, arg2);
             break;
         case WINED3DTOP_BLENDTEXTUREALPHA:
             arg0 = get_argreg(buffer, 0, stage, WINED3DTA_TEXTURE);
-            shader_addline(buffer, "LRP %s%s, %s.a, %s, %s;\n", dstreg, dstmask, arg0, arg1, arg2);
+            shader_addline(buffer, "LRP %s%s, %s.w, %s, %s;\n", dstreg, dstmask, arg0, arg1, arg2);
             break;
         case WINED3DTOP_BLENDDIFFUSEALPHA:
             arg0 = get_argreg(buffer, 0, stage, WINED3DTA_DIFFUSE);
-            shader_addline(buffer, "LRP %s%s, %s.a, %s, %s;\n", dstreg, dstmask, arg0, arg1, arg2);
+            shader_addline(buffer, "LRP %s%s, %s.w, %s, %s;\n", dstreg, dstmask, arg0, arg1, arg2);
             break;
 
         case WINED3DTOP_BLENDTEXTUREALPHAPM:
             arg0 = get_argreg(buffer, 0, stage, WINED3DTA_TEXTURE);
-            shader_addline(buffer, "SUB arg0.a, const.x, %s.a;\n", arg0);
-            shader_addline(buffer, "MAD_SAT %s%s, %s, arg0.a, %s;\n", dstreg, dstmask, arg2, arg1);
+            shader_addline(buffer, "SUB arg0.w, const.x, %s.w;\n", arg0);
+            shader_addline(buffer, "MAD_SAT %s%s, %s, arg0.w, %s;\n", dstreg, dstmask, arg2, arg1);
             break;
 
         /* D3DTOP_PREMODULATE ???? */
 
         case WINED3DTOP_MODULATEINVALPHA_ADDCOLOR:
-            shader_addline(buffer, "SUB arg0.a, const.x, %s;\n", arg1);
-            shader_addline(buffer, "MAD_SAT %s%s, arg0.a, %s, %s;\n", dstreg, dstmask, arg2, arg1);
+            shader_addline(buffer, "SUB arg0.w, const.x, %s;\n", arg1);
+            shader_addline(buffer, "MAD_SAT %s%s, arg0.w, %s, %s;\n", dstreg, dstmask, arg2, arg1);
             break;
         case WINED3DTOP_MODULATEALPHA_ADDCOLOR:
-            shader_addline(buffer, "MAD_SAT %s%s, %s.a, %s, %s;\n", dstreg, dstmask, arg1, arg2, arg1);
+            shader_addline(buffer, "MAD_SAT %s%s, %s.w, %s, %s;\n", dstreg, dstmask, arg1, arg2, arg1);
             break;
         case WINED3DTOP_MODULATEINVCOLOR_ADDALPHA:
             shader_addline(buffer, "SUB arg0, const.x, %s;\n", arg1);
-            shader_addline(buffer, "MAD_SAT %s%s, arg0, %s, %s.a;\n", dstreg, dstmask, arg2, arg1);
+            shader_addline(buffer, "MAD_SAT %s%s, arg0, %s, %s.w;\n", dstreg, dstmask, arg2, arg1);
             break;
         case WINED3DTOP_MODULATECOLOR_ADDALPHA:
-            shader_addline(buffer, "MAD_SAT %s%s, %s, %s, %s.a;\n", dstreg, dstmask, arg1, arg2, arg1);
+            shader_addline(buffer, "MAD_SAT %s%s, %s, %s, %s.w;\n", dstreg, dstmask, arg1, arg2, arg1);
             break;
 
         case WINED3DTOP_DOTPRODUCT3:
@@ -2802,20 +2802,20 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
            (settings->op[stage - 1].cop == WINED3DTOP_BUMPENVMAP ||
             settings->op[stage - 1].cop == WINED3DTOP_BUMPENVMAPLUMINANCE)) {
             shader_addline(&buffer, "SWZ arg1, bumpmat%u, x, z, 0, 0;\n", stage - 1);
-            shader_addline(&buffer, "DP3 ret.r, arg1, tex%u;\n", stage - 1);
+            shader_addline(&buffer, "DP3 ret.x, arg1, tex%u;\n", stage - 1);
             shader_addline(&buffer, "SWZ arg1, bumpmat%u, y, w, 0, 0;\n", stage - 1);
-            shader_addline(&buffer, "DP3 ret.g, arg1, tex%u;\n", stage - 1);
+            shader_addline(&buffer, "DP3 ret.y, arg1, tex%u;\n", stage - 1);
 
             /* with projective textures, texbem only divides the static texture coord, not the displacement,
              * so multiply the displacement with the dividing parameter before passing it to TXP
              */
             if (settings->op[stage].projected != proj_none) {
                 if(settings->op[stage].projected == proj_count4) {
-                    shader_addline(&buffer, "MOV ret.a, fragment.texcoord[%u].a;\n", stage);
-                    shader_addline(&buffer, "MUL ret.rgb, ret, fragment.texcoord[%u].a, fragment.texcoord[%u];\n", stage, stage);
+                    shader_addline(&buffer, "MOV ret.w, fragment.texcoord[%u].w;\n", stage);
+                    shader_addline(&buffer, "MUL ret.xyz, ret, fragment.texcoord[%u].w, fragment.texcoord[%u];\n", stage, stage);
                 } else {
-                    shader_addline(&buffer, "MOV ret.a, fragment.texcoord[%u].b;\n", stage);
-                    shader_addline(&buffer, "MAD ret.rgb, ret, fragment.texcoord[%u].b, fragment.texcoord[%u];\n", stage, stage);
+                    shader_addline(&buffer, "MOV ret.w, fragment.texcoord[%u].z;\n", stage);
+                    shader_addline(&buffer, "MAD ret.xyz, ret, fragment.texcoord[%u].z, fragment.texcoord[%u];\n", stage, stage);
                 }
             } else {
                 shader_addline(&buffer, "ADD ret, ret, fragment.texcoord[%u];\n", stage);
@@ -2824,13 +2824,13 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
             shader_addline(&buffer, "%s%s tex%u, ret, texture[%u], %s;\n",
                            instr, sat, stage, stage, textype);
             if(settings->op[stage - 1].cop == WINED3DTOP_BUMPENVMAPLUMINANCE) {
-                shader_addline(&buffer, "MAD_SAT ret.r, tex%u.b, luminance%u.r, luminance%u.g;\n",
+                shader_addline(&buffer, "MAD_SAT ret.x, tex%u.z, luminance%u.x, luminance%u.y;\n",
                                stage - 1, stage - 1, stage - 1);
-                shader_addline(&buffer, "MUL tex%u, tex%u, ret.r;\n", stage, stage);
+                shader_addline(&buffer, "MUL tex%u, tex%u, ret.x;\n", stage, stage);
             }
         } else if(settings->op[stage].projected == proj_count3) {
             shader_addline(&buffer, "MOV ret, fragment.texcoord[%u];\n", stage);
-            shader_addline(&buffer, "MOV ret.a, ret.b;\n");
+            shader_addline(&buffer, "MOV ret.w, ret.z;\n");
             shader_addline(&buffer, "%s%s tex%u, ret, texture[%u], %s;\n",
                             instr, sat, stage, stage, textype);
         } else {
@@ -2876,7 +2876,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
                           settings->op[stage].cop, settings->op[stage].carg0,
                           settings->op[stage].carg1, settings->op[stage].carg2);
             if(stage == 0) {
-                shader_addline(&buffer, "MOV ret.a, fragment.color.primary.a;\n");
+                shader_addline(&buffer, "MOV ret.w, fragment.color.primary.w;\n");
             }
         } else if(op_equal) {
             gen_ffp_instr(&buffer, stage, TRUE, TRUE, settings->op[stage].dst,
@@ -2895,7 +2895,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
     if(settings->sRGB_write) {
         shader_addline(&buffer, "MAD ret, fragment.color.secondary, specular_enable, %s;\n", final_combiner_src);
         arbfp_add_sRGB_correction(&buffer, "ret", "arg0", "arg1", "arg2", "tempreg");
-        shader_addline(&buffer, "MOV result.color.a, ret.a;\n");
+        shader_addline(&buffer, "MOV result.color.w, ret.w;\n");
     } else {
         shader_addline(&buffer, "MAD result.color, fragment.color.secondary, specular_enable, %s;\n", final_combiner_src);
     }
@@ -3219,11 +3219,11 @@ static BOOL gen_planar_yuv_read(SHADER_BUFFER *buffer, enum yuv_fixup yuv_fixup,
     const char *tex, *texinstr;
 
     if (yuv_fixup == YUV_FIXUP_UYVY) {
-        chroma = 'r';
-        *luminance = 'a';
+        chroma = 'x';
+        *luminance = 'w';
     } else {
-        chroma = 'a';
-        *luminance = 'r';
+        chroma = 'w';
+        *luminance = 'x';
     }
     switch(textype) {
         case GL_TEXTURE_2D:             tex = "2D";     texinstr = "TXP"; break;
@@ -3249,8 +3249,8 @@ static BOOL gen_planar_yuv_read(SHADER_BUFFER *buffer, enum yuv_fixup yuv_fixup,
      * So we have to get the sampling x position in non-normalized coordinates in integers
      */
     if(textype != GL_TEXTURE_RECTANGLE_ARB) {
-        shader_addline(buffer, "MUL texcrd.rg, fragment.texcoord[0], size.x;\n");
-        shader_addline(buffer, "MOV texcrd.a, size.x;\n");
+        shader_addline(buffer, "MUL texcrd.xy, fragment.texcoord[0], size.x;\n");
+        shader_addline(buffer, "MOV texcrd.w, size.x;\n");
     } else {
         shader_addline(buffer, "MOV texcrd, fragment.texcoord[0];\n");
     }
@@ -3272,9 +3272,9 @@ static BOOL gen_planar_yuv_read(SHADER_BUFFER *buffer, enum yuv_fixup yuv_fixup,
 
     /* Put the value into either of the chroma values */
     shader_addline(buffer, "SGE temp.x, texcrd2.x, coef.y;\n");
-    shader_addline(buffer, "MUL chroma.r, luminance.%c, temp.x;\n", chroma);
+    shader_addline(buffer, "MUL chroma.x, luminance.%c, temp.x;\n", chroma);
     shader_addline(buffer, "SLT temp.x, texcrd2.x, coef.y;\n");
-    shader_addline(buffer, "MUL chroma.g, luminance.%c, temp.x;\n", chroma);
+    shader_addline(buffer, "MUL chroma.y, luminance.%c, temp.x;\n", chroma);
 
     /* Sample pixel 2. If we read an even pixel(SLT above returned 1), sample
      * the pixel right to the current one. Otherwise, sample the left pixel.
@@ -3286,9 +3286,9 @@ static BOOL gen_planar_yuv_read(SHADER_BUFFER *buffer, enum yuv_fixup yuv_fixup,
 
     /* Put the value into the other chroma */
     shader_addline(buffer, "SGE temp.x, texcrd2.x, coef.y;\n");
-    shader_addline(buffer, "MAD chroma.g, luminance.%c, temp.x, chroma.g;\n", chroma);
+    shader_addline(buffer, "MAD chroma.y, luminance.%c, temp.x, chroma.y;\n", chroma);
     shader_addline(buffer, "SLT temp.x, texcrd2.x, coef.y;\n");
-    shader_addline(buffer, "MAD chroma.r, luminance.%c, temp.x, chroma.r;\n", chroma);
+    shader_addline(buffer, "MAD chroma.x, luminance.%c, temp.x, chroma.x;\n", chroma);
 
     /* TODO: If filtering is enabled, sample a 2nd pair of pixels left or right of
      * the current one and lerp the two U and V values
@@ -3408,7 +3408,7 @@ static BOOL gen_yv12_read(SHADER_BUFFER *buffer, GLenum textype, char *luminance
     }
     /* Read the texture, put the result into the output register */
     shader_addline(buffer, "TEX temp, texcrd, texture[0], %s;\n", tex);
-    shader_addline(buffer, "MOV chroma.r, temp.a;\n");
+    shader_addline(buffer, "MOV chroma.x, temp.w;\n");
 
     /* The other chroma value is 1/6th of the texture lower, from 5/6th to 6/6th
      * No need to clamp because we're just reusing the already clamped value from above
@@ -3419,7 +3419,7 @@ static BOOL gen_yv12_read(SHADER_BUFFER *buffer, GLenum textype, char *luminance
         shader_addline(buffer, "MAD texcrd.y, size.y, coef.w, texcrd.y;\n");
     }
     shader_addline(buffer, "TEX temp, texcrd, texture[0], %s;\n", tex);
-    shader_addline(buffer, "MOV chroma.g, temp.a;\n");
+    shader_addline(buffer, "MOV chroma.y, temp.w;\n");
 
     /* Sample the luminance value. It is in the top 2/3rd of the texture, so scale the y coordinate.
      * Clamp the y coordinate to prevent the chroma values from bleeding into the sampled luminance
@@ -3541,12 +3541,12 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum yuv_fixup yuv_fixu
      * http://www.fourcc.org/fccyvrgb.php. Note that the chroma
      * ranges from -0.5 to 0.5
      */
-    shader_addline(&buffer, "SUB chroma.rg, chroma, coef.y;\n");
+    shader_addline(&buffer, "SUB chroma.xy, chroma, coef.y;\n");
 
-    shader_addline(&buffer, "MAD result.color.r, chroma.r, yuv_coef.x, luminance.%c;\n", luminance_component);
-    shader_addline(&buffer, "MAD temp.r, -chroma.g, yuv_coef.y, luminance.%c;\n", luminance_component);
-    shader_addline(&buffer, "MAD result.color.g, -chroma.r, yuv_coef.z, temp.r;\n");
-    shader_addline(&buffer, "MAD result.color.b, chroma.g, yuv_coef.w, luminance.%c;\n", luminance_component);
+    shader_addline(&buffer, "MAD result.color.x, chroma.x, yuv_coef.x, luminance.%c;\n", luminance_component);
+    shader_addline(&buffer, "MAD temp.x, -chroma.y, yuv_coef.y, luminance.%c;\n", luminance_component);
+    shader_addline(&buffer, "MAD result.color.y, -chroma.x, yuv_coef.z, temp.x;\n");
+    shader_addline(&buffer, "MAD result.color.z, chroma.y, yuv_coef.w, luminance.%c;\n", luminance_component);
     shader_addline(&buffer, "END\n");
 
     ENTER_GL();

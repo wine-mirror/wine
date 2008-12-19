@@ -588,7 +588,7 @@ static void shader_dump_param(const DWORD param, const DWORD addr_token, int inp
 {
     static const char * const rastout_reg_names[] = { "oPos", "oFog", "oPts" };
     static const char * const misctype_reg_names[] = { "vPos", "vFace"};
-    char swizzle_reg_chars[4];
+    const char *swizzle_reg_chars = "xyzw";
 
     DWORD reg = param & WINED3DSP_REGNUM_MASK;
     DWORD regtype = shader_get_regtype(param);
@@ -596,14 +596,6 @@ static void shader_dump_param(const DWORD param, const DWORD addr_token, int inp
 
     /* There are some minor differences between pixel and vertex shaders */
     char pshader = shader_is_pshader_version(shader_version);
-
-    /* For one, we'd prefer color components to be shown for pshaders.
-     * FIXME: use the swizzle function for this */
-
-    swizzle_reg_chars[0] = pshader? 'r': 'x';
-    swizzle_reg_chars[1] = pshader? 'g': 'y';
-    swizzle_reg_chars[2] = pshader? 'b': 'z';
-    swizzle_reg_chars[3] = pshader? 'a': 'w';
 
     if (input) {
         if ( (modifier == WINED3DSPSM_NEG) ||
@@ -709,10 +701,10 @@ static void shader_dump_param(const DWORD param, const DWORD addr_token, int inp
    } else {
         /** operand input */
         DWORD swizzle = (param & WINED3DSP_SWIZZLE_MASK) >> WINED3DSP_SWIZZLE_SHIFT;
-        DWORD swizzle_r = swizzle & 0x03;
-        DWORD swizzle_g = (swizzle >> 2) & 0x03;
-        DWORD swizzle_b = (swizzle >> 4) & 0x03;
-        DWORD swizzle_a = (swizzle >> 6) & 0x03;
+        DWORD swizzle_x = swizzle & 0x03;
+        DWORD swizzle_y = (swizzle >> 2) & 0x03;
+        DWORD swizzle_z = (swizzle >> 4) & 0x03;
+        DWORD swizzle_w = (swizzle >> 6) & 0x03;
 
         if (0 != modifier) {
             switch (modifier) {
@@ -740,16 +732,16 @@ static void shader_dump_param(const DWORD param, const DWORD addr_token, int inp
         *  RRGGBBAA
         */
         if ((WINED3DVS_NOSWIZZLE >> WINED3DVS_SWIZZLE_SHIFT) != swizzle) {
-            if (swizzle_r == swizzle_g &&
-                swizzle_r == swizzle_b &&
-                swizzle_r == swizzle_a) {
-                    TRACE(".%c", swizzle_reg_chars[swizzle_r]);
+            if (swizzle_x == swizzle_y &&
+                swizzle_x == swizzle_z &&
+                swizzle_x == swizzle_w) {
+                    TRACE(".%c", swizzle_reg_chars[swizzle_x]);
             } else {
                 TRACE(".%c%c%c%c",
-                swizzle_reg_chars[swizzle_r],
-                swizzle_reg_chars[swizzle_g],
-                swizzle_reg_chars[swizzle_b],
-                swizzle_reg_chars[swizzle_a]);
+                swizzle_reg_chars[swizzle_x],
+                swizzle_reg_chars[swizzle_y],
+                swizzle_reg_chars[swizzle_z],
+                swizzle_reg_chars[swizzle_w]);
             }
         }
     }
