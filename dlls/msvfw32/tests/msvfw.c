@@ -28,26 +28,26 @@
 static void test_OpenCase(void)
 {
     HIC h;
-    /* ICOpen(fcc: vidc , handler: cvid) */
-    /* ICTYPE_VIDEO is vidc: lowercase */
-    /* Officially registered fcc for Cinepak is CVID: uppercase */
-    h = ICOpen(mmioFOURCC('v','i','d','c'),mmioFOURCC('c','v','i','d'),ICMODE_DECOMPRESS);
-    ok(0!=h,"ICOpen(vidc.cvid) failed\n");
+    /* Open a compressor with combinations of lowercase
+     * and uppercase compressortype and handler.
+     */
+    h = ICOpen(mmioFOURCC('v','i','d','c'),mmioFOURCC('m','s','v','c'),ICMODE_DECOMPRESS);
+    ok(0!=h,"ICOpen(vidc.msvc) failed\n");
     if (h) {
         ok(ICClose(h)==ICERR_OK,"ICClose failed\n");
     }
-    h = ICOpen(mmioFOURCC('v','i','d','c'),mmioFOURCC('C','V','I','D'),ICMODE_DECOMPRESS);
-    ok(0!=h,"ICOpen(vidc.CVID) failed\n");
+    h = ICOpen(mmioFOURCC('v','i','d','c'),mmioFOURCC('M','S','V','C'),ICMODE_DECOMPRESS);
+    ok(0!=h,"ICOpen(vidc.MSVC) failed\n");
     if (h) {
         ok(ICClose(h)==ICERR_OK,"ICClose failed\n");
     }
-    h = ICOpen(mmioFOURCC('V','I','D','C'),mmioFOURCC('c','v','i','d'),ICMODE_DECOMPRESS);
-    todo_wine ok(0!=h,"ICOpen(VIDC.cvid) failed\n");
+    h = ICOpen(mmioFOURCC('V','I','D','C'),mmioFOURCC('m','s','v','c'),ICMODE_DECOMPRESS);
+    todo_wine ok(0!=h,"ICOpen(VIDC.msvc) failed\n");
     if (h) {
         ok(ICClose(h)==ICERR_OK,"ICClose failed\n");
     }
-    h = ICOpen(mmioFOURCC('V','I','D','C'),mmioFOURCC('C','V','I','D'),ICMODE_DECOMPRESS);
-    todo_wine ok(0!=h,"ICOpen(VIDC.CVID) failed\n");
+    h = ICOpen(mmioFOURCC('V','I','D','C'),mmioFOURCC('M','S','V','C'),ICMODE_DECOMPRESS);
+    todo_wine ok(0!=h,"ICOpen(VIDC.MSVC) failed\n");
     if (h) {
         ok(ICClose(h)==ICERR_OK,"ICClose failed\n");
     }
