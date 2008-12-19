@@ -335,6 +335,93 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent,
  LPCWSTR pwszWizardTitle, PCCRYPTUI_WIZ_IMPORT_SRC_INFO pImportSrc,
  HCERTSTORE hDestCertStore);
 
+/* Definitions missing from PSDK's cryptuiapi.h, but documented on MSDN. */
+typedef BOOL (WINAPI *PFNCCERTDISPLAYPROC)(PCCERT_CONTEXT pCertContext,
+ HWND hWndSelCertDlg, void *pvCallbackData);
+
+/* Values for CRYPTUI_SELECTCERTIFICATE_STRUCT's dwFlags */
+#define CRYPTUI_SELECTCERT_MULTISELECT 0x00000001
+
+typedef struct _CRYPTUI_SELECTCERTIFICATE_STRUCTA
+{
+    DWORD               dwSize;
+    HWND                hwndParent;
+    DWORD               dwFlags;
+    LPCWSTR             szTitle;
+    DWORD               dwDontUseColumn;
+    LPCWSTR             szDisplayString;
+    PFNCFILTERPROC      pFilterCallback;
+    PFNCCERTDISPLAYPROC pDisplayCallback;
+    void               *pvCallbackData;
+    DWORD               cStores;
+    HCERTSTORE         *rghStores;
+    DWORD               cPropSheetPages;
+    LPCPROPSHEETPAGEW   rgPropSheetPages;
+    HCERTSTORE          hSelectedCertStore;
+} CRYPTUI_SELECTCERTIFICATE_STRUCTA, *PCRYPTUI_SELECTCERTIFICATE_STRUCTA;
+typedef const CRYPTUI_SELECTCERTIFICATE_STRUCTA *
+ PCCRYPTUI_SELECTCERTIFICATE_STRUCTA;
+
+typedef struct _CRYPTUI_SELECTCERTIFICATE_STRUCTW
+{
+    DWORD               dwSize;
+    HWND                hwndParent;
+    DWORD               dwFlags;
+    LPCWSTR             szTitle;
+    DWORD               dwDontUseColumn;
+    LPCWSTR             szDisplayString;
+    PFNCFILTERPROC      pFilterCallback;
+    PFNCCERTDISPLAYPROC pDisplayCallback;
+    void               *pvCallbackData;
+    DWORD               cStores;
+    HCERTSTORE         *rghStores;
+    DWORD               cPropSheetPages;
+    LPCPROPSHEETPAGEW   rgPropSheetPages;
+    HCERTSTORE          hSelectedCertStore;
+} CRYPTUI_SELECTCERTIFICATE_STRUCTW, *PCRYPTUI_SELECTCERTIFICATE_STRUCTW;
+typedef const CRYPTUI_SELECTCERTIFICATE_STRUCTW *
+ PCCRYPTUI_SELECTCERTIFICATE_STRUCTW;
+
+PCCERT_CONTEXT WINAPI CryptUIDlgSelectCertificateA(
+ PCCRYPTUI_SELECTCERTIFICATE_STRUCTA pcsc);
+PCCERT_CONTEXT WINAPI CryptUIDlgSelectCertificateW(
+ PCCRYPTUI_SELECTCERTIFICATE_STRUCTW pcsc);
+
+typedef struct tagCRYPTUI_VIEWSIGNERINFO_STRUCTA
+{
+    DWORD             dwSize;
+    HWND              hwndParent;
+    DWORD             dwFlags;
+    LPCSTR            szTitle;
+    CMSG_SIGNER_INFO *pSignerInfo;
+    HCRYPTMSG         hMsg;
+    LPCSTR            pszOID;
+    DWORD_PTR         dwReserved;
+    DWORD             cStores;
+    HCERTSTORE       *rghStores;
+    DWORD             cPropSheetPages;
+    LPCPROPSHEETPAGEA rgPropSheetPages;
+} CRYPTUI_VIEWSIGNERINFO_STRUCTA, *PCRYPTUI_VIEWSIGNERINFO_STRUCTA;
+
+typedef struct tagCRYPTUI_VIEWSIGNERINFO_STRUCTW
+{
+    DWORD             dwSize;
+    HWND              hwndParent;
+    DWORD             dwFlags;
+    LPCWSTR           szTitle;
+    CMSG_SIGNER_INFO *pSignerInfo;
+    HCRYPTMSG         hMsg;
+    LPCSTR            pszOID;
+    DWORD_PTR         dwReserved;
+    DWORD             cStores;
+    HCERTSTORE       *rghStores;
+    DWORD             cPropSheetPages;
+    LPCPROPSHEETPAGEW rgPropSheetPages;
+} CRYPTUI_VIEWSIGNERINFO_STRUCTW, *PCRYPTUI_VIEWSIGNERINFO_STRUCTW;
+
+BOOL WINAPI CryptUIDlgViewSignerInfoA(CRYPTUI_VIEWSIGNERINFO_STRUCTA *pcvsi);
+BOOL WINAPI CryptUIDlgViewSignerInfoW(CRYPTUI_VIEWSIGNERINFO_STRUCTW *pcvsi);
+
 #include <poppack.h>
 
 #ifdef __cplusplus
