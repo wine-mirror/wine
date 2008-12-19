@@ -693,7 +693,8 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
       c.pt.x = cell->pt.x + cell->nWidth;
       c.pt.y = cell->pt.y;
       cell->next_cell->member.cell.pt = c.pt;
-      c.pt.y += cell->yTextOffset;
+      if (!(item->member.para.next_para->member.para.nFlags & MEPF_ROWEND))
+        c.pt.y += cell->yTextOffset;
     }
     else
     {
