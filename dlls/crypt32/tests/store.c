@@ -1251,9 +1251,71 @@ static BOOL initFileFromData(LPCWSTR filename, const BYTE *pb, DWORD cb)
         ret = FALSE;
     return ret;
 }
+
+static const BYTE base64SPC[] =
+"MIICJQYJKoZIhvcNAQcCoIICFjCCAhICAQExADALBgkqhkiG9w0BBwGgggH6MIIB"
+"9jCCAV+gAwIBAgIQnP8+EF4opr9OxH7h4uBPWTANBgkqhkiG9w0BAQQFADAUMRIw"
+"EAYDVQQDEwlKdWFuIExhbmcwHhcNMDgxMjEyMTcxMDE0WhcNMzkxMjMxMjM1OTU5"
+"WjAUMRIwEAYDVQQDEwlKdWFuIExhbmcwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJ"
+"AoGBALCgNjyNvOic0FOfjxvi43HbM+D5joDkhiGSXe+gbZlf8f16k07kkObFEunz"
+"mdB5coscmA7gyqiWNN4ZUyr2cA3lCbnpGPA/0IblyyOcuGIFmmCzeZaVa5ZG6xZP"
+"K7L7o+73Qo6jXVbGhBGnMZ7Q9sAn6s2933olnStnejnqwV0NAgMBAAGjSTBHMEUG"
+"A1UdAQQ+MDyAEFKbKEdXYyx+CWKcV6vxM6ShFjAUMRIwEAYDVQQDEwlKdWFuIExh"
+"bmeCEJz/PhBeKKa/TsR+4eLgT1kwDQYJKoZIhvcNAQEEBQADgYEALpkgLgW3mEaK"
+"idPQ3iPJYLG0Ub1wraqEl9bd42hrhzIdcDzlQgxnm8/5cHYVxIF/C20x/HJplb1R"
+"G6U1ipFe/q8byWD/9JpiBKMGPi9YlUTgXHfS9d4S/QWO1h9Z7KeipBYhoslQpHXu"
+"y9bUr8Adqi6SzgHpCnMu53dxgxUD1r4xAA==";
+/* Same as base64SPC, but as a wide-char string */
+static const WCHAR utf16Base64SPC[] = {
+'M','I','I','C','J','Q','Y','J','K','o','Z','I','h','v','c','N','A',
+'Q','c','C','o','I','I','C','F','j','C','C','A','h','I','C','A','Q',
+'E','x','A','D','A','L','B','g','k','q','h','k','i','G','9','w','0',
+'B','B','w','G','g','g','g','H','6','M','I','I','B','9','j','C','C',
+'A','V','+','g','A','w','I','B','A','g','I','Q','n','P','8','+','E',
+'F','4','o','p','r','9','O','x','H','7','h','4','u','B','P','W','T',
+'A','N','B','g','k','q','h','k','i','G','9','w','0','B','A','Q','Q',
+'F','A','D','A','U','M','R','I','w','E','A','Y','D','V','Q','Q','D',
+'E','w','l','K','d','W','F','u','I','E','x','h','b','m','c','w','H',
+'h','c','N','M','D','g','x','M','j','E','y','M','T','c','x','M','D',
+'E','0','W','h','c','N','M','z','k','x','M','j','M','x','M','j','M',
+'1','O','T','U','5','W','j','A','U','M','R','I','w','E','A','Y','D',
+'V','Q','Q','D','E','w','l','K','d','W','F','u','I','E','x','h','b',
+'m','c','w','g','Z','8','w','D','Q','Y','J','K','o','Z','I','h','v',
+'c','N','A','Q','E','B','B','Q','A','D','g','Y','0','A','M','I','G',
+'J','A','o','G','B','A','L','C','g','N','j','y','N','v','O','i','c',
+'0','F','O','f','j','x','v','i','4','3','H','b','M','+','D','5','j',
+'o','D','k','h','i','G','S','X','e','+','g','b','Z','l','f','8','f',
+'1','6','k','0','7','k','k','O','b','F','E','u','n','z','m','d','B',
+'5','c','o','s','c','m','A','7','g','y','q','i','W','N','N','4','Z',
+'U','y','r','2','c','A','3','l','C','b','n','p','G','P','A','/','0',
+'I','b','l','y','y','O','c','u','G','I','F','m','m','C','z','e','Z',
+'a','V','a','5','Z','G','6','x','Z','P','K','7','L','7','o','+','7',
+'3','Q','o','6','j','X','V','b','G','h','B','G','n','M','Z','7','Q',
+'9','s','A','n','6','s','2','9','3','3','o','l','n','S','t','n','e',
+'j','n','q','w','V','0','N','A','g','M','B','A','A','G','j','S','T',
+'B','H','M','E','U','G','A','1','U','d','A','Q','Q','+','M','D','y',
+'A','E','F','K','b','K','E','d','X','Y','y','x','+','C','W','K','c',
+'V','6','v','x','M','6','S','h','F','j','A','U','M','R','I','w','E',
+'A','Y','D','V','Q','Q','D','E','w','l','K','d','W','F','u','I','E',
+'x','h','b','m','e','C','E','J','z','/','P','h','B','e','K','K','a',
+'/','T','s','R','+','4','e','L','g','T','1','k','w','D','Q','Y','J',
+'K','o','Z','I','h','v','c','N','A','Q','E','E','B','Q','A','D','g',
+'Y','E','A','L','p','k','g','L','g','W','3','m','E','a','K','i','d',
+'P','Q','3','i','P','J','Y','L','G','0','U','b','1','w','r','a','q',
+'E','l','9','b','d','4','2','h','r','h','z','I','d','c','D','z','l',
+'Q','g','x','n','m','8','/','5','c','H','Y','V','x','I','F','/','C',
+'2','0','x','/','H','J','p','l','b','1','R','G','6','U','1','i','p',
+'F','e','/','q','8','b','y','W','D','/','9','J','p','i','B','K','M',
+'G','P','i','9','Y','l','U','T','g','X','H','f','S','9','d','4','S',
+'/','Q','W','O','1','h','9','Z','7','K','e','i','p','B','Y','h','o',
+'s','l','Q','p','H','X','u','y','9','b','U','r','8','A','d','q','i',
+'6','S','z','g','H','p','C','n','M','u','5','3','d','x','g','x','U',
+'D','1','r','4','x','A','A','=','=',0 };
+
 static void testFileNameStore(void)
 {
     static const WCHAR szPrefix[] = { 'c','e','r',0 };
+    static const WCHAR spcPrefix[] = { 's','p','c',0 };
     static const WCHAR szDot[] = { '.',0 };
     WCHAR filename[MAX_PATH];
     HCERTSTORE store;
@@ -1387,6 +1449,58 @@ static void testFileNameStore(void)
          sizeof(serializedStoreWithCertAndCRL));
     }
     DeleteFileW(filename);
+
+    if (!GetTempFileNameW(szDot, spcPrefix, 0, filename))
+       return;
+    DeleteFileW(filename);
+
+    if (initFileFromData(filename, base64SPC, sizeof(base64SPC)))
+    {
+        PCCERT_CONTEXT cert;
+        PCCRL_CONTEXT crl;
+
+        store = CertOpenStore(CERT_STORE_PROV_FILENAME_W, 0, 0,
+         CERT_STORE_READONLY_FLAG, filename);
+        ok(store != NULL, "CertOpenStore failed: %08x\n", GetLastError());
+
+        cert = CertEnumCertificatesInStore(store, NULL);
+        ok(cert != NULL, "CertEnumCertificatesInStore failed: %08x\n",
+         GetLastError());
+        cert = CertEnumCertificatesInStore(store, cert);
+        ok(!cert, "Expected only one cert\n");
+        if (pCertEnumCRLsInStore)
+        {
+            crl = pCertEnumCRLsInStore(store, NULL);
+            ok(!crl, "Expected no CRLs\n");
+        }
+
+        CertCloseStore(store, 0);
+        DeleteFileW(filename);
+    }
+    if (initFileFromData(filename, (BYTE *)utf16Base64SPC,
+     sizeof(utf16Base64SPC)))
+    {
+        PCCERT_CONTEXT cert;
+        PCCRL_CONTEXT crl;
+
+        store = CertOpenStore(CERT_STORE_PROV_FILENAME_W, 0, 0,
+         CERT_STORE_READONLY_FLAG, filename);
+        ok(store != NULL, "CertOpenStore failed: %08x\n", GetLastError());
+
+        cert = CertEnumCertificatesInStore(store, NULL);
+        ok(cert != NULL, "CertEnumCertificatesInStore failed: %08x\n",
+         GetLastError());
+        cert = CertEnumCertificatesInStore(store, cert);
+        ok(!cert, "Expected only one cert\n");
+        if (pCertEnumCRLsInStore)
+        {
+            crl = pCertEnumCRLsInStore(store, NULL);
+            ok(!crl, "Expected no CRLs\n");
+        }
+
+        CertCloseStore(store, 0);
+        DeleteFileW(filename);
+    }
 }
 
 static const BYTE signedContent[] = {
