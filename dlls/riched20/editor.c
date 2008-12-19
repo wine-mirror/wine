@@ -2724,11 +2724,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 }
 
 
-#define UNSUPPORTED_MSG(e) \
-  case e: \
-    FIXME(#e ": stub\n"); \
-    return DefWindowProcW(hWnd, msg, wParam, lParam);
-
 static const char * const edit_messages[] = {
   "EM_GETSEL",
   "EM_SETSEL",
@@ -2868,18 +2863,60 @@ get_msg_name(UINT msg)
 static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
                                       LPARAM lParam, BOOL unicode)
 {
-  ME_TextEditor *editor = (ME_TextEditor *)GetWindowLongPtrW(hWnd, 0);
-  
-  TRACE("hwnd %p msg %04x (%s) %lx %lx, unicode %d\n",
+  ME_TextEditor *editor;
+  HRESULT hresult;
+  LRESULT lresult;
+
+  TRACE("enter hwnd %p msg %04x (%s) %lx %lx, unicode %d\n",
         hWnd, msg, get_msg_name(msg), wParam, lParam, unicode);
-  
-  if (!editor && msg != WM_NCCREATE && msg != WM_NCDESTROY) {
-    ERR("called with invalid hWnd %p - application bug?\n", hWnd);
-    return 0; 
+
+  editor = (ME_TextEditor *)GetWindowLongPtrW(hWnd, 0);
+  if (!editor)
+  {
+    if (msg == WM_NCCREATE)
+    {
+      CREATESTRUCTW *pcs = (CREATESTRUCTW *)lParam;
+      TRACE("WM_NCCREATE: style 0x%08x\n", pcs->style);
+      editor = ME_MakeEditor(hWnd);
+      SetWindowLongPtrW(hWnd, 0, (LONG_PTR)editor);
+      return TRUE;
+    }
+    else if (msg != WM_NCDESTROY)
+    {
+      ERR("called with invalid hWnd %p - application bug?\n", hWnd);
+      return 0;
+    }
   }
 
+  lresult = ME_HandleMessage(editor, msg, wParam, lParam, unicode, &hresult);
+
+  if (hresult == S_FALSE)
+    lresult = DefWindowProcW(hWnd, msg, wParam, lParam);
+
+  TRACE("exit hwnd %p msg %04x (%s) %lx %lx, unicode %d -> %lu\n",
+        hWnd, msg, get_msg_name(msg), wParam, lParam, unicode, lresult);
+
+  return lresult;
+}
+
+#define UNSUPPORTED_MSG(e) \
+  case e:                  \
+    FIXME(#e ": stub\n");  \
+    *phresult = S_FALSE;   \
+    return 0;
+
+/* Handle messages for windowless and windoweded richedit controls.
+ *
+ * The LRESULT that is returned is a return value for window procs,
+ * and the phresult parameter is the COM return code needed by the
+ * text services interface. */
+LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
+                         LPARAM lParam, BOOL unicode, HRESULT* phresult)
+{
+  *phresult = S_OK;
+
   switch(msg) {
-  
+
   UNSUPPORTED_MSG(EM_DISPLAYBAND)
   UNSUPPORTED_MSG(EM_FINDWORDBREAK)
   UNSUPPORTED_MSG(EM_FMTLINES)
@@ -2923,7 +2960,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     {
       int vk = (int)((LPMSG)lParam)->wParam;
       /* if style says we want return key */
-      if((vk == VK_RETURN) && (GetWindowLongW(hWnd, GWL_STYLE) & ES_WANTRETURN))
+      if((vk == VK_RETURN) && (GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_WANTRETURN))
       {
         code |= DLGC_WANTMESSAGE;
       }
@@ -2934,14 +2971,6 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       }
     }
     return code;
-  }
-  case WM_NCCREATE:
-  {
-    CREATESTRUCTW *pcs = (CREATESTRUCTW *)lParam;
-    TRACE("WM_NCCREATE: style 0x%08x\n", pcs->style);
-    editor = ME_MakeEditor(hWnd);
-    SetWindowLongPtrW(hWnd, 0, (LONG_PTR)editor);
-    return TRUE;
   }
   case EM_EMPTYUNDOBUFFER:
     ME_EmptyUndoStack(editor);
@@ -2989,7 +3018,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     /* these flags are equivalent to the ES_* counterparts */
     DWORD mask = ECO_VERTICAL | ECO_AUTOHSCROLL | ECO_AUTOVSCROLL |
                  ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN | ECO_SELECTIONBAR;
-    DWORD settings = GetWindowLongW(hWnd, GWL_STYLE) & mask;
+    DWORD settings = GetWindowLongW(editor->hWnd, GWL_STYLE) & mask;
 
     return settings;
   }
@@ -3001,7 +3030,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
      */
     DWORD mask = ECO_VERTICAL | ECO_AUTOHSCROLL | ECO_AUTOVSCROLL |
                  ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN | ECO_SELECTIONBAR;
-    DWORD raw = GetWindowLongW(hWnd, GWL_STYLE);
+    DWORD raw = GetWindowLongW(editor->hWnd, GWL_STYLE);
     DWORD settings = mask & raw;
     DWORD oldSettings = settings;
     DWORD changedSettings;
@@ -3020,7 +3049,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       case ECOOP_XOR:
         settings ^= lParam;
     }
-    SetWindowLongW(hWnd, GWL_STYLE, (raw & ~mask) | (settings & mask));
+    SetWindowLongW(editor->hWnd, GWL_STYLE, (raw & ~mask) | (settings & mask));
 
     changedSettings = oldSettings ^ settings;
 
@@ -3170,8 +3199,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       editor->rgbBackColor = lParam;
       editor->hbrBackground = CreateSolidBrush(editor->rgbBackColor);
     }
-    InvalidateRect(hWnd, NULL, TRUE);
-    UpdateWindow(hWnd);
+    InvalidateRect(editor->hWnd, NULL, TRUE);
+    UpdateWindow(editor->hWnd);
     return lColor;
   }
   case EM_GETMODIFY:
@@ -3187,12 +3216,12 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   }
   case EM_SETREADONLY:
   {
-    long nStyle = GetWindowLongW(hWnd, GWL_STYLE);
+    long nStyle = GetWindowLongW(editor->hWnd, GWL_STYLE);
     if (wParam)
       nStyle |= ES_READONLY;
     else
       nStyle &= ~ES_READONLY;
-    SetWindowLongW(hWnd, GWL_STYLE, nStyle);
+    SetWindowLongW(editor->hWnd, GWL_STYLE, nStyle);
     return 0;
   }
   case EM_SETEVENTMASK:
@@ -3347,9 +3376,9 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     if (!wParam)
       wParam = (WPARAM)GetStockObject(SYSTEM_FONT); 
     GetObjectW((HGDIOBJ)wParam, sizeof(LOGFONTW), &lf);
-    hDC = GetDC(hWnd);
+    hDC = GetDC(editor->hWnd);
     ME_CharFormatFromLogFont(hDC, &lf, &fmt); 
-    ReleaseDC(hWnd, hDC);   
+    ReleaseDC(editor->hWnd, hDC);
     ME_SetCharFormat(editor, 0, ME_GetTextLength(editor), &fmt);
     ME_SetDefaultCharFormat(editor, &fmt);
 
@@ -3378,7 +3407,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
           int len = -1;
 
           /* uses default style! */
-          if (!(GetWindowLongW(hWnd, GWL_STYLE) & ES_MULTILINE))
+          if (!(GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_MULTILINE))
           {
             WCHAR * p;
 
@@ -3771,19 +3800,19 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     SCROLLINFO si;
 
     ME_SetDefaultFormatRect(editor);
-    if (GetWindowLongW(hWnd, GWL_STYLE) & WS_HSCROLL)
+    if (GetWindowLongW(editor->hWnd, GWL_STYLE) & WS_HSCROLL)
     { /* Squelch the default horizontal scrollbar it would make */
       ShowScrollBar(editor->hWnd, SB_HORZ, FALSE);
     }
 
     si.cbSize = sizeof(si);
     si.fMask = SIF_PAGE | SIF_RANGE;
-    if (GetWindowLongW(hWnd, GWL_STYLE) & ES_DISABLENOSCROLL)
+    if (GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_DISABLENOSCROLL)
       si.fMask |= SIF_DISABLENOSCROLL;
     si.nMax = (si.fMask & SIF_DISABLENOSCROLL) ? 1 : 0;
     si.nMin = 0;
     si.nPage = 0;
-    SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
+    SetScrollInfo(editor->hWnd, SB_VERT, &si, TRUE);
 
     ME_CommitUndo(editor);
     ME_WrapMarkedParagraphs(editor);
@@ -3792,7 +3821,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   }
   case WM_DESTROY:
     ME_DestroyEditor(editor);
-    SetWindowLongPtrW(hWnd, 0, 0);
+    SetWindowLongPtrW(editor->hWnd, 0, 0);
     return 0;
   case WM_SETCURSOR:
   {
@@ -3805,10 +3834,10 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
         !ME_FilterEvent(editor, msg, &wParam, &lParam))
       return 0;
-    SetFocus(hWnd);
+    SetFocus(editor->hWnd);
     ME_LButtonDown(editor, (short)LOWORD(lParam), (short)HIWORD(lParam),
                    ME_CalculateClickCount(editor, msg, wParam, lParam));
-    SetCapture(hWnd);
+    SetCapture(editor->hWnd);
     ME_LinkNotify(editor,msg,wParam,lParam);
     if (!ME_SetCursor(editor)) goto do_default;
     break;
@@ -3817,15 +3846,15 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
         !ME_FilterEvent(editor, msg, &wParam, &lParam))
       return 0;
-    if (GetCapture() == hWnd)
+    if (GetCapture() == editor->hWnd)
       ME_MouseMove(editor, (short)LOWORD(lParam), (short)HIWORD(lParam));
     ME_LinkNotify(editor,msg,wParam,lParam);
     /* Set cursor if mouse is captured, since WM_SETCURSOR won't be received. */
-    if (GetCapture() == hWnd)
+    if (GetCapture() == editor->hWnd)
         ME_SetCursor(editor);
     break;
   case WM_LBUTTONUP:
-    if (GetCapture() == hWnd)
+    if (GetCapture() == editor->hWnd)
       ReleaseCapture();
     if (editor->nSelectionType == stDocument)
       editor->nSelectionType = stPosition;
@@ -3855,7 +3884,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       RECT rc;
       PAINTSTRUCT ps;
 
-      hDC = BeginPaint(hWnd, &ps);
+      hDC = BeginPaint(editor->hWnd, &ps);
       /* Erase area outside of the formatting rectangle */
       if (ps.rcPaint.top < editor->rcFormat.top)
       {
@@ -3884,7 +3913,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       }
 
       ME_PaintContent(editor, hDC, FALSE, &ps.rcPaint);
-      EndPaint(hWnd, &ps);
+      EndPaint(editor->hWnd, &ps);
     }
     break;
   case WM_SETFOCUS:
@@ -3902,7 +3931,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   {
     HDC hDC = (HDC)wParam;
     RECT rc;
-    if (GetUpdateRect(hWnd,&rc,TRUE))
+    if (GetUpdateRect(editor->hWnd,&rc,TRUE))
     {
       FillRect(hDC, &rc, editor->hbrBackground);
     }
@@ -4013,12 +4042,12 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   {
     if (lParam)
     {
-      DWORD exstyle = GetWindowLongW(hWnd, GWL_EXSTYLE);
+      DWORD exstyle = GetWindowLongW(editor->hWnd, GWL_EXSTYLE);
       int border = (exstyle & WS_EX_CLIENTEDGE) ? 1 : 0;
       RECT clientRect;
       RECT *rc = (RECT *)lParam;
 
-      GetClientRect(hWnd, &clientRect);
+      GetClientRect(editor->hWnd, &clientRect);
       if (wParam == 0)
       {
         editor->rcFormat.top = max(0, rc->top - border);
@@ -4052,12 +4081,12 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     ME_SendRequestResize(editor, TRUE);
     return 0;
   case WM_SETREDRAW:
-    return DefWindowProcW(hWnd, msg, wParam, lParam);
+    goto do_default;
   case WM_SIZE:
   {
     RECT clientRect;
 
-    GetClientRect(hWnd, &clientRect);
+    GetClientRect(editor->hWnd, &clientRect);
     if (editor->bDefaultFormatRect) {
       ME_SetDefaultFormatRect(editor);
     } else {
@@ -4066,7 +4095,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     }
     editor->prevClientRect = clientRect;
     ME_RewrapRepaint(editor);
-    return DefWindowProcW(hWnd, msg, wParam, lParam);
+    goto do_default;
   }
   /* IME messages to make richedit controls IME aware */
   case WM_IME_SETCONTEXT:
@@ -4087,7 +4116,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     HIMC hIMC;
 
     ME_Style *style = ME_GetInsertStyle(editor, 0);
-    hIMC = ImmGetContext(hWnd);
+    hIMC = ImmGetContext(editor->hWnd);
     ME_DeleteSelection(editor);
     ME_CommitUndo(editor);
     ME_SaveTempStyle(editor);
@@ -4203,7 +4232,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     break;
   default:
   do_default:
-    return DefWindowProcW(hWnd, msg, wParam, lParam);
+    *phresult = S_FALSE;
+    break;
   }
   return 0L;
 }

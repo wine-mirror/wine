@@ -271,6 +271,8 @@ void ME_DeleteReObject(REOBJECT* reo);
 /* editor.c */
 ME_TextEditor *ME_MakeEditor(HWND hWnd);
 void ME_DestroyEditor(ME_TextEditor *editor);
+LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
+                         LPARAM lParam, BOOL unicode, HRESULT* phresult);
 void ME_SendOldNotify(ME_TextEditor *editor, int nCode);
 void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam);
 int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, BOOL bCRLF);
