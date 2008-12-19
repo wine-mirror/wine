@@ -29,6 +29,7 @@
  */
 
 #include "config.h"
+#include <limits.h>
 #include <stdio.h>
 #include "wined3d_private.h"
 
@@ -54,11 +55,35 @@ typedef struct {
     DWORD coord_mask;
 } glsl_sample_function_t;
 
+enum heap_node_op
+{
+    HEAP_NODE_TRAVERSE_LEFT,
+    HEAP_NODE_TRAVERSE_RIGHT,
+    HEAP_NODE_POP,
+};
+
+struct constant_entry
+{
+    unsigned int idx;
+    unsigned int version;
+};
+
+struct constant_heap
+{
+    struct constant_entry *entries;
+    unsigned int *positions;
+    unsigned int size;
+};
+
 /* GLSL shader private data */
 struct shader_glsl_priv {
     struct hash_table_t *glsl_program_lookup;
-    const struct glsl_shader_prog_link *glsl_program;
+    struct glsl_shader_prog_link *glsl_program;
+    struct constant_heap vconst_heap;
+    struct constant_heap pconst_heap;
+    unsigned char *stack;
     GLhandleARB depth_blt_program[tex_type_count];
+    UINT next_constant_version;
 };
 
 /* Struct to maintain data about a linked GLSL program */
@@ -79,6 +104,7 @@ struct glsl_shader_prog_link {
     GLhandleARB                 vshader;
     IWineD3DPixelShader         *pshader;
     struct ps_compile_args      ps_args;
+    UINT                        constant_version;
 };
 
 typedef struct {
@@ -189,107 +215,166 @@ static void shader_glsl_load_vsamplers(const WineD3D_GL_Info *gl_info, IWineD3DS
     }
 }
 
-/** 
- * Loads floating point constants (aka uniforms) into the currently set GLSL program.
- * When constant_list == NULL, it will load all the constants.
- */
-static void shader_glsl_load_constantsF(IWineD3DBaseShaderImpl *This, const WineD3D_GL_Info *gl_info,
-        unsigned int max_constants, const float *constants, const GLhandleARB *constant_locations,
-        const struct list *constant_list)
+static inline void walk_constant_heap(const WineD3D_GL_Info *gl_info, const float *constants,
+        const GLhandleARB *constant_locations, const struct constant_heap *heap, unsigned char *stack, DWORD version)
 {
-    const constants_entry *constant;
-    const local_constant *lconst;
-    GLhandleARB tmp_loc;
-    DWORD i, j, k;
-    const DWORD *idx;
+    int stack_idx = 0;
+    unsigned int heap_idx = 1;
+    unsigned int idx;
 
-    if (TRACE_ON(d3d_shader)) {
-        LIST_FOR_EACH_ENTRY(constant, constant_list, constants_entry, entry) {
-            idx = constant->idx;
-            j = constant->count;
-            while (j--) {
-                i = *idx++;
-                tmp_loc = constant_locations[i];
-                if (tmp_loc != -1) {
-                    TRACE_(d3d_constants)("Loading constants %i: %f, %f, %f, %f\n", i,
-                            constants[i * 4 + 0], constants[i * 4 + 1],
-                            constants[i * 4 + 2], constants[i * 4 + 3]);
+    if (heap->entries[heap_idx].version <= version) return;
+
+    idx = heap->entries[heap_idx].idx;
+    if (constant_locations[idx] != -1) GL_EXTCALL(glUniform4fvARB(constant_locations[idx], 1, &constants[idx * 4]));
+    stack[stack_idx] = HEAP_NODE_TRAVERSE_LEFT;
+
+    while (stack_idx >= 0)
+    {
+        /* Note that we fall through to the next case statement. */
+        switch(stack[stack_idx])
+        {
+            case HEAP_NODE_TRAVERSE_LEFT:
+            {
+                unsigned int left_idx = heap_idx << 1;
+                if (left_idx < heap->size && heap->entries[left_idx].version > version)
+                {
+                    heap_idx = left_idx;
+                    idx = heap->entries[heap_idx].idx;
+                    if (constant_locations[idx] != -1)
+                        GL_EXTCALL(glUniform4fvARB(constant_locations[idx], 1, &constants[idx * 4]));
+
+                    stack[stack_idx++] = HEAP_NODE_TRAVERSE_RIGHT;
+                    stack[stack_idx] = HEAP_NODE_TRAVERSE_LEFT;
+                    break;
                 }
+            }
+
+            case HEAP_NODE_TRAVERSE_RIGHT:
+            {
+                unsigned int right_idx = (heap_idx << 1) + 1;
+                if (right_idx < heap->size && heap->entries[right_idx].version > version)
+                {
+                    heap_idx = right_idx;
+                    idx = heap->entries[heap_idx].idx;
+                    if (constant_locations[idx] != -1)
+                        GL_EXTCALL(glUniform4fvARB(constant_locations[idx], 1, &constants[idx * 4]));
+
+                    stack[stack_idx++] = HEAP_NODE_POP;
+                    stack[stack_idx] = HEAP_NODE_TRAVERSE_LEFT;
+                    break;
+                }
+            }
+
+            case HEAP_NODE_POP:
+            {
+                heap_idx >>= 1;
+                --stack_idx;
+                break;
             }
         }
     }
+    checkGLcall("walk_constant_heap()");
+}
+
+static inline void apply_clamped_constant(const WineD3D_GL_Info *gl_info, GLint location, const GLfloat *data)
+{
+    GLfloat clamped_constant[4];
+
+    if (location == -1) return;
+
+    clamped_constant[0] = data[0] < -1.0f ? -1.0f : data[0] > 1.0 ? 1.0 : data[0];
+    clamped_constant[1] = data[1] < -1.0f ? -1.0f : data[1] > 1.0 ? 1.0 : data[1];
+    clamped_constant[2] = data[2] < -1.0f ? -1.0f : data[2] > 1.0 ? 1.0 : data[2];
+    clamped_constant[3] = data[3] < -1.0f ? -1.0f : data[3] > 1.0 ? 1.0 : data[3];
+
+    GL_EXTCALL(glUniform4fvARB(location, 1, clamped_constant));
+}
+
+static inline void walk_constant_heap_clamped(const WineD3D_GL_Info *gl_info, const float *constants,
+        const GLhandleARB *constant_locations, const struct constant_heap *heap, unsigned char *stack, DWORD version)
+{
+    int stack_idx = 0;
+    unsigned int heap_idx = 1;
+    unsigned int idx;
+
+    if (heap->entries[heap_idx].version <= version) return;
+
+    idx = heap->entries[heap_idx].idx;
+    apply_clamped_constant(gl_info, constant_locations[idx], &constants[idx * 4]);
+    stack[stack_idx] = HEAP_NODE_TRAVERSE_LEFT;
+
+    while (stack_idx >= 0)
+    {
+        /* Note that we fall through to the next case statement. */
+        switch(stack[stack_idx])
+        {
+            case HEAP_NODE_TRAVERSE_LEFT:
+            {
+                unsigned int left_idx = heap_idx << 1;
+                if (left_idx < heap->size && heap->entries[left_idx].version > version)
+                {
+                    heap_idx = left_idx;
+                    idx = heap->entries[heap_idx].idx;
+                    apply_clamped_constant(gl_info, constant_locations[idx], &constants[idx * 4]);
+
+                    stack[stack_idx++] = HEAP_NODE_TRAVERSE_RIGHT;
+                    stack[stack_idx] = HEAP_NODE_TRAVERSE_LEFT;
+                    break;
+                }
+            }
+
+            case HEAP_NODE_TRAVERSE_RIGHT:
+            {
+                unsigned int right_idx = (heap_idx << 1) + 1;
+                if (right_idx < heap->size && heap->entries[right_idx].version > version)
+                {
+                    heap_idx = right_idx;
+                    idx = heap->entries[heap_idx].idx;
+                    apply_clamped_constant(gl_info, constant_locations[idx], &constants[idx * 4]);
+
+                    stack[stack_idx++] = HEAP_NODE_POP;
+                    stack[stack_idx] = HEAP_NODE_TRAVERSE_LEFT;
+                    break;
+                }
+            }
+
+            case HEAP_NODE_POP:
+            {
+                heap_idx >>= 1;
+                --stack_idx;
+                break;
+            }
+        }
+    }
+    checkGLcall("walk_constant_heap_clamped()");
+}
+
+/* Loads floating point constants (aka uniforms) into the currently set GLSL program. */
+static void shader_glsl_load_constantsF(IWineD3DBaseShaderImpl *This, const WineD3D_GL_Info *gl_info,
+        const float *constants, const GLhandleARB *constant_locations, const struct constant_heap *heap,
+        unsigned char *stack, UINT version)
+{
+    const local_constant *lconst;
 
     /* 1.X pshaders have the constants clamped to [-1;1] implicitly. */
     if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.reg_maps.shader_version) == 1
             && shader_is_pshader_version(This->baseShader.reg_maps.shader_version))
+        walk_constant_heap_clamped(gl_info, constants, constant_locations, heap, stack, version);
+    else
+        walk_constant_heap(gl_info, constants, constant_locations, heap, stack, version);
+
+    if (!This->baseShader.load_local_constsF)
     {
-        float lcl_const[4];
-
-        LIST_FOR_EACH_ENTRY(constant, constant_list, constants_entry, entry) {
-            idx = constant->idx;
-            j = constant->count;
-            while (j--) {
-                i = *idx++;
-                tmp_loc = constant_locations[i];
-                if (tmp_loc != -1) {
-                    /* We found this uniform name in the program - go ahead and send the data */
-                    k = i * 4;
-                    if(constants[k + 0] < -1.0) lcl_const[0] = -1.0;
-                    else if(constants[k + 0] > 1.0) lcl_const[0] = 1.0;
-                    else lcl_const[0] = constants[k + 0];
-                    if(constants[k + 1] < -1.0) lcl_const[1] = -1.0;
-                    else if(constants[k + 1] > 1.0) lcl_const[1] = 1.0;
-                    else lcl_const[1] = constants[k + 1];
-                    if(constants[k + 2] < -1.0) lcl_const[2] = -1.0;
-                    else if(constants[k + 2] > 1.0) lcl_const[2] = 1.0;
-                    else lcl_const[2] = constants[k + 2];
-                    if(constants[k + 3] < -1.0) lcl_const[3] = -1.0;
-                    else if(constants[k + 3] > 1.0) lcl_const[3] = 1.0;
-                    else lcl_const[3] = constants[k + 3];
-
-                    GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, lcl_const));
-                }
-            }
-        }
-    } else {
-        LIST_FOR_EACH_ENTRY(constant, constant_list, constants_entry, entry) {
-            idx = constant->idx;
-            j = constant->count;
-            while (j--) {
-                i = *idx++;
-                tmp_loc = constant_locations[i];
-                if (tmp_loc != -1) {
-                    /* We found this uniform name in the program - go ahead and send the data */
-                    GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, constants + (i * 4)));
-                }
-            }
-        }
-    }
-    checkGLcall("glUniform4fvARB()");
-
-    if(!This->baseShader.load_local_constsF) {
         TRACE("No need to load local float constants for this shader\n");
         return;
     }
 
-    /* Load immediate constants */
-    if (TRACE_ON(d3d_shader)) {
-        LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
-            tmp_loc = constant_locations[lconst->idx];
-            if (tmp_loc != -1) {
-                const GLfloat *values = (const GLfloat *)lconst->value;
-                TRACE_(d3d_constants)("Loading local constants %i: %f, %f, %f, %f\n", lconst->idx,
-                        values[0], values[1], values[2], values[3]);
-            }
-        }
-    }
     /* Immediate constants are clamped to [-1;1] at shader creation time if needed */
-    LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
-        tmp_loc = constant_locations[lconst->idx];
-        if (tmp_loc != -1) {
-            /* We found this uniform name in the program - go ahead and send the data */
-            GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, (const GLfloat *)lconst->value));
-        }
+    LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry)
+    {
+        GLhandleARB location = constant_locations[lconst->idx];
+        /* We found this uniform name in the program - go ahead and send the data */
+        if (location != -1) GL_EXTCALL(glUniform4fvARB(location, 1, (const GLfloat *)lconst->value));
     }
     checkGLcall("glUniform4fvARB()");
 }
@@ -381,7 +466,11 @@ static void shader_glsl_load_constantsB(IWineD3DBaseShaderImpl *This, const Wine
     }
 }
 
-
+static void reset_program_constant_version(void *value, void *context)
+{
+    struct glsl_shader_prog_link *entry = (struct glsl_shader_prog_link *)value;
+    entry->constant_version = 0;
+}
 
 /**
  * Loads the app-supplied constants into the currently set GLSL program.
@@ -392,14 +481,13 @@ static void shader_glsl_load_constants(
     char useVertexShader) {
    
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) device;
-    const struct shader_glsl_priv *priv = (struct shader_glsl_priv *)deviceImpl->shader_priv;
+    struct shader_glsl_priv *priv = (struct shader_glsl_priv *)deviceImpl->shader_priv;
     IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
     const WineD3D_GL_Info *gl_info = &deviceImpl->adapter->gl_info;
 
-    const GLhandleARB *constant_locations;
-    const struct list *constant_list;
     GLhandleARB programId;
-    const struct glsl_shader_prog_link *prog = priv->glsl_program;
+    struct glsl_shader_prog_link *prog = priv->glsl_program;
+    UINT constant_version;
     int i;
 
     if (!prog) {
@@ -407,16 +495,14 @@ static void shader_glsl_load_constants(
         return;
     }
     programId = prog->programId;
+    constant_version = prog->constant_version;
 
     if (useVertexShader) {
         IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
 
-        constant_locations = prog->vuniformF_locations;
-        constant_list = &stateBlock->set_vconstantsF;
-
         /* Load DirectX 9 float constants/uniforms for vertex shader */
-        shader_glsl_load_constantsF(vshader, gl_info, GL_LIMITS(vshader_constantsF),
-                stateBlock->vertexShaderConstantF, constant_locations, constant_list);
+        shader_glsl_load_constantsF(vshader, gl_info, stateBlock->vertexShaderConstantF,
+                prog->vuniformF_locations, &priv->vconst_heap, priv->stack, constant_version);
 
         /* Load DirectX 9 integer constants/uniforms for vertex shader */
         if(vshader->baseShader.uses_int_consts) {
@@ -439,12 +525,9 @@ static void shader_glsl_load_constants(
 
         IWineD3DBaseShaderImpl* pshader = (IWineD3DBaseShaderImpl*) stateBlock->pixelShader;
 
-        constant_locations = prog->puniformF_locations;
-        constant_list = &stateBlock->set_pconstantsF;
-
         /* Load DirectX 9 float constants/uniforms for pixel shader */
-        shader_glsl_load_constantsF(pshader, gl_info, GL_LIMITS(pshader_constantsF),
-                stateBlock->pixelShaderConstantF, constant_locations, constant_list);
+        shader_glsl_load_constantsF(pshader, gl_info, stateBlock->pixelShaderConstantF,
+                prog->puniformF_locations, &priv->pconst_heap, priv->stack, constant_version);
 
         /* Load DirectX 9 integer constants/uniforms for pixel shader */
         if(pshader->baseShader.uses_int_consts) {
@@ -496,49 +579,71 @@ static void shader_glsl_load_constants(
             GL_EXTCALL(glUniform4fvARB(prog->ycorrection_location, 1, correction_params));
         }
     }
+
+    if (priv->next_constant_version == UINT_MAX)
+    {
+        TRACE("Max constant version reached, resetting to 0.\n");
+        hash_table_for_each_entry(priv->glsl_program_lookup, reset_program_constant_version, NULL);
+        priv->next_constant_version = 1;
+    }
+    else
+    {
+        prog->constant_version = priv->next_constant_version++;
+    }
+}
+
+static inline void update_heap_entry(struct constant_heap *heap, unsigned int idx,
+        unsigned int heap_idx, DWORD new_version)
+{
+    struct constant_entry *entries = heap->entries;
+    unsigned int *positions = heap->positions;
+    unsigned int parent_idx;
+
+    while (heap_idx > 1)
+    {
+        parent_idx = heap_idx >> 1;
+
+        if (new_version <= entries[parent_idx].version) break;
+
+        entries[heap_idx] = entries[parent_idx];
+        positions[entries[parent_idx].idx] = heap_idx;
+        heap_idx = parent_idx;
+    }
+
+    entries[heap_idx].version = new_version;
+    entries[heap_idx].idx = idx;
+    positions[idx] = heap_idx;
 }
 
 static void shader_glsl_update_float_vertex_constants(IWineD3DDevice *iface, UINT start, UINT count)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    struct shader_glsl_priv *priv = (struct shader_glsl_priv *)This->shader_priv;
+    struct constant_heap *heap = &priv->vconst_heap;
     UINT i;
 
     for (i = start; i < count + start; ++i)
     {
         if (!This->stateBlock->changed.vertexShaderConstantsF[i])
-        {
-            constants_entry *ptr = LIST_ENTRY(list_head(&This->stateBlock->set_vconstantsF),
-                    constants_entry, entry);
-
-            if (!ptr || ptr->count >= sizeof(ptr->idx) / sizeof(*ptr->idx))
-            {
-                ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(constants_entry));
-                list_add_head(&This->stateBlock->set_vconstantsF, &ptr->entry);
-            }
-            ptr->idx[ptr->count++] = i;
-        }
+            update_heap_entry(heap, i, heap->size++, priv->next_constant_version);
+        else
+            update_heap_entry(heap, i, heap->positions[i], priv->next_constant_version);
     }
 }
 
 static void shader_glsl_update_float_pixel_constants(IWineD3DDevice *iface, UINT start, UINT count)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    struct shader_glsl_priv *priv = (struct shader_glsl_priv *)This->shader_priv;
+    struct constant_heap *heap = &priv->pconst_heap;
     UINT i;
 
     for (i = start; i < count + start; ++i)
     {
         if (!This->stateBlock->changed.pixelShaderConstantsF[i])
-        {
-            constants_entry *ptr = LIST_ENTRY(list_head(&This->stateBlock->set_pconstantsF),
-                    constants_entry, entry);
-
-            if (!ptr || ptr->count >= sizeof(ptr->idx) / sizeof(*ptr->idx))
-            {
-                ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(constants_entry));
-                list_add_head(&This->stateBlock->set_pconstantsF, &ptr->entry);
-            }
-            ptr->idx[ptr->count++] = i;
-        }
+            update_heap_entry(heap, i, heap->size++, priv->next_constant_version);
+        else
+            update_heap_entry(heap, i, heap->positions[i], priv->next_constant_version);
     }
 }
 
@@ -3215,6 +3320,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     entry->vshader = vshader_id;
     entry->pshader = pshader;
     entry->ps_args = compile_args;
+    entry->constant_version = 0;
     /* Add the hash table entry */
     add_glsl_program_entry(priv, entry);
 
@@ -3578,10 +3684,64 @@ static BOOL glsl_program_key_compare(const void *keya, const void *keyb)
            (memcmp(&ka->ps_args, &kb->ps_args, sizeof(kb->ps_args)) == 0);
 }
 
+static BOOL constant_heap_init(struct constant_heap *heap, unsigned int constant_count)
+{
+    SIZE_T size = (constant_count + 1) * sizeof(*heap->entries) + constant_count * sizeof(*heap->positions);
+    void *mem = HeapAlloc(GetProcessHeap(), 0, size);
+
+    if (!mem)
+    {
+        ERR("Failed to allocate memory\n");
+        return FALSE;
+    }
+
+    heap->entries = mem;
+    heap->entries[1].version = 0;
+    heap->positions = (unsigned int *)(heap->entries + constant_count + 1);
+    heap->size = 1;
+
+    return TRUE;
+}
+
+static void constant_heap_free(struct constant_heap *heap)
+{
+    HeapFree(GetProcessHeap(), 0, heap->entries);
+}
+
 static HRESULT shader_glsl_alloc(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
     struct shader_glsl_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_glsl_priv));
+    SIZE_T stack_size = wined3d_log2i(max(GL_LIMITS(vshader_constantsF), GL_LIMITS(pshader_constantsF))) + 1;
+
+    priv->stack = HeapAlloc(GetProcessHeap(), 0, stack_size * sizeof(*priv->stack));
+    if (!priv->stack)
+    {
+        ERR("Failed to allocate memory.\n");
+        HeapFree(GetProcessHeap(), 0, priv);
+        return E_OUTOFMEMORY;
+    }
+
+    if (!constant_heap_init(&priv->vconst_heap, GL_LIMITS(vshader_constantsF)))
+    {
+        ERR("Failed to initialize vertex shader constant heap\n");
+        HeapFree(GetProcessHeap(), 0, priv->stack);
+        HeapFree(GetProcessHeap(), 0, priv);
+        return E_OUTOFMEMORY;
+    }
+
+    if (!constant_heap_init(&priv->pconst_heap, GL_LIMITS(pshader_constantsF)))
+    {
+        ERR("Failed to initialize pixel shader constant heap\n");
+        constant_heap_free(&priv->vconst_heap);
+        HeapFree(GetProcessHeap(), 0, priv->stack);
+        HeapFree(GetProcessHeap(), 0, priv);
+        return E_OUTOFMEMORY;
+    }
+
     priv->glsl_program_lookup = hash_table_create(glsl_program_key_hash, glsl_program_key_compare);
+    priv->next_constant_version = 1;
+
     This->shader_priv = priv;
     return WINED3D_OK;
 }
@@ -3601,6 +3761,8 @@ static void shader_glsl_free(IWineD3DDevice *iface) {
     }
 
     hash_table_destroy(priv->glsl_program_lookup, NULL, NULL);
+    constant_heap_free(&priv->pconst_heap);
+    constant_heap_free(&priv->vconst_heap);
 
     HeapFree(GetProcessHeap(), 0, This->shader_priv);
     This->shader_priv = NULL;

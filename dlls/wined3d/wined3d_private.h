@@ -153,6 +153,7 @@ struct hash_table_t {
 
 struct hash_table_t *hash_table_create(hash_function_t *hash_function, compare_function_t *compare_function);
 void hash_table_destroy(struct hash_table_t *table, void (*free_value)(void *value, void *cb), void *cb);
+void hash_table_for_each_entry(struct hash_table_t *table, void (*callback)(void *value, void *context), void *context);
 void *hash_table_get(const struct hash_table_t *table, const void *key);
 void hash_table_put(struct hash_table_t *table, void *key, void *value);
 void hash_table_remove(struct hash_table_t *table, void *key);
@@ -1784,12 +1785,6 @@ typedef struct SAVEDSTATES {
         BOOL                      scissorRect;
 } SAVEDSTATES;
 
-typedef struct {
-    struct  list entry;
-    DWORD   count;
-    DWORD   idx[13];
-} constants_entry;
-
 struct StageState {
     DWORD stage;
     DWORD state;
@@ -1808,8 +1803,6 @@ struct IWineD3DStateBlockImpl
 
     /* Array indicating whether things have been set or changed */
     SAVEDSTATES               changed;
-    struct list               set_vconstantsF;
-    struct list               set_pconstantsF;
 
     /* Vertex Shader Declaration */
     IWineD3DVertexDeclaration *vertexDecl;

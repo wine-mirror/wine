@@ -1723,6 +1723,16 @@ void hash_table_destroy(struct hash_table_t *table, void (*free_value)(void *val
     HeapFree(GetProcessHeap(), 0, table);
 }
 
+void hash_table_for_each_entry(struct hash_table_t *table, void (*callback)(void *value, void *context), void *context)
+{
+    unsigned int i = 0;
+
+    for (i = 0; i < table->entry_count; ++i)
+    {
+        callback(table->entries[i].value, context);
+    }
+}
+
 static inline struct hash_table_entry_t *hash_table_get_by_idx(const struct hash_table_t *table, const void *key,
         unsigned int idx)
 {

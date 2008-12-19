@@ -57,9 +57,6 @@ HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object) {
     object->contained_ps_consts_f = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) * GL_LIMITS(pshader_constantsF));
     if (!object->contained_ps_consts_f) goto fail;
 
-    list_init(&object->set_vconstantsF);
-    list_init(&object->set_pconstantsF);
-
     return WINED3D_OK;
 
 fail:
@@ -252,7 +249,6 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
     TRACE("(%p) : Releasing from %d\n", This, refCount + 1);
 
     if (!refCount) {
-        constants_entry *constant, *constant2;
         int counter;
 
         /* type 0 represents the primary stateblock, so free all the resources */
@@ -294,15 +290,6 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
         HeapFree(GetProcessHeap(), 0, This->changed.pixelShaderConstantsF);
         HeapFree(GetProcessHeap(), 0, This->contained_vs_consts_f);
         HeapFree(GetProcessHeap(), 0, This->contained_ps_consts_f);
-
-        LIST_FOR_EACH_ENTRY_SAFE(constant, constant2, &This->set_vconstantsF, constants_entry, entry) {
-            HeapFree(GetProcessHeap(), 0, constant);
-        }
-
-        LIST_FOR_EACH_ENTRY_SAFE(constant, constant2, &This->set_pconstantsF, constants_entry, entry) {
-            HeapFree(GetProcessHeap(), 0, constant);
-        }
-
         HeapFree(GetProcessHeap(), 0, This);
     }
     return refCount;
