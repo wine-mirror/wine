@@ -742,8 +742,9 @@ static void set_cert_info(HWND hwnd,
     CRYPT_PROVIDER_CERT *root =
      &provSigner->pasCertChain[provSigner->csCertChain - 1];
 
-    if (provSigner->pChainContext->TrustStatus.dwErrorStatus &
-     CERT_TRUST_IS_PARTIAL_CHAIN)
+    if (!provSigner->pChainContext ||
+     (provSigner->pChainContext->TrustStatus.dwErrorStatus &
+     CERT_TRUST_IS_PARTIAL_CHAIN))
         add_icon_to_control(icon, IDB_CERT_WARNING);
     else if (!root->fTrustedRoot)
         add_icon_to_control(icon, IDB_CERT_ERROR);
@@ -767,8 +768,9 @@ static void set_cert_info(HWND hwnd,
     if (provSigner->dwError == TRUST_E_CERT_SIGNATURE)
         add_string_resource_with_paraformat_to_control(text,
          IDS_CERT_INFO_BAD_SIG, &parFmt);
-    else if (provSigner->pChainContext->TrustStatus.dwErrorStatus &
-     CERT_TRUST_IS_PARTIAL_CHAIN)
+    else if (!provSigner->pChainContext ||
+     (provSigner->pChainContext->TrustStatus.dwErrorStatus &
+     CERT_TRUST_IS_PARTIAL_CHAIN))
         add_string_resource_with_paraformat_to_control(text,
          IDS_CERT_INFO_PARTIAL_CHAIN, &parFmt);
     else if (!root->fTrustedRoot)
