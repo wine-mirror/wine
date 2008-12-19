@@ -1157,7 +1157,6 @@ struct detail_data
     BOOL *pfPropertiesChanged;
     int cFields;
     struct field_value_data *fields;
-    HIMAGELIST imageList;
 };
 
 typedef void (*add_fields_func)(HWND hwnd, struct detail_data *data);
@@ -1860,9 +1859,16 @@ static void add_known_usage(HWND lv, PCCRYPT_OID_INFO info)
     SendMessageW(lv, LVM_INSERTITEMW, 0, (LPARAM)&item);
 }
 
-static void show_cert_usages(HWND hwnd, struct detail_data *data)
+struct edit_cert_data
 {
-    PCCERT_CONTEXT cert = data->pCertViewInfo->pCertContext;
+    PCCERT_CONTEXT cert;
+    BOOL *pfPropertiesChanged;
+    HIMAGELIST imageList;
+};
+
+static void show_cert_usages(HWND hwnd, struct edit_cert_data *data)
+{
+    PCCERT_CONTEXT cert = data->cert;
     HWND lv = GetDlgItem(hwnd, IDC_CERTIFICATE_USAGES);
     PCERT_ENHKEY_USAGE usage;
     DWORD size;
@@ -1949,9 +1955,9 @@ static void show_cert_usages(HWND hwnd, struct detail_data *data)
      BM_CLICK, 0, 0);
 }
 
-static void set_general_cert_properties(HWND hwnd, struct detail_data *data)
+static void set_general_cert_properties(HWND hwnd, struct edit_cert_data *data)
 {
-    PCCERT_CONTEXT cert = data->pCertViewInfo->pCertContext;
+    PCCERT_CONTEXT cert = data->cert;
     WCHAR *str;
 
     if ((str = get_cert_property_as_string(cert, CERT_FRIENDLY_NAME_PROP_ID)))
@@ -2021,27 +2027,25 @@ static BOOL CALLBACK refresh_propsheet_pages(HWND hwnd, LPARAM lParam)
 static void apply_general_changes(HWND hwnd)
 {
     WCHAR buf[MAX_DESCRIPTION + 1];
-    struct detail_data *data =
-     (struct detail_data *)GetWindowLongPtrW(hwnd, DWLP_USER);
+    struct edit_cert_data *data =
+     (struct edit_cert_data *)GetWindowLongPtrW(hwnd, DWLP_USER);
 
     SendMessageW(GetDlgItem(hwnd, IDC_FRIENDLY_NAME), WM_GETTEXT,
      sizeof(buf) / sizeof(buf[0]), (LPARAM)buf);
-    set_cert_string_property(data->pCertViewInfo->pCertContext,
-     CERT_FRIENDLY_NAME_PROP_ID, buf);
+    set_cert_string_property(data->cert, CERT_FRIENDLY_NAME_PROP_ID, buf);
     SendMessageW(GetDlgItem(hwnd, IDC_DESCRIPTION), WM_GETTEXT,
      sizeof(buf) / sizeof(buf[0]), (LPARAM)buf);
-    set_cert_string_property(data->pCertViewInfo->pCertContext,
-     CERT_DESCRIPTION_PROP_ID, buf);
+    set_cert_string_property(data->cert, CERT_DESCRIPTION_PROP_ID, buf);
     if (IsDlgButtonChecked(hwnd, IDC_ENABLE_ALL_PURPOSES))
     {
         /* Setting a NULL usage removes the enhanced key usage property. */
-        CertSetEnhancedKeyUsage(data->pCertViewInfo->pCertContext, NULL);
+        CertSetEnhancedKeyUsage(data->cert, NULL);
     }
     else if (IsDlgButtonChecked(hwnd, IDC_DISABLE_ALL_PURPOSES))
     {
         CERT_ENHKEY_USAGE usage = { 0, NULL };
 
-        CertSetEnhancedKeyUsage(data->pCertViewInfo->pCertContext, &usage);
+        CertSetEnhancedKeyUsage(data->cert, &usage);
     }
     else if (IsDlgButtonChecked(hwnd, IDC_ENABLE_SELECTED_PURPOSES))
     {
@@ -2078,7 +2082,7 @@ static void apply_general_changes(HWND hwnd)
                 }
             }
         }
-        CertSetEnhancedKeyUsage(data->pCertViewInfo->pCertContext, &usage);
+        CertSetEnhancedKeyUsage(data->cert, &usage);
         HeapFree(GetProcessHeap(), 0, usage.rgpszUsageIdentifier);
     }
     EnumChildWindows(GetParent(GetParent(hwnd)), refresh_propsheet_pages, 0);
@@ -2090,7 +2094,6 @@ static LRESULT CALLBACK cert_properties_general_dlg_proc(HWND hwnd, UINT msg,
  WPARAM wp, LPARAM lp)
 {
     PROPSHEETPAGEW *page;
-    struct detail_data *data;
 
     TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
 
@@ -2099,15 +2102,36 @@ static LRESULT CALLBACK cert_properties_general_dlg_proc(HWND hwnd, UINT msg,
     case WM_INITDIALOG:
     {
         HWND description = GetDlgItem(hwnd, IDC_DESCRIPTION);
+        struct detail_data *detailData;
+        struct edit_cert_data *editData;
 
         page = (PROPSHEETPAGEW *)lp;
-        data = (struct detail_data *)page->lParam;
+        detailData = (struct detail_data *)page->lParam;
         SendMessageW(GetDlgItem(hwnd, IDC_FRIENDLY_NAME), EM_SETLIMITTEXT,
          MAX_FRIENDLY_NAME, 0);
         SendMessageW(description, EM_SETLIMITTEXT, MAX_DESCRIPTION, 0);
         ShowScrollBar(description, SB_VERT, FALSE);
-        set_general_cert_properties(hwnd, data);
-        SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
+        editData = HeapAlloc(GetProcessHeap(), 0,
+         sizeof(struct edit_cert_data));
+        if (editData)
+        {
+            editData->imageList = ImageList_Create(16, 16,
+             ILC_COLOR4 | ILC_MASK, 4, 0);
+            if (editData->imageList)
+            {
+                HBITMAP bmp;
+                COLORREF backColor = RGB(255, 0, 255);
+
+                bmp = LoadBitmapW(hInstance, MAKEINTRESOURCEW(IDB_CHECKS));
+                ImageList_AddMasked(editData->imageList, bmp, backColor);
+                DeleteObject(bmp);
+                ImageList_SetBkColor(editData->imageList, CLR_NONE);
+            }
+            editData->cert = detailData->pCertViewInfo->pCertContext;
+            editData->pfPropertiesChanged = detailData->pfPropertiesChanged;
+            SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)editData);
+            set_general_cert_properties(hwnd, editData);
+        }
         break;
     }
     case WM_NOTIFY:
@@ -2172,6 +2196,7 @@ static UINT CALLBACK cert_properties_general_callback(HWND hwnd, UINT msg,
 {
     HWND lv;
     int cItem, i;
+    struct edit_cert_data *data;
 
     switch (msg)
     {
@@ -2195,6 +2220,12 @@ static UINT CALLBACK cert_properties_general_callback(HWND hwnd, UINT msg,
                     HeapFree(GetProcessHeap(), 0, info);
                 }
             }
+        }
+        data = (struct edit_cert_data *)GetWindowLongPtrW(hwnd, DWLP_USER);
+        if (data)
+        {
+            ImageList_Destroy(data->imageList);
+            HeapFree(GetProcessHeap(), 0, data);
         }
         break;
     }
@@ -2359,7 +2390,6 @@ static UINT CALLBACK detail_callback(HWND hwnd, UINT msg,
     case PSPCB_RELEASE:
         data = (struct detail_data *)page->lParam;
         free_detail_fields(data);
-        ImageList_Destroy(data->imageList);
         HeapFree(GetProcessHeap(), 0, data);
         break;
     }
@@ -2379,17 +2409,6 @@ static BOOL init_detail_page(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
         data->pfPropertiesChanged = pfPropertiesChanged;
         data->cFields = 0;
         data->fields = NULL;
-        data->imageList = ImageList_Create(16, 16, ILC_COLOR4 | ILC_MASK, 4, 0);
-        if (data->imageList)
-        {
-            HBITMAP bmp;
-            COLORREF backColor = RGB(255, 0, 255);
-
-            bmp = LoadBitmapW(hInstance, MAKEINTRESOURCEW(IDB_CHECKS));
-            ImageList_AddMasked(data->imageList, bmp, backColor);
-            DeleteObject(bmp);
-            ImageList_SetBkColor(data->imageList, CLR_NONE);
-        }
         memset(page, 0, sizeof(PROPSHEETPAGEW));
         page->dwSize = sizeof(PROPSHEETPAGEW);
         page->dwFlags = PSP_USECALLBACK;
