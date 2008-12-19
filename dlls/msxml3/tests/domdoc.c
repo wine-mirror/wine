@@ -400,6 +400,7 @@ static void test_domdoc( void )
     IXMLDOMAttribute *node_attr = NULL;
     IXMLDOMNode *nodeChild = NULL;
     IXMLDOMProcessingInstruction *nodePI = NULL;
+    ISupportErrorInfo *support_error = NULL;
     VARIANT_BOOL b;
     VARIANT var;
     BSTR str;
@@ -860,6 +861,15 @@ static void test_domdoc( void )
         SysFreeString(str);
 
         IXMLDOMProcessingInstruction_Release(nodePI);
+    }
+
+    r = IXMLDOMDocument_QueryInterface( doc, &IID_ISupportErrorInfo, (LPVOID*)&support_error );
+    ok( r == S_OK, "ret %08x\n", r );
+    if(r == S_OK)
+    {
+        r = ISupportErrorInfo_InterfaceSupportsErrorInfo( support_error, &IID_IXMLDOMDocument );
+        todo_wine ok( r == S_OK, "ret %08x\n", r );
+        ISupportErrorInfo_Release( support_error );
     }
 
     r = IXMLDOMDocument_Release( doc );

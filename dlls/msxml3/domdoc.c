@@ -57,6 +57,7 @@ typedef struct _domdoc
     const struct IPersistStreamVtbl   *lpvtblIPersistStream;
     const struct IObjectWithSiteVtbl  *lpvtblIObjectWithSite;
     const struct IObjectSafetyVtbl    *lpvtblIObjectSafety;
+    const struct ISupportErrorInfoVtbl *lpvtblISupportErrorInfo;
     LONG ref;
     VARIANT_BOOL async;
     VARIANT_BOOL validating;
@@ -248,6 +249,10 @@ static inline domdoc *impl_from_IObjectSafety(IObjectSafety *iface)
     return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpvtblIObjectSafety));
 }
 
+static inline domdoc *impl_from_ISupportErrorInfo(ISupportErrorInfo *iface)
+{
+    return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpvtblISupportErrorInfo));
+}
 
 /************************************************************************
  * xmldoc implementation of IPersistStream.
@@ -375,6 +380,46 @@ static const IPersistStreamVtbl xmldoc_IPersistStream_VTable =
     xmldoc_IPersistStream_GetSizeMax,
 };
 
+/* ISupportErrorInfo interface */
+static HRESULT WINAPI support_error_QueryInterface(
+    ISupportErrorInfo *iface,
+    REFIID riid, void** ppvObj )
+{
+    domdoc *This = impl_from_ISupportErrorInfo(iface);
+    return IXMLDocument_QueryInterface((IXMLDocument *)This, riid, ppvObj);
+}
+
+static ULONG WINAPI support_error_AddRef(
+    ISupportErrorInfo *iface )
+{
+    domdoc *This = impl_from_ISupportErrorInfo(iface);
+    return IXMLDocument_AddRef((IXMLDocument *)This);
+}
+
+static ULONG WINAPI support_error_Release(
+    ISupportErrorInfo *iface )
+{
+    domdoc *This = impl_from_ISupportErrorInfo(iface);
+    return IXMLDocument_Release((IXMLDocument *)This);
+}
+
+static HRESULT WINAPI support_error_InterfaceSupportsErrorInfo(
+    ISupportErrorInfo *iface,
+    REFIID riid )
+{
+    FIXME("(%p)->(%s)\n", iface, debugstr_guid(riid));
+    return S_FALSE;
+}
+
+static const struct ISupportErrorInfoVtbl support_error_vtbl =
+{
+    support_error_QueryInterface,
+    support_error_AddRef,
+    support_error_Release,
+    support_error_InterfaceSupportsErrorInfo
+};
+
+/* IXMLDOMDocument2 interface */
 static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument2 *iface, REFIID riid, void** ppvObject )
 {
     domdoc *This = impl_from_IXMLDOMDocument2( iface );
@@ -401,6 +446,10 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument2 *iface, REFIID rii
     else if (IsEqualGUID(&IID_IObjectWithSite, riid))
     {
         *ppvObject = (IObjectWithSite*)&(This->lpvtblIObjectWithSite);
+    }
+    else if( IsEqualGUID( riid, &IID_ISupportErrorInfo ))
+    {
+        *ppvObject = &This->lpvtblISupportErrorInfo;
     }
     else if(dispex_query_interface(&This->dispex, riid, ppvObject))
     {
@@ -2138,6 +2187,7 @@ HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument2 **docu
     doc->lpvtblIPersistStream = &xmldoc_IPersistStream_VTable;
     doc->lpvtblIObjectWithSite = &domdocObjectSite;
     doc->lpvtblIObjectSafety = &domdocObjectSafetyVtbl;
+    doc->lpvtblISupportErrorInfo = &support_error_vtbl;
     doc->ref = 1;
     doc->async = 0;
     doc->validating = 0;
