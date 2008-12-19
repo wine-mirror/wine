@@ -2945,6 +2945,39 @@ BOOL WINAPI CryptUIDlgViewCertificateW(
     return ret;
 }
 
+/***********************************************************************
+ *		CryptUIDlgViewContext (CRYPTUI.@)
+ */
+BOOL WINAPI CryptUIDlgViewContext(DWORD dwContextType, LPVOID pvContext,
+ HWND hwnd, LPCWSTR pwszTitle, DWORD dwFlags, LPVOID pvReserved)
+{
+    BOOL ret;
+
+    TRACE("(%d, %p, %p, %s, %08x, %p)\n", dwContextType, pvContext, hwnd,
+     debugstr_w(pwszTitle), dwFlags, pvReserved);
+
+    switch (dwContextType)
+    {
+    case CERT_STORE_CERTIFICATE_CONTEXT:
+    {
+        CRYPTUI_VIEWCERTIFICATE_STRUCTW viewInfo;
+
+        memset(&viewInfo, 0, sizeof(viewInfo));
+        viewInfo.dwSize = sizeof(viewInfo);
+        viewInfo.hwndParent = hwnd;
+        viewInfo.szTitle = pwszTitle;
+        viewInfo.pCertContext = pvContext;
+        ret = CryptUIDlgViewCertificateW(&viewInfo, NULL);
+        break;
+    }
+    default:
+        FIXME("unimplemented for context type %d\n", dwContextType);
+        SetLastError(E_INVALIDARG);
+        ret = FALSE;
+    }
+    return ret;
+}
+
 static PCCERT_CONTEXT make_cert_from_file(LPCWSTR fileName)
 {
     HANDLE file;
