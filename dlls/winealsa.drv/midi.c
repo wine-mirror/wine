@@ -1314,7 +1314,7 @@ LONG ALSA_MidiInit(void)
 }
 
 /**************************************************************************
- * 			midMessage (WINEOSS.4)
+ * 			midMessage (WINEALSA.@)
  */
 DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 			    DWORD_PTR dwParam1, DWORD_PTR dwParam2)
@@ -1357,7 +1357,7 @@ DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 }
 
 /**************************************************************************
- * 				modMessage (WINEOSS.5)
+ * 				modMessage (WINEALSA.@)
  */
 DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
                              DWORD_PTR dwParam1, DWORD_PTR dwParam2)
