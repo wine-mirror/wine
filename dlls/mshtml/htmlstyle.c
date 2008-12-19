@@ -1734,8 +1734,8 @@ static HRESULT WINAPI HTMLStyle_get_left(IHTMLStyle *iface, VARIANT *p)
 static HRESULT WINAPI HTMLStyle_get_position(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return IHTMLStyle2_get_position(HTMLSTYLE2(This), p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_zIndex(IHTMLStyle *iface, VARIANT v)

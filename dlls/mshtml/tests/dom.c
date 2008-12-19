@@ -2299,6 +2299,10 @@ static void test_default_style(IHTMLStyle *style)
     test_disp((IUnknown*)style, &DIID_DispHTMLStyle);
     test_ifaces((IUnknown*)style, style_iids);
 
+    hres = IHTMLStyle_get_position(style, &str);
+    ok(hres == S_OK, "get_position failed: %08x\n", hres);
+    ok(!str, "str=%s\n", dbgstr_w(str));
+
     str = (void*)0xdeadbeef;
     hres = IHTMLStyle_get_fontFamily(style, &str);
     ok(hres == S_OK, "get_fontFamily failed: %08x\n", hres);
