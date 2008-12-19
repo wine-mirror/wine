@@ -376,26 +376,10 @@ static BOOL CRYPT_AsnDecodeSequenceItems(struct AsnDecodeSequenceItem items[],
                             }
                             else
                             {
-                                if (itemLen == CMSG_INDEFINITE_LENGTH)
-                                {
-                                    if (itemDecoded > itemEncodedLen - 2 ||
-                                     *(ptr + itemDecoded) != 0 ||
-                                     *(ptr + itemDecoded + 1) != 0)
-                                    {
-                                        TRACE("expected 0 TLV\n");
-                                        SetLastError(CRYPT_E_ASN1_CORRUPT);
-                                        ret = FALSE;
-                                    }
-                                    else
-                                        itemDecoded += 2;
-                                }
-                                if (ret)
-                                {
-                                    ptr += itemDecoded;
-                                    decoded += itemDecoded;
-                                    TRACE("item %d: decoded %d bytes\n", i,
-                                     itemDecoded);
-                                }
+                                ptr += itemDecoded;
+                                decoded += itemDecoded;
+                                TRACE("item %d: decoded %d bytes\n", i,
+                                 itemDecoded);
                             }
                         }
                         else if (items[i].optional &&
