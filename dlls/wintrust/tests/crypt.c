@@ -362,7 +362,7 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
     if (!GetTempFileNameA(CURR_DIR, "cat", 0, tmpfile)) return;
     DeleteFileA(tmpfile);
     file = CreateFileA(tmpfile, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileA failed %u", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileA failed %u\n", GetLastError());
     CloseHandle(file);
 
     ret = pCryptCATAdminAcquireContext(&hcatadmin, &dummy, 0);
@@ -404,7 +404,7 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
 
     DeleteFileA(tmpfile);
     file = CreateFileA(tmpfile, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileA failed %u", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileA failed %u\n", GetLastError());
     WriteFile(file, test_catalog, sizeof(test_catalog), &written, NULL);
     CloseHandle(file);
 
