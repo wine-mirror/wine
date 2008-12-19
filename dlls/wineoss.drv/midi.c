@@ -1699,7 +1699,7 @@ LRESULT OSS_MidiExit(void)
  *======================================================================*/
 
 /**************************************************************************
- * 			midMessage (WINEOSS.4)
+ * 			midMessage (WINEOSS.@)
  */
 DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 			    DWORD_PTR dwParam1, DWORD_PTR dwParam2)
@@ -1742,7 +1742,7 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 }
 
 /**************************************************************************
- * 				modMessage (WINEOSS.5)
+ * 				modMessage (WINEOSS.@)
  */
 DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 			    DWORD_PTR dwParam1, DWORD_PTR dwParam2)
