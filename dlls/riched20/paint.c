@@ -1101,7 +1101,7 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
   hWnd = editor->hWnd;
   winStyle = GetWindowLongW(hWnd, GWL_STYLE);
   bScrollBarIsVisible = (winStyle & WS_VSCROLL) != 0;
-  bScrollBarWillBeVisible = (editor->nHeight > editor->sizeWindow.cy)
+  bScrollBarWillBeVisible = (editor->nTotalLength > editor->sizeWindow.cy)
                             || (winStyle & ES_DISABLENOSCROLL);
   if (bScrollBarIsVisible != bScrollBarWillBeVisible)
   {
@@ -1127,7 +1127,7 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
   hWnd = editor->hWnd;
   si.cbSize = sizeof(si);
   bScrollBarWasVisible = ME_GetYScrollVisible(editor);
-  bScrollBarWillBeVisible = editor->nHeight > editor->sizeWindow.cy;
+  bScrollBarWillBeVisible = editor->nTotalLength > editor->sizeWindow.cy;
   
   si.fMask = SIF_PAGE | SIF_RANGE | SIF_POS;
   if (GetWindowLongW(hWnd, GWL_STYLE) & ES_DISABLENOSCROLL)

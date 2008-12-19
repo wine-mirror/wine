@@ -578,17 +578,14 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
   ME_Context c;
   BOOL bModified = FALSE;
   int yStart = -1;
-  int yLastPos = 0;
 
   ME_InitContext(&c, editor, GetDC(editor->hWnd));
   c.pt.x = 0;
-  editor->nHeight = 0;
   item = editor->pBuffer->pFirst->next;
   while(item != editor->pBuffer->pLast) {
     BOOL bRedraw = FALSE;
 
     assert(item->type == diParagraph);
-    editor->nHeight = max(editor->nHeight, item->member.para.pt.y);
     if ((item->member.para.nFlags & MEPF_REWRAP)
      || (item->member.para.pt.y != c.pt.y))
       bRedraw = TRUE;
@@ -604,8 +601,6 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
     }
 
     bModified = bModified | bRedraw;
-
-    yLastPos = max(yLastPos, c.pt.y);
 
     if (item->member.para.nFlags & MEPF_ROWSTART)
     {
@@ -718,17 +713,9 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
   
   editor->nTotalLength = c.pt.y;
   editor->pBuffer->pLast->member.para.pt.x = 0;
-  editor->pBuffer->pLast->member.para.pt.y = yLastPos;
+  editor->pBuffer->pLast->member.para.pt.y = c.pt.y;
 
   ME_DestroyContext(&c, editor->hWnd);
-
-  /* Each paragraph may contain multiple rows, which should be scrollable, even
-     if the containing paragraph has pt.y == 0 */
-  item = editor->pBuffer->pFirst;
-  while ((item = ME_FindItemFwd(item, diStartRow)) != NULL) {
-    assert(item->type == diStartRow);
-    editor->nHeight = max(editor->nHeight, item->member.row.pt.y);
-  }
 
   if (bModified || editor->nTotalLength < editor->nLastTotalLength)
     ME_InvalidateMarkedParagraphs(editor);
