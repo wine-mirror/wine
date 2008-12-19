@@ -7125,6 +7125,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         This->exStyle = exStyle;
     }
 
+    TRACE("Resetting stateblock\n");
+    IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock);
+    IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->stateBlock);
+
+    /* Note: No parent needed for initial internal stateblock */
+    hr = IWineD3DDevice_CreateStateBlock(iface, WINED3DSBT_INIT, (IWineD3DStateBlock **)&This->stateBlock, NULL);
+    if (FAILED(hr)) ERR("Resetting the stateblock failed with error 0x%08x\n", hr);
+    else TRACE("Created stateblock %p\n", This->stateBlock);
+    This->updateStateBlock = This->stateBlock;
+    IWineD3DStateBlock_AddRef((IWineD3DStateBlock *)This->updateStateBlock);
+
     hr = IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *) This->stateBlock);
     if(FAILED(hr)) {
         ERR("Resetting the stateblock failed with error 0x%08x\n", hr);
