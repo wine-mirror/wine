@@ -1244,6 +1244,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     /* check the return values, because the GetBackBuffer call isn't valid for ddraw */
     hr = IWineD3DDevice_GetSwapChain(device, 0, &swapchain);
     if( hr == WINED3D_OK && swapchain != NULL) {
+        WINED3DVIEWPORT vp;
+
         hr = IWineD3DSwapChain_GetBackBuffer(swapchain, 0, WINED3DBACKBUFFER_TYPE_MONO, &backbuffer);
         if( hr == WINED3D_OK && backbuffer != NULL) {
             IWineD3DSurface_GetDesc(backbuffer, &desc);
@@ -1258,6 +1260,16 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
                 ERR("This should never happen, expect rendering issues!\n");
             }
         }
+
+        /* Set the default viewport */
+        vp.X      = 0;
+        vp.Y      = 0;
+        vp.Width  = ((IWineD3DSwapChainImpl *)swapchain)->presentParms.BackBufferWidth;
+        vp.Height = ((IWineD3DSwapChainImpl *)swapchain)->presentParms.BackBufferHeight;
+        vp.MinZ   = 0.0f;
+        vp.MaxZ   = 1.0f;
+        IWineD3DDevice_SetViewport(device, &vp);
+
         IWineD3DSwapChain_Release(swapchain);
     }
 

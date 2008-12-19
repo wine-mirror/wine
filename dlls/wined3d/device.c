@@ -2181,17 +2181,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
 
     ENTER_GL();
 
-    { /* Set a default viewport */
-        WINED3DVIEWPORT vp;
-        vp.X      = 0;
-        vp.Y      = 0;
-        vp.Width  = pPresentationParameters->BackBufferWidth;
-        vp.Height = pPresentationParameters->BackBufferHeight;
-        vp.MinZ   = 0.0f;
-        vp.MaxZ   = 1.0f;
-        IWineD3DDevice_SetViewport((IWineD3DDevice *)This, &vp);
-    }
-
     /* Initialize the current view state */
     This->view_ident = 1;
     This->contexts[0]->last_was_rhw = 0;
@@ -7081,15 +7070,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
        (pPresentationParameters->BackBufferWidth != swapchain->presentParms.BackBufferWidth ||
         pPresentationParameters->BackBufferHeight != swapchain->presentParms.BackBufferHeight))
     {
-        WINED3DVIEWPORT vp;
         UINT i;
-
-        vp.X = 0;
-        vp.Y = 0;
-        vp.Width = pPresentationParameters->BackBufferWidth;
-        vp.Height = pPresentationParameters->BackBufferHeight;
-        vp.MinZ = 0;
-        vp.MaxZ = 1;
 
         if(!pPresentationParameters->Windowed) {
             DisplayModeChanged = TRUE;
@@ -7104,10 +7085,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         if(This->auto_depth_stencil_buffer) {
             updateSurfaceDesc((IWineD3DSurfaceImpl *)This->auto_depth_stencil_buffer, pPresentationParameters);
         }
-
-
-        /* Now set the new viewport */
-        IWineD3DDevice_SetViewport(iface, &vp);
     }
 
     if((pPresentationParameters->Windowed && !swapchain->presentParms.Windowed) ||
