@@ -532,40 +532,6 @@ int find_property(const DataFormat *df, LPCDIPROPHEADER ph)
     return -1;
 }
 
-
-BOOL DIEnumDevicesCallbackAtoW(LPCDIDEVICEOBJECTINSTANCEA lpddi, LPVOID lpvRef) {
-    DIDEVICEOBJECTINSTANCEW ddtmp;
-    device_enumobjects_AtoWcb_data* data;
-
-    data = (device_enumobjects_AtoWcb_data*) lpvRef;
-    
-    memset(&ddtmp, 0, sizeof(ddtmp));
-    
-    ddtmp.dwSize = sizeof(DIDEVICEINSTANCEW);
-    ddtmp.guidType     = lpddi->guidType;
-    ddtmp.dwOfs        = lpddi->dwOfs;
-    ddtmp.dwType       = lpddi->dwType;
-    ddtmp.dwFlags      = lpddi->dwFlags;
-    MultiByteToWideChar(CP_ACP, 0, lpddi->tszName, -1, ddtmp.tszName, MAX_PATH);
-    
-    if (lpddi->dwSize == sizeof(DIDEVICEINSTANCEA)) {
-	/**
-	 * if dwSize < sizeof(DIDEVICEINSTANCEA of DInput version >= 5)
-	 *  force feedback and other newer data aren't available
-	 */
-	ddtmp.dwFFMaxForce        = lpddi->dwFFMaxForce;
-	ddtmp.dwFFForceResolution = lpddi->dwFFForceResolution;
-	ddtmp.wCollectionNumber   = lpddi->wCollectionNumber;
-	ddtmp.wDesignatorIndex    = lpddi->wDesignatorIndex;
-	ddtmp.wUsagePage          = lpddi->wUsagePage;
-	ddtmp.wUsage              = lpddi->wUsage;
-	ddtmp.dwDimension         = lpddi->dwDimension;
-	ddtmp.wExponent           = lpddi->wExponent;
-	ddtmp.wReserved           = lpddi->wReserved;
-    }
-    return data->lpCallBack(&ddtmp, data->lpvRef);
-}
-
 /******************************************************************************
  *	queue_event - add new event to the ring queue
  */

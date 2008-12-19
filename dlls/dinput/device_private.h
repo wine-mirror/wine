@@ -104,17 +104,6 @@ typedef struct
     LPDIRECTINPUTEFFECT ref;
 } effect_list_item;
 
-/**
- * Callback Data used by specific callback 
- *  for EnumObject on 'W' interfaces
- */
-typedef struct {
-  LPDIENUMDEVICEOBJECTSCALLBACKW lpCallBack;
-  LPVOID lpvRef;
-} device_enumobjects_AtoWcb_data;
-
-extern BOOL DIEnumDevicesCallbackAtoW(LPCDIDEVICEOBJECTINSTANCEA, LPVOID);
-
 extern const GUID DInput_Wine_Keyboard_GUID;
 extern const GUID DInput_Wine_Mouse_GUID;
 
