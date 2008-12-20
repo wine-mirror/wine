@@ -73,6 +73,28 @@ BOOL WINAPI CryptUIDlgCertMgr(PCCRYPTUI_CERT_MGR_STRUCT pCryptUICertMgr)
     return FALSE;
 }
 
+/* FIXME: real names are unknown, functions are undocumented */
+struct _CRYPTUI_SELECTSTORE_INFO_A;
+struct _CRYPTUI_SELECTSTORE_INFO_W;
+
+/***********************************************************************
+ *		CryptUIDlgSelectStoreA (CRYPTUI.@)
+ */
+HCERTSTORE WINAPI CryptUIDlgSelectStoreA(struct _CRYPTUI_SELECTSTORE_INFO_A *info)
+{
+    FIXME("(%p): stub\n", info);
+    return NULL;
+}
+
+/***********************************************************************
+ *		CryptUIDlgSelectStoreW (CRYPTUI.@)
+ */
+HCERTSTORE WINAPI CryptUIDlgSelectStoreW(struct _CRYPTUI_SELECTSTORE_INFO_W *info)
+{
+    FIXME("(%p): stub\n", info);
+    return NULL;
+}
+
 /***********************************************************************
  *		CryptUIDlgViewCertificateA (CRYPTUI.@)
  */
