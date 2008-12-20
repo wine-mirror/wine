@@ -4174,7 +4174,6 @@ BOOL InitAdapters(void) {
             ERR("Can't load opengl32.dll!\n");
             goto nogl_adapter;
         }
-        mod_win32gl = mod_gl;
 #else
 #define USE_GL_FUNC(pfn) pfn = (void*)pwglGetProcAddress(#pfn);
         /* To bypass the opengl32 thunks load wglGetProcAddress from gdi32 (glXGetProcAddress wrapper) instead of opengl32's */
