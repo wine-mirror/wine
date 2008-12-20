@@ -257,6 +257,12 @@ HRESULT WINAPI LoadLibraryShim( LPCWSTR szDllName, LPCWSTR szVersion, LPVOID pvR
     return S_OK;
 }
 
+HRESULT WINAPI LockClrVersion(FLockClrVersionCallback hostCallback, FLockClrVersionCallback *pBeginHostSetup, FLockClrVersionCallback *pEndHostSetup)
+{
+    FIXME("(%p %p %p): stub\n", hostCallback, pBeginHostSetup, pEndHostSetup);
+    return S_OK;
+}
+
 HRESULT WINAPI CoInitializeCor(DWORD fFlags)
 {
     FIXME("(0x%08x): stub\n", fFlags);
