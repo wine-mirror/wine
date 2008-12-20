@@ -1103,7 +1103,7 @@ sub search_from($$)
       my $directory=get_directory_contents $dirname;
       my $found;
       foreach my $dentry (@$directory) {
-	if ($dentry =~ /^$component$/i or
+	if ($dentry =~ /^\Q$component\E$/i or
             (defined $renamed and $dentry =~ /^$renamed$/i)
            ) {
 	  $dirname.="$dentry/";
