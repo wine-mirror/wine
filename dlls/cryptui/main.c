@@ -118,12 +118,59 @@ typedef struct _CRYPTUI_SELECTSTORE_INFO_W
     void                 *pvArg;
 } CRYPTUI_SELECTSTORE_INFO_W, *PCRYPTUI_SELECTSTORE_INFO_W;
 
+static LRESULT CALLBACK select_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+ LPARAM lp)
+{
+    PCRYPTUI_SELECTSTORE_INFO_W info;
+    LRESULT ret = 0;
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+    {
+        info = (PCRYPTUI_SELECTSTORE_INFO_W)lp;
+        SetWindowLongPtrW(hwnd, DWLP_USER, lp);
+        if (info->pwszTitle)
+            SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)info->pwszTitle);
+        if (info->pwszText)
+            SendMessageW(GetDlgItem(hwnd, IDC_STORE_TEXT), WM_SETTEXT, 0,
+             (LPARAM)info->pwszText);
+        if (!(info->dwFlags & CRYPTUI_ENABLE_SHOW_PHYSICAL_STORE))
+            ShowWindow(GetDlgItem(hwnd, IDC_SHOW_PHYSICAL_STORES), FALSE);
+        break;
+    }
+    case WM_COMMAND:
+        switch (wp)
+        {
+        case IDOK:
+            EndDialog(hwnd, IDOK);
+            ret = TRUE;
+            break;
+        case IDCANCEL:
+            EndDialog(hwnd, IDCANCEL);
+            ret = TRUE;
+            break;
+        }
+        break;
+    }
+    return ret;
+}
+
 /***********************************************************************
  *		CryptUIDlgSelectStoreW (CRYPTUI.@)
  */
 HCERTSTORE WINAPI CryptUIDlgSelectStoreW(PCRYPTUI_SELECTSTORE_INFO_W info)
 {
-    FIXME("(%p): stub\n", info);
+    TRACE("(%p)\n", info);
+
+    if (info->dwSize != sizeof(CRYPTUI_SELECTSTORE_INFO_W))
+    {
+        WARN("unexpected size %d\n", info->dwSize);
+        SetLastError(E_INVALIDARG);
+        return NULL;
+    }
+    DialogBoxParamW(hInstance, MAKEINTRESOURCEW(IDD_SELECT_STORE), info->parent,
+     select_store_dlg_proc, (LPARAM)info);
     return NULL;
 }
 
