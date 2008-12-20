@@ -250,26 +250,62 @@ static void free_store_info(HWND tree)
 
 #define MAX_STRING_LEN 512
 
+static HCERTSTORE selected_item_to_store(HWND tree, HTREEITEM hItem)
+{
+    WCHAR buf[MAX_STRING_LEN];
+    TVITEMW item;
+    HCERTSTORE store;
+
+    memset(&item, 0, sizeof(item));
+    item.mask = TVIF_HANDLE | TVIF_PARAM | TVIF_TEXT;
+    item.hItem = hItem;
+    item.cchTextMax = sizeof(buf) / sizeof(buf[0]);
+    item.pszText = buf;
+    SendMessageW(tree, TVM_GETITEMW, 0, (LPARAM)&item);
+    if (item.lParam)
+    {
+        struct StoreInfo *storeInfo = (struct StoreInfo *)item.lParam;
+
+        if (storeInfo->type == StoreHandle)
+            store = storeInfo->u.store;
+        else
+            store = CertOpenSystemStoreW(0, storeInfo->u.name);
+    }
+    else
+    {
+        /* It's implicitly a system store */
+        store = CertOpenSystemStoreW(0, buf);
+    }
+    return store;
+}
+
+struct SelectStoreInfo
+{
+    PCRYPTUI_SELECTSTORE_INFO_W info;
+    HCERTSTORE                  store;
+};
+
 static LRESULT CALLBACK select_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
-    PCRYPTUI_SELECTSTORE_INFO_W info;
+    struct SelectStoreInfo *selectInfo;
     LRESULT ret = 0;
 
     switch (msg)
     {
     case WM_INITDIALOG:
     {
-        info = (PCRYPTUI_SELECTSTORE_INFO_W)lp;
+        selectInfo = (struct SelectStoreInfo *)lp;
         SetWindowLongPtrW(hwnd, DWLP_USER, lp);
-        if (info->pwszTitle)
-            SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)info->pwszTitle);
-        if (info->pwszText)
+        if (selectInfo->info->pwszTitle)
+            SendMessageW(hwnd, WM_SETTEXT, 0,
+             (LPARAM)selectInfo->info->pwszTitle);
+        if (selectInfo->info->pwszText)
             SendMessageW(GetDlgItem(hwnd, IDC_STORE_TEXT), WM_SETTEXT, 0,
-             (LPARAM)info->pwszText);
-        if (!(info->dwFlags & CRYPTUI_ENABLE_SHOW_PHYSICAL_STORE))
+             (LPARAM)selectInfo->info->pwszText);
+        if (!(selectInfo->info->dwFlags & CRYPTUI_ENABLE_SHOW_PHYSICAL_STORE))
             ShowWindow(GetDlgItem(hwnd, IDC_SHOW_PHYSICAL_STORES), FALSE);
-        enumerate_stores(hwnd, info->pEnumData);
+        enumerate_stores(hwnd, selectInfo->info->pEnumData);
         break;
     }
     case WM_COMMAND:
@@ -281,14 +317,14 @@ static LRESULT CALLBACK select_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             HTREEITEM selection = (HTREEITEM)SendMessageW(tree,
              TVM_GETNEXTITEM, TVGN_CARET, (LPARAM)NULL);
 
-            info = (PCRYPTUI_SELECTSTORE_INFO_W)GetWindowLongPtrW(hwnd,
+            selectInfo = (struct SelectStoreInfo *)GetWindowLongPtrW(hwnd,
              DWLP_USER);
             if (!selection)
             {
                 WCHAR title[MAX_STRING_LEN], error[MAX_STRING_LEN], *pTitle;
 
-                if (info->pwszTitle)
-                    pTitle = info->pwszTitle;
+                if (selectInfo->info->pwszTitle)
+                    pTitle = selectInfo->info->pwszTitle;
                 else
                 {
                     LoadStringW(hInstance, IDS_SELECT_STORE_TITLE, title,
@@ -301,9 +337,18 @@ static LRESULT CALLBACK select_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             }
             else
             {
-                /* FIXME: convert selection to store and return it */
-                free_store_info(tree);
-                EndDialog(hwnd, IDOK);
+                HCERTSTORE store = selected_item_to_store(tree, selection);
+
+                if (!selectInfo->info->pfnSelectedStoreCallback ||
+                 selectInfo->info->pfnSelectedStoreCallback(store, hwnd,
+                 selectInfo->info->pvArg))
+                {
+                    selectInfo->store = store;
+                    free_store_info(tree);
+                    EndDialog(hwnd, IDOK);
+                }
+                else
+                    CertCloseStore(store, 0);
             }
             ret = TRUE;
             break;
@@ -324,6 +369,8 @@ static LRESULT CALLBACK select_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  */
 HCERTSTORE WINAPI CryptUIDlgSelectStoreW(PCRYPTUI_SELECTSTORE_INFO_W info)
 {
+    struct SelectStoreInfo selectInfo = { info, NULL };
+
     TRACE("(%p)\n", info);
 
     if (info->dwSize != sizeof(CRYPTUI_SELECTSTORE_INFO_W))
@@ -333,8 +380,8 @@ HCERTSTORE WINAPI CryptUIDlgSelectStoreW(PCRYPTUI_SELECTSTORE_INFO_W info)
         return NULL;
     }
     DialogBoxParamW(hInstance, MAKEINTRESOURCEW(IDD_SELECT_STORE), info->parent,
-     select_store_dlg_proc, (LPARAM)info);
-    return NULL;
+     select_store_dlg_proc, (LPARAM)&selectInfo);
+    return selectInfo.store;
 }
 
 /***********************************************************************
