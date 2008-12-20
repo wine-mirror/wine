@@ -25,6 +25,9 @@
  */
 
 #include "config.h"
+
+#ifdef HAVE_ALSA
+
 #include "wine/port.h"
 
 #include <stdlib.h>
@@ -64,8 +67,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
-
-#ifdef HAVE_ALSA
 
 /*----------------------------------------------------------------------------
 **  ALSA_TestDeviceForWine
