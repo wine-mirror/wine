@@ -26,7 +26,7 @@
 @ stdcall auxGetVolume(long ptr)
 @ stdcall auxOutMessage(long long long long)
 @ stdcall auxSetVolume(long long)
-@ stub joyConfigChanged
+@ stdcall joyConfigChanged(long)
 @ stdcall joyGetDevCapsA(long ptr long)
 @ stdcall joyGetDevCapsW(long ptr long)
 @ stdcall joyGetNumDevs()
