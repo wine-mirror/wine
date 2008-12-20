@@ -800,39 +800,25 @@ static NTSTATUS set_wait_mask(HANDLE hDevice, DWORD mask)
     return status;
 }
 
+/*
+ * does not change IXOFF but simulates that IXOFF has been received:
+ */
 static NTSTATUS set_XOff(int fd)
 {
-    struct termios      port;
-
-    if (tcgetattr(fd,&port) == -1)
+    if (tcflow(fd, TCOOFF))
     {
-        FIXME("tcgetattr on fd %d failed (%s)!\n", fd, strerror(errno));
-        return FILE_GetNtStatus();
-
-
-    }
-    port.c_iflag |= IXOFF;
-    if (tcsetattr(fd, TCSADRAIN, &port) == -1)
-    {
-        FIXME("tcsetattr on fd %d failed (%s)!\n", fd, strerror(errno));
         return FILE_GetNtStatus();
     }
     return STATUS_SUCCESS;
 }
 
+/*
+ * does not change IXON but simulates that IXON has been received:
+ */
 static NTSTATUS set_XOn(int fd)
 {
-    struct termios      port;
-
-    if (tcgetattr(fd,&port) == -1)
+    if (tcflow(fd, TCOON))
     {
-        FIXME("tcgetattr on fd %d failed (%s)!\n", fd, strerror(errno));
-        return FILE_GetNtStatus();
-    }
-    port.c_iflag |= IXON;
-    if (tcsetattr(fd, TCSADRAIN, &port) == -1)
-    {
-        FIXME("tcsetattr on fd %d failed (%s)!\n", fd, strerror(errno));
         return FILE_GetNtStatus();
     }
     return STATUS_SUCCESS;
