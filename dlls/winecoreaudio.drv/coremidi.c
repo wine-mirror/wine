@@ -20,15 +20,17 @@
 
 
 #include "config.h"
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
 #ifdef HAVE_COREAUDIO_COREAUDIO_H
+
 #include <CoreMIDI/CoreMIDI.h>
 #include <mach/mach_time.h>
 
 #include "coremidi.h"
+
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
 MIDIClientRef CoreMIDI_CreateClient(CFStringRef name)
 {

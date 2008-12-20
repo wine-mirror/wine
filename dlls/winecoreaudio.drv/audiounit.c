@@ -19,14 +19,15 @@
  */
 
 #include "config.h"
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(wave);
 
 #ifdef HAVE_AUDIOUNIT_AUDIOUNIT_H
+
 #include <AudioUnit/AudioUnit.h>
 #include <AudioToolbox/AudioToolbox.h>
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(wave);
 WINE_DECLARE_DEBUG_CHANNEL(midi);
 
 extern OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon, 
