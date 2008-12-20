@@ -179,11 +179,47 @@ static BOOL WINAPI enum_store_callback(const void *pvSystemStore,
 static void enumerate_stores(HWND hwnd, CRYPTUI_ENUM_DATA *pEnumData)
 {
     DWORD i;
+    HWND tree = GetDlgItem(hwnd, IDC_STORE_LIST);
 
     for (i = 0; i < pEnumData->cEnumArgs; i++)
         CertEnumSystemStore(pEnumData->rgEnumArgs[i].dwFlags,
          pEnumData->rgEnumArgs[i].pvSystemStoreLocationPara,
          hwnd, enum_store_callback);
+    for (i = 0; i < pEnumData->cStores; i++)
+    {
+        DWORD size;
+
+        if (CertGetStoreProperty(pEnumData->rghStore[i],
+         CERT_STORE_LOCALIZED_NAME_PROP_ID, NULL, &size))
+        {
+            LPWSTR name = HeapAlloc(GetProcessHeap(), 0, size);
+
+            if (name)
+            {
+                if (CertGetStoreProperty(pEnumData->rghStore[i],
+                 CERT_STORE_LOCALIZED_NAME_PROP_ID, name, &size))
+                {
+                    struct StoreInfo *storeInfo = HeapAlloc(GetProcessHeap(),
+                     0, sizeof(struct StoreInfo));
+
+                    if (storeInfo)
+                    {
+                        TVINSERTSTRUCTW tvis;
+
+                        storeInfo->type = StoreHandle;
+                        storeInfo->u.store = pEnumData->rghStore[i];
+                        tvis.hParent = NULL;
+                        tvis.hInsertAfter = TVI_LAST;
+                        tvis.u.item.mask = TVIF_TEXT | TVIF_PARAM;
+                        tvis.u.item.pszText = name;
+                        tvis.u.item.lParam = (LPARAM)storeInfo;
+                        SendMessageW(tree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
+                    }
+                }
+                HeapFree(GetProcessHeap(), 0, name);
+            }
+        }
+    }
 }
 
 static void free_store_info(HWND tree)
