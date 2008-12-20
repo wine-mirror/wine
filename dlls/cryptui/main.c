@@ -118,6 +118,100 @@ typedef struct _CRYPTUI_SELECTSTORE_INFO_W
     void                 *pvArg;
 } CRYPTUI_SELECTSTORE_INFO_W, *PCRYPTUI_SELECTSTORE_INFO_W;
 
+struct StoreInfo
+{
+    enum {
+        StoreHandle,
+        SystemStore
+    } type;
+    union {
+        HCERTSTORE store;
+        LPWSTR name;
+    } DUMMYUNIONNAME;
+};
+
+static BOOL WINAPI enum_store_callback(const void *pvSystemStore,
+ DWORD dwFlags, PCERT_SYSTEM_STORE_INFO pStoreInfo, void *pvReserved,
+ void *pvArg)
+{
+    HWND tree = GetDlgItem(pvArg, IDC_STORE_LIST);
+    TVINSERTSTRUCTW tvis;
+    LPCWSTR localizedName;
+    BOOL ret = TRUE;
+
+    tvis.hParent = NULL;
+    tvis.hInsertAfter = TVI_LAST;
+    tvis.u.item.mask = TVIF_TEXT;
+    if ((localizedName = CryptFindLocalizedName(pvSystemStore)))
+    {
+        struct StoreInfo *storeInfo = HeapAlloc(GetProcessHeap(), 0,
+         sizeof(struct StoreInfo));
+
+        if (storeInfo)
+        {
+            storeInfo->type = SystemStore;
+            storeInfo->u.name = HeapAlloc(GetProcessHeap(), 0,
+             (strlenW(pvSystemStore) + 1) * sizeof(WCHAR));
+            if (storeInfo->u.name)
+            {
+                tvis.u.item.mask |= TVIF_PARAM;
+                tvis.u.item.lParam = (LPARAM)storeInfo;
+                strcpyW(storeInfo->u.name, pvSystemStore);
+            }
+            else
+            {
+                HeapFree(GetProcessHeap(), 0, storeInfo);
+                ret = FALSE;
+            }
+        }
+        else
+            ret = FALSE;
+        tvis.u.item.pszText = (LPWSTR)localizedName;
+    }
+    else
+        tvis.u.item.pszText = (LPWSTR)pvSystemStore;
+    /* FIXME: need a folder icon for the store too */
+    if (ret)
+        SendMessageW(tree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
+    return ret;
+}
+
+static void enumerate_stores(HWND hwnd, CRYPTUI_ENUM_DATA *pEnumData)
+{
+    DWORD i;
+
+    for (i = 0; i < pEnumData->cEnumArgs; i++)
+        CertEnumSystemStore(pEnumData->rgEnumArgs[i].dwFlags,
+         pEnumData->rgEnumArgs[i].pvSystemStoreLocationPara,
+         hwnd, enum_store_callback);
+}
+
+static void free_store_info(HWND tree)
+{
+    HTREEITEM next = (HTREEITEM)SendMessageW(tree, TVM_GETNEXTITEM, TVGN_CHILD,
+     (LPARAM)NULL);
+
+    while (next)
+    {
+        TVITEMW item;
+
+        memset(&item, 0, sizeof(item));
+        item.mask = TVIF_HANDLE | TVIF_PARAM;
+        item.hItem = next;
+        SendMessageW(tree, TVM_GETITEMW, 0, (LPARAM)&item);
+        if (item.lParam)
+        {
+            struct StoreInfo *storeInfo = (struct StoreInfo *)item.lParam;
+
+            if (storeInfo->type == SystemStore)
+                HeapFree(GetProcessHeap(), 0, storeInfo->u.name);
+            HeapFree(GetProcessHeap(), 0, storeInfo);
+        }
+        next = (HTREEITEM)SendMessageW(tree, TVM_GETNEXTITEM, TVGN_NEXT,
+         (LPARAM)next);
+    }
+}
+
 static LRESULT CALLBACK select_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
@@ -137,16 +231,19 @@ static LRESULT CALLBACK select_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
              (LPARAM)info->pwszText);
         if (!(info->dwFlags & CRYPTUI_ENABLE_SHOW_PHYSICAL_STORE))
             ShowWindow(GetDlgItem(hwnd, IDC_SHOW_PHYSICAL_STORES), FALSE);
+        enumerate_stores(hwnd, info->pEnumData);
         break;
     }
     case WM_COMMAND:
         switch (wp)
         {
         case IDOK:
+            free_store_info(GetDlgItem(hwnd, IDC_STORE_LIST));
             EndDialog(hwnd, IDOK);
             ret = TRUE;
             break;
         case IDCANCEL:
+            free_store_info(GetDlgItem(hwnd, IDC_STORE_LIST));
             EndDialog(hwnd, IDCANCEL);
             ret = TRUE;
             break;
