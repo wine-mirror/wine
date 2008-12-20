@@ -3882,6 +3882,8 @@ PCCRYPT_OID_INFO WINAPI CryptFindOIDInfo(DWORD dwKeyType, void *pvKey,
 BOOL WINAPI CryptRegisterOIDInfo(PCCRYPT_OID_INFO pInfo, DWORD dwFlags);
 BOOL WINAPI CryptUnregisterOIDInfo(PCCRYPT_OID_INFO pInfo);
 
+LPCWSTR WINAPI CryptFindLocalizedName(LPCWSTR pwszCryptName);
+
 LPCSTR WINAPI CertAlgIdToOID(DWORD dwAlgId);
 DWORD WINAPI CertOIDToAlgId(LPCSTR pszObjId);
 
