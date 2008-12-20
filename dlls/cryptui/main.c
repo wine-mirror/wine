@@ -119,21 +119,49 @@ typedef struct _CRYPTUI_SELECTSTORE_INFO_W
 } CRYPTUI_SELECTSTORE_INFO_W, *PCRYPTUI_SELECTSTORE_INFO_W;
 
 /***********************************************************************
- *		CryptUIDlgSelectStoreA (CRYPTUI.@)
- */
-HCERTSTORE WINAPI CryptUIDlgSelectStoreA(PCRYPTUI_SELECTSTORE_INFO_A info)
-{
-    FIXME("(%p): stub\n", info);
-    return NULL;
-}
-
-/***********************************************************************
  *		CryptUIDlgSelectStoreW (CRYPTUI.@)
  */
 HCERTSTORE WINAPI CryptUIDlgSelectStoreW(PCRYPTUI_SELECTSTORE_INFO_W info)
 {
     FIXME("(%p): stub\n", info);
     return NULL;
+}
+
+/***********************************************************************
+ *		CryptUIDlgSelectStoreA (CRYPTUI.@)
+ */
+HCERTSTORE WINAPI CryptUIDlgSelectStoreA(PCRYPTUI_SELECTSTORE_INFO_A info)
+{
+    CRYPTUI_SELECTSTORE_INFO_W infoW;
+    HCERTSTORE ret;
+    int len;
+
+    TRACE("(%p)\n", info);
+
+    if (info->dwSize != sizeof(CRYPTUI_SELECTSTORE_INFO_A))
+    {
+        WARN("unexpected size %d\n", info->dwSize);
+        SetLastError(E_INVALIDARG);
+        return NULL;
+    }
+    memcpy(&infoW, &info, sizeof(info));
+    if (info->pszTitle)
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, info->pszTitle, -1, NULL, 0);
+        infoW.pwszTitle = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, info->pszTitle, -1, infoW.pwszTitle,
+         len);
+    }
+    if (info->pszText)
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, info->pszText, -1, NULL, 0);
+        infoW.pwszText = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, info->pszText, -1, infoW.pwszText, len);
+    }
+    ret = CryptUIDlgSelectStoreW(&infoW);
+    HeapFree(GetProcessHeap(), 0, infoW.pwszText);
+    HeapFree(GetProcessHeap(), 0, infoW.pwszTitle);
+    return ret;
 }
 
 /***********************************************************************
