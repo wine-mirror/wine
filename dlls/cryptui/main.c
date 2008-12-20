@@ -248,6 +248,8 @@ static void free_store_info(HWND tree)
     }
 }
 
+#define MAX_STRING_LEN 512
+
 static LRESULT CALLBACK select_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
@@ -274,10 +276,38 @@ static LRESULT CALLBACK select_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         switch (wp)
         {
         case IDOK:
-            free_store_info(GetDlgItem(hwnd, IDC_STORE_LIST));
-            EndDialog(hwnd, IDOK);
+        {
+            HWND tree = GetDlgItem(hwnd, IDC_STORE_LIST);
+            HTREEITEM selection = (HTREEITEM)SendMessageW(tree,
+             TVM_GETNEXTITEM, TVGN_CARET, (LPARAM)NULL);
+
+            info = (PCRYPTUI_SELECTSTORE_INFO_W)GetWindowLongPtrW(hwnd,
+             DWLP_USER);
+            if (!selection)
+            {
+                WCHAR title[MAX_STRING_LEN], error[MAX_STRING_LEN], *pTitle;
+
+                if (info->pwszTitle)
+                    pTitle = info->pwszTitle;
+                else
+                {
+                    LoadStringW(hInstance, IDS_SELECT_STORE_TITLE, title,
+                     sizeof(title) / sizeof(title[0]));
+                    pTitle = title;
+                }
+                LoadStringW(hInstance, IDS_SELECT_STORE, error,
+                 sizeof(error) / sizeof(error[0]));
+                MessageBoxW(hwnd, error, pTitle, MB_ICONEXCLAMATION | MB_OK);
+            }
+            else
+            {
+                /* FIXME: convert selection to store and return it */
+                free_store_info(tree);
+                EndDialog(hwnd, IDOK);
+            }
             ret = TRUE;
             break;
+        }
         case IDCANCEL:
             free_store_info(GetDlgItem(hwnd, IDC_STORE_LIST));
             EndDialog(hwnd, IDCANCEL);
@@ -579,8 +609,6 @@ static void add_oid_text_to_control(HWND hwnd, char *oid)
         add_unformatted_text_to_control(hwnd, &nl, 1);
     }
 }
-
-#define MAX_STRING_LEN 512
 
 struct OIDToString
 {
