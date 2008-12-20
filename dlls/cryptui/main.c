@@ -74,13 +74,54 @@ BOOL WINAPI CryptUIDlgCertMgr(PCCRYPTUI_CERT_MGR_STRUCT pCryptUICertMgr)
 }
 
 /* FIXME: real names are unknown, functions are undocumented */
-struct _CRYPTUI_SELECTSTORE_INFO_A;
-struct _CRYPTUI_SELECTSTORE_INFO_W;
+typedef struct _CRYPTUI_ENUM_SYSTEM_STORE_ARGS
+{
+    DWORD dwFlags;
+    void *pvSystemStoreLocationPara;
+} CRYPTUI_ENUM_SYSTEM_STORE_ARGS, *PCRYPTUI_ENUM_SYSTEM_STORE_ARGS;
+
+typedef struct _CRYPTUI_ENUM_DATA
+{
+    DWORD                           cStores;
+    HCERTSTORE                     *rghStore;
+    DWORD                           cEnumArgs;
+    PCRYPTUI_ENUM_SYSTEM_STORE_ARGS rgEnumArgs;
+} CRYPTUI_ENUM_DATA, *PCRYPTUI_ENUM_DATA;
+
+typedef BOOL (WINAPI *PFN_SELECTED_STORE_CB)(HCERTSTORE store, HWND hwnd,
+ void *pvArg);
+
+/* Values for dwFlags */
+#define CRYPTUI_ENABLE_SHOW_PHYSICAL_STORE 0x00000001
+
+typedef struct _CRYPTUI_SELECTSTORE_INFO_A
+{
+    DWORD                 dwSize;
+    HWND                  parent;
+    DWORD                 dwFlags;
+    LPSTR                 pszTitle;
+    LPSTR                 pszText;
+    CRYPTUI_ENUM_DATA    *pEnumData;
+    PFN_SELECTED_STORE_CB pfnSelectedStoreCallback;
+    void                 *pvArg;
+} CRYPTUI_SELECTSTORE_INFO_A, *PCRYPTUI_SELECTSTORE_INFO_A;
+
+typedef struct _CRYPTUI_SELECTSTORE_INFO_W
+{
+    DWORD                 dwSize;
+    HWND                  parent;
+    DWORD                 dwFlags;
+    LPWSTR                pwszTitle;
+    LPWSTR                pwszText;
+    CRYPTUI_ENUM_DATA    *pEnumData;
+    PFN_SELECTED_STORE_CB pfnSelectedStoreCallback;
+    void                 *pvArg;
+} CRYPTUI_SELECTSTORE_INFO_W, *PCRYPTUI_SELECTSTORE_INFO_W;
 
 /***********************************************************************
  *		CryptUIDlgSelectStoreA (CRYPTUI.@)
  */
-HCERTSTORE WINAPI CryptUIDlgSelectStoreA(struct _CRYPTUI_SELECTSTORE_INFO_A *info)
+HCERTSTORE WINAPI CryptUIDlgSelectStoreA(PCRYPTUI_SELECTSTORE_INFO_A info)
 {
     FIXME("(%p): stub\n", info);
     return NULL;
@@ -89,7 +130,7 @@ HCERTSTORE WINAPI CryptUIDlgSelectStoreA(struct _CRYPTUI_SELECTSTORE_INFO_A *inf
 /***********************************************************************
  *		CryptUIDlgSelectStoreW (CRYPTUI.@)
  */
-HCERTSTORE WINAPI CryptUIDlgSelectStoreW(struct _CRYPTUI_SELECTSTORE_INFO_W *info)
+HCERTSTORE WINAPI CryptUIDlgSelectStoreW(PCRYPTUI_SELECTSTORE_INFO_W info)
 {
     FIXME("(%p): stub\n", info);
     return NULL;
