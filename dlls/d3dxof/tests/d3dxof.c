@@ -227,7 +227,7 @@ static void test_dump(void)
       goto exit;
     }
 
-    printf("Load %d (%d) bytes\n", cbSize, strlen(pvData));
+    printf("Load %d bytes\n", cbSize);
 
     hr = pDirectXFileCreate(&lpDirectXFile);
     ok(hr == DXFILE_OK, "DirectXFileCreate: %x\n", hr);
