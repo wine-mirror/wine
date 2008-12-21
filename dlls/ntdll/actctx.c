@@ -1398,7 +1398,11 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
             if (assembly->type == ASSEMBLY_MANIFEST &&
                 memcmp(&assembly->id.version, &expected_ai->version, sizeof(assembly->id.version)))
             {
-                FIXME("wrong version for assembly manifest\n");
+                FIXME("wrong version for assembly manifest: %u.%u.%u.%u / %u.%u.%u.%u\n",
+                      expected_ai->version.major, expected_ai->version.minor,
+                      expected_ai->version.build, expected_ai->version.revision,
+                      assembly->id.version.major, assembly->id.version.minor,
+                      assembly->id.version.build, assembly->id.version.revision);
                 return FALSE;
             }
             else if (assembly->type == ASSEMBLY_SHARED_MANIFEST &&
