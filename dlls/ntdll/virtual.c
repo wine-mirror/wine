@@ -993,7 +993,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     struct stat st;
     struct file_view *view = NULL;
     char *ptr, *header_end;
-    int delta = 0;
+    INT_PTR delta = 0;
 
     /* zero-map the whole range */
 
