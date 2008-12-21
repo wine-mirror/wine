@@ -767,7 +767,7 @@ static void mixer_test_deviceW(int device)
 
     rc=mixerOpen(&mix, device, 0, 0, 0);
     ok(rc==MMSYSERR_NOERROR,
-       "mixerOpen: MMSYSERR_BADDEVICEID expected, got %s\n",mmsys_error(rc));
+       "mixerOpen: MMSYSERR_NOERROR expected, got %s\n",mmsys_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         rc=mixerOpen(&mix, device, 0, 0, CALLBACK_FUNCTION);
         ok(rc==MMSYSERR_INVALFLAG,
