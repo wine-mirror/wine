@@ -145,17 +145,17 @@ end:
     return rc;
 }
 
-static void *cabinet_alloc(ULONG cb)
+static void CDECL *cabinet_alloc(ULONG cb)
 {
     return msi_alloc(cb);
 }
 
-static void cabinet_free(void *pv)
+static void CDECL cabinet_free(void *pv)
 {
     msi_free(pv);
 }
 
-static INT_PTR cabinet_open(char *pszFile, int oflag, int pmode)
+static INT_PTR CDECL cabinet_open(char *pszFile, int oflag, int pmode)
 {
     HANDLE handle;
     DWORD dwAccess = 0;
@@ -191,7 +191,7 @@ static INT_PTR cabinet_open(char *pszFile, int oflag, int pmode)
     return (INT_PTR)handle;
 }
 
-static UINT cabinet_read(INT_PTR hf, void *pv, UINT cb)
+static UINT CDECL cabinet_read(INT_PTR hf, void *pv, UINT cb)
 {
     HANDLE handle = (HANDLE)hf;
     DWORD read;
@@ -202,7 +202,7 @@ static UINT cabinet_read(INT_PTR hf, void *pv, UINT cb)
     return 0;
 }
 
-static UINT cabinet_write(INT_PTR hf, void *pv, UINT cb)
+static UINT CDECL cabinet_write(INT_PTR hf, void *pv, UINT cb)
 {
     HANDLE handle = (HANDLE)hf;
     DWORD written;
@@ -213,20 +213,20 @@ static UINT cabinet_write(INT_PTR hf, void *pv, UINT cb)
     return 0;
 }
 
-static int cabinet_close(INT_PTR hf)
+static int CDECL cabinet_close(INT_PTR hf)
 {
     HANDLE handle = (HANDLE)hf;
     return CloseHandle(handle) ? 0 : -1;
 }
 
-static long cabinet_seek(INT_PTR hf, long dist, int seektype)
+static long CDECL cabinet_seek(INT_PTR hf, long dist, int seektype)
 {
     HANDLE handle = (HANDLE)hf;
     /* flags are compatible and so are passed straight through */
     return SetFilePointer(handle, dist, NULL, seektype);
 }
 
-static UINT msi_media_get_disk_info(MSIPACKAGE *package, MSIMEDIAINFO *mi)
+static UINT CDECL msi_media_get_disk_info(MSIPACKAGE *package, MSIMEDIAINFO *mi)
 {
     MSIRECORD *row;
     LPWSTR ptr;
@@ -374,7 +374,7 @@ static INT_PTR cabinet_close_file_info(FDINOTIFICATIONTYPE fdint,
     return 1;
 }
 
-static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
+static INT_PTR CDECL cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
 {
     TRACE("(%d)\n", fdint);
 
