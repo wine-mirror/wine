@@ -174,6 +174,16 @@ static const char * control_flags(DWORD fdwControl)
     return flags;
 }
 
+static void test_mixerClose(HMIXER mix)
+{
+    MMRESULT rc;
+
+    rc = mixerClose(mix);
+    ok(rc == MMSYSERR_NOERROR || rc == MMSYSERR_INVALHANDLE,
+       "mixerClose: MMSYSERR_NOERROR or MMSYSERR_INVALHANDLE expected, got %s\n",
+       mmsys_error(rc));
+}
+
 static void mixer_test_controlA(HMIXER mix, LPMIXERCONTROLA control)
 {
     MMRESULT rc;
@@ -378,11 +388,6 @@ static void mixer_test_deviceA(int device)
     ok(rc==MMSYSERR_NOERROR,
        "mixerOpen: MMSYSERR_NOERROR expected, got %s\n",mmsys_error(rc));
     if (rc==MMSYSERR_NOERROR) {
-        rc=mixerOpen(&mix, device, 0, 0, CALLBACK_FUNCTION);
-        ok(rc==MMSYSERR_INVALFLAG
-           || rc==MMSYSERR_NOTSUPPORTED, /* 98/ME */
-           "mixerOpen: MMSYSERR_INVALFLAG or MMSYSERR_NOTSUPPORTED expected, got %s\n", mmsys_error(rc));
-
         for (d=0;d<capsA.cDestinations;d++) {
             MIXERLINEA mixerlineA;
             mixerlineA.cbStruct = 0;
@@ -551,10 +556,7 @@ static void mixer_test_deviceA(int device)
               }
             }
         }
-        rc=mixerClose(mix);
-        ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_INVALHANDLE,
-           "mixerClose: MMSYSERR_NOERROR or MMSYSERR_INVALHANDLE expected, got %s\n",
-           mmsys_error(rc));
+        test_mixerClose(mix);
     }
 }
 
@@ -769,10 +771,6 @@ static void mixer_test_deviceW(int device)
     ok(rc==MMSYSERR_NOERROR,
        "mixerOpen: MMSYSERR_NOERROR expected, got %s\n",mmsys_error(rc));
     if (rc==MMSYSERR_NOERROR) {
-        rc=mixerOpen(&mix, device, 0, 0, CALLBACK_FUNCTION);
-        ok(rc==MMSYSERR_INVALFLAG,
-           "mixerOpen: MMSYSERR_INVALFLAG expected, got %s\n", mmsys_error(rc));
-
         for (d=0;d<capsW.cDestinations;d++) {
             MIXERLINEW mixerlineW;
             mixerlineW.cbStruct = 0;
@@ -957,17 +955,13 @@ static void mixer_test_deviceW(int device)
                 }
             }
         }
-        rc=mixerClose(mix);
-        ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_INVALHANDLE,
-           "mixerClose: MMSYSERR_NOERROR or MMSYSERR_INVALHANDLE expected, got %s\n",
-           mmsys_error(rc));
+        test_mixerClose(mix);
     }
 }
 
 static void mixer_testsA(void)
 {
     MIXERCAPSA capsA;
-    HMIXER mix;
     MMRESULT rc;
     UINT ndev, d;
 
@@ -981,11 +975,6 @@ static void mixer_testsA(void)
        "mixerGetDevCapsA: MMSYSERR_BADDEVICEID expected, got %s\n",
        mmsys_error(rc));
 
-    rc=mixerOpen(&mix, ndev+1, 0, 0, 0);
-    ok(rc==MMSYSERR_BADDEVICEID,
-       "mixerOpen: MMSYSERR_BADDEVICEID expected, got %s\n",
-       mmsys_error(rc));
-
     for (d=0;d<ndev;d++)
         mixer_test_deviceA(d);
 }
@@ -993,7 +982,6 @@ static void mixer_testsA(void)
 static void mixer_testsW(void)
 {
     MIXERCAPSW capsW;
-    HMIXER mix;
     MMRESULT rc;
     UINT ndev, d;
 
@@ -1009,17 +997,66 @@ static void mixer_testsW(void)
     if (rc==MMSYSERR_NOTSUPPORTED)
         return;
 
-    rc=mixerOpen(&mix, ndev+1, 0, 0, 0);
-    ok(rc==MMSYSERR_BADDEVICEID,
-       "mixerOpen: MMSYSERR_BADDEVICEID expected, got %s\n",
-       mmsys_error(rc));
-
     for (d=0;d<ndev;d++)
         mixer_test_deviceW(d);
 }
 
+static void test_mixerOpen()
+{
+    HMIXER mix;
+    MMRESULT rc;
+    UINT ndev, d;
+
+    ndev = mixerGetNumDevs();
+
+    /* Test mixerOpen with invalid device ID values. */
+    rc = mixerOpen(&mix, ndev + 1, 0, 0, 0);
+    ok(rc == MMSYSERR_BADDEVICEID,
+       "mixerOpen: MMSYSERR_BADDEVICEID expected, got %s\n",
+       mmsys_error(rc));
+
+    rc = mixerOpen(&mix, -1, 0, 0, 0);
+    ok(rc == MMSYSERR_BADDEVICEID,
+       "mixerOpen: MMSYSERR_BADDEVICEID expected, got %s\n",
+       mmsys_error(rc));
+
+    for (d = 0; d < ndev; d++) {
+        /* Test mixerOpen with valid device ID values and invalid parameters. */
+        rc = mixerOpen(&mix, d, 0, 0, CALLBACK_FUNCTION);
+        ok(rc == MMSYSERR_INVALFLAG
+           || rc == MMSYSERR_NOTSUPPORTED, /* 98/ME */
+           "mixerOpen: MMSYSERR_INVALFLAG expected, got %s\n",
+           mmsys_error(rc));
+
+        rc = mixerOpen(&mix, d, 0xdeadbeef, 0, CALLBACK_WINDOW);
+        ok(rc == MMSYSERR_INVALPARAM,
+           "mixerOpen: MMSYSERR_INVALPARAM expected, got %s\n",
+           mmsys_error(rc));
+
+        /* Test mixerOpen with a NULL dwCallback and CALLBACK_WINDOW flag. */
+        rc = mixerOpen(&mix, d, 0, 0, CALLBACK_WINDOW);
+        todo_wine
+        ok(rc == MMSYSERR_NOERROR,
+           "mixerOpen: MMSYSERR_NOERROR expected, got %s\n",
+           mmsys_error(rc));
+
+        if (rc == MMSYSERR_NOERROR)
+            test_mixerClose(mix);
+
+        /* Test mixerOpen with normal parameters. */
+        rc = mixerOpen(&mix, d, 0, 0, 0);
+        ok(rc == MMSYSERR_NOERROR,
+           "mixerOpen: MMSYSERR_NOERROR expected, got %s\n",
+           mmsys_error(rc));
+
+        if (rc == MMSYSERR_NOERROR)
+            test_mixerClose(mix);
+    }
+}
+
 START_TEST(mixer)
 {
+    test_mixerOpen();
     mixer_testsA();
     mixer_testsW();
 }
