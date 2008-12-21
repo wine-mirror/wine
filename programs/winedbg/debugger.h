@@ -300,6 +300,10 @@ extern void             break_suspend_execution(void);
 extern void             break_restart_execution(int count);
 extern int              break_add_condition(int bpnum, struct expr* exp);
 
+  /* crashdlg.c */
+extern BOOL             display_crash_dialog(void);
+extern int              msgbox_res_id(HWND hwnd, UINT textId, UINT captionId, UINT uType);
+
   /* dbg.y */
 extern void             parser_handle(HANDLE);
 extern int              input_read_line(const char* pfx, char* buffer, int size);
@@ -456,6 +460,8 @@ extern BOOL             dbg_init(HANDLE hProc, const WCHAR* in, BOOL invade);
 extern BOOL             dbg_load_module(HANDLE hProc, HANDLE hFile, const WCHAR* name, DWORD base, DWORD size);
 extern BOOL             dbg_get_debuggee_info(HANDLE hProcess, IMAGEHLP_MODULE* imh_mod);
 extern void             dbg_set_option(const char*, const char*);
+extern void             dbg_start_interactive(HANDLE hFile);
+extern void             dbg_init_console(void);
 
   /* gdbproxy.c */
 extern int              gdb_main(int argc, char* argv[]);

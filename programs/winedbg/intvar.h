@@ -36,3 +36,6 @@ INTERNAL_VAR(AlwaysShowThunks,          FALSE,          NULL,                   
 
    /* process manipulation */
 INTERNAL_VAR(AlsoDebugProcChild,        FALSE,          NULL,                   dbg_itype_unsigned_int)
+
+   /* automatic invocation on failure */
+INTERNAL_VAR(ShowCrashDialog,           TRUE,           NULL,                   dbg_itype_unsigned_int)

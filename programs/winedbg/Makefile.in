@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = winedbg.exe
 APPMODE   = -mconsole
 IMPORTS   = psapi dbghelp advapi32 kernel32 ntdll
-DELAYIMPORTS = user32
+DELAYIMPORTS = user32 gdi32
 EXTRALIBS = @LIBPOLL@
 
 C_SRCS = \
@@ -14,6 +14,7 @@ C_SRCS = \
 	be_ppc.c \
 	be_x86_64.c \
 	break.c \
+	crashdlg.c \
 	db_disasm.c \
 	display.c \
 	expr.c \
@@ -28,6 +29,8 @@ C_SRCS = \
 	tgt_module.c \
 	types.c \
 	winedbg.c
+
+RC_SRCS = rsrc.rc
 
 LEX_SRCS   = debug.l
 BISON_SRCS = dbg.y

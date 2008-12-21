@@ -556,8 +556,11 @@ static BOOL WINAPI ctrl_c_handler(DWORD dwCtrlType)
     return FALSE;
 }
 
-static void dbg_init_console(void)
+void dbg_init_console(void)
 {
+    /* set the output handle */
+    dbg_houtput = GetStdHandle(STD_OUTPUT_HANDLE);
+
     /* set our control-C handler */
     SetConsoleCtrlHandler(ctrl_c_handler, TRUE);
 
@@ -585,6 +588,23 @@ static int dbg_winedbg_usage(BOOL advanced)
     else
         dbg_printf("Usage:\n\twinedbg [ [ --gdb ] [ prog-name [ prog-args ] | <num> | file.mdmp | --help ]\n");
     return -1;
+}
+
+void dbg_start_interactive(HANDLE hFile)
+{
+    if (dbg_curr_process)
+    {
+        dbg_printf("WineDbg starting on pid %04x\n", dbg_curr_pid);
+        if (dbg_curr_process->active_debuggee) dbg_active_wait_for_first_exception();
+    }
+
+    dbg_interactiveP = TRUE;
+    parser_handle(hFile);
+
+    while (dbg_process_list)
+        dbg_process_list->process_io->close_process(dbg_process_list, FALSE);
+
+    dbg_save_internal_vars();
 }
 
 struct backend_cpu* be_cpu;
@@ -698,19 +718,7 @@ int main(int argc, char** argv)
     case start_error_init:      return -1;
     }
 
-    if (dbg_curr_process)
-    {
-        dbg_printf("WineDbg starting on pid %04x\n", dbg_curr_pid);
-        if (dbg_curr_process->active_debuggee) dbg_active_wait_for_first_exception();
-    }
-
-    dbg_interactiveP = TRUE;
-    parser_handle(hFile);
-
-    while (dbg_process_list)
-        dbg_process_list->process_io->close_process(dbg_process_list, FALSE);
-
-    dbg_save_internal_vars();
+    dbg_start_interactive(hFile);
 
     return 0;
 }

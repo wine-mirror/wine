@@ -27,6 +27,7 @@
 
 #include "debugger.h"
 #include "psapi.h"
+#include "resource.h"
 #include "winternl.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
@@ -45,9 +46,9 @@ static void dbg_init_current_thread(void* start)
 {
     if (start)
     {
-	if (dbg_curr_process->threads && 
+	if (dbg_curr_process->threads &&
             !dbg_curr_process->threads->next && /* first thread ? */
-	    DBG_IVAR(BreakAllThreadsStartup)) 
+	    DBG_IVAR(BreakAllThreadsStartup))
         {
 	    ADDRESS64   addr;
 
@@ -898,7 +899,16 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
         /* auto mode */
         argc--; argv++;
         ds = dbg_active_attach(argc, argv);
-        if (ds != start_ok) return ds;
+        if (ds != start_ok) {
+            msgbox_res_id(NULL, IDS_INVALID_PARAMS, IDS_AUTO_CAPTION, MB_OK);
+            return ds;
+        }
+        if (!display_crash_dialog()) {
+            dbg_init_console();
+            dbg_start_interactive(INVALID_HANDLE_VALUE);
+            return start_ok;
+        }
+
         hFile = parser_generate_command_file("echo Modules:", "info share",
                                              "echo Threads:", "info threads",
                                              "backtrace", "detach", NULL);
