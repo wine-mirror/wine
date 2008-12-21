@@ -1035,7 +1035,6 @@ static void test_mixerOpen()
 
         /* Test mixerOpen with a NULL dwCallback and CALLBACK_WINDOW flag. */
         rc = mixerOpen(&mix, d, 0, 0, CALLBACK_WINDOW);
-        todo_wine
         ok(rc == MMSYSERR_NOERROR,
            "mixerOpen: MMSYSERR_NOERROR expected, got %s\n",
            mmsys_error(rc));

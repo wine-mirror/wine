@@ -355,7 +355,7 @@ UINT  MIXER_Open(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
 
     case CALLBACK_WINDOW:
         mod.dwInstance = dwCallback;
-        if (!IsWindow((HWND)dwCallback))
+        if (dwCallback && !IsWindow((HWND)dwCallback))
             return MMSYSERR_INVALPARAM;
         break;
     }
