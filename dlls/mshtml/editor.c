@@ -137,7 +137,7 @@ static nsresult get_ns_command_state(NSContainer *This, const char *cmd, nsIComm
         return nsres;
     }
 
-    nsres = nsICommandManager_GetCommandState(cmdmgr, cmd, NULL, nsparam);
+    nsres = nsICommandManager_GetCommandState(cmdmgr, cmd, This->doc->window->nswindow, nsparam);
     if(NS_FAILED(nsres))
         ERR("GetCommandState(%s) failed: %08x\n", debugstr_a(cmd), nsres);
 
