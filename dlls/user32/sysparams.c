@@ -85,6 +85,7 @@ enum spi_index
     SPI_MINIMIZEDMETRICS_IDX,
     SPI_SETFOREGROUNDLOCKTIMEOUT_IDX,
     SPI_CARETWIDTH_IDX,
+    SPI_SETMOUSESPEED_IDX,
     SPI_INDEX_COUNT
 };
 
@@ -221,6 +222,8 @@ static const WCHAR SPI_SETFOREGROUNDLOCKTIMEOUT_REGKEY[]=     {'C','o','n','t','
 static const WCHAR SPI_SETFOREGROUNDLOCKTIMEOUT_VALNAME[]=    {'F','o','r','e','g','r','o','u','n','d','L','o','c','k','T','i','m','e','o','u','t',0};
 static const WCHAR SPI_CARETWIDTH_REGKEY[]=                   {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_CARETWIDTH_VALNAME[]=                  {'C','a','r','e','t','W','i','d','t','h',0};
+static const WCHAR SPI_SETMOUSESPEED_REGKEY[]=                {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+static const WCHAR SPI_SETMOUSESPEED_VALNAME[]=               {'M','o','u','s','e','S','e','n','s','i','t','i','v','i','t','y',0};
 
 /* FIXME - real values */
 static const WCHAR SPI_SETSCREENSAVERRUNNING_REGKEY[]=   {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
@@ -312,6 +315,7 @@ static BOOL snap_to_default_button = FALSE;
 static BOOL swap_buttons = FALSE;
 static UINT foreground_lock_timeout = 0;
 static UINT caret_width = 1;
+static UINT mouse_sensitivity = 10;
 static BYTE user_prefs[4];
 
 static MINIMIZEDMETRICS minimized_metrics =
@@ -2159,20 +2163,20 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_SETSHOWIMEUI);		/*    111  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
 
     case SPI_GETMOUSESPEED:             /*    112  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    {
-        int buf[3];
-        ret = SystemParametersInfoW (SPI_GETMOUSE, 0, buf, fWinIni);
-        *(INT *)pvParam = buf[2];
+        ret = get_uint_param( SPI_SETMOUSESPEED_IDX,
+                              SPI_SETMOUSESPEED_REGKEY,
+                              SPI_SETMOUSESPEED_VALNAME,
+                              &mouse_sensitivity, pvParam );
         break;
-    }
 
     case SPI_SETMOUSESPEED:                     /*    113  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    {
-        ret = save_int_param( SPI_SETMOUSE_REGKEY, SPI_SETMOUSE_VALNAME3,
-                              &mouse_speed, PtrToInt(pvParam), fWinIni);
+        if (!pvParam) return FALSE;
+        ret = set_uint_param( SPI_SETMOUSESPEED_IDX,
+                              SPI_SETMOUSESPEED_REGKEY,
+                              SPI_SETMOUSESPEED_VALNAME,
+                              &mouse_sensitivity, *(UINT *) pvParam, fWinIni );
 
         break;
-    }
 
     case SPI_GETSCREENSAVERRUNNING:
         ret = get_bool_param( SPI_SETSCREENSAVERRUNNING_IDX,
