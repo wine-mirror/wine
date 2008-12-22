@@ -341,6 +341,10 @@ int strcasecmp(const char *str1, const char *str2);
 # endif
 #endif /* !defined(HAVE_STRCASECMP) */
 
+#ifndef HAVE_SYMLINK
+int symlink(const char *from, const char *to);
+#endif
+
 #ifndef HAVE_USLEEP
 int usleep (unsigned int useconds);
 #endif /* !defined(HAVE_USLEEP) */

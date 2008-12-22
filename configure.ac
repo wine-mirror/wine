@@ -1417,6 +1417,7 @@ AC_CHECK_FUNCS(\
 	strtold \
 	strtoll \
 	strtoull \
+	symlink \
 	tcgetattr \
 	thr_kill2 \
 	timegm \

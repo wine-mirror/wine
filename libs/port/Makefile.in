@@ -29,6 +29,7 @@ C_SRCS = \
 	strcasecmp.c \
 	strerror.c \
 	strncasecmp.c \
+	symlink.c \
 	usleep.c
 
 all: $(MODULE)
