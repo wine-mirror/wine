@@ -276,8 +276,13 @@ static ULONG WINAPI IDirectMusicPortDownloadImpl_Release (LPDIRECTMUSICPORTDOWNL
 /* IDirectMusicPortDownload Interface follow: */
 static HRESULT WINAPI IDirectMusicPortDownloadImpl_GetBuffer (LPDIRECTMUSICPORTDOWNLOAD iface, DWORD dwDLId, IDirectMusicDownload** ppIDMDownload) {
 	ICOM_THIS_MULTI(IDirectMusicPortImpl, lpDownloadVtbl, iface);
+
 	FIXME("(%p/%p)->(%d, %p): stub\n", This, iface, dwDLId, ppIDMDownload);
-	return S_OK;
+
+	if (!ppIDMDownload)
+		return E_POINTER;
+
+	return DMUSIC_CreateDirectMusicDownloadImpl(&IID_IDirectMusicDownload, (LPVOID*)ppIDMDownload, NULL);
 }
 
 static HRESULT WINAPI IDirectMusicPortDownloadImpl_AllocateBuffer (LPDIRECTMUSICPORTDOWNLOAD iface, DWORD dwSize, IDirectMusicDownload** ppIDMDownload) {
