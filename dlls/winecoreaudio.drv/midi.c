@@ -689,6 +689,10 @@ static DWORD MIDIIn_AddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
     }
 
     EnterCriticalSection(&midiInLock);
+    lpMidiHdr->dwFlags &= ~WHDR_DONE;
+    lpMidiHdr->dwFlags |= MHDR_INQUEUE;
+    lpMidiHdr->dwBytesRecorded = 0;
+    lpMidiHdr->lpNext = 0;
     if (sources[wDevID].lpQueueHdr == 0) {
 	sources[wDevID].lpQueueHdr = lpMidiHdr;
     } else {
