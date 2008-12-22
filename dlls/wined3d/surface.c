@@ -691,6 +691,9 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
     BOOL bpp;
     RECT local_rect;
     BOOL srcIsUpsideDown;
+    GLint rowLen = 0;
+    GLint skipPix = 0;
+    GLint skipRow = 0;
 
     if(wined3d_settings.rendertargetlock_mode == RTL_DISABLE) {
         static BOOL warned = FALSE;
@@ -786,13 +789,41 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
     if(This->Flags & SFLAG_PBO) {
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, This->pbo));
         checkGLcall("glBindBufferARB");
+        if(mem != NULL) {
+            ERR("mem not null for pbo -- unexpected\n");
+            mem = NULL;
+        }
     }
 
-    glReadPixels(local_rect.left, local_rect.top,
+    /* Save old pixel store pack state */
+    glGetIntegerv(GL_PACK_ROW_LENGTH, &rowLen);
+    checkGLcall("glIntegerv");
+    glGetIntegerv(GL_PACK_SKIP_PIXELS, &skipPix);
+    checkGLcall("glIntegerv");
+    glGetIntegerv(GL_PACK_SKIP_ROWS, &skipRow);
+    checkGLcall("glIntegerv");
+
+    /* Setup pixel store pack state -- to glReadPixels into the correct place */
+    glPixelStorei(GL_PACK_ROW_LENGTH, This->currentDesc.Width);
+    checkGLcall("glPixelStorei");
+    glPixelStorei(GL_PACK_SKIP_PIXELS, local_rect.left);
+    checkGLcall("glPixelStorei");
+    glPixelStorei(GL_PACK_SKIP_ROWS, local_rect.top);
+    checkGLcall("glPixelStorei");
+
+    glReadPixels(local_rect.left, (!srcIsUpsideDown) ? (This->currentDesc.Height - local_rect.bottom) : local_rect.top ,
                  local_rect.right - local_rect.left,
                  local_rect.bottom - local_rect.top,
                  fmt, type, mem);
     checkGLcall("glReadPixels");
+
+    /* Reset previous pixel store pack state */
+    glPixelStorei(GL_PACK_ROW_LENGTH, rowLen);
+    checkGLcall("glPixelStorei");
+    glPixelStorei(GL_PACK_SKIP_PIXELS, skipPix);
+    checkGLcall("glPixelStorei");
+    glPixelStorei(GL_PACK_SKIP_ROWS, skipRow);
+    checkGLcall("glPixelStorei");
 
     if(This->Flags & SFLAG_PBO) {
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
@@ -828,7 +859,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
         }
 
         top = mem + pitch * local_rect.top;
-        bottom = mem + pitch * ( local_rect.bottom - local_rect.top - 1);
+        bottom = mem + pitch * (local_rect.bottom - 1);
         for(i = 0; i < (local_rect.bottom - local_rect.top) / 2; i++) {
             memcpy(row, top + off, len);
             memcpy(top + off, bottom + off, len);
