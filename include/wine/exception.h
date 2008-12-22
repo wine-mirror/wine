@@ -233,7 +233,7 @@ extern void __wine_enter_vm86( CONTEXT *context );
 
 #ifndef USE_COMPILER_EXCEPTIONS
 
-extern void WINAPI RtlUnwind(PVOID,PVOID,PEXCEPTION_RECORD,PVOID);
+NTSYSAPI void WINAPI RtlUnwind(PVOID,PVOID,PEXCEPTION_RECORD,PVOID);
 
 /* wrapper for RtlUnwind since it clobbers registers on Windows */
 static inline void __wine_rtl_unwind( EXCEPTION_REGISTRATION_RECORD* frame, EXCEPTION_RECORD *record )
