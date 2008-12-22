@@ -91,10 +91,6 @@ static void test_get_set_vertex_shader(IDirect3DDevice9 *device_ptr)
     int shader_refcount = 0;
     int i = 0;
 
-    hret = IDirect3DDevice9_CreateVertexShader(device_ptr, NULL, &shader_ptr);
-    ok(hret == D3DERR_INVALIDCALL, "CreateVertexShader returned %#x, expected D3DERR_INVALIDCALL (%#x).\n",
-            hret, D3DERR_INVALIDCALL);
-
     hret = IDirect3DDevice9_CreateVertexShader(device_ptr, simple_vs, &shader_ptr);
     ok(hret == D3D_OK && shader_ptr != NULL, "CreateVertexShader returned: hret 0x%x, shader_ptr %p. "
         "Expected hret 0x%x, shader_ptr != %p. Aborting.\n", hret, shader_ptr, D3D_OK, NULL);
@@ -158,10 +154,6 @@ static void test_get_set_pixel_shader(IDirect3DDevice9 *device_ptr)
     HRESULT hret = 0;
     int shader_refcount = 0;
     int i = 0;
-
-    hret = IDirect3DDevice9_CreatePixelShader(device_ptr, NULL, &shader_ptr);
-    ok(hret == D3DERR_INVALIDCALL, "CreatePixelShader returned %#x, expected D3DERR_INVALIDCALL (%#x).\n",
-            hret, D3DERR_INVALIDCALL);
 
     hret = IDirect3DDevice9_CreatePixelShader(device_ptr, simple_ps, &shader_ptr);
     ok(hret == D3D_OK && shader_ptr != NULL, "CreatePixelShader returned: hret 0x%x, shader_ptr %p. "
