@@ -71,7 +71,7 @@ BEGIN
     CONTROL     "Allow DirectX apps to stop the &mouse leaving their window",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
     CONTROL     "Allow the window manager to &decorate the windows",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
     CONTROL     "Allow the &window manager to control the windows",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
-    CONTROL     "Emulate a virtual &desktop",IDC_ENABLE_DESKTOP,"Button",
+    CONTROL     "&Emulate a virtual desktop",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
     LTEXT       "Desktop &size:",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
     LTEXT       "X",IDC_DESKTOP_BY,109,70,8,8,WS_DISABLED
