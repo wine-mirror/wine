@@ -134,19 +134,19 @@ HCATINFO WINAPI CryptCATAdminAddCatalog(HCATADMIN catAdmin, PWSTR catalogFile,
     {
         FIXME("NULL basename not handled\n");
         SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
+        return NULL;
     }
     if (!ca || ca->magic != CATADMIN_MAGIC || !catalogFile || flags)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
+        return NULL;
     }
 
     len = strlenW(ca->path) + strlenW(selectBaseName) + 2;
     if (!(target = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
     {
         SetLastError(ERROR_OUTOFMEMORY);
-        return FALSE;
+        return NULL;
     }
     strcpyW(target, ca->path);
     strcatW(target, slashW);
@@ -161,10 +161,10 @@ HCATINFO WINAPI CryptCATAdminAddCatalog(HCATADMIN catAdmin, PWSTR catalogFile,
     {
         HeapFree(GetProcessHeap(), 0, target);
         SetLastError(ERROR_OUTOFMEMORY);
-        return FALSE;
+        return NULL;
     }
     ci->magic = CATINFO_MAGIC;
-    strcpyW(ci->file, selectBaseName);
+    strcpyW(ci->file, target);
 
     HeapFree(GetProcessHeap(), 0, target);
     return ci;
