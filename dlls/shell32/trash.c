@@ -215,7 +215,7 @@ static char *create_trashinfo(const char *info_dir, const char *file_path)
 {
     const char *base_name;
     char *filename_buffer;
-    unsigned int seed = (unsigned int)time(NULL);
+    ULONG seed = GetTickCount();
     int i;
 
     errno = ENOMEM;       /* out-of-memory is the only case when errno isn't set */
@@ -240,7 +240,7 @@ static char *create_trashinfo(const char *info_dir, const char *file_path)
     
     for (i=0; i<1000; i++)
     {
-        sprintf(filename_buffer, "%s-%08x", base_name, rand_r(&seed));
+        sprintf(filename_buffer, "%s-%08x", base_name, RtlRandom(&seed));
         if (try_create_trashinfo_file(info_dir, filename_buffer, file_path))
             return filename_buffer;
     }
