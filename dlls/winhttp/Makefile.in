@@ -6,6 +6,7 @@ MODULE    = winhttp.dll
 IMPORTLIB = winhttp
 IMPORTS   = shlwapi kernel32
 DELAYIMPORTS = crypt32
+EXTRALIBS = @SOCKETLIBS@
 
 C_SRCS = \
 	cookie.c \

@@ -351,6 +351,7 @@ AC_CHECK_HEADERS(\
 	termios.h \
 	unistd.h \
 	utime.h \
+	winsock2.h \
 	valgrind/memcheck.h \
 	valgrind/valgrind.h
 )
@@ -1334,7 +1335,7 @@ dnl Mingw needs explicit msvcrt for linking libwine and winsock for wininet
 case $host_os in
   mingw32*)
     AC_SUBST(CRTLIBS,"-lmsvcrt")
-    AC_SUBST(SOCKETLIBS,"-lws2_32")
+    AC_SUBST(SOCKETLIBS,"-L\$(TOPOBJDIR)/dlls/ws2_32 -lws2_32")
     ;;
 esac
 
