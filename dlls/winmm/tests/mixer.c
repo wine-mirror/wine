@@ -1016,8 +1016,9 @@ static void test_mixerOpen()
        mmsys_error(rc));
 
     rc = mixerOpen(&mix, -1, 0, 0, 0);
-    ok(rc == MMSYSERR_BADDEVICEID,
-       "mixerOpen: MMSYSERR_BADDEVICEID expected, got %s\n",
+    ok(rc == MMSYSERR_BADDEVICEID ||
+       rc == MMSYSERR_INVALHANDLE, /* NT4/W2K */
+       "mixerOpen: MMSYSERR_BADDEVICEID or MMSYSERR_INVALHANDLE expected, got %s\n",
        mmsys_error(rc));
 
     for (d = 0; d < ndev; d++) {
