@@ -23,18 +23,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
 /* IDirectMusicPortImpl IUnknown part: */
 static HRESULT WINAPI IDirectMusicPortImpl_QueryInterface (LPDIRECTMUSICPORT iface, REFIID riid, LPVOID *ppobj) {
-	IDirectMusicPortImpl *This = (IDirectMusicPortImpl *)iface;
+	ICOM_THIS_MULTI(IDirectMusicPortImpl, lpVtbl, iface);
+
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
 	if (IsEqualIID (riid, &IID_IUnknown) ||
 	    IsEqualGUID(riid, &IID_IDirectMusicPort) ||
-	    IsEqualGUID(riid, &IID_IDirectMusicPort8) ||
-	    IsEqualGUID(riid, &IID_IDirectMusicPortDownload) ||
-	    IsEqualGUID(riid, &IID_IDirectMusicPortDownload8) ||
-	    IsEqualGUID(riid, &IID_IDirectMusicThru) ||
-	    IsEqualGUID(riid, &IID_IDirectMusicThru8)) {
-		IUnknown_AddRef(iface);
-		*ppobj = This;
+	    IsEqualGUID(riid, &IID_IDirectMusicPort8)) {
+		*ppobj = &This->lpVtbl;
+		IDirectMusicPort_AddRef((LPDIRECTMUSICPORT)*ppobj);
+		return S_OK;
+	} else if (IsEqualGUID(riid, &IID_IDirectMusicPortDownload) ||
+		   IsEqualGUID(riid, &IID_IDirectMusicPortDownload8)) {
+		*ppobj = &This->lpDownloadVtbl;
+		IDirectMusicPortDownload_AddRef((LPDIRECTMUSICPORTDOWNLOAD)*ppobj);
+		return S_OK;
+	} else if (IsEqualGUID(riid, &IID_IDirectMusicThru) ||
+		   IsEqualGUID(riid, &IID_IDirectMusicThru8)) {
+		*ppobj = &This->lpThruVtbl;
+		IDirectMusicThru_AddRef((LPDIRECTMUSICTHRU)*ppobj);
 		return S_OK;
 	}
 	WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
