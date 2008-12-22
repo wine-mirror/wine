@@ -327,6 +327,9 @@ static void test_crypt_ui_wiz_import(void)
     BOOL ret;
     CRYPTUI_WIZ_IMPORT_SRC_INFO info;
     HCERTSTORE store;
+    PCCERT_CONTEXT cert;
+    PCCRL_CONTEXT crl;
+    DWORD count;
 
     if (!pCryptUIWizImport)
     {
@@ -506,6 +509,141 @@ static void test_crypt_ui_wiz_import(void)
         }
     }
     CertFreeCertificateContext(info.u.pCertContext);
+
+    info.u.hCertStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    CertAddEncodedCertificateToStore(info.u.hCertStore, X509_ASN_ENCODING,
+     v1CertWithValidPubKey, sizeof(v1CertWithValidPubKey),
+     CERT_STORE_ADD_ALWAYS, NULL);
+    CertAddEncodedCRLToStore(info.u.hCertStore, X509_ASN_ENCODING, signedCRL,
+     sizeof(signedCRL), CERT_STORE_ADD_ALWAYS, NULL);
+    info.dwSubjectChoice = CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_STORE;
+    /* The ALLOW flags aren't allowed with a store as the source if the source
+     * contains types other than those allowed.
+     */
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    SetLastError(0xdeadbeef);
+    ret = CryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CERT,
+     0, NULL, &info, store);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "expected E_INVALIDARG, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CRL,
+     0, NULL, &info, store);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "expected E_INVALIDARG, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CryptUIWizImport(CRYPTUI_WIZ_NO_UI |
+     CRYPTUI_WIZ_IMPORT_NO_CHANGE_DEST_STORE |
+     CRYPTUI_WIZ_IMPORT_ALLOW_CERT | CRYPTUI_WIZ_IMPORT_ALLOW_CRL, 0, NULL,
+     &info, store);
+    todo_wine
+    ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        count = 0;
+        cert = NULL;
+        do {
+            cert = CertEnumCertificatesInStore(store, cert);
+            if (cert)
+                count++;
+        } while (cert);
+        ok(count == 1, "expected 1 cert, got %d\n", count);
+        count = 0;
+        crl = NULL;
+        do {
+            crl = CertEnumCRLsInStore(store, crl);
+            if (crl)
+                count++;
+        } while (cert);
+        ok(count == 1, "expected 1 CRL, got %d\n", count);
+    }
+    CertCloseStore(store, 0);
+    CertCloseStore(info.u.hCertStore, 0);
+
+    /* If the ALLOW flags match the content of the store, the store can be
+     * imported.
+     */
+    info.u.hCertStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    CertAddEncodedCertificateToStore(info.u.hCertStore, X509_ASN_ENCODING,
+     v1CertWithValidPubKey, sizeof(v1CertWithValidPubKey),
+     CERT_STORE_ADD_ALWAYS, NULL);
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    SetLastError(0xdeadbeef);
+    ret = CryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CERT,
+     0, NULL, &info, store);
+    todo_wine
+    ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        count = 0;
+        cert = NULL;
+        do {
+            cert = CertEnumCertificatesInStore(store, cert);
+            if (cert)
+                count++;
+        } while (cert);
+        ok(count == 1, "expected 1 cert, got %d\n", count);
+        count = 0;
+        crl = NULL;
+        do {
+            crl = CertEnumCRLsInStore(store, crl);
+            if (crl)
+                count++;
+        } while (cert);
+        ok(count == 0, "expected 0 CRLs, got %d\n", count);
+    }
+    SetLastError(0xdeadbeef);
+    ret = CryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CRL,
+     0, NULL, &info, store);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "expected E_INVALIDARG, got %08x\n", GetLastError());
+    CertCloseStore(store, 0);
+    CertCloseStore(info.u.hCertStore, 0);
+
+    /* Again, if the ALLOW flags match the content of the store, the store can
+     * be imported.
+     */
+    info.u.hCertStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    CertAddEncodedCRLToStore(info.u.hCertStore, X509_ASN_ENCODING, signedCRL,
+     sizeof(signedCRL), CERT_STORE_ADD_ALWAYS, NULL);
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    SetLastError(0xdeadbeef);
+    ret = CryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CRL,
+     0, NULL, &info, store);
+    todo_wine
+    ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        count = 0;
+        cert = NULL;
+        do {
+            cert = CertEnumCertificatesInStore(store, cert);
+            if (cert)
+                count++;
+        } while (cert);
+        ok(count == 0, "expected 0 certs, got %d\n", count);
+        count = 0;
+        crl = NULL;
+        do {
+            crl = CertEnumCRLsInStore(store, crl);
+            if (crl)
+                count++;
+        } while (cert);
+        ok(count == 1, "expected 1 CRL, got %d\n", count);
+    }
+    SetLastError(0xdeadbeef);
+    ret = CryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CERT,
+     0, NULL, &info, store);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "expected E_INVALIDARG, got %08x\n", GetLastError());
+    CertCloseStore(store, 0);
+    CertCloseStore(info.u.hCertStore, 0);
 
     UnhookWindowsHookEx(hook);
 }
