@@ -371,7 +371,6 @@ static void set_bool_pref(nsIPrefBranch *pref, const char *pref_name, BOOL val)
 
 static void set_profile(void)
 {
-    nsIPrefBranch *pref;
     nsIProfile *profile;
     PRBool exists = FALSE;
     nsresult nsres;
@@ -397,6 +396,12 @@ static void set_profile(void)
         ERR("SetCurrentProfile failed: %08x\n", nsres);
 
     nsIProfile_Release(profile);
+}
+
+static void set_preferences(void)
+{
+    nsIPrefBranch *pref;
+    nsresult nsres;
 
     nsres = nsIServiceManager_GetServiceByContractID(pServMgr, NS_PREFERENCES_CONTRACTID,
             &IID_nsIPrefBranch, (void**)&pref);
@@ -469,6 +474,7 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
     }
 
     set_profile();
+    set_preferences();
 
     nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_MEMORY_CONTRACTID,
             NULL, &IID_nsIMemory, (void**)&nsmem);
