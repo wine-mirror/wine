@@ -1410,6 +1410,7 @@ AC_CHECK_FUNCS(\
 	sigaltstack \
 	sigprocmask \
 	snprintf \
+	socketpair \
 	spawnvp \
 	statfs \
 	statvfs \
