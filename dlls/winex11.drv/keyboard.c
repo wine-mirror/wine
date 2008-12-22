@@ -2126,7 +2126,7 @@ UINT X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 {
     Display *display = thread_init_display();
 
-#define returnMVK(value) { TRACE("returning 0x%x.\n",value); return value; }
+#define returnMVK(value) do { TRACE("returning 0x%x.\n",value); return value; } while(0)
 
     TRACE("wCode=0x%x, wMapType=%d, hkl %p\n", wCode, wMapType, hkl);
     if (!match_x11_keyboard_layout(hkl))
