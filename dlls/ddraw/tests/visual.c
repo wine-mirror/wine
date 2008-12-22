@@ -739,28 +739,28 @@ static void alpha_test(IDirect3DDevice7 *device)
     green = (color & 0x0000ff00) >>  8;
     blue =  (color & 0x000000ff);
     ok(red >= 0xbe && red <= 0xc0 && green >= 0x39 && green <= 0x41 && blue == 0x00,
-       "SRCALPHA on frame buffer returned color %08x, expected 0x00bf4000\n", color);
+       "SRCALPHA on frame buffer returned color 0x%08x, expected 0x00bf4000\n", color);
 
     color = getPixelColor(device, 160, 120);
     red =   (color & 0x00ff0000) >> 16;
     green = (color & 0x0000ff00) >>  8;
     blue =  (color & 0x000000ff);
     ok(red == 0x00 && green == 0x00 && blue >= 0xfe && blue <= 0xff ,
-       "DSTALPHA on frame buffer returned color %08x, expected 0x00ff0000\n", color);
+       "DSTALPHA on frame buffer returned color 0x%08x, expected 0x000000ff\n", color);
 
     color = getPixelColor(device, 480, 360);
     red =   (color & 0x00ff0000) >> 16;
     green = (color & 0x0000ff00) >>  8;
     blue =  (color & 0x000000ff);
     ok(red >= 0xbe && red <= 0xc0 && green >= 0x39 && green <= 0x41 && blue == 0x00,
-       "SRCALPHA on texture returned color %08x, expected bar\n", color);
+       "SRCALPHA on texture returned color 0x%08x, expected 0x00bf4000\n", color);
 
     color = getPixelColor(device, 480, 120);
     red =   (color & 0x00ff0000) >> 16;
     green = (color & 0x0000ff00) >>  8;
     blue =  (color & 0x000000ff);
     ok(red >= 0x7e && red <= 0x81 && green == 0x00 && blue >= 0x7e && blue <= 0x81,
-       "DSTALPHA on texture returned color %08x, expected foo\n", color);
+       "DSTALPHA on texture returned color 0x%08x, expected 0x00800080\n", color);
 
     out:
     if(offscreen) IDirectDrawSurface7_Release(offscreen);
