@@ -219,6 +219,8 @@ static nsrefcnt NSAPI nsChannel_Release(nsIHttpChannel *iface)
             nsIChannel_Release(This->channel);
         if(This->http_channel)
             nsIHttpChannel_Release(This->http_channel);
+        if(This->owner)
+            nsISupports_Release(This->owner);
         if(This->post_data_stream)
             nsIInputStream_Release(This->post_data_stream);
         if(This->load_group)
