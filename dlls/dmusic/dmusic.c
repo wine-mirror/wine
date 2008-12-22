@@ -108,8 +108,16 @@ static HRESULT WINAPI IDirectMusic8Impl_EnumPort(LPDIRECTMUSIC8 iface, DWORD dwI
 
 static HRESULT WINAPI IDirectMusic8Impl_CreateMusicBuffer (LPDIRECTMUSIC8 iface, LPDMUS_BUFFERDESC pBufferDesc, LPDIRECTMUSICBUFFER** ppBuffer, LPUNKNOWN pUnkOuter) {
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
-	FIXME("(%p, %p, %p, %p): stub\n", This, pBufferDesc, ppBuffer, pUnkOuter);
-	return S_OK;
+
+	TRACE("(%p, %p, %p, %p)\n", This, pBufferDesc, ppBuffer, pUnkOuter);
+
+	if (pUnkOuter)
+		return CLASS_E_NOAGGREGATION;
+
+	if (!pBufferDesc || !ppBuffer)
+		return E_POINTER;
+
+	return DMUSIC_CreateDirectMusicBufferImpl(&IID_IDirectMusicBuffer, (LPVOID)ppBuffer, NULL);
 }
 
 static HRESULT WINAPI IDirectMusic8Impl_CreatePort (LPDIRECTMUSIC8 iface, REFCLSID rclsidPort, LPDMUS_PORTPARAMS pPortParams, LPDIRECTMUSICPORT* ppPort, LPUNKNOWN pUnkOuter) {
