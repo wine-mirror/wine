@@ -3443,13 +3443,36 @@ static HCERTSTORE choose_store_for_cert(PCCERT_CONTEXT cert)
      CERT_SYSTEM_STORE_CURRENT_USER, storeName);
 }
 
+static BOOL import_cert(PCCERT_CONTEXT cert, HCERTSTORE hDestCertStore)
+{
+    HCERTSTORE store;
+    BOOL ret;
+
+    if (!cert)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if (hDestCertStore) store = hDestCertStore;
+    else
+    {
+        if (!(store = choose_store_for_cert(cert)))
+        {
+            WARN("unable to open certificate store\n");
+            return FALSE;
+        }
+    }
+    ret = CertAddCertificateContextToStore(store, cert,
+     CERT_STORE_ADD_REPLACE_EXISTING, NULL);
+    if (!hDestCertStore) CertCloseStore(store, 0);
+    return ret;
+}
+
 BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardTitle,
                              PCCRYPTUI_WIZ_IMPORT_SRC_INFO pImportSrc, HCERTSTORE hDestCertStore)
 {
     BOOL ret;
-    HCERTSTORE store;
     const CERT_CONTEXT *cert;
-    BOOL freeCert = FALSE;
 
     TRACE("(0x%08x, %p, %s, %p, %p)\n", dwFlags, hwndParent, debugstr_w(pwszWizardTitle),
           pImportSrc, hDestCertStore);
@@ -3472,35 +3495,19 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
             return FALSE;
         }
         else
-            freeCert = TRUE;
+        {
+            ret = import_cert(cert, hDestCertStore);
+            CertFreeCertificateContext(cert);
+        }
         break;
     case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_CONTEXT:
-        cert = pImportSrc->u.pCertContext;
-        if (!cert)
-        {
-            SetLastError(E_INVALIDARG);
-            return FALSE;
-        }
+        ret = import_cert(pImportSrc->u.pCertContext, hDestCertStore);
         break;
     default:
         FIXME("source type not implemented: %u\n", pImportSrc->dwSubjectChoice);
         SetLastError(E_INVALIDARG);
         return FALSE;
     }
-    if (hDestCertStore) store = hDestCertStore;
-    else
-    {
-        if (!(store = choose_store_for_cert(cert)))
-        {
-            WARN("unable to open certificate store\n");
-            CertFreeCertificateContext(cert);
-            return FALSE;
-        }
-    }
-    ret = CertAddCertificateContextToStore(store, cert, CERT_STORE_ADD_REPLACE_EXISTING, NULL);
 
-    if (!hDestCertStore) CertCloseStore(store, 0);
-    if (freeCert)
-        CertFreeCertificateContext(cert);
     return ret;
 }
