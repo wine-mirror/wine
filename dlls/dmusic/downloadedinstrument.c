@@ -27,7 +27,8 @@ static HRESULT WINAPI IDirectMusicDownloadedInstrumentImpl_QueryInterface (LPDIR
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
 	if (IsEqualIID (riid, &IID_IUnknown)
-		|| IsEqualIID (riid, &IID_IDirectMusicDownloadedInstrument)) {
+		|| IsEqualIID (riid, &IID_IDirectMusicDownloadedInstrument)
+		|| IsEqualIID (riid, &IID_IDirectMusicDownloadedInstrument8)) {
 		IUnknown_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
