@@ -94,7 +94,7 @@ typedef struct
     BOOL bIsDirectory;
     LPWSTR lpszName;
     DWORD nSize;
-    struct tm tmLastModified;
+    SYSTEMTIME tmLastModified;
     unsigned short permissions;
 } FILEPROPERTIESW, *LPFILEPROPERTIESW;
 
@@ -3386,9 +3386,7 @@ static BOOL FTP_ConvertFileProp(LPFILEPROPERTIESW lpafp, LPWIN32_FIND_DATAW lpFi
 
     if (lpafp)
     {
-	/* Convert 'Unix' time to Windows time */
-	RtlSecondsSince1970ToTime(mktime(&lpafp->tmLastModified),
-				  (LARGE_INTEGER *) &(lpFindFileData->ftLastAccessTime));
+        SystemTimeToFileTime( &lpafp->tmLastModified, &lpFindFileData->ftLastAccessTime );
 	lpFindFileData->ftLastWriteTime = lpFindFileData->ftLastAccessTime;
 	lpFindFileData->ftCreationTime = lpFindFileData->ftLastAccessTime;
 	
@@ -3456,12 +3454,12 @@ static BOOL FTP_ParseNextFile(INT nSocket, LPCWSTR lpszSearchFile, LPFILEPROPERT
                 lpfp->nSize = atol(pszToken);
             }
             
-            lpfp->tmLastModified.tm_sec  = 0;
-            lpfp->tmLastModified.tm_min  = 0;
-            lpfp->tmLastModified.tm_hour = 0;
-            lpfp->tmLastModified.tm_mday = 0;
-            lpfp->tmLastModified.tm_mon  = 0;
-            lpfp->tmLastModified.tm_year = 0;
+            lpfp->tmLastModified.wSecond = 0;
+            lpfp->tmLastModified.wMinute = 0;
+            lpfp->tmLastModified.wHour   = 0;
+            lpfp->tmLastModified.wDay    = 0;
+            lpfp->tmLastModified.wMonth  = 0;
+            lpfp->tmLastModified.wYear   = 0;
             
             /* Determine month */
             pszToken = strtok(NULL, szSpace);
@@ -3469,34 +3467,31 @@ static BOOL FTP_ParseNextFile(INT nSocket, LPCWSTR lpszSearchFile, LPFILEPROPERT
             if(strlen(pszToken) >= 3) {
                 pszToken[3] = 0;
                 if((pszTmp = StrStrIA(szMonths, pszToken)))
-                    lpfp->tmLastModified.tm_mon = ((pszTmp - szMonths) / 3)+1;
+                    lpfp->tmLastModified.wMonth = ((pszTmp - szMonths) / 3)+1;
             }
             /* Determine day */
             pszToken = strtok(NULL, szSpace);
             if(!pszToken) continue;
-            lpfp->tmLastModified.tm_mday = atoi(pszToken);
+            lpfp->tmLastModified.wDay = atoi(pszToken);
             /* Determine time or year */
             pszToken = strtok(NULL, szSpace);
             if(!pszToken) continue;
             if((pszTmp = strchr(pszToken, ':'))) {
-                struct tm* apTM;
-                time_t aTime;
+                SYSTEMTIME curr_time;
                 *pszTmp = 0;
                 pszTmp++;
-                lpfp->tmLastModified.tm_min = atoi(pszTmp);
-                lpfp->tmLastModified.tm_hour = atoi(pszToken);
-                time(&aTime);
-                apTM = localtime(&aTime);
-                lpfp->tmLastModified.tm_year = apTM->tm_year;
+                lpfp->tmLastModified.wMinute = atoi(pszTmp);
+                lpfp->tmLastModified.wHour = atoi(pszToken);
+                GetLocalTime( &curr_time );
+                lpfp->tmLastModified.wYear = curr_time.wYear;
             }
             else {
-                lpfp->tmLastModified.tm_year = atoi(pszToken) - 1900;
-                lpfp->tmLastModified.tm_hour = 12;
+                lpfp->tmLastModified.wYear = atoi(pszToken);
+                lpfp->tmLastModified.wHour = 12;
             }
-            TRACE("Mod time: %02d:%02d:%02d  %02d/%02d/%02d\n",
-                lpfp->tmLastModified.tm_hour, lpfp->tmLastModified.tm_min, lpfp->tmLastModified.tm_sec,
-                (lpfp->tmLastModified.tm_year >= 100) ? lpfp->tmLastModified.tm_year - 100 : lpfp->tmLastModified.tm_year,
-                lpfp->tmLastModified.tm_mon, lpfp->tmLastModified.tm_mday);
+            TRACE("Mod time: %02d:%02d:%02d  %04d/%02d/%02d\n",
+                  lpfp->tmLastModified.wHour, lpfp->tmLastModified.wMinute, lpfp->tmLastModified.wSecond,
+                  lpfp->tmLastModified.wYear, lpfp->tmLastModified.wMonth, lpfp->tmLastModified.wDay);
 
             pszToken = strtok(NULL, szSpace);
             if(!pszToken) continue;
@@ -3509,32 +3504,31 @@ static BOOL FTP_ParseNextFile(INT nSocket, LPCWSTR lpszSearchFile, LPFILEPROPERT
                 05-09-03  06:02PM             12656686 2003-04-21bgm_cmd_e.rgz
         */
         else if(isdigit(pszToken[0]) && 8 == strlen(pszToken)) {
+            int mon, mday, year, hour, min;
             lpfp->permissions = 0xFFFF; /* No idea, put full permission :-) */
             
-            sscanf(pszToken, "%d-%d-%d",
-                &lpfp->tmLastModified.tm_mon,
-                &lpfp->tmLastModified.tm_mday,
-                &lpfp->tmLastModified.tm_year);
+            sscanf(pszToken, "%d-%d-%d", &mon, &mday, &year);
+            lpfp->tmLastModified.wDay   = mday;
+            lpfp->tmLastModified.wMonth = mon;
+            lpfp->tmLastModified.wYear  = year;
 
             /* Hacky and bad Y2K protection :-) */
-            if (lpfp->tmLastModified.tm_year < 70)
-                lpfp->tmLastModified.tm_year += 100;
-            
+            if (lpfp->tmLastModified.wYear < 70) lpfp->tmLastModified.wYear += 2000;
+
             pszToken = strtok(NULL, szSpace);
             if(!pszToken) continue;
-            sscanf(pszToken, "%d:%d",
-                &lpfp->tmLastModified.tm_hour,
-                &lpfp->tmLastModified.tm_min);
+            sscanf(pszToken, "%d:%d", &hour, &min);
+            lpfp->tmLastModified.wHour   = hour;
+            lpfp->tmLastModified.wMinute = min;
             if((pszToken[5] == 'P') && (pszToken[6] == 'M')) {
-                lpfp->tmLastModified.tm_hour += 12;
+                lpfp->tmLastModified.wHour += 12;
             }
-            lpfp->tmLastModified.tm_sec = 0;
+            lpfp->tmLastModified.wSecond = 0;
 
-            TRACE("Mod time: %02d:%02d:%02d  %02d/%02d/%02d\n",
-                lpfp->tmLastModified.tm_hour, lpfp->tmLastModified.tm_min, lpfp->tmLastModified.tm_sec,
-                (lpfp->tmLastModified.tm_year >= 100) ? lpfp->tmLastModified.tm_year - 100 : lpfp->tmLastModified.tm_year,
-                lpfp->tmLastModified.tm_mon, lpfp->tmLastModified.tm_mday);
-            
+            TRACE("Mod time: %02d:%02d:%02d  %04d/%02d/%02d\n",
+                  lpfp->tmLastModified.wHour, lpfp->tmLastModified.wMinute, lpfp->tmLastModified.wSecond,
+                  lpfp->tmLastModified.wYear, lpfp->tmLastModified.wMonth, lpfp->tmLastModified.wDay);
+
             pszToken = strtok(NULL, szSpace);
             if(!pszToken) continue;
             if(!strcasecmp(pszToken, "<DIR>")) {
