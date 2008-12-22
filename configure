@@ -17787,9 +17787,7 @@ esac
 
 
 
-
 for ac_func in \
-	_mkdir \
 	_pclose \
 	_popen \
 	_snprintf \
@@ -18978,6 +18976,65 @@ This is an error since --with-ldap was requested." >&2;}
 esac
 fi
 
+
+{ $as_echo "$as_me:$LINENO: checking whether mkdir takes only one argument" >&5
+$as_echo_n "checking whether mkdir takes only one argument... " >&6; }
+if test "${wine_cv_one_arg_mkdir+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <sys/stat.h>
+int
+main ()
+{
+mkdir("foo");
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  wine_cv_one_arg_mkdir=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	wine_cv_one_arg_mkdir=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:$LINENO: result: $wine_cv_one_arg_mkdir" >&5
+$as_echo "$wine_cv_one_arg_mkdir" >&6; }
+if test "$wine_cv_one_arg_mkdir" = "yes"
+then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_ONE_ARG_MKDIR 1
+_ACEOF
+
+fi
 
 
 { $as_echo "$as_me:$LINENO: checking for an ANSI C-conforming const" >&5

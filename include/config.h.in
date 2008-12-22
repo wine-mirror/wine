@@ -507,6 +507,9 @@
 /* Define to 1 if the system has the type `off_t'. */
 #undef HAVE_OFF_T
 
+/* Define if mkdir takes only one argument */
+#undef HAVE_ONE_ARG_MKDIR
+
 /* Define if OpenGL is present on the system */
 #undef HAVE_OPENGL
 
@@ -1001,9 +1004,6 @@
 
 /* Define if Xrender has the XRenderSetPictureTransform function */
 #undef HAVE_XRENDERSETPICTURETRANSFORM
-
-/* Define to 1 if you have the `_mkdir' function. */
-#undef HAVE__MKDIR
 
 /* Define to 1 if you have the `_pclose' function. */
 #undef HAVE__PCLOSE

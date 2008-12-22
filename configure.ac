@@ -1354,7 +1354,6 @@ esac
 dnl **** Check for functions ****
 
 AC_CHECK_FUNCS(\
-	_mkdir \
 	_pclose \
 	_popen \
 	_snprintf \
@@ -1486,6 +1485,15 @@ then
 fi
 WINE_NOTICE_WITH(ldap,[test "x$LDAPLIBS" = "x"],
                  [libldap (OpenLDAP) ${notice_platform}development files not found, LDAP won't be supported.])
+
+AC_CACHE_CHECK([whether mkdir takes only one argument],
+   	wine_cv_one_arg_mkdir,
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/stat.h>]],[[mkdir("foo");]])],
+                          [wine_cv_one_arg_mkdir=yes],[wine_cv_one_arg_mkdir=no]))
+if test "$wine_cv_one_arg_mkdir" = "yes"
+then
+  AC_DEFINE(HAVE_ONE_ARG_MKDIR, 1, [Define if mkdir takes only one argument])
+fi
 
 dnl **** Check for types ****
 

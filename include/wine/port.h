@@ -114,8 +114,8 @@ struct statvfs
 #define RTLD_GLOBAL  0x100
 #endif
 
-#ifdef HAVE__MKDIR
-#define mkdir(path,mode) _mkdir(path)
+#ifdef HAVE_ONE_ARG_MKDIR
+#define mkdir(path,mode) mkdir(path)
 #endif
 
 #if !defined(HAVE_FTRUNCATE) && defined(HAVE_CHSIZE)
