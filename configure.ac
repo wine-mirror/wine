@@ -1387,6 +1387,7 @@ AC_CHECK_FUNCS(\
 	gettid \
 	gettimeofday \
 	getuid \
+	inet_ntop \
 	inet_pton \
 	kqueue \
 	lstat \

@@ -4555,6 +4555,30 @@ int WINAPI WSARemoveServiceClass(LPGUID info)
 }
 
 /***********************************************************************
+ *              inet_ntop                      (WS2_32.@)
+ */
+PCSTR WINAPI WS_inet_ntop( INT family, PVOID addr, PSTR buffer, size_t len )
+{
+#ifdef HAVE_INET_NTOP
+    union generic_unix_sockaddr unix_addr;
+
+    switch (family)
+    {
+    case WS_AF_INET:
+        ws_sockaddr_ws2u( addr, sizeof(struct WS_sockaddr_in), &unix_addr );
+        return inet_ntop( AF_INET, &unix_addr, buffer, len );
+    case WS_AF_INET6:
+        ws_sockaddr_ws2u( addr, sizeof(struct WS_sockaddr_in6), &unix_addr );
+        return inet_ntop( AF_INET6, &unix_addr, buffer, len );
+    }
+#else
+    FIXME( "not supported on this platform\n" );
+#endif
+    WSASetLastError( WSAEAFNOSUPPORT );
+    return NULL;
+}
+
+/***********************************************************************
  *              WSAStringToAddressA                      (WS2_32.80)
  */
 INT WINAPI WSAStringToAddressA(LPSTR AddressString,
