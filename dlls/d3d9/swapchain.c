@@ -227,6 +227,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateAdditionalSwapChain(LPDIRECT3DDEVICE
     localParameters.Flags                               = pPresentationParameters->Flags;
     localParameters.FullScreen_RefreshRateInHz          = pPresentationParameters->FullScreen_RefreshRateInHz;
     localParameters.PresentationInterval                = pPresentationParameters->PresentationInterval;
+    localParameters.AutoRestoreDisplayMode              = TRUE;
 
     EnterCriticalSection(&d3d9_cs);
     hrc = IWineD3DDevice_CreateSwapChain(This->WineD3DDevice, &localParameters, &object->wineD3DSwapChain, (IUnknown*)object, D3D9CB_CreateRenderTarget, D3D9CB_CreateDepthStencilSurface, SURFACE_OPENGL);
