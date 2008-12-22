@@ -185,6 +185,21 @@ out:
     return ret;
 }
 
+/*
+ * Helper function to get and set the viewport - needed on geforce 8800 on XP - driver bug?
+ * This is needed after IDirect3DDevice7_SetRenderTarget in combination with offscreen to backbuffer rendering.
+ */
+static void set_the_same_viewport_again(IDirect3DDevice7 *device)
+{
+    D3DVIEWPORT7 vp = {0};
+    HRESULT hr;
+    hr = IDirect3DDevice7_GetViewport(device,&vp);
+    ok(hr == D3D_OK && vp.dwWidth == 640 && vp.dwHeight == 480, "IDirect3DDevice7_SetViewport returned %08x\n", hr);
+    hr = IDirect3DDevice7_SetViewport(device, &vp);
+    ok(hr == D3D_OK, "IDirect3DDevice7_SetViewport returned %08x\n", hr);
+    return;
+}
+
 struct vertex
 {
     float x, y, z;
@@ -559,6 +574,8 @@ static void offscreen_test(IDirect3DDevice7 *device)
 
         hr = IDirect3DDevice7_SetRenderTarget(device, backbuffer, 0);
         ok(hr == D3D_OK, "SetRenderTarget failed, hr = %08x\n", hr);
+        set_the_same_viewport_again(device);
+
         hr = IDirect3DDevice7_SetTexture(device, 0, offscreen);
         ok(hr == D3D_OK, "SetTexture failed, %08x\n", hr);
 
@@ -716,6 +733,7 @@ static void alpha_test(IDirect3DDevice7 *device)
 
         hr = IDirect3DDevice7_SetRenderTarget(device, backbuffer, 0);
         ok(hr == D3D_OK, "Can't get back buffer, hr = %08x\n", hr);
+        set_the_same_viewport_again(device);
 
         /* Render the offscreen texture onto the frame buffer to be able to compare it regularly.
          * Disable alpha blending for the final composition
