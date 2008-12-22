@@ -171,8 +171,7 @@ BOOL TRASH_CanTrashFile(LPCWSTR wszPath)
 static BOOL try_create_trashinfo_file(const char *info_dir, const char *file_name,
     const char *original_file_name)
 {
-    struct tm curr_time;
-    time_t curr_time_secs;
+    SYSTEMTIME curr_time;
     char datebuf[200];
     char *path = SHAlloc(strlen(info_dir)+strlen(file_name)+strlen(trashinfo_suffix)+1);
     int writer = -1;
@@ -186,16 +185,11 @@ static BOOL try_create_trashinfo_file(const char *info_dir, const char *file_nam
     write(writer, trashinfo_header, strlen(trashinfo_header));
     if (!XDG_WriteDesktopStringEntry(writer, "Path", XDG_URLENCODE, original_file_name))
         goto error;
-    
-    time(&curr_time_secs);
-    localtime_r(&curr_time_secs, &curr_time);
+
+    GetLocalTime( &curr_time );
     wnsprintfA(datebuf, 200, "%04d-%02d-%02dT%02d:%02d:%02d",
-        curr_time.tm_year+1900,
-        curr_time.tm_mon+1,
-        curr_time.tm_mday,
-        curr_time.tm_hour,
-        curr_time.tm_min,
-        curr_time.tm_sec);
+               curr_time.wYear, curr_time.wMonth, curr_time.wDay,
+               curr_time.wHour, curr_time.wMinute, curr_time.wSecond);
     if (!XDG_WriteDesktopStringEntry(writer, "DeletionDate", 0, datebuf))
         goto error;
     close(writer);
