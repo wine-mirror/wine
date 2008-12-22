@@ -43,6 +43,7 @@ struct catadmin
 {
     DWORD magic;
     WCHAR path[MAX_PATH];
+    HANDLE find;
 };
 
 struct catinfo
@@ -50,6 +51,20 @@ struct catinfo
     DWORD magic;
     WCHAR file[MAX_PATH];
 };
+
+static HCATINFO create_catinfo(const WCHAR *filename)
+{
+    struct catinfo *ci;
+
+    if (!(ci = HeapAlloc(GetProcessHeap(), 0, sizeof(*ci))))
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        return INVALID_HANDLE_VALUE;
+    }
+    strcpyW(ci->file, filename);
+    ci->magic = CATINFO_MAGIC;
+    return ci;
+}
 
 /***********************************************************************
  *      CryptCATAdminAcquireContext (WINTRUST.@)
@@ -111,6 +126,8 @@ BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN *catAdmin,
     CreateDirectoryW(ca->path, NULL);
 
     ca->magic = CATADMIN_MAGIC;
+    ca->find = NULL;
+
     *catAdmin = ca;
     return TRUE;
 }
@@ -234,13 +251,120 @@ BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD* pcbHash,
 /***********************************************************************
  *             CryptCATAdminEnumCatalogFromHash (WINTRUST.@)
  */
-HCATINFO WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN hCatAdmin,
-                                                 BYTE* pbHash,
-                                                 DWORD cbHash,
-                                                 DWORD dwFlags,
+HCATINFO WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN hCatAdmin, BYTE* pbHash,
+                                                 DWORD cbHash, DWORD dwFlags,
                                                  HCATINFO* phPrevCatInfo )
 {
-    FIXME("%p %p %d %d %p\n", hCatAdmin, pbHash, cbHash, dwFlags, phPrevCatInfo);
+    static const WCHAR slashW[] = {'\\',0};
+    static const WCHAR globW[]  = {'\\','*','.','c','a','t',0};
+
+    struct catadmin *ca = hCatAdmin;
+    WIN32_FIND_DATAW data;
+    HCATINFO prev = NULL;
+    HCRYPTPROV prov;
+    DWORD size;
+    BOOL ret;
+
+    TRACE("%p %p %d %x %p\n", hCatAdmin, pbHash, cbHash, dwFlags, phPrevCatInfo);
+
+    if (!ca || ca->magic != CATADMIN_MAGIC || !pbHash || cbHash != 20 || dwFlags)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+    if (phPrevCatInfo) prev = *phPrevCatInfo;
+
+    ret = CryptAcquireContextW(&prov, NULL, MS_DEF_PROV_W, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+    if (!ret) return NULL;
+
+    if (!prev)
+    {
+        WCHAR *path;
+
+        size = strlenW(ca->path) * sizeof(WCHAR) + sizeof(globW);
+        if (!(path = HeapAlloc(GetProcessHeap(), 0, size)))
+        {
+            CryptReleaseContext(prov, 0);
+            SetLastError(ERROR_OUTOFMEMORY);
+            return NULL;
+        }
+        strcpyW(path, ca->path);
+        strcatW(path, globW);
+
+        if (ca->find) FindClose(ca->find);
+        ca->find = FindFirstFileW(path, &data);
+
+        HeapFree(GetProcessHeap(), 0, path);
+        if (!ca->find)
+        {
+            CryptReleaseContext(prov, 0);
+            return NULL;
+        }
+    }
+    else if (!FindNextFileW(ca->find, &data))
+    {
+        CryptCATAdminReleaseCatalogContext(hCatAdmin, prev, 0);
+        CryptReleaseContext(prov, 0);
+        return NULL;
+    }
+
+    while (1)
+    {
+        WCHAR *filename;
+        CRYPTCATMEMBER *member = NULL;
+        struct catinfo *ci;
+        HANDLE hcat;
+
+        size = (strlenW(ca->path) + strlenW(data.cFileName) + 2) * sizeof(WCHAR);
+        if (!(filename = HeapAlloc(GetProcessHeap(), 0, size)))
+        {
+            SetLastError(ERROR_OUTOFMEMORY);
+            return NULL;
+        }
+        strcpyW(filename, ca->path);
+        strcatW(filename, slashW);
+        strcatW(filename, data.cFileName);
+
+        hcat = CryptCATOpen(filename, CRYPTCAT_OPEN_EXISTING, prov, 0, 0);
+        if (hcat == INVALID_HANDLE_VALUE)
+        {
+            WARN("couldn't open %s (%u)\n", debugstr_w(filename), GetLastError());
+            continue;
+        }
+        while ((member = CryptCATEnumerateMember(hcat, member)))
+        {
+            if (member->pIndirectData->Digest.cbData != cbHash)
+            {
+                WARN("amount of hash bytes differs: %u/%u\n", member->pIndirectData->Digest.cbData, cbHash);
+                continue;
+            }
+            if (!memcmp(member->pIndirectData->Digest.pbData, pbHash, cbHash))
+            {
+                TRACE("file %s matches\n", debugstr_w(data.cFileName));
+
+                CryptCATClose(hcat);
+                CryptReleaseContext(prov, 0);
+                if (!phPrevCatInfo)
+                {
+                    FindClose(ca->find);
+                    ca->find = NULL;
+                }
+                ci = create_catinfo(filename);
+                HeapFree(GetProcessHeap(), 0, filename);
+                return ci;
+            }
+        }
+        CryptCATClose(hcat);
+        HeapFree(GetProcessHeap(), 0, filename);
+
+        if (!FindNextFileW(ca->find, &data))
+        {
+            FindClose(ca->find);
+            ca->find = NULL;
+            CryptReleaseContext(prov, 0);
+            return NULL;
+        }
+    }
     return NULL;
 }
 
@@ -302,6 +426,7 @@ BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
+    if (ca->find) FindClose(ca->find);
     ca->magic = 0;
     return HeapFree(GetProcessHeap(), 0, ca);
 }
