@@ -1026,9 +1026,9 @@ void VFWAPI ICCompressorFree(PCOMPVARS pc)
 LRESULT MSVIDEO_SendMessage(WINE_HIC* whic, UINT msg, DWORD_PTR lParam1, DWORD_PTR lParam2)
 {
     LRESULT     ret;
-    
-#define XX(x) case x: TRACE("(%p,"#x",0x%08lx,0x%08lx)\n",whic,lParam1,lParam2); break;
-    
+
+#define XX(x) case x: TRACE("(%p,"#x",0x%08lx,0x%08lx)\n",whic,lParam1,lParam2); break
+
     switch (msg) {
         /* DRV_* */
         XX(DRV_LOAD);
