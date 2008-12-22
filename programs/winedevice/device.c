@@ -64,9 +64,11 @@ static LDR_MODULE *find_ldr_module( HMODULE module )
 /* load the driver module file */
 static HMODULE load_driver_module( const WCHAR *name )
 {
-    const IMAGE_NT_HEADERS *nt;
+    IMAGE_NT_HEADERS *nt;
+    const IMAGE_IMPORT_DESCRIPTOR *imports;
     size_t page_size = getpagesize();
-    int delta;
+    int i, delta;
+    ULONG size;
     HMODULE module = LoadLibraryW( name );
 
     if (!module) return NULL;
@@ -80,7 +82,6 @@ static HMODULE load_driver_module( const WCHAR *name )
     if (nt->OptionalHeader.SectionAlignment < page_size ||
         !(nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
     {
-        ULONG size;
         DWORD old;
         IMAGE_BASE_RELOCATION *rel, *end;
 
@@ -98,8 +99,25 @@ static HMODULE load_driver_module( const WCHAR *name )
                 if (old != PAGE_EXECUTE_READWRITE) VirtualProtect( page, page_size, old, NULL );
                 if (!rel) goto error;
             }
+            /* make sure we don't try again */
+            nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress = 0;
         }
     }
+
+    /* make sure imports are relocated too */
+
+    if ((imports = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_IMPORT, &size )))
+    {
+        for (i = 0; imports[i].Name && imports[i].FirstThunk; i++)
+        {
+            char *name = (char *)module + imports[i].Name;
+            WCHAR buffer[32], *p = buffer;
+
+            while (p < buffer + 32) if (!(*p++ = *name++)) break;
+            if (p <= buffer + 32) FreeLibrary( load_driver_module( buffer ) );
+        }
+    }
+
     return module;
 
 error:
