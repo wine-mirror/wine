@@ -44,6 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntlm);
 SECURITY_STATUS fork_helper(PNegoHelper *new_helper, const char *prog,
         char* const argv[])
 {
+#ifdef HAVE_FORK
     int pipe_in[2];
     int pipe_out[2];
     int i;
@@ -132,6 +133,10 @@ SECURITY_STATUS fork_helper(PNegoHelper *new_helper, const char *prog,
     }
 
     return SEC_E_OK;
+#else
+    ERR( "no fork support on this platform\n" );
+    return SEC_E_INTERNAL_ERROR;
+#endif
 }
 
 static SECURITY_STATUS read_line(PNegoHelper helper, int *offset_len)
