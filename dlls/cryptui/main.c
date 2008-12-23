@@ -32,6 +32,7 @@
 #include "richedit.h"
 #include "ole2.h"
 #include "richole.h"
+#include "commdlg.h"
 #include "commctrl.h"
 #include "cryptuiapi.h"
 #include "cryptuires.h"
@@ -3695,13 +3696,95 @@ static LRESULT CALLBACK import_welcome_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
     return ret;
 }
 
+static const WCHAR filter_cert[] = { '*','.','c','e','r',';','*','.',
+ 'c','r','t',0 };
+static const WCHAR filter_pfx[] = { '*','.','p','f','x',';','*','.',
+ 'p','1','2',0 };
+static const WCHAR filter_crl[] = { '*','.','c','r','l',0 };
+static const WCHAR filter_ctl[] = { '*','.','s','t','l',0 };
+static const WCHAR filter_serialized_store[] = { '*','.','s','s','t',0 };
+static const WCHAR filter_cms[] = { '*','.','s','p','c',';','*','.',
+ 'p','7','b',0 };
+static const WCHAR filter_all[] = { '*','.','*',0 };
+
+struct StringToFilter
+{
+    int     id;
+    DWORD   allowFlags;
+    LPCWSTR filter;
+} import_filters[] = {
+ { IDS_IMPORT_FILTER_CERT, CRYPTUI_WIZ_IMPORT_ALLOW_CERT, filter_cert },
+ { IDS_IMPORT_FILTER_PFX, 0, filter_pfx },
+ { IDS_IMPORT_FILTER_CRL, CRYPTUI_WIZ_IMPORT_ALLOW_CRL, filter_crl },
+ { IDS_IMPORT_FILTER_CTL, CRYPTUI_WIZ_IMPORT_ALLOW_CTL, filter_ctl },
+ { IDS_IMPORT_FILTER_SERIALIZED_STORE, 0, filter_serialized_store },
+ { IDS_IMPORT_FILTER_CMS, 0, filter_cms },
+ { IDS_IMPORT_FILTER_ALL, 0, filter_all },
+};
+
+static WCHAR *make_import_file_filter(DWORD dwFlags)
+{
+    DWORD i;
+    int len, totalLen = 2;
+    LPWSTR filter = NULL, str;
+
+    for (i = 0; i < sizeof(import_filters) / sizeof(import_filters[0]); i++)
+    {
+        if (!import_filters[i].allowFlags || !dwFlags ||
+         (dwFlags & import_filters[i].allowFlags))
+        {
+            len = LoadStringW(hInstance, import_filters[i].id, (LPWSTR)&str, 0);
+            totalLen += len + strlenW(import_filters[i].filter) + 2;
+        }
+    }
+    filter = HeapAlloc(GetProcessHeap(), 0, totalLen * sizeof(WCHAR));
+    if (filter)
+    {
+        LPWSTR ptr;
+
+        ptr = filter;
+        for (i = 0; i < sizeof(import_filters) / sizeof(import_filters[0]); i++)
+        {
+            if (!import_filters[i].allowFlags || !dwFlags ||
+             (dwFlags & import_filters[i].allowFlags))
+            {
+                len = LoadStringW(hInstance, import_filters[i].id,
+                 (LPWSTR)&str, 0);
+                memcpy(ptr, str, len * sizeof(WCHAR));
+                ptr += len;
+                *ptr++ = 0;
+                strcpyW(ptr, import_filters[i].filter);
+                ptr += strlenW(import_filters[i].filter) + 1;
+            }
+        }
+        *ptr++ = 0;
+    }
+    return filter;
+}
+
+struct ImportWizData
+{
+    DWORD dwFlags;
+    PCCRYPTUI_WIZ_IMPORT_SRC_INFO pImportSrc;
+    HCERTSTORE hDestCertStore;
+};
+
 static LRESULT CALLBACK import_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
     LRESULT ret = 0;
+    struct ImportWizData *data;
 
     switch (msg)
     {
+    case WM_INITDIALOG:
+    {
+        PROPSHEETPAGEW *page = (PROPSHEETPAGEW *)lp;
+
+        data = (struct ImportWizData *)page->lParam;
+        SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
+        break;
+    }
     case WM_NOTIFY:
     {
         NMHDR *hdr = (NMHDR *)lp;
@@ -3716,6 +3799,30 @@ static LRESULT CALLBACK import_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         }
         break;
     }
+    case WM_COMMAND:
+        switch (wp)
+        {
+        case IDC_IMPORT_BROWSE_FILE:
+        {
+            OPENFILENAMEW ofn;
+            WCHAR fileBuf[MAX_PATH];
+
+            data = (struct ImportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
+            memset(&ofn, 0, sizeof(ofn));
+            ofn.lStructSize = sizeof(ofn);
+            ofn.hwndOwner = hwnd;
+            ofn.lpstrFilter = make_import_file_filter(data->dwFlags);
+            ofn.lpstrFile = fileBuf;
+            ofn.nMaxFile = sizeof(fileBuf) / sizeof(fileBuf[0]);
+            fileBuf[0] = 0;
+            if (GetOpenFileNameW(&ofn))
+                SendMessageW(GetDlgItem(hwnd, IDC_IMPORT_FILENAME), WM_SETTEXT,
+                 0, (LPARAM)ofn.lpstrFile);
+            HeapFree(GetProcessHeap(), 0, (LPWSTR)ofn.lpstrFilter);
+            break;
+        }
+        }
+        break;
     }
     return ret;
 }
@@ -3776,6 +3883,7 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
 {
     PROPSHEETHEADERW hdr;
     PROPSHEETPAGEW pages[4];
+    struct ImportWizData data = { dwFlags, pImportSrc, hDestCertStore };
 
     FIXME("\n");
 
@@ -3794,6 +3902,7 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
     pages[1].dwFlags = PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
     pages[1].pszHeaderTitle = MAKEINTRESOURCEW(IDS_IMPORT_FILE_TITLE);
     pages[1].pszHeaderSubTitle = MAKEINTRESOURCEW(IDS_IMPORT_FILE_SUBTITLE);
+    pages[1].lParam = (LPARAM)&data;
 
     pages[2].dwSize = sizeof(pages[2]);
     pages[2].hInstance = hInstance;

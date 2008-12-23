@@ -69,6 +69,13 @@ STRINGTABLE DISCARDABLE
     IDS_IMPORT_FILE_SUBTITLE "Specify the file you want to import."
     IDS_IMPORT_STORE_TITLE "Certificate Store"
     IDS_IMPORT_STORE_SUBTITLE "Certificate stores are collections of certificates, certificate revocation lists, and certificate trust lists."
+    IDS_IMPORT_FILTER_CERT "X.509 Certificate (*.cer; *.crt)"
+    IDS_IMPORT_FILTER_PFX "Personal Information Exchange (*.pfx; *.p12)"
+    IDS_IMPORT_FILTER_CRL "Certificate Revocation List (*.crl)"
+    IDS_IMPORT_FILTER_CTL "Certificate Trust List (*.stl)"
+    IDS_IMPORT_FILTER_SERIALIZED_STORE "Microsoft Serialized Certificate Store (*.sst)"
+    IDS_IMPORT_FILTER_CMS "CMS/PKCS #7 Messages (*.spc; *.p7b)"
+    IDS_IMPORT_FILTER_ALL "All Files (*.*)"
     IDS_PURPOSE_SERVER_AUTH "Ensures the identify of a remote computer"
     IDS_PURPOSE_CLIENT_AUTH "Proves your identity to a remote computer"
     IDS_PURPOSE_CODE_SIGNING "Ensures software came from software publisher\nProtects software from alteration after publication"
@@ -209,7 +216,8 @@ IDD_IMPORT_WELCOME DIALOG DISCARDABLE 0,0,317,143
 CAPTION "Certificate Import Wizard"
 FONT 8, "MS Shell Dlg"
 BEGIN
-  LTEXT "Welcome to the Certificate Import Wizard", IDC_IMPORT_TITLE, 115,1,195,24
+  LTEXT "Welcome to the Certificate Import Wizard", IDC_IMPORT_TITLE,
+    115,1,195,24
   LTEXT "This wizard helps you import certificates, certificate revocation lists, and certificate trust lists from a file to a certificate store.",
     stc1, 115,33,195,16
   LTEXT "A certificate can be used to identify you or the computer with which you are communicating.  It can also be used for authentication, and to sign messages.  Certificate stores are collections of certificates, certificate revocation lists, and certificate trust lists.",
@@ -251,7 +259,8 @@ IDD_IMPORT_FINISH DIALOG DISCARDABLE 0,0,317,143
 CAPTION "Certificate Import Wizard"
 FONT 8, "MS Shell Dlg"
 BEGIN
-  LTEXT "Completing the Certificate Import Wizard", IDC_IMPORT_TITLE, 115,1,195,24
+  LTEXT "Completing the Certificate Import Wizard", IDC_IMPORT_TITLE,
+    115,1,195,24
   LTEXT "You have successfully completed the Certificate Import Wizard.",
     stc1, 115,33,195,24
   LTEXT "You have specified the following settings:",
