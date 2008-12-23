@@ -2219,8 +2219,8 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   IDirectXFileEnumObjectImpl *This = (IDirectXFileEnumObjectImpl *)iface;
   IDirectXFileDataImpl* object;
   HRESULT hr;
-  LPBYTE pdata;
-  LPBYTE pstrings;
+  LPBYTE pdata = NULL;
+  LPBYTE pstrings = NULL;
 
   TRACE("(%p/%p)->(%p)\n", This, iface, ppDataObj);
 
@@ -2248,7 +2248,8 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   if (!pdata)
   {
     ERR("Out of memory\n");
-    return DXFILEERR_BADALLOC;
+    hr = DXFILEERR_BADALLOC;
+    goto error;
   }
   This->buf.cur_pdata = This->buf.pdata = pdata;
 
@@ -2256,24 +2257,24 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   if (!pstrings)
   {
     ERR("Out of memory\n");
-    HeapFree(GetProcessHeap(), 0, This->buf.pxo->pdata);
-    return DXFILEERR_BADALLOC;
+    hr = DXFILEERR_BADALLOC;
+    goto error;
   }
   This->buf.cur_pstrings = This->buf.pstrings = pstrings;
 
   if (!parse_object(&This->buf))
   {
     TRACE("Object is not correct\n");
-    HeapFree(GetProcessHeap(), 0, This->buf.pxo->pdata);
-    HeapFree(GetProcessHeap(), 0, This->buf.pstrings);
-    return DXFILEERR_PARSEERROR;
+    hr = DXFILEERR_PARSEERROR;
+    goto error;
   }
 
   This->buf.pxo->nb_subobjects = This->buf.cur_subobject;
   if (This->buf.cur_subobject > MAX_SUBOBJECTS)
   {
     FIXME("Too many suobjects %d\n", This->buf.cur_subobject);
-    return DXFILEERR_BADALLOC;
+    hr = DXFILEERR_BADALLOC;
+    goto error;
   }
 
   object->pstrings = pstrings;
@@ -2287,6 +2288,13 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   This->nb_xobjects++;
 
   return DXFILE_OK;
+
+error:
+
+  HeapFree(GetProcessHeap(), 0, pdata);
+  HeapFree(GetProcessHeap(), 0, pstrings);
+
+  return hr;
 }
 
 static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetDataObjectById(IDirectXFileEnumObject* iface, REFGUID rguid, LPDIRECTXFILEDATA* ppDataObj)
