@@ -537,7 +537,6 @@ static void test_crypt_ui_wiz_import(void)
      CRYPTUI_WIZ_IMPORT_NO_CHANGE_DEST_STORE |
      CRYPTUI_WIZ_IMPORT_ALLOW_CERT | CRYPTUI_WIZ_IMPORT_ALLOW_CRL, 0, NULL,
      &info, store);
-    todo_wine
     ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -574,7 +573,6 @@ static void test_crypt_ui_wiz_import(void)
     SetLastError(0xdeadbeef);
     ret = CryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CERT,
      0, NULL, &info, store);
-    todo_wine
     ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -615,7 +613,6 @@ static void test_crypt_ui_wiz_import(void)
     SetLastError(0xdeadbeef);
     ret = CryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CRL,
      0, NULL, &info, store);
-    todo_wine
     ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
     if (ret)
     {

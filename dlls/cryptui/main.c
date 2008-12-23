@@ -3496,6 +3496,34 @@ static BOOL import_crl(PCCRL_CONTEXT crl, HCERTSTORE hDestCertStore)
     return ret;
 }
 
+static BOOL import_ctl(PCCTL_CONTEXT ctl, HCERTSTORE hDestCertStore)
+{
+    HCERTSTORE store;
+    BOOL ret;
+
+    if (!ctl)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if (hDestCertStore) store = hDestCertStore;
+    else
+    {
+        static const WCHAR trust[] = { 'T','r','u','s','t',0 };
+
+        if (!(store = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
+         CERT_SYSTEM_STORE_CURRENT_USER, trust)))
+        {
+            WARN("unable to open certificate store\n");
+            return FALSE;
+        }
+    }
+    ret = CertAddCTLContextToStore(store, ctl,
+     CERT_STORE_ADD_REPLACE_EXISTING_INHERIT_PROPERTIES, NULL);
+    if (!hDestCertStore) CertCloseStore(store, 0);
+    return ret;
+}
+
 /* Checks type, a type such as CERT_QUERY_CONTENT_CERT returned by
  * CryptQueryObject, against the allowed types.  Returns TRUE if the
  * type is allowed, FALSE otherwise.
@@ -3561,6 +3589,77 @@ static void import_warn_type_mismatch(DWORD dwFlags, HWND hwnd, LPCWSTR szTitle)
     }
 }
 
+static BOOL check_store_context_type(DWORD dwFlags, HCERTSTORE store)
+{
+    BOOL ret;
+
+    if (dwFlags &
+     (CRYPTUI_WIZ_IMPORT_ALLOW_CERT | CRYPTUI_WIZ_IMPORT_ALLOW_CRL |
+     CRYPTUI_WIZ_IMPORT_ALLOW_CTL))
+    {
+        PCCERT_CONTEXT cert;
+        PCCRL_CONTEXT crl;
+        PCCTL_CONTEXT ctl;
+
+        ret = TRUE;
+        if ((cert = CertEnumCertificatesInStore(store, NULL)))
+        {
+            CertFreeCertificateContext(cert);
+            if (!(dwFlags & CRYPTUI_WIZ_IMPORT_ALLOW_CERT))
+                ret = FALSE;
+        }
+        if (ret && (crl = CertEnumCRLsInStore(store, NULL)))
+        {
+            CertFreeCRLContext(crl);
+            if (!(dwFlags & CRYPTUI_WIZ_IMPORT_ALLOW_CRL))
+                ret = FALSE;
+        }
+        if (ret && (ctl = CertEnumCTLsInStore(store, NULL)))
+        {
+            CertFreeCTLContext(ctl);
+            if (!(dwFlags & CRYPTUI_WIZ_IMPORT_ALLOW_CTL))
+                ret = FALSE;
+        }
+    }
+    else
+        ret = TRUE;
+    if (!ret)
+        SetLastError(E_INVALIDARG);
+    return ret;
+}
+
+static BOOL import_store(DWORD dwFlags, HWND hwnd, LPCWSTR szTitle,
+ HCERTSTORE source, HCERTSTORE dest)
+{
+    BOOL ret;
+
+    if ((ret = check_store_context_type(dwFlags, source)))
+    {
+        PCCERT_CONTEXT cert = NULL;
+        PCCRL_CONTEXT crl = NULL;
+        PCCTL_CONTEXT ctl = NULL;
+
+        do {
+            cert = CertEnumCertificatesInStore(source, cert);
+            if (cert)
+                ret = import_cert(cert, dest);
+        } while (ret && cert);
+        do {
+            crl = CertEnumCRLsInStore(source, crl);
+            if (crl)
+                ret = import_crl(crl, dest);
+        } while (ret && crl);
+        do {
+            ctl = CertEnumCTLsInStore(source, ctl);
+            if (ctl)
+                ret = import_ctl(ctl, dest);
+        } while (ret && ctl);
+    }
+    else
+        import_warn_type_mismatch(dwFlags, hwnd, szTitle);
+    return ret;
+}
+
 BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardTitle,
                              PCCRYPTUI_WIZ_IMPORT_SRC_INFO pImportSrc, HCERTSTORE hDestCertStore)
 {
@@ -3604,6 +3703,10 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
             ret = import_crl(pImportSrc->u.pCRLContext, hDestCertStore);
         else
             import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
+        break;
+    case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_STORE:
+        ret = import_store(dwFlags, hwndParent, pwszWizardTitle,
+         pImportSrc->u.hCertStore, hDestCertStore);
         break;
     default:
         FIXME("source type not implemented: %u\n", pImportSrc->dwSubjectChoice);
