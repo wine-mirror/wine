@@ -65,6 +65,10 @@ STRINGTABLE DISCARDABLE
     IDS_SELECT_STORE "Please select a certificate store."
     IDS_IMPORT_WIZARD "Certificate Import Wizard"
     IDS_IMPORT_TYPE_MISMATCH "The file contains objects that do not match the given criteria.  Please select another file."
+    IDS_IMPORT_FILE_TITLE "File to Import"
+    IDS_IMPORT_FILE_SUBTITLE "Specify the file you want to import."
+    IDS_IMPORT_STORE_TITLE "Certificate Store"
+    IDS_IMPORT_STORE_SUBTITLE "Certificate stores are collections of certificates, certificate revocation lists, and certificate trust lists."
     IDS_PURPOSE_SERVER_AUTH "Ensures the identify of a remote computer"
     IDS_PURPOSE_CLIENT_AUTH "Proves your identity to a remote computer"
     IDS_PURPOSE_CODE_SIGNING "Ensures software came from software publisher\nProtects software from alteration after publication"
@@ -199,4 +203,60 @@ BEGIN
     BS_AUTOCHECKBOX|WS_TABSTOP
   PUSHBUTTON "OK", IDOK, 90,118,50,14, BS_DEFPUSHBUTTON
   PUSHBUTTON "Cancel", IDCANCEL, 144,118,50,14
+END
+
+IDD_IMPORT_WELCOME DIALOG DISCARDABLE 0,0,317,143
+CAPTION "Certificate Import Wizard"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Welcome to the Certificate Import Wizard", IDC_IMPORT_TITLE, 115,1,195,24
+  LTEXT "This wizard helps you import certificates, certificate revocation lists, and certificate trust lists from a file to a certificate store.",
+    stc1, 115,33,195,16
+  LTEXT "A certificate can be used to identify you or the computer with which you are communicating.  It can also be used for authentication, and to sign messages.  Certificate stores are collections of certificates, certificate revocation lists, and certificate trust lists.",
+    stc2, 115,56,195,40
+  LTEXT "To continue, click Next.",
+    stc3, 115,103,195,8
+END
+
+IDD_IMPORT_FILE DIALOG DISCARDABLE 0,0,317,143
+CAPTION "Certificate Import Wizard"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "&File name:", stc1, 21,1,195,10
+  EDITTEXT IDC_IMPORT_FILENAME, 21,11,208,14, ES_AUTOHSCROLL|WS_TABSTOP
+  PUSHBUTTON "B&rowse...", IDC_IMPORT_BROWSE_FILE, 236,11,60,14
+  LTEXT "Note:  The following file formats may contain more than one certificate, certificate revocation list, or certificate trust list:", stc2, 21,26,265,16
+  LTEXT "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)",
+    stc3, 31,49,265,10
+  LTEXT "Personal Information Exchange/PKCS #12 (.pfx, .p12)",
+    stc3, 31,64,265,10
+  LTEXT "Microsoft Serialized Certificate Store (.sst)",
+    stc3, 31,79,265,10
+END
+
+IDD_IMPORT_STORE DIALOG DISCARDABLE 0,0,317,143
+CAPTION "Certificate Import Wizard"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Wine can automatically select the certificate store, or you can specify a location for the certificates.", stc1, 21,1,195,20
+  AUTORADIOBUTTON "&Automatically select certificate store",
+    IDC_IMPORT_AUTO_STORE, 31,18,180,12, BS_AUTORADIOBUTTON|WS_TABSTOP
+  AUTORADIOBUTTON "&Place all certificates in the following store:",
+    IDC_IMPORT_SPECIFY_STORE, 31,30,180,12, BS_AUTORADIOBUTTON
+  EDITTEXT IDC_IMPORT_STORE, 44,49,185,14, ES_AUTOHSCROLL|WS_TABSTOP
+  PUSHBUTTON "B&rowse...", IDC_IMPORT_BROWSE_STORE, 236,49,60,14
+END
+
+IDD_IMPORT_FINISH DIALOG DISCARDABLE 0,0,317,143
+CAPTION "Certificate Import Wizard"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Completing the Certificate Import Wizard", IDC_IMPORT_TITLE, 115,1,195,24
+  LTEXT "You have successfully completed the Certificate Import Wizard.",
+    stc1, 115,33,195,24
+  LTEXT "You have specified the following settings:",
+    stc2, 115,57,195,12
+  CONTROL "", IDC_IMPORT_SETTINGS, "SysListView32",
+    LVS_REPORT|LVS_SINGLESEL|WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_BORDER,
+    115,67,174,100
 END

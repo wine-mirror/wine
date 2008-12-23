@@ -3671,6 +3671,159 @@ static BOOL import_file(DWORD dwFlags, HWND hwnd, LPCWSTR szTitle,
     return ret;
 }
 
+static LRESULT CALLBACK import_welcome_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+ LPARAM lp)
+{
+    LRESULT ret = 0;
+
+    switch (msg)
+    {
+    case WM_NOTIFY:
+    {
+        NMHDR *hdr = (NMHDR *)lp;
+
+        switch (hdr->code)
+        {
+        case PSN_SETACTIVE:
+            PostMessageW(GetParent(hwnd), PSM_SETWIZBUTTONS, 0, PSWIZB_NEXT);
+            ret = TRUE;
+            break;
+        }
+        break;
+    }
+    }
+    return ret;
+}
+
+static LRESULT CALLBACK import_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+ LPARAM lp)
+{
+    LRESULT ret = 0;
+
+    switch (msg)
+    {
+    case WM_NOTIFY:
+    {
+        NMHDR *hdr = (NMHDR *)lp;
+
+        switch (hdr->code)
+        {
+        case PSN_SETACTIVE:
+            PostMessageW(GetParent(hwnd), PSM_SETWIZBUTTONS, 0,
+             PSWIZB_BACK | PSWIZB_NEXT);
+            ret = TRUE;
+            break;
+        }
+        break;
+    }
+    }
+    return ret;
+}
+
+static LRESULT CALLBACK import_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+ LPARAM lp)
+{
+    LRESULT ret = 0;
+
+    switch (msg)
+    {
+    case WM_NOTIFY:
+    {
+        NMHDR *hdr = (NMHDR *)lp;
+
+        switch (hdr->code)
+        {
+        case PSN_SETACTIVE:
+            PostMessageW(GetParent(hwnd), PSM_SETWIZBUTTONS, 0,
+             PSWIZB_BACK | PSWIZB_NEXT);
+            ret = TRUE;
+            break;
+        }
+        break;
+    }
+    }
+    return ret;
+}
+
+static LRESULT CALLBACK import_finish_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+ LPARAM lp)
+{
+    LRESULT ret = 0;
+
+    switch (msg)
+    {
+    case WM_NOTIFY:
+    {
+        NMHDR *hdr = (NMHDR *)lp;
+
+        switch (hdr->code)
+        {
+        case PSN_SETACTIVE:
+            PostMessageW(GetParent(hwnd), PSM_SETWIZBUTTONS, 0,
+             PSWIZB_BACK | PSWIZB_FINISH);
+            ret = TRUE;
+            break;
+        }
+        break;
+    }
+    }
+    return ret;
+}
+
+static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
+ LPCWSTR pwszWizardTitle, PCCRYPTUI_WIZ_IMPORT_SRC_INFO pImportSrc,
+ HCERTSTORE hDestCertStore)
+{
+    PROPSHEETHEADERW hdr;
+    PROPSHEETPAGEW pages[4];
+
+    FIXME("\n");
+
+    memset(&pages, 0, sizeof(pages));
+
+    pages[0].dwSize = sizeof(pages[0]);
+    pages[0].hInstance = hInstance;
+    pages[0].u.pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_WELCOME);
+    pages[0].pfnDlgProc = import_welcome_dlg_proc;
+    pages[0].dwFlags = PSP_HIDEHEADER;
+
+    pages[1].dwSize = sizeof(pages[1]);
+    pages[1].hInstance = hInstance;
+    pages[1].u.pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_FILE);
+    pages[1].pfnDlgProc = import_file_dlg_proc;
+    pages[1].dwFlags = PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
+    pages[1].pszHeaderTitle = MAKEINTRESOURCEW(IDS_IMPORT_FILE_TITLE);
+    pages[1].pszHeaderSubTitle = MAKEINTRESOURCEW(IDS_IMPORT_FILE_SUBTITLE);
+
+    pages[2].dwSize = sizeof(pages[2]);
+    pages[2].hInstance = hInstance;
+    pages[2].u.pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_STORE);
+    pages[2].pfnDlgProc = import_store_dlg_proc;
+    pages[2].dwFlags = PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
+    pages[2].pszHeaderTitle = MAKEINTRESOURCEW(IDS_IMPORT_STORE_TITLE);
+    pages[2].pszHeaderSubTitle = MAKEINTRESOURCEW(IDS_IMPORT_STORE_SUBTITLE);
+
+    pages[3].dwSize = sizeof(pages[3]);
+    pages[3].hInstance = hInstance;
+    pages[3].u.pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_FINISH);
+    pages[3].pfnDlgProc = import_finish_dlg_proc;
+    pages[3].dwFlags = PSP_HIDEHEADER;
+
+    memset(&hdr, 0, sizeof(hdr));
+    hdr.dwSize = sizeof(hdr);
+    hdr.hwndParent = hwndParent;
+    hdr.dwFlags = PSH_PROPSHEETPAGE | PSH_WIZARD97_OLD | PSH_HEADER;
+    hdr.hInstance = hInstance;
+    if (pwszWizardTitle)
+        hdr.pszCaption = pwszWizardTitle;
+    else
+        hdr.pszCaption = MAKEINTRESOURCEW(IDS_IMPORT_WIZARD);
+    hdr.u3.ppsp = pages;
+    hdr.nPages = 4;
+    PropertySheetW(&hdr);
+    return FALSE;
+}
+
 BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardTitle,
                              PCCRYPTUI_WIZ_IMPORT_SRC_INFO pImportSrc, HCERTSTORE hDestCertStore)
 {
@@ -3687,6 +3840,10 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
         SetLastError(E_INVALIDARG);
         return FALSE;
     }
+
+    if (!(dwFlags & CRYPTUI_WIZ_NO_UI))
+        ret = show_import_ui(dwFlags, hwndParent, pwszWizardTitle, pImportSrc,
+         hDestCertStore);
 
     switch (pImportSrc->dwSubjectChoice)
     {
