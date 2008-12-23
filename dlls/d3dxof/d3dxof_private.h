@@ -130,7 +130,7 @@ typedef struct {
   LPBYTE cur_pdata;
   LPBYTE cur_pstrings;
   BYTE value[100];
-  xobject* pxo_globals;
+  xobject** pxo_globals;
   ULONG nb_pxo_globals;
   xobject* pxo_tab;
   IDirectXFileImpl* pdxf;
@@ -149,7 +149,7 @@ typedef struct {
     parse_buffer buf;
     IDirectXFileImpl* pDirectXFile;
     ULONG nb_xobjects;
-    xobject xobjects[MAX_OBJECTS][MAX_SUBOBJECTS];
+    xobject* xobjects[MAX_OBJECTS];
 } IDirectXFileEnumObjectImpl;
 
 typedef struct {

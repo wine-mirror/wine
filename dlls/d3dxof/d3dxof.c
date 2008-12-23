@@ -2109,9 +2109,9 @@ static BOOL parse_object_parts(parse_buffer * buf, BOOL allow_optional)
         TRACE("Found optional reference %s\n", (char*)buf->value);
         for (i = 0; i < buf->nb_pxo_globals; i++)
         {
-          for (j = 0; j < buf->pxo_globals[i*MAX_SUBOBJECTS].nb_subobjects; j++)
+          for (j = 0; j < (buf->pxo_globals[i])[0].nb_subobjects; j++)
           {
-            if (!strcmp(buf->pxo_globals[i*MAX_SUBOBJECTS+j].name, (char*)buf->value))
+            if (!strcmp((buf->pxo_globals[i])[j].name, (char*)buf->value))
               goto _exit;
           }
         }
@@ -2122,7 +2122,7 @@ _exit:
           return FALSE;
         }
         buf->pxo->childs[buf->pxo->nb_childs] = &buf->pxo_tab[buf->cur_subobject++];
-        buf->pxo->childs[buf->pxo->nb_childs]->ptarget = &buf->pxo_globals[i*MAX_SUBOBJECTS+j];
+        buf->pxo->childs[buf->pxo->nb_childs]->ptarget = &(buf->pxo_globals[i])[j];
         buf->pxo->nb_childs++;
       }
       else if (check_TOKEN(buf) == TOKEN_NAME)
@@ -2237,12 +2237,19 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   if (FAILED(hr))
     return hr;
 
-  This->buf.pxo_globals = &This->xobjects[0][0];
+  This->buf.pxo_globals = This->xobjects;
   This->buf.nb_pxo_globals = This->nb_xobjects;
-  This->buf.pxo_tab = &This->xobjects[This->nb_xobjects][0];
-  This->buf.cur_subobject = 0;
-  This->buf.pxo = &This->buf.pxo_tab[This->buf.cur_subobject++];
+  This->buf.cur_subobject = 1;
   This->buf.level = 0;
+
+  This->buf.pxo_tab = HeapAlloc(GetProcessHeap(), 0, sizeof(xobject)*MAX_SUBOBJECTS);
+  if (!This->buf.pxo_tab)
+  {
+    ERR("Out of memory\n");
+    hr = DXFILEERR_BADALLOC;
+    goto error;
+  }
+  This->buf.pxo = This->xobjects[This->nb_xobjects] = This->buf.pxo_tab;
 
   pdata = HeapAlloc(GetProcessHeap(), 0, MAX_DATA_SIZE);
   if (!pdata)
@@ -2291,6 +2298,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
 
 error:
 
+  HeapFree(GetProcessHeap(), 0, This->buf.pxo_tab);
   HeapFree(GetProcessHeap(), 0, pdata);
   HeapFree(GetProcessHeap(), 0, pstrings);
 
