@@ -1538,7 +1538,14 @@ static ULONG WINAPI IDirectXFileDataImpl_Release(IDirectXFileData* iface)
   TRACE("(%p/%p): ReleaseRef to %d\n", iface, This, ref);
 
   if (!ref)
+  {
+    if (!This->level)
+    {
+      HeapFree(GetProcessHeap(), 0, This->pdata);
+      HeapFree(GetProcessHeap(), 0, This->pstrings);
+    }
     HeapFree(GetProcessHeap(), 0, This);
+  }
 
   return ref;
 }
@@ -1902,7 +1909,10 @@ static ULONG WINAPI IDirectXFileEnumObjectImpl_Release(IDirectXFileEnumObject* i
 
   if (!ref)
   {
-    CloseHandle(This->hFile);
+    if (This->source == DXFILELOAD_FROMFILE)
+      HeapFree(GetProcessHeap(), 0, This->buf.buffer);
+    if (This->hFile != INVALID_HANDLE_VALUE)
+      CloseHandle(This->hFile);
     HeapFree(GetProcessHeap(), 0, This);
   }
 
@@ -2258,7 +2268,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
     hr = DXFILEERR_BADALLOC;
     goto error;
   }
-  This->buf.cur_pdata = This->buf.pdata = pdata;
+  This->buf.cur_pdata = This->buf.pdata = object->pdata = pdata;
 
   pstrings = HeapAlloc(GetProcessHeap(), 0, MAX_STRINGS_BUFFER);
   if (!pstrings)
@@ -2267,7 +2277,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
     hr = DXFILEERR_BADALLOC;
     goto error;
   }
-  This->buf.cur_pstrings = This->buf.pstrings = pstrings;
+  This->buf.cur_pstrings = This->buf.pstrings = object->pstrings = pstrings;
 
   if (!parse_object(&This->buf))
   {

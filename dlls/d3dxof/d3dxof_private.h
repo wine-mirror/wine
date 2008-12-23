@@ -104,6 +104,7 @@ typedef struct {
     int cur_enum_object;
     BOOL from_ref;
     ULONG level;
+    LPBYTE pdata;
     LPBYTE pstrings;
 } IDirectXFileDataImpl;
 
