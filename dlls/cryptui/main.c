@@ -4006,6 +4006,7 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
     PROPSHEETHEADERW hdr;
     PROPSHEETPAGEW pages[4];
     struct ImportWizData data;
+    int nPages = 0;
 
     FIXME("\n");
 
@@ -4019,34 +4020,44 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
     data.hDestCertStore = hDestCertStore;
     memset(&pages, 0, sizeof(pages));
 
-    pages[0].dwSize = sizeof(pages[0]);
-    pages[0].hInstance = hInstance;
-    pages[0].u.pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_WELCOME);
-    pages[0].pfnDlgProc = import_welcome_dlg_proc;
-    pages[0].dwFlags = PSP_HIDEHEADER;
+    pages[nPages].dwSize = sizeof(pages[0]);
+    pages[nPages].hInstance = hInstance;
+    pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_WELCOME);
+    pages[nPages].pfnDlgProc = import_welcome_dlg_proc;
+    pages[nPages].dwFlags = PSP_HIDEHEADER;
+    nPages++;
 
-    pages[1].dwSize = sizeof(pages[1]);
-    pages[1].hInstance = hInstance;
-    pages[1].u.pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_FILE);
-    pages[1].pfnDlgProc = import_file_dlg_proc;
-    pages[1].dwFlags = PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
-    pages[1].pszHeaderTitle = MAKEINTRESOURCEW(IDS_IMPORT_FILE_TITLE);
-    pages[1].pszHeaderSubTitle = MAKEINTRESOURCEW(IDS_IMPORT_FILE_SUBTITLE);
-    pages[1].lParam = (LPARAM)&data;
+    if (!pImportSrc ||
+     pImportSrc->dwSubjectChoice == CRYPTUI_WIZ_IMPORT_SUBJECT_FILE)
+    {
+        pages[nPages].dwSize = sizeof(pages[0]);
+        pages[nPages].hInstance = hInstance;
+        pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_FILE);
+        pages[nPages].pfnDlgProc = import_file_dlg_proc;
+        pages[nPages].dwFlags = PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
+        pages[nPages].pszHeaderTitle = MAKEINTRESOURCEW(IDS_IMPORT_FILE_TITLE);
+        pages[nPages].pszHeaderSubTitle =
+         MAKEINTRESOURCEW(IDS_IMPORT_FILE_SUBTITLE);
+        pages[nPages].lParam = (LPARAM)&data;
+        nPages++;
+    }
 
-    pages[2].dwSize = sizeof(pages[2]);
-    pages[2].hInstance = hInstance;
-    pages[2].u.pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_STORE);
-    pages[2].pfnDlgProc = import_store_dlg_proc;
-    pages[2].dwFlags = PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
-    pages[2].pszHeaderTitle = MAKEINTRESOURCEW(IDS_IMPORT_STORE_TITLE);
-    pages[2].pszHeaderSubTitle = MAKEINTRESOURCEW(IDS_IMPORT_STORE_SUBTITLE);
+    pages[nPages].dwSize = sizeof(pages[0]);
+    pages[nPages].hInstance = hInstance;
+    pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_STORE);
+    pages[nPages].pfnDlgProc = import_store_dlg_proc;
+    pages[nPages].dwFlags = PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
+    pages[nPages].pszHeaderTitle = MAKEINTRESOURCEW(IDS_IMPORT_STORE_TITLE);
+    pages[nPages].pszHeaderSubTitle =
+     MAKEINTRESOURCEW(IDS_IMPORT_STORE_SUBTITLE);
+    nPages++;
 
-    pages[3].dwSize = sizeof(pages[3]);
-    pages[3].hInstance = hInstance;
-    pages[3].u.pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_FINISH);
-    pages[3].pfnDlgProc = import_finish_dlg_proc;
-    pages[3].dwFlags = PSP_HIDEHEADER;
+    pages[nPages].dwSize = sizeof(pages[0]);
+    pages[nPages].hInstance = hInstance;
+    pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_FINISH);
+    pages[nPages].pfnDlgProc = import_finish_dlg_proc;
+    pages[nPages].dwFlags = PSP_HIDEHEADER;
+    nPages++;
 
     memset(&hdr, 0, sizeof(hdr));
     hdr.dwSize = sizeof(hdr);
@@ -4058,7 +4069,7 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
     else
         hdr.pszCaption = MAKEINTRESOURCEW(IDS_IMPORT_WIZARD);
     hdr.u3.ppsp = pages;
-    hdr.nPages = 4;
+    hdr.nPages = nPages;
     PropertySheetW(&hdr);
     if (data.freeSource &&
      data.importSrc.dwSubjectChoice == CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_STORE)
