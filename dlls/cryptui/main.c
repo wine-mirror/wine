@@ -3781,7 +3781,8 @@ struct ImportWizData
 {
     DWORD dwFlags;
     LPCWSTR pwszWizardTitle;
-    PCCRYPTUI_WIZ_IMPORT_SRC_INFO pImportSrc;
+    CRYPTUI_WIZ_IMPORT_SRC_INFO importSrc;
+    BOOL freeSource;
     HCERTSTORE hDestCertStore;
 };
 
@@ -3804,8 +3805,10 @@ static BOOL import_validate_filename(HWND hwnd, struct ImportWizData *data,
             warningID = IDS_IMPORT_TYPE_MISMATCH;
         else
         {
-            FIXME("save %s for import\n", debugstr_w(fileName));
-            CertCloseStore(source, 0);
+            data->importSrc.dwSubjectChoice =
+             CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_STORE;
+            data->importSrc.u.hCertStore = source;
+            data->freeSource = TRUE;
             ret = TRUE;
         }
         if (warningID)
@@ -4002,11 +4005,18 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
 {
     PROPSHEETHEADERW hdr;
     PROPSHEETPAGEW pages[4];
-    struct ImportWizData data = { dwFlags, pwszWizardTitle, pImportSrc,
-     hDestCertStore };
+    struct ImportWizData data;
 
     FIXME("\n");
 
+    data.dwFlags = dwFlags;
+    data.pwszWizardTitle = pwszWizardTitle;
+    if (pImportSrc)
+        memcpy(&data.importSrc, pImportSrc, sizeof(data.importSrc));
+    else
+        memset(&data.importSrc, 0, sizeof(data.importSrc));
+    data.freeSource = FALSE;
+    data.hDestCertStore = hDestCertStore;
     memset(&pages, 0, sizeof(pages));
 
     pages[0].dwSize = sizeof(pages[0]);
@@ -4050,6 +4060,9 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
     hdr.u3.ppsp = pages;
     hdr.nPages = 4;
     PropertySheetW(&hdr);
+    if (data.freeSource &&
+     data.importSrc.dwSubjectChoice == CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_STORE)
+        CertCloseStore(data.importSrc.u.hCertStore, 0);
     return FALSE;
 }
 
