@@ -19,12 +19,12 @@
 @ stub CryptCATCDFOpen
 @ stdcall CryptCATCatalogInfoFromContext(ptr ptr long)
 @ stdcall CryptCATClose(long)
-@ stub CryptCATEnumerateAttr
-@ stub CryptCATEnumerateCatAttr
+@ stdcall CryptCATEnumerateAttr(ptr ptr ptr)
+@ stdcall CryptCATEnumerateCatAttr(ptr ptr)
 @ stdcall CryptCATEnumerateMember(long ptr)
-@ stub CryptCATGetAttrInfo
-@ stub CryptCATGetCatAttrInfo
-@ stub CryptCATGetMemberInfo
+@ stdcall CryptCATGetAttrInfo(ptr ptr wstr)
+@ stdcall CryptCATGetCatAttrInfo(ptr wstr )
+@ stdcall CryptCATGetMemberInfo(ptr wstr)
 @ stub CryptCATHandleFromStore
 @ stdcall CryptCATOpen(wstr long long long long)
 @ stub CryptCATPersistStore

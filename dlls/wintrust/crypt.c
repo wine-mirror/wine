@@ -521,6 +521,93 @@ BOOL WINAPI CryptCATClose(HANDLE hCatalog)
 }
 
 /***********************************************************************
+ *      CryptCATGetAttrInfo  (WINTRUST.@)
+ */
+CRYPTCATATTRIBUTE * WINAPI CryptCATGetAttrInfo(HANDLE hCatalog, CRYPTCATMEMBER *member, LPWSTR tag)
+{
+    struct cryptcat *cc = hCatalog;
+
+    FIXME("%p, %p, %s\n", hCatalog, member, debugstr_w(tag));
+
+    if (!hCatalog || hCatalog == INVALID_HANDLE_VALUE || cc->magic != CRYPTCAT_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+    SetLastError(CRYPT_E_NOT_FOUND);
+    return NULL;
+}
+
+/***********************************************************************
+ *      CryptCATGetCatAttrInfo  (WINTRUST.@)
+ */
+CRYPTCATATTRIBUTE * WINAPI CryptCATGetCatAttrInfo(HANDLE hCatalog, LPWSTR tag)
+{
+    struct cryptcat *cc = hCatalog;
+
+    FIXME("%p, %s\n", hCatalog, debugstr_w(tag));
+
+    if (!hCatalog || hCatalog == INVALID_HANDLE_VALUE || cc->magic != CRYPTCAT_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+    SetLastError(CRYPT_E_NOT_FOUND);
+    return NULL;
+}
+
+CRYPTCATMEMBER * WINAPI CryptCATGetMemberInfo(HANDLE hCatalog, LPWSTR tag)
+{
+    struct cryptcat *cc = hCatalog;
+
+    FIXME("%p, %s\n", hCatalog, debugstr_w(tag));
+
+    if (!hCatalog || hCatalog == INVALID_HANDLE_VALUE || cc->magic != CRYPTCAT_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+    SetLastError(CRYPT_E_NOT_FOUND);
+    return NULL;
+}
+
+/***********************************************************************
+ *      CryptCATEnumerateAttr  (WINTRUST.@)
+ */
+CRYPTCATATTRIBUTE * WINAPI CryptCATEnumerateAttr(HANDLE hCatalog, CRYPTCATMEMBER *member, CRYPTCATATTRIBUTE *prev)
+{
+    struct cryptcat *cc = hCatalog;
+
+    FIXME("%p, %p, %p\n", hCatalog, member, prev);
+
+    if (!hCatalog || hCatalog == INVALID_HANDLE_VALUE || cc->magic != CRYPTCAT_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+    SetLastError(CRYPT_E_NOT_FOUND);
+    return NULL;
+}
+
+/***********************************************************************
+ *      CryptCATEnumerateCatAttr  (WINTRUST.@)
+ */
+CRYPTCATATTRIBUTE * WINAPI CryptCATEnumerateCatAttr(HANDLE hCatalog, CRYPTCATATTRIBUTE *prev)
+{
+    struct cryptcat *cc = hCatalog;
+
+    FIXME("%p, %p\n", hCatalog, prev);
+
+    if (!hCatalog || hCatalog == INVALID_HANDLE_VALUE || cc->magic != CRYPTCAT_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+    SetLastError(CRYPT_E_NOT_FOUND);
+    return NULL;
+}
+
+/***********************************************************************
  *      CryptCATEnumerateMember  (WINTRUST.@)
  */
 CRYPTCATMEMBER * WINAPI CryptCATEnumerateMember(HANDLE hCatalog, CRYPTCATMEMBER *prev)
