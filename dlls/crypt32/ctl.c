@@ -505,7 +505,7 @@ static BOOL CTLContext_GetHashProp(PCCTL_CONTEXT context, DWORD dwPropId,
 {
     BOOL ret = CryptHashCertificate(0, algID, 0, toHash, toHashLen, pvData,
      pcbData);
-    if (ret)
+    if (ret && pvData)
     {
         CRYPT_DATA_BLOB blob = { *pcbData, pvData };
 
