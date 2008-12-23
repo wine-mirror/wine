@@ -93,6 +93,7 @@ STRINGTABLE DISCARDABLE
     IDS_IMPORT_CONTENT_STORE "Certificate Store"
     IDS_IMPORT_SUCCEEDED "The import was successful."
     IDS_IMPORT_FAILED "The import failed."
+    IDS_WIZARD_TITLE_FONT "Arial"
     IDS_PURPOSE_SERVER_AUTH "Ensures the identify of a remote computer"
     IDS_PURPOSE_CLIENT_AUTH "Proves your identity to a remote computer"
     IDS_PURPOSE_CODE_SIGNING "Ensures software came from software publisher\nProtects software from alteration after publication"
@@ -234,7 +235,7 @@ CAPTION "Certificate Import Wizard"
 FONT 8, "MS Shell Dlg"
 BEGIN
   LTEXT "Welcome to the Certificate Import Wizard", IDC_IMPORT_TITLE,
-    115,1,195,24
+    115,1,195,40
   LTEXT "This wizard helps you import certificates, certificate revocation lists, and certificate trust lists from a file to a certificate store.",
     stc1, 115,33,195,16
   LTEXT "A certificate can be used to identify you or the computer with which you are communicating.  It can also be used for authentication, and to sign messages.  Certificate stores are collections of certificates, certificate revocation lists, and certificate trust lists.",
@@ -277,7 +278,7 @@ CAPTION "Certificate Import Wizard"
 FONT 8, "MS Shell Dlg"
 BEGIN
   LTEXT "Completing the Certificate Import Wizard", IDC_IMPORT_TITLE,
-    115,1,195,24
+    115,1,195,40
   LTEXT "You have successfully completed the Certificate Import Wizard.",
     stc1, 115,33,195,24
   LTEXT "You have specified the following settings:",

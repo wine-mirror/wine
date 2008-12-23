@@ -3690,6 +3690,21 @@ static BOOL import_file(DWORD dwFlags, HWND hwnd, LPCWSTR szTitle,
     return ret;
 }
 
+struct ImportWizData
+{
+    HFONT titleFont;
+    DWORD dwFlags;
+    LPCWSTR pwszWizardTitle;
+    CRYPTUI_WIZ_IMPORT_SRC_INFO importSrc;
+    LPWSTR fileName;
+    DWORD contentType;
+    BOOL freeSource;
+    HCERTSTORE hDestCertStore;
+    BOOL freeDest;
+    BOOL autoDest;
+    BOOL success;
+};
+
 static LRESULT CALLBACK import_welcome_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
@@ -3697,6 +3712,26 @@ static LRESULT CALLBACK import_welcome_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
 
     switch (msg)
     {
+    case WM_INITDIALOG:
+    {
+        struct ImportWizData *data;
+        PROPSHEETPAGEW *page = (PROPSHEETPAGEW *)lp;
+        WCHAR fontFace[MAX_STRING_LEN];
+        HDC hDC = GetDC(hwnd);
+        int height;
+
+        data = (struct ImportWizData *)page->lParam;
+        LoadStringW(hInstance, IDS_WIZARD_TITLE_FONT, fontFace,
+         sizeof(fontFace) / sizeof(fontFace[0]));
+        height = -MulDiv(12, GetDeviceCaps(hDC, LOGPIXELSY), 72);
+        data->titleFont = CreateFontW(height, 0, 0, 0, FW_BOLD, 0, 0, 0,
+         DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+         DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, fontFace);
+        SendMessageW(GetDlgItem(hwnd, IDC_IMPORT_TITLE), WM_SETFONT,
+         (WPARAM)data->titleFont, TRUE);
+        ReleaseDC(hwnd, hDC);
+        break;
+    }
     case WM_NOTIFY:
     {
         NMHDR *hdr = (NMHDR *)lp;
@@ -3779,20 +3814,6 @@ static WCHAR *make_import_file_filter(DWORD dwFlags)
     }
     return filter;
 }
-
-struct ImportWizData
-{
-    DWORD dwFlags;
-    LPCWSTR pwszWizardTitle;
-    CRYPTUI_WIZ_IMPORT_SRC_INFO importSrc;
-    LPWSTR fileName;
-    DWORD contentType;
-    BOOL freeSource;
-    HCERTSTORE hDestCertStore;
-    BOOL freeDest;
-    BOOL autoDest;
-    BOOL success;
-};
 
 static BOOL import_validate_filename(HWND hwnd, struct ImportWizData *data,
  LPCWSTR fileName)
@@ -4181,6 +4202,8 @@ static LRESULT CALLBACK import_finish_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
 
         data = (struct ImportWizData *)page->lParam;
         SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
+        SendMessageW(GetDlgItem(hwnd, IDC_IMPORT_TITLE), WM_SETFONT,
+         (WPARAM)data->titleFont, TRUE);
         GetWindowRect(lv, &rc);
         column.mask = LVCF_WIDTH;
         column.cx = (rc.right - rc.left) / 2 - 2;
@@ -4269,6 +4292,7 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
     pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_WELCOME);
     pages[nPages].pfnDlgProc = import_welcome_dlg_proc;
     pages[nPages].dwFlags = PSP_HIDEHEADER;
+    pages[nPages].lParam = (LPARAM)&data;
     nPages++;
 
     if (!pImportSrc ||
@@ -4339,6 +4363,7 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
     if (data.freeSource &&
      data.importSrc.dwSubjectChoice == CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_STORE)
         CertCloseStore(data.importSrc.u.hCertStore, 0);
+    DeleteObject(data.titleFont);
     return data.success;
 }
 
