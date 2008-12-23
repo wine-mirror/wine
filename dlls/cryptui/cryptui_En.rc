@@ -91,6 +91,8 @@ STRINGTABLE DISCARDABLE
     IDS_IMPORT_CONTENT_CMS "CMS/PKCS #7 Message"
     IDS_IMPORT_CONTENT_PFX "Personal Information Exchange"
     IDS_IMPORT_CONTENT_STORE "Certificate Store"
+    IDS_IMPORT_SUCCEEDED "The import was successful."
+    IDS_IMPORT_FAILED "The import failed."
     IDS_PURPOSE_SERVER_AUTH "Ensures the identify of a remote computer"
     IDS_PURPOSE_CLIENT_AUTH "Proves your identity to a remote computer"
     IDS_PURPOSE_CODE_SIGNING "Ensures software came from software publisher\nProtects software from alteration after publication"

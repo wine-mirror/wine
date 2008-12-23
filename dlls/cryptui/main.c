@@ -3791,6 +3791,7 @@ struct ImportWizData
     HCERTSTORE hDestCertStore;
     BOOL freeDest;
     BOOL autoDest;
+    BOOL success;
 };
 
 static BOOL import_validate_filename(HWND hwnd, struct ImportWizData *data,
@@ -4122,6 +4123,47 @@ static void show_import_details(HWND lv, struct ImportWizData *data)
     }
 }
 
+static BOOL do_import(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardTitle,
+ PCCRYPTUI_WIZ_IMPORT_SRC_INFO pImportSrc, HCERTSTORE hDestCertStore)
+{
+    BOOL ret;
+
+    switch (pImportSrc->dwSubjectChoice)
+    {
+    case CRYPTUI_WIZ_IMPORT_SUBJECT_FILE:
+        ret = import_file(dwFlags, hwndParent, pwszWizardTitle,
+         pImportSrc->u.pwszFileName, hDestCertStore);
+        break;
+    case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_CONTEXT:
+        if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CERT)))
+            ret = import_cert(pImportSrc->u.pCertContext, hDestCertStore);
+        else
+            import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
+        break;
+    case CRYPTUI_WIZ_IMPORT_SUBJECT_CRL_CONTEXT:
+        if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CRL)))
+            ret = import_crl(pImportSrc->u.pCRLContext, hDestCertStore);
+        else
+            import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
+        break;
+    case CRYPTUI_WIZ_IMPORT_SUBJECT_CTL_CONTEXT:
+        if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CTL)))
+            ret = import_ctl(pImportSrc->u.pCTLContext, hDestCertStore);
+        else
+            import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
+        break;
+    case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_STORE:
+        ret = import_store(dwFlags, hwndParent, pwszWizardTitle,
+         pImportSrc->u.hCertStore, hDestCertStore);
+        break;
+    default:
+        WARN("unknown source type: %u\n", pImportSrc->dwSubjectChoice);
+        SetLastError(E_INVALIDARG);
+        ret = FALSE;
+    }
+    return ret;
+}
+
 static LRESULT CALLBACK import_finish_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
@@ -4165,6 +4207,32 @@ static LRESULT CALLBACK import_finish_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             ret = TRUE;
             break;
         }
+        case PSN_WIZFINISH:
+        {
+            data = (struct ImportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
+            if ((data->success = do_import(data->dwFlags, hwnd,
+             data->pwszWizardTitle, &data->importSrc, data->hDestCertStore)))
+            {
+                WCHAR title[MAX_STRING_LEN], message[MAX_STRING_LEN];
+                LPCWSTR pTitle;
+
+                if (data->pwszWizardTitle)
+                    pTitle = data->pwszWizardTitle;
+                else
+                {
+                    LoadStringW(hInstance, IDS_IMPORT_WIZARD, title,
+                     sizeof(title) / sizeof(title[0]));
+                    pTitle = title;
+                }
+                LoadStringW(hInstance, IDS_IMPORT_SUCCEEDED, message,
+                 sizeof(message) / sizeof(message[0]));
+                MessageBoxW(hwnd, message, pTitle, MB_OK);
+            }
+            else
+                import_warning(data->dwFlags, hwnd, data->pwszWizardTitle,
+                 IDS_IMPORT_SUCCEEDED);
+            break;
+        }
         }
         break;
     }
@@ -4181,8 +4249,6 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
     struct ImportWizData data;
     int nPages = 0;
 
-    FIXME("\n");
-
     data.dwFlags = dwFlags;
     data.pwszWizardTitle = pwszWizardTitle;
     if (pImportSrc)
@@ -4194,6 +4260,7 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
     data.hDestCertStore = hDestCertStore;
     data.freeDest = FALSE;
     data.autoDest = TRUE;
+    data.success = TRUE;
 
     memset(&pages, 0, sizeof(pages));
 
@@ -4272,7 +4339,7 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
     if (data.freeSource &&
      data.importSrc.dwSubjectChoice == CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_STORE)
         CertCloseStore(data.importSrc.u.hCertStore, 0);
-    return FALSE;
+    return data.success;
 }
 
 BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardTitle,
@@ -4294,41 +4361,8 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
         ret = show_import_ui(dwFlags, hwndParent, pwszWizardTitle, pImportSrc,
          hDestCertStore);
     else if (pImportSrc)
-    {
-        switch (pImportSrc->dwSubjectChoice)
-        {
-        case CRYPTUI_WIZ_IMPORT_SUBJECT_FILE:
-            ret = import_file(dwFlags, hwndParent, pwszWizardTitle,
-             pImportSrc->u.pwszFileName, hDestCertStore);
-            break;
-        case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_CONTEXT:
-            if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CERT)))
-                ret = import_cert(pImportSrc->u.pCertContext, hDestCertStore);
-            else
-                import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
-            break;
-        case CRYPTUI_WIZ_IMPORT_SUBJECT_CRL_CONTEXT:
-            if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CRL)))
-                ret = import_crl(pImportSrc->u.pCRLContext, hDestCertStore);
-            else
-                import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
-            break;
-        case CRYPTUI_WIZ_IMPORT_SUBJECT_CTL_CONTEXT:
-            if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CTL)))
-                ret = import_ctl(pImportSrc->u.pCTLContext, hDestCertStore);
-            else
-                import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
-            break;
-        case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_STORE:
-            ret = import_store(dwFlags, hwndParent, pwszWizardTitle,
-             pImportSrc->u.hCertStore, hDestCertStore);
-            break;
-        default:
-            WARN("unknown source type: %u\n", pImportSrc->dwSubjectChoice);
-            SetLastError(E_INVALIDARG);
-            ret = FALSE;
-        }
-    }
+        ret = do_import(dwFlags, hwndParent, pwszWizardTitle, pImportSrc,
+         hDestCertStore);
     else
     {
         /* Can't have no UI without specifying source */
