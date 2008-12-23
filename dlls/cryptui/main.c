@@ -3627,12 +3627,10 @@ static BOOL import_store(DWORD dwFlags, HWND hwnd, LPCWSTR szTitle,
     return ret;
 }
 
-static BOOL import_file(DWORD dwFlags, HWND hwnd, LPCWSTR szTitle,
- LPCWSTR fileName, HCERTSTORE dest)
+static HCERTSTORE open_store_from_file(DWORD dwFlags, LPCWSTR fileName)
 {
-    HCERTSTORE source;
+    HCERTSTORE store = NULL;
     DWORD contentType, expectedContentTypeFlags;
-    BOOL ret;
 
     if (dwFlags &
      (CRYPTUI_WIZ_IMPORT_ALLOW_CERT | CRYPTUI_WIZ_IMPORT_ALLOW_CRL |
@@ -3667,14 +3665,25 @@ static BOOL import_file(DWORD dwFlags, HWND hwnd, LPCWSTR szTitle,
          CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED |
          CERT_QUERY_CONTENT_FLAG_PFX;
 
-    ret = CryptQueryObject(CERT_QUERY_OBJECT_FILE, fileName,
+    CryptQueryObject(CERT_QUERY_OBJECT_FILE, fileName,
      expectedContentTypeFlags, CERT_QUERY_FORMAT_FLAG_ALL, 0, NULL,
-     &contentType, NULL, &source, NULL, NULL);
-    if (ret)
+     &contentType, NULL, &store, NULL, NULL);
+    return store;
+}
+
+static BOOL import_file(DWORD dwFlags, HWND hwnd, LPCWSTR szTitle,
+ LPCWSTR fileName, HCERTSTORE dest)
+{
+    HCERTSTORE source;
+    BOOL ret;
+
+    if ((source = open_store_from_file(dwFlags, fileName)))
     {
         ret = import_store(dwFlags, hwnd, szTitle, source, dest);
         CertCloseStore(source, 0);
     }
+    else
+        ret = FALSE;
     return ret;
 }
 
