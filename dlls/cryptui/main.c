@@ -3782,6 +3782,7 @@ struct ImportWizData
     DWORD dwFlags;
     LPCWSTR pwszWizardTitle;
     CRYPTUI_WIZ_IMPORT_SRC_INFO importSrc;
+    LPWSTR fileName;
     BOOL freeSource;
     HCERTSTORE hDestCertStore;
     BOOL freeDest;
@@ -3912,10 +3913,12 @@ static LRESULT CALLBACK import_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
                      (LPARAM)fileName);
                     if (!import_validate_filename(hwnd, data, fileName))
                     {
+                        HeapFree(GetProcessHeap(), 0, fileName);
                         SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, 1);
                         ret = 1;
                     }
-                    HeapFree(GetProcessHeap(), 0, fileName);
+                    else
+                        data->fileName = fileName;
                 }
             }
             break;
@@ -4048,13 +4051,65 @@ static LRESULT CALLBACK import_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
     return ret;
 }
 
+static void show_import_details(HWND lv, struct ImportWizData *data)
+{
+    WCHAR text[MAX_STRING_LEN];
+    LVITEMW item;
+
+    item.mask = LVIF_TEXT;
+    item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
+    item.iSubItem = 0;
+    LoadStringW(hInstance, IDS_IMPORT_STORE_SELECTION, text,
+     sizeof(text)/ sizeof(text[0]));
+    item.pszText = text;
+    SendMessageW(lv, LVM_INSERTITEMW, 0, (LPARAM)&item);
+    item.iSubItem = 1;
+    if (data->autoDest)
+        LoadStringW(hInstance, IDS_IMPORT_DEST_AUTOMATIC, text,
+         sizeof(text)/ sizeof(text[0]));
+    else
+        LoadStringW(hInstance, IDS_IMPORT_DEST_DETERMINED, text,
+         sizeof(text)/ sizeof(text[0]));
+    SendMessageW(lv, LVM_SETITEMTEXTW, item.iItem, (LPARAM)&item);
+    /* FIXME: set content type */
+    if (data->fileName)
+    {
+        item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
+        item.iSubItem = 0;
+        LoadStringW(hInstance, IDS_IMPORT_FILE, text,
+         sizeof(text)/ sizeof(text[0]));
+        SendMessageW(lv, LVM_INSERTITEMW, 0, (LPARAM)&item);
+        item.iSubItem = 1;
+        item.pszText = data->fileName;
+        SendMessageW(lv, LVM_SETITEMTEXTW, item.iItem, (LPARAM)&item);
+    }
+}
+
 static LRESULT CALLBACK import_finish_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
     LRESULT ret = 0;
+    struct ImportWizData *data;
 
     switch (msg)
     {
+    case WM_INITDIALOG:
+    {
+        PROPSHEETPAGEW *page = (PROPSHEETPAGEW *)lp;
+        HWND lv = GetDlgItem(hwnd, IDC_IMPORT_SETTINGS);
+        RECT rc;
+        LVCOLUMNW column;
+
+        data = (struct ImportWizData *)page->lParam;
+        SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
+        GetWindowRect(lv, &rc);
+        column.mask = LVCF_WIDTH;
+        column.cx = (rc.right - rc.left) / 2 - 2;
+        SendMessageW(lv, LVM_INSERTCOLUMNW, 0, (LPARAM)&column);
+        SendMessageW(lv, LVM_INSERTCOLUMNW, 1, (LPARAM)&column);
+        show_import_details(lv, data);
+        break;
+    }
     case WM_NOTIFY:
     {
         NMHDR *hdr = (NMHDR *)lp;
@@ -4062,10 +4117,17 @@ static LRESULT CALLBACK import_finish_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         switch (hdr->code)
         {
         case PSN_SETACTIVE:
+        {
+            HWND lv = GetDlgItem(hwnd, IDC_IMPORT_SETTINGS);
+
+            data = (struct ImportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
+            SendMessageW(lv, LVM_DELETEALLITEMS, 0, 0);
+            show_import_details(lv, data);
             PostMessageW(GetParent(hwnd), PSM_SETWIZBUTTONS, 0,
              PSWIZB_BACK | PSWIZB_FINISH);
             ret = TRUE;
             break;
+        }
         }
         break;
     }
@@ -4090,6 +4152,7 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
         memcpy(&data.importSrc, pImportSrc, sizeof(data.importSrc));
     else
         memset(&data.importSrc, 0, sizeof(data.importSrc));
+    data.fileName = NULL;
     data.freeSource = FALSE;
     data.hDestCertStore = hDestCertStore;
     data.freeDest = FALSE;
@@ -4135,6 +4198,7 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
     pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_IMPORT_FINISH);
     pages[nPages].pfnDlgProc = import_finish_dlg_proc;
     pages[nPages].dwFlags = PSP_HIDEHEADER;
+    pages[nPages].lParam = (LPARAM)&data;
     nPages++;
 
     memset(&hdr, 0, sizeof(hdr));
@@ -4149,6 +4213,7 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
     hdr.u3.ppsp = pages;
     hdr.nPages = nPages;
     PropertySheetW(&hdr);
+    HeapFree(GetProcessHeap(), 0, data.fileName);
     if (data.freeSource &&
      data.importSrc.dwSubjectChoice == CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_STORE)
         CertCloseStore(data.importSrc.u.hCertStore, 0);
