@@ -452,7 +452,7 @@ DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSW lpPar
 	case MCI_STATUS_MEDIA_PRESENT:
 #endif
 	default:
-            FIXME("Unknowm command %08X !\n", lpParms->dwItem);
+            FIXME("Unknown command %08X !\n", lpParms->dwItem);
             TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
             LeaveCriticalSection(&wma->cs);
     	    return MCIERR_UNRECOGNIZED_COMMAND;
