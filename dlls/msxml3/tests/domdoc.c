@@ -260,6 +260,20 @@ static BOOL compareIgnoreReturns(BSTR sLeft, BSTR sRight)
     }
 }
 
+static BOOL compareIgnoreReturnsWhitespace(BSTR sLeft, BSTR sRight)
+{
+    /* MSXML3 inserts whitespace where as libxml doesn't. */
+    for (;;)
+    {
+        while (*sLeft == '\r' || *sLeft == '\n' || *sLeft == ' ') sLeft++;
+        while (*sRight == '\r' || *sRight == '\n' || *sRight == ' ') sRight++;
+        if (*sLeft != *sRight) return FALSE;
+        if (!*sLeft) return TRUE;
+        sLeft++;
+        sRight++;
+    }
+}
+
 static void get_str_for_type(DOMNodeType type, char *buf)
 {
     switch (type)
@@ -1706,6 +1720,7 @@ static void test_get_text(void)
     VARIANT_BOOL b;
     IXMLDOMDocument *doc;
     IXMLDOMNode *node, *node2, *node3;
+    IXMLDOMNode *nodeRoot;
     IXMLDOMNodeList *node_list;
     IXMLDOMNamedNodeMap *node_map;
     long len;
@@ -1725,6 +1740,19 @@ static void test_get_text(void)
     r = IXMLDOMDocument_getElementsByTagName( doc, str, &node_list );
     ok( r == S_OK, "ret %08x\n", r );
     SysFreeString(str);
+
+    /* Test to get all child node text. */
+    r = IXMLDOMDocument_QueryInterface(doc, &IID_IXMLDOMNode, (LPVOID*)&nodeRoot);
+    ok( r == S_OK, "ret %08x\n", r );
+    if(r == S_OK)
+    {
+        r = IXMLDOMNode_get_text( nodeRoot, &str );
+        ok( r == S_OK, "ret %08x\n", r );
+        ok( compareIgnoreReturnsWhitespace(str, _bstr_("fn1.txt\n\n fn2.txt \n\nf1\n")), "wrong get_text\n");
+        SysFreeString(str);
+
+        IXMLDOMNode_Release(nodeRoot);
+    }
 
     if (0) {
     /* this test crashes on win9x */

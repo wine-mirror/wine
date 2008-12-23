@@ -864,32 +864,18 @@ static HRESULT WINAPI xmlnode_get_text(
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
     BSTR str = NULL;
+    xmlChar *pContent;
 
-    TRACE("%p\n", This);
+    TRACE("%p type %d\n", This, This->node->type);
 
     if ( !text )
         return E_INVALIDARG;
 
-    switch(This->node->type)
+    pContent = xmlNodeGetContent((xmlNodePtr)This->node);
+    if(pContent)
     {
-    case XML_ELEMENT_NODE:
-    case XML_ATTRIBUTE_NODE:
-    {
-        xmlNodePtr child = This->node->children;
-        if ( child && child->type == XML_TEXT_NODE )
-            str = bstr_from_xmlChar( child->content );
-        break;
-    }
-
-    case XML_TEXT_NODE:
-    case XML_CDATA_SECTION_NODE:
-    case XML_PI_NODE:
-    case XML_COMMENT_NODE:
-        str = bstr_from_xmlChar( This->node->content );
-        break;
-
-    default:
-        FIXME("Unhandled node type %d\n", This->node->type);
+        str = bstr_from_xmlChar(pContent);
+        xmlFree(pContent);
     }
 
     /* Always return a string. */
