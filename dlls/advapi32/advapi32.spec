@@ -116,8 +116,8 @@
 # @ stub CredMarshalCredentialW
 @ stub CredProfileLoaded
 @ stdcall CredReadA(str long long ptr)
-# @ stub CredReadDomainCredentialsA
-# @ stub CredReadDomainCredentialsW
+@ stdcall CredReadDomainCredentialsA(ptr long ptr ptr)
+@ stdcall CredReadDomainCredentialsW(ptr long ptr ptr)
 @ stdcall CredReadW(wstr long long ptr)
 # @ stub CredRenameA
 # @ stub CredRenameW
