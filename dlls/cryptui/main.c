@@ -3627,10 +3627,11 @@ static BOOL import_store(DWORD dwFlags, HWND hwnd, LPCWSTR szTitle,
     return ret;
 }
 
-static HCERTSTORE open_store_from_file(DWORD dwFlags, LPCWSTR fileName)
+static HCERTSTORE open_store_from_file(DWORD dwFlags, LPCWSTR fileName,
+ DWORD *pContentType)
 {
     HCERTSTORE store = NULL;
-    DWORD contentType, expectedContentTypeFlags;
+    DWORD contentType = 0, expectedContentTypeFlags;
 
     if (dwFlags &
      (CRYPTUI_WIZ_IMPORT_ALLOW_CERT | CRYPTUI_WIZ_IMPORT_ALLOW_CRL |
@@ -3668,6 +3669,8 @@ static HCERTSTORE open_store_from_file(DWORD dwFlags, LPCWSTR fileName)
     CryptQueryObject(CERT_QUERY_OBJECT_FILE, fileName,
      expectedContentTypeFlags, CERT_QUERY_FORMAT_FLAG_ALL, 0, NULL,
      &contentType, NULL, &store, NULL, NULL);
+    if (pContentType)
+        *pContentType = contentType;
     return store;
 }
 
@@ -3677,7 +3680,7 @@ static BOOL import_file(DWORD dwFlags, HWND hwnd, LPCWSTR szTitle,
     HCERTSTORE source;
     BOOL ret;
 
-    if ((source = open_store_from_file(dwFlags, fileName)))
+    if ((source = open_store_from_file(dwFlags, fileName, NULL)))
     {
         ret = import_store(dwFlags, hwnd, szTitle, source, dest);
         CertCloseStore(source, 0);
@@ -3783,6 +3786,7 @@ struct ImportWizData
     LPCWSTR pwszWizardTitle;
     CRYPTUI_WIZ_IMPORT_SRC_INFO importSrc;
     LPWSTR fileName;
+    DWORD contentType;
     BOOL freeSource;
     HCERTSTORE hDestCertStore;
     BOOL freeDest;
@@ -3799,7 +3803,8 @@ static BOOL import_validate_filename(HWND hwnd, struct ImportWizData *data,
      OPEN_EXISTING, 0, NULL);
     if (file != INVALID_HANDLE_VALUE)
     {
-        HCERTSTORE source = open_store_from_file(data->dwFlags, fileName);
+        HCERTSTORE source = open_store_from_file(data->dwFlags, fileName,
+         &data->contentType);
         int warningID = 0;
 
         if (!source)
@@ -4055,6 +4060,7 @@ static void show_import_details(HWND lv, struct ImportWizData *data)
 {
     WCHAR text[MAX_STRING_LEN];
     LVITEMW item;
+    int contentID;
 
     item.mask = LVIF_TEXT;
     item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
@@ -4071,7 +4077,38 @@ static void show_import_details(HWND lv, struct ImportWizData *data)
         LoadStringW(hInstance, IDS_IMPORT_DEST_DETERMINED, text,
          sizeof(text)/ sizeof(text[0]));
     SendMessageW(lv, LVM_SETITEMTEXTW, item.iItem, (LPARAM)&item);
-    /* FIXME: set content type */
+    item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
+    item.iSubItem = 0;
+    LoadStringW(hInstance, IDS_IMPORT_CONTENT, text,
+     sizeof(text)/ sizeof(text[0]));
+    SendMessageW(lv, LVM_INSERTITEMW, 0, (LPARAM)&item);
+    switch (data->contentType)
+    {
+    case CERT_QUERY_CONTENT_CERT:
+    case CERT_QUERY_CONTENT_SERIALIZED_CERT:
+        contentID = IDS_IMPORT_CONTENT_CERT;
+        break;
+    case CERT_QUERY_CONTENT_CRL:
+    case CERT_QUERY_CONTENT_SERIALIZED_CRL:
+        contentID = IDS_IMPORT_CONTENT_CRL;
+        break;
+    case CERT_QUERY_CONTENT_CTL:
+    case CERT_QUERY_CONTENT_SERIALIZED_CTL:
+        contentID = IDS_IMPORT_CONTENT_CTL;
+        break;
+    case CERT_QUERY_CONTENT_PKCS7_SIGNED:
+        contentID = IDS_IMPORT_CONTENT_CMS;
+        break;
+    case CERT_QUERY_CONTENT_FLAG_PFX:
+        contentID = IDS_IMPORT_CONTENT_PFX;
+        break;
+    default:
+        contentID = IDS_IMPORT_CONTENT_STORE;
+        break;
+    }
+    LoadStringW(hInstance, contentID, text, sizeof(text)/ sizeof(text[0]));
+    item.iSubItem = 1;
+    SendMessageW(lv, LVM_SETITEMTEXTW, item.iItem, (LPARAM)&item);
     if (data->fileName)
     {
         item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
@@ -4180,6 +4217,24 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
          MAKEINTRESOURCEW(IDS_IMPORT_FILE_SUBTITLE);
         pages[nPages].lParam = (LPARAM)&data;
         nPages++;
+    }
+    else
+    {
+        switch (pImportSrc->dwSubjectChoice)
+        {
+        case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_CONTEXT:
+            data.contentType = CERT_QUERY_CONTENT_CERT;
+            break;
+        case CRYPTUI_WIZ_IMPORT_SUBJECT_CRL_CONTEXT:
+            data.contentType = CERT_QUERY_CONTENT_CRL;
+            break;
+        case CRYPTUI_WIZ_IMPORT_SUBJECT_CTL_CONTEXT:
+            data.contentType = CERT_QUERY_CONTENT_CTL;
+            break;
+        case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_STORE:
+            data.contentType = CERT_QUERY_CONTENT_SERIALIZED_STORE;
+            break;
+        }
     }
 
     pages[nPages].dwSize = sizeof(pages[0]);
