@@ -47,3 +47,30 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     return TRUE;
 }
+
+/***********************************************************************
+ *              DllRegisterServer (ITIRCL.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    FIXME("stub\n");
+    return S_FALSE;
+}
+
+/***********************************************************************
+ *              DllRegisterServer (ITIRCL.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    FIXME("stub\n");
+    return S_FALSE;
+}
+
+/***********************************************************************
+ *              DllCanUnloadNow (ITIRCL.@)
+ */
+HRESULT WINAPI DllCanUnloadNow(void)
+{
+    FIXME("stub\n");
+    return S_FALSE;
+}
