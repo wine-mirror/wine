@@ -46,6 +46,13 @@ char template[] =
 "DWORD flags;\n"
 "}\n";
 
+char object[] =
+"xof 0302txt 0064\n"
+"Header Object\n"
+"{\n"
+"1; 2; 3;\n"
+"}\n";
+
 static void init_function_pointers(void)
 {
     /* We have to use LoadLibrary as no d3dxof functions are referenced directly */
@@ -60,11 +67,14 @@ static unsigned long getRefcount(IUnknown *iface)
     return IUnknown_Release(iface);
 }
 
-static void test_d3dxof(void)
+static void test_refcount(void)
 {
     HRESULT hr;
     unsigned long ref;
     LPDIRECTXFILE lpDirectXFile = NULL;
+    LPDIRECTXFILEENUMOBJECT lpdxfeo;
+    LPDIRECTXFILEDATA lpdxfd;
+    DXFILELOADMEMORY dxflm;
 
     if (!pDirectXFileCreate)
     {
@@ -82,18 +92,49 @@ static void test_d3dxof(void)
 
     ref = getRefcount( (IUnknown *) lpDirectXFile);
     ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
-
     ref = IDirectXFile_AddRef(lpDirectXFile);
     ok(ref == 2, "Got refcount %ld, expected 1\n", ref);
-
     ref = IDirectXFile_Release(lpDirectXFile);
     ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
 
     hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template, strlen(template));
     ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
 
+    dxflm.lpMemory = &object;
+    dxflm.dSize = strlen(object);
+    hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, DXFILELOAD_FROMMEMORY, &lpdxfeo);
+    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ref = getRefcount( (IUnknown *) lpDirectXFile);
+    ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
+    ref = getRefcount( (IUnknown *) lpdxfeo);
+    ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
+
+    hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
+    ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
+    ref = getRefcount( (IUnknown *) lpDirectXFile);
+    ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
+    ref = getRefcount( (IUnknown *) lpdxfeo);
+    ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
+    /* Enum object gets references to all top level objects */
+    ref = getRefcount( (IUnknown *) lpdxfd);
+    ok(ref == 2, "Got refcount %ld, expected 2\n", ref);
+
     ref = IDirectXFile_Release(lpDirectXFile);
-    ok(ref == 0, "Got refcount %ld, expected 1\n", ref);
+    ok(ref == 0, "Got refcount %ld, expected 0\n", ref);
+    /* Nothing changes for all other objects */
+    ref = getRefcount( (IUnknown *) lpdxfeo);
+    ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
+    ref = getRefcount( (IUnknown *) lpdxfd);
+    ok(ref == 2, "Got refcount %ld, expected 1\n", ref);
+
+    ref = IDirectXFileEnumObject_Release(lpdxfeo);
+    ok(ref == 0, "Got refcount %ld, expected 0\n", ref);
+    /* Enum object releases references to all top level objects */
+    ref = getRefcount( (IUnknown *) lpdxfd);
+    ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
+
+    ref = IDirectXFileData_Release(lpdxfd);
+    ok(ref == 0, "Got refcount %ld, expected 0\n", ref);
 }
 
 /* Set it to 1 to expand the string when dumping the object. This is usefull when there is
@@ -268,7 +309,7 @@ START_TEST(d3dxof)
 {
     init_function_pointers();
 
-    test_d3dxof();
+    test_refcount();
     test_dump();
 
     FreeLibrary(hd3dxof);

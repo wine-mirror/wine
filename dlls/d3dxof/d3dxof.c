@@ -1909,6 +1909,9 @@ static ULONG WINAPI IDirectXFileEnumObjectImpl_Release(IDirectXFileEnumObject* i
 
   if (!ref)
   {
+    int i;
+    for (i = 0; i < This->nb_xobjects; i++)
+      IDirectXFileData_Release(This->pRefObjects[i]);
     if (This->source == DXFILELOAD_FROMFILE)
       HeapFree(GetProcessHeap(), 0, This->buf.buffer);
     if (This->hFile != INVALID_HANDLE_VALUE)
@@ -2301,6 +2304,10 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   object->from_ref = FALSE;
 
   *ppDataObj = (LPDIRECTXFILEDATA)object;
+
+  /* Get a reference to created object */
+  This->pRefObjects[This->nb_xobjects] = (LPDIRECTXFILEDATA)object;
+  IDirectXFileData_AddRef(This->pRefObjects[This->nb_xobjects]);
 
   This->nb_xobjects++;
 

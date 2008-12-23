@@ -151,6 +151,7 @@ typedef struct {
     IDirectXFileImpl* pDirectXFile;
     ULONG nb_xobjects;
     xobject* xobjects[MAX_OBJECTS];
+    IDirectXFileData* pRefObjects[MAX_OBJECTS];
 } IDirectXFileEnumObjectImpl;
 
 typedef struct {
