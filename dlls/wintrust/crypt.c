@@ -475,6 +475,29 @@ BOOL WINAPI CryptCATAdminRemoveCatalog(HCATADMIN hCatAdmin, LPCWSTR pwszCatalogF
 }
 
 /***********************************************************************
+ *      CryptCATAdminResolveCatalogPath  (WINTRUST.@)
+ */
+BOOL WINAPI CryptCATAdminResolveCatalogPath(HCATADMIN hcatadmin, WCHAR *catalog_file,
+                                            CATALOG_INFO *info, DWORD flags)
+{
+    static const WCHAR slashW[] = {'\\',0};
+    struct catadmin *ca = hcatadmin;
+
+    TRACE("%p %s %p %x\n", hcatadmin, debugstr_w(catalog_file), info, flags);
+
+    if (!ca || ca->magic != CATADMIN_MAGIC || !info || info->cbStruct != sizeof(*info) || flags)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    strcpyW(info->wszCatalogFile, ca->path);
+    strcatW(info->wszCatalogFile, slashW);
+    strcatW(info->wszCatalogFile, catalog_file);
+
+    return TRUE;
+}
+
+/***********************************************************************
  *      CryptCATClose  (WINTRUST.@)
  */
 BOOL WINAPI CryptCATClose(HANDLE hCatalog)
@@ -680,6 +703,25 @@ out:
     HeapFree(GetProcessHeap(), 0, oid);
     HeapFree(GetProcessHeap(), 0, buffer);
     return inner;
+}
+
+/***********************************************************************
+ *      CryptCATCatalogInfoFromContext  (WINTRUST.@)
+ */
+BOOL WINAPI CryptCATCatalogInfoFromContext(HCATINFO hcatinfo, CATALOG_INFO *info, DWORD flags)
+{
+    struct catinfo *ci = hcatinfo;
+
+    TRACE("%p, %p, %x\n", hcatinfo, info, flags);
+
+    if (!hcatinfo || hcatinfo == INVALID_HANDLE_VALUE || ci->magic != CATINFO_MAGIC ||
+        flags || !info || info->cbStruct != sizeof(*info))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    strcpyW(info->wszCatalogFile, ci->file);
+    return TRUE;
 }
 
 /***********************************************************************
