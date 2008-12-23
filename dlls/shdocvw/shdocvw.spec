@@ -49,8 +49,8 @@
 164 stub -noname ResetProfileSharing
 165 stub -noname URLSubstitution
 167 stub -noname IsIEDefaultBrowser
-169 stub -noname ParseURLFromOutsideSourceA
-170 stub -noname ParseURLFromOutsideSourceW
+169 stdcall -noname ParseURLFromOutsideSourceA(str ptr ptr ptr)
+170 stdcall -noname ParseURLFromOutsideSourceW(wstr ptr ptr ptr)
 171 stub -noname _DeletePidlDPA
 172 stub -noname IURLQualify
 173 stub -noname SHIsRestricted

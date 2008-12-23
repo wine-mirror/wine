@@ -295,3 +295,104 @@ HRESULT WINAPI URLSubRegQueryA(LPCSTR regpath, LPCSTR name, DWORD type,
 
     return E_FAIL;
 }
+
+/******************************************************************
+ *  ParseURLFromOutsideSourceW (SHDOCVW.170)
+ */
+DWORD WINAPI ParseURLFromOutsideSourceW(LPCWSTR url, LPWSTR out, LPDWORD plen, LPDWORD unknown)
+{
+    WCHAR buffer_in[INTERNET_MAX_URL_LENGTH];
+    WCHAR buffer_out[INTERNET_MAX_URL_LENGTH];
+    LPCWSTR ptr = url;
+    HRESULT hr;
+    DWORD needed;
+    DWORD len;
+    DWORD res = 0;
+
+
+    TRACE("(%s, %p, %p, %p) len: %d, unknown: 0x%x\n", debugstr_w(url), out, plen, unknown,
+            plen ? *plen : 0, unknown ? *unknown : 0);
+
+    if (!PathIsURLW(ptr)) {
+        len = sizeof(buffer_in) / sizeof(buffer_in[0]);
+        buffer_in[0] = 0;
+        hr = UrlApplySchemeW(ptr, buffer_in, &len, URL_APPLY_GUESSSCHEME);
+        TRACE("got 0x%x with %s\n", hr, debugstr_w(buffer_in));
+        if (hr != S_OK) {
+            /* when we can't guess the scheme, use the default scheme */
+            len = sizeof(buffer_in) / sizeof(buffer_in[0]);
+            hr = UrlApplySchemeW(ptr, buffer_in, &len, URL_APPLY_DEFAULT);
+        }
+
+        if (hr == S_OK) {
+            /* we parsed the url to buffer_in */
+            ptr = buffer_in;
+        }
+        else
+        {
+            FIXME("call search hook for %s\n", debugstr_w(ptr));
+        }
+    }
+
+    len = sizeof(buffer_out) / sizeof(buffer_out[0]);
+    buffer_out[0] = '\0';
+    hr = UrlCanonicalizeW(ptr, buffer_out, &len, URL_ESCAPE_SPACES_ONLY);
+    needed = lstrlenW(buffer_out)+1;
+    TRACE("got 0x%x with %s (need %d)\n", hr, debugstr_w(buffer_out), needed);
+
+    if (*plen >= needed) {
+        if (out != NULL) {
+            lstrcpyW(out, buffer_out);
+            res++;
+        }
+        needed--;
+    }
+
+    *plen = needed;
+
+    TRACE("=> %d\n", res);
+    return res;
+}
+
+/******************************************************************
+ *  ParseURLFromOutsideSourceA (SHDOCVW.169)
+ *
+ * See ParseURLFromOutsideSourceW
+ */
+DWORD WINAPI ParseURLFromOutsideSourceA(LPCSTR url, LPSTR out, LPDWORD plen, LPDWORD unknown)
+{
+    WCHAR buffer[INTERNET_MAX_URL_LENGTH];
+    LPWSTR urlW = NULL;
+    DWORD needed;
+    DWORD res;
+    DWORD len;
+
+    TRACE("(%s, %p, %p, %p) len: %d, unknown: 0x%x\n", debugstr_a(url), out, plen, unknown,
+            plen ? *plen : 0, unknown ? *unknown : 0);
+
+    if (url) {
+        len = MultiByteToWideChar(CP_ACP, 0, url, -1, NULL, 0);
+        urlW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, url, -1, urlW, len);
+    }
+
+    len = sizeof(buffer) / sizeof(buffer[0]);
+    res = ParseURLFromOutsideSourceW(urlW, buffer, &len, unknown);
+    HeapFree(GetProcessHeap(), 0, urlW);
+
+    needed = WideCharToMultiByte(CP_ACP, 0, buffer, -1, NULL, 0, NULL, NULL);
+
+    res = 0;
+    if (*plen >= needed) {
+        if (out != NULL) {
+            WideCharToMultiByte(CP_ACP, 0, buffer, -1, out, *plen, NULL, NULL);
+            res = needed;
+        }
+        needed--;
+    }
+
+    *plen = needed;
+
+    TRACE("=> %d\n", res);
+    return res;
+}
