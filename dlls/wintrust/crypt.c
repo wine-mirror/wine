@@ -30,6 +30,7 @@
 #include "mscat.h"
 #include "mssip.h"
 #include "imagehlp.h"
+#include "winternl.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -499,9 +500,149 @@ BOOL WINAPI CryptCATClose(HANDLE hCatalog)
 /***********************************************************************
  *      CryptCATEnumerateMember  (WINTRUST.@)
  */
-CRYPTCATMEMBER *WINAPI CryptCATEnumerateMember(HANDLE hCatalog, CRYPTCATMEMBER* pPrevMember)
+CRYPTCATMEMBER * WINAPI CryptCATEnumerateMember(HANDLE hCatalog, CRYPTCATMEMBER *prev)
 {
-    FIXME("(%p, %p) stub\n", hCatalog, pPrevMember);
+    struct cryptcat *cc = hCatalog;
+    CRYPTCATMEMBER *member = prev;
+    CTL_ENTRY *entry;
+    DWORD size, i;
+
+    TRACE("%p, %p\n", hCatalog, prev);
+
+    if (!hCatalog || hCatalog == INVALID_HANDLE_VALUE || cc->magic != CRYPTCAT_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
+    /* dumping the contents makes me think that dwReserved is the iteration number */
+    if (!member)
+    {
+        if (!(member = HeapAlloc(GetProcessHeap(), 0, sizeof(*member))))
+        {
+            SetLastError(ERROR_OUTOFMEMORY);
+            return NULL;
+        }
+        member->cbStruct = sizeof(*member);
+        member->pwszFileName = member->pwszReferenceTag = NULL;
+        member->dwReserved = 0;
+        member->hReserved = NULL;
+        member->gSubjectType = cc->subject;
+        member->fdwMemberFlags = 0;
+        member->pIndirectData = NULL;
+        member->dwCertVersion = cc->inner->dwVersion;
+    }
+    else member->dwReserved++;
+
+    if (member->dwReserved >= cc->inner->cCTLEntry)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        goto error;
+    }
+
+    /* list them backwards, like native */
+    entry = &cc->inner->rgCTLEntry[cc->inner->cCTLEntry - member->dwReserved - 1];
+
+    member->sEncodedIndirectData.cbData = member->sEncodedMemberInfo.cbData = 0;
+    member->sEncodedIndirectData.pbData = member->sEncodedMemberInfo.pbData = NULL;
+    HeapFree(GetProcessHeap(), 0, member->pIndirectData);
+    member->pIndirectData = NULL;
+
+    for (i = 0; i < entry->cAttribute; i++)
+    {
+        CRYPT_ATTRIBUTE *attr = entry->rgAttribute + i;
+
+        if (attr->cValue != 1)
+        {
+            ERR("Can't handle attr->cValue of %u\n", attr->cValue);
+            continue;
+        }
+        if (!strcmp(attr->pszObjId, CAT_MEMBERINFO_OBJID))
+        {
+            CAT_MEMBERINFO *mi;
+            BOOL ret;
+
+            member->sEncodedMemberInfo.cbData = attr->rgValue->cbData;
+            member->sEncodedMemberInfo.pbData = attr->rgValue->pbData;
+
+            CryptDecodeObject(cc->encoding, CAT_MEMBERINFO_OBJID, attr->rgValue->pbData, attr->rgValue->cbData, 0, NULL, &size);
+
+            if (!(mi = HeapAlloc(GetProcessHeap(), 0, size)))
+            {
+                SetLastError(ERROR_OUTOFMEMORY);
+                goto error;
+            }
+            ret = CryptDecodeObject(cc->encoding, CAT_MEMBERINFO_OBJID, attr->rgValue->pbData, attr->rgValue->cbData, 0, mi, &size);
+            if (ret)
+            {
+                UNICODE_STRING guid;
+
+                member->dwCertVersion = mi->dwCertVersion;
+                RtlInitUnicodeString(&guid, mi->pwszSubjGuid);
+                if (RtlGUIDFromString(&guid, &member->gSubjectType))
+                {
+                    HeapFree(GetProcessHeap(), 0, mi);
+                    goto error;
+                }
+            }
+            HeapFree(GetProcessHeap(), 0, mi);
+            if (!ret) goto error;
+        }
+        else if (!strcmp(attr->pszObjId, SPC_INDIRECT_DATA_OBJID))
+        {
+            /* SPC_INDIRECT_DATA_CONTENT is equal to SIP_INDIRECT_DATA */
+
+            member->sEncodedIndirectData.cbData = attr->rgValue->cbData;
+            member->sEncodedIndirectData.pbData = attr->rgValue->pbData;
+
+            CryptDecodeObject(cc->encoding, SPC_INDIRECT_DATA_OBJID, attr->rgValue->pbData, attr->rgValue->cbData, 0, NULL, &size);
+
+            if (!(member->pIndirectData = HeapAlloc(GetProcessHeap(), 0, size)))
+            {
+                SetLastError(ERROR_OUTOFMEMORY);
+                goto error;
+            }
+            CryptDecodeObject(cc->encoding, SPC_INDIRECT_DATA_OBJID, attr->rgValue->pbData, attr->rgValue->cbData, 0, member->pIndirectData, &size);
+        }
+        else
+            /* this object id should probably be handled in CryptCATEnumerateAttr */
+            FIXME("unhandled object id \"%s\"\n", attr->pszObjId);
+    }
+
+    if (!member->sEncodedMemberInfo.cbData || !member->sEncodedIndirectData.cbData)
+    {
+        ERR("Corrupted catalog entry?\n");
+        SetLastError(CRYPT_E_ATTRIBUTES_MISSING);
+        goto error;
+    }
+    size = (2 * member->pIndirectData->Digest.cbData + 1) * sizeof(WCHAR);
+    if (member->pwszReferenceTag)
+        member->pwszReferenceTag = HeapReAlloc(GetProcessHeap(), 0, member->pwszReferenceTag, size);
+    else
+        member->pwszReferenceTag = HeapAlloc(GetProcessHeap(), 0, size);
+
+    if (!member->pwszReferenceTag)
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        goto error;
+    }
+    /* FIXME: reference tag is usually the file hash but doesn't have to be */
+    for (i = 0; i < member->pIndirectData->Digest.cbData; i++)
+    {
+        DWORD sub;
+
+        sub = member->pIndirectData->Digest.pbData[i] >> 4;
+        member->pwszReferenceTag[i * 2] = (sub < 10 ? '0' + sub : 'A' + sub - 10);
+        sub = member->pIndirectData->Digest.pbData[i] & 0xf;
+        member->pwszReferenceTag[i * 2 + 1] = (sub < 10 ? '0' + sub : 'A' + sub - 10);
+    }
+    member->pwszReferenceTag[i * 2] = 0;
+    return member;
+
+error:
+    HeapFree(GetProcessHeap(), 0, member->pIndirectData);
+    HeapFree(GetProcessHeap(), 0, member->pwszReferenceTag);
+    HeapFree(GetProcessHeap(), 0, member);
     return NULL;
 }
 
