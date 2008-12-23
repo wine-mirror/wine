@@ -1470,7 +1470,7 @@ static DWORD MIDI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
 	    lpParms->dwReturn = wmm->dwTempo;
 	    break;
 	default:
-	    FIXME("Unknowm command %08X !\n", lpParms->dwItem);
+	    FIXME("Unknown command %08X !\n", lpParms->dwItem);
 	    return MCIERR_UNRECOGNIZED_COMMAND;
 	}
     } else {
