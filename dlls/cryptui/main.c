@@ -3704,12 +3704,18 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
         else
             import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
         break;
+    case CRYPTUI_WIZ_IMPORT_SUBJECT_CTL_CONTEXT:
+        if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CTL)))
+            ret = import_ctl(pImportSrc->u.pCTLContext, hDestCertStore);
+        else
+            import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
+        break;
     case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_STORE:
         ret = import_store(dwFlags, hwndParent, pwszWizardTitle,
          pImportSrc->u.hCertStore, hDestCertStore);
         break;
     default:
-        FIXME("source type not implemented: %u\n", pImportSrc->dwSubjectChoice);
+        WARN("unknown source type: %u\n", pImportSrc->dwSubjectChoice);
         SetLastError(E_INVALIDARG);
         return FALSE;
     }
