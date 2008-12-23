@@ -3463,7 +3463,7 @@ static BOOL import_cert(PCCERT_CONTEXT cert, HCERTSTORE hDestCertStore)
         }
     }
     ret = CertAddCertificateContextToStore(store, cert,
-     CERT_STORE_ADD_REPLACE_EXISTING, NULL);
+     CERT_STORE_ADD_REPLACE_EXISTING_INHERIT_PROPERTIES, NULL);
     if (!hDestCertStore) CertCloseStore(store, 0);
     return ret;
 }
