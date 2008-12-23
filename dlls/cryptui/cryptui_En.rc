@@ -63,6 +63,8 @@ STRINGTABLE DISCARDABLE
     IDS_CERTIFICATE_PURPOSE_EXISTS "The OID you entered already exists."
     IDS_SELECT_STORE_TITLE "Select Certificate Store"
     IDS_SELECT_STORE "Please select a certificate store."
+    IDS_IMPORT_WIZARD "Certificate Import Wizard"
+    IDS_IMPORT_TYPE_MISMATCH "The file contains objects that do not match the given criteria.  Please select another file."
     IDS_PURPOSE_SERVER_AUTH "Ensures the identify of a remote computer"
     IDS_PURPOSE_CLIENT_AUTH "Proves your identity to a remote computer"
     IDS_PURPOSE_CODE_SIGNING "Ensures software came from software publisher\nProtects software from alteration after publication"

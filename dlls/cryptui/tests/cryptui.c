@@ -377,7 +377,6 @@ static void test_crypt_ui_wiz_import(void)
     SetLastError(0xdeadbeef);
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CRL,
      0, NULL, &info, NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     CertFreeCertificateContext(info.u.pCertContext);

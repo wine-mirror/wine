@@ -3468,6 +3468,71 @@ static BOOL import_cert(PCCERT_CONTEXT cert, HCERTSTORE hDestCertStore)
     return ret;
 }
 
+/* Checks type, a type such as CERT_QUERY_CONTENT_CERT returned by
+ * CryptQueryObject, against the allowed types.  Returns TRUE if the
+ * type is allowed, FALSE otherwise.
+ */
+static BOOL check_context_type(DWORD dwFlags, DWORD type)
+{
+    BOOL ret;
+
+    if (dwFlags &
+     (CRYPTUI_WIZ_IMPORT_ALLOW_CERT | CRYPTUI_WIZ_IMPORT_ALLOW_CRL |
+     CRYPTUI_WIZ_IMPORT_ALLOW_CTL))
+    {
+        switch (type)
+        {
+        case CERT_QUERY_CONTENT_CERT:
+        case CERT_QUERY_CONTENT_SERIALIZED_CERT:
+            ret = dwFlags & CRYPTUI_WIZ_IMPORT_ALLOW_CERT;
+            break;
+        case CERT_QUERY_CONTENT_CRL:
+        case CERT_QUERY_CONTENT_SERIALIZED_CRL:
+            ret = dwFlags & CRYPTUI_WIZ_IMPORT_ALLOW_CRL;
+            break;
+        case CERT_QUERY_CONTENT_CTL:
+        case CERT_QUERY_CONTENT_SERIALIZED_CTL:
+            ret = dwFlags & CRYPTUI_WIZ_IMPORT_ALLOW_CTL;
+            break;
+        default:
+            /* The remaining types contain more than one type, so allow
+             * any combination.
+             */
+            ret = TRUE;
+        }
+    }
+    else
+    {
+        /* No allowed types specified, so any type is allowed */
+        ret = TRUE;
+    }
+    if (!ret)
+        SetLastError(E_INVALIDARG);
+    return ret;
+}
+
+
+static void import_warn_type_mismatch(DWORD dwFlags, HWND hwnd, LPCWSTR szTitle)
+{
+    if (!(dwFlags & CRYPTUI_WIZ_NO_UI))
+    {
+        WCHAR title[MAX_STRING_LEN], error[MAX_STRING_LEN];
+        LPCWSTR pTitle;
+
+        if (szTitle)
+            pTitle = szTitle;
+        else
+        {
+            LoadStringW(hInstance, IDS_IMPORT_WIZARD, title,
+             sizeof(title) / sizeof(title[0]));
+            pTitle = title;
+        }
+        LoadStringW(hInstance, IDS_IMPORT_TYPE_MISMATCH, error,
+         sizeof(error) / sizeof(error[0]));
+        MessageBoxW(hwnd, error, pTitle, MB_ICONERROR | MB_OK);
+    }
+}
+
 BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardTitle,
                              PCCRYPTUI_WIZ_IMPORT_SRC_INFO pImportSrc, HCERTSTORE hDestCertStore)
 {
@@ -3501,7 +3566,10 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
         }
         break;
     case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_CONTEXT:
-        ret = import_cert(pImportSrc->u.pCertContext, hDestCertStore);
+        if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CERT)))
+            ret = import_cert(pImportSrc->u.pCertContext, hDestCertStore);
+        else
+            import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
         break;
     default:
         FIXME("source type not implemented: %u\n", pImportSrc->dwSubjectChoice);
