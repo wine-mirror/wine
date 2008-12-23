@@ -184,11 +184,13 @@ MAKE_FUNCPTR(FT_Set_Pixel_Sizes);
 MAKE_FUNCPTR(FT_Vector_Transform);
 MAKE_FUNCPTR(FT_Render_Glyph);
 static void (*pFT_Library_Version)(FT_Library,FT_Int*,FT_Int*,FT_Int*);
-static FT_Error (*pFT_Library_SetLcdFilter)(FT_Library, FT_LcdFilter);
 static FT_Error (*pFT_Load_Sfnt_Table)(FT_Face,FT_ULong,FT_Long,FT_Byte*,FT_ULong*);
 static FT_ULong (*pFT_Get_First_Char)(FT_Face,FT_UInt*);
 static FT_ULong (*pFT_Get_Next_Char)(FT_Face,FT_ULong,FT_UInt*);
 static FT_TrueTypeEngineType (*pFT_Get_TrueType_Engine_Type)(FT_Library);
+#ifdef HAVE_FREETYPE_FTLCDFIL_H
+static FT_Error (*pFT_Library_SetLcdFilter)(FT_Library, FT_LcdFilter);
+#endif
 #ifdef HAVE_FREETYPE_FTWINFNT_H
 MAKE_FUNCPTR(FT_Get_WinFNT_Header);
 #endif
@@ -2491,11 +2493,13 @@ static BOOL init_freetype(void)
 #undef LOAD_FUNCPTR
     /* Don't warn if these ones are missing */
     pFT_Library_Version = wine_dlsym(ft_handle, "FT_Library_Version", NULL, 0);
-    pFT_Library_SetLcdFilter = wine_dlsym(ft_handle, "FT_Library_SetLcdFilter", NULL, 0);
     pFT_Load_Sfnt_Table = wine_dlsym(ft_handle, "FT_Load_Sfnt_Table", NULL, 0);
     pFT_Get_First_Char = wine_dlsym(ft_handle, "FT_Get_First_Char", NULL, 0);
     pFT_Get_Next_Char = wine_dlsym(ft_handle, "FT_Get_Next_Char", NULL, 0);
     pFT_Get_TrueType_Engine_Type = wine_dlsym(ft_handle, "FT_Get_TrueType_Engine_Type", NULL, 0);
+#ifdef HAVE_FREETYPE_FTLCDFIL_H
+    pFT_Library_SetLcdFilter = wine_dlsym(ft_handle, "FT_Library_SetLcdFilter", NULL, 0);
+#endif
 #ifdef HAVE_FREETYPE_FTWINFNT_H
     pFT_Get_WinFNT_Header = wine_dlsym(ft_handle, "FT_Get_WinFNT_Header", NULL, 0);
 #endif
@@ -4735,6 +4739,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     case WINE_GGO_HBGR_BITMAP:
     case WINE_GGO_VRGB_BITMAP:
     case WINE_GGO_VBGR_BITMAP:
+#ifdef HAVE_FREETYPE_FTLCDFIL_H
       {
         width  = lpgm->gmBlackBoxX;
         height = lpgm->gmBlackBoxY;
@@ -4836,6 +4841,10 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
 
         break;
       }
+#else
+      LeaveCriticalSection( &freetype_cs );
+      return GDI_ERROR;
+#endif
 
     case GGO_NATIVE:
       {
@@ -5917,13 +5926,12 @@ static BOOL is_hinting_enabled(void)
 
 static BOOL is_subpixel_rendering_enabled( void )
 {
-    if ( !pFT_Library_SetLcdFilter )
-        return FALSE;
-
-    if ( pFT_Library_SetLcdFilter ( NULL, 0 ) == FT_Err_Unimplemented_Feature )
-        return FALSE;
-
-    return TRUE;
+#ifdef HAVE_FREETYPE_FTLCDFIL_H
+    return pFT_Library_SetLcdFilter &&
+           pFT_Library_SetLcdFilter( NULL, 0 ) != FT_Err_Unimplemented_Feature;
+#else
+    return FALSE;
+#endif
 }
 
 /*************************************************************************
