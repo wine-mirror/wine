@@ -1288,7 +1288,7 @@ static LRESULT CALLBACK general_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         switch (wp)
         {
         case IDC_ADDTOSTORE:
-            FIXME("call CryptUIWizImport\n");
+            CryptUIWizImport(0, hwnd, NULL, NULL, NULL);
             break;
         case IDC_ISSUERSTATEMENT:
         {
