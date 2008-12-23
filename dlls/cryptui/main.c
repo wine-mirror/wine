@@ -3345,46 +3345,6 @@ BOOL WINAPI CryptUIDlgViewContext(DWORD dwContextType, LPVOID pvContext,
     return ret;
 }
 
-static PCCERT_CONTEXT make_cert_from_file(LPCWSTR fileName)
-{
-    HANDLE file;
-    DWORD size, encoding = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
-    BYTE *buffer;
-    PCCERT_CONTEXT cert;
-
-    file = CreateFileW(fileName, GENERIC_READ, FILE_SHARE_READ, NULL,
-     OPEN_EXISTING, 0, NULL);
-    if (file == INVALID_HANDLE_VALUE)
-    {
-        WARN("can't open certificate file %s\n", debugstr_w(fileName));
-        return NULL;
-    }
-    if ((size = GetFileSize(file, NULL)))
-    {
-        if ((buffer = HeapAlloc(GetProcessHeap(), 0, size)))
-        {
-            DWORD read;
-            if (!ReadFile(file, buffer, size, &read, NULL) || read != size)
-            {
-                WARN("can't read certificate file %s\n", debugstr_w(fileName));
-                HeapFree(GetProcessHeap(), 0, buffer);
-                CloseHandle(file);
-                return NULL;
-            }
-        }
-    }
-    else
-    {
-        WARN("empty file %s\n", debugstr_w(fileName));
-        CloseHandle(file);
-        return NULL;
-    }
-    CloseHandle(file);
-    cert = CertCreateCertificateContext(encoding, buffer, size);
-    HeapFree(GetProcessHeap(), 0, buffer);
-    return cert;
-}
-
 /* Decodes a cert's basic constraints extension (either szOID_BASIC_CONSTRAINTS
  * or szOID_BASIC_CONSTRAINTS2, whichever is present) to determine if it
  * should be a CA.  If neither extension is present, returns
@@ -3660,11 +3620,61 @@ static BOOL import_store(DWORD dwFlags, HWND hwnd, LPCWSTR szTitle,
     return ret;
 }
 
+static BOOL import_file(DWORD dwFlags, HWND hwnd, LPCWSTR szTitle,
+ LPCWSTR fileName, HCERTSTORE dest)
+{
+    HCERTSTORE source;
+    DWORD contentType, expectedContentTypeFlags;
+    BOOL ret;
+
+    if (dwFlags &
+     (CRYPTUI_WIZ_IMPORT_ALLOW_CERT | CRYPTUI_WIZ_IMPORT_ALLOW_CRL |
+     CRYPTUI_WIZ_IMPORT_ALLOW_CTL))
+    {
+        expectedContentTypeFlags =
+         CERT_QUERY_CONTENT_FLAG_SERIALIZED_STORE |
+         CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED |
+         CERT_QUERY_CONTENT_FLAG_PFX;
+        if (dwFlags & CRYPTUI_WIZ_IMPORT_ALLOW_CERT)
+            expectedContentTypeFlags |=
+             CERT_QUERY_CONTENT_FLAG_CERT |
+             CERT_QUERY_CONTENT_FLAG_SERIALIZED_CERT;
+        if (dwFlags & CRYPTUI_WIZ_IMPORT_ALLOW_CRL)
+            expectedContentTypeFlags |=
+             CERT_QUERY_CONTENT_FLAG_SERIALIZED_CRL |
+             CERT_QUERY_CONTENT_FLAG_CRL;
+        if (dwFlags & CRYPTUI_WIZ_IMPORT_ALLOW_CTL)
+            expectedContentTypeFlags |=
+             CERT_QUERY_CONTENT_FLAG_CTL |
+             CERT_QUERY_CONTENT_FLAG_SERIALIZED_CTL;
+    }
+    else
+        expectedContentTypeFlags =
+         CERT_QUERY_CONTENT_FLAG_CERT |
+         CERT_QUERY_CONTENT_FLAG_CTL |
+         CERT_QUERY_CONTENT_FLAG_CRL |
+         CERT_QUERY_CONTENT_FLAG_SERIALIZED_STORE |
+         CERT_QUERY_CONTENT_FLAG_SERIALIZED_CERT |
+         CERT_QUERY_CONTENT_FLAG_SERIALIZED_CTL |
+         CERT_QUERY_CONTENT_FLAG_SERIALIZED_CRL |
+         CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED |
+         CERT_QUERY_CONTENT_FLAG_PFX;
+
+    ret = CryptQueryObject(CERT_QUERY_OBJECT_FILE, fileName,
+     expectedContentTypeFlags, CERT_QUERY_FORMAT_FLAG_ALL, 0, NULL,
+     &contentType, NULL, &source, NULL, NULL);
+    if (ret)
+    {
+        ret = import_store(dwFlags, hwnd, szTitle, source, dest);
+        CertCloseStore(source, 0);
+    }
+    return ret;
+}
+
 BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardTitle,
                              PCCRYPTUI_WIZ_IMPORT_SRC_INFO pImportSrc, HCERTSTORE hDestCertStore)
 {
     BOOL ret;
-    const CERT_CONTEXT *cert;
 
     TRACE("(0x%08x, %p, %s, %p, %p)\n", dwFlags, hwndParent, debugstr_w(pwszWizardTitle),
           pImportSrc, hDestCertStore);
@@ -3681,16 +3691,8 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
     switch (pImportSrc->dwSubjectChoice)
     {
     case CRYPTUI_WIZ_IMPORT_SUBJECT_FILE:
-        if (!(cert = make_cert_from_file(pImportSrc->u.pwszFileName)))
-        {
-            WARN("unable to create certificate context\n");
-            return FALSE;
-        }
-        else
-        {
-            ret = import_cert(cert, hDestCertStore);
-            CertFreeCertificateContext(cert);
-        }
+        ret = import_file(dwFlags, hwndParent, pwszWizardTitle,
+         pImportSrc->u.pwszFileName, hDestCertStore);
         break;
     case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_CONTEXT:
         if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CERT)))
