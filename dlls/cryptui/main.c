@@ -3785,6 +3785,77 @@ struct ImportWizData
     HCERTSTORE hDestCertStore;
 };
 
+static BOOL import_validate_filename(HWND hwnd, struct ImportWizData *data,
+ LPCWSTR fileName)
+{
+    HANDLE file;
+    BOOL ret = FALSE;
+
+    file = CreateFileW(fileName, GENERIC_READ, FILE_SHARE_READ, NULL,
+     OPEN_EXISTING, 0, NULL);
+    if (file != INVALID_HANDLE_VALUE)
+    {
+        HCERTSTORE source = open_store_from_file(data->dwFlags, fileName);
+        int warningID = 0;
+
+        if (!source)
+            warningID = IDS_IMPORT_BAD_FORMAT;
+        else if (!check_store_context_type(data->dwFlags, source))
+            warningID = IDS_IMPORT_TYPE_MISMATCH;
+        else
+        {
+            FIXME("save %s for import\n", debugstr_w(fileName));
+            CertCloseStore(source, 0);
+            ret = TRUE;
+        }
+        if (warningID)
+        {
+            import_warning(data->dwFlags, hwnd, data->pwszWizardTitle,
+             warningID);
+        }
+        CloseHandle(file);
+    }
+    else
+    {
+        WCHAR title[MAX_STRING_LEN], error[MAX_STRING_LEN];
+        LPCWSTR pTitle;
+        LPWSTR msgBuf, fullError;
+
+        if (data->pwszWizardTitle)
+            pTitle = data->pwszWizardTitle;
+        else
+        {
+            LoadStringW(hInstance, IDS_IMPORT_WIZARD, title,
+             sizeof(title) / sizeof(title[0]));
+            pTitle = title;
+        }
+        LoadStringW(hInstance, IDS_IMPORT_OPEN_FAILED, error,
+         sizeof(error) / sizeof(error[0]));
+        FormatMessageW(
+         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL,
+         GetLastError(), 0, (LPWSTR) &msgBuf, 0, NULL);
+        fullError = HeapAlloc(GetProcessHeap(), 0,
+         (strlenW(error) + strlenW(fileName) + strlenW(msgBuf) + 3)
+         * sizeof(WCHAR));
+        if (fullError)
+        {
+            LPWSTR ptr = fullError;
+
+            strcpyW(ptr, error);
+            ptr += strlenW(error);
+            strcpyW(ptr, fileName);
+            ptr += strlenW(fileName);
+            *ptr++ = ':';
+            *ptr++ = '\n';
+            strcpyW(ptr, msgBuf);
+            MessageBoxW(hwnd, fullError, pTitle, MB_ICONERROR | MB_OK);
+            HeapFree(GetProcessHeap(), 0, fullError);
+        }
+        LocalFree(msgBuf);
+    }
+    return ret;
+}
+
 static LRESULT CALLBACK import_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
@@ -3830,9 +3901,17 @@ static LRESULT CALLBACK import_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
                 LPWSTR fileName = HeapAlloc(GetProcessHeap(), 0,
                  (len + 1) * sizeof(WCHAR));
 
-                SendMessageW(fileNameEdit, WM_GETTEXT, len + 1,
-                 (LPARAM)fileName);
-                FIXME("validate %s\n", debugstr_w(fileName));
+                if (fileName)
+                {
+                    SendMessageW(fileNameEdit, WM_GETTEXT, len + 1,
+                     (LPARAM)fileName);
+                    if (!import_validate_filename(hwnd, data, fileName))
+                    {
+                        SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, 1);
+                        ret = 1;
+                    }
+                    HeapFree(GetProcessHeap(), 0, fileName);
+                }
             }
             break;
         }

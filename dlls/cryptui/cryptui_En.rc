@@ -77,6 +77,8 @@ STRINGTABLE DISCARDABLE
     IDS_IMPORT_FILTER_CMS "CMS/PKCS #7 Messages (*.spc; *.p7b)"
     IDS_IMPORT_FILTER_ALL "All Files (*.*)"
     IDS_IMPORT_EMPTY_FILE "Please select a file."
+    IDS_IMPORT_BAD_FORMAT "The file format is not recognized.  Please select another file."
+    IDS_IMPORT_OPEN_FAILED "Could not open "
     IDS_PURPOSE_SERVER_AUTH "Ensures the identify of a remote computer"
     IDS_PURPOSE_CLIENT_AUTH "Proves your identity to a remote computer"
     IDS_PURPOSE_CODE_SIGNING "Ensures software came from software publisher\nProtects software from alteration after publication"
