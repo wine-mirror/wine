@@ -79,6 +79,7 @@ STRINGTABLE DISCARDABLE
     IDS_IMPORT_EMPTY_FILE "Please select a file."
     IDS_IMPORT_BAD_FORMAT "The file format is not recognized.  Please select another file."
     IDS_IMPORT_OPEN_FAILED "Could not open "
+    IDS_IMPORT_DEST_DETERMINED "Determined by the program"
     IDS_PURPOSE_SERVER_AUTH "Ensures the identify of a remote computer"
     IDS_PURPOSE_CLIENT_AUTH "Proves your identity to a remote computer"
     IDS_PURPOSE_CODE_SIGNING "Ensures software came from software publisher\nProtects software from alteration after publication"
@@ -254,7 +255,7 @@ BEGIN
     IDC_IMPORT_AUTO_STORE, 31,18,180,12, BS_AUTORADIOBUTTON|WS_TABSTOP
   AUTORADIOBUTTON "&Place all certificates in the following store:",
     IDC_IMPORT_SPECIFY_STORE, 31,30,180,12, BS_AUTORADIOBUTTON
-  EDITTEXT IDC_IMPORT_STORE, 44,49,185,14, ES_AUTOHSCROLL|WS_TABSTOP
+  EDITTEXT IDC_IMPORT_STORE, 44,49,185,14, ES_READONLY
   PUSHBUTTON "B&rowse...", IDC_IMPORT_BROWSE_STORE, 236,49,60,14
 END
 

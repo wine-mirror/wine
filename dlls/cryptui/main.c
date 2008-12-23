@@ -3784,6 +3784,8 @@ struct ImportWizData
     CRYPTUI_WIZ_IMPORT_SRC_INFO importSrc;
     BOOL freeSource;
     HCERTSTORE hDestCertStore;
+    BOOL freeDest;
+    BOOL autoDest;
 };
 
 static BOOL import_validate_filename(HWND hwnd, struct ImportWizData *data,
@@ -3953,9 +3955,23 @@ static LRESULT CALLBACK import_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
     LRESULT ret = 0;
+    struct ImportWizData *data;
 
     switch (msg)
     {
+    case WM_INITDIALOG:
+    {
+        PROPSHEETPAGEW *page = (PROPSHEETPAGEW *)lp;
+
+        data = (struct ImportWizData *)page->lParam;
+        SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
+        SendMessageW(GetDlgItem(hwnd, IDC_IMPORT_AUTO_STORE), BM_CLICK, 0, 0);
+        if (data->dwFlags & CRYPTUI_WIZ_IMPORT_NO_CHANGE_DEST_STORE)
+            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_SPECIFY_STORE), FALSE);
+        EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_STORE), FALSE);
+        EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_BROWSE_STORE), FALSE);
+        break;
+    }
     case WM_NOTIFY:
     {
         NMHDR *hdr = (NMHDR *)lp;
@@ -3970,6 +3986,51 @@ static LRESULT CALLBACK import_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         }
         break;
     }
+    case WM_COMMAND:
+        switch (wp)
+        {
+        case IDC_IMPORT_AUTO_STORE:
+            data = (struct ImportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
+            data->autoDest = TRUE;
+            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_STORE), FALSE);
+            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_BROWSE_STORE), FALSE);
+            break;
+        case IDC_IMPORT_SPECIFY_STORE:
+            data = (struct ImportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
+            data->autoDest = FALSE;
+            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_STORE), TRUE);
+            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_BROWSE_STORE), TRUE);
+            break;
+        case IDC_IMPORT_BROWSE_STORE:
+        {
+            CRYPTUI_ENUM_SYSTEM_STORE_ARGS enumArgs = {
+             CERT_SYSTEM_STORE_CURRENT_USER, NULL };
+            CRYPTUI_ENUM_DATA enumData = { 0, NULL, 1, &enumArgs };
+            CRYPTUI_SELECTSTORE_INFO_W selectInfo;
+            HCERTSTORE store;
+
+            data = (struct ImportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
+            selectInfo.dwSize = sizeof(selectInfo);
+            selectInfo.parent = hwnd;
+            selectInfo.dwFlags = CRYPTUI_ENABLE_SHOW_PHYSICAL_STORE;
+            selectInfo.pwszTitle = selectInfo.pwszTitle = NULL;
+            selectInfo.pEnumData = &enumData;
+            selectInfo.pfnSelectedStoreCallback = NULL;
+            if ((store = CryptUIDlgSelectStoreW(&selectInfo)))
+            {
+                WCHAR storeTitle[MAX_STRING_LEN];
+
+                LoadStringW(hInstance, IDS_IMPORT_DEST_DETERMINED,
+                 storeTitle, sizeof(storeTitle) / sizeof(storeTitle[0]));
+                SendMessageW(GetDlgItem(hwnd, IDC_IMPORT_STORE), WM_SETTEXT,
+                 0, (LPARAM)storeTitle);
+                data->hDestCertStore = store;
+                data->freeDest = TRUE;
+            }
+            break;
+        }
+        }
+        break;
     }
     return ret;
 }
@@ -4018,6 +4079,9 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
         memset(&data.importSrc, 0, sizeof(data.importSrc));
     data.freeSource = FALSE;
     data.hDestCertStore = hDestCertStore;
+    data.freeDest = FALSE;
+    data.autoDest = TRUE;
+
     memset(&pages, 0, sizeof(pages));
 
     pages[nPages].dwSize = sizeof(pages[0]);
@@ -4050,6 +4114,7 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
     pages[nPages].pszHeaderTitle = MAKEINTRESOURCEW(IDS_IMPORT_STORE_TITLE);
     pages[nPages].pszHeaderSubTitle =
      MAKEINTRESOURCEW(IDS_IMPORT_STORE_SUBTITLE);
+    pages[nPages].lParam = (LPARAM)&data;
     nPages++;
 
     pages[nPages].dwSize = sizeof(pages[0]);
