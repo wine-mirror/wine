@@ -139,7 +139,7 @@ BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN *catAdmin,
     CreateDirectoryW(ca->path, NULL);
 
     ca->magic = CATADMIN_MAGIC;
-    ca->find = NULL;
+    ca->find = INVALID_HANDLE_VALUE;
 
     *catAdmin = ca;
     return TRUE;
@@ -304,11 +304,11 @@ HCATINFO WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN hCatAdmin, BYTE* pbHa
         strcpyW(path, ca->path);
         strcatW(path, globW);
 
-        if (ca->find) FindClose(ca->find);
+        FindClose(ca->find);
         ca->find = FindFirstFileW(path, &data);
 
         HeapFree(GetProcessHeap(), 0, path);
-        if (!ca->find)
+        if (ca->find == INVALID_HANDLE_VALUE)
         {
             CryptReleaseContext(prov, 0);
             return NULL;
@@ -360,7 +360,7 @@ HCATINFO WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN hCatAdmin, BYTE* pbHa
                 if (!phPrevCatInfo)
                 {
                     FindClose(ca->find);
-                    ca->find = NULL;
+                    ca->find = INVALID_HANDLE_VALUE;
                 }
                 ci = create_catinfo(filename);
                 HeapFree(GetProcessHeap(), 0, filename);
@@ -373,7 +373,7 @@ HCATINFO WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN hCatAdmin, BYTE* pbHa
         if (!FindNextFileW(ca->find, &data))
         {
             FindClose(ca->find);
-            ca->find = NULL;
+            ca->find = INVALID_HANDLE_VALUE;
             CryptReleaseContext(prov, 0);
             return NULL;
         }
@@ -439,7 +439,7 @@ BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    if (ca->find) FindClose(ca->find);
+    if (ca->find != INVALID_HANDLE_VALUE) FindClose(ca->find);
     ca->magic = 0;
     return HeapFree(GetProcessHeap(), 0, ca);
 }
