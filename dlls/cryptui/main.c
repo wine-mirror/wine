@@ -3529,7 +3529,8 @@ static BOOL check_context_type(DWORD dwFlags, DWORD type)
 }
 
 
-static void import_warn_type_mismatch(DWORD dwFlags, HWND hwnd, LPCWSTR szTitle)
+static void import_warning(DWORD dwFlags, HWND hwnd, LPCWSTR szTitle,
+ int warningID)
 {
     if (!(dwFlags & CRYPTUI_WIZ_NO_UI))
     {
@@ -3544,10 +3545,15 @@ static void import_warn_type_mismatch(DWORD dwFlags, HWND hwnd, LPCWSTR szTitle)
              sizeof(title) / sizeof(title[0]));
             pTitle = title;
         }
-        LoadStringW(hInstance, IDS_IMPORT_TYPE_MISMATCH, error,
+        LoadStringW(hInstance, warningID, error,
          sizeof(error) / sizeof(error[0]));
         MessageBoxW(hwnd, error, pTitle, MB_ICONERROR | MB_OK);
     }
+}
+
+static void import_warn_type_mismatch(DWORD dwFlags, HWND hwnd, LPCWSTR szTitle)
+{
+    import_warning(dwFlags, hwnd, szTitle, IDS_IMPORT_TYPE_MISMATCH);
 }
 
 static BOOL check_store_context_type(DWORD dwFlags, HCERTSTORE store)
@@ -3765,6 +3771,7 @@ static WCHAR *make_import_file_filter(DWORD dwFlags)
 struct ImportWizData
 {
     DWORD dwFlags;
+    LPCWSTR pwszWizardTitle;
     PCCRYPTUI_WIZ_IMPORT_SRC_INFO pImportSrc;
     HCERTSTORE hDestCertStore;
 };
@@ -3796,6 +3803,30 @@ static LRESULT CALLBACK import_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
              PSWIZB_BACK | PSWIZB_NEXT);
             ret = TRUE;
             break;
+        case PSN_WIZNEXT:
+        {
+            HWND fileNameEdit = GetDlgItem(hwnd, IDC_IMPORT_FILENAME);
+            DWORD len = SendMessageW(fileNameEdit, WM_GETTEXTLENGTH, 0, 0);
+
+            data = (struct ImportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
+            if (!len)
+            {
+                import_warning(data->dwFlags, hwnd, data->pwszWizardTitle,
+                 IDS_IMPORT_EMPTY_FILE);
+                SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, 1);
+                ret = 1;
+            }
+            else
+            {
+                LPWSTR fileName = HeapAlloc(GetProcessHeap(), 0,
+                 (len + 1) * sizeof(WCHAR));
+
+                SendMessageW(fileNameEdit, WM_GETTEXT, len + 1,
+                 (LPARAM)fileName);
+                FIXME("validate %s\n", debugstr_w(fileName));
+            }
+            break;
+        }
         }
         break;
     }
@@ -3883,7 +3914,8 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
 {
     PROPSHEETHEADERW hdr;
     PROPSHEETPAGEW pages[4];
-    struct ImportWizData data = { dwFlags, pImportSrc, hDestCertStore };
+    struct ImportWizData data = { dwFlags, pwszWizardTitle, pImportSrc,
+     hDestCertStore };
 
     FIXME("\n");
 
