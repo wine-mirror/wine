@@ -3468,6 +3468,34 @@ static BOOL import_cert(PCCERT_CONTEXT cert, HCERTSTORE hDestCertStore)
     return ret;
 }
 
+static BOOL import_crl(PCCRL_CONTEXT crl, HCERTSTORE hDestCertStore)
+{
+    HCERTSTORE store;
+    BOOL ret;
+
+    if (!crl)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if (hDestCertStore) store = hDestCertStore;
+    else
+    {
+        static const WCHAR ca[] = { 'C','A',0 };
+
+        if (!(store = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
+         CERT_SYSTEM_STORE_CURRENT_USER, ca)))
+        {
+            WARN("unable to open certificate store\n");
+            return FALSE;
+        }
+    }
+    ret = CertAddCRLContextToStore(store, crl,
+     CERT_STORE_ADD_REPLACE_EXISTING_INHERIT_PROPERTIES, NULL);
+    if (!hDestCertStore) CertCloseStore(store, 0);
+    return ret;
+}
+
 /* Checks type, a type such as CERT_QUERY_CONTENT_CERT returned by
  * CryptQueryObject, against the allowed types.  Returns TRUE if the
  * type is allowed, FALSE otherwise.
@@ -3568,6 +3596,12 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
     case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_CONTEXT:
         if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CERT)))
             ret = import_cert(pImportSrc->u.pCertContext, hDestCertStore);
+        else
+            import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
+        break;
+    case CRYPTUI_WIZ_IMPORT_SUBJECT_CRL_CONTEXT:
+        if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CRL)))
+            ret = import_crl(pImportSrc->u.pCRLContext, hDestCertStore);
         else
             import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
         break;
