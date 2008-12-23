@@ -3983,6 +3983,19 @@ static LRESULT CALLBACK import_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
              PSWIZB_BACK | PSWIZB_NEXT);
             ret = TRUE;
             break;
+        case PSN_WIZNEXT:
+        {
+            data = (struct ImportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
+            if (IsDlgButtonChecked(hwnd, IDC_IMPORT_SPECIFY_STORE) &&
+             !data->hDestCertStore)
+            {
+                import_warning(data->dwFlags, hwnd, data->pwszWizardTitle,
+                 IDS_IMPORT_SELECT_STORE);
+                SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, 1);
+                ret = 1;
+            }
+            break;
+        }
         }
         break;
     }
