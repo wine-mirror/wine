@@ -44,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
 struct cryptcat
 {
     DWORD     magic;
-    HANDLE    msg;
+    HCRYPTMSG msg;
     DWORD     encoding;
     CTL_INFO *inner;
     DWORD     inner_len;
