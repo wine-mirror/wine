@@ -3941,9 +3941,7 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
     TRACE("(0x%08x, %p, %s, %p, %p)\n", dwFlags, hwndParent, debugstr_w(pwszWizardTitle),
           pImportSrc, hDestCertStore);
 
-    if (!(dwFlags & CRYPTUI_WIZ_NO_UI)) FIXME("UI not implemented\n");
-
-    if (!pImportSrc ||
+    if (pImportSrc &&
      pImportSrc->dwSize != sizeof(CRYPTUI_WIZ_IMPORT_SRC_INFO))
     {
         SetLastError(E_INVALIDARG);
@@ -3953,39 +3951,47 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
     if (!(dwFlags & CRYPTUI_WIZ_NO_UI))
         ret = show_import_ui(dwFlags, hwndParent, pwszWizardTitle, pImportSrc,
          hDestCertStore);
-
-    switch (pImportSrc->dwSubjectChoice)
+    else if (pImportSrc)
     {
-    case CRYPTUI_WIZ_IMPORT_SUBJECT_FILE:
-        ret = import_file(dwFlags, hwndParent, pwszWizardTitle,
-         pImportSrc->u.pwszFileName, hDestCertStore);
-        break;
-    case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_CONTEXT:
-        if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CERT)))
-            ret = import_cert(pImportSrc->u.pCertContext, hDestCertStore);
-        else
-            import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
-        break;
-    case CRYPTUI_WIZ_IMPORT_SUBJECT_CRL_CONTEXT:
-        if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CRL)))
-            ret = import_crl(pImportSrc->u.pCRLContext, hDestCertStore);
-        else
-            import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
-        break;
-    case CRYPTUI_WIZ_IMPORT_SUBJECT_CTL_CONTEXT:
-        if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CTL)))
-            ret = import_ctl(pImportSrc->u.pCTLContext, hDestCertStore);
-        else
-            import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
-        break;
-    case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_STORE:
-        ret = import_store(dwFlags, hwndParent, pwszWizardTitle,
-         pImportSrc->u.hCertStore, hDestCertStore);
-        break;
-    default:
-        WARN("unknown source type: %u\n", pImportSrc->dwSubjectChoice);
+        switch (pImportSrc->dwSubjectChoice)
+        {
+        case CRYPTUI_WIZ_IMPORT_SUBJECT_FILE:
+            ret = import_file(dwFlags, hwndParent, pwszWizardTitle,
+             pImportSrc->u.pwszFileName, hDestCertStore);
+            break;
+        case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_CONTEXT:
+            if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CERT)))
+                ret = import_cert(pImportSrc->u.pCertContext, hDestCertStore);
+            else
+                import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
+            break;
+        case CRYPTUI_WIZ_IMPORT_SUBJECT_CRL_CONTEXT:
+            if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CRL)))
+                ret = import_crl(pImportSrc->u.pCRLContext, hDestCertStore);
+            else
+                import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
+            break;
+        case CRYPTUI_WIZ_IMPORT_SUBJECT_CTL_CONTEXT:
+            if ((ret = check_context_type(dwFlags, CERT_QUERY_CONTENT_CTL)))
+                ret = import_ctl(pImportSrc->u.pCTLContext, hDestCertStore);
+            else
+                import_warn_type_mismatch(dwFlags, hwndParent, pwszWizardTitle);
+            break;
+        case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_STORE:
+            ret = import_store(dwFlags, hwndParent, pwszWizardTitle,
+             pImportSrc->u.hCertStore, hDestCertStore);
+            break;
+        default:
+            WARN("unknown source type: %u\n", pImportSrc->dwSubjectChoice);
+            SetLastError(E_INVALIDARG);
+            ret = FALSE;
+        }
+    }
+    else
+    {
+        /* Can't have no UI without specifying source */
         SetLastError(E_INVALIDARG);
-        return FALSE;
+        ret = FALSE;
     }
 
     return ret;
