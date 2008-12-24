@@ -228,3 +228,23 @@ UINT WINAPI SetupPromptForDiskW(HWND hwndParent, PCWSTR DialogTitle, PCWSTR Disk
           PathRequiredSize);
     return 0;
 }
+
+/***********************************************************************
+ *      CM_Locate_DevNodeA (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Locate_DevNodeA(PDEVINST pdnDevInst, DEVINSTID_A pDeviceID, ULONG ulFlags)
+{
+    FIXME("%p %s 0x%08x: stub\n", pdnDevInst, debugstr_a(pDeviceID), ulFlags);
+
+    return CR_FAILURE;
+}
+
+/***********************************************************************
+ *      CM_Locate_DevNodeW (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Locate_DevNodeW(PDEVINST pdnDevInst, DEVINSTID_W pDeviceID, ULONG ulFlags)
+{
+    FIXME("%p %s 0x%08x: stub\n", pdnDevInst, debugstr_w(pDeviceID), ulFlags);
+
+    return CR_FAILURE;
+}
