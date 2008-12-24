@@ -22,7 +22,7 @@ typedef unsigned int process_id_t;
 typedef unsigned int thread_id_t;
 typedef unsigned int data_size_t;
 typedef unsigned int ioctl_code_t;
-typedef unsigned long lparam_t;
+typedef unsigned __int64 lparam_t;
 typedef unsigned __int64 apc_param_t;
 typedef unsigned __int64 mem_size_t;
 typedef unsigned __int64 file_pos_t;
@@ -2502,12 +2502,12 @@ struct send_hardware_message_request
     thread_id_t     id;
     user_handle_t   win;
     unsigned int    msg;
-    unsigned int    time;
     lparam_t        wparam;
     lparam_t        lparam;
     lparam_t        info;
     int             x;
     int             y;
+    unsigned int    time;
 };
 struct send_hardware_message_reply
 {
@@ -2546,8 +2546,8 @@ struct get_message_reply
 struct reply_message_request
 {
     struct request_header __header;
-    lparam_t        result;
     int             remove;
+    lparam_t        result;
     /* VARARG(data,bytes); */
 };
 struct reply_message_reply
@@ -2606,8 +2606,8 @@ struct kill_win_timer_request
 {
     struct request_header __header;
     user_handle_t   win;
-    unsigned int    msg;
     lparam_t        id;
+    unsigned int    msg;
 };
 struct kill_win_timer_reply
 {
@@ -3149,8 +3149,8 @@ struct set_window_property_request
 {
     struct request_header __header;
     user_handle_t  window;
-    atom_t         atom;
     lparam_t       data;
+    atom_t         atom;
     /* VARARG(name,unicode_str); */
 };
 struct set_window_property_reply
@@ -5053,6 +5053,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 352
+#define SERVER_PROTOCOL_VERSION 353
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

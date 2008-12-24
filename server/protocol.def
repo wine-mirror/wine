@@ -38,7 +38,7 @@ typedef unsigned int process_id_t;
 typedef unsigned int thread_id_t;
 typedef unsigned int data_size_t;
 typedef unsigned int ioctl_code_t;
-typedef unsigned long lparam_t;
+typedef unsigned __int64 lparam_t;
 typedef unsigned __int64 apc_param_t;
 typedef unsigned __int64 mem_size_t;
 typedef unsigned __int64 file_pos_t;
@@ -1862,12 +1862,12 @@ enum message_type
     thread_id_t     id;        /* thread id */
     user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message code */
-    unsigned int    time;      /* message time */
     lparam_t        wparam;    /* parameters */
     lparam_t        lparam;    /* parameters */
     lparam_t        info;      /* extra info */
     int             x;         /* x position */
     int             y;         /* y position */
+    unsigned int    time;      /* message time */
 @END
 
 
@@ -1895,8 +1895,8 @@ enum message_type
 
 /* Reply to a sent message */
 @REQ(reply_message)
-    lparam_t        result;    /* message result */
     int             remove;    /* should we remove the message? */
+    lparam_t        result;    /* message result */
     VARARG(data,bytes);        /* message data for sent messages */
 @END
 
@@ -1933,8 +1933,8 @@ enum message_type
 /* Kill a window timer */
 @REQ(kill_win_timer)
     user_handle_t   win;       /* window handle */
-    unsigned int    msg;       /* message to post */
     lparam_t        id;        /* timer id */
+    unsigned int    msg;       /* message to post */
 @END
 
 
@@ -2307,8 +2307,8 @@ enum message_type
 /* Set a window property */
 @REQ(set_window_property)
     user_handle_t  window;        /* handle to the window */
-    atom_t         atom;          /* property atom (if no name specified) */
     lparam_t       data;          /* data to store */
+    atom_t         atom;          /* property atom (if no name specified) */
     VARARG(name,unicode_str);     /* property name */
 @END
 

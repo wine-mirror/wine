@@ -605,8 +605,9 @@ static void dump_varargs_properties( data_size_t size )
     fputc( '{', stderr );
     while (len > 0)
     {
-        fprintf( stderr, "{atom=%04x,str=%d,data=%lx}",
-                 prop->atom, prop->string, prop->data );
+        fprintf( stderr, "{atom=%04x,str=%d,data=", prop->atom, prop->string );
+        dump_uint64( &prop->data );
+        fputc( '}', stderr );
         prop++;
         if (--len) fputc( ',', stderr );
     }
@@ -2344,8 +2345,12 @@ static void dump_send_message_request( const struct send_message_request *req )
     fprintf( stderr, " flags=%d,", req->flags );
     fprintf( stderr, " win=%08x,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
-    fprintf( stderr, " wparam=%lx,", req->wparam );
-    fprintf( stderr, " lparam=%lx,", req->lparam );
+    fprintf( stderr, " wparam=" );
+    dump_uint64( &req->wparam );
+    fprintf( stderr, "," );
+    fprintf( stderr, " lparam=" );
+    dump_uint64( &req->lparam );
+    fprintf( stderr, "," );
     fprintf( stderr, " timeout=" );
     dump_timeout( &req->timeout );
     fprintf( stderr, "," );
@@ -2363,12 +2368,18 @@ static void dump_send_hardware_message_request( const struct send_hardware_messa
     fprintf( stderr, " id=%04x,", req->id );
     fprintf( stderr, " win=%08x,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
-    fprintf( stderr, " time=%08x,", req->time );
-    fprintf( stderr, " wparam=%lx,", req->wparam );
-    fprintf( stderr, " lparam=%lx,", req->lparam );
-    fprintf( stderr, " info=%lx,", req->info );
+    fprintf( stderr, " wparam=" );
+    dump_uint64( &req->wparam );
+    fprintf( stderr, "," );
+    fprintf( stderr, " lparam=" );
+    dump_uint64( &req->lparam );
+    fprintf( stderr, "," );
+    fprintf( stderr, " info=" );
+    dump_uint64( &req->info );
+    fprintf( stderr, "," );
     fprintf( stderr, " x=%d,", req->x );
-    fprintf( stderr, " y=%d", req->y );
+    fprintf( stderr, " y=%d,", req->y );
+    fprintf( stderr, " time=%08x", req->time );
 }
 
 static void dump_get_message_request( const struct get_message_request *req )
@@ -2386,8 +2397,12 @@ static void dump_get_message_reply( const struct get_message_reply *req )
 {
     fprintf( stderr, " win=%08x,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
-    fprintf( stderr, " wparam=%lx,", req->wparam );
-    fprintf( stderr, " lparam=%lx,", req->lparam );
+    fprintf( stderr, " wparam=" );
+    dump_uint64( &req->wparam );
+    fprintf( stderr, "," );
+    fprintf( stderr, " lparam=" );
+    dump_uint64( &req->lparam );
+    fprintf( stderr, "," );
     fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " time=%08x,", req->time );
     fprintf( stderr, " active_hooks=%08x,", req->active_hooks );
@@ -2398,8 +2413,10 @@ static void dump_get_message_reply( const struct get_message_reply *req )
 
 static void dump_reply_message_request( const struct reply_message_request *req )
 {
-    fprintf( stderr, " result=%lx,", req->result );
     fprintf( stderr, " remove=%d,", req->remove );
+    fprintf( stderr, " result=" );
+    dump_uint64( &req->result );
+    fprintf( stderr, "," );
     fprintf( stderr, " data=" );
     dump_varargs_bytes( cur_size );
 }
@@ -2418,7 +2435,9 @@ static void dump_get_message_reply_request( const struct get_message_reply_reque
 
 static void dump_get_message_reply_reply( const struct get_message_reply_reply *req )
 {
-    fprintf( stderr, " result=%lx,", req->result );
+    fprintf( stderr, " result=" );
+    dump_uint64( &req->result );
+    fprintf( stderr, "," );
     fprintf( stderr, " data=" );
     dump_varargs_bytes( cur_size );
 }
@@ -2428,20 +2447,26 @@ static void dump_set_win_timer_request( const struct set_win_timer_request *req 
     fprintf( stderr, " win=%08x,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " rate=%08x,", req->rate );
-    fprintf( stderr, " id=%lx,", req->id );
-    fprintf( stderr, " lparam=%lx", req->lparam );
+    fprintf( stderr, " id=" );
+    dump_uint64( &req->id );
+    fprintf( stderr, "," );
+    fprintf( stderr, " lparam=" );
+    dump_uint64( &req->lparam );
 }
 
 static void dump_set_win_timer_reply( const struct set_win_timer_reply *req )
 {
-    fprintf( stderr, " id=%lx", req->id );
+    fprintf( stderr, " id=" );
+    dump_uint64( &req->id );
 }
 
 static void dump_kill_win_timer_request( const struct kill_win_timer_request *req )
 {
     fprintf( stderr, " win=%08x,", req->win );
-    fprintf( stderr, " msg=%08x,", req->msg );
-    fprintf( stderr, " id=%lx", req->id );
+    fprintf( stderr, " id=" );
+    dump_uint64( &req->id );
+    fprintf( stderr, "," );
+    fprintf( stderr, " msg=%08x", req->msg );
 }
 
 static void dump_is_window_hung_request( const struct is_window_hung_request *req )
@@ -2635,10 +2660,13 @@ static void dump_set_window_info_request( const struct set_window_info_request *
     fprintf( stderr, " id=%08x,", req->id );
     fprintf( stderr, " is_unicode=%d,", req->is_unicode );
     fprintf( stderr, " instance=%p,", req->instance );
-    fprintf( stderr, " user_data=%lx,", req->user_data );
+    fprintf( stderr, " user_data=" );
+    dump_uint64( &req->user_data );
+    fprintf( stderr, "," );
     fprintf( stderr, " extra_offset=%d,", req->extra_offset );
     fprintf( stderr, " extra_size=%u,", req->extra_size );
-    fprintf( stderr, " extra_value=%lx", req->extra_value );
+    fprintf( stderr, " extra_value=" );
+    dump_uint64( &req->extra_value );
 }
 
 static void dump_set_window_info_reply( const struct set_window_info_reply *req )
@@ -2647,8 +2675,11 @@ static void dump_set_window_info_reply( const struct set_window_info_reply *req 
     fprintf( stderr, " old_ex_style=%08x,", req->old_ex_style );
     fprintf( stderr, " old_id=%08x,", req->old_id );
     fprintf( stderr, " old_instance=%p,", req->old_instance );
-    fprintf( stderr, " old_user_data=%lx,", req->old_user_data );
-    fprintf( stderr, " old_extra_value=%lx", req->old_extra_value );
+    fprintf( stderr, " old_user_data=" );
+    dump_uint64( &req->old_user_data );
+    fprintf( stderr, "," );
+    fprintf( stderr, " old_extra_value=" );
+    dump_uint64( &req->old_extra_value );
 }
 
 static void dump_set_parent_request( const struct set_parent_request *req )
@@ -2865,8 +2896,10 @@ static void dump_redraw_window_request( const struct redraw_window_request *req 
 static void dump_set_window_property_request( const struct set_window_property_request *req )
 {
     fprintf( stderr, " window=%08x,", req->window );
+    fprintf( stderr, " data=" );
+    dump_uint64( &req->data );
+    fprintf( stderr, "," );
     fprintf( stderr, " atom=%04x,", req->atom );
-    fprintf( stderr, " data=%lx,", req->data );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -2881,7 +2914,8 @@ static void dump_remove_window_property_request( const struct remove_window_prop
 
 static void dump_remove_window_property_reply( const struct remove_window_property_reply *req )
 {
-    fprintf( stderr, " data=%lx", req->data );
+    fprintf( stderr, " data=" );
+    dump_uint64( &req->data );
 }
 
 static void dump_get_window_property_request( const struct get_window_property_request *req )
@@ -2894,7 +2928,8 @@ static void dump_get_window_property_request( const struct get_window_property_r
 
 static void dump_get_window_property_reply( const struct get_window_property_reply *req )
 {
-    fprintf( stderr, " data=%lx", req->data );
+    fprintf( stderr, " data=" );
+    dump_uint64( &req->data );
 }
 
 static void dump_get_window_properties_request( const struct get_window_properties_request *req )
@@ -3300,7 +3335,8 @@ static void dump_set_class_info_request( const struct set_class_info_request *re
     fprintf( stderr, " instance=%p,", req->instance );
     fprintf( stderr, " extra_offset=%d,", req->extra_offset );
     fprintf( stderr, " extra_size=%u,", req->extra_size );
-    fprintf( stderr, " extra_value=%lx", req->extra_value );
+    fprintf( stderr, " extra_value=" );
+    dump_uint64( &req->extra_value );
 }
 
 static void dump_set_class_info_reply( const struct set_class_info_reply *req )
@@ -3310,7 +3346,8 @@ static void dump_set_class_info_reply( const struct set_class_info_reply *req )
     fprintf( stderr, " old_extra=%d,", req->old_extra );
     fprintf( stderr, " old_win_extra=%d,", req->old_win_extra );
     fprintf( stderr, " old_instance=%p,", req->old_instance );
-    fprintf( stderr, " old_extra_value=%lx", req->old_extra_value );
+    fprintf( stderr, " old_extra_value=" );
+    dump_uint64( &req->old_extra_value );
 }
 
 static void dump_set_clipboard_info_request( const struct set_clipboard_info_request *req )

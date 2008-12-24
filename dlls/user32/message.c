@@ -3584,7 +3584,7 @@ UINT_PTR WINAPI SetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc )
         req->msg    = WM_TIMER;
         req->id     = id;
         req->rate   = max( timeout, SYS_TIMER_RATE );
-        req->lparam = (unsigned long)winproc;
+        req->lparam = (ULONG_PTR)winproc;
         if (!wine_server_call_err( req ))
         {
             ret = reply->id;
@@ -3615,7 +3615,7 @@ UINT_PTR WINAPI SetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC 
         req->msg    = WM_SYSTIMER;
         req->id     = id;
         req->rate   = max( timeout, SYS_TIMER_RATE );
-        req->lparam = (unsigned long)winproc;
+        req->lparam = (ULONG_PTR)winproc;
         if (!wine_server_call_err( req ))
         {
             ret = reply->id;
