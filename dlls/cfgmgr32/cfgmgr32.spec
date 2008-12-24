@@ -117,8 +117,8 @@
 @ stub CM_Intersect_Range_List
 @ stub CM_Invert_Range_List
 @ stub CM_Is_Dock_Station_Present
-@ stub CM_Locate_DevNodeA
-@ stub CM_Locate_DevNodeW
+@ stdcall CM_Locate_DevNodeA(ptr str long) setupapi.CM_Locate_DevNodeA
+@ stdcall CM_Locate_DevNodeW(ptr wstr long) setupapi.CM_Locate_DevNodeW
 @ stub CM_Locate_DevNode_ExA
 @ stub CM_Locate_DevNode_ExW
 @ stub CM_Merge_Range_List
