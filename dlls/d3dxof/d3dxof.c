@@ -1911,7 +1911,10 @@ static ULONG WINAPI IDirectXFileEnumObjectImpl_Release(IDirectXFileEnumObject* i
   {
     int i;
     for (i = 0; i < This->nb_xobjects; i++)
+    {
       IDirectXFileData_Release(This->pRefObjects[i]);
+      HeapFree(GetProcessHeap(), 0, This->xobjects[i]);
+    }
     if (This->source == DXFILELOAD_FROMFILE)
       HeapFree(GetProcessHeap(), 0, This->buf.buffer);
     if (This->hFile != INVALID_HANDLE_VALUE)
