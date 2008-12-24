@@ -87,7 +87,7 @@ static const char* iocode2str(DWORD ioc)
 {
     switch (ioc)
     {
-#define X(x)    case (x): return #x;
+#define X(x)    case (x): return #x
         X(IOCTL_SERIAL_CLEAR_STATS);
         X(IOCTL_SERIAL_CLR_DTR);
         X(IOCTL_SERIAL_CLR_RTS);
