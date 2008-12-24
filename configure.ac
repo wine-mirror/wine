@@ -351,7 +351,6 @@ AC_CHECK_HEADERS(\
 	termios.h \
 	unistd.h \
 	utime.h \
-	winsock2.h \
 	valgrind/memcheck.h \
 	valgrind/valgrind.h
 )

@@ -23,14 +23,31 @@
 
 #ifndef HAVE_POLL
 
-#ifdef HAVE_WINSOCK2_H
-#include <winsock2.h>
-#endif
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+
+/* we can't include winsock2.h here so we have to duplicate the definitions for Windows */
+#if defined(__MINGW32__) || defined(_MSC_VER)
+
+#define FD_SETSIZE 64
+
+typedef struct
+{
+    unsigned int fd_count;
+    int fd_array[FD_SETSIZE];   /* an array of SOCKETs */
+} fd_set;
+
+#define FD_ZERO(set)      ((set)->fd_count = 0)
+#define FD_ISSET(fd, set) __WSAFDIsSet((fd), (set))
+#define FD_SET(fd, set)   do { if ((set)->fd_count < FD_SETSIZE) (set)->fd_array[(set)->fd_count++]=(fd); } while(0)
+
+int __stdcall select(int,fd_set*,fd_set*,fd_set*,const struct timeval*);
+int __stdcall __WSAFDIsSet(int,fd_set*);
+
 #endif
 
 int poll( struct pollfd *fds, unsigned int count, int timeout )

@@ -7438,7 +7438,6 @@ done
 
 
 
-
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
@@ -7552,7 +7551,6 @@ for ac_header in \
 	termios.h \
 	unistd.h \
 	utime.h \
-	winsock2.h \
 	valgrind/memcheck.h \
 	valgrind/valgrind.h
 
