@@ -2025,7 +2025,6 @@ static inline void call_sendmsg_callback( SENDASYNCPROC callback, HWND hwnd, UIN
 static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags, UINT changed_mask )
 {
     LRESULT result;
-    ULONG_PTR extra_info = 0;
     struct user_thread_info *thread_info = get_user_thread_info();
     struct received_message_info info, *old_info;
     unsigned int hw_id = 0;  /* id of previous hardware message */
@@ -2059,10 +2058,9 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                 info.msg.wParam  = reply->wparam;
                 info.msg.lParam  = reply->lparam;
                 info.msg.time    = reply->time;
-                info.msg.pt.x    = reply->x;
-                info.msg.pt.y    = reply->y;
-                hw_id            = reply->hw_id;
-                extra_info       = reply->info;
+                info.msg.pt.x    = 0;
+                info.msg.pt.y    = 0;
+                hw_id            = 0;
                 thread_info->active_hooks = reply->active_hooks;
             }
             else buffer_size = reply->total;
@@ -2151,14 +2149,27 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
             }
             break;
         case MSG_HARDWARE:
-            if (!process_hardware_message( &info.msg, hw_id, extra_info,
-                                           hwnd, first, last, flags & PM_REMOVE ))
+            if (size >= sizeof(struct hardware_msg_data))
             {
-                TRACE("dropping msg %x\n", info.msg.message );
-                continue;  /* ignore it */
+                const struct hardware_msg_data *data = buffer;
+                info.msg.pt.x = data->x;
+                info.msg.pt.y = data->y;
+                hw_id         = data->hw_id;
+                if (!process_hardware_message( &info.msg, hw_id, data->info,
+                                               hwnd, first, last, flags & PM_REMOVE ))
+                {
+                    TRACE("dropping msg %x\n", info.msg.message );
+                    continue;  /* ignore it */
+                }
+                *msg = info.msg;
+                thread_info->GetMessagePosVal = MAKELONG( info.msg.pt.x, info.msg.pt.y );
+                thread_info->GetMessageTimeVal = info.msg.time;
+                thread_info->GetMessageExtraInfoVal = data->info;
+                if (buffer != local_buffer) HeapFree( GetProcessHeap(), 0, buffer );
+                HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg, TRUE );
+                return TRUE;
             }
-            thread_info->GetMessagePosVal = MAKELONG( info.msg.pt.x, info.msg.pt.y );
-            /* fall through */
+            continue;
         case MSG_POSTED:
             if (info.msg.message & 0x80000000)  /* internal message */
             {
@@ -2184,7 +2195,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
             msg->pt.x = (short)LOWORD( thread_info->GetMessagePosVal );
             msg->pt.y = (short)HIWORD( thread_info->GetMessagePosVal );
             thread_info->GetMessageTimeVal = info.msg.time;
-            thread_info->GetMessageExtraInfoVal = extra_info;
+            thread_info->GetMessageExtraInfoVal = 0;
             if (buffer != local_buffer) HeapFree( GetProcessHeap(), 0, buffer );
             HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg, TRUE );
             return TRUE;

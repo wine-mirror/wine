@@ -2385,15 +2385,11 @@ static void dump_get_message_request( const struct get_message_request *req )
 static void dump_get_message_reply( const struct get_message_reply *req )
 {
     fprintf( stderr, " win=%08x,", req->win );
-    fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " wparam=%lx,", req->wparam );
     fprintf( stderr, " lparam=%lx,", req->lparam );
-    fprintf( stderr, " info=%lx,", req->info );
-    fprintf( stderr, " x=%d,", req->x );
-    fprintf( stderr, " y=%d,", req->y );
+    fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " time=%08x,", req->time );
-    fprintf( stderr, " hw_id=%08x,", req->hw_id );
     fprintf( stderr, " active_hooks=%08x,", req->active_hooks );
     fprintf( stderr, " total=%u,", req->total );
     fprintf( stderr, " data=" );

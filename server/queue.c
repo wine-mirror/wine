@@ -72,9 +72,6 @@ struct message
     unsigned int           msg;       /* message code */
     lparam_t               wparam;    /* parameters */
     lparam_t               lparam;    /* parameters */
-    lparam_t               info;      /* extra info */
-    int                    x;         /* x position */
-    int                    y;         /* y position */
     unsigned int           time;      /* message time */
     void                  *data;      /* message data for sent messages */
     unsigned int           data_size; /* size of message data */
@@ -415,10 +412,15 @@ static int merge_message( struct thread_input *input, const struct message *msg 
     /* now we can merge it */
     prev->wparam  = msg->wparam;
     prev->lparam  = msg->lparam;
-    prev->x       = msg->x;
-    prev->y       = msg->y;
     prev->time    = msg->time;
-    prev->info    = msg->info;
+    if (msg->type == MSG_HARDWARE && prev->data && msg->data)
+    {
+        struct hardware_msg_data *prev_data = prev->data;
+        struct hardware_msg_data *msg_data = msg->data;
+        prev_data->x     = msg_data->x;
+        prev_data->y     = msg_data->y;
+        prev_data->info  = msg_data->info;
+    }
     return 1;
 }
 
@@ -568,9 +570,6 @@ static struct message_result *alloc_message_result( struct msg_queue *send_queue
             callback_msg->wparam    = 0;
             callback_msg->lparam    = 0;
             callback_msg->time      = get_tick_count();
-            callback_msg->x         = 0;
-            callback_msg->y         = 0;
-            callback_msg->info      = 0;
             callback_msg->result    = NULL;
             /* steal the data from the original message */
             callback_msg->data      = msg->data;
@@ -610,10 +609,7 @@ static void receive_message( struct msg_queue *queue, struct message *msg,
     reply->msg    = msg->msg;
     reply->wparam = msg->wparam;
     reply->lparam = msg->lparam;
-    reply->x      = msg->x;
-    reply->y      = msg->y;
     reply->time   = msg->time;
-    reply->info   = msg->info;
 
     if (msg->data) set_reply_data_ptr( msg->data, msg->data_size );
 
@@ -681,10 +677,7 @@ found:
     reply->msg    = msg->msg;
     reply->wparam = msg->wparam;
     reply->lparam = msg->lparam;
-    reply->x      = msg->x;
-    reply->y      = msg->y;
     reply->time   = msg->time;
-    reply->info   = msg->info;
 
     if (flags & PM_REMOVE)
     {
@@ -712,10 +705,7 @@ static int get_quit_message( struct msg_queue *queue, unsigned int flags,
         reply->msg    = WM_QUIT;
         reply->wparam = queue->exit_code;
         reply->lparam = 0;
-        reply->x      = 0;
-        reply->y      = 0;
         reply->time   = get_tick_count();
-        reply->info   = 0;
 
         if (flags & PM_REMOVE)
         {
@@ -1243,7 +1233,7 @@ static void release_hardware_message( struct msg_queue *queue, unsigned int hw_i
 
 /* find the window that should receive a given hardware message */
 static user_handle_t find_hardware_message_window( struct thread_input *input, struct message *msg,
-                                                   unsigned int *msg_code )
+                                                   struct hardware_msg_data *data, unsigned int *msg_code )
 {
     user_handle_t win = 0;
 
@@ -1262,7 +1252,7 @@ static user_handle_t find_hardware_message_window( struct thread_input *input, s
         {
             if (!(win = msg->win) || !is_window_visible( win ))
             {
-                if (input) win = window_from_point( input->desktop, msg->x, msg->y );
+                if (input) win = window_from_point( input->desktop, data->x, data->y );
             }
         }
     }
@@ -1270,7 +1260,8 @@ static user_handle_t find_hardware_message_window( struct thread_input *input, s
 }
 
 /* queue a hardware message into a given thread input */
-static void queue_hardware_message( struct msg_queue *queue, struct message *msg )
+static void queue_hardware_message( struct msg_queue *queue, struct message *msg,
+                                    struct hardware_msg_data *data )
 {
     user_handle_t win;
     struct thread *thread;
@@ -1278,7 +1269,7 @@ static void queue_hardware_message( struct msg_queue *queue, struct message *msg
     unsigned int msg_code;
 
     last_input_time = get_tick_count();
-    win = find_hardware_message_window( input, msg, &msg_code );
+    win = find_hardware_message_window( input, msg, data, &msg_code );
     if (!win || !(thread = get_window_thread(win)))
     {
         if (input) update_input_key_state( input, msg );
@@ -1364,8 +1355,10 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
     while (ptr)
     {
         struct message *msg = LIST_ENTRY( ptr, struct message, entry );
+        struct hardware_msg_data *data = msg->data;
+
         ptr = list_next( &input->msg_list, ptr );
-        win = find_hardware_message_window( input, msg, &msg_code );
+        win = find_hardware_message_window( input, msg, data, &msg_code );
         if (!win || !(win_thread = get_window_thread( win )))
         {
             /* no window at all, remove it */
@@ -1408,11 +1401,10 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
         reply->msg    = msg_code;
         reply->wparam = msg->wparam;
         reply->lparam = msg->lparam;
-        reply->x      = msg->x;
-        reply->y      = msg->y;
         reply->time   = msg->time;
-        reply->info   = msg->info;
-        reply->hw_id  = msg->unique_id;
+
+        data->hw_id = msg->unique_id;
+        set_reply_data( msg->data, msg->data_size );
         return 1;
     }
     /* nothing found, clear the hardware queue bits */
@@ -1495,9 +1487,6 @@ void post_message( user_handle_t win, unsigned int message, lparam_t wparam, lpa
         msg->wparam    = wparam;
         msg->lparam    = lparam;
         msg->time      = get_tick_count();
-        msg->x         = 0;
-        msg->y         = 0;
-        msg->info      = 0;
         msg->result    = NULL;
         msg->data      = NULL;
         msg->data_size = 0;
@@ -1527,9 +1516,6 @@ void post_win_event( struct thread *thread, unsigned int event,
         msg->wparam    = object_id;
         msg->lparam    = child_id;
         msg->time      = get_tick_count();
-        msg->x         = 0;
-        msg->y         = 0;
-        msg->info      = 0;
         msg->result    = NULL;
 
         if ((data = malloc( sizeof(*data) + module_size )))
@@ -1670,9 +1656,6 @@ DECL_HANDLER(send_message)
         msg->wparam    = req->wparam;
         msg->lparam    = req->lparam;
         msg->time      = get_tick_count();
-        msg->x         = 0;
-        msg->y         = 0;
-        msg->info      = 0;
         msg->result    = NULL;
         msg->data      = NULL;
         msg->data_size = get_req_data_size();
@@ -1721,6 +1704,7 @@ DECL_HANDLER(send_hardware_message)
     struct message *msg;
     struct msg_queue *recv_queue = NULL;
     struct thread *thread = NULL;
+    struct hardware_msg_data *data;
 
     if (req->id)
     {
@@ -1734,6 +1718,15 @@ DECL_HANDLER(send_hardware_message)
         return;
     }
 
+    if (!(data = mem_alloc( sizeof(*data) )))
+    {
+        release_object( thread );
+        return;
+    }
+    data->x    = req->x;
+    data->y    = req->y;
+    data->info = req->info;
+
     if ((msg = mem_alloc( sizeof(*msg) )))
     {
         msg->type      = MSG_HARDWARE;
@@ -1742,14 +1735,13 @@ DECL_HANDLER(send_hardware_message)
         msg->wparam    = req->wparam;
         msg->lparam    = req->lparam;
         msg->time      = req->time;
-        msg->x         = req->x;
-        msg->y         = req->y;
-        msg->info      = req->info;
         msg->result    = NULL;
-        msg->data      = NULL;
-        msg->data_size = 0;
-        queue_hardware_message( recv_queue, msg );
+        msg->data      = data;
+        msg->data_size = sizeof(*data);
+        queue_hardware_message( recv_queue, msg, data );
     }
+    else free( data );
+
     if (thread) release_object( thread );
 }
 
@@ -1824,10 +1816,7 @@ DECL_HANDLER(get_message)
         reply->msg    = WM_PAINT;
         reply->wparam = 0;
         reply->lparam = 0;
-        reply->x      = 0;
-        reply->y      = 0;
         reply->time   = get_tick_count();
-        reply->info   = 0;
         return;
     }
 
@@ -1841,10 +1830,7 @@ DECL_HANDLER(get_message)
         reply->msg    = timer->msg;
         reply->wparam = timer->id;
         reply->lparam = timer->lparam;
-        reply->x      = 0;
-        reply->y      = 0;
         reply->time   = get_tick_count();
-        reply->info   = 0;
         return;
     }
 

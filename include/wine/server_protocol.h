@@ -171,6 +171,14 @@ typedef struct
 
 
 
+struct hardware_msg_data
+{
+    lparam_t        info;
+    int             x;
+    int             y;
+    unsigned int    hw_id;
+};
+
 struct callback_msg_data
 {
     void           *callback;
@@ -2523,15 +2531,11 @@ struct get_message_reply
 {
     struct reply_header __header;
     user_handle_t   win;
-    int             type;
     unsigned int    msg;
     lparam_t        wparam;
     lparam_t        lparam;
-    lparam_t        info;
-    int             x;
-    int             y;
+    int             type;
     unsigned int    time;
-    unsigned int    hw_id;
     unsigned int    active_hooks;
     data_size_t     total;
     /* VARARG(data,message_data); */
@@ -5049,6 +5053,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 351
+#define SERVER_PROTOCOL_VERSION 352
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

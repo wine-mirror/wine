@@ -187,6 +187,14 @@ typedef struct
 
 /* structures for extra message data */
 
+struct hardware_msg_data
+{
+    lparam_t        info;      /* extra info */
+    int             x;         /* x position */
+    int             y;         /* y position */
+    unsigned int    hw_id;     /* unique id */
+};
+
 struct callback_msg_data
 {
     void           *callback;   /* callback function */
@@ -1874,15 +1882,11 @@ enum message_type
     unsigned int    changed_mask; /* changed bits mask */
 @REPLY
     user_handle_t   win;       /* window handle */
-    int             type;      /* message type */
     unsigned int    msg;       /* message code */
     lparam_t        wparam;    /* parameters */
     lparam_t        lparam;    /* parameters */
-    lparam_t        info;      /* extra info */
-    int             x;         /* x position */
-    int             y;         /* y position */
+    int             type;      /* message type */
     unsigned int    time;      /* message time */
-    unsigned int    hw_id;     /* id if hardware message */
     unsigned int    active_hooks; /* active hooks bitmap */
     data_size_t     total;     /* total size of extra data */
     VARARG(data,message_data); /* message data for sent messages */
