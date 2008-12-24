@@ -179,7 +179,7 @@ static const char * getIoctlCommand(int command)
 static const char * getControlType(DWORD dwControlType)
 {
     static char str[64];
-#define TYPE_TO_STR(x) case x: return #x;
+#define TYPE_TO_STR(x) case x: return #x
     switch (dwControlType) {
     TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_CUSTOM);
     TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_BOOLEANMETER);
