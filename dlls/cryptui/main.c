@@ -4350,7 +4350,8 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
     memset(&hdr, 0, sizeof(hdr));
     hdr.dwSize = sizeof(hdr);
     hdr.hwndParent = hwndParent;
-    hdr.dwFlags = PSH_PROPSHEETPAGE | PSH_WIZARD97_OLD | PSH_HEADER;
+    hdr.dwFlags = PSH_PROPSHEETPAGE | PSH_WIZARD97_OLD | PSH_HEADER |
+     PSH_WATERMARK;
     hdr.hInstance = hInstance;
     if (pwszWizardTitle)
         hdr.pszCaption = pwszWizardTitle;
@@ -4358,6 +4359,7 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
         hdr.pszCaption = MAKEINTRESOURCEW(IDS_IMPORT_WIZARD);
     hdr.u3.ppsp = pages;
     hdr.nPages = nPages;
+    hdr.u4.pszbmWatermark = MAKEINTRESOURCEW(IDB_CERT_WATERMARK);
     PropertySheetW(&hdr);
     HeapFree(GetProcessHeap(), 0, data.fileName);
     if (data.freeSource &&
