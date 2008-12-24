@@ -41,7 +41,7 @@ conf_yesno_answer() {
 echo "Wine Installer v1.0"
 echo
 
-if ! [ -f configure ]
+if [ ! -f configure ]
 then
     if [ -f ../configure ]
     then {
@@ -55,7 +55,7 @@ then
     fi
 fi
 
-if [ `whoami` = 'root' ]
+if [ -w / ]
 then
     echo "You are running wineinstall as root, this is not advisable. Please rerun as a user."
     echo "Aborting."
@@ -70,9 +70,7 @@ then
 fi
 
 # check whether RPM installed, and if it is, remove any old wine rpm.
-hash rpm &>/dev/null
-RET=$?
-if [ $RET -eq 0 ]; then
+if [ -x `which rpm 2>/dev/null` ]; then
     if [ -n "`rpm -qi wine 2>/dev/null|grep "^Name"`" ]; then
       echo "Warning: Old Wine RPM install detected. Do you want to remove it first?"
       conf_yesno_answer "(yes/no) "
@@ -98,7 +96,7 @@ if [ $RET -eq 0 ]; then
 fi
 
 # check whether wine binary still available
-if [ -n "`wine --version 2>/dev/null`" ]
+if [ -x `which wine 2>/dev/null` ] && [ -n "`wine --version 2>/dev/null`" ]
 then
     echo "Warning !! wine binary (still) found, which may indicate"
     echo "a (conflicting) previous installation."
