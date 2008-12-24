@@ -80,7 +80,7 @@
 
 #include "compobj_private.h"
 
-#define HANDLE_ERROR(err) { hr = err; TRACE("(HRESULT=%x)\n", (HRESULT)err); goto CLEANUP; }
+#define HANDLE_ERROR(err) do { hr = err; TRACE("(HRESULT=%x)\n", (HRESULT)err); goto CLEANUP; } while (0)
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
