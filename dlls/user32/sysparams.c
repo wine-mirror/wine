@@ -2170,11 +2170,10 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         break;
 
     case SPI_SETMOUSESPEED:                     /*    113  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-        if (!pvParam) return FALSE;
         ret = set_uint_param( SPI_SETMOUSESPEED_IDX,
                               SPI_SETMOUSESPEED_REGKEY,
                               SPI_SETMOUSESPEED_VALNAME,
-                              &mouse_sensitivity, *(UINT *) pvParam, fWinIni );
+                              &mouse_sensitivity, PtrToInt(pvParam), fWinIni );
 
         break;
 
