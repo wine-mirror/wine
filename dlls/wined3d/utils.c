@@ -754,7 +754,7 @@ const char* debug_d3ddeclusage(BYTE usage) {
 
 const char* debug_d3dresourcetype(WINED3DRESOURCETYPE res) {
   switch (res) {
-#define RES_TO_STR(res) case res: return #res;
+#define RES_TO_STR(res) case res: return #res
     RES_TO_STR(WINED3DRTYPE_SURFACE);
     RES_TO_STR(WINED3DRTYPE_VOLUME);
     RES_TO_STR(WINED3DRTYPE_TEXTURE);
@@ -771,7 +771,7 @@ const char* debug_d3dresourcetype(WINED3DRESOURCETYPE res) {
 
 const char* debug_d3dprimitivetype(WINED3DPRIMITIVETYPE PrimitiveType) {
   switch (PrimitiveType) {
-#define PRIM_TO_STR(prim) case prim: return #prim;
+#define PRIM_TO_STR(prim) case prim: return #prim
     PRIM_TO_STR(WINED3DPT_POINTLIST);
     PRIM_TO_STR(WINED3DPT_LINELIST);
     PRIM_TO_STR(WINED3DPT_LINESTRIP);
@@ -1098,7 +1098,7 @@ const char* debug_d3dtstype(WINED3DTRANSFORMSTATETYPE tstype) {
 
 const char* debug_d3dpool(WINED3DPOOL Pool) {
   switch (Pool) {
-#define POOL_TO_STR(p) case p: return #p;
+#define POOL_TO_STR(p) case p: return #p
     POOL_TO_STR(WINED3DPOOL_DEFAULT);
     POOL_TO_STR(WINED3DPOOL_MANAGED);
     POOL_TO_STR(WINED3DPOOL_SYSTEMMEM);
