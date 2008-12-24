@@ -1209,7 +1209,11 @@ static void test_copy(void)
        retval == ERROR_ACCESS_DENIED, /* win2k */
        "Expected 1148, 1026 or ERROR_ACCESS_DENIED, got %d\n", retval);
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
-    ok(!DeleteFileA("two.txt"), "Expected file to not exist\n");
+    if (file_exists("two.txt"))
+        /* Vista and W2K8 (broken or new behavior ?) */
+        ok(RemoveDirectory("two.txt"), "Expected two.txt to exist\n");
+    else
+        ok(!DeleteFileA("two.txt"), "Expected file to not exist\n");
 
     createTestFile("one.txt");
 
@@ -1253,7 +1257,11 @@ static void test_copy(void)
        retval == ERROR_ACCESS_DENIED, /* win2k */
        "Expected 1148, 1026 or ERROR_ACCESS_DENIED, got %d\n", retval);
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
-    ok(!DeleteFileA("two.txt"), "Expected file to not exist\n");
+    if (file_exists("two.txt"))
+        /* Vista and W2K8 (broken or new behavior ?) */
+        ok(RemoveDirectory("two.txt"), "Expected two.txt to exist\n");
+    else
+        ok(!DeleteFileA("two.txt"), "Expected file to not exist\n");
 
     createTestFile("one.txt");
 
@@ -1284,13 +1292,23 @@ static void test_copy(void)
     shfo.pTo = to;
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperation(&shfo);
-    expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
-    ok(!DeleteFileA("threedir\\one.txt"), "Expected file to not exist\n");
-    ok(!DeleteFileA("threedir\\two.txt"), "Expected file to not exist\n");
+    if (retval == ERROR_SUCCESS)
+    {
+        /* Vista and W2K8 (broken or new behavior ?) */
+        ok(DeleteFileA("threedir\\one.txt"), "Expected file to exist\n");
+        ok(DeleteFileA("threedir\\two.txt"), "Expected file to exist\n");
+        ok(RemoveDirectoryA("threedir"), "Expected dir to exist\n");
+    }
+    else
+    {
+        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
+        ok(!DeleteFileA("threedir\\one.txt"), "Expected file to not exist\n");
+        ok(!DeleteFileA("threedir\\two.txt"), "Expected file to not exist\n");
+        ok(!DeleteFileA("threedir"), "Expected file to not exist\n");
+        ok(!RemoveDirectoryA("threedir"), "Expected dir to not exist\n");
+    }
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
     ok(DeleteFileA("two.txt"), "Expected file to exist\n");
-    ok(!DeleteFileA("threedir"), "Expected file to not exist\n");
-    ok(!RemoveDirectoryA("threedir"), "Expected dir to not exist\n");
 
     createTestFile("one.txt");
     createTestFile("two.txt");
@@ -1365,13 +1383,23 @@ static void test_copy(void)
                   FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperation(&shfo);
     ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
-    ok(DeleteFileA("threedir\\one.txt"), "Expected file to exist\n");
-    ok(DeleteFileA("threedir\\two.txt"), "Expected file to exist\n");
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
     ok(DeleteFileA("two.txt"), "Expected file to exist\n");
+    ok(DeleteFileA("threedir\\one.txt"), "Expected file to exist\n");
+    if (file_exists("fourdir"))
+    {
+        /* Vista and W2K8 (broken or new behavior ?) */
+        ok(!DeleteFileA("threedir\\two.txt"), "Expected file to not exist\n");
+        ok(DeleteFileA("fourdir\\two.txt"), "Expected file to exist\n");
+        RemoveDirectoryA("fourdir");
+    }
+    else
+    {
+        ok(DeleteFileA("threedir\\two.txt"), "Expected file to exist\n");
+        ok(!DeleteFileA("fourdir"), "Expected file to not exist\n");
+        ok(!RemoveDirectoryA("fourdir"), "Expected dir to not exist\n");
+    }
     ok(RemoveDirectoryA("threedir"), "Expected dir to exist\n");
-    ok(!DeleteFileA("fourdir"), "Expected file to not exist\n");
-    ok(!RemoveDirectoryA("fourdir"), "Expected dir to not exist\n");
 
     createTestFile("one.txt");
     createTestFile("two.txt");
@@ -1409,13 +1437,23 @@ static void test_copy(void)
                   FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperation(&shfo);
     ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
-    ok(DeleteFileA("threedir\\one.txt"), "Expected file to exist\n");
-    ok(DeleteFileA("threedir\\two.txt"), "Expected file to exist\n");
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
     ok(DeleteFileA("two.txt"), "Expected file to exist\n");
+    ok(DeleteFileA("threedir\\one.txt"), "Expected file to exist\n");
+    if (file_exists("fourdir"))
+    {
+        /* Vista and W2K8 (broken or new behavior ?) */
+        ok(!DeleteFileA("threedir\\two.txt"), "Expected file to not exist\n");
+        ok(DeleteFileA("fourdir\\two.txt"), "Expected file to exist\n");
+        RemoveDirectoryA("fourdir");
+    }
+    else
+    {
+        ok(DeleteFileA("threedir\\two.txt"), "Expected file to exist\n");
+        ok(!DeleteFileA("fourdir"), "Expected file to not exist\n");
+        ok(!RemoveDirectoryA("fourdir"), "Expected dit to not exist\n");
+    }
     ok(RemoveDirectoryA("threedir"), "Expected dir to exist\n");
-    ok(!DeleteFileA("fourdir"), "Expected file to not exist\n");
-    ok(!RemoveDirectoryA("fourdir"), "Expected dit to not exist\n");
     ok(!DeleteFileA("five"), "Expected file to not exist\n");
     ok(!RemoveDirectoryA("five"), "Expected dit to not exist\n");
 
