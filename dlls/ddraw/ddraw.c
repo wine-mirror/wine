@@ -590,7 +590,7 @@ IDirectDrawImpl_SetDisplayModeNoOverride(IDirectDraw7 *iface,
     {
         case WINED3DERR_NOTAVAILABLE:       return DDERR_UNSUPPORTED;
         default:                            return hr;
-    };
+    }
 }
 
 /*****************************************************************************
