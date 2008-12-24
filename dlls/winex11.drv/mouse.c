@@ -436,10 +436,10 @@ static XcursorImage *create_cursor_image( CURSORICONINFO *ptr )
     unsigned char tmp;
     BOOL alpha_zero = TRUE;
 
-    and_width_bytes = ptr->nWidth / 8;
-    xor_width_bytes = and_width_bytes * ptr->bBitsPerPixel;
+    and_width_bytes = 2 * ((ptr->nWidth+15) / 16);
+    xor_width_bytes = ptr->nWidthBytes;
 
-    and_size = ptr->nWidth * ptr->nHeight / 8;
+    and_size = ptr->nHeight * and_width_bytes;
     and_ptr = and_bits = (unsigned char *)(ptr + 1);
 
     xor_ptr = xor_bits = and_ptr + and_size;
