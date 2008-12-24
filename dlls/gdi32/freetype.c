@@ -4578,9 +4578,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
           wine_dbgstr_point(&lpgm->gmptGlyphOrigin),
           lpgm->gmCellIncX, lpgm->gmCellIncY);
 
-    if ((format == GGO_METRICS || format == GGO_BITMAP || format ==  WINE_GGO_GRAY16_BITMAP ||
-         format == WINE_GGO_HRGB_BITMAP || format == WINE_GGO_HBGR_BITMAP ||
-         format == WINE_GGO_VRGB_BITMAP || format == WINE_GGO_VBGR_BITMAP ) &&
+    if ((format == GGO_METRICS || format == GGO_BITMAP || format ==  WINE_GGO_GRAY16_BITMAP) &&
         (!lpmat || is_identity_MAT2(lpmat))) /* don't cache custom transforms */
     {
         FONT_GM(font,original_index)->gm = *lpgm;
@@ -4741,22 +4739,24 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     case WINE_GGO_VBGR_BITMAP:
 #ifdef HAVE_FREETYPE_FTLCDFIL_H
       {
-        width  = lpgm->gmBlackBoxX;
-        height = lpgm->gmBlackBoxY;
-        pitch  = width * 4;
-        needed = pitch * height;
-
-        if (!buf || !buflen) break;
-
-        memset(buf, 0, buflen);
-
         switch (ft_face->glyph->format)
         {
         case FT_GLYPH_FORMAT_BITMAP:
           {
-            BYTE *src = ft_face->glyph->bitmap.buffer, *dst = buf;
-            INT src_pitch = ft_face->glyph->bitmap.pitch;
-            INT x;
+            BYTE *src, *dst;
+            INT src_pitch, x;
+
+            width  = lpgm->gmBlackBoxX;
+            height = lpgm->gmBlackBoxY;
+            pitch  = width * 4;
+            needed = pitch * height;
+
+            if (!buf || !buflen) break;
+
+            memset(buf, 0, buflen);
+            dst = buf;
+            src = ft_face->glyph->bitmap.buffer;
+            src_pitch = ft_face->glyph->bitmap.pitch;
 
             while ( height-- )
             {
@@ -4774,14 +4774,39 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
 
         case FT_GLYPH_FORMAT_OUTLINE:
           {
-            unsigned int *dst = (unsigned int *) buf;
+            unsigned int *dst;
             BYTE *src;
             INT x, src_pitch, rgb_interval, hmul, vmul;
-            BOOL rgb = (format == WINE_GGO_HRGB_BITMAP || format == WINE_GGO_VRGB_BITMAP);
+            BOOL rgb;
             FT_LcdFilter lcdfilter = FT_LCD_FILTER_DEFAULT;
             FT_Render_Mode render_mode =
                 (format == WINE_GGO_HRGB_BITMAP || format == WINE_GGO_HBGR_BITMAP)?
                     FT_RENDER_MODE_LCD: FT_RENDER_MODE_LCD_V;
+
+            if ( lcdfilter == FT_LCD_FILTER_DEFAULT || lcdfilter == FT_LCD_FILTER_LIGHT )
+            {
+                if ( render_mode == FT_RENDER_MODE_LCD)
+                {
+                    lpgm->gmBlackBoxX += 2;
+                    lpgm->gmptGlyphOrigin.x -= 1;
+                }
+                else
+                {
+                    lpgm->gmBlackBoxY += 2;
+                    lpgm->gmptGlyphOrigin.y += 1;
+                }
+            }
+
+            width  = lpgm->gmBlackBoxX;
+            height = lpgm->gmBlackBoxY;
+            pitch  = width * 4;
+            needed = pitch * height;
+
+            if (!buf || !buflen) break;
+
+            memset(buf, 0, buflen);
+            dst = (unsigned int *)buf;
+            rgb = (format == WINE_GGO_HRGB_BITMAP || format == WINE_GGO_VRGB_BITMAP);
 
             if ( needsTransform )
                 pFT_Outline_Transform (&ft_face->glyph->outline, &transMat);
@@ -4805,8 +4830,6 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
                 vmul = 3;
             }
 
-            if ( lcdfilter == FT_LCD_FILTER_DEFAULT || lcdfilter == FT_LCD_FILTER_LIGHT )
-                src += rgb_interval * 3;
             while ( height-- )
             {
                 for ( x = 0; x < width; x++ )
