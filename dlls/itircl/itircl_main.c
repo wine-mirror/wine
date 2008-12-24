@@ -58,7 +58,7 @@ HRESULT WINAPI DllRegisterServer(void)
 }
 
 /***********************************************************************
- *              DllRegisterServer (ITIRCL.@)
+ *              DllUnregisterServer (ITIRCL.@)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
