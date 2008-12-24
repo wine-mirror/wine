@@ -509,7 +509,13 @@ IDirect3DVertexBufferImpl_Optimize(IDirect3DVertexBuffer7 *iface,
 {
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
     IDirect3DDeviceImpl *D3D = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice7, D3DDevice);
-    FIXME("(%p)->(%p,%08x): stub!\n", This, D3D, Flags);
+    static BOOL hide = FALSE;
+
+    if (!hide)
+    {
+        FIXME("(%p)->(%p,%08x): stub!\n", This, D3D, Flags);
+        hide = TRUE;
+    }
 
     /* We could forward this call to WineD3D and take advantage
      * of it once we use OpenGL vertex buffers
