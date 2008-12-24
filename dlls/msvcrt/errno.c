@@ -129,7 +129,7 @@ void msvcrt_set_errno(int err)
   switch(err)
   {
 #define ERR_CASE(oserr) case oserr:
-#define ERR_MAPS(oserr,crterr) case oserr:*errno = crterr;break;
+#define ERR_MAPS(oserr, crterr) case oserr: *errno = crterr; break
     ERR_CASE(ERROR_ACCESS_DENIED)
     ERR_CASE(ERROR_NETWORK_ACCESS_DENIED)
     ERR_CASE(ERROR_CANNOT_MAKE)
