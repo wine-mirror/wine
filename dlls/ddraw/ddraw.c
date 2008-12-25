@@ -2084,6 +2084,7 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
     ICOM_INIT_INTERFACE(*ppSurf, IDirect3DTexture, IDirect3DTexture1_Vtbl);
     (*ppSurf)->ref = 1;
     (*ppSurf)->version = 7;
+    TRACE("%p->version = %d\n", (*ppSurf), (*ppSurf)->version);
     (*ppSurf)->ddraw = This;
     (*ppSurf)->surface_desc.dwSize = sizeof(DDSURFACEDESC2);
     (*ppSurf)->surface_desc.u4.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);

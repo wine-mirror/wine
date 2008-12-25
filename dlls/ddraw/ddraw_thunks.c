@@ -377,6 +377,23 @@ IDirectDraw4Impl_CreatePalette(LPDIRECTDRAW4 This, DWORD dwFlags,
     return hr;
 }
 
+/* Must set all attached surfaces (e.g. mipmaps) versions as well */
+static void set_surf_version(IDirectDrawSurfaceImpl *surf, int version)
+{
+    int i;
+    TRACE("%p->version(%d) = %d\n", surf, surf->version, version);
+    surf->version = version;
+    for(i = 0; i < MAX_COMPLEX_ATTACHED; i++)
+    {
+        if(!surf->complex_array[i]) break;
+        set_surf_version(surf->complex_array[i], version);
+    }
+    while( (surf = surf->next_attached) )
+    {
+        set_surf_version(surf, version);
+    }
+}
+
 static HRESULT WINAPI
 IDirectDrawImpl_CreateSurface(LPDIRECTDRAW This, LPDDSURFACEDESC pSDesc,
 			      LPDIRECTDRAWSURFACE *ppSurface,
@@ -407,7 +424,7 @@ IDirectDrawImpl_CreateSurface(LPDIRECTDRAW This, LPDDSURFACEDESC pSDesc,
     impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, pSurface7);
     if(SUCCEEDED(hr) && impl)
     {
-        impl->version = 1;
+        set_surf_version(impl, 1);
         IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
                              IDirectDraw,
                              IDirectDraw7,
@@ -442,7 +459,7 @@ IDirectDraw2Impl_CreateSurface(LPDIRECTDRAW2 This, LPDDSURFACEDESC pSDesc,
     impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, pSurface7);
     if(SUCCEEDED(hr) && impl)
     {
-        impl->version = 2;
+        set_surf_version(impl, 2);
         IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
                              IDirectDraw2,
                              IDirectDraw7,
@@ -477,7 +494,7 @@ IDirectDraw3Impl_CreateSurface(LPDIRECTDRAW3 This, LPDDSURFACEDESC pSDesc,
     impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, pSurface7);
     if(SUCCEEDED(hr) && impl)
     {
-        impl->version = 3;
+        set_surf_version(impl, 3);
         IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
                              IDirectDraw3,
                              IDirectDraw7,
@@ -507,7 +524,7 @@ IDirectDraw4Impl_CreateSurface(LPDIRECTDRAW4 This, LPDDSURFACEDESC2 pSDesc,
     impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurface);
     if(SUCCEEDED(hr) && impl)
     {
-        impl->version = 4;
+        set_surf_version(impl, 4);
         IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
                              IDirectDraw4,
                              IDirectDraw7,

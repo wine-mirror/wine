@@ -475,14 +475,17 @@ IDirectDrawSurfaceImpl_GetAttachedSurface(IDirectDrawSurface7 *iface,
     TRACE("(%p)->(%p,%p)\n", This, Caps, Surface);
     EnterCriticalSection(&ddraw_cs);
 
-    our_caps = *Caps;
-
     if(This->version < 7)
     {
         /* Earlier dx apps put garbage into these members, clear them */
+        our_caps.dwCaps = Caps->dwCaps;
         our_caps.dwCaps2 = 0;
         our_caps.dwCaps3 = 0;
         our_caps.dwCaps4 = 0;
+    }
+    else
+    {
+        our_caps = *Caps;
     }
 
     TRACE("(%p): Looking for caps: %x,%x,%x,%x\n", This, our_caps.dwCaps, our_caps.dwCaps2, our_caps.dwCaps3, our_caps.dwCaps4); /* FIXME: Better debugging */
