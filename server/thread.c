@@ -1242,7 +1242,7 @@ DECL_HANDLER(queue_apc)
     {
     case APC_NONE:
     case APC_USER:
-        thread = get_thread_from_handle( req->thread, THREAD_SET_CONTEXT );
+        thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT );
         break;
     case APC_VIRTUAL_ALLOC:
     case APC_VIRTUAL_FREE:
@@ -1251,13 +1251,13 @@ DECL_HANDLER(queue_apc)
     case APC_VIRTUAL_LOCK:
     case APC_VIRTUAL_UNLOCK:
     case APC_UNMAP_VIEW:
-        process = get_process_from_handle( req->process, PROCESS_VM_OPERATION );
+        process = get_process_from_handle( req->handle, PROCESS_VM_OPERATION );
         break;
     case APC_VIRTUAL_QUERY:
-        process = get_process_from_handle( req->process, PROCESS_QUERY_INFORMATION );
+        process = get_process_from_handle( req->handle, PROCESS_QUERY_INFORMATION );
         break;
     case APC_MAP_VIEW:
-        process = get_process_from_handle( req->process, PROCESS_VM_OPERATION );
+        process = get_process_from_handle( req->handle, PROCESS_VM_OPERATION );
         if (process && process != current->process)
         {
             /* duplicate the handle into the target process */
@@ -1272,7 +1272,7 @@ DECL_HANDLER(queue_apc)
         }
         break;
     case APC_CREATE_THREAD:
-        process = get_process_from_handle( req->process, PROCESS_CREATE_THREAD );
+        process = get_process_from_handle( req->handle, PROCESS_CREATE_THREAD );
         break;
     default:
         set_error( STATUS_INVALID_PARAMETER );

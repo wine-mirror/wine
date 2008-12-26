@@ -747,7 +747,7 @@ NTSTATUS WINAPI NtQueueApcThread( HANDLE handle, PNTAPCFUNC func, ULONG_PTR arg1
     NTSTATUS ret;
     SERVER_START_REQ( queue_apc )
     {
-        req->thread = wine_server_obj_handle( handle );
+        req->handle = wine_server_obj_handle( handle );
         if (func)
         {
             req->call.type         = APC_USER;

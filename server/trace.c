@@ -1077,8 +1077,7 @@ static void dump_unload_dll_request( const struct unload_dll_request *req )
 
 static void dump_queue_apc_request( const struct queue_apc_request *req )
 {
-    fprintf( stderr, " thread=%04x,", req->thread );
-    fprintf( stderr, " process=%04x,", req->process );
+    fprintf( stderr, " handle=%04x,", req->handle );
     fprintf( stderr, " call=" );
     dump_apc_call( &req->call );
 }

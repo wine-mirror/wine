@@ -1032,7 +1032,7 @@ NTSTATUS NTDLL_queue_process_apc( HANDLE process, const apc_call_t *call, apc_re
 
         SERVER_START_REQ( queue_apc )
         {
-            req->process = wine_server_obj_handle( process );
+            req->handle = wine_server_obj_handle( process );
             req->call = *call;
             if (!(ret = wine_server_call( req )))
             {
