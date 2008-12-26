@@ -159,6 +159,10 @@ AC_CACHE_CHECK([for the directory containing the Wine tools], wine_cv_toolsdir,
      AC_MSG_ERROR([could not find Wine tools in $with_wine_tools.])
    fi])
 AC_SUBST(TOOLSDIR,$wine_cv_toolsdir)
+if test "$cross_compiling" = "yes"
+then
+    AC_SUBST(TARGET,"$host_alias")
+fi
 
 AC_PATH_XTRA
 

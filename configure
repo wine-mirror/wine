@@ -745,6 +745,7 @@ X_PRE_LIBS
 X_CFLAGS
 CPP
 XMKMF
+TARGET
 TOOLSDIR
 CPPBIN
 ac_ct_CXX
@@ -3873,6 +3874,11 @@ fi
 $as_echo "$wine_cv_toolsdir" >&6; }
 TOOLSDIR=$wine_cv_toolsdir
 
+if test "$cross_compiling" = "yes"
+then
+    TARGET="$host_alias"
+
+fi
 
 
 ac_ext=c
