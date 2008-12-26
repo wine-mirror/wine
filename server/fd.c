@@ -1769,7 +1769,7 @@ void default_poll_event( struct fd *fd, int event )
     else if (!fd->inode) set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
 }
 
-struct async *fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
+struct async *fd_queue_async( struct fd *fd, const async_data_t *data, int type )
 {
     struct async_queue *queue;
     struct async *async;
@@ -1830,7 +1830,7 @@ void default_fd_queue_async( struct fd *fd, const async_data_t *data, int type, 
 {
     struct async *async;
 
-    if ((async = fd_queue_async( fd, data, type, count )))
+    if ((async = fd_queue_async( fd, data, type )))
     {
         release_object( async );
         set_error( STATUS_PENDING );

@@ -610,13 +610,13 @@ static obj_handle_t pipe_server_ioctl( struct fd *fd, ioctl_code_t code, const a
                 async_data_t new_data = *async_data;
                 if (!(wait_handle = alloc_wait_event( current->process ))) break;
                 new_data.event = wait_handle;
-                if (!(async = fd_queue_async( server->ioctl_fd, &new_data, ASYNC_TYPE_WAIT, 0 )))
+                if (!(async = fd_queue_async( server->ioctl_fd, &new_data, ASYNC_TYPE_WAIT )))
                 {
                     close_handle( current->process, wait_handle );
                     break;
                 }
             }
-            else async = fd_queue_async( server->ioctl_fd, async_data, ASYNC_TYPE_WAIT, 0 );
+            else async = fd_queue_async( server->ioctl_fd, async_data, ASYNC_TYPE_WAIT );
 
             if (async)
             {

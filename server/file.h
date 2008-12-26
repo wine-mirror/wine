@@ -75,7 +75,7 @@ extern int default_fd_signaled( struct object *obj, struct thread *thread );
 extern unsigned int default_fd_map_access( struct object *obj, unsigned int access );
 extern int default_fd_get_poll_events( struct fd *fd );
 extern void default_poll_event( struct fd *fd, int event );
-extern struct async *fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
+extern struct async *fd_queue_async( struct fd *fd, const async_data_t *data, int type );
 extern void fd_async_wake_up( struct fd *fd, int type, unsigned int status );
 extern void fd_reselect_async( struct fd *fd, struct async_queue *queue );
 extern obj_handle_t default_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async,

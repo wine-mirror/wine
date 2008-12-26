@@ -332,7 +332,7 @@ static obj_handle_t device_ioctl( struct fd *fd, ioctl_code_t code, const async_
         return 0;
     }
 
-    if (!(ioctl->async = fd_queue_async( device->fd, async_data, ASYNC_TYPE_WAIT, 0 )))
+    if (!(ioctl->async = fd_queue_async( device->fd, async_data, ASYNC_TYPE_WAIT )))
     {
         close_handle( current->process, handle );
         release_object( ioctl );
