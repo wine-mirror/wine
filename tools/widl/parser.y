@@ -132,7 +132,6 @@ static type_t *find_type_or_error(const char *name, int t);
 static type_t *find_type_or_error2(char *name, int t);
 static type_t *get_type(unsigned char type, char *name, int t);
 static type_t *get_typev(unsigned char type, var_t *name, int t);
-static int get_struct_type(var_list_t *fields);
 
 static var_t *reg_const(var_t *var);
 
@@ -1061,9 +1060,7 @@ pointer_type:
 	;
 
 structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = get_typev(RPC_FC_STRUCT, $2, tsSTRUCT);
-                                                  /* overwrite RPC_FC_STRUCT with a more exact type */
 						  check_def($$);
-						  $$->type = get_struct_type( $4 );
 						  $$->kind = TKIND_RECORD;
 						  $$->fields_or_args = $4;
 						  $$->defined = TRUE;
@@ -1502,18 +1499,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
 
     if (dim->is_const)
     {
-      unsigned int align = 0;
-      size_t size = type_memsize(v->type, &align);
-
-      if (dim->cval <= 0)
-        error_loc("%s: array dimension must be positive\n", v->name);
-
-      if (0xffffffffuL / size < (unsigned long) dim->cval)
-        error_loc("%s: total array size is too large\n", v->name);
-      else if (0xffffuL < size * dim->cval)
-        v->type = make_type(RPC_FC_LGFARRAY, v->type);
-      else
-        v->type = make_type(RPC_FC_SMFARRAY, v->type);
+      v->type = make_type(RPC_FC_LGFARRAY, v->type);
     }
     else
     {
@@ -1582,29 +1568,6 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
       *ptype = duptype(*ptype, 0);
       (*ptype)->type = RPC_FC_BOGUS_ARRAY;
     }
-  }
-
-  if (is_array(v->type))
-  {
-    const type_t *rt = v->type->ref;
-    if (is_user_type(rt))
-      v->type->type = RPC_FC_BOGUS_ARRAY;
-    else
-      switch (rt->type)
-        {
-        case RPC_FC_BOGUS_STRUCT:
-        case RPC_FC_NON_ENCAPSULATED_UNION:
-        case RPC_FC_ENCAPSULATED_UNION:
-        case RPC_FC_ENUM16:
-          v->type->type = RPC_FC_BOGUS_ARRAY;
-          break;
-          /* FC_RP should be above, but widl overuses these, and will break things.  */
-        case RPC_FC_UP:
-        case RPC_FC_RP:
-          if (rt->ref->type == RPC_FC_IP)
-            v->type->type = RPC_FC_BOGUS_ARRAY;
-          break;
-        }
   }
 
   /* v->type is currently pointing to the type on the left-side of the
@@ -1973,163 +1936,6 @@ static type_t *get_typev(unsigned char type, var_t *name, int t)
     free(name);
   }
   return get_type(type, sname, t);
-}
-
-static int get_struct_type(var_list_t *fields)
-{
-  int has_pointer = 0;
-  int has_conformance = 0;
-  int has_variance = 0;
-  var_t *field;
-
-  if (get_padding(fields))
-    return RPC_FC_BOGUS_STRUCT;
-
-  if (fields) LIST_FOR_EACH_ENTRY( field, fields, var_t, entry )
-  {
-    type_t *t = field->type;
-
-    if (is_user_type(t))
-      return RPC_FC_BOGUS_STRUCT;
-
-    if (is_ptr(t))
-    {
-        do
-            t = t->ref;
-        while (is_ptr(t));
-
-        switch (t->type)
-        {
-        case RPC_FC_IP:
-        case RPC_FC_ENCAPSULATED_UNION:
-        case RPC_FC_NON_ENCAPSULATED_UNION:
-        case RPC_FC_BOGUS_STRUCT:
-            return RPC_FC_BOGUS_STRUCT;
-        }
-
-        has_pointer = 1;
-        continue;
-    }
-
-    if (field->type->declarray)
-    {
-        if (is_string_type(field->attrs, field->type))
-        {
-            if (is_conformant_array(field->type))
-                has_conformance = 1;
-            has_variance = 1;
-            continue;
-        }
-
-        if (is_array(field->type->ref))
-            return RPC_FC_BOGUS_STRUCT;
-
-        if (is_conformant_array(field->type))
-        {
-            has_conformance = 1;
-            if (field->type->declarray && list_next(fields, &field->entry))
-                error_loc("field '%s' deriving from a conformant array must be the last field in the structure\n",
-                        field->name);
-        }
-        if (field->type->length_is)
-            has_variance = 1;
-
-        t = field->type->ref;
-    }
-
-    switch (t->type)
-    {
-    /*
-     * RPC_FC_BYTE, RPC_FC_STRUCT, etc
-     *  Simple types don't effect the type of struct.
-     *  A struct containing a simple struct is still a simple struct.
-     *  So long as we can block copy the data, we return RPC_FC_STRUCT.
-     */
-    case 0: /* void pointer */
-    case RPC_FC_BYTE:
-    case RPC_FC_CHAR:
-    case RPC_FC_SMALL:
-    case RPC_FC_USMALL:
-    case RPC_FC_WCHAR:
-    case RPC_FC_SHORT:
-    case RPC_FC_USHORT:
-    case RPC_FC_LONG:
-    case RPC_FC_ULONG:
-    case RPC_FC_INT3264:
-    case RPC_FC_UINT3264:
-    case RPC_FC_HYPER:
-    case RPC_FC_FLOAT:
-    case RPC_FC_DOUBLE:
-    case RPC_FC_STRUCT:
-    case RPC_FC_ENUM32:
-      break;
-
-    case RPC_FC_RP:
-    case RPC_FC_UP:
-    case RPC_FC_FP:
-    case RPC_FC_OP:
-    case RPC_FC_CARRAY:
-    case RPC_FC_CVARRAY:
-    case RPC_FC_BOGUS_ARRAY:
-      has_pointer = 1;
-      break;
-
-    /*
-     * Propagate member attributes
-     *  a struct should be at least as complex as its member
-     */
-    case RPC_FC_CVSTRUCT:
-      has_conformance = 1;
-      has_variance = 1;
-      has_pointer = 1;
-      break;
-
-    case RPC_FC_CPSTRUCT:
-      has_conformance = 1;
-      if (list_next( fields, &field->entry ))
-          error_loc("field '%s' deriving from a conformant array must be the last field in the structure\n",
-                  field->name);
-      has_pointer = 1;
-      break;
-
-    case RPC_FC_CSTRUCT:
-      has_conformance = 1;
-      if (list_next( fields, &field->entry ))
-          error_loc("field '%s' deriving from a conformant array must be the last field in the structure\n",
-                  field->name);
-      break;
-
-    case RPC_FC_PSTRUCT:
-      has_pointer = 1;
-      break;
-
-    default:
-      error_loc("Unknown struct member %s with type (0x%02x)\n", field->name, t->type);
-      /* fallthru - treat it as complex */
-
-    /* as soon as we see one of these these members, it's bogus... */
-    case RPC_FC_ENCAPSULATED_UNION:
-    case RPC_FC_NON_ENCAPSULATED_UNION:
-    case RPC_FC_BOGUS_STRUCT:
-    case RPC_FC_ENUM16:
-      return RPC_FC_BOGUS_STRUCT;
-    }
-  }
-
-  if( has_variance )
-  {
-    if ( has_conformance )
-      return RPC_FC_CVSTRUCT;
-    else
-      return RPC_FC_BOGUS_STRUCT;
-  }
-  if( has_conformance && has_pointer )
-    return RPC_FC_CPSTRUCT;
-  if( has_conformance )
-    return RPC_FC_CSTRUCT;
-  if( has_pointer )
-    return RPC_FC_PSTRUCT;
-  return RPC_FC_STRUCT;
 }
 
 /***** constant repository *****/
