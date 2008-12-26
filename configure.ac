@@ -1006,9 +1006,12 @@ dnl **** Check for resolver library ***
 AC_SUBST(RESOLVLIBS,"")
 if test "$ac_cv_header_resolv_h" = "yes"
 then
-    AC_CHECK_LIB(resolv, res_query,
+    ac_save_LIBS="$LIBS"
+    LIBS="$LIBS -lresolv"
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <resolv.h>]],[[res_init();]])],
         [AC_DEFINE(HAVE_RESOLV, 1, [Define if you have the resolver library and header])
          RESOLVLIBS="-lresolv"])
+    LIBS="$ac_save_LIBS"
 fi
 
 dnl **** Check for LittleCMS ***

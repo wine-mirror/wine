@@ -14273,31 +14273,19 @@ RESOLVLIBS=""
 
 if test "$ac_cv_header_resolv_h" = "yes"
 then
-    { $as_echo "$as_me:$LINENO: checking for res_query in -lresolv" >&5
-$as_echo_n "checking for res_query in -lresolv... " >&6; }
-if test "${ac_cv_lib_resolv_res_query+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lresolv  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
+    ac_save_LIBS="$LIBS"
+    LIBS="$LIBS -lresolv"
+    cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char res_query ();
+#include <resolv.h>
 int
 main ()
 {
-return res_query ();
+res_init();
   ;
   return 0;
 }
@@ -14323,30 +14311,23 @@ $as_echo "$ac_try_echo") >&5
 	 test "$cross_compiling" = yes ||
 	 $as_test_x conftest$ac_exeext
        }; then
-  ac_cv_lib_resolv_res_query=yes
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_resolv_res_query=no
-fi
-
-rm -rf conftest.dSYM
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_resolv_res_query" >&5
-$as_echo "$ac_cv_lib_resolv_res_query" >&6; }
-if test "x$ac_cv_lib_resolv_res_query" = x""yes; then
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_RESOLV 1
 _ACEOF
 
          RESOLVLIBS="-lresolv"
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
 fi
 
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+    LIBS="$ac_save_LIBS"
 fi
 
 LCMSLIBS=""
