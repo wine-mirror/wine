@@ -741,21 +741,10 @@ static type_t **sort_interfaces( const statement_list_t *stmts, int *count )
     return ifaces;
 }
 
-void write_proxies(const statement_list_t *stmts)
+static void write_proxy_routines(const statement_list_t *stmts)
 {
   int expr_eval_routines;
-  char *file_id = proxy_token;
-  int i, count, have_baseiid;
   unsigned int proc_offset = 0;
-  type_t **interfaces;
-
-  if (!do_proxies) return;
-  if (do_everything && !need_proxy_file(stmts)) return;
-
-  init_proxy(stmts);
-  if(!proxy) return;
-
-  pointer_size = sizeof(void*);
 
   write_formatstringsdecl(proxy, indent, stmts, need_proxy);
   write_stubdescproto();
@@ -767,12 +756,47 @@ void write_proxies(const statement_list_t *stmts)
   write_user_quad_list(proxy);
   write_stubdesc(expr_eval_routines);
 
-  print_proxy( "#if !defined(__RPC_WIN32__)\n");
+  print_proxy( "#if !defined(__RPC_WIN%u__)\n", pointer_size == 8 ? 64 : 32);
   print_proxy( "#error Currently only Wine and WIN32 are supported.\n");
   print_proxy( "#endif\n");
   print_proxy( "\n");
   write_procformatstring(proxy, stmts, need_proxy);
   write_typeformatstring(proxy, stmts, need_proxy);
+
+}
+
+void write_proxies(const statement_list_t *stmts)
+{
+  char *file_id = proxy_token;
+  int i, count, have_baseiid;
+  type_t **interfaces;
+
+  if (!do_proxies) return;
+  if (do_everything && !need_proxy_file(stmts)) return;
+
+  init_proxy(stmts);
+  if(!proxy) return;
+
+  if (do_win32 && do_win64)
+  {
+      fprintf(proxy, "\n#ifndef _WIN64\n\n");
+      pointer_size = 4;
+      write_proxy_routines( stmts );
+      fprintf(proxy, "\n#else /* _WIN64 */\n\n");
+      pointer_size = 8;
+      write_proxy_routines( stmts );
+      fprintf(proxy, "#endif /* _WIN64 */\n\n");
+  }
+  else if (do_win32)
+  {
+      pointer_size = 4;
+      write_proxy_routines( stmts );
+  }
+  else if (do_win64)
+  {
+      pointer_size = 8;
+      write_proxy_routines( stmts );
+  }
 
   interfaces = sort_interfaces(stmts, &count);
   fprintf(proxy, "static const CInterfaceProxyVtbl* const _%s_ProxyVtblList[] =\n", file_id);

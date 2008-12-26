@@ -396,6 +396,7 @@ void check_for_additional_prototype_types(const var_list_t *list);
 void init_types(void);
 type_t *alloc_type(void);
 void set_all_tfswrite(int val);
+void clear_all_offsets(void);
 
 type_t *duptype(type_t *t, int dupname);
 type_t *alias(type_t *t, const char *name);

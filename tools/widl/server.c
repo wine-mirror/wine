@@ -424,7 +424,7 @@ static void write_server_stmts(const statement_list_t *stmts, int expr_eval_rout
 
                 write_function_stubs(iface, proc_offset);
 
-                print_server("#if !defined(__RPC_WIN32__)\n");
+                print_server("#if !defined(__RPC_WIN%u__)\n", pointer_size == 8 ? 64 : 32);
                 print_server("#error  Invalid build platform for this stub.\n");
                 print_server("#endif\n");
 
@@ -436,21 +436,10 @@ static void write_server_stmts(const statement_list_t *stmts, int expr_eval_rout
     }
 }
 
-void write_server(const statement_list_t *stmts)
+static void write_server_routines(const statement_list_t *stmts)
 {
     unsigned int proc_offset = 0;
     int expr_eval_routines;
-
-    if (!do_server)
-        return;
-    if (do_everything && !need_stub_files(stmts))
-        return;
-
-    init_server();
-    if (!server)
-        return;
-
-    pointer_size = sizeof(void*);
 
     write_formatstringsdecl(server, indent, stmts, need_stub);
     expr_eval_routines = write_expr_eval_routines(server, server_token);
@@ -464,6 +453,39 @@ void write_server(const statement_list_t *stmts)
 
     write_procformatstring(server, stmts, need_stub);
     write_typeformatstring(server, stmts, need_stub);
+}
+
+void write_server(const statement_list_t *stmts)
+{
+    if (!do_server)
+        return;
+    if (do_everything && !need_stub_files(stmts))
+        return;
+
+    init_server();
+    if (!server)
+        return;
+
+    if (do_win32 && do_win64)
+    {
+        fprintf(server, "\n#ifndef _WIN64\n\n");
+        pointer_size = 4;
+        write_server_routines( stmts );
+        fprintf(server, "\n#else /* _WIN64 */\n\n");
+        pointer_size = 8;
+        write_server_routines( stmts );
+        fprintf(server, "\n#endif /* _WIN64 */\n");
+    }
+    else if (do_win32)
+    {
+        pointer_size = 4;
+        write_server_routines( stmts );
+    }
+    else if (do_win64)
+    {
+        pointer_size = 8;
+        write_server_routines( stmts );
+    }
 
     fclose(server);
 }

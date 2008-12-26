@@ -1366,6 +1366,13 @@ void set_all_tfswrite(int val)
     node->data.tfswrite = val;
 }
 
+void clear_all_offsets(void)
+{
+  type_pool_node_t *node;
+  LIST_FOR_EACH_ENTRY(node, &type_pool, type_pool_node_t, link)
+    node->data.typestring_offset = node->data.ptrdesc = 0;
+}
+
 type_t *make_type(unsigned char type, type_t *ref)
 {
   type_t *t = alloc_type();

@@ -483,7 +483,7 @@ static void write_client_ifaces(const statement_list_t *stmts, int expr_eval_rou
                 write_stubdescdecl(iface);
                 write_function_stubs(iface, proc_offset);
 
-                print_client("#if !defined(__RPC_WIN32__)\n");
+                print_client("#if !defined(__RPC_WIN%u__)\n", pointer_size == 8 ? 64 : 32);
                 print_client("#error  Invalid build platform for this stub.\n");
                 print_client("#endif\n");
 
@@ -496,21 +496,10 @@ static void write_client_ifaces(const statement_list_t *stmts, int expr_eval_rou
     }
 }
 
-void write_client(const statement_list_t *stmts)
+static void write_client_routines(const statement_list_t *stmts)
 {
     unsigned int proc_offset = 0;
     int expr_eval_routines;
-
-    if (!do_client)
-        return;
-    if (do_everything && !need_stub_files(stmts))
-        return;
-
-    init_client();
-    if (!client)
-        return;
-
-    pointer_size = sizeof(void*);
 
     write_formatstringsdecl(client, indent, stmts, need_stub);
     expr_eval_routines = write_expr_eval_routines(client, client_token);
@@ -524,6 +513,39 @@ void write_client(const statement_list_t *stmts)
 
     write_procformatstring(client, stmts, need_stub);
     write_typeformatstring(client, stmts, need_stub);
+}
+
+void write_client(const statement_list_t *stmts)
+{
+    if (!do_client)
+        return;
+    if (do_everything && !need_stub_files(stmts))
+        return;
+
+    init_client();
+    if (!client)
+        return;
+
+    if (do_win32 && do_win64)
+    {
+        fprintf(client, "\n#ifndef _WIN64\n\n");
+        pointer_size = 4;
+        write_client_routines( stmts );
+        fprintf(client, "\n#else /* _WIN64 */\n\n");
+        pointer_size = 8;
+        write_client_routines( stmts );
+        fprintf(client, "\n#endif /* _WIN64 */\n");
+    }
+    else if (do_win32)
+    {
+        pointer_size = 4;
+        write_client_routines( stmts );
+    }
+    else if (do_win64)
+    {
+        pointer_size = 8;
+        write_client_routines( stmts );
+    }
 
     fclose(client);
 }

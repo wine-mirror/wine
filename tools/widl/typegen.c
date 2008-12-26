@@ -572,6 +572,8 @@ static void write_formatdesc(FILE *f, int indent, const char *str)
 
 void write_formatstringsdecl(FILE *f, int indent, const statement_list_t *stmts, type_pred_t pred)
 {
+    clear_all_offsets();
+
     print_file(f, indent, "#define TYPE_FORMAT_STRING_SIZE %d\n",
                get_size_typeformatstring(stmts, pred));
 
