@@ -161,11 +161,12 @@ typedef struct
 
 typedef struct
 {
+    obj_handle_t    handle;
+    obj_handle_t    event;
     void           *callback;
     void           *iosb;
     void           *arg;
     void           *apc;
-    obj_handle_t    event;
     apc_param_t     cvalue;
 } async_data_t;
 
@@ -1651,7 +1652,6 @@ struct read_directory_changes_request
 {
     struct request_header __header;
     unsigned int filter;
-    obj_handle_t handle;
     int          subtree;
     int          want_data;
     async_data_t async;
@@ -2671,7 +2671,6 @@ struct set_serial_info_reply
 struct register_async_request
 {
     struct request_header __header;
-    obj_handle_t handle;
     int          type;
     int          count;
     async_data_t async;
@@ -2701,7 +2700,6 @@ struct cancel_async_reply
 struct ioctl_request
 {
     struct request_header __header;
-    obj_handle_t   handle;
     ioctl_code_t   code;
     async_data_t   async;
     /* VARARG(in_data,bytes); */
@@ -5053,6 +5051,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 353
+#define SERVER_PROTOCOL_VERSION 354
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

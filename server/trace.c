@@ -265,8 +265,9 @@ static void dump_apc_result( const apc_result_t *result )
 
 static void dump_async_data( const async_data_t *data )
 {
-    fprintf( stderr, "{callback=%p,iosb=%p,arg=%p,apc=%p,event=%04x}",
-             data->callback, data->iosb, data->arg, data->apc, data->event );
+    fprintf( stderr, "{handle=%04x,event=%04x,callback=%p,iosb=%p,arg=%p,apc=%p,cvalue=}",
+             data->handle, data->event, data->callback, data->iosb, data->arg, data->apc );
+    dump_uint64( &data->cvalue );
 }
 
 static void dump_luid( const luid_t *luid )
@@ -1732,7 +1733,6 @@ static void dump_send_console_signal_request( const struct send_console_signal_r
 static void dump_read_directory_changes_request( const struct read_directory_changes_request *req )
 {
     fprintf( stderr, " filter=%08x,", req->filter );
-    fprintf( stderr, " handle=%04x,", req->handle );
     fprintf( stderr, " subtree=%d,", req->subtree );
     fprintf( stderr, " want_data=%d,", req->want_data );
     fprintf( stderr, " async=" );
@@ -2508,7 +2508,6 @@ static void dump_set_serial_info_request( const struct set_serial_info_request *
 
 static void dump_register_async_request( const struct register_async_request *req )
 {
-    fprintf( stderr, " handle=%04x,", req->handle );
     fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " count=%d,", req->count );
     fprintf( stderr, " async=" );
@@ -2522,7 +2521,6 @@ static void dump_cancel_async_request( const struct cancel_async_request *req )
 
 static void dump_ioctl_request( const struct ioctl_request *req )
 {
-    fprintf( stderr, " handle=%04x,", req->handle );
     fprintf( stderr, " code=" );
     dump_ioctl_code( &req->code );
     fprintf( stderr, "," );

@@ -1327,8 +1327,8 @@ static int WS2_register_async_shutdown( SOCKET s, int type )
 
     SERVER_START_REQ( register_async )
     {
-        req->handle = wine_server_obj_handle( wsa->hSocket );
         req->type   = type;
+        req->async.handle   = wine_server_obj_handle( wsa->hSocket );
         req->async.callback = WS2_async_shutdown;
         req->async.iosb     = &wsa->local_iosb;
         req->async.arg      = wsa;
@@ -2780,8 +2780,8 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
             SERVER_START_REQ( register_async )
             {
-                req->handle = wine_server_obj_handle( wsa->hSocket );
-                req->type   = ASYNC_TYPE_WRITE;
+                req->type           = ASYNC_TYPE_WRITE;
+                req->async.handle   = wine_server_obj_handle( wsa->hSocket );
                 req->async.callback = WS2_async_send;
                 req->async.iosb     = iosb;
                 req->async.arg      = wsa;
@@ -4306,8 +4306,8 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
                 SERVER_START_REQ( register_async )
                 {
-                    req->handle = wine_server_obj_handle( wsa->hSocket );
-                    req->type   = ASYNC_TYPE_READ;
+                    req->type           = ASYNC_TYPE_READ;
+                    req->async.handle   = wine_server_obj_handle( wsa->hSocket );
                     req->async.callback = WS2_async_recv;
                     req->async.iosb     = iosb;
                     req->async.arg      = wsa;

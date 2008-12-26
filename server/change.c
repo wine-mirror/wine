@@ -1139,7 +1139,7 @@ DECL_HANDLER(read_directory_changes)
         return;
     }
 
-    dir = get_dir_obj( current->process, req->handle, 0 );
+    dir = get_dir_obj( current->process, req->async.handle, 0 );
     if (!dir)
         return;
 

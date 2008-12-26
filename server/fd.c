@@ -2011,7 +2011,7 @@ DECL_HANDLER(get_handle_fd)
 DECL_HANDLER(ioctl)
 {
     unsigned int access = (req->code >> 14) & (FILE_READ_DATA|FILE_WRITE_DATA);
-    struct fd *fd = get_handle_fd_obj( current->process, req->handle, access );
+    struct fd *fd = get_handle_fd_obj( current->process, req->async.handle, access );
 
     if (fd)
     {
@@ -2041,7 +2041,7 @@ DECL_HANDLER(register_async)
         return;
     }
 
-    if ((fd = get_handle_fd_obj( current->process, req->handle, access )))
+    if ((fd = get_handle_fd_obj( current->process, req->async.handle, access )))
     {
         if (get_unix_fd( fd ) != -1) fd->fd_ops->queue_async( fd, &req->async, req->type, req->count );
         release_object( fd );

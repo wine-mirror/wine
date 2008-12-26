@@ -652,14 +652,14 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
 
             SERVER_START_REQ( register_async )
             {
-                req->handle = wine_server_obj_handle( hFile );
                 req->type   = ASYNC_TYPE_READ;
                 req->count  = length;
+                req->async.handle   = wine_server_obj_handle( hFile );
+                req->async.event    = wine_server_obj_handle( hEvent );
                 req->async.callback = FILE_AsyncReadService;
                 req->async.iosb     = io_status;
                 req->async.arg      = fileio;
                 req->async.apc      = fileio_apc;
-                req->async.event    = wine_server_obj_handle( hEvent );
                 req->async.cvalue   = cvalue;
                 status = wine_server_call( req );
             }
@@ -976,14 +976,14 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 
             SERVER_START_REQ( register_async )
             {
-                req->handle = wine_server_obj_handle( hFile );
                 req->type   = ASYNC_TYPE_WRITE;
                 req->count  = length;
+                req->async.handle   = wine_server_obj_handle( hFile );
+                req->async.event    = wine_server_obj_handle( hEvent );
                 req->async.callback = FILE_AsyncWriteService;
                 req->async.iosb     = io_status;
                 req->async.arg      = fileio;
                 req->async.apc      = fileio_apc;
-                req->async.event    = wine_server_obj_handle( hEvent );
                 req->async.cvalue   = cvalue;
                 status = wine_server_call( req );
             }
@@ -1197,8 +1197,8 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
 
     SERVER_START_REQ( ioctl )
     {
-        req->handle         = wine_server_obj_handle( handle );
         req->code           = code;
+        req->async.handle   = wine_server_obj_handle( handle );
         req->async.callback = ioctl_completion;
         req->async.iosb     = io;
         req->async.arg      = async;
