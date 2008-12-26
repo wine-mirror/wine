@@ -59,6 +59,7 @@ extern char *server_name;
 extern char *server_token;
 extern const char *prefix_client;
 extern const char *prefix_server;
+extern size_t pointer_size;
 extern time_t now;
 
 extern int line_number;

@@ -1018,7 +1018,8 @@ size_t type_memsize(const type_t *t, unsigned int *align)
     }
     else if (is_ptr(t) || is_conformant_array(t))
     {
-        size = sizeof(void *);
+        assert( pointer_size );
+        size = pointer_size;
         if (size > *align) *align = size;
     }
     else switch (t->type)

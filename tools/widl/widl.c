@@ -132,6 +132,8 @@ FILE *local_stubs;
 FILE *proxy;
 FILE *idfile;
 
+size_t pointer_size = 0;
+
 time_t now;
 
 enum {

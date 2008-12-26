@@ -510,6 +510,8 @@ void write_client(const statement_list_t *stmts)
     if (!client)
         return;
 
+    pointer_size = sizeof(void*);
+
     write_formatstringsdecl(client, indent, stmts, need_stub);
     expr_eval_routines = write_expr_eval_routines(client, client_token);
     if (expr_eval_routines)

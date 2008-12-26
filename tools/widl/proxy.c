@@ -127,8 +127,6 @@ static void init_proxy(const statement_list_t *stmts)
   print_proxy( "    return (__frame->_StubMsg.dwStubPhase != PROXY_SENDRECEIVE);\n");
   print_proxy( "}\n");
   print_proxy( "\n");
-  write_formatstringsdecl(proxy, indent, stmts, need_proxy);
-  write_stubdescproto();
 }
 
 static void clear_output_vars( const var_list_t *args )
@@ -757,6 +755,10 @@ void write_proxies(const statement_list_t *stmts)
   init_proxy(stmts);
   if(!proxy) return;
 
+  pointer_size = sizeof(void*);
+
+  write_formatstringsdecl(proxy, indent, stmts, need_proxy);
+  write_stubdescproto();
   write_proxy_stmts(stmts, &proc_offset);
 
   expr_eval_routines = write_expr_eval_routines(proxy, proxy_token);

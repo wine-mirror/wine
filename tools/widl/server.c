@@ -450,6 +450,8 @@ void write_server(const statement_list_t *stmts)
     if (!server)
         return;
 
+    pointer_size = sizeof(void*);
+
     write_formatstringsdecl(server, indent, stmts, need_stub);
     expr_eval_routines = write_expr_eval_routines(server, server_token);
     if (expr_eval_routines)
