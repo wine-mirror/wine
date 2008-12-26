@@ -170,7 +170,8 @@ VOID WINAPI RtlSetBits(PRTL_BITMAP lpBits, ULONG ulStart, ULONG ulCount)
   }
 
   /* Set remaining bits, if any */
-  *lpOut |= NTDLL_maskBits[ulCount & 0x7];
+  if (ulCount & 0x7)
+    *lpOut |= NTDLL_maskBits[ulCount & 0x7];
 }
 
 /*************************************************************************
