@@ -45,6 +45,8 @@ extern int do_server;
 extern int do_idfile;
 extern int do_dlldata;
 extern int old_names;
+extern int do_win32;
+extern int do_win64;
 
 extern char *input_name;
 extern char *header_name;

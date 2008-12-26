@@ -78,6 +78,8 @@ static const char usage[] =
 "   -U file     Name of interface identifiers file (default is infile_i.c)\n"
 "   -V          Print version and exit\n"
 "   -W          Enable pedantic warnings\n"
+"   --win32     Only generate 32-bit code\n"
+"   --win64     Only generate 64-bit code\n"
 "Debug level 'n' is a bitmask with following meaning:\n"
 "    * 0x01 Tell which resource is parsed (verbose mode)\n"
 "    * 0x02 Dump internal structures\n"
@@ -106,6 +108,8 @@ int do_idfile = 0;
 int do_dlldata = 0;
 int no_preprocess = 0;
 int old_names = 0;
+int do_win32 = 1;
+int do_win64 = 1;
 
 char *input_name;
 char *header_name;
@@ -143,7 +147,9 @@ enum {
     LOCAL_STUBS_OPTION,
     PREFIX_ALL_OPTION,
     PREFIX_CLIENT_OPTION,
-    PREFIX_SERVER_OPTION
+    PREFIX_SERVER_OPTION,
+    WIN32_OPTION,
+    WIN64_OPTION
 };
 
 static const char short_options[] =
@@ -156,6 +162,8 @@ static const struct option long_options[] = {
     { "prefix-all", 1, 0, PREFIX_ALL_OPTION },
     { "prefix-client", 1, 0, PREFIX_CLIENT_OPTION },
     { "prefix-server", 1, 0, PREFIX_SERVER_OPTION },
+    { "win32", 0, 0, WIN32_OPTION },
+    { "win64", 0, 0, WIN64_OPTION },
     { 0, 0, 0, 0 }
 };
 
@@ -376,6 +384,14 @@ int main(int argc,char *argv[])
       break;
     case PREFIX_SERVER_OPTION:
       prefix_server = xstrdup(optarg);
+      break;
+    case WIN32_OPTION:
+      do_win32 = 1;
+      do_win64 = 0;
+      break;
+    case WIN64_OPTION:
+      do_win32 = 0;
+      do_win64 = 1;
       break;
     case 'c':
       do_everything = 0;

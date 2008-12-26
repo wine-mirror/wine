@@ -74,6 +74,10 @@ Prefix to put on the name of server stubs.
 Generate server stub.
 .IP "\fB-S \fIfile\fR"
 Name of server stub file (default is \fIinfile\fR_s.c)
+.IP "\fB--win32, --win64\fR"
+Only generate 32-bit, respectively 64-bit code (the default is to
+generate both 32-bit and 64-bit versions into the same destination
+file).
 .PP
 .B Dlldata file options:
 .IP "\fB--dlldata=\fIfile\fR"
