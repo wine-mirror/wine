@@ -146,6 +146,10 @@ extern void VIRTUAL_SetForceExec( BOOL enable );
 extern void VIRTUAL_UseLargeAddressSpace(void);
 extern struct _KUSER_SHARED_DATA *user_shared_data;
 
+/* completion */
+extern NTSTATUS NTDLL_AddCompletion( HANDLE hFile, ULONG_PTR CompletionValue,
+                                     NTSTATUS CompletionStatus, ULONG Information );
+
 /* code pages */
 extern int ntdll_umbstowcs(DWORD flags, const char* src, int srclen, WCHAR* dst, int dstlen);
 extern int ntdll_wcstoumbs(DWORD flags, const WCHAR* src, int srclen, char* dst, int dstlen,
@@ -210,8 +214,16 @@ static inline struct ntdll_thread_regs *ntdll_get_thread_regs(void)
     return (struct ntdll_thread_regs *)NtCurrentTeb()->SpareBytes1;
 }
 
-/* Completion */
-extern NTSTATUS NTDLL_AddCompletion( HANDLE hFile, ULONG_PTR CompletionValue,
-                                     NTSTATUS CompletionStatus, ULONG Information );
+/* Register functions */
+
+#ifdef __i386__
+#define DEFINE_REGS_ENTRYPOINT( name, args, pop_args ) \
+    __ASM_GLOBAL_FUNC( name, \
+                       "pushl %eax\n\t" \
+                       "call " __ASM_NAME("__wine_call_from_32_regs") "\n\t" \
+                       ".long " __ASM_NAME("__regs_") #name "-.\n\t" \
+                       ".byte " #args "," #pop_args )
+/* FIXME: add support for other CPUs */
+#endif
 
 #endif
