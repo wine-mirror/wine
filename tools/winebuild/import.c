@@ -971,22 +971,22 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
         output( "\tjmp *%%eax\n" );
         break;
     case CPU_x86_64:
-        output( "\tpushq %%rdi\n" );
-        output( "\tpushq %%rsi\n" );
         output( "\tpushq %%rdx\n" );
         output( "\tpushq %%rcx\n" );
         output( "\tpushq %%r8\n" );
         output( "\tpushq %%r9\n" );
-        output( "\tsubq $32,%%rsp\n" );
-        output( "\tmovq %%r11,%%rcx\n" );
+        output( "\tpushq %%r10\n" );
+        output( "\tpushq %%r11\n" );
+        output( "\tsubq $40,%%rsp\n" );
+        output( "\tmovq %%rax,%%rcx\n" );
         output( "\tcall %s\n", asm_name("__wine_spec_delay_load") );
-        output( "\taddq $32,%%rsp\n" );
+        output( "\taddq $40,%%rsp\n" );
+        output( "\tpopq %%r11\n" );
+        output( "\tpopq %%r10\n" );
         output( "\tpopq %%r9\n" );
         output( "\tpopq %%r8\n" );
         output( "\tpopq %%rcx\n" );
         output( "\tpopq %%rdx\n" );
-        output( "\tpopq %%rsi\n" );
-        output( "\tpopq %%rdi\n" );
         output( "\tjmp *%%rax\n" );
         break;
     case CPU_SPARC:
@@ -1069,7 +1069,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
                 output( "\tjmp %s\n", asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_x86_64:
-                output( "\tmovq $%d,%%r11\n", (idx << 16) | j );
+                output( "\tmovq $%d,%%rax\n", (idx << 16) | j );
                 output( "\tjmp %s\n", asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_SPARC:
