@@ -243,21 +243,25 @@ static void find_joydevs(void)
             continue;
         }
 
-      if ((-1==ioctl(fd,EVIOCGBIT(0,sizeof(joydev.evbits)),joydev.evbits))) {
-        perror("EVIOCGBIT 0");
-        close(fd);
-        continue; 
-      }
-      if (-1==ioctl(fd,EVIOCGBIT(EV_ABS,sizeof(joydev.absbits)),joydev.absbits)) {
-        perror("EVIOCGBIT EV_ABS");
-        close(fd);
-        continue;
-      }
-      if (-1==ioctl(fd,EVIOCGBIT(EV_KEY,sizeof(joydev.keybits)),joydev.keybits)) {
-        perror("EVIOCGBIT EV_KEY");
-        close(fd);
-        continue;
-      }
+        if (ioctl(fd, EVIOCGBIT(0, sizeof(joydev.evbits)), joydev.evbits) == -1)
+        {
+            WARN("ioct(EVIOCGBIT, 0) failed: %d %s\n", errno, strerror(errno));
+            close(fd);
+            continue;
+        }
+        if (ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(joydev.absbits)), joydev.absbits) == -1)
+        {
+            WARN("ioct(EVIOCGBIT, EV_ABS) failed: %d %s\n", errno, strerror(errno));
+            close(fd);
+            continue;
+        }
+        if (ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(joydev.keybits)), joydev.keybits) == -1)
+        {
+            WARN("ioct(EVIOCGBIT, EV_KEY) failed: %d %s\n", errno, strerror(errno));
+            close(fd);
+            continue;
+        }
+
       /* A true joystick has at least axis X and Y, and at least 1
        * button. copied from linux/drivers/input/joydev.c */
       if (test_bit(joydev.absbits,ABS_X) && test_bit(joydev.absbits,ABS_Y) &&
@@ -628,24 +632,29 @@ static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 
     TRACE("(this=%p)\n",This);
 
-    res = IDirectInputDevice2AImpl_Acquire(iface);
-    if (res==DI_OK) {
-      if (-1==(This->joyfd=open(This->joydev->device,O_RDWR))) {
-        if (-1==(This->joyfd=open(This->joydev->device,O_RDONLY))) {
-          /* Couldn't open the device at all */
-          perror(This->joydev->device);
-          IDirectInputDevice2AImpl_Unacquire(iface);
-          return DIERR_NOTFOUND;
-        } else {
-          /* Couldn't open in r/w but opened in read-only. */
-          WARN("Could not open %s in read-write mode.  Force feedback will be disabled.\n", This->joydev->device);
+    if ((res = IDirectInputDevice2AImpl_Acquire(iface)) != DI_OK)
+    {
+        WARN("Failed to acquire: %x\n", res);
+        return res;
+    }
+
+    if ((This->joyfd = open(This->joydev->device, O_RDWR)) == -1)
+    {
+        if ((This->joyfd = open(This->joydev->device, O_RDONLY)) == -1)
+        {
+            /* Couldn't open the device at all */
+            ERR("Failed to open device %s: %d %s\n", This->joydev->device, errno, strerror(errno));
+            IDirectInputDevice2AImpl_Unacquire(iface);
+            return DIERR_NOTFOUND;
         }
-      }
     }
     else
-        WARN("Failed to acquire: %x\n", res);
+    {
+        /* Couldn't open in r/w but opened in read-only. */
+        WARN("Could not open %s in read-write mode.  Force feedback will be disabled.\n", This->joydev->device);
+    }
 
-    return res;
+    return DI_OK;
 }
 
 /******************************************************************************
