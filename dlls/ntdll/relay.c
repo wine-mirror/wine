@@ -38,7 +38,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(relay);
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 
 struct relay_descr  /* descriptor for a module */
 {
@@ -317,7 +317,8 @@ static inline void RELAY_PrintArgs( const INT_PTR *args, int nb_args, unsigned i
     }
 }
 
-extern LONGLONG call_entry_point( void *func, int nb_args, const INT_PTR *args );
+extern LONGLONG CDECL call_entry_point( void *func, int nb_args, const INT_PTR *args );
+#ifdef __i386__
 __ASM_GLOBAL_FUNC( call_entry_point,
                    "\tpushl %ebp\n"
                    "\tmovl %esp,%ebp\n"
@@ -339,6 +340,33 @@ __ASM_GLOBAL_FUNC( call_entry_point,
                    "\tpopl %esi\n"
                    "\tpopl %ebp\n"
                    "\tret" )
+#else
+__ASM_GLOBAL_FUNC( call_entry_point,
+                   "\tpushq %rbp\n"
+                   "\tmovq %rsp,%rbp\n"
+                   "\tpushq %rsi\n"
+                   "\tpushq %rdi\n"
+                   "\tmovq %rcx,%rax\n"
+                   "\tmovq $4,%rcx\n"
+                   "\tcmp %rcx,%rdx\n"
+                   "\tcmovgq %rdx,%rcx\n"
+                   "\tleaq 0(,%rcx,8),%rdx\n"
+                   "\tsubq %rdx,%rsp\n"
+                   "\tandq $~15,%rsp\n"
+                   "\tmovq %rsp,%rdi\n"
+                   "\tmovq %r8,%rsi\n"
+                   "\trep; movsq\n"
+                   "\tmovq 0(%rsp),%rcx\n"
+                   "\tmovq 8(%rsp),%rdx\n"
+                   "\tmovq 16(%rsp),%r8\n"
+                   "\tmovq 24(%rsp),%r9\n"
+                   "\tcallq *%rax\n"
+                   "\tleaq -16(%rbp),%rsp\n"
+                   "\tpopq %rdi\n"
+                   "\tpopq %rsi\n"
+                   "\tpopq %rbp\n"
+                   "\tret\n" )
+#endif
 
 
 /***********************************************************************
@@ -386,6 +414,7 @@ static LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx, 
 /***********************************************************************
  *           relay_call_regs
  */
+#ifdef __i386__
 void WINAPI __regs_relay_call_regs( struct relay_descr *descr, unsigned int idx,
                                     unsigned int orig_eax, unsigned int ret_addr,
                                     CONTEXT86 *context )
@@ -451,6 +480,7 @@ void WINAPI __regs_relay_call_regs( struct relay_descr *descr, unsigned int idx,
 }
 extern void WINAPI relay_call_regs(void);
 DEFINE_REGS_ENTRYPOINT( relay_call_regs, 16, 16 )
+#endif
 
 
 /***********************************************************************
@@ -500,7 +530,9 @@ void RELAY_SetupDLL( HMODULE module )
         return;
 
     descr->relay_call = relay_call;
+#ifdef __i386__
     descr->relay_call_regs = relay_call_regs;
+#endif
     descr->private = data;
 
     data->module = module;
@@ -535,7 +567,7 @@ void RELAY_SetupDLL( HMODULE module )
     }
 }
 
-#else  /* __i386__ */
+#else  /* __i386__ || __x86_64__ */
 
 FARPROC RELAY_GetProcAddress( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
                               DWORD exp_size, FARPROC proc, DWORD ordinal, const WCHAR *user )
@@ -547,7 +579,7 @@ void RELAY_SetupDLL( HMODULE module )
 {
 }
 
-#endif  /* __i386__ */
+#endif  /* __i386__ || __x86_64__ */
 
 
 /***********************************************************************/
