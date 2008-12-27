@@ -494,14 +494,13 @@ static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, char *szXPMFileName)
             {
                 for (i = 0; i < pIconDir->idCount; i++)
                 {
-		    if ((pIconDir->idEntries[i].wBitCount >= nMaxBits) && (pIconDir->idEntries[i].wBitCount <= 8))
+		    if (pIconDir->idEntries[i].wBitCount >= nMaxBits)
 		    {
-			nMaxBits = pIconDir->idEntries[i].wBitCount;
-
 			if ((pIconDir->idEntries[i].bHeight * pIconDir->idEntries[i].bWidth) >= nMax)
 			{
 			    lpName = MAKEINTRESOURCEW(pIconDir->idEntries[i].nID);
 			    nMax = pIconDir->idEntries[i].bHeight * pIconDir->idEntries[i].bWidth;
+			    nMaxBits = pIconDir->idEntries[i].wBitCount;
 			}
 		    }		    
                 }
