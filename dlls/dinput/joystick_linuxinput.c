@@ -215,13 +215,11 @@ static struct JoyDev *joydevs = NULL;
 
 static void find_joydevs(void)
 {
-  int i;
+    int i;
 
-  if (have_joydevs!=-1) {
-    return;
-  }
-
-  have_joydevs = 0;
+    if (InterlockedCompareExchange(&have_joydevs, 0, -1) != -1)
+        /* Someone beat us to it */
+        return;
 
   for (i=0;i<MAX_JOYDEV;i++) {
     char	buf[MAX_PATH];
