@@ -1118,7 +1118,7 @@ static LRESULT COMBOEX_Create (HWND hwnd, CREATESTRUCTA const *cs)
 }
 
 
-static LRESULT COMBOEX_Command (COMBOEX_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+static LRESULT COMBOEX_Command (COMBOEX_INFO *infoPtr, WPARAM wParam)
 {
     LRESULT lret;
     INT command = HIWORD(wParam);
@@ -2273,7 +2273,7 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 /*   Window messages passed to parent */
 	case WM_COMMAND:
-	    return COMBOEX_Command (infoPtr, wParam, lParam);
+	    return COMBOEX_Command (infoPtr, wParam);
 
 	case WM_NOTIFY:
 	    if (infoPtr->NtfUnicode)
