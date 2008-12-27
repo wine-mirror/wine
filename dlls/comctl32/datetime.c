@@ -949,7 +949,7 @@ DATETIME_KeyDown (DATETIME_INFO *infoPtr, DWORD vkCode)
 
 
 static LRESULT
-DATETIME_Char (DATETIME_INFO *infoPtr, WPARAM vkCode, LPARAM keyData)
+DATETIME_Char (DATETIME_INFO *infoPtr, WPARAM vkCode)
 {
     int fieldNum = infoPtr->select & DTHT_DATEFIELD;
 
@@ -1353,7 +1353,7 @@ DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return DATETIME_KeyDown (infoPtr, wParam);
 
     case WM_CHAR:
-        return DATETIME_Char (infoPtr, wParam, lParam);
+        return DATETIME_Char (infoPtr, wParam);
 
     case WM_KILLFOCUS:
         return DATETIME_KillFocus (infoPtr, (HWND)wParam);
