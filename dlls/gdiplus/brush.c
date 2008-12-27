@@ -1331,3 +1331,17 @@ GpStatus WINGDIPAPI GdipGetLineRectI(GpLineGradient *brush, GpRect *rect)
 
     return ret;
 }
+
+GpStatus WINGDIPAPI GdipRotateLineTransform(GpLineGradient* brush,
+    REAL angle, GpMatrixOrder order)
+{
+    static int calls;
+
+    if(!brush)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("(%p, %.2f, %d) stub\n", brush, angle, order);
+
+    return NotImplemented;
+}
