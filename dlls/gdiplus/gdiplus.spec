@@ -480,7 +480,7 @@
 @ stub GdipResetPageTransform
 @ stdcall GdipResetPath(ptr)
 @ stub GdipResetPathGradientTransform
-@ stub GdipResetPenTransform
+@ stdcall GdipResetPenTransform(ptr)
 @ stdcall GdipResetTextureTransform(ptr)
 @ stdcall GdipResetWorldTransform(ptr)
 @ stdcall GdipRestoreGraphics(ptr long)

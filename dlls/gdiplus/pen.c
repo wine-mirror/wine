@@ -385,6 +385,19 @@ GpStatus WINGDIPAPI GdipGetPenWidth(GpPen *pen, REAL *width)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipResetPenTransform(GpPen *pen)
+{
+    static int calls;
+
+    if(!pen)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("(%p) stub\n", pen);
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSetPenBrushFill(GpPen *pen, GpBrush *brush)
 {
     TRACE("(%p, %p)\n", pen, brush);
