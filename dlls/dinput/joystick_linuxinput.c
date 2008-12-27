@@ -221,15 +221,15 @@ static void find_joydevs(void)
         /* Someone beat us to it */
         return;
 
-  for (i=0;i<MAX_JOYDEV;i++) {
-    char	buf[MAX_PATH];
-    struct JoyDev joydev = {0};
-    int fd;
-    int no_ff_check = 0;
-    int j;
+    for (i = 0; i < MAX_JOYDEV; i++)
+    {
+        char buf[MAX_PATH];
+        struct JoyDev joydev = {0};
+        int fd;
+        int no_ff_check = 0;
+        int j;
 
-    snprintf(buf,MAX_PATH,EVDEVPREFIX"%d",i);
-    buf[MAX_PATH-1] = 0;
+        snprintf(buf, sizeof(buf), EVDEVPREFIX"%d", i);
 
     if ((fd=open(buf, O_RDWR))==-1) {
       fd = open(buf, O_RDONLY);
