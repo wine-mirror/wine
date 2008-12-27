@@ -63,7 +63,7 @@ typedef struct {
 } xtemplate;
 
 typedef struct {
-    char name[MAX_NAME_LEN];
+    char* name;
     LPBYTE start;
     ULONG size;
 } xobject_member;

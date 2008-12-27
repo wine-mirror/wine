@@ -1938,6 +1938,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
     int k;
     int nb_elems = 1;
 
+    buf->pxo->members[i].name = pt->members[i].name;
     buf->pxo->members[i].start = buf->cur_pdata;
 
     for (k = 0; k < pt->members[i].nb_dims; k++)
