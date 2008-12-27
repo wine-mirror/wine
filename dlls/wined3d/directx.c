@@ -1303,7 +1303,8 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             }
             break;
         case VENDOR_INTEL:
-            if (strstr(gl_info->gl_renderer, "GMA 950")) {
+            if (strstr(gl_info->gl_renderer, "GMA 950") ||
+                strstr(gl_info->gl_renderer, "945GM")) {
                 /* MacOS calls the card GMA 950, but everywhere else the PCI ID is named 945GM */
                 gl_info->gl_card = CARD_INTEL_I945GM;
                 vidmem = 64;
