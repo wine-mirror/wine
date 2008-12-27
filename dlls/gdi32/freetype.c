@@ -4776,7 +4776,8 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
           {
             unsigned int *dst;
             BYTE *src;
-            INT x, src_pitch, rgb_interval, hmul, vmul;
+            INT x, src_pitch, src_width, src_height, rgb_interval, hmul, vmul;
+            INT x_shift, y_shift;
             BOOL rgb;
             FT_LcdFilter lcdfilter = FT_LCD_FILTER_DEFAULT;
             FT_Render_Mode render_mode =
@@ -4810,13 +4811,16 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
 
             if ( needsTransform )
                 pFT_Outline_Transform (&ft_face->glyph->outline, &transMat);
-            pFT_Outline_Translate (&ft_face->glyph->outline, -left, -bottom );
+
             if ( pFT_Library_SetLcdFilter )
                 pFT_Library_SetLcdFilter( library, lcdfilter );
             pFT_Render_Glyph (ft_face->glyph, render_mode);
 
             src = ft_face->glyph->bitmap.buffer;
             src_pitch = ft_face->glyph->bitmap.pitch;
+            src_width = ft_face->glyph->bitmap.width;
+            src_height = ft_face->glyph->bitmap.rows;
+
             if ( render_mode == FT_RENDER_MODE_LCD)
             {
                 rgb_interval = 1;
@@ -4830,9 +4834,20 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
                 vmul = 3;
             }
 
-            while ( height-- )
+            x_shift = ft_face->glyph->bitmap_left - lpgm->gmptGlyphOrigin.x;
+            if ( x_shift < 0 ) x_shift = 0;
+            if ( x_shift + (src_width / hmul) > width )
+                x_shift = width - (src_width / hmul);
+
+            y_shift = lpgm->gmptGlyphOrigin.y - ft_face->glyph->bitmap_top;
+            if ( y_shift < 0 ) y_shift = 0;
+            if ( y_shift + (src_height / vmul) > height )
+                y_shift = height - (src_height / vmul);
+
+            dst += x_shift + y_shift * ( pitch / 4 );
+            while ( src_height )
             {
-                for ( x = 0; x < width; x++ )
+                for ( x = 0; x < src_width / hmul; x++ )
                 {
                     if ( rgb )
                     {
@@ -4851,6 +4866,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
                 }
                 src += src_pitch * vmul;
                 dst += pitch / 4;
+                src_height -= vmul;
             }
 
             break;
