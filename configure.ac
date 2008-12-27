@@ -344,7 +344,6 @@ AC_CHECK_HEADERS(\
 	sys/statvfs.h \
 	sys/strtio.h \
 	sys/syscall.h \
-	sys/sysctl.h \
 	sys/time.h \
 	sys/times.h \
 	sys/uio.h \
@@ -363,7 +362,7 @@ AC_HEADER_STAT()
 
 dnl **** Checks for headers that depend on other ones ****
 
-AC_CHECK_HEADERS([sys/mount.h sys/statfs.h sys/user.h sys/vfs.h],,,
+AC_CHECK_HEADERS([sys/mount.h sys/statfs.h sys/sysctl.h sys/user.h sys/vfs.h],,,
     [#include <sys/types.h>
      #ifdef HAVE_SYS_PARAM_H
      # include <sys/param.h>

@@ -7444,7 +7444,6 @@ done
 
 
 
-
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
@@ -7547,7 +7546,6 @@ for ac_header in \
 	sys/statvfs.h \
 	sys/strtio.h \
 	sys/syscall.h \
-	sys/sysctl.h \
 	sys/time.h \
 	sys/times.h \
 	sys/uio.h \
@@ -7786,7 +7784,8 @@ fi
 
 
 
-for ac_header in sys/mount.h sys/statfs.h sys/user.h sys/vfs.h
+
+for ac_header in sys/mount.h sys/statfs.h sys/sysctl.h sys/user.h sys/vfs.h
 do
 as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 { $as_echo "$as_me:$LINENO: checking for $ac_header" >&5
