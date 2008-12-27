@@ -47,7 +47,7 @@ typedef struct
 #define NATIVEFONT_GetInfoPtr(hwnd) ((NATIVEFONT_INFO *)GetWindowLongPtrW (hwnd, 0))
 
 static LRESULT
-NATIVEFONT_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
+NATIVEFONT_Create (HWND hwnd)
 {
     NATIVEFONT_INFO *infoPtr;
 
@@ -85,7 +85,7 @@ NATIVEFONT_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch (uMsg)
     {
 	case WM_CREATE:
-	    return NATIVEFONT_Create (hwnd, wParam, lParam);
+	    return NATIVEFONT_Create (hwnd);
 
 	case WM_DESTROY:
 	    return NATIVEFONT_Destroy (infoPtr);
