@@ -2685,6 +2685,7 @@ void ME_DestroyEditor(ME_TextEditor *editor)
     DeleteObject(editor->hbrBackground);
   if(editor->lpOleCallback)
     IUnknown_Release(editor->lpOleCallback);
+  SetWindowLongPtrW(editor->hWnd, 0, 0);
   OleUninitialize();
 
   FREE_OBJ(editor->pBuffer);
@@ -3821,7 +3822,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case WM_DESTROY:
     ME_DestroyEditor(editor);
-    SetWindowLongPtrW(editor->hWnd, 0, 0);
     return 0;
   case WM_SETCURSOR:
   {
