@@ -79,7 +79,9 @@ static const WCHAR pd32_collateW[] = { 'P', 'D', '3', '2', '_', 'C', 'O', 'L', '
 static const WCHAR pd32_nocollateW[] = { 'P', 'D', '3', '2', '_', 'N', 'O', 'C', 'O', 'L', 'L', 'A', 'T', 'E', 0 };
 static const WCHAR pd32_portraitW[] = { 'P', 'D', '3', '2', '_', 'P', 'O', 'R', 'T', 'R', 'A', 'I', 'T', 0 };
 static const WCHAR pd32_landscapeW[] = { 'P', 'D', '3', '2', '_', 'L', 'A', 'N', 'D', 'S', 'C', 'A', 'P', 'E', 0 };
-static const WCHAR propW[] = {'_','_','W','I','N','E','_','P','R','I','N','T','D','L','G','D','A','T','A',0};
+static const WCHAR printdlg_prop[] = {'_','_','W','I','N','E','_','P','R','I','N','T','D','L','G','D','A','T','A',0};
+static const WCHAR pagesetupdlg_prop[] = { '_', '_', 'W', 'I', 'N', 'E', '_', 'P', 'A', 'G', 'E',
+                                           'S', 'E', 'T', 'U', 'P', 'D', 'L', 'G', 'D', 'A', 'T', 'A', 0 };
 
 /***********************************************************************
  *    PRINTDLG_OpenDefaultPrinter
@@ -1854,12 +1856,12 @@ static INT_PTR CALLBACK PrintDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
     INT_PTR res = FALSE;
 
     if (uMsg!=WM_INITDIALOG) {
-        PrintStructures = GetPropA(hDlg,"__WINE_PRINTDLGDATA");
+        PrintStructures = GetPropW(hDlg, printdlg_prop);
 	if (!PrintStructures)
 	    return FALSE;
     } else {
         PrintStructures = (PRINT_PTRA*) lParam;
-	SetPropA(hDlg,"__WINE_PRINTDLGDATA",PrintStructures);
+        SetPropW(hDlg, printdlg_prop, PrintStructures);
         if(!check_printer_setup(hDlg))
         {
             EndDialog(hDlg,FALSE);
@@ -1903,12 +1905,12 @@ static INT_PTR CALLBACK PrintDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
     INT_PTR res = FALSE;
 
     if (uMsg!=WM_INITDIALOG) {
-        PrintStructures = GetPropW(hDlg, propW);
+        PrintStructures = GetPropW(hDlg, printdlg_prop);
 	if (!PrintStructures)
 	    return FALSE;
     } else {
         PrintStructures = (PRINT_PTRW*) lParam;
-	SetPropW(hDlg, propW, PrintStructures);
+        SetPropW(hDlg, printdlg_prop, PrintStructures);
         if(!check_printer_setup(hDlg))
         {
             EndDialog(hDlg,FALSE);
@@ -3215,7 +3217,7 @@ PRINTDLG_PagePaintProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return CallWindowProcA(lpfnStaticWndProc, hWnd, uMsg, wParam, lParam);
 
     /* Processing WM_PAINT message */
-    pda = GetPropA(hWnd, "__WINE_PAGESETUPDLGDATA");
+    pda = GetPropW(hWnd, pagesetupdlg_prop);
     if (!pda) {
         WARN("__WINE_PAGESETUPDLGDATA prop not set?\n");
         return FALSE;
@@ -3311,8 +3313,8 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	
 	hDrawWnd = GetDlgItem(hDlg, rct1); 
         TRACE("set property to %p\n", pda);
-	SetPropA(hDlg, "__WINE_PAGESETUPDLGDATA", pda);
-	SetPropA(hDrawWnd, "__WINE_PAGESETUPDLGDATA", pda);
+        SetPropW(hDlg, pagesetupdlg_prop, pda);
+        SetPropW(hDrawWnd, pagesetupdlg_prop, pda);
 	GetWindowRect(hDrawWnd, &pda->rtDrawRect); /* Calculating rect in client coordinates where paper draws */
 	ScreenToClient(hDlg, (LPPOINT)&pda->rtDrawRect);
 	ScreenToClient(hDlg, (LPPOINT)(&pda->rtDrawRect.right));
@@ -3404,7 +3406,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	PRINTDLG_PS_ChangePaperPrev(pda);
 	return TRUE;
     } else {
-        pda = GetPropA(hDlg,"__WINE_PAGESETUPDLGDATA");
+        pda = GetPropW(hDlg, pagesetupdlg_prop);
 	if (!pda) {
 	    WARN("__WINE_PAGESETUPDLGDATA prop not set?\n");
 	    return FALSE;
@@ -3424,9 +3426,6 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 static INT_PTR CALLBACK
 PageDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    static const WCHAR __WINE_PAGESETUPDLGDATA[] = 
-	{ '_', '_', 'W', 'I', 'N', 'E', '_', 'P', 'A', 'G', 'E', 
-	  'S', 'E', 'T', 'U', 'P', 'D', 'L', 'G', 'D', 'A', 'T', 'A', 0 };
     PageSetupDataW	*pdw;
     BOOL		res = FALSE;
 
@@ -3434,7 +3433,7 @@ PageDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	res = TRUE;
         pdw = (PageSetupDataW*)lParam;
 	pdw->curdlg = *pdw->dlgw;
-	SetPropW(hDlg, __WINE_PAGESETUPDLGDATA, pdw);
+        SetPropW(hDlg, pagesetupdlg_prop, pdw);
 	if (pdw->dlgw->Flags & PSD_ENABLEPAGESETUPHOOK) {
 	    res = pdw->dlgw->lpfnPageSetupHook(hDlg,uMsg,wParam,(LPARAM)pdw->dlgw);
 	    if (!res) {
@@ -3490,7 +3489,7 @@ PageDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	return TRUE;
     } else {
-        pdw = GetPropW(hDlg, __WINE_PAGESETUPDLGDATA);
+        pdw = GetPropW(hDlg, pagesetupdlg_prop);
 	if (!pdw) {
 	    WARN("__WINE_PAGESETUPDLGDATA prop not set?\n");
 	    return FALSE;
