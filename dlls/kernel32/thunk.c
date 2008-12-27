@@ -1185,6 +1185,78 @@ FreeSLCallback(
 	FIXME("(0x%08x): stub\n",x);
 }
 
+/**********************************************************************
+ * 		AllocMappedBuffer	(KERNEL32.38)
+ *
+ * This is an undocumented KERNEL32 function that
+ * SMapLS's a GlobalAlloc'ed buffer.
+ *
+ * RETURNS
+ *       EDI register: pointer to buffer
+ *
+ * NOTES
+ *       The buffer is preceded by 8 bytes:
+ *        ...
+ *       edi+0   buffer
+ *       edi-4   SEGPTR to buffer
+ *       edi-8   some magic Win95 needs for SUnMapLS
+ *               (we use it for the memory handle)
+ *
+ *       The SEGPTR is used by the caller!
+ */
+void WINAPI __regs_AllocMappedBuffer(
+              CONTEXT86 *context /* [in] EDI register: size of buffer to allocate */
+) {
+    HGLOBAL handle = GlobalAlloc(0, context->Edi + 8);
+    DWORD *buffer = GlobalLock(handle);
+    DWORD ptr = 0;
+
+    if (buffer)
+        if (!(ptr = MapLS(buffer + 2)))
+        {
+            GlobalUnlock(handle);
+            GlobalFree(handle);
+        }
+
+    if (!ptr)
+        context->Eax = context->Edi = 0;
+    else
+    {
+        buffer[0] = (DWORD)handle;
+        buffer[1] = ptr;
+
+        context->Eax = ptr;
+        context->Edi = (DWORD)(buffer + 2);
+    }
+}
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( AllocMappedBuffer, 0, 0 )
+#endif
+
+/**********************************************************************
+ * 		FreeMappedBuffer	(KERNEL32.39)
+ *
+ * Free a buffer allocated by AllocMappedBuffer
+ *
+ * RETURNS
+ *  Nothing.
+ */
+void WINAPI __regs_FreeMappedBuffer(
+              CONTEXT86 *context /* [in] EDI register: pointer to buffer */
+) {
+    if (context->Edi)
+    {
+        DWORD *buffer = (DWORD *)context->Edi - 2;
+
+        UnMapLS(buffer[1]);
+
+        GlobalUnlock((HGLOBAL)buffer[0]);
+        GlobalFree((HGLOBAL)buffer[0]);
+    }
+}
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( FreeMappedBuffer, 0, 0 )
+#endif
 
 /**********************************************************************
  * 		GetTEBSelectorFS	(KERNEL.475)
