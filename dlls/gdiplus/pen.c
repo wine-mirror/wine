@@ -398,6 +398,19 @@ GpStatus WINGDIPAPI GdipResetPenTransform(GpPen *pen)
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipScalePenTransform(GpPen *pen, REAL sx, REAL sy, GpMatrixOrder order)
+{
+    static int calls;
+
+    if(!pen)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("(%p, %.2f, %.2f, %d) stub\n", pen, sx, sy, order);
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSetPenBrushFill(GpPen *pen, GpBrush *brush)
 {
     TRACE("(%p, %p)\n", pen, brush);

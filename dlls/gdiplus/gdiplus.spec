@@ -499,7 +499,7 @@
 @ stub GdipScaleLineTransform
 @ stdcall GdipScaleMatrix(ptr long long long)
 @ stub GdipScalePathGradientTransform
-@ stub GdipScalePenTransform
+@ stdcall GdipScalePenTransform(ptr long long long)
 @ stdcall GdipScaleTextureTransform(ptr long long long)
 @ stdcall GdipScaleWorldTransform(ptr long long long)
 @ stdcall GdipSetAdjustableArrowCapFillState(ptr long)
