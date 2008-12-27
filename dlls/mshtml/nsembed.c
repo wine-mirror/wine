@@ -1496,7 +1496,8 @@ static nsresult NSAPI nsTooltipListener_OnShowTooltip(nsITooltipListener *iface,
 {
     NSContainer *This = NSTOOLTIP_THIS(iface);
 
-    show_tooltip(This->doc, aXCoord, aYCoord, aTipText);
+    if (This->doc)
+        show_tooltip(This->doc, aXCoord, aYCoord, aTipText);
 
     return NS_OK;
 }
@@ -1505,7 +1506,8 @@ static nsresult NSAPI nsTooltipListener_OnHideTooltip(nsITooltipListener *iface)
 {
     NSContainer *This = NSTOOLTIP_THIS(iface);
 
-    hide_tooltip(This->doc);
+    if (This->doc)
+        hide_tooltip(This->doc);
 
     return NS_OK;
 }
