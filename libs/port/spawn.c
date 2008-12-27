@@ -43,7 +43,10 @@ int spawnvp(int mode, const char *cmdname, const char *const argv[])
     {
         execvp(cmdname, (char **)argv);
         /* if we get here it failed */
-        if (errno != ENOTSUP) return -1;  /* exec fails on MacOS if the process has multiple threads */
+#ifdef ENOTSUP
+        if (errno != ENOTSUP)  /* exec fails on MacOS if the process has multiple threads */
+#endif
+            return -1;
     }
 
     dfl_act.sa_handler = SIG_DFL;
