@@ -231,12 +231,17 @@ static void find_joydevs(void)
 
         snprintf(buf, sizeof(buf), EVDEVPREFIX"%d", i);
 
-    if ((fd=open(buf, O_RDWR))==-1) {
-      fd = open(buf, O_RDONLY);
-      no_ff_check = 1;
-    }
+        if ((fd = open(buf, O_RDWR)) == -1)
+        {
+            fd = open(buf, O_RDONLY);
+            no_ff_check = 1;
+        }
 
-    if (fd!=-1) {
+        if (fd == -1)
+        {
+            WARN("Failed to open \"%s\": %d %s\n", buf, errno, strerror(errno));
+            continue;
+        }
 
       if ((-1==ioctl(fd,EVIOCGBIT(0,sizeof(joydev.evbits)),joydev.evbits))) {
         perror("EVIOCGBIT 0");
@@ -319,9 +324,8 @@ static void find_joydevs(void)
         have_joydevs++;
       }
 
-      close(fd);
+        close(fd);
     }
-  }
 }
 
 static void fill_joystick_dideviceinstanceA(LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
