@@ -1370,7 +1370,6 @@
 # or 'wine_' (for user-visible functions) to avoid namespace conflicts.
 
 # Relays
-@ cdecl -norelay -i386 __wine_call_from_32_regs()
 @ cdecl -i386 __wine_enter_vm86(ptr)
 
 # Server interface
