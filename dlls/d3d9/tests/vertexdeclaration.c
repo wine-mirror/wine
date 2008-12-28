@@ -454,6 +454,11 @@ static void test_fvf_decl_conversion(IDirect3DDevice9 *pDevice)
     }
     {
         CONST D3DVERTEXELEMENT9 test_buffer[] =
+            { { 0, 0, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_POSITION, 0 }, D3DDECL_END() };
+        VDECL_CHECK(test_fvf_to_decl(pDevice, default_decl, D3DFVF_XYZW, test_buffer, 1));
+    }
+    {
+        CONST D3DVERTEXELEMENT9 test_buffer[] =
           { { 0, 0, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_POSITIONT, 0 }, D3DDECL_END() };
         VDECL_CHECK(test_fvf_to_decl(pDevice, default_decl, D3DFVF_XYZRHW, test_buffer, 1));
     }
