@@ -29,9 +29,7 @@
 #include <stdarg.h>
 
 #include "debugger.h"
-#include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 static struct be_process_io be_process_module_io;
 
