@@ -622,6 +622,19 @@ static int schan_init_sec_ctx_get_next_buffer(const struct schan_transport *t, s
     return -1;
 }
 
+static void dump_buffer_desc(SecBufferDesc *desc)
+{
+    unsigned int i;
+
+    if (!desc) return;
+    TRACE("Buffer desc %p:\n", desc);
+    for (i = 0; i < desc->cBuffers; ++i)
+    {
+        SecBuffer *b = &desc->pBuffers[i];
+        TRACE("\tbuffer %u: cbBuffer %ld, BufferType %#lx pvBuffer %p\n", i, b->cbBuffer, b->BufferType, b->pvBuffer);
+    }
+}
+
 /***********************************************************************
  *              InitializeSecurityContextW
  */
@@ -640,6 +653,9 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_w(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
+
+    dump_buffer_desc(pInput);
+    dump_buffer_desc(pOutput);
 
     if (!phContext)
     {
