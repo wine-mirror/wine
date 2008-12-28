@@ -35,6 +35,7 @@
 static HANDLE (WINAPI *pFindFirstFileExA)(LPCSTR,FINDEX_INFO_LEVELS,LPVOID,FINDEX_SEARCH_OPS,LPVOID,DWORD);
 static BOOL (WINAPI *pReplaceFileA)(LPCSTR, LPCSTR, LPCSTR, DWORD, LPVOID, LPVOID);
 static BOOL (WINAPI *pReplaceFileW)(LPCWSTR, LPCWSTR, LPCWSTR, DWORD, LPVOID, LPVOID);
+static UINT (WINAPI *pGetSystemWindowsDirectoryA)(LPSTR, UINT);
 
 /* keep filename and filenameW the same */
 static const char filename[] = "testfile.xxx";
@@ -58,6 +59,7 @@ static void InitFunctionPointers(void)
     pFindFirstFileExA=(void*)GetProcAddress(hkernel32, "FindFirstFileExA");
     pReplaceFileA=(void*)GetProcAddress(hkernel32, "ReplaceFileA");
     pReplaceFileW=(void*)GetProcAddress(hkernel32, "ReplaceFileW");
+    pGetSystemWindowsDirectoryA=(void*)GetProcAddress(hkernel32, "GetSystemWindowsDirectoryA");
 }
 
 static void test__hread( void )
@@ -1752,7 +1754,10 @@ static void test_OpenFile(void)
     UINT length;
     
     /* Check for existing file */
-    length = GetWindowsDirectoryA(buff, MAX_PATH);
+    if (!pGetSystemWindowsDirectoryA)
+        length = GetWindowsDirectoryA(buff, MAX_PATH);
+    else
+        length = pGetSystemWindowsDirectoryA(buff, MAX_PATH);
 
     if (length + sizeof(file) < MAX_PATH)
     {
