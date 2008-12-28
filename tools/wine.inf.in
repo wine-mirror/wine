@@ -2262,6 +2262,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,dosx.exe
 11,,dsound.dll
 11,,dsound.vxd
+11,,dxdiagn.dll
 11,,gdi32.dll
 11,,glu32.dll
 11,,hal.dll

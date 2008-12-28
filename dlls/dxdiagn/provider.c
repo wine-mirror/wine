@@ -401,6 +401,7 @@ static HRESULT DXDiag_InitDXDiagDirectXFilesContainer(IDxDiagContainer* pSubCont
         {'d','p','n','e','t','.','d','l','l',0},
         {'d','s','o','u','n','d','.','d','l','l',0},
         {'d','s','w','a','v','e','.','d','l','l',0},
+        {'d','x','d','i','a','g','n','.','d','l','l',0},
         {'q','u','a','r','t','z','.','d','l','l',0}
     };
     WCHAR szFilePath[MAX_PATH];
