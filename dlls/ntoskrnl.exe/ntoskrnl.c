@@ -862,6 +862,15 @@ void WINAPI ExFreePoolWithTag( void *ptr, ULONG tag )
 
 
 /***********************************************************************
+ *           KeInitializeEvent   (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeInitializeEvent( PRKEVENT Event, EVENT_TYPE Type, BOOLEAN State )
+{
+    FIXME( "stub: %p %d %d\n", Event, Type, State );
+}
+
+
+/***********************************************************************
  *           KeInitializeSpinLock   (NTOSKRNL.EXE.@)
  */
 void WINAPI KeInitializeSpinLock( PKSPIN_LOCK SpinLock )

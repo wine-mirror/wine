@@ -546,7 +546,7 @@
 @ stub KeInitializeApc
 @ stub KeInitializeDeviceQueue
 @ stub KeInitializeDpc
-@ stub KeInitializeEvent
+@ stdcall KeInitializeEvent(ptr long long)
 @ stub KeInitializeInterrupt
 @ stub KeInitializeMutant
 @ stub KeInitializeMutex
