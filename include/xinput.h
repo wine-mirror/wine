@@ -202,4 +202,38 @@ typedef struct _XINPUT_CAPABILITIES {
     XINPUT_VIBRATION Vibration;
 } XINPUT_CAPABILITIES, *PXINPUT_CAPABILITIES;
 
+/*
+ * Defines the structure for a joystick input event which is
+ * retrieved using the function XInputGetKeystroke
+ */
+typedef struct _XINPUT_KEYSTROKE {
+    WORD VirtualKey;
+    WCHAR Unicode;
+    WORD Flags;
+    BYTE UserIndex;
+    BYTE HidCode;
+} XINPUT_KEYSTROKE, *PXINPUT_KEYSTROKE;
+
+typedef struct _XINPUT_BATTERY_INFORMATION
+{
+    BYTE BatteryType;
+    BYTE BatteryLevel;
+} XINPUT_BATTERY_INFORMATION, *PXINPUT_BATTERY_INFORMATION;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void WINAPI XInputEnable(BOOL);
+DWORD WINAPI XInputSetState(DWORD, XINPUT_VIBRATION*);
+DWORD WINAPI XInputGetState(DWORD, XINPUT_STATE*);
+DWORD WINAPI XInputGetKeystroke(DWORD, DWORD, PXINPUT_KEYSTROKE);
+DWORD WINAPI XInputGetCapabilities(DWORD, DWORD, XINPUT_CAPABILITIES*);
+DWORD WINAPI XInputGetDSoundAudioDeviceGuids(DWORD, GUID*, GUID*);
+DWORD WINAPI XInputGetBatteryInformation(DWORD, BYTE, XINPUT_BATTERY_INFORMATION*);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __WINE_XINPUT_H */
