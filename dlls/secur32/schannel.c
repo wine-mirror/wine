@@ -607,9 +607,15 @@ static int schan_init_sec_ctx_get_next_buffer(const struct schan_transport *t, s
     if (s->current_buffer_idx == -1)
     {
         int idx = schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_TOKEN);
-        if (idx != -1 && !s->desc->pBuffers[idx].pvBuffer
-                && (t->ctx->req_ctx_attr & ISC_REQ_ALLOCATE_MEMORY))
-            s->allow_buffer_resize = TRUE;
+        if (t->ctx->req_ctx_attr & ISC_REQ_ALLOCATE_MEMORY)
+        {
+            if (idx == -1)
+            {
+                idx = schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_EMPTY);
+                if (idx != -1) s->desc->pBuffers[idx].BufferType = SECBUFFER_TOKEN;
+            }
+            if (idx != -1 && !s->desc->pBuffers[idx].pvBuffer) s->allow_buffer_resize = TRUE;
+        }
         return idx;
     }
 
