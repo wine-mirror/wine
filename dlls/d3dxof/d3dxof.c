@@ -1088,13 +1088,13 @@ static BOOL parse_template_members_list(parse_buffer * buf)
       cur_member->idx_template = 0;
       while (cur_member->idx_template < buf->pdxf->nb_xtemplates)
       {
-        if (!strcmp((char*)buf->value, buf->pdxf->xtemplates[cur_member->idx_template].name))
+        if (!strcasecmp((char*)buf->value, buf->pdxf->xtemplates[cur_member->idx_template].name))
           break;
         cur_member->idx_template++;
       }
       if (cur_member->idx_template == buf->pdxf->nb_xtemplates)
       {
-        TRACE("Reference to a nonexistent template '%s'\n", (char*)buf->value);
+        ERR("Reference to a nonexistent template '%s'\n", (char*)buf->value);
         return FALSE;
       }
     }
@@ -1977,7 +1977,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
         /* To do template lookup */
         for (j = 0; j < buf->pdxf->nb_xtemplates; j++)
         {
-          if (!strcmp(buf->pdxf->xtemplates[pt->members[i].idx_template].name, buf->pdxf->xtemplates[j].name))
+          if (!strcasecmp(buf->pdxf->xtemplates[pt->members[i].idx_template].name, buf->pdxf->xtemplates[j].name))
           {
             buf->pxt[buf->level] = &buf->pdxf->xtemplates[j];
             break;
@@ -1985,7 +1985,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
         }
         if (j == buf->pdxf->nb_xtemplates)
         {
-          FIXME("Unknown template %s\n", (char*)buf->value);
+          ERR("Unknown template %s\n", (char*)buf->value);
           buf->level--;
           return FALSE;
         }
@@ -2186,7 +2186,7 @@ static BOOL parse_object(parse_buffer * buf)
   /* To do template lookup */
   for (i = 0; i < buf->pdxf->nb_xtemplates; i++)
   {
-    if (!strcmp((char*)buf->value, buf->pdxf->xtemplates[i].name))
+    if (!strcasecmp((char*)buf->value, buf->pdxf->xtemplates[i].name))
     {
       buf->pxt[buf->level] = &buf->pdxf->xtemplates[i];
       memcpy(&buf->pxo->type, &buf->pdxf->xtemplates[i].class_id, 16);
@@ -2195,7 +2195,7 @@ static BOOL parse_object(parse_buffer * buf)
   }
   if (i == buf->pdxf->nb_xtemplates)
   {
-    FIXME("Unknown template %s\n", (char*)buf->value);
+    ERR("Unknown template %s\n", (char*)buf->value);
     return FALSE;
   }
 
