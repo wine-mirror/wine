@@ -717,7 +717,7 @@ static void test_copy(void)
     {
         /* Vista and W2K8 (broken or new behavior ?) */
         ok(file_exists("test6.txt\\test1.txt"), "The file is not copied - many files "
-           "are specified as a target");
+           "are specified as a target\n");
         DeleteFileA("test6.txt\\test1.txt");
         DeleteFileA("test6.txt\\test2.txt");
         RemoveDirectoryA("test6.txt\\test4.txt");
@@ -750,9 +750,9 @@ static void test_copy(void)
     {
         /* Vista and W2K8 (broken or new behavior ?) */
         ok(file_exists("test6.txt\\test1.txt"), "The file is not copied - many files "
-           "are specified as a target");
+           "are specified as a target\n");
         ok(file_exists("test7.txt\\test2.txt"), "The file is not copied - many files "
-           "are specified as a target");
+           "are specified as a target\n");
         DeleteFileA("test6.txt\\test1.txt");
         DeleteFileA("test7.txt\\test2.txt");
         RemoveDirectoryA("test6.txt");
