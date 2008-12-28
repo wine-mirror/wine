@@ -48,6 +48,7 @@ MAKE_FUNCPTR(gnutls_alert_get);
 MAKE_FUNCPTR(gnutls_alert_get_name);
 MAKE_FUNCPTR(gnutls_certificate_allocate_credentials);
 MAKE_FUNCPTR(gnutls_certificate_free_credentials);
+MAKE_FUNCPTR(gnutls_cipher_get);
 MAKE_FUNCPTR(gnutls_credentials_set);
 MAKE_FUNCPTR(gnutls_deinit);
 MAKE_FUNCPTR(gnutls_global_deinit);
@@ -56,6 +57,8 @@ MAKE_FUNCPTR(gnutls_global_set_log_function);
 MAKE_FUNCPTR(gnutls_global_set_log_level);
 MAKE_FUNCPTR(gnutls_handshake);
 MAKE_FUNCPTR(gnutls_init);
+MAKE_FUNCPTR(gnutls_mac_get);
+MAKE_FUNCPTR(gnutls_mac_get_key_size);
 MAKE_FUNCPTR(gnutls_perror);
 MAKE_FUNCPTR(gnutls_set_default_priority);
 MAKE_FUNCPTR(gnutls_transport_set_errno);
@@ -800,14 +803,69 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextA(
     return ret;
 }
 
+static unsigned int schannel_get_cipher_block_size(gnutls_cipher_algorithm_t cipher)
+{
+    const struct
+    {
+        gnutls_cipher_algorithm_t cipher;
+        unsigned int block_size;
+    }
+    algorithms[] =
+    {
+        {GNUTLS_CIPHER_3DES_CBC, 8},
+        {GNUTLS_CIPHER_AES_128_CBC, 16},
+        {GNUTLS_CIPHER_AES_256_CBC, 16},
+        {GNUTLS_CIPHER_ARCFOUR_128, 1},
+        {GNUTLS_CIPHER_ARCFOUR_40, 1},
+        {GNUTLS_CIPHER_DES_CBC, 8},
+        {GNUTLS_CIPHER_NULL, 1},
+        {GNUTLS_CIPHER_RC2_40_CBC, 8},
+    };
+    unsigned int i;
+
+    for (i = 0; i < sizeof(algorithms) / sizeof(*algorithms); ++i)
+    {
+        if (algorithms[i].cipher == cipher)
+            return algorithms[i].block_size;
+    }
+
+    FIXME("Unknown cipher %#x, returning 1\n", cipher);
+
+    return 1;
+}
+
 static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         PCtxtHandle context_handle, ULONG attribute, PVOID buffer)
 {
+    struct schan_context *ctx;
+
     TRACE("context_handle %p, attribute %#x, buffer %p\n",
             context_handle, attribute, buffer);
 
+    if (!context_handle) return SEC_E_INVALID_HANDLE;
+    ctx = schan_get_object(context_handle->dwLower, SCHAN_HANDLE_CTX);
+
     switch(attribute)
     {
+        case SECPKG_ATTR_STREAM_SIZES:
+        {
+            SecPkgContext_StreamSizes *stream_sizes = (SecPkgContext_StreamSizes *)buffer;
+            gnutls_mac_algorithm_t mac = pgnutls_mac_get(ctx->session);
+            size_t mac_size = pgnutls_mac_get_key_size(mac);
+            gnutls_cipher_algorithm_t cipher = pgnutls_cipher_get(ctx->session);
+            unsigned int block_size = schannel_get_cipher_block_size(cipher);
+
+            TRACE("Using %zu mac bytes, block size %u\n", mac_size, block_size);
+
+            /* These are defined by the TLS RFC */
+            stream_sizes->cbHeader = 5;
+            stream_sizes->cbTrailer = mac_size + 256; /* Max 255 bytes padding + 1 for padding size */
+            stream_sizes->cbMaximumMessage = 1 << 14;
+            stream_sizes->cbBuffers = 4;
+            stream_sizes->cbBlockSize = block_size;
+            return SEC_E_OK;
+        }
+
         default:
             FIXME("Unhandled attribute %#x\n", attribute);
             return SEC_E_UNSUPPORTED_FUNCTION;
@@ -822,6 +880,9 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesA(
 
     switch(attribute)
     {
+        case SECPKG_ATTR_STREAM_SIZES:
+            return schan_QueryContextAttributesW(context_handle, attribute, buffer);
+
         default:
             FIXME("Unhandled attribute %#x\n", attribute);
             return SEC_E_UNSUPPORTED_FUNCTION;
@@ -961,6 +1022,7 @@ void SECUR32_initSchannelSP(void)
     LOAD_FUNCPTR(gnutls_alert_get_name)
     LOAD_FUNCPTR(gnutls_certificate_allocate_credentials)
     LOAD_FUNCPTR(gnutls_certificate_free_credentials)
+    LOAD_FUNCPTR(gnutls_cipher_get)
     LOAD_FUNCPTR(gnutls_credentials_set)
     LOAD_FUNCPTR(gnutls_deinit)
     LOAD_FUNCPTR(gnutls_global_deinit)
@@ -969,6 +1031,8 @@ void SECUR32_initSchannelSP(void)
     LOAD_FUNCPTR(gnutls_global_set_log_level)
     LOAD_FUNCPTR(gnutls_handshake)
     LOAD_FUNCPTR(gnutls_init)
+    LOAD_FUNCPTR(gnutls_mac_get)
+    LOAD_FUNCPTR(gnutls_mac_get_key_size)
     LOAD_FUNCPTR(gnutls_perror)
     LOAD_FUNCPTR(gnutls_set_default_priority)
     LOAD_FUNCPTR(gnutls_transport_set_errno)
