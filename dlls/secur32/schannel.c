@@ -61,6 +61,7 @@ MAKE_FUNCPTR(gnutls_mac_get);
 MAKE_FUNCPTR(gnutls_mac_get_key_size);
 MAKE_FUNCPTR(gnutls_perror);
 MAKE_FUNCPTR(gnutls_set_default_priority);
+MAKE_FUNCPTR(gnutls_record_recv);
 MAKE_FUNCPTR(gnutls_record_send);
 MAKE_FUNCPTR(gnutls_transport_set_errno);
 MAKE_FUNCPTR(gnutls_transport_set_ptr);
@@ -1002,6 +1003,86 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
     return SEC_E_OK;
 }
 
+static int schan_decrypt_message_get_next_buffer(const struct schan_transport *t, struct schan_buffers *s)
+{
+    if (s->current_buffer_idx == -1)
+        return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_DATA);
+
+    return -1;
+}
+
+static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle,
+        PSecBufferDesc message, ULONG message_seq_no, PULONG quality)
+{
+    struct schan_transport transport;
+    struct schan_context *ctx;
+    SecBuffer *buffer;
+    SIZE_T data_size;
+    char *data;
+    ssize_t received = 0;
+    ssize_t ret;
+    int idx;
+
+    TRACE("context_handle %p, message %p, message_seq_no %d, quality %p\n",
+            context_handle, message, message_seq_no, quality);
+
+    if (!context_handle) return SEC_E_INVALID_HANDLE;
+    ctx = schan_get_object(context_handle->dwLower, SCHAN_HANDLE_CTX);
+
+    dump_buffer_desc(message);
+
+    idx = schan_find_sec_buffer_idx(message, 0, SECBUFFER_DATA);
+    if (idx == -1)
+    {
+        WARN("No data buffer passed\n");
+        return SEC_E_INTERNAL_ERROR;
+    }
+    buffer = &message->pBuffers[idx];
+
+    data_size = buffer->cbBuffer;
+    data = HeapAlloc(GetProcessHeap(), 0, data_size);
+
+    transport.ctx = ctx;
+    init_schan_buffers(&transport.in, message, schan_decrypt_message_get_next_buffer);
+    init_schan_buffers(&transport.out, NULL, NULL);
+    pgnutls_transport_set_ptr(ctx->session, (gnutls_transport_ptr_t)&transport);
+
+    while (received < data_size)
+    {
+        ret = pgnutls_record_recv(ctx->session, data + received, data_size - received);
+        if (ret < 0)
+        {
+            if (ret == GNUTLS_E_AGAIN)
+            {
+                if (!received)
+                {
+                    pgnutls_perror(ret);
+                    HeapFree(GetProcessHeap(), 0, data);
+                    TRACE("Returning SEC_E_INCOMPLETE_MESSAGE\n");
+                    return SEC_E_INCOMPLETE_MESSAGE;
+                }
+                break;
+            }
+            else
+            {
+                pgnutls_perror(ret);
+                HeapFree(GetProcessHeap(), 0, data);
+                ERR("Returning SEC_E_INTERNAL_ERROR\n");
+                return SEC_E_INTERNAL_ERROR;
+            }
+        }
+        received += ret;
+    }
+
+    TRACE("Received %zd bytes\n", received);
+
+    memcpy(buffer->pvBuffer, data, received);
+    buffer->cbBuffer = received;
+    HeapFree(GetProcessHeap(), 0, data);
+
+    return SEC_E_OK;
+}
+
 static SECURITY_STATUS SEC_ENTRY schan_DeleteSecurityContext(PCtxtHandle context_handle)
 {
     struct schan_context *ctx;
@@ -1051,7 +1132,7 @@ static const SecurityFunctionTableA schanTableA = {
     NULL, /* Reserved8 */
     NULL, /* QuerySecurityContextToken */
     schan_EncryptMessage,
-    NULL, /* DecryptMessage */
+    schan_DecryptMessage,
     NULL, /* SetContextAttributesA */
 };
 
@@ -1082,7 +1163,7 @@ static const SecurityFunctionTableW schanTableW = {
     NULL, /* Reserved8 */
     NULL, /* QuerySecurityContextToken */
     schan_EncryptMessage,
-    NULL, /* DecryptMessage */
+    schan_DecryptMessage,
     NULL, /* SetContextAttributesW */
 };
 
@@ -1148,6 +1229,7 @@ void SECUR32_initSchannelSP(void)
     LOAD_FUNCPTR(gnutls_mac_get_key_size)
     LOAD_FUNCPTR(gnutls_perror)
     LOAD_FUNCPTR(gnutls_set_default_priority)
+    LOAD_FUNCPTR(gnutls_record_recv);
     LOAD_FUNCPTR(gnutls_record_send);
     LOAD_FUNCPTR(gnutls_transport_set_errno)
     LOAD_FUNCPTR(gnutls_transport_set_ptr)
