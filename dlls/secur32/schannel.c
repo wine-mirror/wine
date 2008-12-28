@@ -800,6 +800,34 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextA(
     return ret;
 }
 
+static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
+        PCtxtHandle context_handle, ULONG attribute, PVOID buffer)
+{
+    TRACE("context_handle %p, attribute %#x, buffer %p\n",
+            context_handle, attribute, buffer);
+
+    switch(attribute)
+    {
+        default:
+            FIXME("Unhandled attribute %#x\n", attribute);
+            return SEC_E_UNSUPPORTED_FUNCTION;
+    }
+}
+
+static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesA(
+        PCtxtHandle context_handle, ULONG attribute, PVOID buffer)
+{
+    TRACE("context_handle %p, attribute %#x, buffer %p\n",
+            context_handle, attribute, buffer);
+
+    switch(attribute)
+    {
+        default:
+            FIXME("Unhandled attribute %#x\n", attribute);
+            return SEC_E_UNSUPPORTED_FUNCTION;
+    }
+}
+
 static SECURITY_STATUS SEC_ENTRY schan_DeleteSecurityContext(PCtxtHandle context_handle)
 {
     struct schan_context *ctx;
@@ -834,7 +862,7 @@ static const SecurityFunctionTableA schanTableA = {
     NULL, /* CompleteAuthToken */
     schan_DeleteSecurityContext,
     NULL, /* ApplyControlToken */
-    NULL, /* QueryContextAttributesA */
+    schan_QueryContextAttributesA,
     NULL, /* ImpersonateSecurityContext */
     NULL, /* RevertSecurityContext */
     NULL, /* MakeSignature */
@@ -865,7 +893,7 @@ static const SecurityFunctionTableW schanTableW = {
     NULL, /* CompleteAuthToken */
     schan_DeleteSecurityContext,
     NULL, /* ApplyControlToken */
-    NULL, /* QueryContextAttributesW */
+    schan_QueryContextAttributesW,
     NULL, /* ImpersonateSecurityContext */
     NULL, /* RevertSecurityContext */
     NULL, /* MakeSignature */
