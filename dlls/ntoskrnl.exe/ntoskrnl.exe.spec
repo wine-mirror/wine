@@ -908,7 +908,7 @@
 @ stub PsRevertToSelf
 @ stub PsSetContextThread
 @ stdcall PsSetCreateProcessNotifyRoutine(ptr long)
-@ stub PsSetCreateThreadNotifyRoutine
+@ stdcall PsSetCreateThreadNotifyRoutine(ptr)
 @ stub PsSetJobUIRestrictionsClass
 @ stub PsSetLegoNotifyRoutine
 @ stub PsSetLoadImageNotifyRoutine

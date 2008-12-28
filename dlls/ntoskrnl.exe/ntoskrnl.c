@@ -54,6 +54,7 @@ typedef struct _KSERVICE_TABLE_DESCRIPTOR
 KSERVICE_TABLE_DESCRIPTOR KeServiceDescriptorTable[4] = { { 0 } };
 
 typedef void (WINAPI *PCREATE_PROCESS_NOTIFY_ROUTINE)(HANDLE,HANDLE,BOOLEAN);
+typedef void (WINAPI *PCREATE_THREAD_NOTIFY_ROUTINE)(HANDLE,HANDLE,BOOLEAN);
 
 static struct list Irps = LIST_INIT(Irps);
 
@@ -1109,6 +1110,17 @@ NTSTATUS WINAPI PsSetCreateProcessNotifyRoutine( PCREATE_PROCESS_NOTIFY_ROUTINE 
     FIXME( "stub: %p %d\n", callback, remove );
     return STATUS_SUCCESS;
 }
+
+
+/***********************************************************************
+ *           PsSetCreateThreadNotifyRoutine   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI PsSetCreateThreadNotifyRoutine( PCREATE_THREAD_NOTIFY_ROUTINE NotifyRoutine )
+{
+    FIXME( "stub: %p\n", NotifyRoutine );
+    return STATUS_SUCCESS;
+}
+
 
 /***********************************************************************
  *           MmGetSystemRoutineAddress   (NTOSKRNL.EXE.@)
