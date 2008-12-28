@@ -311,7 +311,7 @@ SCSI_LinuxDeviceIo( int fd,
 		WARN("Not enough bytes written to scsi device. bytes=%d .. %d\n", cbInBuffer, dwBytes );
                 /* FIXME: set_last_error() never sets error to ERROR_NOT_ENOUGH_MEMORY... */
 		if( save_error == ERROR_NOT_ENOUGH_MEMORY )
-			MESSAGE("Your Linux kernel was not able to handle the amount of data sent to the scsi device. Try recompiling with a larger SG_BIG_BUFF value (kernel 2.0.x sg.h)");
+			MESSAGE("Your Linux kernel was not able to handle the amount of data sent to the scsi device. Try recompiling with a larger SG_BIG_BUFF value (kernel 2.0.x sg.h)\n");
 		WARN("error= %d\n", save_error );
 		*lpcbBytesReturned = 0;
 		return FALSE;
