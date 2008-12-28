@@ -267,7 +267,7 @@ NTSTATUS WINAPI IoAllocateDriverObjectExtension( PDRIVER_OBJECT DriverObject,
                                                  ULONG DriverObjectExtensionSize,
                                                  PVOID *DriverObjectExtension )
 {
-    FIXME( "%p, %p, %u, %p\n", DriverObject, ClientIdentificationAddress,
+    FIXME( "stub: %p, %p, %u, %p\n", DriverObject, ClientIdentificationAddress,
             DriverObjectExtensionSize, DriverObjectExtension );
     return STATUS_NOT_IMPLEMENTED;
 }
@@ -279,7 +279,7 @@ NTSTATUS WINAPI IoAllocateDriverObjectExtension( PDRIVER_OBJECT DriverObject,
 PVOID WINAPI IoGetDriverObjectExtension( PDRIVER_OBJECT DriverObject,
                                          PVOID ClientIdentificationAddress )
 {
-    FIXME( "%p, %p\n", DriverObject, ClientIdentificationAddress );
+    FIXME( "stub: %p, %p\n", DriverObject, ClientIdentificationAddress );
     return NULL;
 }
 
@@ -875,7 +875,7 @@ void WINAPI KeInitializeEvent( PRKEVENT Event, EVENT_TYPE Type, BOOLEAN State )
  */
 void WINAPI KeInitializeSpinLock( PKSPIN_LOCK SpinLock )
 {
-    FIXME("%p\n", SpinLock);
+    FIXME( "stub: %p\n", SpinLock );
 }
 
 
@@ -884,7 +884,7 @@ void WINAPI KeInitializeSpinLock( PKSPIN_LOCK SpinLock )
  */
 void WINAPI KeInitializeTimerEx( PKTIMER Timer, TIMER_TYPE Type )
 {
-    FIXME("%p %d\n", Timer, Type);
+    FIXME( "stub: %p %d\n", Timer, Type );
 }
 
 
