@@ -412,7 +412,7 @@ BOOL16 WINAPI LocalInit16( HANDLE16 selector, WORD start, WORD end )
 
     if (TRACE_ON(local))
     {
-        /* If TRACE_ON(heap) is set, the global heap blocks are */
+        /* If TRACE_ON(local) is set, the global heap blocks are */
         /* cleared before use, so we can test for double initialization. */
         if (LOCAL_GetHeap(selector))
         {
