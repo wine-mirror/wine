@@ -388,7 +388,7 @@ static DWORD WINAPI midRecThread(LPVOID arg)
 				len -= copylen;
 				pos += copylen;
 				/* We check if we reach the end of buffer or the end of sysex before notifying
-				 * to handle the case where ALSA splitted the sysex into several events */
+				 * to handle the case where ALSA split the sysex into several events */
 				if ((lpMidiHdr->dwBytesRecorded == lpMidiHdr->dwBufferLength) ||
 				    (*(BYTE*)(lpMidiHdr->lpData + lpMidiHdr->dwBytesRecorded - 1) == 0xF7)) {
 				    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;

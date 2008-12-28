@@ -314,7 +314,7 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
                 FIXME("No free constant to load the luminance parameters\n");
             }
         } else {
-            FIXME("No free constant found to load environemnt bump mapping matrix into the shader. texbem instruction will not apply bump mapping\n");
+            FIXME("No free constant found to load environment bump mapping matrix into the shader. texbem instruction will not apply bump mapping\n");
         }
 
         ps->numbumpenvmatconsts = cur + 1;

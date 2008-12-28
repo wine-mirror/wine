@@ -212,10 +212,10 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_GetObject (LPDIR
 	   else we use info we were given */
 	if (pObjectEntry) {
 		TRACE(": found alias entry for requested object... using stored info\n");
-		/* I think in certain cases it can happen that entry's descriptor lacks info
+		/* I think in certain cases it can happen that entry's descriptor lacks info about
 		   where to load from (e.g.: if we loaded from stream and then released object
-		   from cache; then only it's CLSID, GUID and perhaps name are left); so just
-		   overwrite info entry has (since it ought to be 100% correct) */
+		   from cache; then only its CLSID, GUID and perhaps name are left); so just
+		   overwrite whatever info the entry has (since it ought to be 100% correct) */
 		DMUSIC_CopyDescriptor (pDesc, &pObjectEntry->Desc);
 		/*pDesc = &pObjectEntry->Desc; */ /* FIXME: is this OK? */
 	} else {
@@ -476,7 +476,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_SetObject (LPDIR
 	LIST_FOR_EACH (pEntry, This->pObjects) {
 		pObjectEntry = LIST_ENTRY (pEntry, WINE_LOADER_ENTRY, entry);
 		if (!memcmp (&pObjectEntry->Desc, pDesc, sizeof(DMUS_OBJECTDESC))) {
-			TRACE(": exacly same entry already exists\n");
+			TRACE(": exactly same entry already exists\n");
 			return S_OK;
 		}
 	}		

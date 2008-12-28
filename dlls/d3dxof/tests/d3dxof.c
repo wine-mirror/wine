@@ -137,7 +137,7 @@ static void test_refcount(void)
     ok(ref == 0, "Got refcount %ld, expected 0\n", ref);
 }
 
-/* Set it to 1 to expand the string when dumping the object. This is usefull when there is
+/* Set it to 1 to expand the string when dumping the object. This is useful when there is
  * only one string in a sub-object (very common). Use with care, this may lead to a crash. */
 #define EXPAND_STRING 0
 

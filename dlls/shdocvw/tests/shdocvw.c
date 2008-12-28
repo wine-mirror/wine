@@ -241,7 +241,7 @@ static void test_ParseURLFromOutsideSourceA(void)
         len = maxlen;
         dummy = 0;
         res = pParseURLFromOutsideSourceA(ParseURL_table[i].url, buffer, &len, &dummy);
-        /* len includes the terminating 0, when the buffer is to small */
+        /* len includes the terminating 0, when the buffer is too small */
         ok( res == 0 && len == ParseURL_table[i].len + 1,
             "#%d (==): got %d and %d (expected '0' and %d)\n",
             i, res, len, ParseURL_table[i].len + 1);
@@ -333,7 +333,7 @@ static void test_ParseURLFromOutsideSourceW(void)
     len = maxlen;
     dummy = 0;
     res = pParseURLFromOutsideSourceW(urlW, bufferW, &len, &dummy);
-    /* len includes the terminating 0, when the buffer is to small */
+    /* len includes the terminating 0, when the buffer is too small */
     ok( res == 0 && len == ParseURL_table[0].len + 1,
         "==: got %d and %d (expected '0' and %d)\n",
         res, len, ParseURL_table[0].len + 1);
