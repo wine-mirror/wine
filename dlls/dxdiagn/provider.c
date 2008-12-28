@@ -377,54 +377,56 @@ static HRESULT DXDiag_InitDXDiagLogicalDisksContainer(IDxDiagContainer* pSubCont
   */
   return hr;
 }
-static HRESULT DXDiag_InitDXDiagDirectXFilesContainer(IDxDiagContainer* pSubCont) {
-  HRESULT hr = S_OK;
-  /**/
-  static const WCHAR ddraw_dll[] = {'d','d','r','a','w','.','d','l','l',0};
-  static const WCHAR dplayx_dll[] = {'d','p','l','a','y','x','.','d','l','l',0};
-  static const WCHAR dpnet_dll[] = {'d','p','n','e','t','.','d','l','l',0};
-  static const WCHAR dinput_dll[] = {'d','i','n','p','u','t','.','d','l','l',0};
-  static const WCHAR dinput8_dll[] = {'d','i','n','p','u','t','8','.','d','l','l',0};
-  static const WCHAR dsound_dll[] = {'d','s','o','u','n','d','.','d','l','l',0};
-  static const WCHAR dswave_dll[] = {'d','s','w','a','v','e','.','d','l','l',0};
-  static const WCHAR d3d8_dll[] = {'d','3','d','8','.','d','l','l',0};
-  static const WCHAR d3d9_dll[] = {'d','3','d','9','.','d','l','l',0};
-  static const WCHAR dmband_dll[] = {'d','m','b','a','n','d','.','d','l','l',0};
-  static const WCHAR dmcompos_dll[] = {'d','m','c','o','m','p','o','s','.','d','l','l',0};
-  static const WCHAR dmime_dll[] =  {'d','m','i','m','e','.','d','l','l',0};
-  static const WCHAR dmloader_dll[] = {'d','m','l','o','a','d','e','r','.','d','l','l',0};
-  static const WCHAR dmscript_dll[] = {'d','m','s','c','r','i','p','t','.','d','l','l',0};
-  static const WCHAR dmstyle_dll[] = {'d','m','s','t','y','l','e','.','d','l','l',0};
-  static const WCHAR dmsynth_dll[] = {'d','m','s','y','n','t','h','.','d','l','l',0};
-  static const WCHAR dmusic_dll[] = {'d','m','u','s','i','c','.','d','l','l',0};
-  static const WCHAR devenum_dll[] = {'d','e','v','e','n','u','m','.','d','l','l',0};
-  static const WCHAR quartz_dll[] = {'q','u','a','r','t','z','.','d','l','l',0};
-  WCHAR szFilePath[512];
 
-  hr = GetSystemDirectoryW(szFilePath, MAX_PATH);
-  if (FAILED(hr)) { return hr; }  
-  szFilePath[MAX_PATH-1]=0;     
+static HRESULT DXDiag_InitDXDiagDirectXFilesContainer(IDxDiagContainer* pSubCont)
+{
+    HRESULT hr = S_OK;
+    static const WCHAR dlls[][15] =
+    {
+        {'d','3','d','8','.','d','l','l',0},
+        {'d','3','d','9','.','d','l','l',0},
+        {'d','d','r','a','w','.','d','l','l',0},
+        {'d','e','v','e','n','u','m','.','d','l','l',0},
+        {'d','i','n','p','u','t','8','.','d','l','l',0},
+        {'d','i','n','p','u','t','.','d','l','l',0},
+        {'d','m','b','a','n','d','.','d','l','l',0},
+        {'d','m','c','o','m','p','o','s','.','d','l','l',0},
+        {'d','m','i','m','e','.','d','l','l',0},
+        {'d','m','l','o','a','d','e','r','.','d','l','l',0},
+        {'d','m','s','c','r','i','p','t','.','d','l','l',0},
+        {'d','m','s','t','y','l','e','.','d','l','l',0},
+        {'d','m','s','y','n','t','h','.','d','l','l',0},
+        {'d','m','u','s','i','c','.','d','l','l',0},
+        {'d','p','l','a','y','x','.','d','l','l',0},
+        {'d','p','n','e','t','.','d','l','l',0},
+        {'d','s','o','u','n','d','.','d','l','l',0},
+        {'d','s','w','a','v','e','.','d','l','l',0},
+        {'q','u','a','r','t','z','.','d','l','l',0}
+    };
+    WCHAR szFilePath[MAX_PATH];
+    INT i;
 
-  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, ddraw_dll);
-  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, dplayx_dll);
-  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, dpnet_dll);
-  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, dinput_dll);
-  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, dinput8_dll);
-  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, dsound_dll);
-  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, dswave_dll);
-  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, d3d8_dll);
-  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, d3d9_dll);
-  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, dmband_dll);
-  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, dmcompos_dll);
-  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, dmime_dll);
-  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, dmloader_dll);
-  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, dmscript_dll);
-  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, dmstyle_dll);
-  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, dmsynth_dll);
-  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, dmusic_dll);
-  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, devenum_dll);
-  hr = DXDiag_AddFileDescContainer(pSubCont, szFilePath, quartz_dll);
-  return hr;
+    GetSystemDirectoryW(szFilePath, MAX_PATH);
+
+    for (i = 0; i < sizeof(dlls) / sizeof(dlls[0]); i++)
+    {
+        static const WCHAR szFormat[] = {'%','d',0};
+        WCHAR szFileID[5];
+        IDxDiagContainer *pDXFileSubCont;
+
+        snprintfW(szFileID, sizeof(szFileID)/sizeof(szFileID[0]), szFormat, i);
+
+        hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pDXFileSubCont);
+        if (FAILED(hr)) continue;
+
+        if (FAILED(DXDiag_AddFileDescContainer(pDXFileSubCont, szFilePath, dlls[i])) ||
+            FAILED(IDxDiagContainerImpl_AddChildContainer(pSubCont, szFileID, pDXFileSubCont)))
+        {
+            IUnknown_Release(pDXFileSubCont);
+            continue;
+        }
+    }
+    return hr;
 }
 
 static HRESULT DXDiag_InitDXDiagDisplayContainer(IDxDiagContainer* pSubCont)
