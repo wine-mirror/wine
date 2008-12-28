@@ -228,6 +228,7 @@ static void find_joydevs(void)
         int fd;
         int no_ff_check = 0;
         int j;
+        struct JoyDev *new_joydevs;
 
         snprintf(buf, sizeof(buf), EVDEVPREFIX"%d", i);
 
@@ -319,12 +320,18 @@ static void find_joydevs(void)
 	  }
 	}
 
-	if (have_joydevs==0) {
-	  joydevs = HeapAlloc(GetProcessHeap(), 0, sizeof(struct JoyDev));
-	} else {
-	  HeapReAlloc(GetProcessHeap(), 0, joydevs, (1+have_joydevs) * sizeof(struct JoyDev));
-	}
-	memcpy(joydevs+have_joydevs, &joydev, sizeof(struct JoyDev));
+        if (!have_joydevs)
+            new_joydevs = HeapAlloc(GetProcessHeap(), 0, sizeof(struct JoyDev));
+        else
+            new_joydevs = HeapReAlloc(GetProcessHeap(), 0, joydevs, (1 + have_joydevs) * sizeof(struct JoyDev));
+
+        if (!new_joydevs)
+        {
+            close(fd);
+            continue;
+        }
+        joydevs = new_joydevs;
+        memcpy(joydevs + have_joydevs, &joydev, sizeof(joydev));
         have_joydevs++;
       }
 
