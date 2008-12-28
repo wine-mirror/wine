@@ -28,9 +28,6 @@
 
 #include "coremidi.h"
 
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
 MIDIClientRef CoreMIDI_CreateClient(CFStringRef name)
 {
