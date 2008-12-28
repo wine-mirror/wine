@@ -7444,6 +7444,7 @@ done
 
 
 
+
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
@@ -7484,6 +7485,7 @@ for ac_header in \
 	linux/major.h \
 	linux/param.h \
 	linux/serial.h \
+	linux/types.h \
 	linux/ucdrom.h \
 	mach/mach.h \
 	mach/machine.h \
@@ -8062,6 +8064,9 @@ cat >>conftest.$ac_ext <<_ACEOF
      #endif
      #ifdef HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
+     #endif
+     #ifdef HAVE_LINUX_TYPES_H
+     # include <linux/types.h>
      #endif
 
 #include <$ac_header>

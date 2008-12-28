@@ -282,6 +282,7 @@ AC_CHECK_HEADERS(\
 	linux/major.h \
 	linux/param.h \
 	linux/serial.h \
+	linux/types.h \
 	linux/ucdrom.h \
 	mach/mach.h \
 	mach/machine.h \
@@ -432,6 +433,9 @@ AC_CHECK_HEADERS([linux/ipx.h],,,
      #endif
      #ifdef HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
+     #endif
+     #ifdef HAVE_LINUX_TYPES_H
+     # include <linux/types.h>
      #endif])
 
 AC_CHECK_HEADERS([resolv.h],,,
