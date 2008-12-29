@@ -50,6 +50,7 @@ extern int do_win64;
 
 extern char *input_name;
 extern char *header_name;
+extern char *header_token;
 extern char *local_stubs_name;
 extern char *typelib_name;
 extern char *dlldata_name;
@@ -67,14 +68,15 @@ extern time_t now;
 extern int line_number;
 extern int char_number;
 
-extern FILE* header;
-extern FILE* idfile;
-
+extern void write_header(const statement_list_t *stmts);
 extern void write_id_data(const statement_list_t *stmts);
 extern void write_proxies(const statement_list_t *stmts);
 extern void write_client(const statement_list_t *stmts);
 extern void write_server(const statement_list_t *stmts);
 extern void write_local_stubs(const statement_list_t *stmts);
 extern void write_dlldata(const statement_list_t *stmts);
+
+extern void start_cplusplus_guard(FILE *fp);
+extern void end_cplusplus_guard(FILE *fp);
 
 #endif

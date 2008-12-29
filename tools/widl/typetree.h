@@ -26,7 +26,7 @@
 
 type_t *type_new_function(var_list_t *args);
 type_t *type_new_pointer(type_t *ref, attr_list_t *attrs);
-void type_interface_define(type_t *iface, type_t *inherit, func_list_t *funcs);
+void type_interface_define(type_t *iface, type_t *inherit, statement_list_t *stmts);
 void type_dispinterface_define(type_t *iface, var_list_t *props, func_list_t *methods);
 void type_dispinterface_define_from_iface(type_t *dispiface, type_t *iface);
 

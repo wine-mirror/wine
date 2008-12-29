@@ -295,6 +295,7 @@ struct _type_t {
     struct iface_details *iface;
   } details;
   func_list_t *funcs;             /* interfaces and modules */
+  statement_list_t *stmts;        /* interfaces and modules */
   ifref_list_t *ifaces;           /* coclasses */
   unsigned long dim;              /* array dimension */
   expr_t *size_is, *length_is;
@@ -339,7 +340,7 @@ struct _declarator_t {
 struct _func_t {
   var_t *def;
   var_list_t *args;
-  int ignore, idx;
+  int idx;
 
   /* parser-internal */
   struct list entry;

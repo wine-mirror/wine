@@ -64,13 +64,14 @@ static int compute_method_indexes(type_t *iface)
     return idx;
 }
 
-void type_interface_define(type_t *iface, type_t *inherit, func_list_t *funcs)
+void type_interface_define(type_t *iface, type_t *inherit, statement_list_t *stmts)
 {
     iface->ref = inherit;
     iface->details.iface = xmalloc(sizeof(*iface->details.iface));
-    iface->funcs = funcs;
+    iface->funcs = gen_function_list(stmts);
     iface->details.iface->disp_props = NULL;
     iface->details.iface->disp_methods = NULL;
+    iface->stmts = stmts;
     iface->defined = TRUE;
     check_functions(iface);
     compute_method_indexes(iface);
@@ -84,7 +85,7 @@ void type_dispinterface_define(type_t *iface, var_list_t *props, func_list_t *me
     iface->funcs = NULL;
     iface->details.iface->disp_props = props;
     iface->details.iface->disp_methods = methods;
-    iface->funcs = methods;
+    iface->stmts = NULL;
     iface->defined = TRUE;
     check_functions(iface);
     compute_method_indexes(iface);

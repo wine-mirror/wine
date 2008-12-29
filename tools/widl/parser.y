@@ -69,7 +69,6 @@
 #define YYERROR_VERBOSE
 
 unsigned char pointer_default = RPC_FC_UP;
-static int is_in_interface = FALSE;
 static int is_object_interface = FALSE;
 /* are we inside a library block? */
 static int is_inside_library = FALSE;
@@ -140,7 +139,6 @@ static type_t *get_type(unsigned char type, char *name, int t);
 static var_t *reg_const(var_t *var);
 
 static char *gen_name(void);
-static statement_t *process_typedefs(var_list_t *names);
 static void check_arg(var_t *arg);
 static void check_all_user_types(const statement_list_t *stmts);
 static attr_list_t *check_iface_attrs(const char *name, attr_list_t *attrs);
@@ -166,9 +164,10 @@ static statement_t *make_statement_library(typelib_t *typelib);
 static statement_t *make_statement_cppquote(const char *str);
 static statement_t *make_statement_importlib(const char *str);
 static statement_t *make_statement_module(type_t *type);
+static statement_t *make_statement_typedef(var_list_t *names);
 static statement_t *make_statement_import(const char *str);
+static statement_t *make_statement_typedef(var_list_t *names);
 static statement_list_t *append_statement(statement_list_t *list, statement_t *stmt);
-static func_list_t *append_func_from_statement(func_list_t *list, statement_t *stmt);
 
 #define tsENUM   1
 #define tsSTRUCT 2
@@ -320,7 +319,6 @@ static func_list_t *append_func_from_statement(func_list_t *list, statement_t *s
 %type <declarator> declarator direct_declarator init_declarator
 %type <declarator_list> declarator_list
 %type <func> funcdef
-%type <func_list> int_statements dispint_meths
 %type <type> coclass coclasshdr coclassdef
 %type <num> pointer_type version
 %type <str> libraryhdr callconv cppquote importlib import t_ident
@@ -328,7 +326,7 @@ static func_list_t *append_func_from_statement(func_list_t *list, statement_t *s
 %type <import> import_start
 %type <typelib> library_start librarydef
 %type <statement> statement typedef
-%type <stmt_list> gbl_statements imp_statements
+%type <stmt_list> gbl_statements imp_statements int_statements dispint_meths
 
 %left ','
 %right '?' ':'
@@ -349,6 +347,7 @@ static func_list_t *append_func_from_statement(func_list_t *list, statement_t *s
 
 input:   gbl_statements				{ fix_incomplete();
 						  check_all_user_types($1);
+						  write_header($1);
 						  write_id_data($1);
 						  write_proxies($1);
 						  write_client($1);
@@ -359,15 +358,13 @@ input:   gbl_statements				{ fix_incomplete();
 	;
 
 gbl_statements:					{ $$ = NULL; }
-	| gbl_statements interfacedec		{ $$ = $1; }
+	| gbl_statements interfacedec		{ $$ = append_statement($1, make_statement_reference($2)); }
 	| gbl_statements interfacedef		{ $$ = append_statement($1, make_statement_type_decl($2)); }
 	| gbl_statements coclass ';'		{ $$ = $1;
 						  reg_type($2, $2->name, 0);
-						  if (!parse_only && do_header) write_coclass_forward($2);
 						}
 	| gbl_statements coclassdef		{ $$ = append_statement($1, make_statement_type_decl($2));
 						  reg_type($2, $2->name, 0);
-						  if (!parse_only && do_header) write_coclass_forward($2);
 						}
 	| gbl_statements moduledef		{ $$ = append_statement($1, make_statement_module($2)); }
 	| gbl_statements librarydef		{ $$ = append_statement($1, make_statement_library($2)); }
@@ -377,10 +374,9 @@ gbl_statements:					{ $$ = NULL; }
 imp_statements:					{ $$ = NULL; }
 	| imp_statements interfacedec		{ $$ = append_statement($1, make_statement_reference($2)); }
 	| imp_statements interfacedef		{ $$ = append_statement($1, make_statement_type_decl($2)); }
-	| imp_statements coclass ';'		{ $$ = $1; reg_type($2, $2->name, 0); if (!parse_only && do_header) write_coclass_forward($2); }
+	| imp_statements coclass ';'		{ $$ = $1; reg_type($2, $2->name, 0); }
 	| imp_statements coclassdef		{ $$ = append_statement($1, make_statement_type_decl($2));
 						  reg_type($2, $2->name, 0);
-						  if (!parse_only && do_header) write_coclass_forward($2);
 						}
 	| imp_statements moduledef		{ $$ = append_statement($1, make_statement_module($2)); }
 	| imp_statements statement		{ $$ = append_statement($1, $2); }
@@ -389,7 +385,7 @@ imp_statements:					{ $$ = NULL; }
 	;
 
 int_statements:					{ $$ = NULL; }
-	| int_statements statement		{ $$ = append_func_from_statement( $1, $2 ); }
+	| int_statements statement		{ $$ = append_statement($1, $2); }
 	;
 
 semicolon_opt:
@@ -398,15 +394,8 @@ semicolon_opt:
 
 statement:
 	  cppquote				{ $$ = make_statement_cppquote($1); }
-	| typedecl ';'				{ $$ = make_statement_type_decl($1);
-						  if (!parse_only && do_header) {
-						    write_type_def_or_decl(header, $1, FALSE, NULL);
-						    fprintf(header, ";\n\n");
-						  }
-						}
-	| declaration ';'			{ $$ = make_statement_declaration($1);
-						  if (!parse_only && do_header) write_declaration($1, is_in_interface);
-						}
+	| typedecl ';'				{ $$ = make_statement_type_decl($1); }
+	| declaration ';'			{ $$ = make_statement_declaration($1); }
 	| import				{ $$ = make_statement_import($1); }
 	| typedef ';'				{ $$ = $1; }
 	;
@@ -420,7 +409,7 @@ typedecl:
 	| attributes uniondef                   { $$ = $2; $$->attrs = check_union_attrs($1); }
 	;
 
-cppquote: tCPPQUOTE '(' aSTRING ')'		{ $$ = $3; if (!parse_only && do_header) fprintf(header, "%s\n", $3); }
+cppquote: tCPPQUOTE '(' aSTRING ')'		{ $$ = $3; }
 	;
 import_start: tIMPORT aSTRING ';'		{ assert(yychar == YYEMPTY);
 						  $$ = xmalloc(sizeof(struct _import_t));
@@ -433,7 +422,6 @@ import_start: tIMPORT aSTRING ';'		{ assert(yychar == YYEMPTY);
 import: import_start imp_statements aEOF	{ $$ = $1->name;
 						  if ($1->import_performed) pop_import();
 						  free($1);
-						  if (!parse_only && do_header) write_import($$);
 						}
 	;
 
@@ -445,7 +433,6 @@ libraryhdr: tLIBRARY aIDENTIFIER		{ $$ = $2; }
 	;
 library_start: attributes libraryhdr '{'	{ $$ = make_library($2, check_library_attrs($2, $1));
 						  if (!parse_only) start_typelib($$);
-						  if (!parse_only && do_header) write_library($$);
 						  is_inside_library = TRUE;
 						}
 	;
@@ -841,8 +828,6 @@ coclass:  tCOCLASS aIDENTIFIER			{ $$ = make_class($2); }
 coclasshdr: attributes coclass			{ $$ = $2;
 						  check_def($$);
 						  $$->attrs = check_coclass_attrs($2->name, $1);
-						  if (!parse_only && do_header)
-						    write_coclass($$);
 						}
 	;
 
@@ -866,14 +851,12 @@ dispinterface: tDISPINTERFACE aIDENTIFIER	{ $$ = get_type(RPC_FC_IP, $2, 0); $$-
 	;
 
 dispinterfacehdr: attributes dispinterface	{ attr_t *attrs;
-						  is_in_interface = TRUE;
 						  is_object_interface = TRUE;
 						  $$ = $2;
 						  check_def($$);
 						  attrs = make_attr(ATTR_DISPINTERFACE);
 						  $$->attrs = append_attr( check_dispiface_attrs($2->name, $1), attrs );
 						  $$->defined = TRUE;
-						  if (!parse_only && do_header) write_forward($$);
 						}
 	;
 
@@ -890,14 +873,10 @@ dispinterfacedef: dispinterfacehdr '{'
 	  dispint_meths
 	  '}'					{ $$ = $1;
 						  type_dispinterface_define($$, $3, $4);
-						  if (!parse_only && do_header) write_interface($$);
-						  is_in_interface = FALSE;
 						}
 	| dispinterfacehdr
 	 '{' interface ';' '}' 			{ $$ = $1;
 						  type_dispinterface_define_from_iface($$, $3);
-						  if (!parse_only && do_header) write_interface($$);
-						  is_in_interface = FALSE;
 						}
 	;
 
@@ -914,20 +893,16 @@ interfacehdr: attributes interface		{ $$.interface = $2;
 						  if (is_attr($1, ATTR_POINTERDEFAULT))
 						    pointer_default = get_attrv($1, ATTR_POINTERDEFAULT);
 						  is_object_interface = is_object($1);
-						  is_in_interface = TRUE;
 						  check_def($2);
 						  $2->attrs = check_iface_attrs($2->name, $1);
 						  $2->defined = TRUE;
-						  if (!parse_only && do_header) write_forward($2);
 						}
 	;
 
 interfacedef: interfacehdr inherit
 	  '{' int_statements '}' semicolon_opt	{ $$ = $1.interface;
 						  type_interface_define($$, $2, $4);
-						  if (!parse_only && do_header) write_interface($$);
 						  pointer_default = $1.old_pointer_default;
-						  is_in_interface = FALSE;
 						}
 /* MIDL is able to import the definition of a base class from inside the
  * definition of a derived class, I'll try to support it with this rule */
@@ -935,16 +910,14 @@ interfacedef: interfacehdr inherit
 	  '{' import int_statements '}'
 	   semicolon_opt			{ $$ = $1.interface;
 						  type_interface_define($$, find_type_or_error2($3, 0), $6);
-						  if (!parse_only && do_header) write_interface($$);
 						  pointer_default = $1.old_pointer_default;
-						  is_in_interface = FALSE;
 						}
 	| dispinterfacedef semicolon_opt	{ $$ = $1; }
 	;
 
 interfacedec:
-	  interface ';'				{ $$ = $1; if (!parse_only && do_header) write_forward($$); }
-	| dispinterface ';'			{ $$ = $1; if (!parse_only && do_header) write_forward($$); }
+	  interface ';'				{ $$ = $1; }
+	| dispinterface ';'			{ $$ = $1; }
 	;
 
 module:   tMODULE aIDENTIFIER			{ $$ = make_type(0, NULL); $$->name = $2; $$->kind = TKIND_MODULE; }
@@ -958,8 +931,8 @@ modulehdr: attributes module			{ $$ = $2;
 
 moduledef: modulehdr '{' int_statements '}'
 	   semicolon_opt			{ $$ = $1;
-						  $$->funcs = $3;
-						  /* FIXME: if (!parse_only && do_header) write_module($$); */
+						  $$->stmts = $3;
+						  $$->funcs = gen_function_list($3);
 						}
 	;
 
@@ -1046,7 +1019,7 @@ type:	  tVOID					{ $$ = find_type_or_error("void", 0); }
 
 typedef: tTYPEDEF m_attributes decl_spec declarator_list
 						{ reg_typedefs($3, $4, check_typedef_attrs($2));
-						  $$ = process_typedefs($4);
+						  $$ = make_statement_typedef($4);
 						}
 	;
 
@@ -1735,7 +1708,6 @@ static func_t *make_func(var_t *def)
   func_t *f = xmalloc(sizeof(func_t));
   f->def = def;
   f->args = def->type->details.function->args;
-  f->ignore = parse_only;
   f->idx = -1;
   return f;
 }
@@ -2008,6 +1980,25 @@ var_t *find_const(const char *name, int f)
     return NULL;
   }
   return cur->var;
+}
+
+func_list_t *gen_function_list(const statement_list_t *stmts)
+{
+  func_list_t *func_list = NULL;
+  const statement_t *stmt;
+  if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
+  {
+    if (stmt->type == STMT_DECLARATION)
+    {
+      var_t *var = stmt->u.var;
+      if (var->stgclass == STG_NONE && var->type->type == RPC_FC_FUNCTION)
+      {
+        check_function_attrs(var->name, var->type->attrs);
+        func_list = append_func(func_list, make_func(var));
+      }
+    }
+  }
+  return func_list;
 }
 
 static char *gen_name(void)
@@ -2677,7 +2668,7 @@ static statement_t *make_statement_module(type_t *type)
     return stmt;
 }
 
-static statement_t *process_typedefs(declarator_list_t *decls)
+static statement_t *make_statement_typedef(declarator_list_t *decls)
 {
     declarator_t *decl, *next;
     statement_t *stmt;
@@ -2697,9 +2688,6 @@ static statement_t *process_typedefs(declarator_list_t *decls)
         (*type_list)->type = type;
         (*type_list)->next = NULL;
 
-        if (! parse_only && do_header)
-            write_typedef(type);
-
         type_list = &(*type_list)->next;
         free(decl);
         free(var);
@@ -2717,20 +2705,6 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
         list_init( list );
     }
     list_add_tail( list, &stmt->entry );
-    return list;
-}
-
-static func_list_t *append_func_from_statement(func_list_t *list, statement_t *stmt)
-{
-    if (stmt->type == STMT_DECLARATION)
-    {
-        var_t *var = stmt->u.var;
-        if (var->stgclass == STG_NONE && var->type->type == RPC_FC_FUNCTION)
-        {
-            check_function_attrs(var->name, var->type->attrs);
-            return append_func(list, make_func(stmt->u.var));
-        }
-    }
     return list;
 }
 
