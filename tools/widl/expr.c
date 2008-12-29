@@ -32,6 +32,7 @@
 #include "utils.h"
 #include "expr.h"
 #include "header.h"
+#include "typetree.h"
 
 expr_t *make_expr(enum expr_type type)
 {
@@ -362,17 +363,14 @@ static type_t *find_identifier(const char *identifier, const type_t *cont_type, 
 
     *found_in_cont_type = 0;
 
-    if (cont_type && (cont_type->type == RPC_FC_FUNCTION || is_struct(cont_type->type)))
-        fields = cont_type->fields_or_args;
-    else if (cont_type && is_union(cont_type->type))
+    if (cont_type)
     {
-        if (cont_type->type == RPC_FC_ENCAPSULATED_UNION)
-        {
-            const var_t *uv = LIST_ENTRY(list_tail(cont_type->fields_or_args), const var_t, entry);
-            fields = uv->type->fields_or_args;
-        }
-        else
-            fields = cont_type->fields_or_args;
+        if (cont_type->type == RPC_FC_FUNCTION)
+            fields = type_function_get_args(cont_type);
+        else if (is_struct(cont_type->type))
+            fields = type_struct_get_fields(cont_type);
+        else if (is_union(cont_type->type))
+            fields = type_union_get_cases(cont_type);
     }
 
     if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )

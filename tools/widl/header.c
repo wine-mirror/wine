@@ -34,6 +34,7 @@
 #include "parser.h"
 #include "header.h"
 #include "expr.h"
+#include "typetree.h"
 
 typedef struct _user_type_t generic_handle_t;
 
@@ -209,7 +210,7 @@ void write_type_left(FILE *h, type_t *t, int declonly)
           else fprintf(h, "enum {\n");
           t->written = TRUE;
           indentation++;
-          write_enums(h, t->fields_or_args);
+          write_enums(h, type_enum_get_values(t));
           indent(h, -1);
           fprintf(h, "}");
         }
@@ -227,7 +228,10 @@ void write_type_left(FILE *h, type_t *t, int declonly)
           else fprintf(h, "struct {\n");
           t->written = TRUE;
           indentation++;
-          write_fields(h, t->fields_or_args);
+          if (t->type == RPC_FC_ENCAPSULATED_UNION)
+            write_fields(h, type_encapsulated_union_get_fields(t));
+          else
+            write_fields(h, type_struct_get_fields(t));
           indent(h, -1);
           fprintf(h, "}");
         }
@@ -239,7 +243,7 @@ void write_type_left(FILE *h, type_t *t, int declonly)
           else fprintf(h, "union {\n");
           t->written = TRUE;
           indentation++;
-          write_fields(h, t->fields_or_args);
+          write_fields(h, type_union_get_cases(t));
           indent(h, -1);
           fprintf(h, "}");
         }
@@ -308,7 +312,7 @@ void write_type_v(FILE *h, type_t *t, int is_field, int declonly,
   if (pt->type == RPC_FC_FUNCTION) {
     if (ptr_level) fputc(')', h);
     fputc('(', h);
-    write_args(h, pt->fields_or_args, NULL, 0, FALSE);
+    write_args(h, type_function_get_args(pt), NULL, 0, FALSE);
     fputc(')', h);
   } else
     write_type_right(h, t, is_field);
@@ -409,7 +413,14 @@ void check_for_additional_prototype_types(const var_list_t *list)
       }
       else
       {
-        check_for_additional_prototype_types(type->fields_or_args);
+        var_list_t *vars = NULL;
+        if (type->type == RPC_FC_ENUM16 || type->type == RPC_FC_ENUM32)
+          vars = type_enum_get_values(type);
+        else if (is_struct(type->type))
+          vars = type_struct_get_fields(type);
+        else if (is_union(type->type))
+          vars = type_union_get_cases(type);
+        check_for_additional_prototype_types(vars);
       }
     }
   }

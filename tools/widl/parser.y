@@ -39,6 +39,7 @@
 #include "typelib.h"
 #include "typegen.h"
 #include "expr.h"
+#include "typetree.h"
 
 #if defined(YYBYACC)
 	/* Berkeley yacc (byacc) doesn't seem to know about these */
@@ -122,9 +123,12 @@ static type_t *make_safearray(type_t *type);
 static type_t *make_builtin(char *name);
 static type_t *make_int(int sign);
 static typelib_t *make_library(const char *name, const attr_list_t *attrs);
-static type_t *make_func_type(var_list_t *args);
-static type_t *make_pointer_type(type_t *ref, attr_list_t *attrs);
 static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type);
+
+static type_t *type_new_enum(var_t *name, var_list_t *enums);
+static type_t *type_new_struct(var_t *name, var_list_t *fields);
+static type_t *type_new_nonencapsulated_union(var_t *name, var_list_t *fields);
+static type_t *type_new_encapsulated_union(var_t *name, var_t *switch_field, var_t *union_field, var_list_t *cases);
 
 static type_t *reg_type(type_t *type, const char *name, int t);
 static type_t *reg_typedefs(decl_spec_t *decl_spec, var_list_t *names, attr_list_t *attrs);
@@ -140,11 +144,9 @@ static void write_clsid(type_t *cls);
 static void write_diid(type_t *iface);
 static void write_iid(type_t *iface);
 
-static int compute_method_indexes(type_t *iface);
 static char *gen_name(void);
 static statement_t *process_typedefs(var_list_t *names);
 static void check_arg(var_t *arg);
-static void check_functions(const type_t *iface);
 static void check_all_user_types(const statement_list_t *stmts);
 static attr_list_t *check_iface_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_function_attrs(const char *name, attr_list_t *attrs);
@@ -642,10 +644,7 @@ enum:	  ident '=' expr_int_const		{ $$ = reg_const($1);
 						}
 	;
 
-enumdef: tENUM t_ident '{' enums '}'		{ $$ = get_typev(RPC_FC_ENUM16, $2, tsENUM);
-						  $$->kind = TKIND_ENUM;
-						  $$->fields_or_args = $4;
-						  $$->defined = TRUE;
+enumdef: tENUM t_ident '{' enums '}'		{ $$ = type_new_enum($2, $4);
                                                   if(in_typelib)
                                                       add_typelib_entry($$);
 						}
@@ -886,8 +885,6 @@ dispinterfacehdr: attributes dispinterface	{ attr_t *attrs;
 						  check_def($$);
 						  attrs = make_attr(ATTR_DISPINTERFACE);
 						  $$->attrs = append_attr( check_dispiface_attrs($2->name, $1), attrs );
-						  $$->ref = find_type("IDispatch", 0);
-						  if (!$$->ref) error_loc("IDispatch is undefined\n");
 						  $$->defined = TRUE;
 						  if (!parse_only && do_header) write_forward($$);
 						}
@@ -905,16 +902,14 @@ dispinterfacedef: dispinterfacehdr '{'
 	  dispint_props
 	  dispint_meths
 	  '}'					{ $$ = $1;
-						  $$->fields_or_args = $3;
-						  $$->funcs = $4;
+						  type_dispinterface_define($$, $3, $4);
 						  if (!parse_only && do_header) write_interface($$);
 						  if (!parse_only && do_idfile) write_diid($$);
 						  is_in_interface = FALSE;
 						}
 	| dispinterfacehdr
 	 '{' interface ';' '}' 			{ $$ = $1;
-						  $$->fields_or_args = $3->fields_or_args;
-						  $$->funcs = $3->funcs;
+						  type_dispinterface_define_from_iface($$, $3);
 						  if (!parse_only && do_header) write_interface($$);
 						  if (!parse_only && do_idfile) write_diid($$);
 						  is_in_interface = FALSE;
@@ -944,10 +939,7 @@ interfacehdr: attributes interface		{ $$.interface = $2;
 
 interfacedef: interfacehdr inherit
 	  '{' int_statements '}' semicolon_opt	{ $$ = $1.interface;
-						  $$->ref = $2;
-						  $$->funcs = $4;
-						  check_functions($$);
-						  compute_method_indexes($$);
+						  type_interface_define($$, $2, $4);
 						  if (!parse_only && do_header) write_interface($$);
 						  if (!parse_only && local_stubs) write_locals(local_stubs, $$, TRUE);
 						  if (!parse_only && do_idfile) write_iid($$);
@@ -959,10 +951,7 @@ interfacedef: interfacehdr inherit
 	| interfacehdr ':' aIDENTIFIER
 	  '{' import int_statements '}'
 	   semicolon_opt			{ $$ = $1.interface;
-						  $$->ref = find_type_or_error2($3, 0);
-						  if (!$$->ref) error_loc("base class '%s' not found in import\n", $3);
-						  $$->funcs = $6;
-						  compute_method_indexes($$);
+						  type_interface_define($$, find_type_or_error2($3, 0), $6);
 						  if (!parse_only && do_header) write_interface($$);
 						  if (!parse_only && local_stubs) write_locals(local_stubs, $$, TRUE);
 						  if (!parse_only && do_idfile) write_iid($$);
@@ -1028,7 +1017,7 @@ decl_spec_no_type:
 
 declarator:
 	  '*' m_type_qual_list declarator %prec PPTR
-						{ $$ = $3; $$->type = append_ptrchain_type($$->type, make_pointer_type(NULL, $2)); }
+						{ $$ = $3; $$->type = append_ptrchain_type($$->type, type_new_pointer(NULL, $2)); }
 	| callconv declarator			{ $$ = $2; $$->type->attrs = append_attr($$->type->attrs, make_attrp(ATTR_CALLCONV, $1)); }
 	| direct_declarator
 	;
@@ -1038,7 +1027,7 @@ direct_declarator:
 	| '(' declarator ')'			{ $$ = $2; }
 	| direct_declarator array		{ $$ = $1; $$->array = append_array($$->array, $2); }
 	| direct_declarator '(' m_args ')'	{ $$ = $1;
-						  $$->func_type = append_ptrchain_type($$->type, make_func_type($3));
+						  $$->func_type = append_ptrchain_type($$->type, type_new_function($3));
 						  $$->type = NULL;
 						}
 	;
@@ -1059,11 +1048,7 @@ pointer_type:
 	| tPTR					{ $$ = RPC_FC_FP; }
 	;
 
-structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = get_typev(RPC_FC_STRUCT, $2, tsSTRUCT);
-						  check_def($$);
-						  $$->kind = TKIND_RECORD;
-						  $$->fields_or_args = $4;
-						  $$->defined = TRUE;
+structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = type_new_struct($2, $4);
                                                   if(in_typelib)
                                                       add_typelib_entry($$);
                                                 }
@@ -1088,27 +1073,10 @@ typedef: tTYPEDEF m_attributes decl_spec declarator_list
 	;
 
 uniondef: tUNION t_ident '{' ne_union_fields '}'
-						{ $$ = get_typev(RPC_FC_NON_ENCAPSULATED_UNION, $2, tsUNION);
-						  check_def($$);
-						  $$->kind = TKIND_UNION;
-						  $$->fields_or_args = $4;
-						  $$->defined = TRUE;
-						}
+						{ $$ = type_new_nonencapsulated_union($2, $4); }
 	| tUNION t_ident
 	  tSWITCH '(' s_field ')'
-	  m_ident '{' cases '}'			{ var_t *u = $7;
-						  $$ = get_typev(RPC_FC_ENCAPSULATED_UNION, $2, tsUNION);
-						  check_def($$);
-						  $$->kind = TKIND_UNION;
-						  if (!u) u = make_var( xstrdup("tagged_union") );
-						  u->type = make_type(RPC_FC_NON_ENCAPSULATED_UNION, NULL);
-						  u->type->kind = TKIND_UNION;
-						  u->type->fields_or_args = $9;
-						  u->type->defined = TRUE;
-						  $$->fields_or_args = append_var( $$->fields_or_args, $5 );
-						  $$->fields_or_args = append_var( $$->fields_or_args, u );
-						  $$->defined = TRUE;
-						}
+	  m_ident '{' cases '}'			{ $$ = type_new_encapsulated_union($2, $5, $7, $9); }
 	;
 
 version:
@@ -1403,18 +1371,57 @@ type_t *make_type(unsigned char type, type_t *ref)
   return t;
 }
 
-static type_t *make_func_type(var_list_t *args)
+static type_t *type_new_enum(var_t *name, var_list_t *enums)
 {
-  type_t *t = make_type(RPC_FC_FUNCTION, NULL);
-  t->fields_or_args = args;
+    type_t *t = get_typev(RPC_FC_ENUM16, name, tsENUM);
+    t->kind = TKIND_ENUM;
+    t->fields_or_args = enums;
+    t->defined = TRUE;
+    return t;
+}
+
+static type_t *type_new_struct(var_t *name, var_list_t *fields)
+{
+  type_t *t = get_typev(RPC_FC_STRUCT, name, tsSTRUCT);
+  t->kind = TKIND_RECORD;
+  t->fields_or_args = fields;
+  t->defined = TRUE;
   return t;
 }
 
-static type_t *make_pointer_type(type_t *ref, attr_list_t *attrs)
+static type_t *type_new_nonencapsulated_union(var_t *name, var_list_t *fields)
 {
-    type_t *t = make_type(pointer_default, ref);
-    t->attrs = attrs;
-    return t;
+  type_t *t = get_typev(RPC_FC_NON_ENCAPSULATED_UNION, name, tsUNION);
+  t->kind = TKIND_UNION;
+  t->fields_or_args = fields;
+  t->defined = TRUE;
+  return t;
+}
+
+static type_t *type_new_encapsulated_union(var_t *name, var_t *switch_field, var_t *union_field, var_list_t *cases)
+{
+  type_t *t = get_typev(RPC_FC_ENCAPSULATED_UNION, name, tsUNION);
+  t->kind = TKIND_UNION;
+  if (!union_field) union_field = make_var( xstrdup("tagged_union") );
+  union_field->type = make_type(RPC_FC_NON_ENCAPSULATED_UNION, NULL);
+  union_field->type->kind = TKIND_UNION;
+  union_field->type->fields_or_args = cases;
+  union_field->type->defined = TRUE;
+  t->fields_or_args = append_var( NULL, switch_field );
+  t->fields_or_args = append_var( t->fields_or_args, union_field );
+  t->defined = TRUE;
+  return t;
+}
+
+static void function_add_head_arg(func_t *func, var_t *arg)
+{
+    if (!func->def->type->fields_or_args)
+    {
+        func->def->type->fields_or_args = xmalloc( sizeof(*func->def->type->fields_or_args) );
+        list_init( func->def->type->fields_or_args );
+    }
+    list_add_head( func->def->type->fields_or_args, &arg->entry );
+    func->args = func->def->type->fields_or_args;
 }
 
 static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type)
@@ -2008,26 +2015,6 @@ static void write_iid(type_t *iface)
   write_guid(idfile, "IID", iface->name, uuid);
 }
 
-static int compute_method_indexes(type_t *iface)
-{
-  int idx;
-  func_t *f;
-
-  if (iface->ref)
-    idx = compute_method_indexes(iface->ref);
-  else
-    idx = 0;
-
-  if (!iface->funcs)
-    return idx;
-
-  LIST_FOR_EACH_ENTRY( f, iface->funcs, func_t, entry )
-    if (! is_callas(f->def->attrs))
-      f->idx = idx++;
-
-  return idx;
-}
-
 static char *gen_name(void)
 {
   static const char format[] = "__WIDL_%s_generated_name_%08lX";
@@ -2482,21 +2469,13 @@ static void check_remoting_fields(const var_t *var, type_t *type)
 
     if (is_struct(type->type))
     {
-        if (type->defined)
-            fields = type->fields_or_args;
+        if (type_is_defined(type))
+            fields = type_struct_get_fields(type);
         else
             error_loc_info(&var->loc_info, "undefined type declaration %s\n", type->name);
     }
     else if (is_union(type->type))
-    {
-        if (type->type == RPC_FC_ENCAPSULATED_UNION)
-        {
-            const var_t *uv = LIST_ENTRY(list_tail(type->fields_or_args), const var_t, entry);
-            fields = uv->type->fields_or_args;
-        }
-        else
-            fields = type->fields_or_args;
-    }
+        fields = type_union_get_cases(type);
 
     if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
         if (field->type) check_field_common(type, type->name, field);
@@ -2569,19 +2548,13 @@ static void add_explicit_handle_if_necessary(func_t *func)
                 var_t *idl_handle = make_var(xstrdup("IDL_handle"));
                 idl_handle->attrs = append_attr(NULL, make_attr(ATTR_IN));
                 idl_handle->type = find_type_or_error("handle_t", 0);
-                if (!func->def->type->fields_or_args)
-                {
-                    func->def->type->fields_or_args = xmalloc( sizeof(*func->def->type->fields_or_args) );
-                    list_init( func->def->type->fields_or_args );
-                }
-                list_add_head( func->def->type->fields_or_args, &idl_handle->entry );
-                func->args = func->def->type->fields_or_args;
+                function_add_head_arg(func, idl_handle);
             }
         }
     }
 }
 
-static void check_functions(const type_t *iface)
+void check_functions(const type_t *iface)
 {
     if (is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE) && iface->funcs)
     {

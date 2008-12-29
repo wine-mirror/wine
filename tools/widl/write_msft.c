@@ -51,6 +51,7 @@
 #include "utils.h"
 #include "header.h"
 #include "hash.h"
+#include "typetree.h"
 
 enum MSFT_segment_index {
     MSFT_SEG_TYPEINFO = 0,  /* type information */
@@ -1968,14 +1969,14 @@ static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinte
     if (dispinterface->funcs)
         LIST_FOR_EACH_ENTRY( func, dispinterface->funcs, const func_t, entry ) idx++;
 
-    if (dispinterface->fields_or_args)
-        LIST_FOR_EACH_ENTRY( var, dispinterface->fields_or_args, var_t, entry )
+    if (type_dispiface_get_props(dispinterface))
+        LIST_FOR_EACH_ENTRY( var, type_dispiface_get_props(dispinterface), var_t, entry )
             add_var_desc(msft_typeinfo, idx++, var);
 
-    if (dispinterface->funcs)
+    if (type_dispiface_get_methods(dispinterface))
     {
         idx = 0;
-        LIST_FOR_EACH_ENTRY( func, dispinterface->funcs, const func_t, entry )
+        LIST_FOR_EACH_ENTRY( func, type_dispiface_get_methods(dispinterface), const func_t, entry )
             if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
                 idx++;
     }
@@ -2052,8 +2053,8 @@ static void add_structure_typeinfo(msft_typelib_t *typelib, type_t *structure)
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_RECORD, structure->name, structure->attrs);
     msft_typeinfo->typeinfo->size = 0;
 
-    if (structure->fields_or_args)
-        LIST_FOR_EACH_ENTRY( cur, structure->fields_or_args, var_t, entry )
+    if (type_struct_get_fields(structure))
+        LIST_FOR_EACH_ENTRY( cur, type_struct_get_fields(structure), var_t, entry )
             add_var_desc(msft_typeinfo, idx++, cur);
 }
 
@@ -2067,8 +2068,8 @@ static void add_enum_typeinfo(msft_typelib_t *typelib, type_t *enumeration)
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_ENUM, enumeration->name, enumeration->attrs);
     msft_typeinfo->typeinfo->size = 0;
 
-    if (enumeration->fields_or_args)
-        LIST_FOR_EACH_ENTRY( cur, enumeration->fields_or_args, var_t, entry )
+    if (type_enum_get_values(enumeration))
+        LIST_FOR_EACH_ENTRY( cur, type_enum_get_values(enumeration), var_t, entry )
             add_var_desc(msft_typeinfo, idx++, cur);
 }
 

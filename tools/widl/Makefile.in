@@ -17,6 +17,7 @@ C_SRCS = \
 	server.c \
 	typegen.c \
 	typelib.c \
+	typetree.c \
 	utils.c \
 	widl.c \
 	write_msft.c

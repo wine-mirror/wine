@@ -45,4 +45,6 @@ void pop_import(void);
 
 int is_type(const char *name);
 
+void check_functions(const type_t *iface);
+
 #endif

@@ -22,6 +22,7 @@
 #define __WIDL_WIDLTYPES_H
 
 #include <stdarg.h>
+#include <assert.h>
 #include "guiddef.h"
 #include "wine/rpcfc.h"
 #include "wine/list.h"
