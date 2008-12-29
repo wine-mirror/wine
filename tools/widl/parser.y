@@ -2471,6 +2471,10 @@ static void check_remoting_fields(const var_t *var, type_t *type)
     const var_t *field;
     const var_list_t *fields = NULL;
 
+    /* find the real type */
+    while (type->kind == TKIND_ALIAS)
+        type = type->orig;
+
     if (type->checked)
         return;
 
