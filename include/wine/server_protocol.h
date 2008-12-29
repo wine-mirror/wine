@@ -26,7 +26,7 @@ typedef unsigned __int64 lparam_t;
 typedef unsigned __int64 apc_param_t;
 typedef unsigned __int64 mem_size_t;
 typedef unsigned __int64 file_pos_t;
-typedef void *client_ptr_t;
+typedef unsigned __int64 client_ptr_t;
 typedef client_ptr_t mod_handle_t;
 
 struct request_header
@@ -532,9 +532,9 @@ struct get_startup_info_reply
 struct init_process_done_request
 {
     struct request_header __header;
+    int          gui;
     mod_handle_t module;
     void*        entry;
-    int          gui;
 };
 struct init_process_done_reply
 {
@@ -2848,7 +2848,7 @@ struct get_window_info_reply
     process_id_t   pid;
     thread_id_t    tid;
     atom_t         atom;
-    int            is_unicode;
+    short int      is_unicode;
 };
 
 
@@ -2856,12 +2856,12 @@ struct get_window_info_reply
 struct set_window_info_request
 {
     struct request_header __header;
-    unsigned int   flags;
+    unsigned short flags;
+    short int      is_unicode;
     user_handle_t  handle;
     unsigned int   style;
     unsigned int   ex_style;
     unsigned int   id;
-    int            is_unicode;
     mod_handle_t   instance;
     lparam_t       user_data;
     int            extra_offset;
@@ -2873,10 +2873,10 @@ struct set_window_info_reply
     struct reply_header __header;
     unsigned int   old_style;
     unsigned int   old_ex_style;
-    unsigned int   old_id;
     mod_handle_t   old_instance;
     lparam_t       old_user_data;
     lparam_t       old_extra_value;
+    unsigned int   old_id;
 };
 #define SET_WIN_STYLE     0x01
 #define SET_WIN_EXSTYLE   0x02
@@ -5052,6 +5052,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 355
+#define SERVER_PROTOCOL_VERSION 356
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

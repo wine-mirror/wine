@@ -480,7 +480,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->style          = 0;
     win->ex_style       = 0;
     win->id             = 0;
-    win->instance       = NULL;
+    win->instance       = 0;
     win->is_unicode     = 1;
     win->is_linked      = 0;
     win->is_layered     = 0;

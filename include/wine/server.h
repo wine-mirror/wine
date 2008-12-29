@@ -108,6 +108,18 @@ static inline HANDLE wine_server_ptr_handle( obj_handle_t handle )
     return (HANDLE)(INT_PTR)(int)handle;
 }
 
+/* convert a client pointer to a server client_ptr_t */
+static inline client_ptr_t wine_server_client_ptr( const void *ptr )
+{
+    return (client_ptr_t)(ULONG_PTR)ptr;
+}
+
+/* convert a server client_ptr_t to a real pointer */
+static inline void *wine_server_get_ptr( client_ptr_t ptr )
+{
+    return (void *)(ULONG_PTR)ptr;
+}
+
 
 /* macros for server requests */
 

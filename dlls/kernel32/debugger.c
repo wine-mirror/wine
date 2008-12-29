@@ -86,7 +86,7 @@ BOOL WINAPI WaitForDebugEvent(
                 event->u.CreateProcessInfo.hFile                 = wine_server_ptr_handle( data.info.create_process.file );
                 event->u.CreateProcessInfo.hProcess              = wine_server_ptr_handle( data.info.create_process.process );
                 event->u.CreateProcessInfo.hThread               = wine_server_ptr_handle( data.info.create_process.thread );
-                event->u.CreateProcessInfo.lpBaseOfImage         = data.info.create_process.base;
+                event->u.CreateProcessInfo.lpBaseOfImage         = wine_server_get_ptr( data.info.create_process.base );
                 event->u.CreateProcessInfo.dwDebugInfoFileOffset = data.info.create_process.dbg_offset;
                 event->u.CreateProcessInfo.nDebugInfoSize        = data.info.create_process.dbg_size;
                 event->u.CreateProcessInfo.lpThreadLocalBase     = data.info.create_process.teb;
@@ -102,14 +102,14 @@ BOOL WINAPI WaitForDebugEvent(
                 break;
             case LOAD_DLL_DEBUG_EVENT:
                 event->u.LoadDll.hFile                 = wine_server_ptr_handle( data.info.load_dll.handle );
-                event->u.LoadDll.lpBaseOfDll           = data.info.load_dll.base;
+                event->u.LoadDll.lpBaseOfDll           = wine_server_get_ptr( data.info.load_dll.base );
                 event->u.LoadDll.dwDebugInfoFileOffset = data.info.load_dll.dbg_offset;
                 event->u.LoadDll.nDebugInfoSize        = data.info.load_dll.dbg_size;
                 event->u.LoadDll.lpImageName           = data.info.load_dll.name;
                 event->u.LoadDll.fUnicode              = data.info.load_dll.unicode;
                 break;
             case UNLOAD_DLL_DEBUG_EVENT:
-                event->u.UnloadDll.lpBaseOfDll = data.info.unload_dll.base;
+                event->u.UnloadDll.lpBaseOfDll = wine_server_get_ptr( data.info.unload_dll.base );
                 break;
             case OUTPUT_DEBUG_STRING_EVENT:
                 event->u.DebugString.lpDebugStringData  = data.info.output_string.string;

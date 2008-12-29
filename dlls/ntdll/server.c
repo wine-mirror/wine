@@ -986,7 +986,7 @@ NTSTATUS server_init_process_done(void)
     /* Signal the parent process to continue */
     SERVER_START_REQ( init_process_done )
     {
-        req->module = peb->ImageBaseAddress;
+        req->module = wine_server_client_ptr( peb->ImageBaseAddress );
         req->entry  = (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint;
         req->gui    = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
         status = wine_server_call( req );

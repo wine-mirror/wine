@@ -42,7 +42,7 @@ typedef unsigned __int64 lparam_t;
 typedef unsigned __int64 apc_param_t;
 typedef unsigned __int64 mem_size_t;
 typedef unsigned __int64 file_pos_t;
-typedef void *client_ptr_t;
+typedef unsigned __int64 client_ptr_t;
 typedef client_ptr_t mod_handle_t;
 
 struct request_header
@@ -526,9 +526,9 @@ typedef union
 
 /* Signal the end of the process initialization */
 @REQ(init_process_done)
+    int          gui;          /* is it a GUI process? */
     mod_handle_t module;       /* main module base address */
     void*        entry;        /* process entry point */
-    int          gui;          /* is it a GUI process? */
 @END
 
 
@@ -2097,18 +2097,18 @@ enum message_type
     process_id_t   pid;         /* process owning the window */
     thread_id_t    tid;         /* thread owning the window */
     atom_t         atom;        /* class atom */
-    int            is_unicode;  /* ANSI or unicode */
+    short int      is_unicode;  /* ANSI or unicode */
 @END
 
 
 /* Set some information in a window */
 @REQ(set_window_info)
-    unsigned int   flags;         /* flags for fields to set (see below) */
+    unsigned short flags;         /* flags for fields to set (see below) */
+    short int      is_unicode;    /* ANSI or unicode */
     user_handle_t  handle;        /* handle to the window */
     unsigned int   style;         /* window style */
     unsigned int   ex_style;      /* window extended style */
     unsigned int   id;            /* window id */
-    int            is_unicode;    /* ANSI or unicode */
     mod_handle_t   instance;      /* creator instance */
     lparam_t       user_data;     /* user-specific data */
     int            extra_offset;  /* offset to set in extra bytes */
@@ -2117,10 +2117,10 @@ enum message_type
 @REPLY
     unsigned int   old_style;     /* old window style */
     unsigned int   old_ex_style;  /* old window extended style */
-    unsigned int   old_id;        /* old window id */
     mod_handle_t   old_instance;  /* old creator instance */
     lparam_t       old_user_data; /* old user-specific data */
     lparam_t       old_extra_value; /* old value in extra bytes */
+    unsigned int   old_id;        /* old window id */
 @END
 #define SET_WIN_STYLE     0x01
 #define SET_WIN_EXSTYLE   0x02

@@ -1447,7 +1447,7 @@ static void load_builtin_callback( void *module, const char *filename )
     SERVER_START_REQ( load_dll )
     {
         req->handle     = 0;
-        req->base       = module;
+        req->base       = wine_server_client_ptr( module );
         req->size       = nt->OptionalHeader.SizeOfImage;
         req->dbg_offset = nt->FileHeader.PointerToSymbolTable;
         req->dbg_size   = nt->FileHeader.NumberOfSymbols;
@@ -1529,7 +1529,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
     SERVER_START_REQ( load_dll )
     {
         req->handle     = wine_server_obj_handle( file );
-        req->base       = module;
+        req->base       = wine_server_client_ptr( module );
         req->size       = nt->OptionalHeader.SizeOfImage;
         req->dbg_offset = nt->FileHeader.PointerToSymbolTable;
         req->dbg_size   = nt->FileHeader.NumberOfSymbols;
@@ -2264,7 +2264,7 @@ static void free_modref( WINE_MODREF *wm )
 
     SERVER_START_REQ( unload_dll )
     {
-        req->base = wm->ldr.BaseAddress;
+        req->base = wine_server_client_ptr( wm->ldr.BaseAddress );
         wine_server_call( req );
     }
     SERVER_END_REQ;

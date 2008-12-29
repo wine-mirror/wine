@@ -112,7 +112,7 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
     {
         req->parent   = wine_server_user_handle( parent );
         req->owner    = wine_server_user_handle( owner );
-        req->instance = instance;
+        req->instance = wine_server_client_ptr( instance );
         if (!(req->atom = get_int_atom_value( name )) && name)
             wine_server_add_data( req, name, strlenW(name)*sizeof(WCHAR) );
         if (!wine_server_call_err( req ))
@@ -1119,7 +1119,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, UINT flags
         req->flags     = SET_WIN_STYLE | SET_WIN_EXSTYLE | SET_WIN_INSTANCE | SET_WIN_UNICODE;
         req->style     = wndPtr->dwStyle;
         req->ex_style  = wndPtr->dwExStyle;
-        req->instance  = (void *)wndPtr->hInstance;
+        req->instance  = wine_server_client_ptr( wndPtr->hInstance );
         req->is_unicode = (wndPtr->flags & WIN_ISUNICODE) != 0;
         req->extra_offset = -1;
         wine_server_call( req );
@@ -1885,7 +1885,7 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, UINT size, BOOL unicod
                 case GWL_STYLE:      retvalue = reply->old_style; break;
                 case GWL_EXSTYLE:    retvalue = reply->old_ex_style; break;
                 case GWLP_ID:        retvalue = reply->old_id; break;
-                case GWLP_HINSTANCE: retvalue = (ULONG_PTR)reply->old_instance; break;
+                case GWLP_HINSTANCE: retvalue = (ULONG_PTR)wine_server_get_ptr( reply->old_instance ); break;
                 case GWLP_USERDATA:  retvalue = reply->old_user_data; break;
                 default:
                     if (offset >= 0) retvalue = get_win_data( &reply->old_extra_value, size );
@@ -2091,7 +2091,7 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
             break;
         case GWLP_HINSTANCE:
             req->flags = SET_WIN_INSTANCE;
-            req->instance = (void *)newval;
+            req->instance = wine_server_client_ptr( (void *)newval );
             break;
         case GWLP_WNDPROC:
             req->flags = SET_WIN_UNICODE;
@@ -2125,7 +2125,7 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
                 break;
             case GWLP_HINSTANCE:
                 wndPtr->hInstance = (HINSTANCE)newval;
-                retval = (ULONG_PTR)reply->old_instance;
+                retval = (ULONG_PTR)wine_server_get_ptr( reply->old_instance );
                 break;
             case GWLP_WNDPROC:
                 break;
