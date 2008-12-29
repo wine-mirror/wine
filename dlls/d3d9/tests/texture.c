@@ -321,6 +321,7 @@ static void test_filter(IDirect3DDevice9 *device) {
     }
 
     hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    IDirect3DTexture9_Release(texture);
 
     out:
     IDirect3D9_Release(d3d9);
@@ -342,6 +343,7 @@ START_TEST(texture)
     D3DCAPS9 caps;
     HMODULE d3d9_handle;
     IDirect3DDevice9 *device_ptr;
+    ULONG refcount;
 
     d3d9_handle = LoadLibraryA("d3d9.dll");
     if (!d3d9_handle)
@@ -360,4 +362,7 @@ START_TEST(texture)
     test_mipmap_gen(device_ptr);
     test_filter(device_ptr);
     test_gettexture(device_ptr);
+
+    refcount = IDirect3DDevice9_Release(device_ptr);
+    ok(!refcount, "Device has %u references left\n", refcount);
 }

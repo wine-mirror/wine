@@ -135,6 +135,7 @@ START_TEST(texture)
     D3DCAPS8 caps;
     HMODULE d3d8_handle;
     IDirect3DDevice8 *device_ptr;
+    ULONG refcount;
 
     d3d8_handle = LoadLibraryA("d3d8.dll");
     if (!d3d8_handle)
@@ -150,4 +151,7 @@ START_TEST(texture)
 
     test_texture_stage_states(device_ptr, caps.MaxTextureBlendStages);
     test_cube_textures(device_ptr, caps.TextureCaps);
+
+    refcount = IDirect3DDevice8_Release(device_ptr);
+    ok(!refcount, "Device has %u references left\n", refcount);
 }

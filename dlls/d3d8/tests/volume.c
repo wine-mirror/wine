@@ -128,6 +128,7 @@ START_TEST(volume)
 {
     HMODULE d3d8_handle;
     IDirect3DDevice8 *device_ptr;
+    ULONG refcount;
     D3DCAPS8 caps;
 
     d3d8_handle = LoadLibraryA("d3d8.dll");
@@ -147,4 +148,7 @@ START_TEST(volume)
     }
 
     test_volume_get_container(device_ptr);
+
+    refcount = IDirect3DDevice8_Release(device_ptr);
+    ok(!refcount, "Device has %u references left\n", refcount);
 }

@@ -91,6 +91,7 @@ static void test_begin_end_state_block(IDirect3DDevice9 *device_ptr)
     ok(hret == D3D_OK && state_block_ptr != 0 && state_block_ptr != (IDirect3DStateBlock9 *)0xdeadbeef, 
         "EndStateBlock returned: hret 0x%x, state_block_ptr %p. "
         "Expected hret 0x%x, state_block_ptr != %p, state_block_ptr != 0xdeadbeef.\n", hret, state_block_ptr, D3D_OK, NULL);
+    IDirect3DStateBlock9_Release(state_block_ptr);
 
     /* Calling EndStateBlock while not recording should return D3DERR_INVALIDCALL. state_block_ptr should not be touched. */
     state_block_ptr = (IDirect3DStateBlock9 *)0xdeadbeef;
@@ -1583,5 +1584,9 @@ START_TEST(stateblock)
     test_state_management(device_ptr, &device_pparams);
     test_shader_constant_apply(device_ptr);
 
-    if (device_ptr) IUnknown_Release(device_ptr);
+    if (device_ptr)
+    {
+        ULONG refcount = IDirect3DDevice9_Release(device_ptr);
+        ok(!refcount, "Device has %u references left\n", refcount);
+    }
 }

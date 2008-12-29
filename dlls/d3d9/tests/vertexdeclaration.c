@@ -183,6 +183,7 @@ static void test_get_set_vertex_declaration(IDirect3DDevice9 *device_ptr, IDirec
     ok(hret == D3D_OK && decl_refcount == i && current_decl_ptr == decl_ptr, 
         "GetVertexDeclaration returned: hret 0x%x, current_decl_ptr %p refcount %d. "
         "Expected hret 0x%x, current_decl_ptr %p, refcount %d.\n", hret, current_decl_ptr, decl_refcount, D3D_OK, decl_ptr, i);
+    IDirect3DVertexDeclaration9_Release(current_decl_ptr);
 }
 
 static void test_get_declaration(IDirect3DVertexDeclaration9 *decl_ptr, D3DVERTEXELEMENT9 *vertex_decl, UINT expected_num_elements)
@@ -852,6 +853,7 @@ START_TEST(vertexdeclaration)
     UINT simple_decl_num_elements = sizeof(simple_decl) / sizeof(*simple_decl);
     IDirect3DDevice9 *device_ptr = 0;
     IDirect3DVertexDeclaration9 *decl_ptr = 0;
+    ULONG refcount;
 
     d3d9_handle = LoadLibraryA("d3d9.dll");
     if (!d3d9_handle)
@@ -880,4 +882,9 @@ START_TEST(vertexdeclaration)
     test_fvf_decl_management(device_ptr);
     test_vertex_declaration_alignment(device_ptr);
     test_unused_type(device_ptr);
+
+    IDirect3DVertexDeclaration9_Release(decl_ptr);
+
+    refcount = IDirect3DDevice9_Release(device_ptr);
+    ok(!refcount, "Device has %u references left\n", refcount);
 }

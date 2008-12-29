@@ -125,6 +125,7 @@ START_TEST(volume)
 {
     HMODULE d3d9_handle;
     IDirect3DDevice9 *device_ptr;
+    ULONG refcount;
     D3DCAPS9 caps;
 
     memset(&caps, 0, sizeof(caps));
@@ -145,4 +146,7 @@ START_TEST(volume)
     }
 
     test_volume_get_container(device_ptr);
+
+    refcount = IDirect3DDevice9_Release(device_ptr);
+    ok(!refcount, "Device has %u references left\n", refcount);
 }

@@ -382,6 +382,7 @@ START_TEST(surface)
 {
     HMODULE d3d9_handle;
     IDirect3DDevice9 *device_ptr;
+    ULONG refcount;
 
     d3d9_handle = LoadLibraryA("d3d9.dll");
     if (!d3d9_handle)
@@ -398,4 +399,7 @@ START_TEST(surface)
     test_lockrect_offset(device_ptr);
     test_lockrect_invalid(device_ptr);
     test_private_data(device_ptr);
+
+    refcount = IDirect3DDevice9_Release(device_ptr);
+    ok(!refcount, "Device has %u references left\n", refcount);
 }

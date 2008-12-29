@@ -1345,8 +1345,11 @@ START_TEST(visual)
 cleanup:
     if(device_ptr) {
         D3DDEVICE_CREATION_PARAMETERS creation_parameters;
+        ULONG refcount;
+
         IDirect3DDevice8_GetCreationParameters(device_ptr, &creation_parameters);
-        IDirect3DDevice8_Release(device_ptr);
+        refcount = IDirect3DDevice8_Release(device_ptr);
+        ok(!refcount, "Device has %u references left\n", refcount);
         DestroyWindow(creation_parameters.hFocusWindow);
     }
 }
