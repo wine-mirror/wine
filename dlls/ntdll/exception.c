@@ -601,5 +601,5 @@ void __wine_spec_unimplemented_stub( const char *module, const char *function )
     record.NumberParameters = 2;
     record.ExceptionInformation[0] = (ULONG_PTR)module;
     record.ExceptionInformation[1] = (ULONG_PTR)function;
-    RtlRaiseException( &record );
+    for (;;) RtlRaiseException( &record );
 }
