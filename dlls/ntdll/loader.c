@@ -1451,7 +1451,7 @@ static void load_builtin_callback( void *module, const char *filename )
         req->size       = nt->OptionalHeader.SizeOfImage;
         req->dbg_offset = nt->FileHeader.PointerToSymbolTable;
         req->dbg_size   = nt->FileHeader.NumberOfSymbols;
-        req->name       = &wm->ldr.FullDllName.Buffer;
+        req->name       = wine_server_client_ptr( &wm->ldr.FullDllName.Buffer );
         wine_server_add_data( req, wm->ldr.FullDllName.Buffer, wm->ldr.FullDllName.Length );
         wine_server_call( req );
     }
@@ -1533,7 +1533,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
         req->size       = nt->OptionalHeader.SizeOfImage;
         req->dbg_offset = nt->FileHeader.PointerToSymbolTable;
         req->dbg_size   = nt->FileHeader.NumberOfSymbols;
-        req->name       = &wm->ldr.FullDllName.Buffer;
+        req->name       = wine_server_client_ptr( &wm->ldr.FullDllName.Buffer );
         wine_server_add_data( req, wm->ldr.FullDllName.Buffer, wm->ldr.FullDllName.Length );
         wine_server_call( req );
     }

@@ -75,7 +75,7 @@ struct debug_event_create_process
     int          dbg_size;
     void        *teb;
     void        *start;
-    void        *name;
+    client_ptr_t name;
     int          unicode;
 };
 struct debug_event_exit
@@ -88,7 +88,7 @@ struct debug_event_load_dll
     mod_handle_t base;
     int          dbg_offset;
     int          dbg_size;
-    void        *name;
+    client_ptr_t name;
     int          unicode;
 };
 struct debug_event_unload_dll
@@ -723,7 +723,7 @@ struct load_dll_request
     struct request_header __header;
     obj_handle_t handle;
     mod_handle_t base;
-    void*        name;
+    client_ptr_t name;
     data_size_t  size;
     int          dbg_offset;
     int          dbg_size;
@@ -5052,6 +5052,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 356
+#define SERVER_PROTOCOL_VERSION 357
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

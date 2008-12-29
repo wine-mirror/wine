@@ -459,10 +459,11 @@ static void dump_varargs_debug_event( data_size_t size )
                  event->info.create_process.file, event->info.create_process.process,
                  event->info.create_process.thread );
         dump_uint64( &event->info.create_process.base );
-        fprintf( stderr, ",offset=%d,size=%d,teb=%p,start=%p,name=%p,unicode=%d}",
+        fprintf( stderr, ",offset=%d,size=%d,teb=%p,start=%p,name=",
                  event->info.create_process.dbg_offset, event->info.create_process.dbg_size,
-                 event->info.create_process.teb, event->info.create_process.start,
-                 event->info.create_process.name, event->info.create_process.unicode );
+                 event->info.create_process.teb, event->info.create_process.start );
+        dump_uint64( &event->info.create_process.name );
+        fprintf( stderr, ",unicode=%d}", event->info.create_process.unicode );
         break;
     case EXIT_THREAD_DEBUG_EVENT:
         fprintf( stderr, "{exit_thread,code=%d}", event->info.exit.exit_code );
@@ -473,9 +474,10 @@ static void dump_varargs_debug_event( data_size_t size )
     case LOAD_DLL_DEBUG_EVENT:
         fprintf( stderr, "{load_dll,file=%04x,base", event->info.load_dll.handle );
         dump_uint64( &event->info.load_dll.base );
-        fprintf( stderr, ",offset=%d,size=%d,name=%p,unicode=%d}",
-                 event->info.load_dll.dbg_offset, event->info.load_dll.dbg_size,
-                 event->info.load_dll.name, event->info.load_dll.unicode );
+        fprintf( stderr, ",offset=%d,size=%d,name=",
+                 event->info.load_dll.dbg_offset, event->info.load_dll.dbg_size );
+        dump_uint64( &event->info.load_dll.name );
+        fprintf( stderr, ",unicode=%d}", event->info.load_dll.unicode );
         break;
     case UNLOAD_DLL_DEBUG_EVENT:
         fputs( "{unload_dll,base=", stderr );
@@ -1071,7 +1073,9 @@ static void dump_load_dll_request( const struct load_dll_request *req )
     fprintf( stderr, " base=" );
     dump_uint64( &req->base );
     fprintf( stderr, "," );
-    fprintf( stderr, " name=%p,", req->name );
+    fprintf( stderr, " name=" );
+    dump_uint64( &req->name );
+    fprintf( stderr, "," );
     fprintf( stderr, " size=%u,", req->size );
     fprintf( stderr, " dbg_offset=%d,", req->dbg_offset );
     fprintf( stderr, " dbg_size=%d,", req->dbg_size );

@@ -91,7 +91,7 @@ struct debug_event_create_process
     int          dbg_size;   /* size of debug info */
     void        *teb;        /* thread teb (in debugged process address space) */
     void        *start;      /* thread startup routine */
-    void        *name;       /* image name (optional) */
+    client_ptr_t name;       /* image name (optional) */
     int          unicode;    /* is it Unicode? */
 };
 struct debug_event_exit
@@ -104,7 +104,7 @@ struct debug_event_load_dll
     mod_handle_t base;       /* base address of the dll */
     int          dbg_offset; /* offset of debug info in file */
     int          dbg_size;   /* size of debug info */
-    void        *name;       /* image name (optional) */
+    client_ptr_t name;       /* image name (optional) */
     int          unicode;    /* is it Unicode? */
 };
 struct debug_event_unload_dll
@@ -659,7 +659,7 @@ typedef union
 @REQ(load_dll)
     obj_handle_t handle;       /* file handle */
     mod_handle_t base;         /* base address */
-    void*        name;         /* ptr to ptr to name (in process addr space) */
+    client_ptr_t name;         /* ptr to ptr to name (in process addr space) */
     data_size_t  size;         /* dll size */
     int          dbg_offset;   /* debug info offset */
     int          dbg_size;     /* debug info size */

@@ -91,7 +91,7 @@ BOOL WINAPI WaitForDebugEvent(
                 event->u.CreateProcessInfo.nDebugInfoSize        = data.info.create_process.dbg_size;
                 event->u.CreateProcessInfo.lpThreadLocalBase     = data.info.create_process.teb;
                 event->u.CreateProcessInfo.lpStartAddress        = data.info.create_process.start;
-                event->u.CreateProcessInfo.lpImageName           = data.info.create_process.name;
+                event->u.CreateProcessInfo.lpImageName           = wine_server_get_ptr( data.info.create_process.name );
                 event->u.CreateProcessInfo.fUnicode              = data.info.create_process.unicode;
                 break;
             case EXIT_THREAD_DEBUG_EVENT:
@@ -105,7 +105,7 @@ BOOL WINAPI WaitForDebugEvent(
                 event->u.LoadDll.lpBaseOfDll           = wine_server_get_ptr( data.info.load_dll.base );
                 event->u.LoadDll.dwDebugInfoFileOffset = data.info.load_dll.dbg_offset;
                 event->u.LoadDll.nDebugInfoSize        = data.info.load_dll.dbg_size;
-                event->u.LoadDll.lpImageName           = data.info.load_dll.name;
+                event->u.LoadDll.lpImageName           = wine_server_get_ptr( data.info.load_dll.name );
                 event->u.LoadDll.fUnicode              = data.info.load_dll.unicode;
                 break;
             case UNLOAD_DLL_DEBUG_EVENT:
