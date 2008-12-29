@@ -2191,37 +2191,53 @@ static void add_module_typeinfo(msft_typelib_t *typelib, type_t *module)
     msft_typeinfo->typeinfo->size = idx;
 }
 
-static void add_entry(msft_typelib_t *typelib, typelib_entry_t *entry)
+static void add_entry(msft_typelib_t *typelib, const statement_t *stmt)
 {
-    switch(entry->type->kind) {
-    case TKIND_INTERFACE:
-    case TKIND_DISPATCH:
-        add_interface_typeinfo(typelib, entry->type);
+    switch(stmt->type) {
+    case STMT_LIBRARY:
+    case STMT_IMPORT:
+    case STMT_CPPQUOTE:
+    case STMT_DECLARATION:
+        /* not included in typelib */
         break;
-
-    case TKIND_RECORD:
-        add_structure_typeinfo(typelib, entry->type);
+    case STMT_IMPORTLIB:
+        /* not processed here */
         break;
-
-    case TKIND_ENUM:
-        add_enum_typeinfo(typelib, entry->type);
+    case STMT_TYPEDEF:
+    {
+        const type_list_t *type_entry = stmt->u.type_list;
+        for (; type_entry; type_entry = type_entry->next)
+            if (is_attr(type_entry->type->attrs, ATTR_PUBLIC))
+                add_typedef_typeinfo(typelib, type_entry->type);
         break;
-
-    case TKIND_ALIAS:
-        add_typedef_typeinfo(typelib, entry->type);
+    }
+    case STMT_MODULE:
+        add_module_typeinfo(typelib, stmt->u.type);
         break;
-
-    case TKIND_COCLASS:
-        add_coclass_typeinfo(typelib, entry->type);
+    case STMT_TYPE:
+    case STMT_TYPEREF:
+    {
+        type_t *type = stmt->u.type;
+        switch (type->kind) {
+        case TKIND_INTERFACE:
+        case TKIND_DISPATCH:
+            add_interface_typeinfo(typelib, type);
+            break;
+        case TKIND_RECORD:
+            add_structure_typeinfo(typelib, type);
+            break;
+        case TKIND_ENUM:
+            add_enum_typeinfo(typelib, type);
+            break;
+        case TKIND_COCLASS:
+            add_coclass_typeinfo(typelib, type);
+            break;
+        default:
+            error("add_entry: unhandled type %d\n", type->kind);
+            break;
+        }
         break;
-
-    case TKIND_MODULE:
-        add_module_typeinfo(typelib, entry->type);
-        break;
-
-    default:
-        error("add_entry: unhandled type %d\n", entry->type->kind);
-        break;
+    }
     }
 }
 
@@ -2497,7 +2513,7 @@ int create_msft_typelib(typelib_t *typelib)
 {
     msft_typelib_t *msft;
     int failed = 0;
-    typelib_entry_t *entry;
+    const statement_t *stmt;
     time_t cur_time;
     char *time_override;
     unsigned int version = 5 << 24 | 1 << 16 | 164; /* 5.01.0164 */
@@ -2550,8 +2566,9 @@ int create_msft_typelib(typelib_t *typelib)
     set_custdata(msft, &midl_time_guid, VT_UI4, &cur_time, &msft->typelib_header.CustomDataOffset);
     set_custdata(msft, &midl_version_guid, VT_UI4, &version, &msft->typelib_header.CustomDataOffset);
 
-    LIST_FOR_EACH_ENTRY( entry, &typelib->entries, typelib_entry_t, entry )
-        add_entry(msft, entry);
+    if (typelib->stmts)
+        LIST_FOR_EACH_ENTRY( stmt, typelib->stmts, const statement_t, entry )
+            add_entry(msft, stmt);
 
     save_all_changes(msft);
     free(msft);

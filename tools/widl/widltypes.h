@@ -387,7 +387,6 @@ struct _typelib_t {
     char *name;
     char *filename;
     const attr_list_t *attrs;
-    struct list entries;
     struct list importlibs;
     statement_list_t *stmts;
 };

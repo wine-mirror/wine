@@ -369,27 +369,23 @@ gbl_statements:					{ $$ = NULL; }
 						  if (!parse_only && do_header) write_coclass_forward($2);
 						}
 	| gbl_statements coclassdef		{ $$ = append_statement($1, make_statement_type_decl($2));
-						  add_typelib_entry($2);
 						  reg_type($2, $2->name, 0);
 						  if (!parse_only && do_header) write_coclass_forward($2);
 						}
-	| gbl_statements moduledef		{ $$ = append_statement($1, make_statement_module($2));
-						  add_typelib_entry($2);
-						}
+	| gbl_statements moduledef		{ $$ = append_statement($1, make_statement_module($2)); }
 	| gbl_statements librarydef		{ $$ = append_statement($1, make_statement_library($2)); }
 	| gbl_statements statement		{ $$ = append_statement($1, $2); }
 	;
 
 imp_statements:					{ $$ = NULL; }
-	| imp_statements interfacedec		{ $$ = append_statement($1, make_statement_reference($2)); if (!parse_only) add_typelib_entry($2); }
-	| imp_statements interfacedef		{ $$ = append_statement($1, make_statement_type_decl($2)); if (!parse_only) add_typelib_entry($2); }
+	| imp_statements interfacedec		{ $$ = append_statement($1, make_statement_reference($2)); }
+	| imp_statements interfacedef		{ $$ = append_statement($1, make_statement_type_decl($2)); }
 	| imp_statements coclass ';'		{ $$ = $1; reg_type($2, $2->name, 0); if (!parse_only && do_header) write_coclass_forward($2); }
 	| imp_statements coclassdef		{ $$ = append_statement($1, make_statement_type_decl($2));
-						  if (!parse_only) add_typelib_entry($2);
 						  reg_type($2, $2->name, 0);
 						  if (!parse_only && do_header) write_coclass_forward($2);
 						}
-	| imp_statements moduledef		{ $$ = append_statement($1, make_statement_module($2)); if (!parse_only) add_typelib_entry($2); }
+	| imp_statements moduledef		{ $$ = append_statement($1, make_statement_module($2)); }
 	| imp_statements statement		{ $$ = append_statement($1, $2); }
 	| imp_statements importlib		{ $$ = append_statement($1, make_statement_importlib($2)); }
 	| imp_statements librarydef		{ $$ = append_statement($1, make_statement_library($2)); }
@@ -644,10 +640,7 @@ enum:	  ident '=' expr_int_const		{ $$ = reg_const($1);
 						}
 	;
 
-enumdef: tENUM t_ident '{' enums '}'		{ $$ = type_new_enum($2, $4);
-                                                  if(in_typelib)
-                                                      add_typelib_entry($$);
-						}
+enumdef: tENUM t_ident '{' enums '}'		{ $$ = type_new_enum($2, $4); }
 	;
 
 m_exprs:  m_expr                                { $$ = append_expr( NULL, $1 ); }
@@ -1048,10 +1041,7 @@ pointer_type:
 	| tPTR					{ $$ = RPC_FC_FP; }
 	;
 
-structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = type_new_struct($2, TRUE, $4);
-                                                  if(in_typelib)
-                                                      add_typelib_entry($$);
-                                                }
+structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = type_new_struct($2, TRUE, $4); }
 	;
 
 type:	  tVOID					{ $$ = find_type_or_error("void", 0); }
@@ -1783,7 +1773,6 @@ static typelib_t *make_library(const char *name, const attr_list_t *attrs)
     typelib->name = xstrdup(name);
     typelib->filename = NULL;
     typelib->attrs = attrs;
-    list_init( &typelib->entries );
     list_init( &typelib->importlibs );
     return typelib;
 }
@@ -2746,8 +2735,6 @@ static statement_t *process_typedefs(declarator_list_t *decls)
 
         if (! parse_only && do_header)
             write_typedef(type);
-        if (in_typelib && is_attr(type->attrs, ATTR_PUBLIC))
-            add_typelib_entry(type);
 
         type_list = &(*type_list)->next;
         free(decl);
