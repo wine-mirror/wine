@@ -446,6 +446,11 @@ static BOOL MULTIMEDIA_PlaySound(const void* pszSound, HMODULE hmod, DWORD fdwSo
     if ((fdwSound & (SND_NOWAIT | SND_NOSTOP)) && PlaySoundList != NULL)
 	return FALSE;
 
+    if ((fdwSound & SND_ALIAS_ID) == SND_ALIAS_ID) {
+        FIXME("SND_ALIAS_ID not supported\n");
+        return FALSE;
+    }
+
     /* alloc internal structure, if we need to play something */
     if (pszSound && !(fdwSound & SND_PURGE))
     {
