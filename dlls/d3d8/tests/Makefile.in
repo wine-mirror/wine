@@ -8,6 +8,7 @@ IMPORTS   = user32 kernel32
 CTESTS = \
 	d3d8_main.c \
 	device.c \
+	stateblock.c \
 	surface.c \
 	texture.c \
 	visual.c \
