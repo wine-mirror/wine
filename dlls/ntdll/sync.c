@@ -812,7 +812,7 @@ static int wait_reply( void *cookie )
         if (ret == sizeof(reply))
         {
             if (!reply.cookie) break;  /* thread got killed */
-            if (reply.cookie == cookie) return reply.signaled;
+            if (wine_server_get_ptr(reply.cookie) == cookie) return reply.signaled;
             /* we stole another reply, wait for the real one */
             signaled = wait_reply( cookie );
             /* and now put the wrong one back in the pipe */
@@ -1091,7 +1091,7 @@ NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UIN
         SERVER_START_REQ( select )
         {
             req->flags    = flags;
-            req->cookie   = &cookie;
+            req->cookie   = wine_server_client_ptr( &cookie );
             req->signal   = wine_server_obj_handle( signal_object );
             req->prev_apc = apc_handle;
             req->timeout  = abs_timeout;

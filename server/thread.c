@@ -58,7 +58,7 @@ struct thread_wait
     struct thread          *thread;     /* owner thread */
     int                     count;      /* count of objects */
     int                     flags;
-    void                   *cookie;     /* magic cookie to return to client */
+    client_ptr_t            cookie;     /* magic cookie to return to client */
     timeout_t               timeout;
     struct timeout_user    *user;
     struct wait_queue_entry queues[1];
@@ -560,7 +560,7 @@ static int check_wait( struct thread *thread )
 }
 
 /* send the wakeup signal to a thread */
-static int send_thread_wakeup( struct thread *thread, void *cookie, int signaled )
+static int send_thread_wakeup( struct thread *thread, client_ptr_t cookie, int signaled )
 {
     struct wake_up_reply reply;
     int ret;
@@ -583,15 +583,14 @@ static int send_thread_wakeup( struct thread *thread, void *cookie, int signaled
 int wake_thread( struct thread *thread )
 {
     int signaled, count;
-    void *cookie;
+    client_ptr_t cookie;
 
     for (count = 0; thread->wait; count++)
     {
         if ((signaled = check_wait( thread )) == -1) break;
 
         cookie = thread->wait->cookie;
-        if (debug_level) fprintf( stderr, "%04x: *wakeup* signaled=%d cookie=%p\n",
-                                  thread->id, signaled, cookie );
+        if (debug_level) fprintf( stderr, "%04x: *wakeup* signaled=%d\n", thread->id, signaled );
         end_wait( thread );
         if (send_thread_wakeup( thread, cookie, signaled ) == -1) /* error */
 	    break;
@@ -604,14 +603,13 @@ static void thread_timeout( void *ptr )
 {
     struct thread_wait *wait = ptr;
     struct thread *thread = wait->thread;
-    void *cookie = wait->cookie;
+    client_ptr_t cookie = wait->cookie;
 
     wait->user = NULL;
     if (thread->wait != wait) return; /* not the top-level wait, ignore it */
     if (thread->suspend + thread->process->suspend > 0) return;  /* suspended, ignore it */
 
-    if (debug_level) fprintf( stderr, "%04x: *wakeup* signaled=%d cookie=%p\n",
-                              thread->id, (int)STATUS_TIMEOUT, cookie );
+    if (debug_level) fprintf( stderr, "%04x: *wakeup* signaled=TIMEOUT\n", thread->id );
     end_wait( thread );
     if (send_thread_wakeup( thread, cookie, STATUS_TIMEOUT ) == -1) return;
     /* check if other objects have become signaled in the meantime */
@@ -634,7 +632,7 @@ static int signal_object( obj_handle_t handle )
 }
 
 /* select on a list of handles */
-static timeout_t select_on( unsigned int count, void *cookie, const obj_handle_t *handles,
+static timeout_t select_on( unsigned int count, client_ptr_t cookie, const obj_handle_t *handles,
                             int flags, timeout_t timeout, obj_handle_t signal_obj )
 {
     int ret;
@@ -916,7 +914,7 @@ void kill_thread( struct thread *thread, int violent_death )
     if (thread->wait)
     {
         while (thread->wait) end_wait( thread );
-        send_thread_wakeup( thread, NULL, STATUS_PENDING );
+        send_thread_wakeup( thread, 0, STATUS_PENDING );
         /* if it is waiting on the socket, we don't need to send a SIGQUIT */
         violent_death = 0;
     }

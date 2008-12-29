@@ -135,8 +135,8 @@ struct send_fd
 
 struct wake_up_reply
 {
-    void *cookie;
-    int   signaled;
+    client_ptr_t cookie;
+    int          signaled;
 };
 
 
@@ -860,7 +860,7 @@ struct select_request
 {
     struct request_header __header;
     int          flags;
-    void*        cookie;
+    client_ptr_t cookie;
     obj_handle_t signal;
     obj_handle_t prev_apc;
     timeout_t    timeout;
@@ -5052,6 +5052,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 358
+#define SERVER_PROTOCOL_VERSION 359
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

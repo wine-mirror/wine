@@ -1175,7 +1175,9 @@ static void dump_open_thread_reply( const struct open_thread_reply *req )
 static void dump_select_request( const struct select_request *req )
 {
     fprintf( stderr, " flags=%d,", req->flags );
-    fprintf( stderr, " cookie=%p,", req->cookie );
+    fprintf( stderr, " cookie=" );
+    dump_uint64( &req->cookie );
+    fprintf( stderr, "," );
     fprintf( stderr, " signal=%04x,", req->signal );
     fprintf( stderr, " prev_apc=%04x,", req->prev_apc );
     fprintf( stderr, " timeout=" );

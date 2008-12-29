@@ -151,8 +151,8 @@ struct send_fd
 /* structure sent by the server on the wait fifo */
 struct wake_up_reply
 {
-    void *cookie;    /* magic cookie that was passed in select_request */
-    int   signaled;  /* wait result */
+    client_ptr_t cookie;    /* magic cookie that was passed in select_request */
+    int          signaled;  /* wait result */
 };
 
 /* NT-style timeout, in 100ns units, negative means relative timeout */
@@ -748,7 +748,7 @@ typedef union
 /* Wait for handles */
 @REQ(select)
     int          flags;        /* wait flags (see below) */
-    void*        cookie;       /* magic cookie to return to client */
+    client_ptr_t cookie;       /* magic cookie to return to client */
     obj_handle_t signal;       /* object to signal (0 if none) */
     obj_handle_t prev_apc;     /* handle to previous APC */
     timeout_t    timeout;      /* timeout */
