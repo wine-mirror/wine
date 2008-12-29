@@ -244,7 +244,7 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetLevelDesc(IWineD3DVolumeTextu
         TRACE("(%p) Level (%d)\n", This, Level);
         return IWineD3DVolume_GetDesc(This->volumes[Level], pDesc);
     } else {
-        FIXME("(%p) Level (%d)\n", This, Level);
+        WARN("(%p) Level (%d)\n", This, Level);
     }
     return WINED3D_OK;
 }
@@ -255,7 +255,7 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetVolumeLevel(IWineD3DVolumeTex
       IWineD3DVolume_AddRef(*ppVolumeLevel);
       TRACE("(%p) -> level(%d) returning volume@%p\n", This, Level, *ppVolumeLevel);
     } else {
-      FIXME("(%p) Level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
+      WARN("(%p) Level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
       return WINED3DERR_INVALIDCALL;
     }
     return WINED3D_OK;

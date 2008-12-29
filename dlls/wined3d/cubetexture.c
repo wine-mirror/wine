@@ -298,7 +298,7 @@ static HRESULT WINAPI IWineD3DCubeTextureImpl_GetLevelDesc(IWineD3DCubeTexture *
         TRACE("(%p) level (%d)\n", This, Level);
         return IWineD3DSurface_GetDesc(This->surfaces[0][Level], pDesc);
     }
-    FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
+    WARN("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
     return WINED3DERR_INVALIDCALL;
 }
 

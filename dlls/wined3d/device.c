@@ -2984,7 +2984,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
                  *
                  * TODO: Test how this affects rendering
                  */
-                FIXME("Too many concurrently active lights\n");
+                WARN("Too many concurrently active lights\n");
                 return WINED3D_OK;
             }
 
@@ -4738,7 +4738,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface, IW
     IWineD3DStateBlockImpl *object = This->updateStateBlock;
 
     if (!This->isRecordingState) {
-        FIXME("(%p) not recording! returning error\n", This);
+        WARN("(%p) not recording! returning error\n", This);
         *ppStateBlock = NULL;
         return WINED3DERR_INVALIDCALL;
     }
@@ -5137,7 +5137,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *
          * without an index buffer set. (The first time at least...)
          * D3D8 simply dies, but I doubt it can do much harm to return
          * D3DERR_INVALIDCALL there as well. */
-        ERR("(%p) : Called without a valid index buffer set, returning WINED3DERR_INVALIDCALL\n", This);
+        WARN("(%p) : Called without a valid index buffer set, returning WINED3DERR_INVALIDCALL\n", This);
         return WINED3DERR_INVALIDCALL;
     }
 

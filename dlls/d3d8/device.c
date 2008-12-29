@@ -1113,7 +1113,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_EndStateBlock(LPDIRECT3DDEVICE8 iface
     EnterCriticalSection(&d3d8_cs);
     hr = IWineD3DDevice_EndStateBlock(This->WineD3DDevice , &wineD3DStateBlock);
     if (hr != D3D_OK) {
-        FIXME("IWineD3DDevice_EndStateBlock returned an error\n");
+        WARN("IWineD3DDevice_EndStateBlock returned an error\n");
         LeaveCriticalSection(&d3d8_cs);
         return hr;
     }

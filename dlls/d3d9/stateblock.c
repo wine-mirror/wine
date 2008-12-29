@@ -175,7 +175,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_EndStateBlock(LPDIRECT3DDEVICE9EX iface, I
     hr=IWineD3DDevice_EndStateBlock(This->WineD3DDevice,&wineD3DStateBlock);
     LeaveCriticalSection(&d3d9_cs);
     if(hr!= D3D_OK){
-       FIXME("IWineD3DDevice_EndStateBlock returned an error\n");
+       WARN("IWineD3DDevice_EndStateBlock returned an error\n");
        return hr;
     }    
     /* allocate a new IDirectD3DStateBlock */
