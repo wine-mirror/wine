@@ -139,11 +139,6 @@ static type_t *get_type(unsigned char type, char *name, int t);
 
 static var_t *reg_const(var_t *var);
 
-static void write_libid(const typelib_t *typelib);
-static void write_clsid(type_t *cls);
-static void write_diid(type_t *iface);
-static void write_iid(type_t *iface);
-
 static char *gen_name(void);
 static statement_t *process_typedefs(var_list_t *names);
 static void check_arg(var_t *arg);
@@ -354,6 +349,7 @@ static func_list_t *append_func_from_statement(func_list_t *list, statement_t *s
 
 input:   gbl_statements				{ fix_incomplete();
 						  check_all_user_types($1);
+						  write_id_data($1);
 						  write_proxies($1);
 						  write_client($1);
 						  write_server($1);
@@ -449,7 +445,6 @@ libraryhdr: tLIBRARY aIDENTIFIER		{ $$ = $2; }
 library_start: attributes libraryhdr '{'	{ $$ = make_library($2, check_library_attrs($2, $1));
 						  if (!parse_only) start_typelib($$);
 						  if (!parse_only && do_header) write_library($$);
-						  if (!parse_only && do_idfile) write_libid($$);
 						  is_inside_library = TRUE;
 						}
 	;
@@ -847,8 +842,6 @@ coclasshdr: attributes coclass			{ $$ = $2;
 						  $$->attrs = check_coclass_attrs($2->name, $1);
 						  if (!parse_only && do_header)
 						    write_coclass($$);
-						  if (!parse_only && do_idfile)
-						    write_clsid($$);
 						}
 	;
 
@@ -897,14 +890,12 @@ dispinterfacedef: dispinterfacehdr '{'
 	  '}'					{ $$ = $1;
 						  type_dispinterface_define($$, $3, $4);
 						  if (!parse_only && do_header) write_interface($$);
-						  if (!parse_only && do_idfile) write_diid($$);
 						  is_in_interface = FALSE;
 						}
 	| dispinterfacehdr
 	 '{' interface ';' '}' 			{ $$ = $1;
 						  type_dispinterface_define_from_iface($$, $3);
 						  if (!parse_only && do_header) write_interface($$);
-						  if (!parse_only && do_idfile) write_diid($$);
 						  is_in_interface = FALSE;
 						}
 	;
@@ -935,7 +926,6 @@ interfacedef: interfacehdr inherit
 						  type_interface_define($$, $2, $4);
 						  if (!parse_only && do_header) write_interface($$);
 						  if (!parse_only && local_stubs) write_locals(local_stubs, $$, TRUE);
-						  if (!parse_only && do_idfile) write_iid($$);
 						  pointer_default = $1.old_pointer_default;
 						  is_in_interface = FALSE;
 						}
@@ -947,7 +937,6 @@ interfacedef: interfacehdr inherit
 						  type_interface_define($$, find_type_or_error2($3, 0), $6);
 						  if (!parse_only && do_header) write_interface($$);
 						  if (!parse_only && local_stubs) write_locals(local_stubs, $$, TRUE);
-						  if (!parse_only && do_idfile) write_iid($$);
 						  pointer_default = $1.old_pointer_default;
 						  is_in_interface = FALSE;
 						}
@@ -2020,30 +2009,6 @@ var_t *find_const(const char *name, int f)
     return NULL;
   }
   return cur->var;
-}
-
-static void write_libid(const typelib_t *typelib)
-{
-  const UUID *uuid = get_attrp(typelib->attrs, ATTR_UUID);
-  write_guid(idfile, "LIBID", typelib->name, uuid);
-}
-
-static void write_clsid(type_t *cls)
-{
-  const UUID *uuid = get_attrp(cls->attrs, ATTR_UUID);
-  write_guid(idfile, "CLSID", cls->name, uuid);
-}
-
-static void write_diid(type_t *iface)
-{
-  const UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
-  write_guid(idfile, "DIID", iface->name, uuid);
-}
-
-static void write_iid(type_t *iface)
-{
-  const UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
-  write_guid(idfile, "IID", iface->name, uuid);
 }
 
 static char *gen_name(void)

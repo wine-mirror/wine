@@ -71,6 +71,7 @@ extern FILE* header;
 extern FILE* local_stubs;
 extern FILE* idfile;
 
+extern void write_id_data(const statement_list_t *stmts);
 extern void write_proxies(const statement_list_t *stmts);
 extern void write_client(const statement_list_t *stmts);
 extern void write_server(const statement_list_t *stmts);
