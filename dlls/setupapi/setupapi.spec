@@ -18,7 +18,7 @@
 @ stub CM_Add_Range
 @ stub CM_Add_Res_Des
 @ stub CM_Add_Res_Des_Ex
-@ stub CM_Connect_MachineA
+@ stdcall CM_Connect_MachineA(str ptr)
 @ stdcall CM_Connect_MachineW(wstr ptr)
 @ stub CM_Create_DevNodeA
 @ stub CM_Create_DevNodeW

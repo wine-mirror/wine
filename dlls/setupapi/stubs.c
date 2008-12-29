@@ -52,6 +52,15 @@ DWORD WINAPI suErrorToIds16( WORD w1, WORD w2 )
 }
 
 /***********************************************************************
+ *              CM_Connect_MachineA  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Connect_MachineA(PCSTR name, PHMACHINE machine)
+{
+  FIXME("(%s %p) stub\n", name, machine);
+  return CR_ACCESS_DENIED;
+}
+
+/***********************************************************************
  *		CM_Connect_MachineW  (SETUPAPI.@)
  */
 CONFIGRET WINAPI CM_Connect_MachineW(PCWSTR name, PHMACHINE machine)
