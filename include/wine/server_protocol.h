@@ -26,6 +26,8 @@ typedef unsigned __int64 lparam_t;
 typedef unsigned __int64 apc_param_t;
 typedef unsigned __int64 mem_size_t;
 typedef unsigned __int64 file_pos_t;
+typedef void *client_ptr_t;
+typedef client_ptr_t mod_handle_t;
 
 struct request_header
 {
@@ -68,7 +70,7 @@ struct debug_event_create_process
     obj_handle_t file;
     obj_handle_t process;
     obj_handle_t thread;
-    void        *base;
+    mod_handle_t base;
     int          dbg_offset;
     int          dbg_size;
     void        *teb;
@@ -83,7 +85,7 @@ struct debug_event_exit
 struct debug_event_load_dll
 {
     obj_handle_t handle;
-    void        *base;
+    mod_handle_t base;
     int          dbg_offset;
     int          dbg_size;
     void        *name;
@@ -91,7 +93,7 @@ struct debug_event_load_dll
 };
 struct debug_event_unload_dll
 {
-    void       *base;
+    mod_handle_t base;
 };
 struct debug_event_output_string
 {
@@ -530,7 +532,7 @@ struct get_startup_info_reply
 struct init_process_done_request
 {
     struct request_header __header;
-    void*        module;
+    mod_handle_t module;
     void*        entry;
     int          gui;
 };
@@ -677,7 +679,7 @@ struct get_dll_info_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    void*        base_address;
+    mod_handle_t base_address;
 };
 struct get_dll_info_reply
 {
@@ -720,7 +722,7 @@ struct load_dll_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    void*        base;
+    mod_handle_t base;
     void*        name;
     data_size_t  size;
     int          dbg_offset;
@@ -737,7 +739,7 @@ struct load_dll_reply
 struct unload_dll_request
 {
     struct request_header __header;
-    void*        base;
+    mod_handle_t base;
 };
 struct unload_dll_reply
 {
@@ -2777,7 +2779,7 @@ struct create_window_request
     user_handle_t  parent;
     user_handle_t  owner;
     atom_t         atom;
-    void*          instance;
+    mod_handle_t   instance;
     /* VARARG(class,unicode_str); */
 };
 struct create_window_reply
@@ -2860,7 +2862,7 @@ struct set_window_info_request
     unsigned int   ex_style;
     unsigned int   id;
     int            is_unicode;
-    void*          instance;
+    mod_handle_t   instance;
     lparam_t       user_data;
     int            extra_offset;
     data_size_t    extra_size;
@@ -2872,7 +2874,7 @@ struct set_window_info_reply
     unsigned int   old_style;
     unsigned int   old_ex_style;
     unsigned int   old_id;
-    void*          old_instance;
+    mod_handle_t   old_instance;
     lparam_t       old_user_data;
     lparam_t       old_extra_value;
 };
@@ -3656,7 +3658,7 @@ struct create_class_request
     int            local;
     atom_t         atom;
     unsigned int   style;
-    void*          instance;
+    mod_handle_t   instance;
     int            extra;
     int            win_extra;
     void*          client_ptr;
@@ -3674,7 +3676,7 @@ struct destroy_class_request
 {
     struct request_header __header;
     atom_t         atom;
-    void*          instance;
+    mod_handle_t   instance;
     /* VARARG(name,unicode_str); */
 };
 struct destroy_class_reply
@@ -3693,7 +3695,7 @@ struct set_class_info_request
     atom_t         atom;
     unsigned int   style;
     int            win_extra;
-    void*          instance;
+    mod_handle_t   instance;
     int            extra_offset;
     data_size_t    extra_size;
     lparam_t       extra_value;
@@ -3705,7 +3707,7 @@ struct set_class_info_reply
     unsigned int   old_style;
     int            old_extra;
     int            old_win_extra;
-    void*          old_instance;
+    mod_handle_t   old_instance;
     lparam_t       old_extra_value;
 };
 #define SET_CLASS_ATOM      0x0001

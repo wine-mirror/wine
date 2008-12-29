@@ -36,6 +36,7 @@ my %formats =
     "user_handle_t" => [  4,   4,  "%08x" ],
     "process_id_t"  => [  4,   4,  "%04x" ],
     "thread_id_t"   => [  4,   4,  "%04x" ],
+    "mod_handle_t"  => [  4,   4,  "%p" ],
     "lparam_t"      => [  8,   8,  "&dump_uint64" ],
     "apc_param_t"   => [  8,   8,  "&dump_uint64" ],
     "file_pos_t"    => [  8,   8,  "&dump_uint64" ],

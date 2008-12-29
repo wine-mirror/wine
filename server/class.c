@@ -46,7 +46,7 @@ struct window_class
     int             count;           /* reference count */
     int             local;           /* local class? */
     atom_t          atom;            /* class atom */
-    void           *instance;        /* module instance */
+    mod_handle_t    instance;        /* module instance */
     unsigned int    style;           /* class style */
     int             win_extra;       /* number of window extra bytes */
     void           *client_ptr;      /* pointer to class in client address space */
@@ -91,7 +91,7 @@ void destroy_process_classes( struct process *process )
     }
 }
 
-static struct window_class *find_class( struct process *process, atom_t atom, void *instance )
+static struct window_class *find_class( struct process *process, atom_t atom, mod_handle_t instance )
 {
     struct list *ptr;
 
@@ -105,7 +105,7 @@ static struct window_class *find_class( struct process *process, atom_t atom, vo
 }
 
 struct window_class *grab_class( struct process *process, atom_t atom,
-                                 void *instance, int *extra_bytes )
+                                 mod_handle_t instance, int *extra_bytes )
 {
     struct window_class *class = find_class( process, atom, instance );
     if (class)

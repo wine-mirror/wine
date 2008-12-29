@@ -42,6 +42,8 @@ typedef unsigned __int64 lparam_t;
 typedef unsigned __int64 apc_param_t;
 typedef unsigned __int64 mem_size_t;
 typedef unsigned __int64 file_pos_t;
+typedef void *client_ptr_t;
+typedef client_ptr_t mod_handle_t;
 
 struct request_header
 {
@@ -84,7 +86,7 @@ struct debug_event_create_process
     obj_handle_t file;       /* handle to the process exe file */
     obj_handle_t process;    /* handle to the new process */
     obj_handle_t thread;     /* handle to the new thread */
-    void        *base;       /* base of executable image */
+    mod_handle_t base;       /* base of executable image */
     int          dbg_offset; /* offset of debug info in file */
     int          dbg_size;   /* size of debug info */
     void        *teb;        /* thread teb (in debugged process address space) */
@@ -99,7 +101,7 @@ struct debug_event_exit
 struct debug_event_load_dll
 {
     obj_handle_t handle;     /* file handle for the dll */
-    void        *base;       /* base address of the dll */
+    mod_handle_t base;       /* base address of the dll */
     int          dbg_offset; /* offset of debug info in file */
     int          dbg_size;   /* size of debug info */
     void        *name;       /* image name (optional) */
@@ -107,7 +109,7 @@ struct debug_event_load_dll
 };
 struct debug_event_unload_dll
 {
-    void       *base;       /* base address of the dll */
+    mod_handle_t base;       /* base address of the dll */
 };
 struct debug_event_output_string
 {
@@ -524,7 +526,7 @@ typedef union
 
 /* Signal the end of the process initialization */
 @REQ(init_process_done)
-    void*        module;       /* main module base address */
+    mod_handle_t module;       /* main module base address */
     void*        entry;        /* process entry point */
     int          gui;          /* is it a GUI process? */
 @END
@@ -628,7 +630,7 @@ typedef union
 /* Retrieve information about a module */
 @REQ(get_dll_info)
     obj_handle_t handle;       /* process handle */
-    void*        base_address; /* base address of module */
+    mod_handle_t base_address; /* base address of module */
 @REPLY
     void*        entry_point;
     data_size_t  size;            /* module size */
@@ -656,7 +658,7 @@ typedef union
 /* Notify the server that a dll has been loaded */
 @REQ(load_dll)
     obj_handle_t handle;       /* file handle */
-    void*        base;         /* base address */
+    mod_handle_t base;         /* base address */
     void*        name;         /* ptr to ptr to name (in process addr space) */
     data_size_t  size;         /* dll size */
     int          dbg_offset;   /* debug info offset */
@@ -667,7 +669,7 @@ typedef union
 
 /* Notify the server that a dll is being unloaded */
 @REQ(unload_dll)
-    void*        base;         /* base address */
+    mod_handle_t base;         /* base address */
 @END
 
 
@@ -2050,7 +2052,7 @@ enum message_type
     user_handle_t  parent;      /* parent window */
     user_handle_t  owner;       /* owner window */
     atom_t         atom;        /* class atom */
-    void*          instance;    /* module instance */
+    mod_handle_t   instance;    /* module instance */
     VARARG(class,unicode_str);  /* class name */
 @REPLY
     user_handle_t  handle;      /* created window */
@@ -2107,7 +2109,7 @@ enum message_type
     unsigned int   ex_style;      /* window extended style */
     unsigned int   id;            /* window id */
     int            is_unicode;    /* ANSI or unicode */
-    void*          instance;      /* creator instance */
+    mod_handle_t   instance;      /* creator instance */
     lparam_t       user_data;     /* user-specific data */
     int            extra_offset;  /* offset to set in extra bytes */
     data_size_t    extra_size;    /* size to set in extra bytes */
@@ -2116,7 +2118,7 @@ enum message_type
     unsigned int   old_style;     /* old window style */
     unsigned int   old_ex_style;  /* old window extended style */
     unsigned int   old_id;        /* old window id */
-    void*          old_instance;  /* old creator instance */
+    mod_handle_t   old_instance;  /* old creator instance */
     lparam_t       old_user_data; /* old user-specific data */
     lparam_t       old_extra_value; /* old value in extra bytes */
 @END
@@ -2641,7 +2643,7 @@ enum message_type
     int            local;          /* is it a local class? */
     atom_t         atom;           /* class atom */
     unsigned int   style;          /* class style */
-    void*          instance;       /* module instance */
+    mod_handle_t   instance;       /* module instance */
     int            extra;          /* number of extra class bytes */
     int            win_extra;      /* number of window extra bytes */
     void*          client_ptr;     /* pointer to class in client address space */
@@ -2654,7 +2656,7 @@ enum message_type
 /* Destroy a window class */
 @REQ(destroy_class)
     atom_t         atom;           /* class atom */
-    void*          instance;       /* module instance */
+    mod_handle_t   instance;       /* module instance */
     VARARG(name,unicode_str);      /* class name */
 @REPLY
     void*          client_ptr;     /* pointer to class in client address space */
@@ -2668,7 +2670,7 @@ enum message_type
     atom_t         atom;           /* class atom */
     unsigned int   style;          /* class style */
     int            win_extra;      /* number of window extra bytes */
-    void*          instance;       /* module instance */
+    mod_handle_t   instance;       /* module instance */
     int            extra_offset;   /* offset to set in extra bytes */
     data_size_t    extra_size;     /* size to set in extra bytes */
     lparam_t       extra_value;    /* value to set in extra bytes */
@@ -2677,7 +2679,7 @@ enum message_type
     unsigned int   old_style;      /* previous class style */
     int            old_extra;      /* previous number of class extra bytes */
     int            old_win_extra;  /* previous number of window extra bytes */
-    void*          old_instance;   /* previous module instance */
+    mod_handle_t   old_instance;   /* previous module instance */
     lparam_t       old_extra_value; /* old value in extra bytes */
 @END
 #define SET_CLASS_ATOM      0x0001

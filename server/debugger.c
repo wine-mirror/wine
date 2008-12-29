@@ -205,7 +205,8 @@ static int fill_load_dll_event( struct debug_event *event, void *arg )
 
 static int fill_unload_dll_event( struct debug_event *event, void *arg )
 {
-    event->data.info.unload_dll.base = arg;
+    mod_handle_t *base = arg;
+    event->data.info.unload_dll.base = *base;
     return 1;
 }
 

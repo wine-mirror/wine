@@ -76,7 +76,7 @@ struct window
     unsigned int     style;           /* window style */
     unsigned int     ex_style;        /* window extended style */
     unsigned int     id;              /* window id */
-    void*            instance;        /* creator instance */
+    mod_handle_t     instance;        /* creator instance */
     unsigned int     is_unicode : 1;  /* ANSI or unicode */
     unsigned int     is_linked : 1;   /* is it linked into the parent z-order list? */
     unsigned int     is_layered : 1;  /* has layered info been set? */
@@ -428,7 +428,7 @@ void close_desktop_window( struct desktop *desktop )
 
 /* create a new window structure (note: the window is not linked in the window tree) */
 static struct window *create_window( struct window *parent, struct window *owner,
-                                     atom_t atom, void *instance )
+                                     atom_t atom, mod_handle_t instance )
 {
     static const rectangle_t empty_rect;
     int extra_bytes;

@@ -143,7 +143,7 @@ extern struct window_class *get_window_class( user_handle_t window );
 
 extern void destroy_process_classes( struct process *process );
 extern struct window_class *grab_class( struct process *process, atom_t atom,
-                                        void *instance, int *extra_bytes );
+                                        mod_handle_t instance, int *extra_bytes );
 extern void release_class( struct window_class *class );
 extern int is_desktop_class( struct window_class *class );
 extern int is_hwnd_message_class( struct window_class *class );

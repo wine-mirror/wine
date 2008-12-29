@@ -505,7 +505,7 @@ struct process *get_process_from_handle( obj_handle_t handle, unsigned int acces
 }
 
 /* find a dll from its base address */
-static inline struct process_dll *find_process_dll( struct process *process, void *base )
+static inline struct process_dll *find_process_dll( struct process *process, mod_handle_t base )
 {
     struct process_dll *dll;
 
@@ -518,7 +518,8 @@ static inline struct process_dll *find_process_dll( struct process *process, voi
 
 /* add a dll to a process list */
 static struct process_dll *process_load_dll( struct process *process, struct file *file,
-                                             void *base, const WCHAR *filename, data_size_t name_len )
+                                             mod_handle_t base, const WCHAR *filename,
+                                             data_size_t name_len )
 {
     struct process_dll *dll;
 
@@ -547,7 +548,7 @@ static struct process_dll *process_load_dll( struct process *process, struct fil
 }
 
 /* remove a dll from a process list */
-static void process_unload_dll( struct process *process, void *base )
+static void process_unload_dll( struct process *process, mod_handle_t base )
 {
     struct process_dll *dll = find_process_dll( process, base );
 
@@ -557,7 +558,7 @@ static void process_unload_dll( struct process *process, void *base )
         free( dll->filename );
         list_remove( &dll->entry );
         free( dll );
-        generate_debug_event( current, UNLOAD_DLL_DEBUG_EVENT, base );
+        generate_debug_event( current, UNLOAD_DLL_DEBUG_EVENT, &base );
     }
     else set_error( STATUS_INVALID_PARAMETER );
 }
