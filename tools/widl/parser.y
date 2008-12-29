@@ -125,17 +125,16 @@ static type_t *make_int(int sign);
 static typelib_t *make_library(const char *name, const attr_list_t *attrs);
 static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type);
 
-static type_t *type_new_enum(var_t *name, var_list_t *enums);
-static type_t *type_new_struct(var_t *name, var_list_t *fields);
-static type_t *type_new_nonencapsulated_union(var_t *name, var_list_t *fields);
-static type_t *type_new_encapsulated_union(var_t *name, var_t *switch_field, var_t *union_field, var_list_t *cases);
+static type_t *type_new_enum(char *name, var_list_t *enums);
+static type_t *type_new_struct(char *name, var_list_t *fields);
+static type_t *type_new_nonencapsulated_union(char *name, var_list_t *fields);
+static type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *union_field, var_list_t *cases);
 
 static type_t *reg_type(type_t *type, const char *name, int t);
 static type_t *reg_typedefs(decl_spec_t *decl_spec, var_list_t *names, attr_list_t *attrs);
 static type_t *find_type_or_error(const char *name, int t);
 static type_t *find_type_or_error2(char *name, int t);
 static type_t *get_type(unsigned char type, char *name, int t);
-static type_t *get_typev(unsigned char type, var_t *name, int t);
 
 static var_t *reg_const(var_t *var);
 
@@ -321,14 +320,14 @@ static func_list_t *append_func_from_statement(func_list_t *list, statement_t *s
 %type <ifref_list> coclass_ints
 %type <var> arg ne_union_field union_field s_field case enum declaration
 %type <var_list> m_args no_args args fields ne_union_fields cases enums enum_list dispint_props field
-%type <var> m_ident t_ident ident
+%type <var> m_ident ident
 %type <declarator> declarator direct_declarator init_declarator
 %type <declarator_list> declarator_list
 %type <func> funcdef
 %type <func_list> int_statements dispint_meths
 %type <type> coclass coclasshdr coclassdef
 %type <num> pointer_type version
-%type <str> libraryhdr callconv cppquote importlib import
+%type <str> libraryhdr callconv cppquote importlib import t_ident
 %type <uuid> uuid_string
 %type <import> import_start
 %type <typelib> library_start librarydef
@@ -789,8 +788,8 @@ m_ident:					{ $$ = NULL; }
 	;
 
 t_ident:					{ $$ = NULL; }
-	| aIDENTIFIER				{ $$ = make_var($1); }
-	| aKNOWNTYPE				{ $$ = make_var($1); }
+	| aIDENTIFIER				{ $$ = $1; }
+	| aKNOWNTYPE				{ $$ = $1; }
 	;
 
 ident:	  aIDENTIFIER				{ $$ = make_var($1); }
@@ -1371,9 +1370,9 @@ type_t *make_type(unsigned char type, type_t *ref)
   return t;
 }
 
-static type_t *type_new_enum(var_t *name, var_list_t *enums)
+static type_t *type_new_enum(char *name, var_list_t *enums)
 {
-    type_t *t = get_typev(RPC_FC_ENUM16, name, tsENUM);
+    type_t *t = get_type(RPC_FC_ENUM16, name, tsENUM);
     t->kind = TKIND_ENUM;
     if (enums)
     {
@@ -1386,9 +1385,9 @@ static type_t *type_new_enum(var_t *name, var_list_t *enums)
     return t;
 }
 
-static type_t *type_new_struct(var_t *name, var_list_t *fields)
+static type_t *type_new_struct(char *name, var_list_t *fields)
 {
-  type_t *t = get_typev(RPC_FC_STRUCT, name, tsSTRUCT);
+  type_t *t = get_type(RPC_FC_STRUCT, name, tsSTRUCT);
   t->kind = TKIND_RECORD;
   t->details.structure = xmalloc(sizeof(*t->details.structure));
   t->details.structure->fields = fields;
@@ -1396,9 +1395,9 @@ static type_t *type_new_struct(var_t *name, var_list_t *fields)
   return t;
 }
 
-static type_t *type_new_nonencapsulated_union(var_t *name, var_list_t *fields)
+static type_t *type_new_nonencapsulated_union(char *name, var_list_t *fields)
 {
-  type_t *t = get_typev(RPC_FC_NON_ENCAPSULATED_UNION, name, tsUNION);
+  type_t *t = get_type(RPC_FC_NON_ENCAPSULATED_UNION, name, tsUNION);
   t->kind = TKIND_UNION;
   t->details.structure = xmalloc(sizeof(*t->details.structure));
   t->details.structure->fields = fields;
@@ -1406,9 +1405,9 @@ static type_t *type_new_nonencapsulated_union(var_t *name, var_list_t *fields)
   return t;
 }
 
-static type_t *type_new_encapsulated_union(var_t *name, var_t *switch_field, var_t *union_field, var_list_t *cases)
+static type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *union_field, var_list_t *cases)
 {
-  type_t *t = get_typev(RPC_FC_ENCAPSULATED_UNION, name, tsUNION);
+  type_t *t = get_type(RPC_FC_ENCAPSULATED_UNION, name, tsUNION);
   t->kind = TKIND_UNION;
   if (!union_field) union_field = make_var( xstrdup("tagged_union") );
   union_field->type = make_type(RPC_FC_NON_ENCAPSULATED_UNION, NULL);
@@ -1951,16 +1950,6 @@ static type_t *get_type(unsigned char type, char *name, int t)
   tp->name = name;
   if (!name) return tp;
   return reg_type(tp, name, t);
-}
-
-static type_t *get_typev(unsigned char type, var_t *name, int t)
-{
-  char *sname = NULL;
-  if (name) {
-    sname = name->name;
-    free(name);
-  }
-  return get_type(type, sname, t);
 }
 
 /***** constant repository *****/
