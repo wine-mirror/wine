@@ -1333,7 +1333,16 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetFVF(LPDIRECT3DDEVICE9EX iface, DWO
         return hr;
     }
 
-    *pFVF = decl ? ((IDirect3DVertexDeclaration9Impl *)decl)->convFVF : 0;
+    if (decl)
+    {
+        *pFVF = ((IDirect3DVertexDeclaration9Impl *)decl)->convFVF;
+        IDirect3DVertexDeclaration9_Release(decl);
+    }
+    else
+    {
+        *pFVF = 0;
+    }
+
     TRACE("Returning FVF %#x\n", *pFVF);
 
     return hr;
