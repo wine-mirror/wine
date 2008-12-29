@@ -193,7 +193,7 @@ struct winevent_msg_data
 {
     user_handle_t   hook;
     thread_id_t     tid;
-    void           *hook_proc;
+    client_ptr_t    hook_proc;
 
 };
 
@@ -3564,8 +3564,8 @@ struct set_hook_request
     thread_id_t    tid;
     int            event_min;
     int            event_max;
+    client_ptr_t   proc;
     int            flags;
-    void*          proc;
     int            unicode;
     /* VARARG(module,unicode_str); */
 };
@@ -3582,8 +3582,8 @@ struct remove_hook_request
 {
     struct request_header __header;
     user_handle_t  handle;
+    client_ptr_t   proc;
     int            id;
-    void*          proc;
 };
 struct remove_hook_reply
 {
@@ -3608,8 +3608,8 @@ struct start_hook_chain_reply
     user_handle_t  handle;
     process_id_t   pid;
     thread_id_t    tid;
-    void*          proc;
     int            unicode;
+    client_ptr_t   proc;
     unsigned int   active_hooks;
     /* VARARG(module,unicode_str); */
 };
@@ -3645,7 +3645,7 @@ struct get_hook_info_reply
     int            id;
     process_id_t   pid;
     thread_id_t    tid;
-    void*          proc;
+    client_ptr_t   proc;
     int            unicode;
     /* VARARG(module,unicode_str); */
 };
@@ -5052,6 +5052,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 361
+#define SERVER_PROTOCOL_VERSION 362
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

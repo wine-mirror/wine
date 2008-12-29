@@ -3245,8 +3245,10 @@ static void dump_set_hook_request( const struct set_hook_request *req )
     fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " event_min=%d,", req->event_min );
     fprintf( stderr, " event_max=%d,", req->event_max );
+    fprintf( stderr, " proc=" );
+    dump_uint64( &req->proc );
+    fprintf( stderr, "," );
     fprintf( stderr, " flags=%d,", req->flags );
-    fprintf( stderr, " proc=%p,", req->proc );
     fprintf( stderr, " unicode=%d,", req->unicode );
     fprintf( stderr, " module=" );
     dump_varargs_unicode_str( cur_size );
@@ -3261,8 +3263,10 @@ static void dump_set_hook_reply( const struct set_hook_reply *req )
 static void dump_remove_hook_request( const struct remove_hook_request *req )
 {
     fprintf( stderr, " handle=%08x,", req->handle );
-    fprintf( stderr, " id=%d,", req->id );
-    fprintf( stderr, " proc=%p", req->proc );
+    fprintf( stderr, " proc=" );
+    dump_uint64( &req->proc );
+    fprintf( stderr, "," );
+    fprintf( stderr, " id=%d", req->id );
 }
 
 static void dump_remove_hook_reply( const struct remove_hook_reply *req )
@@ -3284,8 +3288,10 @@ static void dump_start_hook_chain_reply( const struct start_hook_chain_reply *re
     fprintf( stderr, " handle=%08x,", req->handle );
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " tid=%04x,", req->tid );
-    fprintf( stderr, " proc=%p,", req->proc );
     fprintf( stderr, " unicode=%d,", req->unicode );
+    fprintf( stderr, " proc=" );
+    dump_uint64( &req->proc );
+    fprintf( stderr, "," );
     fprintf( stderr, " active_hooks=%08x,", req->active_hooks );
     fprintf( stderr, " module=" );
     dump_varargs_unicode_str( cur_size );
@@ -3312,7 +3318,9 @@ static void dump_get_hook_info_reply( const struct get_hook_info_reply *req )
     fprintf( stderr, " id=%d,", req->id );
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " tid=%04x,", req->tid );
-    fprintf( stderr, " proc=%p,", req->proc );
+    fprintf( stderr, " proc=" );
+    dump_uint64( &req->proc );
+    fprintf( stderr, "," );
     fprintf( stderr, " unicode=%d,", req->unicode );
     fprintf( stderr, " module=" );
     dump_varargs_unicode_str( cur_size );

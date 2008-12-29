@@ -52,7 +52,7 @@ struct hook
     int                 event_min;
     int                 event_max;
     int                 flags;
-    void               *proc;     /* hook function */
+    client_ptr_t        proc;     /* hook function */
     int                 unicode;  /* is it a unicode hook? */
     WCHAR              *module;   /* module name for global hooks */
     data_size_t         module_size;
@@ -167,7 +167,7 @@ static void free_hook( struct hook *hook )
 }
 
 /* find a hook from its index and proc */
-static struct hook *find_hook( struct thread *thread, int index, void *proc )
+static struct hook *find_hook( struct thread *thread, int index, client_ptr_t proc )
 {
     struct list *p;
     struct hook_table *table = get_queue_hooks( thread );
@@ -292,7 +292,7 @@ static void hook_table_destroy( struct object *obj )
 static void remove_hook( struct hook *hook )
 {
     if (hook->table->counts[hook->index])
-        hook->proc = NULL; /* chain is in use, just mark it and return */
+        hook->proc = 0; /* chain is in use, just mark it and return */
     else
         free_hook( hook );
 }

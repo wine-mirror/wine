@@ -2106,7 +2106,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                 WINEVENTPROC hook_proc;
                 const struct winevent_msg_data *data = buffer;
 
-                hook_proc = data->hook_proc;
+                hook_proc = wine_server_get_ptr( data->hook_proc );
                 size -= sizeof(*data);
                 if (size)
                 {

@@ -1500,7 +1500,7 @@ void post_message( user_handle_t win, unsigned int message, lparam_t wparam, lpa
 /* post a win event */
 void post_win_event( struct thread *thread, unsigned int event,
                      user_handle_t win, unsigned int object_id,
-                     unsigned int child_id, void *hook_proc,
+                     unsigned int child_id, client_ptr_t hook_proc,
                      const WCHAR *module, data_size_t module_size,
                      user_handle_t hook)
 {
