@@ -485,9 +485,10 @@ static void dump_varargs_debug_event( data_size_t size )
         fputc( '}', stderr );
         break;
     case OUTPUT_DEBUG_STRING_EVENT:
-        fprintf( stderr, "{output_string,data=%p,unicode=%d,len=%d}",
-                 event->info.output_string.string, event->info.output_string.unicode,
-                 event->info.output_string.length );
+        fprintf( stderr, "{output_string,string=" );
+        dump_uint64( &event->info.output_string.string );
+        fprintf( stderr, ",unicode=%d,len=%u}",
+                 event->info.output_string.unicode, event->info.output_string.length );
         break;
     case RIP_EVENT:
         fprintf( stderr, "{rip,err=%d,type=%d}",
@@ -1922,9 +1923,11 @@ static void dump_get_exception_status_reply( const struct get_exception_status_r
 
 static void dump_output_debug_string_request( const struct output_debug_string_request *req )
 {
-    fprintf( stderr, " string=%p,", req->string );
-    fprintf( stderr, " unicode=%d,", req->unicode );
-    fprintf( stderr, " length=%d", req->length );
+    fprintf( stderr, " length=%u,", req->length );
+    fprintf( stderr, " string=" );
+    dump_uint64( &req->string );
+    fprintf( stderr, "," );
+    fprintf( stderr, " unicode=%d", req->unicode );
 }
 
 static void dump_continue_debug_event_request( const struct continue_debug_event_request *req )

@@ -97,9 +97,9 @@ struct debug_event_unload_dll
 };
 struct debug_event_output_string
 {
-    void       *string;
-    int         unicode;
-    int         length;
+    client_ptr_t string;
+    int          unicode;
+    data_size_t  length;
 };
 struct debug_event_rip_info
 {
@@ -1873,9 +1873,9 @@ struct get_exception_status_reply
 struct output_debug_string_request
 {
     struct request_header __header;
-    void*         string;
+    data_size_t   length;
+    client_ptr_t  string;
     int           unicode;
-    int           length;
 };
 struct output_debug_string_reply
 {
@@ -5052,6 +5052,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 357
+#define SERVER_PROTOCOL_VERSION 358
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -113,9 +113,9 @@ struct debug_event_unload_dll
 };
 struct debug_event_output_string
 {
-    void       *string;     /* string to display (in debugged process address space) */
-    int         unicode;    /* is it Unicode? */
-    int         length;     /* string length */
+    client_ptr_t string;     /* string to display (in debugged process address space) */
+    int          unicode;    /* is it Unicode? */
+    data_size_t  length;     /* string length */
 };
 struct debug_event_rip_info
 {
@@ -1462,9 +1462,9 @@ enum char_info_mode
 
 /* Send an output string to the debugger */
 @REQ(output_debug_string)
-    void*         string;      /* string to display (in debugged process address space) */
+    data_size_t   length;      /* string length */
+    client_ptr_t  string;      /* string to display (in debugged process address space) */
     int           unicode;     /* is it Unicode? */
-    int           length;      /* string length */
 @END
 
 

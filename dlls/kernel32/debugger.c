@@ -112,7 +112,7 @@ BOOL WINAPI WaitForDebugEvent(
                 event->u.UnloadDll.lpBaseOfDll = wine_server_get_ptr( data.info.unload_dll.base );
                 break;
             case OUTPUT_DEBUG_STRING_EVENT:
-                event->u.DebugString.lpDebugStringData  = data.info.output_string.string;
+                event->u.DebugString.lpDebugStringData  = wine_server_get_ptr( data.info.output_string.string );
                 event->u.DebugString.fUnicode           = data.info.output_string.unicode;
                 event->u.DebugString.nDebugStringLength = data.info.output_string.length;
                 break;
@@ -237,7 +237,7 @@ void WINAPI OutputDebugStringA( LPCSTR str )
 {
     SERVER_START_REQ( output_debug_string )
     {
-        req->string  = (void *)str;
+        req->string  = wine_server_client_ptr( str );
         req->unicode = 0;
         req->length  = strlen(str) + 1;
         wine_server_call( req );
@@ -264,7 +264,7 @@ void WINAPI OutputDebugStringW( LPCWSTR str )
 {
     SERVER_START_REQ( output_debug_string )
     {
-        req->string  = (void *)str;
+        req->string  = wine_server_client_ptr( str );
         req->unicode = 1;
         req->length  = (lstrlenW(str) + 1) * sizeof(WCHAR);
         wine_server_call( req );
