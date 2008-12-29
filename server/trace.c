@@ -125,7 +125,8 @@ static void dump_apc_call( const apc_call_t *call )
     case APC_TIMER:
         fprintf( stderr, "APC_TIMER,time=" );
         dump_timeout( &call->timer.time );
-        fprintf( stderr, ",arg=%p", call->timer.arg );
+        fprintf( stderr, ",arg=" );
+        dump_uint64( &call->timer.arg );
         break;
     case APC_ASYNC_IO:
         fprintf( stderr, "APC_ASYNC_IO,func=%p,user=%p,sb=%p,status=%s",
@@ -2166,9 +2167,13 @@ static void dump_set_timer_request( const struct set_timer_request *req )
     fprintf( stderr, " expire=" );
     dump_timeout( &req->expire );
     fprintf( stderr, "," );
-    fprintf( stderr, " period=%d,", req->period );
-    fprintf( stderr, " callback=%p,", req->callback );
-    fprintf( stderr, " arg=%p", req->arg );
+    fprintf( stderr, " callback=" );
+    dump_uint64( &req->callback );
+    fprintf( stderr, "," );
+    fprintf( stderr, " arg=" );
+    dump_uint64( &req->arg );
+    fprintf( stderr, "," );
+    fprintf( stderr, " period=%d", req->period );
 }
 
 static void dump_set_timer_reply( const struct set_timer_reply *req )

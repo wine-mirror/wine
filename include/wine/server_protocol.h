@@ -277,10 +277,10 @@ typedef union
     } user;
     struct
     {
-        enum apc_type   type;
-        void (__stdcall *func)(void*, unsigned int, unsigned int);
+        enum apc_type    type;
+        client_ptr_t     func;
         timeout_t        time;
-        void            *arg;
+        client_ptr_t     arg;
     } timer;
     struct
     {
@@ -2203,9 +2203,9 @@ struct set_timer_request
     struct request_header __header;
     obj_handle_t handle;
     timeout_t    expire;
+    client_ptr_t callback;
+    client_ptr_t arg;
     int          period;
-    void*        callback;
-    void*        arg;
 };
 struct set_timer_reply
 {
@@ -5052,6 +5052,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 362
+#define SERVER_PROTOCOL_VERSION 363
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

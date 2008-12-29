@@ -293,10 +293,10 @@ typedef union
     } user;
     struct
     {
-        enum apc_type   type;     /* APC_TIMER */
-        void (__stdcall *func)(void*, unsigned int, unsigned int);
+        enum apc_type    type;     /* APC_TIMER */
+        client_ptr_t     func;     /* void (__stdcall *func)(void*, unsigned int, unsigned int); */
         timeout_t        time;     /* absolute time of expiration */
-        void            *arg;      /* user argument */
+        client_ptr_t     arg;      /* user argument */
     } timer;
     struct
     {
@@ -1669,9 +1669,9 @@ enum char_info_mode
 @REQ(set_timer)
     obj_handle_t handle;        /* handle to the timer */
     timeout_t    expire;        /* next expiration absolute time */
+    client_ptr_t callback;      /* callback function */
+    client_ptr_t arg;           /* callback argument */
     int          period;        /* timer period in ms */
-    void*        callback;      /* callback function */
-    void*        arg;           /* callback argument */
 @REPLY
     int          signaled;      /* was the timer signaled before this call ? */
 @END

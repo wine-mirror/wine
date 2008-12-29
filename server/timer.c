@@ -46,8 +46,8 @@ struct timer
     timeout_t            when;      /* next expiration */
     struct timeout_user *timeout;   /* timeout user */
     struct thread       *thread;    /* thread that set the APC function */
-    void                *callback;  /* callback APC function */
-    void                *arg;       /* callback argument */
+    client_ptr_t         callback;  /* callback APC function */
+    client_ptr_t         arg;       /* callback argument */
 };
 
 static void timer_dump( struct object *obj, int verbose );
@@ -160,7 +160,7 @@ static int cancel_timer( struct timer *timer )
 
 /* set the timer expiration and period */
 static int set_timer( struct timer *timer, timeout_t expire, unsigned int period,
-                      void *callback, void *arg )
+                      client_ptr_t callback, client_ptr_t arg )
 {
     int signaled = cancel_timer( timer );
     if (timer->manual)

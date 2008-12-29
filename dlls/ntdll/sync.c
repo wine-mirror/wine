@@ -671,8 +671,8 @@ NTSTATUS WINAPI NtSetTimer(IN HANDLE handle,
         req->handle   = wine_server_obj_handle( handle );
         req->period   = period;
         req->expire   = when->QuadPart;
-        req->callback = callback;
-        req->arg      = callback_arg;
+        req->callback = wine_server_client_ptr( callback );
+        req->arg      = wine_server_client_ptr( callback_arg );
         status = wine_server_call( req );
         if (state) *state = reply->signaled;
     }
@@ -856,9 +856,13 @@ static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
         user_apc = TRUE;
         break;
     case APC_TIMER:
-        call->timer.func( call->timer.arg, (DWORD)call->timer.time, (DWORD)(call->timer.time >> 32) );
+    {
+        void (WINAPI *func)(void*, unsigned int, unsigned int) = wine_server_get_ptr( call->timer.func );
+        func( wine_server_get_ptr( call->timer.arg ),
+              (DWORD)call->timer.time, (DWORD)(call->timer.time >> 32) );
         user_apc = TRUE;
         break;
+    }
     case APC_ASYNC_IO:
         result->type = call->type;
         result->async_io.status = call->async_io.func( call->async_io.user,
