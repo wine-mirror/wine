@@ -1216,7 +1216,7 @@ WINE_WARNING_WITH(jpeg,[test "x$ac_cv_lib_soname_jpeg" = "x"],
 dnl **** Check for libpng ****
 if test "$ac_cv_header_png_h" = "yes"
 then
-    WINE_CHECK_SONAME(png,png_create_read_struct,,,-lm,[[libpng[[0-9]]*]])
+    WINE_CHECK_SONAME(png,png_create_read_struct,,,-lm -lz,[[libpng[[0-9]]*]])
 fi
 WINE_WARNING_WITH(png,[test "x$ac_cv_lib_soname_png" = "x"],
                  [libpng ${notice_platform}development files not found, PNG won't be supported.])
