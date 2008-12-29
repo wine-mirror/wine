@@ -225,7 +225,7 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
             {
                 code     = reply->code;
                 ioctl    = reply->next;
-                device   = reply->user_ptr;
+                device   = wine_server_get_ptr( reply->user_ptr );
                 in_size  = reply->in_size;
                 out_size = reply->out_size;
             }
@@ -491,7 +491,7 @@ NTSTATUS WINAPI IoCreateDevice( DRIVER_OBJECT *driver, ULONG ext_size,
         req->attributes = 0;
         req->rootdir    = 0;
         req->manager    = wine_server_obj_handle( manager );
-        req->user_ptr   = device;
+        req->user_ptr   = wine_server_client_ptr( device );
         if (name) wine_server_add_data( req, name->Buffer, name->Length );
         if (!(status = wine_server_call( req ))) handle = wine_server_ptr_handle( reply->handle );
     }

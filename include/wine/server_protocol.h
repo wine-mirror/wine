@@ -4118,7 +4118,7 @@ struct create_device_request
     unsigned int attributes;
     obj_handle_t rootdir;
     obj_handle_t manager;
-    void*        user_ptr;
+    client_ptr_t user_ptr;
     /* VARARG(name,unicode_str); */
 };
 struct create_device_reply
@@ -4154,7 +4154,7 @@ struct get_next_device_request_reply
     struct reply_header __header;
     obj_handle_t next;
     ioctl_code_t code;
-    void*        user_ptr;
+    client_ptr_t user_ptr;
     data_size_t  in_size;
     data_size_t  out_size;
     /* VARARG(next_data,bytes); */
@@ -5052,6 +5052,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 360
+#define SERVER_PROTOCOL_VERSION 361
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

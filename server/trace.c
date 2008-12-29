@@ -3729,7 +3729,9 @@ static void dump_create_device_request( const struct create_device_request *req 
     fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " rootdir=%04x,", req->rootdir );
     fprintf( stderr, " manager=%04x,", req->manager );
-    fprintf( stderr, " user_ptr=%p,", req->user_ptr );
+    fprintf( stderr, " user_ptr=" );
+    dump_uint64( &req->user_ptr );
+    fprintf( stderr, "," );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -3759,7 +3761,9 @@ static void dump_get_next_device_request_reply( const struct get_next_device_req
     fprintf( stderr, " code=" );
     dump_ioctl_code( &req->code );
     fprintf( stderr, "," );
-    fprintf( stderr, " user_ptr=%p,", req->user_ptr );
+    fprintf( stderr, " user_ptr=" );
+    dump_uint64( &req->user_ptr );
+    fprintf( stderr, "," );
     fprintf( stderr, " in_size=%u,", req->in_size );
     fprintf( stderr, " out_size=%u,", req->out_size );
     fprintf( stderr, " next_data=" );

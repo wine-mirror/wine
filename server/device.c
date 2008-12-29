@@ -112,7 +112,7 @@ struct device
     struct object          obj;           /* object header */
     struct device_manager *manager;       /* manager for this device (or NULL if deleted) */
     struct fd             *fd;            /* file descriptor for ioctl */
-    void                  *user_ptr;      /* opaque ptr for client side */
+    client_ptr_t           user_ptr;      /* opaque ptr for client side */
     struct list            entry;         /* entry in device manager list */
     struct list            requests;      /* list of pending ioctl requests */
 };

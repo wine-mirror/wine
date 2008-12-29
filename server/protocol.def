@@ -2961,7 +2961,7 @@ enum message_type
     unsigned int attributes;      /* object attributes */
     obj_handle_t rootdir;         /* root directory */
     obj_handle_t manager;         /* device manager */
-    void*        user_ptr;        /* opaque ptr for use by client */
+    client_ptr_t user_ptr;        /* opaque ptr for use by client */
     VARARG(name,unicode_str);     /* object name */
 @REPLY
     obj_handle_t handle;          /* handle to the device */
@@ -2983,7 +2983,7 @@ enum message_type
 @REPLY
     obj_handle_t next;            /* handle to the next ioctl */
     ioctl_code_t code;            /* ioctl code */
-    void*        user_ptr;        /* opaque ptr for the device */
+    client_ptr_t user_ptr;        /* opaque ptr for the device */
     data_size_t  in_size;         /* total needed input size */
     data_size_t  out_size;        /* needed output size */
     VARARG(next_data,bytes);      /* input data of the next ioctl */
