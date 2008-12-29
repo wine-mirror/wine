@@ -754,7 +754,7 @@ static void write_method_proto(FILE *header, const type_t *iface)
   }
 }
 
-void write_locals(FILE *fp, const type_t *iface, int body)
+static void write_locals(FILE *fp, const type_t *iface, int body)
 {
   static const char comment[]
     = "/* WIDL-generated stub.  You must provide an implementation for this.  */";
@@ -812,6 +812,38 @@ void write_locals(FILE *fp, const type_t *iface, int body)
         error_loc("invalid call_as attribute (%s -> %s)\n", def->name, cas->name);
     }
   }
+}
+
+static void write_local_stubs_stmts(FILE *local_stubs, const statement_list_t *stmts)
+{
+  const statement_t *stmt;
+  if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
+  {
+    if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
+      write_locals(local_stubs, stmt->u.type, TRUE);
+    else if (stmt->type == STMT_LIBRARY)
+      write_local_stubs_stmts(local_stubs, stmt->u.lib->stmts);
+  }
+}
+
+void write_local_stubs(const statement_list_t *stmts)
+{
+  FILE *local_stubs;
+
+  if (!local_stubs_name) return;
+
+  local_stubs = fopen(local_stubs_name, "w");
+  if (!local_stubs) {
+    error("Could not open %s for output\n", local_stubs_name);
+    return;
+  }
+  fprintf(local_stubs, "/* call_as/local stubs for %s */\n\n", input_name);
+  fprintf(local_stubs, "#include <objbase.h>\n");
+  fprintf(local_stubs, "#include \"%s\"\n\n", header_name);
+
+  write_local_stubs_stmts(local_stubs, stmts);
+
+  fclose(local_stubs);
 }
 
 static void write_function_proto(FILE *header, const type_t *iface, const func_t *fun, const char *prefix)

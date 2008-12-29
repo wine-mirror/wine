@@ -50,7 +50,6 @@ extern void write_array(FILE *h, array_dims_t *v, int field);
 extern void write_import(const char *fname);
 extern void write_forward(type_t *iface);
 extern void write_interface(type_t *iface);
-extern void write_locals(FILE *fp, const type_t *iface, int body);
 extern void write_coclass(type_t *cocl);
 extern void write_coclass_forward(type_t *cocl);
 extern void write_typedef(type_t *type);

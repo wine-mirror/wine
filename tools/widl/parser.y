@@ -354,6 +354,7 @@ input:   gbl_statements				{ fix_incomplete();
 						  write_client($1);
 						  write_server($1);
 						  write_dlldata($1);
+						  write_local_stubs($1);
 						}
 	;
 
@@ -925,7 +926,6 @@ interfacedef: interfacehdr inherit
 	  '{' int_statements '}' semicolon_opt	{ $$ = $1.interface;
 						  type_interface_define($$, $2, $4);
 						  if (!parse_only && do_header) write_interface($$);
-						  if (!parse_only && local_stubs) write_locals(local_stubs, $$, TRUE);
 						  pointer_default = $1.old_pointer_default;
 						  is_in_interface = FALSE;
 						}
@@ -936,7 +936,6 @@ interfacedef: interfacehdr inherit
 	   semicolon_opt			{ $$ = $1.interface;
 						  type_interface_define($$, find_type_or_error2($3, 0), $6);
 						  if (!parse_only && do_header) write_interface($$);
-						  if (!parse_only && local_stubs) write_locals(local_stubs, $$, TRUE);
 						  pointer_default = $1.old_pointer_default;
 						  is_in_interface = FALSE;
 						}

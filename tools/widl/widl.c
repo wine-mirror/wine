@@ -132,8 +132,6 @@ const char *prefix_server = "";
 int line_number = 1;
 
 FILE *header;
-FILE *local_stubs;
-FILE *proxy;
 FILE *idfile;
 
 size_t pointer_size = 0;
@@ -643,17 +641,6 @@ int main(int argc,char *argv[])
     start_cplusplus_guard(header);
   }
 
-  if (local_stubs_name) {
-    local_stubs = fopen(local_stubs_name, "w");
-    if (!local_stubs) {
-      fprintf(stderr, "Could not open %s for output\n", local_stubs_name);
-      return 1;
-    }
-    fprintf(local_stubs, "/* call_as/local stubs for %s */\n\n", input_name);
-    fprintf(local_stubs, "#include <objbase.h>\n");
-    fprintf(local_stubs, "#include \"%s\"\n\n", header_name);
-  }
-
   init_types();
   ret = parser_parse();
 
@@ -669,10 +656,6 @@ int main(int argc,char *argv[])
     end_cplusplus_guard(header);
     fprintf(header, "#endif /* __WIDL_%s */\n", header_token);
     fclose(header);
-  }
-
-  if (local_stubs) {
-    fclose(local_stubs);
   }
 
   fclose(parser_in);
