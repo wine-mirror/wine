@@ -73,7 +73,7 @@ BEGIN
     CONTROL     "마우스 커서를 DirectX 프로그램 창안에 잡아두기(&M)",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
     CONTROL     "창관리자가 Wine창을 꾸미도록 함(&D)",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
     CONTROL     "창관리자가 Wine창을 관리하도록 함(&W)",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
-    CONTROL     "가상 데스크탑 흉내내기(&D)",IDC_ENABLE_DESKTOP,"Button",
+    CONTROL     "가상 데스크탑 흉내내기(&E)",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
     LTEXT       "데스크탑 크기(&S):",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
     LTEXT       "X",IDC_DESKTOP_BY,109,70,8,8,WS_DISABLED
