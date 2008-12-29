@@ -70,6 +70,24 @@ CONFIGRET WINAPI CM_Connect_MachineW(PCWSTR name, PHMACHINE machine)
 }
 
 /***********************************************************************
+ *              CM_Create_DevNodeA  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Create_DevNodeA(PDEVINST pdnDevInst, DEVINSTID_A pDeviceID, DEVINST dnParent, ULONG ulFlags)
+{
+  FIXME("(%p %s 0x%08x 0x%08x) stub\n", pdnDevInst, pDeviceID, dnParent, ulFlags);
+  return CR_SUCCESS;
+}
+
+/***********************************************************************
+ *              CM_Create_DevNodeW  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Create_DevNodeW(PDEVINST pdnDevInst, DEVINSTID_W pDeviceID, DEVINST dnParent, ULONG ulFlags)
+{
+  FIXME("(%p %s 0x%08x 0x%08x) stub\n", pdnDevInst, debugstr_w(pDeviceID), dnParent, ulFlags);
+  return CR_SUCCESS;
+}
+
+/***********************************************************************
  *		CM_Disconnect_Machine  (SETUPAPI.@)
  */
 CONFIGRET WINAPI CM_Disconnect_Machine(HMACHINE handle)

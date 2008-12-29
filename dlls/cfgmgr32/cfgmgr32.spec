@@ -9,8 +9,8 @@
 @ stub CM_Add_Res_Des_Ex
 @ stdcall CM_Connect_MachineA(str ptr) setupapi.CM_Connect_MachineA
 @ stdcall CM_Connect_MachineW(wstr ptr) setupapi.CM_Connect_MachineW
-@ stub CM_Create_DevNodeA
-@ stub CM_Create_DevNodeW
+@ stdcall CM_Create_DevNodeA(ptr str long long) setupapi.CM_Create_DevNodeA
+@ stdcall CM_Create_DevNodeW(ptr wstr long long) setupapi.CM_Create_DevNodeW
 @ stub CM_Create_DevNode_ExA
 @ stub CM_Create_DevNode_ExW
 @ stub CM_Create_Range_List
