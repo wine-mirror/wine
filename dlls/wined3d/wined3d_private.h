@@ -2132,7 +2132,6 @@ typedef enum COMPARISON_TYPE {
 typedef struct SHADER_OPCODE {
     unsigned int  opcode;
     const char*   name;
-    const char*   glname;
     char          dst_token;
     CONST UINT    num_params;
     enum WINED3D_SHADER_INSTRUCTION_HANDLER handler_idx;
