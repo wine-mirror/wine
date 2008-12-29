@@ -411,7 +411,7 @@ void check_for_additional_prototype_types(const var_list_t *list)
          * using a wire marshaled type */
         break;
       }
-      else
+      else if (type_is_complete(type))
       {
         var_list_t *vars = NULL;
         if (type->type == RPC_FC_ENUM16 || type->type == RPC_FC_ENUM32)

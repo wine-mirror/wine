@@ -1351,7 +1351,7 @@ type_t *make_type(unsigned char type, type_t *ref)
   t->attrs = NULL;
   t->orig = NULL;
   t->funcs = NULL;
-  t->fields_or_args = NULL;
+  memset(&t->details, 0, sizeof(t->details));
   t->ifaces = NULL;
   t->dim = 0;
   t->size_is = NULL;
@@ -1375,7 +1375,13 @@ static type_t *type_new_enum(var_t *name, var_list_t *enums)
 {
     type_t *t = get_typev(RPC_FC_ENUM16, name, tsENUM);
     t->kind = TKIND_ENUM;
-    t->fields_or_args = enums;
+    if (enums)
+    {
+        t->details.enumeration = xmalloc(sizeof(*t->details.enumeration));
+        t->details.enumeration->enums = enums;
+    }
+    else
+        t->details.enumeration = NULL;
     t->defined = TRUE;
     return t;
 }
@@ -1384,7 +1390,8 @@ static type_t *type_new_struct(var_t *name, var_list_t *fields)
 {
   type_t *t = get_typev(RPC_FC_STRUCT, name, tsSTRUCT);
   t->kind = TKIND_RECORD;
-  t->fields_or_args = fields;
+  t->details.structure = xmalloc(sizeof(*t->details.structure));
+  t->details.structure->fields = fields;
   t->defined = TRUE;
   return t;
 }
@@ -1393,7 +1400,8 @@ static type_t *type_new_nonencapsulated_union(var_t *name, var_list_t *fields)
 {
   type_t *t = get_typev(RPC_FC_NON_ENCAPSULATED_UNION, name, tsUNION);
   t->kind = TKIND_UNION;
-  t->fields_or_args = fields;
+  t->details.structure = xmalloc(sizeof(*t->details.structure));
+  t->details.structure->fields = fields;
   t->defined = TRUE;
   return t;
 }
@@ -1405,23 +1413,25 @@ static type_t *type_new_encapsulated_union(var_t *name, var_t *switch_field, var
   if (!union_field) union_field = make_var( xstrdup("tagged_union") );
   union_field->type = make_type(RPC_FC_NON_ENCAPSULATED_UNION, NULL);
   union_field->type->kind = TKIND_UNION;
-  union_field->type->fields_or_args = cases;
+  union_field->type->details.structure = xmalloc(sizeof(*union_field->type->details.structure));
+  union_field->type->details.structure->fields = cases;
   union_field->type->defined = TRUE;
-  t->fields_or_args = append_var( NULL, switch_field );
-  t->fields_or_args = append_var( t->fields_or_args, union_field );
+  t->details.structure = xmalloc(sizeof(*t->details.structure));
+  t->details.structure->fields = append_var( NULL, switch_field );
+  t->details.structure->fields = append_var( t->details.structure->fields, union_field );
   t->defined = TRUE;
   return t;
 }
 
 static void function_add_head_arg(func_t *func, var_t *arg)
 {
-    if (!func->def->type->fields_or_args)
+    if (!func->def->type->details.function->args)
     {
-        func->def->type->fields_or_args = xmalloc( sizeof(*func->def->type->fields_or_args) );
-        list_init( func->def->type->fields_or_args );
+        func->def->type->details.function->args = xmalloc( sizeof(*func->def->type->details.function->args) );
+        list_init( func->def->type->details.function->args );
     }
-    list_add_head( func->def->type->fields_or_args, &arg->entry );
-    func->args = func->def->type->fields_or_args;
+    list_add_head( func->def->type->details.function->args, &arg->entry );
+    func->args = func->def->type->details.function->args;
 }
 
 static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type)
@@ -1726,7 +1736,7 @@ static func_t *make_func(var_t *def)
 {
   func_t *f = xmalloc(sizeof(func_t));
   f->def = def;
-  f->args = def->type->fields_or_args;
+  f->args = def->type->details.function->args;
   f->ignore = parse_only;
   f->idx = -1;
   return f;
@@ -1818,7 +1828,8 @@ static void fix_type(type_t *t)
   if (t->kind == TKIND_ALIAS && is_incomplete(t)) {
     type_t *ot = t->orig;
     fix_type(ot);
-    t->fields_or_args = ot->fields_or_args;
+    if (is_struct(ot->type) || is_union(ot->type))
+      t->details.structure = ot->details.structure;
     t->defined = ot->defined;
   }
 }
@@ -2469,7 +2480,7 @@ static void check_remoting_fields(const var_t *var, type_t *type)
 
     if (is_struct(type->type))
     {
-        if (type_is_defined(type))
+        if (type_is_complete(type))
             fields = type_struct_get_fields(type);
         else
             error_loc_info(&var->loc_info, "undefined type declaration %s\n", type->name);
@@ -2581,7 +2592,8 @@ static void check_all_user_types(const statement_list_t *stmts)
   {
     if (stmt->type == STMT_LIBRARY)
       check_all_user_types(stmt->u.lib->stmts);
-    else if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
+    else if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP &&
+             !is_local(stmt->u.type->attrs))
     {
       const func_t *f;
       const func_list_t *fs = stmt->u.type->funcs;

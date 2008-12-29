@@ -32,7 +32,8 @@
 type_t *type_new_function(var_list_t *args)
 {
     type_t *t = make_type(RPC_FC_FUNCTION, NULL);
-    t->fields_or_args = args;
+    t->details.function = xmalloc(sizeof(*t->details.function));
+    t->details.function->args = args;
     return t;
 }
 
@@ -66,7 +67,10 @@ static int compute_method_indexes(type_t *iface)
 void type_interface_define(type_t *iface, type_t *inherit, func_list_t *funcs)
 {
     iface->ref = inherit;
+    iface->details.iface = xmalloc(sizeof(*iface->details.iface));
     iface->funcs = funcs;
+    iface->details.iface->disp_props = NULL;
+    iface->details.iface->disp_methods = NULL;
     iface->defined = TRUE;
     check_functions(iface);
     compute_method_indexes(iface);
@@ -76,8 +80,10 @@ void type_dispinterface_define(type_t *iface, var_list_t *props, func_list_t *me
 {
     iface->ref = find_type("IDispatch", 0);
     if (!iface->ref) error_loc("IDispatch is undefined\n");
+    iface->details.iface = xmalloc(sizeof(*iface->details.iface));
     iface->funcs = NULL;
-    iface->fields_or_args = props;
+    iface->details.iface->disp_props = props;
+    iface->details.iface->disp_methods = methods;
     iface->funcs = methods;
     iface->defined = TRUE;
     check_functions(iface);
@@ -86,5 +92,6 @@ void type_dispinterface_define(type_t *iface, var_list_t *props, func_list_t *me
 
 void type_dispinterface_define_from_iface(type_t *dispiface, type_t *iface)
 {
-    type_dispinterface_define(dispiface, iface->fields_or_args, iface->funcs);
+    type_dispinterface_define(dispiface, iface->details.iface->disp_props,
+                              iface->details.iface->disp_methods);
 }

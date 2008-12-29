@@ -260,14 +260,41 @@ struct _expr_t {
   struct list entry;
 };
 
+struct struct_details
+{
+  var_list_t *fields;
+};
+
+struct enumeration_details
+{
+  var_list_t *enums;
+};
+
+struct func_details
+{
+  var_list_t *args;
+};
+
+struct iface_details
+{
+  func_list_t *disp_methods;
+  var_list_t *disp_props;
+};
+
 struct _type_t {
   const char *name;
   enum type_kind kind;
   unsigned char type;
   struct _type_t *ref;
   attr_list_t *attrs;
+  union
+  {
+    struct struct_details *structure;
+    struct enumeration_details *enumeration;
+    struct func_details *function;
+    struct iface_details *iface;
+  } details;
   func_list_t *funcs;             /* interfaces and modules */
-  var_list_t *fields_or_args;     /* interfaces, structures, enumerations and functions (for args) */
   ifref_list_t *ifaces;           /* coclasses */
   unsigned long dim;              /* array dimension */
   expr_t *size_is, *length_is;
