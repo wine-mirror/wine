@@ -117,11 +117,11 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
             wine_server_add_data( req, name, strlenW(name)*sizeof(WCHAR) );
         if (!wine_server_call_err( req ))
         {
-            handle = wine_server_ptr_handle( reply->handle );
+            handle      = wine_server_ptr_handle( reply->handle );
             full_parent = wine_server_ptr_handle( reply->parent );
             full_owner  = wine_server_ptr_handle( reply->owner );
             extra_bytes = reply->extra;
-            class = reply->class_ptr;
+            class       = wine_server_get_ptr( reply->class_ptr );
         }
     }
     SERVER_END_REQ;

@@ -148,7 +148,7 @@ extern void release_class( struct window_class *class );
 extern int is_desktop_class( struct window_class *class );
 extern int is_hwnd_message_class( struct window_class *class );
 extern atom_t get_class_atom( struct window_class *class );
-extern void *get_class_client_ptr( struct window_class *class );
+extern client_ptr_t get_class_client_ptr( struct window_class *class );
 
 /* windows station functions */
 

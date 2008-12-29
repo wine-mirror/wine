@@ -49,7 +49,7 @@ struct window_class
     mod_handle_t    instance;        /* module instance */
     unsigned int    style;           /* class style */
     int             win_extra;       /* number of window extra bytes */
-    void           *client_ptr;      /* pointer to class in client address space */
+    client_ptr_t    client_ptr;      /* pointer to class in client address space */
     int             nb_extra_bytes;  /* number of extra bytes */
     char            extra_bytes[1];  /* extra bytes storage */
 };
@@ -141,7 +141,7 @@ atom_t get_class_atom( struct window_class *class )
     return class->atom;
 }
 
-void *get_class_client_ptr( struct window_class *class )
+client_ptr_t get_class_client_ptr( struct window_class *class )
 {
     return class->client_ptr;
 }

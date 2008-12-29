@@ -357,7 +357,7 @@ static CLASS *CLASS_RegisterClass( LPCWSTR name, HINSTANCE hInstance, BOOL local
         req->instance   = wine_server_client_ptr( hInstance );
         req->extra      = classExtra;
         req->win_extra  = winExtra;
-        req->client_ptr = classPtr;
+        req->client_ptr = wine_server_client_ptr( classPtr );
         req->atom       = classPtr->atomName;
         if (!req->atom && name) wine_server_add_data( req, name, strlenW(name) * sizeof(WCHAR) );
         ret = !wine_server_call_err( req );
@@ -628,7 +628,7 @@ BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
         req->instance = wine_server_client_ptr( hInstance );
         if (!(req->atom = get_int_atom_value(className)) && className)
             wine_server_add_data( req, className, strlenW(className) * sizeof(WCHAR) );
-        if (!wine_server_call_err( req )) classPtr = reply->client_ptr;
+        if (!wine_server_call_err( req )) classPtr = wine_server_get_ptr( reply->client_ptr );
     }
     SERVER_END_REQ;
 

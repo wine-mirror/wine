@@ -2623,7 +2623,8 @@ static void dump_create_window_reply( const struct create_window_reply *req )
     fprintf( stderr, " parent=%08x,", req->parent );
     fprintf( stderr, " owner=%08x,", req->owner );
     fprintf( stderr, " extra=%d,", req->extra );
-    fprintf( stderr, " class_ptr=%p", req->class_ptr );
+    fprintf( stderr, " class_ptr=" );
+    dump_uint64( &req->class_ptr );
 }
 
 static void dump_destroy_window_request( const struct destroy_window_request *req )
@@ -3327,7 +3328,9 @@ static void dump_create_class_request( const struct create_class_request *req )
     fprintf( stderr, "," );
     fprintf( stderr, " extra=%d,", req->extra );
     fprintf( stderr, " win_extra=%d,", req->win_extra );
-    fprintf( stderr, " client_ptr=%p,", req->client_ptr );
+    fprintf( stderr, " client_ptr=" );
+    dump_uint64( &req->client_ptr );
+    fprintf( stderr, "," );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -3349,7 +3352,8 @@ static void dump_destroy_class_request( const struct destroy_class_request *req 
 
 static void dump_destroy_class_reply( const struct destroy_class_reply *req )
 {
-    fprintf( stderr, " client_ptr=%p", req->client_ptr );
+    fprintf( stderr, " client_ptr=" );
+    dump_uint64( &req->client_ptr );
 }
 
 static void dump_set_class_info_request( const struct set_class_info_request *req )
