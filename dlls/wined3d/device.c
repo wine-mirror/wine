@@ -1764,6 +1764,10 @@ static unsigned int ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the
             elements[idx].Type = WINED3DDECLTYPE_FLOAT4;
             elements[idx].Usage = WINED3DDECLUSAGE_POSITIONT;
         }
+        else if ((fvf & WINED3DFVF_XYZW) == WINED3DFVF_XYZW) {
+            elements[idx].Type = WINED3DDECLTYPE_FLOAT4;
+            elements[idx].Usage = WINED3DDECLUSAGE_POSITION;
+        }
         else {
             elements[idx].Type = WINED3DDECLTYPE_FLOAT3;
             elements[idx].Usage = WINED3DDECLUSAGE_POSITION;
