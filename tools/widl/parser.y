@@ -97,6 +97,7 @@ typelist_t incomplete_types = LIST_INIT(incomplete_types);
 
 static void add_incomplete(type_t *t);
 static void fix_incomplete(void);
+static void fix_incomplete_types(type_t *complete_type);
 
 static str_list_t *append_str(str_list_t *list, char *str);
 static attr_list_t *append_attr(attr_list_t *list, attr_t *attr);
@@ -126,7 +127,7 @@ static typelib_t *make_library(const char *name, const attr_list_t *attrs);
 static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type);
 
 static type_t *type_new_enum(char *name, var_list_t *enums);
-static type_t *type_new_struct(char *name, var_list_t *fields);
+static type_t *type_new_struct(char *name, int defined, var_list_t *fields);
 static type_t *type_new_nonencapsulated_union(char *name, var_list_t *fields);
 static type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *union_field, var_list_t *cases);
 
@@ -1047,7 +1048,7 @@ pointer_type:
 	| tPTR					{ $$ = RPC_FC_FP; }
 	;
 
-structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = type_new_struct($2, $4);
+structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = type_new_struct($2, TRUE, $4);
                                                   if(in_typelib)
                                                       add_typelib_entry($$);
                                                 }
@@ -1059,7 +1060,7 @@ type:	  tVOID					{ $$ = find_type_or_error("void", 0); }
 	| enumdef				{ $$ = $1; }
 	| tENUM aIDENTIFIER			{ $$ = find_type_or_error2($2, tsENUM); }
 	| structdef				{ $$ = $1; }
-	| tSTRUCT aIDENTIFIER			{ $$ = get_type(RPC_FC_STRUCT, $2, tsSTRUCT); }
+	| tSTRUCT aIDENTIFIER			{ $$ = type_new_struct($2, FALSE, NULL); }
 	| uniondef				{ $$ = $1; }
 	| tUNION aIDENTIFIER			{ $$ = find_type_or_error2($2, tsUNION); }
 	| tSAFEARRAY '(' type ')'		{ $$ = make_safearray($3); }
@@ -1385,13 +1386,33 @@ static type_t *type_new_enum(char *name, var_list_t *enums)
     return t;
 }
 
-static type_t *type_new_struct(char *name, var_list_t *fields)
+static type_t *type_new_struct(char *name, int defined, var_list_t *fields)
 {
-  type_t *t = get_type(RPC_FC_STRUCT, name, tsSTRUCT);
+  type_t *tag_type = name ? find_type(name, tsSTRUCT) : NULL;
+  type_t *t = make_type(RPC_FC_STRUCT, NULL);
+  t->name = name;
   t->kind = TKIND_RECORD;
-  t->details.structure = xmalloc(sizeof(*t->details.structure));
-  t->details.structure->fields = fields;
-  t->defined = TRUE;
+  if (defined || (tag_type && tag_type->details.structure))
+  {
+    if (tag_type && tag_type->details.structure)
+    {
+      t->details.structure = tag_type->details.structure;
+      t->type = tag_type->type;
+    }
+    else if (defined)
+    {
+      t->details.structure = xmalloc(sizeof(*t->details.structure));
+      t->details.structure->fields = fields;
+      t->defined = TRUE;
+    }
+  }
+  if (name)
+  {
+    if (fields)
+      reg_type(t, name, tsSTRUCT);
+    else
+      add_incomplete(t);
+  }
   return t;
 }
 
@@ -1807,6 +1828,8 @@ static type_t *reg_type(type_t *type, const char *name, int t)
   nt->t = t;
   nt->next = type_hash[hash];
   type_hash[hash] = nt;
+  if ((t == tsSTRUCT || t == tsUNION))
+    fix_incomplete_types(type);
   return type;
 }
 
@@ -1839,7 +1862,26 @@ static void fix_incomplete(void)
 
   LIST_FOR_EACH_ENTRY_SAFE(tn, next, &incomplete_types, struct typenode, entry) {
     fix_type(tn->type);
+    list_remove(&tn->entry);
     free(tn);
+  }
+}
+
+static void fix_incomplete_types(type_t *complete_type)
+{
+  struct typenode *tn, *next;
+
+  LIST_FOR_EACH_ENTRY_SAFE(tn, next, &incomplete_types, struct typenode, entry)
+  {
+    if (((is_struct(complete_type->type) && is_struct(tn->type->type)) ||
+         (is_union(complete_type->type) && is_union(tn->type->type))) &&
+        !strcmp(complete_type->name, tn->type->name))
+    {
+      tn->type->details.structure = complete_type->details.structure;
+      tn->type->type = complete_type->type;
+      list_remove(&tn->entry);
+      free(tn);
+    }
   }
 }
 
