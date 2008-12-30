@@ -278,6 +278,7 @@ typedef union
     struct
     {
         enum apc_type    type;
+        int              __pad;
         client_ptr_t     func;
         timeout_t        time;
         client_ptr_t     arg;
@@ -293,54 +294,58 @@ typedef union
     struct
     {
         enum apc_type    type;
-        void            *addr;
+        unsigned int     op_type;
+        client_ptr_t     addr;
         mem_size_t       size;
         unsigned int     zero_bits;
-        unsigned int     op_type;
         unsigned int     prot;
     } virtual_alloc;
     struct
     {
         enum apc_type    type;
-        void            *addr;
-        mem_size_t       size;
         unsigned int     op_type;
+        client_ptr_t     addr;
+        mem_size_t       size;
     } virtual_free;
     struct
     {
         enum apc_type    type;
-        const void      *addr;
+        int              __pad;
+        client_ptr_t     addr;
     } virtual_query;
     struct
     {
         enum apc_type    type;
-        void            *addr;
-        mem_size_t       size;
         unsigned int     prot;
+        client_ptr_t     addr;
+        mem_size_t       size;
     } virtual_protect;
     struct
     {
         enum apc_type    type;
-        const void      *addr;
+        int              __pad;
+        client_ptr_t     addr;
         mem_size_t       size;
     } virtual_flush;
     struct
     {
         enum apc_type    type;
-        void            *addr;
+        int              __pad;
+        client_ptr_t     addr;
         mem_size_t       size;
     } virtual_lock;
     struct
     {
         enum apc_type    type;
-        void            *addr;
+        int              __pad;
+        client_ptr_t     addr;
         mem_size_t       size;
     } virtual_unlock;
     struct
     {
         enum apc_type    type;
         obj_handle_t     handle;
-        void            *addr;
+        client_ptr_t     addr;
         mem_size_t       size;
         file_pos_t       offset;
         unsigned int     zero_bits;
@@ -350,7 +355,8 @@ typedef union
     struct
     {
         enum apc_type    type;
-        void            *addr;
+        int              __pad;
+        client_ptr_t     addr;
     } unmap_view;
     struct
     {
@@ -376,22 +382,22 @@ typedef union
     {
         enum apc_type    type;
         unsigned int     status;
-        void            *addr;
+        client_ptr_t     addr;
         mem_size_t       size;
     } virtual_alloc;
     struct
     {
         enum apc_type    type;
         unsigned int     status;
-        void            *addr;
+        client_ptr_t     addr;
         mem_size_t       size;
     } virtual_free;
     struct
     {
         enum apc_type    type;
         unsigned int     status;
-        void            *base;
-        void            *alloc_base;
+        client_ptr_t     base;
+        client_ptr_t     alloc_base;
         mem_size_t       size;
         unsigned int     state;
         unsigned int     prot;
@@ -402,7 +408,7 @@ typedef union
     {
         enum apc_type    type;
         unsigned int     status;
-        void            *addr;
+        client_ptr_t     addr;
         mem_size_t       size;
         unsigned int     prot;
     } virtual_protect;
@@ -410,28 +416,28 @@ typedef union
     {
         enum apc_type    type;
         unsigned int     status;
-        const void      *addr;
+        client_ptr_t     addr;
         mem_size_t       size;
     } virtual_flush;
     struct
     {
         enum apc_type    type;
         unsigned int     status;
-        void            *addr;
+        client_ptr_t     addr;
         mem_size_t       size;
     } virtual_lock;
     struct
     {
         enum apc_type    type;
         unsigned int     status;
-        void            *addr;
+        client_ptr_t     addr;
         mem_size_t       size;
     } virtual_unlock;
     struct
     {
         enum apc_type    type;
         unsigned int     status;
-        void            *addr;
+        client_ptr_t     addr;
         mem_size_t       size;
     } map_view;
     struct
@@ -870,9 +876,9 @@ struct select_request
 struct select_reply
 {
     struct reply_header __header;
-    obj_handle_t apc_handle;
     timeout_t    timeout;
     apc_call_t   call;
+    obj_handle_t apc_handle;
 };
 #define SELECT_ALL           1
 #define SELECT_ALERTABLE     2
@@ -5052,6 +5058,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 366
+#define SERVER_PROTOCOL_VERSION 367
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

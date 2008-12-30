@@ -134,40 +134,54 @@ static void dump_apc_call( const apc_call_t *call )
                  get_status_name(call->async_io.status) );
         break;
     case APC_VIRTUAL_ALLOC:
-        fprintf( stderr, "APC_VIRTUAL_ALLOC,addr=%p,size=", call->virtual_alloc.addr );
+        fprintf( stderr, "APC_VIRTUAL_ALLOC,addr==" );
+        dump_uint64( &call->virtual_alloc.addr );
+        fprintf( stderr, ",size=" );
         dump_uint64( &call->virtual_alloc.size );
         fprintf( stderr, ",zero_bits=%u,op_type=%x,prot=%x",
                  call->virtual_alloc.zero_bits, call->virtual_alloc.op_type,
                  call->virtual_alloc.prot );
         break;
     case APC_VIRTUAL_FREE:
-        fprintf( stderr, "APC_VIRTUAL_FREE,addr=%p,size=", call->virtual_free.addr );
+        fprintf( stderr, "APC_VIRTUAL_FREE,addr=" );
+        dump_uint64( &call->virtual_free.addr );
+        fprintf( stderr, ",size=" );
         dump_uint64( &call->virtual_free.size );
         fprintf( stderr, ",op_type=%x", call->virtual_free.op_type );
         break;
     case APC_VIRTUAL_QUERY:
-        fprintf( stderr, "APC_VIRTUAL_QUERY,addr=%p", call->virtual_query.addr );
+        fprintf( stderr, "APC_VIRTUAL_QUERY,addr=" );
+        dump_uint64( &call->virtual_query.addr );
         break;
     case APC_VIRTUAL_PROTECT:
-        fprintf( stderr, "APC_VIRTUAL_PROTECT,addr=%p,size=", call->virtual_protect.addr );
+        fprintf( stderr, "APC_VIRTUAL_PROTECT,addr=" );
+        dump_uint64( &call->virtual_protect.addr );
+        fprintf( stderr, ",size=" );
         dump_uint64( &call->virtual_protect.size );
         fprintf( stderr, ",prot=%x", call->virtual_protect.prot );
         break;
     case APC_VIRTUAL_FLUSH:
-        fprintf( stderr, "APC_VIRTUAL_FLUSH,addr=%p,size=", call->virtual_flush.addr );
+        fprintf( stderr, "APC_VIRTUAL_FLUSH,addr=" );
+        dump_uint64( &call->virtual_flush.addr );
+        fprintf( stderr, ",size=" );
         dump_uint64( &call->virtual_flush.size );
         break;
     case APC_VIRTUAL_LOCK:
-        fprintf( stderr, "APC_VIRTUAL_LOCK,addr=%p,size=", call->virtual_lock.addr );
+        fprintf( stderr, "APC_VIRTUAL_LOCK,addr=" );
+        dump_uint64( &call->virtual_lock.addr );
+        fprintf( stderr, ",size=" );
         dump_uint64( &call->virtual_lock.size );
         break;
     case APC_VIRTUAL_UNLOCK:
-        fprintf( stderr, "APC_VIRTUAL_UNLOCK,addr=%p,size=", call->virtual_unlock.addr );
+        fprintf( stderr, "APC_VIRTUAL_UNLOCK,addr=" );
+        dump_uint64( &call->virtual_unlock.addr );
+        fprintf( stderr, ",size=" );
         dump_uint64( &call->virtual_unlock.size );
         break;
     case APC_MAP_VIEW:
-        fprintf( stderr, "APC_MAP_VIEW,handle=%04x,addr=%p,size=",
-                 call->map_view.handle, call->map_view.addr );
+        fprintf( stderr, "APC_MAP_VIEW,handle=%04x,addr=", call->map_view.handle );
+        dump_uint64( &call->map_view.addr );
+        fprintf( stderr, ",size=" );
         dump_uint64( &call->map_view.size );
         fprintf( stderr, ",offset=" );
         dump_uint64( &call->map_view.offset );
@@ -175,7 +189,8 @@ static void dump_apc_call( const apc_call_t *call )
                  call->map_view.zero_bits, call->map_view.alloc_type, call->map_view.prot );
         break;
     case APC_UNMAP_VIEW:
-        fprintf( stderr, "APC_UNMAP_VIEW,addr=%p", call->unmap_view.addr );
+        fprintf( stderr, "APC_UNMAP_VIEW,addr=" );
+        dump_uint64( &call->unmap_view.addr );
         break;
     case APC_CREATE_THREAD:
         fprintf( stderr, "APC_CREATE_THREAD,func=%p,arg=%p,reserve=",
@@ -204,48 +219,65 @@ static void dump_apc_result( const apc_result_t *result )
                  get_status_name( result->async_io.status ) );
         break;
     case APC_VIRTUAL_ALLOC:
-        fprintf( stderr, "APC_VIRTUAL_ALLOC,status=%s,addr=%p,size=",
-                 get_status_name( result->virtual_alloc.status ), result->virtual_alloc.addr );
+        fprintf( stderr, "APC_VIRTUAL_ALLOC,status=%s,addr=",
+                 get_status_name( result->virtual_alloc.status ));
+        dump_uint64( &result->virtual_alloc.addr );
+        fprintf( stderr, ",size=" );
         dump_uint64( &result->virtual_alloc.size );
         break;
     case APC_VIRTUAL_FREE:
-        fprintf( stderr, "APC_VIRTUAL_FREE,status=%s,addr=%p,size=",
-                 get_status_name( result->virtual_free.status ), result->virtual_free.addr );
+        fprintf( stderr, "APC_VIRTUAL_FREE,status=%s,addr=",
+                 get_status_name( result->virtual_free.status ));
+        dump_uint64( &result->virtual_free.addr );
+        fprintf( stderr, ",size=" );
         dump_uint64( &result->virtual_free.size );
         break;
     case APC_VIRTUAL_QUERY:
-        fprintf( stderr, "APC_VIRTUAL_QUERY,status=%s,base=%p,alloc_base=%p,size=",
-                 get_status_name( result->virtual_query.status ),
-                 result->virtual_query.base, result->virtual_query.alloc_base );
+        fprintf( stderr, "APC_VIRTUAL_QUERY,status=%s,base=",
+                 get_status_name( result->virtual_query.status ));
+        dump_uint64( &result->virtual_query.base );
+        fprintf( stderr, ",alloc_base=" );
+        dump_uint64( &result->virtual_query.alloc_base );
+        fprintf( stderr, ",size=" );
         dump_uint64( &result->virtual_query.size );
         fprintf( stderr, ",state=%x,prot=%x,alloc_prot=%x,alloc_type=%x",
                  result->virtual_query.state, result->virtual_query.prot,
                  result->virtual_query.alloc_prot, result->virtual_query.alloc_type );
         break;
     case APC_VIRTUAL_PROTECT:
-        fprintf( stderr, "APC_VIRTUAL_PROTECT,status=%s,addr=%p,size=",
-                 get_status_name( result->virtual_protect.status ), result->virtual_protect.addr );
+        fprintf( stderr, "APC_VIRTUAL_PROTECT,status=%s,addr=",
+                 get_status_name( result->virtual_protect.status ));
+        dump_uint64( &result->virtual_protect.addr );
+        fprintf( stderr, ",size=" );
         dump_uint64( &result->virtual_protect.size );
         fprintf( stderr, ",prot=%x", result->virtual_protect.prot );
         break;
     case APC_VIRTUAL_FLUSH:
-        fprintf( stderr, "APC_VIRTUAL_FLUSH,status=%s,addr=%p,size=",
-                 get_status_name( result->virtual_flush.status ), result->virtual_flush.addr );
+        fprintf( stderr, "APC_VIRTUAL_FLUSH,status=%s,addr=",
+                 get_status_name( result->virtual_flush.status ));
+        dump_uint64( &result->virtual_flush.addr );
+        fprintf( stderr, ",size=" );
         dump_uint64( &result->virtual_flush.size );
         break;
     case APC_VIRTUAL_LOCK:
-        fprintf( stderr, "APC_VIRTUAL_LOCK,status=%s,addr=%p,size=",
-                 get_status_name( result->virtual_lock.status ), result->virtual_lock.addr );
+        fprintf( stderr, "APC_VIRTUAL_LOCK,status=%s,addr=",
+                 get_status_name( result->virtual_lock.status ));
+        dump_uint64( &result->virtual_lock.addr );
+        fprintf( stderr, ",size=" );
         dump_uint64( &result->virtual_lock.size );
         break;
     case APC_VIRTUAL_UNLOCK:
-        fprintf( stderr, "APC_VIRTUAL_UNLOCK,status=%s,addr=%p,size=",
-                 get_status_name( result->virtual_unlock.status ), result->virtual_unlock.addr );
+        fprintf( stderr, "APC_VIRTUAL_UNLOCK,status=%s,addr=",
+                 get_status_name( result->virtual_unlock.status ));
+        dump_uint64( &result->virtual_unlock.addr );
+        fprintf( stderr, ",size=" );
         dump_uint64( &result->virtual_unlock.size );
         break;
     case APC_MAP_VIEW:
-        fprintf( stderr, "APC_MAP_VIEW,status=%s,addr=%p,size=",
-                 get_status_name( result->map_view.status ), result->map_view.addr );
+        fprintf( stderr, "APC_MAP_VIEW,status=%s,addr=",
+                 get_status_name( result->map_view.status ));
+        dump_uint64( &result->map_view.addr );
+        fprintf( stderr, ",size=" );
         dump_uint64( &result->map_view.size );
         break;
     case APC_UNMAP_VIEW:
@@ -1193,12 +1225,13 @@ static void dump_select_request( const struct select_request *req )
 
 static void dump_select_reply( const struct select_reply *req )
 {
-    fprintf( stderr, " apc_handle=%04x,", req->apc_handle );
     fprintf( stderr, " timeout=" );
     dump_timeout( &req->timeout );
     fprintf( stderr, "," );
     fprintf( stderr, " call=" );
     dump_apc_call( &req->call );
+    fprintf( stderr, "," );
+    fprintf( stderr, " apc_handle=%04x", req->apc_handle );
 }
 
 static void dump_create_event_request( const struct create_event_request *req )
