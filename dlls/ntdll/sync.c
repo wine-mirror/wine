@@ -1007,16 +1007,16 @@ static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
         HANDLE handle;
         SIZE_T reserve = call->create_thread.reserve;
         SIZE_T commit = call->create_thread.commit;
+        void *func = wine_server_get_ptr( call->create_thread.func );
+        void *arg  = wine_server_get_ptr( call->create_thread.arg );
 
         result->type = call->type;
-        if (reserve == call->create_thread.reserve && commit == call->create_thread.commit)
+        if (reserve == call->create_thread.reserve && commit == call->create_thread.commit &&
+            (ULONG_PTR)func == call->create_thread.func && (ULONG_PTR)arg == call->create_thread.arg)
         {
             result->create_thread.status = RtlCreateUserThread( NtCurrentProcess(), NULL,
                                                                 call->create_thread.suspend, NULL,
-                                                                reserve, commit,
-                                                                call->create_thread.func,
-                                                                call->create_thread.arg,
-                                                                &handle, &id );
+                                                                reserve, commit, func, arg, &handle, &id );
             result->create_thread.handle = wine_server_obj_handle( handle );
             result->create_thread.tid = HandleToULong(id.UniqueThread);
         }

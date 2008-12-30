@@ -483,8 +483,8 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
         memset( &call, 0, sizeof(call) );
 
         call.create_thread.type    = APC_CREATE_THREAD;
-        call.create_thread.func    = start;
-        call.create_thread.arg     = param;
+        call.create_thread.func    = wine_server_client_ptr( start );
+        call.create_thread.arg     = wine_server_client_ptr( param );
         call.create_thread.reserve = stack_reserve;
         call.create_thread.commit  = stack_commit;
         call.create_thread.suspend = suspended;

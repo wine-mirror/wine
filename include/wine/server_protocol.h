@@ -362,11 +362,11 @@ typedef union
     struct
     {
         enum apc_type    type;
-        void (__stdcall *func)(void*);
-        void            *arg;
+        int              suspend;
+        client_ptr_t     func;
+        client_ptr_t     arg;
         mem_size_t       reserve;
         mem_size_t       commit;
-        int              suspend;
     } create_thread;
 } apc_call_t;
 
@@ -5059,6 +5059,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 369
+#define SERVER_PROTOCOL_VERSION 370
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

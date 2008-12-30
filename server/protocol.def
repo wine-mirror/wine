@@ -378,11 +378,11 @@ typedef union
     struct
     {
         enum apc_type    type;      /* APC_CREATE_THREAD */
-        void (__stdcall *func)(void*);  /* start function */
-        void            *arg;       /* argument for start function */
+        int              suspend;   /* suspended thread? */
+        client_ptr_t     func;      /* void (__stdcall *func)(void*);  start function */
+        client_ptr_t     arg;       /* argument for start function */
         mem_size_t       reserve;   /* reserve size for thread stack */
         mem_size_t       commit;    /* commit size for thread stack */
-        int              suspend;   /* suspended thread? */
     } create_thread;
 } apc_call_t;
 

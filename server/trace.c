@@ -193,8 +193,11 @@ static void dump_apc_call( const apc_call_t *call )
         dump_uint64( &call->unmap_view.addr );
         break;
     case APC_CREATE_THREAD:
-        fprintf( stderr, "APC_CREATE_THREAD,func=%p,arg=%p,reserve=",
-                 call->create_thread.func, call->create_thread.arg );
+        fprintf( stderr, "APC_CREATE_THREAD,func=" );
+        dump_uint64( &call->create_thread.func );
+        fprintf( stderr, ",arg=" );
+        dump_uint64( &call->create_thread.arg );
+        fprintf( stderr, ",reserve=" );
         dump_uint64( &call->create_thread.reserve );
         fprintf( stderr, ",commit=" );
         dump_uint64( &call->create_thread.commit );
