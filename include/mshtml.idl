@@ -2245,6 +2245,20 @@ methods:
     VARIANT minHeight();
 }
 
+[
+    noncreatable,
+    uuid(3050f285-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLStyle
+{
+    [default] dispinterface DispHTMLStyle;
+    interface IHTMLStyle;
+    interface IHTMLStyle2;
+    /* interface IHTMLStyle3; */
+    /* interface IHTMLStyle4; */
+    /* interface IHTMLStyle5; */
+}
+
 /*****************************************************************************
  *    IHTMLRenderStyle interface
  */

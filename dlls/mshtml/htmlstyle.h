@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-typedef struct {
+struct HTMLStyle {
     DispatchEx dispex;
     const IHTMLStyleVtbl    *lpHTMLStyleVtbl;
     const IHTMLStyle2Vtbl   *lpHTMLStyle2Vtbl;
@@ -24,7 +24,7 @@ typedef struct {
     LONG ref;
 
     nsIDOMCSSStyleDeclaration *nsstyle;
-} HTMLStyle;
+};
 
 #define HTMLSTYLE(x)     ((IHTMLStyle*)                   &(x)->lpHTMLStyleVtbl)
 #define HTMLSTYLE2(x)    ((IHTMLStyle2*)                  &(x)->lpHTMLStyle2Vtbl)
