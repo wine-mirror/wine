@@ -365,9 +365,9 @@ typedef union
         client_ptr_t     addr;      /* requested address */
         mem_size_t       size;      /* allocation size */
         file_pos_t       offset;    /* file offset */
-        unsigned int     zero_bits; /* allocation alignment */
         unsigned int     alloc_type;/* allocation type */
-        unsigned int     prot;      /* memory protection flags */
+        unsigned short   zero_bits; /* allocation alignment */
+        unsigned short   prot;      /* memory protection flags */
     } map_view;
     struct
     {
@@ -416,10 +416,10 @@ typedef union
         client_ptr_t     base;      /* resulting base address */
         client_ptr_t     alloc_base;/* resulting allocation base */
         mem_size_t       size;      /* resulting region size */
-        unsigned int     state;     /* resulting region state */
-        unsigned int     prot;      /* resulting region protection */
-        unsigned int     alloc_prot;/* resulting allocation protection */
-        unsigned int     alloc_type;/* resulting region allocation type */
+        unsigned short   state;     /* resulting region state */
+        unsigned short   prot;      /* resulting region protection */
+        unsigned short   alloc_prot;/* resulting allocation protection */
+        unsigned short   alloc_type;/* resulting region allocation type */
     } virtual_query;
     struct
     {

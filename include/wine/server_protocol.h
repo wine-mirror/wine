@@ -349,9 +349,9 @@ typedef union
         client_ptr_t     addr;
         mem_size_t       size;
         file_pos_t       offset;
-        unsigned int     zero_bits;
         unsigned int     alloc_type;
-        unsigned int     prot;
+        unsigned short   zero_bits;
+        unsigned short   prot;
     } map_view;
     struct
     {
@@ -400,10 +400,10 @@ typedef union
         client_ptr_t     base;
         client_ptr_t     alloc_base;
         mem_size_t       size;
-        unsigned int     state;
-        unsigned int     prot;
-        unsigned int     alloc_prot;
-        unsigned int     alloc_type;
+        unsigned short   state;
+        unsigned short   prot;
+        unsigned short   alloc_prot;
+        unsigned short   alloc_type;
     } virtual_query;
     struct
     {
@@ -5059,6 +5059,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 368
+#define SERVER_PROTOCOL_VERSION 369
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

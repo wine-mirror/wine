@@ -916,10 +916,10 @@ static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
             result->virtual_query.base       = wine_server_client_ptr( info.BaseAddress );
             result->virtual_query.alloc_base = wine_server_client_ptr( info.AllocationBase );
             result->virtual_query.size       = info.RegionSize;
-            result->virtual_query.state      = info.State;
             result->virtual_query.prot       = info.Protect;
             result->virtual_query.alloc_prot = info.AllocationProtect;
-            result->virtual_query.alloc_type = info.Type;
+            result->virtual_query.state      = info.State >> 12;
+            result->virtual_query.alloc_type = info.Type >> 16;
         }
         break;
     }

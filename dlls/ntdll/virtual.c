@@ -1963,10 +1963,10 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
             info->BaseAddress       = wine_server_get_ptr( result.virtual_query.base );
             info->AllocationBase    = wine_server_get_ptr( result.virtual_query.alloc_base );
             info->RegionSize        = result.virtual_query.size;
-            info->State             = result.virtual_query.state;
             info->Protect           = result.virtual_query.prot;
             info->AllocationProtect = result.virtual_query.alloc_prot;
-            info->Type              = result.virtual_query.alloc_type;
+            info->State             = (DWORD)result.virtual_query.state << 12;
+            info->Type              = (DWORD)result.virtual_query.alloc_type << 16;
             if (info->RegionSize != result.virtual_query.size)  /* truncated */
                 return STATUS_INVALID_PARAMETER;  /* FIXME */
             if (res_len) *res_len = sizeof(*info);
@@ -2233,6 +2233,26 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     if ((offset.u.LowPart & mask) || (*addr_ptr && ((UINT_PTR)*addr_ptr & mask)))
         return STATUS_INVALID_PARAMETER;
 
+    switch(protect)
+    {
+    case PAGE_NOACCESS:
+        access = SECTION_QUERY;
+        break;
+    case PAGE_READWRITE:
+    case PAGE_EXECUTE_READWRITE:
+        access = SECTION_QUERY | SECTION_MAP_WRITE;
+        break;
+    case PAGE_READONLY:
+    case PAGE_WRITECOPY:
+    case PAGE_EXECUTE:
+    case PAGE_EXECUTE_READ:
+    case PAGE_EXECUTE_WRITECOPY:
+        access = SECTION_QUERY | SECTION_MAP_READ;
+        break;
+    default:
+        return STATUS_INVALID_PARAMETER;
+    }
+
     if (process != NtCurrentProcess())
     {
         apc_call_t call;
@@ -2257,26 +2277,6 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
             *size_ptr = result.map_view.size;
         }
         return result.map_view.status;
-    }
-
-    switch(protect)
-    {
-    case PAGE_NOACCESS:
-        access = SECTION_QUERY;
-        break;
-    case PAGE_READWRITE:
-    case PAGE_EXECUTE_READWRITE:
-        access = SECTION_QUERY | SECTION_MAP_WRITE;
-        break;
-    case PAGE_READONLY:
-    case PAGE_WRITECOPY:
-    case PAGE_EXECUTE:
-    case PAGE_EXECUTE_READ:
-    case PAGE_EXECUTE_WRITECOPY:
-        access = SECTION_QUERY | SECTION_MAP_READ;
-        break;
-    default:
-        return STATUS_INVALID_PARAMETER;
     }
 
     SERVER_START_REQ( get_mapping_info )
