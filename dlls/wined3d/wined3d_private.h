@@ -1128,9 +1128,6 @@ struct IWineD3DDeviceImpl
     /* Textures for when no other textures are mapped */
     UINT                          dummyTextureName[MAX_TEXTURES];
 
-    /* Debug stream management */
-    BOOL                     debug;
-
     /* Device state management */
     HRESULT                 state;
     BOOL                    d3d_initialized;
