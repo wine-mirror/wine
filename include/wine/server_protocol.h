@@ -17,7 +17,7 @@
 
 typedef unsigned int obj_handle_t;
 typedef unsigned int user_handle_t;
-typedef unsigned short atom_t;
+typedef unsigned int atom_t;
 typedef unsigned int process_id_t;
 typedef unsigned int thread_id_t;
 typedef unsigned int data_size_t;
@@ -148,7 +148,7 @@ typedef __int64 timeout_t;
 typedef struct
 {
     atom_t         atom;
-    short          string;
+    int            string;
     lparam_t       data;
 } property_data_t;
 
@@ -2857,7 +2857,7 @@ struct get_window_info_reply
     process_id_t   pid;
     thread_id_t    tid;
     atom_t         atom;
-    short int      is_unicode;
+    int            is_unicode;
 };
 
 
@@ -5061,6 +5061,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 376
+#define SERVER_PROTOCOL_VERSION 377
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

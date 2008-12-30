@@ -33,7 +33,7 @@
 
 typedef unsigned int obj_handle_t;
 typedef unsigned int user_handle_t;
-typedef unsigned short atom_t;
+typedef unsigned int atom_t;
 typedef unsigned int process_id_t;
 typedef unsigned int thread_id_t;
 typedef unsigned int data_size_t;
@@ -164,7 +164,7 @@ typedef __int64 timeout_t;
 typedef struct
 {
     atom_t         atom;     /* property atom */
-    short          string;   /* was atom a string originally? */
+    int            string;   /* was atom a string originally? */
     lparam_t       data;     /* data stored in property */
 } property_data_t;
 
@@ -2106,7 +2106,7 @@ enum message_type
     process_id_t   pid;         /* process owning the window */
     thread_id_t    tid;         /* thread owning the window */
     atom_t         atom;        /* class atom */
-    short int      is_unicode;  /* ANSI or unicode */
+    int            is_unicode;  /* ANSI or unicode */
 @END
 
 
