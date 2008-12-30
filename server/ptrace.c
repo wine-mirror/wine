@@ -354,7 +354,7 @@ static struct thread *get_ptrace_thread( struct process *process )
 }
 
 /* read data from a process memory space */
-int read_process_memory( struct process *process, const void *ptr, data_size_t size, char *dest )
+int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, char *dest )
 {
     struct thread *thread = get_ptrace_thread( process );
     unsigned int first_offset, last_offset, len;
@@ -362,11 +362,17 @@ int read_process_memory( struct process *process, const void *ptr, data_size_t s
 
     if (!thread) return 0;
 
-    first_offset = (unsigned long)ptr % sizeof(int);
+    if ((unsigned long)ptr != ptr)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
+
+    first_offset = ptr % sizeof(int);
     last_offset = (size + first_offset) % sizeof(int);
     if (!last_offset) last_offset = sizeof(int);
 
-    addr = (int *)((char *)ptr - first_offset);
+    addr = (int *)(unsigned long)(ptr - first_offset);
     len = (size + first_offset + sizeof(int) - 1) / sizeof(int);
 
     if (suspend_for_ptrace( thread ))
@@ -415,7 +421,7 @@ static int check_process_write_access( struct thread *thread, int *addr, data_si
 }
 
 /* write data to a process memory space */
-int write_process_memory( struct process *process, void *ptr, data_size_t size, const char *src )
+int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, const char *src )
 {
     struct thread *thread = get_ptrace_thread( process );
     int ret = 0, data = 0;
@@ -425,9 +431,15 @@ int write_process_memory( struct process *process, void *ptr, data_size_t size, 
 
     if (!thread) return 0;
 
+    if ((unsigned long)ptr != ptr)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
+
     /* compute the mask for the first int */
     first_mask = ~0;
-    first_offset = (unsigned long)ptr % sizeof(int);
+    first_offset = ptr % sizeof(int);
     memset( &first_mask, 0, first_offset );
 
     /* compute the mask for the last int */
@@ -436,7 +448,7 @@ int write_process_memory( struct process *process, void *ptr, data_size_t size, 
     last_mask = 0;
     memset( &last_mask, 0xff, last_offset );
 
-    addr = (int *)((char *)ptr - first_offset);
+    addr = (int *)(unsigned long)(ptr - first_offset);
     len = (size + first_offset + sizeof(int) - 1) / sizeof(int);
 
     if (suspend_for_ptrace( thread ))

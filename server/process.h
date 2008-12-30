@@ -138,8 +138,8 @@ extern struct thread *console_get_renderer( struct console_input *console );
 extern void init_tracing_mechanism(void);
 extern void init_process_tracing( struct process *process );
 extern void finish_process_tracing( struct process *process );
-extern int read_process_memory( struct process *process, const void *ptr, data_size_t size, char *dest );
-extern int write_process_memory( struct process *process, void *ptr, data_size_t size, const char *src );
+extern int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, char *dest );
+extern int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, const char *src );
 
 static inline process_id_t get_process_id( struct process *process ) { return process->id; }
 

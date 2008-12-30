@@ -124,12 +124,18 @@ int send_thread_signal( struct thread *thread, int sig )
 }
 
 /* read data from a process memory space */
-int read_process_memory( struct process *process, const void *ptr, size_t size, char *dest )
+int read_process_memory( struct process *process, client_ptr_t ptr, size_t size, char *dest )
 {
     ssize_t ret;
-    int fd = open_proc_as( process, O_RDONLY );
+    int fd;
 
-    if (fd == -1) return 0;
+    if ((off_t)ptr != ptr)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
+
+    if ((fd = open_proc_as( process, O_RDONLY )) == -1) return 0;
 
     ret = pread( fd, dest, size, (off_t)ptr );
     close( fd );
@@ -141,12 +147,18 @@ int read_process_memory( struct process *process, const void *ptr, size_t size, 
 }
 
 /* write data to a process memory space */
-int write_process_memory( struct process *process, void *ptr, size_t size, const char *src )
+int write_process_memory( struct process *process, client_ptr_t ptr, size_t size, const char *src )
 {
     ssize_t ret;
-    int fd = open_proc_as( process, O_WRONLY );
+    int fd;
 
-    if (fd == -1) return 0;
+    if ((off_t)ptr != ptr)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
+
+    if ((fd = open_proc_as( process, O_RDONLY )) == -1) return 0;
 
     ret = pwrite( fd, src, size, (off_t)ptr );
     close( fd );

@@ -1500,7 +1500,7 @@ enum char_info_mode
 /* Read data from a process address space */
 @REQ(read_process_memory)
     obj_handle_t handle;       /* process handle */
-    void*        addr;         /* addr to read from */
+    client_ptr_t addr;         /* addr to read from */
 @REPLY
     VARARG(data,bytes);        /* result data */
 @END
@@ -1509,7 +1509,7 @@ enum char_info_mode
 /* Write data to a process address space */
 @REQ(write_process_memory)
     obj_handle_t handle;       /* process handle */
-    void*        addr;         /* addr to write to */
+    client_ptr_t addr;         /* addr to write to */
     VARARG(data,bytes);        /* data to write */
 @END
 

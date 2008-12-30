@@ -2549,7 +2549,7 @@ NTSTATUS WINAPI NtReadVirtualMemory( HANDLE process, const void *addr, void *buf
     SERVER_START_REQ( read_process_memory )
     {
         req->handle = wine_server_obj_handle( process );
-        req->addr   = (void *)addr;
+        req->addr   = wine_server_client_ptr( addr );
         wine_server_set_reply( req, buffer, size );
         if ((status = wine_server_call( req ))) size = 0;
     }
@@ -2571,7 +2571,7 @@ NTSTATUS WINAPI NtWriteVirtualMemory( HANDLE process, void *addr, const void *bu
     SERVER_START_REQ( write_process_memory )
     {
         req->handle     = wine_server_obj_handle( process );
-        req->addr       = addr;
+        req->addr       = wine_server_client_ptr( addr );
         wine_server_add_data( req, buffer, size );
         if ((status = wine_server_call( req ))) size = 0;
     }

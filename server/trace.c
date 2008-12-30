@@ -1964,7 +1964,8 @@ static void dump_set_debugger_kill_on_exit_request( const struct set_debugger_ki
 static void dump_read_process_memory_request( const struct read_process_memory_request *req )
 {
     fprintf( stderr, " handle=%04x,", req->handle );
-    fprintf( stderr, " addr=%p", req->addr );
+    fprintf( stderr, " addr=" );
+    dump_uint64( &req->addr );
 }
 
 static void dump_read_process_memory_reply( const struct read_process_memory_reply *req )
@@ -1976,7 +1977,9 @@ static void dump_read_process_memory_reply( const struct read_process_memory_rep
 static void dump_write_process_memory_request( const struct write_process_memory_request *req )
 {
     fprintf( stderr, " handle=%04x,", req->handle );
-    fprintf( stderr, " addr=%p,", req->addr );
+    fprintf( stderr, " addr=" );
+    dump_uint64( &req->addr );
+    fprintf( stderr, "," );
     fprintf( stderr, " data=" );
     dump_varargs_bytes( cur_size );
 }

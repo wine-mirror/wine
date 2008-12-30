@@ -292,7 +292,7 @@ int send_thread_signal( struct thread *thread, int sig )
 }
 
 /* read data from a process memory space */
-int read_process_memory( struct process *process, const void *ptr, data_size_t size, char *dest )
+int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, char *dest )
 {
     kern_return_t ret;
     mach_msg_type_number_t bytes_read;
@@ -307,6 +307,11 @@ int read_process_memory( struct process *process, const void *ptr, data_size_t s
         set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
+    if ((vm_address_t)ptr != ptr)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
 
     if ((ret = task_suspend( process_port )) != KERN_SUCCESS)
     {
@@ -314,8 +319,8 @@ int read_process_memory( struct process *process, const void *ptr, data_size_t s
         return 0;
     }
 
-    offset = (unsigned long)ptr % page_size;
-    aligned_address = (vm_address_t)((char *)ptr - offset);
+    offset = ptr % page_size;
+    aligned_address = (vm_address_t)(ptr - offset);
     aligned_size = (size + offset + page_size - 1) / page_size * page_size;
 
     ret = vm_read( process_port, aligned_address, aligned_size, &data, &bytes_read );
@@ -330,7 +335,7 @@ int read_process_memory( struct process *process, const void *ptr, data_size_t s
 }
 
 /* write data to a process memory space */
-int write_process_memory( struct process *process, void *ptr, data_size_t size, const char *src )
+int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, const char *src )
 {
     kern_return_t ret;
     vm_address_t aligned_address, region_address;
@@ -347,9 +352,14 @@ int write_process_memory( struct process *process, void *ptr, data_size_t size, 
         set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
+    if ((vm_address_t)ptr != ptr)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
 
-    offset = (unsigned long)ptr % page_size;
-    aligned_address = (vm_address_t)((char *)ptr - offset);
+    offset = ptr % page_size;
+    aligned_address = (vm_address_t)(ptr - offset);
     aligned_size = (size + offset + page_size - 1) / page_size * page_size;
 
     if ((ret = task_suspend( process_port )) != KERN_SUCCESS)

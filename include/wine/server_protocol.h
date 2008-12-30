@@ -1940,7 +1940,7 @@ struct read_process_memory_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    void*        addr;
+    client_ptr_t addr;
 };
 struct read_process_memory_reply
 {
@@ -1954,7 +1954,7 @@ struct write_process_memory_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    void*        addr;
+    client_ptr_t addr;
     /* VARARG(data,bytes); */
 };
 struct write_process_memory_reply
@@ -5052,6 +5052,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 364
+#define SERVER_PROTOCOL_VERSION 365
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
