@@ -3068,7 +3068,8 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, W
                         stateblock->wineD3DDevice->frag_pipe->ffp_proj_control);
 
     /* The sampler applying function calls us if this changes */
-    if(context->lastWasPow2Texture[texUnit] && stateblock->textures[texUnit]) {
+    if ((context->lastWasPow2Texture & (1 << texUnit)) && stateblock->textures[texUnit])
+    {
         if(generated) {
             FIXME("Non-power2 texture being used with generated texture coords\n");
         }
@@ -3358,8 +3359,10 @@ static void sampler_texmatrix(DWORD state, IWineD3DStateBlockImpl *stateblock, W
             }
         }
 
-        if(texIsPow2 || context->lastWasPow2Texture[sampler]) {
-            context->lastWasPow2Texture[sampler] = texIsPow2;
+        if (texIsPow2 || (context->lastWasPow2Texture & (1 << sampler)))
+        {
+            if (texIsPow2) context->lastWasPow2Texture |= 1 << sampler;
+            else context->lastWasPow2Texture &= ~(1 << sampler);
             transform_texture(STATE_TEXTURESTAGE(stateblock->wineD3DDevice->texUnitMap[sampler], WINED3DTSS_TEXTURETRANSFORMFLAGS), stateblock, context);
         }
     }
