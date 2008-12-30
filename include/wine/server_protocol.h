@@ -137,6 +137,7 @@ struct wake_up_reply
 {
     client_ptr_t cookie;
     int          signaled;
+    int          __pad;
 };
 
 
@@ -5058,6 +5059,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 367
+#define SERVER_PROTOCOL_VERSION 368
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

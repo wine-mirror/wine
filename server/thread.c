@@ -565,6 +565,7 @@ static int send_thread_wakeup( struct thread *thread, client_ptr_t cookie, int s
     struct wake_up_reply reply;
     int ret;
 
+    memset( &reply, 0, sizeof(reply) );
     reply.cookie   = cookie;
     reply.signaled = signaled;
     if ((ret = write( get_unix_fd( thread->wait_fd ), &reply, sizeof(reply) )) == sizeof(reply))

@@ -153,6 +153,7 @@ struct wake_up_reply
 {
     client_ptr_t cookie;    /* magic cookie that was passed in select_request */
     int          signaled;  /* wait result */
+    int          __pad;
 };
 
 /* NT-style timeout, in 100ns units, negative means relative timeout */
