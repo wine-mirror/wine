@@ -1813,7 +1813,9 @@ static void dump_get_mapping_info_reply( const struct get_mapping_info_reply *re
     fprintf( stderr, "," );
     fprintf( stderr, " protect=%d,", req->protect );
     fprintf( stderr, " header_size=%d,", req->header_size );
-    fprintf( stderr, " base=%p,", req->base );
+    fprintf( stderr, " base=" );
+    dump_uint64( &req->base );
+    fprintf( stderr, "," );
     fprintf( stderr, " mapping=%04x,", req->mapping );
     fprintf( stderr, " shared_file=%04x", req->shared_file );
 }

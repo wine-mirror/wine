@@ -2285,11 +2285,12 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         req->access = access;
         res = wine_server_call( req );
         map_vprot   = reply->protect;
-        base        = reply->base;
+        base        = wine_server_get_ptr( reply->base );
         full_size   = reply->size;
         header_size = reply->header_size;
         dup_mapping = wine_server_ptr_handle( reply->mapping );
         shared_file = wine_server_ptr_handle( reply->shared_file );
+        if ((ULONG_PTR)base != reply->base) base = NULL;
     }
     SERVER_END_REQ;
     if (res) return res;

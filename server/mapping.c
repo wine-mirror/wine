@@ -58,7 +58,7 @@ struct mapping
     int             protect;         /* protection flags */
     struct file    *file;            /* file mapped */
     int             header_size;     /* size of headers (for PE image mapping) */
-    void           *base;            /* default base addr (for PE image mapping) */
+    client_ptr_t    base;            /* default base addr (for PE image mapping) */
     struct ranges  *committed;       /* list of committed ranges in this mapping */
     struct file    *shared_file;     /* temp file for shared PE mapping */
     struct list     shared_entry;    /* entry in global shared PE mappings list */
@@ -341,7 +341,7 @@ static int get_image_params( struct mapping *mapping )
     if (mapping->shared_file) list_add_head( &shared_list, &mapping->shared_entry );
 
     mapping->size        = ROUND_SIZE( nt.OptionalHeader.SizeOfImage );
-    mapping->base        = (void *)nt.OptionalHeader.ImageBase;
+    mapping->base        = nt.OptionalHeader.ImageBase;
     mapping->header_size = max( pos + size, nt.OptionalHeader.SizeOfHeaders );
     mapping->protect     = VPROT_IMAGE;
 
@@ -389,7 +389,7 @@ static struct object *create_mapping( struct directory *root, const struct unico
                                                DACL_SECURITY_INFORMATION|
                                                SACL_SECURITY_INFORMATION );
     mapping->header_size = 0;
-    mapping->base        = NULL;
+    mapping->base        = 0;
     mapping->file        = NULL;
     mapping->shared_file = NULL;
     mapping->committed   = NULL;
@@ -453,11 +453,11 @@ static void mapping_dump( struct object *obj, int verbose )
 {
     struct mapping *mapping = (struct mapping *)obj;
     assert( obj->ops == &mapping_ops );
-    fprintf( stderr, "Mapping size=%08x%08x prot=%08x file=%p header_size=%08x base=%p "
+    fprintf( stderr, "Mapping size=%08x%08x prot=%08x file=%p header_size=%08x base=%08lx "
              "shared_file=%p ",
              (unsigned int)(mapping->size >> 32), (unsigned int)mapping->size,
              mapping->protect, mapping->file, mapping->header_size,
-             mapping->base, mapping->shared_file );
+             (unsigned long)mapping->base, mapping->shared_file );
     dump_object_name( &mapping->obj );
     fputc( '\n', stderr );
 }

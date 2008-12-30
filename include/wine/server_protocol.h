@@ -1737,7 +1737,7 @@ struct get_mapping_info_reply
     mem_size_t   size;
     int          protect;
     int          header_size;
-    void*        base;
+    client_ptr_t base;
     obj_handle_t mapping;
     obj_handle_t shared_file;
 };
@@ -5052,6 +5052,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 365
+#define SERVER_PROTOCOL_VERSION 366
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
