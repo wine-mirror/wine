@@ -369,35 +369,6 @@ static void set_bool_pref(nsIPrefBranch *pref, const char *pref_name, BOOL val)
         ERR("Could not set pref %s\n", debugstr_a(pref_name));
 }
 
-static void set_profile(void)
-{
-    nsIProfile *profile;
-    PRBool exists = FALSE;
-    nsresult nsres;
-
-    static const WCHAR wszMSHTML[] = {'M','S','H','T','M','L',0};
-
-    nsres = nsIServiceManager_GetServiceByContractID(pServMgr, NS_PROFILE_CONTRACTID,
-            &IID_nsIProfile, (void**)&profile);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get profile service: %08x\n", nsres);
-        return;
-    }
-
-    nsres = nsIProfile_ProfileExists(profile, wszMSHTML, &exists);
-    if(!exists) {
-        nsres = nsIProfile_CreateNewProfile(profile, wszMSHTML, NULL, NULL, FALSE);
-        if(NS_FAILED(nsres))
-            ERR("CreateNewProfile failed: %08x\n", nsres);
-    }
-
-    nsres = nsIProfile_SetCurrentProfile(profile, wszMSHTML);
-    if(NS_FAILED(nsres))
-        ERR("SetCurrentProfile failed: %08x\n", nsres);
-
-    nsIProfile_Release(profile);
-}
-
 static void set_preferences(void)
 {
     nsIPrefBranch *pref;
@@ -473,7 +444,6 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
         ERR("could not get appstartup-notifier: %08x\n", nsres);
     }
 
-    set_profile();
     set_preferences();
 
     nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_MEMORY_CONTRACTID,
