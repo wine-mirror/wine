@@ -853,9 +853,12 @@ static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
     case APC_NONE:
         break;
     case APC_USER:
-        call->user.func( call->user.args[0], call->user.args[1], call->user.args[2] );
+    {
+        void (WINAPI *func)(ULONG_PTR,ULONG_PTR,ULONG_PTR) = wine_server_get_ptr( call->user.func );
+        func( call->user.args[0], call->user.args[1], call->user.args[2] );
         user_apc = TRUE;
         break;
+    }
     case APC_TIMER:
     {
         void (WINAPI *func)(void*, unsigned int, unsigned int) = wine_server_get_ptr( call->timer.func );
@@ -867,14 +870,15 @@ static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
     case APC_ASYNC_IO:
     {
         void *apc = NULL;
-        IO_STATUS_BLOCK *iosb = call->async_io.sb;
+        IO_STATUS_BLOCK *iosb = wine_server_get_ptr( call->async_io.sb );
+        NTSTATUS (*func)(void *, IO_STATUS_BLOCK *, NTSTATUS, void **) = wine_server_get_ptr( call->async_io.func );
         result->type = call->type;
-        result->async_io.status = call->async_io.func( call->async_io.user, iosb,
-                                                       call->async_io.status, &apc );
+        result->async_io.status = func( wine_server_get_ptr( call->async_io.user ),
+                                        iosb, call->async_io.status, &apc );
         if (result->async_io.status != STATUS_PENDING)
         {
             result->async_io.total = iosb->Information;
-            result->async_io.apc   = apc;
+            result->async_io.apc   = wine_server_client_ptr( apc );
         }
         break;
     }

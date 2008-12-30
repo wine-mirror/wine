@@ -166,9 +166,9 @@ typedef struct
 {
     obj_handle_t    handle;
     obj_handle_t    event;
-    void           *callback;
-    void           *iosb;
-    void           *arg;
+    client_ptr_t    callback;
+    client_ptr_t    iosb;
+    client_ptr_t    arg;
     apc_param_t     cvalue;
 } async_data_t;
 
@@ -272,7 +272,8 @@ typedef union
     struct
     {
         enum apc_type    type;
-        void (__stdcall *func)(unsigned long,unsigned long,unsigned long);
+        int              __pad;
+        client_ptr_t     func;
         apc_param_t      args[3];
     } user;
     struct
@@ -286,10 +287,10 @@ typedef union
     struct
     {
         enum apc_type    type;
-        unsigned int   (*func)(void*, void*, unsigned int, void **);
-        void            *user;
-        void            *sb;
         unsigned int     status;
+        client_ptr_t     func;
+        client_ptr_t     user;
+        client_ptr_t     sb;
     } async_io;
     struct
     {
@@ -376,7 +377,7 @@ typedef union
     {
         enum apc_type    type;
         unsigned int     status;
-        void            *apc;
+        client_ptr_t     apc;
         unsigned int     total;
     } async_io;
     struct
@@ -2727,7 +2728,7 @@ struct get_ioctl_result_request
 {
     struct request_header __header;
     obj_handle_t   handle;
-    void*          user_arg;
+    client_ptr_t   user_arg;
 };
 struct get_ioctl_result_reply
 {
@@ -5060,6 +5061,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 372
+#define SERVER_PROTOCOL_VERSION 373
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

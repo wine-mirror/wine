@@ -1334,9 +1334,9 @@ static int WS2_register_async_shutdown( SOCKET s, int type )
     {
         req->type   = type;
         req->async.handle   = wine_server_obj_handle( wsa->hSocket );
-        req->async.callback = WS2_async_shutdown;
-        req->async.iosb     = &wsa->local_iosb;
-        req->async.arg      = wsa;
+        req->async.callback = wine_server_client_ptr( WS2_async_shutdown );
+        req->async.iosb     = wine_server_client_ptr( &wsa->local_iosb );
+        req->async.arg      = wine_server_client_ptr( wsa );
         req->async.cvalue   = 0;
         status = wine_server_call( req );
     }
@@ -2786,9 +2786,9 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             {
                 req->type           = ASYNC_TYPE_WRITE;
                 req->async.handle   = wine_server_obj_handle( wsa->hSocket );
-                req->async.callback = WS2_async_send;
-                req->async.iosb     = iosb;
-                req->async.arg      = wsa;
+                req->async.callback = wine_server_client_ptr( WS2_async_send );
+                req->async.iosb     = wine_server_client_ptr( iosb );
+                req->async.arg      = wine_server_client_ptr( wsa );
                 req->async.event    = wine_server_obj_handle( lpCompletionRoutine ? 0 : lpOverlapped->hEvent );
                 req->async.cvalue   = cvalue;
                 err = wine_server_call( req );
@@ -4311,9 +4311,9 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                 {
                     req->type           = ASYNC_TYPE_READ;
                     req->async.handle   = wine_server_obj_handle( wsa->hSocket );
-                    req->async.callback = WS2_async_recv;
-                    req->async.iosb     = iosb;
-                    req->async.arg      = wsa;
+                    req->async.callback = wine_server_client_ptr( WS2_async_recv );
+                    req->async.iosb     = wine_server_client_ptr( iosb );
+                    req->async.arg      = wine_server_client_ptr( wsa );
                     req->async.event    = wine_server_obj_handle( lpCompletionRoutine ? 0 : lpOverlapped->hEvent );
                     req->async.cvalue   = cvalue;
                     err = wine_server_call( req );

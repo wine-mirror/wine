@@ -657,9 +657,9 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                 req->count  = length;
                 req->async.handle   = wine_server_obj_handle( hFile );
                 req->async.event    = wine_server_obj_handle( hEvent );
-                req->async.callback = FILE_AsyncReadService;
-                req->async.iosb     = io_status;
-                req->async.arg      = fileio;
+                req->async.callback = wine_server_client_ptr( FILE_AsyncReadService );
+                req->async.iosb     = wine_server_client_ptr( io_status );
+                req->async.arg      = wine_server_client_ptr( fileio );
                 req->async.cvalue   = cvalue;
                 status = wine_server_call( req );
             }
@@ -981,9 +981,9 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
                 req->count  = length;
                 req->async.handle   = wine_server_obj_handle( hFile );
                 req->async.event    = wine_server_obj_handle( hEvent );
-                req->async.callback = FILE_AsyncWriteService;
-                req->async.iosb     = io_status;
-                req->async.arg      = fileio;
+                req->async.callback = wine_server_client_ptr( FILE_AsyncWriteService );
+                req->async.iosb     = wine_server_client_ptr( io_status );
+                req->async.arg      = wine_server_client_ptr( fileio );
                 req->async.cvalue   = cvalue;
                 status = wine_server_call( req );
             }
@@ -1164,7 +1164,7 @@ static NTSTATUS ioctl_completion( void *arg, IO_STATUS_BLOCK *io, NTSTATUS statu
         SERVER_START_REQ( get_ioctl_result )
         {
             req->handle   = wine_server_obj_handle( async->handle );
-            req->user_arg = async;
+            req->user_arg = wine_server_client_ptr( async );
             wine_server_set_reply( req, async->buffer, async->size );
             if (!(status = wine_server_call( req )))
                 io->Information = wine_server_reply_size( reply );
@@ -1206,9 +1206,9 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
         req->code           = code;
         req->blocking       = !apc && !event;
         req->async.handle   = wine_server_obj_handle( handle );
-        req->async.callback = ioctl_completion;
-        req->async.iosb     = io;
-        req->async.arg      = async;
+        req->async.callback = wine_server_client_ptr( ioctl_completion );
+        req->async.iosb     = wine_server_client_ptr( io );
+        req->async.arg      = wine_server_client_ptr( async );
         req->async.event    = wine_server_obj_handle( event );
         req->async.cvalue   = cvalue;
         wine_server_add_data( req, in_buffer, in_size );

@@ -234,7 +234,7 @@ void async_set_timeout( struct async *async, timeout_t timeout, unsigned int sta
 }
 
 /* store the result of the client-side async callback */
-void async_set_result( struct object *obj, unsigned int status, unsigned int total, void *apc )
+void async_set_result( struct object *obj, unsigned int status, unsigned int total, client_ptr_t apc )
 {
     struct async *async = (struct async *)obj;
 
@@ -266,8 +266,8 @@ void async_set_result( struct object *obj, unsigned int status, unsigned int tot
             memset( &data, 0, sizeof(data) );
             data.type         = APC_USER;
             data.user.func    = apc;
-            data.user.args[0] = (apc_param_t)(unsigned long)async->data.arg;
-            data.user.args[1] = (apc_param_t)(unsigned long)async->data.iosb;
+            data.user.args[0] = async->data.arg;
+            data.user.args[1] = async->data.iosb;
             data.user.args[2] = 0;
             thread_queue_apc( async->thread, NULL, &data );
         }

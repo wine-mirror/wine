@@ -114,7 +114,9 @@ static void dump_apc_call( const apc_call_t *call )
         fprintf( stderr, "APC_NONE" );
         break;
     case APC_USER:
-        fprintf( stderr, "APC_USER,args={" );
+        fprintf( stderr, "APC_USER,func=" );
+        dump_uint64( &call->user.func );
+        fprintf( stderr, ",args={" );
         dump_uint64( &call->user.args[0] );
         fputc( ',', stderr );
         dump_uint64( &call->user.args[1] );
@@ -129,9 +131,13 @@ static void dump_apc_call( const apc_call_t *call )
         dump_uint64( &call->timer.arg );
         break;
     case APC_ASYNC_IO:
-        fprintf( stderr, "APC_ASYNC_IO,func=%p,user=%p,sb=%p,status=%s",
-                 call->async_io.func, call->async_io.user, call->async_io.sb,
-                 get_status_name(call->async_io.status) );
+        fprintf( stderr, "APC_ASYNC_IO,func=" );
+        dump_uint64( &call->async_io.func );
+        fprintf( stderr, ",user=" );
+        dump_uint64( &call->async_io.user );
+        fprintf( stderr, ",sb=" );
+        dump_uint64( &call->async_io.sb );
+        fprintf( stderr, ",status=%s", get_status_name(call->async_io.status) );
         break;
     case APC_VIRTUAL_ALLOC:
         fprintf( stderr, "APC_VIRTUAL_ALLOC,addr==" );
@@ -218,8 +224,9 @@ static void dump_apc_result( const apc_result_t *result )
     case APC_NONE:
         break;
     case APC_ASYNC_IO:
-        fprintf( stderr, "APC_ASYNC_IO,status=%s,total=%u,apc=%p",
-                 get_status_name( result->async_io.status ), result->async_io.total, result->async_io.apc );
+        fprintf( stderr, "APC_ASYNC_IO,status=%s,total=%u,apc=",
+                 get_status_name( result->async_io.status ), result->async_io.total );
+        dump_uint64( &result->async_io.apc );
         break;
     case APC_VIRTUAL_ALLOC:
         fprintf( stderr, "APC_VIRTUAL_ALLOC,status=%s,addr=",
@@ -301,8 +308,13 @@ static void dump_apc_result( const apc_result_t *result )
 
 static void dump_async_data( const async_data_t *data )
 {
-    fprintf( stderr, "{handle=%04x,event=%04x,callback=%p,iosb=%p,arg=%p,cvalue=",
-             data->handle, data->event, data->callback, data->iosb, data->arg );
+    fprintf( stderr, "{handle=%04x,event=%04x,callback=", data->handle, data->event );
+    dump_uint64( &data->callback );
+    fprintf( stderr, ",iosb=" );
+    dump_uint64( &data->iosb );
+    fprintf( stderr, ",arg=" );
+    dump_uint64( &data->arg );
+    fprintf( stderr, ",cvalue=" );
     dump_uint64( &data->cvalue );
     fputc( '}', stderr );
 }
@@ -2608,7 +2620,8 @@ static void dump_ioctl_reply( const struct ioctl_reply *req )
 static void dump_get_ioctl_result_request( const struct get_ioctl_result_request *req )
 {
     fprintf( stderr, " handle=%04x,", req->handle );
-    fprintf( stderr, " user_arg=%p", req->user_arg );
+    fprintf( stderr, " user_arg=" );
+    dump_uint64( &req->user_arg );
 }
 
 static void dump_get_ioctl_result_reply( const struct get_ioctl_result_reply *req )

@@ -2401,9 +2401,9 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
         req->want_data  = (Buffer != NULL);
         req->subtree    = WatchTree;
         req->async.handle   = wine_server_obj_handle( FileHandle );
-        req->async.callback = read_changes_apc;
-        req->async.iosb     = IoStatusBlock;
-        req->async.arg      = info;
+        req->async.callback = wine_server_client_ptr( read_changes_apc );
+        req->async.iosb     = wine_server_client_ptr( IoStatusBlock );
+        req->async.arg      = wine_server_client_ptr( info );
         req->async.event    = wine_server_obj_handle( Event );
         req->async.cvalue   = cvalue;
         status = wine_server_call( req );

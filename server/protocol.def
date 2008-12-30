@@ -182,9 +182,9 @@ typedef struct
 {
     obj_handle_t    handle;        /* object to perform I/O on */
     obj_handle_t    event;         /* event to signal when done */
-    void           *callback;      /* client-side callback to call upon end of async */
-    void           *iosb;          /* I/O status block in client addr space */
-    void           *arg;           /* opaque user data to pass to callback */
+    client_ptr_t    callback;      /* client-side callback to call upon end of async */
+    client_ptr_t    iosb;          /* I/O status block in client addr space */
+    client_ptr_t    arg;           /* opaque user data to pass to callback */
     apc_param_t     cvalue;        /* completion value to use for completion events */
 } async_data_t;
 
@@ -288,7 +288,8 @@ typedef union
     struct
     {
         enum apc_type    type;     /* APC_USER */
-        void (__stdcall *func)(unsigned long,unsigned long,unsigned long);
+        int              __pad;
+        client_ptr_t     func;     /* void (__stdcall *func)(ULONG_PTR,ULONG_PTR,ULONG_PTR); */
         apc_param_t      args[3];  /* arguments for user function */
     } user;
     struct
@@ -302,10 +303,10 @@ typedef union
     struct
     {
         enum apc_type    type;     /* APC_ASYNC_IO */
-        unsigned int   (*func)(void*, void*, unsigned int, void **);
-        void            *user;     /* user pointer */
-        void            *sb;       /* status block */
         unsigned int     status;   /* I/O status */
+        client_ptr_t     func;     /* unsigned int (*func)(void*, void*, unsigned int, void **); */
+        client_ptr_t     user;     /* user pointer */
+        client_ptr_t     sb;       /* status block */
     } async_io;
     struct
     {
@@ -392,7 +393,7 @@ typedef union
     {
         enum apc_type    type;      /* APC_ASYNC_IO */
         unsigned int     status;    /* new status of async operation */
-        void            *apc;       /* user APC to call */
+        client_ptr_t     apc;       /* user APC to call */
         unsigned int     total;     /* bytes transferred */
     } async_io;
     struct
@@ -2015,7 +2016,7 @@ enum message_type
 /* Retrieve results of an async ioctl */
 @REQ(get_ioctl_result)
     obj_handle_t   handle;        /* handle to the device */
-    void*          user_arg;      /* user arg used to identify the request */
+    client_ptr_t   user_arg;      /* user arg used to identify the request */
 @REPLY
     VARARG(out_data,bytes);       /* ioctl output data */
 @END

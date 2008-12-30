@@ -40,7 +40,7 @@ struct ioctl_call
     struct list            mgr_entry;     /* entry in manager queue */
     struct device         *device;        /* device containing this ioctl */
     struct thread         *thread;        /* thread that queued the ioctl */
-    void                  *user_arg;      /* user arg used to identify the request */
+    client_ptr_t           user_arg;      /* user arg used to identify the request */
     struct async          *async;         /* pending async op */
     ioctl_code_t           code;          /* ioctl code */
     unsigned int           status;        /* resulting status (or STATUS_PENDING) */
@@ -296,7 +296,7 @@ static enum server_fd_type device_get_fd_type( struct fd *fd )
 }
 
 static struct ioctl_call *find_ioctl_call( struct device *device, struct thread *thread,
-                                           void *user_arg )
+                                           client_ptr_t user_arg )
 {
     struct ioctl_call *ioctl;
 
