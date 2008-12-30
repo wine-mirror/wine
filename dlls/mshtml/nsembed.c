@@ -142,22 +142,33 @@ static void register_nscontainer_class(void)
     nscontainer_class = RegisterClassExW(&wndclass);
 }
 
-static BOOL load_xpcom(const PRUnichar *gre_path)
+static void set_environment(LPCWSTR gre_path)
 {
     WCHAR path_env[MAX_PATH];
     int len;
 
-    static const WCHAR wszPATH[] = {'P','A','T','H',0};
+    static const WCHAR pathW[] = {'P','A','T','H',0};
+    static const WCHAR warnW[] = {'w','a','r','n',0};
+    static const WCHAR xpcom_debug_breakW[] =
+        {'X','P','C','O','M','_','D','E','B','U','G','_','B','R','E','A','K',0};
+
+    /* We have to modify PATH as XPCOM loads other DLLs from this directory. */
+    GetEnvironmentVariableW(pathW, path_env, sizeof(path_env)/sizeof(WCHAR));
+    len = strlenW(path_env);
+    path_env[len++] = ';';
+    strcpyW(path_env+len, gre_path);
+    SetEnvironmentVariableW(pathW, path_env);
+
+    SetEnvironmentVariableW(xpcom_debug_breakW, warnW);
+}
+
+static BOOL load_xpcom(const PRUnichar *gre_path)
+{
     static const WCHAR strXPCOM[] = {'x','p','c','o','m','.','d','l','l',0};
 
     TRACE("(%s)\n", debugstr_w(gre_path));
 
-    /* We have to modify PATH as XPCOM loads other DLLs from this directory. */
-    GetEnvironmentVariableW(wszPATH, path_env, sizeof(path_env)/sizeof(WCHAR));
-    len = strlenW(path_env);
-    path_env[len++] = ';';
-    strcpyW(path_env+len, gre_path);
-    SetEnvironmentVariableW(wszPATH, path_env);
+    set_environment(gre_path);
 
     hXPCOM = LoadLibraryW(strXPCOM);
     if(!hXPCOM) {
