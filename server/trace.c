@@ -218,8 +218,8 @@ static void dump_apc_result( const apc_result_t *result )
     case APC_NONE:
         break;
     case APC_ASYNC_IO:
-        fprintf( stderr, "APC_ASYNC_IO,status=%s",
-                 get_status_name( result->async_io.status ) );
+        fprintf( stderr, "APC_ASYNC_IO,status=%s,total=%u,apc=%p",
+                 get_status_name( result->async_io.status ), result->async_io.total, result->async_io.apc );
         break;
     case APC_VIRTUAL_ALLOC:
         fprintf( stderr, "APC_VIRTUAL_ALLOC,status=%s,addr=",
@@ -301,9 +301,10 @@ static void dump_apc_result( const apc_result_t *result )
 
 static void dump_async_data( const async_data_t *data )
 {
-    fprintf( stderr, "{handle=%04x,event=%04x,callback=%p,iosb=%p,arg=%p,apc=%p,cvalue=}",
-             data->handle, data->event, data->callback, data->iosb, data->arg, data->apc );
+    fprintf( stderr, "{handle=%04x,event=%04x,callback=%p,iosb=%p,arg=%p,cvalue=",
+             data->handle, data->event, data->callback, data->iosb, data->arg );
     dump_uint64( &data->cvalue );
+    fputc( '}', stderr );
 }
 
 static void dump_luid( const luid_t *luid )

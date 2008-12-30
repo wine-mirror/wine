@@ -1127,7 +1127,7 @@ static int WS2_recv( int fd, struct ws2_async *wsa )
  *
  * Handler for overlapped recv() operations.
  */
-static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS status, ULONG *total )
+static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS status, void **apc)
 {
     ws2_async* wsa = user;
     int result = 0, fd;
@@ -1163,7 +1163,8 @@ static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS stat
     if (status != STATUS_PENDING)
     {
         iosb->u.Status = status;
-        iosb->Information = *total = result;
+        iosb->Information = result;
+        *apc = ws2_async_apc;
     }
     return status;
 }
@@ -1228,7 +1229,7 @@ static int WS2_send( int fd, struct ws2_async *wsa )
  *
  * Handler for overlapped send() operations.
  */
-static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS status, ULONG *total )
+static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS status, void **apc)
 {
     ws2_async* wsa = user;
     int result = 0, fd;
@@ -1273,7 +1274,8 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
     if (status != STATUS_PENDING)
     {
         iosb->u.Status = status;
-        iosb->Information = *total = result;
+        iosb->Information = result;
+        *apc = ws2_async_apc;
     }
     return status;
 }
@@ -1283,7 +1285,7 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
  *
  * Handler for shutdown() operations on overlapped sockets.
  */
-static NTSTATUS WS2_async_shutdown( void* user, PIO_STATUS_BLOCK iosb, NTSTATUS status, ULONG *total )
+static NTSTATUS WS2_async_shutdown( void* user, PIO_STATUS_BLOCK iosb, NTSTATUS status, void **apc )
 {
     ws2_async* wsa = user;
     int fd, err = 1;
@@ -1303,8 +1305,8 @@ static NTSTATUS WS2_async_shutdown( void* user, PIO_STATUS_BLOCK iosb, NTSTATUS 
         status = err ? wsaErrno() : STATUS_SUCCESS;
         break;
     }
-    *total = 0;
     iosb->u.Status = status;
+    *apc = ws2_async_apc;
     return status;
 }
 
@@ -1335,7 +1337,6 @@ static int WS2_register_async_shutdown( SOCKET s, int type )
         req->async.callback = WS2_async_shutdown;
         req->async.iosb     = &wsa->local_iosb;
         req->async.arg      = wsa;
-        req->async.apc      = ws2_async_apc;
         req->async.cvalue   = 0;
         status = wine_server_call( req );
     }
@@ -2788,7 +2789,6 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                 req->async.callback = WS2_async_send;
                 req->async.iosb     = iosb;
                 req->async.arg      = wsa;
-                req->async.apc      = ws2_async_apc;
                 req->async.event    = wine_server_obj_handle( lpCompletionRoutine ? 0 : lpOverlapped->hEvent );
                 req->async.cvalue   = cvalue;
                 err = wine_server_call( req );
@@ -4314,7 +4314,6 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                     req->async.callback = WS2_async_recv;
                     req->async.iosb     = iosb;
                     req->async.arg      = wsa;
-                    req->async.apc      = ws2_async_apc;
                     req->async.event    = wine_server_obj_handle( lpCompletionRoutine ? 0 : lpOverlapped->hEvent );
                     req->async.cvalue   = cvalue;
                     err = wine_server_call( req );

@@ -185,7 +185,6 @@ typedef struct
     void           *callback;      /* client-side callback to call upon end of async */
     void           *iosb;          /* I/O status block in client addr space */
     void           *arg;           /* opaque user data to pass to callback */
-    void           *apc;           /* user apc to call */
     apc_param_t     cvalue;        /* completion value to use for completion events */
 } async_data_t;
 
@@ -303,7 +302,7 @@ typedef union
     struct
     {
         enum apc_type    type;     /* APC_ASYNC_IO */
-        unsigned int   (*func)(void*, void*, unsigned int, unsigned int *);
+        unsigned int   (*func)(void*, void*, unsigned int, void **);
         void            *user;     /* user pointer */
         void            *sb;       /* status block */
         unsigned int     status;   /* I/O status */
@@ -393,6 +392,7 @@ typedef union
     {
         enum apc_type    type;      /* APC_ASYNC_IO */
         unsigned int     status;    /* new status of async operation */
+        void            *apc;       /* user APC to call */
         unsigned int     total;     /* bytes transferred */
     } async_io;
     struct

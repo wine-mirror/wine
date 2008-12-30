@@ -169,7 +169,6 @@ typedef struct
     void           *callback;
     void           *iosb;
     void           *arg;
-    void           *apc;
     apc_param_t     cvalue;
 } async_data_t;
 
@@ -287,7 +286,7 @@ typedef union
     struct
     {
         enum apc_type    type;
-        unsigned int   (*func)(void*, void*, unsigned int, unsigned int *);
+        unsigned int   (*func)(void*, void*, unsigned int, void **);
         void            *user;
         void            *sb;
         unsigned int     status;
@@ -377,6 +376,7 @@ typedef union
     {
         enum apc_type    type;
         unsigned int     status;
+        void            *apc;
         unsigned int     total;
     } async_io;
     struct
@@ -5060,6 +5060,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 371
+#define SERVER_PROTOCOL_VERSION 372
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -865,12 +865,19 @@ static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
         break;
     }
     case APC_ASYNC_IO:
+    {
+        void *apc = NULL;
+        IO_STATUS_BLOCK *iosb = call->async_io.sb;
         result->type = call->type;
-        result->async_io.status = call->async_io.func( call->async_io.user,
-                                                       call->async_io.sb,
-                                                       call->async_io.status,
-                                                       &result->async_io.total );
+        result->async_io.status = call->async_io.func( call->async_io.user, iosb,
+                                                       call->async_io.status, &apc );
+        if (result->async_io.status != STATUS_PENDING)
+        {
+            result->async_io.total = iosb->Information;
+            result->async_io.apc   = apc;
+        }
         break;
+    }
     case APC_VIRTUAL_ALLOC:
         result->type = call->type;
         addr = wine_server_get_ptr( call->virtual_alloc.addr );
