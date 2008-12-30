@@ -586,7 +586,7 @@ BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr_in *
     heap_free( hostname );
     if (ret != 0)
     {
-        TRACE("failed to get address of %s (%s)\n", debugstr_a(hostname), gai_strerror(ret));
+        TRACE("failed to get address of %s (%s)\n", debugstr_w(hostnameW), gai_strerror(ret));
         return FALSE;
     }
     memset( sa, 0, sizeof(struct sockaddr_in) );
@@ -602,7 +602,7 @@ BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr_in *
     heap_free( hostname );
     if (!he)
     {
-        TRACE("failed to get address of %s (%d)\n", debugstr_a(hostname), h_errno);
+        TRACE("failed to get address of %s (%d)\n", debugstr_w(hostnameW), h_errno);
         LeaveCriticalSection( &cs_gethostbyname );
         return FALSE;
     }
