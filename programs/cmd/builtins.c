@@ -2135,7 +2135,7 @@ void WCMD_setshow_time (void) {
     GetLocalTime(&st);
     if (GetTimeFormat (LOCALE_USER_DEFAULT, 0, &st, NULL,
 		curtime, sizeof(curtime)/sizeof(WCHAR))) {
-      WCMD_output (WCMD_LoadMessage(WCMD_CURRENTDATE), curtime);
+      WCMD_output (WCMD_LoadMessage(WCMD_CURRENTTIME), curtime);
       if (strstrW (quals, parmT) == NULL) {
         WCMD_output (WCMD_LoadMessage(WCMD_NEWTIME));
         WCMD_ReadFile (GetStdHandle(STD_INPUT_HANDLE), buffer,
