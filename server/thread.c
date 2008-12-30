@@ -1032,7 +1032,7 @@ DECL_HANDLER(init_thread)
     if (!(current->wait_fd  = create_anonymous_fd( &thread_fd_ops, wait_fd, &current->obj, 0 )))
         return;
 
-    if (!is_valid_address(req->teb) || !is_valid_address(req->peb) || !is_valid_address(req->ldt_copy))
+    if (!is_valid_address(req->teb) || !is_valid_address(req->peb))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return;
@@ -1046,7 +1046,6 @@ DECL_HANDLER(init_thread)
     {
         process->unix_pid = current->unix_pid;
         process->peb      = req->peb;
-        process->ldt_copy = req->ldt_copy;
         reply->info_size  = init_process( current );
     }
     else

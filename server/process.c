@@ -332,7 +332,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     process->idle_event      = NULL;
     process->queue           = NULL;
     process->peb             = NULL;
-    process->ldt_copy        = NULL;
+    process->ldt_copy        = 0;
     process->winstation      = 0;
     process->desktop         = 0;
     process->token           = NULL;
@@ -1017,6 +1017,8 @@ DECL_HANDLER(init_process_done)
     /* main exe is the first in the dll list */
     list_remove( &dll->entry );
     list_add_head( &process->dlls, &dll->entry );
+
+    process->ldt_copy = req->ldt_copy;
 
     generate_startup_debug_events( process, req->entry );
     set_process_startup_state( process, STARTUP_DONE );

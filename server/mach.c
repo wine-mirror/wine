@@ -446,9 +446,8 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
 
     if ((ret = task_suspend( process_port )) == KERN_SUCCESS)
     {
-        void *ptr = process->ldt_copy;
-        vm_offset_t offset = (unsigned long)ptr % page_size;
-        vm_address_t aligned_address = (vm_address_t)((char *)ptr - offset);
+        vm_offset_t offset = process->ldt_copy % page_size;
+        vm_address_t aligned_address = (vm_address_t)(process->ldt_copy - offset);
         vm_size_t aligned_size = (total_size + offset + page_size - 1) / page_size * page_size;
 
         ret = vm_read( process_port, aligned_address, aligned_size, &data, &bytes_read );

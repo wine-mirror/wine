@@ -80,7 +80,7 @@ struct process
     struct token        *token;           /* security token associated with this process */
     struct list          dlls;            /* list of loaded dlls */
     void                *peb;             /* PEB address in client address space */
-    void                *ldt_copy;        /* pointer to LDT copy in client addr space */
+    client_ptr_t         ldt_copy;        /* pointer to LDT copy in client addr space */
     unsigned int         trace_data;      /* opaque data used by the process tracing mechanism */
 };
 

@@ -542,6 +542,7 @@ struct init_process_done_request
     struct request_header __header;
     int          gui;
     mod_handle_t module;
+    client_ptr_t ldt_copy;
     void*        entry;
 };
 struct init_process_done_reply
@@ -560,7 +561,7 @@ struct init_thread_request
     void*        teb;
     void*        peb;
     void*        entry;
-    void*        ldt_copy;
+    int          unused;
     int          reply_fd;
     int          wait_fd;
 };
@@ -5061,6 +5062,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 373
+#define SERVER_PROTOCOL_VERSION 374
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

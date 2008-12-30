@@ -174,10 +174,15 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
                          unsigned int *limit, unsigned char *flags )
 {
     ssize_t ret;
-    off_t pos = (off_t)thread->process->ldt_copy;
-    int fd = open_proc_as( thread->process, O_RDONLY );
+    off_t pos = thread->process->ldt_copy;
+    int fd;
 
-    if (fd == -1) return;
+    if (!pos)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
+    if ((fd = open_proc_as( thread->process, O_RDONLY )) == -1) return;
 
     ret = pread( fd, base, sizeof(*base), pos + entry*sizeof(int) );
     if (ret != sizeof(*base)) goto error;

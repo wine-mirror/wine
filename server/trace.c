@@ -971,6 +971,9 @@ static void dump_init_process_done_request( const struct init_process_done_reque
     fprintf( stderr, " module=" );
     dump_uint64( &req->module );
     fprintf( stderr, "," );
+    fprintf( stderr, " ldt_copy=" );
+    dump_uint64( &req->ldt_copy );
+    fprintf( stderr, "," );
     fprintf( stderr, " entry=%p", req->entry );
 }
 
@@ -982,7 +985,7 @@ static void dump_init_thread_request( const struct init_thread_request *req )
     fprintf( stderr, " teb=%p,", req->teb );
     fprintf( stderr, " peb=%p,", req->peb );
     fprintf( stderr, " entry=%p,", req->entry );
-    fprintf( stderr, " ldt_copy=%p,", req->ldt_copy );
+    fprintf( stderr, " unused=%d,", req->unused );
     fprintf( stderr, " reply_fd=%d,", req->reply_fd );
     fprintf( stderr, " wait_fd=%d", req->wait_fd );
 }

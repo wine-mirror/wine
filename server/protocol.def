@@ -536,6 +536,7 @@ typedef union
 @REQ(init_process_done)
     int          gui;          /* is it a GUI process? */
     mod_handle_t module;       /* main module base address */
+    client_ptr_t ldt_copy;     /* address of LDT copy (in thread address space) */
     void*        entry;        /* process entry point */
 @END
 
@@ -548,7 +549,7 @@ typedef union
     void*        teb;          /* TEB of new thread (in thread address space) */
     void*        peb;          /* address of PEB (in thread address space) */
     void*        entry;        /* thread entry point (in thread address space) */
-    void*        ldt_copy;     /* address of LDT copy (in thread address space) */
+    int          unused;       /* was: ldt_copy */
     int          reply_fd;     /* fd for reply pipe */
     int          wait_fd;      /* fd for blocking calls pipe */
 @REPLY

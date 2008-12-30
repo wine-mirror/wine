@@ -505,10 +505,10 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
     if (suspend_for_ptrace( thread ))
     {
         unsigned char flags_buf[4];
-        int *addr = (int *)thread->process->ldt_copy + entry;
+        int *addr = (int *)(unsigned long)thread->process->ldt_copy + entry;
         if (read_thread_int( thread, addr, (int *)base ) == -1) goto done;
         if (read_thread_int( thread, addr + 8192, (int *)limit ) == -1) goto done;
-        addr = (int *)thread->process->ldt_copy + 2*8192 + (entry >> 2);
+        addr = (int *)(unsigned long)thread->process->ldt_copy + 2*8192 + (entry >> 2);
         if (read_thread_int( thread, addr, (int *)flags_buf ) == -1) goto done;
         *flags = flags_buf[entry & 3];
     done:
