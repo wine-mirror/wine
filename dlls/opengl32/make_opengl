@@ -680,10 +680,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
 # The thunks themselves....
 my $count = keys %ext_functions;
-print EXT "const int extension_registry_size = $count;\n";
-print EXT "void *extension_funcs[$count];\n";
+print EXT "enum extensions\n{\n";
+foreach (sort keys %ext_functions) {
+    my $func_ref = $ext_functions{$_};
+    print EXT "    EXT_$func_ref->[0],\n";
+}
+print EXT "    NB_EXTENSIONS\n};\n\n";
+print EXT "const int extension_registry_size = NB_EXTENSIONS;\n";
+print EXT "void *extension_funcs[NB_EXTENSIONS];\n";
 print EXT "\n/* The thunks themselves....*/";
-my $pos = 0;
 foreach (sort keys %ext_functions) {
     my $func_ref = $ext_functions{$_};
     my $local_var = "  " . ConvertType($func_ref->[1]) . " (*$ext_prefix$func_ref->[0])( ";
@@ -697,14 +702,13 @@ foreach (sort keys %ext_functions) {
 	}
     }
     $local_var .= 'void ' if (!@{$func_ref->[2]});
-    $local_var .= ") = extension_funcs[$pos];\n";
-    $pos++;
+    $local_var .= ") = extension_funcs[EXT_$func_ref->[0]];\n";
     print EXT "\nstatic ", GenerateThunk($ext_functions{$_}, 0, $ext_prefix, $gen_thread_safe, $local_var);
 }
 
 # Then the table giving the string <-> function correspondence */
 print EXT "\n\n/* The table giving the correspondence between names and functions */\n";
-print EXT "const OpenGL_extension extension_registry[$count] = {\n";
+print EXT "const OpenGL_extension extension_registry[NB_EXTENSIONS] = {\n";
 my $i = 0;
 foreach (sort keys %ext_functions) {
     my $func_ref = $ext_functions{$_};
