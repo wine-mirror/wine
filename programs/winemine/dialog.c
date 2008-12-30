@@ -114,21 +114,3 @@ INT_PTR CALLBACK TimesDlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
     }
     return FALSE;
 }
-
-INT_PTR CALLBACK AboutDlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
-{
-    switch( uMsg ) {
-    case WM_INITDIALOG:
-        return TRUE;
-
-    case WM_COMMAND:
-        switch( LOWORD( wParam ) ) {
-        case IDOK:
-        case IDCANCEL:
-            EndDialog( hDlg, 0 );
-            return TRUE;
-        }
-        break;
-    }
-    return FALSE;
-}
