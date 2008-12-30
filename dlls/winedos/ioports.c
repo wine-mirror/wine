@@ -67,9 +67,8 @@ static BYTE parport_8255[4] = {0x4f, 0x20, 0xff, 0xff};
 
 static BYTE cmosaddress;
 
-/* if you change anything here, use IO_FixCMOSCheckSum below to compute
- * the checksum and put the right values in.
- */
+static int cmos_image_initialized = 0;
+
 static BYTE cmosimage[64] =
 {
   0x27, /* 0x00: seconds */
@@ -118,8 +117,8 @@ static BYTE cmosimage[64] =
   0x00, /* 0x2b: options 2 */
   0x00, /* 0x2c: options 3 */
   0x3f, /* 0x2d: reserved  */
-  0x03, /* 0x2e: low CMOS ram checksum */
-  0x19, /* 0x2f: high CMOS ram checksum */
+  0xcc, /* 0x2e: low CMOS ram checksum (computed automatically) */
+  0xcc, /* 0x2f: high CMOS ram checksum (computed automatically) */
   0x00, /* 0x30: low extended memory byte */
   0x1c, /* 0x31: high extended memory byte */
   0x19, /* 0x32: century byte */
@@ -138,7 +137,6 @@ static BYTE cmosimage[64] =
   0x5f  /* 0x3f: reserved */
 };
 
-#if 0
 static void IO_FixCMOSCheckSum(void)
 {
 	WORD sum = 0;
@@ -148,9 +146,8 @@ static void IO_FixCMOSCheckSum(void)
 		sum += cmosimage[i];
 	cmosimage[0x2e] = sum >> 8; /* yes, this IS hi byte !! */
 	cmosimage[0x2f] = sum & 0xff;
-	MESSAGE("calculated hi %02x, lo %02x\n", cmosimage[0x2e], cmosimage[0x2f]);
+	TRACE("calculated hi %02x, lo %02x\n", cmosimage[0x2e], cmosimage[0x2f]);
 }
-#endif
 
 #ifdef DIRECT_IO_ACCESS
 
@@ -459,6 +456,11 @@ DWORD WINAPI DOSVM_inport( int port, int size )
         res = (DWORD)cmosaddress;
         break;
     case 0x71:
+        if (!cmos_image_initialized)
+        {
+            IO_FixCMOSCheckSum();
+            cmos_image_initialized = 1;
+        }
         res = (DWORD)cmosimage[cmosaddress & 0x3f];
         break;
     case 0x200:
@@ -506,8 +508,8 @@ DWORD WINAPI DOSVM_inport( int port, int size )
     case 0x3dd:
     case 0x3de:
     case 0x3df:
-        if(size > 1)
-           FIXME("Trying to read more than one byte from VGA!\n");
+        if (size > 1)
+            FIXME("Trying to read more than one byte from VGA!\n");
         res = (DWORD)VGA_ioport_in( port );
         break;
     case 0x00:
@@ -677,6 +679,11 @@ void WINAPI DOSVM_outport( int port, int size, DWORD value )
         cmosaddress = (BYTE)value & 0x7f;
         break;
     case 0x71:
+        if (!cmos_image_initialized)
+        {
+            IO_FixCMOSCheckSum();
+            cmos_image_initialized = 1;
+        }
         cmosimage[cmosaddress & 0x3f] = (BYTE)value;
         break;
     case 0x226:
