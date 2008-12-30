@@ -78,7 +78,7 @@ struct thread
     int                    unix_tid;      /* Unix tid of client */
     CONTEXT               *context;       /* current context if in an exception handler */
     CONTEXT               *suspend_context; /* current context if suspended */
-    void                  *teb;           /* TEB address (in client address space) */
+    client_ptr_t           teb;           /* TEB address (in client address space) */
     int                    priority;      /* priority level */
     unsigned int           affinity;      /* affinity mask */
     int                    suspend;       /* suspend count */

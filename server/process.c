@@ -331,7 +331,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     process->startup_info    = NULL;
     process->idle_event      = NULL;
     process->queue           = NULL;
-    process->peb             = NULL;
+    process->peb             = 0;
     process->ldt_copy        = 0;
     process->winstation      = 0;
     process->desktop         = 0;
@@ -829,7 +829,7 @@ int set_process_debug_flag( struct process *process, int flag )
     char data = (flag != 0);
 
     /* BeingDebugged flag is the byte at offset 2 in the PEB */
-    return write_process_memory( process, (client_ptr_t)(unsigned long)((char *)process->peb + 2), 1, &data );
+    return write_process_memory( process, process->peb + 2, 1, &data );
 }
 
 /* take a snapshot of currently running processes */

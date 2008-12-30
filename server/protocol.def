@@ -78,7 +78,7 @@ struct debug_event_exception
 struct debug_event_create_thread
 {
     obj_handle_t handle;     /* handle to the new thread */
-    void        *teb;        /* thread teb (in debugged process address space) */
+    client_ptr_t teb;        /* thread teb (in debugged process address space) */
     client_ptr_t start;      /* thread startup routine */
 };
 struct debug_event_create_process
@@ -89,7 +89,7 @@ struct debug_event_create_process
     mod_handle_t base;       /* base of executable image */
     int          dbg_offset; /* offset of debug info in file */
     int          dbg_size;   /* size of debug info */
-    void        *teb;        /* thread teb (in debugged process address space) */
+    client_ptr_t teb;        /* thread teb (in debugged process address space) */
     client_ptr_t start;      /* thread startup routine */
     client_ptr_t name;       /* image name (optional) */
     int          unicode;    /* is it Unicode? */
@@ -546,11 +546,11 @@ typedef union
     int          unix_pid;     /* Unix pid of new thread */
     int          unix_tid;     /* Unix tid of new thread */
     int          debug_level;  /* new debug level */
-    void*        teb;          /* TEB of new thread (in thread address space) */
-    void*        peb;          /* address of PEB (in thread address space) */
+    client_ptr_t teb;          /* TEB of new thread (in thread address space) */
     client_ptr_t entry;        /* thread entry point (in thread address space) */
     int          reply_fd;     /* fd for reply pipe */
     int          wait_fd;      /* fd for blocking calls pipe */
+    client_ptr_t peb;          /* address of PEB (in thread address space) */
 @REPLY
     process_id_t pid;          /* process id of the new thread's process */
     thread_id_t  tid;          /* thread id of the new thread */
@@ -585,12 +585,12 @@ typedef union
 @REPLY
     process_id_t pid;              /* server process id */
     process_id_t ppid;             /* server process id of parent */
-    int          exit_code;        /* process exit code */
     int          priority;         /* priority class */
     unsigned int affinity;         /* process affinity mask */
-    void*        peb;              /* PEB address in process address space */
+    client_ptr_t peb;              /* PEB address in process address space */
     timeout_t    start_time;       /* process start time */
     timeout_t    end_time;         /* process end time */
+    int          exit_code;        /* process exit code */
 @END
 
 
@@ -612,12 +612,12 @@ typedef union
 @REPLY
     process_id_t pid;           /* server process id */
     thread_id_t  tid;           /* server thread id */
-    void*        teb;           /* thread teb pointer */
-    int          exit_code;     /* thread exit code */
+    client_ptr_t teb;           /* thread teb pointer */
     int          priority;      /* thread priority level */
     unsigned int affinity;      /* thread affinity mask */
     timeout_t    creation_time; /* thread creation time */
     timeout_t    exit_time;     /* thread exit time */
+    int          exit_code;     /* thread exit code */
     int          last;          /* last thread in process */
 @END
 

@@ -62,7 +62,7 @@ struct debug_event_exception
 struct debug_event_create_thread
 {
     obj_handle_t handle;
-    void        *teb;
+    client_ptr_t teb;
     client_ptr_t start;
 };
 struct debug_event_create_process
@@ -73,7 +73,7 @@ struct debug_event_create_process
     mod_handle_t base;
     int          dbg_offset;
     int          dbg_size;
-    void        *teb;
+    client_ptr_t teb;
     client_ptr_t start;
     client_ptr_t name;
     int          unicode;
@@ -558,11 +558,11 @@ struct init_thread_request
     int          unix_pid;
     int          unix_tid;
     int          debug_level;
-    void*        teb;
-    void*        peb;
+    client_ptr_t teb;
     client_ptr_t entry;
     int          reply_fd;
     int          wait_fd;
+    client_ptr_t peb;
 };
 struct init_thread_reply
 {
@@ -615,12 +615,12 @@ struct get_process_info_reply
     struct reply_header __header;
     process_id_t pid;
     process_id_t ppid;
-    int          exit_code;
     int          priority;
     unsigned int affinity;
-    void*        peb;
+    client_ptr_t peb;
     timeout_t    start_time;
     timeout_t    end_time;
+    int          exit_code;
 };
 
 
@@ -653,12 +653,12 @@ struct get_thread_info_reply
     struct reply_header __header;
     process_id_t pid;
     thread_id_t  tid;
-    void*        teb;
-    int          exit_code;
+    client_ptr_t teb;
     int          priority;
     unsigned int affinity;
     timeout_t    creation_time;
     timeout_t    exit_time;
+    int          exit_code;
     int          last;
 };
 
@@ -5061,6 +5061,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 375
+#define SERVER_PROTOCOL_VERSION 376
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

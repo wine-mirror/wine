@@ -29,7 +29,6 @@ my %formats =
     "unsigned char" => [  1,   1,  "%02x" ],
     "unsigned short"=> [  2,   2,  "%04x" ],
     "unsigned int"  => [  4,   4,  "%08x" ],
-    "void*"         => [  4,   4,  "%p" ],
     "data_size_t"   => [  4,   4,  "%u" ],
     "obj_handle_t"  => [  4,   4,  "%04x" ],
     "atom_t"        => [  2,   2,  "%04x" ],

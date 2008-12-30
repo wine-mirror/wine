@@ -154,7 +154,7 @@ static inline void init_thread_structure( struct thread *thread )
     thread->unix_tid        = -1;  /* not known yet */
     thread->context         = NULL;
     thread->suspend_context = NULL;
-    thread->teb             = NULL;
+    thread->teb             = 0;
     thread->debug_ctx       = NULL;
     thread->debug_event     = NULL;
     thread->debug_break     = 0;
@@ -188,9 +188,9 @@ static inline void init_thread_structure( struct thread *thread )
 }
 
 /* check if address looks valid for a client-side data structure (TEB etc.) */
-static inline int is_valid_address( void *addr )
+static inline int is_valid_address( client_ptr_t addr )
 {
-    return addr && !((unsigned long)addr % sizeof(int));
+    return addr && !(addr % sizeof(int));
 }
 
 /* create a new thread */
@@ -291,8 +291,8 @@ static void dump_thread( struct object *obj, int verbose )
     struct thread *thread = (struct thread *)obj;
     assert( obj->ops == &thread_ops );
 
-    fprintf( stderr, "Thread id=%04x unix pid=%d unix tid=%d teb=%p state=%d\n",
-             thread->id, thread->unix_pid, thread->unix_tid, thread->teb, thread->state );
+    fprintf( stderr, "Thread id=%04x unix pid=%d unix tid=%d state=%d\n",
+             thread->id, thread->unix_pid, thread->unix_tid, thread->state );
 }
 
 static int thread_signaled( struct object *obj, struct thread *thread )

@@ -499,8 +499,9 @@ static void dump_varargs_debug_event( data_size_t size )
         fprintf( stderr, ",first=%d}", event->info.exception.first );
         break;
     case CREATE_THREAD_DEBUG_EVENT:
-        fprintf( stderr, "{create_thread,thread=%04x,teb=%p,start=",
-                 event->info.create_thread.handle, event->info.create_thread.teb );
+        fprintf( stderr, "{create_thread,thread=%04x,teb=", event->info.create_thread.handle );
+        dump_uint64( &event->info.create_thread.teb );
+        fprintf( stderr, ",start=" );
         dump_uint64( &event->info.create_thread.start );
         fputc( '}', stderr );
         break;
@@ -509,9 +510,10 @@ static void dump_varargs_debug_event( data_size_t size )
                  event->info.create_process.file, event->info.create_process.process,
                  event->info.create_process.thread );
         dump_uint64( &event->info.create_process.base );
-        fprintf( stderr, ",offset=%d,size=%d,teb=%p,start=",
-                 event->info.create_process.dbg_offset, event->info.create_process.dbg_size,
-                 event->info.create_process.teb );
+        fprintf( stderr, ",offset=%d,size=%d,teb=",
+                 event->info.create_process.dbg_offset, event->info.create_process.dbg_size );
+        dump_uint64( &event->info.create_process.teb );
+        fprintf( stderr, ",start=" );
         dump_uint64( &event->info.create_process.start );
         fprintf( stderr, ",name=" );
         dump_uint64( &event->info.create_process.name );
@@ -986,13 +988,16 @@ static void dump_init_thread_request( const struct init_thread_request *req )
     fprintf( stderr, " unix_pid=%d,", req->unix_pid );
     fprintf( stderr, " unix_tid=%d,", req->unix_tid );
     fprintf( stderr, " debug_level=%d,", req->debug_level );
-    fprintf( stderr, " teb=%p,", req->teb );
-    fprintf( stderr, " peb=%p,", req->peb );
+    fprintf( stderr, " teb=" );
+    dump_uint64( &req->teb );
+    fprintf( stderr, "," );
     fprintf( stderr, " entry=" );
     dump_uint64( &req->entry );
     fprintf( stderr, "," );
     fprintf( stderr, " reply_fd=%d,", req->reply_fd );
-    fprintf( stderr, " wait_fd=%d", req->wait_fd );
+    fprintf( stderr, " wait_fd=%d,", req->wait_fd );
+    fprintf( stderr, " peb=" );
+    dump_uint64( &req->peb );
 }
 
 static void dump_init_thread_reply( const struct init_thread_reply *req )
@@ -1038,15 +1043,18 @@ static void dump_get_process_info_reply( const struct get_process_info_reply *re
 {
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " ppid=%04x,", req->ppid );
-    fprintf( stderr, " exit_code=%d,", req->exit_code );
     fprintf( stderr, " priority=%d,", req->priority );
     fprintf( stderr, " affinity=%08x,", req->affinity );
-    fprintf( stderr, " peb=%p,", req->peb );
+    fprintf( stderr, " peb=" );
+    dump_uint64( &req->peb );
+    fprintf( stderr, "," );
     fprintf( stderr, " start_time=" );
     dump_timeout( &req->start_time );
     fprintf( stderr, "," );
     fprintf( stderr, " end_time=" );
     dump_timeout( &req->end_time );
+    fprintf( stderr, "," );
+    fprintf( stderr, " exit_code=%d", req->exit_code );
 }
 
 static void dump_set_process_info_request( const struct set_process_info_request *req )
@@ -1067,8 +1075,9 @@ static void dump_get_thread_info_reply( const struct get_thread_info_reply *req 
 {
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " tid=%04x,", req->tid );
-    fprintf( stderr, " teb=%p,", req->teb );
-    fprintf( stderr, " exit_code=%d,", req->exit_code );
+    fprintf( stderr, " teb=" );
+    dump_uint64( &req->teb );
+    fprintf( stderr, "," );
     fprintf( stderr, " priority=%d,", req->priority );
     fprintf( stderr, " affinity=%08x,", req->affinity );
     fprintf( stderr, " creation_time=" );
@@ -1077,6 +1086,7 @@ static void dump_get_thread_info_reply( const struct get_thread_info_reply *req 
     fprintf( stderr, " exit_time=" );
     dump_timeout( &req->exit_time );
     fprintf( stderr, "," );
+    fprintf( stderr, " exit_code=%d,", req->exit_code );
     fprintf( stderr, " last=%d", req->last );
 }
 

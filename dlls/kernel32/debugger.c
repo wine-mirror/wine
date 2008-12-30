@@ -79,7 +79,7 @@ BOOL WINAPI WaitForDebugEvent(
                 break;
             case CREATE_THREAD_DEBUG_EVENT:
                 event->u.CreateThread.hThread           = wine_server_ptr_handle( data.info.create_thread.handle );
-                event->u.CreateThread.lpThreadLocalBase = data.info.create_thread.teb;
+                event->u.CreateThread.lpThreadLocalBase = wine_server_get_ptr( data.info.create_thread.teb );
                 event->u.CreateThread.lpStartAddress    = wine_server_get_ptr( data.info.create_thread.start );
                 break;
             case CREATE_PROCESS_DEBUG_EVENT:
@@ -89,7 +89,7 @@ BOOL WINAPI WaitForDebugEvent(
                 event->u.CreateProcessInfo.lpBaseOfImage         = wine_server_get_ptr( data.info.create_process.base );
                 event->u.CreateProcessInfo.dwDebugInfoFileOffset = data.info.create_process.dbg_offset;
                 event->u.CreateProcessInfo.nDebugInfoSize        = data.info.create_process.dbg_size;
-                event->u.CreateProcessInfo.lpThreadLocalBase     = data.info.create_process.teb;
+                event->u.CreateProcessInfo.lpThreadLocalBase     = wine_server_get_ptr( data.info.create_process.teb );
                 event->u.CreateProcessInfo.lpStartAddress        = wine_server_get_ptr( data.info.create_process.start );
                 event->u.CreateProcessInfo.lpImageName           = wine_server_get_ptr( data.info.create_process.name );
                 event->u.CreateProcessInfo.fUnicode              = data.info.create_process.unicode;

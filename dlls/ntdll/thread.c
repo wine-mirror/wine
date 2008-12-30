@@ -1178,7 +1178,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
                 if (!(status = wine_server_call( req )))
                 {
                     info.ExitStatus             = reply->exit_code;
-                    info.TebBaseAddress         = reply->teb;
+                    info.TebBaseAddress         = wine_server_get_ptr( reply->teb );
                     info.ClientId.UniqueProcess = ULongToHandle(reply->pid);
                     info.ClientId.UniqueThread  = ULongToHandle(reply->tid);
                     info.AffinityMask           = reply->affinity & affinity_mask;
