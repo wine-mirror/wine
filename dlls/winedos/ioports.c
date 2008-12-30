@@ -95,7 +95,7 @@ static BYTE cmosimage[64] =
   0x80, /* 0x15: low base memory */
   0x02, /* 0x16: high base memory (0x280 => 640KB) */
   0x00, /* 0x17: low extended memory */
-  0x1c, /* 0x18: high extended memory (0x1c00 => 7MB) */
+  0x3b, /* 0x18: high extended memory (0x3b00 => 15MB) */
   0x00, /* 0x19: HD 1 extended type byte */
   0x00, /* 0x1a: HD 2 extended type byte */
   0xad, /* 0x1b: reserved */
