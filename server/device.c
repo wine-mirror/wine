@@ -125,7 +125,7 @@ static struct object *device_open_file( struct object *obj, unsigned int access,
                                         unsigned int sharing, unsigned int options );
 static enum server_fd_type device_get_fd_type( struct fd *fd );
 static obj_handle_t device_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async_data,
-                                  const void *data, data_size_t size );
+                                  int blocking, const void *data, data_size_t size );
 
 static const struct object_ops device_ops =
 {
@@ -308,7 +308,7 @@ static struct ioctl_call *find_ioctl_call( struct device *device, struct thread 
 }
 
 static obj_handle_t device_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async_data,
-                                  const void *data, data_size_t size )
+                                  int blocking, const void *data, data_size_t size )
 {
     struct device *device = get_fd_user( fd );
     struct ioctl_call *ioctl;

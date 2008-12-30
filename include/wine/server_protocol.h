@@ -2710,6 +2710,7 @@ struct ioctl_request
     struct request_header __header;
     ioctl_code_t   code;
     async_data_t   async;
+    int            blocking;
     /* VARARG(in_data,bytes); */
 };
 struct ioctl_reply
@@ -5059,6 +5060,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 370
+#define SERVER_PROTOCOL_VERSION 371
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

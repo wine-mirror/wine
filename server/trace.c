@@ -2591,6 +2591,7 @@ static void dump_ioctl_request( const struct ioctl_request *req )
     fprintf( stderr, " async=" );
     dump_async_data( &req->async );
     fprintf( stderr, "," );
+    fprintf( stderr, " blocking=%d,", req->blocking );
     fprintf( stderr, " in_data=" );
     dump_varargs_bytes( cur_size );
 }

@@ -1912,7 +1912,7 @@ static void unmount_device( struct fd *device_fd )
 
 /* default ioctl() routine */
 obj_handle_t default_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async,
-                               const void *data, data_size_t size )
+                               int blocking, const void *data, data_size_t size )
 {
     switch(code)
     {
@@ -2015,7 +2015,7 @@ DECL_HANDLER(ioctl)
 
     if (fd)
     {
-        reply->wait = fd->fd_ops->ioctl( fd, req->code, &req->async,
+        reply->wait = fd->fd_ops->ioctl( fd, req->code, &req->async, req->blocking,
                                          get_req_data(), get_req_data_size() );
         reply->options = fd->options;
         release_object( fd );

@@ -2003,6 +2003,7 @@ enum message_type
 @REQ(ioctl)
     ioctl_code_t   code;          /* ioctl code */
     async_data_t   async;         /* async I/O parameters */
+    int            blocking;      /* whether it's a blocking ioctl */
     VARARG(in_data,bytes);        /* ioctl input data */
 @REPLY
     obj_handle_t   wait;          /* handle to wait on for blocking ioctl */
