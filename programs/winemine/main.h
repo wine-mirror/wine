@@ -120,57 +120,7 @@ typedef struct tagBOARD
 
 } BOARD;
 
-void ExitApp( int error );
-
-void InitBoard( BOARD *p_board );
-
-void LoadBoard( BOARD *p_board );
-
-void SaveBoard( BOARD *p_board );
-
-void DestroyBoard( BOARD *p_board );
-
-void SetDifficulty( BOARD *p_board, DIFFICULTY difficulty );
-
 void CheckLevel( BOARD *p_board );
-
-void CreateBoard( BOARD *p_board );
-
-void PlaceMines ( BOARD *p_board, int selected_col, int selected_row );
-
-void TestBoard( HWND hWnd, BOARD *p_board, int x, int y, int msg );
-
-void TestMines( BOARD *p_board, POINT pt, int msg );
-
-void TestFace( BOARD *p_board, POINT pt, int msg );
-
-void DrawBoard( HDC hdc, HDC hMemDC, PAINTSTRUCT *ps, BOARD *p_board );
-
-void DrawMines( HDC hdc, HDC hMemDC, BOARD *p_board );
-
-void DrawMine( HDC hdc, HDC hMemDC, BOARD *p_board, unsigned col, unsigned row, BOOL IsPressed );
-
-void AddFlag( BOARD *p_board, unsigned col, unsigned row );
-
-void CompleteBox( BOARD *p_board, unsigned col, unsigned row );
-
-void CompleteBoxes( BOARD *p_board, unsigned col, unsigned row );
-
-void PressBox( BOARD *p_board, unsigned col, unsigned row );
-
-void PressBoxes( BOARD *p_board, unsigned col, unsigned row );
-
-void UnpressBox( BOARD *p_board, unsigned col, unsigned row );
-
-void UnpressBoxes( BOARD *p_board, unsigned col, unsigned row );
-
-void UpdateTimer( BOARD *p_board );
-
-void DrawLeds( HDC hdc, HDC hMemDC, BOARD *p_board, int number, int x, int y);
-
-void DrawFace( HDC hdc, HDC hMemDC, BOARD *p_board );
-
-LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 INT_PTR CALLBACK CustomDlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam );
 
