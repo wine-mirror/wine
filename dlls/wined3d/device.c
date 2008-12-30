@@ -3638,6 +3638,7 @@ static void device_map_stage(IWineD3DDeviceImpl *This, int stage, int unit) {
 static void device_update_fixed_function_usage_map(IWineD3DDeviceImpl *This) {
     int i;
 
+    This->fixed_function_usage_map = 0;
     for (i = 0; i < MAX_TEXTURES; ++i) {
         WINED3DTEXTUREOP color_op = This->stateBlock->textureState[i][WINED3DTSS_COLOROP];
         WINED3DTEXTUREOP alpha_op = This->stateBlock->textureState[i][WINED3DTSS_ALPHAOP];
@@ -3650,10 +3651,6 @@ static void device_update_fixed_function_usage_map(IWineD3DDeviceImpl *This) {
 
         if (color_op == WINED3DTOP_DISABLE) {
             /* Not used, and disable higher stages */
-            while (i < MAX_TEXTURES) {
-                This->fixed_function_usage_map[i] = FALSE;
-                ++i;
-            }
             break;
         }
 
@@ -3663,13 +3660,11 @@ static void device_update_fixed_function_usage_map(IWineD3DDeviceImpl *This) {
                 || ((alpha_arg1 == WINED3DTA_TEXTURE) && alpha_op != WINED3DTOP_SELECTARG2)
                 || ((alpha_arg2 == WINED3DTA_TEXTURE) && alpha_op != WINED3DTOP_SELECTARG1)
                 || ((alpha_arg3 == WINED3DTA_TEXTURE) && (alpha_op == WINED3DTOP_MULTIPLYADD || alpha_op == WINED3DTOP_LERP))) {
-            This->fixed_function_usage_map[i] = TRUE;
-        } else {
-            This->fixed_function_usage_map[i] = FALSE;
+            This->fixed_function_usage_map |= (1 << i);
         }
 
         if ((color_op == WINED3DTOP_BUMPENVMAP || color_op == WINED3DTOP_BUMPENVMAPLUMINANCE) && i < MAX_TEXTURES - 1) {
-            This->fixed_function_usage_map[i+1] = TRUE;
+            This->fixed_function_usage_map |= (1 << (i + 1));
         }
     }
 }
@@ -3682,7 +3677,7 @@ static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This) {
     if (This->max_ffp_textures == This->max_ffp_texture_stages ||
         This->stateBlock->lowest_disabled_stage <= This->max_ffp_textures) {
         for (i = 0; i < This->stateBlock->lowest_disabled_stage; ++i) {
-            if (!This->fixed_function_usage_map[i]) continue;
+            if (!(This->fixed_function_usage_map & (1 << i))) continue;
 
             if (This->texUnitMap[i] != i) {
                 device_map_stage(This, i, i);
@@ -3696,7 +3691,7 @@ static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This) {
     /* Now work out the mapping */
     tex = 0;
     for (i = 0; i < This->stateBlock->lowest_disabled_stage; ++i) {
-        if (!This->fixed_function_usage_map[i]) continue;
+        if (!(This->fixed_function_usage_map & (1 << i))) continue;
 
         if (This->texUnitMap[i] != tex) {
             device_map_stage(This, i, tex);
@@ -3739,7 +3734,7 @@ static BOOL device_unit_free_for_vs(IWineD3DDeviceImpl *This, const DWORD *pshad
 
         if (!pshader_sampler_tokens) {
             /* No pixel shader, check fixed function */
-            return current_mapping >= MAX_TEXTURES || !This->fixed_function_usage_map[current_mapping];
+            return current_mapping >= MAX_TEXTURES || !(This->fixed_function_usage_map & (1 << current_mapping));
         }
 
         /* Pixel shader, check the shader's sampler map */

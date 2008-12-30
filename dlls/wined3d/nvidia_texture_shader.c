@@ -453,7 +453,7 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEX
 static void nvrc_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[stage];
-    BOOL tex_used = stateblock->wineD3DDevice->fixed_function_usage_map[stage];
+    BOOL tex_used = stateblock->wineD3DDevice->fixed_function_usage_map & (1 << stage);
 
     TRACE("Setting color op for stage %d\n", stage);
 

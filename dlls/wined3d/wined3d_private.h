@@ -1065,19 +1065,30 @@ struct IWineD3DDeviceImpl
 
     unsigned int max_ffp_textures, max_ffp_texture_stages;
 
-    /* To store */
-    BOOL                    view_ident;        /* true iff view matrix is identity                */
-    BOOL                    untransformed;
-    BOOL                    vertexBlendUsed;   /* To avoid needless setting of the blend matrices */
+    WORD view_ident : 1;                /* true iff view matrix is identity */
+    WORD untransformed : 1;
+    WORD vertexBlendUsed : 1;           /* To avoid needless setting of the blend matrices */
+    WORD isRecordingState : 1;
+    WORD isInDraw : 1;
+    WORD render_offscreen : 1;
+    WORD bCursorVisible : 1;
+    WORD haveHardwareCursor : 1;
+    WORD d3d_initialized : 1;
+    WORD inScene : 1;                   /* A flag to check for proper BeginScene / EndScene call pairs */
+    WORD softwareVertexProcessing : 1;  /* process vertex shaders using software or hardware */
+    WORD useDrawStridedSlow : 1;
+    WORD instancedDraw : 1;
+    WORD padding : 3;
+
+    BYTE fixed_function_usage_map;      /* MAX_TEXTURES, 8 */
+
 #define DDRAW_PITCH_ALIGNMENT 8
 #define D3D8_PITCH_ALIGNMENT 4
     unsigned char           surface_alignment; /* Line Alignment of surfaces                      */
 
     /* State block related */
-    BOOL                    isRecordingState;
     IWineD3DStateBlockImpl *stateBlock;
     IWineD3DStateBlockImpl *updateStateBlock;
-    BOOL                   isInDraw;
 
     /* Internal use fields  */
     WINED3DDEVICE_CREATION_PARAMETERS createParms;
@@ -1107,7 +1118,6 @@ struct IWineD3DDeviceImpl
     UINT                    paletteConversionShader;
 
     /* For rendering to a texture using glCopyTexImage */
-    BOOL                    render_offscreen;
     GLenum                  *draw_buffers;
     GLuint                  depth_blt_texture;
     GLuint                  depth_blt_rb;
@@ -1115,14 +1125,12 @@ struct IWineD3DDeviceImpl
     UINT                    depth_blt_rb_h;
 
     /* Cursor management */
-    BOOL                    bCursorVisible;
     UINT                    xHotSpot;
     UINT                    yHotSpot;
     UINT                    xScreenSpace;
     UINT                    yScreenSpace;
     UINT                    cursorWidth, cursorHeight;
     GLuint                  cursorTexture;
-    BOOL                    haveHardwareCursor;
     HCURSOR                 hardwareCursor;
 
     /* The Wine logo surface */
@@ -1133,13 +1141,6 @@ struct IWineD3DDeviceImpl
 
     /* Device state management */
     HRESULT                 state;
-    BOOL                    d3d_initialized;
-
-    /* A flag to check for proper BeginScene / EndScene call pairs */
-    BOOL inScene;
-
-    /* process vertex shaders using software or hardware */
-    BOOL softwareVertexProcessing;
 
     /* DirectDraw stuff */
     DWORD ddraw_width, ddraw_height;
@@ -1151,13 +1152,10 @@ struct IWineD3DDeviceImpl
     /* With register combiners we can skip junk texture stages */
     DWORD                     texUnitMap[MAX_COMBINED_SAMPLERS];
     DWORD                     rev_tex_unit_map[MAX_COMBINED_SAMPLERS];
-    BOOL                      fixed_function_usage_map[MAX_TEXTURES];
 
     /* Stream source management */
     WineDirect3DVertexStridedData strided_streams;
     const WineDirect3DVertexStridedData *up_strided;
-    BOOL                      useDrawStridedSlow;
-    BOOL                      instancedDraw;
 
     /* Context management */
     WineD3DContext          **contexts;                  /* Dynamic array containing pointers to context structures */

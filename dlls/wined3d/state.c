@@ -2883,7 +2883,7 @@ static void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTE
 static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[stage];
-    BOOL tex_used = stateblock->wineD3DDevice->fixed_function_usage_map[stage];
+    BOOL tex_used = stateblock->wineD3DDevice->fixed_function_usage_map & (1 << stage);
 
     TRACE("Setting color op for stage %d\n", stage);
 
@@ -2939,7 +2939,7 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[stage];
-    BOOL tex_used = stateblock->wineD3DDevice->fixed_function_usage_map[stage];
+    BOOL tex_used = stateblock->wineD3DDevice->fixed_function_usage_map & (1 << stage);
     DWORD op, arg1, arg2, arg0;
 
     TRACE("Setting alpha op for stage %d\n", stage);
