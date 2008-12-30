@@ -313,70 +313,6 @@ BOOL handle_insert_comment(HTMLDocument *doc, const PRUnichar *comment)
     return TRUE;
 }
 
-static nsresult NSAPI handle_node_insert(nsIDOMEventListener *iface, nsIDOMEvent *event)
-{
-    NSContainer *This = NSEVENTLIST_THIS(iface)->This;
-    nsIDOMEventTarget *target;
-    nsIDOMComment *nscomment;
-    nsIDOMElement *elem;
-    nsresult nsres;
-
-    TRACE("(%p %p)\n", This, event);
-
-    nsres = nsIDOMEvent_GetTarget(event, &target);
-    if(NS_FAILED(nsres)) {
-        ERR("GetTarget failed: %08x\n", nsres);
-        return NS_OK;
-    }
-
-    nsres = nsIDOMEventTarget_QueryInterface(target, &IID_nsIDOMElement, (void**)&elem);
-    if(NS_SUCCEEDED(nsres)) {
-        nsIDOMHTMLScriptElement *script;
-
-        nsres = nsIDOMElement_QueryInterface(elem, &IID_nsIDOMHTMLScriptElement, (void**)&script);
-        if(NS_SUCCEEDED(nsres)) {
-            doc_insert_script(This->doc, script);
-            nsIDOMHTMLScriptElement_Release(script);
-        }
-
-        check_event_attr(This->doc, elem);
-
-        nsIDOMEventTarget_Release(target);
-        nsIDOMNode_Release(elem);
-        return NS_OK;
-    }
-
-    nsres = nsIDOMEventTarget_QueryInterface(target, &IID_nsIDOMComment, (void**)&nscomment);
-    if(NS_SUCCEEDED(nsres)) {
-        nsAString comment_str;
-        BOOL remove_comment = FALSE;
-
-        nsAString_Init(&comment_str, NULL);
-        nsres = nsIDOMComment_GetData(nscomment, &comment_str);
-        if(NS_SUCCEEDED(nsres)) {
-            const PRUnichar *comment;
-
-            nsAString_GetData(&comment_str, &comment);
-            remove_comment = handle_insert_comment(This->doc, comment);
-        }
-
-        nsAString_Finish(&comment_str);
-
-        if(remove_comment) {
-            nsIDOMNode *nsparent, *tmp;
-
-            nsIDOMComment_GetParentNode(nscomment, &nsparent);
-            nsIDOMNode_RemoveChild(nsparent, (nsIDOMNode*)nscomment, &tmp);
-            nsIDOMNode_Release(nsparent);
-            nsIDOMNode_Release(tmp);
-        }
-
-        nsIDOMComment_Release(nscomment);
-    }
-
-    return NS_OK;
-}
-
 static nsresult NSAPI handle_htmlevent(nsIDOMEventListener *iface, nsIDOMEvent *event)
 {
     NSContainer *This = NSEVENTLIST_THIS(iface)->This;
@@ -427,7 +363,6 @@ static const nsIDOMEventListenerVtbl blur_vtbl =      EVENTLISTENER_VTBL(handle_
 static const nsIDOMEventListenerVtbl focus_vtbl =     EVENTLISTENER_VTBL(handle_focus);
 static const nsIDOMEventListenerVtbl keypress_vtbl =  EVENTLISTENER_VTBL(handle_keypress);
 static const nsIDOMEventListenerVtbl load_vtbl =      EVENTLISTENER_VTBL(handle_load);
-static const nsIDOMEventListenerVtbl node_insert_vtbl = EVENTLISTENER_VTBL(handle_node_insert);
 static const nsIDOMEventListenerVtbl htmlevent_vtbl = EVENTLISTENER_VTBL(handle_htmlevent);
 
 static void init_event(nsIDOMEventTarget *target, const PRUnichar *type,
@@ -489,7 +424,6 @@ void init_nsevents(NSContainer *This)
     init_listener(&This->focus_listener,       This, &focus_vtbl);
     init_listener(&This->keypress_listener,    This, &keypress_vtbl);
     init_listener(&This->load_listener,        This, &load_vtbl);
-    init_listener(&This->node_insert_listener, This, &node_insert_vtbl);
     init_listener(&This->htmlevent_listener,   This, &htmlevent_vtbl);
 
     nsres = nsIWebBrowser_GetContentDOMWindow(This->webbrowser, &dom_window);

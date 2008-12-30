@@ -321,7 +321,6 @@ struct NSContainer {
     nsEventListener focus_listener;
     nsEventListener keypress_listener;
     nsEventListener load_listener;
-    nsEventListener node_insert_listener;
     nsEventListener htmlevent_listener;
 
     nsIWebBrowser *webbrowser;
