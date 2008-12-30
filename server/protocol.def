@@ -200,7 +200,7 @@ struct hardware_msg_data
 
 struct callback_msg_data
 {
-    void           *callback;   /* callback function */
+    client_ptr_t    callback;   /* callback function */
     lparam_t        data;       /* user data for callback */
     lparam_t        result;     /* message result */
 };

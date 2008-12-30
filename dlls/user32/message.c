@@ -2096,7 +2096,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
             if (size >= sizeof(struct callback_msg_data))
             {
                 const struct callback_msg_data *data = buffer;
-                call_sendmsg_callback( data->callback, info.msg.hwnd,
+                call_sendmsg_callback( wine_server_get_ptr(data->callback), info.msg.hwnd,
                                        info.msg.message, data->data, data->result );
             }
             continue;
@@ -2333,7 +2333,7 @@ static BOOL put_message_in_queue( const struct send_message_info *info, size_t *
     }
     else if (info->type == MSG_CALLBACK)
     {
-        msg_data.callback.callback = info->callback;
+        msg_data.callback.callback = wine_server_client_ptr( info->callback );
         msg_data.callback.data     = info->data;
         msg_data.callback.result   = 0;
         data.data[0] = &msg_data;

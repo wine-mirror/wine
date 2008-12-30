@@ -184,7 +184,7 @@ struct hardware_msg_data
 
 struct callback_msg_data
 {
-    void           *callback;
+    client_ptr_t    callback;
     lparam_t        data;
     lparam_t        result;
 };
@@ -5052,6 +5052,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 363
+#define SERVER_PROTOCOL_VERSION 364
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
