@@ -296,6 +296,13 @@ typedef struct {
     NSContainer *This;
 } nsEventListener;
 
+typedef struct _mutation_queue_t {
+    DWORD type;
+    nsISupports *nsiface;
+
+    struct _mutation_queue_t *next;
+} mutation_queue_t;
+
 struct NSContainer {
     const nsIWebBrowserChromeVtbl       *lpWebBrowserChromeVtbl;
     const nsIContextMenuListenerVtbl    *lpContextMenuListenerVtbl;
@@ -305,6 +312,10 @@ struct NSContainer {
     const nsIInterfaceRequestorVtbl     *lpInterfaceRequestorVtbl;
     const nsIWeakReferenceVtbl          *lpWeakReferenceVtbl;
     const nsISupportsWeakReferenceVtbl  *lpSupportsWeakReferenceVtbl;
+
+    const nsIDocumentObserverVtbl       *lpDocumentObserverVtbl;
+
+    const nsIRunnableVtbl  *lpRunnableVtbl;
 
     nsEventListener blur_listener;
     nsEventListener focus_listener;
@@ -329,6 +340,9 @@ struct NSContainer {
     nsIURIContentListener *content_listener;
 
     HWND hwnd;
+
+    mutation_queue_t *mutation_queue;
+    mutation_queue_t *mutation_queue_tail;
 
     nsChannelBSC *bscallback; /* hack */
     HWND reset_focus; /* hack */
@@ -434,6 +448,10 @@ typedef struct {
 #define NSWEAKREF(x)     ((nsIWeakReference*)             &(x)->lpWeakReferenceVtbl)
 #define NSSUPWEAKREF(x)  ((nsISupportsWeakReference*)     &(x)->lpSupportsWeakReferenceVtbl)
 
+#define NSDOCOBS(x)      ((nsIDocumentObserver*)          &(x)->lpDocumentObserverVtbl)
+
+#define NSRUNNABLE(x)    ((nsIRunnable*)  &(x)->lpRunnableVtbl)
+
 #define NSCHANNEL(x)     ((nsIChannel*)        &(x)->lpHttpChannelVtbl)
 #define NSHTTPCHANNEL(x) ((nsIHttpChannel*)    &(x)->lpHttpChannelVtbl)
 #define NSUPCHANNEL(x)   ((nsIUploadChannel*)  &(x)->lpUploadChannelVtbl)
@@ -486,6 +504,10 @@ void ConnectionPointContainer_Destroy(ConnectionPointContainer*);
 
 NSContainer *NSContainer_Create(HTMLDocument*,NSContainer*);
 void NSContainer_Release(NSContainer*);
+
+void init_mutation(NSContainer*);
+void set_mutation_observer(NSContainer*,nsIDOMHTMLDocument*);
+BOOL handle_insert_comment(HTMLDocument *doc, const PRUnichar *comment);
 
 void HTMLDocument_LockContainer(HTMLDocument*,BOOL);
 void show_context_menu(HTMLDocument*,DWORD,POINT*,IDispatch*);

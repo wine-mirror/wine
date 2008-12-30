@@ -2276,11 +2276,76 @@ static nsresult NSAPI nsNetUtil_ParseContentType(nsINetUtil *iface, const nsACSt
     return nsINetUtil_ParseContentType(net_util, aTypeHeader, aCharset, aHadCharset, aContentType);
 }
 
+static nsresult NSAPI nsNetUtil_ProtocolHasFlags(nsINetUtil *iface, nsIURI *aURI, PRUint32 aFlags, PRBool *_retval)
+{
+    TRACE("()\n");
+
+    return nsINetUtil_ProtocolHasFlags(net_util, aURI, aFlags, _retval);
+}
+
+static nsresult NSAPI nsNetUtil_URIChainHasFlags(nsINetUtil *iface, nsIURI *aURI, PRUint32 aFlags, PRBool *_retval)
+{
+    TRACE("(%p %08x %p)\n", aURI, aFlags, _retval);
+
+    if(aFlags == (1<<11)) {
+        *_retval = FALSE;
+        return NS_OK;
+    }
+
+    return nsINetUtil_URIChainHasFlags(net_util, aURI, aFlags, _retval);
+}
+
+static nsresult NSAPI nsNetUtil_ToImmutableURI(nsINetUtil *iface, nsIURI *aURI, nsIURI **_retval)
+{
+    TRACE("(%p %p)\n", aURI, _retval);
+
+    return nsINetUtil_ToImmutableURI(net_util, aURI, _retval);
+}
+
+static nsresult NSAPI nsNetUtil_EscapeString(nsINetUtil *iface, const nsACString *aString,
+                                             PRUint32 aEscapeType, nsACString *_retval)
+{
+    TRACE("(%p %x %p)\n", aString, aEscapeType, _retval);
+
+    return nsINetUtil_EscapeString(net_util, aString, aEscapeType, _retval);
+}
+
+static nsresult NSAPI nsNetUtil_EscapeURL(nsINetUtil *iface, const nsACString *aStr, PRUint32 aFlags,
+                                          nsACString *_retval)
+{
+    TRACE("(%p %08x %p)\n", aStr, aFlags, _retval);
+
+    return nsINetUtil_EscapeURL(net_util, aStr, aFlags, _retval);
+}
+
+static nsresult NSAPI nsNetUtil_UnescapeString(nsINetUtil *iface, const nsACString *aStr,
+                                               PRUint32 aFlags, nsACString *_retval)
+{
+    TRACE("(%p %08x %p)\n", aStr, aFlags, _retval);
+
+    return nsINetUtil_UnescapeString(net_util, aStr, aFlags, _retval);
+}
+
+static nsresult NSAPI nsNetUtil_ExtractCharsetFromContentType(nsINetUtil *iface, const nsACString *aTypeHeader,
+        nsACString *aCharset, PRInt32 *aCharsetStart, PRInt32 *aCharsetEnd, PRBool *_retval)
+{
+    TRACE("(%p %p %p %p %p)\n", aTypeHeader, aCharset, aCharsetStart, aCharsetEnd, _retval);
+
+    return nsINetUtil_ExtractCharsetFromContentType(net_util, aTypeHeader, aCharset, aCharsetStart, aCharsetEnd, _retval);
+}
+
 static const nsINetUtilVtbl nsNetUtilVtbl = {
     nsNetUtil_QueryInterface,
     nsNetUtil_AddRef,
     nsNetUtil_Release,
-    nsNetUtil_ParseContentType
+    nsNetUtil_ParseContentType,
+    nsNetUtil_ProtocolHasFlags,
+    nsNetUtil_URIChainHasFlags,
+    nsNetUtil_ToImmutableURI,
+    nsNetUtil_EscapeString,
+    nsNetUtil_EscapeURL,
+    nsNetUtil_UnescapeString,
+    nsNetUtil_ExtractCharsetFromContentType
 };
 
 static nsINetUtil nsNetUtil = { &nsNetUtilVtbl };

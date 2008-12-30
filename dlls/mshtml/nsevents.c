@@ -178,7 +178,7 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
 #define IE_MAJOR_VERSION 7
 #define IE_MINOR_VERSION 0
 
-static BOOL handle_insert_comment(HTMLDocument *doc, const PRUnichar *comment)
+BOOL handle_insert_comment(HTMLDocument *doc, const PRUnichar *comment)
 {
     DWORD len;
     int majorv = 0, minorv = 0;
@@ -484,8 +484,6 @@ void init_nsevents(NSContainer *This)
     static const PRUnichar wsz_focus[]     = {'f','o','c','u','s',0};
     static const PRUnichar wsz_keypress[]  = {'k','e','y','p','r','e','s','s',0};
     static const PRUnichar wsz_load[]      = {'l','o','a','d',0};
-    static const PRUnichar DOMNodeInsertedW[] =
-        {'D','O','M','N','o','d','e','I','n','s','e','r','t','e','d',0};
 
     init_listener(&This->blur_listener,        This, &blur_vtbl);
     init_listener(&This->focus_listener,       This, &focus_vtbl);
@@ -511,7 +509,6 @@ void init_nsevents(NSContainer *This)
     init_event(target, wsz_focus,      NSEVENTLIST(&This->focus_listener),       TRUE);
     init_event(target, wsz_keypress,   NSEVENTLIST(&This->keypress_listener),    FALSE);
     init_event(target, wsz_load,       NSEVENTLIST(&This->load_listener),        TRUE);
-    init_event(target, DOMNodeInsertedW,NSEVENTLIST(&This->node_insert_listener),TRUE);
 
     nsIDOMEventTarget_Release(target);
 }

@@ -661,7 +661,7 @@ static void nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNode 
     case ELEMENT_NODE: {
         nsIDOMElement *nselem;
         nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMElement, (void**)&nselem);
-        nsIContentSerializer_AppendElementStart(serializer, nselem, has_children, str);
+        nsIContentSerializer_AppendElementStart(serializer, nselem, nselem, str);
         nsIDOMElement_Release(nselem);
         break;
     }
@@ -733,7 +733,7 @@ void nsnode_to_nsstring(nsIDOMNode *nsdoc, nsAString *str)
         return;
     }
 
-    nsres = nsIContentSerializer_Init(serializer, 0, 100, NULL, FALSE);
+    nsres = nsIContentSerializer_Init(serializer, 0, 100, NULL, FALSE, FALSE /* FIXME */);
     if(NS_FAILED(nsres))
         ERR("Init failed: %08x\n", nsres);
 
@@ -816,7 +816,8 @@ void set_ns_editmode(NSContainer *This)
         return;
     }
 
-    nsres = nsIEditingSession_MakeWindowEditable(editing_session, dom_window, NULL, FALSE);
+    nsres = nsIEditingSession_MakeWindowEditable(editing_session, dom_window,
+            NULL, FALSE, TRUE, TRUE);
     nsIEditingSession_Release(editing_session);
     nsIDOMWindow_Release(dom_window);
     if(NS_FAILED(nsres)) {
@@ -865,6 +866,9 @@ void update_nsdocument(HTMLDocument *doc)
         nsIDOMHTMLDocument_Release(doc->nsdoc);
 
     doc->nsdoc = nsdoc;
+
+    if(nsdoc)
+        set_mutation_observer(doc->nscontainer, nsdoc);
 }
 
 void close_gecko(void)
@@ -1668,6 +1672,7 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
 
     ret->doc = doc;
     ret->ref = 1;
+    init_mutation(ret);
 
     nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_WEBBROWSER_CONTRACTID,
             NULL, &IID_nsIWebBrowser, (void**)&ret->webbrowser);
