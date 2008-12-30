@@ -34,6 +34,7 @@
 #include "mshtml_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
+WINE_DECLARE_DEBUG_CHANNEL(gecko);
 
 #define NS_APPSTARTUPNOTIFIER_CONTRACTID "@mozilla.org/embedcomp/appstartup-notifier;1"
 #define NS_WEBBROWSER_CONTRACTID "@mozilla.org/embedding/browser/nsWebBrowser;1"
@@ -144,13 +145,16 @@ static void register_nscontainer_class(void)
 
 static void set_environment(LPCWSTR gre_path)
 {
-    WCHAR path_env[MAX_PATH];
-    int len;
+    WCHAR path_env[MAX_PATH], buf[20];
+    int len, debug_level = 0;
 
     static const WCHAR pathW[] = {'P','A','T','H',0};
     static const WCHAR warnW[] = {'w','a','r','n',0};
     static const WCHAR xpcom_debug_breakW[] =
         {'X','P','C','O','M','_','D','E','B','U','G','_','B','R','E','A','K',0};
+    static const WCHAR nspr_log_modulesW[] =
+        {'N','S','P','R','_','L','O','G','_','M','O','D','U','L','E','S',0};
+    static const WCHAR debug_formatW[] = {'a','l','l',':','%','d',0};
 
     /* We have to modify PATH as XPCOM loads other DLLs from this directory. */
     GetEnvironmentVariableW(pathW, path_env, sizeof(path_env)/sizeof(WCHAR));
@@ -160,6 +164,16 @@ static void set_environment(LPCWSTR gre_path)
     SetEnvironmentVariableW(pathW, path_env);
 
     SetEnvironmentVariableW(xpcom_debug_breakW, warnW);
+
+    if(TRACE_ON(gecko))
+        debug_level = 5;
+    else if(WARN_ON(gecko))
+        debug_level = 3;
+    else if(ERR_ON(gecko))
+        debug_level = 2;
+
+    sprintfW(buf, debug_formatW, debug_level);
+    SetEnvironmentVariableW(nspr_log_modulesW, buf);
 }
 
 static BOOL load_xpcom(const PRUnichar *gre_path)
