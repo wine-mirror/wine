@@ -1760,27 +1760,28 @@ extern const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl;
 /*   Note: Very long winded but gl Lists are not flexible enough */
 /*   to resolve everything we need, so doing it manually for now */
 typedef struct SAVEDSTATES {
-        BOOL                      indices;
-        BOOL                      material;
-        BOOL                      streamSource[MAX_STREAMS];
-        BOOL                      streamFreq[MAX_STREAMS];
-        BOOL                      textures[MAX_COMBINED_SAMPLERS];
-        BOOL                      transform[HIGHEST_TRANSFORMSTATE + 1];
-        BOOL                      viewport;
-        BOOL                      renderState[WINEHIGHEST_RENDER_STATE + 1];
-        BOOL                      textureState[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
-        BOOL                      samplerState[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
-        BOOL                      clipplane[MAX_CLIPPLANES];
-        BOOL                      vertexDecl;
-        BOOL                      pixelShader;
-        WORD                      pixelShaderConstantsB;
-        WORD                      pixelShaderConstantsI;
-        BOOL                     *pixelShaderConstantsF;
-        BOOL                      vertexShader;
-        WORD                      vertexShaderConstantsB;
-        WORD                      vertexShaderConstantsI;
-        BOOL                     *vertexShaderConstantsF;
-        BOOL                      scissorRect;
+    BOOL streamSource[MAX_STREAMS];
+    BOOL streamFreq[MAX_STREAMS];
+    BOOL textures[MAX_COMBINED_SAMPLERS];
+    BOOL transform[HIGHEST_TRANSFORMSTATE + 1];
+    BOOL renderState[WINEHIGHEST_RENDER_STATE + 1];
+    BOOL textureState[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
+    BOOL samplerState[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
+    BOOL clipplane[MAX_CLIPPLANES];
+    WORD pixelShaderConstantsB;     /* MAX_CONST_B, 16 */
+    WORD pixelShaderConstantsI;     /* MAX_CONST_I, 16 */
+    BOOL *pixelShaderConstantsF;
+    WORD vertexShaderConstantsB;    /* MAX_CONST_B, 16 */
+    WORD vertexShaderConstantsI;    /* MAX_CONST_I, 16 */
+    BOOL *vertexShaderConstantsF;
+    BYTE indices : 1;
+    BYTE material : 1;
+    BYTE viewport : 1;
+    BYTE vertexDecl : 1;
+    BYTE pixelShader : 1;
+    BYTE vertexShader : 1;
+    BYTE scissorRect : 1;
+    BYTE padding : 1;
 } SAVEDSTATES;
 
 struct StageState {
