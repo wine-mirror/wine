@@ -710,7 +710,7 @@ foreach (sort keys %ext_functions) {
     my $func_ref = $ext_functions{$_};
     if ($func_ref->[0] eq $func_ref->[3])
     {
-        print EXT "  { \"$func_ref->[0]\", \"$func_ref->[4]\", (void *) wine_$func_ref->[0] }";
+        print EXT "  { \"$func_ref->[0]\", \"$func_ref->[4]\", wine_$func_ref->[0] }";
     }
     if ($i != $count-1) {
 	print EXT ",";
