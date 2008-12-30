@@ -161,6 +161,9 @@ int cant_be_null(const var_t *v)
   if (is_aliaschain_attr(type, ATTR_CONTEXTHANDLE))
       return 0;
 
+  if (is_user_type(type))
+      return 0;
+
   if (! attrs && type)
   {
     attrs = type->attrs;
