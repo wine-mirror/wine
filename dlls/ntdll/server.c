@@ -934,7 +934,7 @@ static void send_server_task_port(void)
  */
 void server_init_process(void)
 {
-    obj_handle_t dummy_handle;
+    obj_handle_t version;
     const char *env_socket = getenv( "WINESERVERSOCKET" );
 
     if (env_socket)
@@ -958,8 +958,15 @@ void server_init_process(void)
     pthread_functions.sigprocmask( SIG_BLOCK, &server_block_set, NULL );
 
     /* receive the first thread request fd on the main socket */
-    ntdll_get_thread_data()->request_fd = receive_fd( &dummy_handle );
+    ntdll_get_thread_data()->request_fd = receive_fd( &version );
 
+    if (version != SERVER_PROTOCOL_VERSION)
+        server_protocol_error( "version mismatch %d/%d.\n"
+                               "Your %s binary was not upgraded correctly,\n"
+                               "or you have an older one somewhere in your PATH.\n"
+                               "Or maybe the wrong wineserver is still running?\n",
+                               version, SERVER_PROTOCOL_VERSION,
+                               (version > SERVER_PROTOCOL_VERSION) ? "wine" : "wineserver" );
 #ifdef __APPLE__
     send_server_task_port();
 #endif
@@ -1004,7 +1011,7 @@ NTSTATUS server_init_process_done(void)
  */
 size_t server_init_thread( int unix_pid, int unix_tid, void *entry_point )
 {
-    int version, ret;
+    int ret;
     int reply_pipe[2];
     struct sigaction sig_act;
     size_t info_size;
@@ -1049,18 +1056,10 @@ size_t server_init_thread( int unix_pid, int unix_tid, void *entry_point )
         NtCurrentTeb()->ClientId.UniqueProcess = ULongToHandle(reply->pid);
         NtCurrentTeb()->ClientId.UniqueThread  = ULongToHandle(reply->tid);
         info_size         = reply->info_size;
-        version           = reply->version;
         server_start_time = reply->server_start;
     }
     SERVER_END_REQ;
 
     if (ret) server_protocol_error( "init_thread failed with status %x\n", ret );
-    if (version != SERVER_PROTOCOL_VERSION)
-        server_protocol_error( "version mismatch %d/%d.\n"
-                               "Your %s binary was not upgraded correctly,\n"
-                               "or you have an older one somewhere in your PATH.\n"
-                               "Or maybe the wrong wineserver is still running?\n",
-                               version, SERVER_PROTOCOL_VERSION,
-                               (version > SERVER_PROTOCOL_VERSION) ? "wine" : "wineserver" );
     return info_size;
 }

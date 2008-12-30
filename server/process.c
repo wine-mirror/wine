@@ -377,7 +377,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
         file_set_error();
         goto error;
     }
-    if (send_client_fd( process, request_pipe[1], 0 ) == -1)
+    if (send_client_fd( process, request_pipe[1], SERVER_PROTOCOL_VERSION ) == -1)
     {
         close( request_pipe[0] );
         close( request_pipe[1] );
