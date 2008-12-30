@@ -506,7 +506,6 @@ void NSContainer_Release(NSContainer*);
 
 void init_mutation(NSContainer*);
 void set_mutation_observer(NSContainer*,nsIDOMHTMLDocument*);
-BOOL handle_insert_comment(HTMLDocument *doc, const PRUnichar *comment);
 
 void HTMLDocument_LockContainer(HTMLDocument*,BOOL);
 void show_context_menu(HTMLDocument*,DWORD,POINT*,IDispatch*);
