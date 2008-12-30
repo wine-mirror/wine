@@ -142,25 +142,6 @@ static int get_struct_type(const type_t *type)
     if (is_user_type(t))
       return RPC_FC_BOGUS_STRUCT;
 
-    if (is_ptr(t))
-    {
-        do
-            t = t->ref;
-        while (is_ptr(t));
-
-        switch (get_struct_type(t))
-        {
-        case RPC_FC_IP:
-        case RPC_FC_ENCAPSULATED_UNION:
-        case RPC_FC_NON_ENCAPSULATED_UNION:
-        case RPC_FC_BOGUS_STRUCT:
-            return RPC_FC_BOGUS_STRUCT;
-        }
-
-        has_pointer = 1;
-        continue;
-    }
-
     if (field->type->declarray)
     {
         if (is_string_type(field->attrs, field->type))
@@ -221,6 +202,10 @@ static int get_struct_type(const type_t *type)
     case RPC_FC_FP:
     case RPC_FC_OP:
       if (pointer_size != 4)
+        return RPC_FC_BOGUS_STRUCT;
+      /* pointers to interfaces aren't really pointers and have to be
+       * marshalled specially so they make the structure complex */
+      if (t->ref->type == RPC_FC_IP)
         return RPC_FC_BOGUS_STRUCT;
       has_pointer = 1;
       break;
