@@ -13258,7 +13258,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 int
 main ()
 {
-typeof(gnutls_transport_set_errno) *pfunc;
+typeof(gnutls_mac_get_key_size) *pfunc;
   ;
   return 0;
 }
