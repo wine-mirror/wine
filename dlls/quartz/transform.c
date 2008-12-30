@@ -45,7 +45,6 @@ static const WCHAR wcsOutputPinName[] = {'o','u','t','p','u','t',' ','p','i','n'
 
 static const IBaseFilterVtbl TransformFilter_Vtbl;
 static const IPinVtbl TransformFilter_InputPin_Vtbl;
-static const IMemInputPinVtbl MemInputPin_Vtbl; 
 static const IPinVtbl TransformFilter_OutputPin_Vtbl;
 
 static HRESULT TransformFilter_Input_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
@@ -649,17 +648,4 @@ static const IPinVtbl TransformFilter_OutputPin_Vtbl =
     OutputPin_BeginFlush,
     OutputPin_EndFlush,
     OutputPin_NewSegment
-};
-
-static const IMemInputPinVtbl MemInputPin_Vtbl = 
-{
-    MemInputPin_QueryInterface,
-    MemInputPin_AddRef,
-    MemInputPin_Release,
-    MemInputPin_GetAllocator,
-    MemInputPin_NotifyAllocator,
-    MemInputPin_GetAllocatorRequirements,
-    MemInputPin_Receive,
-    MemInputPin_ReceiveMultiple,
-    MemInputPin_ReceiveCanBlock
 };

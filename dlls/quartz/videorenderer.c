@@ -256,19 +256,6 @@ static BOOL CreateRenderingSubsystem(VideoRendererImpl* This)
     return TRUE;
 }
 
-static const IMemInputPinVtbl MemInputPin_Vtbl = 
-{
-    MemInputPin_QueryInterface,
-    MemInputPin_AddRef,
-    MemInputPin_Release,
-    MemInputPin_GetAllocator,
-    MemInputPin_NotifyAllocator,
-    MemInputPin_GetAllocatorRequirements,
-    MemInputPin_Receive,
-    MemInputPin_ReceiveMultiple,
-    MemInputPin_ReceiveCanBlock
-};
-
 static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, DWORD size)
 {
     AM_MEDIA_TYPE amt;

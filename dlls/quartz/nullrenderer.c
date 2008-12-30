@@ -67,19 +67,6 @@ typedef struct NullRendererImpl
     MediaSeekingImpl mediaSeeking;
 } NullRendererImpl;
 
-static const IMemInputPinVtbl MemInputPin_Vtbl =
-{
-    MemInputPin_QueryInterface,
-    MemInputPin_AddRef,
-    MemInputPin_Release,
-    MemInputPin_GetAllocator,
-    MemInputPin_NotifyAllocator,
-    MemInputPin_GetAllocatorRequirements,
-    MemInputPin_Receive,
-    MemInputPin_ReceiveMultiple,
-    MemInputPin_ReceiveCanBlock
-};
-
 static HRESULT NullRenderer_Sample(LPVOID iface, IMediaSample * pSample)
 {
     NullRendererImpl *This = (NullRendererImpl *)iface;
