@@ -2379,7 +2379,7 @@ static void state_texfactor_arbfp(DWORD state, IWineD3DStateBlockImpl *statebloc
      * application provided constants
      */
     if(device->shader_backend == &arb_program_shader_backend) {
-        if(use_ps(device)) return;
+        if (use_ps(stateblock)) return;
 
         device = stateblock->wineD3DDevice;
         device->activeContext->pshader_const_dirty[ARB_FFP_CONST_TFACTOR] = 1;
@@ -2400,7 +2400,7 @@ static void state_arb_specularenable(DWORD state, IWineD3DStateBlockImpl *stateb
      * application provided constants
      */
     if(device->shader_backend == &arb_program_shader_backend) {
-        if(use_ps(device)) return;
+        if (use_ps(stateblock)) return;
 
         device = stateblock->wineD3DDevice;
         device->activeContext->pshader_const_dirty[ARB_FFP_CONST_SPECULAR_ENABLE] = 1;
@@ -2424,7 +2424,8 @@ static void set_bumpmat_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     float mat[2][2];
 
-    if(use_ps(device)) {
+    if (use_ps(stateblock))
+    {
         if(stage != 0 &&
            ((IWineD3DPixelShaderImpl *) stateblock->pixelShader)->baseShader.reg_maps.bumpmat[stage]) {
             /* The pixel shader has to know the bump env matrix. Do a constants update if it isn't scheduled
@@ -2458,7 +2459,8 @@ static void tex_bumpenvlum_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     float param[4];
 
-    if(use_ps(device)) {
+    if (use_ps(stateblock))
+    {
         if(stage != 0 &&
            ((IWineD3DPixelShaderImpl *) stateblock->pixelShader)->baseShader.reg_maps.luminanceparams[stage]) {
             /* The pixel shader has to know the luminance offset. Do a constants update if it
@@ -2961,8 +2963,8 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
 static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     struct shader_arb_priv *priv = (struct shader_arb_priv *) device->fragment_priv;
-    BOOL use_pshader = use_ps(device);
-    BOOL use_vshader = use_vs(device);
+    BOOL use_pshader = use_ps(stateblock);
+    BOOL use_vshader = use_vs(stateblock);
     struct ffp_frag_settings settings;
     const struct arbfp_ffp_desc *desc;
     unsigned int i;

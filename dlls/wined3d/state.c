@@ -532,7 +532,8 @@ static void state_clipping(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     DWORD enable  = 0xFFFFFFFF;
     DWORD disable = 0x00000000;
 
-    if (use_vs(stateblock->wineD3DDevice)) {
+    if (use_vs(stateblock))
+    {
         /* The spec says that opengl clipping planes are disabled when using shaders. Direct3D planes aren't,
          * so that is an issue. The MacOS ATI driver keeps clipping planes activated with shaders in some
          * conditions I got sick of tracking down. The shader state handler disables all clip planes because
@@ -898,8 +899,7 @@ static void state_stencilwrite(DWORD state, IWineD3DStateBlockImpl *stateblock, 
 static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     BOOL fogenable = stateblock->renderState[WINED3DRS_FOGENABLE];
     IWineD3DPixelShaderImpl *ps_impl = (IWineD3DPixelShaderImpl *)stateblock->pixelShader;
-    BOOL is_ps3 = use_ps(stateblock->wineD3DDevice)
-            && ps_impl->baseShader.reg_maps.shader_version >= WINED3DPS_VERSION(3,0);
+    BOOL is_ps3 = use_ps(stateblock) && ps_impl->baseShader.reg_maps.shader_version >= WINED3DPS_VERSION(3,0);
     float fogstart, fogend;
 
     union {
@@ -956,14 +956,14 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
      */
 
     if( is_ps3 ) {
-        if( !use_vs(stateblock->wineD3DDevice)
-                && stateblock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE ) {
+        if (!use_vs(stateblock) && stateblock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
+        {
             FIXME("Implement vertex fog for pixel shader >= 3.0 and fixed function pipeline\n");
         }
     }
 
-    if (use_vs(stateblock->wineD3DDevice)
-            && ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.reg_maps.fog) {
+    if (use_vs(stateblock) && ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.reg_maps.fog)
+    {
         if( stateblock->renderState[WINED3DRS_FOGTABLEMODE] != WINED3DFOG_NONE ) {
             if(!is_ps3) FIXME("Implement table fog for foggy vertex shader\n");
             /* Disable fog */
@@ -983,7 +983,8 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
         }
         context->last_was_foggy_shader = TRUE;
     }
-    else if( use_ps(stateblock->wineD3DDevice) ) {
+    else if (use_ps(stateblock))
+    {
         /* NOTE: For pixel shader, GL_FOG_START and GL_FOG_END don't hold fog start s and end e but
          * -1/(e-s) and e/(e-s) respectively to simplify fog computation in the shader.
          */
@@ -2887,7 +2888,7 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     TRACE("Setting color op for stage %d\n", stage);
 
     /* Using a pixel shader? Don't care for anything here, the shader applying does it */
-    if (use_ps(stateblock->wineD3DDevice)) return;
+    if (use_ps(stateblock)) return;
 
     if (stage != mapped_stage) WARN("Using non 1:1 mapping: %d -> %d!\n", stage, mapped_stage);
 
@@ -3041,8 +3042,8 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     int coordIdx;
 
     /* Ignore this when a vertex shader is used, or if the streams aren't sorted out yet */
-    if(use_vs(stateblock->wineD3DDevice) ||
-       isStateDirty(context, STATE_VDECL)) {
+    if (use_vs(stateblock) || isStateDirty(context, STATE_VDECL))
+    {
         TRACE("Using a vertex shader, or stream sources not sorted out yet, skipping\n");
         return;
     }
@@ -3309,7 +3310,7 @@ static void shaderconstant(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
        return;
     }
 
-    device->shader_backend->shader_load_constants((IWineD3DDevice *) device, use_ps(device), use_vs(device));
+    device->shader_backend->shader_load_constants((IWineD3DDevice *)device, use_ps(stateblock), use_vs(stateblock));
 }
 
 static void tex_bumpenvlscale(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
@@ -3401,7 +3402,8 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
             checkGLcall("glTexEnvi(GL_TEXTURE_LOD_BIAS_EXT, ...)");
         }
 
-        if(!use_ps(stateblock->wineD3DDevice) && sampler < stateblock->lowest_disabled_stage) {
+        if (!use_ps(stateblock) && sampler < stateblock->lowest_disabled_stage)
+        {
             if(stateblock->renderState[WINED3DRS_COLORKEYENABLE] && sampler == 0) {
                 /* If color keying is enabled update the alpha test, it depends on the existence
                  * of a color key in stage 0
@@ -3425,9 +3427,8 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
 }
 
 static void apply_pshader_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
-
-    if (use_ps(device)) {
+    if (use_ps(stateblock))
+    {
         if(!context->last_was_pshader) {
             state_fog(state, stateblock, context);
         }
@@ -3442,8 +3443,8 @@ static void apply_pshader_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 
 void apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
-    BOOL use_pshader = use_ps(device);
-    BOOL use_vshader = use_vs(device);
+    BOOL use_pshader = use_ps(stateblock);
+    BOOL use_vshader = use_vs(stateblock);
     int i;
 
     if (use_pshader) {
@@ -4383,8 +4384,8 @@ static void streamsrc(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
 
 static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     BOOL updateFog = FALSE;
-    BOOL useVertexShaderFunction = use_vs(stateblock->wineD3DDevice);
-    BOOL usePixelShaderFunction = use_ps(stateblock->wineD3DDevice);
+    BOOL useVertexShaderFunction = use_vs(stateblock);
+    BOOL usePixelShaderFunction = use_ps(stateblock);
     BOOL transformed;
     /* Some stuff is in the device until we have per context tracking */
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;

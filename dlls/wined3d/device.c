@@ -3789,8 +3789,8 @@ static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps) {
 }
 
 void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
-    BOOL vs = use_vs(This);
-    BOOL ps = use_ps(This);
+    BOOL vs = use_vs(This->stateBlock);
+    BOOL ps = use_ps(This->stateBlock);
     /*
      * Rules are:
      * -> Pixel shaders need a 1:1 map. In theory the shader input could be mapped too, but

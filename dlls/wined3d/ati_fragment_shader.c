@@ -883,7 +883,7 @@ static void textransform(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3
 
 static void atifs_apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
-    BOOL use_vshader = use_vs(device);
+    BOOL use_vshader = use_vs(stateblock);
 
     /* The ATIFS code does not support pixel shaders currently, but we have to provide a state handler
      * to call shader_select to select a vertex shader if one is applied because the vertex shader state

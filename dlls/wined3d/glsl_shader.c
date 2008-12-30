@@ -797,7 +797,8 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
      */
     if (pshader && shader_version >= WINED3DPS_VERSION(3, 0))
     {
-        if(use_vs(device)) {
+        if (use_vs(device->stateBlock))
+        {
             shader_addline(buffer, "varying vec4 IN[%u];\n", GL_LIMITS(glsl_varyings) / 4);
         } else {
             /* TODO: Write a replacement shader for the fixed function vertex pipeline, so this isn't needed.

@@ -296,7 +296,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const WineDirect3DVertexStrid
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const UINT *streamOffset = This->stateBlock->streamOffset;
     long                      SkipnStrides = startVertex + This->stateBlock->loadBaseVertexIndex;
-    BOOL                      pixelShader = use_ps(This);
+    BOOL                      pixelShader = use_ps(This->stateBlock);
     BOOL specular_fog = FALSE;
     UINT texture_stages = GL_LIMITS(texture_stages);
     const BYTE *texCoords[WINED3DDP_MAXTEXCOORD];
@@ -863,7 +863,8 @@ void drawPrimitive(IWineD3DDevice *iface,
         if (numberOfVertices == 0 )
             numberOfVertices = calculatedNumberOfindices;
 
-        if(!use_vs(This)) {
+        if (!use_vs(This->stateBlock))
+        {
             if(!This->strided_streams.u.s.position_transformed && This->activeContext->num_untracked_materials &&
                 This->stateBlock->renderState[WINED3DRS_LIGHTING]) {
                 static BOOL warned;
@@ -898,7 +899,8 @@ void drawPrimitive(IWineD3DDevice *iface,
 
         if (This->useDrawStridedSlow || emulation) {
             /* Immediate mode drawing */
-            if(use_vs(This)) {
+            if (use_vs(This->stateBlock))
+            {
                 static BOOL warned;
                 if (!warned) {
                     FIXME("Using immediate mode with vertex shaders for half float emulation\n");

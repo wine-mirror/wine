@@ -2462,15 +2462,17 @@ typedef struct {
 const StaticPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt,
         const WineD3D_GL_Info *gl_info, const struct GlPixelFormatDesc **glDesc);
 
-static inline BOOL use_vs(IWineD3DDeviceImpl *device) {
-    return (device->vs_selected_mode != SHADER_NONE
-            && device->stateBlock->vertexShader
-            && !device->strided_streams.u.s.position_transformed);
+static inline BOOL use_vs(IWineD3DStateBlockImpl *stateblock)
+{
+    return (stateblock->vertexShader
+            && !stateblock->wineD3DDevice->strided_streams.u.s.position_transformed
+            && stateblock->wineD3DDevice->vs_selected_mode != SHADER_NONE);
 }
 
-static inline BOOL use_ps(IWineD3DDeviceImpl *device) {
-    return (device->ps_selected_mode != SHADER_NONE
-            && device->stateBlock->pixelShader);
+static inline BOOL use_ps(IWineD3DStateBlockImpl *stateblock)
+{
+    return (stateblock->pixelShader
+            && stateblock->wineD3DDevice->ps_selected_mode != SHADER_NONE);
 }
 
 void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED3DRECT *src_rect,
