@@ -112,32 +112,34 @@ static const struct object_ops debug_ctx_ops =
 
 /* routines to build an event according to its type */
 
-static int fill_exception_event( struct debug_event *event, void *arg )
+static int fill_exception_event( struct debug_event *event, const void *arg )
 {
     memcpy( &event->data.info.exception, arg, sizeof(event->data.info.exception) );
     return 1;
 }
 
-static int fill_create_thread_event( struct debug_event *event, void *arg )
+static int fill_create_thread_event( struct debug_event *event, const void *arg )
 {
     struct process *debugger = event->debugger->process;
     struct thread *thread = event->sender;
+    const client_ptr_t *entry = arg;
     obj_handle_t handle;
 
     /* documented: THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME */
     if (!(handle = alloc_handle( debugger, thread, THREAD_ALL_ACCESS, 0 ))) return 0;
     event->data.info.create_thread.handle = handle;
     event->data.info.create_thread.teb    = thread->teb;
-    event->data.info.create_thread.start  = arg;
+    event->data.info.create_thread.start  = *entry;
     return 1;
 }
 
-static int fill_create_process_event( struct debug_event *event, void *arg )
+static int fill_create_process_event( struct debug_event *event, const void *arg )
 {
     struct process *debugger = event->debugger->process;
     struct thread *thread = event->sender;
     struct process *process = thread->process;
     struct process_dll *exe_module = get_process_exe_module( process );
+    const client_ptr_t *entry = arg;
     obj_handle_t handle;
 
     /* documented: PROCESS_VM_READ | PROCESS_VM_WRITE */
@@ -164,7 +166,7 @@ static int fill_create_process_event( struct debug_event *event, void *arg )
     event->data.info.create_process.file       = handle;
     event->data.info.create_process.teb        = thread->teb;
     event->data.info.create_process.base       = exe_module->base;
-    event->data.info.create_process.start      = arg;
+    event->data.info.create_process.start      = *entry;
     event->data.info.create_process.dbg_offset = exe_module->dbg_offset;
     event->data.info.create_process.dbg_size   = exe_module->dbg_size;
     event->data.info.create_process.name       = exe_module->name;
@@ -172,24 +174,24 @@ static int fill_create_process_event( struct debug_event *event, void *arg )
     return 1;
 }
 
-static int fill_exit_thread_event( struct debug_event *event, void *arg )
+static int fill_exit_thread_event( struct debug_event *event, const void *arg )
 {
-    struct thread *thread = arg;
+    const struct thread *thread = arg;
     event->data.info.exit.exit_code = thread->exit_code;
     return 1;
 }
 
-static int fill_exit_process_event( struct debug_event *event, void *arg )
+static int fill_exit_process_event( struct debug_event *event, const void *arg )
 {
-    struct process *process = arg;
+    const struct process *process = arg;
     event->data.info.exit.exit_code = process->exit_code;
     return 1;
 }
 
-static int fill_load_dll_event( struct debug_event *event, void *arg )
+static int fill_load_dll_event( struct debug_event *event, const void *arg )
 {
     struct process *debugger = event->debugger->process;
-    struct process_dll *dll = arg;
+    const struct process_dll *dll = arg;
     obj_handle_t handle = 0;
 
     if (dll->file && !(handle = alloc_handle( debugger, dll->file, GENERIC_READ, 0 )))
@@ -203,21 +205,21 @@ static int fill_load_dll_event( struct debug_event *event, void *arg )
     return 1;
 }
 
-static int fill_unload_dll_event( struct debug_event *event, void *arg )
+static int fill_unload_dll_event( struct debug_event *event, const void *arg )
 {
-    mod_handle_t *base = arg;
+    const mod_handle_t *base = arg;
     event->data.info.unload_dll.base = *base;
     return 1;
 }
 
-static int fill_output_debug_string_event( struct debug_event *event, void *arg )
+static int fill_output_debug_string_event( struct debug_event *event, const void *arg )
 {
-    struct debug_event_output_string *data = arg;
+    const struct debug_event_output_string *data = arg;
     event->data.info.output_string = *data;
     return 1;
 }
 
-typedef int (*fill_event_func)( struct debug_event *event, void *arg );
+typedef int (*fill_event_func)( struct debug_event *event, const void *arg );
 
 #define NB_DEBUG_EVENTS OUTPUT_DEBUG_STRING_EVENT  /* RIP_EVENT not supported */
 
@@ -373,7 +375,7 @@ static int continue_debug_event( struct process *process, struct thread *thread,
 
 /* alloc a debug event for a debugger */
 static struct debug_event *alloc_debug_event( struct thread *thread, int code,
-                                              void *arg, const CONTEXT *context )
+                                              const void *arg, const CONTEXT *context )
 {
     struct thread *debugger = thread->process->debugger;
     struct debug_event *event;
@@ -404,7 +406,7 @@ static struct debug_event *alloc_debug_event( struct thread *thread, int code,
 }
 
 /* generate a debug event from inside the server and queue it */
-void generate_debug_event( struct thread *thread, int code, void *arg )
+void generate_debug_event( struct thread *thread, int code, const void *arg )
 {
     if (thread->process->debugger)
     {
@@ -499,7 +501,7 @@ int debugger_detach( struct process *process, struct thread *debugger )
 }
 
 /* generate all startup events of a given process */
-void generate_startup_debug_events( struct process *process, void *entry )
+void generate_startup_debug_events( struct process *process, client_ptr_t entry )
 {
     struct list *ptr;
     struct thread *thread, *first_thread = get_process_first_thread( process );
@@ -508,7 +510,7 @@ void generate_startup_debug_events( struct process *process, void *entry )
     LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
     {
         if (thread == first_thread)
-            generate_debug_event( thread, CREATE_PROCESS_DEBUG_EVENT, entry );
+            generate_debug_event( thread, CREATE_PROCESS_DEBUG_EVENT, &entry );
         else
             generate_debug_event( thread, CREATE_THREAD_DEBUG_EVENT, NULL );
     }
@@ -619,7 +621,7 @@ DECL_HANDLER(debug_process)
     }
     else if (debugger_attach( process, current ))
     {
-        generate_startup_debug_events( process, NULL );
+        generate_startup_debug_events( process, 0 );
         break_process( process );
         resume_process( process );
     }

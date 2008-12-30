@@ -1168,7 +1168,7 @@ DECL_HANDLER(get_dll_info)
         if (dll)
         {
             reply->size = dll->size;
-            reply->entry_point = NULL; /* FIXME */
+            reply->entry_point = 0; /* FIXME */
             reply->filename_len = dll->namelen;
             if (dll->filename)
             {

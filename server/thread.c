@@ -1053,7 +1053,7 @@ DECL_HANDLER(init_thread)
         if (process->unix_pid != current->unix_pid)
             process->unix_pid = -1;  /* can happen with linuxthreads */
         if (current->suspend + process->suspend > 0) stop_thread( current );
-        generate_debug_event( current, CREATE_THREAD_DEBUG_EVENT, req->entry );
+        generate_debug_event( current, CREATE_THREAD_DEBUG_EVENT, &req->entry );
     }
     debug_level = max( debug_level, req->debug_level );
 

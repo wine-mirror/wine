@@ -79,7 +79,7 @@ struct debug_event_create_thread
 {
     obj_handle_t handle;     /* handle to the new thread */
     void        *teb;        /* thread teb (in debugged process address space) */
-    void        *start;      /* thread startup routine */
+    client_ptr_t start;      /* thread startup routine */
 };
 struct debug_event_create_process
 {
@@ -90,7 +90,7 @@ struct debug_event_create_process
     int          dbg_offset; /* offset of debug info in file */
     int          dbg_size;   /* size of debug info */
     void        *teb;        /* thread teb (in debugged process address space) */
-    void        *start;      /* thread startup routine */
+    client_ptr_t start;      /* thread startup routine */
     client_ptr_t name;       /* image name (optional) */
     int          unicode;    /* is it Unicode? */
 };
@@ -537,7 +537,7 @@ typedef union
     int          gui;          /* is it a GUI process? */
     mod_handle_t module;       /* main module base address */
     client_ptr_t ldt_copy;     /* address of LDT copy (in thread address space) */
-    void*        entry;        /* process entry point */
+    client_ptr_t entry;        /* process entry point */
 @END
 
 
@@ -548,8 +548,7 @@ typedef union
     int          debug_level;  /* new debug level */
     void*        teb;          /* TEB of new thread (in thread address space) */
     void*        peb;          /* address of PEB (in thread address space) */
-    void*        entry;        /* thread entry point (in thread address space) */
-    int          unused;       /* was: ldt_copy */
+    client_ptr_t entry;        /* thread entry point (in thread address space) */
     int          reply_fd;     /* fd for reply pipe */
     int          wait_fd;      /* fd for blocking calls pipe */
 @REPLY
@@ -641,7 +640,7 @@ typedef union
     obj_handle_t handle;       /* process handle */
     mod_handle_t base_address; /* base address of module */
 @REPLY
-    void*        entry_point;
+    client_ptr_t entry_point;
     data_size_t  size;            /* module size */
     data_size_t  filename_len;    /* buffer len in bytes required to store filename */
     VARARG(filename,unicode_str); /* file name of module */

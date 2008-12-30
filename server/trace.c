@@ -499,18 +499,21 @@ static void dump_varargs_debug_event( data_size_t size )
         fprintf( stderr, ",first=%d}", event->info.exception.first );
         break;
     case CREATE_THREAD_DEBUG_EVENT:
-        fprintf( stderr, "{create_thread,thread=%04x,teb=%p,start=%p}",
-                 event->info.create_thread.handle, event->info.create_thread.teb,
-                 event->info.create_thread.start );
+        fprintf( stderr, "{create_thread,thread=%04x,teb=%p,start=",
+                 event->info.create_thread.handle, event->info.create_thread.teb );
+        dump_uint64( &event->info.create_thread.start );
+        fputc( '}', stderr );
         break;
     case CREATE_PROCESS_DEBUG_EVENT:
         fprintf( stderr, "{create_process,file=%04x,process=%04x,thread=%04x,base=",
                  event->info.create_process.file, event->info.create_process.process,
                  event->info.create_process.thread );
         dump_uint64( &event->info.create_process.base );
-        fprintf( stderr, ",offset=%d,size=%d,teb=%p,start=%p,name=",
+        fprintf( stderr, ",offset=%d,size=%d,teb=%p,start=",
                  event->info.create_process.dbg_offset, event->info.create_process.dbg_size,
-                 event->info.create_process.teb, event->info.create_process.start );
+                 event->info.create_process.teb );
+        dump_uint64( &event->info.create_process.start );
+        fprintf( stderr, ",name=" );
         dump_uint64( &event->info.create_process.name );
         fprintf( stderr, ",unicode=%d}", event->info.create_process.unicode );
         break;
@@ -974,7 +977,8 @@ static void dump_init_process_done_request( const struct init_process_done_reque
     fprintf( stderr, " ldt_copy=" );
     dump_uint64( &req->ldt_copy );
     fprintf( stderr, "," );
-    fprintf( stderr, " entry=%p", req->entry );
+    fprintf( stderr, " entry=" );
+    dump_uint64( &req->entry );
 }
 
 static void dump_init_thread_request( const struct init_thread_request *req )
@@ -984,8 +988,9 @@ static void dump_init_thread_request( const struct init_thread_request *req )
     fprintf( stderr, " debug_level=%d,", req->debug_level );
     fprintf( stderr, " teb=%p,", req->teb );
     fprintf( stderr, " peb=%p,", req->peb );
-    fprintf( stderr, " entry=%p,", req->entry );
-    fprintf( stderr, " unused=%d,", req->unused );
+    fprintf( stderr, " entry=" );
+    dump_uint64( &req->entry );
+    fprintf( stderr, "," );
     fprintf( stderr, " reply_fd=%d,", req->reply_fd );
     fprintf( stderr, " wait_fd=%d", req->wait_fd );
 }
@@ -1093,7 +1098,9 @@ static void dump_get_dll_info_request( const struct get_dll_info_request *req )
 
 static void dump_get_dll_info_reply( const struct get_dll_info_reply *req )
 {
-    fprintf( stderr, " entry_point=%p,", req->entry_point );
+    fprintf( stderr, " entry_point=" );
+    dump_uint64( &req->entry_point );
+    fprintf( stderr, "," );
     fprintf( stderr, " size=%u,", req->size );
     fprintf( stderr, " filename_len=%u,", req->filename_len );
     fprintf( stderr, " filename=" );

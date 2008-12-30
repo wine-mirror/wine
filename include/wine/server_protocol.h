@@ -63,7 +63,7 @@ struct debug_event_create_thread
 {
     obj_handle_t handle;
     void        *teb;
-    void        *start;
+    client_ptr_t start;
 };
 struct debug_event_create_process
 {
@@ -74,7 +74,7 @@ struct debug_event_create_process
     int          dbg_offset;
     int          dbg_size;
     void        *teb;
-    void        *start;
+    client_ptr_t start;
     client_ptr_t name;
     int          unicode;
 };
@@ -543,7 +543,7 @@ struct init_process_done_request
     int          gui;
     mod_handle_t module;
     client_ptr_t ldt_copy;
-    void*        entry;
+    client_ptr_t entry;
 };
 struct init_process_done_reply
 {
@@ -560,8 +560,7 @@ struct init_thread_request
     int          debug_level;
     void*        teb;
     void*        peb;
-    void*        entry;
-    int          unused;
+    client_ptr_t entry;
     int          reply_fd;
     int          wait_fd;
 };
@@ -693,7 +692,7 @@ struct get_dll_info_request
 struct get_dll_info_reply
 {
     struct reply_header __header;
-    void*        entry_point;
+    client_ptr_t entry_point;
     data_size_t  size;
     data_size_t  filename_len;
     /* VARARG(filename,unicode_str); */
@@ -5062,6 +5061,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 374
+#define SERVER_PROTOCOL_VERSION 375
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -997,7 +997,7 @@ NTSTATUS server_init_process_done(void)
 #ifdef __i386__
         req->ldt_copy = wine_server_client_ptr( &wine_ldt_copy );
 #endif
-        req->entry    = (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint;
+        req->entry    = wine_server_client_ptr( (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint );
         req->gui      = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
         status = wine_server_call( req );
     }
@@ -1050,7 +1050,7 @@ size_t server_init_thread( int unix_pid, int unix_tid, void *entry_point )
         req->unix_tid    = unix_tid;
         req->teb         = NtCurrentTeb();
         req->peb         = NtCurrentTeb()->Peb;
-        req->entry       = entry_point;
+        req->entry       = wine_server_client_ptr( entry_point );
         req->reply_fd    = reply_pipe[1];
         req->wait_fd     = ntdll_get_thread_data()->wait_fd[1];
         req->debug_level = (TRACE_ON(server) != 0);
