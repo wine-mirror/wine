@@ -1107,7 +1107,14 @@ IDirectDrawImpl_WaitForVerticalBlank(IDirectDraw7 *iface,
                                      HANDLE h)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
-    FIXME("(%p)->(%x,%p): Stub\n", This, Flags, h);
+    static BOOL hide = FALSE;
+
+    /* This function is called often, so print the fixme only once */
+    if(!hide)
+    {
+        FIXME("(%p)->(%x,%p): Stub\n", This, Flags, h);
+        hide = TRUE;
+    }
 
     /* MSDN says DDWAITVB_BLOCKBEGINEVENT is not supported */
     if(Flags & DDWAITVB_BLOCKBEGINEVENT)
