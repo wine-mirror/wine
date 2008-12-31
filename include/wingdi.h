@@ -771,6 +771,8 @@ typedef struct tagXFORM
 #define PROOF_QUALITY          2
 #define NONANTIALIASED_QUALITY 3
 #define ANTIALIASED_QUALITY    4
+#define CLEARTYPE_QUALITY          5
+#define CLEARTYPE_NATURAL_QUALITY  6
 
   /* lfPitchAndFamily pitch values */
 #define DEFAULT_PITCH       0x00

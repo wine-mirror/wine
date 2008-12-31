@@ -451,14 +451,45 @@ static BOOL get_gasp_flags(X11DRV_PDEVICE *physDev, WORD *flags)
     return TRUE;
 }
 
+static AA_Type get_antialias_type( X11DRV_PDEVICE *physDev, BOOL subpixel, BOOL hinter)
+{
+    AA_Type ret;
+    WORD flags;
+    UINT font_smoothing_type, font_smoothing_orientation;
+
+    if (X11DRV_XRender_Installed && subpixel &&
+        SystemParametersInfoW( SPI_GETFONTSMOOTHINGTYPE, 0, &font_smoothing_type, 0) &&
+        font_smoothing_type == FE_FONTSMOOTHINGCLEARTYPE)
+    {
+        if ( SystemParametersInfoW( SPI_GETFONTSMOOTHINGORIENTATION, 0,
+                                    &font_smoothing_orientation, 0) &&
+             font_smoothing_orientation == FE_FONTSMOOTHINGORIENTATIONBGR)
+        {
+            ret = AA_BGR;
+        }
+        else
+            ret = AA_RGB;
+        /*FIXME
+          If the monitor is in portrait mode, ClearType is disabled in the MS Windows (MSDN).
+          But, Wine's subpixel rendering can support the portrait mode.
+         */
+    }
+    else if (!hinter || !get_gasp_flags(physDev, &flags) || flags & GASP_DOGRAY)
+        ret = AA_Grey;
+    else
+        ret = AA_None;
+
+    return ret;
+}
+
 static int GetCacheEntry(X11DRV_PDEVICE *physDev, LFANDSIZE *plfsz)
 {
     int ret;
     int format;
     gsCacheEntry *entry;
-    WORD flags;
     static int hinter = -1;
     static int subpixel = -1;
+    BOOL font_smoothing;
 
     if((ret = LookupEntry(plfsz)) != -1) return ret;
 
@@ -479,19 +510,28 @@ static int GetCacheEntry(X11DRV_PDEVICE *physDev, LFANDSIZE *plfsz)
             subpixel = status.wFlags & WINE_TT_SUBPIXEL_RENDERING_ENABLED;
         }
 
-        /* FIXME: Use the following registry information
-           [HKEY_CURRENT_USER\Control Panel\Desktop]
-           "FontSmoothing"="2"                       ; 0=>Off, 2=>On
-           "FontSmoothingType"=dword:00000002        ; 1=>Standard, 2=>Cleartype
-           "FontSmoothingOrientation"=dword:00000001 ; 0=>BGR, 1=>RGB
-           "FontSmoothingGamma"=dword:00000578
-         */
-        if ( subpixel && X11DRV_XRender_Installed)
-            entry->aa_default = AA_RGB;
-        else if(!hinter || !get_gasp_flags(physDev, &flags) || flags & GASP_DOGRAY)
-            entry->aa_default = AA_Grey;
-        else
-            entry->aa_default = AA_None;
+        switch (plfsz->lf.lfQuality)
+        {
+            case ANTIALIASED_QUALITY:
+                entry->aa_default = get_antialias_type( physDev, FALSE, hinter );
+                break;
+            case CLEARTYPE_QUALITY:
+            case CLEARTYPE_NATURAL_QUALITY:
+                entry->aa_default = get_antialias_type( physDev, subpixel, hinter );
+                break;
+            case DEFAULT_QUALITY:
+            case DRAFT_QUALITY:
+            case PROOF_QUALITY:
+            default:
+                if ( SystemParametersInfoW( SPI_GETFONTSMOOTHING, 0, &font_smoothing, 0) &&
+                     font_smoothing)
+                {
+                    entry->aa_default = get_antialias_type( physDev, subpixel, hinter );
+                }
+                else
+                    entry->aa_default = AA_None;
+                break;
+        }
     }
     else
         entry->aa_default = AA_None;
