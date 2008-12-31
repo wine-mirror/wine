@@ -7937,7 +7937,7 @@ static void fixed_function_bumpmap_test(IDirect3DDevice9 *device)
      * green: 0.5  * (0.25 * 2.0 + 0.1) = 0.5  * 0.6 = 0.3  = 0x4c
      * green: 0.75 * (0.25 * 2.0 + 0.1) = 0.75 * 0.6 = 0.45 = 0x72
      */
-    ok(color_match(color, 0x00994c72, 3), "bumpmap failed: Got color 0x%08x, expected 0x00994c72.\n", color);
+    ok(color_match(color, 0x00994c72, 5), "bumpmap failed: Got color 0x%08x, expected 0x00994c72.\n", color);
 
     /* Check a result scale factor > 1.0 */
     scale = 10;
