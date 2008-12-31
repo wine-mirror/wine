@@ -859,8 +859,8 @@ BOOL WINAPI StrTrimA(LPSTR,LPCSTR);
 BOOL WINAPI StrTrimW(LPWSTR,LPCWSTR);
 #define StrTrim WINELIB_NAME_AW(StrTrim)
 
-INT WINAPI wvnsprintfA(LPSTR,INT,LPCSTR,va_list);
-INT WINAPI wvnsprintfW(LPWSTR,INT,LPCWSTR,va_list);
+INT WINAPI wvnsprintfA(LPSTR,INT,LPCSTR,__ms_va_list);
+INT WINAPI wvnsprintfW(LPWSTR,INT,LPCWSTR,__ms_va_list);
 #define wvnsprintf WINELIB_NAME_AW(wvnsprintf)
 
 INT WINAPIV wnsprintfA(LPSTR,INT,LPCSTR, ...);
