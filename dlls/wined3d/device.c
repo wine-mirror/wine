@@ -3671,13 +3671,16 @@ static void device_update_fixed_function_usage_map(IWineD3DDeviceImpl *This) {
 
 static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This) {
     int i, tex;
+    WORD ffu_map;
 
     device_update_fixed_function_usage_map(This);
+    ffu_map = This->fixed_function_usage_map;
 
     if (This->max_ffp_textures == This->max_ffp_texture_stages ||
-        This->stateBlock->lowest_disabled_stage <= This->max_ffp_textures) {
-        for (i = 0; i < This->stateBlock->lowest_disabled_stage; ++i) {
-            if (!(This->fixed_function_usage_map & (1 << i))) continue;
+            This->stateBlock->lowest_disabled_stage <= This->max_ffp_textures) {
+        for (i = 0; ffu_map; ffu_map >>= 1, ++i)
+        {
+            if (!(ffu_map & 1)) continue;
 
             if (This->texUnitMap[i] != i) {
                 device_map_stage(This, i, i);
@@ -3690,8 +3693,9 @@ static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This) {
 
     /* Now work out the mapping */
     tex = 0;
-    for (i = 0; i < This->stateBlock->lowest_disabled_stage; ++i) {
-        if (!(This->fixed_function_usage_map & (1 << i))) continue;
+    for (i = 0; ffu_map; ffu_map >>= 1, ++i)
+    {
+        if (!(ffu_map & 1)) continue;
 
         if (This->texUnitMap[i] != tex) {
             device_map_stage(This, i, tex);
