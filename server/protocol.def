@@ -196,6 +196,7 @@ struct hardware_msg_data
     int             x;         /* x position */
     int             y;         /* y position */
     unsigned int    hw_id;     /* unique id */
+    int             __pad;
 };
 
 struct callback_msg_data
@@ -554,8 +555,8 @@ typedef union
 @REPLY
     process_id_t pid;          /* process id of the new thread's process */
     thread_id_t  tid;          /* thread id of the new thread */
-    data_size_t  info_size;    /* total size of startup info */
     timeout_t    server_start; /* server start time */
+    data_size_t  info_size;    /* total size of startup info */
     int          version;      /* protocol version */
 @END
 
@@ -677,6 +678,7 @@ typedef union
 
 /* Notify the server that a dll is being unloaded */
 @REQ(unload_dll)
+    int          __pad;
     mod_handle_t base;         /* base address */
 @END
 
@@ -1335,8 +1337,8 @@ enum char_info_mode
 @REQ(create_mapping)
     unsigned int access;        /* wanted access rights */
     unsigned int attributes;    /* object attributes */
-    mem_size_t   size;          /* mapping size */
     unsigned int protect;       /* protection flags (see below) */
+    mem_size_t   size;          /* mapping size */
     obj_handle_t file_handle;   /* file handle */
     VARARG(objattr,object_attributes); /* object attributes */
 @REPLY
@@ -1986,8 +1988,8 @@ enum message_type
 /* Create an async I/O */
 @REQ(register_async)
     int          type;          /* type of queue to look after */
-    int          count;         /* count - usually # of bytes to be read/written */
     async_data_t async;         /* async I/O parameters */
+    int          count;         /* count - usually # of bytes to be read/written */
 @END
 #define ASYNC_TYPE_READ  0x01
 #define ASYNC_TYPE_WRITE 0x02
@@ -2028,11 +2030,11 @@ enum message_type
     unsigned int   attributes;   /* object attributes */
     obj_handle_t   rootdir;      /* root directory */
     unsigned int   options;
-    unsigned int   flags;
     unsigned int   maxinstances;
     unsigned int   outsize;
     unsigned int   insize;
     timeout_t      timeout;
+    unsigned int   flags;
     VARARG(name,unicode_str);    /* pipe name */
 @REPLY
     obj_handle_t   handle;       /* handle to the pipe */
@@ -2841,8 +2843,8 @@ enum message_type
     unsigned int   access;        /* wanted access rights */
     unsigned int   attributes;    /* object attributes */
     obj_handle_t   rootdir;       /* root directory */
-    unsigned int   max_msgsize;
     timeout_t      read_timeout;
+    unsigned int   max_msgsize;
     VARARG(name,unicode_str);     /* mailslot name */
 @REPLY
     obj_handle_t   handle;        /* handle to the mailslot */
@@ -2852,11 +2854,11 @@ enum message_type
 /* Set mailslot information */
 @REQ(set_mailslot_info)
     obj_handle_t   handle;        /* handle to the mailslot */
+    timeout_t      read_timeout;
     unsigned int   flags;
-    timeout_t      read_timeout;
 @REPLY
-    unsigned int   max_msgsize;
     timeout_t      read_timeout;
+    unsigned int   max_msgsize;
 @END
 #define MAILSLOT_SET_READ_TIMEOUT  1
 
@@ -2969,8 +2971,8 @@ enum message_type
     unsigned int access;          /* wanted access rights */
     unsigned int attributes;      /* object attributes */
     obj_handle_t rootdir;         /* root directory */
-    obj_handle_t manager;         /* device manager */
     client_ptr_t user_ptr;        /* opaque ptr for use by client */
+    obj_handle_t manager;         /* device manager */
     VARARG(name,unicode_str);     /* object name */
 @REPLY
     obj_handle_t handle;          /* handle to the device */
@@ -3074,8 +3076,8 @@ enum message_type
 /* associate object with completion port */
 @REQ(set_completion_info)
     obj_handle_t  handle;         /* object handle */
-    obj_handle_t  chandle;        /* port handle */
     apc_param_t   ckey;           /* completion key */
+    obj_handle_t  chandle;        /* port handle */
 @END
 
 

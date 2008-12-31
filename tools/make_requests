@@ -71,6 +71,7 @@ sub DO_DUMP_FUNC($$@)
     {
 	my $type = shift;
 	my $var = shift;
+        next if $var =~ /^__pad/;
 	if (defined($formats{$type}))
 	{
             my $fmt = ${$formats{$type}}[2];

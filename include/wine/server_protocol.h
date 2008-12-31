@@ -180,6 +180,7 @@ struct hardware_msg_data
     int             x;
     int             y;
     unsigned int    hw_id;
+    int             __pad;
 };
 
 struct callback_msg_data
@@ -569,8 +570,8 @@ struct init_thread_reply
     struct reply_header __header;
     process_id_t pid;
     thread_id_t  tid;
-    data_size_t  info_size;
     timeout_t    server_start;
+    data_size_t  info_size;
     int          version;
 };
 
@@ -747,6 +748,7 @@ struct load_dll_reply
 struct unload_dll_request
 {
     struct request_header __header;
+    int          __pad;
     mod_handle_t base;
 };
 struct unload_dll_reply
@@ -1690,8 +1692,8 @@ struct create_mapping_request
     struct request_header __header;
     unsigned int access;
     unsigned int attributes;
-    mem_size_t   size;
     unsigned int protect;
+    mem_size_t   size;
     obj_handle_t file_handle;
     /* VARARG(objattr,object_attributes); */
 };
@@ -2681,8 +2683,8 @@ struct register_async_request
 {
     struct request_header __header;
     int          type;
-    int          count;
     async_data_t async;
+    int          count;
 };
 struct register_async_reply
 {
@@ -2745,11 +2747,11 @@ struct create_named_pipe_request
     unsigned int   attributes;
     obj_handle_t   rootdir;
     unsigned int   options;
-    unsigned int   flags;
     unsigned int   maxinstances;
     unsigned int   outsize;
     unsigned int   insize;
     timeout_t      timeout;
+    unsigned int   flags;
     /* VARARG(name,unicode_str); */
 };
 struct create_named_pipe_reply
@@ -3932,8 +3934,8 @@ struct create_mailslot_request
     unsigned int   access;
     unsigned int   attributes;
     obj_handle_t   rootdir;
-    unsigned int   max_msgsize;
     timeout_t      read_timeout;
+    unsigned int   max_msgsize;
     /* VARARG(name,unicode_str); */
 };
 struct create_mailslot_reply
@@ -3948,14 +3950,14 @@ struct set_mailslot_info_request
 {
     struct request_header __header;
     obj_handle_t   handle;
-    unsigned int   flags;
     timeout_t      read_timeout;
+    unsigned int   flags;
 };
 struct set_mailslot_info_reply
 {
     struct reply_header __header;
-    unsigned int   max_msgsize;
     timeout_t      read_timeout;
+    unsigned int   max_msgsize;
 };
 #define MAILSLOT_SET_READ_TIMEOUT  1
 
@@ -4126,8 +4128,8 @@ struct create_device_request
     unsigned int access;
     unsigned int attributes;
     obj_handle_t rootdir;
-    obj_handle_t manager;
     client_ptr_t user_ptr;
+    obj_handle_t manager;
     /* VARARG(name,unicode_str); */
 };
 struct create_device_reply
@@ -4283,8 +4285,8 @@ struct set_completion_info_request
 {
     struct request_header __header;
     obj_handle_t  handle;
-    obj_handle_t  chandle;
     apc_param_t   ckey;
+    obj_handle_t  chandle;
 };
 struct set_completion_info_reply
 {
@@ -5061,6 +5063,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 377
+#define SERVER_PROTOCOL_VERSION 378
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

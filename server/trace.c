@@ -1004,10 +1004,10 @@ static void dump_init_thread_reply( const struct init_thread_reply *req )
 {
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " tid=%04x,", req->tid );
-    fprintf( stderr, " info_size=%u,", req->info_size );
     fprintf( stderr, " server_start=" );
     dump_timeout( &req->server_start );
     fprintf( stderr, "," );
+    fprintf( stderr, " info_size=%u,", req->info_size );
     fprintf( stderr, " version=%d", req->version );
 }
 
@@ -1841,10 +1841,10 @@ static void dump_create_mapping_request( const struct create_mapping_request *re
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " protect=%08x,", req->protect );
     fprintf( stderr, " size=" );
     dump_uint64( &req->size );
     fprintf( stderr, "," );
-    fprintf( stderr, " protect=%08x,", req->protect );
     fprintf( stderr, " file_handle=%04x,", req->file_handle );
     fprintf( stderr, " objattr=" );
     dump_varargs_object_attributes( cur_size );
@@ -2606,9 +2606,10 @@ static void dump_set_serial_info_request( const struct set_serial_info_request *
 static void dump_register_async_request( const struct register_async_request *req )
 {
     fprintf( stderr, " type=%d,", req->type );
-    fprintf( stderr, " count=%d,", req->count );
     fprintf( stderr, " async=" );
     dump_async_data( &req->async );
+    fprintf( stderr, "," );
+    fprintf( stderr, " count=%d", req->count );
 }
 
 static void dump_cancel_async_request( const struct cancel_async_request *req )
@@ -2656,13 +2657,13 @@ static void dump_create_named_pipe_request( const struct create_named_pipe_reque
     fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " rootdir=%04x,", req->rootdir );
     fprintf( stderr, " options=%08x,", req->options );
-    fprintf( stderr, " flags=%08x,", req->flags );
     fprintf( stderr, " maxinstances=%08x,", req->maxinstances );
     fprintf( stderr, " outsize=%08x,", req->outsize );
     fprintf( stderr, " insize=%08x,", req->insize );
     fprintf( stderr, " timeout=" );
     dump_timeout( &req->timeout );
     fprintf( stderr, "," );
+    fprintf( stderr, " flags=%08x,", req->flags );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -3650,10 +3651,10 @@ static void dump_create_mailslot_request( const struct create_mailslot_request *
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " rootdir=%04x,", req->rootdir );
-    fprintf( stderr, " max_msgsize=%08x,", req->max_msgsize );
     fprintf( stderr, " read_timeout=" );
     dump_timeout( &req->read_timeout );
     fprintf( stderr, "," );
+    fprintf( stderr, " max_msgsize=%08x,", req->max_msgsize );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -3666,16 +3667,18 @@ static void dump_create_mailslot_reply( const struct create_mailslot_reply *req 
 static void dump_set_mailslot_info_request( const struct set_mailslot_info_request *req )
 {
     fprintf( stderr, " handle=%04x,", req->handle );
-    fprintf( stderr, " flags=%08x,", req->flags );
     fprintf( stderr, " read_timeout=" );
     dump_timeout( &req->read_timeout );
+    fprintf( stderr, "," );
+    fprintf( stderr, " flags=%08x", req->flags );
 }
 
 static void dump_set_mailslot_info_reply( const struct set_mailslot_info_reply *req )
 {
-    fprintf( stderr, " max_msgsize=%08x,", req->max_msgsize );
     fprintf( stderr, " read_timeout=" );
     dump_timeout( &req->read_timeout );
+    fprintf( stderr, "," );
+    fprintf( stderr, " max_msgsize=%08x", req->max_msgsize );
 }
 
 static void dump_create_directory_request( const struct create_directory_request *req )
@@ -3817,10 +3820,10 @@ static void dump_create_device_request( const struct create_device_request *req 
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " rootdir=%04x,", req->rootdir );
-    fprintf( stderr, " manager=%04x,", req->manager );
     fprintf( stderr, " user_ptr=" );
     dump_uint64( &req->user_ptr );
     fprintf( stderr, "," );
+    fprintf( stderr, " manager=%04x,", req->manager );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -3959,9 +3962,10 @@ static void dump_query_completion_reply( const struct query_completion_reply *re
 static void dump_set_completion_info_request( const struct set_completion_info_request *req )
 {
     fprintf( stderr, " handle=%04x,", req->handle );
-    fprintf( stderr, " chandle=%04x,", req->chandle );
     fprintf( stderr, " ckey=" );
     dump_uint64( &req->ckey );
+    fprintf( stderr, "," );
+    fprintf( stderr, " chandle=%04x", req->chandle );
 }
 
 static void dump_add_fd_completion_request( const struct add_fd_completion_request *req )

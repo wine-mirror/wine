@@ -1723,6 +1723,7 @@ DECL_HANDLER(send_hardware_message)
         release_object( thread );
         return;
     }
+    memset( data, 0, sizeof(*data) );
     data->x    = req->x;
     data->y    = req->y;
     data->info = req->info;
