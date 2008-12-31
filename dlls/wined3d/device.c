@@ -2547,7 +2547,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
     oldSrc = This->updateStateBlock->streamSource[StreamNumber];
     TRACE("(%p) : StreamNo: %u, OldStream (%p), NewStream (%p), OffsetInBytes %u, NewStride %u\n", This, StreamNumber, oldSrc, pStreamData, OffsetInBytes, Stride);
 
-    This->updateStateBlock->changed.streamSource[StreamNumber] = TRUE;
+    This->updateStateBlock->changed.streamSource |= 1 << StreamNumber;
 
     if(oldSrc == pStreamData &&
        This->updateStateBlock->streamStride[StreamNumber] == Stride &&
@@ -2635,7 +2635,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSourceFreq(IWineD3DDevice *ifa
     TRACE("(%p) StreamNumber(%d), Divider(%d)\n", This, StreamNumber, Divider);
     This->updateStateBlock->streamFlags[StreamNumber] = Divider & (WINED3DSTREAMSOURCE_INSTANCEDATA  | WINED3DSTREAMSOURCE_INDEXEDDATA );
 
-    This->updateStateBlock->changed.streamFreq[StreamNumber]  = TRUE;
+    This->updateStateBlock->changed.streamFreq |= 1 << StreamNumber;
     This->updateStateBlock->streamFreq[StreamNumber]          = Divider & 0x7FFFFF;
 
     if(This->updateStateBlock->streamFreq[StreamNumber] != oldFreq ||

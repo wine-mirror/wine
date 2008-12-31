@@ -86,8 +86,8 @@ static void stateblock_savedstates_copy(IWineD3DStateBlock* iface, SAVEDSTATES *
     dest->scissorRect = dest->scissorRect;
 
     /* Fixed size arrays */
-    memcpy(dest->streamSource, source->streamSource, bsize * MAX_STREAMS);
-    memcpy(dest->streamFreq, source->streamFreq, bsize * MAX_STREAMS);
+    dest->streamSource = source->streamSource;
+    dest->streamFreq = source->streamFreq;
     memcpy(dest->textures, source->textures, bsize * MAX_COMBINED_SAMPLERS);
     memcpy(dest->transform, source->transform, bsize * (HIGHEST_TRANSFORMSTATE + 1));
     memcpy(dest->renderState, source->renderState, bsize * (WINEHIGHEST_RENDER_STATE + 1));
@@ -123,8 +123,8 @@ void stateblock_savedstates_set(
     states->scissorRect = value;
 
     /* Fixed size arrays */
-    memset(states->streamSource, value, bsize * MAX_STREAMS);
-    memset(states->streamFreq, value, bsize * MAX_STREAMS);
+    states->streamSource = value ? 0xffff : 0;
+    states->streamFreq = value ? 0xffff : 0;
     memset(states->textures, value, bsize * MAX_COMBINED_SAMPLERS);
     memset(states->transform, value, bsize * (HIGHEST_TRANSFORMSTATE + 1));
     memset(states->renderState, value, bsize * (WINEHIGHEST_RENDER_STATE + 1));
@@ -372,6 +372,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     IWineD3DStateBlockImpl *This             = (IWineD3DStateBlockImpl *)iface;
     IWineD3DStateBlockImpl *targetStateBlock = This->wineD3DDevice->stateBlock;
     unsigned int i, j;
+    WORD map;
 
     TRACE("(%p) : Updating state block %p ------------------v\n", targetStateBlock, This);
 
@@ -510,10 +511,14 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
             targetStateBlock->scissorRect = This->scissorRect;
         }
 
-        for (i = 0; i < MAX_STREAMS; i++) {
-            if (This->changed.streamSource[i] &&
-                            ((This->streamStride[i] != targetStateBlock->streamStride[i]) ||
-                            (This->streamSource[i] != targetStateBlock->streamSource[i]))) {
+        map = This->changed.streamSource;
+        for (i = 0; map; map >>= 1, ++i)
+        {
+            if (!(map & 1)) continue;
+
+            if (This->streamStride[i] != targetStateBlock->streamStride[i]
+                    || This->streamSource[i] != targetStateBlock->streamSource[i])
+            {
                 TRACE("Updating stream source %u to %p, stride to %u\n",
                         i, targetStateBlock->streamSource[i], targetStateBlock->streamStride[i]);
                 This->streamStride[i] = targetStateBlock->streamStride[i];
@@ -521,14 +526,20 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
                 if(This->streamSource[i]) IWineD3DVertexBuffer_Release(This->streamSource[i]);
                 This->streamSource[i] = targetStateBlock->streamSource[i];
             }
+        }
 
-            if (This->changed.streamFreq[i] &&
-            (This->streamFreq[i] != targetStateBlock->streamFreq[i]
-            || This->streamFlags[i] != targetStateBlock->streamFlags[i])){
-                    TRACE("Updating stream frequency %u to %u flags to %#x\n",
-                            i, targetStateBlock->streamFreq[i], targetStateBlock->streamFlags[i]);
-                    This->streamFreq[i]  =  targetStateBlock->streamFreq[i];
-                    This->streamFlags[i] =  targetStateBlock->streamFlags[i];
+        map = This->changed.streamFreq;
+        for (i = 0; map; map >>= 1, ++i)
+        {
+            if (!(map & 1)) continue;
+
+            if (This->streamFreq[i] != targetStateBlock->streamFreq[i]
+                    || This->streamFlags[i] != targetStateBlock->streamFlags[i])
+            {
+                TRACE("Updating stream frequency %u to %u flags to %#x\n",
+                        i, targetStateBlock->streamFreq[i], targetStateBlock->streamFlags[i]);
+                This->streamFreq[i] = targetStateBlock->streamFreq[i];
+                This->streamFlags[i] = targetStateBlock->streamFlags[i];
             }
         }
 
@@ -714,6 +725,7 @@ should really perform a delta so that only the changes get updated*/
 
     UINT i;
     UINT j;
+    WORD map;
 
     TRACE("(%p) : Applying state block %p ------------------v\n", This, pDevice);
 
@@ -806,12 +818,16 @@ should really perform a delta so that only the changes get updated*/
         }
 
         /* TODO: Proper implementation using SetStreamSource offset (set to 0 for the moment)\n") */
-        for (i=0; i<MAX_STREAMS; i++) {
-            if (This->changed.streamSource[i])
-                IWineD3DDevice_SetStreamSource(pDevice, i, This->streamSource[i], 0, This->streamStride[i]);
+        map = This->changed.streamSource;
+        for (i = 0; map; map >>= 1, ++i)
+        {
+            if (map & 1) IWineD3DDevice_SetStreamSource(pDevice, i, This->streamSource[i], 0, This->streamStride[i]);
+        }
 
-            if (This->changed.streamFreq[i])
-                IWineD3DDevice_SetStreamSourceFreq(pDevice, i, This->streamFreq[i] | This->streamFlags[i]);
+        map = This->changed.streamFreq;
+        for (i = 0; map; map >>= 1, ++i)
+        {
+            if (map & 1) IWineD3DDevice_SetStreamSourceFreq(pDevice, i, This->streamFreq[i] | This->streamFlags[i]);
         }
         for (j = 0 ; j < MAX_COMBINED_SAMPLERS; j++){
             if (This->changed.textures[j]) {
