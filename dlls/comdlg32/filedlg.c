@@ -2205,7 +2205,6 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
           ret = EndDialog(hwnd, FALSE);
           COMDLG32_SetCommDlgExtendedError(FNERR_BUFFERTOOSMALL);
         }
-        goto ret;
       }
       break;
   }
