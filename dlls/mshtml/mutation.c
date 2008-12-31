@@ -122,6 +122,7 @@ static BOOL handle_insert_comment(HTMLDocument *doc, const PRUnichar *comment)
         majorv = majorv*10 + (*ptr++ - '0');
 
     if(*ptr == '.') {
+        ptr++;
         if(!isdigitW(*ptr))
             return FALSE;
         while(isdigitW(*ptr))
