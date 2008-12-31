@@ -84,6 +84,18 @@ extern "C" {
 # endif
 #endif /* __cdecl */
 
+#ifndef __ms_va_list
+# if defined(__x86_64__) && defined (__GNUC__)
+#  define __ms_va_list __builtin_ms_va_list
+#  define __ms_va_start(list,arg) __builtin_ms_va_start(list,arg)
+#  define __ms_va_end(list) __builtin_ms_va_end(list)
+# else
+#  define __ms_va_list va_list
+#  define __ms_va_start(list,arg) va_start(list,arg)
+#  define __ms_va_end(list) va_end(list)
+# endif
+#endif
+
 #ifdef __WINESRC__
 #define __ONLY_IN_WINELIB(x)	do_not_use_this_in_wine
 #else

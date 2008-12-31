@@ -5068,8 +5068,8 @@ WINUSERAPI VOID        WINAPI mouse_event(DWORD,DWORD,DWORD,DWORD,ULONG_PTR);
 WINUSERAPI INT        WINAPIV wsprintfA(LPSTR,LPCSTR,...);
 WINUSERAPI INT        WINAPIV wsprintfW(LPWSTR,LPCWSTR,...);
 #define                       wsprintf WINELIB_NAME_AW(wsprintf)
-WINUSERAPI INT         WINAPI wvsprintfA(LPSTR,LPCSTR,va_list);
-WINUSERAPI INT         WINAPI wvsprintfW(LPWSTR,LPCWSTR,va_list);
+WINUSERAPI INT         WINAPI wvsprintfA(LPSTR,LPCSTR,__ms_va_list);
+WINUSERAPI INT         WINAPI wvsprintfW(LPWSTR,LPCWSTR,__ms_va_list);
 #define                       wvsprintf WINELIB_NAME_AW(wvsprintf)
 
 /* Undocumented functions */
