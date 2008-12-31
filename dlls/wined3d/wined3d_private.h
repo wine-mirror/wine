@@ -1765,7 +1765,7 @@ typedef struct SAVEDSTATES {
     BOOL renderState[WINEHIGHEST_RENDER_STATE + 1];
     BOOL textureState[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
     BOOL samplerState[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
-    BOOL clipplane[MAX_CLIPPLANES];
+    DWORD clipplane;                /* WINED3DMAXUSERCLIPPLANES, 32 */
     WORD pixelShaderConstantsB;     /* MAX_CONST_B, 16 */
     WORD pixelShaderConstantsI;     /* MAX_CONST_I, 16 */
     BOOL *pixelShaderConstantsF;

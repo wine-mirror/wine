@@ -93,7 +93,7 @@ static void stateblock_savedstates_copy(IWineD3DStateBlock* iface, SAVEDSTATES *
     memcpy(dest->renderState, source->renderState, bsize * (WINEHIGHEST_RENDER_STATE + 1));
     memcpy(dest->textureState, source->textureState, bsize * MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE + 1));
     memcpy(dest->samplerState, source->samplerState, bsize * MAX_COMBINED_SAMPLERS * (WINED3D_HIGHEST_SAMPLER_STATE + 1));
-    memcpy(dest->clipplane, source->clipplane, bsize * MAX_CLIPPLANES);
+    dest->clipplane = source->clipplane;
     dest->pixelShaderConstantsB = source->pixelShaderConstantsB;
     dest->pixelShaderConstantsI = source->pixelShaderConstantsI;
     dest->vertexShaderConstantsB = source->vertexShaderConstantsB;
@@ -130,7 +130,7 @@ void stateblock_savedstates_set(
     memset(states->renderState, value, bsize * (WINEHIGHEST_RENDER_STATE + 1));
     memset(states->textureState, value, bsize * MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE + 1));
     memset(states->samplerState, value, bsize * MAX_COMBINED_SAMPLERS * (WINED3D_HIGHEST_SAMPLER_STATE + 1));
-    memset(states->clipplane, value, bsize * MAX_CLIPPLANES);
+    states->clipplane = value ? 0xffffffff : 0;
     states->pixelShaderConstantsB = value ? 0xffff : 0;
     states->pixelShaderConstantsI = value ? 0xffff : 0;
     states->vertexShaderConstantsB = value ? 0xffff : 0;
@@ -372,7 +372,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     IWineD3DStateBlockImpl *This             = (IWineD3DStateBlockImpl *)iface;
     IWineD3DStateBlockImpl *targetStateBlock = This->wineD3DDevice->stateBlock;
     unsigned int i, j;
-    WORD map;
+    DWORD map;
 
     TRACE("(%p) : Updating state block %p ------------------v\n", targetStateBlock, This);
 
@@ -543,9 +543,12 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
             }
         }
 
-        for (i = 0; i < GL_LIMITS(clipplanes); i++) {
-            if (This->changed.clipplane[i]
-                    && memcmp(targetStateBlock->clipplane[i], This->clipplane[i], sizeof(*This->clipplane)))
+        map = This->changed.clipplane;
+        for (i = 0; map; map >>= 1, ++i)
+        {
+            if (!(map & 1)) continue;
+
+            if (memcmp(targetStateBlock->clipplane[i], This->clipplane[i], sizeof(*This->clipplane)))
             {
                 TRACE("Updating clipplane %u\n", i);
                 memcpy(This->clipplane[i], targetStateBlock->clipplane[i], sizeof(*This->clipplane));
@@ -725,7 +728,7 @@ should really perform a delta so that only the changes get updated*/
 
     UINT i;
     UINT j;
-    WORD map;
+    DWORD map;
 
     TRACE("(%p) : Applying state block %p ------------------v\n", This, pDevice);
 
@@ -839,18 +842,19 @@ should really perform a delta so that only the changes get updated*/
             }
         }
 
-        for (i = 0; i < GL_LIMITS(clipplanes); i++) {
-            if (This->changed.clipplane[i]) {
-                float clip[4];
+        map = This->changed.clipplane;
+        for (i = 0; map; map >>= 1, ++i)
+        {
+            float clip[4];
 
-                clip[0] = This->clipplane[i][0];
-                clip[1] = This->clipplane[i][1];
-                clip[2] = This->clipplane[i][2];
-                clip[3] = This->clipplane[i][3];
-                IWineD3DDevice_SetClipPlane(pDevice, i, clip);
-            }
+            if (!(map & 1)) continue;
+
+            clip[0] = This->clipplane[i][0];
+            clip[1] = This->clipplane[i][1];
+            clip[2] = This->clipplane[i][2];
+            clip[3] = This->clipplane[i][3];
+            IWineD3DDevice_SetClipPlane(pDevice, i, clip);
         }
-
     } else if(This->blockType == WINED3DSBT_VERTEXSTATE) {
         IWineD3DDevice_SetVertexShader(pDevice, This->vertexShader);
         for (i = 0; i < GL_LIMITS(vshader_constantsF); i++) {

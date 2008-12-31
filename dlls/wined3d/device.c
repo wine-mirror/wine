@@ -3038,7 +3038,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetClipPlane(IWineD3DDevice *iface, DWO
         return WINED3DERR_INVALIDCALL;
     }
 
-    This->updateStateBlock->changed.clipplane[Index] = TRUE;
+    This->updateStateBlock->changed.clipplane |= 1 << Index;
 
     if(This->updateStateBlock->clipplane[Index][0] == pPlane[0] &&
        This->updateStateBlock->clipplane[Index][1] == pPlane[1] &&
