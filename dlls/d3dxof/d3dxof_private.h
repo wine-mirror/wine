@@ -42,6 +42,8 @@
 #define MAX_SUBOBJECTS 500
 #define MAX_STRINGS_BUFFER 10000
 
+#define MAX_DATA_SIZE 400000
+
 typedef struct {
     DWORD type;
     LONG idx_template;
@@ -162,5 +164,11 @@ typedef struct {
 HRESULT IDirectXFileImpl_Create(IUnknown *pUnkOuter, LPVOID *ppObj);
 HRESULT IDirectXFileFileObjectImpl_Create(IDirectXFileObjectImpl** ppObj);
 HRESULT IDirectXFileFileSaveObjectImpl_Create(IDirectXFileSaveObjectImpl** ppObj);
+
+BOOL read_bytes(parse_buffer * buf, LPVOID data, DWORD size);
+BOOL parse_template(parse_buffer * buf);
+void dump_template(xtemplate* templates_array, xtemplate* ptemplate);
+BOOL is_template_available(parse_buffer * buf);
+BOOL parse_object(parse_buffer * buf);
 
 #endif /* __D3DXOF_PRIVATE_INCLUDED__ */
