@@ -47,7 +47,7 @@ void send_callback( object_header_t *hdr, DWORD status, LPVOID info, DWORD bufle
 {
     TRACE("%p, 0x%08x, %p, %u\n", hdr, status, info, buflen);
 
-    if (hdr->notify_mask & status) hdr->callback( hdr->handle, hdr->context, status, info, buflen );
+    if (hdr->callback && (hdr->notify_mask & status)) hdr->callback( hdr->handle, hdr->context, status, info, buflen );
 }
 
 /***********************************************************************
