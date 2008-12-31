@@ -149,7 +149,18 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
     }
     if ((q = memchrW( p, '/', len - (p - url) )))
     {
-        if (!(set_component( &uc->lpszHostName, &uc->dwHostNameLength, p, q - p, flags ))) goto exit;
+        if ((r = memchrW( p, ':', q - p )))
+        {
+            if (!(set_component( &uc->lpszHostName, &uc->dwHostNameLength, p, r - p, flags ))) goto exit;
+            r++;
+            uc->nPort = atoiW( r );
+        }
+        else
+        {
+            if (!(set_component( &uc->lpszHostName, &uc->dwHostNameLength, p, q - p, flags ))) goto exit;
+            if (uc->nScheme == INTERNET_SCHEME_HTTP) uc->nPort = INTERNET_DEFAULT_HTTP_PORT;
+            if (uc->nScheme == INTERNET_SCHEME_HTTPS) uc->nPort = INTERNET_DEFAULT_HTTPS_PORT;
+        }
 
         if ((r = memchrW( q, '?', len - (q - url) )))
         {
@@ -164,16 +175,28 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
     }
     else
     {
-        if (!(set_component( &uc->lpszHostName, &uc->dwHostNameLength, p, len - (p - url), flags ))) goto exit;
+        if ((r = memchrW( p, ':', len - (p - url) )))
+        {
+            if (!(set_component( &uc->lpszHostName, &uc->dwHostNameLength, p, r - p, flags ))) goto exit;
+            r++;
+            uc->nPort = atoiW( r );
+        }
+        else
+        {
+            if (!(set_component( &uc->lpszHostName, &uc->dwHostNameLength, p, len - (p - url), flags ))) goto exit;
+            if (uc->nScheme == INTERNET_SCHEME_HTTP) uc->nPort = INTERNET_DEFAULT_HTTP_PORT;
+            if (uc->nScheme == INTERNET_SCHEME_HTTPS) uc->nPort = INTERNET_DEFAULT_HTTPS_PORT;
+        }
         if (!(set_component( &uc->lpszUrlPath, &uc->dwUrlPathLength, (WCHAR *)url + len, 0, flags ))) goto exit;
         if (!(set_component( &uc->lpszExtraInfo, &uc->dwExtraInfoLength, (WCHAR *)url + len, 0, flags ))) goto exit;
     }
 
     ret = TRUE;
 
-    TRACE("scheme(%s) host(%s) path(%s) extra(%s)\n",
+    TRACE("scheme(%s) host(%s) port(%d) path(%s) extra(%s)\n",
           debugstr_wn( uc->lpszScheme, uc->dwSchemeLength ),
           debugstr_wn( uc->lpszHostName, uc->dwHostNameLength ),
+          uc->nPort,
           debugstr_wn( uc->lpszUrlPath, uc->dwUrlPathLength ),
           debugstr_wn( uc->lpszExtraInfo, uc->dwExtraInfoLength ));
 

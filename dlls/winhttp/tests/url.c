@@ -361,7 +361,7 @@ static void WinHttpCrackUrl_test( void )
     ok( uc.dwPasswordLength == 8, "unexpected password length\n" );
     ok( !memcmp( uc.lpszHostName, winehq, sizeof(winehq) ), "unexpected hostname\n" );
     ok( uc.dwHostNameLength == 14, "unexpected hostname length\n" );
-    todo_wine ok( uc.nPort == 80, "unexpected port: %u\n", uc.nPort );
+    ok( uc.nPort == 80, "unexpected port: %u\n", uc.nPort );
     ok( !memcmp( uc.lpszUrlPath, about, sizeof(about) ), "unexpected path\n" );
     ok( uc.dwUrlPathLength == 11, "unexpected path length\n" );
     ok( !memcmp( uc.lpszExtraInfo, query, sizeof(query) ), "unexpected extra info\n" );
@@ -392,7 +392,7 @@ static void WinHttpCrackUrl_test( void )
     ok( uc.dwPasswordLength == 8, "unexpected password length\n" );
     ok( uc.lpszHostName == url_k1 + 25, "unexpected hostname\n" );
     ok( uc.dwHostNameLength == 14, "unexpected hostname length\n" );
-    todo_wine ok( uc.nPort == 80, "unexpected port: %u\n", uc.nPort );
+    ok( uc.nPort == 80, "unexpected port: %u\n", uc.nPort );
     ok( uc.lpszUrlPath == url_k1 + 39, "unexpected path\n" );
     ok( uc.dwUrlPathLength == 11, "unexpected path length\n" );
     ok( uc.lpszExtraInfo == url_k1 + 50, "unexpected extra info\n" );
@@ -411,7 +411,7 @@ static void WinHttpCrackUrl_test( void )
     ok( uc.dwPasswordLength == 0, "unexpected password length\n" );
     ok( uc.lpszHostName == url_k2 + 7, "unexpected hostname\n" );
     ok( uc.dwHostNameLength == 14, "unexpected hostname length\n" );
-    todo_wine ok( uc.nPort == 80, "unexpected port: %u\n", uc.nPort );
+    ok( uc.nPort == 80, "unexpected port: %u\n", uc.nPort );
     ok( uc.lpszUrlPath == url_k2 + 21, "unexpected path\n" );
     ok( uc.dwUrlPathLength == 0, "unexpected path length\n" );
     ok( uc.lpszExtraInfo == url_k2 + 21, "unexpected extra info\n" );
@@ -430,7 +430,7 @@ static void WinHttpCrackUrl_test( void )
     ok( uc.dwPasswordLength == 0, "unexpected password length\n" );
     ok( uc.lpszHostName == url_k3 + 8, "unexpected hostname\n" );
     ok( uc.dwHostNameLength == 14, "unexpected hostname length\n" );
-    todo_wine ok( uc.nPort == 443, "unexpected port: %u\n", uc.nPort );
+    ok( uc.nPort == 443, "unexpected port: %u\n", uc.nPort );
     ok( uc.lpszUrlPath == url_k3 + 22, "unexpected path\n" );
     ok( uc.dwUrlPathLength == 5, "unexpected path length\n" );
     ok( uc.lpszExtraInfo == url_k3 + 27, "unexpected extra info\n" );
@@ -537,9 +537,9 @@ static void WinHttpCrackUrl_test( void )
 
     ret = WinHttpCrackUrl( url7, 0, 0, &uc );
     ok( ret, "WinHttpCrackUrl failed\n" );
-    todo_wine ok( !memcmp( uc.lpszHostName, winehq, sizeof(winehq) ), "unexpected host name: %s\n", debugstr_w(uc.lpszHostName) );
-    todo_wine ok( uc.dwHostNameLength == 14, "unexpected host name length: %d\n", uc.dwHostNameLength );
-    todo_wine ok( uc.nPort == 42, "unexpected port: %u\n", uc.nPort );
+    ok( !memcmp( uc.lpszHostName, winehq, sizeof(winehq) ), "unexpected host name: %s\n", debugstr_w(uc.lpszHostName) );
+    ok( uc.dwHostNameLength == 14, "unexpected host name length: %d\n", uc.dwHostNameLength );
+    ok( uc.nPort == 42, "unexpected port: %u\n", uc.nPort );
 
     /* decoding without buffers */
     reset_url_components( &uc );
@@ -550,12 +550,12 @@ static void WinHttpCrackUrl_test( void )
     reset_url_components( &uc );
     ret = WinHttpCrackUrl( url10, 0, 0, &uc );
     ok( ret, "WinHttpCrackUrl failed\n" );
-    todo_wine ok( uc.nPort == 80, "unexpected port: %u\n", uc.nPort );
+    ok( uc.nPort == 80, "unexpected port: %u\n", uc.nPort );
 
     reset_url_components( &uc );
     ret = WinHttpCrackUrl( url11, 0, 0, &uc );
     ok( ret, "WinHttpCrackUrl failed\n" );
-    todo_wine ok( uc.nPort == 443, "unexpected port: %u\n", uc.nPort );
+    ok( uc.nPort == 443, "unexpected port: %u\n", uc.nPort );
 
 }
 
