@@ -2726,7 +2726,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) : For state %s\n", This, debug_d3dtstype(State));
 
-    if (State < HIGHEST_TRANSFORMSTATE)
+    if (State <= HIGHEST_TRANSFORMSTATE)
     {
         mat = &This->updateStateBlock->transforms[State];
     } else {

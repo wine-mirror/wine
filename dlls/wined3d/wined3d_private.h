@@ -531,9 +531,7 @@ extern int num_lock;
 
 #define MAX_STREAMS  16  /* Maximum possible streams - used for fixed size arrays
                             See MaxStreams in MSDN under GetDeviceCaps */
-                         /* Maximum number of constants provided to the shaders */
-#define HIGHEST_TRANSFORMSTATE 512 
-                         /* Highest value in WINED3DTRANSFORMSTATETYPE */
+#define HIGHEST_TRANSFORMSTATE WINED3DTS_WORLDMATRIX(255) /* Highest value in WINED3DTRANSFORMSTATETYPE */
 
 /* Checking of API calls */
 /* --------------------- */
