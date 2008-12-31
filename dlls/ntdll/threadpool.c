@@ -148,7 +148,7 @@ static NTSTATUS add_work_item_to_queue(struct work_item *work_item)
     if (!work_item_event)
     {
         HANDLE sem;
-        status = NtCreateSemaphore(&sem, SEMAPHORE_ALL_ACCESS, NULL, 1, LONG_MAX);
+        status = NtCreateSemaphore(&sem, SEMAPHORE_ALL_ACCESS, NULL, 1, INT_MAX);
         if (interlocked_cmpxchg_ptr( &work_item_event, sem, 0 ))
             NtClose(sem);  /* somebody beat us to it */
     }
