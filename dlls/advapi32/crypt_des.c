@@ -252,33 +252,6 @@ static void xor( unsigned char *dst, const unsigned char *a, const unsigned char
         dst[i] = a[i] ^ b[i];
 }
 
-unsigned char *CRYPT_DESkey8to7( unsigned char *dst, const unsigned char *key )
-{
-    int i;
-    unsigned char tmp[7];
-    static const unsigned char map8to7[56] =
-    {
-         0,  1,  2,  3,  4,  5,  6,
-         8,  9, 10, 11, 12, 13, 14,
-        16, 17, 18, 19, 20, 21, 22,
-        24, 25, 26, 27, 28, 29, 30,
-        32, 33, 34, 35, 36, 37, 38,
-        40, 41, 42, 43, 44, 45, 46,
-        48, 49, 50, 51, 52, 53, 54,
-        56, 57, 58, 59, 60, 61, 62
-    };
-
-    if ((dst == NULL) || (key == NULL))
-        return NULL;
-
-    Permute( tmp, key, map8to7, 7 );
-
-    for (i = 0; i < 7; i++)
-        dst[i] = tmp[i];
-
-    return dst;
-}
-
 unsigned char *CRYPT_DEShash( unsigned char *dst, const unsigned char *key, const unsigned char *src )
 {
     int i;
