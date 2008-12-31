@@ -4309,10 +4309,10 @@ INT WINAPIV ShellMessageBoxWrapW(HINSTANCE hInstance, HWND hWnd, LPCWSTR lpText,
     WCHAR szText[100], szTitle[100];
     LPCWSTR pszText = szText, pszTitle = szTitle;
     LPWSTR pszTemp;
-    va_list args;
+    __ms_va_list args;
     int ret;
 
-    va_start(args, uType);
+    __ms_va_start(args, uType);
 
     TRACE("(%p,%p,%p,%p,%08x)\n", hInstance, hWnd, lpText, lpCaption, uType);
 
@@ -4329,7 +4329,7 @@ INT WINAPIV ShellMessageBoxWrapW(HINSTANCE hInstance, HWND hWnd, LPCWSTR lpText,
     FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_STRING,
                    pszText, 0, 0, (LPWSTR)&pszTemp, 0, &args);
 
-    va_end(args);
+    __ms_va_end(args);
 
     ret = MessageBoxW(hWnd, pszTemp, pszTitle, uType);
     LocalFree(pszTemp);

@@ -135,7 +135,7 @@ DWORD WINAPI FormatMessageA(
 	DWORD	dwLanguageId,
 	LPSTR	lpBuffer,
 	DWORD	nSize,
-	va_list* _args )
+	__ms_va_list* _args )
 {
     LPDWORD args=(LPDWORD)_args;
     DWORD ret = 0;
@@ -356,7 +356,7 @@ DWORD WINAPI FormatMessageW(
 	DWORD	dwLanguageId,
 	LPWSTR	lpBuffer,
 	DWORD	nSize,
-	va_list* _args )
+	__ms_va_list* _args )
 {
     LPDWORD args=(LPDWORD)_args;
 #if defined(__i386__) || defined(__sparc__)

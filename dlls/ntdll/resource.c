@@ -438,7 +438,7 @@ NTSTATUS WINAPI RtlFindMessage( HMODULE hmod, ULONG type, ULONG lang,
  */
 NTSTATUS WINAPI RtlFormatMessage( LPWSTR Message, UCHAR MaxWidth,
                                   BOOLEAN IgnoreInserts, BOOLEAN Ansi,
-                                  BOOLEAN ArgumentIsArray, va_list * Arguments,
+                                  BOOLEAN ArgumentIsArray, __ms_va_list * Arguments,
                                   LPWSTR Buffer, ULONG BufferSize )
 {
     FIXME("(%s, %u, %s, %s, %s, %p, %p, %d)\n", debugstr_w(Message),
