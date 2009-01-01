@@ -103,7 +103,8 @@ cpp_quote("#endif")
 [
     object,
     uuid(000214E9-0000-0000-C000-000000000046),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IShellPropSheetExt : IUnknown
 {
@@ -813,7 +814,8 @@ interface IPersistFolder3 : IPersistFolder2
 [
     object,
     uuid(000214eb-0000-0000-c000-000000000046),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IExtractIconA : IUnknown
 {
@@ -853,7 +855,8 @@ cpp_quote("#define GIL_DONTCACHE    0x0010")
 [
     object,
     uuid(000214fa-0000-0000-c000-000000000046),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IExtractIconW : IUnknown
 {
@@ -939,7 +942,8 @@ cpp_quote("#define DWFAF_HIDDEN           0x0001")
 [
     object,
     uuid(de5bf786-477a-11d2-839d-00c04fd918d0),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IDragSourceHelper : IUnknown
 {
@@ -968,7 +972,8 @@ interface IDragSourceHelper : IUnknown
 [
     object,
     uuid(4657278b-411b-11d2-839a-00c04fd918d0),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IDropTargetHelper : IUnknown
 {
@@ -1119,7 +1124,8 @@ cpp_quote("#define CMIC_MASK_NOZONECHECKS   SEE_MASK_NOZONECHECKS")
 [
     object,
     uuid(000214f4-0000-0000-c000-000000000046),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IContextMenu2 : IContextMenu
 {
@@ -1138,7 +1144,8 @@ interface IContextMenu2 : IContextMenu
 [
     object,
     uuid(bcfce0a0-ec17-11d0-8d10-00a0c90f2719),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IContextMenu3 : IContextMenu2
 {
@@ -1232,7 +1239,8 @@ interface IResolveShellLink : IUnknown
 [
     object,
     uuid(ac60f6a0-0fd9-11d0-99cb-00c04fd64497),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IURLSearchHook : IUnknown
 {
@@ -1248,7 +1256,8 @@ interface IURLSearchHook : IUnknown
 [
     object,
     uuid(09f656a2-41af-480c-88f7-16cc0d164615),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface ISearchContext : IUnknown
 {
@@ -1267,7 +1276,8 @@ interface ISearchContext : IUnknown
 [
     object,
     uuid(5ee44da4-6d32-46e3-86bc-07540dedd0e0),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IURLSearchHook2 : IURLSearchHook
 {
@@ -1365,7 +1375,8 @@ interface IRunnableTask : IUnknown
 [
     object,
     uuid(d82be2b1-5764-11d0-a96e-00c04fd705a2),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IShellChangeNotify : IUnknown
 {
@@ -1381,7 +1392,8 @@ interface IShellChangeNotify : IUnknown
 [
     object,
     uuid(01e18d10-4d8b-11d2-855d-006008059367),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IFileSystemBindData : IUnknown
 {
