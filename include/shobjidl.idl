@@ -1305,7 +1305,7 @@ interface INewShortcutHookA : IUnknown
                 [in] LPCSTR pcszReferent,
                 [in] HWND hwnd);
     HRESULT GetReferent(
-                [out] LPCSTR pcszReferent,
+                [out] LPSTR pcszReferent,
                 [in] int cchReferent);
     HRESULT SetFolder(
                 [in] LPCSTR pcszReferent);
@@ -1336,7 +1336,7 @@ interface INewShortcutHookW : IUnknown
                 [in] LPCWSTR pcszReferent,
                 [in] HWND hwnd);
     HRESULT GetReferent(
-                [out] LPCWSTR pcszReferent,
+                [out] LPWSTR pcszReferent,
                 [in] int cchReferent);
     HRESULT SetFolder(
                 [in] LPCWSTR pcszReferent);
