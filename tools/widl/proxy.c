@@ -197,6 +197,24 @@ static int need_delegation(const type_t *iface)
     return iface->ref && iface->ref->ref && iface->ref->ignore;
 }
 
+static int get_delegation_indirect(const type_t *iface, const type_t ** delegate_to)
+{
+  const type_t * cur_iface;
+  for (cur_iface = iface; cur_iface != NULL; cur_iface = cur_iface->ref)
+    if (need_delegation(cur_iface))
+    {
+      if(delegate_to)
+        *delegate_to = cur_iface->ref;
+      return 1;
+    }
+  return 0;
+}
+
+static int need_delegation_indirect(const type_t *iface)
+{
+  return get_delegation_indirect(iface, NULL);
+}
+
 static void proxy_check_pointers( const var_list_t *args )
 {
   const var_t *arg;
@@ -626,7 +644,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   fprintf(proxy, "};\n");
   print_proxy( "\n");
   print_proxy( "static %sCInterfaceStubVtbl _%sStubVtbl =\n",
-               need_delegation(iface) ? "" : "const ", iface->name);
+               need_delegation_indirect(iface) ? "" : "const ", iface->name);
   print_proxy( "{\n");
   indent++;
   print_proxy( "{\n");
@@ -639,7 +657,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   print_proxy( "},\n", iface->name);
   print_proxy( "{\n");
   indent++;
-  print_proxy( "CStdStubBuffer_%s\n", need_delegation(iface) ? "DELEGATING_METHODS" : "METHODS");
+  print_proxy( "CStdStubBuffer_%s\n", need_delegation_indirect(iface) ? "DELEGATING_METHODS" : "METHODS");
   indent--;
   print_proxy( "}\n");
   indent--;
@@ -773,6 +791,7 @@ void write_proxies(const statement_list_t *stmts)
   char *file_id = proxy_token;
   int i, count, have_baseiid;
   type_t **interfaces;
+  const type_t * delegate_to;
 
   if (!do_proxies) return;
   if (do_everything && !need_proxy_file(stmts)) return;
@@ -826,14 +845,14 @@ void write_proxies(const statement_list_t *stmts)
   fprintf(proxy, "};\n");
   fprintf(proxy, "\n");
 
-  if ((have_baseiid = does_any_iface(stmts, need_delegation)))
+  if ((have_baseiid = does_any_iface(stmts, need_delegation_indirect)))
   {
       fprintf(proxy, "static const IID * _%s_BaseIIDList[] =\n", file_id);
       fprintf(proxy, "{\n");
       for (i = 0; i < count; i++)
       {
-          if (need_delegation(interfaces[i]))
-              fprintf( proxy, "    &IID_%s,  /* %s */\n", interfaces[i]->ref->name, interfaces[i]->name );
+          if (get_delegation_indirect(interfaces[i], &delegate_to))
+              fprintf( proxy, "    &IID_%s,  /* %s */\n", delegate_to->name, interfaces[i]->name );
           else
               fprintf( proxy, "    0,\n" );
       }
