@@ -25,6 +25,37 @@
 
 static DWORD (WINAPI *pXInputGetState)(DWORD, XINPUT_STATE*);
 static DWORD (WINAPI *pXInputGetCapabilities)(DWORD,DWORD,XINPUT_CAPABILITIES*);
+static DWORD (WINAPI *pXInputSetState)(DWORD, XINPUT_VIBRATION*);
+static void  (WINAPI *pXInputEnable)(BOOL);
+
+static void test_set_state(void)
+{
+    XINPUT_VIBRATION vibrator;
+    DWORD controllerNum;
+    DWORD result;
+
+    for(controllerNum=0; controllerNum < XUSER_MAX_COUNT; controllerNum++)
+    {
+        ZeroMemory(&vibrator, sizeof(XINPUT_VIBRATION));
+
+        vibrator.wLeftMotorSpeed = 0;
+        vibrator.wRightMotorSpeed = 0;
+        result = pXInputSetState(controllerNum, &vibrator);
+        ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED, "XInputSetState failed with (%d)\n", result);
+
+        pXInputEnable(0);
+
+        vibrator.wLeftMotorSpeed = 65535;
+        vibrator.wRightMotorSpeed = 65535;
+        result = pXInputSetState(controllerNum, &vibrator);
+        ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED, "XInputSetState failed with (%d)\n", result);
+
+        pXInputEnable(1);
+    }
+
+    result = pXInputSetState(XUSER_MAX_COUNT+1, &vibrator);
+    ok(result == ERROR_BAD_ARGUMENTS, "XInputSetState returned (%d)\n", result);
+}
 
 static void test_get_state(void)
 {
@@ -100,8 +131,11 @@ START_TEST(xinput)
         return;
     }
 
+    pXInputEnable = (void*)GetProcAddress(hXinput, "XInputEnable");
+    pXInputSetState = (void*)GetProcAddress(hXinput, "XInputSetState");
     pXInputGetState = (void*)GetProcAddress(hXinput, "XInputGetState");
     pXInputGetCapabilities = (void*)GetProcAddress(hXinput, "XInputGetCapabilities");
+    test_set_state();
     test_get_state();
     test_get_capabilities();
     FreeLibrary(hXinput);
