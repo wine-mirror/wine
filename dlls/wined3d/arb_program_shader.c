@@ -924,6 +924,7 @@ static void shader_hw_map2gl(const SHADER_OPCODE_ARG *arg)
         case WINED3DSIO_MAD: instruction = "MAD"; break;
         case WINED3DSIO_MAX: instruction = "MAX"; break;
         case WINED3DSIO_MIN: instruction = "MIN"; break;
+        case WINED3DSIO_MOV: instruction = "MOV"; break;
         case WINED3DSIO_MUL: instruction = "MUL"; break;
         case WINED3DSIO_NOP: instruction = "NOP"; break;
         case WINED3DSIO_POW: instruction = "POW"; break;
