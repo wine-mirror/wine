@@ -6137,7 +6137,7 @@ START_TEST(dplayx)
 {
     if (!winetest_interactive)
     {
-        skip("Run in interacive mode to run dplayx tests.\n");
+        skip("Run in interactive mode to run dplayx tests.\n");
         return;
     }
 
