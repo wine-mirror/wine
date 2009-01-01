@@ -626,7 +626,7 @@ interface IShellLinkA : IUnknown
     HRESULT GetPath(
         [out, size_is(cch)] LPSTR pszFile,
         [in] int cch,
-        [in, out] WIN32_FIND_DATAA *pfd,
+        [in, out, unique] WIN32_FIND_DATAA *pfd,
         [in] DWORD fFlags);
 
     HRESULT GetIDList( [out] LPITEMIDLIST * ppidl );
