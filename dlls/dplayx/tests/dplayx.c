@@ -783,7 +783,7 @@ static BOOL CALLBACK EnumAddress_cb2( REFGUID guidDataType,
     }
     else if ( IsEqualGUID( types[1], guidDataType ) )
     {
-        todo_wine checkGuid( sps[ callbackData->dwCounter1 ], (LPGUID) lpData );
+        todo_wine checkGuid( sps[ callbackData->dwCounter1 ], lpData );
     }
 
     callbackData->dwCounter2++;
@@ -815,10 +815,8 @@ static BOOL CALLBACK EnumConnections_cb( LPCGUID lpguidSP,
                       &IID_IDirectPlayLobby3A, (LPVOID*) &pDPL );
 
     callbackData->dwCounter2 = 0;
-    IDirectPlayLobby_EnumAddress( pDPL, EnumAddress_cb2,
-                                  (LPCVOID) lpConnection,
-                                  dwConnectionSize,
-                                  (LPVOID) callbackData );
+    IDirectPlayLobby_EnumAddress( pDPL, EnumAddress_cb2, lpConnection,
+                                  dwConnectionSize, callbackData );
     todo_wine check( 3, callbackData->dwCounter2 );
 
     callbackData->dwCounter1++;
@@ -841,24 +839,21 @@ static void test_EnumConnections(void)
     callbackData.dwCounter1 = 0;
     callbackData.dwFlags = 0;
     hr = IDirectPlayX_EnumConnections( pDP, &appGuid, EnumConnections_cb,
-                                       (LPVOID) &callbackData,
-                                       callbackData.dwFlags );
+                                       &callbackData, callbackData.dwFlags );
     checkHR( DP_OK, hr );
     check( 4, callbackData.dwCounter1 );
 
     callbackData.dwCounter1 = 0;
     callbackData.dwFlags = 0;
     hr = IDirectPlayX_EnumConnections( pDP, NULL, EnumConnections_cb,
-                                       (LPVOID) &callbackData,
-                                       callbackData.dwFlags );
+                                       &callbackData, callbackData.dwFlags );
     checkHR( DP_OK, hr );
     check( 4, callbackData.dwCounter1 );
 
     callbackData.dwCounter1 = 0;
     callbackData.dwFlags = 0;
     hr = IDirectPlayX_EnumConnections( pDP, &appGuid, NULL,
-                                       (LPVOID) &callbackData,
-                                       callbackData.dwFlags );
+                                       &callbackData, callbackData.dwFlags );
     checkHR( DPERR_INVALIDPARAMS, hr );
     check( 0, callbackData.dwCounter1 );
 
@@ -867,16 +862,14 @@ static void test_EnumConnections(void)
     callbackData.dwCounter1 = 0;
     callbackData.dwFlags = DPCONNECTION_DIRECTPLAY;
     hr = IDirectPlayX_EnumConnections( pDP, &appGuid, EnumConnections_cb,
-                                       (LPVOID) &callbackData,
-                                       callbackData.dwFlags );
+                                       &callbackData, callbackData.dwFlags );
     checkHR( DP_OK, hr );
     check( 4, callbackData.dwCounter1 );
 
     callbackData.dwCounter1 = 0;
     callbackData.dwFlags = DPCONNECTION_DIRECTPLAYLOBBY;
     hr = IDirectPlayX_EnumConnections( pDP, &appGuid, EnumConnections_cb,
-                                       (LPVOID) &callbackData,
-                                       callbackData.dwFlags );
+                                       &callbackData, callbackData.dwFlags );
     checkHR( DP_OK, hr );
     check( 0, callbackData.dwCounter1 );
 
@@ -884,8 +877,7 @@ static void test_EnumConnections(void)
     callbackData.dwFlags = ( DPCONNECTION_DIRECTPLAY |
                              DPCONNECTION_DIRECTPLAYLOBBY );
     hr = IDirectPlayX_EnumConnections( pDP, &appGuid, EnumConnections_cb,
-                                       (LPVOID) &callbackData,
-                                       callbackData.dwFlags );
+                                       &callbackData, callbackData.dwFlags );
     checkHR( DP_OK, hr );
     check( 4, callbackData.dwCounter1 );
 
@@ -893,8 +885,7 @@ static void test_EnumConnections(void)
     callbackData.dwFlags = ~( DPCONNECTION_DIRECTPLAY |
                               DPCONNECTION_DIRECTPLAYLOBBY );
     hr = IDirectPlayX_EnumConnections( pDP, &appGuid, EnumConnections_cb,
-                                       (LPVOID) &callbackData,
-                                       callbackData.dwFlags );
+                                       &callbackData, callbackData.dwFlags );
     checkHR( DPERR_INVALIDFLAGS, hr );
     check( 0, callbackData.dwCounter1 );
 
@@ -942,8 +933,7 @@ static void test_InitializeConnection(void)
     CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
                       &IID_IDirectPlay4A, (LPVOID*) &pDP );
 
-    IDirectPlayX_EnumConnections( pDP, &appGuid, EnumConnections_cb2,
-                                  (LPVOID) pDP, 0 );
+    IDirectPlayX_EnumConnections( pDP, &appGuid, EnumConnections_cb2, pDP, 0 );
 
     IDirectPlayX_Release( pDP );
 }
@@ -1270,7 +1260,7 @@ static void test_EnumSessions(void)
 
     /* Service provider not initialized */
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData, 0 );
+                                    &callbackData, 0 );
     checkHR( DPERR_UNINITIALIZED, hr );
 
 
@@ -1279,7 +1269,7 @@ static void test_EnumSessions(void)
 
     /* Session with no size */
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData, 0 );
+                                    &callbackData, 0 );
     todo_wine checkHR( DPERR_INVALIDPARAMS, hr );
 
     if ( hr == DPERR_UNINITIALIZED )
@@ -1294,7 +1284,7 @@ static void test_EnumSessions(void)
     /* No sessions */
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData, 0 );
+                                    &callbackData, 0 );
     checkHR( DP_OK, hr );
     check( 0, callbackData.dwCounter1 );
 
@@ -1353,11 +1343,11 @@ static void test_EnumSessions(void)
     /* Invalid params */
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData, -1 );
+                                    &callbackData, -1 );
     checkHR( DPERR_INVALIDPARAMS, hr );
 
     hr = IDirectPlayX_EnumSessions( pDP, NULL, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData, 0 );
+                                    &callbackData, 0 );
     checkHR( DPERR_INVALIDPARAMS, hr );
 
     check( -1, callbackData.dwCounter1 );
@@ -1368,8 +1358,7 @@ static void test_EnumSessions(void)
                                                   protected */
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( N_SESSIONS-2, callbackData.dwCounter1 );
 
     /* Doesn't list private */
@@ -1377,32 +1366,28 @@ static void test_EnumSessions(void)
                              DPENUMSESSIONS_PASSWORDREQUIRED );
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( N_SESSIONS-1, callbackData.dwCounter1 );
 
     /* Doesn't list full, no new, no join, private, protected */
     callbackData.dwFlags = DPENUMSESSIONS_AVAILABLE;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( N_SESSIONS-5, callbackData.dwCounter1 );
 
     /* Like with DPENUMSESSIONS_AVAILABLE */
     callbackData.dwFlags = 0;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( N_SESSIONS-5, callbackData.dwCounter1 );
 
     /* Doesn't list full, no new, no join, private */
     callbackData.dwFlags = DPENUMSESSIONS_PASSWORDREQUIRED;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( N_SESSIONS-4, callbackData.dwCounter1 );
 
 
@@ -1410,23 +1395,20 @@ static void test_EnumSessions(void)
     callbackData.dwFlags = DPENUMSESSIONS_ASYNC;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( N_SESSIONS-4, callbackData.dwCounter1 ); /* Read cache of last
                                                        sync enumeration */
 
     callbackData.dwFlags = DPENUMSESSIONS_STOPASYNC;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( 0, callbackData.dwCounter1 ); /* Stop enumeration */
 
     callbackData.dwFlags = DPENUMSESSIONS_ASYNC;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( 0, callbackData.dwCounter1 ); /* Start enumeration */
 
     Sleep(500); /* Give time to fill the cache */
@@ -1434,15 +1416,13 @@ static void test_EnumSessions(void)
     callbackData.dwFlags = DPENUMSESSIONS_ASYNC;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( N_SESSIONS-5, callbackData.dwCounter1 ); /* Retrieve results */
 
     callbackData.dwFlags = DPENUMSESSIONS_STOPASYNC;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( 0, callbackData.dwCounter1 ); /* Stop enumeration */
 
 
@@ -1464,15 +1444,13 @@ static void test_EnumSessions(void)
     callbackData.dwFlags = 0;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( 0, callbackData.dwCounter1 );
 
     callbackData.dwFlags = DPENUMSESSIONS_PASSWORDREQUIRED;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( 2, callbackData.dwCounter1 ); /* Both sessions automatically
                                             set DPSESSION_PASSWORDREQUIRED */
 
@@ -1492,8 +1470,7 @@ static void test_EnumSessions(void)
     callbackData.dwFlags = 0;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( 2, callbackData.dwCounter1 ); /* Without password,
                                             the flag is ignored */
 
@@ -1513,15 +1490,13 @@ static void test_EnumSessions(void)
     /* - Listing without password */
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( 0, callbackData.dwCounter1 );
 
     callbackData.dwFlags = DPENUMSESSIONS_PASSWORDREQUIRED;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( 1, callbackData.dwCounter1 );
 
     /* - Listing with incorrect password */
@@ -1529,23 +1504,20 @@ static void test_EnumSessions(void)
     callbackData.dwFlags = 0;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( 0, callbackData.dwCounter1 );
 
     callbackData.dwFlags = DPENUMSESSIONS_PASSWORDREQUIRED;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( 1, callbackData.dwCounter1 );
 
     /* - Listing with  correct password */
     U2(dpsd).lpszPasswordA = (LPSTR) "password";
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( 2, callbackData.dwCounter1 );
 
 
@@ -1553,8 +1525,7 @@ static void test_EnumSessions(void)
     callbackData.dwFlags = DPENUMSESSIONS_ASYNC;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( 2, callbackData.dwCounter1 ); /* Read cache of last sync enumeration,
                                             even private sessions */
 
@@ -1584,15 +1555,13 @@ static void test_EnumSessions(void)
     dpsd.guidApplication = appGuid2;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( 1, callbackData.dwCounter1 ); /* Only one of the sessions */
 
     dpsd.guidApplication = appGuid;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( 1, callbackData.dwCounter1 ); /* The other session */
     /* FIXME:
        For some reason, if we enum 1st with appGuid and 2nd with appGuid2,
@@ -1601,8 +1570,7 @@ static void test_EnumSessions(void)
     dpsd.guidApplication = GUID_NULL;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
-                                    (LPVOID) &callbackData,
-                                    callbackData.dwFlags );
+                                    &callbackData, callbackData.dwFlags );
     check( 2, callbackData.dwCounter1 ); /* Both sessions */
 
     for (i=4; i<=5; i++)
@@ -1672,7 +1640,7 @@ static void test_SessionDesc(void)
     IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
     /* Peer */
     IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
-                               (LPVOID)pDP[1], 0 );
+                               pDP[1], 0 );
 
     for (i=0; i<2; i++)
     {
@@ -1930,7 +1898,7 @@ static void test_CreatePlayer(void)
     hr = IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
     checkHR( DP_OK, hr );
     hr = IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
-                                    (LPVOID) pDP[1], 0 );
+                                    pDP[1], 0 );
     checkHR( DP_OK, hr );
 
 
@@ -2023,7 +1991,7 @@ static void test_GetPlayerCaps(void)
     hr = IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
     checkHR( DP_OK, hr );
     hr = IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
-                                    (LPVOID) pDP[1], 0 );
+                                    pDP[1], 0 );
     checkHR( DP_OK, hr );
 
     for (i=0; i<2; i++)
@@ -2150,8 +2118,7 @@ static void test_PlayerData(void)
                                      dwDataSize, 0 );
     checkHR( DPERR_UNINITIALIZED, hr );
 
-    hr = IDirectPlayX_GetPlayerData( pDP, 0, (LPVOID) lpDataGet,
-                                     &dwDataSizeGet, 0 );
+    hr = IDirectPlayX_GetPlayerData( pDP, 0, lpDataGet, &dwDataSizeGet, 0 );
     checkHR( DPERR_UNINITIALIZED, hr );
 
 
@@ -2168,8 +2135,7 @@ static void test_PlayerData(void)
                                      dwDataSize, 0 );
     todo_wine checkHR( DPERR_INVALIDPLAYER, hr );
 
-    hr = IDirectPlayX_GetPlayerData( pDP, 0, (LPVOID) lpDataGet,
-                                     &dwDataSizeGet, 0 );
+    hr = IDirectPlayX_GetPlayerData( pDP, 0, lpDataGet, &dwDataSizeGet, 0 );
     todo_wine checkHR( DPERR_INVALIDPLAYER, hr );
 
     if ( hr == DPERR_UNINITIALIZED )
@@ -2185,15 +2151,12 @@ static void test_PlayerData(void)
     checkHR( DP_OK, hr );
 
     /* Invalid parameters */
-    hr = IDirectPlayX_SetPlayerData( pDP, dpid, NULL,
-                                     dwDataSize, 0 );
+    hr = IDirectPlayX_SetPlayerData( pDP, dpid, NULL, dwDataSize, 0 );
     checkHR( DPERR_INVALIDPARAMS, hr );
-    hr = IDirectPlayX_SetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
-                                     -1, 0 );
+    hr = IDirectPlayX_SetPlayerData( pDP, dpid, lpDataGet, -1, 0 );
     checkHR( DPERR_INVALIDPARAMS, hr );
 
-    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
-                                     NULL, 0 );
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, lpDataGet, NULL, 0 );
     checkHR( DPERR_INVALIDPARAMS, hr );
 
 
@@ -2213,14 +2176,12 @@ static void test_PlayerData(void)
 
     dwDataSizeGet = 2;
     strcpy(lpDataGet, lpDataFake);
-    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
-                                     &dwDataSizeGet, 0 );
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, lpDataGet, &dwDataSizeGet, 0 );
     check( DPERR_BUFFERTOOSMALL, hr );
     check( dwDataSize, dwDataSizeGet );
 
     strcpy(lpDataGet, lpDataFake);
-    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
-                                     &dwDataSizeGet, 0 );
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, lpDataGet, &dwDataSizeGet, 0 );
     checkHR( DP_OK, hr );
     check( dwDataSize, dwDataSizeGet );
     checkStr( lpData, lpDataGet );
@@ -2228,8 +2189,7 @@ static void test_PlayerData(void)
     /* Normal operation */
     dwDataSizeGet = dwDataSizeFake;
     strcpy(lpDataGet, lpDataFake);
-    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
-                                     &dwDataSizeGet, 0 );
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, lpDataGet, &dwDataSizeGet, 0 );
     checkHR( DP_OK, hr );
     check( dwDataSize, dwDataSizeGet );
     checkStr( lpData, lpDataGet );
@@ -2237,32 +2197,30 @@ static void test_PlayerData(void)
     /* Flag tests */
     dwDataSizeGet = dwDataSizeFake;
     strcpy(lpDataGet, lpDataFake);
-    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
-                                     &dwDataSizeGet, 0 );
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, lpDataGet, &dwDataSizeGet, 0 );
     checkHR( DP_OK, hr );
     check( dwDataSize, dwDataSizeGet ); /* Remote: works as expected */
     checkStr( lpData, lpDataGet );
 
     dwDataSizeGet = dwDataSizeFake;
     strcpy(lpDataGet, lpDataFake);
-    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
-                                     &dwDataSizeGet, DPGET_REMOTE );
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, lpDataGet, &dwDataSizeGet,
+                                     DPGET_REMOTE );
     checkHR( DP_OK, hr );
     check( dwDataSize, dwDataSizeGet ); /* Same behaviour as in previous test */
     checkStr( lpData, lpDataGet );
 
     dwDataSizeGet = dwDataSizeFake;
     strcpy(lpDataGet, lpDataFake);
-    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
-                                     &dwDataSizeGet, DPGET_LOCAL );
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, lpDataGet, &dwDataSizeGet,
+                                     DPGET_LOCAL );
     checkHR( DP_OK, hr );
     check( 0, dwDataSizeGet ); /* Sets size to 0 (as local data doesn't exist) */
     checkStr( lpDataFake, lpDataGet );
 
     dwDataSizeGet = dwDataSizeFake;
     strcpy(lpDataGet, lpDataFake);
-    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
-                                     &dwDataSizeGet,
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, lpDataGet, &dwDataSizeGet,
                                      DPGET_LOCAL | DPGET_REMOTE );
     checkHR( DP_OK, hr );
     check( 0, dwDataSizeGet ); /* Same behaviour as in previous test */
@@ -2271,16 +2229,16 @@ static void test_PlayerData(void)
     /* Getting local data (which doesn't exist), buffer size is ignored */
     dwDataSizeGet = 0;
     strcpy(lpDataGet, lpDataFake);
-    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
-                                     &dwDataSizeGet, DPGET_LOCAL );
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, lpDataGet, &dwDataSizeGet,
+                                     DPGET_LOCAL );
     checkHR( DP_OK, hr );
     check( 0, dwDataSizeGet ); /* Sets size to 0 */
     checkStr( lpDataFake, lpDataGet );
 
     dwDataSizeGet = dwDataSizeFake;
     strcpy(lpDataGet, lpDataFake);
-    hr = IDirectPlayX_GetPlayerData( pDP, dpid, NULL,
-                                     &dwDataSizeGet, DPGET_LOCAL );
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, NULL, &dwDataSizeGet,
+                                     DPGET_LOCAL );
     checkHR( DP_OK, hr );
     check( 0, dwDataSizeGet ); /* Sets size to 0 */
     checkStr( lpDataFake, lpDataGet );
@@ -2305,32 +2263,30 @@ static void test_PlayerData(void)
     /* Flag tests (again) */
     dwDataSizeGet = dwDataSizeFake;
     strcpy(lpDataGet, lpDataFake);
-    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
-                                     &dwDataSizeGet, 0 );
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, lpDataGet, &dwDataSizeGet, 0 );
     checkHR( DP_OK, hr );
     check( dwDataSize, dwDataSizeGet ); /* Remote: works as expected */
     checkStr( lpData, lpDataGet );
 
     dwDataSizeGet = dwDataSizeFake;
     strcpy(lpDataGet, lpDataFake);
-    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
-                                     &dwDataSizeGet, DPGET_REMOTE );
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, lpDataGet, &dwDataSizeGet,
+                                     DPGET_REMOTE );
     checkHR( DP_OK, hr );
     check( dwDataSize, dwDataSizeGet ); /* Like in previous test */
     checkStr( lpData, lpDataGet );
 
     dwDataSizeGet = dwDataSizeFake;
     strcpy(lpDataGet, lpDataFake);
-    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
-                                     &dwDataSizeGet, DPGET_LOCAL );
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, lpDataGet, &dwDataSizeGet,
+                                     DPGET_LOCAL );
     checkHR( DP_OK, hr );
     check( dwDataSizeLocal, dwDataSizeGet ); /* Local: works as expected */
     checkStr( lpDataLocal, lpDataGet );
 
     dwDataSizeGet = dwDataSizeFake;
     strcpy(lpDataGet, lpDataFake);
-    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
-                                     &dwDataSizeGet,
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, lpDataGet, &dwDataSizeGet,
                                      DPGET_LOCAL | DPGET_REMOTE );
     checkHR( DP_OK, hr );
     check( dwDataSizeLocal, dwDataSizeGet ); /* Like in previous test */
@@ -2339,8 +2295,8 @@ static void test_PlayerData(void)
     /* Small buffer works as expected again */
     dwDataSizeGet = 0;
     strcpy(lpDataGet, lpDataFake);
-    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
-                                     &dwDataSizeGet, DPGET_LOCAL );
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, lpDataGet, &dwDataSizeGet,
+                                     DPGET_LOCAL );
     checkHR( DPERR_BUFFERTOOSMALL, hr );
     check( dwDataSizeLocal, dwDataSizeGet );
     checkStr( lpDataFake, lpDataGet );
@@ -2370,8 +2326,7 @@ static void test_PlayerData(void)
 
     dwDataSizeGet = dwDataSizeFake;
     strcpy(lpDataGet, lpDataFake);
-    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
-                                     &dwDataSizeGet, 0 );
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, lpDataGet, &dwDataSizeGet, 0 );
     checkHR( DP_OK, hr );
     check( dwDataSizeLocal, dwDataSizeGet );
     checkStr( lpDataLocal, lpDataGet );
@@ -2383,8 +2338,7 @@ static void test_PlayerData(void)
 
     dwDataSizeGet = dwDataSizeFake + 1;
     strcpy(lpDataGet, lpData);
-    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
-                                     &dwDataSizeGet, 0 );
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, lpDataGet, &dwDataSizeGet, 0 );
     checkHR( DP_OK, hr );
     check( dwDataSizeFake, dwDataSizeGet );
     checkStr( lpDataFake, lpDataGet );
@@ -2456,7 +2410,7 @@ static void test_PlayerName(void)
     dpsd.dwMaxPlayers = 10;
     IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
     IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
-                               (LPVOID) pDP[1], 0 );
+                               pDP[1], 0 );
 
     IDirectPlayX_CreatePlayer( pDP[0], &dpid[0], NULL, NULL, NULL, 0, 0 );
     IDirectPlayX_CreatePlayer( pDP[1], &dpid[1], NULL, NULL, NULL, 0, 0 );
@@ -2713,7 +2667,7 @@ static void test_GetPlayerAccount(void)
 
     IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
     IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
-                               (LPVOID) pDP[1], 0 );
+                               pDP[1], 0 );
 
     for (i=0; i<2; i++)
     {
@@ -2747,8 +2701,7 @@ static void test_GetPlayerAccount(void)
     checkHR( DP_OK, hr );
 
     hr = IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0,
-                                    EnumSessions_cb_join_secure,
-                                    (LPVOID) pDP[1], 0 );
+                                    EnumSessions_cb_join_secure, pDP[1], 0 );
     checkHR( DP_OK, hr );
 
     hr = IDirectPlayX_CreatePlayer( pDP[1], &dpid[1],
@@ -2837,7 +2790,7 @@ static BOOL CALLBACK EnumAddress_cb( REFGUID guidDataType,
         break;
     case 1:
     case 5:
-        checkGuid( &DPSPGUID_TCPIP, (LPGUID) lpData );
+        checkGuid( &DPSPGUID_TCPIP, lpData );
         break;
     case 6:
         checkStr( "127.0.0.1", (LPSTR) lpData );
@@ -2907,7 +2860,7 @@ static void test_GetPlayerAddress(void)
     dpsd.dwMaxPlayers = 10;
     IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
     IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
-                               (LPVOID) pDP[1], 0 );
+                               pDP[1], 0 );
 
     for (i=0; i<2; i++)
     {
@@ -2958,9 +2911,8 @@ static void test_GetPlayerAddress(void)
     checkHR( DP_OK, hr );
     check( 136, dwDataSize );
 
-    hr = IDirectPlayLobby_EnumAddress( pDPL, EnumAddress_cb,
-                                       (LPCVOID) lpData, dwDataSize,
-                                       (LPVOID) &callbackData );
+    hr = IDirectPlayLobby_EnumAddress( pDPL, EnumAddress_cb, lpData, dwDataSize,
+                                       &callbackData );
     checkHR( DP_OK, hr );
 
     check( 4, callbackData.dwCounter1 );
@@ -2972,9 +2924,8 @@ static void test_GetPlayerAddress(void)
     checkHR( DP_OK, hr );
     check( 130, dwDataSize );
 
-    hr = IDirectPlayLobby_EnumAddress( pDPL, EnumAddress_cb,
-                                       (LPCVOID) lpData, dwDataSize,
-                                       (LPVOID) &callbackData );
+    hr = IDirectPlayLobby_EnumAddress( pDPL, EnumAddress_cb, lpData, dwDataSize,
+                                       &callbackData );
     checkHR( DP_OK, hr );
 
     check( 8, callbackData.dwCounter1 );
@@ -3034,7 +2985,7 @@ static void test_GetPlayerFlags(void)
 
     IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
     IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
-                               (LPVOID) pDP[1], 0 );
+                               pDP[1], 0 );
 
     for (i=0; i<2; i++)
     {
@@ -3196,8 +3147,8 @@ static void test_CreateGroup(void)
     for (i=0; i<6; i++)
     {
         dwDataSizeGet = 1024;
-        hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, 0,
-                                   (LPVOID) lpDataGet, &dwDataSizeGet );
+        hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, 0, lpDataGet,
+                                   &dwDataSizeGet );
         checkHR( DP_OK, hr );
         if ( NULL == U1(lpDataGet->dpnName).lpszShortNameA )
         {
@@ -3261,8 +3212,8 @@ static void test_CreateGroup(void)
     for (i=0; i<5; i++)
     {
         dwDataSizeGet = 1024;
-        hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, 0,
-                                   (LPVOID) lpDataGet, &dwDataSizeGet );
+        hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, 0, lpDataGet,
+                                   &dwDataSizeGet );
         checkHR( DP_OK, hr );
         check( 48 + lpDataGet->dwDataSize, dwDataSizeGet );
         check( DPID_SYSMSG, idFrom );
@@ -3316,8 +3267,8 @@ static void test_CreateGroup(void)
     for (i=0; i<8; i++)
     {
         dwDataSizeGet = 1024;
-        hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, 0,
-                                   (LPVOID) lpDataGet, &dwDataSizeGet );
+        hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, 0, lpDataGet,
+                                   &dwDataSizeGet );
         checkHR( DP_OK, hr );
         check( 48, dwDataSizeGet );
         check( DPID_SYSMSG, idFrom );
@@ -3441,7 +3392,7 @@ static void test_GroupOwner(void)
     hr = IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
     checkHR( DP_OK, hr );
     hr = IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
-                                    (LPVOID) pDP[1], 0 );
+                                    pDP[1], 0 );
     checkHR( DP_OK, hr );
 
     for (i=0; i<2; i++)
@@ -3529,24 +3480,21 @@ static BOOL CALLBACK EnumSessions_cb_EnumPlayers( LPCDPSESSIONDESC2 lpThisSD,
 
     /* guid = NULL */
     callbackData->dwCounter1 = 0;
-    hr = IDirectPlayX_EnumPlayers( callbackData->pDP, NULL,
-                                   EnumPlayers_cb,
-                                   (LPVOID) &callbackData, 0 );
+    hr = IDirectPlayX_EnumPlayers( callbackData->pDP, NULL, EnumPlayers_cb,
+                                   &callbackData, 0 );
     checkHR( DPERR_NOSESSIONS, hr );
     check( 0, callbackData->dwCounter1 );
 
     /* guid = appGuid */
     callbackData->dwCounter1 = 0;
     hr = IDirectPlayX_EnumPlayers( callbackData->pDP, (LPGUID) &appGuid,
-                                   EnumPlayers_cb,
-                                   (LPVOID) &callbackData, 0 );
+                                   EnumPlayers_cb, &callbackData, 0 );
     checkHR( DPERR_NOSESSIONS, hr );
     check( 0, callbackData->dwCounter1 );
 
     callbackData->dwCounter1 = 0;
     hr = IDirectPlayX_EnumPlayers( callbackData->pDP, (LPGUID) &appGuid,
-                                   EnumPlayers_cb,
-                                   (LPVOID) &callbackData,
+                                   EnumPlayers_cb, &callbackData,
                                    DPENUMPLAYERS_SESSION );
     checkHR( DPERR_NOSESSIONS, hr );
     check( 0, callbackData->dwCounter1 );
@@ -3555,16 +3503,14 @@ static BOOL CALLBACK EnumSessions_cb_EnumPlayers( LPCDPSESSIONDESC2 lpThisSD,
     callbackData->dwCounter1 = 0;
     hr = IDirectPlayX_EnumPlayers( callbackData->pDP,
                                    (LPGUID) &lpThisSD->guidInstance,
-                                   EnumPlayers_cb,
-                                   (LPVOID) &callbackData, 0 );
+                                   EnumPlayers_cb, &callbackData, 0 );
     checkHR( DPERR_NOSESSIONS, hr );
     check( 0, callbackData->dwCounter1 );
 
     callbackData->dwCounter1 = 0;
     hr = IDirectPlayX_EnumPlayers( callbackData->pDP,
                                    (LPGUID) &lpThisSD->guidInstance,
-                                   EnumPlayers_cb,
-                                   (LPVOID) &callbackData,
+                                   EnumPlayers_cb, &callbackData,
                                    DPENUMPLAYERS_SESSION );
     checkHR( DPERR_GENERIC, hr ); /* Why? */
     check( 0, callbackData->dwCounter1 );
@@ -3603,7 +3549,7 @@ static void test_EnumPlayers(void)
     /* Uninitialized service provider */
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumPlayers( pDP[0], (LPGUID) &appGuid, NULL,
-                                   (LPVOID) &callbackData, 0 );
+                                   &callbackData, 0 );
     checkHR( DPERR_UNINITIALIZED, hr );
     check( 0, callbackData.dwCounter1 );
 
@@ -3616,7 +3562,7 @@ static void test_EnumPlayers(void)
     /* No session */
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumPlayers( pDP[0], NULL, EnumPlayers_cb,
-                                   (LPVOID) &callbackData, 0 );
+                                   &callbackData, 0 );
     todo_wine checkHR( DPERR_NOSESSIONS, hr );
     check( 0, callbackData.dwCounter1 );
 
@@ -3628,14 +3574,13 @@ static void test_EnumPlayers(void)
 
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumPlayers( pDP[0], (LPGUID) &appGuid, EnumPlayers_cb,
-                                   (LPVOID) &callbackData, 0 );
+                                   &callbackData, 0 );
     checkHR( DPERR_NOSESSIONS, hr );
     check( 0, callbackData.dwCounter1 );
 
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumPlayers( pDP[0], (LPGUID) &appGuid, EnumPlayers_cb,
-                                   (LPVOID) &callbackData,
-                                   DPENUMPLAYERS_SESSION );
+                                   &callbackData, DPENUMPLAYERS_SESSION );
     checkHR( DPERR_NOSESSIONS, hr );
     check( 0, callbackData.dwCounter1 );
 
@@ -3649,7 +3594,7 @@ static void test_EnumPlayers(void)
     /* No players */
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumPlayers( pDP[0], NULL, EnumPlayers_cb,
-                                   (LPVOID) &callbackData, 0 );
+                                   &callbackData, 0 );
     checkHR( DP_OK, hr );
     check( 0, callbackData.dwCounter1 );
 
@@ -3676,14 +3621,13 @@ static void test_EnumPlayers(void)
     /* Invalid parameters */
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumPlayers( pDP[0], (LPGUID) &appGuid, NULL,
-                                   (LPVOID) &callbackData, 0 );
+                                   &callbackData, 0 );
     checkHR( DPERR_INVALIDPARAMS, hr );
     check( 0, callbackData.dwCounter1 );
 
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumPlayers( pDP[0], NULL, EnumPlayers_cb,
-                                   (LPVOID) &callbackData,
-                                   DPENUMPLAYERS_SESSION );
+                                   &callbackData, DPENUMPLAYERS_SESSION );
     checkHR( DPERR_INVALIDPARAMS, hr );
     check( 0, callbackData.dwCounter1 );
 
@@ -3692,7 +3636,7 @@ static void test_EnumPlayers(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumPlayers( pDP[0], NULL, EnumPlayers_cb,
-                                   (LPVOID) &callbackData, 0 );
+                                   &callbackData, 0 );
     checkHR( DP_OK, hr );
     check( 2, callbackData.dwCounter1 );
     checkStr( "20", callbackData.szTrace1 );
@@ -3701,7 +3645,7 @@ static void test_EnumPlayers(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumPlayers( pDP[1], NULL, EnumPlayers_cb,
-                                   (LPVOID) &callbackData, 0 );
+                                   &callbackData, 0 );
     checkHR( DP_OK, hr );
     check( 1, callbackData.dwCounter1 );
     checkStr( "1", callbackData.szTrace1 );
@@ -3710,7 +3654,7 @@ static void test_EnumPlayers(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumPlayers( pDP[0], (LPGUID) &appGuid, EnumPlayers_cb,
-                                   (LPVOID) &callbackData, 0 );
+                                   &callbackData, 0 );
     checkHR( DP_OK, hr );
     check( 2, callbackData.dwCounter1 ); /* Guid is ignored */
     checkStr( "20", callbackData.szTrace1 );
@@ -3722,14 +3666,14 @@ static void test_EnumPlayers(void)
     callbackData.pDP = pDP[2];
     hr = IDirectPlayX_EnumSessions( pDP[2], &dpsd[2], 0,
                                     EnumSessions_cb_EnumPlayers,
-                                    (LPVOID) &callbackData, 0 );
+                                    &callbackData, 0 );
     checkHR( DP_OK, hr );
 
 
     /* - Open session */
     callbackData.pDP = pDP[2];
     hr = IDirectPlayX_EnumSessions( pDP[2], &dpsd[0], 0, EnumSessions_cb_join,
-                                    (LPVOID) pDP[2], 0 );
+                                    pDP[2], 0 );
     checkHR( DP_OK, hr );
     hr = IDirectPlayX_CreatePlayer( pDP[2], &dpid[3],
                                     NULL, NULL, NULL, 0,
@@ -3746,7 +3690,7 @@ static void test_EnumPlayers(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumPlayers( pDP[2], NULL, EnumPlayers_cb,
-                                   (LPVOID) &callbackData, 0 );
+                                   &callbackData, 0 );
     checkHR( DP_OK, hr );
     check( 4, callbackData.dwCounter1 );
     checkStr( "4302", callbackData.szTrace1 );
@@ -3758,8 +3702,7 @@ static void test_EnumPlayers(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumPlayers( pDP[2], NULL, EnumPlayers_cb,
-                                   (LPVOID) &callbackData,
-                                   DPENUMPLAYERS_ALL );
+                                   &callbackData, DPENUMPLAYERS_ALL );
     checkHR( DP_OK, hr );
     check( 4, callbackData.dwCounter1 );
     checkStr( "4302", callbackData.szTrace1 );
@@ -3768,8 +3711,7 @@ static void test_EnumPlayers(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumPlayers( pDP[2], NULL, EnumPlayers_cb,
-                                   (LPVOID) &callbackData,
-                                   DPENUMPLAYERS_GROUP );
+                                   &callbackData, DPENUMPLAYERS_GROUP );
     checkHR( DP_OK, hr );
     check( 6, callbackData.dwCounter1 );
     checkStr( "430256", callbackData.szTrace1 );
@@ -3781,8 +3723,7 @@ static void test_EnumPlayers(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumPlayers( pDP[2], NULL, EnumPlayers_cb,
-                                   (LPVOID) &callbackData,
-                                   DPENUMPLAYERS_LOCAL );
+                                   &callbackData, DPENUMPLAYERS_LOCAL );
     checkHR( DP_OK, hr );
     check( 2, callbackData.dwCounter1 );
     checkStr( "43", callbackData.szTrace1 );
@@ -3792,8 +3733,7 @@ static void test_EnumPlayers(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumPlayers( pDP[2], NULL, EnumPlayers_cb,
-                                   (LPVOID) &callbackData,
-                                   DPENUMPLAYERS_SERVERPLAYER );
+                                   &callbackData, DPENUMPLAYERS_SERVERPLAYER );
     checkHR( DP_OK, hr );
     check( 1, callbackData.dwCounter1 );
     checkStr( "0", callbackData.szTrace1 );
@@ -3802,8 +3742,7 @@ static void test_EnumPlayers(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumPlayers( pDP[2], NULL, EnumPlayers_cb,
-                                   (LPVOID) &callbackData,
-                                   DPENUMPLAYERS_SPECTATOR );
+                                   &callbackData, DPENUMPLAYERS_SPECTATOR );
     checkHR( DP_OK, hr );
     check( 1, callbackData.dwCounter1 );
     checkStr( "3", callbackData.szTrace1 );
@@ -3863,23 +3802,20 @@ static BOOL CALLBACK EnumSessions_cb_EnumGroups( LPCDPSESSIONDESC2 lpThisSD,
     /* guid = NULL */
     callbackData->dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroups( callbackData->pDP, NULL,
-                                  EnumGroups_cb,
-                                  (LPVOID) &callbackData, 0 );
+                                  EnumGroups_cb, &callbackData, 0 );
     checkHR( DPERR_NOSESSIONS, hr );
     check( 0, callbackData->dwCounter1 );
 
     /* guid = appGuid */
     callbackData->dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroups( callbackData->pDP, (LPGUID) &appGuid,
-                                  EnumGroups_cb,
-                                  (LPVOID) &callbackData, 0 );
+                                  EnumGroups_cb, &callbackData, 0 );
     checkHR( DPERR_NOSESSIONS, hr );
     check( 0, callbackData->dwCounter1 );
 
     callbackData->dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroups( callbackData->pDP, (LPGUID) &appGuid,
-                                  EnumGroups_cb,
-                                  (LPVOID) &callbackData,
+                                  EnumGroups_cb, &callbackData,
                                   DPENUMGROUPS_SESSION );
     checkHR( DPERR_NOSESSIONS, hr );
     check( 0, callbackData->dwCounter1 );
@@ -3888,16 +3824,14 @@ static BOOL CALLBACK EnumSessions_cb_EnumGroups( LPCDPSESSIONDESC2 lpThisSD,
     callbackData->dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroups( callbackData->pDP,
                                   (LPGUID) &lpThisSD->guidInstance,
-                                  EnumGroups_cb,
-                                  (LPVOID) &callbackData, 0 );
+                                  EnumGroups_cb, &callbackData, 0 );
     checkHR( DPERR_NOSESSIONS, hr );
     check( 0, callbackData->dwCounter1 );
 
     callbackData->dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroups( callbackData->pDP,
                                   (LPGUID) &lpThisSD->guidInstance,
-                                  EnumGroups_cb,
-                                  (LPVOID) &callbackData,
+                                  EnumGroups_cb, &callbackData,
                                   DPENUMGROUPS_SESSION );
     checkHR( DPERR_GENERIC, hr ); /* Why? */
     check( 0, callbackData->dwCounter1 );
@@ -3936,7 +3870,7 @@ static void test_EnumGroups(void)
     /* Uninitialized service provider */
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroups( pDP[0], NULL, EnumGroups_cb,
-                                  (LPVOID) &callbackData, 0 );
+                                  &callbackData, 0 );
     checkHR( DPERR_UNINITIALIZED, hr );
     check( 0, callbackData.dwCounter1 );
 
@@ -3949,7 +3883,7 @@ static void test_EnumGroups(void)
     /* No session */
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroups( pDP[0], NULL, EnumGroups_cb,
-                                  (LPVOID) &callbackData, 0 );
+                                  &callbackData, 0 );
     todo_wine checkHR( DPERR_NOSESSIONS, hr );
     check( 0, callbackData.dwCounter1 );
 
@@ -3961,14 +3895,13 @@ static void test_EnumGroups(void)
 
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroups( pDP[0], (LPGUID) &appGuid, EnumGroups_cb,
-                                  (LPVOID) &callbackData, 0 );
+                                  &callbackData, 0 );
     checkHR( DPERR_NOSESSIONS, hr );
     check( 0, callbackData.dwCounter1 );
 
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroups( pDP[0], (LPGUID) &appGuid, EnumGroups_cb,
-                                  (LPVOID) &callbackData,
-                                  DPENUMGROUPS_SESSION );
+                                  &callbackData, DPENUMGROUPS_SESSION );
     checkHR( DPERR_NOSESSIONS, hr );
     check( 0, callbackData.dwCounter1 );
 
@@ -3982,7 +3915,7 @@ static void test_EnumGroups(void)
     /* No groups */
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroups( pDP[0], NULL, EnumGroups_cb,
-                                  (LPVOID) &callbackData, 0 );
+                                  &callbackData, 0 );
     checkHR( DP_OK, hr );
     check( 0, callbackData.dwCounter1 );
 
@@ -4006,14 +3939,13 @@ static void test_EnumGroups(void)
     /* Invalid parameters */
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroups( pDP[0], (LPGUID) &appGuid, NULL,
-                                  (LPVOID) &callbackData, 0 );
+                                  &callbackData, 0 );
     checkHR( DPERR_INVALIDPARAMS, hr );
     check( 0, callbackData.dwCounter1 );
 
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroups( pDP[0], NULL, EnumGroups_cb,
-                                  (LPVOID) &callbackData,
-                                  DPENUMGROUPS_SESSION );
+                                  &callbackData, DPENUMGROUPS_SESSION );
     checkHR( DPERR_INVALIDPARAMS, hr );
     check( 0, callbackData.dwCounter1 );
 
@@ -4022,7 +3954,7 @@ static void test_EnumGroups(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumGroups( pDP[0], NULL, EnumGroups_cb,
-                                  (LPVOID) &callbackData, 0 );
+                                  &callbackData, 0 );
     checkHR( DP_OK, hr );
     check( 2, callbackData.dwCounter1 );
     checkStr( "02", callbackData.szTrace1 );
@@ -4031,7 +3963,7 @@ static void test_EnumGroups(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumGroups( pDP[1], NULL, EnumGroups_cb,
-                                  (LPVOID) &callbackData, 0 );
+                                  &callbackData, 0 );
     checkHR( DP_OK, hr );
     check( 1, callbackData.dwCounter1 );
     checkStr( "1", callbackData.szTrace1 );
@@ -4040,7 +3972,7 @@ static void test_EnumGroups(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumGroups( pDP[0], (LPGUID) &appGuid, EnumGroups_cb,
-                                  (LPVOID) &callbackData, 0 );
+                                  &callbackData, 0 );
     checkHR( DP_OK, hr );
     check( 2, callbackData.dwCounter1 ); /* Guid is ignored */
     checkStr( "02", callbackData.szTrace1 );
@@ -4052,13 +3984,13 @@ static void test_EnumGroups(void)
     callbackData.pDP = pDP[2];
     hr = IDirectPlayX_EnumSessions( pDP[2], &dpsd[2], 0,
                                     EnumSessions_cb_EnumGroups,
-                                    (LPVOID) &callbackData, 0 );
+                                    &callbackData, 0 );
     checkHR( DP_OK, hr );
 
     /* - Open session */
     callbackData.pDP = pDP[2];
     hr = IDirectPlayX_EnumSessions( pDP[2], &dpsd[0], 0, EnumSessions_cb_join,
-                                    (LPVOID) pDP[2], 0 );
+                                    pDP[2], 0 );
     checkHR( DP_OK, hr );
 
     hr = IDirectPlayX_CreateGroup( pDP[2], &dpid[3],
@@ -4072,7 +4004,7 @@ static void test_EnumGroups(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumGroups( pDP[2], NULL, EnumGroups_cb,
-                                  (LPVOID) &callbackData, 0 );
+                                  &callbackData, 0 );
     checkHR( DP_OK, hr );
     check( 4, callbackData.dwCounter1 );
     checkStr( "0234", callbackData.szTrace1 );
@@ -4082,8 +4014,7 @@ static void test_EnumGroups(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumGroups( pDP[2], NULL, EnumGroups_cb,
-                                  (LPVOID) &callbackData,
-                                  DPENUMGROUPS_ALL );
+                                  &callbackData, DPENUMGROUPS_ALL );
     checkHR( DP_OK, hr );
     check( 4, callbackData.dwCounter1 );
     checkStr( "0234", callbackData.szTrace1 );
@@ -4092,8 +4023,7 @@ static void test_EnumGroups(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumGroups( pDP[2], NULL, EnumGroups_cb,
-                                  (LPVOID) &callbackData,
-                                  DPENUMGROUPS_HIDDEN );
+                                  &callbackData, DPENUMGROUPS_HIDDEN );
     checkHR( DP_OK, hr );
     check( 1, callbackData.dwCounter1 );
     checkStr( "2", callbackData.szTrace1 );
@@ -4102,8 +4032,7 @@ static void test_EnumGroups(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumGroups( pDP[2], NULL, EnumGroups_cb,
-                                  (LPVOID) &callbackData,
-                                  DPENUMGROUPS_LOCAL );
+                                  &callbackData, DPENUMGROUPS_LOCAL );
     checkHR( DP_OK, hr );
     check( 2, callbackData.dwCounter1 );
     checkStr( "34", callbackData.szTrace1 );
@@ -4113,8 +4042,7 @@ static void test_EnumGroups(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumGroups( pDP[2], NULL, EnumGroups_cb,
-                                  (LPVOID) &callbackData,
-                                  DPENUMGROUPS_REMOTE );
+                                  &callbackData, DPENUMGROUPS_REMOTE );
     checkHR( DP_OK, hr );
     check( 2, callbackData.dwCounter1 );
     checkStr( "02", callbackData.szTrace1 );
@@ -4124,8 +4052,7 @@ static void test_EnumGroups(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumGroups( pDP[2], NULL, EnumGroups_cb,
-                                  (LPVOID) &callbackData,
-                                  DPENUMGROUPS_STAGINGAREA );
+                                  &callbackData, DPENUMGROUPS_STAGINGAREA );
     checkHR( DP_OK, hr );
     check( 1, callbackData.dwCounter1 );
     checkStr( "4", callbackData.szTrace1 );
@@ -4167,7 +4094,7 @@ static void test_EnumGroupsInGroup(void)
     /* Uninitialized service provider */
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], 0, NULL, EnumGroups_cb,
-                                         (LPVOID) &callbackData, 0 );
+                                         &callbackData, 0 );
     checkHR( DPERR_UNINITIALIZED, hr );
     check( 0, callbackData.dwCounter1 );
 
@@ -4220,26 +4147,25 @@ static void test_EnumGroupsInGroup(void)
     /* Invalid parameters */
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], 0, NULL, EnumGroups_cb,
-                                         (LPVOID) &callbackData, 0 );
+                                         &callbackData, 0 );
     checkHR( DPERR_INVALIDGROUP, hr );
     check( 0, callbackData.dwCounter1 );
 
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], 10, NULL, EnumGroups_cb,
-                                         (LPVOID) &callbackData, 0 );
+                                         &callbackData, 0 );
     checkHR( DPERR_INVALIDGROUP, hr );
     check( 0, callbackData.dwCounter1 );
 
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], (LPGUID) &appGuid,
-                                         NULL, (LPVOID) &callbackData, 0 );
+                                         NULL, &callbackData, 0 );
     checkHR( DPERR_INVALIDPARAMS, hr );
     check( 0, callbackData.dwCounter1 );
 
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], NULL, EnumGroups_cb,
-                                         (LPVOID) &callbackData,
-                                         DPENUMGROUPS_SESSION );
+                                         &callbackData, DPENUMGROUPS_SESSION );
     checkHR( DPERR_INVALIDPARAMS, hr );
     check( 0, callbackData.dwCounter1 );
 
@@ -4247,14 +4173,14 @@ static void test_EnumGroupsInGroup(void)
     /* Regular operation */
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[0], NULL, EnumGroups_cb,
-                                         (LPVOID) &callbackData, 0 );
+                                         &callbackData, 0 );
     checkHR( DP_OK, hr );
     check( 0, callbackData.dwCounter1 );
 
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], NULL, EnumGroups_cb,
-                                         (LPVOID) &callbackData, 0 );
+                                         &callbackData, 0 );
     checkHR( DP_OK, hr );
     check( 4, callbackData.dwCounter1 );
     checkStr( "5432", callbackData.szTrace1 );
@@ -4263,8 +4189,7 @@ static void test_EnumGroupsInGroup(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], (LPGUID) &appGuid,
-                                         EnumGroups_cb,
-                                         (LPVOID) &callbackData, 0 );
+                                         EnumGroups_cb, &callbackData, 0 );
     checkHR( DP_OK, hr );
     check( 4, callbackData.dwCounter1 ); /* Guid is ignored */
     checkStr( "5432", callbackData.szTrace1 );
@@ -4276,19 +4201,19 @@ static void test_EnumGroupsInGroup(void)
     callbackData.pDP = pDP[1];
     hr = IDirectPlayX_EnumSessions( pDP[1], &dpsd[1], 0,
                                     EnumSessions_cb_EnumGroups,
-                                    (LPVOID) &callbackData, 0 );
+                                    &callbackData, 0 );
     checkHR( DP_OK, hr );
 
     /* - Open session */
     hr = IDirectPlayX_EnumSessions( pDP[1], &dpsd[0], 0, EnumSessions_cb_join,
-                                    (LPVOID) pDP[1], 0 );
+                                    pDP[1], 0 );
     checkHR( DP_OK, hr );
 
 
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumGroupsInGroup( pDP[1], dpid[1], NULL, EnumGroups_cb,
-                                         (LPVOID) &callbackData, 0 );
+                                         &callbackData, 0 );
     checkHR( DP_OK, hr );
     check( 4, callbackData.dwCounter1 );
     checkStr( "5432", callbackData.szTrace1 );
@@ -4298,8 +4223,7 @@ static void test_EnumGroupsInGroup(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], NULL, EnumGroups_cb,
-                                         (LPVOID) &callbackData,
-                                         DPENUMGROUPS_ALL );
+                                         &callbackData, DPENUMGROUPS_ALL );
     checkHR( DP_OK, hr );
     check( 4, callbackData.dwCounter1 );
     checkStr( "5432", callbackData.szTrace1 );
@@ -4308,8 +4232,7 @@ static void test_EnumGroupsInGroup(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], NULL, EnumGroups_cb,
-                                         (LPVOID) &callbackData,
-                                         DPENUMGROUPS_HIDDEN );
+                                         &callbackData, DPENUMGROUPS_HIDDEN );
     checkHR( DP_OK, hr );
     check( 1, callbackData.dwCounter1 );
     checkStr( "3", callbackData.szTrace1 );
@@ -4318,8 +4241,7 @@ static void test_EnumGroupsInGroup(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], NULL, EnumGroups_cb,
-                                         (LPVOID) &callbackData,
-                                         DPENUMGROUPS_LOCAL );
+                                         &callbackData, DPENUMGROUPS_LOCAL );
     checkHR( DP_OK, hr );
     check( 4, callbackData.dwCounter1 );
     checkStr( "5432", callbackData.szTrace1 );
@@ -4329,23 +4251,20 @@ static void test_EnumGroupsInGroup(void)
 
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], NULL, EnumGroups_cb,
-                                         (LPVOID) &callbackData,
-                                         DPENUMGROUPS_REMOTE );
+                                         &callbackData, DPENUMGROUPS_REMOTE );
     checkHR( DP_OK, hr );
     check( 0, callbackData.dwCounter1 );
 
     callbackData.dwCounter1 = 0;
     hr = IDirectPlayX_EnumGroupsInGroup( pDP[1], dpid[1], NULL, EnumGroups_cb,
-                                         (LPVOID) &callbackData,
-                                         DPENUMGROUPS_LOCAL );
+                                         &callbackData, DPENUMGROUPS_LOCAL );
     checkHR( DP_OK, hr );
     check( 0, callbackData.dwCounter1 );
 
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumGroupsInGroup( pDP[1], dpid[1], NULL, EnumGroups_cb,
-                                         (LPVOID) &callbackData,
-                                         DPENUMGROUPS_REMOTE );
+                                         &callbackData, DPENUMGROUPS_REMOTE );
     checkHR( DP_OK, hr );
     check( 4, callbackData.dwCounter1 );
     checkStr( "5432", callbackData.szTrace1 );
@@ -4356,8 +4275,7 @@ static void test_EnumGroupsInGroup(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], NULL, EnumGroups_cb,
-                                         (LPVOID) &callbackData,
-                                         DPENUMGROUPS_SHORTCUT );
+                                         &callbackData, DPENUMGROUPS_SHORTCUT );
     checkHR( DP_OK, hr );
     check( 1, callbackData.dwCounter1 );
     checkStr( "5", callbackData.szTrace1 );
@@ -4366,7 +4284,7 @@ static void test_EnumGroupsInGroup(void)
     callbackData.dwCounter1 = 0;
     callbackData.szTrace2[0] = 0;
     hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], NULL, EnumGroups_cb,
-                                         (LPVOID) &callbackData,
+                                         &callbackData,
                                          DPENUMGROUPS_STAGINGAREA );
     checkHR( DP_OK, hr );
     check( 1, callbackData.dwCounter1 );
@@ -4410,7 +4328,7 @@ static void test_groups_p2p(void)
     hr = IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
     todo_wine checkHR( DP_OK, hr );
     hr = IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
-                                    (LPVOID) pDP[1], 0 );
+                                    pDP[1], 0 );
     todo_wine checkHR( DP_OK, hr );
 
     if ( hr == DPERR_UNINITIALIZED )
@@ -4645,7 +4563,7 @@ static void test_groups_cs(void)
     todo_wine checkHR( DP_OK, hr );
     dpsd.dwFlags = 0;
     hr = IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
-                                    (LPVOID) pDP[1], 0 );
+                                    pDP[1], 0 );
     todo_wine checkHR( DP_OK, hr );
 
     if ( hr == DPERR_UNINITIALIZED )
@@ -4885,7 +4803,7 @@ static void test_Send(void)
     dpsd.dwMaxPlayers = 10;
     IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
     IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
-                               (LPVOID) pDP[1], 0 );
+                               pDP[1], 0 );
     IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
 
 
@@ -4950,7 +4868,7 @@ static void test_Send(void)
 
     hr = IDirectPlayX_Receive( pDP[0], &dpid[0], &dpid[1],
                                DPRECEIVE_FROMPLAYER | DPRECEIVE_TOPLAYER,
-                               (LPVOID) lpData, &dwDataSize );
+                               lpData, &dwDataSize );
     checkHR( DP_OK, hr );
     checkStr( message, (LPSTR) lpData );
     check( strlen(message)+1, dwDataSize );
@@ -4968,11 +4886,11 @@ static void test_Send(void)
 
     hr = IDirectPlayX_Receive( pDP[0], &dpid[0], &dpid[3],
                                DPRECEIVE_FROMPLAYER | DPRECEIVE_TOPLAYER,
-                               (LPVOID) lpData, &dwDataSize );
+                               lpData, &dwDataSize );
     checkHR( DPERR_NOMESSAGES, hr );
     hr = IDirectPlayX_Receive( pDP[1], &dpid[0], &dpid[3],
                                DPRECEIVE_FROMPLAYER | DPRECEIVE_TOPLAYER,
-                               (LPVOID) lpData, &dwDataSize );
+                               lpData, &dwDataSize );
     checkHR( DP_OK, hr );
     checkStr( message, (LPSTR) lpData );
     check( strlen(message)+1, dwDataSize );
@@ -4993,13 +4911,13 @@ static void test_Send(void)
     {
         hr = IDirectPlayX_Receive( pDP[0], &dpid[0], &dpid[i],
                                    DPRECEIVE_FROMPLAYER | DPRECEIVE_TOPLAYER,
-                                   (LPVOID) lpData, &dwDataSize );
+                                   lpData, &dwDataSize );
         checkHR( DP_OK, hr );
         checkStr( message, (LPSTR) lpData );
     }
     hr = IDirectPlayX_Receive( pDP[1], &dpid[0], &dpid[3],
                                DPRECEIVE_FROMPLAYER | DPRECEIVE_TOPLAYER,
-                               (LPVOID) lpData, &dwDataSize );
+                               lpData, &dwDataSize );
     checkHR( DP_OK, hr );
     checkStr( message, (LPSTR) lpData );
 
@@ -5120,8 +5038,8 @@ static void test_Send(void)
     for (i=0; i<3; i++)
     {
         dwDataSize = 1024;
-        hr = IDirectPlayX_Receive( pDP[0], &idFrom, &idTo, 0,
-                                   (LPVOID) lpData, &dwDataSize );
+        hr = IDirectPlayX_Receive( pDP[0], &idFrom, &idTo, 0, lpData,
+                                   &dwDataSize );
 
         lpDataSecure = (LPDPMSG_SECUREMESSAGE) lpData;
 
@@ -5511,7 +5429,7 @@ static void test_GetMessageCount(void)
     dpsd.dwMaxPlayers = 10;
     IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
     IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
-                               (LPVOID) pDP[1], 0 );
+                               pDP[1], 0 );
 
     IDirectPlayX_CreatePlayer( pDP[0], &dpid[0], NULL, NULL, NULL, 0, 0 );
     IDirectPlayX_CreatePlayer( pDP[0], &dpid[1], NULL, NULL, NULL, 0, 0 );
@@ -5737,7 +5655,7 @@ static void test_GetMessageQueue(void)
     dpsd.dwMaxPlayers = 10;
     IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
     IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
-                               (LPVOID) pDP[1], 0 );
+                               pDP[1], 0 );
 
     IDirectPlayX_CreatePlayer( pDP[0], &dpid[0], NULL, NULL, NULL, 0, 0 );
     IDirectPlayX_CreatePlayer( pDP[0], &dpid[1], NULL, NULL, NULL, 0, 0 );
@@ -6042,7 +5960,7 @@ static void test_remote_data_replication(void)
 
     /* Peer */
     hr = IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
-                                    (LPVOID) pDP[1], 0 );
+                                    pDP[1], 0 );
     checkHR( DP_OK, hr );
 
     hr = IDirectPlayX_CreatePlayer( pDP[1], &dpid[1],
@@ -6139,8 +6057,7 @@ static void test_remote_data_replication(void)
 
 
     /* Purge "new player" messages from queue */
-    hr = IDirectPlayX_Receive( pDP[0], &idFrom, &idTo, 0,
-                               (LPVOID) lpData, &dwDataSize );
+    hr = IDirectPlayX_Receive( pDP[0], &idFrom, &idTo, 0, lpData, &dwDataSize );
     checkHR( DP_OK, hr );
     checkConv( DPSYS_CREATEPLAYERORGROUP, lpData->dwType, dpMsgType2str );
 
@@ -6158,8 +6075,8 @@ static void test_remote_data_replication(void)
     {
         for (j=0; j<2; j++)
         {
-            hr = IDirectPlayX_Receive( pDP[i], &idFrom, &idTo, 0,
-                                       (LPVOID) lpData, &dwDataSize );
+            hr = IDirectPlayX_Receive( pDP[i], &idFrom, &idTo, 0, lpData,
+                                       &dwDataSize );
             checkHR( DP_OK, hr );
             check( 29, dwDataSize );
             check( DPID_SYSMSG, idFrom );
