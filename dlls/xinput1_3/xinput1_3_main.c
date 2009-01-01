@@ -55,6 +55,18 @@ void WINAPI XInputEnable(BOOL enable)
     FIXME("(%d) Stub!\n", enable);
 }
 
+DWORD WINAPI XInputSetState(DWORD dwUserIndex, XINPUT_VIBRATION* pVibration)
+{
+    FIXME("(%d %p) Stub!\n", dwUserIndex, pVibration);
+
+    if (dwUserIndex < XUSER_MAX_COUNT)
+    {
+        return ERROR_DEVICE_NOT_CONNECTED;
+        /* If controller exists then return ERROR_SUCCESS */
+    }
+    return ERROR_BAD_ARGUMENTS;
+}
+
 DWORD WINAPI XInputGetState(DWORD dwUserIndex, XINPUT_STATE* pState)
 {
     FIXME("(%u %p)\n", dwUserIndex, pState);
