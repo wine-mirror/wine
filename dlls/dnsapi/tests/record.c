@@ -37,25 +37,25 @@ static DNS_RECORDA r3 = { NULL, name1, DNS_TYPE_A, sizeof(DNS_A_DATA), { 0 }, 12
 
 static void test_DnsRecordCompare( void )
 {
-    ok( DnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r1 ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsRecordCompare( &r1, &r1 ) == TRUE, "failed unexpectedly\n" );
 
     r2.pName = name2;
-    ok( DnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsRecordCompare( &r1, &r2 ) == TRUE, "failed unexpectedly\n" );
 
     r2.Flags.S.CharSet = DnsCharSetUnicode;
-    ok( DnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsRecordCompare( &r1, &r2 ) == FALSE, "succeeded unexpectedly\n" );
 
     r2.Flags.S.CharSet = DnsCharSetAnsi;
-    ok( DnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsRecordCompare( &r1, &r2 ) == FALSE, "succeeded unexpectedly\n" );
 
     r1.Flags.S.CharSet = DnsCharSetAnsi;
-    ok( DnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsRecordCompare( &r1, &r2 ) == TRUE, "failed unexpectedly\n" );
 
     r1.dwTtl = 0;
-    ok( DnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == TRUE, "failed unexpectedly\n" );
+    ok( DnsRecordCompare( &r1, &r2 ) == TRUE, "failed unexpectedly\n" );
 
     r2.Data.A.IpAddress = 0;
-    ok( DnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == FALSE, "succeeded unexpectedly\n" );
+    ok( DnsRecordCompare( &r1, &r2 ) == FALSE, "succeeded unexpectedly\n" );
 }
 
 static void test_DnsRecordSetCompare( void )
