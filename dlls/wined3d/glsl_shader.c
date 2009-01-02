@@ -3872,10 +3872,16 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface, SHADER_BU
                 shader_addline(buffer, "%s.xyz = mix(gl_Fog.color.xyz, %s.xyz, Fog);\n", fragcolor, fragcolor);
                 break;
             case FOG_EXP:
-                FIXME("Implement EXP fog in glsl\n");
+                /* Fog = e^(-gl_Fog.density * gl_FogFragCoord) */
+                shader_addline(buffer, "float Fog = exp(-gl_Fog.density * gl_FogFragCoord);\n");
+                shader_addline(buffer, "Fog = clamp(Fog, 0.0, 1.0);");
+                shader_addline(buffer, "%s.xyz = mix(gl_Fog.color.xyz, %s.xyz, Fog);\n", fragcolor, fragcolor);
                 break;
             case FOG_EXP2:
-                FIXME("Implement EXP2 fog in glsl\n");
+                /* Fog = e^(-(gl_Fog.density * gl_FogFragCoord)^2) */
+                shader_addline(buffer, "float Fog = exp(-gl_Fog.density * gl_Fog.density * gl_FogFragCoord * gl_FogFragCoord);\n");
+                shader_addline(buffer, "Fog = clamp(Fog, 0.0, 1.0);");
+                shader_addline(buffer, "%s.xyz = mix(gl_Fog.color.xyz, %s.xyz, Fog);\n", fragcolor, fragcolor);
                 break;
         }
     }
