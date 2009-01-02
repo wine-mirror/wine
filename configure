@@ -14285,6 +14285,9 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
 #include <resolv.h>
 int
 main ()

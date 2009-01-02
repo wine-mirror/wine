@@ -1011,7 +1011,10 @@ if test "$ac_cv_header_resolv_h" = "yes"
 then
     ac_save_LIBS="$LIBS"
     LIBS="$LIBS -lresolv"
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <resolv.h>]],[[res_init();]])],
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#include <resolv.h>]],[[res_init();]])],
         [AC_DEFINE(HAVE_RESOLV, 1, [Define if you have the resolver library and header])
          RESOLVLIBS="-lresolv"])
     LIBS="$ac_save_LIBS"
