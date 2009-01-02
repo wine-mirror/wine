@@ -53,18 +53,14 @@ static int reg_printfW(const WCHAR *msg, ...)
     return count;
 }
 
-static int reg_message(int msg, ...)
+static int reg_message(int msg)
 {
-    va_list va_args;
+    static const WCHAR formatW[] = {'%','s',0};
     WCHAR msg_buffer[8192];
 
     LoadStringW(GetModuleHandleW(NULL), msg, msg_buffer,
         sizeof(msg_buffer)/sizeof(WCHAR));
-    va_start(va_args, msg);
-    reg_printfW(msg_buffer, va_args);
-    va_end(va_args);
-
-    return 0;
+    return reg_printfW(formatW, msg_buffer);
 }
 
 static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
