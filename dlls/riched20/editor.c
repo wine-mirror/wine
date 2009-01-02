@@ -3558,7 +3558,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       nCopy = min(nCharsLeft, strText->nLen);
 
       if (unicode)
-        lstrcpynW((LPWSTR) dest, strText->szData, nCopy);
+        memcpy(dest, strText->szData, nCopy * sizeof(WCHAR));
       else
         nCopy = WideCharToMultiByte(CP_ACP, 0, strText->szData, nCopy, dest,
                                     nCharsLeft, NULL, NULL);
