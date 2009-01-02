@@ -452,7 +452,7 @@ BOOL CoreAudio_GetDevCaps (void)
     
     memcpy(CoreAudio_DefaultDevice.ds_desc.szDesc, name, sizeof(name));
     strcpy(CoreAudio_DefaultDevice.ds_desc.szDrvname, "winecoreaudio.drv");
-    MultiByteToWideChar(CP_ACP, 0, name, sizeof(name), 
+    MultiByteToWideChar(CP_UNIXCP, 0, name, sizeof(name),
                         CoreAudio_DefaultDevice.out_caps.szPname, 
                         sizeof(CoreAudio_DefaultDevice.out_caps.szPname) / sizeof(WCHAR));
     memcpy(CoreAudio_DefaultDevice.dev_name, name, 32);
@@ -506,7 +506,6 @@ LONG CoreAudio_WaveInit(void)
 {
     OSStatus status;
     UInt32 propertySize;
-    CHAR szPname[MAXPNAMELEN];
     int i;
     CFStringRef  messageThreadPortName;
     CFMessagePortRef port_ReceiveInMessageThread;
@@ -538,10 +537,13 @@ LONG CoreAudio_WaveInit(void)
         return DRV_FAILURE;
     
     CoreAudio_DefaultDevice.interface_name=HeapAlloc(GetProcessHeap(),0,strlen(CoreAudio_DefaultDevice.dev_name)+1);
-    sprintf(CoreAudio_DefaultDevice.interface_name, "%s", CoreAudio_DefaultDevice.dev_name);
+    strcpy(CoreAudio_DefaultDevice.interface_name, CoreAudio_DefaultDevice.dev_name);
     
     for (i = 0; i < MAX_WAVEOUTDRV; ++i)
     {
+        static const WCHAR wszWaveOutFormat[] =
+            {'C','o','r','e','A','u','d','i','o',' ','W','a','v','e','I','n',' ','%','d',0};
+
         WOutDev[i].state = WINE_WS_CLOSED;
         WOutDev[i].cadev = &CoreAudio_DefaultDevice; 
         WOutDev[i].woID = i;
@@ -550,8 +552,7 @@ LONG CoreAudio_WaveInit(void)
         
         WOutDev[i].caps.wMid = 0xcafe; 	/* Manufac ID */
         WOutDev[i].caps.wPid = 0x0001; 	/* Product ID */
-        snprintf(szPname, sizeof(szPname), "CoreAudio WaveOut %d", i);
-        MultiByteToWideChar(CP_ACP, 0, szPname, -1, WOutDev[i].caps.szPname, sizeof(WOutDev[i].caps.szPname)/sizeof(WCHAR));
+        snprintfW(WOutDev[i].caps.szPname, sizeof(WOutDev[i].caps.szPname)/sizeof(WCHAR), wszWaveOutFormat, i);
         snprintf(WOutDev[i].interface_name, sizeof(WOutDev[i].interface_name), "winecoreaudio: %d", i);
         
         WOutDev[i].caps.vDriverVersion = 0x0001;
@@ -590,6 +591,9 @@ LONG CoreAudio_WaveInit(void)
 
     for (i = 0; i < MAX_WAVEINDRV; ++i)
     {
+        static const WCHAR wszWaveInFormat[] =
+            {'C','o','r','e','A','u','d','i','o',' ','W','a','v','e','I','n',' ','%','d',0};
+
         memset(&WInDev[i], 0, sizeof(WInDev[i]));
         WInDev[i].wiID = i;
 
@@ -602,8 +606,7 @@ LONG CoreAudio_WaveInit(void)
         WInDev[i].caps.wPid = 0x0001; 	/* Product ID */
         WInDev[i].caps.vDriverVersion = 0x0001;
 
-        snprintf(szPname, sizeof(szPname), "CoreAudio WaveIn %d", i);
-        MultiByteToWideChar(CP_ACP, 0, szPname, -1, WInDev[i].caps.szPname, sizeof(WInDev[i].caps.szPname)/sizeof(WCHAR));
+        snprintfW(WInDev[i].caps.szPname, sizeof(WInDev[i].caps.szPname)/sizeof(WCHAR), wszWaveInFormat, i);
         snprintf(WInDev[i].interface_name, sizeof(WInDev[i].interface_name), "winecoreaudio in: %d", i);
 
         if (inputSampleRate == 96000)
@@ -1416,7 +1419,7 @@ static DWORD wodDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
 {
     TRACE("(%u, %p)\n", wDevID, dwParam1);
     
-    *dwParam1 = MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].cadev->interface_name, -1,
+    *dwParam1 = MultiByteToWideChar(CP_UNIXCP, 0, WOutDev[wDevID].cadev->interface_name, -1,
                                     NULL, 0 ) * sizeof(WCHAR);
     return MMSYSERR_NOERROR;
 }
@@ -1427,10 +1430,10 @@ static DWORD wodDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
 static DWORD wodDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 {
     TRACE("\n");
-    if (dwParam2 >= MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].cadev->interface_name, -1,
+    if (dwParam2 >= MultiByteToWideChar(CP_UNIXCP, 0, WOutDev[wDevID].cadev->interface_name, -1,
                                         NULL, 0 ) * sizeof(WCHAR))
     {
-        MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].cadev->interface_name, -1,
+        MultiByteToWideChar(CP_UNIXCP, 0, WOutDev[wDevID].cadev->interface_name, -1,
                             dwParam1, dwParam2 / sizeof(WCHAR));
         return MMSYSERR_NOERROR;
     }
@@ -2238,7 +2241,7 @@ static DWORD widDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
 {
     TRACE("(%u, %p)\n", wDevID, dwParam1);
 
-    *dwParam1 = MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].interface_name, -1,
+    *dwParam1 = MultiByteToWideChar(CP_UNIXCP, 0, WInDev[wDevID].interface_name, -1,
                                     NULL, 0 ) * sizeof(WCHAR);
     return MMSYSERR_NOERROR;
 }
@@ -2249,10 +2252,10 @@ static DWORD widDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
  */
 static DWORD widDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 {
-    if (dwParam2 >= MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].interface_name, -1,
+    if (dwParam2 >= MultiByteToWideChar(CP_UNIXCP, 0, WInDev[wDevID].interface_name, -1,
                                         NULL, 0 ) * sizeof(WCHAR))
     {
-        MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].interface_name, -1,
+        MultiByteToWideChar(CP_UNIXCP, 0, WInDev[wDevID].interface_name, -1,
                             dwParam1, dwParam2 / sizeof(WCHAR));
         return MMSYSERR_NOERROR;
     }
