@@ -158,7 +158,7 @@ void WCMD_output (const WCHAR *format, ...) {
   int ret;
 
   va_start(ap,format);
-  ret = wvsprintf (string, format, ap);
+  ret = vsnprintfW(string, sizeof(string)/sizeof(WCHAR), format, ap);
   if( ret >= (sizeof(string)/sizeof(WCHAR))) {
        WINE_ERR("Output truncated in WCMD_output\n" );
        ret = (sizeof(string)/sizeof(WCHAR)) - 1;
