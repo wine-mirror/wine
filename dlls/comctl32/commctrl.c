@@ -125,9 +125,9 @@ static const char manifest_filename[] = ARCH "_" NAME "_" PUBLIC_KEY "_" VERSION
 
 static LRESULT WINAPI COMCTL32_SubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-LPWSTR  COMCTL32_wSubclass = NULL;
+static LPWSTR COMCTL32_wSubclass = NULL;
 HMODULE COMCTL32_hModule = 0;
-LANGID  COMCTL32_uiLang = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
+static LANGID COMCTL32_uiLang = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
 HBRUSH  COMCTL32_hPattern55AABrush = NULL;
 COMCTL32_SysColor  comctl32_color;
 
