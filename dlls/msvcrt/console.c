@@ -289,9 +289,9 @@ int CDECL _cprintf(const char* format, ...)
 {
   char buf[2048], *mem = buf;
   int written, resize = sizeof(buf), retval;
-  va_list valist;
+  __ms_va_list valist;
 
-  va_start( valist, format );
+  __ms_va_start( valist, format );
   /* There are two conventions for snprintf failing:
    * Return -1 if we truncated, or
    * Return the number of bytes that would have been written
@@ -305,9 +305,9 @@ int CDECL _cprintf(const char* format, ...)
       MSVCRT_free (mem);
     if (!(mem = MSVCRT_malloc(resize)))
       return MSVCRT_EOF;
-    va_start( valist, format );
+    __ms_va_start( valist, format );
   }
-  va_end(valist);
+  __ms_va_end(valist);
   LOCK_CONSOLE;
   retval = _cputs( mem );
   UNLOCK_CONSOLE;

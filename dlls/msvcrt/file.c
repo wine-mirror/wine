@@ -3018,7 +3018,7 @@ MSVCRT_FILE* CDECL MSVCRT_tmpfile(void)
 /*********************************************************************
  *		vfprintf (MSVCRT.@)
  */
-int CDECL MSVCRT_vfprintf(MSVCRT_FILE* file, const char *format, va_list valist)
+int CDECL MSVCRT_vfprintf(MSVCRT_FILE* file, const char *format, __ms_va_list valist)
 {
   char buf[2048], *mem = buf;
   int written, resize = sizeof(buf), retval;
@@ -3048,7 +3048,7 @@ int CDECL MSVCRT_vfprintf(MSVCRT_FILE* file, const char *format, va_list valist)
  * Is final char included in written (then resize is too big) or not
  * (then we must test for equality too)?
  */
-int CDECL MSVCRT_vfwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, va_list valist)
+int CDECL MSVCRT_vfwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __ms_va_list valist)
 {
   MSVCRT_wchar_t buf[2048], *mem = buf;
   int written, resize = sizeof(buf) / sizeof(MSVCRT_wchar_t), retval;
@@ -3071,7 +3071,7 @@ int CDECL MSVCRT_vfwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, va_l
 /*********************************************************************
  *		vprintf (MSVCRT.@)
  */
-int CDECL MSVCRT_vprintf(const char *format, va_list valist)
+int CDECL MSVCRT_vprintf(const char *format, __ms_va_list valist)
 {
   return MSVCRT_vfprintf(MSVCRT_stdout,format,valist);
 }
@@ -3079,7 +3079,7 @@ int CDECL MSVCRT_vprintf(const char *format, va_list valist)
 /*********************************************************************
  *		vwprintf (MSVCRT.@)
  */
-int CDECL MSVCRT_vwprintf(const MSVCRT_wchar_t *format, va_list valist)
+int CDECL MSVCRT_vwprintf(const MSVCRT_wchar_t *format, __ms_va_list valist)
 {
   return MSVCRT_vfwprintf(MSVCRT_stdout,format,valist);
 }
@@ -3089,11 +3089,11 @@ int CDECL MSVCRT_vwprintf(const MSVCRT_wchar_t *format, va_list valist)
  */
 int CDECL MSVCRT_fprintf(MSVCRT_FILE* file, const char *format, ...)
 {
-    va_list valist;
+    __ms_va_list valist;
     int res;
-    va_start(valist, format);
+    __ms_va_start(valist, format);
     res = MSVCRT_vfprintf(file, format, valist);
-    va_end(valist);
+    __ms_va_end(valist);
     return res;
 }
 
@@ -3102,11 +3102,11 @@ int CDECL MSVCRT_fprintf(MSVCRT_FILE* file, const char *format, ...)
  */
 int CDECL MSVCRT_fwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, ...)
 {
-    va_list valist;
+    __ms_va_list valist;
     int res;
-    va_start(valist, format);
+    __ms_va_start(valist, format);
     res = MSVCRT_vfwprintf(file, format, valist);
-    va_end(valist);
+    __ms_va_end(valist);
     return res;
 }
 
@@ -3115,11 +3115,11 @@ int CDECL MSVCRT_fwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, ...)
  */
 int CDECL MSVCRT_printf(const char *format, ...)
 {
-    va_list valist;
+    __ms_va_list valist;
     int res;
-    va_start(valist, format);
+    __ms_va_start(valist, format);
     res = MSVCRT_vfprintf(MSVCRT_stdout, format, valist);
-    va_end(valist);
+    __ms_va_end(valist);
     return res;
 }
 
@@ -3164,11 +3164,11 @@ MSVCRT_wint_t CDECL MSVCRT_ungetwc(MSVCRT_wint_t wc, MSVCRT_FILE * file)
  */
 int CDECL MSVCRT_wprintf(const MSVCRT_wchar_t *format, ...)
 {
-    va_list valist;
+    __ms_va_list valist;
     int res;
-    va_start(valist, format);
+    __ms_va_start(valist, format);
     res = MSVCRT_vwprintf(format, valist);
-    va_end(valist);
+    __ms_va_end(valist);
     return res;
 }
 

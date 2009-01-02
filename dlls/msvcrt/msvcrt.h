@@ -665,9 +665,9 @@ double __cdecl   MSVCRT_difftime(MSVCRT_time_t time1, MSVCRT_time_t time2);
 MSVCRT_time_t  __cdecl MSVCRT_time(MSVCRT_time_t*);
 MSVCRT_FILE*   __cdecl MSVCRT__fdopen(int, const char *);
 MSVCRT_FILE*   __cdecl MSVCRT__wfdopen(int, const MSVCRT_wchar_t *);
-int            __cdecl MSVCRT_vsnprintf(char *str, unsigned int len, const char *format, va_list valist);
+int            __cdecl MSVCRT_vsnprintf(char *str, unsigned int len, const char *format, __ms_va_list valist);
 int            __cdecl MSVCRT_vsnwprintf(MSVCRT_wchar_t *str, unsigned int len,
-                                       const MSVCRT_wchar_t *format, va_list valist );
+                                       const MSVCRT_wchar_t *format, __ms_va_list valist );
 int            __cdecl MSVCRT_raise(int sig);
 
 #ifndef __WINE_MSVCRT_TEST
