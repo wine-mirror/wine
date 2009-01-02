@@ -999,8 +999,12 @@ static HRESULT WINAPI PrimaryBufferImpl_Unlock(
 
 	if (!(device->drvdesc.dwFlags & DSDDESC_DONTNEEDPRIMARYLOCK) && device->hwbuf) {
 		HRESULT	hres;
-		
-		hres = IDsDriverBuffer_Unlock(device->hwbuf, p1, x1, p2, x2);
+
+		if ((char *)p1 - (char *)device->buffer + x1 > device->buflen)
+		    hres = DSERR_INVALIDPARAM;
+		else
+		    hres = IDsDriverBuffer_Unlock(device->hwbuf, p1, x1, p2, x2);
+
 		if (hres != DS_OK) {
 			WARN("IDsDriverBuffer_Unlock failed\n");
 			return hres;
