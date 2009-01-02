@@ -1760,7 +1760,7 @@ extern const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl;
 typedef struct SAVEDSTATES {
     WORD streamSource;              /* MAX_STREAMS, 16 */
     WORD streamFreq;                /* MAX_STREAMS, 16 */
-    BOOL textures[MAX_COMBINED_SAMPLERS];
+    DWORD textures;                 /* MAX_COMBINED_SAMPLERS, 20 */
     BOOL transform[HIGHEST_TRANSFORMSTATE + 1];
     BOOL renderState[WINEHIGHEST_RENDER_STATE + 1];
     BOOL textureState[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];

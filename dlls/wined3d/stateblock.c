@@ -88,7 +88,7 @@ static void stateblock_savedstates_copy(IWineD3DStateBlock* iface, SAVEDSTATES *
     /* Fixed size arrays */
     dest->streamSource = source->streamSource;
     dest->streamFreq = source->streamFreq;
-    memcpy(dest->textures, source->textures, bsize * MAX_COMBINED_SAMPLERS);
+    dest->textures = source->textures;
     memcpy(dest->transform, source->transform, bsize * (HIGHEST_TRANSFORMSTATE + 1));
     memcpy(dest->renderState, source->renderState, bsize * (WINEHIGHEST_RENDER_STATE + 1));
     memcpy(dest->textureState, source->textureState, bsize * MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE + 1));
@@ -125,7 +125,7 @@ void stateblock_savedstates_set(
     /* Fixed size arrays */
     states->streamSource = value ? 0xffff : 0;
     states->streamFreq = value ? 0xffff : 0;
-    memset(states->textures, value, bsize * MAX_COMBINED_SAMPLERS);
+    states->textures = value ? 0xfffff : 0;
     memset(states->transform, value, bsize * (HIGHEST_TRANSFORMSTATE + 1));
     memset(states->renderState, value, bsize * (WINEHIGHEST_RENDER_STATE + 1));
     memset(states->textureState, value, bsize * MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE + 1));
@@ -574,11 +574,13 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
 
         /* Samplers */
         /* TODO: move over to using memcpy */
-        for (j = 0; j < MAX_COMBINED_SAMPLERS; j++) {
-            if (This->changed.textures[j]) {
-                TRACE("Updating texture %u to %p (was %p)\n", j, targetStateBlock->textures[j], This->textures[j]);
-                This->textures[j] = targetStateBlock->textures[j];
-            }
+        map = This->changed.textures;
+        for (i = 0; map; map >>= 1, ++i)
+        {
+            if (!(map & 1)) continue;
+
+            TRACE("Updating texture %u to %p (was %p)\n", i, targetStateBlock->textures[i], This->textures[i]);
+            This->textures[i] = targetStateBlock->textures[i];
         }
 
         for (j = 0; j < This->num_contained_sampler_states; j++) {
@@ -832,14 +834,15 @@ should really perform a delta so that only the changes get updated*/
         {
             if (map & 1) IWineD3DDevice_SetStreamSourceFreq(pDevice, i, This->streamFreq[i] | This->streamFlags[i]);
         }
-        for (j = 0 ; j < MAX_COMBINED_SAMPLERS; j++){
-            if (This->changed.textures[j]) {
-                if (j < MAX_FRAGMENT_SAMPLERS) {
-                    IWineD3DDevice_SetTexture(pDevice, j, This->textures[j]);
-                } else {
-                    IWineD3DDevice_SetTexture(pDevice, WINED3DVERTEXTEXTURESAMPLER0 + j - MAX_FRAGMENT_SAMPLERS, This->textures[j]);
-                }
-            }
+
+        map = This->changed.textures;
+        for (i = 0; map; map >>= 1, ++i)
+        {
+            if (!(map & 1)) continue;
+
+            if (i < MAX_FRAGMENT_SAMPLERS) IWineD3DDevice_SetTexture(pDevice, i, This->textures[i]);
+            else IWineD3DDevice_SetTexture(pDevice, WINED3DVERTEXTEXTURESAMPLER0 + i - MAX_FRAGMENT_SAMPLERS,
+                    This->textures[i]);
         }
 
         map = This->changed.clipplane;
@@ -1239,7 +1242,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
 
     for(i = 0; i < GL_LIMITS(textures); i++) {
         /* Note: This avoids calling SetTexture, so pretend it has been called */
-        This->changed.textures[i] = TRUE;
+        This->changed.textures |= 1 << i;
         This->textures[i]         = NULL;
     }
 
