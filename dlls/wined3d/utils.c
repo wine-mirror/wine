@@ -1512,6 +1512,7 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) {
         case WINED3DFVF_XYZB3:  size += 6 * sizeof(float); break;
         case WINED3DFVF_XYZB4:  size += 7 * sizeof(float); break;
         case WINED3DFVF_XYZB5:  size += 8 * sizeof(float); break;
+        case WINED3DFVF_XYZW:   size += 4 * sizeof(float); break;
         default: ERR("Unexpected position mask\n");
     }
     for (i = 0; i < numTextures; i++) {
