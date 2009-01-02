@@ -5242,12 +5242,11 @@ static LRESULT TOOLBAR_Unkwn45D(HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-/* UNDOCUMENTED MESSAGE: This is an extended version of the
- * TB_SETHOTITEM message. It allows the caller to specify a reason why the
- * hot item changed (rather than just the HICF_OTHER that TB_SETHOTITEM
- * sends). */
+/* This is an extended version of the TB_SETHOTITEM message. It allows the
+ * caller to specify a reason why the hot item changed (rather than just the
+ * HICF_OTHER that TB_SETHOTITEM sends). */
 static LRESULT
-TOOLBAR_Unkwn45E (HWND hwnd, WPARAM wParam, LPARAM lParam)
+TOOLBAR_SetHotItem2 (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
     INT nOldHotItem = infoPtr->nHotItem;
@@ -5268,17 +5267,14 @@ TOOLBAR_Unkwn45E (HWND hwnd, WPARAM wParam, LPARAM lParam)
     return (nOldHotItem < 0) ? -1 : (LRESULT)nOldHotItem;
 }
 
-/* UNDOCUMENTED MESSAGE: This sets the toolbar global iListGap parameter
- * which controls the amount of spacing between the image and the text
- * of buttons for TBSTYLE_LIST toolbars. */
-static LRESULT TOOLBAR_Unkwn460(HWND hwnd, WPARAM wParam, LPARAM lParam)
+/* Sets the toolbar global iListGap parameter which controls the amount of
+ * spacing between the image and the text of buttons for TBSTYLE_LIST
+ * toolbars. */
+static LRESULT TOOLBAR_SetListGap(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
 
     TRACE("hwnd=%p iListGap=%ld\n", hwnd, wParam);
-    
-    if (lParam != 0)
-        FIXME("lParam = 0x%08lx. Please report\n", lParam);
     
     infoPtr->iListGap = (INT)wParam;
 
@@ -5287,9 +5283,9 @@ static LRESULT TOOLBAR_Unkwn460(HWND hwnd, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-/* UNDOCUMENTED MESSAGE: This returns the number of maximum number
- * of image lists associated with the various states. */
-static LRESULT TOOLBAR_Unkwn462(HWND hwnd, WPARAM wParam, LPARAM lParam)
+/* Returns the number of maximum number of image lists associated with the
+ * various states. */
+static LRESULT TOOLBAR_GetImageListCount(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
 
@@ -5299,7 +5295,7 @@ static LRESULT TOOLBAR_Unkwn462(HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 static LRESULT
-TOOLBAR_Unkwn463 (HWND hwnd, WPARAM wParam, LPARAM lParam)
+TOOLBAR_GetIdealSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     LPSIZE lpsize = (LPSIZE)lParam;
@@ -5314,7 +5310,7 @@ TOOLBAR_Unkwn463 (HWND hwnd, WPARAM wParam, LPARAM lParam)
      *   lParam    pointer to SIZE structure
      *
      */
-    TRACE("[0463] wParam %ld, lParam 0x%08lx -> 0x%08x 0x%08x\n",
+    TRACE("wParam %ld, lParam 0x%08lx -> 0x%08x 0x%08x\n",
 	  wParam, lParam, lpsize->cx, lpsize->cy);
 
     switch(wParam) {
@@ -5341,11 +5337,10 @@ TOOLBAR_Unkwn463 (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	lpsize->cy = infoPtr->rcBound.bottom - infoPtr->rcBound.top;
 	break;
     default:
-	ERR("Unknown wParam %ld for Toolbar message [0463]. Please report\n",
-	    wParam);
+	FIXME("Unknown wParam %ld\n", wParam);
 	return 0;
     }
-    TRACE("[0463] set to -> 0x%08x 0x%08x\n",
+    TRACE("set to -> 0x%08x 0x%08x\n",
 	  lpsize->cx, lpsize->cy);
     return 1;
 }
@@ -6920,17 +6915,17 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case TB_UNKWN45D:
 	    return TOOLBAR_Unkwn45D(hwnd, wParam, lParam);
 
-	case TB_UNKWN45E:
-	    return TOOLBAR_Unkwn45E (hwnd, wParam, lParam);
+	case TB_SETHOTITEM2:
+	    return TOOLBAR_SetHotItem2 (hwnd, wParam, lParam);
 
-	case TB_UNKWN460:
-	    return TOOLBAR_Unkwn460(hwnd, wParam, lParam);
+	case TB_SETLISTGAP:
+	    return TOOLBAR_SetListGap(hwnd, wParam, lParam);
 
-	case TB_UNKWN462:
-	    return TOOLBAR_Unkwn462(hwnd, wParam, lParam);
+	case TB_GETIMAGELISTCOUNT:
+	    return TOOLBAR_GetImageListCount(hwnd, wParam, lParam);
 
-	case TB_UNKWN463:
-	    return TOOLBAR_Unkwn463 (hwnd, wParam, lParam);
+	case TB_GETIDEALSIZE:
+	    return TOOLBAR_GetIdealSize (hwnd, wParam, lParam);
 
 	case TB_UNKWN464:
 	    return TOOLBAR_Unkwn464(hwnd, wParam, lParam);
