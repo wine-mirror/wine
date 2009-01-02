@@ -932,16 +932,16 @@ void kill_thread( struct thread *thread, int violent_death )
 /* trigger a breakpoint event in a given thread */
 void break_thread( struct thread *thread )
 {
-    struct debug_event_exception data;
+    debug_event_t data;
 
     assert( thread->context );
 
-    data.record.ExceptionCode    = STATUS_BREAKPOINT;
-    data.record.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    data.record.ExceptionRecord  = NULL;
-    data.record.ExceptionAddress = get_context_ip( thread->context );
-    data.record.NumberParameters = 0;
-    data.first = 1;
+    data.exception.record.ExceptionCode    = STATUS_BREAKPOINT;
+    data.exception.record.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+    data.exception.record.ExceptionRecord  = NULL;
+    data.exception.record.ExceptionAddress = get_context_ip( thread->context );
+    data.exception.record.NumberParameters = 0;
+    data.exception.first = 1;
     generate_debug_event( thread, EXCEPTION_DEBUG_EVENT, &data );
     thread->debug_break = 0;
 }

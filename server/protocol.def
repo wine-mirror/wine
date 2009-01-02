@@ -69,76 +69,71 @@ struct request_max_size
 #define LAST_USER_HANDLE  0xffef  /* last possible value for low word of user handle */
 
 
-/* definitions of the event data depending on the event code */
-struct debug_event_exception
-{
-    EXCEPTION_RECORD record;   /* exception record */
-    int              first;    /* first chance exception? */
-};
-struct debug_event_create_thread
-{
-    obj_handle_t handle;     /* handle to the new thread */
-    client_ptr_t teb;        /* thread teb (in debugged process address space) */
-    client_ptr_t start;      /* thread startup routine */
-};
-struct debug_event_create_process
-{
-    obj_handle_t file;       /* handle to the process exe file */
-    obj_handle_t process;    /* handle to the new process */
-    obj_handle_t thread;     /* handle to the new thread */
-    mod_handle_t base;       /* base of executable image */
-    int          dbg_offset; /* offset of debug info in file */
-    int          dbg_size;   /* size of debug info */
-    client_ptr_t teb;        /* thread teb (in debugged process address space) */
-    client_ptr_t start;      /* thread startup routine */
-    client_ptr_t name;       /* image name (optional) */
-    int          unicode;    /* is it Unicode? */
-};
-struct debug_event_exit
-{
-    int          exit_code;  /* thread or process exit code */
-};
-struct debug_event_load_dll
-{
-    obj_handle_t handle;     /* file handle for the dll */
-    mod_handle_t base;       /* base address of the dll */
-    int          dbg_offset; /* offset of debug info in file */
-    int          dbg_size;   /* size of debug info */
-    client_ptr_t name;       /* image name (optional) */
-    int          unicode;    /* is it Unicode? */
-};
-struct debug_event_unload_dll
-{
-    mod_handle_t base;       /* base address of the dll */
-};
-struct debug_event_output_string
-{
-    client_ptr_t string;     /* string to display (in debugged process address space) */
-    int          unicode;    /* is it Unicode? */
-    data_size_t  length;     /* string length */
-};
-struct debug_event_rip_info
-{
-    int         error;      /* ??? */
-    int         type;       /* ??? */
-};
-union debug_event_data
-{
-    struct debug_event_exception      exception;
-    struct debug_event_create_thread  create_thread;
-    struct debug_event_create_process create_process;
-    struct debug_event_exit           exit;
-    struct debug_event_load_dll       load_dll;
-    struct debug_event_unload_dll     unload_dll;
-    struct debug_event_output_string  output_string;
-    struct debug_event_rip_info       rip_info;
-};
-
 /* debug event data */
-typedef struct
+typedef union
 {
-    int                      code;   /* event code */
-    union debug_event_data   info;   /* event information */
+    int code;   /* event code */
+    struct
+    {
+        int              code;     /* EXCEPTION_DEBUG_EVENT */
+        int              first;    /* first chance exception? */
+        EXCEPTION_RECORD record;   /* exception record */
+    } exception;
+    struct
+    {
+        int          code;       /* CREATE_THREAD_DEBUG_EVENT */
+        obj_handle_t handle;     /* handle to the new thread */
+        client_ptr_t teb;        /* thread teb (in debugged process address space) */
+        client_ptr_t start;      /* thread startup routine */
+    } create_thread;
+    struct
+    {
+        int          code;       /* CREATE_PROCESS_DEBUG_EVENT */
+        obj_handle_t file;       /* handle to the process exe file */
+        obj_handle_t process;    /* handle to the new process */
+        obj_handle_t thread;     /* handle to the new thread */
+        mod_handle_t base;       /* base of executable image */
+        int          dbg_offset; /* offset of debug info in file */
+        int          dbg_size;   /* size of debug info */
+        client_ptr_t teb;        /* thread teb (in debugged process address space) */
+        client_ptr_t start;      /* thread startup routine */
+        client_ptr_t name;       /* image name (optional) */
+        int          unicode;    /* is it Unicode? */
+    } create_process;
+    struct
+    {
+        int          code;       /* EXIT_THREAD_DEBUG_EVENT/EXIT_PROCESS_DEBUG_EVENT */
+        int          exit_code;  /* thread or process exit code */
+    } exit;
+    struct
+    {
+        int          code;       /* LOAD_DLL_DEBUG_EVENT */
+        obj_handle_t handle;     /* file handle for the dll */
+        mod_handle_t base;       /* base address of the dll */
+        int          dbg_offset; /* offset of debug info in file */
+        int          dbg_size;   /* size of debug info */
+        client_ptr_t name;       /* image name (optional) */
+        int          unicode;    /* is it Unicode? */
+    } load_dll;
+    struct
+    {
+        int          code;       /* UNLOAD_DLL_DEBUG_EVENT */
+        int          __pad;
+        mod_handle_t base;       /* base address of the dll */
+    } unload_dll;
+    struct
+    {
+        int          code;       /* OUTPUT_DEBUG_STRING_EVENT */
+        int          unicode;    /* is it Unicode? */
+        client_ptr_t string;     /* string to display (in debugged process address space) */
+        data_size_t  length;     /* string length */
+    } output_string;
+    struct
+    {
+        int          code;       /* RIP_EVENT */
+        int          error;      /* ??? */
+        int          type;       /* ??? */
+    } rip_info;
 } debug_event_t;
 
 /* structure used in sending an fd from client to server */

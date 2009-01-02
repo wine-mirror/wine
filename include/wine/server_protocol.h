@@ -54,75 +54,70 @@ struct request_max_size
 
 
 
-struct debug_event_exception
+typedef union
 {
-    EXCEPTION_RECORD record;
-    int              first;
-};
-struct debug_event_create_thread
-{
-    obj_handle_t handle;
-    client_ptr_t teb;
-    client_ptr_t start;
-};
-struct debug_event_create_process
-{
-    obj_handle_t file;
-    obj_handle_t process;
-    obj_handle_t thread;
-    mod_handle_t base;
-    int          dbg_offset;
-    int          dbg_size;
-    client_ptr_t teb;
-    client_ptr_t start;
-    client_ptr_t name;
-    int          unicode;
-};
-struct debug_event_exit
-{
-    int          exit_code;
-};
-struct debug_event_load_dll
-{
-    obj_handle_t handle;
-    mod_handle_t base;
-    int          dbg_offset;
-    int          dbg_size;
-    client_ptr_t name;
-    int          unicode;
-};
-struct debug_event_unload_dll
-{
-    mod_handle_t base;
-};
-struct debug_event_output_string
-{
-    client_ptr_t string;
-    int          unicode;
-    data_size_t  length;
-};
-struct debug_event_rip_info
-{
-    int         error;
-    int         type;
-};
-union debug_event_data
-{
-    struct debug_event_exception      exception;
-    struct debug_event_create_thread  create_thread;
-    struct debug_event_create_process create_process;
-    struct debug_event_exit           exit;
-    struct debug_event_load_dll       load_dll;
-    struct debug_event_unload_dll     unload_dll;
-    struct debug_event_output_string  output_string;
-    struct debug_event_rip_info       rip_info;
-};
-
-
-typedef struct
-{
-    int                      code;
-    union debug_event_data   info;
+    int code;
+    struct
+    {
+        int              code;
+        int              first;
+        EXCEPTION_RECORD record;
+    } exception;
+    struct
+    {
+        int          code;
+        obj_handle_t handle;
+        client_ptr_t teb;
+        client_ptr_t start;
+    } create_thread;
+    struct
+    {
+        int          code;
+        obj_handle_t file;
+        obj_handle_t process;
+        obj_handle_t thread;
+        mod_handle_t base;
+        int          dbg_offset;
+        int          dbg_size;
+        client_ptr_t teb;
+        client_ptr_t start;
+        client_ptr_t name;
+        int          unicode;
+    } create_process;
+    struct
+    {
+        int          code;
+        int          exit_code;
+    } exit;
+    struct
+    {
+        int          code;
+        obj_handle_t handle;
+        mod_handle_t base;
+        int          dbg_offset;
+        int          dbg_size;
+        client_ptr_t name;
+        int          unicode;
+    } load_dll;
+    struct
+    {
+        int          code;
+        int          __pad;
+        mod_handle_t base;
+    } unload_dll;
+    struct
+    {
+        int          code;
+        int          unicode;
+        client_ptr_t string;
+        data_size_t  length;
+    } output_string;
+    struct
+    {
+        int          code;
+        int          error;
+        int          type;
+    } rip_info;
 } debug_event_t;
 
 
@@ -5063,6 +5058,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 378
+#define SERVER_PROTOCOL_VERSION 379
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -495,58 +495,58 @@ static void dump_varargs_debug_event( data_size_t size )
     {
     case EXCEPTION_DEBUG_EVENT:
         fprintf( stderr, "{exception," );
-        dump_exc_record( &event->info.exception.record );
-        fprintf( stderr, ",first=%d}", event->info.exception.first );
+        dump_exc_record( &event->exception.record );
+        fprintf( stderr, ",first=%d}", event->exception.first );
         break;
     case CREATE_THREAD_DEBUG_EVENT:
-        fprintf( stderr, "{create_thread,thread=%04x,teb=", event->info.create_thread.handle );
-        dump_uint64( &event->info.create_thread.teb );
+        fprintf( stderr, "{create_thread,thread=%04x,teb=", event->create_thread.handle );
+        dump_uint64( &event->create_thread.teb );
         fprintf( stderr, ",start=" );
-        dump_uint64( &event->info.create_thread.start );
+        dump_uint64( &event->create_thread.start );
         fputc( '}', stderr );
         break;
     case CREATE_PROCESS_DEBUG_EVENT:
         fprintf( stderr, "{create_process,file=%04x,process=%04x,thread=%04x,base=",
-                 event->info.create_process.file, event->info.create_process.process,
-                 event->info.create_process.thread );
-        dump_uint64( &event->info.create_process.base );
+                 event->create_process.file, event->create_process.process,
+                 event->create_process.thread );
+        dump_uint64( &event->create_process.base );
         fprintf( stderr, ",offset=%d,size=%d,teb=",
-                 event->info.create_process.dbg_offset, event->info.create_process.dbg_size );
-        dump_uint64( &event->info.create_process.teb );
+                 event->create_process.dbg_offset, event->create_process.dbg_size );
+        dump_uint64( &event->create_process.teb );
         fprintf( stderr, ",start=" );
-        dump_uint64( &event->info.create_process.start );
+        dump_uint64( &event->create_process.start );
         fprintf( stderr, ",name=" );
-        dump_uint64( &event->info.create_process.name );
-        fprintf( stderr, ",unicode=%d}", event->info.create_process.unicode );
+        dump_uint64( &event->create_process.name );
+        fprintf( stderr, ",unicode=%d}", event->create_process.unicode );
         break;
     case EXIT_THREAD_DEBUG_EVENT:
-        fprintf( stderr, "{exit_thread,code=%d}", event->info.exit.exit_code );
+        fprintf( stderr, "{exit_thread,code=%d}", event->exit.exit_code );
         break;
     case EXIT_PROCESS_DEBUG_EVENT:
-        fprintf( stderr, "{exit_process,code=%d}", event->info.exit.exit_code );
+        fprintf( stderr, "{exit_process,code=%d}", event->exit.exit_code );
         break;
     case LOAD_DLL_DEBUG_EVENT:
-        fprintf( stderr, "{load_dll,file=%04x,base", event->info.load_dll.handle );
-        dump_uint64( &event->info.load_dll.base );
+        fprintf( stderr, "{load_dll,file=%04x,base", event->load_dll.handle );
+        dump_uint64( &event->load_dll.base );
         fprintf( stderr, ",offset=%d,size=%d,name=",
-                 event->info.load_dll.dbg_offset, event->info.load_dll.dbg_size );
-        dump_uint64( &event->info.load_dll.name );
-        fprintf( stderr, ",unicode=%d}", event->info.load_dll.unicode );
+                 event->load_dll.dbg_offset, event->load_dll.dbg_size );
+        dump_uint64( &event->load_dll.name );
+        fprintf( stderr, ",unicode=%d}", event->load_dll.unicode );
         break;
     case UNLOAD_DLL_DEBUG_EVENT:
         fputs( "{unload_dll,base=", stderr );
-        dump_uint64( &event->info.unload_dll.base );
+        dump_uint64( &event->unload_dll.base );
         fputc( '}', stderr );
         break;
     case OUTPUT_DEBUG_STRING_EVENT:
         fprintf( stderr, "{output_string,string=" );
-        dump_uint64( &event->info.output_string.string );
+        dump_uint64( &event->output_string.string );
         fprintf( stderr, ",unicode=%d,len=%u}",
-                 event->info.output_string.unicode, event->info.output_string.length );
+                 event->output_string.unicode, event->output_string.length );
         break;
     case RIP_EVENT:
         fprintf( stderr, "{rip,err=%d,type=%d}",
-                 event->info.rip_info.error, event->info.rip_info.type );
+                 event->rip_info.error, event->rip_info.type );
         break;
     case 0:  /* zero is the code returned on timeouts */
         fprintf( stderr, "{}" );

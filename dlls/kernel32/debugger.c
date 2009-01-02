@@ -74,51 +74,51 @@ BOOL WINAPI WaitForDebugEvent(
             switch(data.code)
             {
             case EXCEPTION_DEBUG_EVENT:
-                event->u.Exception.ExceptionRecord = data.info.exception.record;
-                event->u.Exception.dwFirstChance   = data.info.exception.first;
+                event->u.Exception.ExceptionRecord = data.exception.record;
+                event->u.Exception.dwFirstChance   = data.exception.first;
                 break;
             case CREATE_THREAD_DEBUG_EVENT:
-                event->u.CreateThread.hThread           = wine_server_ptr_handle( data.info.create_thread.handle );
-                event->u.CreateThread.lpThreadLocalBase = wine_server_get_ptr( data.info.create_thread.teb );
-                event->u.CreateThread.lpStartAddress    = wine_server_get_ptr( data.info.create_thread.start );
+                event->u.CreateThread.hThread           = wine_server_ptr_handle( data.create_thread.handle );
+                event->u.CreateThread.lpThreadLocalBase = wine_server_get_ptr( data.create_thread.teb );
+                event->u.CreateThread.lpStartAddress    = wine_server_get_ptr( data.create_thread.start );
                 break;
             case CREATE_PROCESS_DEBUG_EVENT:
-                event->u.CreateProcessInfo.hFile                 = wine_server_ptr_handle( data.info.create_process.file );
-                event->u.CreateProcessInfo.hProcess              = wine_server_ptr_handle( data.info.create_process.process );
-                event->u.CreateProcessInfo.hThread               = wine_server_ptr_handle( data.info.create_process.thread );
-                event->u.CreateProcessInfo.lpBaseOfImage         = wine_server_get_ptr( data.info.create_process.base );
-                event->u.CreateProcessInfo.dwDebugInfoFileOffset = data.info.create_process.dbg_offset;
-                event->u.CreateProcessInfo.nDebugInfoSize        = data.info.create_process.dbg_size;
-                event->u.CreateProcessInfo.lpThreadLocalBase     = wine_server_get_ptr( data.info.create_process.teb );
-                event->u.CreateProcessInfo.lpStartAddress        = wine_server_get_ptr( data.info.create_process.start );
-                event->u.CreateProcessInfo.lpImageName           = wine_server_get_ptr( data.info.create_process.name );
-                event->u.CreateProcessInfo.fUnicode              = data.info.create_process.unicode;
+                event->u.CreateProcessInfo.hFile                 = wine_server_ptr_handle( data.create_process.file );
+                event->u.CreateProcessInfo.hProcess              = wine_server_ptr_handle( data.create_process.process );
+                event->u.CreateProcessInfo.hThread               = wine_server_ptr_handle( data.create_process.thread );
+                event->u.CreateProcessInfo.lpBaseOfImage         = wine_server_get_ptr( data.create_process.base );
+                event->u.CreateProcessInfo.dwDebugInfoFileOffset = data.create_process.dbg_offset;
+                event->u.CreateProcessInfo.nDebugInfoSize        = data.create_process.dbg_size;
+                event->u.CreateProcessInfo.lpThreadLocalBase     = wine_server_get_ptr( data.create_process.teb );
+                event->u.CreateProcessInfo.lpStartAddress        = wine_server_get_ptr( data.create_process.start );
+                event->u.CreateProcessInfo.lpImageName           = wine_server_get_ptr( data.create_process.name );
+                event->u.CreateProcessInfo.fUnicode              = data.create_process.unicode;
                 break;
             case EXIT_THREAD_DEBUG_EVENT:
-                event->u.ExitThread.dwExitCode = data.info.exit.exit_code;
+                event->u.ExitThread.dwExitCode = data.exit.exit_code;
                 break;
             case EXIT_PROCESS_DEBUG_EVENT:
-                event->u.ExitProcess.dwExitCode = data.info.exit.exit_code;
+                event->u.ExitProcess.dwExitCode = data.exit.exit_code;
                 break;
             case LOAD_DLL_DEBUG_EVENT:
-                event->u.LoadDll.hFile                 = wine_server_ptr_handle( data.info.load_dll.handle );
-                event->u.LoadDll.lpBaseOfDll           = wine_server_get_ptr( data.info.load_dll.base );
-                event->u.LoadDll.dwDebugInfoFileOffset = data.info.load_dll.dbg_offset;
-                event->u.LoadDll.nDebugInfoSize        = data.info.load_dll.dbg_size;
-                event->u.LoadDll.lpImageName           = wine_server_get_ptr( data.info.load_dll.name );
-                event->u.LoadDll.fUnicode              = data.info.load_dll.unicode;
+                event->u.LoadDll.hFile                 = wine_server_ptr_handle( data.load_dll.handle );
+                event->u.LoadDll.lpBaseOfDll           = wine_server_get_ptr( data.load_dll.base );
+                event->u.LoadDll.dwDebugInfoFileOffset = data.load_dll.dbg_offset;
+                event->u.LoadDll.nDebugInfoSize        = data.load_dll.dbg_size;
+                event->u.LoadDll.lpImageName           = wine_server_get_ptr( data.load_dll.name );
+                event->u.LoadDll.fUnicode              = data.load_dll.unicode;
                 break;
             case UNLOAD_DLL_DEBUG_EVENT:
-                event->u.UnloadDll.lpBaseOfDll = wine_server_get_ptr( data.info.unload_dll.base );
+                event->u.UnloadDll.lpBaseOfDll = wine_server_get_ptr( data.unload_dll.base );
                 break;
             case OUTPUT_DEBUG_STRING_EVENT:
-                event->u.DebugString.lpDebugStringData  = wine_server_get_ptr( data.info.output_string.string );
-                event->u.DebugString.fUnicode           = data.info.output_string.unicode;
-                event->u.DebugString.nDebugStringLength = data.info.output_string.length;
+                event->u.DebugString.lpDebugStringData  = wine_server_get_ptr( data.output_string.string );
+                event->u.DebugString.fUnicode           = data.output_string.unicode;
+                event->u.DebugString.nDebugStringLength = data.output_string.length;
                 break;
             case RIP_EVENT:
-                event->u.RipInfo.dwError = data.info.rip_info.error;
-                event->u.RipInfo.dwType  = data.info.rip_info.type;
+                event->u.RipInfo.dwError = data.rip_info.error;
+                event->u.RipInfo.dwType  = data.rip_info.type;
                 break;
             }
         done:
