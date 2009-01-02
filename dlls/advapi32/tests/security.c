@@ -1870,7 +1870,8 @@ static void test_granted_access(HANDLE handle, ACCESS_MASK access,
 static void test_process_security(void)
 {
     BOOL res;
-    char owner[32], group[32];
+    PTOKEN_OWNER owner;
+    PTOKEN_PRIMARY_GROUP group;
     PSID AdminSid = NULL, UsersSid = NULL;
     PACL Acl = NULL;
     SECURITY_DESCRIPTOR *SecurityDescriptor = NULL;
@@ -1879,7 +1880,7 @@ static void test_process_security(void)
     STARTUPINFOA startup;
     SECURITY_ATTRIBUTES psa;
     HANDLE token, event;
-    DWORD tmp;
+    DWORD size;
 
     Acl = HeapAlloc(GetProcessHeap(), 0, 256);
     res = InitializeAcl(Acl, 256, ACL_REVISION);
@@ -1900,16 +1901,31 @@ static void test_process_security(void)
         return;
     }
 
-    res = GetTokenInformation( token, TokenOwner, owner, sizeof(owner), &tmp );
+    res = GetTokenInformation( token, TokenOwner, NULL, 0, &size );
+    ok(!res, "Expected failure, got %d\n", res);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+
+    owner = HeapAlloc(GetProcessHeap(), 0, size);
+    res = GetTokenInformation( token, TokenOwner, owner, size, &size );
     ok(res, "GetTokenInformation failed with error %d\n", GetLastError());
     AdminSid = ((TOKEN_OWNER*)owner)->Owner;
-    res = GetTokenInformation( token, TokenPrimaryGroup, group, sizeof(group), &tmp );
+
+    res = GetTokenInformation( token, TokenPrimaryGroup, NULL, 0, &size );
+    ok(!res, "Expected failure, got %d\n", res);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+
+    group = HeapAlloc(GetProcessHeap(), 0, size);
+    res = GetTokenInformation( token, TokenPrimaryGroup, group, size, &size );
     ok(res, "GetTokenInformation failed with error %d\n", GetLastError());
     UsersSid = ((TOKEN_PRIMARY_GROUP*)group)->PrimaryGroup;
 
     CloseHandle( token );
     if (!res)
     {
+        HeapFree(GetProcessHeap(), 0, group);
+        HeapFree(GetProcessHeap(), 0, owner);
         HeapFree(GetProcessHeap(), 0, Acl);
         return;
     }
@@ -1969,6 +1985,8 @@ static void test_process_security(void)
     CloseHandle( info.hProcess );
     CloseHandle( info.hThread );
     CloseHandle( event );
+    HeapFree(GetProcessHeap(), 0, group);
+    HeapFree(GetProcessHeap(), 0, owner);
     HeapFree(GetProcessHeap(), 0, Acl);
     HeapFree(GetProcessHeap(), 0, SecurityDescriptor);
 }
