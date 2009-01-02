@@ -25,6 +25,7 @@
 #include <AudioUnit/AudioUnit.h>
 #include <AudioToolbox/AudioToolbox.h>
 
+#undef DPRINTF
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
