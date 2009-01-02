@@ -2025,7 +2025,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
     array = find_array_or_string_in_struct(type);
     if (array && !processed(array->type))
         array_offset
-            = is_attr(array->attrs, ATTR_STRING)
+            = is_string_type(array->attrs, array->type)
             ? write_string_tfs(file, array->attrs, array->type, array->name, tfsoff)
             : write_array_tfs(file, array->attrs, array->type, array->name, tfsoff);
 
@@ -3291,7 +3291,7 @@ void declare_stub_args( FILE *file, int indent, const func_t *func )
 
     LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
     {
-        int is_string = is_attr(var->attrs, ATTR_STRING);
+        int is_string = is_string_type(var->attrs, var->type);
 
         in_attr = is_attr(var->attrs, ATTR_IN);
         out_attr = is_attr(var->attrs, ATTR_OUT);
@@ -3338,7 +3338,7 @@ void assign_stub_out_args( FILE *file, int indent, const func_t *func, const cha
 
     LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
     {
-        int is_string = is_attr(var->attrs, ATTR_STRING);
+        int is_string = is_string_type(var->attrs, var->type);
         in_attr = is_attr(var->attrs, ATTR_IN);
         out_attr = is_attr(var->attrs, ATTR_OUT);
         if (!out_attr && !in_attr)
