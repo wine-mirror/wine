@@ -3865,7 +3865,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
         3:    WARN and return WINED3DERR_NOTAVAILABLE;
         4: Create the surface, but allow it to be used only for DirectDraw Blts. Some apps(e.g. Swat 3) create textures with a Height of 16 and a Width > 3000 and blt 16x16 letter areas from them to the render target.
         */
-        WARN("(%p) Creating an oversized surface\n", This);
+        WARN("(%p) Creating an oversized surface: %ux%u (texture is %ux%u)\n",
+             This, This->pow2Width, This->pow2Height, This->currentDesc.Width, This->currentDesc.Height);
         This->Flags |= SFLAG_OVERSIZE;
 
         /* This will be initialized on the first blt */
