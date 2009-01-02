@@ -931,7 +931,7 @@ static void test_CoFreeUnusedLibraries(void)
 
     ok(!is_module_loaded("urlmon.dll"), "urlmon.dll shouldn't be loaded\n");
 
-    hr = CoCreateInstance(&CLSID_FileProtocol, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
+    hr = CoCreateInstance(&CLSID_FileProtocol, NULL, CLSCTX_INPROC_SERVER, &IID_IInternetProtocol, (void **)&pUnk);
     if (hr == REGDB_E_CLASSNOTREG)
     {
         trace("IE not installed so can't run CoFreeUnusedLibraries test\n");
