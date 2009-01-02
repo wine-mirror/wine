@@ -144,9 +144,6 @@ typedef unsigned int   u_long;
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-/* proper 4-byte packing */
-#include <pshpack4.h>
-
 /*
  * Address families
  */
@@ -365,8 +362,13 @@ typedef struct WS(servent)
 {
     char* s_name;                  /* official service name */
     char** s_aliases;              /* alias list */
+#ifdef _WIN64
+    char* s_proto;                 /* protocol to use */
+    short s_port;                  /* port # */
+#else
     short s_port;                  /* port # */
     char* s_proto;                 /* protocol to use */
+#endif
 } SERVENT, *PSERVENT, *LPSERVENT;
 
 
@@ -647,11 +649,19 @@ typedef struct WS(WSAData)
 {
     WORD                    wVersion;
     WORD                    wHighVersion;
+#ifdef _WIN64
+    WORD                    iMaxSockets;
+    WORD                    iMaxUdpDg;
+    char                   *lpVendorInfo;
+    char                    szDescription[WSADESCRIPTION_LEN+1];
+    char                    szSystemStatus[WSASYS_STATUS_LEN+1];
+#else
     char                    szDescription[WSADESCRIPTION_LEN+1];
     char                    szSystemStatus[WSASYS_STATUS_LEN+1];
     WORD                    iMaxSockets;
     WORD                    iMaxUdpDg;
     char                   *lpVendorInfo;
+#endif
 } WSADATA, *LPWSADATA;
 
 
@@ -1050,9 +1060,6 @@ int WINAPI WS(shutdown)(SOCKET,int);
 SOCKET WINAPI WS(socket)(int,int,int);
 
 #endif /* !defined(__WINE_WINSOCK2__) || WS_API_PROTOTYPES */
-
-
-#include <poppack.h>
 
 #ifdef __cplusplus
 }
