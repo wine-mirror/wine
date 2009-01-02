@@ -837,6 +837,9 @@ static HRESULT WINAPI PrimaryBufferImpl_Lock(
 		GetTickCount()
 	);
 
+        if (!audiobytes1)
+            return DSERR_INVALIDPARAM;
+
 	if (device->priolevel != DSSCL_WRITEPRIMARY) {
 		WARN("failed priority check!\n");
 		return DSERR_PRIOLEVELNEEDED;

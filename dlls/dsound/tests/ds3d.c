@@ -184,6 +184,10 @@ static int buffer_refill(play_state_t* state, DWORD size)
     if (size>state->wave_len-state->written)
         size=state->wave_len-state->written;
 
+    /* some broken apps like Navyfield mistakenly pass NULL for a ppValue */
+    rc=IDirectSoundBuffer_Lock(state->dsbo,state->offset,size,
+                               &ptr1,NULL,&ptr2,&len2,0);
+    ok(rc==DSERR_INVALIDPARAM,"expected %08x got %08x\n",DSERR_INVALIDPARAM, rc);
     rc=IDirectSoundBuffer_Lock(state->dsbo,state->offset,size,
                                &ptr1,&len1,&ptr2,&len2,0);
     ok(rc==DS_OK,"IDirectSoundBuffer_Lock() failed: %08x\n", rc);

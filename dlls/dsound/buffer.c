@@ -532,6 +532,9 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 		GetTickCount()
 	);
 
+        if (!audiobytes1)
+            return DSERR_INVALIDPARAM;
+
         /* when this flag is set, writecursor is meaningless and must be calculated */
 	if (flags & DSBLOCK_FROMWRITECURSOR) {
 		/* GetCurrentPosition does too much magic to duplicate here */
