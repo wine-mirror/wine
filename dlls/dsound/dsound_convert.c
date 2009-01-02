@@ -159,7 +159,7 @@ static void convert_32_to_16 (const void *src, void *dst)
 
 static void convert_32_to_24 (const void *src, void *dst)
 {
-    DWORD dest = le32(*(DWORD*)dst);
+    DWORD dest = le32(*(DWORD*)src);
     BYTE *dest24 = dst;
 
     dest24[0] = dest / 256;
