@@ -187,9 +187,8 @@ DWORD	MCIAVI_mciPut(UINT wDevID, DWORD dwFlags, LPMCI_DGV_PUT_PARMS lpParms)
         return MCIERR_UNRECOGNIZED_COMMAND;
     }
     if (dwFlags & MCI_DGV_PUT_WINDOW) {
-        FIXME("PUT_WINDOW %s\n", wine_dbgstr_rect(&rc));
-        LeaveCriticalSection(&wma->cs);
-        return MCIERR_UNRECOGNIZED_COMMAND;
+        TRACE("PUT_WINDOW %s\n", wine_dbgstr_rect(&rc));
+        SetWindowPos(wma->hWndPaint, NULL, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER);
     }
     LeaveCriticalSection(&wma->cs);
     return 0;
