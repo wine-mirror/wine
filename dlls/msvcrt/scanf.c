@@ -93,12 +93,12 @@ static int wchar2digit(MSVCRT_wchar_t c, int base) {
  */
 int CDECL MSVCRT_fscanf(MSVCRT_FILE *file, const char *format, ...)
 {
-    va_list valist;
+    __ms_va_list valist;
     int res;
 
-    va_start(valist, format);
+    __ms_va_start(valist, format);
     res = MSVCRT_vfscanf(file, format, valist);
-    va_end(valist);
+    __ms_va_end(valist);
     return res;
 }
 
@@ -107,12 +107,12 @@ int CDECL MSVCRT_fscanf(MSVCRT_FILE *file, const char *format, ...)
  */
 int CDECL MSVCRT_scanf(const char *format, ...)
 {
-    va_list valist;
+    __ms_va_list valist;
     int res;
 
-    va_start(valist, format);
+    __ms_va_start(valist, format);
     res = MSVCRT_vfscanf(MSVCRT_stdin, format, valist);
-    va_end(valist);
+    __ms_va_end(valist);
     return res;
 }
 
@@ -121,12 +121,12 @@ int CDECL MSVCRT_scanf(const char *format, ...)
  */
 int CDECL MSVCRT_fwscanf(MSVCRT_FILE *file, const MSVCRT_wchar_t *format, ...)
 {
-    va_list valist;
+    __ms_va_list valist;
     int res;
 
-    va_start(valist, format);
+    __ms_va_start(valist, format);
     res = MSVCRT_vfwscanf(file, format, valist);
-    va_end(valist);
+    __ms_va_end(valist);
     return res;
 }
 
@@ -136,12 +136,12 @@ int CDECL MSVCRT_fwscanf(MSVCRT_FILE *file, const MSVCRT_wchar_t *format, ...)
  */
 int CDECL MSVCRT_wscanf(const MSVCRT_wchar_t *format, ...)
 {
-    va_list valist;
+    __ms_va_list valist;
     int res;
 
-    va_start(valist, format);
+    __ms_va_start(valist, format);
     res = MSVCRT_vfwscanf(MSVCRT_stdin, format, valist);
-    va_end(valist);
+    __ms_va_end(valist);
     return res;
 }
 
@@ -151,12 +151,12 @@ int CDECL MSVCRT_wscanf(const MSVCRT_wchar_t *format, ...)
  */
 int CDECL MSVCRT_sscanf(const char *str, const char *format, ...)
 {
-    va_list valist;
+    __ms_va_list valist;
     int res;
 
-    va_start(valist, format);
+    __ms_va_start(valist, format);
     res = MSVCRT_vsscanf(str, format, valist);
-    va_end(valist);
+    __ms_va_end(valist);
     return res;
 }
 
@@ -166,12 +166,12 @@ int CDECL MSVCRT_sscanf(const char *str, const char *format, ...)
  */
 int CDECL MSVCRT_swscanf(const MSVCRT_wchar_t *str, const MSVCRT_wchar_t *format, ...)
 {
-    va_list valist;
+    __ms_va_list valist;
     int res;
 
-    va_start(valist, format);
+    __ms_va_start(valist, format);
     res = MSVCRT_vswscanf(str, format, valist);
-    va_end(valist);
+    __ms_va_end(valist);
     return res;
 }
 
@@ -181,11 +181,11 @@ int CDECL MSVCRT_swscanf(const MSVCRT_wchar_t *str, const MSVCRT_wchar_t *format
  */
 int CDECL _cscanf(const char *format, ...)
 {
-    va_list valist;
+    __ms_va_list valist;
     int res;
 
-    va_start(valist, format);
+    __ms_va_start(valist, format);
     res = MSVCRT_vcscanf(format, valist);
-    va_end(valist);
+    __ms_va_end(valist);
     return res;
 }
