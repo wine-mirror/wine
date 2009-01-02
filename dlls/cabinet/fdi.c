@@ -293,7 +293,7 @@ int make_decode_table(cab_ULONG nsyms, cab_ULONG nbits, const cab_UBYTE *length,
 /*************************************************************************
  * checksum (internal)
  */
-cab_ULONG checksum(const cab_UBYTE *data, cab_UWORD bytes, cab_ULONG csum) {
+static cab_ULONG checksum(const cab_UBYTE *data, cab_UWORD bytes, cab_ULONG csum) {
   int len;
   cab_ULONG ul = 0;
 
