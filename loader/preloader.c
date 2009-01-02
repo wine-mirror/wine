@@ -163,6 +163,7 @@ void __bb_init_func(void) { return; }
 
 /* similar to the above but for -fstack-protector */
 void *__stack_chk_guard = 0;
+void __stack_chk_fail_local(void) { return; }
 void __stack_chk_fail(void) { return; }
 
 /* data for setting up the glibc-style thread-local storage in %gs */
