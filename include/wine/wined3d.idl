@@ -889,7 +889,7 @@ const UINT WINED3DCLIPPLANE5                                    = (1 << 5);
 
 /* FVF (Flexible Vertex Format) codes */
 const UINT WINED3DFVF_RESERVED0                                 = 0x0001;
-const UINT WINED3DFVF_POSITION_MASK                             = 0x000e;
+const UINT WINED3DFVF_POSITION_MASK                             = 0x400e;
 const UINT WINED3DFVF_XYZ                                       = 0x0002;
 const UINT WINED3DFVF_XYZRHW                                    = 0x0004;
 const UINT WINED3DFVF_XYZB1                                     = 0x0006;
