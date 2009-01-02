@@ -83,9 +83,9 @@ void copy_context( CONTEXT *to, const CONTEXT *from, unsigned int flags )
 }
 
 /* retrieve the current instruction pointer of a context */
-void *get_context_ip( const CONTEXT *context )
+client_ptr_t get_context_ip( const CONTEXT *context )
 {
-    return (void *)context->Rip;
+    return context->Rip;
 }
 
 /* return the context flag that contains the CPU id */

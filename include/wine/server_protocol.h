@@ -61,7 +61,13 @@ typedef union
     {
         int              code;
         int              first;
-        EXCEPTION_RECORD record;
+        unsigned int     exc_code;
+        unsigned int     flags;
+        client_ptr_t     record;
+        client_ptr_t     address;
+        int              nb_params;
+        int              __pad;
+        client_ptr_t     params[15];
     } exception;
     struct
     {
@@ -1851,8 +1857,14 @@ struct wait_debug_event_reply
 struct queue_exception_event_request
 {
     struct request_header __header;
-    int              first;
-    /* VARARG(record,exc_event); */
+    int           first;
+    unsigned int  code;
+    unsigned int  flags;
+    client_ptr_t  record;
+    client_ptr_t  address;
+    data_size_t   len;
+    /* VARARG(params,uints64,len); */
+    /* VARARG(context,context); */
 };
 struct queue_exception_event_reply
 {
@@ -5058,6 +5070,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 379
+#define SERVER_PROTOCOL_VERSION 380
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

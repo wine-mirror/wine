@@ -116,6 +116,7 @@ static int fill_exception_event( struct debug_event *event, const void *arg )
 {
     const debug_event_t *data = arg;
     event->data.exception = data->exception;
+    event->data.exception.nb_params = min( event->data.exception.nb_params, EXCEPTION_MAXIMUM_PARAMETERS );
     return 1;
 }
 
@@ -375,8 +376,7 @@ static int continue_debug_event( struct process *process, struct thread *thread,
 }
 
 /* alloc a debug event for a debugger */
-static struct debug_event *alloc_debug_event( struct thread *thread, int code,
-                                              const void *arg, const CONTEXT *context )
+static struct debug_event *alloc_debug_event( struct thread *thread, int code, const void *arg )
 {
     struct thread *debugger = thread->process->debugger;
     struct debug_event *event;
@@ -399,11 +399,6 @@ static struct debug_event *alloc_debug_event( struct thread *thread, int code,
         return NULL;
     }
     event->data.code = code;
-    if (context)
-    {
-        memcpy( &event->context, context, sizeof(event->context) );
-        thread->context = &event->context;
-    }
     return event;
 }
 
@@ -412,7 +407,7 @@ void generate_debug_event( struct thread *thread, int code, const void *arg )
 {
     if (thread->process->debugger)
     {
-        struct debug_event *event = alloc_debug_event( thread, code, arg, NULL );
+        struct debug_event *event = alloc_debug_event( thread, code, arg );
         if (event)
         {
             link_event( event );
@@ -638,18 +633,32 @@ DECL_HANDLER(queue_exception_event)
     {
         debug_event_t data;
         struct debug_event *event;
-        const CONTEXT *context = get_req_data();
-        const EXCEPTION_RECORD *rec = (const EXCEPTION_RECORD *)(context + 1);
 
-        if (get_req_data_size() < sizeof(*rec) + sizeof(*context))
+        if ((req->len % sizeof(client_ptr_t)) != 0 ||
+            req->len > get_req_data_size() ||
+            req->len > EXCEPTION_MAXIMUM_PARAMETERS * sizeof(client_ptr_t))
         {
             set_error( STATUS_INVALID_PARAMETER );
             return;
         }
-        data.exception.record = *rec;
-        data.exception.first  = req->first;
-        if ((event = alloc_debug_event( current, EXCEPTION_DEBUG_EVENT, &data, context )))
+        memset( &data, 0, sizeof(data) );
+        data.exception.first     = req->first;
+        data.exception.exc_code  = req->code;
+        data.exception.flags     = req->flags;
+        data.exception.record    = req->record;
+        data.exception.address   = req->address;
+        data.exception.nb_params = req->len / sizeof(client_ptr_t);
+        memcpy( data.exception.params, get_req_data(), req->len );
+
+        if ((event = alloc_debug_event( current, EXCEPTION_DEBUG_EVENT, &data )))
         {
+            const CONTEXT *context = (const CONTEXT *)((char *)get_req_data() + req->len);
+            data_size_t size = get_req_data_size() - req->len;
+
+            memset( &event->context, 0, sizeof(event->context) );
+            memcpy( &event->context, context, size );
+            current->context = &event->context;
+
             if ((reply->handle = alloc_handle( current->process, event, SYNCHRONIZE, 0 )))
             {
                 link_event( event );

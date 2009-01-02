@@ -936,12 +936,11 @@ void break_thread( struct thread *thread )
 
     assert( thread->context );
 
-    data.exception.record.ExceptionCode    = STATUS_BREAKPOINT;
-    data.exception.record.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    data.exception.record.ExceptionRecord  = NULL;
-    data.exception.record.ExceptionAddress = get_context_ip( thread->context );
-    data.exception.record.NumberParameters = 0;
-    data.exception.first = 1;
+    memset( &data, 0, sizeof(data) );
+    data.exception.first     = 1;
+    data.exception.exc_code  = STATUS_BREAKPOINT;
+    data.exception.flags     = EXCEPTION_CONTINUABLE;
+    data.exception.address   = get_context_ip( thread->context );
     generate_debug_event( thread, EXCEPTION_DEBUG_EVENT, &data );
     thread->debug_break = 0;
 }

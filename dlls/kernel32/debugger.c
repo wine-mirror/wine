@@ -50,7 +50,7 @@ BOOL WINAPI WaitForDebugEvent(
     DWORD         timeout)
 {
     BOOL ret;
-    DWORD res;
+    DWORD i, res;
 
     for (;;)
     {
@@ -74,8 +74,14 @@ BOOL WINAPI WaitForDebugEvent(
             switch(data.code)
             {
             case EXCEPTION_DEBUG_EVENT:
-                event->u.Exception.ExceptionRecord = data.exception.record;
-                event->u.Exception.dwFirstChance   = data.exception.first;
+                event->u.Exception.dwFirstChance = data.exception.first;
+                event->u.Exception.ExceptionRecord.ExceptionCode    = data.exception.exc_code;
+                event->u.Exception.ExceptionRecord.ExceptionFlags   = data.exception.flags;
+                event->u.Exception.ExceptionRecord.ExceptionRecord  = wine_server_get_ptr( data.exception.record );
+                event->u.Exception.ExceptionRecord.ExceptionAddress = wine_server_get_ptr( data.exception.address );
+                event->u.Exception.ExceptionRecord.NumberParameters = data.exception.nb_params;
+                for (i = 0; i < data.exception.nb_params; i++)
+                    event->u.Exception.ExceptionRecord.ExceptionInformation[i] = data.exception.params[i];
                 break;
             case CREATE_THREAD_DEBUG_EVENT:
                 event->u.CreateThread.hThread           = wine_server_ptr_handle( data.create_thread.handle );

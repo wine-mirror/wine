@@ -75,9 +75,15 @@ typedef union
     int code;   /* event code */
     struct
     {
-        int              code;     /* EXCEPTION_DEBUG_EVENT */
-        int              first;    /* first chance exception? */
-        EXCEPTION_RECORD record;   /* exception record */
+        int              code;       /* EXCEPTION_DEBUG_EVENT */
+        int              first;      /* first chance exception? */
+        unsigned int     exc_code;   /* exception code */
+        unsigned int     flags;      /* exception flags */
+        client_ptr_t     record;     /* exception record */
+        client_ptr_t     address;    /* exception address */
+        int              nb_params;  /* number of parameters */
+        int              __pad;
+        client_ptr_t     params[15]; /* parameters */
     } exception;
     struct
     {
@@ -1450,8 +1456,14 @@ enum char_info_mode
 
 /* Queue an exception event */
 @REQ(queue_exception_event)
-    int              first;    /* first chance exception? */
-    VARARG(record,exc_event);  /* thread context followed by exception record */
+    int           first;       /* first chance exception? */
+    unsigned int  code;        /* exception code */
+    unsigned int  flags;       /* exception flags */
+    client_ptr_t  record;      /* exception record */
+    client_ptr_t  address;     /* exception address */
+    data_size_t   len;         /* size of parameters */
+    VARARG(params,uints64,len);/* exception parameters */
+    VARARG(context,context);   /* thread context */
 @REPLY
     obj_handle_t     handle;   /* handle to the queued event */
 @END

@@ -121,7 +121,7 @@ extern struct token *thread_get_impersonation_token( struct thread *thread );
 
 /* CPU context functions */
 extern void copy_context( CONTEXT *to, const CONTEXT *from, unsigned int flags );
-extern void *get_context_ip( const CONTEXT *context );
+extern client_ptr_t get_context_ip( const CONTEXT *context );
 extern unsigned int get_context_cpu_flag(void);
 extern unsigned int get_context_system_regs( unsigned int flags );
 

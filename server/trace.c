@@ -351,20 +351,6 @@ static void dump_context( const CONTEXT *context, data_size_t size )
 #endif
 }
 
-static void dump_exc_record( const EXCEPTION_RECORD *rec )
-{
-    unsigned int i;
-    fprintf( stderr, "{code=%x,flags=%x,rec=%p,addr=%p,params={",
-             rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionRecord,
-             rec->ExceptionAddress );
-    for (i = 0; i < min(rec->NumberParameters,EXCEPTION_MAXIMUM_PARAMETERS); i++)
-    {
-        if (i) fputc( ',', stderr );
-        fprintf( stderr, "%lx", rec->ExceptionInformation[i] );
-    }
-    fputc( '}', stderr );
-}
-
 static void dump_varargs_ints( data_size_t size )
 {
     const int *data = cur_data;
@@ -374,6 +360,21 @@ static void dump_varargs_ints( data_size_t size )
     while (len > 0)
     {
         fprintf( stderr, "%d", *data++ );
+        if (--len) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+    remove_data( size );
+}
+
+static void dump_varargs_uints64( data_size_t size )
+{
+    const unsigned __int64 *data = cur_data;
+    data_size_t len = size / sizeof(*data);
+
+    fputc( '{', stderr );
+    while (len > 0)
+    {
+        dump_uint64( data++ );
         if (--len) fputc( ',', stderr );
     }
     fputc( '}', stderr );
@@ -462,97 +463,92 @@ static void dump_varargs_context( data_size_t size )
     remove_data( min( size, sizeof(CONTEXT) ));
 }
 
-static void dump_varargs_exc_event( data_size_t size )
-{
-    const CONTEXT *ptr = cur_data;
-
-    if (!size)
-    {
-        fprintf( stderr, "{}" );
-        return;
-    }
-    fprintf( stderr, "{context=" );
-    dump_context( ptr, size );
-    if (size > sizeof(CONTEXT))
-    {
-        fprintf( stderr, ",rec=" );
-        dump_exc_record( (const EXCEPTION_RECORD *)(ptr + 1) );
-    }
-    fputc( '}', stderr );
-    remove_data( size );
-}
-
 static void dump_varargs_debug_event( data_size_t size )
 {
-    const debug_event_t *event = cur_data;
+    debug_event_t event;
+    unsigned int i;
 
     if (!size)
     {
         fprintf( stderr, "{}" );
         return;
     }
-    switch(event->code)
+    size = min( size, sizeof(event) );
+    memset( &event, 0, sizeof(event) );
+    memcpy( &event, cur_data, size );
+
+    switch(event.code)
     {
     case EXCEPTION_DEBUG_EVENT:
-        fprintf( stderr, "{exception," );
-        dump_exc_record( &event->exception.record );
-        fprintf( stderr, ",first=%d}", event->exception.first );
+        fprintf( stderr, "{exception,first=%d,exc_code=%08x,flags=%08x,record=",
+                 event.exception.first, event.exception.exc_code, event.exception.flags );
+        dump_uint64( &event.exception.record );
+        fprintf( stderr, ",address=" );
+        dump_uint64( &event.exception.address );
+        fprintf( stderr, ",params={" );
+        event.exception.nb_params = min( event.exception.nb_params, EXCEPTION_MAXIMUM_PARAMETERS );
+        for (i = 0; i < event.exception.nb_params; i++)
+        {
+            dump_uint64( &event.exception.params[i] );
+            if (i < event.exception.nb_params) fputc( ',', stderr );
+        }
+        fprintf( stderr, "}}" );
         break;
     case CREATE_THREAD_DEBUG_EVENT:
-        fprintf( stderr, "{create_thread,thread=%04x,teb=", event->create_thread.handle );
-        dump_uint64( &event->create_thread.teb );
+        fprintf( stderr, "{create_thread,thread=%04x,teb=", event.create_thread.handle );
+        dump_uint64( &event.create_thread.teb );
         fprintf( stderr, ",start=" );
-        dump_uint64( &event->create_thread.start );
+        dump_uint64( &event.create_thread.start );
         fputc( '}', stderr );
         break;
     case CREATE_PROCESS_DEBUG_EVENT:
         fprintf( stderr, "{create_process,file=%04x,process=%04x,thread=%04x,base=",
-                 event->create_process.file, event->create_process.process,
-                 event->create_process.thread );
-        dump_uint64( &event->create_process.base );
+                 event.create_process.file, event.create_process.process,
+                 event.create_process.thread );
+        dump_uint64( &event.create_process.base );
         fprintf( stderr, ",offset=%d,size=%d,teb=",
-                 event->create_process.dbg_offset, event->create_process.dbg_size );
-        dump_uint64( &event->create_process.teb );
+                 event.create_process.dbg_offset, event.create_process.dbg_size );
+        dump_uint64( &event.create_process.teb );
         fprintf( stderr, ",start=" );
-        dump_uint64( &event->create_process.start );
+        dump_uint64( &event.create_process.start );
         fprintf( stderr, ",name=" );
-        dump_uint64( &event->create_process.name );
-        fprintf( stderr, ",unicode=%d}", event->create_process.unicode );
+        dump_uint64( &event.create_process.name );
+        fprintf( stderr, ",unicode=%d}", event.create_process.unicode );
         break;
     case EXIT_THREAD_DEBUG_EVENT:
-        fprintf( stderr, "{exit_thread,code=%d}", event->exit.exit_code );
+        fprintf( stderr, "{exit_thread,code=%d}", event.exit.exit_code );
         break;
     case EXIT_PROCESS_DEBUG_EVENT:
-        fprintf( stderr, "{exit_process,code=%d}", event->exit.exit_code );
+        fprintf( stderr, "{exit_process,code=%d}", event.exit.exit_code );
         break;
     case LOAD_DLL_DEBUG_EVENT:
-        fprintf( stderr, "{load_dll,file=%04x,base", event->load_dll.handle );
-        dump_uint64( &event->load_dll.base );
+        fprintf( stderr, "{load_dll,file=%04x,base", event.load_dll.handle );
+        dump_uint64( &event.load_dll.base );
         fprintf( stderr, ",offset=%d,size=%d,name=",
-                 event->load_dll.dbg_offset, event->load_dll.dbg_size );
-        dump_uint64( &event->load_dll.name );
-        fprintf( stderr, ",unicode=%d}", event->load_dll.unicode );
+                 event.load_dll.dbg_offset, event.load_dll.dbg_size );
+        dump_uint64( &event.load_dll.name );
+        fprintf( stderr, ",unicode=%d}", event.load_dll.unicode );
         break;
     case UNLOAD_DLL_DEBUG_EVENT:
         fputs( "{unload_dll,base=", stderr );
-        dump_uint64( &event->unload_dll.base );
+        dump_uint64( &event.unload_dll.base );
         fputc( '}', stderr );
         break;
     case OUTPUT_DEBUG_STRING_EVENT:
         fprintf( stderr, "{output_string,string=" );
-        dump_uint64( &event->output_string.string );
+        dump_uint64( &event.output_string.string );
         fprintf( stderr, ",unicode=%d,len=%u}",
-                 event->output_string.unicode, event->output_string.length );
+                 event.output_string.unicode, event.output_string.length );
         break;
     case RIP_EVENT:
         fprintf( stderr, "{rip,err=%d,type=%d}",
-                 event->rip_info.error, event->rip_info.type );
+                 event.rip_info.error, event.rip_info.type );
         break;
     case 0:  /* zero is the code returned on timeouts */
         fprintf( stderr, "{}" );
         break;
     default:
-        fprintf( stderr, "{code=??? (%d)}", event->code );
+        fprintf( stderr, "{code=??? (%d)}", event.code );
         break;
     }
     remove_data( size );
@@ -1975,8 +1971,20 @@ static void dump_wait_debug_event_reply( const struct wait_debug_event_reply *re
 static void dump_queue_exception_event_request( const struct queue_exception_event_request *req )
 {
     fprintf( stderr, " first=%d,", req->first );
+    fprintf( stderr, " code=%08x,", req->code );
+    fprintf( stderr, " flags=%08x,", req->flags );
     fprintf( stderr, " record=" );
-    dump_varargs_exc_event( cur_size );
+    dump_uint64( &req->record );
+    fprintf( stderr, "," );
+    fprintf( stderr, " address=" );
+    dump_uint64( &req->address );
+    fprintf( stderr, "," );
+    fprintf( stderr, " len=%u,", req->len );
+    fprintf( stderr, " params=" );
+    dump_varargs_uints64( min(cur_size,req->len) );
+    fputc( ',', stderr );
+    fprintf( stderr, " context=" );
+    dump_varargs_context( cur_size );
 }
 
 static void dump_queue_exception_event_reply( const struct queue_exception_event_reply *req )

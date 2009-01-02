@@ -188,15 +188,25 @@ void wait_suspend( CONTEXT *context )
 static NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *context )
 {
     int ret;
+    DWORD i;
     HANDLE handle = 0;
+    client_ptr_t params[EXCEPTION_MAXIMUM_PARAMETERS];
 
     if (!NtCurrentTeb()->Peb->BeingDebugged) return 0;  /* no debugger present */
+
+    for (i = 0; i < min( rec->NumberParameters, EXCEPTION_MAXIMUM_PARAMETERS ); i++)
+        params[i] = rec->ExceptionInformation[i];
 
     SERVER_START_REQ( queue_exception_event )
     {
         req->first   = first_chance;
+        req->code    = rec->ExceptionCode;
+        req->flags   = rec->ExceptionFlags;
+        req->record  = wine_server_client_ptr( rec->ExceptionRecord );
+        req->address = wine_server_client_ptr( rec->ExceptionAddress );
+        req->len     = i * sizeof(params[0]);
+        wine_server_add_data( req, params, req->len );
         wine_server_add_data( req, context, sizeof(*context) );
-        wine_server_add_data( req, rec, sizeof(*rec) );
         if (!wine_server_call( req )) handle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
