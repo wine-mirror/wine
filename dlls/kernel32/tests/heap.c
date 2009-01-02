@@ -64,13 +64,13 @@ START_TEST(heap)
     /* test some border cases of HeapAlloc and HeapReAlloc */
     mem = HeapAlloc(GetProcessHeap(), 0, 0);
     ok(mem != NULL, "memory not allocated for size 0\n");
-    msecond = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, ~0UL - 7);
-    ok(msecond == NULL, "HeapReAlloc(0xfffffff8) should have failed\n");
-    msecond = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, ~0UL);
-    ok(msecond == NULL, "HeapReAlloc(0xffffffff) should have failed\n");
+    msecond = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, ~(SIZE_T)0 - 7);
+    ok(msecond == NULL, "HeapReAlloc(~0 - 7) should have failed\n");
+    msecond = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, ~(SIZE_T)0);
+    ok(msecond == NULL, "HeapReAlloc(~0) should have failed\n");
     HeapFree(GetProcessHeap(), 0, mem);
-    mem = HeapAlloc(GetProcessHeap(), 0, ~0UL);
-    ok(mem == NULL, "memory allocated for size ~0UL\n");
+    mem = HeapAlloc(GetProcessHeap(), 0, ~(SIZE_T)0);
+    ok(mem == NULL, "memory allocated for size ~0\n");
 
     /* large blocks must be 16-byte aligned */
     mem = HeapAlloc(GetProcessHeap(), 0, 512 * 1024);
