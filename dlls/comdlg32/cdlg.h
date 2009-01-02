@@ -193,8 +193,6 @@ BOOL CC_HookCallChk( const CHOOSECOLORW *lpcc );
 int CC_MouseCheckResultWindow( HWND hDlg, LPARAM lParam );
 LRESULT CC_WMLButtonDown( HWND hDlg, WPARAM wParam, LPARAM lParam );
 LRESULT CC_WMLButtonUp( HWND hDlg, WPARAM wParam, LPARAM lParam );
-LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD 
-						notifyCode, HWND hwndCtl );
 LRESULT CC_WMMouseMove( HWND hDlg, LPARAM lParam );
 LRESULT CC_WMPaint( HWND hDlg, WPARAM wParam, LPARAM lParam );
 void CC_SwitchToFullSize( HWND hDlg, COLORREF result, LPCRECT lprect );
