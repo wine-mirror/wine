@@ -188,7 +188,7 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
  *	module_find_by_name
  *
  */
-struct module* module_find_by_name(const struct process* pcs, const WCHAR* name)
+static struct module* module_find_by_name(const struct process* pcs, const WCHAR* name)
 {
     struct module*      module;
 
@@ -238,7 +238,7 @@ struct module* module_is_already_loaded(const struct process* pcs, const WCHAR* 
  *           module_get_container
  *
  */
-struct module* module_get_container(const struct process* pcs, 
+static struct module* module_get_container(const struct process* pcs,
                                     const struct module* inner)
 {
     struct module*      module;

@@ -298,7 +298,7 @@ unsigned sparse_array_length(const struct sparse_array* sa)
     return sa->elements.num_elts;
 }
 
-unsigned hash_table_hash(const char* name, unsigned num_buckets)
+static unsigned hash_table_hash(const char* name, unsigned num_buckets)
 {
     unsigned    hash = 0;
     while (*name)

@@ -91,7 +91,6 @@ void     hash_table_init(struct pool* pool, struct hash_table* ht,
 void     hash_table_destroy(struct hash_table* ht);
 void     hash_table_add(struct hash_table* ht, struct hash_table_elt* elt);
 void*    hash_table_find(const struct hash_table* ht, const char* name);
-unsigned hash_table_hash(const char* name, unsigned num_buckets);
 
 struct hash_table_iter
 {
@@ -439,9 +438,6 @@ extern struct module*
                     module_find_by_addr(const struct process* pcs, unsigned long addr,
                                         enum module_type type);
 extern struct module*
-                    module_find_by_name(const struct process* pcs,
-                                        const WCHAR* name);
-extern struct module*
                     module_find_by_nameA(const struct process* pcs,
                                          const char* name);
 extern struct module*
@@ -453,9 +449,6 @@ extern struct module*
                                enum module_type type, BOOL virtual,
                                unsigned long addr, unsigned long size,
                                unsigned long stamp, unsigned long checksum);
-extern struct module*
-                    module_get_container(const struct process* pcs,
-                                         const struct module* inner);
 extern struct module*
                     module_get_containee(const struct process* pcs,
                                          const struct module* inner);
