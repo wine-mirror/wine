@@ -2246,6 +2246,129 @@ methods:
 }
 
 [
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f656-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLStyle3 : IDispatch
+{
+    [propput, id(DISPID_IHTMLSTYLE3_LAYOUTFLOW), displaybind, bindable]
+    HRESULT layoutFlow([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_LAYOUTFLOW), displaybind, bindable]
+    HRESULT layoutFlow([retval, out] BSTR * p);
+
+    [propput, id(DISPID_IHTMLSTYLE3_ZOOM), displaybind, bindable]
+    HRESULT zoom([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_ZOOM), displaybind, bindable]
+    HRESULT zoom([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLSTYLE3_WORDWRAP), displaybind, bindable]
+    HRESULT wordWrap([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_WORDWRAP), displaybind, bindable]
+    HRESULT wordWrap([retval, out] BSTR * p);
+
+    [propput, id(DISPID_IHTMLSTYLE3_TEXTUNDERLINEPOSITION), displaybind, bindable]
+    HRESULT textUnderlinePosition([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_TEXTUNDERLINEPOSITION), displaybind, bindable]
+    HRESULT textUnderlinePosition([retval, out] BSTR * p);
+
+    [propput, id(DISPID_IHTMLSTYLE3_SCROLLBARBASECOLOR), displaybind, bindable]
+    HRESULT scrollbarBaseColor([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_SCROLLBARBASECOLOR), displaybind, bindable]
+    HRESULT scrollbarBaseColor([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLSTYLE3_SCROLLBARFACECOLOR), displaybind, bindable]
+    HRESULT scrollbarFaceColor([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_SCROLLBARFACECOLOR), displaybind, bindable]
+    HRESULT scrollbarFaceColor([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLSTYLE3_SCROLLBAR3DLIGHTCOLOR), displaybind, bindable]
+    HRESULT scrollbar3dLightColor([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_SCROLLBAR3DLIGHTCOLOR), displaybind, bindable]
+    HRESULT scrollbar3dLightColor([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLSTYLE3_SCROLLBARSHADOWCOLOR), displaybind, bindable]
+    HRESULT scrollbarShadowColor([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_SCROLLBARSHADOWCOLOR), displaybind, bindable]
+    HRESULT scrollbarShadowColor([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLSTYLE3_SCROLLBARHIGHLIGHTCOLOR), displaybind, bindable]
+    HRESULT scrollbarHighlightColor([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_SCROLLBARHIGHLIGHTCOLOR), displaybind, bindable]
+    HRESULT scrollbarHighlightColor([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLSTYLE3_SCROLLBARDARKSHADOWCOLOR), displaybind, bindable]
+    HRESULT scrollbarDarkShadowColor([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_SCROLLBARDARKSHADOWCOLOR), displaybind, bindable]
+    HRESULT scrollbarDarkShadowColor([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLSTYLE3_SCROLLBARARROWCOLOR), displaybind, bindable]
+    HRESULT scrollbarArrowColor([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_SCROLLBARARROWCOLOR), displaybind, bindable]
+    HRESULT scrollbarArrowColor([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLSTYLE3_SCROLLBARTRACKCOLOR), displaybind, bindable]
+    HRESULT scrollbarTrackColor([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_SCROLLBARTRACKCOLOR), displaybind, bindable]
+    HRESULT scrollbarTrackColor([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLSTYLE3_WRITINGMODE), displaybind, bindable]
+    HRESULT writingMode([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_WRITINGMODE), displaybind, bindable]
+    HRESULT writingMode([retval, out] BSTR * p);
+
+    [propput, id(DISPID_IHTMLSTYLE3_TEXTALIGNLAST), displaybind, bindable]
+    HRESULT textAlignLast([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_TEXTALIGNLAST), displaybind, bindable]
+    HRESULT textAlignLast([retval, out] BSTR * p);
+
+    [propput, id(DISPID_IHTMLSTYLE3_TEXTKASHIDASPACE), displaybind, bindable]
+    HRESULT textKashidaSpace([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_TEXTKASHIDASPACE), displaybind, bindable]
+    HRESULT textKashidaSpace([retval, out] VARIANT * p);
+}
+
+/*****************************************************************************
+ *    IHTMLSytyle4 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f816-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLStyle4 : IDispatch
+{
+    [propput, id(DISPID_IHTMLSTYLE4_TEXTOVERFLOW), displaybind, bindable]
+    HRESULT textOverflow([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE4_TEXTOVERFLOW), displaybind, bindable]
+    HRESULT textOverflow([retval, out] BSTR * p);
+
+    [propput, id(DISPID_IHTMLSTYLE4_MINHEIGHT), displaybind, bindable]
+    HRESULT minHeight([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE4_MINHEIGHT), displaybind, bindable]
+    HRESULT minHeight([retval, out] VARIANT * p);
+}
+
+[
     noncreatable,
     uuid(3050f285-98b5-11cf-bb82-00aa00bdce0b)
 ]
@@ -2254,8 +2377,8 @@ coclass HTMLStyle
     [default] dispinterface DispHTMLStyle;
     interface IHTMLStyle;
     interface IHTMLStyle2;
-    /* interface IHTMLStyle3; */
-    /* interface IHTMLStyle4; */
+    interface IHTMLStyle3;
+    interface IHTMLStyle4;
     /* interface IHTMLStyle5; */
 }
 
