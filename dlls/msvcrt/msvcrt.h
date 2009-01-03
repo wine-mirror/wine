@@ -598,7 +598,7 @@ struct MSVCRT__stat64 {
 #define MSVCRT_SIGABRT  22
 #define MSVCRT_NSIG     (MSVCRT_SIGABRT + 1)
 
-typedef void (*MSVCRT___sighandler_t)(int);
+typedef void (__cdecl *MSVCRT___sighandler_t)(int);
 
 #define MSVCRT_SIG_DFL ((MSVCRT___sighandler_t)0)
 #define MSVCRT_SIG_IGN ((MSVCRT___sighandler_t)1)

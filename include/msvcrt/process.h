@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-typedef void (*_beginthread_start_routine_t)(void *);
+typedef void (__cdecl *_beginthread_start_routine_t)(void *);
 typedef unsigned int (__stdcall *_beginthreadex_start_routine_t)(void *);
 
 uintptr_t __cdecl _beginthread(_beginthread_start_routine_t,unsigned int,void*);
