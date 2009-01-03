@@ -723,7 +723,7 @@ static HRESULT Installer_RegistryValue(HKEY hkey, LPCWSTR szKey, VARIANT vValue,
 
     VariantInit(&vararg[2]);
     V_VT(&vararg[2]) = VT_I4;
-    V_I4(&vararg[2]) = (int)hkey;
+    V_I4(&vararg[2]) = (INT_PTR)hkey;
     VariantInit(&vararg[1]);
     V_VT(&vararg[1]) = VT_BSTR;
     V_BSTR(&vararg[1]) = SysAllocString(szKey);
@@ -2401,7 +2401,7 @@ static void test_Installer(void)
     }
 
     /* Installer::OpenDatabase */
-    hr = Installer_OpenDatabase(szPath, (int)MSIDBOPEN_TRANSACT, &pDatabase);
+    hr = Installer_OpenDatabase(szPath, (INT_PTR)MSIDBOPEN_TRANSACT, &pDatabase);
     ok(hr == S_OK, "Installer_OpenDatabase failed, hresult 0x%08x\n", hr);
     if (hr == S_OK)
     {
