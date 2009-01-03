@@ -597,7 +597,7 @@ static void CALLBACK timer_queue_cb4(PVOID p, BOOLEAN timedOut)
 
 static void CALLBACK timer_queue_cb5(PVOID p, BOOLEAN timedOut)
 {
-    DWORD delay = (DWORD) p;
+    DWORD_PTR delay = (DWORD_PTR) p;
     ok(timedOut, "Timer callbacks should always time out\n");
     if (delay)
         Sleep(delay);

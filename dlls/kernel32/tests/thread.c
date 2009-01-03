@@ -187,7 +187,7 @@ static DWORD WINAPI threadFunc1(LPVOID p)
    int i;
 /* write our thread # into shared memory */
    tstruct->threadmem[tstruct->threadnum]=GetCurrentThreadId();
-   ok(TlsSetValue(tlsIndex,(LPVOID)(tstruct->threadnum+1))!=0,
+   ok(TlsSetValue(tlsIndex,(LPVOID)(INT_PTR)(tstruct->threadnum+1))!=0,
       "TlsSetValue failed\n");
 /* The threads synchronize before terminating.  This is done by
    Signaling an event, and waiting for all events to occur
@@ -205,7 +205,7 @@ static DWORD WINAPI threadFunc1(LPVOID p)
    ok( lstrlenA( (char *)0xdeadbeef ) == 0, "lstrlenA: unexpected success\n" );
 
 /* Check that no one changed our tls memory */
-   ok((int)TlsGetValue(tlsIndex)-1==tstruct->threadnum,
+   ok((INT_PTR)TlsGetValue(tlsIndex)-1==tstruct->threadnum,
       "TlsGetValue failed\n");
    return NUM_THREADS+tstruct->threadnum;
 }
@@ -929,7 +929,7 @@ static DWORD CALLBACK work_function(void *p)
 
 static void test_QueueUserWorkItem(void)
 {
-    int i;
+    INT_PTR i;
     DWORD wait_result;
     DWORD before, after;
 
@@ -1046,7 +1046,7 @@ static DWORD WINAPI TLS_InheritanceProc(LPVOID p)
    inheritance with TLS_InheritanceProc.  */
 static DWORD WINAPI TLS_ThreadProc(LPVOID p)
 {
-  LONG id = (LONG) p;
+  LONG_PTR id = (LONG_PTR) p;
   LPVOID val;
   BOOL ret;
 
@@ -1166,7 +1166,7 @@ static DWORD WINAPI TLS_ThreadProc(LPVOID p)
 static void test_TLS(void)
 {
   HANDLE threads[2];
-  LONG i;
+  LONG_PTR i;
   DWORD ret;
   BOOL suc;
 

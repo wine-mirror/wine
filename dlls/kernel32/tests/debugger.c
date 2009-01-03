@@ -147,7 +147,7 @@ static void doDebugger(int argc, char** argv)
     else
         blackbox.attach_rc=TRUE;
 
-    debug_event=(argc >= 6 ? (HANDLE)atol(argv[5]) : NULL);
+    debug_event=(argc >= 6 ? (HANDLE)(INT_PTR)atol(argv[5]) : NULL);
     blackbox.debug_err=0;
     if (debug_event && strstr(myARGV[2], "event"))
     {

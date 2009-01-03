@@ -389,7 +389,7 @@ static void test_CreateNamedPipe_instances_must_match(void)
 /** implementation of alarm() */
 static DWORD CALLBACK alarmThreadMain(LPVOID arg)
 {
-    DWORD timeout = (DWORD) arg;
+    DWORD_PTR timeout = (DWORD_PTR) arg;
     trace("alarmThreadMain\n");
     if (WaitForSingleObject( alarm_event, timeout ) == WAIT_TIMEOUT)
     {

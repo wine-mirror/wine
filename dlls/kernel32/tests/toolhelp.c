@@ -73,8 +73,8 @@ static int     init(void)
     case 2: /* the test program */
         return 0;
     case 4: /* the sub-process */
-        ev1 = (HANDLE)atoi(argv[2]);
-        ev2 = (HANDLE)atoi(argv[3]);
+        ev1 = (HANDLE)(INT_PTR)atoi(argv[2]);
+        ev2 = (HANDLE)(INT_PTR)atoi(argv[3]);
         ev3 = CreateEvent(NULL, FALSE, FALSE, NULL);
 
         if (ev3 == NULL) ExitProcess(WAIT_ABANDONED);
@@ -324,7 +324,7 @@ START_TEST(toolhelp)
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = SW_SHOWNORMAL;
 
-    sprintf(buffer, "%s tests/toolhelp.c %u %u", selfname, (DWORD)ev1, (DWORD)ev2);
+    sprintf(buffer, "%s tests/toolhelp.c %lu %lu", selfname, (DWORD_PTR)ev1, (DWORD_PTR)ev2);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, TRUE, 0, NULL, NULL, &startup, &info), "CreateProcess\n");
     /* wait for child to be initialized */
     w = WaitForSingleObject(ev1, WAIT_TIME);
