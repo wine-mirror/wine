@@ -604,8 +604,8 @@ static void wave_out_test_deviceOut(int device, double duration,
     BOOL has_volume = pcaps->dwSupport & WAVECAPS_VOLUME ? TRUE : FALSE;
     double paused = 0.0;
     double actual;
-    DWORD callback = 0;
-    DWORD callback_instance = 0;
+    DWORD_PTR callback = 0;
+    DWORD_PTR callback_instance = 0;
     HANDLE thread = 0;
     DWORD thread_id;
     char * buffer;
@@ -619,11 +619,11 @@ static void wave_out_test_deviceOut(int device, double duration,
         return;
 
     if ((flags & CALLBACK_TYPEMASK) == CALLBACK_EVENT) {
-        callback = (DWORD)hevent;
+        callback = (DWORD_PTR)hevent;
         callback_instance = 0;
     } else if ((flags & CALLBACK_TYPEMASK) == CALLBACK_FUNCTION) {
-        callback = (DWORD)callback_func;
-        callback_instance = (DWORD)hevent;
+        callback = (DWORD_PTR)callback_func;
+        callback_instance = (DWORD_PTR)hevent;
     } else if ((flags & CALLBACK_TYPEMASK) == CALLBACK_THREAD) {
         thread = CreateThread(NULL, 0, callback_thread, hevent, 0, &thread_id);
         if (thread) {
@@ -827,7 +827,7 @@ EXIT:
     HeapFree(GetProcessHeap(), 0, frags);
 }
 
-static void wave_out_test_device(int device)
+static void wave_out_test_device(UINT_PTR device)
 {
     WAVEOUTCAPSA capsA;
     WAVEOUTCAPSW capsW;

@@ -148,7 +148,7 @@ static void wave_in_test_deviceIn(int device, LPWAVEFORMATEX pwfx, DWORD format,
         return;
 
     win=NULL;
-    rc=waveInOpen(&win,device,pwfx,(DWORD)hevent,0,CALLBACK_EVENT|flags);
+    rc=waveInOpen(&win,device,pwfx,(DWORD_PTR)hevent,0,CALLBACK_EVENT|flags);
     /* Note: Win9x doesn't know WAVE_FORMAT_DIRECT */
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID ||
        rc==MMSYSERR_NOTENABLED || rc==MMSYSERR_NODRIVER ||
@@ -255,7 +255,7 @@ static void wave_in_test_deviceIn(int device, LPWAVEFORMATEX pwfx, DWORD format,
         HWAVEOUT wout;
 
         trace("Playing back recorded sound\n");
-        rc=waveOutOpen(&wout,WAVE_MAPPER,pwfx,(DWORD)hevent,0,CALLBACK_EVENT);
+        rc=waveOutOpen(&wout,WAVE_MAPPER,pwfx,(DWORD_PTR)hevent,0,CALLBACK_EVENT);
         ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID ||
            rc==MMSYSERR_NOTENABLED || rc==MMSYSERR_NODRIVER ||
            rc==MMSYSERR_ALLOCATED ||
@@ -295,7 +295,7 @@ static void wave_in_test_deviceIn(int device, LPWAVEFORMATEX pwfx, DWORD format,
     CloseHandle(hevent);
 }
 
-static void wave_in_test_device(int device)
+static void wave_in_test_device(UINT_PTR device)
 {
     WAVEINCAPSA capsA;
     WAVEINCAPSW capsW;
