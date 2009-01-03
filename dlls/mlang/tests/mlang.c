@@ -379,7 +379,7 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
 #endif
 	ok(cpinfo[i].dwFlags & flags, "enumerated flags %08x do not include requested %08x\n", cpinfo[i].dwFlags, flags);
 
-	if (TranslateCharsetInfo((DWORD *)cpinfo[i].uiFamilyCodePage, &csi, TCI_SRCCODEPAGE))
+	if (TranslateCharsetInfo((DWORD *)(INT_PTR)cpinfo[i].uiFamilyCodePage, &csi, TCI_SRCCODEPAGE))
 	    ok(cpinfo[i].bGDICharset == csi.ciCharset, "%d != %d\n", cpinfo[i].bGDICharset, csi.ciCharset);
 	else
 	    trace("TranslateCharsetInfo failed for cp %u\n", cpinfo[i].uiFamilyCodePage);
