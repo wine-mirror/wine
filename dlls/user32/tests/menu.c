@@ -285,7 +285,7 @@ static void test_menu_ownerdraw(void)
                                NULL, NULL, NULL, NULL);
     ok(hwnd != NULL, "CreateWindowEx failed with error %d\n", GetLastError());
     if( !hwnd) return;
-    SetWindowLongPtr( hwnd, GWLP_WNDPROC, (LONG)menu_ownerdraw_wnd_proc);
+    SetWindowLongPtr( hwnd, GWLP_WNDPROC, (LONG_PTR)menu_ownerdraw_wnd_proc);
     hmenu = CreatePopupMenu();
     ok(hmenu != NULL, "CreateMenu failed with error %d\n", GetLastError());
     if( !hmenu) { DestroyWindow(hwnd);return;}
@@ -538,7 +538,7 @@ static void test_menu_bmp_and_string(void)
 
     ok(hwnd != NULL, "CreateWindowEx failed with error %d\n", GetLastError());
     if( !hwnd) return;
-    SetWindowLongPtr( hwnd, GWLP_WNDPROC, (LONG)menu_ownerdraw_wnd_proc);
+    SetWindowLongPtr( hwnd, GWLP_WNDPROC, (LONG_PTR)menu_ownerdraw_wnd_proc);
 
     if( winetest_debug)
         trace("    check %d,%d arrow %d avechar %d\n",
@@ -552,7 +552,7 @@ static void test_menu_bmp_and_string(void)
         for( szidx=0; szidx < sizeof( bmsizes) / sizeof( SIZE); szidx++) {
             HBITMAP hbm = CreateBitmap( bmsizes[szidx].cx, bmsizes[szidx].cy,1,1,bmfill);
             HBITMAP bitmaps[] = { HBMMENU_CALLBACK, hbm, NULL  };
-            ok( (int)hbm, "CreateBitmap failed err %d\n", GetLastError());
+            ok( hbm != 0, "CreateBitmap failed err %d\n", GetLastError());
             for( txtidx = 0; txtidx < sizeof(MOD_txtsizes)/sizeof(MOD_txtsizes[0]); txtidx++) {
                 for( hassub = 0; hassub < 2 ; hassub++) { /* add submenu item */
                     for( mnuopt = 0; mnuopt < 3 ; mnuopt++){ /* test MNS_NOCHECK/MNS_CHECKORBMP */
@@ -1607,7 +1607,7 @@ static void test_menu_search_bycommand( void )
 
     rc = GetMenuItemInfo(hmenu, (UINT_PTR)hmenuSub2, FALSE, &info);
     ok (rc, "Getting the menus info failed\n");
-    ok (info.wID == (UINT)hmenuSub2, "IDs differ for popup menu\n");
+    ok (info.wID == (UINT_PTR)hmenuSub2, "IDs differ for popup menu\n");
     ok (!strcmp(info.dwTypeData, "Submenu2"), "Returned item has wrong label (%s)\n", info.dwTypeData);
 
     DestroyMenu( hmenu );
@@ -1872,7 +1872,7 @@ static void test_menu_flags( void )
     hMenu = CreateMenu();
     hPopupMenu = CreatePopupMenu();
 
-    AppendMenu(hMenu, MF_POPUP | MF_STRING, (UINT)hPopupMenu, "Popup");
+    AppendMenu(hMenu, MF_POPUP | MF_STRING, (UINT_PTR)hPopupMenu, "Popup");
 
     AppendMenu(hPopupMenu, MF_STRING | MF_HILITE | MF_DEFAULT, 101, "Item 1");
     InsertMenu(hPopupMenu, 1, MF_BYPOSITION | MF_STRING | MF_HILITE | MF_DEFAULT, 102, "Item 2");
@@ -1920,7 +1920,7 @@ static void test_menu_hilitemenuitem( void )
     hMenu = CreateMenu();
     hPopupMenu = CreatePopupMenu();
 
-    AppendMenu(hMenu, MF_POPUP | MF_STRING, (UINT)hPopupMenu, "Popup");
+    AppendMenu(hMenu, MF_POPUP | MF_STRING, (UINT_PTR)hPopupMenu, "Popup");
 
     AppendMenu(hPopupMenu, MF_STRING, 101, "Item 1");
     AppendMenu(hPopupMenu, MF_STRING, 102, "Item 2");
@@ -2053,7 +2053,7 @@ static void check_menu_items(HMENU hmenu, UINT checked_cmd, UINT checked_type,
 #endif
         if (mii.hSubMenu)
         {
-            ok((HMENU)mii.wID == mii.hSubMenu, "id %u: wID should be equal to hSubMenu\n", checked_cmd);
+            ok(mii.wID == (UINT_PTR)mii.hSubMenu, "id %u: wID should be equal to hSubMenu\n", checked_cmd);
             check_menu_items(mii.hSubMenu, checked_cmd, checked_type, checked_state);
         }
         else

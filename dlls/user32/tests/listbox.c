@@ -50,7 +50,7 @@ static HWND
 create_listbox (DWORD add_style, HWND parent)
 {
   HWND handle;
-  int ctl_id=0;
+  INT_PTR ctl_id=0;
   if (parent)
     ctl_id=1;
   handle=CreateWindow ("LISTBOX", "TestList",

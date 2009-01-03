@@ -175,7 +175,7 @@ static void do_parent(void)
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = SW_SHOWNORMAL;
 
-    sprintf(path_name, "%s cursoricon %x", test_argv[0], (unsigned int) parent);
+    sprintf(path_name, "%s cursoricon %lx", test_argv[0], (INT_PTR)parent);
     ok(CreateProcessA(NULL, path_name, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess failed.\n");
     child_process = info.hProcess;
 

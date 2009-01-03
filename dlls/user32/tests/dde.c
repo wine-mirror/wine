@@ -160,7 +160,7 @@ static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPA
         lstrcpyA((LPSTR)data->Value, str);
         GlobalUnlock(hglobal);
 
-        lparam = PackDDElParam(WM_DDE_ACK, (UINT)hglobal, HIWORD(lparam));
+        lparam = PackDDElParam(WM_DDE_ACK, (UINT_PTR)hglobal, HIWORD(lparam));
         PostMessageA(client, WM_DDE_DATA, (WPARAM)hwnd, lparam);
 
         break;
