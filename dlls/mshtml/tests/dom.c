@@ -2185,6 +2185,7 @@ static void test_compatmode(IHTMLDocument2 *doc)
 static void test_location(IHTMLDocument2 *doc)
 {
     IHTMLLocation *location, *location2;
+    IHTMLWindow2 *window;
     ULONG ref;
     HRESULT hres;
 
@@ -2195,10 +2196,18 @@ static void test_location(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_location failed: %08x\n", hres);
 
     ok(location == location2, "location != location2\n");
+    IHTMLLocation_Release(location2);
+
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
+
+    hres = IHTMLWindow2_get_location(window, &location2);
+    ok(hres == S_OK, "get_location failed: %08x\n", hres);
+    ok(location == location2, "location != location2\n");
+    IHTMLLocation_Release(location2);
 
     test_ifaces((IUnknown*)location, location_iids);
 
-    IHTMLLocation_Release(location2);
     ref = IHTMLLocation_Release(location);
     ok(!ref, "location chould be destroyed here\n");
 }

@@ -248,8 +248,15 @@ static HRESULT WINAPI HTMLWindow2_get_Image(IHTMLWindow2 *iface, IHTMLImageEleme
 static HRESULT WINAPI HTMLWindow2_get_location(IHTMLWindow2 *iface, IHTMLLocation **p)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->doc) {
+        FIXME("This->doc is NULL\n");
+        return E_FAIL;
+    }
+
+    return IHTMLDocument2_get_location(HTMLDOC(This->doc), p);
 }
 
 static HRESULT WINAPI HTMLWindow2_get_history(IHTMLWindow2 *iface, IOmHistory **p)
