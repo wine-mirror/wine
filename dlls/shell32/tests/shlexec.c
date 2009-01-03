@@ -90,7 +90,7 @@ static void strcat_param(char* str, const char* param)
 static char shell_call[2048]="";
 static int shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, LPCSTR directory)
 {
-    int rc;
+    INT_PTR rc;
 
     strcpy(shell_call, "ShellExecute(");
     strcat_param(shell_call, operation);
@@ -111,8 +111,7 @@ static int shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, LPCST
      * association it displays the 'Open With' dialog and I could not find
      * a flag to prevent this.
      */
-    rc=(int)ShellExecute(NULL, operation, file, parameters, directory,
-                         SW_SHOWNORMAL);
+    rc=(INT_PTR)ShellExecute(NULL, operation, file, parameters, directory, SW_SHOWNORMAL);
 
     if (rc > 32)
     {
@@ -135,7 +134,7 @@ static int shell_execute_ex(DWORD mask, LPCSTR operation, LPCSTR file,
 {
     SHELLEXECUTEINFO sei;
     BOOL success;
-    int rc;
+    INT_PTR rc;
 
     strcpy(shell_call, "ShellExecuteEx(");
     strcat_param(shell_call, operation);
@@ -168,9 +167,9 @@ static int shell_execute_ex(DWORD mask, LPCSTR operation, LPCSTR file,
     DeleteFile(child_file);
     SetLastError(0xcafebabe);
     success=ShellExecuteEx(&sei);
-    rc=(int)sei.hInstApp;
+    rc=(INT_PTR)sei.hInstApp;
     ok((success && rc > 32) || (!success && rc <= 32),
-       "%s rc=%d and hInstApp=%d is not allowed\n", shell_call, success, rc);
+       "%s rc=%d and hInstApp=%ld is not allowed\n", shell_call, success, rc);
 
     if (rc > 32)
     {
@@ -835,7 +834,7 @@ static void test_find_executable(void)
     char filename[MAX_PATH];
     char command[MAX_PATH];
     const filename_tests_t* test;
-    int rc;
+    INT_PTR rc;
 
     if (!create_test_association(".sfe"))
     {
@@ -849,26 +848,26 @@ static void test_find_executable(void)
     strcpy(command, "your word");
     if (0) /* Can crash on Vista! */
     {
-    rc=(int)FindExecutableA(NULL, NULL, command);
-    ok(rc == SE_ERR_FNF || rc > 32 /* nt4 */, "FindExecutable(NULL) returned %d\n", rc);
+    rc=(INT_PTR)FindExecutableA(NULL, NULL, command);
+    ok(rc == SE_ERR_FNF || rc > 32 /* nt4 */, "FindExecutable(NULL) returned %ld\n", rc);
     ok(strcmp(command, "your word") != 0, "FindExecutable(NULL) returned command=[%s]\n", command);
     }
 
     strcpy(command, "your word");
-    rc=(int)FindExecutableA(tmpdir, NULL, command);
-    ok(rc == SE_ERR_NOASSOC /* >= win2000 */ || rc > 32 /* win98, nt4 */, "FindExecutable(NULL) returned %d\n", rc);
+    rc=(INT_PTR)FindExecutableA(tmpdir, NULL, command);
+    ok(rc == SE_ERR_NOASSOC /* >= win2000 */ || rc > 32 /* win98, nt4 */, "FindExecutable(NULL) returned %ld\n", rc);
     ok(strcmp(command, "your word") != 0, "FindExecutable(NULL) returned command=[%s]\n", command);
 
     sprintf(filename, "%s\\test file.sfe", tmpdir);
-    rc=(int)FindExecutableA(filename, NULL, command);
-    ok(rc > 32, "FindExecutable(%s) returned %d\n", filename, rc);
+    rc=(INT_PTR)FindExecutableA(filename, NULL, command);
+    ok(rc > 32, "FindExecutable(%s) returned %ld\n", filename, rc);
     /* Depending on the platform, command could be '%1' or 'test file.sfe' */
 
-    rc=(int)FindExecutableA("test file.sfe", tmpdir, command);
-    ok(rc > 32, "FindExecutable(%s) returned %d\n", filename, rc);
+    rc=(INT_PTR)FindExecutableA("test file.sfe", tmpdir, command);
+    ok(rc > 32, "FindExecutable(%s) returned %ld\n", filename, rc);
 
-    rc=(int)FindExecutableA("test file.sfe", NULL, command);
-    ok(rc == SE_ERR_FNF, "FindExecutable(%s) returned %d\n", filename, rc);
+    rc=(INT_PTR)FindExecutableA("test file.sfe", NULL, command);
+    ok(rc == SE_ERR_FNF, "FindExecutable(%s) returned %ld\n", filename, rc);
 
     delete_test_association(".sfe");
 
@@ -880,11 +879,11 @@ static void test_find_executable(void)
     create_test_verb(".shl", "Open", 0, "Open");
 
     sprintf(filename, "%s\\test file.shl", tmpdir);
-    rc=(int)FindExecutableA(filename, NULL, command);
-    ok(rc == SE_ERR_FNF /* NT4 */ || rc > 32, "FindExecutable(%s) returned %d\n", filename, rc);
+    rc=(INT_PTR)FindExecutableA(filename, NULL, command);
+    ok(rc == SE_ERR_FNF /* NT4 */ || rc > 32, "FindExecutable(%s) returned %ld\n", filename, rc);
 
     sprintf(filename, "%s\\test file.shlfoo", tmpdir);
-    rc=(int)FindExecutableA(filename, NULL, command);
+    rc=(INT_PTR)FindExecutableA(filename, NULL, command);
 
     delete_test_association(".shl");
 
@@ -919,16 +918,16 @@ static void test_find_executable(void)
         }
         /* Win98 does not '\0'-terminate command! */
         memset(command, '\0', sizeof(command));
-        rc=(int)FindExecutableA(filename, NULL, command);
+        rc=(INT_PTR)FindExecutableA(filename, NULL, command);
         if (rc > 32)
             rc=33;
         if ((test->todo & 0x10)==0)
         {
-            ok(rc==test->rc, "FindExecutable(%s) failed: rc=%d\n", filename, rc);
+            ok(rc==test->rc, "FindExecutable(%s) failed: rc=%ld\n", filename, rc);
         }
         else todo_wine
         {
-            ok(rc==test->rc, "FindExecutable(%s) failed: rc=%d\n", filename, rc);
+            ok(rc==test->rc, "FindExecutable(%s) failed: rc=%ld\n", filename, rc);
         }
         if (rc > 32)
         {
