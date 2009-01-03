@@ -105,11 +105,11 @@ static void test_fileops( void )
 
     rewind(file);
     ok(fgetpos(file,&pos) == 0, "fgetpos failed unexpected\n");
-    ok(pos == 0, "Unexpected result of fgetpos 0x%Lx\n", pos);
-    pos = (ULONGLONG)sizeof (outbuffer);
+    ok(pos == 0, "Unexpected result of fgetpos %x%08x\n", (DWORD)(pos >> 32), (DWORD)pos);
+    pos = sizeof (outbuffer);
     ok(fsetpos(file, &pos) == 0, "fsetpos failed unexpected\n");
     ok(fgetpos(file,&pos) == 0, "fgetpos failed unexpected\n");
-    ok(pos == (ULONGLONG)sizeof (outbuffer), "Unexpected result of fgetpos 0x%Lx\n", pos);
+    ok(pos == sizeof (outbuffer), "Unexpected result of fgetpos %x%08x\n", (DWORD)(pos >> 32), (DWORD)pos);
 
     fclose (file);
     fd = open ("fdopen.tst", O_RDONLY | O_TEXT);
@@ -463,8 +463,7 @@ static void test_fgetwc( void )
   ok(l==BUFSIZ-2, "ftell expected %d got %ld\n", BUFSIZ-2, l);
   fgetws(wtextW,LLEN,tempfh);
   l=ftell(tempfh);
-  ok(l==BUFSIZ-2+strlen(mytext), "ftell expected %d got %ld\n",
-   BUFSIZ-2+strlen(mytext), l);
+  ok(l==BUFSIZ-2+strlen(mytext), "ftell got %ld\n", l);
   mytextW = AtoW (mytext);
   aptr = mytextW;
   wptr = wtextW;
@@ -1019,7 +1018,7 @@ static void test_pipes_child(int argc, char** args)
 
     for (i=0; i<N_TEST_MESSAGES; i++) {
        nwritten=write(fd, pipe_string, strlen(pipe_string));
-       ok(nwritten == strlen(pipe_string), "i %d, expected to write %d bytes, wrote %d\n", i, strlen(pipe_string), nwritten);
+       ok(nwritten == strlen(pipe_string), "i %d, expected to write '%s' wrote %d\n", i, pipe_string, nwritten);
        /* let other process wake up so they can show off their "keep reading until EOF" behavior */
        if (i < N_TEST_MESSAGES-1)
            Sleep(100);
@@ -1057,7 +1056,7 @@ static void test_pipes(const char* selfname)
 
     for (i=0; i<N_TEST_MESSAGES; i++) {
        r=read(pipes[0], buf, sizeof(buf)-1);
-       ok(r == strlen(pipe_string), "i %d, expected to read %d bytes, got %d\n", i, strlen(pipe_string)+1, r);
+       ok(r == strlen(pipe_string), "i %d, got %d\n", i, r);
        if (r > 0)
            buf[r]='\0';
        ok(strcmp(buf, pipe_string) == 0, "expected to read '%s', got '%s'\n", pipe_string, buf);
@@ -1092,7 +1091,7 @@ static void test_pipes(const char* selfname)
     for (i=0; i<N_TEST_MESSAGES; i++)
        strcat(expected, pipe_string);
     r=fread(buf, 1, sizeof(buf)-1, file);
-    ok(r == strlen(expected), "fread() returned %d instead of %d: ferror=%d\n", r, strlen(expected), ferror(file));
+    ok(r == strlen(expected), "fread() returned %d: ferror=%d\n", r, ferror(file));
     if (r > 0)
        buf[r]='\0';
     ok(strcmp(buf, expected) == 0, "got '%s' expected '%s'\n", buf, expected);
