@@ -1666,7 +1666,7 @@ static void test_header_handling_order(int port)
     request = HttpOpenRequest(connect, NULL, "/test3", NULL, NULL, types, INTERNET_FLAG_KEEP_CONNECTION, 0);
     ok(request != NULL, "HttpOpenRequest failed\n");
 
-    ret = HttpAddRequestHeaders(request, authorization, ~0UL, HTTP_ADDREQ_FLAG_ADD);
+    ret = HttpAddRequestHeaders(request, authorization, ~0u, HTTP_ADDREQ_FLAG_ADD);
     ok(ret, "HttpAddRequestHeaders failed\n");
 
     ret = HttpSendRequest(request, NULL, 0, NULL, 0);
@@ -1683,7 +1683,7 @@ static void test_header_handling_order(int port)
     request = HttpOpenRequest(connect, NULL, "/test4", NULL, NULL, types, INTERNET_FLAG_KEEP_CONNECTION, 0);
     ok(request != NULL, "HttpOpenRequest failed\n");
 
-    ret = HttpSendRequest(request, connection, ~0UL, NULL, 0);
+    ret = HttpSendRequest(request, connection, ~0u, NULL, 0);
     ok(ret, "HttpSendRequest failed\n");
 
     status = 0;
@@ -1697,10 +1697,10 @@ static void test_header_handling_order(int port)
     request = HttpOpenRequest(connect, "POST", "/test7", NULL, NULL, types, INTERNET_FLAG_KEEP_CONNECTION, 0);
     ok(request != NULL, "HttpOpenRequest failed\n");
 
-    ret = HttpAddRequestHeaders(request, "Content-Length: 100\r\n", ~0UL, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
+    ret = HttpAddRequestHeaders(request, "Content-Length: 100\r\n", ~0u, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
     ok(ret, "HttpAddRequestHeaders failed\n");
 
-    ret = HttpSendRequest(request, connection, ~0UL, NULL, 0);
+    ret = HttpSendRequest(request, connection, ~0u, NULL, 0);
     ok(ret, "HttpSendRequest failed\n");
 
     status = 0;
@@ -2055,7 +2055,7 @@ static void test_user_agent_header(void)
     ok(!ret, "HttpQueryInfo succeeded\n");
     ok(err == ERROR_HTTP_HEADER_NOT_FOUND, "expected ERROR_HTTP_HEADER_NOT_FOUND, got %u\n", err);
 
-    ret = HttpAddRequestHeaders(req, "User-Agent: Gizmo Project\r\n", ~0UL, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
+    ret = HttpAddRequestHeaders(req, "User-Agent: Gizmo Project\r\n", ~0u, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
     ok(ret, "HttpAddRequestHeaders succeeded\n");
 
     size = sizeof(buffer);
@@ -2075,7 +2075,7 @@ static void test_user_agent_header(void)
     ok(!ret, "HttpQueryInfo succeeded\n");
     ok(err == ERROR_HTTP_HEADER_NOT_FOUND, "expected ERROR_HTTP_HEADER_NOT_FOUND, got %u\n", err);
 
-    ret = HttpAddRequestHeaders(req, "Accept: audio/*, image/*, text/*\r\nUser-Agent: Gizmo Project\r\n", ~0UL, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
+    ret = HttpAddRequestHeaders(req, "Accept: audio/*, image/*, text/*\r\nUser-Agent: Gizmo Project\r\n", ~0u, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
     ok(ret, "HttpAddRequestHeaders failed\n");
 
     buffer[0] = 0;
