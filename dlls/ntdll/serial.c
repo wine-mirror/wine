@@ -74,6 +74,9 @@
 #include "wine/debug.h"
 
 #ifdef HAVE_LINUX_SERIAL_H
+#ifdef HAVE_ASM_TYPES_H
+#include <asm/types.h>
+#endif
 #include <linux/serial.h>
 #endif
 
