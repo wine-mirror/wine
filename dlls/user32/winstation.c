@@ -628,7 +628,14 @@ BOOL WINAPI GetUserObjectSecurity( HANDLE handle, PSECURITY_INFORMATION info,
                                    PSECURITY_DESCRIPTOR sid, DWORD len, LPDWORD needed )
 {
     FIXME( "(%p %p %p len=%d %p),stub!\n", handle, info, sid, len, needed );
-    return TRUE;
+    if (needed)
+        *needed = sizeof(SECURITY_DESCRIPTOR);
+    if (len < sizeof(SECURITY_DESCRIPTOR))
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+    return InitializeSecurityDescriptor(sid, SECURITY_DESCRIPTOR_REVISION);
 }
 
 /***********************************************************************
