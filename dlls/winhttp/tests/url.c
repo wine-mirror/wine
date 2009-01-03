@@ -124,12 +124,12 @@ static void WinHttpCreateUrl_test( void )
     BOOL ret;
 
     /* NULL components */
-    len = ~0UL;
+    len = ~0u;
     SetLastError( 0xdeadbeef );
     ret = WinHttpCreateUrl( NULL, 0, NULL, &len );
     ok( !ret, "expected failure\n" );
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got %u\n", GetLastError() );
-    ok( len == ~0UL, "expected len ~0UL got %u\n", len );
+    ok( len == ~0u, "expected len ~0u got %u\n", len );
 
     /* zero'ed components */
     memset( &uc, 0, sizeof(URL_COMPONENTS) );
@@ -137,7 +137,7 @@ static void WinHttpCreateUrl_test( void )
     ret = WinHttpCreateUrl( &uc, 0, NULL, &len );
     ok( !ret, "expected failure\n" );
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got %u\n", GetLastError() );
-    ok( len == ~0UL, "expected len ~0UL got %u\n", len );
+    ok( len == ~0u, "expected len ~0u got %u\n", len );
 
     /* valid components, NULL url, NULL length */
     fill_url_components( &uc );
@@ -145,7 +145,7 @@ static void WinHttpCreateUrl_test( void )
     ret = WinHttpCreateUrl( &uc, 0, NULL, NULL );
     ok( !ret, "expected failure\n" );
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got %u\n", GetLastError() );
-    ok( len == ~0UL, "expected len ~0UL got %u\n", len );
+    ok( len == ~0u, "expected len ~0u got %u\n", len );
 
     /* valid components, NULL url */
     SetLastError( 0xdeadbeef );
@@ -310,13 +310,13 @@ static void reset_url_components( URL_COMPONENTS *uc )
 {
     memset( uc, 0, sizeof(URL_COMPONENTS) );
     uc->dwStructSize = sizeof(URL_COMPONENTS);
-    uc->dwSchemeLength    = ~0UL;
-    uc->dwHostNameLength  = ~0UL;
+    uc->dwSchemeLength    = ~0u;
+    uc->dwHostNameLength  = ~0u;
     uc->nPort             =  0;
-    uc->dwUserNameLength  = ~0UL;
-    uc->dwPasswordLength  = ~0UL;
-    uc->dwUrlPathLength   = ~0UL;
-    uc->dwExtraInfoLength = ~0UL;
+    uc->dwUserNameLength  = ~0u;
+    uc->dwPasswordLength  = ~0u;
+    uc->dwUrlPathLength   = ~0u;
+    uc->dwExtraInfoLength = ~0u;
 }
 
 static void WinHttpCrackUrl_test( void )

@@ -665,22 +665,22 @@ static void test_WinHttpAddHeaders(void)
         test_header_name, buffer, &len, &index);
     ok(ret == FALSE, "WinHttpQueryHeaders succeeded unexpectedly, found third header.\n");
 
-    ret = WinHttpAddRequestHeaders(request, test_headers[8], ~0UL, WINHTTP_ADDREQ_FLAG_ADD);
+    ret = WinHttpAddRequestHeaders(request, test_headers[8], ~0u, WINHTTP_ADDREQ_FLAG_ADD);
     ok(!ret, "WinHttpAddRequestHeaders failed\n");
 
-    ret = WinHttpAddRequestHeaders(request, test_headers[9], ~0UL, WINHTTP_ADDREQ_FLAG_ADD);
+    ret = WinHttpAddRequestHeaders(request, test_headers[9], ~0u, WINHTTP_ADDREQ_FLAG_ADD);
     ok(ret, "WinHttpAddRequestHeaders failed\n");
 
-    ret = WinHttpAddRequestHeaders(request, test_headers[10], ~0UL, WINHTTP_ADDREQ_FLAG_ADD);
+    ret = WinHttpAddRequestHeaders(request, test_headers[10], ~0u, WINHTTP_ADDREQ_FLAG_ADD);
     ok(!ret, "WinHttpAddRequestHeaders failed\n");
 
-    ret = WinHttpAddRequestHeaders(request, test_headers[11], ~0UL, WINHTTP_ADDREQ_FLAG_ADD);
+    ret = WinHttpAddRequestHeaders(request, test_headers[11], ~0u, WINHTTP_ADDREQ_FLAG_ADD);
     ok(!ret, "WinHttpAddRequestHeaders failed\n");
 
-    ret = WinHttpAddRequestHeaders(request, test_headers[12], ~0UL, WINHTTP_ADDREQ_FLAG_ADD);
+    ret = WinHttpAddRequestHeaders(request, test_headers[12], ~0u, WINHTTP_ADDREQ_FLAG_ADD);
     ok(!ret, "WinHttpAddRequestHeaders failed\n");
 
-    ret = WinHttpAddRequestHeaders(request, test_headers[13], ~0UL, WINHTTP_ADDREQ_FLAG_ADD);
+    ret = WinHttpAddRequestHeaders(request, test_headers[13], ~0u, WINHTTP_ADDREQ_FLAG_ADD);
     ok(ret, "WinHttpAddRequestHeaders failed\n");
 
     index = 0;
