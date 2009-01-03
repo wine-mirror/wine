@@ -95,10 +95,10 @@ int ds_snd_queue_max = 10;
 int ds_snd_queue_min = 6;
 int ds_snd_shadow_maxsize = 2;
 int ds_hw_accel = DS_HW_ACCEL_FULL;
-int ds_default_playback = 0;
-int ds_default_capture = 0;
 int ds_default_sample_rate = 44100;
 int ds_default_bits_per_sample = 16;
+static int ds_default_playback;
+static int ds_default_capture;
 
 /*
  * Get a config key from either the app-specific or the default config
