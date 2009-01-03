@@ -356,20 +356,20 @@ static void test__llseek( void )
 
     for (i = 0; i < 400; i++)
     {
-        ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains\n" );
+        ok( _hwrite( filehandle, sillytext, strlen( sillytext ) ) != -1, "_hwrite complains\n" );
     }
-    ok( HFILE_ERROR != _llseek( filehandle, 400 * strlen( sillytext ), FILE_CURRENT ), "should be able to seek\n" );
-    ok( HFILE_ERROR != _llseek( filehandle, 27 + 35 * strlen( sillytext ), FILE_BEGIN ), "should be able to seek\n" );
+    ok( _llseek( filehandle, 400 * strlen( sillytext ), FILE_CURRENT ) != -1, "should be able to seek\n" );
+    ok( _llseek( filehandle, 27 + 35 * strlen( sillytext ), FILE_BEGIN ) != -1, "should be able to seek\n" );
 
     bytes_read = _hread( filehandle, buffer, 1);
     ok( 1 == bytes_read, "file read size error\n" );
     ok( buffer[0] == sillytext[27], "_llseek error, it got lost seeking\n" );
-    ok( HFILE_ERROR != _llseek( filehandle, -400 * strlen( sillytext ), FILE_END ), "should be able to seek\n" );
+    ok( _llseek( filehandle, -400 * strlen( sillytext ), FILE_END ) != -1, "should be able to seek\n" );
 
     bytes_read = _hread( filehandle, buffer, 1);
     ok( 1 == bytes_read, "file read size error\n" );
     ok( buffer[0] == sillytext[0], "_llseek error, it got lost seeking\n" );
-    ok( HFILE_ERROR != _llseek( filehandle, 1000000, FILE_END ), "should be able to seek past file; poor, poor Windows programmers\n" );
+    ok( _llseek( filehandle, 1000000, FILE_END ) != -1, "should be able to seek past file; poor, poor Windows programmers\n" );
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains\n" );
 
     ret = DeleteFileA( filename );
