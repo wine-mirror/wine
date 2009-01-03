@@ -281,6 +281,7 @@ int wmain (int argc, WCHAR *argv[])
 
 		sei.lpFile = dos_filename;
 		sei.lpDirectory = parent_directory = get_parent_dir(dos_filename);
+		sei.fMask &= ~SEE_MASK_FLAG_NO_UI;
 
                 if (GetBinaryTypeW(sei.lpFile, &binary_type)) {
                     WCHAR *commandline;
