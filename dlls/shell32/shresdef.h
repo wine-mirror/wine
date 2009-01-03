@@ -193,4 +193,13 @@ FIXME: Need to add them, but for now just let them use the same: searching.avi
 #define IDC_RUNDLG_EDITPATH     12298
 #define IDC_RUNDLG_LABEL        12305
 
+/* bitmaps */
+/* explorer toolbar icons
+ * FIXME: images are hacky and should be re-drawn; also dark and light bitmaps are same for now
+ */
+#define IDB_TB_LARGE_LIGHT      214
+#define IDB_TB_LARGE_DARK       215
+#define IDB_TB_SMALL_LIGHT      216
+#define IDB_TB_SMALL_DARK       217
+
 #endif
