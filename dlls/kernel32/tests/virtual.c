@@ -57,7 +57,7 @@ static void test_VirtualAllocEx(void)
 {
     const unsigned int alloc_size = 1<<15;
     char *src, *dst;
-    unsigned long bytes_written = 0, bytes_read = 0, i;
+    SIZE_T bytes_written = 0, bytes_read = 0, i;
     void *addr1, *addr2;
     BOOL b;
     DWORD old_prot;
