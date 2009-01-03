@@ -73,6 +73,27 @@ static ULONG WINAPI IDirectPlay8AddressImpl_Release(PDIRECTPLAY8ADDRESS iface) {
     return refCount;
 }
 
+/* returns name of given GUID */
+static const char *debugstr_SP(const GUID *id) {
+  static const guid_info guids[] = {
+    /* CLSIDs */
+    GE(CLSID_DP8SP_IPX),
+    GE(CLSID_DP8SP_TCPIP),
+    GE(CLSID_DP8SP_SERIAL),
+    GE(CLSID_DP8SP_MODEM)
+  };
+  unsigned int i;
+
+  if (!id) return "(null)";
+
+  for (i = 0; i < sizeof(guids)/sizeof(guids[0]); i++) {
+    if (IsEqualGUID(id, guids[i].guid))
+      return guids[i].name;
+  }
+  /* if we didn't find it, act like standard debugstr_guid */
+  return debugstr_guid(id);
+}
+
 /* IDirectPlay8Address Interface follow: */
 
 static HRESULT WINAPI IDirectPlay8AddressImpl_BuildFromURLW(PDIRECTPLAY8ADDRESS iface, WCHAR* pwszSourceURL) { 
@@ -251,25 +272,4 @@ HRESULT DPNET_CreateDirectPlay8Address(LPCLASSFACTORY iface, LPUNKNOWN punkOuter
   client->lpVtbl = &DirectPlay8Address_Vtbl;
   client->ref = 0; /* will be inited with QueryInterface */
   return IDirectPlay8AddressImpl_QueryInterface ((PDIRECTPLAY8ADDRESS)client, riid, ppobj);
-}
-
-/* returns name of given GUID */
-const char *debugstr_SP(const GUID *id) {
-  static const guid_info guids[] = {
-    /* CLSIDs */
-    GE(CLSID_DP8SP_IPX),
-    GE(CLSID_DP8SP_TCPIP),
-    GE(CLSID_DP8SP_SERIAL),
-    GE(CLSID_DP8SP_MODEM)
-  };      
-  unsigned int i;
-
-  if (!id) return "(null)";
-  
-  for (i = 0; i < sizeof(guids)/sizeof(guids[0]); i++) {
-    if (IsEqualGUID(id, guids[i].guid))
-      return guids[i].name;
-  }
-  /* if we didn't find it, act like standard debugstr_guid */	
-  return debugstr_guid(id);
 }

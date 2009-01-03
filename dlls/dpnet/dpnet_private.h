@@ -111,11 +111,6 @@ extern HRESULT DPNET_CreateDirectPlay8Address(LPCLASSFACTORY iface, LPUNKNOWN pu
 extern HRESULT DPNET_CreateDirectPlay8LobbiedApp(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
 extern HRESULT DPNET_CreateDirectPlay8ThreadPool(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
 
-/**
- * debug
- */
-extern const char *debugstr_SP(const GUID *id);
-
 /* used for generic dumping (copied from ddraw) */
 typedef struct {
     DWORD val;
