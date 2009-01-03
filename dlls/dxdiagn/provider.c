@@ -32,6 +32,7 @@
 #include "vfw.h"
 #include "mmddk.h"
 #include "ddraw.h"
+#include "d3d9.h"
 
 #include "wine/debug.h"
 
@@ -186,6 +187,37 @@ static inline HRESULT add_prop_ull_as_str( IDxDiagContainer* cont, LPCWSTR prop,
     VariantClear( &var );
 
     return hr;
+}
+
+static void get_display_device_id(WCHAR *szIdentifierBuffer)
+{
+    static const WCHAR szNA[] = {'n','/','a',0};
+
+    HRESULT hr = E_FAIL;
+
+    HMODULE                 d3d9_handle;
+    IDirect3D9             *(WINAPI *pDirect3DCreate9)(UINT) = NULL;
+    IDirect3D9             *pD3d = NULL;
+    D3DADAPTER_IDENTIFIER9  adapter_ident;
+
+    /* Retrieves the display device identifier from the d3d9 implementation. */
+    d3d9_handle = LoadLibraryA("d3d9.dll");
+    if(d3d9_handle)
+        pDirect3DCreate9 = (void *)GetProcAddress(d3d9_handle, "Direct3DCreate9");
+    if(pDirect3DCreate9)
+        pD3d = pDirect3DCreate9(D3D_SDK_VERSION);
+    if(pD3d)
+        hr = IDirect3D9_GetAdapterIdentifier(pD3d, D3DADAPTER_DEFAULT, 0, &adapter_ident);
+    if(SUCCEEDED(hr)) {
+        StringFromGUID2(&adapter_ident.DeviceIdentifier, szIdentifierBuffer, 39);
+    } else {
+        memcpy(szIdentifierBuffer, szNA, sizeof(szNA));
+    }
+
+    if (pD3d)
+        IDirect3D9_Release(pD3d);
+    if (d3d9_handle)
+        FreeLibrary(d3d9_handle);
 }
 
 /**
@@ -438,6 +470,7 @@ static HRESULT DXDiag_InitDXDiagDisplayContainer(IDxDiagContainer* pSubCont)
     static const WCHAR szKeyDeviceKey[] = {'s','z','K','e','y','D','e','v','i','c','e','K','e','y',0};
     static const WCHAR szVendorId[] = {'s','z','V','e','n','d','o','r','I','d',0};
     static const WCHAR szDeviceId[] = {'s','z','D','e','v','i','c','e','I','d',0};
+    static const WCHAR szDeviceIdentifier[] = {'s','z','D','e','v','i','c','e','I','d','e','n','t','i','f','i','e','r',0};
     static const WCHAR dwWidth[] = {'d','w','W','i','d','t','h',0};
     static const WCHAR dwHeight[] = {'d','w','H','e','i','g','h','t',0};
     static const WCHAR dwBpp[] = {'d','w','B','p','p',0};
@@ -494,6 +527,9 @@ static HRESULT DXDiag_InitDXDiagDisplayContainer(IDxDiagContainer* pSubCont)
         if (surface_descr.dwFlags & DDSD_PIXELFORMAT)
             add_prop_ui4( pDisplayAdapterSubCont, dwBpp, surface_descr.u4.ddpfPixelFormat.u1.dwRGBBitCount );
     }
+
+    get_display_device_id( buffer );
+    add_prop_str( pDisplayAdapterSubCont, szDeviceIdentifier, buffer );
 
     add_prop_str( pDisplayAdapterSubCont, szVendorId, szEmpty );
     add_prop_str( pDisplayAdapterSubCont, szDeviceId, szEmpty );
