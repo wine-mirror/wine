@@ -1435,7 +1435,7 @@ static BOOL get_glyph_indices(INT charset, UINT code_page, WORD *idx, UINT count
         ok(!(fs.fsCsb[0] & (1 << 31)), "symbol encoding should NOT be available\n");
     }
 
-    if (!TranslateCharsetInfo((DWORD *)cs, &csi, TCI_SRCCHARSET))
+    if (!TranslateCharsetInfo((DWORD *)(INT_PTR)cs, &csi, TCI_SRCCHARSET))
     {
         trace("Can't find codepage for charset %d\n", cs);
         ReleaseDC(0, hdc);
