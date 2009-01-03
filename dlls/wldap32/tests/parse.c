@@ -60,7 +60,7 @@ static void test_ldap_parse_sort_control( LDAP *ld )
     ret = ldap_parse_resultA( NULL, res, &result, NULL, NULL, NULL, &server_ctrls, 1 );
     ok( ret == LDAP_PARAM_ERROR, "ldap_parse_resultA failed 0x%x\n", ret );
 
-    result = ~0UL;
+    result = ~0u;
     ret = ldap_parse_resultA( ld, res, &result, NULL, NULL, NULL, &server_ctrls, 1 );
     ok( !ret, "ldap_parse_resultA failed 0x%x\n", ret );
     ok( !result, "got 0x%x expected 0\n", result );
