@@ -29,7 +29,7 @@ static void * (*p_aligned_offset_malloc)(size_t,size_t,size_t) = NULL;
 static void * (*p_aligned_realloc)(void*,size_t,size_t) = NULL;
 static void * (*p_aligned_offset_realloc)(void*,size_t,size_t,size_t) = NULL;
 
-static void test_aligned_malloc(size_t size, size_t alignment)
+static void test_aligned_malloc(unsigned int size, unsigned int alignment)
 {
     void *mem;
 
@@ -57,7 +57,7 @@ static void test_aligned_malloc(size_t size, size_t alignment)
         ok(errno == EINVAL, "_aligned_malloc(%d, %d) errno: %d != %d\n", size, alignment, errno, EINVAL);
 }
 
-static void test_aligned_offset_malloc(size_t size, size_t alignment, size_t offset)
+static void test_aligned_offset_malloc(unsigned int size, unsigned int alignment, unsigned int offset)
 {
     void *mem;
 
@@ -88,7 +88,7 @@ static void test_aligned_offset_malloc(size_t size, size_t alignment, size_t off
         ok(errno == EINVAL, "_aligned_offset_malloc(%d, %d, %d) errno: %d != %d\n", size, alignment, offset, errno, EINVAL);
 }
 
-static void test_aligned_realloc(size_t size1, size_t size2, size_t alignment)
+static void test_aligned_realloc(unsigned int size1, unsigned int size2, unsigned int alignment)
 {
     void *mem, *mem1, *mem2;
 
@@ -160,7 +160,8 @@ static void test_aligned_realloc(size_t size1, size_t size2, size_t alignment)
         ok(errno == EINVAL, "_aligned_malloc(%d, %d) errno: %d != %d\n", size1, alignment, errno, EINVAL);
 }
 
-static void test_aligned_offset_realloc(size_t size1, size_t size2, size_t alignment, size_t offset)
+static void test_aligned_offset_realloc(unsigned int size1, unsigned int size2,
+                                        unsigned int alignment, unsigned int offset)
 {
     void *mem, *mem1, *mem2;
 
