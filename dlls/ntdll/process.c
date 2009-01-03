@@ -212,7 +212,8 @@ NTSTATUS WINAPI NtQueryInformationProcess(
         {
             VM_COUNTERS pvmi;
 
-            if (ProcessInformationLength >= sizeof(VM_COUNTERS))
+            /* older Windows versions don't have the PrivatePageCount field */
+            if (ProcessInformationLength >= FIELD_OFFSET(VM_COUNTERS,PrivatePageCount))
             {
                 if (!ProcessInformation)
                     ret = STATUS_ACCESS_VIOLATION;
@@ -223,12 +224,14 @@ NTSTATUS WINAPI NtQueryInformationProcess(
                     /* FIXME : real data */
                     memset(&pvmi, 0 , sizeof(VM_COUNTERS));
 
-                    memcpy(ProcessInformation, &pvmi, sizeof(VM_COUNTERS));
+                    len = ProcessInformationLength;
+                    if (len != FIELD_OFFSET(VM_COUNTERS,PrivatePageCount)) len = sizeof(VM_COUNTERS);
 
-                    len = sizeof(VM_COUNTERS);
+                    memcpy(ProcessInformation, &pvmi, min(ProcessInformationLength,sizeof(VM_COUNTERS)));
                 }
 
-                if (ProcessInformationLength > sizeof(VM_COUNTERS))
+                if (ProcessInformationLength != FIELD_OFFSET(VM_COUNTERS,PrivatePageCount) &&
+                    ProcessInformationLength != sizeof(VM_COUNTERS))
                     ret = STATUS_INFO_LENGTH_MISMATCH;
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;

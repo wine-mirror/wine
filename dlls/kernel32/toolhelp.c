@@ -202,7 +202,7 @@ static BOOL fetch_process_thread( DWORD flags, SYSTEM_PROCESS_INFORMATION** pspi
                 spi = (SYSTEM_PROCESS_INFORMATION*)((char*)spi + offset);
                 if (flags & TH32CS_SNAPPROCESS) (*num_pcs)++;
                 if (flags & TH32CS_SNAPTHREAD) *num_thd += spi->dwThreadCount;
-            } while ((offset = spi->dwOffset));
+            } while ((offset = spi->NextEntryOffset));
             return TRUE;
         case STATUS_INFO_LENGTH_MISMATCH:
             *pspi = HeapReAlloc( GetProcessHeap(), 0, *pspi, size *= 2 );
@@ -234,18 +234,18 @@ static void fill_process( struct snapshot* snap, ULONG* offset,
 
         pcs_entry->dwSize = sizeof(PROCESSENTRY32W);
         pcs_entry->cntUsage = 0; /* MSDN says no longer used, always 0 */
-        pcs_entry->th32ProcessID = spi->dwProcessID;
+        pcs_entry->th32ProcessID = HandleToUlong(spi->UniqueProcessId);
         pcs_entry->th32DefaultHeapID = 0; /* MSDN says no longer used, always 0 */
         pcs_entry->th32ModuleID = 0; /* MSDN says no longer used, always 0 */
         pcs_entry->cntThreads = spi->dwThreadCount;
-        pcs_entry->th32ParentProcessID = spi->dwParentProcessID;
+        pcs_entry->th32ParentProcessID = HandleToUlong(spi->ParentProcessId);
         pcs_entry->pcPriClassBase = spi->dwBasePriority;
         pcs_entry->dwFlags = 0; /* MSDN says no longer used, always 0 */
         l = min(spi->ProcessName.Length, sizeof(pcs_entry->szExeFile) - sizeof(WCHAR));
         memcpy(pcs_entry->szExeFile, spi->ProcessName.Buffer, l);
         pcs_entry->szExeFile[l / sizeof(WCHAR)] = '\0';
         pcs_entry++;
-    } while ((poff = spi->dwOffset));
+    } while ((poff = spi->NextEntryOffset));
 
     *offset += num * sizeof(PROCESSENTRY32W);
 }
@@ -274,8 +274,8 @@ static void fill_thread( struct snapshot* snap, ULONG* offset, LPVOID info, ULON
         {
             thd_entry->dwSize = sizeof(THREADENTRY32);
             thd_entry->cntUsage = 0; /* MSDN says no longer used, always 0 */
-            thd_entry->th32ThreadID = sti->dwThreadID;
-            thd_entry->th32OwnerProcessID = sti->dwOwningPID;
+            thd_entry->th32ThreadID = HandleToUlong(sti->ClientId.UniqueThread);
+            thd_entry->th32OwnerProcessID = HandleToUlong(sti->ClientId.UniqueProcess);
             thd_entry->tpBasePri = sti->dwBasePriority;
             thd_entry->tpDeltaPri = 0; /* MSDN says no longer used, always 0 */
             thd_entry->dwFlags = 0; /* MSDN says no longer used, always 0" */
@@ -283,7 +283,7 @@ static void fill_thread( struct snapshot* snap, ULONG* offset, LPVOID info, ULON
             sti++;
             thd_entry++;
       }
-    } while ((poff = spi->dwOffset));
+    } while ((poff = spi->NextEntryOffset));
     *offset += num * sizeof(THREADENTRY32);
 }
 

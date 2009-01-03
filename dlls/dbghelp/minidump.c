@@ -98,10 +98,9 @@ static BOOL fetch_processes_info(struct dump_context* dc)
         dc->spi = dc->pcs_buffer;
         for (;;)
         {
-            if (dc->spi->dwProcessID == dc->pid) return TRUE;
-            if (!dc->spi->dwOffset) break;
-            dc->spi = (SYSTEM_PROCESS_INFORMATION*)     
-                ((char*)dc->spi + dc->spi->dwOffset);
+            if (HandleToUlong(dc->spi->UniqueProcessId) == dc->pid) return TRUE;
+            if (!dc->spi->NextEntryOffset) break;
+            dc->spi = (SYSTEM_PROCESS_INFORMATION*)((char*)dc->spi + dc->spi->NextEntryOffset);
         }
     }
     HeapFree(GetProcessHeap(), 0, dc->pcs_buffer);
@@ -179,13 +178,13 @@ static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
                               const MINIDUMP_EXCEPTION_INFORMATION* except,
                               MINIDUMP_THREAD* mdThd, CONTEXT* ctx)
 {
-    DWORD                       tid = dc->spi->ti[thd_idx].dwThreadID;
+    DWORD                       tid = HandleToUlong(dc->spi->ti[thd_idx].ClientId.UniqueThread);
     HANDLE                      hThread;
     THREAD_BASIC_INFORMATION    tbi;
 
     memset(ctx, 0, sizeof(*ctx));
 
-    mdThd->ThreadId = dc->spi->ti[thd_idx].dwThreadID;
+    mdThd->ThreadId = tid;
     mdThd->SuspendCount = 0;
     mdThd->Teb = 0;
     mdThd->Stack.StartOfMemoryRange = 0;
@@ -198,8 +197,7 @@ static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
 
     if ((hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, tid)) == NULL)
     {
-        FIXME("Couldn't open thread %u (%u)\n",
-              dc->spi->ti[thd_idx].dwThreadID, GetLastError());
+        FIXME("Couldn't open thread %u (%u)\n", tid, GetLastError());
         return FALSE;
     }
     
@@ -713,7 +711,7 @@ static  unsigned        dump_threads(struct dump_context* dc,
             cbin.ProcessId = dc->pid;
             cbin.ProcessHandle = dc->hProcess;
             cbin.CallbackType = ThreadCallback;
-            cbin.u.Thread.ThreadId = dc->spi->ti[i].dwThreadID;
+            cbin.u.Thread.ThreadId = HandleToUlong(dc->spi->ti[i].ClientId.UniqueThread);
             cbin.u.Thread.ThreadHandle = 0; /* FIXME */
             cbin.u.Thread.Context = ctx;
             cbin.u.Thread.SizeOfContext = sizeof(CONTEXT);

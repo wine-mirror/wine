@@ -222,13 +222,13 @@ BOOL WINAPI EnumProcesses(DWORD *lpdwProcessIDs, DWORD cb, DWORD *lpcbUsed)
 
     for (*lpcbUsed = 0; cb >= sizeof(DWORD); cb -= sizeof(DWORD))
     {
-        *lpdwProcessIDs++ = spi->dwProcessID;
+        *lpdwProcessIDs++ = HandleToUlong(spi->UniqueProcessId);
         *lpcbUsed += sizeof(DWORD);
 
-        if (spi->dwOffset == 0)
+        if (spi->NextEntryOffset == 0)
             break;
 
-        spi = (SYSTEM_PROCESS_INFORMATION *)(((PCHAR)spi) + spi->dwOffset);
+        spi = (SYSTEM_PROCESS_INFORMATION *)(((PCHAR)spi) + spi->NextEntryOffset);
     }
 
     HeapFree(GetProcessHeap(), 0, pBuf);

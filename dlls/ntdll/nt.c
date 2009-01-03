@@ -824,15 +824,15 @@ NTSTATUS WINAPI NtQuerySystemInformation(
  
                             memset(spi, 0, sizeof(*spi));
 
-                            spi->dwOffset = procstructlen - wlen;
+                            spi->NextEntryOffset = procstructlen - wlen;
                             spi->dwThreadCount = reply->threads;
 
                             /* spi->pszProcessName will be set later on */
 
                             spi->dwBasePriority = reply->priority;
-                            spi->dwProcessID = (DWORD)reply->pid;
-                            spi->dwParentProcessID = (DWORD)reply->ppid;
-                            spi->dwHandleCount = reply->handles;
+                            spi->UniqueProcessId = UlongToHandle(reply->pid);
+                            spi->ParentProcessId = UlongToHandle(reply->ppid);
+                            spi->HandleCount = reply->handles;
 
                             /* spi->ti will be set later on */
 
@@ -863,7 +863,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                             if (!(ret = wine_server_call( req )))
                             {
                                 j++;
-                                if (reply->pid == spi->dwProcessID)
+                                if (UlongToHandle(reply->pid) == spi->UniqueProcessId)
                                 {
                                     /* ftKernelTime, ftUserTime, ftCreateTime;
                                      * dwTickCount, dwStartAddress
@@ -871,8 +871,9 @@ NTSTATUS WINAPI NtQuerySystemInformation(
 
                                     memset(&spi->ti[i], 0, sizeof(spi->ti));
 
-                                    spi->ti[i].dwOwningPID = reply->pid;
-                                    spi->ti[i].dwThreadID  = reply->tid;
+                                    spi->ti[i].CreateTime.QuadPart = 0xdeadbeef;
+                                    spi->ti[i].ClientId.UniqueProcess = UlongToHandle(reply->pid);
+                                    spi->ti[i].ClientId.UniqueThread  = UlongToHandle(reply->tid);
                                     spi->ti[i].dwCurrentPriority = reply->base_pri + reply->delta_pri;
                                     spi->ti[i].dwBasePriority = reply->base_pri;
                                     i++;
@@ -884,17 +885,17 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                     if (ret == STATUS_NO_MORE_FILES) ret = STATUS_SUCCESS;
 
                     /* now append process name */
-                    spi->ProcessName.Buffer = (WCHAR*)((char*)spi + spi->dwOffset);
+                    spi->ProcessName.Buffer = (WCHAR*)((char*)spi + spi->NextEntryOffset);
                     spi->ProcessName.Length = wlen - sizeof(WCHAR);
                     spi->ProcessName.MaximumLength = wlen;
                     memcpy( spi->ProcessName.Buffer, exename, wlen );
-                    spi->dwOffset += wlen;
+                    spi->NextEntryOffset += wlen;
 
                     last = spi;
-                    spi = (SYSTEM_PROCESS_INFORMATION*)((char*)spi + spi->dwOffset);
+                    spi = (SYSTEM_PROCESS_INFORMATION*)((char*)spi + spi->NextEntryOffset);
                 }
             }
-            if (ret == STATUS_SUCCESS && last) last->dwOffset = 0;
+            if (ret == STATUS_SUCCESS && last) last->NextEntryOffset = 0;
             if (hSnap) NtClose(hSnap);
         }
         break;

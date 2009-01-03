@@ -1000,20 +1000,20 @@ PVOID WINAPI RtlVirtualUnwind(ULONG,ULONG64,ULONG64,RUNTIME_FUNCTION*,CONTEXT*,P
  */
 
 /* This is used by NtQuerySystemInformation */
-typedef struct _SYSTEM_THREAD_INFORMATION{
-    FILETIME    ftKernelTime;
-    FILETIME    ftUserTime;
-    FILETIME    ftCreateTime;
-    DWORD       dwTickCount;
-    DWORD       dwStartAddress;
-    DWORD       dwOwningPID;
-    DWORD       dwThreadID;
-    DWORD       dwCurrentPriority;
-    DWORD       dwBasePriority;
-    DWORD       dwContextSwitches;
-    DWORD       dwThreadState;
-    DWORD       dwWaitReason;
-    DWORD       dwUnknown;
+typedef struct _SYSTEM_THREAD_INFORMATION
+{                                    /* win32/win64 */
+    LARGE_INTEGER KernelTime;          /* 00/00 */
+    LARGE_INTEGER UserTime;            /* 08/08 */
+    LARGE_INTEGER CreateTime;          /* 10/10 */
+    DWORD         dwTickCount;         /* 18/18 */
+    LPVOID        StartAddress;        /* 1c/20 */
+    CLIENT_ID     ClientId;            /* 20/28 */
+    DWORD         dwCurrentPriority;   /* 28/38 */
+    DWORD         dwBasePriority;      /* 2c/3c */
+    DWORD         dwContextSwitches;   /* 30/40 */
+    DWORD         dwThreadState;       /* 34/44 */
+    DWORD         dwWaitReason;        /* 38/48 */
+    DWORD         dwUnknown;           /* 3c/4c */
 } SYSTEM_THREAD_INFORMATION, *PSYSTEM_THREAD_INFORMATION;
 
 typedef struct _IO_STATUS_BLOCK {
@@ -1353,38 +1353,39 @@ typedef struct _VM_COUNTERS_ {
     SIZE_T QuotaNonPagedPoolUsage;
     SIZE_T PagefileUsage;
     SIZE_T PeakPagefileUsage;
+    SIZE_T PrivatePageCount;
 } VM_COUNTERS, *PVM_COUNTERS;
 
 typedef struct _SYSTEM_PROCESS_INFORMATION {
-#ifdef __WINESRC__
-    DWORD dwOffset;
-    DWORD dwThreadCount;
-    DWORD dwUnknown1[6];
-    FILETIME ftCreationTime;
-    FILETIME ftUserTime;
-    FILETIME ftKernelTime;
-    UNICODE_STRING ProcessName;
-    DWORD dwBasePriority;
-    DWORD dwProcessID;
-    DWORD dwParentProcessID;
-    DWORD dwHandleCount;
-    DWORD dwUnknown3;
-    DWORD dwUnknown4;
-    VM_COUNTERS vmCounters;
-    IO_COUNTERS ioCounters;
-    SYSTEM_THREAD_INFORMATION ti[1];
+#ifdef __WINESRC__                  /* win32/win64 */
+    ULONG NextEntryOffset;             /* 00/00 */
+    DWORD dwThreadCount;               /* 04/04 */
+    DWORD dwUnknown1[6];               /* 08/08 */
+    LARGE_INTEGER CreationTime;        /* 20/20 */
+    LARGE_INTEGER UserTime;            /* 28/28 */
+    LARGE_INTEGER KernelTime;          /* 30/30 */
+    UNICODE_STRING ProcessName;        /* 38/38 */
+    DWORD dwBasePriority;              /* 40/48 */
+    HANDLE UniqueProcessId;            /* 44/50 */
+    HANDLE ParentProcessId;            /* 48/58 */
+    ULONG HandleCount;                 /* 4c/60 */
+    DWORD dwUnknown3;                  /* 50/64 */
+    DWORD dwUnknown4;                  /* 54/68 */
+    VM_COUNTERS vmCounters;            /* 58/70 */
+    IO_COUNTERS ioCounters;            /* 88/d0 */
+    SYSTEM_THREAD_INFORMATION ti[1];   /* b8/100 */
 #else
-    ULONG NextEntryOffset;
-    BYTE Reserved1[52];
-    PVOID Reserved2[3];
-    HANDLE UniqueProcessId;
-    PVOID Reserved3;
-    ULONG HandleCount;
-    BYTE Reserved4[4];
-    PVOID Reserved5[11];
-    SIZE_T PeakPagefileUsage;
-    SIZE_T PrivatePageCount;
-    LARGE_INTEGER Reserved6[6];
+    ULONG NextEntryOffset;             /* 00/00 */
+    BYTE Reserved1[52];                /* 04/04 */
+    PVOID Reserved2[3];                /* 38/38 */
+    HANDLE UniqueProcessId;            /* 44/50 */
+    PVOID Reserved3;                   /* 48/58 */
+    ULONG HandleCount;                 /* 4c/60 */
+    BYTE Reserved4[4];                 /* 50/64 */
+    PVOID Reserved5[11];               /* 54/68 */
+    SIZE_T PeakPagefileUsage;          /* 80/c0 */
+    SIZE_T PrivatePageCount;           /* 84/c8 */
+    LARGE_INTEGER Reserved6[6];        /* 88/d0 */
 #endif
 } SYSTEM_PROCESS_INFORMATION, *PSYSTEM_PROCESS_INFORMATION;
 
@@ -1936,16 +1937,16 @@ typedef struct _LDR_MODULE
 
 typedef struct _SYSTEM_MODULE
 {
-    ULONG               Reserved1;
-    ULONG               Reserved2;
-    PVOID               ImageBaseAddress;
-    ULONG               ImageSize;
-    ULONG               Flags;
-    WORD                Id;
-    WORD                Rank;
-    WORD                Unknown;
-    WORD                NameOffset;
-    BYTE                Name[MAXIMUM_FILENAME_LENGTH];
+    PVOID               Reserved1;                      /* 00/00 */
+    PVOID               Reserved2;                      /* 04/08 */
+    PVOID               ImageBaseAddress;               /* 08/10 */
+    ULONG               ImageSize;                      /* 0c/18 */
+    ULONG               Flags;                          /* 10/1c */
+    WORD                Id;                             /* 14/20 */
+    WORD                Rank;                           /* 16/22 */
+    WORD                Unknown;                        /* 18/24 */
+    WORD                NameOffset;                     /* 1a/26 */
+    BYTE                Name[MAXIMUM_FILENAME_LENGTH];  /* 1c/28 */
 } SYSTEM_MODULE, *PSYSTEM_MODULE;
 
 typedef struct _SYSTEM_MODULE_INFORMATION
