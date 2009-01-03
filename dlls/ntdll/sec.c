@@ -618,7 +618,12 @@ NTSTATUS WINAPI RtlGetDaclSecurityDescriptor(
 	    *pDacl = lpsd->Dacl;
 
 	  *lpbDaclDefaulted = (( SE_DACL_DEFAULTED & lpsd->Control ) ? 1 : 0);
-	}
+        }
+        else
+        {
+            *pDacl = NULL;
+            *lpbDaclDefaulted = 0;
+        }
 
 	return STATUS_SUCCESS;
 }
