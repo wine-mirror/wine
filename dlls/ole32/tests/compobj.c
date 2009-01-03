@@ -887,7 +887,7 @@ static void test_registered_object_thread_affinity(void)
     ok(hr == S_OK, "CoGetClassObject on local server object registered in same "
        "thread should return S_OK instead of 0x%08x\n", hr);
 
-    thread = CreateThread(NULL, 0, revoke_class_object_thread, (LPVOID)cookie, 0, &tid);
+    thread = CreateThread(NULL, 0, revoke_class_object_thread, (LPVOID)(DWORD_PTR)cookie, 0, &tid);
     ok(thread != NULL, "CreateThread failed with error %d\n", GetLastError());
     WaitForSingleObject(thread, INFINITE);
     GetExitCodeThread(thread, &exitcode);
