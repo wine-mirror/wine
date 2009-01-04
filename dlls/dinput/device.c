@@ -432,11 +432,8 @@ static HRESULT create_DataFormat(LPCDIDATAFORMAT asked_format, DataFormat *forma
 		break;
 	    }
 	}
-	
-	if (j == asked_format->dwNumObjs)
-	    same = 0;
     }
-    
+
     TRACE("Setting to default value :\n");
     for (j = 0; j < asked_format->dwNumObjs; j++) {
 	if (done[j] == 0) {
