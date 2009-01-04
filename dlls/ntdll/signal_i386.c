@@ -1179,7 +1179,7 @@ static inline CONTEXT *get_exception_context( EXCEPTION_RECORD *rec )
  */
 static inline DWORD get_fpu_code( const CONTEXT *context )
 {
-    DWORD status = context->FloatSave.StatusWord;
+    DWORD status = context->FloatSave.StatusWord & ~(context->FloatSave.ControlWord & 0x3f);
 
     if (status & 0x01)  /* IE */
     {
