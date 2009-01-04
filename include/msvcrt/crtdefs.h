@@ -104,11 +104,6 @@ typedef unsigned int size_t;
 #define _SIZE_T_DEFINED
 #endif
 
-#ifndef _TIME_T_DEFINED
-typedef long time_t;
-#define _TIME_T_DEFINED
-#endif
-
 #ifndef _TIME32_T_DEFINED
 typedef long __time32_t;
 #define _TIME32_T_DEFINED
@@ -117,6 +112,15 @@ typedef long __time32_t;
 #ifndef _TIME64_T_DEFINED
 typedef __int64 __time64_t;
 #define _TIME64_T_DEFINED
+#endif
+
+#ifndef _TIME_T_DEFINED
+#ifdef _WIN64
+typedef __time64_t time_t;
+#else
+typedef __time32_t time_t;
+#endif
+#define _TIME_T_DEFINED
 #endif
 
 #ifndef _WCHAR_T_DEFINED
