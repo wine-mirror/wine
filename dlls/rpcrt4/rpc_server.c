@@ -745,7 +745,7 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpExA( RPC_CSTR Protseq, UINT MaxCalls, RPC
   RpcServerProtseq* ps;
   RPC_STATUS status;
 
-  TRACE("(%s,%u,%s,%p,{%u,%lu,%lu})\n", debugstr_a(szps), MaxCalls,
+  TRACE("(%s,%u,%s,%p,{%u,%u,%u})\n", debugstr_a(szps), MaxCalls,
        debugstr_a(szep), SecurityDescriptor,
        lpPolicy->Length, lpPolicy->EndpointFlags, lpPolicy->NICFlags );
 
@@ -766,7 +766,7 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpExW( RPC_WSTR Protseq, UINT MaxCalls, RPC
   RPC_STATUS status;
   LPSTR EndpointA;
 
-  TRACE("(%s,%u,%s,%p,{%u,%lu,%lu})\n", debugstr_w( Protseq ), MaxCalls,
+  TRACE("(%s,%u,%s,%p,{%u,%u,%u})\n", debugstr_w( Protseq ), MaxCalls,
        debugstr_w( Endpoint ), SecurityDescriptor,
        lpPolicy->Length, lpPolicy->EndpointFlags, lpPolicy->NICFlags );
 
