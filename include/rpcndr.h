@@ -144,7 +144,7 @@ struct NDR_ALLOC_ALL_NODES_CONTEXT;
 struct NDR_POINTER_QUEUE_STATE;
 
 typedef unsigned char *RPC_BUFPTR;
-typedef unsigned long RPC_LENGTH;
+typedef ULONG RPC_LENGTH;
 typedef void (__RPC_USER *EXPR_EVAL)(struct _MIDL_STUB_MESSAGE *);
 typedef const unsigned char *PFORMAT_STRING;
 
