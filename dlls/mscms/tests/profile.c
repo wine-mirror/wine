@@ -31,6 +31,7 @@
 #include "wine/test.h"
 
 HMODULE hmscms;
+HMODULE huser32;
 
 static BOOL     (WINAPI *pAssociateColorProfileWithDeviceA)(PCSTR,PCSTR,PCSTR);
 static BOOL     (WINAPI *pCloseColorProfile)(HPROFILE);
@@ -57,6 +58,8 @@ static BOOL     (WINAPI *pSetStandardColorSpaceProfileA)(PCSTR,DWORD,PSTR);
 static BOOL     (WINAPI *pSetStandardColorSpaceProfileW)(PCWSTR,DWORD,PWSTR);
 static BOOL     (WINAPI *pUninstallColorProfileA)(PCSTR,PCSTR,BOOL);
 static BOOL     (WINAPI *pUninstallColorProfileW)(PCWSTR,PCWSTR,BOOL);
+
+static BOOL     (WINAPI *pEnumDisplayDevicesA)(LPCSTR,DWORD,PDISPLAY_DEVICE,DWORD);
 
 #define GETFUNCPTR(func) p##func = (void *)GetProcAddress( hmscms, #func ); \
     if (!p##func) return FALSE;
@@ -88,6 +91,8 @@ static BOOL init_function_ptrs( void )
     GETFUNCPTR( SetStandardColorSpaceProfileW )
     GETFUNCPTR( UninstallColorProfileA )
     GETFUNCPTR( UninstallColorProfileW )
+
+    pEnumDisplayDevicesA = (void *)GetProcAddress( huser32, "EnumDisplayDevicesA" );
 
     return TRUE;
 }
@@ -1367,63 +1372,77 @@ static void test_AssociateColorProfileWithDeviceA(void)
     BOOL ret;
     char profile[MAX_PATH], basename[MAX_PATH];
     DWORD error, size = sizeof(profile);
+    DISPLAY_DEVICE display;
+    BOOL res;
+    DISPLAY_DEVICE monitor;
 
-    if (testprofile)
+    if (testprofile && pEnumDisplayDevicesA)
     {
-        SetLastError(0xdeadbeef);
-        ret = pAssociateColorProfileWithDeviceA( "machine", testprofile, NULL );
-        error = GetLastError();
-        ok( !ret, "AssociateColorProfileWithDevice() succeeded\n" );
-        ok( error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error );
+        display.cb = sizeof( DISPLAY_DEVICE );
+        res = pEnumDisplayDevicesA( NULL, 0, &display, 0 );
+        ok( res, "Can't get display info\n" );
 
-        SetLastError(0xdeadbeef);
-        ret = pAssociateColorProfileWithDeviceA( "machine", NULL, "DISPLAY" );
-        error = GetLastError();
-        ok( !ret, "AssociateColorProfileWithDevice() succeeded\n" );
-        ok( error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error );
+        monitor.cb = sizeof( DISPLAY_DEVICE );
+        res = pEnumDisplayDevicesA( display.DeviceName, 0, &monitor, 0 );
+        if (res)
+        {
+            SetLastError(0xdeadbeef);
+            ret = pAssociateColorProfileWithDeviceA( "machine", testprofile, NULL );
+            error = GetLastError();
+            ok( !ret, "AssociateColorProfileWithDevice() succeeded\n" );
+            ok( error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error );
 
-        SetLastError(0xdeadbeef);
-        ret = pAssociateColorProfileWithDeviceA( "machine", testprofile, "DISPLAY" );
-        error = GetLastError();
-        ok( !ret, "AssociateColorProfileWithDevice() succeeded\n" );
-        ok( error == ERROR_NOT_SUPPORTED, "expected ERROR_NOT_SUPPORTED, got %u\n", error );
+            SetLastError(0xdeadbeef);
+            ret = pAssociateColorProfileWithDeviceA( "machine", NULL, monitor.DeviceID );
+            error = GetLastError();
+            ok( !ret, "AssociateColorProfileWithDevice() succeeded\n" );
+            ok( error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error );
 
-        ret = pInstallColorProfileA( NULL, testprofile );
-        ok( ret, "InstallColorProfileA() failed (%u)\n", GetLastError() );
+            SetLastError(0xdeadbeef);
+            ret = pAssociateColorProfileWithDeviceA( "machine", testprofile, monitor.DeviceID );
+            error = GetLastError();
+            ok( !ret, "AssociateColorProfileWithDevice() succeeded\n" );
+            ok( error == ERROR_NOT_SUPPORTED, "expected ERROR_NOT_SUPPORTED, got %u\n", error );
 
-        ret = pGetColorDirectoryA( NULL, profile, &size );
-        ok( ret, "GetColorDirectoryA() failed (%d)\n", GetLastError() );
+            ret = pInstallColorProfileA( NULL, testprofile );
+            ok( ret, "InstallColorProfileA() failed (%u)\n", GetLastError() );
 
-        MSCMS_basenameA( testprofile, basename );
-        lstrcatA( profile, "\\" );
-        lstrcatA( profile, basename );
+            ret = pGetColorDirectoryA( NULL, profile, &size );
+            ok( ret, "GetColorDirectoryA() failed (%d)\n", GetLastError() );
 
-        ret = pAssociateColorProfileWithDeviceA( NULL, profile, "DISPLAY" );
-        ok( ret, "AssociateColorProfileWithDevice() failed (%u)\n", GetLastError() );
+            MSCMS_basenameA( testprofile, basename );
+            lstrcatA( profile, "\\" );
+            lstrcatA( profile, basename );
 
-        SetLastError(0xdeadbeef);
-        ret = pDisassociateColorProfileFromDeviceA( "machine", profile, NULL );
-        error = GetLastError();
-        ok( !ret, "DisassociateColorProfileFromDeviceA() succeeded\n" );
-        ok( error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error );
+            ret = pAssociateColorProfileWithDeviceA( NULL, profile, monitor.DeviceID );
+            ok( ret, "AssociateColorProfileWithDevice() failed (%u)\n", GetLastError() );
 
-        SetLastError(0xdeadbeef);
-        ret = pDisassociateColorProfileFromDeviceA( "machine", NULL, "DISPLAY" );
-        error = GetLastError();
-        ok( !ret, "DisassociateColorProfileFromDeviceA() succeeded\n" );
-        ok( error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error );
+            SetLastError(0xdeadbeef);
+            ret = pDisassociateColorProfileFromDeviceA( "machine", profile, NULL );
+            error = GetLastError();
+            ok( !ret, "DisassociateColorProfileFromDeviceA() succeeded\n" );
+            ok( error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error );
 
-        SetLastError(0xdeadbeef);
-        ret = pDisassociateColorProfileFromDeviceA( "machine", profile, "DISPLAY" );
-        error = GetLastError();
-        ok( !ret, "DisassociateColorProfileFromDeviceA() succeeded\n" );
-        ok( error == ERROR_NOT_SUPPORTED, "expected ERROR_NOT_SUPPORTED, got %u\n", error );
+            SetLastError(0xdeadbeef);
+            ret = pDisassociateColorProfileFromDeviceA( "machine", NULL, monitor.DeviceID );
+            error = GetLastError();
+            ok( !ret, "DisassociateColorProfileFromDeviceA() succeeded\n" );
+            ok( error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error );
 
-        ret = pDisassociateColorProfileFromDeviceA( NULL, profile, "DISPLAY" );
-        ok( ret, "DisassociateColorProfileFromDeviceA() failed (%u)\n", GetLastError() );
+            SetLastError(0xdeadbeef);
+            ret = pDisassociateColorProfileFromDeviceA( "machine", profile, monitor.DeviceID );
+            error = GetLastError();
+            ok( !ret, "DisassociateColorProfileFromDeviceA() succeeded\n" );
+            ok( error == ERROR_NOT_SUPPORTED, "expected ERROR_NOT_SUPPORTED, got %u\n", error );
 
-        ret = pUninstallColorProfileA( NULL, profile, TRUE );
-        ok( ret, "UninstallColorProfileA() failed (%d)\n", GetLastError() );
+            ret = pDisassociateColorProfileFromDeviceA( NULL, profile, monitor.DeviceID );
+            ok( ret, "DisassociateColorProfileFromDeviceA() failed (%u)\n", GetLastError() );
+
+            ret = pUninstallColorProfileA( NULL, profile, TRUE );
+            ok( ret, "UninstallColorProfileA() failed (%d)\n", GetLastError() );
+        }
+        else
+            skip("Unable to obtain monitor name\n");
     }
 }
 
@@ -1441,8 +1460,16 @@ START_TEST(profile)
     hmscms = LoadLibraryA( "mscms.dll" );
     if (!hmscms) return;
 
+    huser32 = LoadLibraryA( "user32.dll" );
+    if (!huser32)
+    {
+        FreeLibrary( hmscms );
+        return;
+    }
+
     if (!init_function_ptrs())
     {
+        FreeLibrary( huser32 );
         FreeLibrary( hmscms );
         return;
     }
@@ -1537,5 +1564,6 @@ START_TEST(profile)
     if (testprofile)
         DeleteFileA( testprofile );
     
+    FreeLibrary( huser32 );
     FreeLibrary( hmscms );
 }
