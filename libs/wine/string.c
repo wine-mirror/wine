@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
 #include <limits.h>
 #include <stdio.h>
 
@@ -298,6 +299,51 @@ noconv:
 }
 
 
+/* format a WCHAR string according to a printf format; helper for vsnprintfW */
+static int format_string( WCHAR *buffer, size_t len, const char *format, const WCHAR *str )
+{
+    size_t count = 0;
+    int i, left_align = 0, width = 0, max = 0;
+
+    assert( *format == '%' );
+    format++; /* skip '%' */
+
+    while (*format == '0' || *format == '+' || *format == '-' || *format == ' ' || *format == '#')
+    {
+        if (*format == '-') left_align = 1;
+        format++;
+    }
+
+    while (isdigit(*format)) width = width * 10 + *format++ - '0';
+
+    if (*format == '.')
+    {
+        format++;
+        while (isdigit(*format)) max = max * 10 + *format++ - '0';
+        for (i = 0; i < max; i++) if (!str[i]) max = i;
+    }
+    else max = strlenW(str);
+
+    assert( *format == 's' );
+
+    if (!left_align && width > max)
+    {
+        if ((count += width - max) >= len) return -1;
+        for (i = 0; i < width - max; i++) *buffer++ = ' ';
+    }
+
+    if ((count += max) >= len) return -1;
+    memcpy( buffer, str, max * sizeof(WCHAR) );
+    buffer += max;
+
+    if (left_align && width > max)
+    {
+        if ((count += width - max) >= len) return -1;
+        for (i = 0; i < width - max; i++) *buffer++ = ' ';
+    }
+    return count;
+}
+
 int vsnprintfW(WCHAR *str, size_t len, const WCHAR *format, va_list valist)
 {
     unsigned int written = 0;
@@ -372,23 +418,34 @@ int vsnprintfW(WCHAR *str, size_t len, const WCHAR *format, va_list valist)
             {
                 static const WCHAR none[] = { '(','n','u','l','l',')',0 };
                 const WCHAR *wstr = va_arg(valist, const WCHAR *);
-                const WCHAR *striter = wstr ? wstr : none;
-                while (*striter)
-                {
-                    if (written++ >= len)
-                        return -1;
-                    *str++ = *striter++;
-                }
+                int count;
+
+                *fmta++ = 's';
+                *fmta = 0;
+                count = format_string( str, len - written, fmtbufa, wstr ? wstr : none );
+                if (count == -1) return -1;
+                str += count;
+                written += count;
                 iter++;
                 break;
             }
 
             case 'c':
-                if (written++ >= len)
-                    return -1;
-                *str++ = (WCHAR)va_arg(valist, int);
+            {
+                WCHAR wstr[2];
+                int count;
+
+                wstr[0] = va_arg(valist, int);
+                wstr[1] = 0;
+                *fmta++ = 's';
+                *fmta = 0;
+                count = format_string( str, len - written, fmtbufa, wstr );
+                if (count == -1) return -1;
+                str += count;
+                written += count;
                 iter++;
                 break;
+            }
 
             default:
             {
@@ -396,7 +453,8 @@ int vsnprintfW(WCHAR *str, size_t len, const WCHAR *format, va_list valist)
                 /* FIXME: for unrecognised types, should ignore % when printing */
                 char *bufaiter = bufa;
                 if (*iter == 'p')
-                    sprintf(bufaiter, "%08lX", va_arg(valist, long));
+                    sprintf(bufaiter, "%0*lX", 2 * (int)sizeof(void*),
+                            (unsigned long)va_arg(valist, void *));
                 else
                 {
                     *fmta++ = *iter;
@@ -408,9 +466,7 @@ int vsnprintfW(WCHAR *str, size_t len, const WCHAR *format, va_list valist)
                         sprintf(bufaiter, fmtbufa, va_arg(valist, double));
                     else
                     {
-                        /* FIXME: On 32 bit systems this doesn't handle int 64's.
-                         *        on 64 bit systems this doesn't work for 32 bit types
-			 */
+                        /* FIXME: On 32 bit systems this doesn't handle int 64's. */
                         sprintf(bufaiter, fmtbufa, va_arg(valist, void *));
                     }
                 }
