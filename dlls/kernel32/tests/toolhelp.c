@@ -204,14 +204,14 @@ static void test_thread(DWORD curr_pid, DWORD sub_pcs_pid)
 
 static const char* curr_expected_modules[] =
 {
-    "kernel32.dll",
     "kernel32_test.exe"
+    "kernel32.dll",
     /* FIXME: could test for ntdll on NT and Wine */
 };
 static const char* sub_expected_modules[] =
 {
-    "kernel32.dll",
     "kernel32_test.exe",
+    "kernel32.dll",
     "shell32.dll"
     /* FIXME: could test for ntdll on NT and Wine */
 };
@@ -283,6 +283,7 @@ START_TEST(toolhelp)
 {
     DWORD               pid = GetCurrentProcessId();
     int                 r;
+    char                *p, module[MAX_PATH];
     char                buffer[MAX_PATH];
     SECURITY_ATTRIBUTES sa;
     PROCESS_INFORMATION	info;
@@ -329,6 +330,12 @@ START_TEST(toolhelp)
     /* wait for child to be initialized */
     w = WaitForSingleObject(ev1, WAIT_TIME);
     ok(w == WAIT_OBJECT_0, "Failed to wait on sub-process startup\n");
+
+    GetModuleFileNameA( 0, module, sizeof(module) );
+    if (!(p = strrchr( module, '\\' ))) p = module;
+    else p++;
+    curr_expected_modules[0] = p;
+    sub_expected_modules[0] = p;
 
     test_process(pid, info.dwProcessId);
     test_thread(pid, info.dwProcessId);
