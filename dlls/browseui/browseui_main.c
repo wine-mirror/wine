@@ -146,7 +146,7 @@ static HRESULT ClassFactory_Constructor(LPFNCONSTRUCTOR ctor, LPVOID *ppvOut)
     This->vtbl = &ClassFactoryVtbl;
     This->ref = 1;
     This->ctor = ctor;
-    *ppvOut = (LPVOID)This;
+    *ppvOut = This;
     TRACE("Created class factory %p\n", This);
     BROWSEUI_refCount++;
     return S_OK;

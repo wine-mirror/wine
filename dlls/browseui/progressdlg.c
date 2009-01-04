@@ -223,7 +223,7 @@ static DWORD WINAPI dialog_thread(LPVOID lpParameter)
 {
     /* Note: until we set the hEvent in WM_INITDIALOG, the ProgressDialog object
      * is protected by the critical section held by StartProgress */
-    struct create_params *params = (struct create_params *)lpParameter;
+    struct create_params *params = lpParameter;
     HWND hwnd;
     MSG msg;
 
