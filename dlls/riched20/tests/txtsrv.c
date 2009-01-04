@@ -39,6 +39,7 @@ static HMODULE hmoduleRichEdit;
 /* Use a special table for x86 machines to convert the thiscall
  * calling convention.  This isn't needed on other platforms. */
 #ifdef __i386__
+static ITextServicesVtbl itextServicesStdcallVtbl;
 #define TXTSERV_VTABLE(This) (&itextServicesStdcallVtbl)
 #else /* __i386__ */
 #define TXTSERV_VTABLE(This) (This)->lpVtbl
@@ -440,8 +441,6 @@ static HRESULT WINAPI ITextHostImpl_TxGetSelectionBarWidth(ITextHost *iface,
                 This, lSelBarWidth);
     return E_NOTIMPL;
 }
-
-static ITextServicesVtbl itextServicesStdcallVtbl;
 
 static ITextHostVtbl itextHostVtbl = {
     ITextHostImpl_QueryInterface,
