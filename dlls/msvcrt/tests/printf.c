@@ -277,20 +277,50 @@ static void test_sprintf( void )
     ok(!strcmp(buffer,"1   "),"Character zero-padded and/or not left-adjusted \"%s\"\n",buffer);
     ok( r==4, "return count wrong\n");
 
-    format = "%p";
-    r = sprintf(buffer,format,(void *)57);
-    ok(!strcmp(buffer,"00000039"),"Pointer formatted incorrectly \"%s\"\n",buffer);
-    ok( r==8, "return count wrong\n");
+    if (sizeof(void *) == 8)
+    {
+        format = "%p";
+        r = sprintf(buffer,format,(void *)57);
+        ok(!strcmp(buffer,"0000000000000039"),"Pointer formatted incorrectly \"%s\"\n",buffer);
+        ok( r==16, "return count wrong\n");
 
-    format = "%#012p";
-    r = sprintf(buffer,format,(void *)57);
-    ok(!strcmp(buffer,"  0X00000039"),"Pointer formatted incorrectly\n");
-    ok( r==12, "return count wrong\n");
+        format = "%#020p";
+        r = sprintf(buffer,format,(void *)57);
+        ok(!strcmp(buffer,"  0X0000000000000039"),"Pointer formatted incorrectly\n");
+        ok( r==20, "return count wrong\n");
 
-    format = "%Fp";
-    r = sprintf(buffer,format,(void *)57);
-    ok(!strcmp(buffer,"00000039"),"Pointer formatted incorrectly \"%s\"\n",buffer);
-    ok( r==8, "return count wrong\n");
+        format = "%Fp";
+        r = sprintf(buffer,format,(void *)57);
+        ok(!strcmp(buffer,"0000000000000039"),"Pointer formatted incorrectly \"%s\"\n",buffer);
+        ok( r==16, "return count wrong\n");
+
+        format = "%#-020p";
+        r = sprintf(buffer,format,(void *)57);
+        ok(!strcmp(buffer,"0X0000000000000039  "),"Pointer formatted incorrectly\n");
+        ok( r==20, "return count wrong\n");
+    }
+    else
+    {
+        format = "%p";
+        r = sprintf(buffer,format,(void *)57);
+        ok(!strcmp(buffer,"00000039"),"Pointer formatted incorrectly \"%s\"\n",buffer);
+        ok( r==8, "return count wrong\n");
+
+        format = "%#012p";
+        r = sprintf(buffer,format,(void *)57);
+        ok(!strcmp(buffer,"  0X00000039"),"Pointer formatted incorrectly\n");
+        ok( r==12, "return count wrong\n");
+
+        format = "%Fp";
+        r = sprintf(buffer,format,(void *)57);
+        ok(!strcmp(buffer,"00000039"),"Pointer formatted incorrectly \"%s\"\n",buffer);
+        ok( r==8, "return count wrong\n");
+
+        format = "%#-012p";
+        r = sprintf(buffer,format,(void *)57);
+        ok(!strcmp(buffer,"0X00000039  "),"Pointer formatted incorrectly\n");
+        ok( r==12, "return count wrong\n");
+    }
 
     format = "%04s";
     r = sprintf(buffer,format,"foo");
@@ -311,11 +341,6 @@ static void test_sprintf( void )
     r = sprintf(buffer,format,-5,"foo");
     ok(!strcmp(buffer,"foo  "),"Negative field width ignored \"%s\"\n",buffer);
     ok( r==5, "return count wrong\n");
-
-    format = "%#-012p";
-    r = sprintf(buffer,format,(void *)57);
-    ok(!strcmp(buffer,"0X00000039  "),"Pointer formatted incorrectly\n");
-    ok( r==12, "return count wrong\n");
 
     format = "hello";
     r = sprintf(buffer, format);
@@ -455,8 +480,16 @@ static void test_sprintf( void )
 
     format = "%p";
     r = sprintf(buffer, format,0);
-    ok(!strcmp(buffer,"00000000"), "failed\n");
-    ok( r==8, "return count wrong\n");
+    if (sizeof(void *) == 8)
+    {
+        ok(!strcmp(buffer,"0000000000000000"), "failed\n");
+        ok( r==16, "return count wrong\n");
+    }
+    else
+    {
+        ok(!strcmp(buffer,"00000000"), "failed\n");
+        ok( r==8, "return count wrong\n");
+    }
 
     format = "%s";
     r = sprintf(buffer, format,0);
