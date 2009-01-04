@@ -215,10 +215,6 @@ static const struct message monthcal_hit_test_seq[] = {
     { MCM_HITTEST, sent|wparam, 0},
     { MCM_HITTEST, sent|wparam, 0},
     { MCM_HITTEST, sent|wparam, 0},
-    { MCM_HITTEST, sent|wparam, 0},
-    { MCM_HITTEST, sent|wparam, 0},
-    { MCM_HITTEST, sent|wparam, 0},
-    { MCM_HITTEST, sent|wparam, 0},
     { 0 }
 };
 
@@ -462,8 +458,6 @@ static LRESULT WINAPI monthcal_subclass_proc(HWND hwnd, UINT message, WPARAM wPa
     static long defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
-
-    trace("monthcal: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
 
     msg.message = message;
     msg.flags = sent|wparam|lparam;
@@ -727,6 +721,12 @@ static void test_monthcal_HitTest(HWND hwnd)
     MCHITTESTINFO mchit;
     UINT res;
     SYSTEMTIME st;
+    LONG x;
+    UINT title_index;
+    static const UINT title_hits[] =
+        { MCHT_NOWHERE, MCHT_TITLEBK, MCHT_TITLEBTNPREV, MCHT_TITLEBK,
+          MCHT_TITLEMONTH, MCHT_TITLEBK, MCHT_TITLEYEAR, MCHT_TITLEBK,
+          MCHT_TITLEBTNNEXT, MCHT_TITLEBK, MCHT_NOWHERE };
 
     memset(&mchit, 0, sizeof(MCHITTESTINFO));
 
@@ -780,42 +780,6 @@ static void test_monthcal_HitTest(HWND hwnd)
     expect(180, mchit.pt.y);
     expect(mchit.uHit, res);
     expect(MCHT_CALENDARBK, res);
-
-    /* (50, 40) is in active area - previous month button */
-    mchit.pt.x = 50;
-    mchit.pt.y = 40;
-    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(50, mchit.pt.x);
-    expect(40, mchit.pt.y);
-    expect(mchit.uHit, res);
-    todo_wine {expect(MCHT_TITLEBTNPREV, res);}
-
-    /* (90, 40) is in active area - background section of the title */
-    mchit.pt.x = 90;
-    mchit.pt.y = 40;
-    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(90, mchit.pt.x);
-    expect(40, mchit.pt.y);
-    expect(mchit.uHit, res);
-    todo_wine {expect(MCHT_TITLE, res);}
-
-    /* (140, 40) is in active area - month section of the title */
-    mchit.pt.x = 140;
-    mchit.pt.y = 40;
-    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(140, mchit.pt.x);
-    expect(40, mchit.pt.y);
-    expect(mchit.uHit, res);
-    todo_wine {expect(MCHT_TITLEMONTH, res);}
-
-    /* (250, 40) is in active area - next month button */
-    mchit.pt.x = 250;
-    mchit.pt.y = 40;
-    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
-    expect(250, mchit.pt.x);
-    expect(40, mchit.pt.y);
-    expect(mchit.uHit, res);
-    todo_wine {expect(MCHT_TITLEBTNNEXT, res);}
 
     /* (70, 70) is in active area - day of the week */
     mchit.pt.x = 70;
@@ -910,6 +874,27 @@ static void test_monthcal_HitTest(HWND hwnd)
     todo_wine {expect(MCHT_TODAYLINK, res);}
 
     ok_sequence(sequences, MONTHCAL_SEQ_INDEX, monthcal_hit_test_seq, "monthcal hit test", TRUE);
+
+    /* The horizontal position of title bar elements depends on locale (y pos
+       is constant), so we sample across a horizontal line and make sure we
+       find all elements. */
+    mchit.pt.y = 40;
+    title_index = 0;
+    for (x = 0; x < 300; x++){
+        mchit.pt.x = x;
+        res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
+        expect(x, mchit.pt.x);
+        expect(40, mchit.pt.y);
+        expect(mchit.uHit, res);
+        if (res != title_hits[title_index]){
+            title_index++;
+            if (sizeof(title_hits) / sizeof(title_hits[0]) <= title_index)
+                break;
+            todo_wine {expect(title_hits[title_index], res);}
+        }
+    }
+    todo_wine {ok(300 <= x && title_index + 1 == sizeof(title_hits) / sizeof(title_hits[0]),
+        "Wrong title layout\n");}
 }
 
 static void test_monthcal_todaylink(HWND hwnd)
