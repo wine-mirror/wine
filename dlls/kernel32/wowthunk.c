@@ -38,8 +38,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thunk);
-WINE_DECLARE_DEBUG_CHANNEL(relay);
-WINE_DECLARE_DEBUG_CHANNEL(snoop);
 
 /*
  * These are the 16-bit side WOW routines.  They reside in wownt16.h
@@ -58,6 +56,9 @@ DWORD WINAPI FreeLibrary32W16(DWORD);
 
 
 #ifdef __i386__
+
+WINE_DECLARE_DEBUG_CHANNEL(relay);
+WINE_DECLARE_DEBUG_CHANNEL(snoop);
 
 /* symbols exported from relay16.s */
 extern DWORD WINAPI wine_call_to_16( FARPROC16 target, DWORD cbArgs, PEXCEPTION_HANDLER handler );
