@@ -1945,11 +1945,11 @@ static void test_ndr_buffer(void)
     StubDesc.RpcInterfaceInformation = (void *)&IFoo___RpcServerInterface;
 
     status = RpcServerUseProtseqEp(ncalrpc, 20, endpoint, NULL);
-    ok(RPC_S_OK == status, "RpcServerUseProtseqEp failed with status %lu\n", status);
+    ok(RPC_S_OK == status, "RpcServerUseProtseqEp failed with status %u\n", status);
     status = RpcServerRegisterIf(IFoo_v0_0_s_ifspec, NULL, NULL);
-    ok(RPC_S_OK == status, "RpcServerRegisterIf failed with status %lu\n", status);
+    ok(RPC_S_OK == status, "RpcServerRegisterIf failed with status %u\n", status);
     status = RpcServerListen(1, 20, TRUE);
-    ok(RPC_S_OK == status, "RpcServerListen failed with status %lu\n", status);
+    ok(RPC_S_OK == status, "RpcServerListen failed with status %u\n", status);
     if (status != RPC_S_OK)
     {
         /* Failed to create a server, running client tests is useless */
@@ -1957,10 +1957,10 @@ static void test_ndr_buffer(void)
     }
 
     status = RpcStringBindingCompose(NULL, ncalrpc, NULL, endpoint, NULL, &binding);
-    ok(status == RPC_S_OK, "RpcStringBindingCompose failed (%lu)\n", status);
+    ok(status == RPC_S_OK, "RpcStringBindingCompose failed (%u)\n", status);
 
     status = RpcBindingFromStringBinding(binding, &Handle);
-    ok(status == RPC_S_OK, "RpcBindingFromStringBinding failed (%lu)\n", status);
+    ok(status == RPC_S_OK, "RpcBindingFromStringBinding failed (%u)\n", status);
     RpcStringFree(&binding);
 
     NdrClientInitializeNew(&RpcMessage, &StubMsg, &StubDesc, 5);
@@ -2003,7 +2003,7 @@ todo_wine
     RpcBindingFree(&Handle);
 
     status = RpcServerUnregisterIf(NULL, NULL, FALSE);
-    ok(status == RPC_S_OK, "RpcServerUnregisterIf failed (%lu)\n", status);
+    ok(status == RPC_S_OK, "RpcServerUnregisterIf failed (%u)\n", status);
 }
 
 static void test_NdrMapCommAndFaultStatus(void)
@@ -2022,7 +2022,7 @@ static void test_NdrMapCommAndFaultStatus(void)
         ULONG expected_comm_status = 0;
         ULONG expected_fault_status = 0;
         status = NdrMapCommAndFaultStatus(&StubMsg, &comm_status, &fault_status, rpc_status);
-        ok(status == RPC_S_OK, "NdrMapCommAndFaultStatus failed with error %ld\n", status);
+        ok(status == RPC_S_OK, "NdrMapCommAndFaultStatus failed with error %d\n", status);
         switch (rpc_status)
         {
         case ERROR_INVALID_HANDLE:
@@ -2042,9 +2042,9 @@ static void test_NdrMapCommAndFaultStatus(void)
         default:
             expected_fault_status = rpc_status;
         }
-        ok(comm_status == expected_comm_status, "NdrMapCommAndFaultStatus should have mapped %ld to comm status %d instead of %d\n",
+        ok(comm_status == expected_comm_status, "NdrMapCommAndFaultStatus should have mapped %d to comm status %d instead of %d\n",
             rpc_status, expected_comm_status, comm_status);
-        ok(fault_status == expected_fault_status, "NdrMapCommAndFaultStatus should have mapped %ld to fault status %d instead of %d\n",
+        ok(fault_status == expected_fault_status, "NdrMapCommAndFaultStatus should have mapped %d to fault status %d instead of %d\n",
             rpc_status, expected_fault_status, fault_status);
     }
 }

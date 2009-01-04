@@ -120,7 +120,7 @@ void ept_insert(handle_t h,
                                   &entry->address);
         if (rpc_status != RPC_S_OK)
         {
-            WINE_WARN("TowerExplode failed %lu\n", rpc_status);
+            WINE_WARN("TowerExplode failed %u\n", rpc_status);
             *status = rpc_status;
             break; /* FIXME: more cleanup? */
         }

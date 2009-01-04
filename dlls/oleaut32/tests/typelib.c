@@ -649,7 +649,7 @@ static void test_QueryPathOfRegTypeLib(void)
     BSTR path;
 
     status = UuidCreate(&uid);
-    ok(!status || status == RPC_S_UUID_LOCAL_ONLY, "UuidCreate error %08lx\n", status);
+    ok(!status || status == RPC_S_UUID_LOCAL_ONLY, "UuidCreate error %08x\n", status);
 
     StringFromGUID2(&uid, uid_str, 40);
     /*trace("GUID: %s\n", wine_dbgstr_w(uid_str));*/

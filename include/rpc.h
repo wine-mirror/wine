@@ -51,7 +51,7 @@
 #define __RPC_STUB __stdcall
 #define RPC_ENTRY  __stdcall
 #define RPCRTAPI
-typedef long RPC_STATUS;
+typedef LONG RPC_STATUS;
 
 typedef void* I_RPC_HANDLE;
 

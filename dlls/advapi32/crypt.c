@@ -305,7 +305,7 @@ static void CRYPT_CreateMachineGuid(void)
                                     '%','0','2','x','%','0','2','x',
                                     '%','0','2','x',0 };
 
-				pUuidCreate = GetProcAddress(lib, "UuidCreate");
+                                pUuidCreate = (void *)GetProcAddress(lib, "UuidCreate");
                                 rs = pUuidCreate(&uuid);
                                 if (rs == S_OK)
                                 {

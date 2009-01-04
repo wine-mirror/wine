@@ -380,7 +380,7 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
 
     status = RPCRT4_Receive(conn, &hdr, msg);
     if (status != RPC_S_OK) {
-      WARN("receive failed with error %lx\n", status);
+      WARN("receive failed with error %x\n", status);
       HeapFree(GetProcessHeap(), 0, msg);
       break;
     }

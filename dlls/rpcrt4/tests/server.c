@@ -1294,12 +1294,12 @@ server(void)
   DWORD ret;
 
   iptcp_status = RpcServerUseProtseqEp(iptcp, 20, port, NULL);
-  ok(iptcp_status == RPC_S_OK, "RpcServerUseProtseqEp(ncacn_ip_tcp) failed with status %ld\n", iptcp_status);
+  ok(iptcp_status == RPC_S_OK, "RpcServerUseProtseqEp(ncacn_ip_tcp) failed with status %d\n", iptcp_status);
   np_status = RpcServerUseProtseqEp(np, 0, pipe, NULL);
   if (np_status == RPC_S_PROTSEQ_NOT_SUPPORTED)
     skip("Protocol sequence ncacn_np is not supported\n");
   else
-    ok(np_status == RPC_S_OK, "RpcServerUseProtseqEp(ncacn_np) failed with status %ld\n", np_status);
+    ok(np_status == RPC_S_OK, "RpcServerUseProtseqEp(ncacn_np) failed with status %d\n", np_status);
 
   if (pRpcServerRegisterIfEx)
   {
@@ -1310,9 +1310,9 @@ server(void)
   }
   else
     status = RpcServerRegisterIf(s_IServer_v0_0_s_ifspec, NULL, NULL);
-  ok(status == RPC_S_OK, "RpcServerRegisterIf failed with status %ld\n", status);
+  ok(status == RPC_S_OK, "RpcServerRegisterIf failed with status %d\n", status);
   status = RpcServerListen(1, 20, TRUE);
-  ok(status == RPC_S_OK, "RpcServerListen failed with status %ld\n", status);
+  ok(status == RPC_S_OK, "RpcServerListen failed with status %d\n", status);
   stop_event = CreateEvent(NULL, FALSE, FALSE, NULL);
   ok(stop_event != NULL, "CreateEvent failed with error %d\n", GetLastError());
 
@@ -1338,7 +1338,7 @@ server(void)
   {
     status = RpcMgmtWaitServerListen();
     todo_wine {
-      ok(status == RPC_S_OK, "RpcMgmtWaitServerListening failed with status %ld\n", status);
+      ok(status == RPC_S_OK, "RpcMgmtWaitServerListening failed with status %d\n", status);
     }
   }
 }

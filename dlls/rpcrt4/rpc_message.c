@@ -1279,7 +1279,7 @@ RPC_STATUS WINAPI I_RpcReceive(PRPC_MESSAGE pMsg)
   conn = pMsg->ReservedForRuntime;
   status = RPCRT4_Receive(conn, &hdr, pMsg);
   if (status != RPC_S_OK) {
-    WARN("receive failed with error %lx\n", status);
+    WARN("receive failed with error %x\n", status);
     goto fail;
   }
 

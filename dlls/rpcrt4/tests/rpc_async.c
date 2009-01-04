@@ -36,14 +36,14 @@ static void test_RpcAsyncInitializeHandle(void)
     int i;
 
     status = pRpcAsyncInitializeHandle((PRPC_ASYNC_STATE)buffer, sizeof(buffer));
-    ok(status == ERROR_INVALID_PARAMETER, "RpcAsyncInitializeHandle with large Size should have returned ERROR_INVALID_PARAMETER instead of %ld\n", status);
+    ok(status == ERROR_INVALID_PARAMETER, "RpcAsyncInitializeHandle with large Size should have returned ERROR_INVALID_PARAMETER instead of %d\n", status);
 
     status = pRpcAsyncInitializeHandle(&async, sizeof(async) - 1);
-    ok(status == ERROR_INVALID_PARAMETER, "RpcAsyncInitializeHandle with small Size should have returned ERROR_INVALID_PARAMETER instead of %ld\n", status);
+    ok(status == ERROR_INVALID_PARAMETER, "RpcAsyncInitializeHandle with small Size should have returned ERROR_INVALID_PARAMETER instead of %d\n", status);
 
     memset(&async, 0xcc, sizeof(async));
     status = pRpcAsyncInitializeHandle(&async, sizeof(async));
-    ok(status == RPC_S_OK, "RpcAsyncInitializeHandle failed with error %ld\n", status);
+    ok(status == RPC_S_OK, "RpcAsyncInitializeHandle failed with error %d\n", status);
 
     ok(async.Size == sizeof(async), "async.Size wrong: %d\n", async.Size);
     ok(async.Signature == 0x43595341, "async.Signature should be 0x43595341, but is 0x%x instead\n", async.Signature);
@@ -64,16 +64,16 @@ static void test_RpcAsyncGetCallStatus(void)
     RPC_STATUS status;
 
     status = pRpcAsyncInitializeHandle(&async, sizeof(async));
-    ok(status == RPC_S_OK, "RpcAsyncInitializeHandle failed with error %ld\n", status);
+    ok(status == RPC_S_OK, "RpcAsyncInitializeHandle failed with error %d\n", status);
 
     status = pRpcAsyncGetCallStatus(&async);
     todo_wine
-    ok(status == RPC_S_INVALID_BINDING, "RpcAsyncGetCallStatus should have returned RPC_S_INVALID_BINDING instead of %ld\n", status);
+    ok(status == RPC_S_INVALID_BINDING, "RpcAsyncGetCallStatus should have returned RPC_S_INVALID_BINDING instead of %d\n", status);
 
     memset(&async, 0, sizeof(async));
     status = pRpcAsyncGetCallStatus(&async);
     todo_wine
-    ok(status == RPC_S_INVALID_BINDING, "RpcAsyncGetCallStatus should have returned RPC_S_INVALID_BINDING instead of %ld\n", status);
+    ok(status == RPC_S_INVALID_BINDING, "RpcAsyncGetCallStatus should have returned RPC_S_INVALID_BINDING instead of %d\n", status);
 }
 
 START_TEST( rpc_async )
