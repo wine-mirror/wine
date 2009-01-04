@@ -692,7 +692,7 @@ UINT WINAPI MsiDatabaseImportW(MSIHANDLE handle, LPCWSTR szFolder, LPCWSTR szFil
     MSIDATABASE *db;
     UINT r;
 
-    TRACE("%lx %s %s\n",handle,debugstr_w(szFolder), debugstr_w(szFilename));
+    TRACE("%x %s %s\n",handle,debugstr_w(szFolder), debugstr_w(szFilename));
 
     db = msihandle2msiinfo( handle, MSIHANDLETYPE_DATABASE );
     if( !db )
@@ -720,7 +720,7 @@ UINT WINAPI MsiDatabaseImportA( MSIHANDLE handle,
     LPWSTR path = NULL, file = NULL;
     UINT r = ERROR_OUTOFMEMORY;
 
-    TRACE("%lx %s %s\n", handle, debugstr_a(szFolder), debugstr_a(szFilename));
+    TRACE("%x %s %s\n", handle, debugstr_a(szFolder), debugstr_a(szFilename));
 
     if( szFolder )
     {
@@ -912,7 +912,7 @@ UINT WINAPI MsiDatabaseExportW( MSIHANDLE handle, LPCWSTR szTable,
     MSIDATABASE *db;
     UINT r;
 
-    TRACE("%lx %s %s %s\n", handle, debugstr_w(szTable),
+    TRACE("%x %s %s %s\n", handle, debugstr_w(szTable),
           debugstr_w(szFolder), debugstr_w(szFilename));
 
     db = msihandle2msiinfo( handle, MSIHANDLETYPE_DATABASE );
@@ -941,7 +941,7 @@ UINT WINAPI MsiDatabaseExportA( MSIHANDLE handle, LPCSTR szTable,
     LPWSTR path = NULL, file = NULL, table = NULL;
     UINT r = ERROR_OUTOFMEMORY;
 
-    TRACE("%lx %s %s %s\n", handle, debugstr_a(szTable),
+    TRACE("%x %s %s %s\n", handle, debugstr_a(szTable),
           debugstr_a(szFolder), debugstr_a(szFilename));
 
     if( szTable )
@@ -981,7 +981,7 @@ UINT WINAPI MsiDatabaseMergeA(MSIHANDLE hDatabase, MSIHANDLE hDatabaseMerge,
     UINT r;
     LPWSTR table;
 
-    TRACE("(%ld, %ld, %s)\n", hDatabase, hDatabaseMerge,
+    TRACE("(%d, %d, %s)\n", hDatabase, hDatabaseMerge,
           debugstr_a(szTableName));
 
     table = strdupAtoW(szTableName);
@@ -1426,7 +1426,7 @@ UINT WINAPI MsiDatabaseMergeW(MSIHANDLE hDatabase, MSIHANDLE hDatabaseMerge,
     BOOL conflicts;
     UINT r;
 
-    TRACE("(%ld, %ld, %s)\n", hDatabase, hDatabaseMerge,
+    TRACE("(%d, %d, %s)\n", hDatabase, hDatabaseMerge,
           debugstr_w(szTableName));
 
     if (szTableName && !*szTableName)
@@ -1488,7 +1488,7 @@ MSIDBSTATE WINAPI MsiGetDatabaseState( MSIHANDLE handle )
     MSIDBSTATE ret = MSIDBSTATE_READ;
     MSIDATABASE *db;
 
-    TRACE("%ld\n", handle);
+    TRACE("%d\n", handle);
 
     db = msihandle2msiinfo( handle, MSIHANDLETYPE_DATABASE );
     if( !db )

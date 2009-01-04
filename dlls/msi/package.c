@@ -1027,7 +1027,7 @@ MSIHANDLE WINAPI MsiGetActiveDatabase(MSIHANDLE hInstall)
     MSIHANDLE handle = 0;
     IWineMsiRemotePackage *remote_package;
 
-    TRACE("(%ld)\n",hInstall);
+    TRACE("(%d)\n",hInstall);
 
     package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE);
     if( package)
@@ -1486,7 +1486,7 @@ static UINT MSI_GetProperty( MSIHANDLE handle, LPCWSTR name,
     UINT r = ERROR_FUNCTION_FAILED;
     LPCWSTR val = NULL;
 
-    TRACE("%lu %s %p %p\n", handle, debugstr_w(name),
+    TRACE("%u %s %p %p\n", handle, debugstr_w(name),
           szValueBuf->str.w, pchValueBuf );
 
     if (!name)

@@ -68,7 +68,7 @@ UINT WINAPI MsiEnableUIPreview( MSIHANDLE hdb, MSIHANDLE* phPreview )
     MSIPREVIEW *preview;
     UINT r = ERROR_FUNCTION_FAILED;
 
-    TRACE("%ld %p\n", hdb, phPreview);
+    TRACE("%d %p\n", hdb, phPreview);
 
     db = msihandle2msiinfo( hdb, MSIHANDLETYPE_DATABASE );
     if( !db )
@@ -137,7 +137,7 @@ UINT WINAPI MsiPreviewDialogW( MSIHANDLE hPreview, LPCWSTR szDialogName )
     MSIPREVIEW *preview;
     UINT r;
 
-    TRACE("%ld %s\n", hPreview, debugstr_w(szDialogName));
+    TRACE("%d %s\n", hPreview, debugstr_w(szDialogName));
 
     preview = msihandle2msiinfo( hPreview, MSIHANDLETYPE_PREVIEW );
     if( !preview )
@@ -155,7 +155,7 @@ UINT WINAPI MsiPreviewDialogA( MSIHANDLE hPreview, LPCSTR szDialogName )
     UINT r;
     LPWSTR strW = NULL;
 
-    TRACE("%ld %s\n", hPreview, debugstr_a(szDialogName));
+    TRACE("%d %s\n", hPreview, debugstr_a(szDialogName));
 
     if( szDialogName )
     {
@@ -171,7 +171,7 @@ UINT WINAPI MsiPreviewDialogA( MSIHANDLE hPreview, LPCSTR szDialogName )
 UINT WINAPI MsiPreviewBillboardW( MSIHANDLE hPreview, LPCWSTR szControlName,
                                   LPCWSTR szBillboard)
 {
-    FIXME("%ld %s %s\n", hPreview, debugstr_w(szControlName),
+    FIXME("%d %s %s\n", hPreview, debugstr_w(szControlName),
           debugstr_w(szBillboard));
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
@@ -179,7 +179,7 @@ UINT WINAPI MsiPreviewBillboardW( MSIHANDLE hPreview, LPCWSTR szControlName,
 UINT WINAPI MsiPreviewBillboardA( MSIHANDLE hPreview, LPCSTR szControlName,
                                   LPCSTR szBillboard)
 {
-    FIXME("%ld %s %s\n", hPreview, debugstr_a(szControlName),
+    FIXME("%d %s %s\n", hPreview, debugstr_a(szControlName),
           debugstr_a(szBillboard));
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
