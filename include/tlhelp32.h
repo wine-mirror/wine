@@ -60,30 +60,30 @@ BOOL WINAPI Thread32Next(HANDLE,LPTHREADENTRY32);
 
 typedef struct tagPROCESSENTRY32
 {
-    DWORD dwSize;
-    DWORD cntUsage;
-    DWORD th32ProcessID;
-    DWORD th32DefaultHeapID;
-    DWORD th32ModuleID;
-    DWORD cntThreads;
-    DWORD th32ParentProcessID;
-    LONG  pcPriClassBase;
-    DWORD dwFlags;
-    char szExeFile[MAX_PATH];
+    DWORD     dwSize;
+    DWORD     cntUsage;
+    DWORD     th32ProcessID;
+    ULONG_PTR th32DefaultHeapID;
+    DWORD     th32ModuleID;
+    DWORD     cntThreads;
+    DWORD     th32ParentProcessID;
+    LONG      pcPriClassBase;
+    DWORD     dwFlags;
+    char      szExeFile[MAX_PATH];
 } PROCESSENTRY32, *PPROCESSENTRY32, *LPPROCESSENTRY32;
 
 typedef struct tagPROCESSENTRY32W
 {
-    DWORD dwSize;
-    DWORD cntUsage;
-    DWORD th32ProcessID;
-    DWORD th32DefaultHeapID;
-    DWORD th32ModuleID;
-    DWORD cntThreads;
-    DWORD th32ParentProcessID;
-    LONG  pcPriClassBase;
-    DWORD dwFlags;
-    WCHAR szExeFile[MAX_PATH];
+    DWORD     dwSize;
+    DWORD     cntUsage;
+    DWORD     th32ProcessID;
+    ULONG_PTR th32DefaultHeapID;
+    DWORD     th32ModuleID;
+    DWORD     cntThreads;
+    DWORD     th32ParentProcessID;
+    LONG      pcPriClassBase;
+    DWORD     dwFlags;
+    WCHAR     szExeFile[MAX_PATH];
 } PROCESSENTRY32W, *PPROCESSENTRY32W, *LPPROCESSENTRY32W;
 
 BOOL WINAPI Process32First(HANDLE,LPPROCESSENTRY32);
