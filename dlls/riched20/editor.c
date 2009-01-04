@@ -4289,7 +4289,7 @@ LRESULT WINAPI RichEdit10ANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 void ME_SendOldNotify(ME_TextEditor *editor, int nCode)
 {
   HWND hWnd = editor->hWnd;
-  SendMessageA(GetParent(hWnd), WM_COMMAND, (nCode<<16)|GetWindowLongW(hWnd, GWLP_ID), (LPARAM)hWnd);
+  SendMessageA(GetParent(hWnd), WM_COMMAND, MAKEWPARAM(GetWindowLongW(hWnd, GWLP_ID), nCode), (LPARAM)hWnd);
 }
 
 void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam)
