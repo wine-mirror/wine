@@ -841,6 +841,82 @@ static void test_simd_exceptions(void)
     ok( got_exception == 1, "got exception: %i, should be 1\n", got_exception);
 }
 
+struct fpu_exception_info
+{
+    DWORD exception_code;
+    DWORD exception_offset;
+    DWORD eip_offset;
+};
+
+static DWORD fpu_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+        CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
+{
+    struct fpu_exception_info *info = *(struct fpu_exception_info **)(frame + 1);
+
+    info->exception_code = rec->ExceptionCode;
+    info->exception_offset = (BYTE *)rec->ExceptionAddress - (BYTE *)code_mem;
+    info->eip_offset = context->Eip - (DWORD)code_mem;
+
+    ++context->Eip;
+    return ExceptionContinueExecution;
+}
+
+static void test_fpu_exceptions(void)
+{
+    static const BYTE fpu_exception_test_ie[] =
+    {
+        0x83, 0xec, 0x04,                   /* sub $0x4,%esp        */
+        0x66, 0xc7, 0x04, 0x24, 0xfe, 0x03, /* movw $0x3fe,(%esp)   */
+        0x9b, 0xd9, 0x7c, 0x24, 0x02,       /* fstcw 0x2(%esp)      */
+        0xd9, 0x2c, 0x24,                   /* fldcw (%esp)         */
+        0xd9, 0xee,                         /* fldz                 */
+        0xd9, 0xe8,                         /* fld1                 */
+        0xde, 0xf1,                         /* fdivp                */
+        0xdd, 0xd8,                         /* fstp %st(0)          */
+        0xdd, 0xd8,                         /* fstp %st(0)          */
+        0x9b,                               /* fwait                */
+        0xdb, 0xe2,                         /* fnclex               */
+        0xd9, 0x6c, 0x24, 0x02,             /* fldcw 0x2(%esp)      */
+        0x83, 0xc4, 0x04,                   /* add $0x4,%esp        */
+        0xc3,                               /* ret                  */
+    };
+
+    static const BYTE fpu_exception_test_de[] =
+    {
+        0x83, 0xec, 0x04,                   /* sub $0x4,%esp        */
+        0x66, 0xc7, 0x04, 0x24, 0xfb, 0x03, /* movw $0x3fb,(%esp)   */
+        0x9b, 0xd9, 0x7c, 0x24, 0x02,       /* fstcw 0x2(%esp)      */
+        0xd9, 0x2c, 0x24,                   /* fldcw (%esp)         */
+        0xdd, 0xd8,                         /* fstp %st(0)          */
+        0xd9, 0xee,                         /* fldz                 */
+        0xd9, 0xe8,                         /* fld1                 */
+        0xde, 0xf1,                         /* fdivp                */
+        0x9b,                               /* fwait                */
+        0xdb, 0xe2,                         /* fnclex               */
+        0xdd, 0xd8,                         /* fstp %st(0)          */
+        0xdd, 0xd8,                         /* fstp %st(0)          */
+        0xd9, 0x6c, 0x24, 0x02,             /* fldcw 0x2(%esp)      */
+        0x83, 0xc4, 0x04,                   /* add $0x4,%esp        */
+        0xc3,                               /* ret                  */
+    };
+
+    struct fpu_exception_info info;
+
+    memset(&info, 0, sizeof(info));
+    run_exception_test(fpu_exception_handler, &info, fpu_exception_test_ie, sizeof(fpu_exception_test_ie));
+    ok(info.exception_code == EXCEPTION_FLT_STACK_CHECK,
+            "Got exception code %#x, expected EXCEPTION_FLT_STACK_CHECK\n", info.exception_code);
+    ok(info.exception_offset == 0x19, "Got exception offset %#x, expected 0x19\n", info.exception_offset);
+    ok(info.eip_offset == 0x1b, "Got EIP offset %#x, expected 0x1b\n", info.eip_offset);
+
+    memset(&info, 0, sizeof(info));
+    run_exception_test(fpu_exception_handler, &info, fpu_exception_test_de, sizeof(fpu_exception_test_de));
+    ok(info.exception_code == EXCEPTION_FLT_DIVIDE_BY_ZERO,
+            "Got exception code %#x, expected EXCEPTION_FLT_DIVIDE_BY_ZERO\n", info.exception_code);
+    ok(info.exception_offset == 0x17, "Got exception offset %#x, expected 0x17\n", info.exception_offset);
+    ok(info.eip_offset == 0x19, "Got EIP offset %#x, expected 0x19\n", info.eip_offset);
+}
+
 #endif  /* __i386__ */
 
 START_TEST(exception)
@@ -918,6 +994,7 @@ START_TEST(exception)
     test_rtlraiseexception();
     test_debugger();
     test_simd_exceptions();
+    test_fpu_exceptions();
 
     VirtualFree(code_mem, 1024, MEM_RELEASE);
 #endif
