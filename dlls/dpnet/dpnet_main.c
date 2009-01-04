@@ -114,7 +114,7 @@ static IClassFactoryImpl DPNET_CFS[] = {
   { &DICF_Vtbl, 1, &CLSID_DirectPlay8Server,  DPNET_CreateDirectPlay8Server },
   { &DICF_Vtbl, 1, &CLSID_DirectPlay8Peer,    DPNET_CreateDirectPlay8Peer },
   { &DICF_Vtbl, 1, &CLSID_DirectPlay8Address, DPNET_CreateDirectPlay8Address },
-  { &DICF_Vtbl, 1, &CLSID_DirectPlay8LobbiedApplication, (void *)DPNET_CreateDirectPlay8LobbiedApp },
+  { &DICF_Vtbl, 1, &CLSID_DirectPlay8LobbiedApplication, DPNET_CreateDirectPlay8LobbiedApp },
   { &DICF_Vtbl, 1, &CLSID_DirectPlay8ThreadPool, DPNET_CreateDirectPlay8ThreadPool},
   { NULL, 0, NULL, NULL }
 };

@@ -202,7 +202,7 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(PDIRECTPLAY8ADDRESS i
     break;
   case DPNA_DATATYPE_GUID:
     if (sizeof(GUID) != dwDataSize) return DPNERR_INVALIDPARAM;
-    TRACE("(%p, %u): GUID Type -> %s\n", lpvData, dwDataSize, debugstr_guid((const GUID*) lpvData));
+    TRACE("(%p, %u): GUID Type -> %s\n", lpvData, dwDataSize, debugstr_guid(lpvData));
     break;
   case DPNA_DATATYPE_STRING:
     TRACE("(%p, %u): STRING Type -> %s\n", lpvData, dwDataSize, (const CHAR*) lpvData);
