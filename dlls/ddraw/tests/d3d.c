@@ -1118,7 +1118,7 @@ static void Direct3D1Test(void)
     instr->bOpcode = D3DOP_TRIANGLE;
     instr->bSize = sizeof(D3DOP_TRIANGLE);
     instr->wCount = 0;
-    instr = ((D3DINSTRUCTION*)(instr))+1;
+    instr++;
     instr->bOpcode = D3DOP_EXIT;
     instr->bSize = 0;
     instr->wCount = 0;
