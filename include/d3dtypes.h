@@ -55,10 +55,10 @@ typedef LONG D3DFIXED;
 #define RGBA_MAKE(r, g, b, a)   ((D3DCOLOR) (((a) << 24) | ((r) << 16) | ((g) << 8) | (b)))
 
 #define D3DRGB(r, g, b) \
-    (0xff000000L | ( ((long)((r) * 255)) << 16) | (((long)((g) * 255)) << 8) | (long)((b) * 255))
+    (0xff000000 | ( ((LONG)((r) * 255)) << 16) | (((LONG)((g) * 255)) << 8) | (LONG)((b) * 255))
 #define D3DRGBA(r, g, b, a) \
-    (   (((long)((a) * 255)) << 24) | (((long)((r) * 255)) << 16) \
-    |   (((long)((g) * 255)) << 8) | (long)((b) * 255) \
+    (   (((LONG)((a) * 255)) << 24) | (((LONG)((r) * 255)) << 16) \
+    |   (((LONG)((g) * 255)) << 8) | (LONG)((b) * 255) \
     )
 
 #define RGB_GETRED(rgb)         (((rgb) >> 16) & 0xff)
