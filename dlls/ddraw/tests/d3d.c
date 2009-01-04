@@ -843,7 +843,7 @@ static HRESULT WINAPI enumDevicesCallback(GUID *Guid,LPSTR DeviceDescription,LPS
 
 static HRESULT WINAPI enumDevicesCallbackTest7(LPSTR DeviceDescription, LPSTR DeviceName, LPD3DDEVICEDESC7 lpdd7, LPVOID Context)
 {
-    D3D7ETest *d3d7et = (D3D7ETest*)Context;
+    D3D7ETest *d3d7et = Context;
     if(IsEqualGUID(&lpdd7->deviceGUID, &IID_IDirect3DRGBDevice))
         d3d7et->rgb++;
     else if(IsEqualGUID(&lpdd7->deviceGUID, &IID_IDirect3DHALDevice))
@@ -871,7 +871,7 @@ static void D3D7EnumTest(void)
     }
 
     memset(&d3d7et, 0, sizeof(d3d7et));
-    IDirect3D7_EnumDevices(lpD3D, enumDevicesCallbackTest7, (LPVOID) &d3d7et);
+    IDirect3D7_EnumDevices(lpD3D, enumDevicesCallbackTest7, &d3d7et);
 
 
     /* A couple of games (Delta Force LW and TFD) rely on this behaviour */
@@ -1130,7 +1130,7 @@ static void Direct3D1Test(void)
 
     memset(&transformdata, 0, sizeof(transformdata));
     transformdata.dwSize = sizeof(transformdata);
-    transformdata.lpIn = (void *) testverts;
+    transformdata.lpIn = testverts;
     transformdata.dwInSize = sizeof(testverts[0]);
     transformdata.lpOut = out;
     transformdata.dwOutSize = sizeof(out[0]);
@@ -1252,7 +1252,7 @@ static void Direct3D1Test(void)
                 "Regular output DWORD %d remained untouched\n", i);
     }
 
-    transformdata.lpIn = (void *) cliptest;
+    transformdata.lpIn = cliptest;
     transformdata.dwInSize = sizeof(cliptest[0]);
     hr = IDirect3DViewport_TransformVertices(Viewport, sizeof(cliptest) / sizeof(cliptest[0]),
                                              &transformdata, D3DTRANSFORM_CLIPPED,
@@ -1356,7 +1356,7 @@ static void Direct3D1Test(void)
     ok(hr == D3D_OK, "IDirect3DViewport_TransformVertices returned %08x\n", hr);
     ok(i == (D3DCLIP_BOTTOM | D3DCLIP_LEFT), "Offscreen is %d\n", i);
 
-    transformdata.lpIn = (void *) offscreentest;
+    transformdata.lpIn = offscreentest;
     transformdata.dwInSize = sizeof(offscreentest[0]);
     SET_VP_DATA(vp_data);
     vp_data.dwWidth = 257;

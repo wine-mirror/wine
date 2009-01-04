@@ -248,7 +248,7 @@ static void SrcColorKey32BlitTest(void)
 
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
-    lpData = (LPDWORD)ddsd2.lpSurface;
+    lpData = ddsd2.lpSurface;
     lpData[0] = 0xCCCCCCCC;
     lpData[1] = 0xCCCCCCCC;
     lpData[2] = 0xCCCCCCCC;
@@ -274,7 +274,7 @@ static void SrcColorKey32BlitTest(void)
     rc = IDirectDrawSurface_Lock(lpSrc, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
     ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
-    lpData = (LPDWORD)ddsd2.lpSurface;
+    lpData = ddsd2.lpSurface;
     lpData[0] = 0x77010203;
     lpData[1] = 0x00010203;
     lpData[2] = 0x77FF00FF;
@@ -287,7 +287,7 @@ static void SrcColorKey32BlitTest(void)
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
     ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
-    lpData = (LPDWORD)ddsd2.lpSurface;
+    lpData = ddsd2.lpSurface;
     /* Different behavior on some drivers / windows versions. Some versions ignore the X channel when
      * color keying, but copy it to the destination surface. Others apply it for color keying, but
      * do not copy it into the destination surface.
@@ -388,7 +388,7 @@ static void SrcColorKey32BlitTest(void)
     rc = IDirectDrawSurface_Lock(lpSrc, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
     ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
-    lpData = (LPDWORD)ddsd2.lpSurface;
+    lpData = ddsd2.lpSurface;
     lpData[0] = 0x000000FF; /* Applies to src blt key in src surface */
     lpData[1] = 0x00000000; /* Applies to dst blt key in src surface */
     lpData[2] = 0x00FF0000; /* Dst color key in dst surface */
@@ -401,7 +401,7 @@ static void SrcColorKey32BlitTest(void)
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
     ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
-    lpData = (LPDWORD)ddsd2.lpSurface;
+    lpData = ddsd2.lpSurface;
     lpData[0] = 0x55555555;
     lpData[1] = 0x55555555;
     lpData[2] = 0x55555555;
@@ -418,7 +418,7 @@ static void SrcColorKey32BlitTest(void)
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
     ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
-    lpData = (LPDWORD)ddsd2.lpSurface;
+    lpData = ddsd2.lpSurface;
     /* Should have copied src data unmodified to dst */
     ok(lpData[0] == 0x000000FF &&
        lpData[1] == 0x00000000 &&
@@ -443,7 +443,7 @@ static void SrcColorKey32BlitTest(void)
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
     ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
-    lpData = (LPDWORD)ddsd2.lpSurface;
+    lpData = ddsd2.lpSurface;
 
     ok(lpData[0] == 0x55555555 && /* Here the src key applied */
        lpData[1] == 0x00000000 &&
@@ -468,7 +468,7 @@ static void SrcColorKey32BlitTest(void)
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
     ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
-    lpData = (LPDWORD)ddsd2.lpSurface;
+    lpData = ddsd2.lpSurface;
 
     ok(lpData[0] == 0x000000FF &&
        lpData[1] == 0x00000000 &&
@@ -495,7 +495,7 @@ static void SrcColorKey32BlitTest(void)
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
     ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
-    lpData = (LPDWORD)ddsd2.lpSurface;
+    lpData = ddsd2.lpSurface;
 
     ok(lpData[0] == 0x55555555 &&
        lpData[1] == 0x55555555 &&
@@ -521,7 +521,7 @@ static void SrcColorKey32BlitTest(void)
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
     ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
-    lpData = (LPDWORD)ddsd2.lpSurface;
+    lpData = ddsd2.lpSurface;
 
     /* DirectDraw uses the dest blit key from the SOURCE surface ! */
     ok(lpData[0] == 0x00ff0000 &&
@@ -548,7 +548,7 @@ static void SrcColorKey32BlitTest(void)
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
     ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
-    lpData = (LPDWORD)ddsd2.lpSurface;
+    lpData = ddsd2.lpSurface;
 
     ok(lpData[0] == 0x00FF0000 &&
        lpData[1] == 0x00FF0000 &&
@@ -575,7 +575,7 @@ static void SrcColorKey32BlitTest(void)
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
     ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
-    lpData = (LPDWORD)ddsd2.lpSurface;
+    lpData = ddsd2.lpSurface;
 
     ok(lpData[0] == 0x00FF0000 &&
        lpData[1] == 0x00FF0000 &&
@@ -598,7 +598,7 @@ static void SrcColorKey32BlitTest(void)
     rc = IDirectDrawSurface_Lock(lpSrc, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
     ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
-    lpData = (LPDWORD)ddsd2.lpSurface;
+    lpData = ddsd2.lpSurface;
     lpData[5] = 0x000000FF; /* Applies to src blt key in src surface */
     rc = IDirectDrawSurface_Unlock(lpSrc, NULL);
     ok(rc==DD_OK,"Unlock returned: %x\n",rc);
@@ -610,7 +610,7 @@ static void SrcColorKey32BlitTest(void)
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
     ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
-    lpData = (LPDWORD)ddsd2.lpSurface;
+    lpData = ddsd2.lpSurface;
 
     ok(lpData[0] == 0x00FF0000 && /* Masked by Destination key */
        lpData[1] == 0x00FF0000 && /* Masked by Destination key */
@@ -1016,7 +1016,7 @@ static void EnumTest(void)
     ok(!ctx.expected[3], "expected NULL pointer\n");
     ctx.count = 0;
 
-    rc = IDirectDraw_EnumSurfaces(lpDD, DDENUMSURFACES_DOESEXIST | DDENUMSURFACES_ALL, &ddsd, (void *) &ctx, enumCB);
+    rc = IDirectDraw_EnumSurfaces(lpDD, DDENUMSURFACES_DOESEXIST | DDENUMSURFACES_ALL, &ddsd, &ctx, enumCB);
     ok(rc == DD_OK, "IDirectDraw_EnumSurfaces returned %08x\n", rc);
     ok(ctx.count == 3, "%d surfaces enumerated, expected 3\n", ctx.count);
 
@@ -1433,7 +1433,7 @@ static HRESULT WINAPI CubeTestLvl2Enum(IDirectDrawSurface7 *surface, DDSURFACEDE
 static HRESULT WINAPI CubeTestLvl1Enum(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *desc, void *context)
 {
     UINT mips = 0;
-    UINT *num = (UINT *) context;
+    UINT *num = context;
     static const struct compare expected[] =
     {
         {
