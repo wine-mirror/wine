@@ -190,13 +190,16 @@ START_TEST(heap)
     ok(mem == NULL, "Expected NULL, got %p\n", mem);
 
     /* invalid free */
-    SetLastError(MAGIC_DEAD);
-    mem = GlobalFree(gbl);
-    ok(mem == gbl || broken(mem == NULL) /* nt4 */, "Expected gbl, got %p\n", mem);
-    if (mem == gbl)
-        ok(GetLastError() == ERROR_INVALID_HANDLE ||
-           GetLastError() == ERROR_INVALID_PARAMETER, /* win9x */
-           "Expected ERROR_INVALID_HANDLE or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    if (sizeof(void *) != 8)  /* crashes on 64-bit Vista */
+    {
+        SetLastError(MAGIC_DEAD);
+        mem = GlobalFree(gbl);
+        ok(mem == gbl || broken(mem == NULL) /* nt4 */, "Expected gbl, got %p\n", mem);
+        if (mem == gbl)
+            ok(GetLastError() == ERROR_INVALID_HANDLE ||
+               GetLastError() == ERROR_INVALID_PARAMETER, /* win9x */
+               "Expected ERROR_INVALID_HANDLE or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    }
 
     gbl = GlobalAlloc(GMEM_DDESHARE, 100);
 
@@ -211,12 +214,15 @@ START_TEST(heap)
        "Expected 1 or 0, got %d\n", res);
 
     /* GlobalSize on an invalid handle */
-    SetLastError(MAGIC_DEAD);
-    size = GlobalSize((HGLOBAL)0xc042);
-    ok(size == 0, "Expected 0, got %ld\n", size);
-    ok(GetLastError() == ERROR_INVALID_HANDLE ||
-       GetLastError() == ERROR_INVALID_PARAMETER, /* win9x */
-       "Expected ERROR_INVALID_HANDLE or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    if (sizeof(void *) != 8)  /* crashes on 64-bit Vista */
+    {
+        SetLastError(MAGIC_DEAD);
+        size = GlobalSize((HGLOBAL)0xc042);
+        ok(size == 0, "Expected 0, got %ld\n", size);
+        ok(GetLastError() == ERROR_INVALID_HANDLE ||
+           GetLastError() == ERROR_INVALID_PARAMETER, /* win9x */
+           "Expected ERROR_INVALID_HANDLE or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    }
 
     /* ####################################### */
     /* Local*() functions */
