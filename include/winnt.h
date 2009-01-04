@@ -540,7 +540,12 @@ typedef DWORD FLONG;
 #define PROCESSOR_ARM920         2336    /* 0x920 */
 #define PROCESSOR_ARM_7TDMI      70001
 
+#ifdef _WIN64
+#define MAXIMUM_PROCESSORS       64
+#else
 #define MAXIMUM_PROCESSORS       32
+#endif
+
 typedef struct _MEMORY_BASIC_INFORMATION
 {
     LPVOID   BaseAddress;

@@ -681,7 +681,7 @@ VOID WINAPI GetSystemInfo(
 
 	valSize = sizeof(int);
 	if (sysctlbyname ("hw.activecpu", &value, &valSize, NULL, 0) == 0)
-	    cachedsi.dwActiveProcessorMask = (1 << value) - 1;
+	    cachedsi.dwActiveProcessorMask = ((ULONG_PTR)1 << value) - 1;
 
 	valSize = sizeof(int);
 	if (sysctlbyname ("hw.cputype", &cputype, &valSize, NULL, 0) == 0)
@@ -780,12 +780,12 @@ VOID WINAPI GetSystemInfo(
 	FIXME("not yet supported on this system\n");
 #endif
         if (!cachedsi.dwActiveProcessorMask)
-            cachedsi.dwActiveProcessorMask = (1 << cachedsi.dwNumberOfProcessors) - 1;
+            cachedsi.dwActiveProcessorMask = ((ULONG_PTR)1 << cachedsi.dwNumberOfProcessors) - 1;
 
         *si = cachedsi;
 
         TRACE("<- CPU arch %d, res'd %d, pagesize %d, minappaddr %p, maxappaddr %p,"
-              " act.cpumask %08x, numcpus %d, CPU type %d, allocgran. %d, CPU level %d, CPU rev %d\n",
+              " act.cpumask %lx, numcpus %d, CPU type %d, allocgran. %d, CPU level %d, CPU rev %d\n",
               si->u.s.wProcessorArchitecture, si->u.s.wReserved, si->dwPageSize,
               si->lpMinimumApplicationAddress, si->lpMaximumApplicationAddress,
               si->dwActiveProcessorMask, si->dwNumberOfProcessors, si->dwProcessorType,

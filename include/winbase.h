@@ -776,7 +776,7 @@ typedef struct _SYSTEM_INFO
     DWORD	dwPageSize;
     LPVOID	lpMinimumApplicationAddress;
     LPVOID	lpMaximumApplicationAddress;
-    DWORD	dwActiveProcessorMask;
+    DWORD_PTR	dwActiveProcessorMask;
     DWORD	dwNumberOfProcessors;
     DWORD	dwProcessorType;
     DWORD	dwAllocationGranularity;
