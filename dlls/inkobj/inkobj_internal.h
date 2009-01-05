@@ -30,7 +30,6 @@
 
 #include "wine/debug.h"
 
-extern LONG INKOBJ_refCount;
 extern HINSTANCE INKOBJ_hInstance;
 
 #endif /* INKOBJ_INTERNAL_H */

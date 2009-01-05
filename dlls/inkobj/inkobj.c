@@ -19,7 +19,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(inkobj);
 
-LONG INKOBJ_refCount = 0;
+static LONG INKOBJ_refCount;
 HINSTANCE INKOBJ_hInstance;
 
 /*****************************************************
