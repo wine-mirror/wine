@@ -2037,7 +2037,7 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     /* count the number of inherited interfaces and non-local functions */
     for(ref = inherit; ref; ref = type_iface_get_inherit(ref)) {
         num_parents++;
-        STATEMENTS_FOR_EACH_FUNC( stmt_func, ref->details.iface->stmts ) {
+        STATEMENTS_FOR_EACH_FUNC( stmt_func, type_iface_get_stmts(ref) ) {
             var_t *func = stmt_func->u.var;
             if (!is_local(func->attrs)) num_funcs++;
         }
@@ -2045,7 +2045,7 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     msft_typeinfo->typeinfo->datatype2 = num_funcs << 16 | num_parents;
     msft_typeinfo->typeinfo->cbSizeVft = num_funcs * 4;
 
-    STATEMENTS_FOR_EACH_FUNC( stmt_func, interface->details.iface->stmts ) {
+    STATEMENTS_FOR_EACH_FUNC( stmt_func, type_iface_get_stmts(interface) ) {
         var_t *func = stmt_func->u.var;
         if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
             idx++;

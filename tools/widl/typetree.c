@@ -91,7 +91,7 @@ static int compute_method_indexes(type_t *iface)
     else
         idx = 0;
 
-    STATEMENTS_FOR_EACH_FUNC( stmt, iface->details.iface->stmts )
+    STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
     {
         var_t *func = stmt->u.var;
         if (!is_callas(func->attrs))

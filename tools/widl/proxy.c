@@ -535,7 +535,7 @@ static int count_methods(type_t *iface)
     if (type_iface_get_inherit(iface))
         count = count_methods(type_iface_get_inherit(iface));
 
-    STATEMENTS_FOR_EACH_FUNC(stmt, iface->details.iface->stmts) {
+    STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface)) {
         const var_t *func = stmt->u.var;
         if (!is_callas(func->attrs)) count++;
     }
@@ -550,7 +550,7 @@ static int write_proxy_methods(type_t *iface, int skip)
   if (type_iface_get_inherit(iface))
     i = write_proxy_methods(type_iface_get_inherit(iface),
                             need_delegation(iface));
-  STATEMENTS_FOR_EACH_FUNC(stmt, iface->details.iface->stmts) {
+  STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface)) {
     const var_t *func = stmt->u.var;
     if (!is_callas(func->attrs)) {
       if (i) fprintf(proxy, ",\n");
@@ -572,7 +572,7 @@ static int write_stub_methods(type_t *iface, int skip)
   else
     return i; /* skip IUnknown */
 
-  STATEMENTS_FOR_EACH_FUNC(stmt, iface->details.iface->stmts) {
+  STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface)) {
     const var_t *func = stmt->u.var;
     if (!is_local(func->attrs)) {
       if (i) fprintf(proxy,",\n");
@@ -592,7 +592,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
 
   /* FIXME: check for [oleautomation], shouldn't generate proxies/stubs if specified */
 
-  STATEMENTS_FOR_EACH_FUNC(stmt, iface->details.iface->stmts) {
+  STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface)) {
     const var_t *func = stmt->u.var;
     if (first_func) {
       fprintf(proxy, "/*****************************************************************************\n");
@@ -606,7 +606,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
       int idx = func->type->details.function->idx;
       if (cname) {
           const statement_t *stmt2;
-          STATEMENTS_FOR_EACH_FUNC(stmt2, iface->details.iface->stmts) {
+          STATEMENTS_FOR_EACH_FUNC(stmt2, type_iface_get_stmts(iface)) {
               const var_t *m = stmt2->u.var;
               if (!strcmp(m->name, cname))
               {
@@ -630,7 +630,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
     for (inherit_iface = type_iface_get_inherit(iface);
          inherit_iface;
          inherit_iface = type_iface_get_inherit(inherit_iface)) {
-      STATEMENTS_FOR_EACH_FUNC(stmt, inherit_iface->details.iface->stmts) {
+      STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(inherit_iface)) {
         const var_t *func = stmt->u.var;
         int idx = func->type->details.function->idx;
         if (idx + 1 > midx) midx = idx + 1;

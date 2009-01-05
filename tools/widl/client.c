@@ -81,7 +81,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
     if (!implicit_handle)
         print_client("static RPC_BINDING_HANDLE %s__MIDL_AutoBindHandle;\n\n", iface->name);
 
-    STATEMENTS_FOR_EACH_FUNC( stmt, iface->details.iface->stmts )
+    STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
     {
         const var_t *func = stmt->u.var;
         const var_t* explicit_handle_var;
@@ -478,7 +478,7 @@ static void write_client_ifaces(const statement_list_t *stmts, int expr_eval_rou
             fprintf(client, " */\n");
             fprintf(client, "\n");
 
-            STATEMENTS_FOR_EACH_FUNC(stmt2, iface->details.iface->stmts)
+            STATEMENTS_FOR_EACH_FUNC(stmt2, type_iface_get_stmts(iface))
             {
                 has_func = 1;
                 break;

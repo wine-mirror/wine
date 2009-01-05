@@ -54,7 +54,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
     const var_t *var;
     const var_t* explicit_handle_var;
 
-    STATEMENTS_FOR_EACH_FUNC( stmt, iface->details.iface->stmts )
+    STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
     {
         const var_t *func = stmt->u.var;
         int has_full_pointer = is_full_pointer_function(func);
@@ -256,7 +256,7 @@ static void write_dispatchtable(type_t *iface)
     print_server("{\n");
     indent++;
 
-    STATEMENTS_FOR_EACH_FUNC( stmt, iface->details.iface->stmts )
+    STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
     {
         var_t *func = stmt->u.var;
         print_server("%s_%s,\n", iface->name, get_name(func));
@@ -416,7 +416,7 @@ static void write_server_stmts(const statement_list_t *stmts, int expr_eval_rout
             fprintf(server, " */\n");
             fprintf(server, "\n");
 
-            if (statements_has_func(iface->details.iface->stmts))
+            if (statements_has_func(type_iface_get_stmts(iface)))
             {
                 write_serverinterfacedecl(iface);
                 write_stubdescdecl(iface);

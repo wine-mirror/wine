@@ -2501,7 +2501,7 @@ static void check_functions(const type_t *iface, int is_inside_library)
     const statement_t *stmt;
     if (is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE))
     {
-        STATEMENTS_FOR_EACH_FUNC( stmt, iface->details.iface->stmts )
+        STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
         {
             var_t *func = stmt->u.var;
             add_explicit_handle_if_necessary(func);
@@ -2509,7 +2509,7 @@ static void check_functions(const type_t *iface, int is_inside_library)
     }
     if (!is_inside_library && !is_attr(iface->attrs, ATTR_LOCAL))
     {
-        STATEMENTS_FOR_EACH_FUNC( stmt, iface->details.iface->stmts )
+        STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
         {
             const var_t *func = stmt->u.var;
             if (!is_attr(func->attrs, ATTR_LOCAL))
@@ -2543,7 +2543,7 @@ static void check_all_user_types(const statement_list_t *stmts)
              !is_local(stmt->u.type->attrs))
     {
       const statement_t *stmt_func;
-      STATEMENTS_FOR_EACH_FUNC(stmt_func, stmt->u.type->details.iface->stmts) {
+      STATEMENTS_FOR_EACH_FUNC(stmt_func, type_iface_get_stmts(stmt->u.type)) {
         const var_t *func = stmt_func->u.var;
         check_for_additional_prototype_types(func->type->details.function->args);
       }

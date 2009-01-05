@@ -631,7 +631,7 @@ static void write_method_macro(FILE *header, const type_t *iface, const char *na
   if (type_iface_get_inherit(iface))
     write_method_macro(header, type_iface_get_inherit(iface), name);
 
-  STATEMENTS_FOR_EACH_FUNC(stmt, iface->details.iface->stmts)
+  STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface))
   {
     const var_t *func = stmt->u.var;
 
@@ -692,7 +692,7 @@ static void write_cpp_method_def(FILE *header, const type_t *iface)
 {
   const statement_t *stmt;
 
-  STATEMENTS_FOR_EACH_FUNC(stmt, iface->details.iface->stmts)
+  STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface))
   {
     const var_t *func = stmt->u.var;
     if (!is_callas(func->attrs)) {
@@ -717,7 +717,7 @@ static void do_write_c_method_def(FILE *header, const type_t *iface, const char 
   if (type_iface_get_inherit(iface))
     do_write_c_method_def(header, type_iface_get_inherit(iface), name);
 
-  STATEMENTS_FOR_EACH_FUNC(stmt, iface->details.iface->stmts)
+  STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface))
   {
     const var_t *func = stmt->u.var;
     if (first_iface) {
@@ -752,7 +752,7 @@ static void write_method_proto(FILE *header, const type_t *iface)
 {
   const statement_t *stmt;
 
-  STATEMENTS_FOR_EACH_FUNC(stmt, iface->details.iface->stmts)
+  STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface))
   {
     const var_t *func = stmt->u.var;
 
@@ -783,16 +783,16 @@ static void write_locals(FILE *fp, const type_t *iface, int body)
   if (!is_object(iface->attrs))
     return;
 
-  STATEMENTS_FOR_EACH_FUNC(stmt, iface->details.iface->stmts) {
+  STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface)) {
     const var_t *func = stmt->u.var;
     const var_t *cas = is_callas(func->attrs);
 
     if (cas) {
       const statement_t *stmt2 = NULL;
-      STATEMENTS_FOR_EACH_FUNC(stmt2, iface->details.iface->stmts)
+      STATEMENTS_FOR_EACH_FUNC(stmt2, type_iface_get_stmts(iface))
         if (!strcmp(stmt2->u.var->name, cas->name))
           break;
-      if (&stmt2->entry != iface->details.iface->stmts) {
+      if (&stmt2->entry != type_iface_get_stmts(iface)) {
         const var_t *m = stmt2->u.var;
         /* proxy prototype - use local prototype */
         write_type_decl_left(fp, get_func_return_type(m));
@@ -1062,7 +1062,7 @@ static void write_imports(FILE *header, const statement_list_t *stmts)
     {
       case STMT_TYPE:
         if (stmt->u.type->type == RPC_FC_IP)
-          write_imports(header, stmt->u.type->details.iface->stmts);
+          write_imports(header, type_iface_get_stmts(stmt->u.type));
         break;
       case STMT_TYPEREF:
       case STMT_IMPORTLIB:
@@ -1132,13 +1132,13 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
           if (is_attr(stmt->u.type->attrs, ATTR_DISPINTERFACE) || is_object(stmt->u.type->attrs))
           {
             write_com_interface_start(header, iface);
-            write_header_stmts(header, iface->details.iface->stmts, stmt->u.type, TRUE);
+            write_header_stmts(header, type_iface_get_stmts(iface), stmt->u.type, TRUE);
             write_com_interface_end(header, iface);
           }
           else
           {
             write_rpc_interface_start(header, iface);
-            write_header_stmts(header, iface->details.iface->stmts, iface, FALSE);
+            write_header_stmts(header, type_iface_get_stmts(iface), iface, FALSE);
             write_rpc_interface_end(header, iface);
           }
         }

@@ -682,7 +682,7 @@ static void write_procformatstring_stmts(FILE *file, int indent, const statement
             const statement_t *stmt_func;
             if (!pred(stmt->u.type))
                 continue;
-            STATEMENTS_FOR_EACH_FUNC(stmt_func, stmt->u.type->details.iface->stmts)
+            STATEMENTS_FOR_EACH_FUNC(stmt_func, type_iface_get_stmts(stmt->u.type))
             {
                 const var_t *func = stmt_func->u.var;
                 if (is_local(func->attrs)) continue;
@@ -2599,7 +2599,7 @@ static size_t process_tfs_stmts(FILE *file, const statement_list_t *stmts,
             continue;
 
         current_iface = iface;
-        STATEMENTS_FOR_EACH_FUNC( stmt_func, iface->details.iface->stmts )
+        STATEMENTS_FOR_EACH_FUNC( stmt_func, type_iface_get_stmts(iface) )
         {
             const var_t *func = stmt_func->u.var;
                 if (is_local(func->attrs)) continue;
@@ -3271,7 +3271,7 @@ size_t get_size_procformatstring(const statement_list_t *stmts, type_pred_t pred
         if (!pred(iface))
             continue;
 
-        STATEMENTS_FOR_EACH_FUNC( stmt_func, iface->details.iface->stmts )
+        STATEMENTS_FOR_EACH_FUNC( stmt_func, type_iface_get_stmts(iface) )
         {
             const var_t *func = stmt_func->u.var;
             if (!is_local(func->attrs))
