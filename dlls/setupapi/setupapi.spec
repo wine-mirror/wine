@@ -554,6 +554,7 @@
 @ stub pSetupGetVersionDatum
 @ stub pSetupGuidFromString
 @ stub pSetupIsGuidNull
+@ stdcall pSetupInstallCatalog(wstr wstr ptr)
 @ stdcall pSetupIsUserAdmin() IsUserAdmin
 @ stub pSetupMakeSurePathExists
 @ stdcall pSetupSetGlobalFlags(long)
@@ -571,4 +572,5 @@
 @ stdcall pSetupStringTableLookUpString(ptr wstr long) StringTableLookUpString
 @ stdcall pSetupStringTableLookUpStringEx(ptr wstr long ptr ptr) StringTableLookUpStringEx
 @ stdcall pSetupStringTableSetExtraData(ptr long ptr long) StringTableSetExtraData
+@ stub pSetupVerifyCatalogFile
 @ stub pSetupVerifyQueuedCatalogs

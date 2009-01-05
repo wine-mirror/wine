@@ -1122,6 +1122,15 @@ DWORD WINAPI InstallCatalog( LPCSTR catalog, LPCSTR basename, LPSTR fullname )
     return 0;
 }
 
+/***********************************************************************
+ *      pSetupInstallCatalog  (SETUPAPI.@)
+ */
+DWORD WINAPI pSetupInstallCatalog( LPCWSTR catalog, LPCWSTR basename, LPWSTR fullname )
+{
+    FIXME("%s, %s, %p\n", debugstr_w(catalog), debugstr_w(basename), fullname);
+    return 0;
+}
+
 static UINT detect_compression_type( LPCWSTR file )
 {
     DWORD size;
