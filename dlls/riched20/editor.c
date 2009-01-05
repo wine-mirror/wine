@@ -3263,7 +3263,11 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     }
     ME_CommitUndo(editor);
     if (bRepaint)
-      ME_RewrapRepaint(editor);
+    {
+      ME_WrapMarkedParagraphs(editor);
+      ME_UpdateScrollBar(editor);
+      ME_Repaint(editor);
+    }
     return 1;
   }
   case EM_GETCHARFORMAT:
@@ -3285,7 +3289,9 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_SETPARAFORMAT:
   {
     BOOL result = ME_SetSelectionParaFormat(editor, (PARAFORMAT2 *)lParam);
-    ME_RewrapRepaint(editor);
+    ME_WrapMarkedParagraphs(editor);
+    ME_UpdateScrollBar(editor);
+    ME_Repaint(editor);
     ME_CommitUndo(editor);
     return result;
   }
