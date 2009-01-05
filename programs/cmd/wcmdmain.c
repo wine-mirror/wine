@@ -438,23 +438,6 @@ WCHAR *WCMD_strtrim_leading_spaces (WCHAR *string) {
 }
 
 /*************************************************************************
- * WCMD_strtrim_trailing_spaces
- *
- *	Remove trailing spaces from a string. This routine modifies the input
- *	string by placing a null after the last non-space WCHARacter
- */
-void WCMD_strtrim_trailing_spaces (WCHAR *string) {
-
-  WCHAR *ptr;
-
-  ptr = string + strlenW (string) - 1;
-  while ((*ptr == ' ') && (ptr >= string)) {
-    *ptr = '\0';
-    ptr--;
-  }
-}
-
-/*************************************************************************
  * WCMD_opt_s_strip_quotes
  *
  *	Remove first and last quote WCHARacters, preserving all other text

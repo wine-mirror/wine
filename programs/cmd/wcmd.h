@@ -98,7 +98,6 @@ int  WCMD_volume (int mode, WCHAR *command);
 WCHAR *WCMD_fgets (WCHAR *s, int n, HANDLE stream);
 WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where);
 WCHAR *WCMD_strtrim_leading_spaces (WCHAR *string);
-void WCMD_strtrim_trailing_spaces (WCHAR *string);
 void WCMD_opt_s_strip_quotes(WCHAR *cmd);
 void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable, WCHAR *forValue, BOOL justFors);
 
