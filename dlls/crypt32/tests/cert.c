@@ -551,7 +551,7 @@ static void testCertProperties(void)
     ok(ret, "CertSetCertificateContextProperty failed: %08x\n", GetLastError());
     /* Now that that's set, the key prov handle property is also gettable.
      */
-    size = sizeof(DWORD);
+    size = sizeof(keyContext.hCryptProv);
     ret = CertGetCertificateContextProperty(context,
      CERT_KEY_PROV_HANDLE_PROP_ID, &keyContext.hCryptProv, &size);
     ok(ret, "Expected to get the CERT_KEY_PROV_HANDLE_PROP_ID, got %08x\n",
