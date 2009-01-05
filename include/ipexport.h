@@ -21,9 +21,9 @@
 #ifndef __WINE_IPEXPORT_H
 #define __WINE_IPEXPORT_H
 
-typedef unsigned long   IPAddr;
-typedef unsigned long   IPMask;
-typedef unsigned long   IP_STATUS;
+typedef ULONG IPAddr;
+typedef ULONG IPMask;
+typedef ULONG IP_STATUS;
 
 struct ip_option_information
 {
@@ -51,8 +51,8 @@ struct ip_option_information
 struct icmp_echo_reply
 {
     IPAddr                       Address;
-    unsigned long                Status;
-    unsigned long                RoundTripTime;
+    ULONG                        Status;
+    ULONG                        RoundTripTime;
     unsigned short               DataSize;
     unsigned short               Reserved;
     void*                        Data;

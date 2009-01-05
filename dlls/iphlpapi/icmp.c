@@ -492,7 +492,7 @@ DWORD WINAPI IcmpSendEcho2(
     DWORD                    Timeout
     )
 {
-    TRACE("(%p, %p, %p, %p, %08lx, %p, %d, %p, %p, %d, %d): stub\n", IcmpHandle,
+    TRACE("(%p, %p, %p, %p, %08x, %p, %d, %p, %p, %d, %d): stub\n", IcmpHandle,
             Event, ApcRoutine, ApcContext, DestinationAddress, RequestData,
             RequestSize, RequestOptions, ReplyBuffer, ReplySize, Timeout);
 

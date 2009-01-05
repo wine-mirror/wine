@@ -1550,7 +1550,7 @@ DWORD WINAPI GetPerAdapterInfo(ULONG IfIndex, PIP_PER_ADAPTER_INFO pPerAdapterIn
  */
 BOOL WINAPI GetRTTAndHopCount(IPAddr DestIpAddress, PULONG HopCount, ULONG MaxHops, PULONG RTT)
 {
-  FIXME("(DestIpAddress 0x%08lx, HopCount %p, MaxHops %d, RTT %p): stub\n",
+  FIXME("(DestIpAddress 0x%08x, HopCount %p, MaxHops %d, RTT %p): stub\n",
    DestIpAddress, HopCount, MaxHops, RTT);
   return FALSE;
 }
@@ -1880,7 +1880,7 @@ DWORD WINAPI NotifyRouteChange(PHANDLE Handle, LPOVERLAPPED overlapped)
  */
 DWORD WINAPI SendARP(IPAddr DestIP, IPAddr SrcIP, PULONG pMacAddr, PULONG PhyAddrLen)
 {
-  FIXME("(DestIP 0x%08lx, SrcIP 0x%08lx, pMacAddr %p, PhyAddrLen %p): stub\n",
+  FIXME("(DestIP 0x%08x, SrcIP 0x%08x, pMacAddr %p, PhyAddrLen %p): stub\n",
    DestIP, SrcIP, pMacAddr, PhyAddrLen);
   return ERROR_NOT_SUPPORTED;
 }
