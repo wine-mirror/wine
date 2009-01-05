@@ -70,8 +70,6 @@
 
 unsigned char pointer_default = RPC_FC_UP;
 static int is_object_interface = FALSE;
-/* are we inside a library block? */
-static int is_inside_library = FALSE;
 
 typedef struct list typelist_t;
 struct typenode {
@@ -140,6 +138,7 @@ static var_t *reg_const(var_t *var);
 
 static char *gen_name(void);
 static void check_arg(var_t *arg);
+static void check_statements(const statement_list_t *stmts, int is_inside_library);
 static void check_all_user_types(const statement_list_t *stmts);
 static attr_list_t *check_iface_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_function_attrs(const char *name, attr_list_t *attrs);
@@ -346,6 +345,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %%
 
 input:   gbl_statements				{ fix_incomplete();
+						  check_statements($1, FALSE);
 						  check_all_user_types($1);
 						  write_header($1);
 						  write_id_data($1);
@@ -433,14 +433,12 @@ libraryhdr: tLIBRARY aIDENTIFIER		{ $$ = $2; }
 	;
 library_start: attributes libraryhdr '{'	{ $$ = make_library($2, check_library_attrs($2, $1));
 						  if (!parse_only) start_typelib($$);
-						  is_inside_library = TRUE;
 						}
 	;
 librarydef: library_start imp_statements '}'
 	    semicolon_opt			{ $$ = $1;
 						  $$->stmts = $2;
 						  if (!parse_only) end_typelib();
-						  is_inside_library = FALSE;
 						}
 	;
 
@@ -2540,7 +2538,7 @@ static void add_explicit_handle_if_necessary(func_t *func)
     }
 }
 
-void check_functions(const type_t *iface)
+static void check_functions(const type_t *iface, int is_inside_library)
 {
     if (is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE) && iface->funcs)
     {
@@ -2556,6 +2554,19 @@ void check_functions(const type_t *iface)
             if (!is_attr(func->def->attrs, ATTR_LOCAL))
                 check_remoting_args(func);
         }
+    }
+}
+
+static void check_statements(const statement_list_t *stmts, int is_inside_library)
+{
+    const statement_t *stmt;
+
+    if (stmts) LIST_FOR_EACH_ENTRY(stmt, stmts, const statement_t, entry)
+    {
+      if (stmt->type == STMT_LIBRARY)
+          check_statements(stmt->u.lib->stmts, TRUE);
+      else if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
+          check_functions(stmt->u.type, is_inside_library);
     }
 }
 

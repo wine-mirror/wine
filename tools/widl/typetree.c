@@ -73,7 +73,6 @@ void type_interface_define(type_t *iface, type_t *inherit, statement_list_t *stm
     iface->details.iface->disp_methods = NULL;
     iface->stmts = stmts;
     iface->defined = TRUE;
-    check_functions(iface);
     compute_method_indexes(iface);
 }
 
@@ -87,7 +86,6 @@ void type_dispinterface_define(type_t *iface, var_list_t *props, func_list_t *me
     iface->details.iface->disp_methods = methods;
     iface->stmts = NULL;
     iface->defined = TRUE;
-    check_functions(iface);
     compute_method_indexes(iface);
 }
 
