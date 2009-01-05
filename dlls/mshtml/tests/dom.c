@@ -2245,7 +2245,11 @@ static void test_navigator(IHTMLDocument2 *doc)
     bstr = NULL;
     hres = IOmNavigator_get_platform(navigator, &bstr);
     ok(hres == S_OK, "get_platform failed: %08x\n", hres);
+#ifdef _WIN64
+    ok(!strcmp_wa(bstr, "Win64"), "unexpected platform %s\n", dbgstr_w(bstr));
+#else
     ok(!strcmp_wa(bstr, "Win32"), "unexpected platform %s\n", dbgstr_w(bstr));
+#endif
     SysFreeString(bstr);
 
     bstr = NULL;
