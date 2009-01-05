@@ -485,9 +485,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         }
         for (j = 0 ; j < MAX_COMBINED_SAMPLERS; j++) {
             for (i =0; i < NUM_SAVEDPIXELSTATES_S;i++) {
-                object->changed.samplerState[j][SavedPixelStates_S[i]] = TRUE;
+                DWORD state = SavedPixelStates_S[i];
+                object->changed.samplerState[j] |= 1 << state;
                 object->contained_sampler_states[object->num_contained_sampler_states].stage = j;
-                object->contained_sampler_states[object->num_contained_sampler_states].state = SavedPixelStates_S[i];
+                object->contained_sampler_states[object->num_contained_sampler_states].state = state;
                 object->num_contained_sampler_states++;
             }
         }
@@ -543,9 +544,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         }
         for (j = 0 ; j < MAX_COMBINED_SAMPLERS; j++){
             for (i =0; i < NUM_SAVEDVERTEXSTATES_S;i++) {
-                object->changed.samplerState[j][SavedVertexStates_S[i]] = TRUE;
+                DWORD state = SavedVertexStates_S[i];
+                object->changed.samplerState[j] |= 1 << state;
                 object->contained_sampler_states[object->num_contained_sampler_states].stage = j;
-                object->contained_sampler_states[object->num_contained_sampler_states].state = SavedVertexStates_S[i];
+                object->contained_sampler_states[object->num_contained_sampler_states].state = state;
                 object->num_contained_sampler_states++;
             }
         }
@@ -3327,7 +3329,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, 
 
     oldValue = This->stateBlock->samplerState[Sampler][Type];
     This->updateStateBlock->samplerState[Sampler][Type]         = Value;
-    This->updateStateBlock->changed.samplerState[Sampler][Type] = Value;
+    This->updateStateBlock->changed.samplerState[Sampler] |= 1 << Type;
 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
@@ -4821,12 +4823,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface, IW
         }
     }
     for(i = 0; i < MAX_COMBINED_SAMPLERS; i++){
-        for (j = 1; j < WINED3D_HIGHEST_SAMPLER_STATE; j++) {
-            if(object->changed.samplerState[i][j]) {
-                object->contained_sampler_states[object->num_contained_sampler_states].stage = i;
-                object->contained_sampler_states[object->num_contained_sampler_states].state = j;
-                object->num_contained_sampler_states++;
-            }
+        DWORD map = object->changed.samplerState[i];
+
+        for (j = 0; map; map >>= 1, ++j)
+        {
+            if (!(map & 1)) continue;
+
+            object->contained_sampler_states[object->num_contained_sampler_states].stage = i;
+            object->contained_sampler_states[object->num_contained_sampler_states].state = j;
+            ++object->num_contained_sampler_states;
         }
     }
 
