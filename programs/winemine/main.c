@@ -57,7 +57,7 @@ void CheckLevel( BOARD *p_board )
         p_board->mines = p_board->cols * p_board->rows - 2;
 }
 
-void LoadBoard( BOARD *p_board )
+static void LoadBoard( BOARD *p_board )
 {
     DWORD size;
     DWORD type;
@@ -126,7 +126,7 @@ void LoadBoard( BOARD *p_board )
     RegCloseKey( hkey );
 }
 
-void InitBoard( BOARD *p_board )
+static void InitBoard( BOARD *p_board )
 {
     HMENU hMenu;
 
@@ -146,7 +146,7 @@ void InitBoard( BOARD *p_board )
     CheckLevel( p_board );
 }
 
-void SaveBoard( BOARD *p_board )
+static void SaveBoard( BOARD *p_board )
 {
     HKEY hkey;
     unsigned i;
@@ -180,14 +180,14 @@ void SaveBoard( BOARD *p_board )
     RegCloseKey( hkey );
 }
 
-void DestroyBoard( BOARD *p_board )
+static void DestroyBoard( BOARD *p_board )
 {
     DeleteObject( p_board->hFacesBMP );
     DeleteObject( p_board->hLedsBMP );
     DeleteObject( p_board->hMinesBMP );
 }
 
-void SetDifficulty( BOARD *p_board, DIFFICULTY difficulty )
+static void SetDifficulty( BOARD *p_board, DIFFICULTY difficulty )
 {
     HMENU hMenu;
 
@@ -254,7 +254,7 @@ static void MoveOnScreen(RECT* rect)
     ShiftBetween(&rect->top, &rect->bottom, mi.rcWork.top, mi.rcWork.bottom);
 }
 
-void CreateBoard( BOARD *p_board )
+static void CreateBoard( BOARD *p_board )
 {
     int left, top, bottom, right;
     unsigned col, row;
@@ -331,7 +331,7 @@ void CreateBoard( BOARD *p_board )
 
 
 /* Randomly places mines everywhere except the selected box. */
-void PlaceMines ( BOARD *p_board, int selected_col, int selected_row )
+static void PlaceMines ( BOARD *p_board, int selected_col, int selected_row )
 {
     int i, j;
     unsigned col, row;
@@ -372,7 +372,7 @@ void PlaceMines ( BOARD *p_board, int selected_col, int selected_row )
     }
 }
 
-void DrawMine( HDC hdc, HDC hMemDC, BOARD *p_board, unsigned col, unsigned row, BOOL IsPressed )
+static void DrawMine( HDC hdc, HDC hMemDC, BOARD *p_board, unsigned col, unsigned row, BOOL IsPressed )
 {
     MINEBMP_OFFSET offset = BOX_BMP;
 
@@ -449,7 +449,7 @@ void DrawMine( HDC hdc, HDC hMemDC, BOARD *p_board, unsigned col, unsigned row, 
             hMemDC, 0, offset * MINE_HEIGHT, SRCCOPY );
 }
 
-void DrawMines ( HDC hdc, HDC hMemDC, BOARD *p_board )
+static void DrawMines ( HDC hdc, HDC hMemDC, BOARD *p_board )
 {
     HGDIOBJ hOldObj;
     unsigned col, row;
@@ -463,7 +463,7 @@ void DrawMines ( HDC hdc, HDC hMemDC, BOARD *p_board )
     SelectObject( hMemDC, hOldObj );
 }
 
-void DrawLeds( HDC hdc, HDC hMemDC, BOARD *p_board, int number, int x, int y )
+static void DrawLeds( HDC hdc, HDC hMemDC, BOARD *p_board, int number, int x, int y )
 {
     HGDIOBJ hOldObj;
     unsigned led[3], i;
@@ -506,7 +506,7 @@ void DrawLeds( HDC hdc, HDC hMemDC, BOARD *p_board, int number, int x, int y )
 }
 
 
-void DrawFace( HDC hdc, HDC hMemDC, BOARD *p_board )
+static void DrawFace( HDC hdc, HDC hMemDC, BOARD *p_board )
 {
     HGDIOBJ hOldObj;
 
@@ -523,7 +523,7 @@ void DrawFace( HDC hdc, HDC hMemDC, BOARD *p_board )
 }
 
 
-void DrawBoard( HDC hdc, HDC hMemDC, PAINTSTRUCT *ps, BOARD *p_board )
+static void DrawBoard( HDC hdc, HDC hMemDC, PAINTSTRUCT *ps, BOARD *p_board )
 {
     RECT tmp_rect;
 
@@ -545,7 +545,7 @@ void DrawBoard( HDC hdc, HDC hMemDC, PAINTSTRUCT *ps, BOARD *p_board )
 }
 
 
-void AddFlag( BOARD *p_board, unsigned col, unsigned row )
+static void AddFlag( BOARD *p_board, unsigned col, unsigned row )
 {
     if( p_board->box[col][row].FlagType != COMPLETE ) {
         switch( p_board->box[col][row].FlagType ) {
@@ -569,7 +569,7 @@ void AddFlag( BOARD *p_board, unsigned col, unsigned row )
 }
 
 
-void UnpressBox( BOARD *p_board, unsigned col, unsigned row )
+static void UnpressBox( BOARD *p_board, unsigned col, unsigned row )
 {
     HDC hdc;
     HGDIOBJ hOldObj;
@@ -587,7 +587,7 @@ void UnpressBox( BOARD *p_board, unsigned col, unsigned row )
 }
 
 
-void UnpressBoxes( BOARD *p_board, unsigned col, unsigned row )
+static void UnpressBoxes( BOARD *p_board, unsigned col, unsigned row )
 {
     int i, j;
 
@@ -598,7 +598,7 @@ void UnpressBoxes( BOARD *p_board, unsigned col, unsigned row )
 }
 
 
-void PressBox( BOARD *p_board, unsigned col, unsigned row )
+static void PressBox( BOARD *p_board, unsigned col, unsigned row )
 {
     HDC hdc;
     HGDIOBJ hOldObj;
@@ -616,7 +616,7 @@ void PressBox( BOARD *p_board, unsigned col, unsigned row )
 }
 
 
-void PressBoxes( BOARD *p_board, unsigned col, unsigned row )
+static void PressBoxes( BOARD *p_board, unsigned col, unsigned row )
 {
     int i, j;
 
@@ -643,7 +643,7 @@ void PressBoxes( BOARD *p_board, unsigned col, unsigned row )
 }
 
 
-void CompleteBox( BOARD *p_board, unsigned col, unsigned row )
+static void CompleteBox( BOARD *p_board, unsigned col, unsigned row )
 {
     int i, j;
 
@@ -670,7 +670,7 @@ void CompleteBox( BOARD *p_board, unsigned col, unsigned row )
 }
 
 
-void CompleteBoxes( BOARD *p_board, unsigned col, unsigned row )
+static void CompleteBoxes( BOARD *p_board, unsigned col, unsigned row )
 {
     unsigned numFlags = 0;
     int i, j;
@@ -693,7 +693,7 @@ void CompleteBoxes( BOARD *p_board, unsigned col, unsigned row )
 }
 
 
-void TestMines( BOARD *p_board, POINT pt, int msg )
+static void TestMines( BOARD *p_board, POINT pt, int msg )
 {
     BOOL draw = TRUE;
     int col, row;
@@ -758,7 +758,7 @@ void TestMines( BOARD *p_board, POINT pt, int msg )
 }
 
 
-void TestFace( BOARD *p_board, POINT pt, int msg )
+static void TestFace( BOARD *p_board, POINT pt, int msg )
 {
     if( p_board->status == PLAYING || p_board->status == WAITING ) {
         if( msg == WM_LBUTTONDOWN || msg == WM_MBUTTONDOWN )
@@ -783,7 +783,7 @@ void TestFace( BOARD *p_board, POINT pt, int msg )
 }
 
 
-void TestBoard( HWND hWnd, BOARD *p_board, int x, int y, int msg )
+static void TestBoard( HWND hWnd, BOARD *p_board, int x, int y, int msg )
 {
     POINT pt;
     unsigned col,row;
@@ -834,7 +834,7 @@ void TestBoard( HWND hWnd, BOARD *p_board, int x, int y, int msg )
 }
 
 
-LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     HDC hdc;
     PAINTSTRUCT ps;
