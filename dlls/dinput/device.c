@@ -876,7 +876,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_GetProperty(
 
     switch (LOWORD(rguid))
     {
-        case (DWORD) DIPROP_BUFFERSIZE:
+        case (DWORD_PTR) DIPROP_BUFFERSIZE:
         {
             LPDIPROPDWORD pd = (LPDIPROPDWORD)pdiph;
 
@@ -910,7 +910,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetProperty(
 
     switch (LOWORD(rguid))
     {
-        case (DWORD) DIPROP_AXISMODE:
+        case (DWORD_PTR) DIPROP_AXISMODE:
         {
             LPCDIPROPDWORD pd = (LPCDIPROPDWORD)pdiph;
 
@@ -930,7 +930,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetProperty(
             LeaveCriticalSection(&This->crit);
             break;
         }
-        case (DWORD) DIPROP_BUFFERSIZE:
+        case (DWORD_PTR) DIPROP_BUFFERSIZE:
         {
             LPCDIPROPDWORD pd = (LPCDIPROPDWORD)pdiph;
 

@@ -585,7 +585,7 @@ static HRESULT WINAPI SysMouseAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
     
     if (!HIWORD(rguid)) {
 	switch (LOWORD(rguid)) {
-	    case (DWORD) DIPROP_GRANULARITY: {
+	    case (DWORD_PTR) DIPROP_GRANULARITY: {
 		LPDIPROPDWORD pr = (LPDIPROPDWORD) pdiph;
 		
 		/* We'll just assume that the app asks about the Z axis */
@@ -594,7 +594,7 @@ static HRESULT WINAPI SysMouseAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
 		break;
 	    }
 	      
-	    case (DWORD) DIPROP_RANGE: {
+	    case (DWORD_PTR) DIPROP_RANGE: {
 		LPDIPROPRANGE pr = (LPDIPROPRANGE) pdiph;
 		
 		if ((pdiph->dwHow == DIPH_BYID) &&

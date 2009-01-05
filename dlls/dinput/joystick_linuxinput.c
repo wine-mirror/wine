@@ -852,7 +852,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
 
   if (!HIWORD(rguid)) {
     switch (LOWORD(rguid)) {
-    case (DWORD)DIPROP_RANGE: {
+    case (DWORD_PTR)DIPROP_RANGE: {
       LPCDIPROPRANGE pr = (LPCDIPROPRANGE)ph;
 
       if (ph->dwHow == DIPH_DEVICE) {
@@ -880,7 +880,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
       fake_current_js_state(This);
       break;
     }
-    case (DWORD)DIPROP_DEADZONE: {
+    case (DWORD_PTR)DIPROP_DEADZONE: {
       LPCDIPROPDWORD pd = (LPCDIPROPDWORD)ph;
       if (ph->dwHow == DIPH_DEVICE) {
         DWORD i;
@@ -899,18 +899,18 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
       fake_current_js_state(This);
       break;
     }
-    case (DWORD)DIPROP_CALIBRATIONMODE: {
+    case (DWORD_PTR)DIPROP_CALIBRATIONMODE: {
       LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
       FIXME("DIPROP_CALIBRATIONMODE(%d)\n", pd->dwData);
       break;
     }
-    case (DWORD)DIPROP_AUTOCENTER: {
+    case (DWORD_PTR)DIPROP_AUTOCENTER: {
       LPCDIPROPDWORD pd = (LPCDIPROPDWORD)ph;
 
       FIXME("DIPROP_AUTOCENTER(%d)\n", pd->dwData);
       break;
     }
-    case (DWORD)DIPROP_SATURATION: {
+    case (DWORD_PTR)DIPROP_SATURATION: {
       LPCDIPROPDWORD pd = (LPCDIPROPDWORD)ph;
 
       if (ph->dwHow == DIPH_DEVICE) {
@@ -999,7 +999,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
     if (HIWORD(rguid)) return DI_OK;
 
     switch (LOWORD(rguid)) {
-    case (DWORD) DIPROP_RANGE:
+    case (DWORD_PTR) DIPROP_RANGE:
     {
         LPDIPROPRANGE pr = (LPDIPROPRANGE) pdiph;
         int obj = find_property(&This->base.data_format, pdiph);
@@ -1011,7 +1011,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
 	TRACE("range(%d, %d) obj=%d\n", pr->lMin, pr->lMax, obj);
         break;
     }
-    case (DWORD) DIPROP_DEADZONE:
+    case (DWORD_PTR) DIPROP_DEADZONE:
     {
         LPDIPROPDWORD pd = (LPDIPROPDWORD)pdiph;
         int obj = find_property(&This->base.data_format, pdiph);
@@ -1022,7 +1022,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
         TRACE("deadzone(%d) obj=%d\n", pd->dwData, obj);
         break;
     }
-    case (DWORD) DIPROP_SATURATION:
+    case (DWORD_PTR) DIPROP_SATURATION:
     {
         LPDIPROPDWORD pd = (LPDIPROPDWORD)pdiph;
         int obj = find_property(&This->base.data_format, pdiph);

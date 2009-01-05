@@ -795,7 +795,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
 
     if (!HIWORD(rguid)) {
         switch (LOWORD(rguid)) {
-        case (DWORD)DIPROP_RANGE: {
+        case (DWORD_PTR)DIPROP_RANGE: {
             LPCDIPROPRANGE pr = (LPCDIPROPRANGE)ph;
             if (ph->dwHow == DIPH_DEVICE) {
                 TRACE("proprange(%d,%d) all\n", pr->lMin, pr->lMax);
@@ -815,7 +815,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
             }
             break;
         }
-        case (DWORD)DIPROP_DEADZONE: {
+        case (DWORD_PTR)DIPROP_DEADZONE: {
             LPCDIPROPDWORD pd = (LPCDIPROPDWORD)ph;
             if (ph->dwHow == DIPH_DEVICE) {
                 TRACE("deadzone(%d) all\n", pd->dwData);
@@ -832,7 +832,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
             }
             break;
         }
-        case (DWORD)DIPROP_SATURATION: {
+        case (DWORD_PTR)DIPROP_SATURATION: {
             LPCDIPROPDWORD pd = (LPCDIPROPDWORD)ph;
             if (ph->dwHow == DIPH_DEVICE) {
                 TRACE("saturation(%d) all\n", pd->dwData);
@@ -919,7 +919,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(
 
     if (!HIWORD(rguid)) {
         switch (LOWORD(rguid)) {
-        case (DWORD) DIPROP_RANGE: {
+        case (DWORD_PTR) DIPROP_RANGE: {
             LPDIPROPRANGE pr = (LPDIPROPRANGE)pdiph;
             int obj = find_property(&This->base.data_format, pdiph);
 
@@ -933,7 +933,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(
             }
             break;
         }
-        case (DWORD) DIPROP_DEADZONE: {
+        case (DWORD_PTR) DIPROP_DEADZONE: {
             LPDIPROPDWORD pd = (LPDIPROPDWORD)pdiph;
             int obj = find_property(&This->base.data_format, pdiph);
 
@@ -944,7 +944,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(
             }
             break;
         }
-        case (DWORD) DIPROP_SATURATION: {
+        case (DWORD_PTR) DIPROP_SATURATION: {
             LPDIPROPDWORD pd = (LPDIPROPDWORD)pdiph;
             int obj = find_property(&This->base.data_format, pdiph);
 

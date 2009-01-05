@@ -443,7 +443,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
 
     switch (LOWORD(rguid))
     {
-        case (DWORD)DIPROP_KEYNAME:
+        case (DWORD_PTR)DIPROP_KEYNAME:
         {
             HRESULT hr;
             LPDIPROPSTRING ps = (LPDIPROPSTRING)pdiph;
