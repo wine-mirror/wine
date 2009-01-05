@@ -2927,7 +2927,29 @@ BOOL WINAPI CryptMsgSignCTL(DWORD dwMsgEncodingType, BYTE *pbCtlContent,
  DWORD cbCtlContent, PCMSG_SIGNED_ENCODE_INFO pSignInfo, DWORD dwFlags,
  BYTE *pbEncoded, DWORD *pcbEncoded)
 {
-    FIXME("(%08x, %p, %d, %p, %08x, %p, %p): stub\n", dwMsgEncodingType,
+    static char oid_ctl[] = szOID_CTL;
+    BOOL ret;
+    HCRYPTMSG msg;
+
+    TRACE("(%08x, %p, %d, %p, %08x, %p, %p)\n", dwMsgEncodingType,
      pbCtlContent, cbCtlContent, pSignInfo, dwFlags, pbEncoded, pcbEncoded);
-    return FALSE;
+
+    if (dwFlags)
+    {
+        FIXME("unimplemented for flags %08x\n", dwFlags);
+        return FALSE;
+    }
+    msg = CryptMsgOpenToEncode(dwMsgEncodingType, 0, CMSG_SIGNED, pSignInfo,
+     oid_ctl, NULL);
+    if (msg)
+    {
+        ret = CryptMsgUpdate(msg, pbCtlContent, cbCtlContent, TRUE);
+        if (ret)
+            ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, pbEncoded,
+             pcbEncoded);
+        CryptMsgClose(msg);
+    }
+    else
+        ret = FALSE;
+    return ret;
 }
