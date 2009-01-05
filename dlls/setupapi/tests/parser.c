@@ -33,12 +33,14 @@
 /* function pointers */
 static HMODULE hSetupAPI;
 static LPCWSTR (WINAPI *pSetupGetField)(PINFCONTEXT,DWORD);
+static BOOL (WINAPI *pSetupEnumInfSectionsA)( HINF hinf, UINT index, PSTR buffer, DWORD size, UINT *need );
 
 static void init_function_pointers(void)
 {
     hSetupAPI = GetModuleHandleA("setupapi.dll");
 
-    pSetupGetField = (void *)GetProcAddress(hSetupAPI, "pSetupGetField"); 
+    pSetupGetField = (void *)GetProcAddress(hSetupAPI, "pSetupGetField");
+    pSetupEnumInfSectionsA = (void *)GetProcAddress(hSetupAPI, "SetupEnumInfSectionsA" );
 }
 
 static const char tmpfilename[] = ".\\tmp.inf";
@@ -244,6 +246,52 @@ static void test_section_names(void)
         }
         SetupCloseInfFile( hinf );
     }
+}
+
+static void test_enum_sections(void)
+{
+    static const char *contents = STD_HEADER "[s1]\nfoo=bar\n[s2]\nbar=foo\n[s3]\n[strings]\na=b\n";
+
+    BOOL ret;
+    DWORD len;
+    HINF hinf;
+    UINT err, index;
+    char buffer[256];
+
+    if (!pSetupEnumInfSectionsA)
+    {
+        win_skip( "SetupEnumInfSectionsA not available\n" );
+        return;
+    }
+
+    hinf = test_file_contents( contents, &err );
+    ok( hinf != NULL, "Expected valid INF file\n" );
+
+    for (index = 0; ; index++)
+    {
+        SetLastError( 0xdeadbeef );
+        ret = pSetupEnumInfSectionsA( hinf, index, NULL, 0, &len );
+        err = GetLastError();
+        if (!ret && GetLastError() == ERROR_NO_MORE_ITEMS) break;
+        ok( ret, "SetupEnumInfSectionsA failed\n" );
+        ok( len == 3 || len == 8, "wrong len %u\n", len );
+
+        SetLastError( 0xdeadbeef );
+        ret = pSetupEnumInfSectionsA( hinf, index, NULL, sizeof(buffer), &len );
+        err = GetLastError();
+        ok( !ret, "SetupEnumInfSectionsA succeeded\n" );
+        ok( err == ERROR_INVALID_USER_BUFFER, "wrong error %u\n", err );
+        ok( len == 3 || len == 8, "wrong len %u\n", len );
+
+        SetLastError( 0xdeadbeef );
+        ret = pSetupEnumInfSectionsA( hinf, index, buffer, sizeof(buffer), &len );
+        ok( ret, "SetupEnumInfSectionsA failed err %u\n", GetLastError() );
+        ok( len == 3 || len == 8, "wrong len %u\n", len );
+        ok( !lstrcmpi( buffer, "version" ) || !lstrcmpi( buffer, "s1" ) ||
+            !lstrcmpi( buffer, "s2" ) || !lstrcmpi( buffer, "s3" ) || !lstrcmpi( buffer, "strings" ),
+            "bad section '%s'\n", buffer );
+    }
+    SetupCloseInfFile( hinf );
 }
 
 
@@ -672,6 +720,7 @@ START_TEST(parser)
     init_function_pointers();
     test_invalid_files();
     test_section_names();
+    test_enum_sections();
     test_key_names();
     test_close_inf_file();
     test_pSetupGetField();
