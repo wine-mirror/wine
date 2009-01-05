@@ -50,15 +50,17 @@ typedef unsigned long  MSVCRT__fsize_t;
 typedef unsigned __int64 MSVCRT_size_t;
 typedef __int64 MSVCRT_intptr_t;
 typedef unsigned __int64 MSVCRT_uintptr_t;
+typedef __int64 MSVCRT_time_t;
 #else
 typedef unsigned long MSVCRT_size_t;
 typedef long MSVCRT_intptr_t;
 typedef unsigned long MSVCRT_uintptr_t;
+typedef long MSVCRT_time_t;
 #endif
 typedef unsigned int   MSVCRT__dev_t;
 typedef int  MSVCRT__off_t;
 typedef long MSVCRT_clock_t;
-typedef long MSVCRT_time_t;
+typedef long MSVCRT___time32_t;
 typedef __int64 MSVCRT___time64_t;
 typedef __int64 MSVCRT_fpos_t;
 

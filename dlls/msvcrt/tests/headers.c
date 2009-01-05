@@ -88,6 +88,7 @@ static void test_types(void)
     CHECK_TYPE(_off_t);
     CHECK_TYPE(clock_t);
     CHECK_TYPE(time_t);
+    CHECK_TYPE(__time32_t);
     CHECK_TYPE(__time64_t);
     CHECK_TYPE(fpos_t);
     CHECK_SIZE(FILE);
