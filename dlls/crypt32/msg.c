@@ -2896,3 +2896,12 @@ BOOL WINAPI CryptMsgVerifyCountersignatureEncodedEx(HCRYPTPROV_LEGACY hCryptProv
      cbSignerInfoCountersignature, dwSignerType, pvSigner, dwFlags, pvReserved);
     return FALSE;
 }
+
+BOOL WINAPI CryptMsgEncodeAndSignCTL(DWORD dwMsgEncodingType,
+ PCTL_INFO pCtlInfo, PCMSG_SIGNED_ENCODE_INFO pSignInfo, DWORD dwFlags,
+ BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    FIXME("(%08x, %p, %p, %08x, %p, %p): stub\n", dwMsgEncodingType, pCtlInfo,
+     pSignInfo, dwFlags, pbEncoded, pcbEncoded);
+    return FALSE;
+}

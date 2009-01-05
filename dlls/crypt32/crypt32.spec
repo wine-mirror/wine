@@ -148,7 +148,7 @@
 @ stub CryptMsgCountersign
 @ stub CryptMsgCountersignEncoded
 @ stdcall CryptMsgDuplicate(ptr)
-@ stub CryptMsgEncodeAndSignCTL
+@ stdcall CryptMsgEncodeAndSignCTL(long ptr ptr long ptr ptr)
 @ stdcall CryptMsgGetAndVerifySigner(ptr long ptr long ptr ptr)
 @ stdcall CryptMsgGetParam(ptr long long ptr ptr)
 @ stdcall CryptMsgOpenToDecode(long long long long ptr ptr)
