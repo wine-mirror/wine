@@ -2905,3 +2905,12 @@ BOOL WINAPI CryptMsgEncodeAndSignCTL(DWORD dwMsgEncodingType,
      pSignInfo, dwFlags, pbEncoded, pcbEncoded);
     return FALSE;
 }
+
+BOOL WINAPI CryptMsgSignCTL(DWORD dwMsgEncodingType, BYTE *pbCtlContent,
+ DWORD cbCtlContent, PCMSG_SIGNED_ENCODE_INFO pSignInfo, DWORD dwFlags,
+ BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    FIXME("(%08x, %p, %d, %p, %08x, %p, %p): stub\n", dwMsgEncodingType,
+     pbCtlContent, cbCtlContent, pSignInfo, dwFlags, pbEncoded, pcbEncoded);
+    return FALSE;
+}

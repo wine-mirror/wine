@@ -153,7 +153,7 @@
 @ stdcall CryptMsgGetParam(ptr long long ptr ptr)
 @ stdcall CryptMsgOpenToDecode(long long long long ptr ptr)
 @ stdcall CryptMsgOpenToEncode(long long long ptr str ptr)
-@ stub CryptMsgSignCTL
+@ stdcall CryptMsgSignCTL(long ptr long ptr long ptr ptr)
 @ stdcall CryptMsgUpdate(ptr ptr long long)
 @ stub CryptMsgVerifyCountersignatureEncoded
 @ stdcall CryptMsgVerifyCountersignatureEncodedEx(ptr long ptr long ptr long long ptr long ptr)
