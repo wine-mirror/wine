@@ -844,6 +844,8 @@ static HRESULT WINAPI OLEPictureImpl_get_Attributes(IPicture *iface,
   TRACE("(%p)->(%p).\n", This, pdwAttr);
   *pdwAttr = 0;
   switch (This->desc.picType) {
+  case PICTYPE_UNINITIALIZED:
+  case PICTYPE_NONE: break;
   case PICTYPE_BITMAP: 	if (This->hbmMask) *pdwAttr = PICTURE_TRANSPARENT; break;	/* not 'truly' scalable, see MSDN. */
   case PICTYPE_ICON: *pdwAttr     = PICTURE_TRANSPARENT;break;
   case PICTYPE_ENHMETAFILE: /* fall through */

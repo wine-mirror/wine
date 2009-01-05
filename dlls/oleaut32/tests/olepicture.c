@@ -324,6 +324,7 @@ static void test_empty_image(void) {
 	ULARGE_INTEGER	newpos1;
 	LARGE_INTEGER	seekto;
 	short		type;
+	DWORD		attr;
 
 	/* Empty image. Happens occasionally in VB programs. */
 	hglob = GlobalAlloc (0, 8);
@@ -346,6 +347,11 @@ static void test_empty_image(void) {
 	hres = IPicture_get_Type (pic, &type);
 	ok (hres == S_OK,"empty picture get type failed with hres 0x%08x\n", hres);
 	ok (type == PICTYPE_NONE,"type is %d, but should be PICTYPE_NONE(0)\n", type);
+
+	attr = 0xdeadbeef;
+	hres = IPicture_get_Attributes (pic, &attr);
+	ok (hres == S_OK,"empty picture get attributes failed with hres 0x%08x\n", hres);
+	ok (attr == 0,"attr is %d, but should be 0\n", attr);
 
 	hres = IPicture_get_Handle (pic, &handle);
 	ok (hres == S_OK,"empty picture get handle failed with hres 0x%08x\n", hres);
@@ -645,6 +651,26 @@ static void test_Render(void)
     ReleaseDC(NULL, hdc);
 }
 
+static void test_get_Attributes(void)
+{
+    IPicture *pic;
+    HRESULT hres;
+    short type;
+    DWORD attr;
+
+    OleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, (VOID**)&pic);
+    hres = IPicture_get_Type(pic, &type);
+    ok(hres == S_OK, "IPicture_get_Type does not return S_OK, but 0x%08x\n", hres);
+    ok(type == PICTYPE_UNINITIALIZED, "Expected type = PICTYPE_UNINITIALIZED, got = %d\n", type);
+
+    attr = 0xdeadbeef;
+    hres = IPicture_get_Attributes(pic, &attr);
+    ole_expect(hres, S_OK);
+    ok(attr == 0, "IPicture_get_Attributes does not reset attr to zero, got %d\n", attr);
+
+    IPicture_Release(pic);
+}
+
 START_TEST(olepicture)
 {
 	hOleaut32 = GetModuleHandleA("oleaut32.dll");
@@ -672,6 +698,7 @@ START_TEST(olepicture)
 	test_Invoke();
         test_OleCreatePictureIndirect();
         test_Render();
+        test_get_Attributes();
 }
 
 
