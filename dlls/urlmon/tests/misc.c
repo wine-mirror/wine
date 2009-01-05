@@ -1305,18 +1305,20 @@ static void test_ReleaseBindInfo(void)
 static void test_CopyStgMedium(void)
 {
     STGMEDIUM src, dst;
+    HGLOBAL empty;
     HRESULT hres;
 
     static WCHAR fileW[] = {'f','i','l','e',0};
 
     memset(&src, 0xf0, sizeof(src));
     memset(&dst, 0xe0, sizeof(dst));
+    memset(&empty, 0xf0, sizeof(empty));
     src.tymed = TYMED_NULL;
     src.pUnkForRelease = NULL;
     hres = CopyStgMedium(&src, &dst);
     ok(hres == S_OK, "CopyStgMedium failed: %08x\n", hres);
     ok(dst.tymed == TYMED_NULL, "tymed=%d\n", dst.tymed);
-    ok(dst.u.hGlobal == (void*)0xf0f0f0f0, "u=%p\n", dst.u.hGlobal);
+    ok(dst.u.hGlobal == empty, "u=%p\n", dst.u.hGlobal);
     ok(!dst.pUnkForRelease, "pUnkForRelease=%p, expected NULL\n", dst.pUnkForRelease);
 
     memset(&dst, 0xe0, sizeof(dst));
