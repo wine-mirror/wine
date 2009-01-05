@@ -105,4 +105,34 @@ static inline int type_is_complete(const type_t *type)
         return TRUE;
 }
 
+static inline int type_array_has_conformance(const type_t *type)
+{
+    assert(is_array(type));
+    return (type->details.array.size_is != NULL);
+}
+
+static inline int type_array_has_variance(const type_t *type)
+{
+    assert(is_array(type));
+    return (type->details.array.length_is != NULL);
+}
+
+static inline unsigned long type_array_get_dim(const type_t *type)
+{
+    assert(is_array(type));
+    return type->details.array.dim;
+}
+
+static inline expr_t *type_array_get_conformance(const type_t *type)
+{
+    assert(is_array(type));
+    return type->details.array.size_is;
+}
+
+static inline expr_t *type_array_get_variance(const type_t *type)
+{
+    assert(is_array(type));
+    return type->details.array.length_is;
+}
+
 #endif /* WIDL_TYPE_TREE_H */

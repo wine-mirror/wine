@@ -1095,10 +1095,10 @@ static int encode_var(
         arraydata += 2;
         for (atype = type; atype->declarray; atype = atype->ref)
         {
-            arraydata[0] = atype->dim;
+            arraydata[0] = type_array_get_dim(atype);
             arraydata[1] = 0;
             arraydata += 2;
-            elements *= atype->dim;
+            elements *= type_array_get_dim(atype);
         }
 
         typeoffset = ctl2_alloc_segment(typelib, MSFT_SEG_TYPEDESC, 8, 0);

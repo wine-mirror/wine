@@ -155,14 +155,14 @@ static int get_struct_type(const type_t *type)
         if (is_array(field->type->ref))
             return RPC_FC_BOGUS_STRUCT;
 
-        if (is_conformant_array(field->type))
+        if (type_array_has_conformance(field->type))
         {
             has_conformance = 1;
             if (field->type->declarray && list_next(fields, &field->entry))
                 error_loc("field '%s' deriving from a conformant array must be the last field in the structure\n",
                         field->name);
         }
-        if (field->type->length_is)
+        if (type_array_has_variance(field->type))
             has_variance = 1;
 
         t = field->type->ref;
@@ -306,7 +306,7 @@ static int get_array_type(const type_t *type)
         {
             unsigned int align = 0;
             size_t size = type_memsize(type, &align);
-            if (size * type->dim <= 0xffff)
+            if (size * type_array_get_dim(type) <= 0xffff)
                 return (type->type == RPC_FC_LGFARRAY) ? RPC_FC_SMFARRAY : RPC_FC_SMVARRAY;
         }
     }
@@ -1066,10 +1066,10 @@ size_t type_memsize(const type_t *t, unsigned int *align)
     case RPC_FC_SMVARRAY:
     case RPC_FC_LGVARRAY:
     case RPC_FC_BOGUS_ARRAY:
-        size = t->dim * type_memsize(t->ref, align);
+        size = type_array_get_dim(t) * type_memsize(t->ref, align);
         break;
     default:
-        error("type_memsize: Unknown type %d\n", t->type);
+        error("type_memsize: Unknown type 0x%x\n", t->type);
         size = 0;
     }
 
@@ -1494,7 +1494,7 @@ static int write_fixed_array_pointer_descriptions(
 
             print_file(file, 2, "0x%02x, /* FC_FIXED_REPEAT */\n", RPC_FC_FIXED_REPEAT);
             print_file(file, 2, "0x%02x, /* FC_PAD */\n", RPC_FC_PAD);
-            print_file(file, 2, "NdrFcShort(0x%x), /* Iterations = %d */\n", type->dim, type->dim);
+            print_file(file, 2, "NdrFcShort(0x%x), /* Iterations = %d */\n", type_array_get_dim(type), type_array_get_dim(type));
             print_file(file, 2, "NdrFcShort(0x%x), /* Increment = %d */\n", increment_size, increment_size);
             print_file(file, 2, "NdrFcShort(0x%x), /* Offset to array = %d */\n", *offset_in_memory, *offset_in_memory);
             print_file(file, 2, "NdrFcShort(0x%x), /* Number of pointers = %d */\n", pointer_count, pointer_count);
@@ -1550,7 +1550,7 @@ static int write_conformant_array_pointer_descriptions(
     unsigned int align;
     int pointer_count = 0;
 
-    if (is_conformant_array(type) && !type->length_is)
+    if (is_conformant_array(type) && !type_array_has_variance(type))
     {
         unsigned int temp = 0;
         /* unfortunately, this needs to be done in two passes to avoid
@@ -1595,7 +1595,7 @@ static int write_varying_array_pointer_descriptions(
     unsigned int align;
     int pointer_count = 0;
 
-    if (is_array(type) && type->length_is)
+    if (is_array(type) && type_array_has_variance(type))
     {
         unsigned int temp = 0;
         /* unfortunately, this needs to be done in two passes to avoid
@@ -1633,7 +1633,7 @@ static int write_varying_array_pointer_descriptions(
             {
                 size_t padding;
 
-                if (is_array(v->type) && v->type->length_is)
+                if (is_array(v->type) && type_array_has_variance(v->type))
                 {
                     *offset_in_buffer = ROUND_SIZE(*offset_in_buffer, 4);
                     /* skip over variance and offset in buffer */
@@ -1758,10 +1758,12 @@ static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
 
     if (type->declarray && !is_conformant_array(type))
     {
+        unsigned long dim = type_array_get_dim(type);
+
         /* FIXME: multi-dimensional array */
-        if (0xffffuL < type->dim)
+        if (0xffffuL < dim)
             error("array size for parameter %s exceeds %u bytes by %lu bytes\n",
-                  name, 0xffffu, type->dim - 0xffffu);
+                  name, 0xffffu, dim - 0xffffu);
 
         if (rtype == RPC_FC_CHAR)
             WRITE_FCTYPE(file, FC_CSTRING, *typestring_offset);
@@ -1770,12 +1772,12 @@ static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
         print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
         *typestring_offset += 2;
 
-        print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", type->dim, type->dim);
+        print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", dim, dim);
         *typestring_offset += 2;
 
         return start_offset;
     }
-    else if (type->size_is)
+    else if (is_conformant_array(type))
     {
         unsigned int align = 0;
 
@@ -1791,7 +1793,7 @@ static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
             (type->declarray && current_structure
              ? type_memsize(current_structure, &align)
              : 0),
-            type, type->size_is);
+            type, type_array_get_conformance(type));
 
         return start_offset;
     }
@@ -1811,8 +1813,8 @@ static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
 static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type,
                               const char *name, unsigned int *typestring_offset)
 {
-    const expr_t *length_is = type->length_is;
-    const expr_t *size_is = type->size_is;
+    const expr_t *length_is = type_array_get_variance(type);
+    const expr_t *size_is = type_array_get_conformance(type);
     unsigned int align = 0;
     size_t size;
     size_t start_offset;
@@ -1866,15 +1868,16 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
         {
             unsigned int elalign = 0;
             size_t elsize = type_memsize(type->ref, &elalign);
+            unsigned long dim = type_array_get_dim(type);
 
             if (real_type == RPC_FC_LGVARRAY)
             {
-                print_file(file, 2, "NdrFcLong(0x%x),\t/* %lu */\n", type->dim, type->dim);
+                print_file(file, 2, "NdrFcLong(0x%x),\t/* %lu */\n", dim, dim);
                 *typestring_offset += 4;
             }
             else
             {
-                print_file(file, 2, "NdrFcShort(0x%x),\t/* %lu */\n", type->dim, type->dim);
+                print_file(file, 2, "NdrFcShort(0x%x),\t/* %lu */\n", dim, dim);
                 *typestring_offset += 2;
             }
 
@@ -1902,7 +1905,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
     }
     else
     {
-        unsigned int dim = size_is ? 0 : type->dim;
+        unsigned int dim = size_is ? 0 : type_array_get_dim(type);
         print_file(file, 2, "NdrFcShort(0x%x),\t/* %u */\n", dim, dim);
         *typestring_offset += 2;
         *typestring_offset
@@ -2708,7 +2711,7 @@ static unsigned int get_required_buffer_size_type(
 
         case RPC_FC_SMFARRAY:
         case RPC_FC_LGFARRAY:
-            return type->dim * get_required_buffer_size_type(type->ref, name, alignment);
+            return type_array_get_dim(type) * get_required_buffer_size_type(type->ref, name, alignment);
 
         default:
             return 0;
@@ -2917,11 +2920,11 @@ expr_t *get_size_is_expr(const type_t *t, const char *name)
 {
     expr_t *x = NULL;
 
-    for ( ; is_ptr(t) || is_array(t); t = t->ref)
-        if (t->size_is)
+    for ( ; is_array(t); t = t->ref)
+        if (type_array_has_conformance(t))
         {
             if (!x)
-                x = t->size_is;
+                x = type_array_get_conformance(t);
             else
                 error("%s: multidimensional conformant"
                       " arrays not supported at the top level\n",
@@ -2944,19 +2947,19 @@ static void write_parameter_conf_or_var_exprs(FILE *file, int indent, const char
             break;
         else if (is_array(type) || is_string_type(var->attrs, type))
         {
-            if (is_conformance_needed_for_phase(phase))
+            if (is_conformance_needed_for_phase(phase) && is_array(type))
             {
-                if (type->size_is)
+                if (type_array_has_conformance(type))
                 {
                     print_file(file, indent, "__frame->_StubMsg.MaxCount = (ULONG_PTR)");
-                    write_expr(file, type->size_is, 1, 1, NULL, NULL, local_var_prefix);
+                    write_expr(file, type_array_get_conformance(type), 1, 1, NULL, NULL, local_var_prefix);
                     fprintf(file, ";\n\n");
                 }
-                if (type->length_is)
+                if (type_array_has_variance(type))
                 {
                     print_file(file, indent, "__frame->_StubMsg.Offset = 0;\n"); /* FIXME */
                     print_file(file, indent, "__frame->_StubMsg.ActualCount = (ULONG_PTR)");
-                    write_expr(file, type->length_is, 1, 1, NULL, NULL, local_var_prefix);
+                    write_expr(file, type_array_get_variance(type), 1, 1, NULL, NULL, local_var_prefix);
                     fprintf(file, ";\n\n");
                 }
             }
@@ -3080,7 +3083,7 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
         {
             if (phase == PHASE_FREE || pass == PASS_RETURN || pointer_type == RPC_FC_UP)
                 print_phase_function(file, indent, "Pointer", local_var_prefix, phase, var,
-                                     start_offset - (type->size_is ? 4 : 2));
+                                     start_offset - (is_conformant_array(type) ? 4 : 2));
             else
                 print_phase_function(file, indent, "ConformantString", local_var_prefix,
                                      phase, var, start_offset);
@@ -3305,7 +3308,7 @@ void declare_stub_args( FILE *file, int indent, const var_t *func )
             print_file(file, indent, "NDR_SCONTEXT %s;\n", var->name);
         else
         {
-            if (!in_attr && !var->type->size_is && !is_string)
+            if (!in_attr && !is_conformant_array(var->type) && !is_string)
             {
                 print_file(file, indent, "");
                 write_type_decl(file, var->type->declarray ? var->type : var->type->ref,
@@ -3358,15 +3361,19 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
                 print_file(file, indent + 1, "(PFORMAT_STRING)&__MIDL_TypeFormatString.Format[%d]);\n",
                            var->type->typestring_offset);
             }
-            else if (var->type->size_is)
+            else if (is_array(var->type) &&
+                     type_array_has_conformance(var->type))
             {
                 unsigned int size, align = 0;
                 type_t *type = var->type;
 
                 fprintf(file, " = NdrAllocate(&__frame->_StubMsg, ");
-                for ( ; type->size_is ; type = type->ref)
+                for ( ;
+                     is_array(type) && type_array_has_conformance(type);
+                     type = type->ref)
                 {
-                    write_expr(file, type->size_is, TRUE, TRUE, NULL, NULL, local_var_prefix);
+                    write_expr(file, type_array_get_conformance(type), TRUE,
+                               TRUE, NULL, NULL, local_var_prefix);
                     fprintf(file, " * ");
                 }
                 size = type_memsize(type, &align);

@@ -1300,9 +1300,6 @@ type_t *make_type(unsigned char type, type_t *ref)
   t->orig = NULL;
   memset(&t->details, 0, sizeof(t->details));
   t->ifaces = NULL;
-  t->dim = 0;
-  t->size_is = NULL;
-  t->length_is = NULL;
   t->typestring_offset = 0;
   t->ptrdesc = 0;
   t->declarray = FALSE;
@@ -1498,7 +1495,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
     }
 
     v->type->declarray = TRUE;
-    v->type->dim = dim->cval;
+    v->type->details.array.dim = dim->cval;
   }
 
   ptype = &v->type;
@@ -1517,7 +1514,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
         error_loc("%s: size_is attribute applied to illegal type\n", v->name);
 
       atype->type = RPC_FC_CARRAY;
-      atype->size_is = dim;
+      atype->details.array.size_is = dim;
     }
 
     ptype = &(*ptype)->ref;
@@ -1542,7 +1539,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
       else
         error_loc("%s: length_is attribute applied to illegal type\n", v->name);
 
-      atype->length_is = dim;
+      atype->details.array.length_is = dim;
     }
 
     ptype = &(*ptype)->ref;

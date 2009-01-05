@@ -118,7 +118,7 @@ int is_conformant_array(const type_t *t)
 {
     return t->type == RPC_FC_CARRAY
         || t->type == RPC_FC_CVARRAY
-        || (t->type == RPC_FC_BOGUS_ARRAY && t->size_is);
+        || (t->type == RPC_FC_BOGUS_ARRAY && type_array_has_conformance(t));
 }
 
 void write_guid(FILE *f, const char *guid_prefix, const char *name, const UUID *uuid)
@@ -276,7 +276,7 @@ void write_type_right(FILE *h, type_t *t, int is_field)
       t = t->ref;
     }
     for ( ; t->declarray; t = t->ref)
-      fprintf(h, "[%lu]", t->dim);
+      fprintf(h, "[%lu]", type_array_get_dim(t));
   }
 }
 

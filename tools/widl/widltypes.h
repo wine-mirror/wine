@@ -289,6 +289,12 @@ struct module_details
   func_list_t *funcs;
 };
 
+struct array_details
+{
+  unsigned long dim;
+  expr_t *size_is, *length_is;
+};
+
 struct _type_t {
   const char *name;
   enum type_kind kind;
@@ -302,10 +308,9 @@ struct _type_t {
     struct func_details *function;
     struct iface_details *iface;
     struct module_details *module;
+    struct array_details array;
   } details;
   ifref_list_t *ifaces;           /* coclasses */
-  unsigned long dim;              /* array dimension */
-  expr_t *size_is, *length_is;
   type_t *orig;                   /* dup'd types */
   unsigned int typestring_offset;
   unsigned int ptrdesc;           /* used for complex structs */
