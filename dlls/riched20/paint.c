@@ -1083,7 +1083,15 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
   si.cbSize = sizeof(si);
   bScrollBarWasVisible = ME_GetYScrollVisible(editor);
   bScrollBarWillBeVisible = editor->nTotalLength > editor->sizeWindow.cy;
-  
+
+  if (editor->vert_si.nPos && !bScrollBarWillBeVisible)
+  {
+    ME_ScrollAbs(editor, 0);
+    /* ME_ScrollAbs will call this function,
+     * so nothing else needs to be done here. */
+    return;
+  }
+
   si.fMask = SIF_PAGE | SIF_RANGE | SIF_POS;
   if (GetWindowLongW(hWnd, GWL_STYLE) & ES_DISABLENOSCROLL)
   {
@@ -1102,26 +1110,17 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
   si.nMax = editor->nTotalLength;
   si.nPos = editor->vert_si.nPos;
   si.nPage = editor->sizeWindow.cy;
-     
-  if (!(si.nMin == editor->vert_si.nMin && si.nMax == editor->vert_si.nMax && si.nPage == editor->vert_si.nPage))
+
+  if (!(si.nMin == editor->vert_si.nMin &&
+        si.nMax == editor->vert_si.nMax &&
+        si.nPage == editor->vert_si.nPage))
   {
     TRACE("min=%d max=%d page=%d\n", si.nMin, si.nMax, si.nPage);
     editor->vert_si.nMin = si.nMin;
     editor->vert_si.nMax = si.nMax;
     editor->vert_si.nPage = si.nPage;
-    if (bScrollBarWillBeVisible)
-    {
+    if (bScrollBarWillBeVisible || bScrollBarWasVisible)
       SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
-    }
-    else
-    {
-      if (bScrollBarWasVisible && !(si.fMask & SIF_DISABLENOSCROLL))
-      {
-        SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
-        ShowScrollBar(hWnd, SB_VERT, FALSE);
-        ME_ScrollAbs(editor, 0);
-      }
-    }
   }
 }
 
