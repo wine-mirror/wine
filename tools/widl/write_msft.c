@@ -1080,7 +1080,7 @@ static int encode_var(
         int *arraydata;
 
         num_dims = 0;
-        for (atype = type; atype->declarray; atype = atype->ref)
+        for (atype = type; atype->declarray; atype = type_array_get_element(atype))
             ++num_dims;
 
         chat("array with %d dimensions\n", num_dims);
@@ -1093,7 +1093,7 @@ static int encode_var(
         arraydata[1] |= ((num_dims * 2 * sizeof(long)) << 16);
 
         arraydata += 2;
-        for (atype = type; atype->declarray; atype = atype->ref)
+        for (atype = type; atype->declarray; atype = type_array_get_element(atype))
         {
             arraydata[0] = type_array_get_dim(atype);
             arraydata[1] = 0;

@@ -549,7 +549,7 @@ static struct expression_type resolve_expression(const struct expr_loc *expr_loc
         if (result.type && is_array(result.type))
         {
             struct expression_type index_result;
-            result.type = result.type->ref;
+            result.type = type_array_get_element(result.type);
             index_result = resolve_expression(expr_loc, cont_type /* FIXME */, e->u.ext);
             if (!index_result.type || !is_integer_type(index_result.type))
                 error_loc_info(&expr_loc->v->loc_info, "array subscript not of integral type in expression%s%s\n",

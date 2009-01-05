@@ -2381,8 +2381,10 @@ static void check_field_common(const type_t *container_type,
         }
         if (type_is_alias(type))
             type = type->orig;
-        else if (is_ptr(type) || is_array(type))
+        else if (is_ptr(type))
             type = type->ref;
+        else if (is_array(type))
+            type = type_array_get_element(type);
         else
             break;
     }

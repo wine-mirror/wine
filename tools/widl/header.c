@@ -198,7 +198,7 @@ void write_type_left(FILE *h, type_t *t, int declonly)
     fprintf(h, "const ");
 
   if (type_is_alias(t)) fprintf(h, "%s", t->name);
-  else if (t->declarray) write_type_left(h, t->ref, declonly);
+  else if (t->declarray) write_type_left(h, type_array_get_element(t), declonly);
   else {
     if (t->sign > 0) fprintf(h, "signed ");
     else if (t->sign < 0) fprintf(h, "unsigned ");
@@ -253,12 +253,15 @@ void write_type_left(FILE *h, type_t *t, int declonly)
       case RPC_FC_UP:
       case RPC_FC_FP:
       case RPC_FC_OP:
-      case RPC_FC_CARRAY:
-      case RPC_FC_CVARRAY:
-      case RPC_FC_BOGUS_ARRAY:
         write_type_left(h, t->ref, declonly);
         fprintf(h, "%s*", needs_space_after(t->ref) ? " " : "");
         if (is_ptr(t) && is_attr(t->attrs, ATTR_CONST)) fprintf(h, "const ");
+        break;
+      case RPC_FC_CARRAY:
+      case RPC_FC_CVARRAY:
+      case RPC_FC_BOGUS_ARRAY:
+        write_type_left(h, type_array_get_element(t), declonly);
+        fprintf(h, "%s*", needs_space_after(type_array_get_element(t)) ? " " : "");
         break;
       default:
         fprintf(h, "%s", t->name);
@@ -273,9 +276,9 @@ void write_type_right(FILE *h, type_t *t, int is_field)
   if (t->declarray) {
     if (is_conformant_array(t)) {
       fprintf(h, "[%s]", is_field ? "1" : "");
-      t = t->ref;
+      t = type_array_get_element(t);
     }
-    for ( ; t->declarray; t = t->ref)
+    for ( ; t->declarray; t = type_array_get_element(t))
       fprintf(h, "[%lu]", type_array_get_dim(t));
   }
 }

@@ -165,7 +165,7 @@ static int get_struct_type(const type_t *type)
         if (type_array_has_variance(field->type))
             has_variance = 1;
 
-        t = field->type->ref;
+        t = type_array_get_element(field->type);
     }
 
     switch (get_struct_type(t))
@@ -285,7 +285,7 @@ static int get_array_type(const type_t *type)
 {
     if (is_array(type))
     {
-        const type_t *rt = type->ref;
+        const type_t *rt = type_array_get_element(type);
         if (is_user_type(rt))
             return RPC_FC_BOGUS_ARRAY;
         switch (get_struct_type(rt))
@@ -363,7 +363,7 @@ static int type_has_pointers(const type_t *type)
     else if (is_ptr(type))
         return TRUE;
     else if (is_array(type))
-        return type_has_pointers(type->ref);
+        return type_has_pointers(type_array_get_element(type));
     else if (is_struct(type->type))
     {
         var_list_t *fields = type_struct_get_fields(type);
@@ -398,7 +398,7 @@ static int type_has_full_pointer(const type_t *type)
     else if (is_ptr(type))
         return FALSE;
     else if (is_array(type))
-        return type_has_full_pointer(type->ref);
+        return type_has_full_pointer(type_array_get_element(type));
     else if (is_struct(type->type))
     {
         var_list_t *fields = type_struct_get_fields(type);
@@ -1009,7 +1009,7 @@ size_t type_memsize(const type_t *t, unsigned int *align)
         size = type_memsize(t->orig, align);
     else if (t->declarray && is_conformant_array(t))
     {
-        type_memsize(t->ref, align);
+        type_memsize(type_array_get_element(t), align);
         size = 0;
     }
     else if (is_ptr(t) || is_conformant_array(t))
@@ -1066,7 +1066,7 @@ size_t type_memsize(const type_t *t, unsigned int *align)
     case RPC_FC_SMVARRAY:
     case RPC_FC_LGVARRAY:
     case RPC_FC_BOGUS_ARRAY:
-        size = type_array_get_dim(t) * type_memsize(t->ref, align);
+        size = type_array_get_dim(t) * type_memsize(type_array_get_element(t), align);
         break;
     default:
         error("type_memsize: Unknown type 0x%x\n", t->type);
@@ -1425,8 +1425,8 @@ static int write_pointer_description_offsets(
     if (is_array(type))
     {
         return write_pointer_description_offsets(
-            file, attrs, type->ref, offset_in_memory, offset_in_buffer,
-            typestring_offset);
+            file, attrs, type_array_get_element(type), offset_in_memory,
+            offset_in_buffer, typestring_offset);
     }
     else if (is_non_complex_struct(type))
     {
@@ -1482,7 +1482,7 @@ static int write_fixed_array_pointer_descriptions(
         /* unfortunately, this needs to be done in two passes to avoid
          * writing out redundant FC_FIXED_REPEAT descriptions */
         pointer_count = write_pointer_description_offsets(
-            NULL, attrs, type->ref, NULL, NULL, &temp);
+            NULL, attrs, type_array_get_element(type), NULL, NULL, &temp);
         if (pointer_count > 0)
         {
             unsigned int increment_size;
@@ -1490,7 +1490,7 @@ static int write_fixed_array_pointer_descriptions(
             size_t offset_of_array_pointer_buf = 0;
 
             align = 0;
-            increment_size = type_memsize(type->ref, &align);
+            increment_size = type_memsize(type_array_get_element(type), &align);
 
             print_file(file, 2, "0x%02x, /* FC_FIXED_REPEAT */\n", RPC_FC_FIXED_REPEAT);
             print_file(file, 2, "0x%02x, /* FC_PAD */\n", RPC_FC_PAD);
@@ -1556,7 +1556,7 @@ static int write_conformant_array_pointer_descriptions(
         /* unfortunately, this needs to be done in two passes to avoid
          * writing out redundant FC_VARIABLE_REPEAT descriptions */
         pointer_count = write_pointer_description_offsets(
-            NULL, attrs, type->ref, NULL, NULL, &temp);
+            NULL, attrs, type_array_get_element(type), NULL, NULL, &temp);
         if (pointer_count > 0)
         {
             unsigned int increment_size;
@@ -1564,7 +1564,7 @@ static int write_conformant_array_pointer_descriptions(
             size_t offset_of_array_pointer_buf = offset_in_memory;
 
             align = 0;
-            increment_size = type_memsize(type->ref, &align);
+            increment_size = type_memsize(type_array_get_element(type), &align);
 
             if (increment_size > USHRT_MAX)
                 error("array size of %u bytes is too large\n", increment_size);
@@ -1577,8 +1577,9 @@ static int write_conformant_array_pointer_descriptions(
             *typestring_offset += 8;
 
             pointer_count = write_pointer_description_offsets(
-                file, attrs, type->ref, &offset_of_array_pointer_mem,
-                &offset_of_array_pointer_buf, typestring_offset);
+                file, attrs, type_array_get_element(type),
+                &offset_of_array_pointer_mem, &offset_of_array_pointer_buf,
+                typestring_offset);
         }
     }
 
@@ -1601,13 +1602,13 @@ static int write_varying_array_pointer_descriptions(
         /* unfortunately, this needs to be done in two passes to avoid
          * writing out redundant FC_VARIABLE_REPEAT descriptions */
         pointer_count = write_pointer_description_offsets(
-            NULL, attrs, type->ref, NULL, NULL, &temp);
+            NULL, attrs, type_array_get_element(type), NULL, NULL, &temp);
         if (pointer_count > 0)
         {
             unsigned int increment_size;
 
             align = 0;
-            increment_size = type_memsize(type->ref, &align);
+            increment_size = type_memsize(type_array_get_element(type), &align);
 
             if (increment_size > USHRT_MAX)
                 error("array size of %u bytes is too large\n", increment_size);
@@ -1829,13 +1830,13 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
     if (!pointer_type)
         pointer_type = RPC_FC_RP;
 
-    if (write_embedded_types(file, attrs, type->ref, name, FALSE, typestring_offset))
+    if (write_embedded_types(file, attrs, type_array_get_element(type), name, FALSE, typestring_offset))
         has_pointer = TRUE;
     else
-        has_pointer = type_has_pointers(type->ref);
+        has_pointer = type_has_pointers(type_array_get_element(type));
 
     align = 0;
-    size = type_memsize((is_conformant_array(type) ? type->ref : type), &align);
+    size = type_memsize((is_conformant_array(type) ? type_array_get_element(type) : type), &align);
     real_type = get_array_type( type );
 
     start_offset = *typestring_offset;
@@ -1867,7 +1868,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
         if (real_type == RPC_FC_SMVARRAY || real_type == RPC_FC_LGVARRAY)
         {
             unsigned int elalign = 0;
-            size_t elsize = type_memsize(type->ref, &elalign);
+            size_t elsize = type_memsize(type_array_get_element(type), &elalign);
             unsigned long dim = type_array_get_dim(type);
 
             if (real_type == RPC_FC_LGVARRAY)
@@ -1900,7 +1901,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
             *typestring_offset += 1;
         }
 
-        write_member_type(file, type, NULL, type->ref, NULL, typestring_offset);
+        write_member_type(file, type, NULL, type_array_get_element(type), NULL, typestring_offset);
         write_end(file, typestring_offset);
     }
     else
@@ -1914,7 +1915,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
         *typestring_offset
             += write_conf_or_var_desc(file, current_structure, baseoff,
                                       type, length_is);
-        write_member_type(file, type, NULL, type->ref, NULL, typestring_offset);
+        write_member_type(file, type, NULL, type_array_get_element(type), NULL, typestring_offset);
         write_end(file, typestring_offset);
     }
 
@@ -2920,7 +2921,7 @@ expr_t *get_size_is_expr(const type_t *t, const char *name)
 {
     expr_t *x = NULL;
 
-    for ( ; is_array(t); t = t->ref)
+    for ( ; is_array(t); t = type_array_get_element(t))
         if (type_array_has_conformance(t))
         {
             if (!x)
@@ -3370,7 +3371,7 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
                 fprintf(file, " = NdrAllocate(&__frame->_StubMsg, ");
                 for ( ;
                      is_array(type) && type_array_has_conformance(type);
-                     type = type->ref)
+                     type = type_array_get_element(type))
                 {
                     write_expr(file, type_array_get_conformance(type), TRUE,
                                TRUE, NULL, NULL, local_var_prefix);

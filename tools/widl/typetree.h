@@ -141,6 +141,12 @@ static inline expr_t *type_array_get_variance(const type_t *type)
     return type->details.array.length_is;
 }
 
+static inline type_t *type_array_get_element(const type_t *type)
+{
+    assert(is_array(type));
+    return type->ref;
+}
+
 static inline type_t *type_get_real_type(const type_t *type)
 {
     if (type->is_alias)
