@@ -50,20 +50,19 @@ static void print_server(const char *format, ...)
 
 static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 {
-    const func_t *func;
+    const statement_t *stmt;
     const var_t *var;
     const var_t* explicit_handle_var;
 
-    if (!iface->funcs) return;
-    LIST_FOR_EACH_ENTRY( func, iface->funcs, const func_t, entry )
+    STATEMENTS_FOR_EACH_FUNC( stmt, iface->details.iface->stmts )
     {
-        const var_t *def = func->def;
+        const var_t *func = stmt->u.var;
         int has_full_pointer = is_full_pointer_function(func);
 
         /* check for a defined binding handle */
         explicit_handle_var = get_explicit_handle_var(func);
 
-        print_server("struct __frame_%s_%s\n{\n", iface->name, get_name(def));
+        print_server("struct __frame_%s_%s\n{\n", iface->name, get_name(func));
         indent++;
         print_server("__DECL_EXCEPTION_FRAME\n");
         print_server("MIDL_STUB_MESSAGE _StubMsg;\n");
@@ -74,8 +73,8 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         indent--;
         print_server("};\n\n");
 
-        print_server("static void __finally_%s_%s(", iface->name, get_name(def));
-        fprintf(server," struct __frame_%s_%s *__frame )\n{\n", iface->name, get_name(def));
+        print_server("static void __finally_%s_%s(", iface->name, get_name(func));
+        fprintf(server," struct __frame_%s_%s *__frame )\n{\n", iface->name, get_name(func));
 
         indent++;
         write_remoting_arguments(server, indent, func, "__frame->", PASS_OUT, PHASE_FREE);
@@ -86,12 +85,12 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         indent--;
         print_server("}\n\n");
 
-        print_server("void __RPC_STUB %s_%s( PRPC_MESSAGE _pRpcMessage )\n", iface->name, get_name(def));
+        print_server("void __RPC_STUB %s_%s( PRPC_MESSAGE _pRpcMessage )\n", iface->name, get_name(func));
 
         /* write the functions body */
         fprintf(server, "{\n");
         indent++;
-        print_server("struct __frame_%s_%s __f, * const __frame = &__f;\n", iface->name, get_name(def));
+        print_server("struct __frame_%s_%s __f, * const __frame = &__f;\n", iface->name, get_name(func));
         if (has_out_arg_or_return(func)) print_server("RPC_STATUS _Status;\n");
         fprintf(server, "\n");
 
@@ -102,7 +101,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         print_server("&%s_StubDesc);\n", iface->name);
         indent--;
         fprintf(server, "\n");
-        print_server( "RpcExceptionInit( __server_filter, __finally_%s_%s );\n", iface->name, get_name(def));
+        print_server( "RpcExceptionInit( __server_filter, __finally_%s_%s );\n", iface->name, get_name(func));
 
         write_parameters_init(server, indent, func, "__frame->");
 
@@ -122,7 +121,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         if (has_full_pointer)
             write_full_pointer_init(server, indent, func, TRUE);
 
-        if (func->args)
+        if (type_get_function_args(func->type))
         {
             print_server("if ((_pRpcMessage->DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)\n");
             indent++;
@@ -160,15 +159,15 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             print_server("__frame->_RetVal = ");
         else
             print_server("");
-        fprintf(server, "%s%s", prefix_server, get_name(def));
+        fprintf(server, "%s%s", prefix_server, get_name(func));
 
-        if (func->args)
+        if (type_get_function_args(func->type))
         {
             int first_arg = 1;
 
             fprintf(server, "(\n");
             indent++;
-            LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+            LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
             {
                 if (first_arg)
                     first_arg = 0;
@@ -229,7 +228,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         print_server("RpcFinally\n");
         print_server("{\n");
         indent++;
-        print_server("__finally_%s_%s( __frame );\n", iface->name, get_name(def));
+        print_server("__finally_%s_%s( __frame );\n", iface->name, get_name(func));
         indent--;
         print_server("}\n");
         print_server("RpcEndFinally\n");
@@ -251,16 +250,16 @@ static void write_dispatchtable(type_t *iface)
 {
     unsigned long ver = get_attrv(iface->attrs, ATTR_VERSION);
     unsigned long method_count = 0;
-    const func_t *func;
+    const statement_t *stmt;
 
     print_server("static RPC_DISPATCH_FUNCTION %s_table[] =\n", iface->name);
     print_server("{\n");
     indent++;
 
-    if (iface->funcs) LIST_FOR_EACH_ENTRY( func, iface->funcs, const func_t, entry )
+    STATEMENTS_FOR_EACH_FUNC( stmt, iface->details.iface->stmts )
     {
-        var_t *def = func->def;
-        print_server("%s_%s,\n", iface->name, get_name(def));
+        var_t *func = stmt->u.var;
+        print_server("%s_%s,\n", iface->name, get_name(func));
         method_count++;
     }
     print_server("0\n");
@@ -417,7 +416,7 @@ static void write_server_stmts(const statement_list_t *stmts, int expr_eval_rout
             fprintf(server, " */\n");
             fprintf(server, "\n");
 
-            if (iface->funcs)
+            if (statements_has_func(iface->details.iface->stmts))
             {
                 write_serverinterfacedecl(iface);
                 write_stubdescdecl(iface);

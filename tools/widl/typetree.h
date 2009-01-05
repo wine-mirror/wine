@@ -29,6 +29,7 @@ type_t *type_new_pointer(type_t *ref, attr_list_t *attrs);
 void type_interface_define(type_t *iface, type_t *inherit, statement_list_t *stmts);
 void type_dispinterface_define(type_t *iface, var_list_t *props, func_list_t *methods);
 void type_dispinterface_define_from_iface(type_t *dispiface, type_t *iface);
+void type_module_define(type_t *module, statement_list_t *stmts);
 
 static inline var_list_t *type_struct_get_fields(const type_t *type)
 {

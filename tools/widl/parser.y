@@ -152,7 +152,7 @@ static attr_list_t *check_dispiface_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_module_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_coclass_attrs(const char *name, attr_list_t *attrs);
 const char *get_attr_display_name(enum attr_type type);
-static void add_explicit_handle_if_necessary(func_t *func);
+static void add_explicit_handle_if_necessary(var_t *func);
 static void check_def(const type_t *t);
 
 static statement_t *make_statement(enum statement_type type);
@@ -929,8 +929,7 @@ modulehdr: attributes module			{ $$ = $2;
 
 moduledef: modulehdr '{' int_statements '}'
 	   semicolon_opt			{ $$ = $1;
-						  $$->stmts = $3;
-						  $$->funcs = gen_function_list($3);
+                                                  type_module_define($$, $3);
 						}
 	;
 
@@ -1299,7 +1298,6 @@ type_t *make_type(unsigned char type, type_t *ref)
   t->ref = ref;
   t->attrs = NULL;
   t->orig = NULL;
-  t->funcs = NULL;
   memset(&t->details, 0, sizeof(t->details));
   t->ifaces = NULL;
   t->dim = 0;
@@ -1392,15 +1390,14 @@ static type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_
   return t;
 }
 
-static void function_add_head_arg(func_t *func, var_t *arg)
+static void type_function_add_head_arg(type_t *type, var_t *arg)
 {
-    if (!func->def->type->details.function->args)
+    if (!type->details.function->args)
     {
-        func->def->type->details.function->args = xmalloc( sizeof(*func->def->type->details.function->args) );
-        list_init( func->def->type->details.function->args );
+        type->details.function->args = xmalloc( sizeof(*type->details.function->args) );
+        list_init( type->details.function->args );
     }
-    list_add_head( func->def->type->details.function->args, &arg->entry );
-    func->args = func->def->type->details.function->args;
+    list_add_head( type->details.function->args, &arg->entry );
 }
 
 static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type)
@@ -1705,8 +1702,6 @@ static func_t *make_func(var_t *def)
 {
   func_t *f = xmalloc(sizeof(func_t));
   f->def = def;
-  f->args = def->type->details.function->args;
-  f->idx = -1;
   return f;
 }
 
@@ -1978,25 +1973,6 @@ var_t *find_const(const char *name, int f)
     return NULL;
   }
   return cur->var;
-}
-
-func_list_t *gen_function_list(const statement_list_t *stmts)
-{
-  func_list_t *func_list = NULL;
-  const statement_t *stmt;
-  if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
-  {
-    if (stmt->type == STMT_DECLARATION)
-    {
-      var_t *var = stmt->u.var;
-      if (var->stgclass == STG_NONE && var->type->type == RPC_FC_FUNCTION)
-      {
-        check_function_attrs(var->name, var->type->attrs);
-        func_list = append_func(func_list, make_func(var));
-      }
-    }
-  }
-  return func_list;
 }
 
 static char *gen_name(void)
@@ -2466,12 +2442,12 @@ static void check_remoting_fields(const var_t *var, type_t *type)
 }
 
 /* checks that arguments for a function make sense for marshalling and unmarshalling */
-static void check_remoting_args(const func_t *func)
+static void check_remoting_args(const var_t *func)
 {
-    const char *funcname = func->def->name;
+    const char *funcname = func->name;
     const var_t *arg;
 
-    if (func->args) LIST_FOR_EACH_ENTRY( arg, func->args, const var_t, entry )
+    if (func->type->details.function->args) LIST_FOR_EACH_ENTRY( arg, func->type->details.function->args, const var_t, entry )
     {
         int ptr_level = 0;
         const type_t *type = arg->type;
@@ -2506,11 +2482,11 @@ static void check_remoting_args(const func_t *func)
             }
         }
 
-        check_field_common(func->def->type, funcname, arg);
+        check_field_common(func->type, funcname, arg);
     }
 }
 
-static void add_explicit_handle_if_necessary(func_t *func)
+static void add_explicit_handle_if_necessary(var_t *func)
 {
     const var_t* explicit_handle_var;
     const var_t* explicit_generic_handle_var = NULL;
@@ -2532,7 +2508,7 @@ static void add_explicit_handle_if_necessary(func_t *func)
                 var_t *idl_handle = make_var(xstrdup("IDL_handle"));
                 idl_handle->attrs = append_attr(NULL, make_attr(ATTR_IN));
                 idl_handle->type = find_type_or_error("handle_t", 0);
-                function_add_head_arg(func, idl_handle);
+                type_function_add_head_arg(func->type, idl_handle);
             }
         }
     }
@@ -2540,18 +2516,21 @@ static void add_explicit_handle_if_necessary(func_t *func)
 
 static void check_functions(const type_t *iface, int is_inside_library)
 {
-    if (is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE) && iface->funcs)
+    const statement_t *stmt;
+    if (is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE))
     {
-        func_t *func;
-        LIST_FOR_EACH_ENTRY( func, iface->funcs, func_t, entry )
+        STATEMENTS_FOR_EACH_FUNC( stmt, iface->details.iface->stmts )
+        {
+            var_t *func = stmt->u.var;
             add_explicit_handle_if_necessary(func);
+        }
     }
     if (!is_inside_library && !is_attr(iface->attrs, ATTR_LOCAL))
     {
-        const func_t *func;
-        if (iface->funcs) LIST_FOR_EACH_ENTRY( func, iface->funcs, const func_t, entry )
+        STATEMENTS_FOR_EACH_FUNC( stmt, iface->details.iface->stmts )
         {
-            if (!is_attr(func->def->attrs, ATTR_LOCAL))
+            const var_t *func = stmt->u.var;
+            if (!is_attr(func->attrs, ATTR_LOCAL))
                 check_remoting_args(func);
         }
     }
@@ -2581,10 +2560,11 @@ static void check_all_user_types(const statement_list_t *stmts)
     else if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP &&
              !is_local(stmt->u.type->attrs))
     {
-      const func_t *f;
-      const func_list_t *fs = stmt->u.type->funcs;
-      if (fs) LIST_FOR_EACH_ENTRY(f, fs, const func_t, entry)
-        check_for_additional_prototype_types(f->args);
+      const statement_t *stmt_func;
+      STATEMENTS_FOR_EACH_FUNC(stmt_func, stmt->u.type->details.iface->stmts) {
+        const var_t *func = stmt_func->u.var;
+        check_for_additional_prototype_types(func->type->details.function->args);
+      }
     }
   }
 }

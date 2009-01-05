@@ -47,11 +47,11 @@ extern int need_proxy_file(const statement_list_t *stmts);
 extern const var_t *is_callas(const attr_list_t *list);
 extern void write_args(FILE *h, const var_list_t *arg, const char *name, int obj, int do_indent);
 extern void write_array(FILE *h, array_dims_t *v, int field);
-extern const var_t* get_explicit_handle_var(const func_t* func);
+extern const var_t* get_explicit_handle_var(const var_t *func);
 extern const type_t* get_explicit_generic_handle_type(const var_t* var);
-extern const var_t* get_explicit_generic_handle_var(const func_t* func);
-extern const var_t* get_context_handle_var(const func_t* func);
-extern int has_out_arg_or_return(const func_t *func);
+extern const var_t* get_explicit_generic_handle_var(const var_t *func);
+extern const var_t* get_context_handle_var(const var_t *func);
+extern int has_out_arg_or_return(const var_t *func);
 extern void write_guid(FILE *f, const char *guid_prefix, const char *name,
                        const UUID *uuid);
 extern int is_const_decl(const var_t *var);

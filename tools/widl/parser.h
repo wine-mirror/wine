@@ -45,6 +45,4 @@ void pop_import(void);
 
 int is_type(const char *name);
 
-func_list_t *gen_function_list(const statement_list_t *stmts);
-
 #endif

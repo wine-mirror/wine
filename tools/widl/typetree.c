@@ -34,6 +34,7 @@ type_t *type_new_function(var_list_t *args)
     type_t *t = make_type(RPC_FC_FUNCTION, NULL);
     t->details.function = xmalloc(sizeof(*t->details.function));
     t->details.function->args = args;
+    t->details.function->idx = -1;
     return t;
 }
 
@@ -47,19 +48,22 @@ type_t *type_new_pointer(type_t *ref, attr_list_t *attrs)
 static int compute_method_indexes(type_t *iface)
 {
     int idx;
-    func_t *f;
+    statement_t *stmt;
+
+    if (!iface->details.iface)
+        return 0;
 
     if (iface->ref)
         idx = compute_method_indexes(iface->ref);
     else
         idx = 0;
 
-    if (!iface->funcs)
-        return idx;
-
-    LIST_FOR_EACH_ENTRY( f, iface->funcs, func_t, entry )
-        if (! is_callas(f->def->attrs))
-            f->idx = idx++;
+    STATEMENTS_FOR_EACH_FUNC( stmt, iface->details.iface->stmts )
+    {
+        var_t *func = stmt->u.var;
+        if (!is_callas(func->attrs))
+            func->type->details.function->idx = idx++;
+    }
 
     return idx;
 }
@@ -68,10 +72,9 @@ void type_interface_define(type_t *iface, type_t *inherit, statement_list_t *stm
 {
     iface->ref = inherit;
     iface->details.iface = xmalloc(sizeof(*iface->details.iface));
-    iface->funcs = gen_function_list(stmts);
     iface->details.iface->disp_props = NULL;
     iface->details.iface->disp_methods = NULL;
-    iface->stmts = stmts;
+    iface->details.iface->stmts = stmts;
     iface->defined = TRUE;
     compute_method_indexes(iface);
 }
@@ -81,10 +84,9 @@ void type_dispinterface_define(type_t *iface, var_list_t *props, func_list_t *me
     iface->ref = find_type("IDispatch", 0);
     if (!iface->ref) error_loc("IDispatch is undefined\n");
     iface->details.iface = xmalloc(sizeof(*iface->details.iface));
-    iface->funcs = NULL;
     iface->details.iface->disp_props = props;
     iface->details.iface->disp_methods = methods;
-    iface->stmts = NULL;
+    iface->details.iface->stmts = NULL;
     iface->defined = TRUE;
     compute_method_indexes(iface);
 }
@@ -93,4 +95,12 @@ void type_dispinterface_define_from_iface(type_t *dispiface, type_t *iface)
 {
     type_dispinterface_define(dispiface, iface->details.iface->disp_props,
                               iface->details.iface->disp_methods);
+}
+
+void type_module_define(type_t *module, statement_list_t *stmts)
+{
+    if (module->details.module) error_loc("multiple definition error\n");
+    module->details.module = xmalloc(sizeof(*module->details.module));
+    module->details.module->stmts = stmts;
+    module->defined = TRUE;
 }

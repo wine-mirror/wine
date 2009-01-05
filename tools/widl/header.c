@@ -521,14 +521,14 @@ static void write_library(FILE *header, const typelib_t *typelib)
 }
 
 
-const var_t* get_explicit_handle_var(const func_t* func)
+const var_t* get_explicit_handle_var(const var_t *func)
 {
     const var_t* var;
 
-    if (!func->args)
+    if (!type_get_function_args(func->type))
         return NULL;
 
-    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
         if (var->type->type == RPC_FC_BIND_PRIMITIVE)
             return var;
 
@@ -544,45 +544,45 @@ const type_t* get_explicit_generic_handle_type(const var_t* var)
     return NULL;
 }
 
-const var_t* get_explicit_generic_handle_var(const func_t* func)
+const var_t* get_explicit_generic_handle_var(const var_t *func)
 {
     const var_t* var;
 
-    if (!func->args)
+    if (!type_get_function_args(func->type))
         return NULL;
 
-    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
         if (get_explicit_generic_handle_type(var))
             return var;
 
     return NULL;
 }
 
-const var_t* get_context_handle_var(const func_t* func)
+const var_t* get_context_handle_var(const var_t *func)
 {
     const var_t* var;
 
-    if (!func->args)
+    if (!type_get_function_args(func->type))
         return NULL;
 
-    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
         if (is_attr(var->attrs, ATTR_IN) && is_context_handle(var->type))
             return var;
 
     return NULL;
 }
 
-int has_out_arg_or_return(const func_t *func)
+int has_out_arg_or_return(const var_t *func)
 {
     const var_t *var;
 
     if (!is_void(get_func_return_type(func)))
         return 1;
 
-    if (!func->args)
+    if (!type_get_function_args(func->type))
         return 0;
 
-    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
         if (is_attr(var->attrs, ATTR_OUT))
             return 1;
 
@@ -612,28 +612,33 @@ const var_t *is_callas(const attr_list_t *a)
 
 static void write_method_macro(FILE *header, const type_t *iface, const char *name)
 {
-  const func_t *cur;
+  const statement_t *stmt;
+  int first_iface = 1;
 
   if (iface->ref) write_method_macro(header, iface->ref, name);
 
-  if (!iface->funcs) return;
-
-  fprintf(header, "/*** %s methods ***/\n", iface->name);
-  LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry )
+  STATEMENTS_FOR_EACH_FUNC(stmt, iface->details.iface->stmts)
   {
-    var_t *def = cur->def;
-    if (!is_callas(def->attrs)) {
+    const var_t *func = stmt->u.var;
+
+    if (first_iface)
+    {
+      fprintf(header, "/*** %s methods ***/\n", iface->name);
+      first_iface = 0;
+    }
+
+    if (!is_callas(func->attrs)) {
       const var_t *arg;
 
-      fprintf(header, "#define %s_%s(This", name, get_name(def));
-      if (cur->args)
-          LIST_FOR_EACH_ENTRY( arg, cur->args, const var_t, entry )
+      fprintf(header, "#define %s_%s(This", name, get_name(func));
+      if (type_get_function_args(func->type))
+          LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->type), const var_t, entry )
               fprintf(header, ",%s", arg->name);
       fprintf(header, ") ");
 
-      fprintf(header, "(This)->lpVtbl->%s(This", get_name(def));
-      if (cur->args)
-          LIST_FOR_EACH_ENTRY( arg, cur->args, const var_t, entry )
+      fprintf(header, "(This)->lpVtbl->%s(This", get_name(func));
+      if (type_get_function_args(func->type))
+          LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->type), const var_t, entry )
               fprintf(header, ",%s", arg->name);
       fprintf(header, ")\n");
     }
@@ -671,21 +676,19 @@ void write_args(FILE *h, const var_list_t *args, const char *name, int method, i
 
 static void write_cpp_method_def(FILE *header, const type_t *iface)
 {
-  const func_t *cur;
+  const statement_t *stmt;
 
-  if (!iface->funcs) return;
-
-  LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry )
+  STATEMENTS_FOR_EACH_FUNC(stmt, iface->details.iface->stmts)
   {
-    var_t *def = cur->def;
-    if (!is_callas(def->attrs)) {
-      const char *callconv = get_attrp(def->type->attrs, ATTR_CALLCONV);
+    const var_t *func = stmt->u.var;
+    if (!is_callas(func->attrs)) {
+      const char *callconv = get_attrp(func->type->attrs, ATTR_CALLCONV);
       if (!callconv) callconv = "";
       indent(header, 0);
       fprintf(header, "virtual ");
-      write_type_decl_left(header, get_func_return_type(cur));
-      fprintf(header, " %s %s(\n", callconv, get_name(def));
-      write_args(header, cur->args, iface->name, 2, TRUE);
+      write_type_decl_left(header, get_func_return_type(func));
+      fprintf(header, " %s %s(\n", callconv, get_name(func));
+      write_args(header, type_get_function_args(func->type), iface->name, 2, TRUE);
       fprintf(header, ") = 0;\n");
       fprintf(header, "\n");
     }
@@ -694,23 +697,26 @@ static void write_cpp_method_def(FILE *header, const type_t *iface)
 
 static void do_write_c_method_def(FILE *header, const type_t *iface, const char *name)
 {
-  const func_t *cur;
+  const statement_t *stmt;
+  int first_iface = 1;
 
   if (iface->ref) do_write_c_method_def(header, iface->ref, name);
 
-  if (!iface->funcs) return;
-  indent(header, 0);
-  fprintf(header, "/*** %s methods ***/\n", iface->name);
-  LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry )
+  STATEMENTS_FOR_EACH_FUNC(stmt, iface->details.iface->stmts)
   {
-    const var_t *def = cur->def;
-    if (!is_callas(def->attrs)) {
-      const char *callconv = get_attrp(def->type->attrs, ATTR_CALLCONV);
+    const var_t *func = stmt->u.var;
+    if (first_iface) {
+      indent(header, 0);
+      fprintf(header, "/*** %s methods ***/\n", iface->name);
+      first_iface = 0;
+    }
+    if (!is_callas(func->attrs)) {
+      const char *callconv = get_attrp(func->type->attrs, ATTR_CALLCONV);
       if (!callconv) callconv = "";
       indent(header, 0);
-      write_type_decl_left(header, get_func_return_type(cur));
-      fprintf(header, " (%s *%s)(\n", callconv, get_name(def));
-      write_args(header, cur->args, name, 1, TRUE);
+      write_type_decl_left(header, get_func_return_type(func));
+      fprintf(header, " (%s *%s)(\n", callconv, get_name(func));
+      write_args(header, type_get_function_args(func->type), name, 1, TRUE);
       fprintf(header, ");\n");
       fprintf(header, "\n");
     }
@@ -729,23 +735,22 @@ static void write_c_disp_method_def(FILE *header, const type_t *iface)
 
 static void write_method_proto(FILE *header, const type_t *iface)
 {
-  const func_t *cur;
+  const statement_t *stmt;
 
-  if (!iface->funcs) return;
-  LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry )
+  STATEMENTS_FOR_EACH_FUNC(stmt, iface->details.iface->stmts)
   {
-    const var_t *def = cur->def;
+    const var_t *func = stmt->u.var;
 
-    if (!is_local(def->attrs)) {
-      const char *callconv = get_attrp(def->type->attrs, ATTR_CALLCONV);
+    if (!is_local(func->attrs)) {
+      const char *callconv = get_attrp(func->type->attrs, ATTR_CALLCONV);
       if (!callconv) callconv = "";
       /* proxy prototype */
-      write_type_decl_left(header, get_func_return_type(cur));
-      fprintf(header, " %s %s_%s_Proxy(\n", callconv, iface->name, get_name(def));
-      write_args(header, cur->args, iface->name, 1, TRUE);
+      write_type_decl_left(header, get_func_return_type(func));
+      fprintf(header, " %s %s_%s_Proxy(\n", callconv, iface->name, get_name(func));
+      write_args(header, type_get_function_args(func->type), iface->name, 1, TRUE);
       fprintf(header, ");\n");
       /* stub prototype */
-      fprintf(header, "void __RPC_STUB %s_%s_Stub(\n", iface->name, get_name(def));
+      fprintf(header, "void __RPC_STUB %s_%s_Stub(\n", iface->name, get_name(func));
       fprintf(header, "    IRpcStubBuffer* This,\n");
       fprintf(header, "    IRpcChannelBuffer* pRpcChannelBuffer,\n");
       fprintf(header, "    PRPC_MESSAGE pRpcMessage,\n");
@@ -758,27 +763,26 @@ static void write_locals(FILE *fp, const type_t *iface, int body)
 {
   static const char comment[]
     = "/* WIDL-generated stub.  You must provide an implementation for this.  */";
-  const func_list_t *funcs = iface->funcs;
-  const func_t *cur;
+  const statement_t *stmt;
 
-  if (!is_object(iface->attrs) || !funcs)
+  if (!is_object(iface->attrs))
     return;
 
-  LIST_FOR_EACH_ENTRY(cur, funcs, const func_t, entry) {
-    const var_t *def = cur->def;
-    const var_t *cas = is_callas(def->attrs);
+  STATEMENTS_FOR_EACH_FUNC(stmt, iface->details.iface->stmts) {
+    const var_t *func = stmt->u.var;
+    const var_t *cas = is_callas(func->attrs);
 
     if (cas) {
-      const func_t *m;
-      LIST_FOR_EACH_ENTRY(m, iface->funcs, const func_t, entry)
-        if (!strcmp(m->def->name, cas->name))
+      const statement_t *stmt2 = NULL;
+      STATEMENTS_FOR_EACH_FUNC(stmt2, iface->details.iface->stmts)
+        if (!strcmp(stmt2->u.var->name, cas->name))
           break;
-      if (&m->entry != iface->funcs) {
-        const var_t *mdef = m->def;
+      if (&stmt2->entry != iface->details.iface->stmts) {
+        const var_t *m = stmt2->u.var;
         /* proxy prototype - use local prototype */
         write_type_decl_left(fp, get_func_return_type(m));
-        fprintf(fp, " CALLBACK %s_%s_Proxy(\n", iface->name, get_name(mdef));
-        write_args(fp, m->args, iface->name, 1, TRUE);
+        fprintf(fp, " CALLBACK %s_%s_Proxy(\n", iface->name, get_name(m));
+        write_args(fp, type_get_function_args(m->type), iface->name, 1, TRUE);
         fprintf(fp, ")");
         if (body) {
           type_t *rt = get_func_return_type(m);
@@ -798,9 +802,9 @@ static void write_locals(FILE *fp, const type_t *iface, int body)
         else
           fprintf(fp, ";\n");
         /* stub prototype - use remotable prototype */
-        write_type_decl_left(fp, get_func_return_type(cur));
-        fprintf(fp, " __RPC_STUB %s_%s_Stub(\n", iface->name, get_name(mdef));
-        write_args(fp, cur->args, iface->name, 1, TRUE);
+        write_type_decl_left(fp, get_func_return_type(func));
+        fprintf(fp, " __RPC_STUB %s_%s_Stub(\n", iface->name, get_name(m));
+        write_args(fp, type_get_function_args(func->type), iface->name, 1, TRUE);
         fprintf(fp, ")");
         if (body)
           /* Remotable methods must all return HRESULTs.  */
@@ -809,7 +813,7 @@ static void write_locals(FILE *fp, const type_t *iface, int body)
           fprintf(fp, ";\n");
       }
       else
-        error_loc("invalid call_as attribute (%s -> %s)\n", def->name, cas->name);
+        error_loc("invalid call_as attribute (%s -> %s)\n", func->name, cas->name);
     }
   }
 }
@@ -855,8 +859,8 @@ static void write_function_proto(FILE *header, const type_t *iface, const var_t 
   fprintf(header, " ");
   if (callconv) fprintf(header, "%s ", callconv);
   fprintf(header, "%s%s(\n", prefix, get_name(fun));
-  if (fun->type->details.function->args)
-    write_args(header, fun->type->details.function->args, iface->name, 0, TRUE);
+  if (type_get_function_args(fun->type))
+    write_args(header, type_get_function_args(fun->type), iface->name, 0, TRUE);
   else
     fprintf(header, "    void");
   fprintf(header, ");\n\n");
@@ -1042,7 +1046,7 @@ static void write_imports(FILE *header, const statement_list_t *stmts)
     {
       case STMT_TYPE:
         if (stmt->u.type->type == RPC_FC_IP)
-          write_imports(header, stmt->u.type->stmts);
+          write_imports(header, stmt->u.type->details.iface->stmts);
         break;
       case STMT_TYPEREF:
       case STMT_IMPORTLIB:
@@ -1112,13 +1116,13 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
           if (is_attr(stmt->u.type->attrs, ATTR_DISPINTERFACE) || is_object(stmt->u.type->attrs))
           {
             write_com_interface_start(header, iface);
-            write_header_stmts(header, iface->stmts, stmt->u.type, TRUE);
+            write_header_stmts(header, iface->details.iface->stmts, stmt->u.type, TRUE);
             write_com_interface_end(header, iface);
           }
           else
           {
             write_rpc_interface_start(header, iface);
-            write_header_stmts(header, iface->stmts, iface, FALSE);
+            write_header_stmts(header, iface->details.iface->stmts, iface, FALSE);
             write_rpc_interface_end(header, iface);
           }
         }

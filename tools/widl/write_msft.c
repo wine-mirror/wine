@@ -1261,7 +1261,7 @@ static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
     return S_OK;
 }
 
-static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int index)
+static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
 {
     int offset, name_offset;
     int *typedata, typedata_size;
@@ -1292,13 +1292,13 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
         break;
     }
 
-    if (is_local( func->def->attrs )) {
+    if (is_local( func->attrs )) {
         chat("add_func_desc: skipping local function\n");
         return S_FALSE;
     }
 
-    if (func->args)
-      LIST_FOR_EACH_ENTRY( arg, func->args, var_t, entry )
+    if (type_get_function_args(func->type))
+      LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->type), var_t, entry )
       {
         num_params++;
         if (arg->attrs) LIST_FOR_EACH_ENTRY( attr, arg->attrs, const attr_t, entry ) {
@@ -1311,9 +1311,9 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
 
     chat("add_func_desc: num of params %d\n", num_params);
 
-    name_offset = ctl2_alloc_name(typeinfo->typelib, func->def->name);
+    name_offset = ctl2_alloc_name(typeinfo->typelib, func->name);
 
-    if (func->def->attrs) LIST_FOR_EACH_ENTRY( attr, func->def->attrs, const attr_t, entry ) {
+    if (func->attrs) LIST_FOR_EACH_ENTRY( attr, func->attrs, const attr_t, entry ) {
         expr_t *expr = attr->u.pval;
         switch(attr->type) {
         case ATTR_BINDABLE:
@@ -1434,7 +1434,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
 
     /* fill out the basic type information */
     typedata[0] = typedata_size | (index << 16);
-    encode_var(typeinfo->typelib, get_func_return_type(func), func->def, &typedata[1], NULL, NULL, &decoded_size);
+    encode_var(typeinfo->typelib, get_func_return_type(func), func, &typedata[1], NULL, NULL, &decoded_size);
     typedata[2] = funcflags;
     typedata[3] = ((52 /*sizeof(FUNCDESC)*/ + decoded_size) << 16) | typeinfo->typeinfo->cbSizeVft;
     typedata[4] = (next_idx << 16) | (callconv << 8) | (invokekind << 3) | funckind;
@@ -1460,10 +1460,10 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
         warning("unknown number of optional attrs\n");
     }
 
-    if (func->args)
+    if (type_get_function_args(func->type))
     {
       i = 0;
-      LIST_FOR_EACH_ENTRY( arg, func->args, var_t, entry )
+      LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->type), var_t, entry )
       {
         int paramflags = 0;
         int *paramdata = typedata + 6 + extra_attr + (num_defaults ? num_params : 0) + i * 3;
@@ -1567,10 +1567,10 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
     if(typeinfo->typekind == TKIND_MODULE)
         namedata[9] |= 0x20;
 
-    if (func->args)
+    if (type_get_function_args(func->type))
     {
         i = 0;
-        LIST_FOR_EACH_ENTRY( arg, func->args, var_t, entry )
+        LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->type), var_t, entry )
         {
             /* don't give the last arg of a [propput*] func a name */
             if(i != num_params - 1 || (invokekind != 0x4 /* INVOKE_PROPERTYPUT */ && invokekind != 0x8 /* INVOKE_PROPERTYPUTREF */))
@@ -1965,9 +1965,10 @@ static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinte
     add_dispatch(typelib);
     msft_typeinfo->typeinfo->cImplTypes = 1;
 
-    /* count the no of funcs, as the variable indices come after the funcs */
-    if (dispinterface->funcs)
-        LIST_FOR_EACH_ENTRY( func, dispinterface->funcs, const func_t, entry ) idx++;
+    /* count the no of methods, as the variable indices come after the funcs */
+    if (dispinterface->details.iface->disp_methods)
+        LIST_FOR_EACH_ENTRY( func, dispinterface->details.iface->disp_methods, const func_t, entry )
+            idx++;
 
     if (type_dispiface_get_props(dispinterface))
         LIST_FOR_EACH_ENTRY( var, type_dispiface_get_props(dispinterface), var_t, entry )
@@ -1977,7 +1978,7 @@ static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinte
     {
         idx = 0;
         LIST_FOR_EACH_ENTRY( func, type_dispiface_get_methods(dispinterface), const func_t, entry )
-            if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
+            if(add_func_desc(msft_typeinfo, func->def, idx) == S_OK)
                 idx++;
     }
 }
@@ -1985,7 +1986,7 @@ static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinte
 static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
 {
     int idx = 0;
-    const func_t *func;
+    const statement_t *stmt_func;
     type_t *ref;
     msft_typeinfo_t *msft_typeinfo;
     importinfo_t *ref_importinfo = NULL;
@@ -2027,17 +2028,19 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     /* count the number of inherited interfaces and non-local functions */
     for(ref = interface->ref; ref; ref = ref->ref) {
         num_parents++;
-        if (ref->funcs)
-            LIST_FOR_EACH_ENTRY( func, ref->funcs, const func_t, entry )
-                if (!is_local(func->def->attrs)) num_funcs++;
+        STATEMENTS_FOR_EACH_FUNC( stmt_func, ref->details.iface->stmts ) {
+            var_t *func = stmt_func->u.var;
+            if (!is_local(func->attrs)) num_funcs++;
+        }
     }
     msft_typeinfo->typeinfo->datatype2 = num_funcs << 16 | num_parents;
     msft_typeinfo->typeinfo->cbSizeVft = num_funcs * 4;
 
-    if (interface->funcs)
-        LIST_FOR_EACH_ENTRY( func, interface->funcs, const func_t, entry )
-            if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
-                idx++;
+    STATEMENTS_FOR_EACH_FUNC( stmt_func, interface->details.iface->stmts ) {
+        var_t *func = stmt_func->u.var;
+        if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
+            idx++;
+    }
 }
 
 static void add_structure_typeinfo(msft_typelib_t *typelib, type_t *structure)
@@ -2173,7 +2176,7 @@ static void add_coclass_typeinfo(msft_typelib_t *typelib, type_t *cls)
 static void add_module_typeinfo(msft_typelib_t *typelib, type_t *module)
 {
     int idx = 0;
-    const func_t *func;
+    const statement_t *stmt;
     msft_typeinfo_t *msft_typeinfo;
 
     if (-1 < module->typelib_idx)
@@ -2183,10 +2186,11 @@ static void add_module_typeinfo(msft_typelib_t *typelib, type_t *module)
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_MODULE, module->name, module->attrs);
     msft_typeinfo->typeinfo->typekind |= 0x0a00;
 
-    if (module->funcs)
-        LIST_FOR_EACH_ENTRY( func, module->funcs, const func_t, entry )
-            if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
-                idx++;
+    STATEMENTS_FOR_EACH_FUNC( stmt, module->details.module->stmts ) {
+        var_t *func = stmt->u.var;
+        if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
+            idx++;
+    }
 
     msft_typeinfo->typeinfo->size = idx;
 }

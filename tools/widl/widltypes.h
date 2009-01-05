@@ -273,12 +273,20 @@ struct enumeration_details
 struct func_details
 {
   var_list_t *args;
+  int idx;
 };
 
 struct iface_details
 {
+  statement_list_t *stmts;
   func_list_t *disp_methods;
   var_list_t *disp_props;
+};
+
+struct module_details
+{
+  statement_list_t *stmts;
+  func_list_t *funcs;
 };
 
 struct _type_t {
@@ -293,9 +301,8 @@ struct _type_t {
     struct enumeration_details *enumeration;
     struct func_details *function;
     struct iface_details *iface;
+    struct module_details *module;
   } details;
-  func_list_t *funcs;             /* interfaces and modules */
-  statement_list_t *stmts;        /* interfaces and modules */
   ifref_list_t *ifaces;           /* coclasses */
   unsigned long dim;              /* array dimension */
   expr_t *size_is, *length_is;
@@ -339,8 +346,6 @@ struct _declarator_t {
 
 struct _func_t {
   var_t *def;
-  var_list_t *args;
-  int idx;
 
   /* parser-internal */
   struct list entry;
@@ -442,9 +447,31 @@ type_t *make_type(unsigned char type, type_t *ref);
 
 void init_loc_info(loc_info_t *);
 
-static inline type_t *get_func_return_type(const func_t *func)
+static inline type_t *get_func_return_type(const var_t *func)
 {
-  return func->def->type->ref;
+  return func->type->ref;
+}
+
+static inline var_list_t *type_get_function_args(const type_t *func_type)
+{
+  return func_type->details.function->args;
+}
+
+#define STATEMENTS_FOR_EACH_FUNC(stmt, stmts) \
+  if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, statement_t, entry ) \
+    if (stmt->type == STMT_DECLARATION && stmt->u.var->stgclass == STG_NONE && \
+        stmt->u.var->type->type == RPC_FC_FUNCTION)
+
+static inline int statements_has_func(const statement_list_t *stmts)
+{
+  const statement_t *stmt;
+  int has_func = 0;
+  STATEMENTS_FOR_EACH_FUNC(stmt, stmts)
+  {
+    has_func = 1;
+    break;
+  }
+  return has_func;
 }
 
 #endif

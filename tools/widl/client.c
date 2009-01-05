@@ -50,14 +50,14 @@ static void print_client( const char *format, ... )
 }
 
 
-static void check_pointers(const func_t *func)
+static void check_pointers(const var_t *func)
 {
     const var_t *var;
 
-    if (!func->args)
+    if (!type_get_function_args(func->type))
         return;
 
-    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
     {
         if (is_var_ptr(var) && cant_be_null(var))
         {
@@ -73,7 +73,7 @@ static void check_pointers(const func_t *func)
 
 static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 {
-    const func_t *func;
+    const statement_t *stmt;
     const char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
     const var_t *var;
     int method_count = 0;
@@ -81,14 +81,15 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
     if (!implicit_handle)
         print_client("static RPC_BINDING_HANDLE %s__MIDL_AutoBindHandle;\n\n", iface->name);
 
-    if (iface->funcs) LIST_FOR_EACH_ENTRY( func, iface->funcs, const func_t, entry )
+    STATEMENTS_FOR_EACH_FUNC( stmt, iface->details.iface->stmts )
     {
-        const var_t *def = func->def;
+        const var_t *func = stmt->u.var;
         const var_t* explicit_handle_var;
         const var_t* explicit_generic_handle_var = NULL;
         const var_t* context_handle_var = NULL;
         int has_full_pointer = is_full_pointer_function(func);
-        const char *callconv = get_attrp(def->type->attrs, ATTR_CALLCONV);
+        const char *callconv = get_attrp(func->type->attrs, ATTR_CALLCONV);
+        const var_list_t *args = type_get_function_args(func->type);
 
         /* check for a defined binding handle */
         explicit_handle_var = get_explicit_handle_var(func);
@@ -99,7 +100,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
                 context_handle_var = get_context_handle_var(func);
         }
 
-        print_client( "struct __frame_%s%s\n{\n", prefix_client, get_name(def) );
+        print_client( "struct __frame_%s%s\n{\n", prefix_client, get_name(func) );
         indent++;
         print_client( "__DECL_EXCEPTION_FRAME\n" );
         print_client("MIDL_STUB_MESSAGE _StubMsg;\n");
@@ -119,8 +120,8 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         indent--;
         print_client( "};\n\n" );
 
-        print_client( "static void __finally_%s%s(", prefix_client, get_name(def) );
-        print_client( " struct __frame_%s%s *__frame )\n{\n", prefix_client, get_name(def) );
+        print_client( "static void __finally_%s%s(", prefix_client, get_name(func) );
+        print_client( " struct __frame_%s%s *__frame )\n{\n", prefix_client, get_name(func) );
         indent++;
 
         /* FIXME: emit client finally code */
@@ -147,10 +148,10 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         if (needs_space_after(get_func_return_type(func)))
           fprintf(client, " ");
         if (callconv) fprintf(client, "%s ", callconv);
-        fprintf(client, "%s%s(\n", prefix_client, get_name(def));
+        fprintf(client, "%s%s(\n", prefix_client, get_name(func));
         indent++;
-        if (func->args)
-            write_args(client, func->args, iface->name, 0, TRUE);
+        if (args)
+            write_args(client, args, iface->name, 0, TRUE);
         else
             print_client("void");
         fprintf(client, ")\n");
@@ -159,7 +160,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         /* write the functions body */
         fprintf(client, "{\n");
         indent++;
-        print_client( "struct __frame_%s%s __f, * const __frame = &__f;\n", prefix_client, get_name(def) );
+        print_client( "struct __frame_%s%s __f, * const __frame = &__f;\n", prefix_client, get_name(func) );
 
         /* declare return value '_RetVal' */
         if (!is_void(get_func_return_type(func)))
@@ -184,7 +185,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         }
         fprintf(client, "\n");
 
-        print_client( "RpcExceptionInit( 0, __finally_%s%s );\n", prefix_client, get_name(def) );
+        print_client( "RpcExceptionInit( 0, __finally_%s%s );\n", prefix_client, get_name(func) );
 
         if (has_full_pointer)
             write_full_pointer_init(client, indent, func, FALSE);
@@ -199,12 +200,12 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         print_client("NdrClientInitializeNew(&_RpcMessage, &__frame->_StubMsg, &%s_StubDesc, %d);\n",
                      iface->name, method_count);
 
-        if (is_attr(def->attrs, ATTR_IDEMPOTENT) || is_attr(def->attrs, ATTR_BROADCAST))
+        if (is_attr(func->attrs, ATTR_IDEMPOTENT) || is_attr(func->attrs, ATTR_BROADCAST))
         {
             print_client("_RpcMessage.RpcFlags = ( RPC_NCA_FLAGS_DEFAULT ");
-            if (is_attr(def->attrs, ATTR_IDEMPOTENT))
+            if (is_attr(func->attrs, ATTR_IDEMPOTENT))
                 fprintf(client, "| RPC_NCA_FLAGS_IDEMPOTENT ");
-            if (is_attr(def->attrs, ATTR_BROADCAST))
+            if (is_attr(func->attrs, ATTR_BROADCAST))
                 fprintf(client, "| RPC_NCA_FLAGS_BROADCAST ");
             fprintf(client, ");\n\n");
         }
@@ -294,9 +295,9 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         }
 
         /* update proc_offset */
-        if (func->args)
+        if (args)
         {
-            LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+            LIST_FOR_EACH_ENTRY( var, args, const var_t, entry )
                 *proc_offset += get_size_procformatstring_type(var->name, var->type, var->attrs);
         }
         if (!is_void(get_func_return_type(func)))
@@ -309,7 +310,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         print_client("RpcFinally\n");
         print_client("{\n");
         indent++;
-        print_client( "__finally_%s%s( __frame );\n", prefix_client, get_name(def) );
+        print_client( "__finally_%s%s( __frame );\n", prefix_client, get_name(func) );
         indent--;
         print_client("}\n");
         print_client("RpcEndFinally\n");
@@ -466,6 +467,8 @@ static void write_client_ifaces(const statement_list_t *stmts, int expr_eval_rou
     {
         if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
         {
+            int has_func = 0;
+            const statement_t *stmt2;
             type_t *iface = stmt->u.type;
             if (!need_stub(iface))
                 return;
@@ -475,7 +478,13 @@ static void write_client_ifaces(const statement_list_t *stmts, int expr_eval_rou
             fprintf(client, " */\n");
             fprintf(client, "\n");
 
-            if (iface->funcs)
+            STATEMENTS_FOR_EACH_FUNC(stmt2, iface->details.iface->stmts)
+            {
+                has_func = 1;
+                break;
+            }
+
+            if (has_func)
             {
                 write_implicithandledecl(iface);
 

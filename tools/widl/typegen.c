@@ -46,7 +46,7 @@
 /* value to add on to round size up to a multiple of alignment */
 #define ROUNDING(size, alignment) (((alignment) - 1) - (((size) + ((alignment) - 1)) & ((alignment) - 1)))
 
-static const func_t *current_func;
+static const var_t *current_func;
 static const type_t *current_structure;
 static const type_t *current_iface;
 
@@ -536,17 +536,17 @@ static void write_var_init(FILE *file, int indent, const type_t *t, const char *
         print_file(file, indent, "%s%s = 0;\n", local_var_prefix, n);
 }
 
-void write_parameters_init(FILE *file, int indent, const func_t *func, const char *local_var_prefix)
+void write_parameters_init(FILE *file, int indent, const var_t *func, const char *local_var_prefix)
 {
     const var_t *var;
 
     if (!is_void(get_func_return_type(func)))
         write_var_init(file, indent, get_func_return_type(func), "_RetVal", local_var_prefix);
 
-    if (!func->args)
+    if (!type_get_function_args(func->type))
         return;
 
-    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
         write_var_init(file, indent, var->type, var->name, local_var_prefix);
 
     fprintf(file, "\n");
@@ -678,17 +678,18 @@ static void write_procformatstring_stmts(FILE *file, int indent, const statement
     {
         if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
         {
-            const func_t *func;
+            const statement_t *stmt_func;
             if (!pred(stmt->u.type))
                 continue;
-            if (stmt->u.type->funcs) LIST_FOR_EACH_ENTRY( func, stmt->u.type->funcs, const func_t, entry )
+            STATEMENTS_FOR_EACH_FUNC(stmt_func, stmt->u.type->details.iface->stmts)
             {
-                if (is_local(func->def->attrs)) continue;
+                const var_t *func = stmt_func->u.var;
+                if (is_local(func->attrs)) continue;
                 /* emit argument data */
-                if (func->args)
+                if (type_get_function_args(func->type))
                 {
                     const var_t *var;
-                    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+                    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
                         write_procformatstring_type(file, indent, var->name, var->type, var->attrs, FALSE);
                 }
 
@@ -1075,27 +1076,27 @@ size_t type_memsize(const type_t *t, unsigned int *align)
     return size;
 }
 
-int is_full_pointer_function(const func_t *func)
+int is_full_pointer_function(const var_t *func)
 {
     const var_t *var;
     if (type_has_full_pointer(get_func_return_type(func)))
         return TRUE;
-    if (!func->args)
+    if (!type_get_function_args(func->type))
         return FALSE;
-    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
         if (type_has_full_pointer( var->type ))
             return TRUE;
     return FALSE;
 }
 
-void write_full_pointer_init(FILE *file, int indent, const func_t *func, int is_server)
+void write_full_pointer_init(FILE *file, int indent, const var_t *func, int is_server)
 {
     print_file(file, indent, "__frame->_StubMsg.FullPtrXlatTables = NdrFullPointerXlatInit(0,%s);\n",
                    is_server ? "XLAT_SERVER" : "XLAT_CLIENT");
     fprintf(file, "\n");
 }
 
-void write_full_pointer_free(FILE *file, int indent, const func_t *func)
+void write_full_pointer_free(FILE *file, int indent, const var_t *func)
 {
     print_file(file, indent, "NdrFullPointerXlatFree(__frame->_StubMsg.FullPtrXlatTables);\n");
     fprintf(file, "\n");
@@ -2391,7 +2392,7 @@ static size_t write_contexthandle_tfs(FILE *file, const type_t *type,
     return start_offset;
 }
 
-static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *func,
+static size_t write_typeformatstring_var(FILE *file, int indent, const var_t *func,
                                          type_t *type, const var_t *var,
                                          unsigned int *typeformat_offset)
 {
@@ -2572,6 +2573,8 @@ static size_t process_tfs_stmts(FILE *file, const statement_list_t *stmts,
     if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
     {
         const type_t *iface;
+        const statement_t *stmt_func;
+
         if (stmt->type == STMT_LIBRARY)
         {
             process_tfs_stmts(file, stmt->u.lib->stmts, pred, typeformat_offset);
@@ -2584,17 +2587,15 @@ static size_t process_tfs_stmts(FILE *file, const statement_list_t *stmts,
         if (!pred(iface))
             continue;
 
-        if (iface->funcs)
+        current_iface = iface;
+        STATEMENTS_FOR_EACH_FUNC( stmt_func, iface->details.iface->stmts )
         {
-            const func_t *func;
-            current_iface = iface;
-            LIST_FOR_EACH_ENTRY( func, iface->funcs, const func_t, entry )
-            {
-                if (is_local(func->def->attrs)) continue;
+            const var_t *func = stmt_func->u.var;
+                if (is_local(func->attrs)) continue;
 
                 if (!is_void(get_func_return_type(func)))
                 {
-                    var_t v = *func->def;
+                    var_t v = *func;
                     v.type = get_func_return_type(func);
                     update_tfsoff(get_func_return_type(func),
                                   write_typeformatstring_var(
@@ -2604,15 +2605,14 @@ static size_t process_tfs_stmts(FILE *file, const statement_list_t *stmts,
                 }
 
                 current_func = func;
-                if (func->args)
-                    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+                if (type_get_function_args(func->type))
+                    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
                         update_tfsoff(
                             var->type,
                             write_typeformatstring_var(
                                 file, 2, func, var->type, var,
                                 typeformat_offset),
                             file);
-            }
         }
     }
 
@@ -2742,14 +2742,14 @@ static unsigned int get_required_buffer_size(const var_t *var, unsigned int *ali
     return 0;
 }
 
-static unsigned int get_function_buffer_size( const func_t *func, enum pass pass )
+static unsigned int get_function_buffer_size( const var_t *func, enum pass pass )
 {
     const var_t *var;
     unsigned int total_size = 0, alignment;
 
-    if (func->args)
+    if (type_get_function_args(func->type))
     {
-        LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+        LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
         {
             total_size += get_required_buffer_size(var, &alignment, pass);
             total_size += alignment;
@@ -2758,7 +2758,7 @@ static unsigned int get_function_buffer_size( const func_t *func, enum pass pass
 
     if (pass == PASS_OUT && !is_void(get_func_return_type(func)))
     {
-        var_t v = *func->def;
+        var_t v = *func;
         v.type = get_func_return_type(func);
         total_size += get_required_buffer_size(&v, &alignment, PASS_RETURN);
         total_size += alignment;
@@ -2991,7 +2991,7 @@ static void write_parameter_conf_or_var_exprs(FILE *file, int indent, const char
     }
 }
 
-static void write_remoting_arg(FILE *file, int indent, const func_t *func, const char *local_var_prefix,
+static void write_remoting_arg(FILE *file, int indent, const var_t *func, const char *local_var_prefix,
                                enum pass pass, enum remoting_phase phase, const var_t *var)
 {
     int in_attr, out_attr, pointer_type;
@@ -3183,7 +3183,7 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func, const
     fprintf(file, "\n");
 }
 
-void write_remoting_arguments(FILE *file, int indent, const func_t *func, const char *local_var_prefix,
+void write_remoting_arguments(FILE *file, int indent, const var_t *func, const char *local_var_prefix,
                               enum pass pass, enum remoting_phase phase)
 {
     if (phase == PHASE_BUFFERSIZE && pass != PASS_RETURN)
@@ -3195,7 +3195,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func, const 
     if (pass == PASS_RETURN)
     {
         var_t var;
-        var = *func->def;
+        var = *func;
         var.type = get_func_return_type(func);
         var.name = xstrdup( "_RetVal" );
         write_remoting_arg( file, indent, func, local_var_prefix, pass, phase, &var );
@@ -3204,9 +3204,9 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func, const 
     else
     {
         const var_t *var;
-        if (!func->args)
+        if (!type_get_function_args(func->type))
             return;
-        LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+        LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
             write_remoting_arg( file, indent, func, local_var_prefix, pass, phase, var );
     }
 }
@@ -3218,14 +3218,14 @@ size_t get_size_procformatstring_type(const char *name, const type_t *type, cons
 }
 
 
-size_t get_size_procformatstring_func(const func_t *func)
+size_t get_size_procformatstring_func(const var_t *func)
 {
     const var_t *var;
     size_t size = 0;
 
     /* argument list size */
-    if (func->args)
-        LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+    if (type_get_function_args(func->type))
+        LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
             size += get_size_procformatstring_type(var->name, var->type, var->attrs);
 
     /* return value size */
@@ -3241,11 +3241,12 @@ size_t get_size_procformatstring(const statement_list_t *stmts, type_pred_t pred
 {
     const statement_t *stmt;
     size_t size = 1;
-    const func_t *func;
 
     if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
     {
         const type_t *iface;
+        const statement_t *stmt_func;
+
         if (stmt->type == STMT_LIBRARY)
         {
             size += get_size_procformatstring(stmt->u.lib->stmts, pred) - 1;
@@ -3258,10 +3259,12 @@ size_t get_size_procformatstring(const statement_list_t *stmts, type_pred_t pred
         if (!pred(iface))
             continue;
 
-        if (iface->funcs)
-            LIST_FOR_EACH_ENTRY( func, iface->funcs, const func_t, entry )
-                if (!is_local(func->def->attrs))
-                    size += get_size_procformatstring_func( func );
+        STATEMENTS_FOR_EACH_FUNC( stmt_func, iface->details.iface->stmts )
+        {
+            const var_t *func = stmt_func->u.var;
+            if (!is_local(func->attrs))
+                size += get_size_procformatstring_func( func );
+        }
     }
     return size;
 }
@@ -3272,7 +3275,7 @@ size_t get_size_typeformatstring(const statement_list_t *stmts, type_pred_t pred
     return process_tfs(NULL, stmts, pred);
 }
 
-void declare_stub_args( FILE *file, int indent, const func_t *func )
+void declare_stub_args( FILE *file, int indent, const var_t *func )
 {
     int in_attr, out_attr;
     int i = 0;
@@ -3286,10 +3289,10 @@ void declare_stub_args( FILE *file, int indent, const func_t *func )
         fprintf(file, " _RetVal;\n");
     }
 
-    if (!func->args)
+    if (!type_get_function_args(func->type))
         return;
 
-    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
     {
         int is_string = is_string_type(var->attrs, var->type);
 
@@ -3327,16 +3330,16 @@ void declare_stub_args( FILE *file, int indent, const func_t *func )
 }
 
 
-void assign_stub_out_args( FILE *file, int indent, const func_t *func, const char *local_var_prefix )
+void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char *local_var_prefix )
 {
     int in_attr, out_attr;
     int i = 0, sep = 0;
     const var_t *var;
 
-    if (!func->args)
+    if (!type_get_function_args(func->type))
         return;
 
-    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
     {
         int is_string = is_string_type(var->attrs, var->type);
         in_attr = is_attr(var->attrs, ATTR_IN);
