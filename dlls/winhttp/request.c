@@ -410,7 +410,7 @@ BOOL add_request_headers( request_t *request, LPCWSTR headers, DWORD len, DWORD 
     WCHAR *buffer, *p, *q;
     header_t *header;
 
-    if (len == ~0UL) len = strlenW( headers );
+    if (len == ~0u) len = strlenW( headers );
     if (!(buffer = heap_alloc( (len + 1) * sizeof(WCHAR) ))) return FALSE;
     strcpyW( buffer, headers );
 
@@ -1062,7 +1062,7 @@ static BOOL handle_redirect( request_t *request )
 
     memset( &uc, 0, sizeof(uc) );
     uc.dwStructSize = sizeof(uc);
-    uc.dwSchemeLength = uc.dwHostNameLength = uc.dwUrlPathLength = uc.dwExtraInfoLength = ~0UL;
+    uc.dwSchemeLength = uc.dwHostNameLength = uc.dwUrlPathLength = uc.dwExtraInfoLength = ~0u;
 
     if (!WinHttpCrackUrl( location, size / sizeof(WCHAR), 0, &uc )) /* assume relative redirect */
     {
@@ -1184,7 +1184,7 @@ static BOOL receive_data_chunked( request_t *request, void *buffer, DWORD size, 
     {
         if (*read == size) break;
 
-        if (request->content_length == ~0UL) /* new chunk */
+        if (request->content_length == ~0u) /* new chunk */
         {
             buflen = sizeof(reply);
             if (!netconn_get_next_line( &request->netconn, reply, &buflen )) break;
@@ -1218,7 +1218,7 @@ static BOOL receive_data_chunked( request_t *request, void *buffer, DWORD size, 
         if (request->content_read == request->content_length) /* chunk complete */
         {
             request->content_read = 0;
-            request->content_length = ~0UL;
+            request->content_length = ~0u;
 
             buflen = sizeof(reply);
             if (!netconn_get_next_line( &request->netconn, reply, &buflen ))
@@ -1249,7 +1249,7 @@ static void finished_reading( request_t *request )
     else if (!strcmpW( request->version, http1_0 )) close = TRUE;
 
     if (close) close_connection( request );
-    request->content_length = ~0UL;
+    request->content_length = ~0u;
     request->content_read = 0;
 }
 
@@ -1331,7 +1331,7 @@ static BOOL receive_response( request_t *request, BOOL async )
         size = sizeof(DWORD);
         query = WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER;
         if (!query_headers( request, query, NULL, &request->content_length, &size, NULL ))
-            request->content_length = ~0UL;
+            request->content_length = ~0u;
 
         if (!(request->hdr.disable_flags & WINHTTP_DISABLE_COOKIES)) record_cookies( request );
 
