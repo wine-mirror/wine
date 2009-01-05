@@ -2207,6 +2207,7 @@ static void test_location(IHTMLDocument2 *doc)
     IHTMLLocation_Release(location2);
 
     test_ifaces((IUnknown*)location, location_iids);
+    test_disp((IUnknown*)location, &IID_IHTMLLocation);
 
     ref = IHTMLLocation_Release(location);
     ok(!ref, "location chould be destroyed here\n");

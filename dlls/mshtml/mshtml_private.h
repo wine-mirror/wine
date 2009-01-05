@@ -102,6 +102,7 @@ typedef enum {
     IHTMLGenericElement_tid,
     IHTMLImgElement_tid,
     IHTMLInputElement_tid,
+    IHTMLLocation_tid,
     IHTMLOptionElement_tid,
     IHTMLSelectElement_tid,
     IHTMLStyle_tid,
@@ -199,6 +200,7 @@ struct ConnectionPoint {
 };
 
 typedef struct {
+    DispatchEx dispex;
     const IHTMLLocationVtbl *lpHTMLLocationVtbl;
 
     LONG ref;

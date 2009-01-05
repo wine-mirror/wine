@@ -106,6 +106,7 @@ static REFIID tid_ids[] = {
     &IID_IHTMLGenericElement,
     &IID_IHTMLImgElement,
     &IID_IHTMLInputElement,
+    &IID_IHTMLLocation,
     &IID_IHTMLOptionElement,
     &IID_IHTMLSelectElement,
     &IID_IHTMLStyle,
