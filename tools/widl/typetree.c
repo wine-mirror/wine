@@ -58,23 +58,22 @@ type_t *type_new_pointer(type_t *ref, attr_list_t *attrs)
 
 type_t *type_new_alias(type_t *t, const char *name)
 {
-  type_t *a = duptype(t, 0);
+    type_t *a = duptype(t, 0);
 
-  a->name = xstrdup(name);
-  a->kind = TKIND_ALIAS;
-  a->attrs = NULL;
-  a->declarray = FALSE;
-  a->orig = t;
-  init_loc_info(&a->loc_info);
+    a->name = xstrdup(name);
+    a->attrs = NULL;
+    a->declarray = FALSE;
+    a->orig = t;
+    a->is_alias = TRUE;
+    init_loc_info(&a->loc_info);
 
-  return a;
+    return a;
 }
 
 type_t *type_new_module(char *name)
 {
     type_t *type = make_type(RPC_FC_MODULE, NULL);
     type->name = name;
-    type->kind = TKIND_MODULE;
     /* FIXME: register type to detect multiple definitions */
     return type;
 }

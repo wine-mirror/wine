@@ -142,7 +142,7 @@ static inline expr_t *type_array_get_variance(const type_t *type)
 
 static inline type_t *type_get_real_type(const type_t *type)
 {
-    if (type->kind == TKIND_ALIAS)
+    if (type->is_alias)
         return type_get_real_type(type->orig);
     else
         return (type_t *)type;
@@ -150,7 +150,7 @@ static inline type_t *type_get_real_type(const type_t *type)
 
 static inline int type_is_alias(const type_t *type)
 {
-    return (type->kind == TKIND_ALIAS);
+    return type->is_alias;
 }
 
 #endif /* WIDL_TYPE_TREE_H */

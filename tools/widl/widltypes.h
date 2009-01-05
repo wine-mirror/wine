@@ -298,7 +298,6 @@ struct array_details
 
 struct _type_t {
   const char *name;
-  enum type_kind kind;
   unsigned char type;
   struct _type_t *ref;
   attr_list_t *attrs;
@@ -324,6 +323,7 @@ struct _type_t {
   unsigned int user_types_registered : 1;
   unsigned int tfswrite : 1;   /* if the type needs to be written to the TFS */
   unsigned int checked : 1;
+  unsigned int is_alias : 1; /* is the type an alias? */
   int sign : 2;
 };
 

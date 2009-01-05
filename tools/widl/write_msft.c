@@ -2197,24 +2197,42 @@ static void add_module_typeinfo(msft_typelib_t *typelib, type_t *module)
 
 static void add_type_typeinfo(msft_typelib_t *typelib, type_t *type)
 {
-    switch (type->kind) {
-    case TKIND_INTERFACE:
-    case TKIND_DISPATCH:
+    switch (type->type) {
+    case RPC_FC_IP:
         add_interface_typeinfo(typelib, type);
         break;
-    case TKIND_RECORD:
+    case RPC_FC_STRUCT:
         add_structure_typeinfo(typelib, type);
         break;
-    case TKIND_ENUM:
+    case RPC_FC_ENUM16:
+    case RPC_FC_ENUM32:
         add_enum_typeinfo(typelib, type);
         break;
-    case TKIND_COCLASS:
+    case RPC_FC_COCLASS:
         add_coclass_typeinfo(typelib, type);
         break;
-    case TKIND_PRIMITIVE:
+    case RPC_FC_BYTE:
+    case RPC_FC_CHAR:
+    case RPC_FC_USMALL:
+    case RPC_FC_SMALL:
+    case RPC_FC_WCHAR:
+    case RPC_FC_USHORT:
+    case RPC_FC_SHORT:
+    case RPC_FC_ULONG:
+    case RPC_FC_LONG:
+    case RPC_FC_HYPER:
+    case RPC_FC_IGNORE:
+    case RPC_FC_FLOAT:
+    case RPC_FC_DOUBLE:
+    case RPC_FC_ERROR_STATUS_T:
+    case RPC_FC_BIND_PRIMITIVE:
+    case RPC_FC_RP:
+    case RPC_FC_UP:
+    case RPC_FC_OP:
+    case RPC_FC_FP:
         break;
     default:
-        error("add_entry: unhandled type %d for %s\n", type->kind, type->name);
+        error("add_entry: unhandled type 0x%x for %s\n", type->type, type->name);
         break;
     }
 }

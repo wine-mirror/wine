@@ -816,7 +816,7 @@ int_std:  tINT					{ $$ = make_builtin($<str>1); }
 
 coclass:  tCOCLASS aIDENTIFIER			{ $$ = make_class($2); }
 	| tCOCLASS aKNOWNTYPE			{ $$ = find_type($2, 0);
-						  if ($$->kind != TKIND_COCLASS)
+						  if ($$->type != RPC_FC_COCLASS)
 						    error_loc("%s was not declared a coclass at %s:%d\n",
 							      $2, $$->loc_info.input_name,
 							      $$->loc_info.line_number);
@@ -844,8 +844,8 @@ coclass_int:
 	  m_attributes interfacedec		{ $$ = make_ifref($2); $$->attrs = $1; }
 	;
 
-dispinterface: tDISPINTERFACE aIDENTIFIER	{ $$ = get_type(RPC_FC_IP, $2, 0); $$->kind = TKIND_DISPATCH; }
-	|      tDISPINTERFACE aKNOWNTYPE	{ $$ = get_type(RPC_FC_IP, $2, 0); $$->kind = TKIND_DISPATCH; }
+dispinterface: tDISPINTERFACE aIDENTIFIER	{ $$ = get_type(RPC_FC_IP, $2, 0); }
+	|      tDISPINTERFACE aKNOWNTYPE	{ $$ = get_type(RPC_FC_IP, $2, 0); }
 	;
 
 dispinterfacehdr: attributes dispinterface	{ attr_t *attrs;
@@ -882,8 +882,8 @@ inherit:					{ $$ = NULL; }
 	| ':' aKNOWNTYPE			{ $$ = find_type_or_error2($2, 0); }
 	;
 
-interface: tINTERFACE aIDENTIFIER		{ $$ = get_type(RPC_FC_IP, $2, 0); $$->kind = TKIND_INTERFACE; }
-	|  tINTERFACE aKNOWNTYPE		{ $$ = get_type(RPC_FC_IP, $2, 0); $$->kind = TKIND_INTERFACE; }
+interface: tINTERFACE aIDENTIFIER		{ $$ = get_type(RPC_FC_IP, $2, 0); }
+	|  tINTERFACE aKNOWNTYPE		{ $$ = get_type(RPC_FC_IP, $2, 0); }
 	;
 
 interfacehdr: attributes interface		{ $$.interface = $2;
@@ -1293,7 +1293,6 @@ type_t *make_type(unsigned char type, type_t *ref)
 {
   type_t *t = alloc_type();
   t->name = NULL;
-  t->kind = TKIND_PRIMITIVE;
   t->type = type;
   t->ref = ref;
   t->attrs = NULL;
@@ -1310,6 +1309,7 @@ type_t *make_type(unsigned char type, type_t *ref)
   t->user_types_registered = FALSE;
   t->tfswrite = FALSE;
   t->checked = FALSE;
+  t->is_alias = FALSE;
   t->typelib_idx = -1;
   init_loc_info(&t->loc_info);
   return t;
@@ -1318,7 +1318,6 @@ type_t *make_type(unsigned char type, type_t *ref)
 static type_t *type_new_enum(char *name, var_list_t *enums)
 {
     type_t *t = get_type(RPC_FC_ENUM16, name, tsENUM);
-    t->kind = TKIND_ENUM;
     if (enums)
     {
         t->details.enumeration = xmalloc(sizeof(*t->details.enumeration));
@@ -1335,7 +1334,6 @@ static type_t *type_new_struct(char *name, int defined, var_list_t *fields)
   type_t *tag_type = name ? find_type(name, tsSTRUCT) : NULL;
   type_t *t = make_type(RPC_FC_STRUCT, NULL);
   t->name = name;
-  t->kind = TKIND_RECORD;
   if (defined || (tag_type && tag_type->details.structure))
   {
     if (tag_type && tag_type->details.structure)
@@ -1363,7 +1361,6 @@ static type_t *type_new_struct(char *name, int defined, var_list_t *fields)
 static type_t *type_new_nonencapsulated_union(char *name, var_list_t *fields)
 {
   type_t *t = get_type(RPC_FC_NON_ENCAPSULATED_UNION, name, tsUNION);
-  t->kind = TKIND_UNION;
   t->details.structure = xmalloc(sizeof(*t->details.structure));
   t->details.structure->fields = fields;
   t->defined = TRUE;
@@ -1373,10 +1370,8 @@ static type_t *type_new_nonencapsulated_union(char *name, var_list_t *fields)
 static type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *union_field, var_list_t *cases)
 {
   type_t *t = get_type(RPC_FC_ENCAPSULATED_UNION, name, tsUNION);
-  t->kind = TKIND_UNION;
   if (!union_field) union_field = make_var( xstrdup("tagged_union") );
   union_field->type = make_type(RPC_FC_NON_ENCAPSULATED_UNION, NULL);
-  union_field->type->kind = TKIND_UNION;
   union_field->type->details.structure = xmalloc(sizeof(*union_field->type->details.structure));
   union_field->type->details.structure->fields = cases;
   union_field->type->defined = TRUE;
@@ -1706,7 +1701,6 @@ static type_t *make_class(char *name)
 {
   type_t *c = make_type(RPC_FC_COCLASS, NULL);
   c->name = name;
-  c->kind = TKIND_COCLASS;
   return c;
 }
 
@@ -1850,8 +1844,9 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
   /* We must generate names for tagless enum, struct or union.
      Typedef-ing a tagless enum, struct or union means we want the typedef
      to be included in a library hence the public attribute.  */
-  if ((type->kind == TKIND_ENUM || type->kind == TKIND_RECORD
-       || type->kind == TKIND_UNION) && ! type->name && ! parse_only)
+  if ((type->type == RPC_FC_ENUM16 || type->type == RPC_FC_ENUM32 ||
+       is_struct(type->type) || is_union(type->type)) &&
+      !type->name && !parse_only)
   {
     if (! is_attr(attrs, ATTR_PUBLIC))
       attrs = append_attr( attrs, make_attr(ATTR_PUBLIC) );
