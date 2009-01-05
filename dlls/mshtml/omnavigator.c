@@ -251,11 +251,15 @@ static HRESULT WINAPI OmNavigator_get_platform(IOmNavigator *iface, BSTR *p)
 {
     OmNavigator *This = OMNAVIGATOR_THIS(iface);
 
-    static const WCHAR win32W[] = {'W','i','n','3','2',0};
+#ifdef _WIN64
+    static const WCHAR platformW[] = {'W','i','n','6','4',0};
+#else
+    static const WCHAR platformW[] = {'W','i','n','3','2',0};
+#endif
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = SysAllocString(win32W);
+    *p = SysAllocString(platformW);
     return S_OK;
 }
 
