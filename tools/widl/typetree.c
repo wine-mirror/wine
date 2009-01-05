@@ -86,8 +86,8 @@ static int compute_method_indexes(type_t *iface)
     if (!iface->details.iface)
         return 0;
 
-    if (iface->ref)
-        idx = compute_method_indexes(iface->ref);
+    if (type_iface_get_inherit(iface))
+        idx = compute_method_indexes(type_iface_get_inherit(iface));
     else
         idx = 0;
 

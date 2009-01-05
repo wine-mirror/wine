@@ -80,6 +80,12 @@ static inline var_list_t *type_union_get_cases(const type_t *type)
         return type->details.structure->fields;
 }
 
+static inline type_t *type_iface_get_inherit(const type_t *type)
+{
+    assert(type->type == RPC_FC_IP);
+    return type->ref;
+}
+
 static inline var_list_t *type_dispiface_get_props(const type_t *type)
 {
     assert(type->type == RPC_FC_IP);

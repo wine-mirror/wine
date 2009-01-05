@@ -1995,6 +1995,7 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     msft_typeinfo_t *msft_typeinfo;
     importinfo_t *ref_importinfo = NULL;
     int num_parents = 0, num_funcs = 0;
+    type_t *inherit;
     const type_t *derived;
 
     if (-1 < interface->typelib_idx)
@@ -2006,11 +2007,14 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     /* midl adds the parent interface first, unless the parent itself
        has no parent (i.e. it stops before IUnknown). */
 
-    if(interface->ref) {
-        ref_importinfo = find_importinfo(typelib, interface->ref->name);
+    inherit = type_iface_get_inherit(interface);
 
-        if(!ref_importinfo && interface->ref->ref && interface->ref->typelib_idx == -1)
-            add_interface_typeinfo(typelib, interface->ref);
+    if(inherit) {
+        ref_importinfo = find_importinfo(typelib, inherit->name);
+
+        if(!ref_importinfo && type_iface_get_inherit(inherit) &&
+           inherit->typelib_idx == -1)
+            add_interface_typeinfo(typelib, inherit);
     }
 
     interface->typelib_idx = typelib->typelib_header.nrtypeinfos;
@@ -2018,7 +2022,7 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     msft_typeinfo->typeinfo->size = 4;
     msft_typeinfo->typeinfo->typekind |= 0x2200;
 
-    for (derived = interface->ref; derived; derived = derived->ref)
+    for (derived = inherit; derived; derived = type_iface_get_inherit(derived))
         if (derived->name && !strcmp(derived->name, "IDispatch"))
             msft_typeinfo->typeinfo->flags |= 0x1000; /* TYPEFLAG_FDISPATCHABLE */
 
@@ -2026,11 +2030,12 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     if (!(msft_typeinfo->typeinfo->flags & 0x1000)) /* TYPEFLAG_FDISPATCHABLE */
         msft_typeinfo->typeinfo->flags &= ~0x40; /* TYPEFLAG_FDUAL */
 
-    if(interface->ref)
-        add_impl_type(msft_typeinfo, interface->ref, ref_importinfo);
+    if(type_iface_get_inherit(interface))
+        add_impl_type(msft_typeinfo, type_iface_get_inherit(interface),
+                      ref_importinfo);
 
     /* count the number of inherited interfaces and non-local functions */
-    for(ref = interface->ref; ref; ref = ref->ref) {
+    for(ref = inherit; ref; ref = type_iface_get_inherit(ref)) {
         num_parents++;
         STATEMENTS_FOR_EACH_FUNC( stmt_func, ref->details.iface->stmts ) {
             var_t *func = stmt_func->u.var;

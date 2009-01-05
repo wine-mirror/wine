@@ -194,17 +194,19 @@ int cant_be_null(const var_t *v)
 
 static int need_delegation(const type_t *iface)
 {
-    return iface->ref && iface->ref->ref && iface->ref->ignore;
+    return type_iface_get_inherit(iface) &&
+           type_iface_get_inherit(type_iface_get_inherit(iface)) &&
+           type_iface_get_inherit(iface)->ignore;
 }
 
 static int get_delegation_indirect(const type_t *iface, const type_t ** delegate_to)
 {
   const type_t * cur_iface;
-  for (cur_iface = iface; cur_iface != NULL; cur_iface = cur_iface->ref)
+  for (cur_iface = iface; cur_iface != NULL; cur_iface = type_iface_get_inherit(cur_iface))
     if (need_delegation(cur_iface))
     {
       if(delegate_to)
-        *delegate_to = cur_iface->ref;
+        *delegate_to = type_iface_get_inherit(cur_iface);
       return 1;
     }
   return 0;
@@ -530,7 +532,9 @@ static int count_methods(type_t *iface)
     const statement_t *stmt;
     int count = 0;
 
-    if (iface->ref) count = count_methods(iface->ref);
+    if (type_iface_get_inherit(iface))
+        count = count_methods(type_iface_get_inherit(iface));
+
     STATEMENTS_FOR_EACH_FUNC(stmt, iface->details.iface->stmts) {
         const var_t *func = stmt->u.var;
         if (!is_callas(func->attrs)) count++;
@@ -543,7 +547,9 @@ static int write_proxy_methods(type_t *iface, int skip)
   const statement_t *stmt;
   int i = 0;
 
-  if (iface->ref) i = write_proxy_methods(iface->ref, need_delegation(iface));
+  if (type_iface_get_inherit(iface))
+    i = write_proxy_methods(type_iface_get_inherit(iface),
+                            need_delegation(iface));
   STATEMENTS_FOR_EACH_FUNC(stmt, iface->details.iface->stmts) {
     const var_t *func = stmt->u.var;
     if (!is_callas(func->attrs)) {
@@ -561,8 +567,10 @@ static int write_stub_methods(type_t *iface, int skip)
   const statement_t *stmt;
   int i = 0;
 
-  if (iface->ref) i = write_stub_methods(iface->ref, need_delegation(iface));
-  else return i; /* skip IUnknown */
+  if (type_iface_get_inherit(iface))
+    i = write_stub_methods(type_iface_get_inherit(iface), need_delegation(iface));
+  else
+    return i; /* skip IUnknown */
 
   STATEMENTS_FOR_EACH_FUNC(stmt, iface->details.iface->stmts) {
     const var_t *func = stmt->u.var;
@@ -619,7 +627,9 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   /* interface didn't have any methods - search in inherited interfaces */
   if (midx == -1) {
     const type_t *inherit_iface;
-    for (inherit_iface = iface->ref; inherit_iface; inherit_iface = inherit_iface->ref) {
+    for (inherit_iface = type_iface_get_inherit(iface);
+         inherit_iface;
+         inherit_iface = type_iface_get_inherit(inherit_iface)) {
       STATEMENTS_FOR_EACH_FUNC(stmt, inherit_iface->details.iface->stmts) {
         const var_t *func = stmt->u.var;
         int idx = func->type->details.function->idx;
@@ -759,7 +769,7 @@ static void build_iface_list( const statement_list_t *stmts, type_t **ifaces[], 
         else if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
         {
             type_t *iface = stmt->u.type;
-            if (iface->ref && need_proxy(iface))
+            if (type_iface_get_inherit(iface) && need_proxy(iface))
             {
                 *ifaces = xrealloc( *ifaces, (*count + 1) * sizeof(*ifaces) );
                 (*ifaces)[(*count)++] = iface;

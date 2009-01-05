@@ -628,7 +628,8 @@ static void write_method_macro(FILE *header, const type_t *iface, const char *na
   const statement_t *stmt;
   int first_iface = 1;
 
-  if (iface->ref) write_method_macro(header, iface->ref, name);
+  if (type_iface_get_inherit(iface))
+    write_method_macro(header, type_iface_get_inherit(iface), name);
 
   STATEMENTS_FOR_EACH_FUNC(stmt, iface->details.iface->stmts)
   {
@@ -713,7 +714,8 @@ static void do_write_c_method_def(FILE *header, const type_t *iface, const char 
   const statement_t *stmt;
   int first_iface = 1;
 
-  if (iface->ref) do_write_c_method_def(header, iface->ref, name);
+  if (type_iface_get_inherit(iface))
+    do_write_c_method_def(header, type_iface_get_inherit(iface), name);
 
   STATEMENTS_FOR_EACH_FUNC(stmt, iface->details.iface->stmts)
   {
@@ -743,7 +745,7 @@ static void write_c_method_def(FILE *header, const type_t *iface)
 
 static void write_c_disp_method_def(FILE *header, const type_t *iface)
 {
-  do_write_c_method_def(header, iface->ref, iface->name);
+  do_write_c_method_def(header, type_iface_get_inherit(iface), iface->name);
 }
 
 static void write_method_proto(FILE *header, const type_t *iface)
@@ -924,9 +926,10 @@ static void write_com_interface_end(FILE *header, type_t *iface)
     write_iface_guid(header, iface);
   /* C++ interface */
   fprintf(header, "#if defined(__cplusplus) && !defined(CINTERFACE)\n");
-  if (iface->ref)
+  if (type_iface_get_inherit(iface))
   {
-    fprintf(header, "interface %s : public %s\n", iface->name, iface->ref->name);
+    fprintf(header, "interface %s : public %s\n", iface->name,
+            type_iface_get_inherit(iface)->name);
     fprintf(header, "{\n");
   }
   else
@@ -944,7 +947,7 @@ static void write_com_interface_end(FILE *header, type_t *iface)
     write_cpp_method_def(header, iface);
     indentation--;
   }
-  if (!iface->ref)
+  if (!type_iface_get_inherit(iface))
     fprintf(header, "    END_INTERFACE\n");
   fprintf(header, "};\n");
   fprintf(header, "#else\n");
@@ -967,7 +970,7 @@ static void write_com_interface_end(FILE *header, type_t *iface)
   fprintf(header, "#ifdef COBJMACROS\n");
   /* dispinterfaces don't have real functions, so don't write macros for them,
    * only for the interface this interface inherits from, i.e. IDispatch */
-  write_method_macro(header, dispinterface ? iface->ref : iface, iface->name);
+  write_method_macro(header, dispinterface ? type_iface_get_inherit(iface) : iface, iface->name);
   fprintf(header, "#endif\n");
   fprintf(header, "\n");
   fprintf(header, "#endif\n");
