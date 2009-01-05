@@ -157,7 +157,7 @@ static inline int type_is_alias(const type_t *type)
 static inline ifref_list_t *type_coclass_get_ifaces(const type_t *type)
 {
     assert(type->type == RPC_FC_COCLASS);
-    return type->ifaces;
+    return type->details.coclass.ifaces;
 }
 
 #endif /* WIDL_TYPE_TREE_H */

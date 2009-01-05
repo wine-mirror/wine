@@ -1295,7 +1295,6 @@ type_t *make_type(unsigned char type, type_t *ref)
   t->attrs = NULL;
   t->orig = NULL;
   memset(&t->details, 0, sizeof(t->details));
-  t->ifaces = NULL;
   t->typestring_offset = 0;
   t->ptrdesc = 0;
   t->declarray = FALSE;

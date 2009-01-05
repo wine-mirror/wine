@@ -296,6 +296,11 @@ struct array_details
   expr_t *size_is, *length_is;
 };
 
+struct coclass_details
+{
+  ifref_list_t *ifaces;
+};
+
 struct _type_t {
   const char *name;
   unsigned char type;
@@ -309,8 +314,8 @@ struct _type_t {
     struct iface_details *iface;
     struct module_details *module;
     struct array_details array;
+    struct coclass_details coclass;
   } details;
-  ifref_list_t *ifaces;           /* coclasses */
   type_t *orig;                   /* dup'd types */
   unsigned int typestring_offset;
   unsigned int ptrdesc;           /* used for complex structs */
