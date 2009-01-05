@@ -1099,14 +1099,7 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     bScrollBarWillBeVisible = TRUE;
   }
 
-  if (bScrollBarWasVisible != bScrollBarWillBeVisible)
-  {
-    ShowScrollBar(hWnd, SB_VERT, bScrollBarWillBeVisible);
-    ME_MarkAllForWrapping(editor);
-    ME_WrapMarkedParagraphs(editor);
-  }
-  
-  si.nMin = 0;  
+  si.nMin = 0;
   si.nMax = editor->nTotalLength;
   si.nPos = editor->vert_si.nPos;
   si.nPage = editor->sizeWindow.cy;
@@ -1122,6 +1115,9 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     if (bScrollBarWillBeVisible || bScrollBarWasVisible)
       SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
   }
+
+  if (bScrollBarWasVisible != bScrollBarWillBeVisible)
+    ShowScrollBar(hWnd, SB_VERT, bScrollBarWillBeVisible);
 }
 
 int ME_GetYScrollPos(ME_TextEditor *editor)
