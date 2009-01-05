@@ -249,7 +249,7 @@ static void testAcquireSecurityContext(void)
      NULL, NULL, NULL, NULL, &cred, &exp);
     ok(st == SEC_E_OK, "AcquireCredentialsHandleA failed: %08x\n", st);
     /* expriy is indeterminate in win2k3 */
-    trace("expiry: %08lx%08lx\n", exp.HighPart, exp.LowPart);
+    trace("expiry: %08x%08x\n", exp.HighPart, exp.LowPart);
     pFreeCredentialsHandle(&cred);
 
     /* Bad version in SCHANNEL_CRED */

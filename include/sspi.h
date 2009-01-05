@@ -71,8 +71,8 @@ typedef PSecHandle PCtxtHandle;
 
 typedef struct _SECURITY_INTEGER
 {
-    unsigned long LowPart;
-    long HighPart;
+    ULONG LowPart;
+    LONG  HighPart;
 } SECURITY_INTEGER, *PSECURITY_INTEGER;
 typedef SECURITY_INTEGER TimeStamp, *PTimeStamp;
 
@@ -171,7 +171,7 @@ typedef struct _SecBufferDesc
 #define SECBUFFER_VERSION 0
 
 typedef void (SEC_ENTRY *SEC_GET_KEY_FN)(void *Arg, void *Principal,
- unsigned long KeyVer, void **Key, SECURITY_STATUS *Status);
+ ULONG KeyVer, void **Key, SECURITY_STATUS *Status);
 
 SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(PULONG pcPackages,
  PSecPkgInfoA *ppPackageInfo);
@@ -532,7 +532,7 @@ typedef struct _SecPkgContext_PasswordExpiry
 
 typedef struct _SecPkgContext_SessionKey
 {
-    unsigned long  SessionKeyLength;
+    ULONG          SessionKeyLength;
     unsigned char *SessionKey;
 } SecPkgContext_SessionKey, *PSecPkgContext_SessionKey;
 
@@ -551,24 +551,24 @@ typedef struct _SecPkgContext_PackageInfoW
 
 typedef struct _SecPkgContext_Flags
 {
-    unsigned long Flags;
+    ULONG Flags;
 } SecPkgContext_Flags, *PSecPkgContext_Flags;
 
 typedef struct _SecPkgContext_UserFlags
 {
-    unsigned long UserFlags;
+    ULONG UserFlags;
 } SecPkgContext_UserFlags, *PSecPkgContext_UserFlags;
 
 typedef struct _SecPkgContext_NegotiationInfoA
 {
-    PSecPkgInfoA  PackageInfo;
-    unsigned long NegotiationState;
+    PSecPkgInfoA PackageInfo;
+    ULONG        NegotiationState;
 } SecPkgContext_NegotiationInfoA, *PSecPkgContext_NegotiationInfoA;
 
 typedef struct _SecPkgContext_NegotiationInfoW
 {
-    PSecPkgInfoW  PackageInfo;
-    unsigned long NegotiationState;
+    PSecPkgInfoW PackageInfo;
+    ULONG        NegotiationState;
 } SecPkgContext_NegotiationInfoW, *PSecPkgContext_NegotiationInfoW;
 
 #define SecPkgContext_NegotiationInfo WINELIB_NAME_AW(SecPkgContext_NegotiationInfo)
@@ -598,14 +598,14 @@ typedef struct _SecPkgContext_NativeNamesW
 
 typedef struct _SecPkgContext_CredentialNameA
 {
-    unsigned long  CredentialType;
-    SEC_CHAR      *sCredentialName;
+    ULONG     CredentialType;
+    SEC_CHAR *sCredentialName;
 } SecPkgContext_CredentialNameA, *PSecPkgContext_CredentialNameA;
 
 typedef struct _SecPkgContext_CredentialNameW
 {
-    unsigned long  CredentialType;
-    SEC_WCHAR     *sCredentialName;
+    ULONG      CredentialType;
+    SEC_WCHAR *sCredentialName;
 } SecPkgContext_CredentialNameW, *PSecPkgContext_CredentialNameW;
 
 #define SecPkgContext_CredentialName WINELIB_NAME_AW(SecPkgContext_CredentialName)
@@ -618,20 +618,20 @@ typedef struct _SecPkgContext_AccessToken
 
 typedef struct _SecPkgContext_TargetInformation
 {
-    unsigned long  MarshalledTargetInfoLength;
+    ULONG          MarshalledTargetInfoLength;
     unsigned char *MarshalledTargetInfo;
 } SecPkgContext_TargetInformation, *PSecPkgContext_TargetInformation;
 
 typedef struct _SecPkgContext_AuthzID
 {
-    unsigned long  AuthzIDLength;
-    char          *AuthzID;
+    ULONG  AuthzIDLength;
+    char  *AuthzID;
 } SecPkgContext_AuthzID, *PSecPkgContext_AuthzID;
 
 typedef struct _SecPkgContext_Target
 {
-    unsigned long  TargetLength;
-    char          *Target;
+    ULONG  TargetLength;
+    char  *Target;
 } SecPkgContext_Target, *PSecPkgContext_Target;
 
 SECURITY_STATUS SEC_ENTRY ImpersonateSecurityContext(PCtxtHandle phContext);
