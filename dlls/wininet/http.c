@@ -1695,7 +1695,7 @@ static DWORD HTTP_ReadChunked(WININETHTTPREQW *req, void *buffer, DWORD size, DW
     {
         if (*read == size) break;
 
-        if (req->dwContentLength == ~0UL) /* new chunk */
+        if (req->dwContentLength == ~0u) /* new chunk */
         {
             buflen = sizeof(reply);
             if (!NETCON_getNextLine(&req->netConnection, reply, &buflen)) break;
@@ -1736,7 +1736,7 @@ static DWORD HTTP_ReadChunked(WININETHTTPREQW *req, void *buffer, DWORD size, DW
         if (req->dwContentRead == req->dwContentLength) /* chunk complete */
         {
             req->dwContentRead = 0;
-            req->dwContentLength = ~0UL;
+            req->dwContentLength = ~0u;
 
             buflen = sizeof(reply);
             if (!NETCON_getNextLine(&req->netConnection, reply, &buflen))
