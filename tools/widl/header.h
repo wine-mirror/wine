@@ -58,7 +58,7 @@ extern int is_const_decl(const var_t *var);
 
 static inline int last_ptr(const type_t *type)
 {
-    return is_ptr(type) && !is_declptr(type->ref);
+    return is_ptr(type) && !is_declptr(type_pointer_get_ref(type));
 }
 
 static inline int last_array(const type_t *type)
@@ -75,7 +75,7 @@ static inline int is_string_type(const attr_list_t *attrs, const type_t *type)
 static inline int is_context_handle(const type_t *type)
 {
     const type_t *t;
-    for (t = type; is_ptr(t); t = t->ref)
+    for (t = type; is_ptr(t); t = type_pointer_get_ref(t))
         if (is_attr(t->attrs, ATTR_CONTEXTHANDLE))
             return 1;
     return 0;

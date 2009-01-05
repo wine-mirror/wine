@@ -876,8 +876,8 @@ static int encode_type(
     case VT_PTR:
       {
         int next_vt;
-        for(next_vt = 0; type->ref; type = type->ref) {
-            next_vt = get_type_vt(type->ref);
+        for(next_vt = 0; is_ptr(type); type = type_pointer_get_ref(type)) {
+            next_vt = get_type_vt(type_pointer_get_ref(type));
             if (next_vt != 0)
                 break;
         }
@@ -885,7 +885,8 @@ static int encode_type(
         if (next_vt == 0)
             next_vt = VT_VOID;
 
-        encode_type(typelib, next_vt, type->ref, &target_type, NULL, NULL, &child_size);
+        encode_type(typelib, next_vt, type_pointer_get_ref(type),
+                    &target_type, NULL, NULL, &child_size);
         /* these types already have an implicit pointer, so we don't need to
          * add another */
         if(next_vt == VT_DISPATCH || next_vt == VT_UNKNOWN) {
@@ -1115,7 +1116,10 @@ static int encode_var(
 
     vt = get_type_vt(type);
     if (vt == VT_PTR) {
-        int skip_ptr = encode_var(typelib, type->ref, var, &target_type, NULL, NULL, &child_size);
+        type_t *ref = is_ptr(type) ?
+            type_pointer_get_ref(type) : type_array_get_element(type);
+        int skip_ptr = encode_var(typelib, ref, var,
+                                  &target_type, NULL, NULL, &child_size);
 
         if(skip_ptr == 2) {
             chat("encode_var: skipping ptr\n");

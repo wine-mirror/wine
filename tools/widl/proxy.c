@@ -164,10 +164,10 @@ int cant_be_null(const var_t *v)
   if (is_user_type(type))
       return 0;
 
-  if (! attrs && type)
+  if (!attrs && is_ptr(type))
   {
     attrs = type->attrs;
-    type = type->ref;
+    type = type_pointer_get_ref(type);
   }
 
   while (attrs)
@@ -180,10 +180,10 @@ int cant_be_null(const var_t *v)
     if (t == RPC_FC_RP)
       return 1;
 
-    if (type)
+    if (is_ptr(type))
     {
       attrs = type->attrs;
-      type = type->ref;
+      type = type_pointer_get_ref(type);
     }
     else
       attrs = NULL;

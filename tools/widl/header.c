@@ -65,7 +65,7 @@ int is_ptrchain_attr(const var_t *var, enum attr_type t)
             else if (type_is_alias(type))
                 type = type->orig;
             else if (is_ptr(type))
-                type = type->ref;
+                type = type_pointer_get_ref(type);
             else return 0;
         }
     }
@@ -253,9 +253,9 @@ void write_type_left(FILE *h, type_t *t, int declonly)
       case RPC_FC_UP:
       case RPC_FC_FP:
       case RPC_FC_OP:
-        write_type_left(h, t->ref, declonly);
-        fprintf(h, "%s*", needs_space_after(t->ref) ? " " : "");
-        if (is_ptr(t) && is_attr(t->attrs, ATTR_CONST)) fprintf(h, "const ");
+        write_type_left(h, type_pointer_get_ref(t), declonly);
+        fprintf(h, "%s*", needs_space_after(type_pointer_get_ref(t)) ? " " : "");
+        if (is_attr(t->attrs, ATTR_CONST)) fprintf(h, "const ");
         break;
       case RPC_FC_CARRAY:
       case RPC_FC_CVARRAY:
@@ -291,7 +291,7 @@ void write_type_v(FILE *h, type_t *t, int is_field, int declonly,
 
   if (!h) return;
 
-  for (pt = t; is_ptr(pt); pt = pt->ref, ptr_level++)
+  for (pt = t; is_ptr(pt); pt = type_pointer_get_ref(pt), ptr_level++)
     ;
 
   if (pt->type == RPC_FC_FUNCTION) {
@@ -378,10 +378,11 @@ void check_for_additional_prototype_types(const var_list_t *list)
   if (!list) return;
   LIST_FOR_EACH_ENTRY( v, list, const var_t, entry )
   {
-    type_t *type;
-    for (type = v->type; type; type = type_is_alias(type) ? type->orig : type->ref) {
+    type_t *type = v->type;
+    if (!type) continue;
+    for (;;) {
       const char *name = type->name;
-      if (type->user_types_registered) continue;
+      if (type->user_types_registered) break;
       type->user_types_registered = 1;
       if (is_attr(type->attrs, ATTR_CONTEXTHANDLE)) {
         if (!context_handle_registered(name))
@@ -425,6 +426,15 @@ void check_for_additional_prototype_types(const var_list_t *list)
           vars = type_union_get_cases(type);
         check_for_additional_prototype_types(vars);
       }
+
+      if (type_is_alias(type))
+        type = type->orig;
+      else if (is_ptr(type))
+        type = type_pointer_get_ref(type);
+      else if (is_array(type))
+        type = type_array_get_element(type);
+      else
+        break;
     }
   }
 }
@@ -482,7 +492,7 @@ int is_const_decl(const var_t *var)
     if (is_attr(t->attrs, ATTR_CONST))
       return TRUE;
     else if (is_ptr(t))
-      t = t->ref;
+      t = type_pointer_get_ref(t);
     else break;
   }
   return FALSE;
@@ -541,7 +551,7 @@ const var_t* get_explicit_handle_var(const var_t *func)
 const type_t* get_explicit_generic_handle_type(const var_t* var)
 {
     const type_t *t;
-    for (t = var->type; is_ptr(t); t = t->ref)
+    for (t = var->type; is_ptr(t); t = type_pointer_get_ref(t))
         if (t->type != RPC_FC_BIND_PRIMITIVE && is_attr(t->attrs, ATTR_HANDLE))
             return t;
     return NULL;

@@ -124,12 +124,19 @@ static unsigned short builtin_vt(const type_t *t)
     return kwp->vt;
   }
   if (is_string_type (t->attrs, t))
-    switch (t->ref->type)
+  {
+    unsigned char fc;
+    if (is_array(t))
+      fc = type_array_get_element(t)->type;
+    else
+      fc = type_pointer_get_ref(t)->type;
+    switch (fc)
       {
       case RPC_FC_CHAR: return VT_LPSTR;
       case RPC_FC_WCHAR: return VT_LPWSTR;
       default: break;
       }
+  }
   return 0;
 }
 

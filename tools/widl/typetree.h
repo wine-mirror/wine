@@ -166,4 +166,10 @@ static inline ifref_list_t *type_coclass_get_ifaces(const type_t *type)
     return type->details.coclass.ifaces;
 }
 
+static inline type_t *type_pointer_get_ref(const type_t *type)
+{
+    assert(is_ptr(type));
+    return type->ref;
+}
+
 #endif /* WIDL_TYPE_TREE_H */

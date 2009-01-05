@@ -1419,7 +1419,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
     {
       type_t *t;
       /* move inline attribute from return type node to function node */
-      for (t = func_type; is_ptr(t); t = t->ref)
+      for (t = func_type; is_ptr(t); t = type_pointer_get_ref(t))
         ;
       t->attrs = move_attr(t->attrs, type->attrs, ATTR_INLINE);
     }
@@ -1556,13 +1556,13 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
     type_t *ft, *t;
     type_t *return_type = v->type;
     v->type = func_type;
-    for (ft = v->type; is_ptr(ft); ft = ft->ref)
+    for (ft = v->type; is_ptr(ft); ft = type_pointer_get_ref(ft))
       ;
     assert(ft->type == RPC_FC_FUNCTION);
     ft->ref = return_type;
     /* move calling convention attribute, if present, from pointer nodes to
      * function node */
-    for (t = v->type; is_ptr(t); t = t->ref)
+    for (t = v->type; is_ptr(t); t = type_pointer_get_ref(t))
       ft->attrs = move_attr(ft->attrs, t->attrs, ATTR_CALLCONV);
     if (is_object_interface && !is_attr(ft->attrs, ATTR_CALLCONV))
     {
@@ -1574,7 +1574,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
   else
   {
     type_t *t;
-    for (t = v->type; is_ptr(t); t = t->ref)
+    for (t = v->type; is_ptr(t); t = type_pointer_get_ref(t))
       if (is_attr(t->attrs, ATTR_CALLCONV))
         error_loc("calling convention applied to non-function-pointer type\n");
   }
@@ -1826,7 +1826,7 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
     unsigned char c;
 
     while (is_ptr(t))
-      t = t->ref;
+      t = type_pointer_get_ref(t);
 
     c = t->type;
     if (c != RPC_FC_CHAR && c != RPC_FC_BYTE && c != RPC_FC_WCHAR)
@@ -2281,7 +2281,7 @@ static int is_ptr_guid_type(const type_t *type)
 
     /* second, make sure it is a pointer to something of size sizeof(GUID),
      * i.e. 16 bytes */
-    return (type_memsize(type->ref, &align) == 16);
+    return (type_memsize(type_pointer_get_ref(type), &align) == 16);
 }
 
 static void check_conformance_expr_list(const char *attr_name, const var_t *arg, const type_t *container_type, expr_list_t *expr_list)
@@ -2446,7 +2446,7 @@ static void check_remoting_args(const var_t *func)
             else if (is_ptr(type))
             {
                 ptr_level++;
-                type = type->ref;
+                type = type_pointer_get_ref(type);
             }
             else
                 break;
