@@ -203,7 +203,6 @@ static UINT_PTR handle_appbarmessage(DWORD msg, PAPPBARDATA abd)
         abd->uEdge = ABE_BOTTOM;
         return TRUE;
     case ABM_ACTIVATE:
-        WINE_FIXME("SHAppBarMessage(ABM_ACTIVATE, hwnd=%p, lparam=%lx): stub\n", abd->hWnd, abd->lParam);
         return TRUE;
     case ABM_GETAUTOHIDEBAR:
         WINE_FIXME("SHAppBarMessage(ABM_GETAUTOHIDEBAR, hwnd=%p, edge=%x): stub\n", abd->hWnd, abd->uEdge);
@@ -212,7 +211,6 @@ static UINT_PTR handle_appbarmessage(DWORD msg, PAPPBARDATA abd)
         WINE_FIXME("SHAppBarMessage(ABM_SETAUTOHIDEBAR, hwnd=%p, edge=%x, lparam=%lx): stub\n", abd->hWnd, abd->uEdge, abd->lParam);
         return TRUE;
     case ABM_WINDOWPOSCHANGED:
-        WINE_FIXME("SHAppBarMessage(ABM_WINDOWPOSCHANGED, hwnd=%p): stub\n", abd->hWnd);
         return TRUE;
     default:
         WINE_FIXME("SHAppBarMessage(%x) unimplemented\n", msg);
