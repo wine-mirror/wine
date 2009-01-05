@@ -121,17 +121,17 @@ static void UnloadCABINETDll(void)
 
 /* FDICreate callbacks */
 
-static void *sc_cb_alloc(ULONG cb)
+static void * CDECL sc_cb_alloc(ULONG cb)
 {
   return HeapAlloc(GetProcessHeap(), 0, cb);
 }
 
-static void sc_cb_free(void *pv)
+static void CDECL sc_cb_free(void *pv)
 {
   HeapFree(GetProcessHeap(), 0, pv);
 }
 
-static INT_PTR sc_cb_open(char *pszFile, int oflag, int pmode)
+static INT_PTR CDECL sc_cb_open(char *pszFile, int oflag, int pmode)
 {
   DWORD creation = 0, sharing = 0;
   int ioflag = 0;
@@ -202,7 +202,7 @@ static INT_PTR sc_cb_open(char *pszFile, int oflag, int pmode)
   return ret;
 }
 
-static UINT sc_cb_read(INT_PTR hf, void *pv, UINT cb)
+static UINT CDECL sc_cb_read(INT_PTR hf, void *pv, UINT cb)
 {
   DWORD num_read;
   BOOL rslt;
@@ -222,7 +222,7 @@ static UINT sc_cb_read(INT_PTR hf, void *pv, UINT cb)
   return num_read;
 }
 
-static UINT sc_cb_write(INT_PTR hf, void *pv, UINT cb)
+static UINT CDECL sc_cb_write(INT_PTR hf, void *pv, UINT cb)
 {
   DWORD num_written;
   /* BOOL rv; */
@@ -240,7 +240,7 @@ static UINT sc_cb_write(INT_PTR hf, void *pv, UINT cb)
   }
 }
 
-static int sc_cb_close(INT_PTR hf)
+static int CDECL sc_cb_close(INT_PTR hf)
 {
   /* TRACE("(hf == %d)\n", hf); */
 
@@ -250,7 +250,7 @@ static int sc_cb_close(INT_PTR hf)
     return -1;
 }
 
-static long sc_cb_lseek(INT_PTR hf, long dist, int seektype)
+static long CDECL sc_cb_lseek(INT_PTR hf, long dist, int seektype)
 {
   DWORD ret;
 
@@ -272,7 +272,7 @@ static long sc_cb_lseek(INT_PTR hf, long dist, int seektype)
 
 /* FDICopy callbacks */
 
-static INT_PTR sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
+static INT_PTR CDECL sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
 {
   FILE_IN_CABINET_INFO_A fici;
   PSC_HSC_A phsc;
@@ -391,7 +391,7 @@ static INT_PTR sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
   }
 }
 
-static INT_PTR sc_FNNOTIFY_W(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
+static INT_PTR CDECL sc_FNNOTIFY_W(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
 {
   FILE_IN_CABINET_INFO_W fici;
   PSC_HSC_W phsc;
