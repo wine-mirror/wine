@@ -324,6 +324,8 @@ static int format_string( WCHAR *buffer, size_t len, const char *format, const W
     }
     else max = strlenW(str);
 
+    if (*format == 'h' || *format == 'l') format++;
+
     assert( *format == 's' );
 
     if (!left_align && width > max)
