@@ -49,6 +49,12 @@ static inline var_list_t *type_function_get_args(const type_t *type)
     return type->details.function->args;
 }
 
+static inline type_t *type_function_get_rettype(const type_t *type)
+{
+    assert(type->type == RPC_FC_FUNCTION);
+    return type->ref;
+}
+
 static inline var_list_t *type_enum_get_values(const type_t *type)
 {
     assert(type->type == RPC_FC_ENUM16 || type->type == RPC_FC_ENUM32);

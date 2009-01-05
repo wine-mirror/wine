@@ -541,8 +541,8 @@ void write_parameters_init(FILE *file, int indent, const var_t *func, const char
 {
     const var_t *var;
 
-    if (!is_void(get_func_return_type(func)))
-        write_var_init(file, indent, get_func_return_type(func), "_RetVal", local_var_prefix);
+    if (!is_void(type_function_get_rettype(func->type)))
+        write_var_init(file, indent, type_function_get_rettype(func->type), "_RetVal", local_var_prefix);
 
     if (!type_get_function_args(func->type))
         return;
@@ -695,13 +695,13 @@ static void write_procformatstring_stmts(FILE *file, int indent, const statement
                 }
 
                 /* emit return value data */
-                if (is_void(get_func_return_type(func)))
+                if (is_void(type_function_get_rettype(func->type)))
                 {
                     print_file(file, indent, "0x5b,    /* FC_END */\n");
                     print_file(file, indent, "0x5c,    /* FC_PAD */\n");
                 }
                 else
-                    write_procformatstring_type(file, indent, "return value", get_func_return_type(func), NULL, TRUE);
+                    write_procformatstring_type(file, indent, "return value", type_function_get_rettype(func->type), NULL, TRUE);
             }
         }
         else if (stmt->type == STMT_LIBRARY)
@@ -1080,7 +1080,7 @@ size_t type_memsize(const type_t *t, unsigned int *align)
 int is_full_pointer_function(const var_t *func)
 {
     const var_t *var;
-    if (type_has_full_pointer(get_func_return_type(func)))
+    if (type_has_full_pointer(type_function_get_rettype(func->type)))
         return TRUE;
     if (!type_get_function_args(func->type))
         return FALSE;
@@ -2604,13 +2604,14 @@ static size_t process_tfs_stmts(FILE *file, const statement_list_t *stmts,
             const var_t *func = stmt_func->u.var;
                 if (is_local(func->attrs)) continue;
 
-                if (!is_void(get_func_return_type(func)))
+                if (!is_void(type_function_get_rettype(func->type)))
                 {
                     var_t v = *func;
-                    v.type = get_func_return_type(func);
-                    update_tfsoff(get_func_return_type(func),
+                    v.type = type_function_get_rettype(func->type);
+                    update_tfsoff(type_function_get_rettype(func->type),
                                   write_typeformatstring_var(
-                                      file, 2, NULL, get_func_return_type(func),
+                                      file, 2, NULL,
+                                      type_function_get_rettype(func->type),
                                       &v, typeformat_offset),
                                   file);
                 }
@@ -2768,10 +2769,10 @@ static unsigned int get_function_buffer_size( const var_t *func, enum pass pass 
         }
     }
 
-    if (pass == PASS_OUT && !is_void(get_func_return_type(func)))
+    if (pass == PASS_OUT && !is_void(type_function_get_rettype(func->type)))
     {
         var_t v = *func;
-        v.type = get_func_return_type(func);
+        v.type = type_function_get_rettype(func->type);
         total_size += get_required_buffer_size(&v, &alignment, PASS_RETURN);
         total_size += alignment;
     }
@@ -3208,7 +3209,7 @@ void write_remoting_arguments(FILE *file, int indent, const var_t *func, const c
     {
         var_t var;
         var = *func;
-        var.type = get_func_return_type(func);
+        var.type = type_function_get_rettype(func->type);
         var.name = xstrdup( "_RetVal" );
         write_remoting_arg( file, indent, func, local_var_prefix, pass, phase, &var );
         free( var.name );
@@ -3241,10 +3242,10 @@ size_t get_size_procformatstring_func(const var_t *func)
             size += get_size_procformatstring_type(var->name, var->type, var->attrs);
 
     /* return value size */
-    if (is_void(get_func_return_type(func)))
+    if (is_void(type_function_get_rettype(func->type)))
         size += 2; /* FC_END and FC_PAD */
     else
-        size += get_size_procformatstring_type("return value", get_func_return_type(func), NULL);
+        size += get_size_procformatstring_type("return value", type_function_get_rettype(func->type), NULL);
 
     return size;
 }
@@ -3294,10 +3295,10 @@ void declare_stub_args( FILE *file, int indent, const var_t *func )
     const var_t *var;
 
     /* declare return value '_RetVal' */
-    if (!is_void(get_func_return_type(func)))
+    if (!is_void(type_function_get_rettype(func->type)))
     {
         print_file(file, indent, "");
-        write_type_decl_left(file, get_func_return_type(func));
+        write_type_decl_left(file, type_function_get_rettype(func->type));
         fprintf(file, " _RetVal;\n");
     }
 

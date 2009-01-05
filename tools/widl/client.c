@@ -113,7 +113,8 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             print_client("RPC_BINDING_HANDLE _Handle;\n");
         }
 
-        if (!is_void(get_func_return_type(func)) && decl_indirect(get_func_return_type(func)))
+        if (!is_void(type_function_get_rettype(func->type)) &&
+            decl_indirect(type_function_get_rettype(func->type)))
         {
             print_client("void *_p_%s;\n", "_RetVal" );
         }
@@ -144,8 +145,8 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         indent--;
         print_client( "}\n\n" );
 
-        write_type_decl_left(client, get_func_return_type(func));
-        if (needs_space_after(get_func_return_type(func)))
+        write_type_decl_left(client, type_function_get_rettype(func->type));
+        if (needs_space_after(type_function_get_rettype(func->type)))
           fprintf(client, " ");
         if (callconv) fprintf(client, "%s ", callconv);
         fprintf(client, "%s%s(\n", prefix_client, get_name(func));
@@ -163,10 +164,10 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         print_client( "struct __frame_%s%s __f, * const __frame = &__f;\n", prefix_client, get_name(func) );
 
         /* declare return value '_RetVal' */
-        if (!is_void(get_func_return_type(func)))
+        if (!is_void(type_function_get_rettype(func->type)))
         {
             print_client("");
-            write_type_decl_left(client, get_func_return_type(func));
+            write_type_decl_left(client, type_function_get_rettype(func->type));
             fprintf(client, " _RetVal;\n");
         }
         print_client("RPC_MESSAGE _RpcMessage;\n");
@@ -178,7 +179,8 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
                 print_client("__frame->%s = %s;\n",
                              explicit_generic_handle_var->name, explicit_generic_handle_var->name );
         }
-        if (!is_void(get_func_return_type(func)) && decl_indirect(get_func_return_type(func)))
+        if (!is_void(type_function_get_rettype(func->type)) &&
+            decl_indirect(type_function_get_rettype(func->type)))
         {
             print_client("__frame->_p_%s = &%s;\n",
                          "_RetVal", "_RetVal");
@@ -285,11 +287,12 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         write_remoting_arguments(client, indent, func, "", PASS_OUT, PHASE_UNMARSHAL);
 
         /* unmarshal return value */
-        if (!is_void(get_func_return_type(func)))
+        if (!is_void(type_function_get_rettype(func->type)))
         {
-            if (decl_indirect(get_func_return_type(func)))
+            if (decl_indirect(type_function_get_rettype(func->type)))
                 print_client("MIDL_memset(&%s, 0, sizeof(%s));\n", "_RetVal", "_RetVal");
-            else if (is_ptr(get_func_return_type(func)) || is_array(get_func_return_type(func)))
+            else if (is_ptr(type_function_get_rettype(func->type)) ||
+                     is_array(type_function_get_rettype(func->type)))
                 print_client("%s = 0;\n", "_RetVal");
             write_remoting_arguments(client, indent, func, "", PASS_RETURN, PHASE_UNMARSHAL);
         }
@@ -300,8 +303,8 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             LIST_FOR_EACH_ENTRY( var, args, const var_t, entry )
                 *proc_offset += get_size_procformatstring_type(var->name, var->type, var->attrs);
         }
-        if (!is_void(get_func_return_type(func)))
-            *proc_offset += get_size_procformatstring_type("return value", get_func_return_type(func), NULL);
+        if (!is_void(type_function_get_rettype(func->type)))
+            *proc_offset += get_size_procformatstring_type("return value", type_function_get_rettype(func->type), NULL);
         else
             *proc_offset += 2; /* FC_END and FC_PAD */
 
@@ -317,7 +320,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 
 
         /* emit return code */
-        if (!is_void(get_func_return_type(func)))
+        if (!is_void(type_function_get_rettype(func->type)))
         {
             fprintf(client, "\n");
             print_client("return _RetVal;\n");

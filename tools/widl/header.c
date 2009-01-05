@@ -299,7 +299,7 @@ void write_type_v(FILE *h, type_t *t, int is_field, int declonly,
     const char *callconv = get_attrp(pt->attrs, ATTR_CALLCONV);
     if (!callconv) callconv = "";
     if (is_attr(pt->attrs, ATTR_INLINE)) fprintf(h, "inline ");
-    write_type_left(h, pt->ref, declonly);
+    write_type_left(h, type_function_get_rettype(pt), declonly);
     fputc(' ', h);
     if (ptr_level) fputc('(', h);
     fprintf(h, "%s ", callconv);
@@ -589,7 +589,7 @@ int has_out_arg_or_return(const var_t *func)
 {
     const var_t *var;
 
-    if (!is_void(get_func_return_type(func)))
+    if (!is_void(type_function_get_rettype(func->type)))
         return 1;
 
     if (!type_get_function_args(func->type))
@@ -700,7 +700,7 @@ static void write_cpp_method_def(FILE *header, const type_t *iface)
       if (!callconv) callconv = "";
       indent(header, 0);
       fprintf(header, "virtual ");
-      write_type_decl_left(header, get_func_return_type(func));
+      write_type_decl_left(header, type_function_get_rettype(func->type));
       fprintf(header, " %s %s(\n", callconv, get_name(func));
       write_args(header, type_get_function_args(func->type), iface->name, 2, TRUE);
       fprintf(header, ") = 0;\n");
@@ -729,7 +729,7 @@ static void do_write_c_method_def(FILE *header, const type_t *iface, const char 
       const char *callconv = get_attrp(func->type->attrs, ATTR_CALLCONV);
       if (!callconv) callconv = "";
       indent(header, 0);
-      write_type_decl_left(header, get_func_return_type(func));
+      write_type_decl_left(header, type_function_get_rettype(func->type));
       fprintf(header, " (%s *%s)(\n", callconv, get_name(func));
       write_args(header, type_get_function_args(func->type), name, 1, TRUE);
       fprintf(header, ");\n");
@@ -760,7 +760,7 @@ static void write_method_proto(FILE *header, const type_t *iface)
       const char *callconv = get_attrp(func->type->attrs, ATTR_CALLCONV);
       if (!callconv) callconv = "";
       /* proxy prototype */
-      write_type_decl_left(header, get_func_return_type(func));
+      write_type_decl_left(header, type_function_get_rettype(func->type));
       fprintf(header, " %s %s_%s_Proxy(\n", callconv, iface->name, get_name(func));
       write_args(header, type_get_function_args(func->type), iface->name, 1, TRUE);
       fprintf(header, ");\n");
@@ -795,12 +795,12 @@ static void write_locals(FILE *fp, const type_t *iface, int body)
       if (&stmt2->entry != type_iface_get_stmts(iface)) {
         const var_t *m = stmt2->u.var;
         /* proxy prototype - use local prototype */
-        write_type_decl_left(fp, get_func_return_type(m));
+        write_type_decl_left(fp, type_function_get_rettype(m->type));
         fprintf(fp, " CALLBACK %s_%s_Proxy(\n", iface->name, get_name(m));
         write_args(fp, type_get_function_args(m->type), iface->name, 1, TRUE);
         fprintf(fp, ")");
         if (body) {
-          type_t *rt = get_func_return_type(m);
+          type_t *rt = type_function_get_rettype(m->type);
           fprintf(fp, "\n{\n");
           fprintf(fp, "    %s\n", comment);
           if (rt->name && strcmp(rt->name, "HRESULT") == 0)
@@ -817,7 +817,7 @@ static void write_locals(FILE *fp, const type_t *iface, int body)
         else
           fprintf(fp, ";\n");
         /* stub prototype - use remotable prototype */
-        write_type_decl_left(fp, get_func_return_type(func));
+        write_type_decl_left(fp, type_function_get_rettype(func->type));
         fprintf(fp, " __RPC_STUB %s_%s_Stub(\n", iface->name, get_name(m));
         write_args(fp, type_get_function_args(func->type), iface->name, 1, TRUE);
         fprintf(fp, ")");
@@ -870,7 +870,7 @@ static void write_function_proto(FILE *header, const type_t *iface, const var_t 
   const char *callconv = get_attrp(fun->type->attrs, ATTR_CALLCONV);
 
   /* FIXME: do we need to handle call_as? */
-  write_type_decl_left(header, fun->type->ref);
+  write_type_decl_left(header, type_function_get_rettype(fun->type));
   fprintf(header, " ");
   if (callconv) fprintf(header, "%s ", callconv);
   fprintf(header, "%s%s(\n", prefix, get_name(fun));

@@ -455,11 +455,6 @@ type_t *make_type(unsigned char type, type_t *ref);
 
 void init_loc_info(loc_info_t *);
 
-static inline type_t *get_func_return_type(const var_t *func)
-{
-  return func->type->ref;
-}
-
 static inline var_list_t *type_get_function_args(const type_t *func_type)
 {
   return func_type->details.function->args;

@@ -300,7 +300,7 @@ static void proxy_free_variables( var_list_t *args, const char *local_var_prefix
 static void gen_proxy(type_t *iface, const var_t *func, int idx,
                       unsigned int proc_offset)
 {
-  int has_ret = !is_void(get_func_return_type(func));
+  int has_ret = !is_void(type_function_get_rettype(func->type));
   int has_full_pointer = is_full_pointer_function(func);
   const char *callconv = get_attrp(func->type->attrs, ATTR_CALLCONV);
   if (!callconv) callconv = "";
@@ -316,7 +316,7 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
   print_proxy( "}\n");
   print_proxy( "\n");
 
-  write_type_decl_left(proxy, get_func_return_type(func));
+  write_type_decl_left(proxy, type_function_get_rettype(func->type));
   print_proxy( " %s %s_%s_Proxy(\n", callconv, iface->name, get_name(func));
   write_args(proxy, type_get_function_args(func->type), iface->name, 1, TRUE);
   print_proxy( ")\n");
@@ -326,12 +326,12 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
   /* local variables */
   if (has_ret) {
     print_proxy( "" );
-    write_type_decl_left(proxy, get_func_return_type(func));
+    write_type_decl_left(proxy, type_function_get_rettype(func->type));
     print_proxy( " _RetVal;\n");
   }
   print_proxy( "RPC_MESSAGE _RpcMessage;\n" );
   if (has_ret) {
-    if (decl_indirect(get_func_return_type(func)))
+    if (decl_indirect(type_function_get_rettype(func->type)))
       print_proxy("void *_p_%s = &%s;\n",
                  "_RetVal", "_RetVal");
   }
@@ -377,9 +377,10 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
 
   if (has_ret)
   {
-      if (decl_indirect(get_func_return_type(func)))
+      if (decl_indirect(type_function_get_rettype(func->type)))
           print_proxy("MIDL_memset(&%s, 0, sizeof(%s));\n", "_RetVal", "_RetVal");
-      else if (is_ptr(get_func_return_type(func)) || is_array(get_func_return_type(func)))
+      else if (is_ptr(type_function_get_rettype(func->type)) ||
+               is_array(type_function_get_rettype(func->type)))
           print_proxy("%s = 0;\n", "_RetVal");
       write_remoting_arguments(proxy, indent, func, "", PASS_RETURN, PHASE_UNMARSHAL);
   }
@@ -418,7 +419,7 @@ static void gen_stub(type_t *iface, const var_t *func, const char *cas,
                      unsigned int proc_offset)
 {
   const var_t *arg;
-  int has_ret = !is_void(get_func_return_type(func));
+  int has_ret = !is_void(type_function_get_rettype(func->type));
   int has_full_pointer = is_full_pointer_function(func);
 
   indent = 0;
@@ -498,7 +499,7 @@ static void gen_stub(type_t *iface, const var_t *func, const char *cas,
 
   write_remoting_arguments(proxy, indent, func, "__frame->", PASS_OUT, PHASE_BUFFERSIZE);
 
-  if (!is_void(get_func_return_type(func)))
+  if (!is_void(type_function_get_rettype(func->type)))
     write_remoting_arguments(proxy, indent, func, "__frame->", PASS_RETURN, PHASE_BUFFERSIZE);
 
   print_proxy("NdrStubGetBuffer(This, _pRpcChannelBuffer, &__frame->_StubMsg);\n");
@@ -507,7 +508,7 @@ static void gen_stub(type_t *iface, const var_t *func, const char *cas,
   fprintf(proxy, "\n");
 
   /* marshall the return value */
-  if (!is_void(get_func_return_type(func)))
+  if (!is_void(type_function_get_rettype(func->type)))
     write_remoting_arguments(proxy, indent, func, "__frame->", PASS_RETURN, PHASE_MARSHAL);
 
   indent--;
