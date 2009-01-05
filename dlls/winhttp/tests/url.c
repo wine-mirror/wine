@@ -557,6 +557,19 @@ static void WinHttpCrackUrl_test( void )
     ok( ret, "WinHttpCrackUrl failed\n" );
     ok( uc.nPort == 443, "unexpected port: %u\n", uc.nPort );
 
+    reset_url_components( &uc );
+    SetLastError( 0xdeadbeef );
+    ret = WinHttpCrackUrl( empty, 0, 0, &uc );
+    error = GetLastError();
+    ok( !ret, "WinHttpCrackUrl succeeded\n" );
+    ok( error == ERROR_WINHTTP_UNRECOGNIZED_SCHEME, "got %u, expected ERROR_WINHTTP_UNRECOGNIZED_SCHEME\n", error );
+
+    reset_url_components( &uc );
+    SetLastError( 0xdeadbeef );
+    ret = WinHttpCrackUrl( http, 0, 0, &uc );
+    error = GetLastError();
+    ok( !ret, "WinHttpCrackUrl succeeded\n" );
+    ok( error == ERROR_WINHTTP_UNRECOGNIZED_SCHEME, "got %u, expected ERROR_WINHTTP_UNRECOGNIZED_SCHEME\n", error );
 }
 
 START_TEST(url)

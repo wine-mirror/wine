@@ -82,7 +82,7 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
 
     if (flags & ICU_ESCAPE) FIXME("flag ICU_ESCAPE not supported\n");
 
-    if (!url || !url[0] || !uc || uc->dwStructSize != sizeof(URL_COMPONENTS))
+    if (!url || !uc || uc->dwStructSize != sizeof(URL_COMPONENTS))
     {
         set_last_error( ERROR_INVALID_PARAMETER );
         return FALSE;
@@ -114,12 +114,18 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
         }
         HeapFree( GetProcessHeap(), 0, url_tmp );
     }
-    if (!(p = strchrW( url, ':' ))) return FALSE;
-
+    if (!(p = strchrW( url, ':' )))
+    {
+        set_last_error( ERROR_WINHTTP_UNRECOGNIZED_SCHEME );
+        return FALSE;
+    }
     if (p - url == 4 && !strncmpiW( url, scheme_http, 4 )) uc->nScheme = INTERNET_SCHEME_HTTP;
     else if (p - url == 5 && !strncmpiW( url, scheme_https, 5 )) uc->nScheme = INTERNET_SCHEME_HTTPS;
-    else goto exit;
-
+    else
+    {
+        set_last_error( ERROR_WINHTTP_UNRECOGNIZED_SCHEME );
+        goto exit;
+    }
     if (!(set_component( &uc->lpszScheme, &uc->dwSchemeLength, (WCHAR *)url, p - url, flags ))) goto exit;
 
     p++; /* skip ':' */
