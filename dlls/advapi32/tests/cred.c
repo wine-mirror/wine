@@ -180,16 +180,20 @@ static void test_CredReadDomainCredentialsA(void)
 
     SetLastError(0xdeadbeef);
     ret = pCredReadDomainCredentialsA(&info, 0, &count, &creds);
-    ok(!ret && GetLastError() == ERROR_NOT_FOUND,
-        "CredReadDomainCredentialsA should have failed with ERROR_NOT_FOUND instead of %d\n",
+    ok(!ret, "CredReadDomainCredentialsA should have failed\n");
+    ok(GetLastError() == ERROR_NOT_FOUND ||
+        GetLastError() == ERROR_INVALID_PARAMETER, /* Vista, W2K8 */
+        "Expected ERROR_NOT_FOUND or ERROR_INVALID_PARAMETER instead of %d\n",
         GetLastError());
 
     info.DnsServerName = NULL;
 
     SetLastError(0xdeadbeef);
     ret = pCredReadDomainCredentialsA(&info, 0, &count, &creds);
-    ok(!ret && GetLastError() == ERROR_NOT_FOUND,
-        "CredReadDomainCredentialsA should have failed with ERROR_NOT_FOUND instead of %d\n",
+    ok(!ret, "CredReadDomainCredentialsA should have failed\n");
+    ok(GetLastError() == ERROR_NOT_FOUND ||
+        GetLastError() == ERROR_INVALID_PARAMETER, /* Vista, W2K8 */
+        "Expected ERROR_NOT_FOUND or ERROR_INVALID_PARAMETER instead of %d\n",
         GetLastError());
 }
 
