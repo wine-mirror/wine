@@ -61,7 +61,8 @@ static HRESULT init_d3d8(HMODULE d3d8_module, IDirect3DDevice8 **device, D3DPRES
 
     hr = IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
             D3DCREATE_SOFTWARE_VERTEXPROCESSING, device_pparams, device);
-    ok(SUCCEEDED(hr) || hr == D3DERR_NOTAVAILABLE, "IDirect3D8_CreateDevice failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr) || hr == D3DERR_NOTAVAILABLE || broken(hr == D3DERR_INVALIDCALL),
+            "IDirect3D8_CreateDevice failed, hr %#x.\n", hr);
 
     return hr;
 }
@@ -1540,7 +1541,11 @@ START_TEST(stateblock)
     }
 
     hr = init_d3d8(d3d8_module, &device, &device_pparams);
-    if (FAILED(hr)) return;
+    if (FAILED(hr))
+    {
+        FreeLibrary(d3d8_module);
+        return;
+    }
 
     test_begin_end_state_block(device);
     test_state_management(device, &device_pparams);
@@ -1548,4 +1553,6 @@ START_TEST(stateblock)
 
     refcount = IDirect3DDevice8_Release(device);
     ok(!refcount, "Device has %u references left\n", refcount);
+
+    FreeLibrary(d3d8_module);
 }
