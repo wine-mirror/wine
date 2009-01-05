@@ -26,10 +26,14 @@
 
 type_t *type_new_function(var_list_t *args);
 type_t *type_new_pointer(type_t *ref, attr_list_t *attrs);
+type_t *type_new_alias(type_t *t, const char *name);
 void type_interface_define(type_t *iface, type_t *inherit, statement_list_t *stmts);
 void type_dispinterface_define(type_t *iface, var_list_t *props, func_list_t *methods);
 void type_dispinterface_define_from_iface(type_t *dispiface, type_t *iface);
 void type_module_define(type_t *module, statement_list_t *stmts);
+
+/* FIXME: shouldn't need to export this */
+type_t *duptype(type_t *t, int dupname);
 
 static inline var_list_t *type_struct_get_fields(const type_t *type)
 {

@@ -49,31 +49,6 @@
 
 static typelib_t *typelib;
 
-type_t *duptype(type_t *t, int dupname)
-{
-  type_t *d = alloc_type();
-
-  *d = *t;
-  if (dupname && t->name)
-    d->name = xstrdup(t->name);
-
-  d->orig = t;
-  return d;
-}
-
-type_t *alias(type_t *t, const char *name)
-{
-  type_t *a = duptype(t, 0);
-
-  a->name = xstrdup(name);
-  a->kind = TKIND_ALIAS;
-  a->attrs = NULL;
-  a->declarray = FALSE;
-  init_loc_info(&a->loc_info);
-
-  return a;
-}
-
 int is_ptr(const type_t *t)
 {
   unsigned char c = t->type;

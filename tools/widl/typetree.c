@@ -29,6 +29,17 @@
 #include "typetree.h"
 #include "header.h"
 
+type_t *duptype(type_t *t, int dupname)
+{
+  type_t *d = alloc_type();
+
+  *d = *t;
+  if (dupname && t->name)
+    d->name = xstrdup(t->name);
+
+  return d;
+}
+
 type_t *type_new_function(var_list_t *args)
 {
     type_t *t = make_type(RPC_FC_FUNCTION, NULL);
@@ -43,6 +54,20 @@ type_t *type_new_pointer(type_t *ref, attr_list_t *attrs)
     type_t *t = make_type(pointer_default, ref);
     t->attrs = attrs;
     return t;
+}
+
+type_t *type_new_alias(type_t *t, const char *name)
+{
+  type_t *a = duptype(t, 0);
+
+  a->name = xstrdup(name);
+  a->kind = TKIND_ALIAS;
+  a->attrs = NULL;
+  a->declarray = FALSE;
+  a->orig = t;
+  init_loc_info(&a->loc_info);
+
+  return a;
 }
 
 static int compute_method_indexes(type_t *iface)

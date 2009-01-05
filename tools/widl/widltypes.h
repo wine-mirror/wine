@@ -436,9 +436,6 @@ type_t *alloc_type(void);
 void set_all_tfswrite(int val);
 void clear_all_offsets(void);
 
-type_t *duptype(type_t *t, int dupname);
-type_t *alias(type_t *t, const char *name);
-
 int is_ptr(const type_t *t);
 int is_array(const type_t *t);
 int is_var_ptr(const var_t *v);

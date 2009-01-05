@@ -785,7 +785,7 @@ base_type: tBYTE				{ $$ = make_builtin($<str>1); }
 						  case RPC_FC_HYPER:
 						    if ($$->name[0] == 'h') /* hyper, as opposed to __int64 */
                                                     {
-                                                      $$ = alias($$, "MIDL_uhyper");
+                                                      $$ = type_new_alias($$, "MIDL_uhyper");
                                                       $$->sign = 0;
                                                     }
 						    break;
@@ -1876,7 +1876,7 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
       /* set the attributes to allow set_type to do some checks on them */
       name->attrs = attrs;
       set_type(name, decl_spec, decl, 0);
-      cur = alias(name->type, name->name);
+      cur = type_new_alias(name->type, name->name);
       cur->attrs = attrs;
 
       if (is_incomplete(cur))
