@@ -470,8 +470,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         object->num_contained_ps_consts_i = MAX_CONST_I;
 
         for (i = 0; i < NUM_SAVEDPIXELSTATES_R; i++) {
-            object->changed.renderState[SavedPixelStates_R[i]] = TRUE;
-            object->contained_render_states[i] = SavedPixelStates_R[i];
+            DWORD rs = SavedPixelStates_R[i];
+            object->changed.renderState[rs >> 5] |= 1 << (rs & 0x1f);
+            object->contained_render_states[i] = rs;
         }
         object->num_contained_render_states = NUM_SAVEDPIXELSTATES_R;
         for (j = 0; j < MAX_TEXTURES; j++) {
@@ -527,8 +528,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         }
         object->num_contained_vs_consts_i = MAX_CONST_I;
         for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; i++) {
-            object->changed.renderState[SavedVertexStates_R[i]] = TRUE;
-            object->contained_render_states[i] = SavedVertexStates_R[i];
+            DWORD rs = SavedVertexStates_R[i];
+            object->changed.renderState[rs >> 5] |= 1 << (rs & 0x1f);
+            object->contained_render_states[i] = rs;
         }
         object->num_contained_render_states = NUM_SAVEDVERTEXSTATES_R;
         for (j = 0; j < MAX_TEXTURES; j++) {
@@ -3262,7 +3264,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
 
     TRACE("(%p)->state = %s(%d), value = %d\n", This, debug_d3drenderstate(State), State, Value);
 
-    This->updateStateBlock->changed.renderState[State] = TRUE;
+    This->updateStateBlock->changed.renderState[State >> 5] |= 1 << (State & 0x1f);
     This->updateStateBlock->renderState[State] = Value;
 
     /* Handle recording of state blocks */
@@ -4746,10 +4748,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface, IW
         return WINED3DERR_INVALIDCALL;
     }
 
-    for(i = 1; i <= WINEHIGHEST_RENDER_STATE; i++) {
-        if(object->changed.renderState[i]) {
-            object->contained_render_states[object->num_contained_render_states] = i;
-            object->num_contained_render_states++;
+    for (i = 0; i <= WINEHIGHEST_RENDER_STATE >> 5; ++i)
+    {
+        DWORD map = object->changed.renderState[i];
+        for (j = 0; map; map >>= 1, ++j)
+        {
+            if (!(map & 1)) continue;
+
+            object->contained_render_states[object->num_contained_render_states++] = (i << 5) | j;
         }
     }
 

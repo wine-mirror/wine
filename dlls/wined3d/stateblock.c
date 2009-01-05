@@ -90,7 +90,7 @@ static void stateblock_savedstates_copy(IWineD3DStateBlock* iface, SAVEDSTATES *
     dest->streamFreq = source->streamFreq;
     dest->textures = source->textures;
     memcpy(dest->transform, source->transform, sizeof(source->transform));
-    memcpy(dest->renderState, source->renderState, bsize * (WINEHIGHEST_RENDER_STATE + 1));
+    memcpy(dest->renderState, source->renderState, sizeof(source->renderState));
     memcpy(dest->textureState, source->textureState, bsize * MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE + 1));
     memcpy(dest->samplerState, source->samplerState, bsize * MAX_COMBINED_SAMPLERS * (WINED3D_HIGHEST_SAMPLER_STATE + 1));
     dest->clipplane = source->clipplane;
@@ -130,19 +130,34 @@ void stateblock_savedstates_set(
     states->scissorRect = value;
 
     /* Fixed size arrays */
-    states->streamSource = value ? 0xffff : 0;
-    states->streamFreq = value ? 0xffff : 0;
-    states->textures = value ? 0xfffff : 0;
-    if (value) stateblock_set_bits(states->transform, HIGHEST_TRANSFORMSTATE + 1);
-    else memset(states->transform, 0, sizeof(states->transform));
-    memset(states->renderState, value, bsize * (WINEHIGHEST_RENDER_STATE + 1));
+    if (value)
+    {
+        states->streamSource = 0xffff;
+        states->streamFreq = 0xffff;
+        states->textures = 0xfffff;
+        stateblock_set_bits(states->transform, HIGHEST_TRANSFORMSTATE + 1);
+        stateblock_set_bits(states->renderState, WINEHIGHEST_RENDER_STATE + 1);
+        states->clipplane = 0xffffffff;
+        states->pixelShaderConstantsB = 0xffff;
+        states->pixelShaderConstantsI = 0xffff;
+        states->vertexShaderConstantsB = 0xffff;
+        states->vertexShaderConstantsI = 0xffff;
+    }
+    else
+    {
+        states->streamSource = 0;
+        states->streamFreq = 0;
+        states->textures = 0;
+        memset(states->transform, 0, sizeof(states->transform));
+        memset(states->renderState, 0, sizeof(states->renderState));
+        states->clipplane = 0;
+        states->pixelShaderConstantsB = 0;
+        states->pixelShaderConstantsI = 0;
+        states->vertexShaderConstantsB = 0;
+        states->vertexShaderConstantsI = 0;
+    }
     memset(states->textureState, value, bsize * MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE + 1));
     memset(states->samplerState, value, bsize * MAX_COMBINED_SAMPLERS * (WINED3D_HIGHEST_SAMPLER_STATE + 1));
-    states->clipplane = value ? 0xffffffff : 0;
-    states->pixelShaderConstantsB = value ? 0xffff : 0;
-    states->pixelShaderConstantsI = value ? 0xffff : 0;
-    states->vertexShaderConstantsB = value ? 0xffff : 0;
-    states->vertexShaderConstantsI = value ? 0xffff : 0;
 
     /* Dynamically sized arrays */
     memset(states->pixelShaderConstantsF, value, bsize * GL_LIMITS(pshader_constantsF));
