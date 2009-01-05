@@ -2048,18 +2048,75 @@ static HRESULT WINAPI HTMLStyle_setAttribute(IHTMLStyle *iface, BSTR strAttribut
         VARIANT AttributeValue, LONG lFlags)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%s v%d %08x)\n", This, debugstr_w(strAttributeName),
-          V_VT(&AttributeValue), lFlags);
-    return E_NOTIMPL;
+    HRESULT hres;
+    DISPID dispid;
+
+    TRACE("(%p)->(%s v%d %08x)\n", This, debugstr_w(strAttributeName),
+           V_VT(&AttributeValue), lFlags);
+
+    if(!strAttributeName)
+        return E_INVALIDARG;
+
+    if(lFlags == 1)
+        FIXME("Parameter lFlags ignored\n");
+
+    hres = HTMLStyle_GetIDsOfNames(iface, &IID_NULL, (LPOLESTR*)&strAttributeName, 1,
+                        LOCALE_USER_DEFAULT, &dispid);
+    if(hres == S_OK)
+    {
+        VARIANT ret;
+        DISPID dispidNamed = DISPID_PROPERTYPUT;
+        DISPPARAMS params;
+
+        params.cArgs = 1;
+        params.rgvarg = &AttributeValue;
+        params.cNamedArgs = 1;
+        params.rgdispidNamedArgs = &dispidNamed;
+
+        hres = HTMLStyle_Invoke(iface, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
+            DISPATCH_PROPERTYPUT, &params, &ret, NULL, NULL);
+    }
+    else
+    {
+        FIXME("Custom attributes not supported.\n");
+    }
+
+    TRACE("ret: %08x\n", hres);
+
+    return hres;
 }
 
 static HRESULT WINAPI HTMLStyle_getAttribute(IHTMLStyle *iface, BSTR strAttributeName,
         LONG lFlags, VARIANT *AttributeValue)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%s %08x %p)\n", This, debugstr_w(strAttributeName),
-         lFlags, AttributeValue);
-    return E_NOTIMPL;
+    HRESULT hres;
+    DISPID dispid;
+
+    TRACE("(%p)->(%s v%p %08x)\n", This, debugstr_w(strAttributeName),
+          AttributeValue, lFlags);
+
+    if(!AttributeValue || !strAttributeName)
+        return E_INVALIDARG;
+
+    if(lFlags == 1)
+        FIXME("Parameter lFlags ignored\n");
+
+    hres = HTMLStyle_GetIDsOfNames(iface, &IID_NULL, (LPOLESTR*)&strAttributeName, 1,
+                        LOCALE_USER_DEFAULT, &dispid);
+    if(hres == S_OK)
+    {
+        DISPPARAMS params = {NULL, NULL, 0, 0 };
+
+        hres = HTMLStyle_Invoke(iface, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
+            DISPATCH_PROPERTYGET, &params, AttributeValue, NULL, NULL);
+    }
+    else
+    {
+        FIXME("Custom attributes not supported.\n");
+    }
+
+    return hres;
 }
 
 static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttributeName,

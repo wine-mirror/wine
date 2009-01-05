@@ -2750,6 +2750,42 @@ static void test_default_style(IHTMLStyle *style)
     ok(hres == S_OK, "put_overflow failed: %08x\n", hres);
     SysFreeString(sOverflowDefault);
 
+    /* Attribute Tests*/
+    hres = IHTMLStyle_getAttribute(style, NULL, 1, &v);
+    ok(hres == E_INVALIDARG, "getAttribute failed: %08x\n", hres);
+
+    str = a2bstr("position");
+    hres = IHTMLStyle_getAttribute(style, str, 1, NULL);
+    ok(hres == E_INVALIDARG, "getAttribute failed: %08x\n", hres);
+
+    hres = IHTMLStyle_getAttribute(style, str, 1, &v);
+    ok(hres == S_OK, "getAttribute failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "type failed: %d\n", V_VT(&v));
+    VariantClear(&v);
+
+    hres = IHTMLStyle_setAttribute(style, NULL, v, 1);
+    ok(hres == E_INVALIDARG, "getAttribute failed: %08x\n", hres);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("absolute");
+    hres = IHTMLStyle_setAttribute(style, str, v, 1);
+    ok(hres == S_OK, "setAttribute failed: %08x\n", hres);
+    VariantClear(&v);
+
+    hres = IHTMLStyle_getAttribute(style, str, 1, &v);
+    ok(hres == S_OK, "getAttribute failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "type failed: %d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "absolute"), "str=%s\n", dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = NULL;
+    hres = IHTMLStyle_setAttribute(style, str, v, 1);
+    ok(hres == S_OK, "setAttribute failed: %08x\n", hres);
+    VariantClear(&v);
+
+    SysFreeString(str);
+
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
     if(SUCCEEDED(hres)) {
