@@ -32,9 +32,10 @@ Um Wine kompilieren und ausführen zu können, brauchen Sie eines der
 folgenden Betriebssysteme:
 
   Linux version 2.0.36 oder neuer
-  FreeBSD 4.x oder FreeBSD 5-CURRENT oder neuer
-  Solaris x86 2.5 oder neuer
+  FreeBSD 6.3 oder neuer
+  Solaris x86 9 oder neuer
   NetBSD-current
+  Mac OS X 10.4 oder neuer
 
 Da Wine Thread-Support auf Kernelebene benötigt, werden nur die oben
 aufgeführten Betriebssysteme unterstützt.
@@ -74,20 +75,11 @@ Unterstützte Dateisysteme:
 
 Grundsätzliche Voraussetzungen:
   Sie müssen die Include-Dateien für X11-Entwicklung installiert haben
-  (Debian nennt diese xlib6g-dev, RedHat XFree86-devel).
-
-Vorausgesetzte Build-Tools:
-  Auf x86-Systemen wird der gcc >= 2.7.2 benötigt.
-  Versionen vor 2.7.2.3 können Probleme damit haben, wenn bestimmte Dateien
-  mit Optimierungen kompiliert werden, oft im Zusammenhang mit Problemen mit
-  der Verwaltung von Header-Dateien. pgcc arbeitet derzeit nicht mit Wine.
-  Die Ursache dieses Problems ist unbekannt.
+  (Debian nennt diese xlib6g-dev, Red Hat XFree86-devel).
 
   Natürlich benötigen Sie auch "make" (höchstwahrscheinlich GNU make).
 
   Des Weiteren benötigen Sie flex in der Version 2.5 oder höher und bison.
-  Wenn Sie RedHat oder Debian benutzen, installieren Sie bitte die flex-
-  und bison-Pakete.
 
 Optionale Support-Bibliotheken:
   Der ./configure Aufruf zeigt am Ende optionale Bibliotheken an,
