@@ -62,7 +62,7 @@ int is_ptrchain_attr(const var_t *var, enum attr_type t)
         {
             if (is_attr(type->attrs, t))
                 return 1;
-            else if (type->kind == TKIND_ALIAS)
+            else if (type_is_alias(type))
                 type = type->orig;
             else if (is_ptr(type))
                 type = type->ref;
@@ -78,7 +78,7 @@ int is_aliaschain_attr(const type_t *type, enum attr_type attr)
     {
         if (is_attr(t->attrs, attr))
             return 1;
-        else if (t->kind == TKIND_ALIAS)
+        else if (type_is_alias(t))
             t = t->orig;
         else return 0;
     }
@@ -185,8 +185,8 @@ static void write_enums(FILE *h, var_list_t *enums)
 
 int needs_space_after(type_t *t)
 {
-  return (t->kind == TKIND_ALIAS
-          || (!is_ptr(t) && (!is_conformant_array(t) || t->declarray)));
+  return (type_is_alias(t) ||
+          (!is_ptr(t) && (!is_conformant_array(t) || t->declarray)));
 }
 
 void write_type_left(FILE *h, type_t *t, int declonly)
@@ -194,10 +194,10 @@ void write_type_left(FILE *h, type_t *t, int declonly)
   if (!h) return;
 
   if (is_attr(t->attrs, ATTR_CONST) &&
-      (t->kind == TKIND_ALIAS || t->declarray || !is_ptr(t)))
+      (type_is_alias(t) || t->declarray || !is_ptr(t)))
     fprintf(h, "const ");
 
-  if (t->kind == TKIND_ALIAS) fprintf(h, "%s", t->name);
+  if (type_is_alias(t)) fprintf(h, "%s", t->name);
   else if (t->declarray) write_type_left(h, t->ref, declonly);
   else {
     if (t->sign > 0) fprintf(h, "signed ");
@@ -376,7 +376,7 @@ void check_for_additional_prototype_types(const var_list_t *list)
   LIST_FOR_EACH_ENTRY( v, list, const var_t, entry )
   {
     type_t *type;
-    for (type = v->type; type; type = type->kind == TKIND_ALIAS ? type->orig : type->ref) {
+    for (type = v->type; type; type = type_is_alias(type) ? type->orig : type->ref) {
       const char *name = type->name;
       if (type->user_types_registered) continue;
       type->user_types_registered = 1;

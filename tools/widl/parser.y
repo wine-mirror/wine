@@ -1451,7 +1451,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
     for (ptr = *pt; ptr && !ptr_attr; )
     {
       ptr_attr = get_attrv(ptr->attrs, ATTR_POINTERTYPE);
-      if (!ptr_attr && ptr->kind == TKIND_ALIAS)
+      if (!ptr_attr && type_is_alias(ptr))
         ptr = ptr->orig;
       else
         break;
@@ -1786,7 +1786,7 @@ static void add_incomplete(type_t *t)
 
 static void fix_type(type_t *t)
 {
-  if (t->kind == TKIND_ALIAS && is_incomplete(t)) {
+  if (type_is_alias(t) && is_incomplete(t)) {
     type_t *ot = t->orig;
     fix_type(ot);
     if (is_struct(ot->type) || is_union(ot->type))
@@ -2284,19 +2284,13 @@ static int is_allowed_conf_type(const type_t *type)
 static int is_ptr_guid_type(const type_t *type)
 {
     unsigned int align = 0;
-    for (;;)
-    {
-        if (type->kind == TKIND_ALIAS)
-            type = type->orig;
-        else if (is_ptr(type))
-        {
-            type = type->ref;
-            break;
-        }
-        else
-            return FALSE;
-    }
-    return (type_memsize(type, &align) == 16);
+
+    /* first, make sure it is a pointer to something */
+    if (!is_ptr(type)) return FALSE;
+
+    /* second, make sure it is a pointer to something of size sizeof(GUID),
+     * i.e. 16 bytes */
+    return (type_memsize(type->ref, &align) == 16);
 }
 
 static void check_conformance_expr_list(const char *attr_name, const var_t *arg, const type_t *container_type, expr_list_t *expr_list)
@@ -2394,7 +2388,7 @@ static void check_field_common(const type_t *container_type,
             is_context_handle = 1;
             break;
         }
-        if (type->kind == TKIND_ALIAS)
+        if (type_is_alias(type))
             type = type->orig;
         else if (is_ptr(type) || is_array(type))
             type = type->ref;
@@ -2415,9 +2409,7 @@ static void check_remoting_fields(const var_t *var, type_t *type)
     const var_t *field;
     const var_list_t *fields = NULL;
 
-    /* find the real type */
-    while (type->kind == TKIND_ALIAS)
-        type = type->orig;
+    type = type_get_real_type(type);
 
     if (type->checked)
         return;
@@ -2456,7 +2448,7 @@ static void check_remoting_args(const var_t *func)
                 break;
             if (is_attr(type->attrs, ATTR_CONTEXTHANDLE))
                 break;
-            if (type->kind == TKIND_ALIAS)
+            if (type_is_alias(type))
                 type = type->orig;
             else if (is_ptr(type))
             {

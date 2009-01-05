@@ -45,6 +45,7 @@
 #include "typelib.h"
 #include "widltypes.h"
 #include "typelib_struct.h"
+#include "typetree.h"
 
 static typelib_t *typelib;
 
@@ -173,7 +174,7 @@ unsigned short get_type_vt(type_t *t)
     if (vt) return vt;
   }
 
-  if (t->kind == TKIND_ALIAS && is_attr(t->attrs, ATTR_PUBLIC))
+  if (type_is_alias(t) && is_attr(t->attrs, ATTR_PUBLIC))
     return VT_USERDEFINED;
 
   switch (t->type) {

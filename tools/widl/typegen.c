@@ -467,7 +467,7 @@ static type_t *get_user_type(const type_t *t, const char **pname)
             return ut;
         }
 
-        if (t->kind == TKIND_ALIAS)
+        if (type_is_alias(t))
             t = t->orig;
         else
             return 0;
@@ -1005,7 +1005,7 @@ size_t type_memsize(const type_t *t, unsigned int *align)
 {
     size_t size = 0;
 
-    if (t->kind == TKIND_ALIAS)
+    if (type_is_alias(t))
         size = type_memsize(t->orig, align);
     else if (t->declarray && is_conformant_array(t))
     {
