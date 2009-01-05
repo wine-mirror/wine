@@ -2901,9 +2901,26 @@ BOOL WINAPI CryptMsgEncodeAndSignCTL(DWORD dwMsgEncodingType,
  PCTL_INFO pCtlInfo, PCMSG_SIGNED_ENCODE_INFO pSignInfo, DWORD dwFlags,
  BYTE *pbEncoded, DWORD *pcbEncoded)
 {
-    FIXME("(%08x, %p, %p, %08x, %p, %p): stub\n", dwMsgEncodingType, pCtlInfo,
+    BOOL ret;
+    BYTE *pbCtlContent;
+    DWORD cbCtlContent;
+
+    TRACE("(%08x, %p, %p, %08x, %p, %p)\n", dwMsgEncodingType, pCtlInfo,
      pSignInfo, dwFlags, pbEncoded, pcbEncoded);
-    return FALSE;
+
+    if (dwFlags)
+    {
+        FIXME("unimplemented for flags %08x\n", dwFlags);
+        return FALSE;
+    }
+    if ((ret = CryptEncodeObjectEx(dwMsgEncodingType, PKCS_CTL, pCtlInfo,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, &pbCtlContent, &cbCtlContent)))
+    {
+        ret = CryptMsgSignCTL(dwMsgEncodingType, pbCtlContent, cbCtlContent,
+         pSignInfo, dwFlags, pbEncoded, pcbEncoded);
+        LocalFree(pbCtlContent);
+    }
+    return ret;
 }
 
 BOOL WINAPI CryptMsgSignCTL(DWORD dwMsgEncodingType, BYTE *pbCtlContent,
