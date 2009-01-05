@@ -1240,7 +1240,6 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
         This->textureState[i][WINED3DTSS_BUMPENVLSCALE         ] = 0;
         This->textureState[i][WINED3DTSS_BUMPENVLOFFSET        ] = 0;
         This->textureState[i][WINED3DTSS_TEXTURETRANSFORMFLAGS ] = WINED3DTTFF_DISABLE;
-        This->textureState[i][WINED3DTSS_ADDRESSW              ] = WINED3DTADDRESS_WRAP;
         This->textureState[i][WINED3DTSS_COLORARG0             ] = WINED3DTA_CURRENT;
         This->textureState[i][WINED3DTSS_ALPHAARG0             ] = WINED3DTA_CURRENT;
         This->textureState[i][WINED3DTSS_RESULTARG             ] = WINED3DTA_CURRENT;

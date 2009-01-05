@@ -7571,7 +7571,6 @@ const DWORD SavedPixelStates_R[NUM_SAVEDPIXELSTATES_R] = {
 };
 
 const DWORD SavedPixelStates_T[NUM_SAVEDPIXELSTATES_T] = {
-    WINED3DTSS_ADDRESSW              ,
     WINED3DTSS_ALPHAARG0             ,
     WINED3DTSS_ALPHAARG1             ,
     WINED3DTSS_ALPHAARG2             ,
