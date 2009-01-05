@@ -100,16 +100,16 @@ IDI_SHELL_MY_DOCUMENTS ICON mydocs.ico
 IDI_SHELL_MY_NETWORK_PLACES ICON mydocs.ico
 
 /* @makedep: idb_tb_large.bmp */
-IDB_TB_LG_LIGHT BITMAP idb_tb_large.bmp
+IDB_TB_LARGE_LIGHT BITMAP idb_tb_large.bmp
 
 /* @makedep: idb_tb_large.bmp */
-IDB_TB_LG_DARK BITMAP idb_tb_large.bmp
+IDB_TB_LARGE_DARK BITMAP idb_tb_large.bmp
 
 /* @makedep: idb_tb_small.bmp */
-IDB_TB_SM_LIGHT BITMAP idb_tb_small.bmp
+IDB_TB_SMALL_LIGHT BITMAP idb_tb_small.bmp
 
 /* @makedep: idb_tb_small.bmp */
-IDB_TB_SM_DARK BITMAP idb_tb_small.bmp
+IDB_TB_SMALL_DARK BITMAP idb_tb_small.bmp
 
 /* @makedep: searching.avi */
 IDR_AVI_SEARCHING AVI searching.avi
