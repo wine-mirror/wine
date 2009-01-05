@@ -75,6 +75,36 @@
 #define WS_EX_OVERLAPPEDWINDOW (WS_EX_WINDOWEDGE|WS_EX_CLIENTEDGE)
 #define WS_EX_PALETTEWINDOW    (WS_EX_WINDOWEDGE|WS_EX_TOOLWINDOW|WS_EX_TOPMOST)
 
+/* Standard dialog button IDs */
+#define IDOK                1
+#define IDCANCEL            2
+#define IDABORT             3
+#define IDRETRY             4
+#define IDIGNORE            5
+#define IDYES               6
+#define IDNO                7
+#define IDCLOSE             8
+#define IDHELP              9
+#define IDTRYAGAIN         10
+#define IDCONTINUE         11
+
+/* Win32 button control messages */
+#define BM_GETCHECK          0x00f0
+#define BM_SETCHECK          0x00f1
+#define BM_GETSTATE          0x00f2
+#define BM_SETSTATE          0x00f3
+#define BM_SETSTYLE          0x00f4
+#define BM_CLICK             0x00f5
+#define BM_GETIMAGE          0x00f6
+#define BM_SETIMAGE          0x00f7
+
+/* Button states */
+#define BST_UNCHECKED        0x0000
+#define BST_CHECKED          0x0001
+#define BST_INDETERMINATE    0x0002
+#define BST_PUSHED           0x0004
+#define BST_FOCUS            0x0008
+
 /* Button control styles */
 #define BS_PUSHBUTTON          0x00000000L
 #define BS_DEFPUSHBUTTON       0x00000001L
@@ -155,6 +185,38 @@
 #define ES_WANTRETURN   0x00001000
 #define ES_NUMBER       0x00002000
 
+
+#define HELP_CONTEXT        0x0001
+#define HELP_QUIT           0x0002
+#define HELP_INDEX          0x0003
+#define HELP_CONTENTS       0x0003
+#define HELP_HELPONHELP     0x0004
+#define HELP_SETINDEX       0x0005
+#define HELP_SETCONTENTS    0x0005
+#define HELP_CONTEXTPOPUP   0x0008
+#define HELP_FORCEFILE      0x0009
+#define HELP_KEY            0x0101
+#define HELP_COMMAND        0x0102
+#define HELP_PARTIALKEY     0x0105
+#define HELP_MULTIKEY       0x0201
+#define HELP_SETWINPOS      0x0203
+#define HELP_CONTEXTMENU    0x000a
+#define HELP_FINDER	    0x000b
+#define HELP_WM_HELP	    0x000c
+#define HELP_SETPOPUP_POS   0x000d
+
+#define HELP_TCARD	    0x8000
+#define HELP_TCARD_DATA	    0x0010
+#define HELP_TCARD_OTHER_CALLER 0x0011
+
+
+#define IDH_NO_HELP             28440
+#define IDH_MISSING_CONTEXT     28441
+#define IDH_GENERIC_HELP_BUTTON 28442
+#define IDH_OK                  28443
+#define IDH_CANCEL              28444
+#define IDH_HELP                28445
+
 /* Listbox styles */
 #define LBS_NOTIFY               0x0001
 #define LBS_SORT                 0x0002
@@ -173,6 +235,105 @@
 #define LBS_NOSEL                0x4000
 #define LBS_COMBOBOX             0x8000
 #define LBS_STANDARD  (LBS_NOTIFY | LBS_SORT | WS_VSCROLL | WS_BORDER)
+
+/* Menu flags */
+#define MF_INSERT          0x0000
+#define MF_CHANGE          0x0080
+#define MF_APPEND          0x0100
+#define MF_DELETE          0x0200
+#define MF_REMOVE          0x1000
+#define MF_END             0x0080
+
+#define MF_ENABLED         0x0000
+#define MF_GRAYED          0x0001
+#define MF_DISABLED        0x0002
+#define MF_STRING          0x0000
+#define MF_BITMAP          0x0004
+#define MF_UNCHECKED       0x0000
+#define MF_CHECKED         0x0008
+#define MF_POPUP           0x0010
+#define MF_MENUBARBREAK    0x0020
+#define MF_MENUBREAK       0x0040
+#define MF_UNHILITE        0x0000
+#define MF_HILITE          0x0080
+#define MF_OWNERDRAW       0x0100
+#define MF_USECHECKBITMAPS 0x0200
+#define MF_BYCOMMAND       0x0000
+#define MF_BYPOSITION      0x0400
+#define MF_SEPARATOR       0x0800
+#define MF_DEFAULT         0x1000
+#define MF_SYSMENU         0x2000
+#define MF_HELP            0x4000
+#define MF_RIGHTJUSTIFY    0x4000
+#define MF_MOUSESELECT     0x8000
+
+/* Flags for extended menu item types.  */
+#define MFT_STRING         MF_STRING
+#define MFT_BITMAP         MF_BITMAP
+#define MFT_MENUBARBREAK   MF_MENUBARBREAK
+#define MFT_MENUBREAK      MF_MENUBREAK
+#define MFT_OWNERDRAW      MF_OWNERDRAW
+#define MFT_RADIOCHECK     0x00000200L
+#define MFT_SEPARATOR      MF_SEPARATOR
+#define MFT_RIGHTORDER     0x00002000L
+#define MFT_RIGHTJUSTIFY   MF_RIGHTJUSTIFY
+
+/* Flags for extended menu item states.  */
+#define MFS_GRAYED          0x00000003L
+#define MFS_DISABLED        MFS_GRAYED
+#define MFS_CHECKED         MF_CHECKED
+#define MFS_HILITE          MF_HILITE
+#define MFS_ENABLED         MF_ENABLED
+#define MFS_UNCHECKED       MF_UNCHECKED
+#define MFS_UNHILITE        MF_UNHILITE
+#define MFS_DEFAULT         MF_DEFAULT
+#define MFS_MASK            0x0000108BL
+#define MFS_HOTTRACKDRAWN   0x10000000L
+#define MFS_CACHEDBMP       0x20000000L
+#define MFS_BOTTOMGAPDROP   0x40000000L
+#define MFS_TOPGAPDROP      0x80000000L
+#define MFS_GAPDROP         0xC0000000L
+/* Scrollbar styles */
+#define SBS_HORZ                    0x0000L
+#define SBS_VERT                    0x0001L
+#define SBS_TOPALIGN                0x0002L
+#define SBS_LEFTALIGN               0x0002L
+#define SBS_BOTTOMALIGN             0x0004L
+#define SBS_RIGHTALIGN              0x0004L
+#define SBS_SIZEBOXTOPLEFTALIGN     0x0002L
+#define SBS_SIZEBOXBOTTOMRIGHTALIGN 0x0004L
+#define SBS_SIZEBOX                 0x0008L
+#define SBS_SIZEGRIP                0x0010L
+
+/* WM_SYSCOMMAND parameters */
+#ifdef SC_SIZE /* at least HP-UX: already defined in /usr/include/sys/signal.h */
+#undef SC_SIZE
+#endif
+#define SC_SIZE         0xf000
+#define SC_MOVE         0xf010
+#define SC_MINIMIZE     0xf020
+#define SC_MAXIMIZE     0xf030
+#define SC_NEXTWINDOW   0xf040
+#define SC_PREVWINDOW   0xf050
+#define SC_CLOSE        0xf060
+#define SC_VSCROLL      0xf070
+#define SC_HSCROLL      0xf080
+#define SC_MOUSEMENU    0xf090
+#define SC_KEYMENU      0xf100
+#define SC_ARRANGE      0xf110
+#define SC_RESTORE      0xf120
+#define SC_TASKLIST     0xf130
+#define SC_SCREENSAVE   0xf140
+#define SC_HOTKEY       0xf150
+  /* Win32 4.0 */
+#define SC_DEFAULT      0xf160
+#define SC_MONITORPOWER 0xf170
+#define SC_CONTEXTHELP  0xf180
+#define SC_SEPARATOR    0xf00f
+
+/* obsolete names(SC_ICON and SC_ZOOM) */
+#define SC_ICON   SC_MINIMIZE
+#define SC_ZOOM   SC_MAXIMIZE
 
 /* Static Control Styles */
 #define SS_LEFT             0x00000000L
@@ -208,3 +369,32 @@
 #define SS_PATHELLIPSIS     0x00008000L
 #define SS_WORDELLIPSIS     0x0000C000L
 #define SS_ELLIPSISMASK     0x0000C000L
+
+/* ShowWindow() codes */
+#define SW_HIDE             0
+#define SW_SHOWNORMAL       1
+#define SW_NORMAL           1
+#define SW_SHOWMINIMIZED    2
+#define SW_SHOWMAXIMIZED    3
+#define SW_MAXIMIZE         3
+#define SW_SHOWNOACTIVATE   4
+#define SW_SHOW             5
+#define SW_MINIMIZE         6
+#define SW_SHOWMINNOACTIVE  7
+#define SW_SHOWNA           8
+#define SW_RESTORE          9
+#define SW_SHOWDEFAULT	    10
+#define SW_FORCEMINIMIZE    11
+#define SW_MAX              11
+
+/* Predefined resources */
+#define IDI_APPLICATION    MAKEINTRESOURCE(32512)
+#define IDI_HAND           MAKEINTRESOURCE(32513)
+#define IDI_QUESTION       MAKEINTRESOURCE(32514)
+#define IDI_EXCLAMATION    MAKEINTRESOURCE(32515)
+#define IDI_ASTERISK       MAKEINTRESOURCE(32516)
+#define IDI_WINLOGO        MAKEINTRESOURCE(32517)
+
+#define IDI_WARNING        IDI_EXCLAMATION
+#define IDI_ERROR          IDI_HAND
+#define IDI_INFORMATION    IDI_ASTERISK
