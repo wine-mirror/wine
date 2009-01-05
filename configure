@@ -26247,6 +26247,14 @@ dlls/unicows/Makefile: dlls/unicows/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/unicows/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/updspapi/Makefile"
+test "x$enable_updspapi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	updspapi"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/updspapi/Makefile: dlls/updspapi/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/updspapi/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/url/Makefile"
 test "x$enable_url" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	url"
@@ -28251,6 +28259,7 @@ do
     "dlls/tapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/tapi32/Makefile" ;;
     "dlls/twain_32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/twain_32/Makefile" ;;
     "dlls/unicows/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/unicows/Makefile" ;;
+    "dlls/updspapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/updspapi/Makefile" ;;
     "dlls/url/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/url/Makefile" ;;
     "dlls/urlmon/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/urlmon/Makefile" ;;
     "dlls/urlmon/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/urlmon/tests/Makefile" ;;
