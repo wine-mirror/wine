@@ -1758,10 +1758,10 @@ extern const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl;
 /*   Note: Very long winded but gl Lists are not flexible enough */
 /*   to resolve everything we need, so doing it manually for now */
 typedef struct SAVEDSTATES {
+    DWORD transform[(HIGHEST_TRANSFORMSTATE >> 5) + 1];
     WORD streamSource;              /* MAX_STREAMS, 16 */
     WORD streamFreq;                /* MAX_STREAMS, 16 */
     DWORD textures;                 /* MAX_COMBINED_SAMPLERS, 20 */
-    BOOL transform[HIGHEST_TRANSFORMSTATE + 1];
     BOOL renderState[WINEHIGHEST_RENDER_STATE + 1];
     BOOL textureState[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
     BOOL samplerState[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];

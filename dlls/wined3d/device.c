@@ -2669,7 +2669,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, W
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
-        This->updateStateBlock->changed.transform[d3dts] = TRUE;
+        This->updateStateBlock->changed.transform[d3dts >> 5] |= 1 << (d3dts & 0x1f);
         This->updateStateBlock->transforms[d3dts] = *lpmatrix;
         return WINED3D_OK;
     }
@@ -4752,10 +4752,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface, IW
             object->num_contained_render_states++;
         }
     }
-    for(i = 1; i <= HIGHEST_TRANSFORMSTATE; i++) {
-        if(object->changed.transform[i]) {
-            object->contained_transform_states[object->num_contained_transform_states] = i;
-            object->num_contained_transform_states++;
+
+    for (i = 0; i <= HIGHEST_TRANSFORMSTATE >> 5; ++i)
+    {
+        DWORD map = object->changed.transform[i];
+        for (j = 0; map; map >>= 1, ++j)
+        {
+            if (!(map & 1)) continue;
+
+            object->contained_transform_states[object->num_contained_transform_states++] = (i << 5) | j;
         }
     }
     for(i = 0; i < GL_LIMITS(vshader_constantsF); i++) {

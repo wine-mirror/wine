@@ -89,7 +89,7 @@ static void stateblock_savedstates_copy(IWineD3DStateBlock* iface, SAVEDSTATES *
     dest->streamSource = source->streamSource;
     dest->streamFreq = source->streamFreq;
     dest->textures = source->textures;
-    memcpy(dest->transform, source->transform, bsize * (HIGHEST_TRANSFORMSTATE + 1));
+    memcpy(dest->transform, source->transform, sizeof(source->transform));
     memcpy(dest->renderState, source->renderState, bsize * (WINEHIGHEST_RENDER_STATE + 1));
     memcpy(dest->textureState, source->textureState, bsize * MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE + 1));
     memcpy(dest->samplerState, source->samplerState, bsize * MAX_COMBINED_SAMPLERS * (WINED3D_HIGHEST_SAMPLER_STATE + 1));
@@ -102,6 +102,13 @@ static void stateblock_savedstates_copy(IWineD3DStateBlock* iface, SAVEDSTATES *
     /* Dynamically sized arrays */
     memcpy(dest->pixelShaderConstantsF, source->pixelShaderConstantsF, bsize * GL_LIMITS(pshader_constantsF));
     memcpy(dest->vertexShaderConstantsF, source->vertexShaderConstantsF, bsize * GL_LIMITS(vshader_constantsF));
+}
+
+static inline void stateblock_set_bits(DWORD *map, UINT map_size)
+{
+    DWORD mask = (1 << (map_size & 0x1f)) - 1;
+    memset(map, 0xff, (map_size >> 5) * sizeof(*map));
+    if (mask) map[map_size >> 5] = mask;
 }
 
 /** Set all members of a stateblock savedstate to the given value */
@@ -126,7 +133,8 @@ void stateblock_savedstates_set(
     states->streamSource = value ? 0xffff : 0;
     states->streamFreq = value ? 0xffff : 0;
     states->textures = value ? 0xfffff : 0;
-    memset(states->transform, value, bsize * (HIGHEST_TRANSFORMSTATE + 1));
+    if (value) stateblock_set_bits(states->transform, HIGHEST_TRANSFORMSTATE + 1);
+    else memset(states->transform, 0, sizeof(states->transform));
     memset(states->renderState, value, bsize * (WINEHIGHEST_RENDER_STATE + 1));
     memset(states->textureState, value, bsize * MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE + 1));
     memset(states->samplerState, value, bsize * MAX_COMBINED_SAMPLERS * (WINED3D_HIGHEST_SAMPLER_STATE + 1));
