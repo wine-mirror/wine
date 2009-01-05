@@ -768,7 +768,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 
         if(pInput->pBuffers[input_token_idx].cbBuffer > max_len)
         {
-            TRACE("pInput->pBuffers[%d].cbBuffer is: %ld\n",
+            TRACE("pInput->pBuffers[%d].cbBuffer is: %d\n",
                     input_token_idx,
                     pInput->pBuffers[input_token_idx].cbBuffer);
             ret = SEC_E_INVALID_TOKEN;

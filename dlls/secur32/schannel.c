@@ -507,7 +507,7 @@ static void schan_resize_current_buffer(const struct schan_buffers *s, SIZE_T mi
 
     if (!new_data)
     {
-        TRACE("Failed to resize %p from %ld to %ld\n", b->pvBuffer, b->cbBuffer, new_size);
+        TRACE("Failed to resize %p from %d to %ld\n", b->pvBuffer, b->cbBuffer, new_size);
         return;
     }
 
@@ -539,7 +539,7 @@ static char *schan_get_buffer(const struct schan_transport *t, struct schan_buff
     }
 
     buffer = &s->desc->pBuffers[s->current_buffer_idx];
-    TRACE("Using buffer %d: cbBuffer %ld, BufferType %#lx, pvBuffer %p\n", s->current_buffer_idx, buffer->cbBuffer, buffer->BufferType, buffer->pvBuffer);
+    TRACE("Using buffer %d: cbBuffer %d, BufferType %#x, pvBuffer %p\n", s->current_buffer_idx, buffer->cbBuffer, buffer->BufferType, buffer->pvBuffer);
 
     schan_resize_current_buffer(s, s->offset + *count);
     max_count = buffer->cbBuffer - s->offset;
@@ -636,7 +636,7 @@ static void dump_buffer_desc(SecBufferDesc *desc)
     for (i = 0; i < desc->cBuffers; ++i)
     {
         SecBuffer *b = &desc->pBuffers[i];
-        TRACE("\tbuffer %u: cbBuffer %ld, BufferType %#lx pvBuffer %p\n", i, b->cbBuffer, b->BufferType, b->pvBuffer);
+        TRACE("\tbuffer %u: cbBuffer %d, BufferType %#x pvBuffer %p\n", i, b->cbBuffer, b->BufferType, b->pvBuffer);
     }
 }
 

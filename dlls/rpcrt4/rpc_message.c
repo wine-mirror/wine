@@ -606,7 +606,7 @@ static RPC_STATUS RPCRT4_ClientAuthorize(RpcConnection *conn, SecBuffer *in,
       }
   }
 
-  TRACE("cbBuffer = %ld\n", out->cbBuffer);
+  TRACE("cbBuffer = %d\n", out->cbBuffer);
 
   if (!continue_needed)
   {

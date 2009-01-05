@@ -447,7 +447,7 @@ static SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first, ULONG data_rep
         ok(ret == SEC_E_BUFFER_TOO_SMALL, "expected SEC_E_BUFFER_TOO_SMALL, got %s\n", getSecError(ret));
 
         ok(out_buf->pBuffers[0].cbBuffer == 0,
-           "InitializeSecurityContext set buffer size to %lu\n", out_buf->pBuffers[0].cbBuffer);
+           "InitializeSecurityContext set buffer size to %u\n", out_buf->pBuffers[0].cbBuffer);
 
         out_buf->pBuffers[0].cbBuffer = sspi_data->max_token;
         out_buf->pBuffers[0].BufferType = SECBUFFER_DATA;
@@ -476,9 +476,9 @@ static SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first, ULONG data_rep
     }
 
     ok(out_buf->pBuffers[0].BufferType == SECBUFFER_TOKEN,
-       "buffer type was changed from SECBUFFER_TOKEN to %ld\n", out_buf->pBuffers[0].BufferType);
+       "buffer type was changed from SECBUFFER_TOKEN to %d\n", out_buf->pBuffers[0].BufferType);
     ok(out_buf->pBuffers[0].cbBuffer < sspi_data->max_token,
-       "InitializeSecurityContext set buffer size to %lu\n", out_buf->pBuffers[0].cbBuffer);
+       "InitializeSecurityContext set buffer size to %u\n", out_buf->pBuffers[0].cbBuffer);
 
     return ret;
 }
@@ -870,16 +870,16 @@ static void testAuth(ULONG data_rep, BOOL fake)
             "pQueryContextAttributesA(SECPKG_ATTR_SIZES) returned %s\n",
             getSecError(sec_status));
     ok((ctxt_sizes.cbMaxToken == 1904) || (ctxt_sizes.cbMaxToken == 2888),
-            "cbMaxToken should be 1904 or 2888 but is %lu\n",
+            "cbMaxToken should be 1904 or 2888 but is %u\n",
             ctxt_sizes.cbMaxToken);
     ok(ctxt_sizes.cbMaxSignature == 16,
-            "cbMaxSignature should be 16 but is %lu\n",
+            "cbMaxSignature should be 16 but is %u\n",
             ctxt_sizes.cbMaxSignature);
     ok(ctxt_sizes.cbSecurityTrailer == 16,
-            "cbSecurityTrailer should be 16 but is  %lu\n",
+            "cbSecurityTrailer should be 16 but is  %u\n",
             ctxt_sizes.cbSecurityTrailer);
     ok(ctxt_sizes.cbBlockSize == 0,
-            "cbBlockSize should be 0 but is %lu\n",
+            "cbBlockSize should be 0 but is %u\n",
             ctxt_sizes.cbBlockSize);
 
 tAuthend:
