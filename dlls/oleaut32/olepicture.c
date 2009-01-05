@@ -842,6 +842,10 @@ static HRESULT WINAPI OLEPictureImpl_get_Attributes(IPicture *iface,
 {
   OLEPictureImpl *This = (OLEPictureImpl *)iface;
   TRACE("(%p)->(%p).\n", This, pdwAttr);
+
+  if(!pdwAttr)
+    return E_POINTER;
+
   *pdwAttr = 0;
   switch (This->desc.picType) {
   case PICTYPE_UNINITIALIZED:

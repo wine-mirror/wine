@@ -663,6 +663,9 @@ static void test_get_Attributes(void)
     ok(hres == S_OK, "IPicture_get_Type does not return S_OK, but 0x%08x\n", hres);
     ok(type == PICTYPE_UNINITIALIZED, "Expected type = PICTYPE_UNINITIALIZED, got = %d\n", type);
 
+    hres = IPicture_get_Attributes(pic, NULL);
+    ole_expect(hres, E_POINTER);
+
     attr = 0xdeadbeef;
     hres = IPicture_get_Attributes(pic, &attr);
     ole_expect(hres, S_OK);
