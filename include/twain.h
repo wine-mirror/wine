@@ -127,10 +127,10 @@ typedef char    TW_STR255[256],   FAR *pTW_STR255;
 /* Numeric types. */
 typedef char           TW_INT8,   FAR *pTW_INT8;
 typedef short          TW_INT16,  FAR *pTW_INT16;
-typedef long           TW_INT32,  FAR *pTW_INT32;
+typedef LONG           TW_INT32,  FAR *pTW_INT32;
 typedef unsigned char  TW_UINT8,  FAR *pTW_UINT8;
 typedef unsigned short TW_UINT16, FAR *pTW_UINT16;
-typedef unsigned long  TW_UINT32, FAR *pTW_UINT32;
+typedef ULONG          TW_UINT32, FAR *pTW_UINT32;
 typedef unsigned short TW_BOOL,   FAR *pTW_BOOL;
 
 /* Fixed point structure type. */

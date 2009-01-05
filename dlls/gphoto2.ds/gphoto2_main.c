@@ -343,7 +343,7 @@ static TW_UINT16 GPHOTO2_PendingXfersEndXfer (pTW_IDENTITY pOrigin,
 	if (file->download)
 	    count++;
     }
-    TRACE("count = %ld\n", count);
+    TRACE("count = %d\n", count);
     pPendingXfers->Count = count;
     if (pPendingXfers->Count != 0) {
         activeDS.currentState = 6;
@@ -379,7 +379,7 @@ static TW_UINT16 GPHOTO2_PendingXfersGet (pTW_IDENTITY pOrigin,
 	if (file->download)
 	    count++;
     }
-    TRACE("count = %ld\n", count);
+    TRACE("count = %d\n", count);
     pPendingXfers->Count = count;
     activeDS.twCC = TWCC_SUCCESS;
     return TWRC_SUCCESS;
@@ -1002,7 +1002,7 @@ DS_Entry ( pTW_IDENTITY pOrigin,
 {
     TW_UINT16 twRC = TWRC_SUCCESS;  /* Return Code */
 
-    TRACE("(DG=%ld DAT=%d MSG=%d)\n", DG, DAT, MSG);
+    TRACE("(DG=%d DAT=%d MSG=%d)\n", DG, DAT, MSG);
 
     switch (DG)
     {

@@ -543,7 +543,7 @@ DS_Entry ( pTW_IDENTITY pOrigin,
 {
     TW_UINT16 twRC = TWRC_SUCCESS;  /* Return Code */
 
-    TRACE("(DG=%ld DAT=%d MSG=%d)\n", DG, DAT, MSG);
+    TRACE("(DG=%d DAT=%d MSG=%d)\n", DG, DAT, MSG);
 
     switch (DG)
     {

@@ -159,7 +159,7 @@ DSM_Entry (pTW_IDENTITY pOrigin,
 {
     TW_UINT16 twRC = TWRC_SUCCESS;  /* Return Code */
 
-    TRACE("(DG=%ld DAT=%d MSG=%d)\n", DG, DAT, MSG);
+    TRACE("(DG=%d DAT=%d MSG=%d)\n", DG, DAT, MSG);
 
     if (pDest)
     {
@@ -172,7 +172,7 @@ DSM_Entry (pTW_IDENTITY pOrigin,
 	    return TWRC_FAILURE;
 	}
 	DSM_twCC = TWCC_SUCCESS;
-	TRACE("Forwarding %ld/%d/%d/%p to DS.\n", DG, DAT, MSG, pData);
+        TRACE("Forwarding %d/%d/%d/%p to DS.\n", DG, DAT, MSG, pData);
 	twRC = pSource->dsEntry(pOrigin, DG, DAT, MSG, pData);
 	TRACE("return value is %d\n", twRC);
 	return twRC;
@@ -183,7 +183,7 @@ DSM_Entry (pTW_IDENTITY pOrigin,
             twRC = TWAIN_SourceManagerHandler (pOrigin, DAT, MSG, pData);
             break;
         default:
-	    FIXME("The DSM does not handle DG %ld\n", DG);
+            FIXME("The DSM does not handle DG %d\n", DG);
             DSM_twCC = TWCC_BADPROTOCOL;
             twRC = TWRC_FAILURE;
     }

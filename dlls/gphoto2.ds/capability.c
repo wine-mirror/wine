@@ -195,7 +195,7 @@ static TW_BOOL GPHOTO2_OneValueSet32 (pTW_CAPABILITY pCapability, TW_UINT32 valu
 {
     pCapability->hContainer = GlobalAlloc (0, sizeof(TW_ONEVALUE));
 
-    TRACE("-> %ld\n", value);
+    TRACE("-> %d\n", value);
 
     if (pCapability->hContainer)
     {
@@ -258,7 +258,7 @@ static TW_BOOL GPHOTO2_EnumGet16 (pTW_CAPABILITY pCapability, int *nrofvalues, T
     *nrofvalues = pVal->NumItems;
     *values = HeapAlloc( GetProcessHeap(), 0, sizeof(TW_UINT16)*pVal->NumItems);
     memcpy (*values, pVal->ItemList, sizeof(TW_UINT16)*(*nrofvalues));
-    FIXME("Current Index %ld, Default Index %ld\n", pVal->CurrentIndex, pVal->DefaultIndex);
+    FIXME("Current Index %d, Default Index %d\n", pVal->CurrentIndex, pVal->DefaultIndex);
     GlobalUnlock (pCapability->hContainer);
     return TRUE;
 }
@@ -310,7 +310,7 @@ static TW_UINT16 GPHOTO2_ICAPXferMech (pTW_CAPABILITY pCapability, TW_UINT16 act
                 if (!GPHOTO2_OneValueGet32 (pCapability, &xfermechtemp))
                     return TWCC_LOWMEMORY;
 		activeDS.capXferMech = xfermechtemp;
-		TRACE("xfermech is %ld\n", xfermechtemp);
+                TRACE("xfermech is %d\n", xfermechtemp);
 		return TWCC_SUCCESS;
             }
             else if (pCapability->ConType == TWON_ENUMERATION)
