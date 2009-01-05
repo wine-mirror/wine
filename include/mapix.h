@@ -36,7 +36,7 @@ typedef struct IMAPISession *LPMAPISESSION;
 
 #ifndef WINE_FLAGS_DEFINED
 #define WINE_FLAGS_DEFINED
-typedef unsigned long           FLAGS;
+typedef ULONG                   FLAGS;
 #endif
 
 /* Flags for MAPILogon and MAPILogonEx */
