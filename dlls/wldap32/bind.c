@@ -53,7 +53,7 @@ ULONG CDECL ldap_bindA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR cred, ULONG method )
 
     TRACE( "(%p, %s, %p, 0x%08x)\n", ld, debugstr_a(dn), cred, method );
 
-    if (!ld) return ~0UL;
+    if (!ld) return ~0u;
 
     if (dn) {
         dnW = strAtoW( dn );
@@ -104,7 +104,7 @@ ULONG CDECL ldap_bindW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR cred, ULONG method )
 
     TRACE( "(%p, %s, %p, 0x%08x)\n", ld, debugstr_w(dn), cred, method );
 
-    if (!ld) return ~0UL;
+    if (!ld) return ~0u;
     if (method != LDAP_AUTH_SIMPLE) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn) {
@@ -124,7 +124,7 @@ ULONG CDECL ldap_bindW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR cred, ULONG method )
     if (ret == LDAP_SUCCESS)
         ret = msg;
     else
-        ret = ~0UL;
+        ret = ~0u;
 
 exit:
     strfreeU( dnU );
@@ -476,7 +476,7 @@ ULONG CDECL ldap_simple_bindA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR passwd )
 
     TRACE( "(%p, %s, %p)\n", ld, debugstr_a(dn), passwd );
 
-    if (!ld) return ~0UL;
+    if (!ld) return ~0u;
 
     if (dn) {
         dnW = strAtoW( dn );
@@ -526,7 +526,7 @@ ULONG CDECL ldap_simple_bindW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR passwd )
 
     TRACE( "(%p, %s, %p)\n", ld, debugstr_w(dn), passwd );
 
-    if (!ld) return ~0UL;
+    if (!ld) return ~0u;
 
     if (dn) {
         dnU = strWtoU( dn );
@@ -545,7 +545,7 @@ ULONG CDECL ldap_simple_bindW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR passwd )
     if (ret == LDAP_SUCCESS)
         ret = msg;
     else
-        ret = ~0UL;
+        ret = ~0u;
 
 exit:
     strfreeU( dnU );

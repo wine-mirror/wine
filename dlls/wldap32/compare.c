@@ -49,12 +49,12 @@ ULONG CDECL ldap_compareA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value )
 #ifdef HAVE_LDAP
     WCHAR *dnW = NULL, *attrW = NULL, *valueW = NULL;
 
-    ret = ~0UL;
+    ret = ~0u;
 
     TRACE( "(%p, %s, %s, %s)\n", ld, debugstr_a(dn), debugstr_a(attr),
            debugstr_a(value) );
 
-    if (!ld || !attr) return ~0UL;
+    if (!ld || !attr) return ~0u;
 
     if (dn) {
         dnW = strAtoW( dn );
@@ -103,12 +103,12 @@ ULONG CDECL ldap_compareW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR valu
     struct berval val = { 0, NULL };
     int msg;
 
-    ret = ~0UL;
+    ret = ~0u;
 
     TRACE( "(%p, %s, %s, %s)\n", ld, debugstr_w(dn), debugstr_w(attr),
            debugstr_w(value) );
 
-    if (!ld || !attr) return ~0UL;
+    if (!ld || !attr) return ~0u;
 
     if (dn) {
         dnU = strWtoU( dn );
@@ -131,7 +131,7 @@ ULONG CDECL ldap_compareW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR valu
     if (ret == LDAP_SUCCESS)
         ret = msg;
     else
-        ret = ~0UL;
+        ret = ~0u;
 
 exit:
     strfreeU( dnU );

@@ -58,7 +58,7 @@ ULONG CDECL ldap_modifyA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *mods[] )
 
     TRACE( "(%p, %s, %p)\n", ld, debugstr_a(dn), mods );
 
-    if (!ld) return ~0UL;
+    if (!ld) return ~0u;
 
     if (dn) {
         dnW = strAtoW( dn );
@@ -128,7 +128,7 @@ ULONG CDECL ldap_modifyW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *mods[] )
     if (ret == LDAP_SUCCESS)
         ret = msg;
     else
-        ret = ~0UL;
+        ret = ~0u;
 
 exit:
     strfreeU( dnU );
@@ -157,7 +157,7 @@ ULONG CDECL ldap_modify_extA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *mods[],
     TRACE( "(%p, %s, %p, %p, %p, %p)\n", ld, debugstr_a(dn), mods,
            serverctrls, clientctrls, message );
 
-    if (!ld) return ~0UL;
+    if (!ld) return ~0u;
 
     if (dn) {
         dnW = strAtoW( dn );
@@ -226,7 +226,7 @@ ULONG CDECL ldap_modify_extW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *mods[],
     TRACE( "(%p, %s, %p, %p, %p, %p)\n", ld, debugstr_w(dn), mods,
            serverctrls, clientctrls, message );
 
-    if (!ld) return ~0UL;
+    if (!ld) return ~0u;
 
     if (dn) {
         dnU = strWtoU( dn );

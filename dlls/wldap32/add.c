@@ -58,7 +58,7 @@ ULONG CDECL ldap_addA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *attrs[] )
 
     TRACE( "(%p, %s, %p)\n", ld, debugstr_a(dn), attrs );
 
-    if (!ld) return ~0UL;
+    if (!ld) return ~0u;
 
     if (dn) {
         dnW = strAtoW( dn );
@@ -127,7 +127,7 @@ ULONG CDECL ldap_addW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[] )
     if (ret == LDAP_SUCCESS)
         ret = msg;
     else
-        ret = ~0UL;
+        ret = ~0u;
 
 exit:
     strfreeU( dnU );

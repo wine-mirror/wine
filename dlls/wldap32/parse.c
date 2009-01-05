@@ -125,7 +125,7 @@ ULONG CDECL ldap_parse_referenceA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *messag
 
     TRACE( "(%p, %p, %p)\n", ld, message, referrals );
 
-    if (!ld) return ~0UL;
+    if (!ld) return ~0u;
 
     ret = ldap_parse_referenceW( ld, message, &referralsW );
 
@@ -162,7 +162,7 @@ ULONG CDECL ldap_parse_referenceW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *messag
 
     TRACE( "(%p, %p, %p)\n", ld, message, referrals );
 
-    if (!ld) return ~0UL;
+    if (!ld) return ~0u;
     
     ret = map_error( ldap_parse_reference( ld, message, &referralsU, NULL, 0 ));
 
@@ -383,7 +383,7 @@ INT CDECL ldap_parse_vlv_controlA( WLDAP32_LDAP *ld, PLDAPControlA *control,
     TRACE( "(%p, %p, %p, %p, %p, %p)\n", ld, control, targetpos,
            listcount, context, errcode );
 
-    if (!ld) return ~0UL;
+    if (!ld) return ~0u;
 
     if (control) {
         controlW = controlarrayAtoW( control );
@@ -437,7 +437,7 @@ INT CDECL ldap_parse_vlv_controlW( WLDAP32_LDAP *ld, PLDAPControlW *control,
     TRACE( "(%p, %p, %p, %p, %p, %p)\n", ld, control, targetpos,
            listcount, context, errcode );
 
-    if (!ld || !control) return ~0UL;
+    if (!ld || !control) return ~0u;
 
     controlU = controlarrayWtoU( control );
     if (!controlU) return WLDAP32_LDAP_NO_MEMORY;

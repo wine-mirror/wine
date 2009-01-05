@@ -161,14 +161,14 @@ ULONG CDECL WLDAP32_ldap_result2error( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *re
 
     TRACE( "(%p, %p, 0x%08x)\n", ld, res, free );
 
-    if (!ld || !res) return ~0UL;
+    if (!ld || !res) return ~0u;
 
     ret = ldap_parse_result( ld, res, &error, NULL, NULL, NULL, NULL, free );
 
     if (ret == LDAP_SUCCESS)
         ret = error;
     else
-        ret = ~0UL;
+        ret = ~0u;
 
 #endif
     return ret;

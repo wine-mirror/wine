@@ -215,7 +215,7 @@ INT CDECL ldap_create_vlv_controlA( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
 
     TRACE( "(%p, %p, 0x%02x, %p)\n", ld, info, critical, control );
 
-    if (!ld || !control) return ~0UL;
+    if (!ld || !control) return ~0u;
 
     ret = ldap_create_vlv_controlW( ld, info, critical, &controlW );
 
@@ -261,7 +261,7 @@ INT CDECL ldap_create_vlv_controlW( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
 
     TRACE( "(%p, %p, 0x%02x, %p)\n", ld, info, critical, control );
 
-    if (!ld || !control) return ~0UL;
+    if (!ld || !control) return ~0u;
 
     ret = map_error( ldap_create_vlv_control( ld, (LDAPVLVInfo *)info, &controlU ));
 

@@ -51,7 +51,7 @@ ULONG CDECL ldap_deleteA( WLDAP32_LDAP *ld, PCHAR dn )
 
     TRACE( "(%p, %s)\n", ld, debugstr_a(dn) );
 
-    if (!ld) return ~0UL;
+    if (!ld) return ~0u;
 
     if (dn) {
         dnW = strAtoW( dn );
@@ -92,7 +92,7 @@ ULONG CDECL ldap_deleteW( WLDAP32_LDAP *ld, PWCHAR dn )
 
     TRACE( "(%p, %s)\n", ld, debugstr_w(dn) );
 
-    if (!ld) return ~0UL;
+    if (!ld) return ~0u;
 
     if (dn) {
         dnU = strWtoU( dn );
@@ -104,7 +104,7 @@ ULONG CDECL ldap_deleteW( WLDAP32_LDAP *ld, PWCHAR dn )
     if (ret == LDAP_SUCCESS)
         ret = msg;
     else
-        ret = ~0UL;
+        ret = ~0u;
 
     strfreeU( dnU );
 
