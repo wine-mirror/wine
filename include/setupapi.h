@@ -1633,8 +1633,8 @@ BOOL     WINAPI SetupDiUnremoveDevice(HDEVINFO, PSP_DEVINFO_DATA);
 HDSKSPC  WINAPI SetupDuplicateDiskSpaceListA(HDSKSPC, PVOID, DWORD, UINT);
 HDSKSPC  WINAPI SetupDuplicateDiskSpaceListW(HDSKSPC, PVOID, DWORD, UINT);
 #define         SetupDuplicateDiskSpaceList WINELIB_NAME_AW(SetupDuplicateDiskSpaceList)
-BOOL     WINAPI SetupEnumInfSectionsA(HINF, UINT, PSTR, SIZE, UINT *);
-BOOL     WINAPI SetupEnumInfSectionsW(HINF, UINT, PWSTR, SIZE, UINT *);
+BOOL     WINAPI SetupEnumInfSectionsA(HINF, UINT, PSTR, DWORD, DWORD *);
+BOOL     WINAPI SetupEnumInfSectionsW(HINF, UINT, PWSTR, DWORD, DWORD *);
 #define         SetupEnumInfSections WINELIB_NAME_AW(SetupEnumInfSections)
 BOOL     WINAPI SetupFindFirstLineA( HINF hinf, PCSTR section, PCSTR key, INFCONTEXT *context );
 BOOL     WINAPI SetupFindFirstLineW( HINF hinf, PCWSTR section, PCWSTR key, INFCONTEXT *context );
