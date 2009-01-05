@@ -299,7 +299,8 @@ BOOL CDECL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmo
         devmode->dmPelsHeight = dd_modes[n].dwHeight;
         devmode->dmBitsPerPel = dd_modes[n].dwBPP;
         devmode->dmDisplayFrequency = dd_modes[n].wRefreshRate;
-        devmode->dmFields = (DM_PELSWIDTH|DM_PELSHEIGHT|DM_BITSPERPEL);
+        devmode->dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL |
+                            DM_DISPLAYFLAGS;
         if (devmode->dmDisplayFrequency)
         {
             devmode->dmFields |= DM_DISPLAYFREQUENCY;
