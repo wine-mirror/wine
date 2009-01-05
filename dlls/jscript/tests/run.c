@@ -574,6 +574,11 @@ static void parse_script(BSTR script_str)
 
     hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
     ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+    if (FAILED(hres))
+    {
+        IActiveScript_Release(engine);
+        return;
+    }
 
     hres = IActiveScriptParse_InitNew(parser);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
@@ -696,6 +701,11 @@ static void test_isvisible(BOOL global_members)
 
     hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
     ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+    if (FAILED(hres))
+    {
+        IActiveScript_Release(engine);
+        return;
+    }
 
     hres = IActiveScriptParse_InitNew(parser);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);

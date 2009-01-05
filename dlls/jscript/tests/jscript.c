@@ -295,6 +295,11 @@ static void test_jscript(void)
 
     hres = IUnknown_QueryInterface(unk, &IID_IActiveScriptParse, (void**)&parse);
     ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+    if (FAILED(hres))
+    {
+        IActiveScript_Release(script);
+        return;
+    }
 
     test_state(script, SCRIPTSTATE_UNINITIALIZED);
     test_safety(unk);
@@ -366,6 +371,11 @@ static void test_jscript2(void)
 
     hres = IUnknown_QueryInterface(unk, &IID_IActiveScriptParse, (void**)&parse);
     ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+    if (FAILED(hres))
+    {
+        IActiveScript_Release(script);
+        return;
+    }
 
     test_state(script, SCRIPTSTATE_UNINITIALIZED);
 
