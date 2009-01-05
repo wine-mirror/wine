@@ -918,8 +918,8 @@ interfacedec:
 	| dispinterface ';'			{ $$ = $1; }
 	;
 
-module:   tMODULE aIDENTIFIER			{ $$ = make_type(0, NULL); $$->name = $2; $$->kind = TKIND_MODULE; }
-	| tMODULE aKNOWNTYPE			{ $$ = make_type(0, NULL); $$->name = $2; $$->kind = TKIND_MODULE; }
+module:   tMODULE aIDENTIFIER			{ $$ = type_new_module($2); }
+	| tMODULE aKNOWNTYPE			{ $$ = type_new_module($2); }
 	;
 
 modulehdr: attributes module			{ $$ = $2;

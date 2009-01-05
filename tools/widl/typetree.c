@@ -70,6 +70,15 @@ type_t *type_new_alias(type_t *t, const char *name)
   return a;
 }
 
+type_t *type_new_module(char *name)
+{
+    type_t *type = make_type(RPC_FC_MODULE, NULL);
+    type->name = name;
+    type->kind = TKIND_MODULE;
+    /* FIXME: register type to detect multiple definitions */
+    return type;
+}
+
 static int compute_method_indexes(type_t *iface)
 {
     int idx;

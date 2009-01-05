@@ -209,9 +209,10 @@ unsigned short get_type_vt(type_t *t)
   case RPC_FC_CVSTRUCT:
   case RPC_FC_BOGUS_STRUCT:
   case RPC_FC_COCLASS:
+  case RPC_FC_MODULE:
     return VT_USERDEFINED;
   case 0:
-    return t->kind == TKIND_PRIMITIVE ? VT_VOID : VT_USERDEFINED;
+    return VT_VOID;
   default:
     error("get_type_vt: unknown type: 0x%02x\n", t->type);
   }

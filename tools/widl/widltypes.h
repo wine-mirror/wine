@@ -35,6 +35,7 @@ typedef GUID UUID;
 #define TRUE 1
 #define FALSE 0
 
+#define RPC_FC_MODULE   0xfc
 #define RPC_FC_COCLASS  0xfd
 #define RPC_FC_FUNCTION 0xfe
 
