@@ -137,3 +137,10 @@ void type_module_define(type_t *module, statement_list_t *stmts)
     module->details.module->stmts = stmts;
     module->defined = TRUE;
 }
+
+type_t *type_coclass_define(type_t *coclass, ifref_list_t *ifaces)
+{
+    coclass->ifaces = ifaces;
+    coclass->defined = TRUE;
+    return coclass;
+}

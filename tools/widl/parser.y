@@ -830,10 +830,7 @@ coclasshdr: attributes coclass			{ $$ = $2;
 	;
 
 coclassdef: coclasshdr '{' coclass_ints '}' semicolon_opt
-						{ $$ = $1;
-						  $$->ifaces = $3;
-						  $$->defined = TRUE;
-						}
+						{ $$ = type_coclass_define($1, $3); }
 	;
 
 coclass_ints:					{ $$ = NULL; }

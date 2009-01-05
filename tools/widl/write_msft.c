@@ -2099,6 +2099,7 @@ static void add_coclass_typeinfo(msft_typelib_t *typelib, type_t *cls)
     MSFT_RefRecord *ref, *first = NULL, *first_source = NULL;
     int have_default = 0, have_default_source = 0;
     const attr_t *attr;
+    ifref_list_t *ifaces;
 
     if (-1 < cls->typelib_idx)
         return;
@@ -2106,13 +2107,14 @@ static void add_coclass_typeinfo(msft_typelib_t *typelib, type_t *cls)
     cls->typelib_idx = typelib->typelib_header.nrtypeinfos;
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_COCLASS, cls->name, cls->attrs);
 
-    if (cls->ifaces) LIST_FOR_EACH_ENTRY( iref, cls->ifaces, ifref_t, entry ) num_ifaces++;
+    ifaces = type_coclass_get_ifaces(cls);
+    if (ifaces) LIST_FOR_EACH_ENTRY( iref, ifaces, ifref_t, entry ) num_ifaces++;
 
     offset = msft_typeinfo->typeinfo->datatype1 = ctl2_alloc_segment(typelib, MSFT_SEG_REFERENCES,
                                                                      num_ifaces * sizeof(*ref), 0);
 
     i = 0;
-    if (cls->ifaces) LIST_FOR_EACH_ENTRY( iref, cls->ifaces, ifref_t, entry ) {
+    if (ifaces) LIST_FOR_EACH_ENTRY( iref, ifaces, ifref_t, entry ) {
         if(iref->iface->typelib_idx == -1)
             add_interface_typeinfo(typelib, iref->iface);
         ref = (MSFT_RefRecord*) (typelib->typelib_segment_data[MSFT_SEG_REFERENCES] + offset + i * sizeof(*ref));

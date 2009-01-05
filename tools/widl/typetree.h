@@ -32,6 +32,7 @@ void type_interface_define(type_t *iface, type_t *inherit, statement_list_t *stm
 void type_dispinterface_define(type_t *iface, var_list_t *props, func_list_t *methods);
 void type_dispinterface_define_from_iface(type_t *dispiface, type_t *iface);
 void type_module_define(type_t *module, statement_list_t *stmts);
+type_t *type_coclass_define(type_t *coclass, ifref_list_t *ifaces);
 
 /* FIXME: shouldn't need to export this */
 type_t *duptype(type_t *t, int dupname);
@@ -151,6 +152,12 @@ static inline type_t *type_get_real_type(const type_t *type)
 static inline int type_is_alias(const type_t *type)
 {
     return type->is_alias;
+}
+
+static inline ifref_list_t *type_coclass_get_ifaces(const type_t *type)
+{
+    assert(type->type == RPC_FC_COCLASS);
+    return type->ifaces;
 }
 
 #endif /* WIDL_TYPE_TREE_H */
