@@ -27,15 +27,15 @@ extern "C" {
 
 #ifndef __LHANDLE
 #define __LHANDLE
-typedef unsigned long           LHANDLE, *LPLHANDLE;
+typedef ULONG                   LHANDLE, *LPLHANDLE;
 #endif
 #define lhSessionNull           ((LHANDLE)0)
 
 #ifndef WINE_FLAGS_DEFINED
 #define WINE_FLAGS_DEFINED
-typedef unsigned long           FLAGS;
+typedef ULONG                   FLAGS;
 #endif
-typedef unsigned long*          LPULONG;
+typedef ULONG                  *LPULONG;
 
 typedef struct
 {
