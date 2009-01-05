@@ -309,7 +309,7 @@ void WCMD_print_error (void) {
  *
  */
 
-void WCMD_show_prompt (void) {
+static void WCMD_show_prompt (void) {
 
   int status;
   WCHAR out_string[MAX_PATH], curdir[MAX_PATH], prompt_string[MAX_PATH];
@@ -442,7 +442,7 @@ WCHAR *WCMD_strtrim_leading_spaces (WCHAR *string) {
  *
  *	Remove first and last quote WCHARacters, preserving all other text
  */
-void WCMD_opt_s_strip_quotes(WCHAR *cmd) {
+static void WCMD_opt_s_strip_quotes(WCHAR *cmd) {
   WCHAR *src = cmd + 1, *dest = cmd, *lastq = NULL;
   while((*dest=*src) != '\0') {
       if (*src=='\"')
@@ -761,7 +761,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR *forVar, WCHAR *forVal) {
  * read in and not again, except for 'for' variable substitution.
  * eg. As evidence, "echo %1 && shift && echo %1" or "echo %%path%%"
  */
-void handleExpansion(WCHAR *cmd, BOOL justFors, WCHAR *forVariable, WCHAR *forValue) {
+static void handleExpansion(WCHAR *cmd, BOOL justFors, WCHAR *forVariable, WCHAR *forValue) {
 
   /* For commands in a context (batch program):                  */
   /*   Expand environment variables in a batch file %{0-9} first */
@@ -846,7 +846,7 @@ void handleExpansion(WCHAR *cmd, BOOL justFors, WCHAR *forVariable, WCHAR *forVa
  *	second in p2. Any subsequent non-qualifier strings are lost.
  *	Parameters in quotes are handled.
  */
-void WCMD_parse (WCHAR *s, WCHAR *q, WCHAR *p1, WCHAR *p2)
+static void WCMD_parse (WCHAR *s, WCHAR *q, WCHAR *p1, WCHAR *p2)
 {
   int p = 0;
 
@@ -1612,7 +1612,7 @@ static void WCMD_DumpCommands(CMD_LIST *commands) {
  *
  *   Adds a command to the current command list
  */
-void WCMD_addCommand(WCHAR *command, int *commandLen,
+static void WCMD_addCommand(WCHAR *command, int *commandLen,
                      WCHAR *redirs,  int *redirLen,
                      WCHAR **copyTo, int **copyToLen,
                      CMD_DELIMITERS prevDelim, int curDepth,

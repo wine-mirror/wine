@@ -74,7 +74,7 @@ static const WCHAR spaceW[]  = {' ','\0'};
  *
  * Reverse a WCHARacter string in-place (strrev() is not available under unixen :-( ).
  */
-WCHAR * WCMD_strrev (WCHAR *buff) {
+static WCHAR * WCMD_strrev (WCHAR *buff) {
 
   int r, i;
   WCHAR b;
@@ -95,7 +95,7 @@ WCHAR * WCMD_strrev (WCHAR *buff) {
  * Result is returned in a static string overwritten with each call.
  * FIXME: There must be a better algorithm!
  */
-WCHAR * WCMD_filesize64 (ULONGLONG n) {
+static WCHAR * WCMD_filesize64 (ULONGLONG n) {
 
   ULONGLONG q;
   unsigned int r, i;
@@ -121,7 +121,7 @@ WCHAR * WCMD_filesize64 (ULONGLONG n) {
  *
  * Sort based on the /O options supplied on the command line
  */
-int WCMD_dir_sort (const void *a, const void *b)
+static int WCMD_dir_sort (const void *a, const void *b)
 {
   WIN32_FIND_DATA *filea = (WIN32_FIND_DATA *)a;
   WIN32_FIND_DATA *fileb = (WIN32_FIND_DATA *)b;
@@ -200,7 +200,7 @@ int WCMD_dir_sort (const void *a, const void *b)
  *
  * Reverse a WCHARacter string in-place (strrev() is not available under unixen :-( ).
  */
-void WCMD_getfileowner(WCHAR *filename, WCHAR *owner, int ownerlen) {
+static void WCMD_getfileowner(WCHAR *filename, WCHAR *owner, int ownerlen) {
 
     ULONG sizeNeeded = 0;
     DWORD rc;
