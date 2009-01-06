@@ -34,8 +34,10 @@
 
 /* Error codes could be pre-Win32 */
 #define DE_SAMEFILE     0x71
+#define DE_MANYSRC1DEST 0x72
 #define DE_OPCANCELLED  0x75
 #define DE_DESTSUBTREE  0x76
+#define DE_INVALIDFILES 0x7C
 #define DE_DESTSAMETREE 0x7D
 #define expect_retval(ret, ret_prewin32)\
     ok(retval == ret ||\
@@ -667,8 +669,9 @@ static void test_rename(void)
     shfo.pTo = "a.txt\0";
     retval = SHFileOperationA(&shfo);
     ok(retval == ERROR_GEN_FAILURE ||
+       retval == DE_MANYSRC1DEST || /* Vista */
        broken(!retval), /* Win9x */
-       "Expected ERROR_GEN_FAILURE, got %d\n", retval);
+       "Expected ERROR_GEN_FAILURE or DE_MANYSRC1DEST, got %d\n", retval);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
     ok(file_exists("test2.txt"), "Expected test2.txt to exist\n");
     ok(!file_exists("a.txt"), "Expected a.txt to not exist\n");
@@ -677,7 +680,9 @@ static void test_rename(void)
     shfo.pFrom = "idontexist\0";
     shfo.pTo = "newfile\0";
     retval = SHFileOperationA(&shfo);
-    ok(retval == 1026, "Expected 1026, got %d\n", retval);
+    ok(retval == 1026 ||
+       retval == ERROR_FILE_NOT_FOUND, /* Vista */
+       "Expected 1026 or ERROR_FILE_NOT_FOUND, got %d\n", retval);
     ok(!file_exists("newfile"), "Expected newfile to not exist\n");
 
     /* pTo already exist */
@@ -696,7 +701,9 @@ static void test_rename(void)
     /* pFrom is empty */
     shfo.pFrom = "\0";
     retval = SHFileOperationA(&shfo);
-        ok(retval == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %d\n", retval);
+    ok(retval == ERROR_ACCESS_DENIED ||
+       retval == ERROR_INVALID_TARGET_HANDLE, /* Vista */
+       "Expected ERROR_ACCESS_DENIED or ERROR_INVALID_TARGET_HANDLE, got %d\n", retval);
 
     /* pFrom is NULL, commented out because it crashes on nt 4.0 */
 #if 0
@@ -1227,8 +1234,9 @@ static void test_copy(void)
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperation(&shfo);
     ok(retval == 1148 || retval == 1026 ||
-       retval == ERROR_ACCESS_DENIED, /* win2k */
-       "Expected 1148, 1026 or ERROR_ACCESS_DENIED, got %d\n", retval);
+       retval == ERROR_ACCESS_DENIED || /* win2k */
+       retval == DE_INVALIDFILES, /* Vista */
+       "Unexpected return value, got %d\n", retval);
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
     if (file_exists("two.txt"))
         /* Vista and W2K8 (broken or new behavior ?) */
@@ -1275,8 +1283,9 @@ static void test_copy(void)
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperation(&shfo);
     ok(retval == 1148 || retval == 1026 ||
-       retval == ERROR_ACCESS_DENIED, /* win2k */
-       "Expected 1148, 1026 or ERROR_ACCESS_DENIED, got %d\n", retval);
+       retval == ERROR_ACCESS_DENIED ||  /* win2k */
+       retval == DE_INVALIDFILES, /* Vista */
+       "Unexpected return value, got %d\n", retval);
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
     if (dir_exists("two.txt"))
         /* Vista and W2K8 (broken or new behavior ?) */
@@ -1782,16 +1791,22 @@ static void test_sh_path_prepare(void)
     /* file exists, SHPPFW_NONE */
     set_curr_dir_path(path, "test1.txt\0");
     res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_NONE);
-    ok(res == HRESULT_FROM_WIN32(ERROR_DIRECTORY), "res == 0x%08x, expected HRESULT_FROM_WIN32(ERROR_DIRECTORY)\n", res);
+    ok(res == HRESULT_FROM_WIN32(ERROR_DIRECTORY) ||
+       res == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), /* Vista */
+       "Unexpected result : 0x%08x\n", res);
 
     /* file exists, SHPPFW_DIRCREATE */
     res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_DIRCREATE);
-    ok(res == HRESULT_FROM_WIN32(ERROR_DIRECTORY), "res == 0x%08x, expected HRESULT_FROM_WIN32(ERROR_DIRECTORY)\n", res);
+    ok(res == HRESULT_FROM_WIN32(ERROR_DIRECTORY) ||
+       res == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), /* Vista */
+       "Unexpected result : 0x%08x\n", res);
 
     /* file exists, SHPPFW_NONE, trailing \ */
     set_curr_dir_path(path, "test1.txt\\\0");
     res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_NONE);
-    ok(res == HRESULT_FROM_WIN32(ERROR_DIRECTORY), "res == 0x%08x, expected HRESULT_FROM_WIN32(ERROR_DIRECTORY)\n", res);
+    ok(res == HRESULT_FROM_WIN32(ERROR_DIRECTORY) ||
+       res == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), /* Vista */
+       "Unexpected result : 0x%08x\n", res);
 
     /* relative path exists, SHPPFW_DIRCREATE */
     res = pSHPathPrepareForWriteA(0, 0, ".\\testdir2", SHPPFW_DIRCREATE);
