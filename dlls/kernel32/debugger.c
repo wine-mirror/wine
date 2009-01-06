@@ -25,7 +25,6 @@
 #include "wine/winbase16.h"
 #include "wine/server.h"
 #include "kernel_private.h"
-#include "kernel16_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(debugstr);
@@ -406,24 +405,6 @@ BOOL WINAPI CheckRemoteDebuggerPresent(HANDLE process, PBOOL DebuggerPresent)
     FIXME("(%p)->(%p): Stub!\n", process, DebuggerPresent);
     *DebuggerPresent = FALSE;
     return TRUE;
-}
-
-/***********************************************************************
- *           _DebugOutput                    (KERNEL.328)
- */
-void WINAPIV _DebugOutput( WORD flags, LPCSTR spec, VA_LIST16 valist )
-{
-    char caller[101];
-
-    /* Decode caller address */
-    if (!GetModuleName16( GetExePtr(CURRENT_STACK16->cs), caller, sizeof(caller) ))
-        sprintf( caller, "%04X:%04X", CURRENT_STACK16->cs, CURRENT_STACK16->ip );
-
-    /* FIXME: cannot use wvsnprintf16 from kernel */
-    /* wvsnprintf16( temp, sizeof(temp), spec, valist ); */
-
-    /* Output */
-    FIXME("%s %04x %s\n", caller, flags, debugstr_a(spec) );
 }
 
 /***********************************************************************

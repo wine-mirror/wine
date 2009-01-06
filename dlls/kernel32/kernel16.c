@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -263,4 +264,22 @@ void WINAPI WINHELP_EntryPoint( CONTEXT86 *context )
 
     HeapFree( GetProcessHeap(), 0, cmdline );
     ExitThread( exit_code );
+}
+
+/***********************************************************************
+ *           _DebugOutput                    (KERNEL.328)
+ */
+void WINAPIV _DebugOutput( WORD flags, LPCSTR spec, VA_LIST16 valist )
+{
+    char caller[101];
+
+    /* Decode caller address */
+    if (!GetModuleName16( GetExePtr(CURRENT_STACK16->cs), caller, sizeof(caller) ))
+        sprintf( caller, "%04X:%04X", CURRENT_STACK16->cs, CURRENT_STACK16->ip );
+
+    /* FIXME: cannot use wvsnprintf16 from kernel */
+    /* wvsnprintf16( temp, sizeof(temp), spec, valist ); */
+
+    /* Output */
+    FIXME("%s %04x %s\n", caller, flags, debugstr_a(spec) );
 }
