@@ -421,7 +421,6 @@ void WINAPI __regs_relay_call_regs( struct relay_descr *descr, unsigned int idx,
 {
     WORD ordinal = LOWORD(idx);
     BYTE nb_args = LOBYTE(HIWORD(idx));
-    BYTE flags   = HIBYTE(HIWORD(idx));
     struct relay_private_data *data = descr->private;
     struct relay_entry_point *entry_point = data->entry_points + ordinal;
     BYTE *orig_func = entry_point->orig_func;
@@ -431,8 +430,7 @@ void WINAPI __regs_relay_call_regs( struct relay_descr *descr, unsigned int idx,
     /* restore the context to what it was before the relay thunk */
     context->Eax = orig_eax;
     context->Eip = ret_addr;
-    if (flags & 2)  /* stdcall */
-        context->Esp += nb_args * sizeof(int);
+    context->Esp += nb_args * sizeof(int);
 
     if (TRACE_ON(relay))
     {
@@ -479,7 +477,7 @@ void WINAPI __regs_relay_call_regs( struct relay_descr *descr, unsigned int idx,
     }
 }
 extern void WINAPI relay_call_regs(void);
-DEFINE_REGS_ENTRYPOINT( relay_call_regs, 16, 16 )
+DEFINE_REGS_ENTRYPOINT( relay_call_regs, 4 )
 #endif
 
 
@@ -973,8 +971,8 @@ void WINAPI __regs_SNOOP_Return( CONTEXT86 *context )
 }
 
 /* assembly wrappers that save the context */
-DEFINE_REGS_ENTRYPOINT( SNOOP_Entry, 0, 0 )
-DEFINE_REGS_ENTRYPOINT( SNOOP_Return, 0, 0 )
+DEFINE_REGS_ENTRYPOINT( SNOOP_Entry, 0 )
+DEFINE_REGS_ENTRYPOINT( SNOOP_Return, 0 )
 
 #else  /* __i386__ */
 

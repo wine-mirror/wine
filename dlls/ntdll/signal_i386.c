@@ -896,7 +896,7 @@ void WINAPI __regs_get_cpu_context( CONTEXT *context, CONTEXT *regs )
     if (fpux_support) save_fpux( context );
     else save_fpu( context );
 }
-DEFINE_REGS_ENTRYPOINT( get_cpu_context, 4, 4 )
+DEFINE_REGS_ENTRYPOINT( get_cpu_context, 1 )
 
 
 /***********************************************************************
