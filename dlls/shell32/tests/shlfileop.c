@@ -1107,8 +1107,8 @@ static void test_copy(void)
     shfo.fAnyOperationsAborted = FALSE;
     shfo.fFlags = FOF_NOERRORUI | FOF_MULTIDESTFILES;
     retval = SHFileOperation(&shfo);
-    ok(retval == ERROR_NO_MORE_SEARCH_HANDLES,
-       "Expected ERROR_NO_MORE_SEARCH_HANDLES, got %d\n", retval);
+    ok(retval == DE_SAMEFILE,
+       "Expected DE_SAMEFILE, got %d\n", retval);
     ok(!shfo.fAnyOperationsAborted, "Expected no operations to be aborted\n");
     ok(DeleteFile("b.txt"), "Expected b.txt to exist\n");
     ok(!file_exists("c.txt"), "Expected c.txt to not exist\n");
