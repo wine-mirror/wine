@@ -469,7 +469,7 @@ static	void	dump_dir_exported_functions(void)
     const DWORD*		pFunc;
     const DWORD*		pName;
     const WORD* 		pOrdl;
-    DWORD*		        map;
+    DWORD*		        funcs;
 
     if (!exportDir) return;
 
@@ -496,37 +496,27 @@ static	void	dump_dir_exported_functions(void)
     pOrdl = RVA(exportDir->AddressOfNameOrdinals, exportDir->NumberOfNames * sizeof(WORD));
     if (!pOrdl) {printf("Can't grab functions' ordinal table\n"); return;}
 
-    /* bit map of used funcs */
-    map = calloc(((exportDir->NumberOfFunctions + 31) & ~31) / 32, sizeof(DWORD));
-    if (!map) fatal("no memory");
+    funcs = calloc( exportDir->NumberOfFunctions, sizeof(*funcs) );
+    if (!funcs) fatal("no memory");
 
-    for (i = 0; i < exportDir->NumberOfNames; i++, pName++, pOrdl++)
-    {
-	map[*pOrdl / 32] |= 1 << (*pOrdl % 32);
+    for (i = 0; i < exportDir->NumberOfNames; i++) funcs[pOrdl[i]] = pName[i];
 
-        printf("  %08X  %4u %s", pFunc[*pOrdl], exportDir->Base + *pOrdl,
-               get_symbol_str((const char*)RVA(*pName, sizeof(DWORD))));
-        /* check for forwarded function */
-        if ((const char *)RVA(pFunc[*pOrdl],sizeof(void*)) >= (const char *)exportDir &&
-            (const char *)RVA(pFunc[*pOrdl],sizeof(void*)) < (const char *)exportDir + size)
-            printf( " (-> %s)", (const char *)RVA(pFunc[*pOrdl],1));
-        printf("\n");
-    }
-    pFunc = RVA(exportDir->AddressOfFunctions, exportDir->NumberOfFunctions * sizeof(DWORD));
-    if (!pFunc)
-    {
-        printf("Can't grab functions' address table\n");
-        free(map);
-        return;
-    }
     for (i = 0; i < exportDir->NumberOfFunctions; i++)
     {
-	if (pFunc[i] && !(map[i / 32] & (1 << (i % 32))))
-	{
-            printf("  %08X  %4u <by ordinal>\n", pFunc[i], exportDir->Base + i);
-	}
+        if (!pFunc[i]) continue;
+        printf("  %08X %5u ", pFunc[i], exportDir->Base + i);
+        if (funcs[i])
+        {
+            printf("%s", get_symbol_str((const char*)RVA(funcs[i], sizeof(DWORD))));
+            /* check for forwarded function */
+            if ((const char *)RVA(pFunc[i],1) >= (const char *)exportDir &&
+                (const char *)RVA(pFunc[i],1) < (const char *)exportDir + size)
+                printf(" (-> %s)", (const char *)RVA(pFunc[i],1));
+            printf("\n");
+        }
+        else printf("<by ordinal>\n");
     }
-    free(map);
+    free(funcs);
     printf("\n");
 }
 
