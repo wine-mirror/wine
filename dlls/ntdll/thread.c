@@ -1134,7 +1134,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
     {
         if (needed_flags)
         {
-            get_cpu_context( &ctx );
+            RtlCaptureContext( &ctx );
             copy_context( context, &ctx, ctx.ContextFlags & needed_flags );
         }
 #ifdef __i386__

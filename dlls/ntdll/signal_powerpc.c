@@ -268,13 +268,12 @@ static inline void restore_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
 
 
 /***********************************************************************
- *              get_cpu_context
- *
- * Get the context of the current thread.
+ *		RtlCaptureContext (NTDLL.@)
  */
-void get_cpu_context( CONTEXT *context )
+void WINAPI RtlCaptureContext( CONTEXT *context )
 {
     FIXME("not implemented\n");
+    memset( context, 0, sizeof(*context) );
 }
 
 

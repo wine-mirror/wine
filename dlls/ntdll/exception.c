@@ -400,25 +400,6 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
     return status;
 }
 
-/***********************************************************************
- *		RtlCaptureContext (NTDLL.@)
- */
-void WINAPI __regs_RtlCaptureContext( CONTEXT *context_out, CONTEXT *context_in )
-{
-    *context_out = *context_in;
-}
-
-/**********************************************************************/
-
-#ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( RtlCaptureContext, 1 )
-#else
-void WINAPI RtlCaptureContext( CONTEXT *context_out )
-{
-    memset( context_out, 0, sizeof(*context_out) );
-}
-#endif
-
 
 /***********************************************************************
  *		RtlRaiseException (NTDLL.@)

@@ -886,17 +886,15 @@ static inline void restore_context( const CONTEXT *context, SIGCONTEXT *sigconte
 
 
 /***********************************************************************
- *              get_cpu_context
- *
- * Register function to get the context of the current thread.
+ *		RtlCaptureContext (NTDLL.@)
  */
-void WINAPI __regs_get_cpu_context( CONTEXT *context, CONTEXT *regs )
+void WINAPI __regs_RtlCaptureContext( CONTEXT *context, CONTEXT *regs )
 {
     *context = *regs;
     if (fpux_support) save_fpux( context );
     else save_fpu( context );
 }
-DEFINE_REGS_ENTRYPOINT( get_cpu_context, 1 )
+DEFINE_REGS_ENTRYPOINT( RtlCaptureContext, 1 )
 
 
 /***********************************************************************

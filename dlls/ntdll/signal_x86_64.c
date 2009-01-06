@@ -199,14 +199,13 @@ static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
 
 
 /***********************************************************************
- *              get_cpu_context
- *
- * Get the context of the current thread.
+ *		RtlCaptureContext (NTDLL.@)
  */
-void get_cpu_context( CONTEXT *context )
+void WINAPI __regs_RtlCaptureContext( CONTEXT *context, CONTEXT *regs )
 {
-    FIXME("not implemented\n");
+    *context = *regs;
 }
+DEFINE_REGS_ENTRYPOINT( RtlCaptureContext, 1 )
 
 
 /***********************************************************************
