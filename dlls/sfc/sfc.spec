@@ -1,6 +1,6 @@
 1 stub @
 2 stub @
-3 stub @
+3 stdcall @(long) SFC_3
 4 stub @
 5 stub @
 6 stub @
