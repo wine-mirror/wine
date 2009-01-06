@@ -685,6 +685,12 @@ BOOL WINAPI WTOverlap(HCTX hCtx, BOOL fToTop)
 
     EnterCriticalSection(&csTablet);
     context = TABLET_FindOpenContext(hCtx);
+    if (!context)
+    {
+        LeaveCriticalSection(&csTablet);
+        return FALSE;
+    }
+
     /* if we want to send to top and it's not already there */
     if (fToTop && context->context.lcStatus != CXS_ONTOP)
     {
@@ -777,6 +783,12 @@ BOOL WINAPI WTSetA(HCTX hCtx, LPLOGCONTEXTA lpLogCtx)
 
     EnterCriticalSection(&csTablet);
     context = TABLET_FindOpenContext(hCtx);
+    if (!context)
+    {
+        LeaveCriticalSection(&csTablet);
+        return FALSE;
+    }
+
     LOGCONTEXTAtoW(lpLogCtx, &context->context);
     LeaveCriticalSection(&csTablet);
 
@@ -799,6 +811,12 @@ BOOL WINAPI WTSetW(HCTX hCtx, LPLOGCONTEXTW lpLogCtx)
 
     EnterCriticalSection(&csTablet);
     context = TABLET_FindOpenContext(hCtx);
+    if (!context)
+    {
+        LeaveCriticalSection(&csTablet);
+        return FALSE;
+    }
+
     memmove(&context->context, lpLogCtx, sizeof(LOGCONTEXTW));
     LeaveCriticalSection(&csTablet);
 
