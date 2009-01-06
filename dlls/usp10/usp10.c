@@ -1322,10 +1322,12 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
         for (i = 0; i < cChars; i++)
         {
             /* FIXME: set to better values */
-            psva[i].uJustification = 2;
+            psva[i].uJustification = (pwcChars[i] == ' ') ? SCRIPT_JUSTIFY_BLANK : SCRIPT_JUSTIFY_CHARACTER;
             psva[i].fClusterStart  = 1;
             psva[i].fDiacritic     = 0;
             psva[i].fZeroWidth     = 0;
+            psva[i].fReserved      = 0;
+            psva[i].fShapeReserved = 0;
 
             if (pwLogClust) pwLogClust[i] = i;
         }
