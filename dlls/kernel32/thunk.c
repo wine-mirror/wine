@@ -2326,3 +2326,233 @@ void WINAPI Throw16( LPCATCHBUF lpbuf, INT16 retval, CONTEXT86 *context )
     if (lpbuf[8] != context->SegSs)
         ERR("Switching stack segment with Throw() not supported; expect crash now\n" );
 }
+
+
+/*
+ *  16-bit WOW routines (in KERNEL)
+ */
+
+/**********************************************************************
+ *           GetVDMPointer32W      (KERNEL.516)
+ */
+DWORD WINAPI GetVDMPointer32W16( SEGPTR vp, UINT16 fMode )
+{
+    GlobalPageLock16(GlobalHandle16(SELECTOROF(vp)));
+    return (DWORD)K32WOWGetVDMPointer( vp, 0, (DWORD)fMode );
+}
+
+/***********************************************************************
+ *           LoadLibraryEx32W      (KERNEL.513)
+ */
+DWORD WINAPI LoadLibraryEx32W16( LPCSTR lpszLibFile, DWORD hFile, DWORD dwFlags )
+{
+    HMODULE hModule;
+    DWORD mutex_count;
+    OFSTRUCT ofs;
+    const char *p;
+
+    if (!lpszLibFile)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    /* if the file cannot be found, call LoadLibraryExA anyway, since it might be
+       a builtin module. This case is handled in MODULE_LoadLibraryExA */
+
+    if ((p = strrchr( lpszLibFile, '.' )) && !strchr( p, '\\' ))  /* got an extension */
+    {
+        if (OpenFile16( lpszLibFile, &ofs, OF_EXIST ) != HFILE_ERROR16)
+            lpszLibFile = ofs.szPathName;
+    }
+    else
+    {
+        char buffer[MAX_PATH+4];
+        strcpy( buffer, lpszLibFile );
+        strcat( buffer, ".dll" );
+        if (OpenFile16( buffer, &ofs, OF_EXIST ) != HFILE_ERROR16)
+            lpszLibFile = ofs.szPathName;
+    }
+
+    ReleaseThunkLock( &mutex_count );
+    hModule = LoadLibraryExA( lpszLibFile, (HANDLE)hFile, dwFlags );
+    RestoreThunkLock( mutex_count );
+
+    return (DWORD)hModule;
+}
+
+/***********************************************************************
+ *           GetProcAddress32W     (KERNEL.515)
+ */
+DWORD WINAPI GetProcAddress32W16( DWORD hModule, LPCSTR lpszProc )
+{
+    return (DWORD)GetProcAddress( (HMODULE)hModule, lpszProc );
+}
+
+/***********************************************************************
+ *           FreeLibrary32W        (KERNEL.514)
+ */
+DWORD WINAPI FreeLibrary32W16( DWORD hLibModule )
+{
+    BOOL retv;
+    DWORD mutex_count;
+
+    ReleaseThunkLock( &mutex_count );
+    retv = FreeLibrary( (HMODULE)hLibModule );
+    RestoreThunkLock( mutex_count );
+    return (DWORD)retv;
+}
+
+
+#define CPEX_DEST_STDCALL   0x00000000
+#define CPEX_DEST_CDECL     0x80000000
+
+/**********************************************************************
+ *           WOW_CallProc32W
+ */
+static DWORD WOW_CallProc32W16( FARPROC proc32, DWORD nrofargs, DWORD *args )
+{
+    DWORD ret;
+    DWORD mutex_count;
+
+    ReleaseThunkLock( &mutex_count );
+
+    /*
+     * FIXME:  If ( nrofargs & CPEX_DEST_CDECL ) != 0, we should call a
+     *         32-bit CDECL routine ...
+     */
+
+    if (!proc32) ret = 0;
+    else switch (nrofargs)
+    {
+    case 0: ret = proc32();
+            break;
+    case 1: ret = proc32(args[0]);
+            break;
+    case 2: ret = proc32(args[0],args[1]);
+            break;
+    case 3: ret = proc32(args[0],args[1],args[2]);
+            break;
+    case 4: ret = proc32(args[0],args[1],args[2],args[3]);
+            break;
+    case 5: ret = proc32(args[0],args[1],args[2],args[3],args[4]);
+            break;
+    case 6: ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5]);
+            break;
+    case 7: ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6]);
+            break;
+    case 8: ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7]);
+            break;
+    case 9: ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8]);
+            break;
+    case 10:ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9]);
+            break;
+    case 11:ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10]);
+            break;
+    case 12:ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11]);
+            break;
+    case 13:ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12]);
+            break;
+    case 14:ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13]);
+            break;
+    case 15:ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14]);
+            break;
+    default:
+            /* FIXME: should go up to 32  arguments */
+            ERR("Unsupported number of arguments %d, please report.\n",nrofargs);
+            ret = 0;
+            break;
+    }
+
+    RestoreThunkLock( mutex_count );
+
+    TRACE("returns %08x\n",ret);
+    return ret;
+}
+
+/**********************************************************************
+ *           CallProc32W           (KERNEL.517)
+ */
+DWORD WINAPIV CallProc32W16( DWORD nrofargs, DWORD argconvmask, FARPROC proc32, VA_LIST16 valist )
+{
+    DWORD args[32];
+    unsigned int i;
+
+    TRACE("(%d,%d,%p args[",nrofargs,argconvmask,proc32);
+
+    for (i=0;i<nrofargs;i++)
+    {
+        if (argconvmask & (1<<i))
+        {
+            SEGPTR ptr = VA_ARG16( valist, SEGPTR );
+            /* pascal convention, have to reverse the arguments order */
+            args[nrofargs - i - 1] = (DWORD)MapSL(ptr);
+            TRACE("%08x(%p),",ptr,MapSL(ptr));
+        }
+        else
+        {
+            DWORD arg = VA_ARG16( valist, DWORD );
+            /* pascal convention, have to reverse the arguments order */
+            args[nrofargs - i - 1] = arg;
+            TRACE("%d,", arg);
+        }
+    }
+    TRACE("])\n");
+
+    /* POP nrofargs DWORD arguments and 3 DWORD parameters */
+    stack16_pop( (3 + nrofargs) * sizeof(DWORD) );
+
+    return WOW_CallProc32W16( proc32, nrofargs, args );
+}
+
+/**********************************************************************
+ *           _CallProcEx32W         (KERNEL.518)
+ */
+DWORD WINAPIV CallProcEx32W16( DWORD nrofargs, DWORD argconvmask, FARPROC proc32, VA_LIST16 valist )
+{
+    DWORD args[32];
+    unsigned int i;
+
+    TRACE("(%d,%d,%p args[",nrofargs,argconvmask,proc32);
+
+    for (i=0;i<nrofargs;i++)
+    {
+        if (argconvmask & (1<<i))
+        {
+            SEGPTR ptr = VA_ARG16( valist, SEGPTR );
+            args[i] = (DWORD)MapSL(ptr);
+            TRACE("%08x(%p),",ptr,MapSL(ptr));
+        }
+        else
+        {
+            DWORD arg = VA_ARG16( valist, DWORD );
+            args[i] = arg;
+            TRACE("%d,", arg);
+        }
+    }
+    TRACE("])\n");
+    return WOW_CallProc32W16( proc32, nrofargs, args );
+}
+
+
+/**********************************************************************
+ *           WOW16Call               (KERNEL.500)
+ *
+ * FIXME!!!
+ *
+ */
+DWORD WINAPIV WOW16Call(WORD x, WORD y, WORD z, VA_LIST16 args)
+{
+        int     i;
+        DWORD   calladdr;
+        FIXME("(0x%04x,0x%04x,%d),calling (",x,y,z);
+
+        for (i=0;i<x/2;i++) {
+                WORD    a = VA_ARG16(args,WORD);
+                DPRINTF("%04x ",a);
+        }
+        calladdr = VA_ARG16(args,DWORD);
+        stack16_pop( 3*sizeof(WORD) + x + sizeof(DWORD) );
+        DPRINTF(") calling address was 0x%08x\n",calladdr);
+        return 0;
+}
