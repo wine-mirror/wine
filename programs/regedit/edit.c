@@ -49,19 +49,19 @@ struct edit_params
 
 static INT vmessagebox(HWND hwnd, INT buttons, INT titleId, INT resId, va_list ap)
 {
-    TCHAR title[256];
-    TCHAR errfmt[1024];
-    TCHAR errstr[1024];
+    static const WCHAR errorW[] = {'E','r','r','o','r',0};
+    static const WCHAR unknownW[] = {'U','n','k','n','o','w','n',' ','e','r','r','o','r',' ','s','t','r','i','n','g','!',0};
 
-    if (!LoadString(hInst, titleId, title, COUNT_OF(title)))
-        lstrcpy(title, "Error");
+    WCHAR title[256];
+    WCHAR errfmt[1024];
+    WCHAR errstr[1024];
 
-    if (!LoadString(hInst, resId, errfmt, COUNT_OF(errfmt)))
-        lstrcpy(errfmt, "Unknown error string!");
+    if (!LoadStringW(hInst, titleId, title, COUNT_OF(title))) lstrcpyW(title, errorW);
+    if (!LoadStringW(hInst, resId, errfmt, COUNT_OF(errfmt))) lstrcpyW(errfmt, unknownW);
 
-    _vsntprintf(errstr, COUNT_OF(errstr), errfmt, ap);
+    vsnprintfW(errstr, COUNT_OF(errstr), errfmt, ap);
 
-    return MessageBox(hwnd, errstr, title, buttons);
+    return MessageBoxW(hwnd, errstr, title, buttons);
 }
 
 static INT messagebox(HWND hwnd, INT buttons, INT titleId, INT resId, ...)
@@ -401,7 +401,6 @@ BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath)
     BOOL result = FALSE;
     LONG lRet;
     HKEY hKey;
-    CHAR* keyPathA = GetMultiByteString(keyPath);
 
     lRet = RegOpenKeyExW(hKeyRoot, keyPath, 0, KEY_READ|KEY_SET_VALUE, &hKey);
     if (lRet != ERROR_SUCCESS) {
@@ -409,7 +408,7 @@ BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath)
 	return FALSE;
     }
     
-    if (messagebox(hwnd, MB_YESNO | MB_ICONEXCLAMATION, IDS_DELETE_BOX_TITLE, IDS_DELETE_BOX_TEXT, keyPathA) != IDYES)
+    if (messagebox(hwnd, MB_YESNO | MB_ICONEXCLAMATION, IDS_DELETE_BOX_TITLE, IDS_DELETE_BOX_TEXT, keyPath) != IDYES)
 	goto done;
 	
     lRet = SHDeleteKeyW(hKeyRoot, keyPath);
@@ -421,7 +420,6 @@ BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath)
     
 done:
     RegCloseKey(hKey);
-    HeapFree(GetProcessHeap(), 0, keyPathA);
     return result;
 }
 

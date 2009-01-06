@@ -757,9 +757,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     SetFocus(g_pChildWnd->hTreeWnd);
                 }
             } else {
-                CHAR* searchStringA = GetMultiByteString(searchString);
-                error(hWnd, IDS_NOTFOUND, searchStringA);
-                HeapFree(GetProcessHeap(), 0, searchStringA);
+                error(hWnd, IDS_NOTFOUND, searchString);
             }
         }
         break;
