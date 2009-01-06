@@ -40,10 +40,12 @@ DECLARE_HANDLE(HSTRING_TABLE);
 #define ST_CASE_SENSITIVE_COMPARE	0x00000001
 
 static DWORD    (WINAPI *pStringTableAddString)(HSTRING_TABLE, LPWSTR, DWORD);
+static DWORD    (WINAPI *pStringTableAddStringEx)(HSTRING_TABLE, LPWSTR, DWORD, LPVOID, DWORD);
 static VOID     (WINAPI *pStringTableDestroy)(HSTRING_TABLE);
 static HSTRING_TABLE (WINAPI *pStringTableDuplicate)(HSTRING_TABLE hStringTable);
 static HSTRING_TABLE (WINAPI *pStringTableInitialize)(VOID);
 static DWORD    (WINAPI *pStringTableLookUpString)(HSTRING_TABLE, LPWSTR, DWORD);
+static DWORD    (WINAPI *pStringTableLookUpStringEx)(HSTRING_TABLE, LPWSTR, DWORD, LPVOID, LPDWORD);
 static LPWSTR   (WINAPI *pStringTableStringFromId)(HSTRING_TABLE, DWORD);
 #if 0
 static BOOL     (WINAPI *pStringTableStringFromIdEx)(HSTRING_TABLE, DWORD, LPWSTR, LPDWORD);
@@ -67,6 +69,10 @@ static void load_it_up(void)
     if (!pStringTableAddString)
         pStringTableAddString = (void*)GetProcAddress(hdll, "pSetupStringTableAddString");
 
+    pStringTableAddStringEx = (void*)GetProcAddress(hdll, "StringTableAddStringEx");
+    if (!pStringTableAddStringEx)
+        pStringTableAddStringEx = (void*)GetProcAddress(hdll, "pSetupStringTableAddStringEx");
+
     pStringTableDuplicate = (void*)GetProcAddress(hdll, "StringTableDuplicate");
     if (!pStringTableDuplicate)
         pStringTableDuplicate = (void*)GetProcAddress(hdll, "pSetupStringTableDuplicate");
@@ -78,6 +84,10 @@ static void load_it_up(void)
     pStringTableLookUpString = (void*)GetProcAddress(hdll, "StringTableLookUpString");
     if (!pStringTableLookUpString)
         pStringTableLookUpString = (void*)GetProcAddress(hdll, "pSetupStringTableLookUpString");
+
+    pStringTableLookUpStringEx = (void*)GetProcAddress(hdll, "StringTableLookUpStringEx");
+    if (!pStringTableLookUpStringEx)
+        pStringTableLookUpStringEx = (void*)GetProcAddress(hdll, "pSetupStringTableLookUpStringEx");
 
     pStringTableStringFromId = (void*)GetProcAddress(hdll, "StringTableStringFromId");
     if (!pStringTableStringFromId)
@@ -107,6 +117,33 @@ static void test_StringTableAddString(void)
     /* case sensitive */    
     hString=pStringTableAddString(table,String,ST_CASE_SENSITIVE_COMPARE);
     ok(hstring!=hString,"String handle and string share same ID %x in Table\n", hstring);        
+
+    pStringTableDestroy(table);
+}
+
+static void test_StringTableAddStringEx(void)
+{
+    DWORD retval, hstring, hString, hfoo;
+    HANDLE table;
+
+    table = pStringTableInitialize();
+    ok(table != NULL,"Failed to Initialize String Table\n");
+
+    /* case insensitive */
+    hstring = pStringTableAddStringEx(table, string, 0, NULL, 0);
+    ok(hstring != ~0u, "Failed to add string to String Table\n");
+
+    retval = pStringTableAddStringEx(table, String, 0, NULL, 0);
+    ok(retval != ~0u, "Failed to add String to String Table\n");
+    ok(hstring == retval, "string handle %x != String handle %x in String Table\n", hstring, retval);
+
+    hfoo = pStringTableAddStringEx(table, foo, 0, NULL, 0);
+    ok(hfoo != ~0u, "Failed to add foo to String Table\n");
+    ok(hfoo != hstring, "foo and string share the same ID %x in String Table\n", hfoo);
+
+    /* case sensitive */
+    hString = pStringTableAddStringEx(table, String, ST_CASE_SENSITIVE_COMPARE, NULL, 0);
+    ok(hstring != hString, "String handle and string share same ID %x in Table\n", hstring);
 
     pStringTableDestroy(table);
 }
@@ -182,6 +219,62 @@ static void test_StringTableLookUpString(void)
     pStringTableDestroy(table2);
 }
 
+static void test_StringTableLookUpStringEx(void)
+{
+    DWORD retval, retval2, hstring, hString, hfoo;
+    HANDLE table, table2;
+
+    table = pStringTableInitialize();
+    ok(table != NULL,"Failed to Initialize String Table\n");
+
+    hstring = pStringTableAddString(table, string, 0);
+    ok(hstring != ~0u, "failed to add 'string' to string table\n");
+
+    hString = pStringTableAddString(table, String, 0);
+    ok(hString != ~0u,"failed to add 'String' to string table\n");
+
+    hfoo = pStringTableAddString(table, foo, 0);
+    ok(hfoo != ~0u, "failed to add 'foo' to string table\n");
+
+    table2 = pStringTableDuplicate(table);
+    ok(table2 != NULL, "Failed to duplicate String Table\n");
+
+    /* case insensitive */
+    retval = pStringTableLookUpStringEx(table, string, 0, NULL, NULL);
+    ok(retval != ~0u, "Failed find string in String Table 1\n");
+    ok(retval == hstring,
+        "Lookup for string (%x) does not match previous handle (%x) in String Table 1\n",
+        retval, hstring);
+
+    retval = pStringTableLookUpStringEx(table2, string, 0, NULL, NULL);
+    ok(retval != ~0u, "Failed find string in String Table 2\n");
+
+    retval = pStringTableLookUpStringEx(table, String, 0, NULL, NULL);
+    ok(retval != ~0u, "Failed find String in String Table 1\n");
+
+    retval = pStringTableLookUpStringEx(table2, String, 0, NULL, NULL);
+    ok(retval != ~0u, "Failed find String in String Table 2\n");
+
+    retval=pStringTableLookUpStringEx(table, foo, 0, NULL, NULL);
+    ok(retval != ~0u, "Failed find foo in String Table 1\n");
+    ok(retval == hfoo,
+        "Lookup for foo (%x) does not match previous handle (%x) in String Table 1\n",
+        retval, hfoo);
+
+    retval = pStringTableLookUpStringEx(table2, foo, 0, NULL, NULL);
+    ok(retval != ~0u, "Failed find foo in String Table 2\n");
+
+    /* case sensitive */
+    retval = pStringTableLookUpStringEx(table, string,ST_CASE_SENSITIVE_COMPARE, NULL, NULL);
+    retval2 = pStringTableLookUpStringEx(table, String, ST_CASE_SENSITIVE_COMPARE, NULL, NULL);
+    ok(retval != retval2, "Lookup of string equals String in Table 1\n");
+    ok(retval == hString,
+        "Lookup for String (%x) does not match previous handle (%x) in String Table 1\n",
+        retval, hString);
+
+    pStringTableDestroy(table);
+}
+
 static void test_StringTableStringFromId(void)
 {
     HANDLE table;
@@ -210,7 +303,9 @@ START_TEST(stringtable)
     load_it_up();
 
     test_StringTableAddString();
+    test_StringTableAddStringEx();
     test_StringTableDuplicate();
     test_StringTableLookUpString();
+    test_StringTableLookUpStringEx();
     test_StringTableStringFromId();
 }
