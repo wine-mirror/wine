@@ -1287,7 +1287,9 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
     HRESULT hr;
     unsigned int i;
 
-    TRACE("(%p, %p, %p, %d, %d, %p)\n",  hdc, psc, pwcChars, cChars, cMaxGlyphs, psa);
+    TRACE("(%p, %p, %s, %d, %d, %p, %p, %p, %p, %p)\n", hdc, psc, debugstr_wn(pwcChars, cChars),
+          cChars, cMaxGlyphs, psa, pwOutGlyphs, pwLogClust, psva, pcGlyphs);
+
     if (psa) TRACE("psa values: %d, %d, %d, %d, %d, %d, %d\n", psa->eScript, psa->fRTL, psa->fLayoutRTL,
                    psa->fLinkBefore, psa->fLinkAfter, psa->fLogicalOrder, psa->fNoGlyphIndex);
 
@@ -1362,8 +1364,8 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
     HRESULT hr;
     int i;
 
-    TRACE("(%p, %p, %p, %s, %d, %p, %p, %p)\n",  hdc, psc, pwGlyphs,
-          debugstr_wn(pwGlyphs, cGlyphs), cGlyphs, psva, psa, piAdvance);
+    TRACE("(%p, %p, %p, %d, %p, %p, %p, %p, %p)\n",  hdc, psc, pwGlyphs, cGlyphs, psva, psa,
+          piAdvance, pGoffset, pABC);
 
     if (!psva) return E_INVALIDARG;
     if ((hr = init_script_cache(hdc, psc)) != S_OK) return hr;
