@@ -116,9 +116,7 @@ int is_void(const type_t *t)
 
 int is_conformant_array(const type_t *t)
 {
-    return t->type == RPC_FC_CARRAY
-        || t->type == RPC_FC_CVARRAY
-        || (t->type == RPC_FC_BOGUS_ARRAY && type_array_has_conformance(t));
+    return is_array(t) && type_array_has_conformance(t);
 }
 
 void write_guid(FILE *f, const char *guid_prefix, const char *name, const UUID *uuid)
@@ -186,7 +184,7 @@ static void write_enums(FILE *h, var_list_t *enums)
 int needs_space_after(type_t *t)
 {
   return (type_is_alias(t) ||
-          (!is_ptr(t) && (!is_conformant_array(t) || t->declarray)));
+          (!is_ptr(t) && (!is_conformant_array(t) || t->declarray || (is_array(t) && t->name))));
 }
 
 void write_type_left(FILE *h, type_t *t, int declonly)
@@ -202,7 +200,11 @@ void write_type_left(FILE *h, type_t *t, int declonly)
   else {
     if (t->sign > 0) fprintf(h, "signed ");
     else if (t->sign < 0) fprintf(h, "unsigned ");
-    switch (t->type) {
+
+    if (is_array(t) && !t->name) {
+      write_type_left(h, type_array_get_element(t), declonly);
+      fprintf(h, "%s*", needs_space_after(type_array_get_element(t)) ? " " : "");
+    } else switch (t->type) {
       case RPC_FC_ENUM16:
       case RPC_FC_ENUM32:
         if (!declonly && t->defined && !t->written) {
@@ -256,12 +258,6 @@ void write_type_left(FILE *h, type_t *t, int declonly)
         write_type_left(h, type_pointer_get_ref(t), declonly);
         fprintf(h, "%s*", needs_space_after(type_pointer_get_ref(t)) ? " " : "");
         if (is_attr(t->attrs, ATTR_CONST)) fprintf(h, "const ");
-        break;
-      case RPC_FC_CARRAY:
-      case RPC_FC_CVARRAY:
-      case RPC_FC_BOGUS_ARRAY:
-        write_type_left(h, type_array_get_element(t), declonly);
-        fprintf(h, "%s*", needs_space_after(type_array_get_element(t)) ? " " : "");
         break;
       default:
         fprintf(h, "%s", t->name);

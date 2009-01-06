@@ -190,8 +190,13 @@ unsigned short get_type_vt(type_t *t)
   case RPC_FC_UP:
   case RPC_FC_OP:
   case RPC_FC_FP:
+  case RPC_FC_SMFARRAY:
+  case RPC_FC_LGFARRAY:
+  case RPC_FC_SMVARRAY:
+  case RPC_FC_LGVARRAY:
   case RPC_FC_CARRAY:
   case RPC_FC_CVARRAY:
+  case RPC_FC_BOGUS_ARRAY:
     if(t->ref)
     {
       if (match(t->ref->name, "SAFEARRAY"))

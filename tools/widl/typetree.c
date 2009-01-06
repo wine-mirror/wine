@@ -78,6 +78,20 @@ type_t *type_new_module(char *name)
     return type;
 }
 
+type_t *type_new_array(const char *name, type_t *element, int declarray,
+                       unsigned long dim, expr_t *size_is, expr_t *length_is)
+{
+    type_t *t = make_type(RPC_FC_LGFARRAY, element);
+    if (name) t->name = xstrdup(name);
+    t->declarray = declarray;
+    t->details.array.length_is = length_is;
+    if (size_is)
+        t->details.array.size_is = size_is;
+    else
+        t->details.array.dim = dim;
+    return t;
+}
+
 static int compute_method_indexes(type_t *iface)
 {
     int idx;

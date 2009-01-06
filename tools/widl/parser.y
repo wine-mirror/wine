@@ -1404,9 +1404,9 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
 {
   expr_list_t *sizes = get_attrp(v->attrs, ATTR_SIZEIS);
   expr_list_t *lengs = get_attrp(v->attrs, ATTR_LENGTHIS);
-  int sizeless, has_varconf;
+  int sizeless;
   expr_t *dim;
-  type_t *atype, **ptype;
+  type_t **ptype;
   array_dims_t *arr = decl ? decl->array : NULL;
   type_t *func_type = decl ? decl->func_type : NULL;
   type_t *type = decl_spec->type;
@@ -1469,6 +1469,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
       error_loc("'%s': [v1_enum] attribute applied to non-enum type\n", v->name);
   }
 
+  ptype = &v->type;
   sizeless = FALSE;
   if (arr) LIST_FOR_EACH_ENTRY_REV(dim, arr, expr_t, entry)
   {
@@ -1477,35 +1478,46 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
 
     if (dim->is_const)
     {
-      v->type = make_type(RPC_FC_LGFARRAY, v->type);
+      if (dim->cval <= 0)
+        error_loc("%s: array dimension must be positive\n", v->name);
+
+      /* FIXME: should use a type_memsize that allows us to pass in a pointer size */
+      if (0)
+      {
+        unsigned int align = 0;
+        size_t size = type_memsize(v->type, &align);
+
+        if (0xffffffffuL / size < (unsigned long) dim->cval)
+          error_loc("%s: total array size is too large\n", v->name);
+      }
     }
     else
-    {
       sizeless = TRUE;
-      v->type = make_type(RPC_FC_CARRAY, v->type);
-    }
 
-    v->type->declarray = TRUE;
-    v->type->details.array.dim = dim->cval;
+    *ptype = type_new_array(NULL, *ptype, TRUE,
+                            dim->is_const ? dim->cval : 0,
+                            dim->is_const ? NULL : dim, NULL);
   }
 
   ptype = &v->type;
-  has_varconf = FALSE;
   if (sizes) LIST_FOR_EACH_ENTRY(dim, sizes, expr_t, entry)
   {
     if (dim->type != EXPR_VOID)
     {
-      has_varconf = TRUE;
-      atype = *ptype = duptype(*ptype, 0);
-
-      if (atype->type == RPC_FC_SMFARRAY || atype->type == RPC_FC_LGFARRAY)
-        error_loc("%s: cannot specify size_is for a fixed sized array\n", v->name);
-
-      if (atype->type != RPC_FC_CARRAY && !is_ptr(atype))
+      if (is_array(*ptype))
+      {
+        if (type_array_get_conformance(*ptype)->is_const)
+          error_loc("%s: cannot specify size_is for a fixed sized array\n", v->name);
+        else
+          *ptype = type_new_array((*ptype)->name,
+                                  type_array_get_element(*ptype), TRUE,
+                                  0, dim, NULL);
+      }
+      else if (is_ptr(*ptype))
+        *ptype = type_new_array((*ptype)->name, type_pointer_get_ref(*ptype), FALSE,
+                                0, dim, NULL);
+      else
         error_loc("%s: size_is attribute applied to illegal type\n", v->name);
-
-      atype->type = RPC_FC_CARRAY;
-      atype->details.array.size_is = dim;
     }
 
     ptype = &(*ptype)->ref;
@@ -1518,34 +1530,22 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
   {
     if (dim->type != EXPR_VOID)
     {
-      has_varconf = TRUE;
-      atype = *ptype = duptype(*ptype, 0);
-
-      if (atype->type == RPC_FC_SMFARRAY)
-        atype->type = RPC_FC_SMVARRAY;
-      else if (atype->type == RPC_FC_LGFARRAY)
-        atype->type = RPC_FC_LGVARRAY;
-      else if (atype->type == RPC_FC_CARRAY)
-        atype->type = RPC_FC_CVARRAY;
+      if (is_array(*ptype))
+      {
+        *ptype = type_new_array((*ptype)->name,
+                                type_array_get_element(*ptype),
+                                (*ptype)->declarray,
+                                type_array_get_dim(*ptype),
+                                type_array_get_conformance(*ptype),
+                                dim);
+      }
       else
         error_loc("%s: length_is attribute applied to illegal type\n", v->name);
-
-      atype->details.array.length_is = dim;
     }
 
     ptype = &(*ptype)->ref;
     if (*ptype == NULL)
       error_loc("%s: too many expressions in length_is attribute\n", v->name);
-  }
-
-  if (has_varconf && !last_array(v->type))
-  {
-    ptype = &v->type;
-    for (ptype = &v->type; is_array(*ptype); ptype = &(*ptype)->ref)
-    {
-      *ptype = duptype(*ptype, 0);
-      (*ptype)->type = RPC_FC_BOGUS_ARRAY;
-    }
   }
 
   /* v->type is currently pointing to the type on the left-side of the

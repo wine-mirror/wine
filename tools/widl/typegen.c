@@ -120,6 +120,15 @@ const char *string_of_type(unsigned char type)
     }
 }
 
+static unsigned char get_pointer_fc(const type_t *type)
+{
+    assert(is_ptr(type));
+    /* FIXME: see corresponding hack in set_type - we shouldn't be getting
+     * the pointer type from an alias, rather determining it from the
+     * position */
+    return type->type;
+}
+
 static int get_struct_type(const type_t *type)
 {
   int has_pointer = 0;
@@ -210,6 +219,10 @@ static int get_struct_type(const type_t *type)
       has_pointer = 1;
       break;
 
+    case RPC_FC_SMFARRAY:
+    case RPC_FC_LGFARRAY:
+    case RPC_FC_SMVARRAY:
+    case RPC_FC_LGVARRAY:
     case RPC_FC_CARRAY:
     case RPC_FC_CVARRAY:
     case RPC_FC_BOGUS_ARRAY:
@@ -281,37 +294,70 @@ static int get_struct_type(const type_t *type)
   return RPC_FC_STRUCT;
 }
 
-static int get_array_type(const type_t *type)
+static unsigned char get_array_type(const type_t *type)
 {
-    if (is_array(type))
+    unsigned char fc;
+    const expr_t *size_is;
+    const type_t *elem_type;
+
+    if (!is_array(type))
+        return type->type;
+
+    elem_type = type_array_get_element(type);
+    size_is = type_array_get_conformance(type);
+
+    if (!size_is)
     {
-        const type_t *rt = type_array_get_element(type);
-        if (is_user_type(rt))
-            return RPC_FC_BOGUS_ARRAY;
-        switch (get_struct_type(rt))
+        unsigned int align = 0;
+        size_t size = type_memsize(elem_type, &align);
+        if (size * type_array_get_dim(type) > 0xffffuL)
+            fc = RPC_FC_LGFARRAY;
+        else
+            fc = RPC_FC_SMFARRAY;
+    }
+    else
+        fc = RPC_FC_CARRAY;
+
+    if (type_array_has_variance(type))
+    {
+        if (fc == RPC_FC_SMFARRAY)
+            fc = RPC_FC_SMVARRAY;
+        else if (fc == RPC_FC_LGFARRAY)
+            fc = RPC_FC_LGVARRAY;
+        else if (fc == RPC_FC_CARRAY)
+            fc = RPC_FC_CVARRAY;
+    }
+
+    if (is_user_type(elem_type))
+        fc = RPC_FC_BOGUS_ARRAY;
+    else if (is_struct(elem_type->type))
+    {
+        switch (get_struct_type(elem_type))
         {
         case RPC_FC_BOGUS_STRUCT:
-        case RPC_FC_NON_ENCAPSULATED_UNION:
-        case RPC_FC_ENCAPSULATED_UNION:
-        case RPC_FC_ENUM16:
-            return RPC_FC_BOGUS_ARRAY;
-            /* FC_RP should be above, but widl overuses these, and will break things.  */
-        case RPC_FC_UP:
-        case RPC_FC_RP:
-            if (type_pointer_get_ref(rt)->type == RPC_FC_IP)
-                return RPC_FC_BOGUS_ARRAY;
+            fc = RPC_FC_BOGUS_ARRAY;
             break;
         }
-
-        if (type->type == RPC_FC_LGFARRAY || type->type == RPC_FC_LGVARRAY)
-        {
-            unsigned int align = 0;
-            size_t size = type_memsize(type, &align);
-            if (size * type_array_get_dim(type) <= 0xffff)
-                return (type->type == RPC_FC_LGFARRAY) ? RPC_FC_SMFARRAY : RPC_FC_SMVARRAY;
-        }
     }
-    return type->type;
+    else if (elem_type->type == RPC_FC_ENUM16)
+    {
+        /* is 16-bit enum - if so, wire size differs from mem size and so
+         * the array cannot be block copied, which means the array is complex */
+        fc = RPC_FC_BOGUS_ARRAY;
+    }
+    else if (is_union(elem_type->type))
+        fc = RPC_FC_BOGUS_ARRAY;
+    else if (is_ptr(elem_type))
+    {
+        /* ref pointers cannot just be block copied. unique pointers to
+         * interfaces need special treatment. either case means the array is
+         * complex */
+        if (get_pointer_fc(elem_type) == RPC_FC_RP ||
+            type_pointer_get_ref(elem_type)->type == RPC_FC_IP)
+            fc = RPC_FC_BOGUS_ARRAY;
+    }
+
+    return fc;
 }
 
 int is_struct(unsigned char type)
