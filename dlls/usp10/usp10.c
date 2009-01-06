@@ -519,6 +519,8 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
 #define Script_Arabic  6
 #define Script_Latin   1
 #define Script_Numeric 5
+#define Script_CR      22
+#define Script_LF      23
 
     int   cnt = 0, index = 0;
     int   New_Script = SCRIPT_UNDEFINED;
@@ -532,6 +534,12 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     pItems[index].iCharPos = 0;
     memset(&pItems[index].a, 0, sizeof(SCRIPT_ANALYSIS));
 
+    if  (pwcInChars[cnt] == '\r')
+        pItems[index].a.eScript = Script_CR;
+    else
+    if  (pwcInChars[cnt] == '\n')
+        pItems[index].a.eScript = Script_LF;
+    else
     if  (pwcInChars[cnt] >= Numeric_start && pwcInChars[cnt] <= Numeric_stop)
         pItems[index].a.eScript = Script_Numeric;
     else
@@ -546,10 +554,16 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
 
     TRACE("New_Script=%d, eScript=%d index=%d cnt=%d iCharPos=%d\n",
           New_Script, pItems[index].a.eScript, index, cnt,
-          pItems[index].iCharPos = cnt);
+          pItems[index].iCharPos);
 
-    for (cnt=0; cnt < cInChars; cnt++)
+    for (cnt=1; cnt < cInChars; cnt++)
     {
+        if  (pwcInChars[cnt] == '\r')
+            New_Script = Script_CR;
+        else
+        if  (pwcInChars[cnt] == '\n')
+            New_Script = Script_LF;
+        else
         if  ((pwcInChars[cnt] >= Numeric_start && pwcInChars[cnt] <= Numeric_stop)
              || (New_Script == Script_Numeric && pwcInChars[cnt] == Numeric_space))
             New_Script = Script_Numeric;
@@ -558,7 +572,8 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
              || (New_Script == Script_Arabic && pwcInChars[cnt] == Numeric_space))
             New_Script = Script_Arabic;
         else
-        if  ((WCHAR) pwcInChars[cnt] >= Latin_start && (WCHAR) pwcInChars[cnt] <= Latin_stop)
+        if  ((pwcInChars[cnt] >= Latin_start && pwcInChars[cnt] <= Latin_stop)
+             || (New_Script == Script_Latin && pwcInChars[cnt] == Numeric_space))
             New_Script = Script_Latin;
         else
             New_Script = SCRIPT_UNDEFINED;
@@ -580,7 +595,7 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
             if  (New_Script == Script_Arabic)
                 pItems[index].a.s.uBidiLevel = 1;
 
-            TRACE("index=%d cnt=%d iCharPos=%d\n", index, cnt, pItems[index].iCharPos = cnt);
+            TRACE("index=%d cnt=%d iCharPos=%d\n", index, cnt, pItems[index].iCharPos);
         }
     }
 

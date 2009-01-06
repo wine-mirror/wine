@@ -1426,6 +1426,43 @@ static void test_ScriptBreak(void)
     ok(!la.fReserved, "fReserved set\n");
 }
 
+static void test_newlines(void)
+{
+    static const WCHAR test1[] = {'t','e','x','t','\r','t','e','x','t',0};
+    static const WCHAR test2[] = {'t','e','x','t','\n','t','e','x','t',0};
+    static const WCHAR test3[] = {'t','e','x','t','\r','\n','t','e','x','t',0};
+    static const WCHAR test4[] = {'t','e','x','t','\n','\r','t','e','x','t',0};
+    static const WCHAR test5[] = {'1','2','3','4','\n','\r','1','2','3','4',0};
+    SCRIPT_ITEM items[5];
+    HRESULT hr;
+    int count;
+
+    count = 0;
+    hr = ScriptItemize(test1, lstrlenW(test1), 5, NULL, NULL, items, &count);
+    ok(hr == S_OK, "ScriptItemize failed: 0x%08x\n", hr);
+    ok(count == 3, "got %d expected 3\n", count);
+
+    count = 0;
+    hr = ScriptItemize(test2, lstrlenW(test2), 5, NULL, NULL, items, &count);
+    ok(hr == S_OK, "ScriptItemize failed: 0x%08x\n", hr);
+    ok(count == 3, "got %d expected 3\n", count);
+
+    count = 0;
+    hr = ScriptItemize(test3, lstrlenW(test3), 5, NULL, NULL, items, &count);
+    ok(hr == S_OK, "ScriptItemize failed: 0x%08x\n", hr);
+    ok(count == 4, "got %d expected 4\n", count);
+
+    count = 0;
+    hr = ScriptItemize(test4, lstrlenW(test4), 5, NULL, NULL, items, &count);
+    ok(hr == S_OK, "ScriptItemize failed: 0x%08x\n", hr);
+    ok(count == 4, "got %d expected 4\n", count);
+
+    count = 0;
+    hr = ScriptItemize(test5, lstrlenW(test5), 5, NULL, NULL, items, &count);
+    ok(hr == S_OK, "ScriptItemize failed: 0x%08x\n", hr);
+    ok(count == 4, "got %d expected 4\n", count);
+}
+
 START_TEST(usp10)
 {
     HWND            hwnd;
@@ -1471,6 +1508,7 @@ START_TEST(usp10)
     test_digit_substitution();
     test_ScriptGetProperties();
     test_ScriptBreak();
+    test_newlines();
 
     ReleaseDC(hwnd, hdc);
     DestroyWindow(hwnd);
