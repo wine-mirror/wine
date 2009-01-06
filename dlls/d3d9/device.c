@@ -1008,13 +1008,50 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetTexture(LPDIRECT3DDEVICE9EX ifac
     return hr;
 }
 
+static const WINED3DTEXTURESTAGESTATETYPE tss_lookup[] =
+{
+    WINED3DTSS_FORCE_DWORD,             /*  0, unused */
+    WINED3DTSS_COLOROP,                 /*  1, D3DTSS_COLOROP */
+    WINED3DTSS_COLORARG1,               /*  2, D3DTSS_COLORARG1 */
+    WINED3DTSS_COLORARG2,               /*  3, D3DTSS_COLORARG2 */
+    WINED3DTSS_ALPHAOP,                 /*  4, D3DTSS_ALPHAOP */
+    WINED3DTSS_ALPHAARG1,               /*  5, D3DTSS_ALPHAARG1 */
+    WINED3DTSS_ALPHAARG2,               /*  6, D3DTSS_ALPHAARG2 */
+    WINED3DTSS_BUMPENVMAT00,            /*  7, D3DTSS_BUMPENVMAT00 */
+    WINED3DTSS_BUMPENVMAT01,            /*  8, D3DTSS_BUMPENVMAT01 */
+    WINED3DTSS_BUMPENVMAT10,            /*  9, D3DTSS_BUMPENVMAT10 */
+    WINED3DTSS_BUMPENVMAT11,            /* 10, D3DTSS_BUMPENVMAT11 */
+    WINED3DTSS_TEXCOORDINDEX,           /* 11, D3DTSS_TEXCOORDINDEX */
+    WINED3DTSS_FORCE_DWORD,             /* 12, unused */
+    WINED3DTSS_FORCE_DWORD,             /* 13, unused */
+    WINED3DTSS_FORCE_DWORD,             /* 14, unused */
+    WINED3DTSS_FORCE_DWORD,             /* 15, unused */
+    WINED3DTSS_FORCE_DWORD,             /* 16, unused */
+    WINED3DTSS_FORCE_DWORD,             /* 17, unused */
+    WINED3DTSS_FORCE_DWORD,             /* 18, unused */
+    WINED3DTSS_FORCE_DWORD,             /* 19, unused */
+    WINED3DTSS_FORCE_DWORD,             /* 20, unused */
+    WINED3DTSS_FORCE_DWORD,             /* 21, unused */
+    WINED3DTSS_BUMPENVLSCALE,           /* 22, D3DTSS_BUMPENVLSCALE */
+    WINED3DTSS_BUMPENVLOFFSET,          /* 23, D3DTSS_BUMPENVLOFFSET */
+    WINED3DTSS_TEXTURETRANSFORMFLAGS,   /* 24, D3DTSS_TEXTURETRANSFORMFLAGS */
+    WINED3DTSS_FORCE_DWORD,             /* 25, unused */
+    WINED3DTSS_COLORARG0,               /* 26, D3DTSS_COLORARG0 */
+    WINED3DTSS_ALPHAARG0,               /* 27, D3DTSS_ALPHAARG0 */
+    WINED3DTSS_RESULTARG,               /* 28, D3DTSS_RESULTARG */
+    WINED3DTSS_FORCE_DWORD,             /* 29, unused */
+    WINED3DTSS_FORCE_DWORD,             /* 30, unused */
+    WINED3DTSS_FORCE_DWORD,             /* 31, unused */
+    WINED3DTSS_CONSTANT,                /* 32, D3DTSS_CONSTANT */
+};
+
 static HRESULT  WINAPI  IDirect3DDevice9Impl_GetTextureStageState(LPDIRECT3DDEVICE9EX iface, DWORD Stage, D3DTEXTURESTAGESTATETYPE Type, DWORD* pValue) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
     EnterCriticalSection(&d3d9_cs);
-    hr = IWineD3DDevice_GetTextureStageState(This->WineD3DDevice, Stage, Type, pValue);
+    hr = IWineD3DDevice_GetTextureStageState(This->WineD3DDevice, Stage, tss_lookup[Type], pValue);
     LeaveCriticalSection(&d3d9_cs);
     return hr;
 }
@@ -1025,7 +1062,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetTextureStageState(LPDIRECT3DDEVI
     TRACE("(%p) Relay\n" , This);
 
     EnterCriticalSection(&d3d9_cs);
-    hr = IWineD3DDevice_SetTextureStageState(This->WineD3DDevice, Stage, Type, Value);
+    hr = IWineD3DDevice_SetTextureStageState(This->WineD3DDevice, Stage, tss_lookup[Type], Value);
     LeaveCriticalSection(&d3d9_cs);
     return hr;
 }

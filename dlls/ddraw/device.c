@@ -4997,6 +4997,40 @@ IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
     return hr;
 }
 
+static const struct tss_lookup
+{
+    BOOL sampler_state;
+    DWORD state;
+}
+tss_lookup[] =
+{
+    {FALSE, WINED3DTSS_FORCE_DWORD},            /*  0, unused */
+    {FALSE, WINED3DTSS_COLOROP},                /*  1, D3DTSS_COLOROP */
+    {FALSE, WINED3DTSS_COLORARG1},              /*  2, D3DTSS_COLORARG1 */
+    {FALSE, WINED3DTSS_COLORARG2},              /*  3, D3DTSS_COLORARG2 */
+    {FALSE, WINED3DTSS_ALPHAOP},                /*  4, D3DTSS_ALPHAOP */
+    {FALSE, WINED3DTSS_ALPHAARG1},              /*  5, D3DTSS_ALPHAARG1 */
+    {FALSE, WINED3DTSS_ALPHAARG2},              /*  6, D3DTSS_ALPHAARG2 */
+    {FALSE, WINED3DTSS_BUMPENVMAT00},           /*  7, D3DTSS_BUMPENVMAT00 */
+    {FALSE, WINED3DTSS_BUMPENVMAT01},           /*  8, D3DTSS_BUMPENVMAT01 */
+    {FALSE, WINED3DTSS_BUMPENVMAT10},           /*  9, D3DTSS_BUMPENVMAT10 */
+    {FALSE, WINED3DTSS_BUMPENVMAT11},           /* 10, D3DTSS_BUMPENVMAT11 */
+    {FALSE, WINED3DTSS_TEXCOORDINDEX},          /* 11, D3DTSS_TEXCOORDINDEX */
+    {TRUE,  WINED3DSAMP_ADDRESSU},              /* 12, D3DTSS_ADDRESS */
+    {TRUE,  WINED3DSAMP_ADDRESSU},              /* 13, D3DTSS_ADDRESSU */
+    {TRUE,  WINED3DSAMP_ADDRESSV},              /* 14, D3DTSS_ADDRESSV */
+    {TRUE,  WINED3DSAMP_BORDERCOLOR},           /* 15, D3DTSS_BORDERCOLOR */
+    {TRUE,  WINED3DSAMP_MAGFILTER},             /* 16, D3DTSS_MAGFILTER */
+    {TRUE,  WINED3DSAMP_MINFILTER},             /* 17, D3DTSS_MINFILTER */
+    {TRUE,  WINED3DSAMP_MIPFILTER},             /* 18, D3DTSS_MIPFILTER */
+    {TRUE,  WINED3DSAMP_MIPMAPLODBIAS},         /* 19, D3DTSS_MIPMAPLODBIAS */
+    {TRUE,  WINED3DSAMP_MAXMIPLEVEL},           /* 20, D3DTSS_MAXMIPLEVEL */
+    {TRUE,  WINED3DSAMP_MAXANISOTROPY},         /* 21, D3DTSS_MAXANISOTROPY */
+    {FALSE, WINED3DTSS_BUMPENVLSCALE},          /* 22, D3DTSS_BUMPENVLSCALE */
+    {FALSE, WINED3DTSS_BUMPENVLOFFSET},         /* 23, D3DTSS_BUMPENVLOFFSET */
+    {FALSE, WINED3DTSS_TEXTURETRANSFORMFLAGS},  /* 24, D3DTSS_TEXTURETRANSFORMFLAGS */
+};
+
 /*****************************************************************************
  * IDirect3DDevice7::GetTextureStageState
  *
@@ -5023,102 +5057,63 @@ IDirect3DDeviceImpl_7_GetTextureStageState(IDirect3DDevice7 *iface,
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     HRESULT hr;
+    const struct tss_lookup *l = &tss_lookup[TexStageStateType];
     TRACE("(%p)->(%08x,%08x,%p): Relay!\n", This, Stage, TexStageStateType, State);
 
     if(!State)
         return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
-    switch(TexStageStateType)
+
+    if (l->sampler_state)
     {
-        /* Mipfilter is a sampler state with different values */
-        case D3DTSS_MIPFILTER:
+        hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice, Stage, l->state, State);
+
+        switch(TexStageStateType)
         {
-            WINED3DTEXTUREFILTERTYPE value;
-
-            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice,
-                                                Stage,
-                                                WINED3DSAMP_MIPFILTER,
-                                                &value);
-            switch(value)
+            /* Mipfilter is a sampler state with different values */
+            case D3DTSS_MIPFILTER:
             {
-                case WINED3DTEXF_NONE: *State = D3DTFP_NONE; break;
-                case WINED3DTEXF_POINT: *State = D3DTFP_POINT; break;
-                case WINED3DTEXF_LINEAR: *State = D3DTFP_LINEAR; break;
-                default:
-                    ERR("Unexpected mipfilter value %d\n", value);
-                    *State = D3DTFP_NONE;
+                switch(*State)
+                {
+                    case WINED3DTEXF_NONE: *State = D3DTFP_NONE; break;
+                    case WINED3DTEXF_POINT: *State = D3DTFP_POINT; break;
+                    case WINED3DTEXF_LINEAR: *State = D3DTFP_LINEAR; break;
+                    default:
+                        ERR("Unexpected mipfilter value %#x\n", *State);
+                        *State = D3DTFP_NONE;
+                        break;
+                }
+                break;
             }
-            break;
-        }
 
-        /* Minfilter is a sampler state too, equal values */
-        case D3DTSS_MINFILTER:
-            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice,
-                                                Stage,
-                                                WINED3DSAMP_MINFILTER,
-                                                State);
-            break;
-
-        /* Magfilter has slightly different values */
-        case D3DTSS_MAGFILTER:
-        {
-            WINED3DTEXTUREFILTERTYPE wined3dfilter;
-            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice,
-                                                Stage,
-                                                WINED3DSAMP_MAGFILTER,
-                                                &wined3dfilter);
-            switch(wined3dfilter)
+            /* Magfilter has slightly different values */
+            case D3DTSS_MAGFILTER:
             {
-                case WINED3DTEXF_POINT:             *State = D3DTFG_POINT;          break;
-                case WINED3DTEXF_LINEAR:            *State = D3DTFG_LINEAR;         break;
-                case WINED3DTEXF_ANISOTROPIC:       *State = D3DTFG_ANISOTROPIC;    break;
-                case WINED3DTEXF_FLATCUBIC:         *State = D3DTFG_FLATCUBIC;      break;
-                case WINED3DTEXF_GAUSSIANCUBIC:     *State = D3DTFG_GAUSSIANCUBIC;  break;
-                default:
-                    ERR("Unexpected wined3d mag filter value %d\n", wined3dfilter);
-                    *State = D3DTFG_POINT;
+                switch(*State)
+                {
+                    case WINED3DTEXF_POINT: *State = D3DTFG_POINT; break;
+                    case WINED3DTEXF_LINEAR: *State = D3DTFG_LINEAR; break;
+                    case WINED3DTEXF_ANISOTROPIC: *State = D3DTFG_ANISOTROPIC; break;
+                    case WINED3DTEXF_FLATCUBIC: *State = D3DTFG_FLATCUBIC; break;
+                    case WINED3DTEXF_GAUSSIANCUBIC: *State = D3DTFG_GAUSSIANCUBIC; break;
+                    default:
+                        ERR("Unexpected wined3d mag filter value %#x\n", *State);
+                        *State = D3DTFG_POINT;
+                        break;
+                }
+                break;
             }
-            break;
+
+            default:
+                break;
         }
-
-        case D3DTSS_ADDRESS:
-        case D3DTSS_ADDRESSU:
-            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice,
-                                                Stage,
-                                                WINED3DSAMP_ADDRESSU,
-                                                State);
-            break;
-        case D3DTSS_ADDRESSV:
-            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice,
-                                                Stage,
-                                                WINED3DSAMP_ADDRESSV,
-                                                State);
-            break;
-
-        case D3DTSS_BORDERCOLOR:
-            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice, Stage, WINED3DSAMP_BORDERCOLOR, State);
-            break;
-
-        case D3DTSS_MIPMAPLODBIAS:
-            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice, Stage, WINED3DSAMP_MIPMAPLODBIAS, State);
-            break;
-
-        case D3DTSS_MAXMIPLEVEL:
-            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice, Stage, WINED3DSAMP_MAXMIPLEVEL, State);
-            break;
-
-        case D3DTSS_MAXANISOTROPY:
-            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice, Stage, WINED3DSAMP_MAXANISOTROPY, State);
-            break;
-
-        default:
-            hr = IWineD3DDevice_GetTextureStageState(This->wineD3DDevice,
-                                                     Stage,
-                                                     TexStageStateType,
-                                                     State);
-            break;
     }
+    else
+    {
+        hr = IWineD3DDevice_GetTextureStageState(This->wineD3DDevice, Stage, l->state, State);
+    }
+
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -5187,106 +5182,66 @@ IDirect3DDeviceImpl_7_SetTextureStageState(IDirect3DDevice7 *iface,
                                            DWORD State)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    const struct tss_lookup *l = &tss_lookup[TexStageStateType];
     HRESULT hr;
     TRACE("(%p)->(%08x,%08x,%08x): Relay!\n", This, Stage, TexStageStateType, State);
 
     EnterCriticalSection(&ddraw_cs);
-    switch(TexStageStateType)
+
+    if (l->sampler_state)
     {
-        /* Mipfilter is a sampler state with different values */
-        case D3DTSS_MIPFILTER:
+        switch(TexStageStateType)
         {
-            WINED3DTEXTUREFILTERTYPE value;
-            switch(State)
+            /* Mipfilter is a sampler state with different values */
+            case D3DTSS_MIPFILTER:
             {
-                case D3DTFP_NONE: value = WINED3DTEXF_NONE; break;
-                case D3DTFP_POINT: value = WINED3DTEXF_POINT; break;
-                case 0: /* Unchecked */
-                case D3DTFP_LINEAR: value = WINED3DTEXF_LINEAR; break;
-                default:
-                    ERR("Unexpected mipfilter value %d\n", State);
-                    value = WINED3DTEXF_NONE;
+                switch(State)
+                {
+                    case D3DTFP_NONE: State = WINED3DTEXF_NONE; break;
+                    case D3DTFP_POINT: State = WINED3DTEXF_POINT; break;
+                    case 0: /* Unchecked */
+                    case D3DTFP_LINEAR: State = WINED3DTEXF_LINEAR; break;
+                    default:
+                        ERR("Unexpected mipfilter value %d\n", State);
+                        State = WINED3DTEXF_NONE;
+                        break;
+                }
+                break;
             }
-            hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice,
-                                                Stage,
-                                                WINED3DSAMP_MIPFILTER,
-                                                value);
-            break;
+
+            /* Magfilter has slightly different values */
+            case D3DTSS_MAGFILTER:
+            {
+                switch(State)
+                {
+                    case D3DTFG_POINT: State = WINED3DTEXF_POINT; break;
+                    case D3DTFG_LINEAR: State = WINED3DTEXF_LINEAR; break;
+                    case D3DTFG_FLATCUBIC: State = WINED3DTEXF_FLATCUBIC; break;
+                    case D3DTFG_GAUSSIANCUBIC: State = WINED3DTEXF_GAUSSIANCUBIC; break;
+                    case D3DTFG_ANISOTROPIC: State = WINED3DTEXF_ANISOTROPIC; break;
+                    default:
+                        ERR("Unexpected d3d7 mag filter type %d\n", State);
+                        State = WINED3DTEXF_POINT;
+                        break;
+                }
+                break;
+            }
+
+            case D3DTSS_ADDRESS:
+                IWineD3DDevice_SetSamplerState(This->wineD3DDevice, Stage, WINED3DSAMP_ADDRESSV, State);
+                break;
+
+            default:
+                break;
         }
 
-        /* Minfilter is a sampler state too, equal values */
-        case D3DTSS_MINFILTER:
-            hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice,
-                                                Stage,
-                                                WINED3DSAMP_MINFILTER,
-                                                State);
-            break;
-
-        /* Magfilter has slightly different values */
-        case D3DTSS_MAGFILTER:
-        {
-            WINED3DTEXTUREFILTERTYPE wined3dfilter;
-            switch((D3DTEXTUREMAGFILTER) State)
-            {
-                case D3DTFG_POINT:          wined3dfilter = WINED3DTEXF_POINT;          break;
-                case D3DTFG_LINEAR:         wined3dfilter = WINED3DTEXF_LINEAR;         break;
-                case D3DTFG_FLATCUBIC:      wined3dfilter = WINED3DTEXF_FLATCUBIC;      break;
-                case D3DTFG_GAUSSIANCUBIC:  wined3dfilter = WINED3DTEXF_GAUSSIANCUBIC;  break;
-                case D3DTFG_ANISOTROPIC:    wined3dfilter = WINED3DTEXF_ANISOTROPIC;    break;
-                default:
-                    ERR("Unexpected d3d7 mag filter type %d\n", State);
-                    wined3dfilter = WINED3DTEXF_POINT;
-            }
-            hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice,
-                                                Stage,
-                                                WINED3DSAMP_MAGFILTER,
-                                                wined3dfilter);
-            break;
-        }
-
-        case D3DTSS_ADDRESS:
-                   IWineD3DDevice_SetSamplerState(This->wineD3DDevice,
-                                                  Stage,
-                                                  WINED3DSAMP_ADDRESSV,
-                                                  State);
-            /* Drop through */
-        case D3DTSS_ADDRESSU:
-            hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice,
-                                                Stage,
-                                                WINED3DSAMP_ADDRESSU,
-                                                State);
-            break;
-
-        case D3DTSS_ADDRESSV:
-            hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice,
-                                                Stage,
-                                                WINED3DSAMP_ADDRESSV,
-                                                State);
-            break;
-
-        case D3DTSS_BORDERCOLOR:
-            hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice, Stage, WINED3DSAMP_BORDERCOLOR, State);
-            break;
-
-        case D3DTSS_MIPMAPLODBIAS:
-            hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice, Stage, WINED3DSAMP_MIPMAPLODBIAS, State);
-            break;
-
-        case D3DTSS_MAXMIPLEVEL:
-            hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice, Stage, WINED3DSAMP_MAXMIPLEVEL, State);
-            break;
-
-        case D3DTSS_MAXANISOTROPY:
-            hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice, Stage, WINED3DSAMP_MAXANISOTROPY, State);
-            break;
-
-        default:
-            hr = IWineD3DDevice_SetTextureStageState(This->wineD3DDevice,
-                                                     Stage,
-                                                     TexStageStateType,
-                                                     State);
-            break;
+        hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice, Stage, l->state, State);
     }
+    else
+    {
+        hr = IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, Stage, l->state, State);
+    }
+
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }

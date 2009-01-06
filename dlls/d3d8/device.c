@@ -1266,100 +1266,70 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, D
     return hr;
 }
 
+static const struct tss_lookup
+{
+    BOOL sampler_state;
+    DWORD state;
+}
+tss_lookup[] =
+{
+    {FALSE, WINED3DTSS_FORCE_DWORD},            /*  0, unused */
+    {FALSE, WINED3DTSS_COLOROP},                /*  1, D3DTSS_COLOROP */
+    {FALSE, WINED3DTSS_COLORARG1},              /*  2, D3DTSS_COLORARG1 */
+    {FALSE, WINED3DTSS_COLORARG2},              /*  3, D3DTSS_COLORARG2 */
+    {FALSE, WINED3DTSS_ALPHAOP},                /*  4, D3DTSS_ALPHAOP */
+    {FALSE, WINED3DTSS_ALPHAARG1},              /*  5, D3DTSS_ALPHAARG1 */
+    {FALSE, WINED3DTSS_ALPHAARG2},              /*  6, D3DTSS_ALPHAARG2 */
+    {FALSE, WINED3DTSS_BUMPENVMAT00},           /*  7, D3DTSS_BUMPENVMAT00 */
+    {FALSE, WINED3DTSS_BUMPENVMAT01},           /*  8, D3DTSS_BUMPENVMAT01 */
+    {FALSE, WINED3DTSS_BUMPENVMAT10},           /*  9, D3DTSS_BUMPENVMAT10 */
+    {FALSE, WINED3DTSS_BUMPENVMAT11},           /* 10, D3DTSS_BUMPENVMAT11 */
+    {FALSE, WINED3DTSS_TEXCOORDINDEX},          /* 11, D3DTSS_TEXCOORDINDEX */
+    {FALSE, WINED3DTSS_FORCE_DWORD},            /* 12, unused */
+    {TRUE,  WINED3DSAMP_ADDRESSU},              /* 13, D3DTSS_ADDRESSU */
+    {TRUE,  WINED3DSAMP_ADDRESSV},              /* 14, D3DTSS_ADDRESSV */
+    {TRUE,  WINED3DSAMP_BORDERCOLOR},           /* 15, D3DTSS_BORDERCOLOR */
+    {TRUE,  WINED3DSAMP_MAGFILTER},             /* 16, D3DTSS_MAGFILTER */
+    {TRUE,  WINED3DSAMP_MINFILTER},             /* 17, D3DTSS_MINFILTER */
+    {TRUE,  WINED3DSAMP_MIPFILTER},             /* 18, D3DTSS_MIPFILTER */
+    {TRUE,  WINED3DSAMP_MIPMAPLODBIAS},         /* 19, D3DTSS_MIPMAPLODBIAS */
+    {TRUE,  WINED3DSAMP_MAXMIPLEVEL},           /* 20, D3DTSS_MAXMIPLEVEL */
+    {TRUE,  WINED3DSAMP_MAXANISOTROPY},         /* 21, D3DTSS_MAXANISOTROPY */
+    {FALSE, WINED3DTSS_BUMPENVLSCALE},          /* 22, D3DTSS_BUMPENVLSCALE */
+    {FALSE, WINED3DTSS_BUMPENVLOFFSET},         /* 23, D3DTSS_BUMPENVLOFFSET */
+    {FALSE, WINED3DTSS_TEXTURETRANSFORMFLAGS},  /* 24, D3DTSS_TEXTURETRANSFORMFLAGS */
+    {TRUE,  WINED3DSAMP_ADDRESSW},              /* 25, D3DTSS_ADDRESSW */
+    {FALSE, WINED3DTSS_COLORARG0},              /* 26, D3DTSS_COLORARG0 */
+    {FALSE, WINED3DTSS_ALPHAARG0},              /* 27, D3DTSS_ALPHAARG0 */
+    {FALSE, WINED3DTSS_RESULTARG},              /* 28, D3DTSS_RESULTARG */
+};
+
 static HRESULT  WINAPI  IDirect3DDevice8Impl_GetTextureStageState(LPDIRECT3DDEVICE8 iface, DWORD Stage,D3DTEXTURESTAGESTATETYPE Type,DWORD* pValue) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
+    const struct tss_lookup *l = &tss_lookup[Type];
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    switch(Type) {
-    case D3DTSS_ADDRESSU:
-        Type = WINED3DSAMP_ADDRESSU;
-        break;
-    case D3DTSS_ADDRESSV:
-        Type = WINED3DSAMP_ADDRESSV;
-        break;
-    case D3DTSS_ADDRESSW:
-        Type = WINED3DSAMP_ADDRESSW;
-        break;
-    case D3DTSS_BORDERCOLOR:
-        Type = WINED3DSAMP_BORDERCOLOR;
-        break;
-    case D3DTSS_MAGFILTER:
-        Type = WINED3DSAMP_MAGFILTER;
-        break;
-    case D3DTSS_MAXANISOTROPY:
-        Type = WINED3DSAMP_MAXANISOTROPY;
-        break;
-    case D3DTSS_MAXMIPLEVEL:
-        Type = WINED3DSAMP_MAXMIPLEVEL;
-        break;
-    case D3DTSS_MINFILTER:
-        Type = WINED3DSAMP_MINFILTER;
-        break;
-    case D3DTSS_MIPFILTER:
-        Type = WINED3DSAMP_MIPFILTER;
-        break;
-    case D3DTSS_MIPMAPLODBIAS:
-        Type = WINED3DSAMP_MIPMAPLODBIAS;
-        break;
-    default:
-        EnterCriticalSection(&d3d8_cs);
-        hr = IWineD3DDevice_GetTextureStageState(This->WineD3DDevice, Stage, Type, pValue);
-        LeaveCriticalSection(&d3d8_cs);
-        return hr;
-    }
-
     EnterCriticalSection(&d3d8_cs);
-    hr = IWineD3DDevice_GetSamplerState(This->WineD3DDevice, Stage, Type, pValue);
+
+    if (l->sampler_state) hr = IWineD3DDevice_GetSamplerState(This->WineD3DDevice, Stage, l->state, pValue);
+    else hr = IWineD3DDevice_GetTextureStageState(This->WineD3DDevice, Stage, l->state, pValue);
+
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 iface, DWORD Stage, D3DTEXTURESTAGESTATETYPE Type, DWORD Value) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
+    const struct tss_lookup *l = &tss_lookup[Type];
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    switch(Type) {
-    case D3DTSS_ADDRESSU:
-        Type = WINED3DSAMP_ADDRESSU;
-        break;
-    case D3DTSS_ADDRESSV:
-        Type = WINED3DSAMP_ADDRESSV;
-        break;
-    case D3DTSS_ADDRESSW:
-        Type = WINED3DSAMP_ADDRESSW;
-        break;
-    case D3DTSS_BORDERCOLOR:
-        Type = WINED3DSAMP_BORDERCOLOR;
-        break;
-    case D3DTSS_MAGFILTER:
-        Type = WINED3DSAMP_MAGFILTER;
-        break;
-    case D3DTSS_MAXANISOTROPY:
-        Type = WINED3DSAMP_MAXANISOTROPY;
-        break;
-    case D3DTSS_MAXMIPLEVEL:
-        Type = WINED3DSAMP_MAXMIPLEVEL;
-        break;
-    case D3DTSS_MINFILTER:
-        Type = WINED3DSAMP_MINFILTER;
-        break;
-    case D3DTSS_MIPFILTER:
-        Type = WINED3DSAMP_MIPFILTER;
-        break;
-    case D3DTSS_MIPMAPLODBIAS:
-        Type = WINED3DSAMP_MIPMAPLODBIAS;
-        break;
-    default:
-        EnterCriticalSection(&d3d8_cs);
-        hr = IWineD3DDevice_SetTextureStageState(This->WineD3DDevice, Stage, Type, Value);
-        LeaveCriticalSection(&d3d8_cs);
-        return hr;
-    }
-
     EnterCriticalSection(&d3d8_cs);
-    hr = IWineD3DDevice_SetSamplerState(This->WineD3DDevice, Stage, Type, Value);
+
+    if (l->sampler_state) hr = IWineD3DDevice_SetSamplerState(This->WineD3DDevice, Stage, l->state, Value);
+    else hr = IWineD3DDevice_SetTextureStageState(This->WineD3DDevice, Stage, l->state, Value);
+
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }
