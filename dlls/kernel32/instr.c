@@ -23,6 +23,8 @@
 #include "config.h"
 #include "wine/port.h"
 
+#ifdef __i386__
+
 #include <stdarg.h>
 
 #include "windef.h"
@@ -928,3 +930,5 @@ FARPROC16 WINAPI GetSetKernelDOSProc16( FARPROC16 DosProc )
     FIXME("(DosProc=%p): stub\n", DosProc);
     return NULL;
 }
+
+#endif  /* __i386__ */

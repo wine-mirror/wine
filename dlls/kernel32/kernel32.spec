@@ -40,27 +40,27 @@
  30 stdcall -noname GlobalUnWire16(long)
  31 stdcall -noname GlobalFree16(long)
  32 stdcall -noname GlobalSize16(long)
- 33 stdcall -noname HouseCleanLogicallyDeadHandles()
- 34 stdcall -noname GetWin16DOSEnv()
+ 33 stdcall -noname -i386 HouseCleanLogicallyDeadHandles()
+ 34 stdcall -noname -i386 GetWin16DOSEnv()
  35 stdcall -noname LoadLibrary16(str)
  36 stdcall -noname FreeLibrary16(long)
  37 stdcall -noname GetProcAddress16(long str) WIN32_GetProcAddress16
  38 stdcall -noname -i386 -register AllocMappedBuffer()
  39 stdcall -noname -i386 -register FreeMappedBuffer()
  40 stdcall -noname -i386 -register OT_32ThkLSF()
- 41 stdcall -noname ThunkInitLSF(long str long str str)
+ 41 stdcall -noname -i386 ThunkInitLSF(long str long str str)
  42 stdcall -noname -i386 -register LogApiThkLSF(str)
- 43 stdcall -noname ThunkInitLS(long str long str str)
+ 43 stdcall -noname -i386 ThunkInitLS(long str long str str)
  44 stdcall -noname -i386 -register LogApiThkSL(str)
  45 stdcall -noname -i386 -register Common32ThkLS()
- 46 stdcall -noname ThunkInitSL(long str long str str)
+ 46 stdcall -noname -i386 ThunkInitSL(long str long str str)
  47 stdcall -noname -i386 -register LogCBThkSL(str)
  48 stdcall -noname ReleaseThunkLock(ptr)
  49 stdcall -noname RestoreThunkLock(long)
 
  51 stdcall -noname -i386 -register W32S_BackTo32()
- 52 stdcall -noname GetThunkBuff()
- 53 stdcall -noname GetThunkStuff(str str)
+ 52 stdcall -noname -i386 GetThunkBuff()
+ 53 stdcall -noname -i386 GetThunkStuff(str str)
  54 stdcall -noname K32WOWCallback16(long long)
  55 stdcall -noname K32WOWCallback16Ex(ptr long long ptr ptr)
  56 stdcall -noname K32WOWGetVDMPointer(long long long)
@@ -94,20 +94,20 @@
  84 stdcall -noname -ret64 K32RtlConvertLongToLargeInteger(long) ntdll.RtlConvertLongToLargeInteger
  85 stdcall -noname -ret64 K32RtlConvertUlongToLargeInteger(long) ntdll.RtlConvertUlongToLargeInteger
  86 stdcall @(ptr) _KERNEL32_86
- 87 stdcall -noname SSOnBigStack()
- 88 varargs -noname SSCall(long long ptr)
+ 87 stdcall -noname -i386 SSOnBigStack()
+ 88 varargs -noname -i386 SSCall(long long ptr)
  89 stdcall -noname -i386 -register FT_PrologPrime()
  90 stdcall -noname -i386 -register QT_ThunkPrime()
- 91 stdcall -noname PK16FNF(ptr)
- 92 stdcall -noname GetPK16SysVar()
+ 91 stdcall -noname -i386 PK16FNF(ptr)
+ 92 stdcall -noname -i386 GetPK16SysVar()
  93 stdcall -noname GetpWin16Lock(ptr)
  94 stdcall -noname _CheckNotSysLevel(ptr)
  95 stdcall -noname _ConfirmSysLevel(ptr)
  96 stdcall -noname _ConfirmWin16Lock()
  97 stdcall -noname _EnterSysLevel(ptr)
  98 stdcall -noname _LeaveSysLevel(ptr)
- 99 stdcall @(long) _KERNEL32_99
-100 stdcall @(long long long) _KERNEL32_100
+ 99 stdcall -i386 @(long) _KERNEL32_99
+100 stdcall -i386 @(long long long) _KERNEL32_100
 101 stub @
 102 stub @
 103 stub @
@@ -143,8 +143,8 @@
 @ stdcall AddRefActCtx(ptr)
 @ stdcall AddVectoredExceptionHandler(long ptr) ntdll.RtlAddVectoredExceptionHandler
 @ stdcall AllocConsole()
-@ stub AllocLSCallback
-@ stdcall AllocSLCallback(ptr ptr)
+@ stub -i386 AllocLSCallback
+@ stdcall -i386 AllocSLCallback(ptr ptr)
 @ stub AllocateUserPhysicalPages
 @ stdcall AreFileApisANSI()
 @ stdcall AssignProcessToJobObject(ptr ptr)
@@ -415,11 +415,11 @@
 @ stdcall FreeLibrary(long)
 @ stdcall FreeLibraryAndExitThread(long long)
 @ stdcall FreeResource(long)
-@ stdcall FreeSLCallback(long)
+@ stdcall -i386 FreeSLCallback(long)
 @ stub FreeUserPhysicalPages
 @ stub FreeVirtualBuffer
 @ stdcall GenerateConsoleCtrlEvent(long long)
-@ stdcall Get16DLLAddress(long str)
+@ stdcall -i386 Get16DLLAddress(long str)
 @ stdcall GetACP()
 @ stdcall GetAtomNameA(long ptr long)
 @ stdcall GetAtomNameW(long ptr long)
@@ -1082,7 +1082,7 @@
 @ stdcall TermsrvAppInstallMode()
 @ stdcall Thread32First(long ptr)
 @ stdcall Thread32Next(long ptr)
-@ stdcall ThunkConnect32(ptr str str str ptr ptr)
+@ stdcall -i386 ThunkConnect32(ptr str str str ptr ptr)
 @ stdcall TlsAlloc()
 @ stub TlsAllocInternal
 @ stdcall TlsFree(long)
@@ -1095,8 +1095,8 @@
 @ stub TrimVirtualBuffer
 @ stdcall TryEnterCriticalSection(ptr) ntdll.RtlTryEnterCriticalSection
 @ stdcall TzSpecificLocalTimeToSystemTime(ptr ptr ptr)
-@ stdcall UTRegister(long str str str ptr ptr ptr)
-@ stdcall UTUnRegister(long)
+@ stdcall -i386 UTRegister(long str str str ptr ptr ptr)
+@ stdcall -i386 UTUnRegister(long)
 @ stdcall UnMapLS(long)
 @ stdcall -i386 -norelay UnMapSLFixArray(long long)
 @ stdcall UnhandledExceptionFilter(ptr)
@@ -1251,10 +1251,10 @@
 # or 'wine_' (for user-visible functions) to avoid namespace conflicts.
 
 # 16-bit relays
-@ cdecl __wine_dll_register_16(ptr str)
-@ cdecl __wine_dll_unregister_16(ptr)
-@ varargs -private __wine_call_from_16_regs()
-@ cdecl __wine_emulate_instruction(ptr ptr)
+@ cdecl -i386 __wine_dll_register_16(ptr str)
+@ cdecl -i386 __wine_dll_unregister_16(ptr)
+@ varargs -i386 -private __wine_call_from_16_regs()
+@ cdecl -i386 __wine_emulate_instruction(ptr ptr)
 
 # Unix files
 @ cdecl wine_get_unix_file_name(wstr)

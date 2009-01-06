@@ -31,6 +31,8 @@
 # include <unistd.h>
 #endif
 
+#ifdef __i386__
+
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -147,11 +149,7 @@ struct SLApiDB
 SEGPTR CALL32_CBClient_RetAddr = 0;
 SEGPTR CALL32_CBClientEx_RetAddr = 0;
 
-#ifdef __i386__
 extern void __wine_call_from_16_thunk();
-#else
-static void __wine_call_from_16_thunk() { }
-#endif
 
 /* Push a DWORD on the 32-bit stack */
 static inline void stack32_push( CONTEXT86 *context, DWORD val )
@@ -191,9 +189,7 @@ void WINAPI __regs_LogApiThkLSF( LPSTR func, CONTEXT86 *context )
 {
     TRACE( "%s\n", debugstr_a(func) );
 }
-#ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( LogApiThkLSF, 1 )
-#endif
 
 /***********************************************************************
  *           LogApiThkSL    (KERNEL32.44)
@@ -204,9 +200,7 @@ void WINAPI __regs_LogApiThkSL( LPSTR func, CONTEXT86 *context )
 {
     TRACE( "%s\n", debugstr_a(func) );
 }
-#ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( LogApiThkSL, 1 )
-#endif
 
 /***********************************************************************
  *           LogCBThkSL    (KERNEL32.47)
@@ -217,9 +211,7 @@ void WINAPI __regs_LogCBThkSL( LPSTR func, CONTEXT86 *context )
 {
     TRACE( "%s\n", debugstr_a(func) );
 }
-#ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( LogCBThkSL, 1 )
-#endif
 
 /***********************************************************************
  * Generates a FT_Prolog call.
@@ -486,9 +478,7 @@ void WINAPI __regs_QT_Thunk( CONTEXT86 *context )
     context->Esp +=   LOWORD(context16.Esp) -
                         ( OFFSETOF(NtCurrentTeb()->WOW32Reserved) - argsize );
 }
-#ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( QT_Thunk, 0 )
-#endif
 
 
 /**********************************************************************
@@ -554,9 +544,7 @@ void WINAPI __regs_FT_Prolog( CONTEXT86 *context )
     *(DWORD *)(context->Ebp - 48) = context->Eax;
     *(DWORD *)(context->Ebp - 52) = context->Edx;
 }
-#ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( FT_Prolog, 0 )
-#endif
 
 /**********************************************************************
  * 		FT_Thunk			(KERNEL32.@)
@@ -622,11 +610,7 @@ void WINAPI __regs_FT_Thunk( CONTEXT86 *context )
     /* Copy modified buffers back to 32-bit stack */
     memcpy( oldstack, newstack, argsize );
 }
-#ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( FT_Thunk, 0 )
-#endif
-
-#ifdef __i386__
 
 /***********************************************************************
  *		FT_Exit0 (KERNEL32.@)
@@ -678,8 +662,6 @@ DEFINE_FT_Exit(44)
 DEFINE_FT_Exit(48)
 DEFINE_FT_Exit(52)
 DEFINE_FT_Exit(56)
-
-#endif /* __i386__ */
 
 
 /***********************************************************************
@@ -778,9 +760,7 @@ void WINAPI __regs_Common32ThkLS( CONTEXT86 *context )
     /* Clean up caller's stack frame */
     context->Esp += LOBYTE(context16.Ebx);
 }
-#ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( Common32ThkLS, 0 )
-#endif
 
 /***********************************************************************
  *		OT_32ThkLSF	(KERNEL32.40)
@@ -835,9 +815,7 @@ void WINAPI __regs_OT_32ThkLSF( CONTEXT86 *context )
     context->Esp +=   LOWORD(context16.Esp) -
                         ( OFFSETOF(NtCurrentTeb()->WOW32Reserved) - argsize );
 }
-#ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( OT_32ThkLSF, 0 )
-#endif
 
 /***********************************************************************
  *		ThunkInitLSF		(KERNEL32.41)
@@ -937,9 +915,7 @@ void WINAPI __regs_FT_PrologPrime( CONTEXT86 *context )
     /* Jump to the call stub just created */
     context->Eip = (DWORD)relayCode;
 }
-#ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( FT_PrologPrime, 0 )
-#endif
 
 /***********************************************************************
  *		QT_ThunkPrime			(KERNEL32.90)
@@ -969,9 +945,7 @@ void WINAPI __regs_QT_ThunkPrime( CONTEXT86 *context )
     /* Jump to the call stub just created */
     context->Eip = (DWORD)relayCode;
 }
-#ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( QT_ThunkPrime, 0 )
-#endif
 
 /***********************************************************************
  *		ThunkInitSL (KERNEL32.46)
@@ -1112,9 +1086,7 @@ void WINAPI __regs_W32S_BackTo32( CONTEXT86 *context )
 
     context->Eip = stack32_pop(context);
 }
-#ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( W32S_BackTo32, 0 )
-#endif
 
 /**********************************************************************
  *			AllocSLCallback		(KERNEL32.@)
@@ -1229,9 +1201,7 @@ void WINAPI __regs_AllocMappedBuffer(
         context->Edi = (DWORD)(buffer + 2);
     }
 }
-#ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( AllocMappedBuffer, 0 )
-#endif
 
 /**********************************************************************
  * 		FreeMappedBuffer	(KERNEL32.39)
@@ -1254,9 +1224,7 @@ void WINAPI __regs_FreeMappedBuffer(
         GlobalFree((HGLOBAL)buffer[0]);
     }
 }
-#ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( FreeMappedBuffer, 0 )
-#endif
 
 /**********************************************************************
  * 		GetTEBSelectorFS	(KERNEL.475)
@@ -1362,9 +1330,7 @@ void WINAPI __regs_K32Thk1632Prolog( CONTEXT86 *context )
        been called.  Thus we re-use it to hold the Win16Lock count */
    ReleaseThunkLock(&CURRENT_STACK16->entry_point);
 }
-#ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( K32Thk1632Prolog, 0 )
-#endif
 
 /***********************************************************************
  *           K32Thk1632Epilog			(KERNEL32.@)
@@ -1399,9 +1365,7 @@ void WINAPI __regs_K32Thk1632Epilog( CONTEXT86 *context )
             context->Ebp, context->Esp, NtCurrentTeb()->WOW32Reserved);
    }
 }
-#ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( K32Thk1632Epilog, 0 )
-#endif
 
 /*********************************************************************
  *                   PK16FNF [KERNEL32.91]
@@ -2211,9 +2175,7 @@ void WINAPI __regs_CommonUnimpStub( CONTEXT86 *context )
 
     context->Esp += (context->Ecx & 0x0f) * 4;
 }
-#ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( CommonUnimpStub, 0 )
-#endif
 
 /**********************************************************************
  *           HouseCleanLogicallyDeadHandles    (KERNEL32.33)
@@ -2556,3 +2518,5 @@ DWORD WINAPIV WOW16Call(WORD x, WORD y, WORD z, VA_LIST16 args)
         DPRINTF(") calling address was 0x%08x\n",calladdr);
         return 0;
 }
+
+#endif /* __i386__ */
