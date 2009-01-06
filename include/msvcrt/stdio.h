@@ -115,7 +115,7 @@ int    __cdecl _setmaxstdio(int);
 int    __cdecl _snprintf(char*,size_t,const char*,...);
 char*  __cdecl _tempnam(const char*,const char*);
 int    __cdecl _unlink(const char*);
-int    __cdecl _vsnprintf(char*,size_t,const char*,va_list);
+int    __cdecl _vsnprintf(char*,size_t,const char*,__ms_va_list);
 
 void   __cdecl clearerr(FILE*);
 int    __cdecl fclose(FILE*);
@@ -155,9 +155,9 @@ int    __cdecl sscanf(const char*,const char*,...);
 FILE*  __cdecl tmpfile(void);
 char*  __cdecl tmpnam(char*);
 int    __cdecl ungetc(int,FILE*);
-int    __cdecl vfprintf(FILE*,const char*,va_list);
-int    __cdecl vprintf(const char*,va_list);
-int    __cdecl vsprintf(char*,const char*,va_list);
+int    __cdecl vfprintf(FILE*,const char*,__ms_va_list);
+int    __cdecl vprintf(const char*,__ms_va_list);
+int    __cdecl vsprintf(char*,const char*,__ms_va_list);
 
 #ifndef _WSTDIO_DEFINED
 #define _WSTDIO_DEFINED
@@ -166,7 +166,7 @@ wint_t   __cdecl _fputwchar(wint_t);
 wchar_t* __cdecl _getws(wchar_t*);
 int      __cdecl _putws(const wchar_t*);
 int      __cdecl _snwprintf(wchar_t*,size_t,const wchar_t*,...);
-int      __cdecl _vsnwprintf(wchar_t*,size_t,const wchar_t*,va_list);
+int      __cdecl _vsnwprintf(wchar_t*,size_t,const wchar_t*,__ms_va_list);
 FILE*    __cdecl _wfdopen(int,const wchar_t*);
 FILE*    __cdecl _wfopen(const wchar_t*,const wchar_t*);
 FILE*    __cdecl _wfreopen(const wchar_t*,const wchar_t*,FILE*);
@@ -193,9 +193,9 @@ int      __cdecl putws(const wchar_t*);
 int      __cdecl swprintf(wchar_t*,const wchar_t*,...);
 int      __cdecl swscanf(const wchar_t*,const wchar_t*,...);
 wint_t   __cdecl ungetwc(wint_t,FILE*);
-int      __cdecl vfwprintf(FILE*,const wchar_t*,va_list);
-int      __cdecl vswprintf(wchar_t*,const wchar_t*,va_list);
-int      __cdecl vwprintf(const wchar_t*,va_list);
+int      __cdecl vfwprintf(FILE*,const wchar_t*,__ms_va_list);
+int      __cdecl vswprintf(wchar_t*,const wchar_t*,__ms_va_list);
+int      __cdecl vwprintf(const wchar_t*,__ms_va_list);
 int      __cdecl wprintf(const wchar_t*,...);
 int      __cdecl wscanf(const wchar_t*,...);
 #endif /* _WSTDIO_DEFINED */
@@ -218,7 +218,7 @@ static inline char* tempnam(const char *dir, const char *prefix) { return _tempn
 static inline int unlink(const char* path) { return _unlink(path); }
 #define _UNLINK_DEFINED
 #endif
-static inline int vsnprintf(char *buffer, size_t size, const char *format, va_list args) { return _vsnprintf(buffer,size,format,args); }
+static inline int vsnprintf(char *buffer, size_t size, const char *format, __ms_va_list args) { return _vsnprintf(buffer,size,format,args); }
 
 static inline wint_t fgetwchar(void) { return _fgetwchar(); }
 static inline wint_t fputwchar(wint_t wc) { return _fputwchar(wc); }
