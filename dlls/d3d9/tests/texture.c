@@ -99,7 +99,6 @@ static void test_texture_stage_states(IDirect3DDevice9 *device_ptr, int num_stag
         test_texture_stage_state(device_ptr, i, D3DTSS_ALPHAARG0, D3DTA_CURRENT);
         test_texture_stage_state(device_ptr, i, D3DTSS_RESULTARG, D3DTA_CURRENT);
         test_texture_stage_state(device_ptr, i, D3DTSS_CONSTANT, 0);
-        test_texture_stage_state(device_ptr, i, D3DTSS_FORCE_DWORD, 0);
     }
 }
 
