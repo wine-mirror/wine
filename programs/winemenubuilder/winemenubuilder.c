@@ -804,7 +804,7 @@ static BOOL write_desktop_entry(const char *location, const char *linkname, cons
     fprintf(file, "Exec=env WINEPREFIX=\"%s\" wine \"%s\" %s\n",
             wine_get_config_dir(), path, args);
     fprintf(file, "Type=Application\n");
-    fprintf(file, "StartupWMClass=Wine\n");
+    fprintf(file, "StartupNotify=true\n");
     if (descr && lstrlenA(descr))
         fprintf(file, "Comment=%s\n", descr);
     if (workdir && lstrlenA(workdir))

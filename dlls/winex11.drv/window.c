@@ -82,6 +82,66 @@ static const char gl_drawable_prop[]  = "__wine_x11_gl_drawable";
 static const char pixmap_prop[]       = "__wine_x11_pixmap";
 static const char managed_prop[]      = "__wine_x11_managed";
 
+
+/***********************************************************************
+ * http://standards.freedesktop.org/startup-notification-spec
+ */
+static void remove_startup_notification(Display *display, Window window)
+{
+    static LONG startup_notification_removed = 0;
+    char id[1024];
+    char message[1024];
+    int i;
+    int pos;
+    XEvent xevent;
+    const char *src;
+    int srclen;
+
+    if (InterlockedCompareExchange(&startup_notification_removed, 1, 0) != 0)
+        return;
+
+    if (GetEnvironmentVariableA("DESKTOP_STARTUP_ID", id, sizeof(id)) == 0)
+        return;
+    SetEnvironmentVariableA("DESKTOP_STARTUP_ID", NULL);
+
+    pos = snprintf(message, sizeof(message), "remove: ID=");
+    message[pos++] = '"';
+    for (i = 0; id[i] && pos < sizeof(message) - 2; i++)
+    {
+        if (id[i] == '"' || id[i] == '\\')
+            message[pos++] = '\\';
+        message[pos++] = id[i];
+    }
+    message[pos++] = '"';
+    message[pos++] = '\0';
+
+    xevent.xclient.type = ClientMessage;
+    xevent.xclient.message_type = x11drv_atom(_NET_STARTUP_INFO_BEGIN);
+    xevent.xclient.display = display;
+    xevent.xclient.window = window;
+    xevent.xclient.format = 8;
+
+    src = message;
+    srclen = strlen(src) + 1;
+
+    wine_tsx11_lock();
+    while (srclen > 0)
+    {
+        int msglen = srclen;
+        if (msglen > 20)
+            msglen = 20;
+        memset(&xevent.xclient.data.b[0], 0, 20);
+        memcpy(&xevent.xclient.data.b[0], src, msglen);
+        src += msglen;
+        srclen -= msglen;
+
+        XSendEvent( display, DefaultRootWindow( display ), False, PropertyChangeMask, &xevent );
+        xevent.xclient.message_type = x11drv_atom(_NET_STARTUP_INFO);
+    }
+    wine_tsx11_unlock();
+}
+
+
 /***********************************************************************
  *		is_window_managed
  *
@@ -1098,6 +1158,8 @@ static void set_xembed_flags( Display *display, struct x11drv_win_data *data, un
 static void map_window( Display *display, struct x11drv_win_data *data, DWORD new_style )
 {
     TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
+
+    remove_startup_notification( display, data->whole_window );
 
     wait_for_withdrawn_state( display, data, TRUE );
 
