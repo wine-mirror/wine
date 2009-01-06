@@ -320,8 +320,9 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
     {
         DWORD c;
 
-        TRACE( "code=%x flags=%x addr=%p\n",
-               rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
+        TRACE( "code=%x flags=%x addr=%p ip=%p tid=%04x\n",
+               rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
+               GET_IP(context), GetCurrentThreadId() );
         for (c = 0; c < rec->NumberParameters; c++)
             TRACE( " info[%d]=%08lx\n", c, rec->ExceptionInformation[c] );
         if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
@@ -335,17 +336,26 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
                          rec->ExceptionAddress,
                          (char*)rec->ExceptionInformation[0], rec->ExceptionInformation[1] );
         }
-#ifdef __i386__
         else
         {
+#ifdef __i386__
             TRACE(" eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x\n",
                   context->Eax, context->Ebx, context->Ecx,
                   context->Edx, context->Esi, context->Edi );
             TRACE(" ebp=%08x esp=%08x cs=%04x ds=%04x es=%04x fs=%04x gs=%04x flags=%08x\n",
                   context->Ebp, context->Esp, context->SegCs, context->SegDs,
                   context->SegEs, context->SegFs, context->SegGs, context->EFlags );
-        }
+#elif defined(__x86_64__)
+            TRACE(" rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
+                  context->Rax, context->Rbx, context->Rcx, context->Rdx );
+            TRACE(" rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
+                  context->Rsi, context->Rdi, context->Rbp, context->Rsp );
+            TRACE("  r8=%016lx  r9=%016lx r10=%016lx r11=%016lx\n",
+                  context->R8, context->R9, context->R10, context->R11 );
+            TRACE(" r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
+                  context->R12, context->R13, context->R14, context->R15 );
 #endif
+        }
         status = send_debug_event( rec, TRUE, context );
         if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
             return STATUS_SUCCESS;
