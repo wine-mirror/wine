@@ -803,6 +803,52 @@ static void dump_dir_clr_header(void)
     printf("\n");
 }
 
+static void dump_dir_reloc(void)
+{
+    unsigned int i, size = 0;
+    const USHORT *relocs;
+    const IMAGE_BASE_RELOCATION *rel = get_dir_and_size(IMAGE_DIRECTORY_ENTRY_BASERELOC, &size);
+    const IMAGE_BASE_RELOCATION *end = (IMAGE_BASE_RELOCATION *)((char *)rel + size);
+    static const char * const names[] =
+    {
+        "BASED_ABSOLUTE",
+        "BASED_HIGH",
+        "BASED_LOW",
+        "BASED_HIGHLOW",
+        "BASED_HIGHADJ",
+        "BASED_MIPS_JMPADDR",
+        "BASED_SECTION",
+        "BASED_REL",
+        "unknown 8",
+        "BASED_IA64_IMM64",
+        "BASED_DIR64",
+        "BASED_HIGH3ADJ",
+        "unknown 12",
+        "unknown 13",
+        "unknown 14",
+        "unknown 15"
+    };
+
+    if (!rel) return;
+
+    printf( "Relocations\n" );
+    while (rel < end - 1 && rel->SizeOfBlock)
+    {
+        printf( "  Page %x\n", rel->VirtualAddress );
+        relocs = (const USHORT *)(rel + 1);
+        i = (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT);
+        while (i--)
+        {
+            USHORT offset = *relocs & 0xfff;
+            int type = *relocs >> 12;
+            printf( "    off %04x type %s\n", offset, names[type] );
+            relocs++;
+        }
+        rel = (const IMAGE_BASE_RELOCATION *)relocs;
+    }
+    printf("\n");
+}
+
 static void dump_dir_tls(void)
 {
     IMAGE_TLS_DIRECTORY64 dir;
@@ -1247,11 +1293,8 @@ void pe_dump(void)
 	    dump_dir_tls();
 	if (all || !strcmp(globals.dumpsect, "clr"))
 	    dump_dir_clr_header();
-#if 0
-	/* FIXME: not implemented yet */
 	if (all || !strcmp(globals.dumpsect, "reloc"))
 	    dump_dir_reloc();
-#endif
     }
     if (globals.do_debug)
         dump_debug();
