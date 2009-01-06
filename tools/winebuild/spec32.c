@@ -170,7 +170,7 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\tmovq $%u,%%rdx\n", (flags << 24) | (args << 16) | (i - spec->base) );
             output( "\tleaq .L__wine_spec_relay_descr(%%rip),%%rcx\n" );
             output( "\tsubq $40,%%rsp\n" );
-            output( "\tcallq *8(%%rcx)\n" );
+            output( "\tcallq *%u(%%rcx)\n", (odp->flags & FLAG_REGISTER) ? 16 : 8 );
             output( "\taddq $40,%%rsp\n" );
             output( "\tret\n" );
             break;
