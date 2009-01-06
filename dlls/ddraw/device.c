@@ -5095,6 +5095,23 @@ IDirect3DDeviceImpl_7_GetTextureStageState(IDirect3DDevice7 *iface,
                                                 WINED3DSAMP_ADDRESSV,
                                                 State);
             break;
+
+        case D3DTSS_BORDERCOLOR:
+            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice, Stage, WINED3DSAMP_BORDERCOLOR, State);
+            break;
+
+        case D3DTSS_MIPMAPLODBIAS:
+            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice, Stage, WINED3DSAMP_MIPMAPLODBIAS, State);
+            break;
+
+        case D3DTSS_MAXMIPLEVEL:
+            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice, Stage, WINED3DSAMP_MAXMIPLEVEL, State);
+            break;
+
+        case D3DTSS_MAXANISOTROPY:
+            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice, Stage, WINED3DSAMP_MAXANISOTROPY, State);
+            break;
+
         default:
             hr = IWineD3DDevice_GetTextureStageState(This->wineD3DDevice,
                                                      Stage,
@@ -5245,6 +5262,22 @@ IDirect3DDeviceImpl_7_SetTextureStageState(IDirect3DDevice7 *iface,
                                                 Stage,
                                                 WINED3DSAMP_ADDRESSV,
                                                 State);
+            break;
+
+        case D3DTSS_BORDERCOLOR:
+            hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice, Stage, WINED3DSAMP_BORDERCOLOR, State);
+            break;
+
+        case D3DTSS_MIPMAPLODBIAS:
+            hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice, Stage, WINED3DSAMP_MIPMAPLODBIAS, State);
+            break;
+
+        case D3DTSS_MAXMIPLEVEL:
+            hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice, Stage, WINED3DSAMP_MAXMIPLEVEL, State);
+            break;
+
+        case D3DTSS_MAXANISOTROPY:
+            hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice, Stage, WINED3DSAMP_MAXANISOTROPY, State);
             break;
 
         default:
