@@ -736,7 +736,7 @@ static void test_copy(void)
     }
     else
     {
-        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %d\n", retval);
+        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
         ok(!file_exists("test6.txt"), "The file is copied - many files are "
            "specified as a target\n");
     }
@@ -771,7 +771,7 @@ static void test_copy(void)
     }
     else
     {
-        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %d\n", retval);
+        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
         ok(!file_exists("test6.txt"), "The file is copied - many files are "
            "specified as a target\n");
     }
@@ -1552,7 +1552,7 @@ static void test_move(void)
     }
     else
     {
-        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %d\n", retval);
+        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
         ok(!file_exists("test6.txt"), "The file is not moved - many files are "
            "specified as a target\n");
     }
@@ -1580,7 +1580,7 @@ static void test_move(void)
     }
     else
     {
-        ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %d\n", retval);
+        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
         ok(file_exists("test1.txt"), "The file is moved. Many files are specified\n");
         ok(dir_exists("test4.txt"), "The directory is moved. Many files are specified\n");
     }
