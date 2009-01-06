@@ -54,8 +54,6 @@ HMODULE hdll;
 static WCHAR string[] = {'s','t','r','i','n','g',0};
 static WCHAR String[] = {'S','t','r','i','n','g',0};
 static WCHAR foo[] = {'f','o','o',0};
-DWORD hstring, hString, hfoo; /* Handles pointing to our strings */
-HANDLE table, table2;  /* Handles pointing to our tables */
 
 static void load_it_up(void)
 {
@@ -86,15 +84,13 @@ static void load_it_up(void)
         pStringTableStringFromId = (void*)GetProcAddress(hdll, "pSetupStringTableStringFromId");
 }
 
-static void test_StringTableInitialize(void)
-{
-    table=pStringTableInitialize();
-    ok(table!=NULL,"Failed to Initialize String Table\n");
-}
-
 static void test_StringTableAddString(void)
 {
-    DWORD retval;
+    DWORD retval, hstring, hString, hfoo;
+    HANDLE table;
+
+    table = pStringTableInitialize();
+    ok(table != NULL, "failed to initialize string table\n");
 
     /* case insensitive */
     hstring=pStringTableAddString(table,string,0);
@@ -111,18 +107,44 @@ static void test_StringTableAddString(void)
     /* case sensitive */    
     hString=pStringTableAddString(table,String,ST_CASE_SENSITIVE_COMPARE);
     ok(hstring!=hString,"String handle and string share same ID %x in Table\n", hstring);        
+
+    pStringTableDestroy(table);
 }
 
 static void test_StringTableDuplicate(void)
 {
+    HANDLE table, table2;
+
+    table = pStringTableInitialize();
+    ok(table != NULL,"Failed to Initialize String Table\n");
+
     table2=pStringTableDuplicate(table);
     ok(table2!=NULL,"Failed to duplicate String Table\n");
+
+    pStringTableDestroy(table);
+    pStringTableDestroy(table2);
 }
 
 static void test_StringTableLookUpString(void)
 {   
-    DWORD retval, retval2;
-    
+    DWORD retval, retval2, hstring, hString, hfoo;
+    HANDLE table, table2;
+
+    table = pStringTableInitialize();
+    ok(table != NULL,"failed to initialize string table\n");
+
+    hstring = pStringTableAddString(table, string, 0);
+    ok(hstring != ~0u, "failed to add 'string' to string table\n");
+
+    hString = pStringTableAddString(table, String, 0);
+    ok(hString != ~0u,"failed to add 'String' to string table\n");
+
+    hfoo = pStringTableAddString(table, foo, 0);
+    ok(hfoo != ~0u, "failed to add 'foo' to string table\n");
+
+    table2 = pStringTableDuplicate(table);
+    ok(table2 != NULL, "Failed to duplicate String Table\n");
+
     /* case insensitive */
     retval=pStringTableLookUpString(table,string,0);
     ok(retval!=-1,"Failed find string in String Table 1\n");
@@ -152,15 +174,26 @@ static void test_StringTableLookUpString(void)
     retval=pStringTableLookUpString(table,string,ST_CASE_SENSITIVE_COMPARE);
     retval2=pStringTableLookUpString(table,String,ST_CASE_SENSITIVE_COMPARE);    
     ok(retval!=retval2,"Lookup of string equals String in Table 1\n");
-    ok(retval2==hString,
+    ok(retval==hString,
         "Lookup for String (%x) does not match previous handle (%x) in String Table 1\n",
-        retval, hString);        
+        retval, hString);
+
+    pStringTableDestroy(table);
+    pStringTableDestroy(table2);
 }
 
 static void test_StringTableStringFromId(void)
 {
+    HANDLE table;
+    DWORD hstring;
     WCHAR *string2;
     int result;
+
+    table = pStringTableInitialize();
+    ok(table != NULL,"Failed to Initialize String Table\n");
+
+    hstring = pStringTableAddString(table, string, 0);
+    ok(hstring != ~0u,"failed to add 'string' to string table\n");
 
     /* correct */
     string2=pStringTableStringFromId(table,pStringTableLookUpString(table,string,0));
@@ -168,19 +201,16 @@ static void test_StringTableStringFromId(void)
     
     result=lstrcmpiW(string, string2);
     ok(result==0,"StringID %p does not match requested StringID %p\n",string,string2);
+
+    pStringTableDestroy(table);
 }
 
 START_TEST(stringtable)
 {
     load_it_up();
 
-    test_StringTableInitialize();
     test_StringTableAddString();
     test_StringTableDuplicate();
     test_StringTableLookUpString();
     test_StringTableStringFromId();
-
-    /* assume we can always destroy */
-    pStringTableDestroy(table);
-    pStringTableDestroy(table2);
 }
