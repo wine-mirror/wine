@@ -1761,10 +1761,10 @@ typedef struct SAVEDSTATES {
     DWORD transform[(HIGHEST_TRANSFORMSTATE >> 5) + 1];
     WORD streamSource;                          /* MAX_STREAMS, 16 */
     WORD streamFreq;                            /* MAX_STREAMS, 16 */
-    DWORD textures;                             /* MAX_COMBINED_SAMPLERS, 20 */
     DWORD renderState[(WINEHIGHEST_RENDER_STATE >> 5) + 1];
-    BOOL textureState[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
-    WORD samplerState[MAX_COMBINED_SAMPLERS];   /* WINED3D_HIGHEST_SAMPLER_STATE + 1, 14*/
+    DWORD textureState[MAX_TEXTURES];           /* WINED3D_HIGHEST_TEXTURE_STATE + 1, 18 */
+    WORD samplerState[MAX_COMBINED_SAMPLERS];   /* WINED3D_HIGHEST_SAMPLER_STATE + 1, 14 */
+    DWORD textures;                             /* MAX_COMBINED_SAMPLERS, 20 */
     DWORD clipplane;                            /* WINED3DMAXUSERCLIPPLANES, 32 */
     WORD pixelShaderConstantsB;                 /* MAX_CONST_B, 16 */
     WORD pixelShaderConstantsI;                 /* MAX_CONST_I, 16 */

@@ -478,9 +478,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         object->num_contained_render_states = NUM_SAVEDPIXELSTATES_R;
         for (j = 0; j < MAX_TEXTURES; j++) {
             for (i = 0; i < NUM_SAVEDPIXELSTATES_T; i++) {
-                object->changed.textureState[j][SavedPixelStates_T[i]] = TRUE;
+                DWORD state = SavedPixelStates_T[i];
+                object->changed.textureState[j] |= 1 << state;
                 object->contained_tss_states[object->num_contained_tss_states].stage = j;
-                object->contained_tss_states[object->num_contained_tss_states].state = SavedPixelStates_T[i];
+                object->contained_tss_states[object->num_contained_tss_states].state = state;
                 object->num_contained_tss_states++;
             }
         }
@@ -537,9 +538,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         object->num_contained_render_states = NUM_SAVEDVERTEXSTATES_R;
         for (j = 0; j < MAX_TEXTURES; j++) {
             for (i = 0; i < NUM_SAVEDVERTEXSTATES_T; i++) {
-                object->changed.textureState[j][SavedVertexStates_T[i]] = TRUE;
+                DWORD state = SavedVertexStates_T[i];
+                object->changed.textureState[j] |= 1 << state;
                 object->contained_tss_states[object->num_contained_tss_states].stage = j;
-                object->contained_tss_states[object->num_contained_tss_states].state = SavedVertexStates_T[i];
+                object->contained_tss_states[object->num_contained_tss_states].state = state;
                 object->num_contained_tss_states++;
             }
         }
@@ -4448,7 +4450,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
         return WINED3D_OK;
     }
 
-    This->updateStateBlock->changed.textureState[Stage][Type] = TRUE;
+    This->updateStateBlock->changed.textureState[Stage] |= 1 << Type;
     This->updateStateBlock->textureState[Stage][Type]         = Value;
 
     if (This->isRecordingState) {
@@ -4816,13 +4818,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface, IW
         }
     }
     for(i = 0; i < MAX_TEXTURES; i++) {
-        for (j = 0; j <= WINED3D_HIGHEST_TEXTURE_STATE; ++j)
+        DWORD map = object->changed.textureState[i];
+
+        for(j = 0; map; map >>= 1, ++j)
         {
-            if(object->changed.textureState[i][j]) {
-                object->contained_tss_states[object->num_contained_tss_states].stage = i;
-                object->contained_tss_states[object->num_contained_tss_states].state = j;
-                object->num_contained_tss_states++;
-            }
+            if (!(map & 1)) continue;
+
+            object->contained_tss_states[object->num_contained_tss_states].stage = i;
+            object->contained_tss_states[object->num_contained_tss_states].state = j;
+            ++object->num_contained_tss_states;
         }
     }
     for(i = 0; i < MAX_COMBINED_SAMPLERS; i++){
