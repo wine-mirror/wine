@@ -879,109 +879,109 @@ typedef struct DECLSPEC_ALIGN(16) _M128A {
 } M128A, *PM128A;
 
 typedef struct _XMM_SAVE_AREA32 {
-    WORD ControlWord;
-    WORD StatusWord;
-    BYTE TagWord;
-    BYTE Reserved1;
-    WORD ErrorOpcode;
-    DWORD ErrorOffset;
-    WORD ErrorSelector;
-    WORD Reserved2;
-    DWORD DataOffset;
-    WORD DataSelector;
-    WORD Reserved3;
-    DWORD MxCsr;
-    DWORD MxCsr_Mask;
-    M128A FloatRegisters[8];
-    M128A XmmRegisters[16];
-    BYTE Reserved4[96];
+    WORD ControlWord;        /* 000 */
+    WORD StatusWord;         /* 002 */
+    BYTE TagWord;            /* 004 */
+    BYTE Reserved1;          /* 005 */
+    WORD ErrorOpcode;        /* 006 */
+    DWORD ErrorOffset;       /* 008 */
+    WORD ErrorSelector;      /* 00c */
+    WORD Reserved2;          /* 00e */
+    DWORD DataOffset;        /* 010 */
+    WORD DataSelector;       /* 014 */
+    WORD Reserved3;          /* 016 */
+    DWORD MxCsr;             /* 018 */
+    DWORD MxCsr_Mask;        /* 01c */
+    M128A FloatRegisters[8]; /* 020 */
+    M128A XmmRegisters[16];  /* 0a0 */
+    BYTE Reserved4[96];      /* 1a0 */
 } XMM_SAVE_AREA32, *PXMM_SAVE_AREA32;
 
 typedef struct DECLSPEC_ALIGN(16) _CONTEXT {
-    DWORD64 P1Home;
-    DWORD64 P2Home;
-    DWORD64 P3Home;
-    DWORD64 P4Home;
-    DWORD64 P5Home;
-    DWORD64 P6Home;
+    DWORD64 P1Home;          /* 000 */
+    DWORD64 P2Home;          /* 008 */
+    DWORD64 P3Home;          /* 010 */
+    DWORD64 P4Home;          /* 018 */
+    DWORD64 P5Home;          /* 020 */
+    DWORD64 P6Home;          /* 028 */
 
     /* Control flags */
-    DWORD ContextFlags;
-    DWORD MxCsr;
+    DWORD ContextFlags;      /* 030 */
+    DWORD MxCsr;             /* 034 */
 
     /* Segment */
-    WORD SegCs;
-    WORD SegDs;
-    WORD SegEs;
-    WORD SegFs;
-    WORD SegGs;
-    WORD SegSs;
-    DWORD EFlags;
+    WORD SegCs;              /* 038 */
+    WORD SegDs;              /* 03a */
+    WORD SegEs;              /* 03c */
+    WORD SegFs;              /* 03e */
+    WORD SegGs;              /* 040 */
+    WORD SegSs;              /* 042 */
+    DWORD EFlags;            /* 044 */
 
     /* Debug */
-    DWORD64 Dr0;
-    DWORD64 Dr1;
-    DWORD64 Dr2;
-    DWORD64 Dr3;
-    DWORD64 Dr6;
-    DWORD64 Dr7;
+    DWORD64 Dr0;             /* 048 */
+    DWORD64 Dr1;             /* 050 */
+    DWORD64 Dr2;             /* 058 */
+    DWORD64 Dr3;             /* 060 */
+    DWORD64 Dr6;             /* 068 */
+    DWORD64 Dr7;             /* 070 */
 
     /* Integer */
-    DWORD64 Rax;
-    DWORD64 Rcx;
-    DWORD64 Rdx;
-    DWORD64 Rbx;
-    DWORD64 Rsp;
-    DWORD64 Rbp;
-    DWORD64 Rsi;
-    DWORD64 Rdi;
-    DWORD64 R8;
-    DWORD64 R9;
-    DWORD64 R10;
-    DWORD64 R11;
-    DWORD64 R12;
-    DWORD64 R13;
-    DWORD64 R14;
-    DWORD64 R15;
+    DWORD64 Rax;             /* 078 */
+    DWORD64 Rcx;             /* 080 */
+    DWORD64 Rdx;             /* 088 */
+    DWORD64 Rbx;             /* 090 */
+    DWORD64 Rsp;             /* 098 */
+    DWORD64 Rbp;             /* 0a0 */
+    DWORD64 Rsi;             /* 0a8 */
+    DWORD64 Rdi;             /* 0b0 */
+    DWORD64 R8;              /* 0b8 */
+    DWORD64 R9;              /* 0c0 */
+    DWORD64 R10;             /* 0c8 */
+    DWORD64 R11;             /* 0d0 */
+    DWORD64 R12;             /* 0d8 */
+    DWORD64 R13;             /* 0e0 */
+    DWORD64 R14;             /* 0e8 */
+    DWORD64 R15;             /* 0f0 */
 
     /* Counter */
-    DWORD64 Rip;
+    DWORD64 Rip;             /* 0f8 */
 
     /* Floating point */
     union {
-        XMM_SAVE_AREA32 FltSave;
+        XMM_SAVE_AREA32 FltSave;  /* 100 */
         struct {
-            M128A Header[2];
-            M128A Legacy[8];
-            M128A Xmm0;
-            M128A Xmm1;
-            M128A Xmm2;
-            M128A Xmm3;
-            M128A Xmm4;
-            M128A Xmm5;
-            M128A Xmm6;
-            M128A Xmm7;
-            M128A Xmm8;
-            M128A Xmm9;
-            M128A Xmm10;
-            M128A Xmm11;
-            M128A Xmm12;
-            M128A Xmm13;
-            M128A Xmm14;
-            M128A Xmm15;
+            M128A Header[2];      /* 100 */
+            M128A Legacy[8];      /* 120 */
+            M128A Xmm0;           /* 1a0 */
+            M128A Xmm1;           /* 1b0 */
+            M128A Xmm2;           /* 1c0 */
+            M128A Xmm3;           /* 1d0 */
+            M128A Xmm4;           /* 1e0 */
+            M128A Xmm5;           /* 1f0 */
+            M128A Xmm6;           /* 200 */
+            M128A Xmm7;           /* 210 */
+            M128A Xmm8;           /* 220 */
+            M128A Xmm9;           /* 230 */
+            M128A Xmm10;          /* 240 */
+            M128A Xmm11;          /* 250 */
+            M128A Xmm12;          /* 260 */
+            M128A Xmm13;          /* 270 */
+            M128A Xmm14;          /* 280 */
+            M128A Xmm15;          /* 290 */
         } DUMMYSTRUCTNAME;
     } DUMMYUNIONNAME;
 
     /* Vector */
-    M128A VectorRegister[26];
-    DWORD64 VectorControl;
+    M128A VectorRegister[26];     /* 300 */
+    DWORD64 VectorControl;        /* 4a0 */
 
     /* Debug control */
-    DWORD64 DebugControl;
-    DWORD64 LastBranchToRip;
-    DWORD64 LastBranchFromRip;
-    DWORD64 LastExceptionToRip;
-    DWORD64 LastExceptionFromRip;
+    DWORD64 DebugControl;         /* 4a8 */
+    DWORD64 LastBranchToRip;      /* 4b0 */
+    DWORD64 LastBranchFromRip;    /* 4b8 */
+    DWORD64 LastExceptionToRip;   /* 4c0 */
+    DWORD64 LastExceptionFromRip; /* 4c8 */
 } CONTEXT;
 
 typedef struct _RUNTIME_FUNCTION
