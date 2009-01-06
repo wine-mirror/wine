@@ -416,7 +416,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         }
         object->num_contained_ps_consts_b = MAX_CONST_B;
         for(i = 0; i < MAX_TEXTURES; i++) {
-            for(j = 1; j <= WINED3D_HIGHEST_TEXTURE_STATE; j++) {
+            for (j = 0; j <= WINED3D_HIGHEST_TEXTURE_STATE; ++j)
+            {
                 object->contained_tss_states[object->num_contained_tss_states].stage = i;
                 object->contained_tss_states[object->num_contained_tss_states].state = j;
                 object->num_contained_tss_states++;
@@ -3619,7 +3620,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantF(
 
 static inline void markTextureStagesDirty(IWineD3DDeviceImpl *This, DWORD stage) {
     DWORD i;
-    for(i = 0; i < WINED3D_HIGHEST_TEXTURE_STATE; i++) {
+    for(i = 0; i <= WINED3D_HIGHEST_TEXTURE_STATE; ++i)
+    {
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(stage, i));
     }
 }
@@ -4814,7 +4816,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface, IW
         }
     }
     for(i = 0; i < MAX_TEXTURES; i++) {
-        for(j = 1; j <= WINED3D_HIGHEST_TEXTURE_STATE; j++) {
+        for (j = 0; j <= WINED3D_HIGHEST_TEXTURE_STATE; ++j)
+        {
             if(object->changed.textureState[i][j]) {
                 object->contained_tss_states[object->num_contained_tss_states].stage = i;
                 object->contained_tss_states[object->num_contained_tss_states].state = j;

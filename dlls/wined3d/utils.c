@@ -1025,9 +1025,6 @@ const char* debug_d3dtexturestate(DWORD state) {
     D3DSTATE_TO_STR(WINED3DTSS_RESULTARG             );
     D3DSTATE_TO_STR(WINED3DTSS_CONSTANT              );
 #undef D3DSTATE_TO_STR
-  case 12:
-    /* Note WINED3DTSS are not consecutive, so skip these */
-    return "unused";
   default:
     FIXME("Unrecognized %u texture state!\n", state);
     return "unrecognized";

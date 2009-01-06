@@ -998,7 +998,8 @@ should really perform a delta so that only the changes get updated*/
             IWineD3DDevice_SetRenderState(pDevice, i, This->renderState[i]);
         }
         for(j = 0; j < MAX_TEXTURES; j++) {
-            for(i = 1; i <= WINED3D_HIGHEST_TEXTURE_STATE; i++) {
+            for (i = 0; i <= WINED3D_HIGHEST_TEXTURE_STATE; ++i)
+            {
                 IWineD3DDevice_SetTextureStageState(pDevice, j, i, This->textureState[j][i]);
             }
         }
