@@ -4004,8 +4004,18 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
         break;
       case SB_THUMBTRACK:
       case SB_THUMBPOSITION:
-        ME_ScrollAbs(editor,HIWORD(wParam));
+      {
+        SCROLLINFO sbi;
+        sbi.cbSize = sizeof(sbi);
+        sbi.fMask = SIF_TRACKPOS;
+        /* Try to get 32-bit track position value. */
+        if (!GetScrollInfo(editor->hWnd, SB_VERT, &sbi))
+          /* GetScrollInfo failed, settle for 16-bit value in wParam. */
+          sbi.nTrackPos = HIWORD(wParam);
+
+        ME_ScrollAbs(editor, sbi.nTrackPos);
         break;
+      }
     }
     if (msg == EM_SCROLL)
       return 0x00010000 | (((ME_GetYScrollPos(editor) - origNPos)/lineHeight) & 0xffff);
