@@ -1549,11 +1549,10 @@ static void test_move(void)
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
     ok(!SHFileOperationA(&shfo2), "Move many files\n");
-    ok(file_exists("test6.txt"), "The file is moved - many files are "
+    ok(DeleteFileA("test6.txt"), "The file is not moved - many files are "
        "specified as a target\n");
-    DeleteFileA("test6.txt");
-    DeleteFileA("test7.txt");
-    RemoveDirectoryA("test8.txt");
+    ok(DeleteFileA("test7.txt"), "The file is not moved\n");
+    ok(RemoveDirectoryA("test8.txt"), "The directory is not moved\n");
 
     init_shfo_tests();
 
@@ -1628,9 +1627,18 @@ static void test_move(void)
     shfo.pFrom = "test1.txt\0";
     shfo.pTo = "a.txt\0b.txt\0";
     retval = SHFileOperationA(&shfo);
-    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
-    ok(!file_exists("test1.txt"), "Expected test1.txt to not exist\n");
-    ok(DeleteFile("a.txt"), "Expected a.txt to exist\n");
+    if (retval == DE_OPCANCELLED)
+    {
+        /* NT4 fails and doesn't move any files */
+        ok(!file_exists("a.txt"), "Expected a.txt to not exist\n");
+        DeleteFileA("test1.txt");
+    }
+    else
+    {
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
+        ok(!file_exists("test1.txt"), "Expected test1.txt to not exist\n");
+        ok(DeleteFile("a.txt"), "Expected a.txt to exist\n");
+    }
     ok(!file_exists("b.txt"), "Expected b.txt to not exist\n");
 
     /* move two files to one other */
@@ -1727,9 +1735,17 @@ static void test_move(void)
     /* try to overwrite an existing file */
     shfo.pTo = "test3.txt\0";
     retval = SHFileOperationA(&shfo);
-    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
-    ok(!file_exists("test2.txt"), "Expected test2.txt to not exist\n");
-    ok(file_exists("test3.txt"), "Expected test3.txt to exist\n");
+    if (retval == DE_OPCANCELLED)
+    {
+        /* NT4 fails and doesn't move any files */
+        ok(file_exists("test2.txt"), "Expected test2.txt to exist\n");
+    }
+    else
+    {
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
+        ok(!file_exists("test2.txt"), "Expected test2.txt to not exist\n");
+        ok(file_exists("test3.txt"), "Expected test3.txt to exist\n");
+    }
 }
 
 static void test_sh_create_dir(void)
