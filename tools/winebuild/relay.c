@@ -741,9 +741,10 @@ static void BuildCallTo32CBClient( BOOL isEx )
  *
  * Stack layout:
  *   ...
- * (ebp+16)  first arg
- * (ebp+12)  ret addr to user code
- * (ebp+8)   eax saved by relay code
+ * (ebp+20)  first arg
+ * (ebp+16)  ret addr to user code
+ * (ebp+12)  func to call (relative to relay code ret addr)
+ * (ebp+8)   number of args
  * (ebp+4)   ret addr to relay code
  * (ebp+0)   saved ebp
  * (ebp-128) buffer area to allow stack frame manipulation
@@ -770,17 +771,16 @@ static void BuildCallFrom32Regs(void)
 
     output( "\tpushl %%ebp\n" );
     output( "\tmovl %%esp,%%ebp\n ");
-    output( "\tleal -%d(%%esp), %%esp\n", STACK_SPACE + 4 /* for context arg */);
+    output( "\tleal -%d(%%esp),%%esp\n", STACK_SPACE );
 
     /* Build the context structure */
 
+    output( "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(Eax) - STACK_SPACE );
     output( "\tpushfl\n" );
     output( "\tpopl %%eax\n" );
     output( "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(EFlags) - STACK_SPACE );
     output( "\tmovl 0(%%ebp),%%eax\n" );
     output( "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(Ebp) - STACK_SPACE );
-    output( "\tmovl 8(%%ebp),%%eax\n" );
-    output( "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(Eax) - STACK_SPACE );
     output( "\tmovl %%ebx,%d(%%ebp)\n", CONTEXTOFFSET(Ebx) - STACK_SPACE );
     output( "\tmovl %%ecx,%d(%%ebp)\n", CONTEXTOFFSET(Ecx) - STACK_SPACE );
     output( "\tmovl %%edx,%d(%%ebp)\n", CONTEXTOFFSET(Edx) - STACK_SPACE );
@@ -805,31 +805,30 @@ static void BuildCallFrom32Regs(void)
     output( "\tmovl $0x%x,%%eax\n", CONTEXT86_FULL );
     output( "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(ContextFlags) - STACK_SPACE );
 
-    output( "\tmovl 12(%%ebp),%%eax\n" ); /* Get %eip at time of call */
+    output( "\tmovl 16(%%ebp),%%eax\n" ); /* Get %eip at time of call */
     output( "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(Eip) - STACK_SPACE );
 
     /* Transfer the arguments */
 
-    output( "\tmovl 4(%%ebp),%%ebx\n" );   /* get relay code addr */
-    output( "\tmovzbl 4(%%ebx),%%ecx\n" ); /* fetch number of args to copy */
-    output( "\tsubl %%ecx,%%esp\n" );
+    output( "\tmovl 8(%%ebp),%%ecx\n" );    /* fetch number of args to copy */
+    output( "\tleal 4(,%%ecx,4),%%edx\n" ); /* add 4 for context arg */
+    output( "\tsubl %%edx,%%esp\n" );
     output( "\tandl $~15,%%esp\n" );
-    output( "\tleal 16(%%ebp),%%esi\n" );  /* get %esp at time of call */
+    output( "\tleal 20(%%ebp),%%esi\n" );  /* get %esp at time of call */
     output( "\tmovl %%esp,%%edi\n" );
-    output( "\tshrl $2,%%ecx\n" );
+    output( "\ttest %%ecx,%%ecx\n" );
     output( "\tjz 1f\n" );
     output( "\tcld\n" );
     output( "\trep\n\tmovsl\n" );  /* copy args */
     output( "1:\tleal %d(%%ebp),%%eax\n", -STACK_SPACE );  /* get addr of context struct */
     output( "\tmovl %%eax,(%%edi)\n" );    /* and pass it as extra arg */
-    output( "\tmovzbl 5(%%ebx),%%eax\n" ); /* fetch number of args to remove */
-    output( "\tleal 16(%%ebp,%%eax),%%eax\n" );
-    output( "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(Esp) - STACK_SPACE );
+    output( "\tmovl %%esi,%d(%%ebp)\n", CONTEXTOFFSET(Esp) - STACK_SPACE );
 
     /* Call the entry point */
 
-    output( "\taddl (%%ebx),%%ebx\n" );
-    output( "\tcall *%%ebx\n" );
+    output( "\tmovl 4(%%ebp),%%eax\n" );   /* get relay code addr */
+    output( "\taddl 12(%%ebp),%%eax\n" );
+    output( "\tcall *%%eax\n" );
     output( "\tleal -%d(%%ebp),%%ecx\n", STACK_SPACE );
 
     /* Restore the context structure */

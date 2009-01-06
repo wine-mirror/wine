@@ -137,7 +137,6 @@ static void output_relay_debug( DLLSPEC *spec )
                 output( "\tpushl %%esp\n" );
 
             if (odp->flags & FLAG_RET64) flags |= 1;
-            if (odp->type == TYPE_STDCALL) flags |= 2;
             output( "\tpushl $%u\n", (flags << 24) | (args << 16) | (i - spec->base) );
 
             if (UsePIC)

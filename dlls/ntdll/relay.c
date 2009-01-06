@@ -447,16 +447,17 @@ void WINAPI __regs_relay_call_regs( struct relay_descr *descr, unsigned int idx,
                  context->Edx, context->Esi, context->Edi, context->Ebp, context->Esp,
                  context->SegDs, context->SegEs, context->SegFs, context->SegGs, context->EFlags );
 
-        assert( orig_func[0] == 0x50 /* pushl %eax */ );
-        assert( orig_func[1] == 0xe8 /* call */ );
+        assert( orig_func[0] == 0x68 /* pushl func */ );
+        assert( orig_func[5] == 0x6a /* pushl args */ );
+        assert( orig_func[7] == 0xe8 /* call */ );
     }
 
     /* now call the real function */
 
     memcpy( args_copy, args, nb_args * sizeof(args[0]) );
-    args_copy[nb_args++] = (int)context;  /* append context argument */
+    args_copy[nb_args++] = (INT_PTR)context;  /* append context argument */
 
-    call_entry_point( orig_func + 6 + *(int *)(orig_func + 6), nb_args, args_copy );
+    call_entry_point( orig_func + 12 + *(int *)(orig_func + 1), nb_args, args_copy );
 
 
     if (TRACE_ON(relay))
