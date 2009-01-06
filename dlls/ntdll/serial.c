@@ -651,7 +651,11 @@ static NTSTATUS set_line_control(int fd, const SERIAL_LINE_CONTROL* slc)
     port.c_cflag &= ~(HUPCL);
     port.c_cflag |= CLOCAL | CREAD;
     
-    port.c_lflag &= ~(ICANON|ECHO|ISIG);
+    /*
+     * on FreeBSD, turning off ICANON does not disable IEXTEN,
+     * so we must turn it off explicitly. No harm done on Linux.
+     */
+    port.c_lflag &= ~(ICANON|ECHO|ISIG|IEXTEN);
     port.c_lflag |= NOFLSH;
     
     bytesize = slc->WordLength;
