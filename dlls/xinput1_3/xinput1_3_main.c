@@ -79,6 +79,18 @@ DWORD WINAPI XInputGetState(DWORD dwUserIndex, XINPUT_STATE* pState)
     return ERROR_BAD_ARGUMENTS;
 }
 
+DWORD WINAPI XInputGetKeystroke(DWORD dwUserIndex, DWORD dwReserve, PXINPUT_KEYSTROKE pKeystroke)
+{
+    FIXME("(%d %d %p) Stub!\n", dwUserIndex, dwReserve, pKeystroke);
+
+    if (dwUserIndex < XUSER_MAX_COUNT)
+    {
+        return ERROR_DEVICE_NOT_CONNECTED;
+        /* If controller exists then return ERROR_SUCCESS */
+    }
+    return ERROR_BAD_ARGUMENTS;
+}
+
 DWORD WINAPI XInputGetCapabilities(DWORD dwUserIndex, DWORD dwFlags, XINPUT_CAPABILITIES* pCapabilities)
 {
     FIXME("(%d %d %p)\n", dwUserIndex, dwFlags, pCapabilities);
