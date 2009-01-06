@@ -1041,8 +1041,14 @@ HRESULT WINAPI ScriptBreak(const WCHAR *chars, int count, const SCRIPT_ANALYSIS 
         memset(&la[i], 0, sizeof(SCRIPT_LOGATTR));
 
         /* FIXME: set the other flags */
-        la[i].fWhiteSpace = isspaceW(chars[i]);
+        la[i].fWhiteSpace = (chars[i] == ' ');
         la[i].fCharStop = 1;
+
+        if (i > 0 && la[i - 1].fWhiteSpace)
+        {
+            la[i].fSoftBreak = 1;
+            la[i].fWordStop = 1;
+        }
     }
     return S_OK;
 }

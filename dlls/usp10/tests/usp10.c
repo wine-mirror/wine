@@ -1382,6 +1382,50 @@ static void test_ScriptGetProperties(void)
     ok(hr == S_OK, "ScriptGetProperties failed: 0x%08x\n", hr);
 }
 
+static void test_ScriptBreak(void)
+{
+    static const WCHAR test[] = {' ','\r','\n',0};
+    SCRIPT_ITEM items[4];
+    SCRIPT_LOGATTR la;
+    HRESULT hr;
+
+    hr = ScriptItemize(test, 3, 4, NULL, NULL, items, NULL);
+    ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
+
+    memset(&la, 0, sizeof(la));
+    hr = ScriptBreak(test, 1, &items[0].a, &la);
+    ok(!hr, "ScriptBreak should return S_OK not %08x\n", hr);
+
+    ok(!la.fSoftBreak, "fSoftBreak set\n");
+    ok(la.fWhiteSpace, "fWhiteSpace not set\n");
+    ok(la.fCharStop, "fCharStop not set\n");
+    ok(!la.fWordStop, "fWordStop set\n");
+    ok(!la.fInvalid, "fInvalid set\n");
+    ok(!la.fReserved, "fReserved set\n");
+
+    memset(&la, 0, sizeof(la));
+    hr = ScriptBreak(test + 1, 1, &items[1].a, &la);
+    ok(!hr, "ScriptBreak should return S_OK not %08x\n", hr);
+
+    ok(!la.fSoftBreak, "fSoftBreak set\n");
+    ok(!la.fWhiteSpace, "fWhiteSpace set\n");
+    ok(la.fCharStop, "fCharStop not set\n");
+    ok(!la.fWordStop, "fWordStop set\n");
+    ok(!la.fInvalid, "fInvalid set\n");
+    ok(!la.fReserved, "fReserved set\n");
+
+    memset(&la, 0, sizeof(la));
+    hr = ScriptBreak(test + 2, 1, &items[2].a, &la);
+    ok(!hr, "ScriptBreak should return S_OK not %08x\n", hr);
+
+    ok(!la.fSoftBreak, "fSoftBreak set\n");
+    ok(!la.fWhiteSpace, "fWhiteSpace set\n");
+    ok(la.fCharStop, "fCharStop not set\n");
+    ok(!la.fWordStop, "fWordStop set\n");
+    ok(!la.fInvalid, "fInvalid set\n");
+    ok(!la.fReserved, "fReserved set\n");
+}
+
 START_TEST(usp10)
 {
     HWND            hwnd;
@@ -1426,6 +1470,7 @@ START_TEST(usp10)
     test_ScriptLayout();
     test_digit_substitution();
     test_ScriptGetProperties();
+    test_ScriptBreak();
 
     ReleaseDC(hwnd, hdc);
     DestroyWindow(hwnd);
