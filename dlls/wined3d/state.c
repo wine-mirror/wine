@@ -5488,7 +5488,7 @@ static void multistate_apply_3(DWORD state, IWineD3DStateBlockImpl *stateblock, 
     stateblock->wineD3DDevice->multistate_funcs[state][2](state, stateblock, context);
 }
 
-void compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_multistate_funcs,
+HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_multistate_funcs,
         const WineD3D_GL_Info *gl_info, const struct StateEntryTemplate *vertex,
         const struct fragment_pipeline *fragment, const struct StateEntryTemplate *misc)
 {
@@ -5520,6 +5520,7 @@ void compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_mul
         memset(set, 0, sizeof(set));
 
         for(i = 0; cur[i].state; i++) {
+            APPLYSTATEFUNC *funcs_array;
 
             /* Only use the first matching state with the available extension from one template.
              * e.g.
@@ -5552,17 +5553,24 @@ void compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_mul
                     dev_multistate_funcs[cur[i].state] = HeapAlloc(GetProcessHeap(),
                                                                    0,
                                                                    sizeof(**dev_multistate_funcs) * 2);
+                    if (!dev_multistate_funcs[cur[i].state]) {
+                        goto out_of_mem;
+                    }
+
                     dev_multistate_funcs[cur[i].state][0] = multistate_funcs[cur[i].state][0];
                     dev_multistate_funcs[cur[i].state][1] = multistate_funcs[cur[i].state][1];
                     break;
                 case 2:
                     StateTable[cur[i].state].apply = multistate_apply_3;
-                    HeapFree(GetProcessHeap(), 0, multistate_funcs[cur[i].state]);
-                    dev_multistate_funcs[cur[i].state] = HeapAlloc(GetProcessHeap(),
-                                                                   0,
-                                                                   sizeof(**dev_multistate_funcs) * 3);
-                    dev_multistate_funcs[cur[i].state][0] = multistate_funcs[cur[i].state][0];
-                    dev_multistate_funcs[cur[i].state][1] = multistate_funcs[cur[i].state][1];
+                    funcs_array = HeapReAlloc(GetProcessHeap(),
+                                              0,
+                                              dev_multistate_funcs[cur[i].state],
+                                              sizeof(**dev_multistate_funcs) * 3);
+                    if (!funcs_array) {
+                        goto out_of_mem;
+                    }
+
+                    dev_multistate_funcs[cur[i].state] = funcs_array;
                     dev_multistate_funcs[cur[i].state][2] = multistate_funcs[cur[i].state][2];
                     break;
                 default:
@@ -5578,5 +5586,16 @@ void compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_mul
             StateTable[cur[i].state].representative = cur[i].content.representative;
         }
     }
+
+    return WINED3D_OK;
+
+out_of_mem:
+    for (i = 0; i <= STATE_HIGHEST; ++i) {
+        HeapFree(GetProcessHeap(), 0, dev_multistate_funcs[i]);
+    }
+
+    memset(dev_multistate_funcs, 0, (STATE_HIGHEST + 1)*sizeof(*dev_multistate_funcs));
+
+    return E_OUTOFMEMORY;
 }
 #undef GLINFO_LOCATION

@@ -760,7 +760,7 @@ extern const struct fragment_pipeline nvts_fragment_pipeline;
 extern const struct fragment_pipeline nvrc_fragment_pipeline;
 
 /* "Base" state table */
-void compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_multistate_funcs,
+HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_multistate_funcs,
         const WineD3D_GL_Info *gl_info, const struct StateEntryTemplate *vertex,
         const struct fragment_pipeline *fragment, const struct StateEntryTemplate *misc);
 

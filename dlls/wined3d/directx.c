@@ -3631,6 +3631,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     const struct fragment_pipeline *frag_pipeline = NULL;
     int i;
     struct fragment_caps ffp_caps;
+    HRESULT hr;
 
     /* Validate the adapter number. If no adapters are available(no GL), ignore the adapter
      * number and create a device without a 3D adapter for 2D only operation.
@@ -3689,8 +3690,15 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     frag_pipeline->get_caps(DeviceType, &GLINFO_LOCATION, &ffp_caps);
     object->max_ffp_textures = ffp_caps.MaxSimultaneousTextures;
     object->max_ffp_texture_stages = ffp_caps.MaxTextureBlendStages;
-    compile_state_table(object->StateTable, object->multistate_funcs, &GLINFO_LOCATION,
+    hr = compile_state_table(object->StateTable, object->multistate_funcs, &GLINFO_LOCATION,
                         ffp_vertexstate_template, frag_pipeline, misc_state_template);
+
+    if (FAILED(hr)) {
+        IWineD3D_Release(object->wineD3D);
+        HeapFree(GetProcessHeap(), 0, object);
+
+        return hr;
+    }
 
     object->blitter = select_blit_implementation(Adapter, DeviceType);
 
