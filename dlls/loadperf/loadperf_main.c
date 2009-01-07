@@ -24,7 +24,11 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winerror.h"
+#include "winnls.h"
 #include "wine/debug.h"
+
+#include "loadperf.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(loadperf);
 
@@ -44,4 +48,45 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
 
     return TRUE;
+}
+
+/*************************************************************
+ *     UnloadPerfCounterTextStringsA (loadperf.@)
+ *
+ * NOTES
+ *   See UnloadPerfCounterTextStringsW
+ */
+DWORD WINAPI UnloadPerfCounterTextStringsA(LPCSTR cmdline, BOOL verbose)
+{
+    DWORD ret;
+    LPWSTR cmdlineW = NULL;
+
+    if (cmdline)
+    {
+        INT len = MultiByteToWideChar(CP_ACP, 0, cmdline, -1, NULL, 0);
+        cmdlineW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (!cmdlineW) return ERROR_NOT_ENOUGH_MEMORY;
+        MultiByteToWideChar(CP_ACP, 0, cmdline, -1, cmdlineW, len);
+    }
+
+    ret = UnloadPerfCounterTextStringsW(cmdlineW, verbose);
+
+    HeapFree(GetProcessHeap(), 0, cmdlineW);
+
+    return ret;
+}
+
+/*************************************************************
+ *     UnloadPerfCounterTextStringsW (loadperf.@)
+ *
+ * PARAMS
+ *   cmdline [in] Last argument in command line - application counters to be removed
+ *   verbose [in] TRUE - the function may write to stdout
+ *
+ */
+DWORD WINAPI UnloadPerfCounterTextStringsW(LPCWSTR cmdline, BOOL verbose)
+{
+    FIXME("(%s, %d): stub\n", debugstr_w(cmdline), verbose);
+
+    return ERROR_SUCCESS;
 }

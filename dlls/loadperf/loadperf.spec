@@ -8,7 +8,7 @@
 @ stub RestorePerfRegistryFromFileW
 @ stub SetServiceAsTrustedA
 @ stub SetServiceAsTrustedW
-@ stub UnloadPerfCounterTextStringsA
-@ stub UnloadPerfCounterTextStringsW
+@ stdcall UnloadPerfCounterTextStringsA(str long)
+@ stdcall UnloadPerfCounterTextStringsW(wstr long)
 @ stub UpdatePerfNameFilesA
 @ stub UpdatePerfNameFilesW

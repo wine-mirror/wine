@@ -259,6 +259,7 @@ SRCDIR_INCLUDES = \
 	lmuse.h \
 	lmuseflg.h \
 	lmwksta.h \
+	loadperf.h \
 	lzexpand.h \
 	mapi.h \
 	mapicode.h \
