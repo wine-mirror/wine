@@ -318,23 +318,23 @@ HRESULT WINAPI DllCanUnloadNow(void) {
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv) {
     TRACE("(%s, %s, %p)\n", debugstr_dmguid(rclsid), debugstr_dmguid(riid), ppv);
     if (IsEqualCLSID (rclsid, &CLSID_DirectMusicChordMap) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &ChordMap_CF;
+                *ppv = &ChordMap_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicComposer) && IsEqualIID (riid, &IID_IClassFactory)) { 
-		*ppv = (LPVOID) &Composer_CF;
+                *ppv = &Composer_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);		
 		return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicChordMapTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &ChordMapTrack_CF;
+                *ppv = &ChordMapTrack_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);		
 		return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicTemplate) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &Template_CF;
+                *ppv = &Template_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);		
 		return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSignPostTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &SignPostTrack_CF;
+                *ppv = &SignPostTrack_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);		
 		return S_OK;
 	}
