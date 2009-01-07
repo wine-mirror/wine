@@ -23,9 +23,6 @@
 #include "globals.h"
 #include <stdio.h>
 
-BOOL FileIsPlaceable( LPCSTR szFileName );
-HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName );
-
 HMETAFILE hmf;
 int deltax = 0, deltay = 0;
 int width = 0, height = 0;
@@ -44,6 +41,85 @@ static BOOL FileOpen(HWND hWnd, char *fn, int fnsz)
     return FALSE;
   *fn = 0;
   return GetOpenFileName(&ofn);
+}
+
+static BOOL FileIsPlaceable( LPCSTR szFileName )
+{
+  HFILE		hInFile;
+  APMFILEHEADER	apmh;
+
+  if( (hInFile = _lopen( szFileName, OF_READ ) ) == HFILE_ERROR )
+    return FALSE;
+
+  if( _lread( hInFile, &apmh, sizeof(APMFILEHEADER) )
+      != sizeof(APMFILEHEADER) )
+    {
+      _lclose( hInFile );
+      return FALSE;
+    }
+  _lclose( hInFile );
+
+  /* Is it placeable? */
+  return (apmh.key == APMHEADER_KEY);
+}
+
+static HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName )
+{
+  LPBYTE lpData;
+  METAHEADER mfHeader;
+  APMFILEHEADER	APMHeader;
+  HFILE	fh;
+  HMETAFILE hmf;
+  WORD checksum, *p;
+  HDC hdc;
+  int i;
+
+  if( (fh = _lopen( szFileName, OF_READ ) ) == HFILE_ERROR ) return 0;
+  _llseek(fh, 0, 0);
+  if (!_lread(fh, (LPSTR)&APMHeader, sizeof(APMFILEHEADER))) return 0;
+  _llseek(fh, sizeof(APMFILEHEADER), 0);
+  checksum = 0;
+  p = (WORD *) &APMHeader;
+
+  for(i=0; i<10; i++)
+    checksum ^= *p++;
+  if (checksum != APMHeader.checksum) {
+    char msg[128];
+    sprintf(msg, "Computed checksum %04x != stored checksum %04x\n",
+	   checksum, APMHeader.checksum);
+        MessageBox(hwnd, msg, "Checksum failed", MB_OK);
+    return 0;
+  }
+
+  if (!_lread(fh, (LPSTR)&mfHeader, sizeof(METAHEADER))) return 0;
+
+  if (!(lpData = GlobalAlloc(GPTR, (mfHeader.mtSize * 2L)))) return 0;
+
+  _llseek(fh, sizeof(APMFILEHEADER), 0);
+  if (!_lread(fh, lpData, (UINT)(mfHeader.mtSize * 2L)))
+  {
+    GlobalFree((HGLOBAL)lpData);
+    _lclose(fh);
+    return 0;
+  }
+  _lclose(fh);
+
+  if (!(hmf = SetMetaFileBitsEx(mfHeader.mtSize*2, lpData)))
+    return 0;
+
+
+  width = APMHeader.bbox.Right - APMHeader.bbox.Left;
+  height = APMHeader.bbox.Bottom - APMHeader.bbox.Top;
+
+  /*      printf("Ok! width %d height %d inch %d\n", width, height, APMHeader.inch);  */
+  hdc = GetDC(hwnd);
+  width = width * GetDeviceCaps(hdc, LOGPIXELSX)/APMHeader.inch;
+  height = height * GetDeviceCaps(hdc,LOGPIXELSY)/APMHeader.inch;
+  ReleaseDC(hwnd, hdc);
+
+  deltax = 0;
+  deltay = 0 ;
+  return hmf;
 }
 
 
@@ -136,83 +212,4 @@ LRESULT CALLBACK WndProc(HWND hwnd,
       return DefWindowProc(hwnd, uMessage, wparam, lparam);
     }
     return 0;
-}
-
-BOOL FileIsPlaceable( LPCSTR szFileName )
-{
-  HFILE		hInFile;
-  APMFILEHEADER	apmh;
-
-  if( (hInFile = _lopen( szFileName, OF_READ ) ) == HFILE_ERROR )
-    return FALSE;
-
-  if( _lread( hInFile, &apmh, sizeof(APMFILEHEADER) )
-      != sizeof(APMFILEHEADER) )
-    {
-      _lclose( hInFile );
-      return FALSE;
-    }
-  _lclose( hInFile );
-
-  /* Is it placeable? */
-  return (apmh.key == APMHEADER_KEY);
-}
-
-HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName )
-{
-  LPBYTE lpData;
-  METAHEADER mfHeader;
-  APMFILEHEADER	APMHeader;
-  HFILE	fh;
-  HMETAFILE hmf;
-  WORD checksum, *p;
-  HDC hdc;
-  int i;
-
-  if( (fh = _lopen( szFileName, OF_READ ) ) == HFILE_ERROR ) return 0;
-  _llseek(fh, 0, 0);
-  if (!_lread(fh, (LPSTR)&APMHeader, sizeof(APMFILEHEADER))) return 0;
-  _llseek(fh, sizeof(APMFILEHEADER), 0);
-  checksum = 0;
-  p = (WORD *) &APMHeader;
-
-  for(i=0; i<10; i++)
-    checksum ^= *p++;
-  if (checksum != APMHeader.checksum) {
-    char msg[128];
-    sprintf(msg, "Computed checksum %04x != stored checksum %04x\n",
-	   checksum, APMHeader.checksum);
-        MessageBox(hwnd, msg, "Checksum failed", MB_OK);
-    return 0;
-  }
-
-  if (!_lread(fh, (LPSTR)&mfHeader, sizeof(METAHEADER))) return 0;
-
-  if (!(lpData = GlobalAlloc(GPTR, (mfHeader.mtSize * 2L)))) return 0;
-
-  _llseek(fh, sizeof(APMFILEHEADER), 0);
-  if (!_lread(fh, lpData, (UINT)(mfHeader.mtSize * 2L)))
-  {
-    GlobalFree((HGLOBAL)lpData);
-    _lclose(fh);
-    return 0;
-  }
-  _lclose(fh);
-
-  if (!(hmf = SetMetaFileBitsEx(mfHeader.mtSize*2, lpData)))
-    return 0;
-
-
-  width = APMHeader.bbox.Right - APMHeader.bbox.Left;
-  height = APMHeader.bbox.Bottom - APMHeader.bbox.Top;
-
-  /*      printf("Ok! width %d height %d inch %d\n", width, height, APMHeader.inch);  */
-  hdc = GetDC(hwnd);
-  width = width * GetDeviceCaps(hdc, LOGPIXELSX)/APMHeader.inch;
-  height = height * GetDeviceCaps(hdc,LOGPIXELSY)/APMHeader.inch;
-  ReleaseDC(hwnd, hdc);
-
-  deltax = 0;
-  deltay = 0 ;
-  return hmf;
 }
