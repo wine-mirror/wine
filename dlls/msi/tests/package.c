@@ -9585,6 +9585,13 @@ static void test_MsiGetProductProperty(void)
     lstrcatA(keypath, prod_squashed);
 
     res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &userkey);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip("Not enough rights to perform tests\n");
+        RegDeleteKeyA(prodkey, "");
+        RegCloseKey(prodkey);
+        return;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     res = RegCreateKeyA(userkey, "InstallProperties", &props);
