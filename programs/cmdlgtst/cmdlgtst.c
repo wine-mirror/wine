@@ -288,7 +288,7 @@ static void paintMainWindow(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lPar
 	/* Commence painting! */
 
 	BeginPaint(hWnd, &ps);
-	GetClientRect(hWnd, (LPRECT) &rect);
+	GetClientRect(hWnd, &rect);
 
 	pen = SelectObject(ps.hdc, CreatePen(0, 0, fgColor));
 	brush = SelectObject(ps.hdc, CreateSolidBrush(bgColor));
@@ -367,8 +367,8 @@ static void mw_ColorSetup(HWND hWnd)
 	if(ChooseColor(&cc)) {
 		RECT rect;
 
-		GetClientRect(hWnd, (LPRECT) &rect);
-		InvalidateRect(hWnd, (LPRECT) &rect, FALSE);
+		GetClientRect(hWnd, &rect);
+		InvalidateRect(hWnd, &rect, FALSE);
 		bgColor = cc.rgbResult;
 	}
 	else mw_checkError(hWnd, FALSE);
@@ -378,8 +378,8 @@ static void mw_FontSetup(HWND hWnd)
 {
 	if(ChooseFont(&cf)) {
 		RECT rect;
-		GetClientRect(hWnd, (LPRECT) &rect);
-		InvalidateRect(hWnd, (LPRECT) &rect, FALSE);
+		GetClientRect(hWnd, &rect);
+		InvalidateRect(hWnd, &rect, FALSE);
 		txtColor = cf.rgbColors;
 	}
 	else mw_checkError(hWnd, FALSE);
@@ -405,8 +405,8 @@ static void mw_OpenSetup(HWND hWnd)
 {
 	if(GetOpenFileName(&ofn)) {
 		RECT rect;
-		GetClientRect(hWnd, (LPRECT) &rect);
-		InvalidateRect(hWnd, (LPRECT) &rect, FALSE);
+		GetClientRect(hWnd, &rect);
+		InvalidateRect(hWnd, &rect, FALSE);
 	}
 	else mw_checkError(hWnd,FALSE);
 }
@@ -415,8 +415,8 @@ static void mw_SaveSetup(HWND hWnd)
 {
 	if(GetSaveFileName(&ofn)) {
 		RECT rect;
-		GetClientRect(hWnd, (LPRECT) &rect);
-		InvalidateRect(hWnd, (LPRECT) &rect, FALSE);
+		GetClientRect(hWnd, &rect);
+		InvalidateRect(hWnd, &rect, FALSE);
 	}
 	else mw_checkError(hWnd,FALSE);
 }
