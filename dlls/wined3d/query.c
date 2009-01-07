@@ -268,60 +268,68 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
 
 static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_GetData(IWineD3DQuery* iface, void* pData, DWORD dwSize, DWORD dwGetDataFlags) {
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *) iface;
+    GLuint queryId = ((WineQueryOcclusionData *)This->extendedData)->queryId;
     DWORD* data = pData;
+    GLuint available;
+    GLuint samples;
     HRESULT res;
+
     TRACE("(%p) : type D3DQUERY_OCCLUSION, pData %p, dwSize %#x, dwGetDataFlags %#x\n", This, pData, dwSize, dwGetDataFlags);
 
-    if(This->state == QUERY_CREATED) {
+    if (This->state == QUERY_CREATED)
+    {
         /* D3D allows GetData on a new query, OpenGL doesn't. So just invent the data ourselves */
         TRACE("Query wasn't yet started, returning S_OK\n");
-        res = S_OK;
         if(data) *data = 0;
-    } else if(This->state == QUERY_BUILDING) {
+        return S_OK;
+    }
+
+    if (This->state == QUERY_BUILDING)
+    {
         /* Msdn says this returns an error, but our tests show that S_FALSE is returned */
         TRACE("Query is building, returning S_FALSE\n");
-        res = S_FALSE;
+        return S_FALSE;
     }
-    else if (GL_SUPPORT(ARB_OCCLUSION_QUERY))
+
+    if (!GL_SUPPORT(ARB_OCCLUSION_QUERY))
     {
-        if (((WineQueryOcclusionData *)This->extendedData)->ctx != This->wineD3DDevice->activeContext
-                || This->wineD3DDevice->activeContext->tid != GetCurrentThreadId())
-        {
-            FIXME("%p Wrong context, returning 1.\n", This);
-            *data = 1;
-            res = S_OK;
-        }
-        else
-        {
-            GLuint available;
-            GLuint samples;
-            GLuint queryId = ((WineQueryOcclusionData *)This->extendedData)->queryId;
-
-            ENTER_GL();
-            GL_EXTCALL(glGetQueryObjectuivARB(queryId, GL_QUERY_RESULT_AVAILABLE_ARB, &available));
-            checkGLcall("glGetQueryObjectuivARB(GL_QUERY_RESULT_AVAILABLE)\n");
-            TRACE("(%p) : available %d.\n", This, available);
-
-            if (available)
-            {
-                if (data)
-                {
-                    GL_EXTCALL(glGetQueryObjectuivARB(queryId, GL_QUERY_RESULT_ARB, &samples));
-                    checkGLcall("glGetQueryObjectuivARB(GL_QUERY_RESULT)\n");
-                    TRACE("(%p) : Returning %d samples.\n", This, samples);
-                    *data = samples;
-                }
-                res = S_OK;
-            } else {
-                res = S_FALSE;
-            }
-            LEAVE_GL();
-        }
-    } else {
         WARN("(%p) : Occlusion queries not supported. Returning 1.\n", This);
         *data = 1;
+        return S_OK;
+    }
+
+    if (((WineQueryOcclusionData *)This->extendedData)->ctx != This->wineD3DDevice->activeContext
+            || This->wineD3DDevice->activeContext->tid != GetCurrentThreadId())
+    {
+        FIXME("%p Wrong context, returning 1.\n", This);
+        *data = 1;
+        return S_OK;
+    }
+
+    ENTER_GL();
+
+    GL_EXTCALL(glGetQueryObjectuivARB(queryId, GL_QUERY_RESULT_AVAILABLE_ARB, &available));
+    checkGLcall("glGetQueryObjectuivARB(GL_QUERY_RESULT_AVAILABLE)\n");
+    TRACE("(%p) : available %d.\n", This, available);
+
+    if (available)
+    {
+        if (data)
+        {
+            GL_EXTCALL(glGetQueryObjectuivARB(queryId, GL_QUERY_RESULT_ARB, &samples));
+            checkGLcall("glGetQueryObjectuivARB(GL_QUERY_RESULT)\n");
+            TRACE("(%p) : Returning %d samples.\n", This, samples);
+            *data = samples;
+        }
         res = S_OK;
     }
+    else
+    {
+        res = S_FALSE;
+    }
+
+    LEAVE_GL();
+
     return res;
 }
 
