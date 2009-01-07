@@ -82,15 +82,15 @@ static HRESULT WINAPI MediaStreamFilterImpl_QueryInterface(IMediaStreamFilter * 
     *ppv = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IPersist))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IMediaFilter))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IBaseFilter))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IMediaStreamFilter))
-        *ppv = (LPVOID)This;
+        *ppv = This;
 
     if (*ppv)
     {
