@@ -44,6 +44,7 @@ static DWORD    (WINAPI *pStringTableAddStringEx)(HSTRING_TABLE, LPWSTR, DWORD, 
 static VOID     (WINAPI *pStringTableDestroy)(HSTRING_TABLE);
 static HSTRING_TABLE (WINAPI *pStringTableDuplicate)(HSTRING_TABLE hStringTable);
 static HSTRING_TABLE (WINAPI *pStringTableInitialize)(VOID);
+static HSTRING_TABLE (WINAPI *pStringTableInitializeEx)(DWORD, DWORD);
 static DWORD    (WINAPI *pStringTableLookUpString)(HSTRING_TABLE, LPWSTR, DWORD);
 static DWORD    (WINAPI *pStringTableLookUpStringEx)(HSTRING_TABLE, LPWSTR, DWORD, LPVOID, LPDWORD);
 static LPWSTR   (WINAPI *pStringTableStringFromId)(HSTRING_TABLE, DWORD);
@@ -64,6 +65,10 @@ static void load_it_up(void)
     pStringTableInitialize = (void*)GetProcAddress(hdll, "StringTableInitialize");
     if (!pStringTableInitialize)
         pStringTableInitialize = (void*)GetProcAddress(hdll, "pSetupStringTableInitialize");
+
+    pStringTableInitializeEx = (void*)GetProcAddress(hdll, "StringTableInitializeEx");
+    if (!pStringTableInitializeEx)
+        pStringTableInitializeEx = (void*)GetProcAddress(hdll, "pSetupStringTableInitializeEx");
 
     pStringTableAddString = (void*)GetProcAddress(hdll, "StringTableAddString");
     if (!pStringTableAddString)
@@ -221,8 +226,10 @@ static void test_StringTableLookUpString(void)
 
 static void test_StringTableLookUpStringEx(void)
 {
-    DWORD retval, retval2, hstring, hString, hfoo;
+    static WCHAR uilevel[] = {'U','I','L','E','V','E','L',0};
+    DWORD retval, retval2, hstring, hString, hfoo, data;
     HANDLE table, table2;
+    char buffer[4];
 
     table = pStringTableInitialize();
     ok(table != NULL,"Failed to Initialize String Table\n");
@@ -271,6 +278,30 @@ static void test_StringTableLookUpStringEx(void)
     ok(retval == hString,
         "Lookup for String (%x) does not match previous handle (%x) in String Table 1\n",
         retval, hString);
+
+    pStringTableDestroy(table);
+
+    table = pStringTableInitializeEx(0x1000, 0);
+    ok(table != NULL, "failed to initialize string table\n");
+
+    data = 0xaaaaaaaa;
+    retval = pStringTableAddStringEx(table, uilevel, 0x5, &data, sizeof(data));
+    ok(retval != ~0u, "failed to add 'UILEVEL' to string table\n");
+
+    memset(buffer, 0x55, sizeof(buffer));
+    retval = pStringTableLookUpStringEx(table, uilevel, ST_CASE_SENSITIVE_COMPARE, buffer, (LPDWORD)0);
+    ok(retval != ~0u, "failed find 'UILEVEL' in string table\n");
+    ok(memcmp(buffer, &data, 4), "unexpected data\n");
+
+    memset(buffer, 0x55, sizeof(buffer));
+    retval = pStringTableLookUpStringEx(table, uilevel, ST_CASE_SENSITIVE_COMPARE, buffer, (LPDWORD)2);
+    ok(retval != ~0u, "failed find 'UILEVEL' in string table\n");
+    ok(!memcmp(buffer, &data, 2), "unexpected data\n");
+
+    memset(buffer, 0x55, sizeof(buffer));
+    retval = pStringTableLookUpStringEx(table, uilevel, ST_CASE_SENSITIVE_COMPARE, buffer, (LPDWORD)sizeof(buffer));
+    ok(retval != ~0u, "failed find 'UILEVEL' in string table\n");
+    ok(!memcmp(buffer, &data, 4), "unexpected data\n");
 
     pStringTableDestroy(table);
 }

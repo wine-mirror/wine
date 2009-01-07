@@ -273,6 +273,7 @@ StringTableAddStringEx(HSTRING_TABLE hStringTable, LPWSTR lpString,
                 return ~0u;
             }
             memcpy(pStringTable->pSlots[i].pData, lpExtraData, dwExtraDataSize);
+            pStringTable->pSlots[i].dwSize = dwExtraDataSize;
             pStringTable->dwUsedSlots++;
             return i + 1;
         }
@@ -492,7 +493,7 @@ StringTableLookUpStringEx(HSTRING_TABLE hStringTable,
                 if (!lstrcmpW(pStringTable->pSlots[i].pString, lpString))
                 {
                     if (lpExtraData)
-                        memcpy(lpExtraData, pStringTable->pSlots[i].pData, pStringTable->pSlots[i].dwSize);
+                        memcpy(lpExtraData, pStringTable->pSlots[i].pData, (DWORD)lpReserved);
                     return i + 1;
                 }
             }
@@ -501,7 +502,7 @@ StringTableLookUpStringEx(HSTRING_TABLE hStringTable,
                 if (!lstrcmpiW(pStringTable->pSlots[i].pString, lpString))
                 {
                     if (lpExtraData)
-                        memcpy(lpExtraData, pStringTable->pSlots[i].pData, pStringTable->pSlots[i].dwSize);
+                        memcpy(lpExtraData, pStringTable->pSlots[i].pData, (DWORD)lpReserved);
                     return i + 1;
                 }
             }
