@@ -91,10 +91,10 @@
  * Test macros
  */
 
-#define TEST_FIELD(type, field_type, field_name, field_offset, field_size, field_align) \
-  TEST_TYPE_SIZE(field_type, field_size); \
-  TEST_FIELD_ALIGNMENT(type, field_name, field_align); \
-  TEST_FIELD_OFFSET(type, field_name, field_offset); \
+#define TEST_FIELD(type, field, field_offset, field_size, field_align) \
+  TEST_TYPE_SIZE((((type*)0)->field), field_size); \
+  TEST_FIELD_ALIGNMENT(type, field, field_align); \
+  TEST_FIELD_OFFSET(type, field, field_offset)
 
 #define TEST_TYPE(type, size, align) \
   TEST_TYPE_ALIGNMENT(type, align); \
@@ -127,20 +127,20 @@ static void test_pack_DLLVERSIONINFO(void)
 {
     /* DLLVERSIONINFO (pack 8) */
     TEST_TYPE(DLLVERSIONINFO, 20, 4);
-    TEST_FIELD(DLLVERSIONINFO, DWORD, cbSize, 0, 4, 4);
-    TEST_FIELD(DLLVERSIONINFO, DWORD, dwMajorVersion, 4, 4, 4);
-    TEST_FIELD(DLLVERSIONINFO, DWORD, dwMinorVersion, 8, 4, 4);
-    TEST_FIELD(DLLVERSIONINFO, DWORD, dwBuildNumber, 12, 4, 4);
-    TEST_FIELD(DLLVERSIONINFO, DWORD, dwPlatformID, 16, 4, 4);
+    TEST_FIELD(DLLVERSIONINFO, cbSize, 0, 4, 4);
+    TEST_FIELD(DLLVERSIONINFO, dwMajorVersion, 4, 4, 4);
+    TEST_FIELD(DLLVERSIONINFO, dwMinorVersion, 8, 4, 4);
+    TEST_FIELD(DLLVERSIONINFO, dwBuildNumber, 12, 4, 4);
+    TEST_FIELD(DLLVERSIONINFO, dwPlatformID, 16, 4, 4);
 }
 
 static void test_pack_DLLVERSIONINFO2(void)
 {
     /* DLLVERSIONINFO2 (pack 8) */
     TEST_TYPE(DLLVERSIONINFO2, 32, 8);
-    TEST_FIELD(DLLVERSIONINFO2, DLLVERSIONINFO, info1, 0, 20, 4);
-    TEST_FIELD(DLLVERSIONINFO2, DWORD, dwFlags, 20, 4, 4);
-    TEST_FIELD(DLLVERSIONINFO2, ULONGLONG, ullVersion, 24, 8, 8);
+    TEST_FIELD(DLLVERSIONINFO2, info1, 0, 20, 4);
+    TEST_FIELD(DLLVERSIONINFO2, dwFlags, 20, 4, 4);
+    TEST_FIELD(DLLVERSIONINFO2, ullVersion, 24, 8, 8);
 }
 
 static void test_pack_HUSKEY(void)

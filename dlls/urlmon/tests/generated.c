@@ -89,10 +89,10 @@
  * Test macros
  */
 
-#define TEST_FIELD(type, field_type, field_name, field_offset, field_size, field_align) \
-  TEST_TYPE_SIZE(field_type, field_size); \
-  TEST_FIELD_ALIGNMENT(type, field_name, field_align); \
-  TEST_FIELD_OFFSET(type, field_name, field_offset); \
+#define TEST_FIELD(type, field, field_offset, field_size, field_align) \
+  TEST_TYPE_SIZE((((type*)0)->field), field_size); \
+  TEST_FIELD_ALIGNMENT(type, field, field_align); \
+  TEST_FIELD_OFFSET(type, field, field_offset)
 
 #define TEST_TYPE(type, size, align) \
   TEST_TYPE_ALIGNMENT(type, align); \
@@ -111,8 +111,8 @@
 static void test_pack_BINDINFO(void)
 {
     /* BINDINFO (pack 4) */
-    TEST_FIELD(BINDINFO, ULONG, cbSize, 0, 4, 4);
-    TEST_FIELD(BINDINFO, LPWSTR, szExtraInfo, 4, 4, 4);
+    TEST_FIELD(BINDINFO, cbSize, 0, 4, 4);
+    TEST_FIELD(BINDINFO, szExtraInfo, 4, 4, 4);
 }
 
 static void test_pack_IBindHost(void)
@@ -265,39 +265,39 @@ static void test_pack_REMSECURITY_ATTRIBUTES(void)
 {
     /* REMSECURITY_ATTRIBUTES (pack 4) */
     TEST_TYPE(REMSECURITY_ATTRIBUTES, 12, 4);
-    TEST_FIELD(REMSECURITY_ATTRIBUTES, DWORD, nLength, 0, 4, 4);
-    TEST_FIELD(REMSECURITY_ATTRIBUTES, DWORD, lpSecurityDescriptor, 4, 4, 4);
-    TEST_FIELD(REMSECURITY_ATTRIBUTES, BOOL, bInheritHandle, 8, 4, 4);
+    TEST_FIELD(REMSECURITY_ATTRIBUTES, nLength, 0, 4, 4);
+    TEST_FIELD(REMSECURITY_ATTRIBUTES, lpSecurityDescriptor, 4, 4, 4);
+    TEST_FIELD(REMSECURITY_ATTRIBUTES, bInheritHandle, 8, 4, 4);
 }
 
 static void test_pack_RemBINDINFO(void)
 {
     /* RemBINDINFO (pack 4) */
     TEST_TYPE(RemBINDINFO, 72, 4);
-    TEST_FIELD(RemBINDINFO, ULONG, cbSize, 0, 4, 4);
-    TEST_FIELD(RemBINDINFO, LPWSTR, szExtraInfo, 4, 4, 4);
-    TEST_FIELD(RemBINDINFO, DWORD, grfBindInfoF, 8, 4, 4);
-    TEST_FIELD(RemBINDINFO, DWORD, dwBindVerb, 12, 4, 4);
-    TEST_FIELD(RemBINDINFO, LPWSTR, szCustomVerb, 16, 4, 4);
-    TEST_FIELD(RemBINDINFO, DWORD, cbstgmedData, 20, 4, 4);
-    TEST_FIELD(RemBINDINFO, DWORD, dwOptions, 24, 4, 4);
-    TEST_FIELD(RemBINDINFO, DWORD, dwOptionsFlags, 28, 4, 4);
-    TEST_FIELD(RemBINDINFO, DWORD, dwCodePage, 32, 4, 4);
-    TEST_FIELD(RemBINDINFO, REMSECURITY_ATTRIBUTES, securityAttributes, 36, 12, 4);
-    TEST_FIELD(RemBINDINFO, IID, iid, 48, 16, 4);
-    TEST_FIELD(RemBINDINFO, IUnknown *, pUnk, 64, 4, 4);
-    TEST_FIELD(RemBINDINFO, DWORD, dwReserved, 68, 4, 4);
+    TEST_FIELD(RemBINDINFO, cbSize, 0, 4, 4);
+    TEST_FIELD(RemBINDINFO, szExtraInfo, 4, 4, 4);
+    TEST_FIELD(RemBINDINFO, grfBindInfoF, 8, 4, 4);
+    TEST_FIELD(RemBINDINFO, dwBindVerb, 12, 4, 4);
+    TEST_FIELD(RemBINDINFO, szCustomVerb, 16, 4, 4);
+    TEST_FIELD(RemBINDINFO, cbstgmedData, 20, 4, 4);
+    TEST_FIELD(RemBINDINFO, dwOptions, 24, 4, 4);
+    TEST_FIELD(RemBINDINFO, dwOptionsFlags, 28, 4, 4);
+    TEST_FIELD(RemBINDINFO, dwCodePage, 32, 4, 4);
+    TEST_FIELD(RemBINDINFO, securityAttributes, 36, 12, 4);
+    TEST_FIELD(RemBINDINFO, iid, 48, 16, 4);
+    TEST_FIELD(RemBINDINFO, pUnk, 64, 4, 4);
+    TEST_FIELD(RemBINDINFO, dwReserved, 68, 4, 4);
 }
 
 static void test_pack_RemFORMATETC(void)
 {
     /* RemFORMATETC (pack 4) */
     TEST_TYPE(RemFORMATETC, 20, 4);
-    TEST_FIELD(RemFORMATETC, DWORD, cfFormat, 0, 4, 4);
-    TEST_FIELD(RemFORMATETC, DWORD, ptd, 4, 4, 4);
-    TEST_FIELD(RemFORMATETC, DWORD, dwAspect, 8, 4, 4);
-    TEST_FIELD(RemFORMATETC, LONG, lindex, 12, 4, 4);
-    TEST_FIELD(RemFORMATETC, DWORD, tymed, 16, 4, 4);
+    TEST_FIELD(RemFORMATETC, cfFormat, 0, 4, 4);
+    TEST_FIELD(RemFORMATETC, ptd, 4, 4, 4);
+    TEST_FIELD(RemFORMATETC, dwAspect, 8, 4, 4);
+    TEST_FIELD(RemFORMATETC, lindex, 12, 4, 4);
+    TEST_FIELD(RemFORMATETC, tymed, 16, 4, 4);
 }
 
 static void test_pack(void)

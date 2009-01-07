@@ -91,10 +91,10 @@
  * Test macros
  */
 
-#define TEST_FIELD(type, field_type, field_name, field_offset, field_size, field_align) \
-  TEST_TYPE_SIZE(field_type, field_size); \
-  TEST_FIELD_ALIGNMENT(type, field_name, field_align); \
-  TEST_FIELD_OFFSET(type, field_name, field_offset); \
+#define TEST_FIELD(type, field, field_offset, field_size, field_align) \
+  TEST_TYPE_SIZE((((type*)0)->field), field_size); \
+  TEST_FIELD_ALIGNMENT(type, field, field_align); \
+  TEST_FIELD_OFFSET(type, field, field_offset)
 
 #define TEST_TYPE(type, size, align) \
   TEST_TYPE_ALIGNMENT(type, align); \
@@ -156,8 +156,8 @@ static void test_pack_RPC_BINDING_VECTOR(void)
 {
     /* RPC_BINDING_VECTOR (pack 4) */
     TEST_TYPE(RPC_BINDING_VECTOR, 8, 4);
-    TEST_FIELD(RPC_BINDING_VECTOR, ULONG, Count, 0, 4, 4);
-    TEST_FIELD(RPC_BINDING_VECTOR, RPC_BINDING_HANDLE[1], BindingH, 4, 4, 4);
+    TEST_FIELD(RPC_BINDING_VECTOR, Count, 0, 4, 4);
+    TEST_FIELD(RPC_BINDING_VECTOR, BindingH, 4, 4, 4);
 }
 
 static void test_pack_RPC_IF_HANDLE(void)
@@ -170,26 +170,26 @@ static void test_pack_RPC_IF_ID(void)
 {
     /* RPC_IF_ID (pack 4) */
     TEST_TYPE(RPC_IF_ID, 20, 4);
-    TEST_FIELD(RPC_IF_ID, UUID, Uuid, 0, 16, 4);
-    TEST_FIELD(RPC_IF_ID, unsigned short, VersMajor, 16, 2, 2);
-    TEST_FIELD(RPC_IF_ID, unsigned short, VersMinor, 18, 2, 2);
+    TEST_FIELD(RPC_IF_ID, Uuid, 0, 16, 4);
+    TEST_FIELD(RPC_IF_ID, VersMajor, 16, 2, 2);
+    TEST_FIELD(RPC_IF_ID, VersMinor, 18, 2, 2);
 }
 
 static void test_pack_RPC_POLICY(void)
 {
     /* RPC_POLICY (pack 4) */
     TEST_TYPE(RPC_POLICY, 12, 4);
-    TEST_FIELD(RPC_POLICY, unsigned int, Length, 0, 4, 4);
-    TEST_FIELD(RPC_POLICY, ULONG, EndpointFlags, 4, 4, 4);
-    TEST_FIELD(RPC_POLICY, ULONG, NICFlags, 8, 4, 4);
+    TEST_FIELD(RPC_POLICY, Length, 0, 4, 4);
+    TEST_FIELD(RPC_POLICY, EndpointFlags, 4, 4, 4);
+    TEST_FIELD(RPC_POLICY, NICFlags, 8, 4, 4);
 }
 
 static void test_pack_UUID_VECTOR(void)
 {
     /* UUID_VECTOR (pack 4) */
     TEST_TYPE(UUID_VECTOR, 8, 4);
-    TEST_FIELD(UUID_VECTOR, ULONG, Count, 0, 4, 4);
-    TEST_FIELD(UUID_VECTOR, UUID *[1], Uuid, 4, 4, 4);
+    TEST_FIELD(UUID_VECTOR, Count, 0, 4, 4);
+    TEST_FIELD(UUID_VECTOR, Uuid, 4, 4, 4);
 }
 
 static void test_pack_PRPC_CLIENT_INTERFACE(void)
@@ -238,15 +238,15 @@ static void test_pack_RPC_CLIENT_INTERFACE(void)
 {
     /* RPC_CLIENT_INTERFACE (pack 4) */
     TEST_TYPE(RPC_CLIENT_INTERFACE, 68, 4);
-    TEST_FIELD(RPC_CLIENT_INTERFACE, unsigned int, Length, 0, 4, 4);
-    TEST_FIELD(RPC_CLIENT_INTERFACE, RPC_SYNTAX_IDENTIFIER, InterfaceId, 4, 20, 4);
-    TEST_FIELD(RPC_CLIENT_INTERFACE, RPC_SYNTAX_IDENTIFIER, TransferSyntax, 24, 20, 4);
-    TEST_FIELD(RPC_CLIENT_INTERFACE, PRPC_DISPATCH_TABLE, DispatchTable, 44, 4, 4);
-    TEST_FIELD(RPC_CLIENT_INTERFACE, unsigned int, RpcProtseqEndpointCount, 48, 4, 4);
-    TEST_FIELD(RPC_CLIENT_INTERFACE, PRPC_PROTSEQ_ENDPOINT, RpcProtseqEndpoint, 52, 4, 4);
-    TEST_FIELD(RPC_CLIENT_INTERFACE, ULONG_PTR, Reserved, 56, 4, 4);
-    TEST_FIELD(RPC_CLIENT_INTERFACE, void const*, InterpreterInfo, 60, 4, 4);
-    TEST_FIELD(RPC_CLIENT_INTERFACE, unsigned int, Flags, 64, 4, 4);
+    TEST_FIELD(RPC_CLIENT_INTERFACE, Length, 0, 4, 4);
+    TEST_FIELD(RPC_CLIENT_INTERFACE, InterfaceId, 4, 20, 4);
+    TEST_FIELD(RPC_CLIENT_INTERFACE, TransferSyntax, 24, 20, 4);
+    TEST_FIELD(RPC_CLIENT_INTERFACE, DispatchTable, 44, 4, 4);
+    TEST_FIELD(RPC_CLIENT_INTERFACE, RpcProtseqEndpointCount, 48, 4, 4);
+    TEST_FIELD(RPC_CLIENT_INTERFACE, RpcProtseqEndpoint, 52, 4, 4);
+    TEST_FIELD(RPC_CLIENT_INTERFACE, Reserved, 56, 4, 4);
+    TEST_FIELD(RPC_CLIENT_INTERFACE, InterpreterInfo, 60, 4, 4);
+    TEST_FIELD(RPC_CLIENT_INTERFACE, Flags, 64, 4, 4);
 }
 
 static void test_pack_RPC_DISPATCH_FUNCTION(void)
@@ -258,94 +258,94 @@ static void test_pack_RPC_DISPATCH_TABLE(void)
 {
     /* RPC_DISPATCH_TABLE (pack 4) */
     TEST_TYPE(RPC_DISPATCH_TABLE, 12, 4);
-    TEST_FIELD(RPC_DISPATCH_TABLE, unsigned int, DispatchTableCount, 0, 4, 4);
-    TEST_FIELD(RPC_DISPATCH_TABLE, RPC_DISPATCH_FUNCTION*, DispatchTable, 4, 4, 4);
-    TEST_FIELD(RPC_DISPATCH_TABLE, LONG_PTR, Reserved, 8, 4, 4);
+    TEST_FIELD(RPC_DISPATCH_TABLE, DispatchTableCount, 0, 4, 4);
+    TEST_FIELD(RPC_DISPATCH_TABLE, DispatchTable, 4, 4, 4);
+    TEST_FIELD(RPC_DISPATCH_TABLE, Reserved, 8, 4, 4);
 }
 
 static void test_pack_RPC_MESSAGE(void)
 {
     /* RPC_MESSAGE (pack 4) */
     TEST_TYPE(RPC_MESSAGE, 44, 4);
-    TEST_FIELD(RPC_MESSAGE, RPC_BINDING_HANDLE, Handle, 0, 4, 4);
-    TEST_FIELD(RPC_MESSAGE, unsigned long, DataRepresentation, 4, 4, 4);
-    TEST_FIELD(RPC_MESSAGE, void*, Buffer, 8, 4, 4);
-    TEST_FIELD(RPC_MESSAGE, unsigned int, BufferLength, 12, 4, 4);
-    TEST_FIELD(RPC_MESSAGE, unsigned int, ProcNum, 16, 4, 4);
-    TEST_FIELD(RPC_MESSAGE, PRPC_SYNTAX_IDENTIFIER, TransferSyntax, 20, 4, 4);
-    TEST_FIELD(RPC_MESSAGE, void*, RpcInterfaceInformation, 24, 4, 4);
-    TEST_FIELD(RPC_MESSAGE, void*, ReservedForRuntime, 28, 4, 4);
-    TEST_FIELD(RPC_MESSAGE, RPC_MGR_EPV*, ManagerEpv, 32, 4, 4);
-    TEST_FIELD(RPC_MESSAGE, void*, ImportContext, 36, 4, 4);
-    TEST_FIELD(RPC_MESSAGE, unsigned long, RpcFlags, 40, 4, 4);
+    TEST_FIELD(RPC_MESSAGE, Handle, 0, 4, 4);
+    TEST_FIELD(RPC_MESSAGE, DataRepresentation, 4, 4, 4);
+    TEST_FIELD(RPC_MESSAGE, Buffer, 8, 4, 4);
+    TEST_FIELD(RPC_MESSAGE, BufferLength, 12, 4, 4);
+    TEST_FIELD(RPC_MESSAGE, ProcNum, 16, 4, 4);
+    TEST_FIELD(RPC_MESSAGE, TransferSyntax, 20, 4, 4);
+    TEST_FIELD(RPC_MESSAGE, RpcInterfaceInformation, 24, 4, 4);
+    TEST_FIELD(RPC_MESSAGE, ReservedForRuntime, 28, 4, 4);
+    TEST_FIELD(RPC_MESSAGE, ManagerEpv, 32, 4, 4);
+    TEST_FIELD(RPC_MESSAGE, ImportContext, 36, 4, 4);
+    TEST_FIELD(RPC_MESSAGE, RpcFlags, 40, 4, 4);
 }
 
 static void test_pack_RPC_PROTSEQ_ENDPOINT(void)
 {
     /* RPC_PROTSEQ_ENDPOINT (pack 4) */
     TEST_TYPE(RPC_PROTSEQ_ENDPOINT, 8, 4);
-    TEST_FIELD(RPC_PROTSEQ_ENDPOINT, unsigned char*, RpcProtocolSequence, 0, 4, 4);
-    TEST_FIELD(RPC_PROTSEQ_ENDPOINT, unsigned char*, Endpoint, 4, 4, 4);
+    TEST_FIELD(RPC_PROTSEQ_ENDPOINT, RpcProtocolSequence, 0, 4, 4);
+    TEST_FIELD(RPC_PROTSEQ_ENDPOINT, Endpoint, 4, 4, 4);
 }
 
 static void test_pack_RPC_SERVER_INTERFACE(void)
 {
     /* RPC_SERVER_INTERFACE (pack 4) */
     TEST_TYPE(RPC_SERVER_INTERFACE, 68, 4);
-    TEST_FIELD(RPC_SERVER_INTERFACE, unsigned int, Length, 0, 4, 4);
-    TEST_FIELD(RPC_SERVER_INTERFACE, RPC_SYNTAX_IDENTIFIER, InterfaceId, 4, 20, 4);
-    TEST_FIELD(RPC_SERVER_INTERFACE, RPC_SYNTAX_IDENTIFIER, TransferSyntax, 24, 20, 4);
-    TEST_FIELD(RPC_SERVER_INTERFACE, PRPC_DISPATCH_TABLE, DispatchTable, 44, 4, 4);
-    TEST_FIELD(RPC_SERVER_INTERFACE, unsigned int, RpcProtseqEndpointCount, 48, 4, 4);
-    TEST_FIELD(RPC_SERVER_INTERFACE, PRPC_PROTSEQ_ENDPOINT, RpcProtseqEndpoint, 52, 4, 4);
-    TEST_FIELD(RPC_SERVER_INTERFACE, RPC_MGR_EPV*, DefaultManagerEpv, 56, 4, 4);
-    TEST_FIELD(RPC_SERVER_INTERFACE, void const*, InterpreterInfo, 60, 4, 4);
-    TEST_FIELD(RPC_SERVER_INTERFACE, unsigned int, Flags, 64, 4, 4);
+    TEST_FIELD(RPC_SERVER_INTERFACE, Length, 0, 4, 4);
+    TEST_FIELD(RPC_SERVER_INTERFACE, InterfaceId, 4, 20, 4);
+    TEST_FIELD(RPC_SERVER_INTERFACE, TransferSyntax, 24, 20, 4);
+    TEST_FIELD(RPC_SERVER_INTERFACE, DispatchTable, 44, 4, 4);
+    TEST_FIELD(RPC_SERVER_INTERFACE, RpcProtseqEndpointCount, 48, 4, 4);
+    TEST_FIELD(RPC_SERVER_INTERFACE, RpcProtseqEndpoint, 52, 4, 4);
+    TEST_FIELD(RPC_SERVER_INTERFACE, DefaultManagerEpv, 56, 4, 4);
+    TEST_FIELD(RPC_SERVER_INTERFACE, InterpreterInfo, 60, 4, 4);
+    TEST_FIELD(RPC_SERVER_INTERFACE, Flags, 64, 4, 4);
 }
 
 static void test_pack_RPC_SYNTAX_IDENTIFIER(void)
 {
     /* RPC_SYNTAX_IDENTIFIER (pack 4) */
     TEST_TYPE(RPC_SYNTAX_IDENTIFIER, 20, 4);
-    TEST_FIELD(RPC_SYNTAX_IDENTIFIER, GUID, SyntaxGUID, 0, 16, 4);
-    TEST_FIELD(RPC_SYNTAX_IDENTIFIER, RPC_VERSION, SyntaxVersion, 16, 4, 2);
+    TEST_FIELD(RPC_SYNTAX_IDENTIFIER, SyntaxGUID, 0, 16, 4);
+    TEST_FIELD(RPC_SYNTAX_IDENTIFIER, SyntaxVersion, 16, 4, 2);
 }
 
 static void test_pack_RPC_VERSION(void)
 {
     /* RPC_VERSION (pack 4) */
     TEST_TYPE(RPC_VERSION, 4, 2);
-    TEST_FIELD(RPC_VERSION, unsigned short, MajorVersion, 0, 2, 2);
-    TEST_FIELD(RPC_VERSION, unsigned short, MinorVersion, 2, 2, 2);
+    TEST_FIELD(RPC_VERSION, MajorVersion, 0, 2, 2);
+    TEST_FIELD(RPC_VERSION, MinorVersion, 2, 2, 2);
 }
 
 static void test_pack_ARRAY_INFO(void)
 {
     /* ARRAY_INFO (pack 4) */
     TEST_TYPE(ARRAY_INFO, 24, 4);
-    TEST_FIELD(ARRAY_INFO, LONG, Dimension, 0, 4, 4);
-    TEST_FIELD(ARRAY_INFO, ULONG *, BufferConformanceMark, 4, 4, 4);
-    TEST_FIELD(ARRAY_INFO, ULONG *, BufferVarianceMark, 8, 4, 4);
-    TEST_FIELD(ARRAY_INFO, ULONG *, MaxCountArray, 12, 4, 4);
-    TEST_FIELD(ARRAY_INFO, ULONG *, OffsetArray, 16, 4, 4);
-    TEST_FIELD(ARRAY_INFO, ULONG *, ActualCountArray, 20, 4, 4);
+    TEST_FIELD(ARRAY_INFO, Dimension, 0, 4, 4);
+    TEST_FIELD(ARRAY_INFO, BufferConformanceMark, 4, 4, 4);
+    TEST_FIELD(ARRAY_INFO, BufferVarianceMark, 8, 4, 4);
+    TEST_FIELD(ARRAY_INFO, MaxCountArray, 12, 4, 4);
+    TEST_FIELD(ARRAY_INFO, OffsetArray, 16, 4, 4);
+    TEST_FIELD(ARRAY_INFO, ActualCountArray, 20, 4, 4);
 }
 
 static void test_pack_COMM_FAULT_OFFSETS(void)
 {
     /* COMM_FAULT_OFFSETS (pack 4) */
     TEST_TYPE(COMM_FAULT_OFFSETS, 4, 2);
-    TEST_FIELD(COMM_FAULT_OFFSETS, short, CommOffset, 0, 2, 2);
-    TEST_FIELD(COMM_FAULT_OFFSETS, short, FaultOffset, 2, 2, 2);
+    TEST_FIELD(COMM_FAULT_OFFSETS, CommOffset, 0, 2, 2);
+    TEST_FIELD(COMM_FAULT_OFFSETS, FaultOffset, 2, 2, 2);
 }
 
 static void test_pack_CS_STUB_INFO(void)
 {
     /* CS_STUB_INFO (pack 4) */
     TEST_TYPE(CS_STUB_INFO, 12, 4);
-    TEST_FIELD(CS_STUB_INFO, ULONG, WireCodeset, 0, 4, 4);
-    TEST_FIELD(CS_STUB_INFO, ULONG, DesiredReceivingCodeset, 4, 4, 4);
-    TEST_FIELD(CS_STUB_INFO, void *, CSArrayInfo, 8, 4, 4);
+    TEST_FIELD(CS_STUB_INFO, WireCodeset, 0, 4, 4);
+    TEST_FIELD(CS_STUB_INFO, DesiredReceivingCodeset, 4, 4, 4);
+    TEST_FIELD(CS_STUB_INFO, CSArrayInfo, 8, 4, 4);
 }
 
 static void test_pack_EXPR_EVAL(void)
@@ -357,10 +357,10 @@ static void test_pack_FULL_PTR_TO_REFID_ELEMENT(void)
 {
     /* FULL_PTR_TO_REFID_ELEMENT (pack 4) */
     TEST_TYPE(FULL_PTR_TO_REFID_ELEMENT, 16, 4);
-    TEST_FIELD(FULL_PTR_TO_REFID_ELEMENT, struct _FULL_PTR_TO_REFID_ELEMENT *, Next, 0, 4, 4);
-    TEST_FIELD(FULL_PTR_TO_REFID_ELEMENT, void *, Pointer, 4, 4, 4);
-    TEST_FIELD(FULL_PTR_TO_REFID_ELEMENT, ULONG, RefId, 8, 4, 4);
-    TEST_FIELD(FULL_PTR_TO_REFID_ELEMENT, unsigned char, State, 12, 1, 1);
+    TEST_FIELD(FULL_PTR_TO_REFID_ELEMENT, Next, 0, 4, 4);
+    TEST_FIELD(FULL_PTR_TO_REFID_ELEMENT, Pointer, 4, 4, 4);
+    TEST_FIELD(FULL_PTR_TO_REFID_ELEMENT, RefId, 8, 4, 4);
+    TEST_FIELD(FULL_PTR_TO_REFID_ELEMENT, State, 12, 1, 1);
 }
 
 static void test_pack_FULL_PTR_XLAT_TABLES(void)
@@ -371,8 +371,8 @@ static void test_pack_FULL_PTR_XLAT_TABLES(void)
 static void test_pack_GENERIC_BINDING_INFO(void)
 {
     /* GENERIC_BINDING_INFO (pack 4) */
-    TEST_FIELD(GENERIC_BINDING_INFO, void *, pObj, 0, 4, 4);
-    TEST_FIELD(GENERIC_BINDING_INFO, unsigned int, Size, 4, 4, 4);
+    TEST_FIELD(GENERIC_BINDING_INFO, pObj, 0, 4, 4);
+    TEST_FIELD(GENERIC_BINDING_INFO, Size, 4, 4, 4);
 }
 
 static void test_pack_GENERIC_BINDING_ROUTINE_PAIR(void)
@@ -388,76 +388,76 @@ static void test_pack_MALLOC_FREE_STRUCT(void)
 static void test_pack_MIDL_FORMAT_STRING(void)
 {
     /* MIDL_FORMAT_STRING (pack 4) */
-    TEST_FIELD(MIDL_FORMAT_STRING, short, Pad, 0, 2, 2);
+    TEST_FIELD(MIDL_FORMAT_STRING, Pad, 0, 2, 2);
 }
 
 static void test_pack_MIDL_SERVER_INFO(void)
 {
     /* MIDL_SERVER_INFO (pack 4) */
     TEST_TYPE(MIDL_SERVER_INFO, 32, 4);
-    TEST_FIELD(MIDL_SERVER_INFO, PMIDL_STUB_DESC, pStubDesc, 0, 4, 4);
-    TEST_FIELD(MIDL_SERVER_INFO, SERVER_ROUTINE *, DispatchTable, 4, 4, 4);
-    TEST_FIELD(MIDL_SERVER_INFO, PFORMAT_STRING, ProcString, 8, 4, 4);
-    TEST_FIELD(MIDL_SERVER_INFO, unsigned short *, FmtStringOffset, 12, 4, 4);
-    TEST_FIELD(MIDL_SERVER_INFO, STUB_THUNK *, ThunkTable, 16, 4, 4);
-    TEST_FIELD(MIDL_SERVER_INFO, PRPC_SYNTAX_IDENTIFIER, pTransferSyntax, 20, 4, 4);
-    TEST_FIELD(MIDL_SERVER_INFO, ULONG_PTR, nCount, 24, 4, 4);
-    TEST_FIELD(MIDL_SERVER_INFO, PMIDL_SYNTAX_INFO, pSyntaxInfo, 28, 4, 4);
+    TEST_FIELD(MIDL_SERVER_INFO, pStubDesc, 0, 4, 4);
+    TEST_FIELD(MIDL_SERVER_INFO, DispatchTable, 4, 4, 4);
+    TEST_FIELD(MIDL_SERVER_INFO, ProcString, 8, 4, 4);
+    TEST_FIELD(MIDL_SERVER_INFO, FmtStringOffset, 12, 4, 4);
+    TEST_FIELD(MIDL_SERVER_INFO, ThunkTable, 16, 4, 4);
+    TEST_FIELD(MIDL_SERVER_INFO, pTransferSyntax, 20, 4, 4);
+    TEST_FIELD(MIDL_SERVER_INFO, nCount, 24, 4, 4);
+    TEST_FIELD(MIDL_SERVER_INFO, pSyntaxInfo, 28, 4, 4);
 }
 
 static void test_pack_MIDL_STUB_DESC(void)
 {
     /* MIDL_STUB_DESC (pack 4) */
-    TEST_FIELD(MIDL_STUB_DESC, void *, RpcInterfaceInformation, 0, 4, 4);
+    TEST_FIELD(MIDL_STUB_DESC, RpcInterfaceInformation, 0, 4, 4);
 }
 
 static void test_pack_MIDL_STUB_MESSAGE(void)
 {
     /* MIDL_STUB_MESSAGE (pack 4) */
-    TEST_FIELD(MIDL_STUB_MESSAGE, PRPC_MESSAGE, RpcMsg, 0, 4, 4);
-    TEST_FIELD(MIDL_STUB_MESSAGE, unsigned char *, Buffer, 4, 4, 4);
-    TEST_FIELD(MIDL_STUB_MESSAGE, unsigned char *, BufferStart, 8, 4, 4);
-    TEST_FIELD(MIDL_STUB_MESSAGE, unsigned char *, BufferEnd, 12, 4, 4);
-    TEST_FIELD(MIDL_STUB_MESSAGE, unsigned char *, BufferMark, 16, 4, 4);
-    TEST_FIELD(MIDL_STUB_MESSAGE, ULONG, BufferLength, 20, 4, 4);
-    TEST_FIELD(MIDL_STUB_MESSAGE, ULONG, MemorySize, 24, 4, 4);
-    TEST_FIELD(MIDL_STUB_MESSAGE, unsigned char *, Memory, 28, 4, 4);
-    TEST_FIELD(MIDL_STUB_MESSAGE, int, ReuseBuffer, 36, 4, 4);
-    TEST_FIELD(MIDL_STUB_MESSAGE, struct NDR_ALLOC_ALL_NODES_CONTEXT *, pAllocAllNodesContext, 40, 4, 4);
-    TEST_FIELD(MIDL_STUB_MESSAGE, struct NDR_POINTER_QUEUE_STATE *, pPointerQueueState, 44, 4, 4);
-    TEST_FIELD(MIDL_STUB_MESSAGE, int, IgnoreEmbeddedPointers, 48, 4, 4);
-    TEST_FIELD(MIDL_STUB_MESSAGE, unsigned char *, PointerBufferMark, 52, 4, 4);
-    TEST_FIELD(MIDL_STUB_MESSAGE, unsigned char, CorrDespIncrement, 56, 1, 1);
-    TEST_FIELD(MIDL_STUB_MESSAGE, unsigned char, uFlags, 57, 1, 1);
-    TEST_FIELD(MIDL_STUB_MESSAGE, ULONG_PTR, MaxCount, 60, 4, 4);
-    TEST_FIELD(MIDL_STUB_MESSAGE, ULONG, Offset, 64, 4, 4);
-    TEST_FIELD(MIDL_STUB_MESSAGE, ULONG, ActualCount, 68, 4, 4);
+    TEST_FIELD(MIDL_STUB_MESSAGE, RpcMsg, 0, 4, 4);
+    TEST_FIELD(MIDL_STUB_MESSAGE, Buffer, 4, 4, 4);
+    TEST_FIELD(MIDL_STUB_MESSAGE, BufferStart, 8, 4, 4);
+    TEST_FIELD(MIDL_STUB_MESSAGE, BufferEnd, 12, 4, 4);
+    TEST_FIELD(MIDL_STUB_MESSAGE, BufferMark, 16, 4, 4);
+    TEST_FIELD(MIDL_STUB_MESSAGE, BufferLength, 20, 4, 4);
+    TEST_FIELD(MIDL_STUB_MESSAGE, MemorySize, 24, 4, 4);
+    TEST_FIELD(MIDL_STUB_MESSAGE, Memory, 28, 4, 4);
+    TEST_FIELD(MIDL_STUB_MESSAGE, ReuseBuffer, 36, 4, 4);
+    TEST_FIELD(MIDL_STUB_MESSAGE, pAllocAllNodesContext, 40, 4, 4);
+    TEST_FIELD(MIDL_STUB_MESSAGE, pPointerQueueState, 44, 4, 4);
+    TEST_FIELD(MIDL_STUB_MESSAGE, IgnoreEmbeddedPointers, 48, 4, 4);
+    TEST_FIELD(MIDL_STUB_MESSAGE, PointerBufferMark, 52, 4, 4);
+    TEST_FIELD(MIDL_STUB_MESSAGE, CorrDespIncrement, 56, 1, 1);
+    TEST_FIELD(MIDL_STUB_MESSAGE, uFlags, 57, 1, 1);
+    TEST_FIELD(MIDL_STUB_MESSAGE, MaxCount, 60, 4, 4);
+    TEST_FIELD(MIDL_STUB_MESSAGE, Offset, 64, 4, 4);
+    TEST_FIELD(MIDL_STUB_MESSAGE, ActualCount, 68, 4, 4);
 }
 
 static void test_pack_MIDL_STUBLESS_PROXY_INFO(void)
 {
     /* MIDL_STUBLESS_PROXY_INFO (pack 4) */
     TEST_TYPE(MIDL_STUBLESS_PROXY_INFO, 24, 4);
-    TEST_FIELD(MIDL_STUBLESS_PROXY_INFO, PMIDL_STUB_DESC, pStubDesc, 0, 4, 4);
-    TEST_FIELD(MIDL_STUBLESS_PROXY_INFO, PFORMAT_STRING, ProcFormatString, 4, 4, 4);
-    TEST_FIELD(MIDL_STUBLESS_PROXY_INFO, unsigned short *, FormatStringOffset, 8, 4, 4);
-    TEST_FIELD(MIDL_STUBLESS_PROXY_INFO, PRPC_SYNTAX_IDENTIFIER, pTransferSyntax, 12, 4, 4);
-    TEST_FIELD(MIDL_STUBLESS_PROXY_INFO, ULONG_PTR, nCount, 16, 4, 4);
-    TEST_FIELD(MIDL_STUBLESS_PROXY_INFO, PMIDL_SYNTAX_INFO, pSyntaxInfo, 20, 4, 4);
+    TEST_FIELD(MIDL_STUBLESS_PROXY_INFO, pStubDesc, 0, 4, 4);
+    TEST_FIELD(MIDL_STUBLESS_PROXY_INFO, ProcFormatString, 4, 4, 4);
+    TEST_FIELD(MIDL_STUBLESS_PROXY_INFO, FormatStringOffset, 8, 4, 4);
+    TEST_FIELD(MIDL_STUBLESS_PROXY_INFO, pTransferSyntax, 12, 4, 4);
+    TEST_FIELD(MIDL_STUBLESS_PROXY_INFO, nCount, 16, 4, 4);
+    TEST_FIELD(MIDL_STUBLESS_PROXY_INFO, pSyntaxInfo, 20, 4, 4);
 }
 
 static void test_pack_MIDL_SYNTAX_INFO(void)
 {
     /* MIDL_SYNTAX_INFO (pack 4) */
     TEST_TYPE(MIDL_SYNTAX_INFO, 48, 4);
-    TEST_FIELD(MIDL_SYNTAX_INFO, RPC_SYNTAX_IDENTIFIER, TransferSyntax, 0, 20, 4);
-    TEST_FIELD(MIDL_SYNTAX_INFO, RPC_DISPATCH_TABLE*, DispatchTable, 20, 4, 4);
-    TEST_FIELD(MIDL_SYNTAX_INFO, PFORMAT_STRING, ProcString, 24, 4, 4);
-    TEST_FIELD(MIDL_SYNTAX_INFO, unsigned short*, FmtStringOffset, 28, 4, 4);
-    TEST_FIELD(MIDL_SYNTAX_INFO, PFORMAT_STRING, TypeString, 32, 4, 4);
-    TEST_FIELD(MIDL_SYNTAX_INFO, void*, aUserMarshalQuadruple, 36, 4, 4);
-    TEST_FIELD(MIDL_SYNTAX_INFO, ULONG_PTR, pReserved1, 40, 4, 4);
-    TEST_FIELD(MIDL_SYNTAX_INFO, ULONG_PTR, pReserved2, 44, 4, 4);
+    TEST_FIELD(MIDL_SYNTAX_INFO, TransferSyntax, 0, 20, 4);
+    TEST_FIELD(MIDL_SYNTAX_INFO, DispatchTable, 20, 4, 4);
+    TEST_FIELD(MIDL_SYNTAX_INFO, ProcString, 24, 4, 4);
+    TEST_FIELD(MIDL_SYNTAX_INFO, FmtStringOffset, 28, 4, 4);
+    TEST_FIELD(MIDL_SYNTAX_INFO, TypeString, 32, 4, 4);
+    TEST_FIELD(MIDL_SYNTAX_INFO, aUserMarshalQuadruple, 36, 4, 4);
+    TEST_FIELD(MIDL_SYNTAX_INFO, pReserved1, 40, 4, 4);
+    TEST_FIELD(MIDL_SYNTAX_INFO, pReserved2, 44, 4, 4);
 }
 
 static void test_pack_NDR_CCONTEXT(void)
@@ -490,14 +490,14 @@ static void test_pack_NDR_SCONTEXT(void)
 static void test_pack_NDR_USER_MARSHAL_INFO(void)
 {
     /* NDR_USER_MARSHAL_INFO (pack 4) */
-    TEST_FIELD(NDR_USER_MARSHAL_INFO, ULONG, InformationLevel, 0, 4, 4);
+    TEST_FIELD(NDR_USER_MARSHAL_INFO, InformationLevel, 0, 4, 4);
 }
 
 static void test_pack_NDR_USER_MARSHAL_INFO_LEVEL1(void)
 {
     /* NDR_USER_MARSHAL_INFO_LEVEL1 (pack 4) */
-    TEST_FIELD(NDR_USER_MARSHAL_INFO_LEVEL1, void *, Buffer, 0, 4, 4);
-    TEST_FIELD(NDR_USER_MARSHAL_INFO_LEVEL1, ULONG, BufferSize, 4, 4, 4);
+    TEST_FIELD(NDR_USER_MARSHAL_INFO_LEVEL1, Buffer, 0, 4, 4);
+    TEST_FIELD(NDR_USER_MARSHAL_INFO_LEVEL1, BufferSize, 4, 4, 4);
 }
 
 static void test_pack_PARRAY_INFO(void)
@@ -600,8 +600,8 @@ static void test_pack_SCONTEXT_QUEUE(void)
 {
     /* SCONTEXT_QUEUE (pack 4) */
     TEST_TYPE(SCONTEXT_QUEUE, 8, 4);
-    TEST_FIELD(SCONTEXT_QUEUE, ULONG, NumberOfObjects, 0, 4, 4);
-    TEST_FIELD(SCONTEXT_QUEUE, NDR_SCONTEXT *, ArrayOfObjects, 4, 4, 4);
+    TEST_FIELD(SCONTEXT_QUEUE, NumberOfObjects, 0, 4, 4);
+    TEST_FIELD(SCONTEXT_QUEUE, ArrayOfObjects, 4, 4, 4);
 }
 
 static void test_pack_SERVER_ROUTINE(void)
@@ -617,10 +617,10 @@ static void test_pack_STUB_THUNK(void)
 static void test_pack_USER_MARSHAL_CB(void)
 {
     /* USER_MARSHAL_CB (pack 4) */
-    TEST_FIELD(USER_MARSHAL_CB, ULONG, Flags, 0, 4, 4);
-    TEST_FIELD(USER_MARSHAL_CB, PMIDL_STUB_MESSAGE, pStubMsg, 4, 4, 4);
-    TEST_FIELD(USER_MARSHAL_CB, PFORMAT_STRING, pReserve, 8, 4, 4);
-    TEST_FIELD(USER_MARSHAL_CB, ULONG, Signature, 12, 4, 4);
+    TEST_FIELD(USER_MARSHAL_CB, Flags, 0, 4, 4);
+    TEST_FIELD(USER_MARSHAL_CB, pStubMsg, 4, 4, 4);
+    TEST_FIELD(USER_MARSHAL_CB, pReserve, 8, 4, 4);
+    TEST_FIELD(USER_MARSHAL_CB, Signature, 12, 4, 4);
 }
 
 static void test_pack_USER_MARSHAL_FREEING_ROUTINE(void)

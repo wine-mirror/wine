@@ -93,10 +93,10 @@
  * Test macros
  */
 
-#define TEST_FIELD(type, field_type, field_name, field_offset, field_size, field_align) \
-  TEST_TYPE_SIZE(field_type, field_size); \
-  TEST_FIELD_ALIGNMENT(type, field_name, field_align); \
-  TEST_FIELD_OFFSET(type, field_name, field_offset); \
+#define TEST_FIELD(type, field, field_offset, field_size, field_align) \
+  TEST_TYPE_SIZE((((type*)0)->field), field_size); \
+  TEST_FIELD_ALIGNMENT(type, field, field_align); \
+  TEST_FIELD_OFFSET(type, field, field_offset)
 
 #define TEST_TYPE(type, size, align) \
   TEST_TYPE_ALIGNMENT(type, align); \
@@ -116,8 +116,8 @@ static void test_pack_BLOB(void)
 {
     /* BLOB (pack 4) */
     TEST_TYPE(BLOB, 8, 4);
-    TEST_FIELD(BLOB, ULONG, cbSize, 0, 4, 4);
-    TEST_FIELD(BLOB, BYTE *, pBlobData, 4, 4, 4);
+    TEST_FIELD(BLOB, cbSize, 0, 4, 4);
+    TEST_FIELD(BLOB, pBlobData, 4, 4, 4);
 }
 
 static void test_pack_BSTR(void)
@@ -131,33 +131,33 @@ static void test_pack_BSTRBLOB(void)
 {
     /* BSTRBLOB (pack 4) */
     TEST_TYPE(BSTRBLOB, 8, 4);
-    TEST_FIELD(BSTRBLOB, ULONG, cbSize, 0, 4, 4);
-    TEST_FIELD(BSTRBLOB, BYTE *, pData, 4, 4, 4);
+    TEST_FIELD(BSTRBLOB, cbSize, 0, 4, 4);
+    TEST_FIELD(BSTRBLOB, pData, 4, 4, 4);
 }
 
 static void test_pack_BYTE_BLOB(void)
 {
     /* BYTE_BLOB (pack 4) */
     TEST_TYPE(BYTE_BLOB, 8, 4);
-    TEST_FIELD(BYTE_BLOB, unsigned long, clSize, 0, 4, 4);
-    TEST_FIELD(BYTE_BLOB, byte[1], abData, 4, 1, 1);
+    TEST_FIELD(BYTE_BLOB, clSize, 0, 4, 4);
+    TEST_FIELD(BYTE_BLOB, abData, 4, 1, 1);
 }
 
 static void test_pack_BYTE_SIZEDARR(void)
 {
     /* BYTE_SIZEDARR (pack 4) */
     TEST_TYPE(BYTE_SIZEDARR, 8, 4);
-    TEST_FIELD(BYTE_SIZEDARR, unsigned long, clSize, 0, 4, 4);
-    TEST_FIELD(BYTE_SIZEDARR, byte *, pData, 4, 4, 4);
+    TEST_FIELD(BYTE_SIZEDARR, clSize, 0, 4, 4);
+    TEST_FIELD(BYTE_SIZEDARR, pData, 4, 4, 4);
 }
 
 static void test_pack_CLIPDATA(void)
 {
     /* CLIPDATA (pack 4) */
     TEST_TYPE(CLIPDATA, 12, 4);
-    TEST_FIELD(CLIPDATA, ULONG, cbSize, 0, 4, 4);
-    TEST_FIELD(CLIPDATA, long, ulClipFmt, 4, 4, 4);
-    TEST_FIELD(CLIPDATA, BYTE *, pClipData, 8, 4, 4);
+    TEST_FIELD(CLIPDATA, cbSize, 0, 4, 4);
+    TEST_FIELD(CLIPDATA, ulClipFmt, 4, 4, 4);
+    TEST_FIELD(CLIPDATA, pClipData, 8, 4, 4);
 }
 
 static void test_pack_CLIPFORMAT(void)
@@ -171,26 +171,26 @@ static void test_pack_COAUTHIDENTITY(void)
 {
     /* COAUTHIDENTITY (pack 4) */
     TEST_TYPE(COAUTHIDENTITY, 28, 4);
-    TEST_FIELD(COAUTHIDENTITY, USHORT *, User, 0, 4, 4);
-    TEST_FIELD(COAUTHIDENTITY, ULONG, UserLength, 4, 4, 4);
-    TEST_FIELD(COAUTHIDENTITY, USHORT *, Domain, 8, 4, 4);
-    TEST_FIELD(COAUTHIDENTITY, ULONG, DomainLength, 12, 4, 4);
-    TEST_FIELD(COAUTHIDENTITY, USHORT *, Password, 16, 4, 4);
-    TEST_FIELD(COAUTHIDENTITY, ULONG, PasswordLength, 20, 4, 4);
-    TEST_FIELD(COAUTHIDENTITY, ULONG, Flags, 24, 4, 4);
+    TEST_FIELD(COAUTHIDENTITY, User, 0, 4, 4);
+    TEST_FIELD(COAUTHIDENTITY, UserLength, 4, 4, 4);
+    TEST_FIELD(COAUTHIDENTITY, Domain, 8, 4, 4);
+    TEST_FIELD(COAUTHIDENTITY, DomainLength, 12, 4, 4);
+    TEST_FIELD(COAUTHIDENTITY, Password, 16, 4, 4);
+    TEST_FIELD(COAUTHIDENTITY, PasswordLength, 20, 4, 4);
+    TEST_FIELD(COAUTHIDENTITY, Flags, 24, 4, 4);
 }
 
 static void test_pack_COAUTHINFO(void)
 {
     /* COAUTHINFO (pack 4) */
     TEST_TYPE(COAUTHINFO, 28, 4);
-    TEST_FIELD(COAUTHINFO, DWORD, dwAuthnSvc, 0, 4, 4);
-    TEST_FIELD(COAUTHINFO, DWORD, dwAuthzSvc, 4, 4, 4);
-    TEST_FIELD(COAUTHINFO, LPWSTR, pwszServerPrincName, 8, 4, 4);
-    TEST_FIELD(COAUTHINFO, DWORD, dwAuthnLevel, 12, 4, 4);
-    TEST_FIELD(COAUTHINFO, DWORD, dwImpersonationLevel, 16, 4, 4);
-    TEST_FIELD(COAUTHINFO, COAUTHIDENTITY *, pAuthIdentityData, 20, 4, 4);
-    TEST_FIELD(COAUTHINFO, DWORD, dwCapabilities, 24, 4, 4);
+    TEST_FIELD(COAUTHINFO, dwAuthnSvc, 0, 4, 4);
+    TEST_FIELD(COAUTHINFO, dwAuthzSvc, 4, 4, 4);
+    TEST_FIELD(COAUTHINFO, pwszServerPrincName, 8, 4, 4);
+    TEST_FIELD(COAUTHINFO, dwAuthnLevel, 12, 4, 4);
+    TEST_FIELD(COAUTHINFO, dwImpersonationLevel, 16, 4, 4);
+    TEST_FIELD(COAUTHINFO, pAuthIdentityData, 20, 4, 4);
+    TEST_FIELD(COAUTHINFO, dwCapabilities, 24, 4, 4);
 }
 
 static void test_pack_DATE(void)
@@ -209,26 +209,26 @@ static void test_pack_DWORD_SIZEDARR(void)
 {
     /* DWORD_SIZEDARR (pack 4) */
     TEST_TYPE(DWORD_SIZEDARR, 8, 4);
-    TEST_FIELD(DWORD_SIZEDARR, unsigned long, clSize, 0, 4, 4);
-    TEST_FIELD(DWORD_SIZEDARR, unsigned long *, pData, 4, 4, 4);
+    TEST_FIELD(DWORD_SIZEDARR, clSize, 0, 4, 4);
+    TEST_FIELD(DWORD_SIZEDARR, pData, 4, 4, 4);
 }
 
 static void test_pack_FLAGGED_BYTE_BLOB(void)
 {
     /* FLAGGED_BYTE_BLOB (pack 4) */
     TEST_TYPE(FLAGGED_BYTE_BLOB, 12, 4);
-    TEST_FIELD(FLAGGED_BYTE_BLOB, unsigned long, fFlags, 0, 4, 4);
-    TEST_FIELD(FLAGGED_BYTE_BLOB, unsigned long, clSize, 4, 4, 4);
-    TEST_FIELD(FLAGGED_BYTE_BLOB, byte[1], abData, 8, 1, 1);
+    TEST_FIELD(FLAGGED_BYTE_BLOB, fFlags, 0, 4, 4);
+    TEST_FIELD(FLAGGED_BYTE_BLOB, clSize, 4, 4, 4);
+    TEST_FIELD(FLAGGED_BYTE_BLOB, abData, 8, 1, 1);
 }
 
 static void test_pack_FLAGGED_WORD_BLOB(void)
 {
     /* FLAGGED_WORD_BLOB (pack 4) */
     TEST_TYPE(FLAGGED_WORD_BLOB, 12, 4);
-    TEST_FIELD(FLAGGED_WORD_BLOB, unsigned long, fFlags, 0, 4, 4);
-    TEST_FIELD(FLAGGED_WORD_BLOB, unsigned long, clSize, 4, 4, 4);
-    TEST_FIELD(FLAGGED_WORD_BLOB, unsigned short[1], asData, 8, 2, 2);
+    TEST_FIELD(FLAGGED_WORD_BLOB, fFlags, 0, 4, 4);
+    TEST_FIELD(FLAGGED_WORD_BLOB, clSize, 4, 4, 4);
+    TEST_FIELD(FLAGGED_WORD_BLOB, asData, 8, 2, 2);
 }
 
 static void test_pack_HMETAFILEPICT(void)
@@ -241,8 +241,8 @@ static void test_pack_HYPER_SIZEDARR(void)
 {
     /* HYPER_SIZEDARR (pack 4) */
     TEST_TYPE(HYPER_SIZEDARR, 8, 4);
-    TEST_FIELD(HYPER_SIZEDARR, unsigned long, clSize, 0, 4, 4);
-    TEST_FIELD(HYPER_SIZEDARR, hyper *, pData, 4, 4, 4);
+    TEST_FIELD(HYPER_SIZEDARR, clSize, 0, 4, 4);
+    TEST_FIELD(HYPER_SIZEDARR, pData, 4, 4, 4);
 }
 
 static void test_pack_LPBLOB(void)
@@ -306,44 +306,44 @@ static void test_pack_RemHBITMAP(void)
 {
     /* RemHBITMAP (pack 4) */
     TEST_TYPE(RemHBITMAP, 8, 4);
-    TEST_FIELD(RemHBITMAP, unsigned long, cbData, 0, 4, 4);
-    TEST_FIELD(RemHBITMAP, byte[1], data, 4, 1, 1);
+    TEST_FIELD(RemHBITMAP, cbData, 0, 4, 4);
+    TEST_FIELD(RemHBITMAP, data, 4, 1, 1);
 }
 
 static void test_pack_RemHENHMETAFILE(void)
 {
     /* RemHENHMETAFILE (pack 4) */
     TEST_TYPE(RemHENHMETAFILE, 8, 4);
-    TEST_FIELD(RemHENHMETAFILE, unsigned long, cbData, 0, 4, 4);
-    TEST_FIELD(RemHENHMETAFILE, byte[1], data, 4, 1, 1);
+    TEST_FIELD(RemHENHMETAFILE, cbData, 0, 4, 4);
+    TEST_FIELD(RemHENHMETAFILE, data, 4, 1, 1);
 }
 
 static void test_pack_RemHGLOBAL(void)
 {
     /* RemHGLOBAL (pack 4) */
     TEST_TYPE(RemHGLOBAL, 12, 4);
-    TEST_FIELD(RemHGLOBAL, long, fNullHGlobal, 0, 4, 4);
-    TEST_FIELD(RemHGLOBAL, unsigned long, cbData, 4, 4, 4);
-    TEST_FIELD(RemHGLOBAL, byte[1], data, 8, 1, 1);
+    TEST_FIELD(RemHGLOBAL, fNullHGlobal, 0, 4, 4);
+    TEST_FIELD(RemHGLOBAL, cbData, 4, 4, 4);
+    TEST_FIELD(RemHGLOBAL, data, 8, 1, 1);
 }
 
 static void test_pack_RemHMETAFILEPICT(void)
 {
     /* RemHMETAFILEPICT (pack 4) */
     TEST_TYPE(RemHMETAFILEPICT, 20, 4);
-    TEST_FIELD(RemHMETAFILEPICT, long, mm, 0, 4, 4);
-    TEST_FIELD(RemHMETAFILEPICT, long, xExt, 4, 4, 4);
-    TEST_FIELD(RemHMETAFILEPICT, long, yExt, 8, 4, 4);
-    TEST_FIELD(RemHMETAFILEPICT, unsigned long, cbData, 12, 4, 4);
-    TEST_FIELD(RemHMETAFILEPICT, byte[1], data, 16, 1, 1);
+    TEST_FIELD(RemHMETAFILEPICT, mm, 0, 4, 4);
+    TEST_FIELD(RemHMETAFILEPICT, xExt, 4, 4, 4);
+    TEST_FIELD(RemHMETAFILEPICT, yExt, 8, 4, 4);
+    TEST_FIELD(RemHMETAFILEPICT, cbData, 12, 4, 4);
+    TEST_FIELD(RemHMETAFILEPICT, data, 16, 1, 1);
 }
 
 static void test_pack_RemHPALETTE(void)
 {
     /* RemHPALETTE (pack 4) */
     TEST_TYPE(RemHPALETTE, 8, 4);
-    TEST_FIELD(RemHPALETTE, unsigned long, cbData, 0, 4, 4);
-    TEST_FIELD(RemHPALETTE, byte[1], data, 4, 1, 1);
+    TEST_FIELD(RemHPALETTE, cbData, 0, 4, 4);
+    TEST_FIELD(RemHPALETTE, data, 4, 1, 1);
 }
 
 static void test_pack_SCODE(void)
@@ -391,74 +391,74 @@ static void test_pack_WORD_SIZEDARR(void)
 {
     /* WORD_SIZEDARR (pack 4) */
     TEST_TYPE(WORD_SIZEDARR, 8, 4);
-    TEST_FIELD(WORD_SIZEDARR, unsigned long, clSize, 0, 4, 4);
-    TEST_FIELD(WORD_SIZEDARR, unsigned short *, pData, 4, 4, 4);
+    TEST_FIELD(WORD_SIZEDARR, clSize, 0, 4, 4);
+    TEST_FIELD(WORD_SIZEDARR, pData, 4, 4, 4);
 }
 
 static void test_pack_remoteMETAFILEPICT(void)
 {
     /* remoteMETAFILEPICT (pack 4) */
     TEST_TYPE(remoteMETAFILEPICT, 16, 4);
-    TEST_FIELD(remoteMETAFILEPICT, long, mm, 0, 4, 4);
-    TEST_FIELD(remoteMETAFILEPICT, long, xExt, 4, 4, 4);
-    TEST_FIELD(remoteMETAFILEPICT, long, yExt, 8, 4, 4);
-    TEST_FIELD(remoteMETAFILEPICT, userHMETAFILE *, hMF, 12, 4, 4);
+    TEST_FIELD(remoteMETAFILEPICT, mm, 0, 4, 4);
+    TEST_FIELD(remoteMETAFILEPICT, xExt, 4, 4, 4);
+    TEST_FIELD(remoteMETAFILEPICT, yExt, 8, 4, 4);
+    TEST_FIELD(remoteMETAFILEPICT, hMF, 12, 4, 4);
 }
 
 static void test_pack_userBITMAP(void)
 {
     /* userBITMAP (pack 4) */
     TEST_TYPE(userBITMAP, 28, 4);
-    TEST_FIELD(userBITMAP, LONG, bmType, 0, 4, 4);
-    TEST_FIELD(userBITMAP, LONG, bmWidth, 4, 4, 4);
-    TEST_FIELD(userBITMAP, LONG, bmHeight, 8, 4, 4);
-    TEST_FIELD(userBITMAP, LONG, bmWidthBytes, 12, 4, 4);
-    TEST_FIELD(userBITMAP, WORD, bmPlanes, 16, 2, 2);
-    TEST_FIELD(userBITMAP, WORD, bmBitsPixel, 18, 2, 2);
-    TEST_FIELD(userBITMAP, ULONG, cbSize, 20, 4, 4);
-    TEST_FIELD(userBITMAP, byte[1], pBuffer, 24, 1, 1);
+    TEST_FIELD(userBITMAP, bmType, 0, 4, 4);
+    TEST_FIELD(userBITMAP, bmWidth, 4, 4, 4);
+    TEST_FIELD(userBITMAP, bmHeight, 8, 4, 4);
+    TEST_FIELD(userBITMAP, bmWidthBytes, 12, 4, 4);
+    TEST_FIELD(userBITMAP, bmPlanes, 16, 2, 2);
+    TEST_FIELD(userBITMAP, bmBitsPixel, 18, 2, 2);
+    TEST_FIELD(userBITMAP, cbSize, 20, 4, 4);
+    TEST_FIELD(userBITMAP, pBuffer, 24, 1, 1);
 }
 
 static void test_pack_userCLIPFORMAT(void)
 {
     /* userCLIPFORMAT (pack 4) */
-    TEST_FIELD(userCLIPFORMAT, long, fContext, 0, 4, 4);
+    TEST_FIELD(userCLIPFORMAT, fContext, 0, 4, 4);
 }
 
 static void test_pack_userHBITMAP(void)
 {
     /* userHBITMAP (pack 4) */
-    TEST_FIELD(userHBITMAP, long, fContext, 0, 4, 4);
+    TEST_FIELD(userHBITMAP, fContext, 0, 4, 4);
 }
 
 static void test_pack_userHENHMETAFILE(void)
 {
     /* userHENHMETAFILE (pack 4) */
-    TEST_FIELD(userHENHMETAFILE, long, fContext, 0, 4, 4);
+    TEST_FIELD(userHENHMETAFILE, fContext, 0, 4, 4);
 }
 
 static void test_pack_userHGLOBAL(void)
 {
     /* userHGLOBAL (pack 4) */
-    TEST_FIELD(userHGLOBAL, long, fContext, 0, 4, 4);
+    TEST_FIELD(userHGLOBAL, fContext, 0, 4, 4);
 }
 
 static void test_pack_userHMETAFILE(void)
 {
     /* userHMETAFILE (pack 4) */
-    TEST_FIELD(userHMETAFILE, long, fContext, 0, 4, 4);
+    TEST_FIELD(userHMETAFILE, fContext, 0, 4, 4);
 }
 
 static void test_pack_userHMETAFILEPICT(void)
 {
     /* userHMETAFILEPICT (pack 4) */
-    TEST_FIELD(userHMETAFILEPICT, long, fContext, 0, 4, 4);
+    TEST_FIELD(userHMETAFILEPICT, fContext, 0, 4, 4);
 }
 
 static void test_pack_userHPALETTE(void)
 {
     /* userHPALETTE (pack 4) */
-    TEST_FIELD(userHPALETTE, long, fContext, 0, 4, 4);
+    TEST_FIELD(userHPALETTE, fContext, 0, 4, 4);
 }
 
 static void test_pack_wireBSTR(void)
@@ -532,34 +532,34 @@ static void test_pack_APPBARDATA(void)
 {
     /* APPBARDATA (pack 1) */
     TEST_TYPE(APPBARDATA, 36, 1);
-    TEST_FIELD(APPBARDATA, DWORD, cbSize, 0, 4, 1);
-    TEST_FIELD(APPBARDATA, HWND, hWnd, 4, 4, 1);
-    TEST_FIELD(APPBARDATA, UINT, uCallbackMessage, 8, 4, 1);
-    TEST_FIELD(APPBARDATA, UINT, uEdge, 12, 4, 1);
-    TEST_FIELD(APPBARDATA, RECT, rc, 16, 16, 1);
-    TEST_FIELD(APPBARDATA, LPARAM, lParam, 32, 4, 1);
+    TEST_FIELD(APPBARDATA, cbSize, 0, 4, 1);
+    TEST_FIELD(APPBARDATA, hWnd, 4, 4, 1);
+    TEST_FIELD(APPBARDATA, uCallbackMessage, 8, 4, 1);
+    TEST_FIELD(APPBARDATA, uEdge, 12, 4, 1);
+    TEST_FIELD(APPBARDATA, rc, 16, 16, 1);
+    TEST_FIELD(APPBARDATA, lParam, 32, 4, 1);
 }
 
 static void test_pack_DRAGINFOA(void)
 {
     /* DRAGINFOA (pack 1) */
     TEST_TYPE(DRAGINFOA, 24, 1);
-    TEST_FIELD(DRAGINFOA, UINT, uSize, 0, 4, 1);
-    TEST_FIELD(DRAGINFOA, POINT, pt, 4, 8, 1);
-    TEST_FIELD(DRAGINFOA, BOOL, fNC, 12, 4, 1);
-    TEST_FIELD(DRAGINFOA, LPSTR, lpFileList, 16, 4, 1);
-    TEST_FIELD(DRAGINFOA, DWORD, grfKeyState, 20, 4, 1);
+    TEST_FIELD(DRAGINFOA, uSize, 0, 4, 1);
+    TEST_FIELD(DRAGINFOA, pt, 4, 8, 1);
+    TEST_FIELD(DRAGINFOA, fNC, 12, 4, 1);
+    TEST_FIELD(DRAGINFOA, lpFileList, 16, 4, 1);
+    TEST_FIELD(DRAGINFOA, grfKeyState, 20, 4, 1);
 }
 
 static void test_pack_DRAGINFOW(void)
 {
     /* DRAGINFOW (pack 1) */
     TEST_TYPE(DRAGINFOW, 24, 1);
-    TEST_FIELD(DRAGINFOW, UINT, uSize, 0, 4, 1);
-    TEST_FIELD(DRAGINFOW, POINT, pt, 4, 8, 1);
-    TEST_FIELD(DRAGINFOW, BOOL, fNC, 12, 4, 1);
-    TEST_FIELD(DRAGINFOW, LPWSTR, lpFileList, 16, 4, 1);
-    TEST_FIELD(DRAGINFOW, DWORD, grfKeyState, 20, 4, 1);
+    TEST_FIELD(DRAGINFOW, uSize, 0, 4, 1);
+    TEST_FIELD(DRAGINFOW, pt, 4, 8, 1);
+    TEST_FIELD(DRAGINFOW, fNC, 12, 4, 1);
+    TEST_FIELD(DRAGINFOW, lpFileList, 16, 4, 1);
+    TEST_FIELD(DRAGINFOW, grfKeyState, 20, 4, 1);
 }
 
 static void test_pack_FILEOP_FLAGS(void)
@@ -626,31 +626,31 @@ static void test_pack_LPSHNAMEMAPPINGW(void)
 static void test_pack_NOTIFYICONDATAA(void)
 {
     /* NOTIFYICONDATAA (pack 1) */
-    TEST_FIELD(NOTIFYICONDATAA, DWORD, cbSize, 0, 4, 1);
-    TEST_FIELD(NOTIFYICONDATAA, HWND, hWnd, 4, 4, 1);
-    TEST_FIELD(NOTIFYICONDATAA, UINT, uID, 8, 4, 1);
-    TEST_FIELD(NOTIFYICONDATAA, UINT, uFlags, 12, 4, 1);
-    TEST_FIELD(NOTIFYICONDATAA, UINT, uCallbackMessage, 16, 4, 1);
-    TEST_FIELD(NOTIFYICONDATAA, HICON, hIcon, 20, 4, 1);
-    TEST_FIELD(NOTIFYICONDATAA, CHAR[128], szTip, 24, 128, 1);
-    TEST_FIELD(NOTIFYICONDATAA, DWORD, dwState, 152, 4, 1);
-    TEST_FIELD(NOTIFYICONDATAA, DWORD, dwStateMask, 156, 4, 1);
-    TEST_FIELD(NOTIFYICONDATAA, CHAR[256], szInfo, 160, 256, 1);
+    TEST_FIELD(NOTIFYICONDATAA, cbSize, 0, 4, 1);
+    TEST_FIELD(NOTIFYICONDATAA, hWnd, 4, 4, 1);
+    TEST_FIELD(NOTIFYICONDATAA, uID, 8, 4, 1);
+    TEST_FIELD(NOTIFYICONDATAA, uFlags, 12, 4, 1);
+    TEST_FIELD(NOTIFYICONDATAA, uCallbackMessage, 16, 4, 1);
+    TEST_FIELD(NOTIFYICONDATAA, hIcon, 20, 4, 1);
+    TEST_FIELD(NOTIFYICONDATAA, szTip, 24, 128, 1);
+    TEST_FIELD(NOTIFYICONDATAA, dwState, 152, 4, 1);
+    TEST_FIELD(NOTIFYICONDATAA, dwStateMask, 156, 4, 1);
+    TEST_FIELD(NOTIFYICONDATAA, szInfo, 160, 256, 1);
 }
 
 static void test_pack_NOTIFYICONDATAW(void)
 {
     /* NOTIFYICONDATAW (pack 1) */
-    TEST_FIELD(NOTIFYICONDATAW, DWORD, cbSize, 0, 4, 1);
-    TEST_FIELD(NOTIFYICONDATAW, HWND, hWnd, 4, 4, 1);
-    TEST_FIELD(NOTIFYICONDATAW, UINT, uID, 8, 4, 1);
-    TEST_FIELD(NOTIFYICONDATAW, UINT, uFlags, 12, 4, 1);
-    TEST_FIELD(NOTIFYICONDATAW, UINT, uCallbackMessage, 16, 4, 1);
-    TEST_FIELD(NOTIFYICONDATAW, HICON, hIcon, 20, 4, 1);
-    TEST_FIELD(NOTIFYICONDATAW, WCHAR[128], szTip, 24, 256, 1);
-    TEST_FIELD(NOTIFYICONDATAW, DWORD, dwState, 280, 4, 1);
-    TEST_FIELD(NOTIFYICONDATAW, DWORD, dwStateMask, 284, 4, 1);
-    TEST_FIELD(NOTIFYICONDATAW, WCHAR[256], szInfo, 288, 512, 1);
+    TEST_FIELD(NOTIFYICONDATAW, cbSize, 0, 4, 1);
+    TEST_FIELD(NOTIFYICONDATAW, hWnd, 4, 4, 1);
+    TEST_FIELD(NOTIFYICONDATAW, uID, 8, 4, 1);
+    TEST_FIELD(NOTIFYICONDATAW, uFlags, 12, 4, 1);
+    TEST_FIELD(NOTIFYICONDATAW, uCallbackMessage, 16, 4, 1);
+    TEST_FIELD(NOTIFYICONDATAW, hIcon, 20, 4, 1);
+    TEST_FIELD(NOTIFYICONDATAW, szTip, 24, 256, 1);
+    TEST_FIELD(NOTIFYICONDATAW, dwState, 280, 4, 1);
+    TEST_FIELD(NOTIFYICONDATAW, dwStateMask, 284, 4, 1);
+    TEST_FIELD(NOTIFYICONDATAW, szInfo, 288, 512, 1);
 }
 
 static void test_pack_PAPPBARDATA(void)
@@ -682,114 +682,114 @@ static void test_pack_PRINTEROP_FLAGS(void)
 static void test_pack_SHELLEXECUTEINFOA(void)
 {
     /* SHELLEXECUTEINFOA (pack 1) */
-    TEST_FIELD(SHELLEXECUTEINFOA, DWORD, cbSize, 0, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOA, ULONG, fMask, 4, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOA, HWND, hwnd, 8, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOA, LPCSTR, lpVerb, 12, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOA, LPCSTR, lpFile, 16, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOA, LPCSTR, lpParameters, 20, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOA, LPCSTR, lpDirectory, 24, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOA, INT, nShow, 28, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOA, HINSTANCE, hInstApp, 32, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOA, LPVOID, lpIDList, 36, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOA, LPCSTR, lpClass, 40, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOA, HKEY, hkeyClass, 44, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOA, DWORD, dwHotKey, 48, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, cbSize, 0, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, fMask, 4, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, hwnd, 8, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, lpVerb, 12, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, lpFile, 16, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, lpParameters, 20, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, lpDirectory, 24, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, nShow, 28, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, hInstApp, 32, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, lpIDList, 36, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, lpClass, 40, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, hkeyClass, 44, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, dwHotKey, 48, 4, 1);
 }
 
 static void test_pack_SHELLEXECUTEINFOW(void)
 {
     /* SHELLEXECUTEINFOW (pack 1) */
-    TEST_FIELD(SHELLEXECUTEINFOW, DWORD, cbSize, 0, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOW, ULONG, fMask, 4, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOW, HWND, hwnd, 8, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOW, LPCWSTR, lpVerb, 12, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOW, LPCWSTR, lpFile, 16, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOW, LPCWSTR, lpParameters, 20, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOW, LPCWSTR, lpDirectory, 24, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOW, INT, nShow, 28, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOW, HINSTANCE, hInstApp, 32, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOW, LPVOID, lpIDList, 36, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOW, LPCWSTR, lpClass, 40, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOW, HKEY, hkeyClass, 44, 4, 1);
-    TEST_FIELD(SHELLEXECUTEINFOW, DWORD, dwHotKey, 48, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, cbSize, 0, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, fMask, 4, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, hwnd, 8, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, lpVerb, 12, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, lpFile, 16, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, lpParameters, 20, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, lpDirectory, 24, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, nShow, 28, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, hInstApp, 32, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, lpIDList, 36, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, lpClass, 40, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, hkeyClass, 44, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, dwHotKey, 48, 4, 1);
 }
 
 static void test_pack_SHFILEINFOA(void)
 {
     /* SHFILEINFOA (pack 1) */
     TEST_TYPE(SHFILEINFOA, 352, 1);
-    TEST_FIELD(SHFILEINFOA, HICON, hIcon, 0, 4, 1);
-    TEST_FIELD(SHFILEINFOA, int, iIcon, 4, 4, 1);
-    TEST_FIELD(SHFILEINFOA, DWORD, dwAttributes, 8, 4, 1);
-    TEST_FIELD(SHFILEINFOA, CHAR[MAX_PATH], szDisplayName, 12, 260, 1);
-    TEST_FIELD(SHFILEINFOA, CHAR[80], szTypeName, 272, 80, 1);
+    TEST_FIELD(SHFILEINFOA, hIcon, 0, 4, 1);
+    TEST_FIELD(SHFILEINFOA, iIcon, 4, 4, 1);
+    TEST_FIELD(SHFILEINFOA, dwAttributes, 8, 4, 1);
+    TEST_FIELD(SHFILEINFOA, szDisplayName, 12, 260, 1);
+    TEST_FIELD(SHFILEINFOA, szTypeName, 272, 80, 1);
 }
 
 static void test_pack_SHFILEINFOW(void)
 {
     /* SHFILEINFOW (pack 1) */
     TEST_TYPE(SHFILEINFOW, 692, 1);
-    TEST_FIELD(SHFILEINFOW, HICON, hIcon, 0, 4, 1);
-    TEST_FIELD(SHFILEINFOW, int, iIcon, 4, 4, 1);
-    TEST_FIELD(SHFILEINFOW, DWORD, dwAttributes, 8, 4, 1);
-    TEST_FIELD(SHFILEINFOW, WCHAR[MAX_PATH], szDisplayName, 12, 520, 1);
-    TEST_FIELD(SHFILEINFOW, WCHAR[80], szTypeName, 532, 160, 1);
+    TEST_FIELD(SHFILEINFOW, hIcon, 0, 4, 1);
+    TEST_FIELD(SHFILEINFOW, iIcon, 4, 4, 1);
+    TEST_FIELD(SHFILEINFOW, dwAttributes, 8, 4, 1);
+    TEST_FIELD(SHFILEINFOW, szDisplayName, 12, 520, 1);
+    TEST_FIELD(SHFILEINFOW, szTypeName, 532, 160, 1);
 }
 
 static void test_pack_SHFILEOPSTRUCTA(void)
 {
     /* SHFILEOPSTRUCTA (pack 1) */
     TEST_TYPE(SHFILEOPSTRUCTA, 30, 1);
-    TEST_FIELD(SHFILEOPSTRUCTA, HWND, hwnd, 0, 4, 1);
-    TEST_FIELD(SHFILEOPSTRUCTA, UINT, wFunc, 4, 4, 1);
-    TEST_FIELD(SHFILEOPSTRUCTA, LPCSTR, pFrom, 8, 4, 1);
-    TEST_FIELD(SHFILEOPSTRUCTA, LPCSTR, pTo, 12, 4, 1);
-    TEST_FIELD(SHFILEOPSTRUCTA, FILEOP_FLAGS, fFlags, 16, 2, 1);
-    TEST_FIELD(SHFILEOPSTRUCTA, BOOL, fAnyOperationsAborted, 18, 4, 1);
-    TEST_FIELD(SHFILEOPSTRUCTA, LPVOID, hNameMappings, 22, 4, 1);
-    TEST_FIELD(SHFILEOPSTRUCTA, LPCSTR, lpszProgressTitle, 26, 4, 1);
+    TEST_FIELD(SHFILEOPSTRUCTA, hwnd, 0, 4, 1);
+    TEST_FIELD(SHFILEOPSTRUCTA, wFunc, 4, 4, 1);
+    TEST_FIELD(SHFILEOPSTRUCTA, pFrom, 8, 4, 1);
+    TEST_FIELD(SHFILEOPSTRUCTA, pTo, 12, 4, 1);
+    TEST_FIELD(SHFILEOPSTRUCTA, fFlags, 16, 2, 1);
+    TEST_FIELD(SHFILEOPSTRUCTA, fAnyOperationsAborted, 18, 4, 1);
+    TEST_FIELD(SHFILEOPSTRUCTA, hNameMappings, 22, 4, 1);
+    TEST_FIELD(SHFILEOPSTRUCTA, lpszProgressTitle, 26, 4, 1);
 }
 
 static void test_pack_SHFILEOPSTRUCTW(void)
 {
     /* SHFILEOPSTRUCTW (pack 1) */
     TEST_TYPE(SHFILEOPSTRUCTW, 30, 1);
-    TEST_FIELD(SHFILEOPSTRUCTW, HWND, hwnd, 0, 4, 1);
-    TEST_FIELD(SHFILEOPSTRUCTW, UINT, wFunc, 4, 4, 1);
-    TEST_FIELD(SHFILEOPSTRUCTW, LPCWSTR, pFrom, 8, 4, 1);
-    TEST_FIELD(SHFILEOPSTRUCTW, LPCWSTR, pTo, 12, 4, 1);
-    TEST_FIELD(SHFILEOPSTRUCTW, FILEOP_FLAGS, fFlags, 16, 2, 1);
-    TEST_FIELD(SHFILEOPSTRUCTW, BOOL, fAnyOperationsAborted, 18, 4, 1);
-    TEST_FIELD(SHFILEOPSTRUCTW, LPVOID, hNameMappings, 22, 4, 1);
-    TEST_FIELD(SHFILEOPSTRUCTW, LPCWSTR, lpszProgressTitle, 26, 4, 1);
+    TEST_FIELD(SHFILEOPSTRUCTW, hwnd, 0, 4, 1);
+    TEST_FIELD(SHFILEOPSTRUCTW, wFunc, 4, 4, 1);
+    TEST_FIELD(SHFILEOPSTRUCTW, pFrom, 8, 4, 1);
+    TEST_FIELD(SHFILEOPSTRUCTW, pTo, 12, 4, 1);
+    TEST_FIELD(SHFILEOPSTRUCTW, fFlags, 16, 2, 1);
+    TEST_FIELD(SHFILEOPSTRUCTW, fAnyOperationsAborted, 18, 4, 1);
+    TEST_FIELD(SHFILEOPSTRUCTW, hNameMappings, 22, 4, 1);
+    TEST_FIELD(SHFILEOPSTRUCTW, lpszProgressTitle, 26, 4, 1);
 }
 
 static void test_pack_SHNAMEMAPPINGA(void)
 {
     /* SHNAMEMAPPINGA (pack 1) */
     TEST_TYPE(SHNAMEMAPPINGA, 16, 1);
-    TEST_FIELD(SHNAMEMAPPINGA, LPSTR, pszOldPath, 0, 4, 1);
-    TEST_FIELD(SHNAMEMAPPINGA, LPSTR, pszNewPath, 4, 4, 1);
-    TEST_FIELD(SHNAMEMAPPINGA, int, cchOldPath, 8, 4, 1);
-    TEST_FIELD(SHNAMEMAPPINGA, int, cchNewPath, 12, 4, 1);
+    TEST_FIELD(SHNAMEMAPPINGA, pszOldPath, 0, 4, 1);
+    TEST_FIELD(SHNAMEMAPPINGA, pszNewPath, 4, 4, 1);
+    TEST_FIELD(SHNAMEMAPPINGA, cchOldPath, 8, 4, 1);
+    TEST_FIELD(SHNAMEMAPPINGA, cchNewPath, 12, 4, 1);
 }
 
 static void test_pack_SHNAMEMAPPINGW(void)
 {
     /* SHNAMEMAPPINGW (pack 1) */
     TEST_TYPE(SHNAMEMAPPINGW, 16, 1);
-    TEST_FIELD(SHNAMEMAPPINGW, LPWSTR, pszOldPath, 0, 4, 1);
-    TEST_FIELD(SHNAMEMAPPINGW, LPWSTR, pszNewPath, 4, 4, 1);
-    TEST_FIELD(SHNAMEMAPPINGW, int, cchOldPath, 8, 4, 1);
-    TEST_FIELD(SHNAMEMAPPINGW, int, cchNewPath, 12, 4, 1);
+    TEST_FIELD(SHNAMEMAPPINGW, pszOldPath, 0, 4, 1);
+    TEST_FIELD(SHNAMEMAPPINGW, pszNewPath, 4, 4, 1);
+    TEST_FIELD(SHNAMEMAPPINGW, cchOldPath, 8, 4, 1);
+    TEST_FIELD(SHNAMEMAPPINGW, cchNewPath, 12, 4, 1);
 }
 
 static void test_pack_ITEMIDLIST(void)
 {
     /* ITEMIDLIST (pack 1) */
     TEST_TYPE(ITEMIDLIST, 3, 1);
-    TEST_FIELD(ITEMIDLIST, SHITEMID, mkid, 0, 3, 1);
+    TEST_FIELD(ITEMIDLIST, mkid, 0, 3, 1);
 }
 
 static void test_pack_LPCITEMIDLIST(void)
@@ -833,33 +833,33 @@ static void test_pack_LPSTRRET(void)
 static void test_pack_SHELLDETAILS(void)
 {
     /* SHELLDETAILS (pack 1) */
-    TEST_FIELD(SHELLDETAILS, int, fmt, 0, 4, 1);
-    TEST_FIELD(SHELLDETAILS, int, cxChar, 4, 4, 1);
+    TEST_FIELD(SHELLDETAILS, fmt, 0, 4, 1);
+    TEST_FIELD(SHELLDETAILS, cxChar, 4, 4, 1);
 }
 
 static void test_pack_SHITEMID(void)
 {
     /* SHITEMID (pack 1) */
     TEST_TYPE(SHITEMID, 3, 1);
-    TEST_FIELD(SHITEMID, WORD, cb, 0, 2, 1);
-    TEST_FIELD(SHITEMID, BYTE[1], abID, 2, 1, 1);
+    TEST_FIELD(SHITEMID, cb, 0, 2, 1);
+    TEST_FIELD(SHITEMID, abID, 2, 1, 1);
 }
 
 static void test_pack_STRRET(void)
 {
     /* STRRET (pack 4) */
-    TEST_FIELD(STRRET, UINT, uType, 0, 4, 4);
+    TEST_FIELD(STRRET, uType, 0, 4, 4);
 }
 
 static void test_pack_AUTO_SCROLL_DATA(void)
 {
     /* AUTO_SCROLL_DATA (pack 1) */
     TEST_TYPE(AUTO_SCROLL_DATA, 48, 1);
-    TEST_FIELD(AUTO_SCROLL_DATA, int, iNextSample, 0, 4, 1);
-    TEST_FIELD(AUTO_SCROLL_DATA, DWORD, dwLastScroll, 4, 4, 1);
-    TEST_FIELD(AUTO_SCROLL_DATA, BOOL, bFull, 8, 4, 1);
-    TEST_FIELD(AUTO_SCROLL_DATA, POINT[NUM_POINTS], pts, 12, 24, 1);
-    TEST_FIELD(AUTO_SCROLL_DATA, DWORD[NUM_POINTS], dwTimes, 36, 12, 1);
+    TEST_FIELD(AUTO_SCROLL_DATA, iNextSample, 0, 4, 1);
+    TEST_FIELD(AUTO_SCROLL_DATA, dwLastScroll, 4, 4, 1);
+    TEST_FIELD(AUTO_SCROLL_DATA, bFull, 8, 4, 1);
+    TEST_FIELD(AUTO_SCROLL_DATA, pts, 12, 24, 1);
+    TEST_FIELD(AUTO_SCROLL_DATA, dwTimes, 36, 12, 1);
 }
 
 static void test_pack_BFFCALLBACK(void)
@@ -872,116 +872,116 @@ static void test_pack_BROWSEINFOA(void)
 {
     /* BROWSEINFOA (pack 8) */
     TEST_TYPE(BROWSEINFOA, 32, 4);
-    TEST_FIELD(BROWSEINFOA, HWND, hwndOwner, 0, 4, 4);
-    TEST_FIELD(BROWSEINFOA, LPCITEMIDLIST, pidlRoot, 4, 4, 4);
-    TEST_FIELD(BROWSEINFOA, LPSTR, pszDisplayName, 8, 4, 4);
-    TEST_FIELD(BROWSEINFOA, LPCSTR, lpszTitle, 12, 4, 4);
-    TEST_FIELD(BROWSEINFOA, UINT, ulFlags, 16, 4, 4);
-    TEST_FIELD(BROWSEINFOA, BFFCALLBACK, lpfn, 20, 4, 4);
-    TEST_FIELD(BROWSEINFOA, LPARAM, lParam, 24, 4, 4);
-    TEST_FIELD(BROWSEINFOA, INT, iImage, 28, 4, 4);
+    TEST_FIELD(BROWSEINFOA, hwndOwner, 0, 4, 4);
+    TEST_FIELD(BROWSEINFOA, pidlRoot, 4, 4, 4);
+    TEST_FIELD(BROWSEINFOA, pszDisplayName, 8, 4, 4);
+    TEST_FIELD(BROWSEINFOA, lpszTitle, 12, 4, 4);
+    TEST_FIELD(BROWSEINFOA, ulFlags, 16, 4, 4);
+    TEST_FIELD(BROWSEINFOA, lpfn, 20, 4, 4);
+    TEST_FIELD(BROWSEINFOA, lParam, 24, 4, 4);
+    TEST_FIELD(BROWSEINFOA, iImage, 28, 4, 4);
 }
 
 static void test_pack_BROWSEINFOW(void)
 {
     /* BROWSEINFOW (pack 8) */
     TEST_TYPE(BROWSEINFOW, 32, 4);
-    TEST_FIELD(BROWSEINFOW, HWND, hwndOwner, 0, 4, 4);
-    TEST_FIELD(BROWSEINFOW, LPCITEMIDLIST, pidlRoot, 4, 4, 4);
-    TEST_FIELD(BROWSEINFOW, LPWSTR, pszDisplayName, 8, 4, 4);
-    TEST_FIELD(BROWSEINFOW, LPCWSTR, lpszTitle, 12, 4, 4);
-    TEST_FIELD(BROWSEINFOW, UINT, ulFlags, 16, 4, 4);
-    TEST_FIELD(BROWSEINFOW, BFFCALLBACK, lpfn, 20, 4, 4);
-    TEST_FIELD(BROWSEINFOW, LPARAM, lParam, 24, 4, 4);
-    TEST_FIELD(BROWSEINFOW, INT, iImage, 28, 4, 4);
+    TEST_FIELD(BROWSEINFOW, hwndOwner, 0, 4, 4);
+    TEST_FIELD(BROWSEINFOW, pidlRoot, 4, 4, 4);
+    TEST_FIELD(BROWSEINFOW, pszDisplayName, 8, 4, 4);
+    TEST_FIELD(BROWSEINFOW, lpszTitle, 12, 4, 4);
+    TEST_FIELD(BROWSEINFOW, ulFlags, 16, 4, 4);
+    TEST_FIELD(BROWSEINFOW, lpfn, 20, 4, 4);
+    TEST_FIELD(BROWSEINFOW, lParam, 24, 4, 4);
+    TEST_FIELD(BROWSEINFOW, iImage, 28, 4, 4);
 }
 
 static void test_pack_CABINETSTATE(void)
 {
     /* CABINETSTATE (pack 1) */
     TEST_TYPE(CABINETSTATE, 12, 1);
-    TEST_FIELD(CABINETSTATE, WORD, cLength, 0, 2, 1);
-    TEST_FIELD(CABINETSTATE, WORD, nVersion, 2, 2, 1);
-    TEST_FIELD(CABINETSTATE, UINT, fMenuEnumFilter, 8, 4, 1);
+    TEST_FIELD(CABINETSTATE, cLength, 0, 2, 1);
+    TEST_FIELD(CABINETSTATE, nVersion, 2, 2, 1);
+    TEST_FIELD(CABINETSTATE, fMenuEnumFilter, 8, 4, 1);
 }
 
 static void test_pack_CIDA(void)
 {
     /* CIDA (pack 1) */
     TEST_TYPE(CIDA, 8, 1);
-    TEST_FIELD(CIDA, UINT, cidl, 0, 4, 1);
-    TEST_FIELD(CIDA, UINT[1], aoffset, 4, 4, 1);
+    TEST_FIELD(CIDA, cidl, 0, 4, 1);
+    TEST_FIELD(CIDA, aoffset, 4, 4, 1);
 }
 
 static void test_pack_CSFV(void)
 {
     /* CSFV (pack 1) */
-    TEST_FIELD(CSFV, UINT, cbSize, 0, 4, 1);
-    TEST_FIELD(CSFV, IShellFolder*, pshf, 4, 4, 1);
-    TEST_FIELD(CSFV, IShellView*, psvOuter, 8, 4, 1);
-    TEST_FIELD(CSFV, LPCITEMIDLIST, pidl, 12, 4, 1);
-    TEST_FIELD(CSFV, LONG, lEvents, 16, 4, 1);
-    TEST_FIELD(CSFV, LPFNVIEWCALLBACK, pfnCallback, 20, 4, 1);
+    TEST_FIELD(CSFV, cbSize, 0, 4, 1);
+    TEST_FIELD(CSFV, pshf, 4, 4, 1);
+    TEST_FIELD(CSFV, psvOuter, 8, 4, 1);
+    TEST_FIELD(CSFV, pidl, 12, 4, 1);
+    TEST_FIELD(CSFV, lEvents, 16, 4, 1);
+    TEST_FIELD(CSFV, pfnCallback, 20, 4, 1);
 }
 
 static void test_pack_DROPFILES(void)
 {
     /* DROPFILES (pack 1) */
     TEST_TYPE(DROPFILES, 20, 1);
-    TEST_FIELD(DROPFILES, DWORD, pFiles, 0, 4, 1);
-    TEST_FIELD(DROPFILES, POINT, pt, 4, 8, 1);
-    TEST_FIELD(DROPFILES, BOOL, fNC, 12, 4, 1);
-    TEST_FIELD(DROPFILES, BOOL, fWide, 16, 4, 1);
+    TEST_FIELD(DROPFILES, pFiles, 0, 4, 1);
+    TEST_FIELD(DROPFILES, pt, 4, 8, 1);
+    TEST_FIELD(DROPFILES, fNC, 12, 4, 1);
+    TEST_FIELD(DROPFILES, fWide, 16, 4, 1);
 }
 
 static void test_pack_FILEDESCRIPTORA(void)
 {
     /* FILEDESCRIPTORA (pack 1) */
     TEST_TYPE(FILEDESCRIPTORA, 332, 1);
-    TEST_FIELD(FILEDESCRIPTORA, DWORD, dwFlags, 0, 4, 1);
-    TEST_FIELD(FILEDESCRIPTORA, CLSID, clsid, 4, 16, 1);
-    TEST_FIELD(FILEDESCRIPTORA, SIZEL, sizel, 20, 8, 1);
-    TEST_FIELD(FILEDESCRIPTORA, POINTL, pointl, 28, 8, 1);
-    TEST_FIELD(FILEDESCRIPTORA, DWORD, dwFileAttributes, 36, 4, 1);
-    TEST_FIELD(FILEDESCRIPTORA, FILETIME, ftCreationTime, 40, 8, 1);
-    TEST_FIELD(FILEDESCRIPTORA, FILETIME, ftLastAccessTime, 48, 8, 1);
-    TEST_FIELD(FILEDESCRIPTORA, FILETIME, ftLastWriteTime, 56, 8, 1);
-    TEST_FIELD(FILEDESCRIPTORA, DWORD, nFileSizeHigh, 64, 4, 1);
-    TEST_FIELD(FILEDESCRIPTORA, DWORD, nFileSizeLow, 68, 4, 1);
-    TEST_FIELD(FILEDESCRIPTORA, CHAR[MAX_PATH], cFileName, 72, 260, 1);
+    TEST_FIELD(FILEDESCRIPTORA, dwFlags, 0, 4, 1);
+    TEST_FIELD(FILEDESCRIPTORA, clsid, 4, 16, 1);
+    TEST_FIELD(FILEDESCRIPTORA, sizel, 20, 8, 1);
+    TEST_FIELD(FILEDESCRIPTORA, pointl, 28, 8, 1);
+    TEST_FIELD(FILEDESCRIPTORA, dwFileAttributes, 36, 4, 1);
+    TEST_FIELD(FILEDESCRIPTORA, ftCreationTime, 40, 8, 1);
+    TEST_FIELD(FILEDESCRIPTORA, ftLastAccessTime, 48, 8, 1);
+    TEST_FIELD(FILEDESCRIPTORA, ftLastWriteTime, 56, 8, 1);
+    TEST_FIELD(FILEDESCRIPTORA, nFileSizeHigh, 64, 4, 1);
+    TEST_FIELD(FILEDESCRIPTORA, nFileSizeLow, 68, 4, 1);
+    TEST_FIELD(FILEDESCRIPTORA, cFileName, 72, 260, 1);
 }
 
 static void test_pack_FILEDESCRIPTORW(void)
 {
     /* FILEDESCRIPTORW (pack 1) */
     TEST_TYPE(FILEDESCRIPTORW, 592, 1);
-    TEST_FIELD(FILEDESCRIPTORW, DWORD, dwFlags, 0, 4, 1);
-    TEST_FIELD(FILEDESCRIPTORW, CLSID, clsid, 4, 16, 1);
-    TEST_FIELD(FILEDESCRIPTORW, SIZEL, sizel, 20, 8, 1);
-    TEST_FIELD(FILEDESCRIPTORW, POINTL, pointl, 28, 8, 1);
-    TEST_FIELD(FILEDESCRIPTORW, DWORD, dwFileAttributes, 36, 4, 1);
-    TEST_FIELD(FILEDESCRIPTORW, FILETIME, ftCreationTime, 40, 8, 1);
-    TEST_FIELD(FILEDESCRIPTORW, FILETIME, ftLastAccessTime, 48, 8, 1);
-    TEST_FIELD(FILEDESCRIPTORW, FILETIME, ftLastWriteTime, 56, 8, 1);
-    TEST_FIELD(FILEDESCRIPTORW, DWORD, nFileSizeHigh, 64, 4, 1);
-    TEST_FIELD(FILEDESCRIPTORW, DWORD, nFileSizeLow, 68, 4, 1);
-    TEST_FIELD(FILEDESCRIPTORW, WCHAR[MAX_PATH], cFileName, 72, 520, 1);
+    TEST_FIELD(FILEDESCRIPTORW, dwFlags, 0, 4, 1);
+    TEST_FIELD(FILEDESCRIPTORW, clsid, 4, 16, 1);
+    TEST_FIELD(FILEDESCRIPTORW, sizel, 20, 8, 1);
+    TEST_FIELD(FILEDESCRIPTORW, pointl, 28, 8, 1);
+    TEST_FIELD(FILEDESCRIPTORW, dwFileAttributes, 36, 4, 1);
+    TEST_FIELD(FILEDESCRIPTORW, ftCreationTime, 40, 8, 1);
+    TEST_FIELD(FILEDESCRIPTORW, ftLastAccessTime, 48, 8, 1);
+    TEST_FIELD(FILEDESCRIPTORW, ftLastWriteTime, 56, 8, 1);
+    TEST_FIELD(FILEDESCRIPTORW, nFileSizeHigh, 64, 4, 1);
+    TEST_FIELD(FILEDESCRIPTORW, nFileSizeLow, 68, 4, 1);
+    TEST_FIELD(FILEDESCRIPTORW, cFileName, 72, 520, 1);
 }
 
 static void test_pack_FILEGROUPDESCRIPTORA(void)
 {
     /* FILEGROUPDESCRIPTORA (pack 1) */
     TEST_TYPE(FILEGROUPDESCRIPTORA, 336, 1);
-    TEST_FIELD(FILEGROUPDESCRIPTORA, UINT, cItems, 0, 4, 1);
-    TEST_FIELD(FILEGROUPDESCRIPTORA, FILEDESCRIPTORA[1], fgd, 4, 332, 1);
+    TEST_FIELD(FILEGROUPDESCRIPTORA, cItems, 0, 4, 1);
+    TEST_FIELD(FILEGROUPDESCRIPTORA, fgd, 4, 332, 1);
 }
 
 static void test_pack_FILEGROUPDESCRIPTORW(void)
 {
     /* FILEGROUPDESCRIPTORW (pack 1) */
     TEST_TYPE(FILEGROUPDESCRIPTORW, 596, 1);
-    TEST_FIELD(FILEGROUPDESCRIPTORW, UINT, cItems, 0, 4, 1);
-    TEST_FIELD(FILEGROUPDESCRIPTORW, FILEDESCRIPTORW[1], fgd, 4, 592, 1);
+    TEST_FIELD(FILEGROUPDESCRIPTORW, cItems, 0, 4, 1);
+    TEST_FIELD(FILEGROUPDESCRIPTORW, fgd, 4, 592, 1);
 }
 
 static void test_pack_LPBROWSEINFOA(void)
@@ -1126,62 +1126,62 @@ static void test_pack_QCMINFO(void)
 {
     /* QCMINFO (pack 8) */
     TEST_TYPE(QCMINFO, 20, 4);
-    TEST_FIELD(QCMINFO, HMENU, hmenu, 0, 4, 4);
-    TEST_FIELD(QCMINFO, UINT, indexMenu, 4, 4, 4);
-    TEST_FIELD(QCMINFO, UINT, idCmdFirst, 8, 4, 4);
-    TEST_FIELD(QCMINFO, UINT, idCmdLast, 12, 4, 4);
-    TEST_FIELD(QCMINFO, QCMINFO_IDMAP const*, pIdMap, 16, 4, 4);
+    TEST_FIELD(QCMINFO, hmenu, 0, 4, 4);
+    TEST_FIELD(QCMINFO, indexMenu, 4, 4, 4);
+    TEST_FIELD(QCMINFO, idCmdFirst, 8, 4, 4);
+    TEST_FIELD(QCMINFO, idCmdLast, 12, 4, 4);
+    TEST_FIELD(QCMINFO, pIdMap, 16, 4, 4);
 }
 
 static void test_pack_QCMINFO_IDMAP(void)
 {
     /* QCMINFO_IDMAP (pack 8) */
     TEST_TYPE(QCMINFO_IDMAP, 12, 4);
-    TEST_FIELD(QCMINFO_IDMAP, UINT, nMaxIds, 0, 4, 4);
-    TEST_FIELD(QCMINFO_IDMAP, QCMINFO_IDMAP_PLACEMENT[1], pIdList, 4, 8, 4);
+    TEST_FIELD(QCMINFO_IDMAP, nMaxIds, 0, 4, 4);
+    TEST_FIELD(QCMINFO_IDMAP, pIdList, 4, 8, 4);
 }
 
 static void test_pack_QCMINFO_IDMAP_PLACEMENT(void)
 {
     /* QCMINFO_IDMAP_PLACEMENT (pack 8) */
     TEST_TYPE(QCMINFO_IDMAP_PLACEMENT, 8, 4);
-    TEST_FIELD(QCMINFO_IDMAP_PLACEMENT, UINT, id, 0, 4, 4);
-    TEST_FIELD(QCMINFO_IDMAP_PLACEMENT, UINT, fFlags, 4, 4, 4);
+    TEST_FIELD(QCMINFO_IDMAP_PLACEMENT, id, 0, 4, 4);
+    TEST_FIELD(QCMINFO_IDMAP_PLACEMENT, fFlags, 4, 4, 4);
 }
 
 static void test_pack_SHChangeDWORDAsIDList(void)
 {
     /* SHChangeDWORDAsIDList (pack 1) */
     TEST_TYPE(SHChangeDWORDAsIDList, 12, 1);
-    TEST_FIELD(SHChangeDWORDAsIDList, USHORT, cb, 0, 2, 1);
-    TEST_FIELD(SHChangeDWORDAsIDList, DWORD, dwItem1, 2, 4, 1);
-    TEST_FIELD(SHChangeDWORDAsIDList, DWORD, dwItem2, 6, 4, 1);
-    TEST_FIELD(SHChangeDWORDAsIDList, USHORT, cbZero, 10, 2, 1);
+    TEST_FIELD(SHChangeDWORDAsIDList, cb, 0, 2, 1);
+    TEST_FIELD(SHChangeDWORDAsIDList, dwItem1, 2, 4, 1);
+    TEST_FIELD(SHChangeDWORDAsIDList, dwItem2, 6, 4, 1);
+    TEST_FIELD(SHChangeDWORDAsIDList, cbZero, 10, 2, 1);
 }
 
 static void test_pack_SHChangeNotifyEntry(void)
 {
     /* SHChangeNotifyEntry (pack 1) */
     TEST_TYPE(SHChangeNotifyEntry, 8, 1);
-    TEST_FIELD(SHChangeNotifyEntry, LPCITEMIDLIST, pidl, 0, 4, 1);
-    TEST_FIELD(SHChangeNotifyEntry, BOOL, fRecursive, 4, 4, 1);
+    TEST_FIELD(SHChangeNotifyEntry, pidl, 0, 4, 1);
+    TEST_FIELD(SHChangeNotifyEntry, fRecursive, 4, 4, 1);
 }
 
 static void test_pack_SHChangeProductKeyAsIDList(void)
 {
     /* SHChangeProductKeyAsIDList (pack 1) */
     TEST_TYPE(SHChangeProductKeyAsIDList, 82, 1);
-    TEST_FIELD(SHChangeProductKeyAsIDList, USHORT, cb, 0, 2, 1);
-    TEST_FIELD(SHChangeProductKeyAsIDList, WCHAR[39], wszProductKey, 2, 78, 1);
-    TEST_FIELD(SHChangeProductKeyAsIDList, USHORT, cbZero, 80, 2, 1);
+    TEST_FIELD(SHChangeProductKeyAsIDList, cb, 0, 2, 1);
+    TEST_FIELD(SHChangeProductKeyAsIDList, wszProductKey, 2, 78, 1);
+    TEST_FIELD(SHChangeProductKeyAsIDList, cbZero, 80, 2, 1);
 }
 
 static void test_pack_SHDESCRIPTIONID(void)
 {
     /* SHDESCRIPTIONID (pack 8) */
     TEST_TYPE(SHDESCRIPTIONID, 20, 4);
-    TEST_FIELD(SHDESCRIPTIONID, DWORD, dwDescriptionId, 0, 4, 4);
-    TEST_FIELD(SHDESCRIPTIONID, CLSID, clsid, 4, 16, 4);
+    TEST_FIELD(SHDESCRIPTIONID, dwDescriptionId, 0, 4, 4);
+    TEST_FIELD(SHDESCRIPTIONID, clsid, 4, 16, 4);
 }
 
 static void test_pack_SHELLFLAGSTATE(void)
@@ -1194,20 +1194,20 @@ static void test_pack_SHELLSTATE(void)
 {
     /* SHELLSTATE (pack 1) */
     TEST_TYPE(SHELLSTATE, 32, 1);
-    TEST_FIELD(SHELLSTATE, DWORD, dwWin95Unused, 4, 4, 1);
-    TEST_FIELD(SHELLSTATE, UINT, uWin95Unused, 8, 4, 1);
-    TEST_FIELD(SHELLSTATE, LONG, lParamSort, 12, 4, 1);
-    TEST_FIELD(SHELLSTATE, int, iSortDirection, 16, 4, 1);
-    TEST_FIELD(SHELLSTATE, UINT, version, 20, 4, 1);
-    TEST_FIELD(SHELLSTATE, UINT, uNotUsed, 24, 4, 1);
+    TEST_FIELD(SHELLSTATE, dwWin95Unused, 4, 4, 1);
+    TEST_FIELD(SHELLSTATE, uWin95Unused, 8, 4, 1);
+    TEST_FIELD(SHELLSTATE, lParamSort, 12, 4, 1);
+    TEST_FIELD(SHELLSTATE, iSortDirection, 16, 4, 1);
+    TEST_FIELD(SHELLSTATE, version, 20, 4, 1);
+    TEST_FIELD(SHELLSTATE, uNotUsed, 24, 4, 1);
 }
 
 static void test_pack_TBINFO(void)
 {
     /* TBINFO (pack 8) */
     TEST_TYPE(TBINFO, 8, 4);
-    TEST_FIELD(TBINFO, UINT, cbuttons, 0, 4, 4);
-    TEST_FIELD(TBINFO, UINT, uFlags, 4, 4, 4);
+    TEST_FIELD(TBINFO, cbuttons, 0, 4, 4);
+    TEST_FIELD(TBINFO, uFlags, 4, 4, 4);
 }
 
 static void test_pack(void)
