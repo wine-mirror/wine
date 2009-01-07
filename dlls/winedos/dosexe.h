@@ -368,13 +368,6 @@ extern UINT WINAPI DOSVM_GetTimer( void );
 extern void DOSDEV_InstallDOSDevices(void);
 extern void DOSDEV_SetupDevice(const WINEDEV * devinfo,
                                WORD seg, WORD off_dev, WORD off_thunk);
-extern DWORD DOSDEV_Console(void);
-extern DWORD DOSDEV_FindCharDevice(char*name);
-extern int DOSDEV_Peek(DWORD dev, BYTE*data);
-extern int DOSDEV_Read(DWORD dev, DWORD buf, int buflen);
-extern int DOSDEV_Write(DWORD dev, DWORD buf, int buflen, int verify);
-extern int DOSDEV_IoctlRead(DWORD dev, DWORD buf, int buflen);
-extern int DOSDEV_IoctlWrite(DWORD dev, DWORD buf, int buflen);
 extern void DOSDEV_SetSharingRetry(WORD delay, WORD count);
 extern SEGPTR DOSDEV_GetLOL(BOOL v86);
 
