@@ -1434,5 +1434,9 @@ static void test_pack(void)
 
 START_TEST(generated)
 {
+#ifdef _WIN64
+    ok(0, "The type size / alignment tests don't support Win64 yet\n");
+#else
     test_pack();
+#endif
 }

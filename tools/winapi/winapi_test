@@ -586,7 +586,11 @@ sub output_footer($$$) {
     print OUT "START_TEST(generated)\n";
     print OUT "{\n";
     foreach my $test (@tests) {
+	print OUT "#ifdef _WIN64\n";
+	print OUT "    ok(0, \"The type size / alignment tests don't support Win64 yet\\n\");\n";
+	print OUT "#else\n";
 	print OUT "    test_$test();\n";
+	print OUT "#endif\n";
     }
     print OUT "}\n";
 }
