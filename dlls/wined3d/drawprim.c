@@ -253,8 +253,9 @@ void primitiveDeclarationConvertToStridedData(
     }
 }
 
-static void drawStridedFast(IWineD3DDevice *iface,UINT numberOfVertices, GLenum glPrimitiveType,
-                     const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx, ULONG startVertex) {
+static void drawStridedFast(IWineD3DDevice *iface, UINT numberOfVertices, GLenum glPrimitiveType,
+        const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     if (idxSize != 0 /* This crashes sometimes!*/) {
@@ -273,8 +274,8 @@ static void drawStridedFast(IWineD3DDevice *iface,UINT numberOfVertices, GLenum 
 #endif
 
     } else {
-        TRACE("(%p) : glDrawArrays(%#x, %d, %d)\n", This, glPrimitiveType, startVertex, numberOfVertices);
-        glDrawArrays(glPrimitiveType, startVertex, numberOfVertices);
+        TRACE("(%p) : glDrawArrays(%#x, %d, %d)\n", This, glPrimitiveType, startIdx, numberOfVertices);
+        glDrawArrays(glPrimitiveType, startIdx, numberOfVertices);
         checkGLcall("glDrawArrays");
     }
 
@@ -287,7 +288,7 @@ static void drawStridedFast(IWineD3DDevice *iface,UINT numberOfVertices, GLenum 
  */
 
 static void drawStridedSlow(IWineD3DDevice *iface, const WineDirect3DVertexStridedData *sd, UINT NumVertexes,
-        GLenum glPrimType, const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx, ULONG startVertex)
+        GLenum glPrimType, const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx)
 {
     unsigned int               textureNo    = 0;
     const WORD                *pIdxBufS     = NULL;
@@ -295,7 +296,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const WineDirect3DVertexStrid
     ULONG                      vx_index;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const UINT *streamOffset = This->stateBlock->streamOffset;
-    long                      SkipnStrides = startVertex + This->stateBlock->loadBaseVertexIndex;
+    long                      SkipnStrides = startIdx + This->stateBlock->loadBaseVertexIndex;
     BOOL                      pixelShader = use_ps(This->stateBlock);
     BOOL specular_fog = FALSE;
     UINT texture_stages = GL_LIMITS(texture_stages);
@@ -597,10 +598,10 @@ static inline void send_attribute(IWineD3DDeviceImpl *This, const DWORD type, co
 }
 
 static void drawStridedSlowVs(IWineD3DDevice *iface, const WineDirect3DVertexStridedData *sd, UINT numberOfVertices,
-        GLenum glPrimitiveType, const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx, ULONG startVertex)
+        GLenum glPrimitiveType, const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    long                      SkipnStrides = startVertex + This->stateBlock->loadBaseVertexIndex;
+    long                      SkipnStrides = startIdx + This->stateBlock->loadBaseVertexIndex;
     const WORD                *pIdxBufS     = NULL;
     const DWORD               *pIdxBufL     = NULL;
     ULONG                      vx_index;
@@ -658,7 +659,7 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, const WineDirect3DVertexStr
 
 static inline void drawStridedInstanced(IWineD3DDevice *iface, const WineDirect3DVertexStridedData *sd,
         UINT numberOfVertices, GLenum glPrimitiveType, const void *idxData, short idxSize, ULONG minIndex,
-        ULONG startIdx, ULONG startVertex)
+        ULONG startIdx)
 {
     UINT numInstances = 0, i;
     int numInstancedAttribs = 0, j;
@@ -811,16 +812,9 @@ static inline void remove_vbos(IWineD3DDeviceImpl *This, WineDirect3DVertexStrid
 }
 
 /* Routine common to the draw primitive and draw indexed primitive routines */
-void drawPrimitive(IWineD3DDevice *iface,
-                   int PrimitiveType,
-                   long NumPrimitives,
-                   /* for Indexed: */
-                   long  StartVertexIndex,
-                   UINT  numberOfVertices,
-                   long  StartIdx,
-                   short idxSize,
-                   const void *idxData,
-                   int   minIndex) {
+void drawPrimitive(IWineD3DDevice *iface, int PrimitiveType, long NumPrimitives,
+        UINT numberOfVertices, long StartIdx, short idxSize, const void *idxData, int minIndex)
+{
 
     IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSurfaceImpl          *target;
@@ -908,19 +902,19 @@ void drawPrimitive(IWineD3DDevice *iface,
                 } else {
                     TRACE("Using immediate mode with vertex shaders for half float emulation\n");
                 }
-                drawStridedSlowVs(iface, strided, calculatedNumberOfindices, glPrimType,
-                                  idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
+                drawStridedSlowVs(iface, strided, calculatedNumberOfindices,
+                        glPrimType, idxData, idxSize, minIndex, StartIdx);
             } else {
                 drawStridedSlow(iface, strided, calculatedNumberOfindices,
-                                glPrimType, idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
+                        glPrimType, idxData, idxSize, minIndex, StartIdx);
             }
         } else if(This->instancedDraw) {
             /* Instancing emulation with mixing immediate mode and arrays */
             drawStridedInstanced(iface, &This->strided_streams, calculatedNumberOfindices, glPrimType,
-                            idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
+                            idxData, idxSize, minIndex, StartIdx);
         } else {
             drawStridedFast(iface, calculatedNumberOfindices, glPrimType,
-                            idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
+                    idxData, idxSize, minIndex, StartIdx);
         }
     }
 
