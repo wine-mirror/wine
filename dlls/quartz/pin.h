@@ -187,7 +187,6 @@ HRESULT OutputPin_DecommitAllocator(OutputPin * This);
 HRESULT OutputPin_GetDeliveryBuffer(OutputPin * This, IMediaSample ** ppSample, REFERENCE_TIME * tStart, REFERENCE_TIME * tStop, DWORD dwFlags);
 HRESULT OutputPin_SendSample(OutputPin * This, IMediaSample * pSample);
 HRESULT OutputPin_DeliverDisconnect(OutputPin * This);
-HRESULT OutputPin_DeliverNewSegment(OutputPin * This, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
 
 /* Pull Pin */
 HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt);

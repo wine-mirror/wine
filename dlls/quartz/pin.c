@@ -953,22 +953,6 @@ HRESULT OutputPin_SendSample(OutputPin * This, IMediaSample * pSample)
     return hr;
 }
 
-HRESULT OutputPin_DeliverNewSegment(OutputPin * This, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
-{
-    HRESULT hr;
-
-    EnterCriticalSection(This->pin.pCritSec);
-    {
-        if (!This->pin.pConnectedTo)
-            hr = VFW_E_NOT_CONNECTED;
-        else
-            hr = IPin_NewSegment(This->pin.pConnectedTo, tStart, tStop, dRate);
-    }
-    LeaveCriticalSection(This->pin.pCritSec);
-    
-    return hr;
-}
-
 HRESULT OutputPin_CommitAllocator(OutputPin * This)
 {
     HRESULT hr = S_OK;
