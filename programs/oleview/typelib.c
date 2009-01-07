@@ -189,12 +189,12 @@ static void GetSaveIdlAsPath(void)
         SaveIdl(wszPath);
 }
 
-void AddToStrW(WCHAR *wszDest, const WCHAR *wszSource)
+static void AddToStrW(WCHAR *wszDest, const WCHAR *wszSource)
 {
     lstrcpyW(&wszDest[lstrlenW(wszDest)], wszSource);
 }
 
-void AddToTLDataStrW(TYPELIB_DATA *pTLData, const WCHAR *wszSource)
+static void AddToTLDataStrW(TYPELIB_DATA *pTLData, const WCHAR *wszSource)
 {
     int SourceLen = lstrlenW(wszSource);
 
@@ -205,7 +205,7 @@ void AddToTLDataStrW(TYPELIB_DATA *pTLData, const WCHAR *wszSource)
     pTLData->idlLen += SourceLen;
 }
 
-void AddToTLDataStrWithTabsW(TYPELIB_DATA *pTLData, WCHAR *wszSource)
+static void AddToTLDataStrWithTabsW(TYPELIB_DATA *pTLData, WCHAR *wszSource)
 {
     int lineLen = lstrlenW(wszSource);
     int newLinesNo = 0;
@@ -1552,7 +1552,7 @@ static void EmptyTLTree(void)
     }
 }
 
-LRESULT CALLBACK TypeLibProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK TypeLibProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch(uMsg)
     {

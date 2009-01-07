@@ -63,7 +63,7 @@ static IUnknown *GetInterface(void)
     return unk;
 }
 
-INT_PTR CALLBACK InterfaceViewerProc(HWND hDlgWnd, UINT uMsg,
+static INT_PTR CALLBACK InterfaceViewerProc(HWND hDlgWnd, UINT uMsg,
         WPARAM wParam, LPARAM lParam)
 {
     DIALOG_INFO *di;

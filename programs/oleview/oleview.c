@@ -26,7 +26,7 @@ static WCHAR wszFormat[] = { '<','o','b','j','e','c','t','\n',' ',' ',' ',
     'c','l','a','s','s','i','d','=','\"','c','l','s','i','d',':','%','s','\"','\n',
     '>','\n','<','/','o','b','j','e','c','t','>','\0' };
 
-INT_PTR CALLBACK SysConfProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK SysConfProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     HKEY hKey;
     WCHAR buffer[MAX_LOAD_STRING];
@@ -98,7 +98,7 @@ INT_PTR CALLBACK SysConfProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
     return FALSE;
 }
 
-INT_PTR CALLBACK CreateInstOnProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK CreateInstOnProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     HWND hEdit;
 
@@ -431,7 +431,7 @@ static void UpdateStatusBar(int itemID)
     SendMessage(globals.hStatusBar, SB_SETTEXT, 0, (LPARAM)info);
 }
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg,
+static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg,
         WPARAM wParam, LPARAM lParam)
 {
     switch(uMsg)

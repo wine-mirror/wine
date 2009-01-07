@@ -350,7 +350,7 @@ static void CreateTabCtrl(HWND hWnd)
             0, 0, 0, 0, details.hTab, NULL, globals.hMainInst, NULL);
 }
 
-LRESULT CALLBACK DetailsProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK DetailsProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     int sel;
 

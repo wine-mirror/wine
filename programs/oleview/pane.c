@@ -57,7 +57,7 @@ static void DrawSplitMoving(HWND hWnd, int x)
     ReleaseDC(hWnd, hdc);
 }
 
-LRESULT CALLBACK PaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK PaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     POINT pt;
     PANE *pane = (PANE*)GetMenu(hWnd);
