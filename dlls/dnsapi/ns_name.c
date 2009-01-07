@@ -39,10 +39,42 @@
 
 static const char	digits[] = "0123456789";
 
-/* Forward. */
+/* Private. */
 
-static int		special(int);
-static int		printable(int);
+/*
+ * special(ch)
+ *	Thinking in noninternationalized USASCII (per the DNS spec),
+ *	is this character special ("in need of quoting") ?
+ * return:
+ *	boolean.
+ */
+static int
+special(int ch) {
+	switch (ch) {
+	case 0x22: /* '"' */
+	case 0x2E: /* '.' */
+	case 0x3B: /* ';' */
+	case 0x5C: /* '\\' */
+	/* Special modifiers in zone files. */
+	case 0x40: /* '@' */
+	case 0x24: /* '$' */
+		return (1);
+	default:
+		return (0);
+	}
+}
+
+/*
+ * printable(ch)
+ *	Thinking in noninternationalized USASCII (per the DNS spec),
+ *	is this character visible and not a space when printed ?
+ * return:
+ *	boolean.
+ */
+static int
+printable(int ch) {
+	return (ch > 0x20 && ch < 0x7f);
+}
 
 /* Public. */
 
@@ -276,43 +308,6 @@ dns_ns_name_skip(const u_char **ptrptr, const u_char *eom) {
 	}
 	*ptrptr = cp;
 	return (0);
-}
-
-/* Private. */
-
-/*
- * special(ch)
- *	Thinking in noninternationalized USASCII (per the DNS spec),
- *	is this character special ("in need of quoting") ?
- * return:
- *	boolean.
- */
-static int
-special(int ch) {
-	switch (ch) {
-	case 0x22: /* '"' */
-	case 0x2E: /* '.' */
-	case 0x3B: /* ';' */
-	case 0x5C: /* '\\' */
-	/* Special modifiers in zone files. */
-	case 0x40: /* '@' */
-	case 0x24: /* '$' */
-		return (1);
-	default:
-		return (0);
-	}
-}
-
-/*
- * printable(ch)
- *	Thinking in noninternationalized USASCII (per the DNS spec),
- *	is this character visible and not a space when printed ?
- * return:
- *	boolean.
- */
-static int
-printable(int ch) {
-	return (ch > 0x20 && ch < 0x7f);
 }
 
 #endif  /* HAVE_RESOLV */
