@@ -1025,7 +1025,8 @@ should really perform a delta so that only the changes get updated*/
             UINT sampler = j < MAX_FRAGMENT_SAMPLERS ? j : WINED3DVERTEXTEXTURESAMPLER0 + j - MAX_FRAGMENT_SAMPLERS;
 
             IWineD3DDevice_SetTexture(pDevice, sampler, This->textures[j]);
-            for(i = 1; i < WINED3D_HIGHEST_SAMPLER_STATE; i++) {
+            for (i = 1; i <= WINED3D_HIGHEST_SAMPLER_STATE; ++i)
+            {
                 IWineD3DDevice_SetSamplerState(pDevice, sampler, i, This->samplerState[j][i]);
             }
         }
