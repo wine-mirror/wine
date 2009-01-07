@@ -612,7 +612,7 @@ PPB_Load( IPersistPropertyBag * iface, IPropertyBag *pPropBag,
     TRACE("%p/%p-> (%p, %p)\n", iface, This, pPropBag, pErrorLog);
 
     V_VT(&var) = VT_I4;
-    hr = IPropertyBag_Read(pPropBag, (LPCOLESTR)VFWIndex, &var, pErrorLog);
+    hr = IPropertyBag_Read(pPropBag, VFWIndex, &var, pErrorLog);
 
     if (SUCCEEDED(hr))
     {
@@ -662,7 +662,7 @@ KSP_QueryInterface( IKsPropertySet * iface, REFIID riid, LPVOID * ppv )
     if (IsEqualIID(riid, &IID_IUnknown) ||
         IsEqualIID(riid, &IID_IKsPropertySet))
     {
-        *ppv = (LPVOID)iface;
+        *ppv = iface;
         IKsPropertySet_AddRef( iface );
         return S_OK;
     }
@@ -788,9 +788,9 @@ static HRESULT WINAPI VfwPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * 
 
     *ppv = NULL;
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IPin))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IKsPropertySet))
-        *ppv = (LPVOID)&(This->KSP_VT);
+        *ppv = &(This->KSP_VT);
     else if (IsEqualIID(riid, &IID_IAMStreamConfig))
         return IUnknown_QueryInterface((IUnknown *)This->parent, riid, ppv);
 

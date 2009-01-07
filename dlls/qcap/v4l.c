@@ -568,7 +568,7 @@ static void V4l_FreeFrame(Capture * capBox)
 
 static DWORD WINAPI ReadThread(LPVOID lParam)
 {
-    Capture * capBox = (Capture *)lParam;
+    Capture * capBox = lParam;
     HRESULT hr;
     IMediaSample *pSample = NULL;
     unsigned long framecount = 0;
