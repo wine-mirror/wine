@@ -63,8 +63,18 @@ static ULONG  WINAPI IWineD3DQueryImpl_Release(IWineD3DQuery *iface) {
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
         ENTER_GL();
+        /* Queries are specific to the GL context that created them. Not
+         * deleting the query will obviously leak it, but that's still better
+         * than potentially deleting a different query with the same id in this
+         * context, and (still) leaking the actual query. */
         if(This->type == WINED3DQUERYTYPE_EVENT) {
-            if(GL_SUPPORT(APPLE_FENCE)) {
+            if (((WineQueryEventData *)This->extendedData)->ctx != This->wineD3DDevice->activeContext
+                    || This->wineD3DDevice->activeContext->tid != GetCurrentThreadId())
+            {
+                FIXME("Query was created in a different context, skipping deletion\n");
+            }
+            else if(GL_SUPPORT(APPLE_FENCE))
+            {
                 GL_EXTCALL(glDeleteFencesAPPLE(1, &((WineQueryEventData *)(This->extendedData))->fenceId));
                 checkGLcall("glDeleteFencesAPPLE");
             } else if(GL_SUPPORT(NV_FENCE)) {
@@ -72,8 +82,16 @@ static ULONG  WINAPI IWineD3DQueryImpl_Release(IWineD3DQuery *iface) {
                 checkGLcall("glDeleteFencesNV");
             }
         } else if(This->type == WINED3DQUERYTYPE_OCCLUSION && GL_SUPPORT(ARB_OCCLUSION_QUERY)) {
-            GL_EXTCALL(glDeleteQueriesARB(1, &((WineQueryOcclusionData *)(This->extendedData))->queryId));
-            checkGLcall("glDeleteQueriesARB");
+            if (((WineQueryOcclusionData *)This->extendedData)->ctx != This->wineD3DDevice->activeContext
+                    || This->wineD3DDevice->activeContext->tid != GetCurrentThreadId())
+            {
+                FIXME("Query was created in a different context, skipping deletion\n");
+            }
+            else
+            {
+                GL_EXTCALL(glDeleteQueriesARB(1, &((WineQueryOcclusionData *)(This->extendedData))->queryId));
+                checkGLcall("glDeleteQueriesARB");
+            }
         }
         LEAVE_GL();
 
