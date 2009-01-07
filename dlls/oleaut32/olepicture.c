@@ -519,6 +519,10 @@ static HRESULT WINAPI OLEPictureImpl_get_Handle(IPicture *iface,
 {
   OLEPictureImpl *This = (OLEPictureImpl *)iface;
   TRACE("(%p)->(%p)\n", This, phandle);
+
+  if(!phandle)
+    return E_POINTER;
+
   switch(This->desc.picType) {
   case PICTYPE_NONE:
   case PICTYPE_UNINITIALIZED:

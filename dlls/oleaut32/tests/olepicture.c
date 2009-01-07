@@ -674,6 +674,19 @@ static void test_get_Attributes(void)
     IPicture_Release(pic);
 }
 
+static void test_get_Handle(void)
+{
+    IPicture *pic;
+    HRESULT hres;
+
+    OleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, (VOID**)&pic);
+
+    hres = IPicture_get_Handle(pic, NULL);
+    ole_expect(hres, E_POINTER);
+
+    IPicture_Release(pic);
+}
+
 START_TEST(olepicture)
 {
 	hOleaut32 = GetModuleHandleA("oleaut32.dll");
@@ -702,6 +715,7 @@ START_TEST(olepicture)
         test_OleCreatePictureIndirect();
         test_Render();
         test_get_Attributes();
+        test_get_Handle();
 }
 
 
