@@ -116,7 +116,7 @@ static void color_or_size_dsa_add (WrappedDsa* wdsa, const WCHAR* name,
 
 static int CALLBACK dsa_destroy_callback (LPVOID p, LPVOID pData)
 {
-    ThemeColorOrSize* item = (ThemeColorOrSize*)p;
+    ThemeColorOrSize* item = p;
     HeapFree (GetProcessHeap(), 0, item->name);
     HeapFree (GetProcessHeap(), 0, item->fancyName);
     return 1;
@@ -135,7 +135,7 @@ static void create_color_or_size_dsa (WrappedDsa* wdsa)
 
 static ThemeColorOrSize* color_or_size_dsa_get (WrappedDsa* wdsa, int index)
 {
-    return (ThemeColorOrSize*)DSA_GetItemPtr (wdsa->dsa, index);
+    return DSA_GetItemPtr (wdsa->dsa, index);
 }
 
 static int color_or_size_dsa_find (WrappedDsa* wdsa, const WCHAR* name)
@@ -163,7 +163,7 @@ static int themeFilesCount = 0;
 
 static int CALLBACK theme_dsa_destroy_callback (LPVOID p, LPVOID pData)
 {
-    ThemeFile* item = (ThemeFile*)p;
+    ThemeFile* item = p;
     HeapFree (GetProcessHeap(), 0, item->themeFileName);
     HeapFree (GetProcessHeap(), 0, item->fancyName);
     free_color_or_size_dsa (&item->colors);
