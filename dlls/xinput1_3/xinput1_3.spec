@@ -4,4 +4,4 @@
 @ stdcall XInputGetKeystroke(long long ptr)
 @ stdcall XInputGetCapabilities(long long ptr)
 @ stdcall XInputGetDSoundAudioDeviceGuids(long ptr ptr)
-@ stub XInputGetBatteryInformation
+@ stdcall XInputGetBatteryInformation(long ptr ptr)

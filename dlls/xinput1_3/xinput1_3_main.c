@@ -114,3 +114,15 @@ DWORD WINAPI XInputGetDSoundAudioDeviceGuids(DWORD dwUserIndex, GUID* pDSoundRen
     }
     return ERROR_BAD_ARGUMENTS;
 }
+
+DWORD WINAPI XInputGetBatteryInformation(DWORD dwUserIndex, BYTE deviceType, XINPUT_BATTERY_INFORMATION* pBatteryInfo)
+{
+    FIXME("(%d %u %p) Stub!\n", dwUserIndex, deviceType, pBatteryInfo);
+
+    if (dwUserIndex < XUSER_MAX_COUNT)
+    {
+        return ERROR_DEVICE_NOT_CONNECTED;
+        /* If controller exists then return ERROR_SUCCESS */
+    }
+    return ERROR_BAD_ARGUMENTS;
+}
