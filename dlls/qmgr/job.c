@@ -382,32 +382,34 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_SetMinimumRetryDelay(
     IBackgroundCopyJob2 *iface,
     ULONG Seconds)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    FIXME("%u\n", Seconds);
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetMinimumRetryDelay(
     IBackgroundCopyJob2 *iface,
     ULONG *Seconds)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    FIXME("%p\n", Seconds);
+    *Seconds = 30;
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_SetNoProgressTimeout(
     IBackgroundCopyJob2 *iface,
     ULONG Seconds)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    FIXME("%u\n", Seconds);
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetNoProgressTimeout(
     IBackgroundCopyJob2 *iface,
     ULONG *Seconds)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    FIXME("%p\n", Seconds);
+    *Seconds = 900;
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetErrorCount(
