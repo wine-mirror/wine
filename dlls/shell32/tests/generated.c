@@ -1,4 +1,4 @@
-/* File generated automatically from tools/winapi/test.dat; do not edit! */
+/* File generated automatically from tools/winapi/tests.dat; do not edit! */
 /* This file can be copied, modified and distributed without restriction. */
 
 /*
@@ -530,27 +530,10 @@ static void test_pack_FMTID(void)
     TEST_TYPE(FMTID, 16, 4);
 }
 
-static void test_pack_GUID(void)
-{
-    /* GUID (pack 4) */
-    TEST_TYPE(GUID, 16, 4);
-    TEST_FIELD(GUID, unsigned long, Data1, 0, 4, 4);
-    TEST_FIELD(GUID, unsigned short, Data2, 4, 2, 2);
-    TEST_FIELD(GUID, unsigned short, Data3, 6, 2, 2);
-    TEST_FIELD(GUID, unsigned char[ 8 ], Data4, 8, 8, 1);
-}
-
 static void test_pack_IID(void)
 {
     /* IID */
     TEST_TYPE(IID, 16, 4);
-}
-
-static void test_pack_LPGUID(void)
-{
-    /* LPGUID */
-    TEST_TYPE(LPGUID, 4, 4);
-    TEST_TYPE_POINTER(LPGUID, 16, 4);
 }
 
 static void test_pack_APPBARDATA(void)
@@ -1227,12 +1210,6 @@ static void test_pack_SHELLSTATE(void)
     TEST_FIELD(SHELLSTATE, UINT, uNotUsed, 24, 4, 1);
 }
 
-static void test_pack_SHELLVIEWID(void)
-{
-    /* SHELLVIEWID */
-    TEST_TYPE(SHELLVIEWID, 16, 4);
-}
-
 static void test_pack_TBINFO(void)
 {
     /* TBINFO (pack 8) */
@@ -1275,7 +1252,6 @@ static void test_pack(void)
     test_pack_FLAGGED_BYTE_BLOB();
     test_pack_FLAGGED_WORD_BLOB();
     test_pack_FMTID();
-    test_pack_GUID();
     test_pack_HMETAFILEPICT();
     test_pack_HYPER_SIZEDARR();
     test_pack_IID();
@@ -1300,7 +1276,6 @@ static void test_pack(void)
     test_pack_LPFILEGROUPDESCRIPTORA();
     test_pack_LPFILEGROUPDESCRIPTORW();
     test_pack_LPFNVIEWCALLBACK();
-    test_pack_LPGUID();
     test_pack_LPIDA();
     test_pack_LPITEMIDLIST();
     test_pack_LPOLESTR();
@@ -1348,7 +1323,6 @@ static void test_pack(void)
     test_pack_SHELLEXECUTEINFOW();
     test_pack_SHELLFLAGSTATE();
     test_pack_SHELLSTATE();
-    test_pack_SHELLVIEWID();
     test_pack_SHFILEINFOA();
     test_pack_SHFILEINFOW();
     test_pack_SHFILEOPSTRUCTA();

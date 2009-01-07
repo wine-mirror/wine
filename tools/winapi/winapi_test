@@ -234,6 +234,10 @@ sub _find_align_kind_size($) {
 	$align = 4;
 	$kind = "struct";
 	$size = 8;
+    } elsif (/^GUID$/) {
+	$align = 4;
+	$kind = "struct";
+	$size = 16;
     } elsif (/^(?:VOID)$/) {
  	$align = 4;
  	$kind = "signed";

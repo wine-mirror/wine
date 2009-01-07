@@ -1,4 +1,4 @@
-/* File generated automatically from tools/winapi/test.dat; do not edit! */
+/* File generated automatically from tools/winapi/tests.dat; do not edit! */
 /* This file can be copied, modified and distributed without restriction. */
 
 /*
@@ -128,7 +128,6 @@ static void test_pack_RPC_STATUS(void)
 {
     /* RPC_STATUS */
     TEST_TYPE(RPC_STATUS, 4, 4);
-    TEST_TYPE_SIGNED(RPC_STATUS);
 }
 
 static void test_pack_PRPC_POLICY(void)
@@ -165,7 +164,7 @@ static void test_pack_RPC_BINDING_VECTOR(void)
 {
     /* RPC_BINDING_VECTOR (pack 4) */
     TEST_TYPE(RPC_BINDING_VECTOR, 8, 4);
-    TEST_FIELD(RPC_BINDING_VECTOR, unsigned long, Count, 0, 4, 4);
+    TEST_FIELD(RPC_BINDING_VECTOR, ULONG, Count, 0, 4, 4);
     TEST_FIELD(RPC_BINDING_VECTOR, RPC_BINDING_HANDLE[1], BindingH, 4, 4, 4);
 }
 
@@ -178,6 +177,10 @@ static void test_pack_RPC_IF_HANDLE(void)
 static void test_pack_RPC_IF_ID(void)
 {
     /* RPC_IF_ID (pack 4) */
+    TEST_TYPE(RPC_IF_ID, 20, 4);
+    TEST_FIELD(RPC_IF_ID, UUID, Uuid, 0, 16, 4);
+    TEST_FIELD(RPC_IF_ID, unsigned short, VersMajor, 16, 2, 2);
+    TEST_FIELD(RPC_IF_ID, unsigned short, VersMinor, 18, 2, 2);
 }
 
 static void test_pack_RPC_POLICY(void)
@@ -185,15 +188,15 @@ static void test_pack_RPC_POLICY(void)
     /* RPC_POLICY (pack 4) */
     TEST_TYPE(RPC_POLICY, 12, 4);
     TEST_FIELD(RPC_POLICY, unsigned int, Length, 0, 4, 4);
-    TEST_FIELD(RPC_POLICY, unsigned long, EndpointFlags, 4, 4, 4);
-    TEST_FIELD(RPC_POLICY, unsigned long, NICFlags, 8, 4, 4);
+    TEST_FIELD(RPC_POLICY, ULONG, EndpointFlags, 4, 4, 4);
+    TEST_FIELD(RPC_POLICY, ULONG, NICFlags, 8, 4, 4);
 }
 
 static void test_pack_UUID_VECTOR(void)
 {
     /* UUID_VECTOR (pack 4) */
     TEST_TYPE(UUID_VECTOR, 8, 4);
-    TEST_FIELD(UUID_VECTOR, unsigned long, Count, 0, 4, 4);
+    TEST_FIELD(UUID_VECTOR, ULONG, Count, 0, 4, 4);
     TEST_FIELD(UUID_VECTOR, UUID *[1], Uuid, 4, 4, 4);
 }
 
@@ -201,6 +204,7 @@ static void test_pack_PRPC_CLIENT_INTERFACE(void)
 {
     /* PRPC_CLIENT_INTERFACE */
     TEST_TYPE(PRPC_CLIENT_INTERFACE, 4, 4);
+    TEST_TYPE_POINTER(PRPC_CLIENT_INTERFACE, 68, 4);
 }
 
 static void test_pack_PRPC_DISPATCH_TABLE(void)
@@ -228,6 +232,7 @@ static void test_pack_PRPC_SERVER_INTERFACE(void)
 {
     /* PRPC_SERVER_INTERFACE */
     TEST_TYPE(PRPC_SERVER_INTERFACE, 4, 4);
+    TEST_TYPE_POINTER(PRPC_SERVER_INTERFACE, 68, 4);
 }
 
 static void test_pack_PRPC_SYNTAX_IDENTIFIER(void)
@@ -240,7 +245,16 @@ static void test_pack_PRPC_SYNTAX_IDENTIFIER(void)
 static void test_pack_RPC_CLIENT_INTERFACE(void)
 {
     /* RPC_CLIENT_INTERFACE (pack 4) */
+    TEST_TYPE(RPC_CLIENT_INTERFACE, 68, 4);
     TEST_FIELD(RPC_CLIENT_INTERFACE, unsigned int, Length, 0, 4, 4);
+    TEST_FIELD(RPC_CLIENT_INTERFACE, RPC_SYNTAX_IDENTIFIER, InterfaceId, 4, 20, 4);
+    TEST_FIELD(RPC_CLIENT_INTERFACE, RPC_SYNTAX_IDENTIFIER, TransferSyntax, 24, 20, 4);
+    TEST_FIELD(RPC_CLIENT_INTERFACE, PRPC_DISPATCH_TABLE, DispatchTable, 44, 4, 4);
+    TEST_FIELD(RPC_CLIENT_INTERFACE, unsigned int, RpcProtseqEndpointCount, 48, 4, 4);
+    TEST_FIELD(RPC_CLIENT_INTERFACE, PRPC_PROTSEQ_ENDPOINT, RpcProtseqEndpoint, 52, 4, 4);
+    TEST_FIELD(RPC_CLIENT_INTERFACE, ULONG_PTR, Reserved, 56, 4, 4);
+    TEST_FIELD(RPC_CLIENT_INTERFACE, void const*, InterpreterInfo, 60, 4, 4);
+    TEST_FIELD(RPC_CLIENT_INTERFACE, unsigned int, Flags, 64, 4, 4);
 }
 
 static void test_pack_RPC_DISPATCH_FUNCTION(void)
@@ -285,7 +299,16 @@ static void test_pack_RPC_PROTSEQ_ENDPOINT(void)
 static void test_pack_RPC_SERVER_INTERFACE(void)
 {
     /* RPC_SERVER_INTERFACE (pack 4) */
+    TEST_TYPE(RPC_SERVER_INTERFACE, 68, 4);
     TEST_FIELD(RPC_SERVER_INTERFACE, unsigned int, Length, 0, 4, 4);
+    TEST_FIELD(RPC_SERVER_INTERFACE, RPC_SYNTAX_IDENTIFIER, InterfaceId, 4, 20, 4);
+    TEST_FIELD(RPC_SERVER_INTERFACE, RPC_SYNTAX_IDENTIFIER, TransferSyntax, 24, 20, 4);
+    TEST_FIELD(RPC_SERVER_INTERFACE, PRPC_DISPATCH_TABLE, DispatchTable, 44, 4, 4);
+    TEST_FIELD(RPC_SERVER_INTERFACE, unsigned int, RpcProtseqEndpointCount, 48, 4, 4);
+    TEST_FIELD(RPC_SERVER_INTERFACE, PRPC_PROTSEQ_ENDPOINT, RpcProtseqEndpoint, 52, 4, 4);
+    TEST_FIELD(RPC_SERVER_INTERFACE, RPC_MGR_EPV*, DefaultManagerEpv, 56, 4, 4);
+    TEST_FIELD(RPC_SERVER_INTERFACE, void const*, InterpreterInfo, 60, 4, 4);
+    TEST_FIELD(RPC_SERVER_INTERFACE, unsigned int, Flags, 64, 4, 4);
 }
 
 static void test_pack_RPC_SYNTAX_IDENTIFIER(void)
@@ -434,6 +457,15 @@ static void test_pack_MIDL_STUBLESS_PROXY_INFO(void)
 static void test_pack_MIDL_SYNTAX_INFO(void)
 {
     /* MIDL_SYNTAX_INFO (pack 4) */
+    TEST_TYPE(MIDL_SYNTAX_INFO, 48, 4);
+    TEST_FIELD(MIDL_SYNTAX_INFO, RPC_SYNTAX_IDENTIFIER, TransferSyntax, 0, 20, 4);
+    TEST_FIELD(MIDL_SYNTAX_INFO, RPC_DISPATCH_TABLE*, DispatchTable, 20, 4, 4);
+    TEST_FIELD(MIDL_SYNTAX_INFO, PFORMAT_STRING, ProcString, 24, 4, 4);
+    TEST_FIELD(MIDL_SYNTAX_INFO, unsigned short*, FmtStringOffset, 28, 4, 4);
+    TEST_FIELD(MIDL_SYNTAX_INFO, PFORMAT_STRING, TypeString, 32, 4, 4);
+    TEST_FIELD(MIDL_SYNTAX_INFO, void*, aUserMarshalQuadruple, 36, 4, 4);
+    TEST_FIELD(MIDL_SYNTAX_INFO, ULONG_PTR, pReserved1, 40, 4, 4);
+    TEST_FIELD(MIDL_SYNTAX_INFO, ULONG_PTR, pReserved2, 44, 4, 4);
 }
 
 static void test_pack_NDR_CCONTEXT(void)
@@ -544,6 +576,7 @@ static void test_pack_PMIDL_SYNTAX_INFO(void)
 {
     /* PMIDL_SYNTAX_INFO */
     TEST_TYPE(PMIDL_SYNTAX_INFO, 4, 4);
+    TEST_TYPE_POINTER(PMIDL_SYNTAX_INFO, 48, 4);
 }
 
 static void test_pack_PNDR_ASYNC_MESSAGE(void)

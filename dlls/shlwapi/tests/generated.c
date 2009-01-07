@@ -1,4 +1,4 @@
-/* File generated automatically from tools/winapi/test.dat; do not edit! */
+/* File generated automatically from tools/winapi/tests.dat; do not edit! */
 /* This file can be copied, modified and distributed without restriction. */
 
 /*
