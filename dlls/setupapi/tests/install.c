@@ -288,6 +288,13 @@ static void test_install_svc_from(void)
     infhandle = SetupOpenInfFileA(path, NULL, INF_STYLE_WIN4, NULL);
     SetLastError(0xdeadbeef);
     ret = SetupInstallServicesFromInfSectionA(infhandle, "Winetest.Services", 0);
+    if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
+    {
+        skip("Not enough rights to install the service\n");
+        SetupCloseInfFile(infhandle);
+        DeleteFile(inffile);
+        return;
+    }
     ok(ret, "Expected success\n");
     ok(GetLastError() == ERROR_SUCCESS,
         "Expected ERROR_SUCCESS, got %08x\n", GetLastError());
@@ -342,6 +349,11 @@ static void test_driver_install(void)
     if (!scm_handle && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
         skip("OpenSCManagerA is not implemented, we are most likely on win9x\n");
+        return;
+    }
+    else if (!scm_handle && (GetLastError() == ERROR_ACCESS_DENIED))
+    {
+        skip("Not enough rights to install the service\n");
         return;
     }
     CloseServiceHandle(scm_handle);
