@@ -56,104 +56,109 @@
  * Test helper macros
  */
 
-#ifdef FIELD_ALIGNMENT
-# define TEST_FIELD_ALIGNMENT(type, field, align) \
-   ok(_TYPE_ALIGNMENT(((type*)0)->field) == align, \
-       "FIELD_ALIGNMENT(" #type ", " #field ") == %d (expected " #align ")\n", \
-           (int)_TYPE_ALIGNMENT(((type*)0)->field))
+#ifdef _WIN64
+
+# define TEST_TYPE_SIZE(type, size)
+# define TEST_TYPE_ALIGN(type, align)
+# define TEST_TARGET_ALIGN(type, align)
+# define TEST_FIELD_ALIGN(type, field, align)
+# define TEST_FIELD_OFFSET(type, field, offset)
+
 #else
-# define TEST_FIELD_ALIGNMENT(type, field, align) do { } while (0)
+
+# define TEST_TYPE_SIZE(type, size)             C_ASSERT(sizeof(type) == size);
+
+# ifdef TYPE_ALIGNMENT
+#  define TEST_TYPE_ALIGN(type, align)          C_ASSERT(TYPE_ALIGNMENT(type) == align);
+# else
+#  define TEST_TYPE_ALIGN(type, align)
+# endif
+
+# ifdef _TYPE_ALIGNMENT
+#  define TEST_TARGET_ALIGN(type, align)        C_ASSERT(_TYPE_ALIGNMENT(*(type)0) == align);
+#  define TEST_FIELD_ALIGN(type, field, align)  C_ASSERT(_TYPE_ALIGNMENT(((type*)0)->field) == align);
+# else
+#  define TEST_TARGET_ALIGN(type, align)
+#  define TEST_FIELD_ALIGN(type, field, align)
+# endif
+
+# define TEST_FIELD_OFFSET(type, field, offset) C_ASSERT(FIELD_OFFSET(type, field) == offset);
+
 #endif
 
-#define TEST_FIELD_OFFSET(type, field, offset) \
-    ok(FIELD_OFFSET(type, field) == offset, \
-        "FIELD_OFFSET(" #type ", " #field ") == %ld (expected " #offset ")\n", \
-             (long int)FIELD_OFFSET(type, field))
+#define TEST_TARGET_SIZE(type, size)            TEST_TYPE_SIZE(*(type)0, size)
+#define TEST_FIELD_SIZE(type, field, size)      TEST_TYPE_SIZE((((type*)0)->field), size)
+#define TEST_TYPE_SIGNED(type)                  C_ASSERT((type) -1 < 0);
+#define TEST_TYPE_UNSIGNED(type)                C_ASSERT((type) -1 > 0);
 
-#ifdef _TYPE_ALIGNMENT
-#define TEST__TYPE_ALIGNMENT(type, align) \
-    ok(_TYPE_ALIGNMENT(type) == align, "TYPE_ALIGNMENT(" #type ") == %d (expected " #align ")\n", (int)_TYPE_ALIGNMENT(type))
-#else
-# define TEST__TYPE_ALIGNMENT(type, align) do { } while (0)
-#endif
-
-#ifdef TYPE_ALIGNMENT
-#define TEST_TYPE_ALIGNMENT(type, align) \
-    ok(TYPE_ALIGNMENT(type) == align, "TYPE_ALIGNMENT(" #type ") == %d (expected " #align ")\n", (int)TYPE_ALIGNMENT(type))
-#else
-# define TEST_TYPE_ALIGNMENT(type, align) do { } while (0)
-#endif
-
-#define TEST_TYPE_SIZE(type, size) \
-    ok(sizeof(type) == size, "sizeof(" #type ") == %d (expected " #size ")\n", ((int) sizeof(type)))
-
-/***********************************************************************
- * Test macros
- */
-
-#define TEST_FIELD(type, field, field_offset, field_size, field_align) \
-  TEST_TYPE_SIZE((((type*)0)->field), field_size); \
-  TEST_FIELD_ALIGNMENT(type, field, field_align); \
-  TEST_FIELD_OFFSET(type, field, field_offset)
-
-#define TEST_TYPE(type, size, align) \
-  TEST_TYPE_ALIGNMENT(type, align); \
-  TEST_TYPE_SIZE(type, size)
-
-#define TEST_TYPE_POINTER(type, size, align) \
-    TEST__TYPE_ALIGNMENT(*(type)0, align); \
-    TEST_TYPE_SIZE(*(type)0, size)
-
-#define TEST_TYPE_SIGNED(type) \
-    ok((type) -1 < 0, "(" #type ") -1 < 0\n");
-
-#define TEST_TYPE_UNSIGNED(type) \
-     ok((type) -1 > 0, "(" #type ") -1 > 0\n");
 
 static void test_pack_ASSOCF(void)
 {
     /* ASSOCF */
-    TEST_TYPE(ASSOCF, 4, 4);
-    TEST_TYPE_UNSIGNED(ASSOCF);
+    TEST_TYPE_SIZE   (ASSOCF, 4)
+    TEST_TYPE_ALIGN  (ASSOCF, 4)
+    TEST_TYPE_UNSIGNED(ASSOCF)
 }
 
 static void test_pack_DLLGETVERSIONPROC(void)
 {
     /* DLLGETVERSIONPROC */
-    TEST_TYPE(DLLGETVERSIONPROC, 4, 4);
+    TEST_TYPE_SIZE   (DLLGETVERSIONPROC, 4)
+    TEST_TYPE_ALIGN  (DLLGETVERSIONPROC, 4)
 }
 
 static void test_pack_DLLVERSIONINFO(void)
 {
     /* DLLVERSIONINFO (pack 8) */
-    TEST_TYPE(DLLVERSIONINFO, 20, 4);
-    TEST_FIELD(DLLVERSIONINFO, cbSize, 0, 4, 4);
-    TEST_FIELD(DLLVERSIONINFO, dwMajorVersion, 4, 4, 4);
-    TEST_FIELD(DLLVERSIONINFO, dwMinorVersion, 8, 4, 4);
-    TEST_FIELD(DLLVERSIONINFO, dwBuildNumber, 12, 4, 4);
-    TEST_FIELD(DLLVERSIONINFO, dwPlatformID, 16, 4, 4);
+    TEST_TYPE_SIZE   (DLLVERSIONINFO, 20)
+    TEST_TYPE_ALIGN  (DLLVERSIONINFO, 4)
+    TEST_FIELD_SIZE  (DLLVERSIONINFO, cbSize, 4)
+    TEST_FIELD_ALIGN (DLLVERSIONINFO, cbSize, 4)
+    TEST_FIELD_OFFSET(DLLVERSIONINFO, cbSize, 0)
+    TEST_FIELD_SIZE  (DLLVERSIONINFO, dwMajorVersion, 4)
+    TEST_FIELD_ALIGN (DLLVERSIONINFO, dwMajorVersion, 4)
+    TEST_FIELD_OFFSET(DLLVERSIONINFO, dwMajorVersion, 4)
+    TEST_FIELD_SIZE  (DLLVERSIONINFO, dwMinorVersion, 4)
+    TEST_FIELD_ALIGN (DLLVERSIONINFO, dwMinorVersion, 4)
+    TEST_FIELD_OFFSET(DLLVERSIONINFO, dwMinorVersion, 8)
+    TEST_FIELD_SIZE  (DLLVERSIONINFO, dwBuildNumber, 4)
+    TEST_FIELD_ALIGN (DLLVERSIONINFO, dwBuildNumber, 4)
+    TEST_FIELD_OFFSET(DLLVERSIONINFO, dwBuildNumber, 12)
+    TEST_FIELD_SIZE  (DLLVERSIONINFO, dwPlatformID, 4)
+    TEST_FIELD_ALIGN (DLLVERSIONINFO, dwPlatformID, 4)
+    TEST_FIELD_OFFSET(DLLVERSIONINFO, dwPlatformID, 16)
 }
 
 static void test_pack_DLLVERSIONINFO2(void)
 {
     /* DLLVERSIONINFO2 (pack 8) */
-    TEST_TYPE(DLLVERSIONINFO2, 32, 8);
-    TEST_FIELD(DLLVERSIONINFO2, info1, 0, 20, 4);
-    TEST_FIELD(DLLVERSIONINFO2, dwFlags, 20, 4, 4);
-    TEST_FIELD(DLLVERSIONINFO2, ullVersion, 24, 8, 8);
+    TEST_TYPE_SIZE   (DLLVERSIONINFO2, 32)
+    TEST_TYPE_ALIGN  (DLLVERSIONINFO2, 8)
+    TEST_FIELD_SIZE  (DLLVERSIONINFO2, info1, 20)
+    TEST_FIELD_ALIGN (DLLVERSIONINFO2, info1, 4)
+    TEST_FIELD_OFFSET(DLLVERSIONINFO2, info1, 0)
+    TEST_FIELD_SIZE  (DLLVERSIONINFO2, dwFlags, 4)
+    TEST_FIELD_ALIGN (DLLVERSIONINFO2, dwFlags, 4)
+    TEST_FIELD_OFFSET(DLLVERSIONINFO2, dwFlags, 20)
+    TEST_FIELD_SIZE  (DLLVERSIONINFO2, ullVersion, 8)
+    TEST_FIELD_ALIGN (DLLVERSIONINFO2, ullVersion, 8)
+    TEST_FIELD_OFFSET(DLLVERSIONINFO2, ullVersion, 24)
 }
 
 static void test_pack_HUSKEY(void)
 {
     /* HUSKEY */
-    TEST_TYPE(HUSKEY, 4, 4);
+    TEST_TYPE_SIZE   (HUSKEY, 4)
+    TEST_TYPE_ALIGN  (HUSKEY, 4)
 }
 
 static void test_pack_PHUSKEY(void)
 {
     /* PHUSKEY */
-    TEST_TYPE(PHUSKEY, 4, 4);
-    TEST_TYPE_POINTER(PHUSKEY, 4, 4);
+    TEST_TYPE_SIZE   (PHUSKEY, 4)
+    TEST_TYPE_ALIGN  (PHUSKEY, 4)
+    TEST_TARGET_SIZE (PHUSKEY, 4)
+    TEST_TARGET_ALIGN(PHUSKEY, 4)
 }
 
 static void test_pack(void)

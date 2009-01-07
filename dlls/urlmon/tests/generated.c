@@ -54,65 +54,51 @@
  * Test helper macros
  */
 
-#ifdef FIELD_ALIGNMENT
-# define TEST_FIELD_ALIGNMENT(type, field, align) \
-   ok(_TYPE_ALIGNMENT(((type*)0)->field) == align, \
-       "FIELD_ALIGNMENT(" #type ", " #field ") == %d (expected " #align ")\n", \
-           (int)_TYPE_ALIGNMENT(((type*)0)->field))
+#ifdef _WIN64
+
+# define TEST_TYPE_SIZE(type, size)
+# define TEST_TYPE_ALIGN(type, align)
+# define TEST_TARGET_ALIGN(type, align)
+# define TEST_FIELD_ALIGN(type, field, align)
+# define TEST_FIELD_OFFSET(type, field, offset)
+
 #else
-# define TEST_FIELD_ALIGNMENT(type, field, align) do { } while (0)
+
+# define TEST_TYPE_SIZE(type, size)             C_ASSERT(sizeof(type) == size);
+
+# ifdef TYPE_ALIGNMENT
+#  define TEST_TYPE_ALIGN(type, align)          C_ASSERT(TYPE_ALIGNMENT(type) == align);
+# else
+#  define TEST_TYPE_ALIGN(type, align)
+# endif
+
+# ifdef _TYPE_ALIGNMENT
+#  define TEST_TARGET_ALIGN(type, align)        C_ASSERT(_TYPE_ALIGNMENT(*(type)0) == align);
+#  define TEST_FIELD_ALIGN(type, field, align)  C_ASSERT(_TYPE_ALIGNMENT(((type*)0)->field) == align);
+# else
+#  define TEST_TARGET_ALIGN(type, align)
+#  define TEST_FIELD_ALIGN(type, field, align)
+# endif
+
+# define TEST_FIELD_OFFSET(type, field, offset) C_ASSERT(FIELD_OFFSET(type, field) == offset);
+
 #endif
 
-#define TEST_FIELD_OFFSET(type, field, offset) \
-    ok(FIELD_OFFSET(type, field) == offset, \
-        "FIELD_OFFSET(" #type ", " #field ") == %ld (expected " #offset ")\n", \
-             (long int)FIELD_OFFSET(type, field))
+#define TEST_TARGET_SIZE(type, size)            TEST_TYPE_SIZE(*(type)0, size)
+#define TEST_FIELD_SIZE(type, field, size)      TEST_TYPE_SIZE((((type*)0)->field), size)
+#define TEST_TYPE_SIGNED(type)                  C_ASSERT((type) -1 < 0);
+#define TEST_TYPE_UNSIGNED(type)                C_ASSERT((type) -1 > 0);
 
-#ifdef _TYPE_ALIGNMENT
-#define TEST__TYPE_ALIGNMENT(type, align) \
-    ok(_TYPE_ALIGNMENT(type) == align, "TYPE_ALIGNMENT(" #type ") == %d (expected " #align ")\n", (int)_TYPE_ALIGNMENT(type))
-#else
-# define TEST__TYPE_ALIGNMENT(type, align) do { } while (0)
-#endif
-
-#ifdef TYPE_ALIGNMENT
-#define TEST_TYPE_ALIGNMENT(type, align) \
-    ok(TYPE_ALIGNMENT(type) == align, "TYPE_ALIGNMENT(" #type ") == %d (expected " #align ")\n", (int)TYPE_ALIGNMENT(type))
-#else
-# define TEST_TYPE_ALIGNMENT(type, align) do { } while (0)
-#endif
-
-#define TEST_TYPE_SIZE(type, size) \
-    ok(sizeof(type) == size, "sizeof(" #type ") == %d (expected " #size ")\n", ((int) sizeof(type)))
-
-/***********************************************************************
- * Test macros
- */
-
-#define TEST_FIELD(type, field, field_offset, field_size, field_align) \
-  TEST_TYPE_SIZE((((type*)0)->field), field_size); \
-  TEST_FIELD_ALIGNMENT(type, field, field_align); \
-  TEST_FIELD_OFFSET(type, field, field_offset)
-
-#define TEST_TYPE(type, size, align) \
-  TEST_TYPE_ALIGNMENT(type, align); \
-  TEST_TYPE_SIZE(type, size)
-
-#define TEST_TYPE_POINTER(type, size, align) \
-    TEST__TYPE_ALIGNMENT(*(type)0, align); \
-    TEST_TYPE_SIZE(*(type)0, size)
-
-#define TEST_TYPE_SIGNED(type) \
-    ok((type) -1 < 0, "(" #type ") -1 < 0\n");
-
-#define TEST_TYPE_UNSIGNED(type) \
-     ok((type) -1 > 0, "(" #type ") -1 > 0\n");
 
 static void test_pack_BINDINFO(void)
 {
     /* BINDINFO (pack 4) */
-    TEST_FIELD(BINDINFO, cbSize, 0, 4, 4);
-    TEST_FIELD(BINDINFO, szExtraInfo, 4, 4, 4);
+    TEST_FIELD_SIZE  (BINDINFO, cbSize, 4)
+    TEST_FIELD_ALIGN (BINDINFO, cbSize, 4)
+    TEST_FIELD_OFFSET(BINDINFO, cbSize, 0)
+    TEST_FIELD_SIZE  (BINDINFO, szExtraInfo, 4)
+    TEST_FIELD_ALIGN (BINDINFO, szExtraInfo, 4)
+    TEST_FIELD_OFFSET(BINDINFO, szExtraInfo, 4)
 }
 
 static void test_pack_IBindHost(void)
@@ -198,106 +184,162 @@ static void test_pack_IWinInetInfoVtbl(void)
 static void test_pack_LPBINDHOST(void)
 {
     /* LPBINDHOST */
-    TEST_TYPE(LPBINDHOST, 4, 4);
+    TEST_TYPE_SIZE   (LPBINDHOST, 4)
+    TEST_TYPE_ALIGN  (LPBINDHOST, 4)
 }
 
 static void test_pack_LPBINDING(void)
 {
     /* LPBINDING */
-    TEST_TYPE(LPBINDING, 4, 4);
+    TEST_TYPE_SIZE   (LPBINDING, 4)
+    TEST_TYPE_ALIGN  (LPBINDING, 4)
 }
 
 static void test_pack_LPBINDSTATUSCALLBACK(void)
 {
     /* LPBINDSTATUSCALLBACK */
-    TEST_TYPE(LPBINDSTATUSCALLBACK, 4, 4);
+    TEST_TYPE_SIZE   (LPBINDSTATUSCALLBACK, 4)
+    TEST_TYPE_ALIGN  (LPBINDSTATUSCALLBACK, 4)
 }
 
 static void test_pack_LPIINTERNETPROTOCOLINFO(void)
 {
     /* LPIINTERNETPROTOCOLINFO */
-    TEST_TYPE(LPIINTERNETPROTOCOLINFO, 4, 4);
+    TEST_TYPE_SIZE   (LPIINTERNETPROTOCOLINFO, 4)
+    TEST_TYPE_ALIGN  (LPIINTERNETPROTOCOLINFO, 4)
 }
 
 static void test_pack_LPIINTERNETSESSION(void)
 {
     /* LPIINTERNETSESSION */
-    TEST_TYPE(LPIINTERNETSESSION, 4, 4);
+    TEST_TYPE_SIZE   (LPIINTERNETSESSION, 4)
+    TEST_TYPE_ALIGN  (LPIINTERNETSESSION, 4)
 }
 
 static void test_pack_LPPERSISTMONIKER(void)
 {
     /* LPPERSISTMONIKER */
-    TEST_TYPE(LPPERSISTMONIKER, 4, 4);
+    TEST_TYPE_SIZE   (LPPERSISTMONIKER, 4)
+    TEST_TYPE_ALIGN  (LPPERSISTMONIKER, 4)
 }
 
 static void test_pack_LPREMFORMATETC(void)
 {
     /* LPREMFORMATETC */
-    TEST_TYPE(LPREMFORMATETC, 4, 4);
+    TEST_TYPE_SIZE   (LPREMFORMATETC, 4)
+    TEST_TYPE_ALIGN  (LPREMFORMATETC, 4)
 }
 
 static void test_pack_LPREMSECURITY_ATTRIBUTES(void)
 {
     /* LPREMSECURITY_ATTRIBUTES */
-    TEST_TYPE(LPREMSECURITY_ATTRIBUTES, 4, 4);
+    TEST_TYPE_SIZE   (LPREMSECURITY_ATTRIBUTES, 4)
+    TEST_TYPE_ALIGN  (LPREMSECURITY_ATTRIBUTES, 4)
 }
 
 static void test_pack_LPWININETHTTPINFO(void)
 {
     /* LPWININETHTTPINFO */
-    TEST_TYPE(LPWININETHTTPINFO, 4, 4);
+    TEST_TYPE_SIZE   (LPWININETHTTPINFO, 4)
+    TEST_TYPE_ALIGN  (LPWININETHTTPINFO, 4)
 }
 
 static void test_pack_LPWININETINFO(void)
 {
     /* LPWININETINFO */
-    TEST_TYPE(LPWININETINFO, 4, 4);
+    TEST_TYPE_SIZE   (LPWININETINFO, 4)
+    TEST_TYPE_ALIGN  (LPWININETINFO, 4)
 }
 
 static void test_pack_PREMSECURITY_ATTRIBUTES(void)
 {
     /* PREMSECURITY_ATTRIBUTES */
-    TEST_TYPE(PREMSECURITY_ATTRIBUTES, 4, 4);
+    TEST_TYPE_SIZE   (PREMSECURITY_ATTRIBUTES, 4)
+    TEST_TYPE_ALIGN  (PREMSECURITY_ATTRIBUTES, 4)
 }
 
 static void test_pack_REMSECURITY_ATTRIBUTES(void)
 {
     /* REMSECURITY_ATTRIBUTES (pack 4) */
-    TEST_TYPE(REMSECURITY_ATTRIBUTES, 12, 4);
-    TEST_FIELD(REMSECURITY_ATTRIBUTES, nLength, 0, 4, 4);
-    TEST_FIELD(REMSECURITY_ATTRIBUTES, lpSecurityDescriptor, 4, 4, 4);
-    TEST_FIELD(REMSECURITY_ATTRIBUTES, bInheritHandle, 8, 4, 4);
+    TEST_TYPE_SIZE   (REMSECURITY_ATTRIBUTES, 12)
+    TEST_TYPE_ALIGN  (REMSECURITY_ATTRIBUTES, 4)
+    TEST_FIELD_SIZE  (REMSECURITY_ATTRIBUTES, nLength, 4)
+    TEST_FIELD_ALIGN (REMSECURITY_ATTRIBUTES, nLength, 4)
+    TEST_FIELD_OFFSET(REMSECURITY_ATTRIBUTES, nLength, 0)
+    TEST_FIELD_SIZE  (REMSECURITY_ATTRIBUTES, lpSecurityDescriptor, 4)
+    TEST_FIELD_ALIGN (REMSECURITY_ATTRIBUTES, lpSecurityDescriptor, 4)
+    TEST_FIELD_OFFSET(REMSECURITY_ATTRIBUTES, lpSecurityDescriptor, 4)
+    TEST_FIELD_SIZE  (REMSECURITY_ATTRIBUTES, bInheritHandle, 4)
+    TEST_FIELD_ALIGN (REMSECURITY_ATTRIBUTES, bInheritHandle, 4)
+    TEST_FIELD_OFFSET(REMSECURITY_ATTRIBUTES, bInheritHandle, 8)
 }
 
 static void test_pack_RemBINDINFO(void)
 {
     /* RemBINDINFO (pack 4) */
-    TEST_TYPE(RemBINDINFO, 72, 4);
-    TEST_FIELD(RemBINDINFO, cbSize, 0, 4, 4);
-    TEST_FIELD(RemBINDINFO, szExtraInfo, 4, 4, 4);
-    TEST_FIELD(RemBINDINFO, grfBindInfoF, 8, 4, 4);
-    TEST_FIELD(RemBINDINFO, dwBindVerb, 12, 4, 4);
-    TEST_FIELD(RemBINDINFO, szCustomVerb, 16, 4, 4);
-    TEST_FIELD(RemBINDINFO, cbstgmedData, 20, 4, 4);
-    TEST_FIELD(RemBINDINFO, dwOptions, 24, 4, 4);
-    TEST_FIELD(RemBINDINFO, dwOptionsFlags, 28, 4, 4);
-    TEST_FIELD(RemBINDINFO, dwCodePage, 32, 4, 4);
-    TEST_FIELD(RemBINDINFO, securityAttributes, 36, 12, 4);
-    TEST_FIELD(RemBINDINFO, iid, 48, 16, 4);
-    TEST_FIELD(RemBINDINFO, pUnk, 64, 4, 4);
-    TEST_FIELD(RemBINDINFO, dwReserved, 68, 4, 4);
+    TEST_TYPE_SIZE   (RemBINDINFO, 72)
+    TEST_TYPE_ALIGN  (RemBINDINFO, 4)
+    TEST_FIELD_SIZE  (RemBINDINFO, cbSize, 4)
+    TEST_FIELD_ALIGN (RemBINDINFO, cbSize, 4)
+    TEST_FIELD_OFFSET(RemBINDINFO, cbSize, 0)
+    TEST_FIELD_SIZE  (RemBINDINFO, szExtraInfo, 4)
+    TEST_FIELD_ALIGN (RemBINDINFO, szExtraInfo, 4)
+    TEST_FIELD_OFFSET(RemBINDINFO, szExtraInfo, 4)
+    TEST_FIELD_SIZE  (RemBINDINFO, grfBindInfoF, 4)
+    TEST_FIELD_ALIGN (RemBINDINFO, grfBindInfoF, 4)
+    TEST_FIELD_OFFSET(RemBINDINFO, grfBindInfoF, 8)
+    TEST_FIELD_SIZE  (RemBINDINFO, dwBindVerb, 4)
+    TEST_FIELD_ALIGN (RemBINDINFO, dwBindVerb, 4)
+    TEST_FIELD_OFFSET(RemBINDINFO, dwBindVerb, 12)
+    TEST_FIELD_SIZE  (RemBINDINFO, szCustomVerb, 4)
+    TEST_FIELD_ALIGN (RemBINDINFO, szCustomVerb, 4)
+    TEST_FIELD_OFFSET(RemBINDINFO, szCustomVerb, 16)
+    TEST_FIELD_SIZE  (RemBINDINFO, cbstgmedData, 4)
+    TEST_FIELD_ALIGN (RemBINDINFO, cbstgmedData, 4)
+    TEST_FIELD_OFFSET(RemBINDINFO, cbstgmedData, 20)
+    TEST_FIELD_SIZE  (RemBINDINFO, dwOptions, 4)
+    TEST_FIELD_ALIGN (RemBINDINFO, dwOptions, 4)
+    TEST_FIELD_OFFSET(RemBINDINFO, dwOptions, 24)
+    TEST_FIELD_SIZE  (RemBINDINFO, dwOptionsFlags, 4)
+    TEST_FIELD_ALIGN (RemBINDINFO, dwOptionsFlags, 4)
+    TEST_FIELD_OFFSET(RemBINDINFO, dwOptionsFlags, 28)
+    TEST_FIELD_SIZE  (RemBINDINFO, dwCodePage, 4)
+    TEST_FIELD_ALIGN (RemBINDINFO, dwCodePage, 4)
+    TEST_FIELD_OFFSET(RemBINDINFO, dwCodePage, 32)
+    TEST_FIELD_SIZE  (RemBINDINFO, securityAttributes, 12)
+    TEST_FIELD_ALIGN (RemBINDINFO, securityAttributes, 4)
+    TEST_FIELD_OFFSET(RemBINDINFO, securityAttributes, 36)
+    TEST_FIELD_SIZE  (RemBINDINFO, iid, 16)
+    TEST_FIELD_ALIGN (RemBINDINFO, iid, 4)
+    TEST_FIELD_OFFSET(RemBINDINFO, iid, 48)
+    TEST_FIELD_SIZE  (RemBINDINFO, pUnk, 4)
+    TEST_FIELD_ALIGN (RemBINDINFO, pUnk, 4)
+    TEST_FIELD_OFFSET(RemBINDINFO, pUnk, 64)
+    TEST_FIELD_SIZE  (RemBINDINFO, dwReserved, 4)
+    TEST_FIELD_ALIGN (RemBINDINFO, dwReserved, 4)
+    TEST_FIELD_OFFSET(RemBINDINFO, dwReserved, 68)
 }
 
 static void test_pack_RemFORMATETC(void)
 {
     /* RemFORMATETC (pack 4) */
-    TEST_TYPE(RemFORMATETC, 20, 4);
-    TEST_FIELD(RemFORMATETC, cfFormat, 0, 4, 4);
-    TEST_FIELD(RemFORMATETC, ptd, 4, 4, 4);
-    TEST_FIELD(RemFORMATETC, dwAspect, 8, 4, 4);
-    TEST_FIELD(RemFORMATETC, lindex, 12, 4, 4);
-    TEST_FIELD(RemFORMATETC, tymed, 16, 4, 4);
+    TEST_TYPE_SIZE   (RemFORMATETC, 20)
+    TEST_TYPE_ALIGN  (RemFORMATETC, 4)
+    TEST_FIELD_SIZE  (RemFORMATETC, cfFormat, 4)
+    TEST_FIELD_ALIGN (RemFORMATETC, cfFormat, 4)
+    TEST_FIELD_OFFSET(RemFORMATETC, cfFormat, 0)
+    TEST_FIELD_SIZE  (RemFORMATETC, ptd, 4)
+    TEST_FIELD_ALIGN (RemFORMATETC, ptd, 4)
+    TEST_FIELD_OFFSET(RemFORMATETC, ptd, 4)
+    TEST_FIELD_SIZE  (RemFORMATETC, dwAspect, 4)
+    TEST_FIELD_ALIGN (RemFORMATETC, dwAspect, 4)
+    TEST_FIELD_OFFSET(RemFORMATETC, dwAspect, 8)
+    TEST_FIELD_SIZE  (RemFORMATETC, lindex, 4)
+    TEST_FIELD_ALIGN (RemFORMATETC, lindex, 4)
+    TEST_FIELD_OFFSET(RemFORMATETC, lindex, 12)
+    TEST_FIELD_SIZE  (RemFORMATETC, tymed, 4)
+    TEST_FIELD_ALIGN (RemFORMATETC, tymed, 4)
+    TEST_FIELD_OFFSET(RemFORMATETC, tymed, 16)
 }
 
 static void test_pack(void)

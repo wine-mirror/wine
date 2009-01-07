@@ -536,59 +536,41 @@ sub output_header($$$) {
     print OUT " * Test helper macros\n";
     print OUT " */\n";
     print OUT "\n";
-    print OUT "#ifdef FIELD_ALIGNMENT\n";
-    print OUT "# define TEST_FIELD_ALIGNMENT(type, field, align) \\\n";
-    print OUT "   ok(_TYPE_ALIGNMENT(((type*)0)->field) == align, \\\n";
-    print OUT "       \"FIELD_ALIGNMENT(\" #type \", \" #field \") == %d (expected \" #align \")\\n\", \\\n";
-    print OUT "           (int)_TYPE_ALIGNMENT(((type*)0)->field))\n";
+    print OUT "#ifdef _WIN64\n";
+    print OUT "\n";
+    print OUT "# define TEST_TYPE_SIZE(type, size)\n";
+    print OUT "# define TEST_TYPE_ALIGN(type, align)\n";
+    print OUT "# define TEST_TARGET_ALIGN(type, align)\n";
+    print OUT "# define TEST_FIELD_ALIGN(type, field, align)\n";
+    print OUT "# define TEST_FIELD_OFFSET(type, field, offset)\n";
+    print OUT "\n";
     print OUT "#else\n";
-    print OUT "# define TEST_FIELD_ALIGNMENT(type, field, align) do { } while (0)\n";
+    print OUT "\n";
+    print OUT "# define TEST_TYPE_SIZE(type, size)             C_ASSERT(sizeof(type) == size);\n";
+    print OUT "\n";
+    print OUT "# ifdef TYPE_ALIGNMENT\n";
+    print OUT "#  define TEST_TYPE_ALIGN(type, align)          C_ASSERT(TYPE_ALIGNMENT(type) == align);\n";
+    print OUT "# else\n";
+    print OUT "#  define TEST_TYPE_ALIGN(type, align)\n";
+    print OUT "# endif\n";
+    print OUT "\n";
+    print OUT "# ifdef _TYPE_ALIGNMENT\n";
+    print OUT "#  define TEST_TARGET_ALIGN(type, align)        C_ASSERT(_TYPE_ALIGNMENT(*(type)0) == align);\n";
+    print OUT "#  define TEST_FIELD_ALIGN(type, field, align)  C_ASSERT(_TYPE_ALIGNMENT(((type*)0)->field) == align);\n";
+    print OUT "# else\n";
+    print OUT "#  define TEST_TARGET_ALIGN(type, align)\n";
+    print OUT "#  define TEST_FIELD_ALIGN(type, field, align)\n";
+    print OUT "# endif\n";
+    print OUT "\n";
+    print OUT "# define TEST_FIELD_OFFSET(type, field, offset) C_ASSERT(FIELD_OFFSET(type, field) == offset);\n";
+    print OUT "\n";
     print OUT "#endif\n";
     print OUT "\n";
-    print OUT "#define TEST_FIELD_OFFSET(type, field, offset) \\\n";
-    print OUT "    ok(FIELD_OFFSET(type, field) == offset, \\\n";
-    print OUT "        \"FIELD_OFFSET(\" #type \", \" #field \") == %ld (expected \" #offset \")\\n\", \\\n";
-    print OUT "             (long int)FIELD_OFFSET(type, field))\n";
+    print OUT "#define TEST_TARGET_SIZE(type, size)            TEST_TYPE_SIZE(*(type)0, size)\n";
+    print OUT "#define TEST_FIELD_SIZE(type, field, size)      TEST_TYPE_SIZE((((type*)0)->field), size)\n";
+    print OUT "#define TEST_TYPE_SIGNED(type)                  C_ASSERT((type) -1 < 0);\n";
+    print OUT "#define TEST_TYPE_UNSIGNED(type)                C_ASSERT((type) -1 > 0);\n";
     print OUT "\n";
-    print OUT "#ifdef _TYPE_ALIGNMENT\n";
-    print OUT "#define TEST__TYPE_ALIGNMENT(type, align) \\\n";
-    print OUT "    ok(_TYPE_ALIGNMENT(type) == align, \"TYPE_ALIGNMENT(\" #type \") == %d (expected \" #align \")\\n\", (int)_TYPE_ALIGNMENT(type))\n";
-    print OUT "#else\n";
-    print OUT "# define TEST__TYPE_ALIGNMENT(type, align) do { } while (0)\n";
-    print OUT "#endif\n";
-    print OUT "\n";
-    print OUT "#ifdef TYPE_ALIGNMENT\n";
-    print OUT "#define TEST_TYPE_ALIGNMENT(type, align) \\\n";
-    print OUT "    ok(TYPE_ALIGNMENT(type) == align, \"TYPE_ALIGNMENT(\" #type \") == %d (expected \" #align \")\\n\", (int)TYPE_ALIGNMENT(type))\n";
-    print OUT "#else\n";
-    print OUT "# define TEST_TYPE_ALIGNMENT(type, align) do { } while (0)\n";
-    print OUT "#endif\n";
-    print OUT "\n";
-    print OUT "#define TEST_TYPE_SIZE(type, size) \\\n";
-    print OUT "    ok(sizeof(type) == size, \"sizeof(\" #type \") == %d (expected \" #size \")\\n\", ((int) sizeof(type)))\n";
-    print OUT "\n";
-    print OUT "/***********************************************************************\n";
-    print OUT " * Test macros\n";
-    print OUT " */\n";
-    print OUT "\n";
-    print OUT "#define TEST_FIELD(type, field, field_offset, field_size, field_align) \\\n";
-    print OUT "  TEST_TYPE_SIZE((((type*)0)->field), field_size); \\\n";
-    print OUT "  TEST_FIELD_ALIGNMENT(type, field, field_align); \\\n";
-    print OUT "  TEST_FIELD_OFFSET(type, field, field_offset)\n";
-    print OUT "\n";
-    print OUT "#define TEST_TYPE(type, size, align) \\\n";
-    print OUT "  TEST_TYPE_ALIGNMENT(type, align); \\\n";
-    print OUT "  TEST_TYPE_SIZE(type, size)\n";
-    print OUT "\n";
-    print OUT "#define TEST_TYPE_POINTER(type, size, align) \\\n";
-    print OUT "    TEST__TYPE_ALIGNMENT(*(type)0, align); \\\n";
-    print OUT "    TEST_TYPE_SIZE(*(type)0, size)\n";
-    print OUT "\n";
-    print OUT "#define TEST_TYPE_SIGNED(type) \\\n";
-    print OUT "    ok((type) -1 < 0, \"(\" #type \") -1 < 0\\n\");\n";
-    print OUT "\n";
-    print OUT "#define TEST_TYPE_UNSIGNED(type) \\\n";
-    print OUT "     ok((type) -1 > 0, \"(\" #type \") -1 > 0\\n\");\n";
     print OUT "\n";
 }
 
@@ -635,7 +617,8 @@ sub output_test_pack_type($$$$$$) {
     }
 
     if (!scalar(keys(%$optional_fields)) && defined($type_align) && defined($type_size)) {
-	print OUT "    TEST_TYPE($type_name, $type_size, $type_align);\n";
+	print OUT "    TEST_TYPE_SIZE   ($type_name, $type_size)\n";
+	print OUT "    TEST_TYPE_ALIGN  ($type_name, $type_align)\n";
     }
 
     if ($type_kind eq "float") {
@@ -684,15 +667,16 @@ sub output_test_pack_type($$$$$$) {
 	    my $optional_fields2 = $$type_name2optional_fields{$type_name2};
 
 	    if (!$optional && !scalar(keys(%$optional_fields2)) && defined($type_align2) && defined($type_size2)) {
-		print OUT "    TEST_TYPE_POINTER($type_name, $type_size2, $type_align2);\n";
+		print OUT "    TEST_TARGET_SIZE ($type_name, $type_size2)\n";
+		print OUT "    TEST_TARGET_ALIGN($type_name, $type_align2)\n";
 	    } else {
 		# $output->write("$type_name: warning: type size not found\n");
 	    }
 	}
     } elsif ($type_kind eq "signed") {
-	print OUT "    TEST_TYPE_SIGNED($type_name);\n";
+	print OUT "    TEST_TYPE_SIGNED($type_name)\n";
     } elsif ($type_kind eq "unsigned") {
-	print OUT "    TEST_TYPE_UNSIGNED($type_name);\n";
+	print OUT "    TEST_TYPE_UNSIGNED($type_name)\n";
     }
 }
 
@@ -727,15 +711,17 @@ sub output_test_pack_fields($$$$$$$) {
 	    $field_offset += $offset;
 	    if ($field_name eq "DUMMYSTRUCTNAME") {
 		print OUT "#ifdef NONAMELESSSTRUCT\n";
-		print OUT "    TEST_FIELD($type_name, $field_name, ";
-		print OUT "$field_offset, $field_size, $field_align);\n";
+		print OUT "    TEST_TYPE_SIZE   ($type_name.$field_name, $field_size)\n";
+		print OUT "    TEST_FIELD_ALIGN ($type_name, $field_name, $field_align)\n";
+		print OUT "    TEST_FIELD_OFFSET($type_name, $field_name, $field_offset)\n";
 		print OUT "#else\n";
 		output_test_pack_fields(\*OUT, $type_name2type, $type_name2optional, $type_name2optional_fields,
 					$type_name, $$type_name2type{$field_type_name}, $field_offset);	
 		print OUT "#endif\n";
 	    } else {
-		print OUT "    TEST_FIELD($type_name, $field_name, ";
-		print OUT "$field_offset, $field_size, $field_align);\n";
+		print OUT "    TEST_FIELD_SIZE  ($type_name, $field_name, $field_size)\n";
+		print OUT "    TEST_FIELD_ALIGN ($type_name, $field_name, $field_align)\n";
+		print OUT "    TEST_FIELD_OFFSET($type_name, $field_name, $field_offset)\n";
 	    }
 	} else {
 	    # $output->write("$type_name: $field_type_name: $field_name: test not generated (offset not defined)\n");
