@@ -929,21 +929,6 @@ void VGA_Get16Palette(char *Table)
     memcpy( vga_16_palette, Table, 17 ); /* copy the entries into the table */
 }
 
-void VGA_SetQuadPalette(RGBQUAD*color,int start,int len)
-{
-    PALETTEENTRY pal[256];
-    int c;
-
-    if (!lpddraw) return;
-    for (c=0; c<len; c++) {
-        pal[c].peRed  =color[c].rgbRed;
-        pal[c].peGreen=color[c].rgbGreen;
-        pal[c].peBlue =color[c].rgbBlue;
-        pal[c].peFlags=0;
-    }
-    IDirectDrawPalette_SetEntries(lpddpal,0,start,len,pal);
-}
-
 static LPSTR VGA_Lock(unsigned*Pitch,unsigned*Height,unsigned*Width,unsigned*Depth)
 {
     if (!lpddraw) return NULL;

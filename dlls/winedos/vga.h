@@ -35,7 +35,6 @@ void VGA_SetColor16(int reg,int color);
 char VGA_GetColor16(int reg);
 void VGA_Set16Palette(char *Table);
 void VGA_Get16Palette(char *Table);
-void VGA_SetQuadPalette(RGBQUAD*color,int start,int len);
 void VGA_SetWindowStart(int start);
 int  VGA_GetWindowStart(void);
 void VGA_ShowMouse(BOOL show);
