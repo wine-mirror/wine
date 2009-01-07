@@ -1271,6 +1271,21 @@ static void write_user_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
     *tfsoff += 2;
 }
 
+static unsigned char inline make_signed(unsigned char fc)
+{
+    switch(fc)
+    {
+        case RPC_FC_USMALL:
+            return RPC_FC_SMALL;
+        case RPC_FC_USHORT:
+            return RPC_FC_SHORT;
+        case RPC_FC_ULONG:
+            return RPC_FC_LONG;
+        default:
+            return fc;
+    }
+}
+
 static void write_member_type(FILE *file, const type_t *cont,
                               const attr_list_t *attrs, const type_t *type,
                               unsigned int *corroff, unsigned int *tfsoff)
@@ -1306,7 +1321,7 @@ static void write_member_type(FILE *file, const type_t *cont,
         print_file(file, 2, "0x%x,\t/* %s */\n", fc, string_of_type(fc));
         *tfsoff += 1;
     }
-    else if (!write_base_type(file, type->type, tfsoff))
+    else if (!write_base_type(file, make_signed(type->type), tfsoff))
         error("Unsupported member type 0x%x\n", type->type);
 }
 
