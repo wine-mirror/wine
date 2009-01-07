@@ -29,6 +29,7 @@ static DWORD (WINAPI *pXInputSetState)(DWORD, XINPUT_VIBRATION*);
 static void  (WINAPI *pXInputEnable)(BOOL);
 static DWORD (WINAPI *pXInputGetKeystroke)(DWORD, DWORD, PXINPUT_KEYSTROKE);
 static DWORD (WINAPI *pXInputGetDSoundAudioDeviceGuids)(DWORD, GUID*, GUID*);
+static DWORD (WINAPI *pXInputGetBatteryInformation)(DWORD, BYTE, XINPUT_BATTERY_INFORMATION*);
 
 static void test_set_state(void)
 {
@@ -168,6 +169,30 @@ static void test_get_dsoundaudiodevice(void)
     ok(result == ERROR_BAD_ARGUMENTS, "XInputGetDSoundAudioDeviceGuids returned (%d)\n", result);
 }
 
+static void test_get_batteryinformation(void)
+{
+    DWORD controllerNum;
+    DWORD result;
+    XINPUT_BATTERY_INFORMATION batteryInfo;
+
+    for(controllerNum=0; controllerNum < XUSER_MAX_COUNT; controllerNum++)
+    {
+        ZeroMemory(&batteryInfo, sizeof(XINPUT_BATTERY_INFORMATION));
+
+        result = pXInputGetBatteryInformation(controllerNum, BATTERY_DEVTYPE_GAMEPAD, &batteryInfo);
+        ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED, "XInputGetBatteryInformation failed with (%d)\n", result);
+
+        if (ERROR_DEVICE_NOT_CONNECTED == result)
+        {
+            ok(batteryInfo.BatteryLevel == BATTERY_TYPE_DISCONNECTED, "Failed to report device as being disconnected.");
+            skip("Controller %d is not connected\n", controllerNum);
+        }
+    }
+
+    result = pXInputGetBatteryInformation(XUSER_MAX_COUNT+1, BATTERY_DEVTYPE_GAMEPAD, &batteryInfo);
+    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetBatteryInformation returned (%d)\n", result);
+}
+
 START_TEST(xinput)
 {
     HMODULE hXinput;
@@ -185,12 +210,14 @@ START_TEST(xinput)
     pXInputGetKeystroke = (void*)GetProcAddress(hXinput, "XInputGetKeystroke");
     pXInputGetCapabilities = (void*)GetProcAddress(hXinput, "XInputGetCapabilities");
     pXInputGetDSoundAudioDeviceGuids = (void*)GetProcAddress(hXinput, "XInputGetDSoundAudioDeviceGuids");
+    pXInputGetBatteryInformation = (void*)GetProcAddress(hXinput, "XInputGetBatteryInformation");
 
     test_set_state();
     test_get_state();
     test_get_keystroke();
     test_get_capabilities();
     test_get_dsoundaudiodevice();
+    test_get_batteryinformation();
 
     FreeLibrary(hXinput);
 }
