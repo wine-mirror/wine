@@ -31,21 +31,13 @@
  */
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1300) && defined(__cplusplus)
-# define FIELD_ALIGNMENT(type, field) __alignof(((type*)0)->field)
-#elif defined(__GNUC__)
-# define FIELD_ALIGNMENT(type, field) __alignof__(((type*)0)->field)
-#else
-/* FIXME: Not sure if is possible to do without compiler extension */
-#endif
-
-#if defined(_MSC_VER) && (_MSC_VER >= 1300) && defined(__cplusplus)
 # define _TYPE_ALIGNMENT(type) __alignof(type)
 #elif defined(__GNUC__)
 # define _TYPE_ALIGNMENT(type) __alignof__(type)
 #else
 /*
- * FIXME: Not sure if is possible to do without compiler extension
- *        (if type is not just a name that is, if so the normal)
+ * FIXME: May not be possible without a compiler extension
+ *        (if type is not just a name that is, otherwise the normal
  *         TYPE_ALIGNMENT can be used)
  */
 #endif
@@ -64,9 +56,9 @@
 
 #ifdef FIELD_ALIGNMENT
 # define TEST_FIELD_ALIGNMENT(type, field, align) \
-   ok(FIELD_ALIGNMENT(type, field) == align, \
+   ok(_TYPE_ALIGNMENT(((type*)0)->field) == align, \
        "FIELD_ALIGNMENT(" #type ", " #field ") == %d (expected " #align ")\n", \
-           (int)FIELD_ALIGNMENT(type, field))
+           (int)_TYPE_ALIGNMENT(((type*)0)->field))
 #else
 # define TEST_FIELD_ALIGNMENT(type, field, align) do { } while (0)
 #endif
