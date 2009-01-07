@@ -711,6 +711,35 @@ void MSACM_WriteCurrentPriorities(void)
     RegCloseKey(hPriorityKey);
 }
 
+static PWINE_ACMLOCALDRIVER MSACM_pFirstACMLocalDriver;
+static PWINE_ACMLOCALDRIVER MSACM_pLastACMLocalDriver;
+
+static PWINE_ACMLOCALDRIVER MSACM_UnregisterLocalDriver(PWINE_ACMLOCALDRIVER paldrv)
+{
+    PWINE_ACMLOCALDRIVER pNextACMLocalDriver;
+
+    if (paldrv->pACMInstList) {
+        ERR("local driver instances still present after closing all drivers - memory leak\n");
+        return NULL;
+    }
+
+    if (paldrv == MSACM_pFirstACMLocalDriver)
+        MSACM_pFirstACMLocalDriver = paldrv->pNextACMLocalDrv;
+    if (paldrv == MSACM_pLastACMLocalDriver)
+        MSACM_pLastACMLocalDriver = paldrv->pPrevACMLocalDrv;
+
+    if (paldrv->pPrevACMLocalDrv)
+        paldrv->pPrevACMLocalDrv->pNextACMLocalDrv = paldrv->pNextACMLocalDrv;
+    if (paldrv->pNextACMLocalDrv)
+        paldrv->pNextACMLocalDrv->pPrevACMLocalDrv = paldrv->pPrevACMLocalDrv;
+
+    pNextACMLocalDriver = paldrv->pNextACMLocalDrv;
+
+    HeapFree(MSACM_hHeap, 0, paldrv);
+
+    return pNextACMLocalDriver;
+}
+
 /***********************************************************************
  *           MSACM_UnregisterDriver()
  */
@@ -823,9 +852,6 @@ MMRESULT MSACM_Message(HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARAM lParam2
 
     return MMSYSERR_INVALHANDLE;
 }
-
-static PWINE_ACMLOCALDRIVER MSACM_pFirstACMLocalDriver;
-static PWINE_ACMLOCALDRIVER MSACM_pLastACMLocalDriver;
 
 PWINE_ACMLOCALDRIVER MSACM_RegisterLocalDriver(HMODULE hModule, DRIVERPROC lpDriverProc)
 {
@@ -1039,30 +1065,4 @@ LRESULT MSACM_CloseLocalDriver(PWINE_ACMLOCALDRIVERINST paldrv)
     }
     ERR("unable to close driver instance\n");
     return FALSE;
-}
-
-PWINE_ACMLOCALDRIVER MSACM_UnregisterLocalDriver(PWINE_ACMLOCALDRIVER paldrv)
-{
-    PWINE_ACMLOCALDRIVER pNextACMLocalDriver;
-
-    if (paldrv->pACMInstList) {
-        ERR("local driver instances still present after closing all drivers - memory leak\n");
-        return NULL;
-    }
-
-    if (paldrv == MSACM_pFirstACMLocalDriver)
-	MSACM_pFirstACMLocalDriver = paldrv->pNextACMLocalDrv;
-    if (paldrv == MSACM_pLastACMLocalDriver)
-	MSACM_pLastACMLocalDriver = paldrv->pPrevACMLocalDrv;
-
-    if (paldrv->pPrevACMLocalDrv)
-	paldrv->pPrevACMLocalDrv->pNextACMLocalDrv = paldrv->pNextACMLocalDrv;
-    if (paldrv->pNextACMLocalDrv)
-	paldrv->pNextACMLocalDrv->pPrevACMLocalDrv = paldrv->pPrevACMLocalDrv;
-
-    pNextACMLocalDriver = paldrv->pNextACMLocalDrv;
-
-    HeapFree(MSACM_hHeap, 0, paldrv);
-
-    return pNextACMLocalDriver;
 }
