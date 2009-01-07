@@ -1900,6 +1900,7 @@ WINE_CONFIG_MAKEFILE([dlls/jscript/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DL
 WINE_CONFIG_MAKEFILE([dlls/jscript/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
 WINE_CONFIG_MAKEFILE([dlls/kernel32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/kernel32/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
+WINE_CONFIG_MAKEFILE([dlls/loadperf/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/localspl/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/localspl/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
 WINE_CONFIG_MAKEFILE([dlls/localui/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])

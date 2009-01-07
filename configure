@@ -25007,6 +25007,14 @@ dlls/kernel32/tests/Makefile: dlls/kernel32/tests/Makefile.in dlls/Maketest.rule
 ac_config_files="$ac_config_files dlls/kernel32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/loadperf/Makefile"
+test "x$enable_loadperf" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	loadperf"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/loadperf/Makefile: dlls/loadperf/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/loadperf/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/localspl/Makefile"
 test "x$enable_localspl" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	localspl"
@@ -28104,6 +28112,7 @@ do
     "dlls/jscript/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/jscript/tests/Makefile" ;;
     "dlls/kernel32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/kernel32/Makefile" ;;
     "dlls/kernel32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/kernel32/tests/Makefile" ;;
+    "dlls/loadperf/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/loadperf/Makefile" ;;
     "dlls/localspl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/localspl/Makefile" ;;
     "dlls/localspl/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/localspl/tests/Makefile" ;;
     "dlls/localui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/localui/Makefile" ;;
