@@ -595,6 +595,10 @@ static HRESULT WINAPI OLEPictureImpl_get_Type(IPicture *iface,
 {
   OLEPictureImpl *This = (OLEPictureImpl *)iface;
   TRACE("(%p)->(%p): type is %d\n", This, ptype, This->desc.picType);
+
+  if(!ptype)
+    return E_POINTER;
+
   *ptype = This->desc.picType;
   return S_OK;
 }
