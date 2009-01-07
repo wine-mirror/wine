@@ -29,6 +29,8 @@
 
 static char selfname[MAX_PATH];
 static CHAR CURR_DIR[MAX_PATH];
+static CHAR catroot[MAX_PATH];
+static CHAR catroot2[MAX_PATH];
 
 /*
  * Minimalistic catalog file. To reconstruct, save text below as winetest.cdf,
@@ -123,7 +125,7 @@ static void test_context(void)
     BOOL ret;
     HCATADMIN hca;
     static GUID unknown = { 0xC689AABA, 0x8E78, 0x11D0, { 0x8C,0x47,0x00,0xC0,0x4F,0xC2,0x95,0xEE }}; /* WINTRUST.DLL */
-    CHAR windir[MAX_PATH], catroot[MAX_PATH], catroot2[MAX_PATH], dummydir[MAX_PATH];
+    CHAR dummydir[MAX_PATH];
     DWORD attrs;
 
     /* When CryptCATAdminAcquireContext is successful it will create
@@ -207,12 +209,6 @@ static void test_context(void)
     ret = pCryptCATAdminAcquireContext(&hca, &dummy, 0);
     ok(ret, "Expected success\n");
     ok(hca != NULL, "Expected a context handle, got NULL\n");
-
-    GetWindowsDirectoryA(windir, MAX_PATH);
-    lstrcpyA(catroot, windir);
-    lstrcatA(catroot, "\\system32\\CatRoot");
-    lstrcpyA(catroot2, windir);
-    lstrcatA(catroot2, "\\system32\\CatRoot2");
 
     attrs = GetFileAttributes(catroot);
     ok(attrs != INVALID_FILE_ATTRIBUTES, "Expected the CatRoot directory to exist\n");
@@ -354,14 +350,18 @@ static void test_calchash(void)
 static void test_CryptCATAdminAddRemoveCatalog(void)
 {
     static WCHAR basenameW[] = {'w','i','n','e','t','e','s','t','.','c','a','t',0};
+    static CHAR basename[] = "winetest.cat";
     HCATADMIN hcatadmin;
     HCATINFO hcatinfo;
     CATALOG_INFO info;
     WCHAR tmpfileW[MAX_PATH];
     char tmpfile[MAX_PATH];
+    char catfile[MAX_PATH], catfilepath[MAX_PATH], *p;
+    WCHAR catfileW[MAX_PATH];
     HANDLE file;
     DWORD error, written;
     BOOL ret;
+    DWORD attrs;
 
     if (!pCryptCATAdminRemoveCatalog)
     {
@@ -419,22 +419,61 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
     WriteFile(file, test_catalog, sizeof(test_catalog), &written, NULL);
     CloseHandle(file);
 
+    /* Unique name will be created */
     hcatinfo = pCryptCATAdminAddCatalog(hcatadmin, tmpfileW, NULL, 0);
     todo_wine ok(hcatinfo != NULL, "CryptCATAdminAddCatalog failed %u\n", GetLastError());
 
+    info.cbStruct = sizeof(info);
+    info.wszCatalogFile[0] = 0;
+    ret = pCryptCATCatalogInfoFromContext(hcatinfo, &info, 0);
+    todo_wine
+    {
+    ok(ret, "CryptCATCatalogInfoFromContext failed %u\n", GetLastError());
+    ok(info.wszCatalogFile[0] != 0, "Expected a filename\n");
+    }
+    WideCharToMultiByte(CP_ACP, 0, info.wszCatalogFile, -1, catfile, MAX_PATH, 0, 0);
+    if ((p = strrchr(catfile, '\\'))) p++;
+    MultiByteToWideChar(0, 0, p, -1, catfileW, MAX_PATH);
+
+    /* winetest.cat will be created */
     hcatinfo = pCryptCATAdminAddCatalog(hcatadmin, tmpfileW, basenameW, 0);
     ok(hcatinfo != NULL, "CryptCATAdminAddCatalog failed %u\n", GetLastError());
+
+    lstrcpyA(catfilepath, catroot);
+    lstrcatA(catfilepath, "\\{DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF}\\winetest.cat");
+    attrs = GetFileAttributes(catfilepath);
+    ok(attrs != INVALID_FILE_ATTRIBUTES, "Expected %s to exist\n", catfilepath);
 
     info.cbStruct = sizeof(info);
     info.wszCatalogFile[0] = 0;
     ret = pCryptCATCatalogInfoFromContext(hcatinfo, &info, 0);
     ok(ret, "CryptCATCatalogInfoFromContext failed %u\n", GetLastError());
+    ok(info.wszCatalogFile[0] != 0, "Expected a filename\n");
+    WideCharToMultiByte(CP_ACP, 0, info.wszCatalogFile, -1, catfile, MAX_PATH, 0, 0);
+    if ((p = strrchr(catfile, '\\'))) p++;
+    ok(!lstrcmpA(basename, p), "Expected %s, got %s\n", basename, p);
 
     ret = pCryptCATAdminReleaseCatalogContext(hcatadmin, hcatinfo, 0);
     ok(ret, "CryptCATAdminReleaseCatalogContext failed %u\n", GetLastError());
 
-    ret = pCryptCATAdminRemoveCatalog(hcatadmin, tmpfileW, 0);
+    /* Remove the catalog file with the unique name */
+    ret = pCryptCATAdminRemoveCatalog(hcatadmin, catfileW, 0);
+    todo_wine
     ok(ret, "CryptCATAdminRemoveCatalog failed %u\n", GetLastError());
+
+    /* Remove the winetest.cat catalog file, first with the full path. This should not succeed
+     * according to MSDN */
+    ret = pCryptCATAdminRemoveCatalog(hcatadmin, info.wszCatalogFile, 0);
+    ok(ret, "CryptCATAdminRemoveCatalog failed %u\n", GetLastError());
+    /* The call succeeds but the file is not removed */
+    attrs = GetFileAttributes(catfilepath);
+    todo_wine
+    ok(attrs != INVALID_FILE_ATTRIBUTES, "Expected %s to exist\n", catfilepath);
+    ret = pCryptCATAdminRemoveCatalog(hcatadmin, basenameW, 0);
+    todo_wine
+    ok(ret, "CryptCATAdminRemoveCatalog failed %u\n", GetLastError());
+    attrs = GetFileAttributes(catfilepath);
+    ok(attrs == INVALID_FILE_ATTRIBUTES, "Expected %s to be removed\n", catfilepath);
 
     ret = pCryptCATAdminReleaseContext(hcatadmin, 0);
     ok(ret, "CryptCATAdminReleaseContext failed %u\n", GetLastError());
@@ -506,6 +545,7 @@ START_TEST(crypt)
 {
     int myARGC;
     char** myARGV;
+    char windir[MAX_PATH];
 
     InitFunctionPtrs();
 
@@ -514,6 +554,12 @@ START_TEST(crypt)
         win_skip("CryptCATAdmin functions are not available\n");
         return;
     }
+
+    GetWindowsDirectoryA(windir, MAX_PATH);
+    lstrcpyA(catroot, windir);
+    lstrcatA(catroot, "\\system32\\CatRoot");
+    lstrcpyA(catroot2, windir);
+    lstrcatA(catroot2, "\\system32\\CatRoot2");
 
     myARGC = winetest_get_mainargs(&myARGV);
     strcpy(selfname, myARGV[0]);
