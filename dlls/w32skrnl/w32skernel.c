@@ -41,16 +41,6 @@ LPSTR WINAPI GetWin32sDirectory(void)
 }
 
 /***********************************************************************
- *		_GetThunkBuff
- * FIXME: ???
- */
-SEGPTR WINAPI _GetThunkBuff(void)
-{
-    return 0;
-}
-
-
-/***********************************************************************
  *           GetCurrentTask32   (W32SKRNL.3)
  */
 HTASK16 WINAPI GetCurrentTask32(void)
