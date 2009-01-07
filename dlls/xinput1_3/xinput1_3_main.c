@@ -102,3 +102,15 @@ DWORD WINAPI XInputGetCapabilities(DWORD dwUserIndex, DWORD dwFlags, XINPUT_CAPA
     }
     return ERROR_BAD_ARGUMENTS;
 }
+
+DWORD WINAPI XInputGetDSoundAudioDeviceGuids(DWORD dwUserIndex, GUID* pDSoundRenderGuid, GUID* pDSoundCaptureGuid)
+{
+    FIXME("(%d %s %s) Stub!\n", dwUserIndex, debugstr_guid(pDSoundRenderGuid), debugstr_guid(pDSoundCaptureGuid));
+
+    if (dwUserIndex < XUSER_MAX_COUNT)
+    {
+        return ERROR_DEVICE_NOT_CONNECTED;
+        /* If controller exists then return ERROR_SUCCESS */
+    }
+    return ERROR_BAD_ARGUMENTS;
+}
