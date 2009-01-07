@@ -776,11 +776,11 @@ void write_procformatstring(FILE *file, const statement_list_t *stmts, type_pred
     print_file(file, indent, "\n");
 }
 
-static int write_base_type(FILE *file, const type_t *type, unsigned int *typestring_offset)
+static int write_base_type(FILE *file, unsigned char fc, unsigned int *typestring_offset)
 {
-    if (is_base_type(type->type))
+    if (is_base_type(fc))
     {
-        print_file(file, 2, "0x%02x,\t/* %s */\n", type->type, string_of_type(type->type));
+        print_file(file, 2, "0x%02x,\t/* %s */\n", fc, string_of_type(fc));
         *typestring_offset += 1;
         return 1;
     }
@@ -1306,7 +1306,7 @@ static void write_member_type(FILE *file, const type_t *cont,
         print_file(file, 2, "0x%x,\t/* %s */\n", fc, string_of_type(fc));
         *tfsoff += 1;
     }
-    else if (!write_base_type(file, type, tfsoff))
+    else if (!write_base_type(file, type->type, tfsoff))
         error("Unsupported member type 0x%x\n", type->type);
 }
 
