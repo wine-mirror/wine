@@ -1517,7 +1517,7 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
   {
       RPC_STATUS status;
 
-      TRACE("SecurityQos { Version=%d, Capabilties=0x%x, IdentityTracking=%d, ImpersonationLevel=%d",
+      TRACE("SecurityQos { Version=%d, Capabilities=0x%x, IdentityTracking=%d, ImpersonationLevel=%d",
             SecurityQos->Version, SecurityQos->Capabilities, SecurityQos->IdentityTracking, SecurityQos->ImpersonationType);
       if (SecurityQos->Version >= 2)
       {
@@ -1647,7 +1647,7 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
   {
       RPC_STATUS status;
 
-      TRACE("SecurityQos { Version=%d, Capabilties=0x%x, IdentityTracking=%d, ImpersonationLevel=%d",
+      TRACE("SecurityQos { Version=%d, Capabilities=0x%x, IdentityTracking=%d, ImpersonationLevel=%d",
             SecurityQos->Version, SecurityQos->Capabilities, SecurityQos->IdentityTracking, SecurityQos->ImpersonationType);
       if (SecurityQos->Version >= 2)
       {
