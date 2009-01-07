@@ -1357,11 +1357,6 @@ void VGA_PutChar(BYTE ascii)
     LeaveCriticalSection(&vga_lock);
 }
 
-void VGA_SetTextAttribute(BYTE attr)
-{
-    vga_text_attr = attr;
-}
-
 void VGA_ClearText(unsigned row1, unsigned col1,
                    unsigned row2, unsigned col2,
                    BYTE attr)

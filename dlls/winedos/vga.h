@@ -53,7 +53,6 @@ void VGA_SetCursorPos(unsigned X,unsigned Y);
 void VGA_GetCursorPos(unsigned*X,unsigned*Y);
 void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count);
 void VGA_PutChar(BYTE ascii);
-void VGA_SetTextAttribute(BYTE attr);
 void VGA_ClearText(unsigned row1, unsigned col1,
                   unsigned row2, unsigned col2,
                   BYTE attr);
