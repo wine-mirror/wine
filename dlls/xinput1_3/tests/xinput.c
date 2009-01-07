@@ -28,6 +28,7 @@ static DWORD (WINAPI *pXInputGetCapabilities)(DWORD,DWORD,XINPUT_CAPABILITIES*);
 static DWORD (WINAPI *pXInputSetState)(DWORD, XINPUT_VIBRATION*);
 static void  (WINAPI *pXInputEnable)(BOOL);
 static DWORD (WINAPI *pXInputGetKeystroke)(DWORD, DWORD, PXINPUT_KEYSTROKE);
+static DWORD (WINAPI *pXInputGetDSoundAudioDeviceGuids)(DWORD, GUID*, GUID*);
 
 static void test_set_state(void)
 {
@@ -145,6 +146,28 @@ static void test_get_capabilities(void)
     ok(result == ERROR_BAD_ARGUMENTS, "XInputGetCapabilities returned (%d)\n", result);
 }
 
+static void test_get_dsoundaudiodevice(void)
+{
+    DWORD controllerNum;
+    DWORD result;
+    GUID soundRender;
+    GUID soundCapture;
+
+    for(controllerNum=0; controllerNum < XUSER_MAX_COUNT; controllerNum++)
+    {
+        result = pXInputGetDSoundAudioDeviceGuids(controllerNum, &soundRender, &soundCapture);
+        ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED, "XInputGetDSoundAudioDeviceGuids failed with (%d)\n", result);
+
+        if (ERROR_DEVICE_NOT_CONNECTED == result)
+        {
+            skip("Controller %d is not connected\n", controllerNum);
+        }
+    }
+
+    result = pXInputGetDSoundAudioDeviceGuids(XUSER_MAX_COUNT+1, &soundRender, &soundCapture);
+    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetDSoundAudioDeviceGuids returned (%d)\n", result);
+}
+
 START_TEST(xinput)
 {
     HMODULE hXinput;
@@ -161,9 +184,13 @@ START_TEST(xinput)
     pXInputGetState = (void*)GetProcAddress(hXinput, "XInputGetState");
     pXInputGetKeystroke = (void*)GetProcAddress(hXinput, "XInputGetKeystroke");
     pXInputGetCapabilities = (void*)GetProcAddress(hXinput, "XInputGetCapabilities");
+    pXInputGetDSoundAudioDeviceGuids = (void*)GetProcAddress(hXinput, "XInputGetDSoundAudioDeviceGuids");
+
     test_set_state();
     test_get_state();
     test_get_keystroke();
     test_get_capabilities();
+    test_get_dsoundaudiodevice();
+
     FreeLibrary(hXinput);
 }
