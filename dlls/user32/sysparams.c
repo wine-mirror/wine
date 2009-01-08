@@ -2394,7 +2394,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                                SPI_SETFONTSMOOTHINGTYPE_VALNAME,
                                (LPBYTE)&pvParam, sizeof(UINT), REG_DWORD, fWinIni ))
         {
-            font_smoothing_type = (UINT)pvParam;
+            font_smoothing_type = PtrToUlong(pvParam);
             spi_loaded[spi_idx] = TRUE;
         }
         else
@@ -2424,7 +2424,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                                SPI_SETFONTSMOOTHINGCONTRAST_VALNAME,
                                (LPBYTE)&pvParam, sizeof(UINT), REG_DWORD, fWinIni ))
         {
-            font_smoothing_contrast = (UINT)pvParam;
+            font_smoothing_contrast = PtrToUlong(pvParam);
             spi_loaded[spi_idx] = TRUE;
         }
         else
@@ -2458,7 +2458,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                                SPI_SETFONTSMOOTHINGORIENTATION_VALNAME,
                                (LPBYTE)&pvParam, sizeof(UINT), REG_DWORD, fWinIni ))
         {
-            font_smoothing_orientation = (UINT)pvParam;
+            font_smoothing_orientation = PtrToUlong(pvParam);
             spi_loaded[spi_idx] = TRUE;
         }
         else
