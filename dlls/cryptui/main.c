@@ -109,6 +109,99 @@ static void initialize_purpose_selection(HWND hwnd)
     SendMessageW(cb, CB_SETCURSEL, 0, 0);
 }
 
+static void add_cert_to_view(HWND lv, PCCERT_CONTEXT cert, DWORD *allocatedLen,
+ LPWSTR *str)
+{
+    DWORD len;
+    LVITEMW item;
+    WCHAR dateFmt[80]; /* sufficient for LOCALE_SSHORTDATE */
+    WCHAR date[80];
+    SYSTEMTIME sysTime;
+
+    item.mask = LVIF_IMAGE | LVIF_PARAM | LVIF_TEXT;
+    item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
+    item.iSubItem = 0;
+    item.iImage = 0;
+    item.lParam = (LPARAM)CertDuplicateCertificateContext(cert);
+    len = CertGetNameStringW(cert, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL,
+     NULL, 0);
+    if (len > *allocatedLen)
+    {
+        HeapFree(GetProcessHeap(), 0, *str);
+        *str = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (*str)
+            *allocatedLen = len;
+    }
+    if (*str)
+    {
+        CertGetNameStringW(cert, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL,
+         *str, len);
+        item.pszText = *str;
+        SendMessageW(lv, LVM_INSERTITEMW, 0, (LPARAM)&item);
+    }
+
+    item.mask = LVIF_TEXT;
+    len = CertGetNameStringW(cert, CERT_NAME_SIMPLE_DISPLAY_TYPE,
+     CERT_NAME_ISSUER_FLAG, NULL, NULL, 0);
+    if (len > *allocatedLen)
+    {
+        HeapFree(GetProcessHeap(), 0, *str);
+        *str = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (*str)
+            *allocatedLen = len;
+    }
+    if (*str)
+    {
+        CertGetNameStringW(cert, CERT_NAME_SIMPLE_DISPLAY_TYPE,
+         CERT_NAME_ISSUER_FLAG, NULL, *str, len);
+        item.pszText = *str;
+        item.iSubItem = 1;
+        SendMessageW(lv, LVM_SETITEMTEXTW, item.iItem, (LPARAM)&item);
+    }
+
+    GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_SSHORTDATE, dateFmt,
+     sizeof(dateFmt) / sizeof(dateFmt[0]));
+    FileTimeToSystemTime(&cert->pCertInfo->NotAfter, &sysTime);
+    GetDateFormatW(LOCALE_SYSTEM_DEFAULT, 0, &sysTime, dateFmt, date,
+     sizeof(date) / sizeof(date[0]));
+    item.pszText = date;
+    item.iSubItem = 2;
+    SendMessageW(lv, LVM_SETITEMTEXTW, item.iItem, (LPARAM)&item);
+
+    len = CertGetNameStringW(cert, CERT_NAME_FRIENDLY_DISPLAY_TYPE, 0, NULL,
+     NULL, 0);
+    if (len > *allocatedLen)
+    {
+        HeapFree(GetProcessHeap(), 0, *str);
+        *str = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (*str)
+            *allocatedLen = len;
+    }
+    if (*str)
+    {
+        CertGetNameStringW(cert, CERT_NAME_FRIENDLY_DISPLAY_TYPE, 0, NULL,
+         *str, len);
+        item.pszText = *str;
+        item.iSubItem = 3;
+        SendMessageW(lv, LVM_SETITEMTEXTW, item.iItem, (LPARAM)&item);
+    }
+}
+
+static void show_store_certs(HWND hwnd, HCERTSTORE store)
+{
+    HWND lv = GetDlgItem(hwnd, IDC_MGR_CERTS);
+    PCCERT_CONTEXT cert = NULL;
+    DWORD allocatedLen = 0;
+    LPWSTR str = NULL;
+
+    do {
+        cert = CertEnumCertificatesInStore(store, cert);
+        if (cert)
+            add_cert_to_view(lv, cert, &allocatedLen, &str);
+    } while (cert);
+    HeapFree(GetProcessHeap(), 0, str);
+}
+
 static const WCHAR my[] = { 'M','y',0 };
 static const WCHAR addressBook[] = {
  'A','d','d','r','e','s','s','B','o','o','k',0 };
@@ -157,6 +250,21 @@ static void show_cert_stores(HWND hwnd, DWORD dwFlags)
     }
 }
 
+static void free_certs(HWND lv)
+{
+    LVITEMW item;
+    int items = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0), i;
+
+    for (i = 0; i < items; i++)
+    {
+        item.mask = LVIF_PARAM;
+        item.iItem = i;
+        item.iSubItem = 0;
+        SendMessageW(lv, LVM_GETITEMW, 0, (LPARAM)&item);
+        CertFreeCertificateContext((PCCERT_CONTEXT)item.lParam);
+    }
+}
+
 static HCERTSTORE cert_mgr_index_to_store(HWND tab, int index)
 {
     TCITEMW item;
@@ -183,20 +291,39 @@ static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
     {
         PCCRYPTUI_CERT_MGR_STRUCT pCryptUICertMgr =
          (PCCRYPTUI_CERT_MGR_STRUCT)lp;
+        HIMAGELIST imageList;
+        HWND tab = GetDlgItem(hwnd, IDC_MGR_STORES);
 
+        imageList = ImageList_Create(16, 16, ILC_COLOR4 | ILC_MASK, 2, 0);
+        if (imageList)
+        {
+            HBITMAP bmp;
+            COLORREF backColor = RGB(255, 0, 255);
+
+            bmp = LoadBitmapW(hInstance, MAKEINTRESOURCEW(IDB_SMALL_ICONS));
+            ImageList_AddMasked(imageList, bmp, backColor);
+            DeleteObject(bmp);
+            ImageList_SetBkColor(imageList, CLR_NONE);
+            SendMessageW(GetDlgItem(hwnd, IDC_MGR_CERTS), LVM_SETIMAGELIST,
+             LVSIL_SMALL, (LPARAM)imageList);
+            SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)imageList);
+        }
         initialize_purpose_selection(hwnd);
         add_cert_columns(hwnd);
         if (pCryptUICertMgr->pwszTitle)
             SendMessageW(hwnd, WM_SETTEXT, 0,
              (LPARAM)pCryptUICertMgr->pwszTitle);
         show_cert_stores(hwnd, pCryptUICertMgr->dwFlags);
+        show_store_certs(hwnd, cert_mgr_index_to_store(tab, 0));
         break;
     }
     case WM_COMMAND:
         switch (wp)
         {
         case IDCANCEL:
+            free_certs(GetDlgItem(hwnd, IDC_MGR_CERTS));
             close_stores(GetDlgItem(hwnd, IDC_MGR_STORES));
+            ImageList_Destroy((HIMAGELIST)GetWindowLongPtrW(hwnd, DWLP_USER));
             EndDialog(hwnd, IDCANCEL);
             break;
         }
