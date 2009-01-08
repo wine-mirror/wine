@@ -779,24 +779,146 @@ static void cert_mgr_clear_cert_selection(HWND hwnd)
     refresh_store_certs(hwnd);
 }
 
-static void show_selected_cert(HWND hwnd, int index)
+static PCCERT_CONTEXT cert_mgr_index_to_cert(HWND hwnd, int index)
 {
+    PCCERT_CONTEXT cert = NULL;
     LVITEMW item;
-    HWND lv = GetDlgItem(hwnd, IDC_MGR_CERTS);
 
     item.mask = LVIF_PARAM;
     item.iItem = index;
     item.iSubItem = 0;
-    if (SendMessageW(lv, LVM_GETITEMW, 0, (LPARAM)&item))
+    if (SendMessageW(GetDlgItem(hwnd, IDC_MGR_CERTS), LVM_GETITEMW, 0,
+     (LPARAM)&item))
+        cert = (PCCERT_CONTEXT)item.lParam;
+    return cert;
+}
+
+static void show_selected_cert(HWND hwnd, int index)
+{
+    PCCERT_CONTEXT cert = cert_mgr_index_to_cert(hwnd, index);
+
+    if (cert)
     {
         CRYPTUI_VIEWCERTIFICATE_STRUCTW viewInfo;
 
         memset(&viewInfo, 0, sizeof(viewInfo));
         viewInfo.dwSize = sizeof(viewInfo);
         viewInfo.hwndParent = hwnd;
-        viewInfo.pCertContext = (PCCERT_CONTEXT)item.lParam;
+        viewInfo.pCertContext = cert;
         /* FIXME: this should be modal */
         CryptUIDlgViewCertificateW(&viewInfo, NULL);
+    }
+}
+
+static void cert_mgr_show_cert_usages(HWND hwnd, int index)
+{
+    HWND text = GetDlgItem(hwnd, IDC_MGR_PURPOSES);
+    PCCERT_CONTEXT cert = cert_mgr_index_to_cert(hwnd, index);
+    PCERT_ENHKEY_USAGE usage;
+    DWORD size;
+
+    /* Get enhanced key usage.  Have to check for a property and an extension
+     * separately, because CertGetEnhancedKeyUsage will succeed and return an
+     * empty usage if neither is set.  Unfortunately an empty usage implies
+     * no usage is allowed, so we have to distinguish between the two cases.
+     */
+    if (CertGetEnhancedKeyUsage(cert, CERT_FIND_PROP_ONLY_ENHKEY_USAGE_FLAG,
+     NULL, &size))
+    {
+        usage = HeapAlloc(GetProcessHeap(), 0, size);
+        if (!CertGetEnhancedKeyUsage(cert,
+         CERT_FIND_PROP_ONLY_ENHKEY_USAGE_FLAG, usage, &size))
+        {
+            HeapFree(GetProcessHeap(), 0, usage);
+            usage = NULL;
+        }
+    }
+    else if (CertGetEnhancedKeyUsage(cert, CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG,
+     NULL, &size))
+    {
+        usage = HeapAlloc(GetProcessHeap(), 0, size);
+        if (!CertGetEnhancedKeyUsage(cert,
+         CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG, usage, &size))
+        {
+            HeapFree(GetProcessHeap(), 0, usage);
+            usage = NULL;
+        }
+    }
+    else
+        usage = NULL;
+    if (usage)
+    {
+        if (usage->cUsageIdentifier)
+        {
+            static const WCHAR commaSpace[] = { ',',' ',0 };
+            DWORD i, len = 1;
+            LPWSTR str, ptr;
+
+            for (i = 0; i < usage->cUsageIdentifier; i++)
+            {
+                PCCRYPT_OID_INFO info =
+                 CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY,
+                 usage->rgpszUsageIdentifier[i],
+                 CRYPT_ENHKEY_USAGE_OID_GROUP_ID);
+
+                if (info)
+                    len += strlenW(info->pwszName);
+                else
+                    len += strlen(usage->rgpszUsageIdentifier[i]);
+                if (i < usage->cUsageIdentifier - 1)
+                    len += strlenW(commaSpace);
+            }
+            str = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+            if (str)
+            {
+                for (i = 0, ptr = str; i < usage->cUsageIdentifier; i++)
+                {
+                    PCCRYPT_OID_INFO info =
+                     CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY,
+                     usage->rgpszUsageIdentifier[i],
+                     CRYPT_ENHKEY_USAGE_OID_GROUP_ID);
+
+                    if (info)
+                    {
+                        strcpyW(ptr, info->pwszName);
+                        ptr += strlenW(info->pwszName);
+                    }
+                    else
+                    {
+                        LPCSTR src = usage->rgpszUsageIdentifier[i];
+
+                        for (; *src; ptr++, src++)
+                            *ptr = *src;
+                        *ptr = 0;
+                    }
+                    if (i < usage->cUsageIdentifier - 1)
+                    {
+                        strcpyW(ptr, commaSpace);
+                        ptr += strlenW(commaSpace);
+                    }
+                }
+                *ptr = 0;
+                SendMessageW(text, WM_SETTEXT, 0, (LPARAM)str);
+                HeapFree(GetProcessHeap(), 0, str);
+            }
+            HeapFree(GetProcessHeap(), 0, usage);
+        }
+        else
+        {
+            WCHAR buf[MAX_STRING_LEN];
+
+            LoadStringW(hInstance, IDS_ALLOWED_PURPOSE_NONE, buf,
+             sizeof(buf) / sizeof(buf[0]));
+            SendMessageW(text, WM_SETTEXT, 0, (LPARAM)buf);
+        }
+    }
+    else
+    {
+        WCHAR buf[MAX_STRING_LEN];
+
+        LoadStringW(hInstance, IDS_ALLOWED_PURPOSE_ALL, buf,
+         sizeof(buf) / sizeof(buf[0]));
+        SendMessageW(text, WM_SETTEXT, 0, (LPARAM)buf);
     }
 }
 
@@ -857,6 +979,8 @@ static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
                 EnableWindow(GetDlgItem(hwnd, IDC_MGR_EXPORT), numSelected > 0);
                 EnableWindow(GetDlgItem(hwnd, IDC_MGR_REMOVE), numSelected > 0);
                 EnableWindow(GetDlgItem(hwnd, IDC_MGR_VIEW), numSelected == 1);
+                if (numSelected == 1)
+                    cert_mgr_show_cert_usages(hwnd, nm->iItem);
             }
             break;
         }
