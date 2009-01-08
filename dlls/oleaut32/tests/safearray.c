@@ -275,7 +275,7 @@ static struct {
 static void test_safearray(void)
 {
 	SAFEARRAY 	*a, b, *c;
-	unsigned int 	i;
+	unsigned int 	i, diff;
 	LONG		indices[2];
 	HRESULT 	hres;
 	SAFEARRAYBOUND	bound, bounds[2];
@@ -434,19 +434,22 @@ static void test_safearray(void)
 	indices[1] = 23;
 	hres = SafeArrayPtrOfIndex(a, indices, (void**)&ptr2);
 	ok(S_OK == hres,"SAPOI failed [1,23], hres 0x%x\n",hres);
-	ok(ptr2 - ptr1 == 8,"ptr difference is not 8, but %d (%p vs %p)\n", ptr2-ptr1, ptr2, ptr1);
+        diff = ptr2 - ptr1;
+	ok(diff == 8,"ptr difference is not 8, but %d (%p vs %p)\n", diff, ptr2, ptr1);
 
 	indices[0] = 3;
 	indices[1] = 24;
 	hres = SafeArrayPtrOfIndex(a, indices, (void**)&ptr2);
 	ok(S_OK == hres,"SAPOI failed [5,24], hres 0x%x\n",hres);
-	ok(ptr2 - ptr1 == 176,"ptr difference is not 176, but %d (%p vs %p)\n", ptr2-ptr1, ptr2, ptr1);
+        diff = ptr2 - ptr1;
+	ok(diff == 176,"ptr difference is not 176, but %d (%p vs %p)\n", diff, ptr2, ptr1);
 
 	indices[0] = 20;
 	indices[1] = 23;
 	hres = SafeArrayPtrOfIndex(a, indices, (void**)&ptr2);
 	ok(S_OK == hres,"SAPOI failed [20,23], hres 0x%x\n",hres);
-	ok(ptr2 - ptr1 == 76,"ptr difference is not 76, but %d (%p vs %p)\n", ptr2-ptr1, ptr2, ptr1);
+        diff = ptr2 - ptr1;
+	ok(diff == 76,"ptr difference is not 76, but %d (%p vs %p)\n", diff, ptr2, ptr1);
 
 	hres = SafeArrayUnaccessData(a);
 	ok(S_OK == hres, "SAUAD failed with 0x%x\n", hres);
