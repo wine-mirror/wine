@@ -1989,7 +1989,7 @@ static HRESULT WINAPI Videowindow_get_Owner(IVideoWindow *iface,
 					    OAHWND *Owner) {
     ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
 
-    TRACE("(%p/%p)->(%08x)\n", This, iface, (DWORD) Owner);
+    TRACE("(%p/%p)->(%p)\n", This, iface, Owner);
 
     *(HWND*)Owner = GetParent(This->hWnd);
 
