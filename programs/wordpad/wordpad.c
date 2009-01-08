@@ -1341,7 +1341,7 @@ static BOOL get_comboexlist_selection(HWND hComboEx, LPWSTR wszBuffer, UINT buff
     cbItem.iItem = idx;
     cbItem.pszText = wszBuffer;
     cbItem.cchTextMax = bufferLength-1;
-    result = SendMessageW(hComboEx, CBEM_GETITEM, 0, (LPARAM)&cbItem);
+    result = SendMessageW(hComboEx, CBEM_GETITEMW, 0, (LPARAM)&cbItem);
 
     return result != 0;
 }
