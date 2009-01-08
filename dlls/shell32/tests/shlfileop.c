@@ -323,7 +323,7 @@ static void test_get_file_info_iconlist(void)
     ok(shInfoa.dwAttributes == 0xcfcfcfcf ||
        shInfoa.dwAttributes ==  0 || /* Vista */
        broken(shInfoa.dwAttributes != 0xcfcfcfcf), /* NT4 doesn't clear but sets this field */
-       "SHGetFileInfoA(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL), unexpected dwAttributes : %08x\n",shInfoa.dwAttributes);
+       "SHGetFileInfoA(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL), unexpected dwAttributes\n");
     CloseHandle(hSysImageList);
 
     if (!pSHGetFileInfoW)
@@ -346,7 +346,9 @@ static void test_get_file_info_iconlist(void)
     todo_wine ok(shInfow.hIcon == 0, "SHGetFileInfoW(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) did not clear hIcon\n");
     ok(shInfow.szTypeName[0] == 0, "SHGetFileInfoW(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) did not clear szTypeName[0]\n");
     ok(shInfow.iIcon != 0xcfcfcfcf, "SHGetFileInfoW(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) should set iIcon\n");
-    ok(shInfow.dwAttributes == 0xcfcfcfcf, "SHGetFileInfoW(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) should not change dwAttributes\n");
+    ok(shInfow.dwAttributes == 0xcfcfcfcf ||
+       shInfoa.dwAttributes ==  0, /* Vista */
+       "SHGetFileInfoW(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) unexpected dwAttributes\n");
     CloseHandle(hSysImageList);
 
     /* Various suposidly invalid flag testing */
@@ -355,7 +357,9 @@ static void test_get_file_info_iconlist(void)
 	    SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON);
     ok(hr != 0, "SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON Failed\n");
     ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing\n");
-    ok(shInfow.dwAttributes==0xcfcfcfcf,"dwAttributes modified\n");
+    ok(shInfow.dwAttributes==0xcfcfcfcf ||
+       shInfoa.dwAttributes==0, /* Vista */
+       "unexpected dwAttributes\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
     hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
@@ -380,7 +384,9 @@ static void test_get_file_info_iconlist(void)
 	    SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_LARGEICON);
     ok(hr != 0, "SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_LARGEICON Failed\n");
     ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing\n");
-    ok(shInfow.dwAttributes==0xcfcfcfcf,"dwAttributes modified\n");
+    ok(shInfow.dwAttributes==0xcfcfcfcf ||
+       shInfoa.dwAttributes==0, /* Vista */
+       "unexpected dwAttributes\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
     hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
@@ -417,7 +423,9 @@ static void test_get_file_info_iconlist(void)
         SHGFI_EXETYPE);
     todo_wine ok(hr != 0, "SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON|SHGFI_EXETYPE Failed\n");
     ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing\n");
-    ok(shInfow.dwAttributes==0xcfcfcfcf,"dwAttributes modified\n");
+    ok(shInfow.dwAttributes==0xcfcfcfcf ||
+       shInfoa.dwAttributes==0, /* Vista */
+       "unexpected dwAttributes\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
     hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
@@ -446,7 +454,9 @@ static void test_get_file_info_iconlist(void)
         SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_EXETYPE);
     todo_wine ok(hr != 0, "SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_EXETYPE Failed\n");
     ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing\n");
-    ok(shInfow.dwAttributes==0xcfcfcfcf,"dwAttributes modified\n");
+    ok(shInfow.dwAttributes==0xcfcfcfcf ||
+       shInfoa.dwAttributes==0, /* Vista */
+       "unexpected dwAttributes\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
     hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
