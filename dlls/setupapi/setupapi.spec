@@ -533,7 +533,7 @@
 @ stdcall StringTableInitialize()
 @ stdcall StringTableInitializeEx(long long)
 @ stdcall StringTableLookUpString(ptr wstr long)
-@ stdcall StringTableLookUpStringEx(ptr wstr long ptr ptr)
+@ stdcall StringTableLookUpStringEx(ptr wstr long ptr long)
 @ stdcall StringTableSetExtraData(ptr long ptr long)
 @ stdcall StringTableStringFromId(ptr long)
 @ stdcall StringTableStringFromIdEx(ptr long ptr ptr)

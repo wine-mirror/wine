@@ -46,7 +46,7 @@ static HSTRING_TABLE (WINAPI *pStringTableDuplicate)(HSTRING_TABLE hStringTable)
 static HSTRING_TABLE (WINAPI *pStringTableInitialize)(VOID);
 static HSTRING_TABLE (WINAPI *pStringTableInitializeEx)(DWORD, DWORD);
 static DWORD    (WINAPI *pStringTableLookUpString)(HSTRING_TABLE, LPWSTR, DWORD);
-static DWORD    (WINAPI *pStringTableLookUpStringEx)(HSTRING_TABLE, LPWSTR, DWORD, LPVOID, LPDWORD);
+static DWORD    (WINAPI *pStringTableLookUpStringEx)(HSTRING_TABLE, LPWSTR, DWORD, LPVOID, DWORD);
 static LPWSTR   (WINAPI *pStringTableStringFromId)(HSTRING_TABLE, DWORD);
 #if 0
 static BOOL     (WINAPI *pStringTableStringFromIdEx)(HSTRING_TABLE, DWORD, LPWSTR, LPDWORD);
@@ -247,33 +247,33 @@ static void test_StringTableLookUpStringEx(void)
     ok(table2 != NULL, "Failed to duplicate String Table\n");
 
     /* case insensitive */
-    retval = pStringTableLookUpStringEx(table, string, 0, NULL, NULL);
+    retval = pStringTableLookUpStringEx(table, string, 0, NULL, 0);
     ok(retval != ~0u, "Failed find string in String Table 1\n");
     ok(retval == hstring,
         "Lookup for string (%x) does not match previous handle (%x) in String Table 1\n",
         retval, hstring);
 
-    retval = pStringTableLookUpStringEx(table2, string, 0, NULL, NULL);
+    retval = pStringTableLookUpStringEx(table2, string, 0, NULL, 0);
     ok(retval != ~0u, "Failed find string in String Table 2\n");
 
-    retval = pStringTableLookUpStringEx(table, String, 0, NULL, NULL);
+    retval = pStringTableLookUpStringEx(table, String, 0, NULL, 0);
     ok(retval != ~0u, "Failed find String in String Table 1\n");
 
-    retval = pStringTableLookUpStringEx(table2, String, 0, NULL, NULL);
+    retval = pStringTableLookUpStringEx(table2, String, 0, NULL, 0);
     ok(retval != ~0u, "Failed find String in String Table 2\n");
 
-    retval=pStringTableLookUpStringEx(table, foo, 0, NULL, NULL);
+    retval=pStringTableLookUpStringEx(table, foo, 0, NULL, 0);
     ok(retval != ~0u, "Failed find foo in String Table 1\n");
     ok(retval == hfoo,
         "Lookup for foo (%x) does not match previous handle (%x) in String Table 1\n",
         retval, hfoo);
 
-    retval = pStringTableLookUpStringEx(table2, foo, 0, NULL, NULL);
+    retval = pStringTableLookUpStringEx(table2, foo, 0, NULL, 0);
     ok(retval != ~0u, "Failed find foo in String Table 2\n");
 
     /* case sensitive */
-    retval = pStringTableLookUpStringEx(table, string,ST_CASE_SENSITIVE_COMPARE, NULL, NULL);
-    retval2 = pStringTableLookUpStringEx(table, String, ST_CASE_SENSITIVE_COMPARE, NULL, NULL);
+    retval = pStringTableLookUpStringEx(table, string,ST_CASE_SENSITIVE_COMPARE, NULL, 0);
+    retval2 = pStringTableLookUpStringEx(table, String, ST_CASE_SENSITIVE_COMPARE, NULL, 0);
     ok(retval != retval2, "Lookup of string equals String in Table 1\n");
     ok(retval == hString,
         "Lookup for String (%x) does not match previous handle (%x) in String Table 1\n",
@@ -289,17 +289,17 @@ static void test_StringTableLookUpStringEx(void)
     ok(retval != ~0u, "failed to add 'UILEVEL' to string table\n");
 
     memset(buffer, 0x55, sizeof(buffer));
-    retval = pStringTableLookUpStringEx(table, uilevel, ST_CASE_SENSITIVE_COMPARE, buffer, (LPDWORD)0);
+    retval = pStringTableLookUpStringEx(table, uilevel, ST_CASE_SENSITIVE_COMPARE, buffer, 0);
     ok(retval != ~0u, "failed find 'UILEVEL' in string table\n");
     ok(memcmp(buffer, &data, 4), "unexpected data\n");
 
     memset(buffer, 0x55, sizeof(buffer));
-    retval = pStringTableLookUpStringEx(table, uilevel, ST_CASE_SENSITIVE_COMPARE, buffer, (LPDWORD)2);
+    retval = pStringTableLookUpStringEx(table, uilevel, ST_CASE_SENSITIVE_COMPARE, buffer, 2);
     ok(retval != ~0u, "failed find 'UILEVEL' in string table\n");
     ok(!memcmp(buffer, &data, 2), "unexpected data\n");
 
     memset(buffer, 0x55, sizeof(buffer));
-    retval = pStringTableLookUpStringEx(table, uilevel, ST_CASE_SENSITIVE_COMPARE, buffer, (LPDWORD)sizeof(buffer));
+    retval = pStringTableLookUpStringEx(table, uilevel, ST_CASE_SENSITIVE_COMPARE, buffer, sizeof(buffer));
     ok(retval != ~0u, "failed find 'UILEVEL' in string table\n");
     ok(!memcmp(buffer, &data, 4), "unexpected data\n");
 

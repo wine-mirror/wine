@@ -457,7 +457,7 @@ StringTableGetExtraData(HSTRING_TABLE hStringTable,
  *     dwFlags      [I] Flags
  *                        1: case sensitive compare
  *     lpExtraData  [O] Pointer to the buffer that receives the extra data
- *     lpReserved   [I/O] Unused
+ *     dwReserved   [I/O] Unused
  *
  * RETURNS
  *     Success: String ID
@@ -468,13 +468,13 @@ StringTableLookUpStringEx(HSTRING_TABLE hStringTable,
                           LPWSTR lpString,
                           DWORD dwFlags,
                           LPVOID lpExtraData,
-                          LPDWORD lpReserved)
+                          DWORD dwReserved)
 {
     PSTRING_TABLE pStringTable;
     DWORD i;
 
-    TRACE("%p %s %x %p, %p\n", hStringTable, debugstr_w(lpString), dwFlags,
-          lpExtraData, lpReserved);
+    TRACE("%p %s %x %p, %x\n", hStringTable, debugstr_w(lpString), dwFlags,
+          lpExtraData, dwReserved);
 
     pStringTable = (PSTRING_TABLE)hStringTable;
     if (pStringTable == NULL)
@@ -493,7 +493,7 @@ StringTableLookUpStringEx(HSTRING_TABLE hStringTable,
                 if (!lstrcmpW(pStringTable->pSlots[i].pString, lpString))
                 {
                     if (lpExtraData)
-                        memcpy(lpExtraData, pStringTable->pSlots[i].pData, (DWORD)lpReserved);
+                        memcpy(lpExtraData, pStringTable->pSlots[i].pData, dwReserved);
                     return i + 1;
                 }
             }
@@ -502,7 +502,7 @@ StringTableLookUpStringEx(HSTRING_TABLE hStringTable,
                 if (!lstrcmpiW(pStringTable->pSlots[i].pString, lpString))
                 {
                     if (lpExtraData)
-                        memcpy(lpExtraData, pStringTable->pSlots[i].pData, (DWORD)lpReserved);
+                        memcpy(lpExtraData, pStringTable->pSlots[i].pData, dwReserved);
                     return i + 1;
                 }
             }
@@ -532,7 +532,7 @@ StringTableLookUpString(HSTRING_TABLE hStringTable,
                         LPWSTR lpString,
                         DWORD dwFlags)
 {
-    return StringTableLookUpStringEx(hStringTable, lpString, dwFlags, NULL, NULL);
+    return StringTableLookUpStringEx(hStringTable, lpString, dwFlags, NULL, 0);
 }
 
 
