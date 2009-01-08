@@ -50,6 +50,9 @@ typedef struct {
     DWORD size;
 } elem_vector_t;
 
+static IHTMLElementCollection *HTMLElementCollection_Create(IUnknown *ref_unk,
+                                                            HTMLElement **elems, DWORD len);
+
 static void elem_vector_add(elem_vector_t *buf, HTMLElement *elem)
 {
     if(buf->len == buf->size) {
@@ -534,7 +537,7 @@ IHTMLElementCollection *create_collection_from_htmlcol(HTMLDocument *doc, IUnkno
     return HTMLElementCollection_Create(unk, buf.buf, buf.len);
 }
 
-IHTMLElementCollection *HTMLElementCollection_Create(IUnknown *ref_unk,
+static IHTMLElementCollection *HTMLElementCollection_Create(IUnknown *ref_unk,
             HTMLElement **elems, DWORD len)
 {
     HTMLElementCollection *ret = heap_alloc_zero(sizeof(HTMLElementCollection));
