@@ -184,7 +184,7 @@ static void test_get_batteryinformation(void)
 
         if (ERROR_DEVICE_NOT_CONNECTED == result)
         {
-            ok(batteryInfo.BatteryLevel == BATTERY_TYPE_DISCONNECTED, "Failed to report device as being disconnected.");
+            ok(batteryInfo.BatteryLevel == BATTERY_TYPE_DISCONNECTED, "Failed to report device as being disconnected.\n");
             skip("Controller %d is not connected\n", controllerNum);
         }
     }
