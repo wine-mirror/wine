@@ -779,6 +779,27 @@ static void cert_mgr_clear_cert_selection(HWND hwnd)
     refresh_store_certs(hwnd);
 }
 
+static void show_selected_cert(HWND hwnd, int index)
+{
+    LVITEMW item;
+    HWND lv = GetDlgItem(hwnd, IDC_MGR_CERTS);
+
+    item.mask = LVIF_PARAM;
+    item.iItem = index;
+    item.iSubItem = 0;
+    if (SendMessageW(lv, LVM_GETITEMW, 0, (LPARAM)&item))
+    {
+        CRYPTUI_VIEWCERTIFICATE_STRUCTW viewInfo;
+
+        memset(&viewInfo, 0, sizeof(viewInfo));
+        viewInfo.dwSize = sizeof(viewInfo);
+        viewInfo.hwndParent = hwnd;
+        viewInfo.pCertContext = (PCCERT_CONTEXT)item.lParam;
+        /* FIXME: this should be modal */
+        CryptUIDlgViewCertificateW(&viewInfo, NULL);
+    }
+}
+
 static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
@@ -839,6 +860,9 @@ static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             }
             break;
         }
+        case NM_DBLCLK:
+            show_selected_cert(hwnd, ((NMITEMACTIVATE *)lp)->iItem);
+            break;
         }
         break;
     }
@@ -877,6 +901,16 @@ static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
                 refresh_store_certs(hwnd);
             }
             break;
+        case IDC_MGR_VIEW:
+        {
+            HWND lv = GetDlgItem(hwnd, IDC_MGR_CERTS);
+            int selection = SendMessageW(lv, LVM_GETNEXTITEM, -1,
+             LVNI_SELECTED);
+
+            if (selection >= 0)
+                show_selected_cert(hwnd, selection);
+            break;
+        }
         case IDCANCEL:
             free_certs(GetDlgItem(hwnd, IDC_MGR_CERTS));
             close_stores(GetDlgItem(hwnd, IDC_MGR_STORES));
