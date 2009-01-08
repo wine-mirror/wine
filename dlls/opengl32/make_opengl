@@ -3,13 +3,17 @@ use strict;
 
 # This script is called thus :
 #
-#   make_opengl path_to_spec_file opengl_version
+#   make_opengl [opengl_version]
 #
-#     - path_to_spec_file is the path to the directory where the OpenGL
-#       spec files are located. These files are hosted in the OpenGL
-#       extension registry at opengl.org:
+#     - It needs the gl.spec and gl.tm files in the current directory.
+#       These files are hosted in the OpenGL extension registry at
+#       opengl.org:
+#
 #       http://www.opengl.org/registry/api/gl.spec
 #       http://www.opengl.org/registry/api/gl.tm
+#
+#       If they are not found in the current directory the script will
+#       attempt to download them from there.
 #
 #       The files used to be hosted and maintained by SGI. You can still find
 #       find them in the sample implementation CVS tree which is located at
@@ -18,7 +22,7 @@ use strict;
 #         http://oss.sgi.com/cgi-bin/cvsweb.cgi/projects/ogl-sample/main/doc/registry/specs/
 #
 #     - opengl_version is the OpenGL version emulated by the library
-#       (can be 1.0 to 1.5).
+#       (can be 1.0 to 1.5). The default is 1.2.
 #
 # This script generates the three following files :
 #
@@ -283,13 +287,12 @@ sub GenerateThunk($$$$$)
 #
 # Extract and checks the number of arguments
 #
-if (@ARGV != 2) {
+if (@ARGV > 1) {
     my $name0=$0;
     $name0=~s%^.*/%%;
-    die "Usage: $name0 OpenGL_registry_location OpenGL_version\n";
+    die "Usage: $name0 [version]\n";
 }
-my $registry_path = shift @ARGV;
-my $version       = shift @ARGV;
+my $version = $ARGV[0] || "1.2";
 if ($version eq "1.0") {
     %norm_categories = %cat_1_0;
 } elsif ($version eq "1.1") {
@@ -307,10 +310,16 @@ if ($version eq "1.0") {
 }
 
 #
+# Fetch the registry files
+#
+-f "gl.spec" || system "wget http://www.opengl.org/registry/api/gl.spec" || die "cannot download gl.spec";
+-f "gl.tm" || system "wget http://www.opengl.org/registry/api/gl.tm" || die "cannot download gl.tm";
+
+#
 # Open the registry files
 #
-open(TYPES,    "$registry_path/gl.tm")   || die "Could not open 'gl.tm'. Please check your path in the registry files.\n";
-open(REGISTRY, "$registry_path/gl.spec") || die "Could not open 'gl.spec'. Please check your path in the registry files.\n";
+open(TYPES,    "gl.tm")   || die "Could not open gl.tm";
+open(REGISTRY, "gl.spec") || die "Could not open gl.spec";
 
 #
 # First, create a mapping between the pseudo types used in the spec file
