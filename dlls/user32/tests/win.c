@@ -1972,7 +1972,7 @@ static void test_SetMenu(HWND parent)
 static void test_window_tree(HWND parent, const DWORD *style, const int *order, int total)
 {
     HWND child[5], hwnd;
-    int i;
+    INT_PTR i;
 
     assert(total <= 5);
 
@@ -1993,7 +1993,7 @@ static void test_window_tree(HWND parent, const DWORD *style, const int *order, 
         else
             child[i] = CreateWindowExA(0, "static", "", style[i], 0,0,10,10,
                                        parent, (HMENU)i, 0, NULL);
-        trace("child[%d] = %p\n", i, child[i]);
+        trace("child[%ld] = %p\n", i, child[i]);
         ok(child[i] != 0, "CreateWindowEx failed to create child window\n");
     }
 
@@ -2004,8 +2004,8 @@ static void test_window_tree(HWND parent, const DWORD *style, const int *order, 
 
     for (i = 0; i < total; i++)
     {
-        trace("hwnd[%d] = %p\n", i, hwnd);
-        ok(child[order[i]] == hwnd, "Z order of child #%d is wrong\n", i);
+        trace("hwnd[%ld] = %p\n", i, hwnd);
+        ok(child[order[i]] == hwnd, "Z order of child #%ld is wrong\n", i);
 
         hwnd = GetWindow(hwnd, GW_HWNDNEXT);
     }

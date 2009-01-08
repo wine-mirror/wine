@@ -8263,7 +8263,7 @@ static void test_DestroyWindow(void)
 {
     BOOL ret;
     HWND parent, child1, child2, child3, child4, test;
-    UINT child_id = WND_CHILD_ID + 1;
+    UINT_PTR child_id = WND_CHILD_ID + 1;
 
     parent = CreateWindowExA(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
 			     100, 100, 200, 200, 0, 0, 0, NULL);
