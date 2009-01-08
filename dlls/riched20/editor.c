@@ -2319,7 +2319,8 @@ static LRESULT ME_Char(ME_TextEditor *editor, WPARAM charCode,
       else if (para == ME_GetParagraph(editor->pCursors[1].pRun) &&
                cursor.nOffset + cursor.pRun->member.run.nCharOfs == 0 &&
                para->member.para.prev_para->member.para.nFlags & MEPF_ROWSTART &&
-               !para->member.para.prev_para->member.para.nCharOfs)
+               !para->member.para.prev_para->member.para.nCharOfs &&
+               wstr == '\r')
       {
         /* Insert a newline before the table. */
         WCHAR endl = '\r';
