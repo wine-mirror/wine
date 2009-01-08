@@ -301,7 +301,7 @@ int	WINECON_GrabChanges(struct inner_data* data)
                 req->access     = GENERIC_READ | GENERIC_WRITE;
                 req->attributes = 0;
                 req->share      = FILE_SHARE_READ | FILE_SHARE_WRITE;
-		h = wine_server_call_err( req ) ? 0 : (HANDLE)reply->handle;
+                h = wine_server_call_err( req ) ? 0 : wine_server_ptr_handle(reply->handle);
 	    }
 	    SERVER_END_REQ;
 	    WINE_TRACE(" active(%p)", h);
@@ -635,8 +635,8 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
         req->pid        = pid;
 
         ret = !wine_server_call_err( req );
-        data->hConIn = (HANDLE)reply->handle_in;
-	data->hSynchro = (HANDLE)reply->event;
+        data->hConIn = wine_server_ptr_handle( reply->handle_in );
+        data->hSynchro = wine_server_ptr_handle( reply->event );
     }
     SERVER_END_REQ;
     if (!ret) goto error;
@@ -649,7 +649,7 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
         req->attributes = 0;
         req->share      = FILE_SHARE_READ|FILE_SHARE_WRITE;
         ret = !wine_server_call_err( req );
-        data->hConOut  = (HANDLE)reply->handle_out;
+        data->hConOut   = wine_server_ptr_handle( reply->handle_out );
     }
     SERVER_END_REQ;
     if (!ret) goto error;
