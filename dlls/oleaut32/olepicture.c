@@ -529,16 +529,16 @@ static HRESULT WINAPI OLEPictureImpl_get_Handle(IPicture *iface,
     *phandle = 0;
     break;
   case PICTYPE_BITMAP:
-    *phandle = (OLE_HANDLE)This->desc.u.bmp.hbitmap;
+    *phandle = HandleToUlong(This->desc.u.bmp.hbitmap);
     break;
   case PICTYPE_METAFILE:
-    *phandle = (OLE_HANDLE)This->desc.u.wmf.hmeta;
+    *phandle = HandleToUlong(This->desc.u.wmf.hmeta);
     break;
   case PICTYPE_ICON:
-    *phandle = (OLE_HANDLE)This->desc.u.icon.hicon;
+    *phandle = HandleToUlong(This->desc.u.icon.hicon);
     break;
   case PICTYPE_ENHMETAFILE:
-    *phandle = (OLE_HANDLE)This->desc.u.emf.hemf;
+    *phandle = HandleToUlong(This->desc.u.emf.hemf);
     break;
   default:
     FIXME("Unimplemented type %d\n", This->desc.picType);
@@ -568,7 +568,7 @@ static HRESULT WINAPI OLEPictureImpl_get_hPal(IPicture *iface,
       hres = S_FALSE;
       break;
     case PICTYPE_BITMAP:
-      *phandle = (OLE_HANDLE)This->desc.u.bmp.hpal;
+      *phandle = HandleToUlong(This->desc.u.bmp.hpal);
       hres = S_OK;
       break;
     case PICTYPE_METAFILE:
@@ -782,7 +782,7 @@ static HRESULT WINAPI OLEPictureImpl_SelectPicture(IPicture *iface,
 	  *phdcOut = This->hDCCur;
       This->hDCCur = hdcIn;
       if (phbmpOut)
-	  *phbmpOut = (OLE_HANDLE)This->desc.u.bmp.hbitmap;
+	  *phbmpOut = HandleToUlong(This->desc.u.bmp.hbitmap);
       return S_OK;
   } else {
       FIXME("Don't know how to select picture type %d\n",This->desc.picType);
