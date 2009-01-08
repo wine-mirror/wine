@@ -300,7 +300,7 @@ static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTW* cs)
          mii.dwTypeData = applet->info[i].szName;
          mii.cch = sizeof(applet->info[i].szName) / sizeof(applet->info[i].szName[0]);
          mii.wID = IDM_CPANEL_APPLET_BASE + menucount;
-         mii.dwItemData = (DWORD) item;
+         mii.dwItemData = (ULONG_PTR)item;
 
          if (InsertMenuItemW(hSubMenu, menucount, TRUE, &mii)) {
             /* add the list view item */
