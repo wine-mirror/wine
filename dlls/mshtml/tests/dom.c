@@ -4001,6 +4001,27 @@ static void gecko_installer_workaround(BOOL disable)
     RegCloseKey(hkey);
 }
 
+/* Check if Internet Explorer is configured to run in "Enhanced Security Configuration" (aka hardened mode) */
+/* Note: this code is duplicated in dlls/mshtml/tests/dom.c, dlls/mshtml/tests/script.c and dlls/urlmon/tests/misc.c */
+static BOOL is_ie_hardened()
+{
+    HKEY zone_map;
+    DWORD ie_harden, type, size;
+
+    ie_harden = 0;
+    if(RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap",
+                    0, KEY_QUERY_VALUE, &zone_map) == ERROR_SUCCESS) {
+        size = sizeof(DWORD);
+        if (RegQueryValueEx(zone_map, "IEHarden", NULL, &type, (LPBYTE) &ie_harden, &size) != ERROR_SUCCESS ||
+            type != REG_DWORD) {
+            ie_harden = 0;
+        }
+    RegCloseKey(zone_map);
+    }
+
+    return ie_harden != 0;
+}
+
 START_TEST(dom)
 {
     gecko_installer_workaround(TRUE);
@@ -4009,7 +4030,11 @@ START_TEST(dom)
     run_domtest(doc_str1, test_doc_elem);
     run_domtest(range_test_str, test_txtrange);
     run_domtest(range_test2_str, test_txtrange2);
-    run_domtest(elem_test_str, test_elems);
+    if (winetest_interactive || ! is_ie_hardened()) {
+        run_domtest(elem_test_str, test_elems);
+    }else {
+        skip("IE running in Enhanced Security Configuration\n");
+    }
     run_domtest(doc_blank, test_create_elems);
     run_domtest(doc_blank, test_defaults);
     run_domtest(indent_test_str, test_indent);

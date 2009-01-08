@@ -1137,16 +1137,41 @@ static void gecko_installer_workaround(BOOL disable)
     RegCloseKey(hkey);
 }
 
+/* Check if Internet Explorer is configured to run in "Enhanced Security Configuration" (aka hardened mode) */
+/* Note: this code is duplicated in dlls/mshtml/tests/dom.c, dlls/mshtml/tests/script.c and dlls/urlmon/tests/misc.c */
+static BOOL is_ie_hardened()
+{
+    HKEY zone_map;
+    DWORD ie_harden, type, size;
+
+    ie_harden = 0;
+    if(RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap",
+                    0, KEY_QUERY_VALUE, &zone_map) == ERROR_SUCCESS) {
+        size = sizeof(DWORD);
+        if (RegQueryValueEx(zone_map, "IEHarden", NULL, &type, (LPBYTE) &ie_harden, &size) != ERROR_SUCCESS ||
+            type != REG_DWORD) {
+            ie_harden = 0;
+        }
+    RegCloseKey(zone_map);
+    }
+
+    return ie_harden != 0;
+}
+
 START_TEST(script)
 {
     gecko_installer_workaround(TRUE);
     CoInitialize(NULL);
 
-    if(register_script_engine()) {
-        test_simple_script();
-        init_registry(FALSE);
+    if(winetest_interactive || ! is_ie_hardened()) {
+        if(register_script_engine()) {
+            test_simple_script();
+            init_registry(FALSE);
+        }else {
+            skip("Could not register TestScript engine\n");
+        }
     }else {
-        skip("Could not register TestScript engine\n");
+        skip("IE running in Enhanced Security Configuration\n");
     }
 
     CoUninitialize();
