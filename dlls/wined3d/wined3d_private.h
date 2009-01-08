@@ -1711,11 +1711,6 @@ BOOL palette9_changed(IWineD3DSurfaceImpl *This);
 /*****************************************************************************
  * IWineD3DVertexDeclaration implementation structure
  */
-typedef struct attrib_declaration {
-    DWORD usage;
-    DWORD idx;
-} attrib_declaration;
-
 #define MAX_ATTRIBS 16
 
 typedef struct IWineD3DVertexDeclarationImpl {
@@ -1734,10 +1729,6 @@ typedef struct IWineD3DVertexDeclarationImpl {
     UINT                    num_streams;
     BOOL                    position_transformed;
     BOOL                    half_float_conv_needed;
-
-    /* Ordered array of declaration types that need swizzling in a vshader */
-    attrib_declaration      swizzled_attribs[MAX_ATTRIBS];
-    UINT                    num_swizzled_attribs;
 } IWineD3DVertexDeclarationImpl;
 
 extern const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl;
@@ -2182,10 +2173,6 @@ extern BOOL vshader_get_input(
     BYTE usage_req, BYTE usage_idx_req,
     unsigned int* regnum);
 
-extern BOOL vshader_input_is_color(
-    IWineD3DVertexShader* iface,
-    unsigned int regnum);
-
 extern HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object);
 
 /* GLSL helper functions */
@@ -2337,9 +2324,7 @@ typedef struct IWineD3DVertexShaderImpl {
     semantic semantics_in [MAX_ATTRIBS];
     semantic semantics_out [MAX_REG_OUTPUT];
 
-    /* Ordered array of attributes that are swizzled */
-    attrib_declaration          swizzled_attribs [MAX_ATTRIBS];
-    UINT                        num_swizzled_attribs;
+    WORD swizzle_map;   /* MAX_ATTRIBS, 16 */
 
     UINT                       min_rel_offset, max_rel_offset;
     UINT                       rel_offset;

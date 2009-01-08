@@ -510,8 +510,7 @@ static void vshader_program_add_param(const SHADER_OPCODE_ARG *arg, const DWORD 
     break;
   case WINED3DSPR_INPUT:
 
-    if (vshader_input_is_color((IWineD3DVertexShader*) This, reg))
-        is_color = TRUE;
+    if (This->swizzle_map & (1 << reg)) is_color = TRUE;
 
     sprintf(tmpReg, "vertex.attrib[%u]", reg);
     strcat(hwLine, tmpReg);

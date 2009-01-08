@@ -1030,8 +1030,7 @@ static void shader_glsl_get_register_name(const DWORD param, const DWORD addr_to
                     strcpy(tmpStr, "gl_SecondaryColor");
             }
         } else {
-            if (vshader_input_is_color((IWineD3DVertexShader*) This, reg))
-               *is_color = TRUE;
+            if (((IWineD3DVertexShaderImpl *)This)->swizzle_map & (1 << reg)) *is_color = TRUE;
             sprintf(tmpStr, "attrib%u", reg);
         } 
         break;

@@ -1884,6 +1884,8 @@ typedef struct WineDirect3DVertexStridedData
     } u;
 
     BOOL position_transformed;
+    WORD swizzle_map;       /* MAX_ATTRIBS, 16 */
+    WORD use_map;           /* MAX_ATTRIBS, 16 */
 } WineDirect3DVertexStridedData;
 
 typedef struct _WINED3DVSHADERCAPS2_0

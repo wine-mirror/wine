@@ -158,6 +158,7 @@ void primitiveDeclarationConvertToStridedData(
     }
 
     /* Translate the declaration into strided data */
+    strided->swizzle_map = 0;
     for (i = 0 ; i < vertexDeclaration->declarationWNumElements - 1; ++i) {
         GLint streamVBO = 0;
         BOOL stride_used;
@@ -234,6 +235,8 @@ void primitiveDeclarationConvertToStridedData(
                 strided->u.input[idx].dwStride = stride;
                 strided->u.input[idx].VBO = streamVBO;
                 strided->u.input[idx].streamNo = element->Stream;
+                if (element->Type == WINED3DDECLTYPE_D3DCOLOR) strided->swizzle_map |= 1 << idx;
+                strided->use_map |= 1 << idx;
             }
         }
     }
