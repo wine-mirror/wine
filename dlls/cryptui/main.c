@@ -209,18 +209,27 @@ static LPSTR get_cert_mgr_usages(void)
     return str;
 }
 
+typedef enum {
+    PurposeFilterShowAll = 0,
+    PurposeFilterShowAdvanced = 1,
+    PurposeFilterShowOID = 2
+} PurposeFilter;
+
 static void initialize_purpose_selection(HWND hwnd)
 {
     HWND cb = GetDlgItem(hwnd, IDC_MGR_PURPOSE_SELECTION);
     WCHAR buf[MAX_STRING_LEN];
     LPSTR usages;
+    int index;
 
     LoadStringW(hInstance, IDS_PURPOSE_ALL, buf,
      sizeof(buf) / sizeof(buf[0]));
-    SendMessageW(cb, CB_INSERTSTRING, -1, (LPARAM)buf);
+    index = SendMessageW(cb, CB_INSERTSTRING, -1, (LPARAM)buf);
+    SendMessageW(cb, CB_SETITEMDATA, index, (LPARAM)PurposeFilterShowAll);
     LoadStringW(hInstance, IDS_PURPOSE_ADVANCED, buf,
      sizeof(buf) / sizeof(buf[0]));
-    SendMessageW(cb, CB_INSERTSTRING, -1, (LPARAM)buf);
+    index = SendMessageW(cb, CB_INSERTSTRING, -1, (LPARAM)buf);
+    SendMessageW(cb, CB_SETITEMDATA, index, (LPARAM)PurposeFilterShowAdvanced);
     SendMessageW(cb, CB_SETCURSEL, 0, 0);
     if ((usages = get_cert_mgr_usages()))
     {
@@ -235,26 +244,205 @@ static void initialize_purpose_selection(HWND hwnd)
             if (comma)
                 *comma = 0;
             if ((info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, ptr, 0)))
-                SendMessageW(GetDlgItem(hwnd, IDC_MGR_PURPOSE_SELECTION),
-                 CB_INSERTSTRING, 0, (LPARAM)info->pwszName);
+            {
+                index = SendMessageW(cb, CB_INSERTSTRING, 0,
+                 (LPARAM)info->pwszName);
+                SendMessageW(cb, CB_SETITEMDATA, index, (LPARAM)info);
+            }
         }
         HeapFree(GetProcessHeap(), 0, usages);
     }
 }
 
+extern BOOL WINAPI WTHelperGetKnownUsages(DWORD action,
+ PCCRYPT_OID_INFO **usages);
+
+static CERT_ENHKEY_USAGE *add_oid_to_usage(CERT_ENHKEY_USAGE *usage, LPSTR oid)
+{
+    if (!usage->cUsageIdentifier)
+        usage->rgpszUsageIdentifier = HeapAlloc(GetProcessHeap(), 0,
+         sizeof(LPSTR));
+    else
+        usage->rgpszUsageIdentifier = HeapReAlloc(GetProcessHeap(), 0,
+         usage->rgpszUsageIdentifier,
+         (usage->cUsageIdentifier + 1) * sizeof(LPSTR));
+    if (usage->rgpszUsageIdentifier)
+        usage->rgpszUsageIdentifier[usage->cUsageIdentifier++] = oid;
+    else
+    {
+        HeapFree(GetProcessHeap(), 0, usage);
+        usage = NULL;
+    }
+    return usage;
+}
+
+static CERT_ENHKEY_USAGE *convert_usages_str_to_usage(LPSTR usageStr)
+{
+    CERT_ENHKEY_USAGE *usage = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+     sizeof(CERT_ENHKEY_USAGE));
+
+    if (usage)
+    {
+        LPSTR ptr, comma;
+
+        for (ptr = usageStr, comma = strchr(ptr, ','); usage && ptr && *ptr;
+         ptr = comma ? comma + 1 : NULL,
+         comma = ptr ? strchr(ptr, ',') : NULL)
+        {
+            if (comma)
+                *comma = 0;
+            add_oid_to_usage(usage, ptr);
+        }
+    }
+    return usage;
+}
+
+static CERT_ENHKEY_USAGE *create_advanced_filter(void)
+{
+    CERT_ENHKEY_USAGE *advancedUsage = HeapAlloc(GetProcessHeap(),
+     HEAP_ZERO_MEMORY, sizeof(CERT_ENHKEY_USAGE));
+
+    if (advancedUsage)
+    {
+        PCCRYPT_OID_INFO *usages;
+
+        if (WTHelperGetKnownUsages(1, &usages))
+        {
+            LPSTR disabledUsagesStr;
+
+            if ((disabledUsagesStr = get_cert_mgr_usages()))
+            {
+                CERT_ENHKEY_USAGE *disabledUsages =
+                 convert_usages_str_to_usage(disabledUsagesStr);
+
+                if (disabledUsages)
+                {
+                    PCCRYPT_OID_INFO *ptr;
+
+                    for (ptr = usages; *ptr; ptr++)
+                    {
+                        DWORD i;
+                        BOOL disabled = FALSE;
+
+                        for (i = 0; !disabled &&
+                         i < disabledUsages->cUsageIdentifier; i++)
+                            if (!strcmp(disabledUsages->rgpszUsageIdentifier[i],
+                             (*ptr)->pszOID))
+                                disabled = TRUE;
+                        if (!disabled)
+                            add_oid_to_usage(advancedUsage,
+                             (LPSTR)(*ptr)->pszOID);
+                    }
+                    /* The individual strings are pointers to disabledUsagesStr,
+                     * so they're freed when it is.
+                     */
+                    HeapFree(GetProcessHeap(), 0,
+                     disabledUsages->rgpszUsageIdentifier);
+                    HeapFree(GetProcessHeap(), 0, disabledUsages);
+                }
+                HeapFree(GetProcessHeap(), 0, disabledUsagesStr);
+            }
+            WTHelperGetKnownUsages(2, &usages);
+        }
+    }
+    return advancedUsage;
+}
+
 static void show_store_certs(HWND hwnd, HCERTSTORE store)
 {
     HWND lv = GetDlgItem(hwnd, IDC_MGR_CERTS);
+    HWND cb = GetDlgItem(hwnd, IDC_MGR_PURPOSE_SELECTION);
     PCCERT_CONTEXT cert = NULL;
     DWORD allocatedLen = 0;
     LPWSTR str = NULL;
+    int index;
+    PurposeFilter filter = PurposeFilterShowAll;
+    LPCSTR oid = NULL;
+    CERT_ENHKEY_USAGE *advanced = NULL;
 
+    index = SendMessageW(cb, CB_GETCURSEL, 0, 0);
+    if (index >= 0)
+    {
+        INT_PTR data = SendMessageW(cb, CB_GETITEMDATA, index, 0);
+
+        if (!HIWORD(data))
+            filter = data;
+        else
+        {
+            PCCRYPT_OID_INFO info = (PCCRYPT_OID_INFO)data;
+
+            filter = PurposeFilterShowOID;
+            oid = info->pszOID;
+        }
+    }
+    if (filter == PurposeFilterShowAdvanced)
+        advanced = create_advanced_filter();
     do {
         cert = CertEnumCertificatesInStore(store, cert);
         if (cert)
-            add_cert_to_view(lv, cert, &allocatedLen, &str);
+        {
+            BOOL show = FALSE;
+
+            if (filter == PurposeFilterShowAll)
+                show = TRUE;
+            else
+            {
+                int numOIDs;
+                DWORD cbOIDs = 0;
+
+                if (CertGetValidUsages(1, &cert, &numOIDs, NULL, &cbOIDs))
+                {
+                    if (numOIDs == -1)
+                    {
+                        /* -1 implies all usages are valid */
+                        show = TRUE;
+                    }
+                    else
+                    {
+                        LPSTR *oids = HeapAlloc(GetProcessHeap(), 0, cbOIDs);
+
+                        if (oids)
+                        {
+                            if (CertGetValidUsages(1, &cert, &numOIDs, oids,
+                             &cbOIDs))
+                            {
+                                int i;
+
+                                if (filter == PurposeFilterShowOID)
+                                {
+                                    for (i = 0; !show && i < numOIDs; i++)
+                                        if (!strcmp(oids[i], oid))
+                                            show = TRUE;
+                                }
+                                else
+                                {
+                                    for (i = 0; !show && i < numOIDs; i++)
+                                    {
+                                        DWORD j;
+
+                                        for (j = 0; !show &&
+                                         j < advanced->cUsageIdentifier; j++)
+                                            if (!strcmp(oids[i],
+                                             advanced->rgpszUsageIdentifier[j]))
+                                                show = TRUE;
+                                    }
+                                }
+                            }
+                            HeapFree(GetProcessHeap(), 0, oids);
+                        }
+                    }
+                }
+            }
+            if (show)
+                add_cert_to_view(lv, cert, &allocatedLen, &str);
+        }
     } while (cert);
     HeapFree(GetProcessHeap(), 0, str);
+    if (advanced)
+    {
+        HeapFree(GetProcessHeap(), 0, advanced->rgpszUsageIdentifier);
+        HeapFree(GetProcessHeap(), 0, advanced);
+    }
 }
 
 static const WCHAR my[] = { 'M','y',0 };
@@ -374,9 +562,6 @@ static void add_known_usage(HWND lv, PCCRYPT_OID_INFO info,
     item.pszText = (LPWSTR)info->pwszName;
     SendMessageW(lv, LVM_INSERTITEMW, 0, (LPARAM)&item);
 }
-
-extern BOOL WINAPI WTHelperGetKnownUsages(DWORD action,
- PCCRYPT_OID_INFO **usages);
 
 static void add_known_usages_to_list(HWND lv, CheckBitmapIndex state)
 {
