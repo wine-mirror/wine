@@ -767,6 +767,18 @@ static LRESULT CALLBACK cert_mgr_advanced_dlg_proc(HWND hwnd, UINT msg,
     return 0;
 }
 
+static void cert_mgr_clear_cert_selection(HWND hwnd)
+{
+    WCHAR empty[] = { 0 };
+
+    EnableWindow(GetDlgItem(hwnd, IDC_MGR_EXPORT), FALSE);
+    EnableWindow(GetDlgItem(hwnd, IDC_MGR_REMOVE), FALSE);
+    EnableWindow(GetDlgItem(hwnd, IDC_MGR_VIEW), FALSE);
+    SendMessageW(GetDlgItem(hwnd, IDC_MGR_PURPOSES), WM_SETTEXT, 0,
+     (LPARAM)empty);
+    refresh_store_certs(hwnd);
+}
+
 static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
@@ -809,8 +821,24 @@ static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         switch (hdr->code)
         {
         case TCN_SELCHANGE:
-            refresh_store_certs(hwnd);
+            cert_mgr_clear_cert_selection(hwnd);
             break;
+        case LVN_ITEMCHANGED:
+        {
+            NMITEMACTIVATE *nm;
+            HWND lv = GetDlgItem(hwnd, IDC_MGR_CERTS);
+
+            nm = (NMITEMACTIVATE*)lp;
+            if (nm->uNewState & LVN_ITEMACTIVATE)
+            {
+                int numSelected = SendMessageW(lv, LVM_GETSELECTEDCOUNT, 0, 0);
+
+                EnableWindow(GetDlgItem(hwnd, IDC_MGR_EXPORT), numSelected > 0);
+                EnableWindow(GetDlgItem(hwnd, IDC_MGR_REMOVE), numSelected > 0);
+                EnableWindow(GetDlgItem(hwnd, IDC_MGR_VIEW), numSelected == 1);
+            }
+            break;
+        }
         }
         break;
     }
@@ -818,7 +846,7 @@ static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         switch (wp)
         {
         case ((CBN_SELCHANGE << 16) | IDC_MGR_PURPOSE_SELECTION):
-            refresh_store_certs(hwnd);
+            cert_mgr_clear_cert_selection(hwnd);
             break;
         case IDC_MGR_ADVANCED:
             if (DialogBoxW(hInstance, MAKEINTRESOURCEW(IDD_CERT_MGR_ADVANCED),
