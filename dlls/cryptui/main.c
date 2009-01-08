@@ -454,13 +454,42 @@ static const WCHAR trustedPublisher[] = {
  'T','r','u','s','t','e','d','P','u','b','l','i','s','h','e','r',0 };
 static const WCHAR disallowed[] = { 'D','i','s','a','l','l','o','w','e','d',0 };
 
-static LPCWSTR defaultStoreList[] = {
- my, addressBook, ca, root, trustedPublisher, disallowed };
-static LPCWSTR publisherStoreList[] = { root, trustedPublisher, disallowed };
-
-static void show_cert_stores(HWND hwnd, DWORD dwFlags)
+struct CertMgrStoreInfo
 {
-    LPCWSTR *storeList;
+    LPCWSTR name;
+    int removeWarning;
+    int removePluralWarning;
+};
+
+static const struct CertMgrStoreInfo defaultStoreList[] = {
+ { my, IDS_WARN_REMOVE_MY, IDS_WARN_REMOVE_PLURAL_MY },
+ { addressBook, IDS_WARN_REMOVE_ADDRESSBOOK,
+   IDS_WARN_REMOVE_PLURAL_ADDRESSBOOK },
+ { ca, IDS_WARN_REMOVE_CA, IDS_WARN_REMOVE_PLURAL_CA },
+ { root, IDS_WARN_REMOVE_ROOT, IDS_WARN_REMOVE_PLURAL_ROOT },
+ { trustedPublisher, IDS_WARN_REMOVE_TRUSTEDPUBLISHER,
+   IDS_WARN_REMOVE_PLURAL_TRUSTEDPUBLISHER },
+ { disallowed, IDS_WARN_REMOVE_DEFAULT },
+};
+
+static const struct CertMgrStoreInfo publisherStoreList[] = {
+ { root, IDS_WARN_REMOVE_ROOT, IDS_WARN_REMOVE_PLURAL_ROOT },
+ { trustedPublisher, IDS_WARN_REMOVE_TRUSTEDPUBLISHER,
+   IDS_WARN_REMOVE_PLURAL_TRUSTEDPUBLISHER },
+ { disallowed, IDS_WARN_REMOVE_PLURAL_DEFAULT },
+};
+
+struct CertMgrData
+{
+    HIMAGELIST imageList;
+    LPCWSTR title;
+    DWORD nStores;
+    const struct CertMgrStoreInfo *stores;
+};
+
+static void show_cert_stores(HWND hwnd, DWORD dwFlags, struct CertMgrData *data)
+{
+    const struct CertMgrStoreInfo *storeList;
     int cStores, i;
     HWND tab = GetDlgItem(hwnd, IDC_MGR_STORES);
 
@@ -476,16 +505,18 @@ static void show_cert_stores(HWND hwnd, DWORD dwFlags)
     }
     if (dwFlags & CRYPTUI_CERT_MGR_SINGLE_TAB_FLAG)
         cStores = 1;
+    data->nStores = cStores;
+    data->stores = storeList;
     for (i = 0; i < cStores; i++)
     {
         LPCWSTR name;
         TCITEMW item;
         HCERTSTORE store;
 
-        if (!(name = CryptFindLocalizedName(storeList[i])))
-            name = storeList[i];
+        if (!(name = CryptFindLocalizedName(storeList[i].name)))
+            name = storeList[i].name;
         store = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
-         CERT_SYSTEM_STORE_CURRENT_USER, storeList[i]);
+         CERT_SYSTEM_STORE_CURRENT_USER, storeList[i].name);
         item.mask = TCIF_TEXT | TCIF_PARAM;
         item.pszText = (LPWSTR)name;
         item.lParam = (LPARAM)store;
@@ -922,38 +953,93 @@ static void cert_mgr_show_cert_usages(HWND hwnd, int index)
     }
 }
 
+static void cert_mgr_do_remove(HWND hwnd)
+{
+    int tabIndex = SendMessageW(GetDlgItem(hwnd, IDC_MGR_STORES),
+     TCM_GETCURSEL, 0, 0);
+    struct CertMgrData *data =
+     (struct CertMgrData *)GetWindowLongPtrW(hwnd, DWLP_USER);
+
+    if (tabIndex < data->nStores)
+    {
+        HWND lv = GetDlgItem(hwnd, IDC_MGR_CERTS);
+        WCHAR warning[MAX_STRING_LEN], title[MAX_STRING_LEN];
+        LPCWSTR pTitle;
+        int warningID;
+
+        if (SendMessageW(lv, LVM_GETSELECTEDCOUNT, 0, 0) > 1)
+            warningID = data->stores[tabIndex].removePluralWarning;
+        else
+            warningID = data->stores[tabIndex].removeWarning;
+        if (data->title)
+            pTitle = data->title;
+        else
+        {
+            LoadStringW(hInstance, IDS_CERT_MGR, title,
+             sizeof(title) / sizeof(title[0]));
+            pTitle = title;
+        }
+        LoadStringW(hInstance, warningID, warning,
+         sizeof(warning) / sizeof(warning[0]));
+        if (MessageBoxW(hwnd, warning, pTitle, MB_YESNO) == IDYES)
+        {
+            int selection = -1;
+
+            do {
+                selection = SendMessageW(lv, LVM_GETNEXTITEM, selection,
+                 LVNI_SELECTED);
+                if (selection >= 0)
+                {
+                    PCCERT_CONTEXT cert = cert_mgr_index_to_cert(hwnd,
+                     selection);
+
+                    CertDeleteCertificateFromStore(cert);
+                }
+            } while (selection >= 0);
+            cert_mgr_clear_cert_selection(hwnd);
+        }
+    }
+}
+
 static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
+    struct CertMgrData *data;
+
     switch (msg)
     {
     case WM_INITDIALOG:
     {
         PCCRYPTUI_CERT_MGR_STRUCT pCryptUICertMgr =
          (PCCRYPTUI_CERT_MGR_STRUCT)lp;
-        HIMAGELIST imageList;
         HWND tab = GetDlgItem(hwnd, IDC_MGR_STORES);
 
-        imageList = ImageList_Create(16, 16, ILC_COLOR4 | ILC_MASK, 2, 0);
-        if (imageList)
+        data = HeapAlloc(GetProcessHeap(), 0, sizeof(struct CertMgrData));
+        if (data)
         {
-            HBITMAP bmp;
-            COLORREF backColor = RGB(255, 0, 255);
+            data->imageList = ImageList_Create(16, 16, ILC_COLOR4 | ILC_MASK,
+             2, 0);
+            if (data->imageList)
+            {
+                HBITMAP bmp;
+                COLORREF backColor = RGB(255, 0, 255);
 
-            bmp = LoadBitmapW(hInstance, MAKEINTRESOURCEW(IDB_SMALL_ICONS));
-            ImageList_AddMasked(imageList, bmp, backColor);
-            DeleteObject(bmp);
-            ImageList_SetBkColor(imageList, CLR_NONE);
-            SendMessageW(GetDlgItem(hwnd, IDC_MGR_CERTS), LVM_SETIMAGELIST,
-             LVSIL_SMALL, (LPARAM)imageList);
-            SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)imageList);
+                bmp = LoadBitmapW(hInstance, MAKEINTRESOURCEW(IDB_SMALL_ICONS));
+                ImageList_AddMasked(data->imageList, bmp, backColor);
+                DeleteObject(bmp);
+                ImageList_SetBkColor(data->imageList, CLR_NONE);
+                SendMessageW(GetDlgItem(hwnd, IDC_MGR_CERTS), LVM_SETIMAGELIST,
+                 LVSIL_SMALL, (LPARAM)data->imageList);
+            }
+            SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
+            data->title = pCryptUICertMgr->pwszTitle;
         }
         initialize_purpose_selection(hwnd);
         add_cert_columns(hwnd);
         if (pCryptUICertMgr->pwszTitle)
             SendMessageW(hwnd, WM_SETTEXT, 0,
              (LPARAM)pCryptUICertMgr->pwszTitle);
-        show_cert_stores(hwnd, pCryptUICertMgr->dwFlags);
+        show_cert_stores(hwnd, pCryptUICertMgr->dwFlags, data);
         show_store_certs(hwnd, cert_mgr_index_to_store(tab, 0));
         break;
     }
@@ -987,6 +1073,14 @@ static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         case NM_DBLCLK:
             show_selected_cert(hwnd, ((NMITEMACTIVATE *)lp)->iItem);
             break;
+        case LVN_KEYDOWN:
+        {
+            NMLVKEYDOWN *lvk = (NMLVKEYDOWN *)lp;
+
+            if (lvk->wVKey == VK_DELETE)
+                cert_mgr_do_remove(hwnd);
+            break;
+        }
         }
         break;
     }
@@ -1035,10 +1129,16 @@ static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
                 show_selected_cert(hwnd, selection);
             break;
         }
+        case IDC_MGR_REMOVE:
+            cert_mgr_do_remove(hwnd);
+            break;
         case IDCANCEL:
             free_certs(GetDlgItem(hwnd, IDC_MGR_CERTS));
             close_stores(GetDlgItem(hwnd, IDC_MGR_STORES));
-            ImageList_Destroy((HIMAGELIST)GetWindowLongPtrW(hwnd, DWLP_USER));
+            close_stores(GetDlgItem(hwnd, IDC_MGR_STORES));
+            data = (struct CertMgrData *)GetWindowLongPtrW(hwnd, DWLP_USER);
+            ImageList_Destroy(data->imageList);
+            HeapFree(GetProcessHeap(), 0, data);
             EndDialog(hwnd, IDCANCEL);
             break;
         }
