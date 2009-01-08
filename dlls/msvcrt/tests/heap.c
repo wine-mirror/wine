@@ -48,8 +48,7 @@ static void test_aligned_malloc(unsigned int size, unsigned int alignment)
         {
             void *saved;
             saved = *(void **)((DWORD_PTR)((char *)mem - sizeof(void *)) & ~(sizeof(void *) - 1));
-            trace("_aligned_malloc(%3d, %3d) returns %p, saved = %p, diff = %d\n",
-                  size, alignment, mem, saved, (char *)saved - (char *)mem);
+            trace("_aligned_malloc(%3d, %3d) returns %p, saved = %p\n", size, alignment, mem, saved );
         }
         p_aligned_free(mem);
     }
@@ -79,8 +78,8 @@ static void test_aligned_offset_malloc(unsigned int size, unsigned int alignment
         {
             void *saved;
             saved = *(void **)((DWORD_PTR)((char *)mem - sizeof(void *)) & ~(sizeof(void *) - 1));
-            trace("_aligned_offset_malloc(%3d, %3d, %3d) returns %p, saved = %p, diff = %d\n",
-                  size, alignment, offset, mem, saved, (char *)saved - (char *)mem);
+            trace("_aligned_offset_malloc(%3d, %3d, %3d) returns %p, saved = %p\n",
+                  size, alignment, offset, mem, saved);
         }
         p_aligned_free(mem);
     }
@@ -116,8 +115,7 @@ static void test_aligned_realloc(unsigned int size1, unsigned int size2, unsigne
         {
             void *saved;
             saved = *(void **)((DWORD_PTR)((char *)mem - sizeof(void *)) & ~(sizeof(void *) - 1));
-            trace("_aligned_malloc(%3d, %3d) returns %p, saved = %p, diff = %d\n",
-                  size1, alignment, mem, saved, (char *)saved - (char *)mem);
+            trace("_aligned_malloc(%3d, %3d) returns %p, saved = %p\n", size1, alignment, mem, saved);
         }
 
         mem2 = p_aligned_realloc(mem, size2, alignment);
@@ -132,8 +130,8 @@ static void test_aligned_realloc(unsigned int size1, unsigned int size2, unsigne
             {
                 void *saved;
                 saved = *(void **)((DWORD_PTR)((char *)mem2 - sizeof(void *)) & ~(sizeof(void *) - 1));
-                trace("_aligned_realloc(%p, %3d, %3d) returns %p, saved = %p, diff = %d\n",
-                      mem, size2, alignment, mem2, saved, (char *)saved - (char *)mem2);
+                trace("_aligned_realloc(%p, %3d, %3d) returns %p, saved = %p\n",
+                      mem, size2, alignment, mem2, saved);
             }
             if (mem1)
             {
@@ -189,8 +187,8 @@ static void test_aligned_offset_realloc(unsigned int size1, unsigned int size2,
         {
             void *saved;
             saved = *(void **)((DWORD_PTR)((char *)mem - sizeof(void *)) & ~(sizeof(void *) - 1));
-            trace("_aligned_offset_malloc(%3d, %3d, %3d) returns %p, saved = %p, diff = %d\n",
-                  size1, alignment, offset, mem, saved, (char *)saved - (char *)mem);
+            trace("_aligned_offset_malloc(%3d, %3d, %3d) returns %p, saved = %p\n",
+                  size1, alignment, offset, mem, saved);
         }
 
         mem2 = p_aligned_offset_realloc(mem, size2, alignment, offset);
@@ -205,8 +203,8 @@ static void test_aligned_offset_realloc(unsigned int size1, unsigned int size2,
             {
                 void *saved;
                 saved = *(void **)((DWORD_PTR)((char *)mem2 - sizeof(void *)) & ~(sizeof(void *) - 1));
-                trace("_aligned_offset_realloc(%p, %3d, %3d, %3d) returns %p, saved = %p, diff = %d\n",
-                      mem, size2, alignment, offset, mem2, saved, (char *)saved - (char *)mem2);
+                trace("_aligned_offset_realloc(%p, %3d, %3d, %3d) returns %p, saved = %p\n",
+                      mem, size2, alignment, offset, mem2, saved);
             }
             if (mem1)
             {
