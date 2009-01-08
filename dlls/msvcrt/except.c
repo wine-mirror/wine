@@ -96,6 +96,9 @@ static inline int call_unwind_func( int (*func)(void), void *ebp )
 
 #endif
 
+
+#ifdef __i386__
+
 static DWORD MSVCRT_nested_handler(PEXCEPTION_RECORD rec,
                                    EXCEPTION_REGISTRATION_RECORD* frame,
                                    PCONTEXT context,
@@ -111,7 +114,7 @@ static DWORD MSVCRT_nested_handler(PEXCEPTION_RECORD rec,
 /*********************************************************************
  *		_EH_prolog (MSVCRT.@)
  */
-#ifdef __i386__
+
 /* Provided for VC++ binary compatibility only */
 __ASM_GLOBAL_FUNC(_EH_prolog,
                   "pushl $-1\n\t"
@@ -251,7 +254,7 @@ int CDECL _except_handler3(PEXCEPTION_RECORD rec,
     }
   }
 #else
-  FIXME("exception %lx flags=%lx at %p handler=%p %p %p stub\n",
+  FIXME("exception %x flags=%x at %p handler=%p %p %p stub\n",
         rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
         frame->handler, context, dispatcher);
 #endif
