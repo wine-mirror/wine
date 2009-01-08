@@ -1090,6 +1090,11 @@ static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         case ((CBN_SELCHANGE << 16) | IDC_MGR_PURPOSE_SELECTION):
             cert_mgr_clear_cert_selection(hwnd);
             break;
+        case IDC_MGR_IMPORT:
+            if (CryptUIWizImport(0, hwnd, NULL, NULL,
+             cert_mgr_current_store(hwnd)))
+                refresh_store_certs(hwnd);
+            break;
         case IDC_MGR_ADVANCED:
             if (DialogBoxW(hInstance, MAKEINTRESOURCEW(IDD_CERT_MGR_ADVANCED),
              hwnd, cert_mgr_advanced_dlg_proc) == IDOK)
