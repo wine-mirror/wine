@@ -5001,11 +5001,29 @@ static LRESULT CALLBACK import_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
 
         data = (struct ImportWizData *)page->lParam;
         SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
-        SendMessageW(GetDlgItem(hwnd, IDC_IMPORT_AUTO_STORE), BM_CLICK, 0, 0);
-        if (data->dwFlags & CRYPTUI_WIZ_IMPORT_NO_CHANGE_DEST_STORE)
+        if (!data->hDestCertStore)
+        {
+            SendMessageW(GetDlgItem(hwnd, IDC_IMPORT_AUTO_STORE), BM_CLICK,
+             0, 0);
+            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_STORE), FALSE);
+            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_BROWSE_STORE), FALSE);
             EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_SPECIFY_STORE), FALSE);
-        EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_STORE), FALSE);
-        EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_BROWSE_STORE), FALSE);
+        }
+        else
+        {
+            WCHAR storeTitle[MAX_STRING_LEN];
+
+            SendMessageW(GetDlgItem(hwnd, IDC_IMPORT_SPECIFY_STORE), BM_CLICK,
+             0, 0);
+            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_STORE), TRUE);
+            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_BROWSE_STORE), TRUE);
+            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_SPECIFY_STORE),
+             !(data->dwFlags & CRYPTUI_WIZ_IMPORT_NO_CHANGE_DEST_STORE));
+            LoadStringW(hInstance, IDS_IMPORT_DEST_DETERMINED,
+             storeTitle, sizeof(storeTitle) / sizeof(storeTitle[0]));
+            SendMessageW(GetDlgItem(hwnd, IDC_IMPORT_STORE), WM_SETTEXT,
+             0, (LPARAM)storeTitle);
+        }
         break;
     }
     case WM_NOTIFY:
