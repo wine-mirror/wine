@@ -401,9 +401,8 @@ DWORD WINAPI GetFileResourceSize16( LPCSTR lpszFileName, LPCSTR lpszResType,
     OFSTRUCT ofs;
     DWORD reslen;
 
-    TRACE("(%s,type=0x%x,id=0x%x,off=%p)\n",
-                debugstr_a(lpszFileName), (LONG)lpszResType, (LONG)lpszResId,
-                lpszResId );
+    TRACE("(%s,type=%p,id=%p,off=%p)\n",
+          debugstr_a(lpszFileName), lpszResType, lpszResId, lpszResId );
 
     lzfd = LZOpenFileA( (LPSTR)lpszFileName, &ofs, OF_READ );
     if ( lzfd < 0 ) return 0;
