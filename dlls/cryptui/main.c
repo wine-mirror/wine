@@ -38,6 +38,7 @@
 #include "cryptuires.h"
 #include "urlmon.h"
 #include "hlink.h"
+#include "winreg.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
@@ -185,6 +186,41 @@ static void add_cert_to_view(HWND lv, PCCERT_CONTEXT cert, DWORD *allocatedLen,
         item.iSubItem = 3;
         SendMessageW(lv, LVM_SETITEMTEXTW, item.iItem, (LPARAM)&item);
     }
+}
+
+static LPSTR get_cert_mgr_usages(void)
+{
+    static const WCHAR keyName[] = { 'S','o','f','t','w','a','r','e','\\','M',
+     'i','c','r','o','s','o','f','t','\\','C','r','y','p','t','o','g','r','a',
+     'p','h','y','\\','U','I','\\','C','e','r','t','m','g','r','\\','P','u',
+     'r','p','o','s','e',0 };
+    LPSTR str = NULL;
+    HKEY key;
+
+    if (!RegCreateKeyExW(HKEY_CURRENT_USER, keyName, 0, NULL, 0, KEY_READ,
+     NULL, &key, NULL))
+    {
+        LONG rc;
+        DWORD type, size;
+
+        rc = RegQueryValueExA(key, "Purpose", NULL, &type, NULL, &size);
+        if ((!rc || rc == ERROR_MORE_DATA) && type == REG_SZ)
+        {
+            str = HeapAlloc(GetProcessHeap(), 0, size);
+            if (str)
+            {
+                rc = RegQueryValueExA(key, "Purpose", NULL, NULL, (LPBYTE)str,
+                 &size);
+                if (rc)
+                {
+                    HeapFree(GetProcessHeap(), 0, str);
+                    str = NULL;
+                }
+            }
+        }
+        RegCloseKey(key);
+    }
+    return str;
 }
 
 static void show_store_certs(HWND hwnd, HCERTSTORE store)
@@ -359,6 +395,31 @@ static void toggle_usage(HWND hwnd, int iItem)
     }
 }
 
+static LONG_PTR find_oid_in_list(HWND lv, LPCSTR oid)
+{
+    PCCRYPT_OID_INFO oidInfo = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY,
+     (void *)oid, CRYPT_ENHKEY_USAGE_OID_GROUP_ID);
+    LONG_PTR ret;
+
+    if (oidInfo)
+    {
+        LVFINDINFOW findInfo;
+
+        findInfo.flags = LVFI_PARAM;
+        findInfo.lParam = (LPARAM)oidInfo;
+        ret = SendMessageW(lv, LVM_FINDITEMW, -1, (LPARAM)&findInfo);
+    }
+    else
+    {
+        LVFINDINFOA findInfo;
+
+        findInfo.flags = LVFI_STRING;
+        findInfo.psz = oid;
+        ret = SendMessageW(lv, LVM_FINDITEMA, -1, (LPARAM)&findInfo);
+    }
+    return ret;
+}
+
 static LRESULT CALLBACK cert_mgr_advanced_dlg_proc(HWND hwnd, UINT msg,
  WPARAM wp, LPARAM lp)
 {
@@ -370,6 +431,7 @@ static LRESULT CALLBACK cert_mgr_advanced_dlg_proc(HWND hwnd, UINT msg,
         LVCOLUMNW column;
         HWND lv = GetDlgItem(hwnd, IDC_CERTIFICATE_USAGES);
         HIMAGELIST imageList;
+        LPSTR disabledUsages;
 
         GetWindowRect(lv, &rc);
         column.mask = LVCF_WIDTH;
@@ -389,6 +451,23 @@ static LRESULT CALLBACK cert_mgr_advanced_dlg_proc(HWND hwnd, UINT msg,
             SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)imageList);
         }
         add_known_usages_to_list(lv, CheckBitmapIndexChecked);
+        if ((disabledUsages = get_cert_mgr_usages()))
+        {
+            LPSTR ptr, comma;
+
+            for (ptr = disabledUsages, comma = strchr(ptr, ','); ptr && *ptr;
+             ptr = comma ? comma + 1 : NULL,
+             comma = ptr ? strchr(ptr, ',') : NULL)
+            {
+                LONG_PTR index;
+
+                if (comma)
+                    *comma = 0;
+                if ((index = find_oid_in_list(lv, ptr)) != -1)
+                    toggle_usage(hwnd, index);
+            }
+            HeapFree(GetProcessHeap(), 0, disabledUsages);
+        }
         break;
     }
     case WM_NOTIFY:
@@ -2408,30 +2487,8 @@ static BOOL is_valid_oid(LPCSTR oid)
 
 static BOOL is_oid_in_list(HWND hwnd, LPCSTR oid)
 {
-    HWND lv = GetDlgItem(hwnd, IDC_CERTIFICATE_USAGES);
-    PCCRYPT_OID_INFO oidInfo = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY,
-     (void *)oid, CRYPT_ENHKEY_USAGE_OID_GROUP_ID);
-    BOOL ret = FALSE;
-
-    if (oidInfo)
-    {
-        LVFINDINFOW findInfo;
-
-        findInfo.flags = LVFI_PARAM;
-        findInfo.lParam = (LPARAM)oidInfo;
-        if (SendMessageW(lv, LVM_FINDITEMW, -1, (LPARAM)&findInfo) != -1)
-            ret = TRUE;
-    }
-    else
-    {
-        LVFINDINFOA findInfo;
-
-        findInfo.flags = LVFI_STRING;
-        findInfo.psz = oid;
-        if (SendMessageW(lv, LVM_FINDITEMA, -1, (LPARAM)&findInfo) != -1)
-            ret = TRUE;
-    }
-    return ret;
+    return find_oid_in_list(GetDlgItem(hwnd, IDC_CERTIFICATE_USAGES), oid)
+     != -1;
 }
 
 #define MAX_PURPOSE 255
