@@ -538,6 +538,7 @@ static void test_nontrivial_pointer_types(void)
     RPC_MESSAGE RpcMessage;
     MIDL_STUB_MESSAGE StubMsg;
     MIDL_STUB_DESC StubDesc;
+    DWORD size;
     void *ptr;
     char **p1;
     char *p2;
@@ -580,8 +581,8 @@ static void test_nontrivial_pointer_types(void)
 
     ptr = NdrPointerMarshall( &StubMsg, (unsigned char *)p1, &fmtstr_ref_unique_out[4] );
     ok(ptr == NULL, "ret %p\n", ptr);
-    ok(StubMsg.Buffer - StubMsg.BufferStart == 5, "Buffer %p Start %p len %d\n",
-       StubMsg.Buffer, StubMsg.BufferStart, StubMsg.Buffer - StubMsg.BufferStart);
+    size = StubMsg.Buffer - StubMsg.BufferStart;
+    ok(size == 5, "Buffer %p Start %p len %d\n", StubMsg.Buffer, StubMsg.BufferStart, size);
     ok(*(unsigned int *)StubMsg.BufferStart != 0, "pointer ID marshalled incorrectly\n");
     ok(*(unsigned char *)(StubMsg.BufferStart + 4) == 0x22, "char data marshalled incorrectly: 0x%x\n",
        *(unsigned char *)(StubMsg.BufferStart + 4));
@@ -1549,6 +1550,7 @@ static void test_conformant_string(void)
     RPC_MESSAGE RpcMessage;
     MIDL_STUB_MESSAGE StubMsg;
     MIDL_STUB_DESC StubDesc;
+    DWORD size;
     void *ptr;
     unsigned char *mem, *mem_orig;
     char memsrc[] = "This is a test string";
@@ -1581,8 +1583,9 @@ static void test_conformant_string(void)
 
     ptr = NdrPointerMarshall( &StubMsg, (unsigned char *)memsrc, fmtstr_conf_str );
     ok(ptr == NULL, "ret %p\n", ptr);
-    ok(StubMsg.Buffer - StubMsg.BufferStart == sizeof(memsrc) + 12, "Buffer %p Start %p len %d\n",
-       StubMsg.Buffer, StubMsg.BufferStart, StubMsg.Buffer - StubMsg.BufferStart);
+    size = StubMsg.Buffer - StubMsg.BufferStart;
+    ok(size == sizeof(memsrc) + 12, "Buffer %p Start %p len %d\n",
+       StubMsg.Buffer, StubMsg.BufferStart, size);
     ok(!memcmp(StubMsg.BufferStart + 12, memsrc, sizeof(memsrc)), "incorrectly marshaled\n");
 
     StubMsg.Buffer = StubMsg.BufferStart;
@@ -1665,6 +1668,7 @@ static void test_nonconformant_string(void)
     RPC_MESSAGE RpcMessage;
     MIDL_STUB_MESSAGE StubMsg;
     MIDL_STUB_DESC StubDesc;
+    DWORD size;
     void *ptr;
     unsigned char *mem, *mem_orig;
     unsigned char memsrc[10] = "This is";
@@ -1700,8 +1704,9 @@ static void test_nonconformant_string(void)
 
     ptr = NdrNonConformantStringMarshall( &StubMsg, (unsigned char *)memsrc, fmtstr_nonconf_str );
     ok(ptr == NULL, "ret %p\n", ptr);
-    ok(StubMsg.Buffer - StubMsg.BufferStart == strlen((char *)memsrc) + 1 + 8, "Buffer %p Start %p len %d\n",
-       StubMsg.Buffer, StubMsg.BufferStart, StubMsg.Buffer - StubMsg.BufferStart);
+    size = StubMsg.Buffer - StubMsg.BufferStart;
+    ok(size == strlen((char *)memsrc) + 1 + 8, "Buffer %p Start %p len %d\n",
+       StubMsg.Buffer, StubMsg.BufferStart, size);
     ok(!memcmp(StubMsg.BufferStart + 8, memsrc, strlen((char *)memsrc) + 1), "incorrectly marshaled\n");
 
     StubMsg.Buffer = StubMsg.BufferStart;
@@ -1774,8 +1779,9 @@ static void test_nonconformant_string(void)
 
     ptr = NdrNonConformantStringMarshall( &StubMsg, (unsigned char *)memsrc2, fmtstr_nonconf_str );
     ok(ptr == NULL, "ret %p\n", ptr);
-    ok(StubMsg.Buffer - StubMsg.BufferStart == strlen((char *)memsrc2) + 1 + 8, "Buffer %p Start %p len %d\n",
-       StubMsg.Buffer, StubMsg.BufferStart, StubMsg.Buffer - StubMsg.BufferStart);
+    size = StubMsg.Buffer - StubMsg.BufferStart;
+    ok(size == strlen((char *)memsrc2) + 1 + 8, "Buffer %p Start %p len %d\n",
+       StubMsg.Buffer, StubMsg.BufferStart, size);
     ok(!memcmp(StubMsg.BufferStart + 8, memsrc2, strlen((char *)memsrc2) + 1), "incorrectly marshaled\n");
 
     StubMsg.Buffer = StubMsg.BufferStart;
@@ -1909,8 +1915,8 @@ static void test_conf_complex_struct(void)
     ptr = NdrComplexStructMarshall( &StubMsg, (unsigned char *)memsrc,
                                     &fmtstr_complex_struct[30] );
     ok(ptr == NULL, "ret %p\n", ptr);
-    ok(*(unsigned int *)StubMsg.BufferStart == 20, "Conformance should have been 20 instead of %d\n", (unsigned int)StubMsg.BufferStart);
-    ok(*(unsigned int *)(StubMsg.BufferStart + 4) == 20, "conf_complex.size should have been 20 instead of %d\n", (unsigned int)(StubMsg.BufferStart + 4));
+    ok(*(unsigned int *)StubMsg.BufferStart == 20, "Conformance should have been 20 instead of %d\n", *(unsigned int *)StubMsg.BufferStart);
+    ok(*(unsigned int *)(StubMsg.BufferStart + 4) == 20, "conf_complex.size should have been 20 instead of %d\n", *(unsigned int *)(StubMsg.BufferStart + 4));
     for (i = 0; i < 20; i++)
       ok(*(unsigned int *)(StubMsg.BufferStart + 8 + i * 4) == 0, "pointer id for conf_complex.array[%d] should have been 0 instead of 0x%x\n", i, *(unsigned int *)(StubMsg.BufferStart + 8 + i * 4));
 
