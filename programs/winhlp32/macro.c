@@ -96,7 +96,7 @@ void CALLBACK MACRO_CreateButton(LPCSTR id, LPCSTR name, LPCSTR macro)
     WINHELP_LayoutMainWindow(win);
 }
 
-void CALLBACK MACRO_DestroyButton(LPCSTR str)
+static void CALLBACK MACRO_DestroyButton(LPCSTR str)
 {
     WINE_FIXME("(\"%s\")\n", str);
 }
@@ -113,7 +113,7 @@ void CALLBACK MACRO_DisableButton(LPCSTR id)
     EnableWindow((*b)->hWnd, FALSE);
 }
 
-void CALLBACK MACRO_EnableButton(LPCSTR id)
+static void CALLBACK MACRO_EnableButton(LPCSTR id)
 {
     WINHELP_BUTTON**    b;
 
@@ -142,12 +142,12 @@ void CALLBACK MACRO_About(void)
     WINE_FIXME("()\n");
 }
 
-void CALLBACK MACRO_AddAccelerator(LONG u1, LONG u2, LPCSTR str)
+static void CALLBACK MACRO_AddAccelerator(LONG u1, LONG u2, LPCSTR str)
 {
     WINE_FIXME("(%u, %u, \"%s\")\n", u1, u2, str);
 }
 
-void CALLBACK MACRO_ALink(LPCSTR str1, LONG u, LPCSTR str2)
+static void CALLBACK MACRO_ALink(LPCSTR str1, LONG u, LPCSTR str2)
 {
     WINE_FIXME("(\"%s\", %u, \"%s\")\n", str1, u, str2);
 }
@@ -157,12 +157,12 @@ void CALLBACK MACRO_Annotate(void)
     WINE_FIXME("()\n");
 }
 
-void CALLBACK MACRO_AppendItem(LPCSTR str1, LPCSTR str2, LPCSTR str3, LPCSTR str4)
+static void CALLBACK MACRO_AppendItem(LPCSTR str1, LPCSTR str2, LPCSTR str3, LPCSTR str4)
 {
     WINE_FIXME("(\"%s\", \"%s\", \"%s\", \"%s\")\n", str1, str2, str3, str4);
 }
 
-void CALLBACK MACRO_Back(void)
+static void CALLBACK MACRO_Back(void)
 {
     WINHELP_WINDOW* win = Globals.active_win;
 
@@ -172,7 +172,7 @@ void CALLBACK MACRO_Back(void)
         WINHELP_CreateHelpWindow(&win->back.set[--win->back.index - 1], SW_SHOW, FALSE);
 }
 
-void CALLBACK MACRO_BackFlush(void)
+static void CALLBACK MACRO_BackFlush(void)
 {
     WINHELP_WINDOW* win = Globals.active_win;
 
@@ -186,12 +186,12 @@ void CALLBACK MACRO_BookmarkDefine(void)
     WINE_FIXME("()\n");
 }
 
-void CALLBACK MACRO_BookmarkMore(void)
+static void CALLBACK MACRO_BookmarkMore(void)
 {
     WINE_FIXME("()\n");
 }
 
-void CALLBACK MACRO_BrowseButtons(void)
+static void CALLBACK MACRO_BrowseButtons(void)
 {
     HLPFILE_PAGE*       page = Globals.active_win->page;
     ULONG               relative;
@@ -207,7 +207,7 @@ void CALLBACK MACRO_BrowseButtons(void)
         MACRO_DisableButton("BTN_NEXT");
 }
 
-void CALLBACK MACRO_ChangeButtonBinding(LPCSTR id, LPCSTR macro)
+static void CALLBACK MACRO_ChangeButtonBinding(LPCSTR id, LPCSTR macro)
 {
     WINHELP_WINDOW*     win = Globals.active_win;
     WINHELP_BUTTON*     button;
@@ -248,7 +248,7 @@ void CALLBACK MACRO_ChangeButtonBinding(LPCSTR id, LPCSTR macro)
     WINHELP_LayoutMainWindow(win);
 }
 
-void CALLBACK MACRO_ChangeEnable(LPCSTR id, LPCSTR macro)
+static void CALLBACK MACRO_ChangeEnable(LPCSTR id, LPCSTR macro)
 {
     WINE_TRACE("(\"%s\", \"%s\")\n", id, macro);
 
@@ -256,17 +256,17 @@ void CALLBACK MACRO_ChangeEnable(LPCSTR id, LPCSTR macro)
     MACRO_EnableButton(id);
 }
 
-void CALLBACK MACRO_ChangeItemBinding(LPCSTR str1, LPCSTR str2)
+static void CALLBACK MACRO_ChangeItemBinding(LPCSTR str1, LPCSTR str2)
 {
     WINE_FIXME("(\"%s\", \"%s\")\n", str1, str2);
 }
 
-void CALLBACK MACRO_CheckItem(LPCSTR str)
+static void CALLBACK MACRO_CheckItem(LPCSTR str)
 {
     WINE_FIXME("(\"%s\")\n", str);
 }
 
-void CALLBACK MACRO_CloseSecondarys(void)
+static void CALLBACK MACRO_CloseSecondarys(void)
 {
     WINHELP_WINDOW *win;
 
@@ -276,7 +276,7 @@ void CALLBACK MACRO_CloseSecondarys(void)
             DestroyWindow(win->hMainWnd);
 }
 
-void CALLBACK MACRO_CloseWindow(LPCSTR lpszWindow)
+static void CALLBACK MACRO_CloseWindow(LPCSTR lpszWindow)
 {
     WINHELP_WINDOW *win;
 
@@ -289,12 +289,12 @@ void CALLBACK MACRO_CloseWindow(LPCSTR lpszWindow)
             DestroyWindow(win->hMainWnd);
 }
 
-void CALLBACK MACRO_Compare(LPCSTR str)
+static void CALLBACK MACRO_Compare(LPCSTR str)
 {
     WINE_FIXME("(\"%s\")\n", str);
 }
 
-void CALLBACK MACRO_Contents(void)
+static void CALLBACK MACRO_Contents(void)
 {
     WINE_TRACE("()\n");
 
@@ -302,7 +302,7 @@ void CALLBACK MACRO_Contents(void)
         MACRO_JumpContents(Globals.active_win->page->file->lpszPath, NULL);
 }
 
-void CALLBACK MACRO_ControlPanel(LPCSTR str1, LPCSTR str2, LONG u)
+static void CALLBACK MACRO_ControlPanel(LPCSTR str1, LPCSTR str2, LONG u)
 {
     WINE_FIXME("(\"%s\", \"%s\", %u)\n", str1, str2, u);
 }
@@ -312,42 +312,42 @@ void CALLBACK MACRO_CopyDialog(void)
     WINE_FIXME("()\n");
 }
 
-void CALLBACK MACRO_CopyTopic(void)
+static void CALLBACK MACRO_CopyTopic(void)
 {
     WINE_FIXME("()\n");
 }
 
-void CALLBACK MACRO_DeleteItem(LPCSTR str)
+static void CALLBACK MACRO_DeleteItem(LPCSTR str)
 {
     WINE_FIXME("(\"%s\")\n", str);
 }
 
-void CALLBACK MACRO_DeleteMark(LPCSTR str)
+static void CALLBACK MACRO_DeleteMark(LPCSTR str)
 {
     WINE_FIXME("(\"%s\")\n", str);
 }
 
-void CALLBACK MACRO_DisableItem(LPCSTR str)
+static void CALLBACK MACRO_DisableItem(LPCSTR str)
 {
     WINE_FIXME("(\"%s\")\n", str);
 }
 
-void CALLBACK MACRO_EnableItem(LPCSTR str)
+static void CALLBACK MACRO_EnableItem(LPCSTR str)
 {
     WINE_FIXME("(\"%s\")\n", str);
 }
 
-void CALLBACK MACRO_EndMPrint(void)
+static void CALLBACK MACRO_EndMPrint(void)
 {
     WINE_FIXME("()\n");
 }
 
-void CALLBACK MACRO_ExecFile(LPCSTR str1, LPCSTR str2, LONG u, LPCSTR str3)
+static void CALLBACK MACRO_ExecFile(LPCSTR str1, LPCSTR str2, LONG u, LPCSTR str3)
 {
     WINE_FIXME("(\"%s\", \"%s\", %u, \"%s\")\n", str1, str2, u, str3);
 }
 
-void CALLBACK MACRO_ExecProgram(LPCSTR str, LONG u)
+static void CALLBACK MACRO_ExecProgram(LPCSTR str, LONG u)
 {
     WINE_FIXME("(\"%s\", %u)\n", str, u);
 }
@@ -360,22 +360,22 @@ void CALLBACK MACRO_Exit(void)
         DestroyWindow(Globals.win_list->hMainWnd);
 }
 
-void CALLBACK MACRO_ExtAbleItem(LPCSTR str, LONG u)
+static void CALLBACK MACRO_ExtAbleItem(LPCSTR str, LONG u)
 {
     WINE_FIXME("(\"%s\", %u)\n", str, u);
 }
 
-void CALLBACK MACRO_ExtInsertItem(LPCSTR str1, LPCSTR str2, LPCSTR str3, LPCSTR str4, LONG u1, LONG u2)
+static void CALLBACK MACRO_ExtInsertItem(LPCSTR str1, LPCSTR str2, LPCSTR str3, LPCSTR str4, LONG u1, LONG u2)
 {
     WINE_FIXME("(\"%s\", \"%s\", \"%s\", \"%s\", %u, %u)\n", str1, str2, str3, str4, u1, u2);
 }
 
-void CALLBACK MACRO_ExtInsertMenu(LPCSTR str1, LPCSTR str2, LPCSTR str3, LONG u1, LONG u2)
+static void CALLBACK MACRO_ExtInsertMenu(LPCSTR str1, LPCSTR str2, LPCSTR str3, LONG u1, LONG u2)
 {
     WINE_FIXME("(\"%s\", \"%s\", \"%s\", %u, %u)\n", str1, str2, str3, u1, u2);
 }
 
-BOOL CALLBACK MACRO_FileExist(LPCSTR str)
+static BOOL CALLBACK MACRO_FileExist(LPCSTR str)
 {
     WINE_TRACE("(\"%s\")\n", str);
     return GetFileAttributes(str) != INVALID_FILE_ATTRIBUTES;
@@ -391,27 +391,27 @@ void CALLBACK MACRO_FileOpen(void)
     }
 }
 
-void CALLBACK MACRO_Find(void)
+static void CALLBACK MACRO_Find(void)
 {
     WINE_FIXME("()\n");
 }
 
-void CALLBACK MACRO_Finder(void)
+static void CALLBACK MACRO_Finder(void)
 {
     WINHELP_CreateIndexWindow(FALSE);
 }
 
-void CALLBACK MACRO_FloatingMenu(void)
+static void CALLBACK MACRO_FloatingMenu(void)
 {
     WINE_FIXME("()\n");
 }
 
-void CALLBACK MACRO_Flush(void)
+static void CALLBACK MACRO_Flush(void)
 {
     WINE_FIXME("()\n");
 }
 
-void CALLBACK MACRO_FocusWindow(LPCSTR lpszWindow)
+static void CALLBACK MACRO_FocusWindow(LPCSTR lpszWindow)
 {
     WINHELP_WINDOW *win;
 
@@ -424,12 +424,12 @@ void CALLBACK MACRO_FocusWindow(LPCSTR lpszWindow)
             SetFocus(win->hMainWnd);
 }
 
-void CALLBACK MACRO_Generate(LPCSTR str, LONG w, LONG l)
+static void CALLBACK MACRO_Generate(LPCSTR str, LONG w, LONG l)
 {
     WINE_FIXME("(\"%s\", %x, %x)\n", str, w, l);
 }
 
-void CALLBACK MACRO_GotoMark(LPCSTR str)
+static void CALLBACK MACRO_GotoMark(LPCSTR str)
 {
     WINE_FIXME("(\"%s\")\n", str);
 }
@@ -463,45 +463,45 @@ void CALLBACK MACRO_History(void)
     }
 }
 
-void CALLBACK MACRO_IfThen(BOOL b, LPCSTR t)
+static void CALLBACK MACRO_IfThen(BOOL b, LPCSTR t)
 {
     if (b) MACRO_ExecuteMacro(t);
 }
 
-void CALLBACK MACRO_IfThenElse(BOOL b, LPCSTR t, LPCSTR f)
+static void CALLBACK MACRO_IfThenElse(BOOL b, LPCSTR t, LPCSTR f)
 {
     if (b) MACRO_ExecuteMacro(t); else MACRO_ExecuteMacro(f);
 }
 
-BOOL CALLBACK MACRO_InitMPrint(void)
+static BOOL CALLBACK MACRO_InitMPrint(void)
 {
     WINE_FIXME("()\n");
     return FALSE;
 }
 
-void CALLBACK MACRO_InsertItem(LPCSTR str1, LPCSTR str2, LPCSTR str3, LPCSTR str4, LONG u)
+static void CALLBACK MACRO_InsertItem(LPCSTR str1, LPCSTR str2, LPCSTR str3, LPCSTR str4, LONG u)
 {
     WINE_FIXME("(\"%s\", \"%s\", \"%s\", \"%s\", %u)\n", str1, str2, str3, str4, u);
 }
 
-void CALLBACK MACRO_InsertMenu(LPCSTR str1, LPCSTR str2, LONG u)
+static void CALLBACK MACRO_InsertMenu(LPCSTR str1, LPCSTR str2, LONG u)
 {
     WINE_FIXME("(\"%s\", \"%s\", %u)\n", str1, str2, u);
 }
 
-BOOL CALLBACK MACRO_IsBook(void)
+static BOOL CALLBACK MACRO_IsBook(void)
 {
     WINE_TRACE("()\n");
     return Globals.isBook;
 }
 
-BOOL CALLBACK MACRO_IsMark(LPCSTR str)
+static BOOL CALLBACK MACRO_IsMark(LPCSTR str)
 {
     WINE_FIXME("(\"%s\")\n", str);
     return FALSE;
 }
 
-BOOL CALLBACK MACRO_IsNotMark(LPCSTR str)
+static BOOL CALLBACK MACRO_IsNotMark(LPCSTR str)
 {
     WINE_FIXME("(\"%s\")\n", str);
     return TRUE;
@@ -530,12 +530,12 @@ void CALLBACK MACRO_JumpHash(LPCSTR lpszPath, LPCSTR lpszWindow, LONG lHash)
                            SW_NORMAL);
 }
 
-void CALLBACK MACRO_JumpHelpOn(void)
+static void CALLBACK MACRO_JumpHelpOn(void)
 {
     WINE_FIXME("()\n");
 }
 
-void CALLBACK MACRO_JumpID(LPCSTR lpszPathWindow, LPCSTR topic_id)
+static void CALLBACK MACRO_JumpID(LPCSTR lpszPathWindow, LPCSTR topic_id)
 {
     LPSTR       ptr;
 
@@ -561,32 +561,32 @@ void CALLBACK MACRO_JumpID(LPCSTR lpszPathWindow, LPCSTR topic_id)
 /* FIXME: this macros is wrong
  * it should only contain 2 strings, path & window are coded as path>window
  */
-void CALLBACK MACRO_JumpKeyword(LPCSTR lpszPath, LPCSTR lpszWindow, LPCSTR keyword)
+static void CALLBACK MACRO_JumpKeyword(LPCSTR lpszPath, LPCSTR lpszWindow, LPCSTR keyword)
 {
     WINE_FIXME("(\"%s\", \"%s\", \"%s\")\n", lpszPath, lpszWindow, keyword);
 }
 
-void CALLBACK MACRO_KLink(LPCSTR str1, LONG u, LPCSTR str2, LPCSTR str3)
+static void CALLBACK MACRO_KLink(LPCSTR str1, LONG u, LPCSTR str2, LPCSTR str3)
 {
     WINE_FIXME("(\"%s\", %u, \"%s\", \"%s\")\n", str1, u, str2, str3);
 }
 
-void CALLBACK MACRO_Menu(void)
+static void CALLBACK MACRO_Menu(void)
 {
     WINE_FIXME("()\n");
 }
 
-void CALLBACK MACRO_MPrintHash(LONG u)
+static void CALLBACK MACRO_MPrintHash(LONG u)
 {
     WINE_FIXME("(%u)\n", u);
 }
 
-void CALLBACK MACRO_MPrintID(LPCSTR str)
+static void CALLBACK MACRO_MPrintID(LPCSTR str)
 {
     WINE_FIXME("(\"%s\")\n", str);
 }
 
-void CALLBACK MACRO_Next(void)
+static void CALLBACK MACRO_Next(void)
 {
     WINHELP_WNDPAGE     wp;
 
@@ -601,7 +601,7 @@ void CALLBACK MACRO_Next(void)
     }
 }
 
-void CALLBACK MACRO_NoShow(void)
+static void CALLBACK MACRO_NoShow(void)
 {
     WINE_FIXME("()\n");
 }
@@ -611,22 +611,22 @@ void CALLBACK MACRO_PopupContext(LPCSTR str, LONG u)
     WINE_FIXME("(\"%s\", %u)\n", str, u);
 }
 
-void CALLBACK MACRO_PopupHash(LPCSTR str, LONG u)
+static void CALLBACK MACRO_PopupHash(LPCSTR str, LONG u)
 {
     WINE_FIXME("(\"%s\", %u)\n", str, u);
 }
 
-void CALLBACK MACRO_PopupId(LPCSTR str1, LPCSTR str2)
+static void CALLBACK MACRO_PopupId(LPCSTR str1, LPCSTR str2)
 {
     WINE_FIXME("(\"%s\", \"%s\")\n", str1, str2);
 }
 
-void CALLBACK MACRO_PositionWindow(LONG i1, LONG i2, LONG u1, LONG u2, LONG u3, LPCSTR str)
+static void CALLBACK MACRO_PositionWindow(LONG i1, LONG i2, LONG u1, LONG u2, LONG u3, LPCSTR str)
 {
     WINE_FIXME("(%i, %i, %u, %u, %u, \"%s\")\n", i1, i2, u1, u2, u3, str);
 }
 
-void CALLBACK MACRO_Prev(void)
+static void CALLBACK MACRO_Prev(void)
 {
     WINHELP_WNDPAGE     wp;
 
@@ -677,7 +677,7 @@ void CALLBACK MACRO_PrinterSetup(void)
     WINE_FIXME("()\n");
 }
 
-void CALLBACK MACRO_RegisterRoutine(LPCSTR dll_name, LPCSTR proc, LPCSTR args)
+static void CALLBACK MACRO_RegisterRoutine(LPCSTR dll_name, LPCSTR proc, LPCSTR args)
 {
     FARPROC             fn = NULL;
     int                 size;
@@ -739,22 +739,22 @@ void CALLBACK MACRO_RegisterRoutine(LPCSTR dll_name, LPCSTR proc, LPCSTR args)
     WINE_TRACE("Added %s(%s) at %p\n", proc, args, fn);
 }
 
-void CALLBACK MACRO_RemoveAccelerator(LONG u1, LONG u2)
+static void CALLBACK MACRO_RemoveAccelerator(LONG u1, LONG u2)
 {
     WINE_FIXME("(%u, %u)\n", u1, u2);
 }
 
-void CALLBACK MACRO_ResetMenu(void)
+static void CALLBACK MACRO_ResetMenu(void)
 {
     WINE_FIXME("()\n");
 }
 
-void CALLBACK MACRO_SaveMark(LPCSTR str)
+static void CALLBACK MACRO_SaveMark(LPCSTR str)
 {
     WINE_FIXME("(\"%s\")\n", str);
 }
 
-void CALLBACK MACRO_Search(void)
+static void CALLBACK MACRO_Search(void)
 {
     WINHELP_CreateIndexWindow(TRUE);
 }
@@ -764,7 +764,7 @@ void CALLBACK MACRO_SetContents(LPCSTR str, LONG u)
     WINE_FIXME("(\"%s\", %u)\n", str, u);
 }
 
-void CALLBACK MACRO_SetHelpOnFile(LPCSTR str)
+static void CALLBACK MACRO_SetHelpOnFile(LPCSTR str)
 {
     WINE_TRACE("(\"%s\")\n", str);
 
@@ -774,51 +774,51 @@ void CALLBACK MACRO_SetHelpOnFile(LPCSTR str)
         strcpy(Globals.active_win->page->file->help_on_file, str);
 }
 
-void CALLBACK MACRO_SetPopupColor(LONG r, LONG g, LONG b)
+static void CALLBACK MACRO_SetPopupColor(LONG r, LONG g, LONG b)
 {
     WINE_TRACE("(%x, %x, %x)\n", r, g, b);
     Globals.active_win->page->file->has_popup_color = TRUE;
     Globals.active_win->page->file->popup_color = RGB(r, g, b);
 }
 
-void CALLBACK MACRO_ShellExecute(LPCSTR str1, LPCSTR str2, LONG u1, LONG u2, LPCSTR str3, LPCSTR str4)
+static void CALLBACK MACRO_ShellExecute(LPCSTR str1, LPCSTR str2, LONG u1, LONG u2, LPCSTR str3, LPCSTR str4)
 {
     WINE_FIXME("(\"%s\", \"%s\", %u, %u, \"%s\", \"%s\")\n", str1, str2, u1, u2, str3, str4);
 }
 
-void CALLBACK MACRO_ShortCut(LPCSTR str1, LPCSTR str2, LONG w, LONG l, LPCSTR str)
+static void CALLBACK MACRO_ShortCut(LPCSTR str1, LPCSTR str2, LONG w, LONG l, LPCSTR str)
 {
     WINE_FIXME("(\"%s\", \"%s\", %x, %x, \"%s\")\n", str1, str2, w, l, str);
 }
 
-void CALLBACK MACRO_TCard(LONG u)
+static void CALLBACK MACRO_TCard(LONG u)
 {
     WINE_FIXME("(%u)\n", u);
 }
 
-void CALLBACK MACRO_Test(LONG u)
+static void CALLBACK MACRO_Test(LONG u)
 {
     WINE_FIXME("(%u)\n", u);
 }
 
-BOOL CALLBACK MACRO_TestALink(LPCSTR str)
+static BOOL CALLBACK MACRO_TestALink(LPCSTR str)
 {
     WINE_FIXME("(\"%s\")\n", str);
     return FALSE;
 }
 
-BOOL CALLBACK MACRO_TestKLink(LPCSTR str)
+static BOOL CALLBACK MACRO_TestKLink(LPCSTR str)
 {
     WINE_FIXME("(\"%s\")\n", str);
     return FALSE;
 }
 
-void CALLBACK MACRO_UncheckItem(LPCSTR str)
+static void CALLBACK MACRO_UncheckItem(LPCSTR str)
 {
     WINE_FIXME("(\"%s\")\n", str);
 }
 
-void CALLBACK MACRO_UpdateWindow(LPCSTR str1, LPCSTR str2)
+static void CALLBACK MACRO_UpdateWindow(LPCSTR str1, LPCSTR str2)
 {
     WINE_FIXME("(\"%s\", \"%s\")\n", str1, str2);
 }
