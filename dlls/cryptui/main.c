@@ -109,6 +109,71 @@ static void initialize_purpose_selection(HWND hwnd)
     SendMessageW(cb, CB_SETCURSEL, 0, 0);
 }
 
+static const WCHAR my[] = { 'M','y',0 };
+static const WCHAR addressBook[] = {
+ 'A','d','d','r','e','s','s','B','o','o','k',0 };
+static const WCHAR ca[] = { 'C','A',0 };
+static const WCHAR root[] = { 'R','o','o','t',0 };
+static const WCHAR trustedPublisher[] = {
+ 'T','r','u','s','t','e','d','P','u','b','l','i','s','h','e','r',0 };
+static const WCHAR disallowed[] = { 'D','i','s','a','l','l','o','w','e','d',0 };
+
+static LPCWSTR defaultStoreList[] = {
+ my, addressBook, ca, root, trustedPublisher, disallowed };
+static LPCWSTR publisherStoreList[] = { root, trustedPublisher, disallowed };
+
+static void show_cert_stores(HWND hwnd, DWORD dwFlags)
+{
+    LPCWSTR *storeList;
+    int cStores, i;
+    HWND tab = GetDlgItem(hwnd, IDC_MGR_STORES);
+
+    if (dwFlags & CRYPTUI_CERT_MGR_PUBLISHER_TAB)
+    {
+        storeList = publisherStoreList;
+        cStores = sizeof(publisherStoreList) / sizeof(publisherStoreList[0]);
+    }
+    else
+    {
+        storeList = defaultStoreList;
+        cStores = sizeof(defaultStoreList) / sizeof(defaultStoreList[0]);
+    }
+    if (dwFlags & CRYPTUI_CERT_MGR_SINGLE_TAB_FLAG)
+        cStores = 1;
+    for (i = 0; i < cStores; i++)
+    {
+        LPCWSTR name;
+        TCITEMW item;
+        HCERTSTORE store;
+
+        if (!(name = CryptFindLocalizedName(storeList[i])))
+            name = storeList[i];
+        store = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
+         CERT_SYSTEM_STORE_CURRENT_USER, storeList[i]);
+        item.mask = TCIF_TEXT | TCIF_PARAM;
+        item.pszText = (LPWSTR)name;
+        item.lParam = (LPARAM)store;
+        SendMessageW(tab, TCM_INSERTITEMW, i, (LPARAM)&item);
+    }
+}
+
+static HCERTSTORE cert_mgr_index_to_store(HWND tab, int index)
+{
+    TCITEMW item;
+
+    item.mask = TCIF_PARAM;
+    SendMessageW(tab, TCM_GETITEMW, index, (LPARAM)&item);
+    return (HCERTSTORE)item.lParam;
+}
+
+static void close_stores(HWND tab)
+{
+    int i, tabs = SendMessageW(tab, TCM_GETITEMCOUNT, 0, 0);
+
+    for (i = 0; i < tabs; i++)
+        CertCloseStore(cert_mgr_index_to_store(tab, i), 0);
+}
+
 static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
@@ -124,12 +189,14 @@ static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         if (pCryptUICertMgr->pwszTitle)
             SendMessageW(hwnd, WM_SETTEXT, 0,
              (LPARAM)pCryptUICertMgr->pwszTitle);
+        show_cert_stores(hwnd, pCryptUICertMgr->dwFlags);
         break;
     }
     case WM_COMMAND:
         switch (wp)
         {
         case IDCANCEL:
+            close_stores(GetDlgItem(hwnd, IDC_MGR_STORES));
             EndDialog(hwnd, IDCANCEL);
             break;
         }
@@ -3471,15 +3538,12 @@ static BOOL is_ca_cert(PCCERT_CONTEXT cert, BOOL defaultIfNotSpecified)
 
 static HCERTSTORE choose_store_for_cert(PCCERT_CONTEXT cert)
 {
-    static const WCHAR AddressBook[] = { 'A','d','d','r','e','s','s',
-     'B','o','o','k',0 };
-    static const WCHAR CA[] = { 'C','A',0 };
     LPCWSTR storeName;
 
     if (is_ca_cert(cert, TRUE))
-        storeName = CA;
+        storeName = ca;
     else
-        storeName = AddressBook;
+        storeName = addressBook;
     return CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
      CERT_SYSTEM_STORE_CURRENT_USER, storeName);
 }
@@ -3522,8 +3586,6 @@ static BOOL import_crl(PCCRL_CONTEXT crl, HCERTSTORE hDestCertStore)
     if (hDestCertStore) store = hDestCertStore;
     else
     {
-        static const WCHAR ca[] = { 'C','A',0 };
-
         if (!(store = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
          CERT_SYSTEM_STORE_CURRENT_USER, ca)))
         {
