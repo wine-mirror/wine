@@ -118,12 +118,12 @@ static HANDLE get_device_manager(void)
 static LONG CALLBACK vectored_handler( EXCEPTION_POINTERS *ptrs )
 {
     EXCEPTION_RECORD *record = ptrs->ExceptionRecord;
-    CONTEXT *context = ptrs->ContextRecord;
 
     if (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ||
         record->ExceptionCode == EXCEPTION_PRIV_INSTRUCTION)
     {
 #ifdef __i386__
+        CONTEXT *context = ptrs->ContextRecord;
         extern DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context );
 
         if (__wine_emulate_instruction( record, context ) == ExceptionContinueExecution)
@@ -1068,7 +1068,7 @@ NTSTATUS WINAPI PsCreateSystemThread(PHANDLE ThreadHandle, ULONG DesiredAccess,
  */
 HANDLE WINAPI PsGetCurrentProcessId(void)
 {
-    return (HANDLE)GetCurrentProcessId();  /* FIXME: not quite right... */
+    return UlongToHandle(GetCurrentProcessId());  /* FIXME: not quite right... */
 }
 
 
@@ -1077,7 +1077,7 @@ HANDLE WINAPI PsGetCurrentProcessId(void)
  */
 HANDLE WINAPI PsGetCurrentThreadId(void)
 {
-    return (HANDLE)GetCurrentThreadId();  /* FIXME: not quite right... */
+    return UlongToHandle(GetCurrentThreadId());  /* FIXME: not quite right... */
 }
 
 
