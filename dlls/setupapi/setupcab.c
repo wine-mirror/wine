@@ -307,7 +307,7 @@ static INT_PTR CDECL sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     ci.DiskName = pfdin->psz2;
     ci.SetId = pfdin->setID;
     ci.CabinetNumber = pfdin->iCabinet;
-    phsc->msghandler(phsc->context, SPFILENOTIFY_CABINETINFO, (UINT) &ci, 0);
+    phsc->msghandler(phsc->context, SPFILENOTIFY_CABINETINFO, (UINT_PTR) &ci, 0);
     return 0;
   case fdintPARTIAL_FILE:
     TRACE("Partial file notification\n");
@@ -328,7 +328,7 @@ static INT_PTR CDECL sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     fici.DosAttribs = pfdin->attribs;
     memset(&(fici.FullTargetName[0]), 0, MAX_PATH);
     err = phsc->msghandler(phsc->context, SPFILENOTIFY_FILEINCABINET,
-                           (UINT) &fici, (UINT) pfdin->psz1);
+                           (UINT_PTR)&fici, (UINT_PTR)pfdin->psz1);
     if (err == FILEOP_DOIT) {
       TRACE("  Callback specified filename: %s\n", debugstr_a(&(fici.FullTargetName[0])));
       if (!fici.FullTargetName[0]) {
@@ -352,7 +352,7 @@ static INT_PTR CDECL sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     fp.Flags = 0;
     /* the following should be a fixme -- but it occurs too many times */
     WARN("Should set file date/time/attribs (and execute files?)\n");
-    err = phsc->msghandler(phsc->context, SPFILENOTIFY_FILEEXTRACTED, (UINT) &fp, 0);
+    err = phsc->msghandler(phsc->context, SPFILENOTIFY_FILEEXTRACTED, (UINT_PTR)&fp, 0);
     if (sc_cb_close(pfdin->hf))
       WARN("_close failed.\n");
     if (err) {
@@ -374,7 +374,7 @@ static INT_PTR CDECL sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     ci.CabinetNumber = pfdin->iCabinet;
     /* remember the new cabinet name */
     strcpy(&(phsc->most_recent_cabinet_name[0]), pfdin->psz1);
-    err = phsc->msghandler(phsc->context, SPFILENOTIFY_NEEDNEWCABINET, (UINT) &ci, (UINT) &(mysterio[0]));
+    err = phsc->msghandler(phsc->context, SPFILENOTIFY_NEEDNEWCABINET, (UINT_PTR)&ci, (UINT_PTR)mysterio);
     if (err) {
       SetLastError(err);
       return -1;
@@ -438,7 +438,7 @@ static INT_PTR CDECL sc_FNNOTIFY_W(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     ci.DiskName = &(buf2[0]);
     ci.SetId = pfdin->setID;
     ci.CabinetNumber = pfdin->iCabinet;
-    phsc->msghandler(phsc->context, SPFILENOTIFY_CABINETINFO, (UINT) &ci, 0);
+    phsc->msghandler(phsc->context, SPFILENOTIFY_CABINETINFO, (UINT_PTR)&ci, 0);
     return 0;
   case fdintPARTIAL_FILE:
     TRACE("Partial file notification\n");
@@ -462,7 +462,7 @@ static INT_PTR CDECL sc_FNNOTIFY_W(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     fici.DosAttribs = pfdin->attribs;
     memset(&(fici.FullTargetName[0]), 0, MAX_PATH * sizeof(WCHAR));
     err = phsc->msghandler(phsc->context, SPFILENOTIFY_FILEINCABINET,
-                           (UINT) &fici, (UINT) pfdin->psz1);
+                           (UINT_PTR)&fici, (UINT_PTR)pfdin->psz1);
     if (err == FILEOP_DOIT) {
       TRACE("  Callback specified filename: %s\n", debugstr_w(&(fici.FullTargetName[0])));
       if (fici.FullTargetName[0]) {
@@ -495,7 +495,7 @@ static INT_PTR CDECL sc_FNNOTIFY_W(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     fp.Flags = 0;
     /* a valid fixme -- but occurs too many times */
     /* FIXME("Should set file date/time/attribs (and execute files?)\n"); */
-    err = phsc->msghandler(phsc->context, SPFILENOTIFY_FILEEXTRACTED, (UINT) &fp, 0);
+    err = phsc->msghandler(phsc->context, SPFILENOTIFY_FILEEXTRACTED, (UINT_PTR)&fp, 0);
     if (sc_cb_close(pfdin->hf))
       WARN("_close failed.\n");
     if (err) {
@@ -525,7 +525,7 @@ static INT_PTR CDECL sc_FNNOTIFY_W(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     ci.DiskName = &(buf2[0]);
     ci.SetId = pfdin->setID;
     ci.CabinetNumber = pfdin->iCabinet;
-    err = phsc->msghandler(phsc->context, SPFILENOTIFY_NEEDNEWCABINET, (UINT) &ci, (UINT) &(mysterio[0]));
+    err = phsc->msghandler(phsc->context, SPFILENOTIFY_NEEDNEWCABINET, (UINT_PTR)&ci, (UINT_PTR)mysterio);
     if (err) {
       SetLastError(err);
       return -1;
