@@ -1332,6 +1332,9 @@ static void test_class_moniker(void)
     ok_ole_success(hr, CreateBindCtx);
 
     /* IsRunning test */
+    hr = IMoniker_IsRunning(moniker, NULL, NULL, NULL);
+    ok(hr == E_NOTIMPL, "IMoniker_IsRunning should return E_NOTIMPL, not 0x%08x\n", hr);
+
     hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
     ok(hr == E_NOTIMPL, "IMoniker_IsRunning should return E_NOTIMPL, not 0x%08x\n", hr);
 
@@ -1461,6 +1464,10 @@ static void test_item_moniker(void)
     ok_ole_success(hr, CreateBindCtx);
 
     /* IsRunning test */
+    hr = IMoniker_IsRunning(moniker, NULL, NULL, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "IMoniker_IsRunning should return E_INVALIDARG, not 0x%08x\n", hr);
+
     hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
     ok(hr == S_FALSE, "IMoniker_IsRunning should return S_FALSE, not 0x%08x\n", hr);
 
@@ -1593,6 +1600,10 @@ static void test_generic_composite_moniker(void)
     ok_ole_success(hr, CreateBindCtx);
 
     /* IsRunning test */
+    hr = IMoniker_IsRunning(moniker, NULL, NULL, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "IMoniker_IsRunning should return E_INVALIDARG, not 0x%08x\n", hr);
+
     hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
     todo_wine
     ok(hr == S_FALSE, "IMoniker_IsRunning should return S_FALSE, not 0x%08x\n", hr);
