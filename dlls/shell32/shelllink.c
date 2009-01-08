@@ -2529,7 +2529,7 @@ ShellLink_InvokeCommand( IContextMenu* iface, LPCMINVOKECOMMANDINFO lpici )
 
     if ( lpici->lpVerb != MAKEINTRESOURCEA(This->iIdOpen) )
     {
-        ERR("Unknown id %d != %d\n", (INT)lpici->lpVerb, This->iIdOpen );
+        ERR("Unknown id %p != %d\n", lpici->lpVerb, This->iIdOpen );
         return E_INVALIDARG;
     }
 
