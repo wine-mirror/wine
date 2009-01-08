@@ -65,13 +65,49 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
+static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+ LPARAM lp)
+{
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+    {
+        PCCRYPTUI_CERT_MGR_STRUCT pCryptUICertMgr =
+         (PCCRYPTUI_CERT_MGR_STRUCT)lp;
+
+        if (pCryptUICertMgr->pwszTitle)
+            SendMessageW(hwnd, WM_SETTEXT, 0,
+             (LPARAM)pCryptUICertMgr->pwszTitle);
+        break;
+    }
+    case WM_COMMAND:
+        switch (wp)
+        {
+        case IDCANCEL:
+            EndDialog(hwnd, IDCANCEL);
+            break;
+        }
+        break;
+    }
+    return 0;
+}
+
 /***********************************************************************
  *		CryptUIDlgCertMgr (CRYPTUI.@)
  */
 BOOL WINAPI CryptUIDlgCertMgr(PCCRYPTUI_CERT_MGR_STRUCT pCryptUICertMgr)
 {
-    FIXME("(%p): stub\n", pCryptUICertMgr);
-    return FALSE;
+    TRACE("(%p)\n", pCryptUICertMgr);
+
+    if (pCryptUICertMgr->dwSize != sizeof(CRYPTUI_CERT_MGR_STRUCT))
+    {
+        WARN("unexpected size %d\n", pCryptUICertMgr->dwSize);
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    DialogBoxParamW(hInstance, MAKEINTRESOURCEW(IDD_CERT_MGR),
+     pCryptUICertMgr->hwndParent, cert_mgr_dlg_proc, (LPARAM)pCryptUICertMgr);
+    return TRUE;
 }
 
 /* FIXME: real names are unknown, functions are undocumented */
