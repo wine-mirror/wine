@@ -241,7 +241,7 @@ static void     doChild(const char* file, const char* option)
                 siA.dwX, siA.dwY, siA.dwXSize, siA.dwYSize,
                 siA.dwXCountChars, siA.dwYCountChars, siA.dwFillAttribute,
                 siA.dwFlags, siA.wShowWindow,
-                (DWORD)siA.hStdInput, (DWORD)siA.hStdOutput, (DWORD)siA.hStdError);
+                (DWORD_PTR)siA.hStdInput, (DWORD_PTR)siA.hStdOutput, (DWORD_PTR)siA.hStdError);
 
     /* since GetStartupInfoW is only implemented in win2k,
      * zero out before calling so we can notice the difference
@@ -258,7 +258,7 @@ static void     doChild(const char* file, const char* option)
                 siW.dwX, siW.dwY, siW.dwXSize, siW.dwYSize,
                 siW.dwXCountChars, siW.dwYCountChars, siW.dwFillAttribute,
                 siW.dwFlags, siW.wShowWindow,
-                (DWORD)siW.hStdInput, (DWORD)siW.hStdOutput, (DWORD)siW.hStdError);
+                (DWORD_PTR)siW.hStdInput, (DWORD_PTR)siW.hStdOutput, (DWORD_PTR)siW.hStdError);
 
     /* Arguments */
     childPrintf(hFile, "[Arguments]\nargcA=%d\n", myARGC);
@@ -492,7 +492,7 @@ static void ok_child_stringWA( int line, const char *sect, const char *key,
 #define okChildInt(sect, key, expect) \
     do { \
         UINT result = GetPrivateProfileIntA((sect), (key), !(expect), resfile); \
-        ok(result == expect, "%s:%s expected %d, but got %d\n", (sect), (key), (int)(expect), result); \
+        ok(result == expect, "%s:%s expected %u, but got %u\n", (sect), (key), (UINT)(expect), result); \
    } while (0)
 
 static void test_Startup(void)
@@ -1292,9 +1292,9 @@ static void test_Console(void)
     okChildInt("StartupInfoA", "wShowWindow", startup.wShowWindow);
 
     /* check child correctly inherited the console */
-    okChildInt("StartupInfoA", "hStdInput", (DWORD)startup.hStdInput);
-    okChildInt("StartupInfoA", "hStdOutput", (DWORD)startup.hStdOutput);
-    okChildInt("StartupInfoA", "hStdError", (DWORD)startup.hStdError);
+    okChildInt("StartupInfoA", "hStdInput", (DWORD_PTR)startup.hStdInput);
+    okChildInt("StartupInfoA", "hStdOutput", (DWORD_PTR)startup.hStdOutput);
+    okChildInt("StartupInfoA", "hStdError", (DWORD_PTR)startup.hStdError);
     okChildInt("Console", "SizeX", (DWORD)sbi.dwSize.X);
     okChildInt("Console", "SizeY", (DWORD)sbi.dwSize.Y);
     okChildInt("Console", "CursorX", (DWORD)sbi.dwCursorPosition.X);
