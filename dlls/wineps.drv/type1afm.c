@@ -746,7 +746,7 @@ static BOOL ParseN(LPSTR sz, OLD_AFMMETRICS *metrics)
 static const OLD_AFMMETRICS badmetrics =
 {
     INT_MAX,	    	    	    	    	    /* C */
-    LONG_MAX,	    	    	    	    	    /* UV */
+    INT_MAX,	    	    	    	    	    /* UV */
     FLT_MAX,	    	    	    	    	    /* WX */
     NULL,   	    	    	    	    	    /* N */
     { FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX }, 	    /* B */
