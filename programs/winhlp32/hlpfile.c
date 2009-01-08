@@ -460,36 +460,36 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, const BYTE *buf, const BYTE *end, 
     return TRUE;
 }
 
-static long fetch_long(const BYTE** ptr)
+static LONG fetch_long(const BYTE** ptr)
 {
-    long        ret;
+    LONG        ret;
 
     if (*(*ptr) & 1)
     {
-        ret = (*(const unsigned long*)(*ptr) - 0x80000000L) / 2;
+        ret = (*(const ULONG*)(*ptr) - 0x80000000) / 2;
         (*ptr) += 4;
     }
     else
     {
-        ret = (*(const unsigned short*)(*ptr) - 0x8000) / 2;
+        ret = (*(const USHORT*)(*ptr) - 0x8000) / 2;
         (*ptr) += 2;
     }
 
     return ret;
 }
 
-static unsigned long fetch_ulong(const BYTE** ptr)
+static ULONG fetch_ulong(const BYTE** ptr)
 {
-    unsigned long        ret;
+    ULONG        ret;
 
     if (*(*ptr) & 1)
     {
-        ret = *(const unsigned long*)(*ptr) / 2;
+        ret = *(const ULONG*)(*ptr) / 2;
         (*ptr) += 4;
     }
     else
     {
-        ret = *(const unsigned short*)(*ptr) / 2;
+        ret = *(const USHORT*)(*ptr) / 2;
         (*ptr) += 2;
     }
     return ret;
@@ -785,7 +785,7 @@ static BOOL HLPFILE_RtfAddBitmap(struct RtfData* rd, const BYTE* beg, BYTE type,
     const BYTE*         pict_beg;
     BYTE*               alloc = NULL;
     BITMAPINFO*         bi;
-    unsigned long       off, csz;
+    ULONG               off, csz;
     unsigned            nc = 0;
     BOOL                clrImportant = FALSE;
     BOOL                ret = FALSE;
@@ -880,9 +880,8 @@ done:
  */
 static BOOL     HLPFILE_RtfAddMetaFile(struct RtfData* rd, const BYTE* beg, BYTE pack)
 {
+    ULONG size, csize, off, hsoff;
     const BYTE*         ptr;
-    unsigned long       size, csize;
-    unsigned long       off, hsoff;
     const BYTE*         bits;
     BYTE*               alloc = NULL;
     char                tmp[256];
@@ -906,8 +905,8 @@ static BOOL     HLPFILE_RtfAddMetaFile(struct RtfData* rd, const BYTE* beg, BYTE
     hsoff = GET_UINT(ptr, 4);
     ptr += 8;
 
-    WINE_TRACE("sz=%lu csz=%lu offs=%lu/%u,%lu\n",
-               size, csize, off, ptr - beg, hsoff);
+    WINE_TRACE("sz=%u csz=%u offs=%u/%u,%u\n",
+               size, csize, off, (ULONG)(ptr - beg), hsoff);
 
     bits = HLPFILE_DecompressGfx(beg + off, csize, size, pack, &alloc);
     if (!bits) return FALSE;
@@ -925,7 +924,7 @@ static BOOL     HLPFILE_RtfAddMetaFile(struct RtfData* rd, const BYTE* beg, BYTE
  *
  */
 static  BOOL    HLPFILE_RtfAddGfxByAddr(struct RtfData* rd, HLPFILE *hlpfile,
-                                        const BYTE* ref, unsigned long size)
+                                        const BYTE* ref, ULONG size)
 {
     unsigned    i, numpict;
 
@@ -1047,7 +1046,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
     UINT               textsize;
     const BYTE        *format, *format_end;
     char              *text, *text_base, *text_end;
-    long               size, blocksize, datalen;
+    LONG               size, blocksize, datalen;
     unsigned short     bits;
     unsigned           nc, ncol = 1;
     short              table_width;
@@ -1354,7 +1353,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
 	    case 0x88:
                 {
                     BYTE    type = format[1];
-                    long    size;
+                    LONG    size;
 
                     /* FIXME: we don't use 'BYTE    pos = (*format - 0x86);' for the image position */
                     format += 2;
@@ -1373,7 +1372,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
                             rd->char_pos++;
                             break;
                         case 1:
-                            WINE_FIXME("does it work ??? %x<%lu>#%u\n",
+                            WINE_FIXME("does it work ??? %x<%u>#%u\n",
                                        GET_SHORT(format, 0),
                                        size, GET_SHORT(format, 2));
                             HLPFILE_RtfAddGfxByAddr(rd, page->file, format + 2, size - 4);
@@ -2126,14 +2125,14 @@ static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
     INT dec_size, cpr_size;
     BYTE *buf_idx, *end_idx;
     BYTE *buf_phs, *end_phs;
-    long* ptr, mask = 0;
+    LONG* ptr, mask = 0;
     unsigned int i;
     unsigned short bc, n;
 
     if (!HLPFILE_FindSubFile(hlpfile, "|PhrIndex", &buf_idx, &end_idx) ||
         !HLPFILE_FindSubFile(hlpfile, "|PhrImage", &buf_phs, &end_phs)) return FALSE;
 
-    ptr = (long*)(buf_idx + 9 + 28);
+    ptr = (LONG*)(buf_idx + 9 + 28);
     bc = GET_USHORT(buf_idx, 9 + 24) & 0x0F;
     num = hlpfile->num_phrases = GET_USHORT(buf_idx, 9 + 4);
 
