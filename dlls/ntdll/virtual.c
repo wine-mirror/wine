@@ -123,7 +123,7 @@ static void *user_space_limit    = (void *)0x7fff0000;  /* top of the user addre
 static void *working_set_limit   = (void *)0x7fff0000;  /* top of the current working set */
 #else
 static UINT page_shift;
-static UINT page_size;
+static UINT_PTR page_size;
 static UINT_PTR page_mask;
 static void *address_space_limit;
 static void *user_space_limit;
