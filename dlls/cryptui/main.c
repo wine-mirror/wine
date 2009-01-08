@@ -420,6 +420,66 @@ static LONG_PTR find_oid_in_list(HWND lv, LPCSTR oid)
     return ret;
 }
 
+static void save_cert_mgr_usages(HWND hwnd)
+{
+    static const WCHAR keyName[] = { 'S','o','f','t','w','a','r','e','\\','M',
+     'i','c','r','o','s','o','f','t','\\','C','r','y','p','t','o','g','r','a',
+     'p','h','y','\\','U','I','\\','C','e','r','t','m','g','r','\\','P','u',
+     'r','p','o','s','e',0 };
+    HKEY key;
+    HWND lv = GetDlgItem(hwnd, IDC_CERTIFICATE_USAGES);
+    int purposes = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0), i;
+    LVITEMW item;
+    LPSTR str = NULL;
+
+    item.mask = LVIF_STATE | LVIF_PARAM;
+    item.iSubItem = 0;
+    item.stateMask = LVIS_STATEIMAGEMASK;
+    for (i = 0; i < purposes; i++)
+    {
+        item.iItem = i;
+        if (SendMessageW(lv, LVM_GETITEMW, 0, (LPARAM)&item))
+        {
+            int state = item.state >> 12;
+
+            if (state == CheckBitmapIndexUnchecked)
+            {
+                CRYPT_OID_INFO *info = (CRYPT_OID_INFO *)item.lParam;
+                BOOL firstString = TRUE;
+
+                if (!str)
+                    str = HeapAlloc(GetProcessHeap(), 0,
+                     strlen(info->pszOID) + 1);
+                else
+                {
+                    str = HeapReAlloc(GetProcessHeap(), 0, str,
+                     strlen(str) + 1 + strlen(info->pszOID) + 1);
+                    firstString = FALSE;
+                }
+                if (str)
+                {
+                    LPSTR ptr = firstString ? str : str + strlen(str);
+
+                    if (!firstString)
+                        *ptr++ = ',';
+                    strcpy(ptr, info->pszOID);
+                }
+            }
+        }
+    }
+    if (!RegCreateKeyExW(HKEY_CURRENT_USER, keyName, 0, NULL, 0, KEY_ALL_ACCESS,
+     NULL, &key, NULL))
+    {
+        if (str)
+            RegSetValueExA(key, "Purpose", 0, REG_SZ, (const BYTE *)str,
+             strlen(str) + 1);
+        else
+            RegDeleteValueA(key, "Purpose");
+        RegCloseKey(key);
+    }
+    HeapFree(GetProcessHeap(), 0, str);
+}
+
 static LRESULT CALLBACK cert_mgr_advanced_dlg_proc(HWND hwnd, UINT msg,
  WPARAM wp, LPARAM lp)
 {
@@ -489,6 +549,7 @@ static LRESULT CALLBACK cert_mgr_advanced_dlg_proc(HWND hwnd, UINT msg,
         switch (wp)
         {
         case IDOK:
+            save_cert_mgr_usages(hwnd);
             ImageList_Destroy((HIMAGELIST)GetWindowLongPtrW(hwnd, DWLP_USER));
             EndDialog(hwnd, IDOK);
             break;
