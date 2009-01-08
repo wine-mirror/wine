@@ -193,8 +193,12 @@ static void test_get_file_info(void)
     todo_wine ok(shfi.hIcon == 0, "SHGetFileInfoA('' | 0) did not clear hIcon\n");
     todo_wine ok(shfi.szDisplayName[0] == 0, "SHGetFileInfoA('' | 0) did not clear szDisplayName[0]\n");
     todo_wine ok(shfi.szTypeName[0] == 0, "SHGetFileInfoA('' | 0) did not clear szTypeName[0]\n");
-    ok(shfi.iIcon == 0xcfcfcfcf, "SHGetFileInfoA('' | 0) should not clear iIcon\n");
-    ok(shfi.dwAttributes == 0xcfcfcfcf, "SHGetFileInfoA('' | 0) should not clear dwAttributes\n");
+    ok(shfi.iIcon == 0xcfcfcfcf ||
+       broken(shfi.iIcon != 0xcfcfcfcf), /* NT4 doesn't clear but sets this field */
+       "SHGetFileInfoA('' | 0) should not clear iIcon\n");
+    ok(shfi.dwAttributes == 0xcfcfcfcf ||
+       broken(shfi.dwAttributes != 0xcfcfcfcf), /* NT4 doesn't clear but sets this field */
+       "SHGetFileInfoA('' | 0) should not clear dwAttributes\n");
 
     if (pSHGetFileInfoW)
     {
@@ -225,7 +229,9 @@ static void test_get_file_info(void)
     todo_wine ok(shfi.hIcon == 0, "SHGetFileInfoA(c:\\nonexistent | SHGFI_ATTRIBUTES) did not clear hIcon\n");
     todo_wine ok(shfi.szDisplayName[0] == 0, "SHGetFileInfoA(c:\\nonexistent | SHGFI_ATTRIBUTES) did not clear szDisplayName[0]\n");
     todo_wine ok(shfi.szTypeName[0] == 0, "SHGetFileInfoA(c:\\nonexistent | SHGFI_ATTRIBUTES) did not clear szTypeName[0]\n");
-    ok(shfi.iIcon == 0xcfcfcfcf, "SHGetFileInfoA(c:\\nonexistent | SHGFI_ATTRIBUTES) should not clear iIcon\n");
+    ok(shfi.iIcon == 0xcfcfcfcf ||
+       broken(shfi.iIcon != 0xcfcfcfcf), /* NT4 doesn't clear but sets this field */
+       "SHGetFileInfoA(c:\\nonexistent | SHGFI_ATTRIBUTES) should not clear iIcon\n");
 
     rc=SHGetFileInfoA("c:\\nonexistent", FILE_ATTRIBUTE_DIRECTORY,
                       &shfi, sizeof(shfi),
@@ -314,7 +320,10 @@ static void test_get_file_info_iconlist(void)
     todo_wine ok(shInfoa.hIcon == 0, "SHGetFileInfoA(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) did not clear hIcon\n");
     todo_wine ok(shInfoa.szTypeName[0] == 0, "SHGetFileInfoA(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) did not clear szTypeName[0]\n");
     ok(shInfoa.iIcon != 0xcfcfcfcf, "SHGetFileInfoA(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) should set iIcon\n");
-    ok(shInfoa.dwAttributes == 0xcfcfcfcf, "SHGetFileInfoA(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) should not change dwAttributes\n");
+    ok(shInfoa.dwAttributes == 0xcfcfcfcf ||
+       shInfoa.dwAttributes ==  0 || /* Vista */
+       broken(shInfoa.dwAttributes != 0xcfcfcfcf), /* NT4 doesn't clear but sets this field */
+       "SHGetFileInfoA(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL), unexpected dwAttributes : %08x\n",shInfoa.dwAttributes);
     CloseHandle(hSysImageList);
 
     if (!pSHGetFileInfoW)
