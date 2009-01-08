@@ -40,6 +40,7 @@
 #define DE_DESTSUBTREE   0x76
 #define DE_INVALIDFILES  0x7C
 #define DE_DESTSAMETREE  0x7D
+#define DE_FLDDESTISFILE 0x7E
 #define DE_FILEDESTISFLD 0x80
 #define expect_retval(ret, ret_prewin32)\
     ok(retval == ret ||\
@@ -917,8 +918,16 @@ static void test_copy(void)
     set_curr_dir_path(from, "test1.txt\0test2.txt\0");
     set_curr_dir_path(to, "test3.txt\0");
     retval = SHFileOperation(&shfo);
-    expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
-    ok(shfo.fAnyOperationsAborted, "Expected aborted operations\n");
+    if (retval == DE_FLDDESTISFILE)
+    {
+        /* Vista and W2K8 (broken or new behavior ?) */
+        ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
+    }
+    else
+    {
+        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
+        ok(shfo.fAnyOperationsAborted, "Expected aborted operations\n");
+    }
     ok(!file_exists("test3.txt\\test2.txt"), "Expected test3.txt\\test2.txt to not exist\n");
 
     /* try to copy many files to nonexistent directory */
@@ -1560,7 +1569,10 @@ static void test_copy(void)
     shfo.fFlags = FOF_MULTIDESTFILES | FOF_NOCONFIRMATION |
                   FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperation(&shfo);
-    expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
+    ok(retval == ERROR_CANCELLED ||
+       retval == DE_FILEDESTISFLD || /* Vista */
+       broken(retval == DE_OPCANCELLED), /* Win9x, NT4 */
+       "Expected ERROR_CANCELLED or DE_FILEDESTISFLD. got %d\n", retval);
     if (file_exists("threedir\\threedir"))
     {
         /* NT4 */
