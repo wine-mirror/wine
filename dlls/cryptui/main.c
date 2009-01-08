@@ -65,6 +65,50 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
+#define MAX_STRING_LEN 512
+
+static void add_cert_columns(HWND hwnd)
+{
+    HWND lv = GetDlgItem(hwnd, IDC_MGR_CERTS);
+    RECT rc;
+    WCHAR buf[MAX_STRING_LEN];
+    LVCOLUMNW column;
+
+    SendMessageW(lv, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+    GetWindowRect(lv, &rc);
+    LoadStringW(hInstance, IDS_SUBJECT_COLUMN, buf,
+     sizeof(buf) / sizeof(buf[0]));
+    column.mask = LVCF_WIDTH | LVCF_TEXT;
+    column.cx = (rc.right - rc.left) * 29 / 100 - 2;
+    column.pszText = buf;
+    SendMessageW(lv, LVM_INSERTCOLUMNW, 0, (LPARAM)&column);
+    LoadStringW(hInstance, IDS_ISSUER_COLUMN, buf,
+     sizeof(buf) / sizeof(buf[0]));
+    SendMessageW(lv, LVM_INSERTCOLUMNW, 1, (LPARAM)&column);
+    column.cx = (rc.right - rc.left) * 16 / 100 - 2;
+    LoadStringW(hInstance, IDS_EXPIRATION_COLUMN, buf,
+     sizeof(buf) / sizeof(buf[0]));
+    SendMessageW(lv, LVM_INSERTCOLUMNW, 2, (LPARAM)&column);
+    column.cx = (rc.right - rc.left) * 23 / 100 - 1;
+    LoadStringW(hInstance, IDS_FRIENDLY_NAME_COLUMN, buf,
+     sizeof(buf) / sizeof(buf[0]));
+    SendMessageW(lv, LVM_INSERTCOLUMNW, 3, (LPARAM)&column);
+}
+
+static void initialize_purpose_selection(HWND hwnd)
+{
+    HWND cb = GetDlgItem(hwnd, IDC_MGR_PURPOSE_SELECTION);
+    WCHAR buf[MAX_STRING_LEN];
+
+    LoadStringW(hInstance, IDS_PURPOSE_ALL, buf,
+     sizeof(buf) / sizeof(buf[0]));
+    SendMessageW(cb, CB_INSERTSTRING, -1, (LPARAM)buf);
+    LoadStringW(hInstance, IDS_PURPOSE_ADVANCED, buf,
+     sizeof(buf) / sizeof(buf[0]));
+    SendMessageW(cb, CB_INSERTSTRING, -1, (LPARAM)buf);
+    SendMessageW(cb, CB_SETCURSEL, 0, 0);
+}
+
 static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
@@ -75,6 +119,8 @@ static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         PCCRYPTUI_CERT_MGR_STRUCT pCryptUICertMgr =
          (PCCRYPTUI_CERT_MGR_STRUCT)lp;
 
+        initialize_purpose_selection(hwnd);
+        add_cert_columns(hwnd);
         if (pCryptUICertMgr->pwszTitle)
             SendMessageW(hwnd, WM_SETTEXT, 0,
              (LPARAM)pCryptUICertMgr->pwszTitle);
@@ -284,8 +330,6 @@ static void free_store_info(HWND tree)
          (LPARAM)next);
     }
 }
-
-#define MAX_STRING_LEN 512
 
 static HCERTSTORE selected_item_to_store(HWND tree, HTREEITEM hItem)
 {
