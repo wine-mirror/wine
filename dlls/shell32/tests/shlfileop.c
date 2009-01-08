@@ -497,17 +497,19 @@ static void test_delete(void)
     shfo.lpszProgressTitle = NULL;
 
     ok(!SHFileOperationA(&shfo), "Deletion was not successful\n");
-    ok(file_exists("test4.txt"), "Directory should not have been removed\n");
+    ok(dir_exists("test4.txt"), "Directory should not have been removed\n");
     ok(!file_exists("test1.txt"), "File should have been removed\n");
+    ok(!file_exists("test2.txt"), "File should have been removed\n");
+    ok(!file_exists("test3.txt"), "File should have been removed\n");
 
     ret = SHFileOperationA(&shfo);
-    ok(!ret, "Directory exists, but is not removed, ret=%d\n", ret);
-    ok(file_exists("test4.txt"), "Directory should not have been removed\n");
+    ok(ret == ERROR_SUCCESS, "Directory exists, but is not removed, ret=%d\n", ret);
+    ok(dir_exists("test4.txt"), "Directory should not have been removed\n");
 
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
 
     ok(!SHFileOperationA(&shfo), "Directory is not removed\n");
-    ok(!file_exists("test4.txt"), "Directory should have been removed\n");
+    ok(!dir_exists("test4.txt"), "Directory should have been removed\n");
 
     ret = SHFileOperationA(&shfo);
     ok(!ret, "The requested file does not exist, ret=%d\n", ret);
@@ -517,13 +519,13 @@ static void test_delete(void)
     buf[strlen(buf) + 1] = '\0';
     ok(MoveFileA("test1.txt", "test4.txt\\test1.txt"), "Filling the subdirectory failed\n");
     ok(!SHFileOperationA(&shfo), "Directory is not removed\n");
-    ok(!file_exists("test4.txt"), "Directory is not removed\n");
+    ok(!dir_exists("test4.txt"), "Directory is not removed\n");
 
     init_shfo_tests();
     shfo.pFrom = "test1.txt\0test4.txt\0";
     ok(!SHFileOperationA(&shfo), "Directory and a file are not removed\n");
     ok(!file_exists("test1.txt"), "The file should have been removed\n");
-    ok(!file_exists("test4.txt"), "Directory should have been removed\n");
+    ok(!dir_exists("test4.txt"), "Directory should have been removed\n");
     ok(file_exists("test2.txt"), "This file should not have been removed\n");
 
     /* FOF_FILESONLY does not delete a dir matching a wildcard */
@@ -533,13 +535,15 @@ static void test_delete(void)
     ok(!SHFileOperation(&shfo), "Failed to delete files\n");
     ok(!file_exists("test1.txt"), "test1.txt should have been removed\n");
     ok(!file_exists("test_5.txt"), "test_5.txt should have been removed\n");
-    ok(file_exists("test4.txt"), "test4.txt should not have been removed\n");
+    ok(dir_exists("test4.txt"), "test4.txt should not have been removed\n");
 
     /* FOF_FILESONLY only deletes a dir if explicitly specified */
     init_shfo_tests();
     shfo.pFrom = "test_?.txt\0test4.txt\0";
     ok(!SHFileOperation(&shfo), "Failed to delete files and directory\n");
-    ok(!file_exists("test4.txt"), "test4.txt should have been removed\n");
+    ok(!dir_exists("test4.txt") ||
+       broken(dir_exists("test4.txt")), /* NT4 */
+      "test4.txt should have been removed\n");
     ok(!file_exists("test_5.txt"), "test_5.txt should have been removed\n");
     ok(file_exists("test1.txt"), "test1.txt should not have been removed\n");
 
@@ -586,8 +590,10 @@ static void test_delete(void)
     shfo.pFrom = "testdir2\0testdir2\\one.txt\0";
     shfo.wFunc = FO_DELETE;
     ret = SHFileOperation(&shfo);
-    ok(ret == ERROR_PATH_NOT_FOUND, "Expected ERROR_PATH_NOT_FOUND, got %d\n", ret);
-    ok(!file_exists("testdir2"), "Expected testdir2 to not exist\n");
+    ok(ret == ERROR_PATH_NOT_FOUND ||
+       broken(ret == ERROR_SUCCESS), /* NT4 */
+       "Expected ERROR_PATH_NOT_FOUND, got %d\n", ret);
+    ok(!dir_exists("testdir2"), "Expected testdir2 to not exist\n");
     ok(!file_exists("testdir2\\one.txt"), "Expected testdir2\\one.txt to not exist\n");
 
     /* try the FOF_NORECURSION flag, continues deleting subdirs */
@@ -597,7 +603,7 @@ static void test_delete(void)
     ret = SHFileOperation(&shfo);
     ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
     ok(!file_exists("testdir2\\one.txt"), "Expected testdir2\\one.txt to not exist\n");
-    ok(!file_exists("testdir2\\nested"), "Expected testdir2\\nested to exist\n");
+    ok(!dir_exists("testdir2\\nested"), "Expected testdir2\\nested to not exist\n");
 }
 
 /* tests the FO_RENAME action */
