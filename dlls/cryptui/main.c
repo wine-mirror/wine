@@ -298,6 +298,26 @@ static void refresh_store_certs(HWND hwnd)
     show_store_certs(hwnd, cert_mgr_current_store(hwnd));
 }
 
+static LRESULT CALLBACK cert_mgr_advanced_dlg_proc(HWND hwnd, UINT msg,
+ WPARAM wp, LPARAM lp)
+{
+    switch (msg)
+    {
+    case WM_COMMAND:
+        switch (wp)
+        {
+        case IDOK:
+            EndDialog(hwnd, IDOK);
+            break;
+        case IDCANCEL:
+            EndDialog(hwnd, IDCANCEL);
+            break;
+        }
+        break;
+    }
+    return 0;
+}
+
 static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
@@ -350,6 +370,10 @@ static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         {
         case ((CBN_SELCHANGE << 16) | IDC_MGR_PURPOSE_SELECTION):
             refresh_store_certs(hwnd);
+            break;
+        case IDC_MGR_ADVANCED:
+            DialogBoxW(hInstance, MAKEINTRESOURCEW(IDD_CERT_MGR_ADVANCED), hwnd,
+             cert_mgr_advanced_dlg_proc);
             break;
         case IDCANCEL:
             free_certs(GetDlgItem(hwnd, IDC_MGR_CERTS));
