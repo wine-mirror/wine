@@ -205,7 +205,7 @@ void WINAPI OpenURL(HWND hWnd, HINSTANCE hInst, LPCSTR lpcstrUrl, int nShowCmd)
  * Some forwards (by ordinal) to SHLWAPI
  */
 
-static void* fetch_shlwapi_ordinal(unsigned ord)
+static void* fetch_shlwapi_ordinal(UINT_PTR ord)
 {
     static const WCHAR shlwapiW[] = {'s','h','l','w','a','p','i','.','d','l','l','\0'};
     static HANDLE h;
