@@ -477,7 +477,8 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImp
     }
     if (shader->baseShader.reg_maps.shader_version >= WINED3DPS_VERSION(3,0))
     {
-        if(((IWineD3DDeviceImpl *) shader->baseShader.device)->strided_streams.u.s.position_transformed) {
+        if (((IWineD3DDeviceImpl *)shader->baseShader.device)->strided_streams.position_transformed)
+        {
             args->vp_mode = pretransformed;
         }
         else if (use_vs(stateblock))
@@ -492,7 +493,7 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImp
         if(stateblock->renderState[WINED3DRS_FOGENABLE]) {
             switch(stateblock->renderState[WINED3DRS_FOGTABLEMODE]) {
                 case WINED3DFOG_NONE:
-                    if (((IWineD3DDeviceImpl *)shader->baseShader.device)->strided_streams.u.s.position_transformed
+                    if (((IWineD3DDeviceImpl *)shader->baseShader.device)->strided_streams.position_transformed
                             || use_vs(stateblock))
                     {
                         args->fog = FOG_LINEAR;

@@ -95,7 +95,7 @@ static void state_lighting(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
 
     transformed = ((stateblock->wineD3DDevice->strided_streams.u.s.position.lpData != NULL ||
                     stateblock->wineD3DDevice->strided_streams.u.s.position.VBO != 0) &&
-                    stateblock->wineD3DDevice->strided_streams.u.s.position_transformed) ? TRUE : FALSE;
+                    stateblock->wineD3DDevice->strided_streams.position_transformed) ? TRUE : FALSE;
 
     if (stateblock->renderState[WINED3DRS_LIGHTING] && !transformed) {
         glEnable(GL_LIGHTING);
@@ -4321,9 +4321,7 @@ static void streamsrc(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
                 useVertexShaderFunction, dataLocations, &fixup);
     }
 
-    if (dataLocations->u.s.position_transformed) {
-        useVertexShaderFunction = FALSE;
-    }
+    if (dataLocations->position_transformed) useVertexShaderFunction = FALSE;
 
     if(useVertexShaderFunction) {
         if(((IWineD3DVertexDeclarationImpl *) stateblock->vertexDecl)->half_float_conv_needed && !fixup) {
@@ -4403,7 +4401,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         updateFog = TRUE;
     }
 
-    transformed = device->strided_streams.u.s.position_transformed;
+    transformed = device->strided_streams.position_transformed;
     if(transformed != context->last_was_rhw && !useVertexShaderFunction) {
         updateFog = TRUE;
     }

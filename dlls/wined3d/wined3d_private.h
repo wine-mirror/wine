@@ -2454,7 +2454,7 @@ const StaticPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt,
 static inline BOOL use_vs(IWineD3DStateBlockImpl *stateblock)
 {
     return (stateblock->vertexShader
-            && !stateblock->wineD3DDevice->strided_streams.u.s.position_transformed
+            && !stateblock->wineD3DDevice->strided_streams.position_transformed
             && stateblock->wineD3DDevice->vs_selected_mode != SHADER_NONE);
 }
 

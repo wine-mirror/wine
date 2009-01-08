@@ -152,7 +152,7 @@ void primitiveDeclarationConvertToStridedData(
     const DWORD *streams = vertexDeclaration->streams;
 
     /* Check for transformed vertices, disable vertex shader if present */
-    strided->u.s.position_transformed = vertexDeclaration->position_transformed;
+    strided->position_transformed = vertexDeclaration->position_transformed;
     if(vertexDeclaration->position_transformed) {
         useVertexShaderFunction = FALSE;
     }
@@ -861,8 +861,9 @@ void drawPrimitive(IWineD3DDevice *iface, int PrimitiveType, long NumPrimitives,
 
         if (!use_vs(This->stateBlock))
         {
-            if(!This->strided_streams.u.s.position_transformed && This->activeContext->num_untracked_materials &&
-                This->stateBlock->renderState[WINED3DRS_LIGHTING]) {
+            if (!This->strided_streams.position_transformed && This->activeContext->num_untracked_materials
+                    && This->stateBlock->renderState[WINED3DRS_LIGHTING])
+            {
                 static BOOL warned;
                 if (!warned) {
                     FIXME("Using software emulation because not all material properties could be tracked\n");
@@ -1027,9 +1028,8 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
            vtxStride * info->StartVertexOffsetWidth;
 
     /* Not entirely sure about what happens with transformed vertices */
-    if(strided.u.s.position_transformed) {
-        FIXME("Transformed position in rectpatch generation\n");
-    }
+    if (strided.position_transformed) FIXME("Transformed position in rectpatch generation\n");
+
     if(vtxStride % sizeof(GLfloat)) {
         /* glMap2f reads vertex sizes in GLfloats, the d3d stride is in bytes.
          * I don't see how the stride could not be a multiple of 4, but make sure
