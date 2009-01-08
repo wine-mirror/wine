@@ -203,9 +203,8 @@ static void test_StrChrA(void)
   for (count = 32; count < 128; count++)
   {
     LPSTR result = StrChrA(string+32, count);
-    ok(result - string == count,
-        "found char '%c' in wrong place: got %d, expected %d\n",
-        count, result - string, count);
+    INT pos = result - string;
+    ok(pos == count, "found char '%c' in wrong place: got %d, expected %d\n", count, pos, count);
   }
 
   for (count = 32; count < 128; count++)
@@ -340,9 +339,8 @@ static void test_StrRChrW(void)
   for (count = 32; count < 128; count++)
   {
     LPWSTR result = StrRChrW(string+32, NULL, count);
-    ok(result - string == count,
-        "found char %d in wrong place: got %d, expected %d\n",
-        count, result - string, count);
+    INT pos = result - string;
+    ok(pos == count, "found char %d in wrong place: got %d, expected %d\n", count, pos, count);
   }
 
   for (count = 32; count < 128; count++)
