@@ -676,9 +676,9 @@ IDirectSoundFullDuplexImpl_Initialize(
     IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
     IDirectSoundBufferImpl * dsb;
 
-    TRACE("(%p,%s,%s,%p,%p,%x,%x,%p,%p)\n", This,
+    TRACE("(%p,%s,%s,%p,%p,%p,%x,%p,%p)\n", This,
         debugstr_guid(pCaptureGuid), debugstr_guid(pRendererGuid),
-        lpDscBufferDesc, lpDsBufferDesc, (DWORD)hWnd, dwLevel,
+        lpDscBufferDesc, lpDsBufferDesc, hWnd, dwLevel,
         lplpDirectSoundCaptureBuffer8, lplpDirectSoundBuffer8);
 
     if (This->renderer_device != NULL || This->capture_device != NULL) {
