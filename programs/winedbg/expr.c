@@ -346,19 +346,19 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         rtn.cookie      = DLV_HOST;
         rtn.type.id     = dbg_itype_astring;
         rtn.type.module = 0;
-        rtn.addr.Offset = (unsigned int)&exp->un.string.str;
+        rtn.addr.Offset = (ULONG_PTR)&exp->un.string.str;
         break;
     case EXPR_TYPE_U_CONST:
         rtn.cookie      = DLV_HOST;
         rtn.type.id     = dbg_itype_unsigned_int;
         rtn.type.module = 0;
-        rtn.addr.Offset = (unsigned int)&exp->un.u_const.value;
+        rtn.addr.Offset = (ULONG_PTR)&exp->un.u_const.value;
         break;
     case EXPR_TYPE_S_CONST:
         rtn.cookie      = DLV_HOST;
         rtn.type.id     = dbg_itype_signed_int;
         rtn.type.module = 0;
-        rtn.addr.Offset = (unsigned int)&exp->un.s_const.value;
+        rtn.addr.Offset = (ULONG_PTR)&exp->un.s_const.value;
         break;
     case EXPR_TYPE_SYMBOL:
         switch (symbol_get_lvalue(exp->un.symbol.name, -1, &rtn, FALSE))
@@ -463,7 +463,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         rtn.cookie = DLV_HOST;
         /* get return type from function signature tupe */
         types_get_info(&rtn.type, TI_GET_TYPE, &rtn.type.id);
-        rtn.addr.Offset = (unsigned int)&exp->un.call.result;
+        rtn.addr.Offset = (ULONG_PTR)&exp->un.call.result;
         break;
     case EXPR_TYPE_INTVAR:
         rtn.cookie = DLV_HOST;
@@ -471,7 +471,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
             RaiseException(DEBUG_STATUS_NO_SYMBOL, 0, 0, NULL);
         rtn.type.id     = div->typeid;
         rtn.type.module = 0;
-        rtn.addr.Offset = (unsigned int)div->pval;
+        rtn.addr.Offset = (ULONG_PTR)div->pval;
         break;
     case EXPR_TYPE_BINOP:
         rtn.cookie = DLV_HOST;
@@ -481,7 +481,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
             RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
         rtn.type.id = dbg_itype_signed_int;
         rtn.type.module = 0;
-        rtn.addr.Offset = (unsigned int)&exp->un.binop.result;
+        rtn.addr.Offset = (ULONG_PTR)&exp->un.binop.result;
         type1 = exp1.type;
         type2 = exp2.type;
         switch (exp->un.binop.binop_type)
@@ -611,7 +611,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         rtn.cookie = DLV_HOST;
         exp1 = expr_eval(exp->un.unop.exp1);
         if (exp1.type.id == dbg_itype_none) RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
-        rtn.addr.Offset = (unsigned int)&exp->un.unop.result;
+        rtn.addr.Offset = (ULONG_PTR)&exp->un.unop.result;
         rtn.type.id     = dbg_itype_signed_int;
         rtn.type.module = 0;
         switch (exp->un.unop.unop_type)
@@ -638,7 +638,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
             /* only do it on linear addresses */
             if (exp1.addr.Mode != AddrModeFlat)
                 RaiseException(DEBUG_STATUS_CANT_DEREF, 0, 0, NULL);
-            exp->un.unop.result = (unsigned int)memory_to_linear_addr(&exp1.addr);
+            exp->un.unop.result = (ULONG_PTR)memory_to_linear_addr(&exp1.addr);
             rtn.type = types_find_pointer(&exp1.type);
             if (rtn.type.id == dbg_itype_none)
                 RaiseException(DEBUG_STATUS_CANT_DEREF, 0, 0, NULL);

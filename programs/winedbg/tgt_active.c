@@ -53,7 +53,7 @@ static void dbg_init_current_thread(void* start)
 
             break_set_xpoints(FALSE);
 	    addr.Mode   = AddrModeFlat;
-	    addr.Offset = (DWORD)start;
+	    addr.Offset = (DWORD_PTR)start;
 	    break_add_break(&addr, TRUE, TRUE);
 	    break_set_xpoints(TRUE);
 	}

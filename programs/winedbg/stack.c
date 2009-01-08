@@ -182,7 +182,7 @@ unsigned stack_fetch_frames(void)
     /* don't confuse StackWalk by passing in inconsistent addresses */
     if ((sf.AddrPC.Mode == AddrModeFlat) && (sf.AddrFrame.Mode != AddrModeFlat))
     {
-        sf.AddrFrame.Offset = (DWORD)memory_to_linear_addr(&sf.AddrFrame);
+        sf.AddrFrame.Offset = (ULONG_PTR)memory_to_linear_addr(&sf.AddrFrame);
         sf.AddrFrame.Mode = AddrModeFlat;
     }
 

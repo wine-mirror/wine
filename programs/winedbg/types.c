@@ -114,7 +114,7 @@ LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue, unsigned* ps
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;
     case SymTagFunctionType:
-        rtn = (unsigned)memory_to_linear_addr(&lvalue->addr);
+        rtn = (ULONG_PTR)memory_to_linear_addr(&lvalue->addr);
         break;
     default:
         WINE_FIXME("Unsupported tag %u\n", tag);
@@ -230,7 +230,7 @@ static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue,
         *tmpbuf &= ~mask;
 
         lvalue->cookie      = DLV_HOST;
-        lvalue->addr.Offset = (DWORD)tmpbuf;
+        lvalue->addr.Offset = (ULONG_PTR)tmpbuf;
 
         /*
          * OK, now we have the correct part of the number.
