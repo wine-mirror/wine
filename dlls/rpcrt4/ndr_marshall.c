@@ -58,8 +58,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
     (*(pchar)     = LOBYTE(LOWORD(uint32)), \
      *((pchar)+1) = HIBYTE(LOWORD(uint32)), \
      *((pchar)+2) = LOBYTE(HIWORD(uint32)), \
-     *((pchar)+3) = HIBYTE(HIWORD(uint32)), \
-     (uint32)) /* allow as r-value */
+     *((pchar)+3) = HIBYTE(HIWORD(uint32)))
 
 # define LITTLE_ENDIAN_UINT32_READ(pchar) \
     (MAKELONG( \
@@ -71,8 +70,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
   (*((pchar)+3) = LOBYTE(LOWORD(uint32)), \
    *((pchar)+2) = HIBYTE(LOWORD(uint32)), \
    *((pchar)+1) = LOBYTE(HIWORD(uint32)), \
-   *(pchar)     = HIBYTE(HIWORD(uint32)), \
-   (uint32)) /* allow as r-value */
+   *(pchar)     = HIBYTE(HIWORD(uint32)))
 
 #define BIG_ENDIAN_UINT32_READ(pchar) \
   (MAKELONG( \
