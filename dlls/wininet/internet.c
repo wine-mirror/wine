@@ -1824,8 +1824,8 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackA(
     INTERNET_STATUS_CALLBACK retVal;
     LPWININETHANDLEHEADER lpwh;
 
-    TRACE("0x%08x\n", (ULONG)hInternet);
-    
+    TRACE("%p\n", hInternet);
+
     if (!(lpwh = WININET_GetObject(hInternet)))
         return INTERNET_INVALID_STATUS_CALLBACK;
 
@@ -1852,7 +1852,7 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackW(
     INTERNET_STATUS_CALLBACK retVal;
     LPWININETHANDLEHEADER lpwh;
 
-    TRACE("0x%08x\n", (ULONG)hInternet);
+    TRACE("%p\n", hInternet);
 
     if (!(lpwh = WININET_GetObject(hInternet)))
         return INTERNET_INVALID_STATUS_CALLBACK;
