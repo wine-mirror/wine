@@ -85,6 +85,7 @@ static inline WORD d3d_fpu_setup(void)
         FIXME("FPUPRESERVE not implemented for this platform / compiler\n");
         warned = TRUE;
     }
+    return 0;
 #endif
 
     set_fpu_control_word(0x37f);
