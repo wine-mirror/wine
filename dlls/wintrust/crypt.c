@@ -471,7 +471,32 @@ BOOL WINAPI CryptCATAdminRemoveCatalog(HCATADMIN hCatAdmin, LPCWSTR pwszCatalogF
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    return DeleteFileW(pwszCatalogFile);
+
+    /* Only delete when there is a filename and no path */
+    if (pwszCatalogFile && pwszCatalogFile[0] != 0 &&
+        !strchrW(pwszCatalogFile, '\\') && !strchrW(pwszCatalogFile, '/') &&
+        !strchrW(pwszCatalogFile, ':'))
+    {
+        static const WCHAR slashW[] = {'\\',0};
+        WCHAR *target;
+        DWORD len;
+
+        len = strlenW(ca->path) + strlenW(pwszCatalogFile) + 2;
+        if (!(target = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
+        {
+            SetLastError(ERROR_OUTOFMEMORY);
+            return FALSE;
+        }
+        strcpyW(target, ca->path);
+        strcatW(target, slashW);
+        strcatW(target, pwszCatalogFile);
+
+        DeleteFileW(target);
+
+        HeapFree(GetProcessHeap(), 0, target);
+    }
+
+    return TRUE;
 }
 
 /***********************************************************************

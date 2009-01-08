@@ -433,6 +433,7 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
     }
     WideCharToMultiByte(CP_ACP, 0, info.wszCatalogFile, -1, catfile, MAX_PATH, 0, 0);
     if ((p = strrchr(catfile, '\\'))) p++;
+    memset(catfileW, 0, sizeof(catfileW));
     MultiByteToWideChar(0, 0, p, -1, catfileW, MAX_PATH);
 
     /* winetest.cat will be created */
@@ -458,19 +459,17 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
 
     /* Remove the catalog file with the unique name */
     ret = pCryptCATAdminRemoveCatalog(hcatadmin, catfileW, 0);
-    todo_wine
     ok(ret, "CryptCATAdminRemoveCatalog failed %u\n", GetLastError());
 
     /* Remove the winetest.cat catalog file, first with the full path. This should not succeed
      * according to MSDN */
     ret = pCryptCATAdminRemoveCatalog(hcatadmin, info.wszCatalogFile, 0);
     ok(ret, "CryptCATAdminRemoveCatalog failed %u\n", GetLastError());
-    /* The call succeeds but the file is not removed */
+    /* The call succeeded with the full path but the file is not removed */
     attrs = GetFileAttributes(catfilepath);
-    todo_wine
     ok(attrs != INVALID_FILE_ATTRIBUTES, "Expected %s to exist\n", catfilepath);
+    /* Given only the filename the file is removed */
     ret = pCryptCATAdminRemoveCatalog(hcatadmin, basenameW, 0);
-    todo_wine
     ok(ret, "CryptCATAdminRemoveCatalog failed %u\n", GetLastError());
     attrs = GetFileAttributes(catfilepath);
     ok(attrs == INVALID_FILE_ATTRIBUTES, "Expected %s to be removed\n", catfilepath);
