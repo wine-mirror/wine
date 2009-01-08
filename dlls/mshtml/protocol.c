@@ -647,7 +647,7 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         LPWSTR endpoint = NULL;
         DWORD file_id = strtolW(url_file, &endpoint, 10);
         if(endpoint == url_file+strlenW(url_file))
-            src = FindResourceW(hdll, (LPCWSTR)file_id, (LPCWSTR)RT_HTML);
+            src = FindResourceW(hdll, MAKEINTRESOURCEW(file_id), MAKEINTRESOURCEW(RT_HTML));
 
         if(!src) {
             WARN("Could not find resource\n");
