@@ -194,7 +194,7 @@ BOOL WINHELP_GetOpenFileName(LPSTR lpszFile, int len)
  *
  *           WINHELP_MessageBoxIDS_s
  */
-INT WINHELP_MessageBoxIDS_s(UINT ids_text, LPCSTR str, UINT ids_title, WORD type)
+static INT WINHELP_MessageBoxIDS_s(UINT ids_text, LPCSTR str, UINT ids_title, WORD type)
 {
     CHAR text[MAX_STRING_LEN];
     CHAR newtext[MAX_STRING_LEN + MAX_PATH];
@@ -1164,7 +1164,7 @@ struct index_data
  * WINHELP_IndexDlgProc
  *
  */
-INT_PTR CALLBACK WINHELP_IndexDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK WINHELP_IndexDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     static struct index_data* id;
     int sel;
@@ -1232,7 +1232,7 @@ INT_PTR CALLBACK WINHELP_IndexDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
  * WINHELP_SearchDlgProc
  *
  */
-INT_PTR CALLBACK WINHELP_SearchDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK WINHELP_SearchDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     static struct index_data* id;
 
