@@ -108,7 +108,7 @@ static const WCHAR szwWineIMCProperty[] = {'W','i','n','e','I','m','m','H','I','
 
 static const WCHAR szImeFileW[] = {'I','m','e',' ','F','i','l','e',0};
 static const WCHAR szLayoutTextW[] = {'L','a','y','o','u','t',' ','T','e','x','t',0};
-static const WCHAR szImeRegFmt[] = {'S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\','C','o','n','t','r','o','l','\\','K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','s','\\','%','0','8','x',0};
+static const WCHAR szImeRegFmt[] = {'S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\','C','o','n','t','r','o','l','\\','K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','s','\\','%','0','8','l','x',0};
 
 
 #define is_himc_ime_unicode(p)  (p->immKbd->imeInfo.fdwProperty & IME_PROP_UNICODE)
@@ -279,7 +279,7 @@ static ImmHkl *IMM_GetImmHkl(HKL hkl)
     ImmHkl *ptr;
     WCHAR filename[MAX_PATH];
 
-    TRACE("Seeking ime for keyboard 0x%x\n",(unsigned)hkl);
+    TRACE("Seeking ime for keyboard %p\n",hkl);
 
     LIST_FOR_EACH_ENTRY(ptr, &ImmHklList, ImmHkl, entry)
     {
@@ -658,7 +658,7 @@ HIMC WINAPI ImmCreateContext(void)
     }
 
     new_context->immKbd->uSelected++;
-    TRACE("Created context 0x%x\n",(UINT)new_context);
+    TRACE("Created context %p\n",new_context);
 
     return new_context;
 }
@@ -1480,7 +1480,7 @@ BOOL WINAPI ImmGetConversionStatus(
  */
 HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
 {
-    TRACE("Default is %x\n",(unsigned)IMM_GetThreadData()->hwndDefault);
+    TRACE("Default is %p\n",IMM_GetThreadData()->hwndDefault);
     return IMM_GetThreadData()->hwndDefault;
 }
 
@@ -1597,7 +1597,7 @@ UINT WINAPI ImmGetIMEFileNameW(HKL hKL, LPWSTR lpszFileName, UINT uBufLen)
     DWORD rc;
     WCHAR regKey[sizeof(szImeRegFmt)/sizeof(WCHAR)+8];
 
-    wsprintfW( regKey, szImeRegFmt, (unsigned)hKL );
+    wsprintfW( regKey, szImeRegFmt, (ULONG_PTR)hKL );
     rc = RegOpenKeyW( HKEY_LOCAL_MACHINE, regKey, &hkey);
     if (rc != ERROR_SUCCESS)
     {
@@ -1819,8 +1819,8 @@ HKL WINAPI ImmInstallIMEW(
     {
         DWORD disposition = 0;
 
-        hkl = (HKL)(((0xe000|count)<<16) | lcid);
-        wsprintfW( regKey, szImeRegFmt, (unsigned)hkl);
+        hkl = (HKL)MAKELPARAM( lcid, 0xe000 | count );
+        wsprintfW( regKey, szImeRegFmt, (ULONG_PTR)hkl);
 
         rc = RegCreateKeyExW(HKEY_LOCAL_MACHINE, regKey, 0, NULL, 0, KEY_WRITE, NULL, &hkey, &disposition);
         if (rc == ERROR_SUCCESS && disposition == REG_CREATED_NEW_KEY)
