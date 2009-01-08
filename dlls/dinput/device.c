@@ -274,7 +274,7 @@ void fill_DataFormat(void *out, DWORD size, const void *in, const DataFormat *df
     memset(out, 0, size);
     if (df->dt == NULL) {
 	/* This means that the app uses Wine's internal data format */
-	memcpy(out, in, df->internal_format_size);
+        memcpy(out, in, min(size, df->internal_format_size));
     } else {
 	for (i = 0; i < df->size; i++) {
 	    if (df->dt[i].offset_in >= 0) {
