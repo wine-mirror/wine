@@ -1026,9 +1026,7 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceInfo(
 
     if ((pdidi->dwSize != sizeof(DIDEVICEINSTANCE_DX3A)) &&
         (pdidi->dwSize != sizeof(DIDEVICEINSTANCEA))) {
-        WARN("invalid parameter: pdidi->dwSize = %d != %d or %d\n",
-             pdidi->dwSize, sizeof(DIDEVICEINSTANCE_DX3A),
-             sizeof(DIDEVICEINSTANCEA));
+        WARN("invalid parameter: pdidi->dwSize = %d\n", pdidi->dwSize);
         return DIERR_INVALIDPARAM;
     }
 
@@ -1061,9 +1059,7 @@ static HRESULT WINAPI JoystickWImpl_GetDeviceInfo(
 
     if ((pdidi->dwSize != sizeof(DIDEVICEINSTANCE_DX3W)) &&
         (pdidi->dwSize != sizeof(DIDEVICEINSTANCEW))) {
-        WARN("invalid parameter: pdidi->dwSize = %d != %d or %d\n",
-             pdidi->dwSize, sizeof(DIDEVICEINSTANCE_DX3W),
-             sizeof(DIDEVICEINSTANCEW));
+        WARN("invalid parameter: pdidi->dwSize = %d\n", pdidi->dwSize);
         return DIERR_INVALIDPARAM;
     }
 

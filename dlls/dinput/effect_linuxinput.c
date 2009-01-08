@@ -119,8 +119,7 @@ static void _dump_DIEFFECT_flags(DWORD dwFlags)
 static void _dump_DIENVELOPE(LPCDIENVELOPE env)
 {
     if (env->dwSize != sizeof(DIENVELOPE)) {
-        WARN("Non-standard DIENVELOPE structure size (%d instead of %d).\n",
-	     env->dwSize, sizeof(DIENVELOPE));
+        WARN("Non-standard DIENVELOPE structure size %d.\n", env->dwSize);
     }
     TRACE("Envelope has attack (level: %d time: %d), fade (level: %d time: %d)\n",
 	  env->dwAttackLevel, env->dwAttackTime, env->dwFadeLevel, env->dwFadeTime);
@@ -175,8 +174,7 @@ static void _dump_DIEFFECT(LPCDIEFFECT eff, REFGUID guid)
     TRACE("Dumping DIEFFECT structure:\n");
     TRACE("  - dwSize: %d\n", eff->dwSize);
     if ((eff->dwSize != sizeof(DIEFFECT)) && (eff->dwSize != sizeof(DIEFFECT_DX5))) {
-        WARN("Non-standard DIEFFECT structure size (%d instead of %d or %d).\n",
-	     eff->dwSize, sizeof(DIEFFECT), sizeof(DIEFFECT_DX5));
+        WARN("Non-standard DIEFFECT structure size %d\n", eff->dwSize);
     }
     TRACE("  - dwFlags: %d\n", eff->dwFlags);
     TRACE("    ");
