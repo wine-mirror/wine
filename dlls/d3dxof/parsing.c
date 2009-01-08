@@ -762,7 +762,7 @@ static inline BOOL is_primitive_type(WORD token)
   return ret;
 }
 
-BOOL parse_template_option_info(parse_buffer * buf)
+static BOOL parse_template_option_info(parse_buffer * buf)
 {
   xtemplate* cur_template = &buf->pdxf->xtemplates[buf->pdxf->nb_xtemplates];
 
