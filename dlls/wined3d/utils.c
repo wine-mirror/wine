@@ -499,8 +499,8 @@ static WINED3DGLTYPE const glTypeLookupTemplate[WINED3DDECLTYPE_UNUSED] =
     {WINED3DDECLTYPE_USHORT4N,  4, GL_UNSIGNED_SHORT, 4, GL_TRUE,  sizeof(short int)},
     {WINED3DDECLTYPE_UDEC3,     3, GL_UNSIGNED_SHORT, 3, GL_FALSE, sizeof(short int)},
     {WINED3DDECLTYPE_DEC3N,     3, GL_SHORT,          3, GL_TRUE,  sizeof(short int)},
-    {WINED3DDECLTYPE_FLOAT16_2, 2, GL_HALF_FLOAT_NV,  2, GL_FALSE, sizeof(GLhalfNV)},
-    {WINED3DDECLTYPE_FLOAT16_4, 4, GL_HALF_FLOAT_NV,  4, GL_FALSE, sizeof(GLhalfNV)}
+    {WINED3DDECLTYPE_FLOAT16_2, 2, GL_FLOAT,          2, GL_FALSE, sizeof(GLhalfNV)},
+    {WINED3DDECLTYPE_FLOAT16_4, 4, GL_FLOAT,          4, GL_FALSE, sizeof(GLhalfNV)}
 };
 
 void init_type_lookup(WineD3D_GL_Info *gl_info) {
@@ -511,12 +511,13 @@ void init_type_lookup(WineD3D_GL_Info *gl_info) {
         gl_info->glTypeLookup[WINED3DDECLTYPE_D3DCOLOR].format = GL_BGRA;
     }
 
-    if(!GL_SUPPORT(NV_HALF_FLOAT)) {
+    if (GL_SUPPORT(NV_HALF_FLOAT))
+    {
         /* Do not change the size of the type, it is CPU side. We have to change the GPU-side information though.
          * It is the job of the vertex buffer code to make sure that the vbos have the right format
          */
-        gl_info->glTypeLookup[WINED3DDECLTYPE_FLOAT16_2].glType = GL_FLOAT;
-        gl_info->glTypeLookup[WINED3DDECLTYPE_FLOAT16_4].glType = GL_FLOAT;
+        gl_info->glTypeLookup[WINED3DDECLTYPE_FLOAT16_2].glType = GL_HALF_FLOAT_NV;
+        gl_info->glTypeLookup[WINED3DDECLTYPE_FLOAT16_4].glType = GL_HALF_FLOAT_NV;
     }
 }
 
