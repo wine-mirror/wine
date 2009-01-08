@@ -6010,6 +6010,177 @@ static void test_format_rect(void)
     DestroyWindow(hwnd);
 }
 
+static void test_WM_GETDLGCODE(void)
+{
+    HWND hwnd;
+    UINT res, expected;
+    MSG msg;
+
+    expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL|DLGC_WANTMESSAGE;
+
+    hwnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
+                          ES_MULTILINE|ES_WANTRETURN|WS_POPUP,
+                          0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
+    msg.hwnd = hwnd;
+    res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, 0);
+    expected = expected | DLGC_WANTMESSAGE;
+    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+       res, expected);
+    DestroyWindow(hwnd);
+
+    msg.message = WM_KEYDOWN;
+    msg.wParam = VK_RETURN;
+    msg.lParam = MapVirtualKey(VK_RETURN, MAPVK_VK_TO_VSC) | 0x0001;
+    msg.pt.x = 0;
+    msg.pt.y = 0;
+    msg.time = GetTickCount();
+
+    hwnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
+                          ES_MULTILINE|ES_WANTRETURN|WS_POPUP,
+                          0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
+    msg.hwnd = hwnd;
+    res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
+    expected = expected | DLGC_WANTMESSAGE;
+    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+       res, expected);
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
+                          ES_MULTILINE|WS_POPUP,
+                          0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
+    msg.hwnd = hwnd;
+    res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
+    expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL|DLGC_WANTMESSAGE;
+    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+       res, expected);
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
+                          ES_WANTRETURN|WS_POPUP,
+                          0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
+    msg.hwnd = hwnd;
+    res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
+    expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL;
+    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+       res, expected);
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
+                          WS_POPUP,
+                          0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
+    msg.hwnd = hwnd;
+    res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
+    expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL;
+    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+       res, expected);
+    DestroyWindow(hwnd);
+
+    msg.wParam = VK_TAB;
+    msg.lParam = MapVirtualKey(VK_TAB, MAPVK_VK_TO_VSC) | 0x0001;
+
+    hwnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
+                          ES_MULTILINE|WS_POPUP,
+                          0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
+    msg.hwnd = hwnd;
+    res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
+    expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL|DLGC_WANTMESSAGE;
+    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+       res, expected);
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
+                          WS_POPUP,
+                          0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
+    msg.hwnd = hwnd;
+    res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
+    expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL;
+    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+       res, expected);
+    DestroyWindow(hwnd);
+
+    hold_key(VK_CONTROL);
+
+    hwnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
+                          ES_MULTILINE|WS_POPUP,
+                          0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
+    msg.hwnd = hwnd;
+    res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
+    expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL|DLGC_WANTMESSAGE;
+    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+       res, expected);
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
+                          WS_POPUP,
+                          0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
+    msg.hwnd = hwnd;
+    res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
+    expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL;
+    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+       res, expected);
+    DestroyWindow(hwnd);
+
+    release_key(VK_CONTROL);
+
+    msg.wParam = 'a';
+    msg.lParam = MapVirtualKey('a', MAPVK_VK_TO_VSC) | 0x0001;
+
+    hwnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
+                          ES_MULTILINE|WS_POPUP,
+                          0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
+    msg.hwnd = hwnd;
+    res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
+    expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL|DLGC_WANTMESSAGE;
+    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+       res, expected);
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
+                          WS_POPUP,
+                          0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
+    msg.hwnd = hwnd;
+    res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
+    expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL;
+    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+       res, expected);
+    DestroyWindow(hwnd);
+
+    msg.message = WM_CHAR;
+
+    hwnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
+                          ES_MULTILINE|WS_POPUP,
+                          0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
+    msg.hwnd = hwnd;
+    res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
+    expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL|DLGC_WANTMESSAGE;
+    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+       res, expected);
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
+                          WS_POPUP,
+                          0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
+    msg.hwnd = hwnd;
+    res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
+    expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL;
+    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+       res, expected);
+    DestroyWindow(hwnd);
+}
+
 START_TEST( editor )
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -6063,6 +6234,7 @@ START_TEST( editor )
   test_word_wrap();
   test_auto_yscroll();
   test_format_rect();
+  test_WM_GETDLGCODE();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
