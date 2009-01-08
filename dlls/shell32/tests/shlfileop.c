@@ -561,7 +561,9 @@ static void test_delete(void)
     shfo.pFrom = "test1.txt\0";
     shfo.wFunc = 0;
     ret = SHFileOperation(&shfo);
-    ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER ||
+       broken(ret == ERROR_SUCCESS), /* Win9x, NT4 */
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", ret);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
 
     /* try an invalid list, only one null terminator */
