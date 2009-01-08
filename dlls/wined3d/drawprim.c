@@ -253,33 +253,35 @@ void primitiveDeclarationConvertToStridedData(
     }
 }
 
-static void drawStridedFast(IWineD3DDevice *iface, UINT numberOfVertices, GLenum glPrimitiveType,
-        const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx)
+static void drawStridedFast(IWineD3DDevice *iface, GLenum primitive_type,
+        UINT min_vertex_idx, UINT max_vertex_idx, UINT count, short idx_size,
+        const void *idx_data, UINT start_idx)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    if (idxSize != 0 /* This crashes sometimes!*/) {
-        TRACE("(%p) : glElements(%x, %d, %d, ...)\n", This, glPrimitiveType, numberOfVertices, minIndex);
-        idxData = idxData == (void *)-1 ? NULL : idxData;
-#if 1
-        glDrawElements(glPrimitiveType, numberOfVertices, idxSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
-                     (const char *)idxData+(idxSize * startIdx));
-        checkGLcall("glDrawElements");
-#else /* using drawRangeElements may be faster */
+    if (idx_size)
+    {
+        TRACE("(%p) : glElements(%x, %d, %d, ...)\n", This, primitive_type, count, min_vertex_idx);
 
-        glDrawRangeElements(glPrimitiveType, minIndex, minIndex + numberOfVertices - 1, numberOfVertices,
-                      idxSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
-                      (const char *)idxData+(idxSize * startIdx));
+#if 1
+        glDrawElements(primitive_type, count,
+                idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
+                (const char *)idx_data + (idx_size * start_idx));
+        checkGLcall("glDrawElements");
+#else
+        glDrawRangeElements(primitive_type, min_vertex_idx, max_vertex_idx, count,
+                idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
+                (const char *)idx_data + (idx_size * start_idx));
         checkGLcall("glDrawRangeElements");
 #endif
+    }
+    else
+    {
+        TRACE("(%p) : glDrawArrays(%#x, %d, %d)\n", This, primitive_type, start_idx, count);
 
-    } else {
-        TRACE("(%p) : glDrawArrays(%#x, %d, %d)\n", This, glPrimitiveType, startIdx, numberOfVertices);
-        glDrawArrays(glPrimitiveType, startIdx, numberOfVertices);
+        glDrawArrays(primitive_type, start_idx, count);
         checkGLcall("glDrawArrays");
     }
-
-    return;
 }
 
 /*
@@ -913,8 +915,8 @@ void drawPrimitive(IWineD3DDevice *iface, int PrimitiveType, long NumPrimitives,
             drawStridedInstanced(iface, &This->strided_streams, calculatedNumberOfindices, glPrimType,
                             idxData, idxSize, minIndex, StartIdx);
         } else {
-            drawStridedFast(iface, calculatedNumberOfindices, glPrimType,
-                    idxData, idxSize, minIndex, StartIdx);
+            drawStridedFast(iface, glPrimType, minIndex, minIndex + numberOfVertices - 1,
+                    calculatedNumberOfindices, idxSize, idxData, StartIdx);
         }
     }
 
