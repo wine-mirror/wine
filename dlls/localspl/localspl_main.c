@@ -28,8 +28,9 @@
 #include "wingdi.h"
 #include "winreg.h"
 #include "winspool.h"
-#include "ddk/winsplp.h"
 #include "winuser.h"
+#include "ddk/winddiui.h"
+#include "ddk/winsplp.h"
 
 #include "wine/list.h"
 #include "wine/debug.h"
@@ -722,6 +723,44 @@ static BOOL WINAPI fpGetPrinterDriverDirectory(LPWSTR pName, LPWSTR pEnvironment
     return TRUE;
 }
 
+/******************************************************************
+ * driver_load [internal]
+ *
+ * load a driver user interface dll
+ *
+ * On failure, NULL is returned
+ *
+ */
+
+static HMODULE driver_load(const printenv_t * env, LPWSTR dllname)
+{
+    WCHAR fullname[MAX_PATH];
+    HMODULE hui;
+    DWORD len;
+
+    TRACE("(%p, %s)\n", env, debugstr_w(dllname));
+
+    /* build the driverdir */
+    len = sizeof(fullname) -
+          (lstrlenW(env->versionsubdir) + 1 + lstrlenW(dllname) + 1) * sizeof(WCHAR);
+
+    if (!fpGetPrinterDriverDirectory(NULL, (LPWSTR) env->envname, 1,
+                                     (LPBYTE) fullname, len, &len)) {
+        /* Should never Fail */
+        SetLastError(ERROR_BUFFER_OVERFLOW);
+        return NULL;
+    }
+
+    lstrcatW(fullname, env->versionsubdir);
+    lstrcatW(fullname, backslashW);
+    lstrcatW(fullname, dllname);
+
+    hui = LoadLibraryW(fullname);
+    TRACE("%p: LoadLibrary(%s) %d\n", hui, debugstr_w(fullname), GetLastError());
+
+    return hui;
+}
+
 /******************************************************************************
  *  myAddPrinterDriverEx [internal]
  *
@@ -735,12 +774,15 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
     const printenv_t *env;
     apd_data_t apd;
     DRIVER_INFO_8W di;
+    BOOL    (WINAPI *pDrvDriverEvent)(DWORD, DWORD, LPBYTE, LPARAM);
+    HMODULE hui;
     LPWSTR  ptr;
     HKEY    hroot;
     HKEY    hdrv;
     DWORD   disposition;
     DWORD   len;
     LONG    lres;
+    BOOL    res;
 
     /* we need to set all entries in the Registry, independent from the Level of
        DRIVER_INFO, that the caller supplied */
@@ -873,7 +915,17 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
     if (level > 5) TRACE("level %u for Driver %s is incomplete\n", level, debugstr_w(di.pName));
 
     RegCloseKey(hdrv);
-    TRACE("### DrvDriverEvent(...,DRIVEREVENT_INITIALIZE) not implemented yet\n");
+    hui = driver_load(env, di.pConfigFile);
+    pDrvDriverEvent = (void *)GetProcAddress(hui, "DrvDriverEvent");
+    if (hui && pDrvDriverEvent) {
+
+        /* Support for DrvDriverEvent is optional */
+        TRACE("DRIVER_EVENT_INITIALIZE for %s (%s)\n", debugstr_w(di.pName), debugstr_w(di.pConfigFile));
+        /* MSDN: level for DRIVER_INFO is 1 to 3 */
+        res = pDrvDriverEvent(DRIVER_EVENT_INITIALIZE, 3, (LPBYTE) &di, 0);
+        TRACE("got %d from DRIVER_EVENT_INITIALIZE\n", res);
+    }
+    FreeLibrary(hui);
 
     TRACE("=> TRUE with %u\n", GetLastError());
     return TRUE;
