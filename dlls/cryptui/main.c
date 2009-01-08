@@ -636,8 +636,33 @@ static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             refresh_store_certs(hwnd);
             break;
         case IDC_MGR_ADVANCED:
-            DialogBoxW(hInstance, MAKEINTRESOURCEW(IDD_CERT_MGR_ADVANCED), hwnd,
-             cert_mgr_advanced_dlg_proc);
+            if (DialogBoxW(hInstance, MAKEINTRESOURCEW(IDD_CERT_MGR_ADVANCED),
+             hwnd, cert_mgr_advanced_dlg_proc) == IDOK)
+            {
+                HWND cb = GetDlgItem(hwnd, IDC_MGR_PURPOSE_SELECTION);
+                int index, len;
+                LPWSTR curString = NULL;
+
+                index = SendMessageW(cb, CB_GETCURSEL, 0, 0);
+                if (index >= 0)
+                {
+                    len = SendMessageW(cb, CB_GETLBTEXTLEN, index, 0);
+                    curString = HeapAlloc(GetProcessHeap(), 0,
+                     (len + 1) * sizeof(WCHAR));
+                    SendMessageW(cb, CB_GETLBTEXT, index, (LPARAM)curString);
+                }
+                SendMessageW(cb, CB_RESETCONTENT, 0, 0);
+                initialize_purpose_selection(hwnd);
+                if (curString)
+                {
+                    index = SendMessageW(cb, CB_FINDSTRINGEXACT, -1,
+                     (LPARAM)curString);
+                    if (index >= 0)
+                        SendMessageW(cb, CB_SETCURSEL, index, 0);
+                    HeapFree(GetProcessHeap(), 0, curString);
+                }
+                refresh_store_certs(hwnd);
+            }
             break;
         case IDCANCEL:
             free_certs(GetDlgItem(hwnd, IDC_MGR_CERTS));
