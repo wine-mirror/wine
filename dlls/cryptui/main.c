@@ -298,18 +298,86 @@ static void refresh_store_certs(HWND hwnd)
     show_store_certs(hwnd, cert_mgr_current_store(hwnd));
 }
 
+typedef enum {
+    CheckBitmapIndexUnchecked = 1,
+    CheckBitmapIndexChecked = 2,
+    CheckBitmapIndexDisabledUnchecked = 3,
+    CheckBitmapIndexDisabledChecked = 4
+} CheckBitmapIndex;
+
+static void add_known_usage(HWND lv, PCCRYPT_OID_INFO info,
+ CheckBitmapIndex state)
+{
+    LVITEMW item;
+
+    item.mask = LVIF_TEXT | LVIF_STATE | LVIF_PARAM;
+    item.state = INDEXTOSTATEIMAGEMASK(state);
+    item.stateMask = LVIS_STATEIMAGEMASK;
+    item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
+    item.iSubItem = 0;
+    item.lParam = (LPARAM)info;
+    item.pszText = (LPWSTR)info->pwszName;
+    SendMessageW(lv, LVM_INSERTITEMW, 0, (LPARAM)&item);
+}
+
+extern BOOL WINAPI WTHelperGetKnownUsages(DWORD action,
+ PCCRYPT_OID_INFO **usages);
+
+static void add_known_usages_to_list(HWND lv, CheckBitmapIndex state)
+{
+    PCCRYPT_OID_INFO *usages;
+
+    if (WTHelperGetKnownUsages(1, &usages))
+    {
+        PCCRYPT_OID_INFO *ptr;
+
+        for (ptr = usages; *ptr; ptr++)
+            add_known_usage(lv, *ptr, state);
+        WTHelperGetKnownUsages(2, &usages);
+    }
+}
+
 static LRESULT CALLBACK cert_mgr_advanced_dlg_proc(HWND hwnd, UINT msg,
  WPARAM wp, LPARAM lp)
 {
     switch (msg)
     {
+    case WM_INITDIALOG:
+    {
+        RECT rc;
+        LVCOLUMNW column;
+        HWND lv = GetDlgItem(hwnd, IDC_CERTIFICATE_USAGES);
+        HIMAGELIST imageList;
+
+        GetWindowRect(lv, &rc);
+        column.mask = LVCF_WIDTH;
+        column.cx = rc.right - rc.left;
+        SendMessageW(lv, LVM_INSERTCOLUMNW, 0, (LPARAM)&column);
+        imageList = ImageList_Create(16, 16, ILC_COLOR4 | ILC_MASK, 4, 0);
+        if (imageList)
+        {
+            HBITMAP bmp;
+            COLORREF backColor = RGB(255, 0, 255);
+
+            bmp = LoadBitmapW(hInstance, MAKEINTRESOURCEW(IDB_CHECKS));
+            ImageList_AddMasked(imageList, bmp, backColor);
+            DeleteObject(bmp);
+            ImageList_SetBkColor(imageList, CLR_NONE);
+            SendMessageW(lv, LVM_SETIMAGELIST, LVSIL_STATE, (LPARAM)imageList);
+            SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)imageList);
+        }
+        add_known_usages_to_list(lv, CheckBitmapIndexChecked);
+        break;
+    }
     case WM_COMMAND:
         switch (wp)
         {
         case IDOK:
+            ImageList_Destroy((HIMAGELIST)GetWindowLongPtrW(hwnd, DWLP_USER));
             EndDialog(hwnd, IDOK);
             break;
         case IDCANCEL:
+            ImageList_Destroy((HIMAGELIST)GetWindowLongPtrW(hwnd, DWLP_USER));
             EndDialog(hwnd, IDCANCEL);
             break;
         }
@@ -2232,13 +2300,6 @@ static void create_cert_details_list(HWND hwnd, struct detail_data *data)
     set_fields_selection(hwnd, data, 0);
 }
 
-typedef enum {
-    CheckBitmapIndexUnchecked = 1,
-    CheckBitmapIndexChecked = 2,
-    CheckBitmapIndexDisabledUnchecked = 3,
-    CheckBitmapIndexDisabledChecked = 4
-} CheckBitmapIndex;
-
 static void add_purpose(HWND hwnd, LPCSTR oid)
 {
     HWND lv = GetDlgItem(hwnd, IDC_CERTIFICATE_USAGES);
@@ -2518,23 +2579,6 @@ static void select_purposes(HWND hwnd, PurposeSelection selection)
     }
 }
 
-extern BOOL WINAPI WTHelperGetKnownUsages(DWORD action,
- PCCRYPT_OID_INFO **usages);
-
-static void add_known_usage(HWND lv, PCCRYPT_OID_INFO info)
-{
-    LVITEMW item;
-
-    item.mask = LVIF_TEXT | LVIF_STATE | LVIF_PARAM;
-    item.state = INDEXTOSTATEIMAGEMASK(CheckBitmapIndexDisabledChecked);
-    item.stateMask = LVIS_STATEIMAGEMASK;
-    item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
-    item.iSubItem = 0;
-    item.lParam = (LPARAM)info;
-    item.pszText = (LPWSTR)info->pwszName;
-    SendMessageW(lv, LVM_INSERTITEMW, 0, (LPARAM)&item);
-}
-
 struct edit_cert_data
 {
     PCCERT_CONTEXT cert;
@@ -2548,7 +2592,6 @@ static void show_cert_usages(HWND hwnd, struct edit_cert_data *data)
     HWND lv = GetDlgItem(hwnd, IDC_CERTIFICATE_USAGES);
     PCERT_ENHKEY_USAGE usage;
     DWORD size;
-    PCCRYPT_OID_INFO *usages;
     RECT rc;
     LVCOLUMNW column;
     PurposeSelection purposeSelection;
@@ -2609,23 +2652,14 @@ static void show_cert_usages(HWND hwnd, struct edit_cert_data *data)
              usage->rgpszUsageIdentifier[i], CRYPT_ENHKEY_USAGE_OID_GROUP_ID);
 
             if (info)
-                add_known_usage(lv, info);
+                add_known_usage(lv, info, CheckBitmapIndexDisabledChecked);
             else
                 add_purpose(hwnd, usage->rgpszUsageIdentifier[i]);
         }
         HeapFree(GetProcessHeap(), 0, usage);
     }
     else
-    {
-        if (WTHelperGetKnownUsages(1, &usages))
-        {
-            PCCRYPT_OID_INFO *ptr;
-
-            for (ptr = usages; *ptr; ptr++)
-                add_known_usage(lv, *ptr);
-            WTHelperGetKnownUsages(2, &usages);
-        }
-    }
+        add_known_usages_to_list(lv, CheckBitmapIndexDisabledChecked);
     select_purposes(hwnd, purposeSelection);
     SendMessageW(GetDlgItem(hwnd, IDC_ENABLE_ALL_PURPOSES + purposeSelection),
      BM_CLICK, 0, 0);
