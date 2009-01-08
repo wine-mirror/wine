@@ -1761,41 +1761,41 @@ static void WINAPI wine_glBindBufferBaseNV( GLenum target, GLuint index, GLuint 
   LEAVE_GL();
 }
 
-static void WINAPI wine_glBindBufferOffsetEXT( GLenum target, GLuint index, GLuint buffer, ptrdiff_t offset ) {
-  void (*func_glBindBufferOffsetEXT)( GLenum, GLuint, GLuint, ptrdiff_t ) = extension_funcs[EXT_glBindBufferOffsetEXT];
-  TRACE("(%d, %d, %d, %d)\n", target, index, buffer, offset );
+static void WINAPI wine_glBindBufferOffsetEXT( GLenum target, GLuint index, GLuint buffer, INT_PTR offset ) {
+  void (*func_glBindBufferOffsetEXT)( GLenum, GLuint, GLuint, INT_PTR ) = extension_funcs[EXT_glBindBufferOffsetEXT];
+  TRACE("(%d, %d, %d, %ld)\n", target, index, buffer, offset );
   ENTER_GL();
   func_glBindBufferOffsetEXT( target, index, buffer, offset );
   LEAVE_GL();
 }
 
-static void WINAPI wine_glBindBufferOffsetNV( GLenum target, GLuint index, GLuint buffer, ptrdiff_t offset ) {
-  void (*func_glBindBufferOffsetNV)( GLenum, GLuint, GLuint, ptrdiff_t ) = extension_funcs[EXT_glBindBufferOffsetNV];
-  TRACE("(%d, %d, %d, %d)\n", target, index, buffer, offset );
+static void WINAPI wine_glBindBufferOffsetNV( GLenum target, GLuint index, GLuint buffer, INT_PTR offset ) {
+  void (*func_glBindBufferOffsetNV)( GLenum, GLuint, GLuint, INT_PTR ) = extension_funcs[EXT_glBindBufferOffsetNV];
+  TRACE("(%d, %d, %d, %ld)\n", target, index, buffer, offset );
   ENTER_GL();
   func_glBindBufferOffsetNV( target, index, buffer, offset );
   LEAVE_GL();
 }
 
-static void WINAPI wine_glBindBufferRange( GLenum target, GLuint index, GLuint buffer, ptrdiff_t offset, ptrdiff_t size ) {
-  void (*func_glBindBufferRange)( GLenum, GLuint, GLuint, ptrdiff_t, ptrdiff_t ) = extension_funcs[EXT_glBindBufferRange];
-  TRACE("(%d, %d, %d, %d, %d)\n", target, index, buffer, offset, size );
+static void WINAPI wine_glBindBufferRange( GLenum target, GLuint index, GLuint buffer, INT_PTR offset, INT_PTR size ) {
+  void (*func_glBindBufferRange)( GLenum, GLuint, GLuint, INT_PTR, INT_PTR ) = extension_funcs[EXT_glBindBufferRange];
+  TRACE("(%d, %d, %d, %ld, %ld)\n", target, index, buffer, offset, size );
   ENTER_GL();
   func_glBindBufferRange( target, index, buffer, offset, size );
   LEAVE_GL();
 }
 
-static void WINAPI wine_glBindBufferRangeEXT( GLenum target, GLuint index, GLuint buffer, ptrdiff_t offset, ptrdiff_t size ) {
-  void (*func_glBindBufferRangeEXT)( GLenum, GLuint, GLuint, ptrdiff_t, ptrdiff_t ) = extension_funcs[EXT_glBindBufferRangeEXT];
-  TRACE("(%d, %d, %d, %d, %d)\n", target, index, buffer, offset, size );
+static void WINAPI wine_glBindBufferRangeEXT( GLenum target, GLuint index, GLuint buffer, INT_PTR offset, INT_PTR size ) {
+  void (*func_glBindBufferRangeEXT)( GLenum, GLuint, GLuint, INT_PTR, INT_PTR ) = extension_funcs[EXT_glBindBufferRangeEXT];
+  TRACE("(%d, %d, %d, %ld, %ld)\n", target, index, buffer, offset, size );
   ENTER_GL();
   func_glBindBufferRangeEXT( target, index, buffer, offset, size );
   LEAVE_GL();
 }
 
-static void WINAPI wine_glBindBufferRangeNV( GLenum target, GLuint index, GLuint buffer, ptrdiff_t offset, ptrdiff_t size ) {
-  void (*func_glBindBufferRangeNV)( GLenum, GLuint, GLuint, ptrdiff_t, ptrdiff_t ) = extension_funcs[EXT_glBindBufferRangeNV];
-  TRACE("(%d, %d, %d, %d, %d)\n", target, index, buffer, offset, size );
+static void WINAPI wine_glBindBufferRangeNV( GLenum target, GLuint index, GLuint buffer, INT_PTR offset, INT_PTR size ) {
+  void (*func_glBindBufferRangeNV)( GLenum, GLuint, GLuint, INT_PTR, INT_PTR ) = extension_funcs[EXT_glBindBufferRangeNV];
+  TRACE("(%d, %d, %d, %ld, %ld)\n", target, index, buffer, offset, size );
   ENTER_GL();
   func_glBindBufferRangeNV( target, index, buffer, offset, size );
   LEAVE_GL();
@@ -2123,17 +2123,17 @@ static void WINAPI wine_glBlitFramebufferEXT( GLint srcX0, GLint srcY0, GLint sr
   LEAVE_GL();
 }
 
-static void WINAPI wine_glBufferData( GLenum target, ptrdiff_t size, GLvoid* data, GLenum usage ) {
-  void (*func_glBufferData)( GLenum, ptrdiff_t, GLvoid*, GLenum ) = extension_funcs[EXT_glBufferData];
-  TRACE("(%d, %d, %p, %d)\n", target, size, data, usage );
+static void WINAPI wine_glBufferData( GLenum target, INT_PTR size, GLvoid* data, GLenum usage ) {
+  void (*func_glBufferData)( GLenum, INT_PTR, GLvoid*, GLenum ) = extension_funcs[EXT_glBufferData];
+  TRACE("(%d, %ld, %p, %d)\n", target, size, data, usage );
   ENTER_GL();
   func_glBufferData( target, size, data, usage );
   LEAVE_GL();
 }
 
-static void WINAPI wine_glBufferDataARB( GLenum target, ptrdiff_t size, GLvoid* data, GLenum usage ) {
-  void (*func_glBufferDataARB)( GLenum, ptrdiff_t, GLvoid*, GLenum ) = extension_funcs[EXT_glBufferDataARB];
-  TRACE("(%d, %d, %p, %d)\n", target, size, data, usage );
+static void WINAPI wine_glBufferDataARB( GLenum target, INT_PTR size, GLvoid* data, GLenum usage ) {
+  void (*func_glBufferDataARB)( GLenum, INT_PTR, GLvoid*, GLenum ) = extension_funcs[EXT_glBufferDataARB];
+  TRACE("(%d, %ld, %p, %d)\n", target, size, data, usage );
   ENTER_GL();
   func_glBufferDataARB( target, size, data, usage );
   LEAVE_GL();
@@ -2157,17 +2157,17 @@ static GLuint WINAPI wine_glBufferRegionEnabled( void ) {
   return ret_value;
 }
 
-static void WINAPI wine_glBufferSubData( GLenum target, ptrdiff_t offset, ptrdiff_t size, GLvoid* data ) {
-  void (*func_glBufferSubData)( GLenum, ptrdiff_t, ptrdiff_t, GLvoid* ) = extension_funcs[EXT_glBufferSubData];
-  TRACE("(%d, %d, %d, %p)\n", target, offset, size, data );
+static void WINAPI wine_glBufferSubData( GLenum target, INT_PTR offset, INT_PTR size, GLvoid* data ) {
+  void (*func_glBufferSubData)( GLenum, INT_PTR, INT_PTR, GLvoid* ) = extension_funcs[EXT_glBufferSubData];
+  TRACE("(%d, %ld, %ld, %p)\n", target, offset, size, data );
   ENTER_GL();
   func_glBufferSubData( target, offset, size, data );
   LEAVE_GL();
 }
 
-static void WINAPI wine_glBufferSubDataARB( GLenum target, ptrdiff_t offset, ptrdiff_t size, GLvoid* data ) {
-  void (*func_glBufferSubDataARB)( GLenum, ptrdiff_t, ptrdiff_t, GLvoid* ) = extension_funcs[EXT_glBufferSubDataARB];
-  TRACE("(%d, %d, %d, %p)\n", target, offset, size, data );
+static void WINAPI wine_glBufferSubDataARB( GLenum target, INT_PTR offset, INT_PTR size, GLvoid* data ) {
+  void (*func_glBufferSubDataARB)( GLenum, INT_PTR, INT_PTR, GLvoid* ) = extension_funcs[EXT_glBufferSubDataARB];
+  TRACE("(%d, %ld, %ld, %p)\n", target, offset, size, data );
   ENTER_GL();
   func_glBufferSubDataARB( target, offset, size, data );
   LEAVE_GL();
@@ -3701,17 +3701,17 @@ static void WINAPI wine_glFinishTextureSUNX( void ) {
   LEAVE_GL();
 }
 
-static void WINAPI wine_glFlushMappedBufferRange( GLenum target, ptrdiff_t offset, ptrdiff_t length ) {
-  void (*func_glFlushMappedBufferRange)( GLenum, ptrdiff_t, ptrdiff_t ) = extension_funcs[EXT_glFlushMappedBufferRange];
-  TRACE("(%d, %d, %d)\n", target, offset, length );
+static void WINAPI wine_glFlushMappedBufferRange( GLenum target, INT_PTR offset, INT_PTR length ) {
+  void (*func_glFlushMappedBufferRange)( GLenum, INT_PTR, INT_PTR ) = extension_funcs[EXT_glFlushMappedBufferRange];
+  TRACE("(%d, %ld, %ld)\n", target, offset, length );
   ENTER_GL();
   func_glFlushMappedBufferRange( target, offset, length );
   LEAVE_GL();
 }
 
-static void WINAPI wine_glFlushMappedBufferRangeAPPLE( GLenum target, ptrdiff_t offset, ptrdiff_t size ) {
-  void (*func_glFlushMappedBufferRangeAPPLE)( GLenum, ptrdiff_t, ptrdiff_t ) = extension_funcs[EXT_glFlushMappedBufferRangeAPPLE];
-  TRACE("(%d, %d, %d)\n", target, offset, size );
+static void WINAPI wine_glFlushMappedBufferRangeAPPLE( GLenum target, INT_PTR offset, INT_PTR size ) {
+  void (*func_glFlushMappedBufferRangeAPPLE)( GLenum, INT_PTR, INT_PTR ) = extension_funcs[EXT_glFlushMappedBufferRangeAPPLE];
+  TRACE("(%d, %ld, %ld)\n", target, offset, size );
   ENTER_GL();
   func_glFlushMappedBufferRangeAPPLE( target, offset, size );
   LEAVE_GL();
@@ -4473,17 +4473,17 @@ static void WINAPI wine_glGetBufferPointervARB( GLenum target, GLenum pname, GLv
   LEAVE_GL();
 }
 
-static void WINAPI wine_glGetBufferSubData( GLenum target, ptrdiff_t offset, ptrdiff_t size, GLvoid* data ) {
-  void (*func_glGetBufferSubData)( GLenum, ptrdiff_t, ptrdiff_t, GLvoid* ) = extension_funcs[EXT_glGetBufferSubData];
-  TRACE("(%d, %d, %d, %p)\n", target, offset, size, data );
+static void WINAPI wine_glGetBufferSubData( GLenum target, INT_PTR offset, INT_PTR size, GLvoid* data ) {
+  void (*func_glGetBufferSubData)( GLenum, INT_PTR, INT_PTR, GLvoid* ) = extension_funcs[EXT_glGetBufferSubData];
+  TRACE("(%d, %ld, %ld, %p)\n", target, offset, size, data );
   ENTER_GL();
   func_glGetBufferSubData( target, offset, size, data );
   LEAVE_GL();
 }
 
-static void WINAPI wine_glGetBufferSubDataARB( GLenum target, ptrdiff_t offset, ptrdiff_t size, GLvoid* data ) {
-  void (*func_glGetBufferSubDataARB)( GLenum, ptrdiff_t, ptrdiff_t, GLvoid* ) = extension_funcs[EXT_glGetBufferSubDataARB];
-  TRACE("(%d, %d, %d, %p)\n", target, offset, size, data );
+static void WINAPI wine_glGetBufferSubDataARB( GLenum target, INT_PTR offset, INT_PTR size, GLvoid* data ) {
+  void (*func_glGetBufferSubDataARB)( GLenum, INT_PTR, INT_PTR, GLvoid* ) = extension_funcs[EXT_glGetBufferSubDataARB];
+  TRACE("(%d, %ld, %ld, %p)\n", target, offset, size, data );
   ENTER_GL();
   func_glGetBufferSubDataARB( target, offset, size, data );
   LEAVE_GL();
@@ -5089,9 +5089,9 @@ static void WINAPI wine_glGetNamedBufferPointervEXT( GLuint buffer, GLenum pname
   LEAVE_GL();
 }
 
-static void WINAPI wine_glGetNamedBufferSubDataEXT( GLuint buffer, ptrdiff_t offset, ptrdiff_t size, GLvoid* data ) {
-  void (*func_glGetNamedBufferSubDataEXT)( GLuint, ptrdiff_t, ptrdiff_t, GLvoid* ) = extension_funcs[EXT_glGetNamedBufferSubDataEXT];
-  TRACE("(%d, %d, %d, %p)\n", buffer, offset, size, data );
+static void WINAPI wine_glGetNamedBufferSubDataEXT( GLuint buffer, INT_PTR offset, INT_PTR size, GLvoid* data ) {
+  void (*func_glGetNamedBufferSubDataEXT)( GLuint, INT_PTR, INT_PTR, GLvoid* ) = extension_funcs[EXT_glGetNamedBufferSubDataEXT];
+  TRACE("(%d, %ld, %ld, %p)\n", buffer, offset, size, data );
   ENTER_GL();
   func_glGetNamedBufferSubDataEXT( buffer, offset, size, data );
   LEAVE_GL();
@@ -5697,9 +5697,9 @@ static GLint WINAPI wine_glGetUniformLocationARB( unsigned int programObj, char*
   return ret_value;
 }
 
-static ptrdiff_t WINAPI wine_glGetUniformOffsetEXT( GLuint program, GLint location ) {
-  ptrdiff_t ret_value;
-  ptrdiff_t (*func_glGetUniformOffsetEXT)( GLuint, GLint ) = extension_funcs[EXT_glGetUniformOffsetEXT];
+static INT_PTR WINAPI wine_glGetUniformOffsetEXT( GLuint program, GLint location ) {
+  INT_PTR ret_value;
+  INT_PTR (*func_glGetUniformOffsetEXT)( GLuint, GLint ) = extension_funcs[EXT_glGetUniformOffsetEXT];
   TRACE("(%d, %d)\n", program, location );
   ENTER_GL();
   ret_value = func_glGetUniformOffsetEXT( program, location );
@@ -6503,9 +6503,9 @@ static GLvoid* WINAPI wine_glMapBufferARB( GLenum target, GLenum access ) {
   return ret_value;
 }
 
-static void WINAPI wine_glMapBufferRange( GLenum target, ptrdiff_t offset, ptrdiff_t length, GLbitfield access ) {
-  void (*func_glMapBufferRange)( GLenum, ptrdiff_t, ptrdiff_t, GLbitfield ) = extension_funcs[EXT_glMapBufferRange];
-  TRACE("(%d, %d, %d, %d)\n", target, offset, length, access );
+static void WINAPI wine_glMapBufferRange( GLenum target, INT_PTR offset, INT_PTR length, GLbitfield access ) {
+  void (*func_glMapBufferRange)( GLenum, INT_PTR, INT_PTR, GLbitfield ) = extension_funcs[EXT_glMapBufferRange];
+  TRACE("(%d, %ld, %ld, %d)\n", target, offset, length, access );
   ENTER_GL();
   func_glMapBufferRange( target, offset, length, access );
   LEAVE_GL();
@@ -7883,17 +7883,17 @@ static void WINAPI wine_glMultiTexSubImage3DEXT( GLenum texunit, GLenum target, 
   LEAVE_GL();
 }
 
-static void WINAPI wine_glNamedBufferDataEXT( GLuint buffer, ptrdiff_t size, GLvoid* data, GLenum usage ) {
-  void (*func_glNamedBufferDataEXT)( GLuint, ptrdiff_t, GLvoid*, GLenum ) = extension_funcs[EXT_glNamedBufferDataEXT];
-  TRACE("(%d, %d, %p, %d)\n", buffer, size, data, usage );
+static void WINAPI wine_glNamedBufferDataEXT( GLuint buffer, INT_PTR size, GLvoid* data, GLenum usage ) {
+  void (*func_glNamedBufferDataEXT)( GLuint, INT_PTR, GLvoid*, GLenum ) = extension_funcs[EXT_glNamedBufferDataEXT];
+  TRACE("(%d, %ld, %p, %d)\n", buffer, size, data, usage );
   ENTER_GL();
   func_glNamedBufferDataEXT( buffer, size, data, usage );
   LEAVE_GL();
 }
 
-static void WINAPI wine_glNamedBufferSubDataEXT( GLuint buffer, ptrdiff_t offset, ptrdiff_t size, GLvoid* data ) {
-  void (*func_glNamedBufferSubDataEXT)( GLuint, ptrdiff_t, ptrdiff_t, GLvoid* ) = extension_funcs[EXT_glNamedBufferSubDataEXT];
-  TRACE("(%d, %d, %d, %p)\n", buffer, offset, size, data );
+static void WINAPI wine_glNamedBufferSubDataEXT( GLuint buffer, INT_PTR offset, INT_PTR size, GLvoid* data ) {
+  void (*func_glNamedBufferSubDataEXT)( GLuint, INT_PTR, INT_PTR, GLvoid* ) = extension_funcs[EXT_glNamedBufferSubDataEXT];
+  TRACE("(%d, %ld, %ld, %p)\n", buffer, offset, size, data );
   ENTER_GL();
   func_glNamedBufferSubDataEXT( buffer, offset, size, data );
   LEAVE_GL();
