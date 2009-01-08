@@ -364,7 +364,7 @@ static void test__llseek( void )
     bytes_read = _hread( filehandle, buffer, 1);
     ok( 1 == bytes_read, "file read size error\n" );
     ok( buffer[0] == sillytext[27], "_llseek error, it got lost seeking\n" );
-    ok( _llseek( filehandle, -400 * strlen( sillytext ), FILE_END ) != -1, "should be able to seek\n" );
+    ok( _llseek( filehandle, -400 * (LONG)strlen( sillytext ), FILE_END ) != -1, "should be able to seek\n" );
 
     bytes_read = _hread( filehandle, buffer, 1);
     ok( 1 == bytes_read, "file read size error\n" );
@@ -1845,8 +1845,8 @@ static void test_OpenFile(void)
     ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
     ok( ofs.nErrCode == ERROR_SUCCESS || broken(ofs.nErrCode != ERROR_SUCCESS) /* win9x */,
         "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
-    ret = CloseHandle((HANDLE)hFile);
-    ok( ret == TRUE, "CloseHandle() returns %d\n", ret );
+    ret = _lclose(hFile);
+    ok( !ret, "_lclose() returns %d\n", ret );
     retval = GetFileAttributesA(filename);
     ok( retval != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA: error %d\n", GetLastError() );
 
@@ -1863,8 +1863,8 @@ static void test_OpenFile(void)
         "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
     ok( lstrcmpiA(ofs.szPathName, buff) == 0,
         "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
-    ret = CloseHandle((HANDLE)hFile);
-    ok( ret == TRUE, "CloseHandle() returns %d\n", ret );
+    ret = _lclose(hFile);
+    ok( !ret, "_lclose() returns %d\n", ret );
 
     memset(&ofs, 0xA5, sizeof(ofs));
     SetLastError(0xfaceabee);
@@ -1878,8 +1878,8 @@ static void test_OpenFile(void)
         "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
     ok( lstrcmpiA(ofs.szPathName, buff) == 0,
         "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
-    ret = CloseHandle((HANDLE)hFile);
-    ok( ret == TRUE, "CloseHandle() returns %d\n", ret );
+    ret = _lclose(hFile);
+    ok( !ret, "_lclose() returns %d\n", ret );
 
     memset(&ofs, 0xA5, sizeof(ofs));
     SetLastError(0xfaceabee);
@@ -1893,8 +1893,8 @@ static void test_OpenFile(void)
         "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
     ok( lstrcmpiA(ofs.szPathName, buff) == 0,
         "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
-    ret = CloseHandle((HANDLE)hFile);
-    ok( ret == TRUE, "CloseHandle() returns %d\n", ret );
+    ret = _lclose(hFile);
+    ok( !ret, "_lclose() returns %d\n", ret );
 
     memset(&ofs, 0xA5, sizeof(ofs));
     SetLastError(0xfaceabee);
