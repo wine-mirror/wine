@@ -114,6 +114,7 @@ static const struct {
     {"GL_EXT_texture_filter_anisotropic",   EXT_TEXTURE_FILTER_ANISOTROPIC, 0                           },
     {"GL_EXT_texture_lod",                  EXT_TEXTURE_LOD,                0                           },
     {"GL_EXT_texture_lod_bias",             EXT_TEXTURE_LOD_BIAS,           0                           },
+    {"GL_EXT_vertex_array_bgra",            EXT_VERTEX_ARRAY_BGRA,          0                           },
     {"GL_EXT_vertex_shader",                EXT_VERTEX_SHADER,              0                           },
     {"GL_EXT_gpu_program_parameters",       EXT_GPU_PROGRAM_PARAMETERS,     0                           },
 

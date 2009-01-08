@@ -3383,6 +3383,7 @@ typedef enum _GL_SupportedExt {
   EXT_TEXTURE_SRGB,
   EXT_TEXTURE_SWIZZLE,
   EXT_GPU_PROGRAM_PARAMETERS,
+  EXT_VERTEX_ARRAY_BGRA,
   /* NVIDIA */
   NV_HALF_FLOAT,
   NV_FOG_DISTANCE,
@@ -3852,6 +3853,7 @@ typedef struct _WINED3DGLTYPE {
     int         d3dType;
     GLint       size;
     GLenum      glType;
+    GLint       format;
     GLboolean   normalized;
     int         typesize;
 } WINED3DGLTYPE;

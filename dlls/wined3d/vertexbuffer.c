@@ -364,10 +364,11 @@ static inline BOOL IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
          * FLOAT16s if not supported. Also, we can't iterate over the array, so use macros to generate code for all
          * the attributes that our current fixed function pipeline implementation cares for.
          */
+        BOOL support_d3dcolor = GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA);
         ret = check_attribute(This, &device->strided_streams.u.s.position,     TRUE, TRUE,  FALSE, &stride_this_run, &float16_used) || ret;
         ret = check_attribute(This, &device->strided_streams.u.s.normal,       TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = check_attribute(This, &device->strided_streams.u.s.diffuse,      TRUE, FALSE, TRUE,  &stride_this_run, &float16_used) || ret;
-        ret = check_attribute(This, &device->strided_streams.u.s.specular,     TRUE, FALSE, TRUE,  &stride_this_run, &float16_used) || ret;
+        ret = check_attribute(This, &device->strided_streams.u.s.diffuse,      !support_d3dcolor, FALSE, TRUE,  &stride_this_run, &float16_used) || ret;
+        ret = check_attribute(This, &device->strided_streams.u.s.specular,     !support_d3dcolor, FALSE, TRUE,  &stride_this_run, &float16_used) || ret;
         ret = check_attribute(This, &device->strided_streams.u.s.texCoords[0], TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
         ret = check_attribute(This, &device->strided_streams.u.s.texCoords[1], TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
         ret = check_attribute(This, &device->strided_streams.u.s.texCoords[2], TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;

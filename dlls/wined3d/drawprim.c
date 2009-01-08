@@ -235,7 +235,10 @@ void primitiveDeclarationConvertToStridedData(
                 strided->u.input[idx].dwStride = stride;
                 strided->u.input[idx].VBO = streamVBO;
                 strided->u.input[idx].streamNo = element->Stream;
-                if (element->Type == WINED3DDECLTYPE_D3DCOLOR) strided->swizzle_map |= 1 << idx;
+                if (!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) && element->Type == WINED3DDECLTYPE_D3DCOLOR)
+                {
+                    strided->swizzle_map |= 1 << idx;
+                }
                 strided->use_map |= 1 << idx;
             }
         }
