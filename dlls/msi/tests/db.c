@@ -5742,14 +5742,13 @@ static void test_noquotes(void)
 
 static void read_file_data(LPCSTR filename, LPSTR buffer)
 {
-    OFSTRUCT ofs;
-    HFILE file;
+    HANDLE file;
     DWORD read;
 
-    file = OpenFile(filename, &ofs, OF_READ);
+    file = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL );
     ZeroMemory(buffer, MAX_PATH);
-    ReadFile((HANDLE)file, buffer, MAX_PATH, &read, NULL);
-    CloseHandle((HANDLE)file);
+    ReadFile(file, buffer, MAX_PATH, &read, NULL);
+    CloseHandle(file);
 }
 
 static void test_forcecodepage(void)
