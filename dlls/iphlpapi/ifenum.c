@@ -652,17 +652,6 @@ DWORD getInterfaceEntryByName(const char *name, PMIB_IFROW entry)
   return ret;
 }
 
-DWORD getInterfaceEntryByIndex(DWORD index, PMIB_IFROW entry)
-{
-  char nameBuf[IF_NAMESIZE];
-  char *name = getInterfaceNameByIndex(index, nameBuf);
-
-  if (name)
-    return getInterfaceEntryByName(name, entry);
-  else
-    return ERROR_INVALID_DATA;
-}
-
 /* Enumerates the IP addresses in the system using SIOCGIFCONF, returning
  * the count to you in *pcAddresses.  It also returns to you the struct ifconf
  * used by the call to ioctl, so that you may process the addresses further.
