@@ -5060,7 +5060,7 @@ static void test_SysStringByteLen(void)
   BSTR str = GetBSTR(&bstr);
 
   bstr.dwLen = 0;
-  ok (SysStringByteLen(str) == 0, "Expected dwLen 0, got %d\n", SysStringLen(str));
+  ok (SysStringByteLen(str) == 0, "Expected dwLen 0, got %d\n", SysStringByteLen(str));
   bstr.dwLen = 2;
   ok (SysStringByteLen(str) == 2, "Expected dwLen 2, got %d\n", SysStringByteLen(str));
 }
