@@ -96,20 +96,6 @@ static void add_cert_columns(HWND hwnd)
     SendMessageW(lv, LVM_INSERTCOLUMNW, 3, (LPARAM)&column);
 }
 
-static void initialize_purpose_selection(HWND hwnd)
-{
-    HWND cb = GetDlgItem(hwnd, IDC_MGR_PURPOSE_SELECTION);
-    WCHAR buf[MAX_STRING_LEN];
-
-    LoadStringW(hInstance, IDS_PURPOSE_ALL, buf,
-     sizeof(buf) / sizeof(buf[0]));
-    SendMessageW(cb, CB_INSERTSTRING, -1, (LPARAM)buf);
-    LoadStringW(hInstance, IDS_PURPOSE_ADVANCED, buf,
-     sizeof(buf) / sizeof(buf[0]));
-    SendMessageW(cb, CB_INSERTSTRING, -1, (LPARAM)buf);
-    SendMessageW(cb, CB_SETCURSEL, 0, 0);
-}
-
 static void add_cert_to_view(HWND lv, PCCERT_CONTEXT cert, DWORD *allocatedLen,
  LPWSTR *str)
 {
@@ -221,6 +207,39 @@ static LPSTR get_cert_mgr_usages(void)
         RegCloseKey(key);
     }
     return str;
+}
+
+static void initialize_purpose_selection(HWND hwnd)
+{
+    HWND cb = GetDlgItem(hwnd, IDC_MGR_PURPOSE_SELECTION);
+    WCHAR buf[MAX_STRING_LEN];
+    LPSTR usages;
+
+    LoadStringW(hInstance, IDS_PURPOSE_ALL, buf,
+     sizeof(buf) / sizeof(buf[0]));
+    SendMessageW(cb, CB_INSERTSTRING, -1, (LPARAM)buf);
+    LoadStringW(hInstance, IDS_PURPOSE_ADVANCED, buf,
+     sizeof(buf) / sizeof(buf[0]));
+    SendMessageW(cb, CB_INSERTSTRING, -1, (LPARAM)buf);
+    SendMessageW(cb, CB_SETCURSEL, 0, 0);
+    if ((usages = get_cert_mgr_usages()))
+    {
+        LPSTR ptr, comma;
+
+        for (ptr = usages, comma = strchr(ptr, ','); ptr && *ptr;
+         ptr = comma ? comma + 1 : NULL,
+         comma = ptr ? strchr(ptr, ',') : NULL)
+        {
+            PCCRYPT_OID_INFO info;
+
+            if (comma)
+                *comma = 0;
+            if ((info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, ptr, 0)))
+                SendMessageW(GetDlgItem(hwnd, IDC_MGR_PURPOSE_SELECTION),
+                 CB_INSERTSTRING, 0, (LPARAM)info->pwszName);
+        }
+        HeapFree(GetProcessHeap(), 0, usages);
+    }
 }
 
 static void show_store_certs(HWND hwnd, HCERTSTORE store)
