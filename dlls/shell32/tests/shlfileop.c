@@ -33,12 +33,14 @@
 #endif
 
 /* Error codes could be pre-Win32 */
-#define DE_SAMEFILE     0x71
-#define DE_MANYSRC1DEST 0x72
-#define DE_OPCANCELLED  0x75
-#define DE_DESTSUBTREE  0x76
-#define DE_INVALIDFILES 0x7C
-#define DE_DESTSAMETREE 0x7D
+#define DE_SAMEFILE      0x71
+#define DE_MANYSRC1DEST  0x72
+#define DE_DIFFDIR       0x73
+#define DE_OPCANCELLED   0x75
+#define DE_DESTSUBTREE   0x76
+#define DE_INVALIDFILES  0x7C
+#define DE_DESTSAMETREE  0x7D
+#define DE_FILEDESTISFLD 0x80
 #define expect_retval(ret, ret_prewin32)\
     ok(retval == ret ||\
        broken(retval == ret_prewin32),\
@@ -614,20 +616,34 @@ static void test_rename(void)
 
     set_curr_dir_path(from, "test1.txt\0");
     set_curr_dir_path(to, "test4.txt\0");
-    ok(SHFileOperationA(&shfo), "File is not renamed moving to other directory "
-       "when specifying directory name only\n");
-    ok(file_exists("test1.txt"), "The file is removed\n");
+    retval = SHFileOperationA(&shfo);
+    ok(retval == ERROR_ALREADY_EXISTS ||
+       retval == DE_FILEDESTISFLD || /* Vista */
+       broken(retval == ERROR_INVALID_NAME), /* Win9x, NT4 */
+       "Expected ERROR_ALREADY_EXISTS or DE_FILEDESTISFLD, got %d\n", retval);
+    ok(file_exists("test1.txt"), "The file is renamed\n");
 
     set_curr_dir_path(from, "test3.txt\0");
     set_curr_dir_path(to, "test4.txt\\test1.txt\0");
-    ok(!SHFileOperationA(&shfo), "File is renamed moving to other directory\n");
-    ok(file_exists("test4.txt\\test1.txt"), "The file is not renamed\n");
+    retval = SHFileOperationA(&shfo);
+    if (retval == DE_DIFFDIR)
+    {
+        /* Vista and W2K8 (broken or new behavior ?) */
+        ok(!file_exists("test4.txt\\test1.txt"), "The file is renamed\n");
+    }
+    else
+    {
+        ok(retval == ERROR_SUCCESS, "File is renamed moving to other directory\n");
+        ok(file_exists("test4.txt\\test1.txt"), "The file is not renamed\n");
+    }
 
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
-    retval = SHFileOperationA(&shfo); /* W98 returns 0, W2K and newer returns ERROR_GEN_FAILURE, both do nothing */
-    ok(!retval || retval == ERROR_GEN_FAILURE || retval == ERROR_INVALID_TARGET_HANDLE,
-       "Can't rename many files, retval = %d\n", retval);
+    retval = SHFileOperationA(&shfo);
+    ok(retval == ERROR_GEN_FAILURE ||
+       retval == DE_MANYSRC1DEST || /* Vista */
+       broken(retval == ERROR_SUCCESS), /* Win9x */
+       "Expected ERROR_GEN_FAILURE or DE_MANYSRC1DEST , got %d\n", retval);
     ok(file_exists("test1.txt"), "The file is renamed - many files are specified\n");
 
     memcpy(&shfo2, &shfo, sizeof(SHFILEOPSTRUCTA));
@@ -635,34 +651,37 @@ static void test_rename(void)
 
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
-    retval = SHFileOperationA(&shfo2); /* W98 returns 0, W2K and newer returns ERROR_GEN_FAILURE, both do nothing */
-    ok(!retval || retval == ERROR_GEN_FAILURE || retval == ERROR_INVALID_TARGET_HANDLE,
-       "Can't rename many files, retval = %d\n", retval);
+    retval = SHFileOperationA(&shfo2);
+    ok(retval == ERROR_GEN_FAILURE ||
+       retval == DE_MANYSRC1DEST || /* Vista */
+       broken(retval == ERROR_SUCCESS), /* Win9x */
+       "Expected ERROR_GEN_FAILURE or DE_MANYSRC1DEST files, got %d\n", retval);
     ok(file_exists("test1.txt"), "The file is not renamed - many files are specified\n");
 
     set_curr_dir_path(from, "test1.txt\0");
     set_curr_dir_path(to, "test6.txt\0");
     retval = SHFileOperationA(&shfo);
-    ok(!retval, "Rename file failed, retval = %d\n", retval);
+    ok(retval == ERROR_SUCCESS, "Rename file failed, retval = %d\n", retval);
     ok(!file_exists("test1.txt"), "The file is not renamed\n");
     ok(file_exists("test6.txt"), "The file is not renamed\n");
 
     set_curr_dir_path(from, "test6.txt\0");
     set_curr_dir_path(to, "test1.txt\0");
     retval = SHFileOperationA(&shfo);
-    ok(!retval, "Rename file back failed, retval = %d\n", retval);
+    ok(retval == ERROR_SUCCESS, "Rename file back failed, retval = %d\n", retval);
 
     set_curr_dir_path(from, "test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0");
     retval = SHFileOperationA(&shfo);
-    ok(!retval, "Rename dir failed, retval = %d\n", retval);
-    ok(!file_exists("test4.txt"), "The dir is not renamed\n");
-    ok(file_exists("test6.txt"), "The dir is not renamed\n");
+    ok(retval == ERROR_SUCCESS, "Rename dir failed, retval = %d\n", retval);
+    ok(!dir_exists("test4.txt"), "The dir is not renamed\n");
+    ok(dir_exists("test6.txt"), "The dir is not renamed\n");
 
     set_curr_dir_path(from, "test6.txt\0");
     set_curr_dir_path(to, "test4.txt\0");
     retval = SHFileOperationA(&shfo);
-    ok(!retval, "Rename dir back failed, retval = %d\n", retval);
+    ok(retval == ERROR_SUCCESS, "Rename dir back failed, retval = %d\n", retval);
+    ok(dir_exists("test4.txt"), "The dir is not renamed\n");
 
     /* try to rename more than one file to a single file */
     shfo.pFrom = "test1.txt\0test2.txt\0";
@@ -670,7 +689,7 @@ static void test_rename(void)
     retval = SHFileOperationA(&shfo);
     ok(retval == ERROR_GEN_FAILURE ||
        retval == DE_MANYSRC1DEST || /* Vista */
-       broken(!retval), /* Win9x */
+       broken(retval == ERROR_SUCCESS), /* Win9x */
        "Expected ERROR_GEN_FAILURE or DE_MANYSRC1DEST, got %d\n", retval);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
     ok(file_exists("test2.txt"), "Expected test2.txt to exist\n");
@@ -681,7 +700,8 @@ static void test_rename(void)
     shfo.pTo = "newfile\0";
     retval = SHFileOperationA(&shfo);
     ok(retval == 1026 ||
-       retval == ERROR_FILE_NOT_FOUND, /* Vista */
+       retval == ERROR_FILE_NOT_FOUND || /* Vista */
+       broken(retval == ERROR_SUCCESS), /* NT4 */
        "Expected 1026 or ERROR_FILE_NOT_FOUND, got %d\n", retval);
     ok(!file_exists("newfile"), "Expected newfile to not exist\n");
 
@@ -689,28 +709,45 @@ static void test_rename(void)
     shfo.pFrom = "test1.txt\0";
     shfo.pTo = "test2.txt\0";
     retval = SHFileOperationA(&shfo);
-        ok(retval == ERROR_ALREADY_EXISTS, "Expected ERROR_ALREADY_EXISTS, got %d\n", retval);
+    if (retval == ERROR_SUCCESS)
+    {
+        /* Vista and W2K8 (broken or new behavior ?) */
+        createTestFile("test1.txt");
+    }
+    else
+    {
+        ok(retval == ERROR_ALREADY_EXISTS ||
+           broken(retval == DE_OPCANCELLED) || /* NT4 */
+           broken(retval == ERROR_INVALID_NAME), /* Win9x */
+           "Expected ERROR_ALREADY_EXISTS, got %d\n", retval);
+    }
 
     /* pFrom is valid, but pTo is empty */
     shfo.pFrom = "test1.txt\0";
     shfo.pTo = "\0";
     retval = SHFileOperationA(&shfo);
-    expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x */);
+    ok(retval == ERROR_CANCELLED ||
+       retval == DE_DIFFDIR || /* Vista */
+       broken(retval == DE_OPCANCELLED) || /* Win9x */
+       broken(retval == 65652), /* NT4 */
+       "Expected ERROR_CANCELLED or DE_DIFFDIR\n");
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
 
     /* pFrom is empty */
     shfo.pFrom = "\0";
     retval = SHFileOperationA(&shfo);
     ok(retval == ERROR_ACCESS_DENIED ||
-       retval == ERROR_INVALID_TARGET_HANDLE, /* Vista */
-       "Expected ERROR_ACCESS_DENIED or ERROR_INVALID_TARGET_HANDLE, got %d\n", retval);
+       retval == DE_MANYSRC1DEST || /* Vista */
+       broken(retval == ERROR_SUCCESS), /* Win9x */
+       "Expected ERROR_ACCESS_DENIED or DE_MANYSRC1DEST, got %d\n", retval);
 
     /* pFrom is NULL, commented out because it crashes on nt 4.0 */
-#if 0
-    shfo.pFrom = NULL;
-    retval = SHFileOperationA(&shfo);
-    ok(retval == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", retval);
-#endif
+    if (0)
+    {
+        shfo.pFrom = NULL;
+        retval = SHFileOperationA(&shfo);
+        ok(retval == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", retval);
+    }
 }
 
 /* tests the FO_COPY action */
