@@ -1429,7 +1429,7 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
                     {
                         release_sock_fd( s, fd );
                         SetLastError(WSAEAFNOSUPPORT);
-                        return INVALID_SOCKET;
+                        return SOCKET_ERROR;
                     }
                 }
 #endif
