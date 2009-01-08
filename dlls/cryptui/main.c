@@ -274,12 +274,28 @@ static HCERTSTORE cert_mgr_index_to_store(HWND tab, int index)
     return (HCERTSTORE)item.lParam;
 }
 
+static HCERTSTORE cert_mgr_current_store(HWND hwnd)
+{
+    HWND tab = GetDlgItem(hwnd, IDC_MGR_STORES);
+
+    return cert_mgr_index_to_store(tab, SendMessageW(tab, TCM_GETCURSEL, 0, 0));
+}
+
 static void close_stores(HWND tab)
 {
     int i, tabs = SendMessageW(tab, TCM_GETITEMCOUNT, 0, 0);
 
     for (i = 0; i < tabs; i++)
         CertCloseStore(cert_mgr_index_to_store(tab, i), 0);
+}
+
+static void refresh_store_certs(HWND hwnd)
+{
+    HWND lv = GetDlgItem(hwnd, IDC_MGR_CERTS);
+
+    free_certs(lv);
+    SendMessageW(lv, LVM_DELETEALLITEMS, 0, 0);
+    show_store_certs(hwnd, cert_mgr_current_store(hwnd));
 }
 
 static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
@@ -317,9 +333,24 @@ static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         show_store_certs(hwnd, cert_mgr_index_to_store(tab, 0));
         break;
     }
+    case WM_NOTIFY:
+    {
+        NMHDR *hdr = (NMHDR *)lp;
+
+        switch (hdr->code)
+        {
+        case TCN_SELCHANGE:
+            refresh_store_certs(hwnd);
+            break;
+        }
+        break;
+    }
     case WM_COMMAND:
         switch (wp)
         {
+        case ((CBN_SELCHANGE << 16) | IDC_MGR_PURPOSE_SELECTION):
+            refresh_store_certs(hwnd);
+            break;
         case IDCANCEL:
             free_certs(GetDlgItem(hwnd, IDC_MGR_CERTS));
             close_stores(GetDlgItem(hwnd, IDC_MGR_STORES));
