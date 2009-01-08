@@ -2956,21 +2956,9 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
    return ME_StreamOut(editor, wParam, (EDITSTREAM *)lParam);
   case WM_GETDLGCODE:
   {
-    UINT code = DLGC_WANTCHARS|DLGC_WANTARROWS;
-    if(lParam && (((LPMSG)lParam)->message == WM_KEYDOWN))
-    {
-      int vk = (int)((LPMSG)lParam)->wParam;
-      /* if style says we want return key */
-      if((vk == VK_RETURN) && (GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_WANTRETURN))
-      {
-        code |= DLGC_WANTMESSAGE;
-      }
-      /* we always handle ctrl-tab */
-      if((vk == VK_TAB) && (GetKeyState(VK_CONTROL) & 0x8000))
-      {
-        code |= DLGC_WANTMESSAGE;
-      }
-    }
+    UINT code = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL;
+    if (GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_MULTILINE)
+      code |= DLGC_WANTMESSAGE;
     return code;
   }
   case EM_EMPTYUNDOBUFFER:

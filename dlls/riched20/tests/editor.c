@@ -6025,7 +6025,7 @@ static void test_WM_GETDLGCODE(void)
     msg.hwnd = hwnd;
     res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, 0);
     expected = expected | DLGC_WANTMESSAGE;
-    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+    ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
        res, expected);
     DestroyWindow(hwnd);
 
@@ -6043,7 +6043,7 @@ static void test_WM_GETDLGCODE(void)
     msg.hwnd = hwnd;
     res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
     expected = expected | DLGC_WANTMESSAGE;
-    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+    ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
        res, expected);
     DestroyWindow(hwnd);
 
@@ -6054,7 +6054,7 @@ static void test_WM_GETDLGCODE(void)
     msg.hwnd = hwnd;
     res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
     expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL|DLGC_WANTMESSAGE;
-    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+    ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
        res, expected);
     DestroyWindow(hwnd);
 
@@ -6065,7 +6065,7 @@ static void test_WM_GETDLGCODE(void)
     msg.hwnd = hwnd;
     res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
     expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL;
-    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+    ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
        res, expected);
     DestroyWindow(hwnd);
 
@@ -6076,7 +6076,7 @@ static void test_WM_GETDLGCODE(void)
     msg.hwnd = hwnd;
     res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
     expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL;
-    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+    ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
        res, expected);
     DestroyWindow(hwnd);
 
@@ -6090,7 +6090,7 @@ static void test_WM_GETDLGCODE(void)
     msg.hwnd = hwnd;
     res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
     expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL|DLGC_WANTMESSAGE;
-    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+    ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
        res, expected);
     DestroyWindow(hwnd);
 
@@ -6101,7 +6101,7 @@ static void test_WM_GETDLGCODE(void)
     msg.hwnd = hwnd;
     res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
     expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL;
-    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+    ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
        res, expected);
     DestroyWindow(hwnd);
 
@@ -6114,7 +6114,7 @@ static void test_WM_GETDLGCODE(void)
     msg.hwnd = hwnd;
     res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
     expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL|DLGC_WANTMESSAGE;
-    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+    ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
        res, expected);
     DestroyWindow(hwnd);
 
@@ -6125,7 +6125,7 @@ static void test_WM_GETDLGCODE(void)
     msg.hwnd = hwnd;
     res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
     expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL;
-    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+    ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
        res, expected);
     DestroyWindow(hwnd);
 
@@ -6141,7 +6141,7 @@ static void test_WM_GETDLGCODE(void)
     msg.hwnd = hwnd;
     res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
     expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL|DLGC_WANTMESSAGE;
-    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+    ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
        res, expected);
     DestroyWindow(hwnd);
 
@@ -6152,7 +6152,7 @@ static void test_WM_GETDLGCODE(void)
     msg.hwnd = hwnd;
     res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
     expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL;
-    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+    ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
        res, expected);
     DestroyWindow(hwnd);
 
@@ -6165,7 +6165,7 @@ static void test_WM_GETDLGCODE(void)
     msg.hwnd = hwnd;
     res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
     expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL|DLGC_WANTMESSAGE;
-    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+    ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
        res, expected);
     DestroyWindow(hwnd);
 
@@ -6176,7 +6176,7 @@ static void test_WM_GETDLGCODE(void)
     msg.hwnd = hwnd;
     res = SendMessage(hwnd, WM_GETDLGCODE, VK_RETURN, (LPARAM)&msg);
     expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL;
-    todo_wine ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+    ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
        res, expected);
     DestroyWindow(hwnd);
 }
