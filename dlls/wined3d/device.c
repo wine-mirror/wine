@@ -55,7 +55,7 @@ const WINED3DLIGHT WINED3D_default_light = {
 static void IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResource *resource);
 
 /* helper macros */
-#define D3DMEMCHECK(object, ppResult) if(NULL == object) { *ppResult = NULL; WARN("Out of memory\n"); return WINED3DERR_OUTOFVIDEOMEMORY;}
+#define D3DMEMCHECK(object, ppResult) if(NULL == object) { *ppResult = NULL; ERR("Out of memory\n"); return WINED3DERR_OUTOFVIDEOMEMORY;}
 
 #define D3DCREATEOBJECTINSTANCE(object, type) { \
     object=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3D##type##Impl)); \
