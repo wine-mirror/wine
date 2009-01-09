@@ -1185,6 +1185,7 @@ static void test_GetOutlineTextMetrics(void)
     HFONT hfont, hfont_old;
     HDC hdc;
     DWORD ret, otm_size;
+    LPSTR unset_ptr;
 
     if (!is_font_installed("Arial"))
     {
@@ -1241,6 +1242,7 @@ static void test_GetOutlineTextMetrics(void)
 
     /* ask about truncated data */
     memset(otm, 0xAA, otm_size);
+    memset(&unset_ptr, 0xAA, sizeof(unset_ptr));
     SetLastError(0xdeadbeef);
     otm->otmSize = sizeof(*otm) - sizeof(LPSTR); /* just in case for Win9x compatibility */
     ret = GetOutlineTextMetrics(hdc, otm->otmSize, otm);
@@ -1253,7 +1255,7 @@ static void test_GetOutlineTextMetrics(void)
         ok(otm->otmpFaceName == NULL, "expected NULL got %p\n", otm->otmpFaceName);
         ok(otm->otmpStyleName == NULL, "expected NULL got %p\n", otm->otmpStyleName);
     }
-    ok(otm->otmpFullName == (LPSTR)0xAAAAAAAA, "expected 0xAAAAAAAA got %p\n", otm->otmpFullName);
+    ok(otm->otmpFullName == unset_ptr, "expected %p got %p\n", unset_ptr, otm->otmpFullName);
 
     HeapFree(GetProcessHeap(), 0, otm);
 
