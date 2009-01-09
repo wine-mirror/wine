@@ -3900,7 +3900,7 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock,
     stateblock->wineD3DDevice->instancedDraw = FALSE;
 
     for (i = 0; i < MAX_ATTRIBS; i++) {
-        if (!strided->u.input[i].VBO && !strided->u.input[i].lpData)
+        if (!(strided->use_map & (1 << i)))
         {
             if (context->numbered_array_mask & (1 << i)) unload_numbered_array(stateblock, context, i);
             continue;
