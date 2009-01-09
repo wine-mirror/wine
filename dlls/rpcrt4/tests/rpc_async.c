@@ -34,6 +34,7 @@ static void test_RpcAsyncInitializeHandle(void)
     RPC_ASYNC_STATE async;
     RPC_STATUS status;
     int i;
+    void *unset_ptr;
 
     status = pRpcAsyncInitializeHandle((PRPC_ASYNC_STATE)buffer, sizeof(buffer));
     ok(status == ERROR_INVALID_PARAMETER, "RpcAsyncInitializeHandle with large Size should have returned ERROR_INVALID_PARAMETER instead of %d\n", status);
@@ -42,6 +43,7 @@ static void test_RpcAsyncInitializeHandle(void)
     ok(status == ERROR_INVALID_PARAMETER, "RpcAsyncInitializeHandle with small Size should have returned ERROR_INVALID_PARAMETER instead of %d\n", status);
 
     memset(&async, 0xcc, sizeof(async));
+    memset(&unset_ptr, 0xcc, sizeof(unset_ptr));
     status = pRpcAsyncInitializeHandle(&async, sizeof(async));
     ok(status == RPC_S_OK, "RpcAsyncInitializeHandle failed with error %d\n", status);
 
@@ -50,7 +52,7 @@ static void test_RpcAsyncInitializeHandle(void)
     ok(async.Lock == 0, "async.Lock should be 0, but is %d instead\n", async.Lock);
     ok(async.Flags == 0, "async.Flags should be 0, but is %d instead\n", async.Flags);
     ok(async.StubInfo == NULL, "async.StubInfo should be NULL, not %p\n", async.StubInfo);
-    ok(async.UserInfo == (void *)0xcccccccc, "async.UserInfo should be unset, not %p\n", async.UserInfo);
+    ok(async.UserInfo == unset_ptr, "async.UserInfo should be unset, not %p\n", async.UserInfo);
     ok(async.RuntimeInfo == NULL, "async.RuntimeInfo should be NULL, not %p\n", async.RuntimeInfo);
     ok(async.Event == 0xcccccccc, "async.Event should be unset, not %d\n", async.Event);
     ok(async.NotificationType == 0xcccccccc, "async.NotificationType should be unset, not %d\n", async.NotificationType);
