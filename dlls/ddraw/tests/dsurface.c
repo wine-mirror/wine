@@ -2746,6 +2746,16 @@ static void SurfaceCapsTest(void)
 
         IDirectDraw7_Release(dd7);
     }
+
+    memset(&create, 0, sizeof(create));
+    create.dwSize = sizeof(create);
+    create.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    create.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_VIDEOMEMORY;
+    create.dwWidth = 64;
+    create.dwHeight = 64;
+    hr = IDirectDraw_CreateSurface(lpDD, &create, &surface1, NULL);
+    ok(hr == DDERR_INVALIDCAPS, "Creating a SYSMEM | VIDMEM surface returned 0x%08x, expected DDERR_INVALIDCAPS\n", hr);
+    if(surface1) IDirectDrawSurface_Release(surface1);
 }
 
 static BOOL can_create_primary_surface(void)

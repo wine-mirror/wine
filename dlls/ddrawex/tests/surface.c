@@ -147,6 +147,26 @@ static void GetDCTest(void)
     IDirectDraw_Release(dd1);
 }
 
+static void CapsTest(void)
+{
+    DDSURFACEDESC ddsd;
+    IDirectDraw  *dd1 = createDD();
+    IDirectDrawSurface *surf;
+    HRESULT hr;
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_VIDEOMEMORY;
+    ddsd.dwWidth = 64;
+    ddsd.dwHeight = 64;
+    hr = IDirectDraw_CreateSurface(dd1, &ddsd, &surf, NULL);
+    todo_wine ok(hr == DD_OK, "Creating a SYSMEM | VIDMEM surface returned 0x%08x, expected DD_OK\n", hr);
+    if(surf) IDirectDrawSurface_Release(surf);
+
+    IDirectDraw_Release(dd1);
+}
+
 START_TEST(surface)
 {
     IClassFactory *classfactory = NULL;
@@ -169,6 +189,7 @@ START_TEST(surface)
     ok(hr == S_OK, "Failed to create a IDirectDrawFactory\n");
 
     GetDCTest();
+    CapsTest();
 
     if(factory) {
         ref = IDirectDrawFactory_Release(factory);

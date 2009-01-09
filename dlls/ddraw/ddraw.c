@@ -2432,6 +2432,7 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
     LONG extra_surfaces = 0;
     DDSURFACEDESC2 desc2;
     WINED3DDISPLAYMODE Mode;
+    const DWORD sysvidmem = DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY;
 
     TRACE("(%p)->(%p,%p,%p)\n", This, DDSD, Surf, UnkOuter);
 
@@ -2490,6 +2491,16 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_INVALIDCAPS;
     }
+
+    if((DDSD->ddsCaps.dwCaps & sysvidmem) == sysvidmem)
+    {
+        /* This is a special switch in ddrawex.dll, but not allowed in ddraw.dll */
+        WARN("Application tries to put the surface in both system and video memory\n");
+        LeaveCriticalSection(&ddraw_cs);
+        *Surf = NULL;
+        return DDERR_INVALIDCAPS;
+    }
+
     /* Check cube maps but only if the size includes them */
     if (DDSD->dwSize >= sizeof(DDSURFACEDESC2))
     {
