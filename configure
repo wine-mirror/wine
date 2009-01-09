@@ -24407,6 +24407,14 @@ dlls/ddrawex/Makefile: dlls/ddrawex/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/ddrawex/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/ddrawex/tests/Makefile"
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+	ddrawex/tests"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/ddrawex/tests/Makefile: dlls/ddrawex/tests/Makefile.in dlls/Maketest.rules"
+ac_config_files="$ac_config_files dlls/ddrawex/tests/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/devenum/Makefile"
 test "x$enable_devenum" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	devenum"
@@ -28037,6 +28045,7 @@ do
     "dlls/ddraw/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ddraw/Makefile" ;;
     "dlls/ddraw/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ddraw/tests/Makefile" ;;
     "dlls/ddrawex/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ddrawex/Makefile" ;;
+    "dlls/ddrawex/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ddrawex/tests/Makefile" ;;
     "dlls/devenum/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/devenum/Makefile" ;;
     "dlls/dinput/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dinput/Makefile" ;;
     "dlls/dinput/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dinput/tests/Makefile" ;;
