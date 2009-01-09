@@ -1666,6 +1666,7 @@ static void add_icon_to_control(HWND hwnd, int id)
     HBITMAP bitmap = NULL;
     RECT rect;
     STGMEDIUM stgm;
+    LPOLECLIENTSITE clientSite = NULL;
     REOBJECT reObject;
 
     TRACE("(%p, %d)\n", hwnd, id);
@@ -1695,6 +1696,9 @@ static void add_icon_to_control(HWND hwnd, int id)
      (void**)&dataObject);
     if (FAILED(hr))
         goto end;
+    hr = IRichEditOle_GetClientSite(richEditOle, &clientSite);
+    if (FAILED(hr))
+        goto end;
     bitmap = LoadImageW(hInstance, MAKEINTRESOURCEW(id), IMAGE_BITMAP, 0, 0,
      LR_DEFAULTSIZE | LR_LOADTRANSPARENT);
     if (!bitmap)
@@ -1714,7 +1718,7 @@ static void add_icon_to_control(HWND hwnd, int id)
     reObject.clsid = clsid;
     reObject.poleobj = object;
     reObject.pstg = NULL;
-    reObject.polesite = NULL;
+    reObject.polesite = clientSite;
     reObject.sizel.cx = reObject.sizel.cy = 0;
     reObject.dvaspect = DVASPECT_CONTENT;
     reObject.dwFlags = 0;
@@ -1723,6 +1727,8 @@ static void add_icon_to_control(HWND hwnd, int id)
     IRichEditOle_InsertObject(richEditOle, &reObject);
 
 end:
+    if (clientSite)
+        IOleClientSite_Release(clientSite);
     if (dataObject)
         IDataObject_Release(dataObject);
     if (oleCache)
