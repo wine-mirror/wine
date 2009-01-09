@@ -55,12 +55,31 @@ typedef struct
 
 
 /******************************************************************************
- * DirectDrawFactopry implementation
+ * DirectDrawFactory implementation
  ******************************************************************************/
 typedef struct
 {
     const IDirectDrawFactoryVtbl *lpVtbl;
     LONG ref;
 } IDirectDrawFactoryImpl;
+
+HRESULT WINAPI IDirectDrawFactoryImpl_CreateDirectDraw(IDirectDrawFactory* iface,
+    GUID * pGUID, HWND hWnd, DWORD dwCoopLevelFlags, DWORD dwReserved, IUnknown *pUnkOuter,
+    IDirectDraw **ppDirectDraw);
+
+/******************************************************************************
+ * IDirectDraw wrapper implementation
+ ******************************************************************************/
+typedef struct
+{
+    const IDirectDrawVtbl *IDirectDraw_Vtbl;
+    const IDirectDraw2Vtbl *IDirectDraw2_Vtbl;
+    const IDirectDraw3Vtbl *IDirectDraw3_Vtbl;
+    const IDirectDraw4Vtbl *IDirectDraw4_Vtbl;
+    LONG ref;
+
+    /* The interface we're forwarding to */
+    IDirectDraw4 *parent;
+} IDirectDrawImpl;
 
 #endif /* __WINE_DLLS_DDRAWEX_DDRAWEX_PRIVATE_H */

@@ -33,7 +33,7 @@
 #include "initguid.h"
 #include "ddrawex_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
+WINE_DEFAULT_DEBUG_CHANNEL(ddrawex);
 
 
 /*******************************************************************************
@@ -193,36 +193,6 @@ IDirectDrawFactoryImpl_Release(IDirectDrawFactory *iface)
 
     return ref;
 }
-
-
-/*******************************************************************************
- * IDirectDrawFactoryImpl_CreateDirectDraw
- *******************************************************************************/
-static HRESULT WINAPI
-IDirectDrawFactoryImpl_CreateDirectDraw(IDirectDrawFactory* iface,
-                                        GUID * pGUID,
-                                        HWND hWnd,
-                                        DWORD dwCoopLevelFlags,
-                                        DWORD dwReserved,
-                                        IUnknown *pUnkOuter,
-                                        IDirectDraw **ppDirectDraw)
-{
-    HRESULT hr;
-
-    TRACE("\n");
-
-    hr = DirectDrawCreateEx(pGUID, (void**)ppDirectDraw, &IID_IDirectDraw3, pUnkOuter);
-
-    if (FAILED(hr))
-        return hr;
-
-    hr = IDirectDraw_SetCooperativeLevel(*ppDirectDraw, hWnd, dwCoopLevelFlags);
-    if (FAILED(hr))
-        IDirectDraw_Release(*ppDirectDraw);
-
-    return hr;
-}
-
 
 /*******************************************************************************
  * IDirectDrawFactoryImpl_DirectDrawEnumerate
