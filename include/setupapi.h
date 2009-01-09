@@ -22,8 +22,10 @@
 
 #include <commctrl.h>
 
-#ifdef __cplusplus
-extern "C" {
+#ifdef _WIN64
+#include <pshpack8.h>
+#else
+#include <pshpack1.h>
 #endif
 
 /* setupapi doesn't use the normal convention, it adds an underscore before A/W */
@@ -1848,8 +1850,6 @@ BOOL     WINAPI UnmapAndCloseFile(HANDLE, HANDLE, PVOID);
 
 #undef DECL_WINELIB_SETUPAPI_TYPE_AW
 
-#ifdef __cplusplus
-}
-#endif
+#include <poppack.h>
 
 #endif /* _INC_SETUPAPI */

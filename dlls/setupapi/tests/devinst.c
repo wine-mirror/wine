@@ -835,12 +835,6 @@ static void testGetDeviceInterfaceDetail(void)
             SetLastError(0xdeadbeef);
             ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, detail,
                     size, &size, NULL);
-            ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER,
-             "Expected ERROR_INVALID_USER_BUFFER, got %08x\n", GetLastError());
-            /* Windows 2000 and up check for the exact size */
-            detail->cbSize = FIELD_OFFSET(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath[1]);
-            ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, detail,
-                    size, &size, NULL);
             ok(ret, "SetupDiGetDeviceInterfaceDetailA failed: %d\n",
                     GetLastError());
             ok(!lstrcmpiA(path, detail->DevicePath) ||
