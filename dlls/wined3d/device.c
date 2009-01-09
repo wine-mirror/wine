@@ -349,7 +349,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
 
     /* Special case - Used during initialization to produce a placeholder stateblock
           so other functions called can update a state block                         */
-    if (Type == WINED3DSBT_INIT) {
+    if (Type == WINED3DSBT_INIT || Type == WINED3DSBT_RECORDED)
+    {
         /* Don't bother increasing the reference count otherwise a device will never
            be freed due to circular dependencies                                   */
         return WINED3D_OK;
@@ -4704,42 +4705,22 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetDisplayMode(IWineD3DDevice *iface, U
 
 static HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DStateBlockImpl *object;
-    HRESULT temp_result;
-    int i;
+    IWineD3DStateBlock *stateblock;
+    HRESULT hr;
 
     TRACE("(%p)\n", This);
-    
-    if (This->isRecordingState) {
-        return WINED3DERR_INVALIDCALL;
-    }
-    
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DStateBlockImpl));
-    if (NULL == object ) {
-        FIXME("(%p)Error allocating memory for stateblock\n", This);
-        return E_OUTOFMEMORY;
-    }
-    TRACE("(%p) created object %p\n", This, object);
-    object->wineD3DDevice= This;
-    /** FIXME: object->parent       = parent; **/
-    object->parent       = NULL;
-    object->blockType    = WINED3DSBT_RECORDED;
-    object->ref          = 1;
-    object->lpVtbl       = &IWineD3DStateBlock_Vtbl;
 
-    for(i = 0; i < LIGHTMAP_SIZE; i++) {
-        list_init(&object->lightMap[i]);
-    }
+    if (This->isRecordingState) return WINED3DERR_INVALIDCALL;
 
-    temp_result = allocate_shader_constants(object);
-    if (WINED3D_OK != temp_result)
-        return temp_result;
+    hr = IWineD3DDeviceImpl_CreateStateBlock(iface, WINED3DSBT_RECORDED, &stateblock, NULL);
+    if (FAILED(hr)) return hr;
 
     IWineD3DStateBlock_Release((IWineD3DStateBlock*)This->updateStateBlock);
-    This->updateStateBlock = object;
+    This->updateStateBlock = (IWineD3DStateBlockImpl *)stateblock;
     This->isRecordingState = TRUE;
 
-    TRACE("(%p) recording stateblock %p\n",This , object);
+    TRACE("(%p) recording stateblock %p\n", This, stateblock);
+
     return WINED3D_OK;
 }
 
