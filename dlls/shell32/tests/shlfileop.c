@@ -601,20 +601,33 @@ static void test_delete(void)
         ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
     }
 
-    /* delete a dir, and then a file inside the dir, same as
-    * deleting a nonexistent file
-    *
-    * FIXME: Vista throws up a dialog window to ask if one.txt should be created
-    */
-    init_shfo_tests();
-    shfo.pFrom = "testdir2\0testdir2\\one.txt\0";
+    /* delete a nonexistent file */
+    shfo.pFrom = "nonexistent.txt\0";
     shfo.wFunc = FO_DELETE;
     ret = SHFileOperation(&shfo);
-    ok(ret == ERROR_PATH_NOT_FOUND ||
+    todo_wine
+    ok(ret == 1026 ||
+       ret == ERROR_FILE_NOT_FOUND || /* Vista */
        broken(ret == ERROR_SUCCESS), /* NT4 */
-       "Expected ERROR_PATH_NOT_FOUND, got %d\n", ret);
-    ok(!dir_exists("testdir2"), "Expected testdir2 to not exist\n");
-    ok(!file_exists("testdir2\\one.txt"), "Expected testdir2\\one.txt to not exist\n");
+       "Expected 1026 or ERROR_FILE_NOT_FOUND, got %d\n", ret);
+
+    /* delete a dir, and then a file inside the dir, same as
+    * deleting a nonexistent file
+    */
+    if (ret != ERROR_FILE_NOT_FOUND)
+    {
+        /* Vista would throw up a dialog box that we can't suppress */
+        init_shfo_tests();
+        shfo.pFrom = "testdir2\0testdir2\\one.txt\0";
+        ret = SHFileOperation(&shfo);
+        ok(ret == ERROR_PATH_NOT_FOUND ||
+           broken(ret == ERROR_SUCCESS), /* NT4 */
+           "Expected ERROR_PATH_NOT_FOUND, got %d\n", ret);
+        ok(!dir_exists("testdir2"), "Expected testdir2 to not exist\n");
+        ok(!file_exists("testdir2\\one.txt"), "Expected testdir2\\one.txt to not exist\n");
+    }
+    else
+        skip("Test would show a dialog box\n");
 
     /* try the FOF_NORECURSION flag, continues deleting subdirs */
     init_shfo_tests();
