@@ -51,7 +51,7 @@ typedef enum tagSTRRET_TYPE
     STRRET_CSTR = 2
 } STRRET_TYPE;
 
-cpp_quote("#include <pshpack4.h>")
+cpp_quote("#include <pshpack8.h>")
 typedef struct _STRRET
 {
     UINT uType;			/* STRRET_xxx */
