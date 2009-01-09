@@ -912,12 +912,15 @@ WINE_WARNING_WITH(xslt,[test "x$ac_cv_lib_soname_xslt" = "x"],
 
 dnl **** Check for libhal ****
 AC_SUBST(HALINCL,"")
-if test "x$with_hal" != "xno" -a "$PKG_CONFIG" != "false"
+if test "x$with_hal" != "xno"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    ac_hal_libs="`$PKG_CONFIG --libs hal 2>/dev/null`"
-    ac_hal_cflags="`$PKG_CONFIG --cflags hal 2>/dev/null`"
-    CPPFLAGS="$CPPFLAGS $ac_hal_cflags"
+    if test "$PKG_CONFIG" != "false"
+    then
+        ac_hal_libs="`$PKG_CONFIG --libs hal 2>/dev/null`"
+        ac_hal_cflags="`$PKG_CONFIG --cflags hal 2>/dev/null`"
+        CPPFLAGS="$CPPFLAGS $ac_hal_cflags"
+    fi
     AC_CHECK_HEADERS([dbus/dbus.h hal/libhal.h])
     if test "$ac_cv_header_dbus_dbus_h" = "yes" -a "$ac_cv_header_hal_libhal_h" = "yes"
     then
@@ -931,12 +934,15 @@ WINE_NOTICE_WITH(hal,[test "x$ac_cv_lib_soname_hal" = "x"],
                  [libhal ${notice_platform}development files not found, no dynamic device support.])
 
 dnl **** Check for libgnutls ****
-if test "x$with_gnutls" != "xno" -a "$PKG_CONFIG" != "false"
+if test "x$with_gnutls" != "xno"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    ac_gnutls_libs="`$PKG_CONFIG --libs gnutls 2>/dev/null`"
-    ac_gnutls_cflags="`$PKG_CONFIG --cflags gnutls 2>/dev/null`"
-    CPPFLAGS="$CPPFLAGS $ac_gnutls_cflags"
+    if test "$PKG_CONFIG" != "false"
+    then
+        ac_gnutls_libs="`$PKG_CONFIG --libs gnutls 2>/dev/null`"
+        ac_gnutls_cflags="`$PKG_CONFIG --cflags gnutls 2>/dev/null`"
+        CPPFLAGS="$CPPFLAGS $ac_gnutls_cflags"
+    fi
     AC_CHECK_HEADER(gnutls/gnutls.h,
         [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <gnutls/gnutls.h>]], [[typeof(gnutls_mac_get_key_size) *pfunc;]])],
             [WINE_CHECK_SONAME(gnutls,gnutls_global_init,
