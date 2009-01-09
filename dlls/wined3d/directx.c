@@ -520,8 +520,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     ENTER_GL();
 
     gl_string = (const char *) glGetString(GL_RENDERER);
-    if (NULL == gl_string)
-	gl_string = "None";
+    if (!gl_string) gl_string = "None";
     strcpy(gl_info->gl_renderer, gl_string);
 
     gl_string = (const char *) glGetString(GL_VENDOR);
@@ -3152,11 +3151,11 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         pCaps->RasterCaps         |= WINED3DPRASTERCAPS_FOGRANGE;
     }
                         /* FIXME Add:
-			   WINED3DPRASTERCAPS_COLORPERSPECTIVE
-			   WINED3DPRASTERCAPS_STRETCHBLTMULTISAMPLE
-			   WINED3DPRASTERCAPS_ANTIALIASEDGES
-			   WINED3DPRASTERCAPS_ZBUFFERLESSHSR
-			   WINED3DPRASTERCAPS_WBUFFER */
+                           WINED3DPRASTERCAPS_COLORPERSPECTIVE
+                           WINED3DPRASTERCAPS_STRETCHBLTMULTISAMPLE
+                           WINED3DPRASTERCAPS_ANTIALIASEDGES
+                           WINED3DPRASTERCAPS_ZBUFFERLESSHSR
+                           WINED3DPRASTERCAPS_WBUFFER */
 
     pCaps->ZCmpCaps = WINED3DPCMPCAPS_ALWAYS       |
                       WINED3DPCMPCAPS_EQUAL        |

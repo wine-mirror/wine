@@ -1830,7 +1830,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                 Dest = (WORD *) (dst + y * outpitch);
                 for (x = 0; x < width; x++ ) {
                     WORD color = *Source++;
-		    *Dest = color;
+                    *Dest = color;
                     if ((color < This->SrcBltCKey.dwColorSpaceLowValue) ||
                         (color > This->SrcBltCKey.dwColorSpaceHighValue)) {
                         *Dest |= (1 << 15);

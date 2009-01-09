@@ -1954,7 +1954,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePalette(IWineD3DDevice *iface, DW
     object->parent = Parent;
     object->wineD3DDevice = This;
     object->palNumEntries = IWineD3DPaletteImpl_Size(Flags);
-	
     object->hpal = CreatePalette((const LOGPALETTE*)&(object->palVersion));
 
     if(!object->hpal) {
@@ -2880,9 +2879,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
             if (rho < 0.0001) rho = 0.0001f;
             object->exponent = -0.3/log(cos(rho/2));
         }
-	if (object->exponent > 128.0) {
-		object->exponent = 128.0;
-	}
+        if (object->exponent > 128.0) {
+            object->exponent = 128.0;
+        }
         object->cutoff = pLight->Phi*90/M_PI;
 
         /* FIXME: Range */

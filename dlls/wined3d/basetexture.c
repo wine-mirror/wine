@@ -249,7 +249,6 @@ HRESULT basetexture_bind(IWineD3DBaseTexture *iface)
                 glTexParameteri(textureDimensions, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
             }
         }
-		
     } else { /* this only happened if we've run out of openGL textures */
         WARN("This texture doesn't have an openGL texture assigned to it\n");
         hr =  WINED3DERR_INVALIDCALL;
