@@ -547,7 +547,8 @@ VOID WINAPI GetSystemInfo(
 #elif defined (__NetBSD__)
         {
              int mib[2];
-             int value[2];
+             int value;
+             size_t val_len;
              char model[256];
              char *cpuclass;
              FILE *f = fopen ("/var/run/dmesg.boot", "r");
@@ -556,33 +557,33 @@ VOID WINAPI GetSystemInfo(
              mib[0] = CTL_MACHDEP;
 #ifdef CPU_FPU_PRESENT
              mib[1] = CPU_FPU_PRESENT;
-             value[1] = sizeof(int);
-             if (sysctl(mib, 2, value, value+1, NULL, 0) >= 0)
+             val_len = sizeof(value);
+             if (sysctl(mib, 2, &value, &val_len, NULL, 0) >= 0)
                  if (value) PF[PF_FLOATING_POINT_EMULATED] = FALSE;
                  else       PF[PF_FLOATING_POINT_EMULATED] = TRUE;
 #endif
 #ifdef CPU_SSE
              mib[1] = CPU_SSE;   /* this should imply MMX */
-             value[1] = sizeof(int);
-             if (sysctl(mib, 2, value, value+1, NULL, 0) >= 0)
+             val_len = sizeof(value);
+             if (sysctl(mib, 2, &value, &val_len, NULL, 0) >= 0)
                  if (value) PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
 #endif
 #ifdef CPU_SSE2
              mib[1] = CPU_SSE2;  /* this should imply MMX */
-             value[1] = sizeof(int);
-             if (sysctl(mib, 2, value, value+1, NULL, 0) >= 0)
+             value[1] = sizeof(value);
+             if (sysctl(mib, 2, &value, &val_len, NULL, 0) >= 0)
                  if (value) PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
 #endif
              mib[0] = CTL_HW;
              mib[1] = HW_NCPU;
-             value[1] = sizeof(int);
-             if (sysctl(mib, 2, value, value+1, NULL, 0) >= 0)
-                 if (value[0] > cachedsi.dwNumberOfProcessors)
+             val_len = sizeof(value);
+             if (sysctl(mib, 2, &value, &val_len, NULL, 0) >= 0)
+                 if (value > cachedsi.dwNumberOfProcessors)
                     cachedsi.dwNumberOfProcessors = value[0];
              mib[1] = HW_MODEL;
-             value[1] = 255;
-             if (sysctl(mib, 2, model, value+1, NULL, 0) >= 0) {
-                  model[value[1]] = '\0'; /* just in case */
+             val_len = sizeof(model)-1;
+             if (sysctl(mib, 2, model, &val_len, NULL, 0) >= 0) {
+                  model[val_len] = '\0'; /* just in case */
                   cpuclass = strstr(model, "-class");
                   if (cpuclass != NULL) {
                        while(cpuclass > model && cpuclass[0] != '(') cpuclass--;
@@ -636,7 +637,7 @@ VOID WINAPI GetSystemInfo(
 #elif defined(__FreeBSD__)
 	{
 	int ret, num;
-	unsigned len;
+	size_t len;
 
         get_cpuinfo( &cachedsi );
 
