@@ -358,16 +358,17 @@ static void test_setpos(void)
 static void test_appbarget(void)
 {
     APPBARDATA abd;
-    HWND hwnd, foregnd;
+    HWND hwnd, foregnd, unset_hwnd;
     UINT_PTR ret;
 
     memset(&abd, 0xcc, sizeof(abd));
+    memset(&unset_hwnd, 0xcc, sizeof(unset_hwnd));
     abd.cbSize = sizeof(abd);
     abd.uEdge = ABE_BOTTOM;
 
     hwnd = (HWND)SHAppBarMessage(ABM_GETAUTOHIDEBAR, &abd);
     ok(hwnd == NULL || IsWindow(hwnd), "ret %p which is not a window\n", hwnd);
-    ok(abd.hWnd == (HWND)0xcccccccc, "hWnd overwritten\n");
+    ok(abd.hWnd == unset_hwnd, "hWnd overwritten %p\n",abd.hWnd);
 
     if (!pMonitorFromWindow)
     {
