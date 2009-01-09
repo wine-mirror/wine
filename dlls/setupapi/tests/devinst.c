@@ -1088,7 +1088,7 @@ static void testRegisterAndGetDetail(void)
         detail = HeapAlloc(GetProcessHeap(), 0, dwSize);
         if (detail)
         {
-            detail->cbSize = FIELD_OFFSET(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath) + sizeof(char);
+            detail->cbSize = sizeof(*detail);
             SetLastError(0xdeadbeef);
             ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData,
              detail, dwSize, &dwSize, NULL);
