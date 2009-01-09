@@ -963,6 +963,7 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This)
         TRACE("Locking offscreen render target\n");
         ENTER_GL();
         glReadBuffer(device->offscreenBuffer);
+        checkGLcall("glReadBuffer");
         LEAVE_GL();
     }
 
