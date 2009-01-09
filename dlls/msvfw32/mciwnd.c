@@ -752,7 +752,7 @@ end_of_mci_open:
                 MCIWND_notify_error(mwi);
                 return 0;
             }
-            TRACE("MCIWNDM_GETLENGTH: %d\n", mci_status.dwReturn);
+            TRACE("MCIWNDM_GETLENGTH: %ld\n", mci_status.dwReturn);
             return mci_status.dwReturn;
         }
 
@@ -769,7 +769,7 @@ end_of_mci_open:
                 MCIWND_notify_error(mwi);
                 return 0;
             }
-            TRACE("MCIWNDM_GETSTART: %d\n", mci_status.dwReturn);
+            TRACE("MCIWNDM_GETSTART: %ld\n", mci_status.dwReturn);
             return mci_status.dwReturn;
         }
 

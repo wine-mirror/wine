@@ -2106,8 +2106,8 @@ LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2)
 	    {
 		LPMCI_STATUS_PARMS	lsp;
 
-		lsp = (LPMCI_STATUS_PARMS)(void*)dwParam2;
-		TRACE("Changing %08x to %08x\n", lsp->dwReturn, LOWORD(lsp->dwReturn));
+		lsp = (LPMCI_STATUS_PARMS)dwParam2;
+		TRACE("Changing %08lx to %08x\n", lsp->dwReturn, LOWORD(lsp->dwReturn));
 		lsp->dwReturn = LOWORD(lsp->dwReturn);
 	    }
 	    break;

@@ -899,7 +899,7 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
     LPWAVEHDR		lpWaveHdr;
 
     if (wwo->lpQueuePtr) {
-	TRACE("lpWaveHdr=(%p), lpPlayPtr=(%p), lpLoopPtr=(%p), reserved=(%d), dwWrittenTotal=(%d), force=(%d)\n",
+	TRACE("lpWaveHdr=(%p), lpPlayPtr=(%p), lpLoopPtr=(%p), reserved=(%ld), dwWrittenTotal=(%d), force=(%d)\n",
 	      wwo->lpQueuePtr,
 	      wwo->lpPlayPtr,
 	      wwo->lpLoopPtr,
@@ -1110,7 +1110,7 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
 	    TRACE("feeding waveheaders until we run out of space\n");
 	    /* note the value that dwPlayedTotal will return when this wave finishes playing */
 	    wwo->lpPlayPtr->reserved = wwo->dwWrittenTotal + wwo->lpPlayPtr->dwBufferLength;
-            TRACE("reserved=(%d) dwWrittenTotal=(%d) dwBufferLength=(%d)\n",
+            TRACE("reserved=(%ld) dwWrittenTotal=(%d) dwBufferLength=(%d)\n",
 		  wwo->lpPlayPtr->reserved,
 		  wwo->dwWrittenTotal,
 		  wwo->lpPlayPtr->dwBufferLength

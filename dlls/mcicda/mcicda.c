@@ -545,7 +545,7 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
 		return MCICDA_GetError(wmcda);
 	    }
 	    lpParms->dwReturn = data.CurrentPosition.TrackNumber;
-            TRACE("CURRENT_TRACK=%u!\n", lpParms->dwReturn);
+            TRACE("CURRENT_TRACK=%lu\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_LENGTH:
             if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_READ_TOC, NULL, 0,
@@ -575,11 +575,11 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
 						    ? MCI_FORMAT_MSF : wmcda->dwTimeFormat,
 						 lpParms->dwReturn,
 						 &ret);
-            TRACE("LENGTH=%u !\n", lpParms->dwReturn);
+            TRACE("LENGTH=%lu\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_MODE:
             lpParms->dwReturn = MCICDA_GetStatus(wmcda);
-            TRACE("MCI_STATUS_MODE=%08X !\n", lpParms->dwReturn);
+            TRACE("MCI_STATUS_MODE=%08lX\n", lpParms->dwReturn);
 	    lpParms->dwReturn = MAKEMCIRESOURCE(lpParms->dwReturn, lpParms->dwReturn);
 	    ret = MCI_RESOURCE_RETURNED;
 	    break;
@@ -596,7 +596,7 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
                 return MCICDA_GetError(wmcda);
 	    }
 	    lpParms->dwReturn = toc.LastTrack - toc.FirstTrack + 1;
-            TRACE("MCI_STATUS_NUMBER_OF_TRACKS = %u !\n", lpParms->dwReturn);
+            TRACE("MCI_STATUS_NUMBER_OF_TRACKS = %lu\n", lpParms->dwReturn);
 	    if (lpParms->dwReturn == (WORD)-1)
 		return MCICDA_GetError(wmcda);
 	    break;
@@ -628,7 +628,7 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
                 lpParms->dwReturn = FRAME_OF_ADDR(data.CurrentPosition.AbsoluteAddress);
             }
 	    lpParms->dwReturn = MCICDA_CalcTime(wmcda, wmcda->dwTimeFormat, lpParms->dwReturn, &ret);
-            TRACE("MCI_STATUS_POSITION=%08X !\n", lpParms->dwReturn);
+            TRACE("MCI_STATUS_POSITION=%08lX\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_READY:
 	    TRACE("MCI_STATUS_READY !\n");
@@ -666,7 +666,7 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
 		    lpParms->dwReturn = (toc.TrackData[lpParms->dwTrack - toc.FirstTrack].Control & 0x04) ?
                                          MCI_CDA_TRACK_OTHER : MCI_CDA_TRACK_AUDIO;
 	    }
-            TRACE("MCI_CDA_STATUS_TYPE_TRACK[%d]=%d\n", lpParms->dwTrack, lpParms->dwReturn);
+            TRACE("MCI_CDA_STATUS_TYPE_TRACK[%d]=%ld\n", lpParms->dwTrack, lpParms->dwReturn);
 	    break;
 	default:
             FIXME("unknown command %08X !\n", lpParms->dwItem);

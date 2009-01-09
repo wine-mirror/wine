@@ -313,11 +313,11 @@ typedef struct wavehdr_tag {
     LPSTR       lpData;
     DWORD       dwBufferLength;
     DWORD       dwBytesRecorded;
-    DWORD       dwUser;
+    DWORD_PTR   dwUser;
     DWORD       dwFlags;
     DWORD       dwLoops;
     struct wavehdr_tag *lpNext;
-    DWORD       reserved;
+    DWORD_PTR   reserved;
 } WAVEHDR, *PWAVEHDR, *NPWAVEHDR, *LPWAVEHDR;
 
 #define WHDR_DONE       0x00000001
@@ -704,7 +704,7 @@ typedef struct midihdr_tag {
     DWORD_PTR	dwUser;
     DWORD	dwFlags;
     struct midihdr_tag *lpNext;
-    DWORD	reserved;
+    DWORD_PTR	reserved;
     DWORD	dwOffset;
     DWORD_PTR	dwReserved[8];
 } MIDIHDR, *LPMIDIHDR;
@@ -1225,7 +1225,7 @@ typedef struct tagMIXERLINEA {
     DWORD	dwSource;
     DWORD	dwLineID;
     DWORD	fdwLine;
-    DWORD	dwUser;
+    DWORD_PTR	dwUser;
     DWORD	dwComponentType;
     DWORD	cChannels;
     DWORD	cConnections;
@@ -1248,7 +1248,7 @@ typedef struct tagMIXERLINEW {
     DWORD	dwSource;
     DWORD	dwLineID;
     DWORD	fdwLine;
-    DWORD	dwUser;
+    DWORD_PTR	dwUser;
     DWORD	dwComponentType;
     DWORD	cChannels;
     DWORD	cConnections;
@@ -1977,7 +1977,7 @@ typedef struct tagMCI_SEEK_PARMS {
 
 typedef struct tagMCI_STATUS_PARMS {
        DWORD_PTR dwCallback;
-	DWORD   dwReturn;
+       DWORD_PTR dwReturn;
 	DWORD   dwItem;
 	DWORD   dwTrack;
 } MCI_STATUS_PARMS, *LPMCI_STATUS_PARMS;

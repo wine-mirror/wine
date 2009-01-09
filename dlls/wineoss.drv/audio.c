@@ -1674,7 +1674,7 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
         {
             if (lpWaveHdr == wwo->lpPlayPtr) {TRACE("play %p\n", lpWaveHdr); break;}
             if (lpWaveHdr == wwo->lpLoopPtr) {TRACE("loop %p\n", lpWaveHdr); break;}
-            if (lpWaveHdr->reserved > wwo->dwPlayedTotal) {TRACE("still playing %p (%u/%u)\n", lpWaveHdr, lpWaveHdr->reserved, wwo->dwPlayedTotal);break;}
+            if (lpWaveHdr->reserved > wwo->dwPlayedTotal) {TRACE("still playing %p (%lu/%u)\n", lpWaveHdr, lpWaveHdr->reserved, wwo->dwPlayedTotal);break;}
         }
 	wwo->lpQueuePtr = lpWaveHdr->lpNext;
 

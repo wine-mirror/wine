@@ -1387,7 +1387,7 @@ static DWORD MIDI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
 	case MCI_STATUS_CURRENT_TRACK:
 	    /* FIXME in Format 2 */
 	    lpParms->dwReturn = 1;
-	    TRACE("MCI_STATUS_CURRENT_TRACK => %u\n", lpParms->dwReturn);
+	    TRACE("MCI_STATUS_CURRENT_TRACK => %lu\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_LENGTH:
 	    if ((dwFlags & MCI_TRACK) && wmm->wFormat == 2) {
@@ -1399,7 +1399,7 @@ static DWORD MIDI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
 		lpParms->dwReturn = MIDI_GetMThdLengthMS(wmm);
 	    }
 	    lpParms->dwReturn = MIDI_ConvertMSToTimeFormat(wmm, lpParms->dwReturn);
-	    TRACE("MCI_STATUS_LENGTH => %u\n", lpParms->dwReturn);
+	    TRACE("MCI_STATUS_LENGTH => %lu\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_MODE:
 	    TRACE("MCI_STATUS_MODE => %u\n", wmm->dwStatus);
@@ -1413,13 +1413,13 @@ static DWORD MIDI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
 	    break;
 	case MCI_STATUS_NUMBER_OF_TRACKS:
 	    lpParms->dwReturn = (wmm->wFormat == 2) ? wmm->nTracks : 1;
-	    TRACE("MCI_STATUS_NUMBER_OF_TRACKS => %u\n", lpParms->dwReturn);
+	    TRACE("MCI_STATUS_NUMBER_OF_TRACKS => %lu\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_POSITION:
 	    /* FIXME: do I need to use MCI_TRACK ? */
 	    lpParms->dwReturn = MIDI_ConvertMSToTimeFormat(wmm,
 							   (dwFlags & MCI_STATUS_START) ? 0 : wmm->dwPositionMS);
-	    TRACE("MCI_STATUS_POSITION %s => %u\n",
+	    TRACE("MCI_STATUS_POSITION %s => %lu\n",
 		  (dwFlags & MCI_STATUS_START) ? "start" : "current", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_READY:
