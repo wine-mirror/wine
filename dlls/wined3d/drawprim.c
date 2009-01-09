@@ -687,7 +687,6 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, const WineDirect3
     }
 
     TRACE("(%p) : glElements(%x, %d, %d, ...)\n", This, glPrimitiveType, numberOfVertices, minIndex);
-    idxData = idxData == (void *)-1 ? NULL : idxData;
 
     /* First, figure out how many instances we have to draw */
     for(i = 0; i < MAX_STREAMS; i++) {
