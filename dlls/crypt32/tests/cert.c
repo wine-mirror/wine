@@ -1678,7 +1678,7 @@ static void testVerifyCertSig(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
     info.Signature.pbData = (BYTE *)sig;
     info.Signature.cUnusedBits = 0;
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, X509_CERT, &info,
-     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&cert, &size);
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, &cert, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (cert)
     {
