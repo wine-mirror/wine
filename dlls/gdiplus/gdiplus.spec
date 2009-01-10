@@ -96,7 +96,7 @@
 @ stdcall GdipCreateHBITMAPFromBitmap(ptr ptr long)
 @ stub GdipCreateHICONFromBitmap
 @ stdcall GdipCreateHalftonePalette()
-@ stub GdipCreateHatchBrush
+@ stdcall GdipCreateHatchBrush(long long long ptr)
 @ stdcall GdipCreateImageAttributes(ptr)
 @ stdcall GdipCreateLineBrush(ptr ptr long long long ptr)
 @ stdcall GdipCreateLineBrushFromRect(ptr long long long long ptr)
