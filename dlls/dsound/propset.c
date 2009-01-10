@@ -283,7 +283,7 @@ static HRESULT DSPROPERTY_WaveDeviceMappingA(
     TRACE("(pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
 	  pPropData,cbPropData,pcbReturned);
 
-    ppd = (PDSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A_DATA) pPropData;
+    ppd = pPropData;
 
     if (!ppd) {
 	WARN("invalid parameter: pPropData\n");
@@ -346,7 +346,7 @@ static HRESULT DSPROPERTY_WaveDeviceMappingW(
     TRACE("(pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
 	  pPropData,cbPropData,pcbReturned);
 
-    ppd = (PDSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W_DATA) pPropData;
+    ppd = pPropData;
 
     if (!ppd) {
 	WARN("invalid parameter: pPropData\n");
@@ -584,7 +584,7 @@ static HRESULT DSPROPERTY_DescriptionA(
     ULONG cbPropData,
     PULONG pcbReturned )
 {
-    PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA ppd = (PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA) pPropData;
+    PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA ppd = pPropData;
     HRESULT err;
     GUID dev_guid;
     TRACE("(pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
@@ -824,7 +824,7 @@ static HRESULT DSPROPERTY_DescriptionW(
     ULONG cbPropData,
     PULONG pcbReturned )
 {
-    PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA ppd = (PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA) pPropData;
+    PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA ppd = pPropData;
     HRESULT err;
     GUID dev_guid;
     TRACE("pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
@@ -1147,7 +1147,7 @@ static HRESULT DSPROPERTY_EnumerateA(
     ULONG cbPropData,
     PULONG pcbReturned )
 {
-    PDSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A_DATA ppd = (PDSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A_DATA) pPropData;
+    PDSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A_DATA ppd = pPropData;
     HRESULT err;
     TRACE("(pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
           pPropData,cbPropData,pcbReturned);
@@ -1257,7 +1257,7 @@ static HRESULT DSPROPERTY_EnumerateW(
     ULONG cbPropData,
     PULONG pcbReturned )
 {
-    PDSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W_DATA ppd = (PDSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W_DATA) pPropData;
+    PDSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W_DATA ppd = pPropData;
     HRESULT err;
     TRACE("(pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
           pPropData,cbPropData,pcbReturned);

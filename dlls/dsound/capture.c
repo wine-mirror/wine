@@ -801,7 +801,7 @@ IDirectSoundCaptureBufferImpl_QueryInterface(
 	        }
 	    }
 
-	    *ppobj = (LPVOID)This->notify;
+            *ppobj = This->notify;
 	    return DS_OK;
 	}
 
