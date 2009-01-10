@@ -118,6 +118,7 @@ MAKE_FUNCPTR(SSL_connect);
 MAKE_FUNCPTR(SSL_shutdown);
 MAKE_FUNCPTR(SSL_write);
 MAKE_FUNCPTR(SSL_read);
+MAKE_FUNCPTR(SSL_pending);
 MAKE_FUNCPTR(SSL_get_verify_result);
 MAKE_FUNCPTR(SSL_get_peer_certificate);
 MAKE_FUNCPTR(SSL_CTX_get_timeout);
@@ -181,6 +182,7 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 	DYNSSL(SSL_shutdown);
 	DYNSSL(SSL_write);
 	DYNSSL(SSL_read);
+	DYNSSL(SSL_pending);
 	DYNSSL(SSL_get_verify_result);
 	DYNSSL(SSL_get_peer_certificate);
 	DYNSSL(SSL_CTX_get_timeout);
@@ -606,7 +608,7 @@ BOOL NETCON_query_data_available(WININET_NETCONNECTION *connection, DWORD *avail
         return FALSE;
 
 #ifdef SONAME_LIBSSL
-    if (connection->peek_msg) *available = connection->peek_len;
+    if (connection->peek_msg) *available = connection->peek_len + pSSL_pending(connection->ssl_s);
 #endif
 
 #ifdef FIONREAD
