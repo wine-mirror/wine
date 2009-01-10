@@ -296,7 +296,7 @@ static WCHAR *get_url_from_dde(void)
             WCHAR *endquote = strchrW(ddeString + 1, '"');
             if (!endquote)
             {
-                WINE_ERR("Unabled to retrieve URL from string %s\n", wine_dbgstr_w(ddeString));
+                WINE_ERR("Unable to retrieve URL from string %s\n", wine_dbgstr_w(ddeString));
                 goto done;
             }
             *endquote = 0;
