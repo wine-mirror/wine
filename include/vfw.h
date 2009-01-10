@@ -1419,7 +1419,7 @@ HWND VFWAPIV MCIWndCreateW(HWND, HINSTANCE, DWORD, LPCWSTR);
 #define MCIWndGetLength(hWnd)       (LONG)MCIWndSM(hWnd,MCIWNDM_GETLENGTH,0,0)
 #define MCIWndGetEnd(hWnd)          (LONG)MCIWndSM(hWnd,MCIWNDM_GETEND,0,0)
 
-#define MCIWndStep(hWnd,n)          (LONG)MCIWndSM(hWnd,MCI_STEP,0,(LPARAM)(long)(n))
+#define MCIWndStep(hWnd,n)          (LONG)MCIWndSM(hWnd,MCI_STEP,0,(LPARAM)(LONG)(n))
 
 #define MCIWndDestroy(hWnd)         (VOID)MCIWndSM(hWnd,WM_CLOSE,0,0)
 #define MCIWndSetZoom(hWnd,iZoom)   (VOID)MCIWndSM(hWnd,MCIWNDM_SETZOOM,0,(LPARAM)(UINT)(iZoom))
