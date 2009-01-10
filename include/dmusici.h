@@ -207,7 +207,7 @@ DEFINE_GUID(GUID_Buffer_Mono,                 0x186cc547,0xdb29,0x11d3,0x9b,0xd1
 typedef WORD    TRANSITION_TYPE, *LPTRANSITION_TYPE;
 /*
  * typedef __int64 REFERENCE_TIME,  *LPREFERENCE_TIME;
- * typedef long    MUSIC_TIME,      *LPMUSIC_TIME;
+ * typedef LONG    MUSIC_TIME,      *LPMUSIC_TIME;
  */
 
 

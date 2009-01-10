@@ -118,7 +118,7 @@ static HRESULT WINAPI IDirectMusicBandTrack_IDirectMusicTrack_EndPlay (LPDIRECTM
 static HRESULT WINAPI IDirectMusicBandTrack_IDirectMusicTrack_Play (LPDIRECTMUSICTRACK8 iface, void* pStateData, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, MUSIC_TIME mtOffset, DWORD dwFlags, IDirectMusicPerformance* pPerf, IDirectMusicSegmentState* pSegSt, DWORD dwVirtualID) {
   ICOM_THIS_MULTI(IDirectMusicBandTrack, TrackVtbl, iface);
   
-  FIXME("(%p, %p, %ld, %ld, %ld, %d, %p, %p, %d): semi-stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
+  FIXME("(%p, %p, %d, %d, %d, %d, %p, %p, %d): semi-stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
   /* Sends following pMSG:
      - DMUS_PATCH_PMSG
      - DMUS_TRANSPOSE_PMSG
@@ -131,13 +131,13 @@ static HRESULT WINAPI IDirectMusicBandTrack_IDirectMusicTrack_Play (LPDIRECTMUSI
 
 static HRESULT WINAPI IDirectMusicBandTrack_IDirectMusicTrack_GetParam (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, MUSIC_TIME mtTime, MUSIC_TIME* pmtNext, void* pParam) {
   ICOM_THIS_MULTI(IDirectMusicBandTrack, TrackVtbl, iface);
-  FIXME("(%p, %s, %ld, %p, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pmtNext, pParam);
+  FIXME("(%p, %s, %d, %p, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pmtNext, pParam);
   return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicBandTrack_IDirectMusicTrack_SetParam (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, MUSIC_TIME mtTime, void* pParam) {
   ICOM_THIS_MULTI(IDirectMusicBandTrack, TrackVtbl, iface);
-  FIXME("(%p, %s, %ld, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pParam);
+  FIXME("(%p, %s, %d, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pParam);
   return S_OK;
 }
 
@@ -178,7 +178,7 @@ static HRESULT WINAPI IDirectMusicBandTrack_IDirectMusicTrack_RemoveNotification
 
 static HRESULT WINAPI IDirectMusicBandTrack_IDirectMusicTrack_Clone (LPDIRECTMUSICTRACK8 iface, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, IDirectMusicTrack** ppTrack) {
   ICOM_THIS_MULTI(IDirectMusicBandTrack, TrackVtbl, iface);
-  FIXME("(%p, %ld, %ld, %p): stub\n", This, mtStart, mtEnd, ppTrack);
+  FIXME("(%p, %d, %d, %p): stub\n", This, mtStart, mtEnd, ppTrack);
   return S_OK;
 }
 
@@ -211,7 +211,7 @@ static HRESULT WINAPI IDirectMusicBandTrack_IDirectMusicTrack_Compose (LPDIRECTM
 
 static HRESULT WINAPI IDirectMusicBandTrack_IDirectMusicTrack_Join (LPDIRECTMUSICTRACK8 iface, IDirectMusicTrack* pNewTrack, MUSIC_TIME mtJoin, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
   ICOM_THIS_MULTI(IDirectMusicBandTrack, TrackVtbl, iface);
-  FIXME("(%p, %p, %ld, %p, %d, %p): stub\n", This, pNewTrack, mtJoin, pContext, dwTrackGroup, ppResultTrack);
+  FIXME("(%p, %p, %d, %p, %d, %p): stub\n", This, pNewTrack, mtJoin, pContext, dwTrackGroup, ppResultTrack);
   return S_OK;
 }
 
@@ -352,8 +352,8 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_ParseBandsList (LPPERSISTSTR
 	  TRACE_(dmfile)(": Band Item chunk v1\n");
 	  
 	  IStream_Read (pStm, &tmp_header, sizeof(DMUS_IO_BAND_ITEM_HEADER), NULL);
-	  TRACE_(dmfile)(" - lBandTime: %lu\n", tmp_header.lBandTime);
-	  
+          TRACE_(dmfile)(" - lBandTime: %u\n", tmp_header.lBandTime);
+
 	  header.dwVersion = 1;
 	  header.lBandTime = tmp_header.lBandTime;
 	  break;
@@ -363,9 +363,9 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_ParseBandsList (LPPERSISTSTR
 	  TRACE_(dmfile)(": Band Item chunk v2\n");
 	  
 	  IStream_Read (pStm, &tmp_header2, sizeof(DMUS_IO_BAND_ITEM_HEADER2), NULL);
-	  TRACE_(dmfile)(" - lBandTimeLogical: %lu\n", tmp_header2.lBandTimeLogical);
-	  TRACE_(dmfile)(" - lBandTimePhysical: %lu\n", tmp_header2.lBandTimePhysical);
-	  
+          TRACE_(dmfile)(" - lBandTimeLogical: %u\n", tmp_header2.lBandTimeLogical);
+          TRACE_(dmfile)(" - lBandTimePhysical: %u\n", tmp_header2.lBandTimePhysical);
+
 	  header.dwVersion = 2;
 	  header.lBandTimeLogical = tmp_header2.lBandTimeLogical;
 	  header.lBandTimePhysical = tmp_header2.lBandTimePhysical;

@@ -260,13 +260,13 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_PlaySegment (LPDIRECTMUSICPER
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_Stop (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicSegment* pSegment, IDirectMusicSegmentState* pSegmentState, MUSIC_TIME mtTime, DWORD dwFlags) {
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
-	FIXME("(%p, %p, %p, %ld, %d): stub\n", This, pSegment, pSegmentState, mtTime, dwFlags);
+	FIXME("(%p, %p, %p, %d, %d): stub\n", This, pSegment, pSegmentState, mtTime, dwFlags);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_GetSegmentState (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicSegmentState** ppSegmentState, MUSIC_TIME mtTime) {
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
-	FIXME("(%p,%p, %ld): stub\n", This, ppSegmentState, mtTime);
+	FIXME("(%p,%p, %d): stub\n", This, ppSegmentState, mtTime);
 	return S_OK;
 }
 
@@ -359,7 +359,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_SendPMsg (LPDIRECTMUSICPERFOR
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_MusicToReferenceTime (LPDIRECTMUSICPERFORMANCE8 iface, MUSIC_TIME mtTime, REFERENCE_TIME* prtTime) {
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
-	FIXME("(%p, %ld, %p): stub\n", This, mtTime, prtTime);
+	FIXME("(%p, %d, %p): stub\n", This, mtTime, prtTime);
 	return S_OK;
 }
 
@@ -600,19 +600,19 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_DownloadInstrument (LPDIRECTM
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_Invalidate (LPDIRECTMUSICPERFORMANCE8 iface, MUSIC_TIME mtTime, DWORD dwFlags) {
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
-	FIXME("(%p, %ld, %d): stub\n", This, mtTime, dwFlags);
+	FIXME("(%p, %d, %d): stub\n", This, mtTime, dwFlags);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_GetParam (LPDIRECTMUSICPERFORMANCE8 iface, REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, MUSIC_TIME* pmtNext, void* pParam) {
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
-	FIXME("(%p, %s, %d, %d, %ld, %p, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pmtNext, pParam);
+	FIXME("(%p, %s, %d, %d, %d, %p, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pmtNext, pParam);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_SetParam (LPDIRECTMUSICPERFORMANCE8 iface, REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, void* pParam) {
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
-	FIXME("(%p, %s, %d, %d, %ld, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pParam);
+	FIXME("(%p, %s, %d, %d, %d, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pParam);
 	return S_OK;
 }
 
@@ -717,7 +717,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_MusicToMIDI (LPDIRECTMUSICPER
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_TimeToRhythm (LPDIRECTMUSICPERFORMANCE8 iface, MUSIC_TIME mtTime, DMUS_TIMESIGNATURE* pTimeSig, WORD* pwMeasure, BYTE* pbBeat, BYTE* pbGrid, short* pnOffset) {
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
-	FIXME("(%p, %ld, %p, %p, %p, %p, %p): stub\n", This, mtTime, pTimeSig, pwMeasure, pbBeat, pbGrid, pnOffset);
+	FIXME("(%p, %d, %p, %p, %p, %p, %p): stub\n", This, mtTime, pTimeSig, pwMeasure, pbBeat, pbGrid, pnOffset);
 	return S_OK;
 }
 
@@ -955,7 +955,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_GetDefaultAudioPath (LPDIRECT
 static HRESULT WINAPI IDirectMusicPerformance8Impl_GetParamEx (LPDIRECTMUSICPERFORMANCE8 iface, REFGUID rguidType, DWORD dwTrackID, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, MUSIC_TIME* pmtNext, void* pParam) {
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
 
-	FIXME("(%p, %s, %d, %d, %d, %ld, %p, %p): stub\n", This, debugstr_dmguid(rguidType), dwTrackID, dwGroupBits, dwIndex, mtTime, pmtNext, pParam);
+	FIXME("(%p, %s, %d, %d, %d, %d, %p, %p): stub\n", This, debugstr_dmguid(rguidType), dwTrackID, dwGroupBits, dwIndex, mtTime, pmtNext, pParam);
 
 	return S_OK;
 }

@@ -92,7 +92,7 @@ typedef struct IDirectMusicGraph         IDirectMusicGraph8,        *LPDIRECTMUS
  * Typedef definitions
  */
 typedef struct _DMUS_PMSG DMUS_PMSG;
-typedef long MUSIC_TIME;
+typedef LONG MUSIC_TIME;
 
 
 /*****************************************************************************

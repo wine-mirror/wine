@@ -124,19 +124,19 @@ static HRESULT WINAPI IDirectMusicScriptTrack_IDirectMusicTrack_EndPlay (LPDIREC
 static HRESULT WINAPI IDirectMusicScriptTrack_IDirectMusicTrack_Play (LPDIRECTMUSICTRACK8 iface, void* pStateData, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, MUSIC_TIME mtOffset, DWORD dwFlags, IDirectMusicPerformance* pPerf, IDirectMusicSegmentState* pSegSt, DWORD dwVirtualID)
 {
 	ICOM_THIS_MULTI(IDirectMusicScriptTrack, TrackVtbl, iface);
-	FIXME("(%p, %p, %ld, %ld, %ld, %d, %p, %p, %d): stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
+	FIXME("(%p, %p, %d, %d, %d, %d, %p, %p, %d): stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicScriptTrack_IDirectMusicTrack_GetParam (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, MUSIC_TIME mtTime, MUSIC_TIME* pmtNext, void* pParam) {
 	ICOM_THIS_MULTI(IDirectMusicScriptTrack, TrackVtbl, iface);
-	FIXME("(%p, %s, %ld, %p, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pmtNext, pParam);
+	FIXME("(%p, %s, %d, %p, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pmtNext, pParam);
 	return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicScriptTrack_IDirectMusicTrack_SetParam (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, MUSIC_TIME mtTime, void* pParam) {
 	ICOM_THIS_MULTI(IDirectMusicScriptTrack, TrackVtbl, iface);
-	FIXME("(%p, %s, %ld, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pParam);
+	FIXME("(%p, %s, %d, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pParam);
 	return S_OK;
 }
 
@@ -163,7 +163,7 @@ static HRESULT WINAPI IDirectMusicScriptTrack_IDirectMusicTrack_RemoveNotificati
 
 static HRESULT WINAPI IDirectMusicScriptTrack_IDirectMusicTrack_Clone (LPDIRECTMUSICTRACK8 iface, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, IDirectMusicTrack** ppTrack) {
 	ICOM_THIS_MULTI(IDirectMusicScriptTrack, TrackVtbl, iface);
-	FIXME("(%p, %ld, %ld, %p): stub\n", This, mtStart, mtEnd, ppTrack);
+	FIXME("(%p, %d, %d, %p): stub\n", This, mtStart, mtEnd, ppTrack);
 	return S_OK;
 }
 
@@ -196,7 +196,7 @@ static HRESULT WINAPI IDirectMusicScriptTrack_IDirectMusicTrack_Compose (LPDIREC
 
 static HRESULT WINAPI IDirectMusicScriptTrack_IDirectMusicTrack_Join (LPDIRECTMUSICTRACK8 iface, IDirectMusicTrack* pNewTrack, MUSIC_TIME mtJoin, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
 	ICOM_THIS_MULTI(IDirectMusicScriptTrack, TrackVtbl, iface);
-	FIXME("(%p, %p, %ld, %p, %d, %p): stub\n", This, pNewTrack, mtJoin, pContext, dwTrackGroup, ppResultTrack);
+	FIXME("(%p, %p, %d, %p, %d, %p): stub\n", This, pNewTrack, mtJoin, pContext, dwTrackGroup, ppResultTrack);
 	return S_OK;
 }
 

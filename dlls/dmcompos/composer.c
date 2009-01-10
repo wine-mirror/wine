@@ -77,7 +77,7 @@ static HRESULT WINAPI IDirectMusicComposerImpl_ComposeSegmentFromShape (LPDIRECT
 
 static HRESULT WINAPI IDirectMusicComposerImpl_ComposeTransition (LPDIRECTMUSICCOMPOSER iface, IDirectMusicSegment* pFromSeg, IDirectMusicSegment* pToSeg, MUSIC_TIME mtTime, WORD wCommand, DWORD dwFlags, IDirectMusicChordMap* pChordMap, IDirectMusicSegment** ppTransSeg) {
 	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
-	FIXME("(%p, %p, %p, %ld, %d, %d, %p, %p): stub\n", This, pFromSeg, pToSeg, mtTime, wCommand, dwFlags, pChordMap, ppTransSeg);
+	FIXME("(%p, %p, %p, %d, %d, %d, %p, %p): stub\n", This, pFromSeg, pToSeg, mtTime, wCommand, dwFlags, pChordMap, ppTransSeg);
 	return S_OK;
 }
 

@@ -114,7 +114,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetLength (L
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetLength (LPDIRECTMUSICSEGMENT8 iface, MUSIC_TIME mtLength) {
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
-  TRACE("(%p, %ld)\n", This, mtLength);
+  TRACE("(%p, %d)\n", This, mtLength);
   This->header.mtLength = mtLength;
   return S_OK;
 }
@@ -352,7 +352,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetParam (LP
   LPDMUS_PRIVATE_SEGMENT_TRACK pIt = NULL;
   HRESULT hr = S_OK;
 
-  FIXME("(%p, %s, 0x%x, %d, %ld, %p, %p)\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pmtNext, pParam);
+  FIXME("(%p, %s, 0x%x, %d, %d, %p, %p)\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pmtNext, pParam);
   
   if (DMUS_SEG_ANYTRACK == dwIndex) {
     
@@ -391,19 +391,19 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetParam (LP
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetParam (LPDIRECTMUSICSEGMENT8 iface, REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, void* pParam) {
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
-  FIXME("(%p, %s, %d, %d, %ld, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pParam);
+  FIXME("(%p, %s, %d, %d, %d, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pParam);
   return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_Clone (LPDIRECTMUSICSEGMENT8 iface, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, IDirectMusicSegment** ppSegment) {
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
-  FIXME("(%p, %ld, %ld, %p): stub\n", This, mtStart, mtEnd, ppSegment);
+  FIXME("(%p, %d, %d, %p): stub\n", This, mtStart, mtEnd, ppSegment);
   return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetStartPoint (LPDIRECTMUSICSEGMENT8 iface, MUSIC_TIME mtStart) {
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
-  TRACE("(%p, %ld)\n", This, mtStart);
+  TRACE("(%p, %d)\n", This, mtStart);
   if (mtStart >= This->header.mtLength) {
     return DMUS_E_OUT_OF_RANGE;
   }
@@ -423,7 +423,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetStartPoin
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetLoopPoints (LPDIRECTMUSICSEGMENT8 iface, MUSIC_TIME mtStart, MUSIC_TIME mtEnd) {
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
-  TRACE("(%p, %ld, %ld)\n", This, mtStart, mtEnd);
+  TRACE("(%p, %d, %d)\n", This, mtStart, mtEnd);
   if (mtStart >= This->header.mtLength || mtEnd > This->header.mtLength || mtStart > mtEnd) {
     return DMUS_E_OUT_OF_RANGE;
   }
@@ -463,7 +463,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetAudioPath
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_Compose (LPDIRECTMUSICSEGMENT8 iface, MUSIC_TIME mtTime, IDirectMusicSegment* pFromSegment, IDirectMusicSegment* pToSegment, IDirectMusicSegment** ppComposedSegment) {
 	ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
-	FIXME("(%p, %ld, %p, %p, %p): stub\n", This, mtTime, pFromSegment, pToSegment, ppComposedSegment);
+	FIXME("(%p, %d, %p, %p, %p): stub\n", This, mtTime, pFromSegment, pToSegment, ppComposedSegment);
 	return S_OK;
 }
 
@@ -1073,10 +1073,10 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseSegmentForm (LPPERSI
 	IStream_Read (pStm, &This->header.dwResolution, sizeof(This->header.dwResolution), NULL);
 	checkSz += sizeof(This->header.dwResolution);
 	TRACE_(dmfile)("dwRepeats: %u\n", This->header.dwRepeats);
-	TRACE_(dmfile)("mtLength: %lu\n",  This->header.mtLength);
-	TRACE_(dmfile)("mtPlayStart: %lu\n",  This->header.mtPlayStart);
-	TRACE_(dmfile)("mtLoopStart: %lu\n",  This->header.mtLoopStart);
-	TRACE_(dmfile)("mtLoopEnd: %lu\n",  This->header.mtLoopEnd);
+	TRACE_(dmfile)("mtLength: %u\n",  This->header.mtLength);
+	TRACE_(dmfile)("mtPlayStart: %u\n",  This->header.mtPlayStart);
+	TRACE_(dmfile)("mtLoopStart: %u\n",  This->header.mtLoopStart);
+	TRACE_(dmfile)("mtLoopEnd: %u\n",  This->header.mtLoopEnd);
 	TRACE_(dmfile)("dwResolution: %u\n", This->header.dwResolution);
 	/** DX 8 */
 	if (Chunk.dwSize > checkSz) {
