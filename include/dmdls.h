@@ -25,10 +25,10 @@
 /*****************************************************************************
  * Typedef definitions
  */
-typedef long GCENT;
-typedef long PCENT;
-typedef long PERCENT;
-typedef long TCENT;
+typedef LONG GCENT;
+typedef LONG PCENT;
+typedef LONG PERCENT;
+typedef LONG TCENT;
 
 typedef LONGLONG REFERENCE_TIME, *LPREFERENCE_TIME;
 
