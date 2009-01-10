@@ -172,9 +172,9 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_GetAppend (LPDIRECTMUSICSYNTH8 ifac
 }
 
 /* IDirectMusicSynth8Impl IDirectMusicSynth8 part: */
-static HRESULT WINAPI IDirectMusicSynth8Impl_PlayVoice (LPDIRECTMUSICSYNTH8 iface, REFERENCE_TIME rt, DWORD dwVoiceId, DWORD dwChannelGroup, DWORD dwChannel, DWORD dwDLId, long prPitch, long vrVolume, SAMPLE_TIME stVoiceStart, SAMPLE_TIME stLoopStart, SAMPLE_TIME stLoopEnd) {
+static HRESULT WINAPI IDirectMusicSynth8Impl_PlayVoice (LPDIRECTMUSICSYNTH8 iface, REFERENCE_TIME rt, DWORD dwVoiceId, DWORD dwChannelGroup, DWORD dwChannel, DWORD dwDLId, LONG prPitch, LONG vrVolume, SAMPLE_TIME stVoiceStart, SAMPLE_TIME stLoopStart, SAMPLE_TIME stLoopEnd) {
 	IDirectMusicSynth8Impl *This = (IDirectMusicSynth8Impl *)iface;
-	FIXME("(%p, 0x%s, %d, %d, %d, %d, %li, %li,0x%s, 0x%s, 0x%s): stub\n",
+	FIXME("(%p, 0x%s, %d, %d, %d, %d, %i, %i,0x%s, 0x%s, 0x%s): stub\n",
 	    This, wine_dbgstr_longlong(rt), dwVoiceId, dwChannelGroup, dwChannel, dwDLId, prPitch, vrVolume,
 	    wine_dbgstr_longlong(stVoiceStart), wine_dbgstr_longlong(stLoopStart), wine_dbgstr_longlong(stLoopEnd));
 	return S_OK;
