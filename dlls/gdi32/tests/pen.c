@@ -61,6 +61,7 @@ static void test_logpen(void)
     LOGPEN lp;
     EXTLOGPEN elp;
     LOGBRUSH lb;
+    DWORD_PTR unset_hatch;
     DWORD obj_type, user_style[2] = { 0xabc, 0xdef };
     struct
     {
@@ -118,7 +119,7 @@ static void test_logpen(void)
         /* see how larger buffer sizes are handled */
         memset(&lp, 0xb0, sizeof(lp));
         SetLastError(0xdeadbeef);
-        size = GetObject(hpen, sizeof(lp) * 2, &lp);
+        size = GetObject(hpen, sizeof(lp) * 4, &lp);
         ok(size == sizeof(lp), "GetObject returned %d, error %d\n", size, GetLastError());
 
         /* see how larger buffer sizes are handled */
@@ -258,11 +259,12 @@ static void test_logpen(void)
 
             /* for PS_NULL it also works this way */
             memset(&elp, 0xb0, sizeof(elp));
+            memset(&unset_hatch, 0xb0, sizeof(unset_hatch));
             SetLastError(0xdeadbeef);
             size = GetObject(hpen, sizeof(elp), &elp);
             ok(size == sizeof(EXTLOGPEN),
                 "GetObject returned %d, error %d\n", size, GetLastError());
-            ok(ext_pen.elp.elpHatch == 0xb0b0b0b0, "expected 0xb0b0b0b0, got %p\n", (void *)ext_pen.elp.elpHatch);
+            ok(ext_pen.elp.elpHatch == unset_hatch, "expected 0xb0b0b0b0, got %p\n", (void *)ext_pen.elp.elpHatch);
             ok(ext_pen.elp.elpNumEntries == 0xb0b0b0b0, "expected 0xb0b0b0b0, got %x\n", ext_pen.elp.elpNumEntries);
             break;
 
@@ -542,7 +544,7 @@ static void test_ps_userstyle(void)
     ok(pen != 0, "ExtCreatePen should not fail\n");
 
     size = GetObject(pen, sizeof(ext_pen), &ext_pen);
-    expect(88, size);
+    expect(FIELD_OFFSET(EXTLOGPEN,elpStyleEntry[16]), size);
 
     for(i = 0; i < 16; i++)
         expect(style[i], ext_pen.elp.elpStyleEntry[i]);
