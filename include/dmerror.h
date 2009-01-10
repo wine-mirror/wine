@@ -28,7 +28,7 @@
 
 #ifndef MAKE_HRESULT
 #define MAKE_HRESULT(sev,fac,code) \
-    ((HRESULT) (((unsigned long)(sev)<<31) | ((unsigned long)(fac)<<16) | ((unsigned long)(code))) )
+    ((HRESULT) (((ULONG)(sev)<<31) | ((ULONG)(fac)<<16) | ((ULONG)(code))) )
 #endif
 
 #define MAKE_DMHRESULTSUCCESS(code)  MAKE_HRESULT(0, FACILITY_DIRECTMUSIC, (DMUS_ERRBASE + (code)))
