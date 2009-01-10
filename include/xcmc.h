@@ -25,9 +25,9 @@ extern "C" {
 
 typedef char                CMC_sint8;
 typedef short               CMC_sint16;
-typedef long int            CMC_sint32;
+typedef LONG                CMC_sint32;
 typedef unsigned short int  CMC_uint16;
-typedef unsigned long int   CMC_uint32;
+typedef ULONG               CMC_uint32;
 typedef void*               CMC_buffer;
 typedef char*               CMC_string;
 
