@@ -1539,15 +1539,9 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
 
             /* As the red and green component are the result of blending use 5% tolerance on the expected value */
             color = getPixelColor(device, 128, 240);
-            if(test_data[i].vshader == 1 && test_data[i].tfog == 0 && color != test_data[i].color[j]) {
-                todo_wine ok(color_match(color, test_data[i].color[j], 13),
-                             "fog vs%i ps%i fvm%i ftm%i %d: got color %08x, expected %08x +-5%%(todo)\n",
-                             test_data[i].vshader, test_data[i].pshader, test_data[i].vfog, test_data[i].tfog, j, color, test_data[i].color[j]);
-            } else {
-                ok(color_match(color, test_data[i].color[j], 13),
-                   "fog vs%i ps%i fvm%i ftm%i %d: got color %08x, expected %08x +-5%%\n",
-                   test_data[i].vshader, test_data[i].pshader, test_data[i].vfog, test_data[i].tfog, j, color, test_data[i].color[j]);
-            }
+            ok(color_match(color, test_data[i].color[j], 13),
+                "fog vs%i ps%i fvm%i ftm%i %d: got color %08x, expected %08x +-5%%\n",
+                test_data[i].vshader, test_data[i].pshader, test_data[i].vfog, test_data[i].tfog, j, color, test_data[i].color[j]);
         }
     }
 

@@ -3912,9 +3912,16 @@ static GLuint shader_glsl_generate_vshader(IWineD3DVertexShader *iface, SHADER_B
     if (reg_maps->shader_version >= WINED3DVS_VERSION(3,0)) shader_addline(buffer, "order_ps_input(OUT);\n");
     else shader_addline(buffer, "order_ps_input();\n");
 
-    /* If this shader doesn't use fog copy the z coord to the fog coord so that we can use table fog */
-    if (!reg_maps->fog)
+    /* The D3DRS_FOGTABLEMODE render state defines if the shader-generated fog coord is used
+     * or if the fragment depth is used. If the fragment depth is used(FOGTABLEMODE != NONE),
+     * the fog frag coord is thrown away. If the fog frag coord is used, but not written by
+     * the shader, it is set to 0.0(fully fogged, since start = 1.0, end = 0.0)
+     */
+    if(args->fog_src == VS_FOG_Z) {
         shader_addline(buffer, "gl_FogFragCoord = gl_Position.z;\n");
+    } else if (!reg_maps->fog) {
+        shader_addline(buffer, "gl_FogFragCoord = 0.0;\n");
+    }
 
     /* Write the final position.
      *
