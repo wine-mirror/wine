@@ -309,7 +309,7 @@ static LRESULT MCIWND_Create(HWND hWnd, LPCREATESTRUCTW cs)
         /* MCI wnd class is prepared to be embedded as an MDI child window */
         if (cs->dwExStyle & WS_EX_MDICHILD)
         {
-            MDICREATESTRUCTW *mdics = (MDICREATESTRUCTW *)cs->lpCreateParams;
+            MDICREATESTRUCTW *mdics = cs->lpCreateParams;
             lParam = mdics->lParam;
         }
         else

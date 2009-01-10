@@ -175,7 +175,7 @@ DWORD WINAPI VideoForWindowsVersion(void)
 
 static BOOL ICInfo_enum_handler(const char *drv, unsigned int nr, void *param)
 {
-    ICINFO *lpicinfo = (ICINFO *)param;
+    ICINFO *lpicinfo = param;
     DWORD fccHandler = mmioStringToFOURCCA(drv + 5, 0);
 
     /* exact match of fccHandler or nth driver found */
@@ -521,7 +521,7 @@ static HIC try_driver(driver_info_t *info)
 
 static BOOL ICLocate_enum_handler(const char *drv, unsigned int nr, void *param)
 {
-    driver_info_t *info = (driver_info_t *)param;
+    driver_info_t *info = param;
     info->fccHandler = mmioStringToFOURCCA(drv + 5, 0);
     info->hic = try_driver(info);
     return info->hic != 0;
@@ -1299,7 +1299,7 @@ HANDLE VFWAPI ICImageDecompress(
 		pHdr = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,cbHdr+sizeof(RGBQUAD)*256);
 		if ( pHdr == NULL )
 			goto err;
-		if ( ICDecompressGetFormat( hic, lpbiIn, (BITMAPINFO*)pHdr ) != ICERR_OK )
+		if ( ICDecompressGetFormat( hic, lpbiIn, pHdr ) != ICERR_OK )
 			goto err;
 		lpbiOut = (BITMAPINFO*)pHdr;
 		if ( lpbiOut->bmiHeader.biBitCount <= 8 &&
@@ -1337,7 +1337,7 @@ HANDLE VFWAPI ICImageDecompress(
 		WARN( "out of memory\n" );
 		goto err;
 	}
-	pMem = (BYTE*)GlobalLock( hMem );
+	pMem = GlobalLock( hMem );
 	if ( pMem == NULL )
 		goto err;
 	memcpy( pMem, lpbiOut, cbHdr );
@@ -1368,7 +1368,7 @@ err:
  */
 LPVOID VFWAPI ICSeqCompressFrame(PCOMPVARS pc, UINT uiFlags, LPVOID lpBits, BOOL *pfKey, LONG *plSize)
 {
-    ICCOMPRESS* icComp = (ICCOMPRESS *)pc->lpState;
+    ICCOMPRESS* icComp = pc->lpState;
     DWORD ret;
     TRACE("(%p, 0x%08x, %p, %p, %p)\n", pc, uiFlags, lpBits, pfKey, plSize);
 
@@ -1490,7 +1490,7 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
     TRACE(" -- %x\n", ret);
     if (ret == ICERR_OK)
     {
-       ICCOMPRESS* icComp = (ICCOMPRESS *)pc->lpState;
+       ICCOMPRESS* icComp = pc->lpState;
        /* Initialise some variables */
        pc->lFrame = 0; pc->lKeyCount = 0;
 
