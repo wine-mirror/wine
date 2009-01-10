@@ -539,55 +539,55 @@ BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int f
     else
     {
 #ifdef SONAME_LIBSSL
+        size_t peek_read = 0, read;
+
 	if (flags & ~(MSG_PEEK|MSG_WAITALL))
 	    FIXME("SSL_read does not support the following flag: %08x\n", flags);
 
         /* this ugly hack is all for MSG_PEEK. eww gross */
-	if (flags & MSG_PEEK && !connection->peek_msg)
-	{
-	    connection->peek_msg = connection->peek_msg_mem = HeapAlloc(GetProcessHeap(), 0, (sizeof(char) * len) + 1);
-	}
-	else if (flags & MSG_PEEK && connection->peek_msg)
-	{
-	    if (len < connection->peek_len)
-		FIXME("buffer isn't big enough. Do the expect us to wrap?\n");
-	    *recvd = min(len, connection->peek_len);
-	    memcpy(buf, connection->peek_msg, *recvd);
-            return TRUE;
-	}
-	else if (connection->peek_msg)
-	{
-	    *recvd = min(len, connection->peek_len);
-	    memcpy(buf, connection->peek_msg, *recvd);
-	    connection->peek_len -= *recvd;
-	    connection->peek_msg += *recvd;
-	    if (connection->peek_len == 0)
-	    {
-		HeapFree(GetProcessHeap(), 0, connection->peek_msg_mem);
-		connection->peek_msg_mem = NULL;
+        if(connection->peek_msg) {
+            if(connection->peek_len >= len) {
+                memcpy(buf, connection->peek_msg, len);
+                if(!(flags & MSG_PEEK)) {
+                    if(connection->peek_len == len) {
+                        HeapFree(GetProcessHeap(), 0, connection->peek_msg);
+                        connection->peek_msg = NULL;
+                        connection->peek_len = 0;
+                    }else {
+                        memmove(connection->peek_msg, connection->peek_msg+len, connection->peek_len-len);
+                        connection->peek_len -= len;
+                        connection->peek_msg = HeapReAlloc(GetProcessHeap(), 0, connection->peek_msg, connection->peek_len);
+                    }
+                }
+
+                *recvd = len;
+                return TRUE;
+            }
+
+            memcpy(buf, connection->peek_msg, connection->peek_len);
+            peek_read = connection->peek_len;
+
+            if(!(flags & MSG_PEEK)) {
+                HeapFree(GetProcessHeap(), 0, connection->peek_msg);
                 connection->peek_msg = NULL;
-	    }
-	    /* check if we got enough data from the peek buffer */
-	    if (!(flags & MSG_WAITALL) || (*recvd == len))
-	        return TRUE;
-	    /* otherwise, fall through */
-	}
-	*recvd += pSSL_read(connection->ssl_s, (char*)buf + *recvd, len - *recvd);
-	if (flags & MSG_PEEK) /* must copy stuff into buffer */
-	{
-            connection->peek_len = *recvd;
-	    if (!*recvd)
-	    {
-		HeapFree(GetProcessHeap(), 0, connection->peek_msg_mem);
-		connection->peek_msg_mem = NULL;
-		connection->peek_msg = NULL;
-	    }
-	    else
-		memcpy(connection->peek_msg, buf, *recvd);
-	}
-	if (*recvd < 1 && len)
-            return FALSE;
-        return TRUE;
+                connection->peek_len = 0;
+            }
+        }
+
+	read = pSSL_read(connection->ssl_s, (BYTE*)buf+peek_read, len-peek_read);
+
+        if(flags & MSG_PEEK) {
+            if(connection->peek_msg)
+                connection->peek_msg = HeapReAlloc(GetProcessHeap(), 0, connection->peek_msg,
+                                                   connection->peek_len+read);
+            else
+                connection->peek_msg = HeapAlloc(GetProcessHeap(), 0, read);
+            memcpy(connection->peek_msg+connection->peek_len, (BYTE*)buf+peek_read, read);
+            connection->peek_len += read;
+        }
+
+        *recvd = read + peek_read;
+	return *recvd > 0 || !len;
 #else
 	return FALSE;
 #endif
