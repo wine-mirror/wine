@@ -111,7 +111,7 @@ static const struct message TestGetSetBkColorSeq[] = {
     { TVM_GETBKCOLOR, sent|wparam|lparam, 0x00000000, 0x00000000 },
     { TVM_SETBKCOLOR, sent|wparam|lparam, 0x00000000, 0x00ffffff },
     { TVM_GETBKCOLOR, sent|wparam|lparam, 0x00000000, 0x00000000 },
-    { TVM_SETBKCOLOR, sent|wparam|lparam, 0x00000000, 0xffffffff },
+    { TVM_SETBKCOLOR, sent|wparam|lparam, 0x00000000, -1 },
     { 0 }
 };
 
@@ -146,7 +146,7 @@ static const struct message TestGetSetItemSeq[] = {
 
 static const struct message TestGetSetItemHeightSeq[] = {
     { TVM_GETITEMHEIGHT, sent|wparam|lparam, 0x00000000, 0x00000000 },
-    { TVM_SETITEMHEIGHT, sent|wparam|lparam, 0xffffffff, 0x00000000 },
+    { TVM_SETITEMHEIGHT, sent|wparam|lparam, -1, 0x00000000 },
     { TVM_GETITEMHEIGHT, sent|wparam|lparam, 0x00000000, 0x00000000 },
     { TVM_SETITEMHEIGHT, sent|lparam, 0xcccccccc, 0x00000000 },
     { TVM_GETITEMHEIGHT, sent|wparam|lparam|optional, 0x00000000, 0x00000000 },
@@ -171,7 +171,7 @@ static const struct message TestGetSetTextColorSeq[] = {
     { TVM_GETTEXTCOLOR, sent|wparam|lparam, 0x00000000, 0x00000000 },
     { TVM_SETTEXTCOLOR, sent|wparam|lparam, 0x00000000, 0x00ffffff },
     { TVM_GETTEXTCOLOR, sent|wparam|lparam, 0x00000000, 0x00000000 },
-    { TVM_SETTEXTCOLOR, sent|wparam|lparam, 0x00000000, 0xffffffff },
+    { TVM_SETTEXTCOLOR, sent|wparam|lparam, 0x00000000, -1 },
     { 0 }
 };
 
