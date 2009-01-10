@@ -315,7 +315,7 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
         goto fail;
     }
 
-    *device = (IUnknown *)dxgi_device;
+    *device = dxgi_device;
 
     return hr;
 

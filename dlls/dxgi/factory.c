@@ -131,7 +131,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters(IWineDXGIFactory *ifa
         return DXGI_ERROR_NOT_FOUND;
     }
 
-    *adapter = (IDXGIAdapter *)This->adapters[adapter_idx];
+    *adapter = This->adapters[adapter_idx];
     IDXGIAdapter_AddRef(*adapter);
 
     TRACE("Returning adapter %p\n", *adapter);
