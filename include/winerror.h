@@ -65,12 +65,12 @@
 
 
 #define MAKE_HRESULT(sev,fac,code) \
-    ((HRESULT) (((unsigned long)(sev)<<31) | ((unsigned long)(fac)<<16) | ((unsigned long)(code))) )
+    ((HRESULT) (((unsigned int)(sev)<<31) | ((unsigned int)(fac)<<16) | ((unsigned int)(code))) )
 #define MAKE_SCODE(sev,fac,code) \
-        ((SCODE) (((unsigned long)(sev)<<31) | ((unsigned long)(fac)<<16) | ((unsigned long)(code))) )
+        ((SCODE) (((unsigned int)(sev)<<31) | ((unsigned int)(fac)<<16) | ((unsigned int)(code))) )
 #define SUCCEEDED(stat) ((HRESULT)(stat)>=0)
 #define FAILED(stat) ((HRESULT)(stat)<0)
-#define IS_ERROR(stat) (((unsigned long)(stat)>>31) == SEVERITY_ERROR)
+#define IS_ERROR(stat) (((unsigned int)(stat)>>31) == SEVERITY_ERROR)
 
 #define HRESULT_CODE(hr) ((hr) & 0xFFFF)
 #define SCODE_CODE(sc)   ((sc) & 0xFFFF)
@@ -90,7 +90,7 @@ typedef long            HRESULT;
 typedef int             HRESULT;
 # endif
 #endif
-static inline HRESULT HRESULT_FROM_WIN32(unsigned long x)
+static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 {
     return (HRESULT)x > 0 ? ((HRESULT) ((x & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)) : (HRESULT)x;
 }
