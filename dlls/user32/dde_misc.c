@@ -103,7 +103,7 @@ LPARAM WINAPI PackDDElParam(UINT msg, UINT_PTR uiLo, UINT_PTR uiHi)
         return uiHi;
 
     default:
-        return MAKELPARAM(uiLo, uiHi);
+        return MAKELONG(uiLo, uiHi);
     }
 }
 

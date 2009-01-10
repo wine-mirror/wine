@@ -1793,7 +1793,8 @@ static void test_PackDDElParam(void)
     BOOL ret;
 
     lparam = PackDDElParam(WM_DDE_INITIATE, 0xcafe, 0xbeef);
-    ok(lparam == 0xbeefcafe, "Expected 0xbeefcafe, got %08lx\n", lparam);
+    /* value gets sign-extended despite being an LPARAM */
+    ok(lparam == (int)0xbeefcafe, "Expected 0xbeefcafe, got %08lx\n", lparam);
     ok(GlobalLock((HGLOBAL)lparam) == NULL,
        "Expected NULL, got %p\n", GlobalLock((HGLOBAL)lparam));
     ok(GetLastError() == ERROR_INVALID_HANDLE,
@@ -1809,7 +1810,7 @@ static void test_PackDDElParam(void)
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
 
     lparam = PackDDElParam(WM_DDE_TERMINATE, 0xcafe, 0xbeef);
-    ok(lparam == 0xbeefcafe, "Expected 0xbeefcafe, got %08lx\n", lparam);
+    ok(lparam == (int)0xbeefcafe, "Expected 0xbeefcafe, got %08lx\n", lparam);
     ok(GlobalLock((HGLOBAL)lparam) == NULL,
        "Expected NULL, got %p\n", GlobalLock((HGLOBAL)lparam));
     ok(GetLastError() == ERROR_INVALID_HANDLE,
@@ -1853,7 +1854,7 @@ static void test_PackDDElParam(void)
        "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     lparam = PackDDElParam(WM_DDE_UNADVISE, 0xcafe, 0xbeef);
-    ok(lparam == 0xbeefcafe, "Expected 0xbeefcafe, got %08lx\n", lparam);
+    ok(lparam == (int)0xbeefcafe, "Expected 0xbeefcafe, got %08lx\n", lparam);
     ok(GlobalLock((HGLOBAL)lparam) == NULL,
        "Expected NULL, got %p\n", GlobalLock((HGLOBAL)lparam));
     ok(GetLastError() == ERROR_INVALID_HANDLE,
@@ -1870,7 +1871,7 @@ static void test_PackDDElParam(void)
 
     lparam = PackDDElParam(WM_DDE_ACK, 0xcafe, 0xbeef);
     /* win9x returns the input (0xbeef<<16 | 0xcafe) here */
-    if (lparam != 0xbeefcafe) {
+    if (lparam != (int)0xbeefcafe) {
         ptr = GlobalLock((HGLOBAL)lparam);
         ok(ptr != NULL, "Expected non-NULL ptr\n");
         ok(ptr[0] == 0xcafe, "Expected 0xcafe, got %08lx\n", ptr[0]);
@@ -1925,7 +1926,7 @@ static void test_PackDDElParam(void)
        "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     lparam = PackDDElParam(WM_DDE_REQUEST, 0xcafe, 0xbeef);
-    ok(lparam == 0xbeefcafe, "Expected 0xbeefcafe, got %08lx\n", lparam);
+    ok(lparam == (int)0xbeefcafe, "Expected 0xbeefcafe, got %08lx\n", lparam);
     ok(GlobalLock((HGLOBAL)lparam) == NULL,
        "Expected NULL, got %p\n", GlobalLock((HGLOBAL)lparam));
     ok(GetLastError() == ERROR_INVALID_HANDLE,
