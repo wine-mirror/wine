@@ -38,7 +38,7 @@
  */
 
 #define MAKE_ACM_VERSION(mjr, mnr, bld) \
-  (((long)(mjr)<<24) | ((long)(mnr)<<16) | ((long)bld))
+  (((LONG)(mjr)<<24) | ((LONG)(mnr)<<16) | ((LONG)bld))
 
 #define ACMDRVOPENDESC_SECTIONNAME_CHARS
 
