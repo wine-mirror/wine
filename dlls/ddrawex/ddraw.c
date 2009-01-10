@@ -1551,7 +1551,7 @@ IDirectDrawFactoryImpl_CreateDirectDraw(IDirectDrawFactory* iface,
 err:
     if(object && object->parent) IDirectDraw4_Release(object->parent);
     if(parent) IDirectDraw_Release(parent);
-    if(object) HeapFree(GetProcessHeap(), 0, object);
+    HeapFree(GetProcessHeap(), 0, object);
     *ppDirectDraw = NULL;
     return hr;
 }
