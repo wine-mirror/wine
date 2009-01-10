@@ -141,8 +141,11 @@ static const USER_DRIVER *load_driver(void)
 /* unload the graphics driver on process exit */
 void USER_unload_driver(void)
 {
+    USER_DRIVER *prev;
     /* make sure we don't try to call the driver after it has been detached */
-    USER_Driver = &null_driver;
+    prev = InterlockedExchangePointer( (void **)&USER_Driver, &null_driver );
+    if (prev != &lazy_load_driver && prev != &null_driver)
+        HeapFree( GetProcessHeap(), 0, prev );
 }
 
 
