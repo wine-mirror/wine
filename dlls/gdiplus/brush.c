@@ -717,6 +717,39 @@ GpStatus WINGDIPAPI GdipGetBrushType(GpBrush *brush, GpBrushType *type)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetHatchBackgroundColor(GpHatch *brush, ARGB *backcol)
+{
+    TRACE("(%p, %p)\n", brush, backcol);
+
+    if(!brush || !backcol)  return InvalidParameter;
+
+    *backcol = brush->backcol;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetHatchForegroundColor(GpHatch *brush, ARGB *forecol)
+{
+    TRACE("(%p, %p)\n", brush, forecol);
+
+    if(!brush || !forecol)  return InvalidParameter;
+
+    *forecol = brush->forecol;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetHatchStyle(GpHatch *brush, HatchStyle *hatchstyle)
+{
+    TRACE("(%p, %p)\n", brush, hatchstyle);
+
+    if(!brush || !hatchstyle)  return InvalidParameter;
+
+    *hatchstyle = brush->hatchstyle;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
 {
     TRACE("(%p)\n", brush);

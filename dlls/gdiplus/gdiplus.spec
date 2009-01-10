@@ -275,9 +275,9 @@
 @ stdcall GdipGetGenericFontFamilyMonospace(ptr)
 @ stdcall GdipGetGenericFontFamilySansSerif(ptr)
 @ stdcall GdipGetGenericFontFamilySerif(ptr)
-@ stub GdipGetHatchBackgroundColor
-@ stub GdipGetHatchForegroundColor
-@ stub GdipGetHatchStyle
+@ stdcall GdipGetHatchBackgroundColor(ptr ptr)
+@ stdcall GdipGetHatchForegroundColor(ptr ptr)
+@ stdcall GdipGetHatchStyle(ptr ptr)
 @ stub GdipGetHemfFromMetafile
 @ stub GdipGetImageAttributesAdjustedPalette
 @ stdcall GdipGetImageBounds(ptr ptr ptr)
