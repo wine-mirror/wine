@@ -257,7 +257,11 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
             break;
         case STATUS_PENDING:
             if (WaitForMultipleObjects( 2, handles, FALSE, INFINITE ) == WAIT_OBJECT_0)
+            {
+                HeapFree( GetProcessHeap(), 0, in_buff );
+                HeapFree( GetProcessHeap(), 0, out_buff );
                 return STATUS_SUCCESS;
+            }
             break;
         }
     }
