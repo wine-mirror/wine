@@ -39,7 +39,7 @@ static const WCHAR WC_EDITW[] = {'E','d','i','t',0};
 
 #define NUMCLASSWORDS 4
 
-#define IS_WNDPROC_HANDLE(x) (((ULONG_PTR)(x) >> 16) == (~((ULONG_PTR)0) >> 16))
+#define IS_WNDPROC_HANDLE(x) (((ULONG_PTR)(x) >> 16) == (~0u >> 16))
 
 static LRESULT WINAPI ClassTest_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {

@@ -50,7 +50,7 @@ typedef struct tagWINDOWPROC
     WNDPROC        procW;    /* Unicode window proc */
 } WINDOWPROC;
 
-#define WINPROC_HANDLE (~0UL >> 16)
+#define WINPROC_HANDLE (~0u >> 16)
 #define MAX_WINPROCS  8192
 #define BUILTIN_WINPROCS 9  /* first BUILTIN_WINPROCS entries are reserved for builtin procs */
 #define MAX_WINPROC_RECURSION  64
