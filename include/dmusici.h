@@ -707,9 +707,9 @@ struct _DMUS_WAVE_PMSG {
 	DMUS_PMSG_PART    
 	REFERENCE_TIME rtStartOffset;
 	REFERENCE_TIME rtDuration;
-	long           lOffset;
-	long           lVolume;
-	long           lPitch;
+	LONG           lOffset;
+	LONG           lVolume;
+	LONG           lPitch;
 	BYTE           bFlags;
 };
 
@@ -1199,7 +1199,7 @@ DECLARE_INTERFACE_(IDirectMusicAudioPath,IUnknown)
     /*** IDirectMusicAudioPath methods ***/
     STDMETHOD(GetObjectInPath)(THIS_ DWORD dwPChannel, DWORD dwStage, DWORD dwBuffer, REFGUID guidObject, WORD dwIndex, REFGUID iidInterface, void **ppObject) PURE;
     STDMETHOD(Activate)(THIS_ BOOL fActivate) PURE;
-    STDMETHOD(SetVolume)(THIS_ long lVolume, DWORD dwDuration) PURE;
+    STDMETHOD(SetVolume)(THIS_ LONG lVolume, DWORD dwDuration) PURE;
     STDMETHOD(ConvertPChannel)(THIS_ DWORD dwPChannelIn, DWORD *pdwPChannelOut) PURE;
 };
 #undef INTERFACE

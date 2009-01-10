@@ -206,9 +206,9 @@ static HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_Activate (
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_SetVolume (LPDIRECTMUSICAUDIOPATH iface, long lVolume, DWORD dwDuration) {
+static HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_SetVolume (LPDIRECTMUSICAUDIOPATH iface, LONG lVolume, DWORD dwDuration) {
   ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, AudioPathVtbl, iface);
-  FIXME("(%p, %li, %d): stub\n", This, lVolume, dwDuration);
+  FIXME("(%p, %i, %d): stub\n", This, lVolume, dwDuration);
   return S_OK;
 }
 
