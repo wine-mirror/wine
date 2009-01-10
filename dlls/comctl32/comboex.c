@@ -164,7 +164,7 @@ static void COMBOEX_DumpItem (CBE_ITEMDATA const *item)
 
 static void COMBOEX_DumpInput (COMBOBOXEXITEMW const *input)
 {
-    TRACE("input - mask=%08x, iItem=%d, pszText=%p, cchTM=%d, iImage=%d\n",
+    TRACE("input - mask=%08x, iItem=%ld, pszText=%p, cchTM=%d, iImage=%d\n",
           input->mask, input->iItem, input->pszText, input->cchTextMax,
           input->iImage);
     if (input->mask & CBEIF_TEXT)
@@ -467,7 +467,7 @@ static void COMBOEX_SetEditText (COMBOEX_INFO *infoPtr, CBE_ITEMDATA *item)
 }
 
 
-static CBE_ITEMDATA * COMBOEX_FindItem(COMBOEX_INFO *infoPtr, INT index)
+static CBE_ITEMDATA * COMBOEX_FindItem(COMBOEX_INFO *infoPtr, INT_PTR index)
 {
     CBE_ITEMDATA *item;
     INT i;
@@ -500,7 +500,7 @@ static inline BOOL COMBOEX_HasEdit(COMBOEX_INFO const *infoPtr)
 
 /* ***  CBEM_xxx message support  *** */
 
-static UINT COMBOEX_GetListboxText(COMBOEX_INFO *infoPtr, int n, LPWSTR buf)
+static UINT COMBOEX_GetListboxText(COMBOEX_INFO *infoPtr, INT_PTR n, LPWSTR buf)
 {
     CBE_ITEMDATA *item;
     LPCWSTR str;
@@ -527,9 +527,9 @@ static UINT COMBOEX_GetListboxText(COMBOEX_INFO *infoPtr, int n, LPWSTR buf)
 }
 
 
-static INT COMBOEX_DeleteItem (COMBOEX_INFO *infoPtr, INT index)
+static INT COMBOEX_DeleteItem (COMBOEX_INFO *infoPtr, INT_PTR index)
 {
-    TRACE("(index=%d)\n", index);
+    TRACE("(index=%ld)\n", index);
 
     /* if item number requested does not exist then return failure */
     if ((index >= infoPtr->nb_items) || (index < 0)) return CB_ERR;
@@ -544,7 +544,7 @@ static INT COMBOEX_DeleteItem (COMBOEX_INFO *infoPtr, INT index)
 
 static BOOL COMBOEX_GetItemW (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW *cit)
 {
-    INT index = cit->iItem;
+    INT_PTR index = cit->iItem;
     CBE_ITEMDATA *item;
 
     TRACE("(...)\n");
@@ -607,7 +607,7 @@ static inline BOOL COMBOEX_HasEditChanged (COMBOEX_INFO const *infoPtr)
 
 static INT COMBOEX_InsertItemW (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW const *cit)
 {
-    INT index;
+    INT_PTR index;
     CBE_ITEMDATA *item;
     NMCOMBOBOXEXW nmcit;
 
@@ -765,7 +765,7 @@ static HIMAGELIST COMBOEX_SetImageList (COMBOEX_INFO *infoPtr, HIMAGELIST himl)
 
 static BOOL COMBOEX_SetItemW (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW *cit)
 {
-    INT index = cit->iItem;
+    INT_PTR index = cit->iItem;
     CBE_ITEMDATA *item;
 
     if (TRACE_ON(comboex)) COMBOEX_DumpInput (cit);
@@ -870,7 +870,7 @@ COMBOEX_FindStringExact (COMBOEX_INFO *infoPtr, INT start, LPCWSTR str)
 }
 
 
-static DWORD_PTR COMBOEX_GetItemData (COMBOEX_INFO *infoPtr, INT index)
+static DWORD_PTR COMBOEX_GetItemData (COMBOEX_INFO *infoPtr, INT_PTR index)
 {
     CBE_ITEMDATA const *item1;
     CBE_ITEMDATA const *item2;
@@ -893,7 +893,7 @@ static DWORD_PTR COMBOEX_GetItemData (COMBOEX_INFO *infoPtr, INT index)
 }
 
 
-static INT COMBOEX_SetCursel (COMBOEX_INFO *infoPtr, INT index)
+static INT COMBOEX_SetCursel (COMBOEX_INFO *infoPtr, INT_PTR index)
 {
     CBE_ITEMDATA *item;
     INT sel;
@@ -901,7 +901,7 @@ static INT COMBOEX_SetCursel (COMBOEX_INFO *infoPtr, INT index)
     if (!(item = COMBOEX_FindItem(infoPtr, index)))
 	return SendMessageW (infoPtr->hwndCombo, CB_SETCURSEL, index, 0);
 
-    TRACE("selecting item %d text=%s\n", index, debugstr_txt(item->pszText));
+    TRACE("selecting item %ld text=%s\n", index, debugstr_txt(item->pszText));
     infoPtr->selected = index;
 
     sel = (INT)SendMessageW (infoPtr->hwndCombo, CB_SETCURSEL, index, 0);
@@ -910,7 +910,7 @@ static INT COMBOEX_SetCursel (COMBOEX_INFO *infoPtr, INT index)
 }
 
 
-static DWORD_PTR COMBOEX_SetItemData (COMBOEX_INFO *infoPtr, INT index, DWORD_PTR data)
+static DWORD_PTR COMBOEX_SetItemData (COMBOEX_INFO *infoPtr, INT_PTR index, DWORD_PTR data)
 {
     CBE_ITEMDATA *item1;
     CBE_ITEMDATA const *item2;
@@ -1124,7 +1124,8 @@ static LRESULT COMBOEX_Command (COMBOEX_INFO *infoPtr, WPARAM wParam)
     INT command = HIWORD(wParam);
     CBE_ITEMDATA *item = 0;
     WCHAR wintext[520];
-    INT cursel, n, oldItem;
+    INT cursel, n;
+    INT_PTR oldItem;
     NMCBEENDEDITW cbeend;
     DWORD oldflags;
     HWND parent = infoPtr->hwndNotify;
@@ -1224,7 +1225,7 @@ static LRESULT COMBOEX_Command (COMBOEX_INFO *infoPtr, WPARAM wParam)
 	 */
 	oldItem = SendMessageW (infoPtr->hwndCombo, CB_GETCURSEL, 0, 0);
 	if (!(item = COMBOEX_FindItem(infoPtr, oldItem))) {
-	    ERR("item %d not found. Problem!\n", oldItem);
+	    ERR("item %ld not found. Problem!\n", oldItem);
 	    break;
 	}
 	infoPtr->selected = oldItem;
@@ -1750,7 +1751,7 @@ COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				   hwnd, uMsg, wParam, lParam);
 
 	case WM_KEYDOWN: {
-	    INT oldItem, selected, step = 1;
+	    INT_PTR oldItem, selected, step = 1;
 	    CBE_ITEMDATA *item;
 
 	    switch ((INT)wParam)
@@ -1787,7 +1788,7 @@ COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		oldItem = SendMessageW (infoPtr->hwndCombo, CB_GETCURSEL, 0, 0);
 		InvalidateRect (infoPtr->hwndCombo, 0, 0);
 		if (!(item = COMBOEX_FindItem(infoPtr, oldItem))) {
-		    ERR("item %d not found. Problem!\n", oldItem);
+		    ERR("item %ld not found. Problem!\n", oldItem);
 		    break;
 		}
 		infoPtr->selected = oldItem;
@@ -1829,7 +1830,7 @@ COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (selected != -1) {
                     cmp_func_t cmptext = get_cmp_func(infoPtr);
 		    item = COMBOEX_FindItem (infoPtr, selected);
-		    TRACE("handling VK_RETURN, selected = %d, selected_text=%s\n",
+		    TRACE("handling VK_RETURN, selected = %ld, selected_text=%s\n",
 			  selected, debugstr_txt(item->pszText));
 		    TRACE("handling VK_RETURN, edittext=%s\n",
 			  debugstr_w(edit_text));
@@ -2079,8 +2080,8 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		LPCWSTR lastwrk;
                 cmp_func_t cmptext = get_cmp_func(infoPtr);
 
-		INT selected = SendMessageW (infoPtr->hwndCombo,
-					     CB_GETCURSEL, 0, 0);
+		INT_PTR selected = SendMessageW (infoPtr->hwndCombo,
+                                                 CB_GETCURSEL, 0, 0);
 
 		/* lstrlenW( lastworkingURL ) */
 
@@ -2093,7 +2094,7 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    lastwrk = COMBOEX_GetText(infoPtr, item);
 		}
 
-		TRACE("handling EN_CHANGE, selected = %d, selected_text=%s\n",
+		TRACE("handling EN_CHANGE, selected = %ld, selected_text=%s\n",
 		      selected, debugstr_w(lastwrk));
 		TRACE("handling EN_CHANGE, edittext=%s\n",
 		      debugstr_w(edit_text));

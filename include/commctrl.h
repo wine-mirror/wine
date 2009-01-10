@@ -2381,10 +2381,10 @@ static const WCHAR WC_TREEVIEWW[] = { 'S','y','s',
 #define TVIF_INTEGRAL         0x0080
 #define TVIF_DI_SETITEM	      0x1000
 
-#define TVI_ROOT              ((HTREEITEM)0xffff0000)     /* -65536 */
-#define TVI_FIRST             ((HTREEITEM)0xffff0001)     /* -65535 */
-#define TVI_LAST              ((HTREEITEM)0xffff0002)     /* -65534 */
-#define TVI_SORT              ((HTREEITEM)0xffff0003)     /* -65533 */
+#define TVI_ROOT              ((HTREEITEM)-65536)
+#define TVI_FIRST             ((HTREEITEM)-65535)
+#define TVI_LAST              ((HTREEITEM)-65534)
+#define TVI_SORT              ((HTREEITEM)-65533)
 
 #define TVIS_FOCUSED          0x0001
 #define TVIS_SELECTED         0x0002
@@ -4244,7 +4244,7 @@ static const WCHAR WC_COMBOBOXEXW[] = { 'C','o','m','b','o',
 typedef struct tagCOMBOBOXEXITEMA
 {
     UINT mask;
-    int iItem;
+    INT_PTR iItem;
     LPSTR pszText;
     int cchTextMax;
     int iImage;
@@ -4258,7 +4258,7 @@ typedef COMBOBOXEXITEMA const *PCCOMBOEXITEMA; /* Yes, there's a BOX missing */
 typedef struct tagCOMBOBOXEXITEMW
 {
     UINT mask;
-    int iItem;
+    INT_PTR iItem;
     LPWSTR pszText;
     int cchTextMax;
     int iImage;
