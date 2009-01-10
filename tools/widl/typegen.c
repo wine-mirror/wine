@@ -1271,7 +1271,7 @@ static void write_user_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
     *tfsoff += 2;
 }
 
-static unsigned char inline make_signed(unsigned char fc)
+static inline unsigned char make_signed(unsigned char fc)
 {
     switch(fc)
     {
