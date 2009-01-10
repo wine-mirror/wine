@@ -3478,6 +3478,38 @@ static LRESULT WINAPI MSIHiddenWindowProc( HWND hwnd, UINT msg,
     return DefWindowProcW( hwnd, msg, wParam, lParam );
 }
 
+static BOOL msi_dialog_register_class( void )
+{
+    WNDCLASSW cls;
+
+    ZeroMemory( &cls, sizeof cls );
+    cls.lpfnWndProc   = MSIDialog_WndProc;
+    cls.hInstance     = NULL;
+    cls.hIcon         = LoadIconW(0, (LPWSTR)IDI_APPLICATION);
+    cls.hCursor       = LoadCursorW(0, (LPWSTR)IDC_ARROW);
+    cls.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
+    cls.lpszMenuName  = NULL;
+    cls.lpszClassName = szMsiDialogClass;
+
+    if( !RegisterClassW( &cls ) )
+        return FALSE;
+
+    cls.lpfnWndProc   = MSIHiddenWindowProc;
+    cls.lpszClassName = szMsiHiddenWindow;
+
+    if( !RegisterClassW( &cls ) )
+        return FALSE;
+
+    uiThreadId = GetCurrentThreadId();
+
+    hMsiHiddenWindow = CreateWindowW( szMsiHiddenWindow, NULL, WS_OVERLAPPED,
+                                   0, 0, 100, 100, NULL, NULL, NULL, NULL );
+    if( !hMsiHiddenWindow )
+        return FALSE;
+
+    return TRUE;
+}
+
 /* functions that interface to other modules within MSI */
 
 msi_dialog *msi_dialog_create( MSIPACKAGE* package,
@@ -3659,38 +3691,6 @@ void msi_dialog_destroy( msi_dialog *dialog )
     msiobj_release( &dialog->package->hdr );
     dialog->package = NULL;
     msi_free( dialog );
-}
-
-BOOL msi_dialog_register_class( void )
-{
-    WNDCLASSW cls;
-
-    ZeroMemory( &cls, sizeof cls );
-    cls.lpfnWndProc   = MSIDialog_WndProc;
-    cls.hInstance     = NULL;
-    cls.hIcon         = LoadIconW(0, (LPWSTR)IDI_APPLICATION);
-    cls.hCursor       = LoadCursorW(0, (LPWSTR)IDC_ARROW);
-    cls.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
-    cls.lpszMenuName  = NULL;
-    cls.lpszClassName = szMsiDialogClass;
-
-    if( !RegisterClassW( &cls ) )
-        return FALSE;
-
-    cls.lpfnWndProc   = MSIHiddenWindowProc;
-    cls.lpszClassName = szMsiHiddenWindow;
-
-    if( !RegisterClassW( &cls ) )
-        return FALSE;
-
-    uiThreadId = GetCurrentThreadId();
-
-    hMsiHiddenWindow = CreateWindowW( szMsiHiddenWindow, NULL, WS_OVERLAPPED,
-                                   0, 0, 100, 100, NULL, NULL, NULL, NULL );
-    if( !hMsiHiddenWindow )
-        return FALSE;
-
-    return TRUE;
 }
 
 void msi_dialog_unregister_class( void )

@@ -41,7 +41,7 @@ static void MSI_ClosePreview( MSIOBJECTHDR *arg )
     msiobj_release( &preview->package->hdr );
 }
 
-MSIPREVIEW *MSI_EnableUIPreview( MSIDATABASE *db )
+static MSIPREVIEW *MSI_EnableUIPreview( MSIDATABASE *db )
 {
     MSIPREVIEW *preview = NULL;
     MSIPACKAGE *package;
@@ -109,7 +109,7 @@ static UINT preview_event_handler( MSIPACKAGE *package, LPCWSTR event,
     return ERROR_SUCCESS;
 }
 
-UINT MSI_PreviewDialogW( MSIPREVIEW *preview, LPCWSTR szDialogName )
+static UINT MSI_PreviewDialogW( MSIPREVIEW *preview, LPCWSTR szDialogName )
 {
     msi_dialog *dialog = NULL;
     UINT r = ERROR_SUCCESS;

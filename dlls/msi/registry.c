@@ -653,7 +653,7 @@ UINT MSIREG_DeleteUserFeaturesKey(LPCWSTR szProduct)
     return RegDeleteTreeW(HKEY_CURRENT_USER, keypath);
 }
 
-UINT MSIREG_OpenInstallerFeaturesKey(LPCWSTR szProduct, HKEY* key, BOOL create)
+static UINT MSIREG_OpenInstallerFeaturesKey(LPCWSTR szProduct, HKEY* key, BOOL create)
 {
     UINT rc;
     WCHAR squished_pc[GUID_SIZE];

@@ -598,7 +598,7 @@ done:
     return r;
 }
 
-UINT MSI_DatabaseImport(MSIDATABASE *db, LPCWSTR folder, LPCWSTR file)
+static UINT MSI_DatabaseImport(MSIDATABASE *db, LPCWSTR folder, LPCWSTR file)
 {
     UINT r;
     DWORD len, i;
@@ -812,7 +812,7 @@ static UINT msi_export_forcecodepage( HANDLE handle )
     return ERROR_SUCCESS;
 }
 
-UINT MSI_DatabaseExport( MSIDATABASE *db, LPCWSTR table,
+static UINT MSI_DatabaseExport( MSIDATABASE *db, LPCWSTR table,
                LPCWSTR folder, LPCWSTR file )
 {
     static const WCHAR query[] = {

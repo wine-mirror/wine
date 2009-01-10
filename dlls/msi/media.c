@@ -455,7 +455,7 @@ void msi_free_media_info(MSIMEDIAINFO *mi)
     msi_free(mi);
 }
 
-UINT msi_load_media_info(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
+static UINT msi_load_media_info(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
 {
     MSIRECORD *row;
     LPWSTR source_dir;
@@ -542,7 +542,7 @@ UINT msi_load_media_info(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
 }
 
 /* FIXME: search NETWORK and URL sources as well */
-UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
+static UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
 {
     WCHAR source[MAX_PATH];
     WCHAR volume[MAX_PATH];

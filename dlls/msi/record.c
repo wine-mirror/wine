@@ -488,7 +488,7 @@ static UINT msi_get_stream_size( IStream *stm )
     return stat.cbSize.QuadPart;
 }
 
-UINT MSI_RecordDataSize(MSIRECORD *rec, UINT iField)
+static UINT MSI_RecordDataSize(MSIRECORD *rec, UINT iField)
 {
     TRACE("%p %d\n", rec, iField);
 
@@ -526,7 +526,7 @@ UINT WINAPI MsiRecordDataSize(MSIHANDLE handle, UINT iField)
     return ret;
 }
 
-UINT MSI_RecordSetStringA( MSIRECORD *rec, UINT iField, LPCSTR szValue )
+static UINT MSI_RecordSetStringA( MSIRECORD *rec, UINT iField, LPCSTR szValue )
 {
     LPWSTR str;
 
@@ -662,7 +662,7 @@ static UINT RECORD_StreamFromFile(LPCWSTR szFile, IStream **pstm)
     return ERROR_SUCCESS;
 }
 
-UINT MSI_RecordSetStream(MSIRECORD *rec, UINT iField, IStream *stream)
+static UINT MSI_RecordSetStream(MSIRECORD *rec, UINT iField, IStream *stream)
 {
     if ( (iField == 0) || (iField > rec->count) )
         return ERROR_INVALID_PARAMETER;
