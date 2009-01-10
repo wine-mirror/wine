@@ -2440,7 +2440,9 @@ unsigned char *  WINAPI NdrNonConformantStringUnmarshall(PMIDL_STUB_MESSAGE pStu
 
   validate_string_data(pStubMsg, bufsize, esize);
 
-  if (fMustAlloc || !*ppMemory)
+  if (!fMustAlloc && !*ppMemory)
+    fMustAlloc = TRUE;
+  if (fMustAlloc)
     *ppMemory = NdrAllocate(pStubMsg, memsize);
 
   safe_copy_from_buffer(pStubMsg, *ppMemory, bufsize);
@@ -3380,7 +3382,9 @@ unsigned char * WINAPI NdrComplexStructUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     offset = pStubMsg->Offset;
   }
 
-  if (fMustAlloc || !*ppMemory)
+  if (!fMustAlloc && !*ppMemory)
+    fMustAlloc = TRUE;
+  if (fMustAlloc)
     *ppMemory = NdrAllocate(pStubMsg, size);
 
   pMemory = ComplexUnmarshall(pStubMsg, *ppMemory, pFormat, pointer_desc, fMustAlloc);
@@ -3921,7 +3925,9 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat = ReadConformance(pStubMsg, pFormat);
   pFormat = ReadVariance(pStubMsg, pFormat, pStubMsg->MaxCount);
 
-  if (fMustAlloc || !*ppMemory)
+  if (!fMustAlloc && !*ppMemory)
+    fMustAlloc = TRUE;
+  if (fMustAlloc)
     *ppMemory = NdrAllocate(pStubMsg, size);
 
   ALIGN_POINTER(pStubMsg->Buffer, alignment);
@@ -4193,8 +4199,13 @@ unsigned char * WINAPI NdrUserMarshalUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   else
     ALIGN_POINTER(pStubMsg->Buffer, (flags & 0xf) + 1);
 
-  if (fMustAlloc || !*ppMemory)
+  if (!fMustAlloc && !*ppMemory)
+    fMustAlloc = TRUE;
+  if (fMustAlloc)
+  {
     *ppMemory = NdrAllocate(pStubMsg, memsize);
+    memset(*ppMemory, 0, memsize);
+  }
 
   pStubMsg->Buffer =
     pStubMsg->StubDesc->aUserMarshalQuadruple[index].pfnUnmarshall(
@@ -4662,7 +4673,9 @@ unsigned char *  WINAPI NdrConformantVaryingStructUnmarshall(PMIDL_STUB_MESSAGE 
     TRACE("memory_size = %d\n", pCVStructFormat->memory_size);
 
     /* work out how much memory to allocate if we need to do so */
-    if (!*ppMemory || fMustAlloc)
+    if (!fMustAlloc && !*ppMemory)
+        fMustAlloc = TRUE;
+    if (fMustAlloc)
     {
         SIZE_T size = pCVStructFormat->memory_size + memsize;
         *ppMemory = NdrAllocate(pStubMsg, size);
@@ -5149,7 +5162,9 @@ unsigned char *  WINAPI NdrVaryingArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     bufsize = safe_multiply(esize, pStubMsg->ActualCount);
     offset = pStubMsg->Offset;
 
-    if (!*ppMemory || fMustAlloc)
+    if (!fMustAlloc && !*ppMemory)
+        fMustAlloc = TRUE;
+    if (fMustAlloc)
         *ppMemory = NdrAllocate(pStubMsg, size);
     saved_buffer = pStubMsg->BufferMark = pStubMsg->Buffer;
     safe_buffer_increment(pStubMsg, bufsize);
@@ -5707,7 +5722,9 @@ unsigned char *  WINAPI NdrEncapsulatedUnionUnmarshall(PMIDL_STUB_MESSAGE pStubM
     TRACE("got switch value 0x%x\n", switch_value);
 
     size = *(const unsigned short*)pFormat + increment;
-    if(!*ppMemory || fMustAlloc)
+    if (!fMustAlloc && !*ppMemory)
+        fMustAlloc = TRUE;
+    if (fMustAlloc)
         *ppMemory = NdrAllocate(pStubMsg, size);
 
     NdrBaseTypeUnmarshall(pStubMsg, ppMemory, &switch_type, FALSE);
@@ -5887,7 +5904,9 @@ unsigned char *  WINAPI NdrNonEncapsulatedUnionUnmarshall(PMIDL_STUB_MESSAGE pSt
 
     size = *(const unsigned short*)pFormat;
 
-    if(!*ppMemory || fMustAlloc)
+    if (!fMustAlloc && !*ppMemory)
+        fMustAlloc = TRUE;
+    if (fMustAlloc)
         *ppMemory = NdrAllocate(pStubMsg, size);
 
     return union_arm_unmarshall(pStubMsg, ppMemory, discriminant, pFormat, fMustAlloc);
@@ -6109,7 +6128,9 @@ unsigned char *WINAPI NdrRangeUnmarshall(
     do \
     { \
         ALIGN_POINTER(pStubMsg->Buffer, sizeof(type)); \
-        if (fMustAlloc || !*ppMemory) \
+        if (!fMustAlloc && !*ppMemory) \
+            fMustAlloc = TRUE; \
+        if (fMustAlloc) \
             *ppMemory = NdrAllocate(pStubMsg, sizeof(type)); \
         if (pStubMsg->Buffer + sizeof(type) > pStubMsg->BufferEnd) \
         { \
@@ -6363,7 +6384,9 @@ static unsigned char *WINAPI NdrBaseTypeUnmarshall(
         break;
     case RPC_FC_ENUM16:
         ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT));
-        if (fMustAlloc || !*ppMemory)
+        if (!fMustAlloc && !*ppMemory)
+            fMustAlloc = TRUE;
+        if (fMustAlloc)
             *ppMemory = NdrAllocate(pStubMsg, sizeof(UINT));
         if (pStubMsg->Buffer + sizeof(USHORT) > pStubMsg->BufferEnd)
             RpcRaiseException(RPC_X_BAD_STUB_DATA);
