@@ -1257,7 +1257,7 @@ BOOL WINAPI SetupEnumInfSectionsA( HINF hinf, UINT index, PSTR buffer, DWORD siz
         {
             DWORD len = WideCharToMultiByte( CP_ACP, 0, file->sections[index]->name, -1,
                                              NULL, 0, NULL, NULL );
-            if (*need) *need = len;
+            if (need) *need = len;
             if (!buffer)
             {
                 if (!size) return TRUE;
@@ -1291,7 +1291,7 @@ BOOL WINAPI SetupEnumInfSectionsW( HINF hinf, UINT index, PWSTR buffer, DWORD si
         if (index < file->nb_sections)
         {
             DWORD len = strlenW( file->sections[index]->name ) + 1;
-            if (*need) *need = len;
+            if (need) *need = len;
             if (!buffer)
             {
                 if (!size) return TRUE;
