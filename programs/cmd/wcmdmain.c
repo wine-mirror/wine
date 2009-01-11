@@ -1871,6 +1871,13 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
                 }
 
                 curCopyTo[(*curLen)++] = *curPos;
+
+                /* If a redirect is immediately followed by '&' (ie. 2>&1) then
+                    do not process that ampersand as an AND operator */
+                if (thisChar == '>' && *(curPos+1) == '&') {
+                    curCopyTo[(*curLen)++] = *(curPos+1);
+                    curPos++;
+                }
                 break;
 
       case '|': /* Pipe character only if not || */
