@@ -67,7 +67,7 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   run = ME_MakeRun(style, ME_MakeString(wszParagraphSign), MERF_ENDPARA);
   run->member.run.nCharOfs = 0;
   run->member.run.nCR = 1;
-  run->member.run.nLF = (editor->bEmulateVersion10) ? 1 : 0;
+  run->member.run.nLF = editor->bEmulateVersion10 ? 1 : 0;
 
   ME_InsertBefore(text->pLast, para);
   ME_InsertBefore(text->pLast, run);
@@ -76,7 +76,7 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   text->pFirst->member.para.next_para = para;
   text->pLast->member.para.prev_para = para;
 
-  text->pLast->member.para.nCharOfs = 1;
+  text->pLast->member.para.nCharOfs = editor->bEmulateVersion10 ? 2 : 1;
 
   ME_DestroyContext(&c, editor->hWnd);
 }

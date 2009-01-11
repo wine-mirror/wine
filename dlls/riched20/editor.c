@@ -2620,11 +2620,12 @@ static BOOL ME_ShowContextMenu(ME_TextEditor *editor, int x, int y)
   return TRUE;
 }
 
-ME_TextEditor *ME_MakeEditor(HWND hWnd) {
+ME_TextEditor *ME_MakeEditor(HWND hWnd, BOOL bEmulateVersion10)
+{
   ME_TextEditor *ed = ALLOC_OBJ(ME_TextEditor);
   int i;
   ed->hWnd = hWnd;
-  ed->bEmulateVersion10 = FALSE;
+  ed->bEmulateVersion10 = bEmulateVersion10;
   ed->pBuffer = ME_MakeText();
   ed->nZoomNumerator = ed->nZoomDenominator = 0;
   ME_MakeFirstParagraph(ed);
@@ -2658,7 +2659,10 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->nParagraphs = 1;
   ed->nLastSelStart = ed->nLastSelEnd = 0;
   ed->pLastSelStartPara = ed->pLastSelEndPara = ME_FindItemFwd(ed->pBuffer->pFirst, diParagraph);
-  ed->bWordWrap = (GetWindowLongW(hWnd, GWL_STYLE) & (WS_HSCROLL|ES_AUTOHSCROLL)) ? FALSE : TRUE;
+  if (ed->bEmulateVersion10)
+    ed->bWordWrap = (GetWindowLongW(hWnd, GWL_STYLE) & ES_AUTOHSCROLL) ? FALSE : TRUE;
+  else
+    ed->bWordWrap = (GetWindowLongW(hWnd, GWL_STYLE) & (WS_HSCROLL|ES_AUTOHSCROLL)) ? FALSE : TRUE;
   ed->bHideSelection = FALSE;
   ed->nInvalidOfs = -1;
   ed->pfnWordBreak = NULL;
@@ -2915,8 +2919,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     if (msg == WM_NCCREATE)
     {
       CREATESTRUCTW *pcs = (CREATESTRUCTW *)lParam;
-      TRACE("WM_NCCREATE: style 0x%08x\n", pcs->style);
-      editor = ME_MakeEditor(hWnd);
+      TRACE("WM_NCCREATE: hWnd %p style 0x%08x\n", hWnd, pcs->style);
+      editor = ME_MakeEditor(hWnd, FALSE);
       SetWindowLongPtrW(hWnd, 0, (LONG_PTR)editor);
       return TRUE;
     }
@@ -4309,23 +4313,17 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
  */
 LRESULT WINAPI RichEdit10ANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-  LRESULT result;
-  
-  /* FIXME: this is NOT the same as 2.0 version */
-  result = RichEditANSIWndProc(hWnd, msg, wParam, lParam);
-  if (msg == WM_NCCREATE)
+  if (msg == WM_NCCREATE && !GetWindowLongPtrW(hWnd, 0))
   {
-    ME_TextEditor *editor = (ME_TextEditor *)GetWindowLongPtrW(hWnd, 0);
-    
-    TRACE("Emulating version 1.0 (hWnd=%p)\n", hWnd);
-    editor->bEmulateVersion10 = TRUE;
-    editor->bWordWrap = (GetWindowLongW(hWnd, GWL_STYLE) & ES_AUTOHSCROLL) ? FALSE : TRUE;
-    editor->pBuffer->pLast->member.para.nCharOfs = 2;
-    assert(editor->pBuffer->pLast->prev->type == diRun);
-    assert(editor->pBuffer->pLast->prev->member.run.nFlags & MERF_ENDPARA);
-    editor->pBuffer->pLast->prev->member.run.nLF = 1;
+    ME_TextEditor *editor;
+    CREATESTRUCTW *pcs = (CREATESTRUCTW *)lParam;
+
+    TRACE("WM_NCCREATE: hWnd %p style 0x%08x\n", hWnd, pcs->style);
+    editor = ME_MakeEditor(hWnd, TRUE);
+    SetWindowLongPtrW(hWnd, 0, (LONG_PTR)editor);
+    return TRUE;
   }
-  return result;
+  return RichEditANSIWndProc(hWnd, msg, wParam, lParam);
 }
 
 void ME_SendOldNotify(ME_TextEditor *editor, int nCode)

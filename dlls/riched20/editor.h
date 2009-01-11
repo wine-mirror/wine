@@ -269,7 +269,7 @@ void ME_CopyReObject(REOBJECT* dst, const REOBJECT* src);
 void ME_DeleteReObject(REOBJECT* reo);
 
 /* editor.c */
-ME_TextEditor *ME_MakeEditor(HWND hWnd);
+ME_TextEditor *ME_MakeEditor(HWND hWnd, BOOL bEmulateVersion10);
 void ME_DestroyEditor(ME_TextEditor *editor);
 LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
                          LPARAM lParam, BOOL unicode, HRESULT* phresult);
