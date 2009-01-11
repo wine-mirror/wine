@@ -223,6 +223,7 @@ loader/wine.de.man
 loader/wine.fr.man
 loader/wine.man
 programs/Makeprog.rules
+programs/cacls/cacls
 programs/clock/clock
 programs/cmd/cmd
 programs/cmdlgtst/cmdlgtst

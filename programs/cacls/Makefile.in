@@ -1,0 +1,15 @@
+EXTRADEFS = -DWINE_NO_UNICODE_MACROS
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = cacls.exe
+APPMODE   = -mconsole
+IMPORTS   = kernel32
+
+C_SRCS = \
+	cacls_main.c
+
+@MAKE_PROG_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend
