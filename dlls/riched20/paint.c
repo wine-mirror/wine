@@ -1127,7 +1127,7 @@ int ME_GetYScrollPos(ME_TextEditor *editor)
 
 BOOL ME_GetYScrollVisible(ME_TextEditor *editor)
 { /* Returns true if the scrollbar is visible */
-  return (editor->vert_si.nMax - editor->vert_si.nMin >= max(editor->vert_si.nPage - 1, 0));
+  return (editor->vert_si.nMax - editor->vert_si.nMin > editor->vert_si.nPage);
 }
 
 void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun)
