@@ -227,6 +227,23 @@ s_sum_conf_array(int x[], int n)
 }
 
 int
+s_sum_conf_ptr_by_conf_ptr(int n1, int *n2_then_x1, int *x2)
+{
+  int i;
+  int sum = 0;
+  if(n1 == 0)
+    return 0;
+
+  for(i = 1; i < n1; ++i)
+    sum += n2_then_x1[i];
+
+  for(i = 0; i < *n2_then_x1; ++i)
+    sum += x2[i];
+
+  return sum;
+}
+
+int
 s_sum_unique_conf_array(int x[], int n)
 {
   return s_sum_conf_array(x, n);
@@ -1127,6 +1144,7 @@ array_tests(void)
     {{1, -2, 3, -4}, {2, 3, 5, 7}, {-4, -1, -14, 4114}}
   };
   int c[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+  int c2[] = {10, 100, 200};
   vector_t vs[2] = {{1, -2, 3}, {4, -5, -6}};
   cps_t cps;
   cpsc_t cpsc;
@@ -1146,6 +1164,11 @@ array_tests(void)
   ok(sum_conf_array(&c[5], 2) == 11, "RPC sum_conf_array\n");
   ok(sum_conf_array(&c[7], 1) == 7, "RPC sum_conf_array\n");
   ok(sum_conf_array(&c[2], 0) == 0, "RPC sum_conf_array\n");
+
+  ok(sum_conf_ptr_by_conf_ptr(1, c2, c) == 45, "RPC sum_conf_ptr_by_conf_ptr");
+  ok(sum_conf_ptr_by_conf_ptr(3, c2, c) == 345, "RPC sum_conf_ptr_by_conf_ptr");
+  c2[0] = 0;
+  ok(sum_conf_ptr_by_conf_ptr(3, c2, c) == 300, "RPC sum_conf_ptr_by_conf_ptr");
 
   ok(sum_unique_conf_array(ca, 4) == -2, "RPC sum_unique_conf_array\n");
   ok(sum_unique_conf_ptr(ca, 5) == 3, "RPC sum_unique_conf_array\n");
