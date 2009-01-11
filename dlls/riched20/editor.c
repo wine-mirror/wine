@@ -2530,7 +2530,7 @@ static BOOL ME_SetCursor(ME_TextEditor *editor)
   }
   ScreenToClient(editor->hWnd, &pt);
 
-  if (editor->nSelectionType == stLine && GetCapture() == editor->hWnd) {
+  if (editor->nSelectionType == stLine && editor->bMouseCaptured) {
       SetCursor(hLeft);
       return TRUE;
   }
@@ -2670,6 +2670,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd, BOOL bEmulateVersion10)
   ed->mode = TM_RICHTEXT | TM_MULTILEVELUNDO | TM_MULTICODEPAGE;
   ed->AutoURLDetect_bEnable = FALSE;
   ed->bHaveFocus = FALSE;
+  ed->bMouseCaptured = FALSE;
   for (i=0; i<HFONT_CACHE_SIZE; i++)
   {
     ed->pFontCache[i].nRefs = 0;
@@ -3874,6 +3875,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     ME_LButtonDown(editor, (short)LOWORD(lParam), (short)HIWORD(lParam),
                    ME_CalculateClickCount(editor, msg, wParam, lParam));
     SetCapture(editor->hWnd);
+    editor->bMouseCaptured = TRUE;
     ME_LinkNotify(editor,msg,wParam,lParam);
     if (!ME_SetCursor(editor)) goto do_default;
     break;
@@ -3882,16 +3884,18 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
         !ME_FilterEvent(editor, msg, &wParam, &lParam))
       return 0;
-    if (GetCapture() == editor->hWnd)
+    if (editor->bMouseCaptured)
       ME_MouseMove(editor, (short)LOWORD(lParam), (short)HIWORD(lParam));
     ME_LinkNotify(editor,msg,wParam,lParam);
     /* Set cursor if mouse is captured, since WM_SETCURSOR won't be received. */
-    if (GetCapture() == editor->hWnd)
+    if (editor->bMouseCaptured)
         ME_SetCursor(editor);
     break;
   case WM_LBUTTONUP:
-    if (GetCapture() == editor->hWnd)
+    if (editor->bMouseCaptured) {
       ReleaseCapture();
+      editor->bMouseCaptured = FALSE;
+    }
     if (editor->nSelectionType == stDocument)
       editor->nSelectionType = stPosition;
     if ((editor->nEventMask & ENM_MOUSEEVENTS) &&

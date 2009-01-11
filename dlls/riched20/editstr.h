@@ -376,6 +376,8 @@ typedef struct tagME_TextEditor
 
   /* Cache previously set vertical scrollbar info */
   SCROLLINFO vert_si;
+
+  BOOL bMouseCaptured;
 } ME_TextEditor;
 
 typedef struct tagME_Context
