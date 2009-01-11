@@ -231,7 +231,7 @@
  523 stdcall -noname SHFreeShared(long long)
  524 stdcall -noname RealDriveType(long long)
  525 stub RealDriveTypeFlags
- 526 stdcall @() SHELL32_526
+ 526 stdcall SHFlushSFCache()
 
  640 stdcall -noname NTSHChangeNotifyRegister(long long long long long long)
  641 stdcall -noname NTSHChangeNotifyDeregister(long)

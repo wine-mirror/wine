@@ -1994,10 +1994,9 @@ BOOL WINAPI LinkWindow_UnregisterClass(void)
 }
 
 /*************************************************************************
- *                      (SHELL32.526)
+ *              SHFlushSFCache (SHELL32.526)
  */
-BOOL WINAPI SHELL32_526(void)
+void WINAPI SHFlushSFCache(void)
 {
     FIXME("()\n");
-    return FALSE;
 }
