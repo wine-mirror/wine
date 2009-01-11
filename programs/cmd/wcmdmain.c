@@ -1676,7 +1676,7 @@ static void WCMD_addCommand(WCHAR *command, int *commandLen,
 WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readFrom) {
 
     WCHAR    *curPos;
-    BOOL      inQuotes = FALSE;
+    int       inQuotes = 0;
     WCHAR     curString[MAXSTRING];
     int       curStringLen = 0;
     WCHAR     curRedirs[MAXSTRING];
@@ -1900,7 +1900,11 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
                 }
                 break;
 
-      case '"': inQuotes = !inQuotes;
+      case '"': if (inQuotes && *(curPos+1) == ' ') {
+                    inQuotes--; /* An end quote must be proceeded by a space */
+                } else {
+                    inQuotes++; /* Quotes within quotes are fun! */
+                }
                 curCopyTo[(*curLen)++] = *curPos;
                 lastWasRedirect = FALSE;
                 break;
@@ -2042,7 +2046,7 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
       if (*curPos == 0x00 && curDepth > 0 && readFrom != INVALID_HANDLE_VALUE) {
         inRem = FALSE;
         prevDelim = CMD_NONE;
-        inQuotes = FALSE;
+        inQuotes = 0;
         memset(extraSpace, 0x00, (MAXSTRING+1) * sizeof(WCHAR));
 
         /* Read more, skipping any blank lines */
