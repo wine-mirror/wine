@@ -543,6 +543,17 @@ static int count_methods(type_t *iface)
     return count;
 }
 
+static const statement_t * get_callas_source(const type_t * iface, const var_t * def)
+{
+  const statement_t * source;
+  STATEMENTS_FOR_EACH_FUNC( source, type_iface_get_stmts(iface)) {
+    const var_t * cas = is_callas(source->u.var->attrs );
+    if (cas && !strcmp(def->name, cas->name))
+      return source;
+  }
+  return NULL;
+}
+
 static int write_proxy_methods(type_t *iface, int skip)
 {
   const statement_t *stmt;
@@ -554,8 +565,11 @@ static int write_proxy_methods(type_t *iface, int skip)
   STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface)) {
     const var_t *func = stmt->u.var;
     if (!is_callas(func->attrs)) {
+      if (i != func->type->details.function->idx )
+        error("widl internal error: method index mismatch");
       if (i) fprintf(proxy, ",\n");
-      if (skip) print_proxy( "0  /* %s_%s_Proxy */", iface->name, get_name(func));
+      if (skip || (is_local(func->attrs) && !get_callas_source(iface, func)))
+           print_proxy( "0  /* %s_%s_Proxy */", iface->name, get_name(func));
       else print_proxy( "%s_%s_Proxy", iface->name, get_name(func));
       i++;
     }
@@ -575,10 +589,19 @@ static int write_stub_methods(type_t *iface, int skip)
 
   STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface)) {
     const var_t *func = stmt->u.var;
-    if (!is_local(func->attrs)) {
+    if (!is_callas(func->attrs)) {
+      int missing = 0;
+      const char * fname = get_name(func);
+      if(is_local(func->attrs)) {
+        const statement_t * callas_source = get_callas_source(iface, func);
+        if(!callas_source)
+          missing = 1;
+        else
+          fname = get_name(callas_source->u.var);
+      }
       if (i) fprintf(proxy,",\n");
-      if (skip) print_proxy("STUB_FORWARDING_FUNCTION");
-      else print_proxy( "%s_%s_Stub", iface->name, get_name(func));
+      if (skip || missing) print_proxy("STUB_FORWARDING_FUNCTION");
+      else print_proxy( "%s_%s_Stub", iface->name, fname);
       i++;
     }
   }
@@ -587,7 +610,7 @@ static int write_stub_methods(type_t *iface, int skip)
 
 static void write_proxy(type_t *iface, unsigned int *proc_offset)
 {
-  int midx = -1, count;
+  int count;
   const statement_t *stmt;
   int first_func = 1;
 
@@ -619,28 +642,10 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
       gen_proxy(iface, func, idx, *proc_offset);
       gen_stub(iface, func, cname, *proc_offset);
       *proc_offset += get_size_procformatstring_func( func );
-      if (midx == -1) midx = idx;
-      else if (midx != idx) error("method index mismatch in write_proxy\n");
-      midx++;
-    }
-  }
-
-  /* interface didn't have any methods - search in inherited interfaces */
-  if (midx == -1) {
-    const type_t *inherit_iface;
-    for (inherit_iface = type_iface_get_inherit(iface);
-         inherit_iface;
-         inherit_iface = type_iface_get_inherit(inherit_iface)) {
-      STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(inherit_iface)) {
-        const var_t *func = stmt->u.var;
-        int idx = func->type->details.function->idx;
-        if (idx + 1 > midx) midx = idx + 1;
-      }
     }
   }
 
   count = count_methods(iface);
-  if (midx != -1 && midx != count) error("invalid count %u/%u\n", count, midx);
 
   /* proxy vtable */
   print_proxy( "static const CINTERFACE_PROXY_VTABLE(%d) _%sProxyVtbl =\n", count, iface->name);
