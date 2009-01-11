@@ -155,6 +155,12 @@ BOOL read_bytes(parse_buffer * buf, LPVOID data, DWORD size)
   return TRUE;
 }
 
+static void rewind_bytes(parse_buffer * buf, DWORD size)
+{
+  buf->buffer -= size;
+  buf->rem_bytes += size;
+}
+
 static void dump_TOKEN(WORD token)
 {
 #define DUMP_TOKEN(t) case t: TRACE(#t "\n"); break
@@ -267,13 +273,15 @@ static WORD get_operator_token(char c)
 
 static BOOL is_keyword(parse_buffer* buf, const char* keyword)
 {
+  char tmp[9]; /* template keyword size + 1 */
   DWORD len = strlen(keyword);
-  if (!strncasecmp((char*)buf->buffer, keyword,len) && is_separator(*(buf->buffer+len)))
+  read_bytes(buf, tmp, len+1);
+  if (!strncasecmp(tmp, keyword,len) && is_separator(tmp[len]))
   {
-    buf->buffer += len;
-    buf->rem_bytes -= len;
+    rewind_bytes(buf, 1);
     return TRUE;
   }
+  rewind_bytes(buf, len+1);
   return FALSE;
 }
 
@@ -527,8 +535,7 @@ static WORD parse_TOKEN(parse_buffer * buf)
       }
       else
       {
-        buf->buffer -= 1;
-        buf->rem_bytes += 1;
+        rewind_bytes(buf, 1);
 
         if ((token = get_keyword_token(buf)))
           break;
@@ -920,12 +927,12 @@ static BOOL parse_template_parts(parse_buffer * buf)
 
 static void go_to_next_definition(parse_buffer * buf)
 {
+  char c;
   while (buf->rem_bytes)
   {
-    char c = *buf->buffer;
+    read_bytes(buf, &c, 1);
     if ((c == '#') || (c == '/'))
     {
-      read_bytes(buf, &c, 1);
       /* Handle comment (# or //) */
       if (c == '/')
       {
@@ -942,13 +949,11 @@ static void go_to_next_definition(parse_buffer * buf)
       }
       continue;
     }
-    else if (is_space(*buf->buffer))
+    else if (!is_space(c))
     {
-      buf->buffer++;
-      buf->rem_bytes--;
-    }
-    else
+      rewind_bytes(buf, 1);
       break;
+    }
   }
 }
 
