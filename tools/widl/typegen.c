@@ -3046,7 +3046,7 @@ static void write_parameter_conf_or_var_exprs(FILE *file, int indent, const char
             }
             break;
         }
-        else if (type->type == RPC_FC_IP)
+        else if (type->type == RPC_FC_IP || is_void(type))
         {
             expr_t *iid;
 
