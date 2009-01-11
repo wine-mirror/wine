@@ -5715,17 +5715,51 @@ static void test_EM_CHARFROMPOS(void)
 {
     HWND hwnd;
     int result;
+    RECT rcClient;
     POINTL point;
     point.x = 0;
-    point.y = 50;
+    point.y = 40;
 
     /* multi-line control inserts CR normally */
     hwnd = new_richedit(NULL);
     result = SendMessageA(hwnd, WM_SETTEXT, 0,
-                          (LPARAM)"one two three four five six seven");
+                          (LPARAM)"one two three four five six seven\reight");
+
+    GetClientRect(hwnd, &rcClient);
 
     result = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM)&point);
-    ok(result == 0, "expected character index of 0 but got %d\n", result);
+    ok(result == 34, "expected character index of 34 but got %d\n", result);
+
+    /* Test with points outside the bounds of the richedit control. */
+    point.x = -1;
+    point.y = 40;
+    result = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM)&point);
+    todo_wine ok(result == 34, "expected character index of 34 but got %d\n", result);
+
+    point.x = 1000;
+    point.y = 0;
+    result = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM)&point);
+    todo_wine ok(result == 33, "expected character index of 33 but got %d\n", result);
+
+    point.x = 1000;
+    point.y = 40;
+    result = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM)&point);
+    todo_wine ok(result == 39, "expected character index of 39 but got %d\n", result);
+
+    point.x = 1000;
+    point.y = -1;
+    result = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM)&point);
+    todo_wine ok(result == 0, "expected character index of 0 but got %d\n", result);
+
+    point.x = 1000;
+    point.y = rcClient.bottom + 1;
+    result = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM)&point);
+    todo_wine ok(result == 34, "expected character index of 34 but got %d\n", result);
+
+    point.x = 1000;
+    point.y = rcClient.bottom;
+    result = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM)&point);
+    todo_wine ok(result == 39, "expected character index of 39 but got %d\n", result);
 
     DestroyWindow(hwnd);
 }
