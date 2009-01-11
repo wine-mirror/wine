@@ -24876,6 +24876,14 @@ dlls/hnetcfg/Makefile: dlls/hnetcfg/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/hnetcfg/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/httpapi/Makefile"
+test "x$enable_httpapi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	httpapi"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/httpapi/Makefile: dlls/httpapi/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/httpapi/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/iccvid/Makefile"
 test "x$enable_iccvid" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	iccvid"
@@ -28166,6 +28174,7 @@ do
     "dlls/hlink/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/hlink/Makefile" ;;
     "dlls/hlink/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/hlink/tests/Makefile" ;;
     "dlls/hnetcfg/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/hnetcfg/Makefile" ;;
+    "dlls/httpapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/httpapi/Makefile" ;;
     "dlls/iccvid/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/iccvid/Makefile" ;;
     "dlls/icmp/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/icmp/Makefile" ;;
     "dlls/ifsmgr.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ifsmgr.vxd/Makefile" ;;

@@ -1887,6 +1887,7 @@ WINE_CONFIG_MAKEFILE([dlls/hid/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DI
 WINE_CONFIG_MAKEFILE([dlls/hlink/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/hlink/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
 WINE_CONFIG_MAKEFILE([dlls/hnetcfg/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
+WINE_CONFIG_MAKEFILE([dlls/httpapi/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/iccvid/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/icmp/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/ifsmgr.vxd/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
