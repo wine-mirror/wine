@@ -45,7 +45,7 @@ HRESULT CopyMediaType(AM_MEDIA_TYPE * pDest, const AM_MEDIA_TYPE *pSrc)
     return S_OK;
 }
 
-void FreeMediaType(AM_MEDIA_TYPE * pMediaType)
+static void FreeMediaType(AM_MEDIA_TYPE * pMediaType)
 {
     CoTaskMemFree(pMediaType->pbFormat);
     pMediaType->pbFormat = NULL;
