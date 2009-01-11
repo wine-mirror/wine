@@ -84,11 +84,6 @@ HRESULT WINAPI D3DXMatrixDecompose(D3DXVECTOR3 *poutscale, D3DXQUATERNION *poutr
     D3DXMATRIX normalized;
     D3DXVECTOR3 vec;
 
-    if (!pm)
-    {
-     return D3DERR_INVALIDCALL;
-    }
-
     /*Compute the scaling part.*/
     vec.x=pm->u.m[0][0];
     vec.y=pm->u.m[0][1];

@@ -578,11 +578,6 @@ static void test_Matrix_Decompose(void)
 
     hr = D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
     ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %x\n", hr);
-
-/*___________*/
-
-    hr = D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %x\n", hr);
 }
 
 static void test_Matrix_Transformation2D(void)
