@@ -2238,6 +2238,13 @@ UINT WINAPI SetErrorMode( UINT mode )
     return old;
 }
 
+/***********************************************************************
+ *           GetErrorMode   (KERNEL32.@)
+ */
+UINT WINAPI GetErrorMode( void )
+{
+    return process_error_mode;
+}
 
 /**********************************************************************
  * TlsAlloc             [KERNEL32.@]
