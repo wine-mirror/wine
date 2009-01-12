@@ -61,18 +61,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 static void convert_8_to_8 (const void *src, void *dst)
 {
     BYTE *dest = dst;
-    *dest = *(BYTE*)src;
+    *dest = *(const BYTE *)src;
 }
 
 static void convert_8_to_16 (const void *src, void *dst)
 {
-    WORD dest = *(BYTE*)src, *dest16 = dst;
+    WORD dest = *(const BYTE *)src, *dest16 = dst;
     *dest16 = le16(dest * 257 - 32768);
 }
 
 static void convert_8_to_24 (const void *src, void *dst)
 {
-    BYTE dest = *(BYTE*)src;
+    BYTE dest = *(const BYTE *)src;
     BYTE *dest24 = dst;
     dest24[0] = dest;
     dest24[1] = dest;
@@ -81,26 +81,26 @@ static void convert_8_to_24 (const void *src, void *dst)
 
 static void convert_8_to_32 (const void *src, void *dst)
 {
-    DWORD dest = *(BYTE*)src, *dest32 = dst;
+    DWORD dest = *(const BYTE *)src, *dest32 = dst;
     *dest32 = le32(dest * 16843009 - 2147483648U);
 }
 
 static void convert_16_to_8 (const void *src, void *dst)
 {
     BYTE *dst8 = dst;
-    *dst8 = (le16(*(WORD*)src)) / 256;
+    *dst8 = (le16(*(const WORD *)src)) / 256;
     *dst8 -= 0x80;
 }
 
 static void convert_16_to_16 (const void *src, void *dst)
 {
     WORD *dest = dst;
-    *dest = *(WORD*)src;
+    *dest = *(const WORD *)src;
 }
 
 static void convert_16_to_24 (const void *src, void *dst)
 {
-    WORD dest = le16(*(WORD*)src);
+    WORD dest = le16(*(const WORD *)src);
     BYTE *dest24 = dst;
 
     dest24[0] = dest / 256;
@@ -110,14 +110,14 @@ static void convert_16_to_24 (const void *src, void *dst)
 
 static void convert_16_to_32 (const void *src, void *dst)
 {
-    DWORD dest = *(WORD*)src, *dest32 = dst;
+    DWORD dest = *(const WORD *)src, *dest32 = dst;
     *dest32 = dest * 65537;
 }
 
 static void convert_24_to_8 (const void *src, void *dst)
 {
     BYTE *dst8 = dst;
-    *dst8 = ((BYTE *)src)[2];
+    *dst8 = ((const BYTE *)src)[2];
 }
 
 static void convert_24_to_16 (const void *src, void *dst)
@@ -147,19 +147,19 @@ static void convert_24_to_32 (const void *src, void *dst)
 static void convert_32_to_8 (const void *src, void *dst)
 {
     BYTE *dst8 = dst;
-    *dst8 = (le32(*(DWORD *)src) / 16777216);
+    *dst8 = (le32(*(const DWORD *)src) / 16777216);
     *dst8 -= 0x80;
 }
 
 static void convert_32_to_16 (const void *src, void *dst)
 {
     WORD *dest16 = dst;
-    *dest16 = le16(le32(*(DWORD*)src) / 65536);
+    *dest16 = le16(le32(*(const DWORD *)src) / 65536);
 }
 
 static void convert_32_to_24 (const void *src, void *dst)
 {
-    DWORD dest = le32(*(DWORD*)src);
+    DWORD dest = le32(*(const DWORD *)src);
     BYTE *dest24 = dst;
 
     dest24[0] = dest / 256;
@@ -170,7 +170,7 @@ static void convert_32_to_24 (const void *src, void *dst)
 static void convert_32_to_32 (const void *src, void *dst)
 {
     DWORD *dest = dst;
-    *dest = *(DWORD*)src;
+    *dest = *(const DWORD *)src;
 }
 
 const bitsconvertfunc convertbpp[4][4] = {
