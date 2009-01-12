@@ -1890,24 +1890,25 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
     object->lpVtbl = &IWineD3DVertexShader_Vtbl;
     object->parent = parent;
     shader_init(&object->baseShader, iface, IWineD3DVertexShaderImpl_shader_ins);
+    list_add_head(&This->shaders, &object->baseShader.shader_list_entry);
     *ppVertexShader = (IWineD3DVertexShader *)object;
 
-    TRACE("(%p) : Created Vertex shader %p\n", This, *ppVertexShader);
+    TRACE("(%p) : Created vertex shader %p\n", This, *ppVertexShader);
 
     if (vertex_declaration) {
         IWineD3DVertexShader_FakeSemantics(*ppVertexShader, vertex_declaration);
     }
 
     hr = IWineD3DVertexShader_SetFunction(*ppVertexShader, pFunction);
-
-    if (WINED3D_OK != hr) {
-        FIXME("(%p) : Failed to set the function, returning WINED3DERR_INVALIDCALL\n", iface);
+    if (FAILED(hr))
+    {
+        WARN("(%p) : Failed to set function, returning %#x\n", iface, hr);
         IWineD3DVertexShader_Release(*ppVertexShader);
-        return WINED3DERR_INVALIDCALL;
+        *ppVertexShader = NULL;
+        return hr;
     }
-    list_add_head(&This->shaders, &object->baseShader.shader_list_entry);
 
-    return WINED3D_OK;
+    return hr;
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface, CONST DWORD *pFunction, IWineD3DPixelShader **ppPixelShader, IUnknown *parent) {
@@ -1928,14 +1929,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface
     object->lpVtbl = &IWineD3DPixelShader_Vtbl;
     object->parent = parent;
     shader_init(&object->baseShader, iface, IWineD3DPixelShaderImpl_shader_ins);
+    list_add_head(&This->shaders, &object->baseShader.shader_list_entry);
     *ppPixelShader = (IWineD3DPixelShader *)object;
 
+    TRACE("(%p) : Created pixel shader %p\n", This, *ppPixelShader);
+
     hr = IWineD3DPixelShader_SetFunction(*ppPixelShader, pFunction);
-    if (WINED3D_OK == hr) {
-        TRACE("(%p) : Created Pixel shader %p\n", This, *ppPixelShader);
-        list_add_head(&This->shaders, &object->baseShader.shader_list_entry);
-    } else {
-        WARN("(%p) : Failed to create pixel shader\n", This);
+    if (FAILED(hr))
+    {
+        WARN("(%p) : Failed to set function, returning %#x\n", iface, hr);
+        IWineD3DPixelShader_Release(*ppPixelShader);
+        *ppPixelShader = NULL;
+        return hr;
     }
 
     return hr;
