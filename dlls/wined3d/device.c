@@ -4578,8 +4578,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD
     if (NULL != This->updateStateBlock->textures[Stage]) {
         IWineD3DBaseTextureImpl *new = (IWineD3DBaseTextureImpl *) This->updateStateBlock->textures[Stage];
         ULONG bindCount = InterlockedIncrement(&new->baseTexture.bindCount);
+        UINT dimensions = IWineD3DBaseTexture_GetTextureDimensions(pTexture);
 
         IWineD3DBaseTexture_AddRef(This->updateStateBlock->textures[Stage]);
+
+        if (!oldTexture || dimensions != IWineD3DBaseTexture_GetTextureDimensions(oldTexture))
+        {
+            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADER);
+        }
+
         if(oldTexture == NULL && Stage < MAX_TEXTURES) {
             /* The source arguments for color and alpha ops have different meanings when a NULL texture is bound,
              * so the COLOROP and ALPHAOP have to be dirtified.
