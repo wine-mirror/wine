@@ -101,7 +101,7 @@ AC_CHECK_TOOL(CPPBIN,cpp,cpp)
 
 case $host in
   x86_64*)
-    if test "x$enable_win64" != "xyes"
+    if test "x$enable_win64" != "xyes" -a "$cross_compiling" != "yes"
     then
       CC="$CC -m32"
       CXX="$CXX -m32"
