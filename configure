@@ -747,6 +747,8 @@ CPP
 XMKMF
 TARGET
 TOOLSDIR
+WIN16_INSTALL
+WIN16_FILES
 CPPBIN
 ac_ct_CXX
 CXXFLAGS
@@ -759,8 +761,6 @@ LDFLAGS
 CFLAGS
 CC
 SET_MAKE
-WIN16_INSTALL
-WIN16_FILES
 host_os
 host_vendor
 host_cpu
@@ -2360,50 +2360,6 @@ IFS=$ac_save_IFS
 case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
-case $host in
-  x86_64*linux*)
-    if test "x$enable_win64" != "xyes"
-    then
-      CC="${CC:-gcc} -m32"
-      CXX="${CXX:-g++} -m32"
-      LD="${LD:-ld} -m elf_i386"
-      AS="${AS:-as} --32"
-      host_cpu="i386"
-      notice_platform="32-bit "
-    fi
-    ;;
-esac
-
-case $host_cpu in
-  *i[3456789]86*)
-    enable_win16=${enable_win16:-yes}
-    ;;
-  *)
-    enable_win16=${enable_win16:-no}
-    enable_ifsmgr_vxd=${enable_ifsmgr_vxd:-no}
-    enable_mmdevldr_vxd=${enable_mmdevldr_vxd:-no}
-    enable_monodebg_vxd=${enable_monodebg_vxd:-no}
-    enable_vdhcp_vxd=${enable_vdhcp_vxd:-no}
-    enable_vmm_vxd=${enable_vmm_vxd:-no}
-    enable_vnbt_vxd=${enable_vnbt_vxd:-no}
-    enable_vnetbios_vxd=${enable_vnetbios_vxd:-no}
-    enable_vtdapi_vxd=${enable_vtdapi_vxd:-no}
-    enable_vwin32_vxd=${enable_vwin32_vxd:-no}
-    enable_w32skrnl=${enable_w32skrnl:-no}
-    enable_winedos=${enable_winedos:-no}
-    enable_winevdm=${enable_winevdm:-no}
-    ;;
-esac
-
-WIN16_FILES="\$(WIN16_FILES)"
-
-WIN16_INSTALL="\$(WIN16_INSTALL)"
-
-if test "x$enable_win16" != "xyes"
-then
-  WIN16_FILES=""
-  WIN16_INSTALL=""
-fi
 
 case "$srcdir" in
  .) ;;
@@ -3846,6 +3802,106 @@ else
 fi
 
 
+case $host in
+  x86_64*)
+    if test "x$enable_win64" != "xyes"
+    then
+      CC="$CC -m32"
+      CXX="$CXX -m32"
+      { $as_echo "$as_me:$LINENO: checking whether $CC works" >&5
+$as_echo_n "checking whether $CC works... " >&6; }
+
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then
+  { $as_echo "$as_me:$LINENO: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	{ $as_echo "$as_me:$LINENO: result: no" >&5
+$as_echo "no" >&6; }
+                      { { $as_echo "$as_me:$LINENO: error: Cannot build a 32-bit program, you need to install 32-bit development libraries." >&5
+$as_echo "$as_me: error: Cannot build a 32-bit program, you need to install 32-bit development libraries." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+      LD="${LD:-ld} -m elf_i386"
+      AS="${AS:-as} --32"
+      host_cpu="i386"
+      notice_platform="32-bit "
+    fi
+    ;;
+esac
+
+case $host_cpu in
+  *i[3456789]86*)
+    enable_win16=${enable_win16:-yes}
+    ;;
+  *)
+    enable_win16=${enable_win16:-no}
+    enable_ifsmgr_vxd=${enable_ifsmgr_vxd:-no}
+    enable_mmdevldr_vxd=${enable_mmdevldr_vxd:-no}
+    enable_monodebg_vxd=${enable_monodebg_vxd:-no}
+    enable_vdhcp_vxd=${enable_vdhcp_vxd:-no}
+    enable_vmm_vxd=${enable_vmm_vxd:-no}
+    enable_vnbt_vxd=${enable_vnbt_vxd:-no}
+    enable_vnetbios_vxd=${enable_vnetbios_vxd:-no}
+    enable_vtdapi_vxd=${enable_vtdapi_vxd:-no}
+    enable_vwin32_vxd=${enable_vwin32_vxd:-no}
+    enable_w32skrnl=${enable_w32skrnl:-no}
+    enable_winedos=${enable_winedos:-no}
+    enable_winevdm=${enable_winevdm:-no}
+    ;;
+esac
+
+WIN16_FILES="\$(WIN16_FILES)"
+
+WIN16_INSTALL="\$(WIN16_INSTALL)"
+
+if test "x$enable_win16" != "xyes"
+then
+  WIN16_FILES=""
+  WIN16_INSTALL=""
+fi
+
 { $as_echo "$as_me:$LINENO: checking for the directory containing the Wine tools" >&5
 $as_echo_n "checking for the directory containing the Wine tools... " >&6; }
 if test "${wine_cv_toolsdir+set}" = set; then
@@ -3879,7 +3935,6 @@ then
     TARGET="$host_alias"
 
 fi
-
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'

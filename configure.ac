@@ -81,12 +81,34 @@ AC_ARG_WITH(xxf86vm,   AS_HELP_STRING([--without-xxf86vm],[do not use XFree vide
 AC_ARG_WITH(wine-tools,AS_HELP_STRING([--with-wine-tools=DIR],[use Wine tools from directory DIR]))
 
 AC_CANONICAL_HOST
+
+dnl check for out of tree build with unclean source tree
+case "$srcdir" in
+ .) ;;
+ *) if test -f "$srcdir/Makefile" -o -f "$srcdir/include/config.h"; then
+      AC_MSG_ERROR([you are building out of the source tree, but the source tree contains object files.
+You need to run 'make distclean' in the source tree first.])
+    fi ;;
+esac
+
+dnl **** Check for some programs ****
+
+AC_PROG_MAKE_SET
+AC_PROG_CC
+AC_PROG_CXX
+dnl We can't use AC_PROG_CPP for winegcc, it uses by default $(CC) -E
+AC_CHECK_TOOL(CPPBIN,cpp,cpp)
+
 case $host in
-  x86_64*linux*)
+  x86_64*)
     if test "x$enable_win64" != "xyes"
     then
-      CC="${CC:-gcc} -m32"
-      CXX="${CXX:-g++} -m32"
+      CC="$CC -m32"
+      CXX="$CXX -m32"
+      AC_MSG_CHECKING([whether $CC works])
+      AC_LINK_IFELSE(AC_LANG_PROGRAM(),AC_MSG_RESULT([yes]),
+                     [AC_MSG_RESULT([no])
+                      AC_MSG_ERROR([Cannot build a 32-bit program, you need to install 32-bit development libraries.])])
       LD="${LD:-ld} -m elf_i386"
       AS="${AS:-as} --32"
       host_cpu="i386"
@@ -125,23 +147,6 @@ then
   WIN16_FILES=""
   WIN16_INSTALL=""
 fi
-
-dnl check for out of tree build with unclean source tree
-case "$srcdir" in
- .) ;;
- *) if test -f "$srcdir/Makefile" -o -f "$srcdir/include/config.h"; then
-      AC_MSG_ERROR([you are building out of the source tree, but the source tree contains object files.
-You need to run 'make distclean' in the source tree first.])
-    fi ;;
-esac
-
-dnl **** Check for some programs ****
-
-AC_PROG_MAKE_SET
-AC_PROG_CC
-AC_PROG_CXX
-dnl We can't use AC_PROG_CPP for winegcc, it uses by default $(CC) -E
-AC_CHECK_TOOL(CPPBIN,cpp,cpp)
 
 AC_CACHE_CHECK([for the directory containing the Wine tools], wine_cv_toolsdir,
   [if test -z "$with_wine_tools"; then
