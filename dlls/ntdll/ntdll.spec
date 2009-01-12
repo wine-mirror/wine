@@ -434,7 +434,7 @@
 @ stdcall RtlAssert(ptr ptr long long)
 # @ stub RtlCancelTimer
 @ stdcall -register RtlCaptureContext(ptr)
-@ stub RtlCaptureStackBackTrace
+@ stdcall RtlCaptureStackBackTrace(long long ptr ptr)
 # @ stub RtlCaptureStackContext
 @ stdcall RtlCharToInteger(ptr long ptr)
 # @ stub RtlCheckForOrphanedCriticalSections
