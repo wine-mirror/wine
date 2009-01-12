@@ -23,6 +23,10 @@
 extern "C" {
 #endif
 
+DWORD WINAPI LoadPerfCounterTextStringsA(LPCSTR, BOOL);
+DWORD WINAPI LoadPerfCounterTextStringsW(LPCWSTR, BOOL);
+#define      LoadPerfCounterTextStrings WINELIB_NAME_AW(LoadPerfCounterTextStrings)
+
 DWORD WINAPI UnloadPerfCounterTextStringsA(LPCSTR, BOOL);
 DWORD WINAPI UnloadPerfCounterTextStringsW(LPCWSTR, BOOL);
 #define      UnloadPerfCounterTextStrings WINELIB_NAME_AW(UnloadPerfCounterTextStrings)

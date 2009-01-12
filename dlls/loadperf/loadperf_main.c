@@ -51,6 +51,47 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 }
 
 /*************************************************************
+ *     LoadPerfCounterTextStringsA (loadperf.@)
+ *
+ * NOTES
+ *   See LoadPerfCounterTextStringsW
+ */
+DWORD WINAPI LoadPerfCounterTextStringsA(LPCSTR cmdline, BOOL quiet)
+{
+    DWORD ret;
+    LPWSTR cmdlineW = NULL;
+
+    if (cmdline)
+    {
+        INT len = MultiByteToWideChar(CP_ACP, 0, cmdline, -1, NULL, 0);
+        cmdlineW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (!cmdlineW) return ERROR_NOT_ENOUGH_MEMORY;
+        MultiByteToWideChar(CP_ACP, 0, cmdline, -1, cmdlineW, len);
+    }
+
+    ret = LoadPerfCounterTextStringsW(cmdlineW, quiet);
+
+    HeapFree(GetProcessHeap(), 0, cmdlineW);
+
+    return ret;
+}
+
+/*************************************************************
+ *     LoadPerfCounterTextStringsW (loadperf.@)
+ *
+ * PARAMS
+ *   cmdline [in] Last argument in command line - ini file to be used
+ *   quiet   [in] FALSE - the function may write to stdout
+ *
+ */
+DWORD WINAPI LoadPerfCounterTextStringsW(LPCWSTR cmdline, BOOL quiet)
+{
+    FIXME("(%s, %d): stub\n", debugstr_w(cmdline), quiet);
+
+    return ERROR_SUCCESS;
+}
+
+/*************************************************************
  *     UnloadPerfCounterTextStringsA (loadperf.@)
  *
  * NOTES

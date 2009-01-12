@@ -3,8 +3,8 @@
 @ stub InstallPerfDllW
 @ stub LoadMofFromInstalledServiceA
 @ stub LoadMofFromInstalledServiceW
-@ stub LoadPerfCounterTextStringsA
-@ stub LoadPerfCounterTextStringsW
+@ stdcall LoadPerfCounterTextStringsA(str long)
+@ stdcall LoadPerfCounterTextStringsW(wstr long)
 @ stub RestorePerfRegistryFromFileW
 @ stub SetServiceAsTrustedA
 @ stub SetServiceAsTrustedW
