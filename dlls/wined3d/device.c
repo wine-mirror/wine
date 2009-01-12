@@ -67,17 +67,6 @@ static void IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResour
     *pp##type = (IWineD3D##type *) object; \
 }
 
-#define D3DCREATESHADEROBJECTINSTANCE(object, type) { \
-    object=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3D##type##Impl)); \
-    D3DMEMCHECK(object, pp##type); \
-    object->lpVtbl = &IWineD3D##type##_Vtbl;  \
-    object->parent          = parent; \
-    object->baseShader.ref  = 1; \
-    object->baseShader.device = (IWineD3DDevice*) This; \
-    list_init(&object->baseShader.linked_programs); \
-    *pp##type = (IWineD3D##type *) object; \
-}
-
 #define  D3DCREATERESOURCEOBJECTINSTANCE(object, type, d3dtype, _size){ \
     object=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3D##type##Impl)); \
     D3DMEMCHECK(object, pp##type); \
@@ -1890,8 +1879,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
 
     if (!pFunction) return WINED3DERR_INVALIDCALL;
 
-    D3DCREATESHADEROBJECTINSTANCE(object, VertexShader)
-    object->baseShader.shader_ins = IWineD3DVertexShaderImpl_shader_ins;
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        *ppVertexShader = NULL;
+        return WINED3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->lpVtbl = &IWineD3DVertexShader_Vtbl;
+    object->parent = parent;
+    shader_init(&object->baseShader, iface, IWineD3DVertexShaderImpl_shader_ins);
+    *ppVertexShader = (IWineD3DVertexShader *)object;
 
     TRACE("(%p) : Created Vertex shader %p\n", This, *ppVertexShader);
 
@@ -1918,8 +1917,19 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface
 
     if (!pFunction) return WINED3DERR_INVALIDCALL;
 
-    D3DCREATESHADEROBJECTINSTANCE(object, PixelShader)
-    object->baseShader.shader_ins = IWineD3DPixelShaderImpl_shader_ins;
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        *ppPixelShader = NULL;
+        return WINED3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->lpVtbl = &IWineD3DPixelShader_Vtbl;
+    object->parent = parent;
+    shader_init(&object->baseShader, iface, IWineD3DPixelShaderImpl_shader_ins);
+    *ppPixelShader = (IWineD3DPixelShader *)object;
+
     hr = IWineD3DPixelShader_SetFunction(*ppPixelShader, pFunction);
     if (WINED3D_OK == hr) {
         TRACE("(%p) : Created Pixel shader %p\n", This, *ppPixelShader);

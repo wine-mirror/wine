@@ -2243,6 +2243,8 @@ void shader_buffer_free(struct SHADER_BUFFER *buffer);
 void shader_cleanup(IWineD3DBaseShader *iface);
 HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_maps *reg_maps,
         struct semantic *semantics_in, struct semantic *semantics_out, const DWORD *byte_code);
+void shader_init(struct IWineD3DBaseShaderClass *shader,
+        IWineD3DDevice *device, const SHADER_OPCODE *instruction_table);
 void shader_trace_init(const DWORD *byte_code, const SHADER_OPCODE *opcode_table);
 
 extern void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,

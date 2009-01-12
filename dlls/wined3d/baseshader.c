@@ -90,6 +90,15 @@ int shader_addline(
     return 0;
 }
 
+void shader_init(struct IWineD3DBaseShaderClass *shader,
+        IWineD3DDevice *device, const SHADER_OPCODE *instruction_table)
+{
+    shader->ref = 1;
+    shader->device = device;
+    shader->shader_ins = instruction_table;
+    list_init(&shader->linked_programs);
+}
+
 const SHADER_OPCODE *shader_get_opcode(const SHADER_OPCODE *opcode_table, DWORD shader_version, DWORD code)
 {
     DWORD i = 0;
