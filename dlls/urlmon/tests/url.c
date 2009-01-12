@@ -138,6 +138,10 @@ static const WCHAR ITS_URL[] =
     {'i','t','s',':','t','e','s','t','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0};
 static const WCHAR MK_URL[] = {'m','k',':','@','M','S','I','T','S','t','o','r','e',':',
     't','e','s','t','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0};
+static const WCHAR https_urlW[] =
+    {'h','t','t','p','s',':','/','/','w','w','w','.','c','o','d','e','w','e','a','v','e','r','s','.','c','o','m',
+     '/','t','e','s','t','.','h','t','m','l',0};
+
 
 static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
 
@@ -168,7 +172,8 @@ static LPCWSTR urls[] = {
     ABOUT_BLANK,
     INDEX_HTML,
     ITS_URL,
-    MK_URL
+    MK_URL,
+    https_urlW
 };
 
 static WCHAR file_url[INTERNET_MAX_URL_LENGTH];
@@ -178,7 +183,8 @@ static enum {
     ABOUT_TEST,
     FILE_TEST,
     ITS_TEST,
-    MK_TEST
+    MK_TEST,
+    HTTPS_TEST
 } test_protocol;
 
 static enum {
@@ -397,7 +403,8 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     if(filedwl_api) {
         ok(bindf == (BINDF_PULLDATA|BINDF_FROMURLMON|BINDF_NEEDFILE), "bindf=%08x\n", bindf);
     }else if(tymed == TYMED_ISTREAM
-       && (test_protocol == FILE_TEST || test_protocol == MK_TEST || test_protocol == HTTP_TEST)) {
+       && (test_protocol == FILE_TEST || test_protocol == MK_TEST
+           || test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)) {
         ok(bindf == (BINDF_ASYNCHRONOUS|BINDF_ASYNCSTORAGE|BINDF_PULLDATA
                      |BINDF_FROMURLMON),
            "bindf=%08x\n", bindf);
@@ -447,7 +454,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         break;
     }
 
-    if(test_protocol == HTTP_TEST) {
+    if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST) {
         IServiceProvider *service_provider;
         IHttpNegotiate *http_negotiate;
         IHttpNegotiate2 *http_negotiate2;
@@ -672,6 +679,11 @@ static HRESULT WINAPI Protocol_Continue(IInternetProtocol *iface,
         IHttpNegotiate_Release(http_negotiate);
         ok(hres == S_OK, "OnResponse failed: %08x\n", hres);
 
+        if(test_protocol == HTTPS_TEST) {
+            hres = IInternetProtocolSink_ReportProgress(protocol_sink, BINDSTATUS_ACCEPTRANGES, NULL);
+            ok(hres == S_OK, "ReportProgress(BINDSTATUS_ACCEPTRANGES) failed: %08x\n", hres);
+        }
+
         hres = IInternetProtocolSink_ReportProgress(protocol_sink,
                 BINDSTATUS_MIMETYPEAVAILABLE, wszTextHtml);
         ok(hres == S_OK,
@@ -772,7 +784,7 @@ static HRESULT WINAPI Protocol_Read(IInternetProtocol *iface, void *pv,
 
     CHECK_EXPECT2(Read);
 
-    if(test_protocol == HTTP_TEST) {
+    if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST) {
         HRESULT hres;
 
         static BOOL pending = TRUE;
@@ -1206,7 +1218,7 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulP
         download_state = END_DOWNLOAD;
         break;
     case BINDSTATUS_CACHEFILENAMEAVAILABLE:
-        if(test_protocol != HTTP_TEST) {
+        if(test_protocol != HTTP_TEST && test_protocol != HTTPS_TEST) {
             if(iface == &objbsc)
                 CHECK_EXPECT(Obj_OnProgress_CACHEFILENAMEAVAILABLE);
             else
@@ -1279,7 +1291,7 @@ static HRESULT WINAPI statusclb_OnStopBinding(IBindStatusCallback *iface, HRESUL
         ok(hresult == binding_hres, "binding failed: %08x, expected %08x\n", hresult, binding_hres);
     ok(szError == NULL, "szError should be NULL\n");
 
-    if(test_protocol == HTTP_TEST && emulate_protocol) {
+    if((test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST) && emulate_protocol) {
         SetEvent(complete_event);
         if(iface != &objbsc)
             WaitForSingleObject(complete_event2, INFINITE);
@@ -1379,7 +1391,8 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWOR
             ok(pstgmed->u.lpszFileName != NULL, "lpszFileName == NULL\n");
     }
 
-    if(test_protocol == HTTP_TEST && emulate_protocol && prot_state < 4 && (!bind_to_object || prot_state > 1))
+    if((test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
+       && emulate_protocol && prot_state < 4 && (!bind_to_object || prot_state > 1))
         SetEvent(complete_event);
 
     return S_OK;
@@ -1508,7 +1521,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     CHECK_EXPECT(Load);
     ok(GetCurrentThreadId() == thread_id, "wrong thread %d\n", GetCurrentThreadId());
 
-    if(test_protocol == HTTP_TEST)
+    if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
         ok(!fFullyAvailable, "fFulyAvailable = %x\n", fFullyAvailable);
     else
         ok(fFullyAvailable, "fFulyAvailable = %x\n", fFullyAvailable);
@@ -1538,11 +1551,11 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     SET_EXPECT(OnProgress_BEGINDOWNLOADDATA);
     if(test_protocol == FILE_TEST)
         SET_EXPECT(OnProgress_CACHEFILENAMEAVAILABLE);
-    if(test_protocol != HTTP_TEST)
+    if(test_protocol != HTTP_TEST && test_protocol != HTTPS_TEST)
         SET_EXPECT(OnProgress_ENDDOWNLOADDATA);
     SET_EXPECT(LockRequest);
     SET_EXPECT(OnDataAvailable);
-    if(test_protocol != HTTP_TEST)
+    if(test_protocol != HTTP_TEST && test_protocol != HTTPS_TEST)
         SET_EXPECT(OnStopBinding);
 
     hres = IMoniker_BindToStorage(pimkName, pibc, NULL, &IID_IStream, (void**)&unk);
@@ -1553,11 +1566,11 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
     if(test_protocol == FILE_TEST)
         CHECK_CALLED(OnProgress_CACHEFILENAMEAVAILABLE);
-    if(test_protocol != HTTP_TEST)
+    if(test_protocol != HTTP_TEST && test_protocol != HTTPS_TEST)
         CHECK_CALLED(OnProgress_ENDDOWNLOADDATA);
     CHECK_CALLED(LockRequest);
     CHECK_CALLED(OnDataAvailable);
-    if(test_protocol != HTTP_TEST)
+    if(test_protocol != HTTP_TEST && test_protocol != HTTPS_TEST)
         CHECK_CALLED(OnStopBinding);
 
     if(unk)
@@ -2044,12 +2057,12 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
     SET_EXPECT(OnStartBinding);
     if(emulate_protocol) {
         SET_EXPECT(Start);
-        if(test_protocol == HTTP_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             SET_EXPECT(Terminate);
         if(tymed != TYMED_FILE || (test_protocol != ABOUT_TEST && test_protocol != ITS_TEST))
             SET_EXPECT(UnlockRequest);
     }else {
-        if(test_protocol == HTTP_TEST) {
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST) {
             SET_EXPECT(QueryInterface_IInternetBindInfo);
             SET_EXPECT(QueryService_IInternetBindInfo);
             SET_EXPECT(QueryInterface_IHttpNegotiate);
@@ -2059,15 +2072,15 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
             SET_EXPECT(OnProgress_FINDINGRESOURCE);
             SET_EXPECT(OnProgress_CONNECTING);
         }
-        if(test_protocol == HTTP_TEST || test_protocol == FILE_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == FILE_TEST)
             SET_EXPECT(OnProgress_SENDINGREQUEST);
-        if(test_protocol == HTTP_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             SET_EXPECT(OnResponse);
         SET_EXPECT(OnProgress_MIMETYPEAVAILABLE);
         SET_EXPECT(OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == FILE_TEST)
             SET_EXPECT(OnProgress_CACHEFILENAMEAVAILABLE);
-        if(test_protocol == HTTP_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             SET_EXPECT(OnProgress_DOWNLOADINGDATA);
         SET_EXPECT(OnProgress_ENDDOWNLOADDATA);
         if(tymed != TYMED_FILE || test_protocol != ABOUT_TEST)
@@ -2076,7 +2089,8 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
     }
 
     hres = IMoniker_BindToStorage(mon, bctx, NULL, tymed == TYMED_ISTREAM ? &IID_IStream : &IID_IUnknown, (void**)&unk);
-    if (test_protocol == HTTP_TEST && hres == HRESULT_FROM_WIN32(ERROR_INTERNET_NAME_NOT_RESOLVED))
+    if ((test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
+        && hres == HRESULT_FROM_WIN32(ERROR_INTERNET_NAME_NOT_RESOLVED))
     {
         skip("Network unreachable, skipping tests\n");
         return;
@@ -2113,7 +2127,7 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
     CHECK_CALLED(OnStartBinding);
     if(emulate_protocol) {
         CHECK_CALLED(Start);
-        if(test_protocol == HTTP_TEST) {
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST) {
             if(tymed == TYMED_FILE)
                 CLEAR_CALLED(Read);
             CHECK_CALLED(Terminate);
@@ -2121,7 +2135,7 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
         if(tymed != TYMED_FILE || (test_protocol != ABOUT_TEST && test_protocol != ITS_TEST))
             CHECK_CALLED(UnlockRequest);
     }else {
-        if(test_protocol == HTTP_TEST) {
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST) {
             CLEAR_CALLED(QueryInterface_IInternetBindInfo);
             CLEAR_CALLED(QueryService_IInternetBindInfo);
             CHECK_CALLED(QueryInterface_IHttpNegotiate);
@@ -2131,7 +2145,7 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
                 CHECK_CALLED(QueryInterface_IHttpNegotiate2);
                 CHECK_CALLED(GetRootSecurityId);
             }
-            if(http_is_first) {
+            if(http_is_first || test_protocol == HTTPS_TEST) {
                 CHECK_CALLED(OnProgress_FINDINGRESOURCE);
                 CHECK_CALLED(OnProgress_CONNECTING);
             }else todo_wine {
@@ -2140,15 +2154,15 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
                 CLEAR_CALLED(OnProgress_CONNECTING);
             }
         }
-        if(test_protocol == HTTP_TEST || test_protocol == FILE_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == FILE_TEST)
             CHECK_CALLED(OnProgress_SENDINGREQUEST);
-        if(test_protocol == HTTP_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             CHECK_CALLED(OnResponse);
         CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
         CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == FILE_TEST)
             CHECK_CALLED(OnProgress_CACHEFILENAMEAVAILABLE);
-        if(test_protocol == HTTP_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             CLEAR_CALLED(OnProgress_DOWNLOADINGDATA);
         CHECK_CALLED(OnProgress_ENDDOWNLOADDATA);
         if(tymed != TYMED_FILE || test_protocol != ABOUT_TEST)
@@ -2159,7 +2173,7 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
     ok(IMoniker_Release(mon) == 0, "mon should be destroyed here\n");
     ok(IBindCtx_Release(bctx) == 0, "bctx should be destroyed here\n");
 
-    if(test_protocol == HTTP_TEST)
+    if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
         http_is_first = FALSE;
 }
 
@@ -2210,13 +2224,13 @@ static void test_BindToObject(int protocol, BOOL emul)
     SET_EXPECT(Obj_OnStartBinding);
     if(emulate_protocol) {
         SET_EXPECT(Start);
-        if(test_protocol == HTTP_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             SET_EXPECT(Terminate);
         if(test_protocol == FILE_TEST)
             SET_EXPECT(OnProgress_MIMETYPEAVAILABLE);
         SET_EXPECT(UnlockRequest);
     }else {
-        if(test_protocol == HTTP_TEST) {
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST) {
             SET_EXPECT(QueryInterface_IHttpNegotiate);
             SET_EXPECT(BeginningTransaction);
             SET_EXPECT(QueryInterface_IHttpNegotiate2);
@@ -2224,15 +2238,15 @@ static void test_BindToObject(int protocol, BOOL emul)
             SET_EXPECT(Obj_OnProgress_FINDINGRESOURCE);
             SET_EXPECT(Obj_OnProgress_CONNECTING);
         }
-        if(test_protocol == HTTP_TEST || test_protocol == FILE_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == FILE_TEST)
             SET_EXPECT(Obj_OnProgress_SENDINGREQUEST);
-        if(test_protocol == HTTP_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             SET_EXPECT(OnResponse);
         SET_EXPECT(Obj_OnProgress_MIMETYPEAVAILABLE);
         SET_EXPECT(Obj_OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == FILE_TEST)
             SET_EXPECT(Obj_OnProgress_CACHEFILENAMEAVAILABLE);
-        if(test_protocol == HTTP_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             SET_EXPECT(OnProgress_DOWNLOADINGDATA);
         SET_EXPECT(Obj_OnProgress_ENDDOWNLOADDATA);
         SET_EXPECT(Obj_OnProgress_CLASSIDAVAILABLE);
@@ -2244,7 +2258,8 @@ static void test_BindToObject(int protocol, BOOL emul)
 
     hres = IMoniker_BindToObject(mon, bctx, NULL, &IID_IUnknown, (void**)&unk);
 
-    if (test_protocol == HTTP_TEST && hres == HRESULT_FROM_WIN32(ERROR_INTERNET_NAME_NOT_RESOLVED))
+    if ((test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
+        && hres == HRESULT_FROM_WIN32(ERROR_INTERNET_NAME_NOT_RESOLVED))
     {
         skip( "Network unreachable, skipping tests\n" );
         return;
@@ -2278,13 +2293,13 @@ static void test_BindToObject(int protocol, BOOL emul)
     CHECK_CALLED(Obj_OnStartBinding);
     if(emulate_protocol) {
         CHECK_CALLED(Start);
-        if(test_protocol == HTTP_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             CHECK_CALLED(Terminate);
         if(test_protocol == FILE_TEST)
             CLEAR_CALLED(OnProgress_MIMETYPEAVAILABLE); /* not called in IE7 */
         CHECK_CALLED(UnlockRequest);
     }else {
-        if(test_protocol == HTTP_TEST) {
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST) {
             CHECK_CALLED(QueryInterface_IHttpNegotiate);
             CHECK_CALLED(BeginningTransaction);
             if (have_IHttpNegotiate2)
@@ -2301,19 +2316,19 @@ static void test_BindToObject(int protocol, BOOL emul)
                 CLEAR_CALLED(Obj_OnProgress_CONNECTING);
             }
         }
-        if(test_protocol == HTTP_TEST || test_protocol == FILE_TEST) {
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == FILE_TEST) {
             if(urls[test_protocol] == SHORT_RESPONSE_URL)
                 CLEAR_CALLED(Obj_OnProgress_SENDINGREQUEST);
             else
                 CHECK_CALLED(Obj_OnProgress_SENDINGREQUEST);
         }
-        if(test_protocol == HTTP_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             CHECK_CALLED(OnResponse);
         CHECK_CALLED(Obj_OnProgress_MIMETYPEAVAILABLE);
         CHECK_CALLED(Obj_OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == FILE_TEST)
             CHECK_CALLED(Obj_OnProgress_CACHEFILENAMEAVAILABLE);
-        if(test_protocol == HTTP_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             CLEAR_CALLED(OnProgress_DOWNLOADINGDATA);
         CLEAR_CALLED(Obj_OnProgress_ENDDOWNLOADDATA);
         CHECK_CALLED(Obj_OnProgress_CLASSIDAVAILABLE);
@@ -2323,7 +2338,7 @@ static void test_BindToObject(int protocol, BOOL emul)
         CHECK_CALLED(Obj_OnStopBinding);
     }
 
-    if(test_protocol != HTTP_TEST || emul || urls[test_protocol] == SHORT_RESPONSE_URL) {
+    if(test_protocol != HTTP_TEST || test_protocol == HTTPS_TEST || emul || urls[test_protocol] == SHORT_RESPONSE_URL) {
         ok(IMoniker_Release(mon) == 0, "mon should be destroyed here\n");
         ok(IBindCtx_Release(bctx) == 0, "bctx should be destroyed here\n");
     }else {
@@ -2338,7 +2353,7 @@ static void test_BindToObject(int protocol, BOOL emul)
     if(emul)
         CoRevokeClassObject(regid);
 
-    if(test_protocol == HTTP_TEST)
+    if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
         http_is_first = FALSE;
 }
 
@@ -2360,21 +2375,21 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
         SET_EXPECT(Start);
         SET_EXPECT(UnlockRequest);
     }else {
-        if(test_protocol == HTTP_TEST) {
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST) {
             SET_EXPECT(QueryInterface_IHttpNegotiate);
             SET_EXPECT(BeginningTransaction);
             SET_EXPECT(QueryInterface_IHttpNegotiate2);
             SET_EXPECT(GetRootSecurityId);
         }
-        if(test_protocol == HTTP_TEST || test_protocol == FILE_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == FILE_TEST)
             SET_EXPECT(OnProgress_SENDINGREQUEST);
-        if(test_protocol == HTTP_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             SET_EXPECT(OnResponse);
         SET_EXPECT(OnProgress_MIMETYPEAVAILABLE);
         SET_EXPECT(OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == FILE_TEST)
             SET_EXPECT(OnProgress_CACHEFILENAMEAVAILABLE);
-        if(test_protocol == HTTP_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             SET_EXPECT(OnProgress_DOWNLOADINGDATA);
         SET_EXPECT(OnProgress_ENDDOWNLOADDATA);
         SET_EXPECT(OnStopBinding);
@@ -2394,7 +2409,7 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
         CHECK_CALLED(Start);
         CHECK_CALLED(UnlockRequest);
     }else {
-        if(test_protocol == HTTP_TEST) {
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST) {
             CHECK_CALLED(QueryInterface_IHttpNegotiate);
             CHECK_CALLED(BeginningTransaction);
             if (have_IHttpNegotiate2)
@@ -2405,15 +2420,15 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
         }
         if(test_protocol == FILE_TEST)
             CHECK_CALLED(OnProgress_SENDINGREQUEST);
-        else if(test_protocol == HTTP_TEST)
+        else if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             CLEAR_CALLED(OnProgress_SENDINGREQUEST); /* not called by IE7 */
-        if(test_protocol == HTTP_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             CHECK_CALLED(OnResponse);
         CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
         CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == FILE_TEST)
             CHECK_CALLED(OnProgress_CACHEFILENAMEAVAILABLE);
-        if(test_protocol == HTTP_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             CLEAR_CALLED(OnProgress_DOWNLOADINGDATA);
         CHECK_CALLED(OnProgress_ENDDOWNLOADDATA);
         CHECK_CALLED(OnStopBinding);
@@ -2580,7 +2595,7 @@ START_TEST(url)
     test_CreateAsyncBindCtx();
     test_CreateAsyncBindCtxEx();
 
-    if(!test_RegisterBindStatusCallback()) {
+    if(test_RegisterBindStatusCallback()) {
         test_BindToStorage_fail();
 
         trace("synchronous http test (COM not initialised)...\n");
@@ -2627,6 +2642,12 @@ START_TEST(url)
 
         trace("emulated http test (to file)...\n");
         test_BindToStorage(HTTP_TEST, TRUE, TYMED_FILE);
+
+        trace("asynchronous https test...\n");
+        test_BindToStorage(HTTPS_TEST, FALSE, TYMED_ISTREAM);
+
+        trace("emulated https test...\n");
+        test_BindToStorage(HTTPS_TEST, TRUE, TYMED_ISTREAM);
 
         trace("about test...\n");
         test_BindToStorage(ABOUT_TEST, FALSE, TYMED_ISTREAM);
