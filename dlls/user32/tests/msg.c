@@ -120,6 +120,7 @@ struct recvd_message {
     LPARAM lParam;         /* expected value of lParam */
     int line;              /* source line where logged */
     const char *descr;     /* description for trace output */
+    char output[512];      /* trace output */
 };
 
 /* Empty message sequence */
@@ -1701,6 +1702,8 @@ static const char *get_winpos_flags(UINT flags)
 #define add_message(msg) add_message_(__LINE__,msg);
 static void add_message_(int line, const struct recvd_message *msg)
 {
+    struct recvd_message *seq;
+
     if (!sequence) 
     {
 	sequence_size = 10;
@@ -1713,13 +1716,15 @@ static void add_message_(int line, const struct recvd_message *msg)
     }
     assert(sequence);
 
-    sequence[sequence_cnt].hwnd = msg->hwnd;
-    sequence[sequence_cnt].message = msg->message;
-    sequence[sequence_cnt].flags = msg->flags;
-    sequence[sequence_cnt].wParam = msg->wParam;
-    sequence[sequence_cnt].lParam = msg->lParam;
-    sequence[sequence_cnt].line   = line;
-    sequence[sequence_cnt].descr  = msg->descr;
+    seq = &sequence[sequence_cnt];
+    seq->hwnd = msg->hwnd;
+    seq->message = msg->message;
+    seq->flags = msg->flags;
+    seq->wParam = msg->wParam;
+    seq->lParam = msg->lParam;
+    seq->line   = line;
+    seq->descr  = msg->descr;
+    seq->output[0] = 0;
 
     if (msg->descr)
     {
@@ -1740,13 +1745,13 @@ static void add_message_(int line, const struct recvd_message *msg)
             };
             const char *code_name = (msg->message <= HCBT_SETFOCUS) ? CBT_code_name[msg->message] : "Unknown";
 
-            trace_(__FILE__,line)( "%s: hook %d (%s) wp %08lx lp %08lx\n",
-                                   msg->descr, msg->message, code_name, msg->wParam, msg->lParam );
+            snprintf( seq->output, sizeof(seq->output), "%s: hook %d (%s) wp %08lx lp %08lx",
+                      msg->descr, msg->message, code_name, msg->wParam, msg->lParam );
         }
         else if (msg->flags & winevent_hook)
         {
-            trace_(__FILE__,line)( "%s: winevent %p %08x %08lx %08lx\n",
-                                   msg->descr, msg->hwnd, msg->message, msg->wParam, msg->lParam );
+            snprintf( seq->output, sizeof(seq->output), "%s: winevent %p %08x %08lx %08lx",
+                      msg->descr, msg->hwnd, msg->message, msg->wParam, msg->lParam );
         }
         else
         {
@@ -1757,19 +1762,20 @@ static void add_message_(int line, const struct recvd_message *msg)
             {
                 WINDOWPOS *winpos = (WINDOWPOS *)msg->lParam;
 
-                trace_(__FILE__,line)( "%s: %p WM_WINDOWPOS%s wp %08lx lp %08lx after %p x %d y %d cx %d cy %d flags %s\n",
-                                       msg->descr, msg->hwnd,
-                                       (msg->message == WM_WINDOWPOSCHANGING) ? "CHANGING" : "CHANGED",
-                                       msg->wParam, msg->lParam, winpos->hwndInsertAfter,
-                                       winpos->x, winpos->y, winpos->cx, winpos->cy,
-                                       get_winpos_flags(winpos->flags) );
+                snprintf( seq->output, sizeof(seq->output),
+                          "%s: %p WM_WINDOWPOS%s wp %08lx lp %08lx after %p x %d y %d cx %d cy %d flags %s",
+                          msg->descr, msg->hwnd,
+                          (msg->message == WM_WINDOWPOSCHANGING) ? "CHANGING" : "CHANGED",
+                          msg->wParam, msg->lParam, winpos->hwndInsertAfter,
+                          winpos->x, winpos->y, winpos->cx, winpos->cy,
+                          get_winpos_flags(winpos->flags) );
 
                 /* Log only documented flags, win2k uses 0x1000 and 0x2000
                  * in the high word for internal purposes
                  */
-                sequence[sequence_cnt].wParam = winpos->flags & 0xffff;
+                seq->wParam = winpos->flags & 0xffff;
                 /* We are not interested in the flags that don't match under XP and Win9x */
-                sequence[sequence_cnt].wParam &= ~SWP_NOZORDER;
+                seq->wParam &= ~SWP_NOZORDER;
                 break;
             }
 
@@ -1778,9 +1784,10 @@ static void add_message_(int line, const struct recvd_message *msg)
                 DRAW_ITEM_STRUCT di;
                 DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT *)msg->lParam;
 
-                trace_(__FILE__,line)( "%s: %p WM_DRAWITEM: type %x, ctl_id %x, item_id %x, action %x, state %x\n",
-                                       msg->descr, msg->hwnd, dis->CtlType, dis->CtlID,
-                                       dis->itemID, dis->itemAction, dis->itemState);
+                snprintf( seq->output, sizeof(seq->output),
+                          "%s: %p WM_DRAWITEM: type %x, ctl_id %x, item_id %x, action %x, state %x",
+                          msg->descr, msg->hwnd, dis->CtlType, dis->CtlID,
+                          dis->itemID, dis->itemAction, dis->itemState);
 
                 di.u.item.type = dis->CtlType;
                 di.u.item.ctl_id = dis->CtlID;
@@ -1788,13 +1795,13 @@ static void add_message_(int line, const struct recvd_message *msg)
                 di.u.item.action = dis->itemAction;
                 di.u.item.state = dis->itemState;
 
-                sequence[sequence_cnt].lParam = di.u.lp;
+                seq->lParam = di.u.lp;
                 break;
             }
             default:
                 if (msg->message >= 0xc000) return;  /* ignore registered messages */
-                trace_(__FILE__,line)( "%s: %p %04x wp %08lx lp %08lx\n",
-                                       msg->descr, msg->hwnd, msg->message, msg->wParam, msg->lParam );
+                snprintf( seq->output, sizeof(seq->output), "%s: %p %04x wp %08lx lp %08lx",
+                          msg->descr, msg->hwnd, msg->message, msg->wParam, msg->lParam );
             }
         }
     }
@@ -1826,25 +1833,73 @@ static void flush_sequence(void)
     sequence_cnt = sequence_size = 0;
 }
 
+static void dump_sequence(const struct message *expected, const char *context, const char *file, int line)
+{
+    const struct recvd_message *actual = sequence;
+
+    trace_(file, line)("Failed sequence %s:\n", context );
+    while (expected->message && actual->message)
+    {
+        if (actual->output[0])
+        {
+            if (expected->flags & hook)
+            {
+                trace_(file, line)( "  expected: hook %04x - actual: %s\n",
+                                    expected->message, actual->output );
+            }
+            else if (expected->flags & winevent_hook)
+            {
+                trace_(file, line)( "  expected: winevent %04x - actual: %s\n",
+                                    expected->message, actual->output );
+            }
+            else
+            {
+                trace_(file, line)( "  expected: msg %04x - actual: %s\n",
+                                    expected->message, actual->output );
+            }
+        }
+
+	if (expected->message == actual->message)
+	{
+	    expected++;
+	    actual++;
+	}
+	/* silently drop winevent messages if there is no support for them */
+	else if ((expected->flags & optional) || ((expected->flags & winevent_hook) && !hEvent_hook))
+	    expected++;
+        else
+        {
+            expected++;
+            actual++;
+        }
+    }
+
+    /* optional trailing messages */
+    while (expected->message && ((expected->flags & optional) ||
+	    ((expected->flags & winevent_hook) && !hEvent_hook)))
+    {
+	expected++;
+    }
+}
+
 #define ok_sequence( exp, contx, todo) \
         ok_sequence_( (exp), (contx), (todo), __FILE__, __LINE__)
 
 
-static void ok_sequence_(const struct message *expected, const char *context, int todo,
-        const char *file, int line)
+static void ok_sequence_(const struct message *expected_list, const char *context, int todo,
+                         const char *file, int line)
 {
     static const struct recvd_message end_of_sequence;
+    const struct message *expected = expected_list;
     const struct recvd_message *actual;
-    int failcount = 0;
-    
+    int failcount = 0, dump = 0;
+
     add_message(&end_of_sequence);
 
     actual = sequence;
 
     while (expected->message && actual->message)
     {
-	trace_( file, line)("expected %04x - actual %04x\n", expected->message, actual->message);
-
 	if (expected->message == actual->message)
 	{
 	    if (expected->flags & wparam)
@@ -1853,15 +1908,20 @@ static void ok_sequence_(const struct message *expected, const char *context, in
 		{
 		    todo_wine {
                         failcount ++;
+                        if (strcmp(winetest_platform, "wine")) dump++;
                         ok_( file, line) (FALSE,
 			    "%s: in msg 0x%04x expecting wParam 0x%lx got 0x%lx\n",
 			    context, expected->message, expected->wParam, actual->wParam);
 		    }
 		}
 		else
-		ok_( file, line) (expected->wParam == actual->wParam,
-		     "%s: in msg 0x%04x expecting wParam 0x%lx got 0x%lx\n",
-		     context, expected->message, expected->wParam, actual->wParam);
+                {
+                    ok_( file, line)(expected->wParam == actual->wParam,
+                                     "%s: in msg 0x%04x expecting wParam 0x%lx got 0x%lx\n",
+                                     context, expected->message, expected->wParam, actual->wParam);
+                    if (expected->wParam != actual->wParam) dump++;
+                }
+
 	    }
 	    if (expected->flags & lparam)
             {
@@ -1869,44 +1929,63 @@ static void ok_sequence_(const struct message *expected, const char *context, in
 		{
 		    todo_wine {
                         failcount ++;
+                        if (strcmp(winetest_platform, "wine")) dump++;
                         ok_( file, line) (FALSE,
 			    "%s: in msg 0x%04x expecting lParam 0x%lx got 0x%lx\n",
 			    context, expected->message, expected->lParam, actual->lParam);
 		    }
 		}
 		else
-		 ok_( file, line) (expected->lParam == actual->lParam,
-		     "%s: in msg 0x%04x expecting lParam 0x%lx got 0x%lx\n",
-		     context, expected->message, expected->lParam, actual->lParam);
+                {
+                    ok_( file, line)(expected->lParam == actual->lParam,
+                                     "%s: in msg 0x%04x expecting lParam 0x%lx got 0x%lx\n",
+                                     context, expected->message, expected->lParam, actual->lParam);
+                    if (expected->lParam != actual->lParam) dump++;
+                }
             }
 	    if ((expected->flags & defwinproc) != (actual->flags & defwinproc) && todo)
 	    {
 		    todo_wine {
                         failcount ++;
+                        if (strcmp(winetest_platform, "wine")) dump++;
                         ok_( file, line) (FALSE,
                             "%s: the msg 0x%04x should %shave been sent by DefWindowProc\n",
                             context, expected->message, (expected->flags & defwinproc) ? "" : "NOT ");
 		    }
 	    }
 	    else
+            {
 	        ok_( file, line) ((expected->flags & defwinproc) == (actual->flags & defwinproc),
 		    "%s: the msg 0x%04x should %shave been sent by DefWindowProc\n",
 		    context, expected->message, (expected->flags & defwinproc) ? "" : "NOT ");
+                if ((expected->flags & defwinproc) != (actual->flags & defwinproc)) dump++;
+            }
+
 	    ok_( file, line) ((expected->flags & beginpaint) == (actual->flags & beginpaint),
 		"%s: the msg 0x%04x should %shave been sent by BeginPaint\n",
 		context, expected->message, (expected->flags & beginpaint) ? "" : "NOT ");
+            if ((expected->flags & beginpaint) != (actual->flags & beginpaint)) dump++;
+
 	    ok_( file, line) ((expected->flags & (sent|posted)) == (actual->flags & (sent|posted)),
 		"%s: the msg 0x%04x should have been %s\n",
 		context, expected->message, (expected->flags & posted) ? "posted" : "sent");
+            if ((expected->flags & (sent|posted)) != (actual->flags & (sent|posted))) dump++;
+
 	    ok_( file, line) ((expected->flags & parent) == (actual->flags & parent),
 		"%s: the msg 0x%04x was expected in %s\n",
 		context, expected->message, (expected->flags & parent) ? "parent" : "child");
+            if ((expected->flags & parent) != (actual->flags & parent)) dump++;
+
 	    ok_( file, line) ((expected->flags & hook) == (actual->flags & hook),
 		"%s: the msg 0x%04x should have been sent by a hook\n",
 		context, expected->message);
+            if ((expected->flags & hook) != (actual->flags & hook)) dump++;
+
 	    ok_( file, line) ((expected->flags & winevent_hook) == (actual->flags & winevent_hook),
 		"%s: the msg 0x%04x should have been sent by a winevent hook\n",
 		context, expected->message);
+            if ((expected->flags & winevent_hook) != (actual->flags & winevent_hook)) dump++;
+
 	    expected++;
 	    actual++;
 	}
@@ -1917,16 +1996,17 @@ static void ok_sequence_(const struct message *expected, const char *context, in
 	{
             failcount++;
             todo_wine {
+                if (strcmp(winetest_platform, "wine")) dump++;
                 ok_( file, line) (FALSE, "%s: the msg 0x%04x was expected, but got msg 0x%04x instead\n",
                     context, expected->message, actual->message);
             }
-            flush_sequence();
-            return;
+            goto done;
         }
         else
         {
             ok_( file, line) (FALSE, "%s: the msg 0x%04x was expected, but got msg 0x%04x instead\n",
                 context, expected->message, actual->message);
+            dump++;
             expected++;
             actual++;
         }
@@ -1942,6 +2022,7 @@ static void ok_sequence_(const struct message *expected, const char *context, in
         todo_wine {
             if (expected->message || actual->message) {
                 failcount++;
+                if (strcmp(winetest_platform, "wine")) dump++;
                 ok_( file, line) (FALSE, "%s: the msg sequence is not complete: expected %04x - actual %04x\n",
                     context, expected->message, actual->message);
             }
@@ -1950,14 +2031,20 @@ static void ok_sequence_(const struct message *expected, const char *context, in
     else
     {
         if (expected->message || actual->message)
+        {
+            dump++;
             ok_( file, line) (FALSE, "%s: the msg sequence is not complete: expected %04x - actual %04x\n",
                 context, expected->message, actual->message);
+        }
     }
     if( todo && !failcount) /* succeeded yet marked todo */
         todo_wine {
+            if (!strcmp(winetest_platform, "wine")) dump++;
             ok_( file, line)( TRUE, "%s: marked \"todo_wine\" but succeeds\n", context);
         }
 
+done:
+    if (dump) dump_sequence(expected_list, context, file, line);
     flush_sequence();
 }
 
@@ -3937,13 +4024,11 @@ static void test_showwindow(void)
     trace("calling ShowWindow( SW_SHOWNA) for invisible top level window\n");
     ok( ShowWindow(hwnd, SW_SHOWNA) == FALSE, "ShowWindow: window was visible\n" );
     ok_sequence(WmSHOWNATopInvisible, "ShowWindow(SW_SHOWNA) on invisible top level window", TRUE);
-    trace("done\n");
 
     /* ShowWindow( SW_SHOWNA) for now visible top level window */
     trace("calling ShowWindow( SW_SHOWNA) for now visible top level window\n");
     ok( ShowWindow(hwnd, SW_SHOWNA) != FALSE, "ShowWindow: window was invisible\n" );
     ok_sequence(WmSHOWNATopVisible, "ShowWindow(SW_SHOWNA) on visible top level window", FALSE);
-    trace("done\n");
     /* back to invisible */
     ShowWindow(hchild, SW_HIDE);
     ShowWindow(hwnd, SW_HIDE);
@@ -3952,21 +4037,18 @@ static void test_showwindow(void)
     trace("calling ShowWindow( SW_SHOWNA) for invisible child with invisible parent\n");
     ok( ShowWindow(hchild, SW_SHOWNA) == FALSE, "ShowWindow: window was visible\n" );
     ok_sequence(WmSHOWNAChildInvisParInvis, "ShowWindow(SW_SHOWNA) invisible child and parent", FALSE);
-    trace("done\n");
     /* ShowWindow(SW_SHOWNA) with child visible and parent invisible */ 
     ok( ShowWindow(hchild, SW_SHOW) != FALSE, "ShowWindow: window was invisible\n" );
     flush_sequence();
     trace("calling ShowWindow( SW_SHOWNA) for the visible child and invisible parent\n");
     ok( ShowWindow(hchild, SW_SHOWNA) != FALSE, "ShowWindow: window was invisible\n" );
     ok_sequence(WmSHOWNAChildVisParInvis, "ShowWindow(SW_SHOWNA) visible child and invisible parent", FALSE);
-    trace("done\n");
     /* ShowWindow(SW_SHOWNA) with child visible and parent visible */
     ShowWindow( hwnd, SW_SHOW);
     flush_sequence();
     trace("calling ShowWindow( SW_SHOWNA) for the visible child and parent\n");
     ok( ShowWindow(hchild, SW_SHOWNA) != FALSE, "ShowWindow: window was invisible\n" );
     ok_sequence(WmSHOWNAChildVisParVis, "ShowWindow(SW_SHOWNA) for the visible child and parent", FALSE);
-    trace("done\n");
 
     /* ShowWindow(SW_SHOWNA) with child invisible and parent visible */
     ShowWindow( hchild, SW_HIDE);
@@ -3974,7 +4056,6 @@ static void test_showwindow(void)
     trace("calling ShowWindow( SW_SHOWNA) for the invisible child and visible parent\n");
     ok( ShowWindow(hchild, SW_SHOWNA) == FALSE, "ShowWindow: window was visible\n" );
     ok_sequence(WmSHOWNAChildInvisParVis, "ShowWindow(SW_SHOWNA) for the invisible child and visible parent", FALSE);
-    trace("done\n");
 
     SetCapture(hchild);
     ok(GetCapture() == hchild, "wrong capture window %p\n", GetCapture());
@@ -3996,7 +4077,6 @@ static void test_showwindow(void)
     ok (hwnd != 0, "Failed to create popup window\n");
     ok(IsZoomed(hwnd), "window should be maximized\n");
     ok_sequence(WmCreateInvisibleMaxPopupSeq, "CreateWindow(WS_MAXIMIZED):popup", FALSE);
-    trace("done\n");
 
     GetWindowRect(hwnd, &rc);
     ok( rc.right-rc.left == GetSystemMetrics(SM_CXSCREEN) &&
@@ -4012,7 +4092,6 @@ static void test_showwindow(void)
     ShowWindow(hwnd, SW_SHOWMAXIMIZED);
     ok(IsZoomed(hwnd), "window should be maximized\n");
     ok_sequence(WmShowMaxPopupResizedSeq, "ShowWindow(SW_SHOWMAXIMIZED):invisible maximized and resized popup", FALSE);
-    trace("done\n");
 
     GetWindowRect(hwnd, &rc);
     ok( rc.right-rc.left == GetSystemMetrics(SM_CXSCREEN) &&
@@ -4032,13 +4111,11 @@ static void test_showwindow(void)
     ok (hwnd != 0, "Failed to create popup window\n");
     ok(IsZoomed(hwnd), "window should be maximized\n");
     ok_sequence(WmCreateInvisibleMaxPopupSeq, "CreateWindow(WS_MAXIMIZED):popup", FALSE);
-    trace("done\n");
 
     trace("calling ShowWindow( SW_SHOWMAXIMIZE ) for invisible maximized popup window\n");
     ShowWindow(hwnd, SW_SHOWMAXIMIZED);
     ok(IsZoomed(hwnd), "window should be maximized\n");
     ok_sequence(WmShowMaxPopupSeq, "ShowWindow(SW_SHOWMAXIMIZED):invisible maximized popup", FALSE);
-    trace("done\n");
     DestroyWindow(hwnd);
     flush_sequence();
 
@@ -4051,7 +4128,6 @@ static void test_showwindow(void)
     ok (hwnd != 0, "Failed to create popup window\n");
     ok(IsZoomed(hwnd), "window should be maximized\n");
     ok_sequence(WmCreateMaxPopupSeq, "CreateWindow(WS_MAXIMIZED):popup", FALSE);
-    trace("done\n");
     DestroyWindow(hwnd);
     flush_sequence();
 
@@ -4065,13 +4141,11 @@ static void test_showwindow(void)
     ok (hwnd != 0, "Failed to create popup window\n");
     ok(!IsZoomed(hwnd), "window should NOT be maximized\n");
     ok_sequence(WmCreatePopupSeq, "CreateWindow(WS_VISIBLE):popup", FALSE);
-    trace("done\n");
 
     trace("calling ShowWindow( SW_SHOWMAXIMIZE ) for visible popup window\n");
     ShowWindow(hwnd, SW_SHOWMAXIMIZED);
     ok(IsZoomed(hwnd), "window should be maximized\n");
     ok_sequence(WmShowVisMaxPopupSeq, "ShowWindow(SW_SHOWMAXIMIZED):popup", FALSE);
-    trace("done\n");
     DestroyWindow(hwnd);
     flush_sequence();
 }
@@ -7097,7 +7171,6 @@ static BOOL is_our_logged_class(HWND hwnd)
 	    !lstrcmpiA(buf, "#32770") ||
 	    !lstrcmpiA(buf, "#32768"))
         return TRUE;
-        trace("ignoring window class %s\n", buf);
     }
     return FALSE;
 }
@@ -8070,10 +8143,9 @@ static void test_scrollwindowex(void)
     trace("start scroll\n");
     ScrollWindowEx( hwnd, 10, 10, &rect, NULL, NULL, NULL,
             SW_SCROLLCHILDREN|SW_ERASE|SW_INVALIDATE);
-    todo_wine { /* wine sends WM_POSCHANGING, WM_POSCHANGED messages */
-                /* windows sometimes a WM_MOVE */
-        ok_sequence(WmEmptySeq, "ScrollWindowEx", 0);
-    }
+    /* wine sends WM_POSCHANGING, WM_POSCHANGED messages */
+    /* windows sometimes a WM_MOVE */
+    ok_sequence(WmEmptySeq, "ScrollWindowEx", TRUE);
     trace("end scroll\n");
     flush_sequence();
     flush_events();
@@ -9965,8 +10037,6 @@ static void test_ShowWindow(void)
 static INT_PTR WINAPI test_dlg_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     struct recvd_message msg;
-
-    trace("dialog: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
 
     switch (message)
     {
