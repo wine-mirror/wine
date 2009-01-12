@@ -83,3 +83,77 @@ ULONG WINAPI HttpTerminate( ULONG flags, PVOID reserved )
     FIXME( "(0x%x, %p): stub!\n", flags, reserved );
     return NO_ERROR;
 }
+
+/***********************************************************************
+ *        HttpDeleteServiceConfiguration     (HTTPAPI.@)
+ *
+ * Remove configuration record from HTTP Server API configuration store
+ *
+ * PARAMS
+ *   handle     [I] reserved, must be 0
+ *   type       [I] configuration record type
+ *   config     [I] buffer which contains configuration record information
+ *   length     [I] length of configuration record buffer
+ *   overlapped [I] reserved, must be NULL
+ *
+ * RETURNS
+ *   NO_ERROR if function succeeds, or error code if function fails
+ *
+ */
+ULONG WINAPI HttpDeleteServiceConfiguration( HANDLE handle, HTTP_SERVICE_CONFIG_ID type,
+                 PVOID config, ULONG length, LPOVERLAPPED overlapped )
+{
+    FIXME( "(%p, %d, %p, %d, %p): stub!\n", handle, type, config, length, overlapped );
+    return NO_ERROR;
+}
+
+/***********************************************************************
+ *        HttpQueryServiceConfiguration     (HTTPAPI.@)
+ *
+ * Retrieves configuration records from HTTP Server API configuration store
+ *
+ * PARAMS
+ *   handle     [ I] reserved, must be 0
+ *   type       [ I] configuration records type
+ *   query      [ I] buffer which contains query data used to retrieve records
+ *   query_len  [ I] length of query buffer
+ *   buffer     [IO] buffer to store query results
+ *   buffer_len [ I] length of output buffer
+ *   data_len   [ O] optional pointer to a buffer which receives query result length
+ *   overlapped [ I] reserved, must be NULL
+ *
+ * RETURNS
+ *   NO_ERROR if function succeeds, or error code if function fails
+ *
+ */
+ULONG WINAPI HttpQueryServiceConfiguration( HANDLE handle, HTTP_SERVICE_CONFIG_ID type,
+                 PVOID query, ULONG query_len, PVOID buffer, ULONG buffer_len,
+                 PULONG data_len, LPOVERLAPPED overlapped )
+{
+    FIXME( "(%p, %d, %p, %d, %p, %d, %p, %p): stub!\n", handle, type, query, query_len,
+            buffer, buffer_len, data_len, overlapped );
+    return ERROR_FILE_NOT_FOUND;
+}
+
+/***********************************************************************
+ *        HttpSetServiceConfiguration     (HTTPAPI.@)
+ *
+ * Add configuration record to HTTP Server API configuration store
+ *
+ * PARAMS
+ *   handle     [I] reserved, must be 0
+ *   type       [I] configuration record type
+ *   config     [I] buffer which contains configuration record information
+ *   length     [I] length of configuration record buffer
+ *   overlapped [I] reserved, must be NULL
+ *
+ * RETURNS
+ *   NO_ERROR if function succeeds, or error code if function fails
+ *
+ */
+ULONG WINAPI HttpSetServiceConfiguration( HANDLE handle, HTTP_SERVICE_CONFIG_ID type,
+                 PVOID config, ULONG length, LPOVERLAPPED overlapped )
+{
+    FIXME( "(%p, %d, %p, %d, %p): stub!\n", handle, type, config, length, overlapped );
+    return NO_ERROR;
+}

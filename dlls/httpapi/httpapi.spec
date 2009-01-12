@@ -7,7 +7,7 @@
 @ stub HttpCreateFilter
 @ stub HttpCreateHttpHandle
 @ stub HttpDeleteConfigGroup
-@ stub HttpDeleteServiceConfiguration
+@ stdcall HttpDeleteServiceConfiguration(ptr long ptr long ptr)
 @ stub HttpFilterAccept
 @ stub HttpFilterAppRead
 @ stub HttpFilterAppWrite
@@ -27,7 +27,7 @@
 @ stub HttpQueryConfigGroupInformation
 @ stub HttpQueryControlChannelInformation
 @ stub HttpQueryServerContextInformation
-@ stub HttpQueryServiceConfiguration
+@ stdcall HttpQueryServiceConfiguration(ptr long ptr long ptr long ptr ptr)
 @ stub HttpReadFragmentFromCache
 @ stub HttpReceiveClientCertificate
 @ stub HttpReceiveHttpRequest
@@ -44,7 +44,7 @@
 @ stub HttpSetConfigGroupInformation
 @ stub HttpSetControlChannelInformation
 @ stub HttpSetServerContextInformation
-@ stub HttpSetServiceConfiguration
+@ stdcall HttpSetServiceConfiguration(ptr long ptr long ptr)
 @ stub HttpShutdownAppPool
 @ stub HttpShutdownFilter
 @ stdcall HttpTerminate(long ptr)
