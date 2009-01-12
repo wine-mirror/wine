@@ -660,19 +660,6 @@ s_context_handle_test(void)
 }
 
 void
-s_get_5numbers(int count, pints_t n[5])
-{
-    int i;
-    for (i = 0; i < count; i++)
-    {
-        n[i].pi = midl_user_allocate(sizeof(*n[i].pi));
-        *n[i].pi = i;
-        n[i].ppi = NULL;
-        n[i].pppi = NULL;
-    }
-}
-
-void
 s_get_numbers(int length, int size, pints_t n[])
 {
     int i;
@@ -1238,11 +1225,6 @@ array_tests(void)
   memset(api, 0, sizeof(api));
   pi = HeapAlloc(GetProcessHeap(), 0, sizeof(*pi));
   *pi = -1;
-  api[0].pi = pi;
-  get_5numbers(1, api);
-  ok(api[0].pi == pi, "RPC varying array [out] pointer changed from %p to %p\n", pi, api[0].pi);
-  ok(*api[0].pi == 0, "pi unmarshalled incorrectly %d\n", *api[0].pi);
-
   api[0].pi = pi;
   get_numbers(1, 1, api);
   ok(api[0].pi == pi, "RPC conformant varying array [out] pointer changed from %p to %p\n", pi, api[0].pi);
