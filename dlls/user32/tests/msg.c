@@ -8743,8 +8743,19 @@ static const struct message WmKeyDownSkippedSeq[] =
     { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 1 }, /* XP */
     { 0 }
 };
+static const struct message WmKeyDownWasDownSkippedSeq[] =
+{
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 0x40000001 }, /* XP */
+    { 0 }
+};
 static const struct message WmKeyUpSkippedSeq[] =
 {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 0xc0000001 }, /* XP */
+    { 0 }
+};
+static const struct message WmUserKeyUpSkippedSeq[] =
+{
+    { WM_USER, sent },
     { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 0xc0000001 }, /* XP */
     { 0 }
 };
@@ -9162,6 +9173,7 @@ todo_wine {
         ok(ret && msg.message == WM_KEYDOWN && msg.wParam == 'N',
            "got %d and %04x wParam %08lx instead of TRUE and WM_KEYDOWN wParam 'N'\n",
            ret, msg.message, msg.wParam);
+        ok_sequence(WmKeyDownSkippedSeq, "WmKeyDownSkippedSeq", FALSE);
         qstatus = GetQueueStatus(qs_all_input);
         ok(qstatus == 0, "wrong qstatus %08x\n", qstatus);
     }
@@ -9180,6 +9192,7 @@ todo_wine {
         ok(ret && msg.message == WM_KEYDOWN && msg.wParam == 'N',
            "got %d and %04x wParam %08lx instead of TRUE and WM_KEYDOWN wParam 'N'\n",
            ret, msg.message, msg.wParam);
+        ok_sequence(WmKeyDownWasDownSkippedSeq, "WmKeyDownWasDownSkippedSeq", FALSE);
         qstatus = GetQueueStatus(qs_all_input);
         ok(qstatus == MAKELONG(0, QS_POSTMESSAGE), "wrong qstatus %08x\n", qstatus);
     }
@@ -9215,7 +9228,7 @@ todo_wine {
         ok(ret && msg.message == WM_KEYUP && msg.wParam == 'N',
            "got %d and %04x wParam %08lx instead of TRUE and WM_KEYDOWN wParam 'N'\n",
            ret, msg.message, msg.wParam);
-        ok_sequence(WmUser, "WmUser", FALSE);
+        ok_sequence(WmUserKeyUpSkippedSeq, "WmUserKeyUpSkippedSeq", FALSE);
         qstatus = GetQueueStatus(qs_all_input);
         ok(qstatus == MAKELONG(0, QS_POSTMESSAGE), "wrong qstatus %08x\n", qstatus);
     }
