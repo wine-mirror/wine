@@ -79,8 +79,6 @@ typedef struct
 static BOOL test_DestroyWindow_flag;
 static HWINEVENTHOOK hEvent_hook;
 
-static void dump_winpos_flags(UINT flags);
-
 static const WCHAR testWindowClassW[] =
 { 'T','e','s','t','W','i','n','d','o','w','C','l','a','s','s','W',0 };
 
@@ -112,6 +110,16 @@ struct message {
     msg_flags_t flags;     /* message props */
     WPARAM wParam;         /* expected value of wParam */
     LPARAM lParam;         /* expected value of lParam */
+};
+
+struct recvd_message {
+    UINT message;          /* the WM_* code */
+    msg_flags_t flags;     /* message props */
+    HWND hwnd;             /* window that received the message */
+    WPARAM wParam;         /* expected value of wParam */
+    LPARAM lParam;         /* expected value of lParam */
+    int line;              /* source line where logged */
+    const char *descr;     /* description for trace output */
 };
 
 /* Empty message sequence */
@@ -799,18 +807,18 @@ static const struct message WmCreateInvisiblePopupSeq[] = {
  * for a popup window with WS_VISIBLE style set
  */
 static const struct message WmShowVisiblePopupSeq_2[] = {
-    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
     { 0 }
 };
 /* SetWindowPos(SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE)
  * for a popup window with WS_VISIBLE style set
  */
 static const struct message WmShowVisiblePopupSeq_3[] = {
-    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE },
     { HCBT_ACTIVATE, hook },
     { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam, 0, 0 },
     { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
-    { WM_WINDOWPOSCHANGING, sent|wparam|optional, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
     { WM_NCACTIVATE, sent|wparam, 1 },
     { WM_ACTIVATE, sent|wparam, 1 },
     { HCBT_SETFOCUS, hook },
@@ -1624,7 +1632,7 @@ static const struct message WmSHOWNATopInvisible[] = {
 
 static int after_end_dialog, test_def_id;
 static int sequence_cnt, sequence_size;
-static struct message* sequence;
+static struct recvd_message* sequence;
 static int log_all_parent_messages;
 static int paint_loop_done;
 
@@ -1663,24 +1671,133 @@ static void init_procs(void)
 #undef GET_PROC
 }
 
-static void add_message(const struct message *msg)
+static const char *get_winpos_flags(UINT flags)
+{
+    static char buffer[300];
+
+    buffer[0] = 0;
+#define DUMP(flag) do { if (flags & flag) { strcat( buffer, "|" #flag ); flags &= ~flag; } } while(0)
+    DUMP( SWP_SHOWWINDOW );
+    DUMP( SWP_HIDEWINDOW );
+    DUMP( SWP_NOACTIVATE );
+    DUMP( SWP_FRAMECHANGED );
+    DUMP( SWP_NOCOPYBITS );
+    DUMP( SWP_NOOWNERZORDER );
+    DUMP( SWP_NOSENDCHANGING );
+    DUMP( SWP_DEFERERASE );
+    DUMP( SWP_ASYNCWINDOWPOS );
+    DUMP( SWP_NOZORDER );
+    DUMP( SWP_NOREDRAW );
+    DUMP( SWP_NOSIZE );
+    DUMP( SWP_NOMOVE );
+    DUMP( SWP_NOCLIENTSIZE );
+    DUMP( SWP_NOCLIENTMOVE );
+    if (flags) sprintf(buffer + strlen(buffer),"|0x%04x", flags);
+    return buffer + 1;
+#undef DUMP
+}
+
+
+#define add_message(msg) add_message_(__LINE__,msg);
+static void add_message_(int line, const struct recvd_message *msg)
 {
     if (!sequence) 
     {
 	sequence_size = 10;
-	sequence = HeapAlloc( GetProcessHeap(), 0, sequence_size * sizeof (struct message) );
+	sequence = HeapAlloc( GetProcessHeap(), 0, sequence_size * sizeof(*sequence) );
     }
     if (sequence_cnt == sequence_size) 
     {
 	sequence_size *= 2;
-	sequence = HeapReAlloc( GetProcessHeap(), 0, sequence, sequence_size * sizeof (struct message) );
+	sequence = HeapReAlloc( GetProcessHeap(), 0, sequence, sequence_size * sizeof(*sequence) );
     }
     assert(sequence);
 
+    sequence[sequence_cnt].hwnd = msg->hwnd;
     sequence[sequence_cnt].message = msg->message;
     sequence[sequence_cnt].flags = msg->flags;
     sequence[sequence_cnt].wParam = msg->wParam;
     sequence[sequence_cnt].lParam = msg->lParam;
+    sequence[sequence_cnt].line   = line;
+    sequence[sequence_cnt].descr  = msg->descr;
+
+    if (msg->descr)
+    {
+        if (msg->flags & hook)
+        {
+            static const char * const CBT_code_name[10] =
+            {
+                "HCBT_MOVESIZE",
+                "HCBT_MINMAX",
+                "HCBT_QS",
+                "HCBT_CREATEWND",
+                "HCBT_DESTROYWND",
+                "HCBT_ACTIVATE",
+                "HCBT_CLICKSKIPPED",
+                "HCBT_KEYSKIPPED",
+                "HCBT_SYSCOMMAND",
+                "HCBT_SETFOCUS"
+            };
+            const char *code_name = (msg->message <= HCBT_SETFOCUS) ? CBT_code_name[msg->message] : "Unknown";
+
+            trace_(__FILE__,line)( "%s: hook %d (%s) wp %08lx lp %08lx\n",
+                                   msg->descr, msg->message, code_name, msg->wParam, msg->lParam );
+        }
+        else if (msg->flags & winevent_hook)
+        {
+            trace_(__FILE__,line)( "%s: winevent %p %08x %08lx %08lx\n",
+                                   msg->descr, msg->hwnd, msg->message, msg->wParam, msg->lParam );
+        }
+        else
+        {
+            switch (msg->message)
+            {
+            case WM_WINDOWPOSCHANGING:
+            case WM_WINDOWPOSCHANGED:
+            {
+                WINDOWPOS *winpos = (WINDOWPOS *)msg->lParam;
+
+                trace_(__FILE__,line)( "%s: %p WM_WINDOWPOS%s wp %08lx lp %08lx after %p x %d y %d cx %d cy %d flags %s\n",
+                                       msg->descr, msg->hwnd,
+                                       (msg->message == WM_WINDOWPOSCHANGING) ? "CHANGING" : "CHANGED",
+                                       msg->wParam, msg->lParam, winpos->hwndInsertAfter,
+                                       winpos->x, winpos->y, winpos->cx, winpos->cy,
+                                       get_winpos_flags(winpos->flags) );
+
+                /* Log only documented flags, win2k uses 0x1000 and 0x2000
+                 * in the high word for internal purposes
+                 */
+                sequence[sequence_cnt].wParam = winpos->flags & 0xffff;
+                /* We are not interested in the flags that don't match under XP and Win9x */
+                sequence[sequence_cnt].wParam &= ~SWP_NOZORDER;
+                break;
+            }
+
+            case WM_DRAWITEM:
+            {
+                DRAW_ITEM_STRUCT di;
+                DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT *)msg->lParam;
+
+                trace_(__FILE__,line)( "%s: %p WM_DRAWITEM: type %x, ctl_id %x, item_id %x, action %x, state %x\n",
+                                       msg->descr, msg->hwnd, dis->CtlType, dis->CtlID,
+                                       dis->itemID, dis->itemAction, dis->itemState);
+
+                di.u.item.type = dis->CtlType;
+                di.u.item.ctl_id = dis->CtlID;
+                di.u.item.item_id = dis->itemID;
+                di.u.item.action = dis->itemAction;
+                di.u.item.state = dis->itemState;
+
+                sequence[sequence_cnt].lParam = di.u.lp;
+                break;
+            }
+            default:
+                if (msg->message >= 0xc000) return;  /* ignore registered messages */
+                trace_(__FILE__,line)( "%s: %p %04x wp %08lx lp %08lx\n",
+                                       msg->descr, msg->hwnd, msg->message, msg->wParam, msg->lParam );
+            }
+        }
+    }
 
     sequence_cnt++;
 }
@@ -1716,8 +1833,8 @@ static void flush_sequence(void)
 static void ok_sequence_(const struct message *expected, const char *context, int todo,
         const char *file, int line)
 {
-    static const struct message end_of_sequence = { 0, 0, 0, 0 };
-    const struct message *actual;
+    static const struct recvd_message end_of_sequence;
+    const struct recvd_message *actual;
     int failcount = 0;
     
     add_message(&end_of_sequence);
@@ -2890,7 +3007,7 @@ static WNDPROC old_mdi_client_proc;
 
 static LRESULT WINAPI mdi_client_hook_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct message msg;
+    struct recvd_message msg;
 
     /* do not log painting messages */
     if (message != WM_PAINT &&
@@ -2903,35 +3020,12 @@ static LRESULT WINAPI mdi_client_hook_proc(HWND hwnd, UINT message, WPARAM wPara
         message != WM_GETICON &&
         message != WM_DEVICECHANGE)
     {
-        trace("mdi client: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
-
-        switch (message)
-        {
-            case WM_WINDOWPOSCHANGING:
-            case WM_WINDOWPOSCHANGED:
-            {
-                WINDOWPOS *winpos = (WINDOWPOS *)lParam;
-
-                trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
-                trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x ",
-                      winpos->hwnd, winpos->hwndInsertAfter,
-                      winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
-                dump_winpos_flags(winpos->flags);
-
-                /* Log only documented flags, win2k uses 0x1000 and 0x2000
-                 * in the high word for internal purposes
-                 */
-                wParam = winpos->flags & 0xffff;
-                /* We are not interested in the flags that don't match under XP and Win9x */
-                wParam &= ~(SWP_NOZORDER);
-                break;
-            }
-        }
-
+        msg.hwnd = hwnd;
         msg.message = message;
         msg.flags = sent|wparam|lparam;
         msg.wParam = wParam;
         msg.lParam = lParam;
+        msg.descr = "mdi client";
         add_message(&msg);
     }
 
@@ -2942,7 +3036,7 @@ static LRESULT WINAPI mdi_child_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
 {
     static long defwndproc_counter = 0;
     LRESULT ret;
-    struct message msg;
+    struct recvd_message msg;
 
     /* do not log painting messages */
     if (message != WM_PAINT &&
@@ -2954,30 +3048,8 @@ static LRESULT WINAPI mdi_child_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
         message != WM_GETICON &&
         message != WM_DEVICECHANGE)
     {
-        trace("mdi child: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
-
         switch (message)
         {
-            case WM_WINDOWPOSCHANGING:
-            case WM_WINDOWPOSCHANGED:
-            {
-                WINDOWPOS *winpos = (WINDOWPOS *)lParam;
-
-                trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
-                trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x ",
-                      winpos->hwnd, winpos->hwndInsertAfter,
-                      winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
-                dump_winpos_flags(winpos->flags);
-
-                /* Log only documented flags, win2k uses 0x1000 and 0x2000
-                 * in the high word for internal purposes
-                 */
-                wParam = winpos->flags & 0xffff;
-                /* We are not interested in the flags that don't match under XP and Win9x */
-                wParam &= ~(SWP_NOZORDER);
-                break;
-            }
-
             case WM_MDIACTIVATE:
             {
                 HWND active, client = GetParent(hwnd);
@@ -2992,11 +3064,13 @@ static LRESULT WINAPI mdi_child_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
             }
         }
 
+        msg.hwnd = hwnd;
         msg.message = message;
         msg.flags = sent|wparam|lparam;
         if (defwndproc_counter) msg.flags |= defwinproc;
         msg.wParam = wParam;
         msg.lParam = lParam;
+        msg.descr = "mdi child";
         add_message(&msg);
     }
 
@@ -3011,7 +3085,7 @@ static LRESULT WINAPI mdi_frame_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
 {
     static long defwndproc_counter = 0;
     LRESULT ret;
-    struct message msg;
+    struct recvd_message msg;
 
     /* do not log painting messages */
     if (message != WM_PAINT &&
@@ -3021,39 +3095,15 @@ static LRESULT WINAPI mdi_frame_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
         message != WM_NCHITTEST &&
         message != WM_GETTEXT &&
         message != WM_GETICON &&
-        message != WM_DEVICECHANGE &&
-        message < 0xc000)
+        message != WM_DEVICECHANGE)
     {
-        trace("mdi frame: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
-
-        switch (message)
-        {
-            case WM_WINDOWPOSCHANGING:
-            case WM_WINDOWPOSCHANGED:
-            {
-                WINDOWPOS *winpos = (WINDOWPOS *)lParam;
-
-                trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
-                trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x ",
-                      winpos->hwnd, winpos->hwndInsertAfter,
-                      winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
-                dump_winpos_flags(winpos->flags);
-
-                /* Log only documented flags, win2k uses 0x1000 and 0x2000
-                 * in the high word for internal purposes
-                 */
-                wParam = winpos->flags & 0xffff;
-                /* We are not interested in the flags that don't match under XP and Win9x */
-                wParam &= ~(SWP_NOZORDER);
-                break;
-            }
-        }
-
+        msg.hwnd = hwnd;
         msg.message = message;
         msg.flags = sent|wparam|lparam;
         if (defwndproc_counter) msg.flags |= defwinproc;
         msg.wParam = wParam;
         msg.lParam = lParam;
+        msg.descr = "mdi frame";
         add_message(&msg);
     }
 
@@ -3658,51 +3708,26 @@ static void test_WM_SETREDRAW(HWND hwnd)
 
 static INT_PTR CALLBACK TestModalDlgProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct message msg;
-
-    trace("dialog: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
-
-    /* explicitly ignore WM_GETICON message */
-    if (message == WM_GETICON) return 0;
-
-    /* ignore registered messages */
-    if (message >= 0xc000) return 0;
+    struct recvd_message msg;
 
     switch (message)
     {
 	/* ignore */
+        case WM_GETICON:
 	case WM_MOUSEMOVE:
 	case WM_SETCURSOR:
 	case WM_DEVICECHANGE:
             return 0;
         case WM_NCHITTEST:
             return HTCLIENT;
-
-        case WM_WINDOWPOSCHANGING:
-        case WM_WINDOWPOSCHANGED:
-        {
-            WINDOWPOS *winpos = (WINDOWPOS *)lParam;
-
-            trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
-            trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x ",
-                  winpos->hwnd, winpos->hwndInsertAfter,
-                  winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
-            dump_winpos_flags(winpos->flags);
-
-            /* Log only documented flags, win2k uses 0x1000 and 0x2000
-             * in the high word for internal purposes
-             */
-            wParam = winpos->flags & 0xffff;
-            /* We are not interested in the flags that don't match under XP and Win9x */
-            wParam &= ~(SWP_NOZORDER);
-            break;
-        }
     }
 
+    msg.hwnd = hwnd;
     msg.message = message;
     msg.flags = sent|wparam|lparam;
     msg.wParam = wParam;
     msg.lParam = lParam;
+    msg.descr = "dialog";
     add_message(&msg);
 
     if (message == WM_INITDIALOG) SetTimer( hwnd, 1, 100, NULL );
@@ -4939,21 +4964,18 @@ static LRESULT CALLBACK button_hook_proc(HWND hwnd, UINT message, WPARAM wParam,
 {
     static long defwndproc_counter = 0;
     LRESULT ret;
-    struct message msg;
-
-    trace("button: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
+    struct recvd_message msg;
 
     /* explicitly ignore WM_GETICON message */
     if (message == WM_GETICON) return 0;
 
-    /* ignore registered messages */
-    if (message >= 0xc000) return 0;
-
+    msg.hwnd = hwnd;
     msg.message = message;
     msg.flags = sent|wparam|lparam;
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
+    msg.descr = "button";
     add_message(&msg);
 
     if (message == BM_SETSTATE)
@@ -5083,21 +5105,18 @@ static LRESULT CALLBACK static_hook_proc(HWND hwnd, UINT message, WPARAM wParam,
 {
     static long defwndproc_counter = 0;
     LRESULT ret;
-    struct message msg;
-
-    trace("static: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
+    struct recvd_message msg;
 
     /* explicitly ignore WM_GETICON message */
     if (message == WM_GETICON) return 0;
 
-    /* ignore registered messages */
-    if (message >= 0xc000) return 0;
-
+    msg.hwnd = hwnd;
     msg.message = message;
     msg.flags = sent|wparam|lparam;
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
+    msg.descr = "static";
     add_message(&msg);
 
     defwndproc_counter++;
@@ -5182,7 +5201,7 @@ static LRESULT CALLBACK combobox_hook_proc(HWND hwnd, UINT message, WPARAM wPara
 {
     static long defwndproc_counter = 0;
     LRESULT ret;
-    struct message msg;
+    struct recvd_message msg;
 
     /* do not log painting messages */
     if (message != WM_PAINT &&
@@ -5194,13 +5213,13 @@ static LRESULT CALLBACK combobox_hook_proc(HWND hwnd, UINT message, WPARAM wPara
         message != WM_GETICON &&
         message != WM_DEVICECHANGE)
     {
-        trace("combo: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
-
+        msg.hwnd = hwnd;
         msg.message = message;
         msg.flags = sent|wparam|lparam;
         if (defwndproc_counter) msg.flags |= defwinproc;
         msg.wParam = wParam;
         msg.lParam = lParam;
+        msg.descr = "combo";
         add_message(&msg);
     }
 
@@ -5286,14 +5305,14 @@ static const struct message WmImeKeydownMsgSeq_1[] =
 
 static LRESULT WINAPI wmime_keydown_procA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct message msg;
+    struct recvd_message msg;
 
-    trace("wmime_keydown_procA: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
-
+    msg.hwnd = hwnd;
     msg.message = message;
     msg.flags = wparam|lparam;
     msg.wParam = wParam;
     msg.lParam = lParam;
+    msg.descr = "wmime_keydown";
     add_message(&msg);
 
     return DefWindowProcA(hwnd, message, wParam, lParam);
@@ -6419,9 +6438,7 @@ static void pump_msg_loop(HWND hwnd, HACCEL hAccel)
 
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
     {
-        struct message log_msg;
-
-        trace("accel: %p, %04x, %08lx, %08lx\n", msg.hwnd, msg.message, msg.wParam, msg.lParam);
+        struct recvd_message log_msg;
 
         /* ignore some unwanted messages */
         if (msg.message == WM_MOUSEMOVE ||
@@ -6430,10 +6447,12 @@ static void pump_msg_loop(HWND hwnd, HACCEL hAccel)
             msg.message == WM_DEVICECHANGE)
             continue;
 
+        log_msg.hwnd = msg.hwnd;
         log_msg.message = msg.message;
         log_msg.flags = wparam|lparam;
         log_msg.wParam = msg.wParam;
         log_msg.lParam = msg.lParam;
+        log_msg.descr = "accel";
         add_message(&log_msg);
 
         if (!hAccel || !TranslateAccelerator(hwnd, hAccel, &msg))
@@ -6646,9 +6665,7 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
     static long defwndproc_counter = 0;
     static long beginpaint_counter = 0;
     LRESULT ret;
-    struct message msg;
-
-    trace("%p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
+    struct recvd_message msg;
 
     /* explicitly ignore WM_GETICON message */
     if (message == WM_GETICON) return 0;
@@ -6717,34 +6734,16 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
 	case WM_SETCURSOR:
 	case WM_DEVICECHANGE:
 	    return 0;
-
-        case WM_WINDOWPOSCHANGING:
-        case WM_WINDOWPOSCHANGED:
-        {
-            WINDOWPOS *winpos = (WINDOWPOS *)lParam;
-
-            trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
-            trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x ",
-                  winpos->hwnd, winpos->hwndInsertAfter,
-                  winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
-            dump_winpos_flags(winpos->flags);
-
-            /* Log only documented flags, win2k uses 0x1000 and 0x2000
-             * in the high word for internal purposes
-             */
-            wParam = winpos->flags & 0xffff;
-            /* We are not interested in the flags that don't match under XP and Win9x */
-            wParam &= ~(SWP_NOZORDER);
-            break;
-        }
     }
 
+    msg.hwnd = hwnd;
     msg.message = message;
     msg.flags = sent|wparam|lparam;
     if (defwndproc_counter) msg.flags |= defwinproc;
     if (beginpaint_counter) msg.flags |= beginpaint;
     msg.wParam = wParam;
     msg.lParam = lParam;
+    msg.descr = "MsgCheckProc";
     add_message(&msg);
 
     if (message == WM_GETMINMAXINFO && (GetWindowLongA(hwnd, GWL_STYLE) & WS_CHILD))
@@ -6800,9 +6799,7 @@ static LRESULT WINAPI PopupMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam,
 {
     static long defwndproc_counter = 0;
     LRESULT ret;
-    struct message msg;
-
-    trace("popup: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
+    struct recvd_message msg;
 
     switch (message)
     {
@@ -6815,11 +6812,13 @@ static LRESULT WINAPI PopupMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam,
         break;
     }
 
+    msg.hwnd = hwnd;
     msg.message = message;
     msg.flags = sent|wparam|lparam;
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
+    msg.descr = "popup";
     add_message(&msg);
 
     if (message == WM_CREATE)
@@ -6840,10 +6839,7 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
     static long defwndproc_counter = 0;
     static long beginpaint_counter = 0;
     LRESULT ret;
-    struct message msg;
-    LPARAM logged_lParam;
-
-    trace("parent: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
+    struct recvd_message msg;
 
     /* explicitly ignore WM_GETICON message */
     if (message == WM_GETICON) return 0;
@@ -6851,7 +6847,6 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
     /* ignore registered messages */
     if (message >= 0xc000) return 0;
 
-    logged_lParam=lParam;
     if (log_all_parent_messages ||
         message == WM_PARENTNOTIFY || message == WM_CANCELMODE ||
 	message == WM_SETFOCUS || message == WM_KILLFOCUS ||
@@ -6877,53 +6872,16 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
                        ret, rc.left, rc.top, rc.right, rc.bottom);
                 break;
             }
-
-            case WM_WINDOWPOSCHANGING:
-            case WM_WINDOWPOSCHANGED:
-            {
-                WINDOWPOS *winpos = (WINDOWPOS *)lParam;
-
-                trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
-                trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x ",
-                      winpos->hwnd, winpos->hwndInsertAfter,
-                      winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
-                dump_winpos_flags(winpos->flags);
-
-                /* Log only documented flags, win2k uses 0x1000 and 0x2000
-                 * in the high word for internal purposes
-                 */
-                wParam = winpos->flags & 0xffff;
-                /* We are not interested in the flags that don't match under XP and Win9x */
-                wParam &= ~(SWP_NOZORDER);
-                break;
-            }
-
-            case WM_DRAWITEM:
-            {
-                /* encode DRAWITEMSTRUCT into an LPARAM */
-                DRAW_ITEM_STRUCT di;
-                DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT *)lParam;
-
-                trace("WM_DRAWITEM: type %x, ctl_id %x, item_id %x, action %x, state %x\n",
-                      dis->CtlType, dis->CtlID, dis->itemID, dis->itemAction, dis->itemState);
-
-                di.u.item.type = dis->CtlType;
-                di.u.item.ctl_id = dis->CtlID;
-                di.u.item.item_id = dis->itemID;
-                di.u.item.action = dis->itemAction;
-                di.u.item.state = dis->itemState;
-
-                logged_lParam = di.u.lp;
-                break;
-            }
         }
 
+        msg.hwnd = hwnd;
         msg.message = message;
         msg.flags = sent|parent|wparam|lparam;
         if (defwndproc_counter) msg.flags |= defwinproc;
         if (beginpaint_counter) msg.flags |= beginpaint;
         msg.wParam = wParam;
-        msg.lParam = logged_lParam;
+        msg.lParam = lParam;
+        msg.descr = "parent";
         add_message(&msg);
     }
 
@@ -6948,15 +6906,10 @@ static LRESULT WINAPI TestDlgProcA(HWND hwnd, UINT message, WPARAM wParam, LPARA
 {
     static long defwndproc_counter = 0;
     LRESULT ret;
-    struct message msg;
-
-    trace("dialog: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
+    struct recvd_message msg;
 
     /* explicitly ignore WM_GETICON message */
     if (message == WM_GETICON) return 0;
-
-    /* ignore registered messages */
-    if (message >= 0xc000) return 0;
 
     if (test_def_id)
     {
@@ -6968,34 +6921,13 @@ static LRESULT WINAPI TestDlgProcA(HWND hwnd, UINT message, WPARAM wParam, LPARA
             ok(HIWORD(ret) == DC_HASDEFID, "DM_GETDEFID should return DC_HASDEFID, got %lx\n", ret);
     }
 
-    switch (message)
-    {
-        case WM_WINDOWPOSCHANGING:
-        case WM_WINDOWPOSCHANGED:
-        {
-            WINDOWPOS *winpos = (WINDOWPOS *)lParam;
-
-            trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
-            trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x ",
-                  winpos->hwnd, winpos->hwndInsertAfter,
-                  winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
-            dump_winpos_flags(winpos->flags);
-
-            /* Log only documented flags, win2k uses 0x1000 and 0x2000
-             * in the high word for internal purposes
-             */
-            wParam = winpos->flags & 0xffff;
-            /* We are not interested in the flags that don't match under XP and Win9x */
-            wParam &= ~(SWP_NOZORDER);
-            break;
-        }
-    }
-
+    msg.hwnd = hwnd;
     msg.message = message;
     msg.flags = sent|wparam|lparam;
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
+    msg.descr = "dialog";
     add_message(&msg);
 
     defwndproc_counter++;
@@ -7005,53 +6937,11 @@ static LRESULT WINAPI TestDlgProcA(HWND hwnd, UINT message, WPARAM wParam, LPARA
     return ret;
 }
 
-static void dump_winpos_flags(UINT flags)
-{
-    if (!winetest_debug) return;
-
-    if (flags & SWP_SHOWWINDOW) printf("|SWP_SHOWWINDOW");
-    if (flags & SWP_HIDEWINDOW) printf("|SWP_HIDEWINDOW");
-    if (flags & SWP_NOACTIVATE) printf("|SWP_NOACTIVATE");
-    if (flags & SWP_FRAMECHANGED) printf("|SWP_FRAMECHANGED");
-    if (flags & SWP_NOCOPYBITS) printf("|SWP_NOCOPYBITS");
-    if (flags & SWP_NOOWNERZORDER) printf("|SWP_NOOWNERZORDER");
-    if (flags & SWP_NOSENDCHANGING) printf("|SWP_NOSENDCHANGING");
-    if (flags & SWP_DEFERERASE) printf("|SWP_DEFERERASE");
-    if (flags & SWP_ASYNCWINDOWPOS) printf("|SWP_ASYNCWINDOWPOS");
-    if (flags & SWP_NOZORDER) printf("|SWP_NOZORDER");
-    if (flags & SWP_NOREDRAW) printf("|SWP_NOREDRAW");
-    if (flags & SWP_NOSIZE) printf("|SWP_NOSIZE");
-    if (flags & SWP_NOMOVE) printf("|SWP_NOMOVE");
-    if (flags & SWP_NOCLIENTSIZE) printf("|SWP_NOCLIENTSIZE");
-    if (flags & SWP_NOCLIENTMOVE) printf("|SWP_NOCLIENTMOVE");
-
-#define DUMPED_FLAGS \
-    (SWP_NOSIZE | \
-    SWP_NOMOVE | \
-    SWP_NOZORDER | \
-    SWP_NOREDRAW | \
-    SWP_NOACTIVATE | \
-    SWP_FRAMECHANGED | \
-    SWP_SHOWWINDOW | \
-    SWP_HIDEWINDOW | \
-    SWP_NOCOPYBITS | \
-    SWP_NOOWNERZORDER | \
-    SWP_NOSENDCHANGING | \
-    SWP_DEFERERASE | \
-    SWP_ASYNCWINDOWPOS | \
-    SWP_NOCLIENTSIZE | \
-    SWP_NOCLIENTMOVE)
-
-    if(flags & ~DUMPED_FLAGS) printf("|0x%04x", flags & ~DUMPED_FLAGS);
-    printf("\n");
-#undef DUMPED_FLAGS
-}
-
 static LRESULT WINAPI ShowWindowProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static long defwndproc_counter = 0;
     LRESULT ret;
-    struct message msg;
+    struct recvd_message msg;
 
     /* log only specific messages we are interested in */
     switch (message)
@@ -7062,49 +6952,25 @@ static LRESULT WINAPI ShowWindowProcA(HWND hwnd, UINT message, WPARAM wParam, LP
     case WM_KILLFOCUS:
 #endif
     case WM_SHOWWINDOW:
-        trace("WM_SHOWWINDOW %ld\n", wParam);
-        break;
     case WM_SIZE:
-        trace("WM_SIZE %ld\n", wParam);
-        break;
     case WM_MOVE:
-        trace("WM_MOVE\n");
-        break;
     case WM_GETMINMAXINFO:
-        trace("WM_GETMINMAXINFO\n");
-        break;
-
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
-    {
-        WINDOWPOS *winpos = (WINDOWPOS *)lParam;
-
-        trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
-        trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
-              winpos->hwnd, winpos->hwndInsertAfter,
-              winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
-        trace("flags: ");
-        dump_winpos_flags(winpos->flags);
-
-        /* Log only documented flags, win2k uses 0x1000 and 0x2000
-         * in the high word for internal purposes
-         */
-        wParam = winpos->flags & 0xffff;
-        /* We are not interested in the flags that don't match under XP and Win9x */
-        wParam &= ~(SWP_NOZORDER);
         break;
-    }
 
     default: /* ignore */
         /*trace("showwindow: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);*/
         return DefWindowProcA(hwnd, message, wParam, lParam);
     }
 
+    msg.hwnd = hwnd;
     msg.message = message;
     msg.flags = sent|wparam|lparam;
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
+    msg.descr = "show";
     add_message(&msg);
 
     defwndproc_counter++;
@@ -7241,21 +7107,7 @@ static DWORD cbt_hook_thread_id;
 
 static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam) 
 { 
-    static const char * const CBT_code_name[10] = {
-	"HCBT_MOVESIZE",
-	"HCBT_MINMAX",
-	"HCBT_QS",
-	"HCBT_CREATEWND",
-	"HCBT_DESTROYWND",
-	"HCBT_ACTIVATE",
-	"HCBT_CLICKSKIPPED",
-	"HCBT_KEYSKIPPED",
-	"HCBT_SYSCOMMAND",
-	"HCBT_SETFOCUS" };
-    const char *code_name = (nCode >= 0 && nCode <= HCBT_SETFOCUS) ? CBT_code_name[nCode] : "Unknown";
     HWND hwnd;
-
-    trace("CBT: %d (%s), %08lx, %08lx\n", nCode, code_name, wParam, lParam);
 
     ok(cbt_hook_thread_id == GetCurrentThreadId(), "we didn't ask for events from other threads\n");
 
@@ -7267,12 +7119,14 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
     if (nCode == HCBT_SYSCOMMAND || nCode == HCBT_KEYSKIPPED)
     {
-	struct message msg;
+	struct recvd_message msg;
 
+        msg.hwnd = 0;
 	msg.message = nCode;
 	msg.flags = hook|wparam|lparam;
 	msg.wParam = wParam;
 	msg.lParam = lParam;
+        msg.descr = "CBT";
 	add_message(&msg);
 
 	return CallNextHookEx(hCBT_hook, nCode, wParam, lParam);
@@ -7297,12 +7151,14 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
     if (is_our_logged_class(hwnd))
     {
-        struct message msg;
+        struct recvd_message msg;
 
+        msg.hwnd = hwnd;
         msg.message = nCode;
         msg.flags = hook|wparam|lparam;
         msg.wParam = wParam;
         msg.lParam = lParam;
+        msg.descr = "CBT";
         add_message(&msg);
     }
     return CallNextHookEx(hCBT_hook, nCode, wParam, lParam);
@@ -7316,9 +7172,6 @@ static void CALLBACK win_event_proc(HWINEVENTHOOK hevent,
 				    DWORD thread_id,
 				    DWORD event_time)
 {
-    trace("WEH:%p,event %08x,hwnd %p,obj %08x,id %08x,thread %08x,time %08x\n",
-	   hevent, event, hwnd, object_id, child_id, thread_id, event_time);
-
     ok(thread_id == GetCurrentThreadId(), "we didn't ask for events from other threads\n");
 
     /* ignore mouse cursor events */
@@ -7326,12 +7179,14 @@ static void CALLBACK win_event_proc(HWINEVENTHOOK hevent,
 
     if (!hwnd || is_our_logged_class(hwnd))
     {
-        struct message msg;
+        struct recvd_message msg;
 
+        msg.hwnd = hwnd;
         msg.message = event;
         msg.flags = winevent_hook|wparam|lparam;
         msg.wParam = object_id;
         msg.lParam = child_id;
+        msg.descr = "WEH";
         add_message(&msg);
     }
 }
@@ -7675,20 +7530,19 @@ static void CALLBACK win_event_global_hook_proc(HWINEVENTHOOK hevent,
 {
     char buf[256];
 
-    trace("WEH_2:%p,event %08x,hwnd %p,obj %08x,id %08x,thread %08x,time %08x\n",
-	   hevent, event, hwnd, object_id, child_id, thread_id, event_time);
-
     if (GetClassNameA(hwnd, buf, sizeof(buf)))
     {
 	if (!lstrcmpiA(buf, "TestWindowClass") ||
 	    !lstrcmpiA(buf, "static"))
 	{
-	    struct message msg;
+	    struct recvd_message msg;
 
+            msg.hwnd = hwnd;
 	    msg.message = event;
 	    msg.flags = winevent_hook|wparam|lparam;
 	    msg.wParam = object_id;
 	    msg.lParam = (thread_id == GetCurrentThreadId()) ? child_id : (child_id + 2);
+            msg.descr = "WEH_2";
 	    add_message(&msg);
 	}
     }
@@ -7702,16 +7556,16 @@ static LRESULT CALLBACK cbt_global_hook_proc(int nCode, WPARAM wParam, LPARAM lP
     HWND hwnd;
     char buf[256];
 
-    trace("CBT_2: %d, %08lx, %08lx\n", nCode, wParam, lParam);
-
     if (nCode == HCBT_SYSCOMMAND)
     {
-	struct message msg;
+	struct recvd_message msg;
 
+        msg.hwnd = 0;
 	msg.message = nCode;
 	msg.flags = hook|wparam|lparam;
 	msg.wParam = wParam;
 	msg.lParam = (cbt_global_hook_thread_id == GetCurrentThreadId()) ? 1 : 2;
+        msg.descr = "CBT_2";
 	add_message(&msg);
 
 	return CallNextHookEx(hCBT_global_hook, nCode, wParam, lParam);
@@ -7724,11 +7578,12 @@ static LRESULT CALLBACK cbt_global_hook_proc(int nCode, WPARAM wParam, LPARAM lP
         /* we can't test for real mouse events */
         if (mhll->flags & LLMHF_INJECTED)
         {
-	    struct message msg;
+	    struct recvd_message msg;
 
 	    memset (&msg, 0, sizeof (msg));
 	    msg.message = wParam;
 	    msg.flags = hook;
+            msg.descr = "CBT_2";
 	    add_message(&msg);
         }
 	return CallNextHookEx(hCBT_global_hook, nCode, wParam, lParam);
@@ -7742,12 +7597,14 @@ static LRESULT CALLBACK cbt_global_hook_proc(int nCode, WPARAM wParam, LPARAM lP
 	if (!lstrcmpiA(buf, "TestWindowClass") ||
 	    !lstrcmpiA(buf, "static"))
 	{
-	    struct message msg;
+	    struct recvd_message msg;
 
+            msg.hwnd = hwnd;
 	    msg.message = nCode;
 	    msg.flags = hook|wparam|lparam;
 	    msg.wParam = wParam;
 	    msg.lParam = (cbt_global_hook_thread_id == GetCurrentThreadId()) ? 1 : 2;
+            msg.descr = "CBT_2";
 	    add_message(&msg);
 	}
     }
@@ -8678,21 +8535,18 @@ static LRESULT CALLBACK edit_hook_proc(HWND hwnd, UINT message, WPARAM wParam, L
 {
     static long defwndproc_counter = 0;
     LRESULT ret;
-    struct message msg;
-
-    trace("edit: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
+    struct recvd_message msg;
 
     /* explicitly ignore WM_GETICON message */
     if (message == WM_GETICON) return 0;
 
-    /* ignore registered messages */
-    if (message >= 0xc000) return 0;
-
+    msg.hwnd = hwnd;
     msg.message = message;
     msg.flags = sent|wparam|lparam;
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
+    msg.descr = "edit";
     add_message(&msg);
 
     defwndproc_counter++;
@@ -9498,12 +9352,14 @@ static void pump_msg_loop_timeout(DWORD timeout, BOOL inject_mouse_move)
              */
             if (msg.message == WM_TIMER || msg.message == WM_SYSTIMER)
             {
-                struct message s_msg;
+                struct recvd_message s_msg;
 
+                s_msg.hwnd = msg.hwnd;
                 s_msg.message = msg.message;
                 s_msg.flags = sent|wparam|lparam;
                 s_msg.wParam = msg.wParam;
                 s_msg.lParam = msg.lParam;
+                s_msg.descr = "msg_loop";
                 add_message(&s_msg);
             }
             DispatchMessage(&msg);
@@ -10108,41 +9964,23 @@ static void test_ShowWindow(void)
 
 static INT_PTR WINAPI test_dlg_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct message msg;
+    struct recvd_message msg;
 
     trace("dialog: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
 
     switch (message)
     {
-    case WM_WINDOWPOSCHANGING:
-    case WM_WINDOWPOSCHANGED:
-    {
-        WINDOWPOS *winpos = (WINDOWPOS *)lParam;
-
-        trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
-        trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x ",
-              winpos->hwnd, winpos->hwndInsertAfter,
-              winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
-        dump_winpos_flags(winpos->flags);
-
-        /* Log only documented flags, win2k uses 0x1000 and 0x2000
-         * in the high word for internal purposes
-         */
-        wParam = winpos->flags & 0xffff;
-        /* We are not interested in the flags that don't match under XP and Win9x */
-        wParam &= ~(SWP_NOZORDER);
-        break;
-    }
-
     /* explicitly ignore WM_GETICON message */
     case WM_GETICON:
         return 0;
     }
 
+    msg.hwnd = hwnd;
     msg.message = message;
     msg.flags = sent|wparam|lparam;
     msg.wParam = wParam;
     msg.lParam = lParam;
+    msg.descr = "dialog";
     add_message(&msg);
 
     /* calling DefDlgProc leads to a recursion under XP */
@@ -10884,7 +10722,7 @@ static LRESULT WINAPI listbox_hook_proc(HWND hwnd, UINT message, WPARAM wp, LPAR
 {
     static long defwndproc_counter = 0;
     LRESULT ret;
-    struct message msg;
+    struct recvd_message msg;
 
     /* do not log painting messages */
     if (message != WM_PAINT &&
@@ -10896,13 +10734,13 @@ static LRESULT WINAPI listbox_hook_proc(HWND hwnd, UINT message, WPARAM wp, LPAR
         message != WM_GETICON &&
         message != WM_DEVICECHANGE)
     {
-        trace("listbox: %p, %04x, %08lx, %08lx\n", hwnd, message, wp, lp);
-
+        msg.hwnd = hwnd;
         msg.message = message;
         msg.flags = sent|wparam|lparam;
         if (defwndproc_counter) msg.flags |= defwinproc;
         msg.wParam = wp;
         msg.lParam = lp;
+        msg.descr = "listbox";
         add_message(&msg);
     }
 
@@ -11109,14 +10947,14 @@ static LRESULT WINAPI parent_menu_proc(HWND hwnd, UINT message, WPARAM wp, LPARA
         message == WM_COMMAND ||
         message == WM_MENUCOMMAND)
     {
-        struct message msg;
+        struct recvd_message msg;
 
-        trace("parent_menu_proc: %p, %04x, %08lx, %08lx\n", hwnd, message, wp, lp);
-
+        msg.hwnd = hwnd;
         msg.message = message;
         msg.flags = sent|wparam|lparam;
         msg.wParam = wp;
         msg.lParam = lp;
+        msg.descr = "parent_menu_proc";
         add_message(&msg);
     }
 
