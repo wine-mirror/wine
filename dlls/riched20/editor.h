@@ -177,7 +177,6 @@ void ME_SetDefaultCharFormat(ME_TextEditor *editor, CHARFORMAT2W *mod);
 
 /* caret.c */
 int ME_SetSelection(ME_TextEditor *editor, int from, int to);
-void ME_SelectByType(ME_TextEditor *editor, ME_SelectionType selectionType);
 void ME_HideCaret(ME_TextEditor *ed);
 void ME_ShowCaret(ME_TextEditor *ed);
 void ME_MoveCaret(ME_TextEditor *ed);
@@ -204,7 +203,6 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars, BOOL bFo
 int ME_GetTextLength(ME_TextEditor *editor);
 int ME_GetTextLengthEx(ME_TextEditor *editor, const GETTEXTLENGTHEX *how);
 ME_Style *ME_GetSelectionInsertStyle(ME_TextEditor *editor);
-BOOL ME_UpdateSelection(ME_TextEditor *editor, const ME_Cursor *pTempCursor);
 
 /* context.c */
 void ME_InitContext(ME_Context *c, ME_TextEditor *editor, HDC hDC);
@@ -269,12 +267,7 @@ void ME_CopyReObject(REOBJECT* dst, const REOBJECT* src);
 void ME_DeleteReObject(REOBJECT* reo);
 
 /* editor.c */
-ME_TextEditor *ME_MakeEditor(HWND hWnd, BOOL bEmulateVersion10);
-void ME_DestroyEditor(ME_TextEditor *editor);
-LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
-                         LPARAM lParam, BOOL unicode, HRESULT* phresult);
 void ME_SendOldNotify(ME_TextEditor *editor, int nCode);
-void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam);
 int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, BOOL bCRLF);
 ME_DisplayItem *ME_FindItemAtOffset(ME_TextEditor *editor, ME_DIType nItemType, int nOffset, int *nItemOffset);
 void ME_RTFCharAttrHook(struct _RTF_Info *info);
@@ -284,11 +277,6 @@ void ME_RTFSpecialCharHook(struct _RTF_Info *info);
 void ME_StreamInFill(ME_InStream *stream);
 extern int me_debug;
 extern void DoWrap(ME_TextEditor *editor);
-extern BOOL ME_FindNextURLCandidate(ME_TextEditor *editor, int sel_min, int sel_max,
-        int * candidate_min, int * candidate_max);
-extern BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, int sel_min, int sel_max);
-BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, int sel_min, int sel_max);
-void ME_UpdateSelectionLinkAttribute(ME_TextEditor *editor);
 
 /* table.c */
 BOOL ME_IsInTable(ME_DisplayItem *pItem);

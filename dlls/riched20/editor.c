@@ -240,6 +240,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
 static BOOL ME_RegisterEditorClass(HINSTANCE);
+static BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, int sel_min, int sel_max);
 
 static const WCHAR RichEdit20W[] = {'R', 'i', 'c', 'h', 'E', 'd', 'i', 't', '2', '0', 'W', 0};
 static const WCHAR RichEdit50W[] = {'R', 'i', 'c', 'h', 'E', 'd', 'i', 't', '5', '0', 'W', 0};
@@ -2114,6 +2115,42 @@ ME_FilterEvent(ME_TextEditor *editor, UINT msg, WPARAM* wParam, LPARAM* lParam)
     return TRUE;
 }
 
+static void ME_UpdateSelectionLinkAttribute(ME_TextEditor *editor)
+{
+  ME_DisplayItem * startPara, * endPara;
+  ME_DisplayItem * item;
+  int dummy;
+  int from, to;
+
+  ME_GetSelection(editor, &from, &to);
+  if (from > to) from ^= to, to ^=from, from ^= to;
+  startPara = NULL; endPara = NULL;
+
+  /* Find paragraph previous to the one that contains start cursor */
+  item = ME_FindItemAtOffset(editor, diRun, from, &dummy);
+  if (item) {
+    startPara = ME_FindItemBack(item, diParagraph);
+    item = ME_FindItemBack(startPara, diParagraph);
+    if (item) startPara = item;
+  }
+
+  /* Find paragraph that contains end cursor */
+  item = ME_FindItemAtOffset(editor, diRun, to, &dummy);
+  if (item) {
+    endPara = ME_FindItemFwd(item, diParagraph);
+  }
+
+  if (startPara && endPara) {
+    ME_UpdateLinkAttribute(editor,
+      startPara->member.para.nCharOfs,
+      endPara->member.para.nCharOfs);
+  } else if (startPara) {
+    ME_UpdateLinkAttribute(editor,
+      startPara->member.para.nCharOfs,
+      -1);
+  }
+}
+
 static BOOL
 ME_KeyDown(ME_TextEditor *editor, WORD nKey)
 {
@@ -2620,7 +2657,7 @@ static BOOL ME_ShowContextMenu(ME_TextEditor *editor, int x, int y)
   return TRUE;
 }
 
-ME_TextEditor *ME_MakeEditor(HWND hWnd, BOOL bEmulateVersion10)
+static ME_TextEditor *ME_MakeEditor(HWND hWnd, BOOL bEmulateVersion10)
 {
   ME_TextEditor *ed = ALLOC_OBJ(ME_TextEditor);
   int i;
@@ -2705,7 +2742,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd, BOOL bEmulateVersion10)
   return ed;
 }
 
-void ME_DestroyEditor(ME_TextEditor *editor)
+static void ME_DestroyEditor(ME_TextEditor *editor)
 {
   ME_DisplayItem *pFirst = editor->pBuffer->pFirst;
   ME_DisplayItem *p = pFirst, *pNext = NULL;
@@ -2904,43 +2941,37 @@ get_msg_name(UINT msg)
   return "";
 }
 
-static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
-                                      LPARAM lParam, BOOL unicode)
+void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-  ME_TextEditor *editor;
-  HRESULT hresult;
-  LRESULT lresult;
+  int x,y;
+  ME_Cursor tmpCursor;
+  BOOL isExact;
+  int nCharOfs; /* The start of the clicked text. Absolute character offset */
 
-  TRACE("enter hwnd %p msg %04x (%s) %lx %lx, unicode %d\n",
-        hWnd, msg, get_msg_name(msg), wParam, lParam, unicode);
+  ME_Run *tmpRun;
 
-  editor = (ME_TextEditor *)GetWindowLongPtrW(hWnd, 0);
-  if (!editor)
-  {
-    if (msg == WM_NCCREATE)
-    {
-      CREATESTRUCTW *pcs = (CREATESTRUCTW *)lParam;
-      TRACE("WM_NCCREATE: hWnd %p style 0x%08x\n", hWnd, pcs->style);
-      editor = ME_MakeEditor(hWnd, FALSE);
-      SetWindowLongPtrW(hWnd, 0, (LONG_PTR)editor);
-      return TRUE;
-    }
-    else if (msg != WM_NCDESTROY)
-    {
-      ERR("called with invalid hWnd %p - application bug?\n", hWnd);
-      return 0;
-    }
+  ENLINK info;
+  x = (short)LOWORD(lParam);
+  y = (short)HIWORD(lParam);
+  nCharOfs = ME_CharFromPos(editor, x, y, &isExact);
+  if (!isExact) return;
+
+  ME_CursorFromCharOfs(editor, nCharOfs, &tmpCursor);
+  tmpRun = &tmpCursor.pRun->member.run;
+
+  if ((tmpRun->style->fmt.dwMask & CFM_LINK)
+    && (tmpRun->style->fmt.dwEffects & CFE_LINK))
+  { /* The clicked run has CFE_LINK set */
+    info.nmhdr.hwndFrom = editor->hWnd;
+    info.nmhdr.idFrom = GetWindowLongW(editor->hWnd, GWLP_ID);
+    info.nmhdr.code = EN_LINK;
+    info.msg = msg;
+    info.wParam = wParam;
+    info.lParam = lParam;
+    info.chrg.cpMin = ME_CharOfsFromRunOfs(editor,tmpCursor.pRun,0);
+    info.chrg.cpMax = info.chrg.cpMin + ME_StrVLen(tmpRun->strText);
+    SendMessageW(GetParent(editor->hWnd), WM_NOTIFY,info.nmhdr.idFrom, (LPARAM)&info);
   }
-
-  lresult = ME_HandleMessage(editor, msg, wParam, lParam, unicode, &hresult);
-
-  if (hresult == S_FALSE)
-    lresult = DefWindowProcW(hWnd, msg, wParam, lParam);
-
-  TRACE("exit hwnd %p msg %04x (%s) %lx %lx, unicode %d -> %lu\n",
-        hWnd, msg, get_msg_name(msg), wParam, lParam, unicode, lresult);
-
-  return lresult;
 }
 
 #define UNSUPPORTED_MSG(e) \
@@ -2954,7 +2985,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
  * The LRESULT that is returned is a return value for window procs,
  * and the phresult parameter is the COM return code needed by the
  * text services interface. */
-LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
+static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
                          LPARAM lParam, BOOL unicode, HRESULT* phresult)
 {
   *phresult = S_OK;
@@ -4288,6 +4319,45 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   return 0L;
 }
 
+static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
+                                      LPARAM lParam, BOOL unicode)
+{
+  ME_TextEditor *editor;
+  HRESULT hresult;
+  LRESULT lresult;
+
+  TRACE("enter hwnd %p msg %04x (%s) %lx %lx, unicode %d\n",
+        hWnd, msg, get_msg_name(msg), wParam, lParam, unicode);
+
+  editor = (ME_TextEditor *)GetWindowLongPtrW(hWnd, 0);
+  if (!editor)
+  {
+    if (msg == WM_NCCREATE)
+    {
+      CREATESTRUCTW *pcs = (CREATESTRUCTW *)lParam;
+      TRACE("WM_NCCREATE: hWnd %p style 0x%08x\n", hWnd, pcs->style);
+      editor = ME_MakeEditor(hWnd, FALSE);
+      SetWindowLongPtrW(hWnd, 0, (LONG_PTR)editor);
+      return TRUE;
+    }
+    else if (msg != WM_NCDESTROY)
+    {
+      ERR("called with invalid hWnd %p - application bug?\n", hWnd);
+      return 0;
+    }
+  }
+
+  lresult = ME_HandleMessage(editor, msg, wParam, lParam, unicode, &hresult);
+
+  if (hresult == S_FALSE)
+    lresult = DefWindowProcW(hWnd, msg, wParam, lParam);
+
+  TRACE("exit hwnd %p msg %04x (%s) %lx %lx, unicode %d -> %lu\n",
+        hWnd, msg, get_msg_name(msg), wParam, lParam, unicode, lresult);
+
+  return lresult;
+}
+
 static LRESULT WINAPI RichEditWndProcW(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     BOOL unicode = TRUE;
@@ -4334,39 +4404,6 @@ void ME_SendOldNotify(ME_TextEditor *editor, int nCode)
 {
   HWND hWnd = editor->hWnd;
   SendMessageA(GetParent(hWnd), WM_COMMAND, MAKEWPARAM(GetWindowLongW(hWnd, GWLP_ID), nCode), (LPARAM)hWnd);
-}
-
-void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-  int x,y;
-  ME_Cursor tmpCursor;
-  BOOL isExact;
-  int nCharOfs; /* The start of the clicked text. Absolute character offset */
-
-  ME_Run *tmpRun;
-
-  ENLINK info;
-  x = (short)LOWORD(lParam);
-  y = (short)HIWORD(lParam);
-  nCharOfs = ME_CharFromPos(editor, x, y, &isExact);
-  if (!isExact) return;
-
-  ME_CursorFromCharOfs(editor, nCharOfs, &tmpCursor);
-  tmpRun = &tmpCursor.pRun->member.run;
-
-  if ((tmpRun->style->fmt.dwMask & CFM_LINK)
-    && (tmpRun->style->fmt.dwEffects & CFE_LINK))
-  { /* The clicked run has CFE_LINK set */
-    info.nmhdr.hwndFrom = editor->hWnd;
-    info.nmhdr.idFrom = GetWindowLongW(editor->hWnd, GWLP_ID);
-    info.nmhdr.code = EN_LINK;
-    info.msg = msg;
-    info.wParam = wParam;
-    info.lParam = lParam;
-    info.chrg.cpMin = ME_CharOfsFromRunOfs(editor,tmpCursor.pRun,0);
-    info.chrg.cpMax = info.chrg.cpMin + ME_StrVLen(tmpRun->strText);
-    SendMessageW(GetParent(editor->hWnd), WM_NOTIFY,info.nmhdr.idFrom, (LPARAM)&info);
-  }  
 }
 
 int ME_CountParagraphsBetween(ME_TextEditor *editor, int from, int to)
@@ -4613,7 +4650,7 @@ static BOOL isurlspecial(WCHAR c)
  *
  * sel_max == -1 indicates scan to end of text.
  */
-BOOL ME_FindNextURLCandidate(ME_TextEditor *editor, int sel_min, int sel_max,
+static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor, int sel_min, int sel_max,
         int * candidate_min, int * candidate_max)
 {
   ME_DisplayItem * item;
@@ -4709,7 +4746,7 @@ BOOL ME_FindNextURLCandidate(ME_TextEditor *editor, int sel_min, int sel_max,
 /**
  * This proc evaluates the selection and returns TRUE if it can be considered an URL
  */
-BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, int sel_min, int sel_max)
+static BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, int sel_min, int sel_max)
 {
   struct prefix_s {
     const char *text;
@@ -4761,7 +4798,7 @@ BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, int sel_min, int sel_max)
  *
  * Returns TRUE if at least one section was modified.
  */
-BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, int sel_min, int sel_max)
+static BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, int sel_min, int sel_max)
 {
   BOOL modified = FALSE;
   int cMin, cMax;
@@ -4833,40 +4870,4 @@ BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, int sel_min, int sel_max)
     }
   } while (sel_min < sel_max);
   return modified;
-}
-
-void ME_UpdateSelectionLinkAttribute(ME_TextEditor *editor)
-{
-  ME_DisplayItem * startPara, * endPara;
-  ME_DisplayItem * item;
-  int dummy;
-  int from, to;
-
-  ME_GetSelection(editor, &from, &to);
-  if (from > to) from ^= to, to ^=from, from ^= to;
-  startPara = NULL; endPara = NULL;
-
-  /* Find paragraph previous to the one that contains start cursor */
-  item = ME_FindItemAtOffset(editor, diRun, from, &dummy);
-  if (item) {
-    startPara = ME_FindItemBack(item, diParagraph);
-    item = ME_FindItemBack(startPara, diParagraph);
-    if (item) startPara = item;
-  }
-
-  /* Find paragraph that contains end cursor */
-  item = ME_FindItemAtOffset(editor, diRun, to, &dummy);
-  if (item) {
-    endPara = ME_FindItemFwd(item, diParagraph);
-  }
-
-  if (startPara && endPara) {
-    ME_UpdateLinkAttribute(editor,
-      startPara->member.para.nCharOfs,
-      endPara->member.para.nCharOfs);
-  } else if (startPara) {
-    ME_UpdateLinkAttribute(editor,
-      startPara->member.para.nCharOfs,
-      -1);
-  }
 }

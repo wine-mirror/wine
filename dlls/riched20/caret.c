@@ -782,7 +782,7 @@ ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
 }
 
 
-void
+static void
 ME_SelectByType(ME_TextEditor *editor, ME_SelectionType selectionType)
 {
   /* pCursor[0] is the end of the selection
@@ -1335,6 +1335,31 @@ ME_MoveCursorLines(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs)
   assert(pCursor->pRun->type == diRun);
 }
 
+static BOOL ME_UpdateSelection(ME_TextEditor *editor, const ME_Cursor *pTempCursor)
+{
+  ME_Cursor old_anchor = editor->pCursors[1];
+
+  if (GetKeyState(VK_SHIFT)>=0) /* cancelling selection */
+  {
+    /* any selection was present ? if so, it's no more, repaint ! */
+    editor->pCursors[1] = editor->pCursors[0];
+    if (memcmp(pTempCursor, &old_anchor, sizeof(ME_Cursor))) {
+      return TRUE;
+    }
+    return FALSE;
+  }
+  else
+  {
+    if (!memcmp(pTempCursor, &editor->pCursors[1], sizeof(ME_Cursor))) /* starting selection */
+    {
+      editor->pCursors[1] = *pTempCursor;
+      return TRUE;
+    }
+  }
+
+  ME_Repaint(editor);
+  return TRUE;
+}
 
 static void ME_ArrowPageUp(ME_TextEditor *editor, ME_Cursor *pCursor)
 {
@@ -1520,32 +1545,6 @@ static int ME_GetSelCursor(ME_TextEditor *editor, int dir)
     return 0;
   else
     return 1;
-}
-
-BOOL ME_UpdateSelection(ME_TextEditor *editor, const ME_Cursor *pTempCursor)
-{
-  ME_Cursor old_anchor = editor->pCursors[1];
-  
-  if (GetKeyState(VK_SHIFT)>=0) /* cancelling selection */
-  {
-    /* any selection was present ? if so, it's no more, repaint ! */
-    editor->pCursors[1] = editor->pCursors[0];
-    if (memcmp(pTempCursor, &old_anchor, sizeof(ME_Cursor))) {
-      return TRUE;
-    }
-    return FALSE;
-  }
-  else
-  {
-    if (!memcmp(pTempCursor, &editor->pCursors[1], sizeof(ME_Cursor))) /* starting selection */
-    {
-      editor->pCursors[1] = *pTempCursor;
-      return TRUE;
-    }
-  }
-
-  ME_Repaint(editor);
-  return TRUE;
 }
 
 void ME_DeleteSelection(ME_TextEditor *editor)
