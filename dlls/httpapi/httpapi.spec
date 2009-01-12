@@ -18,7 +18,7 @@
 @ stub HttpFilterRawWriteAndAppRead
 @ stub HttpFlushResponseCache
 @ stub HttpGetCounters
-@ stub HttpInitialize
+@ stdcall HttpInitialize(long long ptr)
 @ stub HttpInitializeServerContext
 @ stub HttpOpenAppPool
 @ stub HttpOpenControlChannel
@@ -47,6 +47,6 @@
 @ stub HttpSetServiceConfiguration
 @ stub HttpShutdownAppPool
 @ stub HttpShutdownFilter
-@ stub HttpTerminate
+@ stdcall HttpTerminate(long ptr)
 @ stub HttpWaitForDemandStart
 @ stub HttpWaitForDisconnect

@@ -24,6 +24,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "http.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(httpapi);
@@ -41,4 +42,44 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID lpv )
         break;
     }
     return TRUE;
+}
+
+/***********************************************************************
+ *        HttpInitialize       (HTTPAPI.@)
+ *
+ * Initializes HTTP Server API engine
+ *
+ * PARAMS
+ *   version  [ I] HTTP API version which caller will use
+ *   flags    [ I] initialization options which specify parts of API what will be used
+ *   reserved [IO] reserved, must be NULL
+ *
+ * RETURNS
+ *   NO_ERROR if function succeeds, or error code if function fails
+ *
+ */
+ULONG WINAPI HttpInitialize( HTTPAPI_VERSION version, ULONG flags, PVOID reserved )
+{
+    FIXME( "({%d,%d}, 0x%x, %p): stub!\n", version.HttpApiMajorVersion,
+           version.HttpApiMinorVersion, flags, reserved );
+    return NO_ERROR;
+}
+
+/***********************************************************************
+ *        HttpTerminate       (HTTPAPI.@)
+ *
+ * Cleans up HTTP Server API engine resources allocated by HttpInitialize
+ *
+ * PARAMS
+ *   flags    [ I] options which specify parts of API what should be released
+ *   reserved [IO] reserved, must be NULL
+ *
+ * RETURNS
+ *   NO_ERROR if function succeeds, or error code if function fails
+ *
+ */
+ULONG WINAPI HttpTerminate( ULONG flags, PVOID reserved )
+{
+    FIXME( "(0x%x, %p): stub!\n", flags, reserved );
+    return NO_ERROR;
 }
