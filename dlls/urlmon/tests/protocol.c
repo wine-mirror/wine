@@ -74,6 +74,8 @@ DEFINE_EXPECT(ReportProgress_VERIFIEDMIMETYPEAVAILABLE);
 DEFINE_EXPECT(ReportProgress_PROTOCOLCLASSID);
 DEFINE_EXPECT(ReportProgress_COOKIE_SENT);
 DEFINE_EXPECT(ReportProgress_REDIRECTING);
+DEFINE_EXPECT(ReportProgress_ENCODING);
+DEFINE_EXPECT(ReportProgress_ACCEPTRANGES);
 DEFINE_EXPECT(ReportData);
 DEFINE_EXPECT(ReportResult);
 DEFINE_EXPECT(GetBindString_ACCEPT_MIMES);
@@ -124,6 +126,7 @@ static DWORD prot_read;
 static enum {
     FILE_TEST,
     HTTP_TEST,
+    HTTPS_TEST,
     MK_TEST,
     BIND_TEST
 } tested_protocol;
@@ -161,6 +164,13 @@ static const char *debugstr_guid(REFIID riid)
             riid->Data4[5], riid->Data4[6], riid->Data4[7]);
 
     return buf;
+}
+
+static int strcmp_wa(LPCWSTR strw, const char *stra)
+{
+    WCHAR buf[512];
+    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    return lstrcmpW(strw, buf);
 }
 
 static HRESULT WINAPI HttpNegotiate_QueryInterface(IHttpNegotiate2 *iface, REFIID riid, void **ppv)
@@ -355,6 +365,8 @@ static HRESULT WINAPI ProtocolSink_Switch(IInternetProtocolSink *iface, PROTOCOL
         }
         CHECK_CALLED(ReportProgress_SENDINGREQUEST);
         SET_EXPECT(OnResponse);
+        if(tested_protocol == HTTPS_TEST)
+            SET_EXPECT(ReportProgress_ACCEPTRANGES);
         SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
         if(bindf & BINDF_NEEDFILE)
             SET_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
@@ -368,6 +380,8 @@ static HRESULT WINAPI ProtocolSink_Switch(IInternetProtocolSink *iface, PROTOCOL
     if (!state) {
         state = 1;
         CHECK_CALLED(OnResponse);
+        if(tested_protocol == HTTPS_TEST)
+            CHECK_CALLED(ReportProgress_ACCEPTRANGES);
         CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
         if(bindf & BINDF_NEEDFILE)
             CHECK_CALLED(ReportProgress_CACHEFILENAMEAVAILABLE);
@@ -384,9 +398,6 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
     static const WCHAR null_guid[] = {'{','0','0','0','0','0','0','0','0','-','0','0','0','0','-',
         '0','0','0','0','-','0','0','0','0','-','0','0','0','0','0','0','0','0','0','0','0','0','}',0};
     static const WCHAR text_plain[] = {'t','e','x','t','/','p','l','a','i','n',0};
-    static const WCHAR post_host[] =
-        {'c','r','o','s','s','o','v','e','r','.','c','o','d','e',
-         'w','e','a','v','e','r','s','.','c','o','m',0};
     static const WCHAR wszCrossoverIP[] =
         {'2','0','9','.','4','6','.','2','5','.','1','3','2',0};
     /* I'm not sure if it's a good idea to hardcode here the IP address... */
@@ -437,11 +448,12 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         ok(szStatusText != NULL, "szStatusText == NULL\n");
         if(szStatusText)
         {
-            if (!http_post_test)
-                ok(!lstrcmpW(szStatusText, hostW),
-                   "szStatustext != \"www.winehq.org\"\n");
+            if(tested_protocol == HTTPS_TEST)
+                ok(!strcmp_wa(szStatusText, "www.codeweavers.com"), "szStatustext = %s\n", debugstr_w(szStatusText));
+            else if(!http_post_test)
+                ok(!strcmp_wa(szStatusText, "www.winehq.org"), "szStatustext != \"www.winehq.org\"\n");
             else
-                ok(!lstrcmpW(szStatusText, post_host),
+                ok(!strcmp_wa(szStatusText, "crossover.codeweavers.com"),
                    "szStatustext != \"crossover.codeweavers.com\"\n");
         }
         break;
@@ -449,9 +461,8 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         CHECK_EXPECT(ReportProgress_CONNECTING);
         ok(szStatusText != NULL, "szStatusText == NULL\n");
         if(szStatusText)
-            ok(!lstrcmpW(szStatusText, http_post_test ?
-                         wszCrossoverIP : winehq_ipW),
-               "Unexpected szStatusText\n");
+            ok(!lstrcmpW(szStatusText, http_post_test || tested_protocol == HTTPS_TEST ? wszCrossoverIP : winehq_ipW),
+               "Unexpected szStatusText %s\n", debugstr_w(szStatusText));
         break;
     case BINDSTATUS_SENDINGREQUEST:
         CHECK_EXPECT(ReportProgress_SENDINGREQUEST);
@@ -478,7 +489,15 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         break;
     case BINDSTATUS_REDIRECTING:
         CHECK_EXPECT(ReportProgress_REDIRECTING);
-        ok(szStatusText == NULL, "szStatusText != NULL\n");
+        ok(szStatusText == NULL, "szStatusText = %s\n", debugstr_w(szStatusText));
+        break;
+    case BINDSTATUS_ENCODING:
+        CHECK_EXPECT(ReportProgress_ENCODING);
+        ok(!strcmp_wa(szStatusText, "gzip"), "szStatusText = %s\n", debugstr_w(szStatusText));
+        break;
+    case BINDSTATUS_ACCEPTRANGES:
+        CHECK_EXPECT(ReportProgress_ACCEPTRANGES);
+        ok(!szStatusText, "szStatusText = %s\n", debugstr_w(szStatusText));
         break;
     default:
         ok(0, "Unexpected status %d\n", ulStatusCode);
@@ -498,7 +517,7 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
         ok(ulProgressMax == 13, "ulProgressMax=%d, expected 13\n", ulProgressMax);
         ok(grfBSCF == (BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION),
                 "grcfBSCF = %08x\n", grfBSCF);
-    }else if(!binding_test && tested_protocol == HTTP_TEST) {
+    }else if(!binding_test && (tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST)) {
         if(!(grfBSCF & BSCF_LASTDATANOTIFICATION))
             CHECK_EXPECT(ReportData);
         else if (http_post_test)
@@ -870,7 +889,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     ok(hres == S_OK, "ReportProgress(BINDSTATUS_SENDINGREQUEST) failed: %08x\n", hres);
     CHECK_CALLED(ReportProgress_SENDINGREQUEST);
 
-    if(tested_protocol == HTTP_TEST) {
+    if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST) {
         IServiceProvider *service_provider;
         IHttpNegotiate *http_negotiate;
         IHttpNegotiate2 *http_negotiate2;
@@ -1084,7 +1103,7 @@ static HRESULT WINAPI Protocol_Read(IInternetProtocol *iface, void *pv,
     }
 
     if((b = !b))
-        return tested_protocol == HTTP_TEST ? E_PENDING : S_FALSE;
+        return tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST ? E_PENDING : S_FALSE;
 
     memset(pv, 'x', 100);
     prot_read += *pcbRead = 100;
@@ -1547,7 +1566,7 @@ static BOOL http_protocol_start(LPCWSTR url, BOOL is_first)
 
 /* is_first refers to whether this is the first call to this function
  * _for this url_ */
-static void test_http_protocol_url(LPCWSTR url, BOOL is_first)
+static void test_http_protocol_url(LPCWSTR url, BOOL is_https, BOOL is_first)
 {
     IInternetProtocolInfo *protocol_info;
     IClassFactory *factory;
@@ -1557,7 +1576,8 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_first)
     http_url = url;
     http_is_first = is_first;
 
-    hres = CoGetClassObject(&CLSID_HttpProtocol, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
+    hres = CoGetClassObject(is_https ? &CLSID_HttpSProtocol : &CLSID_HttpProtocol,
+            CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -1676,23 +1696,35 @@ static void test_http_protocol(void)
     trace("Testing http protocol (not from urlmon)...\n");
     tested_protocol = HTTP_TEST;
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
-    test_http_protocol_url(winehq_url, TRUE);
+    test_http_protocol_url(winehq_url, FALSE, TRUE);
 
     trace("Testing http protocol (from urlmon)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON;
-    test_http_protocol_url(winehq_url, FALSE);
+    test_http_protocol_url(winehq_url, FALSE, FALSE);
 
     trace("Testing http protocol (to file)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NEEDFILE;
-    test_http_protocol_url(winehq_url, FALSE);
+    test_http_protocol_url(winehq_url, FALSE, FALSE);
 
     trace("Testing http protocol (post data)...\n");
     http_post_test = TRUE;
     /* Without this flag we get a ReportProgress_CACHEFILENAMEAVAILABLE
      * notification with BINDVERB_POST */
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
-    test_http_protocol_url(posttest_url, TRUE);
+    test_http_protocol_url(posttest_url, FALSE, TRUE);
     http_post_test = FALSE;
+}
+
+static void test_https_protocol(void)
+{
+    static const WCHAR codeweavers_url[] =
+        {'h','t','t','p','s',':','/','/','w','w','w','.','c','o','d','e','w','e','a','v','e','r','s',
+         '.','c','o','m','/','t','e','s','t','.','h','t','m','l',0};
+
+    trace("Testing https protocol (from urlmon)...\n");
+    tested_protocol = HTTPS_TEST;
+    bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
+    test_http_protocol_url(codeweavers_url, TRUE, TRUE);
 }
 
 static void test_mk_protocol(void)
@@ -1939,7 +1971,7 @@ static void test_binding(int prot)
     CHECK_CALLED(SetPriority);
     CHECK_CALLED(Start);
 
-    if(prot == HTTP_TEST) {
+    if(prot == HTTP_TEST || prot == HTTPS_TEST) {
         while(prot_state < 4) {
             WaitForSingleObject(event_complete, INFINITE);
             SET_EXPECT(Continue);
@@ -1981,6 +2013,7 @@ START_TEST(protocol)
 
     test_file_protocol();
     test_http_protocol();
+    test_https_protocol();
     test_mk_protocol();
     test_CreateBinding();
     test_binding(FILE_TEST);
