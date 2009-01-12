@@ -1636,6 +1636,29 @@ static DWORD HTTPREQ_SetOption(WININETHANDLEHEADER *hdr, DWORD option, void *buf
     return ERROR_INTERNET_INVALID_OPTION;
 }
 
+static void HTTP_ReceiveRequestData(WININETHTTPREQW *req)
+{
+    INTERNET_ASYNC_RESULT iar;
+    BYTE buffer[4096];
+    BOOL res;
+
+    TRACE("%p\n", req);
+
+    res = NETCON_recv(&req->netConnection, buffer,
+                min(sizeof(buffer), req->dwContentLength - req->dwContentRead),
+                MSG_PEEK, (int *)&iar.dwError);
+
+    if(res) {
+        iar.dwResult = (DWORD_PTR)req->hdr.hInternet;
+    }else {
+        iar.dwResult = 0;
+        iar.dwError = INTERNET_GetLastError();
+    }
+
+    INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_REQUEST_COMPLETE, &iar,
+                          sizeof(INTERNET_ASYNC_RESULT));
+}
+
 static DWORD HTTP_Read(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
 {
     int bytes_read;
@@ -1847,17 +1870,8 @@ static BOOL HTTPREQ_WriteFile(WININETHANDLEHEADER *hdr, const void *buffer, DWOR
 static void HTTPREQ_AsyncQueryDataAvailableProc(WORKREQUEST *workRequest)
 {
     WININETHTTPREQW *req = (WININETHTTPREQW*)workRequest->hdr;
-    INTERNET_ASYNC_RESULT iar;
-    char buffer[4048];
 
-    TRACE("%p\n", workRequest->hdr);
-
-    iar.dwResult = NETCON_recv(&req->netConnection, buffer,
-                               min(sizeof(buffer), req->dwContentLength - req->dwContentRead),
-                               MSG_PEEK, (int *)&iar.dwError);
-
-    INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_REQUEST_COMPLETE, &iar,
-                          sizeof(INTERNET_ASYNC_RESULT));
+    HTTP_ReceiveRequestData(req);
 }
 
 static DWORD HTTPREQ_QueryDataAvailable(WININETHANDLEHEADER *hdr, DWORD *available, DWORD flags, DWORD_PTR ctx)
@@ -3465,12 +3479,18 @@ lend:
 
     /* TODO: send notification for P3P header */
 
-    iar.dwResult = (DWORD_PTR)lpwhr->hdr.hInternet;
-    iar.dwError = bSuccess ? ERROR_SUCCESS : INTERNET_GetLastError();
+    if(lpwhr->lpHttpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC) {
+        if(bSuccess) {
+            HTTP_ReceiveRequestData(lpwhr);
+        }else {
+            iar.dwResult = (DWORD_PTR)lpwhr->hdr.hInternet;
+            iar.dwError = INTERNET_GetLastError();
 
-    INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
-                          INTERNET_STATUS_REQUEST_COMPLETE, &iar,
-                          sizeof(INTERNET_ASYNC_RESULT));
+            INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
+                                  INTERNET_STATUS_REQUEST_COMPLETE, &iar,
+                                  sizeof(INTERNET_ASYNC_RESULT));
+        }
+    }
 
     TRACE("<--\n");
     if (bSuccess) INTERNET_SetLastError(ERROR_SUCCESS);
