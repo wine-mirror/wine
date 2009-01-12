@@ -1458,6 +1458,10 @@ static void test_EM_SETOPTIONS(void)
     HWND hwndRichEdit = new_richedit(NULL);
     static const char text[] = "Hello. My name is RichEdit!";
     char buffer[1024] = {0};
+    DWORD dwStyle, options, oldOptions;
+    DWORD optionStyles = ES_AUTOVSCROLL|ES_AUTOHSCROLL|ES_NOHIDESEL|
+                         ES_READONLY|ES_WANTRETURN|ES_SAVESEL|
+                         ES_SELECTIONBAR|ES_VERTICAL;
 
     /* NEGATIVE TESTING - NO OPTIONS SET */
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
@@ -1479,6 +1483,25 @@ static void test_EM_SETOPTIONS(void)
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     ok(buffer[0]==text[0], 
        "EM_SETOPTIONS: Text changed! s1:%s s2:%s\n", text, buffer); 
+
+    /* EM_SETOPTIONS changes the window style, but changing the
+     * window style does not change the options. */
+    dwStyle = GetWindowLong(hwndRichEdit, GWL_STYLE);
+    ok(dwStyle & ES_READONLY, "Readonly style not set by EM_SETOPTIONS\n");
+    SetWindowLong(hwndRichEdit, GWL_STYLE, dwStyle & ~ES_READONLY);
+    options = SendMessage(hwndRichEdit, EM_GETOPTIONS, 0, 0);
+    todo_wine ok(options & ES_READONLY, "Readonly option set by SetWindowLong\n");
+    /* Confirm that the text is still read only. */
+    SendMessage(hwndRichEdit, WM_CHAR, 'a', ('a' << 16) | 0x0001);
+    SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    todo_wine ok(buffer[0]==text[0],
+       "EM_SETOPTIONS: Text changed! s1:%s s2:%s\n", text, buffer);
+
+    oldOptions = options;
+    SetWindowLong(hwndRichEdit, GWL_STYLE, dwStyle|optionStyles);
+    options = SendMessage(hwndRichEdit, EM_GETOPTIONS, 0, 0);
+    todo_wine ok(options == oldOptions,
+       "Options set by SetWindowLong (%x -> %x)\n", oldOptions, options);
 
     DestroyWindow(hwndRichEdit);
 }
