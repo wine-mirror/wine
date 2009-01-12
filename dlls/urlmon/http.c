@@ -625,6 +625,9 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
             }
         }
 
+        if(This->https)
+            IInternetProtocolSink_ReportProgress(This->protocol_sink, BINDSTATUS_ACCEPTRANGES, NULL);
+
         len = 0;
         if ((!HttpQueryInfoW(This->request, HTTP_QUERY_CONTENT_TYPE, content_type, &len, NULL) &&
              GetLastError() != ERROR_INSUFFICIENT_BUFFER) ||
