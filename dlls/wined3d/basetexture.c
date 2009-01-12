@@ -27,6 +27,16 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 #define GLINFO_LOCATION This->resource.wineD3DDevice->adapter->gl_info
 
+void basetexture_init(struct IWineD3DBaseTextureClass *texture, UINT levels, DWORD usage)
+{
+    texture->levels = levels;
+    texture->filterType = (usage & WINED3DUSAGE_AUTOGENMIPMAP) ? WINED3DTEXF_LINEAR : WINED3DTEXF_NONE;
+    texture->LOD = 0;
+    texture->dirty = TRUE;
+    texture->is_srgb = FALSE;
+    texture->srgb_mode_change_count = 0;
+}
+
 void basetexture_cleanup(IWineD3DBaseTexture *iface)
 {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;

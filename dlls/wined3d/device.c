@@ -115,15 +115,6 @@ static void IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResour
     TRACE("(%p) : Created resource %p\n", This, object); \
 }
 
-#define D3DINITIALIZEBASETEXTURE(_basetexture) { \
-    _basetexture.levels     = Levels; \
-    _basetexture.filterType = (Usage & WINED3DUSAGE_AUTOGENMIPMAP) ? WINED3DTEXF_LINEAR : WINED3DTEXF_NONE; \
-    _basetexture.LOD        = 0; \
-    _basetexture.dirty      = TRUE; \
-    _basetexture.is_srgb = FALSE; \
-    _basetexture.srgb_mode_change_count = 0; \
-}
-
 /**********************************************************
  * Global variable / Constants follow
  **********************************************************/
@@ -792,7 +783,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
     }
 
     D3DCREATERESOURCEOBJECTINSTANCE(object, Texture, WINED3DRTYPE_TEXTURE, 0);
-    D3DINITIALIZEBASETEXTURE(object->baseTexture);    
+    basetexture_init(&object->baseTexture, Levels, Usage);
     object->width  = Width;
     object->height = Height;
 
@@ -937,7 +928,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     }
 
     D3DCREATERESOURCEOBJECTINSTANCE(object, VolumeTexture, WINED3DRTYPE_VOLUMETEXTURE, 0);
-    D3DINITIALIZEBASETEXTURE(object->baseTexture);
+    basetexture_init(&object->baseTexture, Levels, Usage);
 
     TRACE("(%p) : W(%d) H(%d) D(%d), Lvl(%d) Usage(%d), Fmt(%u,%s), Pool(%s)\n", This, Width, Height,
           Depth, Levels, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
@@ -1070,7 +1061,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     }
 
     D3DCREATERESOURCEOBJECTINSTANCE(object, CubeTexture, WINED3DRTYPE_CUBETEXTURE, 0);
-    D3DINITIALIZEBASETEXTURE(object->baseTexture);
+    basetexture_init(&object->baseTexture, Levels, Usage);
 
     TRACE("(%p) Create Cube Texture\n", This);
 
