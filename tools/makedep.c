@@ -866,6 +866,33 @@ static int output_src( FILE *file, INCL_FILE *pFile, int *column )
 
 
 /*******************************************************************
+ *         create_temp_file
+ */
+static FILE *create_temp_file( char **tmp_name )
+{
+    char *name = xmalloc( strlen(OutputFileName) + 13 );
+    unsigned int i, id = getpid();
+    int fd;
+    FILE *ret = NULL;
+
+    for (i = 0; i < 100; i++)
+    {
+        sprintf( name, "%s.tmp%08x", OutputFileName, id );
+        if ((fd = open( name, O_RDWR | O_CREAT | O_EXCL, 0600 )) != -1)
+        {
+            ret = fdopen( fd, "w" );
+            break;
+        }
+        if (errno != EEXIST) break;
+        id += 7777;
+    }
+    if (!ret) fatal_error( "failed to create output file for '%s'\n", OutputFileName );
+    *tmp_name = name;
+    return ret;
+}
+
+
+/*******************************************************************
  *         output_dependencies
  */
 static void output_dependencies(void)
@@ -873,19 +900,23 @@ static void output_dependencies(void)
     INCL_FILE *pFile;
     int i, column;
     FILE *file = NULL;
-    char *buffer;
+    char *tmp_name = NULL;
 
-    if (Separator && ((file = fopen( OutputFileName, "r+" ))))
+    if (Separator && ((file = fopen( OutputFileName, "r" ))))
     {
-        while ((buffer = get_line( file )))
+        char buffer[1024];
+        FILE *tmp_file = create_temp_file( &tmp_name );
+
+        while (fgets( buffer, sizeof(buffer), file ))
         {
-            if (strncmp( buffer, Separator, strlen(Separator) )) continue;
-            ftruncate( fileno(file), ftell(file) );
-            fseek( file, 0L, SEEK_END );
-            break;
+            if (fwrite( buffer, 1, strlen(buffer), tmp_file ) != strlen(buffer))
+                fatal_error( "error writing to %s\n", tmp_name );
+            if (!strncmp( buffer, Separator, strlen(Separator) )) break;
         }
+        fclose( file );
+        file = tmp_file;
     }
-    if (!file)
+    else
     {
         if (!(file = fopen( OutputFileName, Separator ? "a" : "w" )))
         {
@@ -902,7 +933,17 @@ static void output_dependencies(void)
                                                  pFile, &column );
         fprintf( file, "\n" );
     }
-    fclose(file);
+    fclose( file );
+
+    if (tmp_name)
+    {
+        if (rename( tmp_name, OutputFileName ) == -1)
+        {
+            unlink( tmp_name );
+            fatal_error( "failed to rename output file to '%s'\n", OutputFileName );
+        }
+        free( tmp_name );
+    }
 }
 
 
