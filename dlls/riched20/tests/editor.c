@@ -5826,7 +5826,7 @@ static void test_word_wrap(void)
     DestroyWindow(hwnd);
 }
 
-static void test_auto_yscroll(void)
+static void test_autoscroll(void)
 {
     HWND hwnd = new_richedit(NULL);
     int lines, ret, redraw;
@@ -5855,6 +5855,32 @@ static void test_auto_yscroll(void)
     }
 
     SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
+    DestroyWindow(hwnd);
+
+    /* The WS_VSCROLL and WS_HSCROLL styles implicitly set
+     * auto vertical/horizontal scrolling options. */
+    hwnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
+                          WS_POPUP|ES_MULTILINE|WS_VSCROLL|WS_HSCROLL,
+                          0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
+    ret = SendMessage(hwnd, EM_GETOPTIONS, 0, 0);
+    todo_wine ok(ret & ECO_AUTOVSCROLL, "ECO_AUTOVSCROLL isn't set.\n");
+    todo_wine ok(ret & ECO_AUTOHSCROLL, "ECO_AUTOHSCROLL isn't set.\n");
+    ret = GetWindowLong(hwnd, GWL_STYLE);
+    ok(!(ret & ES_AUTOVSCROLL), "ES_AUTOVSCROLL is set.\n");
+    ok(!(ret & ES_AUTOHSCROLL), "ES_AUTOHSCROLL is set.\n");
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
+                          WS_POPUP|ES_MULTILINE,
+                          0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
+    ret = SendMessage(hwnd, EM_GETOPTIONS, 0, 0);
+    ok(!(ret & ECO_AUTOVSCROLL), "ECO_AUTOVSCROLL is set.\n");
+    ok(!(ret & ECO_AUTOHSCROLL), "ECO_AUTOHSCROLL is set.\n");
+    ret = GetWindowLong(hwnd, GWL_STYLE);
+    ok(!(ret & ES_AUTOVSCROLL), "ES_AUTOVSCROLL is set.\n");
+    ok(!(ret & ES_AUTOHSCROLL), "ES_AUTOHSCROLL is set.\n");
     DestroyWindow(hwnd);
 }
 
@@ -6255,7 +6281,7 @@ START_TEST( editor )
   test_EM_CHARFROMPOS();
   test_SETPARAFORMAT();
   test_word_wrap();
-  test_auto_yscroll();
+  test_autoscroll();
   test_format_rect();
   test_WM_GETDLGCODE();
 
