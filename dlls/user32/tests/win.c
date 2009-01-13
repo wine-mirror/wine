@@ -4958,7 +4958,7 @@ static void test_layered_window(void)
     ok( ret, "SetLayeredWindowAttributes should succeed on layered window\n" );
     ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
     ok( ret, "GetLayeredWindowAttributes should succeed on layered window\n" );
-    ok( key == 0x123456, "wrong color key %x\n", key );
+    ok( key == 0x123456 || key == 0, "wrong color key %x\n", key );
     ok( alpha == 44, "wrong alpha %u\n", alpha );
     ok( flags == LWA_ALPHA, "wrong flags %x\n", flags );
 
@@ -4987,24 +4987,24 @@ static void test_layered_window(void)
     ok( alpha == 22 || alpha == 33, "wrong alpha %u\n", alpha );
     ok( flags == LWA_COLORKEY, "wrong flags %x\n", flags );
 
-    /* color key always changed */
+    /* color key may or may not be changed without LWA_COLORKEY */
     ret = pSetLayeredWindowAttributes( hwnd, 0x999999, 44, 0 );
     ok( ret, "SetLayeredWindowAttributes should succeed on layered window\n" );
     alpha = 0;
     ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
     ok( ret, "GetLayeredWindowAttributes should succeed on layered window\n" );
-    ok( key == 0x999999, "wrong color key %x\n", key );
+    ok( key == 0x888888 || key == 0x999999, "wrong color key %x\n", key );
     ok( alpha == 22 || alpha == 44, "wrong alpha %u\n", alpha );
     ok( flags == 0, "wrong flags %x\n", flags );
 
-    /* default alpha is 0 */
+    /* default alpha and color key is 0 */
     SetWindowLong( hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED );
     SetWindowLong( hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED );
     ret = pSetLayeredWindowAttributes( hwnd, 0x222222, 55, 0 );
     ok( ret, "SetLayeredWindowAttributes should succeed on layered window\n" );
     ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
     ok( ret, "GetLayeredWindowAttributes should succeed on layered window\n" );
-    ok( key == 0x222222, "wrong color key %x\n", key );
+    ok( key == 0 || key == 0x222222, "wrong color key %x\n", key );
     ok( alpha == 0 || alpha == 55, "wrong alpha %u\n", alpha );
     ok( flags == 0, "wrong flags %x\n", flags );
 
