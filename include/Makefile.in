@@ -18,6 +18,7 @@ PUBLIC_IDL_H_SRCS = \
 	bits1_5.idl \
 	comcat.idl \
 	control.idl \
+	ctxtcall.idl \
 	d3d10.idl \
 	ddstream.idl \
 	dimm.idl \

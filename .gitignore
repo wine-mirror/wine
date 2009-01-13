@@ -142,6 +142,7 @@ include/bits1_5.h
 include/comcat.h
 include/config.h
 include/control.h
+include/ctxtcall.h
 include/d3d10.h
 include/ddstream.h
 include/dimm.h
