@@ -32,7 +32,7 @@ static HRESULT WINAPI IDirectMusicTempoTrack_IUnknown_QueryInterface (LPUNKNOWN 
   TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
   
   if (IsEqualIID (riid, &IID_IUnknown)) {
-    *ppobj = (LPUNKNOWN)&This->UnknownVtbl;
+    *ppobj = &This->UnknownVtbl;
     IUnknown_AddRef (iface);
     return S_OK;
   } else if (IsEqualIID (riid, &IID_IDirectMusicTrack)
@@ -41,7 +41,7 @@ static HRESULT WINAPI IDirectMusicTempoTrack_IUnknown_QueryInterface (LPUNKNOWN 
     IUnknown_AddRef (iface);
     return S_OK;
   } else if (IsEqualIID (riid, &IID_IPersistStream)) {
-    *ppobj = (LPPERSISTSTREAM)&This->PersistStreamVtbl;
+    *ppobj = &This->PersistStreamVtbl;
     IUnknown_AddRef (iface);
     return S_OK;
   }

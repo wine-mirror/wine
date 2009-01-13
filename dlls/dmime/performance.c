@@ -67,7 +67,7 @@ static DMUS_PMSGItem* ProceedMsg(IDirectMusicPerformance8Impl* This, DMUS_PMSGIt
 }
 
 static DWORD WINAPI ProcessMsgThread(LPVOID lpParam) {
-  IDirectMusicPerformance8Impl* This = (IDirectMusicPerformance8Impl*) lpParam;
+  IDirectMusicPerformance8Impl* This = lpParam;
   DWORD timeOut = INFINITE;
   MSG msg;
   HRESULT hr;

@@ -31,19 +31,19 @@ static HRESULT WINAPI IDirectMusicGraphImpl_IUnknown_QueryInterface (LPUNKNOWN i
 	TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppobj);
 	
 	if (IsEqualIID (riid, &IID_IUnknown)) {
-		*ppobj = (LPVOID)&This->UnknownVtbl;
+		*ppobj = &This->UnknownVtbl;
 		IUnknown_AddRef (iface);
 		return S_OK;	
 	} else if (IsEqualIID (riid, &IID_IDirectMusicGraph)) {
-		*ppobj = (LPVOID)&This->GraphVtbl;
+		*ppobj = &This->GraphVtbl;
 		IUnknown_AddRef (iface);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IDirectMusicObject)) {
-		*ppobj = (LPVOID)&This->ObjectVtbl;
+		*ppobj = &This->ObjectVtbl;
 		IUnknown_AddRef (iface);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IPersistStream)) {
-		*ppobj = (LPVOID)&This->PersistStreamVtbl;
+		*ppobj = &This->PersistStreamVtbl;
 		IUnknown_AddRef (iface);
 		return S_OK;
 	}

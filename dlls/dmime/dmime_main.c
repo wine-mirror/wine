@@ -766,59 +766,59 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     TRACE("(%s, %s, %p)\n", debugstr_dmguid(rclsid), debugstr_dmguid(riid), ppv);
     if (IsEqualCLSID (rclsid, &CLSID_DirectMusicPerformance) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &Performance_CF;
+                *ppv = &Performance_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSegment) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &Segment_CF;
+                *ppv = &Segment_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSegmentState) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &SegmentState_CF;
+                *ppv = &SegmentState_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicGraph) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &Graph_CF;
+                *ppv = &Graph_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicTempoTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &TempoTrack_CF;
+                *ppv = &TempoTrack_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSeqTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &SeqTrack_CF;
+                *ppv = &SeqTrack_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSysExTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &SysExTrack_CF;
+                *ppv = &SysExTrack_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicTimeSigTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &TimeSigTrack_CF;
+                *ppv = &TimeSigTrack_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicParamControlTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &ParamControlTrack_CF;
+                *ppv = &ParamControlTrack_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicMarkerTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &MarkerTrack_CF;
+                *ppv = &MarkerTrack_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicLyricsTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &LyricsTrack_CF;
+                *ppv = &LyricsTrack_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSegTriggerTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &SegTriggerTrack_CF;
+                *ppv = &SegTriggerTrack_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicAudioPath) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &AudioPath_CF;
+                *ppv = &AudioPath_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicWaveTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &WaveTrack_CF;
+                *ppv = &WaveTrack_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;
 	} 
