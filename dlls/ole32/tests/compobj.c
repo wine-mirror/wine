@@ -1017,6 +1017,27 @@ static void test_CoGetObjectContext(void)
     CoUninitialize();
 }
 
+static void test_CoInitializeEx(void)
+{
+    HRESULT hr;
+
+    hr = pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    ok(hr == S_OK, "CoInitializeEx failed with error 0x%08x\n", hr);
+
+    /* Calling OleInitialize for the first time should yield S_OK even with
+     * apartment already initialized by previous CoInitialize(Ex) calls. */
+    hr = OleInitialize(NULL);
+    todo_wine ok(hr == S_OK, "OleInitialize failed with error 0x%08x\n", hr);
+
+    /* Subsequent calls to OleInitialize should return S_FALSE */
+    hr = OleInitialize(NULL);
+    ok(hr == S_FALSE, "Expected S_FALSE, hr = 0x%08x\n", hr);
+
+    /* Cleanup */
+    CoUninitialize();
+    OleUninitialize();
+}
+
 START_TEST(compobj)
 {
     HMODULE hOle32 = GetModuleHandle("ole32");
@@ -1045,4 +1066,5 @@ START_TEST(compobj)
     test_registered_object_thread_affinity();
     test_CoFreeUnusedLibraries();
     test_CoGetObjectContext();
+    test_CoInitializeEx();
 }
