@@ -989,6 +989,29 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
         return WINED3DERR_INVALIDCALL;
     }
 
+    /* Calculate levels for mip mapping */
+    if (Usage & WINED3DUSAGE_AUTOGENMIPMAP)
+    {
+        if (!GL_SUPPORT(SGIS_GENERATE_MIPMAP))
+        {
+            WARN("No mipmap generation support, returning D3DERR_INVALIDCALL\n");
+            return WINED3DERR_INVALIDCALL;
+        }
+
+        if (Levels > 1)
+        {
+            WARN("D3DUSAGE_AUTOGENMIPMAP is set, and level count > 1, returning D3DERR_INVALIDCALL\n");
+            return WINED3DERR_INVALIDCALL;
+        }
+
+        Levels = 1;
+    }
+    else if (!Levels)
+    {
+        Levels = wined3d_log2i(max(max(Width, Height), Depth)) + 1;
+        TRACE("Calculated levels = %d\n", Levels);
+    }
+
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
@@ -1028,22 +1051,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     } else {
         object->baseTexture.minMipLookup = minMipLookup_noFilter;
         object->baseTexture.magLookup    = magLookup_noFilter;
-    }
-
-    /* Calculate levels for mip mapping */
-    if (Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
-        if(!GL_SUPPORT(SGIS_GENERATE_MIPMAP)) {
-            WARN("No mipmap generation support, returning D3DERR_INVALIDCALL\n");
-            return WINED3DERR_INVALIDCALL;
-        }
-        if(Levels > 1) {
-            WARN("D3DUSAGE_AUTOGENMIPMAP is set, and level count > 1, returning D3DERR_INVALIDCALL\n");
-            return WINED3DERR_INVALIDCALL;
-        }
-        object->baseTexture.levels = 1;
-    } else if (Levels == 0) {
-        object->baseTexture.levels = wined3d_log2i(max(max(Width, Height), Depth)) + 1;
-        TRACE("Calculated levels = %d\n", object->baseTexture.levels);
     }
 
     /* Generate all the surfaces */
