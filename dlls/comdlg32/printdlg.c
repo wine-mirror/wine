@@ -2413,7 +2413,6 @@ typedef struct {
     LPPAGESETUPDLGA	dlga; /* Handler to user defined struct */
     PRINTDLGA		pdlg;
     HWND 		hDlg; /* Page Setup dialog handler */
-    PAGESETUPDLGA	curdlg; /* Stores the current dialog state */
     RECT		rtDrawRect; /* Drawing rect for page */
 } PageSetupDataA;
 
@@ -2586,14 +2585,13 @@ PRINTDLG_PS_UpdateDlgStructA(HWND hDlg, PageSetupDataA *pda) {
     DEVMODEA	*dm;
     DWORD 	paperword;
 
-    memcpy(pda->dlga, &pda->curdlg, sizeof(pda->curdlg));
     pda->dlga->hDevMode  = pda->pdlg.hDevMode;
     pda->dlga->hDevNames = pda->pdlg.hDevNames;
 
     dm = GlobalLock(pda->pdlg.hDevMode);
 
     /* Save paper orientation into device context */
-    if(pda->curdlg.ptPaperSize.x > pda->curdlg.ptPaperSize.y)
+    if(pda->dlga->ptPaperSize.x > pda->dlga->ptPaperSize.y)
         dm->u1.s1.dmOrientation = DMORIENT_LANDSCAPE;
     else
         dm->u1.s1.dmOrientation = DMORIENT_PORTRAIT;
@@ -2845,12 +2843,12 @@ PRINTDLG_PS_ChangePaperPrev(const PageSetupDataA *pda)
     LONG width, height, x, y;
     RECT rtTmp;
     
-    if(pda->curdlg.ptPaperSize.x > pda->curdlg.ptPaperSize.y) {
+    if(pda->dlga->ptPaperSize.x > pda->dlga->ptPaperSize.y) {
 	width  = pda->rtDrawRect.right - pda->rtDrawRect.left;
-	height = pda->curdlg.ptPaperSize.y * width / pda->curdlg.ptPaperSize.x;
+        height = pda->dlga->ptPaperSize.y * width / pda->dlga->ptPaperSize.x;
     } else {
 	height = pda->rtDrawRect.bottom - pda->rtDrawRect.top;
-	width  = pda->curdlg.ptPaperSize.x * height / pda->curdlg.ptPaperSize.y;
+        width  = pda->dlga->ptPaperSize.x * height / pda->dlga->ptPaperSize.y;
     }
     x = (pda->rtDrawRect.right + pda->rtDrawRect.left - width) / 2;
     y = (pda->rtDrawRect.bottom + pda->rtDrawRect.top - height) / 2;
@@ -2920,15 +2918,15 @@ PRINTDLG_PS_WMCommandA(
 	return TRUE;
     case rad1:
     case rad2:
-	if((id == rad1 && pda->curdlg.ptPaperSize.x > pda->curdlg.ptPaperSize.y) ||
-	   (id == rad2 && pda->curdlg.ptPaperSize.y > pda->curdlg.ptPaperSize.x))
+        if((id == rad1 && pda->dlga->ptPaperSize.x > pda->dlga->ptPaperSize.y) ||
+           (id == rad2 && pda->dlga->ptPaperSize.y > pda->dlga->ptPaperSize.x))
 	{
 	    char TmpText[25];
 	    char TmpText2[25];
-	    DWORD tmp = pda->curdlg.ptPaperSize.x;
+            DWORD tmp = pda->dlga->ptPaperSize.x;
 
-	    pda->curdlg.ptPaperSize.x = pda->curdlg.ptPaperSize.y;
-	    pda->curdlg.ptPaperSize.y = tmp;
+            pda->dlga->ptPaperSize.x = pda->dlga->ptPaperSize.y;
+            pda->dlga->ptPaperSize.y = tmp;
 
 	    GetDlgItemTextA(hDlg, edt4, TmpText, sizeof(TmpText));
 	    GetDlgItemTextA(hDlg, edt5, TmpText2, sizeof(TmpText2));
@@ -2956,14 +2954,14 @@ PRINTDLG_PS_WMCommandA(
 	    DWORD paperword = SendDlgItemMessageA(hDlg,cmb2,CB_GETITEMDATA,
 	        SendDlgItemMessageA(hDlg, cmb2, CB_GETCURSEL, 0, 0), 0);
    	    if (paperword != CB_ERR) {
-	        PRINTDLG_PaperSizeA(&(pda->pdlg), paperword,&(pda->curdlg.ptPaperSize));
-	        pda->curdlg.ptPaperSize.x = _c_10mm2size(pda->dlga,pda->curdlg.ptPaperSize.x);
-	        pda->curdlg.ptPaperSize.y = _c_10mm2size(pda->dlga,pda->curdlg.ptPaperSize.y);
+                PRINTDLG_PaperSizeA(&(pda->pdlg), paperword,&(pda->dlga->ptPaperSize));
+                pda->dlga->ptPaperSize.x = _c_10mm2size(pda->dlga,pda->dlga->ptPaperSize.x);
+                pda->dlga->ptPaperSize.y = _c_10mm2size(pda->dlga,pda->dlga->ptPaperSize.y);
 	    
 		if (IsDlgButtonChecked(hDlg, rad2)) {
-	            DWORD tmp = pda->curdlg.ptPaperSize.x;
- 		    pda->curdlg.ptPaperSize.x = pda->curdlg.ptPaperSize.y;
-		    pda->curdlg.ptPaperSize.y = tmp;
+                    DWORD tmp = pda->dlga->ptPaperSize.x;
+                    pda->dlga->ptPaperSize.x = pda->dlga->ptPaperSize.y;
+                    pda->dlga->ptPaperSize.y = tmp;
 	        }
 	        PRINTDLG_PS_ChangePaperPrev(pda);
 	    } else
@@ -2996,13 +2994,13 @@ PRINTDLG_PS_WMCommandA(
 	                        DM_IN_BUFFER | DM_OUT_BUFFER | DM_IN_PROMPT);
 	    ClosePrinter(hPrinter);
 	    /* Changing paper */
-	    PRINTDLG_PaperSizeA(&(pda->pdlg), dm->u1.s1.dmPaperSize, &(pda->curdlg.ptPaperSize));
-	    pda->curdlg.ptPaperSize.x = _c_10mm2size(pda->dlga, pda->curdlg.ptPaperSize.x);
-	    pda->curdlg.ptPaperSize.y = _c_10mm2size(pda->dlga, pda->curdlg.ptPaperSize.y);
+            PRINTDLG_PaperSizeA(&(pda->pdlg), dm->u1.s1.dmPaperSize, &(pda->dlga->ptPaperSize));
+            pda->dlga->ptPaperSize.x = _c_10mm2size(pda->dlga, pda->dlga->ptPaperSize.x);
+            pda->dlga->ptPaperSize.y = _c_10mm2size(pda->dlga, pda->dlga->ptPaperSize.y);
             if (dm->u1.s1.dmOrientation == DMORIENT_LANDSCAPE){
-                DWORD tmp = pda->curdlg.ptPaperSize.x;
-                pda->curdlg.ptPaperSize.x = pda->curdlg.ptPaperSize.y;
-                pda->curdlg.ptPaperSize.y = tmp;
+                DWORD tmp = pda->dlga->ptPaperSize.x;
+                pda->dlga->ptPaperSize.x = pda->dlga->ptPaperSize.y;
+                pda->dlga->ptPaperSize.y = tmp;
 		CheckRadioButton(hDlg, rad1, rad2, rad2);
 	    }
 	    else
@@ -3024,16 +3022,16 @@ PRINTDLG_PS_WMCommandA(
 	    break;
 	}       
     case edt4:
-    	GETVAL(id, pda->curdlg.rtMargin.left);
+        GETVAL(id, pda->dlga->rtMargin.left);
 	break;
     case edt5:
-	GETVAL(id, pda->curdlg.rtMargin.top);
+        GETVAL(id, pda->dlga->rtMargin.top);
 	break;
     case edt6:
-	GETVAL(id, pda->curdlg.rtMargin.right);
+        GETVAL(id, pda->dlga->rtMargin.right);
 	break;
     case edt7:
-    	GETVAL(id, pda->curdlg.rtMargin.bottom);
+        GETVAL(id, pda->dlga->rtMargin.bottom);
 	break;
     }
     InvalidateRect(GetDlgItem(hDlg, rct1), NULL, TRUE);
@@ -3228,14 +3226,14 @@ PRINTDLG_PagePaintProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     hdc = BeginPaint(hWnd, &ps);
     GetClientRect(hWnd, &rcClient);
     
-    scalx = rcClient.right  / (double)pda->curdlg.ptPaperSize.x;
-    scaly = rcClient.bottom / (double)pda->curdlg.ptPaperSize.y; 
+    scalx = rcClient.right  / (double)pda->dlga->ptPaperSize.x;
+    scaly = rcClient.bottom / (double)pda->dlga->ptPaperSize.y;
     rcMargin = rcClient;
 
-    rcMargin.left   += pda->curdlg.rtMargin.left   * scalx;
-    rcMargin.top    += pda->curdlg.rtMargin.top    * scalx;
-    rcMargin.right  -= pda->curdlg.rtMargin.right  * scaly;
-    rcMargin.bottom -= pda->curdlg.rtMargin.bottom * scaly;
+    rcMargin.left   += pda->dlga->rtMargin.left   * scalx;
+    rcMargin.top    += pda->dlga->rtMargin.top    * scalx;
+    rcMargin.right  -= pda->dlga->rtMargin.right  * scaly;
+    rcMargin.bottom -= pda->dlga->rtMargin.bottom * scaly;
 
     /* if the space is too small then we make sure to not draw anything */
     rcMargin.left = min(rcMargin.left, rcMargin.right);
@@ -3309,7 +3307,6 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     if (uMsg == WM_INITDIALOG) { /*Init dialog*/
         pda = (PageSetupDataA*)lParam;
 	pda->hDlg   = hDlg; /* saving handle to main window to PageSetupDataA structure */
-	pda->curdlg = *pda->dlga;
 	
 	hDrawWnd = GetDlgItem(hDlg, rct1); 
         TRACE("set property to %p\n", pda);
@@ -3376,10 +3373,10 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    SetDlgItemTextA(hDlg,edt5,str);
 	    SetDlgItemTextA(hDlg,edt6,str);
 	    SetDlgItemTextA(hDlg,edt7,str);
-	    pda->curdlg.rtMargin.left   = size;
-	    pda->curdlg.rtMargin.top    = size;
-	    pda->curdlg.rtMargin.right  = size;
-	    pda->curdlg.rtMargin.bottom = size;
+            pda->dlga->rtMargin.left   = size;
+            pda->dlga->rtMargin.top    = size;
+            pda->dlga->rtMargin.right  = size;
+            pda->dlga->rtMargin.bottom = size;
 	}
 	/* if paper disabled */
 	if (pda->dlga->Flags & PSD_DISABLEPAPER) {
@@ -3391,14 +3388,14 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	dm = GlobalLock(pda->pdlg.hDevMode);
 	if(dm){
 	    dm->u1.s1.dmDefaultSource = 15; /*FIXME: Automatic select. Does it always 15 at start? */
-	    PRINTDLG_PaperSizeA(&(pda->pdlg), dm->u1.s1.dmPaperSize, &pda->curdlg.ptPaperSize);
+            PRINTDLG_PaperSizeA(&(pda->pdlg), dm->u1.s1.dmPaperSize, &pda->dlga->ptPaperSize);
             GlobalUnlock(pda->pdlg.hDevMode);
-	    pda->curdlg.ptPaperSize.x = _c_10mm2size(pda->dlga, pda->curdlg.ptPaperSize.x);
-	    pda->curdlg.ptPaperSize.y = _c_10mm2size(pda->dlga, pda->curdlg.ptPaperSize.y);
+            pda->dlga->ptPaperSize.x = _c_10mm2size(pda->dlga, pda->dlga->ptPaperSize.x);
+            pda->dlga->ptPaperSize.y = _c_10mm2size(pda->dlga, pda->dlga->ptPaperSize.y);
             if (IsDlgButtonChecked(hDlg, rad2) == BST_CHECKED) { /* Landscape orientation */
-                DWORD tmp = pda->curdlg.ptPaperSize.y;
-                pda->curdlg.ptPaperSize.y = pda->curdlg.ptPaperSize.x;
-                pda->curdlg.ptPaperSize.x = tmp;
+                DWORD tmp = pda->dlga->ptPaperSize.y;
+                pda->dlga->ptPaperSize.y = pda->dlga->ptPaperSize.x;
+                pda->dlga->ptPaperSize.x = tmp;
             }
 	} else 
 	    WARN("GlobalLock(pda->pdlg.hDevMode) fail? hDevMode=%p\n", pda->pdlg.hDevMode);
