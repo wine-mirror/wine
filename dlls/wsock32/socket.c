@@ -108,7 +108,7 @@ DWORD WINAPI WsControl(DWORD protocol,
 
    /* Get the command structure into a pointer we can use,
       rather than void */
-   TDIObjectID *pcommand = (TDIObjectID *)pRequestInfo;
+   TDIObjectID *pcommand = pRequestInfo;
 
    /* validate input parameters.  Error codes are from winerror.h, not from
     * winsock.h.  pcbResponseInfoLen is apparently allowed to be NULL for some
@@ -149,7 +149,7 @@ DWORD WINAPI WsControl(DWORD protocol,
          */
          case ENTITY_LIST_ID:
          {
-            TDIEntityID *baseptr = (TDIEntityID *)pResponseInfo;
+            TDIEntityID *baseptr = pResponseInfo;
             DWORD numInt, i, ifTable, spaceNeeded;
             PMIB_IFTABLE table;
 
@@ -280,7 +280,7 @@ DWORD WINAPI WsControl(DWORD protocol,
                {
                   PMIB_IPNETTABLE table;
                   DWORD size;
-                  PULONG output = (PULONG)pResponseInfo;
+                  PULONG output = pResponseInfo;
 
                   if (!pcbResponseInfoLen)
                      return ERROR_BAD_ENVIRONMENT;
@@ -323,7 +323,7 @@ DWORD WINAPI WsControl(DWORD protocol,
                      return ERROR_BAD_ENVIRONMENT;
                   if (*pcbResponseInfoLen < sizeof(MIB_IPSTATS))
                      return ERROR_LOCK_VIOLATION;
-                  GetIpStatistics((PMIB_IPSTATS)pResponseInfo);
+                  GetIpStatistics(pResponseInfo);
 
                   *pcbResponseInfoLen = sizeof(MIB_IPSTATS);
                }
@@ -346,7 +346,7 @@ DWORD WINAPI WsControl(DWORD protocol,
                      return ERROR_BAD_ENVIRONMENT;
                   if (*pcbResponseInfoLen < sizeof(MIB_UDPSTATS))
                      return ERROR_LOCK_VIOLATION;
-                  GetUdpStatistics((PMIB_UDPSTATS)pResponseInfo);
+                  GetUdpStatistics(pResponseInfo);
                   *pcbResponseInfoLen = sizeof(MIB_UDPSTATS);
                }
                break;
@@ -368,7 +368,7 @@ DWORD WINAPI WsControl(DWORD protocol,
                      return ERROR_BAD_ENVIRONMENT;
                   if (*pcbResponseInfoLen < sizeof(MIB_TCPSTATS))
                      return ERROR_LOCK_VIOLATION;
-                  GetTcpStatistics((PMIB_TCPSTATS)pResponseInfo);
+                  GetTcpStatistics(pResponseInfo);
                   *pcbResponseInfoLen = sizeof(MIB_TCPSTATS);
                }
                break;
@@ -386,7 +386,7 @@ DWORD WINAPI WsControl(DWORD protocol,
          case IP_MIB_ADDRTABLE_ENTRY_ID:
          {
             DWORD index = pcommand->toi_entity.tei_instance;
-            PMIB_IPADDRROW baseIPInfo = (PMIB_IPADDRROW) pResponseInfo;
+            PMIB_IPADDRROW baseIPInfo = pResponseInfo;
             PMIB_IPADDRTABLE table;
             DWORD tableSize, i;
 
@@ -437,7 +437,7 @@ DWORD WINAPI WsControl(DWORD protocol,
                {
                   DWORD routeTableSize, numRoutes, ndx, ret;
                   PMIB_IPFORWARDTABLE table;
-                  IPRouteEntry *winRouteTable  = (IPRouteEntry *) pResponseInfo;
+                  IPRouteEntry *winRouteTable  = pResponseInfo;
 
                   if (!pcbResponseInfoLen)
                      return ERROR_BAD_ENVIRONMENT;
