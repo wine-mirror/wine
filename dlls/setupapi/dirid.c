@@ -28,6 +28,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "winspool.h"
 #include "setupapi.h"
 #include "shlobj.h"
 #include "wine/unicode.h"
@@ -86,6 +87,7 @@ static const WCHAR *create_system_dirid( int dirid )
 
     WCHAR buffer[MAX_PATH+32], *str;
     int len;
+    DWORD needed;
 
     switch(dirid)
     {
@@ -138,8 +140,14 @@ static const WCHAR *create_system_dirid( int dirid )
         return get_csidl_dir(CSIDL_PROFILE);
     case DIRID_LOADER:
         return C_Root;  /* FIXME */
+    case DIRID_PRINTPROCESSOR:
+        if (!GetPrintProcessorDirectoryW(NULL, NULL, 1, (LPBYTE)buffer, sizeof(buffer), &needed))
+        {
+            WARN( "cannot retrieve print processor directory\n" );
+            return get_unknown_dirid();
+        }
+        break;
     case DIRID_COLOR:  /* FIXME */
-    case DIRID_PRINTPROCESSOR:  /* FIXME */
     default:
         FIXME( "unknown dirid %d\n", dirid );
         return get_unknown_dirid();
