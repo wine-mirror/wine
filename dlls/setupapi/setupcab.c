@@ -250,7 +250,7 @@ static int CDECL sc_cb_close(INT_PTR hf)
     return -1;
 }
 
-static long CDECL sc_cb_lseek(INT_PTR hf, long dist, int seektype)
+static LONG CDECL sc_cb_lseek(INT_PTR hf, LONG dist, int seektype)
 {
   DWORD ret;
 

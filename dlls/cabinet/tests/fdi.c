@@ -81,7 +81,7 @@ static int CDECL fdi_close(INT_PTR hf)
     return CloseHandle(handle) ? 0 : -1;
 }
 
-static long CDECL fdi_seek(INT_PTR hf, long dist, int seektype)
+static LONG CDECL fdi_seek(INT_PTR hf, LONG dist, int seektype)
 {
     HANDLE handle = (HANDLE) hf;
     return SetFilePointer(handle, dist, NULL, seektype);
@@ -548,7 +548,7 @@ static void test_FDIIsCabinet(void)
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
     ok(GetLastError() == ERROR_INVALID_HANDLE,
        "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-    ok(cabinfo.cbCabinet == 0, "Expected 0, got %ld\n", cabinfo.cbCabinet);
+    ok(cabinfo.cbCabinet == 0, "Expected 0, got %d\n", cabinfo.cbCabinet);
     ok(cabinfo.cFiles == 0, "Expected 0, got %d\n", cabinfo.cFiles);
     ok(cabinfo.cFolders == 0, "Expected 0, got %d\n", cabinfo.cFolders);
     ok(cabinfo.iCabinet == 0, "Expected 0, got %d\n", cabinfo.iCabinet);
@@ -563,7 +563,7 @@ static void test_FDIIsCabinet(void)
     ret = FDIIsCabinet(hfdi, fd, &cabinfo);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(cabinfo.cbCabinet == 0, "Expected 0, got %ld\n", cabinfo.cbCabinet);
+    ok(cabinfo.cbCabinet == 0, "Expected 0, got %d\n", cabinfo.cbCabinet);
     ok(cabinfo.cFiles == 0, "Expected 0, got %d\n", cabinfo.cFiles);
     ok(cabinfo.cFolders == 0, "Expected 0, got %d\n", cabinfo.cFolders);
     ok(cabinfo.iCabinet == 0, "Expected 0, got %d\n", cabinfo.iCabinet);
@@ -584,7 +584,7 @@ static void test_FDIIsCabinet(void)
     ok(cabinfo.setID == 0xbeef, "Expected 0xbeef, got %d\n", cabinfo.setID);
     todo_wine
     {
-        ok(cabinfo.cbCabinet == 182, "Expected 182, got %ld\n", cabinfo.cbCabinet);
+        ok(cabinfo.cbCabinet == 182, "Expected 182, got %d\n", cabinfo.cbCabinet);
         ok(cabinfo.iCabinet == 0, "Expected 0, got %d\n", cabinfo.iCabinet);
     }
 

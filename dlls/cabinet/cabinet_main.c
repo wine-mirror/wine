@@ -148,7 +148,7 @@ static int CDECL fdi_close(INT_PTR hf)
     return CloseHandle(handle) ? 0 : -1;
 }
 
-static long CDECL fdi_seek(INT_PTR hf, long dist, int seektype)
+static LONG CDECL fdi_seek(INT_PTR hf, LONG dist, int seektype)
 {
     HANDLE handle = (HANDLE) hf;
     return SetFilePointer(handle, dist, NULL, seektype);

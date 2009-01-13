@@ -219,7 +219,7 @@ static int CDECL cabinet_close(INT_PTR hf)
     return CloseHandle(handle) ? 0 : -1;
 }
 
-static long CDECL cabinet_seek(INT_PTR hf, long dist, int seektype)
+static LONG CDECL cabinet_seek(INT_PTR hf, LONG dist, int seektype)
 {
     HANDLE handle = (HANDLE)hf;
     /* flags are compatible and so are passed straight through */
