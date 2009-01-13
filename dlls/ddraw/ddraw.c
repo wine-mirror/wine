@@ -3047,7 +3047,7 @@ findRenderTarget(IDirectDrawSurface7 *surface,
                  void *ctx)
 {
     IDirectDrawSurfaceImpl *surf = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, surface);
-    IDirectDrawSurfaceImpl **target = (IDirectDrawSurfaceImpl **) ctx;
+    IDirectDrawSurfaceImpl **target = ctx;
 
     if(!surf->isRenderTarget) {
         *target = surf;

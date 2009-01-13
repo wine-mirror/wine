@@ -2521,7 +2521,7 @@ IDirectDrawSurfaceImpl_SetColorKey(IDirectDrawSurface7 *iface,
                                           Flags,
                                           ctx.CKey);
     IDirectDrawSurface7_EnumAttachedSurfaces(iface,
-                                             (void *) &ctx,
+                                             &ctx,
                                              SetColorKeyEnum);
     LeaveCriticalSection(&ddraw_cs);
     switch(ctx.ret)

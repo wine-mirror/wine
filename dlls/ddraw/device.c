@@ -381,7 +381,7 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
                 {
                     case DDrawHandle_Texture:
                     {
-                        IDirectDrawSurfaceImpl *surf = (IDirectDrawSurfaceImpl *) This->Handles[i].ptr;
+                        IDirectDrawSurfaceImpl *surf = This->Handles[i].ptr;
                         FIXME("Texture Handle %d not unset properly\n", i + 1);
                         surf->Handle = 0;
                     }
@@ -389,7 +389,7 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
 
                     case DDrawHandle_Material:
                     {
-                        IDirect3DMaterialImpl *mat = (IDirect3DMaterialImpl *) This->Handles[i].ptr;
+                        IDirect3DMaterialImpl *mat = This->Handles[i].ptr;
                         FIXME("Material handle %d not unset properly\n", i + 1);
                         mat->Handle = 0;
                     }
@@ -2868,7 +2868,7 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
             }
             else
             {
-                IDirectDrawSurfaceImpl *surf = (IDirectDrawSurfaceImpl *) This->Handles[Value - 1].ptr;
+                IDirectDrawSurfaceImpl *surf = This->Handles[Value - 1].ptr;
                 hr = IDirect3DDevice3_SetTexture(iface, 0, ICOM_INTERFACE(surf, IDirect3DTexture2));
                 break;
             }
@@ -3041,7 +3041,7 @@ IDirect3DDeviceImpl_3_SetLightState(IDirect3DDevice3 *iface,
         }
         else
         {
-            mat = (IDirect3DMaterialImpl *) This->Handles[Value - 1].ptr;
+            mat = This->Handles[Value - 1].ptr;
         }
 
         if (mat != NULL)

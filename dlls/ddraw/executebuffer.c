@@ -131,7 +131,7 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 
 	    case D3DOP_TRIANGLE: {
 	        int i;
-		D3DTLVERTEX *tl_vx = (D3DTLVERTEX *) This->vertex_data;
+                D3DTLVERTEX *tl_vx = This->vertex_data;
 		TRACE("TRIANGLE         (%d)\n", count);
 		
 		if (count*3>This->nb_indices) {
@@ -262,7 +262,7 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 			    WARN("Handle %d is not a material handle\n", matHandle);
 			} else {
 			    IDirect3DMaterialImpl *mat =
-				(IDirect3DMaterialImpl *)lpDevice->Handles[matHandle - 1].ptr;
+                                lpDevice->Handles[matHandle - 1].ptr;
 
 			    mat->activate(mat);
 			}

@@ -751,7 +751,7 @@ DestroyCallback(IDirectDrawSurface7 *surf,
                 void *context)
 {
     IDirectDrawSurfaceImpl *Impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, surf);
-    IDirectDrawImpl *ddraw = (IDirectDrawImpl *) context;
+    IDirectDrawImpl *ddraw = context;
     ULONG ref;
 
     ref = IDirectDrawSurface7_Release(surf);  /* For the EnumSurfaces */
@@ -927,7 +927,7 @@ DllMain(HINSTANCE hInstDLL,
                     hr = IDirectDraw7_EnumSurfaces(ICOM_INTERFACE(ddraw, IDirectDraw7),
                                                     DDENUMSURFACES_ALL,
                                                     &desc,
-                                                    (void *) ddraw,
+                                                    ddraw,
                                                     DestroyCallback);
                     if(hr != D3D_OK)
                         ERR("(%p) EnumSurfaces failed, prepare for trouble\n", ddraw);

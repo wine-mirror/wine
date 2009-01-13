@@ -399,8 +399,8 @@ IDirect3DViewportImpl_TransformVertices(IDirect3DViewport3 *iface,
     multiply_matrix(&mat,&view_mat,&world_mat);
     multiply_matrix(&mat,&proj_mat,&mat);
 
-    in = (float *) lpData->lpIn;
-    out = (float *) lpData->lpOut;
+    in = lpData->lpIn;
+    out = lpData->lpOut;
     outH = lpData->lpHOut;
     for(i = 0; i < dwVertexCount; i++)
     {
@@ -537,7 +537,7 @@ IDirect3DViewportImpl_SetBackground(IDirect3DViewport3 *iface,
 
     if(hMat)
     {
-        This->background = (IDirect3DMaterialImpl *) This->ddraw->d3ddevice->Handles[hMat - 1].ptr;
+        This->background = This->ddraw->d3ddevice->Handles[hMat - 1].ptr;
         TRACE(" setting background color : %f %f %f %f\n",
               This->background->mat.u.diffuse.u1.r,
               This->background->mat.u.diffuse.u2.g,
