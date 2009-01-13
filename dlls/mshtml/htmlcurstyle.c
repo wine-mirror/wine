@@ -32,14 +32,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-typedef struct {
+struct HTMLCurrentStyle {
     DispatchEx dispex;
     const IHTMLCurrentStyleVtbl *lpIHTMLCurrentStyleVtbl;
 
     LONG ref;
 
     nsIDOMCSSStyleDeclaration *nsstyle;
-} HTMLCurrentStyle;
+};
 
 #define HTMLCURSTYLE(x)  ((IHTMLCurrentStyle*)  &(x)->lpIHTMLCurrentStyleVtbl)
 

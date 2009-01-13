@@ -2737,6 +2737,120 @@ interface IHTMLCurrentStyle : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLCurrentStyle2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f658-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLCurrentStyle2 : IDispatch
+{
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_LAYOUTFLOW), displaybind, bindable]
+    HRESULT layoutFlow([retval, out] BSTR * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_WORDWRAP), displaybind, bindable]
+    HRESULT wordWrap([retval, out] BSTR * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_TEXTUNDERLINEPOSITION), displaybind, bindable]
+    HRESULT textUnderlinePosition([retval, out] BSTR * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_HASLAYOUT), displaybind, bindable]
+    HRESULT hasLayout([retval, out] VARIANT_BOOL * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_SCROLLBARBASECOLOR), displaybind, bindable]
+    HRESULT scrollbarBaseColor([retval, out] VARIANT * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_SCROLLBARFACECOLOR), displaybind, bindable]
+    HRESULT scrollbarFaceColor([retval, out] VARIANT * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_SCROLLBAR3DLIGHTCOLOR), displaybind, bindable]
+    HRESULT scrollbar3dLightColor([retval, out] VARIANT * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_SCROLLBARSHADOWCOLOR), displaybind, bindable]
+    HRESULT scrollbarShadowColor([retval, out] VARIANT * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_SCROLLBARHIGHLIGHTCOLOR), displaybind, bindable]
+    HRESULT scrollbarHighlightColor([retval, out] VARIANT * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_SCROLLBARDARKSHADOWCOLOR), displaybind, bindable]
+    HRESULT scrollbarDarkShadowColor([retval, out] VARIANT * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_SCROLLBARARROWCOLOR), displaybind, bindable]
+    HRESULT scrollbarArrowColor([retval, out] VARIANT * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_SCROLLBARTRACKCOLOR), displaybind, bindable]
+    HRESULT scrollbarTrackColor([retval, out] VARIANT * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_WRITINGMODE), displaybind, bindable]
+    HRESULT writingMode([retval, out] BSTR * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_ZOOM), displaybind, bindable]
+    HRESULT zoom([retval, out] VARIANT * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_FILTER), displaybind, bindable]
+    HRESULT filter([retval, out] BSTR * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_TEXTALIGNLAST), displaybind, bindable]
+    HRESULT textAlignLast([retval, out] BSTR * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_TEXTKASHIDASPACE), displaybind, bindable]
+    HRESULT textKashidaSpace([retval, out] VARIANT * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_ISBLOCK), displaybind, bindable, hidden, restricted, nonbrowsable]
+    HRESULT isBlock([retval, out] VARIANT_BOOL * p);
+}
+
+/*****************************************************************************
+ *    IHTMLCurrentStyle3 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f818-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLCurrentStyle3 : IDispatch
+{
+    [propget, id(DISPID_IHTMLCURRENTSTYLE3_TEXTOVERFLOW), displaybind, bindable]
+    HRESULT textOverflow([retval, out] BSTR * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE3_MINHEIGHT), displaybind, bindable]
+    HRESULT minHeight([retval, out] VARIANT * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE3_WORDSPACING), displaybind, bindable]
+    HRESULT wordSpacing([retval, out] VARIANT * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE3_WHITESPACE), displaybind, bindable]
+    HRESULT whiteSpace([retval, out] BSTR * p);
+}
+
+/*****************************************************************************
+ *    IHTMLCurrentStyle4 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f33b-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLCurrentStyle4 : IDispatch
+{
+    [propget, id(DISPID_IHTMLCURRENTSTYLE4_MSINTERPOLATIONMODE), displaybind, bindable]
+    HRESULT msInterpolationMode([retval, out] BSTR * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE4_MAXHEIGHT), displaybind, bindable]
+    HRESULT maxHeight([retval, out] VARIANT * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE4_MINWIDTH), displaybind, bindable]
+    HRESULT minWidth([retval, out] VARIANT * p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE4_MAXWIDTH), displaybind, bindable]
+    HRESULT maxWidth([retval, out] VARIANT * p);
+};
+
+/*****************************************************************************
  *    DispHTMLCurrentStyle dispinterface
  */
 [
@@ -3087,6 +3201,31 @@ methods:
 
     [propget, id(DISPID_IHTMLCURRENTSTYLE3_WHITESPACE), displaybind, bindable]
     BSTR whiteSpace();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE4_MSINTERPOLATIONMODE), displaybind, bindable]
+    BSTR msInterpolationMode();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE4_MAXHEIGHT), displaybind, bindable]
+    VARIANT maxHeight();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE4_MINWIDTH), displaybind, bindable]
+    VARIANT minWidth();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE4_MAXWIDTH), displaybind, bindable]
+    VARIANT maxWidth();
+}
+
+[
+    noncreatable,
+    uuid(3050f3dc-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLCurrentStyle
+{
+    [default] dispinterface DispHTMLCurrentStyle;
+    interface IHTMLCurrentStyle;
+    interface IHTMLCurrentStyle2;
+    interface IHTMLCurrentStyle3;
+    interface IHTMLCurrentStyle4;
 }
 
 /*****************************************************************************
