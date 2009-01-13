@@ -6264,6 +6264,148 @@ static void test_WM_GETDLGCODE(void)
     DestroyWindow(hwnd);
 }
 
+static void test_zoom(void)
+{
+    HWND hwnd;
+    UINT ret;
+    RECT rc;
+    POINT pt;
+    int numerator, denominator;
+
+    hwnd = new_richedit(NULL);
+    GetClientRect(hwnd, &rc);
+    pt.x = (rc.right - rc.left) / 2;
+    pt.y = (rc.bottom - rc.top) / 2;
+    ClientToScreen(hwnd, &pt);
+
+    /* Test initial zoom value */
+    ret = SendMessage(hwnd, EM_GETZOOM, (WPARAM)&numerator, (LPARAM)&denominator);
+    ok(numerator == 0, "Numerator should be initialized to 0 (got %d).\n", numerator);
+    ok(denominator == 0, "Denominator should be initialized to 0 (got %d).\n", denominator);
+    ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
+
+    /* test scroll wheel */
+    hold_key(VK_CONTROL);
+    ret = SendMessage(hwnd, WM_MOUSEWHEEL, MAKEWPARAM(MK_CONTROL, WHEEL_DELTA),
+                      MAKELPARAM(pt.x, pt.y));
+    ok(!ret, "WM_MOUSEWHEEL failed (%d).\n", ret);
+    release_key(VK_CONTROL);
+
+    ret = SendMessage(hwnd, EM_GETZOOM, (WPARAM)&numerator, (LPARAM)&denominator);
+    todo_wine ok(numerator == 110, "incorrect numerator is %d\n", numerator);
+    todo_wine ok(denominator == 100, "incorrect denominator is %d\n", denominator);
+    ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
+
+    /* Test how much the mouse wheel can zoom in and out. */
+    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)490, (LPARAM)100);
+    ok(ret == TRUE, "EM_SETZOOM failed (%d).\n", ret);
+
+    hold_key(VK_CONTROL);
+    ret = SendMessage(hwnd, WM_MOUSEWHEEL, MAKEWPARAM(MK_CONTROL, WHEEL_DELTA),
+                      MAKELPARAM(pt.x, pt.y));
+    ok(!ret, "WM_MOUSEWHEEL failed (%d).\n", ret);
+    release_key(VK_CONTROL);
+
+    ret = SendMessage(hwnd, EM_GETZOOM, (WPARAM)&numerator, (LPARAM)&denominator);
+    todo_wine ok(numerator == 500, "incorrect numerator is %d\n", numerator);
+    ok(denominator == 100, "incorrect denominator is %d\n", denominator);
+    ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
+
+    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)491, (LPARAM)100);
+    ok(ret == TRUE, "EM_SETZOOM failed (%d).\n", ret);
+
+    hold_key(VK_CONTROL);
+    ret = SendMessage(hwnd, WM_MOUSEWHEEL, MAKEWPARAM(MK_CONTROL, WHEEL_DELTA),
+                      MAKELPARAM(pt.x, pt.y));
+    ok(!ret, "WM_MOUSEWHEEL failed (%d).\n", ret);
+    release_key(VK_CONTROL);
+
+    ret = SendMessage(hwnd, EM_GETZOOM, (WPARAM)&numerator, (LPARAM)&denominator);
+    ok(numerator == 491, "incorrect numerator is %d\n", numerator);
+    ok(denominator == 100, "incorrect denominator is %d\n", denominator);
+    ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
+
+    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)20, (LPARAM)100);
+    ok(ret == TRUE, "EM_SETZOOM failed (%d).\n", ret);
+
+    hold_key(VK_CONTROL);
+    ret = SendMessage(hwnd, WM_MOUSEWHEEL, MAKEWPARAM(MK_CONTROL, -WHEEL_DELTA),
+                      MAKELPARAM(pt.x, pt.y));
+    ok(!ret, "WM_MOUSEWHEEL failed (%d).\n", ret);
+    release_key(VK_CONTROL);
+
+    ret = SendMessage(hwnd, EM_GETZOOM, (WPARAM)&numerator, (LPARAM)&denominator);
+    todo_wine ok(numerator == 10, "incorrect numerator is %d\n", numerator);
+    ok(denominator == 100, "incorrect denominator is %d\n", denominator);
+    ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
+
+    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)19, (LPARAM)100);
+    ok(ret == TRUE, "EM_SETZOOM failed (%d).\n", ret);
+
+    hold_key(VK_CONTROL);
+    ret = SendMessage(hwnd, WM_MOUSEWHEEL, MAKEWPARAM(MK_CONTROL, -WHEEL_DELTA),
+                      MAKELPARAM(pt.x, pt.y));
+    ok(!ret, "WM_MOUSEWHEEL failed (%d).\n", ret);
+    release_key(VK_CONTROL);
+
+    ret = SendMessage(hwnd, EM_GETZOOM, (WPARAM)&numerator, (LPARAM)&denominator);
+    ok(numerator == 19, "incorrect numerator is %d\n", numerator);
+    ok(denominator == 100, "incorrect denominator is %d\n", denominator);
+    ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
+
+    /* Test how WM_SCROLLWHEEL treats our custom denominator. */
+    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)50, (LPARAM)13);
+    ok(ret == TRUE, "EM_SETZOOM failed (%d).\n", ret);
+
+    hold_key(VK_CONTROL);
+    ret = SendMessage(hwnd, WM_MOUSEWHEEL, MAKEWPARAM(MK_CONTROL, WHEEL_DELTA),
+                      MAKELPARAM(pt.x, pt.y));
+    ok(!ret, "WM_MOUSEWHEEL failed (%d).\n", ret);
+    release_key(VK_CONTROL);
+
+    ret = SendMessage(hwnd, EM_GETZOOM, (WPARAM)&numerator, (LPARAM)&denominator);
+    todo_wine ok(numerator == 394, "incorrect numerator is %d\n", numerator);
+    todo_wine ok(denominator == 100, "incorrect denominator is %d\n", denominator);
+    ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
+
+    /* Test bounds checking on EM_SETZOOM */
+    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)2, (LPARAM)127);
+    ok(ret == TRUE, "EM_SETZOOM rejected valid values (%d).\n", ret);
+
+    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)127, (LPARAM)2);
+    ok(ret == TRUE, "EM_SETZOOM rejected valid values (%d).\n", ret);
+
+    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)2, (LPARAM)128);
+    todo_wine ok(ret == FALSE, "EM_SETZOOM accepted invalid values (%d).\n", ret);
+
+    ret = SendMessage(hwnd, EM_GETZOOM, (WPARAM)&numerator, (LPARAM)&denominator);
+    todo_wine ok(numerator == 127, "incorrect numerator is %d\n", numerator);
+    todo_wine ok(denominator == 2, "incorrect denominator is %d\n", denominator);
+    ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
+
+    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)128, (LPARAM)2);
+    todo_wine ok(ret == FALSE, "EM_SETZOOM accepted invalid values (%d).\n", ret);
+
+    /* See if negative numbers are accepted. */
+    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)-100, (LPARAM)-100);
+    todo_wine ok(ret == FALSE, "EM_SETZOOM accepted invalid values (%d).\n", ret);
+
+    /* See if negative numbers are accepted. */
+    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)0, (LPARAM)100);
+    todo_wine ok(ret == FALSE, "EM_SETZOOM failed (%d).\n", ret);
+
+    ret = SendMessage(hwnd, EM_GETZOOM, (WPARAM)&numerator, (LPARAM)&denominator);
+    todo_wine ok(numerator == 127, "incorrect numerator is %d\n", numerator);
+    todo_wine ok(denominator == 2, "incorrect denominator is %d\n", denominator);
+    ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
+
+    /* Reset the zoom value */
+    ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)0, (LPARAM)0);
+    ok(ret == TRUE, "EM_SETZOOM failed (%d).\n", ret);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST( editor )
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -6318,6 +6460,7 @@ START_TEST( editor )
   test_autoscroll();
   test_format_rect();
   test_WM_GETDLGCODE();
+  test_zoom();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
