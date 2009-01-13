@@ -67,43 +67,6 @@ static void IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResour
     *pp##type = (IWineD3D##type *) object; \
 }
 
-#define  D3DCREATERESOURCEOBJECTINSTANCE(object, type, d3dtype, _size){ \
-    object=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3D##type##Impl)); \
-    D3DMEMCHECK(object, pp##type); \
-    object->lpVtbl = &IWineD3D##type##_Vtbl;  \
-    object->resource.wineD3DDevice   = This; \
-    object->resource.parent          = parent; \
-    object->resource.resourceType    = d3dtype; \
-    object->resource.ref             = 1; \
-    object->resource.pool            = Pool; \
-    object->resource.format          = Format; \
-    object->resource.usage           = Usage; \
-    object->resource.size            = _size; \
-    object->resource.priority        = 0; \
-    list_init(&object->resource.privateData); \
-    /* Check that we have enough video ram left */ \
-    if (Pool == WINED3DPOOL_DEFAULT) { \
-        if (IWineD3DDevice_GetAvailableTextureMem(iface) <= _size) { \
-            WARN("Out of 'bogus' video memory\n"); \
-            HeapFree(GetProcessHeap(), 0, object); \
-            *pp##type = NULL; \
-            return WINED3DERR_OUTOFVIDEOMEMORY; \
-        } \
-        WineD3DAdapterChangeGLRam(This, _size); \
-    } \
-    object->resource.heapMemory = (0 == _size ? NULL : HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, _size + RESOURCE_ALIGNMENT)); \
-    if (object->resource.heapMemory == NULL && _size != 0) { \
-        FIXME("Out of memory!\n"); \
-        HeapFree(GetProcessHeap(), 0, object); \
-        *pp##type = NULL; \
-        return WINED3DERR_OUTOFVIDEOMEMORY; \
-    } \
-    object->resource.allocatedMemory = (BYTE *)(((ULONG_PTR) object->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1)); \
-    *pp##type = (IWineD3D##type *) object; \
-    IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object) ;\
-    TRACE("(%p) : Created resource %p\n", This, object); \
-}
-
 /**********************************************************
  * Global variable / Constants follow
  **********************************************************/
@@ -190,6 +153,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
     IWineD3DVertexBufferImpl *object;
     WINED3DFORMAT Format = WINED3DFMT_VERTEXDATA; /* Dummy format for now */
     int dxVersion = ( (IWineD3DImpl *) This->wineD3D)->dxVersion;
+    HRESULT hr;
     BOOL conv;
 
     if(Size == 0) {
@@ -205,7 +169,27 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
         return WINED3DERR_INVALIDCALL;
     }
 
-    D3DCREATERESOURCEOBJECTINSTANCE(object, VertexBuffer, WINED3DRTYPE_VERTEXBUFFER, Size)
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        *ppVertexBuffer = NULL;
+        return WINED3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->lpVtbl = &IWineD3DVertexBuffer_Vtbl;
+    hr = resource_init(&object->resource, WINED3DRTYPE_VERTEXBUFFER, This, Size, Usage, Format, Pool, parent);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize resource, returning %#x\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppVertexBuffer = NULL;
+        return hr;
+    }
+
+    TRACE("(%p) : Created resource %p\n", This, object);
+
+    IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object);
 
     TRACE("(%p) : Size=%d, Usage=0x%08x, FVF=%x, Pool=%d - Memory@%p, Iface@%p\n", This, Size, Usage, FVF, Pool, object->resource.allocatedMemory, object);
     *ppVertexBuffer = (IWineD3DVertexBuffer *)object;
@@ -297,10 +281,32 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface
                                                     HANDLE *sharedHandle, IUnknown *parent) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DIndexBufferImpl *object;
+    HRESULT hr;
+
     TRACE("(%p) Creating index buffer\n", This);
 
     /* Allocate the storage for the device */
-    D3DCREATERESOURCEOBJECTINSTANCE(object,IndexBuffer,WINED3DRTYPE_INDEXBUFFER, Length)
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        *ppIndexBuffer = NULL;
+        return WINED3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->lpVtbl = &IWineD3DIndexBuffer_Vtbl;
+    hr = resource_init(&object->resource, WINED3DRTYPE_INDEXBUFFER, This, Length, Usage, Format, Pool, parent);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize resource, returning %#x\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppIndexBuffer = NULL;
+        return hr;
+    }
+
+    TRACE("(%p) : Created resource %p\n", This, object);
+
+    IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object);
 
     if(Pool != WINED3DPOOL_SYSTEMMEM && !(Usage & WINED3DUSAGE_DYNAMIC) && GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT)) {
         CreateIndexBufferVBO(This, object);
@@ -588,6 +594,8 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     const struct GlPixelFormatDesc *glDesc;
     const StaticPixelFormatDesc *tableEntry = getFormatDescEntry(Format, &GLINFO_LOCATION, &glDesc);
     UINT mul_4w, mul_4h;
+    HRESULT hr;
+
     TRACE("(%p) Create surface\n",This);
     
     /** FIXME: Check ranges on the inputs are valid 
@@ -646,7 +654,30 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     if(glDesc->heightscale != 0.0) Size *= glDesc->heightscale;
 
     /** Create and initialise the surface resource **/
-    D3DCREATERESOURCEOBJECTINSTANCE(object,Surface,WINED3DRTYPE_SURFACE, Size)
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        *ppSurface = NULL;
+        return WINED3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->lpVtbl = &IWineD3DSurface_Vtbl;
+    hr = resource_init(&object->resource, WINED3DRTYPE_SURFACE, This, Size, Usage, Format, Pool, parent);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize resource, returning %#x\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppSurface = NULL;
+        return hr;
+    }
+
+    TRACE("(%p) : Created resource %p\n", This, object);
+
+    IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object);
+
+    *ppSurface = (IWineD3DSurface *)object;
+
     /* "Standalone" surface */
     IWineD3DSurface_SetContainer((IWineD3DSurface *)object, NULL);
 
@@ -771,7 +802,30 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
         return WINED3DERR_INVALIDCALL;
     }
 
-    D3DCREATERESOURCEOBJECTINSTANCE(object, Texture, WINED3DRTYPE_TEXTURE, 0);
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        *ppTexture = NULL;
+        return WINED3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->lpVtbl = &IWineD3DTexture_Vtbl;
+    hr = resource_init(&object->resource, WINED3DRTYPE_TEXTURE, This, 0, Usage, Format, Pool, parent);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize resource, returning %#x\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppTexture = NULL;
+        return hr;
+    }
+
+    TRACE("(%p) : Created resource %p\n", This, object);
+
+    IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object);
+
+    *ppTexture = (IWineD3DTexture *)object;
+
     basetexture_init(&object->baseTexture, Levels, Usage);
     object->width  = Width;
     object->height = Height;
@@ -902,6 +956,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     UINT                       tmpH;
     UINT                       tmpD;
     const struct GlPixelFormatDesc *glDesc;
+    HRESULT hr;
 
     getFormatDescEntry(Format, &GLINFO_LOCATION, &glDesc);
 
@@ -916,7 +971,28 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
         return WINED3DERR_INVALIDCALL;
     }
 
-    D3DCREATERESOURCEOBJECTINSTANCE(object, VolumeTexture, WINED3DRTYPE_VOLUMETEXTURE, 0);
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        *ppVolumeTexture = NULL;
+        return WINED3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->lpVtbl = &IWineD3DVolumeTexture_Vtbl;
+    hr = resource_init(&object->resource, WINED3DRTYPE_VOLUMETEXTURE, This, 0, Usage, Format, Pool, parent);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize resource, returning %#x\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppVolumeTexture = NULL;
+        return hr;
+    }
+
+    TRACE("(%p) : Created resource %p\n", This, object);
+
+    IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object);
+
     basetexture_init(&object->baseTexture, Levels, Usage);
 
     TRACE("(%p) : W(%d) H(%d) D(%d), Lvl(%d) Usage(%d), Fmt(%u,%s), Pool(%s)\n", This, Width, Height,
@@ -996,13 +1072,37 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
     IWineD3DDeviceImpl        *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVolumeImpl        *object; /** NOTE: impl ref allowed since this is a create function **/
     const StaticPixelFormatDesc *formatDesc  = getFormatDescEntry(Format, NULL, NULL);
+    HRESULT hr;
 
     if(!GL_SUPPORT(EXT_TEXTURE3D)) {
         WARN("(%p) : Volume cannot be created - no volume texture support\n", This);
         return WINED3DERR_INVALIDCALL;
     }
 
-    D3DCREATERESOURCEOBJECTINSTANCE(object, Volume, WINED3DRTYPE_VOLUME, ((Width * formatDesc->bpp) * Height * Depth))
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        *ppVolume = NULL;
+        return WINED3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->lpVtbl = &IWineD3DVolume_Vtbl;
+    hr = resource_init(&object->resource, WINED3DRTYPE_VOLUME, This,
+            Width * Height * Depth * formatDesc->bpp, Usage, Format, Pool, parent);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize resource, returning %#x\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppVolume = NULL;
+        return hr;
+    }
+
+    TRACE("(%p) : Created resource %p\n", This, object);
+
+    IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object);
+
+    *ppVolume = (IWineD3DVolume *)object;
 
     TRACE("(%p) : W(%d) H(%d) D(%d), Usage(%d), Fmt(%u,%s), Pool(%s)\n", This, Width, Height,
           Depth, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
@@ -1049,7 +1149,28 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
         return WINED3DERR_INVALIDCALL;
     }
 
-    D3DCREATERESOURCEOBJECTINSTANCE(object, CubeTexture, WINED3DRTYPE_CUBETEXTURE, 0);
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        *ppCubeTexture = NULL;
+        return WINED3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->lpVtbl = &IWineD3DCubeTexture_Vtbl;
+    hr = resource_init(&object->resource, WINED3DRTYPE_CUBETEXTURE, This, 0, Usage, Format, Pool, parent);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize resource, returning %#x\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppCubeTexture = NULL;
+        return hr;
+    }
+
+    TRACE("(%p) : Created resource %p\n", This, object);
+
+    IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object);
+
     basetexture_init(&object->baseTexture, Levels, Usage);
 
     TRACE("(%p) Create Cube Texture\n", This);
