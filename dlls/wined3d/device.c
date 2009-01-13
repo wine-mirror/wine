@@ -662,7 +662,31 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
-    object->lpVtbl = &IWineD3DSurface_Vtbl;
+    /* Look at the implementation and set the correct Vtable */
+    switch(Impl)
+    {
+        case SURFACE_OPENGL:
+            /* Check if a 3D adapter is available when creating gl surfaces */
+            if (!This->adapter)
+            {
+                ERR("OpenGL surfaces are not available without opengl\n");
+                HeapFree(GetProcessHeap(), 0, object);
+                return WINED3DERR_NOTAVAILABLE;
+            }
+            object->lpVtbl = &IWineD3DSurface_Vtbl;
+            break;
+
+        case SURFACE_GDI:
+            object->lpVtbl = &IWineGDISurface_Vtbl;
+            break;
+
+        default:
+            /* To be sure to catch this */
+            ERR("Unknown requested surface implementation %d!\n", Impl);
+            HeapFree(GetProcessHeap(), 0, object);
+            return WINED3DERR_INVALIDCALL;
+    }
+
     hr = resource_init(&object->resource, WINED3DRTYPE_SURFACE, This, Size, Usage, Format, Pool, parent);
     if (FAILED(hr))
     {
@@ -745,34 +769,19 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
            This, Width, Height, Format, debug_d3dformat(Format),
            (WINED3DFMT_D16_LOCKABLE == Format), *ppSurface, object->resource.allocatedMemory, object->resource.size);
 
-    /* Look at the implementation and set the correct Vtable */
-    switch(Impl) {
-        case SURFACE_OPENGL:
-            /* Check if a 3D adapter is available when creating gl surfaces */
-            if(!This->adapter) {
-                ERR("OpenGL surfaces are not available without opengl\n");
-                HeapFree(GetProcessHeap(), 0, object->resource.allocatedMemory);
-                HeapFree(GetProcessHeap(), 0, object);
-                return WINED3DERR_NOTAVAILABLE;
-            }
-            break;
-
-        case SURFACE_GDI:
-            object->lpVtbl = &IWineGDISurface_Vtbl;
-            break;
-
-        default:
-            /* To be sure to catch this */
-            ERR("Unknown requested surface implementation %d!\n", Impl);
-            IWineD3DSurface_Release((IWineD3DSurface *) object);
-            return WINED3DERR_INVALIDCALL;
-    }
-
     list_init(&object->renderbuffers);
 
     /* Call the private setup routine */
-    return IWineD3DSurface_PrivateSetup( (IWineD3DSurface *) object );
+    hr = IWineD3DSurface_PrivateSetup((IWineD3DSurface *)object);
+    if (FAILED(hr))
+    {
+        ERR("Private setup failed, returning %#x\n", hr);
+        IWineD3DSurface_Release(*ppSurface);
+        *ppSurface = NULL;
+        return hr;
+    }
 
+    return hr;
 }
 
 static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Width, UINT Height, UINT Levels,
