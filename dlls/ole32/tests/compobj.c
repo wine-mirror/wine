@@ -29,6 +29,9 @@
 #include "shlguid.h"
 #include "urlmon.h" /* for CLSID_FileProtocol */
 
+#include "initguid.h"
+#include "ctxtcall.h"
+
 #include "wine/test.h"
 
 /* functions that are not present on all versions of Windows */
@@ -967,6 +970,7 @@ static void test_CoGetObjectContext(void)
     HRESULT hr;
     ULONG refs;
     IComThreadingInfo *pComThreadingInfo;
+    IContextCallback *pContextCallback;
     APTTYPE apttype;
     THDTYPE thdtype;
 
@@ -996,6 +1000,17 @@ static void test_CoGetObjectContext(void)
     refs = IComThreadingInfo_Release(pComThreadingInfo);
     ok(refs == 0, "pComThreadingInfo should have 0 refs instead of %d refs\n", refs);
 
+    hr = pCoGetObjectContext(&IID_IContextCallback, (void **)&pContextCallback);
+    todo_wine {
+    ok_ole_success(hr, "CoGetObjectContext(ContextCallback)");
+    }
+
+    if (hr == S_OK)
+    {
+        refs = IContextCallback_Release(pContextCallback);
+        ok(refs == 0, "pContextCallback should have 0 refs instead of %d refs\n", refs);
+    }
+
     CoUninitialize();
 
     pCoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -1013,6 +1028,17 @@ static void test_CoGetObjectContext(void)
 
     refs = IComThreadingInfo_Release(pComThreadingInfo);
     ok(refs == 0, "pComThreadingInfo should have 0 refs instead of %d refs\n", refs);
+
+    hr = pCoGetObjectContext(&IID_IContextCallback, (void **)&pContextCallback);
+    todo_wine {
+    ok_ole_success(hr, "CoGetObjectContext(ContextCallback)");
+    }
+
+    if (hr == S_OK)
+    {
+        refs = IContextCallback_Release(pContextCallback);
+        ok(refs == 0, "pContextCallback should have 0 refs instead of %d refs\n", refs);
+    }
 
     CoUninitialize();
 }
