@@ -1562,6 +1562,9 @@ NtAccessCheck(
         SecurityDescriptor, ClientToken, DesiredAccess, GenericMapping,
         PrivilegeSet, ReturnLength, GrantedAccess, AccessStatus);
 
+    if (!PrivilegeSet || !ReturnLength)
+        return STATUS_ACCESS_VIOLATION;
+
     SERVER_START_REQ( access_check )
     {
         struct security_descriptor sd;
