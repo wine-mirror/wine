@@ -34,7 +34,7 @@ static HRESULT WINAPI IDirectMusicMotifTrack_IUnknown_QueryInterface (LPUNKNOWN 
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
 	if (IsEqualIID (riid, &IID_IUnknown)) {
-		*ppobj = (LPUNKNOWN)&This->UnknownVtbl;
+		*ppobj = &This->UnknownVtbl;
 		IDirectMusicMotifTrack_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IDirectMusicTrack)
@@ -43,7 +43,7 @@ static HRESULT WINAPI IDirectMusicMotifTrack_IUnknown_QueryInterface (LPUNKNOWN 
 		IDirectMusicMotifTrack_IDirectMusicTrack_AddRef ((LPDIRECTMUSICTRACK8)&This->TrackVtbl);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IPersistStream)) {
-		*ppobj = (LPPERSISTSTREAM)&This->PersistStreamVtbl;
+		*ppobj = &This->PersistStreamVtbl;
 		IDirectMusicMotifTrack_IPersistStream_AddRef ((LPPERSISTSTREAM)&This->PersistStreamVtbl);
 		return S_OK;
 	}

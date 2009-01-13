@@ -466,35 +466,35 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv) {
     TRACE("(%s, %s, %p)\n", debugstr_dmguid(rclsid), debugstr_dmguid(riid), ppv);
     
 	if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSection) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &Section_CF;
+                *ppv = &Section_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicStyle) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &Style_CF;
+                *ppv = &Style_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;		
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicChordTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &ChordTrack_CF;
+                *ppv = &ChordTrack_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;	
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicCommandTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &CommandTrack_CF;
+                *ppv = &CommandTrack_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;		
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicStyleTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &StyleTrack_CF;
+                *ppv = &StyleTrack_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;		
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicMotifTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &MotifTrack_CF;
+                *ppv = &MotifTrack_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;		
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicAuditionTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &AuditionTrack_CF;
+                *ppv = &AuditionTrack_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;		
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicMuteTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &MuteTrack_CF;
+                *ppv = &MuteTrack_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;		
 	}
