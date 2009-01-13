@@ -339,9 +339,9 @@ static void test_Input_whitebox(void)
     wclass.style         = CS_HREDRAW | CS_VREDRAW;
     wclass.lpfnWndProc   = WndProc;
     wclass.hInstance     = hInstance;
-    wclass.hIcon         = LoadIconA( 0, (LPSTR)IDI_APPLICATION );
-    wclass.hCursor       = LoadCursorA( NULL, IDC_ARROW);
-    wclass.hbrBackground = (HBRUSH)( COLOR_WINDOW + 1);
+    wclass.hIcon         = LoadIconA( 0, IDI_APPLICATION );
+    wclass.hCursor       = LoadCursorA( NULL, IDC_ARROW );
+    wclass.hbrBackground = (HBRUSH)( COLOR_WINDOW + 1 );
     wclass.lpszMenuName = 0;
     wclass.cbClsExtra    = 0;
     wclass.cbWndExtra    = 0;

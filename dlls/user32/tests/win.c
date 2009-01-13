@@ -696,7 +696,7 @@ static BOOL RegisterWindowClasses(void)
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandleA(0);
     cls.hIcon = 0;
-    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hCursor = LoadCursorA(0, IDC_ARROW);
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "MainWindowClass";
@@ -709,7 +709,7 @@ static BOOL RegisterWindowClasses(void)
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandleA(0);
     cls.hIcon = 0;
-    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hCursor = LoadCursorA(0, IDC_ARROW);
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "ToolWindowClass";
@@ -1692,7 +1692,7 @@ static BOOL mdi_RegisterWindowClasses(void)
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandleA(0);
     cls.hIcon = 0;
-    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hCursor = LoadCursorA(0, IDC_ARROW);
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "MDI_parent_Class";
@@ -1737,9 +1737,9 @@ static void test_icons(void)
 {
     WNDCLASSEXA cls;
     HWND hwnd;
-    HICON icon = LoadIconA(0, (LPSTR)IDI_APPLICATION);
-    HICON icon2 = LoadIconA(0, (LPSTR)IDI_QUESTION);
-    HICON small_icon = LoadImageA(0, (LPSTR)IDI_APPLICATION, IMAGE_ICON,
+    HICON icon = LoadIconA(0, IDI_APPLICATION);
+    HICON icon2 = LoadIconA(0, IDI_QUESTION);
+    HICON small_icon = LoadImageA(0, IDI_APPLICATION, IMAGE_ICON,
                                   GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED );
     HICON res;
 
@@ -1749,9 +1749,9 @@ static void test_icons(void)
     cls.cbClsExtra = 0;
     cls.cbWndExtra = 0;
     cls.hInstance = 0;
-    cls.hIcon = LoadIconA(0, (LPSTR)IDI_HAND);
+    cls.hIcon = LoadIconA(0, IDI_HAND);
     cls.hIconSm = small_icon;
-    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hCursor = LoadCursorA(0, IDC_ARROW);
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "IconWindowClass";
@@ -3567,7 +3567,7 @@ static void test_redrawnow(void)
    cls.cbWndExtra = 0;
    cls.hInstance = GetModuleHandleA(0);
    cls.hIcon = 0;
-   cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+   cls.hCursor = LoadCursorA(0, IDC_ARROW);
    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
    cls.lpszMenuName = NULL;
    cls.lpszClassName = "RedrawWindowClass";
@@ -3736,7 +3736,7 @@ static void test_csparentdc(void)
    clsMain.cbWndExtra = 0;
    clsMain.hInstance = GetModuleHandleA(0);
    clsMain.hIcon = 0;
-   clsMain.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+   clsMain.hCursor = LoadCursorA(0, IDC_ARROW);
    clsMain.hbrBackground = GetStockObject(WHITE_BRUSH);
    clsMain.lpszMenuName = NULL;
    clsMain.lpszClassName = "ParentDcMainWindowClass";
@@ -3752,7 +3752,7 @@ static void test_csparentdc(void)
    cls.cbWndExtra = 0;
    cls.hInstance = GetModuleHandleA(0);
    cls.hIcon = 0;
-   cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+   cls.hCursor = LoadCursorA(0, IDC_ARROW);
    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
    cls.lpszMenuName = NULL;
    cls.lpszClassName = "ParentDcWindowClass";
@@ -4249,7 +4249,7 @@ static void test_CreateWindow(void)
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandle(0);
     cls.hIcon = 0;
-    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hCursor = LoadCursorA(0, IDC_ARROW);
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "MinMax_WndClass";
@@ -4660,7 +4660,7 @@ static void test_GetUpdateRect(void)
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandleA(0);
     cls.hIcon = 0;
-    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hCursor = LoadCursorA(0, IDC_ARROW);
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = classNameA;
@@ -5083,7 +5083,7 @@ static void test_fullscreen(void)
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandle(0);
     cls.hIcon = 0;
-    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hCursor = LoadCursorA(0, IDC_ARROW);
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "fullscreen_class";
@@ -5296,7 +5296,7 @@ static void test_thick_child_size(HWND parentWindow)
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandleA(0);
     cls.hIcon = 0;
-    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hCursor = LoadCursorA(0, IDC_ARROW);
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = className;

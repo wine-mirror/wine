@@ -872,7 +872,7 @@ static void InitialFocusTest (void)
         HANDLE hTemplate;
         DLGTEMPLATE* pTemplate;
 
-        hResource = FindResourceA(g_hinst,"FOCUS_TEST_DIALOG", (LPSTR)RT_DIALOG);
+        hResource = FindResourceA(g_hinst,"FOCUS_TEST_DIALOG", RT_DIALOG);
         hTemplate = LoadResource(g_hinst, hResource);
         pTemplate = LockResource(hTemplate);
 

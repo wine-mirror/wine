@@ -3211,7 +3211,7 @@ static BOOL mdi_RegisterWindowClasses(void)
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandleA(0);
     cls.hIcon = 0;
-    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hCursor = LoadCursorA(0, IDC_ARROW);
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "MDI_frame_class";
@@ -7094,7 +7094,7 @@ static BOOL RegisterWindowClasses(void)
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandleA(0);
     cls.hIcon = 0;
-    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hCursor = LoadCursorA(0, IDC_ARROW);
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "TestWindowClass";
@@ -11078,7 +11078,7 @@ static void test_menu_messages(void)
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandleA(0);
     cls.hIcon = 0;
-    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hCursor = LoadCursorA(0, IDC_ARROW);
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "TestMenuClass";
