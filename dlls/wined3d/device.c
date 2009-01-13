@@ -1174,6 +1174,29 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
         return WINED3DERR_INVALIDCALL;
     }
 
+    /* Calculate levels for mip mapping */
+    if (Usage & WINED3DUSAGE_AUTOGENMIPMAP)
+    {
+        if (!GL_SUPPORT(SGIS_GENERATE_MIPMAP))
+        {
+            WARN("No mipmap generation support, returning D3DERR_INVALIDCALL\n");
+            return WINED3DERR_INVALIDCALL;
+        }
+
+        if (Levels > 1)
+        {
+            WARN("D3DUSAGE_AUTOGENMIPMAP is set, and level count > 1, returning D3DERR_INVALIDCALL\n");
+            return WINED3DERR_INVALIDCALL;
+        }
+
+        Levels = 1;
+    }
+    else if (!Levels)
+    {
+        Levels = wined3d_log2i(EdgeLength) + 1;
+        TRACE("Calculated levels = %d\n", Levels);
+    }
+
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
@@ -1226,28 +1249,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
         object->baseTexture.magLookup    = magLookup_noFilter;
     }
 
-    /* Calculate levels for mip mapping */
-    if (Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
-        if(!GL_SUPPORT(SGIS_GENERATE_MIPMAP)) {
-            WARN("No mipmap generation support, returning D3DERR_INVALIDCALL\n");
-            HeapFree(GetProcessHeap(), 0, object);
-            *ppCubeTexture = NULL;
-
-            return WINED3DERR_INVALIDCALL;
-        }
-        if(Levels > 1) {
-            WARN("D3DUSAGE_AUTOGENMIPMAP is set, and level count > 1, returning D3DERR_INVALIDCALL\n");
-            HeapFree(GetProcessHeap(), 0, object);
-            *ppCubeTexture = NULL;
-
-            return WINED3DERR_INVALIDCALL;
-        }
-        object->baseTexture.levels = 1;
-    } else if (Levels == 0) {
-        object->baseTexture.levels = wined3d_log2i(EdgeLength) + 1;
-        TRACE("Calculated levels = %d\n", object->baseTexture.levels);
-    }
-
     /* Generate all the surfaces */
     tmpW = EdgeLength;
     for (i = 0; i < object->baseTexture.levels; i++) {
@@ -1266,21 +1267,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
             hr=D3DCB_CreateSurface(This->parent, parent, tmpW, tmpW, Format, Usage, Pool,
                                    i /* Level */, j, &object->surfaces[j][i],pSharedHandle);
 
-            if(hr!= WINED3D_OK) {
-                /* clean up */
-                unsigned int k;
-                unsigned int l;
-                for (l = 0; l < j; l++) {
-                    IWineD3DSurface_Release(object->surfaces[l][i]);
-                }
-                for (k = 0; k < i; k++) {
-                    for (l = 0; l < 6; l++) {
-                        IWineD3DSurface_Release(object->surfaces[l][k]);
-                    }
-                }
-
+            if (FAILED(hr))
+            {
                 FIXME("(%p) Failed to create surface\n",object);
-                HeapFree(GetProcessHeap(),0,object);
+                IWineD3DCubeTexture_Release((IWineD3DCubeTexture *)object);
                 *ppCubeTexture = NULL;
                 return hr;
             }
