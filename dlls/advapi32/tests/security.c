@@ -240,7 +240,7 @@ static void test_sid(void)
      GetLastError() );
 
     ok(pConvertStringSidToSidA("S-1-5-21-93476-23408-4576", &psid), "ConvertStringSidToSidA failed\n");
-    pisid = (SID *)psid;
+    pisid = psid;
     ok(pisid->SubAuthorityCount == 4, "Invalid sub authority count - expected 4, got %d\n", pisid->SubAuthorityCount);
     ok(pisid->SubAuthority[0] == 21, "Invalid subauthority 0 - expceted 21, got %d\n", pisid->SubAuthority[0]);
     ok(pisid->SubAuthority[3] == 4576, "Invalid subauthority 0 - expceted 4576, got %d\n", pisid->SubAuthority[3]);
@@ -266,7 +266,7 @@ static void test_sid(void)
 
         r = pConvertStringSidToSidA( refs[i].refStr, &psid );
         ok( r, "failed to parse sid string\n" );
-        pisid = (PISID)psid;
+        pisid = psid;
         ok( pisid &&
          !memcmp( pisid->IdentifierAuthority.Value, refs[i].auth.Value,
          sizeof(refs[i].auth) ),
@@ -373,7 +373,7 @@ static void test_trustee(void)
         "MultipleTrusteeOperation wrong\n");
     ok( trustee.TrusteeForm == TRUSTEE_IS_SID, "TrusteeForm wrong\n");
     ok( trustee.TrusteeType == TRUSTEE_IS_UNKNOWN, "TrusteeType wrong\n");
-    ok( trustee.ptstrName == (LPSTR) psid, "ptstrName wrong\n" );
+    ok( trustee.ptstrName == psid, "ptstrName wrong\n" );
 
     /* test BuildTrusteeWithObjectsAndSidA (test 1) */
     memset( &trustee, 0xff, sizeof trustee );
@@ -2215,7 +2215,7 @@ static void test_SetEntriesInAcl(void)
     ExplicitAccess.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
     ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
     ExplicitAccess.Trustee.TrusteeType = TRUSTEE_IS_UNKNOWN;
-    ExplicitAccess.Trustee.ptstrName = (LPWSTR)EveryoneSid;
+    ExplicitAccess.Trustee.ptstrName = EveryoneSid;
     res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
     ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
     ok(NewAcl != NULL, "returned acl was NULL\n");
@@ -2263,7 +2263,7 @@ static void test_SetEntriesInAcl(void)
 
     ExplicitAccess.grfAccessMode = REVOKE_ACCESS;
     ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
-    ExplicitAccess.Trustee.ptstrName = (LPWSTR)UsersSid;
+    ExplicitAccess.Trustee.ptstrName = UsersSid;
     res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
     ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
     ok(NewAcl != NULL, "returned acl was NULL\n");
@@ -2508,17 +2508,17 @@ static void test_ConvertSecurityDescriptorToString()
 
     size = 4096;
     pCreateWellKnownSid(WinLocalSid, NULL, sid_buf, &size);
-    SetSecurityDescriptorOwner(&desc, (PSID)sid_buf, FALSE);
+    SetSecurityDescriptorOwner(&desc, sid_buf, FALSE);
     ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Conversion failed\n");
     CHECK_RESULT_AND_FREE("O:S-1-2-0");
 
-    SetSecurityDescriptorOwner(&desc, (PSID)sid_buf, TRUE);
+    SetSecurityDescriptorOwner(&desc, sid_buf, TRUE);
     ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Conversion failed\n");
     CHECK_RESULT_AND_FREE("O:S-1-2-0");
 
     size = sizeof(sid_buf);
     pCreateWellKnownSid(WinLocalSystemSid, NULL, sid_buf, &size);
-    SetSecurityDescriptorOwner(&desc, (PSID)sid_buf, TRUE);
+    SetSecurityDescriptorOwner(&desc, sid_buf, TRUE);
     ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Conversion failed\n");
     CHECK_RESULT_AND_FREE("O:SY");
 
