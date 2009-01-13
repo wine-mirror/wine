@@ -45,6 +45,8 @@ static const WCHAR attrBorder[] =
     {'b','o','r','d','e','r',0};
 static const WCHAR attrBorderLeft[] =
     {'b','o','r','d','e','r','-','l','e','f','t',0};
+static const WCHAR attrBorderLeftStyle[] =
+    {'b','o','r','d','e','r','-','l','e','f','t','-','s','t','y','l','e',0};
 static const WCHAR attrBorderWidth[] =
     {'b','o','r','d','e','r','-','w','i','d','t','h',0};
 static const WCHAR attrColor[] =
@@ -105,6 +107,7 @@ static const struct{
     {attrBackgroundImage,      DISPID_IHTMLSTYLE_BACKGROUNDIMAGE},
     {attrBorder,               DISPID_IHTMLSTYLE_BORDER},
     {attrBorderLeft,           DISPID_IHTMLSTYLE_BORDERLEFT},
+    {attrBorderLeftStyle,      DISPID_IHTMLSTYLE_BORDERLEFTSTYLE},
     {attrBorderWidth,          DISPID_IHTMLSTYLE_BORDERWIDTH},
     {attrColor,                DISPID_IHTMLSTYLE_COLOR},
     {attrCursor,               DISPID_IHTMLSTYLE_CURSOR},
@@ -411,6 +414,32 @@ static HRESULT get_nsstyle_pos(HTMLStyle *This, styleid_t sid, float *p)
     nsAString_Finish(&str_value);
 
     return hres;
+}
+
+static BOOL is_valid_border_style(BSTR v)
+{
+    static const WCHAR styleNone[]   = {'n','o','n','e',0};
+    static const WCHAR styleDotted[] = {'d','o','t','t','e','d',0};
+    static const WCHAR styleDashed[] = {'d','a','s','h','e','d',0};
+    static const WCHAR styleSolid[]  = {'s','o','l','i','d',0};
+    static const WCHAR styleDouble[] = {'d','o','u','b','l','e',0};
+    static const WCHAR styleGroove[] = {'g','r','o','o','v','e',0};
+    static const WCHAR styleRidge[]  = {'r','i','d','g','e',0};
+    static const WCHAR styleInset[]  = {'i','n','s','e','t',0};
+    static const WCHAR styleOutset[] = {'o','u','t','s','e','t',0};
+
+    TRACE("%s\n", debugstr_w(v));
+
+    if(!v || strcmpiW(v, styleNone)   == 0 || strcmpiW(v, styleDotted) == 0 ||
+             strcmpiW(v, styleDashed) == 0 || strcmpiW(v, styleSolid)  == 0 ||
+             strcmpiW(v, styleDouble) == 0 || strcmpiW(v, styleGroove) == 0 ||
+             strcmpiW(v, styleRidge)  == 0 || strcmpiW(v, styleInset)  == 0 ||
+             strcmpiW(v, styleOutset) == 0 )
+    {
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 #define HTMLSTYLE_THIS(iface) DEFINE_THIS(HTMLStyle, HTMLStyle, iface)
@@ -1473,15 +1502,19 @@ static HRESULT WINAPI HTMLStyle_get_borderBottomStyle(IHTMLStyle *iface, BSTR *p
 static HRESULT WINAPI HTMLStyle_put_borderLeftStyle(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    if(!is_valid_border_style(v))
+        return E_INVALIDARG;
+
+    return set_style_attr(This, STYLEID_BORDER_LEFT_STYLE, v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_borderLeftStyle(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_style_attr(This, STYLEID_BORDER_LEFT_STYLE, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_width(IHTMLStyle *iface, VARIANT v)

@@ -1790,6 +1790,108 @@ static void _test_doc_set_title(unsigned line, IHTMLDocument2 *doc, const char *
     SysFreeString(tmp);
 }
 
+#define test_border_styles(p, n) _test_border_styles(__LINE__, p, n)
+static void _test_border_styles(unsigned line, IHTMLStyle *pStyle, BSTR Name)
+{
+    HRESULT hres;
+    DISPID dispid;
+
+    hres = IHTMLStyle_GetIDsOfNames(pStyle, &IID_NULL, (LPOLESTR*)&Name, 1,
+                        LOCALE_USER_DEFAULT, &dispid);
+    ok_(__FILE__,line) (hres == S_OK, "GetIDsOfNames: %08x\n", hres);
+    if(hres == S_OK)
+    {
+        DISPPARAMS params = {NULL,NULL,0,0};
+        DISPID dispidNamed = DISPID_PROPERTYPUT;
+        VARIANT ret;
+        VARIANT vDefault;
+        VARIANTARG arg;
+
+        hres = IHTMLStyle_Invoke(pStyle, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
+            DISPATCH_PROPERTYGET, &params, &vDefault, NULL, NULL);
+        ok_(__FILE__,line) (hres == S_OK, "get_default. ret: %08x\n", hres);
+
+        params.cArgs = 1;
+        params.cNamedArgs = 1;
+        params.rgdispidNamedArgs = &dispidNamed;
+        V_VT(&arg) = VT_BSTR;
+        V_BSTR(&arg) = a2bstr("none");
+        params.rgvarg = &arg;
+        hres = IHTMLStyle_Invoke(pStyle, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
+            DISPATCH_PROPERTYPUT, &params, &ret, NULL, NULL);
+        ok_(__FILE__,line) (hres == S_OK, "none. ret: %08x\n", hres);
+        VariantClear(&arg);
+
+        V_VT(&arg) = VT_BSTR;
+        V_BSTR(&arg) = a2bstr("dotted");
+        hres = IHTMLStyle_Invoke(pStyle, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
+            DISPATCH_PROPERTYPUT, &params, &ret, NULL, NULL);
+        ok_(__FILE__,line) (hres == S_OK, "dotted. ret: %08x\n", hres);
+        VariantClear(&arg);
+
+        V_VT(&arg) = VT_BSTR;
+        V_BSTR(&arg) = a2bstr("dashed");
+        hres = IHTMLStyle_Invoke(pStyle, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
+        DISPATCH_PROPERTYPUT, &params, &ret, NULL, NULL);
+        ok_(__FILE__,line) (hres == S_OK, "dashed. ret: %08x\n", hres);
+        VariantClear(&arg);
+
+        V_VT(&arg) = VT_BSTR;
+        V_BSTR(&arg) = a2bstr("solid");
+        hres = IHTMLStyle_Invoke(pStyle, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
+            DISPATCH_PROPERTYPUT, &params, &ret, NULL, NULL);
+        ok_(__FILE__,line) (hres == S_OK, "solid. ret: %08x\n", hres);
+        VariantClear(&arg);
+
+        V_VT(&arg) = VT_BSTR;
+        V_BSTR(&arg) = a2bstr("double");
+        hres = IHTMLStyle_Invoke(pStyle, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
+            DISPATCH_PROPERTYPUT, &params, &ret, NULL, NULL);
+        ok_(__FILE__,line) (hres == S_OK, "double. ret: %08x\n", hres);
+        VariantClear(&arg);
+
+        V_VT(&arg) = VT_BSTR;
+        V_BSTR(&arg) = a2bstr("groove");
+        hres = IHTMLStyle_Invoke(pStyle, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
+            DISPATCH_PROPERTYPUT, &params, &ret, NULL, NULL);
+        ok_(__FILE__,line) (hres == S_OK, "groove. ret: %08x\n", hres);
+        VariantClear(&arg);
+
+        V_VT(&arg) = VT_BSTR;
+        V_BSTR(&arg) = a2bstr("ridge");
+        hres = IHTMLStyle_Invoke(pStyle, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
+            DISPATCH_PROPERTYPUT, &params, &ret, NULL, NULL);
+        ok_(__FILE__,line) (hres == S_OK, "ridge. ret: %08x\n", hres);
+        VariantClear(&arg);
+
+        V_VT(&arg) = VT_BSTR;
+        V_BSTR(&arg) = a2bstr("inset");
+        hres = IHTMLStyle_Invoke(pStyle, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
+            DISPATCH_PROPERTYPUT, &params, &ret, NULL, NULL);
+        ok_(__FILE__,line) (hres == S_OK, "inset. ret: %08x\n", hres);
+        VariantClear(&arg);
+
+        V_VT(&arg) = VT_BSTR;
+        V_BSTR(&arg) = a2bstr("outset");
+        hres = IHTMLStyle_Invoke(pStyle, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
+            DISPATCH_PROPERTYPUT, &params, &ret, NULL, NULL);
+        ok_(__FILE__,line) (hres == S_OK, "outset. ret: %08x\n", hres);
+        VariantClear(&arg);
+
+        V_VT(&arg) = VT_BSTR;
+        V_BSTR(&arg) = a2bstr("invalid");
+        hres = IHTMLStyle_Invoke(pStyle, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
+            DISPATCH_PROPERTYPUT, &params, &ret, NULL, NULL);
+        ok_(__FILE__,line) (FAILED(hres), "invalid value passed.\n");
+        VariantClear(&arg);
+
+        params.rgvarg = &vDefault;
+        hres = IHTMLStyle_Invoke(pStyle, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
+            DISPATCH_PROPERTYPUT, &params, &ret, NULL, NULL);
+        ok_(__FILE__,line) (hres == S_OK, "default. ret: %08x\n", hres);
+    }
+}
+
 static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
         const elem_type_t *elem_types, long len)
 {
@@ -2784,6 +2886,10 @@ static void test_default_style(IHTMLStyle *style)
     ok(hres == S_OK, "setAttribute failed: %08x\n", hres);
     VariantClear(&v);
 
+    SysFreeString(str);
+
+    str = a2bstr("borderLeftStyle");
+    test_border_styles(style, str);
     SysFreeString(str);
 
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
