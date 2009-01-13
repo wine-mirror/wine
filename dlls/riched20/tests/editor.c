@@ -6292,8 +6292,8 @@ static void test_zoom(void)
     release_key(VK_CONTROL);
 
     ret = SendMessage(hwnd, EM_GETZOOM, (WPARAM)&numerator, (LPARAM)&denominator);
-    todo_wine ok(numerator == 110, "incorrect numerator is %d\n", numerator);
-    todo_wine ok(denominator == 100, "incorrect denominator is %d\n", denominator);
+    ok(numerator == 110, "incorrect numerator is %d\n", numerator);
+    ok(denominator == 100, "incorrect denominator is %d\n", denominator);
     ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
 
     /* Test how much the mouse wheel can zoom in and out. */
@@ -6307,7 +6307,7 @@ static void test_zoom(void)
     release_key(VK_CONTROL);
 
     ret = SendMessage(hwnd, EM_GETZOOM, (WPARAM)&numerator, (LPARAM)&denominator);
-    todo_wine ok(numerator == 500, "incorrect numerator is %d\n", numerator);
+    ok(numerator == 500, "incorrect numerator is %d\n", numerator);
     ok(denominator == 100, "incorrect denominator is %d\n", denominator);
     ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
 
@@ -6335,7 +6335,7 @@ static void test_zoom(void)
     release_key(VK_CONTROL);
 
     ret = SendMessage(hwnd, EM_GETZOOM, (WPARAM)&numerator, (LPARAM)&denominator);
-    todo_wine ok(numerator == 10, "incorrect numerator is %d\n", numerator);
+    ok(numerator == 10, "incorrect numerator is %d\n", numerator);
     ok(denominator == 100, "incorrect denominator is %d\n", denominator);
     ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
 
@@ -6364,8 +6364,8 @@ static void test_zoom(void)
     release_key(VK_CONTROL);
 
     ret = SendMessage(hwnd, EM_GETZOOM, (WPARAM)&numerator, (LPARAM)&denominator);
-    todo_wine ok(numerator == 394, "incorrect numerator is %d\n", numerator);
-    todo_wine ok(denominator == 100, "incorrect denominator is %d\n", denominator);
+    ok(numerator == 394, "incorrect numerator is %d\n", numerator);
+    ok(denominator == 100, "incorrect denominator is %d\n", denominator);
     ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
 
     /* Test bounds checking on EM_SETZOOM */
