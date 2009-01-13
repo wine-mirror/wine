@@ -81,15 +81,15 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_QueryInter
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 	if (IsEqualIID (riid, &IID_IUnknown) ||
 		IsEqualIID (riid, &IID_IDirectMusicContainer)) {
-		*ppobj = (LPVOID)&This->ContainerVtbl;
+		*ppobj = &This->ContainerVtbl;
 		IDirectMusicContainerImpl_IDirectMusicContainer_AddRef ((LPDIRECTMUSICCONTAINER)&This->ContainerVtbl);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IDirectMusicObject)) {
-		*ppobj = (LPVOID)&This->ObjectVtbl;
+		*ppobj = &This->ObjectVtbl;
 		IDirectMusicContainerImpl_IDirectMusicObject_AddRef ((LPDIRECTMUSICOBJECT)&This->ObjectVtbl);		
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IPersistStream)) {
-		*ppobj = (LPVOID)&This->PersistStreamVtbl;
+		*ppobj = &This->PersistStreamVtbl;
 		IDirectMusicContainerImpl_IPersistStream_AddRef ((LPPERSISTSTREAM)&This->PersistStreamVtbl);		
 		return S_OK;
 	}

@@ -96,11 +96,11 @@ static HRESULT WINAPI IDirectMusicLoaderFileStream_IStream_QueryInterface (LPSTR
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 	if (IsEqualIID (riid, &IID_IUnknown) ||
 		IsEqualIID (riid, &IID_IStream)) {
-		*ppobj = (LPVOID)&This->StreamVtbl;
+		*ppobj = &This->StreamVtbl;
 		IDirectMusicLoaderFileStream_IStream_AddRef ((LPSTREAM)&This->StreamVtbl);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IDirectMusicGetLoader)) {
-		*ppobj = (LPVOID)&This->GetLoaderVtbl;
+		*ppobj = &This->GetLoaderVtbl;
 		IDirectMusicLoaderFileStream_IDirectMusicGetLoader_AddRef ((LPDIRECTMUSICGETLOADER)&This->GetLoaderVtbl);		
 		return S_OK;
 	}
@@ -344,11 +344,11 @@ static HRESULT WINAPI IDirectMusicLoaderResourceStream_IStream_QueryInterface (L
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 	if (IsEqualIID (riid, &IID_IUnknown) ||
 		IsEqualIID (riid, &IID_IStream)) {
-		*ppobj = (LPVOID)&This->StreamVtbl;
+		*ppobj = &This->StreamVtbl;
 		IDirectMusicLoaderResourceStream_IStream_AddRef ((LPSTREAM)&This->StreamVtbl);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IDirectMusicGetLoader)) {
-		*ppobj = (LPVOID)&This->GetLoaderVtbl;
+		*ppobj = &This->GetLoaderVtbl;
 		IDirectMusicLoaderResourceStream_IDirectMusicGetLoader_AddRef ((LPDIRECTMUSICGETLOADER)&This->GetLoaderVtbl);		
 		return S_OK;
 	}
@@ -604,11 +604,11 @@ static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_QueryInterface (LP
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 	if (IsEqualIID (riid, &IID_IUnknown) ||
 		IsEqualIID (riid, &IID_IStream)) {
-		*ppobj = (LPVOID)&This->StreamVtbl;
+		*ppobj = &This->StreamVtbl;
 		IDirectMusicLoaderGenericStream_IStream_AddRef ((LPSTREAM)&This->StreamVtbl);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IDirectMusicGetLoader)) {
-		*ppobj = (LPVOID)&This->GetLoaderVtbl;
+		*ppobj = &This->GetLoaderVtbl;
 		IDirectMusicLoaderGenericStream_IDirectMusicGetLoader_AddRef ((LPDIRECTMUSICGETLOADER)&This->GetLoaderVtbl);		
 		return S_OK;
 	}
