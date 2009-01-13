@@ -343,7 +343,7 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     /* Find resource */
     resDir = resSection + (resDataDir->VirtualAddress - sections[i].VirtualAddress);
 
-    resPtr = (const IMAGE_RESOURCE_DIRECTORY*)resDir;
+    resPtr = resDir;
     resPtr = find_entry_by_name( resPtr, typeid, resDir );
     if ( !resPtr )
     {
