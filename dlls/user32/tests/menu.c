@@ -444,53 +444,56 @@ static void test_mbs_help( int ispop, int hassub, int mnuopt,
         DrawMenuBar( hwnd);
     }
     ret = GetMenuItemRect( hwnd, hmenu, 0, &rc);
-    /* check menu width */
-    if( ispop)
-        expect = ( text || hbmp ?
-                4 + (mnuopt != 1 ? GetSystemMetrics(SM_CXMENUCHECK) : 0)
-                : 0) +
-            arrowwidth  + MOD_avec + (hbmp ? bmpsize.cx + 2 : 0) +
-            (text && hastab ? /* TAB space */
-             MOD_avec + ( hastab==2 ? sc_size.cx : 0) : 0) +
-            (text ?  2 + (text[0] ? size.cx :0): 0) ;
-    else
-        expect = !(text || hbmp) ? 0 :
-            ( hbmp ? (text ? 2:0) + bmpsize.cx  : 0 ) +
-            (text ? 2 * MOD_avec + (text[0] ? size.cx :0): 0) ;
-    ok( rc.right - rc.left == expect,
+    if (0)  /* comment out menu size checks, behavior is different in almost every Windows version */
+    {
+        /* check menu width */
+        if( ispop)
+            expect = ( text || hbmp ?
+                       4 + (mnuopt != 1 ? GetSystemMetrics(SM_CXMENUCHECK) : 0)
+                       : 0) +
+                arrowwidth  + MOD_avec + (hbmp ? bmpsize.cx + 2 : 0) +
+                (text && hastab ? /* TAB space */
+                 MOD_avec + ( hastab==2 ? sc_size.cx : 0) : 0) +
+                (text ?  2 + (text[0] ? size.cx :0): 0) ;
+        else
+            expect = !(text || hbmp) ? 0 :
+                ( hbmp ? (text ? 2:0) + bmpsize.cx  : 0 ) +
+                (text ? 2 * MOD_avec + (text[0] ? size.cx :0): 0) ;
+        ok( rc.right - rc.left == expect,
             "menu width wrong, got %d expected %d\n", rc.right - rc.left, expect);
-    failed = failed || !(rc.right - rc.left == expect);
-    /* check menu height */
-    if( ispop)
-        expect = max( ( !(text || hbmp) ? GetSystemMetrics( SM_CYMENUSIZE)/2 : 0),
-                max( (text ? max( 2 + size.cy, MOD_hic + 4) : 0),
-                    (hbmp ? bmpsize.cy + 2 : 0)));
-    else
-        expect = ( !(text || hbmp) ? GetSystemMetrics( SM_CYMENUSIZE)/2 :
-                max( GetSystemMetrics( SM_CYMENU) - 1, (hbmp ? bmpsize.cy : 0)));
-    ok( rc.bottom - rc.top == expect,
+        failed = failed || !(rc.right - rc.left == expect);
+        /* check menu height */
+        if( ispop)
+            expect = max( ( !(text || hbmp) ? GetSystemMetrics( SM_CYMENUSIZE)/2 : 0),
+                          max( (text ? max( 2 + size.cy, MOD_hic + 4) : 0),
+                               (hbmp ? bmpsize.cy + 2 : 0)));
+        else
+            expect = ( !(text || hbmp) ? GetSystemMetrics( SM_CYMENUSIZE)/2 :
+                       max( GetSystemMetrics( SM_CYMENU) - 1, (hbmp ? bmpsize.cy : 0)));
+        ok( rc.bottom - rc.top == expect,
             "menu height wrong, got %d expected %d (%d)\n",
             rc.bottom - rc.top, expect, GetSystemMetrics( SM_CYMENU));
-    failed = failed || !(rc.bottom - rc.top == expect);
-    if( hbmp == HBMMENU_CALLBACK && MOD_GotDrawItemMsg) {
-        /* check the position of the bitmap */
-        /* horizontal */
-        if (!ispop)
-            expect = 3;
-        else if (mnuopt == 0)
-            expect = 4 + GetSystemMetrics(SM_CXMENUCHECK);
-        else if (mnuopt == 1)
-            expect = 4;
-        else /* mnuopt == 2 */
-            expect = 2;
-        ok( expect == MOD_rc[0].left,
+        failed = failed || !(rc.bottom - rc.top == expect);
+        if( hbmp == HBMMENU_CALLBACK && MOD_GotDrawItemMsg) {
+            /* check the position of the bitmap */
+            /* horizontal */
+            if (!ispop)
+                expect = 3;
+            else if (mnuopt == 0)
+                expect = 4 + GetSystemMetrics(SM_CXMENUCHECK);
+            else if (mnuopt == 1)
+                expect = 4;
+            else /* mnuopt == 2 */
+                expect = 2;
+            ok( expect == MOD_rc[0].left,
                 "bitmap left is %d expected %d\n", MOD_rc[0].left, expect);
-        failed = failed || !(expect == MOD_rc[0].left);
-        /* vertical */
-        expect = (rc.bottom - rc.top - MOD_rc[0].bottom + MOD_rc[0].top) / 2;
-        ok( expect == MOD_rc[0].top,
+            failed = failed || !(expect == MOD_rc[0].left);
+            /* vertical */
+            expect = (rc.bottom - rc.top - MOD_rc[0].bottom + MOD_rc[0].top) / 2;
+            ok( expect == MOD_rc[0].top,
                 "bitmap top is %d expected %d\n", MOD_rc[0].top, expect);
-        failed = failed || !(expect == MOD_rc[0].top);
+            failed = failed || !(expect == MOD_rc[0].top);
+        }
     }
     /* if there was a failure, report details */
     if( failed) {
