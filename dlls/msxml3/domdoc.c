@@ -1312,6 +1312,9 @@ static HRESULT WINAPI domdoc_createNode(
 
     TRACE("(%p)->(type,%s,%s,%p)\n", This, debugstr_w(name), debugstr_w(namespaceURI), node);
 
+    if(namespaceURI && namespaceURI[0])
+        FIXME("nodes with namespaces currently not supported.\n");
+
     hr = get_node_type(Type, &node_type);
     if(FAILED(hr))
         return hr;
