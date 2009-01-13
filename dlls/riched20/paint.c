@@ -23,6 +23,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
+static void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph);
+
 void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, const RECT *rcUpdate)
 {
   ME_DisplayItem *item;
@@ -878,7 +880,7 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
   }
 }
 
-void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph)
+static void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph)
 {
   int align = SetTextAlign(c->hDC, TA_BASELINE);
   ME_DisplayItem *p;
@@ -997,22 +999,7 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph)
   SetTextAlign(c->hDC, align);
 }
 
-void ME_ScrollAbs(ME_TextEditor *editor, int absY)
-{
-  ME_Scroll(editor, absY, 1);
-}
-
-void ME_ScrollUp(ME_TextEditor *editor, int cy)
-{
-  ME_Scroll(editor, cy, 2);
-}
-
-void ME_ScrollDown(ME_TextEditor *editor, int cy)
-{ 
-  ME_Scroll(editor, cy, 3);
-}
-
-void ME_Scroll(ME_TextEditor *editor, int value, int type)
+static void ME_Scroll(ME_TextEditor *editor, int value, int type)
 {
   SCROLLINFO si;
   int nOrigPos, nNewPos, nActualScroll;
@@ -1065,7 +1052,26 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
   ME_UpdateScrollBar(editor);
 }
 
- 
+void ME_ScrollAbs(ME_TextEditor *editor, int absY)
+{
+  ME_Scroll(editor, absY, 1);
+}
+
+void ME_ScrollUp(ME_TextEditor *editor, int cy)
+{
+  ME_Scroll(editor, cy, 2);
+}
+
+void ME_ScrollDown(ME_TextEditor *editor, int cy)
+{
+  ME_Scroll(editor, cy, 3);
+}
+
+static BOOL ME_GetYScrollVisible(ME_TextEditor *editor)
+{ /* Returns true if the scrollbar is visible */
+  return (editor->vert_si.nMax - editor->vert_si.nMin > editor->vert_si.nPage);
+}
+
 void ME_UpdateScrollBar(ME_TextEditor *editor)
 { 
   /* Note that this is the only function that should ever call SetScrolLInfo
@@ -1123,11 +1129,6 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
 int ME_GetYScrollPos(ME_TextEditor *editor)
 {
   return editor->vert_si.nPos;
-}
-
-BOOL ME_GetYScrollVisible(ME_TextEditor *editor)
-{ /* Returns true if the scrollbar is visible */
-  return (editor->vert_si.nMax - editor->vert_si.nMin > editor->vert_si.nPage);
 }
 
 void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun)

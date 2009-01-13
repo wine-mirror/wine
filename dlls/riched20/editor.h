@@ -83,7 +83,6 @@ ME_DisplayItem *ME_FindItemBack(ME_DisplayItem *di, ME_DIType nTypeOrClass);
 ME_DisplayItem *ME_FindItemFwd(ME_DisplayItem *di, ME_DIType nTypeOrClass);
 ME_DisplayItem *ME_FindItemBackOrHere(ME_DisplayItem *di, ME_DIType nTypeOrClass);
 ME_DisplayItem *ME_FindItemFwdOrHere(ME_DisplayItem *di, ME_DIType nTypeOrClass);
-BOOL ME_DITypesEqual(ME_DIType type, ME_DIType nTypeOrClass);
 ME_DisplayItem *ME_MakeDI(ME_DIType type);
 void ME_DestroyDisplayItem(ME_DisplayItem *item);
 void ME_DumpDocument(ME_TextBuffer *buffer);
@@ -222,12 +221,9 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
                                   BOOL keepFirstParaFormat);
 void ME_DumpParaStyle(ME_Paragraph *s);
 void ME_DumpParaStyleToBuf(const PARAFORMAT2 *pFmt, char buf[2048]);
-BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, const PARAFORMAT2 *pFmt);
 BOOL ME_SetSelectionParaFormat(ME_TextEditor *editor, const PARAFORMAT2 *pFmt);
-void ME_GetParaFormat(ME_TextEditor *editor, const ME_DisplayItem *para, PARAFORMAT2 *pFmt);
 void ME_GetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt);
 /* marks from first up to (but not including) last */
-void ME_MarkForWrapping(ME_TextEditor *editor, ME_DisplayItem *first, const ME_DisplayItem *last);
 void ME_MarkForPainting(ME_TextEditor *editor, ME_DisplayItem *first, const ME_DisplayItem *last);
 void ME_MarkAllForWrapping(ME_TextEditor *editor);
 void ME_SetDefaultParaFormat(PARAFORMAT2 *pFmt);
@@ -237,7 +233,6 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, const RECT *
 void ME_Repaint(ME_TextEditor *editor);
 void ME_RewrapRepaint(ME_TextEditor *editor);
 void ME_UpdateRepaint(ME_TextEditor *editor);
-void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph);
 void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun);
 void ME_InvalidateSelection(ME_TextEditor *editor);
 void ME_QueueInvalidateFromCursor(ME_TextEditor *editor, int nCursor);
@@ -250,10 +245,8 @@ int  ME_twips2pointsY(ME_Context *c, int y);
 void ME_ScrollAbs(ME_TextEditor *editor, int absY);
 void ME_ScrollUp(ME_TextEditor *editor, int cy);
 void ME_ScrollDown(ME_TextEditor *editor, int cy);
-void ME_Scroll(ME_TextEditor *editor, int value, int type);
 void ME_UpdateScrollBar(ME_TextEditor *editor);
 int ME_GetYScrollPos(ME_TextEditor *editor);
-BOOL ME_GetYScrollVisible(ME_TextEditor *editor);
 
 /* other functions in paint.c */
 int  ME_GetParaBorderWidth(ME_TextEditor *editor, int);
