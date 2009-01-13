@@ -1230,18 +1230,19 @@ ME_SetZoom(ME_TextEditor *editor, int numerator, int denominator)
 {
   /* TODO: Zoom images and objects */
 
-  if (numerator != 0)
+  if (numerator == 0 && denominator == 0)
   {
-    if (denominator == 0)
-      return FALSE;
-    if (1.0 / 64.0 > (float)numerator / (float)denominator
-        || (float)numerator / (float)denominator > 64.0)
-      return FALSE;
+    editor->nZoomNumerator = editor->nZoomDenominator = 0;
+    return TRUE;
   }
-  
+  if (numerator <= 0 || denominator <= 0)
+    return FALSE;
+  if (numerator * 64 <= denominator || numerator / denominator >= 64)
+    return FALSE;
+
   editor->nZoomNumerator = numerator;
   editor->nZoomDenominator = denominator;
-  
+
   ME_RewrapRepaint(editor);
   return TRUE;
 }

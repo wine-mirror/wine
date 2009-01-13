@@ -6376,27 +6376,27 @@ static void test_zoom(void)
     ok(ret == TRUE, "EM_SETZOOM rejected valid values (%d).\n", ret);
 
     ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)2, (LPARAM)128);
-    todo_wine ok(ret == FALSE, "EM_SETZOOM accepted invalid values (%d).\n", ret);
+    ok(ret == FALSE, "EM_SETZOOM accepted invalid values (%d).\n", ret);
 
     ret = SendMessage(hwnd, EM_GETZOOM, (WPARAM)&numerator, (LPARAM)&denominator);
-    todo_wine ok(numerator == 127, "incorrect numerator is %d\n", numerator);
-    todo_wine ok(denominator == 2, "incorrect denominator is %d\n", denominator);
+    ok(numerator == 127, "incorrect numerator is %d\n", numerator);
+    ok(denominator == 2, "incorrect denominator is %d\n", denominator);
     ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
 
     ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)128, (LPARAM)2);
-    todo_wine ok(ret == FALSE, "EM_SETZOOM accepted invalid values (%d).\n", ret);
+    ok(ret == FALSE, "EM_SETZOOM accepted invalid values (%d).\n", ret);
 
     /* See if negative numbers are accepted. */
     ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)-100, (LPARAM)-100);
-    todo_wine ok(ret == FALSE, "EM_SETZOOM accepted invalid values (%d).\n", ret);
+    ok(ret == FALSE, "EM_SETZOOM accepted invalid values (%d).\n", ret);
 
     /* See if negative numbers are accepted. */
     ret = SendMessage(hwnd, EM_SETZOOM, (WPARAM)0, (LPARAM)100);
-    todo_wine ok(ret == FALSE, "EM_SETZOOM failed (%d).\n", ret);
+    ok(ret == FALSE, "EM_SETZOOM failed (%d).\n", ret);
 
     ret = SendMessage(hwnd, EM_GETZOOM, (WPARAM)&numerator, (LPARAM)&denominator);
-    todo_wine ok(numerator == 127, "incorrect numerator is %d\n", numerator);
-    todo_wine ok(denominator == 2, "incorrect denominator is %d\n", denominator);
+    ok(numerator == 127, "incorrect numerator is %d\n", numerator);
+    ok(denominator == 2, "incorrect denominator is %d\n", denominator);
     ok(ret == TRUE, "EM_GETZOOM failed (%d).\n", ret);
 
     /* Reset the zoom value */
