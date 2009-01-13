@@ -736,7 +736,7 @@ static BOOL PRINTDLG_SetUpPaperComboBoxW(HWND hDlg,
     NrOfEntries = DeviceCapabilitiesW(PrinterName, PortName,
                                       fwCapability_Names, Names, dm);
     NrOfEntries = DeviceCapabilitiesW(PrinterName, PortName,
-				      fwCapability_Words, (LPWSTR)Words, dm);
+                                      fwCapability_Words, Words, dm);
 
     /* reset any current content in the combobox */
     SendDlgItemMessageW(hDlg, nIDComboBox, CB_RESETCONTENT, 0, 0);

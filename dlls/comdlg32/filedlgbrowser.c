@@ -156,12 +156,12 @@ static HRESULT COMDLG32_StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPC
 	switch (src->uType)
 	{
 	  case STRRET_WSTR:
-	    lstrcpynW((LPWSTR)dest, src->u.pOleStr, len);
+            lstrcpynW(dest, src->u.pOleStr, len);
 	    COMDLG32_SHFree(src->u.pOleStr);
 	    break;
 
 	  case STRRET_CSTR:
-            if (len && !MultiByteToWideChar( CP_ACP, 0, src->u.cStr, -1, (LPWSTR)dest, len ))
+            if (len && !MultiByteToWideChar( CP_ACP, 0, src->u.cStr, -1, dest, len ))
                 ((LPWSTR)dest)[len-1] = 0;
 	    break;
 
@@ -169,7 +169,7 @@ static HRESULT COMDLG32_StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPC
 	    if (pidl)
 	    {
                 if (len && !MultiByteToWideChar( CP_ACP, 0, ((LPCSTR)&pidl->mkid)+src->u.uOffset,
-                                                 -1, (LPWSTR)dest, len ))
+                                                 -1, dest, len ))
                     ((LPWSTR)dest)[len-1] = 0;
 	    }
 	    break;
@@ -196,7 +196,7 @@ IShellBrowser * IShellBrowserImpl_Construct(HWND hwndOwner)
     IShellBrowserImpl *sb;
     FileOpenDlgInfos *fodInfos = GetPropA(hwndOwner,FileOpenDlgInfosStr);
 
-    sb=(IShellBrowserImpl*)COMDLG32_SHAlloc(sizeof(IShellBrowserImpl));
+    sb = COMDLG32_SHAlloc(sizeof(IShellBrowserImpl));
 
     /* Initialisation of the member variables */
     sb->ref=1;
@@ -231,19 +231,19 @@ static HRESULT WINAPI IShellBrowserImpl_QueryInterface(IShellBrowser *iface,
     { *ppvObj = This;
     }
     else if(IsEqualIID(riid, &IID_IOleWindow))  /*IOleWindow*/
-    { *ppvObj = (IOleWindow*)This;
+    { *ppvObj = This;
     }
 
     else if(IsEqualIID(riid, &IID_IShellBrowser))  /*IShellBrowser*/
-    { *ppvObj = (IShellBrowser*)This;
+    { *ppvObj = This;
     }
 
     else if(IsEqualIID(riid, &IID_ICommDlgBrowser))  /*ICommDlgBrowser*/
-    { *ppvObj = (ICommDlgBrowser*) &(This->lpVtblCommDlgBrowser);
+    { *ppvObj = &(This->lpVtblCommDlgBrowser);
     }
 
     else if(IsEqualIID(riid, &IID_IServiceProvider))  /* IServiceProvider */
-    { *ppvObj = (ICommDlgBrowser*) &(This->lpVtblServiceProvider);
+    { *ppvObj = &(This->lpVtblServiceProvider);
     }
 
     if(*ppvObj)
@@ -442,7 +442,7 @@ static HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
     fodInfos->Shell.FOIShellFolder = psfTmp;
 
     /* Release old pidlAbsCurrent and update its value */
-    COMDLG32_SHFree((LPVOID)fodInfos->ShellInfos.pidlAbsCurrent);
+    COMDLG32_SHFree(fodInfos->ShellInfos.pidlAbsCurrent);
     fodInfos->ShellInfos.pidlAbsCurrent = pidlTmp;
 
     COMDLG32_UpdateCurrentDir(fodInfos);
@@ -795,7 +795,7 @@ static HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_OnDefaultCommand(ICommDl
 	}
 
         /* Free memory used by pidl */
-        COMDLG32_SHFree((LPVOID)pidl);
+        COMDLG32_SHFree(pidl);
 
         return hRes;
     }
