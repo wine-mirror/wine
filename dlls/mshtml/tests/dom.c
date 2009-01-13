@@ -2900,6 +2900,10 @@ static void test_default_style(IHTMLStyle *style)
     test_border_styles(style, str);
     SysFreeString(str);
 
+    str = a2bstr("bordertopstyle");
+    test_border_styles(style, str);
+    SysFreeString(str);
+
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
     if(SUCCEEDED(hres)) {
