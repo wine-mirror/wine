@@ -147,7 +147,7 @@ static void test_Matrix_AffineTransformation2D(void)
     U(exp_mat).m[3][1] = 6.401924f;
     U(exp_mat).m[0][2] = 0.0f;
     U(exp_mat).m[1][2] = 0.0f;
-    U(exp_mat).m[2][2] = 20.0f;
+    U(exp_mat).m[2][2] = 1.0f;
     U(exp_mat).m[3][2] = 0.0f;
     U(exp_mat).m[0][3] = 0.0f;
     U(exp_mat).m[1][3] = 0.0f;
@@ -177,7 +177,7 @@ static void test_Matrix_AffineTransformation2D(void)
     U(exp_mat).m[3][1] = -0.598076f;
     U(exp_mat).m[0][2] = 0.0f;
     U(exp_mat).m[1][2] = 0.0f;
-    U(exp_mat).m[2][2] = 20.0f;
+    U(exp_mat).m[2][2] = 1.0f;
     U(exp_mat).m[3][2] = 0.0f;
     U(exp_mat).m[0][3] = 0.0f;
     U(exp_mat).m[1][3] = 0.0f;
@@ -207,7 +207,7 @@ static void test_Matrix_AffineTransformation2D(void)
     U(exp_mat).m[3][1] = 7.0f;
     U(exp_mat).m[0][2] = 0.0f;
     U(exp_mat).m[1][2] = 0.0f;
-    U(exp_mat).m[2][2] = 20.0f;
+    U(exp_mat).m[2][2] = 1.0f;
     U(exp_mat).m[3][2] = 0.0f;
     U(exp_mat).m[0][3] = 0.0f;
     U(exp_mat).m[1][3] = 0.0f;
@@ -234,7 +234,7 @@ static void test_Matrix_AffineTransformation2D(void)
     U(exp_mat).m[3][1] = 0.0f;
     U(exp_mat).m[0][2] = 0.0f;
     U(exp_mat).m[1][2] = 0.0f;
-    U(exp_mat).m[2][2] = -20.0f;
+    U(exp_mat).m[2][2] = 1.0f;
     U(exp_mat).m[3][2] = 0.0f;
     U(exp_mat).m[0][3] = 0.0f;
     U(exp_mat).m[1][3] = 0.0f;

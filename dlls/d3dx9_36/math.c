@@ -37,6 +37,7 @@ D3DXMATRIX* WINAPI D3DXMatrixAffineTransformation2D(
     CONST D3DXVECTOR2 *protationcenter, FLOAT rotation,
     CONST D3DXVECTOR2 *ptranslation)
 {
+    D3DXMATRIX m1, m2, m3, m4, m5;
     D3DXQUATERNION rot;
     D3DXVECTOR3 rot_center, trans;
 
@@ -71,7 +72,16 @@ D3DXMATRIX* WINAPI D3DXMatrixAffineTransformation2D(
         trans.z=0.0f;
     }
 
-    D3DXMatrixAffineTransformation(pout, scaling, &rot_center, &rot, &trans);
+    D3DXMatrixScaling(&m1, scaling, scaling, 1.0f);
+    D3DXMatrixTranslation(&m2, -rot_center.x, -rot_center.y, -rot_center.z);
+    D3DXMatrixTranslation(&m4, rot_center.x, rot_center.y, rot_center.z);
+    D3DXMatrixRotationQuaternion(&m3, &rot);
+    D3DXMatrixTranslation(&m5, trans.x, trans.y, trans.z);
+
+    D3DXMatrixMultiply(&m1, &m1, &m2);
+    D3DXMatrixMultiply(&m1, &m1, &m3);
+    D3DXMatrixMultiply(&m1, &m1, &m4);
+    D3DXMatrixMultiply(pout, &m1, &m5);
 
     return pout;
 }
