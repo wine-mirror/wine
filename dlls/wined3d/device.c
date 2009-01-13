@@ -802,6 +802,53 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
         return WINED3DERR_INVALIDCALL;
     }
 
+    /* Non-power2 support */
+    if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO))
+    {
+        pow2Width = Width;
+        pow2Height = Height;
+    }
+    else
+    {
+        /* Find the nearest pow2 match */
+        pow2Width = pow2Height = 1;
+        while (pow2Width < Width) pow2Width <<= 1;
+        while (pow2Height < Height) pow2Height <<= 1;
+
+        if (pow2Width != Width || pow2Height != Height)
+        {
+            if (Levels > 1)
+            {
+                WARN("Attempted to create a mipmapped np2 texture without unconditional np2 support\n");
+                return WINED3DERR_INVALIDCALL;
+            }
+            Levels = 1;
+        }
+    }
+
+    /* Calculate levels for mip mapping */
+    if (Usage & WINED3DUSAGE_AUTOGENMIPMAP)
+    {
+        if (!GL_SUPPORT(SGIS_GENERATE_MIPMAP))
+        {
+            WARN("No mipmap generation support, returning D3DERR_INVALIDCALL\n");
+            return WINED3DERR_INVALIDCALL;
+        }
+
+        if (Levels > 1)
+        {
+            WARN("D3DUSAGE_AUTOGENMIPMAP is set, and level count > 1, returning D3DERR_INVALIDCALL\n");
+            return WINED3DERR_INVALIDCALL;
+        }
+
+        Levels = 1;
+    }
+    else if (!Levels)
+    {
+        Levels = wined3d_log2i(max(Width, Height)) + 1;
+        TRACE("Calculated levels = %d\n", Levels);
+    }
+
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
@@ -838,28 +885,6 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
         object->baseTexture.magLookup    = magLookup_noFilter;
     }
 
-    /** Non-power2 support **/
-    if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO)) {
-        pow2Width = Width;
-        pow2Height = Height;
-    } else {
-        /* Find the nearest pow2 match */
-        pow2Width = pow2Height = 1;
-        while (pow2Width < Width) pow2Width <<= 1;
-        while (pow2Height < Height) pow2Height <<= 1;
-
-        if(pow2Width != Width || pow2Height != Height) {
-            if(Levels > 1) {
-                WARN("Attempted to create a mipmapped np2 texture without unconditional np2 support\n");
-                HeapFree(GetProcessHeap(), 0, object);
-                *ppTexture = NULL;
-                return WINED3DERR_INVALIDCALL;
-            } else {
-                Levels = 1;
-            }
-        }
-    }
-
     /** FIXME: add support for real non-power-two if it's provided by the video card **/
     /* Precalculated scaling for 'faked' non power of two texture coords.
        Second also don't use ARB_TEXTURE_RECTANGLE in case the surface format is P8 and EXT_PALETTED_TEXTURE
@@ -894,22 +919,6 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
         object->cond_np2 = FALSE;
     }
     TRACE(" xf(%f) yf(%f)\n", object->baseTexture.pow2Matrix[0], object->baseTexture.pow2Matrix[5]);
-
-    /* Calculate levels for mip mapping */
-    if (Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
-        if(!GL_SUPPORT(SGIS_GENERATE_MIPMAP)) {
-            WARN("No mipmap generation support, returning D3DERR_INVALIDCALL\n");
-            return WINED3DERR_INVALIDCALL;
-        }
-        if(Levels > 1) {
-            WARN("D3DUSAGE_AUTOGENMIPMAP is set, and level count > 1, returning D3DERR_INVALIDCALL\n");
-            return WINED3DERR_INVALIDCALL;
-        }
-        object->baseTexture.levels = 1;
-    } else if (Levels == 0) {
-        object->baseTexture.levels = wined3d_log2i(max(Width, Height)) + 1;
-        TRACE("Calculated levels = %d\n", object->baseTexture.levels);
-    }
 
     /* Generate all the surfaces */
     tmpW = Width;
