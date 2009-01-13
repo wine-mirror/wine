@@ -477,4 +477,4 @@ STRINGTABLE DISCARDABLE
     IDS_OPEN_FILE   "Deschide fișier"
 }
 
-#pragma code_page(default){
+#pragma code_page(default)
