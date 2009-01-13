@@ -154,7 +154,7 @@ HRESULT WINAPI DllRegisterServer(void)
         static const WCHAR friendlyextrend[] = {'E','x','t','e','r','n','a','l',' ','R','e','n','d','e','r','e','r','s',0};
         static const WCHAR friendlydevctrl[] = {'D','e','v','i','c','e',' ','C','o','n','t','r','o','l',' ','F','i','l','t','e','r','s',0};
 
-        pMapper = (IFilterMapper2*)mapvptr;
+        pMapper = mapvptr;
 
         IFilterMapper2_CreateCategory(pMapper, &CLSID_VideoInputDeviceCategory, MERIT_DO_NOT_USE, friendlyvidcap);
         IFilterMapper2_CreateCategory(pMapper, &CLSID_LegacyAmFilterCategory, MERIT_NORMAL, friendlydshow);

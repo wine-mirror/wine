@@ -71,7 +71,7 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_QueryInterface(
     if (IsEqualGUID(riid, &IID_IUnknown) ||
 	IsEqualGUID(riid, &IID_ICreateDevEnum))
     {
-	*ppvObj = (LPVOID)iface;
+        *ppvObj = iface;
 	DEVENUM_ICreateDevEnum_AddRef(iface);
 	return S_OK;
     }

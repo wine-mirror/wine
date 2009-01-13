@@ -56,7 +56,7 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_QueryInterface(
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IPropertyBag))
     {
-        *ppvObj = (LPVOID)iface;
+        *ppvObj = iface;
         DEVENUM_IPropertyBag_AddRef(iface);
         return S_OK;
     }
@@ -122,7 +122,7 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
         pData = HeapAlloc(GetProcessHeap(), 0, received);
 
         /* work around a GCC bug that occurs here unless we use the reswin32 variable as well */
-        reswin32 = RegQueryValueExW(This->hkey, pszPropName, NULL, &type, (LPBYTE)pData, &received);
+        reswin32 = RegQueryValueExW(This->hkey, pszPropName, NULL, &type, pData, &received);
         res = HRESULT_FROM_WIN32(reswin32);
     }
 
@@ -130,7 +130,7 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
     {
         res = E_INVALIDARG; /* assume we cannot coerce into right type */
 
-        TRACE("Read %d bytes (%s)\n", received, type == REG_SZ ? debugstr_w((LPWSTR)pData) : "binary data");
+        TRACE("Read %d bytes (%s)\n", received, type == REG_SZ ? debugstr_w(pData) : "binary data");
 
         switch (type)
         {
@@ -139,14 +139,14 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
             {
             case VT_LPWSTR:
                 V_UNION(pVar, bstrVal) = CoTaskMemAlloc(received);
-                memcpy(V_UNION(pVar, bstrVal), (LPWSTR)pData, received);
+                memcpy(V_UNION(pVar, bstrVal), pData, received);
                 res = S_OK;
                 break;
             case VT_EMPTY:
                 V_VT(pVar) = VT_BSTR;
             /* fall through */
             case VT_BSTR:
-                V_UNION(pVar, bstrVal) = SysAllocStringLen((LPWSTR)pData, received/sizeof(WCHAR) - 1);
+                V_UNION(pVar, bstrVal) = SysAllocStringLen(pData, received/sizeof(WCHAR) - 1);
                 res = S_OK;
                 break;
             }
@@ -224,14 +224,14 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Write(
     {
     case VT_BSTR:
         TRACE("writing %s\n", debugstr_w(V_UNION(pVar, bstrVal)));
-        lpData = (LPVOID)V_UNION(pVar, bstrVal);
+        lpData = V_UNION(pVar, bstrVal);
         dwType = REG_SZ;
         cbData = (lstrlenW(V_UNION(pVar, bstrVal)) + 1) * sizeof(WCHAR);
         break;
     case VT_I4:
     case VT_UI4:
         TRACE("writing %u\n", V_UNION(pVar, ulVal));
-        lpData = (LPVOID)&V_UNION(pVar, ulVal);
+        lpData = &V_UNION(pVar, ulVal);
         dwType = REG_DWORD;
         cbData = sizeof(DWORD);
         break;
@@ -303,7 +303,7 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_QueryInterface(
         IsEqualGUID(riid, &IID_IPersistStream) ||
         IsEqualGUID(riid, &IID_IMoniker))
     {
-        *ppvObj = (LPVOID)iface;
+        *ppvObj = iface;
         DEVENUM_IMediaCatMoniker_AddRef(iface);
         return S_OK;
     }
@@ -412,7 +412,7 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_BindToObject(
             /* first activation of this class */
 	    LPVOID pvptr;
             res=IMoniker_BindToStorage(iface, NULL, NULL, &IID_IPropertyBag, &pvptr);
-	    pProp = (IPropertyBag*)pvptr;
+            pProp = pvptr;
             if (SUCCEEDED(res))
             {
                 V_VT(&var) = VT_LPWSTR;
@@ -426,7 +426,7 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_BindToObject(
             if (SUCCEEDED(res))
             {
                 res=CoCreateInstance(&clsID,NULL,CLSCTX_ALL,&IID_IUnknown,&pvptr);
-		pObj = (IUnknown*)pvptr;
+                pObj = pvptr;
             }
     }
 
@@ -718,7 +718,7 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_QueryInterface(
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IEnumMoniker))
     {
-        *ppvObj = (LPVOID)iface;
+        *ppvObj = iface;
         DEVENUM_IEnumMoniker_AddRef(iface);
         return S_OK;
     }

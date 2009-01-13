@@ -39,7 +39,7 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_QueryInterface(
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IParseDisplayName))
     {
-	*ppvObj = (LPVOID)iface;
+        *ppvObj = iface;
 	IParseDisplayName_AddRef(iface);
 	return S_OK;
     }

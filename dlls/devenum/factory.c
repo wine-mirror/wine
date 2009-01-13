@@ -40,7 +40,7 @@ static HRESULT WINAPI DEVENUM_IClassFactory_QueryInterface(
     if (IsEqualGUID(riid, &IID_IUnknown) ||
 	IsEqualGUID(riid, &IID_IClassFactory))
     {
-	*ppvObj = (LPVOID)iface;
+        *ppvObj = iface;
 	IClassFactory_AddRef(iface);
 	return S_OK;
     }
