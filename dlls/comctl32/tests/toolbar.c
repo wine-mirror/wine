@@ -1,4 +1,4 @@
-/* Unit tests for treeview.
+/* Unit tests for toolbar.
  *
  * Copyright 2005 Krzysztof Foltman
  * Copyright 2007 Mikolaj Zalewski
