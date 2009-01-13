@@ -1227,12 +1227,12 @@ static BOOL CDECL get_next_cabinet(PCCAB pccab, ULONG  cbPrevCab, void *pv)
     return TRUE;
 }
 
-static long CDECL progress(UINT typeStatus, ULONG cb1, ULONG cb2, void *pv)
+static LONG CDECL progress(UINT typeStatus, ULONG cb1, ULONG cb2, void *pv)
 {
     return 0;
 }
 
-static int CDECL file_placed(PCCAB pccab, char *pszFile, long cbFile,
+static int CDECL file_placed(PCCAB pccab, char *pszFile, LONG cbFile,
                              BOOL fContinuation, void *pv)
 {
     return 0;
@@ -1294,7 +1294,7 @@ static int CDECL fci_close(INT_PTR hf, int *err, void *pv)
     return 0;
 }
 
-static long CDECL fci_seek(INT_PTR hf, long dist, int seektype, int *err, void *pv)
+static LONG CDECL fci_seek(INT_PTR hf, LONG dist, int seektype, int *err, void *pv)
 {
     HANDLE handle = (HANDLE)hf;
     DWORD ret;
