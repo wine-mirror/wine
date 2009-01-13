@@ -2737,8 +2737,8 @@ BOOL WINAPI RSAENH_CPGetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
                 finalize_hash(pCryptHash);
                 pCryptHash->dwState = RSAENH_HASHSTATE_FINISHED;
             }
-            
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)pCryptHash->abHashValue, 
+
+            return copy_param(pbData, pdwDataLen, pCryptHash->abHashValue,
                               pCryptHash->dwHashSize);
 
         default:
@@ -2950,13 +2950,13 @@ BOOL WINAPI RSAENH_CPGetKeyParam(HCRYPTPROV hProv, HCRYPTKEY hKey, DWORD dwParam
     switch (dwParam) 
     {
         case KP_IV:
-            return copy_param(pbData, pdwDataLen, (CONST BYTE*)pCryptKey->abInitVector, 
+            return copy_param(pbData, pdwDataLen, pCryptKey->abInitVector,
                               pCryptKey->dwBlockLen);
         
         case KP_SALT:
             return copy_param(pbData, pdwDataLen, 
-                    (CONST BYTE*)&pCryptKey->abKeyValue[pCryptKey->dwKeyLen], pCryptKey->dwSaltLen);
-        
+                    &pCryptKey->abKeyValue[pCryptKey->dwKeyLen], pCryptKey->dwSaltLen);
+
         case KP_PADDING:
             dwValue = PKCS5_PADDING;
             return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwValue, sizeof(DWORD));

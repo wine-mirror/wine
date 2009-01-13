@@ -270,7 +270,7 @@ static BOOL derive_key(ALG_ID aiAlgid, HCRYPTKEY *phKey, DWORD len)
     } 
     ok(result, "%08x\n", GetLastError());
     if (!result) return FALSE;
-    result = CryptHashData(hHash, (BYTE*)pbData, sizeof(pbData), 0);
+    result = CryptHashData(hHash, pbData, sizeof(pbData), 0);
     ok(result, "%08x\n", GetLastError());
     if (!result) return FALSE;
     result = CryptDeriveKey(hProv, aiAlgid, hHash, (len << 16) | CRYPT_EXPORTABLE, phKey);
@@ -315,7 +315,7 @@ static void test_hashes(void)
         /* rsaenh compiled without OpenSSL */
         ok(GetLastError() == NTE_BAD_ALGID, "%08x\n", GetLastError());
     } else {
-        result = CryptHashData(hHash, (BYTE*)pbData, sizeof(pbData), 0);
+        result = CryptHashData(hHash, pbData, sizeof(pbData), 0);
         ok(result, "%08x\n", GetLastError());
 
         len = sizeof(DWORD);
@@ -336,7 +336,7 @@ static void test_hashes(void)
     result = CryptCreateHash(hProv, CALG_MD4, 0, 0, &hHash);
     ok(result, "%08x\n", GetLastError());
 
-    result = CryptHashData(hHash, (BYTE*)pbData, sizeof(pbData), 0);
+    result = CryptHashData(hHash, pbData, sizeof(pbData), 0);
     ok(result, "%08x\n", GetLastError());
 
     len = sizeof(DWORD);
@@ -360,7 +360,7 @@ static void test_hashes(void)
     result = CryptGetHashParam(hHash, HP_HASHSIZE, (BYTE*)&hashlen, &len, 0);
     ok(result && (hashlen == 16), "%08x, hashlen: %d\n", GetLastError(), hashlen);
 
-    result = CryptHashData(hHash, (BYTE*)pbData, sizeof(pbData), 0);
+    result = CryptHashData(hHash, pbData, sizeof(pbData), 0);
     ok(result, "%08x\n", GetLastError());
 
     len = 16;
@@ -390,7 +390,7 @@ static void test_hashes(void)
 
     /* Can't add data after the hash been retrieved */
     SetLastError(0xdeadbeef);
-    result = CryptHashData(hHash, (BYTE*)pbData, sizeof(pbData), 0);
+    result = CryptHashData(hHash, pbData, sizeof(pbData), 0);
     ok(!result, "Expected failure\n");
     ok(GetLastError() == NTE_BAD_HASH_STATE ||
        GetLastError() == NTE_BAD_ALGID, /* Win9x, WinMe, NT4 */
@@ -409,7 +409,7 @@ static void test_hashes(void)
     result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash);
     ok(result, "%08x\n", GetLastError());
 
-    result = CryptHashData(hHash, (BYTE*)pbData, 5, 0);
+    result = CryptHashData(hHash, pbData, 5, 0);
     ok(result, "%08x\n", GetLastError());
 
     if(pCryptDuplicateHash) {
@@ -766,7 +766,7 @@ static void test_rc2(void)
     } else {
         CRYPT_INTEGER_BLOB salt;
 
-        result = CryptHashData(hHash, (BYTE*)pbData, sizeof(pbData), 0);
+        result = CryptHashData(hHash, pbData, sizeof(pbData), 0);
         ok(result, "%08x\n", GetLastError());
 
         dwLen = 16;
@@ -855,7 +855,7 @@ static void test_rc2(void)
     if (!result) {
         ok(GetLastError()==NTE_BAD_ALGID, "%08x\n", GetLastError());
     } else {
-        result = CryptHashData(hHash, (BYTE*)pbData, sizeof(pbData), 0);
+        result = CryptHashData(hHash, pbData, sizeof(pbData), 0);
         ok(result, "%08x\n", GetLastError());
 
         dwLen = 16;
@@ -935,7 +935,7 @@ static void test_rc4(void)
     } else {
         CRYPT_INTEGER_BLOB salt;
 
-        result = CryptHashData(hHash, (BYTE*)pbData, sizeof(pbData), 0);
+        result = CryptHashData(hHash, pbData, sizeof(pbData), 0);
            ok(result, "%08x\n", GetLastError());
 
         dwLen = 16;
@@ -1027,7 +1027,7 @@ static void test_hmac(void) {
     result = CryptSetHashParam(hHash, HP_HMAC_INFO, (BYTE*)&hmacInfo, 0);
     ok(result, "%08x\n", GetLastError());
 
-    result = CryptHashData(hHash, (BYTE*)abData, sizeof(abData), 0);
+    result = CryptHashData(hHash, abData, sizeof(abData), 0);
     ok(result, "%08x\n", GetLastError());
 
     dwLen = sizeof(abData)/sizeof(BYTE);
@@ -1069,7 +1069,7 @@ static void test_mac(void) {
     ok(result, "%08x\n", GetLastError());
     if (!result) return;
 
-    result = CryptHashData(hHash, (BYTE*)abData, sizeof(abData), 0);
+    result = CryptHashData(hHash, abData, sizeof(abData), 0);
     ok(result, "%08x\n", GetLastError());
 
     dwLen = sizeof(abData)/sizeof(BYTE);
