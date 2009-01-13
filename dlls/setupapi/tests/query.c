@@ -68,6 +68,37 @@ static const char inf_data2[] =
     "sp1qfe\\winhttp.dll=3EC6F518114606CA59D4160322077437,000500010A280615,331776,SP1QFE\n"
     "sp1qfe\\xpob2res.dll=DB83156B9F496F20D1EA70E4ABEC0166,000500010A280622,158720,SP1QFE\n";
 
+static const char inf_data3[] =
+    "[Version]\n"
+    "Signature = \"$Windows NT$\"\n"
+    "[DestinationDirs]\n"
+    "CopyAlways.Windir.files = 10\n"
+    "[CopyAlways.Windir.Files]\n"
+    "WindowsCodecs.dll\n";
+
+static const char inf_data4[] =
+    "[Version]\n"
+    "Signature = \"$Windows NT$\"\n"
+    "[CopyAlways.System32.Files]\n"
+    "WindowsCodecs.dll\n";
+
+static const char inf_data5[] =
+    "[Version]\n"
+    "Signature = \"$Windows NT$\"\n"
+    "[DestinationDirs]\n"
+    "DefaultDestDir = 11\n"
+    "CopyAlways.Windir.files = 10\n"
+    "[CopyAlways.Windir.Files]\n"
+    "WindowsCodecs.dll\n";
+
+static const char inf_data6[] =
+    "[Version]\n"
+    "Signature = \"$Windows NT$\"\n"
+    "[DestinationDirs]\n"
+    "DefaultDestDir = 10\n"
+    "[CopyAlways.Windir.Files]\n"
+    "WindowsCodecs.dll\n";
+
 static void create_inf_file(LPSTR filename, const char *data, DWORD size)
 {
     DWORD dwNumberOfBytesWritten;
@@ -395,6 +426,79 @@ static void test_SetupGetTargetPath(void)
     destfile[3] = '\0';
     lstrcatA(destfile, "LANCOM");
     ok(!lstrcmpiA(destfile, buffer), "unexpected result string: %s\n", buffer);
+
+    SetupCloseInfFile(hinf);
+    DeleteFileA(inf_filename);
+
+    create_inf_file(inf_filename, inf_data3, sizeof(inf_data3) - 1);
+
+    hinf = SetupOpenInfFileA(inf_filename, NULL, INF_STYLE_WIN4, NULL);
+    ok(hinf != INVALID_HANDLE_VALUE, "could not open inf file\n");
+
+    required = 0;
+
+    ret = SetupGetTargetPathA(hinf, NULL, "CopyAlways.Windir.Files", buffer, sizeof(buffer), &required);
+    ok(ret, "SetupGetTargetPathA failed\n");
+
+    lstrcpyA(destfile, WIN_DIR);
+
+    ok(required == lstrlenA(destfile) + 1, "unexpected required size: %d\n", required);
+    ok(!lstrcmpiA(buffer, destfile), "unexpected path: %s\n", buffer);
+
+    SetupCloseInfFile(hinf);
+    DeleteFileA(inf_filename);
+
+    create_inf_file(inf_filename, inf_data4, sizeof(inf_data4) - 1);
+
+    hinf = SetupOpenInfFileA(inf_filename, NULL, INF_STYLE_WIN4, NULL);
+    ok(hinf != INVALID_HANDLE_VALUE, "could not open inf file\n");
+
+    required = 0;
+
+    ret = SetupGetTargetPathA(hinf, NULL, "CopyAlways.System32.Files", buffer, sizeof(buffer), &required);
+    ok(ret, "SetupGetTargetPathA failed\n");
+
+    lstrcpyA(destfile, WIN_DIR);
+    lstrcatA(destfile, "\\system32");
+
+    ok(required == lstrlenA(destfile) + 1, "unexpected required size: %d\n", required);
+    ok(!lstrcmpiA(buffer, destfile), "unexpected path: %s\n", buffer);
+
+    SetupCloseInfFile(hinf);
+    DeleteFileA(inf_filename);
+
+    create_inf_file(inf_filename, inf_data5, sizeof(inf_data5) - 1);
+
+    hinf = SetupOpenInfFileA(inf_filename, NULL, INF_STYLE_WIN4, NULL);
+    ok(hinf != INVALID_HANDLE_VALUE, "could not open inf file\n");
+
+    required = 0;
+
+    ret = SetupGetTargetPathA(hinf, NULL, "CopyAlways.Windir.Files", buffer, sizeof(buffer), &required);
+    ok(ret, "SetupGetTargetPathA failed\n");
+
+    lstrcpyA(destfile, WIN_DIR);
+
+    ok(required == lstrlenA(destfile) + 1, "unexpected required size: %d\n", required);
+    ok(!lstrcmpiA(buffer, destfile), "unexpected path: %s\n", buffer);
+
+    SetupCloseInfFile(hinf);
+    DeleteFileA(inf_filename);
+
+    create_inf_file(inf_filename, inf_data6, sizeof(inf_data6) - 1);
+
+    hinf = SetupOpenInfFileA(inf_filename, NULL, INF_STYLE_WIN4, NULL);
+    ok(hinf != INVALID_HANDLE_VALUE, "could not open inf file\n");
+
+    required = 0;
+
+    ret = SetupGetTargetPathA(hinf, NULL, "CopyAlways.Windir.Files", buffer, sizeof(buffer), &required);
+    ok(ret, "SetupGetTargetPathA failed\n");
+
+    lstrcpyA(destfile, WIN_DIR);
+
+    ok(required == lstrlenA(destfile) + 1, "unexpected required size: %d\n", required);
+    ok(!lstrcmpiA(buffer, destfile), "unexpected path: %s\n", buffer);
 
     SetupCloseInfFile(hinf);
     DeleteFileA(inf_filename);

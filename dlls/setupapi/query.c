@@ -579,18 +579,24 @@ BOOL WINAPI SetupGetTargetPathW( HINF hinf, PINFCONTEXT context, PCWSTR section,
         {'D','e','f','a','u','l','t','D','e','s','t','D','i','r',0};
 
     INFCONTEXT ctx;
-    WCHAR *dir;
+    WCHAR *dir, systemdir[MAX_PATH];
     unsigned int size;
+    BOOL ret = FALSE;
 
     TRACE("%p, %p, %s, %p, 0x%08x, %p\n", hinf, context, debugstr_w(section), buffer,
           buffer_size, required_size);
 
-    if (context && !SetupFindFirstLineW( hinf, destination_dirs, NULL, context )) return FALSE;
-    else if (section && !SetupFindFirstLineW( hinf, section, NULL, &ctx )) return FALSE;
-    else if (!SetupFindFirstLineW( hinf, destination_dirs, default_dest_dir, &ctx )) return FALSE;
-
-    if (!(dir = PARSER_get_dest_dir( context ? context : &ctx ))) return FALSE;
-
+    if (context) ret = SetupFindFirstLineW( hinf, destination_dirs, NULL, context );
+    else if (section)
+    {
+        if (!(ret = SetupFindFirstLineW( hinf, destination_dirs, section, &ctx )))
+            ret = SetupFindFirstLineW( hinf, destination_dirs, default_dest_dir, &ctx );
+    }
+    if (!ret || !(dir = PARSER_get_dest_dir( context ? context : &ctx )))
+    {
+        GetSystemDirectoryW( systemdir, MAX_PATH );
+        dir = systemdir;
+    }
     size = strlenW( dir ) + 1;
     if (required_size) *required_size = size;
 
@@ -605,7 +611,7 @@ BOOL WINAPI SetupGetTargetPathW( HINF hinf, PINFCONTEXT context, PCWSTR section,
             return FALSE;
         }
     }
-    HeapFree( GetProcessHeap(), 0, dir );
+    if (dir != systemdir) HeapFree( GetProcessHeap(), 0, dir );
     return TRUE;
 }
 
