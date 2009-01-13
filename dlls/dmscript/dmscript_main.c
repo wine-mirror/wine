@@ -582,43 +582,43 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     TRACE("(%s, %s, %p)\n", debugstr_dmguid(rclsid), debugstr_dmguid(riid), ppv);
     if (IsEqualCLSID (rclsid, &CLSID_DirectMusicScriptAutoImpSegment) && IsEqualIID (riid, &IID_IClassFactory)) {
-      *ppv = (LPVOID) &ScriptAutoImplSegment_CF;
+      *ppv = &ScriptAutoImplSegment_CF;
       IClassFactory_AddRef((IClassFactory*)*ppv);
       return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicScriptTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
-      *ppv = (LPVOID) &ScriptTrack_CF;
+      *ppv = &ScriptTrack_CF;
       IClassFactory_AddRef((IClassFactory*)*ppv);
       return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_AudioVBScript) && IsEqualIID (riid, &IID_IClassFactory)) {
-      *ppv = (LPVOID) &AudioVBScript_CF;
+      *ppv = &AudioVBScript_CF;
       IClassFactory_AddRef((IClassFactory*)*ppv);
       return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicScript) && IsEqualIID (riid, &IID_IClassFactory)) {
-      *ppv = (LPVOID) &Script_CF;
+      *ppv = &Script_CF;
       IClassFactory_AddRef((IClassFactory*)*ppv);
       return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicScriptAutoImpPerformance) && IsEqualIID (riid, &IID_IClassFactory)) {
-      *ppv = (LPVOID) &ScriptAutoImplPerformance_CF;
+      *ppv = &ScriptAutoImplPerformance_CF;
       IClassFactory_AddRef((IClassFactory*)*ppv);
       return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicScriptSourceCodeLoader) && IsEqualIID (riid, &IID_IClassFactory)) {
-      *ppv = (LPVOID) &ScriptSourceCodeLoader_CF;
+      *ppv = &ScriptSourceCodeLoader_CF;
       IClassFactory_AddRef((IClassFactory*)*ppv);
       return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicScriptAutoImpSegmentState) && IsEqualIID (riid, &IID_IClassFactory)) {
-      *ppv = (LPVOID) &ScriptAutoImplSegmentState_CF;
+      *ppv = &ScriptAutoImplSegmentState_CF;
       IClassFactory_AddRef((IClassFactory*)*ppv);
       return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicScriptAutoImpAudioPathConfig) && IsEqualIID (riid, &IID_IClassFactory)) {
-      *ppv = (LPVOID) &ScriptAutoImplAudioPathConfig_CF;
+      *ppv = &ScriptAutoImplAudioPathConfig_CF;
       IClassFactory_AddRef((IClassFactory*)*ppv);
       return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicScriptAutoImpAudioPath) && IsEqualIID (riid, &IID_IClassFactory)) {
-      *ppv = (LPVOID) &ScriptAutoImplAudioPath_CF;
+      *ppv = &ScriptAutoImplAudioPath_CF;
       IClassFactory_AddRef((IClassFactory*)*ppv);
       return S_OK;
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicScriptAutoImpSong) && IsEqualIID (riid, &IID_IClassFactory)) {
-      *ppv = (LPVOID) &ScriptAutoImplSong_CF;
+      *ppv = &ScriptAutoImplSong_CF;
       IClassFactory_AddRef((IClassFactory*)*ppv);
       return S_OK;
 	}		

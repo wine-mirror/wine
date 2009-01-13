@@ -45,19 +45,19 @@ static HRESULT WINAPI IDirectMusicScriptImpl_IUnknown_QueryInterface (LPUNKNOWN 
   TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
   
   if (IsEqualIID (riid, &IID_IUnknown)) {
-    *ppobj = (LPVOID)&This->UnknownVtbl;
+    *ppobj = &This->UnknownVtbl;
     IDirectMusicScriptImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
     return S_OK;	
   } else if (IsEqualIID (riid, &IID_IDirectMusicScript)) {
-    *ppobj = (LPVOID)&This->ScriptVtbl;
+    *ppobj = &This->ScriptVtbl;
     IDirectMusicScriptImpl_IDirectMusicScript_AddRef ((LPDIRECTMUSICSCRIPT)&This->ScriptVtbl);
     return S_OK;
   } else if (IsEqualIID (riid, &IID_IDirectMusicObject)) {
-    *ppobj = (LPVOID)&This->ObjectVtbl;
+    *ppobj = &This->ObjectVtbl;
     IDirectMusicScriptImpl_IDirectMusicObject_AddRef ((LPDIRECTMUSICOBJECT)&This->ObjectVtbl);		
     return S_OK;
   } else if (IsEqualIID (riid, &IID_IPersistStream)) {
-    *ppobj = (LPVOID)&This->PersistStreamVtbl;
+    *ppobj = &This->PersistStreamVtbl;
     IDirectMusicScriptImpl_IPersistStream_AddRef ((LPPERSISTSTREAM)&This->PersistStreamVtbl);		
     return S_OK;
   }
@@ -524,7 +524,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_Load (LPPERSISTSTREA
 								IDirectMusicObject* pObject = NULL;
 								DMUS_OBJECTDESC desc;
 
-								ZeroMemory ((LPVOID)&desc, sizeof(DMUS_OBJECTDESC));
+								ZeroMemory (&desc, sizeof(DMUS_OBJECTDESC));
 								desc.dwSize = sizeof(DMUS_OBJECTDESC);
 								desc.dwValidData = DMUS_OBJ_STREAM | DMUS_OBJ_CLASS;
 								desc.guidClass = CLSID_DirectMusicContainer;
