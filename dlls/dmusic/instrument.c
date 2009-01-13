@@ -33,11 +33,11 @@ static HRESULT WINAPI IDirectMusicInstrumentImpl_IUnknown_QueryInterface (LPUNKN
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 	
 	if (IsEqualIID (riid, &IID_IUnknown)) {
-		*ppobj = (LPVOID)&This->UnknownVtbl;
+		*ppobj = &This->UnknownVtbl;
 		IDirectMusicInstrumentImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 		return S_OK;	
 	} else if (IsEqualIID (riid, &IID_IDirectMusicInstrument)) {
-		*ppobj = (LPVOID)&This->InstrumentVtbl;
+		*ppobj = &This->InstrumentVtbl;
 		IDirectMusicInstrumentImpl_IDirectMusicInstrument_AddRef ((LPDIRECTMUSICINSTRUMENT)&This->InstrumentVtbl);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IDirectMusicInstrumentPRIVATE)) {	
@@ -46,7 +46,7 @@ static HRESULT WINAPI IDirectMusicInstrumentImpl_IUnknown_QueryInterface (LPUNKN
 			that whoever calls it knows the layout of original implementation table and therefore
 			tries to get data by direct access... expect crashes */
 		FIXME("*sigh*... requested private/unspecified interface\n");
-		*ppobj = (LPVOID)&This->UnknownVtbl;
+		*ppobj = &This->UnknownVtbl;
 		IDirectMusicInstrumentImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 		return S_OK;	
 	}

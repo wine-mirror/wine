@@ -91,7 +91,7 @@ static HRESULT WINAPI IDirectMusic8Impl_EnumPort(LPDIRECTMUSIC8 iface, DWORD dwI
 		TRACE("enumerating 'digital sound' ports\n");	
 		if (i == dwIndex)
 		{
-			DirectSoundEnumerateA((LPDSENUMCALLBACKA) register_waveport, (VOID*) pPortCaps);
+			DirectSoundEnumerateA(register_waveport, pPortCaps);
 			return S_OK;	
 		}
 	}
