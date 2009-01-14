@@ -745,7 +745,7 @@ X_PRE_LIBS
 X_CFLAGS
 CPP
 XMKMF
-TARGET
+TARGETFLAGS
 TOOLSDIR
 WIN16_INSTALL
 WIN16_FILES
@@ -3932,7 +3932,7 @@ TOOLSDIR=$wine_cv_toolsdir
 
 if test "$cross_compiling" = "yes"
 then
-    TARGET="$host_alias"
+    TARGETFLAGS="-b $host_alias"
 
 fi
 

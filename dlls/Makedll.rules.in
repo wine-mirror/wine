@@ -48,7 +48,7 @@ all implib: $(IMPORTLIBFILE) $(IMPLIB_SRCS:%=__static_implib__%)
 $(IMPLIB_SRCS:%=__static_implib__%): $(STATICIMPLIB)
 
 $(SPEC_DEF) $(IMPORTLIB:%=lib%.def): $(MAINSPEC)
-	$(WINEBUILD) $(TARGET:%=--target %) -w --def -o $@ --export $(SRCDIR)/$(MAINSPEC)
+	$(WINEBUILD) $(TARGETFLAGS) -w --def -o $@ --export $(SRCDIR)/$(MAINSPEC)
 
 $(IMPORTLIB:%=lib%.def.a): $(IMPLIB_OBJS)
 	$(RM) $@

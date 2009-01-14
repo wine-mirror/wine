@@ -166,7 +166,7 @@ AC_CACHE_CHECK([for the directory containing the Wine tools], wine_cv_toolsdir,
 AC_SUBST(TOOLSDIR,$wine_cv_toolsdir)
 if test "$cross_compiling" = "yes"
 then
-    AC_SUBST(TARGET,"$host_alias")
+    AC_SUBST(TARGETFLAGS,"-b $host_alias")
 fi
 
 AC_PATH_XTRA
