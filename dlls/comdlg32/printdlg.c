@@ -3617,7 +3617,7 @@ BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
     pda = HeapAlloc(GetProcessHeap(),0,sizeof(*pda));
     pda->dlga = setupdlg;
 
-    bRet = (0<DialogBoxIndirectParamA(
+    bRet = (0<DialogBoxIndirectParamW(
 		setupdlg->hInstance,
 		ptr,
 		setupdlg->hwndOwner,
