@@ -2515,8 +2515,6 @@ interface IWineD3DVolume : IWineD3DResource
     HRESULT AddDirtyBox(
         [in] const WINED3DBOX *dirty_box
     );
-    HRESULT CleanDirtyBox(
-    );
     HRESULT LoadTexture(
         [in] int gl_level,
         [in] BOOL srgb_mode

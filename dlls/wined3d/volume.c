@@ -261,18 +261,6 @@ static HRESULT WINAPI IWineD3DVolumeImpl_UnlockBox(IWineD3DVolume *iface) {
 
 /* Internal use functions follow : */
 
-static HRESULT WINAPI IWineD3DVolumeImpl_CleanDirtyBox(IWineD3DVolume *iface) {
-  IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-  This->dirty = FALSE;
-  This->lockedBox.Left   = This->currentDesc.Width;
-  This->lockedBox.Top    = This->currentDesc.Height;
-  This->lockedBox.Front  = This->currentDesc.Depth;
-  This->lockedBox.Right  = 0;
-  This->lockedBox.Bottom = 0;
-  This->lockedBox.Back   = 0;
-  return WINED3D_OK;
-}
-
 static HRESULT WINAPI IWineD3DVolumeImpl_AddDirtyBox(IWineD3DVolume *iface, CONST WINED3DBOX* pDirtyBox) {
   IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
   This->dirty = TRUE;
@@ -375,7 +363,6 @@ const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
     IWineD3DVolumeImpl_UnlockBox,
     /* Internal interface */
     IWineD3DVolumeImpl_AddDirtyBox,
-    IWineD3DVolumeImpl_CleanDirtyBox,
     IWineD3DVolumeImpl_LoadTexture,
     IWineD3DVolumeImpl_SetContainer
 };
