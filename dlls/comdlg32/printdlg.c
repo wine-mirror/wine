@@ -2932,9 +2932,13 @@ PRINTDLG_PS_WMCommandA(
 	    char TmpText[25];
 	    char TmpText2[25];
             DWORD tmp = pda->dlga->ptPaperSize.x;
+            DEVMODEA *dm = GlobalLock(pda->dlga->hDevMode);
 
             pda->dlga->ptPaperSize.x = pda->dlga->ptPaperSize.y;
             pda->dlga->ptPaperSize.y = tmp;
+
+            dm->u1.s1.dmOrientation = (id == rad1) ? DMORIENT_PORTRAIT : DMORIENT_LANDSCAPE;
+            GlobalUnlock(pda->dlga->hDevMode);
 
 	    GetDlgItemTextA(hDlg, edt4, TmpText, sizeof(TmpText));
 	    GetDlgItemTextA(hDlg, edt5, TmpText2, sizeof(TmpText2));
