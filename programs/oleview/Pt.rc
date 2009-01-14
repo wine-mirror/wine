@@ -152,7 +152,7 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "Ligar a outra máquina"
 FONT 8, "MS Shell Dlg"
 {
-    LTEXT   "&Nome da máquina:", IDIGNORE, 5, 6, 190, 8
+    LTEXT   "&Nome da máquina:", -1, 5, 6, 190, 8
     EDITTEXT    IDC_MACHINE, 5, 16, 190, 12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
     DEFPUSHBUTTON   "&OK", IDOK, 200, 5, 45, 14
     PUSHBUTTON  "&Cancelar", IDCANCEL, 200, 22, 45, 14
@@ -163,10 +163,10 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "Configuração do Sistema"
 FONT 8, "MS Shell Dlg"
 {
-    LTEXT   "Configurações do Sistema", IDIGNORE, 5, 6, 160, 8
+    LTEXT   "Configurações do Sistema", -1, 5, 6, 160, 8
     CHECKBOX    "&Activar COM Distribuídos", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
     CHECKBOX    "Activar ligações &remotas (Win95 apenas)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
-    LTEXT   "Estas configurações alteram apenas valores de registo.\nNão tem consequências no desempenho do Wine.", IDIGNORE, 5, 50, 160, 40
+    LTEXT   "Estas configurações alteram apenas valores de registo.\nNão tem consequências no desempenho do Wine.", -1, 5, 50, 160, 40
     DEFPUSHBUTTON   "&OK", IDOK, 70, 80, 45, 14
     PUSHBUTTON  "&Cancelar", IDCANCEL, 120, 80, 45, 14
 }
@@ -176,9 +176,9 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "Visualizador de Interface por defeito"
 FONT 8, "MS Shell Dlg"
 {
-    LTEXT   "Interface", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "Interface", -1, 5, 6, 50, 8
     LTEXT   "", IDC_LABEL, 60, 6, 145, 8
-    LTEXT   "IID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "IID:", -1, 5, 16, 50, 8
     LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
     DEFPUSHBUTTON   "&Fechar", IDCANCEL, 230, 6, 45, 14
     PUSHBUTTON  "&Ver informação do tipo", IDC_VIEWTYPEINFO, 6, 31, 70, 14, WS_DISABLED
@@ -189,9 +189,9 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "Visualizador de Interface IPersist"
 FONT 8, "MS Shell Dlg"
 {
-    LTEXT   "Nome da classe:", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "Nome da classe:", -1, 5, 6, 50, 8
     LTEXT   "", IDC_LABEL, 60, 6, 145, 8
-    LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "CLSID:", -1, 5, 16, 50, 8
     LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
     DEFPUSHBUTTON   "&Fechar", IDCANCEL, 230, 6, 45, 14
 }
@@ -201,9 +201,9 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "Visualizador de Interface IPersistStream"
 FONT 8, "MS Shell Dlg"
 {
-    LTEXT   "Nome da classe:", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "Nome da classe:", -1, 5, 6, 50, 8
     LTEXT   "", IDC_LABEL, 60, 6, 145, 8
-    LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "CLSID:", -1, 5, 16, 50, 8
     LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
     DEFPUSHBUTTON   "&Fechar", IDCANCEL, 230, 6, 45, 14
     PUSHBUTTON  "&IsDirty", IDC_ISDIRTY_BUTTON, 6, 31, 50, 14

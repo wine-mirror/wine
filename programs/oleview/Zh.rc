@@ -154,7 +154,7 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "连接到另外一台计算机"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT         "计算机名称(&M):", IDIGNORE, 5, 6, 190, 8
+    LTEXT         "计算机名称(&M):", -1, 5, 6, 190, 8
     EDITTEXT    IDC_MACHINE, 5, 16, 190, 12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
     DEFPUSHBUTTON "确定(&O)", IDOK, 200, 5, 45, 14
     PUSHBUTTON    "取消(&C)", IDCANCEL, 200, 22, 45, 14
@@ -165,10 +165,10 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "系统设置"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT         "系统设置", IDIGNORE, 5, 6, 160, 8
+    LTEXT         "系统设置", -1, 5, 6, 160, 8
     CHECKBOX      "启用分布式CO&M", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
     CHECKBOX      "启用远程连接(限&Win95)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
-    LTEXT         "这些设置只改变注册表值.\n它对Wine的性能没有影响.", IDIGNORE, 5, 50, 160, 40
+    LTEXT         "这些设置只改变注册表值.\n它对Wine的性能没有影响.", -1, 5, 50, 160, 40
     DEFPUSHBUTTON "确定(&O)", IDOK, 70, 80, 45, 14
     PUSHBUTTON    "取消(&C)", IDCANCEL, 120, 80, 45, 14
 }
@@ -178,9 +178,9 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "默认界面查看器"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT   "界面", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "界面", -1, 5, 6, 50, 8
     LTEXT   "", IDC_LABEL, 60, 6, 145, 8
-    LTEXT   "IID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "IID:", -1, 5, 16, 50, 8
     LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
     DEFPUSHBUTTON "关闭(&C)", IDCANCEL, 230, 6, 45, 14
     PUSHBUTTON    "查看类型信息(&V)", IDC_VIEWTYPEINFO, 6, 31, 70, 14, WS_DISABLED
@@ -191,9 +191,9 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "IPersist 界面查看器"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT   "类别名称:", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "类别名称:", -1, 5, 6, 50, 8
     LTEXT   "", IDC_LABEL, 60, 6, 145, 8
-    LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "CLSID:", -1, 5, 16, 50, 8
     LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
     DEFPUSHBUTTON "关闭(&C)", IDCANCEL, 230, 6, 45, 14
 }
@@ -203,9 +203,9 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "IPersistStream 界面查看器"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT   "类别名称:", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "类别名称:", -1, 5, 6, 50, 8
     LTEXT   "", IDC_LABEL, 60, 6, 145, 8
-    LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "CLSID:", -1, 5, 16, 50, 8
     LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
     DEFPUSHBUTTON "关闭(&C)", IDCANCEL, 230, 6, 45, 14
     PUSHBUTTON    "已修改(&I)", IDC_ISDIRTY_BUTTON, 6, 31, 50, 14
@@ -347,7 +347,7 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "連接到另外一台電腦"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT         "電腦名稱(&M):", IDIGNORE, 5, 6, 190, 8
+    LTEXT         "電腦名稱(&M):", -1, 5, 6, 190, 8
     EDITTEXT    IDC_MACHINE, 5, 16, 190, 12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
     DEFPUSHBUTTON "確定(&O)", IDOK, 200, 5, 45, 14
     PUSHBUTTON    "取消(&C)", IDCANCEL, 200, 22, 45, 14
@@ -358,10 +358,10 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "系統設定"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT         "系統設定", IDIGNORE, 5, 6, 160, 8
+    LTEXT         "系統設定", -1, 5, 6, 160, 8
     CHECKBOX      "啟用分佈式CO&M", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
     CHECKBOX      "啟用遠程連接(限&Win95)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
-    LTEXT         "這些設定只改變註冊表值.\n它對Wine的性能沒有影響.", IDIGNORE, 5, 50, 160, 40
+    LTEXT         "這些設定只改變註冊表值.\n它對Wine的性能沒有影響.", -1, 5, 50, 160, 40
     DEFPUSHBUTTON "確定(&O)", IDOK, 70, 80, 45, 14
     PUSHBUTTON    "取消(&C)", IDCANCEL, 120, 80, 45, 14
 }
@@ -371,9 +371,9 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "默認界面查看器"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT   "界面", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "界面", -1, 5, 6, 50, 8
     LTEXT   "", IDC_LABEL, 60, 6, 145, 8
-    LTEXT   "IID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "IID:", -1, 5, 16, 50, 8
     LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
     DEFPUSHBUTTON "關閉(&C)", IDCANCEL, 230, 6, 45, 14
     PUSHBUTTON    "查看類型資訊(&V)", IDC_VIEWTYPEINFO, 6, 31, 70, 14, WS_DISABLED
@@ -384,9 +384,9 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "IPersist 界面查看器"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT   "類別名稱:", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "類別名稱:", -1, 5, 6, 50, 8
     LTEXT   "", IDC_LABEL, 60, 6, 145, 8
-    LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "CLSID:", -1, 5, 16, 50, 8
     LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
     DEFPUSHBUTTON "關閉(&C)", IDCANCEL, 230, 6, 45, 14
 }
@@ -396,9 +396,9 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "IPersistStream 界面查看器"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT   "類別名稱:", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "類別名稱:", -1, 5, 6, 50, 8
     LTEXT   "", IDC_LABEL, 60, 6, 145, 8
-    LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "CLSID:", -1, 5, 16, 50, 8
     LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
     DEFPUSHBUTTON "關閉(&C)", IDCANCEL, 230, 6, 45, 14
     PUSHBUTTON    "已修改(&I)", IDC_ISDIRTY_BUTTON, 6, 31, 50, 14
