@@ -559,7 +559,7 @@ static HDDEDATA CALLBACK server_ddeml_callback(UINT uType, UINT uFmt, HCONV hcon
                                                ULONG_PTR dwData1, ULONG_PTR dwData2)
 {
     char str[MAX_PATH], *ptr;
-    HDDEDATA ret;
+    HDDEDATA ret = NULL;
     DWORD size;
 
     static int msg_index = 0;
@@ -711,7 +711,7 @@ static HDDEDATA CALLBACK server_ddeml_callback(UINT uType, UINT uFmt, HCONV hcon
 
     case XTYP_EXECUTE:
     {
-        ok(msg_index == 9 || msg_index == 10, "Expected 9 or 10, got %d\n", msg_index);
+        ok(msg_index >= 9 && msg_index <= 11, "Expected 9 or 11, got %d\n", msg_index);
         ok(uFmt == 0, "Expected 0, got %d\n", uFmt);
         ok(hconv == conversation, "Expected conversation handle, got %p\n", hconv);
         ok(dwData1 == 0, "Expected 0, got %08lx\n", dwData1);
@@ -722,29 +722,50 @@ static HDDEDATA CALLBACK server_ddeml_callback(UINT uType, UINT uFmt, HCONV hcon
         ok(!lstrcmpA(str, "TestDDETopic"), "Expected TestDDETopic, got %s\n", str);
         ok(size == 12, "Expected 12, got %d\n", size);
 
-        ptr = (LPSTR)DdeAccessData(hdata, &size);
-
-        if (msg_index == 9)
+        if (msg_index == 9 || msg_index == 11)
         {
-            ok(!lstrcmpA(ptr, "[Command(Var)]"), "Expected '[Command(Var)]', got %s\n", ptr);
-            ok(size == 15, "Expected 15, got %d\n", size);
+            ptr = (LPSTR)DdeAccessData(hdata, &size);
+
+            if (msg_index == 9)
+            {
+                ok(!lstrcmpA(ptr, "[Command(Var)]"), "Expected '[Command(Var)]', got %s\n", ptr);
+                ok(size == 15, "Expected 15, got %d\n", size);
+                ret = (HDDEDATA)DDE_FACK;
+            }
+            else
+            {
+                ok(!lstrcmpA(ptr, "[BadCommand(Var)]"), "Expected '[BadCommand(Var)]', got %s\n", ptr);
+                ok(size == 18, "Expected 18, got %d\n", size);
+                ret = (HDDEDATA)DDE_FNOTPROCESSED;
+            }
+
+            DdeUnaccessData(hdata);
+        }
+        else if (msg_index == 10)
+        {
+            DWORD rsize = 0;
+            size = 0;
+
+            size = DdeGetData(hdata, NULL, 0, 0);
+            ok(size == 17, "DdeGetData should have returned 17 not %d\n", size);
+            ptr = HeapAlloc(GetProcessHeap(), 0, size);
+            ok(ptr != NULL,"HeapAlloc should have returned ptr not NULL\n");
+            rsize = DdeGetData(hdata, (LPBYTE)ptr, size, 0);
+            ok(rsize == size, "DdeGetData did not return %d bytes but %d\n", size, rsize);
+
+            ok(!lstrcmpA(ptr, "[Command-2(Var)]"), "Expected '[Command-2(Var)]' got %s\n", ptr);
+            ok(size == 17, "Expected 17, got %d\n", size);
             ret = (HDDEDATA)DDE_FACK;
-        }
-        else
-        {
-            ok(!lstrcmpA(ptr, "[BadCommand(Var)]"), "Expected '[BadCommand(Var)]', got %s\n", ptr);
-            ok(size == 18, "Expected 18, got %d\n", size);
-            ret = (HDDEDATA)DDE_FNOTPROCESSED;
-        }
 
-        DdeUnaccessData(hdata);
+            HeapFree(GetProcessHeap(), 0, ptr);
+        }
 
         return ret;
     }
 
     case XTYP_DISCONNECT:
     {
-        ok(msg_index == 11, "Expected 11, got %d\n", msg_index);
+        ok(msg_index == 12, "Expected 12, got %d\n", msg_index);
         ok(uFmt == 0, "Expected 0, got %d\n", uFmt);
         ok(hconv == conversation, "Expected conversation handle, got %p\n", hconv);
         ok(dwData1 == 0, "Expected 0, got %08lx\n", dwData1);
@@ -833,8 +854,8 @@ static LRESULT WINAPI dde_msg_client_wndproc(HWND hwnd, UINT msg, WPARAM wparam,
 
     case WM_DDE_ACK:
     {
-        ok((msg_index >= 2 && msg_index <= 4) || (msg_index >= 6 && msg_index <= 10),
-           "Expected 2, 3, 4, 6, 7, 8, 9 or 10, got %d\n", msg_index);
+        ok((msg_index >= 2 && msg_index <= 4) || (msg_index >= 6 && msg_index <= 11),
+           "Expected 2, 3, 4, 6, 7, 8, 9, 10 or 11, got %d\n", msg_index);
 
         if (msg_index == 2)
         {
@@ -851,7 +872,7 @@ static LRESULT WINAPI dde_msg_client_wndproc(HWND hwnd, UINT msg, WPARAM wparam,
             ok(!lstrcmpA(str, "TestDDETopic"), "Expected TestDDETopic, got %s\n", str);
             ok(size == 12, "Expected 12, got %d\n", size);
         }
-        else if (msg_index == 9 || msg_index == 10)
+        else if (msg_index >= 9 && msg_index <= 11)
         {
             ok(wparam == (WPARAM)server_hwnd, "Expected server hwnd, got %08lx\n", wparam);
 
@@ -869,6 +890,10 @@ static LRESULT WINAPI dde_msg_client_wndproc(HWND hwnd, UINT msg, WPARAM wparam,
             {
                 ok(ack->fAck == TRUE, "Expected TRUE, got %d\n", ack->fAck);
                 ok(!lstrcmpA(ptr, "[Command(Var)]"), "Expected '[Command(Var)]', got %s\n", ptr);
+            } else if (msg_index == 10)
+            {
+                ok(ack->fAck == TRUE, "Expected TRUE, got %d\n", ack->fAck);
+                ok(!lstrcmpA(ptr, "[Command-2(Var)]"), "Expected '[Command-2(Var)]', got %s\n", ptr);
             }
             else
             {
@@ -1099,6 +1124,15 @@ static void test_msg_client()
     PostMessageA(server_hwnd, WM_DDE_EXECUTE, 0, lparam);
 
     flush_events();
+
+    /* WM_DDE_EXECUTE, all params correct */
+    lparam = PackDDElParam(WM_DDE_EXECUTE, 0, (UINT_PTR)execute_hglobal);
+    PostMessageA(server_hwnd, WM_DDE_EXECUTE, (WPARAM)client_hwnd, lparam);
+
+    flush_events();
+
+    GlobalFree(execute_hglobal);
+    execute_hglobal = create_execute("[Command-2(Var)]");
 
     /* WM_DDE_EXECUTE, all params correct */
     lparam = PackDDElParam(WM_DDE_EXECUTE, 0, (UINT_PTR)execute_hglobal);
