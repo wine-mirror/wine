@@ -566,7 +566,7 @@ static int write_proxy_methods(type_t *iface, int skip)
     const var_t *func = stmt->u.var;
     if (!is_callas(func->attrs)) {
       if (i != func->type->details.function->idx )
-        error("widl internal error: method index mismatch");
+        error("widl internal error: method index mismatch\n");
       if (i) fprintf(proxy, ",\n");
       if (skip || (is_local(func->attrs) && !get_callas_source(iface, func)))
            print_proxy( "0  /* %s_%s_Proxy */", iface->name, get_name(func));
