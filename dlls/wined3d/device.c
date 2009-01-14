@@ -54,19 +54,6 @@ const WINED3DLIGHT WINED3D_default_light = {
 /* static function declarations */
 static void IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResource *resource);
 
-/* helper macros */
-#define D3DMEMCHECK(object, ppResult) if(NULL == object) { *ppResult = NULL; ERR("Out of memory\n"); return WINED3DERR_OUTOFVIDEOMEMORY;}
-
-#define D3DCREATEOBJECTINSTANCE(object, type) { \
-    object=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3D##type##Impl)); \
-    D3DMEMCHECK(object, pp##type); \
-    object->lpVtbl = &IWineD3D##type##_Vtbl;  \
-    object->wineD3DDevice = This; \
-    object->parent       = parent; \
-    object->ref          = 1; \
-    *pp##type = (IWineD3D##type *) object; \
-}
-
 /**********************************************************
  * Global variable / Constants follow
  **********************************************************/
@@ -326,8 +313,21 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
     int i, j;
     HRESULT temp_result;
 
-    D3DCREATEOBJECTINSTANCE(object, StateBlock)
-    object->blockType     = Type;
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if(!object)
+    {
+        ERR("Out of memory\n");
+        *ppStateBlock = NULL;
+        return WINED3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->lpVtbl = &IWineD3DStateBlock_Vtbl;
+    object->wineD3DDevice = This;
+    object->parent = parent;
+    object->ref = 1;
+    object->blockType = Type;
+
+    *ppStateBlock = (IWineD3DStateBlock *)object;
 
     for(i = 0; i < LIGHTMAP_SIZE; i++) {
         list_init(&object->lightMap[i]);
@@ -1339,10 +1339,23 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
         return hr;
     }
 
-    D3DCREATEOBJECTINSTANCE(object, Query)
-    object->lpVtbl       = vtable;
-    object->type         = Type;
-    object->state        = QUERY_CREATED;
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if(!object)
+    {
+        ERR("Out of memory\n");
+        *ppQuery = NULL;
+        return WINED3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->lpVtbl = vtable;
+    object->type = Type;
+    object->state = QUERY_CREATED;
+    object->wineD3DDevice = This;
+    object->parent = parent;
+    object->ref = 1;
+
+    *ppQuery = (IWineD3DQuery *)object;
+
     /* allocated the 'extended' data based on the type of query requested */
     switch(Type){
     case WINED3DQUERYTYPE_OCCLUSION:
@@ -1536,7 +1549,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice* iface,
         FIXME("The app requests more than one back buffer, this can't be supported properly. Please configure the application to use double buffering(=1 back buffer) if possible\n");
     }
 
-    D3DCREATEOBJECTINSTANCE(object, SwapChain)
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if(!object)
+    {
+        ERR("Out of memory\n");
+        *ppSwapChain = NULL;
+        return WINED3DERR_OUTOFVIDEOMEMORY;
+    }
+
     switch(surface_type) {
         case SURFACE_GDI:
             object->lpVtbl = &IWineGDISwapChain_Vtbl;
@@ -1548,6 +1568,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice* iface,
             FIXME("Caller tried to create a SURFACE_UNKNOWN swapchain\n");
             return WINED3DERR_INVALIDCALL;
     }
+    object->wineD3DDevice = This;
+    object->parent = parent;
+    object->ref = 1;
+
+    *ppSwapChain = (IWineD3DSwapChain *)object;
 
     /*********************
     * Lookup the window Handle and the relating X window handle
@@ -1844,7 +1869,20 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice*
     TRACE("(%p) : directXVersion %u, elements %p, element_count %d, ppDecl=%p\n",
             This, ((IWineD3DImpl *)This->wineD3D)->dxVersion, elements, element_count, ppVertexDeclaration);
 
-    D3DCREATEOBJECTINSTANCE(object, VertexDeclaration)
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if(!object)
+    {
+        ERR("Out of memory\n");
+        *ppVertexDeclaration = NULL;
+        return WINED3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->lpVtbl = &IWineD3DVertexDeclaration_Vtbl;
+    object->wineD3DDevice = This;
+    object->parent = parent;
+    object->ref = 1;
+
+    *ppVertexDeclaration = (IWineD3DVertexDeclaration *)object;
 
     hr = IWineD3DVertexDeclaration_SetDeclaration((IWineD3DVertexDeclaration *)object, elements, element_count);
     if(FAILED(hr)) {
