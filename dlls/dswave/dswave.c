@@ -41,21 +41,21 @@ static HRESULT WINAPI IDirectMusicWaveImpl_IUnknown_QueryInterface (LPUNKNOWN if
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
 	if (IsEqualIID (riid, &IID_IUnknown)) {
-		*ppobj = (LPVOID)&This->UnknownVtbl;
+		*ppobj = &This->UnknownVtbl;
 		IDirectMusicWaveImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IDirectMusicSegment)
 	|| IsEqualIID (riid, &IID_IDirectMusicSegment2)
 	|| IsEqualIID (riid, &IID_IDirectMusicSegment8)) {
-		*ppobj = (LPVOID)&This->SegmentVtbl;
+		*ppobj = &This->SegmentVtbl;
 		IDirectMusicWaveImpl_IDirectMusicSegment8_AddRef ((LPDIRECTMUSICSEGMENT8)&This->SegmentVtbl);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IDirectMusicObject)) {
-		*ppobj = (LPVOID)&This->ObjectVtbl;
+		*ppobj = &This->ObjectVtbl;
 		IDirectMusicWaveImpl_IDirectMusicObject_AddRef ((LPDIRECTMUSICOBJECT)&This->ObjectVtbl);		
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IPersistStream)) {
-		*ppobj = (LPVOID)&This->PersistStreamVtbl;
+		*ppobj = &This->PersistStreamVtbl;
 		IDirectMusicWaveImpl_IPersistStream_AddRef ((LPPERSISTSTREAM)&This->PersistStreamVtbl);		
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IDirectMusicWavePRIVATE)) {

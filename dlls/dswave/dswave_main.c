@@ -119,7 +119,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
 	TRACE("(%s, %s, %p)\n", debugstr_dmguid(rclsid), debugstr_dmguid(riid), ppv);
 	if (IsEqualCLSID (rclsid, &CLSID_DirectSoundWave) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &Wave_CF;
+		*ppv = &Wave_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;
 	}
