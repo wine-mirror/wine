@@ -2568,53 +2568,6 @@ end:
     return retval;
 }
 
-/****************************************************************************
- * PRINTDLG_PS_UpdateDlgStructA
- *
- * Updates pda->dlga structure 
- * Function calls when user presses OK button
- *
- * PARAMS
- *  hDlg	[in] 	 main window dialog HANDLE
- *  pda 	[in/out] ptr to PageSetupDataA structure
- *
- * RETURNS
- *  TRUE
- */
-static BOOL
-PRINTDLG_PS_UpdateDlgStructA(HWND hDlg, PageSetupDataA *pda) {
-    DEVMODEA	*dm;
-    DWORD 	paperword;
-
-    dm = GlobalLock(pda->dlga->hDevMode);
-
-    /* Save paper orientation into device context */
-    if(pda->dlga->ptPaperSize.x > pda->dlga->ptPaperSize.y)
-        dm->u1.s1.dmOrientation = DMORIENT_LANDSCAPE;
-    else
-        dm->u1.s1.dmOrientation = DMORIENT_PORTRAIT;
-
-    /* Save paper size into the device context */
-    paperword = SendDlgItemMessageA(hDlg,cmb2,CB_GETITEMDATA,
-        SendDlgItemMessageA(hDlg, cmb2, CB_GETCURSEL, 0, 0), 0);
-    if (paperword != CB_ERR)
-        dm->u1.s1.dmPaperSize = paperword;
-    else
-        FIXME("could not get dialog text for papersize cmbbox?\n");
-
-    /* Save paper source into the device context */
-    paperword = SendDlgItemMessageA(hDlg,cmb1,CB_GETITEMDATA,
-        SendDlgItemMessageA(hDlg, cmb1, CB_GETCURSEL, 0, 0), 0);
-    if (paperword != CB_ERR)
-        dm->u1.s1.dmDefaultSource = paperword;
-    else
-        FIXME("could not get dialog text for papersize cmbbox?\n");
-
-    GlobalUnlock(pda->dlga->hDevMode);
-
-    return TRUE;
-}
-
 static BOOL
 PRINTDLG_PS_UpdateDlgStructW(HWND hDlg, PageSetupDataW *pdw) {
     DEVNAMES	*dn;
@@ -2898,8 +2851,6 @@ PRINTDLG_PS_WMCommandA(
 	    LOWORD(lParam),wParam,lParam);
     switch (id)  {
     case IDOK:
-        if (!PRINTDLG_PS_UpdateDlgStructA(hDlg, pda))
-	    return(FALSE);
 	EndDialog(hDlg, TRUE);
 	return TRUE ;
 
