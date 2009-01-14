@@ -1001,9 +1001,7 @@ static void test_CoGetObjectContext(void)
     ok(refs == 0, "pComThreadingInfo should have 0 refs instead of %d refs\n", refs);
 
     hr = pCoGetObjectContext(&IID_IContextCallback, (void **)&pContextCallback);
-    todo_wine {
     ok_ole_success(hr, "CoGetObjectContext(ContextCallback)");
-    }
 
     if (hr == S_OK)
     {
@@ -1030,9 +1028,7 @@ static void test_CoGetObjectContext(void)
     ok(refs == 0, "pComThreadingInfo should have 0 refs instead of %d refs\n", refs);
 
     hr = pCoGetObjectContext(&IID_IContextCallback, (void **)&pContextCallback);
-    todo_wine {
     ok_ole_success(hr, "CoGetObjectContext(ContextCallback)");
-    }
 
     if (hr == S_OK)
     {
