@@ -621,12 +621,9 @@ static void test_EM_POSFROMCHAR(void)
   SendMessage(hwndRichEdit, WM_HSCROLL, SB_LINERIGHT, 0);
   result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, 0, 0);
   ok(HIWORD(result) == 0, "EM_POSFROMCHAR reports y=%d, expected 0\n", HIWORD(result));
-  todo_wine {
-  /* Fails on builtin because horizontal scrollbar is not being shown */
   ok((signed short)(LOWORD(result)) < xpos,
         "EM_POSFROMCHAR reports x=%hd, expected value less than %d\n",
         (signed short)(LOWORD(result)), xpos);
-  }
   SendMessage(hwndRichEdit, WM_HSCROLL, SB_LINELEFT, 0);
 
   /* Test around end of text that doesn't end in a newline. */

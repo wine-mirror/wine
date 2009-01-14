@@ -65,7 +65,7 @@
   - EM_GETREDONAME 2.0
   + EM_GETSEL
   + EM_GETSELTEXT (ANSI&Unicode)
-  + EM_GETSCROLLPOS 3.0 (only Y value valid)
+  + EM_GETSCROLLPOS 3.0
 ! - EM_GETTHUMB
   + EM_GETTEXTEX 2.0
   + EM_GETTEXTLENGTHEX (GTL_PRECISE unimplemented)
@@ -137,12 +137,14 @@
   + WM_GETDLGCODE (the current implementation is incomplete)
   + WM_GETTEXT (ANSI&Unicode)
   + WM_GETTEXTLENGTH (ANSI version sucks)
+  + WM_HSCROLL
   + WM_PASTE
   + WM_SETFONT
   + WM_SETTEXT (resets undo stack !) (proper style?) ANSI&Unicode
   - WM_STYLECHANGING
   - WM_STYLECHANGED (things like read-only flag)
   + WM_UNICHAR
+  + WM_VSCROLL
 
   Notifications
 
@@ -184,7 +186,7 @@
   - ES_VERTICAL
   - ES_WANTRETURN (don't know how to do WM_GETDLGCODE part)
   - WS_SETFONT
-  - WS_HSCROLL
+  + WS_HSCROLL
   + WS_VSCROLL
 */
 
@@ -197,7 +199,6 @@
  * - pictures/OLE objects (not just smiling faces that lack API support ;-) )
  * - COM interface (looks like a major pain in the TODO list)
  * - calculate heights of pictures (half-done)
- * - horizontal scrolling (not even started)
  * - hysteresis during wrapping (related to scrollbars appearing/disappearing)
  * - find/replace
  * - how to implement EM_FORMATRANGE and EM_DISPLAYBAND ? (Mission Impossible)
@@ -2681,6 +2682,7 @@ static ME_TextEditor *ME_MakeEditor(HWND hWnd, BOOL bEmulateVersion10)
   ed->pCursors[2] = ed->pCursors[0];
   ed->pCursors[3] = ed->pCursors[1];
   ed->nLastTotalLength = ed->nTotalLength = 0;
+  ed->nLastTotalWidth = ed->nTotalWidth = 0;
   ed->nUDArrowX = -1;
   ed->nSequence = 0;
   ed->rgbBackColor = -1;
@@ -2730,12 +2732,18 @@ static ME_TextEditor *ME_MakeEditor(HWND hWnd, BOOL bEmulateVersion10)
   
   ed->notified_cr.cpMin = ed->notified_cr.cpMax = 0;
 
-  /* Default vertical scrollbar information */
+  /* Default scrollbar information */
   ed->vert_si.cbSize = sizeof(SCROLLINFO);
   ed->vert_si.nMin = 0;
   ed->vert_si.nMax = 0;
   ed->vert_si.nPage = 0;
   ed->vert_si.nPos = 0;
+
+  ed->horz_si.cbSize = sizeof(SCROLLINFO);
+  ed->horz_si.nMin = 0;
+  ed->horz_si.nMax = 0;
+  ed->horz_si.nPage = 0;
+  ed->horz_si.nPos = 0;
 
   OleInitialize(NULL);
 
@@ -3156,12 +3164,12 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_SETSCROLLPOS:
   {
     POINT *point = (POINT *)lParam;
-    ME_ScrollAbs(editor, point->y);
+    ME_ScrollAbs(editor, point->x, point->y);
     return 0;
   }
   case EM_AUTOURLDETECT:
   {
-    if (wParam==1 || wParam ==0) 
+    if (wParam==1 || wParam ==0)
     {
         editor->AutoURLDetect_bEnable = (BOOL)wParam;
         return 0;
@@ -3363,7 +3371,7 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_GETFIRSTVISIBLELINE:
   {
     ME_DisplayItem *p = editor->pBuffer->pFirst;
-    int y = ME_GetYScrollPos(editor);
+    int y = editor->vert_si.nPos;
     int ypara = 0;
     int count = 0;
     int ystart, yend;
@@ -3433,7 +3441,7 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     return len;
   }
   case EM_SCROLLCARET:
-    ME_EnsureVisible(editor, editor->pCursors[0].pRun);
+    ME_EnsureVisible(editor, &editor->pCursors[0]);
     return 0;
   case WM_SETFONT:
   {
@@ -3587,10 +3595,10 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_GETSCROLLPOS:
   {
-      POINT *point = (POINT *)lParam;
-      point->x = 0; /* FIXME side scrolling not implemented */
-      point->y = ME_GetYScrollPos(editor);
-      return 1;
+    POINT *point = (POINT *)lParam;
+    point->x = editor->horz_si.nPos;
+    point->y = editor->vert_si.nPos;
+    return 1;
   }
   case EM_GETTEXTRANGE:
   {
@@ -3837,9 +3845,8 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     ME_DisplayItem *pRun;
     int nCharOfs, nOffset, nLength;
     POINTL pt = {0,0};
-    SCROLLINFO si;
-    
-    nCharOfs = wParam; 
+
+    nCharOfs = wParam;
     /* detect which API version we're dealing with */
     if (wParam >= 0x40000)
         nCharOfs = lParam;
@@ -3854,10 +3861,8 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     pt.y += ME_GetParagraph(pRun)->member.para.pt.y + editor->rcFormat.top;
     pt.x += editor->rcFormat.left;
 
+    pt.x -= editor->horz_si.nPos;
     pt.y -= editor->vert_si.nPos;
-    si.cbSize = sizeof(si);
-    si.fMask = SIF_POS;
-    if (GetScrollInfo(editor->hWnd, SB_HORZ, &si)) pt.x -= si.nPos;
 
     if (wParam >= 0x40000) {
         *(POINTL *)wParam = pt;
@@ -3869,10 +3874,6 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     SCROLLINFO si;
 
     ME_SetDefaultFormatRect(editor);
-    if (GetWindowLongW(editor->hWnd, GWL_STYLE) & WS_HSCROLL)
-    { /* Squelch the default horizontal scrollbar it would make */
-      ShowScrollBar(editor->hWnd, SB_HORZ, FALSE);
-    }
 
     si.cbSize = sizeof(si);
     si.fMask = SIF_PAGE | SIF_RANGE;
@@ -3882,6 +3883,7 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     si.nMin = 0;
     si.nPage = 0;
     SetScrollInfo(editor->hWnd, SB_VERT, &si, TRUE);
+    SetScrollInfo(editor->hWnd, SB_HORZ, &si, TRUE);
 
     ME_CommitUndo(editor);
     ME_WrapMarkedParagraphs(editor);
@@ -4046,21 +4048,72 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_STOPGROUPTYPING:
     ME_CommitUndo(editor); /* End coalesced undos for typed characters */
     return 0;
+  case WM_HSCROLL:
+  {
+    const int scrollUnit = 7;
+
+    switch(LOWORD(wParam))
+    {
+      case SB_LEFT:
+        ME_ScrollAbs(editor, 0, 0);
+        break;
+      case SB_RIGHT:
+        ME_ScrollAbs(editor,
+                     editor->horz_si.nMax - (int)editor->horz_si.nPage,
+                     editor->vert_si.nMax - (int)editor->vert_si.nPage);
+        break;
+      case SB_LINELEFT:
+        ME_ScrollLeft(editor, scrollUnit);
+        break;
+      case SB_LINERIGHT:
+        ME_ScrollRight(editor, scrollUnit);
+        break;
+      case SB_PAGELEFT:
+        ME_ScrollLeft(editor, editor->sizeWindow.cx);
+        break;
+      case SB_PAGERIGHT:
+        ME_ScrollRight(editor, editor->sizeWindow.cx);
+        break;
+      case SB_THUMBTRACK:
+      case SB_THUMBPOSITION:
+      {
+        SCROLLINFO sbi;
+        sbi.cbSize = sizeof(sbi);
+        sbi.fMask = SIF_TRACKPOS;
+        /* Try to get 32-bit track position value. */
+        if (!GetScrollInfo(editor->hWnd, SB_HORZ, &sbi))
+          /* GetScrollInfo failed, settle for 16-bit value in wParam. */
+          sbi.nTrackPos = HIWORD(wParam);
+
+        ME_HScrollAbs(editor, sbi.nTrackPos);
+        break;
+      }
+    }
+    break;
+  }
   case EM_SCROLL: /* fall through */
-  case WM_VSCROLL: 
+  case WM_VSCROLL:
   {
     int origNPos;
     int lineHeight;
-    
-    origNPos = ME_GetYScrollPos(editor);
+
+    origNPos = editor->vert_si.nPos;
     lineHeight = 24;
-    
+
     if (editor && editor->pBuffer && editor->pBuffer->pDefaultStyle)
       lineHeight = editor->pBuffer->pDefaultStyle->tm.tmHeight;
     if (lineHeight <= 0) lineHeight = 24;
-    
-    switch(LOWORD(wParam)) 
+
+    switch(LOWORD(wParam))
     {
+      case SB_TOP:
+        ME_ScrollAbs(editor, 0, 0);
+        break;
+      case SB_BOTTOM:
+        ME_ScrollAbs(editor,
+                     editor->horz_si.nMax - (int)editor->horz_si.nPage,
+                     editor->vert_si.nMax - (int)editor->vert_si.nPage);
+        break;
       case SB_LINEUP:
         ME_ScrollUp(editor,lineHeight);
         break;
@@ -4084,12 +4137,12 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
           /* GetScrollInfo failed, settle for 16-bit value in wParam. */
           sbi.nTrackPos = HIWORD(wParam);
 
-        ME_ScrollAbs(editor, sbi.nTrackPos);
+        ME_VScrollAbs(editor, sbi.nTrackPos);
         break;
       }
     }
     if (msg == EM_SCROLL)
-      return 0x00010000 | (((ME_GetYScrollPos(editor) - origNPos)/lineHeight) & 0xffff);
+      return 0x00010000 | (((editor->vert_si.nPos - origNPos)/lineHeight) & 0xffff);
     break;
   }
   case WM_MOUSEWHEEL:

@@ -233,7 +233,7 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, const RECT *
 void ME_Repaint(ME_TextEditor *editor);
 void ME_RewrapRepaint(ME_TextEditor *editor);
 void ME_UpdateRepaint(ME_TextEditor *editor);
-void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun);
+void ME_EnsureVisible(ME_TextEditor *editor, ME_Cursor *pCursor);
 void ME_InvalidateSelection(ME_TextEditor *editor);
 void ME_QueueInvalidateFromCursor(ME_TextEditor *editor, int nCursor);
 BOOL ME_SetZoom(ME_TextEditor *editor, int numerator, int denominator);
@@ -242,11 +242,14 @@ int  ME_twips2pointsY(ME_Context *c, int y);
 
 /* scroll functions in paint.c */
 
-void ME_ScrollAbs(ME_TextEditor *editor, int absY);
+void ME_ScrollAbs(ME_TextEditor *editor, int x, int y);
+void ME_HScrollAbs(ME_TextEditor *editor, int x);
+void ME_VScrollAbs(ME_TextEditor *editor, int y);
 void ME_ScrollUp(ME_TextEditor *editor, int cy);
 void ME_ScrollDown(ME_TextEditor *editor, int cy);
+void ME_ScrollLeft(ME_TextEditor *editor, int cx);
+void ME_ScrollRight(ME_TextEditor *editor, int cx);
 void ME_UpdateScrollBar(ME_TextEditor *editor);
-int ME_GetYScrollPos(ME_TextEditor *editor);
 
 /* other functions in paint.c */
 int  ME_GetParaBorderWidth(ME_TextEditor *editor, int);

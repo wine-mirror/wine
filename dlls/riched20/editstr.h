@@ -189,7 +189,7 @@ typedef struct tagME_Paragraph
   int nCharOfs;
   int nFlags;
   POINT pt;
-  int nHeight;
+  int nHeight, nWidth;
   int nLastPaintYPos, nLastPaintHeight;
   int nRows;
   struct tagME_DisplayItem *prev_para, *next_para, *document;
@@ -333,6 +333,7 @@ typedef struct tagME_TextEditor
   int nCursors;
   SIZE sizeWindow;
   int nTotalLength, nLastTotalLength;
+  int nTotalWidth, nLastTotalWidth;
   int nUDArrowX;
   int nSequence;
   COLORREF rgbBackColor;
@@ -374,8 +375,8 @@ typedef struct tagME_TextEditor
   /* Track previous notified selection */
   CHARRANGE notified_cr;
 
-  /* Cache previously set vertical scrollbar info */
-  SCROLLINFO vert_si;
+  /* Cache previously set scrollbar info */
+  SCROLLINFO vert_si, horz_si;
 
   BOOL bMouseCaptured;
 } ME_TextEditor;
