@@ -1551,6 +1551,39 @@ BOOL virtual_check_buffer_for_read( const void *ptr, SIZE_T size )
 
 
 /***********************************************************************
+ *           virtual_check_buffer_for_write
+ *
+ * Check if a memory buffer can be written to, triggering page faults if needed for write watches.
+ */
+BOOL virtual_check_buffer_for_write( void *ptr, SIZE_T size )
+{
+    if (!size) return TRUE;
+    if (!ptr) return FALSE;
+
+    __TRY
+    {
+        volatile char *p = ptr;
+        SIZE_T count = size;
+
+        while (count > page_size)
+        {
+            *p |= 0;
+            p += page_size;
+            count -= page_size;
+        }
+        p[0] |= 0;
+        p[count - 1] |= 0;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        return FALSE;
+    }
+    __ENDTRY
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           VIRTUAL_SetForceExec
  *
  * Whether to force exec prot on all views.
