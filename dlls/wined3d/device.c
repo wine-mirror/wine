@@ -1566,6 +1566,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice* iface,
             break;
         case SURFACE_UNKNOWN:
             FIXME("Caller tried to create a SURFACE_UNKNOWN swapchain\n");
+            HeapFree(GetProcessHeap(), 0, object);
             return WINED3DERR_INVALIDCALL;
     }
     object->wineD3DDevice = This;
