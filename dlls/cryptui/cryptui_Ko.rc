@@ -150,15 +150,15 @@ CAPTION "일반"
 STYLE WS_VISIBLE
 FONT 8, "MS Shell Dlg"
 BEGIN
-  CONTROL "", IDC_STATIC, "Static", WS_BORDER|SS_WHITERECT, 6,10,241,200
+  CONTROL "", -1, "Static", WS_BORDER|SS_WHITERECT, 6,10,241,200
   CONTROL "", IDC_CERTIFICATE_ICON,"RichEdit20W",
     ES_READONLY|WS_DISABLED,8,11,26,26
   CONTROL "", IDC_CERTIFICATE_INFO,"RichEdit20W",
     ES_READONLY|WS_DISABLED,34,11,212,26
-  CONTROL "", IDC_STATIC, "Static", SS_BLACKFRAME, 16,37,222,1
+  CONTROL "", -1, "Static", SS_BLACKFRAME, 16,37,222,1
   CONTROL "", IDC_CERTIFICATE_STATUS,"RichEdit20W",
     ES_READONLY|ES_MULTILINE,8,38,238,78
-  CONTROL "", IDC_STATIC, "Static", SS_BLACKFRAME, 16,116,222,1
+  CONTROL "", -1, "Static", SS_BLACKFRAME, 16,116,222,1
   CONTROL "", IDC_CERTIFICATE_NAMES,"RichEdit20W",
     ES_READONLY|ES_MULTILINE|WS_DISABLED,8,118,238,90
   PUSHBUTTON "인증서 설치(&I)...", IDC_ADDTOSTORE,103,216,70,14
@@ -170,7 +170,7 @@ CAPTION "자세히"
 STYLE WS_VISIBLE
 FONT 8, "MS Shell Dlg"
 BEGIN
-  LTEXT "표시(&S):", stc1, 6,12,40,14
+  LTEXT "표시(&S):", -1, 6,12,40,14
   COMBOBOX IDC_DETAIL_SELECT, 28,10,100,14,
     CBS_DROPDOWNLIST|WS_BORDER|WS_VSCROLL|WS_TABSTOP
   CONTROL "", IDC_DETAIL_LIST, "SysListView32",
@@ -187,7 +187,7 @@ CAPTION "인증서 경로"
 STYLE WS_VISIBLE
 FONT 8, "MS Shell Dlg"
 BEGIN
-  GROUPBOX "인증서 경로(&P)", grp1,6,10,245,165, BS_GROUPBOX
+  GROUPBOX "인증서 경로(&P)", -1,6,10,245,165, BS_GROUPBOX
   CONTROL "",IDC_CERTPATH, "SysTreeView32", TVS_HASLINES|WS_BORDER,
     13,22,231,130
   PUSHBUTTON "인증서 보기(&V)", IDC_VIEWCERTIFICATE,175,156,70,14
@@ -212,11 +212,11 @@ CAPTION "일반"
 STYLE WS_VISIBLE
 FONT 8, "MS Shell Dlg"
 BEGIN
-	LTEXT "애칭(&F):", stc1, 6,14,60,14
+	LTEXT "애칭(&F):", -1, 6,14,60,14
 	EDITTEXT IDC_FRIENDLY_NAME, 60,12,191,14, ES_AUTOHSCROLL|WS_TABSTOP
-	LTEXT "설명(&D):", stc2, 6,32,60,14
+	LTEXT "설명(&D):", -1, 6,32,60,14
 	EDITTEXT IDC_DESCRIPTION, 60,30,191,14, ES_AUTOVSCROLL|ES_MULTILINE|WS_TABSTOP|WS_VSCROLL
-	GROUPBOX "인증서 용도", grp1,6,48,245,165, BS_GROUPBOX
+	GROUPBOX "인증서 용도", -1,6,48,245,165, BS_GROUPBOX
 	AUTORADIOBUTTON "인증서를 모든 용도로 사용 가능(&E)",
 	IDC_ENABLE_ALL_PURPOSES, 12,58,180,14, BS_AUTORADIOBUTTON|WS_TABSTOP
 	AUTORADIOBUTTON "인증서를 모든 용도로 사용하지 않음(&I)",
@@ -232,7 +232,7 @@ IDD_ADD_CERT_PURPOSE DIALOG DISCARDABLE 0,0,200,68
 CAPTION "용도 추가"
 FONT 8, "MS Shell Dlg"
 BEGIN
-	LTEXT "추가하고자 하는 인증서 용도의 객체 식별자(OID) 추가:",stc1, 6,6,190,28
+	LTEXT "추가하고자 하는 인증서 용도의 객체 식별자(OID) 추가:",-1, 6,6,190,28
 	EDITTEXT IDC_NEW_PURPOSE, 6,28,190,14, ES_AUTOVSCROLL|ES_MULTILINE|WS_TABSTOP|WS_VSCROLL
 	PUSHBUTTON "확인", IDOK, 33,48,60,14
 	PUSHBUTTON "취소", IDCANCEL, 100,48,60,14
@@ -254,29 +254,29 @@ CAPTION "인증서 가져오기 마법사"
 FONT 8, "MS Shell Dlg"
 BEGIN
 	LTEXT "인증서 가져오기 마법사에 온 것을 환영합니다", IDC_IMPORT_TITLE,115,1,195,40
-	LTEXT "이 마법사는 당신이 파일로부터 인증서,인증서 파기 목록,인증서 신뢰 목록을 인증서 보관소에 가져오는 것을 도와줍니다.",stc1, 115,33,195,16
-	LTEXT "이 인증서는 당신이나 당신이 통신에 사용하는 컴퓨터를 신원보증하는 데 사용됩니다.  또한  메세지에 사인하고 인증하는 데도 사용됩니다. 인증서 보관소는 인증서, 인증서 파기 목록, 인증서 신뢰 목록의 저장소입니다.",stc2, 115,56,195,40
-	LTEXT "계속하려면, 다음을 클릭하십시오.",stc3, 115,103,195,8
+	LTEXT "이 마법사는 당신이 파일로부터 인증서,인증서 파기 목록,인증서 신뢰 목록을 인증서 보관소에 가져오는 것을 도와줍니다.",-1, 115,33,195,16
+	LTEXT "이 인증서는 당신이나 당신이 통신에 사용하는 컴퓨터를 신원보증하는 데 사용됩니다.  또한  메세지에 사인하고 인증하는 데도 사용됩니다. 인증서 보관소는 인증서, 인증서 파기 목록, 인증서 신뢰 목록의 저장소입니다.",-1, 115,56,195,40
+	LTEXT "계속하려면, 다음을 클릭하십시오.",-1, 115,103,195,8
 END
 
 IDD_IMPORT_FILE DIALOG DISCARDABLE 0,0,317,143
 CAPTION "인증서 가져오기 마법사"
 FONT 8, "MS Shell Dlg"
 BEGIN
-	LTEXT "파일 이름(&F):", stc1, 21,1,195,10
+	LTEXT "파일 이름(&F):", -1, 21,1,195,10
 	EDITTEXT IDC_IMPORT_FILENAME, 21,11,208,14, ES_AUTOHSCROLL|WS_TABSTOP
 	PUSHBUTTON "찾기(&R)...", IDC_IMPORT_BROWSE_FILE, 236,11,60,14
-	LTEXT "주의:  이 파일 형식은 아마도 하나 이상의 인증서,인증서 파기 목록,인증서 신뢰 목록을 가지고 있을 수 있습니다:", stc2, 21,26,265,16
-	LTEXT "암호화 메세지 문법 표준/PKCS #7 메시지 (.p7b)",stc3, 31,49,265,10
-	LTEXT "개인 정보 교환/PKCS #12 (.pfx, .p12)",stc3, 31,64,265,10
-	LTEXT "Microsoft 연속 인증서 보관소 (.sst)",stc3, 31,79,265,10
+	LTEXT "주의:  이 파일 형식은 아마도 하나 이상의 인증서,인증서 파기 목록,인증서 신뢰 목록을 가지고 있을 수 있습니다:", -1, 21,26,265,16
+	LTEXT "암호화 메세지 문법 표준/PKCS #7 메시지 (.p7b)",-1, 31,49,265,10
+	LTEXT "개인 정보 교환/PKCS #12 (.pfx, .p12)",-1, 31,64,265,10
+	LTEXT "Microsoft 연속 인증서 보관소 (.sst)",-1, 31,79,265,10
 END
 
 IDD_IMPORT_STORE DIALOG DISCARDABLE 0,0,317,143
 CAPTION "인증서 가져오기 마법사"
 FONT 8, "MS Shell Dlg"
 BEGIN
-	LTEXT "Wine이 자동으로 인증서 저장소를 선택하거나, 아니면 직접 저장할 곳을 선택할 수 있습니다.", stc1, 21,1,195,20
+	LTEXT "Wine이 자동으로 인증서 저장소를 선택하거나, 아니면 직접 저장할 곳을 선택할 수 있습니다.", -1, 21,1,195,20
 	AUTORADIOBUTTON "자동으로 인증서 저장소 선택(&A)",IDC_IMPORT_AUTO_STORE, 31,18,180,12, BS_AUTORADIOBUTTON|WS_TABSTOP
 	AUTORADIOBUTTON "다음 저장소에 모든 인증서 저장(&P):",IDC_IMPORT_SPECIFY_STORE, 31,30,180,12, BS_AUTORADIOBUTTON
 	EDITTEXT IDC_IMPORT_STORE, 44,49,185,14, ES_READONLY
@@ -288,8 +288,8 @@ CAPTION "인증서 가져오기 마법사"
 FONT 8, "MS Shell Dlg"
 BEGIN
 	LTEXT "인증서 가져오기 마법사 마치는 중", IDC_IMPORT_TITLE,115,1,195,40
-	LTEXT "당신은 인증서 가져오기 마법사를 마치는데 성공했습니다.",stc1, 115,33,195,24
-	LTEXT "당신은 다음 설정을 지정했습니다:",stc2, 115,57,195,12
+	LTEXT "당신은 인증서 가져오기 마법사를 마치는데 성공했습니다.",-1, 115,33,195,24
+	LTEXT "당신은 다음 설정을 지정했습니다:",-1, 115,57,195,12
 	CONTROL "", IDC_IMPORT_SETTINGS, "SysListView32",
 	LVS_REPORT|LVS_NOCOLUMNHEADER|LVS_SINGLESEL|WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_BORDER,
     115,67,174,100
@@ -299,7 +299,7 @@ IDD_CERT_MGR DIALOG DISCARDABLE 0,0,335,270
 CAPTION "인증서"
 FONT 8, "MS Shell Dlg"
 BEGIN
-  LTEXT "지정된 용도(&N):", IDC_STATIC, 7,9,100,12
+  LTEXT "지정된 용도(&N):", -1, 7,9,100,12
   COMBOBOX IDC_MGR_PURPOSE_SELECTION, 83,7,245,14,
     CBS_DROPDOWNLIST|WS_BORDER|WS_VSCROLL|WS_TABSTOP
   CONTROL "", IDC_MGR_STORES, "SysTabControl32",
@@ -310,7 +310,7 @@ BEGIN
   PUSHBUTTON "내보내기(&E)...", IDC_MGR_EXPORT, 62,172,51,14, WS_DISABLED
   PUSHBUTTON "제거하기(&R)", IDC_MGR_REMOVE, 117,172,51,14, WS_DISABLED
   PUSHBUTTON "추가(&A)...", IDC_MGR_ADVANCED, 277,172,51,14
-  GROUPBOX "인증서 지정 용도", grp1,7,194,321,47, BS_GROUPBOX
+  GROUPBOX "인증서 지정 용도", -1,7,194,321,47, BS_GROUPBOX
   LTEXT "", IDC_MGR_PURPOSES, 13,208,252,30
   PUSHBUTTON "보기(&V)...", IDC_MGR_VIEW, 269,218,51,14, WS_DISABLED
   PUSHBUTTON "닫기(&C)", IDCANCEL, 277,249,51,14, BS_DEFPUSHBUTTON
@@ -320,10 +320,10 @@ IDD_CERT_MGR_ADVANCED DIALOG DISCARDABLE 0,0,248,176
 CAPTION "추가 옵션"
 FONT 8, "MS Shell Dlg"
 BEGIN
-  GROUPBOX "인증서 용도", grp1, 7,7,234,141, BS_GROUPBOX
+  GROUPBOX "인증서 용도", -1, 7,7,234,141, BS_GROUPBOX
   LTEXT "추가 용도가 선택되었을 때 나타나는 하나나 다수의 용도 선택.",
-    IDC_STATIC, 14,18,220,16
-  LTEXT "인증서 용도(&C):", IDC_STATIC, 14,41,90,12, WS_TABSTOP
+    -1, 14,18,220,16
+  LTEXT "인증서 용도(&C):", -1, 14,41,90,12, WS_TABSTOP
   CONTROL "", IDC_CERTIFICATE_USAGES,"SysListView32",
     LVS_REPORT|LVS_NOCOLUMNHEADER|LVS_SINGLESEL|WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_BORDER,
     14,51,220,90
