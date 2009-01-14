@@ -329,7 +329,7 @@ static void test_retrieveObjectByUrl(void)
         CertFreeCRLContext(crl);
     store = (HCERTSTORE)0xdeadbeef;
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CAPI2_ANY, 0, 0,
-     (void **)&store, NULL, NULL, NULL, NULL);
+     &store, NULL, NULL, NULL, NULL);
     ok(ret, "CryptRetrieveObjectByUrlA failed: %d\n", GetLastError());
     if (store && store != (HCERTSTORE)0xdeadbeef)
     {
