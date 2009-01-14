@@ -1110,6 +1110,12 @@ static void test_CompareStringA(void)
 
     ret = CompareStringA(lcid, 0, "\2", 2, "\1", 2);
     todo_wine ok(ret != 2, "\\2 vs \\1 expected unequal\n");
+
+    ret = CompareStringA(lcid, NORM_IGNORECASE | LOCALE_USE_CP_ACP, "#", -1, ".", -1);
+    todo_wine ok(ret == CSTR_LESS_THAN, "\"#\" vs \".\" expected CSTR_LESS_THAN, got %d\n", ret);
+
+    ret = lstrcmpi("#", ".");
+    todo_wine ok(ret == -1, "\"#\" vs \".\" expected -1, got %d\n", ret);
 }
 
 static void test_LCMapStringA(void)
