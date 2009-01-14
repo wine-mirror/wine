@@ -2965,7 +2965,11 @@ PRINTDLG_PS_WMCommandA(
 	if(msg == CBN_SELCHANGE){
 	    DWORD paperword = SendDlgItemMessageA(hDlg,cmb2,CB_GETITEMDATA,
 	        SendDlgItemMessageA(hDlg, cmb2, CB_GETCURSEL, 0, 0), 0);
-   	    if (paperword != CB_ERR) {
+            if (paperword != CB_ERR)
+            {
+                DEVMODEA *dm = GlobalLock(pda->dlga->hDevMode);
+                dm->u1.s1.dmPaperSize = paperword;
+                GlobalUnlock(pda->dlga->hDevMode);
                 pagesetup_papersizeA(pda->dlga, paperword, &(pda->dlga->ptPaperSize));
 		if (IsDlgButtonChecked(hDlg, rad2)) {
                     DWORD tmp = pda->dlga->ptPaperSize.x;
