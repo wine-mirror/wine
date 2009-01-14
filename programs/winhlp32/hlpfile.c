@@ -66,7 +66,7 @@ static HLPFILE *first_hlpfile = 0;
  *     Pointer to block identified by key, or NULL if failure.
  *
  */
-void* HLPFILE_BPTreeSearch(BYTE* buf, const void* key,
+static void* HLPFILE_BPTreeSearch(BYTE* buf, const void* key,
                            HLPFILE_BPTreeCompare comp)
 {
     unsigned magic;
@@ -396,7 +396,7 @@ HLPFILE_PAGE *HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset, ULONG* relativ
  *
  *           HLPFILE_Contents
  */
-HLPFILE_PAGE* HLPFILE_Contents(HLPFILE *hlpfile, ULONG* relative)
+static HLPFILE_PAGE* HLPFILE_Contents(HLPFILE *hlpfile, ULONG* relative)
 {
     HLPFILE_PAGE*       page = NULL;
 
@@ -1093,7 +1093,7 @@ static HLPFILE_LINK*       HLPFILE_AllocLink(struct RtfData* rd, int cookie,
     return link;
 }
 
-unsigned HLPFILE_HalfPointsToTwips(unsigned pts)
+static unsigned HLPFILE_HalfPointsToTwips(unsigned pts)
 {
     static unsigned logPxY;
     if (!logPxY)
