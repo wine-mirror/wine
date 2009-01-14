@@ -81,6 +81,10 @@ static void GetDCTest_main(DDSURFACEDESC *ddsd, DDSURFACEDESC2 *ddsd2, void (*te
     IDirectDraw4 *dd4;
 
     hr = IDirectDraw_CreateSurface(dd1, ddsd, &surf, NULL);
+    if (hr == DDERR_UNSUPPORTEDMODE) {
+        win_skip("Unsupported mode\n");
+        return;
+    }
     ok(hr == DD_OK, "IDirectDraw_CreateSurface failed: 0x%08x\n", hr);
     testfunc(surf, 1);
     IDirectDrawSurface_Release(surf);
@@ -164,6 +168,10 @@ static void CapsTest(void)
     ddsd.dwWidth = 64;
     ddsd.dwHeight = 64;
     hr = IDirectDraw_CreateSurface(dd1, &ddsd, &surf, NULL);
+    if (hr == DDERR_UNSUPPORTEDMODE) {
+        win_skip("Unsupported mode\n");
+        return;
+    }
     ok(hr == DD_OK, "Creating a SYSMEM | VIDMEM surface returned 0x%08x, expected DD_OK\n", hr);
     if(surf) IDirectDrawSurface_Release(surf);
 
