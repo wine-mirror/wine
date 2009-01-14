@@ -3236,7 +3236,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
     if (!lpwhr->lpszVerb)
         lpwhr->lpszVerb = WININET_strdupW(szGET);
 
-    if (dwContentLength || !strcmpW(lpwhr->lpszVerb, szPost))
+    if (dwContentLength || strcmpW(lpwhr->lpszVerb, szGET))
     {
         sprintfW(contentLengthStr, szContentLength, dwContentLength);
         HTTP_HttpAddRequestHeadersW(lpwhr, contentLengthStr, -1L, HTTP_ADDREQ_FLAG_ADD_IF_NEW);

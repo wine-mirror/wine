@@ -1408,7 +1408,9 @@ static DWORD CALLBACK server_thread(LPVOID param)
             else
                 send(c, notokmsg, sizeof notokmsg-1, 0);
         }
-        if (strstr(buffer, "POST /test5"))
+        if (strstr(buffer, "POST /test5") ||
+            strstr(buffer, "RPC_IN_DATA /test5") ||
+            strstr(buffer, "RPC_OUT_DATA /test5"))
         {
             if (strstr(buffer, "Content-Length: 0"))
             {
@@ -2013,6 +2015,8 @@ static void test_http_connection(void)
     test_proxy_direct(si.port);
     test_header_handling_order(si.port);
     test_basic_request(si.port, "POST", "/test5");
+    test_basic_request(si.port, "RPC_IN_DATA", "/test5");
+    test_basic_request(si.port, "RPC_OUT_DATA", "/test5");
     test_basic_request(si.port, "GET", "/test6");
     test_connection_header(si.port);
     test_http1_1(si.port);
