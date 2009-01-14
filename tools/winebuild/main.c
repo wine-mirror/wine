@@ -223,6 +223,7 @@ static const char usage_str[] =
 "Usage: winebuild [OPTIONS] [FILES]\n\n"
 "Options:\n"
 "       --as-cmd=AS          Command to use for assembling (default: as)\n"
+"   -b, --target=TARGET      Specify target CPU and platform for cross-compiling\n"
 "   -d, --delay-lib=LIB      Import the specified library in delayed mode\n"
 "   -D SYM                   Ignored for C flags compatibility\n"
 "   -e, --entry=FUNC         Set the DLL entry point function (default: DllMain)\n"
@@ -247,7 +248,6 @@ static const char usage_str[] =
 "   -r, --res=RSRC.RES       Load resources from RSRC.RES\n"
 "       --save-temps         Do not delete the generated intermediate files\n"
 "       --subsystem=SUBSYS   Set the subsystem (one of native, windows, console)\n"
-"       --target=TARGET      Specify target CPU and platform for cross-compiling\n"
 "   -u, --undefined=SYMBOL   Add an undefined reference to SYMBOL when linking\n"
 "   -v, --verbose            Display the programs invoked\n"
 "       --version            Print the version and exit\n"
@@ -274,11 +274,10 @@ enum long_options_values
     LONG_OPT_RELAY32,
     LONG_OPT_SAVE_TEMPS,
     LONG_OPT_SUBSYSTEM,
-    LONG_OPT_TARGET,
     LONG_OPT_VERSION
 };
 
-static const char short_options[] = "C:D:E:F:H:I:K:L:M:N:d:e:f:hi:kl:m:o:r:u:vw";
+static const char short_options[] = "C:D:E:F:H:I:K:L:M:N:b:d:e:f:hi:kl:m:o:r:u:vw";
 
 static const struct option long_options[] =
 {
@@ -294,9 +293,9 @@ static const struct option long_options[] =
     { "relay32",       0, 0, LONG_OPT_RELAY32 },
     { "save-temps",    0, 0, LONG_OPT_SAVE_TEMPS },
     { "subsystem",     1, 0, LONG_OPT_SUBSYSTEM },
-    { "target",        1, 0, LONG_OPT_TARGET },
     { "version",       0, 0, LONG_OPT_VERSION },
     /* aliases for short options */
+    { "target",        1, 0, 'b' },
     { "delay-lib",     1, 0, 'd' },
     { "export",        1, 0, 'E' },
     { "entry",         1, 0, 'e' },
@@ -371,6 +370,9 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             break;
         case 'N':
             spec->dll_name = xstrdup( optarg );
+            break;
+        case 'b':
+            set_target( optarg );
             break;
         case 'd':
             add_delayed_import( optarg );
@@ -475,9 +477,6 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             break;
         case LONG_OPT_SUBSYSTEM:
             set_subsystem( optarg, spec );
-            break;
-        case LONG_OPT_TARGET:
-            set_target( optarg );
             break;
         case LONG_OPT_VERSION:
             printf( "winebuild version " PACKAGE_VERSION "\n" );

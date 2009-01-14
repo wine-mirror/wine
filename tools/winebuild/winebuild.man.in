@@ -59,6 +59,11 @@ Wine internal usage only, you should never need to use this option.
 Specify the command to use to compile assembly files; the default is
 \fBas\fR.
 .TP
+.BI \-b,\ --target= cpu-manufacturer[-kernel]-os
+Specify the target CPU and platform on which the generated code will
+be built. The target specification is in the standard autoconf format
+as returned by config.sub.
+.TP
 .BI \-d,\ --delay-lib= name
 Set the delayed import mode for the specified library, which must be
 one of the libraries imported with the \fB-l\fR option. Delayed mode
@@ -198,11 +203,6 @@ argument array to use Unicode strings. A graphical executable has a
 .br
 Optionally a major and minor subsystem version can also be specified;
 the default subsystem version is 4.0.
-.TP
-.BI --target= cpu-manufacturer[-kernel]-os
-Specify the target CPU and platform on which the generated code will
-be built. The target specification is in the standard autoconf format
-as returned by config.sub.
 .TP
 .BI \-u,\ --undefined= symbol
 Add \fIsymbol\fR to the list of undefined symbols when invoking the
