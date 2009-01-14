@@ -27,8 +27,9 @@
 #include "dshow.h"
 #include "control.h"
 
-static const CHAR fileA[] = "test.avi";
-static const WCHAR file[] = {'t','e','s','t','.','a','v','i',0};
+#define FILE_LEN 9
+static const char avifileA[FILE_LEN] = "test.avi";
+static const char mpegfileA[FILE_LEN] = "test.mpg";
 
 IGraphBuilder* pgraph;
 
@@ -38,11 +39,14 @@ static int createfiltergraph(void)
         &CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IGraphBuilder, (LPVOID*)&pgraph);
 }
 
-static void renderfile(void)
+static void renderfile(const char * fileA)
 {
     HRESULT hr;
+    WCHAR fileW[FILE_LEN];
 
-    hr = IGraphBuilder_RenderFile(pgraph, file, NULL);
+    MultiByteToWideChar(CP_ACP, 0, fileA, -1, fileW, FILE_LEN);
+
+    hr = IGraphBuilder_RenderFile(pgraph, fileW, NULL);
     ok(hr==S_OK, "RenderFile returned: %x\n", hr);
 }
 
@@ -137,7 +141,7 @@ static void releasefiltergraph(void)
     ok(hr==0, "Releasing filtergraph returned: %x\n", hr);
 }
 
-static void test_render_run(void)
+static void test_render_run(const char * fileA)
 {
     HANDLE h;
 
@@ -147,7 +151,7 @@ static void test_render_run(void)
     h = CreateFileA(fileA, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
     if (h != INVALID_HANDLE_VALUE) {
         CloseHandle(h);
-        renderfile();
+        renderfile(fileA);
         rungraph();
     }
 
@@ -1822,7 +1826,8 @@ static void test_render_filter_priority(void)
 START_TEST(filtergraph)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
-    test_render_run();
+    test_render_run(avifileA);
+    test_render_run(mpegfileA);
     test_graph_builder();
     test_graph_builder_addfilter();
     test_mediacontrol();
