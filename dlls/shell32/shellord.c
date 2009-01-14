@@ -1995,8 +1995,13 @@ BOOL WINAPI LinkWindow_UnregisterClass(void)
 
 /*************************************************************************
  *              SHFlushSFCache (SHELL32.526)
+ *
+ * Notifies the shell that a user-specified special folder location has changed.
+ *
+ * NOTES
+ *   In Wine, the shell folder registry values are not cached, so this function
+ *   has no effect.
  */
 void WINAPI SHFlushSFCache(void)
 {
-    FIXME("()\n");
 }
