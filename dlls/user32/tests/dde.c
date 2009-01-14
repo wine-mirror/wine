@@ -427,10 +427,7 @@ todo_wine
     ret = DdeGetLastError(client_pid);
     ok(op == NULL, "Expected NULL, got %p\n", op);
     ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", res);
-    todo_wine
-    {
-        ok(ret == DMLERR_MEMORY_ERROR, "Expected DMLERR_MEMORY_ERROR, got %d\n", ret);
-    }
+    ok(ret == DMLERR_MEMORY_ERROR, "Expected DMLERR_MEMORY_ERROR, got %d\n", ret);
 
     /* XTYP_EXECUTE, no data, -1 size */
     res = 0xdeadbeef;

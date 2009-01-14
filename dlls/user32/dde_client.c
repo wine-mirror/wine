@@ -632,6 +632,15 @@ static WDML_XACT*	WDML_ClientQueueExecute(WDML_CONV* pConv, LPVOID pData, DWORD 
 
     TRACE("XTYP_EXECUTE transaction\n");
 
+    if (pData == NULL)
+    {
+        if (cbData == (DWORD)-1)
+            pConv->instance->lastError = DMLERR_INVALIDPARAMETER;
+        else
+            pConv->instance->lastError = DMLERR_MEMORY_ERROR;
+        return NULL;
+    }
+
     pXAct = WDML_AllocTransaction(pConv->instance, WM_DDE_EXECUTE, 0, 0);
     if (!pXAct)
 	return NULL;
@@ -1154,13 +1163,10 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
     switch (wType)
     {
     case XTYP_EXECUTE:
-        /* Windows simply ignores hszItem and wFmt in this case */
-	if (pData == NULL)
-	{
-	    pConv->instance->lastError = DMLERR_INVALIDPARAMETER;
-	    return 0;
-	}
+    /* Windows simply ignores hszItem and wFmt in this case */
 	pXAct = WDML_ClientQueueExecute(pConv, pData, cbData);
+	if (pXAct == NULL)
+	    return 0;
 	break;
     case XTYP_POKE:
         if (!hszItem)
