@@ -604,7 +604,7 @@ struct enummodes_ctx
 static HRESULT WINAPI
 enum_modes_cb2(DDSURFACEDESC2 *ddsd2, void *vctx)
 {
-    struct enummodes_ctx *ctx = (struct enummodes_ctx *) vctx;
+    struct enummodes_ctx *ctx = vctx;
     DDSURFACEDESC ddsd;
 
     DDSD2_to_DDSD(ddsd2, &ddsd);
@@ -662,7 +662,7 @@ struct enumsurfaces4_ctx
 static HRESULT WINAPI
 enum_surfaces_wrapper(IDirectDrawSurface4 *surf4, DDSURFACEDESC2 *ddsd2, void *vctx)
 {
-    struct enumsurfaces4_ctx *ctx = (struct enumsurfaces4_ctx *) vctx;
+    struct enumsurfaces4_ctx *ctx = vctx;
     IDirectDrawSurface4 *outer = dds_get_outer(surf4);
     IDirectDrawSurface4_AddRef(outer);
     IDirectDrawSurface4_Release(surf4);
@@ -695,7 +695,7 @@ struct enumsurfaces_ctx
 static HRESULT WINAPI
 enum_surfaces_cb2(IDirectDrawSurface4 *surf4, DDSURFACEDESC2 *ddsd2, void *vctx)
 {
-    struct enumsurfaces_ctx *ctx = (struct enumsurfaces_ctx *) vctx;
+    struct enumsurfaces_ctx *ctx = vctx;
     IDirectDrawSurface *surf1;
     DDSURFACEDESC ddsd;
 

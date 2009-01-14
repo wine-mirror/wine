@@ -317,7 +317,7 @@ struct enumsurfaces_wrap
 static HRESULT WINAPI
 enumsurfaces_wrap_cb(IDirectDrawSurface4 *surf, DDSURFACEDESC2 *desc, void *vctx)
 {
-    struct enumsurfaces_wrap *ctx = (struct enumsurfaces_wrap *) vctx;
+    struct enumsurfaces_wrap *ctx = vctx;
     IDirectDrawSurface4 *outer = dds_get_outer(surf);
 
     TRACE("Returning outer surface %p for inner surface %p\n", outer, surf);
@@ -350,7 +350,7 @@ static HRESULT WINAPI
 enumsurfaces_thunk_cb(IDirectDrawSurface4 *surf, DDSURFACEDESC2 *desc2, void *vctx)
 {
     IDirectDrawSurfaceImpl *This = impl_from_dds4(surf);
-    struct enumsurfaces_thunk *ctx = (struct enumsurfaces_thunk *) vctx;
+    struct enumsurfaces_thunk *ctx = vctx;
     DDSURFACEDESC desc;
 
     TRACE("Thunking back to IDirectDrawSurface3\n");

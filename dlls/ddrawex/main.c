@@ -290,7 +290,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 
     factory->pfnCreateInstance = CreateDirectDrawFactory;
 
-    *ppv = (IClassFactory*) factory;
+    *ppv = factory;
 
     return S_OK;
 }
