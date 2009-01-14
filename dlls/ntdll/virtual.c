@@ -2615,14 +2615,22 @@ NTSTATUS WINAPI NtReadVirtualMemory( HANDLE process, const void *addr, void *buf
 {
     NTSTATUS status;
 
-    SERVER_START_REQ( read_process_memory )
+    if (virtual_check_buffer_for_write( buffer, size ))
     {
-        req->handle = wine_server_obj_handle( process );
-        req->addr   = wine_server_client_ptr( addr );
-        wine_server_set_reply( req, buffer, size );
-        if ((status = wine_server_call( req ))) size = 0;
+        SERVER_START_REQ( read_process_memory )
+        {
+            req->handle = wine_server_obj_handle( process );
+            req->addr   = wine_server_client_ptr( addr );
+            wine_server_set_reply( req, buffer, size );
+            if ((status = wine_server_call( req ))) size = 0;
+        }
+        SERVER_END_REQ;
     }
-    SERVER_END_REQ;
+    else
+    {
+        status = STATUS_ACCESS_VIOLATION;
+        size = 0;
+    }
     if (bytes_read) *bytes_read = size;
     return status;
 }
@@ -2637,14 +2645,22 @@ NTSTATUS WINAPI NtWriteVirtualMemory( HANDLE process, void *addr, const void *bu
 {
     NTSTATUS status;
 
-    SERVER_START_REQ( write_process_memory )
+    if (virtual_check_buffer_for_read( buffer, size ))
     {
-        req->handle     = wine_server_obj_handle( process );
-        req->addr       = wine_server_client_ptr( addr );
-        wine_server_add_data( req, buffer, size );
-        if ((status = wine_server_call( req ))) size = 0;
+        SERVER_START_REQ( write_process_memory )
+        {
+            req->handle     = wine_server_obj_handle( process );
+            req->addr       = wine_server_client_ptr( addr );
+            wine_server_add_data( req, buffer, size );
+            if ((status = wine_server_call( req ))) size = 0;
+        }
+        SERVER_END_REQ;
     }
-    SERVER_END_REQ;
+    else
+    {
+        status = STATUS_PARTIAL_COPY;
+        size = 0;
+    }
     if (bytes_written) *bytes_written = size;
     return status;
 }
