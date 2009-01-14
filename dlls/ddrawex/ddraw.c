@@ -1514,7 +1514,7 @@ IDirectDrawFactoryImpl_CreateDirectDraw(IDirectDrawFactory* iface,
     IDirectDrawImpl *object = NULL;
     IDirectDraw *parent = NULL;
 
-    TRACE("(%p)->(%s,%p,0x%08x,0x%08x,%p,%p)", iface, debugstr_guid(pGUID), hWnd, dwCoopLevelFlags,
+    TRACE("(%p)->(%s,%p,0x%08x,0x%08x,%p,%p)\n", iface, debugstr_guid(pGUID), hWnd, dwCoopLevelFlags,
           dwReserved, pUnkOuter, ppDirectDraw);
 
     if(pUnkOuter)
