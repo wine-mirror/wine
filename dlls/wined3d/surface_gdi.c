@@ -540,14 +540,6 @@ static void WINAPI IWineGDISurfaceImpl_GetGlDesc(IWineD3DSurface *iface, glDescr
     *glDescription = NULL;
 }
 
-static HRESULT WINAPI IWineGDISurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, CONST RECT* pDirtyRect) {
-    /* GDI surface data can only be in one location, the system memory dib section. So they are
-     * always clean by definition.
-     */
-    TRACE("No dirtification in GDI surfaces\n");
-    return WINED3D_OK;
-}
-
 static HRESULT WINAPI IWineGDISurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
 
@@ -673,7 +665,6 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DBaseSurfaceImpl_SetClipper,
     IWineD3DBaseSurfaceImpl_GetClipper,
     /* Internal use: */
-    IWineGDISurfaceImpl_AddDirtyRect,
     IWineGDISurfaceImpl_LoadTexture,
     IWineD3DBaseSurfaceImpl_BindTexture,
     IWineGDISurfaceImpl_SaveSnapshot,

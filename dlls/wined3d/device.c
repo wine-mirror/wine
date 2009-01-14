@@ -764,7 +764,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     }
 
     /* mark the texture as dirty so that it gets loaded first time around*/
-    IWineD3DSurface_AddDirtyRect(*ppSurface, NULL);
+    surface_add_dirty_rect(*ppSurface, NULL);
     TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) lockable(%d) surf@%p, surfmem@%p, %d bytes\n",
            This, Width, Height, Format, debug_d3dformat(Format),
            (WINED3DFMT_D16_LOCKABLE == Format), *ppSurface, object->resource.allocatedMemory, object->resource.size);

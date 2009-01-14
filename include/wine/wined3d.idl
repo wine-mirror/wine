@@ -2453,9 +2453,6 @@ interface IWineD3DSurface : IWineD3DResource
     HRESULT GetClipper(
         [out] IWineD3DClipper **clipper
     );
-    HRESULT AddDirtyRect(
-        [in] const RECT *dirty_rect
-    );
     HRESULT LoadTexture(
         [in] BOOL srgb_mode
     );

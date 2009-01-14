@@ -2038,6 +2038,7 @@ void state_fogdensity(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
 void state_fogstartend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
 void state_fog_fragpart(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
 
+void surface_add_dirty_rect(IWineD3DSurface *iface, const RECT *dirty_rect);
 void surface_force_reload(IWineD3DSurface *iface);
 GLenum surface_get_gl_buffer(IWineD3DSurface *iface, IWineD3DSwapChain *swapchain);
 void surface_load_ds_location(IWineD3DSurface *iface, DWORD location);
