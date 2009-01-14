@@ -84,8 +84,8 @@ static void test_VirtualAllocEx(void)
         return;
     }
 
-    src = HeapAlloc( GetProcessHeap(), 0, alloc_size );
-    dst = HeapAlloc( GetProcessHeap(), 0, alloc_size );
+    src = VirtualAlloc( NULL, alloc_size, MEM_COMMIT, PAGE_READWRITE );
+    dst = VirtualAlloc( NULL, alloc_size, MEM_COMMIT, PAGE_READWRITE );
     for (i = 0; i < alloc_size; i++)
         src[i] = i & 0xff;
 
@@ -96,11 +96,40 @@ static void test_VirtualAllocEx(void)
     b = ReadProcessMemory(hProcess, addr1, dst, alloc_size, &bytes_read);
     ok(b && (bytes_read == alloc_size), "%lu bytes read\n", bytes_read);
     ok(!memcmp(src, dst, alloc_size), "Data from remote process differs\n");
+
+    /* test invalid source buffers */
+
+    b = VirtualProtect( src + 0x2000, 0x2000, PAGE_NOACCESS, &old_prot );
+    ok( b, "VirtualProtect failed error %u\n", GetLastError() );
+    b = WriteProcessMemory(hProcess, addr1, src, alloc_size, &bytes_written);
+    ok( !b, "WriteProcessMemory succeeded\n" );
+    ok( GetLastError() == ERROR_NOACCESS ||
+        GetLastError() == ERROR_PARTIAL_COPY, /* vista */
+        "wrong error %u\n", GetLastError() );
+    ok( bytes_written == 0, "%lu bytes written\n", bytes_written );
+    b = ReadProcessMemory(hProcess, addr1, src, alloc_size, &bytes_read);
+    ok( !b, "ReadProcessMemory succeeded\n" );
+    ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
+    ok( bytes_read == 0, "%lu bytes written\n", bytes_read );
+
+    b = VirtualProtect( src, 0x2000, PAGE_NOACCESS, &old_prot );
+    ok( b, "VirtualProtect failed error %u\n", GetLastError() );
+    b = WriteProcessMemory(hProcess, addr1, src, alloc_size, &bytes_written);
+    ok( !b, "WriteProcessMemory succeeded\n" );
+    ok( GetLastError() == ERROR_NOACCESS ||
+        GetLastError() == ERROR_PARTIAL_COPY, /* vista */
+        "wrong error %u\n", GetLastError() );
+    ok( bytes_written == 0, "%lu bytes written\n", bytes_written );
+    b = ReadProcessMemory(hProcess, addr1, src, alloc_size, &bytes_read);
+    ok( !b, "ReadProcessMemory succeeded\n" );
+    ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
+    ok( bytes_read == 0, "%lu bytes written\n", bytes_read );
+
     b = pVirtualFreeEx(hProcess, addr1, 0, MEM_RELEASE);
     ok(b != 0, "VirtualFreeEx, error %u\n", GetLastError());
 
-    HeapFree( GetProcessHeap(), 0, src );
-    HeapFree( GetProcessHeap(), 0, dst );
+    VirtualFree( src, 0, MEM_FREE );
+    VirtualFree( dst, 0, MEM_FREE );
 
     /*
      * The following tests parallel those in test_VirtualAlloc()
