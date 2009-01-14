@@ -1143,7 +1143,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
     memset(&object->lockedBox, 0, sizeof(WINED3DBOX));
     object->dirty               = TRUE;
 
-    return IWineD3DVolume_AddDirtyBox((IWineD3DVolume *) object, NULL);
+    volume_add_dirty_box((IWineD3DVolume *)object, NULL);
+
+    return WINED3D_OK;
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT EdgeLength,

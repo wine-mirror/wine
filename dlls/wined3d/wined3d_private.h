@@ -1455,6 +1455,8 @@ typedef struct IWineD3DVolumeImpl
 
 extern const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl;
 
+void volume_add_dirty_box(IWineD3DVolume *iface, const WINED3DBOX *dirty_box);
+
 /*****************************************************************************
  * IWineD3DVolumeTexture implementation structure (extends IWineD3DBaseTextureImpl)
  */
