@@ -396,6 +396,62 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
     test_color_todo(c, exp, GetPixel, todo_getp); \
 }
 
+static void test_dib_bits_access( HBITMAP hdib, void *bits )
+{
+    MEMORY_BASIC_INFORMATION info;
+    char bmibuf[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD)];
+    DWORD data[256];
+    BITMAPINFO *pbmi = (BITMAPINFO *)bmibuf;
+    HDC hdc = GetDC(0);
+    char filename[MAX_PATH];
+    HANDLE file;
+    DWORD written;
+    INT ret;
+
+    ok(VirtualQuery(bits, &info, sizeof(info)) == sizeof(info),
+        "VirtualQuery failed\n");
+    ok(info.BaseAddress == bits, "%p != %p\n", info.BaseAddress, bits);
+    ok(info.AllocationBase == bits, "%p != %p\n", info.AllocationBase, bits);
+    ok(info.AllocationProtect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.AllocationProtect);
+    ok(info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State);
+    ok(info.Protect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.Protect);
+    ok(info.Type == MEM_PRIVATE, "%x != MEM_PRIVATE\n", info.Type);
+
+    memset( pbmi, 0, sizeof(bmibuf) );
+    memset( data, 0xcc, sizeof(data) );
+    pbmi->bmiHeader.biSize = sizeof(pbmi->bmiHeader);
+    pbmi->bmiHeader.biHeight = 16;
+    pbmi->bmiHeader.biWidth = 16;
+    pbmi->bmiHeader.biBitCount = 32;
+    pbmi->bmiHeader.biPlanes = 1;
+    pbmi->bmiHeader.biCompression = BI_RGB;
+
+    ret = SetDIBits( hdc, hdib, 0, 16, data, pbmi, DIB_RGB_COLORS );
+    ok( ret == 16, "SetDIBits failed\n" );
+
+    ok(VirtualQuery(bits, &info, sizeof(info)) == sizeof(info),
+        "VirtualQuery failed\n");
+    ok(info.BaseAddress == bits, "%p != %p\n", info.BaseAddress, bits);
+    ok(info.AllocationBase == bits, "%p != %p\n", info.AllocationBase, bits);
+    ok(info.AllocationProtect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.AllocationProtect);
+    ok(info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State);
+    ok(info.Type == MEM_PRIVATE, "%x != MEM_PRIVATE\n", info.Type);
+    /* it has been protected now */
+    todo_wine ok(info.Protect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.Protect);
+
+    /* try writing protected bits to a file */
+
+    GetTempFileNameA( ".", "dib", 0, filename );
+    file = CreateFileA( filename, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
+                        CREATE_ALWAYS, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "failed to open %s error %u\n", filename, GetLastError() );
+    ret = WriteFile( file, bits, 8192, &written, NULL );
+    ok( ret, "WriteFile failed error %u\n", GetLastError() );
+    if (ret) ok( written == 8192, "only wrote %u bytes\n", written );
+    CloseHandle( file );
+    DeleteFileA( filename );
+}
+
 static void test_dibsections(void)
 {
     HDC hdc, hdcmem, hdcmem2;
@@ -454,6 +510,8 @@ static void test_dibsections(void)
     ok(info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State);
     ok(info.Protect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.Protect);
     ok(info.Type == MEM_PRIVATE, "%x != MEM_PRIVATE\n", info.Type);
+
+    test_dib_bits_access( hdib, bits );
 
     test_dib_info(hdib, bits, &pbmi->bmiHeader);
     DeleteObject(hdib);
