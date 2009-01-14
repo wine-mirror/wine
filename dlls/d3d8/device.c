@@ -764,11 +764,11 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, ID
         /* Copy rect by rect */
         if (NULL != pSourceRects && NULL != pDestPoints) {
             for (i = 0; i < cRects; ++i) {
-                IWineD3DSurface_BltFast(Dest->wineD3DSurface, pDestPoints[i].x, pDestPoints[i].y, Source->wineD3DSurface, (RECT *) &pSourceRects[i], WINEDDBLTFAST_NOCOLORKEY);
+                IWineD3DSurface_BltFast(Dest->wineD3DSurface, pDestPoints[i].x, pDestPoints[i].y, Source->wineD3DSurface, &pSourceRects[i], WINEDDBLTFAST_NOCOLORKEY);
             }
         } else {
             for (i = 0; i < cRects; ++i) {
-                IWineD3DSurface_BltFast(Dest->wineD3DSurface, 0, 0, Source->wineD3DSurface, (RECT *) &pSourceRects[i], WINEDDBLTFAST_NOCOLORKEY);
+                IWineD3DSurface_BltFast(Dest->wineD3DSurface, 0, 0, Source->wineD3DSurface, &pSourceRects[i], WINEDDBLTFAST_NOCOLORKEY);
             }
         }
     }
@@ -1778,7 +1778,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEV
     TRACE("(%p) : Relay\n", This);
 
     EnterCriticalSection(&d3d8_cs);
-    hr = IWineD3DDevice_SetVertexShaderConstantF(This->WineD3DDevice, Register, (CONST float *)pConstantData, ConstantCount);
+    hr = IWineD3DDevice_SetVertexShaderConstantF(This->WineD3DDevice, Register, pConstantData, ConstantCount);
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }
@@ -1789,7 +1789,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShaderConstant(LPDIRECT3DDEV
     TRACE("(%p) : Relay\n", This);
 
     EnterCriticalSection(&d3d8_cs);
-    hr = IWineD3DDevice_GetVertexShaderConstantF(This->WineD3DDevice, Register, (float *)pConstantData, ConstantCount);
+    hr = IWineD3DDevice_GetVertexShaderConstantF(This->WineD3DDevice, Register, pConstantData, ConstantCount);
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }
@@ -2032,7 +2032,7 @@ static HRESULT  WINAPI  IDirect3DDevice8Impl_SetPixelShaderConstant(LPDIRECT3DDE
     TRACE("(%p) Relay\n", This);
 
     EnterCriticalSection(&d3d8_cs);
-    hr = IWineD3DDevice_SetPixelShaderConstantF(This->WineD3DDevice, Register, (CONST float *)pConstantData, ConstantCount);
+    hr = IWineD3DDevice_SetPixelShaderConstantF(This->WineD3DDevice, Register, pConstantData, ConstantCount);
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }
@@ -2043,7 +2043,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetPixelShaderConstant(LPDIRECT3DDEVI
     TRACE("(%p) Relay\n", This);
 
     EnterCriticalSection(&d3d8_cs);
-    hr = IWineD3DDevice_GetPixelShaderConstantF(This->WineD3DDevice, Register, (float *)pConstantData, ConstantCount);
+    hr = IWineD3DDevice_GetPixelShaderConstantF(This->WineD3DDevice, Register, pConstantData, ConstantCount);
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }
