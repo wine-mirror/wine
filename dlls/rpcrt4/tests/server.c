@@ -1152,10 +1152,10 @@ array_tests(void)
   ok(sum_conf_array(&c[7], 1) == 7, "RPC sum_conf_array\n");
   ok(sum_conf_array(&c[2], 0) == 0, "RPC sum_conf_array\n");
 
-  ok(sum_conf_ptr_by_conf_ptr(1, c2, c) == 45, "RPC sum_conf_ptr_by_conf_ptr");
-  ok(sum_conf_ptr_by_conf_ptr(3, c2, c) == 345, "RPC sum_conf_ptr_by_conf_ptr");
+  ok(sum_conf_ptr_by_conf_ptr(1, c2, c) == 45, "RPC sum_conf_ptr_by_conf_ptr\n");
+  ok(sum_conf_ptr_by_conf_ptr(3, c2, c) == 345, "RPC sum_conf_ptr_by_conf_ptr\n");
   c2[0] = 0;
-  ok(sum_conf_ptr_by_conf_ptr(3, c2, c) == 300, "RPC sum_conf_ptr_by_conf_ptr");
+  ok(sum_conf_ptr_by_conf_ptr(3, c2, c) == 300, "RPC sum_conf_ptr_by_conf_ptr\n");
 
   ok(sum_unique_conf_array(ca, 4) == -2, "RPC sum_unique_conf_array\n");
   ok(sum_unique_conf_ptr(ca, 5) == 3, "RPC sum_unique_conf_array\n");
