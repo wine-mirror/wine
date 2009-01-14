@@ -458,8 +458,7 @@ static void test_SetupGetTargetPath(void)
     ret = SetupGetTargetPathA(hinf, NULL, "CopyAlways.System32.Files", buffer, sizeof(buffer), &required);
     ok(ret, "SetupGetTargetPathA failed\n");
 
-    lstrcpyA(destfile, WIN_DIR);
-    lstrcatA(destfile, "\\system32");
+    GetSystemDirectoryA(destfile, MAX_PATH);
 
     ok(required == lstrlenA(destfile) + 1, "unexpected required size: %d\n", required);
     ok(!lstrcmpiA(buffer, destfile), "unexpected path: %s\n", buffer);
