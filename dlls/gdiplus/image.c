@@ -1180,7 +1180,7 @@ static GpStatus encode_image_BMP(LPVOID bitmap_bits, LPBITMAPINFO bitmap_info,
 
     *output = GdipAlloc(*output_size);
 
-    bmp_file_hdr = (BITMAPFILEHEADER*) *output;
+    bmp_file_hdr = *output;
     bmp_file_hdr->bfType = BITMAP_FORMAT_BMP;
     bmp_file_hdr->bfSize = *output_size;
     bmp_file_hdr->bfOffBits =
