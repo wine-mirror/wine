@@ -1673,10 +1673,11 @@ static void test_async_file_errors(void)
 
 static void test_read_write(void)
 {
-    DWORD bytes, ret;
+    DWORD bytes, ret, old_prot;
     HANDLE hFile;
     char temp_path[MAX_PATH];
     char filename[MAX_PATH];
+    char *mem;
     static const char prefix[] = "pfx";
 
     ret = GetTempPathA(MAX_PATH, temp_path);
@@ -1725,6 +1726,95 @@ static void test_read_write(void)
 		GetLastError() == ERROR_INVALID_PARAMETER), /* Win9x */
 	"ret = %d, error %d\n", ret, GetLastError());
     ok(!bytes, "bytes = %d\n", bytes);
+
+    /* test passing protected memory as buffer */
+
+    mem = VirtualAlloc( NULL, 0x4000, MEM_COMMIT, PAGE_READWRITE );
+    ok( mem != NULL, "failed to allocate virtual mem error %u\n", GetLastError() );
+
+    ret = WriteFile( hFile, mem, 0x4000, &bytes, NULL );
+    ok( ret, "WriteFile failed error %u\n", GetLastError() );
+    ok( bytes == 0x4000, "only wrote %x bytes\n", bytes );
+
+    ret = VirtualProtect( mem + 0x2000, 0x2000, PAGE_NOACCESS, &old_prot );
+    ok( ret, "VirtualProtect failed error %u\n", GetLastError() );
+
+    ret = WriteFile( hFile, mem, 0x4000, &bytes, NULL );
+    ok( !ret, "WriteFile succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_USER_BUFFER ||
+        GetLastError() == ERROR_INVALID_PARAMETER,  /* win9x */
+        "wrong error %u\n", GetLastError() );
+    ok( bytes == 0, "wrote %x bytes\n", bytes );
+
+    ret = WriteFile( (HANDLE)0xdead, mem, 0x4000, &bytes, NULL );
+    ok( !ret, "WriteFile succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_HANDLE || /* handle is checked before buffer on NT */
+        GetLastError() == ERROR_INVALID_PARAMETER,  /* win9x */
+        "wrong error %u\n", GetLastError() );
+    ok( bytes == 0, "wrote %x bytes\n", bytes );
+
+    ret = VirtualProtect( mem, 0x2000, PAGE_NOACCESS, &old_prot );
+    ok( ret, "VirtualProtect failed error %u\n", GetLastError() );
+
+    ret = WriteFile( hFile, mem, 0x4000, &bytes, NULL );
+    ok( !ret, "WriteFile succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_USER_BUFFER ||
+        GetLastError() == ERROR_INVALID_PARAMETER,  /* win9x */
+        "wrong error %u\n", GetLastError() );
+    ok( bytes == 0, "wrote %x bytes\n", bytes );
+
+    SetFilePointer( hFile, 0, NULL, FILE_BEGIN );
+
+    ret = ReadFile( hFile, mem, 0x4000, &bytes, NULL );
+    ok( !ret, "ReadFile succeeded\n" );
+    ok( GetLastError() == ERROR_NOACCESS ||
+        GetLastError() == ERROR_INVALID_PARAMETER,  /* win9x */
+        "wrong error %u\n", GetLastError() );
+    ok( bytes == 0, "read %x bytes\n", bytes );
+
+    ret = VirtualProtect( mem, 0x2000, PAGE_READONLY, &old_prot );
+    ok( ret, "VirtualProtect failed error %u\n", GetLastError() );
+
+    ret = ReadFile( hFile, mem, 0x4000, &bytes, NULL );
+    ok( !ret, "ReadFile succeeded\n" );
+    ok( GetLastError() == ERROR_NOACCESS ||
+        GetLastError() == ERROR_INVALID_PARAMETER,  /* win9x */
+        "wrong error %u\n", GetLastError() );
+    ok( bytes == 0, "read %x bytes\n", bytes );
+
+    ret = VirtualProtect( mem, 0x2000, PAGE_READWRITE, &old_prot );
+    ok( ret, "VirtualProtect failed error %u\n", GetLastError() );
+
+    ret = ReadFile( hFile, mem, 0x4000, &bytes, NULL );
+    ok( !ret, "ReadFile succeeded\n" );
+    ok( GetLastError() == ERROR_NOACCESS ||
+        GetLastError() == ERROR_INVALID_PARAMETER,  /* win9x */
+        "wrong error %u\n", GetLastError() );
+    ok( bytes == 0, "read %x bytes\n", bytes );
+
+    SetFilePointer( hFile, 0x1234, NULL, FILE_BEGIN );
+    SetEndOfFile( hFile );
+    SetFilePointer( hFile, 0, NULL, FILE_BEGIN );
+
+    ret = ReadFile( hFile, mem, 0x4000, &bytes, NULL );
+    ok( !ret, "ReadFile succeeded\n" );
+    ok( GetLastError() == ERROR_NOACCESS ||
+        GetLastError() == ERROR_INVALID_PARAMETER,  /* win9x */
+        "wrong error %u\n", GetLastError() );
+    ok( bytes == 0, "read %x bytes\n", bytes );
+
+    ret = ReadFile( hFile, mem, 0x2000, &bytes, NULL );
+    ok( ret, "ReadFile failed error %u\n", GetLastError() );
+    ok( bytes == 0x1234, "read %x bytes\n", bytes );
+
+    ret = ReadFile( hFile, NULL, 1, &bytes, NULL );
+    ok( !ret, "ReadFile succeeded\n" );
+    ok( GetLastError() == ERROR_NOACCESS ||
+        GetLastError() == ERROR_INVALID_PARAMETER,  /* win9x */
+        "wrong error %u\n", GetLastError() );
+    ok( bytes == 0, "read %x bytes\n", bytes );
+
+    VirtualFree( mem, 0, MEM_FREE );
 
     ret = CloseHandle(hFile);
     ok( ret, "CloseHandle: error %d\n", GetLastError());
