@@ -53,10 +53,10 @@ STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
 CAPTION "Fastest Times"
 {
-    GROUPBOX        "Fastest Times", IDIGNORE,  10,  10, 140,  45
-    LTEXT           "Beginner",      IDIGNORE,  20,  20,  40,   8
-    LTEXT           "Advanced",      IDIGNORE,  20,  30,  40,   8
-    LTEXT           "Expert",        IDIGNORE,  20,  40,  40,   8
+    GROUPBOX        "Fastest Times", -1,  10,  10, 140,  45
+    LTEXT           "Beginner",      -1,  20,  20,  40,   8
+    LTEXT           "Advanced",      -1,  20,  30,  40,   8
+    LTEXT           "Expert",        -1,  20,  40,  40,   8
     LTEXT           "999",          IDC_TIME1,  70,  20,  15,   8
     LTEXT           "999",          IDC_TIME2,  70,  30,  15,   8
     LTEXT           "999",          IDC_TIME3,  70,  40,  15,   8
@@ -71,7 +71,7 @@ STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
 CAPTION "Congratulations!"
 {
-    LTEXT           "Please enter your name", IDIGNORE,  10,  10, 150,  10
+    LTEXT           "Please enter your name", -1,  10,  10, 150,  10
     EDITTEXT                              IDC_EDITNAME,  25,  20, 110,  12
     DEFPUSHBUTTON   "OK",                         IDOK,  60,  40,  40,  15
 }
@@ -81,9 +81,9 @@ STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
 CAPTION "Custom Game"
 {
-    LTEXT           "Rows",   IDIGNORE,   5,   5,  30,  10
-    LTEXT           "Cols",   IDIGNORE,   5,  35,  30,  10
-    LTEXT           "Mines",  IDIGNORE,   5,  65,  30,  10
+    LTEXT           "Rows",   -1,   5,   5,  30,  10
+    LTEXT           "Cols",   -1,   5,  35,  30,  10
+    LTEXT           "Mines",  -1,   5,  65,  30,  10
     EDITTEXT              IDC_EDITROWS,   5,  15,  20,  12, ES_NUMBER
     EDITTEXT              IDC_EDITCOLS,   5,  45,  20,  12, ES_NUMBER
     EDITTEXT             IDC_EDITMINES,   5,  75,  20,  12, ES_NUMBER

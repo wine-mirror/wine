@@ -54,10 +54,10 @@ STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
 CAPTION "Najlepsze Wyniki"
 {
-    GROUPBOX        "Najlepsze Wyniki", IDIGNORE,  10,  10, 150,  45
-    LTEXT           "Pocz¹tkuj¹cy",      IDIGNORE,  20,  20,  50,   8
-    LTEXT           "Zaawansowany",      IDIGNORE,  20,  30,  50,   8
-    LTEXT           "Ekspert",        IDIGNORE,  20,  40,  50,   8
+    GROUPBOX        "Najlepsze Wyniki", -1,  10,  10, 150,  45
+    LTEXT           "Pocz¹tkuj¹cy",      -1,  20,  20,  50,   8
+    LTEXT           "Zaawansowany",      -1,  20,  30,  50,   8
+    LTEXT           "Ekspert",        -1,  20,  40,  50,   8
     LTEXT           "999",          IDC_TIME1,  80,  20,  15,   8
     LTEXT           "999",          IDC_TIME2,  80,  30,  15,   8
     LTEXT           "999",          IDC_TIME3,  80,  40,  15,   8
@@ -72,7 +72,7 @@ STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
 CAPTION "Gratulacje!"
 {
-    LTEXT           "Podaj swoje imiê", IDIGNORE,  10,  10, 150,  10
+    LTEXT           "Podaj swoje imiê", -1,  10,  10, 150,  10
     EDITTEXT                              IDC_EDITNAME,  25,  20, 110,  12
     DEFPUSHBUTTON   "OK",                         IDOK,  60,  40,  40,  15
 }
@@ -82,9 +82,9 @@ STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
 CAPTION "Ustawienia U¿ytkownika"
 {
-    LTEXT           "Wiersze",   IDIGNORE,   5,   5,  30,  10
-    LTEXT           "Kolumny",   IDIGNORE,   5,  35,  30,  10
-    LTEXT           "Miny",  IDIGNORE,   5,  65,  30,  10
+    LTEXT           "Wiersze",   -1,   5,   5,  30,  10
+    LTEXT           "Kolumny",   -1,   5,  35,  30,  10
+    LTEXT           "Miny",  -1,   5,  65,  30,  10
     EDITTEXT              IDC_EDITROWS,   5,  15,  20,  12, ES_NUMBER
     EDITTEXT              IDC_EDITCOLS,   5,  45,  20,  12, ES_NUMBER
     EDITTEXT             IDC_EDITMINES,   5,  75,  20,  12, ES_NUMBER

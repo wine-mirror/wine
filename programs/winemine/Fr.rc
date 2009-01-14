@@ -55,10 +55,10 @@ STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
 CAPTION "Temps les plus rapides"
 {
-    GROUPBOX        "Temps les plus rapides", IDIGNORE,  10,  10, 140,  45
-    LTEXT           "Débutant",      IDIGNORE,  20,  20,  40,   8
-    LTEXT           "Avancé",        IDIGNORE,  20,  30,  40,   8
-    LTEXT           "Expert",        IDIGNORE,  20,  40,  40,   8
+    GROUPBOX        "Temps les plus rapides", -1,  10,  10, 140,  45
+    LTEXT           "Débutant",      -1,  20,  20,  40,   8
+    LTEXT           "Avancé",        -1,  20,  30,  40,   8
+    LTEXT           "Expert",        -1,  20,  40,  40,   8
     LTEXT           "999",          IDC_TIME1,  70,  20,  15,   8
     LTEXT           "999",          IDC_TIME2,  70,  30,  15,   8
     LTEXT           "999",          IDC_TIME3,  70,  40,  15,   8
@@ -73,7 +73,7 @@ STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
 CAPTION "Félicitations !"
 {
-    LTEXT           "Veuillez saisir votre nom", IDIGNORE,  10,  10, 150,  10
+    LTEXT           "Veuillez saisir votre nom", -1,  10,  10, 150,  10
     EDITTEXT                              IDC_EDITNAME,  25,  20, 110,  12
     DEFPUSHBUTTON   "OK",                         IDOK,  60,  40,  40,  15
 }
@@ -83,9 +83,9 @@ STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
 CAPTION "Grille personnalisée"
 {
-    LTEXT           "Rangées",  IDIGNORE,   5,   5,  30,  10
-    LTEXT           "Colonnes", IDIGNORE,   5,  35,  30,  10
-    LTEXT           "Mines",    IDIGNORE,   5,  65,  30,  10
+    LTEXT           "Rangées",  -1,   5,   5,  30,  10
+    LTEXT           "Colonnes", -1,   5,  35,  30,  10
+    LTEXT           "Mines",    -1,   5,  65,  30,  10
     EDITTEXT               IDC_EDITROWS,   5,  15,  20,  12, ES_NUMBER
     EDITTEXT               IDC_EDITCOLS,   5,  45,  20,  12, ES_NUMBER
     EDITTEXT              IDC_EDITMINES,   5,  75,  20,  12, ES_NUMBER
