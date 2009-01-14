@@ -31,6 +31,16 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, const RECT *
   ME_Context c;
   int yoffset;
   int ys, ye;
+  HRGN oldRgn;
+
+  oldRgn = CreateRectRgn(0, 0, 0, 0);
+  if (!GetClipRgn(hDC, oldRgn))
+  {
+    DeleteObject(oldRgn);
+    oldRgn = NULL;
+  }
+  IntersectClipRect(hDC, rcUpdate->left, rcUpdate->top,
+                     rcUpdate->right, rcUpdate->bottom);
 
   editor->nSequence++;
   yoffset = ME_GetYScrollPos(editor);
@@ -107,6 +117,10 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, const RECT *
     ME_SendRequestResize(editor, FALSE);
   editor->nLastTotalLength = editor->nTotalLength;
   ME_DestroyContext(&c, NULL);
+
+  SelectClipRgn(hDC, oldRgn);
+  if (oldRgn)
+    DeleteObject(oldRgn);
 }
 
 void ME_Repaint(ME_TextEditor *editor)
@@ -1037,7 +1051,8 @@ static void ME_Scroll(ME_TextEditor *editor, int value, int type)
   if (abs(nActualScroll) > editor->sizeWindow.cy)
     InvalidateRect(editor->hWnd, NULL, TRUE);
   else
-    ScrollWindowEx(editor->hWnd, 0, nActualScroll, NULL, NULL, NULL, NULL, SW_INVALIDATE);
+    ScrollWindowEx(editor->hWnd, 0, nActualScroll, &editor->rcFormat,
+                   &editor->rcFormat, NULL, NULL, SW_INVALIDATE);
   ME_Repaint(editor);
   
   hWnd = editor->hWnd;
