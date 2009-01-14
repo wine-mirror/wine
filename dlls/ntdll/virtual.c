@@ -53,6 +53,7 @@
 #include "winternl.h"
 #include "wine/library.h"
 #include "wine/server.h"
+#include "wine/exception.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
@@ -1512,6 +1513,40 @@ BOOL virtual_handle_stack_fault( void *addr )
     }
     RtlLeaveCriticalSection( &csVirtual );
     return ret;
+}
+
+
+/***********************************************************************
+ *           virtual_check_buffer_for_read
+ *
+ * Check if a memory buffer can be read, triggering page faults if needed for DIB section access.
+ */
+BOOL virtual_check_buffer_for_read( const void *ptr, SIZE_T size )
+{
+    if (!size) return TRUE;
+    if (!ptr) return FALSE;
+
+    __TRY
+    {
+        volatile const char *p = ptr;
+        char dummy;
+        SIZE_T count = size;
+
+        while (count > page_size)
+        {
+            dummy = *p;
+            p += page_size;
+            count -= page_size;
+        }
+        dummy = p[0];
+        dummy = p[count - 1];
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        return FALSE;
+    }
+    __ENDTRY
+    return TRUE;
 }
 
 

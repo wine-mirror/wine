@@ -904,6 +904,12 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
                                  &needs_close, &type, &options );
     if (status) return status;
 
+    if (!virtual_check_buffer_for_read( buffer, length ))
+    {
+        status = STATUS_INVALID_USER_BUFFER;
+        goto done;
+    }
+
     if (type == FD_TYPE_FILE && offset && offset->QuadPart != (LONGLONG)-2 /* FILE_USE_FILE_POINTER_POSITION */ )
     {
         /* async I/O doesn't make sense on regular files */
@@ -944,19 +950,15 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
             }
             if (type == FD_TYPE_FILE) continue;  /* no async I/O on regular files */
         }
-        else
+        else if (errno != EAGAIN)
         {
             if (errno == EINTR) continue;
-            if (errno != EAGAIN)
+            if (!total)
             {
-                if (errno == EFAULT)
-                {
-                    status = STATUS_INVALID_USER_BUFFER;
-                    goto err;
-                }
-                status = FILE_GetNtStatus();
-                goto done;
+                if (errno == EFAULT) status = STATUS_INVALID_USER_BUFFER;
+                else status = FILE_GetNtStatus();
             }
+            goto done;
         }
 
         if (!(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
