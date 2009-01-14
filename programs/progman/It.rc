@@ -71,9 +71,9 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Nuovo"
 {
 RADIOBUTTON   "",                 PM_NEW_GROUP,    10, 15,  10, 15
-LTEXT         "&Gruppo di programmi",   PM_NEW_GROUP,    20, 18,  80, 15
+LTEXT         "&Gruppo di programmi",   -1,    20, 18,  80, 15
 RADIOBUTTON   "",                 PM_NEW_PROGRAM,  10, 35,  10, 15
-LTEXT         "&Programma", PM_NEW_PROGRAM,  20, 38,  80, 15
+LTEXT         "&Programma", -1,  20, 38,  80, 15
 DEFPUSHBUTTON "OK",          IDOK,           105,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annulla",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "&Aiuto",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
@@ -86,9 +86,9 @@ LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Move Program"
 {
-LTEXT         "Sposta programma:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "Sposta programma:",    -1,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "Dal gruppo:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "Dal gruppo:", -1,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
 LTEXT         "&Al gruppo:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
@@ -104,9 +104,9 @@ LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Copy Program"
 {
-LTEXT         "Copia programma:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "Copia programma:",    -1,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "Dal gruppo:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "Dal gruppo:", -1,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
 LTEXT         "&Al grouppo:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
@@ -148,7 +148,7 @@ LTEXT         "&Tasto di scelta rapida:",      PM_HOT_KEY_TXT,       05, 55,  60
 EDITTEXT                                   PM_HOT_KEY,           80, 55,  90, 15, WS_TABSTOP
 ICON          "",                          PM_ICON,              20, 70
 CHECKBOX      "",                          PM_SYMBOL,            80, 75,  10, 10, WS_TABSTOP
-LTEXT         "&Avvia ridotto a icona",       IDIGNORE,             95, 75,  75, 10
+LTEXT         "&Avvia ridotto a icona",       -1,             95, 75,  75, 10
 DEFPUSHBUTTON "OK",                   IDOK,                185,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annulla",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "&Trova...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
@@ -181,10 +181,10 @@ LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Esegui programma"
 {
-LTEXT     "&Linea di comando:", IDIGNORE,   05, 15, 120, 10
+LTEXT     "&Linea di comando:", -1,   05, 15, 120, 10
 EDITTEXT                               PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
 CHECKBOX      "",                      PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
-LTEXT         "&Avvia ridotto a icona",   IDIGNORE,   20, 45, 120, 10
+LTEXT         "&Avvia ridotto a icona",   -1,   20, 45, 120, 10
 DEFPUSHBUTTON "OK",               IDOK,      135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annulla",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "&Cerca...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP

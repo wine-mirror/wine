@@ -75,9 +75,9 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "新建"
 {
 RADIOBUTTON   "",                 PM_NEW_GROUP,    10, 15,  10, 15
-LTEXT         "程序组(&G)",   PM_NEW_GROUP,    20, 18,  80, 15
+LTEXT         "程序组(&G)",   -1,    20, 18,  80, 15
 RADIOBUTTON   "",                 PM_NEW_PROGRAM,  10, 35,  10, 15
-LTEXT         "程序(&P)", PM_NEW_PROGRAM,  20, 38,  80, 15
+LTEXT         "程序(&P)", -1,  20, 38,  80, 15
 DEFPUSHBUTTON "确定",          IDOK,           105,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "取消",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "帮助(&H)",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
@@ -89,9 +89,9 @@ DIALOG_MOVE DIALOG 0, 0, 250, 65
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "移动程序"
 {
-LTEXT         "移动程序:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "移动程序:",    -1,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "从此程序组中:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "从此程序组中:", -1,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
 LTEXT         "移动到程序组(&T):",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
@@ -106,9 +106,9 @@ DIALOG_COPY DIALOG 0, 0, 250, 65
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "复制程序"
 {
-LTEXT         "复制程序:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "复制程序:",    -1,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "从此程序组中:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "从此程序组中:", -1,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
 LTEXT         "移动到程序组(&T):",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
@@ -148,7 +148,7 @@ LTEXT         "快捷键(&K):",      PM_HOT_KEY_TXT,       05, 55,  60, 10
 EDITTEXT                                   PM_HOT_KEY,           80, 55,  90, 15, WS_TABSTOP
 ICON          "",                          PM_ICON,              20, 70
 CHECKBOX      "",                          PM_SYMBOL,            80, 75,  10, 10, WS_TABSTOP
-LTEXT         "启动后最小化(&M)",       IDIGNORE,             95, 75,  75, 10
+LTEXT         "启动后最小化(&M)",       -1,             95, 75,  75, 10
 DEFPUSHBUTTON "确定",                   IDOK,                185,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "取消",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "浏览(&B)...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
@@ -179,10 +179,10 @@ DIALOG_EXECUTE DIALOG 0, 0, 200, 85
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "执行程序"
 {
-LTEXT     "命令行(&C):", IDIGNORE,   05, 15, 120, 10
+LTEXT     "命令行(&C):", -1,   05, 15, 120, 10
 EDITTEXT                               PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
 CHECKBOX      "",                      PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
-LTEXT         "启动后最小化(&M)",   IDIGNORE,   20, 45, 120, 10
+LTEXT         "启动后最小化(&M)",   -1,   20, 45, 120, 10
 DEFPUSHBUTTON "确定",               IDOK,      135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "取消",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "浏览(&B)...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
@@ -269,9 +269,9 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "新建"
 {
 RADIOBUTTON   "",          PM_NEW_GROUP,    10, 15,  10, 15
-LTEXT         "程式組(&G)", PM_NEW_GROUP,    20, 18,  80, 15
+LTEXT         "程式組(&G)", -1,    20, 18,  80, 15
 RADIOBUTTON   "",          PM_NEW_PROGRAM,  10, 35,  10, 15
-LTEXT         "程式(&P)",   PM_NEW_PROGRAM,  20, 38,  80, 15
+LTEXT         "程式(&P)",   -1,  20, 38,  80, 15
 DEFPUSHBUTTON "確定",      IDOK,           105,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "取消",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "幫助(&H)",   PM_HELP,        105, 45,  60, 15, WS_TABSTOP
@@ -283,9 +283,9 @@ DIALOG_MOVE DIALOG 0, 0, 250, 65
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "移動程式"
 {
-LTEXT         "移動程式:",         IDIGNORE,            5,  5,  90, 15
+LTEXT         "移動程式:",         -1,            5,  5,  90, 15
 LTEXT         "",                 PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "從此程式組中:",      IDIGNORE,            5, 13,  90, 15
+LTEXT         "從此程式組中:",      -1,            5, 13,  90, 15
 LTEXT         "",                 PM_FROM_GROUP,      95, 13,  90, 15
 LTEXT         "移動到程式組(&T):",  PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                          PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
@@ -300,9 +300,9 @@ DIALOG_COPY DIALOG 0, 0, 250, 65
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "複製程式"
 {
-LTEXT         "複製程式:",        IDIGNORE,            5,  5,  90, 15
+LTEXT         "複製程式:",        -1,            5,  5,  90, 15
 LTEXT         "",                PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "從此程式組中:",    IDIGNORE,            5, 13,  90, 15
+LTEXT         "從此程式組中:",    -1,            5, 13,  90, 15
 LTEXT         "",                PM_FROM_GROUP,      95, 13,  90, 15
 LTEXT         "移動到程式組(&T):", PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                         PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
@@ -342,7 +342,7 @@ LTEXT         "快捷鍵(&K):",    PM_HOT_KEY_TXT,       05, 55,  60, 10
 EDITTEXT                       PM_HOT_KEY,           80, 55,  90, 15, WS_TABSTOP
 ICON          "",              PM_ICON,              20, 70
 CHECKBOX      "",              PM_SYMBOL,            80, 75,  10, 10, WS_TABSTOP
-LTEXT         "啟動後最小化(&M)", IDIGNORE,             95, 75,  75, 10
+LTEXT         "啟動後最小化(&M)", -1,             95, 75,  75, 10
 DEFPUSHBUTTON "確定",           IDOK,                185,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "取消",           IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "瀏覽(&B)...",     PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
@@ -373,10 +373,10 @@ DIALOG_EXECUTE DIALOG 0, 0, 200, 85
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "執行程式"
 {
-LTEXT         "指令行(&C):",    IDIGNORE,   05, 15, 120, 10
+LTEXT         "指令行(&C):",    -1,   05, 15, 120, 10
 EDITTEXT                       PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
 CHECKBOX      "",              PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
-LTEXT         "啟動後最小化(&M)", IDIGNORE,   20, 45, 120, 10
+LTEXT         "啟動後最小化(&M)", -1,   20, 45, 120, 10
 DEFPUSHBUTTON "確定",           IDOK,      135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "取消",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "瀏覽(&B)...",     PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP

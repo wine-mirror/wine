@@ -71,9 +71,9 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "새 작업"
 {
 RADIOBUTTON   "",                 PM_NEW_GROUP,    10, 15,  10, 15
-LTEXT         "풀그림 그룹(&G)",   PM_NEW_GROUP,    20, 18,  80, 15
+LTEXT         "풀그림 그룹(&G)",   -1,    20, 18,  80, 15
 RADIOBUTTON   "",                 PM_NEW_PROGRAM,  10, 35,  10, 15
-LTEXT         "풀그림(&P)", PM_NEW_PROGRAM,  20, 38,  80, 15
+LTEXT         "풀그림(&P)", -1,  20, 38,  80, 15
 DEFPUSHBUTTON "확인",          IDOK,           105,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "취소",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "도움말(&H)",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
@@ -86,9 +86,9 @@ LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "풀그림 이동"
 {
-LTEXT         "풀그림 이동:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "풀그림 이동:",    -1,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "대상 그룹:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "대상 그룹:", -1,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
 LTEXT         "목적 그룹(&T):",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
@@ -104,9 +104,9 @@ LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "풀그림 복사"
 {
-LTEXT         "풀그림 복사:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "풀그림 복사:",    -1,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "대상 그룹:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "대상 그룹:", -1,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
 LTEXT         "목적 그룹(&T):",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
@@ -148,7 +148,7 @@ LTEXT         "단축키 지정(&K):",      PM_HOT_KEY_TXT,       05, 55,  60, 10
 EDITTEXT                                   PM_HOT_KEY,           80, 55,  90, 15, WS_TABSTOP
 ICON          "",                          PM_ICON,              20, 70
 CHECKBOX      "",                          PM_SYMBOL,            80, 75,  10, 10, WS_TABSTOP
-LTEXT         "실행시 최소화(&M)",       IDIGNORE,             95, 75,  75, 10
+LTEXT         "실행시 최소화(&M)",       -1,             95, 75,  75, 10
 DEFPUSHBUTTON "확인",                   IDOK,                185,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "취소",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "찾기(&B)...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
@@ -181,10 +181,10 @@ LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "풀그림 실행"
 {
-LTEXT     "명령 라인(&C):", IDIGNORE,   05, 15, 120, 10
+LTEXT     "명령 라인(&C):", -1,   05, 15, 120, 10
 EDITTEXT                               PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
 CHECKBOX      "",                      PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
-LTEXT         "실행시 최소화(&M)",   IDIGNORE,   20, 45, 120, 10
+LTEXT         "실행시 최소화(&M)",   -1,   20, 45, 120, 10
 DEFPUSHBUTTON "확인",               IDOK,      135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "취소",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "찾기(&B)...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
