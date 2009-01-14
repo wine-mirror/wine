@@ -974,13 +974,16 @@ WINE_NOTICE_WITH(curses,[test "x$ac_cv_lib_soname_curses$ac_cv_lib_soname_ncurse
                  [lib(n)curses ${notice_platform}development files not found, curses won't be supported.])
 
 dnl **** Check for SANE ****
-AC_CHECK_PROG(sane_devel,sane-config,sane-config,no)
-if test "$sane_devel" != "no" -a "x$with_sane" != "xno"
+if test "x$with_sane" != "xno"
 then
-    ac_sane_incl="`$sane_devel --cflags`"
-    ac_sane_libs="`$sane_devel --ldflags`"
     ac_save_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS $ac_sane_incl"
+    AC_CHECK_PROG(sane_devel,sane-config,sane-config,no)
+    if test "$sane_devel" != "no"
+    then
+        ac_sane_incl="`$sane_devel --cflags`"
+        ac_sane_libs="`$sane_devel --ldflags`"
+        CPPFLAGS="$CPPFLAGS $ac_sane_incl"
+    fi
     AC_CHECK_HEADER(sane/sane.h,
         [WINE_CHECK_SONAME(sane,sane_init,[AC_SUBST(SANEINCL,"$ac_sane_incl")],,[$ac_sane_libs])])
     CPPFLAGS="$ac_save_CPPFLAGS"
@@ -989,21 +992,24 @@ WINE_NOTICE_WITH(sane,[test "x$ac_cv_lib_soname_sane" = "x"],
                  [libsane ${notice_platform}development files not found, scanners won't be supported.])
 
 dnl **** Check for libgphoto2 ****
-AC_CHECK_PROG(gphoto2_devel,gphoto2-config,gphoto2-config,no)
-AC_CHECK_PROG(gphoto2port_devel,gphoto2-port-config,gphoto2-port-config,no)
-if test "$gphoto2_devel" != "no" -a "$gphoto2port_devel" != "no" -a "x$with_gphoto" != "xno"
+if test "x$with_gphoto" != "xno"
 then
-    ac_gphoto2_incl="`$gphoto2_devel --cflags` `$gphoto2port_devel --cflags`"
-    ac_gphoto2_libs=""
-    for i in `$gphoto2_devel --libs` `$gphoto2port_devel --libs`
-    do
-      case "$i" in
-        -L/usr/lib|-L/usr/lib64) ;;
-        -L*|-l*) ac_gphoto2_libs="$ac_gphoto2_libs $i";;
-      esac
-    done
     ac_save_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS $ac_gphoto2_incl"
+    AC_CHECK_PROG(gphoto2_devel,gphoto2-config,gphoto2-config,no)
+    AC_CHECK_PROG(gphoto2port_devel,gphoto2-port-config,gphoto2-port-config,no)
+    if test "$gphoto2_devel" != "no" -a "$gphoto2port_devel" != "no"
+    then
+        ac_gphoto2_incl="`$gphoto2_devel --cflags` `$gphoto2port_devel --cflags`"
+        ac_gphoto2_libs=""
+        for i in `$gphoto2_devel --libs` `$gphoto2port_devel --libs`
+        do
+            case "$i" in
+            -L/usr/lib|-L/usr/lib64) ;;
+            -L*|-l*) ac_gphoto2_libs="$ac_gphoto2_libs $i";;
+            esac
+        done
+        CPPFLAGS="$CPPFLAGS $ac_gphoto2_incl"
+    fi
     AC_CHECK_HEADER(gphoto2-camera.h,
                     [AC_CHECK_LIB(gphoto2,gp_camera_new,
                                   [AC_DEFINE(HAVE_GPHOTO2, 1, [Define if we have libgphoto2 development environment])
@@ -1043,11 +1049,14 @@ WINE_NOTICE_WITH(cms,[test "$ac_cv_lib_lcms_cmsOpenProfileFromFile" != "yes"],
                  [liblcms ${notice_platform}development files not found, Color Management won't be supported.])
 
 dnl **** Check for FreeType 2 ****
-AC_CHECK_PROGS(ft_devel,[freetype-config freetype2-config],false)
-if test "$ft_devel" != "false" -a "x$with_freetype" != "xno"
+if test "x$with_freetype" != "xno"
 then
-    ac_freetype_libs=`$ft_devel --libs`
-    ac_freetype_incl=`$ft_devel --cflags`
+    AC_CHECK_PROGS(ft_devel,[freetype-config freetype2-config],no)
+    if test "$ft_devel" != "no"
+    then
+        ac_freetype_incl=`$ft_devel --cflags`
+        ac_freetype_libs=`$ft_devel --libs`
+    fi
     WINE_CHECK_SONAME(freetype,FT_Init_FreeType,[ft_lib=yes],[ft_lib=no],[$ac_freetype_libs])
     if test "$ft_lib" = "yes"
     then
@@ -1113,24 +1122,28 @@ WINE_CHECK_LIB_FUNCS(\
         [$LIBPTHREAD])
 
 dnl **** Check for EsounD ****
-AC_PATH_PROG(ESDCONFIG, esd-config)
-if test "x$with_esd" != xno -a "x$ESDCONFIG" != x -a "x$ESDCONFIG" != x'"$ESDCONFIG"';
+if test "x$with_esd" != xno
 then
-    ac_esd_incl=""
-    for i in `$ESDCONFIG --cflags`
-    do
-      case "$i" in
-        -I*) ac_esd_incl="$ac_esd_incl $i";;
-      esac
-    done
-    ac_esd_libs=`$ESDCONFIG --libs`
     save_CFLAGS="$CFLAGS"
-    CFLAGS="$CFLAGS $ac_esd_incl"
-    AC_CHECK_LIB(esd,esd_open_sound,
-        [AC_SUBST(ESDINCL, "$ac_esd_incl")
-         AC_SUBST(ESDLIBS, "$ac_esd_libs")
-         AC_DEFINE(HAVE_ESD, 1, [Define if you have EsounD sound server])],,
-        [$ac_esd_libs])
+    AC_PATH_PROG(ESDCONFIG, esd-config, no)
+    if test "x$ESDCONFIG" != "xno"
+    then
+        ac_esd_incl=""
+        for i in `$ESDCONFIG --cflags`
+        do
+            case "$i" in
+                -I*) ac_esd_incl="$ac_esd_incl $i";;
+            esac
+        done
+        ac_esd_libs=`$ESDCONFIG --libs`
+        CFLAGS="$CFLAGS $ac_esd_incl"
+    fi
+    AC_CHECK_HEADER(esd.h,
+        [AC_CHECK_LIB(esd,esd_open_sound,
+            [AC_SUBST(ESDINCL, "$ac_esd_incl")
+             AC_SUBST(ESDLIBS, "$ac_esd_libs")
+             AC_DEFINE(HAVE_ESD, 1, [Define if you have EsounD sound server])],,
+            [$ac_esd_libs])])
     CFLAGS="$save_CFLAGS"
 fi
 

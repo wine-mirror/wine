@@ -13738,7 +13738,10 @@ esac
 fi
 
 
-# Extract the first word of "sane-config", so it can be a program name with args.
+if test "x$with_sane" != "xno"
+then
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    # Extract the first word of "sane-config", so it can be a program name with args.
 set dummy sane-config; ac_word=$2
 { $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -13776,12 +13779,12 @@ $as_echo "no" >&6; }
 fi
 
 
-if test "$sane_devel" != "no" -a "x$with_sane" != "xno"
-then
-    ac_sane_incl="`$sane_devel --cflags`"
-    ac_sane_libs="`$sane_devel --ldflags`"
-    ac_save_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS $ac_sane_incl"
+    if test "$sane_devel" != "no"
+    then
+        ac_sane_incl="`$sane_devel --cflags`"
+        ac_sane_libs="`$sane_devel --ldflags`"
+        CPPFLAGS="$CPPFLAGS $ac_sane_incl"
+    fi
     if test "${ac_cv_header_sane_sane_h+set}" = set; then
   { $as_echo "$as_me:$LINENO: checking for sane/sane.h" >&5
 $as_echo_n "checking for sane/sane.h... " >&6; }
@@ -14016,7 +14019,10 @@ esac
 fi
 
 
-# Extract the first word of "gphoto2-config", so it can be a program name with args.
+if test "x$with_gphoto" != "xno"
+then
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    # Extract the first word of "gphoto2-config", so it can be a program name with args.
 set dummy gphoto2-config; ac_word=$2
 { $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -14054,7 +14060,7 @@ $as_echo "no" >&6; }
 fi
 
 
-# Extract the first word of "gphoto2-port-config", so it can be a program name with args.
+    # Extract the first word of "gphoto2-port-config", so it can be a program name with args.
 set dummy gphoto2-port-config; ac_word=$2
 { $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -14092,19 +14098,19 @@ $as_echo "no" >&6; }
 fi
 
 
-if test "$gphoto2_devel" != "no" -a "$gphoto2port_devel" != "no" -a "x$with_gphoto" != "xno"
-then
-    ac_gphoto2_incl="`$gphoto2_devel --cflags` `$gphoto2port_devel --cflags`"
-    ac_gphoto2_libs=""
-    for i in `$gphoto2_devel --libs` `$gphoto2port_devel --libs`
-    do
-      case "$i" in
-        -L/usr/lib|-L/usr/lib64) ;;
-        -L*|-l*) ac_gphoto2_libs="$ac_gphoto2_libs $i";;
-      esac
-    done
-    ac_save_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS $ac_gphoto2_incl"
+    if test "$gphoto2_devel" != "no" -a "$gphoto2port_devel" != "no"
+    then
+        ac_gphoto2_incl="`$gphoto2_devel --cflags` `$gphoto2port_devel --cflags`"
+        ac_gphoto2_libs=""
+        for i in `$gphoto2_devel --libs` `$gphoto2port_devel --libs`
+        do
+            case "$i" in
+            -L/usr/lib|-L/usr/lib64) ;;
+            -L*|-l*) ac_gphoto2_libs="$ac_gphoto2_libs $i";;
+            esac
+        done
+        CPPFLAGS="$CPPFLAGS $ac_gphoto2_incl"
+    fi
     if test "${ac_cv_header_gphoto2_camera_h+set}" = set; then
   { $as_echo "$as_me:$LINENO: checking for gphoto2-camera.h" >&5
 $as_echo_n "checking for gphoto2-camera.h... " >&6; }
@@ -14490,7 +14496,9 @@ esac
 fi
 
 
-for ac_prog in freetype-config freetype2-config
+if test "x$with_freetype" != "xno"
+then
+    for ac_prog in freetype-config freetype2-config
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -14531,12 +14539,13 @@ fi
 
   test -n "$ft_devel" && break
 done
-test -n "$ft_devel" || ft_devel="false"
+test -n "$ft_devel" || ft_devel="no"
 
-if test "$ft_devel" != "false" -a "x$with_freetype" != "xno"
-then
-    ac_freetype_libs=`$ft_devel --libs`
-    ac_freetype_incl=`$ft_devel --cflags`
+    if test "$ft_devel" != "no"
+    then
+        ac_freetype_incl=`$ft_devel --cflags`
+        ac_freetype_libs=`$ft_devel --libs`
+    fi
     { $as_echo "$as_me:$LINENO: checking for -lfreetype" >&5
 $as_echo_n "checking for -lfreetype... " >&6; }
 if test "${ac_cv_lib_soname_freetype+set}" = set; then
@@ -15373,7 +15382,10 @@ done
 
 LIBS="$ac_wine_check_funcs_save_LIBS"
 
-# Extract the first word of "esd-config", so it can be a program name with args.
+if test "x$with_esd" != xno
+then
+    save_CFLAGS="$CFLAGS"
+    # Extract the first word of "esd-config", so it can be a program name with args.
 set dummy esd-config; ac_word=$2
 { $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -15400,6 +15412,7 @@ done
 done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_path_ESDCONFIG" && ac_cv_path_ESDCONFIG="no"
   ;;
 esac
 fi
@@ -15413,19 +15426,152 @@ $as_echo "no" >&6; }
 fi
 
 
-if test "x$with_esd" != xno -a "x$ESDCONFIG" != x -a "x$ESDCONFIG" != x'"$ESDCONFIG"';
-then
-    ac_esd_incl=""
-    for i in `$ESDCONFIG --cflags`
-    do
-      case "$i" in
-        -I*) ac_esd_incl="$ac_esd_incl $i";;
-      esac
-    done
-    ac_esd_libs=`$ESDCONFIG --libs`
-    save_CFLAGS="$CFLAGS"
-    CFLAGS="$CFLAGS $ac_esd_incl"
-    { $as_echo "$as_me:$LINENO: checking for esd_open_sound in -lesd" >&5
+    if test "x$ESDCONFIG" != "xno"
+    then
+        ac_esd_incl=""
+        for i in `$ESDCONFIG --cflags`
+        do
+            case "$i" in
+                -I*) ac_esd_incl="$ac_esd_incl $i";;
+            esac
+        done
+        ac_esd_libs=`$ESDCONFIG --libs`
+        CFLAGS="$CFLAGS $ac_esd_incl"
+    fi
+    if test "${ac_cv_header_esd_h+set}" = set; then
+  { $as_echo "$as_me:$LINENO: checking for esd.h" >&5
+$as_echo_n "checking for esd.h... " >&6; }
+if test "${ac_cv_header_esd_h+set}" = set; then
+  $as_echo_n "(cached) " >&6
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_header_esd_h" >&5
+$as_echo "$ac_cv_header_esd_h" >&6; }
+else
+  # Is the header compilable?
+{ $as_echo "$as_me:$LINENO: checking esd.h usability" >&5
+$as_echo_n "checking esd.h usability... " >&6; }
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <esd.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  ac_header_compiler=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_header_compiler=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+$as_echo "$ac_header_compiler" >&6; }
+
+# Is the header present?
+{ $as_echo "$as_me:$LINENO: checking esd.h presence" >&5
+$as_echo_n "checking esd.h presence... " >&6; }
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <esd.h>
+_ACEOF
+if { (ac_try="$ac_cpp conftest.$ac_ext"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null && {
+	 test -z "$ac_c_preproc_warn_flag$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       }; then
+  ac_header_preproc=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+
+rm -f conftest.err conftest.$ac_ext
+{ $as_echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+$as_echo "$ac_header_preproc" >&6; }
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
+  yes:no: )
+    { $as_echo "$as_me:$LINENO: WARNING: esd.h: accepted by the compiler, rejected by the preprocessor!" >&5
+$as_echo "$as_me: WARNING: esd.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: esd.h: proceeding with the compiler's result" >&5
+$as_echo "$as_me: WARNING: esd.h: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { $as_echo "$as_me:$LINENO: WARNING: esd.h: present but cannot be compiled" >&5
+$as_echo "$as_me: WARNING: esd.h: present but cannot be compiled" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: esd.h:     check for missing prerequisite headers?" >&5
+$as_echo "$as_me: WARNING: esd.h:     check for missing prerequisite headers?" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: esd.h: see the Autoconf documentation" >&5
+$as_echo "$as_me: WARNING: esd.h: see the Autoconf documentation" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: esd.h:     section \"Present But Cannot Be Compiled\"" >&5
+$as_echo "$as_me: WARNING: esd.h:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: esd.h: proceeding with the preprocessor's result" >&5
+$as_echo "$as_me: WARNING: esd.h: proceeding with the preprocessor's result" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: esd.h: in the future, the compiler will take precedence" >&5
+$as_echo "$as_me: WARNING: esd.h: in the future, the compiler will take precedence" >&2;}
+    ( cat <<\_ASBOX
+## ------------------------------------ ##
+## Report this to wine-devel@winehq.org ##
+## ------------------------------------ ##
+_ASBOX
+     ) | sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+{ $as_echo "$as_me:$LINENO: checking for esd.h" >&5
+$as_echo_n "checking for esd.h... " >&6; }
+if test "${ac_cv_header_esd_h+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  ac_cv_header_esd_h=$ac_header_preproc
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_header_esd_h" >&5
+$as_echo "$ac_cv_header_esd_h" >&6; }
+
+fi
+if test "x$ac_cv_header_esd_h" = x""yes; then
+  { $as_echo "$as_me:$LINENO: checking for esd_open_sound in -lesd" >&5
 $as_echo_n "checking for esd_open_sound in -lesd... " >&6; }
 if test "${ac_cv_lib_esd_esd_open_sound+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -15493,7 +15639,7 @@ $as_echo "$ac_cv_lib_esd_esd_open_sound" >&6; }
 if test "x$ac_cv_lib_esd_esd_open_sound" = x""yes; then
   ESDINCL="$ac_esd_incl"
 
-         ESDLIBS="$ac_esd_libs"
+             ESDLIBS="$ac_esd_libs"
 
 
 cat >>confdefs.h <<\_ACEOF
@@ -15501,6 +15647,9 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 fi
+
+fi
+
 
     CFLAGS="$save_CFLAGS"
 fi
