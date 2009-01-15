@@ -1452,13 +1452,34 @@ static void test_EM_GETSELTEXT(void)
 /* FIXME: need to test unimplemented options and robustly test wparam */
 static void test_EM_SETOPTIONS(void)
 {
-    HWND hwndRichEdit = new_richedit(NULL);
+    HWND hwndRichEdit;
     static const char text[] = "Hello. My name is RichEdit!";
     char buffer[1024] = {0};
     DWORD dwStyle, options, oldOptions;
     DWORD optionStyles = ES_AUTOVSCROLL|ES_AUTOHSCROLL|ES_NOHIDESEL|
                          ES_READONLY|ES_WANTRETURN|ES_SAVESEL|
                          ES_SELECTIONBAR|ES_VERTICAL;
+
+    /* Test initial options. */
+    hwndRichEdit = CreateWindow(RICHEDIT_CLASS, NULL, WS_POPUP,
+                                0, 0, 200, 60, NULL, NULL,
+                                hmoduleRichEdit, NULL);
+    ok(hwndRichEdit != NULL, "class: %s, error: %d\n",
+       RICHEDIT_CLASS, (int) GetLastError());
+    options = SendMessage(hwndRichEdit, EM_GETOPTIONS, 0, 0);
+    ok(options == 0, "Incorrect initial options %x\n", options);
+    DestroyWindow(hwndRichEdit);
+
+    hwndRichEdit = CreateWindow(RICHEDIT_CLASS, NULL,
+                                WS_POPUP|WS_HSCROLL|WS_VSCROLL,
+                                0, 0, 200, 60, NULL, NULL,
+                                hmoduleRichEdit, NULL);
+    ok(hwndRichEdit != NULL, "class: %s, error: %d\n",
+       RICHEDIT_CLASS, (int) GetLastError());
+    options = SendMessage(hwndRichEdit, EM_GETOPTIONS, 0, 0);
+    /* WS_[VH]SCROLL cause the ECO_AUTO[VH]SCROLL options to be set */
+    todo_wine ok(options == (ECO_AUTOVSCROLL|ECO_AUTOHSCROLL),
+       "Incorrect initial options %x\n", options);
 
     /* NEGATIVE TESTING - NO OPTIONS SET */
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);

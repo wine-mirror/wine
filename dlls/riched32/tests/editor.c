@@ -889,6 +889,27 @@ static void test_word_wrap(void)
     DestroyWindow(hwnd);
 }
 
+static void test_EM_GETOPTIONS(void)
+{
+    HWND hwnd;
+    DWORD options;
+
+    hwnd = CreateWindow(RICHEDIT_CLASS10A, NULL,
+                        WS_POPUP,
+                        0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    options = SendMessage(hwnd, EM_GETOPTIONS, 0, 0);
+    ok(options == 0, "Incorrect options %x\n", options);
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindow(RICHEDIT_CLASS10A, NULL,
+                        WS_POPUP|WS_VSCROLL|WS_HSCROLL,
+                        0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    options = SendMessage(hwnd, EM_GETOPTIONS, 0, 0);
+    todo_wine ok(options == ECO_AUTOVSCROLL,
+       "Incorrect initial options %x\n", options);
+    DestroyWindow(hwnd);
+}
+
 static void test_autoscroll(void)
 {
     HWND hwnd;
@@ -942,6 +963,7 @@ START_TEST( editor )
   test_EM_FINDTEXT();
   test_EM_POSFROMCHAR();
   test_word_wrap();
+  test_EM_GETOPTIONS();
   test_autoscroll();
 
   /* Set the environment variable WINETEST_RICHED32 to keep windows
