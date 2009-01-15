@@ -69,7 +69,7 @@ typedef struct DirectSoundDevice             DirectSoundDevice;
 typedef struct DirectSoundCaptureDevice      DirectSoundCaptureDevice;
 
 /* dsound_convert.h */
-typedef void (*bitsconvertfunc)(const void *, void *);
+typedef void (*bitsconvertfunc)(const void *, void *, UINT, UINT, INT, UINT, UINT);
 extern const bitsconvertfunc convertbpp[4][4];
 typedef void (*mixfunc)(const void *, void *, unsigned);
 extern const mixfunc mixfunctions[4];
