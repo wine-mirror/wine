@@ -174,7 +174,7 @@ void *msihandle2msiinfo(MSIHANDLE handle, UINT type)
 out:
     LeaveCriticalSection( &MSI_handle_cs );
 
-    return (void*) ret;
+    return ret;
 }
 
 IUnknown *msi_get_remote( MSIHANDLE handle )

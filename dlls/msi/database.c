@@ -1202,7 +1202,7 @@ done:
 
 static UINT merge_diff_row(MSIRECORD *rec, LPVOID param)
 {
-    MERGEDATA *data = (MERGEDATA *)param;
+    MERGEDATA *data = param;
     MERGETABLE *table = data->curtable;
     MERGEROW *mergerow;
     MSIQUERY *dbview;
@@ -1257,7 +1257,7 @@ done:
 
 static UINT merge_diff_tables(MSIRECORD *rec, LPVOID param)
 {
-    MERGEDATA *data = (MERGEDATA *)param;
+    MERGEDATA *data = param;
     MERGETABLE *table;
     MSIQUERY *dbview;
     MSIQUERY *mergeview = NULL;
@@ -1562,7 +1562,7 @@ static HRESULT WINAPI mrd_IsTablePersistent( IWineMsiRemoteDatabase *iface,
                                              BSTR table, MSICONDITION *persistent )
 {
     msi_remote_database_impl *This = mrd_from_IWineMsiRemoteDatabase( iface );
-    *persistent = MsiDatabaseIsTablePersistentW(This->database, (LPWSTR)table);
+    *persistent = MsiDatabaseIsTablePersistentW(This->database, table);
     return S_OK;
 }
 
@@ -1570,7 +1570,7 @@ static HRESULT WINAPI mrd_GetPrimaryKeys( IWineMsiRemoteDatabase *iface,
                                           BSTR table, MSIHANDLE *keys )
 {
     msi_remote_database_impl *This = mrd_from_IWineMsiRemoteDatabase( iface );
-    UINT r = MsiDatabaseGetPrimaryKeysW(This->database, (LPWSTR)table, keys);
+    UINT r = MsiDatabaseGetPrimaryKeysW(This->database, table, keys);
     return HRESULT_FROM_WIN32(r);
 }
 
@@ -1586,7 +1586,7 @@ static HRESULT WINAPI mrd_OpenView( IWineMsiRemoteDatabase *iface,
                                     BSTR query, MSIHANDLE *view )
 {
     msi_remote_database_impl *This = mrd_from_IWineMsiRemoteDatabase( iface );
-    UINT r = MsiDatabaseOpenViewW(This->database, (LPWSTR)query, view);
+    UINT r = MsiDatabaseOpenViewW(This->database, query, view);
     return HRESULT_FROM_WIN32(r);
 }
 

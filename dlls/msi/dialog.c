@@ -1725,7 +1725,7 @@ static UINT msi_dialog_pathedit_control( msi_dialog *dialog, MSIRECORD *rec )
 /* radio buttons are a bit different from normal controls */
 static UINT msi_dialog_create_radiobutton( MSIRECORD *rec, LPVOID param )
 {
-    radio_button_group_descr *group = (radio_button_group_descr *)param;
+    radio_button_group_descr *group = param;
     msi_dialog *dialog = group->dialog;
     msi_control *control;
     LPCWSTR prop, text, name;
@@ -3032,7 +3032,7 @@ static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
         'D','e','f','a','u','l','t','U','I','F','o','n','t',0 };
     static const WCHAR dfv[] = {
         'M','S',' ','S','h','e','l','l',' ','D','l','g',0 };
-    msi_dialog *dialog = (msi_dialog*) cs->lpCreateParams;
+    msi_dialog *dialog = cs->lpCreateParams;
     MSIRECORD *rec = NULL;
     LPWSTR title = NULL;
     RECT pos;
@@ -3152,7 +3152,7 @@ struct rec_list
 static UINT add_rec_to_list( MSIRECORD *rec, LPVOID param )
 {
     struct rec_list *add_rec;
-    struct list *records = (struct list *)param;
+    struct list *records = param;
 
     msiobj_addref( &rec->hdr );
 

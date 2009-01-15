@@ -260,7 +260,7 @@ static UINT CDECL msi_media_get_disk_info(MSIPACKAGE *package, MSIMEDIAINFO *mi)
 static INT_PTR cabinet_partial_file(FDINOTIFICATIONTYPE fdint,
                                     PFDINOTIFICATION pfdin)
 {
-    MSICABDATA *data = (MSICABDATA *)pfdin->pv;
+    MSICABDATA *data = pfdin->pv;
     data->mi->is_continuous = FALSE;
     return 0;
 }
@@ -268,7 +268,7 @@ static INT_PTR cabinet_partial_file(FDINOTIFICATIONTYPE fdint,
 static INT_PTR cabinet_next_cabinet(FDINOTIFICATIONTYPE fdint,
                                     PFDINOTIFICATION pfdin)
 {
-    MSICABDATA *data = (MSICABDATA *)pfdin->pv;
+    MSICABDATA *data = pfdin->pv;
     MSIMEDIAINFO *mi = data->mi;
     LPWSTR cab = strdupAtoW(pfdin->psz1);
     INT_PTR res = -1;
@@ -314,7 +314,7 @@ done:
 static INT_PTR cabinet_copy_file(FDINOTIFICATIONTYPE fdint,
                                  PFDINOTIFICATION pfdin)
 {
-    MSICABDATA *data = (MSICABDATA*)pfdin->pv;
+    MSICABDATA *data = pfdin->pv;
     HANDLE handle = 0;
     LPWSTR path = NULL;
     DWORD attrs;
@@ -349,7 +349,7 @@ done:
 static INT_PTR cabinet_close_file_info(FDINOTIFICATIONTYPE fdint,
                                        PFDINOTIFICATION pfdin)
 {
-    MSICABDATA *data = (MSICABDATA*)pfdin->pv;
+    MSICABDATA *data = pfdin->pv;
     FILETIME ft;
     FILETIME ftLocal;
     HANDLE handle = (HANDLE)pfdin->hf;
