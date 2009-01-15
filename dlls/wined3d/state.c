@@ -1867,10 +1867,6 @@ static void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTE
         op = WINED3DTOP_SELECTARG1;
     }
 
-        /* From MSDN (WINED3DTSS_ALPHAARG1) :
-    The default argument is WINED3DTA_TEXTURE. If no texture is set for this stage,
-    then the default argument is WINED3DTA_DIFFUSE.
-    FIXME? If texture added/removed, may need to reset back as well?    */
     if (isAlpha && This->stateBlock->textures[Stage] == NULL && arg1 == WINED3DTA_TEXTURE) {
         get_src_and_opr(WINED3DTA_DIFFUSE, isAlpha, &src1, &opr1);
     } else {
@@ -3114,9 +3110,7 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
 
     /* Values 0-7 are indexes into the FVF tex coords - See comments in DrawPrimitive
      *
-     * FIXME: From MSDN: The WINED3DTSS_TCI_* flags are mutually exclusive. If you include
-     * one flag, you can still specify an index value, which the system uses to
-     * determine the texture wrapping mode.
+     * FIXME: When using generated texture coordinates, the index value is used to specify the wrapping mode.
      * eg. SetTextureStageState( 0, WINED3DTSS_TEXCOORDINDEX, WINED3DTSS_TCI_CAMERASPACEPOSITION | 1 );
      * means use the vertex position (camera-space) as the input texture coordinates
      * for this texture stage, and the wrap mode set in the WINED3DRS_WRAP1 render

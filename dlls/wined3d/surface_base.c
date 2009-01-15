@@ -166,11 +166,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetContainer(IWineD3DSurface* iface, REFI
         ERR("Called without a valid ppContainer.\n");
     }
 
-    /** From MSDN:
-     * If the surface is created using CreateImageSurface/CreateOffscreenPlainSurface, CreateRenderTarget,
-     * or CreateDepthStencilSurface, the surface is considered stand alone. In this case,
-     * GetContainer will return the Direct3D device used to create the surface.
-     */
+    /* Standalone surfaces return the device as container. */
     if (This->container) {
         container = This->container;
     } else {

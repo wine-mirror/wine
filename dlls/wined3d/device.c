@@ -576,17 +576,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
     return WINED3D_OK;
 }
 
-/* ************************************
-MSDN:
-[in] Render targets are not lockable unless the application specifies TRUE for Lockable. Note that lockable render targets reduce performance on some graphics hardware.
-
-Discard
- [in] Set this flag to TRUE to enable z-buffer discarding, and FALSE otherwise. 
-
-If this flag is set, the contents of the depth stencil buffer will be invalid after calling either IDirect3DDevice9::Present or IDirect3DDevice9::SetDepthStencilSurface with a different depth surface.
-
-******************************** */
- 
 static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Width, UINT Height, WINED3DFORMAT Format, BOOL Lockable, BOOL Discard, UINT Level, IWineD3DSurface **ppSurface,WINED3DRESOURCETYPE Type, DWORD Usage, WINED3DPOOL Pool, WINED3DMULTISAMPLE_TYPE MultiSample ,DWORD MultisampleQuality, HANDLE* pSharedHandle, WINED3DSURFTYPE Impl, IUnknown *parent) {
     IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;    
     IWineD3DSurfaceImpl *object; /*NOTE: impl ref allowed since this is a create function */
@@ -597,28 +586,6 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     HRESULT hr;
 
     TRACE("(%p) Create surface\n",This);
-    
-    /** FIXME: Check ranges on the inputs are valid 
-     * MSDN
-     *   MultisampleQuality
-     *    [in] Quality level. The valid range is between zero and one less than the level
-     *    returned by pQualityLevels used by IDirect3D9::CheckDeviceMultiSampleType. 
-     *    Passing a larger value returns the error WINED3DERR_INVALIDCALL. The MultisampleQuality
-     *    values of paired render targets, depth stencil surfaces, and the MultiSample type
-     *    must all match.
-      *******************************/
-
-
-    /**
-    * TODO: Discard MSDN
-    * [in] Set this flag to TRUE to enable z-buffer discarding, and FALSE otherwise.
-    *
-    * If this flag is set, the contents of the depth stencil buffer will be
-    * invalid after calling either IDirect3DDevice9::Present or  * IDirect3DDevice9::SetDepthStencilSurface
-    * with a different depth surface.
-    *
-    *This flag has the same behavior as the constant, D3DPRESENTFLAG_DISCARD_DEPTHSTENCIL, in D3DPRESENTFLAG.
-    ***************************/
 
     if(MultisampleQuality > 0) {
         FIXME("MultisampleQuality set to %d, substituting 0\n", MultisampleQuality);
@@ -1604,11 +1571,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice* iface,
     object->orig_height = Mode.Height;
     object->orig_fmt = Mode.Format;
     formatDesc  = getFormatDescEntry(Mode.Format, NULL, NULL);
-
-    /** MSDN: If Windowed is TRUE and either of the BackBufferWidth/Height values is zero,
-     *  then the corresponding dimension of the client area of the hDeviceWindow
-     *  (or the focus window, if hDeviceWindow is NULL) is taken.
-      **********************/
 
     if (pPresentationParameters->Windowed &&
         ((pPresentationParameters->BackBufferWidth == 0) ||
@@ -2767,10 +2729,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
         return WINED3D_OK;
     }
 
-    /* Need to do a getParent and pass the references up */
-    /* MSDN says ..... When an application no longer holds a reference to this interface, the interface will automatically be freed.
-    which suggests that we shouldn't be ref counting? and do need a _release on the stream source to reset the stream source
-    so for now, just count internally   */
     if (pStreamData != NULL) {
         IWineD3DVertexBufferImpl *vbImpl = (IWineD3DVertexBufferImpl *) pStreamData;
         InterlockedIncrement(&vbImpl->bindCount);
@@ -7499,7 +7457,6 @@ static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IW
         /* TODO: nothing really? */
         break;
         case WINED3DRTYPE_VERTEXBUFFER:
-        /* MSDN: When an application no longer holds a references to this interface, the interface will automatically be freed. */
         {
             int streamNumber;
             TRACE("Cleaning up stream pointers\n");
@@ -7525,7 +7482,6 @@ static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IW
         }
         break;
         case WINED3DRTYPE_INDEXBUFFER:
-        /* MSDN: When an application no longer holds a references to this interface, the interface will automatically be freed.*/
         if (This->updateStateBlock != NULL ) { /* ==NULL when device is being destroyed */
             if (This->updateStateBlock->pIndexData == (IWineD3DIndexBuffer *)resource) {
                 This->updateStateBlock->pIndexData =  NULL;
