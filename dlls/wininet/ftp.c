@@ -1267,6 +1267,7 @@ static const HANDLEHEADERVtbl FTPFILEVtbl = {
     NULL,
     FTPFILE_ReadFile,
     NULL,
+    NULL,
     FTPFILE_WriteFile,
     NULL,
     NULL
@@ -3307,6 +3308,7 @@ static const HANDLEHEADERVtbl FTPFINDNEXTVtbl = {
     FTPFINDNEXT_Destroy,
     NULL,
     FTPFINDNEXT_QueryOption,
+    NULL,
     NULL,
     NULL,
     NULL,

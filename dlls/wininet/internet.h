@@ -124,6 +124,7 @@ typedef struct {
     DWORD (*SetOption)(WININETHANDLEHEADER*,DWORD,void*,DWORD);
     DWORD (*ReadFile)(WININETHANDLEHEADER*,void*,DWORD,DWORD*);
     DWORD (*ReadFileExA)(WININETHANDLEHEADER*,INTERNET_BUFFERSA*,DWORD,DWORD_PTR);
+    DWORD (*ReadFileExW)(WININETHANDLEHEADER*,INTERNET_BUFFERSW*,DWORD,DWORD_PTR);
     BOOL (*WriteFile)(WININETHANDLEHEADER*,const void*,DWORD,DWORD*);
     DWORD (*QueryDataAvailable)(WININETHANDLEHEADER*,DWORD*,DWORD,DWORD_PTR);
     DWORD (*FindNextFileW)(WININETHANDLEHEADER*,void*);
@@ -311,6 +312,11 @@ struct WORKREQ_INTERNETREADFILEEXA
     LPINTERNET_BUFFERSA lpBuffersOut;
 };
 
+struct WORKREQ_INTERNETREADFILEEXW
+{
+    LPINTERNET_BUFFERSW lpBuffersOut;
+};
+
 typedef struct WORKREQ
 {
     void (*asyncproc)(struct WORKREQ*);
@@ -330,8 +336,9 @@ typedef struct WORKREQ
         struct WORKREQ_FTPFINDNEXTW             FtpFindNextW;
         struct WORKREQ_HTTPSENDREQUESTW         HttpSendRequestW;
         struct WORKREQ_SENDCALLBACK             SendCallback;
-	struct WORKREQ_INTERNETOPENURLW         InternetOpenUrlW;
+        struct WORKREQ_INTERNETOPENURLW         InternetOpenUrlW;
         struct WORKREQ_INTERNETREADFILEEXA      InternetReadFileExA;
+        struct WORKREQ_INTERNETREADFILEEXW      InternetReadFileExW;
     } u;
 
 } WORKREQUEST, *LPWORKREQUEST;

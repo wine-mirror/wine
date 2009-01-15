@@ -1795,7 +1795,7 @@ static DWORD HTTPREQ_ReadFile(WININETHANDLEHEADER *hdr, void *buffer, DWORD size
     return HTTPREQ_Read(req, buffer, size, read, TRUE);
 }
 
-static void HTTPREQ_AsyncReadFileExProc(WORKREQUEST *workRequest)
+static void HTTPREQ_AsyncReadFileExAProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_INTERNETREADFILEEXA const *data = &workRequest->u.InternetReadFileExA;
     WININETHTTPREQW *req = (WININETHTTPREQW*)workRequest->hdr;
@@ -1838,9 +1838,74 @@ static DWORD HTTPREQ_ReadFileExA(WININETHANDLEHEADER *hdr, INTERNET_BUFFERSA *bu
         {
             WORKREQUEST workRequest;
 
-            workRequest.asyncproc = HTTPREQ_AsyncReadFileExProc;
+            workRequest.asyncproc = HTTPREQ_AsyncReadFileExAProc;
             workRequest.hdr = WININET_AddRef(&req->hdr);
             workRequest.u.InternetReadFileExA.lpBuffersOut = buffers;
+
+            INTERNET_AsyncCall(&workRequest);
+
+            return ERROR_IO_PENDING;
+        }
+    }
+
+    res = HTTPREQ_Read(req, buffers->lpvBuffer, buffers->dwBufferLength, &buffers->dwBufferLength,
+            !(flags & IRF_NO_WAIT));
+
+    if (res == ERROR_SUCCESS) {
+        DWORD size = buffers->dwBufferLength;
+        INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RESPONSE_RECEIVED,
+                &size, sizeof(size));
+    }
+
+    return res;
+}
+
+static void HTTPREQ_AsyncReadFileExWProc(WORKREQUEST *workRequest)
+{
+    struct WORKREQ_INTERNETREADFILEEXW const *data = &workRequest->u.InternetReadFileExW;
+    WININETHTTPREQW *req = (WININETHTTPREQW*)workRequest->hdr;
+    INTERNET_ASYNC_RESULT iar;
+    DWORD res;
+
+    TRACE("INTERNETREADFILEEXW %p\n", workRequest->hdr);
+
+    res = HTTPREQ_Read(req, data->lpBuffersOut->lpvBuffer,
+            data->lpBuffersOut->dwBufferLength, &data->lpBuffersOut->dwBufferLength, TRUE);
+
+    iar.dwResult = res == ERROR_SUCCESS;
+    iar.dwError = res;
+
+    INTERNET_SendCallback(&req->hdr, req->hdr.dwContext,
+                          INTERNET_STATUS_REQUEST_COMPLETE, &iar,
+                          sizeof(INTERNET_ASYNC_RESULT));
+}
+
+static DWORD HTTPREQ_ReadFileExW(WININETHANDLEHEADER *hdr, INTERNET_BUFFERSW *buffers,
+        DWORD flags, DWORD_PTR context)
+{
+
+    WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
+    DWORD res;
+
+    if (flags & ~(IRF_ASYNC|IRF_NO_WAIT))
+        FIXME("these dwFlags aren't implemented: 0x%x\n", flags & ~(IRF_ASYNC|IRF_NO_WAIT));
+
+    if (buffers->dwStructSize != sizeof(*buffers))
+        return ERROR_INVALID_PARAMETER;
+
+    INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
+
+    if (hdr->dwFlags & INTERNET_FLAG_ASYNC) {
+        DWORD available = 0;
+
+        NETCON_query_data_available(&req->netConnection, &available);
+        if (!available)
+        {
+            WORKREQUEST workRequest;
+
+            workRequest.asyncproc = HTTPREQ_AsyncReadFileExWProc;
+            workRequest.hdr = WININET_AddRef(&req->hdr);
+            workRequest.u.InternetReadFileExW.lpBuffersOut = buffers;
 
             INTERNET_AsyncCall(&workRequest);
 
@@ -1915,6 +1980,7 @@ static const HANDLEHEADERVtbl HTTPREQVtbl = {
     HTTPREQ_SetOption,
     HTTPREQ_ReadFile,
     HTTPREQ_ReadFileExA,
+    HTTPREQ_ReadFileExW,
     HTTPREQ_WriteFile,
     HTTPREQ_QueryDataAvailable,
     NULL

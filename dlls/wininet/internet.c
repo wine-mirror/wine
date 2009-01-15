@@ -2005,29 +2005,34 @@ BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffersOu
 
 /***********************************************************************
  *           InternetReadFileExW (WININET.@)
- *
- * Read data from an open internet file.
- *
- * PARAMS
- *  hFile         [I] Handle returned by InternetOpenUrl() or HttpOpenRequest().
- *  lpBuffersOut  [I/O] Buffer.
- *  dwFlags       [I] Flags.
- *  dwContext     [I] Context for callbacks.
- *
- * RETURNS
- *    FALSE, last error is set to ERROR_CALL_NOT_IMPLEMENTED
- *
- * NOTES
- *  Not implemented in Wine or native either (as of IE6 SP2).
- *
+ * SEE
+ *  InternetReadFileExA()
  */
 BOOL WINAPI InternetReadFileExW(HINTERNET hFile, LPINTERNET_BUFFERSW lpBuffer,
 	DWORD dwFlags, DWORD_PTR dwContext)
 {
-  ERR("(%p, %p, 0x%x, 0x%lx): not implemented in native\n", hFile, lpBuffer, dwFlags, dwContext);
+    LPWININETHANDLEHEADER hdr;
+    DWORD res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
 
-  INTERNET_SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    TRACE("(%p %p 0x%x 0x%lx)\n", hFile, lpBuffer, dwFlags, dwContext);
+
+    hdr = WININET_GetObject(hFile);
+    if (!hdr) {
+        INTERNET_SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    if(hdr->vtbl->ReadFileExW)
+        res = hdr->vtbl->ReadFileExW(hdr, lpBuffer, dwFlags, dwContext);
+
+    WININET_Release(hdr);
+
+    TRACE("-- %s (%u, bytes read: %d)\n", res == ERROR_SUCCESS ? "TRUE": "FALSE",
+          res, lpBuffer->dwBufferLength);
+
+    if(res != ERROR_SUCCESS)
+        SetLastError(res);
+    return res == ERROR_SUCCESS;
 }
 
 DWORD INET_QueryOption(DWORD option, void *buffer, DWORD *size, BOOL unicode)
