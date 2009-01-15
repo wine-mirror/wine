@@ -179,7 +179,7 @@ static void AddEntryToList(HWND hwndLV, LPWSTR Name, DWORD dwValType,
             break;
         case REG_BINARY: {
                 unsigned int i;
-                LPBYTE pData = (LPBYTE)ValBuf;
+                LPBYTE pData = ValBuf;
                 LPWSTR strBinary = HeapAlloc(GetProcessHeap(), 0, dwCount * sizeof(WCHAR) * 3 + sizeof(WCHAR));
                 WCHAR format[] = {'%','0','2','X',' ',0};
                 for (i = 0; i < dwCount; i++)
@@ -476,7 +476,7 @@ HWND CreateListView(HWND hwndParent, UINT id)
     hwndLV = CreateWindowExW(WS_EX_CLIENTEDGE, WC_LISTVIEWW, ListView,
                             WS_VISIBLE | WS_CHILD | WS_TABSTOP | LVS_REPORT | LVS_EDITLABELS,
                             0, 0, rcClient.right, rcClient.bottom,
-                            hwndParent, (HMENU)ULongToHandle(id), hInst, NULL);
+                            hwndParent, ULongToHandle(id), hInst, NULL);
     if (!hwndLV) return NULL;
     SendMessageW(hwndLV, LVM_SETUNICODEFORMAT, TRUE, 0);
     SendMessageW(hwndLV, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
