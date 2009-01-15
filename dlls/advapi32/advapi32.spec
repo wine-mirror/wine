@@ -540,7 +540,7 @@
 @ stdcall RevertToSelf()
 # @ stub SaferCloseLevel
 # @ stub SaferComputeTokenFromLevel
-# @ stub SaferCreateLevel
+@ stdcall SaferCreateLevel(long long long ptr ptr)
 # @ stub SaferGetLevelInformation
 # @ stub SaferGetPolicyInformation
 # @ stub SaferIdentifyLevel

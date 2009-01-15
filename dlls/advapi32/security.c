@@ -28,6 +28,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "winsafer.h"
 #include "winternl.h"
 #include "winioctl.h"
 #include "ntsecapi.h"
@@ -5121,4 +5122,14 @@ DWORD WINAPI SetSecurityInfo(HANDLE handle, SE_OBJECT_TYPE ObjectType,
                       PSID psidGroup, PACL pDacl, PACL pSacl) {
     FIXME("stub\n");
     return ERROR_SUCCESS;
+}
+
+/******************************************************************************
+ * SaferCreateLevel   [ADVAPI32.@]
+ */
+BOOL WINAPI SaferCreateLevel(DWORD ScopeId, DWORD LevelId, DWORD OpenFlags,
+                             SAFER_LEVEL_HANDLE* LevelHandle, LPVOID lpReserved)
+{
+    FIXME("(%u, %x, %u, %p, %p) stub\n", ScopeId, LevelId, OpenFlags, LevelHandle, lpReserved);
+    return FALSE;
 }

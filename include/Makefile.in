@@ -448,6 +448,7 @@ SRCDIR_INCLUDES = \
 	winperf.h \
 	winreg.h \
 	winresrc.h \
+	winsafer.h \
 	winscard.h \
 	winsmcrd.h \
 	winsock.h \
