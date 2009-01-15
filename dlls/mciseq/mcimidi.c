@@ -104,8 +104,8 @@ struct SCA {
  */
 static DWORD CALLBACK	MCI_SCAStarter(LPVOID arg)
 {
-    struct SCA*	sca = (struct SCA*)arg;
-    DWORD		ret;
+    struct SCA* sca = arg;
+    DWORD       ret;
 
     TRACE("In thread before async command (%08x,%u,%08lx,%08lx)\n",
 	  sca->wDevID, sca->wMsg, sca->dwParam1, sca->dwParam2);
@@ -403,7 +403,7 @@ static DWORD MIDI_mciReadMTrk(WINE_MCIMIDI* wmm, MCI_MIDITRACK* mmt)
 		WARN("Buffer for text is too small (%u are needed)\n", len);
 		len = sizeof(buf) - 1;
 	    }
-	    if (mmioRead(wmm->hFile, (HPSTR)buf, len) == len) {
+            if (mmioRead(wmm->hFile, buf, len) == len) {
 		buf[len] = 0;	/* end string in case */
 		switch (HIBYTE(LOWORD(mmt->dwEventData))) {
 		case 0x02:
@@ -1051,7 +1051,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 			WARN("Buffer for text is too small (%u are needed)\n", len);
 			len = sizeof(buf) - 1;
 		    }
-		    if (mmioRead(wmm->hFile, (HPSTR)buf, len) == len) {
+                    if (mmioRead(wmm->hFile, buf, len) == len) {
 			buf[len] = 0;	/* end string in case */
 			TRACE("%s => \"%s\"\n", (idx < 8 ) ? info[idx] : "", buf);
 		    } else {
