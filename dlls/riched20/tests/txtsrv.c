@@ -32,6 +32,7 @@
 #include <textserv.h>
 #include <wine/test.h>
 #include <oleauto.h>
+#include <limits.h>
 
 static HMODULE hmoduleRichEdit;
 
@@ -434,12 +435,16 @@ static void WINAPI ITextHostImpl_TxImmReleaseContext(ITextHost *iface, HIMC himc
     TRACECALL("Call to TxImmReleaseContext(%p, himc=%p)\n", This, himc);
 }
 
+/* This function must set the variable pointed to by *lSelBarWidth.
+   Otherwise an uninitalized value will be used to calculate
+   positions and sizes even if E_NOTIMPL is returned. */
 static HRESULT WINAPI ITextHostImpl_TxGetSelectionBarWidth(ITextHost *iface,
                                                            LONG *lSelBarWidth)
 {
     ITextHostTestImpl *This = (ITextHostTestImpl *)iface;
     TRACECALL("Call to TxGetSelectionBarWidth(%p, lSelBarWidth=%p)\n",
                 This, lSelBarWidth);
+    *lSelBarWidth = 0;
     return E_NOTIMPL;
 }
 
@@ -666,6 +671,66 @@ static void test_TxSetText(void)
     CoTaskMemFree(dummyTextHost);
 }
 
+void test_TxGetNaturalSize() {
+    HRESULT result;
+
+    /* This value is used when calling TxGetNaturalSize.  MSDN says
+       that this is not supported however a null pointer cannot be
+       used as it will cause a segmentation violation.  The values in
+       the structure being pointed to are required to be INT_MAX
+       otherwise calculations can give wrong values. */
+    const SIZEL psizelExtent = {INT_MAX,INT_MAX};
+
+    static const WCHAR oneA[] = {'A',0};
+
+    /* Results of measurements */
+    LONG xdim, ydim;
+
+    /* The device context to do the tests in */
+    HDC hdcDraw;
+
+    /* Variables with the text metric information */
+    INT charwidth_caps_text[26];
+    TEXTMETRIC tmInfo_text;
+
+    if (!init_texthost())
+        return;
+
+    hdcDraw = GetDC(NULL);
+    SaveDC(hdcDraw);
+
+    /* Populate the metric strucs */
+    SetMapMode(hdcDraw,MM_TEXT);
+    GetTextMetrics(hdcDraw, &tmInfo_text);
+    GetCharWidth32(hdcDraw,'A','Z',charwidth_caps_text);
+
+    /* Make measurements in MM_TEXT */
+    SetMapMode(hdcDraw,MM_TEXT);
+    xdim = 0; ydim = 0;
+
+    result = ITextServices_TxSetText(txtserv, oneA);
+    todo_wine ok(result == S_OK, "ITextServices_TxSetText failed\n");
+
+    result = ITextServices_TxGetNaturalSize(txtserv, DVASPECT_CONTENT,
+                                            hdcDraw, NULL, NULL,
+                                            TXTNS_FITTOCONTENT, &psizelExtent,
+                                            &xdim, &ydim);
+    todo_wine ok(result == S_OK, "TxGetNaturalSize failed\n");
+    todo_wine ok(ydim == tmInfo_text.tmHeight,
+                 "Height calculated incorrectly (expected %d, got %d)\n",
+                 tmInfo_text.tmHeight, ydim);
+    /* The native DLL adds one pixel extra when calculating widths. */
+    todo_wine ok(xdim >= charwidth_caps_text[0] && xdim <= charwidth_caps_text[0] + 1,
+                 "Width calculated incorrectly (expected %d {+1}, got %d)\n",
+                 charwidth_caps_text[0], xdim);
+
+    RestoreDC(hdcDraw,1);
+    ReleaseDC(NULL,hdcDraw);
+
+    IUnknown_Release(txtserv);
+    CoTaskMemFree(dummyTextHost);
+}
+
 START_TEST( txtsrv )
 {
     setup_thiscall_wrappers();
@@ -682,6 +747,7 @@ START_TEST( txtsrv )
 
         test_TxGetText();
         test_TxSetText();
+        test_TxGetNaturalSize();
     }
     if (wrapperCodeMem) VirtualFree(wrapperCodeMem, 0, MEM_RELEASE);
 }
