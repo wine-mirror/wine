@@ -2038,6 +2038,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
     {
         NTSTATUS res;
         size_t size = 0;
+        const message_data_t *msg_data = buffer;
 
         SERVER_START_REQ( get_message )
         {
@@ -2093,27 +2094,24 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
             info.flags = ISMEX_CALLBACK;
             break;
         case MSG_CALLBACK_RESULT:
-            if (size >= sizeof(struct callback_msg_data))
-            {
-                const struct callback_msg_data *data = buffer;
-                call_sendmsg_callback( wine_server_get_ptr(data->callback), info.msg.hwnd,
-                                       info.msg.message, data->data, data->result );
-            }
+            if (size >= sizeof(msg_data->callback))
+                call_sendmsg_callback( wine_server_get_ptr(msg_data->callback.callback),
+                                       info.msg.hwnd, info.msg.message,
+                                       msg_data->callback.data, msg_data->callback.result );
             continue;
         case MSG_WINEVENT:
-            if (size >= sizeof(struct winevent_msg_data))
+            if (size >= sizeof(msg_data->winevent))
             {
                 WINEVENTPROC hook_proc;
-                const struct winevent_msg_data *data = buffer;
 
-                hook_proc = wine_server_get_ptr( data->hook_proc );
-                size -= sizeof(*data);
+                hook_proc = wine_server_get_ptr( msg_data->winevent.hook_proc );
+                size -= sizeof(msg_data->winevent);
                 if (size)
                 {
                     WCHAR module[MAX_PATH];
 
                     size = min( size, (MAX_PATH - 1) * sizeof(WCHAR) );
-                    memcpy( module, buffer, size );
+                    memcpy( module, &msg_data->winevent + 1, size );
                     module[size / sizeof(WCHAR)] = 0;
                     if (!(hook_proc = get_hook_proc( hook_proc, module )))
                     {
@@ -2125,17 +2123,18 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                 if (TRACE_ON(relay))
                     DPRINTF( "%04x:Call winevent proc %p (hook=%04x,event=%x,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04x,time=%x)\n",
                              GetCurrentThreadId(), hook_proc,
-                             data->hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
-                             info.msg.lParam, data->tid, info.msg.time);
+                             msg_data->winevent.hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
+                             info.msg.lParam, msg_data->winevent.tid, info.msg.time);
 
-                hook_proc( wine_server_ptr_handle( data->hook ), info.msg.message,
-                           info.msg.hwnd, info.msg.wParam, info.msg.lParam, data->tid, info.msg.time );
+                hook_proc( wine_server_ptr_handle( msg_data->winevent.hook ), info.msg.message,
+                           info.msg.hwnd, info.msg.wParam, info.msg.lParam,
+                           msg_data->winevent.tid, info.msg.time );
 
                 if (TRACE_ON(relay))
                     DPRINTF( "%04x:Ret  winevent proc %p (hook=%04x,event=%x,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04x,time=%x)\n",
                              GetCurrentThreadId(), hook_proc,
-                             data->hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
-                             info.msg.lParam, data->tid, info.msg.time);
+                             msg_data->winevent.hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
+                             info.msg.lParam, msg_data->winevent.tid, info.msg.time);
             }
             continue;
         case MSG_OTHER_PROCESS:
@@ -2149,13 +2148,12 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
             }
             break;
         case MSG_HARDWARE:
-            if (size >= sizeof(struct hardware_msg_data))
+            if (size >= sizeof(msg_data->hardware))
             {
-                const struct hardware_msg_data *data = buffer;
-                info.msg.pt.x = data->x;
-                info.msg.pt.y = data->y;
-                hw_id         = data->hw_id;
-                if (!process_hardware_message( &info.msg, hw_id, data->info,
+                info.msg.pt.x = msg_data->hardware.x;
+                info.msg.pt.y = msg_data->hardware.y;
+                hw_id         = msg_data->hardware.hw_id;
+                if (!process_hardware_message( &info.msg, hw_id, msg_data->hardware.info,
                                                hwnd, first, last, flags & PM_REMOVE ))
                 {
                     TRACE("dropping msg %x\n", info.msg.message );
@@ -2164,7 +2162,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                 *msg = info.msg;
                 thread_info->GetMessagePosVal = MAKELONG( info.msg.pt.x, info.msg.pt.y );
                 thread_info->GetMessageTimeVal = info.msg.time;
-                thread_info->GetMessageExtraInfoVal = data->info;
+                thread_info->GetMessageExtraInfoVal = msg_data->hardware.info;
                 if (buffer != local_buffer) HeapFree( GetProcessHeap(), 0, buffer );
                 HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg, TRUE );
                 return TRUE;
