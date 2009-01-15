@@ -2861,6 +2861,15 @@ static void update_margin_edits(HWND hDlg, const PageSetupDataA *pda)
     SetDlgItemTextW(hDlg, edt7, str);
 }
 
+static void set_margin_groupbox_title(HWND hDlg, const PageSetupDataA *pda)
+{
+    WCHAR title[256];
+
+    if(LoadStringW(COMDLG32_hInstance, is_metric(pda) ? PD32_MARGINS_IN_MILLIMETERS : PD32_MARGINS_IN_INCHES,
+                   title, sizeof(title)/sizeof(title[0])))
+        SetDlgItemTextW(hDlg, grp4, title);
+}
+
 /********************************************************************************
  * PRINTDLG_PS_WMCommandA
  * process WM_COMMAND message for PageSetupDlgA
@@ -3351,6 +3360,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             pda->dlga->rtMargin.bottom = size;
         }
         update_margin_edits(hDlg, pda);
+        set_margin_groupbox_title(hDlg, pda);
 
 	/* if paper disabled */
 	if (pda->dlga->Flags & PSD_DISABLEPAPER) {
