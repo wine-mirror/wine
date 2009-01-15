@@ -604,10 +604,6 @@ static BOOL PRINTDLG_SetUpPaperComboBoxA(HWND hDlg,
          fwCapability_Words = DC_BINS;
     }
 
-    /* for some printer drivers, DeviceCapabilities calls a VXD to obtain the
-     * paper settings. As Wine doesn't allow VXDs, this results in a crash.
-     */
-    WARN(" if your printer driver uses VXDs, expect a crash now!\n");
     NrOfEntries = DeviceCapabilitiesA(PrinterName, PortName,
                                       fwCapability_Names, NULL, dm);
     if (NrOfEntries == 0)
@@ -714,10 +710,6 @@ static BOOL PRINTDLG_SetUpPaperComboBoxW(HWND hDlg,
          fwCapability_Words = DC_BINS;
     }
 
-    /* for some printer drivers, DeviceCapabilities calls a VXD to obtain the
-     * paper settings. As Wine doesn't allow VXDs, this results in a crash.
-     */
-    WARN(" if your printer driver uses VXDs, expect a crash now!\n");
     NrOfEntries = DeviceCapabilitiesW(PrinterName, PortName,
                                       fwCapability_Names, NULL, dm);
     if (NrOfEntries == 0)
