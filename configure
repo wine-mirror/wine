@@ -745,10 +745,10 @@ X_PRE_LIBS
 X_CFLAGS
 CPP
 XMKMF
-TARGETFLAGS
 TOOLSDIR
 WIN16_INSTALL
 WIN16_FILES
+TARGETFLAGS
 CPPBIN
 ac_ct_CXX
 CXXFLAGS
@@ -3867,6 +3867,11 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       AS="${AS:-as} --32"
       host_cpu="i386"
       notice_platform="32-bit "
+      TARGETFLAGS="-m32"
+
+    else
+      TARGETFLAGS="-m64"
+
     fi
     ;;
 esac

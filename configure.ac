@@ -113,6 +113,9 @@ case $host in
       AS="${AS:-as} --32"
       host_cpu="i386"
       notice_platform="32-bit "
+      AC_SUBST(TARGETFLAGS,"-m32")
+    else
+      AC_SUBST(TARGETFLAGS,"-m64")
     fi
     ;;
 esac

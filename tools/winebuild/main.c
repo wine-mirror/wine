@@ -48,6 +48,7 @@ int kill_at = 0;
 int verbose = 0;
 int save_temps = 0;
 int link_ext_symbols = 0;
+int force_pointer_size = 0;
 
 #ifdef __i386__
 enum target_cpu target_cpu = CPU_x86;
@@ -240,6 +241,7 @@ static const char usage_str[] =
 "       --ld-cmd=LD          Command to use for linking (default: ld)\n"
 "   -l, --library=LIB        Import the specified library\n"
 "   -L, --library-path=DIR   Look for imports libraries in DIR\n"
+"   -m32, -m64               Force building 32-bit resp. 64-bit code\n"
 "   -M, --main-module=MODULE Set the name of the main module for a Win16 dll\n"
 "       --nm-cmd=NM          Command to use to get undefined symbols (default: nm)\n"
 "       --nxcompat=y|n       Set the NX compatibility flag (default: yes)\n"
@@ -365,6 +367,12 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             lib_path = xrealloc( lib_path, (nb_lib_paths+1) * sizeof(*lib_path) );
             lib_path[nb_lib_paths++] = xstrdup( optarg );
             break;
+        case 'm':
+            if (strcmp( optarg, "32" ) && strcmp( optarg, "64" ))
+                fatal_error( "Invalid -m option '%s', expected -m32 or -m64\n", optarg );
+            if (!strcmp( optarg, "32" )) force_pointer_size = 4;
+            else force_pointer_size = 8;
+            break;
         case 'M':
             spec->type = SPEC_WIN16;
             break;
@@ -489,6 +497,20 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
 
     if (spec->file_name && !strchr( spec->file_name, '.' ))
         strcat( spec->file_name, exec_mode == MODE_EXE ? ".exe" : ".dll" );
+
+    switch (target_cpu)
+    {
+    case CPU_x86:
+        if (force_pointer_size == 8) target_cpu = CPU_x86_64;
+        break;
+    case CPU_x86_64:
+        if (force_pointer_size == 4) target_cpu = CPU_x86;
+        break;
+    default:
+        if (force_pointer_size == 8)
+            fatal_error( "Cannot build 64-bit code for this CPU\n" );
+        break;
+    }
 
     return &argv[optind];
 }

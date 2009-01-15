@@ -143,6 +143,9 @@ Import the specified library, looking for a corresponding
 \fIlibname.def\fR file in the directories specified with the \fB-L\fR
 option.
 .TP
+.B \-m32, -m64
+Generate 32-bit, respectively 64-bit code.
+.TP
 .BI \-M,\ --main-module= module
 Specify that we are building a 16-bit dll, that will ultimately be
 linked together with the 32-bit dll specified in \fImodule\fR.  Only
