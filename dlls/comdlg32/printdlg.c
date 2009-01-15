@@ -3263,6 +3263,8 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     HWND 		hDrawWnd;
 
     if (uMsg == WM_INITDIALOG) { /*Init dialog*/
+        char str[100];
+
         pda = (PageSetupDataA*)lParam;
 	pda->hDlg   = hDlg; /* saving handle to main window to PageSetupDataA structure */
 	
@@ -3311,31 +3313,26 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    EnableWindow(GetDlgItem(hDlg,rad1),FALSE);
 	    EnableWindow(GetDlgItem(hDlg,rad2),FALSE);
 	}
+
 	/* We fill them out enabled or not */
-	if (pda->dlga->Flags & PSD_MARGINS) {
-	    char str[100];
-	    _c_size2strA(pda,pda->dlga->rtMargin.left,str);
-	    SetDlgItemTextA(hDlg,edt4,str);
-	    _c_size2strA(pda,pda->dlga->rtMargin.top,str);
-	    SetDlgItemTextA(hDlg,edt5,str);
-	    _c_size2strA(pda,pda->dlga->rtMargin.right,str);
-	    SetDlgItemTextA(hDlg,edt6,str);
-	    _c_size2strA(pda,pda->dlga->rtMargin.bottom,str);
-	    SetDlgItemTextA(hDlg,edt7,str);
-	} else {
+        if (!(pda->dlga->Flags & PSD_MARGINS))
+        {
 	    /* default is 1 inch */
 	    DWORD size = _c_inch2size(pda->dlga,1000);
-	    char	str[20];
-	    _c_size2strA(pda,size,str);
-	    SetDlgItemTextA(hDlg,edt4,str);
-	    SetDlgItemTextA(hDlg,edt5,str);
-	    SetDlgItemTextA(hDlg,edt6,str);
-	    SetDlgItemTextA(hDlg,edt7,str);
             pda->dlga->rtMargin.left   = size;
             pda->dlga->rtMargin.top    = size;
             pda->dlga->rtMargin.right  = size;
             pda->dlga->rtMargin.bottom = size;
-	}
+        }
+        _c_size2strA(pda,pda->dlga->rtMargin.left,str);
+        SetDlgItemTextA(hDlg,edt4,str);
+        _c_size2strA(pda,pda->dlga->rtMargin.top,str);
+        SetDlgItemTextA(hDlg,edt5,str);
+        _c_size2strA(pda,pda->dlga->rtMargin.right,str);
+        SetDlgItemTextA(hDlg,edt6,str);
+        _c_size2strA(pda,pda->dlga->rtMargin.bottom,str);
+        SetDlgItemTextA(hDlg,edt7,str);
+
 	/* if paper disabled */
 	if (pda->dlga->Flags & PSD_DISABLEPAPER) {
 	    EnableWindow(GetDlgItem(hDlg,cmb2),FALSE);
