@@ -1338,132 +1338,119 @@ ME_MoveCursorLines(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs)
   assert(pCursor->pRun->type == diRun);
 }
 
-static BOOL ME_UpdateSelection(ME_TextEditor *editor, const ME_Cursor *pTempCursor)
-{
-  ME_Cursor old_anchor = editor->pCursors[1];
-
-  if (GetKeyState(VK_SHIFT)>=0) /* cancelling selection */
-  {
-    /* any selection was present ? if so, it's no more, repaint ! */
-    editor->pCursors[1] = editor->pCursors[0];
-    if (memcmp(pTempCursor, &old_anchor, sizeof(ME_Cursor))) {
-      return TRUE;
-    }
-    return FALSE;
-  }
-  else
-  {
-    if (!memcmp(pTempCursor, &editor->pCursors[1], sizeof(ME_Cursor))) /* starting selection */
-    {
-      editor->pCursors[1] = *pTempCursor;
-      return TRUE;
-    }
-  }
-
-  ME_Repaint(editor);
-  return TRUE;
-}
-
 static void ME_ArrowPageUp(ME_TextEditor *editor, ME_Cursor *pCursor)
 {
-  ME_DisplayItem *pRun = pCursor->pRun;
-  ME_DisplayItem *pLast, *p;
-  int x, y, ys, yd, yp, yprev;
-  ME_Cursor tmp_curs = *pCursor;
+  ME_DisplayItem *p = ME_FindItemFwd(editor->pBuffer->pFirst, diStartRow);
 
-  x = ME_GetXForArrow(editor, pCursor);
-  if (!pCursor->nOffset && editor->bCaretAtEnd)
-    pRun = ME_FindItemBack(pRun, diRun);
+  if (editor->vert_si.nPos < p->member.row.nHeight)
+  {
+    pCursor->pRun = ME_FindItemFwd(editor->pBuffer->pFirst, diRun);
+    pCursor->nOffset = 0;
+    editor->bCaretAtEnd = FALSE;
+    /* Native clears seems to clear this x value on page up at the top
+     * of the text, but not on page down at the end of the text.
+     * Doesn't make sense, but we try to be bug for bug compatible. */
+    editor->nUDArrowX = -1;
+  } else {
+    ME_DisplayItem *pRun = pCursor->pRun;
+    ME_DisplayItem *pLast;
+    int x, y, ys, yd, yp, yprev;
+    int yOldScrollPos = editor->vert_si.nPos;
 
-  p = ME_FindItemBack(pRun, diStartRowOrParagraph);
-  assert(p->type == diStartRow);
-  yp = ME_FindItemBack(p, diParagraph)->member.para.pt.y;
-  yprev = ys = y = yp + p->member.row.pt.y;
-  yd = y - editor->sizeWindow.cy;
-  pLast = p;
+    x = ME_GetXForArrow(editor, pCursor);
+    if (!pCursor->nOffset && editor->bCaretAtEnd)
+      pRun = ME_FindItemBack(pRun, diRun);
 
-  do {
-    p = ME_FindItemBack(p, diStartRowOrParagraph);
-    if (!p)
-      break;
-    if (p->type == diParagraph) { /* crossing paragraphs */
-      if (p->member.para.prev_para == NULL)
-        break;
-      yp = p->member.para.prev_para->member.para.pt.y;
-      continue;
-    }
-    y = yp + p->member.row.pt.y;
-    if (y < yd)
-      break;
+    p = ME_FindItemBack(pRun, diStartRowOrParagraph);
+    assert(p->type == diStartRow);
+    yp = ME_FindItemBack(p, diParagraph)->member.para.pt.y;
+    yprev = ys = y = yp + p->member.row.pt.y;
+
+    ME_ScrollUp(editor, editor->sizeWindow.cy);
+    /* Only move the cursor by the amount scrolled. */
+    yd = y + editor->vert_si.nPos - yOldScrollPos;
     pLast = p;
-    yprev = y;
-  } while(1);
 
-  pCursor->pRun = ME_FindRunInRow(editor, pLast, x, &pCursor->nOffset, &editor->bCaretAtEnd);
-  ME_UpdateSelection(editor, &tmp_curs);
-  if (yprev < editor->sizeWindow.cy)
-  {
-    ME_Cursor startCursor = {ME_FindItemFwd(editor->pBuffer->pFirst, diRun), 0};
-    ME_EnsureVisible(editor, &startCursor);
-    ME_Repaint(editor);
-  }
-  else
-  {
-    ME_ScrollUp(editor, ys-yprev);
+    do {
+      p = ME_FindItemBack(p, diStartRowOrParagraph);
+      if (!p)
+        break;
+      if (p->type == diParagraph) { /* crossing paragraphs */
+        if (p->member.para.prev_para == NULL)
+          break;
+        yp = p->member.para.prev_para->member.para.pt.y;
+        continue;
+      }
+      y = yp + p->member.row.pt.y;
+      if (y < yd)
+        break;
+      pLast = p;
+      yprev = y;
+    } while(1);
+
+    pCursor->pRun = ME_FindRunInRow(editor, pLast, x, &pCursor->nOffset,
+                                    &editor->bCaretAtEnd);
   }
   assert(pCursor->pRun);
   assert(pCursor->pRun->type == diRun);
 }
 
-/* FIXME: in the original RICHEDIT, PageDown always scrolls by the same amount 
-   of pixels, even if it makes the scroll bar position exceed its normal maximum.
-   In such a situation, clicking the scrollbar restores its position back to the
-   normal range (ie. sets it to (doclength-screenheight)). */
-
 static void ME_ArrowPageDown(ME_TextEditor *editor, ME_Cursor *pCursor)
 {
-  ME_DisplayItem *pRun = pCursor->pRun;
-  ME_DisplayItem *pLast, *p;
-  int x, y, ys, yd, yp, yprev;
-  ME_Cursor tmp_curs = *pCursor;
+  ME_DisplayItem *pLast;
+  int x, y;
+
+  /* Find y position of the last row */
+  pLast = editor->pBuffer->pLast;
+  y = pLast->member.para.prev_para->member.para.pt.y
+      + ME_FindItemBack(pLast, diStartRow)->member.row.pt.y;
 
   x = ME_GetXForArrow(editor, pCursor);
-  if (!pCursor->nOffset && editor->bCaretAtEnd)
-    pRun = ME_FindItemBack(pRun, diRun);
 
-  p = ME_FindItemBack(pRun, diStartRowOrParagraph);
-  assert(p->type == diStartRow);
-  yp = ME_FindItemBack(p, diParagraph)->member.para.pt.y;
-  yprev = ys = y = yp + p->member.row.pt.y;
-  yd = y + editor->sizeWindow.cy;
-  pLast = p;
+  if (editor->vert_si.nPos >= y - editor->sizeWindow.cy)
+  {
+    pCursor->pRun = ME_FindItemBack(editor->pBuffer->pLast, diRun);
+    pCursor->nOffset = 0;
+    editor->bCaretAtEnd = FALSE;
+  } else {
+    ME_DisplayItem *pRun = pCursor->pRun;
+    ME_DisplayItem *p;
+    int ys, yd, yp, yprev;
+    int yOldScrollPos = editor->vert_si.nPos;
 
-  do {
-    p = ME_FindItemFwd(p, diStartRowOrParagraph);
-    if (!p)
-      break;
-    if (p->type == diParagraph) {
-      yp = p->member.para.pt.y;
-      continue;
-    }
-    y = yp + p->member.row.pt.y;
-    if (y >= yd)
-      break;
+    if (!pCursor->nOffset && editor->bCaretAtEnd)
+      pRun = ME_FindItemBack(pRun, diRun);
+
+    p = ME_FindItemBack(pRun, diStartRowOrParagraph);
+    assert(p->type == diStartRow);
+    yp = ME_FindItemBack(p, diParagraph)->member.para.pt.y;
+    yprev = ys = y = yp + p->member.row.pt.y;
+
+    /* For native richedit controls:
+     * v1.0 - v3.1 can only scroll down as far as the scrollbar lets us
+     * v4.1 can scroll past this position here. */
+    ME_ScrollDown(editor, editor->sizeWindow.cy);
+    /* Only move the cursor by the amount scrolled. */
+    yd = y + editor->vert_si.nPos - yOldScrollPos;
     pLast = p;
-    yprev = y;
-  } while(1);
 
-  pCursor->pRun = ME_FindRunInRow(editor, pLast, x, &pCursor->nOffset, &editor->bCaretAtEnd);
-  ME_UpdateSelection(editor, &tmp_curs);
-  if (yprev >= editor->nTotalLength-editor->sizeWindow.cy)
-  {
-    ME_Cursor endCursor = {ME_FindItemBack(editor->pBuffer->pLast, diRun), 0};
-    ME_EnsureVisible(editor, &endCursor);
-    ME_Repaint(editor);
-  }
-  else
-  {
-    ME_ScrollUp(editor,ys-yprev);
+    do {
+      p = ME_FindItemFwd(p, diStartRowOrParagraph);
+      if (!p)
+        break;
+      if (p->type == diParagraph) {
+        yp = p->member.para.pt.y;
+        continue;
+      }
+      y = yp + p->member.row.pt.y;
+      if (y >= yd)
+        break;
+      pLast = p;
+      yprev = y;
+    } while(1);
+
+    pCursor->pRun = ME_FindRunInRow(editor, pLast, x, &pCursor->nOffset,
+                                    &editor->bCaretAtEnd);
   }
   assert(pCursor->pRun);
   assert(pCursor->pRun->type == diRun);
