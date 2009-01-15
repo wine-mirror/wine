@@ -2405,10 +2405,6 @@ static DWORD
 _c_10mm2size(PAGESETUPDLGA *dlga,DWORD size) {
     if (dlga->Flags & PSD_INTHOUSANDTHSOFINCHES)
 	return 10*size*100/254;
-    /* If we don't have a flag, we can choose one. Use millimeters
-     * to avoid confusing me
-     */
-    dlga->Flags |= PSD_INHUNDREDTHSOFMILLIMETERS;
     return 10*size;
 }
 
@@ -2417,13 +2413,8 @@ static DWORD
 _c_inch2size(PAGESETUPDLGA *dlga,DWORD size) {
     if (dlga->Flags & PSD_INTHOUSANDTHSOFINCHES)
 	return size;
-    if (dlga->Flags & PSD_INHUNDREDTHSOFMILLIMETERS)
+    else
 	return (size*254)/100;
-    /* if we don't have a flag, we can choose one. Use millimeters
-     * to avoid confusing me
-     */
-    dlga->Flags |= PSD_INHUNDREDTHSOFMILLIMETERS;
-    return (size*254)/100;
 }
 
 static void
@@ -2433,13 +2424,10 @@ _c_size2strA(PageSetupDataA *pda,DWORD size,LPSTR strout) {
 	sprintf(strout,"%d",(size)/100);
 	return;
     }
-    if (pda->dlga->Flags & PSD_INTHOUSANDTHSOFINCHES) {
+    else {
 	sprintf(strout,"%din",(size)/1000);
 	return;
     }
-    pda->dlga->Flags |= PSD_INHUNDREDTHSOFMILLIMETERS;
-    sprintf(strout,"%d",(size)/100);
-    return;
 }
 static void
 _c_size2strW(PageSetupDataW *pdw,DWORD size,LPWSTR strout) {
@@ -2506,6 +2494,14 @@ _c_str2sizeW(const PAGESETUPDLGW *dlga, LPCWSTR strin) {
     /* we need a unicode version of sscanf to avoid it */
     WideCharToMultiByte(CP_ACP, 0, strin, -1, buf, sizeof(buf), NULL, NULL);
     return _c_str2sizeA((const PAGESETUPDLGA *)dlga, buf);
+}
+
+static inline BOOL is_default_metric(void)
+{
+    DWORD system;
+    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_IMEASURE | LOCALE_RETURN_NUMBER,
+                   (LPWSTR)&system, sizeof(system));
+    return system == 0;
 }
 
 static BOOL pagesetup_papersizeA(PAGESETUPDLGA *dlg, const WORD paperword, LPPOINT size)
@@ -3521,6 +3517,10 @@ BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
             COMDLG32_SetCommDlgExtendedError(CDERR_NOHOOK);
             return FALSE;
         }
+
+    if(!(setupdlg->Flags & (PSD_INTHOUSANDTHSOFINCHES | PSD_INHUNDREDTHSOFMILLIMETERS)))
+        setupdlg->Flags |= is_default_metric() ?
+            PSD_INHUNDREDTHSOFMILLIMETERS : PSD_INTHOUSANDTHSOFINCHES;
 
     /* Initialize default printer struct. If no printer device info is specified
        retrieve the default printer data. */
