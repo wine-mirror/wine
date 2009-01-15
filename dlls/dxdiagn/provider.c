@@ -353,7 +353,7 @@ static HRESULT DXDiag_InitDXDiagSystemDevicesContainer(IDxDiagContainer* pSubCon
   IDxDiagContainer* pDeviceSubCont = NULL;
   IDxDiagContainer* pDriversCont = NULL;
 
-  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pDeviceSubCont);
+  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, &pDeviceSubCont);
   if (FAILED(hr)) { return hr; }
   V_VT(pvarProp) = VT_BSTR; V_BSTR(pvarProp) = SysAllocString(property->psz);
   hr = IDxDiagContainerImpl_AddProp(pDeviceSubCont, szDescription, &v);
@@ -369,7 +369,7 @@ static HRESULT DXDiag_InitDXDiagSystemDevicesContainer(IDxDiagContainer* pSubCon
    * Drivers Cont contains Files Desc Containers
    */
   /*
-  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pDriversCont);
+  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, &pDriversCont);
   if (FAILED(hr)) { return hr; }
   hr = IDxDiagContainerImpl_AddChildContainer(pDeviceSubCont, szDrivers, pDriversCont);
 
@@ -394,7 +394,7 @@ static HRESULT DXDiag_InitDXDiagLogicalDisksContainer(IDxDiagContainer* pSubCont
   IDxDiagContainer* pDiskSubCont = NULL;
   IDxDiagContainer* pDriversCont = NULL;
 
-  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pDiskSubCont);
+  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, &pDiskSubCont);
   if (FAILED(hr)) { return hr; }
   hr = IDxDiagContainerImpl_AddChildContainer(pSubCont, "" , pDiskSubCont);
   */
@@ -403,7 +403,7 @@ static HRESULT DXDiag_InitDXDiagLogicalDisksContainer(IDxDiagContainer* pSubCont
    * Drivers Cont contains Files Desc Containers
    */
   /*
-  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pDriversCont);
+  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, &pDriversCont);
   if (FAILED(hr)) { return hr; }
   hr = IDxDiagContainerImpl_AddChildContainer(pDeviceSubCont, szDrivers, pDriversCont);
   */
