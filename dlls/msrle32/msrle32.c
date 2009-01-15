@@ -1497,11 +1497,11 @@ static LRESULT Compress(CodecInfo *pi, ICCOMPRESS* lpic, DWORD dwSize)
     lpic->lpbiOutput->biSizeImage = 0;
 
     if (lpic->lpbiOutput->biBitCount == 4)
-      MSRLE32_CompressRLE4(pi, lpic->lpbiInput, (LPBYTE)lpic->lpInput,
-		   lpic->lpbiOutput, (LPBYTE)lpic->lpOutput, (lpic->dwFlags & ICCOMPRESS_KEYFRAME) != 0);
+      MSRLE32_CompressRLE4(pi, lpic->lpbiInput, lpic->lpInput,
+                   lpic->lpbiOutput, lpic->lpOutput, (lpic->dwFlags & ICCOMPRESS_KEYFRAME) != 0);
     else
-      MSRLE32_CompressRLE8(pi, lpic->lpbiInput, (LPBYTE)lpic->lpInput,
-		   lpic->lpbiOutput, (LPBYTE)lpic->lpOutput, (lpic->dwFlags & ICCOMPRESS_KEYFRAME) != 0);
+      MSRLE32_CompressRLE8(pi, lpic->lpbiInput, lpic->lpInput,
+                   lpic->lpbiOutput, lpic->lpOutput, (lpic->dwFlags & ICCOMPRESS_KEYFRAME) != 0);
 
     if (lpic->dwFrameSize == 0 ||
 	lpic->lpbiOutput->biSizeImage < lpic->dwFrameSize)
@@ -1509,11 +1509,11 @@ static LRESULT Compress(CodecInfo *pi, ICCOMPRESS* lpic, DWORD dwSize)
 
     if ((*lpic->lpdwFlags & ICCOMPRESS_KEYFRAME) == 0) {
       if (lpic->lpbiOutput->biBitCount == 4)
-	MSRLE32_CompressRLE4(pi, lpic->lpbiInput, (LPBYTE)lpic->lpInput,
-			     lpic->lpbiOutput, (LPBYTE)lpic->lpOutput, TRUE);
+        MSRLE32_CompressRLE4(pi, lpic->lpbiInput, lpic->lpInput,
+                             lpic->lpbiOutput, lpic->lpOutput, TRUE);
       else
-	MSRLE32_CompressRLE8(pi, lpic->lpbiInput, (LPBYTE)lpic->lpInput,
-			     lpic->lpbiOutput, (LPBYTE)lpic->lpOutput, TRUE);
+        MSRLE32_CompressRLE8(pi, lpic->lpbiInput, lpic->lpInput,
+                             lpic->lpbiOutput, lpic->lpOutput, TRUE);
 
       if (lpic->dwFrameSize == 0 ||
 	  lpic->lpbiOutput->biSizeImage < lpic->dwFrameSize) {
@@ -1908,7 +1908,7 @@ LRESULT CALLBACK MSRLE32_DriverProc(DWORD_PTR dwDrvID, HDRVR hDrv, UINT uMsg,
 /* DllMain - library initialization code */
 BOOL WINAPI DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved)
 {
-  TRACE("(%p,%d,%p)\n",(LPVOID)hModule,dwReason,lpReserved);
+  TRACE("(%p,%d,%p)\n",hModule,dwReason,lpReserved);
 
   switch (dwReason) {
   case DLL_PROCESS_ATTACH:
