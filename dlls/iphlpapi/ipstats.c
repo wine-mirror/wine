@@ -130,6 +130,10 @@
 #define TCPS_CLOSING     11
 #endif
 
+#ifndef RTF_MULTICAST
+#define RTF_MULTICAST 0 /* Not available on NetBSD/OpenBSD */
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 
 DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
