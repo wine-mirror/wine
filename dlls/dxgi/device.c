@@ -141,10 +141,39 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IDXGIDevice *iface,
         const DXGI_SURFACE_DESC *desc, UINT surface_count, DXGI_USAGE usage,
         const DXGI_SHARED_RESOURCE *shared_resource, IDXGISurface **surface)
 {
-    FIXME("iface %p, desc %p, surface_count %u, usage %#x, shared_resource %p, surface %p stub!\n",
+    struct dxgi_surface *object;
+    HRESULT hr;
+    UINT i;
+
+    FIXME("iface %p, desc %p, surface_count %u, usage %#x, shared_resource %p, surface %p partial stub!\n",
             iface, desc, surface_count, usage, shared_resource, surface);
 
-    return E_NOTIMPL;
+    memset(surface, 0, surface_count * sizeof(*surface));
+    for (i = 0; i < surface_count; ++i)
+    {
+        object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+        if (!object)
+        {
+            ERR("Failed to allocate DXGI surface object memory\n");
+            hr = E_OUTOFMEMORY;
+            goto fail;
+        }
+
+        object->vtbl = &dxgi_surface_vtbl;
+        object->refcount = 1;
+        surface[i] = (IDXGISurface *)object;
+
+        TRACE("Created IDXGISurface %p (%u/%u)\n", object, i + 1, surface_count);
+    }
+
+    return S_OK;
+
+fail:
+    for (i = 0; i < surface_count; ++i)
+    {
+        HeapFree(GetProcessHeap(), 0, surface[i]);
+    }
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_QueryResourceResidency(IDXGIDevice *iface,

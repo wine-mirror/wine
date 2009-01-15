@@ -79,6 +79,14 @@ struct dxgi_swapchain
     LONG refcount;
 };
 
+/* IDXGISurface */
+extern const struct IDXGISurfaceVtbl dxgi_surface_vtbl;
+struct dxgi_surface
+{
+    const struct IDXGISurfaceVtbl *vtbl;
+    LONG refcount;
+};
+
 /* Layered device */
 enum dxgi_device_layer_id
 {
