@@ -513,7 +513,7 @@ static void test_delete(void)
     shfo.hwnd = NULL;
     shfo.wFunc = FO_DELETE;
     shfo.pFrom = buf;
-    shfo.pTo = "\0";
+    shfo.pTo = NULL;
     shfo.fFlags = FOF_FILESONLY | FOF_NOCONFIRMATION | FOF_SILENT;
     shfo.hNameMappings = NULL;
     shfo.lpszProgressTitle = NULL;
