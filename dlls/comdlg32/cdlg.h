@@ -95,8 +95,8 @@ typedef struct {
 #define PD32_NR_OF_DOCUMENTS_IN_QUEUE         1583
 
 #define PD32_MARGINS_IN_INCHES                1585
-#define PD32_MARGINS_IN_MILIMETERS            1586
-#define PD32_MILIMETERS                       1587
+#define PD32_MARGINS_IN_MILLIMETERS           1586
+#define PD32_MILLIMETERS                      1587
 
 /* Charset names string IDs */
 

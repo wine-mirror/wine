@@ -54,6 +54,7 @@
 #include "cdlg_Fr.rc"
 #include "cdlg_Hu.rc"
 #include "cdlg_It.rc"
+#include "cdlg_Ja.rc"
 #include "cdlg_Ko.rc"
 #include "cdlg_Nl.rc"
 #include "cdlg_No.rc"
@@ -68,5 +69,4 @@
 #include "cdlg_Tr.rc"
 #include "cdlg_Uk.rc"
 #include "cdlg_Wa.rc"
-#include "cdlg_Ja.rc"
 #include "cdlg_Zh.rc"

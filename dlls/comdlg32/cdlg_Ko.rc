@@ -414,8 +414,8 @@ STRINGTABLE DISCARDABLE
     PD32_DEFAULT_PRINTER                  "기본 프린터; "
     PD32_NR_OF_DOCUMENTS_IN_QUEUE         "대기열에는  %d의 문서가 존재합니다"
     PD32_MARGINS_IN_INCHES                "여백 [인치]"
-    PD32_MARGINS_IN_MILIMETERS            "여백 [mm]"
-    PD32_MILIMETERS                       "mm"
+    PD32_MARGINS_IN_MILLIMETERS           "여백 [mm]"
+    PD32_MILLIMETERS                      "mm"
 
     PD32_PRINTER_STATUS_READY             "준비"
     PD32_PRINTER_STATUS_PAUSED            "정지; "

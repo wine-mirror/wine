@@ -409,8 +409,8 @@ STRINGTABLE DISCARDABLE
 	PD32_DEFAULT_PRINTER                  "Defaýlta Printilo; "
 	PD32_NR_OF_DOCUMENTS_IN_QUEUE         "%d dokumento(j) estas en presvico"
 	PD32_MARGINS_IN_INCHES                "Marøenoj [inches]"
-	PD32_MARGINS_IN_MILIMETERS            "Marøenoj [mm]"
-	PD32_MILIMETERS                       "mm"
+	PD32_MARGINS_IN_MILLIMETERS           "Marøenoj [mm]"
+	PD32_MILLIMETERS                      "mm"
 	
 	PD32_PRINTER_STATUS_READY             "Preta"
 	PD32_PRINTER_STATUS_PAUSED            "Paýse; "

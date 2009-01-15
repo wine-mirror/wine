@@ -415,8 +415,8 @@ printer installeren. Installeer een printer en probeer het opnieuw."
     PD32_NR_OF_DOCUMENTS_IN_QUEUE         "Er staan %d documenten in de \
 wachtrij"
     PD32_MARGINS_IN_INCHES                "Marges [inch]"
-    PD32_MARGINS_IN_MILIMETERS            "Marges [mm]"
-    PD32_MILIMETERS                       "mm"
+    PD32_MARGINS_IN_MILLIMETERS           "Marges [mm]"
+    PD32_MILLIMETERS                      "mm"
 
     PD32_PRINTER_STATUS_READY             "Klaar"
     PD32_PRINTER_STATUS_PAUSED            "Gepauseerd, "

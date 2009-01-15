@@ -408,8 +408,8 @@ STRINGTABLE DISCARDABLE
     PD32_DEFAULT_PRINTER                  "Imprimantă implicită; "
     PD32_NR_OF_DOCUMENTS_IN_QUEUE         "%d documente sunt în coadă"
     PD32_MARGINS_IN_INCHES                "Margini [țoli]"
-    PD32_MARGINS_IN_MILIMETERS            "Margini [mm]"
-    PD32_MILIMETERS                       "mm"
+    PD32_MARGINS_IN_MILLIMETERS           "Margini [mm]"
+    PD32_MILLIMETERS                      "mm"
 
     PD32_PRINTER_STATUS_READY             "Gata"
     PD32_PRINTER_STATUS_PAUSED            "Pauză; "
