@@ -110,6 +110,8 @@ struct message {
     msg_flags_t flags;     /* message props */
     WPARAM wParam;         /* expected value of wParam */
     LPARAM lParam;         /* expected value of lParam */
+    WPARAM wp_mask;        /* mask for wParam checks */
+    LPARAM lp_mask;        /* mask for lParam checks */
 };
 
 struct recvd_message {
@@ -498,7 +500,7 @@ static const struct message WmShowRestoreMaxOverlappedSeq[] = {
     { WM_NCPAINT, sent|optional },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED, 0, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOSIZE|SWP_NOMOVE },
     { WM_MOVE, sent|defwinproc|optional },
     { WM_SIZE, sent|defwinproc|wparam, SIZE_RESTORED },
     { WM_NCCALCSIZE, sent|wparam|optional, TRUE },
@@ -942,11 +944,11 @@ static const struct message WmShowChildSeq_4[] = {
 /* ShowWindow(SW_MINIMIZE) for child with invisible parent */
 static const struct message WmShowChildInvisibleParentSeq_1[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_MINIMIZE },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOCOPYBITS|SWP_STATECHANGED },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED, 0, SWP_NOACTIVATE },
     { WM_NCCALCSIZE, sent|wparam, 1 },
     { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, 0, 0 },
     { WM_CHILDACTIVATE, sent|optional },
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOREDRAW|SWP_NOCOPYBITS|SWP_STATECHANGED },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOREDRAW|SWP_NOCOPYBITS|SWP_STATECHANGED, 0, SWP_NOACTIVATE },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|defwinproc|wparam, SIZE_MINIMIZED },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
@@ -1907,7 +1909,7 @@ static void ok_sequence_(const struct message *expected_list, const char *contex
 	{
 	    if (expected->flags & wparam)
 	    {
-		if (expected->wParam != actual->wParam && todo)
+		if (((expected->wParam ^ actual->wParam) & ~expected->wp_mask) && todo)
 		{
 		    todo_wine {
                         failcount ++;
@@ -1919,16 +1921,16 @@ static void ok_sequence_(const struct message *expected_list, const char *contex
 		}
 		else
                 {
-                    ok_( file, line)(expected->wParam == actual->wParam,
+                    ok_( file, line)( ((expected->wParam ^ actual->wParam) & ~expected->wp_mask) == 0,
                                      "%s: %u: in msg 0x%04x expecting wParam 0x%lx got 0x%lx\n",
                                      context, count, expected->message, expected->wParam, actual->wParam);
-                    if (expected->wParam != actual->wParam) dump++;
+                    if ((expected->wParam ^ actual->wParam) & ~expected->wp_mask) dump++;
                 }
 
 	    }
 	    if (expected->flags & lparam)
             {
-		if (expected->lParam != actual->lParam && todo)
+		if (((expected->lParam ^ actual->lParam) & ~expected->lp_mask) && todo)
 		{
 		    todo_wine {
                         failcount ++;
@@ -1940,10 +1942,10 @@ static void ok_sequence_(const struct message *expected_list, const char *contex
 		}
 		else
                 {
-                    ok_( file, line)(expected->lParam == actual->lParam,
+                    ok_( file, line)(((expected->lParam ^ actual->lParam) & ~expected->lp_mask) == 0,
                                      "%s: %u: in msg 0x%04x expecting lParam 0x%lx got 0x%lx\n",
                                      context, count, expected->message, expected->lParam, actual->lParam);
-                    if (expected->lParam != actual->lParam) dump++;
+                    if ((expected->lParam ^ actual->lParam) & ~expected->lp_mask) dump++;
                 }
             }
 	    if ((expected->flags & defwinproc) != (actual->flags & defwinproc) && todo)
@@ -5540,7 +5542,7 @@ static const struct message WmInvalidateErasePaint2[] = {
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|beginpaint },
     { WM_GETTEXT, sent|beginpaint|defwinproc|optional },
-    { WM_ERASEBKGND, sent|beginpaint },
+    { WM_ERASEBKGND, sent|beginpaint|optional },
     { 0 }
 };
 
@@ -5595,7 +5597,7 @@ static const struct message WmParentPaintNc[] = {
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|beginpaint },
     { WM_GETTEXT, sent|beginpaint|defwinproc|optional },
-    { WM_ERASEBKGND, sent|beginpaint },
+    { WM_ERASEBKGND, sent|beginpaint|optional },
     { 0 }
 };
 
@@ -5611,7 +5613,7 @@ static const struct message WmParentErasePaint[] = {
     { WM_PAINT, sent|parent },
     { WM_NCPAINT, sent|parent|beginpaint },
     { WM_GETTEXT, sent|parent|beginpaint|defwinproc|optional },
-    { WM_ERASEBKGND, sent|parent|beginpaint },
+    { WM_ERASEBKGND, sent|parent|beginpaint|optional },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|beginpaint },
     { WM_GETTEXT, sent|beginpaint|defwinproc|optional },
@@ -6806,9 +6808,11 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
 	/* test_accelerators() depends on this */
 	case WM_NCHITTEST:
 	    return HTCLIENT;
-    
+
 	/* ignore */
 	case WM_MOUSEMOVE:
+	case WM_MOUSEACTIVATE:
+	case WM_NCMOUSEMOVE:
 	case WM_SETCURSOR:
 	case WM_DEVICECHANGE:
 	    return 0;
@@ -9732,9 +9736,9 @@ static const struct message WmShow[] = {
 };
 static const struct message WmShowNoActivate_1[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_SHOWNOACTIVATE },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_STATECHANGED },
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_STATECHANGED },
-    { WM_MOVE, sent|defwinproc },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_STATECHANGED, 0, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_STATECHANGED, 0, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_MOVE, sent|defwinproc|optional },
     { WM_SIZE, sent|wparam|defwinproc, SIZE_RESTORED },
     { 0 }
 };
@@ -9797,17 +9801,19 @@ static const struct message WmRestore_3[] = {
 };
 static const struct message WmRestore_4[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_RESTORE },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED },
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED },
-    { WM_MOVE, sent|defwinproc },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED, 0, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED, 0, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_MOVE, sent|defwinproc|optional },
     { WM_SIZE, sent|wparam|defwinproc, SIZE_RESTORED },
     { 0 }
 };
 static const struct message WmRestore_5[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_SHOWNORMAL },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED },
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED },
-    { WM_MOVE, sent|defwinproc },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED, 0, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOSIZE|SWP_NOMOVE },
+    { HCBT_ACTIVATE, hook|optional },
+    { HCBT_SETFOCUS, hook|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED, 0, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_MOVE, sent|defwinproc|optional },
     { WM_SIZE, sent|wparam|defwinproc, SIZE_RESTORED },
     { 0 }
 };
@@ -9881,6 +9887,15 @@ static const struct message WmMinMax_1[] = {
 };
 static const struct message WmMinMax_2[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_SHOWMAXIMIZED },
+    { WM_GETMINMAXINFO, sent|optional },
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_FRAMECHANGED|SWP_STATECHANGED },
+    { HCBT_ACTIVATE, hook|optional },
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
+    { HCBT_SETFOCUS, hook|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_FRAMECHANGED|SWP_STATECHANGED, 0, SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_MOVE, sent|defwinproc|optional },
+    { WM_SIZE, sent|wparam|defwinproc|optional, SIZE_MAXIMIZED },
+    { HCBT_SETFOCUS, hook|optional },
     { 0 }
 };
 static const struct message WmMinMax_3[] = {
@@ -9923,12 +9938,12 @@ static const struct message WmShowMaximized_2[] = {
 static const struct message WmShowMaximized_3[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_SHOWMAXIMIZED },
     { WM_GETMINMAXINFO, sent },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED, 0, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOSIZE|SWP_NOMOVE },
     { HCBT_ACTIVATE, hook|optional }, /* win2000 doesn't send it */
     { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE }, /* win2000 doesn't send it */
     { HCBT_SETFOCUS, hook|optional }, /* win2000 doesn't send it */
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED },
-    { WM_MOVE, sent|defwinproc },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED, 0, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_MOVE, sent|defwinproc|optional },
     { WM_SIZE, sent|wparam|defwinproc, SIZE_MAXIMIZED },
     { 0 }
 };
