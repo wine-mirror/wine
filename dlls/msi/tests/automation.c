@@ -594,7 +594,7 @@ static void test_dispatch(void)
     ok(hr == DISP_E_MEMBERNOTFOUND, "IDispatch::Invoke returned 0x%08x\n", hr);
 
     /* Test getting ID of a function name that does exist */
-    name = (WCHAR *)szOpenPackage;
+    name = szOpenPackage;
     hr = IDispatch_GetIDsOfNames(pInstaller, &IID_NULL, &name, 1, LOCALE_USER_DEFAULT, &dispid);
     ok(hr == S_OK, "IDispatch::GetIDsOfNames returned 0x%08x\n", hr);
 
@@ -638,7 +638,7 @@ static void test_dispatch(void)
     ok(hr == DISP_E_MEMBERNOTFOUND, "IDispatch::Invoke returned 0x%08x\n", hr);
 
     /* Test invoking a read-only property as DISPATCH_PROPERTYPUT or as a DISPATCH_METHOD */
-    name = (WCHAR *)szProductState;
+    name = szProductState;
     hr = IDispatch_GetIDsOfNames(pInstaller, &IID_NULL, &name, 1, LOCALE_USER_DEFAULT, &dispid);
     ok(hr == S_OK, "IDispatch::GetIDsOfNames returned 0x%08x\n", hr);
 

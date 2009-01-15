@@ -48,7 +48,7 @@ static void get_user_sid(LPSTR *usersid)
 
     OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
     size = sizeof(buf);
-    GetTokenInformation(token, TokenUser, (void *)buf, size, &size);
+    GetTokenInformation(token, TokenUser, buf, size, &size);
     user = (PTOKEN_USER)buf;
     pConvertSidToStringSidA(user->User.Sid, usersid);
 }
@@ -160,7 +160,7 @@ static void create_test_guid(LPSTR prodcode, LPSTR squashed)
     hr = CoCreateGuid(&guid);
     ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
 
-    size = StringFromGUID2(&guid, (LPOLESTR)guidW, MAX_PATH);
+    size = StringFromGUID2(&guid, guidW, MAX_PATH);
     ok(size == 39, "Expected 39, got %d\n", hr);
 
     WideCharToMultiByte(CP_ACP, 0, guidW, size, prodcode, MAX_PATH, NULL, NULL);

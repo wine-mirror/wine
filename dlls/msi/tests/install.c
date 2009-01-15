@@ -1362,7 +1362,7 @@ static void get_user_sid(LPSTR *usersid)
 
     OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
     size = sizeof(buf);
-    GetTokenInformation(token, TokenUser, (void *)buf, size, &size);
+    GetTokenInformation(token, TokenUser, buf, size, &size);
     user = (PTOKEN_USER)buf;
     pConvertSidToStringSidA(user->User.Sid, usersid);
 }
