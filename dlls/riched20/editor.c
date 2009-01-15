@@ -2157,7 +2157,6 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
 {
   BOOL ctrl_is_down = GetKeyState(VK_CONTROL) & 0x8000;
   BOOL shift_is_down = GetKeyState(VK_SHIFT) & 0x8000;
-  DWORD dwStyle = GetWindowLongW(editor->hWnd, GWL_STYLE);
 
   if (nKey != VK_SHIFT && nKey != VK_CONTROL && nKey != VK_MENU)
       editor->nSelectionType = stPosition;
@@ -2181,7 +2180,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
     case VK_DELETE:
       editor->nUDArrowX = -1;
       /* FIXME backspace and delete aren't the same, they act different wrt paragraph style of the merged paragraph */
-      if (dwStyle & ES_READONLY)
+      if (editor->styleFlags & ES_READONLY)
         return FALSE;
       if (ME_IsSelection(editor))
       {
@@ -2217,7 +2216,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
       ME_SendRequestResize(editor, FALSE);
       return TRUE;
     case VK_RETURN:
-      if (dwStyle & ES_MULTILINE)
+      if (editor->styleFlags & ES_MULTILINE)
       {
         ME_Cursor cursor = editor->pCursors[0];
         ME_DisplayItem *para = ME_GetParagraph(cursor.pRun);
@@ -2225,7 +2224,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
         const WCHAR endl = '\r';
         ME_Style *style;
 
-        if (dwStyle & ES_READONLY) {
+        if (editor->styleFlags & ES_READONLY) {
           MessageBeep(MB_ICONERROR);
           return TRUE;
         }
@@ -2412,7 +2411,7 @@ static LRESULT ME_Char(ME_TextEditor *editor, WPARAM charCode,
       MultiByteToWideChar(CP_ACP, 0, &charA, 1, &wstr, 1);
   }
 
-  if (GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_READONLY) {
+  if (editor->styleFlags & ES_READONLY) {
     MessageBeep(MB_ICONERROR);
     return 0; /* FIXME really 0 ? */
   }
@@ -2664,6 +2663,11 @@ static ME_TextEditor *ME_MakeEditor(HWND hWnd, BOOL bEmulateVersion10)
   int i;
   ed->hWnd = hWnd;
   ed->bEmulateVersion10 = bEmulateVersion10;
+  ed->styleFlags = GetWindowLongW(hWnd, GWL_STYLE);
+  if (ed->styleFlags & WS_VSCROLL)
+    ed->styleFlags |= ES_AUTOVSCROLL;
+  if (!ed->bEmulateVersion10 && (ed->styleFlags & WS_HSCROLL))
+    ed->styleFlags |= ES_AUTOHSCROLL;
   ed->pBuffer = ME_MakeText();
   ed->nZoomNumerator = ed->nZoomDenominator = 0;
   ME_MakeFirstParagraph(ed);
@@ -2698,10 +2702,7 @@ static ME_TextEditor *ME_MakeEditor(HWND hWnd, BOOL bEmulateVersion10)
   ed->nParagraphs = 1;
   ed->nLastSelStart = ed->nLastSelEnd = 0;
   ed->pLastSelStartPara = ed->pLastSelEndPara = ME_FindItemFwd(ed->pBuffer->pFirst, diParagraph);
-  if (ed->bEmulateVersion10)
-    ed->bWordWrap = (GetWindowLongW(hWnd, GWL_STYLE) & ES_AUTOHSCROLL) ? FALSE : TRUE;
-  else
-    ed->bWordWrap = (GetWindowLongW(hWnd, GWL_STYLE) & (WS_HSCROLL|ES_AUTOHSCROLL)) ? FALSE : TRUE;
+  ed->bWordWrap = !(ed->styleFlags & ES_AUTOHSCROLL);
   ed->bHideSelection = FALSE;
   ed->nInvalidOfs = -1;
   ed->pfnWordBreak = NULL;
@@ -2716,20 +2717,20 @@ static ME_TextEditor *ME_MakeEditor(HWND hWnd, BOOL bEmulateVersion10)
     ed->pFontCache[i].nAge = 0;
     ed->pFontCache[i].hFont = NULL;
   }
-  
+
   ME_CheckCharOffsets(ed);
-  if (GetWindowLongW(hWnd, GWL_STYLE) & ES_SELECTIONBAR)
+  if (ed->styleFlags & ES_SELECTIONBAR)
     ed->selofs = SELECTIONBAR_WIDTH;
   else
     ed->selofs = 0;
   ed->bDefaultFormatRect = TRUE;
   ed->nSelectionType = stPosition;
 
-  if (GetWindowLongW(hWnd, GWL_STYLE) & ES_PASSWORD)
+  if (ed->styleFlags & ES_PASSWORD)
     ed->cPasswordMask = '*';
   else
     ed->cPasswordMask = 0;
-  
+
   ed->notified_cr.cpMin = ed->notified_cr.cpMax = 0;
 
   /* Default scrollbar information */
@@ -3039,7 +3040,7 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case WM_GETDLGCODE:
   {
     UINT code = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL;
-    if (GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_MULTILINE)
+    if (editor->styleFlags & ES_MULTILINE)
       code |= DLGC_WANTMESSAGE;
     return code;
   }
@@ -3089,7 +3090,7 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     /* these flags are equivalent to the ES_* counterparts */
     DWORD mask = ECO_VERTICAL | ECO_AUTOHSCROLL | ECO_AUTOVSCROLL |
                  ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN | ECO_SELECTIONBAR;
-    DWORD settings = GetWindowLongW(editor->hWnd, GWL_STYLE) & mask;
+    DWORD settings = editor->styleFlags & mask;
 
     return settings;
   }
@@ -3101,8 +3102,7 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
      */
     DWORD mask = ECO_VERTICAL | ECO_AUTOHSCROLL | ECO_AUTOVSCROLL |
                  ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN | ECO_SELECTIONBAR;
-    DWORD raw = GetWindowLongW(editor->hWnd, GWL_STYLE);
-    DWORD settings = mask & raw;
+    DWORD settings = mask & editor->styleFlags;
     DWORD oldSettings = settings;
     DWORD changedSettings;
 
@@ -3120,14 +3120,17 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       case ECOOP_XOR:
         settings ^= lParam;
     }
-    SetWindowLongW(editor->hWnd, GWL_STYLE, (raw & ~mask) | (settings & mask));
-
     changedSettings = oldSettings ^ settings;
 
     if (settings & ECO_AUTOWORDSELECTION)
       FIXME("ECO_AUTOWORDSELECTION not implemented yet!\n");
 
     if (oldSettings ^ settings) {
+      DWORD dwStyle = GetWindowLongW(editor->hWnd, GWL_STYLE);
+
+      editor->styleFlags = (editor->styleFlags & ~mask) | (settings & mask);
+      SetWindowLongW(editor->hWnd, GWL_STYLE, (dwStyle & ~mask) | (settings & mask));
+
       if (settings & ECO_SELECTIONBAR) {
         editor->selofs = SELECTIONBAR_WIDTH;
         editor->rcFormat.left += SELECTIONBAR_WIDTH;
@@ -3287,12 +3290,15 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_SETREADONLY:
   {
-    long nStyle = GetWindowLongW(editor->hWnd, GWL_STYLE);
-    if (wParam)
-      nStyle |= ES_READONLY;
-    else
-      nStyle &= ~ES_READONLY;
-    SetWindowLongW(editor->hWnd, GWL_STYLE, nStyle);
+    LONG winStyle = GetWindowLongW(editor->hWnd, GWL_STYLE);
+    if (wParam) {
+      editor->styleFlags |= ES_READONLY;
+      winStyle |= ES_READONLY;
+    } else {
+      editor->styleFlags &= ~ES_READONLY;
+      winStyle &= ~ES_READONLY;
+    }
+    SetWindowLongW(editor->hWnd, GWL_STYLE, winStyle);
     return 0;
   }
   case EM_SETEVENTMASK:
@@ -3484,7 +3490,7 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
           int len = -1;
 
           /* uses default style! */
-          if (!(GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_MULTILINE))
+          if (!(editor->styleFlags & ES_MULTILINE))
           {
             WCHAR * p;
 
@@ -3877,7 +3883,7 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
 
     si.cbSize = sizeof(si);
     si.fMask = SIF_PAGE | SIF_RANGE;
-    if (GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_DISABLENOSCROLL)
+    if (editor->styleFlags & ES_DISABLENOSCROLL)
       si.fMask |= SIF_DISABLENOSCROLL;
     si.nMax = (si.fMask & SIF_DISABLENOSCROLL) ? 1 : 0;
     si.nMin = 0;

@@ -1063,13 +1063,13 @@ void ME_ScrollAbs(ME_TextEditor *editor, int x, int y)
   winStyle = GetWindowLongW(editor->hWnd, GWL_STYLE);
   bScrollBarIsVisible = (winStyle & WS_HSCROLL) != 0;
   bScrollBarWillBeVisible = (editor->nTotalWidth > editor->sizeWindow.cx)
-                            || (winStyle & ES_DISABLENOSCROLL);
+                            || (editor->styleFlags & ES_DISABLENOSCROLL);
   if (bScrollBarIsVisible != bScrollBarWillBeVisible)
     ShowScrollBar(editor->hWnd, SB_HORZ, bScrollBarWillBeVisible);
 
   bScrollBarIsVisible = (winStyle & WS_VSCROLL) != 0;
   bScrollBarWillBeVisible = (editor->nTotalLength > editor->sizeWindow.cy)
-                            || (winStyle & ES_DISABLENOSCROLL);
+                            || (editor->styleFlags & ES_DISABLENOSCROLL);
   if (bScrollBarIsVisible != bScrollBarWillBeVisible)
     ShowScrollBar(editor->hWnd, SB_VERT, bScrollBarWillBeVisible);
 
@@ -1119,7 +1119,7 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
 
   si.cbSize = sizeof(si);
   si.fMask = SIF_PAGE | SIF_RANGE | SIF_POS;
-  if (GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_DISABLENOSCROLL)
+  if (editor->styleFlags & ES_DISABLENOSCROLL)
     si.fMask |= SIF_DISABLENOSCROLL;
 
   /* Update horizontal scrollbar */

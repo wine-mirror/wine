@@ -1478,7 +1478,7 @@ static void test_EM_SETOPTIONS(void)
        RICHEDIT_CLASS, (int) GetLastError());
     options = SendMessage(hwndRichEdit, EM_GETOPTIONS, 0, 0);
     /* WS_[VH]SCROLL cause the ECO_AUTO[VH]SCROLL options to be set */
-    todo_wine ok(options == (ECO_AUTOVSCROLL|ECO_AUTOHSCROLL),
+    ok(options == (ECO_AUTOVSCROLL|ECO_AUTOHSCROLL),
        "Incorrect initial options %x\n", options);
 
     /* NEGATIVE TESTING - NO OPTIONS SET */
@@ -1508,17 +1508,17 @@ static void test_EM_SETOPTIONS(void)
     ok(dwStyle & ES_READONLY, "Readonly style not set by EM_SETOPTIONS\n");
     SetWindowLong(hwndRichEdit, GWL_STYLE, dwStyle & ~ES_READONLY);
     options = SendMessage(hwndRichEdit, EM_GETOPTIONS, 0, 0);
-    todo_wine ok(options & ES_READONLY, "Readonly option set by SetWindowLong\n");
+    ok(options & ES_READONLY, "Readonly option set by SetWindowLong\n");
     /* Confirm that the text is still read only. */
     SendMessage(hwndRichEdit, WM_CHAR, 'a', ('a' << 16) | 0x0001);
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
-    todo_wine ok(buffer[0]==text[0],
+    ok(buffer[0]==text[0],
        "EM_SETOPTIONS: Text changed! s1:%s s2:%s\n", text, buffer);
 
     oldOptions = options;
     SetWindowLong(hwndRichEdit, GWL_STYLE, dwStyle|optionStyles);
     options = SendMessage(hwndRichEdit, EM_GETOPTIONS, 0, 0);
-    todo_wine ok(options == oldOptions,
+    ok(options == oldOptions,
        "Options set by SetWindowLong (%x -> %x)\n", oldOptions, options);
 
     DestroyWindow(hwndRichEdit);
@@ -5916,8 +5916,8 @@ static void test_autoscroll(void)
                           0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
     ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
     ret = SendMessage(hwnd, EM_GETOPTIONS, 0, 0);
-    todo_wine ok(ret & ECO_AUTOVSCROLL, "ECO_AUTOVSCROLL isn't set.\n");
-    todo_wine ok(ret & ECO_AUTOHSCROLL, "ECO_AUTOHSCROLL isn't set.\n");
+    ok(ret & ECO_AUTOVSCROLL, "ECO_AUTOVSCROLL isn't set.\n");
+    ok(ret & ECO_AUTOHSCROLL, "ECO_AUTOHSCROLL isn't set.\n");
     ret = GetWindowLong(hwnd, GWL_STYLE);
     ok(!(ret & ES_AUTOVSCROLL), "ES_AUTOVSCROLL is set.\n");
     ok(!(ret & ES_AUTOHSCROLL), "ES_AUTOHSCROLL is set.\n");

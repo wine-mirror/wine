@@ -330,6 +330,7 @@ typedef struct tagME_TextEditor
   BOOL bEmulateVersion10;
   ME_TextBuffer *pBuffer;
   ME_Cursor *pCursors;
+  DWORD styleFlags;
   int nCursors;
   SIZE sizeWindow;
   int nTotalLength, nLastTotalLength;
