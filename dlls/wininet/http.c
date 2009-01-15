@@ -2897,8 +2897,13 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
         req = &workRequest.u.HttpSendRequestW;
         if (lpszHeaders)
         {
-            req->lpszHeader = HeapAlloc(GetProcessHeap(), 0, dwHeaderLength * sizeof(WCHAR));
-            memcpy(req->lpszHeader, lpszHeaders, dwHeaderLength * sizeof(WCHAR));
+            DWORD size;
+
+            if (dwHeaderLength == ~0u) size = (strlenW(lpszHeaders) + 1) * sizeof(WCHAR);
+            else size = dwHeaderLength * sizeof(WCHAR);
+
+            req->lpszHeader = HeapAlloc(GetProcessHeap(), 0, size);
+            memcpy(req->lpszHeader, lpszHeaders, size);
         }
         else
             req->lpszHeader = 0;

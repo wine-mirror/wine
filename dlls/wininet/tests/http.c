@@ -1814,6 +1814,33 @@ static void test_http1_1(int port)
     InternetCloseHandle(ses);
 }
 
+static void test_HttpSendRequestW(int port)
+{
+    static const WCHAR header[] = {'U','A','-','C','P','U',':',' ','x','8','6',0};
+    HINTERNET ses, con, req;
+    DWORD error;
+    BOOL ret;
+
+    ses = InternetOpen("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, INTERNET_FLAG_ASYNC);
+    ok(ses != NULL, "InternetOpen failed\n");
+
+    con = InternetConnect(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(con != NULL, "InternetConnect failed\n");
+
+    req = HttpOpenRequest(con, NULL, "/test1", NULL, NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    SetLastError(0xdeadbeef);
+    ret = HttpSendRequestW(req, header, ~0u, NULL, 0);
+    error = GetLastError();
+    ok(!ret, "HttpSendRequestW succeeded\n");
+    ok(error == ERROR_IO_PENDING, "got %u expected ERROR_IO_PENDING\n", error);
+
+    InternetCloseHandle(req);
+    InternetCloseHandle(con);
+    InternetCloseHandle(ses);
+}
+
 static void test_cookie_header(int port)
 {
     HINTERNET ses, con, req;
@@ -2023,6 +2050,7 @@ static void test_http_connection(void)
     test_cookie_header(si.port);
     test_basic_authentication(si.port);
     test_HttpQueryInfo(si.port);
+    test_HttpSendRequestW(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "GET", "/quit");
