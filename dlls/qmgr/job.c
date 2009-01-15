@@ -503,7 +503,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_SetCredentials(
     BG_AUTH_CREDENTIALS *cred)
 {
     FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_RemoveCredentials(
@@ -512,7 +512,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_RemoveCredentials(
     BG_AUTH_SCHEME scheme)
 {
     FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const IBackgroundCopyJob2Vtbl BITS_IBackgroundCopyJob_Vtbl =
