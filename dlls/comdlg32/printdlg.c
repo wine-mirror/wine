@@ -2416,13 +2416,28 @@ _c_inch2size(PAGESETUPDLGA *dlga,DWORD size) {
 
 static void size2str(const PageSetupDataA *pda, DWORD size, LPWSTR strout)
 {
-    static const WCHAR metric_format[] = {'%','d',0};
-    static const WCHAR imperial_format[] = {'%','d','i','n',0};
+    WCHAR decimal[2] = {'.', 0};
+    WCHAR integer_fmt[] = {'%','d',0};
+    WCHAR hundredths_fmt[] = {'%','d','%','s','%','0','2','d',0};
+    WCHAR thousandths_fmt[] = {'%','d','%','s','%','0','3','d',0};
+
+    /* FIXME use LOCALE_SDECIMAL when the edit parsing code can cope */
 
     if (is_metric(pda))
-	wsprintfW(strout, metric_format, size / 100);
+    {
+        if(size % 100)
+            wsprintfW(strout, hundredths_fmt, size / 100, decimal, size % 100);
+        else
+            wsprintfW(strout, integer_fmt, size / 100);
+    }
     else
-	wsprintfW(strout, imperial_format, size / 1000);
+    {
+        if(size % 1000)
+            wsprintfW(strout, thousandths_fmt, size / 1000, decimal, size % 1000);
+        else
+            wsprintfW(strout, integer_fmt, size / 1000);
+
+    }
 }
 
 static void
