@@ -20,6 +20,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#define D3D10CORE_INIT_GUID
 #include "d3d10core_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
@@ -83,6 +84,7 @@ static HRESULT WINAPI layer_create(enum dxgi_device_layer_id id, void **layer_ba
 
     object->vtbl = &d3d10_device_vtbl;
     object->inner_unknown_vtbl = &d3d10_device_inner_unknown_vtbl;
+    object->device_parent_vtbl = &d3d10_wined3d_device_parent_vtbl;
     object->refcount = 1;
 
     object->outer_unknown = device_object;

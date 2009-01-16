@@ -160,6 +160,7 @@ struct IDirect3D8Impl
  * Predeclare the interface implementation structures
  */
 extern const IDirect3DDevice8Vtbl Direct3DDevice8_Vtbl;
+extern const IWineD3DDeviceParentVtbl d3d8_wined3d_device_parent_vtbl;
 
 /*****************************************************************************
  * IDirect3DDevice8 implementation structure
@@ -177,6 +178,7 @@ struct IDirect3DDevice8Impl
 {
     /* IUnknown fields */
     const IDirect3DDevice8Vtbl   *lpVtbl;
+    const IWineD3DDeviceParentVtbl *device_parent_vtbl;
     LONG                         ref;
 /* But what about baseVertexIndex in state blocks? hmm... it may be a better idea to pass this to wined3d */
     IWineD3DDevice               *WineD3DDevice;
@@ -200,6 +202,7 @@ struct IDirect3DDevice8Impl
 /*****************************************************************************
  * IDirect3DVolume8 implementation structure
  */
+extern const IDirect3DVolume8Vtbl Direct3DVolume8_Vtbl;
 struct IDirect3DVolume8Impl
 {
     /* IUnknown fields */
@@ -624,29 +627,10 @@ UINT convert_to_wined3d_declaration(const DWORD *d3d8_elements, DWORD *d3d8_elem
 size_t parse_token(const DWORD* pToken);
 
 /* Callbacks */
-extern HRESULT WINAPI D3D8CB_CreateVolume(IUnknown  *pDevice, IUnknown *pSuperior, UINT Width, UINT Height, UINT Depth,
-                                          WINED3DFORMAT  Format, WINED3DPOOL Pool, DWORD Usage,
-                                          IWineD3DVolume **ppVolume,
-                                          HANDLE   * pSharedHandle);
-
-extern HRESULT WINAPI D3D8CB_CreateDepthStencilSurface(IUnknown *device, IUnknown *pSuperior, UINT Width, UINT Height,
-                                         WINED3DFORMAT Format, WINED3DMULTISAMPLE_TYPE MultiSample,
-                                         DWORD MultisampleQuality, BOOL Discard,
-                                         IWineD3DSurface** ppSurface, HANDLE* pSharedHandle);
-
-extern HRESULT WINAPI D3D8CB_CreateRenderTarget(IUnknown *device, IUnknown *pSuperior, UINT Width, UINT Height,
-                                         WINED3DFORMAT Format, WINED3DMULTISAMPLE_TYPE MultiSample,
-                                         DWORD MultisampleQuality, BOOL Lockable,
-                                         IWineD3DSurface** ppSurface, HANDLE* pSharedHandle);
-
 extern ULONG WINAPI D3D8CB_DestroySwapChain (IWineD3DSwapChain *pSwapChain);
-
 extern ULONG WINAPI D3D8CB_DestroyDepthStencilSurface (IWineD3DSurface *pSurface);
-
 extern ULONG WINAPI D3D8CB_DestroyRenderTarget (IWineD3DSurface *pSurface);
-
 extern ULONG WINAPI D3D8CB_DestroySurface(IWineD3DSurface *pSurface);
-
 extern ULONG WINAPI D3D8CB_DestroyVolume(IWineD3DVolume *pVolume);
 
 #endif /* __WINE_D3DX8_PRIVATE_H */

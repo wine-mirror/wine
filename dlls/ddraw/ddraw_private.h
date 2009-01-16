@@ -35,8 +35,11 @@
 
 #include "ddcomimpl.h"
 
-#include "wine/wined3d.h"
 #include "wine/list.h"
+#ifdef DDRAW_INIT_GUID
+#include "initguid.h"
+#endif
+#include "wine/wined3d.h"
 
 /*****************************************************************************
  * IParent - a helper interface
@@ -106,6 +109,7 @@ struct IDirectDrawImpl
     ICOM_VFIELD_MULTI(IDirect3D3);
     ICOM_VFIELD_MULTI(IDirect3D2);
     ICOM_VFIELD_MULTI(IDirect3D);
+    const IWineD3DDeviceParentVtbl *device_parent_vtbl;
 
     /* See comment in IDirectDraw::AddRef */
     LONG                    ref7, ref4, ref2, ref3, ref1, numIfaces;
@@ -170,6 +174,7 @@ const IDirectDraw4Vtbl IDirectDraw4_Vtbl;
 const IDirectDraw3Vtbl IDirectDraw3_Vtbl;
 const IDirectDraw2Vtbl IDirectDraw2_Vtbl;
 const IDirectDrawVtbl  IDirectDraw1_Vtbl;
+extern const IWineD3DDeviceParentVtbl ddraw_wined3d_device_parent_vtbl;
 
 /* Helper structures */
 typedef struct EnumDisplayModesCBS

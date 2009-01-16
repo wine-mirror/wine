@@ -45,6 +45,7 @@
 #include "ddraw.h"
 #include "d3d.h"
 
+#define DDRAW_INIT_GUID
 #include "ddraw_private.h"
 
 static typeof(WineDirect3DCreate) *pWineDirect3DCreate;
@@ -179,6 +180,7 @@ DDRAW_Create(const GUID *guid,
     ICOM_INIT_INTERFACE(This, IDirect3D2, IDirect3D2_Vtbl);
     ICOM_INIT_INTERFACE(This, IDirect3D3, IDirect3D3_Vtbl);
     ICOM_INIT_INTERFACE(This, IDirect3D7, IDirect3D7_Vtbl);
+    This->device_parent_vtbl = &ddraw_wined3d_device_parent_vtbl;
 
     /* See comments in IDirectDrawImpl_CreateNewSurface for a description
      * of this member.
@@ -230,13 +232,9 @@ DDRAW_Create(const GUID *guid,
      * When a Direct3DDevice7 is created, the D3D capabilities of WineD3D are
      * initialized
      */
-    hr = IWineD3D_CreateDevice(wineD3D,
-                               0 /*D3D_ADAPTER_DEFAULT*/,
-                               devicetype,
-                               NULL, /* FocusWindow, don't know yet */
-                               0, /* BehaviorFlags */
-                               &wineD3DDevice,
-                               (IUnknown *) ICOM_INTERFACE(This, IDirectDraw7));
+    hr = IWineD3D_CreateDevice(wineD3D, 0 /* D3D_ADAPTER_DEFAULT */, devicetype, NULL /* FocusWindow, don't know yet */,
+            0 /* BehaviorFlags */, (IUnknown *)ICOM_INTERFACE(This, IDirectDraw7),
+            (IWineD3DDeviceParent *)&This->device_parent_vtbl, &wineD3DDevice);
     if(FAILED(hr))
     {
         ERR("Failed to create a wineD3DDevice, result = %x\n", hr);

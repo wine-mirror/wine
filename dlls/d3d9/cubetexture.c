@@ -355,8 +355,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateCubeTexture(LPDIRECT3DDEVICE9EX ifac
     object->ref = 1;
     EnterCriticalSection(&d3d9_cs);
     hr = IWineD3DDevice_CreateCubeTexture(This->WineD3DDevice, EdgeLength, Levels, Usage,
-                                 (WINED3DFORMAT)Format, (WINED3DPOOL) Pool, &object->wineD3DCubeTexture, pSharedHandle, (IUnknown*)object,
-                                 D3D9CB_CreateSurface);
+            Format, Pool, &object->wineD3DCubeTexture, pSharedHandle, (IUnknown*)object);
     LeaveCriticalSection(&d3d9_cs);
 
     if (hr != D3D_OK){

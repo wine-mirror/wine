@@ -1037,6 +1037,7 @@ struct IWineD3DDeviceImpl
 
     /* WineD3D Information  */
     IUnknown               *parent;
+    IWineD3DDeviceParent   *device_parent;
     IWineD3D               *wineD3D;
     struct WineD3DAdapter  *adapter;
 

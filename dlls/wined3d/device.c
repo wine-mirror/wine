@@ -751,11 +751,10 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     return hr;
 }
 
-static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Width, UINT Height, UINT Levels,
-                                                 DWORD Usage, WINED3DFORMAT Format, WINED3DPOOL Pool,
-                                                 IWineD3DTexture** ppTexture, HANDLE* pSharedHandle, IUnknown *parent,
-                                                 D3DCB_CREATESURFACEFN D3DCB_CreateSurface) {
-
+static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
+        UINT Width, UINT Height, UINT Levels, DWORD Usage, WINED3DFORMAT Format, WINED3DPOOL Pool,
+        IWineD3DTexture **ppTexture, HANDLE *pSharedHandle, IUnknown *parent)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DTextureImpl *object;
     unsigned int i;
@@ -902,7 +901,8 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
     for (i = 0; i < object->baseTexture.levels; i++)
     {
         /* use the callback to create the texture surface */
-        hr = D3DCB_CreateSurface(This->parent, parent, tmpW, tmpH, Format, Usage, Pool, i, WINED3DCUBEMAP_FACE_POSITIVE_X, &object->surfaces[i],NULL);
+        hr = IWineD3DDeviceParent_CreateSurface(This->device_parent, parent, tmpW, tmpH, Format,
+                Usage, Pool, i, WINED3DCUBEMAP_FACE_POSITIVE_X, &object->surfaces[i]);
         if (hr!= WINED3D_OK || ( (IWineD3DSurfaceImpl *) object->surfaces[i])->Flags & SFLAG_OVERSIZE) {
             FIXME("Failed to create surface  %p\n", object);
             /* clean up */
@@ -927,13 +927,9 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
-                                                      UINT Width, UINT Height, UINT Depth,
-                                                      UINT Levels, DWORD Usage,
-                                                      WINED3DFORMAT Format, WINED3DPOOL Pool,
-                                                      IWineD3DVolumeTexture **ppVolumeTexture,
-                                                      HANDLE *pSharedHandle, IUnknown *parent,
-                                                      D3DCB_CREATEVOLUMEFN D3DCB_CreateVolume) {
-
+        UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, WINED3DFORMAT Format, WINED3DPOOL Pool,
+        IWineD3DVolumeTexture **ppVolumeTexture, HANDLE *pSharedHandle, IUnknown *parent)
+{
     IWineD3DDeviceImpl        *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVolumeTextureImpl *object;
     unsigned int               i;
@@ -1029,9 +1025,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     {
         HRESULT hr;
         /* Create the volume */
-        hr = D3DCB_CreateVolume(This->parent, parent, tmpW, tmpH, tmpD, Format, Pool, Usage,
-                                &object->volumes[i], pSharedHandle);
-
+        hr = IWineD3DDeviceParent_CreateVolume(This->device_parent, parent,
+                tmpW, tmpH, tmpD, Format, Pool, Usage, &object->volumes[i]);
         if(FAILED(hr)) {
             ERR("Creating a volume for the volume texture failed(%08x)\n", hr);
             IWineD3DVolumeTexture_Release((IWineD3DVolumeTexture *) object);
@@ -1115,13 +1110,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT EdgeLength,
-                                                    UINT Levels, DWORD Usage,
-                                                    WINED3DFORMAT Format, WINED3DPOOL Pool,
-                                                    IWineD3DCubeTexture **ppCubeTexture,
-                                                    HANDLE *pSharedHandle, IUnknown *parent,
-                                                    D3DCB_CREATESURFACEFN D3DCB_CreateSurface) {
-
+static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface,
+        UINT EdgeLength, UINT Levels, DWORD Usage, WINED3DFORMAT Format, WINED3DPOOL Pool,
+        IWineD3DCubeTexture **ppCubeTexture, HANDLE *pSharedHandle, IUnknown *parent)
+{
     IWineD3DDeviceImpl      *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DCubeTextureImpl *object; /** NOTE: impl ref allowed since this is a create function **/
     unsigned int             i, j;
@@ -1233,9 +1225,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
                 GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB
             };
 
-            hr=D3DCB_CreateSurface(This->parent, parent, tmpW, tmpW, Format, Usage, Pool,
-                                   i /* Level */, j, &object->surfaces[j][i],pSharedHandle);
-
+            hr = IWineD3DDeviceParent_CreateSurface(This->device_parent, parent, tmpW, tmpW,
+                    Format, Usage, Pool, i /* Level */, j, &object->surfaces[j][i]);
             if (FAILED(hr))
             {
                 FIXME("(%p) Failed to create surface\n",object);
@@ -1486,10 +1477,9 @@ static void IWineD3DDeviceImpl_RestoreWindow(IWineD3DDevice *iface, HWND window)
 }
 
 /* example at http://www.fairyengine.com/articles/dxmultiviews.htm */
-static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice* iface,
-        WINED3DPRESENT_PARAMETERS* pPresentationParameters, IWineD3DSwapChain** ppSwapChain,
-        IUnknown* parent, D3DCB_CREATERENDERTARGETFN D3DCB_CreateRenderTarget,
-        D3DCB_CREATEDEPTHSTENCILSURFACEFN D3DCB_CreateDepthStencil, WINED3DSURFTYPE surface_type)
+static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
+        WINED3DPRESENT_PARAMETERS *pPresentationParameters, IWineD3DSwapChain **ppSwapChain,
+        IUnknown *parent, WINED3DSURFTYPE surface_type)
 {
     IWineD3DDeviceImpl      *This = (IWineD3DDeviceImpl *)iface;
 
@@ -1599,16 +1589,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice* iface,
     object->presentParms = *pPresentationParameters;
 
     TRACE("calling rendertarget CB\n");
-    hr = D3DCB_CreateRenderTarget(This->parent,
-                             parent,
-                             object->presentParms.BackBufferWidth,
-                             object->presentParms.BackBufferHeight,
-                             object->presentParms.BackBufferFormat,
-                             object->presentParms.MultiSampleType,
-                             object->presentParms.MultiSampleQuality,
-                             TRUE /* Lockable */,
-                             &object->frontBuffer,
-                             NULL /* pShared (always null)*/);
+    hr = IWineD3DDeviceParent_CreateRenderTarget(This->device_parent, parent,
+            object->presentParms.BackBufferWidth, object->presentParms.BackBufferHeight,
+            object->presentParms.BackBufferFormat, object->presentParms.MultiSampleType,
+            object->presentParms.MultiSampleQuality, TRUE /* Lockable */, &object->frontBuffer);
     if (SUCCEEDED(hr)) {
         IWineD3DSurface_SetContainer(object->frontBuffer, (IWineD3DBase *)object);
         if(surface_type == SURFACE_OPENGL) {
@@ -1687,16 +1671,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice* iface,
 
         for(i = 0; i < object->presentParms.BackBufferCount; i++) {
             TRACE("calling rendertarget CB\n");
-            hr = D3DCB_CreateRenderTarget(This->parent,
-                                    parent,
-                                    object->presentParms.BackBufferWidth,
-                                    object->presentParms.BackBufferHeight,
-                                    object->presentParms.BackBufferFormat,
-                                    object->presentParms.MultiSampleType,
-                                    object->presentParms.MultiSampleQuality,
-                                    TRUE /* Lockable */,
-                                    &object->backBuffer[i],
-                                    NULL /* pShared (always null)*/);
+            hr = IWineD3DDeviceParent_CreateRenderTarget(This->device_parent, parent,
+                    object->presentParms.BackBufferWidth, object->presentParms.BackBufferHeight,
+                    object->presentParms.BackBufferFormat, object->presentParms.MultiSampleType,
+                    object->presentParms.MultiSampleQuality, TRUE /* Lockable */, &object->backBuffer[i]);
             if(SUCCEEDED(hr)) {
                 IWineD3DSurface_SetContainer(object->backBuffer[i], (IWineD3DBase *)object);
             } else {
@@ -1726,16 +1704,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice* iface,
     if (pPresentationParameters->EnableAutoDepthStencil && surface_type == SURFACE_OPENGL) {
         TRACE("Creating depth stencil buffer\n");
         if (This->auto_depth_stencil_buffer == NULL ) {
-            hr = D3DCB_CreateDepthStencil(This->parent,
-                                    parent,
-                                    object->presentParms.BackBufferWidth,
-                                    object->presentParms.BackBufferHeight,
-                                    object->presentParms.AutoDepthStencilFormat,
-                                    object->presentParms.MultiSampleType,
-                                    object->presentParms.MultiSampleQuality,
-                                    FALSE /* FIXME: Discard */,
-                                    &This->auto_depth_stencil_buffer,
-                                    NULL /* pShared (always null)*/  );
+            hr = IWineD3DDeviceParent_CreateDepthStencilSurface(This->device_parent, parent,
+                    object->presentParms.BackBufferWidth, object->presentParms.BackBufferHeight,
+                    object->presentParms.AutoDepthStencilFormat, object->presentParms.MultiSampleType,
+                    object->presentParms.MultiSampleQuality, FALSE /* FIXME: Discard */,
+                    &This->auto_depth_stencil_buffer);
             if (SUCCEEDED(hr)) {
                 IWineD3DSurface_SetContainer(This->auto_depth_stencil_buffer, 0);
             } else {
@@ -2224,14 +2197,17 @@ static void create_dummy_textures(IWineD3DDeviceImpl *This) {
     LEAVE_GL();
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPRESENT_PARAMETERS* pPresentationParameters, D3DCB_CREATESWAPCHAIN D3DCB_CreateSwapChain) {
+static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
+        WINED3DPRESENT_PARAMETERS *pPresentationParameters)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DSwapChainImpl *swapchain = NULL;
     HRESULT hr;
     DWORD state;
     unsigned int i;
 
-    TRACE("(%p)->(%p,%p)\n", This, pPresentationParameters, D3DCB_CreateSwapChain);
+    TRACE("(%p)->(%p)\n", This, pPresentationParameters);
+
     if(This->d3d_initialized) return WINED3DERR_INVALIDCALL;
     if(!This->adapter->opengl) return WINED3DERR_INVALIDCALL;
 
@@ -2286,8 +2262,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
 
     /* Setup the implicit swapchain */
     TRACE("Creating implicit swapchain\n");
-    hr=D3DCB_CreateSwapChain(This->parent, pPresentationParameters, (IWineD3DSwapChain **)&swapchain);
-    if (FAILED(hr) || !swapchain) {
+    hr = IWineD3DDeviceParent_CreateSwapChain(This->device_parent,
+            pPresentationParameters, (IWineD3DSwapChain **)&swapchain);
+    if (FAILED(hr))
+    {
         WARN("Failed to create implicit swapchain\n");
         goto err_out;
     }
@@ -2414,15 +2392,19 @@ err_out:
     return hr;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_InitGDI(IWineD3DDevice *iface, WINED3DPRESENT_PARAMETERS* pPresentationParameters, D3DCB_CREATESWAPCHAIN D3DCB_CreateSwapChain) {
+static HRESULT WINAPI IWineD3DDeviceImpl_InitGDI(IWineD3DDevice *iface,
+        WINED3DPRESENT_PARAMETERS *pPresentationParameters)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DSwapChainImpl *swapchain = NULL;
     HRESULT hr;
 
     /* Setup the implicit swapchain */
     TRACE("Creating implicit swapchain\n");
-    hr=D3DCB_CreateSwapChain(This->parent, pPresentationParameters, (IWineD3DSwapChain **)&swapchain);
-    if (FAILED(hr) || !swapchain) {
+    hr = IWineD3DDeviceParent_CreateSwapChain(This->device_parent,
+            pPresentationParameters, (IWineD3DSwapChain **)&swapchain);
+    if (FAILED(hr))
+    {
         WARN("Failed to create implicit swapchain\n");
         goto err_out;
     }

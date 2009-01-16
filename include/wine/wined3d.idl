@@ -2109,22 +2109,65 @@ interface IWineD3DVolume;
 interface IWineD3DSwapChain;
 interface IWineD3DDevice;
 
-typedef HRESULT (*D3DCB_CREATESURFACEFN)(IUnknown *pDevice, IUnknown *pSuperior, UINT Width,
-        UINT Height, WINED3DFORMAT Format, DWORD Usage, WINED3DPOOL Pool, UINT Level, WINED3DCUBEMAP_FACES Face,
-        IWineD3DSurface **ppSurface, HANDLE *pSharedHandle);
-typedef HRESULT (*D3DCB_CREATERENDERTARGETFN)(IUnknown *pDevice, IUnknown *pSuperior, UINT Width,
-        UINT Height, WINED3DFORMAT Format, WINED3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality,
-        BOOL Lockable, IWineD3DSurface **ppSurface, HANDLE *pSharedHandle);
-typedef HRESULT (*D3DCB_CREATEDEPTHSTENCILSURFACEFN)(IUnknown *pDevice, IUnknown *pSuperior, UINT Width,
-        UINT Height, WINED3DFORMAT Format, WINED3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality,
-        BOOL Discard, IWineD3DSurface **ppSurface, HANDLE *pSharedHandle);
+[
+    object,
+    local,
+    uuid(aeb62dfc-bdcb-4f02-9519-1eeea00c15cd)
+]
+interface IWineD3DDeviceParent : IUnknown
+{
+    HRESULT CreateSurface(
+        [in] IUnknown *superior,
+        [in] UINT width,
+        [in] UINT height,
+        [in] WINED3DFORMAT format,
+        [in] DWORD usage,
+        [in] WINED3DPOOL pool,
+        [in] UINT level,
+        [in] WINED3DCUBEMAP_FACES face,
+        [out] IWineD3DSurface **surface
+    );
+
+    HRESULT CreateRenderTarget(
+        [in] IUnknown *superior,
+        [in] UINT width,
+        [in] UINT height,
+        [in] WINED3DFORMAT format,
+        [in] WINED3DMULTISAMPLE_TYPE multisample_type,
+        [in] DWORD multisample_quality,
+        [in] BOOL lockable,
+        [out] IWineD3DSurface **surface
+    );
+
+    HRESULT CreateDepthStencilSurface(
+        [in] IUnknown *superior,
+        [in] UINT width,
+        [in] UINT height,
+        [in] WINED3DFORMAT format,
+        [in] WINED3DMULTISAMPLE_TYPE multisample_type,
+        [in] DWORD multisample_quality,
+        [in] BOOL discard,
+        [out] IWineD3DSurface **surface
+    );
+
+    HRESULT CreateVolume(
+        [in] IUnknown *superior,
+        [in] UINT width,
+        [in] UINT height,
+        [in] UINT depth,
+        [in] WINED3DFORMAT format,
+        [in] WINED3DPOOL pool,
+        [in] DWORD usage,
+        [out] IWineD3DVolume **volume
+    );
+
+    HRESULT CreateSwapChain(
+        [in, out] WINED3DPRESENT_PARAMETERS *present_parameters,
+        [out] IWineD3DSwapChain **swapchain
+    );
+}
 typedef ULONG (*D3DCB_DESTROYSURFACEFN)(IWineD3DSurface *pSurface);
-typedef HRESULT (*D3DCB_CREATEVOLUMEFN)(IUnknown *pDevice, IUnknown *pSuperior, UINT Width,
-        UINT Height, UINT Depth, WINED3DFORMAT Format, WINED3DPOOL Pool, DWORD Usage,
-        IWineD3DVolume **ppVolume, HANDLE *pSharedHandle);
 typedef ULONG (*D3DCB_DESTROYVOLUMEFN)(IWineD3DVolume *pVolume);
-typedef HRESULT (*D3DCB_CREATESWAPCHAIN)(IUnknown *pDevice, WINED3DPRESENT_PARAMETERS *pPresentationParameters,
-        IWineD3DSwapChain **pSwapChain);
 typedef ULONG (*D3DCB_DESTROYSWAPCHAINFN)(IWineD3DSwapChain *pSwapChain);
 typedef HRESULT (*D3DCB_ENUMRESOURCES)(IWineD3DResource *resource, void *pData);
 
@@ -2221,8 +2264,9 @@ interface IWineD3D : IWineD3DBase
         [in] WINED3DDEVTYPE device_type,
         [in] HWND focus_window,
         [in] DWORD behaviour_flags,
-        [out] IWineD3DDevice **device,
-        [in] IUnknown *parent
+        [in] IUnknown *parent,
+        [in] IWineD3DDeviceParent *device_parent,
+        [out] IWineD3DDevice **device
     );
 }
 
@@ -2875,8 +2919,7 @@ interface IWineD3DDevice : IWineD3DBase
         [in] WINED3DPOOL pool,
         [out] IWineD3DTexture **texture,
         [in] HANDLE *shared_handle,
-        [in] IUnknown *parent,
-        [in] D3DCB_CREATESURFACEFN create_surface_callback
+        [in] IUnknown *parent
     );
     HRESULT CreateVolumeTexture(
         [in] UINT width,
@@ -2888,8 +2931,7 @@ interface IWineD3DDevice : IWineD3DBase
         [in] WINED3DPOOL pool,
         [out] IWineD3DVolumeTexture **texture,
         [in] HANDLE *shared_handle,
-        [in] IUnknown *parent,
-        [in] D3DCB_CREATEVOLUMEFN create_volume_callback
+        [in] IUnknown *parent
     );
     HRESULT CreateVolume(
         [in] UINT width,
@@ -2910,8 +2952,7 @@ interface IWineD3DDevice : IWineD3DBase
         [in] WINED3DPOOL pool,
         [out] IWineD3DCubeTexture **texture,
         [in] HANDLE *shared_handle,
-        [in] IUnknown *parent,
-        [in] D3DCB_CREATESURFACEFN create_surface_callback
+        [in] IUnknown *parent
     );
     HRESULT CreateQuery(
         [in] WINED3DQUERYTYPE type,
@@ -2922,8 +2963,6 @@ interface IWineD3DDevice : IWineD3DBase
         [in] WINED3DPRESENT_PARAMETERS *present_parameters,
         [out] IWineD3DSwapChain **swapchain,
         [in] IUnknown *parent,
-        [in] D3DCB_CREATERENDERTARGETFN create_render_target_callback,
-        [in] D3DCB_CREATEDEPTHSTENCILSURFACEFN create_depth_stencil_callback,
         [in] WINED3DSURFTYPE surface_type
     );
     HRESULT CreateVertexDeclaration(
@@ -2955,12 +2994,10 @@ interface IWineD3DDevice : IWineD3DBase
         [in] IUnknown *parent
     );
     HRESULT Init3D(
-        [in] WINED3DPRESENT_PARAMETERS *present_parameters,
-        [in] D3DCB_CREATESWAPCHAIN create_swapchain_callback
+        [in] WINED3DPRESENT_PARAMETERS *present_parameters
     );
     HRESULT InitGDI(
-        [in] WINED3DPRESENT_PARAMETERS *present_parameters,
-        [in] D3DCB_CREATESWAPCHAIN create_swapchain_callback
+        [in] WINED3DPRESENT_PARAMETERS *present_parameters
     );
     HRESULT Uninit3D(
         [in] D3DCB_DESTROYSURFACEFN destroy_surface_callback,

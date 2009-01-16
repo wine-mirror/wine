@@ -28,10 +28,10 @@
 #include "objbase.h"
 
 #include "dxgi.h"
-#include "wine/wined3d.h"
 #ifdef DXGI_INIT_GUID
 #include "initguid.h"
 #endif
+#include "wine/wined3d.h"
 #include "dxgi_private_interface.h"
 
 extern CRITICAL_SECTION dxgi_cs;

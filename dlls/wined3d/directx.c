@@ -3621,10 +3621,10 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
 
 /* Note due to structure differences between dx8 and dx9 D3DPRESENT_PARAMETERS,
    and fields being inserted in the middle, a new structure is used in place    */
-static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, HWND hFocusWindow,
-                                           DWORD BehaviourFlags, IWineD3DDevice** ppReturnedDeviceInterface,
-                                           IUnknown *parent) {
-
+static HRESULT WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter,
+        WINED3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviourFlags, IUnknown *parent,
+        IWineD3DDeviceParent *device_parent, IWineD3DDevice **ppReturnedDeviceInterface)
+{
     IWineD3DDeviceImpl *object  = NULL;
     IWineD3DImpl       *This    = (IWineD3DImpl *)iface;
     WINED3DDISPLAYMODE  mode;
@@ -3655,6 +3655,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     object->adapter = numAdapters ? &Adapters[Adapter] : NULL;
     IWineD3D_AddRef(object->wineD3D);
     object->parent  = parent;
+    object->device_parent = device_parent;
     list_init(&object->resources);
     list_init(&object->shaders);
 

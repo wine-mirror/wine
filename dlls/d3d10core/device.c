@@ -45,6 +45,13 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_inner_QueryInterface(IUnknown *ifa
         return S_OK;
     }
 
+    if (IsEqualGUID(riid, &IID_IWineD3DDeviceParent))
+    {
+        IUnknown_AddRef((IUnknown *)&This->device_parent_vtbl);
+        *object = &This->device_parent_vtbl;
+        return S_OK;
+    }
+
     WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
 
     *object = NULL;
@@ -897,4 +904,97 @@ const struct IUnknownVtbl d3d10_device_inner_unknown_vtbl =
     d3d10_device_inner_QueryInterface,
     d3d10_device_inner_AddRef,
     d3d10_device_inner_Release,
+};
+
+/* IWineD3DDeviceParent IUnknown methods */
+
+static inline struct d3d10_device *device_from_device_parent(IWineD3DDeviceParent *iface)
+{
+    return (struct d3d10_device *)((char*)iface - FIELD_OFFSET(struct d3d10_device, device_parent_vtbl));
+}
+
+HRESULT STDMETHODCALLTYPE device_parent_QueryInterface(IWineD3DDeviceParent *iface, REFIID riid, void **object)
+{
+    struct d3d10_device *This = device_from_device_parent(iface);
+    return d3d10_device_QueryInterface((ID3D10Device *)This, riid, object);
+}
+
+ULONG STDMETHODCALLTYPE device_parent_AddRef(IWineD3DDeviceParent *iface)
+{
+    struct d3d10_device *This = device_from_device_parent(iface);
+    return d3d10_device_AddRef((ID3D10Device *)This);
+}
+
+ULONG STDMETHODCALLTYPE device_parent_Release(IWineD3DDeviceParent *iface)
+{
+    struct d3d10_device *This = device_from_device_parent(iface);
+    return d3d10_device_Release((ID3D10Device *)This);
+}
+
+/* IWineD3DDeviceParent methods */
+
+static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParent *iface,
+        IUnknown *superior, UINT width, UINT height, WINED3DFORMAT format, DWORD usage,
+        WINED3DPOOL pool, UINT level, WINED3DCUBEMAP_FACES face, IWineD3DSurface **surface)
+{
+    FIXME("iface %p, superior %p, width %u, height %u, format %#x, usage %#x,\n"
+            "\tpool %#x, level %u, face %u, surface %p stub!\n",
+            iface, superior, width, height, format, usage, pool, level, face, surface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDeviceParent *iface,
+        IUnknown *superior, UINT width, UINT height, WINED3DFORMAT format, WINED3DMULTISAMPLE_TYPE multisample_type,
+        DWORD multisample_quality, BOOL lockable, IWineD3DSurface **surface)
+{
+    FIXME("iface %p, superior %p, width %u, height %u, format %#x, multisample_type %#x,\n"
+            "\tmultisample_quality %u, lockable %u, surface %p stub!\n",
+            iface, superior, width, height, format, multisample_type, multisample_quality, lockable, surface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3DDeviceParent *iface,
+        IUnknown *superior, UINT width, UINT height, WINED3DFORMAT format, WINED3DMULTISAMPLE_TYPE multisample_type,
+        DWORD multisample_quality, BOOL discard, IWineD3DSurface **surface)
+{
+    FIXME("iface %p, superior %p, width %u, height %u, format %#x, multisample_type %#x,\n"
+            "\tmultisample_quality %u, discard %u, surface %p stub!\n",
+            iface, superior, width, height, format, multisample_type, multisample_quality, discard, surface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent *iface,
+        IUnknown *superior, UINT width, UINT height, UINT depth, WINED3DFORMAT format,
+        WINED3DPOOL pool, DWORD usage, IWineD3DVolume **volume)
+{
+    FIXME("iface %p, superior %p, width %u, height %u, depth %u, format %#x, pool %#x, usage %#x, volume %p stub!\n",
+            iface, superior, width, height, depth, format, pool, usage, volume);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDeviceParent *iface,
+        WINED3DPRESENT_PARAMETERS *present_parameters, IWineD3DSwapChain **swapchain)
+{
+    FIXME("iface %p, present_parameters %p, swapchain %p stub!\n", iface, present_parameters, swapchain);
+
+    return E_NOTIMPL;
+}
+
+
+const struct IWineD3DDeviceParentVtbl d3d10_wined3d_device_parent_vtbl =
+{
+    /* IUnknown methods */
+    device_parent_QueryInterface,
+    device_parent_AddRef,
+    device_parent_Release,
+    /* IWineD3DDeviceParent methods */
+    device_parent_CreateSurface,
+    device_parent_CreateRenderTarget,
+    device_parent_CreateDepthStencilSurface,
+    device_parent_CreateVolume,
+    device_parent_CreateSwapChain,
 };

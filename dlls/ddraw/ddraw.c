@@ -195,6 +195,10 @@ IDirectDrawImpl_QueryInterface(IDirectDraw7 *iface,
             TRACE(" returning Direct3D7 interface at %p.\n", *obj);
         }
     }
+    else if (IsEqualGUID(refiid, &IID_IWineD3DDeviceParent))
+    {
+        *obj = &This->device_parent_vtbl;
+    }
 
     /* Unknown interface */
     else
@@ -1820,100 +1824,6 @@ IDirectDrawImpl_RecreateAllSurfaces(IDirectDrawImpl *This)
                                      IDirectDrawImpl_RecreateSurfacesCallback);
 }
 
-/*****************************************************************************
- * D3D7CB_CreateSurface
- *
- * Callback function for IDirect3DDevice_CreateTexture. It searches for the
- * correct mipmap sublevel, and returns it to WineD3D.
- * The surfaces are created already by IDirectDraw7::CreateSurface
- *
- * Params:
- *  With, Height: With and height of the surface
- *  Format: The requested format
- *  Usage, Pool: D3DUSAGE and D3DPOOL of the surface
- *  level: The mipmap level
- *  Face: The cube map face type
- *  Surface: Pointer to pass the created surface back at
- *  SharedHandle: NULL
- *
- * Returns:
- *  D3D_OK
- *
- *****************************************************************************/
-static HRESULT WINAPI
-D3D7CB_CreateSurface(IUnknown *device,
-                     IUnknown *pSuperior,
-                     UINT Width, UINT Height,
-                     WINED3DFORMAT Format,
-                     DWORD Usage, WINED3DPOOL Pool, UINT level,
-                     WINED3DCUBEMAP_FACES Face,
-                     IWineD3DSurface **Surface,
-                     HANDLE *SharedHandle)
-{
-    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, device);
-    IDirectDrawSurfaceImpl *surf = NULL;
-    UINT i = 0;
-    DDSCAPS2 searchcaps = This->tex_root->surface_desc.ddsCaps;
-    TRACE("(%p) call back. surf=%p. Face %d level %d\n", device, This->tex_root, Face, level);
-
-    searchcaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_ALLFACES;
-    switch(Face)
-    {
-        case WINED3DCUBEMAP_FACE_POSITIVE_X:
-            TRACE("Asked for positive x\n");
-            if(searchcaps.dwCaps2 & DDSCAPS2_CUBEMAP) {
-                searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEX;
-            }
-            surf = This->tex_root; break;
-        case WINED3DCUBEMAP_FACE_NEGATIVE_X:
-            TRACE("Asked for negative x\n");
-            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEX; break;
-        case WINED3DCUBEMAP_FACE_POSITIVE_Y:
-            TRACE("Asked for positive y\n");
-            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEY; break;
-        case WINED3DCUBEMAP_FACE_NEGATIVE_Y:
-            TRACE("Asked for negative y\n");
-            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEY; break;
-        case WINED3DCUBEMAP_FACE_POSITIVE_Z:
-            TRACE("Asked for positive z\n");
-            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEZ; break;
-        case WINED3DCUBEMAP_FACE_NEGATIVE_Z:
-            TRACE("Asked for negative z\n");
-            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEZ; break;
-        default: {ERR("Unexpected cube face\n");} /* Stupid compiler */
-    }
-
-    if(!surf)
-    {
-        IDirectDrawSurface7 *attached;
-        IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(This->tex_root, IDirectDrawSurface7),
-                                               &searchcaps,
-                                               &attached);
-        surf = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, attached);
-        IDirectDrawSurface7_Release(attached);
-    }
-    if(!surf) ERR("root search surface not found\n");
-
-    /* Find the wanted mipmap. There are enough mipmaps in the chain */
-    while(i < level)
-    {
-        IDirectDrawSurface7 *attached;
-        IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(surf, IDirectDrawSurface7),
-                                               &searchcaps,
-                                               &attached);
-        if(!attached) ERR("Surface not found\n");
-        surf = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, attached);
-        IDirectDrawSurface7_Release(attached);
-        i++;
-    }
-
-    /* Return the surface */
-    *Surface = surf->WineD3DSurface;
-
-    TRACE("Returning wineD3DSurface %p, it belongs to surface %p\n", *Surface, surf);
-    return D3D_OK;
-}
-
 ULONG WINAPI D3D7CB_DestroySwapChain(IWineD3DSwapChain *pSwapChain) {
     IUnknown* swapChainParent;
     TRACE("(%p) call back\n", pSwapChain);
@@ -2827,29 +2737,15 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
          */
         if(desc2.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
         {
-            hr = IWineD3DDevice_CreateCubeTexture(This->wineD3DDevice,
-                                                  DDSD->dwWidth, /* Edgelength */
-                                                  levels,
-                                                  0, /* usage */
-                                                  Format,
-                                                  Pool,
-                                                  (IWineD3DCubeTexture **) &object->wineD3DTexture,
-                                                  0, /* SharedHandle */
-                                                  (IUnknown *) ICOM_INTERFACE(object, IDirectDrawSurface7),
-                                                  D3D7CB_CreateSurface);
+            hr = IWineD3DDevice_CreateCubeTexture(This->wineD3DDevice, DDSD->dwWidth /* Edgelength */,
+                    levels, 0 /* usage */, Format, Pool, (IWineD3DCubeTexture **)&object->wineD3DTexture,
+                    0 /* SharedHandle */, (IUnknown *)ICOM_INTERFACE(object, IDirectDrawSurface7));
         }
         else
         {
-            hr = IWineD3DDevice_CreateTexture(This->wineD3DDevice,
-                                              DDSD->dwWidth, DDSD->dwHeight,
-                                              levels, /* MipMapCount = Levels */
-                                              0, /* usage */
-                                              Format,
-                                              Pool,
-                                              (IWineD3DTexture **) &object->wineD3DTexture,
-                                              0, /* SharedHandle */
-                                              (IUnknown *) ICOM_INTERFACE(object, IDirectDrawSurface7),
-                                              D3D7CB_CreateSurface );
+            hr = IWineD3DDevice_CreateTexture(This->wineD3DDevice, DDSD->dwWidth, DDSD->dwHeight, levels,
+                    0 /* usage */, Format, Pool, (IWineD3DTexture **) &object->wineD3DTexture,
+                    0 /* SharedHandle */, (IUnknown *)ICOM_INTERFACE(object, IDirectDrawSurface7));
         }
         This->tex_root = NULL;
     }
@@ -3063,177 +2959,6 @@ findRenderTarget(IDirectDrawSurface7 *surface,
     else return DDENUMRET_OK; /* Continue with the next neighbor surface */
 }
 
-/*****************************************************************************
- * D3D7CB_CreateRenderTarget
- *
- * Callback called by WineD3D to create Surfaces for render target usage
- * This function takes the D3D target from the IDirectDrawImpl structure,
- * and returns the WineD3DSurface. To avoid double usage, the surface
- * is marked as render target afterwards
- *
- * Params
- *  device: The WineD3DDevice's parent
- *  Width, Height, Format: Dimensions and pixelformat of the render target
- *                         Ignored, because the surface already exists
- *  MultiSample, MultisampleQuality, Lockable: Ignored for the same reason
- *  Lockable: ignored
- *  ppSurface: Address to pass the surface pointer back at
- *  pSharedHandle: Ignored
- *
- * Returns:
- *  Always returns D3D_OK
- *
- *****************************************************************************/
-static HRESULT WINAPI
-D3D7CB_CreateRenderTarget(IUnknown *device, IUnknown *pSuperior,
-                          UINT Width, UINT Height,
-                          WINED3DFORMAT Format,
-                          WINED3DMULTISAMPLE_TYPE MultiSample,
-                          DWORD MultisampleQuality,
-                          BOOL Lockable,
-                          IWineD3DSurface** ppSurface,
-                          HANDLE* pSharedHandle)
-{
-    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, device);
-    IDirectDrawSurfaceImpl *d3dSurface = This->d3d_target, *target = NULL;
-    TRACE("(%p) call back\n", device);
-
-    if(d3dSurface->isRenderTarget)
-    {
-        IDirectDrawSurface7_EnumAttachedSurfaces(ICOM_INTERFACE(d3dSurface, IDirectDrawSurface7),
-                                                 &target, findRenderTarget);
-    }
-    else
-    {
-        target = d3dSurface;
-    }
-
-    if(!target)
-    {
-        target = This->d3d_target;
-        ERR(" (%p) : No DirectDrawSurface found to create the back buffer. Using the front buffer as back buffer. Uncertain consequences\n", This);
-    }
-
-    /* TODO: Return failure if the dimensions do not match, but this shouldn't happen */
-
-    *ppSurface = target->WineD3DSurface;
-    target->isRenderTarget = TRUE;
-    TRACE("Returning wineD3DSurface %p, it belongs to surface %p\n", *ppSurface, d3dSurface);
-    return D3D_OK;
-}
-
-static HRESULT WINAPI
-D3D7CB_CreateDepthStencilSurface(IUnknown *device,
-                                 IUnknown *pSuperior,
-                                 UINT Width,
-                                 UINT Height,
-                                 WINED3DFORMAT Format,
-                                 WINED3DMULTISAMPLE_TYPE MultiSample,
-                                 DWORD MultisampleQuality,
-                                 BOOL Discard,
-                                 IWineD3DSurface** ppSurface,
-                                 HANDLE* pSharedHandle)
-{
-    /* Create a Depth Stencil surface to make WineD3D happy */
-    HRESULT hr = D3D_OK;
-    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, device);
-    DDSURFACEDESC2 ddsd;
-
-    TRACE("(%p) call back\n", device);
-
-    *ppSurface = NULL;
-
-    /* Create a DirectDraw surface */
-    memset(&ddsd, 0, sizeof(ddsd));
-    ddsd.dwSize = sizeof(ddsd);
-    ddsd.u4.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
-    ddsd.dwFlags = DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
-    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-    ddsd.dwHeight = Height;
-    ddsd.dwWidth = Width;
-    if(Format != 0)
-    {
-      PixelFormat_WineD3DtoDD(&ddsd.u4.ddpfPixelFormat, Format);
-    }
-    else
-    {
-      ddsd.dwFlags ^= DDSD_PIXELFORMAT;
-    }
-
-    This->depthstencil = TRUE;
-    hr = IDirectDraw7_CreateSurface((IDirectDraw7 *) This,
-                                    &ddsd,
-                                    (IDirectDrawSurface7 **) &This->DepthStencilBuffer,
-                                    NULL);
-    This->depthstencil = FALSE;
-    if(FAILED(hr))
-    {
-        ERR(" (%p) Creating a DepthStencil Surface failed, result = %x\n", This, hr);
-        return hr;
-    }
-    *ppSurface = This->DepthStencilBuffer->WineD3DSurface;
-    return D3D_OK;
-}
-
-/*****************************************************************************
- * D3D7CB_CreateAdditionalSwapChain
- *
- * Callback function for WineD3D which creates a new WineD3DSwapchain
- * interface. It also creates an IParent interface to store that pointer,
- * so the WineD3DSwapchain has a parent and can be released when the D3D
- * device is destroyed
- *****************************************************************************/
-static HRESULT WINAPI
-D3D7CB_CreateAdditionalSwapChain(IUnknown *device,
-                                 WINED3DPRESENT_PARAMETERS* pPresentationParameters,
-                                 IWineD3DSwapChain ** ppSwapChain)
-{
-    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, device);
-    IParentImpl *object = NULL;
-    HRESULT res = D3D_OK;
-    IWineD3DSwapChain *swapchain;
-    IDirectDrawSurfaceImpl *iterator;
-    TRACE("(%p) call back\n", device);
-
-    object = HeapAlloc(GetProcessHeap(),  HEAP_ZERO_MEMORY, sizeof(IParentImpl));
-    if (NULL == object)
-    {
-        FIXME("Allocation of memory failed\n");
-        *ppSwapChain = NULL;
-        return DDERR_OUTOFVIDEOMEMORY;
-    }
-
-    ICOM_INIT_INTERFACE(object, IParent, IParent_Vtbl);
-    object->ref = 1;
-
-    res = IWineD3DDevice_CreateSwapChain(This->wineD3DDevice,
-                                                   pPresentationParameters, 
-                                                   &swapchain, 
-                                                   (IUnknown*) ICOM_INTERFACE(object, IParent),
-                                                   D3D7CB_CreateRenderTarget,
-                                                   D3D7CB_CreateDepthStencilSurface,
-                                                   This->ImplType);
-    if (res != D3D_OK)
-    {
-        FIXME("(%p) call to IWineD3DDevice_CreateSwapChain failed\n", This);
-        HeapFree(GetProcessHeap(), 0 , object);
-        *ppSwapChain = NULL;
-    }
-    else
-    {
-        *ppSwapChain = swapchain;
-        object->child = (IUnknown *) swapchain;
-        This->d3d_target->wineD3DSwapChain = swapchain;
-        iterator = This->d3d_target->complex_array[0];
-        while(iterator) {
-            iterator->wineD3DSwapChain = swapchain;
-            iterator = iterator->complex_array[0];
-        }
-    }
-
-    return res;
-}
-
 static HRESULT IDirectDrawImpl_CreateGDISwapChain(IDirectDrawImpl *This,
                                                          IDirectDrawSurfaceImpl *primary) {
     HRESULT hr;
@@ -3263,9 +2988,7 @@ static HRESULT IDirectDrawImpl_CreateGDISwapChain(IDirectDrawImpl *This,
     presentation_parameters.PresentationInterval            = WINED3DPRESENT_INTERVAL_DEFAULT;
 
     This->d3d_target = primary;
-    hr = IWineD3DDevice_InitGDI(This->wineD3DDevice,
-                                &presentation_parameters,
-                                D3D7CB_CreateAdditionalSwapChain);
+    hr = IWineD3DDevice_InitGDI(This->wineD3DDevice, &presentation_parameters);
     This->d3d_target = NULL;
 
     if (hr != D3D_OK)
@@ -3346,9 +3069,7 @@ IDirectDrawImpl_AttachD3DDevice(IDirectDrawImpl *This,
      */
     This->d3d_initialized = TRUE;
 
-    hr = IWineD3DDevice_Init3D(This->wineD3DDevice,
-                               &localParameters,
-                               D3D7CB_CreateAdditionalSwapChain);
+    hr = IWineD3DDevice_Init3D(This->wineD3DDevice, &localParameters);
     if(FAILED(hr))
     {
         This->d3d_target = NULL;
@@ -3674,3 +3395,254 @@ IDirectDrawImpl_FindDecl(IDirectDrawImpl *This,
     TRACE("Returning %p. %d decls in array\n", pDecl, This->numConvertedDecls);
     return pDecl;
 }
+
+/* IWineD3DDeviceParent IUnknown methods */
+
+static inline struct IDirectDrawImpl *ddraw_from_device_parent(IWineD3DDeviceParent *iface)
+{
+    return (struct IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(struct IDirectDrawImpl, device_parent_vtbl));
+}
+
+HRESULT STDMETHODCALLTYPE device_parent_QueryInterface(IWineD3DDeviceParent *iface, REFIID riid, void **object)
+{
+    struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
+    return IDirectDrawImpl_QueryInterface((IDirectDraw7 *)This, riid, object);
+}
+
+ULONG STDMETHODCALLTYPE device_parent_AddRef(IWineD3DDeviceParent *iface)
+{
+    struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
+    return IDirectDrawImpl_AddRef((IDirectDraw7 *)This);
+}
+
+ULONG STDMETHODCALLTYPE device_parent_Release(IWineD3DDeviceParent *iface)
+{
+    struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
+    return IDirectDrawImpl_Release((IDirectDraw7 *)This);
+}
+
+/* IWineD3DDeviceParent methods */
+
+static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParent *iface,
+        IUnknown *superior, UINT width, UINT height, WINED3DFORMAT format, DWORD usage,
+        WINED3DPOOL pool, UINT level, WINED3DCUBEMAP_FACES face, IWineD3DSurface **surface)
+{
+    struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
+    IDirectDrawSurfaceImpl *surf = NULL;
+    UINT i = 0;
+    DDSCAPS2 searchcaps = This->tex_root->surface_desc.ddsCaps;
+
+    TRACE("iface %p, superior %p, width %u, height %u, format %#x, usage %#x,\n"
+            "\tpool %#x, level %u, face %u, surface %p\n",
+            iface, superior, width, height, format, usage, pool, level, face, surface);
+
+    searchcaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_ALLFACES;
+    switch(face)
+    {
+        case WINED3DCUBEMAP_FACE_POSITIVE_X:
+            TRACE("Asked for positive x\n");
+            if (searchcaps.dwCaps2 & DDSCAPS2_CUBEMAP)
+            {
+                searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEX;
+            }
+            surf = This->tex_root; break;
+        case WINED3DCUBEMAP_FACE_NEGATIVE_X:
+            TRACE("Asked for negative x\n");
+            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEX; break;
+        case WINED3DCUBEMAP_FACE_POSITIVE_Y:
+            TRACE("Asked for positive y\n");
+            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEY; break;
+        case WINED3DCUBEMAP_FACE_NEGATIVE_Y:
+            TRACE("Asked for negative y\n");
+            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEY; break;
+        case WINED3DCUBEMAP_FACE_POSITIVE_Z:
+            TRACE("Asked for positive z\n");
+            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEZ; break;
+        case WINED3DCUBEMAP_FACE_NEGATIVE_Z:
+            TRACE("Asked for negative z\n");
+            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEZ; break;
+        default: {ERR("Unexpected cube face\n");} /* Stupid compiler */
+    }
+
+    if (!surf)
+    {
+        IDirectDrawSurface7 *attached;
+        IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(This->tex_root, IDirectDrawSurface7),
+                &searchcaps, &attached);
+        surf = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, attached);
+        IDirectDrawSurface7_Release(attached);
+    }
+    if (!surf) ERR("root search surface not found\n");
+
+    /* Find the wanted mipmap. There are enough mipmaps in the chain */
+    while (i < level)
+    {
+        IDirectDrawSurface7 *attached;
+        IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(surf, IDirectDrawSurface7), &searchcaps, &attached);
+        if(!attached) ERR("Surface not found\n");
+        surf = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, attached);
+        IDirectDrawSurface7_Release(attached);
+        ++i;
+    }
+
+    /* Return the surface */
+    *surface = surf->WineD3DSurface;
+
+    TRACE("Returning wineD3DSurface %p, it belongs to surface %p\n", *surface, surf);
+
+    return D3D_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDeviceParent *iface,
+        IUnknown *superior, UINT width, UINT height, WINED3DFORMAT format, WINED3DMULTISAMPLE_TYPE multisample_type,
+        DWORD multisample_quality, BOOL lockable, IWineD3DSurface **surface)
+{
+    struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
+    IDirectDrawSurfaceImpl *d3d_surface = This->d3d_target;
+    IDirectDrawSurfaceImpl *target = NULL;
+
+    TRACE("iface %p, superior %p, width %u, height %u, format %#x, multisample_type %#x,\n"
+            "\tmultisample_quality %u, lockable %u, surface %p\n",
+            iface, superior, width, height, format, multisample_type, multisample_quality, lockable, surface);
+
+    if (d3d_surface->isRenderTarget)
+    {
+        IDirectDrawSurface7_EnumAttachedSurfaces(ICOM_INTERFACE(d3d_surface, IDirectDrawSurface7),
+                &target, findRenderTarget);
+    }
+    else
+    {
+        target = d3d_surface;
+    }
+
+    if (!target)
+    {
+        target = This->d3d_target;
+        ERR(" (%p) : No DirectDrawSurface found to create the back buffer. Using the front buffer as back buffer. Uncertain consequences\n", This);
+    }
+
+    /* TODO: Return failure if the dimensions do not match, but this shouldn't happen */
+
+    *surface = target->WineD3DSurface;
+    target->isRenderTarget = TRUE;
+
+    TRACE("Returning wineD3DSurface %p, it belongs to surface %p\n", *surface, d3d_surface);
+
+    return D3D_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3DDeviceParent *iface,
+        IUnknown *superior, UINT width, UINT height, WINED3DFORMAT format, WINED3DMULTISAMPLE_TYPE multisample_type,
+        DWORD multisample_quality, BOOL discard, IWineD3DSurface **surface)
+{
+    struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
+    /* Create a Depth Stencil surface to make WineD3D happy */
+    DDSURFACEDESC2 ddsd;
+    HRESULT hr;
+
+    TRACE("iface %p, superior %p, width %u, height %u, format %#x, multisample_type %#x,\n"
+            "\tmultisample_quality %u, discard %u, surface %p\n",
+            iface, superior, width, height, format, multisample_type, multisample_quality, discard, surface);
+
+    *surface = NULL;
+
+    /* Create a DirectDraw surface */
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.u4.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
+    ddsd.dwFlags = DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    ddsd.dwHeight = height;
+    ddsd.dwWidth = width;
+    if (format)
+    {
+        PixelFormat_WineD3DtoDD(&ddsd.u4.ddpfPixelFormat, format);
+    }
+    else
+    {
+        ddsd.dwFlags ^= DDSD_PIXELFORMAT;
+    }
+
+    This->depthstencil = TRUE;
+    hr = IDirectDraw7_CreateSurface((IDirectDraw7 *)This,
+            &ddsd, (IDirectDrawSurface7 **)&This->DepthStencilBuffer, NULL);
+    This->depthstencil = FALSE;
+    if(FAILED(hr))
+    {
+        ERR(" (%p) Creating a DepthStencil Surface failed, result = %x\n", This, hr);
+        return hr;
+    }
+
+    *surface = This->DepthStencilBuffer->WineD3DSurface;
+
+    return D3D_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent *iface,
+        IUnknown *superior, UINT width, UINT height, UINT depth, WINED3DFORMAT format,
+        WINED3DPOOL pool, DWORD usage, IWineD3DVolume **volume)
+{
+    TRACE("iface %p, superior %p, width %u, height %u, depth %u, format %#x, pool %#x, usage %#x, volume %p\n",
+                iface, superior, width, height, depth, format, pool, usage, volume);
+
+    ERR("Not implemented!\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDeviceParent *iface,
+        WINED3DPRESENT_PARAMETERS *present_parameters, IWineD3DSwapChain **swapchain)
+{
+    struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
+    IDirectDrawSurfaceImpl *iterator;
+    IParentImpl *object;
+    HRESULT hr;
+
+    TRACE("iface %p, present_parameters %p, swapchain %p\n", iface, present_parameters, swapchain);
+
+    object = HeapAlloc(GetProcessHeap(),  HEAP_ZERO_MEMORY, sizeof(IParentImpl));
+    if (!object)
+    {
+        FIXME("Allocation of memory failed\n");
+        *swapchain = NULL;
+        return DDERR_OUTOFVIDEOMEMORY;
+    }
+
+    ICOM_INIT_INTERFACE(object, IParent, IParent_Vtbl);
+    object->ref = 1;
+
+    hr = IWineD3DDevice_CreateSwapChain(This->wineD3DDevice, present_parameters,
+            swapchain, (IUnknown *)ICOM_INTERFACE(object, IParent), This->ImplType);
+    if (FAILED(hr))
+    {
+        FIXME("(%p) CreateSwapChain failed, returning %#x\n", iface, hr);
+        HeapFree(GetProcessHeap(), 0 , object);
+        *swapchain = NULL;
+        return hr;
+    }
+
+    object->child = (IUnknown *)*swapchain;
+    This->d3d_target->wineD3DSwapChain = *swapchain;
+    iterator = This->d3d_target->complex_array[0];
+    while (iterator)
+    {
+        iterator->wineD3DSwapChain = *swapchain;
+        iterator = iterator->complex_array[0];
+    }
+
+    return hr;
+}
+
+const IWineD3DDeviceParentVtbl ddraw_wined3d_device_parent_vtbl =
+{
+    /* IUnknown methods */
+    device_parent_QueryInterface,
+    device_parent_AddRef,
+    device_parent_Release,
+    /* IWineD3DDeviceParent methods */
+    device_parent_CreateSurface,
+    device_parent_CreateRenderTarget,
+    device_parent_CreateDepthStencilSurface,
+    device_parent_CreateVolume,
+    device_parent_CreateSwapChain,
+};

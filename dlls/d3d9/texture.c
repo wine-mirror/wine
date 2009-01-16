@@ -347,9 +347,8 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateTexture(LPDIRECT3DDEVICE9EX iface, U
     object->ref = 1;
     EnterCriticalSection(&d3d9_cs);
     hrc = IWineD3DDevice_CreateTexture(This->WineD3DDevice, Width, Height, Levels, Usage & WINED3DUSAGE_MASK,
-                                 (WINED3DFORMAT)Format, (WINED3DPOOL) Pool, &object->wineD3DTexture, pSharedHandle, (IUnknown *)object, D3D9CB_CreateSurface);
+            Format, Pool, &object->wineD3DTexture, pSharedHandle, (IUnknown *)object);
     LeaveCriticalSection(&d3d9_cs);
-
     if (FAILED(hrc)) {
 
         /* free up object */

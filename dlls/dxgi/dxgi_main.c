@@ -215,6 +215,7 @@ static HRESULT register_d3d10core_layers(HMODULE d3d10core)
 HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, IDXGIAdapter *adapter,
         UINT flags, DWORD unknown0, void **device)
 {
+    IWineD3DDeviceParent *wined3d_device_parent;
     struct layer_get_size_args get_size_args;
     struct dxgi_device *dxgi_device;
     struct dxgi_device_layer d3d10_layer;
@@ -273,6 +274,16 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
     dxgi_device->vtbl = &dxgi_device_vtbl;
     dxgi_device->refcount = 1;
 
+    layer_base = dxgi_device + 1;
+
+    hr = d3d10_layer.create(d3d10_layer.id, &layer_base, 0,
+            dxgi_device, &IID_IUnknown, (void **)&dxgi_device->child_layer);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create device, returning %#x\n", hr);
+        goto fail;
+    }
+
     hr = IDXGIFactory_QueryInterface(factory, &IID_IWineDXGIFactory, (void **)&dxgi_device->factory);
     if (FAILED(hr))
     {
@@ -293,25 +304,23 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
     adapter_ordinal = IWineDXGIAdapter_get_ordinal(wine_adapter);
     IWineDXGIAdapter_Release(wine_adapter);
 
+    hr = IUnknown_QueryInterface((IUnknown *)dxgi_device, &IID_IWineD3DDeviceParent, (void **)&wined3d_device_parent);
+    if (FAILED(hr))
+    {
+        ERR("DXGI device should implement IWineD3DDeviceParent\n");
+        goto fail;
+    }
+
     FIXME("Ignoring adapter type\n");
     EnterCriticalSection(&dxgi_cs);
-    hr = IWineD3D_CreateDevice(wined3d, adapter_ordinal, WINED3DDEVTYPE_HAL, NULL,
-            0, &dxgi_device->wined3d_device, (IUnknown *)dxgi_device);
+    hr = IWineD3D_CreateDevice(wined3d, adapter_ordinal, WINED3DDEVTYPE_HAL, NULL, 0,
+            (IUnknown *)dxgi_device, wined3d_device_parent, &dxgi_device->wined3d_device);
+    IWineD3DDeviceParent_Release(wined3d_device_parent);
     IWineD3D_Release(wined3d);
     LeaveCriticalSection(&dxgi_cs);
     if (FAILED(hr))
     {
         WARN("Failed to create a WineD3D device, returning %#x\n", hr);
-        goto fail;
-    }
-
-    layer_base = dxgi_device + 1;
-
-    hr = d3d10_layer.create(d3d10_layer.id, &layer_base, 0,
-            dxgi_device, &IID_IUnknown, (void **)&dxgi_device->child_layer);
-    if (FAILED(hr))
-    {
-        WARN("Failed to create device, returning %#x\n", hr);
         goto fail;
     }
 
@@ -327,6 +336,7 @@ fail:
         LeaveCriticalSection(&dxgi_cs);
     }
     if (dxgi_device->factory) IWineDXGIFactory_Release(dxgi_device->factory);
+    if (dxgi_device->child_layer) IUnknown_Release(dxgi_device->child_layer);
     HeapFree(GetProcessHeap(), 0, dxgi_device);
     *device = NULL;
     return hr;

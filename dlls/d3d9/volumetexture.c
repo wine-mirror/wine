@@ -258,11 +258,8 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVolumeTexture(LPDIRECT3DDEVICE9EX if
 
     object->lpVtbl = &Direct3DVolumeTexture9_Vtbl;
     object->ref = 1;
-    hrc = IWineD3DDevice_CreateVolumeTexture(This->WineD3DDevice, Width, Height, Depth, Levels, Usage & WINED3DUSAGE_MASK,
-                                 (WINED3DFORMAT)Format, (WINED3DPOOL) Pool, &object->wineD3DVolumeTexture, pSharedHandle,
-                                 (IUnknown *)object, D3D9CB_CreateVolume);
-
-
+    hrc = IWineD3DDevice_CreateVolumeTexture(This->WineD3DDevice, Width, Height, Depth, Levels,
+            Usage & WINED3DUSAGE_MASK, Format, Pool, &object->wineD3DVolumeTexture, pSharedHandle, (IUnknown *)object);
     if (hrc != D3D_OK) {
 
         /* free up object */
