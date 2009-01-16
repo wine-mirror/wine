@@ -35,6 +35,7 @@
 #include "winspool.h"
 #include "winerror.h"
 
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include "commdlg.h"
@@ -73,6 +74,7 @@ static const struct pd_flags psd_flags[] = {
 
 /* address of wndproc for subclassed Static control */
 static WNDPROC lpfnStaticWndProc;
+static WNDPROC edit_wndproc;
 /* the text of the fake document to render for the Page Setup dialog */
 static WCHAR wszFakeDocumentText[1024];
 static const WCHAR pd32_collateW[] = { 'P', 'D', '3', '2', '_', 'C', 'O', 'L', 'L', 'A', 'T', 'E', 0 };
@@ -3302,6 +3304,39 @@ PRINTDLG_PagePaintProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 #undef CALLPAINTHOOK
 }
 
+/*******************************************************
+ * The margin edit controls are subclassed to filter
+ * anything other than numbers and the decimal separator.
+ */
+static LRESULT CALLBACK pagesetup_margin_editproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    WCHAR decimal = '.';
+
+    /* FIXME use LOCALE_SDECIMAL when the edit parsing code can cope */
+
+    switch(msg)
+    case WM_CHAR:
+    {
+        WCHAR wc = (WCHAR)wparam;
+        if(!isdigitW(wc) && wc != decimal && wc != VK_BACK) return 0;
+    }
+    return CallWindowProcW(edit_wndproc, hwnd, msg, wparam, lparam);
+}
+
+static void subclass_margin_edits(HWND hDlg)
+{
+    int id;
+    WNDPROC old_proc;
+
+    for(id = edt4; id <= edt7; id++)
+    {
+        old_proc = (WNDPROC)SetWindowLongPtrW(GetDlgItem(hDlg, id),
+                                              GWLP_WNDPROC,
+                                              (ULONG_PTR)pagesetup_margin_editproc);
+        InterlockedCompareExchangePointer((void**)&edit_wndproc, old_proc, NULL);
+    }
+}
+
 /***********************************************************************
  *           PRINTDLG_PageDlgProcA
  * Message handler for PageSetupDlgA
@@ -3375,6 +3410,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             pda->dlga->rtMargin.bottom = size;
         }
         update_margin_edits(hDlg, pda);
+        subclass_margin_edits(hDlg);
         set_margin_groupbox_title(hDlg, pda);
 
 	/* if paper disabled */
