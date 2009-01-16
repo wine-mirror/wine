@@ -2180,8 +2180,10 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
     char str[MAX_PATH];
     static int msg_index = 0;
     static HCONV conversation = 0;
-    static char test_cmd[] = "test dde command";
-    static WCHAR test_cmd_w[] = {'t','e','s','t',' ','d','d','e',' ','c','o','m','m','a','n','d',0};
+    static char test_cmd_w_to_a[] = "test dde command";
+    static char test_cmd_a_to_a[] = "Test dde command";
+    static WCHAR test_cmd_w_to_w[] = {'t','e','s','t',' ','d','d','e',' ','c','o','m','m','a','n','d',0};
+    static WCHAR test_cmd_a_to_w[] = {'T','e','s','t',' ','d','d','e',' ','c','o','m','m','a','n','d',0};
     static char test_service [] = "TestDDEService";
     static char test_topic [] = "TestDDETopic";
 
@@ -2274,14 +2276,14 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
                              size, rsize, msg_index);
           if (msg_index == 10 || msg_index == 16)
           todo_wine {
-            ok(!lstrcmpW((WCHAR*)buffer, test_cmd_w),
+            ok(!lstrcmpW((WCHAR*)buffer, test_cmd_a_to_w),
                              "Expected \"Test dde command\", msg_index=%d\n",
                              msg_index);
             ok(size == 34, "Expected 34, got %d, msg_index=%d\n", size, msg_index);
           } else
           {
-            ok(!lstrcmpW((WCHAR*)buffer, test_cmd_w),
-                             "Expected \"Test dde command\", msg_index=%d\n",
+            ok(!lstrcmpW((WCHAR*)buffer, test_cmd_w_to_w),
+                             "Expected \"test dde command\", msg_index=%d\n",
                              msg_index);
             ok(size == 34, "Expected 34, got %d, msg_index=%d\n", size, msg_index);
           }
@@ -2295,16 +2297,22 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
                              size, rsize, msg_index);
           if (msg_index == 5)
           todo_wine {
-            ok(!lstrcmpA((CHAR*)buffer, test_cmd), "Expected %s, got %s, msg_index=%d\n",
-                             test_cmd, buffer, msg_index);
+            ok(!lstrcmpA((CHAR*)buffer, test_cmd_w_to_a), "Expected %s, got %s, msg_index=%d\n",
+                             test_cmd_w_to_a, buffer, msg_index);
             ok(size == 17, "Expected size should be 17, got %d, msg_index=%d\n", size, msg_index);
           }
-          else
+          else if (msg_index == 23)
           {
-            ok(!lstrcmpA((CHAR*)buffer, test_cmd), "Expected %s, got %s, msg_index=%d\n",
-                             test_cmd, buffer, msg_index);
+            ok(!lstrcmpA((CHAR*)buffer, test_cmd_w_to_a), "Expected %s, got %s, msg_index=%d\n",
+                             test_cmd_w_to_a, buffer, msg_index);
             ok(size == 17, "Expected size should be 17, got %d, msg_index=%d\n", size, msg_index);
           }
+            else
+            {
+              ok(!lstrcmpA((CHAR*)buffer, test_cmd_a_to_a), "Expected %s, got %s, msg_index=%d\n",
+                               test_cmd_a_to_a, buffer, msg_index);
+              ok(size == 17, "Expected size should be 17, got %d, msg_index=%d\n", size, msg_index);
+            }
 
         }
 
@@ -2343,14 +2351,14 @@ static void test_end_to_end_client(BOOL type_a)
     HSZ server, topic;
     HCONV hconv;
     HDDEDATA hdata;
-    static char test_cmd[] = "test dde command";
+    static char test_cmd[] = "Test dde command";
     static WCHAR test_cmd_w[] = {'t','e','s','t',' ','d','d','e',' ','c','o','m','m','a','n','d',0};
     static char test_service[] = "TestDDEService";
     static WCHAR test_service_w[] = {'T','e','s','t','D','D','E','S','e','r','v','i','c','e',0};
     static char test_topic[] = "TestDDETopic";
     static WCHAR test_topic_w[] = {'T','e','s','t','D','D','E','T','o','p','i','c',0};
 
-    trace("Start end to end client %d\n", type_a);
+    trace("Start end to end client %s\n", type_a ? "ASCII" : "UNICODE");
 
     if (type_a)
         ret = DdeInitializeA(&client_pid, client_end_to_end_callback, APPCMD_CLIENTONLY, 0);
@@ -2408,7 +2416,7 @@ static void test_end_to_end_server(HANDLE hproc, HANDLE hthread, BOOL type_a)
     HDDEDATA hdata;
     static CHAR test_service[] = "TestDDEService";
 
-    trace("start end to end server %d\n", type_a);
+    trace("start end to end server %s\n", type_a ? "ASCII" : "UNICODE");
     server_pid = 0;
 
     if (type_a)
