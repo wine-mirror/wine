@@ -587,7 +587,7 @@ void ME_GetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt)
   while (para != para_end)
   {
     para = para->member.para.next_para;
-    curFmt = &para->member.para.pFmt;
+    curFmt = para->member.para.pFmt;
 
 #define CHECK_FIELD(m, f) \
     if (pFmt->f != curFmt->f) pFmt->dwMask &= ~(m);
