@@ -124,8 +124,32 @@ static HRESULT WINAPI HTMLDocument5_createComment(IHTMLDocument5 *iface, BSTR bs
         IHTMLDOMNode **ppRetNode)
 {
     HTMLDocument *This = HTMLDOC5_THIS(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(bstrdata), ppRetNode);
-    return E_NOTIMPL;
+    nsIDOMComment *nscomment;
+    HTMLDOMNode *node;
+    nsAString str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrdata), ppRetNode);
+
+    if(!This->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
+    }
+
+    nsAString_Init(&str, bstrdata);
+    nsres = nsIDOMHTMLDocument_CreateComment(This->nsdoc, &str, &nscomment);
+    nsAString_Finish(&str);
+    if(NS_FAILED(nsres)) {
+        ERR("CreateTextNode failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    node = &HTMLCommentElement_Create(This, (nsIDOMNode*)nscomment)->node;
+    nsIDOMElement_Release(nscomment);
+
+    *ppRetNode = HTMLDOMNODE(node);
+    IHTMLDOMNode_AddRef(HTMLDOMNODE(node));
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument5_put_onfocusin(IHTMLDocument5 *iface, VARIANT v)

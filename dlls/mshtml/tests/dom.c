@@ -3809,11 +3809,13 @@ static void test_elems(IHTMLDocument2 *doc)
 static void test_create_elems(IHTMLDocument2 *doc)
 {
     IHTMLElement *elem, *body, *elem2;
-    IHTMLDOMNode *node, *node2, *node3;
+    IHTMLDOMNode *node, *node2, *node3, *comment;
+    IHTMLDocument5 *doc5;
     IDispatch *disp;
     VARIANT var;
     long type;
     HRESULT hres;
+    BSTR str;
 
     static const elem_type_t types1[] = { ET_TESTG };
 
@@ -3867,6 +3869,26 @@ static void test_create_elems(IHTMLDocument2 *doc)
     IHTMLDOMNode_Release(node3);
 
     test_elem_innertext(body, "insert test");
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument5, (void**)&doc5);
+    if(hres == S_OK)
+    {
+        str = a2bstr("testing");
+        hres = IHTMLDocument5_createComment(doc5, str, &comment);
+        SysFreeString(str);
+        ok(hres == S_OK, "createComment failed: %08x\n", hres);
+        if(hres == S_OK)
+        {
+            type = get_node_type((IUnknown*)comment);
+            ok(type == 8, "type=%ld, expected 8\n", type);
+
+            test_node_get_value_str((IUnknown*)comment, "testing");
+
+            IHTMLDOMNode_Release(comment);
+        }
+
+        IHTMLDocument5_Release(doc5);
+    }
 
     IHTMLElement_Release(body);
 }
