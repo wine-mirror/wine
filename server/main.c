@@ -126,6 +126,7 @@ static void sigterm_handler( int signum )
 
 int main( int argc, char *argv[] )
 {
+    setvbuf( stderr, NULL, _IOLBF, 0 );
     parse_args( argc, argv );
 
     /* setup temporary handlers before the real signal initialization is done */
@@ -138,7 +139,6 @@ int main( int argc, char *argv[] )
 
     sock_init();
     open_master_socket();
-    setvbuf( stderr, NULL, _IOLBF, 0 );
 
     if (debug_level) fprintf( stderr, "wineserver: starting (pid=%ld)\n", (long) getpid() );
     init_signals();
