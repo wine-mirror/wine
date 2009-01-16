@@ -559,8 +559,7 @@ VOID WINAPI GetSystemInfo(
              mib[1] = CPU_FPU_PRESENT;
              val_len = sizeof(value);
              if (sysctl(mib, 2, &value, &val_len, NULL, 0) >= 0)
-                 if (value) PF[PF_FLOATING_POINT_EMULATED] = FALSE;
-                 else       PF[PF_FLOATING_POINT_EMULATED] = TRUE;
+                 PF[PF_FLOATING_POINT_EMULATED] = !value;
 #endif
 #ifdef CPU_SSE
              mib[1] = CPU_SSE;   /* this should imply MMX */
