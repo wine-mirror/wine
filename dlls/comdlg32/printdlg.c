@@ -2409,7 +2409,7 @@ _c_inch2size(PAGESETUPDLGA *dlga,DWORD size) {
 	return (size*254)/100;
 }
 
-static void size2str(PageSetupDataA *pda, DWORD size, LPWSTR strout)
+static void size2str(const PageSetupDataA *pda, DWORD size, LPWSTR strout)
 {
     static const WCHAR metric_format[] = {'%','d',0};
     static const WCHAR imperial_format[] = {'%','d','i','n',0};
@@ -2493,6 +2493,33 @@ static inline BOOL is_default_metric(void)
     GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_IMEASURE | LOCALE_RETURN_NUMBER,
                    (LPWSTR)&system, sizeof(system));
     return system == 0;
+}
+
+/**********************************************
+ *           rotate_rect
+ * Cyclically permute the four members of rc
+ * If sense is TRUE l -> t -> r -> b
+ * otherwise        l <- t <- r <- b
+ */
+static inline void rotate_rect(RECT *rc, BOOL sense)
+{
+    INT tmp;
+    if(sense)
+    {
+        tmp        = rc->bottom;
+        rc->bottom = rc->right;
+        rc->right  = rc->top;
+        rc->top    = rc->left;
+        rc->left   = tmp;
+    }
+    else
+    {
+        tmp        = rc->left;
+        rc->left   = rc->top;
+        rc->top    = rc->right;
+        rc->right  = rc->bottom;
+        rc->bottom = tmp;
+    }
 }
 
 static BOOL pagesetup_papersizeA(PAGESETUPDLGA *dlg, const WORD paperword, LPPOINT size)
@@ -2815,6 +2842,20 @@ if(msg == EN_CHANGE){ \
 	FIXME("could not get dlgitemtexta for %x\n",id);  \
 }
 
+static void update_margin_edits(HWND hDlg, const PageSetupDataA *pda)
+{
+    WCHAR str[100];
+
+    size2str(pda, pda->dlga->rtMargin.left, str);
+    SetDlgItemTextW(hDlg, edt4, str);
+    size2str(pda, pda->dlga->rtMargin.top, str);
+    SetDlgItemTextW(hDlg, edt5, str);
+    size2str(pda, pda->dlga->rtMargin.right, str);
+    SetDlgItemTextW(hDlg, edt6, str);
+    size2str(pda, pda->dlga->rtMargin.bottom, str);
+    SetDlgItemTextW(hDlg, edt7, str);
+}
+
 /********************************************************************************
  * PRINTDLG_PS_WMCommandA
  * process WM_COMMAND message for PageSetupDlgA
@@ -2867,8 +2908,6 @@ PRINTDLG_PS_WMCommandA(
         if((id == rad1 && pda->dlga->ptPaperSize.x > pda->dlga->ptPaperSize.y) ||
            (id == rad2 && pda->dlga->ptPaperSize.y > pda->dlga->ptPaperSize.x))
 	{
-	    char TmpText[25];
-	    char TmpText2[25];
             DWORD tmp = pda->dlga->ptPaperSize.x;
             DEVMODEA *dm = GlobalLock(pda->dlga->hDevMode);
 
@@ -2878,15 +2917,8 @@ PRINTDLG_PS_WMCommandA(
             dm->u1.s1.dmOrientation = (id == rad1) ? DMORIENT_PORTRAIT : DMORIENT_LANDSCAPE;
             GlobalUnlock(pda->dlga->hDevMode);
 
-	    GetDlgItemTextA(hDlg, edt4, TmpText, sizeof(TmpText));
-	    GetDlgItemTextA(hDlg, edt5, TmpText2, sizeof(TmpText2));
-	    SetDlgItemTextA(hDlg, edt5, TmpText);
-	    SetDlgItemTextA(hDlg, edt4, TmpText2);
-
-	    GetDlgItemTextA(hDlg, edt6, TmpText, sizeof(TmpText));
-	    GetDlgItemTextA(hDlg, edt7, TmpText2, sizeof(TmpText2));
-	    SetDlgItemTextA(hDlg, edt7, TmpText);
-	    SetDlgItemTextA(hDlg, edt6, TmpText2);
+            rotate_rect(&pda->dlga->rtMargin, (id == rad2));
+            update_margin_edits(hDlg, pda);
 
 	    PRINTDLG_PS_ChangePaperPrev(pda);
 	}
@@ -3254,8 +3286,6 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     HWND 		hDrawWnd;
 
     if (uMsg == WM_INITDIALOG) { /*Init dialog*/
-        WCHAR str[100];
-
         pda = (PageSetupDataA*)lParam;
 	pda->hDlg   = hDlg; /* saving handle to main window to PageSetupDataA structure */
 	
@@ -3315,14 +3345,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             pda->dlga->rtMargin.right  = size;
             pda->dlga->rtMargin.bottom = size;
         }
-        size2str(pda, pda->dlga->rtMargin.left, str);
-        SetDlgItemTextW(hDlg, edt4, str);
-        size2str(pda, pda->dlga->rtMargin.top, str);
-        SetDlgItemTextW(hDlg, edt5, str);
-        size2str(pda, pda->dlga->rtMargin.right, str);
-        SetDlgItemTextW(hDlg, edt6, str);
-        size2str(pda, pda->dlga->rtMargin.bottom, str);
-        SetDlgItemTextW(hDlg, edt7, str);
+        update_margin_edits(hDlg, pda);
 
 	/* if paper disabled */
 	if (pda->dlga->Flags & PSD_DISABLEPAPER) {
