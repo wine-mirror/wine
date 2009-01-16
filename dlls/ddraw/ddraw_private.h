@@ -169,11 +169,11 @@ struct IDirectDrawImpl
 };
 
 /* Declare the VTables. They can be found ddraw.c */
-const IDirectDraw7Vtbl IDirectDraw7_Vtbl;
-const IDirectDraw4Vtbl IDirectDraw4_Vtbl;
-const IDirectDraw3Vtbl IDirectDraw3_Vtbl;
-const IDirectDraw2Vtbl IDirectDraw2_Vtbl;
-const IDirectDrawVtbl  IDirectDraw1_Vtbl;
+extern const IDirectDraw7Vtbl IDirectDraw7_Vtbl;
+extern const IDirectDraw4Vtbl IDirectDraw4_Vtbl;
+extern const IDirectDraw3Vtbl IDirectDraw3_Vtbl;
+extern const IDirectDraw2Vtbl IDirectDraw2_Vtbl;
+extern const IDirectDrawVtbl  IDirectDraw1_Vtbl;
 extern const IWineD3DDeviceParentVtbl ddraw_wined3d_device_parent_vtbl;
 
 /* Helper structures */
@@ -273,11 +273,11 @@ struct IDirectDrawSurfaceImpl
 };
 
 /* VTable declaration. It's located in surface.c / surface_thunks.c */
-const IDirectDrawSurface7Vtbl IDirectDrawSurface7_Vtbl;
-const IDirectDrawSurface3Vtbl IDirectDrawSurface3_Vtbl;
-const IDirectDrawGammaControlVtbl IDirectDrawGammaControl_Vtbl;
-const IDirect3DTexture2Vtbl IDirect3DTexture2_Vtbl;
-const IDirect3DTextureVtbl IDirect3DTexture1_Vtbl;
+extern const IDirectDrawSurface7Vtbl IDirectDrawSurface7_Vtbl;
+extern const IDirectDrawSurface3Vtbl IDirectDrawSurface3_Vtbl;
+extern const IDirectDrawGammaControlVtbl IDirectDrawGammaControl_Vtbl;
+extern const IDirect3DTexture2Vtbl IDirect3DTexture2_Vtbl;
+extern const IDirect3DTextureVtbl IDirect3DTexture1_Vtbl;
 
 HRESULT WINAPI IDirectDrawSurfaceImpl_AddAttachedSurface(IDirectDrawSurfaceImpl *This, IDirectDrawSurfaceImpl *Surf);
 void IDirectDrawSurfaceImpl_Destroy(IDirectDrawSurfaceImpl *This);
@@ -300,7 +300,7 @@ struct IParentImpl
 
 };
 
-const IParentVtbl IParent_Vtbl;
+extern const IParentVtbl IParent_Vtbl;
 
 /*****************************************************************************
  * IDirect3DDevice implementation
@@ -363,14 +363,14 @@ struct IDirect3DDeviceImpl
 };
 
 /* Vtables in various versions */
-const IDirect3DDevice7Vtbl IDirect3DDevice7_FPUSetup_Vtbl;
-const IDirect3DDevice7Vtbl IDirect3DDevice7_FPUPreserve_Vtbl;
-const IDirect3DDevice3Vtbl IDirect3DDevice3_Vtbl;
-const IDirect3DDevice2Vtbl IDirect3DDevice2_Vtbl;
-const IDirect3DDeviceVtbl  IDirect3DDevice1_Vtbl;
+extern const IDirect3DDevice7Vtbl IDirect3DDevice7_FPUSetup_Vtbl;
+extern const IDirect3DDevice7Vtbl IDirect3DDevice7_FPUPreserve_Vtbl;
+extern const IDirect3DDevice3Vtbl IDirect3DDevice3_Vtbl;
+extern const IDirect3DDevice2Vtbl IDirect3DDevice2_Vtbl;
+extern const IDirect3DDeviceVtbl  IDirect3DDevice1_Vtbl;
 
 /* The IID */
-const GUID IID_D3DDEVICE_WineD3D;
+extern const GUID IID_D3DDEVICE_WineD3D;
 
 /* Helper functions */
 HRESULT IDirect3DImpl_GetCaps(IWineD3D *WineD3D, D3DDEVICEDESC *Desc123, D3DDEVICEDESC7 *Desc7);
@@ -392,10 +392,10 @@ struct EnumTextureFormatsCBS
 /* No implementation structure as this is only another interface to DirectDraw */
 
 /* the Vtables */
-const IDirect3DVtbl  IDirect3D1_Vtbl;
-const IDirect3D2Vtbl IDirect3D2_Vtbl;
-const IDirect3D3Vtbl IDirect3D3_Vtbl;
-const IDirect3D7Vtbl IDirect3D7_Vtbl;
+extern const IDirect3DVtbl  IDirect3D1_Vtbl;
+extern const IDirect3D2Vtbl IDirect3D2_Vtbl;
+extern const IDirect3D3Vtbl IDirect3D3_Vtbl;
+extern const IDirect3D7Vtbl IDirect3D7_Vtbl;
 
 /* Structure for EnumZBufferFormats */
 struct EnumZBufferFormatsData
@@ -417,7 +417,7 @@ struct IDirectDrawClipperImpl
     IDirectDrawImpl           *ddraw_owner;
 };
 
-const IDirectDrawClipperVtbl IDirectDrawClipper_Vtbl;
+extern const IDirectDrawClipperVtbl IDirectDrawClipper_Vtbl;
 
 typeof(WineDirect3DCreateClipper) *pWineDirect3DCreateClipper;
 
@@ -437,7 +437,7 @@ struct IDirectDrawPaletteImpl
     IDirectDrawImpl           *ddraw_owner;
     IUnknown                  *ifaceToRelease;
 };
-const IDirectDrawPaletteVtbl IDirectDrawPalette_Vtbl;
+extern const IDirectDrawPaletteVtbl IDirectDrawPalette_Vtbl;
 
 /******************************************************************************
  * DirectDraw ClassFactory implementation - incomplete
@@ -487,7 +487,7 @@ struct IDirect3DLightImpl
 };
 
 /* Vtable */
-const IDirect3DLightVtbl IDirect3DLight_Vtbl;
+extern const IDirect3DLightVtbl IDirect3DLight_Vtbl;
 
 /* Helper functions */
 void light_update(IDirect3DLightImpl* This);
@@ -515,9 +515,9 @@ struct IDirect3DMaterialImpl
 };
 
 /* VTables in various versions */
-const IDirect3DMaterialVtbl IDirect3DMaterial_Vtbl;
-const IDirect3DMaterial2Vtbl IDirect3DMaterial2_Vtbl;
-const IDirect3DMaterial3Vtbl IDirect3DMaterial3_Vtbl;
+extern const IDirect3DMaterialVtbl IDirect3DMaterial_Vtbl;
+extern const IDirect3DMaterial2Vtbl IDirect3DMaterial2_Vtbl;
+extern const IDirect3DMaterial3Vtbl IDirect3DMaterial3_Vtbl;
 
 /* Helper functions */
 void material_activate(IDirect3DMaterialImpl* This);
@@ -561,7 +561,7 @@ struct IDirect3DViewportImpl
 };
 
 /* Vtable */
-const IDirect3DViewport3Vtbl IDirect3DViewport3_Vtbl;
+extern const IDirect3DViewport3Vtbl IDirect3DViewport3_Vtbl;
 
 /* Helper functions */
 void viewport_activate(IDirect3DViewportImpl* This, BOOL ignore_lights);
@@ -594,7 +594,7 @@ struct IDirect3DExecuteBufferImpl
 };
 
 /* The VTable */
-const IDirect3DExecuteBufferVtbl IDirect3DExecuteBuffer_Vtbl;
+extern const IDirect3DExecuteBufferVtbl IDirect3DExecuteBuffer_Vtbl;
 
 /* The execute function */
 void
@@ -622,8 +622,8 @@ struct IDirect3DVertexBufferImpl
 };
 
 /* The Vtables */
-const IDirect3DVertexBuffer7Vtbl IDirect3DVertexBuffer7_Vtbl;
-const IDirect3DVertexBufferVtbl IDirect3DVertexBuffer1_Vtbl;
+extern const IDirect3DVertexBuffer7Vtbl IDirect3DVertexBuffer7_Vtbl;
+extern const IDirect3DVertexBufferVtbl IDirect3DVertexBuffer1_Vtbl;
 
 /*****************************************************************************
  * Helper functions from utils.c
