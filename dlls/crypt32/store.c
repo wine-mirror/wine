@@ -329,10 +329,11 @@ static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
     return (PWINECRYPT_CERTSTORE)store;
 }
 
+static const WCHAR rootW[] = { 'R','o','o','t',0 };
+
 static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
-    static const WCHAR rootW[] = { 'R','o','o','t',0 };
     static const WCHAR fmt[] = { '%','s','\\','%','s',0 };
     LPCWSTR storeName = (LPCWSTR)pvPara;
     LPWSTR storePath;
@@ -1350,6 +1351,7 @@ BOOL WINAPI CertEnumSystemStore(DWORD dwFlags, void *pvSystemStoreLocationPara,
     BOOL ret = FALSE;
     LONG rc;
     HKEY key;
+    CERT_SYSTEM_STORE_INFO info = { sizeof(info) };
 
     TRACE("(%08x, %p, %p, %p)\n", dwFlags, pvSystemStoreLocationPara, pvArg,
         pfnEnum);
@@ -1358,7 +1360,6 @@ BOOL WINAPI CertEnumSystemStore(DWORD dwFlags, void *pvSystemStoreLocationPara,
     if (!rc)
     {
         DWORD index = 0;
-        CERT_SYSTEM_STORE_INFO info = { sizeof(info) };
 
         ret = TRUE;
         do {
@@ -1375,6 +1376,12 @@ BOOL WINAPI CertEnumSystemStore(DWORD dwFlags, void *pvSystemStoreLocationPara,
     }
     else
         SetLastError(rc);
+    /* Include root store for the local machine location (it isn't in the
+     * registry)
+     */
+    if (ret && (dwFlags & CERT_SYSTEM_STORE_LOCATION_MASK) ==
+     CERT_SYSTEM_STORE_LOCAL_MACHINE)
+        ret = pfnEnum(rootW, dwFlags, &info, NULL, pvArg);
     return ret;
 }
 
