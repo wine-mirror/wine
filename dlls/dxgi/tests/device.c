@@ -98,6 +98,29 @@ static void test_device_interfaces(IDXGIDevice *device)
     ok(SUCCEEDED(hr), "IDXGIDevice does not implement ID3D10Device\n");
 }
 
+static void test_create_surface(IDXGIDevice *device)
+{
+    ID3D10Texture2D *texture;
+    IDXGISurface *surface;
+    DXGI_SURFACE_DESC desc;
+    HRESULT hr;
+
+    desc.Width = 512;
+    desc.Height = 512;
+    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+
+    hr = IDXGIDevice_CreateSurface(device, &desc, 1, DXGI_USAGE_RENDER_TARGET_OUTPUT, NULL, &surface);
+    ok(SUCCEEDED(hr), "Failed to create a dxgi surface, hr %#x\n", hr);
+
+    hr = IDXGISurface_QueryInterface(surface, &IID_ID3D10Texture2D, (void **)&texture);
+    todo_wine ok(SUCCEEDED(hr), "Surface should implement ID3D10Texture2D\n");
+    if (SUCCEEDED(hr)) ID3D10Texture2D_Release(texture);
+
+    IDXGISurface_Release(surface);
+}
+
 START_TEST(device)
 {
     HMODULE d3d10core = LoadLibraryA("d3d10core.dll");
@@ -119,6 +142,7 @@ START_TEST(device)
     }
 
     test_device_interfaces(device);
+    test_create_surface(device);
 
     refcount = IDXGIDevice_Release(device);
     ok(!refcount, "Device has %u references left\n", refcount);
