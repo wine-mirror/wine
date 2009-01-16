@@ -650,6 +650,16 @@ run_tests (char *logname)
     return logname;
 }
 
+static BOOL WINAPI ctrl_handler(DWORD ctrl_type)
+{
+    if (ctrl_type == CTRL_C_EVENT) {
+        printf("Ignoring Ctrl-C, use Ctrl-Break if you really want to terminate\n");
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 static void
 usage (void)
 {
@@ -749,6 +759,8 @@ int main( int argc, char *argv[] )
 
         if (!running_on_visible_desktop ())
             report (R_FATAL, "Tests must be run on a visible desktop");
+
+        SetConsoleCtrlHandler(ctrl_handler, TRUE);
 
         if (reset_env)
         {
