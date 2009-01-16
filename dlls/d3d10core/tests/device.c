@@ -93,6 +93,53 @@ static void test_device_interfaces(ID3D10Device *device)
     ok(SUCCEEDED(hr), "ID3D10Device does not implement ID3D10Device\n");
 }
 
+static void test_create_texture(ID3D10Device *device)
+{
+    D3D10_TEXTURE2D_DESC desc;
+    ID3D10Texture2D *texture;
+    IDXGISurface *surface;
+    HRESULT hr;
+
+    desc.Width = 512;
+    desc.Height = 512;
+    desc.MipLevels = 1;
+    desc.ArraySize = 1;
+    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Usage = D3D10_USAGE_DEFAULT;
+    desc.BindFlags = D3D10_BIND_RENDER_TARGET;
+    desc.CPUAccessFlags = 0;
+    desc.MiscFlags = 0;
+
+    hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x\n", hr);
+
+    hr = ID3D10Texture2D_QueryInterface(texture, &IID_IDXGISurface, (void **)&surface);
+    todo_wine ok(SUCCEEDED(hr), "Texture should implement IDXGISurface\n");
+    if (SUCCEEDED(hr)) IDXGISurface_Release(surface);
+    ID3D10Texture2D_Release(texture);
+
+    desc.MipLevels = 0;
+    hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x\n", hr);
+
+    hr = ID3D10Texture2D_QueryInterface(texture, &IID_IDXGISurface, (void **)&surface);
+    ok(FAILED(hr), "Texture should not implement IDXGISurface\n");
+    if (SUCCEEDED(hr)) IDXGISurface_Release(surface);
+    ID3D10Texture2D_Release(texture);
+
+    desc.MipLevels = 1;
+    desc.ArraySize = 2;
+    hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x\n", hr);
+
+    hr = ID3D10Texture2D_QueryInterface(texture, &IID_IDXGISurface, (void **)&surface);
+    ok(FAILED(hr), "Texture should not implement IDXGISurface\n");
+    if (SUCCEEDED(hr)) IDXGISurface_Release(surface);
+    ID3D10Texture2D_Release(texture);
+}
+
 START_TEST(device)
 {
     ID3D10Device *device;
@@ -106,6 +153,7 @@ START_TEST(device)
     }
 
     test_device_interfaces(device);
+    test_create_texture(device);
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left\n", refcount);
