@@ -149,7 +149,7 @@ static LONG HatchStyleToHatch(HatchStyle hatchstyle)
 /******************************************************************************
  * GdipCreateHatchBrush [GDIPLUS.@]
  */
-GpStatus WINGDIAPI GdipCreateHatchBrush(HatchStyle hatchstyle, ARGB forecol, ARGB backcol, GpHatch **brush)
+GpStatus WINGDIPAPI GdipCreateHatchBrush(HatchStyle hatchstyle, ARGB forecol, ARGB backcol, GpHatch **brush)
 {
     COLORREF fgcol = ARGB2COLORREF(forecol);
 
