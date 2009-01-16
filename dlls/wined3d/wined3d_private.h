@@ -802,7 +802,6 @@ struct WineD3DContext {
     WORD last_was_rhw : 1;              /* true iff last draw_primitive was in xyzrhw mode */
     WORD last_was_pshader : 1;
     WORD last_was_vshader : 1;
-    WORD last_was_foggy_shader : 1;
     WORD namedArraysLoaded : 1;
     WORD numberedArraysLoaded : 1;
     WORD last_was_blit : 1;
@@ -811,7 +810,7 @@ struct WineD3DContext {
     WORD isPBuffer : 1;
     WORD fog_enabled : 1;
     WORD num_untracked_materials : 2;   /* Max value 2 */
-    WORD padding : 2;
+    WORD padding : 3;
     BYTE texShaderBumpMap;              /* MAX_TEXTURES, 8 */
     BYTE lastWasPow2Texture;            /* MAX_TEXTURES, 8 */
     DWORD                   numbered_array_mask;

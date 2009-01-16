@@ -2096,17 +2096,21 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
     if(stateblock->renderState[WINED3DRS_FOGENABLE] == FALSE) {
         settings->fog = FOG_OFF;
     } else if(stateblock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
-        switch(stateblock->renderState[WINED3DRS_FOGVERTEXMODE]) {
-            case WINED3DFOG_NONE:
-            case WINED3DFOG_LINEAR:
-                settings->fog = FOG_LINEAR;
-                break;
-            case WINED3DFOG_EXP:
-                settings->fog = FOG_EXP;
-                break;
-            case WINED3DFOG_EXP2:
-                settings->fog = FOG_EXP2;
-                break;
+        if(use_vs(stateblock) || ((IWineD3DVertexDeclarationImpl *) stateblock->vertexDecl)->position_transformed) {
+            settings->fog = FOG_LINEAR;
+        } else {
+            switch(stateblock->renderState[WINED3DRS_FOGVERTEXMODE]) {
+                case WINED3DFOG_NONE:
+                case WINED3DFOG_LINEAR:
+                    settings->fog = FOG_LINEAR;
+                    break;
+                case WINED3DFOG_EXP:
+                    settings->fog = FOG_EXP;
+                    break;
+                case WINED3DFOG_EXP2:
+                    settings->fog = FOG_EXP2;
+                    break;
+            }
         }
     } else {
         switch(stateblock->renderState[WINED3DRS_FOGTABLEMODE]) {
