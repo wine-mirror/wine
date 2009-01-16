@@ -89,6 +89,7 @@ static BOOL (WINAPI * pCryptCATAdminRemoveCatalog)(HCATADMIN, LPCWSTR, DWORD);
 static BOOL (WINAPI * pCryptCATAdminReleaseCatalogContext)(HCATADMIN, HCATINFO, DWORD);
 static HANDLE (WINAPI * pCryptCATOpen)(LPWSTR, DWORD, HCRYPTPROV, DWORD, DWORD);
 static BOOL (WINAPI * pCryptCATCatalogInfoFromContext)(HCATINFO, CATALOG_INFO *, DWORD);
+static CRYPTCATATTRIBUTE * (WINAPI * pCryptCATEnumerateCatAttr)(HANDLE, CRYPTCATATTRIBUTE *);
 static CRYPTCATMEMBER * (WINAPI * pCryptCATEnumerateMember)(HANDLE, CRYPTCATMEMBER *);
 static CRYPTCATATTRIBUTE * (WINAPI * pCryptCATEnumerateAttr)(HANDLE, CRYPTCATMEMBER *, CRYPTCATATTRIBUTE *);
 static BOOL (WINAPI * pCryptCATClose)(HANDLE);
@@ -111,6 +112,7 @@ static void InitFunctionPtrs(void)
     WINTRUST_GET_PROC(CryptCATAdminReleaseCatalogContext)
     WINTRUST_GET_PROC(CryptCATOpen)
     WINTRUST_GET_PROC(CryptCATCatalogInfoFromContext)
+    WINTRUST_GET_PROC(CryptCATEnumerateCatAttr)
     WINTRUST_GET_PROC(CryptCATEnumerateMember)
     WINTRUST_GET_PROC(CryptCATEnumerateAttr)
     WINTRUST_GET_PROC(CryptCATClose)
@@ -483,6 +485,8 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
 static void test_catalog_properties(void)
 {
     static const WCHAR hashmeW[] = {'h','a','s','h','m','e',0};
+    static const WCHAR attr1W[] = {'a','t','t','r','1',0};
+    static const WCHAR attr2W[] = {'a','t','t','r','2',0};
     static const GUID subject = {0xde351a42,0x8e59,0x11d0,{0x8c,0x47,0x00,0xc0,0x4f,0xc2,0x95,0xee}};
 
     HANDLE hcat;
@@ -493,6 +497,7 @@ static void test_catalog_properties(void)
     DWORD written;
     HANDLE file;
     BOOL ret;
+    int attrcount = 0;
 
     if (!GetTempFileNameA(CURR_DIR, "cat", 0, catalog)) return;
     file = CreateFileA(catalog, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
@@ -533,6 +538,18 @@ static void test_catalog_properties(void)
 
     m = pCryptCATEnumerateMember(hcat, m);
     ok(m == NULL, "CryptCATEnumerateMember succeeded\n");
+
+    attr = NULL;
+    while ((attr = pCryptCATEnumerateCatAttr(hcat, attr)))
+    {
+        ok(!lstrcmpW(attr->pwszReferenceTag, attr1W) ||
+           !lstrcmpW(attr->pwszReferenceTag, attr2W),
+           "Expected 'attr1' or 'attr2'\n");
+
+        attrcount++;
+    }
+    todo_wine
+    ok(attrcount == 2, "Expected 2 catalog attributes, got %d\n", attrcount);
 
     ret = pCryptCATClose(hcat);
     ok(ret, "CryptCATClose failed\n");
