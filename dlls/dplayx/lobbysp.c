@@ -76,7 +76,7 @@ HRESULT DPLSP_CreateInterface( REFIID riid, LPVOID* ppvObj, IDirectPlay2Impl* dp
 
   if( IsEqualGUID( &IID_IDPLobbySP, riid ) )
   {
-    IDPLobbySPImpl *This = (IDPLobbySPImpl *)*ppvObj;
+    IDPLobbySPImpl *This = *ppvObj;
     This->lpVtbl = &dpLobbySPVT;
   }
   else
@@ -109,7 +109,7 @@ HRESULT DPLSP_CreateInterface( REFIID riid, LPVOID* ppvObj, IDirectPlay2Impl* dp
 
 static BOOL DPLSP_CreateIUnknown( LPVOID lpSP )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)lpSP;
+  IDPLobbySPImpl *This = lpSP;
 
   This->unk = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->unk) ) );
 
@@ -126,7 +126,7 @@ static BOOL DPLSP_CreateIUnknown( LPVOID lpSP )
 
 static BOOL DPLSP_DestroyIUnknown( LPVOID lpSP )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)lpSP;
+  IDPLobbySPImpl *This = lpSP;
 
   This->unk->DPLSP_lock.DebugInfo->Spare[0] = 0;
   DeleteCriticalSection( &This->unk->DPLSP_lock );
@@ -137,7 +137,7 @@ static BOOL DPLSP_DestroyIUnknown( LPVOID lpSP )
 
 static BOOL DPLSP_CreateDPLobbySP( LPVOID lpSP, IDirectPlay2Impl* dp )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)lpSP;
+  IDPLobbySPImpl *This = lpSP;
 
   This->sp = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->sp) ) );
 
@@ -169,7 +169,7 @@ static BOOL DPLSP_CreateDPLobbySP( LPVOID lpSP, IDirectPlay2Impl* dp )
 
 static BOOL DPLSP_DestroyDPLobbySP( LPVOID lpSP )
 {
-  IDPLobbySPImpl *This = (IDPLobbySPImpl *)lpSP;
+  IDPLobbySPImpl *This = lpSP;
 
   HeapFree( GetProcessHeap(), 0, This->sp );
 
@@ -199,7 +199,7 @@ HRESULT WINAPI DPLSP_QueryInterface
 
   if( IsEqualGUID( &IID_IDPLobbySP, riid ) )
   {
-    IDPLobbySPImpl *This = (IDPLobbySPImpl *)*ppvObj;
+    IDPLobbySPImpl *This = *ppvObj;
     This->lpVtbl = &dpLobbySPVT;
   }
   else

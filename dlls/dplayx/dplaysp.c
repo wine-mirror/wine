@@ -100,7 +100,7 @@ HRESULT DPSP_CreateInterface( REFIID riid, LPVOID* ppvObj, IDirectPlay2Impl* dp 
 
   if( IsEqualGUID( &IID_IDirectPlaySP, riid ) )
   {
-    IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)*ppvObj;
+    IDirectPlaySPImpl *This = *ppvObj;
     This->lpVtbl = &directPlaySPVT;
   }
   else
@@ -133,7 +133,7 @@ HRESULT DPSP_CreateInterface( REFIID riid, LPVOID* ppvObj, IDirectPlay2Impl* dp 
 
 static BOOL DPSP_CreateIUnknown( LPVOID lpSP )
 {
-  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)lpSP;
+  IDirectPlaySPImpl *This = lpSP;
 
   This->unk = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->unk) ) );
 
@@ -150,7 +150,7 @@ static BOOL DPSP_CreateIUnknown( LPVOID lpSP )
 
 static BOOL DPSP_DestroyIUnknown( LPVOID lpSP )
 {
-  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)lpSP;
+  IDirectPlaySPImpl *This = lpSP;
 
   This->unk->DPSP_lock.DebugInfo->Spare[0] = 0;
   DeleteCriticalSection( &This->unk->DPSP_lock );
@@ -162,7 +162,7 @@ static BOOL DPSP_DestroyIUnknown( LPVOID lpSP )
 
 static BOOL DPSP_CreateDirectPlaySP( LPVOID lpSP, IDirectPlay2Impl* dp )
 {
-  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)lpSP;
+  IDirectPlaySPImpl *This = lpSP;
 
   This->sp = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->sp) ) );
 
@@ -193,7 +193,7 @@ static BOOL DPSP_CreateDirectPlaySP( LPVOID lpSP, IDirectPlay2Impl* dp )
 
 static BOOL DPSP_DestroyDirectPlaySP( LPVOID lpSP )
 {
-  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)lpSP;
+  IDirectPlaySPImpl *This = lpSP;
 
   /* Normally we should be keeping a reference, but since only the dplay
    * interface that created us can destroy us, we do not keep a reference
@@ -235,7 +235,7 @@ static HRESULT WINAPI DPSP_QueryInterface
 
   if( IsEqualGUID( &IID_IDirectPlaySP, riid ) )
   {
-    IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)*ppvObj;
+    IDirectPlaySPImpl *This = *ppvObj;
     This->lpVtbl = &directPlaySPVT;
   }
   else
@@ -434,7 +434,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
   LPVOID lpMessageHeader
 )
 {
-  LPDPMSG_SENDENVELOPE lpMsg = (LPDPMSG_SENDENVELOPE)lpMessageBody;
+  LPDPMSG_SENDENVELOPE lpMsg = lpMessageBody;
   HRESULT hr = DPERR_GENERIC;
   WORD wCommandId;
   WORD wVersion;
@@ -459,7 +459,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
 
 #if 0
   {
-    const LPDWORD lpcHeader = (LPDWORD)lpMessageHeader;
+    const LPDWORD lpcHeader = lpMessageHeader;
 
     TRACE( "lpMessageHeader = [0x%08lx] [0x%08lx] [0x%08lx] [0x%08lx] [0x%08lx]\n",
            lpcHeader[0], lpcHeader[1], lpcHeader[2], lpcHeader[3], lpcHeader[4] );
@@ -509,7 +509,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
   {
     case DPSYS_CREATEPLAYERORGROUP:
     {
-      LPDPMSG_CREATEPLAYERORGROUP msg = (LPDPMSG_CREATEPLAYERORGROUP)lpMsg;
+      LPDPMSG_CREATEPLAYERORGROUP msg = lpMsg;
 
       if( msg->dwPlayerType == DPPLAYERTYPE_PLAYER )
       {
@@ -544,7 +544,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
 
     case DPSYS_DESTROYPLAYERORGROUP:
     {
-      LPDPMSG_DESTROYPLAYERORGROUP msg = (LPDPMSG_DESTROYPLAYERORGROUP)lpMsg;
+      LPDPMSG_DESTROYPLAYERORGROUP msg = lpMsg;
 
       if( msg->dwPlayerType == DPPLAYERTYPE_PLAYER )
       {
@@ -565,7 +565,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
 
     case DPSYS_ADDPLAYERTOGROUP:
     {
-      LPDPMSG_ADDPLAYERTOGROUP msg = (LPDPMSG_ADDPLAYERTOGROUP)lpMsg;
+      LPDPMSG_ADDPLAYERTOGROUP msg = lpMsg;
 
       hr = DP_IF_AddPlayerToGroup( This, msg->dpIdGroup, msg->dpIdPlayer, ... );
       break;
@@ -573,7 +573,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
 
     case DPSYS_DELETEPLAYERFROMGROUP:
     {
-      LPDPMSG_DELETEPLAYERFROMGROUP msg = (LPDPMSG_DELETEPLAYERFROMGROUP)lpMsg;
+      LPDPMSG_DELETEPLAYERFROMGROUP msg = lpMsg;
 
       hr = DP_IF_DeletePlayerFromGroup( This, msg->dpIdGroup, msg->dpIdPlayer,
                                         ... );
@@ -583,7 +583,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
 
     case DPSYS_SESSIONLOST:
     {
-      LPDPMSG_SESSIONLOST msg = (LPDPMSG_SESSIONLOST)lpMsg;
+      LPDPMSG_SESSIONLOST msg = lpMsg;
 
       FIXME( "DPSYS_SESSIONLOST not handled\n" );
 
@@ -592,7 +592,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
 
     case DPSYS_HOST:
     {
-      LPDPMSG_HOST msg = (LPDPMSG_HOST)lpMsg;
+      LPDPMSG_HOST msg = lpMsg;
 
       FIXME( "DPSYS_HOST not handled\n" );
 
@@ -601,7 +601,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
 
     case DPSYS_SETPLAYERORGROUPDATA:
     {
-      LPDPMSG_SETPLAYERORGROUPDATA msg = (LPDPMSG_SETPLAYERORGROUPDATA)lpMsg;
+      LPDPMSG_SETPLAYERORGROUPDATA msg = lpMsg;
 
       if( msg->dwPlayerType == DPPLAYERTYPE_PLAYER )
       {
@@ -623,7 +623,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
 
     case DPSYS_SETPLAYERORGROUPNAME:
     {
-      LPDPMSG_SETPLAYERORGROUPNAME msg = (LPDPMSG_SETPLAYERORGROUPNAME)lpMsg;
+      LPDPMSG_SETPLAYERORGROUPNAME msg = lpMsg;
 
       if( msg->dwPlayerType == DPPLAYERTYPE_PLAYER )
       {
@@ -644,7 +644,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
 
     case DPSYS_SETSESSIONDESC;
     {
-      LPDPMSG_SETSESSIONDESC msg = (LPDPMSG_SETSESSIONDESC)lpMsg;
+      LPDPMSG_SETSESSIONDESC msg = lpMsg;
 
       hr = DP_IF_SetSessionDesc( This, &msg->dpDesc );
 
@@ -653,7 +653,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
 
     case DPSYS_ADDGROUPTOGROUP:
     {
-      LPDPMSG_ADDGROUPTOGROUP msg = (LPDPMSG_ADDGROUPTOGROUP)lpMsg;
+      LPDPMSG_ADDGROUPTOGROUP msg = lpMsg;
 
       hr = DP_IF_AddGroupToGroup( This, msg->dpIdParentGroup, msg->dpIdGroup,
                                   ... );
@@ -663,7 +663,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
 
     case DPSYS_DELETEGROUPFROMGROUP:
     {
-      LPDPMSG_DELETEGROUPFROMGROUP msg = (LPDPMSG_DELETEGROUPFROMGROUP)lpMsg;
+      LPDPMSG_DELETEGROUPFROMGROUP msg = lpMsg;
 
       hr = DP_IF_DeleteGroupFromGroup( This, msg->dpIdParentGroup,
                                        msg->dpIdGroup, ... );
@@ -673,7 +673,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
 
     case DPSYS_SECUREMESSAGE:
     {
-      LPDPMSG_SECUREMESSAGE msg = (LPDPMSG_SECUREMESSAGE)lpMsg;
+      LPDPMSG_SECUREMESSAGE msg = lpMsg;
 
       FIXME( "DPSYS_SECUREMESSAGE not implemented\n" );
 
@@ -682,7 +682,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
 
     case DPSYS_STARTSESSION:
     {
-      LPDPMSG_STARTSESSION msg = (LPDPMSG_STARTSESSION)lpMsg;
+      LPDPMSG_STARTSESSION msg = lpMsg;
 
       FIXME( "DPSYS_STARTSESSION not implemented\n" );
 
@@ -691,7 +691,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
 
     case DPSYS_CHAT:
     {
-      LPDPMSG_CHAT msg = (LPDPMSG_CHAT)lpMsg;
+      LPDPMSG_CHAT msg = lpMsg;
 
       FIXME( "DPSYS_CHAT not implemeneted\n" );
 
@@ -700,7 +700,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
 
     case DPSYS_SETGROUPOWNER:
     {
-      LPDPMSG_SETGROUPOWNER msg = (LPDPMSG_SETGROUPOWNER)lpMsg;
+      LPDPMSG_SETGROUPOWNER msg = lpMsg;
 
       FIXME( "DPSYS_SETGROUPOWNER not implemented\n" );
 
@@ -709,7 +709,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
 
     case DPSYS_SENDCOMPLETE:
     {
-      LPDPMSG_SENDCOMPLETE msg = (LPDPMSG_SENDCOMPLETE)lpMsg;
+      LPDPMSG_SENDCOMPLETE msg = lpMsg;
 
       FIXME( "DPSYS_SENDCOMPLETE not implemented\n" );
 

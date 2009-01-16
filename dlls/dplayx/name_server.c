@@ -185,7 +185,7 @@ LPVOID NS_GetNSAddr( LPVOID lpNSInfo )
 /* Get the magic number associated with the Name Server */
 DWORD NS_GetNsMagic( LPVOID lpNSInfo )
 {
-  LPDWORD lpHdrInfo = (LPDWORD)NS_GetNSAddr( lpNSInfo );
+  LPDWORD lpHdrInfo = NS_GetNSAddr( lpNSInfo );
 
   return lpHdrInfo[1];
 }

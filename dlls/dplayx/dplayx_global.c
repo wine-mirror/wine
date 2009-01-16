@@ -287,7 +287,7 @@ BOOL DPLAYX_ConstructData(void)
   lpMemArea = (LPVOID)((BYTE*)lpSharedStaticData + dwStaticSharedSize);
 
   /* FIXME: Crude hack */
-  lobbyData   = (DPLAYX_LOBBYDATA*)lpSharedStaticData;
+  lobbyData   = lpSharedStaticData;
   sessionData = (DPSESSIONDESC2*)((BYTE*)lpSharedStaticData + (dwStaticSharedSize/2));
 
   /* Initialize shared data segments. */
@@ -612,7 +612,7 @@ HRESULT DPLAYX_GetConnectionSettingsA
     return DPERR_BUFFERTOOSMALL;
   }
 
-  DPLAYX_CopyConnStructA( (LPDPLCONNECTION)lpData, lpDplData->lpConn );
+  DPLAYX_CopyConnStructA( lpData, lpDplData->lpConn );
 
   DPLAYX_ReleaseSemaphore();
 
@@ -695,7 +695,7 @@ void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, const DPLCONNECTION *src )
   /* Copy address if it exists */
   if( src->lpAddress )
   {
-    dest->lpAddress = (LPVOID)lpStartOfFreeSpace;
+    dest->lpAddress = lpStartOfFreeSpace;
     CopyMemory( lpStartOfFreeSpace, src->lpAddress, src->dwAddressSize );
     /* No need to advance lpStartOfFreeSpace as there is no more "dynamic" data */
   }
@@ -734,7 +734,7 @@ HRESULT DPLAYX_GetConnectionSettingsW
     return DPERR_BUFFERTOOSMALL;
   }
 
-  DPLAYX_CopyConnStructW( (LPDPLCONNECTION)lpData, lpDplData->lpConn );
+  DPLAYX_CopyConnStructW( lpData, lpDplData->lpConn );
 
   DPLAYX_ReleaseSemaphore();
 
@@ -817,7 +817,7 @@ void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, const DPLCONNECTION *src )
   /* Copy address if it exists */
   if( src->lpAddress )
   {
-    dest->lpAddress = (LPVOID)lpStartOfFreeSpace;
+    dest->lpAddress = lpStartOfFreeSpace;
     CopyMemory( lpStartOfFreeSpace, src->lpAddress, src->dwAddressSize );
     /* No need to advance lpStartOfFreeSpace as there is no more "dynamic" data */
   }

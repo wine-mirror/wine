@@ -234,7 +234,7 @@ static LONG kludgePlayerGroupId = 1000;
 
 static BOOL DP_CreateIUnknown( LPVOID lpDP )
 {
-  IDirectPlay2AImpl *This = (IDirectPlay2AImpl *)lpDP;
+  IDirectPlay2AImpl *This = lpDP;
 
   This->unk = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->unk) ) );
   if ( This->unk == NULL )
@@ -250,7 +250,7 @@ static BOOL DP_CreateIUnknown( LPVOID lpDP )
 
 static BOOL DP_DestroyIUnknown( LPVOID lpDP )
 {
-  IDirectPlay2AImpl *This = (IDirectPlay2AImpl *)lpDP;
+  IDirectPlay2AImpl *This = lpDP;
 
   This->unk->DP_lock.DebugInfo->Spare[0] = 0;
   DeleteCriticalSection( &This->unk->DP_lock );
@@ -261,7 +261,7 @@ static BOOL DP_DestroyIUnknown( LPVOID lpDP )
 
 static BOOL DP_CreateDirectPlay2( LPVOID lpDP )
 {
-  IDirectPlay2AImpl *This = (IDirectPlay2AImpl *)lpDP;
+  IDirectPlay2AImpl *This = lpDP;
 
   This->dp2 = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->dp2) ) );
   if ( This->dp2 == NULL )
@@ -367,7 +367,7 @@ DPQ_DECL_DELETECB( cbDeletePlayerElem, lpPlayerList )
 
 static BOOL DP_DestroyDirectPlay2( LPVOID lpDP )
 {
-  IDirectPlay2AImpl *This = (IDirectPlay2AImpl *)lpDP;
+  IDirectPlay2AImpl *This = lpDP;
 
   if( This->dp2->hEnumSessionThread != INVALID_HANDLE_VALUE )
   {
@@ -425,7 +425,7 @@ static BOOL DP_DestroyDirectPlay2( LPVOID lpDP )
 
 static BOOL DP_CreateDirectPlay3( LPVOID lpDP )
 {
-  IDirectPlay3AImpl *This = (IDirectPlay3AImpl *)lpDP;
+  IDirectPlay3AImpl *This = lpDP;
 
   This->dp3 = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->dp3) ) );
   if ( This->dp3 == NULL )
@@ -438,7 +438,7 @@ static BOOL DP_CreateDirectPlay3( LPVOID lpDP )
 
 static BOOL DP_DestroyDirectPlay3( LPVOID lpDP )
 {
-  IDirectPlay3AImpl *This = (IDirectPlay3AImpl *)lpDP;
+  IDirectPlay3AImpl *This = lpDP;
 
   /* Delete the contents */
   HeapFree( GetProcessHeap(), 0, This->dp3 );
@@ -448,7 +448,7 @@ static BOOL DP_DestroyDirectPlay3( LPVOID lpDP )
 
 static BOOL DP_CreateDirectPlay4( LPVOID lpDP )
 {
-  IDirectPlay4AImpl *This = (IDirectPlay4AImpl *)lpDP;
+  IDirectPlay4AImpl *This = lpDP;
 
   This->dp4 = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->dp4) ) );
   if ( This->dp4 == NULL )
@@ -461,7 +461,7 @@ static BOOL DP_CreateDirectPlay4( LPVOID lpDP )
 
 static BOOL DP_DestroyDirectPlay4( LPVOID lpDP )
 {
-  IDirectPlay3AImpl *This = (IDirectPlay3AImpl *)lpDP;
+  IDirectPlay3AImpl *This = lpDP;
 
   /* Delete the contents */
   HeapFree( GetProcessHeap(), 0, This->dp4 );
@@ -486,32 +486,32 @@ HRESULT DP_CreateInterface
 
   if( IsEqualGUID( &IID_IDirectPlay2, riid ) )
   {
-    IDirectPlay2Impl *This = (IDirectPlay2Impl *)*ppvObj;
+    IDirectPlay2Impl *This = *ppvObj;
     This->lpVtbl = &directPlay2WVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay2A, riid ) )
   {
-    IDirectPlay2AImpl *This = (IDirectPlay2AImpl *)*ppvObj;
+    IDirectPlay2AImpl *This = *ppvObj;
     This->lpVtbl = &directPlay2AVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay3, riid ) )
   {
-    IDirectPlay3Impl *This = (IDirectPlay3Impl *)*ppvObj;
+    IDirectPlay3Impl *This = *ppvObj;
     This->lpVtbl = &directPlay3WVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay3A, riid ) )
   {
-    IDirectPlay3AImpl *This = (IDirectPlay3AImpl *)*ppvObj;
+    IDirectPlay3AImpl *This = *ppvObj;
     This->lpVtbl = &directPlay3AVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay4, riid ) )
   {
-    IDirectPlay4Impl *This = (IDirectPlay4Impl *)*ppvObj;
+    IDirectPlay4Impl *This = *ppvObj;
     This->lpVtbl = &directPlay4WVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay4A, riid ) )
   {
-    IDirectPlay4AImpl *This = (IDirectPlay4AImpl *)*ppvObj;
+    IDirectPlay4AImpl *This = *ppvObj;
     This->lpVtbl = &directPlay4AVT;
   }
   else
@@ -570,32 +570,32 @@ static HRESULT WINAPI DP_QueryInterface
 
   if( IsEqualGUID( &IID_IDirectPlay2, riid ) )
   {
-    IDirectPlay2Impl *This = (IDirectPlay2Impl *)*ppvObj;
+    IDirectPlay2Impl *This = *ppvObj;
     This->lpVtbl = &directPlay2WVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay2A, riid ) )
   {
-    IDirectPlay2AImpl *This = (IDirectPlay2AImpl *)*ppvObj;
+    IDirectPlay2AImpl *This = *ppvObj;
     This->lpVtbl = &directPlay2AVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay3, riid ) )
   {
-    IDirectPlay3Impl *This = (IDirectPlay3Impl *)*ppvObj;
+    IDirectPlay3Impl *This = *ppvObj;
     This->lpVtbl = &directPlay3WVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay3A, riid ) )
   {
-    IDirectPlay3AImpl *This = (IDirectPlay3AImpl *)*ppvObj;
+    IDirectPlay3AImpl *This = *ppvObj;
     This->lpVtbl = &directPlay3AVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay4, riid ) )
   {
-    IDirectPlay4Impl *This = (IDirectPlay4Impl *)*ppvObj;
+    IDirectPlay4Impl *This = *ppvObj;
     This->lpVtbl = &directPlay4WVT;
   }
   else if( IsEqualGUID( &IID_IDirectPlay4A, riid ) )
   {
-    IDirectPlay4AImpl *This = (IDirectPlay4AImpl *)*ppvObj;
+    IDirectPlay4AImpl *This = *ppvObj;
     This->lpVtbl = &directPlay4AVT;
   }
   else
@@ -700,8 +700,7 @@ HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpcMessageBody,
 
     case DPMSGCMD_REQUESTNEWPLAYERID:
     {
-      LPCDPMSG_REQUESTNEWPLAYERID lpcMsg =
-        (LPCDPMSG_REQUESTNEWPLAYERID)lpcMessageBody;
+      LPCDPMSG_REQUESTNEWPLAYERID lpcMsg = lpcMessageBody;
 
       LPDPMSG_NEWPLAYERIDREPLY lpReply;
 
@@ -1811,7 +1810,7 @@ static HRESULT DP_IF_DestroyGroup
 
   /* Remove all players that this group has */
   DP_IF_EnumGroupPlayers( This, idGroup, NULL,
-                          cbRemoveGroupOrPlayer, (LPVOID)&context, 0, bAnsi );
+                          cbRemoveGroupOrPlayer, &context, 0, bAnsi );
 
   /* Remove all links to groups that this group has since this is dp3 */
   DP_IF_EnumGroupsInGroup( (IDirectPlay3Impl*)This, idGroup, NULL,
@@ -1896,7 +1895,7 @@ static HRESULT DP_IF_DestroyPlayer
   /* Find each group and call DeletePlayerFromGroup if the player is a
      member of the group */
   DP_IF_EnumGroups( This, NULL, cbDeletePlayerFromAllGroups,
-                    (LPVOID)&cbContext, DPENUMGROUPS_ALL, bAnsi );
+                    &cbContext, DPENUMGROUPS_ALL, bAnsi );
 
   /* Now delete player and player list from the sys group */
   DP_DeletePlayer( This, idPlayer );
@@ -2151,7 +2150,7 @@ static void DP_InvokeEnumSessionCallbacks
 
 static DWORD CALLBACK DP_EnumSessionsSendAsyncRequestThread( LPVOID lpContext )
 {
-  EnumSessionAsyncCallbackData* data = (EnumSessionAsyncCallbackData*)lpContext;
+  EnumSessionAsyncCallbackData* data = lpContext;
   HANDLE hSuicideRequest = data->hSuicideRequest;
   DWORD dwTimeout = data->dwTimeout;
 
@@ -2507,7 +2506,7 @@ static HRESULT DP_IF_GetGroupName
             LPDWORD lpdwDataSize, BOOL bAnsi )
 {
   lpGroupData lpGData;
-  LPDPNAME    lpName = (LPDPNAME)lpData;
+  LPDPNAME    lpName = lpData;
   DWORD       dwRequiredDataSize;
 
   FIXME("(%p)->(0x%08x,%p,%p,%u) ANSI ignored\n",
@@ -2706,7 +2705,7 @@ static HRESULT DP_IF_GetPlayerName
             LPDWORD lpdwDataSize, BOOL bAnsi )
 {
   lpPlayerList lpPList;
-  LPDPNAME    lpName = (LPDPNAME)lpData;
+  LPDPNAME    lpName = lpData;
   DWORD       dwRequiredDataSize;
 
   FIXME( "(%p)->(0x%08x,%p,%p,%u): ANSI\n",

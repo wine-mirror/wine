@@ -127,7 +127,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 
     if ( IsEqualCLSID( riid, &IID_IClassFactory ) )
     {
-        *ppv = (LPVOID)&DP_and_DPL_CF;
+        *ppv = &DP_and_DPL_CF;
         IClassFactory_AddRef( (IClassFactory*)*ppv );
 
         return S_OK;
