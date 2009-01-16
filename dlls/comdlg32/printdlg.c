@@ -2393,6 +2393,11 @@ static HGLOBAL PRINTDLG_GetPGSTemplateW(const PAGESETUPDLGW *lppd)
     return hDlgTmpl;
 }
 
+static inline BOOL is_metric(const PageSetupDataA *pda)
+{
+    return pda->dlga->Flags & PSD_INHUNDREDTHSOFMILLIMETERS;
+}
+
 static DWORD
 _c_10mm2size(PAGESETUPDLGA *dlga,DWORD size) {
     if (dlga->Flags & PSD_INTHOUSANDTHSOFINCHES)
@@ -2414,7 +2419,7 @@ static void size2str(const PageSetupDataA *pda, DWORD size, LPWSTR strout)
     static const WCHAR metric_format[] = {'%','d',0};
     static const WCHAR imperial_format[] = {'%','d','i','n',0};
 
-    if (pda->dlga->Flags & PSD_INHUNDREDTHSOFMILLIMETERS)
+    if (is_metric(pda))
 	wsprintfW(strout, metric_format, size / 100);
     else
 	wsprintfW(strout, imperial_format, size / 1000);
