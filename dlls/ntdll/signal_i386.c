@@ -199,7 +199,7 @@ typedef struct trapframe SIGCONTEXT;
 
 #endif /* bsdi */
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__)
 
 typedef struct sigcontext SIGCONTEXT;
 
@@ -331,6 +331,42 @@ typedef ucontext_t SIGCONTEXT;
 #endif
 
 #endif /* __APPLE__ */
+
+#if defined(__NetBSD__)
+# include <sys/ucontext.h>
+# include <sys/types.h>
+# include <signal.h>
+
+typedef ucontext_t SIGCONTEXT;
+
+#define EAX_sig(context)       ((context)->uc_mcontext.__gregs[_REG_EAX])
+#define EBX_sig(context)       ((context)->uc_mcontext.__gregs[_REG_EBX])
+#define ECX_sig(context)       ((context)->uc_mcontext.__gregs[_REG_ECX])
+#define EDX_sig(context)       ((context)->uc_mcontext.__gregs[_REG_EDX])
+#define ESI_sig(context)       ((context)->uc_mcontext.__gregs[_REG_ESI])
+#define EDI_sig(context)       ((context)->uc_mcontext.__gregs[_REG_EDI])
+#define EBP_sig(context)       ((context)->uc_mcontext.__gregs[_REG_EBP])
+#define ESP_sig(context)       _UC_MACHINE_SP(context)
+
+#define CS_sig(context)        ((context)->uc_mcontext.__gregs[_REG_CS])
+#define DS_sig(context)        ((context)->uc_mcontext.__gregs[_REG_DS])
+#define ES_sig(context)        ((context)->uc_mcontext.__gregs[_REG_ES])
+#define SS_sig(context)        ((context)->uc_mcontext.__gregs[_REG_SS])
+#define FS_sig(context)        ((context)->uc_mcontext.__gregs[_REG_FS])
+#define GS_sig(context)        ((context)->uc_mcontext.__gregs[_REG_GS])
+
+#define EFL_sig(context)       ((context)->uc_mcontext.__gregs[_REG_EFL])
+#define EIP_sig(context)       _UC_MACHINE_PC(context)
+#define TRAP_sig(context)      ((context)->uc_mcontext.__gregs[_REG_TRAPNO])
+#define ERROR_sig(context)     ((context)->uc_mcontext.__gregs[_REG_ERR])
+
+#define FPU_sig(context)     NULL
+#define FPUX_sig(context)    ((XMM_SAVE_AREA32 *)&((context)->uc_mcontext.__fpregs))
+
+#define T_MCHK T_MCA
+#define T_XMMFLT T_XMM
+
+#endif /* __NetBSD__ */
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
