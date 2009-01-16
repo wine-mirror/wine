@@ -272,7 +272,7 @@ static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
 /* Length is in terms of 32 bit samples */
 static void volume_effect32(void *buffer, int length, int left, int right)
 {
-        short *data = (short *)buffer;
+        short *data = buffer;
         int i, v;
     
         if (right == -1) right = left;
@@ -360,15 +360,15 @@ static int JACK_callback_wwo (nframes_t nframes, void *arg)
 {
   sample_t* out_l;
   sample_t* out_r;
-  WINE_WAVEOUT* wwo = (WINE_WAVEOUT*)arg;
+  WINE_WAVEOUT* wwo = arg;
 
   TRACE("wDevID: %u, nframes %u state=%u\n", wwo->wDevID, nframes,wwo->state);
 
   if(!wwo->client)
     ERR("client is closed, this is weird...\n");
-    
-  out_l = (sample_t *) fp_jack_port_get_buffer(wwo->out_port_l, nframes);
-  out_r = (sample_t *) fp_jack_port_get_buffer(wwo->out_port_r, nframes);
+
+  out_l = fp_jack_port_get_buffer(wwo->out_port_l, nframes);
+  out_r = fp_jack_port_get_buffer(wwo->out_port_r, nframes);
 
   if(wwo->state == WINE_WS_PLAYING)
   {
@@ -494,7 +494,7 @@ static int JACK_callback_wwo (nframes_t nframes, void *arg)
  */
 static int JACK_bufsize_wwo (nframes_t nframes, void *arg)
 {
-  WINE_WAVEOUT* wwo = (WINE_WAVEOUT*)arg;
+  WINE_WAVEOUT* wwo = arg;
   DWORD buffer_required;
   TRACE("wDevID=%d\n",wwo->wDevID);
   TRACE("the maximum buffer size is now %u frames\n", nframes);
@@ -562,7 +562,7 @@ static int JACK_srate (nframes_t nframes, void *arg)
 /* if this is called then jack shut down... handle this appropriately */
 static void JACK_shutdown_wwo(void* arg)
 {
-  WINE_WAVEOUT* wwo = (WINE_WAVEOUT*)arg;
+  WINE_WAVEOUT* wwo = arg;
 
   wwo->client = 0; /* reset client */
 
@@ -582,7 +582,7 @@ static void JACK_shutdown_wwo(void* arg)
 /* if this is called then jack shut down... handle this appropriately */
 static void JACK_shutdown_wwi(void* arg)
 {
-  WINE_WAVEIN* wwi = (WINE_WAVEIN*)arg;
+  WINE_WAVEIN* wwi = arg;
 
   wwi->client = 0; /* reset client */
 
@@ -1783,18 +1783,18 @@ static int JACK_callback_wwi (nframes_t nframes, void *arg)
 {
     sample_t* in_l;
     sample_t* in_r = 0;
-    WINE_WAVEIN* wwi = (WINE_WAVEIN*)arg;
+    WINE_WAVEIN* wwi = arg;
 
     TRACE("wDevID: %u, nframes %u\n", wwi->wDevID, nframes);
     
     if(!wwi->client)
 	ERR("client is closed, this is weird...\n");
-    
-    in_l = (sample_t *) fp_jack_port_get_buffer(wwi->in_port_l, nframes);
+
+    in_l = fp_jack_port_get_buffer(wwi->in_port_l, nframes);
 
     if (wwi->in_port_r)
-      in_r = (sample_t *) fp_jack_port_get_buffer(wwi->in_port_r, nframes);
-    
+      in_r = fp_jack_port_get_buffer(wwi->in_port_r, nframes);
+
     EnterCriticalSection(&wwi->access_crst);
     
     if((wwi->lpQueuePtr != NULL) && (wwi->state == WINE_WS_PLAYING))
