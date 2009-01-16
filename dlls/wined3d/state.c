@@ -3344,8 +3344,10 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
     checkGLcall("glActiveTextureARB");
 
     if(stateblock->textures[sampler]) {
+        BOOL srgb = stateblock->samplerState[sampler][WINED3DSAMP_SRGBTEXTURE];
+        basetexture_setsrgbcache(stateblock->textures[sampler], srgb);
         IWineD3DBaseTexture_PreLoad(stateblock->textures[sampler]);
-        IWineD3DBaseTexture_BindTexture(stateblock->textures[sampler]);
+        IWineD3DBaseTexture_BindTexture(stateblock->textures[sampler], srgb);
         IWineD3DBaseTexture_ApplyStateChanges(stateblock->textures[sampler], stateblock->textureState[sampler], stateblock->samplerState[sampler]);
 
         if (GL_SUPPORT(EXT_TEXTURE_LOD_BIAS)) {

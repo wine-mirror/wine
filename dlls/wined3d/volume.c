@@ -57,7 +57,7 @@ static void volume_bind_and_dirtify(IWineD3DVolume *iface) {
     }
 
     if (SUCCEEDED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DVolumeTexture, (void **)&texture))) {
-        IWineD3DVolumeTexture_BindTexture(texture);
+        IWineD3DVolumeTexture_BindTexture(texture, FALSE);
         IWineD3DVolumeTexture_Release(texture);
     } else {
         ERR("Volume should be part of a volume texture\n");

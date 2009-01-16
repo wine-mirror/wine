@@ -113,11 +113,6 @@ static void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *ifac
         for (i = 0; i < This->baseTexture.levels; i++)
             IWineD3DVolume_LoadTexture(This->volumes[i], i, srgb_mode);
     } else if (srgb_was_toggled) {
-        if (This->baseTexture.srgb_mode_change_count < 20)
-            ++This->baseTexture.srgb_mode_change_count;
-        else
-            FIXME("Volumetexture (%p) has been reloaded at least 20 times due to WINED3DSAMP_SRGBTEXTURE changes on it\'s sampler\n", This);
-
         for (i = 0; i < This->baseTexture.levels; i++) {
             volume_add_dirty_box(This->volumes[i], NULL);
             IWineD3DVolume_LoadTexture(This->volumes[i], i, srgb_mode);
@@ -192,10 +187,11 @@ static BOOL WINAPI IWineD3DVolumeTextureImpl_GetDirty(IWineD3DVolumeTexture *ifa
     return basetexture_get_dirty((IWineD3DBaseTexture *)iface);
 }
 
-static HRESULT WINAPI IWineD3DVolumeTextureImpl_BindTexture(IWineD3DVolumeTexture *iface) {
+static HRESULT WINAPI IWineD3DVolumeTextureImpl_BindTexture(IWineD3DVolumeTexture *iface, BOOL srgb) {
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
+    BOOL dummy;
     TRACE("(%p) : relay to BaseTexture\n", This);
-    return basetexture_bind((IWineD3DBaseTexture *)iface);
+    return basetexture_bind((IWineD3DBaseTexture *)iface, srgb, &dummy);
 }
 
 static UINT WINAPI IWineD3DVolumeTextureImpl_GetTextureDimensions(IWineD3DVolumeTexture *iface) {

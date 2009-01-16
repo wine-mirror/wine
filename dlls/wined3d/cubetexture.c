@@ -97,9 +97,9 @@ static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     BOOL srgb_mode = This->baseTexture.is_srgb;
-    BOOL srgb_was_toggled = FALSE;
+    BOOL *dirty = srgb_mode ? &This->baseTexture.srgbDirty : &This->baseTexture.dirty;
 
-    TRACE("(%p) : About to load texture: dirtified(%d)\n", This, This->baseTexture.dirty);
+    TRACE("(%p) : About to load texture: dirtified(%d)\n", This, *dirty);
 
     /* We only have to activate a context for gl when we're not drawing. In most cases PreLoad will be called during draw
      * and a context was activated at the beginning of drawPrimitive
@@ -109,10 +109,6 @@ static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
          * offscreen render targets into their texture
          */
         ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-    } else if (GL_SUPPORT(EXT_TEXTURE_SRGB) && This->baseTexture.bindCount > 0) {
-        srgb_mode = device->stateBlock->samplerState[This->baseTexture.sampler][WINED3DSAMP_SRGBTEXTURE];
-        srgb_was_toggled = (This->baseTexture.is_srgb != srgb_mode);
-        This->baseTexture.is_srgb = srgb_mode;
     }
 
     if (This->resource.format == WINED3DFMT_P8 || This->resource.format == WINED3DFMT_A8P8) {
@@ -129,24 +125,9 @@ static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
         }
     }
     /* If the texture is marked dirty or the srgb sampler setting has changed since the last load then reload the surfaces */
-    if (This->baseTexture.dirty) {
+    if (*dirty) {
         for (i = 0; i < This->baseTexture.levels; i++) {
             for (j = WINED3DCUBEMAP_FACE_POSITIVE_X; j <= WINED3DCUBEMAP_FACE_NEGATIVE_Z ; j++) {
-                IWineD3DSurface_LoadTexture(This->surfaces[j][i], srgb_mode);
-            }
-        }
-    } else if (srgb_was_toggled) {
-        /* Loop is repeated in the else block with the extra surface_add_dirty_rect() line to avoid the
-         * alternative of checking srgb_was_toggled in every iteration, even when the texture is just dirty */
-        if (This->baseTexture.srgb_mode_change_count < 20)
-            ++This->baseTexture.srgb_mode_change_count;
-        else
-            FIXME("Cubetexture (%p) has been reloaded at least 20 times due to WINED3DSAMP_SRGBTEXTURE changes on it\'s sampler\n", This);
-
-        for (i = 0; i < This->baseTexture.levels; i++) {
-            for (j = WINED3DCUBEMAP_FACE_POSITIVE_X; j <= WINED3DCUBEMAP_FACE_NEGATIVE_Z ; j++) {
-                surface_add_dirty_rect(This->surfaces[j][i], NULL);
-                surface_force_reload(This->surfaces[j][i]);
                 IWineD3DSurface_LoadTexture(This->surfaces[j][i], srgb_mode);
             }
         }
@@ -155,8 +136,8 @@ static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
     }
 
     /* No longer dirty */
-    This->baseTexture.dirty = FALSE;
-    return ;
+    *dirty = FALSE;
+    return;
 }
 
 static void WINAPI IWineD3DCubeTextureImpl_UnLoad(IWineD3DCubeTexture *iface) {
@@ -171,7 +152,8 @@ static void WINAPI IWineD3DCubeTextureImpl_UnLoad(IWineD3DCubeTexture *iface) {
     for (i = 0; i < This->baseTexture.levels; i++) {
         for (j = WINED3DCUBEMAP_FACE_POSITIVE_X; j <= WINED3DCUBEMAP_FACE_NEGATIVE_Z ; j++) {
             IWineD3DSurface_UnLoad(This->surfaces[j][i]);
-            surface_set_texture_name(This->surfaces[j][i], 0);
+            surface_set_texture_name(This->surfaces[j][i], 0, TRUE);
+            surface_set_texture_name(This->surfaces[j][i], 0, FALSE);
         }
     }
 
@@ -223,19 +205,23 @@ static BOOL WINAPI IWineD3DCubeTextureImpl_GetDirty(IWineD3DCubeTexture *iface) 
     return basetexture_get_dirty((IWineD3DBaseTexture *)iface);
 }
 
-static HRESULT WINAPI IWineD3DCubeTextureImpl_BindTexture(IWineD3DCubeTexture *iface) {
+static HRESULT WINAPI IWineD3DCubeTextureImpl_BindTexture(IWineD3DCubeTexture *iface, BOOL srgb) {
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
-    BOOL set_gl_texture_desc = This->baseTexture.textureName == 0;
+    BOOL set_gl_texture_desc;
     HRESULT hr;
 
     TRACE("(%p) : relay to BaseTexture\n", This);
 
-    hr = basetexture_bind((IWineD3DBaseTexture *)iface);
+    hr = basetexture_bind((IWineD3DBaseTexture *)iface, srgb, &set_gl_texture_desc);
     if (set_gl_texture_desc && SUCCEEDED(hr)) {
         UINT i, j;
         for (i = 0; i < This->baseTexture.levels; ++i) {
             for (j = WINED3DCUBEMAP_FACE_POSITIVE_X; j <= WINED3DCUBEMAP_FACE_NEGATIVE_Z; ++j) {
-                surface_set_texture_name(This->surfaces[j][i], This->baseTexture.textureName);
+                if(This->baseTexture.is_srgb) {
+                    surface_set_texture_name(This->surfaces[j][i], This->baseTexture.textureName, TRUE);
+                } else {
+                    surface_set_texture_name(This->surfaces[j][i], This->baseTexture.srgbTextureName, FALSE);
+                }
             }
         }
     }
@@ -277,7 +263,8 @@ static void WINAPI IWineD3DCubeTextureImpl_Destroy(IWineD3DCubeTexture *iface, D
             if (This->surfaces[j][i] != NULL) {
                 IWineD3DSurface *surface = This->surfaces[j][i];
                 /* Clean out the texture name we gave to the surface so that the surface doesn't try and release it */
-                surface_set_texture_name(surface, 0);
+                surface_set_texture_name(surface, 0, TRUE);
+                surface_set_texture_name(surface, 0, FALSE);
                 surface_set_texture_target(surface, 0);
                 /* Cleanup the container */
                 IWineD3DSurface_SetContainer(This->surfaces[j][i], 0);
@@ -357,6 +344,7 @@ static HRESULT  WINAPI IWineD3DCubeTextureImpl_AddDirtyRect(IWineD3DCubeTexture 
     HRESULT hr = WINED3DERR_INVALIDCALL;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
     This->baseTexture.dirty = TRUE;
+    This->baseTexture.srgbDirty = TRUE;
     TRACE("(%p) : dirtyfication of faceType(%d) Level (0)\n", This, FaceType);
     if (FaceType <= WINED3DCUBEMAP_FACE_NEGATIVE_Z) {
         surface_add_dirty_rect(This->surfaces[FaceType][0], pDirtyRect);

@@ -5922,7 +5922,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
 
     /* Make sure the surface is loaded and up to date */
     IWineD3DSurface_PreLoad(pDestinationSurface);
-    IWineD3DSurface_BindTexture(pDestinationSurface);
+    IWineD3DSurface_BindTexture(pDestinationSurface, FALSE);
 
     IWineD3DSurface_GetGlDesc(pDestinationSurface, &glDescription);
 

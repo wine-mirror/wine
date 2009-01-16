@@ -1830,7 +1830,7 @@ typedef struct _WINED3DINDEXBUFFER_DESC
 
 typedef struct glDescriptor
 {
-    UINT textureName;
+    UINT textureName, srgbTextureName;
     int level;
     int /*GLenum*/ target;
     int /*GLenum*/ glFormat;
@@ -2501,6 +2501,7 @@ interface IWineD3DSurface : IWineD3DResource
         [in] BOOL srgb_mode
     );
     void BindTexture(
+        [in] BOOL srgb
     );
     HRESULT SaveSnapshot(
         [in] const char *filename
@@ -2589,6 +2590,7 @@ interface IWineD3DBaseTexture : IWineD3DResource
     BOOL GetDirty(
     );
     HRESULT BindTexture(
+        [in] BOOL srgb
     );
     UINT GetTextureDimensions(
     );

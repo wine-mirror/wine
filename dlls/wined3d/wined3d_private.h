@@ -1357,16 +1357,16 @@ typedef enum winetexturestates {
 typedef struct IWineD3DBaseTextureClass
 {
     DWORD                   states[MAX_WINETEXTURESTATES];
+    DWORD                   srgbstates[MAX_WINETEXTURESTATES];
     UINT                    levels;
-    BOOL                    dirty;
-    UINT                    textureName;
+    BOOL                    dirty, srgbDirty;
+    UINT                    textureName, srgbTextureName;
     float                   pow2Matrix[16];
     UINT                    LOD;
     WINED3DTEXTUREFILTERTYPE filterType;
     LONG                    bindCount;
     DWORD                   sampler;
     BOOL                    is_srgb;
-    UINT                    srgb_mode_change_count;
     const struct min_lookup *minMipLookup;
     const GLenum            *magLookup;
     struct color_fixup_desc shader_color_fixup;
@@ -1384,7 +1384,7 @@ typedef struct IWineD3DBaseTextureImpl
 void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
         const DWORD texture_states[WINED3D_HIGHEST_TEXTURE_STATE + 1],
         const DWORD sampler_states[WINED3D_HIGHEST_SAMPLER_STATE + 1]);
-HRESULT basetexture_bind(IWineD3DBaseTexture *iface);
+HRESULT basetexture_bind(IWineD3DBaseTexture *iface, BOOL srgb, BOOL *set_surface_desc);
 void basetexture_cleanup(IWineD3DBaseTexture *iface);
 void basetexture_generate_mipmaps(IWineD3DBaseTexture *iface);
 WINED3DTEXTUREFILTERTYPE basetexture_get_autogen_filter_type(IWineD3DBaseTexture *iface);
@@ -1396,6 +1396,10 @@ HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTexture *iface, WINED3DT
 BOOL basetexture_set_dirty(IWineD3DBaseTexture *iface, BOOL dirty);
 DWORD basetexture_set_lod(IWineD3DBaseTexture *iface, DWORD new_lod);
 void basetexture_unload(IWineD3DBaseTexture *iface);
+static inline void basetexture_setsrgbcache(IWineD3DBaseTexture *iface, BOOL srgb) {
+    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
+    This->baseTexture.is_srgb = srgb;
+}
 
 /*****************************************************************************
  * IWineD3DTexture implementation structure (extends IWineD3DBaseTextureImpl)
@@ -1572,7 +1576,6 @@ struct IWineD3DSurfaceImpl
 #define MAXLOCKCOUNT          50 /* After this amount of locks do not free the sysmem copy */
 
     glDescriptor              glDescription;
-    BOOL                      srgb;
 
     /* For GetDC */
     wineD3DSurface_DIB        dib;
@@ -1641,7 +1644,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, DWORD dsty,
         IWineD3DSurface *Source, const RECT *rsrc, DWORD trans);
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags);
-void WINAPI IWineD3DBaseSurfaceImpl_BindTexture(IWineD3DSurface *iface);
+void WINAPI IWineD3DBaseSurfaceImpl_BindTexture(IWineD3DSurface *iface, BOOL srgb);
 const void *WINAPI IWineD3DBaseSurfaceImpl_GetData(IWineD3DSurface *iface);
 
 void get_drawable_size_swapchain(IWineD3DSurfaceImpl *This, UINT *width, UINT *height);
@@ -1659,22 +1662,23 @@ void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back);
 #define SFLAG_DISCARD       0x00000010 /* ??? */
 #define SFLAG_LOCKED        0x00000020 /* Surface is locked atm */
 #define SFLAG_INTEXTURE     0x00000040 /* The GL texture contains the newest surface content */
-#define SFLAG_INDRAWABLE    0x00000080 /* The gl drawable contains the most up to date data */
-#define SFLAG_INSYSMEM      0x00000100 /* The system memory copy is most up to date */
-#define SFLAG_NONPOW2       0x00000200 /* Surface sizes are not a power of 2 */
-#define SFLAG_DYNLOCK       0x00000400 /* Surface is often locked by the app */
-#define SFLAG_DYNCHANGE     0x00000C00 /* Surface contents are changed very often, implies DYNLOCK */
+#define SFLAG_INSRGBTEX     0x00000080 /* The GL srgb texture contains the newest surface content */
+#define SFLAG_INDRAWABLE    0x00000100 /* The gl drawable contains the most up to date data */
+#define SFLAG_INSYSMEM      0x00000200 /* The system memory copy is most up to date */
+#define SFLAG_NONPOW2       0x00000400 /* Surface sizes are not a power of 2 */
+#define SFLAG_DYNLOCK       0x00000800 /* Surface is often locked by the app */
 #define SFLAG_DCINUSE       0x00001000 /* Set between GetDC and ReleaseDC calls */
 #define SFLAG_LOST          0x00002000 /* Surface lost flag for DDraw */
 #define SFLAG_USERPTR       0x00004000 /* The application allocated the memory for this surface */
 #define SFLAG_GLCKEY        0x00008000 /* The gl texture was created with a color key */
 #define SFLAG_CLIENT        0x00010000 /* GL_APPLE_client_storage is used on that texture */
 #define SFLAG_ALLOCATED     0x00020000 /* A gl texture is allocated for this surface */
-#define SFLAG_PBO           0x00040000 /* Has a PBO attached for speeding up data transfers for dynamically locked surfaces */
-#define SFLAG_NORMCOORD     0x00080000 /* Set if the GL texture coords are normalized(non-texture rectangle) */
-#define SFLAG_DS_ONSCREEN   0x00100000 /* Is a depth stencil, last modified onscreen */
-#define SFLAG_DS_OFFSCREEN  0x00200000 /* Is a depth stencil, last modified offscreen */
-#define SFLAG_INOVERLAYDRAW 0x00400000 /* Overlay drawing is in progress. Recursion prevention */
+#define SFLAG_SRGBALLOCATED 0x00040000 /* A srgb gl texture is allocated for this surface */
+#define SFLAG_PBO           0x00080000 /* Has a PBO attached for speeding up data transfers for dynamically locked surfaces */
+#define SFLAG_NORMCOORD     0x00100000 /* Set if the GL texture coords are normalized(non-texture rectangle) */
+#define SFLAG_DS_ONSCREEN   0x00200000 /* Is a depth stencil, last modified onscreen */
+#define SFLAG_DS_OFFSCREEN  0x00400000 /* Is a depth stencil, last modified offscreen */
+#define SFLAG_INOVERLAYDRAW 0x00800000 /* Overlay drawing is in progress. Recursion prevention */
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_OVERSIZE: Not all data can be kept in GL
@@ -1682,7 +1686,6 @@ void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back);
  * SFLAG_DIBSECTION: The dib code manages the memory
  * SFLAG_LOCKED: The app requires access to the surface data
  * SFLAG_DYNLOCK: Avoid freeing the data for performance
- * SFLAG_DYNCHANGE: Same reason as DYNLOCK
  * SFLAG_PBO: PBOs don't use 'normal' memory. It is either allocated by the driver or must be NULL.
  * SFLAG_CLIENT: OpenGL uses our memory as backup
  */
@@ -1691,14 +1694,14 @@ void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back);
                              SFLAG_DIBSECTION | \
                              SFLAG_LOCKED     | \
                              SFLAG_DYNLOCK    | \
-                             SFLAG_DYNCHANGE  | \
                              SFLAG_USERPTR    | \
                              SFLAG_PBO        | \
                              SFLAG_CLIENT)
 
 #define SFLAG_LOCATIONS     (SFLAG_INSYSMEM   | \
                              SFLAG_INTEXTURE  | \
-                             SFLAG_INDRAWABLE)
+                             SFLAG_INDRAWABLE | \
+                             SFLAG_INSRGBTEX)
 
 #define SFLAG_DS_LOCATIONS  (SFLAG_DS_ONSCREEN | \
                              SFLAG_DS_OFFSCREEN)
@@ -2056,7 +2059,7 @@ GLenum surface_get_gl_buffer(IWineD3DSurface *iface, IWineD3DSwapChain *swapchai
 void surface_load_ds_location(IWineD3DSurface *iface, DWORD location);
 void surface_modify_ds_location(IWineD3DSurface *iface, DWORD location);
 void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int width, unsigned int height);
-void surface_set_texture_name(IWineD3DSurface *iface, GLuint name);
+void surface_set_texture_name(IWineD3DSurface *iface, GLuint name, BOOL srgb_name);
 void surface_set_texture_target(IWineD3DSurface *iface, GLenum target);
 
 BOOL getColorBits(WINED3DFORMAT fmt, short *redSize, short *greenSize, short *blueSize, short *alphaSize, short *totalSize);
