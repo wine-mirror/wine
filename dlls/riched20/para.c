@@ -126,56 +126,71 @@ static void ME_UpdateTableFlags(ME_DisplayItem *para)
 static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, const PARAFORMAT2 *pFmt)
 {
   PARAFORMAT2 copy;
-  assert(sizeof(*para->member.para.pFmt) == sizeof(PARAFORMAT2));
+  DWORD dwMask;
+
+  assert(para->member.para.pFmt->cbSize == sizeof(PARAFORMAT2));
+  dwMask = pFmt->dwMask;
+  if (pFmt->cbSize < sizeof(PARAFORMAT))
+    return FALSE;
+  else if (pFmt->cbSize < sizeof(PARAFORMAT2))
+    dwMask &= PFM_ALL;
+  else
+    dwMask &= PFM_ALL2;
+
   ME_AddUndoItem(editor, diUndoSetParagraphFormat, para);
 
   copy = *para->member.para.pFmt;
 
 #define COPY_FIELD(m, f) \
-  if (pFmt->dwMask & (m)) {                     \
+  if (dwMask & (m)) {                           \
     para->member.para.pFmt->dwMask |= m;        \
     para->member.para.pFmt->f = pFmt->f;        \
   }
 
   COPY_FIELD(PFM_NUMBERING, wNumbering);
-#define EFFECTS_MASK (PFM_RTLPARA|PFM_KEEP|PFM_KEEPNEXT|PFM_PAGEBREAKBEFORE| \
-                      PFM_NOLINENUMBER|PFM_NOWIDOWCONTROL|PFM_DONOTHYPHEN|PFM_SIDEBYSIDE| \
-                      PFM_TABLE)
-  /* we take for granted that PFE_xxx is the hiword of the corresponding PFM_xxx */
-  if (pFmt->dwMask & EFFECTS_MASK) {
-    para->member.para.pFmt->dwMask |= pFmt->dwMask & EFFECTS_MASK;
-    para->member.para.pFmt->wEffects &= ~HIWORD(pFmt->dwMask);
-    para->member.para.pFmt->wEffects |= pFmt->wEffects & HIWORD(pFmt->dwMask);
-  }
-#undef EFFECTS_MASK
-
   COPY_FIELD(PFM_STARTINDENT, dxStartIndent);
-  if (pFmt->dwMask & PFM_OFFSETINDENT)
+  if (dwMask & PFM_OFFSETINDENT)
     para->member.para.pFmt->dxStartIndent += pFmt->dxStartIndent;
   COPY_FIELD(PFM_RIGHTINDENT, dxRightIndent);
   COPY_FIELD(PFM_OFFSET, dxOffset);
   COPY_FIELD(PFM_ALIGNMENT, wAlignment);
-
-  if (pFmt->dwMask & PFM_TABSTOPS)
+  if (dwMask & PFM_TABSTOPS)
   {
     para->member.para.pFmt->cTabCount = pFmt->cTabCount;
     memcpy(para->member.para.pFmt->rgxTabs, pFmt->rgxTabs, pFmt->cTabCount*sizeof(LONG));
   }
-  COPY_FIELD(PFM_SPACEBEFORE, dySpaceBefore);
-  COPY_FIELD(PFM_SPACEAFTER, dySpaceAfter);
-  COPY_FIELD(PFM_LINESPACING, dyLineSpacing);
-  COPY_FIELD(PFM_STYLE, sStyle);
-  COPY_FIELD(PFM_LINESPACING, bLineSpacingRule);
-  COPY_FIELD(PFM_SHADING, wShadingWeight);
-  COPY_FIELD(PFM_SHADING, wShadingStyle);
-  COPY_FIELD(PFM_NUMBERINGSTART, wNumberingStart);
-  COPY_FIELD(PFM_NUMBERINGSTYLE, wNumberingStyle);
-  COPY_FIELD(PFM_NUMBERINGTAB, wNumberingTab);
-  COPY_FIELD(PFM_BORDER, wBorderSpace);
-  COPY_FIELD(PFM_BORDER, wBorderWidth);
-  COPY_FIELD(PFM_BORDER, wBorders);
 
-  para->member.para.pFmt->dwMask |= pFmt->dwMask;
+  if (dwMask & (PFM_ALL2 & ~PFM_ALL))
+  {
+    /* PARAFORMAT2 fields */
+
+#define EFFECTS_MASK (PFM_RTLPARA|PFM_KEEP|PFM_KEEPNEXT|PFM_PAGEBREAKBEFORE| \
+                      PFM_NOLINENUMBER|PFM_NOWIDOWCONTROL|PFM_DONOTHYPHEN|PFM_SIDEBYSIDE| \
+                      PFM_TABLE)
+    /* we take for granted that PFE_xxx is the hiword of the corresponding PFM_xxx */
+    if (dwMask & EFFECTS_MASK) {
+      para->member.para.pFmt->dwMask |= dwMask & EFFECTS_MASK;
+      para->member.para.pFmt->wEffects &= ~HIWORD(dwMask);
+      para->member.para.pFmt->wEffects |= pFmt->wEffects & HIWORD(dwMask);
+    }
+#undef EFFECTS_MASK
+
+    COPY_FIELD(PFM_SPACEBEFORE, dySpaceBefore);
+    COPY_FIELD(PFM_SPACEAFTER, dySpaceAfter);
+    COPY_FIELD(PFM_LINESPACING, dyLineSpacing);
+    COPY_FIELD(PFM_STYLE, sStyle);
+    COPY_FIELD(PFM_LINESPACING, bLineSpacingRule);
+    COPY_FIELD(PFM_SHADING, wShadingWeight);
+    COPY_FIELD(PFM_SHADING, wShadingStyle);
+    COPY_FIELD(PFM_NUMBERINGSTART, wNumberingStart);
+    COPY_FIELD(PFM_NUMBERINGSTYLE, wNumberingStyle);
+    COPY_FIELD(PFM_NUMBERINGTAB, wNumberingTab);
+    COPY_FIELD(PFM_BORDER, wBorderSpace);
+    COPY_FIELD(PFM_BORDER, wBorderWidth);
+    COPY_FIELD(PFM_BORDER, wBorders);
+  }
+
+  para->member.para.pFmt->dwMask |= dwMask;
 #undef COPY_FIELD
 
   if (memcmp(&copy, para->member.para.pFmt, sizeof(PARAFORMAT2)))
