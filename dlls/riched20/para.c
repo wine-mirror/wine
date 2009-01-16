@@ -555,74 +555,73 @@ BOOL ME_SetSelectionParaFormat(ME_TextEditor *editor, const PARAFORMAT2 *pFmt)
   return TRUE;
 }
 
-static void ME_GetParaFormat(ME_TextEditor *editor, const ME_DisplayItem *para, PARAFORMAT2 *pFmt)
+static void ME_GetParaFormat(ME_TextEditor *editor,
+                             const ME_DisplayItem *para,
+                             PARAFORMAT2 *pFmt)
 {
-  if (pFmt->cbSize >= sizeof(PARAFORMAT2))
-  {
+  UINT cbSize = pFmt->cbSize;
+  if (pFmt->cbSize >= sizeof(PARAFORMAT2)) {
     *pFmt = *para->member.para.pFmt;
-    return;
+  } else {
+    CopyMemory(pFmt, para->member.para.pFmt, pFmt->cbSize);
+    pFmt->dwMask &= PFM_ALL;
   }
-  CopyMemory(pFmt, para->member.para.pFmt, pFmt->cbSize);  
+  pFmt->cbSize = cbSize;
 }
 
 void ME_GetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt)
 {
   ME_DisplayItem *para, *para_end;
-  PARAFORMAT2 tmp;
-  
+  PARAFORMAT2 *curFmt;
+
+  if (pFmt->cbSize < sizeof(PARAFORMAT)) {
+    pFmt->dwMask = 0;
+    return;
+  }
+
   ME_GetSelectionParas(editor, &para, &para_end);
-  
+
   ME_GetParaFormat(editor, para, pFmt);
-  if (para == para_end) return;
-  
+
   /* Invalidate values that change across the selected paragraphs. */
-  do {
-    ZeroMemory(&tmp, sizeof(tmp));
-    tmp.cbSize = sizeof(tmp);
-    ME_GetParaFormat(editor, para, &tmp);
+  while (para != para_end)
+  {
+    para = para->member.para.next_para;
+    curFmt = &para->member.para.pFmt;
 
 #define CHECK_FIELD(m, f) \
-    if (pFmt->f != tmp.f) pFmt->dwMask &= ~(m);
+    if (pFmt->f != curFmt->f) pFmt->dwMask &= ~(m);
 
-    pFmt->dwMask &= ~((pFmt->wEffects ^ tmp.wEffects) << 16);
     CHECK_FIELD(PFM_NUMBERING, wNumbering);
-    assert(tmp.dwMask & PFM_ALIGNMENT);
-    CHECK_FIELD(PFM_NUMBERING, wNumbering);
-    assert(tmp.dwMask & PFM_STARTINDENT);
     CHECK_FIELD(PFM_STARTINDENT, dxStartIndent);
-    assert(tmp.dwMask & PFM_RIGHTINDENT);
     CHECK_FIELD(PFM_RIGHTINDENT, dxRightIndent);
-    assert(tmp.dwMask & PFM_OFFSET);
     CHECK_FIELD(PFM_OFFSET, dxOffset);
     CHECK_FIELD(PFM_ALIGNMENT, wAlignment);
-
-    assert(tmp.dwMask & PFM_TABSTOPS);
     if (pFmt->dwMask & PFM_TABSTOPS) {
-      if (pFmt->cTabCount != tmp.cTabCount ||
-          memcmp(pFmt->rgxTabs, tmp.rgxTabs, tmp.cTabCount*sizeof(int)))
+      if (pFmt->cTabCount != para->member.para.pFmt->cTabCount ||
+          memcmp(pFmt->rgxTabs, curFmt->rgxTabs, curFmt->cTabCount*sizeof(int)))
         pFmt->dwMask &= ~PFM_TABSTOPS;
     }
 
-    CHECK_FIELD(PFM_SPACEBEFORE, dySpaceBefore);
-    CHECK_FIELD(PFM_SPACEAFTER, dySpaceAfter);
-    CHECK_FIELD(PFM_LINESPACING, dyLineSpacing);
-    CHECK_FIELD(PFM_STYLE, sStyle);
-    CHECK_FIELD(PFM_SPACEAFTER, bLineSpacingRule);
-    CHECK_FIELD(PFM_SHADING, wShadingWeight);
-    CHECK_FIELD(PFM_SHADING, wShadingStyle);
-    CHECK_FIELD(PFM_NUMBERINGSTART, wNumberingStart);
-    CHECK_FIELD(PFM_NUMBERINGSTYLE, wNumberingStyle);
-    CHECK_FIELD(PFM_NUMBERINGTAB, wNumberingTab);
-    CHECK_FIELD(PFM_BORDER, wBorderSpace);
-    CHECK_FIELD(PFM_BORDER, wBorderWidth);
-    CHECK_FIELD(PFM_BORDER, wBorders);
-
+    if (pFmt->dwMask >= sizeof(PARAFORMAT2))
+    {
+      pFmt->dwMask &= ~((pFmt->wEffects ^ curFmt->wEffects) << 16);
+      CHECK_FIELD(PFM_SPACEBEFORE, dySpaceBefore);
+      CHECK_FIELD(PFM_SPACEAFTER, dySpaceAfter);
+      CHECK_FIELD(PFM_LINESPACING, dyLineSpacing);
+      CHECK_FIELD(PFM_STYLE, sStyle);
+      CHECK_FIELD(PFM_SPACEAFTER, bLineSpacingRule);
+      CHECK_FIELD(PFM_SHADING, wShadingWeight);
+      CHECK_FIELD(PFM_SHADING, wShadingStyle);
+      CHECK_FIELD(PFM_NUMBERINGSTART, wNumberingStart);
+      CHECK_FIELD(PFM_NUMBERINGSTYLE, wNumberingStyle);
+      CHECK_FIELD(PFM_NUMBERINGTAB, wNumberingTab);
+      CHECK_FIELD(PFM_BORDER, wBorderSpace);
+      CHECK_FIELD(PFM_BORDER, wBorderWidth);
+      CHECK_FIELD(PFM_BORDER, wBorders);
+    }
 #undef CHECK_FIELD
-
-    if (para == para_end)
-      return;
-    para = para->member.para.next_para;
-  } while(1);
+  }
 }
 
 void ME_SetDefaultParaFormat(PARAFORMAT2 *pFmt)
