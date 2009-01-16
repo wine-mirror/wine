@@ -61,7 +61,7 @@ static void RefCountTest(void)
     ok(ref == 2, "After AddRef the refcount is %u, expected 2\n", ref);
     IDirectDraw_Release(dd1);
     ref = get_ref((IUnknown *) dd1);
-    ok(ref == 1, "After Release the refcount is %u, expected 2\n", ref);
+    ok(ref == 1, "After Release the refcount is %u, expected 1\n", ref);
 
     IDirectDraw_QueryInterface(dd1, &IID_IDirectDraw2, (void **) &dd2);
     ref = get_ref((IUnknown *) dd2);
