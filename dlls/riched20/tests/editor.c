@@ -1471,7 +1471,7 @@ static void test_EM_SETOPTIONS(void)
     DestroyWindow(hwndRichEdit);
 
     hwndRichEdit = CreateWindow(RICHEDIT_CLASS, NULL,
-                                WS_POPUP|WS_HSCROLL|WS_VSCROLL,
+                                WS_POPUP|WS_HSCROLL|WS_VSCROLL|WS_VISIBLE,
                                 0, 0, 200, 60, NULL, NULL,
                                 hmoduleRichEdit, NULL);
     ok(hwndRichEdit != NULL, "class: %s, error: %d\n",
