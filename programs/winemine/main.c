@@ -70,47 +70,46 @@ static void LoadBoard( BOARD *p_board )
             0, KEY_QUERY_VALUE, &hkey );
 
     size = sizeof( p_board->pos.x );
-    if( !RegQueryValueEx( hkey, "Xpos", NULL, (LPDWORD) &type,
-            (LPBYTE) &p_board->pos.x, (LPDWORD) &size ) == ERROR_SUCCESS )
+    if( !RegQueryValueEx( hkey, "Xpos", NULL, &type,
+            (LPBYTE) &p_board->pos.x, &size ) == ERROR_SUCCESS )
 	p_board->pos.x = 0;
 
     size = sizeof( p_board->pos.y );
-    if( !RegQueryValueEx( hkey, "Ypos", NULL, (LPDWORD) &type,
-            (LPBYTE) &p_board->pos.y, (LPDWORD) &size ) == ERROR_SUCCESS )
+    if( !RegQueryValueEx( hkey, "Ypos", NULL, &type,
+            (LPBYTE) &p_board->pos.y, &size ) == ERROR_SUCCESS )
         p_board->pos.y = 0;
 
     size = sizeof( p_board->rows );
-    if( !RegQueryValueEx( hkey, "Height", NULL, (LPDWORD) &type,
-            (LPBYTE) &p_board->rows, (LPDWORD) &size ) == ERROR_SUCCESS )
+    if( !RegQueryValueEx( hkey, "Height", NULL, &type,
+            (LPBYTE) &p_board->rows, &size ) == ERROR_SUCCESS )
         p_board->rows = BEGINNER_ROWS;
 
     size = sizeof( p_board->cols );
-    if( !RegQueryValueEx( hkey, "Width", NULL, (LPDWORD) &type,
-            (LPBYTE) &p_board->cols, (LPDWORD) &size ) == ERROR_SUCCESS )
+    if( !RegQueryValueEx( hkey, "Width", NULL, &type,
+            (LPBYTE) &p_board->cols, &size ) == ERROR_SUCCESS )
         p_board->cols = BEGINNER_COLS;
 
     size = sizeof( p_board->mines );
-    if( !RegQueryValueEx( hkey, "Mines", NULL, (LPDWORD) &type,
-            (LPBYTE) &p_board->mines, (LPDWORD) &size ) == ERROR_SUCCESS )
+    if( !RegQueryValueEx( hkey, "Mines", NULL, &type,
+            (LPBYTE) &p_board->mines, &size ) == ERROR_SUCCESS )
         p_board->mines = BEGINNER_MINES;
 
     size = sizeof( p_board->difficulty );
-    if( !RegQueryValueEx( hkey, "Difficulty", NULL, (LPDWORD) &type,
-            (LPBYTE) &p_board->difficulty, (LPDWORD) &size ) == ERROR_SUCCESS )
+    if( !RegQueryValueEx( hkey, "Difficulty", NULL, &type,
+            (LPBYTE) &p_board->difficulty, &size ) == ERROR_SUCCESS )
         p_board->difficulty = BEGINNER;
 
     size = sizeof( p_board->IsMarkQ );
-    if( !RegQueryValueEx( hkey, "Mark", NULL, (LPDWORD) &type,
-            (LPBYTE) &p_board->IsMarkQ, (LPDWORD) &size ) == ERROR_SUCCESS )
+    if( !RegQueryValueEx( hkey, "Mark", NULL, &type,
+            (LPBYTE) &p_board->IsMarkQ, &size ) == ERROR_SUCCESS )
         p_board->IsMarkQ = TRUE;
 
     for( i = 0; i < 3; i++ ) {
         wsprintf( key_name, "Name%d", i+1 );
         size = sizeof( data );
-        if( RegQueryValueEx( hkey, key_name, NULL, (LPDWORD) &type,
-                (LPBYTE) data,
-                (LPDWORD) &size ) == ERROR_SUCCESS )
-                    lstrcpynA( p_board->best_name[i], data, sizeof(p_board->best_name[i]) );
+        if( RegQueryValueEx( hkey, key_name, NULL, &type,
+                (LPBYTE) data, &size ) == ERROR_SUCCESS )
+            lstrcpynA( p_board->best_name[i], data, sizeof(p_board->best_name[i]) );
         else
             LoadString( p_board->hInst, IDS_NOBODY, p_board->best_name[i], MAX_PLAYER_NAME_SIZE+1 );
     }
@@ -118,9 +117,8 @@ static void LoadBoard( BOARD *p_board )
     for( i = 0; i < 3; i++ ) {
         wsprintf( key_name, "Time%d", i+1 );
         size = sizeof( p_board->best_time[i] );
-        if( !RegQueryValueEx( hkey, key_name, NULL, (LPDWORD) &type,
-                (LPBYTE) &p_board->best_time[i],
-                (LPDWORD) &size ) == ERROR_SUCCESS )
+        if( !RegQueryValueEx( hkey, key_name, NULL, &type,
+                (LPBYTE) &p_board->best_time[i], &size ) == ERROR_SUCCESS )
             p_board->best_time[i] = 999;
     }
     RegCloseKey( hkey );
@@ -1023,7 +1021,7 @@ int WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmd
     wc.hInstance = hInst;
     wc.hIcon = LoadIcon( hInst, "WINEMINE" );
     wc.hCursor = LoadCursor( 0, IDI_APPLICATION );
-    wc.hbrBackground = (HBRUSH) GetStockObject( BLACK_BRUSH );
+    wc.hbrBackground = GetStockObject( BLACK_BRUSH );
     wc.lpszMenuName = "MENU_WINEMINE";
     wc.lpszClassName = appname;
 
