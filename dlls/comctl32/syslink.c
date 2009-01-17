@@ -602,8 +602,8 @@ static PDOC_ITEM SYSLINK_GetPrevLink (const SYSLINK_INFO *infoPtr, PDOC_ITEM Cur
  * SYSLINK_WrapLine
  * Tries to wrap a line.
  */
-static BOOL SYSLINK_WrapLine (HDC hdc, LPWSTR Text, WCHAR BreakChar, int *LineLen,
-                             int nFit, LPSIZE Extent, int Width)
+static BOOL SYSLINK_WrapLine (LPWSTR Text, WCHAR BreakChar, int *LineLen,
+                             int nFit, LPSIZE Extent)
 {
     WCHAR *Current;
 
@@ -720,7 +720,7 @@ static VOID SYSLINK_Render (const SYSLINK_INFO *infoPtr, HDC hdc, PRECT pRect)
                 
                 if(n != 0)
                 {
-                    Wrap = SYSLINK_WrapLine(hdc, tx, infoPtr->BreakChar, &LineLen, nFit, &szDim, rc.right - x);
+                    Wrap = SYSLINK_WrapLine(tx, infoPtr->BreakChar, &LineLen, nFit, &szDim);
 
                     if(LineLen == 0)
                     {
