@@ -22,7 +22,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
-int ME_GetOptimalBuffer(int nLen)
+static int ME_GetOptimalBuffer(int nLen)
 {
   return ((2*nLen+1)+128)&~63;
 }

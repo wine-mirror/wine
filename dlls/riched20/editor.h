@@ -71,7 +71,6 @@ void ME_DumpStyleToBuf(CHARFORMAT2W *pFmt, char buf[2048]);
 void ME_DumpStyle(ME_Style *s);
 CHARFORMAT2W *ME_ToCF2W(CHARFORMAT2W *to, CHARFORMAT2W *from);
 void ME_CopyToCF2W(CHARFORMAT2W *to, CHARFORMAT2W *from);
-CHARFORMAT2W *ME_ToCFAny(CHARFORMAT2W *to, CHARFORMAT2W *from);
 void ME_CopyToCFAny(CHARFORMAT2W *to, CHARFORMAT2W *from);
 void ME_CopyCharFormat(CHARFORMAT2W *pDest, const CHARFORMAT2W *pSrc); /* only works with 2W structs */
 void ME_CharFormatFromLogFont(HDC hDC, const LOGFONTW *lf, CHARFORMAT2W *fmt); /* ditto */
@@ -89,7 +88,6 @@ void ME_DumpDocument(ME_TextBuffer *buffer);
 const char *ME_GetDITypeName(ME_DIType type);
 
 /* string.c */
-int ME_GetOptimalBuffer(int nLen);
 ME_String *ME_MakeString(LPCWSTR szText);
 ME_String *ME_MakeStringN(LPCWSTR szText, int nMaxChars);
 ME_String *ME_MakeStringR(WCHAR cRepeat, int nMaxChars);

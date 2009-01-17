@@ -77,7 +77,7 @@ void ME_CopyToCF2W(CHARFORMAT2W *to, CHARFORMAT2W *from)
     *to = *from;
 }
 
-CHARFORMAT2W *ME_ToCFAny(CHARFORMAT2W *to, CHARFORMAT2W *from)
+static CHARFORMAT2W *ME_ToCFAny(CHARFORMAT2W *to, CHARFORMAT2W *from)
 {
   assert(from->cbSize == sizeof(CHARFORMAT2W));
   if (to->cbSize == sizeof(CHARFORMATA))
