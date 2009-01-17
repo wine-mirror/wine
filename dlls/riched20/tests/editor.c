@@ -3576,8 +3576,7 @@ static void test_EM_SETTEXTEX(void)
   result = SendMessage(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM) "{\\rtf not unicode}");
   todo_wine ok(result == 11, "EM_SETTEXTEX incorrectly returned %d\n", result);
   SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) bufACP);
-  todo_wine ok(lstrcmpA(bufACP, "not unicode") == 0,
-      "'%s' != 'not unicode'\n", bufACP);
+  ok(lstrcmpA(bufACP, "not unicode") == 0, "'%s' != 'not unicode'\n", bufACP);
 
   /* The following test demonstrates that EM_SETTEXTEX supports RTF strings with a selection */
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "TestSomeText"); /* TestItem1 */

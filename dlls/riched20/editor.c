@@ -3208,42 +3208,56 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   {
     LPWSTR wszText;
     SETTEXTEX *pStruct = (SETTEXTEX *)wParam;
-    size_t len;
+    size_t len = 0;
     int from, to;
     ME_Style *style;
+    BOOL bRtf, bUnicode, bSelection;
     int oldModify = editor->nModifyStep;
 
     if (!pStruct) return 0;
 
+    /* If we detect ascii rtf at the start of the string,
+     * we know it isn't unicode. */
+    bRtf = (lParam && (!strncmp((char *)lParam, "{\\rtf", 5) ||
+                         !strncmp((char *)lParam, "{\\urtf}", 6)));
+    bUnicode = !bRtf && pStruct->codepage == 1200;
+
     TRACE("EM_SETTEXTEX - %s, flags %d, cp %d\n",
-          pStruct->codepage == 1200 ? debugstr_w((LPCWSTR)lParam) : debugstr_a((LPCSTR)lParam),
+          bUnicode ? debugstr_w((LPCWSTR)lParam) : debugstr_a((LPCSTR)lParam),
           pStruct->flags, pStruct->codepage);
 
-    /* FIXME: make use of pStruct->codepage in the to unicode translation */
-    wszText = lParam ? ME_ToUnicode(pStruct->codepage == 1200, (void *)lParam) : NULL;
-    len = wszText ? lstrlenW(wszText) : 0;
-
-    if (pStruct->flags & ST_SELECTION) {
+    bSelection = (pStruct->flags & ST_SELECTION) != 0;
+    if (bSelection) {
       ME_GetSelection(editor, &from, &to);
       style = ME_GetSelectionInsertStyle(editor);
       ME_InternalDeleteText(editor, from, to - from, FALSE);
-      if (pStruct->codepage != 1200 && lParam &&
-          (!strncmp((char *)lParam, "{\\rtf", 5) || !strncmp((char *)lParam, "{\\urtf}", 6)))
-        ME_StreamInRTFString(editor, 1, (char *)lParam);
-      else ME_InsertTextFromCursor(editor, 0, wszText, len, style);
-      ME_ReleaseStyle(style);
-
-      if (editor->AutoURLDetect_bEnable) ME_UpdateSelectionLinkAttribute(editor);
-    }
-    else {
+    } else {
       ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor), FALSE);
-      if (pStruct->codepage != 1200 && lParam &&
-          (!strncmp((char *)lParam, "{\\rtf", 5) || !strncmp((char *)lParam, "{\\urtf}", 6)))
-        ME_StreamInRTFString(editor, 0, (char *)lParam);
-      else ME_InsertTextFromCursor(editor, 0, wszText, len, editor->pBuffer->pDefaultStyle);
-      len = 1;
+      style = editor->pBuffer->pDefaultStyle;
+    }
 
-      if (editor->AutoURLDetect_bEnable) ME_UpdateLinkAttribute(editor, 0, -1);
+    if (bRtf) {
+      ME_StreamInRTFString(editor, bSelection, (char *)lParam);
+      if (bSelection) {
+        /* FIXME: The length returned is doesn't include the rtf control
+         * characters, only the actual text. */
+        len = lParam ? strlen((char *)lParam) : 0;
+      }
+    } else {
+      /* FIXME: make use of pStruct->codepage in the to unicode translation */
+      wszText = lParam ? ME_ToUnicode(bUnicode, (void *)lParam) : NULL;
+      len = wszText ? lstrlenW(wszText) : 0;
+      ME_InsertTextFromCursor(editor, 0, wszText, len, style);
+    }
+
+    if (bSelection) {
+      ME_ReleaseStyle(style);
+      if (editor->AutoURLDetect_bEnable)
+        ME_UpdateSelectionLinkAttribute(editor);
+    } else {
+      len = 1;
+      if (editor->AutoURLDetect_bEnable)
+        ME_UpdateLinkAttribute(editor, 0, -1);
     }
     ME_CommitUndo(editor);
     if (!(pStruct->flags & ST_KEEPUNDO))
