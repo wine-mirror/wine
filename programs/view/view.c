@@ -76,7 +76,7 @@ static HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName )
 
   if( (fh = _lopen( szFileName, OF_READ ) ) == HFILE_ERROR ) return 0;
   _llseek(fh, 0, 0);
-  if (!_lread(fh, (LPSTR)&APMHeader, sizeof(APMFILEHEADER))) return 0;
+  if (!_lread(fh, &APMHeader, sizeof(APMFILEHEADER))) return 0;
   _llseek(fh, sizeof(APMFILEHEADER), 0);
   checksum = 0;
   p = (WORD *) &APMHeader;
@@ -91,14 +91,14 @@ static HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName )
     return 0;
   }
 
-  if (!_lread(fh, (LPSTR)&mfHeader, sizeof(METAHEADER))) return 0;
+  if (!_lread(fh, &mfHeader, sizeof(METAHEADER))) return 0;
 
   if (!(lpData = GlobalAlloc(GPTR, (mfHeader.mtSize * 2L)))) return 0;
 
   _llseek(fh, sizeof(APMFILEHEADER), 0);
   if (!_lread(fh, lpData, (UINT)(mfHeader.mtSize * 2L)))
   {
-    GlobalFree((HGLOBAL)lpData);
+    GlobalFree(lpData);
     _lclose(fh);
     return 0;
   }
