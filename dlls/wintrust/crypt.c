@@ -961,6 +961,54 @@ BOOL WINAPI CryptSIPCreateIndirectData(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pcb
     return FALSE;
 }
 
+
+/***********************************************************************
+ *      CryptCATCDFClose  (WINTRUST.@)
+ */
+BOOL WINAPI CryptCATCDFClose(CRYPTCATCDF *pCDF)
+{
+    FIXME("(%p) stub\n", pCDF);
+
+    return FALSE;
+}
+
+/***********************************************************************
+ *      CryptCATCDFEnumCatAttributes  (WINTRUST.@)
+ */
+CRYPTCATATTRIBUTE * WINAPI CryptCATCDFEnumCatAttributes(CRYPTCATCDF *pCDF,
+                                                        CRYPTCATATTRIBUTE *pPrevAttr,
+                                                        PFN_CDF_PARSE_ERROR_CALLBACK pfnParseError)
+{
+    FIXME("(%p %p %p) stub\n", pCDF, pPrevAttr, pfnParseError);
+
+    return NULL;
+}
+
+/***********************************************************************
+ *      CryptCATCDFEnumMembersByCDFTagEx  (WINTRUST.@)
+ */
+LPWSTR WINAPI CryptCATCDFEnumMembersByCDFTagEx(CRYPTCATCDF *pCDF, LPWSTR pwszPrevCDFTag,
+                                               PFN_CDF_PARSE_ERROR_CALLBACK pfnParseError,
+                                               CRYPTCATMEMBER **ppMember, BOOL fContinueOnError,
+                                               LPVOID pvReserved)
+{
+    FIXME("(%p %s %p %p %d %p) stub\n", pCDF, debugstr_w(pwszPrevCDFTag), pfnParseError,
+          ppMember, fContinueOnError, pvReserved);
+
+    return NULL;
+}
+
+/***********************************************************************
+ *      CryptCATCDFOpen  (WINTRUST.@)
+ */
+CRYPTCATCDF * WINAPI CryptCATCDFOpen(LPWSTR pwszFilePath,
+                                     PFN_CDF_PARSE_ERROR_CALLBACK pfnParseError)
+{
+    FIXME("(%s %p) stub\n", debugstr_w(pwszFilePath), pfnParseError);
+
+    return NULL;
+}
+
 static BOOL WINTRUST_GetSignedMsgFromPEFile(SIP_SUBJECTINFO *pSubjectInfo,
  DWORD *pdwEncodingType, DWORD dwIndex, DWORD *pcbSignedDataMsg,
  BYTE *pbSignedDataMsg)

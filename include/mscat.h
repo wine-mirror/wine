@@ -71,8 +71,20 @@ typedef struct CATALOG_INFO_
     WCHAR wszCatalogFile[MAX_PATH];
 } CATALOG_INFO;
 
+typedef struct CRYPTCATCDF_
+{
+    DWORD cbStruct;
+    HANDLE hFile;
+    DWORD dwCurFilePos;
+    DWORD dwLastMemberOffset;
+    BOOL fEOF;
+    LPWSTR pwszResultDir;
+    HANDLE hCATStore;
+} CRYPTCATCDF;
+
 #include <poppack.h>
 
+typedef void (WINAPI *PFN_CDF_PARSE_ERROR_CALLBACK)(DWORD, DWORD, WCHAR *);
 
 BOOL      WINAPI CryptCATAdminAcquireContext(HCATADMIN*,const GUID*,DWORD);
 HCATINFO  WINAPI CryptCATAdminAddCatalog(HCATADMIN,PWSTR,PWSTR,DWORD);
@@ -83,7 +95,14 @@ BOOL      WINAPI CryptCATAdminReleaseContext(HCATADMIN,DWORD);
 BOOL      WINAPI CryptCATAdminRemoveCatalog(HCATADMIN,LPCWSTR,DWORD);
 BOOL      WINAPI CryptCATAdminResolveCatalogPath(HCATADMIN, WCHAR *, CATALOG_INFO *, DWORD);
 BOOL      WINAPI CryptCATCatalogInfoFromContext(HCATINFO, CATALOG_INFO *, DWORD);
-BOOL      WINAPI CryptCATClose(HANDLE);
+BOOL      WINAPI CryptCATCDFClose(CRYPTCATCDF *);
+CRYPTCATATTRIBUTE * WINAPI CryptCATCDFEnumCatAttributes(CRYPTCATCDF *, CRYPTCATATTRIBUTE *,
+                                                        PFN_CDF_PARSE_ERROR_CALLBACK);
+LPWSTR              WINAPI CryptCATCDFEnumMembersByCDFTagEx(CRYPTCATCDF *, LPWSTR,
+                                                            PFN_CDF_PARSE_ERROR_CALLBACK,
+                                                            CRYPTCATMEMBER **, BOOL, LPVOID);
+CRYPTCATCDF       * WINAPI CryptCATCDFOpen(LPWSTR, PFN_CDF_PARSE_ERROR_CALLBACK);
+BOOL                WINAPI CryptCATClose(HANDLE);
 CRYPTCATATTRIBUTE * WINAPI CryptCATEnumerateAttr(HANDLE, CRYPTCATMEMBER *, CRYPTCATATTRIBUTE *);
 CRYPTCATATTRIBUTE * WINAPI CryptCATEnumerateCatAttr(HANDLE, CRYPTCATATTRIBUTE *);
 CRYPTCATMEMBER    * WINAPI CryptCATEnumerateMember(HANDLE,CRYPTCATMEMBER *);
