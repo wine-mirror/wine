@@ -657,11 +657,11 @@ static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
             IDirectInputDevice2AImpl_Unacquire(iface);
             return DIERR_NOTFOUND;
         }
-    }
-    else
-    {
-        /* Couldn't open in r/w but opened in read-only. */
-        WARN("Could not open %s in read-write mode.  Force feedback will be disabled.\n", This->joydev->device);
+        else
+        {
+            /* Couldn't open in r/w but opened in read-only. */
+            WARN("Could not open %s in read-write mode.  Force feedback will be disabled.\n", This->joydev->device);
+        }
     }
 
     return DI_OK;
