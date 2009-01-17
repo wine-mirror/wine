@@ -178,8 +178,9 @@ static	int	JSTCK_OpenDevice(WINE_JSTCK* jstick)
 #endif
     if ((jstick->dev = open(buf, flags)) < 0) {
         sprintf(buf, JOYDEV_OLD, jstick->joyIntf);
+        jstick->dev = open(buf, flags);
     }
-    return (jstick->dev = open(buf, flags));
+    return jstick->dev;
 }
 
 
