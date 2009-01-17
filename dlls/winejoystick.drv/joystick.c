@@ -100,6 +100,8 @@ typedef struct tagWINE_JSTCK {
     int         r;
     int         u;
     int         v;
+    int         pov_x;
+    int         pov_y;
     int         buttons;
     char        axesMap[ABS_MAX + 1];
 } WINE_JSTCK;
@@ -278,11 +280,14 @@ static const WCHAR ini[] = {'W','i','n','e',' ','J','o','y','s','t','i','c','k',
 		lpCaps->wNumAxes++;
 		lpCaps->wCaps |= JOYCAPS_HASV;
 		break;
+	    case 16: /* Hat 0 X */
+	    case 17: /* Hat 0 Y */
+		lpCaps->wCaps |= JOYCAPS_HASPOV | JOYCAPS_POV4DIR;
+		/* TODO: JOYCAPS_POVCTS handling */
+		break;
 	    default:
 		WARN("Unknown axis %hhu(%hhu). Skipped.\n", jstck->axesMap[i], i);
 	    }
-	    /* FIXME: don't know how to detect for
-	       JOYCAPS_HASPOV, JOYCAPS_POV4DIR, JOYCAPS_POVCTS */
 	}
     }
 #else
@@ -359,6 +364,12 @@ static LRESULT JSTCK_GetPosEx(DWORD_PTR dwDevID, LPJOYINFOEX lpInfo)
 	    case 4: /* Ry */
 		jstck->v = ev.value;
 		break;
+	    case 16: /* Hat 0 X */
+		jstck->pov_x = ev.value;
+		break;
+	    case 17: /* Hat 0 Y */
+		jstck->pov_y = ev.value;
+		break;
 	    default:
 		FIXME("Unknown joystick event '%d'\n", ev.number);
 	    }
@@ -413,6 +424,28 @@ static LRESULT JSTCK_GetPosEx(DWORD_PTR dwDevID, LPJOYINFOEX lpInfo)
 # endif
     if (lpInfo->dwFlags & JOY_RETURNV)
        lpInfo->dwVpos   = jstck->v + 32767;
+    if (lpInfo->dwFlags & JOY_RETURNPOV) {
+	if (jstck->pov_y > 0) {
+	    if (jstck->pov_x < 0)
+		lpInfo->dwPOV = 22500; /* SW */
+	    else if (jstck->pov_x > 0)
+		lpInfo->dwPOV = 13500; /* SE */
+	    else
+		lpInfo->dwPOV = 18000; /* S, JOY_POVBACKWARD */
+	} else if (jstck->pov_y < 0) {
+	    if (jstck->pov_x < 0)
+		lpInfo->dwPOV = 31500; /* NW */
+	    else if (jstck->pov_x > 0)
+		lpInfo->dwPOV = 4500; /* NE */
+	    else
+		lpInfo->dwPOV = 0; /* N, JOY_POVFORWARD */
+	} else if (jstck->pov_x < 0)
+	    lpInfo->dwPOV = 27000; /* W, JOY_POVLEFT */
+	else if (jstck->pov_x > 0)
+	    lpInfo->dwPOV = 9000; /* E, JOY_POVRIGHT */
+	else
+	    lpInfo->dwPOV = JOY_POVCENTERED; /* Center */
+    }
 
 #else
     dev_stat = read(dev, &js, sizeof(js));
