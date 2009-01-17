@@ -101,6 +101,7 @@ typedef struct tagWINE_JSTCK {
     int         u;
     int         v;
     int         buttons;
+    char        axesMap[ABS_MAX + 1];
 } WINE_JSTCK;
 
 static	WINE_JSTCK	JSTCK_Data[MAXJOYSTICK];
@@ -178,8 +179,12 @@ static	int	JSTCK_OpenDevice(WINE_JSTCK* jstick)
 #endif
     if ((jstick->dev = open(buf, flags)) < 0) {
         sprintf(buf, JOYDEV_OLD, jstick->joyIntf);
-        jstick->dev = open(buf, flags);
+        if ((jstick->dev = open(buf, flags)) < 0)
+            return jstick->dev;
     }
+#ifdef HAVE_LINUX_22_JOYSTICK_API
+    ioctl(jstick->dev, JSIOCGAXMAP, jstick->axesMap);
+#endif
     return jstick->dev;
 }
 
@@ -195,6 +200,7 @@ static LRESULT JSTCK_GetDevCaps(DWORD_PTR dwDevID, LPJOYCAPSW lpCaps, DWORD dwSi
     char	nrOfAxes;
     char	nrOfButtons;
     char	identString[MAXPNAMELEN];
+    int		i;
     int		driverVersion;
 #else
 static const WCHAR ini[] = {'W','i','n','e',' ','J','o','y','s','t','i','c','k',' ','D','r','i','v','e','r',0};
@@ -235,26 +241,46 @@ static const WCHAR ini[] = {'W','i','n','e',' ','J','o','y','s','t','i','c','k',
     lpCaps->wNumButtons = nrOfButtons;
 #endif
     if (dwSize == sizeof(JOYCAPSW)) {
-	/* since we suppose ntOfAxes <= 6 in the following code, do it explicitly */
-	if (nrOfAxes > 6) nrOfAxes = 6;
 	/* complete 95 structure */
 	lpCaps->wRmin = 0;
-	lpCaps->wRmax = nrOfAxes >= 4 ? 0xFFFF : 0;
+	lpCaps->wRmax = 0xFFFF;
 	lpCaps->wUmin = 0;
-	lpCaps->wUmax = nrOfAxes >= 5 ? 0xFFFF : 0;
+	lpCaps->wUmax = 0xFFFF;
 	lpCaps->wVmin = 0;
-	lpCaps->wVmax = nrOfAxes >= 6 ? 0xFFFF : 0;
+	lpCaps->wVmax = 0xFFFF;
 	lpCaps->wMaxAxes = 6; /* same as MS Joystick Driver */
-	lpCaps->wNumAxes = nrOfAxes; /* nr of axes in use */
+	lpCaps->wNumAxes = 0; /* nr of axes in use */
 	lpCaps->wMaxButtons = 32; /* same as MS Joystick Driver */
 	lpCaps->szRegKey[0] = 0;
 	lpCaps->szOEMVxD[0] = 0;
 	lpCaps->wCaps = 0;
-	switch(nrOfAxes) {
-	case 6: lpCaps->wCaps |= JOYCAPS_HASV;
-	case 5: lpCaps->wCaps |= JOYCAPS_HASU;
-	case 4: lpCaps->wCaps |= JOYCAPS_HASR;
-	case 3: lpCaps->wCaps |= JOYCAPS_HASZ;
+        for (i = 0; i < nrOfAxes; i++) {
+	    switch (jstck->axesMap[i]) {
+	    case 0: /* X */
+	    case 1: /* Y */
+		lpCaps->wNumAxes++;
+		break;
+	    case 2: /* Z */
+	    case 6: /* Throttle */
+		lpCaps->wNumAxes++;
+		lpCaps->wCaps |= JOYCAPS_HASZ;
+		break;
+	    case 5: /* Rz */
+	    case 7: /* Rudder */
+		lpCaps->wNumAxes++;
+		lpCaps->wCaps |= JOYCAPS_HASR;
+		break;
+	    case 3: /* Rx */
+		lpCaps->wNumAxes++;
+		lpCaps->wCaps |= JOYCAPS_HASU;
+		break;
+	    case 4: /* Ry */
+		lpCaps->wNumAxes++;
+		lpCaps->wCaps |= JOYCAPS_HASV;
+		break;
+	    default:
+		WARN("Unknown axis %hhu(%hhu). Skipped.\n", jstck->axesMap[i], i);
+	    }
 	    /* FIXME: don't know how to detect for
 	       JOYCAPS_HASPOV, JOYCAPS_POV4DIR, JOYCAPS_POVCTS */
 	}
@@ -312,23 +338,25 @@ static LRESULT JSTCK_GetPosEx(DWORD_PTR dwDevID, LPJOYINFOEX lpInfo)
 #ifdef HAVE_LINUX_22_JOYSTICK_API
     while ((read(dev, &ev, sizeof(struct js_event))) > 0) {
 	if (ev.type == (JS_EVENT_AXIS)) {
-	    switch (ev.number) {
-	    case 0:
+	    switch (jstck->axesMap[ev.number]) {
+	    case 0: /* X */
 		jstck->x = ev.value;
 		break;
-	    case 1:
+	    case 1: /* Y */
 		jstck->y = ev.value;
 		break;
-	    case 2:
+	    case 2: /* Z */
+	    case 6: /* Throttle */
 		jstck->z = ev.value;
 		break;
-	    case 3:
+	    case 5: /* Rz */
+	    case 7: /* Rudder */
 		jstck->r = ev.value;
 		break;
-	    case 4:
+	    case 3: /* Rx */
 		jstck->u = ev.value;
 		break;
-	    case 5:
+	    case 4: /* Ry */
 		jstck->v = ev.value;
 		break;
 	    default:
