@@ -3562,6 +3562,23 @@ static void test_EM_SETTEXTEX(void)
   ok(lstrcmpW(buf, TestItem1) == 0,
       "EM_GETTEXTEX results not what was set by EM_SETTEXTEX\n");
 
+  /* The following test demonstrates that EM_SETTEXTEX treats text as ASCII if it
+   * starts with ASCII characters "{\rtf" even when the codepage is unicode. */
+  setText.codepage = 1200; /* Lie about code page (actual ASCII) */
+  getText.codepage = CP_ACP;
+  getText.cb = MAX_BUF_LEN;
+  getText.flags = GT_DEFAULT;
+  getText.lpDefaultChar = NULL;
+  getText.lpUsedDefChar = NULL;
+
+  setText.flags = ST_SELECTION;
+  SendMessage(hwndRichEdit, EM_SETSEL, 0, -1);
+  result = SendMessage(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM) "{\\rtf not unicode}");
+  todo_wine ok(result == 11, "EM_SETTEXTEX incorrectly returned %d\n", result);
+  SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) bufACP);
+  todo_wine ok(lstrcmpA(bufACP, "not unicode") == 0,
+      "'%s' != 'not unicode'\n", bufACP);
+
   /* The following test demonstrates that EM_SETTEXTEX supports RTF strings with a selection */
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "TestSomeText"); /* TestItem1 */
   p = (char *)buf;
