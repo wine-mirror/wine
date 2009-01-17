@@ -1461,7 +1461,7 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
     {
         DWORD size, read, flags = 0;
 
-        TRACE( "profile file: %s\n", debugstr_w( (WCHAR *)profile->pProfileData ) );
+        TRACE( "profile file: %s\n", debugstr_w( profile->pProfileData ) );
 
         if (access & PROFILE_READ) flags = GENERIC_READ;
         if (access & PROFILE_READWRITE) flags = GENERIC_READ|GENERIC_WRITE;
