@@ -1951,7 +1951,7 @@ static HRESULT WINAPI fnIMLangFontLink_CodePagesToCodePage(
             DWORD Csb[2];
             Csb[0] = mask;
             Csb[1] = 0x0;
-            rc = TranslateCharsetInfo((DWORD*)Csb, &cs, TCI_SRCFONTSIG);
+            rc = TranslateCharsetInfo(Csb, &cs, TCI_SRCFONTSIG);
             if (!rc)
                 continue;
 
@@ -3294,7 +3294,7 @@ static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     mlang->total_scripts = sizeof(mlang_data)/sizeof(mlang_data[0]) - 1;
 
     mlang->ref = 1;
-    *ppObj = (LPVOID) mlang;
+    *ppObj = mlang;
     TRACE("returning %p\n", mlang);
 
     LockModule();
