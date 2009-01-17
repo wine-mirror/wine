@@ -90,6 +90,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
+static RPC_STATUS RPCRT4_SpawnConnection(RpcConnection** Connection, RpcConnection* OldConnection);
+
 /**** ncacn_np support ****/
 
 typedef struct _RpcConnection_np
@@ -1541,8 +1543,7 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
   return RPC_S_OK;
 }
 
-
-RPC_STATUS RPCRT4_SpawnConnection(RpcConnection** Connection, RpcConnection* OldConnection)
+static RPC_STATUS RPCRT4_SpawnConnection(RpcConnection** Connection, RpcConnection* OldConnection)
 {
   RPC_STATUS err;
 
