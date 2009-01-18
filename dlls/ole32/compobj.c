@@ -3951,9 +3951,12 @@ HRESULT WINAPI CoGetObjectContext(REFIID riid, void **ppv)
  */
 HRESULT WINAPI CoGetContextToken( ULONG_PTR *token )
 {
+    struct oletls *info = COM_CurrentInfo();
     static int calls;
     if(!(calls++)) FIXME( "stub\n" );
-    if (token) *token = 0;
+    if (!info)
+        return E_OUTOFMEMORY;
+    if (token) *token = info->context_token;
     return E_NOTIMPL;
 }
 
