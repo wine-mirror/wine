@@ -2257,8 +2257,7 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
                              size, msg_index);
         else
         if (msg_index ==22)
-        todo_wine
-            ok(size == 9, "Expected that size should be 9 not %d, msg_index=%d\n",
+            ok(size == 8 || size == 9, "Expected that size should be 8 or 9 not %d, msg_index=%d\n",
                              size, msg_index);
         else
           if (msg_index == 5)
