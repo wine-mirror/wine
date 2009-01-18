@@ -4135,6 +4135,31 @@ static void gecko_installer_workaround(BOOL disable)
     RegCloseKey(hkey);
 }
 
+static void test_HTMLDoc_ISupportErrorInfo(void)
+{
+    HRESULT hres;
+    IUnknown *unk;
+    ISupportErrorInfo *sinfo;
+    LONG ref;
+
+    hres = create_document(&unk);
+    if(FAILED(hres))
+        return;
+
+    hres = IUnknown_QueryInterface(unk, &IID_ISupportErrorInfo, (void**)&sinfo);
+    ok(hres == S_OK, "got %x\n", hres);
+    ok(sinfo != NULL, "got %p\n", sinfo);
+    if(sinfo)
+    {
+        hres = ISupportErrorInfo_InterfaceSupportsErrorInfo(sinfo, &IID_IErrorInfo);
+        ok(hres == S_FALSE, "Expected S_OK, got %x\n", hres);
+    }
+
+    IUnknown_Release(sinfo);
+    ref = IUnknown_Release(unk);
+    ok(ref == 0, "ref=%d, expected 0\n", ref);
+}
+
 START_TEST(htmldoc)
 {
     gecko_installer_workaround(TRUE);
@@ -4151,6 +4176,7 @@ START_TEST(htmldoc)
         test_editing_mode(FALSE);
         test_editing_mode(TRUE);
     }
+    test_HTMLDoc_ISupportErrorInfo();
 
     DestroyWindow(container_hwnd);
     CoUninitialize();

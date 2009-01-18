@@ -129,6 +129,9 @@ static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID 
     }else if(IsEqualGUID(&DIID_DispHTMLDocument, riid)) {
         TRACE("(%p)->(DIID_DispHTMLDocument %p)\n", This, ppvObject);
         *ppvObject = HTMLDOC(This);
+    }else if(IsEqualGUID(&IID_ISupportErrorInfo, riid)) {
+        TRACE("(%p)->(IID_ISupportErrorInfo %p)\n", This, ppvObject);
+        *ppvObject = SUPPERRINFO(This);
     }else if(IsEqualGUID(&CLSID_CMarkup, riid)) {
         FIXME("(%p)->(CLSID_CMarkup %p)\n", This, ppvObject);
         return E_NOINTERFACE;
@@ -1572,6 +1575,39 @@ static const IHTMLDocument2Vtbl HTMLDocumentVtbl = {
     HTMLDocument_createStyleSheet
 };
 
+#define SUPPINFO_THIS(iface) DEFINE_THIS(HTMLDocument, SupportErrorInfo, iface)
+
+static HRESULT WINAPI SupportErrorInfo_QueryInterface(ISupportErrorInfo *iface, REFIID riid, void **ppv)
+{
+    HTMLDocument *This = SUPPINFO_THIS(iface);
+    return IHTMLDocument_QueryInterface(HTMLDOC(This), riid, ppv);
+}
+
+static ULONG WINAPI SupportErrorInfo_AddRef(ISupportErrorInfo *iface)
+{
+    HTMLDocument *This = SUPPINFO_THIS(iface);
+    return IHTMLDocument_AddRef(HTMLDOC(This));
+}
+
+static ULONG WINAPI SupportErrorInfo_Release(ISupportErrorInfo *iface)
+{
+    HTMLDocument *This = SUPPINFO_THIS(iface);
+    return IHTMLDocument_Release(HTMLDOC(This));
+}
+
+static HRESULT WINAPI SupportErrorInfo_InterfaceSupportsErrorInfo(ISupportErrorInfo *iface, REFIID riid)
+{
+    FIXME("(%p)->(%s)\n", iface, debugstr_guid(riid));
+    return S_FALSE;
+}
+
+static const ISupportErrorInfoVtbl SupportErrorInfoVtbl = {
+    SupportErrorInfo_QueryInterface,
+    SupportErrorInfo_AddRef,
+    SupportErrorInfo_Release,
+    SupportErrorInfo_InterfaceSupportsErrorInfo
+};
+
 #define DISPEX_THIS(iface) DEFINE_THIS(HTMLDocument, IDispatchEx, iface)
 
 static HRESULT WINAPI DocDispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
@@ -1742,6 +1778,7 @@ static HRESULT alloc_doc(HTMLDocument **ret)
     doc = heap_alloc_zero(sizeof(HTMLDocument));
     doc->lpHTMLDocument2Vtbl = &HTMLDocumentVtbl;
     doc->lpIDispatchExVtbl = &DocDispatchExVtbl;
+    doc->lpSupportErrorInfoVtbl = &SupportErrorInfoVtbl;
     doc->ref = 1;
     doc->readystate = READYSTATE_UNINITIALIZED;
     doc->scriptmode = SCRIPTMODE_GECKO;

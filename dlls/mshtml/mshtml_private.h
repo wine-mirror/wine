@@ -238,7 +238,7 @@ struct HTMLDocument {
     const IPersistStreamInitVtbl          *lpPersistStreamInitVtbl;
     const ICustomDocVtbl                  *lpCustomDocVtbl;
     const IDispatchExVtbl                 *lpIDispatchExVtbl;
-
+    const ISupportErrorInfoVtbl           *lpSupportErrorInfoVtbl;
     LONG ref;
 
     NSContainer *nscontainer;
@@ -473,6 +473,8 @@ typedef struct {
 #define HTMLLOCATION(x)  ((IHTMLLocation*) &(x)->lpHTMLLocationVtbl)
 
 #define DISPATCHEX(x)    ((IDispatchEx*) &(x)->lpIDispatchExVtbl)
+
+#define SUPPERRINFO(x)   ((ISupportErrorInfo*) &(x)->lpSupportErrorInfoVtbl)
 
 #define DEFINE_THIS2(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,ifc)))
 #define DEFINE_THIS(cls,ifc,iface) DEFINE_THIS2(cls,lp ## ifc ## Vtbl,iface)
