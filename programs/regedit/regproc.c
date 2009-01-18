@@ -394,7 +394,7 @@ static LONG setValue(WCHAR* val_name, WCHAR* val_data, BOOL is_unicode)
         if (!lpbData)
             return ERROR_INVALID_DATA;
 
-        if(dwDataType == REG_MULTI_SZ && !is_unicode)
+        if((dwDataType == REG_MULTI_SZ || dwDataType == REG_EXPAND_SZ) && !is_unicode)
         {
             LPBYTE tmp = lpbData;
             lpbData = (LPBYTE)GetWideStringN((char*)lpbData, dwLen, &dwLen);
