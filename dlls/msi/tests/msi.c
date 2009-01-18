@@ -1275,7 +1275,8 @@ static void test_MsiQueryComponentState(void)
     state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(state == INSTALLSTATE_NOTUSED, "Expected INSTALLSTATE_NOTUSED, got %d\n", state);
+    ok(state == INSTALLSTATE_NOTUSED || state == INSTALLSTATE_LOCAL,
+       "Expected INSTALLSTATE_NOTUSED or INSTALLSTATE_LOCAL, got %d\n", state);
 
     res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"hi", 2);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -1390,7 +1391,8 @@ static void test_MsiQueryComponentState(void)
     state = MAGIC_ERROR;
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, component, &state);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(state == INSTALLSTATE_NOTUSED, "Expected INSTALLSTATE_NOTUSED, got %d\n", state);
+    ok(state == INSTALLSTATE_NOTUSED || state == INSTALLSTATE_LOCAL,
+       "Expected INSTALLSTATE_NOTUSED or INSTALLSTATE_LOCAL, got %d\n", state);
 
     res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"hi", 2);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -4023,7 +4025,6 @@ static void test_MsiGetProductInfoEx(void)
                               INSTALLPROPERTY_HELPTELEPHONE, buf, &sz);
     ok(r == ERROR_MORE_DATA,
        "Expected ERROR_MORE_DATA, got %d\n", r);
-    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
     ok(sz == 10, "Expected 10, got %d\n", sz);
 
     /* szValue is NULL, pcchValue is exactly 5 */
@@ -7779,9 +7780,10 @@ static void test_MsiEnumPatchesEx(void)
        "Expected targetsid to be unchanged, got %s\n", targetsid);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
+    patch_squashed[lstrlenA(patch_squashed) + 1] = '\0';
     res = RegSetValueExA(patches, "Patches", 0, REG_MULTI_SZ,
                          (const BYTE *)patch_squashed,
-                         lstrlenA(patch_squashed) + 1);
+                         lstrlenA(patch_squashed) + 2);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* Patches value exists */
@@ -8780,9 +8782,10 @@ static void test_MsiEnumPatchesEx(void)
        "Expected targetsid to be unchanged, got %s\n", targetsid);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
+    patch_squashed[lstrlenA(patch_squashed) + 1] = '\0';
     res = RegSetValueExA(patches, "Patches", 0, REG_MULTI_SZ,
                          (const BYTE *)patch_squashed,
-                         lstrlenA(patch_squashed) + 1);
+                         lstrlenA(patch_squashed) + 2);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* Patches value exists */
@@ -9257,9 +9260,10 @@ static void test_MsiEnumPatches(void)
        "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
+    patch_squashed[lstrlenA(patch_squashed) + 1] = '\0';
     res = RegSetValueExA(patches, "Patches", 0, REG_MULTI_SZ,
                          (const BYTE *)patch_squashed,
-                         lstrlenA(patch_squashed) + 1);
+                         lstrlenA(patch_squashed) + 2);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* Patches value exists */
@@ -9445,9 +9449,10 @@ static void test_MsiEnumPatches(void)
        "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
+    patch_squashed[lstrlenA(patch_squashed) + 1] = '\0';
     res = RegSetValueExA(patches, "Patches", 0, REG_MULTI_SZ,
                          (const BYTE *)patch_squashed,
-                         lstrlenA(patch_squashed) + 1);
+                         lstrlenA(patch_squashed) + 2);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* Patches value exists */
@@ -9589,9 +9594,10 @@ static void test_MsiEnumPatches(void)
        "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
+    patch_squashed[lstrlenA(patch_squashed) + 1] = '\0';
     res = RegSetValueExA(patches, "Patches", 0, REG_MULTI_SZ,
                          (const BYTE *)patch_squashed,
-                         lstrlenA(patch_squashed) + 1);
+                         lstrlenA(patch_squashed) + 2);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* Patches value exists */
