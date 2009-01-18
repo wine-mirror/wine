@@ -54,6 +54,7 @@ struct LinuxInputEffectImpl
     GUID	guid;
 
     struct ff_effect    effect; /* Effect data */
+    int                 gain;   /* Effect gain */
     int*                fd;     /* Parent device */
     struct list        *entry;  /* Entry into the parent's list of effects */
 };
@@ -379,9 +380,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_GetParameters(
     }
 
     if (dwFlags & DIEP_GAIN) {
-	/* the linux input ff driver apparently has no support
-         * for setting the device's gain. */
-	peff->dwGain = DI_FFNOMINALMAX;
+	peff->dwGain = This->gain;
     }
 
     if (dwFlags & DIEP_SAMPLEPERIOD) {
@@ -513,6 +512,12 @@ static HRESULT WINAPI LinuxInputEffectImpl_Start(
     }
 
     event.type = EV_FF;
+
+    event.code = FF_GAIN;
+    event.value = This->gain;
+    if (write(*(This->fd), &event, sizeof(event)) == -1)
+	FIXME("Failed setting gain. Error: %d \"%s\".\n", errno, strerror(errno));
+
     event.code = This->effect.id;
     event.value = dwIterations;
     if (write(*(This->fd), &event, sizeof(event)) == -1) {
@@ -623,7 +628,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
     /* Gain and Sample Period settings are not supported by the linux
      * event system */
     if (dwFlags & DIEP_GAIN)
-	TRACE("Gain requested but no gain functionality present.\n");
+	This->gain = 0xFFFF * peff->dwGain / 1000;
 
     if (dwFlags & DIEP_SAMPLEPERIOD)
 	TRACE("Sample period requested but no sample period functionality present.\n");
