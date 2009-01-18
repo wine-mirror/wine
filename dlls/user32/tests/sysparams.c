@@ -1353,6 +1353,7 @@ static int get_tmheight( LOGFONTA *plf, int flag)
 }
 
 static void test_GetSystemMetrics( void);
+static UINT smcxsmsize = 999999999;
 
 static void test_SPI_SETNONCLIENTMETRICS( void )               /*     44 */
 {
@@ -1374,6 +1375,7 @@ static void test_SPI_SETNONCLIENTMETRICS( void )               /*     44 */
     if (!test_error_msg(rc,"SPI_{GET,SET}NONCLIENTMETRICS"))
         return;
     Ncmstart = Ncmorig;
+    smcxsmsize = Ncmstart.iSmCaptionWidth;
     /* SPI_GETNONCLIENTMETRICS returns some "cooked" values. For instance if 
        the caption font height is higher than the CaptionHeight field,
        the latter is adjusted accordingly. To be able to restore these setting
@@ -2437,7 +2439,6 @@ static void get_text_metr_size( HDC hdc, LOGFONTA *plf, TEXTMETRICA * ptm, UINT 
 }
 
 static int gsm_error_ctr;
-static UINT smcxsmsize = 999999999;
 
 #define ok_gsm( i, e)\
 {\
