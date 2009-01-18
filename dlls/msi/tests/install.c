@@ -1365,6 +1365,7 @@ static void get_user_sid(LPSTR *usersid)
     GetTokenInformation(token, TokenUser, buf, size, &size);
     user = (PTOKEN_USER)buf;
     pConvertSidToStringSidA(user->User.Sid, usersid);
+    CloseHandle(token);
 }
 
 static BOOL check_record(MSIHANDLE rec, UINT field, LPCSTR val)
