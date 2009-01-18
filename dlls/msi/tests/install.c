@@ -3761,17 +3761,21 @@ static void test_publishsourcelist(void)
     ok(pf_exists("msitest"), "File not installed\n");
 
     /* nothing published */
-    size = 0xdeadbeef;
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
     r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
+                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, value, &size);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+    ok(size == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, size);
+    ok(!lstrcmpA(value, "aaa"), "Expected \"aaa\", got \"%s\"\n", value);
 
-    size = 0xdeadbeef;
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
     r = pMsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                   MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, NULL, &size);
+                                   MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+    ok(size == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, size);
+    ok(!lstrcmpA(value, "aaa"), "Expected \"aaa\", got \"%s\"\n", value);
 
     r = MsiInstallProductA(msifile, "REGISTER_PRODUCT=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -3779,17 +3783,21 @@ static void test_publishsourcelist(void)
     ok(pf_exists("msitest"), "File not installed\n");
 
     /* after RegisterProduct */
-    size = 0xdeadbeef;
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
     r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
+                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, value, &size);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+    ok(size == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, size);
+    ok(!lstrcmpA(value, "aaa"), "Expected \"aaa\", got \"%s\"\n", value);
 
-    size = 0xdeadbeef;
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
     r = pMsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                   MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, NULL, &size);
+                                   MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+    ok(size == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, size);
+    ok(!lstrcmpA(value, "aaa"), "Expected \"aaa\", got \"%s\"\n", value);
 
     r = MsiInstallProductA(msifile, "PROCESS_COMPONENTS=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -3797,17 +3805,21 @@ static void test_publishsourcelist(void)
     ok(pf_exists("msitest"), "File not installed\n");
 
     /* after ProcessComponents */
-    size = 0xdeadbeef;
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
     r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
+                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, value, &size);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+    ok(size == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, size);
+    ok(!lstrcmpA(value, "aaa"), "Expected \"aaa\", got \"%s\"\n", value);
 
-    size = 0xdeadbeef;
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
     r = pMsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                   MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, NULL, &size);
+                                   MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+    ok(size == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, size);
+    ok(!lstrcmpA(value, "aaa"), "Expected \"aaa\", got \"%s\"\n", value);
 
     r = MsiInstallProductA(msifile, "PUBLISH_FEATURES=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -3815,17 +3827,21 @@ static void test_publishsourcelist(void)
     ok(pf_exists("msitest"), "File not installed\n");
 
     /* after PublishFeatures */
-    size = 0xdeadbeef;
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
     r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
+                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, value, &size);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+    ok(size == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, size);
+    ok(!lstrcmpA(value, "aaa"), "Expected \"aaa\", got \"%s\"\n", value);
 
-    size = 0xdeadbeef;
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
     r = pMsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                   MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, NULL, &size);
+                                   MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+    ok(size == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, size);
+    ok(!lstrcmpA(value, "aaa"), "Expected \"aaa\", got \"%s\"\n", value);
 
     r = MsiInstallProductA(msifile, "PUBLISH_PRODUCT=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
