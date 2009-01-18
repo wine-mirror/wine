@@ -3352,10 +3352,46 @@ HRESULT WINAPI CoCopyProxy(IUnknown *pProxy, IUnknown **ppCopy)
  */
 HRESULT WINAPI CoGetCallContext(REFIID riid, void **ppv)
 {
-    FIXME("(%s, %p): stub\n", debugstr_guid(riid), ppv);
+    struct oletls *info = COM_CurrentInfo();
 
-    *ppv = NULL;
-    return E_NOINTERFACE;
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
+
+    if (!info)
+        return E_OUTOFMEMORY;
+
+    if (!info->call_state)
+        return RPC_E_CALL_COMPLETE;
+
+    return IUnknown_QueryInterface(info->call_state, riid, ppv);
+}
+
+/***********************************************************************
+ *           CoSwitchCallContext [OLE32.@]
+ *
+ * Switches the context of the currently executing server call in the current
+ * thread.
+ *
+ * PARAMS
+ *  pObject     [I] Pointer to new context object
+ *  ppOldObject [O] Pointer to memory that will receive old context object pointer
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
+ */
+HRESULT WINAPI CoSwitchCallContext(IUnknown *pObject, IUnknown **ppOldObject)
+{
+    struct oletls *info = COM_CurrentInfo();
+
+    TRACE("(%p, %p)\n", pObject, ppOldObject);
+
+    if (!info)
+        return E_OUTOFMEMORY;
+
+    *ppOldObject = info->call_state;
+    info->call_state = pObject; /* CoSwitchCallContext does not addref nor release objects */
+
+    return S_OK;
 }
 
 /***********************************************************************
