@@ -825,6 +825,32 @@ get_friendly_name_fail:
       return ASSOC_ReturnData(pszOut, pcchOut, path, strlenW(path) + 1);
     }
 
+    case ASSOCSTR_CONTENTTYPE:
+    {
+      static const WCHAR Content_TypeW[] = {'C','o','n','t','e','n','t',' ','T','y','p','e',0};
+      WCHAR *contentType;
+      DWORD ret;
+      DWORD size;
+
+      size = 0;
+      ret = RegGetValueW(This->hkeySource, NULL, Content_TypeW, RRF_RT_REG_SZ, NULL, NULL, &size);
+      if (ret != ERROR_SUCCESS)
+        return HRESULT_FROM_WIN32(ret);
+      contentType = HeapAlloc(GetProcessHeap(), 0, size);
+      if (contentType != NULL)
+      {
+        ret = RegGetValueW(This->hkeySource, NULL, Content_TypeW, RRF_RT_REG_SZ, NULL, contentType, &size);
+        if (ret == ERROR_SUCCESS)
+          hr = ASSOC_ReturnData(pszOut, pcchOut, contentType, strlenW(contentType) + 1);
+        else
+          hr = HRESULT_FROM_WIN32(ret);
+        HeapFree(GetProcessHeap(), 0, contentType);
+      }
+      else
+        hr = E_OUTOFMEMORY;
+      return hr;
+    }
+
     default:
       FIXME("assocstr %d unimplemented!\n", str);
       return E_NOTIMPL;
