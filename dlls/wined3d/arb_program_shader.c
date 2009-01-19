@@ -1857,6 +1857,7 @@ static void shader_arb_destroy(IWineD3DBaseShader *iface) {
         HeapFree(GetProcessHeap(), 0, This->gl_shaders);
         This->gl_shaders = NULL;
         This->num_gl_shaders = 0;
+        This->shader_array_size = 0;
     } else {
         IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *) iface;
 

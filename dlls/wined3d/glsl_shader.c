@@ -3652,6 +3652,7 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
         HeapFree(GetProcessHeap(), 0, ps->gl_shaders);
         ps->gl_shaders = NULL;
         ps->num_gl_shaders = 0;
+        ps->shader_array_size = 0;
     } else {
         TRACE("Deleting shader object %u\n", vs->prgId);
         ENTER_GL();

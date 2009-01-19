@@ -2382,7 +2382,7 @@ typedef struct IWineD3DPixelShaderImpl {
 
     /* The GL shader */
     struct ps_compiled_shader   *gl_shaders;
-    UINT                        num_gl_shaders;
+    UINT                        num_gl_shaders, shader_array_size;
 
     /* Some information about the shader behavior */
     struct stb_const_desc       bumpenvmatconst[MAX_TEXTURES];
