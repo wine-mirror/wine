@@ -543,7 +543,7 @@
 @ cdecl _wfindnext(long ptr) MSVCRT__wfindnext
 @ cdecl _wfindnexti64(long ptr) MSVCRT__wfindnexti64
 @ cdecl _wfopen(wstr wstr) MSVCRT__wfopen
-@ stub _wfreopen #(wstr wstr ptr) MSVCRT__wfreopen
+@ cdecl _wfreopen(wstr wstr ptr)
 @ cdecl _wfsopen(wstr wstr long) MSVCRT__wfsopen
 @ cdecl _wfullpath(ptr wstr long)
 @ cdecl _wgetcwd(wstr long)
