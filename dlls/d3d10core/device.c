@@ -1008,11 +1008,39 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
         IUnknown *superior, UINT width, UINT height, WINED3DFORMAT format, WINED3DMULTISAMPLE_TYPE multisample_type,
         DWORD multisample_quality, BOOL lockable, IWineD3DSurface **surface)
 {
+    struct d3d10_device *This = device_from_device_parent(iface);
+    struct d3d10_texture2d *texture;
+    D3D10_TEXTURE2D_DESC desc;
+    HRESULT hr;
+
     FIXME("iface %p, superior %p, width %u, height %u, format %#x, multisample_type %#x,\n"
             "\tmultisample_quality %u, lockable %u, surface %p stub!\n",
             iface, superior, width, height, format, multisample_type, multisample_quality, lockable, surface);
 
-    return E_NOTIMPL;
+    FIXME("Implement DXGI<->wined3d format and usage conversion\n");
+
+    desc.Width = width;
+    desc.Height = height;
+    desc.MipLevels = 1;
+    desc.ArraySize = 1;
+    desc.Format = format;
+    desc.SampleDesc.Count = multisample_type;
+    desc.SampleDesc.Quality = multisample_quality;
+    desc.Usage = D3D10_USAGE_DEFAULT;
+    desc.BindFlags = D3D10_BIND_RENDER_TARGET;
+    desc.CPUAccessFlags = 0;
+    desc.MiscFlags = 0;
+
+    hr = d3d10_device_CreateTexture2D((ID3D10Device *)This, &desc, NULL, (ID3D10Texture2D **)&texture);
+    if (FAILED(hr))
+    {
+        ERR("CreateTexture2D failed, returning %#x\n", hr);
+        return hr;
+    }
+
+    *surface = texture->wined3d_surface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3DDeviceParent *iface,
