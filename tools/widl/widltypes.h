@@ -538,6 +538,7 @@ static inline enum type_type type_get_type_detect_alias(const type_t *type)
         return TYPE_MODULE;
     default:
         assert(0);
+        return 0;
     }
 }
 
