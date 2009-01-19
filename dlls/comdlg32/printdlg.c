@@ -2856,14 +2856,6 @@ PRINTDLG_PS_ChangePaperPrev(const PageSetupDataA *pda)
     return TRUE;
 }
 
-#define GETVAL(idc,val) \
-if(msg == EN_CHANGE){ \
-    if (GetDlgItemTextA(hDlg,idc,buf,sizeof(buf)) > 0)\
-        val = _c_str2sizeA(pda->dlga,buf); \
-    else\
-	FIXME("could not get dlgitemtexta for %x\n",id);  \
-}
-
 static inline LONG *element_from_margin_id(RECT *rc, WORD id)
 {
     switch(id)
@@ -2888,6 +2880,50 @@ static void update_margin_edits(HWND hDlg, const PageSetupDataA *pda, WORD id)
             size2str(pda, *element_from_margin_id(&pda->dlga->rtMargin, idx), str);
             SetDlgItemTextW(hDlg, idx, str);
         }
+    }
+}
+
+static void margin_edit_notification(HWND hDlg, PageSetupDataA *pda, WORD msg, WORD id)
+{
+    switch (msg)
+    {
+    case EN_CHANGE:
+      {
+        WCHAR buf[10];
+        LONG val = 0;
+        LONG *value = element_from_margin_id(&pda->dlga->rtMargin, id);
+
+        if (GetDlgItemTextW(hDlg, id, buf, sizeof(buf) / sizeof(buf[0])) != 0)
+        {
+            WCHAR *end;
+            WCHAR decimal = '.';
+
+            val = strtolW(buf, &end, 10);
+            if(end != buf || *end == decimal)
+            {
+                int mult = is_metric(pda) ? 100 : 1000;
+                val *= mult;
+                if(*end == decimal)
+                {
+                    while(mult > 1)
+                    {
+                        end++;
+                        mult /= 10;
+                        if(isdigitW(*end))
+                            val += (*end - '0') * mult;
+                        else
+                            break;
+                    }
+                }
+            }
+        }
+        *value = val;
+        return;
+      }
+
+    case EN_KILLFOCUS:
+        update_margin_edits(hDlg, pda, id);
+        return;
     }
 }
 
@@ -2917,8 +2953,7 @@ PRINTDLG_PS_WMCommandA(
 ) {
     WORD msg = HIWORD(wParam);
     WORD id  = LOWORD(wParam);
-    char buf[200];
-	
+
     TRACE("loword (lparam) %d, wparam 0x%lx, lparam %08lx\n",
 	    LOWORD(lParam),wParam,lParam);
     switch (id)  {
@@ -3047,22 +3082,15 @@ PRINTDLG_PS_WMCommandA(
 	    break;
 	}       
     case edt4:
-        GETVAL(id, pda->dlga->rtMargin.left);
-	break;
     case edt5:
-        GETVAL(id, pda->dlga->rtMargin.top);
-	break;
     case edt6:
-        GETVAL(id, pda->dlga->rtMargin.right);
-	break;
     case edt7:
-        GETVAL(id, pda->dlga->rtMargin.bottom);
-	break;
+        margin_edit_notification(hDlg, pda, msg, id);
+        break;
     }
     InvalidateRect(GetDlgItem(hDlg, rct1), NULL, TRUE);
     return FALSE;
 }
-#undef GETVAL			   
 
 static BOOL
 PRINTDLG_PS_WMCommandW(
