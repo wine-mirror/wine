@@ -129,8 +129,6 @@ static void test_codepage(int cp)
     printf("0x%x,%d };\n", prev, count);
 }
 
-#define test_codepage_todo(cp, todo) test_codepage(cp)
-
 #else
 
 /* RLE-encoded mbctype tables for given codepages */
@@ -143,10 +141,7 @@ static int result_cp_949_mbctype[] = { 0x0,66, 0x18,26, 0x8,6, 0x28,26, 0x8,6, 0
 static int result_cp_950_mbctype[] = { 0x0,65, 0x8,1, 0x18,26, 0x8,6, 0x28,26, 0x8,4,
   0x0,2, 0x4,32, 0xc,94, 0,1 };
 
-static int todo_none[] = { -2 };
-static int todo_cp_932[] = { 254, -2 };
-
-static void test_cp_table(int cp, int *result, int *todo)
+static void test_cp_table(int cp, int *result)
 {
     int i;
     int count = 0;
@@ -160,19 +155,12 @@ static void test_cp_table(int cp, int *result, int *todo)
             count = result[1];
             result += 2;
         }
-	if (i == *todo + 1)
-	{
-            todo_wine ok(p_mbctype[i] == curr, "CP%d: Mismatch in ctype for character %d - %d instead of %d\n", cp, i-1, p_mbctype[i], curr);
-            todo++;
-	}
-	else
-            ok(p_mbctype[i] == curr, "CP%d: Mismatch in ctype for character %d - %d instead of %d\n", cp, i-1, p_mbctype[i], curr);
+        ok(p_mbctype[i] == curr, "CP%d: Mismatch in ctype for character %d - %d instead of %d\n", cp, i-1, p_mbctype[i], curr);
         count--;
     }
 }
 
-#define test_codepage(num) test_cp_table(num, result_cp_##num##_mbctype, todo_none);
-#define test_codepage_todo(num, todo) test_cp_table(num, result_cp_##num##_mbctype, todo);
+#define test_codepage(num) test_cp_table(num, result_cp_##num##_mbctype);
 
 #endif
 
@@ -205,7 +193,7 @@ static void test_mbcp(void)
     expect_eq(p_mbctype[128], 0, char, "%x");
 
     /* double byte code pages */
-    test_codepage_todo(932, todo_cp_932);
+    test_codepage(932);
     test_codepage(936);
     test_codepage(949);
     test_codepage(950);
