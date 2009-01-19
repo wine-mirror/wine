@@ -750,6 +750,7 @@ static const struct message WmCreatePopupSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
     { WM_NCPAINT, sent|wparam|optional, 1 },
     { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { WM_ACTIVATEAPP, sent|wparam, 1 },
     { WM_NCACTIVATE, sent|wparam, 1 },
     { WM_ACTIVATE, sent|wparam, 1 },
@@ -834,6 +835,7 @@ static const struct message WmShowVisiblePopupSeq_3[] = {
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|defwinproc },
     { WM_GETTEXT, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { 0 }
 };
 /* CreateWindow (for child window, not initially visible) */
@@ -1884,8 +1886,15 @@ static void dump_sequence(const struct message *expected, const char *context, c
     while (expected->message && ((expected->flags & optional) ||
 	    ((expected->flags & winevent_hook) && !hEvent_hook)))
     {
+        trace_(file, line)( "  %u: expected: msg %04x - actual: nothing\n", count, expected->message );
 	expected++;
+        count++;
     }
+
+    if (expected->message)
+        trace_(file, line)( "  %u: expected: msg %04x - actual: nothing\n", count, expected->message );
+    else if (actual->message && actual->output[0])
+        trace_(file, line)( "  %u: expected: nothing - actual: %s\n", count, actual->output );
 }
 
 #define ok_sequence( exp, contx, todo) \
@@ -1949,6 +1958,14 @@ static void ok_sequence_(const struct message *expected_list, const char *contex
                                      context, count, expected->message, expected->lParam, actual->lParam);
                     if ((expected->lParam ^ actual->lParam) & ~expected->lp_mask) dump++;
                 }
+            }
+	    if ((expected->flags & defwinproc) != (actual->flags & defwinproc) &&
+                (expected->flags & optional))
+            {
+                /* don't match messages if their defwinproc status differs */
+                expected++;
+                count++;
+                continue;
             }
 	    if ((expected->flags & defwinproc) != (actual->flags & defwinproc) && todo)
 	    {
@@ -2387,12 +2404,12 @@ static const struct message WmCreateMDIchildVisibleMaxSeq1[] = {
     /* Win9x: message sequence terminates here. */
 
     { WM_NCACTIVATE, sent|wparam|defwinproc|optional, 1 },
-    { HCBT_SETFOCUS, hook }, /* in MDI client */
+    { HCBT_SETFOCUS, hook|optional }, /* in MDI client */
     { WM_IME_SETCONTEXT, sent|wparam|optional, 1 }, /* in MDI client */
     { WM_IME_NOTIFY, sent|wparam|optional, 2 }, /* in MDI client */
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|optional }, /* in MDI client */
-    { HCBT_SETFOCUS, hook },
+    { HCBT_SETFOCUS, hook|optional },
     { WM_KILLFOCUS, sent|optional }, /* in MDI client */
     { WM_IME_SETCONTEXT, sent|wparam|optional, 0 }, /* in MDI client */
     { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
@@ -3116,6 +3133,7 @@ static LRESULT WINAPI mdi_client_hook_proc(HWND hwnd, UINT message, WPARAM wPara
         message != WM_GETTEXT &&
         message != WM_MDIGETACTIVE &&
         message != WM_GETICON &&
+        message != WM_GETOBJECT &&
         message != WM_DEVICECHANGE)
     {
         msg.hwnd = hwnd;
@@ -3144,6 +3162,7 @@ static LRESULT WINAPI mdi_child_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
         message != WM_NCHITTEST &&
         message != WM_GETTEXT &&
         message != WM_GETICON &&
+        message != WM_GETOBJECT &&
         message != WM_DEVICECHANGE)
     {
         switch (message)
@@ -3193,6 +3212,7 @@ static LRESULT WINAPI mdi_frame_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
         message != WM_NCHITTEST &&
         message != WM_GETTEXT &&
         message != WM_GETICON &&
+        message != WM_GETOBJECT &&
         message != WM_DEVICECHANGE)
     {
         msg.hwnd = hwnd;
@@ -3812,6 +3832,7 @@ static INT_PTR CALLBACK TestModalDlgProcA(HWND hwnd, UINT message, WPARAM wParam
     {
 	/* ignore */
         case WM_GETICON:
+        case WM_GETOBJECT:
 	case WM_MOUSEMOVE:
 	case WM_SETCURSOR:
 	case WM_DEVICECHANGE:
@@ -5061,9 +5082,9 @@ static LRESULT CALLBACK button_hook_proc(HWND hwnd, UINT message, WPARAM wParam,
 
     switch (message)
     {
-    /* explicitly ignore WM_GETICON message */
     case WM_GETICON:
-        return 0;
+    case WM_GETOBJECT:
+        return 0;  /* ignore them */
     case WM_SYNCPAINT:
         break;
     case BM_SETSTATE:
@@ -5169,6 +5190,7 @@ static void test_button_messages(void)
 			   0, 0, 50, 14, 0, 0, 0, NULL);
     ok(hwnd != 0, "Failed to create button window\n");
 
+    SetForegroundWindow(hwnd);
     SetFocus(0);
     flush_events();
     flush_sequence();
@@ -5206,8 +5228,7 @@ static LRESULT CALLBACK static_hook_proc(HWND hwnd, UINT message, WPARAM wParam,
     LRESULT ret;
     struct recvd_message msg;
 
-    /* explicitly ignore WM_GETICON message */
-    if (message == WM_GETICON) return 0;
+    if (message == WM_GETICON || message == WM_GETOBJECT) return 0;  /* ignore them */
 
     msg.hwnd = hwnd;
     msg.message = message;
@@ -5310,6 +5331,7 @@ static LRESULT CALLBACK combobox_hook_proc(HWND hwnd, UINT message, WPARAM wPara
         message != WM_NCHITTEST &&
         message != WM_GETTEXT &&
         message != WM_GETICON &&
+        message != WM_GETOBJECT &&
         message != WM_DEVICECHANGE)
     {
         msg.hwnd = hwnd;
@@ -6542,6 +6564,7 @@ static void pump_msg_loop(HWND hwnd, HACCEL hAccel)
         /* ignore some unwanted messages */
         if (msg.message == WM_MOUSEMOVE ||
             msg.message == WM_GETICON ||
+            msg.message == WM_GETOBJECT ||
             msg.message == WM_TIMER ||
             msg.message == WM_DEVICECHANGE)
             continue;
@@ -6766,9 +6789,6 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
     LRESULT ret;
     struct recvd_message msg;
 
-    /* explicitly ignore WM_GETICON message */
-    if (message == WM_GETICON) return 0;
-
     /* ignore registered messages */
     if (message >= 0xc000) return 0;
 
@@ -6833,6 +6853,8 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
 	case WM_MOUSEACTIVATE:
 	case WM_NCMOUSEMOVE:
 	case WM_SETCURSOR:
+	case WM_GETICON:
+	case WM_GETOBJECT:
 	case WM_DEVICECHANGE:
 	    return 0;
     }
@@ -6905,8 +6927,8 @@ static LRESULT WINAPI PopupMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam,
     switch (message)
     {
     case WM_GETICON:
-        /* explicitly ignore WM_GETICON message */
-        return 0;
+    case WM_GETOBJECT:
+        return 0;  /* ignore them */
     case WM_QUERYENDSESSION:
     case WM_ENDSESSION:
         lParam &= ~0x01;  /* Vista adds a 0x01 flag */
@@ -6942,8 +6964,7 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
     LRESULT ret;
     struct recvd_message msg;
 
-    /* explicitly ignore WM_GETICON message */
-    if (message == WM_GETICON) return 0;
+    if (message == WM_GETICON || message == WM_GETOBJECT) return 0;  /* ignore them */
 
     /* ignore registered messages */
     if (message >= 0xc000) return 0;
@@ -7009,8 +7030,7 @@ static LRESULT WINAPI TestDlgProcA(HWND hwnd, UINT message, WPARAM wParam, LPARA
     LRESULT ret;
     struct recvd_message msg;
 
-    /* explicitly ignore WM_GETICON message */
-    if (message == WM_GETICON) return 0;
+    if (message == WM_GETICON || message == WM_GETOBJECT) return 0;  /* ignore them */
 
     if (test_def_id)
     {
@@ -8633,8 +8653,7 @@ static LRESULT CALLBACK edit_hook_proc(HWND hwnd, UINT message, WPARAM wParam, L
     LRESULT ret;
     struct recvd_message msg;
 
-    /* explicitly ignore WM_GETICON message */
-    if (message == WM_GETICON) return 0;
+    if (message == WM_GETICON || message == WM_GETOBJECT) return 0;  /* ignore them */
 
     msg.hwnd = hwnd;
     msg.message = message;
@@ -9782,6 +9801,7 @@ static const struct message WmShowNA_1[] = {
 static const struct message WmShowNA_2[] = {
     { WM_SHOWWINDOW, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { 0 }
 };
 static const struct message WmRestore_1[] = {
@@ -10091,9 +10111,9 @@ static INT_PTR WINAPI test_dlg_proc(HWND hwnd, UINT message, WPARAM wParam, LPAR
 
     switch (message)
     {
-    /* explicitly ignore WM_GETICON message */
     case WM_GETICON:
-        return 0;
+    case WM_GETOBJECT:
+        return 0;  /* ignore them */
     }
 
     msg.hwnd = hwnd;
@@ -10851,6 +10871,7 @@ static LRESULT WINAPI listbox_hook_proc(HWND hwnd, UINT message, WPARAM wp, LPAR
         message != WM_ERASEBKGND &&
         message != WM_NCHITTEST &&
         message != WM_GETTEXT &&
+        message != WM_GETOBJECT &&
         message != WM_GETICON &&
         message != WM_DEVICECHANGE)
     {
