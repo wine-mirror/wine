@@ -89,6 +89,8 @@ static BOOL (WINAPI * pCryptCATAdminRemoveCatalog)(HCATADMIN, LPCWSTR, DWORD);
 static BOOL (WINAPI * pCryptCATAdminReleaseCatalogContext)(HCATADMIN, HCATINFO, DWORD);
 static HANDLE (WINAPI * pCryptCATOpen)(LPWSTR, DWORD, HCRYPTPROV, DWORD, DWORD);
 static BOOL (WINAPI * pCryptCATCatalogInfoFromContext)(HCATINFO, CATALOG_INFO *, DWORD);
+static BOOL (WINAPI * pCryptCATCDFClose)(CRYPTCATCDF *);
+static CRYPTCATCDF * (WINAPI * pCryptCATCDFOpen)(LPWSTR, PFN_CDF_PARSE_ERROR_CALLBACK);
 static CRYPTCATATTRIBUTE * (WINAPI * pCryptCATEnumerateCatAttr)(HANDLE, CRYPTCATATTRIBUTE *);
 static CRYPTCATMEMBER * (WINAPI * pCryptCATEnumerateMember)(HANDLE, CRYPTCATMEMBER *);
 static CRYPTCATATTRIBUTE * (WINAPI * pCryptCATEnumerateAttr)(HANDLE, CRYPTCATMEMBER *, CRYPTCATATTRIBUTE *);
@@ -112,6 +114,8 @@ static void InitFunctionPtrs(void)
     WINTRUST_GET_PROC(CryptCATAdminReleaseCatalogContext)
     WINTRUST_GET_PROC(CryptCATOpen)
     WINTRUST_GET_PROC(CryptCATCatalogInfoFromContext)
+    WINTRUST_GET_PROC(CryptCATCDFClose)
+    WINTRUST_GET_PROC(CryptCATCDFOpen)
     WINTRUST_GET_PROC(CryptCATEnumerateCatAttr)
     WINTRUST_GET_PROC(CryptCATEnumerateMember)
     WINTRUST_GET_PROC(CryptCATEnumerateAttr)
@@ -349,6 +353,71 @@ static void test_calchash(void)
     DeleteFileA(temp);
 }
 
+static void WINAPI cdf_callback(DWORD area, DWORD error, WCHAR* line)
+{
+}
+
+static void test_CryptCATCDF_params(void)
+{
+    static WCHAR nonexistent[] = {'d','e','a','d','b','e','e','f','.','c','d','f',0};
+    static CHAR  cdffileA[]    = "tempfile.cdf";
+    static WCHAR cdffileW[]    = {'t','e','m','p','f','i','l','e','.','c','d','f',0};
+    CRYPTCATCDF *catcdf;
+    HANDLE file;
+    BOOL ret;
+
+    if (!pCryptCATCDFOpen)
+    {
+        win_skip("CryptCATCDFOpen is not available\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    catcdf = pCryptCATCDFOpen(NULL, NULL);
+    ok(catcdf == NULL, "CryptCATCDFOpen succeeded\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    catcdf = pCryptCATCDFOpen(NULL, cdf_callback);
+    ok(catcdf == NULL, "CryptCATCDFOpen succeeded\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    /* File doesn't exist */
+    SetLastError(0xdeadbeef);
+    catcdf = pCryptCATCDFOpen(nonexistent, cdf_callback);
+    ok(catcdf == NULL, "CryptCATCDFOpen succeeded\n");
+    todo_wine
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+
+    /* Empty file */
+    DeleteFileA(cdffileA);
+    file = CreateFileA(cdffileA, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileA failed %u\n", GetLastError());
+    CloseHandle(file);
+
+    SetLastError(0xdeadbeef);
+    catcdf = pCryptCATCDFOpen(cdffileW, cdf_callback);
+    ok(catcdf == NULL, "CryptCATCDFOpen succeeded\n");
+    todo_wine
+    ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
+    DeleteFileA(cdffileA);
+
+    SetLastError(0xdeadbeef);
+    ret = pCryptCATCDFClose(NULL);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    catcdf = NULL;
+    SetLastError(0xdeadbeef);
+    ret = pCryptCATCDFClose(catcdf);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+}
+
 static void test_CryptCATAdminAddRemoveCatalog(void)
 {
     static WCHAR basenameW[] = {'w','i','n','e','t','e','s','t','.','c','a','t',0};
@@ -584,6 +653,8 @@ START_TEST(crypt)
    
     test_context();
     test_calchash();
+    /* Parameter checking only */
+    test_CryptCATCDF_params();
     test_CryptCATAdminAddRemoveCatalog();
     test_catalog_properties();
 }
