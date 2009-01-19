@@ -52,6 +52,53 @@ static int mp_invmod_slow (const mp_int * a, mp_int * b, mp_int * c);
 static int mp_karatsuba_mul(const mp_int *a, const mp_int *b, mp_int *c);
 static int mp_karatsuba_sqr(const mp_int *a, mp_int *b);
 
+/* b = a/2 */
+static int mp_div_2(const mp_int * a, mp_int * b)
+{
+  int     x, res, oldused;
+
+  /* copy */
+  if (b->alloc < a->used) {
+    if ((res = mp_grow (b, a->used)) != MP_OKAY) {
+      return res;
+    }
+  }
+
+  oldused = b->used;
+  b->used = a->used;
+  {
+    register mp_digit r, rr, *tmpa, *tmpb;
+
+    /* source alias */
+    tmpa = a->dp + b->used - 1;
+
+    /* dest alias */
+    tmpb = b->dp + b->used - 1;
+
+    /* carry */
+    r = 0;
+    for (x = b->used - 1; x >= 0; x--) {
+      /* get the carry for the next iteration */
+      rr = *tmpa & 1;
+
+      /* shift the current digit, add in carry and store */
+      *tmpb-- = (*tmpa-- >> 1) | (r << (DIGIT_BIT - 1));
+
+      /* forward carry to next iteration */
+      r = rr;
+    }
+
+    /* zero excess digits */
+    tmpb = b->dp + b->used;
+    for (x = b->used; x < oldused; x++) {
+      *tmpb++ = 0;
+    }
+  }
+  b->sign = a->sign;
+  mp_clamp (b);
+  return MP_OKAY;
+}
+
 /* computes the modular inverse via binary extended euclidean algorithm, 
  * that is c = 1/a mod b 
  *
@@ -1016,6 +1063,82 @@ mp_count_bits (const mp_int * a)
   return r;
 }
 
+/* shift right by a certain bit count (store quotient in c, optional remainder in d) */
+static int mp_div_2d (const mp_int * a, int b, mp_int * c, mp_int * d)
+{
+  mp_digit D, r, rr;
+  int     x, res;
+  mp_int  t;
+
+
+  /* if the shift count is <= 0 then we do no work */
+  if (b <= 0) {
+    res = mp_copy (a, c);
+    if (d != NULL) {
+      mp_zero (d);
+    }
+    return res;
+  }
+
+  if ((res = mp_init (&t)) != MP_OKAY) {
+    return res;
+  }
+
+  /* get the remainder */
+  if (d != NULL) {
+    if ((res = mp_mod_2d (a, b, &t)) != MP_OKAY) {
+      mp_clear (&t);
+      return res;
+    }
+  }
+
+  /* copy */
+  if ((res = mp_copy (a, c)) != MP_OKAY) {
+    mp_clear (&t);
+    return res;
+  }
+
+  /* shift by as many digits in the bit count */
+  if (b >= DIGIT_BIT) {
+    mp_rshd (c, b / DIGIT_BIT);
+  }
+
+  /* shift any bit count < DIGIT_BIT */
+  D = (mp_digit) (b % DIGIT_BIT);
+  if (D != 0) {
+    register mp_digit *tmpc, mask, shift;
+
+    /* mask */
+    mask = (((mp_digit)1) << D) - 1;
+
+    /* shift for lsb */
+    shift = DIGIT_BIT - D;
+
+    /* alias */
+    tmpc = c->dp + (c->used - 1);
+
+    /* carry */
+    r = 0;
+    for (x = c->used - 1; x >= 0; x--) {
+      /* get the lower  bits of this word in a temp */
+      rr = *tmpc & mask;
+
+      /* shift the current word and mix in the carry bits from the previous word */
+      *tmpc = (*tmpc >> D) | (r << shift);
+      --tmpc;
+
+      /* set the carry to the carry bits of the current word found above */
+      r = rr;
+    }
+  }
+  mp_clamp (c);
+  if (d != NULL) {
+    mp_exch (&t, d);
+  }
+  mp_clear (&t);
+  return MP_OKAY;
+}
+
 /* integer signed division. 
  * c*b + d == a [e.g. a/b, c=quotient, d=remainder]
  * HAC pp.598 Algorithm 14.20
@@ -1029,7 +1152,7 @@ mp_count_bits (const mp_int * a)
  * The overall algorithm is as described as 
  * 14.20 from HAC but fixed to treat these cases.
 */
-int mp_div (const mp_int * a, const mp_int * b, mp_int * c, mp_int * d)
+static int mp_div (const mp_int * a, const mp_int * b, mp_int * c, mp_int * d)
 {
   mp_int  q, x, y, t1, t2;
   int     res, n, t, i, norm, neg;
@@ -1212,129 +1335,6 @@ __Q:mp_clear (&q);
   return res;
 }
 
-/* b = a/2 */
-int mp_div_2(const mp_int * a, mp_int * b)
-{
-  int     x, res, oldused;
-
-  /* copy */
-  if (b->alloc < a->used) {
-    if ((res = mp_grow (b, a->used)) != MP_OKAY) {
-      return res;
-    }
-  }
-
-  oldused = b->used;
-  b->used = a->used;
-  {
-    register mp_digit r, rr, *tmpa, *tmpb;
-
-    /* source alias */
-    tmpa = a->dp + b->used - 1;
-
-    /* dest alias */
-    tmpb = b->dp + b->used - 1;
-
-    /* carry */
-    r = 0;
-    for (x = b->used - 1; x >= 0; x--) {
-      /* get the carry for the next iteration */
-      rr = *tmpa & 1;
-
-      /* shift the current digit, add in carry and store */
-      *tmpb-- = (*tmpa-- >> 1) | (r << (DIGIT_BIT - 1));
-
-      /* forward carry to next iteration */
-      r = rr;
-    }
-
-    /* zero excess digits */
-    tmpb = b->dp + b->used;
-    for (x = b->used; x < oldused; x++) {
-      *tmpb++ = 0;
-    }
-  }
-  b->sign = a->sign;
-  mp_clamp (b);
-  return MP_OKAY;
-}
-
-/* shift right by a certain bit count (store quotient in c, optional remainder in d) */
-int mp_div_2d (const mp_int * a, int b, mp_int * c, mp_int * d)
-{
-  mp_digit D, r, rr;
-  int     x, res;
-  mp_int  t;
-
-
-  /* if the shift count is <= 0 then we do no work */
-  if (b <= 0) {
-    res = mp_copy (a, c);
-    if (d != NULL) {
-      mp_zero (d);
-    }
-    return res;
-  }
-
-  if ((res = mp_init (&t)) != MP_OKAY) {
-    return res;
-  }
-
-  /* get the remainder */
-  if (d != NULL) {
-    if ((res = mp_mod_2d (a, b, &t)) != MP_OKAY) {
-      mp_clear (&t);
-      return res;
-    }
-  }
-
-  /* copy */
-  if ((res = mp_copy (a, c)) != MP_OKAY) {
-    mp_clear (&t);
-    return res;
-  }
-
-  /* shift by as many digits in the bit count */
-  if (b >= DIGIT_BIT) {
-    mp_rshd (c, b / DIGIT_BIT);
-  }
-
-  /* shift any bit count < DIGIT_BIT */
-  D = (mp_digit) (b % DIGIT_BIT);
-  if (D != 0) {
-    register mp_digit *tmpc, mask, shift;
-
-    /* mask */
-    mask = (((mp_digit)1) << D) - 1;
-
-    /* shift for lsb */
-    shift = DIGIT_BIT - D;
-
-    /* alias */
-    tmpc = c->dp + (c->used - 1);
-
-    /* carry */
-    r = 0;
-    for (x = c->used - 1; x >= 0; x--) {
-      /* get the lower  bits of this word in a temp */
-      rr = *tmpc & mask;
-
-      /* shift the current word and mix in the carry bits from the previous word */
-      *tmpc = (*tmpc >> D) | (r << shift);
-      --tmpc;
-
-      /* set the carry to the carry bits of the current word found above */
-      r = rr;
-    }
-  }
-  mp_clamp (c);
-  if (d != NULL) {
-    mp_exch (&t, d);
-  }
-  mp_clear (&t);
-  return MP_OKAY;
-}
-
 static int s_is_power_of_two(mp_digit b, int *p)
 {
    int x;
@@ -1349,7 +1349,7 @@ static int s_is_power_of_two(mp_digit b, int *p)
 }
 
 /* single digit division (based on routine from MPI) */
-int mp_div_d (const mp_int * a, mp_digit b, mp_int * c, mp_digit * d)
+static int mp_div_d (const mp_int * a, mp_digit b, mp_int * c, mp_digit * d)
 {
   mp_int  q;
   mp_word w;
@@ -1430,7 +1430,7 @@ int mp_div_d (const mp_int * a, mp_digit b, mp_int * c, mp_digit * d)
  *
  * Input x must be in the range 0 <= x <= (n-1)**2
  */
-int
+static int
 mp_dr_reduce (mp_int * x, const mp_int * n, mp_digit k)
 {
   int      err, i, m;
@@ -1489,8 +1489,8 @@ top:
   return MP_OKAY;
 }
 
-/* determines the setup value */
-void mp_dr_setup(const mp_int *a, mp_digit *d)
+/* sets the value of "d" required for mp_dr_reduce */
+static void mp_dr_setup(const mp_int *a, mp_digit *d)
 {
    /* the casts are required if DIGIT_BIT is one less than
     * the number of bits in a mp_digit [e.g. DIGIT_BIT==31]

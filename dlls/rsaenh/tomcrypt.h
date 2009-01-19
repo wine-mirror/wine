@@ -300,12 +300,6 @@ void mp_rshd(mp_int *a, int b);
 /* left shift by "b" digits */
 int mp_lshd(mp_int *a, int b);
 
-/* c = a / 2**b */
-int mp_div_2d(const mp_int *a, int b, mp_int *c, mp_int *d);
-
-/* b = a/2 */
-int mp_div_2(const mp_int *a, mp_int *b);
-
 /* c = a * 2**b */
 int mp_mul_2d(const mp_int *a, int b, mp_int *c);
 
@@ -362,9 +356,6 @@ int mp_mul(const mp_int *a, const mp_int *b, mp_int *c);
 /* b = a*a  */
 int mp_sqr(const mp_int *a, mp_int *b);
 
-/* a/b => cb + d == a */
-int mp_div(const mp_int *a, const mp_int *b, mp_int *c, mp_int *d);
-
 /* c = a mod b, 0 <= c < b  */
 int mp_mod(const mp_int *a, mp_int *b, mp_int *c);
 
@@ -381,9 +372,6 @@ int mp_sub_d(mp_int *a, mp_digit b, mp_int *c);
 
 /* c = a * b */
 int mp_mul_d(const mp_int *a, mp_digit b, mp_int *c);
-
-/* a/b => cb + d == a */
-int mp_div_d(const mp_int *a, mp_digit b, mp_int *c, mp_digit *d);
 
 /* a/3 => 3c + d == a */
 int mp_div_3(mp_int *a, mp_int *c, mp_digit *d);
@@ -458,12 +446,6 @@ int mp_montgomery_reduce(mp_int *a, const mp_int *m, mp_digit mp);
 
 /* returns 1 if a is a valid DR modulus */
 int mp_dr_is_modulus(mp_int *a);
-
-/* sets the value of "d" required for mp_dr_reduce */
-void mp_dr_setup(const mp_int *a, mp_digit *d);
-
-/* reduces a modulo b using the Diminished Radix method */
-int mp_dr_reduce(mp_int *a, const mp_int *b, mp_digit mp);
 
 /* returns true if a can be reduced with mp_reduce_2k */
 int mp_reduce_is_2k(mp_int *a);
