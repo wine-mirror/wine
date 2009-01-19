@@ -93,6 +93,53 @@ typedef struct ucontext SIGCONTEXT;
 
 #endif /* linux */
 
+#if defined(__NetBSD__)
+# include <sys/ucontext.h>
+# include <sys/types.h>
+# include <signal.h>
+
+typedef ucontext_t SIGCONTEXT;
+
+#define RAX_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RAX])
+#define RBX_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RBX])
+#define RCX_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RCX])
+#define RDX_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RDX])
+#define RSI_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RSI])
+#define RDI_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RDI])
+#define RBP_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RBP])
+#define R8_sig(context)     ((context)->uc_mcontext.__gregs[_REG_R8])
+#define R9_sig(context)     ((context)->uc_mcontext.__gregs[_REG_R9])
+#define R10_sig(context)    ((context)->uc_mcontext.__gregs[_REG_R10])
+#define R11_sig(context)    ((context)->uc_mcontext.__gregs[_REG_R11])
+#define R12_sig(context)    ((context)->uc_mcontext.__gregs[_REG_R12])
+#define R13_sig(context)    ((context)->uc_mcontext.__gregs[_REG_R13])
+#define R14_sig(context)    ((context)->uc_mcontext.__gregs[_REG_R14])
+#define R15_sig(context)    ((context)->uc_mcontext.__gregs[_REG_R15])
+
+#define CS_sig(context)     ((context)->uc_mcontext.__gregs[_REG_CS])
+#define DS_sig(context)     ((context)->uc_mcontext.__gregs[_REG_DS])
+#define ES_sig(context)     ((context)->uc_mcontext.__gregs[_REG_ES])
+#define FS_sig(context)     ((context)->uc_mcontext.__gregs[_REG_FS])
+#define GS_sig(context)     ((context)->uc_mcontext.__gregs[_REG_GS])
+#define SS_sig(context)     ((context)->uc_mcontext.__gregs[_REG_SS])
+
+#define EFL_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RFL])
+
+#define RIP_sig(context)    (*((unsigned long*)&(context)->uc_mcontext.__gregs[_REG_RIP]))
+#define RSP_sig(context)    (*((unsigned long*)&(context)->uc_mcontext.__gregs[_REG_URSP]))
+
+#define TRAP_sig(context)   ((context)->uc_mcontext.__gregs[_REG_TRAPNO])
+#define ERROR_sig(context)  ((context)->uc_mcontext.__gregs[_REG_ERR])
+
+#define FAULT_CODE          (__siginfo->si_code)
+#define FAULT_ADDRESS       (__siginfo->si_addr)
+
+#define HANDLER_DEF(name) void name( int __signal, siginfo_t *__siginfo, SIGCONTEXT *__context )
+#define HANDLER_CONTEXT (__context)
+
+#define FPU_sig(context)   ((XMM_SAVE_AREA32 *)((context)->uc_mcontext.__fpregs))
+#endif /* __NetBSD__ */
+
 enum i386_trap_code
 {
     TRAP_x86_UNKNOWN    = -1,  /* Unknown fault (TRAP_sig not defined) */
