@@ -551,7 +551,7 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
     DeleteFileA(tmpfile);
 }
 
-static void test_catalog_properties(void)
+static void test_catalog_properties(int members, int attributes)
 {
     static const WCHAR hashmeW[] = {'h','a','s','h','m','e',0};
     static const WCHAR attr1W[] = {'a','t','t','r','1',0};
@@ -566,7 +566,7 @@ static void test_catalog_properties(void)
     DWORD written;
     HANDLE file;
     BOOL ret;
-    int attrcount = 0;
+    int attrcount = 0, membercount = 0;
 
     if (!GetTempFileNameA(CURR_DIR, "cat", 0, catalog)) return;
     file = CreateFileA(catalog, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
@@ -585,28 +585,29 @@ static void test_catalog_properties(void)
     m = pCryptCATEnumerateMember(NULL, NULL);
     ok(m == NULL, "CryptCATEnumerateMember succeeded\n");
 
-    m = pCryptCATEnumerateMember(hcat, NULL);
-    ok(m != NULL, "CryptCATEnumerateMember failed %u\n", GetLastError());
+    m = NULL;
+    while ((m = pCryptCATEnumerateMember(hcat, m)))
+    {
+        ok(m->cbStruct == sizeof(CRYPTCATMEMBER), "unexpected size %u\n", m->cbStruct);
+        todo_wine ok(!lstrcmpW(m->pwszReferenceTag, hashmeW), "unexpected tag\n");
+        ok(!memcmp(&m->gSubjectType, &subject, sizeof(subject)), "guid differs\n");
+        ok(!m->fdwMemberFlags, "got %x expected 0\n", m->fdwMemberFlags);
+        ok(m->dwCertVersion == 0x200, "got %x expected 0x200\n", m->dwCertVersion);
+        ok(!m->dwReserved, "got %x expected 0\n", m->dwReserved);
+        ok(m->hReserved == NULL, "got %p expected NULL\n", m->hReserved);
 
-    ok(m->cbStruct == sizeof(CRYPTCATMEMBER), "unexpected size %u\n", m->cbStruct);
-    todo_wine ok(!lstrcmpW(m->pwszReferenceTag, hashmeW), "unexpected tag\n");
-    ok(!memcmp(&m->gSubjectType, &subject, sizeof(subject)), "guid differs\n");
-    ok(!m->fdwMemberFlags, "got %x expected 0\n", m->fdwMemberFlags);
-    ok(m->dwCertVersion == 0x200, "got %x expected 0x200\n", m->dwCertVersion);
-    ok(!m->dwReserved, "got %x expected 0\n", m->dwReserved);
-    ok(m->hReserved == NULL, "got %p expected NULL\n", m->hReserved);
+        attr = pCryptCATEnumerateAttr(hcat, m, NULL);
+        ok(attr == NULL, "CryptCATEnumerateAttr succeeded\n");
+
+        membercount++;
+    }
+    ok(membercount == members, "Expected %d member, got %d\n", members, membercount);
 
     attr = pCryptCATEnumerateAttr(NULL, NULL, NULL);
     ok(attr == NULL, "CryptCATEnumerateAttr succeeded\n");
 
     attr = pCryptCATEnumerateAttr(hcat, NULL, NULL);
     ok(attr == NULL, "CryptCATEnumerateAttr succeeded\n");
-
-    attr = pCryptCATEnumerateAttr(hcat, m, NULL);
-    ok(attr == NULL, "CryptCATEnumerateAttr succeeded\n");
-
-    m = pCryptCATEnumerateMember(hcat, m);
-    ok(m == NULL, "CryptCATEnumerateMember succeeded\n");
 
     attr = NULL;
     while ((attr = pCryptCATEnumerateCatAttr(hcat, attr)))
@@ -618,7 +619,7 @@ static void test_catalog_properties(void)
         attrcount++;
     }
     todo_wine
-    ok(attrcount == 2, "Expected 2 catalog attributes, got %d\n", attrcount);
+    ok(attrcount == attributes, "Expected %d catalog attributes, got %d\n", attributes, attrcount);
 
     ret = pCryptCATClose(hcat);
     ok(ret, "CryptCATClose failed\n");
@@ -656,5 +657,5 @@ START_TEST(crypt)
     /* Parameter checking only */
     test_CryptCATCDF_params();
     test_CryptCATAdminAddRemoveCatalog();
-    test_catalog_properties();
+    test_catalog_properties(1, 2);
 }
