@@ -2864,18 +2864,31 @@ if(msg == EN_CHANGE){ \
 	FIXME("could not get dlgitemtexta for %x\n",id);  \
 }
 
-static void update_margin_edits(HWND hDlg, const PageSetupDataA *pda)
+static inline LONG *element_from_margin_id(RECT *rc, WORD id)
+{
+    switch(id)
+    {
+    case edt4: return &rc->left;
+    case edt5: return &rc->top;
+    case edt6: return &rc->right;
+    case edt7: return &rc->bottom;
+    }
+    return NULL;
+}
+
+static void update_margin_edits(HWND hDlg, const PageSetupDataA *pda, WORD id)
 {
     WCHAR str[100];
+    WORD idx;
 
-    size2str(pda, pda->dlga->rtMargin.left, str);
-    SetDlgItemTextW(hDlg, edt4, str);
-    size2str(pda, pda->dlga->rtMargin.top, str);
-    SetDlgItemTextW(hDlg, edt5, str);
-    size2str(pda, pda->dlga->rtMargin.right, str);
-    SetDlgItemTextW(hDlg, edt6, str);
-    size2str(pda, pda->dlga->rtMargin.bottom, str);
-    SetDlgItemTextW(hDlg, edt7, str);
+    for(idx = edt4; idx <= edt7; idx++)
+    {
+        if(id == 0 || id == idx)
+        {
+            size2str(pda, *element_from_margin_id(&pda->dlga->rtMargin, idx), str);
+            SetDlgItemTextW(hDlg, idx, str);
+        }
+    }
 }
 
 static void set_margin_groupbox_title(HWND hDlg, const PageSetupDataA *pda)
@@ -2949,7 +2962,7 @@ PRINTDLG_PS_WMCommandA(
             GlobalUnlock(pda->dlga->hDevMode);
 
             rotate_rect(&pda->dlga->rtMargin, (id == rad2));
-            update_margin_edits(hDlg, pda);
+            update_margin_edits(hDlg, pda, 0);
 
 	    PRINTDLG_PS_ChangePaperPrev(pda);
 	}
@@ -3409,7 +3422,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             pda->dlga->rtMargin.right  = size;
             pda->dlga->rtMargin.bottom = size;
         }
-        update_margin_edits(hDlg, pda);
+        update_margin_edits(hDlg, pda, 0);
         subclass_margin_edits(hDlg);
         set_margin_groupbox_title(hDlg, pda);
 
