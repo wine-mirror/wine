@@ -32,6 +32,8 @@
 #include "wine/test.h"
 #include "msg.h"
 
+const char *TEST_CALLBACK_TEXT = "callback_text";
+
 #define NUM_MSG_SEQUENCES   1
 #define LISTVIEW_SEQ_INDEX  0
 
@@ -262,6 +264,64 @@ static void FillRoot(void)
     AddItem('.');
 
     ok(!strcmp(sequence, "AB."), "Item creation\n");
+}
+
+static void TestCallback(void)
+{
+    HTREEITEM hRoot;
+    HTREEITEM hItem1, hItem2;
+    TVINSERTSTRUCTA ins;
+    TVITEM tvi;
+    CHAR test_string[] = "Test_string";
+    CHAR buf[128];
+    LRESULT ret;
+
+    TreeView_DeleteAllItems(hTree);
+    ins.hParent = TVI_ROOT;
+    ins.hInsertAfter = TVI_ROOT;
+    U(ins).item.mask = TVIF_TEXT;
+    U(ins).item.pszText = LPSTR_TEXTCALLBACK;
+    hRoot = TreeView_InsertItem(hTree, &ins);
+    assert(hRoot);
+
+    tvi.hItem = hRoot;
+    tvi.mask = TVIF_TEXT;
+    tvi.pszText = buf;
+    tvi.cchTextMax = sizeof(buf)/sizeof(buf[0]);
+    ret = TreeView_GetItem(hTree, &tvi);
+    ok(ret == 1, "ret");
+    ok(strcmp(tvi.pszText, TEST_CALLBACK_TEXT) == 0, "Callback item text mismatch %s vs %s\n",
+        tvi.pszText, TEST_CALLBACK_TEXT);
+
+    ins.hParent = hRoot;
+    ins.hInsertAfter = TVI_FIRST;
+    U(ins).item.mask = TVIF_TEXT;
+    U(ins).item.pszText = test_string;
+    hItem1 = TreeView_InsertItem(hTree, &ins);
+    assert(hItem1);
+
+    tvi.hItem = hItem1;
+    TreeView_GetItem(hTree, &tvi);
+    ok(strcmp(tvi.pszText, test_string) == 0, "Item text mismatch %s vs %s\n",
+        tvi.pszText, test_string);
+
+    /* undocumented: pszText of NULL also means LPSTR_CALLBACK: */
+    tvi.pszText = NULL;
+    ret = TreeView_SetItem(hTree, &tvi);
+    ok(ret == 1, "Expected SetItem return 1, got %ld\n", ret);
+    tvi.pszText = buf;
+    TreeView_GetItem(hTree, &tvi);
+    todo_wine ok(strcmp(tvi.pszText, TEST_CALLBACK_TEXT) == 0, "Item text mismatch %s vs %s\n",
+        tvi.pszText, TEST_CALLBACK_TEXT);
+
+    U(ins).item.pszText = NULL;
+    hItem2 = TreeView_InsertItem(hTree, &ins);
+    assert(hItem2);
+    tvi.hItem = hItem2;
+    memset(buf, 0, sizeof(buf));
+    TreeView_GetItem(hTree, &tvi);
+    todo_wine ok(strcmp(tvi.pszText, TEST_CALLBACK_TEXT) == 0, "Item text mismatch %s vs %s\n",
+        tvi.pszText, TEST_CALLBACK_TEXT);
 }
 
 static void DoTest1(void)
@@ -664,6 +724,13 @@ static LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
                 IdentifyItem(pTreeView->itemOld.hItem);
                 IdentifyItem(pTreeView->itemNew.hItem);
                 return 0;
+            case TVN_GETDISPINFOA: {
+                NMTVDISPINFOA *disp = (NMTVDISPINFOA *)lParam;
+                if (disp->item.mask & TVIF_TEXT) {
+                    lstrcpyn(disp->item.pszText, TEST_CALLBACK_TEXT, disp->item.cchTextMax);
+                }
+                return 0;
+              }
             }
         }
         return 0;
@@ -745,6 +812,9 @@ START_TEST(treeview)
 
     /* Sequences tested inside due to number */
     TestGetSet();
+
+    /* Clears all the previous items */
+    TestCallback();
 
     PostMessageA(hMainWnd, WM_CLOSE, 0, 0);
     while(GetMessageA(&msg,0,0,0)) {
