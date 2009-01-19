@@ -25,6 +25,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -2556,7 +2557,7 @@ static inline void rotate_rect(RECT *rc, BOOL sense)
     }
 }
 
-static BOOL pagesetup_papersizeA(PAGESETUPDLGA *dlg, const WORD paperword, LPPOINT size)
+static BOOL pagesetup_update_papersize(PageSetupDataA *pda)
 {
     DEVNAMES *dn;
     DEVMODEA *dm;
@@ -2566,8 +2567,8 @@ static BOOL pagesetup_papersizeA(PAGESETUPDLGA *dlg, const WORD paperword, LPPOI
     POINT *points = NULL;
     BOOL retval = FALSE;
 
-    dn = GlobalLock(dlg->hDevNames);
-    dm = GlobalLock(dlg->hDevMode);
+    dn = GlobalLock(pda->dlga->hDevNames);
+    dm = GlobalLock(pda->dlga->hDevMode);
     devname = ((char*)dn)+dn->wDeviceOffset;
     portname = ((char*)dn)+dn->wOutputOffset;
 
@@ -2594,25 +2595,32 @@ static BOOL pagesetup_papersizeA(PAGESETUPDLGA *dlg, const WORD paperword, LPPOI
     }
 
     for (i = 0; i < num; i++)
-        if (words[i] == paperword)
+        if (words[i] == dm->u1.s1.dmPaperSize)
             break;
 
     if (i == num)
     {
-        FIXME("Papersize %d not found in list?\n", paperword);
+        FIXME("Papersize %d not found in list?\n", dm->u1.s1.dmPaperSize);
         goto end;
     }
 
     /* this is _10ths_ of a millimeter */
-    size->x = _c_10mm2size(dlg, points[i].x);
-    size->y = _c_10mm2size(dlg, points[i].y);
+    pda->dlga->ptPaperSize.x = _c_10mm2size(pda->dlga, points[i].x);
+    pda->dlga->ptPaperSize.y = _c_10mm2size(pda->dlga, points[i].y);
+
+    if(dm->u1.s1.dmOrientation == DMORIENT_LANDSCAPE)
+    {
+        LONG tmp = pda->dlga->ptPaperSize.x;
+        pda->dlga->ptPaperSize.x = pda->dlga->ptPaperSize.y;
+        pda->dlga->ptPaperSize.y = tmp;
+    }
     retval = TRUE;
 
 end:
     HeapFree(GetProcessHeap(), 0, words);
     HeapFree(GetProcessHeap(), 0, points);
-    GlobalUnlock(dlg->hDevNames);
-    GlobalUnlock(dlg->hDevMode);
+    GlobalUnlock(pda->dlga->hDevNames);
+    GlobalUnlock(pda->dlga->hDevMode);
     return retval;
 }
 
@@ -3031,12 +3039,7 @@ PRINTDLG_PS_WMCommandA(
                 DEVMODEA *dm = GlobalLock(pda->dlga->hDevMode);
                 dm->u1.s1.dmPaperSize = paperword;
                 GlobalUnlock(pda->dlga->hDevMode);
-                pagesetup_papersizeA(pda->dlga, paperword, &(pda->dlga->ptPaperSize));
-		if (IsDlgButtonChecked(hDlg, rad2)) {
-                    DWORD tmp = pda->dlga->ptPaperSize.x;
-                    pda->dlga->ptPaperSize.x = pda->dlga->ptPaperSize.y;
-                    pda->dlga->ptPaperSize.y = tmp;
-	        }
+                pagesetup_update_papersize(pda);
 	        PRINTDLG_PS_ChangePaperPrev(pda);
 	    } else
 	        FIXME("could not get dialog text for papersize cmbbox?\n");
@@ -3068,13 +3071,9 @@ PRINTDLG_PS_WMCommandA(
 	                        DM_IN_BUFFER | DM_OUT_BUFFER | DM_IN_PROMPT);
 	    ClosePrinter(hPrinter);
 	    /* Changing paper */
-            pagesetup_papersizeA(pda->dlga, dm->u1.s1.dmPaperSize, &(pda->dlga->ptPaperSize));
-            if (dm->u1.s1.dmOrientation == DMORIENT_LANDSCAPE){
-                DWORD tmp = pda->dlga->ptPaperSize.x;
-                pda->dlga->ptPaperSize.x = pda->dlga->ptPaperSize.y;
-                pda->dlga->ptPaperSize.y = tmp;
+            pagesetup_update_papersize(pda);
+            if (dm->u1.s1.dmOrientation == DMORIENT_LANDSCAPE)
 		CheckRadioButton(hDlg, rad1, rad2, rad2);
-	    }
 	    else
 		CheckRadioButton(hDlg, rad1, rad2, rad1);
 	    /* Changing paper preview */
@@ -3470,16 +3469,11 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	/* filling combos: printer, paper, source. selecting current printer (from DEVMODEA) */
         PRINTDLG_PS_ChangePrinterA(hDlg, pda);
+        pagesetup_update_papersize(pda);
 	dm = GlobalLock(pda->dlga->hDevMode);
 	if(dm){
 	    dm->u1.s1.dmDefaultSource = 15; /*FIXME: Automatic select. Does it always 15 at start? */
-            pagesetup_papersizeA(pda->dlga, dm->u1.s1.dmPaperSize, &pda->dlga->ptPaperSize);
             GlobalUnlock(pda->dlga->hDevMode);
-            if (IsDlgButtonChecked(hDlg, rad2) == BST_CHECKED) { /* Landscape orientation */
-                DWORD tmp = pda->dlga->ptPaperSize.y;
-                pda->dlga->ptPaperSize.y = pda->dlga->ptPaperSize.x;
-                pda->dlga->ptPaperSize.x = tmp;
-            }
 	} else 
 	    WARN("GlobalLock(pda->dlga->hDevMode) fail? hDevMode=%p\n", pda->dlga->hDevMode);
 	/* Drawing paper prev */
@@ -3671,12 +3665,13 @@ BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
         setupdlg->hDevNames = pdlg.hDevNames;
     }
 
+    pda = HeapAlloc(GetProcessHeap(),0,sizeof(*pda));
+    pda->dlga = setupdlg;
+
     /* short cut exit, just return default values */
     if (setupdlg->Flags & PSD_RETURNDEFAULT) {
-        DEVMODEA *dm;
-        dm = GlobalLock(setupdlg->hDevMode);
-        pagesetup_papersizeA(setupdlg, dm->u1.s1.dmPaperSize, &setupdlg->ptPaperSize);
-        GlobalUnlock(setupdlg->hDevMode);
+        pagesetup_update_papersize(pda);
+        HeapFree(GetProcessHeap(), 0, pda);
         return TRUE;
     }
 
@@ -3691,9 +3686,6 @@ BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
 	COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
 	return FALSE;
     }
-
-    pda = HeapAlloc(GetProcessHeap(),0,sizeof(*pda));
-    pda->dlga = setupdlg;
 
     bRet = (0<DialogBoxIndirectParamW(
 		setupdlg->hInstance,
