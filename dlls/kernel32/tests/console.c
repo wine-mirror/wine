@@ -173,7 +173,7 @@ static void testCursorInfo(HANDLE hCon)
        ERROR_INVALID_ACCESS, GetLastError());
 }
 
-static void testWriteSimple(HANDLE hCon, COORD sbSize)
+static void testWriteSimple(HANDLE hCon)
 {
     COORD		c;
     DWORD		len;
@@ -407,7 +407,7 @@ static void testWrite(HANDLE hCon, COORD sbSize)
     /* FIXME: should in fact insure that the sb is at least 10 character wide */
     ok(SetConsoleTextAttribute(hCon, TEST_ATTRIB), "Setting default text color\n");
     resetContent(hCon, sbSize, FALSE);
-    testWriteSimple(hCon, sbSize);
+    testWriteSimple(hCon);
     resetContent(hCon, sbSize, FALSE);
     testWriteNotWrappedNotProcessed(hCon, sbSize);
     resetContent(hCon, sbSize, FALSE);
