@@ -24,10 +24,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
-/* IUnknown methods */
+/* Inner IUnknown methods */
 
-static HRESULT STDMETHODCALLTYPE dxgi_surface_QueryInterface(IDXGISurface *iface, REFIID riid, void **object)
+static inline struct dxgi_surface *dxgi_surface_from_inner_unknown(IUnknown *iface)
 {
+    return (struct dxgi_surface *)((char*)iface - FIELD_OFFSET(struct dxgi_surface, inner_unknown_vtbl));
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_surface_inner_QueryInterface(IUnknown *iface, REFIID riid, void **object)
+{
+    struct dxgi_surface *This = dxgi_surface_from_inner_unknown(iface);
+
     TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
 
     if (IsEqualGUID(riid, &IID_IDXGISurface)
@@ -35,8 +42,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_QueryInterface(IDXGISurface *iface
             || IsEqualGUID(riid, &IID_IDXGIObject)
             || IsEqualGUID(riid, &IID_IUnknown))
     {
-        IUnknown_AddRef(iface);
-        *object = iface;
+        IUnknown_AddRef((IUnknown *)This);
+        *object = This;
         return S_OK;
     }
 
@@ -46,9 +53,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_QueryInterface(IDXGISurface *iface
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE dxgi_surface_AddRef(IDXGISurface *iface)
+static ULONG STDMETHODCALLTYPE dxgi_surface_inner_AddRef(IUnknown *iface)
 {
-    struct dxgi_surface *This = (struct dxgi_surface *)iface;
+    struct dxgi_surface *This = dxgi_surface_from_inner_unknown(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -56,9 +63,9 @@ static ULONG STDMETHODCALLTYPE dxgi_surface_AddRef(IDXGISurface *iface)
     return refcount;
 }
 
-static ULONG STDMETHODCALLTYPE dxgi_surface_Release(IDXGISurface *iface)
+static ULONG STDMETHODCALLTYPE dxgi_surface_inner_Release(IUnknown *iface)
 {
-    struct dxgi_surface *This = (struct dxgi_surface *)iface;
+    struct dxgi_surface *This = dxgi_surface_from_inner_unknown(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
@@ -69,6 +76,29 @@ static ULONG STDMETHODCALLTYPE dxgi_surface_Release(IDXGISurface *iface)
     }
 
     return refcount;
+}
+
+/* IUnknown methods */
+
+static HRESULT STDMETHODCALLTYPE dxgi_surface_QueryInterface(IDXGISurface *iface, REFIID riid, void **object)
+{
+    struct dxgi_surface *This = (struct dxgi_surface *)iface;
+    TRACE("Forwarding to outer IUnknown\n");
+    return IUnknown_QueryInterface(This->outer_unknown, riid, object);
+}
+
+static ULONG STDMETHODCALLTYPE dxgi_surface_AddRef(IDXGISurface *iface)
+{
+    struct dxgi_surface *This = (struct dxgi_surface *)iface;
+    TRACE("Forwarding to outer IUnknown\n");
+    return IUnknown_AddRef(This->outer_unknown);
+}
+
+static ULONG STDMETHODCALLTYPE dxgi_surface_Release(IDXGISurface *iface)
+{
+    struct dxgi_surface *This = (struct dxgi_surface *)iface;
+    TRACE("Forwarding to outer IUnknown\n");
+    return IUnknown_Release(This->outer_unknown);
 }
 
 /* IDXGIObject methods */
@@ -152,4 +182,12 @@ const struct IDXGISurfaceVtbl dxgi_surface_vtbl =
     dxgi_surface_GetDesc,
     dxgi_surface_Map,
     dxgi_surface_Unmap,
+};
+
+const struct IUnknownVtbl dxgi_surface_inner_unknown_vtbl =
+{
+    /* IUnknown methods */
+    dxgi_surface_inner_QueryInterface,
+    dxgi_surface_inner_AddRef,
+    dxgi_surface_inner_Release,
 };

@@ -81,9 +81,12 @@ struct dxgi_swapchain
 
 /* IDXGISurface */
 extern const struct IDXGISurfaceVtbl dxgi_surface_vtbl;
+extern const struct IUnknownVtbl dxgi_surface_inner_unknown_vtbl;
 struct dxgi_surface
 {
     const struct IDXGISurfaceVtbl *vtbl;
+    const struct IUnknownVtbl *inner_unknown_vtbl;
+    IUnknown *outer_unknown;
     LONG refcount;
 };
 

@@ -164,7 +164,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
         }
 
         object->vtbl = &dxgi_surface_vtbl;
+        object->inner_unknown_vtbl = &dxgi_surface_inner_unknown_vtbl;
         object->refcount = 1;
+        object->outer_unknown = (IUnknown *)&object->inner_unknown_vtbl;
         surface[i] = (IDXGISurface *)object;
 
         TRACE("Created IDXGISurface %p (%u/%u)\n", object, i + 1, surface_count);
