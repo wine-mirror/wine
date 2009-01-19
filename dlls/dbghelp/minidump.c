@@ -282,13 +282,13 @@ static BOOL add_module(struct dump_context* dc, const WCHAR* name,
 static BOOL WINAPI fetch_pe_module_info_cb(PCWSTR name, DWORD64 base, ULONG size,
                                            PVOID user)
 {
-    struct dump_context*        dc = (struct dump_context*)user;
+    struct dump_context*        dc = user;
     IMAGE_NT_HEADERS            nth;
 
     if (!validate_addr64(base)) return FALSE;
 
     if (pe_load_nt_header(dc->hProcess, base, &nth))
-        add_module((struct dump_context*)user, name, base, size,
+        add_module(user, name, base, size,
                    nth.FileHeader.TimeDateStamp, nth.OptionalHeader.CheckSum,
                    FALSE);
     return TRUE;
@@ -302,7 +302,7 @@ static BOOL WINAPI fetch_pe_module_info_cb(PCWSTR name, DWORD64 base, ULONG size
 static BOOL fetch_elf_module_info_cb(const WCHAR* name, unsigned long base,
                                      void* user)
 {
-    struct dump_context*        dc = (struct dump_context*)user;
+    struct dump_context*        dc = user;
     DWORD                       rbase, size, checksum;
 
     /* FIXME: there's no relevant timestamp on ELF modules */
@@ -971,7 +971,7 @@ BOOL WINAPI MiniDumpReadDumpStream(PVOID base, ULONG str_idx,
                                    PMINIDUMP_DIRECTORY* pdir,
                                    PVOID* stream, ULONG* size)
 {
-    MINIDUMP_HEADER*    mdHead = (MINIDUMP_HEADER*)base;
+    MINIDUMP_HEADER*    mdHead = base;
 
     if (mdHead->Signature == MINIDUMP_SIGNATURE)
     {

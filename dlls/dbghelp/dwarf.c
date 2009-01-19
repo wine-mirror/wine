@@ -72,7 +72,7 @@ static void dump(const void* ptr, unsigned len)
     int         i, j;
     BYTE        msg[128];
     static const char hexof[] = "0123456789abcdef";
-    const       BYTE* x = (const BYTE*)ptr;
+    const       BYTE* x = ptr;
 
     for (i = 0; i < len; i += 16)
     {

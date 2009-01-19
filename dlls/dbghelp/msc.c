@@ -71,7 +71,7 @@ static void dump(const void* ptr, unsigned len)
     unsigned int i, j;
     char        msg[128];
     const char* hexof = "0123456789abcdef";
-    const BYTE* x = (const BYTE*)ptr;
+    const BYTE* x = ptr;
 
     for (i = 0; i < len; i += 16)
     {
@@ -2150,7 +2150,7 @@ static void pdb_convert_symbol_file(const PDB_SYMBOLS* symbols,
 {
     if (symbols->version < 19970000)
     {
-        const PDB_SYMBOL_FILE *sym_file = (const PDB_SYMBOL_FILE*)image;
+        const PDB_SYMBOL_FILE *sym_file = image;
         memset(sfile, 0, sizeof(*sfile));
         sfile->file        = sym_file->file;
         sfile->range.index = sym_file->range.index;
@@ -2385,7 +2385,7 @@ static void pdb_process_symbol_imports(const struct process* pcs,
         imp = (const PDB_SYMBOL_IMPORT*)((const char*)symbols_image + sizeof(PDB_SYMBOLS) + 
                                          symbols->module_size + symbols->offset_size + 
                                          symbols->hash_size + symbols->srcmodule_size);
-        first = (const char*)imp;
+        first = imp;
         last = (const char*)imp + symbols->pdbimport_size;
         while (imp < (const PDB_SYMBOL_IMPORT*)last)
         {

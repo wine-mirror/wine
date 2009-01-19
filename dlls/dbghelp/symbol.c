@@ -1046,7 +1046,7 @@ struct sym_enumerate
 
 static BOOL CALLBACK sym_enumerate_cb(PSYMBOL_INFO syminfo, ULONG size, void* ctx)
 {
-    struct sym_enumerate*       se = (struct sym_enumerate*)ctx;
+    struct sym_enumerate*       se = ctx;
     return (se->cb)(syminfo->Name, syminfo->Address, syminfo->Size, se->ctx);
 }
 
@@ -1073,7 +1073,7 @@ struct sym_enumerate64
 
 static BOOL CALLBACK sym_enumerate_cb64(PSYMBOL_INFO syminfo, ULONG size, void* ctx)
 {
-    struct sym_enumerate64*     se = (struct sym_enumerate64*)ctx;
+    struct sym_enumerate64*     se = ctx;
     return (se->cb)(syminfo->Name, syminfo->Address, syminfo->Size, se->ctx);
 }
 
@@ -1473,7 +1473,7 @@ BOOL WINAPI SymGetLinePrev(HANDLE hProcess, PIMAGEHLP_LINE Line)
     if (!module_get_debug(&pair)) return FALSE;
 
     if (Line->Key == 0) return FALSE;
-    li = (struct line_info*)Line->Key;
+    li = Line->Key;
     /* things are a bit complicated because when we encounter a DLIT_SOURCEFILE
      * element we have to go back until we find the prev one to get the real
      * source file name for the DLIT_OFFSET element just before 
@@ -1523,7 +1523,7 @@ BOOL symt_get_func_line_next(const struct module* module, PIMAGEHLP_LINE line)
     struct line_info*   li;
 
     if (line->Key == 0) return FALSE;
-    li = (struct line_info*)line->Key;
+    li = line->Key;
     while (!li->is_last)
     {
         li++;
