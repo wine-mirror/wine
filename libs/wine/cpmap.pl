@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 #
 # Generate code page .c files from ftp.unicode.org descriptions
 #
@@ -19,23 +19,25 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 #
 
+use strict;
+
 # base directory for ftp.unicode.org files
-$BASEDIR = "ftp.unicode.org/Public/";
-$MAPPREFIX = $BASEDIR . "MAPPINGS/";
+my $BASEDIR = "ftp.unicode.org/Public/";
+my $MAPPREFIX = $BASEDIR . "MAPPINGS/";
 
 # UnicodeData file
-$UNICODEDATA = $BASEDIR . "UNIDATA/UnicodeData.txt";
+my $UNICODEDATA = $BASEDIR . "UNIDATA/UnicodeData.txt";
 
 # Sort keys file
-$SORTKEYS = "www.unicode.org/reports/tr10/allkeys.txt";
+my $SORTKEYS = "www.unicode.org/reports/tr10/allkeys.txt";
 
 # Defaults mapping
-$DEFAULTS = "./defaults";
+my $DEFAULTS = "./defaults";
 
 # Default char for undefined mappings
-$DEF_CHAR = ord '?';
+my $DEF_CHAR = ord '?';
 
-@allfiles =
+my @allfiles =
 (
     [ 37,    "VENDORS/MICSFT/EBCDIC/CP037.TXT",   0, "IBM EBCDIC US Canada" ],
     [ 424,   "VENDORS/MISC/CP424.TXT",            0, "IBM EBCDIC Hebrew" ],
@@ -102,7 +104,7 @@ $DEF_CHAR = ord '?';
 );
 
 
-%ctype =
+my %ctype =
 (
     "upper"  => 0x0001,
     "lower"  => 0x0002,
@@ -115,7 +117,7 @@ $DEF_CHAR = ord '?';
     "alpha"  => 0x0100
 );
 
-%categories =
+my %categories =
 (
     "Lu" => $ctype{"alpha"}|$ctype{"upper"}, # Letter, Uppercase
     "Ll" => $ctype{"alpha"}|$ctype{"lower"}, # Letter, Lowercase
@@ -150,7 +152,7 @@ $DEF_CHAR = ord '?';
 );
 
 # a few characters need additional categories that cannot be determined automatically
-%special_categories =
+my %special_categories =
 (
     "xdigit" => [ ord('0')..ord('9'),ord('A')..ord('F'),ord('a')..ord('f'),
                   0xff10..0xff19, 0xff21..0xff26, 0xff41..0xff46 ],
@@ -162,7 +164,7 @@ $DEF_CHAR = ord '?';
                   0xfff9, 0xfffa, 0xfffb ]
 );
 
-%directions =
+my %directions =
 (
     "L"   => 1,    # Left-to-Right
     "LRE" => 11,   # Left-to-Right Embedding
@@ -185,43 +187,32 @@ $DEF_CHAR = ord '?';
     "ON"  => 11    # Other Neutrals
 );
 
-
-################################################################
-# main routine
-
-READ_DEFAULTS();
-my @sortkeys = READ_SORTKEYS_FILE();
-DUMP_CASE_MAPPINGS();
-DUMP_SORTKEYS(@sortkeys);
-DUMP_COMPOSE_TABLES();
-DUMP_CTYPE_TABLES();
-
-foreach $file (@allfiles) { HANDLE_FILE( @$file ); }
-
-OUTPUT_CPTABLE();
-
-exit(0);
+my @cp2uni = ();
+my @lead_bytes = ();
+my @uni2cp = ();
+my @unicode_defaults = ();
+my @unicode_aliases = ();
+my @tolower_table = ();
+my @toupper_table = ();
+my @digitmap_table = ();
+my @compatmap_table = ();
+my @category_table = (0) x 65536;
+my @direction_table = ();
+my @decomp_table = ();
+my @compose_table = ();
 
 
 ################################################################
 # read in the defaults file
-sub READ_DEFAULTS
+sub READ_DEFAULTS($)
 {
-    @unicode_defaults = ();
-    @unicode_aliases = ();
-    @tolower_table = ();
-    @toupper_table = ();
-    @digitmap_table = ();
-    @compatmap_table = ();
-    @category_table = ();
-    @direction_table = ();
-    @decomp_table = ();
-    @compose_table = ();
+    my $filename = shift;
+    my $start;
 
     # first setup a few default mappings
 
-    open DEFAULTS or die "Cannot open $DEFAULTS";
-    print "Loading $DEFAULTS\n";
+    open DEFAULTS, "$filename" or die "Cannot open $filename";
+    print "Loading $filename\n";
     while (<DEFAULTS>)
     {
         next if /^\#/;  # skip comments
@@ -234,7 +225,7 @@ sub READ_DEFAULTS
             if ($#src > 0) { push @unicode_aliases, \@src; }
             next if ($dst eq "none");
             $dst = ($dst =~ /\'.\'/) ? ord substr($dst,1,1) : hex $dst;
-            foreach $src (@src)
+            foreach my $src (@src)
             {
                 die "Duplicate value" if defined($unicode_defaults[$src]);
                 $unicode_defaults[$src] = $dst;
@@ -246,21 +237,20 @@ sub READ_DEFAULTS
 
     # now build mappings from the decomposition field of the Unicode database
 
-    open UNICODEDATA or die "Cannot open $UNICODEDATA";
+    open UNICODEDATA, "$UNICODEDATA" or die "Cannot open $UNICODEDATA";
     print "Loading $UNICODEDATA\n";
     while (<UNICODEDATA>)
     {
 	# Decode the fields ...
-	($code, $name, $cat, $comb, $bidi,
-	 $decomp, $dec, $dig, $num, $mirror,
-	 $oldname, $comment, $upper, $lower, $title) = split /;/;
-
+	my ($code, $name, $cat, $comb, $bidi,
+            $decomp, $dec, $dig, $num, $mirror,
+            $oldname, $comment, $upper, $lower, $title) = split /;/;
+        my $dst;
         my $src = hex $code;
 
         die "unknown category $cat" unless defined $categories{$cat};
         die "unknown directionality $bidi" unless defined $directions{$bidi};
 
-        $uniname[$src] = $name;
         $category_table[$src] = $categories{$cat};
         $direction_table[$src] = $directions{$bidi};
 
@@ -325,7 +315,7 @@ sub READ_DEFAULTS
         {
             # decomposition contains only char values without prefix -> use first char
             $dst = hex $1;
-            $category_table[$src] |= $category_table[$dst];
+            $category_table[$src] |= $category_table[$dst] if defined $category_table[$dst];
             # store decomposition if it contains two chars
             if ($decomp =~ /^([0-9a-fA-F]+)\s+([0-9a-fA-F]+)$/)
             {
@@ -347,7 +337,7 @@ sub READ_DEFAULTS
         next if defined($unicode_defaults[$src]);  # may have been set in the defaults file
 
         # check for loops
-        for ($i = $dst; ; $i = $unicode_defaults[$i])
+        for (my $i = $dst; ; $i = $unicode_defaults[$i])
         {
             die sprintf("loop detected for %04x -> %04x",$src,$dst) if $i == $src;
             last unless defined($unicode_defaults[$i]);
@@ -357,17 +347,17 @@ sub READ_DEFAULTS
 
     # patch the category of some special characters
 
-    foreach $cat (keys %special_categories)
+    foreach my $cat (keys %special_categories)
     {
         my $flag = $ctype{$cat};
-        foreach $i (@{$special_categories{$cat}}) { $category_table[$i] |= $flag; }
+        foreach my $i (@{$special_categories{$cat}}) { $category_table[$i] |= $flag; }
     }
 }
 
 
 ################################################################
 # parse the input file
-sub READ_FILE
+sub READ_FILE($)
 {
     my $name = shift;
     open INPUT,$name or die "Cannot open $name";
@@ -381,15 +371,15 @@ sub READ_FILE
 
         if (/^0x([0-9a-fA-F]+)\s+\#DBCS LEAD BYTE/)
         {
-            $cp = hex $1;
+            my $cp = hex $1;
             push @lead_bytes,$cp;
             $cp2uni[$cp] = 0;
             next;
         }
         if (/^0x([0-9a-fA-F]+)\s+0x([0-9a-fA-F]+)\s+(\#.*)?/)
         {
-            $cp = hex $1;
-            $uni = hex $2;
+            my $cp = hex $1;
+            my $uni = hex $2;
             $cp2uni[$cp] = $uni unless defined($cp2uni[$cp]);
             $uni2cp[$uni] = $cp unless defined($uni2cp[$uni]);
             if ($cp > 0xff && !defined($cp2uni[$cp >> 8]))
@@ -456,33 +446,33 @@ sub get_glyphs_mapping(@)
 # build EUC-JP table from the JIS 0208 file
 # FIXME: for proper EUC-JP we should probably read JIS 0212 too
 # but this would require 3-byte DBCS characters
-sub READ_JIS0208_FILE
+sub READ_JIS0208_FILE($)
 {
     my $name = shift;
 
     # ASCII chars
-    for ($i = 0x00; $i <= 0x7f; $i++)
+    for (my $i = 0x00; $i <= 0x7f; $i++)
     {
         $cp2uni[$i] = $i;
         $uni2cp[$i] = $i;
     }
 
     # JIS X 0201 right plane
-    for ($i = 0xa1; $i <= 0xdf; $i++)
+    for (my $i = 0xa1; $i <= 0xdf; $i++)
     {
         $cp2uni[0x8e00 + $i] = 0xfec0 + $i;
         $uni2cp[0xfec0 + $i] = 0x8e00 + $i;
     }
 
     # lead bytes
-    foreach $i (0x8e, 0x8f, 0xa1 .. 0xfe)
+    foreach my $i (0x8e, 0x8f, 0xa1 .. 0xfe)
     {
         push @lead_bytes,$i;
         $cp2uni[$i] = 0;
     }
 
     # undefined chars
-    foreach $i (0x80 .. 0x8d, 0x90 .. 0xa0, 0xff)
+    foreach my $i (0x80 .. 0x8d, 0x90 .. 0xa0, 0xff)
     {
         $cp2uni[$i] = $DEF_CHAR;
     }
@@ -503,8 +493,8 @@ sub READ_JIS0208_FILE
         next if /\x1a/;  # skip ^Z
         if (/^0x[0-9a-fA-F]+\s+0x([0-9a-fA-F]+)\s+0x([0-9a-fA-F]+)\s+(\#.*)?/)
         {
-            $cp = 0x8080 + hex $1;
-            $uni = hex $2;
+            my $cp = 0x8080 + hex $1;
+            my $uni = hex $2;
             $cp2uni[$cp] = $uni unless defined($cp2uni[$cp]);
             $uni2cp[$uni] = $cp unless defined($uni2cp[$uni]);
             next;
@@ -516,7 +506,7 @@ sub READ_JIS0208_FILE
 
 ################################################################
 # build the sort keys table
-sub READ_SORTKEYS_FILE
+sub READ_SORTKEYS_FILE()
 {
     my @sortkeys = ();
     for (my $i = 0; $i < 65536; $i++) { $sortkeys[$i] = [ -1, 0, 0, 0, 0 ] };
@@ -607,9 +597,9 @@ sub READ_SORTKEYS_FILE
 
 ################################################################
 # build the sort keys table
-sub DUMP_SORTKEYS
+sub DUMP_SORTKEYS($@)
 {
-    my @keys = @_;
+    my ($filename, @keys) = @_;
 
     # count the number of 256-key ranges that contain something
 
@@ -626,8 +616,8 @@ sub DUMP_SORTKEYS
 
     # output the range offsets
 
-    open OUTPUT,">collation.c.new" or die "Cannot create collation.c";
-    printf "Building collation.c\n";
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    printf "Building $filename\n";
     printf OUTPUT "/* Unicode collation element table */\n";
     printf OUTPUT "/* generated from %s */\n", $SORTKEYS;
     printf OUTPUT "/* DO NOT EDIT!! */\n\n";
@@ -651,20 +641,20 @@ sub DUMP_SORTKEYS
     }
     printf OUTPUT "\n};\n";
     close OUTPUT;
-    save_file("collation.c");
+    save_file($filename);
 }
 
 
 ################################################################
 # add default mappings once the file had been read
-sub ADD_DEFAULT_MAPPINGS
+sub ADD_DEFAULT_MAPPINGS()
 {
     # Apply aliases
 
-    foreach $alias (@unicode_aliases)
+    foreach my $alias (@unicode_aliases)
     {
         my $target = undef;
-        foreach $src (@$alias)
+        foreach my $src (@$alias)
         {
             if (defined($uni2cp[$src]))
             {
@@ -675,7 +665,7 @@ sub ADD_DEFAULT_MAPPINGS
         next unless defined($target);
 
         # At least one char of the alias set is defined, set the others to the same value
-        foreach $src (@$alias)
+        foreach my $src (@$alias)
         {
             $uni2cp[$src] = $target unless defined($uni2cp[$src]);
         }
@@ -684,7 +674,7 @@ sub ADD_DEFAULT_MAPPINGS
     # For every src -> target mapping in the defaults table,
     # make uni2cp[src] = uni2cp[target] if uni2cp[target] is defined
 
-    for ($src = 0; $src < 65536; $src++)
+    for (my $src = 0; $src < 65536; $src++)
     {
         next if defined($uni2cp[$src]);  # source has a definition already
         next unless defined($unicode_defaults[$src]);  # no default for this char
@@ -699,7 +689,7 @@ sub ADD_DEFAULT_MAPPINGS
 
     # Add an identity mapping for all undefined chars
 
-    for ($i = 0; $i < 256; $i++)
+    for (my $i = 0; $i < 256; $i++)
     {
         next if defined($cp2uni[$i]);
         next if defined($uni2cp[$i]);
@@ -709,10 +699,11 @@ sub ADD_DEFAULT_MAPPINGS
 
 ################################################################
 # dump an array of integers
-sub DUMP_ARRAY
+sub DUMP_ARRAY($$@)
 {
     my ($format,$default,@array) = @_;
-    my $i, $ret = "    ";
+    my $i;
+    my $ret = "    ";
     for ($i = 0; $i < $#array; $i++)
     {
         $ret .= sprintf($format, defined $array[$i] ? $array[$i] : $default);
@@ -748,7 +739,7 @@ sub dump_sbcs_table($$$$$)
 
     my @filled = ();
     my $subtables = 1;
-    for ($i = 0; $i < 65536; $i++)
+    for (my $i = 0; $i < 65536; $i++)
     {
         next unless defined $uni2cp[$i];
         $filled[$i >> 8] = 1;
@@ -759,7 +750,7 @@ sub dump_sbcs_table($$$$$)
     # output all the subtables into a single array
 
     printf OUTPUT "static const unsigned char uni2cp_low[%d] =\n{\n", $subtables*256;
-    for ($i = 0; $i < 256; $i++)
+    for (my $i = 0; $i < 256; $i++)
     {
         next unless $filled[$i];
         printf OUTPUT "    /* 0x%02x00 .. 0x%02xff */\n", $i, $i;
@@ -772,7 +763,7 @@ sub dump_sbcs_table($$$$$)
 
     my $pos = 0;
     my @offsets = ();
-    for ($i = 0; $i < 256; $i++)
+    for (my $i = 0; $i < 256; $i++)
     {
         if ($filled[$i]) { push @offsets, $pos; $pos += 256; }
         else { push @offsets, ($subtables-1) * 256; }
@@ -798,15 +789,14 @@ sub dump_sbcs_table($$$$$)
 sub dump_dbcs_table($$$$@)
 {
     my ($codepage, $name, $def, $defw, @lb_ranges) = @_;
-    my $i, $x, $y;
 
     # build a list of lead bytes that are actually used
 
     my @lblist = ();
-    LBLOOP: for ($y = 0; $y <= $#lead_bytes; $y++)
+    LBLOOP: for (my $y = 0; $y <= $#lead_bytes; $y++)
     {
         my $base = $lead_bytes[$y] << 8;
-        for ($x = 0; $x < 256; $x++)
+        for (my $x = 0; $x < 256; $x++)
         {
             if (defined $cp2uni[$base+$x])
             {
@@ -832,7 +822,7 @@ sub dump_dbcs_table($$$$@)
 
     # output the ascii->unicode table for each DBCS lead byte
 
-    for ($y = 0; $y <= $#lblist; $y++)
+    for (my $y = 0; $y <= $#lblist; $y++)
     {
         my $base = $lblist[$y] << 8;
         printf OUTPUT "    /* lead byte %02x */\n", $lblist[$y];
@@ -843,12 +833,12 @@ sub dump_dbcs_table($$$$@)
     # output the lead byte subtables offsets
 
     my @offsets = ();
-    for ($x = 0; $x < 256; $x++) { $offsets[$x] = 0; }
-    for ($x = 0; $x <= $#lblist; $x++) { $offsets[$lblist[$x]] = $x + 1; }
+    for (my $x = 0; $x < 256; $x++) { $offsets[$x] = 0; }
+    for (my $x = 0; $x <= $#lblist; $x++) { $offsets[$lblist[$x]] = $x + 1; }
     if ($unused)
     {
         # increment all lead bytes offset to take into account the unused table
-        for ($x = 0; $x <= $#lead_bytes; $x++) { $offsets[$lead_bytes[$x]]++; }
+        for (my $x = 0; $x <= $#lead_bytes; $x++) { $offsets[$lead_bytes[$x]]++; }
     }
     printf OUTPUT "static const unsigned char cp2uni_leadbytes[256] =\n";
     printf OUTPUT "{\n%s\n};\n\n", DUMP_ARRAY( "0x%02x", 0, @offsets );
@@ -857,7 +847,7 @@ sub dump_dbcs_table($$$$@)
 
     my @filled = ();
     my $subtables = 1;
-    for ($i = 0; $i < 65536; $i++)
+    for (my $i = 0; $i < 65536; $i++)
     {
         next unless defined $uni2cp[$i];
         $filled[$i >> 8] = 1;
@@ -868,7 +858,7 @@ sub dump_dbcs_table($$$$@)
     # output all the subtables into a single array
 
     printf OUTPUT "static const unsigned short uni2cp_low[%d] =\n{\n", $subtables*256;
-    for ($y = 0; $y < 256; $y++)
+    for (my $y = 0; $y < 256; $y++)
     {
         next unless $filled[$y];
         printf OUTPUT "    /* 0x%02x00 .. 0x%02xff */\n", $y, $y;
@@ -880,8 +870,8 @@ sub dump_dbcs_table($$$$@)
     # output a table of the offsets of the subtables in the previous array
 
     my $pos = 0;
-    my @offsets = ();
-    for ($y = 0; $y < 256; $y++)
+    @offsets = ();
+    for (my $y = 0; $y < 256; $y++)
     {
         if ($filled[$y]) { push @offsets, $pos; $pos += 256; }
         else { push @offsets, ($subtables-1) * 256; }
@@ -912,7 +902,7 @@ sub get_lb_ranges()
     my $i = 0;
     foreach $i (@lead_bytes) { $list[$i] = 1; }
     my $on = 0;
-    for ($i = 0; $i < 256; $i++)
+    for (my $i = 0; $i < 256; $i++)
     {
         if ($on)
         {
@@ -930,10 +920,11 @@ sub get_lb_ranges()
 
 ################################################################
 # dump the case mapping tables
-sub DUMP_CASE_MAPPINGS
+sub DUMP_CASE_MAPPINGS($)
 {
-    open OUTPUT,">casemap.c.new" or die "Cannot create casemap.c";
-    printf "Building casemap.c\n";
+    my $filename = shift;
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    printf "Building $filename\n";
     printf OUTPUT "/* Unicode case mappings */\n";
     printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
     printf OUTPUT "#include \"wine/unicode.h\"\n\n";
@@ -943,13 +934,13 @@ sub DUMP_CASE_MAPPINGS
     DUMP_CASE_TABLE( "wine_digitmap",  @digitmap_table );
     DUMP_CASE_TABLE( "wine_compatmap", @compatmap_table );
     close OUTPUT;
-    save_file("casemap.c");
+    save_file($filename);
 }
 
 
 ################################################################
 # dump a case mapping table
-sub DUMP_CASE_TABLE
+sub DUMP_CASE_TABLE($@)
 {
     my ($name,@table) = @_;
 
@@ -960,7 +951,7 @@ sub DUMP_CASE_TABLE
     my @upperbounds = ( 0, 255 );
     my $index = 0;
     my @filled = ();
-    for ($i = 0; $i < 65536; $i++)
+    for (my $i = 0; $i < 65536; $i++)
     {
         next unless defined $table[$i];
         if (!defined $filled[$i >> 8])
@@ -980,7 +971,7 @@ sub DUMP_CASE_TABLE
     # Collapse blocks upwards if possible
     my $removed = 0;
     $index = 0;
-    for ($i = 0; $i < 256; $i++)
+    for (my $i = 0; $i < 256; $i++)
     {
         next unless defined $filled[$i];
         if ($upperbounds[$index - 1] > $lowerbounds[$index])
@@ -1004,7 +995,7 @@ sub DUMP_CASE_TABLE
     printf OUTPUT "    /* defaults */\n";
     printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, (0) x 256 );
     $index = 0;
-    for ($i = 0; $i < 256; $i++)
+    for (my $i = 0; $i < 256; $i++)
     {
         next unless $filled[$i];
         printf OUTPUT ",\n    /* 0x%02x%02x .. 0x%02xff */\n", $i, $lowerbounds[$index], $i;
@@ -1018,25 +1009,26 @@ sub DUMP_CASE_TABLE
 
 ################################################################
 # dump the ctype tables
-sub DUMP_CTYPE_TABLES
+sub DUMP_CTYPE_TABLES($)
 {
-    open OUTPUT,">wctype.c.new" or die "Cannot create wctype.c";
-    printf "Building wctype.c\n";
+    my $filename = shift;
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    printf "Building $filename\n";
     printf OUTPUT "/* Unicode ctype tables */\n";
     printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
     printf OUTPUT "#include \"wine/unicode.h\"\n\n";
 
-    my $i;
     my @array = (0) x 256;
+    my %sequences;
 
     # add the direction in the high 4 bits of the category
-    for ($i = 0; $i < 65536; $i++)
+    for (my $i = 0; $i < 65536; $i++)
     {
-        $category_table[$i] |= $direction_table[$i] << 12;
+        $category_table[$i] |= $direction_table[$i] << 12 if defined $direction_table[$i];
     }
 
     # try to merge table rows
-    for ($row = 0; $row < 256; $row++)
+    for (my $row = 0; $row < 256; $row++)
     {
         my $rowtxt = sprintf "%04x" x 256, @category_table[($row<<8)..($row<<8)+255];
         if (defined($sequences{$rowtxt}))
@@ -1057,16 +1049,18 @@ sub DUMP_CTYPE_TABLES
     printf OUTPUT "    /* values */\n%s\n};\n", DUMP_ARRAY( "0x%04x", 0, @array[256..$#array] );
 
     close OUTPUT;
-    save_file("wctype.c");
+    save_file($filename);
 }
 
 
 ################################################################
 # dump the char composition tables
-sub DUMP_COMPOSE_TABLES
+sub DUMP_COMPOSE_TABLES($)
 {
-    open OUTPUT,">compose.c.new" or die "Cannot create compose.c";
-    printf "Building compose.c\n";
+    my $filename = shift;
+
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    printf "Building $filename\n";
     printf OUTPUT "/* Unicode char composition */\n";
     printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
     printf OUTPUT "#include \"wine/unicode.h\"\n\n";
@@ -1074,7 +1068,7 @@ sub DUMP_COMPOSE_TABLES
     ######### composition table
 
     my @filled = ();
-    foreach $i (@compose_table)
+    foreach my $i (@compose_table)
     {
         my @comp = @$i;
         push @{$filled[$comp[1]]}, [ $comp[0], $comp[2] ];
@@ -1082,7 +1076,8 @@ sub DUMP_COMPOSE_TABLES
 
     # count how many different second chars we have
 
-    for ($i = $count = 0; $i < 65536; $i++)
+    my $count = 0;
+    for (my $i = 0; $i < 65536; $i++)
     {
         next unless defined $filled[$i];
         $count++;
@@ -1091,7 +1086,8 @@ sub DUMP_COMPOSE_TABLES
     # build the table of second chars and offsets
 
     my $pos = $count + 1;
-    for ($i = 0; $i < 65536; $i++)
+    my @table = ();
+    for (my $i = 0; $i < 65536; $i++)
     {
         next unless defined $filled[$i];
         push @table, $i, $pos;
@@ -1104,12 +1100,12 @@ sub DUMP_COMPOSE_TABLES
 
     # build the table of first chars and mappings
 
-    for ($i = 0; $i < 65536; $i++)
+    for (my $i = 0; $i < 65536; $i++)
     {
         next unless defined $filled[$i];
         my @table = ();
         my @list = sort { $a->[0] <=> $b->[0] } @{$filled[$i]};
-        for ($j = 0; $j <= $#list; $j++)
+        for (my $j = 0; $j <= $#list; $j++)
         {
             push @table, $list[$j][0], $list[$j][1];
         }
@@ -1121,9 +1117,9 @@ sub DUMP_COMPOSE_TABLES
 
     # first determine all the 16-char subsets that contain something
 
-    my @filled = (0) x 4096;
-    my $pos = 16*2;  # for the null subset
-    for ($i = 0; $i < 65536; $i++)
+    @filled = (0) x 4096;
+    $pos = 16*2;  # for the null subset
+    for (my $i = 0; $i < 65536; $i++)
     {
         next unless defined $decomp_table[$i];
         $filled[$i >> 4] = $pos;
@@ -1136,7 +1132,7 @@ sub DUMP_COMPOSE_TABLES
 
     my @filled_idx = (256) x 256;
     $pos = 256 + 16;
-    for ($i = 0; $i < 4096; $i++)
+    for (my $i = 0; $i < 4096; $i++)
     {
         next unless $filled[$i];
         $filled_idx[$i >> 4] = $pos;
@@ -1148,7 +1144,7 @@ sub DUMP_COMPOSE_TABLES
 
     # add the index offsets to the subsets positions
 
-    for ($i = 0; $i < 4096; $i++)
+    for (my $i = 0; $i < 4096; $i++)
     {
         next unless $filled[$i];
         $filled[$i] += $null_offset;
@@ -1163,11 +1159,11 @@ sub DUMP_COMPOSE_TABLES
 
     # dump the second-level indexes
 
-    for ($i = 0; $i < 256; $i++)
+    for (my $i = 0; $i < 256; $i++)
     {
         next unless ($filled_idx[$i] > 256);
         my @table = @filled[($i<<4)..($i<<4)+15];
-        for ($j = 0; $j < 16; $j++) { $table[$j] ||= $null_offset; }
+        for (my $j = 0; $j < 16; $j++) { $table[$j] ||= $null_offset; }
         printf OUTPUT ",\n    /* sub-index %02x */\n", $i;
         printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, @table );
     }
@@ -1177,11 +1173,11 @@ sub DUMP_COMPOSE_TABLES
     printf OUTPUT ",\n    /* null mapping */\n";
     printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, (0) x 32 );
 
-    for ($i = 0; $i < 4096; $i++)
+    for (my $i = 0; $i < 4096; $i++)
     {
         next unless $filled[$i];
         my @table = (0) x 32;
-        for ($j = 0; $j < 16; $j++)
+        for (my $j = 0; $j < 16; $j++)
         {
             if (defined $decomp_table[($i<<4) + $j])
             {
@@ -1195,7 +1191,7 @@ sub DUMP_COMPOSE_TABLES
 
     printf OUTPUT "\n};\n";
     close OUTPUT;
-    save_file("compose.c");
+    save_file($filename);
 }
 
 
@@ -1206,11 +1202,11 @@ sub handle_bestfit_file($$$)
 {
     my ($filename, $has_glyphs, $comment) = @_;
     my $state = "";
-    my ($codepage, $width, $def, $defw);
+    my ($codepage, $width, $def, $defw, $count);
     my ($lb_cur, $lb_end);
     my @lb_ranges = ();
 
-    open INPUT,$MAPPREFIX . $filename or die "Cannot open $name";
+    open INPUT,$MAPPREFIX . $filename or die "Cannot open $filename";
 
     while (<INPUT>)
     {
@@ -1241,22 +1237,22 @@ sub handle_bestfit_file($$$)
         {
             if ($state eq "MBTABLE")
             {
-                $cp = hex $1;
-                $uni = hex $2;
+                my $cp = hex $1;
+                my $uni = hex $2;
                 $cp2uni[$cp] = $uni unless defined($cp2uni[$cp]);
                 next;
             }
             if ($state eq "WCTABLE")
             {
-                $uni = hex $1;
-                $cp = hex $2;
+                my $uni = hex $1;
+                my $cp = hex $2;
                 $uni2cp[$uni] = $cp unless defined($uni2cp[$uni]);
                 next;
             }
             if ($state eq "DBCSRANGE")
             {
-                $start = hex $1;
-                $end = hex $2;
+                my $start = hex $1;
+                my $end = hex $2;
                 push @lb_ranges, $start, $end;
                 for (my $i = $start; $i <= $end; $i++)
                 {
@@ -1269,9 +1265,9 @@ sub handle_bestfit_file($$$)
             }
             if ($state eq "DBCSTABLE")
             {
-                $mb = hex $1;
-                $uni = hex $2;
-                $cp = ($lb_cur << 8) | $mb;
+                my $mb = hex $1;
+                my $uni = hex $2;
+                my $cp = ($lb_cur << 8) | $mb;
                 $cp2uni[$cp] = $uni unless defined($cp2uni[$cp]);
                 if (!--$count)
                 {
@@ -1280,7 +1276,7 @@ sub handle_bestfit_file($$$)
                 next;
             }
         }
-        die "$name: Unrecognized line $_\n";
+        die "$filename: Unrecognized line $_\n";
     }
     close INPUT;
 
@@ -1305,7 +1301,7 @@ sub handle_bestfit_file($$$)
 
 ################################################################
 # read an input file and generate the corresponding .c file
-sub HANDLE_FILE
+sub HANDLE_FILE(@)
 {
     my ($codepage,$filename,$has_glyphs,$comment) = @_;
 
@@ -1369,18 +1365,18 @@ sub save_file($)
 
 ################################################################
 # output the list of codepage tables into the cptable.c file
-sub OUTPUT_CPTABLE
+sub OUTPUT_CPTABLE()
 {
-    @tables_decl = ();
+    my @tables_decl = ();
 
-    foreach $file (@allfiles)
+    foreach my $file (@allfiles)
     {
         my ($codepage,$filename,$comment) = @$file;
         push @tables_decl, sprintf("extern union cptable cptable_%03d;\n",$codepage);
     }
 
     push @tables_decl, sprintf("\nstatic const union cptable * const cptables[%d] =\n{\n",$#allfiles+1);
-    foreach $file (@allfiles)
+    foreach my $file (@allfiles)
     {
         my ($codepage,$filename,$comment) = @$file;
         push @tables_decl, sprintf("    &cptable_%03d,\n", $codepage);
@@ -1392,7 +1388,7 @@ sub OUTPUT_CPTABLE
 ################################################################
 # replace the contents of a file between ### cpmap ### marks
 
-sub REPLACE_IN_FILE
+sub REPLACE_IN_FILE($@)
 {
     my $name = shift;
     my @data = @_;
@@ -1414,3 +1410,22 @@ sub REPLACE_IN_FILE
     close(FILE);
     save_file($name);
 }
+
+################################################################
+# main routine
+
+READ_DEFAULTS( $DEFAULTS );
+DUMP_CASE_MAPPINGS( "casemap.c" );
+DUMP_SORTKEYS( "collation.c", READ_SORTKEYS_FILE() );
+DUMP_COMPOSE_TABLES( "compose.c" );
+DUMP_CTYPE_TABLES( "wctype.c" );
+
+foreach my $file (@allfiles) { HANDLE_FILE( @{$file} ); }
+
+OUTPUT_CPTABLE();
+
+exit 0;
+
+# Local Variables:
+# compile-command: "./cpmap.pl && make -k"
+# End:
