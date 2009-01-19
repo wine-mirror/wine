@@ -1694,7 +1694,7 @@ HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID clsid)
         return CO_E_CLASSSTRING;
     }
     RegCloseKey(xhkey);
-    return CLSIDFromString(buf2,clsid);
+    return __CLSIDFromString(buf2,clsid);
 }
 
 
