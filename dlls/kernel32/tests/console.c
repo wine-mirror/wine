@@ -173,6 +173,45 @@ static void testCursorInfo(HANDLE hCon)
        ERROR_INVALID_ACCESS, GetLastError());
 }
 
+static void testEmptyWrite(HANDLE hCon)
+{
+    COORD		c;
+    DWORD		len;
+    const char* 	mytest = "";
+
+    c.X = c.Y = 0;
+    ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left\n");
+
+    len = -1;
+    ok(WriteConsole(hCon, NULL, 0, &len, NULL) != 0 && len == 0, "WriteConsole\n");
+    okCURSOR(hCon, c);
+
+    /* Passing a NULL lpBuffer with sufficiently large non-zero length succeeds
+     * on native Windows and result in memory-like contents being written to
+     * the console. Calling WriteConsoleW like this will crash on Wine. */
+    if (0)
+    {
+        len = -1;
+        ok(!WriteConsole(hCon, NULL, 16, &len, NULL) && len == -1, "WriteConsole\n");
+        okCURSOR(hCon, c);
+
+        /* Cursor advances for this call. */
+        len = -1;
+        ok(WriteConsole(hCon, NULL, 128, &len, NULL) != 0 && len == 128, "WriteConsole\n");
+    }
+
+    len = -1;
+    ok(WriteConsole(hCon, mytest, 0, &len, NULL) != 0 && len == 0, "WriteConsole\n");
+    okCURSOR(hCon, c);
+
+    /* WriteConsole does not halt on a null terminator and is happy to write
+     * memory contents beyond the actual size of the buffer. */
+    len = -1;
+    ok(WriteConsole(hCon, mytest, 16, &len, NULL) != 0 && len == 16, "WriteConsole\n");
+    c.X += 16;
+    okCURSOR(hCon, c);
+}
+
 static void testWriteSimple(HANDLE hCon)
 {
     COORD		c;
@@ -406,6 +445,8 @@ static void testWrite(HANDLE hCon, COORD sbSize)
 {
     /* FIXME: should in fact insure that the sb is at least 10 character wide */
     ok(SetConsoleTextAttribute(hCon, TEST_ATTRIB), "Setting default text color\n");
+    resetContent(hCon, sbSize, FALSE);
+    testEmptyWrite(hCon);
     resetContent(hCon, sbSize, FALSE);
     testWriteSimple(hCon);
     resetContent(hCon, sbSize, FALSE);

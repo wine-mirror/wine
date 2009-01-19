@@ -2057,6 +2057,8 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
 	!GetConsoleScreenBufferInfo(hConsoleOutput, &csbi))
 	return FALSE;
 
+    if (!nNumberOfCharsToWrite) return TRUE;
+
     if (mode & ENABLE_PROCESSED_OUTPUT)
     {
 	unsigned int	i;
