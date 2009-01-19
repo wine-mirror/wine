@@ -602,6 +602,16 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture2D(ID3D10Device *ifac
             return E_FAIL;
         }
 
+        hr = IWineDXGIDevice_create_surface(wine_device, NULL, 0, NULL,
+                (IUnknown *)object, (void **)&object->dxgi_surface);
+        if (FAILED(hr))
+        {
+            ERR("Failed to create DXGI surface, returning %#x\n", hr);
+            HeapFree(GetProcessHeap(), 0, object);
+            IWineDXGIDevice_Release(wine_device);
+            return hr;
+        }
+
         wined3d_device = IWineDXGIDevice_get_wined3d_device(wine_device);
         IWineDXGIDevice_Release(wine_device);
 
@@ -614,6 +624,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture2D(ID3D10Device *ifac
         if (FAILED(hr))
         {
             ERR("CreateSurface failed, returning %#x\n", hr);
+            IDXGISurface_Release(object->dxgi_surface);
             HeapFree(GetProcessHeap(), 0, object);
             return hr;
         }

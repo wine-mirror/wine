@@ -115,7 +115,7 @@ static void test_create_surface(IDXGIDevice *device)
     ok(SUCCEEDED(hr), "Failed to create a dxgi surface, hr %#x\n", hr);
 
     hr = IDXGISurface_QueryInterface(surface, &IID_ID3D10Texture2D, (void **)&texture);
-    todo_wine ok(SUCCEEDED(hr), "Surface should implement ID3D10Texture2D\n");
+    ok(SUCCEEDED(hr), "Surface should implement ID3D10Texture2D\n");
     if (SUCCEEDED(hr)) ID3D10Texture2D_Release(texture);
 
     IDXGISurface_Release(surface);

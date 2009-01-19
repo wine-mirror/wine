@@ -28,6 +28,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 
 static HRESULT STDMETHODCALLTYPE d3d10_texture2d_QueryInterface(ID3D10Texture2D *iface, REFIID riid, void **object)
 {
+    struct d3d10_texture2d *This = (struct d3d10_texture2d *)iface;
+
     TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
 
     if (IsEqualGUID(riid, &IID_ID3D10Texture2D)
@@ -38,6 +40,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture2d_QueryInterface(ID3D10Texture2D 
         IUnknown_AddRef(iface);
         *object = iface;
         return S_OK;
+    }
+
+    if (This->dxgi_surface)
+    {
+        TRACE("Forwarding to dxgi surface\n");
+        return IDXGISurface_QueryInterface(This->dxgi_surface, riid, object);
     }
 
     WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
@@ -65,6 +73,7 @@ static ULONG STDMETHODCALLTYPE d3d10_texture2d_Release(ID3D10Texture2D *iface)
 
     if (!refcount)
     {
+        if (This->dxgi_surface) IDXGISurface_Release(This->dxgi_surface);
         if (This->wined3d_surface) IWineD3DSurface_Release(This->wined3d_surface);
         HeapFree(GetProcessHeap(), 0, This);
     }

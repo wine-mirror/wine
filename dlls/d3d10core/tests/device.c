@@ -116,7 +116,7 @@ static void test_create_texture(ID3D10Device *device)
     ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x\n", hr);
 
     hr = ID3D10Texture2D_QueryInterface(texture, &IID_IDXGISurface, (void **)&surface);
-    todo_wine ok(SUCCEEDED(hr), "Texture should implement IDXGISurface\n");
+    ok(SUCCEEDED(hr), "Texture should implement IDXGISurface\n");
     if (SUCCEEDED(hr)) IDXGISurface_Release(surface);
     ID3D10Texture2D_Release(texture);
 

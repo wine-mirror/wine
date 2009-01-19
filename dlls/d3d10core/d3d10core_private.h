@@ -58,6 +58,7 @@ struct d3d10_texture2d
     const struct ID3D10Texture2DVtbl *vtbl;
     LONG refcount;
 
+    IUnknown *dxgi_surface;
     IWineD3DSurface *wined3d_surface;
 };
 

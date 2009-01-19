@@ -145,40 +145,65 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
         const DXGI_SURFACE_DESC *desc, UINT surface_count, DXGI_USAGE usage,
         const DXGI_SHARED_RESOURCE *shared_resource, IDXGISurface **surface)
 {
-    struct dxgi_surface *object;
+    IWineD3DDeviceParent *device_parent;
     HRESULT hr;
     UINT i;
+    UINT j;
 
-    FIXME("iface %p, desc %p, surface_count %u, usage %#x, shared_resource %p, surface %p partial stub!\n",
+    TRACE("iface %p, desc %p, surface_count %u, usage %#x, shared_resource %p, surface %p\n",
             iface, desc, surface_count, usage, shared_resource, surface);
+
+    hr = IWineDXGIDevice_QueryInterface(iface, &IID_IWineD3DDeviceParent, (void **)&device_parent);
+    if (FAILED(hr))
+    {
+        ERR("Device should implement IWineD3DDeviceParent\n");
+        return E_FAIL;
+    }
+
+    FIXME("Implement DXGI<->wined3d format and usage conversion\n");
 
     memset(surface, 0, surface_count * sizeof(*surface));
     for (i = 0; i < surface_count; ++i)
     {
-        object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-        if (!object)
+        IWineD3DSurface *wined3d_surface;
+        IUnknown *parent;
+
+        hr = IWineD3DDeviceParent_CreateSurface(device_parent, NULL, desc->Width, desc->Height, desc->Format,
+                usage, WINED3DPOOL_DEFAULT, 0, WINED3DCUBEMAP_FACE_POSITIVE_X, &wined3d_surface);
+        if (FAILED(hr))
         {
-            ERR("Failed to allocate DXGI surface object memory\n");
-            hr = E_OUTOFMEMORY;
+            ERR("CreateSurface failed, returning %#x\n", hr);
             goto fail;
         }
 
-        object->vtbl = &dxgi_surface_vtbl;
-        object->inner_unknown_vtbl = &dxgi_surface_inner_unknown_vtbl;
-        object->refcount = 1;
-        object->outer_unknown = (IUnknown *)&object->inner_unknown_vtbl;
-        surface[i] = (IDXGISurface *)object;
+        hr = IWineD3DSurface_GetParent(wined3d_surface, &parent);
+        IWineD3DSurface_Release(wined3d_surface);
+        if (FAILED(hr))
+        {
+            ERR("GetParent failed, returning %#x\n", hr);
+            goto fail;
+        }
 
-        TRACE("Created IDXGISurface %p (%u/%u)\n", object, i + 1, surface_count);
+        hr = IUnknown_QueryInterface(parent, &IID_IDXGISurface, (void **)&surface[i]);
+        IUnknown_Release(parent);
+        if (FAILED(hr))
+        {
+            ERR("Surface should implement IDXGISurface\n");
+            goto fail;
+        }
+
+        TRACE("Created IDXGISurface %p (%u/%u)\n", surface[i], i + 1, surface_count);
     }
+    IWineD3DDeviceParent_Release(device_parent);
 
     return S_OK;
 
 fail:
-    for (i = 0; i < surface_count; ++i)
+    for (j = 0; j < i; ++j)
     {
-        HeapFree(GetProcessHeap(), 0, surface[i]);
+        IDXGISurface_Release(surface[i]);
     }
+    IWineD3DDeviceParent_Release(device_parent);
     return hr;
 }
 
@@ -219,6 +244,41 @@ static IWineD3DDevice * STDMETHODCALLTYPE dxgi_device_get_wined3d_device(IWineDX
     return This->wined3d_device;
 }
 
+static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *iface, const DXGI_SURFACE_DESC *desc,
+        DXGI_USAGE usage, const DXGI_SHARED_RESOURCE *shared_resource, IUnknown *outer, void **surface)
+{
+    struct dxgi_surface *object;
+
+    FIXME("iface %p, desc %p, usage %#x, shared_resource %p, outer %p, surface %p partial stub!\n",
+            iface, desc, usage, shared_resource, outer, surface);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate DXGI surface object memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->vtbl = &dxgi_surface_vtbl;
+    object->inner_unknown_vtbl = &dxgi_surface_inner_unknown_vtbl;
+    object->refcount = 1;
+
+    if (outer)
+    {
+        object->outer_unknown = outer;
+        *surface = &object->inner_unknown_vtbl;
+    }
+    else
+    {
+        object->outer_unknown = (IUnknown *)&object->inner_unknown_vtbl;
+        *surface = object;
+    }
+
+    TRACE("Created IDXGISurface %p\n", object);
+
+    return S_OK;
+}
+
 const struct IWineDXGIDeviceVtbl dxgi_device_vtbl =
 {
     /* IUnknown methods */
@@ -238,4 +298,5 @@ const struct IWineDXGIDeviceVtbl dxgi_device_vtbl =
     dxgi_device_GetGPUThreadPriority,
     /* IWineDXGIAdapter methods */
     dxgi_device_get_wined3d_device,
+    dxgi_device_create_surface,
 };
