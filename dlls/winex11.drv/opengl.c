@@ -1923,7 +1923,7 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc, DWORD first, DWORD count, DWORD 
          if (GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, size, bitmap, NULL) == GDI_ERROR) goto error;
          if (TRACE_ON(wgl)) {
              unsigned int height, width, bitmask;
-             unsigned char *bitmap_ = (unsigned char *) bitmap;
+             unsigned char *bitmap_ = bitmap;
 
              TRACE("  - bbox : %d x %d\n", gm.gmBlackBoxX, gm.gmBlackBoxY);
              TRACE("  - origin : (%d , %d)\n", gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
@@ -2374,7 +2374,7 @@ create_failed:
  */
 static GLboolean WINAPI X11DRV_wglDestroyPbufferARB(HPBUFFERARB hPbuffer)
 {
-    Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
+    Wine_GLPBuffer* object = hPbuffer;
     TRACE("(%p)\n", hPbuffer);
     if (NULL == object) {
         SetLastError(ERROR_INVALID_HANDLE);
@@ -2397,7 +2397,7 @@ static GLboolean WINAPI X11DRV_wglDestroyPbufferARB(HPBUFFERARB hPbuffer)
  */
 HDC CDECL X11DRV_wglGetPbufferDCARB(X11DRV_PDEVICE *physDev, HPBUFFERARB hPbuffer)
 {
-    Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
+    Wine_GLPBuffer* object = hPbuffer;
     if (NULL == object) {
         SetLastError(ERROR_INVALID_HANDLE);
         return NULL;
@@ -2421,7 +2421,7 @@ HDC CDECL X11DRV_wglGetPbufferDCARB(X11DRV_PDEVICE *physDev, HPBUFFERARB hPbuffe
  */
 static GLboolean WINAPI X11DRV_wglQueryPbufferARB(HPBUFFERARB hPbuffer, int iAttribute, int *piValue)
 {
-    Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
+    Wine_GLPBuffer* object = hPbuffer;
     TRACE("(%p, 0x%x, %p)\n", hPbuffer, iAttribute, piValue);
     if (NULL == object) {
         SetLastError(ERROR_INVALID_HANDLE);
@@ -2564,7 +2564,7 @@ static int WINAPI X11DRV_wglReleasePbufferDCARB(HPBUFFERARB hPbuffer, HDC hdc)
  */
 static GLboolean WINAPI X11DRV_wglSetPbufferAttribARB(HPBUFFERARB hPbuffer, const int *piAttribList)
 {
-    Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
+    Wine_GLPBuffer* object = hPbuffer;
     GLboolean ret = GL_FALSE;
 
     WARN("(%p, %p): alpha-testing, report any problem\n", hPbuffer, piAttribList);
@@ -2956,7 +2956,7 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribfvARB(HDC hdc, int iPixelF
  */
 static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuffer)
 {
-    Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
+    Wine_GLPBuffer* object = hPbuffer;
     GLboolean ret = GL_FALSE;
 
     TRACE("(%p, %d)\n", hPbuffer, iBuffer);
@@ -3051,7 +3051,7 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
  */
 static GLboolean WINAPI X11DRV_wglReleaseTexImageARB(HPBUFFERARB hPbuffer, int iBuffer)
 {
-    Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
+    Wine_GLPBuffer* object = hPbuffer;
     GLboolean ret = GL_FALSE;
 
     TRACE("(%p, %d)\n", hPbuffer, iBuffer);

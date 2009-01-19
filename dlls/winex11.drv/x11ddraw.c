@@ -375,7 +375,7 @@ INT X11DRV_DCICommand(INT cbInput, const DCICMD *lpCmd, LPVOID lpOutData)
     return TRUE;
   case DDVERSIONINFO:
     {
-      LPDDVERSIONDATA lpVer = (LPDDVERSIONDATA)lpOutData;
+      LPDDVERSIONDATA lpVer = lpOutData;
       ddraw_ver = lpCmd->dwParam1;
       if (!lpVer) break;
       /* well, whatever... the DDK says so */
@@ -396,7 +396,7 @@ INT X11DRV_DCICommand(INT cbInput, const DCICMD *lpCmd, LPVOID lpOutData)
     return TRUE;
   case DDCREATEDRIVEROBJECT:
     {
-      LPDWORD lpInstance = (LPDWORD)lpOutData;
+      LPDWORD lpInstance = lpOutData;
 
       /* FIXME: get x11drv's hInstance */
       X11DRV_Settings_CreateDriver(&hal_info);

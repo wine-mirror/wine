@@ -334,7 +334,7 @@ INT CDECL X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, L
             case X11DRV_SET_DRAWABLE:
                 if (in_count >= sizeof(struct x11drv_escape_set_drawable))
                 {
-                    const struct x11drv_escape_set_drawable *data = (const struct x11drv_escape_set_drawable *)in_data;
+                    const struct x11drv_escape_set_drawable *data = in_data;
                     if(physDev->xrender) X11DRV_XRender_UpdateDrawable( physDev );
                     physDev->dc_rect = data->dc_rect;
                     physDev->drawable = data->drawable;

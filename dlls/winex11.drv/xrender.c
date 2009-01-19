@@ -1081,7 +1081,7 @@ static void SmoothGlyphGray(XImage *image, int x, int y, void *bitmap, XGlyphInf
     width = gi->width;
     height = gi->height;
 
-    maskLine = (unsigned char *) bitmap;
+    maskLine = bitmap;
     maskStride = (width + 3) & ~3;
 
     ExamineBitfield (image->red_mask, &r_shift, &r_len);

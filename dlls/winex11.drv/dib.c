@@ -352,7 +352,7 @@ static int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
     {
         if (quads)
         {
-            const RGBQUAD * rgb = (const RGBQUAD *)colorPtr;
+            const RGBQUAD * rgb = colorPtr;
 
             if (depth == 1)  /* Monochrome */
             {
@@ -376,7 +376,7 @@ static int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
         }
         else
         {
-            const RGBTRIPLE * rgb = (const RGBTRIPLE *)colorPtr;
+            const RGBTRIPLE * rgb = colorPtr;
 
             if (depth == 1)  /* Monochrome */
             {
@@ -401,7 +401,7 @@ static int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
     }
     else  /* DIB_PAL_COLORS */
     {
-        const WORD * index = (const WORD *)colorPtr;
+        const WORD * index = colorPtr;
 
         for (i = start; i < end; i++, index++)
             colorMapping[i] = X11DRV_PALETTE_ToPhysical( physDev, PALETTEINDEX(*index) );
@@ -4102,7 +4102,7 @@ INT CDECL X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT start
               int num_colors = 1 << descr.infoBpp, i;
               RGBQUAD *rgb;
               COLORREF colref;
-              WORD *index = (WORD*)colorPtr;
+              WORD *index = colorPtr;
               descr.colorMap = rgb = HeapAlloc(GetProcessHeap(), 0, num_colors * sizeof(RGBQUAD));
               for(i = 0; i < num_colors; i++, rgb++, index++) {
                   colref = X11DRV_PALETTE_ToLogical(X11DRV_PALETTE_ToPhysical(physDev, PALETTEINDEX(*index)));

@@ -109,7 +109,7 @@ static LPINPUTCONTEXT LockRealIMC(HIMC hIMC)
 {
     HIMC real_imc = RealIMC(hIMC);
     if (real_imc)
-        return (LPINPUTCONTEXT)ImmLockIMC(real_imc);
+        return ImmLockIMC(real_imc);
     else
         return NULL;
 }

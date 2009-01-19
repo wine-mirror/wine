@@ -154,7 +154,7 @@ static BOOL X11DRV_ImmSetInternalString(DWORD dwIndex, DWORD dwOffset,
             }
         }
 
-        rc = IME_SetCompositionString(SCS_SETSTR, (LPWSTR)CompositionString,
+        rc = IME_SetCompositionString(SCS_SETSTR, CompositionString,
                                       dwCompStringLength, NULL, 0);
     }
     else if ((dwIndex == GCS_RESULTSTR) && (lpComp) && (dwCompLen))
@@ -165,7 +165,7 @@ static BOOL X11DRV_ImmSetInternalString(DWORD dwIndex, DWORD dwOffset,
         ResultString= HeapAlloc(GetProcessHeap(),0,byte_length);
         memcpy(ResultString,lpComp,byte_length);
 
-        rc = IME_SetCompositionString(SCS_SETSTR, (LPWSTR)ResultString,
+        rc = IME_SetCompositionString(SCS_SETSTR, ResultString,
                                      dwResultStringSize, NULL, 0);
 
         IME_NotifyIME( NI_COMPOSITIONSTR, CPS_COMPLETE, 0);

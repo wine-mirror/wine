@@ -421,7 +421,7 @@ static UINT16   __lfCheckSum( const LOGFONT16 *plf )
 static UINT16   __genericCheckSum( const void *ptr, int size )
 {
    unsigned int checksum = 0;
-   const char *p = (const char *)ptr;
+   const char *p = ptr;
    while (size-- > 0)
      checksum ^= (checksum << 3) + (checksum >> 29) + *p++;
 

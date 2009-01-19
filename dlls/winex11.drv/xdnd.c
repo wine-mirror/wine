@@ -355,7 +355,7 @@ static int X11DRV_XDND_MapFormat(unsigned int property, unsigned char *data, int
  */
 static int X11DRV_XDND_DeconstructTextURIList(int property, void* data, int len)
 {
-    char *uriList = (char*) data;
+    char *uriList = data;
     char *uri;
     WCHAR *path;
 
@@ -444,7 +444,7 @@ static int X11DRV_XDND_DeconstructTextPlain(int property, void* data, int len)
     char* dostext;
 
     /* Always supply plain text */
-    X11DRV_XDND_UnixToDos(&dostext, (char*)data, len);
+    X11DRV_XDND_UnixToDos(&dostext, data, len);
     X11DRV_XDND_InsertXDNDData(property, CF_TEXT, dostext, strlen(dostext));
 
     TRACE("CF_TEXT (%d): %s\n", CF_TEXT, dostext);
@@ -494,7 +494,7 @@ static void X11DRV_XDND_SendDropFiles(HWND hwnd)
 
     if (current != NULL)
     {
-        DROPFILES *lpDrop = (DROPFILES*) current->data;
+        DROPFILES *lpDrop = current->data;
 
         if (lpDrop)
         {
