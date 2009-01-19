@@ -2416,26 +2416,38 @@ _c_inch2size(PAGESETUPDLGA *dlga,DWORD size) {
 	return (size*254)/100;
 }
 
+static WCHAR get_decimal_sep(void)
+{
+    static WCHAR sep;
+
+    if(!sep)
+    {
+        WCHAR buf[2] = {'.',0};
+        GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, buf, sizeof(buf) / sizeof(buf[0]));
+        sep = buf[0];
+    }
+    return sep;
+}
+
 static void size2str(const PageSetupDataA *pda, DWORD size, LPWSTR strout)
 {
-    WCHAR decimal[2] = {'.', 0};
     WCHAR integer_fmt[] = {'%','d',0};
-    WCHAR hundredths_fmt[] = {'%','d','%','s','%','0','2','d',0};
-    WCHAR thousandths_fmt[] = {'%','d','%','s','%','0','3','d',0};
+    WCHAR hundredths_fmt[] = {'%','d','%','c','%','0','2','d',0};
+    WCHAR thousandths_fmt[] = {'%','d','%','c','%','0','3','d',0};
 
     /* FIXME use LOCALE_SDECIMAL when the edit parsing code can cope */
 
     if (is_metric(pda))
     {
         if(size % 100)
-            wsprintfW(strout, hundredths_fmt, size / 100, decimal, size % 100);
+            wsprintfW(strout, hundredths_fmt, size / 100, get_decimal_sep(), size % 100);
         else
             wsprintfW(strout, integer_fmt, size / 100);
     }
     else
     {
         if(size % 1000)
-            wsprintfW(strout, thousandths_fmt, size / 1000, decimal, size % 1000);
+            wsprintfW(strout, thousandths_fmt, size / 1000, get_decimal_sep(), size % 1000);
         else
             wsprintfW(strout, integer_fmt, size / 1000);
 
@@ -2896,7 +2908,7 @@ static void margin_edit_notification(HWND hDlg, PageSetupDataA *pda, WORD msg, W
         if (GetDlgItemTextW(hDlg, id, buf, sizeof(buf) / sizeof(buf[0])) != 0)
         {
             WCHAR *end;
-            WCHAR decimal = '.';
+            WCHAR decimal = get_decimal_sep();
 
             val = strtolW(buf, &end, 10);
             if(end != buf || *end == decimal)
@@ -3351,13 +3363,10 @@ PRINTDLG_PagePaintProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT CALLBACK pagesetup_margin_editproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    WCHAR decimal = '.';
-
-    /* FIXME use LOCALE_SDECIMAL when the edit parsing code can cope */
-
     switch(msg)
     case WM_CHAR:
     {
+        WCHAR decimal = get_decimal_sep();
         WCHAR wc = (WCHAR)wparam;
         if(!isdigitW(wc) && wc != decimal && wc != VK_BACK) return 0;
     }
