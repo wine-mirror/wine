@@ -1227,9 +1227,11 @@ static void test_LCMapStringA(void)
     ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_SORTKEY,
                        upper_case, -1, buf, sizeof(buf));
     ok(ret, "LCMapStringA must succeed\n");
+    ok(buf[ret-1] == 0, "LCMapStringA not null-terminated\n");
     ret2 = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_SORTKEY,
                        upper_case, lstrlenA(upper_case), buf2, sizeof(buf2));
-    ok(ret, "LCMapStringA must succeed\n");
+    ok(ret2, "LCMapStringA must succeed\n");
+    ok(buf2[ret2-1] == 0, "LCMapStringA not null-terminated\n" );
     ok(ret == ret2, "lengths of sort keys must be equal\n");
     ok(!lstrcmpA(buf, buf2), "sort keys must be equal\n");
 
