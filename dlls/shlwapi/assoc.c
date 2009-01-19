@@ -772,6 +772,38 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
       return ASSOC_ReturnData(pszOut, pcchOut, path, len);
     }
 
+    case ASSOCSTR_FRIENDLYDOCNAME:
+    {
+      WCHAR *pszFileType;
+      DWORD ret;
+      DWORD size;
+
+      hr = ASSOC_GetValue(This->hkeySource, &pszFileType);
+      if (FAILED(hr))
+        return hr;
+      size = 0;
+      ret = RegGetValueW(HKEY_CLASSES_ROOT, pszFileType, NULL, RRF_RT_REG_SZ, NULL, NULL, &size);
+      if (ret == ERROR_SUCCESS)
+      {
+        WCHAR *docName = HeapAlloc(GetProcessHeap(), 0, size);
+        if (docName)
+        {
+          ret = RegGetValueW(HKEY_CLASSES_ROOT, pszFileType, NULL, RRF_RT_REG_SZ, NULL, docName, &size);
+          if (ret == ERROR_SUCCESS)
+            hr = ASSOC_ReturnData(pszOut, pcchOut, docName, strlenW(docName) + 1);
+          else
+            hr = HRESULT_FROM_WIN32(ret);
+          HeapFree(GetProcessHeap(), 0, docName);
+        }
+        else
+          hr = E_OUTOFMEMORY;
+      }
+      else
+        hr = HRESULT_FROM_WIN32(ret);
+      HeapFree(GetProcessHeap(), 0, pszFileType);
+      return hr;
+    }
+
     case ASSOCSTR_FRIENDLYAPPNAME:
     {
       PVOID verinfoW = NULL;
@@ -848,6 +880,47 @@ get_friendly_name_fail:
       }
       else
         hr = E_OUTOFMEMORY;
+      return hr;
+    }
+
+    case ASSOCSTR_DEFAULTICON:
+    {
+      static const WCHAR DefaultIconW[] = {'D','e','f','a','u','l','t','I','c','o','n',0};
+      WCHAR *pszFileType;
+      DWORD ret;
+      DWORD size;
+      HKEY hkeyFile;
+
+      hr = ASSOC_GetValue(This->hkeySource, &pszFileType);
+      if (FAILED(hr))
+        return hr;
+      ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, pszFileType, 0, KEY_READ, &hkeyFile);
+      if (ret == ERROR_SUCCESS)
+      {
+        size = 0;
+        ret = RegGetValueW(hkeyFile, DefaultIconW, NULL, RRF_RT_REG_SZ, NULL, NULL, &size);
+        if (ret == ERROR_SUCCESS)
+        {
+          WCHAR *icon = HeapAlloc(GetProcessHeap(), 0, size);
+          if (icon)
+          {
+            ret = RegGetValueW(hkeyFile, DefaultIconW, NULL, RRF_RT_REG_SZ, NULL, icon, &size);
+            if (ret == ERROR_SUCCESS)
+              hr = ASSOC_ReturnData(pszOut, pcchOut, icon, strlenW(icon) + 1);
+            else
+              hr = HRESULT_FROM_WIN32(ret);
+            HeapFree(GetProcessHeap(), 0, icon);
+          }
+          else
+            hr = E_OUTOFMEMORY;
+        }
+        else
+          hr = HRESULT_FROM_WIN32(ret);
+        RegCloseKey(hkeyFile);
+      }
+      else
+        hr = HRESULT_FROM_WIN32(ret);
+      HeapFree(GetProcessHeap(), 0, pszFileType);
       return hr;
     }
 
