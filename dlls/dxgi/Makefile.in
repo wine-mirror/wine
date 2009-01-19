@@ -17,8 +17,6 @@ C_SRCS = \
 
 RC_SRCS = version.rc
 
-IDL_H_SRCS = dxgi_private_interface.idl
-
 @MAKE_DLL_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

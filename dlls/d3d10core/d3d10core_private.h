@@ -32,6 +32,7 @@
 #include "initguid.h"
 #endif
 #include "wine/wined3d.h"
+#include "wine/winedxgi.h"
 
 /* TRACE helper functions */
 const char *debug_d3d10_primitive_topology(D3D10_PRIMITIVE_TOPOLOGY topology);
@@ -56,6 +57,8 @@ struct d3d10_texture2d
 {
     const struct ID3D10Texture2DVtbl *vtbl;
     LONG refcount;
+
+    IWineD3DSurface *wined3d_surface;
 };
 
 /* Layered device */

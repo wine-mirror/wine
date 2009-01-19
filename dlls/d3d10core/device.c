@@ -575,6 +575,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture2D(ID3D10Device *ifac
         const D3D10_TEXTURE2D_DESC *desc, const D3D10_SUBRESOURCE_DATA *data, ID3D10Texture2D **texture)
 {
     struct d3d10_texture2d *object;
+    HRESULT hr;
 
     FIXME("iface %p, desc %p, data %p, texture %p partial stub!\n", iface, desc, data, texture);
 
@@ -587,6 +588,37 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture2D(ID3D10Device *ifac
 
     object->vtbl = &d3d10_texture2d_vtbl;
     object->refcount = 1;
+
+    if (desc->MipLevels == 1 && desc->ArraySize == 1)
+    {
+        IWineD3DDevice *wined3d_device;
+        IWineDXGIDevice *wine_device;
+
+        hr = ID3D10Device_QueryInterface(iface, &IID_IWineDXGIDevice, (void **)&wine_device);
+        if (FAILED(hr))
+        {
+            ERR("Device should implement IWineDXGIDevice\n");
+            HeapFree(GetProcessHeap(), 0, object);
+            return E_FAIL;
+        }
+
+        wined3d_device = IWineDXGIDevice_get_wined3d_device(wine_device);
+        IWineDXGIDevice_Release(wine_device);
+
+        FIXME("Implement DXGI<->wined3d format and usage conversion\n");
+
+        hr = IWineD3DDevice_CreateSurface(wined3d_device, desc->Width, desc->Height, desc->Format, FALSE,
+                FALSE, 0, &object->wined3d_surface, WINED3DRTYPE_SURFACE, desc->Usage, WINED3DPOOL_DEFAULT,
+                desc->SampleDesc.Count, desc->SampleDesc.Quality, NULL, SURFACE_OPENGL, (IUnknown *)object);
+        IWineD3DDevice_Release(wined3d_device);
+        if (FAILED(hr))
+        {
+            ERR("CreateSurface failed, returning %#x\n", hr);
+            HeapFree(GetProcessHeap(), 0, object);
+            return hr;
+        }
+    }
+
     *texture = (ID3D10Texture2D *)object;
 
     TRACE("Created ID3D10Texture2D %p\n", object);
@@ -937,11 +969,39 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
         IUnknown *superior, UINT width, UINT height, WINED3DFORMAT format, DWORD usage,
         WINED3DPOOL pool, UINT level, WINED3DCUBEMAP_FACES face, IWineD3DSurface **surface)
 {
+    struct d3d10_device *This = device_from_device_parent(iface);
+    struct d3d10_texture2d *texture;
+    D3D10_TEXTURE2D_DESC desc;
+    HRESULT hr;
+
     FIXME("iface %p, superior %p, width %u, height %u, format %#x, usage %#x,\n"
-            "\tpool %#x, level %u, face %u, surface %p stub!\n",
+            "\tpool %#x, level %u, face %u, surface %p partial stub!\n",
             iface, superior, width, height, format, usage, pool, level, face, surface);
 
-    return E_NOTIMPL;
+    FIXME("Implement DXGI<->wined3d format and usage conversion\n");
+
+    desc.Width = width;
+    desc.Height = height;
+    desc.MipLevels = 1;
+    desc.ArraySize = 1;
+    desc.Format = format;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Usage = usage;
+    desc.BindFlags = 0;
+    desc.CPUAccessFlags = 0;
+    desc.MiscFlags = 0;
+
+    hr = d3d10_device_CreateTexture2D((ID3D10Device *)This, &desc, NULL, (ID3D10Texture2D **)&texture);
+    if (FAILED(hr))
+    {
+        ERR("CreateTexture2D failed, returning %#x\n", hr);
+        return hr;
+    }
+
+    *surface = texture->wined3d_surface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDeviceParent *iface,

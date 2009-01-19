@@ -116,6 +116,7 @@ my %private_idl_headers = (
     "dyngraph.idl" => 1,
     "vmrender.idl" => 1,
     "wine/wined3d.idl" => 1,
+    "wine/winedxgi.idl" => 1,
 );
 
 my (@makefiles, %makefiles);

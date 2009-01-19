@@ -26,7 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
 /* IUnknown methods */
 
-static HRESULT STDMETHODCALLTYPE dxgi_device_QueryInterface(IDXGIDevice *iface, REFIID riid, void **object)
+static HRESULT STDMETHODCALLTYPE dxgi_device_QueryInterface(IWineDXGIDevice *iface, REFIID riid, void **object)
 {
     struct dxgi_device *This = (struct dxgi_device *)iface;
 
@@ -34,7 +34,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_QueryInterface(IDXGIDevice *iface, 
 
     if (IsEqualGUID(riid, &IID_IUnknown)
             || IsEqualGUID(riid, &IID_IDXGIObject)
-            || IsEqualGUID(riid, &IID_IDXGIDevice))
+            || IsEqualGUID(riid, &IID_IDXGIDevice)
+            || IsEqualGUID(riid, &IID_IWineDXGIDevice))
     {
         IUnknown_AddRef(iface);
         *object = iface;
@@ -53,7 +54,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_QueryInterface(IDXGIDevice *iface, 
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE dxgi_device_AddRef(IDXGIDevice *iface)
+static ULONG STDMETHODCALLTYPE dxgi_device_AddRef(IWineDXGIDevice *iface)
 {
     struct dxgi_device *This = (struct dxgi_device *)iface;
     ULONG refcount = InterlockedIncrement(&This->refcount);
@@ -63,7 +64,7 @@ static ULONG STDMETHODCALLTYPE dxgi_device_AddRef(IDXGIDevice *iface)
     return refcount;
 }
 
-static ULONG STDMETHODCALLTYPE dxgi_device_Release(IDXGIDevice *iface)
+static ULONG STDMETHODCALLTYPE dxgi_device_Release(IWineDXGIDevice *iface)
 {
     struct dxgi_device *This = (struct dxgi_device *)iface;
     ULONG refcount = InterlockedDecrement(&This->refcount);
@@ -85,28 +86,31 @@ static ULONG STDMETHODCALLTYPE dxgi_device_Release(IDXGIDevice *iface)
 
 /* IDXGIObject methods */
 
-static HRESULT STDMETHODCALLTYPE dxgi_device_SetPrivateData(IDXGIDevice *iface, REFGUID guid, UINT data_size, const void *data)
+static HRESULT STDMETHODCALLTYPE dxgi_device_SetPrivateData(IWineDXGIDevice *iface,
+        REFGUID guid, UINT data_size, const void *data)
 {
     FIXME("iface %p, guid %s, data_size %u, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_device_SetPrivateDataInterface(IDXGIDevice *iface, REFGUID guid, const IUnknown *object)
+static HRESULT STDMETHODCALLTYPE dxgi_device_SetPrivateDataInterface(IWineDXGIDevice *iface,
+        REFGUID guid, const IUnknown *object)
 {
     FIXME("iface %p, guid %s, object %p stub!\n", iface, debugstr_guid(guid), object);
 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_device_GetPrivateData(IDXGIDevice *iface, REFGUID guid, UINT *data_size, void *data)
+static HRESULT STDMETHODCALLTYPE dxgi_device_GetPrivateData(IWineDXGIDevice *iface,
+        REFGUID guid, UINT *data_size, void *data)
 {
     FIXME("iface %p, guid %s, data_size %p, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_device_GetParent(IDXGIDevice *iface, REFIID riid, void **parent)
+static HRESULT STDMETHODCALLTYPE dxgi_device_GetParent(IWineDXGIDevice *iface, REFIID riid, void **parent)
 {
     FIXME("iface %p, riid %s, parent %p stub!\n", iface, debugstr_guid(riid), parent);
 
@@ -115,7 +119,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetParent(IDXGIDevice *iface, REFII
 
 /* IDXGIDevice methods */
 
-static HRESULT STDMETHODCALLTYPE dxgi_device_GetAdapter(IDXGIDevice *iface, IDXGIAdapter **adapter)
+static HRESULT STDMETHODCALLTYPE dxgi_device_GetAdapter(IWineDXGIDevice *iface, IDXGIAdapter **adapter)
 {
     struct dxgi_device *This = (struct dxgi_device *)iface;
     WINED3DDEVICE_CREATION_PARAMETERS create_parameters;
@@ -137,7 +141,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetAdapter(IDXGIDevice *iface, IDXG
     return IWineDXGIFactory_EnumAdapters(This->factory, create_parameters.AdapterOrdinal, adapter);
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IDXGIDevice *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *iface,
         const DXGI_SURFACE_DESC *desc, UINT surface_count, DXGI_USAGE usage,
         const DXGI_SHARED_RESOURCE *shared_resource, IDXGISurface **surface)
 {
@@ -176,7 +180,7 @@ fail:
     return hr;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_device_QueryResourceResidency(IDXGIDevice *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_device_QueryResourceResidency(IWineDXGIDevice *iface,
         IUnknown *const *resources, DXGI_RESIDENCY *residency, UINT resource_count)
 {
     FIXME("iface %p, resources %p, residency %p, resource_count %u stub!\n",
@@ -185,21 +189,35 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_QueryResourceResidency(IDXGIDevice 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_device_SetGPUThreadPriority(IDXGIDevice *iface, INT priority)
+static HRESULT STDMETHODCALLTYPE dxgi_device_SetGPUThreadPriority(IWineDXGIDevice *iface, INT priority)
 {
     FIXME("iface %p, priority %d stub!\n", iface, priority);
 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_device_GetGPUThreadPriority(IDXGIDevice *iface, INT *priority)
+static HRESULT STDMETHODCALLTYPE dxgi_device_GetGPUThreadPriority(IWineDXGIDevice *iface, INT *priority)
 {
     FIXME("iface %p, priority %p stub!\n", iface, priority);
 
     return E_NOTIMPL;
 }
 
-const struct IDXGIDeviceVtbl dxgi_device_vtbl =
+/* IWineDXGIDevice methods */
+
+static IWineD3DDevice * STDMETHODCALLTYPE dxgi_device_get_wined3d_device(IWineDXGIDevice *iface)
+{
+    struct dxgi_device *This = (struct dxgi_device *)iface;
+
+    TRACE("iface %p\n", iface);
+
+    EnterCriticalSection(&dxgi_cs);
+    IWineD3DDevice_AddRef(This->wined3d_device);
+    LeaveCriticalSection(&dxgi_cs);
+    return This->wined3d_device;
+}
+
+const struct IWineDXGIDeviceVtbl dxgi_device_vtbl =
 {
     /* IUnknown methods */
     dxgi_device_QueryInterface,
@@ -216,4 +234,6 @@ const struct IDXGIDeviceVtbl dxgi_device_vtbl =
     dxgi_device_QueryResourceResidency,
     dxgi_device_SetGPUThreadPriority,
     dxgi_device_GetGPUThreadPriority,
+    /* IWineDXGIAdapter methods */
+    dxgi_device_get_wined3d_device,
 };

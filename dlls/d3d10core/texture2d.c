@@ -63,6 +63,12 @@ static ULONG STDMETHODCALLTYPE d3d10_texture2d_Release(ID3D10Texture2D *iface)
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
 
+    if (!refcount)
+    {
+        if (This->wined3d_surface) IWineD3DSurface_Release(This->wined3d_surface);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
     return refcount;
 }
 
