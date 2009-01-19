@@ -56,24 +56,24 @@ $DEF_CHAR = ord '?';
     [ 865,   "VENDORS/MICSFT/PC/CP865.TXT",       1, "OEM Nordic" ],
     [ 866,   "VENDORS/MICSFT/PC/CP866.TXT",       1, "OEM Russian" ],
     [ 869,   "VENDORS/MICSFT/PC/CP869.TXT",       1, "OEM Greek" ],
-    [ 874,   "VENDORS/MICSFT/PC/CP874.TXT",       1, "ANSI/OEM Thai" ],
-    [ 875,   "VENDORS/MICSFT/EBCDIC/CP875.TXT",   0, "IBM EBCDIC Greek" ],
-    [ 878,   "VENDORS/MISC/KOI8-R.TXT",           0, "Russian KOI8" ],
-    [ 932,   "VENDORS/MICSFT/WINDOWS/CP932.TXT",  0, "ANSI/OEM Japanese Shift-JIS" ],
-    [ 936,   "VENDORS/MICSFT/WINDOWS/CP936.TXT",  0, "ANSI/OEM Simplified Chinese GBK" ],
-    [ 949,   "VENDORS/MICSFT/WINDOWS/CP949.TXT",  0, "ANSI/OEM Korean Unified Hangul" ],
-    [ 950,   "VENDORS/MICSFT/WINDOWS/CP950.TXT",  0, "ANSI/OEM Traditional Chinese Big5" ],
-    [ 1006,  "VENDORS/MISC/CP1006.TXT",           0, "IBM Arabic" ],
-    [ 1026,  "VENDORS/MICSFT/EBCDIC/CP1026.TXT",  0, "IBM EBCDIC Latin 5 Turkish" ],
-    [ 1250,  "VENDORS/MICSFT/WINDOWS/CP1250.TXT", 0, "ANSI Eastern Europe" ],
-    [ 1251,  "VENDORS/MICSFT/WINDOWS/CP1251.TXT", 0, "ANSI Cyrillic" ],
-    [ 1252,  "VENDORS/MICSFT/WINDOWS/CP1252.TXT", 0, "ANSI Latin 1" ],
-    [ 1253,  "VENDORS/MICSFT/WINDOWS/CP1253.TXT", 0, "ANSI Greek" ],
-    [ 1254,  "VENDORS/MICSFT/WINDOWS/CP1254.TXT", 0, "ANSI Turkish" ],
-    [ 1255,  "VENDORS/MICSFT/WINDOWS/CP1255.TXT", 0, "ANSI Hebrew" ],
-    [ 1256,  "VENDORS/MICSFT/WINDOWS/CP1256.TXT", 0, "ANSI Arabic" ],
-    [ 1257,  "VENDORS/MICSFT/WINDOWS/CP1257.TXT", 0, "ANSI Baltic" ],
-    [ 1258,  "VENDORS/MICSFT/WINDOWS/CP1258.TXT", 0, "ANSI/OEM Viet Nam" ],
+    [ 874,   "VENDORS/MICSFT/WindowsBestFit/bestfit874.txt",  1, "ANSI/OEM Thai" ],
+    [ 875,   "VENDORS/MICSFT/EBCDIC/CP875.TXT",               0, "IBM EBCDIC Greek" ],
+    [ 878,   "VENDORS/MISC/KOI8-R.TXT",                       0, "Russian KOI8" ],
+    [ 932,   "VENDORS/MICSFT/WindowsBestFit/bestfit932.txt",  0, "ANSI/OEM Japanese Shift-JIS" ],
+    [ 936,   "VENDORS/MICSFT/WindowsBestFit/bestfit936.txt",  0, "ANSI/OEM Simplified Chinese GBK" ],
+    [ 949,   "VENDORS/MICSFT/WindowsBestFit/bestfit949.txt",  0, "ANSI/OEM Korean Unified Hangul" ],
+    [ 950,   "VENDORS/MICSFT/WindowsBestFit/bestfit950.txt",  0, "ANSI/OEM Traditional Chinese Big5" ],
+    [ 1006,  "VENDORS/MISC/CP1006.TXT",                       0, "IBM Arabic" ],
+    [ 1026,  "VENDORS/MICSFT/EBCDIC/CP1026.TXT",              0, "IBM EBCDIC Latin 5 Turkish" ],
+    [ 1250,  "VENDORS/MICSFT/WindowsBestFit/bestfit1250.txt", 0, "ANSI Eastern Europe" ],
+    [ 1251,  "VENDORS/MICSFT/WindowsBestFit/bestfit1251.txt", 0, "ANSI Cyrillic" ],
+    [ 1252,  "VENDORS/MICSFT/WindowsBestFit/bestfit1252.txt", 0, "ANSI Latin 1" ],
+    [ 1253,  "VENDORS/MICSFT/WindowsBestFit/bestfit1253.txt", 0, "ANSI Greek" ],
+    [ 1254,  "VENDORS/MICSFT/WindowsBestFit/bestfit1254.txt", 0, "ANSI Turkish" ],
+    [ 1255,  "VENDORS/MICSFT/WindowsBestFit/bestfit1255.txt", 0, "ANSI Hebrew" ],
+    [ 1256,  "VENDORS/MICSFT/WindowsBestFit/bestfit1256.txt", 0, "ANSI Arabic" ],
+    [ 1257,  "VENDORS/MICSFT/WindowsBestFit/bestfit1257.txt", 0, "ANSI Baltic" ],
+    [ 1258,  "VENDORS/MICSFT/WindowsBestFit/bestfit1258.txt", 0, "ANSI/OEM Viet Nam" ],
     [ 1361,  "OBSOLETE/EASTASIA/KSC/JOHAB.TXT",   0, "Korean Johab" ],
     [ 10000, "VENDORS/MICSFT/MAC/ROMAN.TXT",      0, "Mac Roman" ],
     [ 10006, "VENDORS/MICSFT/MAC/GREEK.TXT",      0, "Mac Greek" ],
@@ -724,9 +724,9 @@ sub DUMP_ARRAY
 
 ################################################################
 # dump an SBCS mapping table
-sub DUMP_SBCS_TABLE
+sub dump_sbcs_table($$$$$)
 {
-    my ($codepage, $has_glyphs, $name) = @_;
+    my ($codepage, $has_glyphs, $name, $def, $defw) = @_;
     my $i;
 
     # output the ascii->unicode table
@@ -734,14 +734,14 @@ sub DUMP_SBCS_TABLE
     if ($has_glyphs)
     {
         printf OUTPUT "static const WCHAR cp2uni[512] =\n";
-        printf OUTPUT "{\n%s", DUMP_ARRAY( "0x%04x", $DEF_CHAR, @cp2uni[0 .. 255] );
+        printf OUTPUT "{\n%s", DUMP_ARRAY( "0x%04x", $defw, @cp2uni[0 .. 255] );
         printf OUTPUT ",\n    /* glyphs */\n%s\n};\n\n",
-                      DUMP_ARRAY( "0x%04x", $DEF_CHAR, get_glyphs_mapping(@cp2uni[0 .. 255]) );
+                      DUMP_ARRAY( "0x%04x", $defw, get_glyphs_mapping(@cp2uni[0 .. 255]) );
     }
     else
     {
         printf OUTPUT "static const WCHAR cp2uni[256] =\n";
-        printf OUTPUT "{\n%s\n};\n\n", DUMP_ARRAY( "0x%04x", $DEF_CHAR, @cp2uni[0 .. 255] );
+        printf OUTPUT "{\n%s\n};\n\n", DUMP_ARRAY( "0x%04x", $defw, @cp2uni[0 .. 255] );
     }
 
     # count the number of unicode->ascii subtables that contain something
@@ -763,10 +763,10 @@ sub DUMP_SBCS_TABLE
     {
         next unless $filled[$i];
         printf OUTPUT "    /* 0x%02x00 .. 0x%02xff */\n", $i, $i;
-        printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%02x", $DEF_CHAR, @uni2cp[($i<<8) .. ($i<<8)+255] );
+        printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%02x", $def, @uni2cp[($i<<8) .. ($i<<8)+255] );
     }
     printf OUTPUT "    /* defaults */\n";
-    printf OUTPUT "%s\n};\n\n", DUMP_ARRAY( "0x%02x", 0, ($DEF_CHAR) x 256 );
+    printf OUTPUT "%s\n};\n\n", DUMP_ARRAY( "0x%02x", 0, ($def) x 256 );
 
     # output a table of the offsets of the subtables in the previous array
 
@@ -784,7 +784,7 @@ sub DUMP_SBCS_TABLE
 
     printf OUTPUT "const struct sbcs_table cptable_%03d =\n{\n", $codepage;
     printf OUTPUT "    { %d, 1, 0x%04x, 0x%04x, \"%s\" },\n",
-                  $codepage, $DEF_CHAR, $DEF_CHAR, $name;
+                  $codepage, $def, $defw, $name;
     printf OUTPUT "    cp2uni,\n";
     if ($has_glyphs) { printf OUTPUT "    cp2uni + 256,\n"; }
     else { printf OUTPUT "    cp2uni,\n"; }
@@ -795,9 +795,9 @@ sub DUMP_SBCS_TABLE
 
 ################################################################
 # dump a DBCS mapping table
-sub DUMP_DBCS_TABLE
+sub dump_dbcs_table($$$$@)
 {
-    my ($codepage, $name) = @_;
+    my ($codepage, $name, $def, $defw, @lb_ranges) = @_;
     my $i, $x, $y;
 
     # build a list of lead bytes that are actually used
@@ -820,14 +820,14 @@ sub DUMP_DBCS_TABLE
     # output the ascii->unicode table for the single byte chars
 
     printf OUTPUT "static const WCHAR cp2uni[%d] =\n", 256 * ($#lblist + 2 + $unused);
-    printf OUTPUT "{\n%s,\n", DUMP_ARRAY( "0x%04x", $DEF_CHAR, @cp2uni[0 .. 255] );
+    printf OUTPUT "{\n%s,\n", DUMP_ARRAY( "0x%04x", $defw, @cp2uni[0 .. 255] );
 
     # output the default table for unused lead bytes
 
     if ($unused)
     {
         printf OUTPUT "    /* unused lead bytes */\n";
-        printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%04x", 0, ($DEF_CHAR) x 256 );
+        printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%04x", 0, ($defw) x 256 );
     }
 
     # output the ascii->unicode table for each DBCS lead byte
@@ -836,7 +836,7 @@ sub DUMP_DBCS_TABLE
     {
         my $base = $lblist[$y] << 8;
         printf OUTPUT "    /* lead byte %02x */\n", $lblist[$y];
-        printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", $DEF_CHAR, @cp2uni[$base .. $base+255] );
+        printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", $defw, @cp2uni[$base .. $base+255] );
         printf OUTPUT ($y < $#lblist) ? ",\n" : "\n};\n\n";
     }
 
@@ -872,10 +872,10 @@ sub DUMP_DBCS_TABLE
     {
         next unless $filled[$y];
         printf OUTPUT "    /* 0x%02x00 .. 0x%02xff */\n", $y, $y;
-        printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%04x", $DEF_CHAR, @uni2cp[($y<<8) .. ($y<<8)+255] );
+        printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%04x", $def, @uni2cp[($y<<8) .. ($y<<8)+255] );
     }
     printf OUTPUT "    /* defaults */\n";
-    printf OUTPUT "%s\n};\n\n", DUMP_ARRAY( "0x%04x", 0, ($DEF_CHAR) x 256 );
+    printf OUTPUT "%s\n};\n\n", DUMP_ARRAY( "0x%04x", 0, ($def) x 256 );
 
     # output a table of the offsets of the subtables in the previous array
 
@@ -893,38 +893,38 @@ sub DUMP_DBCS_TABLE
 
     printf OUTPUT "const struct dbcs_table cptable_%03d =\n{\n", $codepage;
     printf OUTPUT "    { %d, 2, 0x%04x, 0x%04x, \"%s\" },\n",
-                  $codepage, $DEF_CHAR, $DEF_CHAR, $name;
+                  $codepage, $def, $defw, $name;
     printf OUTPUT "    cp2uni,\n";
     printf OUTPUT "    cp2uni_leadbytes,\n";
     printf OUTPUT "    uni2cp_low,\n";
     printf OUTPUT "    uni2cp_high,\n";
-    DUMP_LB_RANGES();
+    printf OUTPUT "    {\n    %s\n    }\n", DUMP_ARRAY( "0x%02x", 0, @lb_ranges, 0, 0 );
     printf OUTPUT "};\n";
 }
 
 
 ################################################################
-# dump the list of defined lead byte ranges
-sub DUMP_LB_RANGES
+# get the list of defined lead byte ranges
+sub get_lb_ranges()
 {
     my @list = ();
+    my @ranges = ();
     my $i = 0;
     foreach $i (@lead_bytes) { $list[$i] = 1; }
     my $on = 0;
-    printf OUTPUT "    { ";
     for ($i = 0; $i < 256; $i++)
     {
         if ($on)
         {
-            if (!defined $list[$i]) { printf OUTPUT "0x%02x, ", $i-1; $on = 0; }
+            if (!defined $list[$i]) { push @ranges, $i-1; $on = 0; }
         }
         else
         {
-            if ($list[$i]) { printf OUTPUT "0x%02x, ", $i; $on = 1; }
+            if ($list[$i]) { push @ranges, $i; $on = 1; }
         }
     }
-    if ($on) { printf OUTPUT "0xff, "; }
-    printf OUTPUT "0x00, 0x00 }\n";
+    if ($on) { push @ranges, 0xff; }
+    return @ranges;
 }
 
 
@@ -1200,6 +1200,110 @@ sub DUMP_COMPOSE_TABLES
 
 
 ################################################################
+# handle a "bestfit" Windows mapping file
+
+sub handle_bestfit_file($$$)
+{
+    my ($filename, $has_glyphs, $comment) = @_;
+    my $state = "";
+    my ($codepage, $width, $def, $defw);
+    my ($lb_cur, $lb_end);
+    my @lb_ranges = ();
+
+    open INPUT,$MAPPREFIX . $filename or die "Cannot open $name";
+
+    while (<INPUT>)
+    {
+        next if /^;/;  # skip comments
+        next if /^\s*$/;  # skip empty lines
+        next if /\x1a/;  # skip ^Z
+        last if /^ENDCODEPAGE/;
+
+        if (/^CODEPAGE\s+(\d+)/)
+        {
+            $codepage = $1;
+            next;
+        }
+        if (/^CPINFO\s+(\d+)\s+0x([0-9a-fA-f]+)\s+0x([0-9a-fA-F]+)/)
+        {
+            $width = $1;
+            $def = hex $2;
+            $defw = hex $3;
+            next;
+        }
+        if (/^(MBTABLE|WCTABLE|DBCSRANGE|DBCSTABLE)\s+(\d+)/)
+        {
+            $state = $1;
+            $count = $2;
+            next;
+        }
+        if (/^0x([0-9a-fA-F]+)\s+0x([0-9a-fA-F]+)/)
+        {
+            if ($state eq "MBTABLE")
+            {
+                $cp = hex $1;
+                $uni = hex $2;
+                $cp2uni[$cp] = $uni unless defined($cp2uni[$cp]);
+                next;
+            }
+            if ($state eq "WCTABLE")
+            {
+                $uni = hex $1;
+                $cp = hex $2;
+                $uni2cp[$uni] = $cp unless defined($uni2cp[$uni]);
+                next;
+            }
+            if ($state eq "DBCSRANGE")
+            {
+                $start = hex $1;
+                $end = hex $2;
+                push @lb_ranges, $start, $end;
+                for (my $i = $start; $i <= $end; $i++)
+                {
+                    push @lead_bytes, $i;
+                    $cp2uni[$i] = 0;
+                }
+                $lb_cur = $start;
+                $lb_end = $end;
+                next;
+            }
+            if ($state eq "DBCSTABLE")
+            {
+                $mb = hex $1;
+                $uni = hex $2;
+                $cp = ($lb_cur << 8) | $mb;
+                $cp2uni[$cp] = $uni unless defined($cp2uni[$cp]);
+                if (!--$count)
+                {
+                    if (++$lb_cur > $lb_end) { $state = "DBCSRANGE"; }
+                }
+                next;
+            }
+        }
+        die "$name: Unrecognized line $_\n";
+    }
+    close INPUT;
+
+    my $output = sprintf "c_%03d.c", $codepage;
+    open OUTPUT,">$output.new" or die "Cannot create $output";
+
+    printf "Building %s from %s (%s)\n", $output, $filename, $comment;
+
+    # dump all tables
+
+    printf OUTPUT "/* code page %03d (%s) */\n", $codepage, $comment;
+    printf OUTPUT "/* generated from %s */\n", $MAPPREFIX . $filename;
+    printf OUTPUT "/* DO NOT EDIT!! */\n\n";
+    printf OUTPUT "#include \"wine/unicode.h\"\n\n";
+
+    if ($width == 1) { dump_sbcs_table( $codepage, $has_glyphs, $comment, $def, $defw ); }
+    else { dump_dbcs_table( $codepage, $comment, $def, $defw, @lb_ranges ); }
+    close OUTPUT;
+    save_file($output);
+}
+
+
+################################################################
 # read an input file and generate the corresponding .c file
 sub HANDLE_FILE
 {
@@ -1212,10 +1316,12 @@ sub HANDLE_FILE
     # symbol codepage file is special
     if ($codepage == 20932) { READ_JIS0208_FILE($MAPPREFIX . $filename); }
     elsif ($codepage == 20127) { fill_20127_codepage(); }
+    elsif ($filename =~ /\/bestfit/)
+    {
+        handle_bestfit_file( $filename, $has_glyphs, $comment );
+        return;
+    }
     else { READ_FILE($MAPPREFIX . $filename); }
-
-    # hack: 0x00a5 must map to backslash in Shift-JIS
-    if ($codepage == 932) { $uni2cp[0x00a5] = 0x5c; }
 
     ADD_DEFAULT_MAPPINGS();
 
@@ -1238,8 +1344,8 @@ sub HANDLE_FILE
     }
     printf OUTPUT "#include \"wine/unicode.h\"\n\n";
 
-    if ($#lead_bytes == -1) { DUMP_SBCS_TABLE( $codepage, $has_glyphs, $comment ); }
-    else { DUMP_DBCS_TABLE( $codepage, $comment ); }
+    if (!@lead_bytes) { dump_sbcs_table( $codepage, $has_glyphs, $comment, $DEF_CHAR, $DEF_CHAR ); }
+    else { dump_dbcs_table( $codepage, $comment, $DEF_CHAR, $DEF_CHAR, get_lb_ranges() ); }
     close OUTPUT;
     save_file($output);
 }
