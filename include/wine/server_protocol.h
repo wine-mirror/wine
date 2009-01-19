@@ -27,6 +27,7 @@ typedef unsigned __int64 apc_param_t;
 typedef unsigned __int64 mem_size_t;
 typedef unsigned __int64 file_pos_t;
 typedef unsigned __int64 client_ptr_t;
+typedef unsigned __int64 affinity_t;
 typedef client_ptr_t mod_handle_t;
 
 struct request_header
@@ -620,13 +621,12 @@ struct get_process_info_reply
     struct reply_header __header;
     process_id_t pid;
     process_id_t ppid;
-    int          priority;
-    unsigned int affinity;
+    affinity_t   affinity;
     client_ptr_t peb;
     timeout_t    start_time;
     timeout_t    end_time;
     int          exit_code;
-    char __pad_52[4];
+    int          priority;
 };
 
 
@@ -637,8 +637,7 @@ struct set_process_info_request
     obj_handle_t handle;
     int          mask;
     int          priority;
-    unsigned int affinity;
-    char __pad_28[4];
+    affinity_t   affinity;
 };
 struct set_process_info_reply
 {
@@ -661,12 +660,13 @@ struct get_thread_info_reply
     process_id_t pid;
     thread_id_t  tid;
     client_ptr_t teb;
-    int          priority;
-    unsigned int affinity;
+    affinity_t   affinity;
     timeout_t    creation_time;
     timeout_t    exit_time;
     int          exit_code;
+    int          priority;
     int          last;
+    char __pad_60[4];
 };
 
 
@@ -677,8 +677,9 @@ struct set_thread_info_request
     obj_handle_t handle;
     int          mask;
     int          priority;
-    unsigned int affinity;
+    affinity_t   affinity;
     obj_handle_t token;
+    char __pad_36[4];
 };
 struct set_thread_info_reply
 {
@@ -5214,6 +5215,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 380
+#define SERVER_PROTOCOL_VERSION 381
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

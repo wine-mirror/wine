@@ -63,8 +63,8 @@ struct process
     int                  running_threads; /* number of threads running in this process */
     timeout_t            start_time;      /* absolute time at process start */
     timeout_t            end_time;        /* absolute time at process end */
+    affinity_t           affinity;        /* process affinity mask */
     int                  priority;        /* priority class */
-    unsigned int         affinity;        /* process affinity mask */
     int                  suspend;         /* global process suspend count */
     int                  is_system;       /* is it a system process? */
     unsigned int         create_flags;    /* process creation flags */

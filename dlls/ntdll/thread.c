@@ -1169,7 +1169,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
     case ThreadBasicInformation:
         {
             THREAD_BASIC_INFORMATION info;
-            const unsigned int affinity_mask = (1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1;
+            const ULONG_PTR affinity_mask = ((ULONG_PTR)1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1;
 
             SERVER_START_REQ( get_thread_info )
             {
@@ -1420,9 +1420,9 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
         return status;
     case ThreadAffinityMask:
         {
-            const DWORD affinity_mask = (1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1;
-            const DWORD *paff = data;
-            if (length != sizeof(DWORD)) return STATUS_INVALID_PARAMETER;
+            const ULONG_PTR affinity_mask = ((ULONG_PTR)1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1;
+            const ULONG_PTR *paff = data;
+            if (length != sizeof(ULONG_PTR)) return STATUS_INVALID_PARAMETER;
             if (*paff & ~affinity_mask) return STATUS_INVALID_PARAMETER;
             SERVER_START_REQ( set_thread_info )
             {

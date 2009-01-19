@@ -41,6 +41,7 @@ my %formats =
     "apc_param_t"   => [  8,   8,  "&dump_uint64" ],
     "file_pos_t"    => [  8,   8,  "&dump_uint64" ],
     "mem_size_t"    => [  8,   8,  "&dump_uint64" ],
+    "affinity_t"    => [  8,   8,  "&dump_uint64" ],
     "timeout_t"     => [  8,   8,  "&dump_timeout" ],
     "rectangle_t"   => [  16,  4,  "&dump_rectangle" ],
     "char_info_t"   => [  4,   2,  "&dump_char_info" ],

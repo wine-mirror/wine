@@ -43,6 +43,7 @@ typedef unsigned __int64 apc_param_t;
 typedef unsigned __int64 mem_size_t;
 typedef unsigned __int64 file_pos_t;
 typedef unsigned __int64 client_ptr_t;
+typedef unsigned __int64 affinity_t;
 typedef client_ptr_t mod_handle_t;
 
 struct request_header
@@ -588,12 +589,12 @@ typedef union
 @REPLY
     process_id_t pid;              /* server process id */
     process_id_t ppid;             /* server process id of parent */
-    int          priority;         /* priority class */
-    unsigned int affinity;         /* process affinity mask */
+    affinity_t   affinity;         /* process affinity mask */
     client_ptr_t peb;              /* PEB address in process address space */
     timeout_t    start_time;       /* process start time */
     timeout_t    end_time;         /* process end time */
     int          exit_code;        /* process exit code */
+    int          priority;         /* priority class */
 @END
 
 
@@ -602,7 +603,7 @@ typedef union
     obj_handle_t handle;       /* process handle */
     int          mask;         /* setting mask (see below) */
     int          priority;     /* priority class */
-    unsigned int affinity;     /* affinity mask */
+    affinity_t   affinity;     /* affinity mask */
 @END
 #define SET_PROCESS_INFO_PRIORITY 0x01
 #define SET_PROCESS_INFO_AFFINITY 0x02
@@ -616,11 +617,11 @@ typedef union
     process_id_t pid;           /* server process id */
     thread_id_t  tid;           /* server thread id */
     client_ptr_t teb;           /* thread teb pointer */
-    int          priority;      /* thread priority level */
-    unsigned int affinity;      /* thread affinity mask */
+    affinity_t   affinity;      /* thread affinity mask */
     timeout_t    creation_time; /* thread creation time */
     timeout_t    exit_time;     /* thread exit time */
     int          exit_code;     /* thread exit code */
+    int          priority;      /* thread priority level */
     int          last;          /* last thread in process */
 @END
 
@@ -630,7 +631,7 @@ typedef union
     obj_handle_t handle;       /* thread handle */
     int          mask;         /* setting mask (see below) */
     int          priority;     /* priority class */
-    unsigned int affinity;     /* affinity mask */
+    affinity_t   affinity;     /* affinity mask */
     obj_handle_t token;        /* impersonation token */
 @END
 #define SET_THREAD_INFO_PRIORITY 0x01
