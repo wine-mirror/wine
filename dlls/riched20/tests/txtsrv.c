@@ -673,6 +673,7 @@ static void test_TxSetText(void)
 
 void test_TxGetNaturalSize() {
     HRESULT result;
+    BOOL ret;
 
     /* This value is used when calling TxGetNaturalSize.  MSDN says
        that this is not supported however a null pointer cannot be
@@ -702,7 +703,14 @@ void test_TxGetNaturalSize() {
     /* Populate the metric strucs */
     SetMapMode(hdcDraw,MM_TEXT);
     GetTextMetrics(hdcDraw, &tmInfo_text);
-    GetCharWidth32(hdcDraw,'A','Z',charwidth_caps_text);
+    SetLastError(0xdeadbeef);
+    ret = GetCharWidth32(hdcDraw,'A','Z',charwidth_caps_text);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
+        win_skip("GetCharWidth32 is not available\n");
+        RestoreDC(hdcDraw,1);
+        ReleaseDC(NULL,hdcDraw);
+        return;
+    }
 
     /* Make measurements in MM_TEXT */
     SetMapMode(hdcDraw,MM_TEXT);
