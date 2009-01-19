@@ -3031,6 +3031,9 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
             state_texfactor_arbfp(STATE_RENDER(WINED3DRS_TEXTUREFACTOR), stateblock, context);
             state_arb_specularenable(STATE_RENDER(WINED3DRS_SPECULARENABLE), stateblock, context);
         }
+        context->last_was_pshader = FALSE;
+    } else {
+        context->last_was_pshader = TRUE;
     }
 
     /* Finally, select the shader. If a pixel shader is used, it will be set and enabled by the shader backend.
