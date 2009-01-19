@@ -2567,6 +2567,14 @@ static void pagesetup_set_orientation(PageSetupDataA *pda, WORD orient)
     GlobalUnlock(pda->dlga->hDevMode);
 }
 
+static WORD pagesetup_get_orientation(PageSetupDataA *pda)
+{
+    DEVMODEA *dm = GlobalLock(pda->dlga->hDevMode);
+    WORD orient = dm->u1.s1.dmOrientation;
+    GlobalUnlock(pda->dlga->hDevMode);
+    return orient;
+}
+
 static BOOL pagesetup_update_papersize(PageSetupDataA *pda)
 {
     DEVNAMES *dn;
@@ -2618,7 +2626,7 @@ static BOOL pagesetup_update_papersize(PageSetupDataA *pda)
     pda->dlga->ptPaperSize.x = _c_10mm2size(pda->dlga, points[i].x);
     pda->dlga->ptPaperSize.y = _c_10mm2size(pda->dlga, points[i].y);
 
-    if(dm->u1.s1.dmOrientation == DMORIENT_LANDSCAPE)
+    if(pagesetup_get_orientation(pda) == DMORIENT_LANDSCAPE)
     {
         LONG tmp = pda->dlga->ptPaperSize.x;
         pda->dlga->ptPaperSize.x = pda->dlga->ptPaperSize.y;
@@ -3014,8 +3022,8 @@ PRINTDLG_PS_WMCommandA(
     }
     case rad1:
     case rad2:
-        if((id == rad1 && pda->dlga->ptPaperSize.x > pda->dlga->ptPaperSize.y) ||
-           (id == rad2 && pda->dlga->ptPaperSize.y > pda->dlga->ptPaperSize.x))
+        if((id == rad1 && pagesetup_get_orientation(pda) == DMORIENT_LANDSCAPE) ||
+           (id == rad2 && pagesetup_get_orientation(pda) == DMORIENT_PORTRAIT))
 	{
             pagesetup_set_orientation(pda, (id == rad1) ? DMORIENT_PORTRAIT : DMORIENT_LANDSCAPE);
             pagesetup_update_papersize(pda);
@@ -3074,7 +3082,7 @@ PRINTDLG_PS_WMCommandA(
 	    ClosePrinter(hPrinter);
 	    /* Changing paper */
             pagesetup_update_papersize(pda);
-            if (dm->u1.s1.dmOrientation == DMORIENT_LANDSCAPE)
+            if (pagesetup_get_orientation(pda) == DMORIENT_LANDSCAPE)
 		CheckRadioButton(hDlg, rad1, rad2, rad2);
 	    else
 		CheckRadioButton(hDlg, rad1, rad2, rad1);
@@ -3433,16 +3441,12 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             EnableWindow(GetDlgItem(hDlg, edt6), FALSE);
             EnableWindow(GetDlgItem(hDlg, edt7), FALSE);
 	}
+
         /* Set orientation radiobutton properly */
-        if(pda->dlga->hDevMode)
-        {
-            dm = GlobalLock(pda->dlga->hDevMode);
-            if (dm->u1.s1.dmOrientation == DMORIENT_LANDSCAPE)
-                CheckRadioButton(hDlg, rad1, rad2, rad2);
-            else /* this is default if papersize is not set */
-                CheckRadioButton(hDlg, rad1, rad2, rad1);
-            GlobalUnlock(pda->dlga->hDevMode);
-        }
+        if (pagesetup_get_orientation(pda) == DMORIENT_LANDSCAPE)
+            CheckRadioButton(hDlg, rad1, rad2, rad2);
+        else
+            CheckRadioButton(hDlg, rad1, rad2, rad1);
 
 	/* if orientation disabled */
 	if (pda->dlga->Flags & PSD_DISABLEORIENTATION) {
