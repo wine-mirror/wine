@@ -2313,9 +2313,26 @@ BOOL WINAPI CreateUrlCacheEntryW(
 
     for (i = 0; i < 255; i++)
     {
-	static const WCHAR szFormat[] = {'[','%','u',']','%','s',0};
+        static const WCHAR szFormat[] = {'[','%','u',']','%','s',0};
         HANDLE hFile;
+        WCHAR *p;
+
         wsprintfW(lpszFileNameNoPath + countnoextension, szFormat, i, szExtension);
+        for (p = lpszFileNameNoPath + 1; *p; p++)
+        {
+            switch (*p)
+            {
+            case '<': case '>':
+            case ':': case '"':
+            case '/': case '\\':
+            case '|': case '?':
+            case '*':
+                *p = '_'; break;
+            default: break;
+            }
+        }
+        if (p[-1] == ' ' || p[-1] == '.') p[-1] = '_';
+
         TRACE("Trying: %s\n", debugstr_w(lpszFileName));
         hFile = CreateFileW(lpszFileName, GENERIC_READ, 0, NULL, CREATE_NEW, 0, NULL);
         if (hFile != INVALID_HANDLE_VALUE)
