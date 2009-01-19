@@ -2557,6 +2557,16 @@ static inline void rotate_rect(RECT *rc, BOOL sense)
     }
 }
 
+static void pagesetup_set_orientation(PageSetupDataA *pda, WORD orient)
+{
+    DEVMODEA *dm = GlobalLock(pda->dlga->hDevMode);
+
+    assert(orient == DMORIENT_PORTRAIT || orient == DMORIENT_LANDSCAPE);
+
+    dm->u1.s1.dmOrientation = orient;
+    GlobalUnlock(pda->dlga->hDevMode);
+}
+
 static BOOL pagesetup_update_papersize(PageSetupDataA *pda)
 {
     DEVNAMES *dn;
@@ -3007,18 +3017,10 @@ PRINTDLG_PS_WMCommandA(
         if((id == rad1 && pda->dlga->ptPaperSize.x > pda->dlga->ptPaperSize.y) ||
            (id == rad2 && pda->dlga->ptPaperSize.y > pda->dlga->ptPaperSize.x))
 	{
-            DWORD tmp = pda->dlga->ptPaperSize.x;
-            DEVMODEA *dm = GlobalLock(pda->dlga->hDevMode);
-
-            pda->dlga->ptPaperSize.x = pda->dlga->ptPaperSize.y;
-            pda->dlga->ptPaperSize.y = tmp;
-
-            dm->u1.s1.dmOrientation = (id == rad1) ? DMORIENT_PORTRAIT : DMORIENT_LANDSCAPE;
-            GlobalUnlock(pda->dlga->hDevMode);
-
+            pagesetup_set_orientation(pda, (id == rad1) ? DMORIENT_PORTRAIT : DMORIENT_LANDSCAPE);
+            pagesetup_update_papersize(pda);
             rotate_rect(&pda->dlga->rtMargin, (id == rad2));
             update_margin_edits(hDlg, pda, 0);
-
 	    PRINTDLG_PS_ChangePaperPrev(pda);
 	}
 	break;
