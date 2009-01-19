@@ -605,14 +605,16 @@ static void test_catalog_properties(CHAR *catfile, int attributes, int members)
 
         attributes = 2;
         members = 1;
+        MultiByteToWideChar(CP_ACP, 0, catalog, -1, catalogW, MAX_PATH);
     }
     else
-        strcpy(catalog, catfile);
+    {
+        MultiByteToWideChar(CP_ACP, 0, catfile, -1, catalogW, MAX_PATH);
+        catalog[0] = 0;
+    }
 
     hcat = pCryptCATOpen(NULL, 0, 0, 0, 0);
     ok(hcat == INVALID_HANDLE_VALUE, "CryptCATOpen succeeded\n");
-
-    MultiByteToWideChar(CP_ACP, 0, catalog, -1, catalogW, MAX_PATH);
 
     hcat = pCryptCATOpen(catalogW, 0, 0, 0, 0);
     ok(hcat != INVALID_HANDLE_VALUE, "CryptCATOpen failed %u\n", GetLastError());
@@ -658,6 +660,7 @@ static void test_catalog_properties(CHAR *catfile, int attributes, int members)
 
     ret = pCryptCATClose(hcat);
     ok(ret, "CryptCATClose failed\n");
+    if (catalog[0]) DeleteFileA( catalog );
 }
 
 static void test_create_catalog_file(void)
