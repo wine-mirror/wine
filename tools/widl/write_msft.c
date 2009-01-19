@@ -981,7 +981,7 @@ static int encode_type(
 
         /* typedef'd types without public attribute aren't included in the typelib */
         while (type->typelib_idx < 0 && type_is_alias(type) && !is_attr(type->attrs, ATTR_PUBLIC))
-          type = type->orig;
+          type = type_alias_get_aliasee(type);
 
         chat("encode_type: VT_USERDEFINED - type %p name = %s type->type %d idx %d\n", type,
              type->name, type->type, type->typelib_idx);
@@ -2095,8 +2095,11 @@ static void add_typedef_typeinfo(msft_typelib_t *typelib, type_t *tdef)
 
     tdef->typelib_idx = typelib->typelib_header.nrtypeinfos;
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_ALIAS, tdef->name, tdef->attrs);
-    encode_type(typelib, get_type_vt(tdef->orig), tdef->orig, &msft_typeinfo->typeinfo->datatype1, &msft_typeinfo->typeinfo->size,
-               &alignment, &msft_typeinfo->typeinfo->datatype2);
+    encode_type(typelib, get_type_vt(type_alias_get_aliasee(tdef)),
+                type_alias_get_aliasee(tdef),
+                &msft_typeinfo->typeinfo->datatype1,
+                &msft_typeinfo->typeinfo->size,
+                &alignment, &msft_typeinfo->typeinfo->datatype2);
     msft_typeinfo->typeinfo->typekind |= (alignment << 11 | alignment << 6);
 }
 
@@ -2269,7 +2272,7 @@ static void add_entry(msft_typelib_t *typelib, const statement_t *stmt)
             if (is_attr(type_entry->type->attrs, ATTR_PUBLIC))
                 add_typedef_typeinfo(typelib, type_entry->type);
             else
-                add_type_typeinfo(typelib, type_entry->type->orig);
+                add_type_typeinfo(typelib, type_alias_get_aliasee(type_entry->type));
         }
         break;
     }

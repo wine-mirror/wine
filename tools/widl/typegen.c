@@ -515,7 +515,7 @@ static type_t *get_user_type(const type_t *t, const char **pname)
         }
 
         if (type_is_alias(t))
-            t = t->orig;
+            t = type_alias_get_aliasee(t);
         else
             return 0;
     }
@@ -1053,7 +1053,7 @@ size_t type_memsize(const type_t *t, unsigned int *align)
     size_t size = 0;
 
     if (type_is_alias(t))
-        size = type_memsize(t->orig, align);
+        size = type_memsize(type_alias_get_aliasee(t), align);
     else if (t->declarray && is_conformant_array(t))
     {
         type_memsize(type_array_get_element(t), align);

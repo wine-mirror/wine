@@ -180,6 +180,12 @@ static inline int type_is_alias(const type_t *type)
     return type->is_alias;
 }
 
+static inline type_t *type_alias_get_aliasee(const type_t *type)
+{
+    assert(type_is_alias(type));
+    return type->orig;
+}
+
 static inline ifref_list_t *type_coclass_get_ifaces(const type_t *type)
 {
     assert(type->type == RPC_FC_COCLASS);
