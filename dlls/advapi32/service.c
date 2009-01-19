@@ -292,6 +292,7 @@ static DWORD map_exception_code(DWORD exception_code)
     switch (exception_code)
     {
     case RPC_X_NULL_REF_POINTER:
+        return ERROR_INVALID_ADDRESS;
     case RPC_X_ENUM_VALUE_OUT_OF_RANGE:
     case RPC_X_BYTE_COUNT_TOO_SMALL:
         return ERROR_INVALID_PARAMETER;
@@ -1654,9 +1655,7 @@ cleanup:
 BOOL WINAPI QueryServiceConfig2W(SC_HANDLE hService, DWORD dwLevel, LPBYTE buffer,
                                  DWORD size, LPDWORD needed)
 {
-    DWORD sz, type;
-    HKEY hKey;
-    LONG r;
+    DWORD err;
     struct sc_service *hsvc;
 
     if(dwLevel != SERVICE_CONFIG_DESCRIPTION) {
@@ -1670,7 +1669,8 @@ BOOL WINAPI QueryServiceConfig2W(SC_HANDLE hService, DWORD dwLevel, LPBYTE buffe
         SetLastError(ERROR_INVALID_LEVEL);
         return FALSE;
     }
-    if(!needed || (!buffer && size)) {
+
+    if(!buffer && size) {
         SetLastError(ERROR_INVALID_ADDRESS);
         return FALSE;
     }
@@ -1683,36 +1683,36 @@ BOOL WINAPI QueryServiceConfig2W(SC_HANDLE hService, DWORD dwLevel, LPBYTE buffe
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
-    hKey = hsvc->hkey;
 
-    switch(dwLevel) {
-        case SERVICE_CONFIG_DESCRIPTION: {
-            static const WCHAR szDescription[] = {'D','e','s','c','r','i','p','t','i','o','n',0};
-            LPSERVICE_DESCRIPTIONW config = (LPSERVICE_DESCRIPTIONW) buffer;
-            LPBYTE strbuf = NULL;
-            *needed = sizeof (SERVICE_DESCRIPTIONW);
-            sz = size - *needed;
-            if(config && (*needed <= size))
-                strbuf = (LPBYTE) (config + 1);
-            r = RegQueryValueExW( hKey, szDescription, 0, &type, strbuf, &sz );
-            if((r == ERROR_SUCCESS) && ( type != REG_SZ)) {
-                FIXME("SERVICE_CONFIG_DESCRIPTION: don't know how to handle type %d\n", type);
-                return FALSE;
-            }
-            *needed += sz;
-            if(config) {
-                if(r == ERROR_SUCCESS)
-                    config->lpDescription = (LPWSTR) (config + 1);
-                else
-                    config->lpDescription = NULL;
-            }
-        }
-        break;
+    __TRY
+    {
+        err = svcctl_QueryServiceConfig2W(hsvc->hdr.server_handle, dwLevel, buffer, size, needed);
     }
-    if(*needed > size)
-        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code(GetExceptionCode());
+    }
+    __ENDTRY
 
-    return (*needed <= size);
+    if (err != ERROR_SUCCESS)
+    {
+        SetLastError( err );
+        return FALSE;
+    }
+
+    switch (dwLevel)
+    {
+    case SERVICE_CONFIG_DESCRIPTION:
+        if (buffer)
+        {
+            SERVICE_DESCRIPTIONW *descr = (SERVICE_DESCRIPTIONW *)buffer;
+            if (descr->lpDescription)  /* make it an absolute pointer */
+                descr->lpDescription = (WCHAR *)(buffer + (ULONG_PTR)descr->lpDescription);
+            break;
+        }
+    }
+
+    return TRUE;
 }
 
 /******************************************************************************

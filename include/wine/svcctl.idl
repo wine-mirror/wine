@@ -296,8 +296,14 @@ typedef [switch_type(DWORD)] union
     /* Not compatible with Windows function 0x26 */
     DWORD svcctl_QueryServiceConfig2A(/* FIXME */);
 
-    /* Not compatible with Windows function 0x27 */
-    DWORD svcctl_QueryServiceConfig2W(/* FIXME */);
+    /* Untested with Windows function 0x27 */
+    DWORD svcctl_QueryServiceConfig2W(
+        [in] SC_RPC_HANDLE hService,
+        [in] DWORD InfoLevel,
+        [out,size_is(cbBufSize)] BYTE lpBuffer[],
+        [in] DWORD cbBufSize,
+        [out] LPDWORD pcbBytesNeeded
+    );
 
     /* Untested with Windows function 0x28 */
     DWORD svcctl_QueryServiceStatusEx(
