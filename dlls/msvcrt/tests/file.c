@@ -36,6 +36,37 @@
 
 static HANDLE proc_handles[2];
 
+static void test_filbuf( void )
+{
+    FILE *fp;
+    int c;
+    fpos_t pos;
+
+    fp = fopen("filbuf.tst", "wb");
+    fwrite("\n\n\n\n", 1, 4, fp);
+    fclose(fp);
+
+    fp = fopen("filbuf.tst", "rt");
+    c = _filbuf(fp);
+    ok(c == '\n', "read wrong byte\n");
+    /* See bug 16970 for why we care about _filbuf.
+     * ftell returns screwy values on files with lots
+     * of bare LFs in ascii mode because it assumes
+     * that ascii files contain only CRLFs, removes
+     * the CR's early in _filbuf, and adjusts the return
+     * value of ftell to compensate.
+     * native _filbuf will read the whole file, then consume and return
+     * the first one.  That leaves fp->_fd at offset 4, and fp->_ptr
+     * pointing to a buffer of three bare LFs, so
+     * ftell will return 4 - 3 - 3 = -2.
+     */
+    ok(ftell(fp) == -2, "ascii crlf removal does not match native\n");
+    ok(fgetpos(fp, &pos) == 0, "fgetpos fail\n");
+    ok(pos == -2, "ftell does not match fgetpos\n");
+    fclose(fp);
+    unlink("filbuf.tst");
+}
+
 static void test_fdopen( void )
 {
     static const char buffer[] = {0,1,2,3,4,5,6,7,8,9};
@@ -463,7 +494,7 @@ static void test_fgetwc( void )
   ok(l==BUFSIZ-2, "ftell expected %d got %ld\n", BUFSIZ-2, l);
   fgetws(wtextW,LLEN,tempfh);
   l=ftell(tempfh);
-  ok(l==BUFSIZ-2+strlen(mytext), "ftell got %ld\n", l);
+  ok(l==BUFSIZ-2+strlen(mytext), "ftell expected %d got %ld\n", BUFSIZ-2+strlen(mytext), l);
   mytextW = AtoW (mytext);
   aptr = mytextW;
   wptr = wtextW;
@@ -1146,6 +1177,7 @@ START_TEST(file)
     test_unlink();
 
     /* testing stream I/O */
+    test_filbuf();
     test_fdopen();
     test_fopen_fclose_fcloseall();
     test_fileops();
