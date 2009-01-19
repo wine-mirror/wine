@@ -2590,6 +2590,13 @@ static WORD pagesetup_get_papersize(PageSetupDataA *pda)
     return paper;
 }
 
+static void pagesetup_set_defaultsource(PageSetupDataA *pda, WORD source)
+{
+    DEVMODEA *dm = GlobalLock(pda->dlga->hDevMode);
+    dm->u1.s1.dmDefaultSource = source;
+    GlobalUnlock(pda->dlga->hDevMode);
+}
+
 static BOOL pagesetup_update_papersize(PageSetupDataA *pda)
 {
     DEVNAMES *dn;
@@ -3070,14 +3077,14 @@ PRINTDLG_PS_WMCommandA(
 	        FIXME("could not get dialog text for papersize cmbbox?\n");
 	}    
 	break;
-    case cmb3:
-	if(msg == CBN_SELCHANGE){
-	    DEVMODEA *dm = GlobalLock(pda->dlga->hDevMode);
-	    dm->u1.s1.dmDefaultSource = SendDlgItemMessageA(hDlg, cmb3,CB_GETITEMDATA,
-                SendDlgItemMessageA(hDlg, cmb3, CB_GETCURSEL, 0, 0), 0);
-	    GlobalUnlock(pda->dlga->hDevMode);
-	}
-	break;
+    case cmb3: /* Paper Source */
+        if(msg == CBN_SELCHANGE)
+        {
+            WORD source = SendDlgItemMessageA(hDlg, cmb3, CB_GETITEMDATA,
+                                              SendDlgItemMessageA(hDlg, cmb3, CB_GETCURSEL, 0, 0), 0);
+            pagesetup_set_defaultsource(pda, source);
+        }
+        break;
     case psh2:                       /* Printer Properties button */
        {
 	    HANDLE hPrinter;
@@ -3419,7 +3426,6 @@ static void subclass_margin_edits(HWND hDlg)
 static INT_PTR CALLBACK
 PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    DEVMODEA		*dm;
     PageSetupDataA	*pda;
     INT_PTR		res = FALSE;
     HWND 		hDrawWnd;
@@ -3489,15 +3495,12 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    EnableWindow(GetDlgItem(hDlg,cmb2),FALSE);
 	    EnableWindow(GetDlgItem(hDlg,cmb3),FALSE);
 	}
+
 	/* filling combos: printer, paper, source. selecting current printer (from DEVMODEA) */
         PRINTDLG_PS_ChangePrinterA(hDlg, pda);
         pagesetup_update_papersize(pda);
-	dm = GlobalLock(pda->dlga->hDevMode);
-	if(dm){
-	    dm->u1.s1.dmDefaultSource = 15; /*FIXME: Automatic select. Does it always 15 at start? */
-            GlobalUnlock(pda->dlga->hDevMode);
-	} else 
-	    WARN("GlobalLock(pda->dlga->hDevMode) fail? hDevMode=%p\n", pda->dlga->hDevMode);
+        pagesetup_set_defaultsource(pda, DMBIN_FORMSOURCE); /* FIXME: This is the auto select bin. Is this correct? */
+
 	/* Drawing paper prev */
 	PRINTDLG_PS_ChangePaperPrev(pda);
 	return TRUE;
