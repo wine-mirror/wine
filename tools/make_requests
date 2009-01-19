@@ -53,6 +53,7 @@ my %formats =
 
 my @requests = ();
 my %replies = ();
+my @asserts = ();
 
 my @trace_lines = ();
 
@@ -167,11 +168,18 @@ sub PARSE_REQUESTS()
         if (/^\@END/)
         {
             die "Misplaced \@END" unless ($state == 2 || $state == 3);
-            print SERVER_PROT "};\n";
 
+            if ($offset & 7)  # all requests should be 8-byte aligned
+            {
+                my $count = 8 - ($offset & 7);
+                print SERVER_PROT "    char __pad_$offset\[$count\];\n";
+                $offset += $count;
+            }
+            print SERVER_PROT "};\n";
             if ($state == 2)  # build dummy reply struct
             {
                 die "request $name too large ($offset)" if ($offset > $max_req_size);
+                push @asserts, "C_ASSERT( sizeof(struct ${name}_request) == $offset );\n";
                 print SERVER_PROT "struct ${name}_reply\n{\n";
                 print SERVER_PROT "    struct reply_header __header;\n";
                 print SERVER_PROT "};\n";
@@ -179,6 +187,7 @@ sub PARSE_REQUESTS()
             else
             {
                 die "reply $name too large ($offset)" if ($offset > $max_req_size);
+                push @asserts, "C_ASSERT( sizeof(struct ${name}_reply) == $offset );\n";
             }
             # got a complete request
             push @requests, $name;
@@ -221,9 +230,19 @@ sub PARSE_REQUESTS()
                 my @fmt = @{$formats{$type}};
                 if ($offset & ($fmt[1] - 1))
                 {
+                    my $count = $fmt[1] - ($offset & ($fmt[1] - 1));
                     print "protocol.def:$.: warning: $name $offset $type $var needs padding\n" if $warnings;
+                    print SERVER_PROT "    char __pad_$offset\[$count\];\n";
+                    $offset += $count;
                 }
-                $offset = ($offset + $fmt[1] - 1) & ~($fmt[1] - 1);
+                if ($state == 2)
+                {
+                    push @asserts, "C_ASSERT( FIELD_OFFSET(struct ${name}_request, $var) == $offset );\n";
+                }
+                else
+                {
+                    push @asserts, "C_ASSERT( FIELD_OFFSET(struct ${name}_reply, $var) == $offset );\n";
+                }
                 $offset += $fmt[0];
             }
             else
@@ -428,7 +447,15 @@ foreach my $req (@requests)
 {
     push @request_lines, "    (req_handler)req_$req,\n";
 }
-push @request_lines, "};\n#endif  /* WANT_REQUEST_HANDLERS */\n";
+push @request_lines, "};\n\n";
+
+foreach my $type (sort keys %formats)
+{
+    my $size = ${$formats{$type}}[0];
+    push @request_lines, "C_ASSERT( sizeof($type) == $size );\n";
+}
+push @request_lines, @asserts;
+push @request_lines, "\n#endif  /* WANT_REQUEST_HANDLERS */\n";
 
 replace_in_file( "server/request.h",
                  "### make_requests begin ###",

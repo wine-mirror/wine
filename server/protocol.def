@@ -680,7 +680,6 @@ typedef union
 
 /* Notify the server that a dll is being unloaded */
 @REQ(unload_dll)
-    int          __pad;
     mod_handle_t base;         /* base address */
 @END
 
