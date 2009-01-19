@@ -110,8 +110,7 @@ unsigned long get_attrv(const attr_list_t *list, enum attr_type t)
 
 int is_void(const type_t *t)
 {
-  if (!t->type && !t->ref) return 1;
-  return 0;
+    return type_get_type(t) == TYPE_VOID;
 }
 
 int is_conformant_array(const type_t *t)
