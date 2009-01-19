@@ -2567,7 +2567,7 @@ static void pagesetup_set_orientation(PageSetupDataA *pda, WORD orient)
     GlobalUnlock(pda->dlga->hDevMode);
 }
 
-static WORD pagesetup_get_orientation(PageSetupDataA *pda)
+static WORD pagesetup_get_orientation(const PageSetupDataA *pda)
 {
     DEVMODEA *dm = GlobalLock(pda->dlga->hDevMode);
     WORD orient = dm->u1.s1.dmOrientation;
@@ -2582,7 +2582,7 @@ static void pagesetup_set_papersize(PageSetupDataA *pda, WORD paper)
     GlobalUnlock(pda->dlga->hDevMode);
 }
 
-static WORD pagesetup_get_papersize(PageSetupDataA *pda)
+static WORD pagesetup_get_papersize(const PageSetupDataA *pda)
 {
     DEVMODEA *dm = GlobalLock(pda->dlga->hDevMode);
     WORD paper = dm->u1.s1.dmPaperSize;
@@ -2998,6 +2998,14 @@ static void set_margin_groupbox_title(HWND hDlg, const PageSetupDataA *pda)
         SetDlgItemTextW(hDlg, grp4, title);
 }
 
+static void pagesetup_update_orientation_buttons(HWND hDlg, const PageSetupDataA *pda)
+{
+    if (pagesetup_get_orientation(pda) == DMORIENT_LANDSCAPE)
+        CheckRadioButton(hDlg, rad1, rad2, rad2);
+    else
+        CheckRadioButton(hDlg, rad1, rad2, rad1);
+}
+
 /********************************************************************************
  * PRINTDLG_PS_WMCommandA
  * process WM_COMMAND message for PageSetupDlgA
@@ -3104,10 +3112,8 @@ PRINTDLG_PS_WMCommandA(
 	    ClosePrinter(hPrinter);
 	    /* Changing paper */
             pagesetup_update_papersize(pda);
-            if (pagesetup_get_orientation(pda) == DMORIENT_LANDSCAPE)
-		CheckRadioButton(hDlg, rad1, rad2, rad2);
-	    else
-		CheckRadioButton(hDlg, rad1, rad2, rad1);
+            pagesetup_update_orientation_buttons(hDlg, pda);
+
 	    /* Changing paper preview */
 	    PRINTDLG_PS_ChangePaperPrev(pda);
 	    /* Selecting paper in combo */
@@ -3464,11 +3470,8 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             EnableWindow(GetDlgItem(hDlg, edt7), FALSE);
 	}
 
-        /* Set orientation radiobutton properly */
-        if (pagesetup_get_orientation(pda) == DMORIENT_LANDSCAPE)
-            CheckRadioButton(hDlg, rad1, rad2, rad2);
-        else
-            CheckRadioButton(hDlg, rad1, rad2, rad1);
+        /* Set orientation radiobuttons properly */
+        pagesetup_update_orientation_buttons(hDlg, pda);
 
 	/* if orientation disabled */
 	if (pda->dlga->Flags & PSD_DISABLEORIENTATION) {
