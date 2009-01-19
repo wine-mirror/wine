@@ -2575,13 +2575,28 @@ static WORD pagesetup_get_orientation(PageSetupDataA *pda)
     return orient;
 }
 
+static void pagesetup_set_papersize(PageSetupDataA *pda, WORD paper)
+{
+    DEVMODEA *dm = GlobalLock(pda->dlga->hDevMode);
+    dm->u1.s1.dmPaperSize = paper;
+    GlobalUnlock(pda->dlga->hDevMode);
+}
+
+static WORD pagesetup_get_papersize(PageSetupDataA *pda)
+{
+    DEVMODEA *dm = GlobalLock(pda->dlga->hDevMode);
+    WORD paper = dm->u1.s1.dmPaperSize;
+    GlobalUnlock(pda->dlga->hDevMode);
+    return paper;
+}
+
 static BOOL pagesetup_update_papersize(PageSetupDataA *pda)
 {
     DEVNAMES *dn;
     DEVMODEA *dm;
     LPSTR devname, portname;
     int i, num;
-    WORD *words = NULL;
+    WORD *words = NULL, paperword;
     POINT *points = NULL;
     BOOL retval = FALSE;
 
@@ -2612,13 +2627,15 @@ static BOOL pagesetup_update_papersize(PageSetupDataA *pda)
         goto end;
     }
 
+    paperword = pagesetup_get_papersize(pda);
+
     for (i = 0; i < num; i++)
-        if (words[i] == dm->u1.s1.dmPaperSize)
+        if (words[i] == paperword)
             break;
 
     if (i == num)
     {
-        FIXME("Papersize %d not found in list?\n", dm->u1.s1.dmPaperSize);
+        FIXME("Papersize %d not found in list?\n", paperword);
         goto end;
     }
 
@@ -3046,9 +3063,7 @@ PRINTDLG_PS_WMCommandA(
 	        SendDlgItemMessageA(hDlg, cmb2, CB_GETCURSEL, 0, 0), 0);
             if (paperword != CB_ERR)
             {
-                DEVMODEA *dm = GlobalLock(pda->dlga->hDevMode);
-                dm->u1.s1.dmPaperSize = paperword;
-                GlobalUnlock(pda->dlga->hDevMode);
+                pagesetup_set_papersize(pda, paperword);
                 pagesetup_update_papersize(pda);
 	        PRINTDLG_PS_ChangePaperPrev(pda);
 	    } else
@@ -3090,9 +3105,10 @@ PRINTDLG_PS_WMCommandA(
 	    PRINTDLG_PS_ChangePaperPrev(pda);
 	    /* Selecting paper in combo */
 	    count = SendDlgItemMessageA(hDlg, cmb2, CB_GETCOUNT, 0, 0);
-	    if(count != CB_ERR){ 
+	    if(count != CB_ERR) {
+                WORD paperword = pagesetup_get_papersize(pda);
                 for(i=0; i<count; ++i){
-		    if(SendDlgItemMessageA(hDlg, cmb2, CB_GETITEMDATA, i, 0) == dm->u1.s1.dmPaperSize) {
+		    if(SendDlgItemMessageA(hDlg, cmb2, CB_GETITEMDATA, i, 0) == paperword) {
 			SendDlgItemMessageA(hDlg, cmb2, CB_SETCURSEL, i, 0);
 			break;
 		    }
