@@ -373,7 +373,6 @@ HFONT ME_SelectStyleFont(ME_Context *c, ME_Style *s)
   LOGFONTW lf;
   int i, nEmpty, nAge = 0x7FFFFFFF;
   ME_FontCacheItem *item;
-  assert(c->hDC);
   assert(s);
   
   ME_LogFontFromStyle(c, &lf, s);
@@ -426,7 +425,6 @@ void ME_UnselectStyleFont(ME_Context *c, ME_Style *s, HFONT hOldFont)
 {
   int i;
   
-  assert(c->hDC);
   assert(s);
   SelectObject(c->hDC, hOldFont);
   for (i=0; i<HFONT_CACHE_SIZE; i++)

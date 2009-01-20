@@ -3024,7 +3024,7 @@ void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam
  * The LRESULT that is returned is a return value for window procs,
  * and the phresult parameter is the COM return code needed by the
  * text services interface. */
-static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
+LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
                          LPARAM lParam, BOOL unicode, HRESULT* phresult)
 {
   *phresult = S_OK;

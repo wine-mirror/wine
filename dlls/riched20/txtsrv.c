@@ -57,6 +57,7 @@ typedef struct ITextServicesImpl {
    ITextHost *pMyHost;
    LONG ref;
    CRITICAL_SECTION csTxtSrv;
+   ME_TextEditor *editor;
    char spare[256];
 } ITextServicesImpl;
 
@@ -70,6 +71,7 @@ HRESULT WINAPI CreateTextServices(IUnknown  * pUnkOuter,
                                   IUnknown  **ppUnk)
 {
    ITextServicesImpl *ITextImpl;
+   HRESULT hres;
    TRACE("%p %p --> %p\n", pUnkOuter, pITextHost, ppUnk);
    if (pITextHost == NULL)
       return E_POINTER;
@@ -83,6 +85,8 @@ HRESULT WINAPI CreateTextServices(IUnknown  * pUnkOuter,
    ITextHost_AddRef(pITextHost);
    ITextImpl->pMyHost = pITextHost;
    ITextImpl->lpVtbl = &textservices_Vtbl;
+   ITextImpl->editor = ME_MakeEditor(pITextHost, FALSE);
+   ME_HandleMessage(ITextImpl->editor, WM_CREATE, 0, 0, TRUE, &hres);
 
    if (pUnkOuter)
    {
@@ -150,9 +154,10 @@ HRESULT WINAPI fnTextSrv_TxSendMessage(ITextServices *iface,
                                        LRESULT* plresult)
 {
    ICOM_THIS_MULTI(ITextServicesImpl, lpVtbl, iface);
+   HRESULT hresult;
 
-   FIXME("%p: STUB\n", This);
-   return E_NOTIMPL;
+   *plresult = ME_HandleMessage(This->editor, msg, wparam, lparam, TRUE, &hresult);
+   return hresult;
 }
 
 HRESULT WINAPI fnTextSrv_TxDraw(ITextServices *iface,
