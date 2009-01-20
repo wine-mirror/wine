@@ -2017,3 +2017,9 @@ BOOL WINAPI LinkWindow_UnregisterClass(void)
 void WINAPI SHFlushSFCache(void)
 {
 }
+
+HRESULT WINAPI SHGetImageList(int iImageList, REFIID riid, void **ppv)
+{
+    FIXME("STUB: %i %s\n",iImageList,debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
