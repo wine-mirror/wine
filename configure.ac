@@ -1013,6 +1013,7 @@ then
         done
         CPPFLAGS="$CPPFLAGS $ac_gphoto2_incl"
     fi
+    ac_gphoto2_libs=${ac_gphoto2_libs:-"-lgphoto2"}
     AC_CHECK_HEADER(gphoto2-camera.h,
                     [AC_CHECK_LIB(gphoto2,gp_camera_new,
                                   [AC_DEFINE(HAVE_GPHOTO2, 1, [Define if we have libgphoto2 development environment])
@@ -1060,6 +1061,7 @@ then
         ac_freetype_incl=`$ft_devel --cflags`
         ac_freetype_libs=`$ft_devel --libs`
     fi
+    ac_freetype_libs=${ac_freetype_libs:-"-lfreetype"}
     WINE_CHECK_SONAME(freetype,FT_Init_FreeType,[ft_lib=yes],[ft_lib=no],[$ac_freetype_libs])
     if test "$ft_lib" = "yes"
     then
@@ -1141,6 +1143,7 @@ then
         ac_esd_libs=`$ESDCONFIG --libs`
         CFLAGS="$CFLAGS $ac_esd_incl"
     fi
+    ac_esd_libs=${ac_esd_libs:-"-lesd"}
     AC_CHECK_HEADER(esd.h,
         [AC_CHECK_LIB(esd,esd_open_sound,
             [AC_SUBST(ESDINCL, "$ac_esd_incl")

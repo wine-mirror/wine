@@ -14116,6 +14116,7 @@ fi
         done
         CPPFLAGS="$CPPFLAGS $ac_gphoto2_incl"
     fi
+    ac_gphoto2_libs=${ac_gphoto2_libs:-"-lgphoto2"}
     if test "${ac_cv_header_gphoto2_camera_h+set}" = set; then
   { $as_echo "$as_me:$LINENO: checking for gphoto2-camera.h" >&5
 $as_echo_n "checking for gphoto2-camera.h... " >&6; }
@@ -14551,6 +14552,7 @@ test -n "$ft_devel" || ft_devel="no"
         ac_freetype_incl=`$ft_devel --cflags`
         ac_freetype_libs=`$ft_devel --libs`
     fi
+    ac_freetype_libs=${ac_freetype_libs:-"-lfreetype"}
     { $as_echo "$as_me:$LINENO: checking for -lfreetype" >&5
 $as_echo_n "checking for -lfreetype... " >&6; }
 if test "${ac_cv_lib_soname_freetype+set}" = set; then
@@ -15443,6 +15445,7 @@ fi
         ac_esd_libs=`$ESDCONFIG --libs`
         CFLAGS="$CFLAGS $ac_esd_incl"
     fi
+    ac_esd_libs=${ac_esd_libs:-"-lesd"}
     if test "${ac_cv_header_esd_h+set}" = set; then
   { $as_echo "$as_me:$LINENO: checking for esd.h" >&5
 $as_echo_n "checking for esd.h... " >&6; }
