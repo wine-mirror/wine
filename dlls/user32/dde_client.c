@@ -527,7 +527,7 @@ static WDML_QUEUE_STATE WDML_HandleRequestReply(WDML_CONV* pConv, MSG* msg, WDML
 	if (DdeCmpStringHandles(hsz, pXAct->hszItem) != 0)
 	    return WDML_QS_PASS;
 
-	pXAct->hDdeData = WDML_Global2DataHandle((HGLOBAL)uiLo, &wdh);
+	pXAct->hDdeData = WDML_Global2DataHandle(pConv, (HGLOBAL)uiLo, &wdh);
 	if (wdh.fRelease)
 	{
 	    GlobalFree((HGLOBAL)uiLo);
@@ -850,7 +850,7 @@ static WDML_QUEUE_STATE WDML_HandleIncomingData(WDML_CONV* pConv, MSG* msg, HDDE
     UnpackDDElParam(WM_DDE_DATA, msg->lParam, &uiLo, &uiHi);
     hsz = WDML_MakeHszFromAtom(pConv->instance, uiHi);
 
-    hDdeDataIn = WDML_Global2DataHandle((HGLOBAL)uiLo, &wdh);
+    hDdeDataIn = WDML_Global2DataHandle(pConv, (HGLOBAL)uiLo, &wdh);
 
     /* billx:
      *  For hot link, data should be passed to its callback with

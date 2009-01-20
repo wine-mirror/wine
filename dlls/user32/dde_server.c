@@ -772,7 +772,7 @@ static	WDML_QUEUE_STATE WDML_ServerHandleExecute(WDML_CONV* pConv, WDML_XACT* pX
 
 	if (ptr)
 	{
-	    hDdeData = DdeCreateDataHandle(0, ptr, GlobalSize(pXAct->hMem),
+	    hDdeData = DdeCreateDataHandle(pConv->instance->instanceID, ptr, GlobalSize(pXAct->hMem),
 					   0, 0, CF_TEXT, 0);
 	    GlobalUnlock(pXAct->hMem);
 	}

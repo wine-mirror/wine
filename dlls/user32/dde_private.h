@@ -232,7 +232,7 @@ extern	void		WDML_FreeTransaction(WDML_INSTANCE* pInstance, WDML_XACT* pXAct, BO
 extern	WDML_XACT*	WDML_FindTransaction(WDML_CONV* pConv, DWORD tid) DECLSPEC_HIDDEN;
 extern	HGLOBAL		WDML_DataHandle2Global(HDDEDATA hDdeData, BOOL fResponse, BOOL fRelease,
 					       BOOL fDeferUpd, BOOL dAckReq) DECLSPEC_HIDDEN;
-extern	HDDEDATA	WDML_Global2DataHandle(HGLOBAL hMem, WINE_DDEHEAD* da) DECLSPEC_HIDDEN;
+extern	HDDEDATA	WDML_Global2DataHandle(WDML_CONV* pConv, HGLOBAL hMem, WINE_DDEHEAD* da) DECLSPEC_HIDDEN;
 extern  BOOL            WDML_IsAppOwned(HDDEDATA hDdeData) DECLSPEC_HIDDEN;
 extern	WDML_INSTANCE*	WDML_GetInstance(DWORD InstId) DECLSPEC_HIDDEN;
 extern	WDML_INSTANCE*	WDML_GetInstanceFromWnd(HWND hWnd) DECLSPEC_HIDDEN;
