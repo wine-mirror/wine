@@ -2546,23 +2546,26 @@ static BOOL ME_SetCursor(ME_TextEditor *editor)
   pt.x = (short)LOWORD(messagePos);
   pt.y = (short)HIWORD(messagePos);
 
-  sbi.cbSize = sizeof(sbi);
-  GetScrollBarInfo(editor->hWnd, OBJID_HSCROLL, &sbi);
-  if (!(sbi.rgstate[0] & (STATE_SYSTEM_INVISIBLE|STATE_SYSTEM_OFFSCREEN)) &&
-      PtInRect(&sbi.rcScrollBar, pt))
+  if (editor->hWnd)
   {
-      ITextHost_TxSetCursor(editor->texthost,
-                            LoadCursorW(NULL, (WCHAR*)IDC_ARROW), FALSE);
-      return TRUE;
-  }
-  sbi.cbSize = sizeof(sbi);
-  GetScrollBarInfo(editor->hWnd, OBJID_VSCROLL, &sbi);
-  if (!(sbi.rgstate[0] & (STATE_SYSTEM_INVISIBLE|STATE_SYSTEM_OFFSCREEN)) &&
-      PtInRect(&sbi.rcScrollBar, pt))
-  {
-      ITextHost_TxSetCursor(editor->texthost,
-                            LoadCursorW(NULL, (WCHAR*)IDC_ARROW), FALSE);
-      return TRUE;
+    sbi.cbSize = sizeof(sbi);
+    GetScrollBarInfo(editor->hWnd, OBJID_HSCROLL, &sbi);
+    if (!(sbi.rgstate[0] & (STATE_SYSTEM_INVISIBLE|STATE_SYSTEM_OFFSCREEN)) &&
+        PtInRect(&sbi.rcScrollBar, pt))
+    {
+        ITextHost_TxSetCursor(editor->texthost,
+                              LoadCursorW(NULL, (WCHAR*)IDC_ARROW), FALSE);
+        return TRUE;
+    }
+    sbi.cbSize = sizeof(sbi);
+    GetScrollBarInfo(editor->hWnd, OBJID_VSCROLL, &sbi);
+    if (!(sbi.rgstate[0] & (STATE_SYSTEM_INVISIBLE|STATE_SYSTEM_OFFSCREEN)) &&
+        PtInRect(&sbi.rcScrollBar, pt))
+    {
+        ITextHost_TxSetCursor(editor->texthost,
+                              LoadCursorW(NULL, (WCHAR*)IDC_ARROW), FALSE);
+        return TRUE;
+    }
   }
   ITextHost_TxScreenToClient(editor->texthost, &pt);
 
@@ -2630,10 +2633,8 @@ static BOOL ME_SetCursor(ME_TextEditor *editor)
 
 static void ME_SetDefaultFormatRect(ME_TextEditor *editor)
 {
-  DWORD exstyle = GetWindowLongW(editor->hWnd, GWL_EXSTYLE);
-
   ITextHost_TxGetClientRect(editor->texthost, &editor->rcFormat);
-  editor->rcFormat.top += (exstyle & WS_EX_CLIENTEDGE ? 1 : 0);
+  editor->rcFormat.top += editor->exStyleFlags & WS_EX_CLIENTEDGE ? 1 : 0;
   editor->rcFormat.left += 1 + editor->selofs;
   editor->rcFormat.right -= 1;
 }
@@ -2643,7 +2644,7 @@ static BOOL ME_ShowContextMenu(ME_TextEditor *editor, int x, int y)
   CHARRANGE selrange;
   HMENU menu;
   int seltype = 0;
-  if(!editor->lpOleCallback)
+  if(!editor->lpOleCallback || !editor->hWnd)
     return FALSE;
   ME_GetSelection(editor, &selrange.cpMin, &selrange.cpMax);
   if(selrange.cpMin == selrange.cpMax)
@@ -3125,12 +3126,12 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_SETOPTIONS:
   {
-    /* these flags are equivalent to ES_* counterparts                      
-     * ECO_READONLY is already implemented in the code, only requires 
-     * setting the bit to work                                        
-     */
-    DWORD mask = ECO_VERTICAL | ECO_AUTOHSCROLL | ECO_AUTOVSCROLL |
-                 ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN | ECO_SELECTIONBAR;
+    /* these flags are equivalent to ES_* counterparts, except for
+     * ECO_AUTOWORDSELECTION that doesn't have an ES_* counterpart,
+     * but is still stored in editor->styleFlags. */
+    const DWORD mask = ECO_VERTICAL | ECO_AUTOHSCROLL | ECO_AUTOVSCROLL |
+                       ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN |
+                       ECO_SELECTIONBAR | ECO_AUTOWORDSELECTION;
     DWORD settings = mask & editor->styleFlags;
     DWORD oldSettings = settings;
     DWORD changedSettings;
@@ -3151,14 +3152,8 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     }
     changedSettings = oldSettings ^ settings;
 
-    if (settings & ECO_AUTOWORDSELECTION)
-      FIXME("ECO_AUTOWORDSELECTION not implemented yet!\n");
-
     if (oldSettings ^ settings) {
-      DWORD dwStyle = GetWindowLongW(editor->hWnd, GWL_STYLE);
-
       editor->styleFlags = (editor->styleFlags & ~mask) | (settings & mask);
-      SetWindowLongW(editor->hWnd, GWL_STYLE, (dwStyle & ~mask) | (settings & mask));
 
       if (settings & ECO_SELECTIONBAR) {
         editor->selofs = SELECTIONBAR_WIDTH;
@@ -3180,6 +3175,8 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       FIXME("ECO_NOHIDESEL not implemented yet!\n");
     if (settings & ECO_WANTRETURN)
       FIXME("ECO_WANTRETURN not implemented yet!\n");
+    if (settings & ECO_AUTOWORDSELECTION)
+      FIXME("ECO_AUTOWORDSELECTION not implemented yet!\n");
 
     return settings;
   }
@@ -3333,15 +3330,10 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_SETREADONLY:
   {
-    LONG winStyle = GetWindowLongW(editor->hWnd, GWL_STYLE);
-    if (wParam) {
+    if (wParam)
       editor->styleFlags |= ES_READONLY;
-      winStyle |= ES_READONLY;
-    } else {
+    else
       editor->styleFlags &= ~ES_READONLY;
-      winStyle &= ~ES_READONLY;
-    }
-    SetWindowLongW(editor->hWnd, GWL_STYLE, winStyle);
     return 0;
   }
   case EM_SETEVENTMASK:
@@ -3931,8 +3923,13 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     si.nMax = (si.fMask & SIF_DISABLENOSCROLL) ? 1 : 0;
     si.nMin = 0;
     si.nPage = 0;
-    SetScrollInfo(editor->hWnd, SB_VERT, &si, TRUE);
-    SetScrollInfo(editor->hWnd, SB_HORZ, &si, TRUE);
+    if (editor->hWnd) {
+      SetScrollInfo(editor->hWnd, SB_VERT, &si, TRUE);
+      SetScrollInfo(editor->hWnd, SB_HORZ, &si, TRUE);
+    } else {
+      ITextHost_TxSetScrollRange(editor->texthost, SB_VERT, si.nMin, si.nMax, TRUE);
+      ITextHost_TxSetScrollRange(editor->texthost, SB_HORZ, si.nMin, si.nMax, TRUE);
+    }
 
     ME_CommitUndo(editor);
     ME_WrapMarkedParagraphs(editor);
@@ -4000,44 +3997,6 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     if (!ME_ShowContextMenu(editor, (short)LOWORD(lParam), (short)HIWORD(lParam)))
       goto do_default;
     break;
-  case WM_PAINT:
-    {
-      HDC hDC;
-      RECT rc;
-      PAINTSTRUCT ps;
-
-      hDC = BeginPaint(editor->hWnd, &ps);
-      /* Erase area outside of the formatting rectangle */
-      if (ps.rcPaint.top < editor->rcFormat.top)
-      {
-        rc = ps.rcPaint;
-        rc.bottom = editor->rcFormat.top;
-        FillRect(hDC, &rc, editor->hbrBackground);
-        ps.rcPaint.top = editor->rcFormat.top;
-      }
-      if (ps.rcPaint.bottom > editor->rcFormat.bottom) {
-        rc = ps.rcPaint;
-        rc.top = editor->rcFormat.bottom;
-        FillRect(hDC, &rc, editor->hbrBackground);
-        ps.rcPaint.bottom = editor->rcFormat.bottom;
-      }
-      if (ps.rcPaint.left < editor->rcFormat.left) {
-        rc = ps.rcPaint;
-        rc.right = editor->rcFormat.left;
-        FillRect(hDC, &rc, editor->hbrBackground);
-        ps.rcPaint.left = editor->rcFormat.left;
-      }
-      if (ps.rcPaint.right > editor->rcFormat.right) {
-        rc = ps.rcPaint;
-        rc.left = editor->rcFormat.right;
-        FillRect(hDC, &rc, editor->hbrBackground);
-        ps.rcPaint.right = editor->rcFormat.right;
-      }
-
-      ME_PaintContent(editor, hDC, FALSE, &ps.rcPaint);
-      EndPaint(editor->hWnd, &ps);
-    }
-    break;
   case WM_SETFOCUS:
     editor->bHaveFocus = TRUE;
     ME_ShowCaret(editor);
@@ -4049,16 +4008,6 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     ME_HideCaret(editor);
     ME_SendOldNotify(editor, EN_KILLFOCUS);
     return 0;
-  case WM_ERASEBKGND:
-  {
-    HDC hDC = (HDC)wParam;
-    RECT rc;
-    if (GetUpdateRect(editor->hWnd,&rc,TRUE))
-    {
-      FillRect(hDC, &rc, editor->hbrBackground);
-    }
-    return 1;
-  }
   case WM_COMMAND:
     TRACE("editor wnd command = %d\n", LOWORD(wParam));
     return 0;
@@ -4242,11 +4191,11 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   {
     if (lParam)
     {
-      DWORD exstyle = GetWindowLongW(editor->hWnd, GWL_EXSTYLE);
-      int border = (exstyle & WS_EX_CLIENTEDGE) ? 1 : 0;
+      int border = 0;
       RECT clientRect;
       RECT *rc = (RECT *)lParam;
 
+      border = editor->exStyleFlags & WS_EX_CLIENTEDGE ? 1 : 0;
       ITextHost_TxGetClientRect(editor->texthost, &clientRect);
       if (wParam == 0)
       {
@@ -4467,7 +4416,81 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     }
   }
 
-  lresult = ME_HandleMessage(editor, msg, wParam, lParam, unicode, &hresult);
+  switch (msg)
+  {
+    case WM_PAINT:
+    {
+      HDC hDC;
+      RECT rc;
+      PAINTSTRUCT ps;
+
+      hDC = BeginPaint(editor->hWnd, &ps);
+      /* Erase area outside of the formatting rectangle */
+      if (ps.rcPaint.top < editor->rcFormat.top)
+      {
+        rc = ps.rcPaint;
+        rc.bottom = editor->rcFormat.top;
+        FillRect(hDC, &rc, editor->hbrBackground);
+        ps.rcPaint.top = editor->rcFormat.top;
+      }
+      if (ps.rcPaint.bottom > editor->rcFormat.bottom) {
+        rc = ps.rcPaint;
+        rc.top = editor->rcFormat.bottom;
+        FillRect(hDC, &rc, editor->hbrBackground);
+        ps.rcPaint.bottom = editor->rcFormat.bottom;
+      }
+      if (ps.rcPaint.left < editor->rcFormat.left) {
+        rc = ps.rcPaint;
+        rc.right = editor->rcFormat.left;
+        FillRect(hDC, &rc, editor->hbrBackground);
+        ps.rcPaint.left = editor->rcFormat.left;
+      }
+      if (ps.rcPaint.right > editor->rcFormat.right) {
+        rc = ps.rcPaint;
+        rc.left = editor->rcFormat.right;
+        FillRect(hDC, &rc, editor->hbrBackground);
+        ps.rcPaint.right = editor->rcFormat.right;
+      }
+
+      ME_PaintContent(editor, hDC, FALSE, &ps.rcPaint);
+      EndPaint(editor->hWnd, &ps);
+      return 0;
+    }
+    case WM_ERASEBKGND:
+    {
+      HDC hDC = (HDC)wParam;
+      RECT rc;
+
+      if (GetUpdateRect(editor->hWnd, &rc, TRUE))
+        FillRect(hDC, &rc, editor->hbrBackground);
+      return 1;
+    }
+    case EM_SETOPTIONS:
+    {
+      DWORD dwStyle;
+      const DWORD mask = ECO_VERTICAL | ECO_AUTOHSCROLL | ECO_AUTOVSCROLL |
+                         ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN |
+                         ECO_SELECTIONBAR;
+      lresult = ME_HandleMessage(editor, msg, wParam, lParam, unicode, &hresult);
+      dwStyle = GetWindowLongW(hWnd, GWL_STYLE);
+      dwStyle = (dwStyle & ~mask) | (lresult & mask);
+      SetWindowLongW(hWnd, GWL_STYLE, dwStyle);
+      return lresult;
+    }
+    case EM_SETREADONLY:
+    {
+      DWORD dwStyle;
+      lresult = ME_HandleMessage(editor, msg, wParam, lParam, unicode, &hresult);
+      dwStyle = GetWindowLongW(hWnd, GWL_STYLE);
+      dwStyle &= ~ES_READONLY;
+      if (wParam)
+        dwStyle |= ES_READONLY;
+      SetWindowLongW(hWnd, GWL_STYLE, dwStyle);
+      return lresult;
+    }
+    default:
+      lresult = ME_HandleMessage(editor, msg, wParam, lParam, unicode, &hresult);
+  }
 
   if (hresult == S_FALSE)
     lresult = DefWindowProcW(hWnd, msg, wParam, lParam);

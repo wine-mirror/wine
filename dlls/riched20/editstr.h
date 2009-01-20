@@ -338,6 +338,7 @@ typedef struct tagME_TextEditor
   ME_TextBuffer *pBuffer;
   ME_Cursor *pCursors;
   DWORD styleFlags;
+  DWORD exStyleFlags;
   int nCursors;
   SIZE sizeWindow;
   int nTotalLength, nLastTotalLength;
