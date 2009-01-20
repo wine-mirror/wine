@@ -142,7 +142,7 @@ static HRESULT WINAPI OBJSEL_IDsObjectPicker_QueryInterface(
     if (IsEqualGUID(riid, &IID_IUnknown) ||
 	IsEqualGUID(riid, &IID_IDsObjectPicker))
     {
-	*ppvObj = (LPVOID)iface;
+        *ppvObj = iface;
 	OBJSEL_IDsObjectPicker_AddRef(iface);
 	return S_OK;
     }
