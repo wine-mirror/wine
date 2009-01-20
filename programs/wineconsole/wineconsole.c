@@ -64,7 +64,7 @@ static void WINECON_Usage(void)
  *
  * updates the local copy of cells (band to update)
  */
-void WINECON_FetchCells(struct inner_data* data, int upd_tp, int upd_bm)
+static void WINECON_FetchCells(struct inner_data* data, int upd_tp, int upd_bm)
 {
     SERVER_START_REQ( read_console_output )
     {

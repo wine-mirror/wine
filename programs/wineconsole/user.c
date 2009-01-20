@@ -318,7 +318,7 @@ void WCUSER_DumpTextMetric(const TEXTMETRIC* tm, DWORD ft)
  *
  *
  */
-BOOL WCUSER_AreFontsEqual(const struct config_data* config, const LOGFONT* lf)
+static BOOL WCUSER_AreFontsEqual(const struct config_data* config, const LOGFONT* lf)
 {
     return lf->lfHeight == config->cell_height &&
         lf->lfWeight == config->font_weight &&
