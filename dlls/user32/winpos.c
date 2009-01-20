@@ -676,9 +676,6 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
         GetClientRect(GetAncestor(hwnd,GA_PARENT), &rc);
         AdjustWindowRectEx(&rc, style, ((style & WS_POPUP) && GetMenu(hwnd)), exstyle);
 
-        /* avoid calculating this twice */
-        style &= ~(WS_DLGFRAME | WS_BORDER | WS_THICKFRAME);
-
         MinMax.ptMaxSize.x = rc.right - rc.left;
         MinMax.ptMaxSize.y = rc.bottom - rc.top;
         MinMax.ptMinTrackSize.x = GetSystemMetrics(SM_CXMINTRACK);
