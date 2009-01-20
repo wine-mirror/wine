@@ -625,6 +625,7 @@ static void test_get_servicekeyname(void)
     BOOL ret;
     static const CHAR deadbeef[] = "Deadbeef";
     static const WCHAR deadbeefW[] = {'D','e','a','d','b','e','e','f',0};
+    static const WCHAR abcW[] = {'A','B','C',0};
 
     /* Having NULL for the size of the buffer will crash on W2K3 */
 
@@ -667,13 +668,17 @@ static void test_get_servicekeyname(void)
     strcpy(servicename, "ABC");
     ret = GetServiceKeyNameA(scm_handle, deadbeef, servicename, &servicesize);
     ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
+       "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
     todo_wine ok(servicesize == 15, "Service size expected 15, got %d\n", servicesize);
     ok(servicename[0] == 0, "Service name not empty\n");
 
     servicesize = 15;
-    servicenameW[0] = 'A';
+    lstrcpyW( servicenameW, abcW );
     ret = GetServiceKeyNameW(scm_handle, deadbeefW, servicenameW, &servicesize);
     ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
+       "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
     todo_wine ok(servicesize == 15, "Service size expected 15, got %d\n", servicesize);
     ok(servicenameW[0] == 0, "Service name not empty\n");
 
@@ -681,15 +686,55 @@ static void test_get_servicekeyname(void)
     strcpy(servicename, "ABC");
     ret = GetServiceKeyNameA(scm_handle, deadbeef, servicename, &servicesize);
     ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
+       "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
     todo_wine ok(servicesize == 1, "Service size expected 1, got %d\n", servicesize);
     ok(servicename[0] == 'A', "Service name changed\n");
 
     servicesize = 0;
-    servicenameW[0] = 'A';
+    lstrcpyW( servicenameW, abcW );
     ret = GetServiceKeyNameW(scm_handle, deadbeefW, servicenameW, &servicesize);
     ok(!ret, "Expected failure\n");
     todo_wine ok(servicesize == 2, "Service size expected 2, got %d\n", servicesize);
+    ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
+       "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
     ok(servicenameW[0] == 'A', "Service name changed\n");
+
+    servicesize = 1;
+    strcpy(servicename, "ABC");
+    ret = GetServiceKeyNameA(scm_handle, deadbeef, servicename, &servicesize);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
+       "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
+    todo_wine ok(servicesize == 1, "Service size expected 1, got %d\n", servicesize);
+    ok(servicename[0] == 0, "Service name not empty\n");
+
+    servicesize = 1;
+    lstrcpyW( servicenameW, abcW );
+    ret = GetServiceKeyNameW(scm_handle, deadbeefW, servicenameW, &servicesize);
+    ok(!ret, "Expected failure\n");
+    todo_wine ok(servicesize == 2, "Service size expected 2, got %d\n", servicesize);
+    ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
+       "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
+    todo_wine ok(servicenameW[0] == 'A', "Service name changed\n");
+
+    servicesize = 2;
+    strcpy(servicename, "ABC");
+    ret = GetServiceKeyNameA(scm_handle, deadbeef, servicename, &servicesize);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
+       "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
+    ok(servicesize == 2, "Service size expected 2, got %d\n", servicesize);
+    ok(servicename[0] == 0, "Service name not empty\n");
+
+    servicesize = 2;
+    lstrcpyW( servicenameW, abcW );
+    ret = GetServiceKeyNameW(scm_handle, deadbeefW, servicenameW, &servicesize);
+    ok(!ret, "Expected failure\n");
+    todo_wine ok(servicesize == 2, "Service size expected 2, got %d\n", servicesize);
+    ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
+       "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
+    ok(servicenameW[0] == 0, "Service name not empty\n");
 
     /* Check if 'Spooler' exists */
     svc_handle = OpenServiceA(scm_handle, spooler, GENERIC_READ);
