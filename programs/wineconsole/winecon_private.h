@@ -79,9 +79,7 @@ struct inner_data {
 extern void WINECON_Fatal(const char* msg);
 extern void WINECON_NotifyWindowChange(struct inner_data* data);
 extern int  WINECON_GetHistorySize(HANDLE hConIn);
-extern BOOL WINECON_SetHistorySize(HANDLE hConIn, int size);
 extern int  WINECON_GetHistoryMode(HANDLE hConIn);
-extern BOOL WINECON_SetHistoryMode(HANDLE hConIn, int mode);
 extern BOOL WINECON_GetConsoleTitle(HANDLE hConIn, WCHAR* buffer, size_t len);
 extern int  WINECON_GrabChanges(struct inner_data* data);
 extern VOID WINECON_SetConfig(struct inner_data* data,

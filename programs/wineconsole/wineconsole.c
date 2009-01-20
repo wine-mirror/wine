@@ -124,7 +124,7 @@ int	WINECON_GetHistorySize(HANDLE hConIn)
  *
  *
  */
-BOOL	WINECON_SetHistorySize(HANDLE hConIn, int size)
+static BOOL WINECON_SetHistorySize(HANDLE hConIn, int size)
 {
     BOOL	ret;
 
@@ -163,7 +163,7 @@ int	WINECON_GetHistoryMode(HANDLE hConIn)
  *
  *
  */
-BOOL	WINECON_SetHistoryMode(HANDLE hConIn, int mode)
+static BOOL WINECON_SetHistoryMode(HANDLE hConIn, int mode)
 {
     BOOL	ret;
 
