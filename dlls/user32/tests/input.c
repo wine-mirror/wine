@@ -63,7 +63,7 @@ static long timetag = 0x10000000;
 static UINT (WINAPI *pSendInput) (UINT, INPUT*, size_t);
 static int (WINAPI *pGetMouseMovePointsEx) (UINT, LPMOUSEMOVEPOINT, LPMOUSEMOVEPOINT, int, DWORD);
 
-#define MAXKEYEVENTS 6
+#define MAXKEYEVENTS 10
 #define MAXKEYMESSAGES MAXKEYEVENTS /* assuming a key event generates one
                                        and only one message */
 
@@ -799,10 +799,14 @@ static LRESULT CALLBACK WndProc2(HWND hWnd, UINT Msg, WPARAM wParam,
         Msg != WM_GETICON &&
         Msg != WM_DEVICECHANGE)
     {
-        sent_messages[sent_messages_cnt].message = Msg;
-        sent_messages[sent_messages_cnt].flags = 0;
-        sent_messages[sent_messages_cnt].wParam = wParam;
-        sent_messages[sent_messages_cnt++].lParam = HIWORD(lParam) & (KF_UP|KF_EXTENDED);
+        ok(sent_messages_cnt < MAXKEYMESSAGES, "Too many messages\n");
+        if (sent_messages_cnt < MAXKEYMESSAGES)
+        {
+            sent_messages[sent_messages_cnt].message = Msg;
+            sent_messages[sent_messages_cnt].flags = 0;
+            sent_messages[sent_messages_cnt].wParam = wParam;
+            sent_messages[sent_messages_cnt++].lParam = HIWORD(lParam) & (KF_UP|KF_EXTENDED);
+        }
     }
     return DefWindowProc(hWnd, Msg, wParam, lParam);
 }
@@ -813,10 +817,14 @@ static LRESULT CALLBACK hook_proc(int code, WPARAM wparam, LPARAM lparam)
 
     if (code == HC_ACTION)
     {
-        sent_messages[sent_messages_cnt].message = wparam;
-        sent_messages[sent_messages_cnt].flags = hook;
-        sent_messages[sent_messages_cnt].wParam = hook_info->vkCode;
-        sent_messages[sent_messages_cnt++].lParam = hook_info->flags & (LLKHF_UP|LLKHF_EXTENDED);
+        ok(sent_messages_cnt < MAXKEYMESSAGES, "Too many messages\n");
+        if (sent_messages_cnt < MAXKEYMESSAGES)
+        {
+            sent_messages[sent_messages_cnt].message = wparam;
+            sent_messages[sent_messages_cnt].flags = hook;
+            sent_messages[sent_messages_cnt].wParam = hook_info->vkCode;
+            sent_messages[sent_messages_cnt++].lParam = hook_info->flags & (LLKHF_UP|LLKHF_EXTENDED);
+        }
 
 if(0) /* For some reason not stable on Wine */
 {
