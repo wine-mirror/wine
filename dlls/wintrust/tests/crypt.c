@@ -522,6 +522,11 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
     memset(catfileW, 0, sizeof(catfileW));
     MultiByteToWideChar(0, 0, p, -1, catfileW, MAX_PATH);
 
+    /* Set the file attributes so we can check what happens with them during the 'copy' */
+    attrs = FILE_ATTRIBUTE_READONLY;
+    ret = SetFileAttributesA(tmpfile, attrs);
+    ok(ret, "SetFileAttributesA failed : %u\n", GetLastError());
+
     /* winetest.cat will be created */
     hcatinfo = pCryptCATAdminAddCatalog(hcatadmin, tmpfileW, basenameW, 0);
     ok(hcatinfo != NULL, "CryptCATAdminAddCatalog failed %u\n", GetLastError());
@@ -530,6 +535,10 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
     lstrcatA(catfilepath, "\\{DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF}\\winetest.cat");
     attrs = GetFileAttributes(catfilepath);
     ok(attrs != INVALID_FILE_ATTRIBUTES, "Expected %s to exist\n", catfilepath);
+    todo_wine
+    ok(attrs == FILE_ATTRIBUTE_SYSTEM ||
+       attrs == (FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | FILE_ATTRIBUTE_SYSTEM), /* Vista */
+       "File has wrong attributes : %08x\n", attrs);
 
     info.cbStruct = sizeof(info);
     info.wszCatalogFile[0] = 0;
@@ -563,6 +572,9 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
     ret = pCryptCATAdminReleaseContext(hcatadmin, 0);
     ok(ret, "CryptCATAdminReleaseContext failed %u\n", GetLastError());
 
+    /* Set the attributes so we can delete the file */
+    attrs = FILE_ATTRIBUTE_NORMAL;
+    ret = SetFileAttributesA(tmpfile, attrs);
     DeleteFileA(tmpfile);
 }
 
