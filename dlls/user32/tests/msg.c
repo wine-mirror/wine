@@ -654,6 +654,8 @@ static const struct message WmCreateMaxPopupSeq[] = {
     { WM_SYNCPAINT, sent|wparam|optional, 4 },
     { WM_NCPAINT, sent|wparam|optional, 1 },
     { WM_ERASEBKGND, sent|optional },
+    { WM_NCPAINT, sent|wparam|defwinproc|optional, 1 },
+    { WM_ERASEBKGND, sent|defwinproc|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOCLIENTMOVE|SWP_NOCLIENTSIZE|SWP_SHOWWINDOW|SWP_NOMOVE|SWP_NOSIZE },
     { 0 }
 };
@@ -728,6 +730,8 @@ static const struct message WmShowMaxPopupSeq[] = {
     { WM_SYNCPAINT, sent|wparam|optional, 4 },
     { WM_NCPAINT, sent|wparam|optional, 1 },
     { WM_ERASEBKGND, sent|optional },
+    { WM_NCPAINT, sent|wparam|defwinproc|optional, 1 },
+    { WM_ERASEBKGND, sent|defwinproc|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOSIZE },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { 0 }
@@ -914,7 +918,7 @@ static const struct message WmHideChildSeq2[] = {
     { WM_SHOWWINDOW, sent|wparam, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_HIDEWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
     { EVENT_OBJECT_HIDE, winevent_hook|wparam|lparam, 0, 0 },
-    { WM_ERASEBKGND, sent|parent },
+    { WM_ERASEBKGND, sent|parent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_HIDEWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { 0 }
 };
@@ -1868,8 +1872,17 @@ static void dump_sequence(const struct message *expected, const char *context, c
 
 	if (expected->message == actual->message)
 	{
-	    expected++;
-	    actual++;
+	    if ((expected->flags & defwinproc) != (actual->flags & defwinproc) &&
+                (expected->flags & optional))
+            {
+                /* don't match messages if their defwinproc status differs */
+                expected++;
+            }
+            else
+            {
+                expected++;
+                actual++;
+            }
 	}
 	/* silently drop winevent messages if there is no support for them */
 	else if ((expected->flags & optional) || ((expected->flags & winevent_hook) && !hEvent_hook))
@@ -5658,7 +5671,7 @@ static const struct message WmParentErasePaint[] = {
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|beginpaint },
     { WM_GETTEXT, sent|beginpaint|defwinproc|optional },
-    { WM_ERASEBKGND, sent|beginpaint },
+    { WM_ERASEBKGND, sent|beginpaint|optional },
     { 0 }
 };
 
@@ -5743,13 +5756,15 @@ static void test_paint_messages(void)
      */
     trace("testing ValidateRect(0, NULL)\n");
     SetRectEmpty( &rect );
-    ok(ValidateRect(0, &rect), "ValidateRect(0, &rc) should not fail\n");
-    check_update_rgn( hwnd, hrgn );
-    ok_sequence( WmInvalidateErase, "InvalidateErase", FALSE );
-    flush_events();
-    ok_sequence( WmPaint, "Paint", FALSE );
-    RedrawWindow( hwnd, NULL, NULL, RDW_VALIDATE );
-    check_update_rgn( hwnd, 0 );
+    if (ValidateRect(0, &rect))  /* not supported on Win9x */
+    {
+        check_update_rgn( hwnd, hrgn );
+        ok_sequence( WmInvalidateErase, "InvalidateErase", FALSE );
+        flush_events();
+        ok_sequence( WmPaint, "Paint", FALSE );
+        RedrawWindow( hwnd, NULL, NULL, RDW_VALIDATE );
+        check_update_rgn( hwnd, 0 );
+    }
 
     trace("testing InvalidateRgn(0, NULL, FALSE)\n");
     SetLastError(0xdeadbeef);
@@ -8881,6 +8896,11 @@ static void test_PeekMessage(void)
         trace("QS_RAWINPUT not supported on this platform\n");
         qs_all_input &= ~QS_RAWINPUT;
         qs_input &= ~QS_RAWINPUT;
+    }
+    if (qstatus & QS_POSTMESSAGE)
+    {
+        while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) /* nothing */ ;
+        qstatus = GetQueueStatus(qs_all_input);
     }
     ok(qstatus == 0, "wrong qstatus %08x\n", qstatus);
 
