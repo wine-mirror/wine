@@ -311,7 +311,7 @@ static void TestCallback(void)
     ok(ret == 1, "Expected SetItem return 1, got %ld\n", ret);
     tvi.pszText = buf;
     TreeView_GetItem(hTree, &tvi);
-    todo_wine ok(strcmp(tvi.pszText, TEST_CALLBACK_TEXT) == 0, "Item text mismatch %s vs %s\n",
+    ok(strcmp(tvi.pszText, TEST_CALLBACK_TEXT) == 0, "Item text mismatch %s vs %s\n",
         tvi.pszText, TEST_CALLBACK_TEXT);
 
     U(ins).item.pszText = NULL;
@@ -320,7 +320,7 @@ static void TestCallback(void)
     tvi.hItem = hItem2;
     memset(buf, 0, sizeof(buf));
     TreeView_GetItem(hTree, &tvi);
-    todo_wine ok(strcmp(tvi.pszText, TEST_CALLBACK_TEXT) == 0, "Item text mismatch %s vs %s\n",
+    ok(strcmp(tvi.pszText, TEST_CALLBACK_TEXT) == 0, "Item text mismatch %s vs %s\n",
         tvi.pszText, TEST_CALLBACK_TEXT);
 }
 
