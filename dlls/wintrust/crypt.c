@@ -188,6 +188,8 @@ HCATINFO WINAPI CryptCATAdminAddCatalog(HCATADMIN catAdmin, PWSTR catalogFile,
         HeapFree(GetProcessHeap(), 0, target);
         return NULL;
     }
+    SetFileAttributesW(target, FILE_ATTRIBUTE_SYSTEM);
+
     if (!(ci = HeapAlloc(GetProcessHeap(), 0, sizeof(*ci))))
     {
         HeapFree(GetProcessHeap(), 0, target);
