@@ -436,13 +436,8 @@ BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName, B
 
     if (showMessageBox)
     {
-        LPSTR visibleValueNameA = GetMultiByteString(visibleValueName);
-        if (messagebox(hwnd, MB_YESNO | MB_ICONEXCLAMATION, IDS_DELETE_BOX_TITLE, IDS_DELETE_BOX_TEXT, visibleValueNameA) != IDYES)
-        {
-                HeapFree(GetProcessHeap(), 0, visibleValueNameA);
-	        goto done;
-        }
-        HeapFree(GetProcessHeap(), 0, visibleValueNameA);
+        if (messagebox(hwnd, MB_YESNO | MB_ICONEXCLAMATION, IDS_DELETE_BOX_TITLE, IDS_DELETE_BOX_TEXT, visibleValueName) != IDYES)
+            goto done;
     }
 
     lRet = RegDeleteValueW(hKey, valueName ? valueName : &empty);
