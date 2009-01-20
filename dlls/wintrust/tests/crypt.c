@@ -375,17 +375,22 @@ static void test_calchash(void)
     DeleteFileA(temp);
 }
 
+static DWORD error_area;
+static DWORD local_error;
+
 static void WINAPI cdf_callback(DWORD area, DWORD error, WCHAR* line)
 {
+    ok(error_area != -2, "Didn't expect cdf_callback() to be called (%08x, %08x)\n",
+       area, error);
+
+    error_area = area;
+    local_error = error;
 }
 
 static void test_CryptCATCDF_params(void)
 {
     static WCHAR nonexistent[] = {'d','e','a','d','b','e','e','f','.','c','d','f',0};
-    static CHAR  cdffileA[]    = "tempfile.cdf";
-    static WCHAR cdffileW[]    = {'t','e','m','p','f','i','l','e','.','c','d','f',0};
     CRYPTCATCDF *catcdf;
-    HANDLE file;
     BOOL ret;
 
     if (!pCryptCATCDFOpen)
@@ -412,19 +417,6 @@ static void test_CryptCATCDF_params(void)
     ok(catcdf == NULL, "CryptCATCDFOpen succeeded\n");
     todo_wine
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
-
-    /* Empty file */
-    DeleteFileA(cdffileA);
-    file = CreateFileA(cdffileA, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileA failed %u\n", GetLastError());
-    CloseHandle(file);
-
-    SetLastError(0xdeadbeef);
-    catcdf = pCryptCATCDFOpen(cdffileW, cdf_callback);
-    ok(catcdf == NULL, "CryptCATCDFOpen succeeded\n");
-    todo_wine
-    ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
-    DeleteFileA(cdffileA);
 
     SetLastError(0xdeadbeef);
     ret = pCryptCATCDFClose(NULL);
@@ -779,6 +771,292 @@ static void test_create_catalog_file(void)
     DeleteFileA(cdffileA);
 }
 
+static void create_cdf_file(const CHAR *filename, const CHAR *contents)
+{
+    HANDLE file;
+    DWORD written;
+
+    file = CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileA failed %u\n", GetLastError());
+    WriteFile(file, contents, lstrlenA(contents), &written, NULL);
+    CloseHandle(file);
+}
+
+#define CHECK_EXPECT(a, b) \
+    do { \
+        ok(a == error_area, "Expected %08x, got %08x\n", a, error_area); \
+        ok(b == local_error, "Expected %08x, got %08x\n", b, local_error); \
+    } while (0)
+
+/* Clear the variables (can't use 0) */
+#define CLEAR_EXPECT \
+    error_area = local_error = -1
+
+/* Set both variables so the callback routine can check if a call to it was unexpected */
+#define SET_UNEXPECTED \
+    error_area = local_error = -2
+
+static void test_cdf_parsing(void)
+{
+    static CHAR  catfileA[] = "tempfile.cat";
+    static CHAR  cdffileA[] = "tempfile.cdf";
+    static WCHAR cdffileW[] = {'t','e','m','p','f','i','l','e','.','c','d','f',0};
+    CHAR cdf_contents[4096];
+    CRYPTCATCDF *catcdf;
+    CRYPTCATATTRIBUTE *catattr;
+    CRYPTCATMEMBER *catmember;
+    WCHAR  *catmembertag;
+
+    if (!pCryptCATCDFOpen)
+    {
+        win_skip("CryptCATCDFOpen is not available\n");
+        return;
+    }
+
+    /* Empty file */
+    DeleteFileA(cdffileA);
+    create_cdf_file(cdffileA, "");
+
+    CLEAR_EXPECT;
+    SetLastError(0xdeadbeef);
+    catcdf = pCryptCATCDFOpen(cdffileW, cdf_callback);
+    todo_wine
+    CHECK_EXPECT(CRYPTCAT_E_AREA_HEADER, CRYPTCAT_E_CDF_TAGNOTFOUND);
+    ok(catcdf == NULL, "CryptCATCDFOpen succeeded\n");
+    todo_wine
+    ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
+    DeleteFileA(cdffileA);
+    ok(!DeleteFileA(catfileA), "Didn't expect a catalog file to be created\n");
+
+    /* Just the header */
+    lstrcpyA(cdf_contents, "[CatalogHeader]\r\n");
+    create_cdf_file(cdffileA, cdf_contents);
+
+    SET_UNEXPECTED;
+    SetLastError(0xdeadbeef);
+    catcdf = pCryptCATCDFOpen(cdffileW, cdf_callback);
+    ok(catcdf == NULL, "CryptCATCDFOpen succeeded\n");
+    todo_wine
+    ok(GetLastError() == ERROR_SHARING_VIOLATION, "Expected ERROR_SHARING_VIOLATION, got %d\n", GetLastError());
+    DeleteFileA(cdffileA);
+
+    /* Header and member only */
+    lstrcpyA(cdf_contents, "[CatalogHeader]\r\n");
+    lstrcatA(cdf_contents, "[CatalogFiles]\r\n");
+    lstrcatA(cdf_contents, "hashme=.\\tempfile.cdf\r\n");
+    create_cdf_file(cdffileA, cdf_contents);
+
+    SET_UNEXPECTED;
+    SetLastError(0xdeadbeef);
+    catcdf = pCryptCATCDFOpen(cdffileW, cdf_callback);
+    ok(catcdf == NULL, "CryptCATCDFOpen succeeded\n");
+    todo_wine
+    ok(GetLastError() == ERROR_SHARING_VIOLATION, "Expected ERROR_SHARING_VIOLATION, got %d\n", GetLastError());
+    DeleteFileA(cdffileA);
+    ok(!DeleteFileA(catfileA), "Didn't expect a catalog file to be created\n");
+
+    /* Header and Name (no value) */
+    lstrcpyA(cdf_contents, "[CatalogHeader]\r\n");
+    lstrcatA(cdf_contents, "Name=\r\n");
+    create_cdf_file(cdffileA, cdf_contents);
+
+    SET_UNEXPECTED;
+    SetLastError(0xdeadbeef);
+    catcdf = pCryptCATCDFOpen(cdffileW, cdf_callback);
+    ok(catcdf == NULL, "CryptCATCDFOpen succeeded\n");
+    todo_wine
+    ok(GetLastError() == ERROR_SHARING_VIOLATION, "Expected ERROR_SHARING_VIOLATION, got %d\n", GetLastError());
+    DeleteFileA(cdffileA);
+    ok(!DeleteFileA(catfileA), "Didn't expect a catalog file to be created\n");
+
+    /* Header and Name */
+    lstrcpyA(cdf_contents, "[CatalogHeader]\r\n");
+    lstrcatA(cdf_contents, "Name=tempfile.cat\r\n");
+    create_cdf_file(cdffileA, cdf_contents);
+
+    SET_UNEXPECTED;
+    SetLastError(0xdeadbeef);
+    catcdf = pCryptCATCDFOpen(cdffileW, cdf_callback);
+    todo_wine
+    {
+    ok(catcdf != NULL, "CryptCATCDFOpen failed\n");
+    ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
+    }
+    pCryptCATCDFClose(catcdf);
+    DeleteFileA(cdffileA);
+    todo_wine
+    ok(DeleteFileA(catfileA), "Expected a catalog file to be created\n");
+
+    /* Header and non-existing member */
+    lstrcpyA(cdf_contents, "[CatalogHeader]\r\n");
+    lstrcatA(cdf_contents, "Name=tempfile.cat\r\n");
+    lstrcatA(cdf_contents, "[CatalogFiles]\r\n");
+    lstrcatA(cdf_contents, "hashme=.\\deadbeef.cdf\r\n");
+    create_cdf_file(cdffileA, cdf_contents);
+
+    SET_UNEXPECTED;
+    SetLastError(0xdeadbeef);
+    catcdf = pCryptCATCDFOpen(cdffileW, cdf_callback);
+    todo_wine
+    {
+    ok(catcdf != NULL, "CryptCATCDFOpen failed\n");
+    ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
+    }
+    /* Loop through the members */
+    CLEAR_EXPECT;
+    catmember = NULL;
+    catmembertag = NULL;
+    while ((catmembertag = pCryptCATCDFEnumMembersByCDFTagEx(catcdf, catmembertag, cdf_callback, &catmember, FALSE, NULL))) ;
+    todo_wine
+    CHECK_EXPECT(CRYPTCAT_E_AREA_MEMBER, CRYPTCAT_E_CDF_MEMBER_FILENOTFOUND);
+    pCryptCATCDFClose(catcdf);
+    DeleteFileA(cdffileA);
+    todo_wine
+    ok(DeleteFileA(catfileA), "Expected a catalog file to be created\n");
+
+    /* Header, correct member but no explicit newline */
+    lstrcpyA(cdf_contents, "[CatalogHeader]\r\n");
+    lstrcatA(cdf_contents, "Name=tempfile.cat\r\n");
+    lstrcatA(cdf_contents, "[CatalogFiles]\r\n");
+    lstrcatA(cdf_contents, "hashme=.\\tempfile.cdf\r");
+    create_cdf_file(cdffileA, cdf_contents);
+
+    SET_UNEXPECTED;
+    SetLastError(0xdeadbeef);
+    catcdf = pCryptCATCDFOpen(cdffileW, cdf_callback);
+    todo_wine
+    {
+    ok(catcdf != NULL, "CryptCATCDFOpen failed\n");
+    ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
+    }
+    /* Loop through the members */
+    CLEAR_EXPECT;
+    catmember = NULL;
+    catmembertag = NULL;
+    while ((catmembertag = pCryptCATCDFEnumMembersByCDFTagEx(catcdf, catmembertag, cdf_callback, &catmember, FALSE, NULL))) ;
+    todo_wine
+    CHECK_EXPECT(CRYPTCAT_E_AREA_MEMBER, CRYPTCAT_E_CDF_MEMBER_FILE_PATH);
+    pCryptCATCDFClose(catcdf);
+    DeleteFileA(cdffileA);
+    todo_wine
+    ok(DeleteFileA(catfileA), "Expected a catalog file to be created\n");
+
+    /* Header and 2 duplicate members */
+    lstrcpyA(cdf_contents, "[CatalogHeader]\r\n");
+    lstrcatA(cdf_contents, "Name=tempfile.cat\r\n");
+    lstrcatA(cdf_contents, "[CatalogFiles]\r\n");
+    lstrcatA(cdf_contents, "hashme=.\\tempfile.cdf\r\n");
+    lstrcatA(cdf_contents, "hashme=.\\tempfile.cdf\r\n");
+    create_cdf_file(cdffileA, cdf_contents);
+
+    SET_UNEXPECTED;
+    SetLastError(0xdeadbeef);
+    catcdf = pCryptCATCDFOpen(cdffileW, cdf_callback);
+    todo_wine
+    {
+    ok(catcdf != NULL, "CryptCATCDFOpen failed\n");
+    ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
+    }
+    /* Loop through the members */
+    SET_UNEXPECTED;
+    catmember = NULL;
+    catmembertag = NULL;
+    while ((catmembertag = pCryptCATCDFEnumMembersByCDFTagEx(catcdf, catmembertag, cdf_callback, &catmember, FALSE, NULL))) ;
+    pCryptCATCDFClose(catcdf);
+    test_catalog_properties(catfileA, 0, 1);
+    DeleteFileA(cdffileA);
+    todo_wine
+    ok(DeleteFileA(catfileA), "Expected a catalog file to be created\n");
+
+    /* Wrong attribute */
+    lstrcpyA(cdf_contents, "[CatalogHeader]\r\n");
+    lstrcatA(cdf_contents, "Name=tempfile.cat\r\n");
+    lstrcatA(cdf_contents, "CATATTR1=0x10010001:attr1\r\n");
+    create_cdf_file(cdffileA, cdf_contents);
+
+    SET_UNEXPECTED;
+    SetLastError(0xdeadbeef);
+    catcdf = pCryptCATCDFOpen(cdffileW, cdf_callback);
+    todo_wine
+    {
+    ok(catcdf != NULL, "CryptCATCDFOpen failed\n");
+    ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
+    }
+    /* Loop through the attributes */
+    CLEAR_EXPECT;
+    catattr = NULL;
+    while ((catattr = pCryptCATCDFEnumCatAttributes(catcdf, catattr, cdf_callback))) ;
+    todo_wine
+    CHECK_EXPECT(CRYPTCAT_E_AREA_ATTRIBUTE, CRYPTCAT_E_CDF_ATTR_TOOFEWVALUES);
+    pCryptCATCDFClose(catcdf);
+    DeleteFileA(cdffileA);
+    todo_wine
+    ok(DeleteFileA(catfileA), "Expected a catalog file to be created\n");
+
+    /* Two identical attributes */
+    lstrcpyA(cdf_contents, "[CatalogHeader]\r\n");
+    lstrcatA(cdf_contents, "Name=tempfile.cat\r\n");
+    lstrcatA(cdf_contents, "CATATTR1=0x10010001:attr1:value1\r\n");
+    lstrcatA(cdf_contents, "CATATTR1=0x10010001:attr1:value1\r\n");
+    lstrcatA(cdf_contents, "[CatalogFiles]\r\n");
+    lstrcatA(cdf_contents, "hashme=.\\tempfile.cdf\r\n");
+    create_cdf_file(cdffileA, cdf_contents);
+
+    SET_UNEXPECTED;
+    SetLastError(0xdeadbeef);
+    catcdf = pCryptCATCDFOpen(cdffileW, cdf_callback);
+    todo_wine
+    {
+    ok(catcdf != NULL, "CryptCATCDFOpen failed\n");
+    ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
+    }
+    /* Loop through the members */
+    SET_UNEXPECTED;
+    catmember = NULL;
+    catmembertag = NULL;
+    while ((catmembertag = pCryptCATCDFEnumMembersByCDFTagEx(catcdf, catmembertag, cdf_callback, &catmember, FALSE, NULL))) ;
+    /* Loop through the attributes */
+    SET_UNEXPECTED;
+    catattr = NULL;
+    while ((catattr = pCryptCATCDFEnumCatAttributes(catcdf, catattr, cdf_callback))) ;
+    pCryptCATCDFClose(catcdf);
+    test_catalog_properties(catfileA, 1, 1);
+    DeleteFileA(cdffileA);
+    todo_wine
+    ok(DeleteFileA(catfileA), "Expected a catalog file to be created\n");
+
+    /* Two different attribute values with the same tag */
+    lstrcpyA(cdf_contents, "[CatalogHeader]\r\n");
+    lstrcatA(cdf_contents, "Name=tempfile.cat\r\n");
+    lstrcatA(cdf_contents, "CATATTR1=0x10010001:attr1:value1\r\n");
+    lstrcatA(cdf_contents, "CATATTR1=0x10010001:attr2:value2\r\n");
+    lstrcatA(cdf_contents, "[CatalogFiles]\r\n");
+    lstrcatA(cdf_contents, "hashme=.\\tempfile.cdf\r\n");
+    create_cdf_file(cdffileA, cdf_contents);
+
+    SET_UNEXPECTED;
+    SetLastError(0xdeadbeef);
+    catcdf = pCryptCATCDFOpen(cdffileW, cdf_callback);
+    todo_wine
+    {
+    ok(catcdf != NULL, "CryptCATCDFOpen failed\n");
+    ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
+    }
+    /* Loop through the members */
+    SET_UNEXPECTED;
+    catmember = NULL;
+    catmembertag = NULL;
+    while ((catmembertag = pCryptCATCDFEnumMembersByCDFTagEx(catcdf, catmembertag, cdf_callback, &catmember, FALSE, NULL))) ;
+    /* Loop through the attributes */
+    SET_UNEXPECTED;
+    catattr = NULL;
+    while ((catattr = pCryptCATCDFEnumCatAttributes(catcdf, catattr, cdf_callback))) ;
+    pCryptCATCDFClose(catcdf);
+    test_catalog_properties(catfileA, 1, 1);
+    DeleteFileA(cdffileA);
+    todo_wine
+    ok(DeleteFileA(catfileA), "Expected a catalog file to be created\n");
+}
 
 START_TEST(crypt)
 {
@@ -809,6 +1087,8 @@ START_TEST(crypt)
     test_calchash();
     /* Parameter checking only */
     test_CryptCATCDF_params();
+    /* Test the parsing of a cdf file */
+    test_cdf_parsing();
     /* Create a catalogfile out of our own catalog definition file */
     test_create_catalog_file();
     test_CryptCATAdminAddRemoveCatalog();
