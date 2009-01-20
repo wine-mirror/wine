@@ -1964,7 +1964,7 @@ static HRESULT WINAPI
 Thunk_IDirect3DDeviceImpl_2_GetCurrentViewport(IDirect3DDevice2 *iface,
                                                IDirect3DViewport2 **Direct3DViewport2)
 {
-    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice2, iface);
     HRESULT hr;
     TRACE_(ddraw_thunk)("(%p)->(%p) thunking to IDirect3DDevice3 interface.\n", This, Direct3DViewport2);
     hr = IDirect3DDevice3_GetCurrentViewport(ICOM_INTERFACE(This, IDirect3DDevice3),
