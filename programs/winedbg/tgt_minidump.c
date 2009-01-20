@@ -133,7 +133,7 @@ static BOOL WINAPI tgt_process_minidump_write(HANDLE hProcess, void* addr,
     return FALSE;
 }
 
-BOOL CALLBACK validate_file(PCWSTR name, void* user)
+static BOOL CALLBACK validate_file(PCWSTR name, void* user)
 {
     return FALSE; /* get the first file we find !! */
 }

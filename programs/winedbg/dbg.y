@@ -37,6 +37,7 @@
 
 int dbg_lex(void);
 static int dbg_error(const char*);
+static void parser(const char*);
 
 %}
 
@@ -548,7 +549,7 @@ void	parser_handle(HANDLE input)
     dbg_parser_output = out_copy;
 }
 
-void parser(const char* filename)
+static void parser(const char* filename)
 {
     HANDLE h = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0L, 0);
     if (h != INVALID_HANDLE_VALUE)
@@ -558,7 +559,7 @@ void parser(const char* filename)
     }
 }
 
-int dbg_error(const char* s)
+static int dbg_error(const char* s)
 {
     dbg_printf("%s\n", s);
     return 0;

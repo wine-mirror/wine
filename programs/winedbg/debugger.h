@@ -301,7 +301,6 @@ extern void             break_restart_execution(int count);
 extern int              break_add_condition(int bpnum, struct expr* exp);
 
   /* dbg.y */
-extern void             parser(const char*);
 extern void             parser_handle(HANDLE);
 extern int              input_read_line(const char* pfx, char* buffer, int size);
 extern int              input_fetch_entire_line(const char* pfx, char** line);
@@ -436,7 +435,6 @@ extern struct dbg_type  types_find_pointer(const struct dbg_type* type);
 extern struct dbg_type  types_find_type(unsigned long linear, const char* name, enum SymTagEnum tag);
 
   /* winedbg.c */
-extern void	        dbg_outputA(const char* buffer, int len);
 extern void	        dbg_outputW(const WCHAR* buffer, int len);
 extern const char*      dbg_W2A(const WCHAR* buffer, unsigned len);
 #ifdef __GNUC__

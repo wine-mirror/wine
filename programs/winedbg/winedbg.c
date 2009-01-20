@@ -99,7 +99,7 @@ struct dbg_internal_var         dbg_internal_vars[DBG_IV_LAST];
 const struct dbg_internal_var*  dbg_context_vars;
 static HANDLE                   dbg_houtput;
 
-void	dbg_outputA(const char* buffer, int len)
+static void dbg_outputA(const char* buffer, int len)
 {
     static char line_buff[4096];
     static unsigned int line_pos;
