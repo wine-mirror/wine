@@ -603,7 +603,7 @@ IDirect3DExecuteBufferImpl_QueryInterface(IDirect3DExecuteBuffer *iface,
 	TRACE("  Creating IUnknown interface at %p.\n", *obj);
 	return S_OK;
     }
-    if ( IsEqualGUID( &IID_IDirect3DMaterial, riid ) ) {
+    if ( IsEqualGUID( &IID_IDirect3DExecuteBuffer, riid ) ) {
         IDirect3DExecuteBuffer_AddRef(ICOM_INTERFACE(This, IDirect3DExecuteBuffer));
         *obj = ICOM_INTERFACE(This, IDirect3DExecuteBuffer);
 	TRACE("  Creating IDirect3DExecuteBuffer interface %p\n", *obj);
