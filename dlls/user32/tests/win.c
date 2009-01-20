@@ -5258,7 +5258,7 @@ static LRESULT WINAPI test_thick_child_size_winproc(HWND hwnd, UINT msg, WPARAM 
             actualMaxSizeX = minmax->ptMaxSize.x;
             actualMaxSizeY = minmax->ptMaxSize.y;
             ok(actualMaxSizeX == expectedMaxSizeX &&  actualMaxSizeY == expectedMaxSizeY,
-                "expected maxTrack %dx%d, actual maxTrack %dx%d\n",
+                "expected maxSize %dx%d, actual maxSize %dx%d\n",
                 expectedMaxSizeX, expectedMaxSizeY, actualMaxSizeX, actualMaxSizeY);
 
             expectedPosX = - getExpectedThickChildInc();
