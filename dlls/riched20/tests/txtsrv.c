@@ -641,7 +641,7 @@ static void test_TxGetText(void)
         return;
 
     hres = ITextServices_TxGetText(txtserv, &rettext);
-    todo_wine ok(hres == S_OK, "ITextServices_TxGetText failed\n");
+    ok(hres == S_OK, "ITextServices_TxGetText failed\n");
 
     IUnknown_Release(txtserv);
     CoTaskMemFree(dummyTextHost);
@@ -657,14 +657,14 @@ static void test_TxSetText(void)
         return;
 
     hres = ITextServices_TxSetText(txtserv, settext);
-    todo_wine ok(hres == S_OK, "ITextServices_TxSetText failed\n");
+    ok(hres == S_OK, "ITextServices_TxSetText failed\n");
 
     hres = ITextServices_TxGetText(txtserv, &rettext);
-    todo_wine ok(hres == S_OK, "ITextServices_TxGetText failed\n");
+    ok(hres == S_OK, "ITextServices_TxGetText failed\n");
 
-    todo_wine ok(SysStringLen(rettext) == 4,
+    ok(SysStringLen(rettext) == 4,
                  "String returned of wrong length\n");
-    todo_wine ok(memcmp(rettext,settext,SysStringByteLen(rettext)) == 0,
+    ok(memcmp(rettext,settext,SysStringByteLen(rettext)) == 0,
                  "String returned differs\n");
 
     IUnknown_Release(txtserv);
@@ -717,7 +717,7 @@ void test_TxGetNaturalSize() {
     xdim = 0; ydim = 0;
 
     result = ITextServices_TxSetText(txtserv, oneA);
-    todo_wine ok(result == S_OK, "ITextServices_TxSetText failed\n");
+    ok(result == S_OK, "ITextServices_TxSetText failed\n");
 
     result = ITextServices_TxGetNaturalSize(txtserv, DVASPECT_CONTENT,
                                             hdcDraw, NULL, NULL,

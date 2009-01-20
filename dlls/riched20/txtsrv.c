@@ -27,6 +27,7 @@
 
 #include "editor.h"
 #include "ole2.h"
+#include "oleauto.h"
 #include "richole.h"
 #include "imm.h"
 #include "textserv.h"
@@ -276,9 +277,23 @@ HRESULT WINAPI fnTextSrv_TxGetText(ITextServices *iface,
                                    BSTR* pbstrText)
 {
    ICOM_THIS_MULTI(ITextServicesImpl, lpVtbl, iface);
+   int length;
 
-   FIXME("%p: STUB\n", This);
-   return E_NOTIMPL;
+   length = ME_GetTextLength(This->editor);
+   if (length)
+   {
+      BSTR bstr;
+      bstr = SysAllocStringByteLen(NULL, length * sizeof(WCHAR));
+      if (bstr == NULL)
+         return E_OUTOFMEMORY;
+
+      ME_GetTextW(This->editor, bstr , 0, length, FALSE);
+      *pbstrText = bstr;
+   } else {
+      *pbstrText = NULL;
+   }
+
+   return S_OK;
 }
 
 HRESULT WINAPI fnTextSrv_TxSetText(ITextServices *iface,
@@ -286,8 +301,17 @@ HRESULT WINAPI fnTextSrv_TxSetText(ITextServices *iface,
 {
    ICOM_THIS_MULTI(ITextServicesImpl, lpVtbl, iface);
 
-   FIXME("%p: STUB\n", This);
-   return E_NOTIMPL;
+   ME_InternalDeleteText(This->editor, 0, ME_GetTextLength(This->editor),
+                         FALSE);
+   ME_InsertTextFromCursor(This->editor, 0, pszText, -1,
+                           This->editor->pBuffer->pDefaultStyle);
+   ME_SetSelection(This->editor, 0, 0);
+   This->editor->nModifyStep = 0;
+   OleFlushClipboard();
+   ME_EmptyUndoStack(This->editor);
+   ME_UpdateRepaint(This->editor);
+
+   return S_OK;
 }
 
 HRESULT WINAPI fnTextSrv_TxGetCurrentTargetX(ITextServices *iface,
