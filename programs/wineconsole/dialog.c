@@ -73,7 +73,7 @@ static INT_PTR WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, L
 	else if (di->config.cursor_size <= 50)	idc = IDC_OPT_CURSOR_MEDIUM;
 	else				        idc = IDC_OPT_CURSOR_LARGE;
 	SendDlgItemMessage(hDlg, idc, BM_SETCHECK, BST_CHECKED, 0L);
-	SetDlgItemInt(hDlg, IDC_OPT_HIST_SIZE, WINECON_GetHistorySize(di->data->hConIn),  FALSE);
+	SetDlgItemInt(hDlg, IDC_OPT_HIST_SIZE, di->config.history_size,  FALSE);
         SendDlgItemMessage(hDlg, IDC_OPT_HIST_NODOUBLE, BM_SETCHECK,
                            (di->config.history_nodup) ? BST_CHECKED : BST_UNCHECKED, 0L);
         SendDlgItemMessage(hDlg, IDC_OPT_CONF_CTRL, BM_SETCHECK,
