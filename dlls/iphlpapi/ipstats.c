@@ -73,11 +73,11 @@
 #ifdef HAVE_NETINET_IN_PCB_H
 #include <netinet/in_pcb.h>
 #endif
-#ifdef HAVE_NETINET_TCP_VAR_H
-#include <netinet/tcp_var.h>
-#endif
 #ifdef HAVE_NETINET_TCP_TIMER_H
 #include <netinet/tcp_timer.h>
+#endif
+#ifdef HAVE_NETINET_TCP_VAR_H
+#include <netinet/tcp_var.h>
 #endif
 #ifdef HAVE_NETINET_IN_SYSTM_H
 #include <netinet/in_systm.h>
