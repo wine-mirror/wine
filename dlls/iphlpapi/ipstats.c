@@ -97,7 +97,9 @@
 #ifdef HAVE_NETINET_UDP_VAR_H
 #include <netinet/udp_var.h>
 #endif
-
+#ifdef HAVE_SYS_PROTOSW_H
+#include <sys/protosw.h>
+#endif
 #ifdef HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
 #endif

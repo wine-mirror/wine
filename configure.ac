@@ -339,6 +339,7 @@ AC_CHECK_HEADERS(\
 	sys/param.h \
 	sys/poll.h \
 	sys/prctl.h \
+	sys/protosw.h \
 	sys/ptrace.h \
 	sys/reg.h \
 	sys/resource.h \
