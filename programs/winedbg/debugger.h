@@ -308,7 +308,6 @@ extern HANDLE           parser_generate_command_file(const char*, ...);
 
   /* debug.l */
 extern void             lexeme_flush(void);
-extern char*            lexeme_alloc(const char*);
 extern char*            lexeme_alloc_size(int);
 
   /* display.c */

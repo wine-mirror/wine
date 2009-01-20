@@ -36,6 +36,34 @@
 
 #undef YY_INPUT
 
+static char** local_lexemes /* = NULL */;
+static int next_lexeme /* = 0 */;
+static int alloc_lexeme /* = 0 */;
+
+char* lexeme_alloc_size(int size)
+{
+    assert(0 <= next_lexeme && next_lexeme < alloc_lexeme + 1);
+    if (next_lexeme >= alloc_lexeme)
+    {
+        alloc_lexeme += 32;
+        local_lexemes = dbg_heap_realloc(local_lexemes, alloc_lexeme * sizeof(local_lexemes[0]));
+        assert(local_lexemes);
+    }
+    return local_lexemes[next_lexeme++] = HeapAlloc(GetProcessHeap(), 0, size + 1);
+}
+
+static char* lexeme_alloc(const char* lexeme)
+{
+    char*       ptr = lexeme_alloc_size(strlen(lexeme) + 1);
+    return strcpy(ptr, lexeme);
+}
+
+void lexeme_flush(void)
+{
+    while (--next_lexeme >= 0) HeapFree(GetProcessHeap(), 0, local_lexemes[next_lexeme]);
+    next_lexeme = 0;
+}
+
 static int read_input(const char* pfx, char* buf, int size)
 {
     int len;
@@ -234,31 +262,3 @@ all                                     { return tALL; }
 #ifndef dbg_wrap
 int dbg_wrap(void) { return 1; }
 #endif
-
-static char** local_lexemes /* = NULL */;
-static int next_lexeme /* = 0 */;
-static int alloc_lexeme /* = 0 */;
-
-char* lexeme_alloc_size(int size)
-{
-    assert(0 <= next_lexeme && next_lexeme < alloc_lexeme + 1);
-    if (next_lexeme >= alloc_lexeme)
-    {
-        alloc_lexeme += 32;
-        local_lexemes = dbg_heap_realloc(local_lexemes, alloc_lexeme * sizeof(local_lexemes[0]));
-        assert(local_lexemes);
-    }
-    return local_lexemes[next_lexeme++] = HeapAlloc(GetProcessHeap(), 0, size + 1);
-}
-
-char* lexeme_alloc(const char* lexeme)
-{
-    char*       ptr = lexeme_alloc_size(strlen(lexeme) + 1);
-    return strcpy(ptr, lexeme);
-}
-
-void lexeme_flush(void)
-{
-    while (--next_lexeme >= 0) HeapFree(GetProcessHeap(), 0, local_lexemes[next_lexeme]);
-    next_lexeme = 0;
-}
