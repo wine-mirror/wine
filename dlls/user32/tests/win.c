@@ -5199,17 +5199,39 @@ static void test_fullscreen(void)
 
 static BOOL test_thick_child_got_minmax;
 
-static int getExpectedThickChildInc(void)
+static int getExpectedBorderSize(LONG style, LONG exStyle)
 {
-    const int outer = 2;
-    int resizeBorder = GetSystemMetrics(SM_CXFRAME) - GetSystemMetrics(SM_CXDLGFRAME);
-    return (outer + resizeBorder);
+    int border;
+    if ((exStyle & (WS_EX_STATICEDGE|WS_EX_DLGMODALFRAME)) ==
+        WS_EX_STATICEDGE)
+    {
+        border = 1; /* for the outer frame always present */
+    }
+    else
+    {
+        border = 0;
+        if ((exStyle & WS_EX_DLGMODALFRAME) ||
+            (style & (WS_THICKFRAME|WS_DLGFRAME))) border = 2; /* outer */
+    }
+    if (style & WS_THICKFRAME)
+        border +=  ( GetSystemMetrics (SM_CXFRAME)
+                   - GetSystemMetrics (SM_CXDLGFRAME)); /* The resize border */
+    if ((style & (WS_BORDER|WS_DLGFRAME)) ||
+        (exStyle & WS_EX_DLGMODALFRAME))
+        border++; /* The other border */
+
+    return border;
 }
+
+static const char * test_thick_child_name;
+static LONG test_thick_child_style;
+static LONG test_thick_child_exStyle;
 
 static LRESULT WINAPI test_thick_child_size_winproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     MINMAXINFO* minmax;
-    int expectedMinTrack;
+    int expectedMinTrackX;
+    int expectedMinTrackY;
     int actualMinTrackX;
     int actualMinTrackY;
     int expectedMaxTrackX;
@@ -5224,6 +5246,7 @@ static LRESULT WINAPI test_thick_child_size_winproc(HWND hwnd, UINT msg, WPARAM 
     int expectedPosY;
     int actualPosX;
     int actualPosY;
+    LONG adjustedStyle;
     RECT rect;
     switch (msg)
     {
@@ -5235,40 +5258,76 @@ static LRESULT WINAPI test_thick_child_size_winproc(HWND hwnd, UINT msg, WPARAM 
 
             test_thick_child_got_minmax = TRUE;
 
-            expectedMinTrack = 2* getExpectedThickChildInc();
+            if (test_thick_child_style & (WS_DLGFRAME | WS_BORDER))
+            {
+                expectedMinTrackX = GetSystemMetrics(SM_CXMINTRACK);
+                expectedMinTrackY = GetSystemMetrics(SM_CYMINTRACK);
+            }
+            else
+            {
+                expectedMinTrackX = 2 * getExpectedBorderSize(test_thick_child_style, test_thick_child_exStyle);
+                expectedMinTrackY = 2 * getExpectedBorderSize(test_thick_child_style, test_thick_child_exStyle);
+            }
             actualMinTrackX =  minmax->ptMinTrackSize.x;
             actualMinTrackY =  minmax->ptMinTrackSize.y;
-            todo_wine
-                ok(actualMinTrackX == expectedMinTrack && actualMinTrackY == expectedMinTrack,
-                    "expected minTrack %dx%d, actual minTrack %dx%d\n",
-                    expectedMinTrack, expectedMinTrack, actualMinTrackX, actualMinTrackY);
+            if (!(test_thick_child_style & (WS_DLGFRAME | WS_BORDER))) {
+                todo_wine
+                    ok(actualMinTrackX == expectedMinTrackX && actualMinTrackY == expectedMinTrackY,
+                        "expected minTrack %dx%d, actual minTrack %dx%d for %s\n",
+                        expectedMinTrackX, expectedMinTrackY, actualMinTrackX, actualMinTrackY,
+                        test_thick_child_name);
+            }
+            else
+            {
+                ok(actualMinTrackX == expectedMinTrackX && actualMinTrackY == expectedMinTrackY,
+                    "expected minTrack %dx%d, actual minTrack %dx%d for %s\n",
+                    expectedMinTrackX, expectedMinTrackY, actualMinTrackX, actualMinTrackY,
+                    test_thick_child_name);
+            }
 
             actualMaxTrackX = minmax->ptMaxTrackSize.x;
             actualMaxTrackY = minmax->ptMaxTrackSize.y;
             expectedMaxTrackX = GetSystemMetrics(SM_CXMAXTRACK);
             expectedMaxTrackY = GetSystemMetrics(SM_CYMAXTRACK);
             ok(actualMaxTrackX == expectedMaxTrackX &&  actualMaxTrackY == expectedMaxTrackY,
-                "expected maxTrack %dx%d, actual maxTrack %dx%d\n",
-                 expectedMaxTrackX, expectedMaxTrackY, actualMaxTrackX, actualMaxTrackY);
+                "expected maxTrack %dx%d, actual maxTrack %dx%d for %s\n",
+                 expectedMaxTrackX, expectedMaxTrackY, actualMaxTrackX, actualMaxTrackY,
+                test_thick_child_name);
 
+            adjustedStyle = test_thick_child_style;
+            if ((adjustedStyle & WS_CAPTION) == WS_CAPTION)
+                adjustedStyle &= ~WS_BORDER; /* WS_CAPTION = WS_DLGFRAME | WS_BORDER */
             GetClientRect(GetParent(hwnd), &rect);
-            AdjustWindowRectEx(&rect, WS_CHILD | WS_VISIBLE | WS_THICKFRAME, FALSE, 0);
+            AdjustWindowRectEx(&rect, adjustedStyle, FALSE, test_thick_child_exStyle);
             expectedMaxSizeX = rect.right - rect.left;
             expectedMaxSizeY = rect.bottom - rect.top;
             actualMaxSizeX = minmax->ptMaxSize.x;
             actualMaxSizeY = minmax->ptMaxSize.y;
-            ok(actualMaxSizeX == expectedMaxSizeX &&  actualMaxSizeY == expectedMaxSizeY,
-                "expected maxSize %dx%d, actual maxSize %dx%d\n",
-                expectedMaxSizeX, expectedMaxSizeY, actualMaxSizeX, actualMaxSizeY);
+            if (test_thick_child_exStyle & WS_EX_DLGMODALFRAME)
+            {
+                todo_wine
+                    ok(actualMaxSizeX == expectedMaxSizeX &&  actualMaxSizeY == expectedMaxSizeY,
+                        "expected maxSize %dx%d, actual maxSize %dx%d for %s\n",
+                        expectedMaxSizeX, expectedMaxSizeY, actualMaxSizeX, actualMaxSizeY,
+                        test_thick_child_name);
+            }
+            else
+            {
+                ok(actualMaxSizeX == expectedMaxSizeX &&  actualMaxSizeY == expectedMaxSizeY,
+                    "expected maxSize %dx%d, actual maxSize %dx%d for %s\n",
+                    expectedMaxSizeX, expectedMaxSizeY, actualMaxSizeX, actualMaxSizeY,
+                    test_thick_child_name);
+            }
 
-            expectedPosX = - getExpectedThickChildInc();
+            expectedPosX = - getExpectedBorderSize(test_thick_child_style, test_thick_child_exStyle);
             expectedPosY = expectedPosX;
             actualPosX = minmax->ptMaxPosition.x;
             actualPosY = minmax->ptMaxPosition.y;
             todo_wine
                 ok(actualPosX == expectedPosX && actualPosY == expectedPosY,
-                    "expected maxPosition (%d/%d), actual maxPosition (%d/%d)\n",
-                    expectedPosX, expectedPosY, actualPosX, actualPosY);
+                    "expected maxPosition (%d/%d), actual maxPosition (%d/%d) for %s\n",
+                    expectedPosX, expectedPosY, actualPosX, actualPosY, test_thick_child_name);
+
             break;
         }
     }
@@ -5276,6 +5335,7 @@ static LRESULT WINAPI test_thick_child_size_winproc(HWND hwnd, UINT msg, WPARAM 
     return DefWindowProcA(hwnd, msg, wparam, lparam);
 }
 
+#define NUMBER_OF_THICK_CHILD_TESTS 16
 static void test_thick_child_size(HWND parentWindow)
 {
     BOOL success;
@@ -5283,12 +5343,66 @@ static void test_thick_child_size(HWND parentWindow)
     HWND childWindow;
     LONG childWidth;
     LONG childHeight;
+    LONG expectedWidth;
+    LONG expectedHeight;
     WNDCLASSA cls;
     LPCTSTR className = "THICK_CHILD_CLASS";
-    LONG style = WS_CHILD | WS_VISIBLE | WS_THICKFRAME;
-    LONG exStyle = 0;
-    int expectedSize = 2*getExpectedThickChildInc();
+    int i;
+    static const LONG styles[NUMBER_OF_THICK_CHILD_TESTS] = {
+        WS_CHILD | WS_VISIBLE | WS_THICKFRAME,
+        WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_DLGFRAME,
+        WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_DLGFRAME | WS_BORDER,
+        WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_BORDER,
+        WS_CHILD | WS_VISIBLE | WS_THICKFRAME,
+        WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_DLGFRAME,
+        WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_DLGFRAME | WS_BORDER,
+        WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_BORDER,
+        WS_CHILD | WS_VISIBLE | WS_THICKFRAME,
+        WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_DLGFRAME,
+        WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_DLGFRAME | WS_BORDER,
+        WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_BORDER,
+        WS_CHILD | WS_VISIBLE | WS_THICKFRAME,
+        WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_DLGFRAME,
+        WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_DLGFRAME | WS_BORDER,
+        WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_BORDER,
+    };
 
+    static const LONG exStyles[NUMBER_OF_THICK_CHILD_TESTS] = {
+        0,
+        0,
+        0,
+        0,
+        WS_EX_DLGMODALFRAME,
+        WS_EX_DLGMODALFRAME,
+        WS_EX_DLGMODALFRAME,
+        WS_EX_DLGMODALFRAME,
+        WS_EX_STATICEDGE,
+        WS_EX_STATICEDGE,
+        WS_EX_STATICEDGE,
+        WS_EX_STATICEDGE,
+        WS_EX_STATICEDGE | WS_EX_DLGMODALFRAME,
+        WS_EX_STATICEDGE | WS_EX_DLGMODALFRAME,
+        WS_EX_STATICEDGE | WS_EX_DLGMODALFRAME,
+        WS_EX_STATICEDGE | WS_EX_DLGMODALFRAME,
+    };
+    static const char *styleName[NUMBER_OF_THICK_CHILD_TESTS] = {
+        "style=WS_CHILD | WS_VISIBLE | WS_THICKFRAME",
+        "style=WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_DLGFRAME",
+        "style=WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_DLGFRAME | WS_BORDER",
+        "style=WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_BORDER",
+        "style=WS_CHILD | WS_VISIBLE | WS_THICKFRAME, exstyle= WS_EX_DLGMODALFRAME",
+        "style=WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_DLGFRAME exstyle= WS_EX_DLGMODALFRAME",
+        "style=WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_DLGFRAME | WS_BORDER exstyle= WS_EX_DLGMODALFRAME",
+        "style=WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_BORDER exstyle= WS_EX_DLGMODALFRAME",
+        "style=WS_CHILD | WS_VISIBLE | WS_THICKFRAME exstyle= WS_EX_STATICEDGE",
+        "style=WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_DLGFRAME exstyle= WS_EX_STATICEDGE",
+        "style=WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_DLGFRAME | WS_BORDER exstyle= WS_EX_STATICEDGE",
+        "style=WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_BORDER exstyle= WS_EX_STATICEDGE",
+        "style=WS_CHILD | WS_VISIBLE | WS_THICKFRAME, exstyle= WS_EX_STATICEDGE | WS_EX_DLGMODALFRAME",
+        "style=WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_DLGFRAME exstyle= WS_EX_STATICEDGE | WS_EX_DLGMODALFRAME",
+        "style=WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_DLGFRAME | WS_BORDER exstyle= WS_EX_STATICEDGE | WS_EX_DLGMODALFRAME",
+        "style=WS_CHILD | WS_VISIBLE | WS_THICKFRAME | WS_BORDER exstyle= WS_EX_STATICEDGE | WS_EX_DLGMODALFRAME",
+    };
 
     cls.style = 0;
     cls.lpfnWndProc = test_thick_child_size_winproc;
@@ -5296,36 +5410,62 @@ static void test_thick_child_size(HWND parentWindow)
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandleA(0);
     cls.hIcon = 0;
-    cls.hCursor = LoadCursorA(0, IDC_ARROW);
+    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = className;
     SetLastError(0xdeadbeef);
     ok(RegisterClassA(&cls),"RegisterClassA failed, error: %u\n", GetLastError());
 
-    test_thick_child_got_minmax = FALSE;
+    for(i = 0; i < NUMBER_OF_THICK_CHILD_TESTS; i++)
+    {
+        test_thick_child_name = styleName[i];
+        test_thick_child_style = styles[i];
+        test_thick_child_exStyle = exStyles[i];
+        test_thick_child_got_minmax = FALSE;
 
-    SetLastError(0xdeadbeef);
-    childWindow = CreateWindowEx( exStyle, className, "", style,  0, 0, 0, 0, parentWindow, 0,  GetModuleHandleA(0),  NULL );
-    ok(childWindow != NULL, "Failed to create child window, error: %u\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        childWindow = CreateWindowEx( exStyles[i], className, "", styles[i],  0, 0, 0, 0, parentWindow, 0,  GetModuleHandleA(0),  NULL );
+        ok(childWindow != NULL, "Failed to create child window, error: %u\n", GetLastError());
 
-    ok(test_thick_child_got_minmax, "Got no WM_GETMINMAXINFO\n");
+        ok(test_thick_child_got_minmax, "Got no WM_GETMINMAXINFO\n");
 
-    SetLastError(0xdeadbeef);
-    success = GetWindowRect(childWindow, &childRect);
-    ok(success,"GetWindowRect call failed, error: %u\n", GetLastError());
-    childWidth = childRect.right - childRect.left;
-    childHeight = childRect.bottom - childRect.top;
+        SetLastError(0xdeadbeef);
+        success = GetWindowRect(childWindow, &childRect);
+        ok(success,"GetWindowRect call failed, error: %u\n", GetLastError());
+        childWidth = childRect.right - childRect.left;
+        childHeight = childRect.bottom - childRect.top;
 
-    todo_wine
-        ok( (childWidth == expectedSize) && (childHeight == expectedSize),
-            "size of window with style WS_CHILD | WS_VISIBLE | WS_THICKFRAME  is wrong: expected size %dx%d != actual size %dx%d\n",
-            expectedSize, expectedSize, childWidth, childHeight);
+        if (test_thick_child_style & (WS_DLGFRAME | WS_BORDER))
+        {
+            expectedWidth = GetSystemMetrics(SM_CXMINTRACK);
+            expectedHeight = GetSystemMetrics(SM_CYMINTRACK);
+        }
+        else
+        {
+            expectedWidth = 2 * getExpectedBorderSize(test_thick_child_style, test_thick_child_exStyle);
+            expectedHeight = 2 * getExpectedBorderSize(test_thick_child_style, test_thick_child_exStyle);
+        }
+
+        if (!(test_thick_child_style & (WS_DLGFRAME | WS_BORDER)))
+        {
+            todo_wine
+                ok((childWidth == expectedWidth) && (childHeight == expectedHeight),
+                    "size of window (%s) is wrong: expected size %dx%d != actual size %dx%d\n",
+                    test_thick_child_name, expectedWidth, expectedHeight, childWidth, childHeight);
+        }
+        else
+        {
+            ok((childWidth == expectedWidth) && (childHeight == expectedHeight),
+                "size of window (%s) is wrong: expected size %dx%d != actual size %dx%d\n",
+                test_thick_child_name, expectedWidth, expectedHeight, childWidth, childHeight);
+        }
 
 
-    SetLastError(0xdeadbeef);
-    success = DestroyWindow(childWindow);
-    ok(success,"DestroyWindow call failed, error: %u\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        success = DestroyWindow(childWindow);
+        ok(success,"DestroyWindow call failed, error: %u\n", GetLastError());
+    }
     ok(UnregisterClass(className, GetModuleHandleA(0)),"UnregisterClass call failed\n");
 }
 
