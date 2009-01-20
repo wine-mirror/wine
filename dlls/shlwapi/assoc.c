@@ -594,9 +594,8 @@ static HRESULT ASSOC_GetValue(HKEY hkey, WCHAR ** pszText)
   return S_OK;
 }
 
-static HRESULT ASSOC_GetExecutable(IQueryAssociationsImpl *This,
-                                   LPCWSTR pszExtra, LPWSTR path,
-                                   DWORD pathlen, DWORD *len)
+static HRESULT ASSOC_GetCommand(IQueryAssociationsImpl *This,
+                                LPCWSTR pszExtra, WCHAR **ppszCommand)
 {
   HKEY hkeyCommand;
   HKEY hkeyFile;
@@ -604,15 +603,10 @@ static HRESULT ASSOC_GetExecutable(IQueryAssociationsImpl *This,
   HKEY hkeyVerb;
   HRESULT hr;
   LONG ret;
-  WCHAR * pszCommand;
-  WCHAR * pszEnd;
   WCHAR * pszExtraFromReg = NULL;
   WCHAR * pszFileType;
-  WCHAR * pszStart;
   static const WCHAR commandW[] = { 'c','o','m','m','a','n','d',0 };
   static const WCHAR shellW[] = { 's','h','e','l','l',0 };
-
-  assert(len);
 
   hr = ASSOC_GetValue(This->hkeySource, &pszFileType);
   if (FAILED(hr))
@@ -672,8 +666,23 @@ static HRESULT ASSOC_GetExecutable(IQueryAssociationsImpl *This,
   RegCloseKey(hkeyVerb);
   if (ret != ERROR_SUCCESS)
     return HRESULT_FROM_WIN32(ret);
-  hr = ASSOC_GetValue(hkeyCommand, &pszCommand);
+  hr = ASSOC_GetValue(hkeyCommand, ppszCommand);
   RegCloseKey(hkeyCommand);
+  return hr;
+}
+
+static HRESULT ASSOC_GetExecutable(IQueryAssociationsImpl *This,
+                                   LPCWSTR pszExtra, LPWSTR path,
+                                   DWORD pathlen, DWORD *len)
+{
+  WCHAR *pszCommand;
+  WCHAR *pszStart;
+  WCHAR *pszEnd;
+  HRESULT hr;
+
+  assert(len);
+
+  hr = ASSOC_GetCommand(This, pszExtra, &pszCommand);
   if (FAILED(hr))
     return hr;
 
@@ -763,6 +772,18 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
 
   switch (str)
   {
+    case ASSOCSTR_COMMAND:
+    {
+      WCHAR *command;
+      hr = ASSOC_GetCommand(This, pszExtra, &command);
+      if (SUCCEEDED(hr))
+      {
+        hr = ASSOC_ReturnData(pszOut, pcchOut, command, strlenW(command) + 1);
+        HeapFree(GetProcessHeap(), 0, command);
+      }
+      return hr;
+    }
+
     case ASSOCSTR_EXECUTABLE:
     {
       hr = ASSOC_GetExecutable(This, pszExtra, path, MAX_PATH, &len);
