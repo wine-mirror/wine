@@ -2783,29 +2783,26 @@ PRINTDLG_PS_ChangeActivePrinterA(LPSTR name, PageSetupDataA *pda){
 }
 
 /****************************************************************************************
- *  PRINTDLG_PS_ChangePrinterA
+ *  pagesetup_init_combos
  *
- *  Fills Printers, Paper and Source combo
+ *  Fills Printers, Paper and Source combos
  *
- *  RETURNS 
- *   TRUE
  */
-static BOOL
-PRINTDLG_PS_ChangePrinterA(HWND hDlg, PageSetupDataA *pda) {
+static void pagesetup_init_combos(HWND hDlg, PageSetupDataA *pda)
+{
     DEVNAMES	*dn;
     DEVMODEA	*dm;
     LPSTR	devname,portname;
-	
+
     dn = GlobalLock(pda->dlga->hDevNames);
     dm = GlobalLock(pda->dlga->hDevMode);
-    devname	    = ((char*)dn)+dn->wDeviceOffset;
-    portname	= ((char*)dn)+dn->wOutputOffset;
+    devname  = ((char*)dn)+dn->wDeviceOffset;
+    portname = ((char*)dn)+dn->wOutputOffset;
     PRINTDLG_SetUpPrinterListComboA(hDlg, cmb1, devname);
     PRINTDLG_SetUpPaperComboBoxA(hDlg,cmb2,devname,portname,dm);
     PRINTDLG_SetUpPaperComboBoxA(hDlg,cmb3,devname,portname,dm);
     GlobalUnlock(pda->dlga->hDevNames);
     GlobalUnlock(pda->dlga->hDevMode);
-    return TRUE;
 }
 
 static void PRINTDLG_PS_SetOrientationW(HWND hDlg, PageSetupDataW* pdw)
@@ -3048,7 +3045,7 @@ PRINTDLG_PS_WMCommandA(
         {
             pda->dlga->hDevNames = prnt.hDevNames;
             pda->dlga->hDevMode  = prnt.hDevMode;
-            PRINTDLG_PS_ChangePrinterA(hDlg,pda);
+            pagesetup_init_combos(hDlg, pda);
         }
         return TRUE;
     }
@@ -3069,7 +3066,7 @@ PRINTDLG_PS_WMCommandA(
 		char crPrinterName[256];
 		GetDlgItemTextA(hDlg, id, crPrinterName, 255);
 		PRINTDLG_PS_ChangeActivePrinterA(crPrinterName, pda);
-		PRINTDLG_PS_ChangePrinterA(hDlg, pda);
+                pagesetup_init_combos(hDlg, pda);
 	    }
 	    break;
     case cmb2: /* Paper combo */
@@ -3500,7 +3497,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 
 	/* filling combos: printer, paper, source. selecting current printer (from DEVMODEA) */
-        PRINTDLG_PS_ChangePrinterA(hDlg, pda);
+        pagesetup_init_combos(hDlg, pda);
         pagesetup_update_papersize(pda);
         pagesetup_set_defaultsource(pda, DMBIN_FORMSOURCE); /* FIXME: This is the auto select bin. Is this correct? */
 
