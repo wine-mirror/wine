@@ -2258,6 +2258,8 @@ BOOL WINAPI CreateUrlCacheEntryW(
 	if (!len)
 	    return FALSE;
         szFile[len] = '\0';
+        while(len && szFile[--len] == '/') szFile[len] = '\0';
+
         /* FIXME: get rid of illegal characters like \, / and : */
     }
     else
