@@ -66,6 +66,9 @@
 #ifdef HAVE_SYS_STATFS_H
 # include <sys/statfs.h>
 #endif
+#ifdef HAVE_TERMIOS_H
+#include <termios.h>
+#endif
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 # include <valgrind/memcheck.h>
 #endif
@@ -2749,19 +2752,39 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK* IoStatusBlock
 {
     NTSTATUS ret;
     HANDLE hEvent = NULL;
+    enum server_fd_type type;
+    int fd, needs_close;
 
-    SERVER_START_REQ( flush_file )
+    ret = server_get_unix_fd( hFile, FILE_WRITE_DATA, &fd, &needs_close, &type, NULL );
+
+    if (!ret && type == FD_TYPE_SERIAL)
     {
-        req->handle = wine_server_obj_handle( hFile );
-        ret = wine_server_call( req );
-        hEvent = wine_server_ptr_handle( reply->event );
+        while (tcdrain( fd ) == -1)
+        {
+            if (errno != EINTR)
+            {
+                ret = FILE_GetNtStatus();
+                break;
+            }
+        }
     }
-    SERVER_END_REQ;
-    if (!ret && hEvent)
+    else
     {
-        ret = NtWaitForSingleObject( hEvent, FALSE, NULL );
-        NtClose( hEvent );
+        SERVER_START_REQ( flush_file )
+        {
+            req->handle = wine_server_obj_handle( hFile );
+            ret = wine_server_call( req );
+            hEvent = wine_server_ptr_handle( reply->event );
+        }
+        SERVER_END_REQ;
+        if (!ret && hEvent)
+        {
+            ret = NtWaitForSingleObject( hEvent, FALSE, NULL );
+            NtClose( hEvent );
+        }
     }
+
+    if (needs_close) close( fd );
     return ret;
 }
 

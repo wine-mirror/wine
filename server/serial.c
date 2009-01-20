@@ -61,7 +61,6 @@ static struct fd *serial_get_fd( struct object *obj );
 static void serial_destroy(struct object *obj);
 
 static enum server_fd_type serial_get_fd_type( struct fd *fd );
-static void serial_flush( struct fd *fd, struct event **event );
 static void serial_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 
 struct serial
@@ -107,7 +106,7 @@ static const struct fd_ops serial_fd_ops =
 {
     default_fd_get_poll_events,   /* get_poll_events */
     default_poll_event,           /* poll_event */
-    serial_flush,                 /* flush */
+    no_flush,                     /* flush */
     serial_get_fd_type,           /* get_fd_type */
     default_fd_ioctl,             /* ioctl */
     serial_queue_async,           /* queue_async */
@@ -194,14 +193,6 @@ static void serial_queue_async( struct fd *fd, const async_data_t *data, int typ
         release_object( async );
         set_error( STATUS_PENDING );
     }
-}
-
-static void serial_flush( struct fd *fd, struct event **event )
-{
-    /* MSDN says: If hFile is a handle to a communications device,
-     * the function only flushes the transmit buffer.
-     */
-    if (tcflush( get_unix_fd(fd), TCOFLUSH ) == -1) file_set_error();
 }
 
 DECL_HANDLER(get_serial_info)
