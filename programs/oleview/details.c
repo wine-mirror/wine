@@ -46,7 +46,7 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
     U(tvis).item.mask = TVIF_TEXT;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
     U(tvis).item.pszText = wszTree;
-    tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
+    tvis.hInsertAfter = TVI_LAST;
     tvis.hParent = parent;
 
     while(TRUE)
@@ -61,7 +61,7 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
         {
             if(!i && lstrlenW(wszKeyName) > 1)
             {
-                U(tvis).item.pszText = (LPWSTR)wszKeyName;
+                U(tvis).item.pszText = wszKeyName;
                 addPlace = TreeView_InsertItem(details.hReg, &tvis);
                 U(tvis).item.pszText = wszTree;
             }
@@ -213,7 +213,7 @@ static void CreateReg(WCHAR *buffer)
     U(tvis).item.mask = TVIF_TEXT;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
     U(tvis).item.pszText = wszTree;
-    tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
+    tvis.hInsertAfter = TVI_LAST;
     tvis.hParent = TVI_ROOT;
 
     path = buffer;
@@ -225,7 +225,7 @@ static void CreateReg(WCHAR *buffer)
         {
             *path = '\0';
 
-            if(RegOpenKey(HKEY_CLASSES_ROOT, (LPWSTR)buffer, &hKey) != ERROR_SUCCESS)
+            if(RegOpenKey(HKEY_CLASSES_ROOT, buffer, &hKey) != ERROR_SUCCESS)
                 return;
 
             lastLenBuffer = lenBuffer+1;
@@ -259,9 +259,9 @@ static void CreateReg(WCHAR *buffer)
         else break;
     }
 
-    if(RegOpenKey(HKEY_CLASSES_ROOT, (LPWSTR)buffer, &hKey) != ERROR_SUCCESS) return;
+    if(RegOpenKey(HKEY_CLASSES_ROOT, buffer, &hKey) != ERROR_SUCCESS) return;
 
-    CreateRegRec(hKey, addPlace, (LPWSTR)&buffer[lenBuffer+1], TRUE);
+    CreateRegRec(hKey, addPlace, &buffer[lenBuffer+1], TRUE);
 
     RegCloseKey(hKey);
 

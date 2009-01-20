@@ -77,7 +77,7 @@ void CreateInst(HTREEITEM item, WCHAR *wszMachineName)
     memset(&tvis, 0, sizeof(TVINSERTSTRUCT));
     U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
-    tvis.hInsertAfter = (HTREEITEM)TVI_FIRST;
+    tvis.hInsertAfter = TVI_FIRST;
     U(tvis).item.pszText = tvi.pszText;
     tvis.hParent = item;
     tvis.hInsertAfter = TVI_LAST;
@@ -263,7 +263,7 @@ static void AddCOMandAll(void)
     U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM|TVIF_CHILDREN;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
     U(tvis).item.cChildren = 1;
-    tvis.hInsertAfter = (HTREEITEM)TVI_FIRST;
+    tvis.hInsertAfter = TVI_FIRST;
 
     if(RegOpenKey(HKEY_CLASSES_ROOT, wszCLSID, &hKey) != ERROR_SUCCESS) return;
 
@@ -346,7 +346,7 @@ static void AddApplicationID(void)
 
     U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
-    tvis.hInsertAfter = (HTREEITEM)TVI_FIRST;
+    tvis.hInsertAfter = TVI_FIRST;
     tvis.hParent = tree.hAID;
 
     if(RegOpenKey(HKEY_CLASSES_ROOT, wszAppID, &hKey) != ERROR_SUCCESS) return;
@@ -391,7 +391,7 @@ static void AddTypeLib(void)
 
     U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
-    tvis.hInsertAfter = (HTREEITEM)TVI_FIRST;
+    tvis.hInsertAfter = TVI_FIRST;
     tvis.hParent = tree.hTL;
 
     if(RegOpenKey(HKEY_CLASSES_ROOT, wszTypeLib, &hKey) != ERROR_SUCCESS) return;
@@ -457,7 +457,7 @@ static void AddInterfaces(void)
 
     U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
-    tvis.hInsertAfter = (HTREEITEM)TVI_FIRST;
+    tvis.hInsertAfter = TVI_FIRST;
     tvis.hParent = tree.hI;
 
     if(RegOpenKey(HKEY_CLASSES_ROOT, wszInterface, &hKey) != ERROR_SUCCESS) return;
@@ -499,7 +499,7 @@ static void AddComponentCategories(void)
 
     U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM|TVIF_CHILDREN;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
-    tvis.hInsertAfter = (HTREEITEM)TVI_FIRST;
+    tvis.hInsertAfter = TVI_FIRST;
     if(tree.hGBCC) tvis.hParent = tree.hGBCC;
     else tvis.hParent = TVI_ROOT;
     U(tvis).item.cChildren = 1;
@@ -546,7 +546,7 @@ static void AddBaseEntries(void)
     U(tvis).item.pszText = name;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
     U(tvis).item.cChildren = 1;
-    tvis.hInsertAfter = (HTREEITEM)TVI_FIRST;
+    tvis.hInsertAfter = TVI_FIRST;
     tvis.hParent = TVI_ROOT;
 
     LoadString(globals.hMainInst, IDS_TREE_I, U(tvis).item.pszText,

@@ -209,7 +209,7 @@ static void AddToTLDataStrWithTabsW(TYPELIB_DATA *pTLData, WCHAR *wszSource)
 {
     int lineLen = lstrlenW(wszSource);
     int newLinesNo = 0;
-    WCHAR *pSourcePos = (WCHAR *)wszSource;
+    WCHAR *pSourcePos = wszSource;
     WCHAR *pSourceBeg;
 
     if(!lineLen) return;
@@ -223,8 +223,8 @@ static void AddToTLDataStrWithTabsW(TYPELIB_DATA *pTLData, WCHAR *wszSource)
     pTLData->idl = HeapReAlloc(GetProcessHeap(), 0, pTLData->idl,
             sizeof(WCHAR)*(pTLData->idlLen+lineLen+4*newLinesNo+1));
 
-    pSourcePos = (WCHAR *)wszSource;
-    pSourceBeg = (WCHAR *)wszSource;
+    pSourcePos = wszSource;
+    pSourceBeg = wszSource;
     while(newLinesNo)
     {
         if(*pSourcePos != *wszNewLine && *pSourcePos)
@@ -379,7 +379,7 @@ static int EnumVars(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
     U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
     U(tvis).item.pszText = wszText;
-    tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
+    tvis.hInsertAfter = TVI_LAST;
     tvis.hParent = hParent;
 
     for(i=0; i<cVars; i++)
@@ -443,7 +443,7 @@ static int EnumEnums(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
     U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
     U(tvis).item.pszText = wszText;
-    tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
+    tvis.hInsertAfter = TVI_LAST;
     tvis.hParent = hParent;
 
     for(i=0; i<cVars; i++)
@@ -507,7 +507,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
     BOOL bFirst;
 
     U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM;
-    tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
+    tvis.hInsertAfter = TVI_LAST;
     tvis.hParent = hParent;
 
     cFuncs = pTypeAttr->cFuncs;
@@ -736,7 +736,7 @@ static int EnumImplTypes(ITypeInfo *pTypeInfo, int cImplTypes, HTREEITEM hParent
     U(tvis).item.mask = TVIF_TEXT;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
     U(tvis).item.pszText = wszInheritedInterfaces;
-    tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
+    tvis.hInsertAfter = TVI_LAST;
     tvis.hParent = hParent;
 
     tvis.hParent = TreeView_InsertItem(typelib.hTree, &tvis);
@@ -1182,7 +1182,7 @@ static int PopulateTree(void)
     U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
     U(tvis).item.pszText = wszText;
-    tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
+    tvis.hInsertAfter = TVI_LAST;
     tvis.hParent = TVI_ROOT;
 
     if(FAILED((hRes = LoadTypeLib(typelib.wszFileName, &pTypeLib))))
@@ -1635,7 +1635,7 @@ BOOL CreateTypeLibWindow(HINSTANCE hInst, WCHAR *wszFileName)
     if(!globals.hTypeLibWnd) return FALSE;
 
     typelib.hStatusBar = CreateStatusWindow(WS_VISIBLE|WS_CHILD,
-            (LPWSTR)wszTitle, globals.hTypeLibWnd, 0);
+            wszTitle, globals.hTypeLibWnd, 0);
 
     TypeLibResizeChild();
     return TRUE;

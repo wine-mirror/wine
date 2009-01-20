@@ -515,7 +515,7 @@ static BOOL InitInstance(HINSTANCE hInst, int nCmdShow)
     if(!hWnd) return FALSE;
 
     globals.hStatusBar = CreateStatusWindow(WS_VISIBLE|WS_CHILD,
-            (LPWSTR)wszTitle, hWnd, 0);
+            wszTitle, hWnd, 0);
 
     globals.hToolBar = CreateToolbarEx(hWnd, WS_CHILD|WS_VISIBLE, 0, 1, hInst,
             IDB_TOOLBAR, tB, 10, 16, 16, 16, 16, sizeof(TBBUTTON));
