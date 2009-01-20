@@ -203,7 +203,7 @@ ME_Style *ME_GetSelectionInsertStyle(ME_TextEditor *editor);
 
 /* context.c */
 void ME_InitContext(ME_Context *c, ME_TextEditor *editor, HDC hDC);
-void ME_DestroyContext(ME_Context *c, HWND release);
+void ME_DestroyContext(ME_Context *c);
 
 /* wrap.c */
 BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor);

@@ -36,7 +36,7 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   ME_DisplayItem *run;
   ME_Style *style;
 
-  ME_InitContext(&c, editor, GetDC(editor->hWnd));
+  ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
 
   hf = GetStockObject(SYSTEM_FONT);
   assert(hf);
@@ -78,7 +78,7 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
 
   text->pLast->member.para.nCharOfs = editor->bEmulateVersion10 ? 2 : 1;
 
-  ME_DestroyContext(&c, editor->hWnd);
+  ME_DestroyContext(&c);
 }
 
 static void ME_MarkForWrapping(ME_TextEditor *editor, ME_DisplayItem *first, const ME_DisplayItem *last)

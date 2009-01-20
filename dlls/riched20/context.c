@@ -33,8 +33,8 @@ void ME_InitContext(ME_Context *c, ME_TextEditor *editor, HDC hDC)
   c->dpi.cy = GetDeviceCaps(hDC, LOGPIXELSY);
 }
 
-void ME_DestroyContext(ME_Context *c, HWND hWnd)
+void ME_DestroyContext(ME_Context *c)
 {
-  if (hWnd) ReleaseDC(hWnd, c->hDC);
+  if (c->hDC) ITextHost_TxReleaseDC(c->editor->texthost, c->hDC);
   DeleteObject(c->hbrMargin);
 }

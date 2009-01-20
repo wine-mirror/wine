@@ -1393,7 +1393,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   ME_InStream inStream;
   BOOL invalidRTF = FALSE;
 
-  TRACE("stream==%p hWnd==%p format==0x%X\n", stream, editor->hWnd, format);
+  TRACE("stream==%p editor==%p format==0x%X\n", stream, editor, format);
   editor->nEventMask = 0;
 
   ME_GetSelection(editor, &from, &to);
@@ -1580,9 +1580,9 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   if (!(format & SFF_SELECTION)) {
     ME_ClearTempStyle(editor);
   }
-  HideCaret(editor->hWnd);
+  ITextHost_TxShowCaret(editor->texthost, FALSE);
   ME_MoveCaret(editor);
-  ShowCaret(editor->hWnd);
+  ITextHost_TxShowCaret(editor->texthost, TRUE);
   ME_SendSelChange(editor);
   ME_SendRequestResize(editor, FALSE);
 
@@ -2100,14 +2100,11 @@ ME_FilterEvent(ME_TextEditor *editor, UINT msg, WPARAM* wParam, LPARAM* lParam)
 {
     MSGFILTER msgf;
 
-    msgf.nmhdr.hwndFrom = editor->hWnd;
-    msgf.nmhdr.idFrom = GetWindowLongW(editor->hWnd, GWLP_ID);
     msgf.nmhdr.code = EN_MSGFILTER;
     msgf.msg = msg;
-
     msgf.wParam = *wParam;
     msgf.lParam = *lParam;
-    if (SendMessageW(GetParent(editor->hWnd), WM_NOTIFY, msgf.nmhdr.idFrom, (LPARAM)&msgf))
+    if (ITextHost_TxNotify(editor->texthost, msgf.nmhdr.code, &msgf) == S_OK)
         return FALSE;
     *wParam = msgf.wParam;
     *lParam = msgf.lParam;
@@ -2476,7 +2473,7 @@ static LRESULT ME_Char(ME_TextEditor *editor, WPARAM charCode,
       ME_InsertTextFromCursor(editor, 0, &wstr, 1, style);
       ME_ReleaseStyle(style);
       ME_CommitCoalescingUndo(editor);
-      SetCursor(NULL);
+      ITextHost_TxSetCursor(editor->texthost, NULL, FALSE);
     }
 
     if (editor->AutoURLDetect_bEnable) ME_UpdateSelectionLinkAttribute(editor);
@@ -2554,7 +2551,8 @@ static BOOL ME_SetCursor(ME_TextEditor *editor)
   if (!(sbi.rgstate[0] & (STATE_SYSTEM_INVISIBLE|STATE_SYSTEM_OFFSCREEN)) &&
       PtInRect(&sbi.rcScrollBar, pt))
   {
-      SetCursor(LoadCursorW(NULL, (WCHAR*)IDC_ARROW));
+      ITextHost_TxSetCursor(editor->texthost,
+                            LoadCursorW(NULL, (WCHAR*)IDC_ARROW), FALSE);
       return TRUE;
   }
   sbi.cbSize = sizeof(sbi);
@@ -2562,33 +2560,36 @@ static BOOL ME_SetCursor(ME_TextEditor *editor)
   if (!(sbi.rgstate[0] & (STATE_SYSTEM_INVISIBLE|STATE_SYSTEM_OFFSCREEN)) &&
       PtInRect(&sbi.rcScrollBar, pt))
   {
-      SetCursor(LoadCursorW(NULL, (WCHAR*)IDC_ARROW));
+      ITextHost_TxSetCursor(editor->texthost,
+                            LoadCursorW(NULL, (WCHAR*)IDC_ARROW), FALSE);
       return TRUE;
   }
-  ScreenToClient(editor->hWnd, &pt);
+  ITextHost_TxScreenToClient(editor->texthost, &pt);
 
   if (editor->nSelectionType == stLine && editor->bMouseCaptured) {
-      SetCursor(hLeft);
+      ITextHost_TxSetCursor(editor->texthost, hLeft, FALSE);
       return TRUE;
   }
   if (!editor->bEmulateVersion10 /* v4.1 */ &&
       pt.y < editor->rcFormat.top &&
       pt.x < editor->rcFormat.left)
   {
-      SetCursor(hLeft);
+      ITextHost_TxSetCursor(editor->texthost, hLeft, FALSE);
       return TRUE;
   }
   if (pt.y < editor->rcFormat.top || pt.y > editor->rcFormat.bottom)
   {
       if (editor->bEmulateVersion10) /* v1.0 - 3.0 */
-          SetCursor(LoadCursorW(NULL, (WCHAR*)IDC_ARROW));
+          ITextHost_TxSetCursor(editor->texthost,
+                                LoadCursorW(NULL, (WCHAR*)IDC_ARROW), FALSE);
       else /* v4.1 */
-          SetCursor(LoadCursorW(NULL, (WCHAR*)IDC_IBEAM));
+          ITextHost_TxSetCursor(editor->texthost,
+                                LoadCursorW(NULL, (WCHAR*)IDC_IBEAM), TRUE);
       return TRUE;
   }
   if (pt.x < editor->rcFormat.left)
   {
-      SetCursor(hLeft);
+      ITextHost_TxSetCursor(editor->texthost, hLeft, FALSE);
       return TRUE;
   }
   offset = ME_CharFromPos(editor, pt.x, pt.y, &isExact);
@@ -2604,7 +2605,9 @@ static BOOL ME_SetCursor(ME_TextEditor *editor)
               run->style->fmt.dwMask & CFM_LINK &&
               run->style->fmt.dwEffects & CFE_LINK)
           {
-              SetCursor(LoadCursorW(NULL, (WCHAR*)IDC_HAND));
+              ITextHost_TxSetCursor(editor->texthost,
+                                    LoadCursorW(NULL, (WCHAR*)IDC_HAND),
+                                    FALSE);
               return TRUE;
           }
       }
@@ -2613,12 +2616,15 @@ static BOOL ME_SetCursor(ME_TextEditor *editor)
           int selStart, selEnd;
           ME_GetSelection(editor, &selStart, &selEnd);
           if (selStart <= offset && selEnd >= offset) {
-              SetCursor(LoadCursorW(NULL, (WCHAR*)IDC_ARROW));
+              ITextHost_TxSetCursor(editor->texthost,
+                                    LoadCursorW(NULL, (WCHAR*)IDC_ARROW),
+                                    FALSE);
               return TRUE;
           }
       }
   }
-  SetCursor(LoadCursorW(NULL, (WCHAR*)IDC_IBEAM));
+  ITextHost_TxSetCursor(editor->texthost,
+                        LoadCursorW(NULL, (WCHAR*)IDC_IBEAM), TRUE);
   return TRUE;
 }
 
@@ -2626,7 +2632,7 @@ static void ME_SetDefaultFormatRect(ME_TextEditor *editor)
 {
   DWORD exstyle = GetWindowLongW(editor->hWnd, GWL_EXSTYLE);
 
-  GetClientRect(editor->hWnd, &editor->rcFormat);
+  ITextHost_TxGetClientRect(editor->texthost, &editor->rcFormat);
   editor->rcFormat.top += (exstyle & WS_EX_CLIENTEDGE ? 1 : 0);
   editor->rcFormat.left += 1 + editor->selofs;
   editor->rcFormat.right -= 1;
@@ -3182,7 +3188,7 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     ME_InvalidateSelection(editor);
     ME_SetSelection(editor, wParam, lParam);
     ME_InvalidateSelection(editor);
-    HideCaret(editor->hWnd);
+    ITextHost_TxShowCaret(editor->texthost, FALSE);
     ME_ShowCaret(editor);
     ME_SendSelChange(editor);
     return 0;
@@ -3216,7 +3222,7 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     ME_InvalidateSelection(editor);
     end = ME_SetSelection(editor, range.cpMin, range.cpMax);
     ME_InvalidateSelection(editor);
-    HideCaret(editor->hWnd);
+    ITextHost_TxShowCaret(editor->texthost, FALSE);
     ME_ShowCaret(editor);
     ME_SendSelChange(editor);
 
@@ -3224,7 +3230,7 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_SHOWSCROLLBAR:
   {
-    ShowScrollBar(editor->hWnd, wParam, lParam);
+    ITextHost_TxShowScrollBar(editor->texthost, wParam, lParam);
     return 0;
   }
   case EM_SETTEXTEX:
@@ -3298,7 +3304,7 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       DeleteObject(editor->hbrBackground);
       lColor = editor->rgbBackColor;
     }
-    else lColor = GetSysColor(COLOR_WINDOW);
+    else lColor = ITextHost_TxGetSysColor(editor->texthost, COLOR_WINDOW);
 
     if (wParam)
     {
@@ -3310,8 +3316,8 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       editor->rgbBackColor = lParam;
       editor->hbrBackground = CreateSolidBrush(editor->rgbBackColor);
     }
-    InvalidateRect(editor->hWnd, NULL, TRUE);
-    UpdateWindow(editor->hWnd);
+    ITextHost_TxInvalidateRect(editor->texthost, NULL, TRUE);
+    ITextHost_TxViewChange(editor->texthost, TRUE);
     return lColor;
   }
   case EM_GETMODIFY:
@@ -3496,9 +3502,9 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     if (!wParam)
       wParam = (WPARAM)GetStockObject(SYSTEM_FONT); 
     GetObjectW((HGDIOBJ)wParam, sizeof(LOGFONTW), &lf);
-    hDC = GetDC(editor->hWnd);
+    hDC = ITextHost_TxGetDC(editor->texthost);
     ME_CharFormatFromLogFont(hDC, &lf, &fmt); 
-    ReleaseDC(editor->hWnd, hDC);
+    ITextHost_TxReleaseDC(editor->texthost, hDC);
     ME_SetCharFormat(editor, 0, ME_GetTextLength(editor), &fmt);
     ME_SetDefaultCharFormat(editor, &fmt);
 
@@ -3947,10 +3953,10 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
         !ME_FilterEvent(editor, msg, &wParam, &lParam))
       return 0;
-    SetFocus(editor->hWnd);
+    ITextHost_TxSetFocus(editor->texthost);
     ME_LButtonDown(editor, (short)LOWORD(lParam), (short)HIWORD(lParam),
                    ME_CalculateClickCount(editor, msg, wParam, lParam));
-    SetCapture(editor->hWnd);
+    ITextHost_TxSetCapture(editor->texthost, TRUE);
     editor->bMouseCaptured = TRUE;
     ME_LinkNotify(editor,msg,wParam,lParam);
     if (!ME_SetCursor(editor)) goto do_default;
@@ -3969,7 +3975,7 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     break;
   case WM_LBUTTONUP:
     if (editor->bMouseCaptured) {
-      ReleaseCapture();
+      ITextHost_TxSetCapture(editor->texthost, FALSE);
       editor->bMouseCaptured = FALSE;
     }
     if (editor->nSelectionType == stDocument)
@@ -4241,7 +4247,7 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       RECT clientRect;
       RECT *rc = (RECT *)lParam;
 
-      GetClientRect(editor->hWnd, &clientRect);
+      ITextHost_TxGetClientRect(editor->texthost, &clientRect);
       if (wParam == 0)
       {
         editor->rcFormat.top = max(0, rc->top - border);
@@ -4280,7 +4286,7 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   {
     RECT clientRect;
 
-    GetClientRect(editor->hWnd, &clientRect);
+    ITextHost_TxGetClientRect(editor->texthost, &clientRect);
     if (editor->bDefaultFormatRect) {
       ME_SetDefaultFormatRect(editor);
     } else {
@@ -4310,7 +4316,7 @@ static LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     HIMC hIMC;
 
     ME_Style *style = ME_GetInsertStyle(editor, 0);
-    hIMC = ImmGetContext(editor->hWnd);
+    hIMC = ITextHost_TxImmGetContext(editor->texthost);
     ME_DeleteSelection(editor);
     ME_CommitUndo(editor);
     ME_SaveTempStyle(editor);
@@ -4437,7 +4443,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
 {
   ME_TextEditor *editor;
   HRESULT hresult;
-  LRESULT lresult;
+  LRESULT lresult = 0;
 
   TRACE("enter hwnd %p msg %04x (%s) %lx %lx, unicode %d\n",
         hWnd, msg, get_msg_name(msg), wParam, lParam, unicode);
@@ -4515,8 +4521,7 @@ LRESULT WINAPI RichEdit10ANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 
 void ME_SendOldNotify(ME_TextEditor *editor, int nCode)
 {
-  HWND hWnd = editor->hWnd;
-  SendMessageA(GetParent(hWnd), WM_COMMAND, MAKEWPARAM(GetWindowLongW(hWnd, GWLP_ID), nCode), (LPARAM)hWnd);
+  ITextHost_TxNotify(editor->texthost, nCode, NULL);
 }
 
 int ME_CountParagraphsBetween(ME_TextEditor *editor, int from, int to)

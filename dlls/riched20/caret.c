@@ -173,7 +173,7 @@ ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
     ME_DisplayItem *row = ME_FindItemBack(pCursorRun, diStartRowOrParagraph);
 
     if (row) {
-      HDC hDC = GetDC(editor->hWnd);
+      HDC hDC = ITextHost_TxGetDC(editor->texthost);
       ME_Context c;
       ME_DisplayItem *run = pCursorRun;
       ME_DisplayItem *para = NULL;
@@ -217,7 +217,7 @@ ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
       *x = c.rcView.left + run->member.run.pt.x + sz.cx - editor->horz_si.nPos;
       *y = c.rcView.top + para->member.para.pt.y + row->member.row.nBaseline
            + run->member.run.pt.y - pSizeRun->member.run.nAscent - editor->vert_si.nPos;
-      ME_DestroyContext(&c, editor->hWnd);
+      ME_DestroyContext(&c);
       return;
     }
   }
@@ -238,8 +238,8 @@ ME_MoveCaret(ME_TextEditor *editor)
   if(editor->bHaveFocus && !ME_IsSelection(editor))
   {
     x = min(x, editor->rcFormat.right-1);
-    CreateCaret(editor->hWnd, NULL, 0, height);
-    SetCaretPos(x, y);
+    ITextHost_TxCreateCaret(editor->texthost, NULL, 0, height);
+    ITextHost_TxSetCaretPos(editor->texthost, x, y);
   }
 }
 
@@ -248,14 +248,14 @@ void ME_ShowCaret(ME_TextEditor *ed)
 {
   ME_MoveCaret(ed);
   if(ed->bHaveFocus && !ME_IsSelection(ed))
-    ShowCaret(ed->hWnd);
+    ITextHost_TxShowCaret(ed->texthost, TRUE);
 }
 
 void ME_HideCaret(ME_TextEditor *ed)
 {
   if(!ed->bHaveFocus || ME_IsSelection(ed))
   {
-    HideCaret(ed->hWnd);
+    ITextHost_TxShowCaret(ed->texthost, FALSE);
     DestroyCaret();
   }
 }
@@ -1020,7 +1020,7 @@ int ME_CharFromPos(ME_TextEditor *editor, int x, int y, BOOL *isExact)
   RECT rc;
   BOOL bResult;
 
-  GetClientRect(editor->hWnd, &rc);
+  ITextHost_TxGetClientRect(editor->texthost, &rc);
   if (x < 0 || y < 0 || x >= rc.right || y >= rc.bottom) {
     if (isExact) *isExact = FALSE;
     return -1;
@@ -1154,7 +1154,7 @@ void ME_LButtonDown(ME_TextEditor *editor, int x, int y, int clickNum)
     }
   }
   ME_InvalidateSelection(editor);
-  HideCaret(editor->hWnd);
+  ITextHost_TxShowCaret(editor->texthost, FALSE);
   ME_ShowCaret(editor);
   ME_ClearTempStyle(editor);
   ME_SendSelChange(editor);
@@ -1188,7 +1188,7 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y)
   }
 
   ME_InvalidateSelection(editor);
-  HideCaret(editor->hWnd);
+  ITextHost_TxShowCaret(editor->texthost, FALSE);
   ME_ShowCaret(editor);
   ME_SendSelChange(editor);
 }
@@ -1574,7 +1574,7 @@ void ME_SendSelChange(ME_TextEditor *editor)
     ME_ClearTempStyle(editor);
 
     editor->notified_cr = sc.chrg;
-    SendMessageW(GetParent(editor->hWnd), WM_NOTIFY, sc.nmhdr.idFrom, (LPARAM)&sc);
+    ITextHost_TxNotify(editor->texthost, sc.nmhdr.code, &sc);
   }
 }
 
@@ -1636,7 +1636,7 @@ ME_ArrowKey(ME_TextEditor *editor, int nVKey, BOOL extend, BOOL ctrl)
 
   ME_InvalidateSelection(editor);
   ME_Repaint(editor);
-  HideCaret(editor->hWnd);
+  ITextHost_TxShowCaret(editor->texthost, FALSE);
   ME_EnsureVisible(editor, &tmp_curs);
   ME_ShowCaret(editor);
   ME_SendSelChange(editor);

@@ -550,12 +550,12 @@ int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
       return 0;
     return 1;
   }
-  ME_InitContext(&c, editor, GetDC(editor->hWnd));
+  ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
   if (run->nFlags & MERF_GRAPHICS)
   {
     SIZE sz;
     ME_GetOLEObjectSize(&c, run, &sz);
-    ME_DestroyContext(&c, editor->hWnd);
+    ME_DestroyContext(&c);
     if (cx < sz.cx/2)
       return 0;
     return 1;
@@ -584,7 +584,7 @@ int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
     ME_DestroyString(strRunText);
   
   ME_UnselectStyleFont(&c, run->style, hOldFont);
-  ME_DestroyContext(&c, editor->hWnd);
+  ME_DestroyContext(&c);
   return fit;
 }
 
@@ -614,12 +614,12 @@ int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset)
   ME_String *strRunText;
   /* This could point to either the run's real text, or it's masked form in a password control */
 
-  ME_InitContext(&c, editor, GetDC(editor->hWnd));
+  ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
   if (pRun->nFlags & MERF_GRAPHICS)
   {
     if (nOffset)
       ME_GetOLEObjectSize(&c, pRun, &size);
-    ReleaseDC(editor->hWnd, c.hDC);
+    ITextHost_TxReleaseDC(editor->texthost, c.hDC);
     return nOffset != 0;
   }
   
@@ -629,7 +629,7 @@ int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset)
     strRunText = pRun->strText;
 
   ME_GetTextExtent(&c,  strRunText->szData, nOffset, pRun->style, &size);
-  ReleaseDC(editor->hWnd, c.hDC);
+  ITextHost_TxReleaseDC(editor->texthost, c.hDC);
   if (editor->cPasswordMask)
     ME_DestroyString(strRunText);
   return size.cx;
