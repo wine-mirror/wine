@@ -3125,23 +3125,24 @@ PRINTDLG_PS_WMCommandA(
 	    }
 	    break;
     case cmb2: /* Paper combo */
-	if(msg == CBN_SELCHANGE){
-	    DWORD paperword = SendDlgItemMessageA(hDlg,cmb2,CB_GETITEMDATA,
-	        SendDlgItemMessageA(hDlg, cmb2, CB_GETCURSEL, 0, 0), 0);
+        if(msg == CBN_SELCHANGE)
+        {
+            DWORD paperword = SendDlgItemMessageW(hDlg, cmb2, CB_GETITEMDATA,
+                                                  SendDlgItemMessageW(hDlg, cmb2, CB_GETCURSEL, 0, 0), 0);
             if (paperword != CB_ERR)
             {
                 pagesetup_set_papersize(pda, paperword);
                 pagesetup_update_papersize(pda);
 	        PRINTDLG_PS_ChangePaperPrev(pda);
 	    } else
-	        FIXME("could not get dialog text for papersize cmbbox?\n");
-	}    
-	break;
+                FIXME("could not get dialog text for papersize cmbbox?\n");
+        }
+        break;
     case cmb3: /* Paper Source */
         if(msg == CBN_SELCHANGE)
         {
-            WORD source = SendDlgItemMessageA(hDlg, cmb3, CB_GETITEMDATA,
-                                              SendDlgItemMessageA(hDlg, cmb3, CB_GETCURSEL, 0, 0), 0);
+            WORD source = SendDlgItemMessageW(hDlg, cmb3, CB_GETITEMDATA,
+                                              SendDlgItemMessageW(hDlg, cmb3, CB_GETCURSEL, 0, 0), 0);
             pagesetup_set_defaultsource(pda, source);
         }
         break;
@@ -3161,6 +3162,7 @@ PRINTDLG_PS_WMCommandA(
 	    dm = GlobalLock(pda->dlga->hDevMode);
 	    DocumentPropertiesA(hDlg, hPrinter, PrinterName, dm, dm,
 	                        DM_IN_BUFFER | DM_OUT_BUFFER | DM_IN_PROMPT);
+            GlobalUnlock(pda->dlga->hDevMode);
 	    ClosePrinter(hPrinter);
 	    /* Changing paper */
             pagesetup_update_papersize(pda);
@@ -3169,20 +3171,20 @@ PRINTDLG_PS_WMCommandA(
 	    /* Changing paper preview */
 	    PRINTDLG_PS_ChangePaperPrev(pda);
 	    /* Selecting paper in combo */
-	    count = SendDlgItemMessageA(hDlg, cmb2, CB_GETCOUNT, 0, 0);
-	    if(count != CB_ERR) {
+            count = SendDlgItemMessageW(hDlg, cmb2, CB_GETCOUNT, 0, 0);
+            if(count != CB_ERR)
+            {
                 WORD paperword = pagesetup_get_papersize(pda);
-                for(i=0; i<count; ++i){
-		    if(SendDlgItemMessageA(hDlg, cmb2, CB_GETITEMDATA, i, 0) == paperword) {
-			SendDlgItemMessageA(hDlg, cmb2, CB_SETCURSEL, i, 0);
-			break;
-		    }
-		}
-	    }
-									    
-	    GlobalUnlock(pda->dlga->hDevMode);
-	    break;
-	}       
+                for(i = 0; i < count; i++)
+                {
+                    if(SendDlgItemMessageW(hDlg, cmb2, CB_GETITEMDATA, i, 0) == paperword) {
+                        SendDlgItemMessageW(hDlg, cmb2, CB_SETCURSEL, i, 0);
+                        break;
+                    }
+                }
+            }
+            break;
+       }
     case edt4:
     case edt5:
     case edt6:
