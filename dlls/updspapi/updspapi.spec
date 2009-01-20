@@ -63,7 +63,7 @@
 @ stdcall UpdSpScanFileQueueW(long long long ptr ptr ptr) setupapi.SetupScanFileQueueW
 @ stdcall UpdSpSetDirectoryIdA(long long str) setupapi.SetupSetDirectoryIdA
 @ stdcall UpdSpSetDirectoryIdW(long long wstr) setupapi.SetupSetDirectoryIdW
-@ stub UpdSpSetDynamicStringA
+@ stdcall UpdSpSetDynamicStringA(ptr str str)
 @ stub UpdSpSetDynamicStringExA
 @ stub UpdSpSetDynamicStringExW
 @ stub UpdSpSetDynamicStringW
