@@ -328,6 +328,8 @@ static BOOL CALLBACK EnumJoysticks(
         DIEFFECT eff;
         LPDIRECTINPUTEFFECT effect = NULL;
         LONG cnt1, cnt2;
+        HWND real_hWnd;
+        HINSTANCE hInstance = GetModuleHandle(NULL);
 
         trace("Testing force-feedback\n");
         memset(&eff, 0, sizeof(eff));
@@ -342,6 +344,25 @@ static BOOL CALLBACK EnumJoysticks(
         eff.cbTypeSpecificParams  = sizeof(force);
         eff.lpvTypeSpecificParams = &force;
 
+        /* Sending effects to joystick requires
+         * calling IDirectInputEffect_Initialize, which requires
+         * having exclusive access to the device, which requires
+         * - not having acquired the joystick when calling
+         *   IDirectInputDevice_SetCooperativeLevel
+         * - a visible window
+         */
+        real_hWnd = CreateWindowEx(0, "EDIT", "Test text", 0, 10, 10, 300,
+                                   300, NULL, NULL, hInstance, NULL);
+        ok(real_hWnd!=0,"CreateWindowEx failed: %p\n", real_hWnd);
+        ShowWindow(real_hWnd, SW_SHOW);
+        hr = IDirectInputDevice_Unacquire(pJoystick);
+        ok(hr==DI_OK,"IDirectInputDevice_Unacquire() failed: %08x\n", hr);
+        hr = IDirectInputDevice_SetCooperativeLevel(pJoystick, real_hWnd,
+                                                    DISCL_EXCLUSIVE | DISCL_FOREGROUND);
+        ok(hr==DI_OK,"IDirectInputDevice_SetCooperativeLevel() failed: %08x\n", hr);
+        hr = IDirectInputDevice_Acquire(pJoystick);
+        ok(hr==DI_OK,"IDirectInputDevice_Acquire() failed: %08x\n", hr);
+
         cnt1 = get_refcount((IUnknown*)pJoystick);
 
         hr = IDirectInputDevice2_CreateEffect((LPDIRECTINPUTDEVICE2)pJoystick, &GUID_ConstantForce,
@@ -352,11 +373,38 @@ static BOOL CALLBACK EnumJoysticks(
 
         if (effect)
         {
+            hr = IDirectInputEffect_Initialize(effect, hInstance, DIRECTINPUT_VERSION,
+                                               &GUID_ConstantForce);
+            ok(hr==DI_OK,"IDirectInputEffect_Initialize failed: %08x\n", hr);
+            hr = IDirectInputEffect_SetParameters(effect, &eff, DIEP_AXES | DIEP_DIRECTION |
+                                                  DIEP_TYPESPECIFICPARAMS);
+            ok(hr==DI_OK,"IDirectInputEffect_SetParameters failed: %08x\n", hr);
+            if (hr==DI_OK) {
+                /* Test that upload, unacquire, acquire still permits updating
+                 * uploaded effect. */
+                hr = IDirectInputDevice_Unacquire(pJoystick);
+                ok(hr==DI_OK,"IDirectInputDevice_Unacquire() failed: %08x\n", hr);
+                hr = IDirectInputDevice_Acquire(pJoystick);
+                ok(hr==DI_OK,"IDirectInputDevice_Acquire() failed: %08x\n", hr);
+                hr = IDirectInputEffect_SetParameters(effect, &eff, DIEP_GAIN);
+                todo_wine ok(hr==DI_OK,"IDirectInputEffect_SetParameters failed: %08x\n", hr);
+            }
             ref = IUnknown_Release(effect);
             ok(ref == 0, "IDirectInputDevice_Release() reference count = %d\n", ref);
         }
         cnt1 = get_refcount((IUnknown*)pJoystick);
         ok(cnt1 == cnt2, "Ref count is wrong %d != %d\n", cnt1, cnt2);
+
+        /* Before destroying the window, release joystick to revert to
+         * non-exclusive, background cooperative level. */
+        hr = IDirectInputDevice_Unacquire(pJoystick);
+        ok(hr==DI_OK,"IDirectInputDevice_Unacquire() failed: %08x\n", hr);
+        hr = IDirectInputDevice_SetCooperativeLevel(pJoystick, hWnd,
+                                                    DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
+        ok(hr==DI_OK,"IDirectInputDevice_SetCooperativeLevel() failed: %08x\n", hr);
+        DestroyWindow (real_hWnd);
+        hr = IDirectInputDevice_Acquire(pJoystick);
+        ok(hr==DI_OK,"IDirectInputDevice_Acquire() failed: %08x\n", hr);
     }
 
     if (winetest_interactive) {
