@@ -458,8 +458,32 @@ static HRESULT WINAPI HTMLDocument3_getElementsByTagName(IHTMLDocument3 *iface, 
                                                          IHTMLElementCollection **pelColl)
 {
     HTMLDocument *This = HTMLDOC3_THIS(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(v), pelColl);
-    return E_NOTIMPL;
+    nsIDOMNodeList *nslist;
+    nsAString id_str, ns_str;
+    nsresult nsres;
+    static const WCHAR str[] = {'*',0};
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(v), pelColl);
+
+    if(!This->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
+    }
+
+    nsAString_Init(&id_str, v);
+    nsAString_Init(&ns_str, str);
+    nsres = nsIDOMHTMLDocument_GetElementsByTagNameNS(This->nsdoc, &ns_str, &id_str, &nslist);
+    nsAString_Finish(&id_str);
+    nsAString_Finish(&ns_str);
+    if(FAILED(nsres)) {
+        ERR("GetElementByName failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *pelColl = (IHTMLElementCollection*)create_collection_from_nodelist(This, (IUnknown*)HTMLDOC3(This), nslist);
+    nsIDOMNodeList_Release(nslist);
+
+    return S_OK;
 }
 
 #undef HTMLDOC3_THIS

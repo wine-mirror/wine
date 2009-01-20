@@ -3418,6 +3418,8 @@ static void test_elems(IHTMLDocument2 *doc)
     long type;
     HRESULT hres;
     IHTMLElementCollection *collection;
+    IHTMLDocument3 *doc3;
+    BSTR str;
 
     static const WCHAR imgidW[] = {'i','m','g','i','d',0};
     static const WCHAR inW[] = {'i','n',0};
@@ -3804,6 +3806,23 @@ static void test_elems(IHTMLDocument2 *doc)
         }
     }
     IDispatch_Release(disp);
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3);
+    ok(hres == S_OK, "Could not get IHTMLDocument3 iface: %08x\n", hres);
+
+    str = a2bstr("img");
+    hres = IHTMLDocument3_getElementsByTagName(doc3, str, &col);
+    SysFreeString(str);
+    ok(hres == S_OK, "getElementByTag(%s) failed: %08x\n", dbgstr_w(ifrW), hres);
+    if(hres == S_OK)
+    {
+        static const elem_type_t img_types[] = { ET_IMG };
+
+        test_elem_collection((IUnknown*)col, img_types, sizeof(img_types)/sizeof(img_types[0]));
+        IHTMLElementCollection_Release(col);
+    }
+
+    IHTMLDocument3_Release(doc3);
 }
 
 static void test_create_elems(IHTMLDocument2 *doc)
