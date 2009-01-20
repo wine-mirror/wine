@@ -24025,6 +24025,14 @@ dlls/acledit/Makefile: dlls/acledit/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/acledit/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/aclui/Makefile"
+test "x$enable_aclui" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	aclui"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/aclui/Makefile: dlls/aclui/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/aclui/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/activeds/Makefile"
 test "x$enable_activeds" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	activeds"
@@ -28205,6 +28213,7 @@ do
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "dlls/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/Makefile" ;;
     "dlls/acledit/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/acledit/Makefile" ;;
+    "dlls/aclui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/aclui/Makefile" ;;
     "dlls/activeds/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/activeds/Makefile" ;;
     "dlls/actxprxy/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/actxprxy/Makefile" ;;
     "dlls/adsiid/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/adsiid/Makefile" ;;

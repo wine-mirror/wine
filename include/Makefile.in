@@ -89,6 +89,7 @@ SRCDIR_INCLUDES = \
 	$(PUBLIC_IDL_H_SRCS) \
 	accctrl.h \
 	aclapi.h \
+	aclui.h \
 	adshlp.h \
 	advpub.h \
 	appmgmt.h \

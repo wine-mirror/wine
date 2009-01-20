@@ -177,6 +177,7 @@ IMPORT_LIBS = \
 	strmiids/libstrmiids.a \
 	uuid/libuuid.a \
 	winecrt0/libwinecrt0.a \
+	aclui/libaclui.$(IMPLIBEXT) \
 	activeds/libactiveds.$(IMPLIBEXT) \
 	advapi32/libadvapi32.$(IMPLIBEXT) \
 	advpack/libadvpack.$(IMPLIBEXT) \
@@ -320,6 +321,7 @@ CROSS_IMPLIBS = \
 	libd3dx9.a \
 	libwinspool.a \
 	libxinput.a \
+	aclui/libaclui.a \
 	activeds/libactiveds.a \
 	advapi32/libadvapi32.a \
 	advpack/libadvpack.a \
@@ -464,6 +466,9 @@ implib: $(IMPORT_LIBS)
 testsubdirs: $(TESTSUBDIRS)
 
 .PHONY: implib testsubdirs
+
+aclui/libaclui.def aclui/libaclui.a: aclui/aclui.spec $(WINEBUILD)
+	@cd aclui && $(MAKE) `basename $@`
 
 activeds/libactiveds.def activeds/libactiveds.a: activeds/activeds.spec $(WINEBUILD)
 	@cd activeds && $(MAKE) `basename $@`
