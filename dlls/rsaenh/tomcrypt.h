@@ -235,38 +235,19 @@ typedef int ltm_prime_callback(unsigned char *dst, int len, void *dat);
 /* error code to char* string */
 char *mp_error_to_string(int code);
 
-/* ---> init and deinit bignum functions <--- */
-/* init a bignum */
-int mp_init(mp_int *a);
-
-/* free a bignum */
-void mp_clear(mp_int *a);
-
 /* init a null terminated series of arguments */
 int mp_init_multi(mp_int *mp, ...);
 
 /* clear a null terminated series of arguments */
 void mp_clear_multi(mp_int *mp, ...);
 
-/* exchange two ints */
-void mp_exch(mp_int *a, mp_int *b);
-
 /* shrink ram required for a bignum */
 int mp_shrink(mp_int *a);
-
-/* grow an int to a given size */
-int mp_grow(mp_int *a, int size);
-
-/* init to a given number of digits */
-int mp_init_size(mp_int *a, int size);
 
 /* ---> Basic Manipulations <--- */
 #define mp_iszero(a) (((a)->used == 0) ? MP_YES : MP_NO)
 #define mp_iseven(a) (((a)->used > 0 && (((a)->dp[0] & 1) == 0)) ? MP_YES : MP_NO)
 #define mp_isodd(a)  (((a)->used > 0 && (((a)->dp[0] & 1) == 1)) ? MP_YES : MP_NO)
-
-/* set to zero */
-void mp_zero(mp_int *a);
 
 /* set to a digit */
 void mp_set(mp_int *a, mp_digit b);

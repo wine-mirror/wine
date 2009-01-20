@@ -52,6 +52,42 @@ static int mp_invmod_slow (const mp_int * a, mp_int * b, mp_int * c);
 static int mp_karatsuba_mul(const mp_int *a, const mp_int *b, mp_int *c);
 static int mp_karatsuba_sqr(const mp_int *a, mp_int *b);
 
+/* grow as required */
+static int mp_grow (mp_int * a, int size)
+{
+  int     i;
+  mp_digit *tmp;
+
+  /* if the alloc size is smaller alloc more ram */
+  if (a->alloc < size) {
+    /* ensure there are always at least MP_PREC digits extra on top */
+    size += (MP_PREC * 2) - (size % MP_PREC);
+
+    /* reallocate the array a->dp
+     *
+     * We store the return in a temporary variable
+     * in case the operation failed we don't want
+     * to overwrite the dp member of a.
+     */
+    tmp = realloc (a->dp, sizeof (mp_digit) * size);
+    if (tmp == NULL) {
+      /* reallocation failed but "a" is still valid [can be freed] */
+      return MP_MEM;
+    }
+
+    /* reallocation succeeded so set a->dp */
+    a->dp = tmp;
+
+    /* zero excess digits */
+    i        = a->alloc;
+    a->alloc = size;
+    for (; i < a->alloc; i++) {
+      a->dp[i] = 0;
+    }
+  }
+  return MP_OKAY;
+}
+
 /* b = a/2 */
 static int mp_div_2(const mp_int * a, mp_int * b)
 {
@@ -97,6 +133,103 @@ static int mp_div_2(const mp_int * a, mp_int * b)
   b->sign = a->sign;
   mp_clamp (b);
   return MP_OKAY;
+}
+
+/* swap the elements of two integers, for cases where you can't simply swap the
+ * mp_int pointers around
+ */
+static void
+mp_exch (mp_int * a, mp_int * b)
+{
+  mp_int  t;
+
+  t  = *a;
+  *a = *b;
+  *b = t;
+}
+
+/* init a new mp_int */
+static int mp_init (mp_int * a)
+{
+  int i;
+
+  /* allocate memory required and clear it */
+  a->dp = malloc (sizeof (mp_digit) * MP_PREC);
+  if (a->dp == NULL) {
+    return MP_MEM;
+  }
+
+  /* set the digits to zero */
+  for (i = 0; i < MP_PREC; i++) {
+      a->dp[i] = 0;
+  }
+
+  /* set the used to zero, allocated digits to the default precision
+   * and sign to positive */
+  a->used  = 0;
+  a->alloc = MP_PREC;
+  a->sign  = MP_ZPOS;
+
+  return MP_OKAY;
+}
+
+/* init an mp_init for a given size */
+static int mp_init_size (mp_int * a, int size)
+{
+  int x;
+
+  /* pad size so there are always extra digits */
+  size += (MP_PREC * 2) - (size % MP_PREC);
+
+  /* alloc mem */
+  a->dp = malloc (sizeof (mp_digit) * size);
+  if (a->dp == NULL) {
+    return MP_MEM;
+  }
+
+  /* set the members */
+  a->used  = 0;
+  a->alloc = size;
+  a->sign  = MP_ZPOS;
+
+  /* zero the digits */
+  for (x = 0; x < size; x++) {
+      a->dp[x] = 0;
+  }
+
+  return MP_OKAY;
+}
+
+/* clear one (frees)  */
+static void
+mp_clear (mp_int * a)
+{
+  int i;
+
+  /* only do anything if a hasn't been freed previously */
+  if (a->dp != NULL) {
+    /* first zero the digits */
+    for (i = 0; i < a->used; i++) {
+        a->dp[i] = 0;
+    }
+
+    /* free ram */
+    free(a->dp);
+
+    /* reset members to make debugging easier */
+    a->dp    = NULL;
+    a->alloc = a->used = 0;
+    a->sign  = MP_ZPOS;
+  }
+}
+
+/* set to zero */
+static void
+mp_zero (mp_int * a)
+{
+  a->sign = MP_ZPOS;
+  a->used = 0;
+  memset (a->dp, 0, sizeof (mp_digit) * a->alloc);
 }
 
 /* computes the modular inverse via binary extended euclidean algorithm, 
@@ -846,30 +979,6 @@ mp_clamp (mp_int * a)
   }
 }
 
-/* clear one (frees)  */
-void
-mp_clear (mp_int * a)
-{
-  int i;
-
-  /* only do anything if a hasn't been freed previously */
-  if (a->dp != NULL) {
-    /* first zero the digits */
-    for (i = 0; i < a->used; i++) {
-        a->dp[i] = 0;
-    }
-
-    /* free ram */
-    free(a->dp);
-
-    /* reset members to make debugging easier */
-    a->dp    = NULL;
-    a->alloc = a->used = 0;
-    a->sign  = MP_ZPOS;
-  }
-}
-
-
 void mp_clear_multi(mp_int *mp, ...) 
 {
     mp_int* next_mp = mp;
@@ -1499,19 +1608,6 @@ static void mp_dr_setup(const mp_int *a, mp_digit *d)
         ((mp_word)a->dp[0]));
 }
 
-/* swap the elements of two integers, for cases where you can't simply swap the 
- * mp_int pointers around
- */
-void
-mp_exch (mp_int * a, mp_int * b)
-{
-  mp_int  t;
-
-  t  = *a;
-  *a = *b;
-  *b = t;
-}
-
 /* this is a shell function that calls either the normal or Montgomery
  * exptmod functions.  Originally the call to the montgomery code was
  * embedded in the normal function but that wasted a lot of stack space
@@ -1943,67 +2039,6 @@ unsigned long mp_get_int(const mp_int * a)
   return res & 0xFFFFFFFFUL;
 }
 
-/* grow as required */
-int mp_grow (mp_int * a, int size)
-{
-  int     i;
-  mp_digit *tmp;
-
-  /* if the alloc size is smaller alloc more ram */
-  if (a->alloc < size) {
-    /* ensure there are always at least MP_PREC digits extra on top */
-    size += (MP_PREC * 2) - (size % MP_PREC);
-
-    /* reallocate the array a->dp
-     *
-     * We store the return in a temporary variable
-     * in case the operation failed we don't want
-     * to overwrite the dp member of a.
-     */
-    tmp = realloc (a->dp, sizeof (mp_digit) * size);
-    if (tmp == NULL) {
-      /* reallocation failed but "a" is still valid [can be freed] */
-      return MP_MEM;
-    }
-
-    /* reallocation succeeded so set a->dp */
-    a->dp = tmp;
-
-    /* zero excess digits */
-    i        = a->alloc;
-    a->alloc = size;
-    for (; i < a->alloc; i++) {
-      a->dp[i] = 0;
-    }
-  }
-  return MP_OKAY;
-}
-
-/* init a new mp_int */
-int mp_init (mp_int * a)
-{
-  int i;
-
-  /* allocate memory required and clear it */
-  a->dp = malloc (sizeof (mp_digit) * MP_PREC);
-  if (a->dp == NULL) {
-    return MP_MEM;
-  }
-
-  /* set the digits to zero */
-  for (i = 0; i < MP_PREC; i++) {
-      a->dp[i] = 0;
-  }
-
-  /* set the used to zero, allocated digits to the default precision
-   * and sign to positive */
-  a->used  = 0;
-  a->alloc = MP_PREC;
-  a->sign  = MP_ZPOS;
-
-  return MP_OKAY;
-}
-
 /* creates "a" then copies b into it */
 int mp_init_copy (mp_int * a, const mp_int * b)
 {
@@ -2049,33 +2084,6 @@ int mp_init_multi(mp_int *mp, ...)
     }
     va_end(args);
     return res;                /* Assumed ok, if error flagged above. */
-}
-
-/* init an mp_init for a given size */
-int mp_init_size (mp_int * a, int size)
-{
-  int x;
-
-  /* pad size so there are always extra digits */
-  size += (MP_PREC * 2) - (size % MP_PREC);    
-  
-  /* alloc mem */
-  a->dp = malloc (sizeof (mp_digit) * size);
-  if (a->dp == NULL) {
-    return MP_MEM;
-  }
-
-  /* set the members */
-  a->used  = 0;
-  a->alloc = size;
-  a->sign  = MP_ZPOS;
-
-  /* zero the digits */
-  for (x = 0; x < size; x++) {
-      a->dp[x] = 0;
-  }
-
-  return MP_OKAY;
 }
 
 /* hac 14.61, pp608 */
@@ -3848,15 +3856,6 @@ mp_unsigned_bin_size (const mp_int * a)
 {
   int     size = mp_count_bits (a);
   return (size / 8 + ((size & 7) != 0 ? 1 : 0));
-}
-
-/* set to zero */
-void
-mp_zero (mp_int * a)
-{
-  a->sign = MP_ZPOS;
-  a->used = 0;
-  memset (a->dp, 0, sizeof (mp_digit) * a->alloc);
 }
 
 /* reverse an array, used for radix code */
