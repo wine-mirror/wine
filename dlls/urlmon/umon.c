@@ -1252,6 +1252,17 @@ HRESULT WINAPI URLDownloadToCacheFileW(LPUNKNOWN lpUnkCaller, LPCWSTR szURL, LPW
 }
 
 /***********************************************************************
+ *           HlinkSimpleNavigateToMoniker (URLMON.@)
+ */
+HRESULT WINAPI HlinkSimpleNavigateToMoniker(IMoniker *pmkTarget,
+    LPCWSTR szLocation, LPCWSTR szTargetFrameName, IUnknown *pUnk,
+    IBindCtx *pbc, IBindStatusCallback *pbsc, DWORD grfHLNF, DWORD dwReserved)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
  *           HlinkSimpleNavigateToString (URLMON.@)
  */
 HRESULT WINAPI HlinkSimpleNavigateToString( LPCWSTR szTarget,
