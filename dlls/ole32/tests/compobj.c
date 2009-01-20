@@ -89,7 +89,7 @@ static HRESULT WINAPI Test_IClassFactory_QueryInterface(
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IClassFactory))
     {
-        *ppvObj = (LPVOID)iface;
+        *ppvObj = iface;
         IClassFactory_AddRef(iface);
         return S_OK;
     }
@@ -287,7 +287,7 @@ static HRESULT WINAPI MessageFilter_QueryInterface(IMessageFilter *iface, REFIID
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IClassFactory))
     {
-        *ppvObj = (LPVOID)iface;
+        *ppvObj = iface;
         IMessageFilter_AddRef(iface);
         return S_OK;
     }
@@ -398,7 +398,7 @@ static HRESULT WINAPI Test_IUnknown_QueryInterface(
     if (IsEqualIID(riid, &IID_IUnknown) ||
         IsEqualIID(riid, &IID_IWineTest))
     {
-        *ppvObj = (LPVOID)iface;
+        *ppvObj = iface;
         IUnknown_AddRef(iface);
         return S_OK;
     }
@@ -513,7 +513,7 @@ static void test_CoRegisterPSClsid(void)
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok_ole_success(hr, "CreateStreamOnHGlobal");
 
-    hr = CoMarshalInterface(stream, &IID_IWineTest, (IUnknown *)&Test_Unknown, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    hr = CoMarshalInterface(stream, &IID_IWineTest, &Test_Unknown, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
     ok(hr == E_NOTIMPL, "CoMarshalInterface should have returned E_NOTIMPL instead of 0x%08x\n", hr);
     IStream_Release(stream);
 

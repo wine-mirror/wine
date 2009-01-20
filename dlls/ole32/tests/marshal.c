@@ -114,7 +114,7 @@ static HRESULT WINAPI Test_IUnknown_QueryInterface(
 
     if (IsEqualGUID(riid, &IID_IUnknown))
     {
-        *ppvObj = (LPVOID)iface;
+        *ppvObj = iface;
         IUnknown_AddRef(iface);
         return S_OK;
     }
@@ -157,7 +157,7 @@ static HRESULT WINAPI Test_IClassFactory_QueryInterface(
         /* the only other interface Wine is currently able to marshal (for testing two proxies) */
         IsEqualGUID(riid, &IID_IRemUnknown))
     {
-        *ppvObj = (LPVOID)iface;
+        *ppvObj = iface;
         IClassFactory_AddRef(iface);
         return S_OK;
     }
@@ -220,7 +220,7 @@ struct host_object_data
 
 static DWORD CALLBACK host_object_proc(LPVOID p)
 {
-    struct host_object_data *data = (struct host_object_data *)p;
+    struct host_object_data *data = p;
     HRESULT hr;
     MSG msg;
 
@@ -833,7 +833,7 @@ struct ncu_params
 /* helper for test_no_couninitialize_server */
 static DWORD CALLBACK no_couninitialize_server_proc(LPVOID p)
 {
-    struct ncu_params *ncu_params = (struct ncu_params *)p;
+    struct ncu_params *ncu_params = p;
     HRESULT hr;
 
     pCoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -899,7 +899,7 @@ static void test_no_couninitialize_server(void)
 /* STA -> STA call during DLL_THREAD_DETACH */
 static DWORD CALLBACK no_couninitialize_client_proc(LPVOID p)
 {
-    struct ncu_params *ncu_params = (struct ncu_params *)p;
+    struct ncu_params *ncu_params = p;
     HRESULT hr;
     IUnknown *pProxy = NULL;
 
@@ -1370,7 +1370,7 @@ static void test_hresult_marshaling(void)
 /* helper for test_proxy_used_in_wrong_thread */
 static DWORD CALLBACK bad_thread_proc(LPVOID p)
 {
-    IClassFactory * cf = (IClassFactory *)p;
+    IClassFactory * cf = p;
     HRESULT hr;
     IUnknown * proxy = NULL;
 
@@ -1447,7 +1447,7 @@ static void test_proxy_used_in_wrong_thread(void)
     IClassFactory_QueryInterface(pProxy, &IID_IStream, (LPVOID *)&pStream);
 
     /* create a thread that we can misbehave in */
-    thread = CreateThread(NULL, 0, bad_thread_proc, (LPVOID)pProxy, 0, &tid2);
+    thread = CreateThread(NULL, 0, bad_thread_proc, pProxy, 0, &tid2);
 
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
@@ -1468,7 +1468,7 @@ static HRESULT WINAPI MessageFilter_QueryInterface(IMessageFilter *iface, REFIID
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IClassFactory))
     {
-        *ppvObj = (LPVOID)iface;
+        *ppvObj = iface;
         IClassFactory_AddRef(iface);
         return S_OK;
     }
@@ -1679,7 +1679,7 @@ static HRESULT WINAPI HeapUnknown_QueryInterface(IUnknown *iface, REFIID riid, v
     if (IsEqualIID(riid, &IID_IUnknown))
     {
         IUnknown_AddRef(iface);
-        *ppv = (LPVOID)iface;
+        *ppv = iface;
         return S_OK;
     }
     *ppv = NULL;
@@ -2105,7 +2105,7 @@ static void test_freethreadedmarshaler(void)
     /* inproc normal marshaling */
 
     hr = IMarshal_MarshalInterface(pFTMarshal, pStream, &IID_IClassFactory,
-        (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+        &Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
     ok_ole_success(hr, IMarshal_MarshalInterface);
 
     ok_more_than_one_lock();
@@ -2127,7 +2127,7 @@ static void test_freethreadedmarshaler(void)
     /* local normal marshaling */
 
     IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
-    hr = IMarshal_MarshalInterface(pFTMarshal, pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_LOCAL, NULL, MSHLFLAGS_NORMAL);
+    hr = IMarshal_MarshalInterface(pFTMarshal, pStream, &IID_IClassFactory, &Test_ClassFactory, MSHCTX_LOCAL, NULL, MSHLFLAGS_NORMAL);
     ok_ole_success(hr, IMarshal_MarshalInterface);
 
     ok_more_than_one_lock();
@@ -2193,7 +2193,7 @@ static void test_freethreadedmarshaler(void)
 
     IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
     hr = IMarshal_MarshalInterface(pFTMarshal, pStream, &IID_IClassFactory,
-        (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+        &Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
     ok_ole_success(hr, IMarshal_MarshalInterface);
 
     ok_more_than_one_lock();
@@ -2277,7 +2277,7 @@ static HRESULT WINAPI Test_SMI_QueryInterface(
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IStdMarshalInfo))
     {
-        *ppvObj = (LPVOID)iface;
+        *ppvObj = iface;
         IClassFactory_AddRef(iface);
         return S_OK;
     }
@@ -2437,7 +2437,7 @@ static void test_client_security(void)
 
     CoTaskMemFree(pServerPrincName);
 
-    hr = IClientSecurity_QueryBlanket(pCliSec, (IUnknown *)pUnknown1, &dwAuthnSvc, &dwAuthzSvc, &pServerPrincName, &dwAuthnLevel, &dwImpLevel, &pAuthInfo, &dwCapabilities);
+    hr = IClientSecurity_QueryBlanket(pCliSec, pUnknown1, &dwAuthnSvc, &dwAuthzSvc, &pServerPrincName, &dwAuthnLevel, &dwImpLevel, &pAuthInfo, &dwCapabilities);
     todo_wine ok_ole_success(hr, "IClientSecurity_QueryBlanket(IUnknown)");
 
     CoTaskMemFree(pServerPrincName);
@@ -2479,7 +2479,7 @@ static HRESULT WINAPI TestOOP_IClassFactory_QueryInterface(
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IClassFactory))
     {
-        *ppvObj = (LPVOID)iface;
+        *ppvObj = iface;
         IClassFactory_AddRef(iface);
         return S_OK;
     }
@@ -2694,7 +2694,7 @@ struct git_params
 static DWORD CALLBACK get_global_interface_proc(LPVOID pv)
 {
 	HRESULT hr;
-	struct git_params *params = (struct git_params *)pv;
+	struct git_params *params = pv;
 	IClassFactory *cf;
 
 	hr = IGlobalInterfaceTable_GetInterfaceFromGlobal(params->git, params->cookie, &IID_IClassFactory, (void **)&cf);

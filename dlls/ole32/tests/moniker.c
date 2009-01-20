@@ -92,7 +92,7 @@ static HRESULT WINAPI Test_IClassFactory_QueryInterface(
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IClassFactory))
     {
-        *ppvObj = (LPVOID)iface;
+        *ppvObj = iface;
         IClassFactory_AddRef(iface);
         return S_OK;
     }
@@ -151,7 +151,7 @@ static HRESULT WINAPI HeapUnknown_QueryInterface(IUnknown *iface, REFIID riid, v
     if (IsEqualIID(riid, &IID_IUnknown))
     {
         IUnknown_AddRef(iface);
-        *ppv = (LPVOID)iface;
+        *ppv = iface;
         return S_OK;
     }
     *ppv = NULL;
