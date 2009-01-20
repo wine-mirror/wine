@@ -6490,13 +6490,13 @@ static void shademode_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with %08x\n", hr);
 
-    hr = IDirect3DVertexBuffer9_Lock(vb_strip, 0, sizeof(quad_strip), (void **) &data, 0);
+    hr = IDirect3DVertexBuffer9_Lock(vb_strip, 0, sizeof(quad_strip), &data, 0);
     ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %08x\n", hr);
     memcpy(data, quad_strip, sizeof(quad_strip));
     hr = IDirect3DVertexBuffer9_Unlock(vb_strip);
     ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Unlock failed with %08x\n", hr);
 
-    hr = IDirect3DVertexBuffer9_Lock(vb_list, 0, sizeof(quad_list), (void **) &data, 0);
+    hr = IDirect3DVertexBuffer9_Lock(vb_list, 0, sizeof(quad_list), &data, 0);
     ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %08x\n", hr);
     memcpy(data, quad_list, sizeof(quad_list));
     hr = IDirect3DVertexBuffer9_Unlock(vb_list);
@@ -7087,7 +7087,7 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed (%08x)\n", hr);
     if(SUCCEEDED(hr)) {
         if(dcl_color) {
-            hr = IDirect3DVertexBuffer9_Lock(vb, 0, sizeof(quad1), (void **) &data, 0);
+            hr = IDirect3DVertexBuffer9_Lock(vb, 0, sizeof(quad1), &data, 0);
             ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %08x\n", hr);
             memcpy(data, quad1, sizeof(quad1));
             hr = IDirect3DVertexBuffer9_Unlock(vb);
@@ -7101,7 +7101,7 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
         }
 
         if(dcl_ubyte) {
-            hr = IDirect3DVertexBuffer9_Lock(vb, 0, sizeof(quad2), (void **) &data, 0);
+            hr = IDirect3DVertexBuffer9_Lock(vb, 0, sizeof(quad2), &data, 0);
             ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %08x\n", hr);
             memcpy(data, quad2, sizeof(quad2));
             hr = IDirect3DVertexBuffer9_Unlock(vb);
@@ -7117,7 +7117,7 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
         }
 
         if(dcl_short) {
-            hr = IDirect3DVertexBuffer9_Lock(vb, 0, sizeof(quad3), (void **) &data, 0);
+            hr = IDirect3DVertexBuffer9_Lock(vb, 0, sizeof(quad3), &data, 0);
             ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %08x\n", hr);
             memcpy(data, quad3, sizeof(quad3));
             hr = IDirect3DVertexBuffer9_Unlock(vb);
@@ -7133,7 +7133,7 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
         }
 
         if(dcl_float) {
-            hr = IDirect3DVertexBuffer9_Lock(vb, 0, sizeof(quad4), (void **) &data, 0);
+            hr = IDirect3DVertexBuffer9_Lock(vb, 0, sizeof(quad4), &data, 0);
             ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %08x\n", hr);
             memcpy(data, quad4, sizeof(quad4));
             hr = IDirect3DVertexBuffer9_Unlock(vb);
@@ -7182,7 +7182,7 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
 
-    hr = IDirect3DVertexBuffer9_Lock(vb, 0, sizeof(quad_transformed), (void **) &data, 0);
+    hr = IDirect3DVertexBuffer9_Lock(vb, 0, sizeof(quad_transformed), &data, 0);
     ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %08x\n", hr);
     memcpy(data, quad_transformed, sizeof(quad_transformed));
     hr = IDirect3DVertexBuffer9_Unlock(vb);
@@ -7262,7 +7262,7 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
         goto out;
     }
 
-    hr = IDirect3DVertexBuffer9_Lock(vb, 0, sizeof(quads), (void **) &data, 0);
+    hr = IDirect3DVertexBuffer9_Lock(vb, 0, sizeof(quads), &data, 0);
     ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %08x\n", hr);
     memcpy(data, quads, sizeof(quads));
     hr = IDirect3DVertexBuffer9_Unlock(vb);
@@ -7270,7 +7270,7 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(colors),
                                              0, 0, D3DPOOL_MANAGED, &vb2, NULL);
     ok(hr == D3D_OK, "CreateVertexBuffer failed with %08x\n", hr);
-    hr = IDirect3DVertexBuffer9_Lock(vb2, 0, sizeof(colors), (void **) &data, 0);
+    hr = IDirect3DVertexBuffer9_Lock(vb2, 0, sizeof(colors), &data, 0);
     ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %08x\n", hr);
     memcpy(data, colors, sizeof(colors));
     hr = IDirect3DVertexBuffer9_Unlock(vb2);
@@ -7455,7 +7455,7 @@ static void test_vshader_float16(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(quad), 0, 0,
                                              D3DPOOL_MANAGED, &buffer, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexBuffer failed, hr=%08x\n", hr);
-    hr = IDirect3DVertexBuffer9_Lock(buffer, 0, sizeof(quad), (void **) &data, 0);
+    hr = IDirect3DVertexBuffer9_Lock(buffer, 0, sizeof(quad), &data, 0);
     ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed, hr=%08x\n", hr);
     memcpy(data, quad, sizeof(quad));
     hr = IDirect3DVertexBuffer9_Unlock(buffer);

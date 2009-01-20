@@ -265,7 +265,7 @@ static BOOL     WINAPI  IDirect3DDevice9Impl_ShowCursor(LPDIRECT3DDEVICE9EX ifac
 }
 
 static HRESULT WINAPI reset_enum_callback(IWineD3DResource *resource, void *data) {
-    BOOL *resources_ok = (BOOL *) data;
+    BOOL *resources_ok = data;
     WINED3DRESOURCETYPE type;
     HRESULT ret = S_OK;
     WINED3DSURFACE_DESC surface_desc;

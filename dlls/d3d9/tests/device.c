@@ -1770,7 +1770,7 @@ static void test_vertex_buffer_alignment(void)
             }
             if(FAILED(hr)) continue;
 
-            hr = IDirect3DVertexBuffer9_Lock(buffer, 0, 0, (void **) &data, 0);
+            hr = IDirect3DVertexBuffer9_Lock(buffer, 0, 0, &data, 0);
             ok(SUCCEEDED(hr), "IDirect3DVertexBuffer9_Lock failed (0x%08x)\n", hr);
             ok(((DWORD_PTR) data & 31) == 0, "Vertex buffer start address is not 32 byte aligned(size: %d, pool: %s, data: %p)\n",
                sizes[i], debug_d3dpool(pools[j]), data);
