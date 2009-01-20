@@ -76,6 +76,7 @@ DEFINE_EXPECT(ReportProgress_COOKIE_SENT);
 DEFINE_EXPECT(ReportProgress_REDIRECTING);
 DEFINE_EXPECT(ReportProgress_ENCODING);
 DEFINE_EXPECT(ReportProgress_ACCEPTRANGES);
+DEFINE_EXPECT(ReportProgress_PROXYDETECTING);
 DEFINE_EXPECT(ReportData);
 DEFINE_EXPECT(ReportResult);
 DEFINE_EXPECT(GetBindString_ACCEPT_MIMES);
@@ -356,8 +357,9 @@ static HRESULT WINAPI ProtocolSink_Switch(IInternetProtocolSink *iface, PROTOCOL
 
     if (!state) {
         if (http_is_first) {
-            CHECK_CALLED(ReportProgress_FINDINGRESOURCE);
-            CHECK_CALLED(ReportProgress_CONNECTING);
+            CLEAR_CALLED(ReportProgress_FINDINGRESOURCE);
+            CLEAR_CALLED(ReportProgress_CONNECTING);
+            CLEAR_CALLED(ReportProgress_PROXYDETECTING);
         } else todo_wine {
             CHECK_NOT_CALLED(ReportProgress_FINDINGRESOURCE);
             /* IE7 does call this */
@@ -398,9 +400,6 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
     static const WCHAR null_guid[] = {'{','0','0','0','0','0','0','0','0','-','0','0','0','0','-',
         '0','0','0','0','-','0','0','0','0','-','0','0','0','0','0','0','0','0','0','0','0','0','}',0};
     static const WCHAR text_plain[] = {'t','e','x','t','/','p','l','a','i','n',0};
-    static const WCHAR wszCrossoverIP[] =
-        {'2','0','9','.','4','6','.','2','5','.','1','3','2',0};
-    /* I'm not sure if it's a good idea to hardcode here the IP address... */
 
     switch(ulStatusCode) {
     case BINDSTATUS_MIMETYPEAVAILABLE:
@@ -446,23 +445,10 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
     case BINDSTATUS_FINDINGRESOURCE:
         CHECK_EXPECT(ReportProgress_FINDINGRESOURCE);
         ok(szStatusText != NULL, "szStatusText == NULL\n");
-        if(szStatusText)
-        {
-            if(tested_protocol == HTTPS_TEST)
-                ok(!strcmp_wa(szStatusText, "www.codeweavers.com"), "szStatustext = %s\n", debugstr_w(szStatusText));
-            else if(!http_post_test)
-                ok(!strcmp_wa(szStatusText, "www.winehq.org"), "szStatustext != \"www.winehq.org\"\n");
-            else
-                ok(!strcmp_wa(szStatusText, "crossover.codeweavers.com"),
-                   "szStatustext != \"crossover.codeweavers.com\"\n");
-        }
         break;
     case BINDSTATUS_CONNECTING:
         CHECK_EXPECT(ReportProgress_CONNECTING);
         ok(szStatusText != NULL, "szStatusText == NULL\n");
-        if(szStatusText)
-            ok(!lstrcmpW(szStatusText, http_post_test || tested_protocol == HTTPS_TEST ? wszCrossoverIP : winehq_ipW),
-               "Unexpected szStatusText %s\n", debugstr_w(szStatusText));
         break;
     case BINDSTATUS_SENDINGREQUEST:
         CHECK_EXPECT(ReportProgress_SENDINGREQUEST);
@@ -499,6 +485,11 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         CHECK_EXPECT(ReportProgress_ACCEPTRANGES);
         ok(!szStatusText, "szStatusText = %s\n", debugstr_w(szStatusText));
         break;
+    case BINDSTATUS_PROXYDETECTING:
+        CHECK_EXPECT(ReportProgress_PROXYDETECTING);
+        SET_EXPECT(ReportProgress_CONNECTING);
+        ok(!szStatusText, "szStatusText = %s\n", debugstr_w(szStatusText));
+        break;
     default:
         ok(0, "Unexpected status %d\n", ulStatusCode);
     };
@@ -518,7 +509,7 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
         ok(grfBSCF == (BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION),
                 "grcfBSCF = %08x\n", grfBSCF);
     }else if(!binding_test && (tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST)) {
-        if(!(grfBSCF & BSCF_LASTDATANOTIFICATION))
+        if(!(grfBSCF & BSCF_LASTDATANOTIFICATION) || (grfBSCF & BSCF_DATAFULLYAVAILABLE))
             CHECK_EXPECT(ReportData);
         else if (http_post_test)
             ok(ulProgress == 13, "Read %u bytes instead of 13\n", ulProgress);
@@ -526,11 +517,14 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
         ok(ulProgress, "ulProgress == 0\n");
 
         if(first_data_notif) {
-            ok(grfBSCF == BSCF_FIRSTDATANOTIFICATION, "grcfBSCF = %08x\n", grfBSCF);
+            ok(grfBSCF == BSCF_FIRSTDATANOTIFICATION
+               || grfBSCF == (BSCF_LASTDATANOTIFICATION|BSCF_DATAFULLYAVAILABLE),
+               "grcfBSCF = %08x\n", grfBSCF);
             first_data_notif = FALSE;
         } else {
             ok(grfBSCF == BSCF_INTERMEDIATEDATANOTIFICATION
-               || grfBSCF == (BSCF_LASTDATANOTIFICATION|BSCF_INTERMEDIATEDATANOTIFICATION),
+               || grfBSCF == (BSCF_LASTDATANOTIFICATION|BSCF_INTERMEDIATEDATANOTIFICATION)
+               || broken(grfBSCF == (BSCF_FIRSTDATANOTIFICATION|BSCF_LASTDATANOTIFICATION)),
                "grcfBSCF = %08x\n", grfBSCF);
         }
 
@@ -1605,6 +1599,9 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_https, BOOL is_first)
         SET_EXPECT(ReportProgress_FINDINGRESOURCE);
         SET_EXPECT(ReportProgress_CONNECTING);
         SET_EXPECT(ReportProgress_SENDINGREQUEST);
+        SET_EXPECT(ReportProgress_PROXYDETECTING);
+        if(! is_https)
+            SET_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
         if(!(bindf & BINDF_FROMURLMON)) {
             SET_EXPECT(OnResponse);
             SET_EXPECT(ReportProgress_RAWMIMETYPE);
