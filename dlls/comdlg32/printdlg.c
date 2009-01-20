@@ -2653,38 +2653,36 @@ static void pagesetup_release_devmode(const PageSetupDataA *pda, DEVMODEW *dm)
 
 static BOOL pagesetup_update_papersize(PageSetupDataA *pda)
 {
-    DEVNAMES *dn;
-    DEVMODEA *dm;
-    LPSTR devname, portname;
+    DEVMODEW *dm;
+    LPWSTR devname, portname;
     int i, num;
     WORD *words = NULL, paperword;
     POINT *points = NULL;
     BOOL retval = FALSE;
 
-    dn = GlobalLock(pda->dlga->hDevNames);
-    dm = GlobalLock(pda->dlga->hDevMode);
-    devname = ((char*)dn)+dn->wDeviceOffset;
-    portname = ((char*)dn)+dn->wOutputOffset;
+    dm       = pagesetup_get_devmode(pda);
+    devname  = pagesetup_get_devname(pda);
+    portname = pagesetup_get_portname(pda);
 
-    num = DeviceCapabilitiesA(devname, portname, DC_PAPERS, NULL, dm);
+    num = DeviceCapabilitiesW(devname, portname, DC_PAPERS, NULL, dm);
     if (num <= 0)
     {
-        FIXME("No papernames found for %s/%s\n", devname, portname);
+        FIXME("No papernames found for %s/%s\n", debugstr_w(devname), debugstr_w(portname));
         goto end;
     }
 
     words = HeapAlloc(GetProcessHeap(), 0, num * sizeof(WORD));
     points = HeapAlloc(GetProcessHeap(), 0, num * sizeof(POINT));
 
-    if (num != DeviceCapabilitiesA(devname, portname, DC_PAPERS, (LPSTR)words, dm))
+    if (num != DeviceCapabilitiesW(devname, portname, DC_PAPERS, (LPWSTR)words, dm))
     {
         FIXME("Number of returned words is not %d\n", num);
         goto end;
     }
 
-    if (num != DeviceCapabilitiesA(devname, portname, DC_PAPERSIZE, (LPSTR)points, dm))
+    if (num != DeviceCapabilitiesW(devname, portname, DC_PAPERSIZE, (LPWSTR)points, dm))
     {
-        FIXME("Number of returned sizes is not %d\n",num);
+        FIXME("Number of returned sizes is not %d\n", num);
         goto end;
     }
 
@@ -2715,8 +2713,10 @@ static BOOL pagesetup_update_papersize(PageSetupDataA *pda)
 end:
     HeapFree(GetProcessHeap(), 0, words);
     HeapFree(GetProcessHeap(), 0, points);
-    GlobalUnlock(pda->dlga->hDevNames);
-    GlobalUnlock(pda->dlga->hDevMode);
+    pagesetup_release_portname(pda, portname);
+    pagesetup_release_devname(pda, devname);
+    pagesetup_release_devmode(pda, dm);
+
     return retval;
 }
 
