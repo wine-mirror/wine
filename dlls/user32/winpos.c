@@ -686,17 +686,7 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
         MinMax.ptMaxTrackSize.x = GetSystemMetrics(SM_CXMAXTRACK);
         MinMax.ptMaxTrackSize.y = GetSystemMetrics(SM_CYMAXTRACK);
 
-        if (HAS_DLGFRAME( style, exstyle ))
-        {
-            xinc = GetSystemMetrics(SM_CXDLGFRAME);
-            yinc = GetSystemMetrics(SM_CYDLGFRAME);
-        }
-        else
-        {
-            xinc = yinc = 0;
-        }
-        MinMax.ptMaxSize.x += 2 * xinc;
-        MinMax.ptMaxSize.y += 2 * yinc;
+        xinc = yinc = 0;
     }
     else
     {

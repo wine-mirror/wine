@@ -5329,21 +5329,12 @@ static LRESULT WINAPI test_thick_child_size_winproc(HWND hwnd, UINT msg, WPARAM 
             expectedMaxSizeY = rect.bottom - rect.top;
             actualMaxSizeX = minmax->ptMaxSize.x;
             actualMaxSizeY = minmax->ptMaxSize.y;
-            if (test_thick_child_exStyle & WS_EX_DLGMODALFRAME)
-            {
-                todo_wine
-                    ok(actualMaxSizeX == expectedMaxSizeX &&  actualMaxSizeY == expectedMaxSizeY,
-                        "expected maxSize %dx%d, actual maxSize %dx%d for %s\n",
-                        expectedMaxSizeX, expectedMaxSizeY, actualMaxSizeX, actualMaxSizeY,
-                        test_thick_child_name);
-            }
-            else
-            {
-                ok(actualMaxSizeX == expectedMaxSizeX &&  actualMaxSizeY == expectedMaxSizeY,
-                    "expected maxSize %dx%d, actual maxSize %dx%d for %s\n",
-                    expectedMaxSizeX, expectedMaxSizeY, actualMaxSizeX, actualMaxSizeY,
-                    test_thick_child_name);
-            }
+
+            ok(actualMaxSizeX == expectedMaxSizeX &&  actualMaxSizeY == expectedMaxSizeY,
+                "expected maxSize %dx%d, actual maxSize %dx%d for %s\n",
+                expectedMaxSizeX, expectedMaxSizeY, actualMaxSizeX, actualMaxSizeY,
+                test_thick_child_name);
+
 
             expectedPosX = - getExpectedBorderSize(test_thick_child_style, test_thick_child_exStyle);
             expectedPosY = expectedPosX;
