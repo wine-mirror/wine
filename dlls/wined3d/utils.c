@@ -2241,7 +2241,7 @@ void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
 
 unsigned int ffp_frag_program_key_hash(const void *key)
 {
-    const struct ffp_frag_settings *k = (const struct ffp_frag_settings *)key;
+    const struct ffp_frag_settings *k = key;
     unsigned int hash = 0, i;
     const DWORD *blob;
 
@@ -2268,8 +2268,8 @@ unsigned int ffp_frag_program_key_hash(const void *key)
 
 BOOL ffp_frag_program_key_compare(const void *keya, const void *keyb)
 {
-    const struct ffp_frag_settings *ka = (const struct ffp_frag_settings *)keya;
-    const struct ffp_frag_settings *kb = (const struct ffp_frag_settings *)keyb;
+    const struct ffp_frag_settings *ka = keya;
+    const struct ffp_frag_settings *kb = keyb;
 
     return memcmp(ka, kb, sizeof(*ka)) == 0;
 }

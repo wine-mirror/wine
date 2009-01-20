@@ -471,7 +471,7 @@ static void shader_glsl_load_constantsB(IWineD3DBaseShaderImpl *This, const Wine
 
 static void reset_program_constant_version(void *value, void *context)
 {
-    struct glsl_shader_prog_link *entry = (struct glsl_shader_prog_link *)value;
+    struct glsl_shader_prog_link *entry = value;
     entry->constant_version = 0;
 }
 
@@ -3665,7 +3665,7 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
 
 static unsigned int glsl_program_key_hash(const void *key)
 {
-    const glsl_program_key_t *k = (const glsl_program_key_t *)key;
+    const glsl_program_key_t *k = key;
 
     unsigned int hash = k->vshader | ((DWORD_PTR) k->pshader) << 16;
     hash += ~(hash << 15);
@@ -3680,8 +3680,8 @@ static unsigned int glsl_program_key_hash(const void *key)
 
 static BOOL glsl_program_key_compare(const void *keya, const void *keyb)
 {
-    const glsl_program_key_t *ka = (const glsl_program_key_t *)keya;
-    const glsl_program_key_t *kb = (const glsl_program_key_t *)keyb;
+    const glsl_program_key_t *ka = keya;
+    const glsl_program_key_t *kb = keyb;
 
     return ka->vshader == kb->vshader && ka->pshader == kb->pshader &&
            (memcmp(&ka->ps_args, &kb->ps_args, sizeof(kb->ps_args)) == 0);
