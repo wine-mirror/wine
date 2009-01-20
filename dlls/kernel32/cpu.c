@@ -569,7 +569,7 @@ VOID WINAPI GetSystemInfo(
 #endif
 #ifdef CPU_SSE2
              mib[1] = CPU_SSE2;  /* this should imply MMX */
-             value[1] = sizeof(value);
+             val_len = sizeof(value);
              if (sysctl(mib, 2, &value, &val_len, NULL, 0) >= 0)
                  if (value) PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
 #endif
@@ -578,7 +578,7 @@ VOID WINAPI GetSystemInfo(
              val_len = sizeof(value);
              if (sysctl(mib, 2, &value, &val_len, NULL, 0) >= 0)
                  if (value > cachedsi.dwNumberOfProcessors)
-                    cachedsi.dwNumberOfProcessors = value[0];
+                    cachedsi.dwNumberOfProcessors = value;
              mib[1] = HW_MODEL;
              val_len = sizeof(model)-1;
              if (sysctl(mib, 2, model, &val_len, NULL, 0) >= 0) {
@@ -614,16 +614,17 @@ VOID WINAPI GetSystemInfo(
              if (f != NULL)
              {
 	         while (fgets(model, 255, f) != NULL) {
-                        if (sscanf(model,"cpu%d: features %x<", value, value+1) == 2) {
+                        int cpu, features;
+                        if (sscanf(model,"cpu%d: features %x<", &cpu, &features) == 2) {
                             /* we could scan the string but it is easier
                                to test the bits directly */
-                            if (value[1] & 0x1)
+                            if (features & 0x1)
                                 PF[PF_FLOATING_POINT_EMULATED] = TRUE;
-                            if (value[1] & 0x10)
+                            if (features & 0x10)
                                 PF[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
-                            if (value[1] & 0x100)
+                            if (features & 0x100)
                                 PF[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
-                            if (value[1] & 0x800000)
+                            if (features & 0x800000)
                                 PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
 
                             break;
