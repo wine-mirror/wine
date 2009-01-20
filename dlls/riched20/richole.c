@@ -348,7 +348,7 @@ IRichEditOle_fnGetObjectCount(IRichEditOle *me)
 {
     IRichEditOleImpl *This = impl_from_IRichEditOle(me);
     FIXME("stub %p\n",This);
-    return E_NOTIMPL;
+    return 0;
 }
 
 static HRESULT WINAPI
