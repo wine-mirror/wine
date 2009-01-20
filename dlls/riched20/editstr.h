@@ -44,8 +44,14 @@
 #include <commctrl.h>
 #include <ole2.h>
 #include <richole.h>
+#include "imm.h"
+#include <textserv.h>
 
 #include "wine/debug.h"
+
+#ifdef __i386__
+extern struct ITextHostVtbl itextHostStdcallVtbl;
+#endif /* __i386__ */
 
 typedef struct tagME_String
 {
@@ -327,6 +333,7 @@ typedef struct tagME_FontCacheItem
 typedef struct tagME_TextEditor
 {
   HWND hWnd;
+  ITextHost *texthost;
   BOOL bEmulateVersion10;
   ME_TextBuffer *pBuffer;
   ME_Cursor *pCursors;

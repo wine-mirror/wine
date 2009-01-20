@@ -2657,17 +2657,26 @@ static BOOL ME_ShowContextMenu(ME_TextEditor *editor, int x, int y)
   return TRUE;
 }
 
-static ME_TextEditor *ME_MakeEditor(HWND hWnd, BOOL bEmulateVersion10)
+ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
 {
   ME_TextEditor *ed = ALLOC_OBJ(ME_TextEditor);
   int i;
-  ed->hWnd = hWnd;
+  DWORD props;
+  LONG selbarwidth;
+
+  ed->hWnd = NULL;
+  ed->texthost = texthost;
   ed->bEmulateVersion10 = bEmulateVersion10;
-  ed->styleFlags = GetWindowLongW(hWnd, GWL_STYLE);
-  if (ed->styleFlags & WS_VSCROLL)
-    ed->styleFlags |= ES_AUTOVSCROLL;
-  if (!ed->bEmulateVersion10 && (ed->styleFlags & WS_HSCROLL))
-    ed->styleFlags |= ES_AUTOHSCROLL;
+  ITextHost_TxGetPropertyBits(texthost,
+                              (TXTBIT_RICHTEXT|TXTBIT_MULTILINE|
+                               TXTBIT_READONLY|TXTBIT_USEPASSWORD|
+                               TXTBIT_HIDESELECTION|TXTBIT_SAVESELECTION|
+                               TXTBIT_AUTOWORDSEL|TXTBIT_VERTICAL|
+                               TXTBIT_WORDWRAP|TXTBIT_DISABLEDRAG),
+                              &props);
+  ITextHost_TxGetScrollBars(texthost, &ed->styleFlags);
+  ed->styleFlags &= (WS_VSCROLL|WS_HSCROLL|ES_AUTOVSCROLL|
+                     ES_AUTOHSCROLL|ES_DISABLENOSCROLL);
   ed->pBuffer = ME_MakeText();
   ed->nZoomNumerator = ed->nZoomDenominator = 0;
   ME_MakeFirstParagraph(ed);
@@ -2702,12 +2711,13 @@ static ME_TextEditor *ME_MakeEditor(HWND hWnd, BOOL bEmulateVersion10)
   ed->nParagraphs = 1;
   ed->nLastSelStart = ed->nLastSelEnd = 0;
   ed->pLastSelStartPara = ed->pLastSelEndPara = ME_FindItemFwd(ed->pBuffer->pFirst, diParagraph);
-  ed->bWordWrap = !(ed->styleFlags & ES_AUTOHSCROLL);
+  ed->bWordWrap = (props & TXTBIT_WORDWRAP) != 0;
   ed->bHideSelection = FALSE;
   ed->nInvalidOfs = -1;
   ed->pfnWordBreak = NULL;
   ed->lpOleCallback = NULL;
   ed->mode = TM_RICHTEXT | TM_MULTILEVELUNDO | TM_MULTICODEPAGE;
+  ed->mode |= (props & TXTBIT_RICHTEXT) ? TM_RICHTEXT : TM_PLAINTEXT;
   ed->AutoURLDetect_bEnable = FALSE;
   ed->bHaveFocus = FALSE;
   ed->bMouseCaptured = FALSE;
@@ -2719,17 +2729,30 @@ static ME_TextEditor *ME_MakeEditor(HWND hWnd, BOOL bEmulateVersion10)
   }
 
   ME_CheckCharOffsets(ed);
-  if (ed->styleFlags & ES_SELECTIONBAR)
-    ed->selofs = SELECTIONBAR_WIDTH;
-  else
-    ed->selofs = 0;
   ed->bDefaultFormatRect = TRUE;
+  ITextHost_TxGetSelectionBarWidth(ed->texthost, &selbarwidth);
+  /* FIXME: Convert selbarwidth from HIMETRIC to pixels */
+  ed->selofs = selbarwidth ? SELECTIONBAR_WIDTH : 0;
   ed->nSelectionType = stPosition;
 
-  if (ed->styleFlags & ES_PASSWORD)
-    ed->cPasswordMask = '*';
-  else
-    ed->cPasswordMask = 0;
+  ed->cPasswordMask = 0;
+  if (props & TXTBIT_USEPASSWORD)
+    ITextHost_TxGetPasswordChar(texthost, &ed->cPasswordMask);
+
+  if (props & TXTBIT_AUTOWORDSEL)
+    ed->styleFlags |= ECO_AUTOWORDSELECTION;
+  if (props & TXTBIT_MULTILINE)
+    ed->styleFlags |= ES_MULTILINE;
+  if (props & TXTBIT_READONLY)
+    ed->styleFlags |= ES_READONLY;
+  if (!(props & TXTBIT_HIDESELECTION))
+    ed->styleFlags |= ES_NOHIDESEL;
+  if (props & TXTBIT_SAVESELECTION)
+    ed->styleFlags |= ES_SAVESEL;
+  if (props & TXTBIT_VERTICAL)
+    ed->styleFlags |= ES_VERTICAL;
+  if (props & TXTBIT_DISABLEDRAG)
+    ed->styleFlags |= ES_NOOLEDRAGDROP;
 
   ed->notified_cr.cpMin = ed->notified_cr.cpMax = 0;
 
@@ -2774,7 +2797,7 @@ static void ME_DestroyEditor(ME_TextEditor *editor)
     DeleteObject(editor->hbrBackground);
   if(editor->lpOleCallback)
     IUnknown_Release(editor->lpOleCallback);
-  SetWindowLongPtrW(editor->hWnd, 0, 0);
+  IUnknown_Release(editor->texthost);
   OleUninitialize();
 
   FREE_OBJ(editor->pBuffer);
@@ -4425,10 +4448,11 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     if (msg == WM_NCCREATE)
     {
       CREATESTRUCTW *pcs = (CREATESTRUCTW *)lParam;
+      ITextHost *texthost;
+
       TRACE("WM_NCCREATE: hWnd %p style 0x%08x\n", hWnd, pcs->style);
-      editor = ME_MakeEditor(hWnd, FALSE);
-      SetWindowLongPtrW(hWnd, 0, (LONG_PTR)editor);
-      return TRUE;
+      texthost = ME_CreateTextHost(hWnd, FALSE);
+      return texthost != NULL;
     }
     else if (msg != WM_NCDESTROY)
     {
@@ -4479,13 +4503,12 @@ LRESULT WINAPI RichEdit10ANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 {
   if (msg == WM_NCCREATE && !GetWindowLongPtrW(hWnd, 0))
   {
-    ME_TextEditor *editor;
+    ITextHost *texthost;
     CREATESTRUCTW *pcs = (CREATESTRUCTW *)lParam;
 
     TRACE("WM_NCCREATE: hWnd %p style 0x%08x\n", hWnd, pcs->style);
-    editor = ME_MakeEditor(hWnd, TRUE);
-    SetWindowLongPtrW(hWnd, 0, (LONG_PTR)editor);
-    return TRUE;
+    texthost = ME_CreateTextHost(hWnd, TRUE);
+    return texthost != NULL;
   }
   return RichEditANSIWndProc(hWnd, msg, wParam, lParam);
 }

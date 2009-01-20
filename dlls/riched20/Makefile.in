@@ -21,6 +21,7 @@ C_SRCS = \
 	string.c \
 	style.c \
 	table.c \
+	txthost.c \
 	txtsrv.c \
 	undo.c \
 	wrap.c \
