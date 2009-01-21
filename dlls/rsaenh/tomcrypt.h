@@ -278,18 +278,6 @@ void mp_clamp(mp_int *a);
 /* right shift by "b" digits */
 void mp_rshd(mp_int *a, int b);
 
-/* left shift by "b" digits */
-int mp_lshd(mp_int *a, int b);
-
-/* c = a * 2**b */
-int mp_mul_2d(const mp_int *a, int b, mp_int *c);
-
-/* b = a*2 */
-int mp_mul_2(const mp_int *a, mp_int *b);
-
-/* c = a mod 2**d */
-int mp_mod_2d(const mp_int *a, int b, mp_int *c);
-
 /* computes a = 2**b */
 int mp_2expt(mp_int *a, int b);
 
@@ -351,17 +339,11 @@ int mp_add_d(mp_int *a, mp_digit b, mp_int *c);
 /* c = a - b */
 int mp_sub_d(mp_int *a, mp_digit b, mp_int *c);
 
-/* c = a * b */
-int mp_mul_d(const mp_int *a, mp_digit b, mp_int *c);
-
 /* a/3 => 3c + d == a */
 int mp_div_3(mp_int *a, mp_int *c, mp_digit *d);
 
 /* c = a**b */
 int mp_expt_d(mp_int *a, mp_digit b, mp_int *c);
-
-/* c = a mod b, 0 <= c < b  */
-int mp_mod_d(const mp_int *a, mp_digit b, mp_digit *c);
 
 /* ---> number theory <--- */
 
