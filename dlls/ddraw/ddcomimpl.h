@@ -42,11 +42,6 @@
 #define ICOM_INTERFACE(implobj, iface) \
 	((iface *)(implobj == NULL ? NULL :&((implobj)->ICOM_VFIELD_MULTI_NAME(iface))))
 
-#define ICOM_INIT_INTERFACE(implobj, ifacename, vtblname) \
-	do { \
-	  (implobj)->ICOM_VFIELD_MULTI_NAME(ifacename) = &(vtblname); \
-	} while (0)
-
 #define COM_INTERFACE_CAST(impltype, ifnamefrom, ifnameto, ifaceptr)	\
 	ICOM_INTERFACE(ICOM_OBJECT(impltype, ifnamefrom, ifaceptr), ifnameto)
 

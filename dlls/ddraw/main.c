@@ -171,15 +171,15 @@ DDRAW_Create(const GUID *guid,
      * IDirectDraw and IDirect3D are the same object,
      * QueryInterface is used to get other interfaces.
      */
-    ICOM_INIT_INTERFACE(This, IDirectDraw,  IDirectDraw1_Vtbl);
-    ICOM_INIT_INTERFACE(This, IDirectDraw2, IDirectDraw2_Vtbl);
-    ICOM_INIT_INTERFACE(This, IDirectDraw3, IDirectDraw3_Vtbl);
-    ICOM_INIT_INTERFACE(This, IDirectDraw4, IDirectDraw4_Vtbl);
-    ICOM_INIT_INTERFACE(This, IDirectDraw7, IDirectDraw7_Vtbl);
-    ICOM_INIT_INTERFACE(This, IDirect3D,  IDirect3D1_Vtbl);
-    ICOM_INIT_INTERFACE(This, IDirect3D2, IDirect3D2_Vtbl);
-    ICOM_INIT_INTERFACE(This, IDirect3D3, IDirect3D3_Vtbl);
-    ICOM_INIT_INTERFACE(This, IDirect3D7, IDirect3D7_Vtbl);
+    This->IDirectDraw_vtbl = &IDirectDraw1_Vtbl;
+    This->IDirectDraw2_vtbl = &IDirectDraw2_Vtbl;
+    This->IDirectDraw3_vtbl = &IDirectDraw3_Vtbl;
+    This->IDirectDraw4_vtbl = &IDirectDraw4_Vtbl;
+    This->IDirectDraw7_vtbl = &IDirectDraw7_Vtbl;
+    This->IDirect3D_vtbl = &IDirect3D1_Vtbl;
+    This->IDirect3D2_vtbl = &IDirect3D2_Vtbl;
+    This->IDirect3D3_vtbl = &IDirect3D3_Vtbl;
+    This->IDirect3D7_vtbl = &IDirect3D7_Vtbl;
     This->device_parent_vtbl = &ddraw_wined3d_device_parent_vtbl;
 
     /* See comments in IDirectDrawImpl_CreateNewSurface for a description
@@ -700,7 +700,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     factory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*factory));
     if (factory == NULL) return E_OUTOFMEMORY;
 
-    ICOM_INIT_INTERFACE(factory, IClassFactory, IClassFactory_Vtbl);
+    factory->IClassFactory_vtbl = &IClassFactory_Vtbl;
     factory->ref = 1;
 
     factory->pfnCreateInstance = object_creation[i].pfnCreateInstance;

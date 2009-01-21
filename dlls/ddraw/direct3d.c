@@ -442,7 +442,7 @@ IDirect3DImpl_3_CreateLight(IDirect3D3 *iface,
     if (object == NULL)
         return DDERR_OUTOFMEMORY;
 
-    ICOM_INIT_INTERFACE(object, IDirect3DLight, IDirect3DLight_Vtbl);
+    object->IDirect3DLight_vtbl = &IDirect3DLight_Vtbl;
     object->ref = 1;
     object->ddraw = This;
     object->next = NULL;
@@ -522,9 +522,9 @@ IDirect3DImpl_3_CreateMaterial(IDirect3D3 *iface,
     if (object == NULL)
         return DDERR_OUTOFMEMORY;
 
-    ICOM_INIT_INTERFACE(object, IDirect3DMaterial3, IDirect3DMaterial3_Vtbl);
-    ICOM_INIT_INTERFACE(object, IDirect3DMaterial2, IDirect3DMaterial2_Vtbl);
-    ICOM_INIT_INTERFACE(object, IDirect3DMaterial, IDirect3DMaterial_Vtbl);
+    object->IDirect3DMaterial3_vtbl = &IDirect3DMaterial3_Vtbl;
+    object->IDirect3DMaterial2_vtbl = &IDirect3DMaterial2_Vtbl;
+    object->IDirect3DMaterial_vtbl = &IDirect3DMaterial_Vtbl;
     object->ref = 1;
     object->ddraw = This;
     object->activate = material_activate;
@@ -613,7 +613,7 @@ IDirect3DImpl_3_CreateViewport(IDirect3D3 *iface,
     if (object == NULL)
         return DDERR_OUTOFMEMORY;
 
-    ICOM_INIT_INTERFACE(object, IDirect3DViewport3, IDirect3DViewport3_Vtbl);
+    object->IDirect3DViewport3_vtbl = &IDirect3DViewport3_Vtbl;
     object->ref = 1;
     object->ddraw = This;
     object->activate = viewport_activate;
@@ -806,14 +806,13 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     }
 
     if (This->cooperative_level & DDSCL_FPUPRESERVE)
-        ICOM_INIT_INTERFACE(object, IDirect3DDevice7, IDirect3DDevice7_FPUPreserve_Vtbl);
+        object->IDirect3DDevice7_vtbl = &IDirect3DDevice7_FPUPreserve_Vtbl;
     else
-        ICOM_INIT_INTERFACE(object, IDirect3DDevice7, IDirect3DDevice7_FPUSetup_Vtbl);
+        object->IDirect3DDevice7_vtbl = &IDirect3DDevice7_FPUSetup_Vtbl;
 
-    ICOM_INIT_INTERFACE(object, IDirect3DDevice3, IDirect3DDevice3_Vtbl);
-    ICOM_INIT_INTERFACE(object, IDirect3DDevice2, IDirect3DDevice2_Vtbl);
-    ICOM_INIT_INTERFACE(object, IDirect3DDevice, IDirect3DDevice1_Vtbl);
-
+    object->IDirect3DDevice3_vtbl = &IDirect3DDevice3_Vtbl;
+    object->IDirect3DDevice2_vtbl = &IDirect3DDevice2_Vtbl;
+    object->IDirect3DDevice_vtbl = &IDirect3DDevice1_Vtbl;
     object->ref = 1;
     object->ddraw = This;
     object->viewport_list = NULL;
@@ -838,7 +837,7 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_OUTOFMEMORY;
     }
-    ICOM_INIT_INTERFACE(IndexBufferParent, IParent, IParent_Vtbl);
+    IndexBufferParent->IParent_vtbl = &IParent_Vtbl;
     IndexBufferParent->ref = 1;
 
     /* Create an Index Buffer. WineD3D needs one for Drawing indexed primitives
@@ -1043,8 +1042,8 @@ IDirect3DImpl_7_CreateVertexBuffer(IDirect3D7 *iface,
     }
 
     object->ref = 1;
-    ICOM_INIT_INTERFACE(object, IDirect3DVertexBuffer7, IDirect3DVertexBuffer7_Vtbl);
-    ICOM_INIT_INTERFACE(object, IDirect3DVertexBuffer, IDirect3DVertexBuffer1_Vtbl);
+    object->IDirect3DVertexBuffer7_vtbl = &IDirect3DVertexBuffer7_Vtbl;
+    object->IDirect3DVertexBuffer_vtbl = &IDirect3DVertexBuffer1_Vtbl;
 
     object->Caps = Desc->dwCaps;
     object->ddraw = This;
