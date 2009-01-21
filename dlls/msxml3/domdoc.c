@@ -2192,7 +2192,7 @@ HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument2 **docu
     doc->lpvtblIObjectSafety = &domdocObjectSafetyVtbl;
     doc->lpvtblISupportErrorInfo = &support_error_vtbl;
     doc->ref = 1;
-    doc->async = 0;
+    doc->async = VARIANT_TRUE;
     doc->validating = 0;
     doc->resolving = 0;
     doc->preserving = 0;
