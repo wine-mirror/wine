@@ -22,23 +22,15 @@
 
 #include <stddef.h>
 
-/* Generates the name for a vtable pointer for a given interface. */
-/* The canonical name for a single interface is "lpVtbl". */
-#define ICOM_VFIELD_MULTI_NAME(iface) iface##_vtbl
-
-/* Returns the offset of a vtable pointer within an implementation object. */
-#define ICOM_VFIELD_OFFSET(impltype, iface) \
-	offsetof(impltype, ICOM_VFIELD_MULTI_NAME(iface))
-
 /* Given an interface pointer, returns the implementation pointer. */
 #define ICOM_OBJECT(impltype, ifacename, ifaceptr)		\
 	(impltype*)((ifaceptr) == NULL ? NULL			\
-		  : (char*)(ifaceptr) - ICOM_VFIELD_OFFSET(impltype,ifacename))
+		  : (char*)(ifaceptr) - offsetof(impltype, ifacename##_vtbl))
 
 #define ICOM_THIS_FROM(impltype, ifacename, ifaceptr) \
 	impltype* This = ICOM_OBJECT(impltype, ifacename, ifaceptr)
 
 #define COM_INTERFACE_CAST(impltype, ifnamefrom, ifnameto, ifaceptr) \
     ((ifaceptr) ? (ifnameto *)&(((impltype *)((char *)(ifaceptr) \
-    - ICOM_VFIELD_OFFSET(impltype, ifnamefrom)))->ICOM_VFIELD_MULTI_NAME(ifnameto)) : NULL)
+    - offsetof(impltype, ifnamefrom##_vtbl)))->ifnameto##_vtbl) : NULL)
 #endif /* _DDCOMIMPL_H_ */
