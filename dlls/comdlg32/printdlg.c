@@ -2638,6 +2638,25 @@ static void pagesetup_set_defaultsource(PageSetupDataA *pda, WORD source)
     GlobalUnlock(pda->dlga->hDevMode);
 }
 
+static WCHAR *pagesetup_get_drvname(const PageSetupDataA *pda)
+{
+    DEVNAMES *dn;
+    int len;
+    WCHAR *name;
+
+    dn = GlobalLock(pda->dlga->hDevNames);
+    len = MultiByteToWideChar(CP_ACP, 0, (char*)dn + dn->wDriverOffset, -1, NULL, 0);
+    name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, (char*)dn + dn->wDriverOffset, -1, name, len);
+    GlobalUnlock(pda->dlga->hDevNames);
+    return name;
+}
+
+static void pagesetup_release_drvname(const PageSetupDataA *pda, WCHAR *name)
+{
+    HeapFree(GetProcessHeap(), 0, name);
+}
+
 static WCHAR *pagesetup_get_devname(const PageSetupDataA *pda)
 {
     DEVNAMES *dn;
@@ -2941,6 +2960,59 @@ static void pagesetup_init_combos(HWND hDlg, PageSetupDataA *pda)
     pagesetup_release_devmode(pda, dm);
 }
 
+
+/****************************************************************************************
+ *  pagesetup_change_printer_dialog
+ *
+ *  Pops up another dialog that lets the user pick another printer.
+ *
+ *  For now we display the PrintDlg, this should display a striped down version of it.
+ */
+static void pagesetup_change_printer_dialog(HWND hDlg, PageSetupDataA *pda)
+{
+    PRINTDLGW prnt;
+    LPWSTR drvname, devname, portname;
+    DEVMODEW *tmp_dm, *dm;
+
+    memset(&prnt, 0, sizeof(prnt));
+    prnt.lStructSize = sizeof(prnt);
+    prnt.Flags     = 0;
+    prnt.hwndOwner = hDlg;
+
+    drvname = pagesetup_get_drvname(pda);
+    devname = pagesetup_get_devname(pda);
+    portname = pagesetup_get_portname(pda);
+    prnt.hDevNames = 0;
+    PRINTDLG_CreateDevNamesW(&prnt.hDevNames, drvname, devname, portname);
+    pagesetup_release_portname(pda, portname);
+    pagesetup_release_devname(pda, devname);
+    pagesetup_release_drvname(pda, drvname);
+
+    tmp_dm = pagesetup_get_devmode(pda);
+    prnt.hDevMode = GlobalAlloc(GMEM_MOVEABLE, tmp_dm->dmSize + tmp_dm->dmDriverExtra);
+    dm = GlobalLock(prnt.hDevMode);
+    memcpy(dm, tmp_dm, tmp_dm->dmSize + tmp_dm->dmDriverExtra);
+    GlobalUnlock(prnt.hDevMode);
+    pagesetup_release_devmode(pda, tmp_dm);
+
+    if (PrintDlgW(&prnt))
+    {
+        DEVMODEW *dm = GlobalLock(prnt.hDevMode);
+        DEVNAMES *dn = GlobalLock(prnt.hDevNames);
+
+        pagesetup_set_devnames(pda, (WCHAR*)dn + dn->wDriverOffset,
+                               (WCHAR*)dn + dn->wDeviceOffset, (WCHAR *)dn + dn->wOutputOffset);
+        pagesetup_set_devmode(pda, dm);
+        GlobalUnlock(prnt.hDevNames);
+        GlobalUnlock(prnt.hDevMode);
+        pagesetup_init_combos(hDlg, pda);
+    }
+
+    GlobalFree(prnt.hDevMode);
+    GlobalFree(prnt.hDevNames);
+
+}
+
 static void PRINTDLG_PS_SetOrientationW(HWND hDlg, PageSetupDataW* pdw)
 {
     WCHAR PaperName[64];
@@ -3168,25 +3240,12 @@ PRINTDLG_PS_WMCommandA(
         EndDialog(hDlg, FALSE);
 	return FALSE ;
 
-    case psh3:
-    {
-        PRINTDLGA prnt;
-        memset(&prnt, 0, sizeof(prnt));
-        prnt.lStructSize = sizeof(prnt);
-        prnt.Flags     = 0;
-        prnt.hwndOwner = hDlg;
-        prnt.hDevNames = pda->dlga->hDevNames;
-        prnt.hDevMode  = pda->dlga->hDevMode;
-        if (PrintDlgA(&prnt))
-        {
-            pda->dlga->hDevNames = prnt.hDevNames;
-            pda->dlga->hDevMode  = prnt.hDevMode;
-            pagesetup_init_combos(hDlg, pda);
-        }
+    case psh3: /* Printer... */
+        pagesetup_change_printer_dialog(hDlg, pda);
         return TRUE;
-    }
-    case rad1:
-    case rad2:
+
+    case rad1: /* Portrait */
+    case rad2: /* Landscape */
         if((id == rad1 && pagesetup_get_orientation(pda) == DMORIENT_LANDSCAPE) ||
            (id == rad2 && pagesetup_get_orientation(pda) == DMORIENT_PORTRAIT))
 	{
