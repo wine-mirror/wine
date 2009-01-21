@@ -2155,6 +2155,8 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
   BOOL ctrl_is_down = GetKeyState(VK_CONTROL) & 0x8000;
   BOOL shift_is_down = GetKeyState(VK_SHIFT) & 0x8000;
 
+  if (editor->bMouseCaptured)
+      return FALSE;
   if (nKey != VK_SHIFT && nKey != VK_CONTROL && nKey != VK_MENU)
       editor->nSelectionType = stPosition;
 
@@ -2399,6 +2401,9 @@ static LRESULT ME_Char(ME_TextEditor *editor, WPARAM charCode,
                        LPARAM flags, BOOL unicode)
 {
   WCHAR wstr;
+
+  if (editor->bMouseCaptured)
+    return 0;
 
   if (unicode)
       wstr = (WCHAR)charCode;
