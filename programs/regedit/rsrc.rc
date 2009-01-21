@@ -87,5 +87,6 @@ IDI_REGEDIT ICON DISCARDABLE regedit.ico
 #include "Pt.rc"
 #include "Ru.rc"
 #include "Si.rc"
+#include "Sv.rc"
 #include "Tr.rc"
 #include "Zh.rc"
