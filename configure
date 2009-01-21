@@ -25654,6 +25654,14 @@ dlls/msrle32/Makefile: dlls/msrle32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/msrle32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/mssign32/Makefile"
+test "x$enable_mssign32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	mssign32"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/mssign32/Makefile: dlls/mssign32/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/mssign32/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mssip32/Makefile"
 test "x$enable_mssip32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	mssip32"
@@ -28499,6 +28507,7 @@ do
     "dlls/msisys.ocx/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msisys.ocx/Makefile" ;;
     "dlls/msnet32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msnet32/Makefile" ;;
     "dlls/msrle32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msrle32/Makefile" ;;
+    "dlls/mssign32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mssign32/Makefile" ;;
     "dlls/mssip32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mssip32/Makefile" ;;
     "dlls/mstask/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mstask/Makefile" ;;
     "dlls/mstask/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mstask/tests/Makefile" ;;
