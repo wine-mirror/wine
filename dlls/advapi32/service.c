@@ -1565,6 +1565,7 @@ BOOL WINAPI GetServiceKeyNameW( SC_HANDLE hSCManager, LPCWSTR lpDisplayName,
                                 LPWSTR lpServiceName, LPDWORD lpcchBuffer )
 {
     DWORD err;
+    WCHAR buffer[2];
 
     TRACE("%p %s %p %p\n", hSCManager,
           debugstr_w(lpServiceName), lpDisplayName, lpcchBuffer);
@@ -1575,10 +1576,20 @@ BOOL WINAPI GetServiceKeyNameW( SC_HANDLE hSCManager, LPCWSTR lpDisplayName,
         return 0;
     }
 
+    /* provide a buffer if the caller didn't */
+    if (!lpServiceName || *lpcchBuffer < 2)
+    {
+        lpServiceName = buffer;
+        /* A size of 1 would be enough, but tests show that Windows returns 2,
+         * probably because of a WCHAR/bytes mismatch in their code.
+         */
+        *lpcchBuffer = 2;
+    }
+
     __TRY
     {
         err = svcctl_GetServiceKeyNameW(hSCManager, lpDisplayName, lpServiceName,
-                                        lpServiceName ? *lpcchBuffer : 0, lpcchBuffer);
+                                        *lpcchBuffer, lpcchBuffer);
     }
     __EXCEPT(rpc_filter)
     {

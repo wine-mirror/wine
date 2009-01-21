@@ -261,10 +261,7 @@ DWORD svcctl_GetServiceKeyNameW(
         service_unlock(entry);
     }
     else
-    {
-        *cchLength = 1;
         err = ERROR_SERVICE_DOES_NOT_EXIST;
-    }
 
     scmdatabase_unlock(manager->db);
 

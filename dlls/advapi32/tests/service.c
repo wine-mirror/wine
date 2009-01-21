@@ -760,7 +760,7 @@ static void test_get_servicekeyname(void)
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
        "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
-    todo_wine ok(servicesize == 15, "Service size expected 15, got %d\n", servicesize);
+    ok(servicesize == 15, "Service size expected 15, got %d\n", servicesize);
     ok(servicenameW[0] == 0, "Service name not empty\n");
 
     servicesize = 0;
@@ -776,7 +776,7 @@ static void test_get_servicekeyname(void)
     lstrcpyW( servicenameW, abcW );
     ret = GetServiceKeyNameW(scm_handle, deadbeefW, servicenameW, &servicesize);
     ok(!ret, "Expected failure\n");
-    todo_wine ok(servicesize == 2, "Service size expected 2, got %d\n", servicesize);
+    ok(servicesize == 2, "Service size expected 2, got %d\n", servicesize);
     ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
        "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
     ok(servicenameW[0] == 'A', "Service name changed\n");
@@ -794,10 +794,10 @@ static void test_get_servicekeyname(void)
     lstrcpyW( servicenameW, abcW );
     ret = GetServiceKeyNameW(scm_handle, deadbeefW, servicenameW, &servicesize);
     ok(!ret, "Expected failure\n");
-    todo_wine ok(servicesize == 2, "Service size expected 2, got %d\n", servicesize);
+    ok(servicesize == 2, "Service size expected 2, got %d\n", servicesize);
     ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
        "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
-    todo_wine ok(servicenameW[0] == 'A', "Service name changed\n");
+    ok(servicenameW[0] == 'A', "Service name changed\n");
 
     servicesize = 2;
     strcpy(servicename, "ABC");
@@ -805,14 +805,14 @@ static void test_get_servicekeyname(void)
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
        "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
-    ok(servicesize == 2, "Service size expected 2, got %d\n", servicesize);
+    todo_wine ok(servicesize == 2, "Service size expected 2, got %d\n", servicesize);
     ok(servicename[0] == 0, "Service name not empty\n");
 
     servicesize = 2;
     lstrcpyW( servicenameW, abcW );
     ret = GetServiceKeyNameW(scm_handle, deadbeefW, servicenameW, &servicesize);
     ok(!ret, "Expected failure\n");
-    todo_wine ok(servicesize == 2, "Service size expected 2, got %d\n", servicesize);
+    ok(servicesize == 2, "Service size expected 2, got %d\n", servicesize);
     ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
        "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
     ok(servicenameW[0] == 0, "Service name not empty\n");

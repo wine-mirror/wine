@@ -240,7 +240,7 @@ typedef [switch_type(DWORD)] union
         [in] LPCWSTR lpServiceDisplayName,
         [out,size_is(cchBufSize)] WCHAR lpBuffer[],
         [in] DWORD cchBufSize,
-        [out] DWORD *cchLength);
+        [in,out] DWORD *cchLength);
 
     /* Not compatible with Windows function 0x16 */
     DWORD svcctl_SCSetServiceBitsA(/* FIXME */);
