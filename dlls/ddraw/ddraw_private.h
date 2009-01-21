@@ -100,15 +100,15 @@ struct FvfToDecl
 struct IDirectDrawImpl
 {
     /* IUnknown fields */
-    ICOM_VFIELD_MULTI(IDirectDraw7);
-    ICOM_VFIELD_MULTI(IDirectDraw4);
-    ICOM_VFIELD_MULTI(IDirectDraw3);
-    ICOM_VFIELD_MULTI(IDirectDraw2);
-    ICOM_VFIELD_MULTI(IDirectDraw);
-    ICOM_VFIELD_MULTI(IDirect3D7);
-    ICOM_VFIELD_MULTI(IDirect3D3);
-    ICOM_VFIELD_MULTI(IDirect3D2);
-    ICOM_VFIELD_MULTI(IDirect3D);
+    const IDirectDraw7Vtbl *IDirectDraw7_vtbl;
+    const IDirectDraw4Vtbl *IDirectDraw4_vtbl;
+    const IDirectDraw3Vtbl *IDirectDraw3_vtbl;
+    const IDirectDraw2Vtbl *IDirectDraw2_vtbl;
+    const IDirectDrawVtbl *IDirectDraw_vtbl;
+    const IDirect3D7Vtbl *IDirect3D7_vtbl;
+    const IDirect3D3Vtbl *IDirect3D3_vtbl;
+    const IDirect3D2Vtbl *IDirect3D2_vtbl;
+    const IDirect3DVtbl *IDirect3D_vtbl;
     const IWineD3DDeviceParentVtbl *device_parent_vtbl;
 
     /* See comment in IDirectDraw::AddRef */
@@ -219,11 +219,11 @@ extern WINED3DSURFTYPE DefaultSurfaceType;
 struct IDirectDrawSurfaceImpl
 {
     /* IUnknown fields */
-    ICOM_VFIELD_MULTI(IDirectDrawSurface7);
-    ICOM_VFIELD_MULTI(IDirectDrawSurface3);
-    ICOM_VFIELD_MULTI(IDirectDrawGammaControl);
-    ICOM_VFIELD_MULTI(IDirect3DTexture2);
-    ICOM_VFIELD_MULTI(IDirect3DTexture);
+    const IDirectDrawSurface7Vtbl *IDirectDrawSurface7_vtbl;
+    const IDirectDrawSurface3Vtbl *IDirectDrawSurface3_vtbl;
+    const IDirectDrawGammaControlVtbl *IDirectDrawGammaControl_vtbl;
+    const IDirect3DTexture2Vtbl *IDirect3DTexture2_vtbl;
+    const IDirect3DTextureVtbl *IDirect3DTexture_vtbl;
 
     LONG                     ref;
     IUnknown                *ifaceToRelease;
@@ -292,7 +292,7 @@ void IDirectDrawSurfaceImpl_Destroy(IDirectDrawSurfaceImpl *This);
 struct IParentImpl
 {
     /* IUnknown fields */
-    ICOM_VFIELD_MULTI(IParent);
+    const IParentVtbl *IParent_vtbl;
     LONG                    ref;
 
     /* IParentImpl fields */
@@ -323,10 +323,10 @@ struct HandleEntry
 struct IDirect3DDeviceImpl
 {
     /* IUnknown */
-    ICOM_VFIELD_MULTI(IDirect3DDevice7);
-    ICOM_VFIELD_MULTI(IDirect3DDevice3);
-    ICOM_VFIELD_MULTI(IDirect3DDevice2);
-    ICOM_VFIELD_MULTI(IDirect3DDevice);
+    const IDirect3DDevice7Vtbl *IDirect3DDevice7_vtbl;
+    const IDirect3DDevice3Vtbl *IDirect3DDevice3_vtbl;
+    const IDirect3DDevice2Vtbl *IDirect3DDevice2_vtbl;
+    const IDirect3DDeviceVtbl *IDirect3DDevice_vtbl;
     LONG                    ref;
 
     /* Other object connections */
@@ -410,7 +410,7 @@ struct EnumZBufferFormatsData
 struct IDirectDrawClipperImpl
 {
     /* IUnknown fields */
-    ICOM_VFIELD_MULTI(IDirectDrawClipper);
+    const IDirectDrawClipperVtbl *IDirectDrawClipper_vtbl;
     LONG ref;
 
     IWineD3DClipper           *wineD3DClipper;
@@ -427,7 +427,7 @@ typeof(WineDirect3DCreateClipper) *pWineDirect3DCreateClipper;
 struct IDirectDrawPaletteImpl
 {
     /* IUnknown fields */
-    ICOM_VFIELD_MULTI(IDirectDrawPalette);
+    const IDirectDrawPaletteVtbl *IDirectDrawPalette_vtbl;
     LONG ref;
 
     /* WineD3D uplink */
@@ -444,7 +444,7 @@ extern const IDirectDrawPaletteVtbl IDirectDrawPalette_Vtbl;
  ******************************************************************************/
 typedef struct
 {
-    ICOM_VFIELD_MULTI(IClassFactory);
+    const IClassFactoryVtbl *IClassFactory_vtbl;
 
     LONG ref;
     HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, REFIID iid, LPVOID *ppObj);
@@ -463,7 +463,7 @@ struct object_creation_info
  ******************************************************************************/
 struct IDirect3DLightImpl
 {
-    ICOM_VFIELD_MULTI(IDirect3DLight);
+    const IDirect3DLightVtbl *IDirect3DLight_vtbl;
     LONG ref;
 
     /* IDirect3DLight fields */
@@ -499,9 +499,9 @@ void light_desactivate(IDirect3DLightImpl* This);
  ******************************************************************************/
 struct IDirect3DMaterialImpl
 {
-    ICOM_VFIELD_MULTI(IDirect3DMaterial3);
-    ICOM_VFIELD_MULTI(IDirect3DMaterial2);
-    ICOM_VFIELD_MULTI(IDirect3DMaterial);
+    const IDirect3DMaterial3Vtbl *IDirect3DMaterial3_vtbl;
+    const IDirect3DMaterial2Vtbl *IDirect3DMaterial2_vtbl;
+    const IDirect3DMaterialVtbl *IDirect3DMaterial_vtbl;
     LONG  ref;
 
     /* IDirect3DMaterial2 fields */
@@ -527,7 +527,7 @@ void material_activate(IDirect3DMaterialImpl* This);
  *****************************************************************************/
 struct IDirect3DViewportImpl
 {
-    ICOM_VFIELD_MULTI(IDirect3DViewport3);
+    const IDirect3DViewport3Vtbl *IDirect3DViewport3_vtbl;
     LONG ref;
 
     /* IDirect3DViewport fields */
@@ -572,7 +572,7 @@ void viewport_activate(IDirect3DViewportImpl* This, BOOL ignore_lights);
 struct IDirect3DExecuteBufferImpl
 {
     /* IUnknown */
-    ICOM_VFIELD_MULTI(IDirect3DExecuteBuffer);
+    const IDirect3DExecuteBufferVtbl *IDirect3DExecuteBuffer_vtbl;
     LONG                 ref;
 
     /* IDirect3DExecuteBuffer fields */
@@ -608,8 +608,8 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 struct IDirect3DVertexBufferImpl
 {
     /*** IUnknown Methods ***/
-    ICOM_VFIELD_MULTI(IDirect3DVertexBuffer7);
-    ICOM_VFIELD_MULTI(IDirect3DVertexBuffer);
+    const IDirect3DVertexBuffer7Vtbl *IDirect3DVertexBuffer7_vtbl;
+    const IDirect3DVertexBufferVtbl *IDirect3DVertexBuffer_vtbl;
     LONG                 ref;
 
     /*** WineD3D and ddraw links ***/

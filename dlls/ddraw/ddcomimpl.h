@@ -26,10 +26,6 @@
 /* The canonical name for a single interface is "lpVtbl". */
 #define ICOM_VFIELD_MULTI_NAME(iface) iface##_vtbl
 
-/* Declares a vtable pointer field in an implementation. */
-#define ICOM_VFIELD_MULTI(iface) \
-	iface ICOM_VFIELD_MULTI_NAME(iface)
-
 /* Returns the offset of a vtable pointer within an implementation object. */
 #define ICOM_VFIELD_OFFSET(impltype, iface) \
 	offsetof(impltype, ICOM_VFIELD_MULTI_NAME(iface))
@@ -44,11 +40,11 @@
 
 /* Given an object and interface name, returns a pointer to that interface. */
 #define ICOM_INTERFACE(implobj, iface) \
-	(implobj == NULL ? NULL :&((implobj)->ICOM_VFIELD_MULTI_NAME(iface)))
+	((iface *)(implobj == NULL ? NULL :&((implobj)->ICOM_VFIELD_MULTI_NAME(iface))))
 
 #define ICOM_INIT_INTERFACE(implobj, ifacename, vtblname) \
 	do { \
-	  (implobj)->ICOM_VFIELD_MULTI_NAME(ifacename).lpVtbl = &(vtblname); \
+	  (implobj)->ICOM_VFIELD_MULTI_NAME(ifacename) = &(vtblname); \
 	} while (0)
 
 #define COM_INTERFACE_CAST(impltype, ifnamefrom, ifnameto, ifaceptr)	\
