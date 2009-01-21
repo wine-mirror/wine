@@ -334,8 +334,8 @@ static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
 static void volume_effect16(void *bufin, void* bufout, int length, int left,
                             int right, int nChannels)
 {
-  short *d_out = (short *)bufout;
-  short *d_in = (short *)bufin;
+  short *d_out = bufout;
+  short *d_in = bufin;
   int i, v;
 
 /*
@@ -360,8 +360,8 @@ static void volume_effect16(void *bufin, void* bufout, int length, int left,
 static void volume_effect8(void *bufin, void* bufout, int length, int left,
                            int right, int nChannels)
 {
-  char *d_out = (char *)bufout;
-  char *d_in = (char *)bufin;
+  char *d_out = bufout;
+  char *d_in = bufin;
   int i, v;
 
 /*
@@ -841,8 +841,8 @@ static void wodPlayer_ProcessMessages(WINE_WAVEOUT* wwo)
  */
 static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 {
-    WORD	  uDevID = (DWORD)pmt;
-    WINE_WAVEOUT* wwo = (WINE_WAVEOUT*)&WOutDev[uDevID];
+    WORD       uDevID = (DWORD)pmt;
+    WINE_WAVEOUT* wwo = &WOutDev[uDevID];
 
     wwo->state = WINE_WS_STOPPED;
     SetEvent(wwo->hStartUpEvent);
@@ -1337,7 +1337,7 @@ static int nas_open(WINE_WAVEOUT* wwo) {
 static AuBool
 event_handler(AuServer* aud, AuEvent* ev, AuEventHandlerRec* hnd)
 {
-  WINE_WAVEOUT *wwo = (WINE_WAVEOUT *)hnd->data;
+  WINE_WAVEOUT *wwo = hnd->data;
         switch (ev->type) {
 
         case AuEventTypeElementNotify: {
