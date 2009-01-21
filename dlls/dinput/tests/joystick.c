@@ -374,6 +374,7 @@ static BOOL CALLBACK EnumJoysticks(
         if (effect)
         {
             DWORD effect_status;
+            struct DIPROPDWORD diprop_word;
 
             hr = IDirectInputEffect_Initialize(effect, hInstance, data->version,
                                                &GUID_ConstantForce);
@@ -428,6 +429,62 @@ static BOOL CALLBACK EnumJoysticks(
             hr = IDirectInputEffect_GetEffectStatus(effect, &effect_status);
             ok(hr==DI_OK,"IDirectInputEffect_GetEffectStatus() failed: %08x\n", hr);
             todo_wine ok(effect_status!=0,"IDirectInputEffect_GetEffectStatus() reported effect as stopped\n");
+
+            /* Check autocenter status
+             * State: initialy stopped
+             * enable
+             * State: enabled
+             * acquire
+             * State: enabled
+             * unacquire
+             * State: enabled
+             *
+             * IDirectInputDevice2_SetProperty(DIPROP_AUTOCENTER) can only be
+             * executed when devide is released.
+             *
+             * If Executed interactively, user can feel that autocenter is
+             * only disabled when joystick is acquired.
+             */
+            diprop_word.diph.dwSize = sizeof(diprop_word);
+            diprop_word.diph.dwHeaderSize = sizeof(diprop_word.diph);
+            diprop_word.diph.dwObj = 0;
+            diprop_word.diph.dwHow = DIPH_DEVICE;
+            hr = IDirectInputDevice_Unacquire(pJoystick);
+            ok(hr==DI_OK,"IDirectInputDevice_Unacquire() failed: %08x\n", hr);
+            hr = IDirectInputDevice2_GetProperty(pJoystick, DIPROP_AUTOCENTER, &diprop_word.diph);
+            ok(hr==DI_OK,"IDirectInputDevice2_GetProperty() failed: %08x\n", hr);
+            ok(diprop_word.dwData==DIPROPAUTOCENTER_ON,"IDirectInputDevice2_GetProperty() reported autocenter as disabled\n");
+            diprop_word.dwData = DIPROPAUTOCENTER_OFF;
+            hr = IDirectInputDevice2_SetProperty(pJoystick, DIPROP_AUTOCENTER, &diprop_word.diph);
+            ok(hr==DI_OK,"IDirectInputDevice2_SetProperty() failed: %08x\n", hr);
+            hr = IDirectInputDevice2_GetProperty(pJoystick, DIPROP_AUTOCENTER, &diprop_word.diph);
+            ok(hr==DI_OK,"IDirectInputDevice2_GetProperty() failed: %08x\n", hr);
+            ok(diprop_word.dwData==DIPROPAUTOCENTER_OFF,"IDirectInputDevice2_GetProperty() reported autocenter as enabled\n");
+            if (winetest_interactive) {
+                trace("Acquiring in 2s, autocenter will be disabled.\n");
+                Sleep(2000);
+            }
+            hr = IDirectInputDevice_Acquire(pJoystick);
+            ok(hr==DI_OK,"IDirectInputDevice_Acquire() failed: %08x\n", hr);
+            if (winetest_interactive)
+                trace("Acquired.\n");
+            hr = IDirectInputDevice2_GetProperty(pJoystick, DIPROP_AUTOCENTER, &diprop_word.diph);
+            ok(hr==DI_OK,"IDirectInputDevice2_GetProperty() failed: %08x\n", hr);
+            ok(diprop_word.dwData==DIPROPAUTOCENTER_OFF,"IDirectInputDevice2_GetProperty() reported autocenter as enabled\n");
+            if (winetest_interactive) {
+                trace("Releasing in 2s, autocenter will be re-enabled.\n");
+                Sleep(2000);
+            }
+            hr = IDirectInputDevice_Unacquire(pJoystick);
+            ok(hr==DI_OK,"IDirectInputDevice_Unacquire() failed: %08x\n", hr);
+            if (winetest_interactive)
+                trace("Released\n");
+            hr = IDirectInputDevice2_GetProperty(pJoystick, DIPROP_AUTOCENTER, &diprop_word.diph);
+            ok(hr==DI_OK,"IDirectInputDevice2_GetProperty() failed: %08x\n", hr);
+            ok(diprop_word.dwData==DIPROPAUTOCENTER_OFF,"IDirectInputDevice2_GetProperty() reported autocenter as enabled\n");
+            hr = IDirectInputDevice_Acquire(pJoystick);
+            ok(hr==DI_OK,"IDirectInputDevice_Acquire() failed: %08x\n", hr);
+            hr = IDirectInputDevice2_GetProperty(pJoystick, DIPROP_AUTOCENTER, &diprop_word.diph);
 
             ref = IUnknown_Release(effect);
             ok(ref == 0, "IDirectInputDevice_Release() reference count = %d\n", ref);
