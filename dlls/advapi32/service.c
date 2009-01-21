@@ -1680,6 +1680,7 @@ BOOL WINAPI GetServiceDisplayNameW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
   LPWSTR lpDisplayName, LPDWORD lpcchBuffer)
 {
     DWORD err;
+    WCHAR buffer[2];
 
     TRACE("%p %s %p %p\n", hSCManager,
           debugstr_w(lpServiceName), lpDisplayName, lpcchBuffer);
@@ -1690,10 +1691,20 @@ BOOL WINAPI GetServiceDisplayNameW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         return 0;
     }
 
+    /* provide a buffer if the caller didn't */
+    if (!lpDisplayName || *lpcchBuffer < 2)
+    {
+        lpDisplayName = buffer;
+        /* A size of 1 would be enough, but tests show that Windows returns 2,
+         * probably because of a WCHAR/bytes mismatch in their code.
+         */
+        *lpcchBuffer = 2;
+    }
+
     __TRY
     {
         err = svcctl_GetServiceDisplayNameW(hSCManager, lpServiceName, lpDisplayName,
-                                            lpDisplayName ? *lpcchBuffer : 0, lpcchBuffer);
+                                            *lpcchBuffer, lpcchBuffer);
     }
     __EXCEPT(rpc_filter)
     {

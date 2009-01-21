@@ -232,7 +232,7 @@ typedef [switch_type(DWORD)] union
         [in] LPCWSTR lpServiceName,
         [out,size_is(cchBufSize)] WCHAR lpBuffer[],
         [in] DWORD cchBufSize,
-        [out] DWORD *cchLength);
+        [in,out] DWORD *cchLength);
 
     /* Compatible with Windows function 0x15 */
     DWORD svcctl_GetServiceKeyNameW(

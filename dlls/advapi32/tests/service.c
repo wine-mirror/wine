@@ -476,7 +476,7 @@ static void test_get_displayname(void)
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
        "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
-    todo_wine ok(displaysize == 15, "Service size expected 15, got %d\n", displaysize);
+    ok(displaysize == 15, "Service size expected 15, got %d\n", displaysize);
     ok(displaynameW[0] == 0, "Service name not empty\n");
 
     displaysize = 0;
@@ -492,7 +492,7 @@ static void test_get_displayname(void)
     lstrcpyW( displaynameW, abcW );
     ret = GetServiceDisplayNameW(scm_handle, deadbeefW, displaynameW, &displaysize);
     ok(!ret, "Expected failure\n");
-    todo_wine ok(displaysize == 2, "Service size expected 2, got %d\n", displaysize);
+    ok(displaysize == 2, "Service size expected 2, got %d\n", displaysize);
     ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
        "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
     ok(displaynameW[0] == 'A', "Service name changed\n");
@@ -510,10 +510,10 @@ static void test_get_displayname(void)
     lstrcpyW( displaynameW, abcW );
     ret = GetServiceDisplayNameW(scm_handle, deadbeefW, displaynameW, &displaysize);
     ok(!ret, "Expected failure\n");
-    todo_wine ok(displaysize == 2, "Service size expected 2, got %d\n", displaysize);
+    ok(displaysize == 2, "Service size expected 2, got %d\n", displaysize);
     ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
        "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
-    todo_wine ok(displaynameW[0] == 'A', "Service name changed\n");
+    ok(displaynameW[0] == 'A', "Service name changed\n");
 
     displaysize = 2;
     strcpy(displayname, "ABC");
@@ -521,14 +521,14 @@ static void test_get_displayname(void)
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
        "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
-    ok(displaysize == 2, "Service size expected 2, got %d\n", displaysize);
+    todo_wine ok(displaysize == 2, "Service size expected 2, got %d\n", displaysize);
     ok(displayname[0] == 0, "Service name not empty\n");
 
     displaysize = 2;
     lstrcpyW( displaynameW, abcW );
     ret = GetServiceDisplayNameW(scm_handle, deadbeefW, displaynameW, &displaysize);
     ok(!ret, "Expected failure\n");
-    todo_wine ok(displaysize == 2, "Service size expected 2, got %d\n", displaysize);
+    ok(displaysize == 2, "Service size expected 2, got %d\n", displaysize);
     ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
        "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
     ok(displaynameW[0] == 0, "Service name not empty\n");
