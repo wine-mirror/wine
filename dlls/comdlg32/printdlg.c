@@ -2611,6 +2611,46 @@ static WCHAR *pagesetup_get_devname(const PageSetupDataA *pda)
     return name;
 }
 
+static void pagesetup_release_devname(const PageSetupDataA *pda, WCHAR *name)
+{
+    HeapFree(GetProcessHeap(), 0, name);
+}
+
+static WCHAR *pagesetup_get_portname(const PageSetupDataA *pda)
+{
+    DEVNAMES *dn;
+    int len;
+    WCHAR *name;
+
+    dn = GlobalLock(pda->dlga->hDevNames);
+    len = MultiByteToWideChar(CP_ACP, 0, (char*)dn + dn->wOutputOffset, -1, NULL, 0);
+    name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, (char*)dn + dn->wOutputOffset, -1, name, len);
+    GlobalUnlock(pda->dlga->hDevNames);
+    return name;
+}
+
+static void pagesetup_release_portname(const PageSetupDataA *pda, WCHAR *name)
+{
+    HeapFree(GetProcessHeap(), 0, name);
+}
+
+static DEVMODEW *pagesetup_get_devmode(const PageSetupDataA *pda)
+{
+    DEVMODEA *dm;
+    DEVMODEW *dmW;
+
+    dm = GlobalLock(pda->dlga->hDevMode);
+    dmW = GdiConvertToDevmodeW(dm);
+    GlobalUnlock(pda->dlga->hDevMode);
+    return dmW;
+}
+
+static void pagesetup_release_devmode(const PageSetupDataA *pda, DEVMODEW *dm)
+{
+    HeapFree(GetProcessHeap(), 0, dm);
+}
+
 static BOOL pagesetup_update_papersize(PageSetupDataA *pda)
 {
     DEVNAMES *dn;
@@ -2804,22 +2844,20 @@ PRINTDLG_PS_ChangeActivePrinterA(LPSTR name, PageSetupDataA *pda){
  */
 static void pagesetup_init_combos(HWND hDlg, PageSetupDataA *pda)
 {
-    DEVNAMES	*dn;
-    DEVMODEA	*dm;
-    LPSTR	devname,portname;
-    LPWSTR devnameW;
+    DEVMODEW *dm;
+    LPWSTR devname, portname;
 
-    dn = GlobalLock(pda->dlga->hDevNames);
-    dm = GlobalLock(pda->dlga->hDevMode);
-    devnameW = pagesetup_get_devname(pda);
-    devname  = ((char*)dn)+dn->wDeviceOffset;
-    portname = ((char*)dn)+dn->wOutputOffset;
-    PRINTDLG_SetUpPrinterListComboW(hDlg, cmb1, devnameW);
-    PRINTDLG_SetUpPaperComboBoxA(hDlg,cmb2,devname,portname,dm);
-    PRINTDLG_SetUpPaperComboBoxA(hDlg,cmb3,devname,portname,dm);
-    HeapFree(GetProcessHeap(), 0, devnameW);
-    GlobalUnlock(pda->dlga->hDevNames);
-    GlobalUnlock(pda->dlga->hDevMode);
+    dm       = pagesetup_get_devmode(pda);
+    devname  = pagesetup_get_devname(pda);
+    portname = pagesetup_get_portname(pda);
+
+    PRINTDLG_SetUpPrinterListComboW(hDlg, cmb1, devname);
+    PRINTDLG_SetUpPaperComboBoxW(hDlg, cmb2, devname, portname, dm);
+    PRINTDLG_SetUpPaperComboBoxW(hDlg, cmb3, devname, portname, dm);
+
+    pagesetup_release_portname(pda, portname);
+    pagesetup_release_devname(pda, devname);
+    pagesetup_release_devmode(pda, dm);
 }
 
 static void PRINTDLG_PS_SetOrientationW(HWND hDlg, PageSetupDataW* pdw)
