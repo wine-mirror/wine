@@ -2597,6 +2597,20 @@ static void pagesetup_set_defaultsource(PageSetupDataA *pda, WORD source)
     GlobalUnlock(pda->dlga->hDevMode);
 }
 
+static WCHAR *pagesetup_get_devname(const PageSetupDataA *pda)
+{
+    DEVNAMES *dn;
+    int len;
+    WCHAR *name;
+
+    dn = GlobalLock(pda->dlga->hDevNames);
+    len = MultiByteToWideChar(CP_ACP, 0, (char*)dn + dn->wDeviceOffset, -1, NULL, 0);
+    name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, (char*)dn + dn->wDeviceOffset, -1, name, len);
+    GlobalUnlock(pda->dlga->hDevNames);
+    return name;
+}
+
 static BOOL pagesetup_update_papersize(PageSetupDataA *pda)
 {
     DEVNAMES *dn;
@@ -2793,14 +2807,17 @@ static void pagesetup_init_combos(HWND hDlg, PageSetupDataA *pda)
     DEVNAMES	*dn;
     DEVMODEA	*dm;
     LPSTR	devname,portname;
+    LPWSTR devnameW;
 
     dn = GlobalLock(pda->dlga->hDevNames);
     dm = GlobalLock(pda->dlga->hDevMode);
+    devnameW = pagesetup_get_devname(pda);
     devname  = ((char*)dn)+dn->wDeviceOffset;
     portname = ((char*)dn)+dn->wOutputOffset;
-    PRINTDLG_SetUpPrinterListComboA(hDlg, cmb1, devname);
+    PRINTDLG_SetUpPrinterListComboW(hDlg, cmb1, devnameW);
     PRINTDLG_SetUpPaperComboBoxA(hDlg,cmb2,devname,portname,dm);
     PRINTDLG_SetUpPaperComboBoxA(hDlg,cmb3,devname,portname,dm);
+    HeapFree(GetProcessHeap(), 0, devnameW);
     GlobalUnlock(pda->dlga->hDevNames);
     GlobalUnlock(pda->dlga->hDevMode);
 }
