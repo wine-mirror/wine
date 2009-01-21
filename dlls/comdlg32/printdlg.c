@@ -2442,8 +2442,16 @@ static inline BOOL is_metric(const PageSetupDataA *pda)
     return pda->dlga->Flags & PSD_INHUNDREDTHSOFMILLIMETERS;
 }
 
+static inline LONG tenths_mm_to_size(PageSetupDataA *data, LONG size)
+{
+    if (is_metric(data))
+        return 10 * size;
+    else
+        return 10 * size * 100 / 254;
+}
+
 static DWORD
-_c_10mm2size(PAGESETUPDLGA *dlga,DWORD size) {
+_c_10mm2size(PAGESETUPDLGW *dlga,DWORD size) {
     if (dlga->Flags & PSD_INTHOUSANDTHSOFINCHES)
 	return 10*size*100/254;
     return 10*size;
@@ -2810,8 +2818,8 @@ static BOOL pagesetup_update_papersize(PageSetupDataA *pda)
     }
 
     /* this is _10ths_ of a millimeter */
-    pda->dlga->ptPaperSize.x = _c_10mm2size(pda->dlga, points[i].x);
-    pda->dlga->ptPaperSize.y = _c_10mm2size(pda->dlga, points[i].y);
+    pda->dlga->ptPaperSize.x = tenths_mm_to_size(pda, points[i].x);
+    pda->dlga->ptPaperSize.y = tenths_mm_to_size(pda, points[i].y);
 
     if(pagesetup_get_orientation(pda) == DMORIENT_LANDSCAPE)
     {
@@ -2851,8 +2859,8 @@ PRINTDLG_PS_UpdateDlgStructW(HWND hDlg, PageSetupDataW *pdw) {
 
     if (GetDlgItemTextW(hDlg,cmb2,papername,sizeof(papername)/sizeof(papername[0]))>0) {
 	PRINTDLG_PaperSizeW(&(pdw->pdlg),papername,&(pdw->dlgw->ptPaperSize));
-	pdw->dlgw->ptPaperSize.x = _c_10mm2size((LPPAGESETUPDLGA)pdw->dlgw,pdw->dlgw->ptPaperSize.x);
-	pdw->dlgw->ptPaperSize.y = _c_10mm2size((LPPAGESETUPDLGA)pdw->dlgw,pdw->dlgw->ptPaperSize.y);
+	pdw->dlgw->ptPaperSize.x = _c_10mm2size(pdw->dlgw,pdw->dlgw->ptPaperSize.x);
+	pdw->dlgw->ptPaperSize.y = _c_10mm2size(pdw->dlgw,pdw->dlgw->ptPaperSize.y);
     } else
 	FIXME("could not get dialog text for papersize cmbbox?\n");
 #define GETVAL(id,val) if (GetDlgItemTextW(hDlg,id,buf,sizeof(buf)/sizeof(buf[0]))>0) { val = _c_str2sizeW(pdw->dlgw,buf); } else { FIXME("could not get dlgitemtextw for %x\n",id); }
@@ -3019,8 +3027,8 @@ static void PRINTDLG_PS_SetOrientationW(HWND hDlg, PageSetupDataW* pdw)
 
     GetDlgItemTextW(hDlg, cmb2, PaperName, sizeof(PaperName)/sizeof(WCHAR));
     PRINTDLG_PaperSizeW(&pdw->pdlg, PaperName, &pdw->curdlg.ptPaperSize);
-    pdw->curdlg.ptPaperSize.x = _c_10mm2size((LPPAGESETUPDLGA)pdw->dlgw, pdw->curdlg.ptPaperSize.x);
-    pdw->curdlg.ptPaperSize.y = _c_10mm2size((LPPAGESETUPDLGA)pdw->dlgw, pdw->curdlg.ptPaperSize.y);
+    pdw->curdlg.ptPaperSize.x = _c_10mm2size(pdw->dlgw, pdw->curdlg.ptPaperSize.x);
+    pdw->curdlg.ptPaperSize.y = _c_10mm2size(pdw->dlgw, pdw->curdlg.ptPaperSize.y);
 
     if(IsDlgButtonChecked(hDlg, rad2))
     {
@@ -3998,8 +4006,8 @@ BOOL WINAPI PageSetupDlgW(LPPAGESETUPDLGW setupdlg) {
 	setupdlg->hDevNames	= pdlg.hDevNames;
 	/* FIXME: Just return "A4" for now. */
     	PRINTDLG_PaperSizeW(&pdlg,a4,&setupdlg->ptPaperSize);
-	setupdlg->ptPaperSize.x=_c_10mm2size((LPPAGESETUPDLGA)setupdlg,setupdlg->ptPaperSize.x);
-	setupdlg->ptPaperSize.y=_c_10mm2size((LPPAGESETUPDLGA)setupdlg,setupdlg->ptPaperSize.y);
+	setupdlg->ptPaperSize.x=_c_10mm2size(setupdlg,setupdlg->ptPaperSize.x);
+	setupdlg->ptPaperSize.y=_c_10mm2size(setupdlg,setupdlg->ptPaperSize.y);
 	return TRUE;
     }
     hDlgTmpl = PRINTDLG_GetPGSTemplateW(setupdlg);
