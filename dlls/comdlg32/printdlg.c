@@ -2450,6 +2450,14 @@ static inline LONG tenths_mm_to_size(PageSetupDataA *data, LONG size)
         return 10 * size * 100 / 254;
 }
 
+static inline LONG thousandths_inch_to_size(PageSetupDataA *data, LONG size)
+{
+    if (is_metric(data))
+        return size * 254 / 100;
+    else
+        return size;
+}
+
 static DWORD
 _c_10mm2size(PAGESETUPDLGW *dlga,DWORD size) {
     if (dlga->Flags & PSD_INTHOUSANDTHSOFINCHES)
@@ -2459,7 +2467,7 @@ _c_10mm2size(PAGESETUPDLGW *dlga,DWORD size) {
 
 
 static DWORD
-_c_inch2size(PAGESETUPDLGA *dlga,DWORD size) {
+_c_inch2size(PAGESETUPDLGW *dlga,DWORD size) {
     if (dlga->Flags & PSD_INTHOUSANDTHSOFINCHES)
 	return size;
     else
@@ -3700,8 +3708,8 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	/* We fill them out enabled or not */
         if (!(pda->dlga->Flags & PSD_MARGINS))
         {
-	    /* default is 1 inch */
-	    DWORD size = _c_inch2size(pda->dlga,1000);
+            /* default is 1 inch */
+            LONG size = thousandths_inch_to_size(pda, 1000);
             pda->dlga->rtMargin.left   = size;
             pda->dlga->rtMargin.top    = size;
             pda->dlga->rtMargin.right  = size;
@@ -3793,7 +3801,7 @@ PageDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    SetDlgItemTextW(hDlg,edt7,str);
 	} else {
 	    /* default is 1 inch */
-	    DWORD size = _c_inch2size((LPPAGESETUPDLGA)pdw->dlgw,1000);
+	    DWORD size = _c_inch2size(pdw->dlgw,1000);
 	    WCHAR	str[20];
 	    _c_size2strW(pdw,size,str);
 	    SetDlgItemTextW(hDlg,edt4,str);
