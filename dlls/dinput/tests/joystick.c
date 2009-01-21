@@ -373,7 +373,7 @@ static BOOL CALLBACK EnumJoysticks(
 
         if (effect)
         {
-            hr = IDirectInputEffect_Initialize(effect, hInstance, DIRECTINPUT_VERSION,
+            hr = IDirectInputEffect_Initialize(effect, hInstance, data->version,
                                                &GUID_ConstantForce);
             ok(hr==DI_OK,"IDirectInputEffect_Initialize failed: %08x\n", hr);
             hr = IDirectInputEffect_SetParameters(effect, &eff, DIEP_AXES | DIEP_DIRECTION |
