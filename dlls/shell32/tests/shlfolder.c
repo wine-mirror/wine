@@ -1090,7 +1090,10 @@ static void test_FolderShortcut(void) {
     static const GUID CLSID_UnixDosFolder = 
         {0x9d20aae8, 0x0625, 0x44b0, {0x9c, 0xa7, 0x71, 0x88, 0x9c, 0x22, 0x54, 0xd9}};
 
-    if (!pSHGetSpecialFolderPathW || !pStrRetToBufW) return;
+    if (!pSHGetSpecialFolderPathW || !pStrRetToBufW) {
+        win_skip("SHGetSpecialFolderPathW and/or StrRetToBufW are not available\n");
+        return;
+    }
    
     /* These tests basically show, that CLSID_FolderShortcuts are initialized
      * via their IPersistPropertyBag interface. And that the target folder
@@ -1098,6 +1101,10 @@ static void test_FolderShortcut(void) {
      */
     hr = CoCreateInstance(&CLSID_FolderShortcut, NULL, CLSCTX_INPROC_SERVER, 
                           &IID_IPersistPropertyBag, (LPVOID*)&pPersistPropertyBag);
+    if (hr == REGDB_E_CLASSNOTREG) {
+        win_skip("CLSID_FolderShortcut is not implemented\n");
+        return;
+    }
     ok (SUCCEEDED(hr), "CoCreateInstance failed! hr = 0x%08x\n", hr);
     if (FAILED(hr)) return;
 
