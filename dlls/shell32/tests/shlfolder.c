@@ -46,6 +46,7 @@ static HRESULT (WINAPI *pSHBindToParent)(LPCITEMIDLIST, REFIID, LPVOID*, LPCITEM
 static HRESULT (WINAPI *pSHGetFolderPathA)(HWND, int, HANDLE, DWORD, LPSTR);
 static HRESULT (WINAPI *pSHGetFolderPathAndSubDirA)(HWND, int, HANDLE, DWORD, LPCSTR, LPSTR);
 static BOOL (WINAPI *pSHGetPathFromIDListW)(LPCITEMIDLIST,LPWSTR);
+static BOOL (WINAPI *pSHGetSpecialFolderPathA)(HWND, LPSTR, int, BOOL);
 static BOOL (WINAPI *pSHGetSpecialFolderPathW)(HWND, LPWSTR, int, BOOL);
 static HRESULT (WINAPI *pStrRetToBufW)(STRRET*,LPCITEMIDLIST,LPWSTR,UINT);
 static LPITEMIDLIST (WINAPI *pILFindLastID)(LPCITEMIDLIST);
@@ -62,6 +63,7 @@ static void init_function_pointers(void)
     pSHGetFolderPathA = (void*)GetProcAddress(hmod, "SHGetFolderPathA");
     pSHGetFolderPathAndSubDirA = (void*)GetProcAddress(hmod, "SHGetFolderPathAndSubDirA");
     pSHGetPathFromIDListW = (void*)GetProcAddress(hmod, "SHGetPathFromIDListW");
+    pSHGetSpecialFolderPathA = (void*)GetProcAddress(hmod, "SHGetSpecialFolderPathA");
     pSHGetSpecialFolderPathW = (void*)GetProcAddress(hmod, "SHGetSpecialFolderPathW");
     pILFindLastID = (void *)GetProcAddress(hmod, (LPCSTR)16);
     pILFree = (void*)GetProcAddress(hmod, (LPSTR)155);
@@ -356,7 +358,7 @@ static void test_GetDisplayName(void)
     BOOL result;
     HRESULT hr;
     HANDLE hTestFile;
-    WCHAR wszTestFile[MAX_PATH], wszTestFile2[MAX_PATH], wszTestDir[MAX_PATH];
+    WCHAR wszTestFile[MAX_PATH], wszTestFile2[MAX_PATH];
     char szTestFile[MAX_PATH], szTestDir[MAX_PATH];
     DWORD attr;
     STRRET strret;
@@ -365,6 +367,7 @@ static void test_GetDisplayName(void)
     SHITEMID emptyitem = { 0, { 0 } };
     LPITEMIDLIST pidlTestFile, pidlEmpty = (LPITEMIDLIST)&emptyitem;
     LPCITEMIDLIST pidlLast;
+    static const CHAR szFileName[] = "winetest.foo";
     static const WCHAR wszFileName[] = { 'w','i','n','e','t','e','s','t','.','f','o','o',0 };
     static const WCHAR wszDirName[] = { 'w','i','n','e','t','e','s','t',0 };
 
@@ -376,17 +379,18 @@ static void test_GetDisplayName(void)
      * no functional difference in this respect.
      */
 
-    if(!pSHGetSpecialFolderPathW) return;
+    if(!pSHGetSpecialFolderPathA) {
+        win_skip("SHGetSpecialFolderPathA is not available\n");
+        return;
+    }
 
     /* First creating a directory in MyDocuments and a file in this directory. */
-    result = pSHGetSpecialFolderPathW(NULL, wszTestDir, CSIDL_PERSONAL, FALSE);
-    ok(result, "SHGetSpecialFolderPathW failed! Last error: %u\n", GetLastError());
+    result = pSHGetSpecialFolderPathA(NULL, szTestDir, CSIDL_PERSONAL, FALSE);
+    ok(result, "SHGetSpecialFolderPathA failed! Last error: %u\n", GetLastError());
     if (!result) return;
 
-    myPathAddBackslashW(wszTestDir);
-    lstrcatW(wszTestDir, wszDirName);
     /* Use ANSI file functions so this works on Windows 9x */
-    WideCharToMultiByte(CP_ACP, 0, wszTestDir, -1, szTestDir, MAX_PATH, 0, 0);
+    lstrcatA(szTestDir, "\\winetest");
     CreateDirectoryA(szTestDir, NULL);
     attr=GetFileAttributesA(szTestDir);
     if (attr == INVALID_FILE_ATTRIBUTES || !(attr & FILE_ATTRIBUTE_DIRECTORY))
@@ -395,11 +399,9 @@ static void test_GetDisplayName(void)
         return;
     }
 
-    lstrcpyW(wszTestFile, wszTestDir);
-    myPathAddBackslashW(wszTestFile);
-    lstrcatW(wszTestFile, wszFileName);
-    WideCharToMultiByte(CP_ACP, 0, wszTestFile, -1, szTestFile, MAX_PATH, 0, 0);
-
+    lstrcpyA(szTestFile, szTestDir);
+    lstrcatA(szTestFile, "\\");
+    lstrcatA(szTestFile, szFileName);
     hTestFile = CreateFileA(szTestFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
     ok((hTestFile != INVALID_HANDLE_VALUE), "CreateFileA failed! Last error: %u\n", GetLastError());
     if (hTestFile == INVALID_HANDLE_VALUE) return;
@@ -409,6 +411,8 @@ static void test_GetDisplayName(void)
     hr = SHGetDesktopFolder(&psfDesktop);
     ok(SUCCEEDED(hr), "SHGetDesktopFolder failed! hr = %08x\n", hr);
     if (FAILED(hr)) return;
+
+    MultiByteToWideChar(CP_ACP, 0, szTestFile, -1, wszTestFile, MAX_PATH);
 
     hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, wszTestFile, NULL, &pidlTestFile, NULL);
     ok(SUCCEEDED(hr), "Desktop->ParseDisplayName failed! hr = %08x\n", hr);
@@ -435,7 +439,9 @@ static void test_GetDisplayName(void)
 
     if(!pSHBindToParent)
     {
-        skip("SHBindToParent is missing\n");
+        win_skip("SHBindToParent is missing\n");
+        DeleteFileA(szTestFile);
+        RemoveDirectoryA(szTestDir);
         return;
     }
   
