@@ -993,6 +993,13 @@ static void test_encodeUnicodeName(DWORD dwEncoding)
 static void compareNameValues(const CERT_NAME_VALUE *expected,
  const CERT_NAME_VALUE *got)
 {
+    if (expected->dwValueType == CERT_RDN_UTF8_STRING &&
+        got->dwValueType == CERT_RDN_ENCODED_BLOB)
+    {
+        win_skip("Can't handle CERT_RDN_UTF8_STRING\n");
+        return;
+    }
+
     ok(got->dwValueType == expected->dwValueType,
      "Expected string type %d, got %d\n", expected->dwValueType,
      got->dwValueType);
