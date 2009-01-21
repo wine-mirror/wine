@@ -421,12 +421,19 @@ static void test_GetDisplayName(void)
         return;
     }
 
-    /* WinXP stores the filenames as both ANSI and UNICODE in the pidls */
     pidlLast = pILFindLastID(pidlTestFile);
-    ok(pidlLast->mkid.cb >=76, "Expected pidl length of at least 76, got %d.\n", pidlLast->mkid.cb);
+    ok(pidlLast->mkid.cb >=76 ||
+        broken(pidlLast->mkid.cb == 28) || /* W2K */
+        broken(pidlLast->mkid.cb == 40), /* Win9x, WinME */
+        "Expected pidl length of at least 76, got %d.\n", pidlLast->mkid.cb);
+    if (pidlLast->mkid.cb >= 28) {
+        ok(!lstrcmpA((CHAR*)&pidlLast->mkid.abID[12], szFileName),
+            "Filename should be stored as ansi-string at this position!\n");
+    }
+    /* WinXP and up store the filenames as both ANSI and UNICODE in the pidls */
     if (pidlLast->mkid.cb >= 76) {
         ok(!lstrcmpW((WCHAR*)&pidlLast->mkid.abID[46], wszFileName),
-            "WinXP stores the filename as a wchar-string at this position!\n");
+            "Filename should be stored as wchar-string at this position!\n");
     }
     
     /* It seems as if we cannot bind to regular files on windows, but only directories. 
