@@ -1434,7 +1434,13 @@ static HRESULT get_connected_filter_name(TestFilterImpl *pFilter, char *FilterNa
     IPin_Release(pin);
     if (FAILED(hr)) return hr;
 
+    SetLastError(0xdeadbeef);
     hr = IBaseFilter_QueryFilterInfo(pinInfo.pFilter, &filterInfo);
+    if (hr == S_OK && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        IBaseFilter_Release(pinInfo.pFilter);
+        return E_NOTIMPL;
+    }
     ok(hr == S_OK, "IBaseFilter_QueryFilterInfo failed with %x\n", hr);
     IBaseFilter_Release(pinInfo.pFilter);
     if (FAILED(hr)) return hr;
@@ -1557,7 +1563,7 @@ static void test_render_filter_priority(void)
     hr = IFilterGraph2_Render(pgraph2, ((TestFilterImpl*)ptestfilter)->ppPins[0]);
     ok(hr == S_OK, "IFilterGraph2_Render failed with %08x\n", hr);
 
-    get_connected_filter_name((TestFilterImpl*)ptestfilter, ConnectedFilterName1);
+    hr = get_connected_filter_name((TestFilterImpl*)ptestfilter, ConnectedFilterName1);
 
     IFilterGraph2_Release(pgraph2);
     pgraph2 = NULL;
@@ -1565,6 +1571,12 @@ static void test_render_filter_priority(void)
     ptestfilter = NULL;
     IBaseFilter_Release(ptestfilter2);
     ptestfilter2 = NULL;
+
+    if (hr == E_NOTIMPL)
+    {
+        win_skip("Needed functions are not implemented\n");
+        return;
+    }
 
     hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph2, (LPVOID*)&pgraph2);
     ok(hr == S_OK, "CoCreateInstance failed with %08x\n", hr);
