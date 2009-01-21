@@ -780,7 +780,6 @@ static void test_UuidCreate(void)
 
     UuidCreate(&guid);
     version = (guid.Data3 & 0xf000) >> 12;
-    todo_wine
     ok(version == 4 || broken(version == 1), "unexpected version %d\n",
        version);
     if (version == 4)
@@ -826,7 +825,6 @@ static void test_UuidCreate(void)
          * present.  Just check that Data4[0]'s most significant bits are
          * set as expected.
          */
-        todo_wine
         ok((guid.Data4[0] & 0xc0) == 0x80,
            "unexpected value in Data4[0]: %02x\n", guid.Data4[0] & 0xc0);
     }
