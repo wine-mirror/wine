@@ -233,7 +233,6 @@ void ME_RewrapRepaint(ME_TextEditor *editor);
 void ME_UpdateRepaint(ME_TextEditor *editor);
 void ME_EnsureVisible(ME_TextEditor *editor, ME_Cursor *pCursor);
 void ME_InvalidateSelection(ME_TextEditor *editor);
-void ME_QueueInvalidateFromCursor(ME_TextEditor *editor, int nCursor);
 BOOL ME_SetZoom(ME_TextEditor *editor, int numerator, int denominator);
 int  ME_twips2pointsX(ME_Context *c, int x);
 int  ME_twips2pointsY(ME_Context *c, int y);

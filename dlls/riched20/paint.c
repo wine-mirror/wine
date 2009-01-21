@@ -1241,24 +1241,6 @@ void ME_EnsureVisible(ME_TextEditor *editor, ME_Cursor *pCursor)
 
 
 void
-ME_InvalidateFromOfs(ME_TextEditor *editor, int nCharOfs)
-{
-  RECT rc;
-  int x, y, height;
-  ME_Cursor tmp;
-
-  ME_RunOfsFromCharOfs(editor, nCharOfs, &tmp.pRun, &tmp.nOffset);
-  ME_GetCursorCoordinates(editor, &tmp, &x, &y, &height);
-
-  rc.left = 0;
-  rc.top = y;
-  rc.bottom = y + height;
-  rc.right = editor->rcFormat.right;
-  ITextHost_TxInvalidateRect(editor->texthost, &rc, FALSE);
-}
-
-
-void
 ME_InvalidateSelection(ME_TextEditor *editor)
 {
   ME_DisplayItem *para1, *para2;
@@ -1305,13 +1287,6 @@ ME_InvalidateSelection(ME_TextEditor *editor)
   assert(editor->pLastSelStartPara->type == diParagraph);
   assert(editor->pLastSelEndPara->type == diParagraph);
 }
-
-void
-ME_QueueInvalidateFromCursor(ME_TextEditor *editor, int nCursor)
-{
-  editor->nInvalidOfs = ME_GetCursorOfs(editor, nCursor);
-}
-
 
 BOOL
 ME_SetZoom(ME_TextEditor *editor, int numerator, int denominator)

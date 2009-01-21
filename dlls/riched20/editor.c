@@ -2725,7 +2725,6 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->pLastSelStartPara = ed->pLastSelEndPara = ME_FindItemFwd(ed->pBuffer->pFirst, diParagraph);
   ed->bWordWrap = (props & TXTBIT_WORDWRAP) != 0;
   ed->bHideSelection = FALSE;
-  ed->nInvalidOfs = -1;
   ed->pfnWordBreak = NULL;
   ed->lpOleCallback = NULL;
   ed->mode = TM_RICHTEXT | TM_MULTILEVELUNDO | TM_MULTICODEPAGE;

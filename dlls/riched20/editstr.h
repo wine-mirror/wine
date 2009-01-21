@@ -363,7 +363,6 @@ typedef struct tagME_TextEditor
   RECT rcFormat;
   BOOL bDefaultFormatRect;
   BOOL bWordWrap;
-  int nInvalidOfs;
   int nTextLimit;
   EDITWORDBREAKPROCW pfnWordBreak;
   LPRICHEDITOLECALLBACK lpOleCallback;
