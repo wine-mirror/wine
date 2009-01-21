@@ -432,7 +432,10 @@ static void test_GetDisplayName(void)
     /* It seems as if we cannot bind to regular files on windows, but only directories. 
      */
     hr = IShellFolder_BindToObject(psfDesktop, pidlTestFile, NULL, &IID_IUnknown, (VOID**)&psfFile);
-    todo_wine { ok (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "hr = %08x\n", hr); }
+    todo_wine
+    ok (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
+        broken(SUCCEEDED(hr)), /* Win9x, W2K */
+        "hr = %08x\n", hr);
     if (SUCCEEDED(hr)) {
         IShellFolder_Release(psfFile);
     }
