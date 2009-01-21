@@ -3097,46 +3097,40 @@ PRINTDLG_PS_ChangePrinterW(HWND hDlg, PageSetupDataW *pdw) {
 }
 
 /******************************************************************************************
- * PRINTDLG_PS_ChangePaperPrev 
- * 
+ * pagesetup_change_preview
+ *
  * Changes paper preview size / position
  *
- * PARAMS:
- * 	pda		[i] Pointer for current PageSetupDataA structure
- *
- * RETURNS:
- *  always - TRUE
  */
-static BOOL 
-PRINTDLG_PS_ChangePaperPrev(const PageSetupDataA *pda)
+static void pagesetup_change_preview(const PageSetupDataA *data)
 {
     LONG width, height, x, y;
-    RECT rtTmp;
-    
-    if(pda->dlga->ptPaperSize.x > pda->dlga->ptPaperSize.y) {
-	width  = pda->rtDrawRect.right - pda->rtDrawRect.left;
-        height = pda->dlga->ptPaperSize.y * width / pda->dlga->ptPaperSize.x;
-    } else {
-	height = pda->rtDrawRect.bottom - pda->rtDrawRect.top;
-        width  = pda->dlga->ptPaperSize.x * height / pda->dlga->ptPaperSize.y;
+    RECT tmp;
+    const int shadow = 4;
+
+    if(pagesetup_get_orientation(data) == DMORIENT_LANDSCAPE)
+    {
+        width  = data->rtDrawRect.right - data->rtDrawRect.left;
+        height = data->dlga->ptPaperSize.y * width / data->dlga->ptPaperSize.x;
     }
-    x = (pda->rtDrawRect.right + pda->rtDrawRect.left - width) / 2;
-    y = (pda->rtDrawRect.bottom + pda->rtDrawRect.top - height) / 2;
-    TRACE("rtDrawRect(%d, %d, %d, %d) x=%d, y=%d, w=%d, h=%d\n",
-	pda->rtDrawRect.left, pda->rtDrawRect.top, pda->rtDrawRect.right, pda->rtDrawRect.bottom,
-	x, y, width, height);
+    else
+    {
+        height = data->rtDrawRect.bottom - data->rtDrawRect.top;
+        width  = data->dlga->ptPaperSize.x * height / data->dlga->ptPaperSize.y;
+    }
+    x = (data->rtDrawRect.right + data->rtDrawRect.left - width) / 2;
+    y = (data->rtDrawRect.bottom + data->rtDrawRect.top - height) / 2;
+    TRACE("draw rect %s x=%d, y=%d, w=%d, h=%d\n",
+          wine_dbgstr_rect(&data->rtDrawRect), x, y, width, height);
 
-#define SHADOW 4
-    MoveWindow(GetDlgItem(pda->hDlg, rct2), x+width, y+SHADOW, SHADOW, height, FALSE);
-    MoveWindow(GetDlgItem(pda->hDlg, rct3), x+SHADOW, y+height, width, SHADOW, FALSE);
-    MoveWindow(GetDlgItem(pda->hDlg, rct1), x, y, width, height, FALSE);
-    rtTmp = pda->rtDrawRect;
-    rtTmp.right  += SHADOW;
-    rtTmp.bottom += SHADOW;
-#undef SHADOW 
+    MoveWindow(GetDlgItem(data->hDlg, rct2), x + width, y + shadow, shadow, height, FALSE);
+    MoveWindow(GetDlgItem(data->hDlg, rct3), x + shadow, y + height, width, shadow, FALSE);
+    MoveWindow(GetDlgItem(data->hDlg, rct1), x, y, width, height, FALSE);
 
-    InvalidateRect(pda->hDlg, &rtTmp, TRUE);
-    return TRUE;
+    tmp = data->rtDrawRect;
+    tmp.right  += shadow;
+    tmp.bottom += shadow;
+    InvalidateRect(data->hDlg, &tmp, TRUE);
 }
 
 static inline LONG *element_from_margin_id(RECT *rc, WORD id)
@@ -3261,7 +3255,7 @@ static void pagesetup_printer_properties(HWND hDlg, PageSetupDataA *data)
     pagesetup_update_orientation_buttons(hDlg, data);
 
     /* Changing paper preview */
-    PRINTDLG_PS_ChangePaperPrev(data);
+    pagesetup_change_preview(data);
 
     /* Selecting paper in combo */
     count = SendDlgItemMessageW(hDlg, cmb2, CB_GETCOUNT, 0, 0);
@@ -3320,7 +3314,7 @@ PRINTDLG_PS_WMCommandA(
             pagesetup_update_papersize(pda);
             rotate_rect(&pda->dlga->rtMargin, (id == rad2));
             update_margin_edits(hDlg, pda, 0);
-	    PRINTDLG_PS_ChangePaperPrev(pda);
+            pagesetup_change_preview(pda);
 	}
 	break;
     case cmb1: /* Printer combo */
@@ -3341,7 +3335,7 @@ PRINTDLG_PS_WMCommandA(
             {
                 pagesetup_set_papersize(pda, paperword);
                 pagesetup_update_papersize(pda);
-	        PRINTDLG_PS_ChangePaperPrev(pda);
+                pagesetup_change_preview(pda);
 	    } else
                 FIXME("could not get dialog text for papersize cmbbox?\n");
         }
@@ -3731,7 +3725,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         pagesetup_set_defaultsource(pda, DMBIN_FORMSOURCE); /* FIXME: This is the auto select bin. Is this correct? */
 
 	/* Drawing paper prev */
-	PRINTDLG_PS_ChangePaperPrev(pda);
+        pagesetup_change_preview(pda);
 	return TRUE;
     } else {
         pda = GetPropW(hDlg, pagesetupdlg_prop);
