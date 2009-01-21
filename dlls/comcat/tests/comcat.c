@@ -84,9 +84,9 @@ static void do_enum(void)
 
 	IEnumCLSID *pIEnum =(IEnumCLSID*)0xdeadcafe;
 
-	CLSIDFromString((LPOLESTR)szCatID,the_cat);
-	CLSIDFromString((LPOLESTR)szGuid,&wanted_guid);
-	
+	CLSIDFromString(szCatID,the_cat);
+	CLSIDFromString(szGuid,&wanted_guid);
+
 	OleInitialize(NULL);
 
 	hr = CoCreateInstance(rclsid,NULL,CLSCTX_INPROC_SERVER,
