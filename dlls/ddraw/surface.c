@@ -89,7 +89,7 @@ IDirectDrawSurfaceImpl_QueryInterface(IDirectDrawSurface7 *iface,
      || IsEqualGUID(riid, &IID_IDirectDrawSurface4) )
     {
         IUnknown_AddRef(iface);
-        *obj = ICOM_INTERFACE(This, IDirectDrawSurface7);
+        *obj = iface;
         TRACE("(%p) returning IDirectDrawSurface7 interface at %p\n", This, *obj);
         return S_OK;
     }
@@ -98,14 +98,14 @@ IDirectDrawSurfaceImpl_QueryInterface(IDirectDrawSurface7 *iface,
           || IsEqualGUID(riid, &IID_IDirectDrawSurface) )
     {
         IUnknown_AddRef(iface);
-        *obj = ICOM_INTERFACE(This, IDirectDrawSurface3);
+        *obj = &This->IDirectDrawSurface3_vtbl;
         TRACE("(%p) returning IDirectDrawSurface3 interface at %p\n", This, *obj);
         return S_OK;
     }
     else if( IsEqualGUID(riid, &IID_IDirectDrawGammaControl) )
     {
         IUnknown_AddRef(iface);
-        *obj = ICOM_INTERFACE(This, IDirectDrawGammaControl);
+        *obj = &This->IDirectDrawGammaControl_vtbl;
         TRACE("(%p) returning IDirectDrawGammaControl interface at %p\n", This, *obj);
         return S_OK;
     }
@@ -116,10 +116,7 @@ IDirectDrawSurfaceImpl_QueryInterface(IDirectDrawSurface7 *iface,
         IDirect3DDevice7 *d3d;
 
         /* Call into IDirect3D7 for creation */
-        IDirect3D7_CreateDevice(ICOM_INTERFACE(This->ddraw, IDirect3D7),
-                                riid,
-                                ICOM_INTERFACE(This, IDirectDrawSurface7),
-                                &d3d);
+        IDirect3D7_CreateDevice((IDirect3D7 *)&This->ddraw->IDirect3D7_vtbl, riid, (IDirectDrawSurface7 *)This, &d3d);
 
         *obj = COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice7, IDirect3DDevice, d3d);
         TRACE("(%p) Returning IDirect3DDevice interface at %p\n", This, *obj);
@@ -131,12 +128,12 @@ IDirectDrawSurfaceImpl_QueryInterface(IDirectDrawSurface7 *iface,
     {
         if (IsEqualGUID( &IID_IDirect3DTexture, riid ))
         {
-            *obj = ICOM_INTERFACE(This, IDirect3DTexture);
+            *obj = &This->IDirect3DTexture_vtbl;
             TRACE(" returning Direct3DTexture interface at %p.\n", *obj);
         }
         else
         {
-            *obj = ICOM_INTERFACE(This, IDirect3DTexture2);
+            *obj = &This->IDirect3DTexture2_vtbl;
             TRACE(" returning Direct3DTexture2 interface at %p.\n", *obj);
         }
         IUnknown_AddRef( (IUnknown *) *obj);
@@ -200,8 +197,8 @@ void IDirectDrawSurfaceImpl_Destroy(IDirectDrawSurfaceImpl *This)
           * is called, because the refcount is held. It looks like the app released()
           * it often enough to force this
           */
-        IDirectDrawSurface7 *root = ICOM_INTERFACE(This->first_attached, IDirectDrawSurface7);
-        IDirectDrawSurface7 *detach = ICOM_INTERFACE(This, IDirectDrawSurface7);
+        IDirectDrawSurface7 *root = (IDirectDrawSurface7 *)This->first_attached;
+        IDirectDrawSurface7 *detach = (IDirectDrawSurface7 *)This;
 
         FIXME("(%p) Freeing a surface that is attached to surface %p\n", This, This->first_attached);
 
@@ -214,8 +211,8 @@ void IDirectDrawSurfaceImpl_Destroy(IDirectDrawSurfaceImpl *This)
 
     while(This->next_attached != NULL)
     {
-        IDirectDrawSurface7 *root = ICOM_INTERFACE(This, IDirectDrawSurface7);
-        IDirectDrawSurface7 *detach = ICOM_INTERFACE(This->next_attached, IDirectDrawSurface7);
+        IDirectDrawSurface7 *root = (IDirectDrawSurface7 *)This;
+        IDirectDrawSurface7 *detach = (IDirectDrawSurface7 *)This->next_attached;
 
         if(IDirectDrawSurface7_DeleteAttachedSurface(root, 0, detach) != DD_OK)
         {
@@ -400,8 +397,7 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
         }
 
         /* The refcount test shows that the palette is detached when the surface is destroyed */
-        IDirectDrawSurface7_SetPalette(ICOM_INTERFACE(This, IDirectDrawSurface7),
-                                                      NULL);
+        IDirectDrawSurface7_SetPalette((IDirectDrawSurface7 *)This, NULL);
 
         /* Loop through all complex attached surfaces,
          * and destroy them.
@@ -515,7 +511,7 @@ IDirectDrawSurfaceImpl_GetAttachedSurface(IDirectDrawSurface7 *iface,
 
             TRACE("(%p): Returning surface %p\n", This, surf);
             TRACE("(%p): mipmapcount=%d\n", This, surf->mipmap_level);
-            *Surface = ICOM_INTERFACE(surf, IDirectDrawSurface7);
+            *Surface = (IDirectDrawSurface7 *)surf;
             IDirectDrawSurface7_AddRef(*Surface);
             LeaveCriticalSection(&ddraw_cs);
             return DD_OK;
@@ -540,7 +536,7 @@ IDirectDrawSurfaceImpl_GetAttachedSurface(IDirectDrawSurface7 *iface,
             ((surf->surface_desc.ddsCaps.dwCaps2 & our_caps.dwCaps2) == our_caps.dwCaps2)) {
 
             TRACE("(%p): Returning surface %p\n", This, surf);
-            *Surface = ICOM_INTERFACE(surf, IDirectDrawSurface7);
+            *Surface = (IDirectDrawSurface7 *)surf;
             IDirectDrawSurface7_AddRef(*Surface);
             LeaveCriticalSection(&ddraw_cs);
             return DD_OK;
@@ -927,7 +923,7 @@ IDirectDrawSurfaceImpl_AddAttachedSurface(IDirectDrawSurfaceImpl *This,
     /* MSDN: 
      * "This method increments the reference count of the surface being attached."
      */
-    IDirectDrawSurface7_AddRef(ICOM_INTERFACE(Surf, IDirectDrawSurface7));
+    IDirectDrawSurface7_AddRef((IDirectDrawSurface7 *)Surf);
     LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }
@@ -1397,10 +1393,10 @@ IDirectDrawSurfaceImpl_EnumAttachedSurfaces(IDirectDrawSurface7 *iface,
         surf = This->complex_array[i];
         if(!surf) break;
 
-        IDirectDrawSurface7_AddRef(ICOM_INTERFACE(surf, IDirectDrawSurface7));
+        IDirectDrawSurface7_AddRef((IDirectDrawSurface7 *)surf);
         desc = surf->surface_desc;
         /* check: != DDENUMRET_OK or == DDENUMRET_CANCEL? */
-        if (cb(ICOM_INTERFACE(surf, IDirectDrawSurface7), &desc, context) == DDENUMRET_CANCEL)
+        if (cb((IDirectDrawSurface7 *)surf, &desc, context) == DDENUMRET_CANCEL)
         {
             LeaveCriticalSection(&ddraw_cs);
             return DD_OK;
@@ -1409,10 +1405,10 @@ IDirectDrawSurfaceImpl_EnumAttachedSurfaces(IDirectDrawSurface7 *iface,
 
     for (surf = This->next_attached; surf != NULL; surf = surf->next_attached)
     {
-        IDirectDrawSurface7_AddRef(ICOM_INTERFACE(surf, IDirectDrawSurface7));
+        IDirectDrawSurface7_AddRef((IDirectDrawSurface7 *)surf);
         desc = surf->surface_desc;
         /* check: != DDENUMRET_OK or == DDENUMRET_CANCEL? */
-        if (cb( ICOM_INTERFACE(surf, IDirectDrawSurface7), &desc, context) == DDENUMRET_CANCEL)
+        if (cb((IDirectDrawSurface7 *)surf, &desc, context) == DDENUMRET_CANCEL)
         {
             LeaveCriticalSection(&ddraw_cs);
             return DD_OK;
@@ -1938,26 +1934,23 @@ IDirectDrawSurfaceImpl_GetDDInterface(IDirectDrawSurface7 *iface,
     switch(This->version)
     {
         case 7:
-            *((IDirectDraw7 **) DD) = ICOM_INTERFACE(This->ddraw, IDirectDraw7);
-            IDirectDraw7_AddRef(*(IDirectDraw7 **) DD);
+            *DD = This->ddraw;
             break;
 
         case 4:
-            *((IDirectDraw4 **) DD) = ICOM_INTERFACE(This->ddraw, IDirectDraw4);
-            IDirectDraw4_AddRef(*(IDirectDraw4 **) DD);
+            *DD = &This->ddraw->IDirectDraw4_vtbl;
             break;
 
         case 2:
-            *((IDirectDraw2 **) DD) = ICOM_INTERFACE(This->ddraw, IDirectDraw2);
-            IDirectDraw_AddRef( *(IDirectDraw2 **) DD);
+            *DD = &This->ddraw->IDirectDraw2_vtbl;
             break;
 
         case 1:
-            *((IDirectDraw **) DD) = ICOM_INTERFACE(This->ddraw, IDirectDraw);
-            IDirectDraw_AddRef( *(IDirectDraw **) DD);
+            *DD = &This->ddraw->IDirectDraw_vtbl;
             break;
 
     }
+    IUnknown_AddRef((IUnknown *)*DD);
 
     return DD_OK;
 }
@@ -2189,7 +2182,7 @@ IDirectDrawSurfaceImpl_GetClipper(IDirectDrawSurface7 *iface,
         return DDERR_NOCLIPPERATTACHED;
     }
 
-    *Clipper = ICOM_INTERFACE(This->clipper, IDirectDrawClipper);
+    *Clipper = (IDirectDrawClipper *)This->clipper;
     IDirectDrawClipper_AddRef(*Clipper);
     LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
@@ -2229,7 +2222,7 @@ IDirectDrawSurfaceImpl_SetClipper(IDirectDrawSurface7 *iface,
     if (Clipper != NULL)
         IDirectDrawClipper_AddRef(Clipper);
     if(oldClipper)
-        IDirectDrawClipper_Release(ICOM_INTERFACE(oldClipper, IDirectDrawClipper));
+        IDirectDrawClipper_Release((IDirectDrawClipper *)oldClipper);
 
     hr = IWineD3DSurface_SetClipper(This->WineD3DSurface, This->clipper ? This->clipper->wineD3DClipper : NULL);
 
@@ -2591,8 +2584,7 @@ IDirectDrawSurfaceImpl_SetPalette(IDirectDrawSurface7 *iface,
         {
             IDirectDrawSurface7 *attach;
             HRESULT hr;
-            hr = IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(surf, IDirectDrawSurface7),
-                                                        &caps2, &attach);
+            hr = IDirectDrawSurface7_GetAttachedSurface((IDirectDrawSurface7 *)surf, &caps2, &attach);
             if(hr != DD_OK)
             {
                 break;

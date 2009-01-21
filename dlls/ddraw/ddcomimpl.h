@@ -38,11 +38,7 @@
 #define ICOM_THIS_FROM(impltype, ifacename, ifaceptr) \
 	impltype* This = ICOM_OBJECT(impltype, ifacename, ifaceptr)
 
-/* Given an object and interface name, returns a pointer to that interface. */
-#define ICOM_INTERFACE(implobj, iface) \
-	((iface *)(implobj == NULL ? NULL :&((implobj)->ICOM_VFIELD_MULTI_NAME(iface))))
-
-#define COM_INTERFACE_CAST(impltype, ifnamefrom, ifnameto, ifaceptr)	\
-	ICOM_INTERFACE(ICOM_OBJECT(impltype, ifnamefrom, ifaceptr), ifnameto)
-
+#define COM_INTERFACE_CAST(impltype, ifnamefrom, ifnameto, ifaceptr) \
+    ((ifaceptr) ? (ifnameto *)&(((impltype *)((char *)(ifaceptr) \
+    - ICOM_VFIELD_OFFSET(impltype, ifnamefrom)))->ICOM_VFIELD_MULTI_NAME(ifnameto)) : NULL)
 #endif /* _DDCOMIMPL_H_ */

@@ -80,26 +80,26 @@ IDirect3DMaterialImpl_QueryInterface(IDirect3DMaterial3 *iface,
     *obp = NULL;
 
     if ( IsEqualGUID( &IID_IUnknown,  riid ) ) {
-        IDirect3DMaterial_AddRef(ICOM_INTERFACE(This, IDirect3DMaterial));
+        IUnknown_AddRef(iface);
 	*obp = iface;
 	TRACE("  Creating IUnknown interface at %p.\n", *obp);
 	return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirect3DMaterial, riid ) ) {
-        IDirect3DMaterial_AddRef(ICOM_INTERFACE(This, IDirect3DMaterial));
-        *obp = ICOM_INTERFACE(This, IDirect3DMaterial);
+        IDirect3DMaterial_AddRef((IDirect3DMaterial *)&This->IDirect3DMaterial_vtbl);
+        *obp = &This->IDirect3DMaterial_vtbl;
 	TRACE("  Creating IDirect3DMaterial interface %p\n", *obp);
 	return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirect3DMaterial2, riid ) ) {
-        IDirect3DMaterial_AddRef(ICOM_INTERFACE(This, IDirect3DMaterial));
-        *obp = ICOM_INTERFACE(This, IDirect3DMaterial2);
+        IDirect3DMaterial_AddRef((IDirect3DMaterial2 *)&This->IDirect3DMaterial2_vtbl);
+        *obp = &This->IDirect3DMaterial2_vtbl;
 	TRACE("  Creating IDirect3DMaterial2 interface %p\n", *obp);
 	return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirect3DMaterial3, riid ) ) {
-        IDirect3DMaterial_AddRef(ICOM_INTERFACE(This, IDirect3DMaterial));
-        *obp = ICOM_INTERFACE(This, IDirect3DMaterial3);
+        IDirect3DMaterial_AddRef((IDirect3DMaterial2 *)&This->IDirect3DMaterial3_vtbl);
+        *obp = &This->IDirect3DMaterial3_vtbl;
 	TRACE("  Creating IDirect3DMaterial3 interface %p\n", *obp);
 	return S_OK;
     }
@@ -465,8 +465,7 @@ void material_activate(IDirect3DMaterialImpl* This)
     d3d7mat.u3.emissive = This->mat.u3.emissive;
     d3d7mat.u4.power = This->mat.u4.power;
 
-    IDirect3DDevice7_SetMaterial(ICOM_INTERFACE(This->active_device, IDirect3DDevice7),
-                                 &d3d7mat);
+    IDirect3DDevice7_SetMaterial((IDirect3DDevice7 *)This->active_device, &d3d7mat);
 }
 
 const IDirect3DMaterial3Vtbl IDirect3DMaterial3_Vtbl =

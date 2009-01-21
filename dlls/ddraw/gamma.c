@@ -67,9 +67,7 @@ IDirectDrawGammaControlImpl_QueryInterface(IDirectDrawGammaControl *iface, REFII
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawGammaControl, iface);
     TRACE_(ddraw_thunk)("(%p)->(%s,%p): Thunking to IDirectDrawSurface7\n", This, debugstr_guid(riid), obj);
 
-    return IDirectDrawSurface7_QueryInterface(ICOM_INTERFACE(This, IDirectDrawSurface7),
-                                              riid,
-                                              obj);
+    return IDirectDrawSurface7_QueryInterface((IDirectDrawSurface7 *)This, riid, obj);
 }
 
 /**********************************************************
@@ -87,7 +85,7 @@ IDirectDrawGammaControlImpl_AddRef(IDirectDrawGammaControl *iface)
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawGammaControl, iface);
     TRACE_(ddraw_thunk)("(%p)->() Thunking to IDirectDrawSurface7\n", This);
 
-    return IDirectDrawSurface7_AddRef(ICOM_INTERFACE(This, IDirectDrawSurface7));
+    return IDirectDrawSurface7_AddRef((IDirectDrawSurface7 *)This);
 }
 
 /**********************************************************
@@ -105,7 +103,7 @@ IDirectDrawGammaControlImpl_Release(IDirectDrawGammaControl *iface)
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawGammaControl, iface);
     TRACE_(ddraw_thunk)("(%p)->() Thunking to IDirectDrawSurface7\n", This);
 
-    return IDirectDrawSurface7_Release(ICOM_INTERFACE(This, IDirectDrawSurface7));
+    return IDirectDrawSurface7_Release((IDirectDrawSurface7 *)This);
 }
 
 /**********************************************************

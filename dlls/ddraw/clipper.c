@@ -62,14 +62,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 static HRESULT WINAPI IDirectDrawClipperImpl_QueryInterface(
     LPDIRECTDRAWCLIPPER iface, REFIID riid, LPVOID* ppvObj
 ) {
-    IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
-
     if (IsEqualGUID(&IID_IUnknown, riid)
 	|| IsEqualGUID(&IID_IDirectDrawClipper, riid))
     {
-	*ppvObj = ICOM_INTERFACE(This, IDirectDrawClipper);
-	InterlockedIncrement(&This->ref);
-	return S_OK;
+        IUnknown_AddRef(iface);
+        *ppvObj = iface;
+        return S_OK;
     }
     else
     {

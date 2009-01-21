@@ -175,8 +175,8 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
                 IWineD3DDevice_SetRenderState(lpDevice->wineD3DDevice,
                                               WINED3DRS_COLORKEYENABLE,
                                               1);
-                IDirect3DDevice7_DrawIndexedPrimitive(ICOM_INTERFACE(lpDevice,IDirect3DDevice7),
-				                      D3DPT_TRIANGLELIST,D3DFVF_TLVERTEX,tl_vx,0,This->indices,count*3,0);
+                IDirect3DDevice7_DrawIndexedPrimitive((IDirect3DDevice7 *)lpDevice,
+                        D3DPT_TRIANGLELIST, D3DFVF_TLVERTEX, tl_vx, 0, This->indices, count * 3, 0);
 	    } break;
 
 	    case D3DOP_MATRIXLOAD:
@@ -233,8 +233,8 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
                             lpDevice->view = ci->u2.dwArg[0];
                         if(ci->u1.drstRenderStateType == D3DTRANSFORMSTATE_PROJECTION)
                             lpDevice->proj = ci->u2.dwArg[0];
-                        IDirect3DDevice7_SetTransform(ICOM_INTERFACE(lpDevice, IDirect3DDevice7),
-                                                      ci->u1.drstRenderStateType, (LPD3DMATRIX) lpDevice->Handles[ci->u2.dwArg[0] - 1].ptr);
+                        IDirect3DDevice7_SetTransform((IDirect3DDevice7 *)lpDevice,
+                                ci->u1.drstRenderStateType, (LPD3DMATRIX)lpDevice->Handles[ci->u2.dwArg[0] - 1].ptr);
                     }
 		    instr += size;
 		}
@@ -303,8 +303,7 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 				break;
 			}
 
-			IDirect3DDevice7_SetRenderState(ICOM_INTERFACE(lpDevice, IDirect3DDevice7), rs,
-							ci->u2.dwArg[0]);
+                        IDirect3DDevice7_SetRenderState((IDirect3DDevice7 *)lpDevice, rs, ci->u2.dwArg[0]);
 		    }
 
 		    instr += size;
@@ -313,13 +312,13 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 
 	    case D3DOP_STATERENDER: {
 	        int i;
+                IDirect3DDevice2 *d3d_device2 = (IDirect3DDevice2 *)&lpDevice->IDirect3DDevice2_vtbl;
 		TRACE("STATERENDER      (%d)\n", count);
 
 		for (i = 0; i < count; i++) {
 		    LPD3DSTATE ci = (LPD3DSTATE) instr;
 		    
-		    IDirect3DDevice2_SetRenderState(ICOM_INTERFACE(lpDevice, IDirect3DDevice2),
-						    ci->u1.drstRenderStateType, ci->u2.dwArg[0]);
+                    IDirect3DDevice2_SetRenderState(d3d_device2, ci->u1.drstRenderStateType, ci->u2.dwArg[0]);
 
 		    instr += size;
 		}
@@ -592,24 +591,23 @@ IDirect3DExecuteBufferImpl_QueryInterface(IDirect3DExecuteBuffer *iface,
                                           REFIID riid,
                                           void **obj)
 {
-    ICOM_THIS_FROM(IDirect3DExecuteBufferImpl, IDirect3DExecuteBuffer, iface);
-    TRACE("(%p/%p)->(%s,%p)\n", This, iface, debugstr_guid(riid), obj);
+    TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid(riid), obj);
 
     *obj = NULL;
 
     if ( IsEqualGUID( &IID_IUnknown,  riid ) ) {
-        IDirect3DExecuteBuffer_AddRef(ICOM_INTERFACE(This, IDirect3DExecuteBuffer));
+        IDirect3DExecuteBuffer_AddRef(iface);
 	*obj = iface;
 	TRACE("  Creating IUnknown interface at %p.\n", *obj);
 	return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirect3DExecuteBuffer, riid ) ) {
-        IDirect3DExecuteBuffer_AddRef(ICOM_INTERFACE(This, IDirect3DExecuteBuffer));
-        *obj = ICOM_INTERFACE(This, IDirect3DExecuteBuffer);
+        IDirect3DExecuteBuffer_AddRef(iface);
+        *obj = iface;
 	TRACE("  Creating IDirect3DExecuteBuffer interface %p\n", *obj);
 	return S_OK;
     }
-    FIXME("(%p): interface for IID %s NOT found!\n", This, debugstr_guid(riid));
+    FIXME("(%p): interface for IID %s NOT found!\n", iface, debugstr_guid(riid));
     return E_NOINTERFACE;
 }
 

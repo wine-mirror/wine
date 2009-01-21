@@ -256,7 +256,7 @@ void light_update(IDirect3DLightImpl* This)
         return;
     device =  This->active_viewport->active_device;
 
-    IDirect3DDevice7_SetLight(ICOM_INTERFACE(device,IDirect3DDevice7), This->dwLightIndex, &(This->light7));
+    IDirect3DDevice7_SetLight((IDirect3DDevice7 *)device, This->dwLightIndex, &(This->light7));
 }
 
 /*****************************************************************************
@@ -278,7 +278,7 @@ void light_activate(IDirect3DLightImpl* This)
     light_update(This);
     /* If was not active, activate it */
     if ((This->light.dwFlags & D3DLIGHT_ACTIVE) == 0) {
-        IDirect3DDevice7_LightEnable(ICOM_INTERFACE(device,IDirect3DDevice7), This->dwLightIndex, TRUE);
+        IDirect3DDevice7_LightEnable((IDirect3DDevice7 *)device, This->dwLightIndex, TRUE);
 	This->light.dwFlags |= D3DLIGHT_ACTIVE;
     }
 }
@@ -302,7 +302,7 @@ void light_desactivate(IDirect3DLightImpl* This)
     
     /* If was not active, activate it */
     if ((This->light.dwFlags & D3DLIGHT_ACTIVE) != 0) {
-        IDirect3DDevice7_LightEnable(ICOM_INTERFACE(device,IDirect3DDevice7), This->dwLightIndex, FALSE);
+        IDirect3DDevice7_LightEnable((IDirect3DDevice7 *)device, This->dwLightIndex, FALSE);
 	This->light.dwFlags &= ~D3DLIGHT_ACTIVE;
     }
 }

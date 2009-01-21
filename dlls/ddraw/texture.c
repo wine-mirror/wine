@@ -55,9 +55,7 @@ Thunk_IDirect3DTextureImpl_2_QueryInterface(IDirect3DTexture2 *iface,
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirect3DTexture2, iface);
     TRACE("(%p)->(%s,%p) thunking to IDirectDrawSurface7 interface.\n", This, debugstr_guid(riid), obj);
-    return IDirectDrawSurface7_QueryInterface(ICOM_INTERFACE(This, IDirectDrawSurface7),
-                                              riid,
-                                              obj);
+    return IDirectDrawSurface7_QueryInterface((IDirectDrawSurface7 *)This, riid, obj);
 }
 
 static HRESULT WINAPI
@@ -68,9 +66,7 @@ Thunk_IDirect3DTextureImpl_1_QueryInterface(IDirect3DTexture *iface,
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirect3DTexture, iface);
     TRACE("(%p)->(%s,%p) thunking to IDirectDrawSurface7 interface.\n", This, debugstr_guid(riid), obj);
 
-    return IDirectDrawSurface7_QueryInterface(ICOM_INTERFACE(This, IDirectDrawSurface7),
-                                              riid,
-                                              obj);
+    return IDirectDrawSurface7_QueryInterface((IDirectDrawSurface7 *)This, riid, obj);
 }
 
 static ULONG WINAPI
@@ -79,7 +75,7 @@ Thunk_IDirect3DTextureImpl_2_AddRef(IDirect3DTexture2 *iface)
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirect3DTexture2, iface);
     TRACE("(%p)->() thunking to IDirectDrawSurface7 interface.\n", This);
 
-    return IDirectDrawSurface7_AddRef(ICOM_INTERFACE(This, IDirectDrawSurface7));
+    return IDirectDrawSurface7_AddRef((IDirectDrawSurface7 *)This);
 }
 
 static ULONG WINAPI
@@ -97,7 +93,7 @@ Thunk_IDirect3DTextureImpl_2_Release(IDirect3DTexture2 *iface)
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirect3DTexture2, iface);
     TRACE("(%p)->() thunking to IDirectDrawSurface7 interface.\n", This);
 
-    return IDirectDrawSurface7_Release(ICOM_INTERFACE(This, IDirectDrawSurface7));
+    return IDirectDrawSurface7_Release((IDirectDrawSurface7 *)This);
 }
 
 
@@ -242,11 +238,12 @@ Thunk_IDirect3DTextureImpl_1_GetHandle(IDirect3DTexture *iface,
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirect3DTexture, iface);
     IDirect3DDeviceImpl *d3d = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice, lpDirect3DDevice);
+    IDirect3DTexture2 *d3d_texture2 = (IDirect3DTexture2 *)&This->IDirect3DTexture2_vtbl;
+    IDirect3DDevice2 *d3d_device2 = (IDirect3DDevice2 *)&d3d->IDirect3DDevice2_vtbl;
+
     TRACE_(ddraw_thunk)("(%p)->(%p,%p) thunking to IDirect3DTexture2 interface.\n", This, d3d, lpHandle);
 
-    return IDirect3DTexture2_GetHandle(ICOM_INTERFACE(This, IDirect3DTexture2),
-                                       ICOM_INTERFACE(d3d, IDirect3DDevice2),
-                                       lpHandle);
+    return IDirect3DTexture2_GetHandle(d3d_texture2, d3d_device2, lpHandle);
 }
 
 
@@ -267,8 +264,7 @@ get_sub_mimaplevel(IDirectDrawSurfaceImpl *tex_ptr)
     IDirectDrawSurfaceImpl *surf_ptr;
     HRESULT hr;
 
-    hr = IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(tex_ptr, IDirectDrawSurface7),
-                                                &mipmap_caps, &next_level);
+    hr = IDirectDrawSurface7_GetAttachedSurface((IDirectDrawSurface7 *)tex_ptr, &mipmap_caps, &next_level);
     if (FAILED(hr)) return NULL;
 
     surf_ptr = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, next_level);

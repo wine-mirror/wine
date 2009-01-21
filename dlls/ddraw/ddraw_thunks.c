@@ -1126,7 +1126,7 @@ IDirectDrawImpl_Initialize(LPDIRECTDRAW iface, LPGUID pGUID)
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw, iface);
     HRESULT ret_value;
 
-    ret_value = IDirectDraw7_Initialize(ICOM_INTERFACE(This, IDirectDraw7), pGUID);
+    ret_value = IDirectDraw7_Initialize((IDirectDraw7 *)This, pGUID);
 
     return ret_value;
 }
@@ -1137,7 +1137,7 @@ IDirectDraw2Impl_Initialize(LPDIRECTDRAW2 iface, LPGUID pGUID)
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw2, iface);
     HRESULT ret_value;
 
-    ret_value = IDirectDraw7_Initialize(ICOM_INTERFACE(This, IDirectDraw7), pGUID);
+    ret_value = IDirectDraw7_Initialize((IDirectDraw7 *)This, pGUID);
 
     return ret_value;
 }
@@ -1148,7 +1148,7 @@ IDirectDraw3Impl_Initialize(LPDIRECTDRAW3 iface, LPGUID pGUID)
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw3, iface);
     HRESULT ret_value;
 
-    ret_value = IDirectDraw7_Initialize(ICOM_INTERFACE(This, IDirectDraw7), pGUID);
+    ret_value = IDirectDraw7_Initialize((IDirectDraw7 *)This, pGUID);
 
     return ret_value;
 }
@@ -1159,7 +1159,7 @@ IDirectDraw4Impl_Initialize(LPDIRECTDRAW4 iface, LPGUID pGUID)
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw4, iface);
     HRESULT ret_value;
 
-    ret_value = IDirectDraw7_Initialize(ICOM_INTERFACE(This, IDirectDraw7), pGUID);
+    ret_value = IDirectDraw7_Initialize((IDirectDraw7 *)This, pGUID);
 
     return ret_value;
 }

@@ -77,22 +77,22 @@ IDirect3DVertexBufferImpl_QueryInterface(IDirect3DVertexBuffer7 *iface,
 
     if ( IsEqualGUID( &IID_IUnknown,  riid ) )
     {
-        IDirect3DVertexBuffer7_AddRef(ICOM_INTERFACE(This,IDirect3DVertexBuffer7));
+        IUnknown_AddRef(iface);
         *obj = iface;
         TRACE("  Creating IUnknown interface at %p.\n", *obj);
         return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirect3DVertexBuffer, riid ) )
     {
-        IDirect3DVertexBuffer7_AddRef(ICOM_INTERFACE(This,IDirect3DVertexBuffer7));
-        *obj = ICOM_INTERFACE(This, IDirect3DVertexBuffer);
+        IUnknown_AddRef(iface);
+        *obj = &This->IDirect3DVertexBuffer_vtbl;
         TRACE("  Creating IDirect3DVertexBuffer interface %p\n", *obj);
         return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirect3DVertexBuffer7, riid ) )
     {
-        IDirect3DVertexBuffer7_AddRef(ICOM_INTERFACE(This,IDirect3DVertexBuffer7));
-        *obj = ICOM_INTERFACE(This, IDirect3DVertexBuffer7);
+        IUnknown_AddRef(iface);
+        *obj = iface;
         TRACE("  Creating IDirect3DVertexBuffer7 interface %p\n", *obj);
         return S_OK;
     }
@@ -108,9 +108,7 @@ Thunk_IDirect3DVertexBufferImpl_1_QueryInterface(IDirect3DVertexBuffer *iface,
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);
     TRACE_(ddraw_thunk)("(%p)->(%s,%p) thunking to IDirect3DVertexBuffer7 interface.\n", This, debugstr_guid(riid), obj);
 
-    return IDirect3DVertexBuffer7_QueryInterface(ICOM_INTERFACE(This, IDirect3DVertexBuffer7),
-                                                 riid,
-                                                 obj);
+    return IDirect3DVertexBuffer7_QueryInterface((IDirect3DVertexBuffer7 *)This, riid, obj);
 }
 
 /*****************************************************************************
@@ -139,7 +137,7 @@ Thunk_IDirect3DVertexBufferImpl_1_AddRef(IDirect3DVertexBuffer *iface)
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);
     TRACE_(ddraw_thunk)("(%p)->() thunking to IDirect3DVertexBuffer7 interface.\n", This);
 
-    return IDirect3DVertexBuffer7_AddRef(ICOM_INTERFACE(This, IDirect3DVertexBuffer7));
+    return IDirect3DVertexBuffer7_AddRef((IDirect3DVertexBuffer7 *)This);
 }
 
 
@@ -204,7 +202,7 @@ Thunk_IDirect3DVertexBufferImpl_1_Release(IDirect3DVertexBuffer *iface)
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);
     TRACE_(ddraw_thunk)("(%p)->() thunking to IDirect3DVertexBuffer7 interface.\n", This);
 
-    return IDirect3DVertexBuffer7_Release(ICOM_INTERFACE(This, IDirect3DVertexBuffer7));
+    return IDirect3DVertexBuffer7_Release((IDirect3DVertexBuffer7 *)This);
 }
 
 /*****************************************************************************
@@ -274,10 +272,7 @@ Thunk_IDirect3DVertexBufferImpl_1_Lock(IDirect3DVertexBuffer *iface,
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);
     TRACE_(ddraw_thunk)("(%p)->(%08x,%p,%p) thunking to IDirect3DVertexBuffer7 interface.\n", This, Flags, Data, Size);
 
-    return IDirect3DVertexBuffer7_Lock(ICOM_INTERFACE(This, IDirect3DVertexBuffer7),
-                                       Flags,
-                                       Data,
-                                       Size);
+    return IDirect3DVertexBuffer7_Lock((IDirect3DVertexBuffer7 *)This, Flags, Data, Size);
 }
 
 /*****************************************************************************
@@ -309,7 +304,7 @@ Thunk_IDirect3DVertexBufferImpl_1_Unlock(IDirect3DVertexBuffer *iface)
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);
     TRACE_(ddraw_thunk)("(%p)->() thunking to IDirect3DVertexBuffer7 interface.\n", This);
 
-    return IDirect3DVertexBuffer7_Unlock(ICOM_INTERFACE(This, IDirect3DVertexBuffer7));
+    return IDirect3DVertexBuffer7_Unlock((IDirect3DVertexBuffer7 *)This);
 }
 
 
@@ -424,14 +419,8 @@ Thunk_IDirect3DVertexBufferImpl_1_ProcessVertices(IDirect3DVertexBuffer *iface,
 
     TRACE_(ddraw_thunk)("(%p)->(%08x,%08x,%08x,%p,%08x,%p,%08x) thunking to IDirect3DVertexBuffer7 interface.\n", This, VertexOp, DestIndex, Count, Src, SrcIndex, D3D, Flags);
 
-    return IDirect3DVertexBuffer7_ProcessVertices(ICOM_INTERFACE(This, IDirect3DVertexBuffer7),
-                                                  VertexOp,
-                                                  DestIndex,
-                                                  Count,
-                                                  ICOM_INTERFACE(Src, IDirect3DVertexBuffer7),
-                                                  SrcIndex,
-                                                  ICOM_INTERFACE(D3D, IDirect3DDevice7),
-                                                  Flags);
+    return IDirect3DVertexBuffer7_ProcessVertices((IDirect3DVertexBuffer7 *)This, VertexOp, DestIndex,
+            Count, (IDirect3DVertexBuffer7 *)Src, SrcIndex, (IDirect3DDevice7 *)D3D, Flags);
 }
 
 /*****************************************************************************
@@ -484,8 +473,7 @@ Thunk_IDirect3DVertexBufferImpl_1_GetVertexBufferDesc(IDirect3DVertexBuffer *ifa
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);
     TRACE_(ddraw_thunk)("(%p)->(%p) thunking to IDirect3DVertexBuffer7 interface.\n", This, Desc);
 
-    return IDirect3DVertexBuffer7_GetVertexBufferDesc(ICOM_INTERFACE(This, IDirect3DVertexBuffer7),
-                                                      Desc);
+    return IDirect3DVertexBuffer7_GetVertexBufferDesc((IDirect3DVertexBuffer7 *)This, Desc);
 }
 
 
@@ -536,9 +524,7 @@ Thunk_IDirect3DVertexBufferImpl_1_Optimize(IDirect3DVertexBuffer *iface,
     IDirect3DDeviceImpl *D3D = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice3, D3DDevice);
     TRACE_(ddraw_thunk)("(%p)->(%p,%08x) thunking to IDirect3DVertexBuffer7 interface.\n", This, D3D, Flags);
 
-    return IDirect3DVertexBuffer7_Optimize(ICOM_INTERFACE(This, IDirect3DVertexBuffer7),
-                                           ICOM_INTERFACE(D3D, IDirect3DDevice7),
-                                           Flags);
+    return IDirect3DVertexBuffer7_Optimize((IDirect3DVertexBuffer7 *)This, (IDirect3DDevice7 *)D3D, Flags);
 }
 
 /*****************************************************************************
