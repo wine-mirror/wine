@@ -621,6 +621,11 @@ static void test_catalog_properties(CHAR *catfile, int attributes, int members)
     ok(hcat == INVALID_HANDLE_VALUE, "CryptCATOpen succeeded\n");
 
     hcat = pCryptCATOpen(catalogW, 0, 0, 0, 0);
+    if (hcat == INVALID_HANDLE_VALUE && members == 0)
+    {
+        win_skip("CryptCATOpen on W2K can't handle catalog files with no members\n");
+        return;
+    }
     ok(hcat != INVALID_HANDLE_VALUE, "CryptCATOpen failed %u\n", GetLastError());
 
     m = pCryptCATEnumerateMember(NULL, NULL);
