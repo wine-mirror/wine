@@ -24,8 +24,7 @@
 
 /* Generates the name for a vtable pointer for a given interface. */
 /* The canonical name for a single interface is "lpVtbl". */
-#define ICOM_VFIELD_MULTI_NAME2(iface) ITF_##iface
-#define ICOM_VFIELD_MULTI_NAME(iface) ICOM_VFIELD_MULTI_NAME2(iface)
+#define ICOM_VFIELD_MULTI_NAME(iface) iface##_vtbl
 
 /* Declares a vtable pointer field in an implementation. */
 #define ICOM_VFIELD_MULTI(iface) \
