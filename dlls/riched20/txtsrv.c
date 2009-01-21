@@ -190,8 +190,12 @@ HRESULT WINAPI fnTextSrv_TxGetHScroll(ITextServices *iface,
 {
    ICOM_THIS_MULTI(ITextServicesImpl, lpVtbl, iface);
 
-   FIXME("%p: STUB\n", This);
-   return E_NOTIMPL;
+   *plMin = This->editor->horz_si.nMin;
+   *plMax = This->editor->horz_si.nMax;
+   *plPos = This->editor->horz_si.nPos;
+   *plPage = This->editor->horz_si.nPage;
+   *pfEnabled = (This->editor->styleFlags & WS_HSCROLL) != 0;
+   return S_OK;
 }
 
 HRESULT WINAPI fnTextSrv_TxGetVScroll(ITextServices *iface,
@@ -203,8 +207,12 @@ HRESULT WINAPI fnTextSrv_TxGetVScroll(ITextServices *iface,
 {
    ICOM_THIS_MULTI(ITextServicesImpl, lpVtbl, iface);
 
-   FIXME("%p: STUB\n", This);
-   return E_NOTIMPL;
+   *plMin = This->editor->vert_si.nMin;
+   *plMax = This->editor->vert_si.nMax;
+   *plPos = This->editor->vert_si.nPos;
+   *plPage = This->editor->vert_si.nPage;
+   *pfEnabled = (This->editor->styleFlags & WS_VSCROLL) != 0;
+   return S_OK;
 }
 
 HRESULT WINAPI fnTextSrv_OnTxSetCursor(ITextServices *iface,
