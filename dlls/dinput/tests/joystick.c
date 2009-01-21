@@ -373,6 +373,8 @@ static BOOL CALLBACK EnumJoysticks(
 
         if (effect)
         {
+            DWORD effect_status;
+
             hr = IDirectInputEffect_Initialize(effect, hInstance, data->version,
                                                &GUID_ConstantForce);
             ok(hr==DI_OK,"IDirectInputEffect_Initialize failed: %08x\n", hr);
@@ -389,6 +391,44 @@ static BOOL CALLBACK EnumJoysticks(
                 hr = IDirectInputEffect_SetParameters(effect, &eff, DIEP_GAIN);
                 ok(hr==DI_OK,"IDirectInputEffect_SetParameters failed: %08x\n", hr);
             }
+
+            /* Check effect status.
+             * State: initialy stopped
+             * start
+             * State: started
+             * unacquire, acquire, download
+             * State: stopped
+             * start
+             * State: started
+             *
+             * Shows that:
+             * - effects are stopped after Unacquire + Acquire
+             * - effects are preserved (Download + Start doesn't complain
+             *   about incomplete effect)
+             */
+            hr = IDirectInputEffect_GetEffectStatus(effect, &effect_status);
+            ok(hr==DI_OK,"IDirectInputEffect_GetEffectStatus() failed: %08x\n", hr);
+            ok(effect_status==0,"IDirectInputEffect_GetEffectStatus() reported effect as started\n");
+            hr = IDirectInputEffect_SetParameters(effect, &eff, DIEP_START);
+            ok(hr==DI_OK,"IDirectInputEffect_SetParameters failed: %08x\n", hr);
+            hr = IDirectInputEffect_GetEffectStatus(effect, &effect_status);
+            ok(hr==DI_OK,"IDirectInputEffect_GetEffectStatus() failed: %08x\n", hr);
+            todo_wine ok(effect_status!=0,"IDirectInputEffect_GetEffectStatus() reported effect as stopped\n");
+            hr = IDirectInputDevice_Unacquire(pJoystick);
+            ok(hr==DI_OK,"IDirectInputDevice_Unacquire() failed: %08x\n", hr);
+            hr = IDirectInputDevice_Acquire(pJoystick);
+            ok(hr==DI_OK,"IDirectInputDevice_Acquire() failed: %08x\n", hr);
+            hr = IDirectInputEffect_Download(effect);
+            ok(hr==DI_OK,"IDirectInputEffect_Download() failed: %08x\n", hr);
+            hr = IDirectInputEffect_GetEffectStatus(effect, &effect_status);
+            ok(hr==DI_OK,"IDirectInputEffect_GetEffectStatus() failed: %08x\n", hr);
+            ok(effect_status==0,"IDirectInputEffect_GetEffectStatus() reported effect as started\n");
+            hr = IDirectInputEffect_Start(effect, 1, 0);
+            ok(hr==DI_OK,"IDirectInputEffect_Start() failed: %08x\n", hr);
+            hr = IDirectInputEffect_GetEffectStatus(effect, &effect_status);
+            ok(hr==DI_OK,"IDirectInputEffect_GetEffectStatus() failed: %08x\n", hr);
+            todo_wine ok(effect_status!=0,"IDirectInputEffect_GetEffectStatus() reported effect as stopped\n");
+
             ref = IUnknown_Release(effect);
             ok(ref == 0, "IDirectInputDevice_Release() reference count = %d\n", ref);
         }
