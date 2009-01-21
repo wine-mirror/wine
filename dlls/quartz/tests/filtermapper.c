@@ -142,6 +142,16 @@ static void test_fm2_enummatchingfilters(void)
     {
         found = enum_find_filter(wszFilterName1, pEnum);
         ok(found, "EnumMatchingFilters failed to return the test filter 1\n");
+    }
+
+    if (pEnum) IEnumMoniker_Release(pEnum);
+    pEnum = NULL;
+
+    hr = IFilterMapper2_EnumMatchingFilters(pMapper, &pEnum, 0, TRUE, MERIT_UNLIKELY, TRUE,
+                0, NULL, NULL, &GUID_NULL, FALSE, FALSE, 0, NULL, NULL, &GUID_NULL);
+    ok(hr == S_OK, "IFilterMapper2_EnumMatchingFilters failed with %x\n", hr);
+    if (SUCCEEDED(hr) && pEnum)
+    {
         found = enum_find_filter(wszFilterName2, pEnum);
         ok(found, "EnumMatchingFilters failed to return the test filter 2\n");
     }
@@ -159,6 +169,17 @@ static void test_fm2_enummatchingfilters(void)
     {
         found = enum_find_filter(wszFilterName1, pEnum);
         ok(found, "EnumMatchingFilters failed to return the test filter 1\n");
+    }
+
+    if (pEnum) IEnumMoniker_Release(pEnum);
+    pEnum = NULL;
+
+    hr = IFilterMapper2_EnumMatchingFilters(pMapper, &pEnum, 0, TRUE, MERIT_UNLIKELY, TRUE,
+                0, NULL, NULL, &GUID_NULL, TRUE, FALSE, 0, NULL, NULL, &GUID_NULL);
+    ok(hr == S_OK, "IFilterMapper2_EnumMatchingFilters failed with %x\n", hr);
+
+    if (SUCCEEDED(hr) && pEnum)
+    {
         found = enum_find_filter(wszFilterName2, pEnum);
         ok(!found, "EnumMatchingFilters should not return the test filter 2\n");
     }
