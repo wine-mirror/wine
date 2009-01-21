@@ -1194,6 +1194,26 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
             }
         }
         return status;
+    case ThreadAffinityMask:
+        {
+            const ULONG_PTR affinity_mask = ((ULONG_PTR)1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1;
+            ULONG_PTR affinity = 0;
+
+            SERVER_START_REQ( get_thread_info )
+            {
+                req->handle = wine_server_obj_handle( handle );
+                req->tid_in = 0;
+                if (!(status = wine_server_call( req )))
+                    affinity = reply->affinity & affinity_mask;
+            }
+            SERVER_END_REQ;
+            if (status == STATUS_SUCCESS)
+            {
+                if (data) memcpy( data, &affinity, min( length, sizeof(affinity) ));
+                if (ret_len) *ret_len = min( length, sizeof(affinity) );
+            }
+        }
+        return status;
     case ThreadTimes:
         {
             KERNEL_USER_TIMES   kusrt;
@@ -1325,7 +1345,6 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         }
     case ThreadPriority:
     case ThreadBasePriority:
-    case ThreadAffinityMask:
     case ThreadImpersonationToken:
     case ThreadEnableAlignmentFaultFixup:
     case ThreadEventPair_Reusable:
