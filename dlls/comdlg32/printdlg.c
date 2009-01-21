@@ -3211,6 +3211,57 @@ static void pagesetup_update_orientation_buttons(HWND hDlg, const PageSetupDataA
         CheckRadioButton(hDlg, rad1, rad2, rad1);
 }
 
+/****************************************************************************************
+ *  pagesetup_printer_properties
+ *
+ *  Handle invocation of the 'Properties' button (not present in the default template).
+ */
+static void pagesetup_printer_properties(HWND hDlg, PageSetupDataA *data)
+{
+    HANDLE hprn;
+    LPWSTR devname;
+    DEVMODEW *dm;
+    LRESULT count;
+    int i;
+
+    devname = pagesetup_get_devname(data);
+
+    if (!OpenPrinterW(devname, &hprn, NULL))
+    {
+        FIXME("Call to OpenPrinter did not succeed!\n");
+        pagesetup_release_devname(data, devname);
+        return;
+    }
+
+    dm = pagesetup_get_devmode(data);
+    DocumentPropertiesW(hDlg, hprn, devname, dm, dm, DM_IN_BUFFER | DM_OUT_BUFFER | DM_IN_PROMPT);
+    pagesetup_set_devmode(data, dm);
+    pagesetup_release_devmode(data, dm);
+    pagesetup_release_devname(data, devname);
+    ClosePrinter(hprn);
+
+    /* Changing paper */
+    pagesetup_update_papersize(data);
+    pagesetup_update_orientation_buttons(hDlg, data);
+
+    /* Changing paper preview */
+    PRINTDLG_PS_ChangePaperPrev(data);
+
+    /* Selecting paper in combo */
+    count = SendDlgItemMessageW(hDlg, cmb2, CB_GETCOUNT, 0, 0);
+    if(count != CB_ERR)
+    {
+        WORD paperword = pagesetup_get_papersize(data);
+        for(i = 0; i < count; i++)
+        {
+            if(SendDlgItemMessageW(hDlg, cmb2, CB_GETITEMDATA, i, 0) == paperword) {
+                SendDlgItemMessageW(hDlg, cmb2, CB_SETCURSEL, i, 0);
+                break;
+            }
+        }
+    }
+}
+
 /********************************************************************************
  * PRINTDLG_PS_WMCommandA
  * process WM_COMMAND message for PageSetupDlgA
@@ -3287,45 +3338,9 @@ PRINTDLG_PS_WMCommandA(
             pagesetup_set_defaultsource(pda, source);
         }
         break;
-    case psh2:                       /* Printer Properties button */
-       {
-	    HANDLE hPrinter;
-	    char   PrinterName[256];
-	    DEVMODEA *dm;
-	    LRESULT  count;
-	    int      i;
-	    
-            GetDlgItemTextA(hDlg, cmb1, PrinterName, 255);
-	    if (!OpenPrinterA(PrinterName, &hPrinter, NULL)) {
-	        FIXME("Call to OpenPrinter did not succeed!\n");
-		break;
-	    }
-	    dm = GlobalLock(pda->dlga->hDevMode);
-	    DocumentPropertiesA(hDlg, hPrinter, PrinterName, dm, dm,
-	                        DM_IN_BUFFER | DM_OUT_BUFFER | DM_IN_PROMPT);
-            GlobalUnlock(pda->dlga->hDevMode);
-	    ClosePrinter(hPrinter);
-	    /* Changing paper */
-            pagesetup_update_papersize(pda);
-            pagesetup_update_orientation_buttons(hDlg, pda);
-
-	    /* Changing paper preview */
-	    PRINTDLG_PS_ChangePaperPrev(pda);
-	    /* Selecting paper in combo */
-            count = SendDlgItemMessageW(hDlg, cmb2, CB_GETCOUNT, 0, 0);
-            if(count != CB_ERR)
-            {
-                WORD paperword = pagesetup_get_papersize(pda);
-                for(i = 0; i < count; i++)
-                {
-                    if(SendDlgItemMessageW(hDlg, cmb2, CB_GETITEMDATA, i, 0) == paperword) {
-                        SendDlgItemMessageW(hDlg, cmb2, CB_SETCURSEL, i, 0);
-                        break;
-                    }
-                }
-            }
-            break;
-       }
+    case psh2: /* Printer Properties button */
+        pagesetup_printer_properties(hDlg, pda);
+        break;
     case edt4:
     case edt5:
     case edt6:
