@@ -1016,3 +1016,9 @@ RPC_STATUS RPC_ENTRY RpcCancelThreadEx(void* ThreadHandle, LONG Timeout)
     else
         return rpc_cancel_thread(target_tid);
 }
+
+RPC_STATUS RPC_ENTRY NdrGetUserMarshalInfo(ULONG *flags, ULONG level, NDR_USER_MARSHAL_INFO *mi)
+{
+    FIXME("(%p, %u, %p)\n", flags, level, mi);
+    return RPC_X_INVALID_BUFFER;
+}
