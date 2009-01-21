@@ -678,6 +678,18 @@ static HRESULT WINAPI JoystickAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
     TRACE("(this=%p)\n",This);
     res = IDirectInputDevice2AImpl_Unacquire(iface);
     if (res==DI_OK && This->joyfd!=-1) {
+      effect_list_item *itr;
+
+      /* For each known effect:
+       * - stop it
+       * - unload it
+       * But, unlike DISFFC_RESET, do not release the effect.
+       */
+      LIST_FOR_EACH_ENTRY(itr, &This->ff_effects, effect_list_item, entry) {
+          IDirectInputEffect_Stop(itr->ref);
+          IDirectInputEffect_Unload(itr->ref);
+      }
+
       close(This->joyfd);
       This->joyfd = -1;
     }

@@ -387,7 +387,7 @@ static BOOL CALLBACK EnumJoysticks(
                 hr = IDirectInputDevice_Acquire(pJoystick);
                 ok(hr==DI_OK,"IDirectInputDevice_Acquire() failed: %08x\n", hr);
                 hr = IDirectInputEffect_SetParameters(effect, &eff, DIEP_GAIN);
-                todo_wine ok(hr==DI_OK,"IDirectInputEffect_SetParameters failed: %08x\n", hr);
+                ok(hr==DI_OK,"IDirectInputEffect_SetParameters failed: %08x\n", hr);
             }
             ref = IUnknown_Release(effect);
             ok(ref == 0, "IDirectInputDevice_Release() reference count = %d\n", ref);
