@@ -671,7 +671,7 @@ static void test_TxSetText(void)
     CoTaskMemFree(dummyTextHost);
 }
 
-void test_TxGetNaturalSize() {
+static void test_TxGetNaturalSize(void) {
     HRESULT result;
     BOOL ret;
 
