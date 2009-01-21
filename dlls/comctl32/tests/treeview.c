@@ -289,7 +289,7 @@ static void TestCallback(void)
     tvi.pszText = buf;
     tvi.cchTextMax = sizeof(buf)/sizeof(buf[0]);
     ret = TreeView_GetItem(hTree, &tvi);
-    ok(ret == 1, "ret");
+    ok(ret == 1, "ret\n");
     ok(strcmp(tvi.pszText, TEST_CALLBACK_TEXT) == 0, "Callback item text mismatch %s vs %s\n",
         tvi.pszText, TEST_CALLBACK_TEXT);
 
