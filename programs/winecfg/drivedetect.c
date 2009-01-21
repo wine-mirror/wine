@@ -349,7 +349,7 @@ int autodetect_drives(void)
         
         /* allocate a drive for it */
         letter = allocate_letter(type);
-        if (letter == ']')
+        if (letter == 'Z' + 1)
         {
             report_error(NO_MORE_LETTERS);
             fclose(fstab);
