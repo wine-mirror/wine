@@ -1544,7 +1544,7 @@ static void test_DdeCreateStringHandleW(DWORD dde_inst, int codepage)
 static void test_DdeCreateDataHandle(void)
 {
     HDDEDATA hdata;
-    DWORD dde_inst;
+    DWORD dde_inst, dde_inst2;
     DWORD size;
     UINT res, err;
     BOOL ret;
@@ -1552,10 +1552,16 @@ static void test_DdeCreateDataHandle(void)
     LPBYTE ptr;
 
     dde_inst = 0;
+    dde_inst2 = 0;
     res = DdeInitializeA(&dde_inst, client_ddeml_callback, APPCMD_CLIENTONLY, 0);
     ok(res == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", res);
 
+    res = DdeInitializeA(&dde_inst2, client_ddeml_callback, APPCMD_CLIENTONLY, 0);
+    ok(res == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", res);
+
     item = DdeCreateStringHandleA(dde_inst, "item", CP_WINANSI);
+    ok(item != NULL, "Expected non-NULL hsz\n");
+    item = DdeCreateStringHandleA(dde_inst2, "item", CP_WINANSI);
     ok(item != NULL, "Expected non-NULL hsz\n");
 
     if (0) {
@@ -1563,16 +1569,24 @@ static void test_DdeCreateDataHandle(void)
         hdata = DdeCreateDataHandle(0xdeadbeef, (LPBYTE)"data", MAX_PATH, 0, item, CF_TEXT, 0);
     }
 
-    /* 0 instance id */
+    /* 0 instance id
+     * This block tests an invalid instance Id.  The correct behaviour is that if the instance Id
+     * is invalid then the lastError of all instances is set to the error.  There are two instances
+     * created, lastError is cleared, an error is generated and then both instances are checked to
+     * ensure that they both have the same error set
+     */
     DdeGetLastError(dde_inst);
+    DdeGetLastError(dde_inst2);
     hdata = DdeCreateDataHandle(0, (LPBYTE)"data", MAX_PATH, 0, item, CF_TEXT, 0);
     err = DdeGetLastError(dde_inst);
-    todo_wine
-    {
-        ok(hdata == NULL, "Expected NULL, got %p\n", hdata);
-        ok(err == DMLERR_INVALIDPARAMETER,
-           "Expected DMLERR_INVALIDPARAMETER, got %d\n", err);
-    }
+    ok(hdata == NULL, "Expected NULL, got %p\n", hdata);
+    ok(err == DMLERR_INVALIDPARAMETER, "Expected DMLERR_INVALIDPARAMETER, got %d\n", err);
+    err = DdeGetLastError(dde_inst2);
+    ok(err == DMLERR_INVALIDPARAMETER, "Expected DMLERR_INVALIDPARAMETER, got %d\n", err);
+
+    ret = DdeUninitialize(dde_inst2);
+    ok(res == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", res);
+
 
     /* NULL pSrc */
     DdeGetLastError(dde_inst);

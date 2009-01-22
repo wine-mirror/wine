@@ -817,6 +817,25 @@ UINT WINAPI DdeGetLastError(DWORD idInst)
     return error_code;
 }
 
+/******************************************************************
+ *		WDML_SetAllLastError
+ *
+ *
+ */
+static void	WDML_SetAllLastError(DWORD lastError)
+{
+    DWORD		threadID;
+    WDML_INSTANCE*	pInstance;
+    threadID = GetCurrentThreadId();
+    pInstance = WDML_InstanceList;
+    while (pInstance)
+    {
+	if (pInstance->threadID == threadID)
+	    pInstance->lastError = lastError;
+	pInstance = pInstance->next;
+    }
+}
+
 /* ================================================================
  *
  * 			String management
@@ -1267,14 +1286,23 @@ INT WINAPI DdeCmpStringHandles(HSZ hsz1, HSZ hsz2)
 HDDEDATA WINAPI DdeCreateDataHandle(DWORD idInst, LPBYTE pSrc, DWORD cb, DWORD cbOff,
                                     HSZ hszItem, UINT wFmt, UINT afCmd)
 {
-    /* For now, we ignore idInst, hszItem.
+
+    /* Other than check for validity we will ignore for now idInst, hszItem.
      * The purpose of these arguments still need to be investigated.
      */
 
+    WDML_INSTANCE*		pInstance;
     HGLOBAL     		hMem;
     LPBYTE      		pByte;
     DDE_DATAHANDLE_HEAD*	pDdh;
     WCHAR psz[MAX_BUFFER_LEN];
+
+    pInstance = WDML_GetInstance(idInst);
+    if (pInstance == NULL)
+    {
+        WDML_SetAllLastError(DMLERR_INVALIDPARAMETER);
+        return NULL;
+    }
 
     if (!GetAtomNameW(HSZ2ATOM(hszItem), psz, MAX_BUFFER_LEN))
     {
