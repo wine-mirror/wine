@@ -1107,7 +1107,7 @@ static	DWORD	MIX_GetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
                           getControlType(mix->ctrl[c].ctrl.dwControlType),
                           lpmcd->cChannels);
 
-                    mcdu = (LPMIXERCONTROLDETAILS_UNSIGNED)lpmcd->paDetails;
+                    mcdu = lpmcd->paDetails;
 
 		    /* return value is 00RL (4 bytes)... */
 		    if ((val = mix->volume[chnl]) == -1 &&
@@ -1155,7 +1155,7 @@ static	DWORD	MIX_GetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
                           lpmcd->cChannels);
 
 		    /* we mute both channels at the same time */
-		    mcdb = (LPMIXERCONTROLDETAILS_BOOLEAN)lpmcd->paDetails;
+                    mcdb = lpmcd->paDetails;
 		    mcdb->fValue = (mix->volume[chnl] != -1);
 		    TRACE("=> %s\n", mcdb->fValue ? "on" : "off");
 		}
@@ -1188,7 +1188,7 @@ static	DWORD	MIX_GetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
 			int				i, j;
 
 			/* we mute both channels at the same time */
-			mcdb = (LPMIXERCONTROLDETAILS_BOOLEAN)lpmcd->paDetails;
+			mcdb = lpmcd->paDetails;
 
 			for (i = j = 0; j < SOUND_MIXER_NRDEVICES; j++)
 			{
@@ -1229,7 +1229,7 @@ static	DWORD	MIX_GetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
 		LPMIXERCONTROLDETAILS_LISTTEXTW	mcdlt;
 		int i, j;
 
-		mcdlt = (LPMIXERCONTROLDETAILS_LISTTEXTW)lpmcd->paDetails;
+		mcdlt = lpmcd->paDetails;
 		for (i = j = 0; j < SOUND_MIXER_NRDEVICES; j++)
 		{
 		    if (WINE_CHN_SUPPORTS(mix->recMask, j))
@@ -1308,7 +1308,7 @@ static	DWORD	MIX_SetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
                           getControlType(mix->ctrl[c].ctrl.dwControlType),
                           lpmcd->cChannels);
 
-                    mcdu = (LPMIXERCONTROLDETAILS_UNSIGNED)lpmcd->paDetails;
+                    mcdu = lpmcd->paDetails;
 		    /* val should contain 00RL */
 		    switch (lpmcd->cChannels)
 		    {
@@ -1360,7 +1360,7 @@ static	DWORD	MIX_SetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
                           getControlType(mix->ctrl[c].ctrl.dwControlType),
                           lpmcd->cChannels);
 
-		    mcdb = (LPMIXERCONTROLDETAILS_BOOLEAN)lpmcd->paDetails;
+                    mcdb = lpmcd->paDetails;
 		    if (mcdb->fValue)
 		    {
                         /* save the volume and then set it to 0 */
@@ -1405,7 +1405,7 @@ static	DWORD	MIX_SetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
                           lpmcd->cChannels);
 
 		    /* we mute both channels at the same time */
-		    mcdb = (LPMIXERCONTROLDETAILS_BOOLEAN)lpmcd->paDetails;
+                    mcdb = lpmcd->paDetails;
 		    mask = 0;
 		    for (i = j = 0; j < SOUND_MIXER_NRDEVICES; j++)
 		    {

@@ -155,7 +155,7 @@ static HRESULT WINAPI IDsDriverPropertySetImpl_QueryInterface(
     if ( IsEqualGUID(riid, &IID_IUnknown) ||
          IsEqualGUID(riid, &IID_IDsDriverPropertySet) ) {
         IDsDriverPropertySet_AddRef(iface);
-        *ppobj = (LPVOID)This;
+        *ppobj = This;
         return DS_OK;
     }
 
@@ -403,7 +403,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_QueryInterface(PIDSDRIVERBUFFER iface,
     if ( IsEqualGUID(riid, &IID_IUnknown) ||
          IsEqualGUID(riid, &IID_IDsDriverBuffer) ) {
 	IDsDriverBuffer_AddRef(iface);
-	*ppobj = (LPVOID)This;
+        *ppobj = This;
 	return DS_OK;
     }
 
@@ -412,7 +412,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_QueryInterface(PIDSDRIVERBUFFER iface,
             IDsDriverNotifyImpl_Create(This, &(This->notify));
         if (This->notify) {
             IDsDriverNotify_AddRef((PIDSDRIVERNOTIFY)This->notify);
-            *ppobj = (LPVOID)This->notify;
+            *ppobj = This->notify;
             return DS_OK;
         }
         *ppobj = 0;
@@ -424,7 +424,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_QueryInterface(PIDSDRIVERBUFFER iface,
             IDsDriverPropertySetImpl_Create(This, &(This->property_set));
         if (This->property_set) {
             IDsDriverPropertySet_AddRef((PIDSDRIVERPROPERTYSET)This->property_set);
-            *ppobj = (LPVOID)This->property_set;
+            *ppobj = This->property_set;
             return DS_OK;
         }
 	*ppobj = 0;
@@ -668,7 +668,7 @@ static HRESULT WINAPI IDsDriverImpl_QueryInterface(PIDSDRIVER iface, REFIID riid
     if ( IsEqualGUID(riid, &IID_IUnknown) ||
          IsEqualGUID(riid, &IID_IDsDriver) ) {
 	IDsDriver_AddRef(iface);
-	*ppobj = (LPVOID)This;
+        *ppobj = This;
 	return DS_OK;
     }
 

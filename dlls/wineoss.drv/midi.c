@@ -1025,7 +1025,7 @@ static int modFMLoad(int dev)
 	sbi.channel = i;
 	memcpy(sbi.operators, midiFMInstrumentPatches + i * 16, 16);
 
-	if (write(midiSeqFD, (char*)&sbi, sizeof(sbi)) == -1) {
+        if (write(midiSeqFD, &sbi, sizeof(sbi)) == -1) {
 	    WARN("Couldn't write patch for instrument %d, errno %d (%s)!\n", sbi.channel, errno, strerror(errno));
 	    return -1;
 	}
@@ -1034,7 +1034,7 @@ static int modFMLoad(int dev)
 	sbi.channel = 128 + i;
 	memcpy(sbi.operators, midiFMDrumsPatches + i * 16, 16);
 
-	if (write(midiSeqFD, (char*)&sbi, sizeof(sbi)) == -1) {
+        if (write(midiSeqFD, &sbi, sizeof(sbi)) == -1) {
 	    WARN("Couldn't write patch for drum %d, errno %d (%s)!\n", sbi.channel, errno, strerror(errno));
 	    return -1;
 	}
@@ -1047,7 +1047,7 @@ static int modFMLoad(int dev)
  */
 static	void modFMReset(WORD wDevID)
 {
-    sFMextra*	extra   = (sFMextra*)MidiOutDev[wDevID].lpExtra;
+    sFMextra*   extra   = MidiOutDev[wDevID].lpExtra;
     sVoice* 	voice   = extra->voice;
     sChannel*	channel = extra->channel;
     int		i;
@@ -1252,7 +1252,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 	 *	- chorus depth controller is not used
 	 */
 	{
-	    sFMextra*	extra   = (sFMextra*)MidiOutDev[wDevID].lpExtra;
+            sFMextra*   extra   = MidiOutDev[wDevID].lpExtra;
 	    sVoice* 	voice   = extra->voice;
 	    sChannel*	channel = extra->channel;
 	    int		chn = (evt & 0x0F);

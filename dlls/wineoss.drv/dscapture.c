@@ -161,7 +161,7 @@ static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_QueryInterface(
     if ( IsEqualGUID(riid, &IID_IUnknown) ||
          IsEqualGUID(riid, &IID_IDsDriverPropertySet) ) {
         IDsDriverPropertySet_AddRef(iface);
-        *ppobj = (LPVOID)This;
+        *ppobj = This;
         return DS_OK;
     }
 
@@ -395,7 +395,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_QueryInterface(
     if ( IsEqualGUID(riid, &IID_IUnknown) ||
          IsEqualGUID(riid, &IID_IDsCaptureDriverBuffer) ) {
         IDsCaptureDriverBuffer_AddRef(iface);
-        *ppobj = (LPVOID)This;
+        *ppobj = This;
         return DS_OK;
     }
 
@@ -404,7 +404,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_QueryInterface(
             IDsCaptureDriverNotifyImpl_Create(This, &(This->notify));
         if (This->notify) {
             IDsDriverNotify_AddRef((PIDSDRIVERNOTIFY)This->notify);
-            *ppobj = (LPVOID)This->notify;
+            *ppobj = This->notify;
             return DS_OK;
         }
         return E_FAIL;
@@ -415,7 +415,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_QueryInterface(
             IDsCaptureDriverPropertySetImpl_Create(This, &(This->property_set));
         if (This->property_set) {
             IDsDriverPropertySet_AddRef((PIDSDRIVERPROPERTYSET)This->property_set);
-            *ppobj = (LPVOID)This->property_set;
+            *ppobj = This->property_set;
             return DS_OK;
         }
         return E_FAIL;
@@ -721,7 +721,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_QueryInterface(
     if ( IsEqualGUID(riid, &IID_IUnknown) ||
          IsEqualGUID(riid, &IID_IDsCaptureDriver) ) {
         IDsCaptureDriver_AddRef(iface);
-        *ppobj = (LPVOID)This;
+        *ppobj = This;
         return DS_OK;
     }
 
@@ -859,7 +859,7 @@ static void * my_memcpy(void * dst, const void * src, int length)
 
 static DWORD CALLBACK DSCDB_Thread(LPVOID lpParameter)
 {
-    IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)lpParameter;
+    IDsCaptureDriverBufferImpl *This = lpParameter;
     struct pollfd poll_list[2];
     int retval;
     DWORD offset = 0;
@@ -1212,7 +1212,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
     (*ippdscdb)->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     (*ippdscdb)->hExitEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 
-    (*ippdscdb)->hThread = CreateThread(NULL, 0,  DSCDB_Thread, (LPVOID)(*ippdscdb), 0, &((*ippdscdb)->dwThreadID));
+    (*ippdscdb)->hThread = CreateThread(NULL, 0,  DSCDB_Thread, *ippdscdb, 0, &((*ippdscdb)->dwThreadID));
     WaitForSingleObject((*ippdscdb)->hStartUpEvent, INFINITE);
     CloseHandle((*ippdscdb)->hStartUpEvent);
     (*ippdscdb)->hStartUpEvent = INVALID_HANDLE_VALUE;
