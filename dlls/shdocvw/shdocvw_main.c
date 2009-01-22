@@ -396,3 +396,13 @@ DWORD WINAPI ParseURLFromOutsideSourceA(LPCSTR url, LPSTR out, LPDWORD plen, LPD
     TRACE("=> %d\n", res);
     return res;
 }
+
+/******************************************************************
+ *  IEParseDisplayNameWithBCW (SHDOCVW.218)
+ */
+HRESULT WINAPI IEParseDisplayNameWithBCW(DWORD codepage, LPCWSTR lpszDisplayName, LPBC pbc, LPITEMIDLIST *ppidl)
+{
+    /* Guessing at parameter 3 based on IShellFolder's  ParseDisplayName */
+    FIXME("stub: 0x%x %s %p %p\n",codepage,debugstr_w(lpszDisplayName),pbc,ppidl);
+    return E_FAIL;
+}

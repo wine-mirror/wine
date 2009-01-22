@@ -89,7 +89,7 @@
 215 stub -noname GetSearchAssistantUrlA
 216 stub -noname GetDefaultInternetSearchUrlW
 217 stub -noname GetDefaultInternetSearchUrlA
-218 stub -noname IEParseDisplayNameWithBCW
+218 stdcall -noname IEParseDisplayNameWithBCW(long wstr ptr ptr)
 219 stub -noname IEILIsEqual
 220 stub @
 221 stub -noname IECreateFromPathCPWithBCA
