@@ -64,6 +64,9 @@
 #ifdef HAVE_NETINET_IF_ETHER_H
 #include <netinet/if_ether.h>
 #endif
+#ifdef HAVE_NETINET_IF_INARP_H
+#include <netinet/if_inarp.h>
+#endif
 #ifdef HAVE_NETINET_IP_H
 #include <netinet/ip.h>
 #endif
