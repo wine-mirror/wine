@@ -3572,8 +3572,8 @@ PRINTDLG_PagePaintProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     rcMargin = rcClient;
 
     rcMargin.left   += pagesetup_get_margin_rect(data)->left   * scalx;
-    rcMargin.top    += pagesetup_get_margin_rect(data)->top    * scalx;
-    rcMargin.right  -= pagesetup_get_margin_rect(data)->right  * scaly;
+    rcMargin.top    += pagesetup_get_margin_rect(data)->top    * scaly;
+    rcMargin.right  -= pagesetup_get_margin_rect(data)->right  * scalx;
     rcMargin.bottom -= pagesetup_get_margin_rect(data)->bottom * scaly;
 
     /* if the space is too small then we make sure to not draw anything */
