@@ -2438,9 +2438,14 @@ static HGLOBAL PRINTDLG_GetPGSTemplateW(const PAGESETUPDLGW *lppd)
     return hDlgTmpl;
 }
 
+static inline DWORD pagesetup_get_flags(const pagesetup_data *data)
+{
+    return data->dlga->Flags;
+}
+
 static inline BOOL is_metric(const pagesetup_data *data)
 {
-    return data->dlga->Flags & PSD_INHUNDREDTHSOFMILLIMETERS;
+    return pagesetup_get_flags(data) & PSD_INHUNDREDTHSOFMILLIMETERS;
 }
 
 static inline LONG tenths_mm_to_size(pagesetup_data *data, LONG size)
@@ -3433,7 +3438,7 @@ PRINTDLG_DefaultPagePaintHook(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
     INT oldbkmode;
     TRACE("uMsg: WM_USER+%d\n",uMsg-WM_USER);
     /* Call user paint hook if enable */
-    if (data->dlga->Flags & PSD_ENABLEPAGEPAINTHOOK)
+    if (pagesetup_get_flags(data) & PSD_ENABLEPAGEPAINTHOOK)
         if (data->dlga->lpfnPagePaintHook(hwndDlg, uMsg, wParam, lParam))
             return TRUE;
 
@@ -3673,17 +3678,17 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	
 	/* FIXME: Paint hook. Must it be at begin of initialization or at end? */
 	res = TRUE;
-        if (data->dlga->Flags & PSD_ENABLEPAGESETUPHOOK)
+        if (pagesetup_get_flags(data) & PSD_ENABLEPAGESETUPHOOK)
         {
             if (!data->dlga->lpfnPageSetupHook(hDlg,uMsg,wParam,(LPARAM)data->dlga))
 		FIXME("Setup page hook failed?\n");
 	}
 
 	/* if printer button disabled */
-        if (data->dlga->Flags & PSD_DISABLEPRINTER)
+        if (pagesetup_get_flags(data) & PSD_DISABLEPRINTER)
             EnableWindow(GetDlgItem(hDlg, psh3), FALSE);
 	/* if margin edit boxes disabled */
-        if (data->dlga->Flags & PSD_DISABLEMARGINS)
+        if (pagesetup_get_flags(data) & PSD_DISABLEMARGINS)
         {
             EnableWindow(GetDlgItem(hDlg, edt4), FALSE);
             EnableWindow(GetDlgItem(hDlg, edt5), FALSE);
@@ -3695,14 +3700,14 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         pagesetup_update_orientation_buttons(hDlg, data);
 
 	/* if orientation disabled */
-        if (data->dlga->Flags & PSD_DISABLEORIENTATION)
+        if (pagesetup_get_flags(data) & PSD_DISABLEORIENTATION)
         {
 	    EnableWindow(GetDlgItem(hDlg,rad1),FALSE);
 	    EnableWindow(GetDlgItem(hDlg,rad2),FALSE);
 	}
 
 	/* We fill them out enabled or not */
-        if (!(data->dlga->Flags & PSD_MARGINS))
+        if (!(pagesetup_get_flags(data) & PSD_MARGINS))
         {
             /* default is 1 inch */
             LONG size = thousandths_inch_to_size(data, 1000);
@@ -3716,7 +3721,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         set_margin_groupbox_title(hDlg, data);
 
 	/* if paper disabled */
-        if (data->dlga->Flags & PSD_DISABLEPAPER)
+        if (pagesetup_get_flags(data) & PSD_DISABLEPAPER)
         {
 	    EnableWindow(GetDlgItem(hDlg,cmb2),FALSE);
 	    EnableWindow(GetDlgItem(hDlg,cmb3),FALSE);
@@ -3737,7 +3742,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    WARN("__WINE_PAGESETUPDLGDATA prop not set?\n");
 	    return FALSE;
 	}
-        if (data->dlga->Flags & PSD_ENABLEPAGESETUPHOOK)
+        if (pagesetup_get_flags(data) & PSD_ENABLEPAGESETUPHOOK)
         {
             res = data->dlga->lpfnPageSetupHook(hDlg, uMsg, wParam, lParam);
 	    if (res) return res;
