@@ -6871,6 +6871,7 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
 	case WM_GETICON:
 	case WM_GETOBJECT:
 	case WM_DEVICECHANGE:
+	case WM_IME_SELECT:
 	    return 0;
     }
 
@@ -9656,7 +9657,24 @@ static void test_TrackMouseEvent(void)
     flush_sequence();
 
     track_hover(hwnd, 0);
-    track_query(TME_HOVER, hwnd, default_hover_time);
+    tme.cbSize = sizeof(tme);
+    tme.dwFlags = TME_QUERY;
+    tme.hwndTrack = (HWND)0xdeadbeef;
+    tme.dwHoverTime = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = pTrackMouseEvent(&tme);
+    ok(ret, "TrackMouseEvent(TME_QUERY) error %d\n", GetLastError());
+    ok(tme.cbSize == sizeof(tme), "wrong tme.cbSize %u\n", tme.cbSize);
+    if (!tme.dwFlags)
+    {
+        skip( "Cursor not inside window, skipping TrackMouseEvent tests\n" );
+        DestroyWindow( hwnd );
+        return;
+    }
+    ok(tme.dwFlags == TME_HOVER, "wrong tme.dwFlags %08x, expected TME_HOVER\n", tme.dwFlags);
+    ok(tme.hwndTrack == hwnd, "wrong tme.hwndTrack %p, expected %p\n", tme.hwndTrack, hwnd);
+    ok(tme.dwHoverTime == default_hover_time, "wrong tme.dwHoverTime %u, expected %u\n",
+       tme.dwHoverTime, default_hover_time);
 
     pump_msg_loop_timeout(default_hover_time, FALSE);
     ok_sequence(WmMouseHoverSeq, "WmMouseHoverSeq", FALSE);
