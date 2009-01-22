@@ -129,7 +129,7 @@ SECURITY_STATUS SECUR32_CreateNTLMv1SessionKey(PBYTE password, int len, PBYTE se
     TRACE("(%p, %p)\n", password, session_key);
 
     MD4Init(&ctx);
-    MD4Update(&ctx, (const unsigned char*) password, len);
+    MD4Update(&ctx, password, len);
     MD4Final(&ctx);
 
     memcpy(ntlm_hash, ctx.digest, 0x10);

@@ -181,8 +181,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
 
                 if(pAuthData != NULL)
                 {
-                    PSEC_WINNT_AUTH_IDENTITY_W auth_data =
-                        (PSEC_WINNT_AUTH_IDENTITY_W)pAuthData;
+                    PSEC_WINNT_AUTH_IDENTITY_W auth_data = pAuthData;
 
                     TRACE("Username is %s\n", debugstr_wn(auth_data->User, auth_data->UserLength));
                     TRACE("Domain name is %s\n", debugstr_wn(auth_data->Domain, auth_data->DomainLength));
@@ -262,8 +261,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleA(
     
     if(pAuthData != NULL)
     {
-        identity = (PSEC_WINNT_AUTH_IDENTITY_A)pAuthData;
-        
+        identity = pAuthData;
+
         if(identity->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
         {
             pAuthDataW = HeapAlloc(GetProcessHeap(), 0, 
@@ -585,12 +584,12 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 
             TRACE("Converting password to unicode.\n");
             passwd_lenW = MultiByteToWideChar(CP_ACP, 0,
-                                              password ? (LPCSTR)password : (LPCSTR)ntlm_cred->password,
+                                              password ? password : ntlm_cred->password,
                                               password ? pwlen : ntlm_cred->pwlen,
                                               NULL, 0);
             unicode_password = HeapAlloc(GetProcessHeap(), 0,
                                          passwd_lenW * sizeof(SEC_WCHAR));
-            MultiByteToWideChar(CP_ACP, 0, password ? (LPCSTR)password : (LPCSTR)ntlm_cred->password,
+            MultiByteToWideChar(CP_ACP, 0, password ? password : ntlm_cred->password,
                                 password ? pwlen : ntlm_cred->pwlen, unicode_password, passwd_lenW);
 
             SECUR32_CreateNTLMv1SessionKey((PBYTE)unicode_password,
@@ -1523,7 +1522,7 @@ static SECURITY_STATUS ntlm_CreateSignature(PNegoHelper helper, PSecBufferDesc p
         for( i = 0; i < pMessage->cBuffers; ++i )
         {
             if(pMessage->pBuffers[i].BufferType & SECBUFFER_DATA)
-                HMACMD5Update(&hmac_md5_ctx, (BYTE *)pMessage->pBuffers[i].pvBuffer,
+                HMACMD5Update(&hmac_md5_ctx, pMessage->pBuffers[i].pvBuffer,
                         pMessage->pBuffers[i].cbBuffer);
         }
 
@@ -1770,7 +1769,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
     { 
         ntlm_CreateSignature(helper, pMessage, token_idx, NTLM_SEND, FALSE);
         SECUR32_arc4Process(helper->crypt.ntlm2.send_a4i,
-                (BYTE *)pMessage->pBuffers[data_idx].pvBuffer,
+                pMessage->pBuffers[data_idx].pvBuffer,
                 pMessage->pBuffers[data_idx].cbBuffer);
 
         if(helper->neg_flags & NTLMSSP_NEGOTIATE_KEY_EXCHANGE)

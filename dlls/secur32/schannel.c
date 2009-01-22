@@ -132,7 +132,7 @@ static ULONG_PTR schan_alloc_handle(void *object, enum schan_handle_type type)
             ERR("Handle %d(%p) is in the free list, but has type %#x.\n", (handle-schan_handle_table), handle, handle->type);
             return SCHAN_INVALID_HANDLE;
         }
-        schan_free_handles = (struct schan_handle *)handle->object;
+        schan_free_handles = handle->object;
         handle->object = object;
         handle->type = type;
 
@@ -215,7 +215,7 @@ static SECURITY_STATUS schan_QueryCredentialsAttributes(
     case SECPKG_ATTR_CIPHER_STRENGTHS:
         if (pBuffer)
         {
-            SecPkgCred_CipherStrengths *r = (SecPkgCred_CipherStrengths*)pBuffer;
+            SecPkgCred_CipherStrengths *r = pBuffer;
 
             /* FIXME: get from CryptoAPI */
             FIXME("SECPKG_ATTR_CIPHER_STRENGTHS: semi-stub\n");
@@ -432,7 +432,7 @@ static SECURITY_STATUS SEC_ENTRY schan_AcquireCredentialsHandleA(
      debugstr_a(pszPrincipal), debugstr_a(pszPackage), fCredentialUse,
      pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
     return schan_AcquireCredentialsHandle(fCredentialUse,
-     (PSCHANNEL_CRED)pAuthData, phCredential, ptsExpiry);
+     pAuthData, phCredential, ptsExpiry);
 }
 
 static SECURITY_STATUS SEC_ENTRY schan_AcquireCredentialsHandleW(
@@ -444,7 +444,7 @@ static SECURITY_STATUS SEC_ENTRY schan_AcquireCredentialsHandleW(
      debugstr_w(pszPrincipal), debugstr_w(pszPackage), fCredentialUse,
      pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
     return schan_AcquireCredentialsHandle(fCredentialUse,
-     (PSCHANNEL_CRED)pAuthData, phCredential, ptsExpiry);
+     pAuthData, phCredential, ptsExpiry);
 }
 
 static SECURITY_STATUS SEC_ENTRY schan_FreeCredentialsHandle(
@@ -565,7 +565,7 @@ static char *schan_get_buffer(const struct schan_transport *t, struct schan_buff
 
 static ssize_t schan_pull(gnutls_transport_ptr_t transport, void *buff, size_t buff_len)
 {
-    struct schan_transport *t = (struct schan_transport *)transport;
+    struct schan_transport *t = transport;
     char *b;
 
     TRACE("Pull %zu bytes\n", buff_len);
@@ -587,7 +587,7 @@ static ssize_t schan_pull(gnutls_transport_ptr_t transport, void *buff, size_t b
 
 static ssize_t schan_push(gnutls_transport_ptr_t transport, const void *buff, size_t buff_len)
 {
-    struct schan_transport *t = (struct schan_transport *)transport;
+    struct schan_transport *t = transport;
     char *b;
 
     TRACE("Push %zu bytes\n", buff_len);
@@ -851,7 +851,7 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
     {
         case SECPKG_ATTR_STREAM_SIZES:
         {
-            SecPkgContext_StreamSizes *stream_sizes = (SecPkgContext_StreamSizes *)buffer;
+            SecPkgContext_StreamSizes *stream_sizes = buffer;
             gnutls_mac_algorithm_t mac = pgnutls_mac_get(ctx->session);
             size_t mac_size = pgnutls_mac_get_key_size(mac);
             gnutls_cipher_algorithm_t cipher = pgnutls_cipher_get(ctx->session);
