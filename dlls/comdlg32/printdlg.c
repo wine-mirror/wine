@@ -2660,59 +2660,56 @@ static void pagesetup_set_defaultsource(pagesetup_data *data, WORD source)
     GlobalUnlock(data->dlga->hDevMode);
 }
 
-static WCHAR *pagesetup_get_drvname(const pagesetup_data *data)
+typedef enum
+{
+    devnames_driver_name,
+    devnames_device_name,
+    devnames_output_name
+} devnames_name;
+
+
+static inline WORD get_devname_offset(DEVNAMES *dn, devnames_name which)
+{
+    switch(which)
+    {
+    case devnames_driver_name: return dn->wDriverOffset;
+    case devnames_device_name: return dn->wDeviceOffset;
+    case devnames_output_name: return dn->wOutputOffset;
+    }
+    ERR("Souldn't be here\n");
+    return 0;
+}
+
+static WCHAR *pagesetup_get_a_devname(const pagesetup_data *data, devnames_name which)
 {
     DEVNAMES *dn;
     int len;
     WCHAR *name;
 
     dn = GlobalLock(data->dlga->hDevNames);
-    len = MultiByteToWideChar(CP_ACP, 0, (char*)dn + dn->wDriverOffset, -1, NULL, 0);
+    len = MultiByteToWideChar(CP_ACP, 0, (char*)dn + get_devname_offset(dn, which), -1, NULL, 0);
     name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, (char*)dn + dn->wDriverOffset, -1, name, len);
+    MultiByteToWideChar(CP_ACP, 0, (char*)dn + get_devname_offset(dn, which), -1, name, len);
     GlobalUnlock(data->dlga->hDevNames);
     return name;
 }
 
-static void pagesetup_release_drvname(const pagesetup_data *data, WCHAR *name)
+static WCHAR *pagesetup_get_drvname(const pagesetup_data *data)
 {
-    HeapFree(GetProcessHeap(), 0, name);
+    return pagesetup_get_a_devname(data, devnames_driver_name);
 }
 
 static WCHAR *pagesetup_get_devname(const pagesetup_data *data)
 {
-    DEVNAMES *dn;
-    int len;
-    WCHAR *name;
-
-    dn = GlobalLock(data->dlga->hDevNames);
-    len = MultiByteToWideChar(CP_ACP, 0, (char*)dn + dn->wDeviceOffset, -1, NULL, 0);
-    name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, (char*)dn + dn->wDeviceOffset, -1, name, len);
-    GlobalUnlock(data->dlga->hDevNames);
-    return name;
-}
-
-static void pagesetup_release_devname(const pagesetup_data *data, WCHAR *name)
-{
-    HeapFree(GetProcessHeap(), 0, name);
+    return pagesetup_get_a_devname(data, devnames_device_name);
 }
 
 static WCHAR *pagesetup_get_portname(const pagesetup_data *data)
 {
-    DEVNAMES *dn;
-    int len;
-    WCHAR *name;
-
-    dn = GlobalLock(data->dlga->hDevNames);
-    len = MultiByteToWideChar(CP_ACP, 0, (char*)dn + dn->wOutputOffset, -1, NULL, 0);
-    name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, (char*)dn + dn->wOutputOffset, -1, name, len);
-    GlobalUnlock(data->dlga->hDevNames);
-    return name;
+    return pagesetup_get_a_devname(data, devnames_output_name);
 }
 
-static void pagesetup_release_portname(const pagesetup_data *data, WCHAR *name)
+static void pagesetup_release_a_devname(const pagesetup_data *data, WCHAR *name)
 {
     HeapFree(GetProcessHeap(), 0, name);
 }
@@ -2860,8 +2857,8 @@ static BOOL pagesetup_update_papersize(pagesetup_data *data)
 end:
     HeapFree(GetProcessHeap(), 0, words);
     HeapFree(GetProcessHeap(), 0, points);
-    pagesetup_release_portname(data, portname);
-    pagesetup_release_devname(data, devname);
+    pagesetup_release_a_devname(data, portname);
+    pagesetup_release_a_devname(data, devname);
     pagesetup_release_devmode(data, dm);
 
     return retval;
@@ -2991,8 +2988,8 @@ static void pagesetup_init_combos(HWND hDlg, pagesetup_data *data)
     PRINTDLG_SetUpPaperComboBoxW(hDlg, cmb2, devname, portname, dm);
     PRINTDLG_SetUpPaperComboBoxW(hDlg, cmb3, devname, portname, dm);
 
-    pagesetup_release_portname(data, portname);
-    pagesetup_release_devname(data, devname);
+    pagesetup_release_a_devname(data, portname);
+    pagesetup_release_a_devname(data, devname);
     pagesetup_release_devmode(data, dm);
 }
 
@@ -3020,9 +3017,9 @@ static void pagesetup_change_printer_dialog(HWND hDlg, pagesetup_data *data)
     portname = pagesetup_get_portname(data);
     prnt.hDevNames = 0;
     PRINTDLG_CreateDevNamesW(&prnt.hDevNames, drvname, devname, portname);
-    pagesetup_release_portname(data, portname);
-    pagesetup_release_devname(data, devname);
-    pagesetup_release_drvname(data, drvname);
+    pagesetup_release_a_devname(data, portname);
+    pagesetup_release_a_devname(data, devname);
+    pagesetup_release_a_devname(data, drvname);
 
     tmp_dm = pagesetup_get_devmode(data);
     prnt.hDevMode = GlobalAlloc(GMEM_MOVEABLE, tmp_dm->dmSize + tmp_dm->dmDriverExtra);
@@ -3259,7 +3256,7 @@ static void pagesetup_printer_properties(HWND hDlg, pagesetup_data *data)
     if (!OpenPrinterW(devname, &hprn, NULL))
     {
         FIXME("Call to OpenPrinter did not succeed!\n");
-        pagesetup_release_devname(data, devname);
+        pagesetup_release_a_devname(data, devname);
         return;
     }
 
@@ -3267,7 +3264,7 @@ static void pagesetup_printer_properties(HWND hDlg, pagesetup_data *data)
     DocumentPropertiesW(hDlg, hprn, devname, dm, dm, DM_IN_BUFFER | DM_OUT_BUFFER | DM_IN_PROMPT);
     pagesetup_set_devmode(data, dm);
     pagesetup_release_devmode(data, dm);
-    pagesetup_release_devname(data, devname);
+    pagesetup_release_a_devname(data, devname);
     ClosePrinter(hprn);
 
     /* Changing paper */
