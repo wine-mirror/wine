@@ -603,12 +603,6 @@ BOOL WINAPI GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped,
 
     TRACE( "(%p %p %p %x)\n", hFile, lpOverlapped, lpTransferred, bWait );
 
-    if ( lpOverlapped == NULL )
-    {
-        ERR("lpOverlapped was null\n");
-        return FALSE;
-    }
-
     status = lpOverlapped->Internal;
     if (status == STATUS_PENDING)
     {
@@ -624,7 +618,7 @@ BOOL WINAPI GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped,
         status = lpOverlapped->Internal;
     }
 
-    if (lpTransferred) *lpTransferred = lpOverlapped->InternalHigh;
+    *lpTransferred = lpOverlapped->InternalHigh;
 
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;

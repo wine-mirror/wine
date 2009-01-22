@@ -2022,6 +2022,12 @@ static void test_overlapped(void)
     DWORD r, result;
 
     /* GetOverlappedResult crashes if the 2nd or 3rd param are NULL */
+    if (0) /* tested: WinXP */
+    {
+        GetOverlappedResult(0, NULL, &result, FALSE);
+        GetOverlappedResult(0, &ov, NULL, FALSE);
+        GetOverlappedResult(0, NULL, NULL, FALSE);
+    }
 
     memset( &ov, 0,  sizeof ov );
     result = 1;
