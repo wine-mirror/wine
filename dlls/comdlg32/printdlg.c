@@ -2791,6 +2791,22 @@ static inline RECT *pagesetup_get_margin_rect(const pagesetup_data *data)
     return &data->dlga->rtMargin;
 }
 
+typedef enum
+{
+    page_setup_hook,
+    page_paint_hook
+} hook_type;
+
+static inline LPPAGESETUPHOOK pagesetup_get_hook(const pagesetup_data *data, hook_type which)
+{
+    switch(which)
+    {
+    case page_setup_hook: return data->dlga->lpfnPageSetupHook;
+    case page_paint_hook: return data->dlga->lpfnPagePaintHook;
+    }
+    return NULL;
+}
+
 static inline void swap_point(POINT *pt)
 {
     LONG tmp = pt->x;
@@ -3448,7 +3464,7 @@ static UINT_PTR default_page_paint_hook(HWND hwndDlg, UINT uMsg, WPARAM wParam, 
     TRACE("uMsg: WM_USER+%d\n",uMsg-WM_USER);
     /* Call user paint hook if enable */
     if (pagesetup_get_flags(data) & PSD_ENABLEPAGEPAINTHOOK)
-        if (data->dlga->lpfnPagePaintHook(hwndDlg, uMsg, wParam, lParam))
+        if (pagesetup_get_hook(data, page_paint_hook)(hwndDlg, uMsg, wParam, lParam))
             return TRUE;
 
     switch (uMsg) {
@@ -3687,7 +3703,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	res = TRUE;
         if (pagesetup_get_flags(data) & PSD_ENABLEPAGESETUPHOOK)
         {
-            if (!data->dlga->lpfnPageSetupHook(hDlg,uMsg,wParam,(LPARAM)data->dlga))
+            if (!pagesetup_get_hook(data, page_setup_hook)(hDlg, uMsg, wParam, (LPARAM)data->dlga))
 		FIXME("Setup page hook failed?\n");
 	}
 
@@ -3748,7 +3764,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
         if (pagesetup_get_flags(data) & PSD_ENABLEPAGESETUPHOOK)
         {
-            res = data->dlga->lpfnPageSetupHook(hDlg, uMsg, wParam, lParam);
+            res = pagesetup_get_hook(data, page_setup_hook)(hDlg, uMsg, wParam, lParam);
 	    if (res) return res;
 	}
     }
