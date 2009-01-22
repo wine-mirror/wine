@@ -3432,14 +3432,12 @@ PRINTDLG_PS_WMCommandW(
 
 
 /***********************************************************************
- *           DefaultPagePaintHook
+ *           default_page_paint_hook
  * Default hook paint procedure that receives WM_PSD_* messages from the dialog box 
  * whenever the sample page is redrawn.
-*/
-
-static UINT_PTR
-PRINTDLG_DefaultPagePaintHook(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam,
-                              const pagesetup_data *data)
+ */
+static UINT_PTR default_page_paint_hook(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam,
+                                        const pagesetup_data *data)
 {
     LPRECT lprc = (LPRECT) lParam;
     HDC hdc = (HDC) wParam;
@@ -3547,7 +3545,6 @@ PRINTDLG_PagePaintProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     pagesetup_data *data;
     int papersize=0, orientation=0; /* FIXME: set this values for user paint hook */
     double scalx, scaly;
-#define CALLPAINTHOOK(msg,lprc) PRINTDLG_DefaultPagePaintHook( hWnd, msg, (WPARAM)hdc, (LPARAM)lprc, data)
 
     if (uMsg != WM_PAINT)
         return CallWindowProcA(lpfnStaticWndProc, hWnd, uMsg, wParam, lParam);
@@ -3558,7 +3555,7 @@ PRINTDLG_PagePaintProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         WARN("__WINE_PAGESETUPDLGDATA prop not set?\n");
         return FALSE;
     }
-    if (PRINTDLG_DefaultPagePaintHook(hWnd, WM_PSD_PAGESETUPDLG, MAKELONG(papersize, orientation), (LPARAM)data->dlga, data))
+    if (default_page_paint_hook(hWnd, WM_PSD_PAGESETUPDLG, MAKELONG(papersize, orientation), (LPARAM)data->dlga, data))
         return FALSE;
 
     hdc = BeginPaint(hWnd, &ps);
@@ -3577,8 +3574,8 @@ PRINTDLG_PagePaintProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     rcMargin.left = min(rcMargin.left, rcMargin.right);
     rcMargin.top = min(rcMargin.top, rcMargin.bottom);
 
-    if (!CALLPAINTHOOK(WM_PSD_FULLPAGERECT, &rcClient) &&
-        !CALLPAINTHOOK(WM_PSD_MINMARGINRECT, &rcMargin) )
+    if (!default_page_paint_hook(hWnd, WM_PSD_FULLPAGERECT, (WPARAM)hdc, (LPARAM)&rcClient, data) &&
+        !default_page_paint_hook(hWnd, WM_PSD_MINMARGINRECT, (WPARAM)hdc, (LPARAM)&rcMargin, data) )
     {
         /* fill background */
         hbrush = GetSysColorBrush(COLOR_3DHIGHLIGHT);
@@ -3610,7 +3607,7 @@ PRINTDLG_PagePaintProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         DeleteObject(SelectObject(hdc, holdpen));
         DeleteObject(SelectObject(hdc, holdbrush));
 
-        CALLPAINTHOOK(WM_PSD_MARGINRECT, &rcMargin);
+        default_page_paint_hook(hWnd, WM_PSD_MARGINRECT, (WPARAM)hdc, (LPARAM)&rcMargin, data);
 
         /* give text a bit of a space from the frame */
         rcMargin.left += 2;
@@ -3622,12 +3619,11 @@ PRINTDLG_PagePaintProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         rcMargin.left = min(rcMargin.left, rcMargin.right);
         rcMargin.top = min(rcMargin.top, rcMargin.bottom);
 
-        CALLPAINTHOOK(WM_PSD_GREEKTEXTRECT, &rcMargin);
+        default_page_paint_hook(hWnd, WM_PSD_GREEKTEXTRECT, (WPARAM)hdc, (LPARAM)&rcMargin, data);
     }
 
     EndPaint(hWnd, &ps);
     return FALSE;
-#undef CALLPAINTHOOK
 }
 
 /*******************************************************
