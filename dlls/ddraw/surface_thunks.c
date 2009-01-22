@@ -44,6 +44,11 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw_thunk);
 WINE_DECLARE_DEBUG_CHANNEL(ddraw);
 
+static inline IDirectDrawSurfaceImpl *surface_from_surface3(IDirectDrawSurface3 *iface)
+{
+    return (IDirectDrawSurfaceImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawSurfaceImpl, IDirectDrawSurface3_vtbl));
+}
+
 static HRESULT WINAPI
 IDirectDrawSurface3Impl_QueryInterface(LPDIRECTDRAWSURFACE3 This, REFIID iid,
 				       LPVOID *ppObj)
@@ -60,7 +65,7 @@ IDirectDrawSurface3Impl_AddRef(LPDIRECTDRAWSURFACE3 This)
 static ULONG WINAPI
 IDirectDrawSurface3Impl_Release(LPDIRECTDRAWSURFACE3 iface)
 {
-    ICOM_THIS_FROM( IDirectDrawSurfaceImpl, IDirectDrawSurface3, iface);
+    IDirectDrawSurfaceImpl *This = surface_from_surface3(iface);
     TRACE("(%p)\n", This);
     return IDirectDrawSurface7_Release(CONVERT(iface));
 }
@@ -69,7 +74,7 @@ static HRESULT WINAPI
 IDirectDrawSurface3Impl_AddAttachedSurface(LPDIRECTDRAWSURFACE3 iface,
 					   LPDIRECTDRAWSURFACE3 pAttach)
 {
-    ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface3, iface);
+    IDirectDrawSurfaceImpl *This = surface_from_surface3(iface);
     IDirectDrawSurfaceImpl *Surf = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface3, pAttach);
     TRACE("(%p)->(%p)\n", This, Surf);
 
@@ -303,7 +308,7 @@ static HRESULT WINAPI
 IDirectDrawSurface3Impl_GetSurfaceDesc(LPDIRECTDRAWSURFACE3 iface,
 				       LPDDSURFACEDESC pDDSD)
 {
-    ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface3, iface);
+    IDirectDrawSurfaceImpl *This = surface_from_surface3(iface);
 
     TRACE_(ddraw)("(%p)->(%p)\n",This,pDDSD);
 

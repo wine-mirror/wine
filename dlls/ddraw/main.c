@@ -539,7 +539,7 @@ IDirectDrawClassFactoryImpl_QueryInterface(IClassFactory *iface,
                     REFIID riid,
                     void **obj)
 {
-    ICOM_THIS_FROM(IClassFactoryImpl, IClassFactory, iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), obj);
 
@@ -567,7 +567,7 @@ IDirectDrawClassFactoryImpl_QueryInterface(IClassFactory *iface,
 static ULONG WINAPI
 IDirectDrawClassFactoryImpl_AddRef(IClassFactory *iface)
 {
-    ICOM_THIS_FROM(IClassFactoryImpl, IClassFactory, iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p)->() incrementing from %d.\n", This, ref - 1);
@@ -588,7 +588,7 @@ IDirectDrawClassFactoryImpl_AddRef(IClassFactory *iface)
 static ULONG WINAPI
 IDirectDrawClassFactoryImpl_Release(IClassFactory *iface)
 {
-    ICOM_THIS_FROM(IClassFactoryImpl, IClassFactory, iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
     TRACE("(%p)->() decrementing from %d.\n", This, ref+1);
 
@@ -617,7 +617,7 @@ IDirectDrawClassFactoryImpl_CreateInstance(IClassFactory *iface,
                                            REFIID riid,
                                            void **obj)
 {
-    ICOM_THIS_FROM(IClassFactoryImpl, IClassFactory, iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     TRACE("(%p)->(%p,%s,%p)\n",This,UnkOuter,debugstr_guid(riid),obj);
 
@@ -639,7 +639,7 @@ IDirectDrawClassFactoryImpl_CreateInstance(IClassFactory *iface,
 static HRESULT WINAPI
 IDirectDrawClassFactoryImpl_LockServer(IClassFactory *iface,BOOL dolock)
 {
-    ICOM_THIS_FROM(IClassFactoryImpl, IClassFactory, iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     FIXME("(%p)->(%d),stub!\n",This,dolock);
     return S_OK;
 }

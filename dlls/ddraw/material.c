@@ -50,6 +50,11 @@ static void dump_material(const D3DMATERIAL *mat)
     TRACE("  dwSize : %d\n", mat->dwSize);
 }
 
+static inline IDirect3DMaterialImpl *material_from_material1(IDirect3DMaterial *iface)
+{
+    return (IDirect3DMaterialImpl *)((char*)iface - FIELD_OFFSET(IDirect3DMaterialImpl, IDirect3DMaterial_vtbl));
+}
+
 /*****************************************************************************
  * IUnknown Methods.
  *****************************************************************************/
@@ -74,7 +79,7 @@ IDirect3DMaterialImpl_QueryInterface(IDirect3DMaterial3 *iface,
                                      REFIID riid,
                                      LPVOID* obp)
 {
-    ICOM_THIS_FROM(IDirect3DMaterialImpl, IDirect3DMaterial3, iface);
+    IDirect3DMaterialImpl *This = (IDirect3DMaterialImpl *)iface;
     TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), obp);
 
     *obp = NULL;
@@ -119,7 +124,7 @@ IDirect3DMaterialImpl_QueryInterface(IDirect3DMaterial3 *iface,
 static ULONG WINAPI
 IDirect3DMaterialImpl_AddRef(IDirect3DMaterial3 *iface)
 {
-    ICOM_THIS_FROM(IDirect3DMaterialImpl, IDirect3DMaterial3, iface);
+    IDirect3DMaterialImpl *This = (IDirect3DMaterialImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p)->() incrementing from %u.\n", This, ref - 1);
@@ -140,7 +145,7 @@ IDirect3DMaterialImpl_AddRef(IDirect3DMaterial3 *iface)
 static ULONG WINAPI
 IDirect3DMaterialImpl_Release(IDirect3DMaterial3 *iface)
 {
-    ICOM_THIS_FROM(IDirect3DMaterialImpl, IDirect3DMaterial3, iface);
+    IDirect3DMaterialImpl *This = (IDirect3DMaterialImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p)->() decrementing from %u.\n", This, ref + 1);
@@ -181,7 +186,7 @@ static HRESULT WINAPI
 IDirect3DMaterialImpl_Initialize(IDirect3DMaterial *iface,
                                   IDirect3D *Direct3D)
 {
-    ICOM_THIS_FROM(IDirect3DMaterialImpl, IDirect3DMaterial, iface);
+    IDirect3DMaterialImpl *This = material_from_material1(iface);
 
     TRACE("(%p)->(%p) no-op...!\n", This, Direct3D);
 
@@ -201,7 +206,7 @@ IDirect3DMaterialImpl_Initialize(IDirect3DMaterial *iface,
 static HRESULT WINAPI
 IDirect3DMaterialImpl_Reserve(IDirect3DMaterial *iface)
 {
-    ICOM_THIS_FROM(IDirect3DMaterialImpl, IDirect3DMaterial, iface);
+    IDirect3DMaterialImpl *This = material_from_material1(iface);
     TRACE("(%p)->() not implemented\n", This);
 
     return DDERR_UNSUPPORTED;
@@ -219,7 +224,7 @@ IDirect3DMaterialImpl_Reserve(IDirect3DMaterial *iface)
 static HRESULT WINAPI
 IDirect3DMaterialImpl_Unreserve(IDirect3DMaterial *iface)
 {
-    ICOM_THIS_FROM(IDirect3DMaterialImpl, IDirect3DMaterial, iface);
+    IDirect3DMaterialImpl *This = material_from_material1(iface);
     TRACE("(%p)->() not implemented.\n", This);
 
     return DDERR_UNSUPPORTED;
@@ -242,7 +247,7 @@ static HRESULT WINAPI
 IDirect3DMaterialImpl_SetMaterial(IDirect3DMaterial3 *iface,
                                   D3DMATERIAL *lpMat)
 {
-    ICOM_THIS_FROM(IDirect3DMaterialImpl, IDirect3DMaterial3, iface);
+    IDirect3DMaterialImpl *This = (IDirect3DMaterialImpl *)iface;
     TRACE("(%p)->(%p)\n", This, lpMat);
     if (TRACE_ON(d3d7))
         dump_material(lpMat);
@@ -273,7 +278,7 @@ static HRESULT WINAPI
 IDirect3DMaterialImpl_GetMaterial(IDirect3DMaterial3 *iface,
                                   D3DMATERIAL *lpMat)
 {
-    ICOM_THIS_FROM(IDirect3DMaterialImpl, IDirect3DMaterial3, iface);
+    IDirect3DMaterialImpl *This = (IDirect3DMaterialImpl *)iface;
     DWORD dwSize;
     TRACE("(%p)->(%p)\n", This, lpMat);
     if (TRACE_ON(d3d7)) {
@@ -311,7 +316,7 @@ IDirect3DMaterialImpl_GetHandle(IDirect3DMaterial3 *iface,
                                 IDirect3DDevice3 *lpDirect3DDevice3,
                                 D3DMATERIALHANDLE *lpHandle)
 {
-    ICOM_THIS_FROM(IDirect3DMaterialImpl, IDirect3DMaterial3, iface);
+    IDirect3DMaterialImpl *This = (IDirect3DMaterialImpl *)iface;
     IDirect3DDeviceImpl *device = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice3, lpDirect3DDevice3);
     TRACE("(%p/%p)->(%p,%p)\n", This, iface, device, lpHandle);
 

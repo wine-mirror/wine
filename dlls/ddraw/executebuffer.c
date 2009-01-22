@@ -624,7 +624,7 @@ IDirect3DExecuteBufferImpl_QueryInterface(IDirect3DExecuteBuffer *iface,
 static ULONG WINAPI
 IDirect3DExecuteBufferImpl_AddRef(IDirect3DExecuteBuffer *iface)
 {
-    ICOM_THIS_FROM(IDirect3DExecuteBufferImpl, IDirect3DExecuteBuffer, iface);
+    IDirect3DExecuteBufferImpl *This = (IDirect3DExecuteBufferImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
     FIXME("(%p)->()incrementing from %u.\n", This, ref - 1);
@@ -644,7 +644,7 @@ IDirect3DExecuteBufferImpl_AddRef(IDirect3DExecuteBuffer *iface)
 static ULONG WINAPI
 IDirect3DExecuteBufferImpl_Release(IDirect3DExecuteBuffer *iface)
 {
-    ICOM_THIS_FROM(IDirect3DExecuteBufferImpl, IDirect3DExecuteBuffer, iface);
+    IDirect3DExecuteBufferImpl *This = (IDirect3DExecuteBufferImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p)->()decrementing from %u.\n", This, ref + 1);
@@ -676,7 +676,7 @@ IDirect3DExecuteBufferImpl_Initialize(IDirect3DExecuteBuffer *iface,
                                         IDirect3DDevice *lpDirect3DDevice,
                                         D3DEXECUTEBUFFERDESC *lpDesc)
 {
-    ICOM_THIS_FROM(IDirect3DExecuteBufferImpl, IDirect3DExecuteBuffer, iface);
+    IDirect3DExecuteBufferImpl *This = (IDirect3DExecuteBufferImpl *)iface;
     TRACE("(%p)->(%p,%p) no-op....\n", This, lpDirect3DDevice, lpDesc);
     return D3D_OK;
 }
@@ -698,7 +698,7 @@ static HRESULT WINAPI
 IDirect3DExecuteBufferImpl_Lock(IDirect3DExecuteBuffer *iface,
                                 D3DEXECUTEBUFFERDESC *lpDesc)
 {
-    ICOM_THIS_FROM(IDirect3DExecuteBufferImpl, IDirect3DExecuteBuffer, iface);
+    IDirect3DExecuteBufferImpl *This = (IDirect3DExecuteBufferImpl *)iface;
     DWORD dwSize;
     TRACE("(%p)->(%p)\n", This, lpDesc);
 
@@ -725,7 +725,7 @@ IDirect3DExecuteBufferImpl_Lock(IDirect3DExecuteBuffer *iface,
 static HRESULT WINAPI
 IDirect3DExecuteBufferImpl_Unlock(IDirect3DExecuteBuffer *iface)
 {
-    ICOM_THIS_FROM(IDirect3DExecuteBufferImpl, IDirect3DExecuteBuffer, iface);
+    IDirect3DExecuteBufferImpl *This = (IDirect3DExecuteBufferImpl *)iface;
     TRACE("(%p)->() no-op...\n", This);
     return D3D_OK;
 }
@@ -748,7 +748,7 @@ static HRESULT WINAPI
 IDirect3DExecuteBufferImpl_SetExecuteData(IDirect3DExecuteBuffer *iface,
                                           D3DEXECUTEDATA *lpData)
 {
-    ICOM_THIS_FROM(IDirect3DExecuteBufferImpl, IDirect3DExecuteBuffer, iface);
+    IDirect3DExecuteBufferImpl *This = (IDirect3DExecuteBufferImpl *)iface;
     DWORD nbvert;
     TRACE("(%p)->(%p)\n", This, lpData);
 
@@ -784,7 +784,7 @@ static HRESULT WINAPI
 IDirect3DExecuteBufferImpl_GetExecuteData(IDirect3DExecuteBuffer *iface,
                                           D3DEXECUTEDATA *lpData)
 {
-    ICOM_THIS_FROM(IDirect3DExecuteBufferImpl, IDirect3DExecuteBuffer, iface);
+    IDirect3DExecuteBufferImpl *This = (IDirect3DExecuteBufferImpl *)iface;
     DWORD dwSize;
     TRACE("(%p)->(%p): stub!\n", This, lpData);
 
@@ -820,7 +820,7 @@ IDirect3DExecuteBufferImpl_Validate(IDirect3DExecuteBuffer *iface,
                                     void *UserArg,
                                     DWORD Reserved)
 {
-    ICOM_THIS_FROM(IDirect3DExecuteBufferImpl, IDirect3DExecuteBuffer, iface);
+    IDirect3DExecuteBufferImpl *This = (IDirect3DExecuteBufferImpl *)iface;
     TRACE("(%p)->(%p,%p,%p,%08x): Unimplemented!\n", This, Offset, Func, UserArg, Reserved);
     return DDERR_UNSUPPORTED; /* Unchecked */
 }
@@ -842,7 +842,7 @@ static HRESULT WINAPI
 IDirect3DExecuteBufferImpl_Optimize(IDirect3DExecuteBuffer *iface,
                                     DWORD Dummy)
 {
-    ICOM_THIS_FROM(IDirect3DExecuteBufferImpl, IDirect3DExecuteBuffer, iface);
+    IDirect3DExecuteBufferImpl *This = (IDirect3DExecuteBufferImpl *)iface;
     TRACE("(%p)->(%08x): Unimplemented\n", This, Dummy);
     return DDERR_UNSUPPORTED; /* Unchecked */
 }

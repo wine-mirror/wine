@@ -95,7 +95,7 @@ IParentImpl_QueryInterface(IParent *iface,
 static ULONG WINAPI
 IParentImpl_AddRef(IParent *iface)
 {
-    ICOM_THIS_FROM(IParentImpl, IParent, iface);
+    IParentImpl *This = (IParentImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) : AddRef from %d\n", This, ref - 1);
@@ -120,7 +120,7 @@ IParentImpl_AddRef(IParent *iface)
 static ULONG WINAPI 
 IParentImpl_Release(IParent *iface)
 {
-    ICOM_THIS_FROM(IParentImpl, IParent, iface);
+    IParentImpl *This = (IParentImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);

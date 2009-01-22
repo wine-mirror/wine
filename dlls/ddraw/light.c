@@ -65,7 +65,7 @@ IDirect3DLightImpl_QueryInterface(IDirect3DLight *iface,
                                   REFIID riid,
                                   void **obp)
 {
-    ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
+    IDirect3DLightImpl *This = (IDirect3DLightImpl *)iface;
     FIXME("(%p)->(%s,%p): stub!\n", This, debugstr_guid(riid), obp);
     *obp = NULL;
     return E_NOINTERFACE;
@@ -83,7 +83,7 @@ IDirect3DLightImpl_QueryInterface(IDirect3DLight *iface,
 static ULONG WINAPI
 IDirect3DLightImpl_AddRef(IDirect3DLight *iface)
 {
-    ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
+    IDirect3DLightImpl *This = (IDirect3DLightImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p)->() incrementing from %u.\n", This, ref - 1);
@@ -104,7 +104,7 @@ IDirect3DLightImpl_AddRef(IDirect3DLight *iface)
 static ULONG WINAPI
 IDirect3DLightImpl_Release(IDirect3DLight *iface)
 {
-    ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
+    IDirect3DLightImpl *This = (IDirect3DLightImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p)->() decrementing from %u.\n", This, ref + 1);
@@ -137,7 +137,7 @@ static HRESULT WINAPI
 IDirect3DLightImpl_Initialize(IDirect3DLight *iface,
                               IDirect3D *lpDirect3D)
 {
-    ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
+    IDirect3DLightImpl *This = (IDirect3DLightImpl *)iface;
     IDirectDrawImpl *d3d = ICOM_OBJECT(IDirectDrawImpl, IDirect3D, lpDirect3D);
     TRACE("(%p)->(%p) no-op...\n", This, d3d);
     return D3D_OK;
@@ -169,7 +169,7 @@ static HRESULT WINAPI
 IDirect3DLightImpl_SetLight(IDirect3DLight *iface,
                             D3DLIGHT *lpLight)
 {
-    ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
+    IDirect3DLightImpl *This = (IDirect3DLightImpl *)iface;
     LPD3DLIGHT7 light7 = &(This->light7);
     TRACE("(%p)->(%p)\n", This, lpLight);
     if (TRACE_ON(d3d7)) {
@@ -226,7 +226,7 @@ static HRESULT WINAPI
 IDirect3DLightImpl_GetLight(IDirect3DLight *iface,
                             D3DLIGHT *lpLight)
 {
-    ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
+    IDirect3DLightImpl *This = (IDirect3DLightImpl *)iface;
     TRACE("(%p/%p)->(%p)\n", This, iface, lpLight);
     if (TRACE_ON(d3d7)) {
         TRACE("  Returning light definition :\n");

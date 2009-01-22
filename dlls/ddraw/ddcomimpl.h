@@ -27,9 +27,6 @@
 	(impltype*)((ifaceptr) == NULL ? NULL			\
 		  : (char*)(ifaceptr) - offsetof(impltype, ifacename##_vtbl))
 
-#define ICOM_THIS_FROM(impltype, ifacename, ifaceptr) \
-	impltype* This = ICOM_OBJECT(impltype, ifacename, ifaceptr)
-
 #define COM_INTERFACE_CAST(impltype, ifnamefrom, ifnameto, ifaceptr) \
     ((ifaceptr) ? (ifnameto *)&(((impltype *)((char *)(ifaceptr) \
     - offsetof(impltype, ifnamefrom##_vtbl)))->ifnameto##_vtbl) : NULL)

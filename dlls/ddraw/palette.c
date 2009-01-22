@@ -49,7 +49,7 @@ IDirectDrawPaletteImpl_QueryInterface(IDirectDrawPalette *iface,
                                       REFIID refiid,
                                       void **obj)
 {
-    ICOM_THIS_FROM(IDirectDrawPaletteImpl, IDirectDrawPalette, iface);
+    IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(refiid),obj);
 
     if (IsEqualGUID(refiid, &IID_IUnknown)
@@ -78,7 +78,7 @@ IDirectDrawPaletteImpl_QueryInterface(IDirectDrawPalette *iface,
 static ULONG WINAPI
 IDirectDrawPaletteImpl_AddRef(IDirectDrawPalette *iface)
 {
-    ICOM_THIS_FROM(IDirectDrawPaletteImpl, IDirectDrawPalette, iface);
+    IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p)->() incrementing from %u.\n", This, ref - 1);
@@ -98,7 +98,7 @@ IDirectDrawPaletteImpl_AddRef(IDirectDrawPalette *iface)
 static ULONG WINAPI
 IDirectDrawPaletteImpl_Release(IDirectDrawPalette *iface)
 {
-    ICOM_THIS_FROM(IDirectDrawPaletteImpl, IDirectDrawPalette, iface);
+    IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p)->() decrementing from %u.\n", This, ref + 1);
@@ -161,7 +161,7 @@ static HRESULT WINAPI
 IDirectDrawPaletteImpl_GetCaps(IDirectDrawPalette *iface,
                                DWORD *Caps)
 {
-    ICOM_THIS_FROM(IDirectDrawPaletteImpl, IDirectDrawPalette, iface);
+    IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
     HRESULT hr;
     TRACE("(%p)->(%p): Relay\n", This, Caps);
 
@@ -196,7 +196,7 @@ IDirectDrawPaletteImpl_SetEntries(IDirectDrawPalette *iface,
                                   DWORD Count,
                                   PALETTEENTRY *PalEnt)
 {
-    ICOM_THIS_FROM(IDirectDrawPaletteImpl, IDirectDrawPalette, iface);
+    IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
     HRESULT hr;
     TRACE("(%p)->(%x,%d,%d,%p): Relay\n", This, Flags, Start, Count, PalEnt);
 
@@ -233,7 +233,7 @@ IDirectDrawPaletteImpl_GetEntries(IDirectDrawPalette *iface,
                                   DWORD Count,
                                   PALETTEENTRY *PalEnt)
 {
-    ICOM_THIS_FROM(IDirectDrawPaletteImpl, IDirectDrawPalette, iface);
+    IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
     HRESULT hr;
     TRACE("(%p)->(%x,%d,%d,%p): Relay\n", This, Flags, Start, Count, PalEnt);
 

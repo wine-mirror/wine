@@ -44,6 +44,11 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d7);
 WINE_DECLARE_DEBUG_CHANNEL(ddraw_thunk);
 
+static inline IDirect3DVertexBufferImpl *vb_from_vb1(IDirect3DVertexBuffer *iface)
+{
+    return (IDirect3DVertexBufferImpl *)((char*)iface
+            - FIELD_OFFSET(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer_vtbl));
+}
 
 /*****************************************************************************
  * IUnknown Methods
@@ -69,7 +74,7 @@ IDirect3DVertexBufferImpl_QueryInterface(IDirect3DVertexBuffer7 *iface,
                                          REFIID riid,
                                          void  **obj)
 {
-    ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
+    IDirect3DVertexBufferImpl *This = (IDirect3DVertexBufferImpl *)iface;
     TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), obj);
 
     /* By default, set the object pointer to NULL */
@@ -105,7 +110,7 @@ Thunk_IDirect3DVertexBufferImpl_1_QueryInterface(IDirect3DVertexBuffer *iface,
                                                  REFIID riid,
                                                  void **obj)
 {
-    ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);
+    IDirect3DVertexBufferImpl *This = vb_from_vb1(iface);
     TRACE_(ddraw_thunk)("(%p)->(%s,%p) thunking to IDirect3DVertexBuffer7 interface.\n", This, debugstr_guid(riid), obj);
 
     return IDirect3DVertexBuffer7_QueryInterface((IDirect3DVertexBuffer7 *)This, riid, obj);
@@ -123,7 +128,7 @@ Thunk_IDirect3DVertexBufferImpl_1_QueryInterface(IDirect3DVertexBuffer *iface,
 static ULONG WINAPI
 IDirect3DVertexBufferImpl_AddRef(IDirect3DVertexBuffer7 *iface)
 {
-    ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
+    IDirect3DVertexBufferImpl *This = (IDirect3DVertexBufferImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p/%p)->() incrementing from %u.\n", This, iface, ref - 1);
@@ -134,7 +139,7 @@ IDirect3DVertexBufferImpl_AddRef(IDirect3DVertexBuffer7 *iface)
 static ULONG WINAPI
 Thunk_IDirect3DVertexBufferImpl_1_AddRef(IDirect3DVertexBuffer *iface)
 {
-    ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);
+    IDirect3DVertexBufferImpl *This = vb_from_vb1(iface);
     TRACE_(ddraw_thunk)("(%p)->() thunking to IDirect3DVertexBuffer7 interface.\n", This);
 
     return IDirect3DVertexBuffer7_AddRef((IDirect3DVertexBuffer7 *)This);
@@ -153,7 +158,7 @@ Thunk_IDirect3DVertexBufferImpl_1_AddRef(IDirect3DVertexBuffer *iface)
 static ULONG WINAPI
 IDirect3DVertexBufferImpl_Release(IDirect3DVertexBuffer7 *iface)
 {
-    ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
+    IDirect3DVertexBufferImpl *This = (IDirect3DVertexBufferImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p)->() decrementing from %u.\n", This, ref + 1);
@@ -199,7 +204,7 @@ IDirect3DVertexBufferImpl_Release(IDirect3DVertexBuffer7 *iface)
 static ULONG WINAPI
 Thunk_IDirect3DVertexBufferImpl_1_Release(IDirect3DVertexBuffer *iface)
 {
-    ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);
+    IDirect3DVertexBufferImpl *This = vb_from_vb1(iface);
     TRACE_(ddraw_thunk)("(%p)->() thunking to IDirect3DVertexBuffer7 interface.\n", This);
 
     return IDirect3DVertexBuffer7_Release((IDirect3DVertexBuffer7 *)This);
@@ -234,7 +239,7 @@ IDirect3DVertexBufferImpl_Lock(IDirect3DVertexBuffer7 *iface,
                                void **Data,
                                DWORD *Size)
 {
-    ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
+    IDirect3DVertexBufferImpl *This = (IDirect3DVertexBufferImpl *)iface;
     WINED3DVERTEXBUFFER_DESC Desc;
     HRESULT hr;
     TRACE("(%p)->(%08x,%p,%p)\n", This, Flags, Data, Size);
@@ -269,7 +274,7 @@ Thunk_IDirect3DVertexBufferImpl_1_Lock(IDirect3DVertexBuffer *iface,
                                        void **Data,
                                        DWORD *Size)
 {
-    ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);
+    IDirect3DVertexBufferImpl *This = vb_from_vb1(iface);
     TRACE_(ddraw_thunk)("(%p)->(%08x,%p,%p) thunking to IDirect3DVertexBuffer7 interface.\n", This, Flags, Data, Size);
 
     return IDirect3DVertexBuffer7_Lock((IDirect3DVertexBuffer7 *)This, Flags, Data, Size);
@@ -287,7 +292,7 @@ Thunk_IDirect3DVertexBufferImpl_1_Lock(IDirect3DVertexBuffer *iface,
 static HRESULT WINAPI
 IDirect3DVertexBufferImpl_Unlock(IDirect3DVertexBuffer7 *iface)
 {
-    ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
+    IDirect3DVertexBufferImpl *This = (IDirect3DVertexBufferImpl *)iface;
     HRESULT hr;
     TRACE("(%p)->()\n", This);
 
@@ -301,7 +306,7 @@ IDirect3DVertexBufferImpl_Unlock(IDirect3DVertexBuffer7 *iface)
 static HRESULT WINAPI
 Thunk_IDirect3DVertexBufferImpl_1_Unlock(IDirect3DVertexBuffer *iface)
 {
-    ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);
+    IDirect3DVertexBufferImpl *This = vb_from_vb1(iface);
     TRACE_(ddraw_thunk)("(%p)->() thunking to IDirect3DVertexBuffer7 interface.\n", This);
 
     return IDirect3DVertexBuffer7_Unlock((IDirect3DVertexBuffer7 *)This);
@@ -340,7 +345,7 @@ IDirect3DVertexBufferImpl_ProcessVertices(IDirect3DVertexBuffer7 *iface,
                                           IDirect3DDevice7 *D3DDevice,
                                           DWORD Flags)
 {
-    ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
+    IDirect3DVertexBufferImpl *This = (IDirect3DVertexBufferImpl *)iface;
     IDirect3DVertexBufferImpl *Src = ICOM_OBJECT(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, SrcBuffer);
     IDirect3DDeviceImpl *D3D = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice7, D3DDevice);
     BOOL oldClip, doClip;
@@ -413,7 +418,7 @@ Thunk_IDirect3DVertexBufferImpl_1_ProcessVertices(IDirect3DVertexBuffer *iface,
                                                   IDirect3DDevice3 *D3DDevice,
                                                   DWORD Flags)
 {
-    ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);
+    IDirect3DVertexBufferImpl *This = vb_from_vb1(iface);
     IDirect3DVertexBufferImpl *Src = ICOM_OBJECT(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, SrcBuffer);
     IDirect3DDeviceImpl *D3D = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice3, D3DDevice);
 
@@ -440,7 +445,7 @@ static HRESULT WINAPI
 IDirect3DVertexBufferImpl_GetVertexBufferDesc(IDirect3DVertexBuffer7 *iface,
                                               D3DVERTEXBUFFERDESC *Desc)
 {
-    ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
+    IDirect3DVertexBufferImpl *This = (IDirect3DVertexBufferImpl *)iface;
     WINED3DVERTEXBUFFER_DESC WDesc;
     HRESULT hr;
     TRACE("(%p)->(%p)\n", This, Desc);
@@ -470,7 +475,7 @@ static HRESULT WINAPI
 Thunk_IDirect3DVertexBufferImpl_1_GetVertexBufferDesc(IDirect3DVertexBuffer *iface,
                                                       D3DVERTEXBUFFERDESC *Desc)
 {
-    ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);
+    IDirect3DVertexBufferImpl *This = vb_from_vb1(iface);
     TRACE_(ddraw_thunk)("(%p)->(%p) thunking to IDirect3DVertexBuffer7 interface.\n", This, Desc);
 
     return IDirect3DVertexBuffer7_GetVertexBufferDesc((IDirect3DVertexBuffer7 *)This, Desc);
@@ -495,7 +500,7 @@ IDirect3DVertexBufferImpl_Optimize(IDirect3DVertexBuffer7 *iface,
                                    IDirect3DDevice7 *D3DDevice,
                                    DWORD Flags)
 {
-    ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
+    IDirect3DVertexBufferImpl *This = (IDirect3DVertexBufferImpl *)iface;
     IDirect3DDeviceImpl *D3D = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice7, D3DDevice);
     static BOOL hide = FALSE;
 
@@ -520,7 +525,7 @@ Thunk_IDirect3DVertexBufferImpl_1_Optimize(IDirect3DVertexBuffer *iface,
                                            IDirect3DDevice3 *D3DDevice,
                                            DWORD Flags)
 {
-    ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);
+    IDirect3DVertexBufferImpl *This = vb_from_vb1(iface);
     IDirect3DDeviceImpl *D3D = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice3, D3DDevice);
     TRACE_(ddraw_thunk)("(%p)->(%p,%08x) thunking to IDirect3DVertexBuffer7 interface.\n", This, D3D, Flags);
 
@@ -559,7 +564,7 @@ IDirect3DVertexBufferImpl_ProcessVerticesStrided(IDirect3DVertexBuffer7 *iface,
                                                  IDirect3DDevice7 *D3DDevice,
                                                  DWORD Flags)
 {
-    ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
+    IDirect3DVertexBufferImpl *This = (IDirect3DVertexBufferImpl *)iface;
     IDirect3DDeviceImpl *D3D = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice7, D3DDevice);
     FIXME("(%p)->(%08x,%08x,%08x,%p,%08x,%p,%08x): stub!\n", This, VertexOp, DestIndex, Count, StrideData, VertexTypeDesc, D3D, Flags);
     return DD_OK;

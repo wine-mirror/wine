@@ -42,6 +42,26 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw_thunk);
 WINE_DECLARE_DEBUG_CHANNEL(ddraw);
 
+static inline IDirectDrawImpl *ddraw_from_ddraw1(IDirectDraw *iface)
+{
+    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirectDraw_vtbl));
+}
+
+static inline IDirectDrawImpl *ddraw_from_ddraw2(IDirectDraw2 *iface)
+{
+    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirectDraw2_vtbl));
+}
+
+static inline IDirectDrawImpl *ddraw_from_ddraw3(IDirectDraw3 *iface)
+{
+    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirectDraw3_vtbl));
+}
+
+static inline IDirectDrawImpl *ddraw_from_ddraw4(IDirectDraw4 *iface)
+{
+    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirectDraw4_vtbl));
+}
+
 static HRESULT WINAPI
 IDirectDrawImpl_QueryInterface(LPDIRECTDRAW This, REFIID iid, LPVOID *ppObj)
 {
@@ -81,7 +101,7 @@ IDirectDraw4Impl_QueryInterface(LPDIRECTDRAW4 This, REFIID iid, LPVOID *ppObj)
 static ULONG WINAPI
 IDirectDrawImpl_AddRef(LPDIRECTDRAW iface)
 {
-    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw, iface);
+    IDirectDrawImpl *This = ddraw_from_ddraw1(iface);
     ULONG ref = InterlockedIncrement(&This->ref1);
 
     TRACE("(%p) : incrementing IDirectDraw refcount from %u.\n", This, ref -1);
@@ -94,7 +114,7 @@ IDirectDrawImpl_AddRef(LPDIRECTDRAW iface)
 static ULONG WINAPI
 IDirectDraw2Impl_AddRef(LPDIRECTDRAW2 iface)
 {
-    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw2, iface);
+    IDirectDrawImpl *This = ddraw_from_ddraw2(iface);
     ULONG ref = InterlockedIncrement(&This->ref2);
 
     TRACE("(%p) : incrementing IDirectDraw2 refcount from %u.\n", This, ref -1);
@@ -107,7 +127,7 @@ IDirectDraw2Impl_AddRef(LPDIRECTDRAW2 iface)
 static ULONG WINAPI
 IDirectDraw3Impl_AddRef(LPDIRECTDRAW3 iface)
 {
-    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw3, iface);
+    IDirectDrawImpl *This = ddraw_from_ddraw3(iface);
     ULONG ref = InterlockedIncrement(&This->ref3);
 
     TRACE("(%p) : incrementing IDirectDraw3 refcount from %u.\n", This, ref -1);
@@ -120,7 +140,7 @@ IDirectDraw3Impl_AddRef(LPDIRECTDRAW3 iface)
 static ULONG WINAPI
 IDirectDraw4Impl_AddRef(LPDIRECTDRAW4 iface)
 {
-    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw4, iface);
+    IDirectDrawImpl *This = ddraw_from_ddraw4(iface);
     ULONG ref = InterlockedIncrement(&This->ref4);
 
     TRACE("(%p) : incrementing IDirectDraw4 refcount from %u.\n", This, ref -1);
@@ -133,7 +153,7 @@ IDirectDraw4Impl_AddRef(LPDIRECTDRAW4 iface)
 static ULONG WINAPI
 IDirectDrawImpl_Release(LPDIRECTDRAW iface)
 {
-    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw, iface);
+    IDirectDrawImpl *This = ddraw_from_ddraw1(iface);
     ULONG ref = InterlockedDecrement(&This->ref1);
 
     TRACE_(ddraw)("(%p)->() decrementing IDirectDraw refcount from %u.\n", This, ref +1);
@@ -150,7 +170,7 @@ IDirectDrawImpl_Release(LPDIRECTDRAW iface)
 static ULONG WINAPI
 IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface)
 {
-    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw2, iface);
+    IDirectDrawImpl *This = ddraw_from_ddraw2(iface);
     ULONG ref = InterlockedDecrement(&This->ref2);
 
     TRACE_(ddraw)("(%p)->() decrementing IDirectDraw2 refcount from %u.\n", This, ref +1);
@@ -167,7 +187,7 @@ IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface)
 static ULONG WINAPI
 IDirectDraw3Impl_Release(LPDIRECTDRAW3 iface)
 {
-    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw3, iface);
+    IDirectDrawImpl *This = ddraw_from_ddraw3(iface);
     ULONG ref = InterlockedDecrement(&This->ref3);
 
     TRACE_(ddraw)("(%p)->() decrementing IDirectDraw3 refcount from %u.\n", This, ref +1);
@@ -184,7 +204,7 @@ IDirectDraw3Impl_Release(LPDIRECTDRAW3 iface)
 static ULONG WINAPI
 IDirectDraw4Impl_Release(LPDIRECTDRAW4 iface)
 {
-    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw4, iface);
+    IDirectDrawImpl *This = ddraw_from_ddraw4(iface);
     ULONG ref = InterlockedDecrement(&This->ref4);
 
     TRACE_(ddraw)("(%p)->() decrementing IDirectDraw4 refcount from %u.\n", This, ref +1);
@@ -1123,7 +1143,7 @@ IDirectDraw4Impl_GetVerticalBlankStatus(LPDIRECTDRAW4 This, LPBOOL lpbIsInVB)
 static HRESULT WINAPI
 IDirectDrawImpl_Initialize(LPDIRECTDRAW iface, LPGUID pGUID)
 {
-    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw, iface);
+    IDirectDrawImpl *This = ddraw_from_ddraw1(iface);
     HRESULT ret_value;
 
     ret_value = IDirectDraw7_Initialize((IDirectDraw7 *)This, pGUID);
@@ -1134,7 +1154,7 @@ IDirectDrawImpl_Initialize(LPDIRECTDRAW iface, LPGUID pGUID)
 static HRESULT WINAPI
 IDirectDraw2Impl_Initialize(LPDIRECTDRAW2 iface, LPGUID pGUID)
 {
-    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw2, iface);
+    IDirectDrawImpl *This = ddraw_from_ddraw2(iface);
     HRESULT ret_value;
 
     ret_value = IDirectDraw7_Initialize((IDirectDraw7 *)This, pGUID);
@@ -1145,7 +1165,7 @@ IDirectDraw2Impl_Initialize(LPDIRECTDRAW2 iface, LPGUID pGUID)
 static HRESULT WINAPI
 IDirectDraw3Impl_Initialize(LPDIRECTDRAW3 iface, LPGUID pGUID)
 {
-    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw3, iface);
+    IDirectDrawImpl *This = ddraw_from_ddraw3(iface);
     HRESULT ret_value;
 
     ret_value = IDirectDraw7_Initialize((IDirectDraw7 *)This, pGUID);
@@ -1156,7 +1176,7 @@ IDirectDraw3Impl_Initialize(LPDIRECTDRAW3 iface, LPGUID pGUID)
 static HRESULT WINAPI
 IDirectDraw4Impl_Initialize(LPDIRECTDRAW4 iface, LPGUID pGUID)
 {
-    ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw4, iface);
+    IDirectDrawImpl *This = ddraw_from_ddraw4(iface);
     HRESULT ret_value;
 
     ret_value = IDirectDraw7_Initialize((IDirectDraw7 *)This, pGUID);

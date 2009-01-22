@@ -43,6 +43,12 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 WINE_DECLARE_DEBUG_CHANNEL(ddraw_thunk);
 
+static inline IDirectDrawSurfaceImpl *surface_from_gamma_control(IDirectDrawGammaControl *iface)
+{
+    return (IDirectDrawSurfaceImpl *)((char*)iface
+            - FIELD_OFFSET(IDirectDrawSurfaceImpl, IDirectDrawGammaControl_vtbl));
+}
+
 /**********************************************************
  * IUnknown parts follow
  **********************************************************/
@@ -64,7 +70,7 @@ static HRESULT WINAPI
 IDirectDrawGammaControlImpl_QueryInterface(IDirectDrawGammaControl *iface, REFIID riid,
                                            void **obj)
 {
-    ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawGammaControl, iface);
+    IDirectDrawSurfaceImpl *This = surface_from_gamma_control(iface);
     TRACE_(ddraw_thunk)("(%p)->(%s,%p): Thunking to IDirectDrawSurface7\n", This, debugstr_guid(riid), obj);
 
     return IDirectDrawSurface7_QueryInterface((IDirectDrawSurface7 *)This, riid, obj);
@@ -82,7 +88,7 @@ IDirectDrawGammaControlImpl_QueryInterface(IDirectDrawGammaControl *iface, REFII
 static ULONG WINAPI
 IDirectDrawGammaControlImpl_AddRef(IDirectDrawGammaControl *iface)
 {
-    ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawGammaControl, iface);
+    IDirectDrawSurfaceImpl *This = surface_from_gamma_control(iface);
     TRACE_(ddraw_thunk)("(%p)->() Thunking to IDirectDrawSurface7\n", This);
 
     return IDirectDrawSurface7_AddRef((IDirectDrawSurface7 *)This);
@@ -100,7 +106,7 @@ IDirectDrawGammaControlImpl_AddRef(IDirectDrawGammaControl *iface)
 static ULONG WINAPI
 IDirectDrawGammaControlImpl_Release(IDirectDrawGammaControl *iface)
 {
-    ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawGammaControl, iface);
+    IDirectDrawSurfaceImpl *This = surface_from_gamma_control(iface);
     TRACE_(ddraw_thunk)("(%p)->() Thunking to IDirectDrawSurface7\n", This);
 
     return IDirectDrawSurface7_Release((IDirectDrawSurface7 *)This);
@@ -129,7 +135,7 @@ IDirectDrawGammaControlImpl_GetGammaRamp(IDirectDrawGammaControl *iface,
                                          DWORD Flags,
                                          DDGAMMARAMP *GammaRamp)
 {
-    ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawGammaControl, iface);
+    IDirectDrawSurfaceImpl *This = surface_from_gamma_control(iface);
     TRACE("(%p)->(%08x,%p)\n", This,Flags,GammaRamp);
 
     /* This looks sane */
@@ -175,7 +181,7 @@ IDirectDrawGammaControlImpl_SetGammaRamp(IDirectDrawGammaControl *iface,
                                          DWORD Flags,
                                          DDGAMMARAMP *GammaRamp)
 {
-    ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawGammaControl, iface);
+    IDirectDrawSurfaceImpl *This = surface_from_gamma_control(iface);
     TRACE("(%p)->(%08x,%p)\n", This,Flags,GammaRamp);
 
     /* This looks sane */
