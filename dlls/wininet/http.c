@@ -1636,20 +1636,22 @@ static DWORD HTTPREQ_SetOption(WININETHANDLEHEADER *hdr, DWORD option, void *buf
     return ERROR_INTERNET_INVALID_OPTION;
 }
 
-static void HTTP_ReceiveRequestData(WININETHTTPREQW *req)
+static void HTTP_ReceiveRequestData(WININETHTTPREQW *req, BOOL first_notif)
 {
     INTERNET_ASYNC_RESULT iar;
     BYTE buffer[4096];
+    int available;
     BOOL res;
 
     TRACE("%p\n", req);
 
     res = NETCON_recv(&req->netConnection, buffer,
                 min(sizeof(buffer), req->dwContentLength - req->dwContentRead),
-                MSG_PEEK, (int *)&iar.dwError);
+                MSG_PEEK, &available);
 
     if(res) {
         iar.dwResult = (DWORD_PTR)req->hdr.hInternet;
+        iar.dwError = first_notif ? 0 : available;
     }else {
         iar.dwResult = 0;
         iar.dwError = INTERNET_GetLastError();
@@ -1936,7 +1938,7 @@ static void HTTPREQ_AsyncQueryDataAvailableProc(WORKREQUEST *workRequest)
 {
     WININETHTTPREQW *req = (WININETHTTPREQW*)workRequest->hdr;
 
-    HTTP_ReceiveRequestData(req);
+    HTTP_ReceiveRequestData(req, FALSE);
 }
 
 static DWORD HTTPREQ_QueryDataAvailable(WININETHANDLEHEADER *hdr, DWORD *available, DWORD flags, DWORD_PTR ctx)
@@ -3552,7 +3554,7 @@ lend:
 
     if(lpwhr->lpHttpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC) {
         if(bSuccess) {
-            HTTP_ReceiveRequestData(lpwhr);
+            HTTP_ReceiveRequestData(lpwhr, TRUE);
         }else {
             iar.dwResult = (DWORD_PTR)lpwhr->hdr.hInternet;
             iar.dwError = INTERNET_GetLastError();
