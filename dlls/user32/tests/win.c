@@ -78,7 +78,7 @@ static void flush_events( BOOL remove_messages )
 {
     MSG msg;
     int diff = 200;
-    int min_timeout = 50;
+    int min_timeout = 100;
     DWORD time = GetTickCount() + diff;
 
     while (diff > 0)
@@ -87,7 +87,7 @@ static void flush_events( BOOL remove_messages )
         if (remove_messages)
             while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
         diff = time - GetTickCount();
-        min_timeout = 10;
+        min_timeout = 50;
     }
 }
 
@@ -853,10 +853,17 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
     trace("CBT: %d (%s), %08lx, %08lx\n", nCode, code_name, wParam, lParam);
 
-    /* on HCBT_DESTROYWND window state is undefined */
-    if (nCode != HCBT_DESTROYWND && IsWindow((HWND)wParam))
+    switch (nCode)
     {
-	if (pGetWindowInfo)
+    /* on HCBT_DESTROYWND window state is undefined */
+    case HCBT_DESTROYWND:
+        break;
+    case HCBT_MOVESIZE:
+    case HCBT_MINMAX:
+    case HCBT_CREATEWND:
+    case HCBT_ACTIVATE:
+    case HCBT_SETFOCUS:
+	if (pGetWindowInfo && IsWindow((HWND)wParam))
 	{
 	    WINDOWINFO info;
 
@@ -868,6 +875,7 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	    ok(pGetWindowInfo((HWND)wParam, &info), "GetWindowInfo should not fail\n");
 	    verify_window_info((HWND)wParam, &info);
 	}
+        break;
     }
 
     switch (nCode)
@@ -2662,6 +2670,24 @@ static void test_keyboard_input(HWND hwnd)
     ok( !ret, "message %04x available\n", msg.message);
 }
 
+static BOOL wait_for_message( MSG *msg )
+{
+    BOOL ret;
+
+    for (;;)
+    {
+        ret = PeekMessageA(msg, 0, 0, 0, PM_REMOVE);
+        if (ret)
+        {
+            if (msg->message == WM_PAINT) DispatchMessage(msg);
+            else if (msg->message < 0xc000) break;  /* skip registered messages */
+        }
+        else if (MsgWaitForMultipleObjects( 0, NULL, FALSE, 100, QS_ALLINPUT ) == WAIT_TIMEOUT) break;
+    }
+    if (!ret) msg->message = 0;
+    return ret;
+}
+
 static void test_mouse_input(HWND hwnd)
 {
     RECT rc;
@@ -2674,6 +2700,7 @@ static void test_mouse_input(HWND hwnd)
 
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
+    SetWindowPos( hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE );
 
     GetWindowRect(hwnd, &rc);
     trace("main window %p: (%d,%d)-(%d,%d)\n", hwnd, rc.left, rc.top, rc.right, rc.bottom);
@@ -2684,6 +2711,7 @@ static void test_mouse_input(HWND hwnd)
     assert(popup != 0);
     ShowWindow(popup, SW_SHOW);
     UpdateWindow(popup);
+    SetWindowPos( popup, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE );
 
     GetWindowRect(popup, &rc);
     trace("popup window %p: (%d,%d)-(%d,%d)\n", popup, rc.left, rc.top, rc.right, rc.bottom);
@@ -2720,6 +2748,7 @@ static void test_mouse_input(HWND hwnd)
 
     msg.message = 0;
     mouse_event(MOUSEEVENTF_MOVE, 1, 1, 0, 0);
+    flush_events( FALSE );
     /* FIXME: SetCursorPos in Wine generates additional WM_MOUSEMOVE message */
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
     {
@@ -2732,17 +2761,14 @@ static void test_mouse_input(HWND hwnd)
 
     mouse_event(MOUSEEVENTF_MOVE, -1, -1, 0, 0);
     ShowWindow(popup, SW_HIDE);
-    do
-        ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
-    while (msg.message >= 0xc000);  /* skip registered messages */
-    ok(msg.hwnd == hwnd && msg.message == WM_MOUSEMOVE, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+    ret = wait_for_message( &msg );
+    if (ret)
+        ok(msg.hwnd == hwnd && msg.message == WM_MOUSEMOVE, "hwnd %p message %04x\n", msg.hwnd, msg.message);
     flush_events( TRUE );
 
     mouse_event(MOUSEEVENTF_MOVE, 1, 1, 0, 0);
     ShowWindow(hwnd, SW_HIDE);
-    do
-        ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
-    while (ret && msg.message >= 0xc000);  /* skip registered messages */
+    ret = wait_for_message( &msg );
     ok( !ret, "message %04x available\n", msg.message);
     flush_events( TRUE );
 
@@ -2758,31 +2784,23 @@ static void test_mouse_input(HWND hwnd)
     mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
     mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
 
-    ok(PeekMessageA(&msg, 0, 0, 0, 0), "no message available\n");
-    ok(msg.hwnd == popup && msg.message == WM_LBUTTONDOWN, "hwnd %p/%p message %04x\n",
-       msg.hwnd, popup, msg.message);
-    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ret = wait_for_message( &msg );
+    ok(ret, "no message available\n");
     ok(msg.hwnd == popup && msg.message == WM_LBUTTONDOWN, "hwnd %p/%p message %04x\n",
        msg.hwnd, popup, msg.message);
 
-    ok(PeekMessageA(&msg, 0, 0, 0, 0), "no message available\n");
-    ok(msg.hwnd == popup && msg.message == WM_LBUTTONUP, "hwnd %p/%p message %04x\n",
-       msg.hwnd, popup, msg.message);
-    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ret = wait_for_message( &msg );
+    ok(ret, "no message available\n");
     ok(msg.hwnd == popup && msg.message == WM_LBUTTONUP, "hwnd %p/%p message %04x\n",
        msg.hwnd, popup, msg.message);
 
-    ok(PeekMessageA(&msg, 0, 0, 0, 0), "no message available\n");
-    ok(msg.hwnd == popup && msg.message == WM_LBUTTONDBLCLK, "hwnd %p/%p message %04x\n",
-       msg.hwnd, popup, msg.message);
-    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ret = wait_for_message( &msg );
+    ok(ret, "no message available\n");
     ok(msg.hwnd == popup && msg.message == WM_LBUTTONDBLCLK, "hwnd %p/%p message %04x\n",
        msg.hwnd, popup, msg.message);
 
-    ok(PeekMessageA(&msg, 0, 0, 0, 0), "no message available\n");
-    ok(msg.hwnd == popup && msg.message == WM_LBUTTONUP, "hwnd %p/%p message %04x\n",
-       msg.hwnd, popup, msg.message);
-    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ret = wait_for_message( &msg );
+    ok(ret, "no message available\n");
     ok(msg.hwnd == popup && msg.message == WM_LBUTTONUP, "hwnd %p/%p message %04x\n",
        msg.hwnd, popup, msg.message);
 
@@ -2797,10 +2815,12 @@ static void test_mouse_input(HWND hwnd)
     mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
     mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
 
-    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ret = wait_for_message( &msg );
+    ok(ret, "no message available\n");
     ok(msg.hwnd == hwnd && msg.message == WM_LBUTTONDOWN, "hwnd %p/%p message %04x\n",
        msg.hwnd, hwnd, msg.message);
-    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ret = wait_for_message( &msg );
+    ok(ret, "no message available\n");
     ok(msg.hwnd == hwnd && msg.message == WM_LBUTTONUP, "hwnd %p/%p message %04x\n",
        msg.hwnd, hwnd, msg.message);
 
@@ -2808,9 +2828,8 @@ static void test_mouse_input(HWND hwnd)
     SendMessageA(hwnd, WM_COMMAND, (WPARAM)popup, 0);
     test_lbuttondown_flag = FALSE;
 
-    do
-        ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
-    while (msg.message >= 0xc000);  /* skip registered messages */
+    ret = wait_for_message( &msg );
+    ok(ret, "no message available\n");
     ok(msg.hwnd == popup && msg.message == WM_LBUTTONDOWN, "hwnd %p/%p message %04x\n",
        msg.hwnd, popup, msg.message);
     ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
@@ -4892,8 +4911,8 @@ static void test_hwnd_message(void)
         ok(parent != desktop, "GetAncestor(GA_PARENT) should not return desktop for message windows\n");
         root = pGetAncestor(hwnd, GA_ROOT);
         ok(root == hwnd, "GetAncestor(GA_ROOT) should return hwnd for message windows\n");
-        ok( !pGetAncestor(parent, GA_PARENT), "parent shouldn't have parent %p\n",
-            pGetAncestor(parent, GA_PARENT) );
+        ok( !pGetAncestor(parent, GA_PARENT) || broken(pGetAncestor(parent, GA_PARENT) != 0), /* win2k */
+            "parent shouldn't have parent %p\n", pGetAncestor(parent, GA_PARENT) );
         trace("parent %p root %p desktop %p\n", parent, root, desktop);
         if (!GetClassNameA( parent, buffer, sizeof(buffer) )) buffer[0] = 0;
         ok( !lstrcmpi( buffer, "Message" ), "wrong parent class '%s'\n", buffer );
@@ -5521,7 +5540,7 @@ START_TEST(win)
     if (!RegisterWindowClasses()) assert(0);
 
     hhook = SetWindowsHookExA(WH_CBT, cbt_hook_proc, 0, GetCurrentThreadId());
-    assert(hhook);
+    if (!hhook) win_skip( "Cannot set CBT hook, skipping some tests\n" );
 
     hwndMain = CreateWindowExA(/*WS_EX_TOOLWINDOW*/ 0, "MainWindowClass", "Main window",
                                WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
@@ -5588,7 +5607,7 @@ START_TEST(win)
     test_handles( hwndMain );
 
     /* add the tests above this line */
-    UnhookWindowsHookEx(hhook);
+    if (hhook) UnhookWindowsHookEx(hhook);
 
     DestroyWindow(hwndMain2);
     DestroyWindow(hwndMain);
