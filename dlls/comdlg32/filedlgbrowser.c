@@ -149,7 +149,7 @@ static void COMDLG32_UpdateCurrentDir(const FileOpenDlgInfos *fodInfos)
 }
 
 /* copied from shell32 to avoid linking to it */
-static HRESULT COMDLG32_StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPCITEMIDLIST pidl)
+static BOOL COMDLG32_StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPCITEMIDLIST pidl)
 {
 	TRACE("dest=%p len=0x%x strret=%p pidl=%p stub\n",dest,len,src,pidl);
 
@@ -181,7 +181,7 @@ static HRESULT COMDLG32_StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPC
 	    }
 	    return(FALSE);
 	}
-	return S_OK;
+        return TRUE;
 }
 
 /*
@@ -881,7 +881,7 @@ static HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_IncludeObject(ICommDlgBr
 
     if (SUCCEEDED(IShellFolder_GetDisplayNameOf(fodInfos->Shell.FOIShellFolder, pidl, SHGDN_INFOLDER | SHGDN_FORPARSING, &str)))
     {
-      if (SUCCEEDED(COMDLG32_StrRetToStrNW(szPathW, MAX_PATH, &str, pidl)))
+      if (COMDLG32_StrRetToStrNW(szPathW, MAX_PATH, &str, pidl))
       {
 	  if (PathMatchSpecW(szPathW, fodInfos->ShellInfos.lpstrCurrentFilter))
           return S_OK;
