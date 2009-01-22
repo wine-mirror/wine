@@ -519,6 +519,9 @@ ok(tmp === 1, "Math.round(true) = " + tmp);
 tmp = Math.round(1.1, 3, 4);
 ok(tmp === 1, "Math.round(1.1, 3, 4) = " + tmp);
 
+tmp = Math.round();
+ok(isNaN(tmp), "Math.round() is not NaN");
+
 tmp = Math.ceil(0.5);
 ok(tmp === 1, "Math.ceil(0.5) = " + tmp);
 

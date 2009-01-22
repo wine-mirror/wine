@@ -381,8 +381,8 @@ static HRESULT Math_round(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS 
     TRACE("\n");
 
     if(!arg_cnt(dp)) {
-        FIXME("arg_cnt = 0\n");
-        return E_NOTIMPL;
+        num_set_nan(retv);
+        return S_OK;
     }
 
     hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
