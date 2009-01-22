@@ -281,7 +281,7 @@
 @ stdcall DeleteFiber(ptr)
 @ stdcall DeleteFileA(str)
 @ stdcall DeleteFileW(wstr)
-# @ stub DeleteTimerQueue
+@ stdcall DeleteTimerQueue(long)
 @ stdcall DeleteTimerQueueEx (long long)
 @ stdcall DeleteTimerQueueTimer(long long long)
 # @ stub DeleteVolumeMountPointA

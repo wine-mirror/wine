@@ -1330,6 +1330,14 @@ BOOL WINAPI DeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
 }
 
 /***********************************************************************
+ *           DeleteTimerQueue  (KERNEL32.@)
+ */
+BOOL WINAPI DeleteTimerQueue(HANDLE TimerQueue)
+{
+    return DeleteTimerQueueEx(TimerQueue, NULL);
+}
+
+/***********************************************************************
  *           CreateTimerQueueTimer  (KERNEL32.@)
  *
  * Creates a timer-queue timer. This timer expires at the specified due
