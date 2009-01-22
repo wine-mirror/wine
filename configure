@@ -7505,6 +7505,7 @@ done
 
 
 
+
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
@@ -7609,6 +7610,7 @@ for ac_header in \
 	sys/strtio.h \
 	sys/syscall.h \
 	sys/time.h \
+	sys/timeout.h \
 	sys/times.h \
 	sys/uio.h \
 	sys/un.h \

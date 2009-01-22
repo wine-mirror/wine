@@ -354,6 +354,7 @@ AC_CHECK_HEADERS(\
 	sys/strtio.h \
 	sys/syscall.h \
 	sys/time.h \
+	sys/timeout.h \
 	sys/times.h \
 	sys/uio.h \
 	sys/un.h \

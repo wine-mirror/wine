@@ -900,6 +900,9 @@
 /* Define to 1 if you have the <sys/thr.h> header file. */
 #undef HAVE_SYS_THR_H
 
+/* Define to 1 if you have the <sys/timeout.h> header file. */
+#undef HAVE_SYS_TIMEOUT_H
+
 /* Define to 1 if you have the <sys/times.h> header file. */
 #undef HAVE_SYS_TIMES_H
 
