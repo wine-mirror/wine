@@ -138,7 +138,7 @@ IDirect3DLightImpl_Initialize(IDirect3DLight *iface,
                               IDirect3D *lpDirect3D)
 {
     IDirect3DLightImpl *This = (IDirect3DLightImpl *)iface;
-    IDirectDrawImpl *d3d = ICOM_OBJECT(IDirectDrawImpl, IDirect3D, lpDirect3D);
+    IDirectDrawImpl *d3d = lpDirect3D ? ddraw_from_d3d1(lpDirect3D) : NULL;
     TRACE("(%p)->(%p) no-op...\n", This, d3d);
     return D3D_OK;
 }

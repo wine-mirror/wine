@@ -747,7 +747,7 @@ DestroyCallback(IDirectDrawSurface7 *surf,
                 DDSURFACEDESC2 *desc,
                 void *context)
 {
-    IDirectDrawSurfaceImpl *Impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, surf);
+    IDirectDrawSurfaceImpl *Impl = (IDirectDrawSurfaceImpl *)surf;
     IDirectDrawImpl *ddraw = context;
     ULONG ref;
 

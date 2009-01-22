@@ -40,26 +40,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d7);
 
-static inline IDirectDrawImpl *ddraw_from_d3d1(IDirect3D *iface)
-{
-    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirect3D_vtbl));
-}
-
-static inline IDirectDrawImpl *ddraw_from_d3d2(IDirect3D2 *iface)
-{
-    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirect3D2_vtbl));
-}
-
-static inline IDirectDrawImpl *ddraw_from_d3d3(IDirect3D3 *iface)
-{
-    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirect3D3_vtbl));
-}
-
-static inline IDirectDrawImpl *ddraw_from_d3d7(IDirect3D7 *iface)
-{
-    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirect3D7_vtbl));
-}
-
 /*****************************************************************************
  * IDirect3D7::QueryInterface
  *
@@ -767,7 +747,7 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     IDirect3DDeviceImpl *object;
     IParentImpl *IndexBufferParent;
     HRESULT hr;
-    IDirectDrawSurfaceImpl *target = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, Surface);
+    IDirectDrawSurfaceImpl *target = (IDirectDrawSurfaceImpl *)Surface;
     TRACE("(%p)->(%s,%p,%p)\n", iface, debugstr_guid(refiid), Surface, Device);
 
     EnterCriticalSection(&ddraw_cs);

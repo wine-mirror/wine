@@ -75,7 +75,7 @@ IDirectDrawSurface3Impl_AddAttachedSurface(LPDIRECTDRAWSURFACE3 iface,
 					   LPDIRECTDRAWSURFACE3 pAttach)
 {
     IDirectDrawSurfaceImpl *This = surface_from_surface3(iface);
-    IDirectDrawSurfaceImpl *Surf = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface3, pAttach);
+    IDirectDrawSurfaceImpl *Surf = surface_from_surface3(pAttach);
     TRACE("(%p)->(%p)\n", This, Surf);
 
     /* Tests suggest that

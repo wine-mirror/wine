@@ -1652,9 +1652,7 @@ IDirectDrawImpl_RecreateSurfacesCallback(IDirectDrawSurface7 *surf,
                                          DDSURFACEDESC2 *desc,
                                          void *Context)
 {
-    IDirectDrawSurfaceImpl *surfImpl = ICOM_OBJECT(IDirectDrawSurfaceImpl,
-                                                   IDirectDrawSurface7,
-                                                   surf);
+    IDirectDrawSurfaceImpl *surfImpl = (IDirectDrawSurfaceImpl *)surf;
     IDirectDrawImpl *This = surfImpl->ddraw;
     IUnknown *Parent;
     IParentImpl *parImpl = NULL;
@@ -1695,7 +1693,7 @@ IDirectDrawImpl_RecreateSurfacesCallback(IDirectDrawSurface7 *surf,
     {
         /* It is a IParent interface! */
         IUnknown_Release(Parent); /* For the QueryInterface */
-        parImpl = ICOM_OBJECT(IParentImpl, IParent, Parent);
+        parImpl = (IParentImpl *)Parent;
         /* Release the reference the parent interface is holding */
         IWineD3DSurface_Release(wineD3DSurface);
     }
@@ -2932,7 +2930,7 @@ findRenderTarget(IDirectDrawSurface7 *surface,
                  DDSURFACEDESC2 *desc,
                  void *ctx)
 {
-    IDirectDrawSurfaceImpl *surf = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, surface);
+    IDirectDrawSurfaceImpl *surf = (IDirectDrawSurfaceImpl *)surface;
     IDirectDrawSurfaceImpl **target = ctx;
 
     if(!surf->isRenderTarget) {
@@ -3258,7 +3256,7 @@ IDirectDrawImpl_DuplicateSurface(IDirectDraw7 *iface,
                                  IDirectDrawSurface7 **Dest)
 {
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    IDirectDrawSurfaceImpl *Surf = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, Src);
+    IDirectDrawSurfaceImpl *Surf = (IDirectDrawSurfaceImpl *)Src;
 
     FIXME("(%p)->(%p,%p)\n", This, Surf, Dest);
 
@@ -3456,7 +3454,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
     {
         IDirectDrawSurface7 *attached;
         IDirectDrawSurface7_GetAttachedSurface((IDirectDrawSurface7 *)This->tex_root, &searchcaps, &attached);
-        surf = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, attached);
+        surf = (IDirectDrawSurfaceImpl *)attached;
         IDirectDrawSurface7_Release(attached);
     }
     if (!surf) ERR("root search surface not found\n");
@@ -3467,7 +3465,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
         IDirectDrawSurface7 *attached;
         IDirectDrawSurface7_GetAttachedSurface((IDirectDrawSurface7 *)surf, &searchcaps, &attached);
         if(!attached) ERR("Surface not found\n");
-        surf = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, attached);
+        surf = (IDirectDrawSurfaceImpl *)attached;
         IDirectDrawSurface7_Release(attached);
         ++i;
     }

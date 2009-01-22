@@ -265,7 +265,7 @@ static HRESULT WINAPI IDirectDrawClipperImpl_Initialize(
         return DDERR_ALREADYINITIALIZED;
     }
 
-    pOwner = ICOM_OBJECT(IDirectDrawImpl, IDirectDraw, lpDD);
+    pOwner = lpDD ? ddraw_from_ddraw1(lpDD) : NULL;
     This->ddraw_owner = pOwner;
 
     LeaveCriticalSection(&ddraw_cs);

@@ -22,11 +22,6 @@
 
 #include <stddef.h>
 
-/* Given an interface pointer, returns the implementation pointer. */
-#define ICOM_OBJECT(impltype, ifacename, ifaceptr)		\
-	(impltype*)((ifaceptr) == NULL ? NULL			\
-		  : (char*)(ifaceptr) - offsetof(impltype, ifacename##_vtbl))
-
 #define COM_INTERFACE_CAST(impltype, ifnamefrom, ifnameto, ifaceptr) \
     ((ifaceptr) ? (ifnameto *)&(((impltype *)((char *)(ifaceptr) \
     - offsetof(impltype, ifnamefrom##_vtbl)))->ifnameto##_vtbl) : NULL)

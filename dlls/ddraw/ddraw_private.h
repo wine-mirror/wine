@@ -209,6 +209,46 @@ IWineD3DVertexDeclaration *
 IDirectDrawImpl_FindDecl(IDirectDrawImpl *This,
                          DWORD fvf);
 
+static inline IDirectDrawImpl *ddraw_from_d3d1(IDirect3D *iface)
+{
+    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirect3D_vtbl));
+}
+
+static inline IDirectDrawImpl *ddraw_from_d3d2(IDirect3D2 *iface)
+{
+    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirect3D2_vtbl));
+}
+
+static inline IDirectDrawImpl *ddraw_from_d3d3(IDirect3D3 *iface)
+{
+    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirect3D3_vtbl));
+}
+
+static inline IDirectDrawImpl *ddraw_from_d3d7(IDirect3D7 *iface)
+{
+    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirect3D7_vtbl));
+}
+
+static inline IDirectDrawImpl *ddraw_from_ddraw1(IDirectDraw *iface)
+{
+    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirectDraw_vtbl));
+}
+
+static inline IDirectDrawImpl *ddraw_from_ddraw2(IDirectDraw2 *iface)
+{
+    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirectDraw2_vtbl));
+}
+
+static inline IDirectDrawImpl *ddraw_from_ddraw3(IDirectDraw3 *iface)
+{
+    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirectDraw3_vtbl));
+}
+
+static inline IDirectDrawImpl *ddraw_from_ddraw4(IDirectDraw4 *iface)
+{
+    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirectDraw4_vtbl));
+}
+
 /* The default surface type */
 extern WINED3DSURFTYPE DefaultSurfaceType;
 
@@ -281,6 +321,16 @@ extern const IDirect3DTextureVtbl IDirect3DTexture1_Vtbl;
 
 HRESULT WINAPI IDirectDrawSurfaceImpl_AddAttachedSurface(IDirectDrawSurfaceImpl *This, IDirectDrawSurfaceImpl *Surf);
 void IDirectDrawSurfaceImpl_Destroy(IDirectDrawSurfaceImpl *This);
+
+static inline IDirectDrawSurfaceImpl *surface_from_texture1(IDirect3DTexture *iface)
+{
+    return (IDirectDrawSurfaceImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawSurfaceImpl, IDirect3DTexture_vtbl));
+}
+
+static inline IDirectDrawSurfaceImpl *surface_from_texture2(IDirect3DTexture2 *iface)
+{
+    return (IDirectDrawSurfaceImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawSurfaceImpl, IDirect3DTexture2_vtbl));
+}
 
 /* Get the number of bytes per pixel for a given surface */
 #define PFGET_BPP(pf) (pf.dwFlags&DDPF_PALETTEINDEXED8?1:((pf.dwRGBBitCount+7)/8))
@@ -376,6 +426,21 @@ extern const GUID IID_D3DDEVICE_WineD3D;
 HRESULT IDirect3DImpl_GetCaps(IWineD3D *WineD3D, D3DDEVICEDESC *Desc123, D3DDEVICEDESC7 *Desc7);
 DWORD IDirect3DDeviceImpl_CreateHandle(IDirect3DDeviceImpl *This);
 WINED3DZBUFFERTYPE IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *This);
+
+static inline IDirect3DDeviceImpl *device_from_device1(IDirect3DDevice *iface)
+{
+    return (IDirect3DDeviceImpl *)((char*)iface - FIELD_OFFSET(IDirect3DDeviceImpl, IDirect3DDevice_vtbl));
+}
+
+static inline IDirect3DDeviceImpl *device_from_device2(IDirect3DDevice2 *iface)
+{
+    return (IDirect3DDeviceImpl *)((char*)iface - FIELD_OFFSET(IDirect3DDeviceImpl, IDirect3DDevice2_vtbl));
+}
+
+static inline IDirect3DDeviceImpl *device_from_device3(IDirect3DDevice3 *iface)
+{
+    return (IDirect3DDeviceImpl *)((char*)iface - FIELD_OFFSET(IDirect3DDeviceImpl, IDirect3DDevice3_vtbl));
+}
 
 /* Structures */
 struct EnumTextureFormatsCBS
@@ -624,6 +689,12 @@ struct IDirect3DVertexBufferImpl
 /* The Vtables */
 extern const IDirect3DVertexBuffer7Vtbl IDirect3DVertexBuffer7_Vtbl;
 extern const IDirect3DVertexBufferVtbl IDirect3DVertexBuffer1_Vtbl;
+
+static inline IDirect3DVertexBufferImpl *vb_from_vb1(IDirect3DVertexBuffer *iface)
+{
+    return (IDirect3DVertexBufferImpl *)((char*)iface
+            - FIELD_OFFSET(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer_vtbl));
+}
 
 /*****************************************************************************
  * Helper functions from utils.c

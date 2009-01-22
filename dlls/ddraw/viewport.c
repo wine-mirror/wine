@@ -314,8 +314,7 @@ IDirect3DViewportImpl_SetViewport(IDirect3DViewport3 *iface,
         IDirect3DDevice3 *d3d_device3 = (IDirect3DDevice3 *)&This->active_device->IDirect3DDevice3_vtbl;
         IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
         if (current_viewport) {
-            if (ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, current_viewport) == This)
-                This->activate(This, FALSE);
+            if ((IDirect3DViewportImpl *)current_viewport == This) This->activate(This, FALSE);
             IDirect3DViewport3_Release(current_viewport);
         }
     }
@@ -699,7 +698,7 @@ IDirect3DViewportImpl_Clear(IDirect3DViewport3 *iface,
 
     IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
     if(current_viewport) {
-        IDirect3DViewportImpl *vp = ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, current_viewport);
+        IDirect3DViewportImpl *vp = (IDirect3DViewportImpl *)current_viewport;
         vp->activate(vp, TRUE);
         IDirect3DViewport3_Release(current_viewport);
     }
@@ -727,7 +726,7 @@ IDirect3DViewportImpl_AddLight(IDirect3DViewport3 *iface,
                                IDirect3DLight *lpDirect3DLight)
 {
     IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
-    IDirect3DLightImpl *lpDirect3DLightImpl = ICOM_OBJECT(IDirect3DLightImpl, IDirect3DLight, lpDirect3DLight);
+    IDirect3DLightImpl *lpDirect3DLightImpl = (IDirect3DLightImpl *)lpDirect3DLight;
     DWORD i = 0;
     DWORD map = This->map_lights;
     
@@ -783,7 +782,7 @@ IDirect3DViewportImpl_DeleteLight(IDirect3DViewport3 *iface,
                                   IDirect3DLight *lpDirect3DLight)
 {
     IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
-    IDirect3DLightImpl *lpDirect3DLightImpl = ICOM_OBJECT(IDirect3DLightImpl, IDirect3DLight, lpDirect3DLight);
+    IDirect3DLightImpl *lpDirect3DLightImpl = (IDirect3DLightImpl *)lpDirect3DLight;
     IDirect3DLightImpl *cur_light, *prev_light = NULL;
     
     TRACE("(%p)->(%p)\n", This, lpDirect3DLight);
@@ -915,8 +914,7 @@ IDirect3DViewportImpl_SetViewport2(IDirect3DViewport3 *iface,
         IDirect3DDevice3 *d3d_device3 = (IDirect3DDevice3 *)&This->active_device->IDirect3DDevice3_vtbl;
         IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
         if (current_viewport) {
-            if (ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, current_viewport) == This)
-                This->activate(This, FALSE);
+            if ((IDirect3DViewportImpl *)current_viewport == This) This->activate(This, FALSE);
             IDirect3DViewport3_Release(current_viewport);
         }
     }
@@ -1019,7 +1017,7 @@ IDirect3DViewportImpl_Clear2(IDirect3DViewport3 *iface,
             dwCount, lpRects, dwFlags, dwColor, dvZ, dwStencil);
     IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
     if(current_viewport) {
-        IDirect3DViewportImpl *vp = ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, current_viewport);
+        IDirect3DViewportImpl *vp = (IDirect3DViewportImpl *)current_viewport;
         vp->activate(vp, TRUE);
         IDirect3DViewport3_Release(current_viewport);
     }

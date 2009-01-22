@@ -42,26 +42,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw_thunk);
 WINE_DECLARE_DEBUG_CHANNEL(ddraw);
 
-static inline IDirectDrawImpl *ddraw_from_ddraw1(IDirectDraw *iface)
-{
-    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirectDraw_vtbl));
-}
-
-static inline IDirectDrawImpl *ddraw_from_ddraw2(IDirectDraw2 *iface)
-{
-    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirectDraw2_vtbl));
-}
-
-static inline IDirectDrawImpl *ddraw_from_ddraw3(IDirectDraw3 *iface)
-{
-    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirectDraw3_vtbl));
-}
-
-static inline IDirectDrawImpl *ddraw_from_ddraw4(IDirectDraw4 *iface)
-{
-    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirectDraw4_vtbl));
-}
-
 static HRESULT WINAPI
 IDirectDrawImpl_QueryInterface(LPDIRECTDRAW This, REFIID iid, LPVOID *ppObj)
 {
@@ -312,7 +292,7 @@ IDirectDrawImpl_CreatePalette(LPDIRECTDRAW This, DWORD dwFlags,
 				      dwFlags, pEntries, ppPalette, pUnkOuter);
     if(SUCCEEDED(hr) && *ppPalette)
     {
-        IDirectDrawPaletteImpl *impl = ICOM_OBJECT(IDirectDrawPaletteImpl, IDirectDrawPalette, *ppPalette);
+        IDirectDrawPaletteImpl *impl = (IDirectDrawPaletteImpl *)*ppPalette;
         IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
                              IDirectDraw,
                              IDirectDraw7,
@@ -337,7 +317,7 @@ IDirectDraw2Impl_CreatePalette(LPDIRECTDRAW2 This, DWORD dwFlags,
 				      dwFlags, pEntries, ppPalette, pUnkOuter);
     if(SUCCEEDED(hr) && *ppPalette)
     {
-        IDirectDrawPaletteImpl *impl = ICOM_OBJECT(IDirectDrawPaletteImpl, IDirectDrawPalette, *ppPalette);
+        IDirectDrawPaletteImpl *impl = (IDirectDrawPaletteImpl *)*ppPalette;
         IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
                              IDirectDraw2,
                              IDirectDraw7,
@@ -361,7 +341,7 @@ IDirectDraw3Impl_CreatePalette(LPDIRECTDRAW3 This, DWORD dwFlags,
 				      dwFlags, pEntries, ppPalette, pUnkOuter);
     if(SUCCEEDED(hr) && *ppPalette)
     {
-        IDirectDrawPaletteImpl *impl = ICOM_OBJECT(IDirectDrawPaletteImpl, IDirectDrawPalette, *ppPalette);
+        IDirectDrawPaletteImpl *impl = (IDirectDrawPaletteImpl *)*ppPalette;
         IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
                              IDirectDraw3,
                              IDirectDraw7,
@@ -386,7 +366,7 @@ IDirectDraw4Impl_CreatePalette(LPDIRECTDRAW4 This, DWORD dwFlags,
 				      dwFlags, pEntries, ppPalette, pUnkOuter);
     if(SUCCEEDED(hr) && *ppPalette)
     {
-        IDirectDrawPaletteImpl *impl = ICOM_OBJECT(IDirectDrawPaletteImpl, IDirectDrawPalette, *ppPalette);
+        IDirectDrawPaletteImpl *impl = (IDirectDrawPaletteImpl *)*ppPalette;
         IDirectDraw7_Release(COM_INTERFACE_CAST(IDirectDrawImpl,
                              IDirectDraw4,
                              IDirectDraw7,
@@ -441,7 +421,7 @@ IDirectDrawImpl_CreateSurface(LPDIRECTDRAW This, LPDDSURFACEDESC pSDesc,
 				    IDirectDrawSurface7, IDirectDrawSurface3,
 				    pSurface7);
 
-    impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, pSurface7);
+    impl = (IDirectDrawSurfaceImpl *)pSurface7;
     if(SUCCEEDED(hr) && impl)
     {
         set_surf_version(impl, 1);
@@ -476,7 +456,7 @@ IDirectDraw2Impl_CreateSurface(LPDIRECTDRAW2 This, LPDDSURFACEDESC pSDesc,
 				    IDirectDrawSurface7, IDirectDrawSurface3,
 				    pSurface7);
 
-    impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, pSurface7);
+    impl = (IDirectDrawSurfaceImpl *)pSurface7;
     if(SUCCEEDED(hr) && impl)
     {
         set_surf_version(impl, 2);
@@ -511,7 +491,7 @@ IDirectDraw3Impl_CreateSurface(LPDIRECTDRAW3 This, LPDDSURFACEDESC pSDesc,
 				    IDirectDrawSurface7, IDirectDrawSurface3,
 				    pSurface7);
 
-    impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, pSurface7);
+    impl = (IDirectDrawSurfaceImpl *)pSurface7;
     if(SUCCEEDED(hr) && impl)
     {
         set_surf_version(impl, 3);
@@ -541,7 +521,7 @@ IDirectDraw4Impl_CreateSurface(LPDIRECTDRAW4 This, LPDDSURFACEDESC2 pSDesc,
 				    pSDesc,
 				    (LPDIRECTDRAWSURFACE7 *)ppSurface,
 				    pUnkOuter);
-    impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurface);
+    impl = (IDirectDrawSurfaceImpl *)*ppSurface;
     if(SUCCEEDED(hr) && impl)
     {
         set_surf_version(impl, 4);
