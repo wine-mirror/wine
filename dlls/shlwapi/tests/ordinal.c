@@ -229,7 +229,7 @@ static void test_alloc_shared(void)
     hmem=pSHAllocShared(&val,4,procid);
     ok(hmem!=NULL,"SHAllocShared(NULL...) failed: %u\n", GetLastError());
 
-    p=(int*)pSHLockShared(hmem,procid);
+    p=pSHLockShared(hmem,procid);
     ok(p!=NULL,"SHLockShared failed: %u\n", GetLastError());
     if (p!=NULL)
         ok(*p==val,"Wrong value in shared memory: %d instead of %d\n",*p,val);

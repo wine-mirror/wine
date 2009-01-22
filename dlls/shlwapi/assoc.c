@@ -455,7 +455,7 @@ static HRESULT WINAPI IQueryAssociations_fnQueryInterface(
   if (IsEqualIID(riid, &IID_IUnknown) ||
       IsEqualIID(riid, &IID_IQueryAssociations))
   {
-    *ppvObj = (IQueryAssociations*)This;
+    *ppvObj = This;
 
     IQueryAssociations_AddRef((IQueryAssociations*)*ppvObj);
     TRACE("Returning IQueryAssociations (%p)\n", *ppvObj);
