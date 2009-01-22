@@ -357,8 +357,26 @@ static HRESULT WINAPI xmldoc_IPersistStream_Load(
 static HRESULT WINAPI xmldoc_IPersistStream_Save(
     IPersistStream *iface, LPSTREAM pStm, BOOL fClearDirty)
 {
-    FIXME("(%p, %p, %d): stub!\n", iface, pStm, fClearDirty);
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IPersistStream(iface);
+    HRESULT hr;
+    BSTR xmlString;
+
+    TRACE("(%p, %p, %d)\n", iface, pStm, fClearDirty);
+
+    hr = IXMLDOMNode_get_xml( This->node, &xmlString );
+    if(hr == S_OK)
+    {
+        DWORD count;
+        DWORD len = strlenW(xmlString) * sizeof(WCHAR);
+
+        hr = IStream_Write( pStm, xmlString, len, &count );
+
+        SysFreeString(xmlString);
+    }
+
+    TRACE("ret 0x%08x\n", hr);
+
+    return hr;
 }
 
 static HRESULT WINAPI xmldoc_IPersistStream_GetSizeMax(
