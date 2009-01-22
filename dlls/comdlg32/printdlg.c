@@ -2789,6 +2789,11 @@ static inline POINT *pagesetup_get_papersize_pt(const pagesetup_data *data)
     return &data->dlga->ptPaperSize;
 }
 
+static inline RECT *pagesetup_get_margin_rect(const pagesetup_data *data)
+{
+    return &data->dlga->rtMargin;
+}
+
 static inline void swap_point(POINT *pt)
 {
     LONG tmp = pt->x;
@@ -3169,7 +3174,7 @@ static void update_margin_edits(HWND hDlg, const pagesetup_data *data, WORD id)
     {
         if(id == 0 || id == idx)
         {
-            size2str(data, *element_from_margin_id(&data->dlga->rtMargin, idx), str);
+            size2str(data, *element_from_margin_id(pagesetup_get_margin_rect(data), idx), str);
             SetDlgItemTextW(hDlg, idx, str);
         }
     }
@@ -3183,7 +3188,7 @@ static void margin_edit_notification(HWND hDlg, pagesetup_data *data, WORD msg, 
       {
         WCHAR buf[10];
         LONG val = 0;
-        LONG *value = element_from_margin_id(&data->dlga->rtMargin, id);
+        LONG *value = element_from_margin_id(pagesetup_get_margin_rect(data), id);
 
         if (GetDlgItemTextW(hDlg, id, buf, sizeof(buf) / sizeof(buf[0])) != 0)
         {
@@ -3325,7 +3330,7 @@ static BOOL PRINTDLG_PS_WMCommandA(HWND hDlg, WPARAM wParam, LPARAM lParam, page
 	{
             pagesetup_set_orientation(data, (id == rad1) ? DMORIENT_PORTRAIT : DMORIENT_LANDSCAPE);
             pagesetup_update_papersize(data);
-            rotate_rect(&data->dlga->rtMargin, (id == rad2));
+            rotate_rect(pagesetup_get_margin_rect(data), (id == rad2));
             update_margin_edits(hDlg, data, 0);
             pagesetup_change_preview(data);
 	}
@@ -3566,10 +3571,10 @@ PRINTDLG_PagePaintProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     scaly = rcClient.bottom / (double)pagesetup_get_papersize_pt(data)->y;
     rcMargin = rcClient;
 
-    rcMargin.left   += data->dlga->rtMargin.left   * scalx;
-    rcMargin.top    += data->dlga->rtMargin.top    * scalx;
-    rcMargin.right  -= data->dlga->rtMargin.right  * scaly;
-    rcMargin.bottom -= data->dlga->rtMargin.bottom * scaly;
+    rcMargin.left   += pagesetup_get_margin_rect(data)->left   * scalx;
+    rcMargin.top    += pagesetup_get_margin_rect(data)->top    * scalx;
+    rcMargin.right  -= pagesetup_get_margin_rect(data)->right  * scaly;
+    rcMargin.bottom -= pagesetup_get_margin_rect(data)->bottom * scaly;
 
     /* if the space is too small then we make sure to not draw anything */
     rcMargin.left = min(rcMargin.left, rcMargin.right);
@@ -3720,10 +3725,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         {
             /* default is 1 inch */
             LONG size = thousandths_inch_to_size(data, 1000);
-            data->dlga->rtMargin.left   = size;
-            data->dlga->rtMargin.top    = size;
-            data->dlga->rtMargin.right  = size;
-            data->dlga->rtMargin.bottom = size;
+            SetRect(pagesetup_get_margin_rect(data), size, size, size, size);
         }
         update_margin_edits(hDlg, data, 0);
         subclass_margin_edits(hDlg);
