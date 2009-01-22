@@ -232,6 +232,28 @@ mp_zero (mp_int * a)
   memset (a->dp, 0, sizeof (mp_digit) * a->alloc);
 }
 
+/* b = |a|
+ *
+ * Simple function copies the input and fixes the sign to positive
+ */
+static int
+mp_abs (const mp_int * a, mp_int * b)
+{
+  int     res;
+
+  /* copy a to b */
+  if (a != b) {
+     if ((res = mp_copy (a, b)) != MP_OKAY) {
+       return res;
+     }
+  }
+
+  /* force the sign of b to positive */
+  b->sign = MP_ZPOS;
+
+  return MP_OKAY;
+}
+
 /* computes the modular inverse via binary extended euclidean algorithm, 
  * that is c = 1/a mod b 
  *
@@ -793,7 +815,7 @@ static int fast_s_mp_sqr (const mp_int * a, mp_int * b)
  * Simple algorithm which zeroes the int, grows it then just sets one bit
  * as required.
  */
-int
+static int
 mp_2expt (mp_int * a, int b)
 {
   int     res;
@@ -811,28 +833,6 @@ mp_2expt (mp_int * a, int b)
 
   /* put the single bit in its place */
   a->dp[b / DIGIT_BIT] = ((mp_digit)1) << (b % DIGIT_BIT);
-
-  return MP_OKAY;
-}
-
-/* b = |a| 
- *
- * Simple function copies the input and fixes the sign to positive
- */
-int
-mp_abs (const mp_int * a, mp_int * b)
-{
-  int     res;
-
-  /* copy a to b */
-  if (a != b) {
-     if ((res = mp_copy (a, b)) != MP_OKAY) {
-       return res;
-     }
-  }
-
-  /* force the sign of b to positive */
-  b->sign = MP_ZPOS;
 
   return MP_OKAY;
 }
@@ -870,7 +870,7 @@ int mp_add (mp_int * a, mp_int * b, mp_int * c)
 
 
 /* single digit addition */
-int
+static int
 mp_add_d (mp_int * a, mp_digit b, mp_int * c)
 {
   int     res, ix, oldused;
@@ -1203,6 +1203,57 @@ mp_mod_2d (const mp_int * a, int b, mp_int * c)
   c->dp[b / DIGIT_BIT] &= (1 << ((mp_digit)b % DIGIT_BIT)) - 1;
   mp_clamp (c);
   return MP_OKAY;
+}
+
+/* shift right a certain amount of digits */
+static void mp_rshd (mp_int * a, int b)
+{
+  int     x;
+
+  /* if b <= 0 then ignore it */
+  if (b <= 0) {
+    return;
+  }
+
+  /* if b > used then simply zero it and return */
+  if (a->used <= b) {
+    mp_zero (a);
+    return;
+  }
+
+  {
+    register mp_digit *bottom, *top;
+
+    /* shift the digits down */
+
+    /* bottom */
+    bottom = a->dp;
+
+    /* top [offset into digits] */
+    top = a->dp + b;
+
+    /* this is implemented as a sliding window where
+     * the window is b-digits long and digits from
+     * the top of the window are copied to the bottom
+     *
+     * e.g.
+
+     b-2 | b-1 | b0 | b1 | b2 | ... | bb |   ---->
+                 /\                   |      ---->
+                  \-------------------/      ---->
+     */
+    for (x = 0; x < (a->used - b); x++) {
+      *bottom++ = *top++;
+    }
+
+    /* zero the top digits */
+    for (; x < a->used; x++) {
+      *bottom++ = 0;
+    }
+  }
+
+  /* remove excess digits */
+  a->used -= b;
 }
 
 /* shift right by a certain bit count (store quotient in c, optional remainder in d) */
@@ -3096,7 +3147,7 @@ static const mp_digit __prime_tab[] = {
  *
  * sets result to 0 if not, 1 if yes
  */
-int mp_prime_is_divisible (const mp_int * a, int *result)
+static int mp_prime_is_divisible (const mp_int * a, int *result)
 {
   int     err, ix;
   mp_digit res;
@@ -3120,68 +3171,6 @@ int mp_prime_is_divisible (const mp_int * a, int *result)
   return MP_OKAY;
 }
 
-/* performs a variable number of rounds of Miller-Rabin
- *
- * Probability of error after t rounds is no more than
-
- *
- * Sets result to 1 if probably prime, 0 otherwise
- */
-int mp_prime_is_prime (mp_int * a, int t, int *result)
-{
-  mp_int  b;
-  int     ix, err, res;
-
-  /* default to no */
-  *result = MP_NO;
-
-  /* valid value of t? */
-  if (t <= 0 || t > PRIME_SIZE) {
-    return MP_VAL;
-  }
-
-  /* is the input equal to one of the primes in the table? */
-  for (ix = 0; ix < PRIME_SIZE; ix++) {
-      if (mp_cmp_d(a, __prime_tab[ix]) == MP_EQ) {
-         *result = 1;
-         return MP_OKAY;
-      }
-  }
-
-  /* first perform trial division */
-  if ((err = mp_prime_is_divisible (a, &res)) != MP_OKAY) {
-    return err;
-  }
-
-  /* return if it was trivially divisible */
-  if (res == MP_YES) {
-    return MP_OKAY;
-  }
-
-  /* now perform the miller-rabin rounds */
-  if ((err = mp_init (&b)) != MP_OKAY) {
-    return err;
-  }
-
-  for (ix = 0; ix < t; ix++) {
-    /* set the prime */
-    mp_set (&b, __prime_tab[ix]);
-
-    if ((err = mp_prime_miller_rabin (a, &b, &res)) != MP_OKAY) {
-      goto __B;
-    }
-
-    if (res == MP_NO) {
-      goto __B;
-    }
-  }
-
-  /* passed the test */
-  *result = MP_YES;
-__B:mp_clear (&b);
-  return err;
-}
-
 /* Miller-Rabin test of "a" to the base of "b" as described in 
  * HAC pp. 139 Algorithm 4.24
  *
@@ -3189,7 +3178,7 @@ __B:mp_clear (&b);
  * Randomly the chance of error is no more than 1/4 and often 
  * very much lower.
  */
-int mp_prime_miller_rabin (mp_int * a, const mp_int * b, int *result)
+static int mp_prime_miller_rabin (mp_int * a, const mp_int * b, int *result)
 {
   mp_int  n1, y, r;
   int     s, j, err;
@@ -3261,6 +3250,68 @@ int mp_prime_miller_rabin (mp_int * a, const mp_int * b, int *result)
 __Y:mp_clear (&y);
 __R:mp_clear (&r);
 __N1:mp_clear (&n1);
+  return err;
+}
+
+/* performs a variable number of rounds of Miller-Rabin
+ *
+ * Probability of error after t rounds is no more than
+
+ *
+ * Sets result to 1 if probably prime, 0 otherwise
+ */
+static int mp_prime_is_prime (mp_int * a, int t, int *result)
+{
+  mp_int  b;
+  int     ix, err, res;
+
+  /* default to no */
+  *result = MP_NO;
+
+  /* valid value of t? */
+  if (t <= 0 || t > PRIME_SIZE) {
+    return MP_VAL;
+  }
+
+  /* is the input equal to one of the primes in the table? */
+  for (ix = 0; ix < PRIME_SIZE; ix++) {
+      if (mp_cmp_d(a, __prime_tab[ix]) == MP_EQ) {
+         *result = 1;
+         return MP_OKAY;
+      }
+  }
+
+  /* first perform trial division */
+  if ((err = mp_prime_is_divisible (a, &res)) != MP_OKAY) {
+    return err;
+  }
+
+  /* return if it was trivially divisible */
+  if (res == MP_YES) {
+    return MP_OKAY;
+  }
+
+  /* now perform the miller-rabin rounds */
+  if ((err = mp_init (&b)) != MP_OKAY) {
+    return err;
+  }
+
+  for (ix = 0; ix < t; ix++) {
+    /* set the prime */
+    mp_set (&b, __prime_tab[ix]);
+
+    if ((err = mp_prime_miller_rabin (a, &b, &res)) != MP_OKAY) {
+      goto __B;
+    }
+
+    if (res == MP_NO) {
+      goto __B;
+    }
+  }
+
+  /* passed the test */
+  *result = MP_YES;
+__B:mp_clear (&b);
   return err;
 }
 
@@ -3572,57 +3623,6 @@ int mp_reduce_setup (mp_int * a, const mp_int * b)
     return res;
   }
   return mp_div (a, b, a, NULL);
-}
-
-/* shift right a certain amount of digits */
-void mp_rshd (mp_int * a, int b)
-{
-  int     x;
-
-  /* if b <= 0 then ignore it */
-  if (b <= 0) {
-    return;
-  }
-
-  /* if b > used then simply zero it and return */
-  if (a->used <= b) {
-    mp_zero (a);
-    return;
-  }
-
-  {
-    register mp_digit *bottom, *top;
-
-    /* shift the digits down */
-
-    /* bottom */
-    bottom = a->dp;
-
-    /* top [offset into digits] */
-    top = a->dp + b;
-
-    /* this is implemented as a sliding window where 
-     * the window is b-digits long and digits from 
-     * the top of the window are copied to the bottom
-     *
-     * e.g.
-
-     b-2 | b-1 | b0 | b1 | b2 | ... | bb |   ---->
-                 /\                   |      ---->
-                  \-------------------/      ---->
-     */
-    for (x = 0; x < (a->used - b); x++) {
-      *bottom++ = *top++;
-    }
-
-    /* zero the top digits */
-    for (; x < a->used; x++) {
-      *bottom++ = 0;
-    }
-  }
-  
-  /* remove excess digits */
-  a->used -= b;
 }
 
 /* set to a digit */

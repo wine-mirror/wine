@@ -275,12 +275,6 @@ void mp_clamp(mp_int *a);
 
 /* ---> digit manipulation <--- */
 
-/* right shift by "b" digits */
-void mp_rshd(mp_int *a, int b);
-
-/* computes a = 2**b */
-int mp_2expt(mp_int *a, int b);
-
 /* Counts the number of lsbs which are zero before the first zero bit */
 int mp_cnt_lsb(const mp_int *a);
 
@@ -303,9 +297,6 @@ int mp_and(mp_int *a, mp_int *b, mp_int *c);
 
 /* b = -a */
 int mp_neg(mp_int *a, mp_int *b);
-
-/* b = |a| */
-int mp_abs(const mp_int *a, mp_int *b);
 
 /* compare a to b */
 int mp_cmp(const mp_int *a, const mp_int *b);
@@ -332,9 +323,6 @@ int mp_mod(const mp_int *a, mp_int *b, mp_int *c);
 
 /* compare against a single digit */
 int mp_cmp_d(const mp_int *a, mp_digit b);
-
-/* c = a + b */
-int mp_add_d(mp_int *a, mp_digit b, mp_int *c);
 
 /* c = a - b */
 int mp_sub_d(mp_int *a, mp_digit b, mp_int *c);
@@ -427,32 +415,15 @@ int mp_exptmod(const mp_int *a, const mp_int *b, mp_int *c, mp_int *d);
 /* number of primes */
 #define PRIME_SIZE      256
 
-/* result=1 if a is divisible by one of the first PRIME_SIZE primes */
-int mp_prime_is_divisible(const mp_int *a, int *result);
-
 /* performs one Fermat test of "a" using base "b".
  * Sets result to 0 if composite or 1 if probable prime
  */
 int mp_prime_fermat(mp_int *a, mp_int *b, int *result);
 
-/* performs one Miller-Rabin test of "a" using base "b".
- * Sets result to 0 if composite or 1 if probable prime
- */
-int mp_prime_miller_rabin(mp_int *a, const mp_int *b, int *result);
-
 /* This gives [for a given bit size] the number of trials required
  * such that Miller-Rabin gives a prob of failure lower than 2^-96 
  */
 int mp_prime_rabin_miller_trials(int size);
-
-/* performs t rounds of Miller-Rabin on "a" using the first
- * t prime bases.  Also performs an initial sieve of trial
- * division.  Determines if "a" is prime with probability
- * of error no more than (1/4)**t.
- *
- * Sets result to 1 if probably prime, 0 otherwise
- */
-int mp_prime_is_prime(mp_int *a, int t, int *result);
 
 /* finds the next prime after the number "a" using "t" trials
  * of Miller-Rabin.
