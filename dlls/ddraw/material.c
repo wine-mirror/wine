@@ -55,6 +55,11 @@ static inline IDirect3DMaterialImpl *material_from_material1(IDirect3DMaterial *
     return (IDirect3DMaterialImpl *)((char*)iface - FIELD_OFFSET(IDirect3DMaterialImpl, IDirect3DMaterial_vtbl));
 }
 
+static inline IDirect3DMaterialImpl *material_from_material2(IDirect3DMaterial2 *iface)
+{
+    return (IDirect3DMaterialImpl *)((char*)iface - FIELD_OFFSET(IDirect3DMaterialImpl, IDirect3DMaterial2_vtbl));
+}
+
 /*****************************************************************************
  * IUnknown Methods.
  *****************************************************************************/
@@ -347,9 +352,8 @@ Thunk_IDirect3DMaterialImpl_2_GetHandle(LPDIRECT3DMATERIAL2 iface,
 					LPD3DMATERIALHANDLE lpHandle)
 {
     TRACE_(ddraw_thunk)("(%p)->(%p,%p) thunking to IDirect3DMaterial3 interface.\n", iface, lpDirect3DDevice2, lpHandle);
-    return IDirect3DMaterial3_GetHandle(COM_INTERFACE_CAST(IDirect3DMaterialImpl, IDirect3DMaterial2, IDirect3DMaterial3, iface),
-					COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice2, IDirect3DDevice3, lpDirect3DDevice2),
-					lpHandle);
+    return IDirect3DMaterial3_GetHandle((IDirect3DMaterial3 *)material_from_material2(iface), lpDirect3DDevice2 ?
+            (IDirect3DDevice3 *)&device_from_device2(lpDirect3DDevice2)->IDirect3DDevice3_vtbl : NULL, lpHandle);
 }
 
 static HRESULT WINAPI
@@ -358,9 +362,8 @@ Thunk_IDirect3DMaterialImpl_1_GetHandle(LPDIRECT3DMATERIAL iface,
 					LPD3DMATERIALHANDLE lpHandle)
 {
     TRACE_(ddraw_thunk)("(%p)->(%p,%p) thunking to IDirect3DMaterial3 interface.\n", iface, lpDirect3DDevice, lpHandle);
-    return IDirect3DMaterial3_GetHandle(COM_INTERFACE_CAST(IDirect3DMaterialImpl, IDirect3DMaterial, IDirect3DMaterial3, iface),
-					COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice, IDirect3DDevice3, lpDirect3DDevice),
-					lpHandle);
+    return IDirect3DMaterial3_GetHandle((IDirect3DMaterial3 *)material_from_material1(iface), lpDirect3DDevice ?
+            (IDirect3DDevice3 *)&device_from_device1(lpDirect3DDevice)->IDirect3DDevice3_vtbl : NULL, lpHandle);
 }
 
 static HRESULT WINAPI
@@ -369,9 +372,7 @@ Thunk_IDirect3DMaterialImpl_2_QueryInterface(LPDIRECT3DMATERIAL2 iface,
                                              LPVOID* obp)
 {
     TRACE_(ddraw_thunk)("(%p)->(%s,%p) thunking to IDirect3DMaterial3 interface.\n", iface, debugstr_guid(riid), obp);
-    return IDirect3DMaterial3_QueryInterface(COM_INTERFACE_CAST(IDirect3DMaterialImpl, IDirect3DMaterial2, IDirect3DMaterial3, iface),
-                                             riid,
-                                             obp);
+    return IDirect3DMaterial3_QueryInterface((IDirect3DMaterial3 *)material_from_material2(iface), riid, obp);
 }
 
 static HRESULT WINAPI
@@ -380,37 +381,35 @@ Thunk_IDirect3DMaterialImpl_1_QueryInterface(LPDIRECT3DMATERIAL iface,
                                              LPVOID* obp)
 {
     TRACE_(ddraw_thunk)("(%p)->(%s,%p) thunking to IDirect3DMaterial3 interface.\n", iface, debugstr_guid(riid), obp);
-    return IDirect3DMaterial3_QueryInterface(COM_INTERFACE_CAST(IDirect3DMaterialImpl, IDirect3DMaterial, IDirect3DMaterial3, iface),
-                                             riid,
-                                             obp);
+    return IDirect3DMaterial3_QueryInterface((IDirect3DMaterial3 *)material_from_material1(iface), riid, obp);
 }
 
 static ULONG WINAPI
 Thunk_IDirect3DMaterialImpl_2_AddRef(LPDIRECT3DMATERIAL2 iface)
 {
     TRACE_(ddraw_thunk)("(%p)->() thunking to IDirect3DMaterial3 interface.\n", iface);
-    return IDirect3DMaterial3_AddRef(COM_INTERFACE_CAST(IDirect3DMaterialImpl, IDirect3DMaterial2, IDirect3DMaterial3, iface));
+    return IDirect3DMaterial3_AddRef((IDirect3DMaterial3 *)material_from_material2(iface));
 }
 
 static ULONG WINAPI
 Thunk_IDirect3DMaterialImpl_1_AddRef(LPDIRECT3DMATERIAL iface)
 {
     TRACE_(ddraw_thunk)("(%p)->() thunking to IDirect3DMaterial3 interface.\n", iface);
-    return IDirect3DMaterial3_AddRef(COM_INTERFACE_CAST(IDirect3DMaterialImpl, IDirect3DMaterial, IDirect3DMaterial3, iface));
+    return IDirect3DMaterial3_AddRef((IDirect3DMaterial3 *)material_from_material1(iface));
 }
 
 static ULONG WINAPI
 Thunk_IDirect3DMaterialImpl_2_Release(LPDIRECT3DMATERIAL2 iface)
 {
     TRACE_(ddraw_thunk)("(%p)->() thunking to IDirect3DMaterial3 interface.\n", iface);
-    return IDirect3DMaterial3_Release(COM_INTERFACE_CAST(IDirect3DMaterialImpl, IDirect3DMaterial2, IDirect3DMaterial3, iface));
+    return IDirect3DMaterial3_Release((IDirect3DMaterial3 *)material_from_material2(iface));
 }
 
 static ULONG WINAPI
 Thunk_IDirect3DMaterialImpl_1_Release(LPDIRECT3DMATERIAL iface)
 {
     TRACE_(ddraw_thunk)("(%p)->() thunking to IDirect3DMaterial3 interface.\n", iface);
-    return IDirect3DMaterial3_Release(COM_INTERFACE_CAST(IDirect3DMaterialImpl, IDirect3DMaterial, IDirect3DMaterial3, iface));
+    return IDirect3DMaterial3_Release((IDirect3DMaterial3 *)material_from_material1(iface));
 }
 
 static HRESULT WINAPI
@@ -418,8 +417,7 @@ Thunk_IDirect3DMaterialImpl_2_SetMaterial(LPDIRECT3DMATERIAL2 iface,
                                           LPD3DMATERIAL lpMat)
 {
     TRACE_(ddraw_thunk)("(%p)->(%p) thunking to IDirect3DMaterial3 interface.\n", iface, lpMat);
-    return IDirect3DMaterial3_SetMaterial(COM_INTERFACE_CAST(IDirect3DMaterialImpl, IDirect3DMaterial2, IDirect3DMaterial3, iface),
-                                          lpMat);
+    return IDirect3DMaterial3_SetMaterial((IDirect3DMaterial3 *)material_from_material2(iface), lpMat);
 }
 
 static HRESULT WINAPI
@@ -427,8 +425,7 @@ Thunk_IDirect3DMaterialImpl_1_SetMaterial(LPDIRECT3DMATERIAL iface,
                                           LPD3DMATERIAL lpMat)
 {
     TRACE_(ddraw_thunk)("(%p)->(%p) thunking to IDirect3DMaterial3 interface.\n", iface, lpMat);
-    return IDirect3DMaterial3_SetMaterial(COM_INTERFACE_CAST(IDirect3DMaterialImpl, IDirect3DMaterial, IDirect3DMaterial3, iface),
-                                          lpMat);
+    return IDirect3DMaterial3_SetMaterial((IDirect3DMaterial3 *)material_from_material1(iface), lpMat);
 }
 
 static HRESULT WINAPI
@@ -436,8 +433,7 @@ Thunk_IDirect3DMaterialImpl_2_GetMaterial(LPDIRECT3DMATERIAL2 iface,
                                           LPD3DMATERIAL lpMat)
 {
     TRACE_(ddraw_thunk)("(%p)->(%p) thunking to IDirect3DMaterial3 interface.\n", iface, lpMat);
-    return IDirect3DMaterial3_GetMaterial(COM_INTERFACE_CAST(IDirect3DMaterialImpl, IDirect3DMaterial2, IDirect3DMaterial3, iface),
-                                          lpMat);
+    return IDirect3DMaterial3_GetMaterial((IDirect3DMaterial3 *)material_from_material2(iface), lpMat);
 }
 
 static HRESULT WINAPI
@@ -445,8 +441,7 @@ Thunk_IDirect3DMaterialImpl_1_GetMaterial(LPDIRECT3DMATERIAL iface,
                                           LPD3DMATERIAL lpMat)
 {
     TRACE_(ddraw_thunk)("(%p)->(%p) thunking to IDirect3DMaterial3 interface.\n", iface, lpMat);
-    return IDirect3DMaterial3_GetMaterial(COM_INTERFACE_CAST(IDirect3DMaterialImpl, IDirect3DMaterial, IDirect3DMaterial3, iface),
-                                          lpMat);
+    return IDirect3DMaterial3_GetMaterial((IDirect3DMaterial3 *)material_from_material1(iface), lpMat);
 }
 
 

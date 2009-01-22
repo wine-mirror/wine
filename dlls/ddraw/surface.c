@@ -118,7 +118,7 @@ IDirectDrawSurfaceImpl_QueryInterface(IDirectDrawSurface7 *iface,
         /* Call into IDirect3D7 for creation */
         IDirect3D7_CreateDevice((IDirect3D7 *)&This->ddraw->IDirect3D7_vtbl, riid, (IDirectDrawSurface7 *)This, &d3d);
 
-        *obj = COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice7, IDirect3DDevice, d3d);
+        *obj = d3d ? (IDirect3DDevice *)&((IDirect3DDeviceImpl *)d3d)->IDirect3DDevice_vtbl : NULL;
         TRACE("(%p) Returning IDirect3DDevice interface at %p\n", This, *obj);
 
         return S_OK;

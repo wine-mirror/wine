@@ -84,7 +84,7 @@ Thunk_IDirect3DTextureImpl_1_AddRef(IDirect3DTexture *iface)
     IDirectDrawSurfaceImpl *This = surface_from_texture1(iface);
     TRACE("(%p)->() thunking to IDirectDrawSurface7 interface.\n", This);
 
-    return IDirectDrawSurface7_AddRef(COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirect3DTexture, IDirectDrawSurface7, iface));
+    return IDirectDrawSurface7_AddRef((IDirectDrawSurface7 *)This);
 }
 
 static ULONG WINAPI
@@ -103,7 +103,7 @@ Thunk_IDirect3DTextureImpl_1_Release(IDirect3DTexture *iface)
     IDirectDrawSurfaceImpl *This = surface_from_texture1(iface);
     TRACE("(%p)->() thunking to IDirectDrawSurface7 interface.\n", This);
 
-    return IDirectDrawSurface7_Release(COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirect3DTexture, IDirectDrawSurface7, iface));
+    return IDirectDrawSurface7_Release((IDirectDrawSurface7 *)This);
 }
 
 /*****************************************************************************
@@ -162,9 +162,7 @@ Thunk_IDirect3DTextureImpl_1_PaletteChanged(IDirect3DTexture *iface,
     IDirectDrawSurfaceImpl *This = surface_from_texture1(iface);
     TRACE("(%p)->(%08x,%08x) thunking to IDirect3DTexture2 interface.\n", This, Start, Count);
 
-    return IDirect3DTexture2_PaletteChanged(COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirect3DTexture, IDirect3DTexture2, iface),
-                                            Start,
-                                            Count);
+    return IDirect3DTexture2_PaletteChanged((IDirect3DTexture2 *)&This->IDirect3DTexture2_vtbl, Start, Count);
 }
 
 
@@ -469,8 +467,8 @@ Thunk_IDirect3DTextureImpl_1_Load(IDirect3DTexture *iface,
     IDirectDrawSurfaceImpl *Texture = surface_from_texture1(D3DTexture);
     TRACE("(%p)->(%p) thunking to IDirect3DTexture2 interface.\n", This, Texture);
 
-    return IDirect3DTexture2_Load(COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirect3DTexture, IDirect3DTexture2, iface),
-                                  COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirect3DTexture, IDirect3DTexture2, D3DTexture));
+    return IDirect3DTexture2_Load((IDirect3DTexture2 *)&This->IDirect3DTexture2_vtbl,
+            D3DTexture ? (IDirect3DTexture2 *)&surface_from_texture1(D3DTexture)->IDirect3DTexture2_vtbl : NULL);
 }
 
 /*****************************************************************************

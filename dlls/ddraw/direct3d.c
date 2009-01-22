@@ -532,7 +532,8 @@ Thunk_IDirect3DImpl_2_CreateMaterial(IDirect3D2 *iface,
     TRACE("(%p)->(%p,%p) thunking to IDirect3D3 interface.\n", This, Direct3DMaterial, UnkOuter);
     ret = IDirect3D3_CreateMaterial((IDirect3D3 *)&This->IDirect3D3_vtbl, &ret_val, UnkOuter);
 
-    *Direct3DMaterial = COM_INTERFACE_CAST(IDirect3DMaterialImpl, IDirect3DMaterial3, IDirect3DMaterial2, ret_val);
+    *Direct3DMaterial = ret_val ?
+            (IDirect3DMaterial2 *)&((IDirect3DMaterialImpl *)ret_val)->IDirect3DMaterial2_vtbl : NULL;
 
     TRACE(" returning interface %p.\n", *Direct3DMaterial);
 
@@ -551,7 +552,8 @@ Thunk_IDirect3DImpl_1_CreateMaterial(IDirect3D *iface,
     TRACE("(%p)->(%p,%p) thunking to IDirect3D3 interface.\n", This, Direct3DMaterial, UnkOuter);
     ret = IDirect3D3_CreateMaterial((IDirect3D3 *)&This->IDirect3D3_vtbl, &ret_val, UnkOuter);
 
-    *Direct3DMaterial = COM_INTERFACE_CAST(IDirect3DMaterialImpl, IDirect3DMaterial3, IDirect3DMaterial, ret_val);
+    *Direct3DMaterial = ret_val ?
+            (IDirect3DMaterial *)&((IDirect3DMaterialImpl *)ret_val)->IDirect3DMaterial_vtbl : NULL;
 
     TRACE(" returning interface %p.\n", *Direct3DMaterial);
 
@@ -932,7 +934,7 @@ Thunk_IDirect3DImpl_3_CreateDevice(IDirect3D3 *iface,
     hr =  IDirect3D7_CreateDevice((IDirect3D7 *)&This->IDirect3D7_vtbl, refiid,
             (IDirectDrawSurface7 *)Surface /* Same VTables */, (IDirect3DDevice7 **)Device);
 
-    *Device = COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice7, IDirect3DDevice3, *Device);
+    *Device = *Device ? (IDirect3DDevice3 *)&((IDirect3DDeviceImpl *)*Device)->IDirect3DDevice3_vtbl : NULL;
     return hr;
 }
 
@@ -947,10 +949,10 @@ Thunk_IDirect3DImpl_2_CreateDevice(IDirect3D2 *iface,
     TRACE("(%p)->(%s,%p,%p): Thunking to IDirect3D7\n", This, debugstr_guid(refiid), Surface, Device);
 
     hr =  IDirect3D7_CreateDevice((IDirect3D7 *)&This->IDirect3D7_vtbl, refiid,
-            COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirectDrawSurface3, IDirectDrawSurface7, Surface),
+            Surface ? (IDirectDrawSurface7 *)surface_from_surface3((IDirectDrawSurface3 *)Surface) : NULL,
             (IDirect3DDevice7 **)Device);
 
-    *Device = COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice7, IDirect3DDevice2, *Device);
+    *Device = *Device ? (IDirect3DDevice2 *)&((IDirect3DDeviceImpl *)*Device)->IDirect3DDevice2_vtbl : NULL;
     return hr;
 }
 
@@ -1077,7 +1079,9 @@ Thunk_IDirect3DImpl_3_CreateVertexBuffer(IDirect3D3 *iface,
     hr = IDirect3D7_CreateVertexBuffer((IDirect3D7 *)&This->IDirect3D7_vtbl,
             Desc, (IDirect3DVertexBuffer7 **)VertexBuffer, Flags);
 
-    *VertexBuffer = COM_INTERFACE_CAST(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, IDirect3DVertexBuffer, *VertexBuffer);
+    *VertexBuffer = *VertexBuffer ?
+            (IDirect3DVertexBuffer *)&((IDirect3DVertexBufferImpl *)*VertexBuffer)->IDirect3DVertexBuffer_vtbl : NULL;
+
     return hr;
 }
 

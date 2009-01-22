@@ -33,8 +33,6 @@
 #include "ddrawi.h"
 #include "d3d.h"
 
-#include "ddcomimpl.h"
-
 #include "wine/list.h"
 #ifdef DDRAW_INIT_GUID
 #include "initguid.h"
@@ -330,6 +328,11 @@ static inline IDirectDrawSurfaceImpl *surface_from_texture1(IDirect3DTexture *if
 static inline IDirectDrawSurfaceImpl *surface_from_texture2(IDirect3DTexture2 *iface)
 {
     return (IDirectDrawSurfaceImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawSurfaceImpl, IDirect3DTexture2_vtbl));
+}
+
+static inline IDirectDrawSurfaceImpl *surface_from_surface3(IDirectDrawSurface3 *iface)
+{
+    return (IDirectDrawSurfaceImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawSurfaceImpl, IDirectDrawSurface3_vtbl));
 }
 
 /* Get the number of bytes per pixel for a given surface */

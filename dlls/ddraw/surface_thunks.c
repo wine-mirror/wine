@@ -29,25 +29,13 @@
 #include "winerror.h"
 
 #include "ddraw_private.h"
-#include "ddcomimpl.h"
 
-#define CONVERT(pdds) COM_INTERFACE_CAST(IDirectDrawSurfaceImpl,	\
-					 IDirectDrawSurface3,		\
-					 IDirectDrawSurface7,		\
-					 (pdds))
-
-#define CONVERT_REV(pdds) COM_INTERFACE_CAST(IDirectDrawSurfaceImpl,	\
-					     IDirectDrawSurface7,	\
-					     IDirectDrawSurface3,	\
-					     (pdds))
+#define CONVERT(pdds) ((pdds) ? (IDirectDrawSurface7 *)surface_from_surface3(pdds) : NULL)
+#define CONVERT_REV(pdds) \
+        ((pdds) ? (IDirectDrawSurface3 *)&((IDirectDrawSurfaceImpl *)(pdds))->IDirectDrawSurface3_vtbl : NULL)
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw_thunk);
 WINE_DECLARE_DEBUG_CHANNEL(ddraw);
-
-static inline IDirectDrawSurfaceImpl *surface_from_surface3(IDirectDrawSurface3 *iface)
-{
-    return (IDirectDrawSurfaceImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawSurfaceImpl, IDirectDrawSurface3_vtbl));
-}
 
 static HRESULT WINAPI
 IDirectDrawSurface3Impl_QueryInterface(LPDIRECTDRAWSURFACE3 This, REFIID iid,
