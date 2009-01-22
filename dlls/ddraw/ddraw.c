@@ -111,7 +111,7 @@ IDirectDrawImpl_QueryInterface(IDirectDraw7 *iface,
     if ( IsEqualGUID( &IID_IUnknown, refiid ) ||
          IsEqualGUID( &IID_IDirectDraw7, refiid ) )
     {
-        *obj = &This->IDirectDraw7_vtbl;
+        *obj = This;
         TRACE("(%p) Returning IDirectDraw7 interface at %p\n", This, *obj);
     }
     else if ( IsEqualGUID( &IID_IDirectDraw4, refiid ) )
@@ -1720,7 +1720,7 @@ IDirectDrawImpl_RecreateSurfacesCallback(IDirectDrawSurface7 *surf,
          * new surface
          */
         parImpl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*parImpl));
-        parImpl->IParent_vtbl = &IParent_Vtbl;
+        parImpl->lpVtbl = &IParent_Vtbl;
         parImpl->ref = 1;
 
         Parent = (IUnknown *) parImpl;
@@ -1985,7 +1985,7 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
         ERR("(%p) Error allocating memory for a surface\n", This);
         return DDERR_OUTOFVIDEOMEMORY;
     }
-    (*ppSurf)->IDirectDrawSurface7_vtbl = &IDirectDrawSurface7_Vtbl;
+    (*ppSurf)->lpVtbl = &IDirectDrawSurface7_Vtbl;
     (*ppSurf)->IDirectDrawSurface3_vtbl = &IDirectDrawSurface3_Vtbl;
     (*ppSurf)->IDirectDrawGammaControl_vtbl = &IDirectDrawGammaControl_Vtbl;
     (*ppSurf)->IDirect3DTexture2_vtbl = &IDirect3DTexture2_Vtbl;
@@ -2024,7 +2024,7 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
             return DDERR_OUTOFMEMORY;
         }
         parImpl->ref = 1;
-        parImpl->IParent_vtbl = &IParent_Vtbl;
+        parImpl->lpVtbl = &IParent_Vtbl;
         Parent = (IUnknown *)parImpl;
         TRACE("Using IParent interface %p as parent\n", parImpl);
     }
@@ -3128,7 +3128,7 @@ DirectDrawCreateClipper(DWORD Flags,
         return E_OUTOFMEMORY;
     }
 
-    object->IDirectDrawClipper_vtbl = &IDirectDrawClipper_Vtbl;
+    object->lpVtbl = &IDirectDrawClipper_Vtbl;
     object->ref = 1;
     object->wineD3DClipper = pWineDirect3DCreateClipper((IUnknown *) object);
     if(!object->wineD3DClipper)
@@ -3213,7 +3213,7 @@ IDirectDrawImpl_CreatePalette(IDirectDraw7 *iface,
         return E_OUTOFMEMORY;
     }
 
-    object->IDirectDrawPalette_vtbl = &IDirectDrawPalette_Vtbl;
+    object->lpVtbl = &IDirectDrawPalette_Vtbl;
     object->ref = 1;
     object->ddraw_owner = This;
 
@@ -3592,7 +3592,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
         return DDERR_OUTOFVIDEOMEMORY;
     }
 
-    object->IParent_vtbl = &IParent_Vtbl;
+    object->lpVtbl = &IParent_Vtbl;
     object->ref = 1;
 
     hr = IWineD3DDevice_CreateSwapChain(This->wineD3DDevice, present_parameters,

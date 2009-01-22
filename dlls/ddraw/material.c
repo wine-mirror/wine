@@ -108,8 +108,8 @@ IDirect3DMaterialImpl_QueryInterface(IDirect3DMaterial3 *iface,
 	return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirect3DMaterial3, riid ) ) {
-        IDirect3DMaterial_AddRef((IDirect3DMaterial2 *)&This->IDirect3DMaterial3_vtbl);
-        *obp = &This->IDirect3DMaterial3_vtbl;
+        IDirect3DMaterial3_AddRef((IDirect3DMaterial3 *)This);
+        *obp = This;
 	TRACE("  Creating IDirect3DMaterial3 interface %p\n", *obp);
 	return S_OK;
     }

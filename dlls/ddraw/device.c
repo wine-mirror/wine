@@ -737,7 +737,7 @@ IDirect3DDeviceImpl_1_CreateExecuteBuffer(IDirect3DDevice *iface,
         return DDERR_OUTOFMEMORY;
     }
 
-    object->IDirect3DExecuteBuffer_vtbl = &IDirect3DExecuteBuffer_Vtbl;
+    object->lpVtbl = &IDirect3DExecuteBuffer_Vtbl;
     object->ref = 1;
     object->d3ddev = This;
 

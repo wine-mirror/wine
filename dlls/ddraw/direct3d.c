@@ -430,7 +430,7 @@ IDirect3DImpl_3_CreateLight(IDirect3D3 *iface,
     if (object == NULL)
         return DDERR_OUTOFMEMORY;
 
-    object->IDirect3DLight_vtbl = &IDirect3DLight_Vtbl;
+    object->lpVtbl = &IDirect3DLight_Vtbl;
     object->ref = 1;
     object->ddraw = This;
     object->next = NULL;
@@ -506,7 +506,7 @@ IDirect3DImpl_3_CreateMaterial(IDirect3D3 *iface,
     if (object == NULL)
         return DDERR_OUTOFMEMORY;
 
-    object->IDirect3DMaterial3_vtbl = &IDirect3DMaterial3_Vtbl;
+    object->lpVtbl = &IDirect3DMaterial3_Vtbl;
     object->IDirect3DMaterial2_vtbl = &IDirect3DMaterial2_Vtbl;
     object->IDirect3DMaterial_vtbl = &IDirect3DMaterial_Vtbl;
     object->ref = 1;
@@ -595,7 +595,7 @@ IDirect3DImpl_3_CreateViewport(IDirect3D3 *iface,
     if (object == NULL)
         return DDERR_OUTOFMEMORY;
 
-    object->IDirect3DViewport3_vtbl = &IDirect3DViewport3_Vtbl;
+    object->lpVtbl = &IDirect3DViewport3_Vtbl;
     object->ref = 1;
     object->ddraw = This;
     object->activate = viewport_activate;
@@ -784,9 +784,9 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     }
 
     if (This->cooperative_level & DDSCL_FPUPRESERVE)
-        object->IDirect3DDevice7_vtbl = &IDirect3DDevice7_FPUPreserve_Vtbl;
+        object->lpVtbl = &IDirect3DDevice7_FPUPreserve_Vtbl;
     else
-        object->IDirect3DDevice7_vtbl = &IDirect3DDevice7_FPUSetup_Vtbl;
+        object->lpVtbl = &IDirect3DDevice7_FPUSetup_Vtbl;
 
     object->IDirect3DDevice3_vtbl = &IDirect3DDevice3_Vtbl;
     object->IDirect3DDevice2_vtbl = &IDirect3DDevice2_Vtbl;
@@ -815,7 +815,7 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_OUTOFMEMORY;
     }
-    IndexBufferParent->IParent_vtbl = &IParent_Vtbl;
+    IndexBufferParent->lpVtbl = &IParent_Vtbl;
     IndexBufferParent->ref = 1;
 
     /* Create an Index Buffer. WineD3D needs one for Drawing indexed primitives
@@ -1017,7 +1017,7 @@ IDirect3DImpl_7_CreateVertexBuffer(IDirect3D7 *iface,
     }
 
     object->ref = 1;
-    object->IDirect3DVertexBuffer7_vtbl = &IDirect3DVertexBuffer7_Vtbl;
+    object->lpVtbl = &IDirect3DVertexBuffer7_Vtbl;
     object->IDirect3DVertexBuffer_vtbl = &IDirect3DVertexBuffer1_Vtbl;
 
     object->Caps = Desc->dwCaps;

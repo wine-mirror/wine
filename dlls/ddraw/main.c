@@ -171,11 +171,11 @@ DDRAW_Create(const GUID *guid,
      * IDirectDraw and IDirect3D are the same object,
      * QueryInterface is used to get other interfaces.
      */
+    This->lpVtbl = &IDirectDraw7_Vtbl;
     This->IDirectDraw_vtbl = &IDirectDraw1_Vtbl;
     This->IDirectDraw2_vtbl = &IDirectDraw2_Vtbl;
     This->IDirectDraw3_vtbl = &IDirectDraw3_Vtbl;
     This->IDirectDraw4_vtbl = &IDirectDraw4_Vtbl;
-    This->IDirectDraw7_vtbl = &IDirectDraw7_Vtbl;
     This->IDirect3D_vtbl = &IDirect3D1_Vtbl;
     This->IDirect3D2_vtbl = &IDirect3D2_Vtbl;
     This->IDirect3D3_vtbl = &IDirect3D3_Vtbl;
@@ -699,7 +699,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     factory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*factory));
     if (factory == NULL) return E_OUTOFMEMORY;
 
-    factory->IClassFactory_vtbl = &IClassFactory_Vtbl;
+    factory->lpVtbl = &IClassFactory_Vtbl;
     factory->ref = 1;
 
     factory->pfnCreateInstance = object_creation[i].pfnCreateInstance;
