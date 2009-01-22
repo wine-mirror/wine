@@ -2784,6 +2784,18 @@ static void pagesetup_set_devmode(pagesetup_data *data, DEVMODEW *dm)
     HeapFree(GetProcessHeap(), 0, tmp_dm);
 }
 
+static inline POINT *pagesetup_get_papersize_pt(const pagesetup_data *data)
+{
+    return &data->dlga->ptPaperSize;
+}
+
+static inline void swap_point(POINT *pt)
+{
+    LONG tmp = pt->x;
+    pt->x = pt->y;
+    pt->y = tmp;
+}
+
 static BOOL pagesetup_update_papersize(pagesetup_data *data)
 {
     DEVMODEW *dm;
@@ -2832,15 +2844,12 @@ static BOOL pagesetup_update_papersize(pagesetup_data *data)
     }
 
     /* this is _10ths_ of a millimeter */
-    data->dlga->ptPaperSize.x = tenths_mm_to_size(data, points[i].x);
-    data->dlga->ptPaperSize.y = tenths_mm_to_size(data, points[i].y);
+    pagesetup_get_papersize_pt(data)->x = tenths_mm_to_size(data, points[i].x);
+    pagesetup_get_papersize_pt(data)->y = tenths_mm_to_size(data, points[i].y);
 
     if(pagesetup_get_orientation(data) == DMORIENT_LANDSCAPE)
-    {
-        LONG tmp = data->dlga->ptPaperSize.x;
-        data->dlga->ptPaperSize.x = data->dlga->ptPaperSize.y;
-        data->dlga->ptPaperSize.y = tmp;
-    }
+        swap_point(pagesetup_get_papersize_pt(data));
+
     retval = TRUE;
 
 end:
@@ -3117,12 +3126,12 @@ static void pagesetup_change_preview(const pagesetup_data *data)
     if(pagesetup_get_orientation(data) == DMORIENT_LANDSCAPE)
     {
         width  = data->rtDrawRect.right - data->rtDrawRect.left;
-        height = data->dlga->ptPaperSize.y * width / data->dlga->ptPaperSize.x;
+        height = pagesetup_get_papersize_pt(data)->y * width / pagesetup_get_papersize_pt(data)->x;
     }
     else
     {
         height = data->rtDrawRect.bottom - data->rtDrawRect.top;
-        width  = data->dlga->ptPaperSize.x * height / data->dlga->ptPaperSize.y;
+        width  = pagesetup_get_papersize_pt(data)->x * height / pagesetup_get_papersize_pt(data)->y;
     }
     x = (data->rtDrawRect.right + data->rtDrawRect.left - width) / 2;
     y = (data->rtDrawRect.bottom + data->rtDrawRect.top - height) / 2;
@@ -3553,8 +3562,8 @@ PRINTDLG_PagePaintProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     hdc = BeginPaint(hWnd, &ps);
     GetClientRect(hWnd, &rcClient);
     
-    scalx = rcClient.right  / (double)data->dlga->ptPaperSize.x;
-    scaly = rcClient.bottom / (double)data->dlga->ptPaperSize.y;
+    scalx = rcClient.right  / (double)pagesetup_get_papersize_pt(data)->x;
+    scaly = rcClient.bottom / (double)pagesetup_get_papersize_pt(data)->y;
     rcMargin = rcClient;
 
     rcMargin.left   += data->dlga->rtMargin.left   * scalx;
