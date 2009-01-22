@@ -193,7 +193,7 @@ static DWORD CALLBACK copyProgressCallback(LARGE_INTEGER totalSize,
                                            HANDLE dstFile,
                                            LPVOID obj)
 {
-    BackgroundCopyFileImpl *file = (BackgroundCopyFileImpl *) obj;
+    BackgroundCopyFileImpl *file = obj;
     BackgroundCopyJobImpl *job = file->owner;
     ULONG64 diff;
 

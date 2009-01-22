@@ -138,7 +138,7 @@ BackgroundCopyManagerImpl globalMgr = {
 HRESULT BackgroundCopyManagerConstructor(IUnknown *pUnkOuter, LPVOID *ppObj)
 {
     TRACE("(%p,%p)\n", pUnkOuter, ppObj);
-    *ppObj = (IBackgroundCopyManager *) &globalMgr;
+    *ppObj = &globalMgr;
     return S_OK;
 }
 
