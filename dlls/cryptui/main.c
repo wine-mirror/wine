@@ -5443,6 +5443,7 @@ struct ExportWizData
     LPCWSTR pwszWizardTitle;
     PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo;
     void *pvoid;
+    DWORD exportFormat;
 };
 
 static LRESULT CALLBACK export_welcome_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
@@ -5615,11 +5616,13 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     PROPSHEETPAGEW pages[4];
     struct ExportWizData data;
     int nPages = 0;
+    BOOL showFormatPage = TRUE;
 
     data.dwFlags = dwFlags;
     data.pwszWizardTitle = pwszWizardTitle;
     data.pExportInfo = pExportInfo;
     data.pvoid = pvoid;
+    data.exportFormat = 0;
 
     memset(&pages, 0, sizeof(pages));
 
@@ -5631,17 +5634,36 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     pages[nPages].lParam = (LPARAM)&data;
     nPages++;
 
-    pages[nPages].dwSize = sizeof(pages[0]);
-    pages[nPages].hInstance = hInstance;
-    pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_FORMAT);
-    pages[nPages].pfnDlgProc = export_format_dlg_proc;
-    pages[nPages].dwFlags = PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
-    pages[nPages].pszHeaderTitle =
-     MAKEINTRESOURCEW(IDS_EXPORT_FORMAT_TITLE);
-    pages[nPages].pszHeaderSubTitle =
-     MAKEINTRESOURCEW(IDS_EXPORT_FORMAT_SUBTITLE);
-    pages[nPages].lParam = (LPARAM)&data;
-    nPages++;
+    switch (pExportInfo->dwSubjectChoice)
+    {
+    case CRYPTUI_WIZ_EXPORT_CRL_CONTEXT:
+    case CRYPTUI_WIZ_EXPORT_CTL_CONTEXT:
+        showFormatPage = FALSE;
+        data.exportFormat = CRYPTUI_WIZ_EXPORT_FORMAT_DER;
+        break;
+    case CRYPTUI_WIZ_EXPORT_CERT_STORE:
+        showFormatPage = FALSE;
+        data.exportFormat = CRYPTUI_WIZ_EXPORT_FORMAT_SERIALIZED_CERT_STORE;
+        break;
+    case CRYPTUI_WIZ_EXPORT_CERT_STORE_CERTIFICATES_ONLY:
+        showFormatPage = FALSE;
+        data.exportFormat = CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7;
+        break;
+    }
+    if (showFormatPage)
+    {
+        pages[nPages].dwSize = sizeof(pages[0]);
+        pages[nPages].hInstance = hInstance;
+        pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_FORMAT);
+        pages[nPages].pfnDlgProc = export_format_dlg_proc;
+        pages[nPages].dwFlags = PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
+        pages[nPages].pszHeaderTitle =
+         MAKEINTRESOURCEW(IDS_EXPORT_FORMAT_TITLE);
+        pages[nPages].pszHeaderSubTitle =
+         MAKEINTRESOURCEW(IDS_EXPORT_FORMAT_SUBTITLE);
+        pages[nPages].lParam = (LPARAM)&data;
+        nPages++;
+    }
 
     pages[nPages].dwSize = sizeof(pages[0]);
     pages[nPages].hInstance = hInstance;
