@@ -2786,6 +2786,12 @@ static void test_mouse_input(HWND hwnd)
 
     ret = wait_for_message( &msg );
     ok(ret, "no message available\n");
+    if (msg.message == WM_MOUSEMOVE)  /* win2k has an extra WM_MOUSEMOVE here */
+    {
+        ret = wait_for_message( &msg );
+        ok(ret, "no message available\n");
+    }
+
     ok(msg.hwnd == popup && msg.message == WM_LBUTTONDOWN, "hwnd %p/%p message %04x\n",
        msg.hwnd, popup, msg.message);
 
@@ -3795,6 +3801,7 @@ static void test_csparentdc(void)
    ShowWindow(hwndMain, SW_SHOW);
    ShowWindow(hwnd1, SW_SHOW);
    ShowWindow(hwnd2, SW_SHOW);
+   SetWindowPos(hwndMain, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
    flush_events( TRUE );
 
    zero_parentdc_test(&test_answer);
