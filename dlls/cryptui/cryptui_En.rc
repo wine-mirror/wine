@@ -147,6 +147,12 @@ STRINGTABLE DISCARDABLE
     IDS_EXPORT_FILE_TITLE "Export Filename"
     IDS_EXPORT_FILE_SUBTITLE "Specify the name of the file in which the content will be saved."
     IDS_EXPORT_FILE_EXISTS "The specified file already exists.  Do you want to replace it?"
+    IDS_EXPORT_FILTER_CERT "DER-Encoded Binary X.509 (*.cer)"
+    IDS_EXPORT_FILTER_BASE64_CERT "Base64-Encoded X.509 (*.cer)"
+    IDS_EXPORT_FILTER_CRL "Certificate Revocation List (*.crl)"
+    IDS_EXPORT_FILTER_CTL "Certificate Trust List (*.stl)"
+    IDS_EXPORT_FILTER_CMS "CMS/PKCS #7 Messages (*.p7b)"
+    IDS_EXPORT_FILTER_PFX "Personal Information Exchange (*.pfx)"
 }
 
 IDD_GENERAL DIALOG DISCARDABLE 0, 0, 255, 236

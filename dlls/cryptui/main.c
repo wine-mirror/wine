@@ -5718,6 +5718,74 @@ static BOOL export_validate_filename(HWND hwnd, struct ExportWizData *data,
     return ret;
 }
 
+static const WCHAR export_filter_cert[] = { '*','.','c','e','r',0 };
+static const WCHAR export_filter_crl[] = { '*','.','c','r','l',0 };
+static const WCHAR export_filter_ctl[] = { '*','.','s','t','l',0 };
+static const WCHAR export_filter_cms[] = { '*','.','p','7','b',0 };
+static const WCHAR export_filter_pfx[] = { '*','.','p','f','x',0 };
+
+static WCHAR *make_export_file_filter(DWORD exportFormat, DWORD subjectChoice)
+{
+    int baseLen, allLen, totalLen = 2, baseID;
+    LPWSTR filter = NULL, baseFilter, all;
+    LPCWSTR filterStr;
+
+    switch (exportFormat)
+    {
+    case CRYPTUI_WIZ_EXPORT_FORMAT_BASE64:
+        baseID = IDS_EXPORT_FILTER_BASE64_CERT;
+        filterStr = export_filter_cert;
+        break;
+    case CRYPTUI_WIZ_EXPORT_FORMAT_PFX:
+        baseID = IDS_EXPORT_FILTER_PFX;
+        filterStr = export_filter_pfx;
+        break;
+    case CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7:
+        baseID = IDS_EXPORT_FILTER_CMS;
+        filterStr = export_filter_cms;
+        break;
+    default:
+        switch (subjectChoice)
+        {
+        case CRYPTUI_WIZ_EXPORT_CRL_CONTEXT:
+            baseID = IDS_EXPORT_FILTER_CRL;
+            filterStr = export_filter_crl;
+            break;
+        case CRYPTUI_WIZ_EXPORT_CTL_CONTEXT:
+            baseID = IDS_EXPORT_FILTER_CTL;
+            filterStr = export_filter_ctl;
+            break;
+        default:
+            baseID = IDS_EXPORT_FILTER_CERT;
+            filterStr = export_filter_cert;
+            break;
+        }
+    }
+    baseLen = LoadStringW(hInstance, baseID, (LPWSTR)&baseFilter, 0);
+    totalLen += baseLen + strlenW(filterStr) + 2;
+    allLen = LoadStringW(hInstance, IDS_IMPORT_FILTER_ALL, (LPWSTR)&all, 0);
+    totalLen += allLen + strlenW(filter_all) + 2;
+    filter = HeapAlloc(GetProcessHeap(), 0, totalLen * sizeof(WCHAR));
+    if (filter)
+    {
+        LPWSTR ptr;
+
+        ptr = filter;
+        memcpy(ptr, baseFilter, baseLen * sizeof(WCHAR));
+        ptr += baseLen;
+        *ptr++ = 0;
+        strcpyW(ptr, filterStr);
+        ptr += strlenW(filterStr) + 1;
+        memcpy(ptr, all, allLen * sizeof(WCHAR));
+        ptr += allLen;
+        *ptr++ = 0;
+        strcpyW(ptr, filter_all);
+        ptr += strlenW(filter_all) + 1;
+        *ptr++ = 0;
+    }
+    return filter;
+}
+
 static LRESULT CALLBACK export_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
@@ -5808,6 +5876,31 @@ static LRESULT CALLBACK export_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         }
         break;
     }
+    case WM_COMMAND:
+        switch (wp)
+        {
+        case IDC_EXPORT_BROWSE_FILE:
+        {
+            OPENFILENAMEW ofn;
+            WCHAR fileBuf[MAX_PATH];
+
+            data = (struct ExportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
+            memset(&ofn, 0, sizeof(ofn));
+            ofn.lStructSize = sizeof(ofn);
+            ofn.hwndOwner = hwnd;
+            ofn.lpstrFilter = make_export_file_filter(data->exportFormat,
+             data->pExportInfo->dwSubjectChoice);
+            ofn.lpstrFile = fileBuf;
+            ofn.nMaxFile = sizeof(fileBuf) / sizeof(fileBuf[0]);
+            fileBuf[0] = 0;
+            if (GetSaveFileNameW(&ofn))
+                SendMessageW(GetDlgItem(hwnd, IDC_EXPORT_FILENAME), WM_SETTEXT,
+                 0, (LPARAM)ofn.lpstrFile);
+            HeapFree(GetProcessHeap(), 0, (LPWSTR)ofn.lpstrFilter);
+            break;
+        }
+        }
+        break;
     }
     return ret;
 }
