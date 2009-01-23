@@ -7965,6 +7965,9 @@ cat >>conftest.$ac_ext <<_ACEOF
      #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
      #endif
+     #ifdef HAVE_NETINET_IN_SYSTM_H
+     # include <netinet/in_systm.h>
+     #endif
      #ifdef HAVE_NETINET_IP_H
      # include <netinet/ip.h>
      #endif
@@ -8019,7 +8022,7 @@ done
 
 
 
-for ac_header in netinet/tcp_var.h netinet/udp_var.h netinet/icmp_var.h netinet/tcp_timer.h
+for ac_header in netinet/tcp_timer.h netinet/udp_var.h netinet/icmp_var.h netinet/tcp_var.h
 do
 as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 { $as_echo "$as_me:$LINENO: checking for $ac_header" >&5
@@ -8046,6 +8049,9 @@ cat >>conftest.$ac_ext <<_ACEOF
      #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
      #endif
+     #ifdef HAVE_NETINET_IN_SYSTM_H
+     # include <netinet/in_systm.h>
+     #endif
      #ifdef HAVE_NETINET_IP_H
      # include <netinet/ip.h>
      #endif
@@ -8060,6 +8066,9 @@ cat >>conftest.$ac_ext <<_ACEOF
      #endif
      #ifdef HAVE_NETINET_TCP_H
      # include <netinet/tcp.h>
+     #endif
+     #ifdef HAVE_NETINET_TCP_TIMER_H
+     #include <netinet/tcp_timer.h>
      #endif
 
 #include <$ac_header>

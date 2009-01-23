@@ -402,11 +402,14 @@ AC_CHECK_HEADERS(\
      #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
      #endif
+     #ifdef HAVE_NETINET_IN_SYSTM_H
+     # include <netinet/in_systm.h>
+     #endif
      #ifdef HAVE_NETINET_IP_H
      # include <netinet/ip.h>
      #endif])
 
-AC_CHECK_HEADERS([netinet/tcp_var.h netinet/udp_var.h netinet/icmp_var.h netinet/tcp_timer.h ],,,
+AC_CHECK_HEADERS([netinet/tcp_timer.h netinet/udp_var.h netinet/icmp_var.h netinet/tcp_var.h ],,,
     [#include <sys/types.h>
      #ifdef HAVE_ALIAS_H
      # include <alias.h>
@@ -419,6 +422,9 @@ AC_CHECK_HEADERS([netinet/tcp_var.h netinet/udp_var.h netinet/icmp_var.h netinet
      #endif
      #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
+     #endif
+     #ifdef HAVE_NETINET_IN_SYSTM_H
+     # include <netinet/in_systm.h>
      #endif
      #ifdef HAVE_NETINET_IP_H
      # include <netinet/ip.h>
@@ -434,6 +440,9 @@ AC_CHECK_HEADERS([netinet/tcp_var.h netinet/udp_var.h netinet/icmp_var.h netinet
      #endif
      #ifdef HAVE_NETINET_TCP_H
      # include <netinet/tcp.h>
+     #endif
+     #ifdef HAVE_NETINET_TCP_TIMER_H
+     #include <netinet/tcp_timer.h>
      #endif])
 
 AC_CHECK_HEADERS([linux/ipx.h],,,
