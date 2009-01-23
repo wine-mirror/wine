@@ -26128,6 +26128,14 @@ dlls/rasapi32/tests/Makefile: dlls/rasapi32/tests/Makefile.in dlls/Maketest.rule
 ac_config_files="$ac_config_files dlls/rasapi32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/rasdlg/Makefile"
+test "x$enable_rasdlg" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	rasdlg"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/rasdlg/Makefile: dlls/rasdlg/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/rasdlg/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/resutils/Makefile"
 test "x$enable_resutils" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	resutils"
@@ -28489,6 +28497,7 @@ do
     "dlls/query/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/query/Makefile" ;;
     "dlls/rasapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rasapi32/Makefile" ;;
     "dlls/rasapi32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rasapi32/tests/Makefile" ;;
+    "dlls/rasdlg/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rasdlg/Makefile" ;;
     "dlls/resutils/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/resutils/Makefile" ;;
     "dlls/riched20/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/riched20/Makefile" ;;
     "dlls/riched20/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/riched20/tests/Makefile" ;;

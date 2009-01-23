@@ -271,6 +271,7 @@ IMPORT_LIBS = \
 	psapi/libpsapi.$(IMPLIBEXT) \
 	quartz/libquartz.$(IMPLIBEXT) \
 	rasapi32/librasapi32.$(IMPLIBEXT) \
+	rasdlg/librasdlg.$(IMPLIBEXT) \
 	resutils/libresutils.$(IMPLIBEXT) \
 	riched20/libriched20.$(IMPLIBEXT) \
 	rpcrt4/librpcrt4.$(IMPLIBEXT) \
@@ -413,6 +414,7 @@ CROSS_IMPLIBS = \
 	psapi/libpsapi.a \
 	quartz/libquartz.a \
 	rasapi32/librasapi32.a \
+	rasdlg/librasdlg.a \
 	resutils/libresutils.a \
 	riched20/libriched20.a \
 	rpcrt4/librpcrt4.a \
@@ -748,6 +750,9 @@ quartz/libquartz.def quartz/libquartz.a: quartz/quartz.spec $(WINEBUILD)
 
 rasapi32/librasapi32.def rasapi32/librasapi32.a: rasapi32/rasapi32.spec $(WINEBUILD)
 	@cd rasapi32 && $(MAKE) `basename $@`
+
+rasdlg/librasdlg.def rasdlg/librasdlg.a: rasdlg/rasdlg.spec $(WINEBUILD)
+	@cd rasdlg && $(MAKE) `basename $@`
 
 resutils/libresutils.def resutils/libresutils.a: resutils/resutils.spec $(WINEBUILD)
 	@cd resutils && $(MAKE) `basename $@`
