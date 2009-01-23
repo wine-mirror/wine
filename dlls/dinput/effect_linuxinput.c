@@ -380,7 +380,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_GetParameters(
     }
 
     if (dwFlags & DIEP_GAIN) {
-	peff->dwGain = This->gain;
+	peff->dwGain = This->gain * 10000 / 0xFFFF;
     }
 
     if (dwFlags & DIEP_SAMPLEPERIOD) {
@@ -628,7 +628,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
     /* Gain and Sample Period settings are not supported by the linux
      * event system */
     if (dwFlags & DIEP_GAIN)
-	This->gain = 0xFFFF * peff->dwGain / 1000;
+	This->gain = 0xFFFF * peff->dwGain / 10000;
 
     if (dwFlags & DIEP_SAMPLEPERIOD)
 	TRACE("Sample period requested but no sample period functionality present.\n");
@@ -792,6 +792,7 @@ HRESULT linuxinput_create_effect(
     newEffect->ref = 1;
     newEffect->guid = *rguid;
     newEffect->fd = fd;
+    newEffect->gain = 0xFFFF;
 
     /* set the type.  this cannot be changed over the effect's life. */
     switch (type) {
