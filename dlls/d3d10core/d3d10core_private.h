@@ -62,6 +62,16 @@ struct d3d10_texture2d
     IWineD3DSurface *wined3d_surface;
 };
 
+/* ID3D10RenderTargetView */
+extern const struct ID3D10RenderTargetViewVtbl d3d10_rendertarget_view_vtbl;
+struct d3d10_rendertarget_view
+{
+    const struct ID3D10RenderTargetViewVtbl *vtbl;
+    LONG refcount;
+
+    ID3D10Resource *resource;
+};
+
 /* Layered device */
 enum dxgi_device_layer_id
 {
