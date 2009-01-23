@@ -4277,10 +4277,11 @@ static void streamsrc(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
             load_numbered = TRUE;
             device->useDrawStridedSlow = FALSE;
         }
-    } else if (fixup || GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) ||
-               (dataLocations->u.s.pSize.lpData == NULL &&
-                dataLocations->u.s.diffuse.lpData == NULL &&
-                dataLocations->u.s.specular.lpData == NULL)) {
+    } else if (fixup || (!dataLocations->u.s.pSize.lpData
+            && (GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA)
+            || (!dataLocations->u.s.diffuse.lpData
+            && !dataLocations->u.s.specular.lpData))))
+    {
         /* Load the vertex data using named arrays */
         load_named = TRUE;
         device->useDrawStridedSlow = FALSE;
