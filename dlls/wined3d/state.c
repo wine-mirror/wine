@@ -3925,8 +3925,18 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock,
                 case WINED3DDECLTYPE_UBYTE4:
                     GL_EXTCALL(glVertexAttrib4NubvARB(i, ptr));
                     break;
-                case WINED3DDECLTYPE_UBYTE4N:
                 case WINED3DDECLTYPE_D3DCOLOR:
+                    if (GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA))
+                    {
+                        const DWORD *src = (const DWORD *)ptr;
+                        DWORD c = *src & 0xff00ff00;
+                        c |= (*src & 0xff0000) >> 16;
+                        c |= (*src & 0xff) << 16;
+                        GL_EXTCALL(glVertexAttrib4NubvARB(i, (GLubyte *)&c));
+                        break;
+                    }
+                    /* else fallthrough */
+                case WINED3DDECLTYPE_UBYTE4N:
                     GL_EXTCALL(glVertexAttrib4NubvARB(i, ptr));
                     break;
 

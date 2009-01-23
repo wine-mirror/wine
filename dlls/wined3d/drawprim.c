@@ -534,8 +534,18 @@ static inline void send_attribute(IWineD3DDeviceImpl *This, const DWORD type, co
         case WINED3DDECLTYPE_UBYTE4:
             GL_EXTCALL(glVertexAttrib4ubvARB(index, ptr));
             break;
-        case WINED3DDECLTYPE_UBYTE4N:
         case WINED3DDECLTYPE_D3DCOLOR:
+            if (GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA))
+            {
+                const DWORD *src = ptr;
+                DWORD c = *src & 0xff00ff00;
+                c |= (*src & 0xff0000) >> 16;
+                c |= (*src & 0xff) << 16;
+                GL_EXTCALL(glVertexAttrib4NubvARB(index, (GLubyte *)&c));
+                break;
+            }
+            /* else fallthrough */
+        case WINED3DDECLTYPE_UBYTE4N:
             GL_EXTCALL(glVertexAttrib4NubvARB(index, ptr));
             break;
 
