@@ -5905,6 +5905,92 @@ static LRESULT CALLBACK export_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
     return ret;
 }
 
+static void show_export_details(HWND lv, struct ExportWizData *data)
+{
+    WCHAR text[MAX_STRING_LEN];
+    LVITEMW item;
+    int contentID;
+
+    item.mask = LVIF_TEXT;
+    if (data->fileName)
+    {
+        item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
+        item.iSubItem = 0;
+        LoadStringW(hInstance, IDS_IMPORT_FILE, text,
+         sizeof(text)/ sizeof(text[0]));
+        item.pszText = text;
+        SendMessageW(lv, LVM_INSERTITEMW, 0, (LPARAM)&item);
+        item.iSubItem = 1;
+        item.pszText = data->fileName;
+        SendMessageW(lv, LVM_SETITEMTEXTW, item.iItem, (LPARAM)&item);
+    }
+
+    item.pszText = text;
+    switch (data->pExportInfo->dwSubjectChoice)
+    {
+    case CRYPTUI_WIZ_EXPORT_CRL_CONTEXT:
+    case CRYPTUI_WIZ_EXPORT_CTL_CONTEXT:
+        /* do nothing */
+        break;
+    default:
+    {
+        item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
+        item.iSubItem = 0;
+        LoadStringW(hInstance, IDS_EXPORT_INCLUDE_CHAIN, text,
+         sizeof(text) / sizeof(text[0]));
+        SendMessageW(lv, LVM_INSERTITEMW, item.iItem, (LPARAM)&item);
+        item.iSubItem = 1;
+        LoadStringW(hInstance, data->includeChain ? IDS_YES : IDS_NO, text,
+         sizeof(text) / sizeof(text[0]));
+        SendMessageW(lv, LVM_SETITEMTEXTW, item.iItem, (LPARAM)&item);
+
+        item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
+        item.iSubItem = 0;
+        LoadStringW(hInstance, IDS_EXPORT_KEYS, text,
+         sizeof(text) / sizeof(text[0]));
+        SendMessageW(lv, LVM_INSERTITEMW, item.iItem, (LPARAM)&item);
+        item.iSubItem = 1;
+        LoadStringW(hInstance, data->deletePrivateKey ? IDS_YES : IDS_NO, text,
+         sizeof(text) / sizeof(text[0]));
+        SendMessageW(lv, LVM_SETITEMTEXTW, item.iItem, (LPARAM)&item);
+    }
+    }
+
+    item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
+    item.iSubItem = 0;
+    LoadStringW(hInstance, IDS_EXPORT_FORMAT, text,
+     sizeof(text)/ sizeof(text[0]));
+    SendMessageW(lv, LVM_INSERTITEMW, 0, (LPARAM)&item);
+
+    item.iSubItem = 1;
+    switch (data->pExportInfo->dwSubjectChoice)
+    {
+    case CRYPTUI_WIZ_EXPORT_CRL_CONTEXT:
+        contentID = IDS_EXPORT_FILTER_CRL;
+        break;
+    case CRYPTUI_WIZ_EXPORT_CTL_CONTEXT:
+        contentID = IDS_EXPORT_FILTER_CTL;
+        break;
+    default:
+        switch (data->exportFormat)
+        {
+        case CRYPTUI_WIZ_EXPORT_FORMAT_BASE64:
+            contentID = IDS_EXPORT_FILTER_BASE64_CERT;
+            break;
+        case CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7:
+            contentID = IDS_EXPORT_FILTER_CMS;
+            break;
+        case CRYPTUI_WIZ_EXPORT_FORMAT_PFX:
+            contentID = IDS_EXPORT_FILTER_PFX;
+            break;
+        default:
+            contentID = IDS_EXPORT_FILTER_CERT;
+        }
+    }
+    LoadStringW(hInstance, contentID, text, sizeof(text) / sizeof(text[0]));
+    SendMessageW(lv, LVM_SETITEMTEXTW, item.iItem, (LPARAM)&item);
+}
+
 static LRESULT CALLBACK export_finish_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
@@ -5929,6 +6015,7 @@ static LRESULT CALLBACK export_finish_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         column.cx = (rc.right - rc.left) / 2 - 2;
         SendMessageW(lv, LVM_INSERTCOLUMNW, 0, (LPARAM)&column);
         SendMessageW(lv, LVM_INSERTCOLUMNW, 1, (LPARAM)&column);
+        show_export_details(lv, data);
         break;
     }
     case WM_NOTIFY:
@@ -5943,6 +6030,7 @@ static LRESULT CALLBACK export_finish_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
 
             data = (struct ExportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
             SendMessageW(lv, LVM_DELETEALLITEMS, 0, 0);
+            show_export_details(lv, data);
             PostMessageW(GetParent(hwnd), PSM_SETWIZBUTTONS, 0,
              PSWIZB_BACK | PSWIZB_FINISH);
             ret = TRUE;
