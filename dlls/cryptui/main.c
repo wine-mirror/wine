@@ -5436,10 +5436,266 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
     return ret;
 }
 
+struct ExportWizData
+{
+    HFONT titleFont;
+    DWORD dwFlags;
+    LPCWSTR pwszWizardTitle;
+    PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo;
+    void *pvoid;
+};
+
+static LRESULT CALLBACK export_welcome_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+ LPARAM lp)
+{
+    LRESULT ret = 0;
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+    {
+        struct ExportWizData *data;
+        PROPSHEETPAGEW *page = (PROPSHEETPAGEW *)lp;
+        WCHAR fontFace[MAX_STRING_LEN];
+        HDC hDC = GetDC(hwnd);
+        int height;
+
+        data = (struct ExportWizData *)page->lParam;
+        LoadStringW(hInstance, IDS_WIZARD_TITLE_FONT, fontFace,
+         sizeof(fontFace) / sizeof(fontFace[0]));
+        height = -MulDiv(12, GetDeviceCaps(hDC, LOGPIXELSY), 72);
+        data->titleFont = CreateFontW(height, 0, 0, 0, FW_BOLD, 0, 0, 0,
+         DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+         DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, fontFace);
+        SendMessageW(GetDlgItem(hwnd, IDC_EXPORT_TITLE), WM_SETFONT,
+         (WPARAM)data->titleFont, TRUE);
+        ReleaseDC(hwnd, hDC);
+        break;
+    }
+    case WM_NOTIFY:
+    {
+        NMHDR *hdr = (NMHDR *)lp;
+
+        switch (hdr->code)
+        {
+        case PSN_SETACTIVE:
+            PostMessageW(GetParent(hwnd), PSM_SETWIZBUTTONS, 0, PSWIZB_NEXT);
+            ret = TRUE;
+            break;
+        }
+        break;
+    }
+    }
+    return ret;
+}
+
+static LRESULT CALLBACK export_format_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+ LPARAM lp)
+{
+    LRESULT ret = 0;
+    struct ExportWizData *data;
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+    {
+        PROPSHEETPAGEW *page = (PROPSHEETPAGEW *)lp;
+
+        data = (struct ExportWizData *)page->lParam;
+        SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
+        SendMessageW(GetDlgItem(hwnd, IDC_EXPORT_FORMAT_DER), BM_CLICK, 0, 0);
+        break;
+    }
+    case WM_NOTIFY:
+    {
+        NMHDR *hdr = (NMHDR *)lp;
+
+        switch (hdr->code)
+        {
+        case PSN_SETACTIVE:
+            PostMessageW(GetParent(hwnd), PSM_SETWIZBUTTONS, 0,
+             PSWIZB_BACK | PSWIZB_NEXT);
+            ret = TRUE;
+            break;
+        }
+        break;
+    }
+    }
+    return ret;
+}
+
+static LRESULT CALLBACK export_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+ LPARAM lp)
+{
+    LRESULT ret = 0;
+    struct ExportWizData *data;
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+    {
+        PROPSHEETPAGEW *page = (PROPSHEETPAGEW *)lp;
+
+        data = (struct ExportWizData *)page->lParam;
+        SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
+        break;
+    }
+    case WM_NOTIFY:
+    {
+        NMHDR *hdr = (NMHDR *)lp;
+
+        switch (hdr->code)
+        {
+        case PSN_SETACTIVE:
+            PostMessageW(GetParent(hwnd), PSM_SETWIZBUTTONS, 0,
+             PSWIZB_BACK | PSWIZB_NEXT);
+            ret = TRUE;
+            break;
+        }
+        break;
+    }
+    }
+    return ret;
+}
+
+static LRESULT CALLBACK export_finish_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+ LPARAM lp)
+{
+    LRESULT ret = 0;
+    struct ExportWizData *data;
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+    {
+        PROPSHEETPAGEW *page = (PROPSHEETPAGEW *)lp;
+        HWND lv = GetDlgItem(hwnd, IDC_EXPORT_SETTINGS);
+        RECT rc;
+        LVCOLUMNW column;
+
+        data = (struct ExportWizData *)page->lParam;
+        SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
+        SendMessageW(GetDlgItem(hwnd, IDC_EXPORT_TITLE), WM_SETFONT,
+         (WPARAM)data->titleFont, TRUE);
+        GetWindowRect(lv, &rc);
+        column.mask = LVCF_WIDTH;
+        column.cx = (rc.right - rc.left) / 2 - 2;
+        SendMessageW(lv, LVM_INSERTCOLUMNW, 0, (LPARAM)&column);
+        SendMessageW(lv, LVM_INSERTCOLUMNW, 1, (LPARAM)&column);
+        break;
+    }
+    case WM_NOTIFY:
+    {
+        NMHDR *hdr = (NMHDR *)lp;
+
+        switch (hdr->code)
+        {
+        case PSN_SETACTIVE:
+        {
+            HWND lv = GetDlgItem(hwnd, IDC_EXPORT_SETTINGS);
+
+            data = (struct ExportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
+            SendMessageW(lv, LVM_DELETEALLITEMS, 0, 0);
+            PostMessageW(GetParent(hwnd), PSM_SETWIZBUTTONS, 0,
+             PSWIZB_BACK | PSWIZB_FINISH);
+            ret = TRUE;
+            break;
+        }
+        }
+        break;
+    }
+    }
+    return ret;
+}
+
+static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
+ LPCWSTR pwszWizardTitle, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo, void *pvoid)
+{
+    PROPSHEETHEADERW hdr;
+    PROPSHEETPAGEW pages[4];
+    struct ExportWizData data;
+    int nPages = 0;
+
+    data.dwFlags = dwFlags;
+    data.pwszWizardTitle = pwszWizardTitle;
+    data.pExportInfo = pExportInfo;
+    data.pvoid = pvoid;
+
+    memset(&pages, 0, sizeof(pages));
+
+    pages[nPages].dwSize = sizeof(pages[0]);
+    pages[nPages].hInstance = hInstance;
+    pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_WELCOME);
+    pages[nPages].pfnDlgProc = export_welcome_dlg_proc;
+    pages[nPages].dwFlags = PSP_HIDEHEADER;
+    pages[nPages].lParam = (LPARAM)&data;
+    nPages++;
+
+    pages[nPages].dwSize = sizeof(pages[0]);
+    pages[nPages].hInstance = hInstance;
+    pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_FORMAT);
+    pages[nPages].pfnDlgProc = export_format_dlg_proc;
+    pages[nPages].dwFlags = PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
+    pages[nPages].pszHeaderTitle =
+     MAKEINTRESOURCEW(IDS_EXPORT_FORMAT_TITLE);
+    pages[nPages].pszHeaderSubTitle =
+     MAKEINTRESOURCEW(IDS_EXPORT_FORMAT_SUBTITLE);
+    pages[nPages].lParam = (LPARAM)&data;
+    nPages++;
+
+    pages[nPages].dwSize = sizeof(pages[0]);
+    pages[nPages].hInstance = hInstance;
+    pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_FILE);
+    pages[nPages].pfnDlgProc = export_file_dlg_proc;
+    pages[nPages].dwFlags = PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
+    pages[nPages].pszHeaderTitle = MAKEINTRESOURCEW(IDS_EXPORT_FILE_TITLE);
+    pages[nPages].pszHeaderSubTitle =
+     MAKEINTRESOURCEW(IDS_EXPORT_FILE_SUBTITLE);
+    pages[nPages].lParam = (LPARAM)&data;
+    nPages++;
+
+    pages[nPages].dwSize = sizeof(pages[0]);
+    pages[nPages].hInstance = hInstance;
+    pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_FINISH);
+    pages[nPages].pfnDlgProc = export_finish_dlg_proc;
+    pages[nPages].dwFlags = PSP_HIDEHEADER;
+    pages[nPages].lParam = (LPARAM)&data;
+    nPages++;
+
+    memset(&hdr, 0, sizeof(hdr));
+    hdr.dwSize = sizeof(hdr);
+    hdr.hwndParent = hwndParent;
+    hdr.dwFlags = PSH_PROPSHEETPAGE | PSH_WIZARD97_NEW | PSH_HEADER |
+     PSH_WATERMARK;
+    hdr.hInstance = hInstance;
+    if (pwszWizardTitle)
+        hdr.pszCaption = pwszWizardTitle;
+    else
+        hdr.pszCaption = MAKEINTRESOURCEW(IDS_EXPORT_WIZARD);
+    hdr.u3.ppsp = pages;
+    hdr.nPages = nPages;
+    hdr.u4.pszbmWatermark = MAKEINTRESOURCEW(IDB_CERT_WATERMARK);
+    hdr.u5.pszbmHeader = MAKEINTRESOURCEW(IDB_CERT_HEADER);
+    PropertySheetW(&hdr);
+    DeleteObject(data.titleFont);
+    return FALSE;
+}
+
 BOOL WINAPI CryptUIWizExport(DWORD dwFlags, HWND hwndParent,
  LPCWSTR pwszWizardTitle, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo, void *pvoid)
 {
-    FIXME("(%08x, %p, %s, %p, %p): stub\n", dwFlags, hwndParent,
+    BOOL ret;
+
+    TRACE("(%08x, %p, %s, %p, %p)\n", dwFlags, hwndParent,
      debugstr_w(pwszWizardTitle), pExportInfo, pvoid);
-    return FALSE;
+
+    if (!(dwFlags & CRYPTUI_WIZ_NO_UI))
+        ret = show_export_ui(dwFlags, hwndParent, pwszWizardTitle, pExportInfo,
+         pvoid);
+    else
+    {
+        FIXME("stub\n");
+        ret = FALSE;
+    }
+    return ret;
 }
