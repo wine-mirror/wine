@@ -582,7 +582,7 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
         break;
 
     case DISPID_SETSECURELOCKICON:
-        CHECK_EXPECT(Invoke_SETSECURELOCKICON);
+        CHECK_EXPECT2(Invoke_SETSECURELOCKICON);
 
         ok(pDispParams->rgvarg != NULL, "rgvarg == NULL\n");
         ok(pDispParams->cArgs == 1, "cArgs=%d, expected 1\n", pDispParams->cArgs);
@@ -1081,10 +1081,10 @@ static HRESULT WINAPI DocHostUIHandler_ShowContextMenu(IDocHostUIHandler2 *iface
 
 static HRESULT WINAPI DocHostUIHandler_GetHostInfo(IDocHostUIHandler2 *iface, DOCHOSTUIINFO *pInfo)
 {
-    CHECK_EXPECT(GetHostInfo);
+    CHECK_EXPECT2(GetHostInfo);
     ok(pInfo != NULL, "pInfo=NULL\n");
     if(pInfo) {
-        ok(pInfo->cbSize == sizeof(DOCHOSTUIINFO), "pInfo->cbSize=%u\n", pInfo->cbSize);
+        ok(pInfo->cbSize == sizeof(DOCHOSTUIINFO) || broken(!pInfo->cbSize), "pInfo->cbSize=%u\n", pInfo->cbSize);
         ok(!pInfo->dwFlags, "pInfo->dwFlags=%08x, expected 0\n", pInfo->dwFlags);
         ok(!pInfo->dwDoubleClick, "pInfo->dwDoubleClick=%08x, expected 0\n", pInfo->dwDoubleClick);
         ok(!pInfo->pchHostCss, "pInfo->pchHostCss=%p, expected NULL\n", pInfo->pchHostCss);
