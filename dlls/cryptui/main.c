@@ -5444,6 +5444,9 @@ struct ExportWizData
     PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo;
     void *pvoid;
     DWORD exportFormat;
+    BOOL includeChain;
+    BOOL strongEncryption;
+    BOOL deletePrivateKey;
 };
 
 static LRESULT CALLBACK export_welcome_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
@@ -5518,6 +5521,31 @@ static LRESULT CALLBACK export_format_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
              PSWIZB_BACK | PSWIZB_NEXT);
             ret = TRUE;
             break;
+        case PSN_WIZNEXT:
+        {
+            data = (struct ExportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
+            if (IsDlgButtonChecked(hwnd, IDC_EXPORT_FORMAT_DER))
+                data->exportFormat = CRYPTUI_WIZ_EXPORT_FORMAT_DER;
+            else if (IsDlgButtonChecked(hwnd, IDC_EXPORT_FORMAT_BASE64))
+                data->exportFormat = CRYPTUI_WIZ_EXPORT_FORMAT_BASE64;
+            else if (IsDlgButtonChecked(hwnd, IDC_EXPORT_FORMAT_CMS))
+            {
+                data->exportFormat = CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7;
+                if (IsDlgButtonChecked(hwnd, IDC_EXPORT_CMS_INCLUDE_CHAIN))
+                    data->includeChain = TRUE;
+            }
+            else
+            {
+                data->exportFormat = CRYPTUI_WIZ_EXPORT_FORMAT_PFX;
+                if (IsDlgButtonChecked(hwnd, IDC_EXPORT_PFX_INCLUDE_CHAIN))
+                    data->includeChain = TRUE;
+                if (IsDlgButtonChecked(hwnd, IDC_EXPORT_PFX_STRONG_ENCRYPTION))
+                    data->strongEncryption = TRUE;
+                if (IsDlgButtonChecked(hwnd, IDC_EXPORT_PFX_DELETE_PRIVATE_KEY))
+                    data->deletePrivateKey = TRUE;
+            }
+            break;
+        }
         }
         break;
     }
@@ -5623,6 +5651,9 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     data.pExportInfo = pExportInfo;
     data.pvoid = pvoid;
     data.exportFormat = 0;
+    data.includeChain = FALSE;
+    data.strongEncryption = FALSE;
+    data.deletePrivateKey = FALSE;
 
     memset(&pages, 0, sizeof(pages));
 
