@@ -450,11 +450,11 @@ static HRESULT WINAPI IEnumDMO_fnQueryInterface(
     if(IsEqualIID(riid, &IID_IUnknown))
         *ppvObj = This;
     else if(IsEqualIID(riid, &IID_IEnumDMO))
-        *ppvObj = (IEnumDMO*)This;
+        *ppvObj = This;
 
     if(*ppvObj)
     {
-        IEnumDMO_fnAddRef((IEnumDMO*)*ppvObj);
+        IEnumDMO_fnAddRef(*ppvObj);
         return S_OK;
     }
 
