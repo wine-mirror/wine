@@ -4278,6 +4278,7 @@ static void streamsrc(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
             device->useDrawStridedSlow = FALSE;
         }
     } else if (fixup || (!dataLocations->u.s.pSize.lpData
+            && !dataLocations->position_transformed
             && (GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA)
             || (!dataLocations->u.s.diffuse.lpData
             && !dataLocations->u.s.specular.lpData))))
