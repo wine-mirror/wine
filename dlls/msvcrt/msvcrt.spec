@@ -358,7 +358,7 @@
 @ cdecl _mbbtype(long long)
 # extern _mbcasemap
 @ cdecl _mbccpy (str str)
-@ stub _mbcjistojms #(long)
+@ cdecl _mbcjistojms (long)
 @ stub _mbcjmstojis #(long)
 @ cdecl _mbclen(ptr)
 @ stub _mbctohira #(long)

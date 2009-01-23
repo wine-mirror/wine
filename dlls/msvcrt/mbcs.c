@@ -318,6 +318,42 @@ unsigned int CDECL _mbctoupper(unsigned int c)
 }
 
 /*********************************************************************
+ *		_mbcjistojms(MSVCRT.@)
+ *
+ *		Converts a jis character to sjis.
+ *		Based on description from
+ *		http://www.slayers.ne.jp/~oouchi/code/jistosjis.html
+ */
+unsigned int CDECL _mbcjistojms(unsigned int c)
+{
+  /* Conversion takes place only when codepage is 932.
+     In all other cases, c is returned unchanged */
+  if(MSVCRT___lc_codepage == 932)
+  {
+    if(HIBYTE(c) >= 0x21 && HIBYTE(c) <= 0x7e &&
+       LOBYTE(c) >= 0x21 && LOBYTE(c) <= 0x7e)
+    {
+      if(HIBYTE(c) % 2)
+        c += 0x1f;
+      else
+        c += 0x7d;
+
+      if(LOBYTE(c) > 0x7F)
+        c += 0x1;
+
+      c = (((HIBYTE(c) - 0x21)/2 + 0x81) << 8) | LOBYTE(c);
+
+      if(HIBYTE(c) > 0x9f)
+        c += 0x4000;
+    }
+    else
+      return 0; /* Codepage is 932, but c can't be converted */
+  }
+
+  return c;
+}
+
+/*********************************************************************
  *		_mbsdec(MSVCRT.@)
  */
 unsigned char* CDECL _mbsdec(const unsigned char* start, const unsigned char* cur)

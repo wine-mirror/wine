@@ -597,6 +597,28 @@ static void test_wcscpy_s(void)
     ok(szDestShort[0] == 0, "szDestShort[0] not 0\n");
 }
 
+static void test_mbcjisjms(void)
+{
+    /* List of value-pairs to test. The test assumes the last pair to be {0, ..} */
+    unsigned int jisjms[][2] = { {0x2020, 0}, {0x2021, 0}, {0x2120, 0}, {0x2121, 0x8140},
+                                 {0x7f7f, 0}, {0x7f7e, 0}, {0x7e7f, 0}, {0x7e7e, 0xeffc},
+                                 {0x2121FFFF, 0}, {0x2223, 0x81a1}, {0x237e, 0x829e}, {0, 0}};
+    unsigned int ret, exp, i;
+
+    i = 0;
+    do
+    {
+        ret = _mbcjistojms(jisjms[i][0]);
+
+        if(_getmbcp() == 932)   /* Japanese codepage? */
+            exp = jisjms[i][1];
+        else
+            exp = jisjms[i][0]; /* If not, no conversion */
+
+        ok(ret == exp, "Expected 0x%x, got 0x%x\n", exp, ret);
+    } while(jisjms[i++][0] != 0);
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -637,6 +659,7 @@ START_TEST(string)
     test_strcpy_s();
     test_strcat_s();
     test__mbsnbcpy_s();
+    test_mbcjisjms();
 
     test_wcscpy_s();
 }
