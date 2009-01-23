@@ -146,6 +146,7 @@ STRINGTABLE DISCARDABLE
     IDS_EXPORT_FORMAT_SUBTITLE "Choose the format in which the content will be saved."
     IDS_EXPORT_FILE_TITLE "Export Filename"
     IDS_EXPORT_FILE_SUBTITLE "Specify the name of the file in which the content will be saved."
+    IDS_EXPORT_FILE_EXISTS "The specified file already exists.  Do you want to replace it?"
 }
 
 IDD_GENERAL DIALOG DISCARDABLE 0, 0, 255, 236

@@ -5447,6 +5447,8 @@ struct ExportWizData
     BOOL includeChain;
     BOOL strongEncryption;
     BOOL deletePrivateKey;
+    LPWSTR fileName;
+    HANDLE file;
 };
 
 static LRESULT CALLBACK export_welcome_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
@@ -5586,6 +5588,136 @@ static LRESULT CALLBACK export_format_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
     return ret;
 }
 
+static LPWSTR export_append_extension(struct ExportWizData *data,
+ LPWSTR fileName)
+{
+    static const WCHAR cer[] = { '.','c','e','r',0 };
+    static const WCHAR crl[] = { '.','c','r','l',0 };
+    static const WCHAR ctl[] = { '.','c','t','l',0 };
+    static const WCHAR p7b[] = { '.','p','7','b',0 };
+    static const WCHAR pfx[] = { '.','p','f','x',0 };
+    LPCWSTR extension;
+    LPWSTR dot;
+    BOOL appendExtension;
+
+    switch (data->exportFormat)
+    {
+    case CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7:
+        extension = p7b;
+        break;
+    case CRYPTUI_WIZ_EXPORT_FORMAT_PFX:
+        extension = pfx;
+        break;
+    default:
+        switch (data->pExportInfo->dwSubjectChoice)
+        {
+        case CRYPTUI_WIZ_EXPORT_CRL_CONTEXT:
+            extension = crl;
+            break;
+        case CRYPTUI_WIZ_EXPORT_CTL_CONTEXT:
+            extension = ctl;
+            break;
+        default:
+            extension = cer;
+        }
+    }
+    dot = strrchrW(fileName, '.');
+    if (dot)
+        appendExtension = strcmpiW(dot, extension) != 0;
+    else
+        appendExtension = TRUE;
+    if (appendExtension)
+    {
+        fileName = HeapReAlloc(GetProcessHeap(), 0, fileName,
+         (strlenW(fileName) + strlenW(extension) + 1) * sizeof(WCHAR));
+        if (fileName)
+            strcatW(fileName, extension);
+    }
+    return fileName;
+}
+
+static BOOL export_validate_filename(HWND hwnd, struct ExportWizData *data,
+ LPCWSTR fileName)
+{
+    HANDLE file;
+    BOOL tryCreate = TRUE, forceCreate = FALSE, ret = FALSE;
+
+    file = CreateFileW(fileName, GENERIC_WRITE,
+     FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+    if (file != INVALID_HANDLE_VALUE)
+    {
+        WCHAR warning[MAX_STRING_LEN], title[MAX_STRING_LEN];
+        LPCWSTR pTitle;
+
+        if (data->pwszWizardTitle)
+            pTitle = data->pwszWizardTitle;
+        else
+        {
+            LoadStringW(hInstance, IDS_EXPORT_WIZARD, title,
+             sizeof(title) / sizeof(title[0]));
+            pTitle = title;
+        }
+        LoadStringW(hInstance, IDS_EXPORT_FILE_EXISTS, warning,
+         sizeof(warning) / sizeof(warning[0]));
+        if (MessageBoxW(hwnd, warning, pTitle, MB_YESNO) == IDYES)
+            forceCreate = TRUE;
+        else
+            tryCreate = FALSE;
+        CloseHandle(file);
+    }
+    if (tryCreate)
+    {
+        file = CreateFileW(fileName, GENERIC_WRITE,
+         FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+         forceCreate ? CREATE_ALWAYS : CREATE_NEW,
+         0, NULL);
+        if (file != INVALID_HANDLE_VALUE)
+        {
+            data->file = file;
+            ret = TRUE;
+        }
+        else
+        {
+            WCHAR title[MAX_STRING_LEN], error[MAX_STRING_LEN];
+            LPCWSTR pTitle;
+            LPWSTR msgBuf, fullError;
+
+            if (data->pwszWizardTitle)
+                pTitle = data->pwszWizardTitle;
+            else
+            {
+                LoadStringW(hInstance, IDS_EXPORT_WIZARD, title,
+                 sizeof(title) / sizeof(title[0]));
+                pTitle = title;
+            }
+            LoadStringW(hInstance, IDS_IMPORT_OPEN_FAILED, error,
+             sizeof(error) / sizeof(error[0]));
+            FormatMessageW(
+             FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL,
+             GetLastError(), 0, (LPWSTR) &msgBuf, 0, NULL);
+            fullError = HeapAlloc(GetProcessHeap(), 0,
+             (strlenW(error) + strlenW(fileName) + strlenW(msgBuf) + 3)
+             * sizeof(WCHAR));
+            if (fullError)
+            {
+                LPWSTR ptr = fullError;
+
+                strcpyW(ptr, error);
+                ptr += strlenW(error);
+                strcpyW(ptr, fileName);
+                ptr += strlenW(fileName);
+                *ptr++ = ':';
+                *ptr++ = '\n';
+                strcpyW(ptr, msgBuf);
+                MessageBoxW(hwnd, fullError, pTitle, MB_ICONERROR | MB_OK);
+                HeapFree(GetProcessHeap(), 0, fullError);
+            }
+            LocalFree(msgBuf);
+        }
+    }
+    return ret;
+}
+
 static LRESULT CALLBACK export_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
@@ -5621,6 +5753,53 @@ static LRESULT CALLBACK export_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
 
         switch (hdr->code)
         {
+        case PSN_WIZNEXT:
+        {
+            HWND fileNameEdit = GetDlgItem(hwnd, IDC_EXPORT_FILENAME);
+            DWORD len = SendMessageW(fileNameEdit, WM_GETTEXTLENGTH, 0, 0);
+
+            data = (struct ExportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
+            if (!len)
+            {
+                WCHAR title[MAX_STRING_LEN], error[MAX_STRING_LEN];
+                LPCWSTR pTitle;
+
+                if (data->pwszWizardTitle)
+                    pTitle = data->pwszWizardTitle;
+                else
+                {
+                    LoadStringW(hInstance, IDS_EXPORT_WIZARD, title,
+                     sizeof(title) / sizeof(title[0]));
+                    pTitle = title;
+                }
+                LoadStringW(hInstance, IDS_IMPORT_EMPTY_FILE, error,
+                 sizeof(error) / sizeof(error[0]));
+                MessageBoxW(hwnd, error, pTitle, MB_ICONERROR | MB_OK);
+                SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, 1);
+                ret = 1;
+            }
+            else
+            {
+                LPWSTR fileName = HeapAlloc(GetProcessHeap(), 0,
+                 (len + 1) * sizeof(WCHAR));
+
+                if (fileName)
+                {
+                    SendMessageW(fileNameEdit, WM_GETTEXT, len + 1,
+                     (LPARAM)fileName);
+                    fileName = export_append_extension(data, fileName);
+                    if (!export_validate_filename(hwnd, data, fileName))
+                    {
+                        HeapFree(GetProcessHeap(), 0, fileName);
+                        SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, 1);
+                        ret = 1;
+                    }
+                    else
+                        data->fileName = fileName;
+                }
+            }
+            break;
+        }
         case PSN_SETACTIVE:
             PostMessageW(GetParent(hwnd), PSM_SETWIZBUTTONS, 0,
              PSWIZB_BACK | PSWIZB_NEXT);
@@ -5700,6 +5879,8 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     data.includeChain = FALSE;
     data.strongEncryption = FALSE;
     data.deletePrivateKey = FALSE;
+    data.fileName = NULL;
+    data.file = INVALID_HANDLE_VALUE;
 
     memset(&pages, 0, sizeof(pages));
 
@@ -5777,6 +5958,8 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     hdr.u5.pszbmHeader = MAKEINTRESOURCEW(IDB_CERT_HEADER);
     PropertySheetW(&hdr);
     DeleteObject(data.titleFont);
+    CloseHandle(data.file);
+    HeapFree(GetProcessHeap(), 0, data.fileName);
     return FALSE;
 }
 
