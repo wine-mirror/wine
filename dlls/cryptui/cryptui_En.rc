@@ -158,6 +158,8 @@ STRINGTABLE DISCARDABLE
     IDS_EXPORT_KEYS "Export keys"
     IDS_YES "Yes"
     IDS_NO "No"
+    IDS_EXPORT_SUCCEEDED "The export was successful."
+    IDS_EXPORT_FAILED "The export failed."
 }
 
 IDD_GENERAL DIALOG DISCARDABLE 0, 0, 255, 236
