@@ -23,6 +23,10 @@
 extern "C" {
 #endif
 
+DWORD WINAPI InstallPerfDllA(LPCSTR, LPCSTR, ULONG_PTR);
+DWORD WINAPI InstallPerfDllW(LPCWSTR, LPCWSTR, ULONG_PTR);
+#define      InstallPerfDll WINELIB_NAME_AW(InstallPerfDll);
+
 DWORD WINAPI LoadPerfCounterTextStringsA(LPCSTR, BOOL);
 DWORD WINAPI LoadPerfCounterTextStringsW(LPCWSTR, BOOL);
 #define      LoadPerfCounterTextStrings WINELIB_NAME_AW(LoadPerfCounterTextStrings)

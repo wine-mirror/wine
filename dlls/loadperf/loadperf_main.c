@@ -50,6 +50,50 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
+static WCHAR *strdupAW(const char *str)
+{
+    WCHAR *ret = NULL;
+    if (str)
+    {
+        INT len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+        if (!(ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR)))) return NULL;
+        MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    }
+    return ret;
+}
+
+/*************************************************************
+ *     InstallPerfDllA (loadperf.@)
+ */
+DWORD WINAPI InstallPerfDllA(LPCSTR computer, LPCSTR ini, ULONG_PTR flags)
+{
+    DWORD ret;
+    LPWSTR computerW = NULL, iniW = NULL;
+
+    if (computer && !(computerW = strdupAW(computer))) return ERROR_OUTOFMEMORY;
+    if (ini && !(iniW = strdupAW(ini)))
+    {
+        HeapFree(GetProcessHeap(), 0, computerW);
+        return ERROR_OUTOFMEMORY;
+    }
+
+    ret = InstallPerfDllW(computerW, iniW, flags);
+
+    HeapFree(GetProcessHeap(), 0, computerW);
+    HeapFree(GetProcessHeap(), 0, iniW);
+
+    return ret;
+}
+
+/*************************************************************
+ *     InstallPerfDllW (loadperf.@)
+ */
+DWORD WINAPI InstallPerfDllW(LPCWSTR computer, LPCWSTR ini, ULONG_PTR flags)
+{
+    FIXME("(%s, %s, %lx)\n", debugstr_w(computer), debugstr_w(ini), flags);
+    return ERROR_SUCCESS;
+}
+
 /*************************************************************
  *     LoadPerfCounterTextStringsA (loadperf.@)
  *
@@ -61,13 +105,7 @@ DWORD WINAPI LoadPerfCounterTextStringsA(LPCSTR cmdline, BOOL quiet)
     DWORD ret;
     LPWSTR cmdlineW = NULL;
 
-    if (cmdline)
-    {
-        INT len = MultiByteToWideChar(CP_ACP, 0, cmdline, -1, NULL, 0);
-        cmdlineW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-        if (!cmdlineW) return ERROR_NOT_ENOUGH_MEMORY;
-        MultiByteToWideChar(CP_ACP, 0, cmdline, -1, cmdlineW, len);
-    }
+    if (cmdline && !(cmdlineW = strdupAW(cmdline))) return ERROR_OUTOFMEMORY;
 
     ret = LoadPerfCounterTextStringsW(cmdlineW, quiet);
 
@@ -102,13 +140,7 @@ DWORD WINAPI UnloadPerfCounterTextStringsA(LPCSTR cmdline, BOOL verbose)
     DWORD ret;
     LPWSTR cmdlineW = NULL;
 
-    if (cmdline)
-    {
-        INT len = MultiByteToWideChar(CP_ACP, 0, cmdline, -1, NULL, 0);
-        cmdlineW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-        if (!cmdlineW) return ERROR_NOT_ENOUGH_MEMORY;
-        MultiByteToWideChar(CP_ACP, 0, cmdline, -1, cmdlineW, len);
-    }
+    if (cmdline && !(cmdlineW = strdupAW(cmdline))) return ERROR_OUTOFMEMORY;
 
     ret = UnloadPerfCounterTextStringsW(cmdlineW, verbose);
 

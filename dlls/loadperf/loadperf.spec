@@ -1,6 +1,6 @@
 @ stub BackupPerfRegistryToFileW
-@ stub InstallPerfDllA
-@ stub InstallPerfDllW
+@ stdcall InstallPerfDllA(str str ptr)
+@ stdcall InstallPerfDllW(wstr wstr ptr)
 @ stub LoadMofFromInstalledServiceA
 @ stub LoadMofFromInstalledServiceW
 @ stdcall LoadPerfCounterTextStringsA(str long)
