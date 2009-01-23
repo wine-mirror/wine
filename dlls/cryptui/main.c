@@ -5288,7 +5288,7 @@ static LRESULT CALLBACK import_finish_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             }
             else
                 import_warning(data->dwFlags, hwnd, data->pwszWizardTitle,
-                 IDS_IMPORT_SUCCEEDED);
+                 IDS_IMPORT_FAILED);
             break;
         }
         }
