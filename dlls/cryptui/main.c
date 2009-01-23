@@ -6097,42 +6097,41 @@ static BOOL save_cms(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
     return ret;
 }
 
-static BOOL do_export(struct ExportWizData *data)
+static BOOL do_export(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
+ PCCRYPTUI_WIZ_EXPORT_CERTCONTEXT_INFO pContextInfo)
 {
     BOOL ret;
 
-    switch (data->pExportInfo->dwSubjectChoice)
+    switch (pExportInfo->dwSubjectChoice)
     {
     case CRYPTUI_WIZ_EXPORT_CRL_CONTEXT:
-        ret = save_der(data->file,
-         data->pExportInfo->u.pCRLContext->pbCrlEncoded,
-         data->pExportInfo->u.pCRLContext->cbCrlEncoded);
+        ret = save_der(file,
+         pExportInfo->u.pCRLContext->pbCrlEncoded,
+         pExportInfo->u.pCRLContext->cbCrlEncoded);
         break;
     case CRYPTUI_WIZ_EXPORT_CTL_CONTEXT:
-        ret = save_der(data->file,
-         data->pExportInfo->u.pCTLContext->pbCtlEncoded,
-         data->pExportInfo->u.pCTLContext->cbCtlEncoded);
+        ret = save_der(file,
+         pExportInfo->u.pCTLContext->pbCtlEncoded,
+         pExportInfo->u.pCTLContext->cbCtlEncoded);
         break;
     default:
-        switch (data->contextInfo.dwExportFormat)
+        switch (pContextInfo->dwExportFormat)
         {
         case CRYPTUI_WIZ_EXPORT_FORMAT_BASE64:
-            ret = save_base64(data->file,
-             data->pExportInfo->u.pCertContext->pbCertEncoded,
-             data->pExportInfo->u.pCertContext->cbCertEncoded);
+            ret = save_base64(file,
+             pExportInfo->u.pCertContext->pbCertEncoded,
+             pExportInfo->u.pCertContext->cbCertEncoded);
             break;
         case CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7:
-            ret = save_cms(data->file, data->pExportInfo,
-             data->contextInfo.fExportChain);
+            ret = save_cms(file, pExportInfo, pContextInfo->fExportChain);
             break;
         case CRYPTUI_WIZ_EXPORT_FORMAT_PFX:
             FIXME("unimplemented for PFX\n");
             ret = FALSE;
             break;
         default:
-            ret = save_der(data->file,
-             data->pExportInfo->u.pCertContext->pbCertEncoded,
-             data->pExportInfo->u.pCertContext->cbCertEncoded);
+            ret = save_der(file, pExportInfo->u.pCertContext->pbCertEncoded,
+             pExportInfo->u.pCertContext->cbCertEncoded);
         }
     }
     return ret;
@@ -6191,7 +6190,8 @@ static LRESULT CALLBACK export_finish_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             DWORD mbFlags;
 
             data = (struct ExportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
-            if ((data->success = do_export(data)))
+            if ((data->success = do_export(data->file, data->pExportInfo,
+             &data->contextInfo)))
             {
                 messageID = IDS_EXPORT_SUCCEEDED;
                 mbFlags = MB_OK;
@@ -6344,8 +6344,17 @@ BOOL WINAPI CryptUIWizExport(DWORD dwFlags, HWND hwndParent,
          pvoid);
     else
     {
-        FIXME("stub\n");
-        ret = FALSE;
+        HANDLE file = CreateFileW(pExportInfo->pwszExportFileName,
+         GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+         CREATE_ALWAYS, 0, NULL);
+
+        if (file != INVALID_HANDLE_VALUE)
+        {
+            ret = do_export(file, pExportInfo, pvoid);
+            CloseHandle(file);
+        }
+        else
+            ret = FALSE;
     }
     return ret;
 }
