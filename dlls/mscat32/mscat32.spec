@@ -10,7 +10,7 @@
 @ stdcall CryptCATCDFEnumAttributesWithCDFTag(ptr wstr ptr ptr ptr) wintrust.CryptCATCDFEnumAttributesWithCDFTag
 @ stdcall CryptCATCDFEnumCatAttributes(ptr ptr ptr) wintrust.CryptCATCDFEnumCatAttributes
 @ stub CryptCATCDFEnumMembers
-@ stub CryptCATCDFEnumMembersByCDFTag
+@ stdcall CryptCATCDFEnumMembersByCDFTag(ptr wstr ptr ptr long) wintrust.CryptCATCDFEnumMembersByCDFTag
 @ stdcall CryptCATCDFOpen(wstr ptr) wintrust.CryptCATCDFOpen
 @ stdcall CryptCATCatalogInfoFromContext(ptr ptr long) wintrust.CryptCATCatalogInfoFromContext
 @ stdcall CryptCATClose(long) wintrust.CryptCATClose
