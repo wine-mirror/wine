@@ -5442,11 +5442,7 @@ struct ExportWizData
     DWORD dwFlags;
     LPCWSTR pwszWizardTitle;
     PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo;
-    void *pvoid;
-    DWORD exportFormat;
-    BOOL includeChain;
-    BOOL strongEncryption;
-    BOOL deletePrivateKey;
+    CRYPTUI_WIZ_EXPORT_CERTCONTEXT_INFO contextInfo;
     LPWSTR fileName;
     HANDLE file;
     BOOL success;
@@ -5528,24 +5524,29 @@ static LRESULT CALLBACK export_format_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         {
             data = (struct ExportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
             if (IsDlgButtonChecked(hwnd, IDC_EXPORT_FORMAT_DER))
-                data->exportFormat = CRYPTUI_WIZ_EXPORT_FORMAT_DER;
+                data->contextInfo.dwExportFormat =
+                 CRYPTUI_WIZ_EXPORT_FORMAT_DER;
             else if (IsDlgButtonChecked(hwnd, IDC_EXPORT_FORMAT_BASE64))
-                data->exportFormat = CRYPTUI_WIZ_EXPORT_FORMAT_BASE64;
+                data->contextInfo.dwExportFormat =
+                 CRYPTUI_WIZ_EXPORT_FORMAT_BASE64;
             else if (IsDlgButtonChecked(hwnd, IDC_EXPORT_FORMAT_CMS))
             {
-                data->exportFormat = CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7;
+                data->contextInfo.dwExportFormat =
+                 CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7;
                 if (IsDlgButtonChecked(hwnd, IDC_EXPORT_CMS_INCLUDE_CHAIN))
-                    data->includeChain = TRUE;
+                    data->contextInfo.fExportChain =
+                     CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7;
             }
             else
             {
-                data->exportFormat = CRYPTUI_WIZ_EXPORT_FORMAT_PFX;
+                data->contextInfo.dwExportFormat =
+                 CRYPTUI_WIZ_EXPORT_FORMAT_PFX;
                 if (IsDlgButtonChecked(hwnd, IDC_EXPORT_PFX_INCLUDE_CHAIN))
-                    data->includeChain = TRUE;
+                    data->contextInfo.fExportChain = TRUE;
                 if (IsDlgButtonChecked(hwnd, IDC_EXPORT_PFX_STRONG_ENCRYPTION))
-                    data->strongEncryption = TRUE;
+                    data->contextInfo.fStrongEncryption = TRUE;
                 if (IsDlgButtonChecked(hwnd, IDC_EXPORT_PFX_DELETE_PRIVATE_KEY))
-                    data->deletePrivateKey = TRUE;
+                    data->contextInfo.fExportPrivateKeys = TRUE;
             }
             break;
         }
@@ -5601,7 +5602,7 @@ static LPWSTR export_append_extension(struct ExportWizData *data,
     LPWSTR dot;
     BOOL appendExtension;
 
-    switch (data->exportFormat)
+    switch (data->contextInfo.dwExportFormat)
     {
     case CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7:
         extension = p7b;
@@ -5889,7 +5890,8 @@ static LRESULT CALLBACK export_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             memset(&ofn, 0, sizeof(ofn));
             ofn.lStructSize = sizeof(ofn);
             ofn.hwndOwner = hwnd;
-            ofn.lpstrFilter = make_export_file_filter(data->exportFormat,
+            ofn.lpstrFilter = make_export_file_filter(
+             data->contextInfo.dwExportFormat,
              data->pExportInfo->dwSubjectChoice);
             ofn.lpstrFile = fileBuf;
             ofn.nMaxFile = sizeof(fileBuf) / sizeof(fileBuf[0]);
@@ -5941,7 +5943,8 @@ static void show_export_details(HWND lv, struct ExportWizData *data)
          sizeof(text) / sizeof(text[0]));
         SendMessageW(lv, LVM_INSERTITEMW, item.iItem, (LPARAM)&item);
         item.iSubItem = 1;
-        LoadStringW(hInstance, data->includeChain ? IDS_YES : IDS_NO, text,
+        LoadStringW(hInstance,
+         data->contextInfo.fExportChain ? IDS_YES : IDS_NO, text,
          sizeof(text) / sizeof(text[0]));
         SendMessageW(lv, LVM_SETITEMTEXTW, item.iItem, (LPARAM)&item);
 
@@ -5951,7 +5954,8 @@ static void show_export_details(HWND lv, struct ExportWizData *data)
          sizeof(text) / sizeof(text[0]));
         SendMessageW(lv, LVM_INSERTITEMW, item.iItem, (LPARAM)&item);
         item.iSubItem = 1;
-        LoadStringW(hInstance, data->deletePrivateKey ? IDS_YES : IDS_NO, text,
+        LoadStringW(hInstance,
+         data->contextInfo.fExportPrivateKeys ? IDS_YES : IDS_NO, text,
          sizeof(text) / sizeof(text[0]));
         SendMessageW(lv, LVM_SETITEMTEXTW, item.iItem, (LPARAM)&item);
     }
@@ -5973,7 +5977,7 @@ static void show_export_details(HWND lv, struct ExportWizData *data)
         contentID = IDS_EXPORT_FILTER_CTL;
         break;
     default:
-        switch (data->exportFormat)
+        switch (data->contextInfo.dwExportFormat)
         {
         case CRYPTUI_WIZ_EXPORT_FORMAT_BASE64:
             contentID = IDS_EXPORT_FILTER_BASE64_CERT;
@@ -6110,7 +6114,7 @@ static BOOL do_export(struct ExportWizData *data)
          data->pExportInfo->u.pCTLContext->cbCtlEncoded);
         break;
     default:
-        switch (data->exportFormat)
+        switch (data->contextInfo.dwExportFormat)
         {
         case CRYPTUI_WIZ_EXPORT_FORMAT_BASE64:
             ret = save_base64(data->file,
@@ -6118,7 +6122,8 @@ static BOOL do_export(struct ExportWizData *data)
              data->pExportInfo->u.pCertContext->cbCertEncoded);
             break;
         case CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7:
-            ret = save_cms(data->file, data->pExportInfo, data->includeChain);
+            ret = save_cms(data->file, data->pExportInfo,
+             data->contextInfo.fExportChain);
             break;
         case CRYPTUI_WIZ_EXPORT_FORMAT_PFX:
             FIXME("unimplemented for PFX\n");
@@ -6228,11 +6233,18 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     data.dwFlags = dwFlags;
     data.pwszWizardTitle = pwszWizardTitle;
     data.pExportInfo = pExportInfo;
-    data.pvoid = pvoid;
-    data.exportFormat = 0;
-    data.includeChain = FALSE;
-    data.strongEncryption = FALSE;
-    data.deletePrivateKey = FALSE;
+    if (pExportInfo->dwSubjectChoice == CRYPTUI_WIZ_EXPORT_CERT_CONTEXT &&
+     pvoid)
+        memcpy(&data.contextInfo, pvoid,
+         min(((PCCRYPTUI_WIZ_EXPORT_CERTCONTEXT_INFO)pvoid)->dwSize,
+         sizeof(data.contextInfo)));
+    else
+    {
+        data.contextInfo.dwExportFormat = 0;
+        data.contextInfo.fExportChain = FALSE;
+        data.contextInfo.fStrongEncryption = FALSE;
+        data.contextInfo.fExportPrivateKeys = FALSE;
+    }
     data.fileName = NULL;
     data.file = INVALID_HANDLE_VALUE;
     data.success = FALSE;
@@ -6252,15 +6264,16 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     case CRYPTUI_WIZ_EXPORT_CRL_CONTEXT:
     case CRYPTUI_WIZ_EXPORT_CTL_CONTEXT:
         showFormatPage = FALSE;
-        data.exportFormat = CRYPTUI_WIZ_EXPORT_FORMAT_DER;
+        data.contextInfo.dwExportFormat = CRYPTUI_WIZ_EXPORT_FORMAT_DER;
         break;
     case CRYPTUI_WIZ_EXPORT_CERT_STORE:
         showFormatPage = FALSE;
-        data.exportFormat = CRYPTUI_WIZ_EXPORT_FORMAT_SERIALIZED_CERT_STORE;
+        data.contextInfo.dwExportFormat =
+         CRYPTUI_WIZ_EXPORT_FORMAT_SERIALIZED_CERT_STORE;
         break;
     case CRYPTUI_WIZ_EXPORT_CERT_STORE_CERTIFICATES_ONLY:
         showFormatPage = FALSE;
-        data.exportFormat = CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7;
+        data.contextInfo.dwExportFormat = CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7;
         break;
     }
     if (showFormatPage)
