@@ -1990,6 +1990,19 @@ static void test_Navigate2(IUnknown *unk)
     IWebBrowser2_Release(webbrowser);
 }
 
+static void test_IServiceProvider(IUnknown *unk)
+{
+    IServiceProvider *servprov = (void*)0xdeadbeef;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IServiceProvider, (void**)&servprov);
+    todo_wine ok(hres == S_OK, "QueryInterface returned %08x, expected S_OK\n", hres);
+    if(FAILED(hres))
+        return;
+
+    IServiceProvider_Release(servprov);
+}
+
 static void test_QueryInterface(IUnknown *unk)
 {
     IQuickActivate *qa = (IQuickActivate*)0xdeadbeef;
@@ -2060,6 +2073,7 @@ static void test_WebBrowser(void)
     test_GetControlInfo(unk);
     test_wb_funcs(unk, FALSE);
     test_ConnectionPoint(unk, FALSE);
+    test_IServiceProvider(unk);
 
     IWebBrowser2_Release(wb);
     ref = IUnknown_Release(unk);
