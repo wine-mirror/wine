@@ -122,6 +122,13 @@ static unsigned char *WINAPI NdrContextHandleMarshall(PMIDL_STUB_MESSAGE, unsign
 static void WINAPI NdrContextHandleBufferSize(PMIDL_STUB_MESSAGE, unsigned char *, PFORMAT_STRING);
 static unsigned char *WINAPI NdrContextHandleUnmarshall(PMIDL_STUB_MESSAGE, unsigned char **, PFORMAT_STRING, unsigned char);
 
+static unsigned char *WINAPI NdrRangeMarshall(PMIDL_STUB_MESSAGE,unsigned char *, PFORMAT_STRING);
+static void WINAPI NdrRangeBufferSize(PMIDL_STUB_MESSAGE, unsigned char *, PFORMAT_STRING);
+static ULONG WINAPI NdrRangeMemorySize(PMIDL_STUB_MESSAGE, PFORMAT_STRING);
+static void WINAPI NdrRangeFree(PMIDL_STUB_MESSAGE, unsigned char *, PFORMAT_STRING);
+
+static ULONG WINAPI NdrByteCountPointerMemorySize(PMIDL_STUB_MESSAGE, PFORMAT_STRING);
+
 const NDR_MARSHALL NdrMarshaller[NDR_TABLE_SIZE] = {
   0,
   NdrBaseTypeMarshall, NdrBaseTypeMarshall, NdrBaseTypeMarshall,
@@ -6011,10 +6018,10 @@ void WINAPI NdrByteCountPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 }
 
 /***********************************************************************
- *           NdrByteCountPointerMemorySize [RPCRT4.@]
+ *           NdrByteCountPointerMemorySize [internal]
  */
-ULONG WINAPI NdrByteCountPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
-                                PFORMAT_STRING pFormat)
+static ULONG WINAPI NdrByteCountPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+                                                  PFORMAT_STRING pFormat)
 {
     FIXME("stub\n");
     return 0;
@@ -6086,7 +6093,7 @@ void WINAPI NdrXmitOrRepAsFree(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           NdrRangeMarshall [internal]
  */
-unsigned char *WINAPI NdrRangeMarshall(
+static unsigned char *WINAPI NdrRangeMarshall(
     PMIDL_STUB_MESSAGE pStubMsg,
     unsigned char *pMemory,
     PFORMAT_STRING pFormat)
@@ -6109,7 +6116,7 @@ unsigned char *WINAPI NdrRangeMarshall(
 }
 
 /***********************************************************************
- *           NdrRangeUnmarshall
+ *           NdrRangeUnmarshall [RPCRT4.@]
  */
 unsigned char *WINAPI NdrRangeUnmarshall(
     PMIDL_STUB_MESSAGE pStubMsg,
@@ -6209,7 +6216,7 @@ unsigned char *WINAPI NdrRangeUnmarshall(
 /***********************************************************************
  *           NdrRangeBufferSize [internal]
  */
-void WINAPI NdrRangeBufferSize(
+static void WINAPI NdrRangeBufferSize(
     PMIDL_STUB_MESSAGE pStubMsg,
     unsigned char *pMemory,
     PFORMAT_STRING pFormat)
@@ -6232,7 +6239,7 @@ void WINAPI NdrRangeBufferSize(
 /***********************************************************************
  *           NdrRangeMemorySize [internal]
  */
-ULONG WINAPI NdrRangeMemorySize(
+static ULONG WINAPI NdrRangeMemorySize(
     PMIDL_STUB_MESSAGE pStubMsg,
     PFORMAT_STRING pFormat)
 {
@@ -6253,7 +6260,7 @@ ULONG WINAPI NdrRangeMemorySize(
 /***********************************************************************
  *           NdrRangeFree [internal]
  */
-void WINAPI NdrRangeFree(PMIDL_STUB_MESSAGE pStubMsg,
+static void WINAPI NdrRangeFree(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
