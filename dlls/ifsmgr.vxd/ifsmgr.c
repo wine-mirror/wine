@@ -117,8 +117,8 @@ BOOL WINAPI IFSMGR_DeviceIoControl(DWORD dwIoControlCode, LPVOID lpvInBuffer, DW
     case IFS_IOCTL_2F:
         {
             CONTEXT86 cxt;
-            struct win32apireq *pIn=(struct win32apireq *) lpvInBuffer;
-            struct win32apireq *pOut=(struct win32apireq *) lpvOutBuffer;
+            struct win32apireq *pIn=lpvInBuffer;
+            struct win32apireq *pOut=lpvOutBuffer;
 
             TRACE( "Control '%s': "
                    "proid=0x%08lx, eax=0x%08lx, ebx=0x%08lx, ecx=0x%08lx, "
