@@ -5435,3 +5435,11 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
 
     return ret;
 }
+
+BOOL WINAPI CryptUIWizExport(DWORD dwFlags, HWND hwndParent,
+ LPCWSTR pwszWizardTitle, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo, void *pvoid)
+{
+    FIXME("(%08x, %p, %s, %p, %p): stub\n", dwFlags, hwndParent,
+     debugstr_w(pwszWizardTitle), pExportInfo, pvoid);
+    return FALSE;
+}
