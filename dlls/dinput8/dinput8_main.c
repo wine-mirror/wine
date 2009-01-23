@@ -74,12 +74,12 @@ HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riid,
 
     /* When aggregation is used (punkOuter!=NULL) the application needs to manually call Initialize. */
     if(punkOuter == NULL && IsEqualGUID(&IID_IDirectInput8A, riid)) {
-        LPDIRECTINPUTA DI = (LPDIRECTINPUTA)*ppDI;
+        LPDIRECTINPUTA DI = *ppDI;
         IDirectInput8_Initialize(DI, hinst, dwVersion);
     }
 
     if(punkOuter == NULL && IsEqualGUID(&IID_IDirectInput8W, riid)) {
-        LPDIRECTINPUTW DI = (LPDIRECTINPUTW)*ppDI;
+        LPDIRECTINPUTW DI = *ppDI;
         IDirectInput8_Initialize(DI, hinst, dwVersion);
     }
 
@@ -159,7 +159,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     TRACE("(%s,%s,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     if ( IsEqualCLSID( &IID_IClassFactory, riid ) ) {
-        *ppv = (LPVOID)&DINPUT8_CF;
+        *ppv = &DINPUT8_CF;
         IClassFactory_AddRef((IClassFactory*)*ppv);
         return S_OK;
     }
