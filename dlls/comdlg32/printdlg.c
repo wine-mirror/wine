@@ -2402,24 +2402,6 @@ typedef struct {
 } PageSetupDataW;
 
 
-static HGLOBAL PRINTDLG_GetPGSTemplateA(const PAGESETUPDLGA *lppd)
-{
-    HRSRC hResInfo;
-    HGLOBAL hDlgTmpl;
-	
-    if(lppd->Flags & PSD_ENABLEPAGESETUPTEMPLATEHANDLE) {
-	hDlgTmpl = lppd->hPageSetupTemplate;
-    } else if(lppd->Flags & PSD_ENABLEPAGESETUPTEMPLATE) {
-	hResInfo = FindResourceA(lppd->hInstance,
-				 lppd->lpPageSetupTemplateName, (LPSTR)RT_DIALOG);
-	hDlgTmpl = LoadResource(lppd->hInstance, hResInfo);
-    } else {
-	hResInfo = FindResourceA(COMDLG32_hInstance,(LPCSTR)PAGESETUPDLGORD,(LPSTR)RT_DIALOG);
-	hDlgTmpl = LoadResource(COMDLG32_hInstance,hResInfo);
-    }
-    return hDlgTmpl;
-}
-
 static HGLOBAL PRINTDLG_GetPGSTemplateW(const PAGESETUPDLGW *lppd)
 {
     HRSRC hResInfo;
@@ -2726,7 +2708,11 @@ static void pagesetup_set_devnames(pagesetup_data *data, LPCWSTR drv, LPCWSTR de
 
     len += drv_len + dev_len + port_len;
 
-    data->dlga->hDevNames = GlobalReAlloc(data->dlga->hDevNames, len, GMEM_MOVEABLE);
+    if(data->dlga->hDevNames)
+        data->dlga->hDevNames = GlobalReAlloc(data->dlga->hDevNames, len, GMEM_MOVEABLE);
+    else
+        data->dlga->hDevNames = GlobalAlloc(GMEM_MOVEABLE, len);
+
     dn = GlobalLock(data->dlga->hDevNames);
 
     ptr = (char *)(dn + 1);
@@ -2772,9 +2758,13 @@ static void pagesetup_set_devmode(pagesetup_data *data, DEVMODEW *dm)
     DEVMODEA *dmA, *tmp_dm;
 
     tmp_dm = convert_to_devmodeA(dm);
-    data->dlga->hDevMode = GlobalReAlloc(data->dlga->hDevMode,
-                                         tmp_dm->dmSize + tmp_dm->dmDriverExtra,
-                                         GMEM_MOVEABLE);
+
+    if(data->dlga->hDevMode)
+        data->dlga->hDevMode = GlobalReAlloc(data->dlga->hDevMode,
+                                             tmp_dm->dmSize + tmp_dm->dmDriverExtra,
+                                             GMEM_MOVEABLE);
+    else
+        data->dlga->hDevMode = GlobalAlloc(GMEM_MOVEABLE, tmp_dm->dmSize + tmp_dm->dmDriverExtra);
     dmA = GlobalLock(data->dlga->hDevMode);
     memcpy(dmA, tmp_dm, tmp_dm->dmSize + tmp_dm->dmDriverExtra);
     GlobalUnlock(data->dlga->hDevMode);
@@ -3314,8 +3304,8 @@ static void pagesetup_printer_properties(HWND hDlg, pagesetup_data *data)
 }
 
 /********************************************************************************
- * PRINTDLG_PS_WMCommandA
- * process WM_COMMAND message for PageSetupDlgA
+ * pagesetup_wm_command
+ * process WM_COMMAND message for PageSetupDlg
  *
  * PARAMS
  *  hDlg 	[in] 	Main dialog HANDLE 
@@ -3324,7 +3314,7 @@ static void pagesetup_printer_properties(HWND hDlg, pagesetup_data *data)
  *  pda		[in/out] ptr to PageSetupDataA
  */
 
-static BOOL PRINTDLG_PS_WMCommandA(HWND hDlg, WPARAM wParam, LPARAM lParam, pagesetup_data *data)
+static BOOL pagesetup_wm_command(HWND hDlg, WPARAM wParam, LPARAM lParam, pagesetup_data *data)
 {
     WORD msg = HIWORD(wParam);
     WORD id  = LOWORD(wParam);
@@ -3682,11 +3672,11 @@ static void subclass_margin_edits(HWND hDlg)
 }
 
 /***********************************************************************
- *           PRINTDLG_PageDlgProcA
- * Message handler for PageSetupDlgA
+ *           pagesetup_dlg_proc
+ *
+ * Message handler for PageSetupDlg
  */
-static INT_PTR CALLBACK
-PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK pagesetup_dlg_proc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     pagesetup_data *data;
     INT_PTR		res = FALSE;
@@ -3780,7 +3770,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     }
     switch (uMsg) {
     case WM_COMMAND:
-        return PRINTDLG_PS_WMCommandA(hDlg, wParam, lParam, data);
+        return pagesetup_wm_command(hDlg, wParam, lParam, data);
     }
     return FALSE;
 }
@@ -3868,6 +3858,127 @@ PageDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
+static WCHAR *get_default_printer(void)
+{
+    WCHAR *name = NULL;
+    DWORD len = 0;
+
+    GetDefaultPrinterW(NULL, &len);
+    if(len)
+    {
+        name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        GetDefaultPrinterW(name, &len);
+    }
+    return name;
+}
+
+static void pagesetup_dump_dlg_struct(pagesetup_data *data)
+{
+    if(TRACE_ON(commdlg))
+    {
+        char flagstr[1000] = "";
+	const struct pd_flags *pflag = psd_flags;
+        for( ; pflag->name; pflag++)
+        {
+            if(pagesetup_get_flags(data) & pflag->flag)
+            {
+                strcat(flagstr, pflag->name);
+                strcat(flagstr, "|");
+            }
+        }
+        TRACE("(%p): hwndOwner = %p, hDevMode = %p, hDevNames = %p\n"
+              "hinst %p, flags %08x (%s)\n",
+              data->dlga, data->dlga->hwndOwner, data->dlga->hDevMode,
+              data->dlga->hDevNames, data->dlga->hInstance,
+              pagesetup_get_flags(data), flagstr);
+    }
+}
+
+static void *pagesetup_get_template(pagesetup_data *data)
+{
+    HRSRC res;
+    HGLOBAL tmpl_handle;
+
+    if(pagesetup_get_flags(data) & PSD_ENABLEPAGESETUPTEMPLATEHANDLE)
+    {
+	tmpl_handle = data->dlga->hPageSetupTemplate;
+    }
+    else if(pagesetup_get_flags(data) & PSD_ENABLEPAGESETUPTEMPLATE)
+    {
+        res = FindResourceA(data->dlga->hInstance,
+                            data->dlga->lpPageSetupTemplateName, (LPSTR)RT_DIALOG);
+        tmpl_handle = LoadResource(data->dlga->hInstance, res);
+    }
+    else
+    {
+        res = FindResourceW(COMDLG32_hInstance, MAKEINTRESOURCEW(PAGESETUPDLGORD),
+                            MAKEINTRESOURCEW(RT_DIALOG));
+        tmpl_handle = LoadResource(COMDLG32_hInstance, res);
+    }
+    return LockResource(tmpl_handle);
+}
+
+static BOOL pagesetup_common(pagesetup_data *data)
+{
+    BOOL ret;
+    void *tmpl;
+
+    if(!pagesetup_get_dlg_struct(data))
+    {
+        COMDLG32_SetCommDlgExtendedError(CDERR_INITIALIZATION);
+        return FALSE;
+    }
+
+    pagesetup_dump_dlg_struct(data);
+
+    if(data->dlga->lStructSize != sizeof(PAGESETUPDLGA))
+    {
+        COMDLG32_SetCommDlgExtendedError(CDERR_STRUCTSIZE);
+        return FALSE;
+    }
+
+    if ((pagesetup_get_flags(data) & PSD_ENABLEPAGEPAINTHOOK) &&
+        (pagesetup_get_hook(data, page_paint_hook) == NULL))
+    {
+        COMDLG32_SetCommDlgExtendedError(CDERR_NOHOOK);
+        return FALSE;
+    }
+
+    if(!(pagesetup_get_flags(data) & (PSD_INTHOUSANDTHSOFINCHES | PSD_INHUNDREDTHSOFMILLIMETERS)))
+        data->dlga->Flags |= is_default_metric() ?
+            PSD_INHUNDREDTHSOFMILLIMETERS : PSD_INTHOUSANDTHSOFINCHES;
+
+    if (!data->dlga->hDevMode || !data->dlga->hDevNames)
+    {
+        WCHAR *def = get_default_printer();
+        if(!def)
+        {
+            if (!(pagesetup_get_flags(data) & PSD_NOWARNING))
+            {
+                WCHAR errstr[256];
+                LoadStringW(COMDLG32_hInstance, PD32_NO_DEFAULT_PRINTER, errstr, 255);
+                MessageBoxW(data->dlga->hwndOwner, errstr, 0, MB_OK | MB_ICONERROR);
+            }
+            return FALSE;
+        }
+        pagesetup_change_printer(def, data);
+        HeapFree(GetProcessHeap(), 0, def);
+    }
+
+    if (pagesetup_get_flags(data) & PSD_RETURNDEFAULT)
+    {
+        pagesetup_update_papersize(data);
+        return TRUE;
+    }
+
+    tmpl = pagesetup_get_template(data);
+
+    ret = DialogBoxIndirectParamW(data->dlga->hInstance, tmpl,
+                                  data->dlga->hwndOwner,
+                                  pagesetup_dlg_proc, (LPARAM)data) > 0;
+    return ret;
+}
+
 /***********************************************************************
  *            PageSetupDlgA  (COMDLG32.@)
  *
@@ -3885,107 +3996,17 @@ PageDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
  * NOTES
  *    The values of hDevMode and hDevNames are filled on output and can be
  *    changed in PAGESETUPDLG when they are passed in PageSetupDlg.
- * 
+ *
  */
+BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg)
+{
+    pagesetup_data data;
 
-BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
-    HGLOBAL		hDlgTmpl;
-    LPVOID		ptr;
-    BOOL		bRet;
-    pagesetup_data *data;
+    data.dlga = setupdlg;
 
-    if (setupdlg == NULL) {
-	   COMDLG32_SetCommDlgExtendedError(CDERR_INITIALIZATION);
-	   return FALSE;
-    }
-
-    /* TRACE */
-    if(TRACE_ON(commdlg)) {
-        char flagstr[1000] = "";
-	const struct pd_flags *pflag = psd_flags;
-	for( ; pflag->name; pflag++) {
-	    if(setupdlg->Flags & pflag->flag) {
-	        strcat(flagstr, pflag->name);
-	        strcat(flagstr, "|");
-	    }
-	}
-	TRACE("(%p): hwndOwner = %p, hDevMode = %p, hDevNames = %p\n"
-              "hinst %p, flags %08x (%s)\n",
-	      setupdlg, setupdlg->hwndOwner, setupdlg->hDevMode,
-	      setupdlg->hDevNames,
-	      setupdlg->hInstance, setupdlg->Flags, flagstr);
-    }
-
-    /* Checking setupdlg structure */
-    if(setupdlg->lStructSize != sizeof(PAGESETUPDLGA)) {
-	   COMDLG32_SetCommDlgExtendedError(CDERR_STRUCTSIZE);
-	   return FALSE;
-    }
-    if ((setupdlg->Flags & PSD_ENABLEPAGEPAINTHOOK) &&
-        (setupdlg->lpfnPagePaintHook == NULL)) {
-            COMDLG32_SetCommDlgExtendedError(CDERR_NOHOOK);
-            return FALSE;
-        }
-
-    if(!(setupdlg->Flags & (PSD_INTHOUSANDTHSOFINCHES | PSD_INHUNDREDTHSOFMILLIMETERS)))
-        setupdlg->Flags |= is_default_metric() ?
-            PSD_INHUNDREDTHSOFMILLIMETERS : PSD_INTHOUSANDTHSOFINCHES;
-
-    /* Initialize default printer struct. If no printer device info is specified
-       retrieve the default printer data. */
-    if (!setupdlg->hDevMode || !setupdlg->hDevNames)
-    {
-        PRINTDLGA pdlg;
-        memset(&pdlg, 0, sizeof(pdlg));
-        pdlg.lStructSize = sizeof(pdlg);
-        pdlg.Flags = PD_RETURNDEFAULT;
-        bRet = PrintDlgA(&pdlg);
-        if (!bRet)
-        {
-            if (!(setupdlg->Flags & PSD_NOWARNING)) {
-                WCHAR errstr[256];
-                LoadStringW(COMDLG32_hInstance, PD32_NO_DEFAULT_PRINTER, errstr, 255);
-                MessageBoxW(setupdlg->hwndOwner, errstr, 0, MB_OK | MB_ICONERROR);
-            }
-            return FALSE;
-        }
-        setupdlg->hDevMode  = pdlg.hDevMode;
-        setupdlg->hDevNames = pdlg.hDevNames;
-    }
-
-    data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data));
-    data->dlga = setupdlg;
-
-    /* short cut exit, just return default values */
-    if (setupdlg->Flags & PSD_RETURNDEFAULT) {
-        pagesetup_update_papersize(data);
-        HeapFree(GetProcessHeap(), 0, data);
-        return TRUE;
-    }
-
-    /* get dialog template */
-    hDlgTmpl = PRINTDLG_GetPGSTemplateA(setupdlg);
-    if (!hDlgTmpl) {
-	COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
-	return FALSE;
-    }
-    ptr = LockResource( hDlgTmpl );
-    if (!ptr) {
-	COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
-	return FALSE;
-    }
-
-    bRet = (0<DialogBoxIndirectParamW(
-		setupdlg->hInstance,
-		ptr,
-		setupdlg->hwndOwner,
-		PRINTDLG_PageDlgProcA,
-                (LPARAM)data)
-    );
-
-    HeapFree(GetProcessHeap(), 0, data);
-    return bRet;
+    return pagesetup_common(&data);
 }
+
 /***********************************************************************
  *            PageSetupDlgW  (COMDLG32.@)
  *
