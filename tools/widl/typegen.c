@@ -2325,6 +2325,8 @@ static size_t write_union_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
         }
 
         *tfsoff += write_conf_or_var_desc(file, NULL, *tfsoff, st, &dummy_expr );
+        print_file(file, 2, "NdrFcShort(0x2),\t/* Offset= 2 (%u) */\n", *tfsoff + 2);
+        *tfsoff += 2;
     }
 
     print_file(file, 2, "NdrFcShort(0x%x),\t/* %d */\n", size, size);
