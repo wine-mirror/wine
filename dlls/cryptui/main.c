@@ -5567,6 +5567,19 @@ static LRESULT CALLBACK export_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
 
         data = (struct ExportWizData *)page->lParam;
         SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
+        if (data->pExportInfo->dwSubjectChoice ==
+         CRYPTUI_WIZ_EXPORT_CERT_CONTEXT)
+        {
+            DWORD size;
+
+            /* If there's a CRYPT_KEY_PROV_INFO set for this cert, assume the
+             * cert has a private key.
+             */
+            if (CertGetCertificateContextProperty(
+             data->pExportInfo->u.pCertContext, CERT_KEY_PROV_INFO_PROP_ID,
+             NULL, &size))
+                EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_FORMAT_PFX), TRUE);
+        }
         break;
     }
     case WM_NOTIFY:
