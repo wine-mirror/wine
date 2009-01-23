@@ -11380,7 +11380,7 @@ START_TEST(msg)
     test_accelerators();
     test_timers();
     test_timers_no_wnd();
-    test_set_hook();
+    if (hCBT_hook) test_set_hook();
     test_DestroyWindow();
     test_DispatchMessage();
     test_SendMessageTimeout();
