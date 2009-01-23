@@ -62,6 +62,14 @@ struct d3d10_texture2d
     IWineD3DSurface *wined3d_surface;
 };
 
+/* ID3D10Buffer */
+extern const struct ID3D10BufferVtbl d3d10_buffer_vtbl;
+struct d3d10_buffer
+{
+    const struct ID3D10BufferVtbl *vtbl;
+    LONG refcount;
+};
+
 /* ID3D10RenderTargetView */
 extern const struct ID3D10RenderTargetViewVtbl d3d10_rendertarget_view_vtbl;
 struct d3d10_rendertarget_view

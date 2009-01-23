@@ -558,9 +558,25 @@ static void STDMETHODCALLTYPE d3d10_device_Flush(ID3D10Device *iface)
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBuffer(ID3D10Device *iface,
         const D3D10_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data, ID3D10Buffer **buffer)
 {
-    FIXME("iface %p, desc %p, data %p, buffer %p stub!\n", iface, desc, data, buffer);
+    struct d3d10_buffer *object;
 
-    return E_NOTIMPL;
+    FIXME("iface %p, desc %p, data %p, buffer %p partial stub!\n", iface, desc, data, buffer);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate D3D10 buffer object memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->vtbl = &d3d10_buffer_vtbl;
+    object->refcount = 1;
+
+    *buffer = (ID3D10Buffer *)object;
+
+    TRACE("Created ID3D10Buffer %p\n", object);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture1D(ID3D10Device *iface,

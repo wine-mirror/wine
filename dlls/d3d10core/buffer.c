@@ -1,0 +1,164 @@
+/*
+ * Copyright 2009 Henri Verbeet for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ *
+ */
+
+#include "config.h"
+#include "wine/port.h"
+
+#include "d3d10core_private.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
+
+/* IUnknown methods */
+
+static HRESULT STDMETHODCALLTYPE d3d10_buffer_QueryInterface(ID3D10Buffer *iface, REFIID riid, void **object)
+{
+    TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
+
+    if (IsEqualGUID(riid, &IID_ID3D10Buffer)
+            || IsEqualGUID(riid, &IID_ID3D10Resource)
+            || IsEqualGUID(riid, &IID_ID3D10DeviceChild)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IUnknown_AddRef(iface);
+        *object = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
+
+    *object = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d3d10_buffer_AddRef(ID3D10Buffer *iface)
+{
+    struct d3d10_buffer *This = (struct d3d10_buffer *)iface;
+    ULONG refcount = InterlockedIncrement(&This->refcount);
+
+    TRACE("%p increasing refcount to %u\n", This, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d3d10_buffer_Release(ID3D10Buffer *iface)
+{
+    struct d3d10_buffer *This = (struct d3d10_buffer *)iface;
+    ULONG refcount = InterlockedDecrement(&This->refcount);
+
+    TRACE("%p decreasing refcount to %u\n", This, refcount);
+
+    if (!refcount)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return refcount;
+}
+
+/* ID3D10DeviceChild methods */
+
+static void STDMETHODCALLTYPE d3d10_buffer_GetDevice(ID3D10Buffer *iface, ID3D10Device **device)
+{
+    FIXME("iface %p, device %p stub!\n", iface, device);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_buffer_GetPrivateData(ID3D10Buffer *iface,
+        REFGUID guid, UINT *data_size, void *data)
+{
+    FIXME("iface %p, guid %s, data_size %p, data %p stub!\n",
+            iface, debugstr_guid(guid), data_size, data);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_buffer_SetPrivateData(ID3D10Buffer *iface,
+        REFGUID guid, UINT data_size, const void *data)
+{
+    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n",
+            iface, debugstr_guid(guid), data_size, data);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_buffer_SetPrivateDataInterface(ID3D10Buffer *iface,
+        REFGUID guid, const IUnknown *data)
+{
+    FIXME("iface %p, guid %s, data %p stub!\n", iface, debugstr_guid(guid), data);
+
+    return E_NOTIMPL;
+}
+
+/* ID3D10Resource methods */
+
+static void STDMETHODCALLTYPE d3d10_buffer_GetType(ID3D10Buffer *iface, D3D10_RESOURCE_DIMENSION *resource_dimension)
+{
+    FIXME("iface %p, resource_dimension %p stub!\n", iface, resource_dimension);
+}
+
+static void STDMETHODCALLTYPE d3d10_buffer_SetEvictionPriority(ID3D10Buffer *iface, UINT eviction_priority)
+{
+    FIXME("iface %p, eviction_priority %u stub!\n", iface, eviction_priority);
+}
+
+static UINT STDMETHODCALLTYPE d3d10_buffer_GetEvictionPriority(ID3D10Buffer *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return 0;
+}
+
+/* ID3D10Buffer methods */
+
+static HRESULT STDMETHODCALLTYPE d3d10_buffer_Map(ID3D10Buffer *iface, D3D10_MAP map_type, UINT map_flags, void **data)
+{
+    FIXME("iface %p, map_type %u, map_flags %#x, data %p stub!\n", iface, map_type, map_flags, data);
+
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d3d10_buffer_Unmap(ID3D10Buffer *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+}
+
+static void STDMETHODCALLTYPE d3d10_buffer_GetDesc(ID3D10Buffer *iface, D3D10_BUFFER_DESC *desc)
+{
+    FIXME("iface %p, desc %p stub!\n", iface, desc);
+}
+
+const struct ID3D10BufferVtbl d3d10_buffer_vtbl =
+{
+    /* IUnknown methods */
+    d3d10_buffer_QueryInterface,
+    d3d10_buffer_AddRef,
+    d3d10_buffer_Release,
+    /* ID3D10DeviceChild methods */
+    d3d10_buffer_GetDevice,
+    d3d10_buffer_GetPrivateData,
+    d3d10_buffer_SetPrivateData,
+    d3d10_buffer_SetPrivateDataInterface,
+    /* ID3D10Resource methods */
+    d3d10_buffer_GetType,
+    d3d10_buffer_SetEvictionPriority,
+    d3d10_buffer_GetEvictionPriority,
+    /* ID3D10Buffer methods */
+    d3d10_buffer_Map,
+    d3d10_buffer_Unmap,
+    d3d10_buffer_GetDesc,
+};
