@@ -2028,9 +2028,10 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
     struct user_thread_info *thread_info = get_user_thread_info();
     struct received_message_info info, *old_info;
     unsigned int hw_id = 0;  /* id of previous hardware message */
-    char local_buffer[256];
-    void *buffer = local_buffer;
-    size_t buffer_size = sizeof(local_buffer);
+    void *buffer;
+    size_t buffer_size = 256;
+
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, buffer_size ))) return FALSE;
 
     if (!first && !last) last = ~0;
 
@@ -2070,7 +2071,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
 
         if (res)
         {
-            if (buffer != local_buffer) HeapFree( GetProcessHeap(), 0, buffer );
+            HeapFree( GetProcessHeap(), 0, buffer );
             if (res != STATUS_BUFFER_OVERFLOW) return FALSE;
             if (!(buffer = HeapAlloc( GetProcessHeap(), 0, buffer_size ))) return FALSE;
             continue;
@@ -2163,7 +2164,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                 thread_info->GetMessagePosVal = MAKELONG( info.msg.pt.x, info.msg.pt.y );
                 thread_info->GetMessageTimeVal = info.msg.time;
                 thread_info->GetMessageExtraInfoVal = msg_data->hardware.info;
-                if (buffer != local_buffer) HeapFree( GetProcessHeap(), 0, buffer );
+                HeapFree( GetProcessHeap(), 0, buffer );
                 HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg, TRUE );
                 return TRUE;
             }
@@ -2194,7 +2195,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
             msg->pt.y = (short)HIWORD( thread_info->GetMessagePosVal );
             thread_info->GetMessageTimeVal = info.msg.time;
             thread_info->GetMessageExtraInfoVal = 0;
-            if (buffer != local_buffer) HeapFree( GetProcessHeap(), 0, buffer );
+            HeapFree( GetProcessHeap(), 0, buffer );
             HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg, TRUE );
             return TRUE;
         }
