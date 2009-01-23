@@ -477,7 +477,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_QueryInterface(PIDSCDRIVERBUFFE
     if ( IsEqualGUID(riid, &IID_IUnknown) ||
          IsEqualGUID(riid, &IID_IDsCaptureDriverBuffer) ) {
         IDsCaptureDriverBuffer_AddRef(iface);
-        *ppobj = (LPVOID)iface;
+        *ppobj = iface;
         return DS_OK;
     }
 
@@ -494,7 +494,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_QueryInterface(PIDSCDRIVERBUFFE
             IDsDriverNotify_AddRef((PIDSDRIVERNOTIFY)This->notify);
         }
         IDsDriverNotify_AddRef((PIDSDRIVERNOTIFY)This->notify);
-        *ppobj = (LPVOID)This->notify;
+        *ppobj = This->notify;
         return DS_OK;
     }
 

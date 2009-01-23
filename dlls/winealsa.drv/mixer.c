@@ -915,7 +915,7 @@ static DWORD MIX_GetControlDetails(UINT wDevID, LPMIXERCONTROLDETAILS mctrld, DW
 
             TRACE("%s MIXERCONTROLDETAILS_UNSIGNED[%u]\n", getControlType(ct->c.dwControlType), mctrld->cChannels);
 
-            mcdu = (LPMIXERCONTROLDETAILS_UNSIGNED)mctrld->paDetails;
+            mcdu = mctrld->paDetails;
 
             if (mctrld->cChannels != 1 && mmixer->lines[line].chans != mctrld->cChannels)
             {
@@ -966,7 +966,7 @@ static DWORD MIX_GetControlDetails(UINT wDevID, LPMIXERCONTROLDETAILS mctrld, DW
 
             TRACE("%s MIXERCONTROLDETAILS_BOOLEAN[%u]\n", getControlType(ct->c.dwControlType), mctrld->cChannels);
 
-            mcdb = (LPMIXERCONTROLDETAILS_BOOLEAN)mctrld->paDetails;
+            mcdb = mctrld->paDetails;
 
             if (line == 1)
                 for (chn = 0; chn <= SND_MIXER_SCHN_LAST; ++chn)
@@ -1009,7 +1009,7 @@ static DWORD MIX_GetControlDetails(UINT wDevID, LPMIXERCONTROLDETAILS mctrld, DW
 
             TRACE("%s MIXERCONTROLDETAILS_BOOLEAN[%u]\n", getControlType(ct->c.dwControlType), mctrld->cChannels);
 
-            mcdb = (LPMIXERCONTROLDETAILS_BOOLEAN)mctrld->paDetails;
+            mcdb = mctrld->paDetails;
 
             for (x = 0; x<mmixer->chans; ++x)
                 if (line != x && mmixer->lines[x].dst == line)
@@ -1045,7 +1045,7 @@ static DWORD MIX_GetControlDetails(UINT wDevID, LPMIXERCONTROLDETAILS mctrld, DW
 
         if (ct->c.dwControlType == MIXERCONTROL_CONTROLTYPE_MUX || ct->c.dwControlType == MIXERCONTROL_CONTROLTYPE_MIXER)
         {
-            LPMIXERCONTROLDETAILS_LISTTEXTW mcdlt = (LPMIXERCONTROLDETAILS_LISTTEXTW)mctrld->paDetails;
+            LPMIXERCONTROLDETAILS_LISTTEXTW mcdlt = mctrld->paDetails;
             int i, j;
 
             for (i = j = 0; j < mmixer->chans; ++j)
@@ -1143,7 +1143,7 @@ static DWORD MIX_SetControlDetails(UINT wDevID, LPMIXERCONTROLDETAILS mctrld, DW
         }
 
         TRACE("%s MIXERCONTROLDETAILS_UNSIGNED[%u]\n", getControlType(ct->c.dwControlType), mctrld->cChannels);
-        mcdu = (LPMIXERCONTROLDETAILS_UNSIGNED)mctrld->paDetails;
+        mcdu = mctrld->paDetails;
 
         for (chn=0; chn<mctrld->cChannels;++chn)
         {
@@ -1191,7 +1191,7 @@ static DWORD MIX_SetControlDetails(UINT wDevID, LPMIXERCONTROLDETAILS mctrld, DW
 
         TRACE("%s MIXERCONTROLDETAILS_BOOLEAN[%u]\n", getControlType(ct->c.dwControlType), mctrld->cChannels);
 
-        mcdb = (LPMIXERCONTROLDETAILS_BOOLEAN)mctrld->paDetails;
+        mcdb = mctrld->paDetails;
         if (line == 1) /* Mute/unmute capturing */
             for (i = 0; i <= SND_MIXER_SCHN_LAST; ++i)
             {
@@ -1219,7 +1219,7 @@ static DWORD MIX_SetControlDetails(UINT wDevID, LPMIXERCONTROLDETAILS mctrld, DW
         }
 
         TRACE("%s MIXERCONTROLDETAILS_BOOLEAN[%u]\n", getControlType(ct->c.dwControlType), mctrld->cChannels);
-        mcdb = (LPMIXERCONTROLDETAILS_BOOLEAN)mctrld->paDetails;
+        mcdb = mctrld->paDetails;
 
         for (x=i=0; x < mmixer->chans; ++x)
             if (line != x && mmixer->lines[x].dst == line)

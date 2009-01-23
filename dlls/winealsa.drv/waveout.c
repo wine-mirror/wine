@@ -521,7 +521,7 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEDEV* wwo)
 static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 {
     WORD	  uDevID = (DWORD_PTR)pmt;
-    WINE_WAVEDEV* wwo = (WINE_WAVEDEV*)&WOutDev[uDevID];
+    WINE_WAVEDEV* wwo = &WOutDev[uDevID];
     DWORD         dwNextFeedTime = INFINITE;   /* Time before DSP needs feeding */
     DWORD         dwNextNotifyTime = INFINITE; /* Time before next wave completion */
     DWORD         dwSleepTime;

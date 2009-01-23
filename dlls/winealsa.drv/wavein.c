@@ -142,7 +142,7 @@ static void widRecorder_ReadHeaders(WINE_WAVEDEV * wwi)
 static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 {
     WORD		uDevID = (DWORD_PTR)pmt;
-    WINE_WAVEDEV*	wwi = (WINE_WAVEDEV*)&WInDev[uDevID];
+    WINE_WAVEDEV*	wwi = &WInDev[uDevID];
     WAVEHDR*		lpWaveHdr;
     DWORD		dwSleepTime;
     DWORD		bytesRead;
