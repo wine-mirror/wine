@@ -2807,6 +2807,14 @@ static inline LPPAGESETUPHOOK pagesetup_get_hook(const pagesetup_data *data, hoo
     return NULL;
 }
 
+/* This should only be used in calls to hook procs so we return the ptr
+   already cast to LPARAM */
+static inline LPARAM pagesetup_get_dlg_struct(const pagesetup_data *data)
+{
+    return (LPARAM)data->dlga;
+}
+
+
 static inline void swap_point(POINT *pt)
 {
     LONG tmp = pt->x;
@@ -3571,7 +3579,8 @@ PRINTDLG_PagePaintProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         WARN("__WINE_PAGESETUPDLGDATA prop not set?\n");
         return FALSE;
     }
-    if (default_page_paint_hook(hWnd, WM_PSD_PAGESETUPDLG, MAKELONG(papersize, orientation), (LPARAM)data->dlga, data))
+    if (default_page_paint_hook(hWnd, WM_PSD_PAGESETUPDLG, MAKELONG(papersize, orientation),
+                                pagesetup_get_dlg_struct(data), data))
         return FALSE;
 
     hdc = BeginPaint(hWnd, &ps);
@@ -3703,7 +3712,8 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	res = TRUE;
         if (pagesetup_get_flags(data) & PSD_ENABLEPAGESETUPHOOK)
         {
-            if (!pagesetup_get_hook(data, page_setup_hook)(hDlg, uMsg, wParam, (LPARAM)data->dlga))
+            if (!pagesetup_get_hook(data, page_setup_hook)(hDlg, uMsg, wParam,
+                                                           pagesetup_get_dlg_struct(data)))
 		FIXME("Setup page hook failed?\n");
 	}
 
