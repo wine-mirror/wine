@@ -87,6 +87,18 @@ static const WCHAR pagesetupdlg_prop[] = { '_', '_', 'W', 'I', 'N', 'E', '_', 'P
                                            'S', 'E', 'T', 'U', 'P', 'D', 'L', 'G', 'D', 'A', 'T', 'A', 0 };
 
 
+static LPWSTR strdupW(LPCWSTR p)
+{
+    LPWSTR ret;
+    DWORD len;
+
+    if(!p) return NULL;
+    len = (strlenW(p) + 1) * sizeof(WCHAR);
+    ret = HeapAlloc(GetProcessHeap(), 0, len);
+    memcpy(ret, p, len);
+    return ret;
+}
+
 /***********************************************************
  * convert_to_devmodeA
  *
@@ -2390,9 +2402,14 @@ BOOL WINAPI PrintDlgW(LPPRINTDLGW lppd)
 
 typedef struct
 {
-    LPPAGESETUPDLGA	dlga; /* Handler to user defined struct */
-    HWND 		hDlg; /* Page Setup dialog handler */
-    RECT		rtDrawRect; /* Drawing rect for page */
+    BOOL unicode;
+    union
+    {
+        LPPAGESETUPDLGA dlga;
+        LPPAGESETUPDLGW dlgw;
+    } u;
+    HWND hDlg;                /* Page Setup dialog handle */
+    RECT rtDrawRect;          /* Drawing rect for page */
 } pagesetup_data;
 
 typedef struct {
@@ -2422,7 +2439,7 @@ static HGLOBAL PRINTDLG_GetPGSTemplateW(const PAGESETUPDLGW *lppd)
 
 static inline DWORD pagesetup_get_flags(const pagesetup_data *data)
 {
-    return data->dlga->Flags;
+    return data->u.dlgw->Flags;
 }
 
 static inline BOOL is_metric(const pagesetup_data *data)
@@ -2604,42 +2621,78 @@ static inline void rotate_rect(RECT *rc, BOOL sense)
 
 static void pagesetup_set_orientation(pagesetup_data *data, WORD orient)
 {
-    DEVMODEA *dm = GlobalLock(data->dlga->hDevMode);
+    DEVMODEW *dm = GlobalLock(data->u.dlgw->hDevMode);
 
     assert(orient == DMORIENT_PORTRAIT || orient == DMORIENT_LANDSCAPE);
 
-    dm->u1.s1.dmOrientation = orient;
-    GlobalUnlock(data->dlga->hDevMode);
+    if(data->unicode)
+        dm->u1.s1.dmOrientation = orient;
+    else
+    {
+        DEVMODEA *dmA = (DEVMODEA *)dm;
+        dmA->u1.s1.dmOrientation = orient;
+    }
+    GlobalUnlock(data->u.dlgw->hDevMode);
 }
 
 static WORD pagesetup_get_orientation(const pagesetup_data *data)
 {
-    DEVMODEA *dm = GlobalLock(data->dlga->hDevMode);
-    WORD orient = dm->u1.s1.dmOrientation;
-    GlobalUnlock(data->dlga->hDevMode);
+    DEVMODEW *dm = GlobalLock(data->u.dlgw->hDevMode);
+    WORD orient;
+
+    if(data->unicode)
+        orient = dm->u1.s1.dmOrientation;
+    else
+    {
+        DEVMODEA *dmA = (DEVMODEA *)dm;
+        orient = dmA->u1.s1.dmOrientation;
+    }
+    GlobalUnlock(data->u.dlgw->hDevMode);
     return orient;
 }
 
 static void pagesetup_set_papersize(pagesetup_data *data, WORD paper)
 {
-    DEVMODEA *dm = GlobalLock(data->dlga->hDevMode);
-    dm->u1.s1.dmPaperSize = paper;
-    GlobalUnlock(data->dlga->hDevMode);
+    DEVMODEW *dm = GlobalLock(data->u.dlgw->hDevMode);
+
+    if(data->unicode)
+        dm->u1.s1.dmPaperSize = paper;
+    else
+    {
+        DEVMODEA *dmA = (DEVMODEA *)dm;
+        dmA->u1.s1.dmPaperSize = paper;
+    }
+    GlobalUnlock(data->u.dlgw->hDevMode);
 }
 
 static WORD pagesetup_get_papersize(const pagesetup_data *data)
 {
-    DEVMODEA *dm = GlobalLock(data->dlga->hDevMode);
-    WORD paper = dm->u1.s1.dmPaperSize;
-    GlobalUnlock(data->dlga->hDevMode);
+    DEVMODEW *dm = GlobalLock(data->u.dlgw->hDevMode);
+    WORD paper;
+
+    if(data->unicode)
+        paper = dm->u1.s1.dmPaperSize;
+    else
+    {
+        DEVMODEA *dmA = (DEVMODEA *)dm;
+        paper = dmA->u1.s1.dmPaperSize;
+    }
+    GlobalUnlock(data->u.dlgw->hDevMode);
     return paper;
 }
 
 static void pagesetup_set_defaultsource(pagesetup_data *data, WORD source)
 {
-    DEVMODEA *dm = GlobalLock(data->dlga->hDevMode);
-    dm->u1.s1.dmDefaultSource = source;
-    GlobalUnlock(data->dlga->hDevMode);
+    DEVMODEW *dm = GlobalLock(data->u.dlgw->hDevMode);
+
+    if(data->unicode)
+        dm->u1.s1.dmDefaultSource = source;
+    else
+    {
+        DEVMODEA *dmA = (DEVMODEA *)dm;
+        dmA->u1.s1.dmDefaultSource = source;
+    }
+    GlobalUnlock(data->u.dlgw->hDevMode);
 }
 
 typedef enum
@@ -2665,14 +2718,18 @@ static inline WORD get_devname_offset(DEVNAMES *dn, devnames_name which)
 static WCHAR *pagesetup_get_a_devname(const pagesetup_data *data, devnames_name which)
 {
     DEVNAMES *dn;
-    int len;
     WCHAR *name;
 
-    dn = GlobalLock(data->dlga->hDevNames);
-    len = MultiByteToWideChar(CP_ACP, 0, (char*)dn + get_devname_offset(dn, which), -1, NULL, 0);
-    name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, (char*)dn + get_devname_offset(dn, which), -1, name, len);
-    GlobalUnlock(data->dlga->hDevNames);
+    dn = GlobalLock(data->u.dlgw->hDevNames);
+    if(data->unicode)
+        name = strdupW((WCHAR *)dn + get_devname_offset(dn, which));
+    else
+    {
+        int len = MultiByteToWideChar(CP_ACP, 0, (char*)dn + get_devname_offset(dn, which), -1, NULL, 0);
+        name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, (char*)dn + get_devname_offset(dn, which), -1, name, len);
+    }
+    GlobalUnlock(data->u.dlgw->hDevNames);
     return name;
 }
 
@@ -2699,34 +2756,60 @@ static void pagesetup_release_a_devname(const pagesetup_data *data, WCHAR *name)
 static void pagesetup_set_devnames(pagesetup_data *data, LPCWSTR drv, LPCWSTR devname, LPCWSTR port)
 {
     DEVNAMES *dn;
-    char *ptr;
     WCHAR def[256];
     DWORD len = sizeof(DEVNAMES), drv_len, dev_len, port_len;
-    drv_len = WideCharToMultiByte(CP_ACP, 0, drv, -1, NULL, 0, NULL, NULL);
-    dev_len = WideCharToMultiByte(CP_ACP, 0, devname, -1, NULL, 0, NULL, NULL);
-    port_len = WideCharToMultiByte(CP_ACP, 0, port, -1, NULL, 0, NULL, NULL);
 
+    if(data->unicode)
+    {
+        drv_len  = (strlenW(drv) + 1) * sizeof(WCHAR);
+        dev_len  = (strlenW(devname) + 1) * sizeof(WCHAR);
+        port_len = (strlenW(port) + 1) * sizeof(WCHAR);
+    }
+    else
+    {
+        drv_len = WideCharToMultiByte(CP_ACP, 0, drv, -1, NULL, 0, NULL, NULL);
+        dev_len = WideCharToMultiByte(CP_ACP, 0, devname, -1, NULL, 0, NULL, NULL);
+        port_len = WideCharToMultiByte(CP_ACP, 0, port, -1, NULL, 0, NULL, NULL);
+    }
     len += drv_len + dev_len + port_len;
 
-    if(data->dlga->hDevNames)
-        data->dlga->hDevNames = GlobalReAlloc(data->dlga->hDevNames, len, GMEM_MOVEABLE);
+    if(data->u.dlgw->hDevNames)
+        data->u.dlgw->hDevNames = GlobalReAlloc(data->u.dlgw->hDevNames, len, GMEM_MOVEABLE);
     else
-        data->dlga->hDevNames = GlobalAlloc(GMEM_MOVEABLE, len);
+        data->u.dlgw->hDevNames = GlobalAlloc(GMEM_MOVEABLE, len);
 
-    dn = GlobalLock(data->dlga->hDevNames);
+    dn = GlobalLock(data->u.dlgw->hDevNames);
 
-    ptr = (char *)(dn + 1);
-    len = sizeof(DEVNAMES);
-    dn->wDriverOffset = len;
-    WideCharToMultiByte(CP_ACP, 0, drv, -1, ptr, drv_len, NULL, NULL);
-    ptr += drv_len;
-    len += drv_len;
-    dn->wDeviceOffset = len;
-    WideCharToMultiByte(CP_ACP, 0, devname, -1, ptr, dev_len, NULL, NULL);
-    ptr += dev_len;
-    len += dev_len;
-    dn->wOutputOffset = len;
-    WideCharToMultiByte(CP_ACP, 0, port, -1, ptr, port_len, NULL, NULL);
+    if(data->unicode)
+    {
+        WCHAR *ptr = (WCHAR *)(dn + 1);
+        len = sizeof(DEVNAMES) / sizeof(WCHAR);
+        dn->wDriverOffset = len;
+        strcpyW(ptr, drv);
+        ptr += drv_len / sizeof(WCHAR);
+        len += drv_len / sizeof(WCHAR);
+        dn->wDeviceOffset = len;
+        strcpyW(ptr, devname);
+        ptr += dev_len / sizeof(WCHAR);
+        len += dev_len / sizeof(WCHAR);
+        dn->wOutputOffset = len;
+        strcpyW(ptr, port);
+    }
+    else
+    {
+        char *ptr = (char *)(dn + 1);
+        len = sizeof(DEVNAMES);
+        dn->wDriverOffset = len;
+        WideCharToMultiByte(CP_ACP, 0, drv, -1, ptr, drv_len, NULL, NULL);
+        ptr += drv_len;
+        len += drv_len;
+        dn->wDeviceOffset = len;
+        WideCharToMultiByte(CP_ACP, 0, devname, -1, ptr, dev_len, NULL, NULL);
+        ptr += dev_len;
+        len += dev_len;
+        dn->wOutputOffset = len;
+        WideCharToMultiByte(CP_ACP, 0, port, -1, ptr, port_len, NULL, NULL);
+    }
 
     dn->wDefault = 0;
     len = sizeof(def) / sizeof(def[0]);
@@ -2734,18 +2817,26 @@ static void pagesetup_set_devnames(pagesetup_data *data, LPCWSTR drv, LPCWSTR de
     if(!lstrcmpW(def, devname))
         dn->wDefault = 1;
 
-    GlobalUnlock(data->dlga->hDevNames);
+    GlobalUnlock(data->u.dlgw->hDevNames);
 }
 
 static DEVMODEW *pagesetup_get_devmode(const pagesetup_data *data)
 {
-    DEVMODEA *dm;
-    DEVMODEW *dmW;
+    DEVMODEW *dm = GlobalLock(data->u.dlgw->hDevMode);
+    DEVMODEW *ret;
 
-    dm = GlobalLock(data->dlga->hDevMode);
-    dmW = GdiConvertToDevmodeW(dm);
-    GlobalUnlock(data->dlga->hDevMode);
-    return dmW;
+    if(data->unicode)
+    {
+        /* We make a copy even in the unicode case because the ptr
+           may get passed back to us in pagesetup_set_devmode. */
+        ret = HeapAlloc(GetProcessHeap(), 0, dm->dmSize + dm->dmDriverExtra);
+        memcpy(ret, dm, dm->dmSize + dm->dmDriverExtra);
+    }
+    else
+        ret = GdiConvertToDevmodeW((DEVMODEA *)dm);
+
+    GlobalUnlock(data->u.dlgw->hDevMode);
+    return ret;
 }
 
 static void pagesetup_release_devmode(const pagesetup_data *data, DEVMODEW *dm)
@@ -2755,30 +2846,42 @@ static void pagesetup_release_devmode(const pagesetup_data *data, DEVMODEW *dm)
 
 static void pagesetup_set_devmode(pagesetup_data *data, DEVMODEW *dm)
 {
-    DEVMODEA *dmA, *tmp_dm;
+    DEVMODEA *dmA = NULL;
+    void *src, *dst;
+    DWORD size;
 
-    tmp_dm = convert_to_devmodeA(dm);
-
-    if(data->dlga->hDevMode)
-        data->dlga->hDevMode = GlobalReAlloc(data->dlga->hDevMode,
-                                             tmp_dm->dmSize + tmp_dm->dmDriverExtra,
-                                             GMEM_MOVEABLE);
+    if(data->unicode)
+    {
+        size = dm->dmSize + dm->dmDriverExtra;
+        src = dm;
+    }
     else
-        data->dlga->hDevMode = GlobalAlloc(GMEM_MOVEABLE, tmp_dm->dmSize + tmp_dm->dmDriverExtra);
-    dmA = GlobalLock(data->dlga->hDevMode);
-    memcpy(dmA, tmp_dm, tmp_dm->dmSize + tmp_dm->dmDriverExtra);
-    GlobalUnlock(data->dlga->hDevMode);
-    HeapFree(GetProcessHeap(), 0, tmp_dm);
+    {
+        dmA = convert_to_devmodeA(dm);
+        size = dmA->dmSize + dmA->dmDriverExtra;
+        src = dmA;
+    }
+
+    if(data->u.dlgw->hDevMode)
+        data->u.dlgw->hDevMode = GlobalReAlloc(data->u.dlgw->hDevMode, size,
+                                               GMEM_MOVEABLE);
+    else
+        data->u.dlgw->hDevMode = GlobalAlloc(GMEM_MOVEABLE, size);
+
+    dst = GlobalLock(data->u.dlgw->hDevMode);
+    memcpy(dst, src, size);
+    GlobalUnlock(data->u.dlgw->hDevMode);
+    HeapFree(GetProcessHeap(), 0, dmA);
 }
 
 static inline POINT *pagesetup_get_papersize_pt(const pagesetup_data *data)
 {
-    return &data->dlga->ptPaperSize;
+    return &data->u.dlgw->ptPaperSize;
 }
 
 static inline RECT *pagesetup_get_margin_rect(const pagesetup_data *data)
 {
-    return &data->dlga->rtMargin;
+    return &data->u.dlgw->rtMargin;
 }
 
 typedef enum
@@ -2791,8 +2894,8 @@ static inline LPPAGESETUPHOOK pagesetup_get_hook(const pagesetup_data *data, hoo
 {
     switch(which)
     {
-    case page_setup_hook: return data->dlga->lpfnPageSetupHook;
-    case page_paint_hook: return data->dlga->lpfnPagePaintHook;
+    case page_setup_hook: return data->u.dlgw->lpfnPageSetupHook;
+    case page_paint_hook: return data->u.dlgw->lpfnPagePaintHook;
     }
     return NULL;
 }
@@ -2801,9 +2904,8 @@ static inline LPPAGESETUPHOOK pagesetup_get_hook(const pagesetup_data *data, hoo
    already cast to LPARAM */
 static inline LPARAM pagesetup_get_dlg_struct(const pagesetup_data *data)
 {
-    return (LPARAM)data->dlga;
+    return (LPARAM)data->u.dlgw;
 }
-
 
 static inline void swap_point(POINT *pt)
 {
@@ -3886,10 +3988,11 @@ static void pagesetup_dump_dlg_struct(pagesetup_data *data)
                 strcat(flagstr, "|");
             }
         }
-        TRACE("(%p): hwndOwner = %p, hDevMode = %p, hDevNames = %p\n"
+        TRACE("%s: (%p): hwndOwner = %p, hDevMode = %p, hDevNames = %p\n"
               "hinst %p, flags %08x (%s)\n",
-              data->dlga, data->dlga->hwndOwner, data->dlga->hDevMode,
-              data->dlga->hDevNames, data->dlga->hInstance,
+              data->unicode ? "unicode" : "ansi",
+              data->u.dlgw, data->u.dlgw->hwndOwner, data->u.dlgw->hDevMode,
+              data->u.dlgw->hDevNames, data->u.dlgw->hInstance,
               pagesetup_get_flags(data), flagstr);
     }
 }
@@ -3901,13 +4004,17 @@ static void *pagesetup_get_template(pagesetup_data *data)
 
     if(pagesetup_get_flags(data) & PSD_ENABLEPAGESETUPTEMPLATEHANDLE)
     {
-	tmpl_handle = data->dlga->hPageSetupTemplate;
+	tmpl_handle = data->u.dlgw->hPageSetupTemplate;
     }
     else if(pagesetup_get_flags(data) & PSD_ENABLEPAGESETUPTEMPLATE)
     {
-        res = FindResourceA(data->dlga->hInstance,
-                            data->dlga->lpPageSetupTemplateName, (LPSTR)RT_DIALOG);
-        tmpl_handle = LoadResource(data->dlga->hInstance, res);
+        if(data->unicode)
+            res = FindResourceW(data->u.dlgw->hInstance,
+                                data->u.dlgw->lpPageSetupTemplateName, MAKEINTRESOURCEW(RT_DIALOG));
+        else
+            res = FindResourceA(data->u.dlga->hInstance,
+                                data->u.dlga->lpPageSetupTemplateName, MAKEINTRESOURCEA(RT_DIALOG));
+        tmpl_handle = LoadResource(data->u.dlgw->hInstance, res);
     }
     else
     {
@@ -3931,7 +4038,7 @@ static BOOL pagesetup_common(pagesetup_data *data)
 
     pagesetup_dump_dlg_struct(data);
 
-    if(data->dlga->lStructSize != sizeof(PAGESETUPDLGA))
+    if(data->u.dlgw->lStructSize != sizeof(PAGESETUPDLGW))
     {
         COMDLG32_SetCommDlgExtendedError(CDERR_STRUCTSIZE);
         return FALSE;
@@ -3945,10 +4052,10 @@ static BOOL pagesetup_common(pagesetup_data *data)
     }
 
     if(!(pagesetup_get_flags(data) & (PSD_INTHOUSANDTHSOFINCHES | PSD_INHUNDREDTHSOFMILLIMETERS)))
-        data->dlga->Flags |= is_default_metric() ?
+        data->u.dlgw->Flags |= is_default_metric() ?
             PSD_INHUNDREDTHSOFMILLIMETERS : PSD_INTHOUSANDTHSOFINCHES;
 
-    if (!data->dlga->hDevMode || !data->dlga->hDevNames)
+    if (!data->u.dlgw->hDevMode || !data->u.dlgw->hDevNames)
     {
         WCHAR *def = get_default_printer();
         if(!def)
@@ -3957,7 +4064,7 @@ static BOOL pagesetup_common(pagesetup_data *data)
             {
                 WCHAR errstr[256];
                 LoadStringW(COMDLG32_hInstance, PD32_NO_DEFAULT_PRINTER, errstr, 255);
-                MessageBoxW(data->dlga->hwndOwner, errstr, 0, MB_OK | MB_ICONERROR);
+                MessageBoxW(data->u.dlgw->hwndOwner, errstr, 0, MB_OK | MB_ICONERROR);
             }
             return FALSE;
         }
@@ -3973,8 +4080,8 @@ static BOOL pagesetup_common(pagesetup_data *data)
 
     tmpl = pagesetup_get_template(data);
 
-    ret = DialogBoxIndirectParamW(data->dlga->hInstance, tmpl,
-                                  data->dlga->hwndOwner,
+    ret = DialogBoxIndirectParamW(data->u.dlgw->hInstance, tmpl,
+                                  data->u.dlgw->hwndOwner,
                                   pagesetup_dlg_proc, (LPARAM)data) > 0;
     return ret;
 }
@@ -4002,7 +4109,8 @@ BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg)
 {
     pagesetup_data data;
 
-    data.dlga = setupdlg;
+    data.unicode = FALSE;
+    data.u.dlga  = setupdlg;
 
     return pagesetup_common(&data);
 }
