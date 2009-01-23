@@ -5549,6 +5549,39 @@ static LRESULT CALLBACK export_format_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         }
         break;
     }
+    case WM_COMMAND:
+        switch (HIWORD(wp))
+        {
+        case BN_CLICKED:
+            switch (LOWORD(wp))
+            {
+            case IDC_EXPORT_FORMAT_DER:
+            case IDC_EXPORT_FORMAT_BASE64:
+                EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_CMS_INCLUDE_CHAIN),
+                 FALSE);
+                EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_PFX_INCLUDE_CHAIN),
+                 FALSE);
+                EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_PFX_STRONG_ENCRYPTION),
+                 FALSE);
+                EnableWindow(GetDlgItem(hwnd,
+                 IDC_EXPORT_PFX_DELETE_PRIVATE_KEY), FALSE);
+                break;
+            case IDC_EXPORT_FORMAT_CMS:
+                EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_CMS_INCLUDE_CHAIN),
+                 TRUE);
+                break;
+            case IDC_EXPORT_FORMAT_PFX:
+                EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_PFX_INCLUDE_CHAIN),
+                 TRUE);
+                EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_PFX_STRONG_ENCRYPTION),
+                 TRUE);
+                EnableWindow(GetDlgItem(hwnd,
+                 IDC_EXPORT_PFX_DELETE_PRIVATE_KEY), TRUE);
+                break;
+            }
+            break;
+        }
+        break;
     }
     return ret;
 }
