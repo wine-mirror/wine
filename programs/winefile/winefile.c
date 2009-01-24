@@ -2732,7 +2732,7 @@ static void calc_single_width(Pane* pane, int col)
 
 	x = pane->positions[col] + cx;
 
-	for(; col<COLUMNS; ) {
+	for(; col<COLUMNS-1; ) {
 		pane->positions[++col] = x;
 		x += pane->widths[col];
 	}
