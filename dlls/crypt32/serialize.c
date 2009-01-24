@@ -841,7 +841,16 @@ BOOL WINAPI CertSaveStore(HCERTSTORE hCertStore, DWORD dwMsgAndCertEncodingType,
     switch (dwSaveAs)
     {
     case CERT_STORE_SAVE_AS_STORE:
+        if (dwSaveTo == CERT_STORE_SAVE_TO_MEMORY)
+            saveFunc = CRYPT_SaveSerializedToMem;
+        else
+            saveFunc = CRYPT_SaveSerializedToFile;
+        break;
     case CERT_STORE_SAVE_AS_PKCS7:
+        if (dwSaveTo == CERT_STORE_SAVE_TO_MEMORY)
+            saveFunc = CRYPT_SavePKCSToMem;
+        else
+            saveFunc = CRYPT_SavePKCSToFile;
         break;
     default:
         WARN("unimplemented for %d\n", dwSaveAs);
@@ -852,25 +861,17 @@ BOOL WINAPI CertSaveStore(HCERTSTORE hCertStore, DWORD dwMsgAndCertEncodingType,
     {
     case CERT_STORE_SAVE_TO_FILE:
         handle = pvSaveToPara;
-        saveFunc = dwSaveAs == CERT_STORE_SAVE_AS_STORE ?
-         CRYPT_SaveSerializedToFile : CRYPT_SavePKCSToFile;
         break;
     case CERT_STORE_SAVE_TO_FILENAME_A:
         handle = CreateFileA((LPCSTR)pvSaveToPara, GENERIC_WRITE, 0, NULL,
          CREATE_ALWAYS, 0, NULL);
-        saveFunc = dwSaveAs == CERT_STORE_SAVE_AS_STORE ?
-         CRYPT_SaveSerializedToFile : CRYPT_SavePKCSToFile;
         break;
     case CERT_STORE_SAVE_TO_FILENAME_W:
         handle = CreateFileW((LPCWSTR)pvSaveToPara, GENERIC_WRITE, 0, NULL,
          CREATE_ALWAYS, 0, NULL);
-        saveFunc = dwSaveAs == CERT_STORE_SAVE_AS_STORE ?
-         CRYPT_SaveSerializedToFile : CRYPT_SavePKCSToFile;
         break;
     case CERT_STORE_SAVE_TO_MEMORY:
         handle = pvSaveToPara;
-        saveFunc = dwSaveAs == CERT_STORE_SAVE_AS_STORE ?
-         CRYPT_SaveSerializedToMem : CRYPT_SavePKCSToMem;
         break;
     default:
         WARN("unimplemented for %d\n", dwSaveTo);
