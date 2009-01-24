@@ -238,6 +238,15 @@ BOOL WINAPI SetupDiDestroyClassImageList(PSP_CLASSIMAGELIST_DATA ClassListImageD
 }
 
 /***********************************************************************
+ *      SetupDiGetClassImageList (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetClassImageList(PSP_CLASSIMAGELIST_DATA ClassImageListData)
+{
+    FIXME("(%p) stub\n", ClassImageListData);
+    return FALSE;
+}
+
+/***********************************************************************
  *      SetupPromptForDiskA (SETUPAPI.@)
  */
 UINT WINAPI SetupPromptForDiskA(HWND hwndParent, PCSTR DialogTitle, PCSTR DiskName,

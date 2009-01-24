@@ -319,7 +319,7 @@
 @ stdcall SetupDiGetClassDevsExW(ptr wstr ptr long ptr wstr ptr)
 @ stdcall SetupDiGetClassDevsW(ptr ptr long long)
 @ stub SetupDiGetClassImageIndex
-@ stub SetupDiGetClassImageList
+@ stdcall SetupDiGetClassImageList(ptr)
 @ stub SetupDiGetClassImageListExA
 @ stub SetupDiGetClassImageListExW
 @ stub SetupDiGetClassInstallParamsA
