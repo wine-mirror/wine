@@ -664,7 +664,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
             if (peff->cbTypeSpecificParams != sizeof(DICONSTANTFORCE))
                 return DIERR_INVALIDPARAM;
             tsp = (LPCDICONSTANTFORCE)(peff->lpvTypeSpecificParams);
-	    This->effect.u.constant.level = (tsp->lMagnitude / 10) * 32;
+	    This->effect.u.constant.level = (max(min(tsp->lMagnitude, 10000), -10000) / 10) * 32;
 	} else if (type == DIEFT_RAMPFORCE) {
             LPCDIRAMPFORCE tsp;
             if (peff->cbTypeSpecificParams != sizeof(DIRAMPFORCE))
