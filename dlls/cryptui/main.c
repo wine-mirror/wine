@@ -6268,18 +6268,16 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     data.dwFlags = dwFlags;
     data.pwszWizardTitle = pwszWizardTitle;
     data.pExportInfo = pExportInfo;
+    data.contextInfo.dwSize = sizeof(data.contextInfo);
+    data.contextInfo.dwExportFormat = 0;
+    data.contextInfo.fExportChain = FALSE;
+    data.contextInfo.fStrongEncryption = FALSE;
+    data.contextInfo.fExportPrivateKeys = FALSE;
     if (pExportInfo->dwSubjectChoice == CRYPTUI_WIZ_EXPORT_CERT_CONTEXT &&
      pvoid)
         memcpy(&data.contextInfo, pvoid,
          min(((PCCRYPTUI_WIZ_EXPORT_CERTCONTEXT_INFO)pvoid)->dwSize,
          sizeof(data.contextInfo)));
-    else
-    {
-        data.contextInfo.dwExportFormat = 0;
-        data.contextInfo.fExportChain = FALSE;
-        data.contextInfo.fStrongEncryption = FALSE;
-        data.contextInfo.fExportPrivateKeys = FALSE;
-    }
     data.fileName = NULL;
     data.file = INVALID_HANDLE_VALUE;
     data.success = FALSE;
