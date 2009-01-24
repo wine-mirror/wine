@@ -407,8 +407,6 @@ extern void WINAPI DOSVM_Int3eHandler(CONTEXT86*);
 
 /* himem.c */
 extern void DOSVM_InitSegments(void);
-extern LPVOID DOSVM_AllocUMB(DWORD);
-extern LPVOID DOSVM_AllocCodeUMB(DWORD, WORD *, WORD *);
 extern LPVOID DOSVM_AllocDataUMB(DWORD, WORD *, WORD *);
 
 /* int09.c */

@@ -66,7 +66,7 @@ static DWORD DOSVM_umb_free = DOSVM_UMB_BOTTOM;
  * overhead. Use of this routine also preserves precious DOS
  * conventional memory.
  */
-LPVOID DOSVM_AllocUMB( DWORD size )
+static LPVOID DOSVM_AllocUMB( DWORD size )
 {
   LPVOID ptr = (LPVOID)DOSVM_umb_free;
   
@@ -113,7 +113,7 @@ static WORD alloc_selector( void *base, DWORD size, unsigned char flags )
  *
  * FIXME: should allocate a single PM selector for the whole UMB range.
  */
-LPVOID DOSVM_AllocCodeUMB( DWORD size, WORD *segment, WORD *selector )
+static LPVOID DOSVM_AllocCodeUMB( DWORD size, WORD *segment, WORD *selector )
 {
   LPVOID ptr = DOSVM_AllocUMB( size );
   
