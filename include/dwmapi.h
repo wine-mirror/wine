@@ -32,6 +32,7 @@ extern "C" {
 DECLARE_HANDLE(HTHUMBNAIL);
 
 DWMAPI DwmEnableComposition(UINT);
+DWMAPI DwmEnableMMCSS(BOOL);
 DWMAPI DwmExtendFrameIntoClientArea(HWND,const MARGINS*);
 DWMAPI DwmGetColorizationColor(DWORD*,BOOL);
 DWMAPI DwmIsCompositionEnabled(BOOL*);

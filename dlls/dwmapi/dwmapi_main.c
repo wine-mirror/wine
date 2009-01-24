@@ -119,3 +119,13 @@ HRESULT WINAPI DwmUnregisterThumbnail(HTHUMBNAIL thumbnail)
 
     return E_NOTIMPL;
 }
+
+/**********************************************************************
+ *           DwmEnableMMCSS         (DWMAPI.@)
+ */
+HRESULT WINAPI DwmEnableMMCSS(BOOL enableMMCSS)
+{
+    FIXME("(%d) stub\n", enableMMCSS);
+
+    return S_OK;
+}
