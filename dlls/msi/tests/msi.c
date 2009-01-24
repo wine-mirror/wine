@@ -1278,6 +1278,12 @@ static void test_MsiQueryComponentState(void)
     ok(state == INSTALLSTATE_NOTUSED || state == INSTALLSTATE_LOCAL,
        "Expected INSTALLSTATE_NOTUSED or INSTALLSTATE_LOCAL, got %d\n", state);
 
+    /* NULL component, product exists */
+    state = MAGIC_ERROR;
+    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, NULL, &state);
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(state == MAGIC_ERROR, "Expected state not changed, got %d\n", state);
+
     res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"hi", 2);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
