@@ -4153,9 +4153,9 @@ static void test_HTMLDoc_ISupportErrorInfo(void)
     {
         hres = ISupportErrorInfo_InterfaceSupportsErrorInfo(sinfo, &IID_IErrorInfo);
         ok(hres == S_FALSE, "Expected S_OK, got %x\n", hres);
+        IUnknown_Release(sinfo);
     }
 
-    IUnknown_Release(sinfo);
     ref = IUnknown_Release(unk);
     ok(ref == 0, "ref=%d, expected 0\n", ref);
 }
