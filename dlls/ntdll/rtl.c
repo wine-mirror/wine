@@ -1080,3 +1080,18 @@ NTSTATUS WINAPI RtlGetCompressionWorkSpaceSize(USHORT CompressionFormatAndEngine
 
     return STATUS_NOT_IMPLEMENTED;
 }
+
+/******************************************************************************
+ *  RtlCompressBuffer		[NTDLL.@]
+ */
+NTSTATUS WINAPI RtlCompressBuffer(USHORT CompressionFormatAndEngine, PUCHAR UncompressedBuffer,
+                                  ULONG UncompressedBufferSize, PUCHAR CompressedBuffer,
+                                  ULONG CompressedBufferSize, ULONG UncompressedChunkSize,
+                                  PULONG FinalCompressedSize, PVOID WorkSpace)
+{
+    FIXME("0x%04x, %p, %u, %p, %u, %u, %p, %p :stub\n", CompressionFormatAndEngine, UncompressedBuffer,
+         UncompressedBufferSize, CompressedBuffer, CompressedBufferSize, UncompressedChunkSize,
+         FinalCompressedSize, WorkSpace);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
