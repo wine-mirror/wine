@@ -5978,6 +5978,7 @@ static void show_export_details(HWND lv, struct ExportWizData *data)
     case CRYPTUI_WIZ_EXPORT_CRL_CONTEXT:
     case CRYPTUI_WIZ_EXPORT_CTL_CONTEXT:
     case CRYPTUI_WIZ_EXPORT_CERT_STORE:
+    case CRYPTUI_WIZ_EXPORT_CERT_STORE_CERTIFICATES_ONLY:
         /* do nothing */
         break;
     default:
@@ -6076,7 +6077,13 @@ static BOOL save_base64(HANDLE file, const BYTE *pb, DWORD cb)
     return ret;
 }
 
-static BOOL save_cms(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
+static inline BOOL save_store_as_cms(HANDLE file, HCERTSTORE store)
+{
+    return CertSaveStore(store, PKCS_7_ASN_ENCODING | X509_ASN_ENCODING,
+     CERT_STORE_SAVE_AS_PKCS7, CERT_STORE_SAVE_TO_FILE, file, 0);
+}
+
+static BOOL save_cert_as_cms(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
  BOOL includeChain)
 {
     BOOL ret;
@@ -6136,8 +6143,7 @@ static BOOL save_cms(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
             ret = CertAddCertificateContextToStore(store,
              pExportInfo->u.pCertContext, CERT_STORE_ADD_ALWAYS, NULL);
         if (ret)
-            ret = CertSaveStore(store, PKCS_7_ASN_ENCODING | X509_ASN_ENCODING,
-             CERT_STORE_SAVE_AS_PKCS7, CERT_STORE_SAVE_TO_FILE, file, 0);
+            ret = save_store_as_cms(file, store);
         CertCloseStore(store, 0);
     }
     else
@@ -6176,6 +6182,9 @@ static BOOL do_export(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
     case CRYPTUI_WIZ_EXPORT_CERT_STORE:
         ret = save_serialized_store(file, pExportInfo->u.hCertStore);
         break;
+    case CRYPTUI_WIZ_EXPORT_CERT_STORE_CERTIFICATES_ONLY:
+        ret = save_store_as_cms(file, pExportInfo->u.hCertStore);
+        break;
     default:
         switch (pContextInfo->dwExportFormat)
         {
@@ -6189,7 +6198,8 @@ static BOOL do_export(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
              pExportInfo->u.pCertContext->cbCertEncoded);
             break;
         case CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7:
-            ret = save_cms(file, pExportInfo, pContextInfo->fExportChain);
+            ret = save_cert_as_cms(file, pExportInfo,
+             pContextInfo->fExportChain);
             break;
         case CRYPTUI_WIZ_EXPORT_FORMAT_PFX:
             FIXME("unimplemented for PFX\n");
