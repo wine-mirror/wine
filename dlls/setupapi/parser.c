@@ -365,8 +365,8 @@ static const WCHAR *get_string_subst( const struct inf_file *file, const WCHAR *
 /* do string substitutions on the specified text */
 /* the buffer is assumed to be large enough */
 /* returns necessary length not including terminating null */
-unsigned int PARSER_string_substW( const struct inf_file *file, const WCHAR *text, WCHAR *buffer,
-                                   unsigned int size )
+static unsigned int PARSER_string_substW( const struct inf_file *file, const WCHAR *text,
+                                          WCHAR *buffer, unsigned int size )
 {
     const WCHAR *start, *subst, *p;
     unsigned int len, total = 0;
