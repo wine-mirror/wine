@@ -833,7 +833,7 @@ BOOL WINAPI CertSaveStore(HCERTSTORE hCertStore, DWORD dwMsgAndCertEncodingType,
 {
     BOOL (*saveFunc)(HCERTSTORE, DWORD, void *);
     void *handle;
-    BOOL ret;
+    BOOL ret, closeFile = TRUE;
 
     TRACE("(%p, %08x, %d, %d, %p, %08x)\n", hCertStore,
           dwMsgAndCertEncodingType, dwSaveAs, dwSaveTo, pvSaveToPara, dwFlags);
@@ -861,6 +861,7 @@ BOOL WINAPI CertSaveStore(HCERTSTORE hCertStore, DWORD dwMsgAndCertEncodingType,
     {
     case CERT_STORE_SAVE_TO_FILE:
         handle = pvSaveToPara;
+        closeFile = FALSE;
         break;
     case CERT_STORE_SAVE_TO_FILENAME_A:
         handle = CreateFileA((LPCSTR)pvSaveToPara, GENERIC_WRITE, 0, NULL,
@@ -879,6 +880,8 @@ BOOL WINAPI CertSaveStore(HCERTSTORE hCertStore, DWORD dwMsgAndCertEncodingType,
         return FALSE;
     }
     ret = saveFunc(hCertStore, dwMsgAndCertEncodingType, handle);
+    if (closeFile)
+        CloseHandle(handle);
     TRACE("returning %d\n", ret);
     return ret;
 }
