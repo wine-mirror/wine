@@ -5886,6 +5886,9 @@ static LRESULT CALLBACK export_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
 
         data = (struct ExportWizData *)page->lParam;
         SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
+        if (data->pExportInfo->pwszExportFileName)
+            SendMessageW(GetDlgItem(hwnd, IDC_EXPORT_FILENAME), WM_SETTEXT, 0,
+             (LPARAM)data->pExportInfo->pwszExportFileName);
         break;
     }
     case WM_NOTIFY:
