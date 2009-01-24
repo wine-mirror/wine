@@ -5557,9 +5557,13 @@ static LRESULT CALLBACK export_format_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
     {
         PROPSHEETPAGEW *page = (PROPSHEETPAGEW *)lp;
         int defaultFormatID;
+        BOOL hasPrivateKey;
 
         data = (struct ExportWizData *)page->lParam;
         SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
+        hasPrivateKey = export_info_has_private_key(data->pExportInfo);
+        if (hasPrivateKey)
+            EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_FORMAT_PFX), TRUE);
         switch (data->contextInfo.dwExportFormat)
         {
         case CRYPTUI_WIZ_EXPORT_FORMAT_BASE64:
@@ -5569,7 +5573,7 @@ static LRESULT CALLBACK export_format_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             defaultFormatID = IDC_EXPORT_FORMAT_CMS;
             break;
         case CRYPTUI_WIZ_EXPORT_FORMAT_PFX:
-            if (export_info_has_private_key(data->pExportInfo))
+            if (hasPrivateKey)
                 defaultFormatID = IDC_EXPORT_FORMAT_PFX;
             else
                 defaultFormatID = IDC_EXPORT_FORMAT_DER;
@@ -5882,8 +5886,6 @@ static LRESULT CALLBACK export_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
 
         data = (struct ExportWizData *)page->lParam;
         SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
-        if (export_info_has_private_key(data->pExportInfo))
-            EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_FORMAT_PFX), TRUE);
         break;
     }
     case WM_NOTIFY:
