@@ -1128,7 +1128,9 @@ HSZ WINAPI DdeCreateStringHandleA(DWORD idInst, LPCSTR psz, INT codepage)
     TRACE("(%d,%s,%d)\n", idInst, debugstr_a(psz), codepage);
 
     pInstance = WDML_GetInstance(idInst);
-    if (pInstance)
+    if (pInstance == NULL)
+	WDML_SetAllLastError(DMLERR_INVALIDPARAMETER);
+    else
     {
 	if (codepage == 0) codepage = CP_WINANSI;
 	hsz = WDML_CreateString(pInstance, psz, codepage);
@@ -1155,7 +1157,9 @@ HSZ WINAPI DdeCreateStringHandleW(DWORD idInst, LPCWSTR psz, INT codepage)
     HSZ			hsz = 0;
 
     pInstance = WDML_GetInstance(idInst);
-    if (pInstance)
+    if (pInstance == NULL)
+	WDML_SetAllLastError(DMLERR_INVALIDPARAMETER);
+    else
     {
 	if (codepage == 0) codepage = CP_WINUNICODE;
 	hsz = WDML_CreateString(pInstance, psz, codepage);

@@ -1569,18 +1569,14 @@ static void test_DdeCreateDataHandle(void)
     item = DdeCreateStringHandleA(0, "item", CP_WINANSI);
     ok(item == NULL, "Expected NULL hsz got %p\n", item);
     err = DdeGetLastError(dde_inst);
-  todo_wine
     ok(err == DMLERR_INVALIDPARAMETER, "Expected DMLERR_INVALIDPARAMETER, got %d\n", err);
     err = DdeGetLastError(dde_inst2);
-  todo_wine
     ok(err == DMLERR_INVALIDPARAMETER, "Expected DMLERR_INVALIDPARAMETER, got %d\n", err);
     item = DdeCreateStringHandleW(0, item_str, CP_WINUNICODE);
     ok(item == NULL, "Expected NULL hsz got %p\n", item);
     err = DdeGetLastError(dde_inst);
-  todo_wine
     ok(err == DMLERR_INVALIDPARAMETER, "Expected DMLERR_INVALIDPARAMETER, got %d\n", err);
     err = DdeGetLastError(dde_inst2);
-  todo_wine
     ok(err == DMLERR_INVALIDPARAMETER, "Expected DMLERR_INVALIDPARAMETER, got %d\n", err);
 
     item = DdeCreateStringHandleA(dde_inst, "item", CP_WINANSI);
