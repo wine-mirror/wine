@@ -171,7 +171,6 @@ extern DWORD		ALSA_WidNumDevs;
 extern WINE_WAVEDEV	*WOutDev;
 extern DWORD		ALSA_WodNumMallocedDevs;
 extern DWORD		ALSA_WodNumDevs;
-DWORD wodSetVolume(WORD wDevID, DWORD dwParam);
 
 /* alsa.c */
 int	ALSA_InitRingMessage(ALSA_MSG_RING* omr);

@@ -1094,7 +1094,7 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 /**************************************************************************
  * 				wodSetVolume			[internal]
  */
-DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
+static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 {
     WORD	       wleft, wright;
     WINE_WAVEDEV*      wwo;
