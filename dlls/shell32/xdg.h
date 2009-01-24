@@ -25,7 +25,6 @@
 #define XDG_CONFIG_DIRS 3
 #define XDG_CACHE_HOME 4
 
-const char *XDG_GetPath(int path_id);
 char *XDG_BuildPath(int root_id, const char *subpath);
 int XDG_MakeDirs(const char *path);
 

@@ -55,6 +55,9 @@ WINE_DECLARE_DEBUG_CHANNEL(shell);
 extern LPVOID WINAPI Alloc(INT);
 extern BOOL WINAPI Free(LPVOID);
 
+static LPSTR _ILGetSTextPointer(LPCITEMIDLIST pidl);
+static LPWSTR _ILGetTextPointerW(LPCITEMIDLIST pidl);
+
 /*************************************************************************
  * ILGetDisplayNameEx        [SHELL32.186]
  *
@@ -1901,7 +1904,7 @@ LPPIDLDATA _ILGetDataPointer(LPCITEMIDLIST pidl)
  *  _ILGetTextPointerW()
  * gets a pointer to the unicode long filename string stored in the pidl
  */
-LPWSTR _ILGetTextPointerW(LPCITEMIDLIST pidl)
+static LPWSTR _ILGetTextPointerW(LPCITEMIDLIST pidl)
 {
     /* TRACE(pidl,"(pidl%p)\n", pidl);*/
 
@@ -1994,7 +1997,7 @@ LPSTR _ILGetTextPointer(LPCITEMIDLIST pidl)
  *  _ILGetSTextPointer()
  * gets a pointer to the short filename string stored in the pidl
  */
-LPSTR _ILGetSTextPointer(LPCITEMIDLIST pidl)
+static LPSTR _ILGetSTextPointer(LPCITEMIDLIST pidl)
 {
     /* TRACE(pidl,"(pidl%p)\n", pidl); */
 

@@ -159,7 +159,7 @@ static char *load_path(int path_id)
  *
  * The paths are guaranteed to start with '/'
  */
-const char *XDG_GetPath(int path_id)
+static const char *XDG_GetPath(int path_id)
 {
     if (path_id >= PATHS_COUNT || path_id < 0)
     {
