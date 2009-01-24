@@ -5282,20 +5282,11 @@ static LRESULT WINAPI test_thick_child_size_winproc(HWND hwnd, UINT msg, WPARAM 
             }
             actualMinTrackX =  minmax->ptMinTrackSize.x;
             actualMinTrackY =  minmax->ptMinTrackSize.y;
-            if (!(test_thick_child_style & (WS_DLGFRAME | WS_BORDER))) {
-                todo_wine
-                    ok(actualMinTrackX == expectedMinTrackX && actualMinTrackY == expectedMinTrackY,
-                        "expected minTrack %dx%d, actual minTrack %dx%d for %s\n",
-                        expectedMinTrackX, expectedMinTrackY, actualMinTrackX, actualMinTrackY,
-                        test_thick_child_name);
-            }
-            else
-            {
-                ok(actualMinTrackX == expectedMinTrackX && actualMinTrackY == expectedMinTrackY,
-                    "expected minTrack %dx%d, actual minTrack %dx%d for %s\n",
-                    expectedMinTrackX, expectedMinTrackY, actualMinTrackX, actualMinTrackY,
-                    test_thick_child_name);
-            }
+
+            ok(actualMinTrackX == expectedMinTrackX && actualMinTrackY == expectedMinTrackY,
+                "expected minTrack %dx%d, actual minTrack %dx%d for %s\n",
+                expectedMinTrackX, expectedMinTrackY, actualMinTrackX, actualMinTrackY,
+                test_thick_child_name);
 
             actualMaxTrackX = minmax->ptMaxTrackSize.x;
             actualMaxTrackY = minmax->ptMaxTrackSize.y;
@@ -5453,20 +5444,9 @@ static void test_thick_child_size(HWND parentWindow)
             expectedHeight = -2 * adjustedParentRect.top;
         }
 
-        if (!(test_thick_child_style & (WS_DLGFRAME | WS_BORDER)))
-        {
-            todo_wine
-                ok((childWidth == expectedWidth) && (childHeight == expectedHeight),
-                    "size of window (%s) is wrong: expected size %dx%d != actual size %dx%d\n",
-                    test_thick_child_name, expectedWidth, expectedHeight, childWidth, childHeight);
-        }
-        else
-        {
-            ok((childWidth == expectedWidth) && (childHeight == expectedHeight),
-                "size of window (%s) is wrong: expected size %dx%d != actual size %dx%d\n",
-                test_thick_child_name, expectedWidth, expectedHeight, childWidth, childHeight);
-        }
-
+        ok((childWidth == expectedWidth) && (childHeight == expectedHeight),
+            "size of window (%s) is wrong: expected size %dx%d != actual size %dx%d\n",
+            test_thick_child_name, expectedWidth, expectedHeight, childWidth, childHeight);
 
         SetLastError(0xdeadbeef);
         success = DestroyWindow(childWindow);
