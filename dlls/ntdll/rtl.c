@@ -1067,3 +1067,16 @@ PSLIST_ENTRY WINAPI RtlInterlockedPushListSList(PSLIST_HEADER ListHeader,
     return oldHeader.s.Next.Next;
 #endif
 }
+
+/******************************************************************************
+ *  RtlGetCompressionWorkSpaceSize		[NTDLL.@]
+ */
+NTSTATUS WINAPI RtlGetCompressionWorkSpaceSize(USHORT CompressionFormatAndEngine,
+                                               PULONG CompressBufferWorkSpaceSize,
+                                               PULONG CompressFragmentWorkSpaceSize)
+{
+    FIXME("0x%04x, %p, %p: stub!\n", CompressionFormatAndEngine, CompressBufferWorkSpaceSize,
+         CompressFragmentWorkSpaceSize);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
