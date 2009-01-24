@@ -5633,6 +5633,7 @@ static LPWSTR export_append_extension(struct ExportWizData *data,
     static const WCHAR ctl[] = { '.','c','t','l',0 };
     static const WCHAR p7b[] = { '.','p','7','b',0 };
     static const WCHAR pfx[] = { '.','p','f','x',0 };
+    static const WCHAR sst[] = { '.','s','s','t',0 };
     LPCWSTR extension;
     LPWSTR dot;
     BOOL appendExtension;
@@ -5653,6 +5654,9 @@ static LPWSTR export_append_extension(struct ExportWizData *data,
             break;
         case CRYPTUI_WIZ_EXPORT_CTL_CONTEXT:
             extension = ctl;
+            break;
+        case CRYPTUI_WIZ_EXPORT_CERT_STORE:
+            extension = sst;
             break;
         default:
             extension = cer;
@@ -5760,6 +5764,7 @@ static const WCHAR export_filter_crl[] = { '*','.','c','r','l',0 };
 static const WCHAR export_filter_ctl[] = { '*','.','s','t','l',0 };
 static const WCHAR export_filter_cms[] = { '*','.','p','7','b',0 };
 static const WCHAR export_filter_pfx[] = { '*','.','p','f','x',0 };
+static const WCHAR export_filter_sst[] = { '*','.','s','s','t',0 };
 
 static WCHAR *make_export_file_filter(DWORD exportFormat, DWORD subjectChoice)
 {
@@ -5791,6 +5796,10 @@ static WCHAR *make_export_file_filter(DWORD exportFormat, DWORD subjectChoice)
         case CRYPTUI_WIZ_EXPORT_CTL_CONTEXT:
             baseID = IDS_EXPORT_FILTER_CTL;
             filterStr = export_filter_ctl;
+            break;
+        case CRYPTUI_WIZ_EXPORT_CERT_STORE:
+            baseID = IDS_EXPORT_FILTER_SERIALIZED_CERT_STORE;
+            filterStr = export_filter_sst;
             break;
         default:
             baseID = IDS_EXPORT_FILTER_CERT;
@@ -5968,6 +5977,7 @@ static void show_export_details(HWND lv, struct ExportWizData *data)
     {
     case CRYPTUI_WIZ_EXPORT_CRL_CONTEXT:
     case CRYPTUI_WIZ_EXPORT_CTL_CONTEXT:
+    case CRYPTUI_WIZ_EXPORT_CERT_STORE:
         /* do nothing */
         break;
     default:
@@ -6010,6 +6020,9 @@ static void show_export_details(HWND lv, struct ExportWizData *data)
         break;
     case CRYPTUI_WIZ_EXPORT_CTL_CONTEXT:
         contentID = IDS_EXPORT_FILTER_CTL;
+        break;
+    case CRYPTUI_WIZ_EXPORT_CERT_STORE:
+        contentID = IDS_EXPORT_FILTER_SERIALIZED_CERT_STORE;
         break;
     default:
         switch (data->contextInfo.dwExportFormat)
@@ -6132,6 +6145,12 @@ static BOOL save_cms(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
     return ret;
 }
 
+static BOOL save_serialized_store(HANDLE file, HCERTSTORE store)
+{
+    return CertSaveStore(store, PKCS_7_ASN_ENCODING | X509_ASN_ENCODING,
+     CERT_STORE_SAVE_AS_STORE, CERT_STORE_SAVE_TO_FILE, file, 0);
+}
+
 static BOOL do_export(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
  PCCRYPTUI_WIZ_EXPORT_CERTCONTEXT_INFO pContextInfo)
 {
@@ -6153,6 +6172,9 @@ static BOOL do_export(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
         ret = save_der(file,
          pExportInfo->u.pCTLContext->pbCtlEncoded,
          pExportInfo->u.pCTLContext->cbCtlEncoded);
+        break;
+    case CRYPTUI_WIZ_EXPORT_CERT_STORE:
+        ret = save_serialized_store(file, pExportInfo->u.hCertStore);
         break;
     default:
         switch (pContextInfo->dwExportFormat)
