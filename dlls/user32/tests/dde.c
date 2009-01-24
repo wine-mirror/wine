@@ -1550,6 +1550,7 @@ static void test_DdeCreateDataHandle(void)
     BOOL ret;
     HSZ item;
     LPBYTE ptr;
+    WCHAR item_str[] = {'i','t','e','m',0};
 
     dde_inst = 0;
     dde_inst2 = 0;
@@ -1558,6 +1559,29 @@ static void test_DdeCreateDataHandle(void)
 
     res = DdeInitializeA(&dde_inst2, client_ddeml_callback, APPCMD_CLIENTONLY, 0);
     ok(res == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", res);
+
+    /* 0 instance id
+     * This block tests an invalid instance Id.  The correct behaviour is that if the instance Id
+     * is invalid then the lastError of all instances is set to the error.  There are two instances
+     * created, lastError is cleared, an error is generated and then both instances are checked to
+     * ensure that they both have the same error set
+     */
+    item = DdeCreateStringHandleA(0, "item", CP_WINANSI);
+    ok(item == NULL, "Expected NULL hsz got %p\n", item);
+    err = DdeGetLastError(dde_inst);
+  todo_wine
+    ok(err == DMLERR_INVALIDPARAMETER, "Expected DMLERR_INVALIDPARAMETER, got %d\n", err);
+    err = DdeGetLastError(dde_inst2);
+  todo_wine
+    ok(err == DMLERR_INVALIDPARAMETER, "Expected DMLERR_INVALIDPARAMETER, got %d\n", err);
+    item = DdeCreateStringHandleW(0, item_str, CP_WINUNICODE);
+    ok(item == NULL, "Expected NULL hsz got %p\n", item);
+    err = DdeGetLastError(dde_inst);
+  todo_wine
+    ok(err == DMLERR_INVALIDPARAMETER, "Expected DMLERR_INVALIDPARAMETER, got %d\n", err);
+    err = DdeGetLastError(dde_inst2);
+  todo_wine
+    ok(err == DMLERR_INVALIDPARAMETER, "Expected DMLERR_INVALIDPARAMETER, got %d\n", err);
 
     item = DdeCreateStringHandleA(dde_inst, "item", CP_WINANSI);
     ok(item != NULL, "Expected non-NULL hsz\n");
