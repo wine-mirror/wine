@@ -5195,11 +5195,15 @@ static void test_fullscreen(void)
             todo_wine
             ok(rc.left >= mi.rcWork.left && rc.top <= mi.rcWork.top &&
                rc.right <= mi.rcWork.right && rc.bottom <= mi.rcWork.bottom,
-               "%#x/%#x: window rect %d,%d-%d,%d\n", ex_style, style, rc.left, rc.top, rc.right, rc.bottom);
+               "%#x/%#x: window rect %d,%d-%d,%d must be in %d,%d-%d,%d\n",
+               ex_style, style, rc.left, rc.top, rc.right, rc.bottom,
+               mi.rcWork.left, mi.rcWork.top, mi.rcWork.right, mi.rcWork.bottom);
             else
             ok(rc.left >= mi.rcWork.left && rc.top <= mi.rcWork.top &&
                rc.right <= mi.rcWork.right && rc.bottom <= mi.rcWork.bottom,
-               "%#x/%#x: window rect %d,%d-%d,%d\n", ex_style, style, rc.left, rc.top, rc.right, rc.bottom);
+               "%#x/%#x: window rect %d,%d-%d,%d must be in %d,%d-%d,%d\n",
+               ex_style, style, rc.left, rc.top, rc.right, rc.bottom,
+               mi.rcWork.left, mi.rcWork.top, mi.rcWork.right, mi.rcWork.bottom);
             DestroyWindow(hwnd);
 
             style = t_style[i] | WS_MAXIMIZE | WS_MAXIMIZEBOX;
