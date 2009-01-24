@@ -115,7 +115,6 @@ SecurePackage *SECUR32_findPackageA(PCSTR packageName);
 
 /* A few string helpers; will return NULL if str is NULL.  Free return with
  * HeapFree */
-PWSTR SECUR32_strdupW(PCWSTR str);
 PWSTR SECUR32_AllocWideFromMultiByte(PCSTR str);
 PSTR  SECUR32_AllocMultiByteFromWide(PCWSTR str);
 

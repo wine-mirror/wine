@@ -163,7 +163,7 @@ PSecurityFunctionTableW WINAPI InitSecurityInterfaceW(void)
     return &securityFunctionTableW;
 }
 
-PWSTR SECUR32_strdupW(PCWSTR str)
+static PWSTR SECUR32_strdupW(PCWSTR str)
 {
     PWSTR ret;
 
