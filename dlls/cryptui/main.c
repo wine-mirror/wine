@@ -6269,7 +6269,7 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     data.pwszWizardTitle = pwszWizardTitle;
     data.pExportInfo = pExportInfo;
     data.contextInfo.dwSize = sizeof(data.contextInfo);
-    data.contextInfo.dwExportFormat = 0;
+    data.contextInfo.dwExportFormat = CRYPTUI_WIZ_EXPORT_FORMAT_DER;
     data.contextInfo.fExportChain = FALSE;
     data.contextInfo.fStrongEncryption = FALSE;
     data.contextInfo.fExportPrivateKeys = FALSE;
