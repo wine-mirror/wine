@@ -104,7 +104,7 @@ STRINGTABLE
     IDM_REGEDIT,           "Run the Wine registry editor"
     IDM_EXIT,              "Quit the application. Prompts to save changes"
     IDM_CREATEINST,        "Create an instance of the selected object"
-    IDM_CREATEINSTON,      "Create an instance of the selected object on a specyfic machine"
+    IDM_CREATEINSTON,      "Create an instance of the selected object on a specific machine"
     IDM_RELEASEINST,       "Release the currently selected object instance"
     IDM_COPYCLSID,         "Copy the GUID of the currently selected item to the clipboard"
     IDM_VIEW,              "Display the viewer for the selected item"

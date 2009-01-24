@@ -104,7 +104,7 @@ STRINGTABLE
     IDM_REGEDIT,           "Запустить Редактор реестра Wine"
     IDM_EXIT,              "Выйти из приложения с предложением сохранить изменения"
     IDM_CREATEINST,        "Create an instance of the selected object"
-    IDM_CREATEINSTON,      "Create an instance of the selected object on a specyfic machine"
+    IDM_CREATEINSTON,      "Create an instance of the selected object on a specific machine"
     IDM_RELEASEINST,       "Release the currently selected object instance"
     IDM_COPYCLSID,         "Копировать GUID выделенного элемента в буфер"
     IDM_VIEW,              "Display the viewer for the selected item"
