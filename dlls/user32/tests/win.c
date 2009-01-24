@@ -5190,15 +5190,6 @@ static void test_fullscreen(void)
             /* Windows makes a maximized window slightly larger (to hide the borders?) */
             fixup = min(abs(rc.left), abs(rc.top));
             InflateRect(&rc, -fixup, -fixup);
-            /* FIXME: this doesn't work correctly in Wine for child windows yet */
-            if (style & WS_CHILD)
-            todo_wine
-            ok(rc.left >= mi.rcWork.left && rc.top <= mi.rcWork.top &&
-               rc.right <= mi.rcWork.right && rc.bottom <= mi.rcWork.bottom,
-               "%#x/%#x: window rect %d,%d-%d,%d must be in %d,%d-%d,%d\n",
-               ex_style, style, rc.left, rc.top, rc.right, rc.bottom,
-               mi.rcWork.left, mi.rcWork.top, mi.rcWork.right, mi.rcWork.bottom);
-            else
             ok(rc.left >= mi.rcWork.left && rc.top <= mi.rcWork.top &&
                rc.right <= mi.rcWork.right && rc.bottom <= mi.rcWork.bottom,
                "%#x/%#x: window rect %d,%d-%d,%d must be in %d,%d-%d,%d\n",

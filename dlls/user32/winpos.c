@@ -658,6 +658,7 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
     HMONITOR monitor;
     INT xinc, yinc;
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
+    LONG adjustedStyle;
     LONG exstyle = GetWindowLongW( hwnd, GWL_EXSTYLE );
     RECT rc;
     WND *win;
@@ -671,10 +672,12 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
     if (style & WS_CHILD)
     {
         if ((style & WS_CAPTION) == WS_CAPTION)
-            style &= ~WS_BORDER; /* WS_CAPTION = WS_DLGFRAME | WS_BORDER */
+            adjustedStyle = style & ~WS_BORDER; /* WS_CAPTION = WS_DLGFRAME | WS_BORDER */
+        else
+            adjustedStyle = style;
 
         GetClientRect(GetAncestor(hwnd,GA_PARENT), &rc);
-        AdjustWindowRectEx(&rc, style, ((style & WS_POPUP) && GetMenu(hwnd)), exstyle);
+        AdjustWindowRectEx(&rc, adjustedStyle, ((style & WS_POPUP) && GetMenu(hwnd)), exstyle);
 
         MinMax.ptMaxSize.x = rc.right - rc.left;
         MinMax.ptMaxSize.y = rc.bottom - rc.top;
