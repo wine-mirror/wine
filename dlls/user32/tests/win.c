@@ -5321,10 +5321,9 @@ static LRESULT WINAPI test_thick_child_size_winproc(HWND hwnd, UINT msg, WPARAM 
             expectedPosY = rect.top;
             actualPosX = minmax->ptMaxPosition.x;
             actualPosY = minmax->ptMaxPosition.y;
-            todo_wine
-                ok(actualPosX == expectedPosX && actualPosY == expectedPosY,
-                    "expected maxPosition (%d/%d), actual maxPosition (%d/%d) for %s\n",
-                    expectedPosX, expectedPosY, actualPosX, actualPosY, test_thick_child_name);
+            ok(actualPosX == expectedPosX && actualPosY == expectedPosY,
+                "expected maxPosition (%d/%d), actual maxPosition (%d/%d) for %s\n",
+                expectedPosX, expectedPosY, actualPosX, actualPosY, test_thick_child_name);
 
             break;
         }
