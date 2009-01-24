@@ -6137,6 +6137,11 @@ static BOOL do_export(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
 {
     BOOL ret;
 
+    if (pContextInfo->dwSize != sizeof(CRYPTUI_WIZ_EXPORT_CERTCONTEXT_INFO))
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
     switch (pExportInfo->dwSubjectChoice)
     {
     case CRYPTUI_WIZ_EXPORT_CRL_CONTEXT:
@@ -6152,6 +6157,10 @@ static BOOL do_export(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
     default:
         switch (pContextInfo->dwExportFormat)
         {
+        case CRYPTUI_WIZ_EXPORT_FORMAT_DER:
+            ret = save_der(file, pExportInfo->u.pCertContext->pbCertEncoded,
+             pExportInfo->u.pCertContext->cbCertEncoded);
+            break;
         case CRYPTUI_WIZ_EXPORT_FORMAT_BASE64:
             ret = save_base64(file,
              pExportInfo->u.pCertContext->pbCertEncoded,
@@ -6165,8 +6174,8 @@ static BOOL do_export(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
             ret = FALSE;
             break;
         default:
-            ret = save_der(file, pExportInfo->u.pCertContext->pbCertEncoded,
-             pExportInfo->u.pCertContext->cbCertEncoded);
+            SetLastError(E_FAIL);
+            ret = FALSE;
         }
     }
     return ret;
