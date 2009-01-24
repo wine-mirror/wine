@@ -669,66 +669,34 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
     MinMax.ptReserved.x = rc.left;
     MinMax.ptReserved.y = rc.top;
 
-    if (style & WS_CHILD)
+    if ((style & WS_CAPTION) == WS_CAPTION)
+        adjustedStyle = style & ~WS_BORDER; /* WS_CAPTION = WS_DLGFRAME | WS_BORDER */
+    else
+        adjustedStyle = style;
+
+    GetClientRect(GetAncestor(hwnd,GA_PARENT), &rc);
+    AdjustWindowRectEx(&rc, adjustedStyle, ((style & WS_POPUP) && GetMenu(hwnd)), exstyle);
+
+    xinc = -rc.left;
+    yinc = -rc.top;
+
+    MinMax.ptMaxSize.x = rc.right - rc.left;
+    MinMax.ptMaxSize.y = rc.bottom - rc.top;
+    if (style & (WS_DLGFRAME | WS_BORDER))
     {
-        if ((style & WS_CAPTION) == WS_CAPTION)
-            adjustedStyle = style & ~WS_BORDER; /* WS_CAPTION = WS_DLGFRAME | WS_BORDER */
-        else
-            adjustedStyle = style;
-
-        GetClientRect(GetAncestor(hwnd,GA_PARENT), &rc);
-        AdjustWindowRectEx(&rc, adjustedStyle, ((style & WS_POPUP) && GetMenu(hwnd)), exstyle);
-
-        MinMax.ptMaxSize.x = rc.right - rc.left;
-        MinMax.ptMaxSize.y = rc.bottom - rc.top;
-        if (style & (WS_DLGFRAME | WS_BORDER))
-        {
-            MinMax.ptMinTrackSize.x = GetSystemMetrics(SM_CXMINTRACK);
-            MinMax.ptMinTrackSize.y = GetSystemMetrics(SM_CYMINTRACK);
-        }
-        else
-        {
-            MinMax.ptMinTrackSize.x = -2 * rc.left;
-            MinMax.ptMinTrackSize.y = -2 * rc.top;
-        }
-        MinMax.ptMaxTrackSize.x = GetSystemMetrics(SM_CXMAXTRACK);
-        MinMax.ptMaxTrackSize.y = GetSystemMetrics(SM_CYMAXTRACK);
-        xinc = -rc.left;
-        yinc = -rc.top;
+        MinMax.ptMinTrackSize.x = GetSystemMetrics(SM_CXMINTRACK);
+        MinMax.ptMinTrackSize.y = GetSystemMetrics(SM_CYMINTRACK);
     }
     else
     {
-        MinMax.ptMaxSize.x = GetSystemMetrics(SM_CXSCREEN);
-        MinMax.ptMaxSize.y = GetSystemMetrics(SM_CYSCREEN);
-        MinMax.ptMinTrackSize.x = GetSystemMetrics(SM_CXMINTRACK);
-        MinMax.ptMinTrackSize.y = GetSystemMetrics(SM_CYMINTRACK);
-        MinMax.ptMaxTrackSize.x = GetSystemMetrics(SM_CXMAXTRACK);
-        MinMax.ptMaxTrackSize.y = GetSystemMetrics(SM_CYMAXTRACK);
-
-        if (HAS_DLGFRAME( style, exstyle ))
-        {
-            xinc = GetSystemMetrics(SM_CXDLGFRAME);
-            yinc = GetSystemMetrics(SM_CYDLGFRAME);
-        }
-        else
-        {
-            xinc = yinc = 0;
-            if (HAS_THICKFRAME(style))
-            {
-                xinc += GetSystemMetrics(SM_CXFRAME);
-                yinc += GetSystemMetrics(SM_CYFRAME);
-            }
-            if (style & WS_BORDER)
-            {
-                xinc += GetSystemMetrics(SM_CXBORDER);
-                yinc += GetSystemMetrics(SM_CYBORDER);
-            }
-        }
-        MinMax.ptMaxSize.x += 2 * xinc;
-        MinMax.ptMaxSize.y += 2 * yinc;
+        MinMax.ptMinTrackSize.x = 2 * xinc;
+        MinMax.ptMinTrackSize.y = 2 * yinc;
     }
+    MinMax.ptMaxTrackSize.x = GetSystemMetrics(SM_CXMAXTRACK);
+    MinMax.ptMaxTrackSize.y = GetSystemMetrics(SM_CYMAXTRACK);
     MinMax.ptMaxPosition.x = -xinc;
     MinMax.ptMaxPosition.y = -yinc;
+
     if ((win = WIN_GetPtr( hwnd )) && win != WND_DESKTOP && win != WND_OTHER_PROCESS)
     {
         if (!EMPTYPOINT(win->max_pos)) MinMax.ptMaxPosition = win->max_pos;
