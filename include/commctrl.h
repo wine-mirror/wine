@@ -1099,7 +1099,7 @@ static const WCHAR TOOLBARCLASSNAMEW[] = { 'T','o','o','l','b','a','r',
 #define TBSTYLE_EX_UNDOC1               0x00000004 /* similar to TBSTYLE_WRAPABLE */
 #define TBSTYLE_EX_MIXEDBUTTONS         0x00000008
 #define TBSTYLE_EX_HIDECLIPPEDBUTTONS   0x00000010 /* don't show partially obscured buttons */
-#define TBSTYLE_EX_DOUBLEBUFFER         0x00000080 /* Double Buffer the toolbar ??? */
+#define TBSTYLE_EX_DOUBLEBUFFER         0x00000080 /* Double Buffer the toolbar */
 
 #define TBIF_IMAGE              0x00000001
 #define TBIF_TEXT               0x00000002
