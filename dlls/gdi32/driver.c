@@ -729,3 +729,15 @@ INT WINAPI DrawEscape(HDC hdc, INT nEscape, INT cbInput, LPCSTR lpszInData)
     FIXME("DrawEscape, stub\n");
     return 0;
 }
+
+/*******************************************************************
+ *      NamedEscape [GDI32.@]
+ */
+INT WINAPI NamedEscape( HDC hdc, LPCWSTR pDriver, INT nEscape, INT cbInput, LPCSTR lpszInData,
+                        INT cbOutput, LPSTR lpszOutData )
+{
+    FIXME("(%p, %s, %d, %d, %p, %d, %p)\n",
+          hdc, wine_dbgstr_w(pDriver), nEscape, cbInput, lpszInData, cbOutput,
+          lpszOutData);
+    return 0;
+}

@@ -365,7 +365,7 @@
 # @ stub MirrorRgn
 @ stdcall ModifyWorldTransform(long ptr long)
 @ stdcall MoveToEx(long long long ptr)
-# @ stub NamedEscape
+@ stdcall NamedEscape(long wstr long long ptr long ptr)
 @ stdcall OffsetClipRgn(long long long)
 @ stdcall OffsetRgn(long long long)
 @ stdcall OffsetViewportOrgEx(long long long ptr)
