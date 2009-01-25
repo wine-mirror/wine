@@ -567,7 +567,7 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 	{
 	    MINMAXINFO* minmax = (MINMAXINFO *)lparam;
 
-	    trace("hwnd %p, WM_GETMINMAXINFO, %08lx, %08lx\n", hwnd, wparam, lparam);
+	    trace("WM_GETMINMAXINFO: hwnd %p, %08lx, %08lx\n", hwnd, wparam, lparam);
             dump_minmax_info( minmax );
 	    SetWindowLongPtrA(hwnd, GWLP_USERDATA, 0x20031021);
 	    break;
@@ -576,8 +576,7 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 	{
 	    BOOL is_win9x = GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == 0;
 	    WINDOWPOS *winpos = (WINDOWPOS *)lparam;
-	    trace("main: WM_WINDOWPOSCHANGING\n");
-	    trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+	    trace("main: WM_WINDOWPOSCHANGING %p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
 		   winpos->hwnd, winpos->hwndInsertAfter,
 		   winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
 	    if (!(winpos->flags & SWP_NOMOVE))
@@ -597,8 +596,7 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 	{
             RECT rc1, rc2;
 	    WINDOWPOS *winpos = (WINDOWPOS *)lparam;
-	    trace("main: WM_WINDOWPOSCHANGED\n");
-	    trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+	    trace("main: WM_WINDOWPOSCHANGED %p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
 		   winpos->hwnd, winpos->hwndInsertAfter,
 		   winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
 	    ok(winpos->x >= -32768 && winpos->x <= 32767, "bad winpos->x %d\n", winpos->x);
@@ -608,15 +606,14 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 	    ok(winpos->cy >= 0 && winpos->cy <= 32767, "bad winpos->cy %d\n", winpos->cy);
 
             GetWindowRect(hwnd, &rc1);
-            trace("window: (%d,%d)-(%d,%d)\n", rc1.left, rc1.top, rc1.right, rc1.bottom);
             SetRect(&rc2, winpos->x, winpos->y, winpos->x + winpos->cx, winpos->y + winpos->cy);
             /* note: winpos coordinates are relative to parent */
             MapWindowPoints(GetParent(hwnd), 0, (LPPOINT)&rc2, 2);
-            trace("pos: (%d,%d)-(%d,%d)\n", rc2.left, rc2.top, rc2.right, rc2.bottom);
             if (0)
             {
             /* Uncomment this once the test succeeds in all cases */
-            ok(EqualRect(&rc1, &rc2), "rects do not match\n");
+            ok(EqualRect(&rc1, &rc2), "rects do not match (%d,%d-%d,%d) / (%d,%d-%d,%d)\n",
+               rc1.left, rc1.top, rc1.right, rc1.bottom, rc2.left, rc2.top, rc2.right, rc2.bottom );
             }
 
             GetClientRect(hwnd, &rc2);
@@ -719,32 +716,34 @@ static BOOL RegisterWindowClasses(void)
     return TRUE;
 }
 
-static void verify_window_info(HWND hwnd, const WINDOWINFO *info)
+static void verify_window_info(const char *hook, HWND hwnd, const WINDOWINFO *info)
 {
     RECT rcWindow, rcClient;
     DWORD status;
 
-    ok(IsWindow(hwnd), "bad window handle\n");
+    ok(IsWindow(hwnd), "bad window handle %p in hook %s\n", hwnd, hook);
 
     GetWindowRect(hwnd, &rcWindow);
-    ok(EqualRect(&rcWindow, &info->rcWindow), "wrong rcWindow\n");
+    ok(EqualRect(&rcWindow, &info->rcWindow), "wrong rcWindow for %p in hook %s\n", hwnd, hook);
 
     GetClientRect(hwnd, &rcClient);
     /* translate to screen coordinates */
     MapWindowPoints(hwnd, 0, (LPPOINT)&rcClient, 2);
-    ok(EqualRect(&rcClient, &info->rcClient), "wrong rcClient\n");
+    ok(EqualRect(&rcClient, &info->rcClient), "wrong rcClient for %p in hook %s\n", hwnd, hook);
 
     ok(info->dwStyle == (DWORD)GetWindowLongA(hwnd, GWL_STYLE),
-       "wrong dwStyle: %08x != %08x\n", info->dwStyle, GetWindowLongA(hwnd, GWL_STYLE));
+       "wrong dwStyle: %08x != %08x for %p in hook %s\n",
+       info->dwStyle, GetWindowLongA(hwnd, GWL_STYLE), hwnd, hook);
     /* Windows reports some undocumented exstyles in WINDOWINFO, but
      * doesn't return them in GetWindowLong(hwnd, GWL_EXSTYLE).
      */
     ok((info->dwExStyle & ~0xe0000800) == (DWORD)GetWindowLongA(hwnd, GWL_EXSTYLE),
-       "wrong dwExStyle: %08x != %08x\n", info->dwExStyle, GetWindowLongA(hwnd, GWL_EXSTYLE));
+       "wrong dwExStyle: %08x != %08x for %p in hook %s\n",
+       info->dwExStyle, GetWindowLongA(hwnd, GWL_EXSTYLE), hwnd, hook);
     status = (GetActiveWindow() == hwnd) ? WS_ACTIVECAPTION : 0;
     if (GetForegroundWindow())
-        ok(info->dwWindowStatus == status, "wrong dwWindowStatus: %04x != %04x active %p fg %p\n",
-           info->dwWindowStatus, status, GetActiveWindow(), GetForegroundWindow());
+        ok(info->dwWindowStatus == status, "wrong dwWindowStatus: %04x != %04x active %p fg %p in hook %s\n",
+           info->dwWindowStatus, status, GetActiveWindow(), GetForegroundWindow(), hook);
 
     /* win2k and XP return broken border info in GetWindowInfo most of
      * the time, so there is no point in testing it.
@@ -757,10 +756,11 @@ static void verify_window_info(HWND hwnd, const WINDOWINFO *info)
     ok(info->cyWindowBorders == border,
        "wrong cyWindowBorders %d != %d\n", info->cyWindowBorders, border);
 #endif
-    ok(info->atomWindowType == GetClassLongA(hwnd, GCW_ATOM), "wrong atomWindowType\n");
+    ok(info->atomWindowType == GetClassLongA(hwnd, GCW_ATOM), "wrong atomWindowType for %p in hook %s\n",
+       hwnd, hook);
     ok(info->wCreatorVersion == 0x0400 /* NT4, Win2000, XP, Win2003 */ ||
        info->wCreatorVersion == 0x0500 /* Vista */,
-       "wrong wCreatorVersion %04x\n", info->wCreatorVersion);
+       "wrong wCreatorVersion %04x for %p in hook %s\n", info->wCreatorVersion, hwnd, hook);
 }
 
 static void FixedAdjustWindowRectEx(RECT* rc, LONG style, BOOL menu, LONG exstyle)
@@ -791,9 +791,7 @@ static void test_nonclient_area(HWND hwnd)
     menu = !(style & WS_CHILD) && GetMenu(hwnd) != 0;
 
     GetWindowRect(hwnd, &rc_window);
-    trace("window: (%d,%d)-(%d,%d)\n", rc_window.left, rc_window.top, rc_window.right, rc_window.bottom);
     GetClientRect(hwnd, &rc_client);
-    trace("client: (%d,%d)-(%d,%d)\n", rc_client.left, rc_client.top, rc_client.right, rc_client.bottom);
 
     /* avoid some cases when things go wrong */
     if (IsRectEmpty(&rc_window) || IsRectEmpty(&rc_client) ||
@@ -803,15 +801,19 @@ static void test_nonclient_area(HWND hwnd)
     MapWindowPoints(hwnd, 0, (LPPOINT)&rc, 2);
     FixedAdjustWindowRectEx(&rc, style, menu, exstyle);
 
-    trace("calc window: (%d,%d)-(%d,%d)\n", rc.left, rc.top, rc.right, rc.bottom);
-    ok(EqualRect(&rc, &rc_window), "window rect does not match: style:exstyle=0x%08x:0x%08x, menu=%d\n", style, exstyle, menu);
+    ok(EqualRect(&rc, &rc_window),
+       "window rect does not match: style:exstyle=0x%08x:0x%08x, menu=%d, win=(%d,%d)-(%d,%d), calc=(%d,%d)-(%d,%d)\n",
+       style, exstyle, menu, rc_window.left, rc_window.top, rc_window.right, rc_window.bottom,
+       rc.left, rc.top, rc.right, rc.bottom);
 
 
     CopyRect(&rc, &rc_window);
     DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc);
     MapWindowPoints(0, hwnd, (LPPOINT)&rc, 2);
-    trace("calc client: (%d,%d)-(%d,%d)\n", rc.left, rc.top, rc.right, rc.bottom);
-    ok(EqualRect(&rc, &rc_client), "client rect does not match: style:exstyle=0x%08x:0x%08x, menu=%d\n", style, exstyle, menu);
+    ok(EqualRect(&rc, &rc_client),
+       "client rect does not match: style:exstyle=0x%08x:0x%08x, menu=%d client=(%d,%d)-(%d,%d), calc=(%d,%d)-(%d,%d)\n",
+       style, exstyle, menu, rc_client.left, rc_client.top, rc_client.right, rc_client.bottom,
+       rc.left, rc.top, rc.right, rc.bottom);
 
     /* NULL rectangle shouldn't crash */
     ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, 0);
@@ -826,14 +828,14 @@ static void test_nonclient_area(HWND hwnd)
     CopyRect(&rc_window, &rc_client);
     MapWindowPoints(hwnd, 0, (LPPOINT)&rc_window, 2);
     FixedAdjustWindowRectEx(&rc_window, style, menu, exstyle);
-    trace("calc window: (%d,%d)-(%d,%d)\n",
-	rc_window.left, rc_window.top, rc_window.right, rc_window.bottom);
 
     CopyRect(&rc, &rc_window);
     DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc);
     MapWindowPoints(0, hwnd, (LPPOINT)&rc, 2);
-    trace("calc client: (%d,%d)-(%d,%d)\n", rc.left, rc.top, rc.right, rc.bottom);
-    ok(EqualRect(&rc, &rc_client), "synthetic rect does not match: style:exstyle=0x%08x:0x%08x, menu=%d\n", style, exstyle, menu);
+    ok(EqualRect(&rc, &rc_client),
+       "synthetic rect does not match: style:exstyle=0x%08x:0x%08x, menu=%d, client=(%d,%d)-(%d,%d), calc=(%d,%d)-(%d,%d)\n",
+       style, exstyle, menu, rc_client.left, rc_client.top, rc_client.right, rc_client.bottom,
+       rc.left, rc.top, rc.right, rc.bottom);
 }
 
 static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam) 
@@ -850,20 +852,88 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	"HCBT_SYSCOMMAND",
 	"HCBT_SETFOCUS" };
     const char *code_name = (nCode >= 0 && nCode <= HCBT_SETFOCUS) ? CBT_code_name[nCode] : "Unknown";
-
-    trace("CBT: %d (%s), %08lx, %08lx\n", nCode, code_name, wParam, lParam);
+    HWND hwnd = (HWND)wParam;
 
     switch (nCode)
     {
-    /* on HCBT_DESTROYWND window state is undefined */
-    case HCBT_DESTROYWND:
-        break;
+    case HCBT_CREATEWND:
+	{
+	    static const RECT rc_null;
+	    RECT rc;
+	    LONG style;
+	    CBT_CREATEWNDA *createwnd = (CBT_CREATEWNDA *)lParam;
+            trace("HCBT_CREATEWND: hwnd %p, parent %p, style %08x\n",
+		  hwnd, createwnd->lpcs->hwndParent, createwnd->lpcs->style);
+	    ok(createwnd->hwndInsertAfter == HWND_TOP, "hwndInsertAfter should be always HWND_TOP\n");
+
+            if (pGetWindowInfo)
+            {
+                WINDOWINFO info;
+                info.cbSize = sizeof(WINDOWINFO);
+                ok(pGetWindowInfo(hwnd, &info), "GetWindowInfo should not fail\n");
+                verify_window_info(code_name, hwnd, &info);
+            }
+
+	    /* WS_VISIBLE should be turned off yet */
+	    style = createwnd->lpcs->style & ~WS_VISIBLE;
+	    ok(style == GetWindowLongA(hwnd, GWL_STYLE),
+		"style of hwnd and style in the CREATESTRUCT do not match: %08x != %08x\n",
+		GetWindowLongA(hwnd, GWL_STYLE), style);
+
+            if (0)
+            {
+            /* Uncomment this once the test succeeds in all cases */
+	    if ((style & (WS_CHILD|WS_POPUP)) == WS_CHILD)
+	    {
+		ok(GetParent(hwnd) == hwndMessage,
+		   "wrong result from GetParent %p: message window %p\n",
+		   GetParent(hwnd), hwndMessage);
+	    }
+	    else
+		ok(!GetParent(hwnd), "GetParent should return 0 at this point\n");
+
+	    ok(!GetWindow(hwnd, GW_OWNER), "GW_OWNER should be set to 0 at this point\n");
+            }
+            if (0)
+            {
+	    /* while NT assigns GW_HWNDFIRST/LAST some values at this point,
+	     * Win9x still has them set to 0.
+	     */
+	    ok(GetWindow(hwnd, GW_HWNDFIRST) != 0, "GW_HWNDFIRST should not be set to 0 at this point\n");
+	    ok(GetWindow(hwnd, GW_HWNDLAST) != 0, "GW_HWNDLAST should not be set to 0 at this point\n");
+            }
+	    ok(!GetWindow(hwnd, GW_HWNDPREV), "GW_HWNDPREV should be set to 0 at this point\n");
+	    ok(!GetWindow(hwnd, GW_HWNDNEXT), "GW_HWNDNEXT should be set to 0 at this point\n");
+
+            if (0)
+            {
+            /* Uncomment this once the test succeeds in all cases */
+	    if (pGetAncestor)
+	    {
+		ok(pGetAncestor(hwnd, GA_PARENT) == hwndMessage, "GA_PARENT should be set to hwndMessage at this point\n");
+		ok(pGetAncestor(hwnd, GA_ROOT) == hwnd,
+		   "GA_ROOT is set to %p, expected %p\n", pGetAncestor(hwnd, GA_ROOT), hwnd);
+
+		if ((style & (WS_CHILD|WS_POPUP)) == WS_CHILD)
+		    ok(pGetAncestor(hwnd, GA_ROOTOWNER) == hwndMessage,
+		       "GA_ROOTOWNER should be set to hwndMessage at this point\n");
+		else
+		    ok(pGetAncestor(hwnd, GA_ROOTOWNER) == hwnd,
+		       "GA_ROOTOWNER is set to %p, expected %p\n", pGetAncestor(hwnd, GA_ROOTOWNER), hwnd);
+            }
+
+	    ok(GetWindowRect(hwnd, &rc), "GetWindowRect failed\n");
+	    ok(EqualRect(&rc, &rc_null), "window rect should be set to 0 HCBT_CREATEWND\n");
+	    ok(GetClientRect(hwnd, &rc), "GetClientRect failed\n");
+	    ok(EqualRect(&rc, &rc_null), "client rect should be set to 0 on HCBT_CREATEWND\n");
+            }
+	    break;
+	}
     case HCBT_MOVESIZE:
     case HCBT_MINMAX:
-    case HCBT_CREATEWND:
     case HCBT_ACTIVATE:
     case HCBT_SETFOCUS:
-	if (pGetWindowInfo && IsWindow((HWND)wParam))
+	if (pGetWindowInfo && IsWindow(hwnd))
 	{
 	    WINDOWINFO info;
 
@@ -872,79 +942,16 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	     * WinXP do not check it at all.
 	     */
 	    info.cbSize = sizeof(WINDOWINFO);
-	    ok(pGetWindowInfo((HWND)wParam, &info), "GetWindowInfo should not fail\n");
-	    verify_window_info((HWND)wParam, &info);
+	    ok(pGetWindowInfo(hwnd, &info), "GetWindowInfo should not fail\n");
+	    verify_window_info(code_name, hwnd, &info);
 	}
         break;
-    }
-
-    switch (nCode)
-    {
-	case HCBT_CREATEWND:
-	{
-	    static const RECT rc_null;
-	    RECT rc;
-	    LONG style;
-	    CBT_CREATEWNDA *createwnd = (CBT_CREATEWNDA *)lParam;
-            trace("HCBT_CREATEWND: hwnd %p, parent %p, style %08x\n",
-		  (HWND)wParam, createwnd->lpcs->hwndParent, createwnd->lpcs->style);
-	    ok(createwnd->hwndInsertAfter == HWND_TOP, "hwndInsertAfter should be always HWND_TOP\n");
-
-	    /* WS_VISIBLE should be turned off yet */
-	    style = createwnd->lpcs->style & ~WS_VISIBLE;
-	    ok(style == GetWindowLongA((HWND)wParam, GWL_STYLE),
-		"style of hwnd and style in the CREATESTRUCT do not match: %08x != %08x\n",
-		GetWindowLongA((HWND)wParam, GWL_STYLE), style);
-
-            if (0)
-            {
-            /* Uncomment this once the test succeeds in all cases */
-	    if ((style & (WS_CHILD|WS_POPUP)) == WS_CHILD)
-	    {
-		ok(GetParent((HWND)wParam) == hwndMessage,
-		   "wrong result from GetParent %p: message window %p\n",
-		   GetParent((HWND)wParam), hwndMessage);
-	    }
-	    else
-		ok(!GetParent((HWND)wParam), "GetParent should return 0 at this point\n");
-
-	    ok(!GetWindow((HWND)wParam, GW_OWNER), "GW_OWNER should be set to 0 at this point\n");
-            }
-            if (0)
-            {
-	    /* while NT assigns GW_HWNDFIRST/LAST some values at this point,
-	     * Win9x still has them set to 0.
-	     */
-	    ok(GetWindow((HWND)wParam, GW_HWNDFIRST) != 0, "GW_HWNDFIRST should not be set to 0 at this point\n");
-	    ok(GetWindow((HWND)wParam, GW_HWNDLAST) != 0, "GW_HWNDLAST should not be set to 0 at this point\n");
-            }
-	    ok(!GetWindow((HWND)wParam, GW_HWNDPREV), "GW_HWNDPREV should be set to 0 at this point\n");
-	    ok(!GetWindow((HWND)wParam, GW_HWNDNEXT), "GW_HWNDNEXT should be set to 0 at this point\n");
-
-            if (0)
-            {
-            /* Uncomment this once the test succeeds in all cases */
-	    if (pGetAncestor)
-	    {
-		ok(pGetAncestor((HWND)wParam, GA_PARENT) == hwndMessage, "GA_PARENT should be set to hwndMessage at this point\n");
-		ok(pGetAncestor((HWND)wParam, GA_ROOT) == (HWND)wParam,
-		   "GA_ROOT is set to %p, expected %p\n", pGetAncestor((HWND)wParam, GA_ROOT), (HWND)wParam);
-
-		if ((style & (WS_CHILD|WS_POPUP)) == WS_CHILD)
-		    ok(pGetAncestor((HWND)wParam, GA_ROOTOWNER) == hwndMessage,
-		       "GA_ROOTOWNER should be set to hwndMessage at this point\n");
-		else
-		    ok(pGetAncestor((HWND)wParam, GA_ROOTOWNER) == (HWND)wParam,
-		       "GA_ROOTOWNER is set to %p, expected %p\n", pGetAncestor((HWND)wParam, GA_ROOTOWNER), (HWND)wParam);
-            }
-
-	    ok(GetWindowRect((HWND)wParam, &rc), "GetWindowRect failed\n");
-	    ok(EqualRect(&rc, &rc_null), "window rect should be set to 0 HCBT_CREATEWND\n");
-	    ok(GetClientRect((HWND)wParam, &rc), "GetClientRect failed\n");
-	    ok(EqualRect(&rc, &rc_null), "client rect should be set to 0 on HCBT_CREATEWND\n");
-            }
-	    break;
-	}
+    /* on HCBT_DESTROYWND window state is undefined */
+    case HCBT_DESTROYWND:
+        trace( "HCBT_DESTROYWND: hwnd %p\n", hwnd );
+        break;
+    default:
+        break;
     }
 
     return CallNextHookEx(hhook, nCode, wParam, lParam);
@@ -1502,8 +1509,8 @@ static LRESULT WINAPI mdi_child_wnd_proc_2(HWND hwnd, UINT msg, WPARAM wparam, L
         {
             CREATESTRUCTA *cs = (CREATESTRUCTA *)lparam;
 
-            trace("%s\n", (msg == WM_NCCREATE) ? "WM_NCCREATE" : "WM_CREATE");
-            trace("x %d, y %d, cx %d, cy %d\n", cs->x, cs->y, cs->cx, cs->cy);
+            trace("%s: x %d, y %d, cx %d, cy %d\n", (msg == WM_NCCREATE) ? "WM_NCCREATE" : "WM_CREATE",
+                cs->x, cs->y, cs->cx, cs->cy);
 
             ok(!(cs->dwExStyle & WS_EX_MDICHILD), "WS_EX_MDICHILD should not be set\n");
             ok(cs->lpCreateParams == mdi_lParam_test_message, "wrong cs->lpCreateParams\n");
@@ -1532,19 +1539,16 @@ static LRESULT WINAPI mdi_child_wnd_proc_2(HWND hwnd, UINT msg, WPARAM wparam, L
             MINMAXINFO *minmax = (MINMAXINFO *)lparam;
             LONG style, exstyle;
 
-            trace("WM_GETMINMAXINFO\n");
-
             style = GetWindowLongA(hwnd, GWL_STYLE);
             exstyle = GetWindowLongA(hwnd, GWL_EXSTYLE);
 
             GetClientRect(parent, &rc);
-            trace("parent %p client size = (%d x %d)\n", parent, rc.right, rc.bottom);
+            trace("WM_GETMINMAXINFO: parent %p client size = (%d x %d)\n", parent, rc.right, rc.bottom);
 
             GetClientRect(parent, &rc);
             if ((style & WS_CAPTION) == WS_CAPTION)
                 style &= ~WS_BORDER; /* WS_CAPTION = WS_DLGFRAME | WS_BORDER */
             AdjustWindowRectEx(&rc, style, 0, exstyle);
-            trace("calculated max child window size = (%d x %d)\n", rc.right-rc.left, rc.bottom-rc.top);
             dump_minmax_info( minmax );
 
             ok(minmax->ptMaxSize.x == rc.right - rc.left, "default width of maximized child %d != %d\n",
@@ -1560,18 +1564,19 @@ static LRESULT WINAPI mdi_child_wnd_proc_2(HWND hwnd, UINT msg, WPARAM wparam, L
             RECT rc1, rc2;
 
             GetWindowRect(hwnd, &rc1);
-            trace("window: (%d,%d)-(%d,%d)\n", rc1.left, rc1.top, rc1.right, rc1.bottom);
             SetRect(&rc2, winpos->x, winpos->y, winpos->x + winpos->cx, winpos->y + winpos->cy);
             /* note: winpos coordinates are relative to parent */
             MapWindowPoints(GetParent(hwnd), 0, (LPPOINT)&rc2, 2);
-            trace("pos: (%d,%d)-(%d,%d)\n", rc2.left, rc2.top, rc2.right, rc2.bottom);
-            ok(EqualRect(&rc1, &rc2), "rects do not match\n");
-
+            ok(EqualRect(&rc1, &rc2), "rects do not match, window=(%d,%d)-(%d,%d) pos=(%d,%d)-(%d,%d)\n",
+               rc1.left, rc1.top, rc1.right, rc1.bottom,
+               rc2.left, rc2.top, rc2.right, rc2.bottom);
             GetWindowRect(hwnd, &rc1);
             GetClientRect(hwnd, &rc2);
             DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc1);
             MapWindowPoints(0, hwnd, (LPPOINT)&rc1, 2);
-            ok(EqualRect(&rc1, &rc2), "rects do not match\n");
+            ok(EqualRect(&rc1, &rc2), "rects do not match, window=(%d,%d)-(%d,%d) client=(%d,%d)-(%d,%d)\n",
+               rc1.left, rc1.top, rc1.right, rc1.bottom,
+               rc2.left, rc2.top, rc2.right, rc2.bottom);
         }
         /* fall through */
         case WM_WINDOWPOSCHANGING:
@@ -1579,19 +1584,17 @@ static LRESULT WINAPI mdi_child_wnd_proc_2(HWND hwnd, UINT msg, WPARAM wparam, L
             WINDOWPOS *winpos = (WINDOWPOS *)lparam;
             WINDOWPOS my_winpos = *winpos;
 
-            trace("%s\n", (msg == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
-            trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+            trace("%s: %p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+                  (msg == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED",
                   winpos->hwnd, winpos->hwndInsertAfter,
                   winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
 
             DefWindowProcA(hwnd, msg, wparam, lparam);
 
-            trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+            ok(!memcmp(&my_winpos, winpos, sizeof(WINDOWPOS)),
+               "DefWindowProc should not change WINDOWPOS: %p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
                   winpos->hwnd, winpos->hwndInsertAfter,
                   winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
-
-            ok(!memcmp(&my_winpos, winpos, sizeof(WINDOWPOS)),
-               "DefWindowProc should not change WINDOWPOS values\n");
 
             return 1;
         }
@@ -2918,13 +2921,13 @@ static void test_validatergn(HWND hwnd)
 
 static void nccalchelper(HWND hwnd, INT x, INT y, RECT *prc)
 {
+    RECT rc;
     MoveWindow( hwnd, 0, 0, x, y, 0);
     GetWindowRect( hwnd, prc);
-    trace("window rect is %d,%d - %d,%d\n",
-            prc->left,prc->top,prc->right,prc->bottom);
+    rc = *prc;
     DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)prc);
-    trace("nccalc rect is %d,%d - %d,%d\n",
-            prc->left,prc->top,prc->right,prc->bottom);
+    trace("window rect is %d,%d - %d,%d, nccalc rect is %d,%d - %d,%d\n",
+          rc.left,rc.top,rc.right,rc.bottom, prc->left,prc->top,prc->right,prc->bottom);
 }
 
 static void test_nccalcscroll(HWND parent)
@@ -3639,18 +3642,19 @@ static LRESULT WINAPI parentdc_window_procA(HWND hwnd, UINT msg, WPARAM wparam, 
     switch (msg)
     {
     case WM_PAINT:
-        trace("doing WM_PAINT on %p\n", hwnd);
         GetClientRect(hwnd, &rc);
         CopyRect(&t->client, &rc);
-        trace("client rect (%d, %d)-(%d, %d)\n", rc.left, rc.top, rc.right, rc.bottom);
         GetWindowRect(hwnd, &rc);
-        trace("window rect (%d, %d)-(%d, %d)\n", rc.left, rc.top, rc.right, rc.bottom);
+        trace("WM_PAINT: hwnd %p, client rect (%d,%d)-(%d,%d), window rect (%d,%d)-(%d,%d)\n", hwnd,
+              t->client.left, t->client.top, t->client.right, t->client.bottom,
+              rc.left, rc.top, rc.right, rc.bottom);
         BeginPaint(hwnd, &ps);
         CopyRect(&t->paint, &ps.rcPaint);
         GetClipBox(ps.hdc, &rc);
         CopyRect(&t->clip, &rc);
-        trace("clip rect (%d, %d)-(%d, %d)\n", rc.left, rc.top, rc.right, rc.bottom);
-        trace("paint rect (%d, %d)-(%d, %d)\n", ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom);
+        trace("clip rect (%d,%d)-(%d,%d), paint rect (%d,%d)-(%d,%d)\n",
+              rc.left, rc.top, rc.right, rc.bottom,
+              ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom);
         EndPaint(hwnd, &ps);
         return 0;
     }
