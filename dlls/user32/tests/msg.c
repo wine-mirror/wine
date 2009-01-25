@@ -3847,6 +3847,8 @@ static INT_PTR CALLBACK TestModalDlgProcA(HWND hwnd, UINT message, WPARAM wParam
         case WM_GETICON:
         case WM_GETOBJECT:
 	case WM_MOUSEMOVE:
+	case WM_NCMOUSEMOVE:
+	case WM_NCMOUSELEAVE:
 	case WM_SETCURSOR:
 	case WM_DEVICECHANGE:
             return 0;
@@ -6441,6 +6443,8 @@ static const struct message WmCtrlAltVkN[] = {
     { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 0x20000001 }, /* XP */
     { WM_KEYDOWN, wparam|lparam, 'N', 0x20000001 },
     { WM_KEYDOWN, sent|wparam|lparam, 'N', 0x20000001 },
+    { WM_CHAR, optional },
+    { WM_CHAR, sent|optional },
     { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 0xe0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, 'N', 0xe0000001 },
     { WM_KEYUP, sent|wparam|lparam, 'N', 0xe0000001 },
@@ -6999,6 +7003,7 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
                 return HTCLIENT;
             case WM_SETCURSOR:
             case WM_MOUSEMOVE:
+            case WM_NCMOUSEMOVE:
                 return 0;
 
             case WM_ERASEBKGND:
@@ -9690,7 +9695,7 @@ static void test_TrackMouseEvent(void)
 
     track_query(TME_HOVER, hwnd, default_hover_time);
 
-    pump_msg_loop_timeout(default_hover_time / 2, FALSE);
+    pump_msg_loop_timeout(default_hover_time, FALSE);
     ok_sequence(WmMouseHoverSeq, "WmMouseHoverSeq", FALSE);
 
     track_query(0, NULL, 0);
