@@ -306,6 +306,7 @@ static void test_asciimode(void)
 {
     FILE *fp;
     char buf[64];
+    int c, i, j;
 
     /* Simple test of CR CR LF handling.  Test both fgets and fread code paths, they're different! */
     fp = fopen("ascii.tst", "wb");
@@ -332,6 +333,45 @@ static void test_asciimode(void)
     rewind(fp);
     ok((fread(buf, 1, sizeof(buf), fp) == 3) && (0 == strcmp(buf, "foo")), "foo ^Z not read as foo by fread\n");
     ok((fread(buf, 1, sizeof(buf), fp) == 0), "fread after logical EOF\n");
+    fclose(fp);
+
+    /* Show ASCII mode handling*/
+    fp= fopen("ascii.tst","wb");
+    fputs("0\r\n1\r\n2\r\n3\r\n4\r\n5\r\n6\r\n7\r\n8\r\n9\r\n", fp);
+    fclose(fp);
+
+    fp = fopen("ascii.tst", "r");
+    c= fgetc(fp);
+    c= fgetc(fp);
+    fseek(fp,0,SEEK_CUR);
+    todo_wine {
+	for(i=1; i<10; i++) {
+	    ok((j = ftell(fp)) == i*3, "ftell fails in TEXT mode\n");
+	    fseek(fp,0,SEEK_CUR);
+	    ok((c = fgetc(fp)) == '0'+ i, "fgetc after fseek failed in line %d\n", i);
+	    c= fgetc(fp);
+	}
+	/* Show that fseek doesn't skip \\r !*/
+	rewind(fp);
+	c= fgetc(fp);
+	fseek(fp, 2 ,SEEK_CUR);
+	for(i=1; i<10; i++) {
+	    ok((c = fgetc(fp)) == '0'+ i, "fgetc after fseek with pos Offset failed in line %d\n", i);
+	    fseek(fp, 2 ,SEEK_CUR);
+	}
+	fseek(fp, 9*3 ,SEEK_SET);
+	c = fgetc(fp);
+	fseek(fp, -4 ,SEEK_CUR);
+	for(i= 8; i>=0; i--) {
+	    ok((c = fgetc(fp)) == '0'+ i, "fgetc after fseek with neg Offset failed in line %d\n", i);
+	    fseek(fp, -4 ,SEEK_CUR);
+	}
+    }
+    /* Show what happens is fseek positions filepointer on \\r */
+    fclose(fp);
+    fp = fopen("ascii.tst", "r");
+    fseek(fp, 3 ,SEEK_SET);
+    ok((c = fgetc(fp)) == '1', "fgetc fails to read nect char when positioned on \\r \n");
     fclose(fp);
 
     unlink("ascii.tst");
