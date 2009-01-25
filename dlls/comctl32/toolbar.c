@@ -3311,7 +3311,7 @@ TOOLBAR_GetBitmap (HWND hwnd, WPARAM wParam)
 
 
 static inline LRESULT
-TOOLBAR_GetBitmapFlags ()
+TOOLBAR_GetBitmapFlags (void)
 {
     return (GetDeviceCaps (0, LOGPIXELSX) >= 120) ? TBBF_LARGE : 0;
 }
