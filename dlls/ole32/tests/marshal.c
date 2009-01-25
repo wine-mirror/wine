@@ -2222,11 +2222,9 @@ static void test_freethreadedmarshaler(void)
     IMarshal_Release(pFTMarshal);
 }
 
-static void test_inproc_handler(void)
+static void reg_unreg_wine_test_class(BOOL Register)
 {
     HRESULT hr;
-    IUnknown *pObject;
-    IUnknown *pObject2;
     char buffer[256];
     LPOLESTR pszClsid;
     HKEY hkey;
@@ -2235,15 +2233,33 @@ static void test_inproc_handler(void)
 
     hr = StringFromCLSID(&CLSID_WineTest, &pszClsid);
     ok_ole_success(hr, "StringFromCLSID");
-    strcpy(buffer, "CLSID\\");
+    strcpy(buffer, "Software\\Classes\\CLSID\\");
     WideCharToMultiByte(CP_ACP, 0, pszClsid, -1, buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), NULL, NULL);
     CoTaskMemFree(pszClsid);
     strcat(buffer, "\\InprocHandler32");
-    error = RegCreateKeyEx(HKEY_CLASSES_ROOT, buffer, 0, NULL, 0, KEY_SET_VALUE, NULL, &hkey, &dwDisposition);
-    ok(error == ERROR_SUCCESS, "RegCreateKeyEx failed with error %d\n", error);
-    error = RegSetValueEx(hkey, NULL, 0, REG_SZ, (const unsigned char *)"ole32.dll", strlen("ole32.dll") + 1);
-    ok(error == ERROR_SUCCESS, "RegSetValueEx failed with error %d\n", error);
-    RegCloseKey(hkey);
+    if (Register)
+    {
+        error = RegCreateKeyEx(HKEY_CURRENT_USER, buffer, 0, NULL, 0, KEY_SET_VALUE, NULL, &hkey, &dwDisposition);
+        ok(error == ERROR_SUCCESS, "RegCreateKeyEx failed with error %d\n", error);
+        error = RegSetValueEx(hkey, NULL, 0, REG_SZ, (const unsigned char *)"ole32.dll", strlen("ole32.dll") + 1);
+        ok(error == ERROR_SUCCESS, "RegSetValueEx failed with error %d\n", error);
+        RegCloseKey(hkey);
+    }
+    else
+    {
+        RegDeleteKey(HKEY_CURRENT_USER, buffer);
+        *strrchr(buffer, '\\') = '\0';
+        RegDeleteKey(HKEY_CURRENT_USER, buffer);
+    }
+}
+
+static void test_inproc_handler(void)
+{
+    HRESULT hr;
+    IUnknown *pObject;
+    IUnknown *pObject2;
+
+    reg_unreg_wine_test_class(TRUE);
 
     hr = CoCreateInstance(&CLSID_WineTest, NULL, CLSCTX_INPROC_HANDLER, &IID_IUnknown, (void **)&pObject);
     todo_wine
@@ -2262,9 +2278,7 @@ static void test_inproc_handler(void)
         IUnknown_Release(pObject);
     }
 
-    RegDeleteKey(HKEY_CLASSES_ROOT, buffer);
-    *strrchr(buffer, '\\') = '\0';
-    RegDeleteKey(HKEY_CLASSES_ROOT, buffer);
+    reg_unreg_wine_test_class(FALSE);
 }
 
 static HRESULT WINAPI Test_SMI_QueryInterface(
@@ -2327,6 +2341,7 @@ static void test_handler_marshaling(void)
     HANDLE thread;
     static const LARGE_INTEGER ullZero;
 
+    reg_unreg_wine_test_class(TRUE);
     cLocks = 0;
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
@@ -2359,6 +2374,7 @@ static void test_handler_marshaling(void)
     }
 
     end_host_object(tid, thread);
+    reg_unreg_wine_test_class(FALSE);
 
     /* FIXME: test IPersist interface has the same effect as IStdMarshalInfo */
 }
