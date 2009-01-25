@@ -1279,15 +1279,26 @@ UINT16 WINAPI waveOutPrepareHeader16(HWAVEOUT16 hWaveOut,      /* [in] */
 {
     LPWINE_MLD		wmld;
     LPWAVEHDR		lpWaveOutHdr = MapSL(lpsegWaveOutHdr);
+    UINT16		result;
 
     TRACE("(%04X, %08x, %u);\n", hWaveOut, lpsegWaveOutHdr, uSize);
 
     if (lpWaveOutHdr == NULL) return MMSYSERR_INVALPARAM;
 
     if ((wmld = MMDRV_Get(HWAVEOUT_32(hWaveOut), MMDRV_WAVEOUT, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
+        return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, WODM_PREPARE, lpsegWaveOutHdr, uSize, FALSE);
+    if ((result = MMDRV_Message(wmld, WODM_PREPARE, lpsegWaveOutHdr,
+                                uSize, FALSE)) != MMSYSERR_NOTSUPPORTED)
+        return result;
+
+    if (lpWaveOutHdr->dwFlags & WHDR_INQUEUE)
+        return WAVERR_STILLPLAYING;
+
+    lpWaveOutHdr->dwFlags |= WHDR_PREPARED;
+    lpWaveOutHdr->dwFlags &= ~WHDR_DONE;
+
+    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
