@@ -1351,7 +1351,7 @@ struct well_known_sid_value
 /* 74 */ {TRUE, "S-1-5-22"}, {FALSE, "S-1-5-21-12-23-34-45-56-521"}, {TRUE, "S-1-5-32-573"}
 };
 
-static void test_CreateWellKnownSid()
+static void test_CreateWellKnownSid(void)
 {
     SID_IDENTIFIER_AUTHORITY ident = { SECURITY_NT_AUTHORITY };
     PSID domainsid;
@@ -2564,7 +2564,7 @@ static void test_ConvertStringSecurityDescriptor(void)
        "Expected ERROR_INVALID_ACL or ERROR_INVALID_SID, got %d\n", GetLastError());
 }
 
-static void test_ConvertSecurityDescriptorToString()
+static void test_ConvertSecurityDescriptorToString(void)
 {
     SECURITY_DESCRIPTOR desc;
     SECURITY_INFORMATION sec_info = OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION|SACL_SECURITY_INFORMATION;
