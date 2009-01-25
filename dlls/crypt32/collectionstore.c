@@ -95,7 +95,7 @@ static BOOL CRYPT_CollectionAddContext(PWINE_COLLECTIONSTORE store,
         contextFuncs = (PCONTEXT_FUNCS)((LPBYTE)storeEntry->store +
          contextFuncsOffset);
         ret = contextFuncs->addContext(storeEntry->store, context,
-         existingLinked, childContext);
+         existingLinked, (const void **)&childContext);
     }
     else
     {
