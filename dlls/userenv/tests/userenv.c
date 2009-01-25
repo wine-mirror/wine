@@ -176,13 +176,13 @@ static void test_create_env(void)
     };
     static const struct profile_item common_post_nt4_vars[] = {
         { "ALLUSERSPROFILE", { 1, 1, 0, 0 } },
+        { "TEMP", { 1, 1, 0, 0 } },
+        { "TMP", { 1, 1, 0, 0 } },
         { "CommonProgramFiles", { 1, 1, 1, 1 } },
         { "ProgramFiles", { 1, 1, 0, 0 } }
     };
     static const struct profile_item htok_vars[] = {
         { "PATH", { 1, 1, 0, 0 } },
-        { "TEMP", { 1, 1, 0, 0 } },
-        { "TMP", { 1, 1, 0, 0 } },
         { "USERPROFILE", { 1, 1, 0, 0 } }
     };
 
