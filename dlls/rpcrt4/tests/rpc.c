@@ -764,9 +764,9 @@ static void test_RpcStringBindingFromBinding(void)
     ok(status == RPC_S_OK, "RpcBindingFree failed with error %u\n", status);
 }
 
-static char *printGuid(char *buf, const UUID *guid)
+static char *printGuid(char *buf, int size, const UUID *guid)
 {
-    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
+    snprintf(buf, size, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
        guid->Data1, guid->Data2, guid->Data3, guid->Data4[0], guid->Data4[1],
        guid->Data4[2], guid->Data4[3], guid->Data4[4], guid->Data4[5],
        guid->Data4[6], guid->Data4[7]);
@@ -792,8 +792,8 @@ static void test_UuidCreate(void)
         int i;
         char buf[39];
 
-        memcpy(&and, &guid, sizeof(guid));
-        memcpy(&or, &guid, sizeof(guid));
+        and = guid;
+        or = guid;
         /* Generate a bunch of UUIDs and mask them.  By the end, we expect
          * every randomly generated bit to have been zero at least once,
          * resulting in no bits set in the and mask except those which are not
@@ -814,9 +814,9 @@ static void test_UuidCreate(void)
                 *dst |= *src;
         }
         ok(UuidEqual(&and, &v4and, &rslt),
-           "unexpected bits set in V4 UUID: %s\n", printGuid(buf, &and));
+           "unexpected bits set in V4 UUID: %s\n", printGuid(buf, sizeof(buf), &and));
         ok(UuidEqual(&or, &v4or, &rslt),
-           "unexpected bits set in V4 UUID: %s\n", printGuid(buf, &or));
+           "unexpected bits set in V4 UUID: %s\n", printGuid(buf, sizeof(buf), &or));
     }
     else
     {
