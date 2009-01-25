@@ -78,7 +78,7 @@ static LRESULT WINAPI create_test_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LP
     return ret;
 }
 
-static void register_subclass()
+static void register_subclass(void)
 {
     WNDCLASSEX cls;
 
@@ -91,7 +91,7 @@ static void register_subclass()
     ok(RegisterClassEx(&cls), "RegisterClassEx failed\n");
 }
 
-static void test_create()
+static void test_create(void)
 {
     RECT rc;
     HWND hwnd;
