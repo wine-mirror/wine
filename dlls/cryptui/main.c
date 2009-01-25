@@ -1001,6 +1001,67 @@ static void cert_mgr_do_remove(HWND hwnd)
     }
 }
 
+static void cert_mgr_do_export(HWND hwnd)
+{
+    HWND lv = GetDlgItem(hwnd, IDC_MGR_CERTS);
+    int selectionCount = SendMessageW(lv, LVM_GETSELECTEDCOUNT, 0, 0);
+
+    if (selectionCount == 1)
+    {
+        int selection = SendMessageW(lv, LVM_GETNEXTITEM, -1,
+         LVNI_SELECTED);
+
+        if (selection >= 0)
+        {
+            PCCERT_CONTEXT cert = cert_mgr_index_to_cert(hwnd, selection);
+
+            if (cert)
+            {
+                CRYPTUI_WIZ_EXPORT_INFO info;
+
+                info.dwSize = sizeof(info);
+                info.pwszExportFileName = NULL;
+                info.dwSubjectChoice = CRYPTUI_WIZ_EXPORT_CERT_CONTEXT;
+                info.u.pCertContext = cert;
+                info.cStores = 0;
+                CryptUIWizExport(0, hwnd, NULL, &info, NULL);
+            }
+        }
+    }
+    else if (selectionCount > 1)
+    {
+        HCERTSTORE store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+         CERT_STORE_CREATE_NEW_FLAG, NULL);
+
+        if (store)
+        {
+            CRYPTUI_WIZ_EXPORT_INFO info;
+            int selection = -1;
+
+            info.dwSize = sizeof(info);
+            info.pwszExportFileName = NULL;
+            info.dwSubjectChoice =
+             CRYPTUI_WIZ_EXPORT_CERT_STORE_CERTIFICATES_ONLY;
+            info.u.hCertStore = store;
+            info.cStores = 0;
+            do {
+                selection = SendMessageW(lv, LVM_GETNEXTITEM, selection,
+                 LVNI_SELECTED);
+                if (selection >= 0)
+                {
+                    PCCERT_CONTEXT cert = cert_mgr_index_to_cert(hwnd,
+                     selection);
+
+                    CertAddCertificateContextToStore(store, cert,
+                     CERT_STORE_ADD_ALWAYS, NULL);
+                }
+            } while (selection >= 0);
+            CryptUIWizExport(0, hwnd, NULL, &info, NULL);
+            CertCloseStore(store, 0);
+        }
+    }
+}
+
 static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
@@ -1135,29 +1196,8 @@ static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             break;
         }
         case IDC_MGR_EXPORT:
-        {
-            HWND lv = GetDlgItem(hwnd, IDC_MGR_CERTS);
-            int selection = SendMessageW(lv, LVM_GETNEXTITEM, -1,
-             LVNI_SELECTED);
-
-            if (selection >= 0)
-            {
-                PCCERT_CONTEXT cert = cert_mgr_index_to_cert(hwnd, selection);
-
-                if (cert)
-                {
-                    CRYPTUI_WIZ_EXPORT_INFO info;
-
-                    info.dwSize = sizeof(info);
-                    info.pwszExportFileName = NULL;
-                    info.dwSubjectChoice = CRYPTUI_WIZ_EXPORT_CERT_CONTEXT;
-                    info.u.pCertContext = cert;
-                    info.cStores = 0;
-                    CryptUIWizExport(0, hwnd, NULL, &info, NULL);
-                }
-            }
+            cert_mgr_do_export(hwnd);
             break;
-        }
         case IDC_MGR_REMOVE:
             cert_mgr_do_remove(hwnd);
             break;
