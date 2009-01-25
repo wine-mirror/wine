@@ -240,7 +240,7 @@ static void test_ChangeDisplaySettingsEx(void)
         dm.dmFields           = vid_modes_test[i].fields;
         res = pChangeDisplaySettingsExA(NULL, &dm, NULL, CDS_TEST, NULL);
         ok(vid_modes_test[i].must_succeed ?
-           (res == DISP_CHANGE_SUCCESSFUL) :
+           (res == DISP_CHANGE_SUCCESSFUL || res == DISP_CHANGE_RESTART) :
            (res == DISP_CHANGE_SUCCESSFUL || res == DISP_CHANGE_BADMODE || res == DISP_CHANGE_BADPARAM),
            "Unexpected ChangeDisplaySettingsEx() return code for resolution[%d]: %d\n", i, res);
 
@@ -257,7 +257,7 @@ static void test_ChangeDisplaySettingsEx(void)
             ok(GetClipCursor(&r), "GetClipCursor() failed\n");
             ok(EqualRect(&r, &virt), "Invalid clip rect: (%d %d) x (%d %d)\n", r.left, r.top, r.right, r.bottom);
 
-            ok(ClipCursor(NULL), "ClipCursor() failed\n");
+            if (!ClipCursor(NULL)) continue;
             ok(GetClipCursor(&r), "GetClipCursor() failed\n");
             ok(EqualRect(&r, &virt), "Invalid clip rect: (%d %d) x (%d %d)\n", r.left, r.top, r.right, r.bottom);
 
@@ -368,7 +368,8 @@ static void test_work_area(void)
           wp.rcNormalPosition.left, wp.rcNormalPosition.top,
           wp.rcNormalPosition.right, wp.rcNormalPosition.bottom);
     OffsetRect(&wp.rcNormalPosition, rc_work.left, rc_work.top);
-    if (!EqualRect(&mi.rcMonitor, &mi.rcWork)) /* FIXME: remove once Wine is fixed */
+    if (mi.rcMonitor.left != mi.rcWork.left ||
+        mi.rcMonitor.top != mi.rcWork.top)  /* FIXME: remove once Wine is fixed */
         todo_wine ok(EqualRect(&rc_normal, &wp.rcNormalPosition), "normal pos is different\n");
     else
         ok(EqualRect(&rc_normal, &wp.rcNormalPosition), "normal pos is different\n");
