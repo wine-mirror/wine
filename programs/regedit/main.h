@@ -147,6 +147,5 @@ extern void error(HWND hwnd, INT resId, ...);
 
 /* hexedit.c */
 extern void HexEdit_Register(void);
-extern void HexEdit_Unregister(void);
 
 #endif /* __MAIN_H__ */

@@ -688,9 +688,3 @@ void HexEdit_Register(void)
 
     RegisterClass(&wndClass);
 }
-
-
-void HexEdit_Unregister(void)
-{
-    UnregisterClass(HEXEDIT_CLASS, NULL);
-}
