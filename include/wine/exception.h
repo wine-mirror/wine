@@ -37,7 +37,7 @@ extern "C" {
  * {
  *     do some stuff that can raise an exception
  * }
- * __EXCEPT(filter_func,param)
+ * __EXCEPT(filter_func)
  * {
  *     handle the exception here
  * }
@@ -49,14 +49,17 @@ extern "C" {
  * {
  *     do some stuff that can raise an exception
  * }
- * __FINALLY(finally_func,param)
+ * __FINALLY(finally_func)
  *
- * The filter_func must be defined with the WINE_EXCEPTION_FILTER
- * macro, and return one of the EXCEPTION_* code; it can use
- * GetExceptionInformation and GetExceptionCode to retrieve the
+ * The filter_func and finally_func functions must be defined like this:
+ *
+ * LONG CALLBACK filter_func( PEXCEPTION_POINTERS __eptr ) { ... }
+ *
+ * void CALLBACK finally_func( BOOL __normal ) { ... }
+ *
+ * The filter function must return one of the EXCEPTION_* code; it can
+ * use GetExceptionInformation() and GetExceptionCode() to retrieve the
  * exception info.
- *
- * The finally_func must be defined with the WINE_FINALLY_FUNC macro.
  *
  * Warning: inside a __TRY or __EXCEPT block, 'break' or 'continue' statements
  *          break out of the current block. You cannot use 'return', 'goto'
