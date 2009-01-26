@@ -124,7 +124,11 @@ static void STDMETHODCALLTYPE d3d10_rendertarget_view_GetResource(ID3D10RenderTa
 static void STDMETHODCALLTYPE d3d10_rendertarget_view_GetDesc(ID3D10RenderTargetView* iface,
         D3D10_RENDER_TARGET_VIEW_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d10_rendertarget_view *This = (struct d3d10_rendertarget_view *)iface;
+
+    TRACE("iface %p, desc %p\n", iface, desc);
+
+    *desc = This->desc;
 }
 
 const struct ID3D10RenderTargetViewVtbl d3d10_rendertarget_view_vtbl =

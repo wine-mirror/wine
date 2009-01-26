@@ -79,6 +79,7 @@ struct d3d10_rendertarget_view
     LONG refcount;
 
     ID3D10Resource *resource;
+    D3D10_RENDER_TARGET_VIEW_DESC desc;
 };
 
 /* Layered device */
