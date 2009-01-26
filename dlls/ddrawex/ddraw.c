@@ -678,11 +678,11 @@ IDirectDraw4Impl_EnumSurfaces(IDirectDraw4 *iface,
                               LPDDENUMSURFACESCALLBACK2 Callback)
 {
     IDirectDrawImpl *This = impl_from_dd4(iface);
-    struct enumsurfaces4_ctx *ctx;
+    struct enumsurfaces4_ctx ctx;
     TRACE("(%p)->(0x%08x,%p,%p,%p)\n", This, Flags, DDSD, Context, Callback);
 
-    ctx->orig_cb = Callback;
-    ctx->orig_ctx = Context;
+    ctx.orig_cb = Callback;
+    ctx.orig_ctx = Context;
     return IDirectDraw4Impl_EnumSurfaces(This->parent, Flags, DDSD, &ctx, enum_surfaces_wrapper);
 }
 
