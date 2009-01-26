@@ -2555,7 +2555,6 @@ BOOL WineEngInit(void)
     static const WCHAR pathW[] = {'P','a','t','h',0};
     HKEY hkey;
     DWORD valuelen, datalen, i = 0, type, dlen, vlen;
-    LPVOID data;
     WCHAR windowsdir[MAX_PATH];
     char *unixname;
     HANDLE font_mutex;
@@ -2605,7 +2604,7 @@ BOOL WineEngInit(void)
     if(RegOpenKeyW(HKEY_LOCAL_MACHINE,
                    is_win9x() ? win9x_font_reg_key : winnt_font_reg_key,
 		   &hkey) == ERROR_SUCCESS) {
-        LPWSTR valueW;
+        LPWSTR data, valueW;
         RegQueryInfoKeyW(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 			 &valuelen, &datalen, NULL, NULL);
 
@@ -2616,17 +2615,17 @@ BOOL WineEngInit(void)
         {
             dlen = datalen * sizeof(WCHAR);
             vlen = valuelen;
-            while(RegEnumValueW(hkey, i++, valueW, &vlen, NULL, &type, data,
+            while(RegEnumValueW(hkey, i++, valueW, &vlen, NULL, &type, (LPBYTE)data,
                                 &dlen) == ERROR_SUCCESS) {
-                if(((LPWSTR)data)[0] && ((LPWSTR)data)[1] == ':')
+                if(data[0] && (data[1] == ':'))
                 {
-                    if((unixname = wine_get_unix_file_name((LPWSTR)data)))
+                    if((unixname = wine_get_unix_file_name(data)))
                     {
                         AddFontFileToList(unixname, NULL, NULL, ADDFONT_FORCE_BITMAP);
                         HeapFree(GetProcessHeap(), 0, unixname);
                     }
                 }
-                else if(dlen / 2 >= 6 && !strcmpiW(((LPWSTR)data) + dlen / 2 - 5, dot_fonW))
+                else if(dlen / 2 >= 6 && !strcmpiW(data + dlen / 2 - 5, dot_fonW))
                 {
                     WCHAR pathW[MAX_PATH];
                     static const WCHAR fmtW[] = {'%','s','\\','%','s','\0'};
