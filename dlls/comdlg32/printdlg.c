@@ -3646,6 +3646,7 @@ static BOOL pagesetup_common(pagesetup_data *data)
                 LoadStringW(COMDLG32_hInstance, PD32_NO_DEFAULT_PRINTER, errstr, 255);
                 MessageBoxW(data->u.dlgw->hwndOwner, errstr, 0, MB_OK | MB_ICONERROR);
             }
+            COMDLG32_SetCommDlgExtendedError(PDERR_NODEFAULTPRN);
             return FALSE;
         }
         pagesetup_change_printer(def, data);
