@@ -3389,19 +3389,19 @@ static inline struct IDirectDrawImpl *ddraw_from_device_parent(IWineD3DDevicePar
     return (struct IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(struct IDirectDrawImpl, device_parent_vtbl));
 }
 
-HRESULT STDMETHODCALLTYPE device_parent_QueryInterface(IWineD3DDeviceParent *iface, REFIID riid, void **object)
+static HRESULT STDMETHODCALLTYPE device_parent_QueryInterface(IWineD3DDeviceParent *iface, REFIID riid, void **object)
 {
     struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
     return IDirectDrawImpl_QueryInterface((IDirectDraw7 *)This, riid, object);
 }
 
-ULONG STDMETHODCALLTYPE device_parent_AddRef(IWineD3DDeviceParent *iface)
+static ULONG STDMETHODCALLTYPE device_parent_AddRef(IWineD3DDeviceParent *iface)
 {
     struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
     return IDirectDrawImpl_AddRef((IDirectDraw7 *)This);
 }
 
-ULONG STDMETHODCALLTYPE device_parent_Release(IWineD3DDeviceParent *iface)
+static ULONG STDMETHODCALLTYPE device_parent_Release(IWineD3DDeviceParent *iface)
 {
     struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
     return IDirectDrawImpl_Release((IDirectDraw7 *)This);
