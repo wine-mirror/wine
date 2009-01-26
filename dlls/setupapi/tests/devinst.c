@@ -271,7 +271,7 @@ static void test_SetupDiCreateDeviceInfoListEx(void)
 
     error = GetLastError();
     ok(devlist == INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %d (expected %p)\n", devlist, error, INVALID_HANDLE_VALUE);
-    ok(error == ERROR_INVALID_MACHINENAME, "GetLastError returned wrong value : %d, (expected %d)\n", error, ERROR_INVALID_MACHINENAME);
+    ok(error == ERROR_INVALID_MACHINENAME || error == ERROR_MACHINE_UNAVAILABLE, "GetLastError returned wrong value : %d, (expected %d or %d)\n", error, ERROR_INVALID_MACHINENAME, ERROR_MACHINE_UNAVAILABLE);
 
     /* create empty DeviceInfoList */
     devlist = pSetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, NULL);
@@ -887,6 +887,7 @@ static void testDevRegKey(void)
     BOOL ret;
     HDEVINFO set;
     HKEY key = NULL;
+    BOOL classKeyCreated;
 
     SetLastError(0xdeadbeef);
     key = pSetupDiCreateDevRegKeyW(NULL, NULL, 0, 0, 0, NULL, NULL);
@@ -974,26 +975,33 @@ static void testDevRegKey(void)
         /* Create the device reg key */
         key = pSetupDiCreateDevRegKeyW(set, &devInfo, DICS_FLAG_GLOBAL, 0,
          DIREG_DRV, NULL, NULL);
-        ok(key != INVALID_HANDLE_VALUE, "SetupDiCreateDevRegKey failed: %08x\n",
-         GetLastError());
-        RegCloseKey(key);
-        /* The class key should have been created */
-        ok(!RegOpenKeyW(HKEY_LOCAL_MACHINE, classKey, &key),
-         "Expected registry key to exist\n");
-        RegCloseKey(key);
-        SetLastError(0xdeadbeef);
-        key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
-         DIREG_DRV, 0);
-        todo_wine
-        ok(key == INVALID_HANDLE_VALUE &&
-         (GetLastError() == ERROR_INVALID_DATA ||
-         GetLastError() == ERROR_ACCESS_DENIED), /* win2k3 */
-         "Expected ERROR_INVALID_DATA or ERROR_ACCESS_DENIED, got %08x\n", GetLastError());
-        key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
-         DIREG_DRV, KEY_READ);
-        ok(key != INVALID_HANDLE_VALUE, "SetupDiOpenDevRegKey failed: %08x\n",
-         GetLastError());
-        pSetupDiDestroyDeviceInfoList(set);
+        /* Vista and higher don't actually create the key */
+        ok(key != INVALID_HANDLE_VALUE || GetLastError() == ERROR_KEY_DOES_NOT_EXIST,
+         "SetupDiCreateDevRegKey failed: %08x\n", GetLastError());
+        if (key != INVALID_HANDLE_VALUE)
+        {
+            classKeyCreated = TRUE;
+            RegCloseKey(key);
+            /* The class key should have been created */
+            ok(!RegOpenKeyW(HKEY_LOCAL_MACHINE, classKey, &key),
+             "Expected registry key to exist\n");
+            RegCloseKey(key);
+            SetLastError(0xdeadbeef);
+            key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
+             DIREG_DRV, 0);
+            todo_wine
+            ok(key == INVALID_HANDLE_VALUE &&
+             (GetLastError() == ERROR_INVALID_DATA ||
+             GetLastError() == ERROR_ACCESS_DENIED), /* win2k3 */
+             "Expected ERROR_INVALID_DATA or ERROR_ACCESS_DENIED, got %08x\n", GetLastError());
+            key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
+             DIREG_DRV, KEY_READ);
+            ok(key != INVALID_HANDLE_VALUE, "SetupDiOpenDevRegKey failed: %08x\n",
+             GetLastError());
+            pSetupDiDestroyDeviceInfoList(set);
+        }
+        else
+            classKeyCreated = FALSE;
 
         /* Cleanup */
         ret = remove_device();
@@ -1008,7 +1016,7 @@ static void testDevRegKey(void)
             devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, bogus);
             devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, classKey);
         }
-        else
+        else if (classKeyCreated)
         {
             /* There should only be a class key entry, so a simple
              * RegDeleteKey should work
