@@ -131,7 +131,7 @@ static void doDebugger(int argc, char** argv)
 {
     const char* logfile;
     debugger_blackbox_t blackbox;
-    HANDLE start_event, done_event, debug_event;
+    HANDLE start_event = 0, done_event = 0, debug_event;
 
     blackbox.argc=argc;
     logfile=(argc >= 4 ? argv[3] : NULL);
