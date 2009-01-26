@@ -108,7 +108,9 @@ static HRESULT STDMETHODCALLTYPE d3d10_buffer_SetPrivateDataInterface(ID3D10Buff
 
 static void STDMETHODCALLTYPE d3d10_buffer_GetType(ID3D10Buffer *iface, D3D10_RESOURCE_DIMENSION *resource_dimension)
 {
-    FIXME("iface %p, resource_dimension %p stub!\n", iface, resource_dimension);
+    TRACE("iface %p, resource_dimension %p\n", iface, resource_dimension);
+
+    *resource_dimension = D3D10_RESOURCE_DIMENSION_BUFFER;
 }
 
 static void STDMETHODCALLTYPE d3d10_buffer_SetEvictionPriority(ID3D10Buffer *iface, UINT eviction_priority)
