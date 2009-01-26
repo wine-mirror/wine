@@ -152,7 +152,11 @@ static void STDMETHODCALLTYPE d3d10_texture2d_Unmap(ID3D10Texture2D *iface, UINT
 
 static void STDMETHODCALLTYPE d3d10_texture2d_GetDesc(ID3D10Texture2D *iface, D3D10_TEXTURE2D_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d10_texture2d *This = (struct d3d10_texture2d *)iface;
+
+    TRACE("iface %p, desc %p\n", iface, desc);
+
+    *desc = This->desc;
 }
 
 const struct ID3D10Texture2DVtbl d3d10_texture2d_vtbl =

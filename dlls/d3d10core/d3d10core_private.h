@@ -60,6 +60,7 @@ struct d3d10_texture2d
 
     IUnknown *dxgi_surface;
     IWineD3DSurface *wined3d_surface;
+    D3D10_TEXTURE2D_DESC desc;
 };
 
 /* ID3D10Buffer */

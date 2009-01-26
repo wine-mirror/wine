@@ -604,6 +604,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture2D(ID3D10Device *ifac
 
     object->vtbl = &d3d10_texture2d_vtbl;
     object->refcount = 1;
+    object->desc = *desc;
 
     if (desc->MipLevels == 1 && desc->ArraySize == 1)
     {
