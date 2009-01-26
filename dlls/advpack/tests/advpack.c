@@ -272,6 +272,11 @@ static void translateinfstring_test(void)
     buffer[0] = 0;
     hr = pTranslateInfString(inf_file, "idontexist", "Options.NTx86",
                              "InstallDir", buffer, MAX_PATH, &dwSize, NULL);
+    if (hr == E_ACCESSDENIED)
+    {
+        skip("TranslateInfString is broken\n");
+        return;
+    }
     ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", (UINT)hr);
     ok(!strcmp(buffer, TEST_STRING2), "Expected %s, got %s\n", TEST_STRING2, buffer);
     ok(dwSize == 25, "Expected size 25, got %d\n", dwSize);
@@ -591,6 +596,11 @@ static void setperusersecvalues_test(void)
     /* set initial values */
     lstrcpy(peruser.szGUID, "guid");
     hr = pSetPerUserSecValues(&peruser);
+    if (hr == E_FAIL)
+    {
+        skip("SetPerUserSecValues is broken\n");
+        return;
+    }
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(OPEN_GUID_KEY(), "Expected guid key to exist\n");
     ok(check_reg_str(guid, NULL, "displayname"), "Expected displayname\n");
