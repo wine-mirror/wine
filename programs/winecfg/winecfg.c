@@ -478,7 +478,7 @@ void set_reg_key_dwordW(HKEY root, const WCHAR *path, const WCHAR *name, DWORD v
  * you are expected to HeapFree each element of the array, which is null
  * terminated, as well as the array itself.
  */
-WCHAR **enumerate_valuesW(HKEY root, WCHAR *path)
+static WCHAR **enumerate_valuesW(HKEY root, WCHAR *path)
 {
     HKEY key;
     DWORD res, i = 0, valueslen = 0;
