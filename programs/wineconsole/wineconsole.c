@@ -102,24 +102,6 @@ void WINECON_NotifyWindowChange(struct inner_data* data)
 }
 
 /******************************************************************
- *		WINECON_GetHistorySize
- *
- *
- */
-int	WINECON_GetHistorySize(HANDLE hConIn)
-{
-    int	ret = 0;
-
-    SERVER_START_REQ(get_console_input_info)
-    {
-	req->handle = wine_server_obj_handle( hConIn );
-	if (!wine_server_call_err( req )) ret = reply->history_size;
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-/******************************************************************
  *		WINECON_SetHistorySize
  *
  *
@@ -134,25 +116,6 @@ static BOOL WINECON_SetHistorySize(HANDLE hConIn, int size)
 	req->mask = SET_CONSOLE_INPUT_INFO_HISTORY_SIZE;
 	req->history_size = size;
 	ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
-/******************************************************************
- *		WINECON_GetHistoryMode
- *
- *
- */
-int	WINECON_GetHistoryMode(HANDLE hConIn)
-{
-    int	ret = 0;
-
-    SERVER_START_REQ(get_console_input_info)
-    {
-	req->handle = wine_server_obj_handle( hConIn );
-	if (!wine_server_call_err( req )) ret = reply->history_mode;
     }
     SERVER_END_REQ;
     return ret;
