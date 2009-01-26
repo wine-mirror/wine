@@ -364,7 +364,13 @@ static void test_ExitCode(void)
         strstr((char*)debugger_val, "winedbg --auto"))
         crash_and_winedbg(hkey, test_exe);
 
-    crash_and_debug(hkey, test_exe, "dbg,none");
+    if (winetest_interactive)
+        /* Since the debugging process never sets the debug event, it isn't recognized
+           as a valid debugger and, after the debugger exits, Windows will show a dialog box
+           asking the user what to do */
+        crash_and_debug(hkey, test_exe, "dbg,none");
+    else
+        skip("\"none\" debugger test needs user interaction\n");
     crash_and_debug(hkey, test_exe, "dbg,event,order");
     crash_and_debug(hkey, test_exe, "dbg,attach,event,code2");
     if (pDebugSetProcessKillOnExit)
