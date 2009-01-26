@@ -119,7 +119,9 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture2d_SetPrivateDataInterface(ID3D10T
 static void STDMETHODCALLTYPE d3d10_texture2d_GetType(ID3D10Texture2D *iface,
         D3D10_RESOURCE_DIMENSION *resource_dimension)
 {
-    FIXME("iface %p, resource_dimension %p stub!\n", iface, resource_dimension);
+    TRACE("iface %p, resource_dimension %p\n", iface, resource_dimension);
+
+    *resource_dimension = D3D10_RESOURCE_DIMENSION_TEXTURE2D;
 }
 
 static void STDMETHODCALLTYPE d3d10_texture2d_SetEvictionPriority(ID3D10Texture2D *iface, UINT eviction_priority)
