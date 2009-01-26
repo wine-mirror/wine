@@ -3148,11 +3148,9 @@ static unsigned long ComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
     }
     case RPC_FC_ALIGNM4:
       ALIGN_LENGTH(size, 4);
-      ALIGN_POINTER(pStubMsg->Buffer, 4);
       break;
     case RPC_FC_ALIGNM8:
       ALIGN_LENGTH(size, 8);
-      ALIGN_POINTER(pStubMsg->Buffer, 8);
       break;
     case RPC_FC_STRUCTPAD1:
     case RPC_FC_STRUCTPAD2:
