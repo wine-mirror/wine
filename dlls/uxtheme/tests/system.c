@@ -85,9 +85,6 @@ static void test_IsThemed(void)
     SetLastError(0xdeadbeef);
     bThemeActive = pIsThemeActive();
     trace("Theming is %s\n", (bThemeActive) ? "active" : "inactive");
-    ok( GetLastError() == ERROR_SUCCESS,
-        "Expected ERROR_SUCCESS, got 0x%08x\n",
-        GetLastError());
 
     /* This test is not themed */
     SetLastError(0xdeadbeef);
