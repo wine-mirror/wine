@@ -1123,19 +1123,19 @@ static inline struct d3d10_device *device_from_device_parent(IWineD3DDeviceParen
     return (struct d3d10_device *)((char*)iface - FIELD_OFFSET(struct d3d10_device, device_parent_vtbl));
 }
 
-HRESULT STDMETHODCALLTYPE device_parent_QueryInterface(IWineD3DDeviceParent *iface, REFIID riid, void **object)
+static HRESULT STDMETHODCALLTYPE device_parent_QueryInterface(IWineD3DDeviceParent *iface, REFIID riid, void **object)
 {
     struct d3d10_device *This = device_from_device_parent(iface);
     return d3d10_device_QueryInterface((ID3D10Device *)This, riid, object);
 }
 
-ULONG STDMETHODCALLTYPE device_parent_AddRef(IWineD3DDeviceParent *iface)
+static ULONG STDMETHODCALLTYPE device_parent_AddRef(IWineD3DDeviceParent *iface)
 {
     struct d3d10_device *This = device_from_device_parent(iface);
     return d3d10_device_AddRef((ID3D10Device *)This);
 }
 
-ULONG STDMETHODCALLTYPE device_parent_Release(IWineD3DDeviceParent *iface)
+static ULONG STDMETHODCALLTYPE device_parent_Release(IWineD3DDeviceParent *iface)
 {
     struct d3d10_device *This = device_from_device_parent(iface);
     return d3d10_device_Release((ID3D10Device *)This);
