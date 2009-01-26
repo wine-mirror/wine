@@ -459,11 +459,11 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument2 *iface, REFIID rii
     }
     else if (IsEqualGUID(&IID_IPersistStream, riid))
     {
-        *ppvObject = (IPersistStream*)&(This->lpvtblIPersistStream);
+        *ppvObject = &(This->lpvtblIPersistStream);
     }
     else if (IsEqualGUID(&IID_IObjectWithSite, riid))
     {
-        *ppvObject = (IObjectWithSite*)&(This->lpvtblIObjectWithSite);
+        *ppvObject = &(This->lpvtblIObjectWithSite);
     }
     else if( IsEqualGUID( riid, &IID_ISupportErrorInfo ))
     {
@@ -1041,7 +1041,7 @@ static HRESULT WINAPI domdoc_createElement(
 
     TRACE("%p->(%s,%p)\n", iface, debugstr_w(tagname), element);
 
-    xml_name = xmlChar_from_wchar((WCHAR*)tagname);
+    xml_name = xmlChar_from_wchar(tagname);
     xmlnode = xmlNewDocNode(get_doc(This), NULL, xml_name, NULL);
     xmldoc_add_orphan(xmlnode->doc, xmlnode);
 
@@ -1098,7 +1098,7 @@ static HRESULT WINAPI domdoc_createTextNode(
 
     *text = NULL;
 
-    xml_content = xmlChar_from_wchar((WCHAR*)data);
+    xml_content = xmlChar_from_wchar(data);
     xmlnode = xmlNewText(xml_content);
     HeapFree(GetProcessHeap(), 0, xml_content);
 
@@ -1130,7 +1130,7 @@ static HRESULT WINAPI domdoc_createComment(
 
     *comment = NULL;
 
-    xml_content = xmlChar_from_wchar((WCHAR*)data);
+    xml_content = xmlChar_from_wchar(data);
     xmlnode = xmlNewComment(xml_content);
     HeapFree(GetProcessHeap(), 0, xml_content);
 
@@ -1162,7 +1162,7 @@ static HRESULT WINAPI domdoc_createCDATASection(
 
     *cdata = NULL;
 
-    xml_content = xmlChar_from_wchar((WCHAR*)data);
+    xml_content = xmlChar_from_wchar(data);
     xmlnode = xmlNewCDataBlock(get_doc( This ), xml_content, strlen( (char*)xml_content) );
     HeapFree(GetProcessHeap(), 0, xml_content);
 
@@ -1197,8 +1197,8 @@ static HRESULT WINAPI domdoc_createProcessingInstruction(
     if(!target || lstrlenW(target) == 0)
         return E_FAIL;
 
-    xml_target = xmlChar_from_wchar((WCHAR*)target);
-    xml_content = xmlChar_from_wchar((WCHAR*)data);
+    xml_target = xmlChar_from_wchar(target);
+    xml_content = xmlChar_from_wchar(data);
 
     xmlnode = xmlNewDocPI(get_doc(This), xml_target, xml_content);
     xmldoc_add_orphan(xmlnode->doc, xmlnode);
@@ -1232,7 +1232,7 @@ static HRESULT WINAPI domdoc_createAttribute(
 
     *attribute = NULL;
 
-    xml_name = xmlChar_from_wchar((WCHAR*)name);
+    xml_name = xmlChar_from_wchar(name);
     xmlnode = (xmlNode *)xmlNewProp(NULL, xml_name, NULL);
     HeapFree(GetProcessHeap(), 0, xml_name);
 
@@ -1264,7 +1264,7 @@ static HRESULT WINAPI domdoc_createEntityReference(
 
     *entityRef = NULL;
 
-    xml_name = xmlChar_from_wchar((WCHAR*)name);
+    xml_name = xmlChar_from_wchar(name);
     xmlnode = xmlNewReference(get_doc( This ), xml_name );
     HeapFree(GetProcessHeap(), 0, xml_name);
 
@@ -1339,7 +1339,7 @@ static HRESULT WINAPI domdoc_createNode(
 
     TRACE("node_type %d\n", node_type);
 
-    xml_name = xmlChar_from_wchar((WCHAR*)name);
+    xml_name = xmlChar_from_wchar(name);
 
     switch(node_type)
     {
@@ -2279,7 +2279,7 @@ IUnknown* create_domdoc( xmlNodePtr document )
     if (FAILED(hr))
         return NULL;
 
-    return (IUnknown*)pObj;
+    return pObj;
 }
 
 #else
