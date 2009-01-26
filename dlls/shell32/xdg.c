@@ -946,6 +946,7 @@ HRESULT XDG_UserDirLookup(const char * const *xdg_dirs, const unsigned int num_d
             continue;
         }
     }
+    fclose (file);
     hr = S_OK;
 
     /* Remove entries for directories that do not exist */
