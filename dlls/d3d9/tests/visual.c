@@ -292,6 +292,9 @@ static void lighting_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with %08x\n", hr);
 
+    hr = IDirect3DDevice9_SetFVF(device, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %08x\n", hr);
+
     hr = IDirect3DDevice9_SetFVF(device, fvf);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %08x\n", hr);
 
