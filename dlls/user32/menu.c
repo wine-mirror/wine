@@ -2298,7 +2298,7 @@ static void MENU_HideSubPopups( HWND hwndOwner, HMENU hmenu,
 	    hsubmenu = item->hSubMenu;
 	} else return;
 
-	submenu = MENU_GetMenu( hsubmenu );
+	if (!(submenu = MENU_GetMenu( hsubmenu ))) return;
 	MENU_HideSubPopups( hwndOwner, hsubmenu, FALSE, wFlags );
 	MENU_SelectItem( hwndOwner, hsubmenu, NO_SELECTED_ITEM, sendMenuSelect, 0 );
         DestroyWindow( submenu->hWnd );
