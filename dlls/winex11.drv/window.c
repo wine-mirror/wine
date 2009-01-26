@@ -1958,6 +1958,7 @@ void CDECL X11DRV_SetCapture( HWND hwnd, UINT flags )
         wine_tsx11_lock();
         XFlush( gdi_display );
         XUngrabPointer( thread_data->display, CurrentTime );
+        XFlush( thread_data->display );
         wine_tsx11_unlock();
         thread_data->grab_window = None;
     }
