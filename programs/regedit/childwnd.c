@@ -37,7 +37,7 @@ static int last_split;
  * Local module support methods
  */
 
-LPCWSTR GetRootKeyName(HKEY hRootKey)
+static LPCWSTR GetRootKeyName(HKEY hRootKey)
 {
     if(hRootKey == HKEY_CLASSES_ROOT)
         return reg_class_namesW[INDEX_HKEY_CLASSES_ROOT];
