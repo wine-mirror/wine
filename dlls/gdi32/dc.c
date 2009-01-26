@@ -382,7 +382,7 @@ static HDC GetDCState( HDC hdc )
     newdc->vportExtY        = dc->vportExtY;
     newdc->BoundsRect       = dc->BoundsRect;
 
-    newdc->hSelf = (HDC)handle;
+    newdc->hSelf = handle;
     newdc->thread    = GetCurrentThreadId();
     newdc->refcount  = 1;
     newdc->saveLevel = 0;

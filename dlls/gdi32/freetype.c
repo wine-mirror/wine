@@ -4037,7 +4037,7 @@ static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
 {
     const GSUB_CoverageFormat1* cf1;
 
-    cf1 = (GSUB_CoverageFormat1*)table;
+    cf1 = table;
 
     if (GET_BE_WORD(cf1->CoverageFormat) == 1)
     {
@@ -4806,7 +4806,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
             if (!buf || !buflen) break;
 
             memset(buf, 0, buflen);
-            dst = (unsigned int *)buf;
+            dst = buf;
             rgb = (format == WINE_GGO_HRGB_BITMAP || format == WINE_GGO_VRGB_BITMAP);
 
             if ( needsTransform )

@@ -920,8 +920,8 @@ BOOL WINAPI GetTextExtentExPointI( HDC hdc, const WORD *indices, INT count, INT 
     }
     else if(dc->funcs->pGetTextExtentExPoint) {
         FIXME("calling GetTextExtentExPoint\n");
-        ret = dc->funcs->pGetTextExtentExPoint( dc->physDev, (LPCWSTR)indices,
-                                                count, max_ext, nfit, dxs, size );
+        ret = dc->funcs->pGetTextExtentExPoint( dc->physDev, indices, count,
+                                                max_ext, nfit, dxs, size );
     }
 
     release_dc_ptr( dc );

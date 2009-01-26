@@ -2600,8 +2600,7 @@ static INT CALLBACK cbEnhPaletteCopy( HDC a,
 
     TRACE( "copying 0x%08x palettes\n", dwNumPalToCopy );
 
-    memcpy( (LPVOID)info->lpPe,
-            (LPCVOID)(((LPCSTR)lpEof) + lpEof->offPalEntries),
+    memcpy( info->lpPe, (LPCSTR)lpEof + lpEof->offPalEntries,
             sizeof( *(info->lpPe) ) * dwNumPalToCopy );
 
     /* Update the passed data as a return code */

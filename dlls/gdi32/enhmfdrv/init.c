@@ -197,7 +197,7 @@ BOOL EMFDRV_WriteRecord( PHYSDEV dev, EMR *emr )
     physDev->emh->nRecords++;
 
     if(physDev->hFile) {
-	if (!WriteFile(physDev->hFile, (char *)emr, emr->nSize, NULL, NULL))
+        if (!WriteFile(physDev->hFile, emr, emr->nSize, NULL, NULL))
 	    return FALSE;
     } else {
         DWORD nEmfSize = HeapSize(GetProcessHeap(), 0, physDev->emh);
@@ -407,7 +407,7 @@ HDC WINAPI CreateEnhMetaFileW(
             EMFDRV_DeleteDC( dc );
             return 0;
         }
-        if (!WriteFile( hFile, (LPSTR)physDev->emh, size, NULL, NULL )) {
+        if (!WriteFile( hFile, physDev->emh, size, NULL, NULL )) {
             EMFDRV_DeleteDC( dc );
             return 0;
 	}
@@ -482,8 +482,8 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
             return 0;
         }
 
-        if (!WriteFile(physDev->hFile, (LPSTR)physDev->emh,
-                       sizeof(*physDev->emh), NULL, NULL))
+        if (!WriteFile(physDev->hFile, physDev->emh, sizeof(*physDev->emh),
+                       NULL, NULL))
         {
             CloseHandle( physDev->hFile );
             EMFDRV_DeleteDC( dc );

@@ -804,8 +804,8 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *ht, METARECORD *mr, UINT 
                                       infohdr->biHeight,
                                       infohdr->biPlanes,
                                       infohdr->biBitCount,
-                                      (LPSTR)(mr->rdParm +
-                                      (sizeof(BITMAPINFOHEADER) / 2) + 4))));
+                                      mr->rdParm +
+                                      (sizeof(BITMAPINFOHEADER) / 2) + 4)));
             break;
 
         case BS_DIBPATTERN:
@@ -928,7 +928,7 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *ht, METARECORD *mr, UINT 
                                        mr->rdParm[11], /*Height*/
                                        mr->rdParm[13], /*Planes*/
                                        mr->rdParm[14], /*BitsPixel*/
-                                       (LPSTR)&mr->rdParm[15]);  /*bits*/
+                                       &mr->rdParm[15]); /*bits*/
         SelectObject(hdcSrc,hbitmap);
         StretchBlt(hdc, (SHORT)mr->rdParm[9], (SHORT)mr->rdParm[8],
                    (SHORT)mr->rdParm[7], (SHORT)mr->rdParm[6],
@@ -946,7 +946,7 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *ht, METARECORD *mr, UINT 
                                         mr->rdParm[8]/*Height*/,
                                         mr->rdParm[10]/*Planes*/,
                                         mr->rdParm[11]/*BitsPixel*/,
-                                        (LPSTR)&mr->rdParm[12]/*bits*/);
+                                        &mr->rdParm[12]/*bits*/);
         SelectObject(hdcSrc,hbitmap);
         BitBlt(hdc,(SHORT)mr->rdParm[6],(SHORT)mr->rdParm[5],
                 (SHORT)mr->rdParm[4],(SHORT)mr->rdParm[3],

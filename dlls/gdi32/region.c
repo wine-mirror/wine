@@ -1430,8 +1430,7 @@ static void REGION_CopyRegion(WINEREGION *dst, WINEREGION *src)
 	dst->extents.top = src->extents.top;
 	dst->extents.right = src->extents.right;
 	dst->extents.bottom = src->extents.bottom;
-	memcpy((char *) dst->rects, (char *) src->rects,
-	       (int) (src->numRects * sizeof(RECT)));
+        memcpy(dst->rects, src->rects, src->numRects * sizeof(RECT));
     }
     return;
 }

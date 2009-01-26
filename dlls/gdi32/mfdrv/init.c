@@ -339,8 +339,8 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
         }
 
 	physDev->mh->mtType = METAFILE_MEMORY; /* This is what windows does */
-        if (!WriteFile(physDev->hFile, (LPSTR)physDev->mh,
-                       sizeof(*physDev->mh), NULL, NULL)) {
+        if (!WriteFile(physDev->hFile, physDev->mh, sizeof(*physDev->mh),
+                       NULL, NULL)) {
             MFDRV_DeleteDC( dc );
             return 0;
         }
@@ -457,7 +457,7 @@ BOOL MFDRV_WriteRecord( PHYSDEV dev, METARECORD *mr, DWORD rlen)
         break;
     case METAFILE_DISK:
         TRACE("Writing record to disk\n");
-	if (!WriteFile(physDev->hFile, (char *)mr, rlen, NULL, NULL))
+        if (!WriteFile(physDev->hFile, mr, rlen, NULL, NULL))
 	    return FALSE;
         break;
     default:

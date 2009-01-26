@@ -270,7 +270,7 @@ HBRUSH WINAPI CreateDIBPatternBrush( HGLOBAL hbitmap, UINT coloruse )
  */
 HBRUSH WINAPI CreateDIBPatternBrushPt( const void* data, UINT coloruse )
 {
-    const BITMAPINFO *info=(const BITMAPINFO*)data;
+    const BITMAPINFO *info=data;
     LOGBRUSH logbrush;
 
     if (!data)

@@ -616,8 +616,8 @@ INT WINAPI GetDIBits(
     }
 
     colorPtr = (LPBYTE) info + (WORD) info->bmiHeader.biSize;
-    rgbTriples = (RGBTRIPLE *) colorPtr;
-    rgbQuads = (RGBQUAD *) colorPtr;
+    rgbTriples = colorPtr;
+    rgbQuads = colorPtr;
 
     /* Transfer color info */
 

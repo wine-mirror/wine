@@ -520,7 +520,7 @@ HPALETTE CDECL MFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPalette, BOOL bForceB
     BOOL        creationSucceed;
     int         sizeofPalette;
 
-    GetObjectA(hPalette, sizeof(WORD), (LPSTR) &wNumEntries);
+    GetObjectA(hPalette, sizeof(WORD), &wNumEntries);
 
     if (wNumEntries == 0) return 0;
 
