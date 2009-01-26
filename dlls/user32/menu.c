@@ -56,6 +56,7 @@
 #include "wownt32.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
+#include "wine/exception.h"
 #include "win.h"
 #include "controls.h"
 #include "user_private.h"
@@ -2964,6 +2965,11 @@ static void MENU_KeyRight( MTRACKER* pmt, UINT wFlags )
     }
 }
 
+static void CALLBACK release_capture( BOOL __normal )
+{
+    set_capture_window( 0, GUI_INMENUMODE, NULL );
+}
+
 /***********************************************************************
  *           MENU_TrackMenu
  *
@@ -3011,7 +3017,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     capture_win = (wFlags & TPM_POPUPMENU) ? menu->hWnd : mt.hOwnerWnd;
     set_capture_window( capture_win, GUI_INMENUMODE, NULL );
 
-    while (!fEndMenu)
+    __TRY while (!fEndMenu)
     {
 	menu = MENU_GetMenu( mt.hCurrentMenu );
 	if (!menu) /* sometimes happens if I do a window manager close */
@@ -3232,8 +3238,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 	    PeekMessageW( &msg, 0, msg.message, msg.message, PM_REMOVE );
 	else mt.trackFlags &= ~TF_SKIPREMOVE;
     }
-
-    set_capture_window( 0, GUI_INMENUMODE, NULL );
+    __FINALLY( release_capture )
 
     /* If dropdown is still painted and the close box is clicked on
        then the menu will be destroyed as part of the DispatchMessage above.
