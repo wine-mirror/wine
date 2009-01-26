@@ -119,6 +119,7 @@ struct WebBrowser {
     const IOleInPlaceActiveObjectVtbl   *lpOleInPlaceActiveObjectVtbl;
     const IOleCommandTargetVtbl         *lpOleCommandTargetVtbl;
     const IHlinkFrameVtbl               *lpHlinkFrameVtbl;
+    const IServiceProviderVtbl          *lpServiceProviderVtbl;
 
     LONG ref;
 

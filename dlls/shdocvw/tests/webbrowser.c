@@ -1994,11 +1994,22 @@ static void test_IServiceProvider(IUnknown *unk)
 {
     IServiceProvider *servprov = (void*)0xdeadbeef;
     HRESULT hres;
+    IUnknown *ret = NULL;
+    static const IID IID_IBrowserService2 =
+        {0x68BD21CC,0x438B,0x11d2,{0xA5,0x60,0x00,0xA0,0xC,0x2D,0xBF,0xE8}};
 
     hres = IUnknown_QueryInterface(unk, &IID_IServiceProvider, (void**)&servprov);
-    todo_wine ok(hres == S_OK, "QueryInterface returned %08x, expected S_OK\n", hres);
+    ok(hres == S_OK, "QueryInterface returned %08x, expected S_OK\n", hres);
     if(FAILED(hres))
         return;
+
+    hres = IServiceProvider_QueryService(servprov, &SID_STopLevelBrowser, &IID_IBrowserService2, (LPVOID*)&ret);
+    ok(hres == E_FAIL, "QueryService returned %08x, expected E_FAIL\n", hres);
+    ok(ret == NULL, "ret returned %p, expected NULL\n", ret);
+    if(hres == S_OK)
+    {
+        IUnknown_Release(ret);
+    }
 
     IServiceProvider_Release(servprov);
 }

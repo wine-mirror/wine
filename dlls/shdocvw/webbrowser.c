@@ -102,6 +102,9 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
     }else if(IsEqualGUID(&IID_IHlinkFrame, riid)) {
         TRACE("(%p)->(IID_IHlinkFrame %p)\n", This, ppv);
         *ppv = HLINKFRAME(This);
+    }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
+        *ppv = SERVPROV(This);
+        TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
     }else if(IsEqualGUID(&IID_IQuickActivate, riid)) {
         TRACE("(%p)->(IID_IQuickActivate %p) returning NULL\n", This, ppv);
         return E_NOINTERFACE;
@@ -1014,6 +1017,78 @@ static const IWebBrowser2Vtbl WebBrowser2Vtbl =
     WebBrowser_put_Resizable
 };
 
+#define SERVPROV_THIS(iface) DEFINE_THIS(WebBrowser, OleObject, iface)
+/*
+ *  IServiceProvider interface.
+ */
+static HRESULT WINAPI WebBrowser_IServiceProvider_QueryInterface(IServiceProvider *iface,
+            REFIID riid, LPVOID *ppv)
+{
+    WebBrowser *This = SERVPROV_THIS(iface);
+
+    if (ppv == NULL)
+        return E_POINTER;
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        *ppv = WEBBROWSER(This);
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+    }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
+        *ppv = WEBBROWSER(This);
+        TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    FIXME("(%p)->(%s %p) interface not supported\n", This, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI WebBrowser_IServiceProvider_AddRef(IServiceProvider *iface)
+{
+    WebBrowser *This = SERVPROV_THIS(iface);
+    return IWebBrowser_AddRef(WEBBROWSER(This));
+}
+
+static ULONG WINAPI WebBrowser_IServiceProvider_Release(IServiceProvider *iface)
+{
+    WebBrowser *This = SERVPROV_THIS(iface);
+    return IWebBrowser_Release(WEBBROWSER(This));
+}
+
+static HRESULT STDMETHODCALLTYPE WebBrowser_IServiceProvider_QueryService(IServiceProvider *iface,
+            REFGUID guidService, REFIID riid, void **ppv)
+{
+    WebBrowser *This = SERVPROV_THIS(iface);
+    static const IID IID_IBrowserService2 =
+        {0x68BD21CC,0x438B,0x11d2,{0xA5,0x60,0x00,0xA0,0xC,0x2D,0xBF,0xE8}};
+
+    if(*ppv)
+        ppv = NULL;
+
+    if(IsEqualGUID(&IID_IBrowserService2, riid)) {
+        TRACE("(%p)->(IID_IBrowserService2 return E_FAIL)\n", This);
+        return E_FAIL;
+    }
+
+    FIXME("(%p)->(%s, %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
+
+    return E_NOINTERFACE;
+}
+
+#undef SERVPROV_THIS
+
+static const IServiceProviderVtbl ServiceProviderVtbl =
+{
+    WebBrowser_IServiceProvider_QueryInterface,
+    WebBrowser_IServiceProvider_AddRef,
+    WebBrowser_IServiceProvider_Release,
+    WebBrowser_IServiceProvider_QueryService
+};
+
 static HRESULT WebBrowser_Create(INT version, IUnknown *pOuter, REFIID riid, void **ppv)
 {
     WebBrowser *ret;
@@ -1024,6 +1099,7 @@ static HRESULT WebBrowser_Create(INT version, IUnknown *pOuter, REFIID riid, voi
     ret = heap_alloc(sizeof(WebBrowser));
 
     ret->lpWebBrowser2Vtbl = &WebBrowser2Vtbl;
+    ret->lpServiceProviderVtbl = &ServiceProviderVtbl;
     ret->ref = 0;
     ret->version = version;
 
