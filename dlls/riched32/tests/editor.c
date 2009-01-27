@@ -535,6 +535,8 @@ static void test_EM_GETSELTEXT(void)
 static const char haystack[] = "WINEWine wineWine wine WineWine";
                              /* ^0        ^10       ^20       ^30 */
 
+static const char haystack2[] = "first\r\r\nsecond";
+
 struct find_s {
   int start;
   int end;
@@ -620,6 +622,13 @@ struct find_s find_tests2[] = {
   {4, -1, "INEW", 0, 10},
 };
 
+struct find_s find_tests3[] = {
+  /* Searching for end of line characters */
+  {0, -1, "t\r\r\ns", FR_DOWN | FR_MATCHCASE, 4},
+  {6, -1, "\r\n", FR_DOWN | FR_MATCHCASE, 6},
+  {7, -1, "\n", FR_DOWN | FR_MATCHCASE, 7},
+};
+
 static void check_EM_FINDTEXT(HWND hwnd, const char *name, struct find_s *f, int id) {
   int findloc;
   FINDTEXT ft;
@@ -681,6 +690,12 @@ static void test_EM_FINDTEXT(void)
   /* Haystack text */
   run_tests_EM_FINDTEXT(hwndRichEdit, "2", find_tests2,
       sizeof(find_tests2)/sizeof(struct find_s));
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) haystack2);
+
+  /* Haystack text 2 (with EOL characters) */
+  todo_wine run_tests_EM_FINDTEXT(hwndRichEdit, "3", find_tests3,
+      sizeof(find_tests3)/sizeof(struct find_s));
 
   DestroyWindow(hwndRichEdit);
 }
