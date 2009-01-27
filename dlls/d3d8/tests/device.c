@@ -815,7 +815,7 @@ static void test_scene(void)
 
     hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "IDirect3D8_CreateDevice failed with %#08x\n", hr);
+    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL || broken(hr == D3DERR_NOTAVAILABLE), "IDirect3D8_CreateDevice failed with %#08x\n", hr);
     if(!pDevice)
     {
         skip("could not create device, IDirect3D8_CreateDevice returned %#08x\n", hr);
@@ -921,7 +921,7 @@ static void test_shader(void)
 
     hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "IDirect3D8_CreateDevice failed with %#08x\n", hr);
+    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL || broken(hr == D3DERR_NOTAVAILABLE), "IDirect3D8_CreateDevice failed with %#08x\n", hr);
     if(!pDevice)
     {
         skip("could not create device, IDirect3D8_CreateDevice returned %#08x\n", hr);
@@ -1119,7 +1119,7 @@ static void test_limits(void)
 
     hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "IDirect3D8_CreateDevice failed with %#08x\n", hr);
+    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL || broken(hr == D3DERR_NOTAVAILABLE), "IDirect3D8_CreateDevice failed with %#08x\n", hr);
     if(!pDevice)
     {
         skip("could not create device, IDirect3D8_CreateDevice returned %#08x\n", hr);
