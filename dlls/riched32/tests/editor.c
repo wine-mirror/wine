@@ -71,19 +71,18 @@ static void test_WM_SETTEXT()
   LRESULT result;
 
   /* This test attempts to show that WM_SETTEXT on a riched32 control does not
-     attempt to modify the text that is pasted into the control, and should
-     return it as is. In particular, \r\r\n is NOT converted, unlike riched20.
-     Currently, builtin riched32 mangles solitary \r or \n when not part of
-     a \r\n pair.
-
-     For riched32, the rules for breaking lines seem to be the following:
-     - \r\n is one line break. This is the normal case.
-     - \r{0,N}\n is one line break. In particular, \n by itself is a line break.
-     - \n{1,N} are that many line breaks.
-     - \r with text or other characters (except \n) past it, is a line break. That
-       is, a run of \r{N} without a terminating \n is considered N line breaks
-     - \r at the end of the text is NOT a line break. This differs from riched20,
-       where \r at the end of the text is a proper line break.
+   * attempt to modify the text that is pasted into the control, and should
+   * return it as is. In particular, \r\r\n is NOT converted, unlike riched20.
+   *
+   * For riched32, the rules for breaking lines seem to be the following:
+   * - \r\n is one line break. This is the normal case.
+   * - \r{0,2}\n is one line break. In particular, \n by itself is a line break.
+   * - \r{0,N-1}\r\r\n is N line breaks.
+   * - \n{1,N} are that many line breaks.
+   * - \r with text or other characters (except \n) past it, is a line break. That
+   *   is, a run of \r{N} without a terminating \n is considered N line breaks
+   * - \r at the end of the text is NOT a line break. This differs from riched20,
+   *   where \r at the end of the text is a proper line break.
    */
 
 #define TEST_SETTEXT(a, b, nlines) \
@@ -357,9 +356,10 @@ static const struct getline_s {
   const char *text;
 } gl[] = {
   {0, 10, "foo bar\r\n"},
-  {1, 10, "\n"},
-  {2, 10, "bar\n"},
-  {3, 10, "\r\n"},
+  {1, 10, "\r"},
+  {2, 10, "\r\r\n"},
+  {3, 10, "bar\n"},
+  {4, 10, "\r\n"},
 
   /* Buffer smaller than line length */
   {0, 2, "foo bar\r"},
@@ -374,7 +374,8 @@ static void test_EM_GETLINE(void)
   static const int nBuf = 1024;
   char dest[1024], origdest[1024];
   const char text[] = "foo bar\r\n"
-      "\n"
+      "\r"
+      "\r\r\n"
       "bar\n";
 
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
@@ -391,8 +392,12 @@ static void test_EM_GETLINE(void)
     /* EM_GETLINE appends a "\r\0" to the end of the line
      * nCopied counts up to and including the '\r' */
     nCopied = SendMessage(hwndRichEdit, EM_GETLINE, gl[i].line, (LPARAM) dest);
-    ok(nCopied == expected_nCopied, "%d: %d!=%d\n", i, nCopied,
-       expected_nCopied);
+    if (i >= 1 && i <= 4)
+      todo_wine ok(nCopied == expected_nCopied, "%d: %d!=%d\n", i, nCopied,
+         expected_nCopied);
+    else
+      ok(nCopied == expected_nCopied, "%d: %d!=%d\n", i, nCopied,
+         expected_nCopied);
     /* two special cases since a parameter is passed via dest */
     if (gl[i].buffer_len == 0)
       ok(!dest[0] && !dest[1] && !strncmp(dest+2, origdest+2, nBuf-2),
@@ -402,11 +407,20 @@ static void test_EM_GETLINE(void)
          !strncmp(dest+2, origdest+2, nBuf-2), "buffer_len=1\n");
     else
     {
-      ok(!strncmp(dest, gl[i].text, expected_bytes_written),
-         "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
-      ok(!strncmp(dest + expected_bytes_written, origdest
-                  + expected_bytes_written, nBuf - expected_bytes_written),
-         "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
+      if (i >= 1 && i <= 4)
+        todo_wine ok(!strncmp(dest, gl[i].text, expected_bytes_written),
+           "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
+      else
+        ok(!strncmp(dest, gl[i].text, expected_bytes_written),
+           "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
+      if (i >= 1 && i <= 2)
+        todo_wine ok(!strncmp(dest + expected_bytes_written, origdest
+                    + expected_bytes_written, nBuf - expected_bytes_written),
+           "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
+      else
+        ok(!strncmp(dest + expected_bytes_written, origdest
+                    + expected_bytes_written, nBuf - expected_bytes_written),
+           "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
     }
   }
 
