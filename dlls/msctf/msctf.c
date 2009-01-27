@@ -31,7 +31,11 @@
 #include "winreg.h"
 #include "shlwapi.h"
 #include "shlguid.h"
+#include "comcat.h"
 #include "initguid.h"
+#include "msctf.h"
+
+#include "msctf_internal.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msctf);
 
@@ -45,6 +49,7 @@ static const struct {
     REFCLSID clsid;
     LPFNCONSTRUCTOR ctor;
 } ClassesTable[] = {
+    {&CLSID_TF_ThreadMgr, ThreadMgr_Constructor},
     {NULL, NULL}
 };
 

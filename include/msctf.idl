@@ -24,3 +24,54 @@ import "comcat.idl";
 #endif
 
 cpp_quote("EXTERN_C const CLSID CLSID_TF_ThreadMgr;")
+
+typedef [uuid(de403c21-89fd-4f85-8b87-64584d063fbc)] DWORD TfClientId;
+
+interface ITfDocumentMgr;
+interface IEnumTfDocumentMgrs;
+interface ITfFunctionProvider;
+interface IEnumTfFunctionProviders;
+interface ITfCompartmentMgr;
+
+[
+    object,
+    uuid(aa80e801-2021-11d2-93e0-0060b067b86e),
+    pointer_default(unique)
+]
+interface ITfThreadMgr: IUnknown
+{
+    HRESULT Activate(
+        [out] TfClientId *ptid);
+
+    HRESULT Deactivate();
+
+    HRESULT CreateDocumentMgr(
+        [out] ITfDocumentMgr **ppdim);
+
+    HRESULT EnumDocumentMgrs(
+        [out] IEnumTfDocumentMgrs **ppEnum);
+
+    HRESULT GetFocus(
+        [out] ITfDocumentMgr **ppdimFocus);
+
+    HRESULT SetFocus(
+        [in] ITfDocumentMgr *pdimFocus);
+
+    HRESULT AssociateFocus(
+        [in] HWND hwnd,
+        [in, unique] ITfDocumentMgr *pdimNew,
+        [out] ITfDocumentMgr **ppdimPrev);
+
+    HRESULT IsThreadFocus(
+        [out] BOOL *pfThreadFocus);
+
+    HRESULT GetFunctionProvider(
+        [in] REFCLSID clsid,
+        [out] ITfFunctionProvider **ppFuncProv);
+
+    HRESULT EnumFunctionProviders(
+        [out] IEnumTfFunctionProviders **ppEnum);
+
+    HRESULT GetGlobalCompartment(
+        [out] ITfCompartmentMgr **ppCompMgr);
+};

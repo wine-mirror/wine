@@ -7,7 +7,8 @@ IMPORTS   = uuid ole32 user32 advapi32 kernel32 ntdll
 
 C_SRCS = \
 	msctf.c \
-	regsvr.c
+	regsvr.c \
+	threadmgr.c
 
 @MAKE_DLL_RULES@
 
