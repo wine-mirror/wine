@@ -74,7 +74,7 @@ struct gdi_obj_funcs
     HGDIOBJ (*pSelectObject)( HGDIOBJ handle, HDC hdc );
     INT     (*pGetObjectA)( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
     INT     (*pGetObjectW)( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
-    BOOL    (*pUnrealizeObject)( HGDIOBJ handle, void *obj );
+    BOOL    (*pUnrealizeObject)( HGDIOBJ handle );
     BOOL    (*pDeleteObject)( HGDIOBJ handle );
 };
 

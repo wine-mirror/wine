@@ -46,7 +46,7 @@ typedef struct tagPALETTEOBJ
 } PALETTEOBJ;
 
 static INT PALETTE_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
-static BOOL PALETTE_UnrealizeObject( HGDIOBJ handle, void *obj );
+static BOOL PALETTE_UnrealizeObject( HGDIOBJ handle );
 static BOOL PALETTE_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs palette_funcs =
@@ -374,12 +374,11 @@ BOOL WINAPI ResizePalette(
 
     if (!(palPtr = GDI_ReallocObject( size, hPal, palPtr ))) return FALSE;
 
-    PALETTE_UnrealizeObject( hPal, palPtr );
-
     if( cEntries > cPrevEnt ) memset( (BYTE*)palPtr + prevsize, 0, size - prevsize );
     palPtr->logpalette.palNumEntries = cEntries;
     palPtr->logpalette.palVersion = prevVer;
     GDI_ReleaseObj( hPal );
+    PALETTE_UnrealizeObject( hPal );
     return TRUE;
 }
 
@@ -647,15 +646,16 @@ static INT PALETTE_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffe
 /***********************************************************************
  *           PALETTE_UnrealizeObject
  */
-static BOOL PALETTE_UnrealizeObject( HGDIOBJ handle, void *obj )
+static BOOL PALETTE_UnrealizeObject( HGDIOBJ handle )
 {
-    PALETTEOBJ *palette = obj;
+    PALETTEOBJ *palette = GDI_GetObjPtr( handle, PALETTE_MAGIC );
 
-    if (palette->funcs)
+    if (palette)
     {
-        if (palette->funcs->pUnrealizePalette)
-            palette->funcs->pUnrealizePalette( handle );
+        const DC_FUNCTIONS *funcs = palette->funcs;
         palette->funcs = NULL;
+        GDI_ReleaseObj( handle );
+        if (funcs && funcs->pUnrealizePalette) funcs->pUnrealizePalette( handle );
     }
 
     if (InterlockedCompareExchangePointer( (void **)&hLastRealizedPalette, 0, handle ) == handle)
@@ -670,10 +670,10 @@ static BOOL PALETTE_UnrealizeObject( HGDIOBJ handle, void *obj )
  */
 static BOOL PALETTE_DeleteObject( HGDIOBJ handle )
 {
-    PALETTEOBJ *obj = GDI_GetObjPtr( handle, PALETTE_MAGIC );
+    PALETTEOBJ *obj;
 
-    if (!obj) return FALSE;
-    PALETTE_UnrealizeObject( handle, obj );
+    PALETTE_UnrealizeObject( handle );
+    if (!(obj = GDI_GetObjPtr( handle, PALETTE_MAGIC ))) return FALSE;
     return GDI_FreeObject( handle, obj );
 }
 

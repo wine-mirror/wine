@@ -1145,20 +1145,19 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ hObj )
  */
 BOOL WINAPI UnrealizeObject( HGDIOBJ obj )
 {
-    BOOL result = TRUE;
-  /* Check if object is valid */
-
+    BOOL result = FALSE;
     GDIOBJHDR * header = GDI_GetObjPtr( obj, MAGIC_DONTCARE );
-    if (!header) return FALSE;
 
-    TRACE("%p\n", obj );
+    if (header)
+    {
+        const struct gdi_obj_funcs *funcs = header->funcs;
 
-      /* Unrealize object */
-
-    if (header->funcs && header->funcs->pUnrealizeObject)
-        result = header->funcs->pUnrealizeObject( obj, header );
-
-    GDI_ReleaseObj( obj );
+        GDI_ReleaseObj( obj );
+        if (funcs && funcs->pUnrealizeObject)
+            result = header->funcs->pUnrealizeObject( obj );
+        else
+            result = TRUE;
+    }
     return result;
 }
 
