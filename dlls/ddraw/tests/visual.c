@@ -2167,7 +2167,7 @@ static BOOL colortables_check_equality(PALETTEENTRY table1[256], RGBQUAD table2[
     return TRUE;
 }
 
-static void p8_primary_test()
+static void p8_primary_test(void)
 {
     /* Test 8bit mode used by games like StarCraft, C&C Red Alert I etc */
     DDSURFACEDESC ddsd;

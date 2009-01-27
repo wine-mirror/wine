@@ -1635,7 +1635,7 @@ static void D3D7_OldRenderStateTest(void)
 #define IS_VALUE_NEAR(a, b)    ( ((a) == (b)) || ((a) == (b) - 1) || ((a) == (b) + 1) )
 #define MIN(a, b)    ((a) < (b) ? (a) : (b))
 
-static void DeviceLoadTest()
+static void DeviceLoadTest(void)
 {
     DDSURFACEDESC2 ddsd;
     IDirectDrawSurface7 *texture_levels[2][8];
