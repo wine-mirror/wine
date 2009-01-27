@@ -383,6 +383,12 @@ static struct regsvr_coclass const coclass_list[] = {
         "wuapi.dll",
         "Both"
     },
+    {   &CLSID_AutomaticUpdates,
+        "CLSID_AutomaticUpdates",
+        NULL,
+        "wuapi.dll",
+        "Both"
+    },
     { NULL }			/* list terminator */
 };
 

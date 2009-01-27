@@ -111,7 +111,8 @@ static const struct IClassFactoryVtbl wucf_vtbl =
     wucf_LockServer
 };
 
-static wucf updatecf = { &wucf_vtbl, UpdateSession_create };
+static wucf sessioncf = { &wucf_vtbl, UpdateSession_create };
+static wucf updatescf = { &wucf_vtbl, AutomaticUpdates_create };
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID lpv )
 {
@@ -135,8 +136,13 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
     TRACE("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);
 
     if (IsEqualGUID( rclsid, &CLSID_UpdateSession ))
-       cf = (IClassFactory *)&updatecf.vtbl;
-
+    {
+       cf = (IClassFactory *)&sessioncf.vtbl;
+    }
+    else if (IsEqualGUID( rclsid, &CLSID_AutomaticUpdates ))
+    {
+       cf = (IClassFactory *)&updatescf.vtbl;
+    }
     if (!cf) return CLASS_E_CLASSNOTAVAILABLE;
     return IClassFactory_QueryInterface( cf, iid, ppv );
 }
