@@ -58,7 +58,8 @@ RC_SRCS = shres.rc
 SVG_SRCS = \
 	desktop.svg \
 	folder.svg \
-	folder_open.svg
+	folder_open.svg \
+	mycomputer.svg
 
 C_SRCS16  = shell.c
 RC_SRCS16 = version16.rc
