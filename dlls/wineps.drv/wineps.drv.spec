@@ -27,7 +27,6 @@
 @ cdecl Rectangle(ptr long long long long) PSDRV_Rectangle
 @ cdecl ResetDC(ptr ptr) PSDRV_ResetDC
 @ cdecl RoundRect(ptr long long long long long long) PSDRV_RoundRect
-@ cdecl SelectBitmap(ptr long) PSDRV_SelectBitmap
 @ cdecl SelectBrush(ptr long) PSDRV_SelectBrush
 @ cdecl SelectFont(ptr long long) PSDRV_SelectFont
 @ cdecl SelectPen(ptr long) PSDRV_SelectPen

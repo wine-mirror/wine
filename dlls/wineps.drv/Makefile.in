@@ -60,7 +60,6 @@ C_SRCS = \
 	glyphlist.c \
 	graphics.c \
 	init.c \
-	objects.c \
 	pen.c \
 	ppd.c \
 	ps.c \
