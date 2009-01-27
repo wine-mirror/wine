@@ -207,11 +207,10 @@ static void test_legacy_filter_registration(void)
     static const CHAR szFilterName[] = "Testfilter";
     static const WCHAR wszPinName[] = {'P', 'i', 'n', '1', 0 };
     CLSID clsidFilter;
-    WCHAR wszRegKey[MAX_PATH];
     CHAR szRegKey[MAX_PATH];
-    static const WCHAR wszClsid[] = {'C','L','S','I','D', 0};
     static const CHAR szClsid[] = "CLSID";
-    static const WCHAR wszSlash[] = {'\\', 0};
+    WCHAR wszGuidstring[MAX_PATH];
+    CHAR szGuidstring[MAX_PATH];
     LONG lRet;
     HKEY hKey = NULL;
     IEnumMoniker *pEnum = NULL;
@@ -234,12 +233,14 @@ static void test_legacy_filter_registration(void)
     hr = CoCreateGuid(&clsidFilter);
     ok(hr == S_OK, "CoCreateGuid failed with %x\n", hr);
 
-    lstrcpyW(wszRegKey, wszClsid);
-    lstrcatW(wszRegKey, wszSlash);
-    lRet = StringFromGUID2(&clsidFilter, wszRegKey + lstrlenW(wszRegKey), MAX_PATH - lstrlenW(wszRegKey));
+    lRet = StringFromGUID2(&clsidFilter, wszGuidstring, MAX_PATH);
     ok(lRet > 0, "StringFromGUID2 failed\n");
     if (!lRet) goto out;
-    WideCharToMultiByte(CP_ACP, 0, wszRegKey, -1, szRegKey, sizeof(szRegKey), 0, 0);
+    WideCharToMultiByte(CP_ACP, 0, wszGuidstring, -1, szGuidstring, MAX_PATH, 0, 0);
+
+    lstrcpyA(szRegKey, szClsid);
+    lstrcatA(szRegKey, "\\");
+    lstrcatA(szRegKey, szGuidstring);
 
     /* Register---- functions need a filter class key to write pin and pin media type data to. Create a bogus
      * class key for it. */
@@ -303,11 +304,7 @@ static void test_legacy_filter_registration(void)
     lRet = RegOpenKeyExA(HKEY_CLASSES_ROOT, szClsid, 0, KEY_WRITE | DELETE, &hKey);
     ok(lRet == ERROR_SUCCESS, "RegOpenKeyExA failed with %x\n", HRESULT_FROM_WIN32(lRet));
 
-    lRet = StringFromGUID2(&clsidFilter, wszRegKey, MAX_PATH);
-    ok(lRet > 0, "StringFromGUID2 failed\n");
-    WideCharToMultiByte(CP_ACP, 0, wszRegKey, -1, szRegKey, sizeof(szRegKey), 0, 0);
-
-    lRet = RegDeleteKeyA(hKey, szRegKey);
+    lRet = RegDeleteKeyA(hKey, szGuidstring);
     ok(lRet == ERROR_SUCCESS, "RegDeleteKeyA failed with %x\n", HRESULT_FROM_WIN32(lRet));
 
     if (hKey) RegCloseKey(hKey);
