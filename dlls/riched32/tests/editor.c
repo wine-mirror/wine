@@ -392,12 +392,8 @@ static void test_EM_GETLINE(void)
     /* EM_GETLINE appends a "\r\0" to the end of the line
      * nCopied counts up to and including the '\r' */
     nCopied = SendMessage(hwndRichEdit, EM_GETLINE, gl[i].line, (LPARAM) dest);
-    if (i >= 1 && i <= 4)
-      todo_wine ok(nCopied == expected_nCopied, "%d: %d!=%d\n", i, nCopied,
-         expected_nCopied);
-    else
-      ok(nCopied == expected_nCopied, "%d: %d!=%d\n", i, nCopied,
-         expected_nCopied);
+    ok(nCopied == expected_nCopied, "%d: %d!=%d\n", i, nCopied,
+       expected_nCopied);
     /* two special cases since a parameter is passed via dest */
     if (gl[i].buffer_len == 0)
       ok(!dest[0] && !dest[1] && !strncmp(dest+2, origdest+2, nBuf-2),
@@ -407,20 +403,11 @@ static void test_EM_GETLINE(void)
          !strncmp(dest+2, origdest+2, nBuf-2), "buffer_len=1\n");
     else
     {
-      if (i >= 1 && i <= 4)
-        todo_wine ok(!strncmp(dest, gl[i].text, expected_bytes_written),
-           "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
-      else
-        ok(!strncmp(dest, gl[i].text, expected_bytes_written),
-           "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
-      if (i >= 1 && i <= 2)
-        todo_wine ok(!strncmp(dest + expected_bytes_written, origdest
-                    + expected_bytes_written, nBuf - expected_bytes_written),
-           "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
-      else
-        ok(!strncmp(dest + expected_bytes_written, origdest
-                    + expected_bytes_written, nBuf - expected_bytes_written),
-           "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
+      ok(!strncmp(dest, gl[i].text, expected_bytes_written),
+         "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
+      ok(!strncmp(dest + expected_bytes_written, origdest
+                  + expected_bytes_written, nBuf - expected_bytes_written),
+         "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
     }
   }
 

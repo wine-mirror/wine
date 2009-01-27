@@ -517,107 +517,66 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
   if(editor->nTextLimit < oldLen +len)
     editor->nTextLimit = oldLen + len;
 
+  pos = str;
+
   while (len)
   {
-    pos = str;
     /* FIXME this sucks - no respect for unicode (what else can be a line separator in unicode?) */
-    while(pos-str < len && *pos != '\r' && *pos != '\n' && *pos != '\t')
+    while(pos - str < len && *pos != '\r' && *pos != '\n' && *pos != '\t')
       pos++;
-    if (pos-str < len && *pos == '\t') { /* handle tabs */
+
+    if (pos != str) { /* handle text */
+      ME_InternalInsertTextFromCursor(editor, nCursor, str, pos-str, style, 0);
+    } else if (*pos == '\t') { /* handle tabs */
       WCHAR tab = '\t';
-
-      if (pos!=str)
-        ME_InternalInsertTextFromCursor(editor, nCursor, str, pos-str, style, 0);
-    
       ME_InternalInsertTextFromCursor(editor, nCursor, &tab, 1, style, MERF_TAB);
- 
       pos++;
-      if(pos-str <= len) {
-        len -= pos - str;
-        str = pos;
-        continue;
-      }
-    }
-    /* handle special \r\r\n sequence (richedit 2.x and higher only) */
-    if (!editor->bEmulateVersion10 && pos-str < len-2 && pos[0] == '\r' && pos[1] == '\r' && pos[2] == '\n') {
-      WCHAR space = ' ';
-
-      if (pos!=str)
-        ME_InternalInsertTextFromCursor(editor, nCursor, str, pos-str, style, 0);
-
-      ME_InternalInsertTextFromCursor(editor, nCursor, &space, 1, style, 0);
-
-      pos+=3;
-      if(pos-str <= len) {
-        len -= pos - str;
-        str = pos;
-        continue;
-      }
-    }
-    if (pos-str < len) {   /* handle EOLs */
+    } else { /* handle EOLs */
       ME_DisplayItem *tp, *end_run;
       ME_Style *tmp_style;
       int numCR, numLF;
 
-      if (pos!=str)
-        ME_InternalInsertTextFromCursor(editor, nCursor, str, pos-str, style, 0);
-      p = &editor->pCursors[nCursor];
-      if (p->nOffset) {
-        ME_SplitRunSimple(editor, p->pRun, p->nOffset);
-        p = &editor->pCursors[nCursor];
-      }
-      tmp_style = ME_GetInsertStyle(editor, nCursor);
-      /* ME_SplitParagraph increases style refcount */
-
-      /* Encode and fill number of CR and LF according to emulation mode */
-      if (editor->bEmulateVersion10) {
-        const WCHAR * tpos;
-
-        /* We have to find out how many consecutive \r are there, and if there
-           is a \n terminating the run of \r's. */
-        numCR = 0; numLF = 0;
-        tpos = pos;
-        while (tpos-str < len && *tpos == '\r') {
-          tpos++;
-          numCR++;
-        }
-        if (tpos-str >= len) {
-          /* Reached end of text without finding anything but '\r' */
-          if (tpos != pos) {
-            pos++;
-          }
-          numCR = 1; numLF = 0;
-        } else if (*tpos == '\n') {
-          /* The entire run of \r's plus the one \n is one single line break */
-          pos = tpos + 1;
-          numLF = 1;
-        } else {
-          /* Found some other content past the run of \r's */
-          pos++;
-          numCR = 1; numLF = 0;
-        }
+      /* Find number of CR and LF in end of paragraph run */
+      numCR = 0; numLF = 0;
+      if (*pos =='\r')
+      {
+        numCR++;
+        if (len > 1 && pos[1] == '\n')
+          numLF++;
+        else if (len > 2 && pos[1] == '\r' && pos[2] == '\n')
+          numCR++, numLF++;
       } else {
-        if(pos-str < len && *pos =='\r')
-          pos++;
-        if(pos-str < len && *pos =='\n')
-          pos++;
-        numCR = 1; numLF = 0;
+        assert(*pos == '\n');
+        numLF++;
       }
-      tp = ME_SplitParagraph(editor, p->pRun, p->pRun->member.run.style, numCR, numLF, 0);
-      p->pRun = ME_FindItemFwd(tp, diRun);
-      end_run = ME_FindItemBack(tp, diRun);
-      ME_ReleaseStyle(end_run->member.run.style);
-      end_run->member.run.style = tmp_style;
-      p->nOffset = 0;
+      pos += numCR + numLF;
 
-      if(pos-str <= len) {
-        len -= pos - str;
-        str = pos;
-        continue;
+      if (!editor->bEmulateVersion10 && numCR == 2 && numLF == 1)
+      {
+        /* handle special \r\r\n sequence (richedit 2.x and higher only) */
+        WCHAR space = ' ';
+        ME_InternalInsertTextFromCursor(editor, nCursor, &space, 1, style, 0);
+      } else {
+        if (!editor->bEmulateVersion10)
+          numCR = 1, numLF = 0;
+
+        p = &editor->pCursors[nCursor];
+        if (p->nOffset) {
+          ME_SplitRunSimple(editor, p->pRun, p->nOffset);
+          p = &editor->pCursors[nCursor];
+        }
+        tmp_style = ME_GetInsertStyle(editor, nCursor);
+        /* ME_SplitParagraph increases style refcount */
+        tp = ME_SplitParagraph(editor, p->pRun, p->pRun->member.run.style, numCR, numLF, 0);
+        p->pRun = ME_FindItemFwd(tp, diRun);
+        end_run = ME_FindItemBack(tp, diRun);
+        ME_ReleaseStyle(end_run->member.run.style);
+        end_run->member.run.style = tmp_style;
+        p->nOffset = 0;
       }
     }
-    ME_InternalInsertTextFromCursor(editor, nCursor, str, len, style, 0);
-    len = 0;
+    len -= pos - str;
+    str = pos;
   }
 }
 
