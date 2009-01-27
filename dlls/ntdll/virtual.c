@@ -1474,11 +1474,15 @@ NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err )
             VIRTUAL_SetProt( view, page, page_size, *vprot & ~VPROT_GUARD );
             ret = STATUS_GUARD_PAGE_VIOLATION;
         }
-        if ((err & EXCEPTION_WRITE_FAULT) && (*vprot & VPROT_WRITEWATCH))
+        if ((err & EXCEPTION_WRITE_FAULT) && (view->protect & VPROT_WRITEWATCH))
         {
-            *vprot &= ~VPROT_WRITEWATCH;
-            VIRTUAL_SetProt( view, page, page_size, *vprot );
-            ret = STATUS_SUCCESS;
+            if (*vprot & VPROT_WRITEWATCH)
+            {
+                *vprot &= ~VPROT_WRITEWATCH;
+                VIRTUAL_SetProt( view, page, page_size, *vprot );
+            }
+            /* ignore fault if page is writable now */
+            if (VIRTUAL_GetUnixProt( *vprot ) & PROT_WRITE) ret = STATUS_SUCCESS;
         }
     }
     server_leave_uninterrupted_section( &csVirtual, &sigset );
