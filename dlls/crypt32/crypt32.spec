@@ -219,6 +219,7 @@
 @ stdcall PFXExportCertStore(ptr ptr ptr long)
 @ stdcall PFXExportCertStoreEx(ptr ptr ptr ptr long)
 @ stub PFXImportCertStore
+@ stdcall PFXIsPFXBlob(ptr)
 @ stub RegCreateHKCUKeyExU
 @ stub RegCreateKeyExU
 @ stub RegDeleteValueU

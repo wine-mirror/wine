@@ -5511,3 +5511,38 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     TRACE_(crypt)("returning %d\n", ret);
     return ret;
 }
+
+BOOL WINAPI PFXIsPFXBlob(CRYPT_DATA_BLOB *pPFX)
+{
+    BOOL ret;
+
+    TRACE("(%p)\n", pPFX);
+
+    /* A PFX blob is an asn.1-encoded sequence, consisting of at least a
+     * version integer of length 1 (3 encoded byes) and at least one other
+     * datum (two encoded bytes), plus at least two bytes for the outer
+     * sequence.  Thus, even an empty PFX blob is at least 7 bytes in length.
+     */
+    if (pPFX->cbData < 7)
+        ret = FALSE;
+    else if (pPFX->pbData[0] == ASN_SEQUENCE)
+    {
+        DWORD len;
+
+        if ((ret = CRYPT_GetLengthIndefinite(pPFX->pbData, pPFX->cbData, &len)))
+        {
+            BYTE lenLen = GET_LEN_BYTES(pPFX->pbData[1]);
+
+            /* Need at least three bytes for the integer version */
+            if (pPFX->cbData < 1 + lenLen + 3)
+                ret = FALSE;
+            else if (pPFX->pbData[1 + lenLen] != ASN_INTEGER || /* Tag */
+             pPFX->pbData[1 + lenLen + 1] != 1 ||          /* Definite length */
+             pPFX->pbData[1 + lenLen + 2] != 3)            /* PFX version */
+                ret = FALSE;
+        }
+    }
+    else
+        ret = FALSE;
+    return ret;
+}
