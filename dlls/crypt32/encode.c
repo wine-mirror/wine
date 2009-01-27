@@ -4499,6 +4499,14 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     return ret;
 }
 
+BOOL WINAPI PFXExportCertStoreEx(HCERTSTORE hStore, CRYPT_DATA_BLOB *pPFX,
+ LPCWSTR szPassword, void *pvReserved, DWORD dwFlags)
+{
+    FIXME_(crypt)("(%p, %p, %p, %p, %08x): stub\n", hStore, pPFX, szPassword,
+     pvReserved, dwFlags);
+    return FALSE;
+}
+
 BOOL WINAPI CryptExportPublicKeyInfo(HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hCryptProv, DWORD dwKeySpec,
  DWORD dwCertEncodingType, PCERT_PUBLIC_KEY_INFO pInfo, DWORD *pcbInfo)
 {
