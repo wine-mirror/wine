@@ -133,7 +133,7 @@ static void PopulateImageList(HIMAGELIST *iList, HWND list)
 #else
 			bitmap = 0;
 #endif
-			GetObjectA(bitmap,sizeof(BITMAP),(LPVOID)&bmpInfo);
+			GetObjectA(bitmap,sizeof(BITMAP),&bmpInfo);
 
 			if (*iList == 0)
 			{

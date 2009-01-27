@@ -397,7 +397,7 @@ TW_UINT16 GPHOTO2_ImageNativeXferGet (pTW_IDENTITY pOrigin,
  *  will likely crash after calling.
  *
  *  Reason is that there is a lot of example code that does:
- *  bmpinfo = (LPBITMAPINFOHEADER)GlobalLock(hBITMAP); ... pointer access to bmpinfo
+ *  bmpinfo = GlobalLock(hBITMAP); ... pointer access to bmpinfo
  *
  *  Our current HBITMAP handles do not support getting GlobalLocked -> App Crash
  *
