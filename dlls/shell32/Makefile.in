@@ -60,6 +60,7 @@ SVG_SRCS = \
 	folder.svg \
 	folder_open.svg \
 	mycomputer.svg \
+	mydocs.svg \
 	trash_file.svg
 
 C_SRCS16  = shell.c
