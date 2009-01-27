@@ -591,9 +591,9 @@ HRESULT WINAPI MediaSeekingImpl_SetPositions(IMediaSeeking * iface, LONGLONG * p
     This->llCurrent = llNewCurrent;
     This->llStop = llNewStop;
 
-    if (dwCurrentFlags & AM_SEEKING_ReturnTime)
+    if (pCurrent && (dwCurrentFlags & AM_SEEKING_ReturnTime))
         *pCurrent = llNewCurrent;
-    if (dwStopFlags & AM_SEEKING_ReturnTime)
+    if (pStop && (dwStopFlags & AM_SEEKING_ReturnTime))
         *pStop = llNewStop;
 
     ForwardCmdSeek(This->crst, This->pUserData, fwd_setposition, &args);

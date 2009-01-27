@@ -272,6 +272,11 @@ static void test_mediacontrol(void)
     ok(hr == S_OK, "GetCurrentPosition failed: %08x\n", hr);
     ok(pos == 0, "Position != 0 (%x%08x)\n", (DWORD)(pos >> 32), (DWORD)pos);
 
+    hr = IMediaSeeking_SetPositions(seeking, NULL, AM_SEEKING_ReturnTime, NULL, AM_SEEKING_NoPositioning);
+    ok(hr == S_OK, "SetPositions failed: %08x\n", hr);
+    hr = IMediaSeeking_SetPositions(seeking, NULL, AM_SEEKING_NoPositioning, NULL, AM_SEEKING_ReturnTime);
+    ok(hr == S_OK, "SetPositions failed: %08x\n", hr);
+
     IMediaFilter_SetSyncSource(filter, NULL);
     pos = 0xdeadbeef;
     hr = IMediaSeeking_GetCurrentPosition(seeking, &pos);
