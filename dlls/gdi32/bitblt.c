@@ -174,6 +174,17 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
         HBITMAP hbm;
         LPVOID bits;
         INT lines;
+        POINT pts[2];
+
+        pts[0].x = xSrc;
+        pts[0].y = ySrc;
+        pts[1].x = xSrc + widthSrc;
+        pts[1].y = ySrc + heightSrc;
+        LPtoDP(hdcSrc, pts, 2);
+        xSrc      = pts[0].x;
+        ySrc      = pts[0].y;
+        widthSrc  = pts[1].x - pts[0].x;
+        heightSrc = pts[1].y - pts[0].y;
 
         release_dc_ptr( dcDst );
 
