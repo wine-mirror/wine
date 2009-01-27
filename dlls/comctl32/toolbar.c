@@ -3789,6 +3789,7 @@ TOOLBAR_InsertButtonT(HWND hwnd, WPARAM wParam, LPARAM lParam, BOOL fUnicode)
 	    (infoPtr->nNumButtons - nIndex - 1) * sizeof(TBUTTON_INFO));
 
     /* insert new button */
+    ZeroMemory(&infoPtr->buttons[nIndex], sizeof(infoPtr->buttons[nIndex]));
     infoPtr->buttons[nIndex].iBitmap   = lpTbb->iBitmap;
     infoPtr->buttons[nIndex].idCommand = lpTbb->idCommand;
     infoPtr->buttons[nIndex].fsState   = lpTbb->fsState;
