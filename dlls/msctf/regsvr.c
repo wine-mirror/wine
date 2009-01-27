@@ -30,6 +30,7 @@
 
 #include "ole2.h"
 #include "shlguid.h"
+#include "msctf.h"
 
 #include "wine/debug.h"
 
@@ -440,6 +441,13 @@ error_close_progid_key:
  *		coclass list
  */
 static struct regsvr_coclass const coclass_list[] = {
+    {
+        &CLSID_TF_ThreadMgr,
+        "TF_ThreadMgr",
+        NULL,
+        "msctf.dll",
+        "Apartment"
+    },
     { NULL }			/* list terminator */
 };
 

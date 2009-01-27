@@ -165,6 +165,7 @@ include/mimeole.h
 include/mlang.h
 include/mmstream.h
 include/mscoree.h
+include/msctf.h
 include/mshtmhst.h
 include/mshtml.h
 include/msinkaut.h

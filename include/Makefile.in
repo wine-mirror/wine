@@ -43,6 +43,7 @@ PUBLIC_IDL_H_SRCS = \
 	mlang.idl \
 	mmstream.idl \
 	mscoree.idl \
+	msctf.idl \
 	mshtmhst.idl \
 	mshtml.idl \
 	msinkaut.idl \
