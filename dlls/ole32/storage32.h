@@ -152,27 +152,7 @@ struct StgProperty
  * this section appear in stg_bigblockfile.c
  */
 
-/*
- * Declaration of the data structures
- */
 typedef struct BigBlockFile BigBlockFile,*LPBIGBLOCKFILE;
-typedef struct MappedPage   MappedPage,*LPMAPPEDPAGE;
-
-struct BigBlockFile
-{
-  BOOL fileBased;
-  ULARGE_INTEGER filesize;
-  ULONG blocksize;
-  HANDLE hfile;
-  HANDLE hfilemap;
-  DWORD flProtect;
-  MappedPage *maplist;
-  MappedPage *victimhead, *victimtail;
-  ULONG num_victim_pages;
-  ILockBytes *pLkbyt;
-  HGLOBAL hbytearray;
-  LPVOID pbytearray;
-};
 
 /*
  * Declaration of the functions used to manipulate the BigBlockFile

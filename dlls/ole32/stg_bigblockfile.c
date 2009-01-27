@@ -85,6 +85,8 @@ typedef struct
  * file this mapping represents. (The mappings are always
  * PAGE_SIZE-aligned.)
  */
+
+typedef struct MappedPage MappedPage;
 struct MappedPage
 {
     MappedPage *next;
@@ -97,6 +99,22 @@ struct MappedPage
 
     BlockBits readable_blocks;
     BlockBits writable_blocks;
+};
+
+struct BigBlockFile
+{
+    BOOL fileBased;
+    ULARGE_INTEGER filesize;
+    ULONG blocksize;
+    HANDLE hfile;
+    HANDLE hfilemap;
+    DWORD flProtect;
+    MappedPage *maplist;
+    MappedPage *victimhead, *victimtail;
+    ULONG num_victim_pages;
+    ILockBytes *pLkbyt;
+    HGLOBAL hbytearray;
+    LPVOID pbytearray;
 };
 
 /***********************************************************
