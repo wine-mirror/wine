@@ -631,7 +631,12 @@ DWORD svcctl_ChangeServiceConfig2W( SC_RPC_HANDLE hService, DWORD level, SERVICE
             service_unlock( service->service_entry );
         }
         break;
-
+    case SERVICE_CONFIG_FAILURE_ACTIONS:
+        WINE_FIXME( "SERVICE_CONFIG_FAILURE_ACTIONS not implemented: period %u msg %s cmd %s\n",
+                    config->actions.dwResetPeriod,
+                    wine_dbgstr_w(config->actions.lpRebootMsg),
+                    wine_dbgstr_w(config->actions.lpCommand) );
+        break;
     default:
         WINE_FIXME("level %u not implemented\n", level);
         err = ERROR_INVALID_LEVEL;
