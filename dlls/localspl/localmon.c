@@ -427,7 +427,7 @@ static BOOL WINAPI localmon_AddPortExW(LPWSTR pName, DWORD level, LPBYTE pBuffer
  */
 static BOOL WINAPI localmon_ClosePort(HANDLE hPort)
 {
-    port_t * port = (port_t *) hPort;
+    port_t * port = hPort;
 
     TRACE("(%p)\n", port);
     EnterCriticalSection(&port_handles_cs);
@@ -531,7 +531,7 @@ static BOOL WINAPI localmon_OpenPortW(LPWSTR pName, PHANDLE phPort)
 
     port->type = type;
     memcpy(port->nameW, pName, len);
-    *phPort = (HANDLE) port;
+    *phPort = port;
 
     EnterCriticalSection(&port_handles_cs);
     list_add_tail(&port_handles, &port->entry);
@@ -556,7 +556,7 @@ static BOOL WINAPI localmon_OpenPortW(LPWSTR pName, PHANDLE phPort)
  */
 static BOOL WINAPI localmon_XcvClosePort(HANDLE hXcv)
 {
-    xcv_t * xcv = (xcv_t *) hXcv;
+    xcv_t * xcv = hXcv;
 
     TRACE("(%p)\n", xcv);
     /* No checks are done in Windows */
@@ -744,7 +744,7 @@ static BOOL WINAPI localmon_XcvOpenPort(LPCWSTR pName, ACCESS_MASK GrantedAccess
     if (xcv) {
         xcv->GrantedAccess = GrantedAccess;
         memcpy(xcv->nameW, pName, len);
-        *phXcv = (HANDLE) xcv;
+        *phXcv = xcv;
         EnterCriticalSection(&xcv_handles_cs);
         list_add_tail(&xcv_handles, &xcv->entry);
         LeaveCriticalSection(&xcv_handles_cs);
