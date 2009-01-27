@@ -27,6 +27,7 @@
 #include "winnls.h"
 #include "rpc.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 #include "crypt32_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
@@ -716,6 +717,218 @@ BOOL WINAPI CryptAcquireCertificatePrivateKey(PCCERT_CONTEXT pCert,
     }
     HeapFree(GetProcessHeap(), 0, info);
     return ret;
+}
+
+static BOOL key_prov_info_matches_cert(PCCERT_CONTEXT pCert,
+ const CRYPT_KEY_PROV_INFO *keyProvInfo)
+{
+    HCRYPTPROV csp;
+    BOOL matches = FALSE;
+
+    if (CryptAcquireContextW(&csp, keyProvInfo->pwszContainerName,
+     keyProvInfo->pwszProvName, keyProvInfo->dwProvType, keyProvInfo->dwFlags))
+    {
+        DWORD size;
+
+        /* Need to sign something to verify the sig.  What to sign?  Why not
+         * the certificate itself?
+         */
+        if (CryptSignAndEncodeCertificate(csp, AT_SIGNATURE,
+         pCert->dwCertEncodingType, X509_CERT_TO_BE_SIGNED, pCert->pCertInfo,
+         &pCert->pCertInfo->SignatureAlgorithm, NULL, NULL, &size))
+        {
+            BYTE *certEncoded = CryptMemAlloc(size);
+
+            if (certEncoded)
+            {
+                if (CryptSignAndEncodeCertificate(csp, AT_SIGNATURE,
+                 pCert->dwCertEncodingType, X509_CERT_TO_BE_SIGNED,
+                 pCert->pCertInfo, &pCert->pCertInfo->SignatureAlgorithm,
+                 NULL, certEncoded, &size))
+                {
+                    if (size == pCert->cbCertEncoded &&
+                     !memcmp(certEncoded, pCert->pbCertEncoded, size))
+                        matches = TRUE;
+                }
+                CryptMemFree(certEncoded);
+            }
+        }
+        CryptReleaseContext(csp, 0);
+    }
+    return matches;
+}
+
+static BOOL container_matches_cert(PCCERT_CONTEXT pCert, LPCSTR container,
+ CRYPT_KEY_PROV_INFO *keyProvInfo)
+{
+    CRYPT_KEY_PROV_INFO copy;
+    WCHAR containerW[MAX_PATH];
+    BOOL matches = FALSE;
+
+    MultiByteToWideChar(CP_ACP, 0, container, -1,
+     containerW, sizeof(containerW) / sizeof(containerW[0]));
+    /* We make a copy of the CRYPT_KEY_PROV_INFO because the caller expects
+     * keyProvInfo->pwszContainerName to be NULL or a heap-allocated container
+     * name.
+     */
+    memcpy(&copy, keyProvInfo, sizeof(copy));
+    copy.pwszContainerName = containerW;
+    matches = key_prov_info_matches_cert(pCert, &copy);
+    if (matches)
+    {
+        keyProvInfo->pwszContainerName =
+         CryptMemAlloc((strlenW(containerW) + 1) * sizeof(WCHAR));
+        if (keyProvInfo->pwszContainerName)
+        {
+            strcpyW(keyProvInfo->pwszContainerName, containerW);
+            keyProvInfo->dwKeySpec = AT_SIGNATURE;
+        }
+        else
+            matches = FALSE;
+    }
+    return matches;
+}
+
+/* Searches the provider named keyProvInfo.pwszProvName for a container whose
+ * private key matches pCert's public key.  Upon success, updates keyProvInfo
+ * with the matching container's info (free keyProvInfo.pwszContainerName upon
+ * success.)
+ * Returns TRUE if found, FALSE if not.
+ */
+static BOOL find_key_prov_info_in_provider(PCCERT_CONTEXT pCert,
+ CRYPT_KEY_PROV_INFO *keyProvInfo)
+{
+    HCRYPTPROV defProvider;
+    BOOL ret, found = FALSE;
+    char containerA[MAX_PATH];
+
+    assert(keyProvInfo->pwszContainerName == NULL);
+    if ((ret = CryptAcquireContextW(&defProvider, NULL,
+     keyProvInfo->pwszProvName, keyProvInfo->dwProvType,
+     keyProvInfo->dwFlags | CRYPT_VERIFYCONTEXT)))
+    {
+        DWORD enumFlags = keyProvInfo->dwFlags | CRYPT_FIRST;
+
+        while (ret && !found)
+        {
+            DWORD size = sizeof(containerA);
+
+            ret = CryptGetProvParam(defProvider, PP_ENUMCONTAINERS,
+             (BYTE *)containerA, &size, enumFlags);
+            if (ret)
+                found = container_matches_cert(pCert, containerA, keyProvInfo);
+            if (enumFlags & CRYPT_FIRST)
+            {
+                enumFlags &= ~CRYPT_FIRST;
+                enumFlags |= CRYPT_NEXT;
+            }
+        }
+        CryptReleaseContext(defProvider, 0);
+    }
+    return found;
+}
+
+static BOOL find_matching_provider(PCCERT_CONTEXT pCert, DWORD dwFlags)
+{
+    BOOL found = FALSE, ret = TRUE;
+    DWORD index = 0, cbProvName = 0;
+    CRYPT_KEY_PROV_INFO keyProvInfo;
+
+    TRACE("(%p, %08x)\n", pCert, dwFlags);
+
+    memset(&keyProvInfo, 0, sizeof(keyProvInfo));
+    while (ret && !found)
+    {
+        DWORD size = 0;
+
+        ret = CryptEnumProvidersW(index, NULL, 0, &keyProvInfo.dwProvType,
+         NULL, &size);
+        if (ret)
+        {
+            if (size <= cbProvName)
+                ret = CryptEnumProvidersW(index, NULL, 0,
+                 &keyProvInfo.dwProvType, keyProvInfo.pwszProvName, &size);
+            else
+            {
+                CryptMemFree(keyProvInfo.pwszProvName);
+                keyProvInfo.pwszProvName = CryptMemAlloc(size);
+                if (keyProvInfo.pwszProvName)
+                {
+                    cbProvName = size;
+                    ret = CryptEnumProvidersW(index, NULL, 0,
+                     &keyProvInfo.dwProvType, keyProvInfo.pwszProvName, &size);
+                    if (ret)
+                    {
+                        if (dwFlags & CRYPT_FIND_SILENT_KEYSET_FLAG)
+                            keyProvInfo.dwFlags |= CRYPT_SILENT;
+                        if (dwFlags & CRYPT_FIND_USER_KEYSET_FLAG ||
+                         !(dwFlags & (CRYPT_FIND_USER_KEYSET_FLAG |
+                         CRYPT_FIND_MACHINE_KEYSET_FLAG)))
+                        {
+                            keyProvInfo.dwFlags |= CRYPT_USER_KEYSET;
+                            found = find_key_prov_info_in_provider(pCert,
+                             &keyProvInfo);
+                        }
+                        if (!found)
+                        {
+                            if (dwFlags & CRYPT_FIND_MACHINE_KEYSET_FLAG ||
+                             !(dwFlags & (CRYPT_FIND_USER_KEYSET_FLAG |
+                             CRYPT_FIND_MACHINE_KEYSET_FLAG)))
+                            {
+                                keyProvInfo.dwFlags &= ~CRYPT_USER_KEYSET;
+                                keyProvInfo.dwFlags |= CRYPT_MACHINE_KEYSET;
+                                found = find_key_prov_info_in_provider(pCert,
+                                 &keyProvInfo);
+                            }
+                        }
+                    }
+                }
+                else
+                    ret = FALSE;
+            }
+            index++;
+        }
+    }
+    if (found)
+        CertSetCertificateContextProperty(pCert, CERT_KEY_PROV_INFO_PROP_ID,
+         0, &keyProvInfo);
+    CryptMemFree(keyProvInfo.pwszProvName);
+    CryptMemFree(keyProvInfo.pwszContainerName);
+    return found;
+}
+
+static BOOL cert_prov_info_matches_cert(PCCERT_CONTEXT pCert)
+{
+    BOOL matches = FALSE;
+    DWORD size;
+
+    if (CertGetCertificateContextProperty(pCert, CERT_KEY_PROV_INFO_PROP_ID,
+     NULL, &size))
+    {
+        CRYPT_KEY_PROV_INFO *keyProvInfo = CryptMemAlloc(size);
+
+        if (keyProvInfo)
+        {
+            if (CertGetCertificateContextProperty(pCert,
+             CERT_KEY_PROV_INFO_PROP_ID, keyProvInfo, &size))
+                matches = key_prov_info_matches_cert(pCert, keyProvInfo);
+            CryptMemFree(keyProvInfo);
+        }
+    }
+    return matches;
+}
+
+BOOL WINAPI CryptFindCertificateKeyProvInfo(PCCERT_CONTEXT pCert,
+ DWORD dwFlags, void *pvReserved)
+{
+    BOOL matches = FALSE;
+
+    TRACE("(%p, %08x, %p)\n", pCert, dwFlags, pvReserved);
+
+    matches = cert_prov_info_matches_cert(pCert);
+    if (!matches)
+        matches = find_matching_provider(pCert, dwFlags);
+    return matches;
 }
 
 BOOL WINAPI CertCompareCertificate(DWORD dwCertEncodingType,

@@ -118,6 +118,7 @@
 @ stub CryptExportPKCS8
 @ stdcall CryptExportPublicKeyInfo(long long long ptr ptr)
 @ stdcall CryptExportPublicKeyInfoEx(long long long str long ptr ptr ptr)
+@ stdcall CryptFindCertificateKeyProvInfo(ptr long ptr)
 @ stdcall CryptFindLocalizedName(wstr)
 @ stdcall CryptFindOIDInfo(long ptr long)
 @ stdcall CryptFormatObject(long long long ptr str ptr long ptr ptr)
