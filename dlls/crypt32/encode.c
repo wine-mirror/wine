@@ -4499,6 +4499,12 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     return ret;
 }
 
+BOOL WINAPI PFXExportCertStore(HCERTSTORE hStore, CRYPT_DATA_BLOB *pPFX,
+ LPCWSTR szPassword, DWORD dwFlags)
+{
+    return PFXExportCertStoreEx(hStore, pPFX, szPassword, NULL, dwFlags);
+}
+
 BOOL WINAPI PFXExportCertStoreEx(HCERTSTORE hStore, CRYPT_DATA_BLOB *pPFX,
  LPCWSTR szPassword, void *pvReserved, DWORD dwFlags)
 {

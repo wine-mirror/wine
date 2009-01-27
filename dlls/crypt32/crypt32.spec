@@ -216,7 +216,7 @@
 @ stdcall I_CryptSetTls(long ptr)
 @ stdcall I_CryptUninstallAsn1Module(long)
 @ stub I_CryptUninstallOssGlobal
-@ stub PFXExportCertStore
+@ stdcall PFXExportCertStore(ptr ptr ptr long)
 @ stdcall PFXExportCertStoreEx(ptr ptr ptr ptr long)
 @ stub PFXImportCertStore
 @ stub RegCreateHKCUKeyExU
