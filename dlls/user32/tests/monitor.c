@@ -241,7 +241,8 @@ static void test_ChangeDisplaySettingsEx(void)
         res = pChangeDisplaySettingsExA(NULL, &dm, NULL, CDS_TEST, NULL);
         ok(vid_modes_test[i].must_succeed ?
            (res == DISP_CHANGE_SUCCESSFUL || res == DISP_CHANGE_RESTART) :
-           (res == DISP_CHANGE_SUCCESSFUL || res == DISP_CHANGE_BADMODE || res == DISP_CHANGE_BADPARAM),
+           (res == DISP_CHANGE_SUCCESSFUL || res == DISP_CHANGE_RESTART ||
+            res == DISP_CHANGE_BADMODE || res == DISP_CHANGE_BADPARAM),
            "Unexpected ChangeDisplaySettingsEx() return code for resolution[%d]: %d\n", i, res);
 
         if (res == DISP_CHANGE_SUCCESSFUL)
