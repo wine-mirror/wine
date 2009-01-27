@@ -1957,6 +1957,9 @@ static const WCHAR MS_ENH_RSA_AES_PROV_W[] =           { 'M','i','c','r','o','s'
 #define CRYPT_READ              0x0008
 #define CRYPT_WRITE             0x0010
 #define CRYPT_MAC               0x0020
+#define CRYPT_EXPORT_KEY        0x0040
+#define CRYPT_IMPORT_KEY        0x0080
+#define CRYPT_ARCHIVE           0x0100
 
 /* Crypt*Key */
 #define CRYPT_EXPORTABLE        0x00000001
