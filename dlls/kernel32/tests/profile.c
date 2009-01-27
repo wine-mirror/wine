@@ -355,7 +355,7 @@ static void test_profile_existing(void)
     ok( DeleteFile(testfile2), "delete failed\n" );
 }
 
-static void test_profile_delete_on_close()
+static void test_profile_delete_on_close(void)
 {
     static CHAR testfile[] = ".\\testwine5.ini";
     HANDLE h;
