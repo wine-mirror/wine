@@ -423,6 +423,9 @@ AC_CHECK_HEADERS([netinet/tcp_timer.h netinet/udp_var.h netinet/icmp_var.h netin
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
+     #ifdef HAVE_SYS_TIMEOUT_H
+     # include <sys/timeout.h>
+     #endif
      #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
      #endif
