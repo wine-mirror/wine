@@ -487,7 +487,7 @@ static void test_EM_GETTEXTRANGE(void)
     textRange.chrg.cpMax = 12;
     result = SendMessage(hwndRichEdit, EM_GETTEXTRANGE, 0, (LPARAM)&textRange);
     ok(result == 4, "EM_GETTEXTRANGE returned %ld\n", result);
-    todo_wine ok(!strcmp(expect2, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
+    ok(!strcmp(expect2, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text3);
 

@@ -4568,108 +4568,73 @@ int ME_CountParagraphsBetween(ME_TextEditor *editor, int from, int to)
 }
 
 
-int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, int bCRLF)
+int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart,
+                int nChars, int bCRLF)
 {
-  ME_DisplayItem *item = ME_FindItemAtOffset(editor, diRun, nStart, &nStart);
-  int nWritten = 0;
+  ME_DisplayItem *pRun;
+  int nOffset, nWritten = 0;
   WCHAR *pStart = buffer;
-  
-  if (!item) {
-    *buffer = 0;
-    return 0;
-  }
-  
+
+  ME_RunOfsFromCharOfs(editor, nStart, &pRun, &nOffset);
+  /* Get actual offset within run (ME_RunOfsFromCharOfs sets to 0 if MERF_ENDPARA) */
+  nOffset = nStart - ME_GetParagraph(pRun)->member.para.nCharOfs - pRun->member.run.nCharOfs;
+
   /* bCRLF flag is only honored in 2.0 and up. 1.0 must always return text verbatim */
   if (editor->bEmulateVersion10) bCRLF = 0;
 
-  if (nStart)
+  while (nChars && pRun)
   {
-    int nLen = ME_StrLen(item->member.run.strText) - nStart;
-    if (nLen > nChars)
-      nLen = nChars;
-    CopyMemory(buffer, item->member.run.strText->szData + nStart, sizeof(WCHAR)*nLen);
-    nChars -= nLen;
-    nWritten += nLen;
-    buffer += nLen;
-    if (!nChars) {
-      *buffer = 0;
-      return nWritten;
-    }
-    nStart = 0;
-    item = ME_FindItemFwd(item, diRun);
-  }
-  
-  while(nChars && item)
-  {
-    int nLen = ME_StrLen(item->member.run.strText);
-    if (item->member.run.nFlags & MERF_ENDPARA)
-       nLen = item->member.run.nCR + item->member.run.nLF;
-    if (nLen > nChars)
-      nLen = nChars;
+    int nLen;
 
-    if (item->member.run.nFlags & MERF_ENDCELL &&
-        item->member.run.nFlags & MERF_ENDPARA)
+    if (pRun->member.run.nFlags & MERF_ENDCELL &&
+        pRun->member.run.nFlags & MERF_ENDPARA)
     {
       *buffer = '\t';
-    }
-    else if (item->member.run.nFlags & MERF_ENDPARA)
-    {
-      if (!ME_FindItemFwd(item, diRun))
+      nLen = 1;
+    } else if (pRun->member.run.nFlags & MERF_ENDPARA) {
+      if (!ME_FindItemFwd(pRun, diRun)) {
         /* No '\r' is appended to the last paragraph. */
         nLen = 0;
-      else if (bCRLF && nChars == 1) {
+      } else if (bCRLF && nChars == 1) {
         nLen = 0;
         nChars = 0;
       } else {
+        int numCR, numLF;
+        int i, j;
+
         if (bCRLF)
         {
-          /* richedit 2.0 case - actual line-break is \r but should report \r\n */
-          if (ME_GetParagraph(item)->member.para.nFlags & (MEPF_ROWSTART|MEPF_ROWEND))
-            assert(nLen == 2);
-          else
-            assert(nLen == 1);
-          *buffer++ = '\r';
-          *buffer = '\n'; /* Later updated by nLen==1 at the end of the loop */
-          if (nLen == 1)
-            nWritten++;
-          else
-            buffer--;
+          numCR = 1;
+          numLF = 1;
+        } else {
+          numCR = pRun->member.run.nCR;
+          numLF = pRun->member.run.nLF;
         }
-        else
-        {
-          int i, j;
+        numCR -= nOffset;
 
-          /* richedit 2.0 verbatim has only \r. richedit 1.0 should honor encodings */
-          i = 0;
-          while (nChars - i > 0 && i < item->member.run.nCR)
-          {
-            buffer[i] = '\r'; i++;
-          }
-          j = 0;
-          while (nChars - i - j > 0 && j < item->member.run.nLF)
-          {
-            buffer[i+j] = '\n'; j++;
-          }
-        }
+        nLen = min(nChars, numCR + numLF);
+
+        for (i = 0; i < nLen && i < numCR; i++)
+          buffer[i] = '\r';
+
+        for (j = 0; i + j < nLen && j < numLF; j++)
+          buffer[i+j] = '\n';
       }
+    } else {
+      nLen = min(nChars, ME_StrLen(pRun->member.run.strText) - nOffset);
+      CopyMemory(buffer, pRun->member.run.strText->szData + nOffset,
+                 sizeof(WCHAR) * nLen);
     }
-    else
-      CopyMemory(buffer, item->member.run.strText->szData, sizeof(WCHAR)*nLen);
     nChars -= nLen;
     nWritten += nLen;
-    buffer += nLen;    
-      
-    if (!nChars)
-    {
-      TRACE("nWritten=%d, actual=%d\n", nWritten, buffer-pStart);
-      *buffer = 0;
-      return nWritten;
-    }
-    item = ME_FindItemFwd(item, diRun);
+    buffer += nLen;
+    nOffset = 0;
+
+    pRun = ME_FindItemFwd(pRun, diRun);
   }
   *buffer = 0;
   TRACE("nWritten=%d, actual=%d\n", nWritten, buffer-pStart);
-  return nWritten;  
+  return nWritten;
 }
 
 static BOOL ME_RegisterEditorClass(HINSTANCE hInstance)
