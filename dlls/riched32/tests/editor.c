@@ -421,28 +421,45 @@ static void test_EM_LINELENGTH(void)
         "richedit1\r"
         "richedit1\n"
         "richedit1\r\n"
-        "richedit1\r\r\r\r\r\n";
-  int offset_test[10][2] = {
-        {0, 9},
-        {5, 9},
-        {10, 9},
-        {15, 9},
-        {20, 9},
-        {25, 9},
-        {30, 9},
-        {35, 9},
-        {40, 9}, /* <----- in the middle of the \r run, but run not counted */
-        {45, 0},
+        "short\r"
+        "richedit1\r"
+        "\r"
+        "\r"
+        "\r\r\n";
+  int offset_test[16][2] = {
+        {0, 9},  /* Line 1: |richedit1\r */
+        {5, 9},  /* Line 1: riche|dit1\r */
+        {10, 9}, /* Line 2: |richedit1\n */
+        {15, 9}, /* Line 2: riche|dit1\n */
+        {20, 9}, /* Line 3: |richedit1\r\n */
+        {25, 9}, /* Line 3: riche|dit1\r\n */
+        {30, 9}, /* Line 3: richedit1\r|\n */
+        {31, 5}, /* Line 4: |short\r */
+        {42, 9}, /* Line 5: riche|dit1\r */
+        {46, 9}, /* Line 5: richedit1|\r */
+        {47, 0}, /* Line 6: |\r */
+        {48, 0}, /* Line 7: |\r */
+        {49, 0}, /* Line 8: |\r\r\n */
+        {50, 0}, /* Line 8: \r|\r\n */
+        {51, 0}, /* Line 8: \r\r|\n */
+        {52, 0}, /* Line 9: \r\r\n| */
   };
   int i;
   LRESULT result;
 
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
 
-  for (i = 0; i < 10; i++) {
+  result = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
+  ok(result == 9, "Incorrect line count of %ld\n", result);
+
+  for (i = 0; i < sizeof(offset_test)/sizeof(offset_test[0]); i++) {
     result = SendMessage(hwndRichEdit, EM_LINELENGTH, offset_test[i][0], 0);
-    ok(result == offset_test[i][1], "Length of line at offset %d is %ld, expected %d\n",
-        offset_test[i][0], result, offset_test[i][1]);
+    if (i == 6)
+      todo_wine ok(result == offset_test[i][1], "Length of line at offset %d is %ld, expected %d\n",
+         offset_test[i][0], result, offset_test[i][1]);
+    else
+      ok(result == offset_test[i][1], "Length of line at offset %d is %ld, expected %d\n",
+         offset_test[i][0], result, offset_test[i][1]);
   }
 
   DestroyWindow(hwndRichEdit);
