@@ -916,13 +916,14 @@ ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream, int nStart, int nC
 static BOOL
 ME_StreamOutText(ME_TextEditor *editor, ME_OutStream *pStream, int nStart, int nChars, DWORD dwFormat)
 {
-  /* FIXME: use ME_RunOfsFromCharOfs */
-  ME_DisplayItem *item = ME_FindItemAtOffset(editor, diRun, nStart, &nStart);
+  ME_DisplayItem *item;
   int nLen;
   UINT nCodePage = CP_ACP;
   char *buffer = NULL;
   int nBufLen = 0;
   BOOL success = TRUE;
+
+  ME_RunOfsFromCharOfs(editor, nStart, &item, &nStart);
 
   if (!item)
     return FALSE;

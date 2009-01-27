@@ -151,8 +151,13 @@ int ME_SetSelection(ME_TextEditor *editor, int from, int to)
     return len;
   }
 
-  ME_RunOfsFromCharOfs(editor, from, &editor->pCursors[1].pRun, &editor->pCursors[1].nOffset);
-  ME_RunOfsFromCharOfs(editor, to, &editor->pCursors[0].pRun, &editor->pCursors[0].nOffset);
+  ME_CursorFromCharOfs(editor, from, &editor->pCursors[1]);
+  ME_CursorFromCharOfs(editor, to, &editor->pCursors[0]);
+  /* Selection is not allowed in the middle of an end paragraph run. */
+  if (editor->pCursors[1].pRun->member.run.nFlags & MERF_ENDPARA)
+    editor->pCursors[1].nOffset = 0;
+  if (editor->pCursors[0].pRun->member.run.nFlags & MERF_ENDPARA)
+    editor->pCursors[0].nOffset = 0;
   return to;
 }
 

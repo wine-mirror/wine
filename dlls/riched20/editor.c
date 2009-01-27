@@ -1624,55 +1624,6 @@ ME_StreamInRTFString(ME_TextEditor *editor, BOOL selection, char *string)
 }
 
 
-ME_DisplayItem *
-ME_FindItemAtOffset(ME_TextEditor *editor, ME_DIType nItemType, int nOffset, int *nItemOffset)
-{
-  ME_DisplayItem *item = ME_FindItemFwd(editor->pBuffer->pFirst, diParagraph);
-  int runLength;
-  
-  while (item && item->member.para.next_para->member.para.nCharOfs <= nOffset)
-    item = ME_FindItemFwd(item, diParagraph);
-
-  if (!item)
-    return item;
-
-  nOffset -= item->member.para.nCharOfs;
-  if (nItemType == diParagraph) {
-    if (nItemOffset)
-      *nItemOffset = nOffset;
-    return item;
-  }
-  
-  do {
-    item = ME_FindItemFwd(item, diRun);
-    runLength = ME_StrLen(item->member.run.strText);
-    if (item->member.run.nFlags & MERF_ENDPARA)
-      runLength = item->member.run.nCR + item->member.run.nLF;
-  } while (item && (item->member.run.nCharOfs + runLength <= nOffset));
-  if (item) {
-    nOffset -= item->member.run.nCharOfs;
-
-    /* Special case: nOffset may not point exactly at the division between the
-       \r and the \n in 1.0 emulation. If such a case happens, it is sent
-       into the next run, if one exists
-     */
-    if (   item->member.run.nFlags & MERF_ENDPARA
-        && nOffset == item->member.run.nCR
-        && item->member.run.nLF > 0) {
-      ME_DisplayItem *nextItem;
-      nextItem = ME_FindItemFwd(item, diRun);
-      if (nextItem) {
-        nOffset = 0;
-        item = nextItem;
-      }
-    }
-    if (nItemOffset)
-      *nItemOffset = nOffset;
-  }
-  return item;
-}
-
-
 static int
 ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCHAR *text, CHARRANGE *chrgText)
 {
@@ -1743,7 +1694,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
     if ((flags & FR_WHOLEWORD) && nMin)
     {
       nStart = nMin - 1;
-      item = ME_FindItemAtOffset(editor, diRun, nStart, &nStart);
+      ME_RunOfsFromCharOfs(editor, nStart, &item, &nStart);
       if (!item)
       {
         if (chrgText)
@@ -1754,7 +1705,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
     }
 
     nStart = nMin;
-    item = ME_FindItemAtOffset(editor, diRun, nStart, &nStart);
+    ME_RunOfsFromCharOfs(editor, nStart, &item, &nStart);
     if (!item)
     {
       if (chrgText)
@@ -1836,7 +1787,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
     if ((flags & FR_WHOLEWORD) && nMax < nTextLen - 1)
     {
       nEnd = nMax + 1;
-      item = ME_FindItemAtOffset(editor, diRun, nEnd, &nEnd);
+      ME_RunOfsFromCharOfs(editor, nEnd, &item, &nEnd);
       if (!item)
       {
         if (chrgText)
@@ -1847,7 +1798,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
     }
 
     nEnd = nMax;
-    item = ME_FindItemAtOffset(editor, diRun, nEnd, &nEnd);
+    ME_RunOfsFromCharOfs(editor, nEnd, &item, &nEnd);
     if (!item)
     {
       if (chrgText)
@@ -2117,7 +2068,7 @@ static void ME_UpdateSelectionLinkAttribute(ME_TextEditor *editor)
 {
   ME_DisplayItem * startPara, * endPara;
   ME_DisplayItem * item;
-  int dummy;
+  ME_Cursor cursor;
   int from, to;
 
   ME_GetSelection(editor, &from, &to);
@@ -2125,15 +2076,17 @@ static void ME_UpdateSelectionLinkAttribute(ME_TextEditor *editor)
   startPara = NULL; endPara = NULL;
 
   /* Find paragraph previous to the one that contains start cursor */
-  item = ME_FindItemAtOffset(editor, diRun, from, &dummy);
+  ME_CursorFromCharOfs(editor, from, &cursor);
+  item = cursor.pRun;
   if (item) {
     startPara = ME_FindItemBack(item, diParagraph);
-    item = ME_FindItemBack(startPara, diParagraph);
-    if (item) startPara = item;
+    item = startPara->member.para.prev_para;
+    if (item && item->type == diParagraph) startPara = item;
   }
 
   /* Find paragraph that contains end cursor */
-  item = ME_FindItemAtOffset(editor, diRun, to, &dummy);
+  ME_CursorFromCharOfs(editor, to, &cursor);
+  item = cursor.pRun;
   if (item) {
     endPara = ME_FindItemFwd(item, diParagraph);
   }
@@ -4576,8 +4529,6 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart,
   WCHAR *pStart = buffer;
 
   ME_RunOfsFromCharOfs(editor, nStart, &pRun, &nOffset);
-  /* Get actual offset within run (ME_RunOfsFromCharOfs sets to 0 if MERF_ENDPARA) */
-  nOffset = nStart - ME_GetParagraph(pRun)->member.para.nCharOfs - pRun->member.run.nCharOfs;
 
   /* bCRLF flag is only honored in 2.0 and up. 1.0 must always return text verbatim */
   if (editor->bEmulateVersion10) bCRLF = 0;
@@ -4772,7 +4723,7 @@ static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor, int sel_min, int sel_
   TRACE("sel_min = %d sel_max = %d\n", sel_min, sel_max);
 
   *candidate_min = *candidate_max = -1;
-  item = ME_FindItemAtOffset(editor, diRun, sel_min, &nStart);
+  ME_RunOfsFromCharOfs(editor, sel_min, &item, &nStart);
   if (!item) return FALSE;
   TRACE("nStart = %d\n", nStart);
   para = ME_GetParagraph(item);
