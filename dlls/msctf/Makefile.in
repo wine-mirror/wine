@@ -6,7 +6,8 @@ MODULE    = msctf.dll
 IMPORTS   = uuid ole32 user32 advapi32 kernel32 ntdll
 
 C_SRCS = \
-	msctf.c
+	msctf.c \
+	regsvr.c
 
 @MAKE_DLL_RULES@
 
