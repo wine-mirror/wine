@@ -808,6 +808,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 {
       /* Check if object is valid */
 
+    struct hdc_list *hdcs_head;
     GDIOBJHDR * header;
     if (HIWORD(obj)) return FALSE;
 
@@ -821,21 +822,25 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 	return TRUE;
     }
 
-    while (header->hdcs)
+    while ((hdcs_head = header->hdcs) != NULL)
     {
-        DC *dc = get_dc_ptr(header->hdcs->hdc);
-        struct hdc_list *tmp;
+        DC *dc = get_dc_ptr(hdcs_head->hdc);
 
-        TRACE("hdc %p has interest in %p\n", header->hdcs->hdc, obj);
+        header->hdcs = hdcs_head->next;
+        TRACE("hdc %p has interest in %p\n", hdcs_head->hdc, obj);
+
         if(dc)
         {
             if(dc->funcs->pDeleteObject)
+            {
+                GDI_ReleaseObj( obj );  /* release the GDI lock */
                 dc->funcs->pDeleteObject( dc->physDev, obj );
+                header = GDI_GetObjPtr( obj, MAGIC_DONTCARE );  /* and grab it again */
+            }
             release_dc_ptr( dc );
         }
-        tmp = header->hdcs;
-        header->hdcs = header->hdcs->next;
-        HeapFree(GetProcessHeap(), 0, tmp);
+        HeapFree(GetProcessHeap(), 0, hdcs_head);
+        if (!header) return FALSE;
     }
 
     if (header->dwCount)
