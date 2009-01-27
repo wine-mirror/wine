@@ -465,9 +465,10 @@ static void test_EM_GETTEXTRANGE(void)
 {
     HWND hwndRichEdit = new_richedit(NULL);
     const char * text1 = "foo bar\r\nfoo bar";
-    const char * text2 = "foo bar\rfoo bar";
+    const char * text3 = "foo bar\rfoo bar";
     const char * expect1 = "bar\r\nfoo";
-    const char * expect2 = "bar\rfoo";
+    const char * expect2 = "\nfoo";
+    const char * expect3 = "bar\rfoo";
     char buffer[1024] = {0};
     LRESULT result;
     TEXTRANGEA textRange;
@@ -481,7 +482,14 @@ static void test_EM_GETTEXTRANGE(void)
     ok(result == 8, "EM_GETTEXTRANGE returned %ld\n", result);
     ok(!strcmp(expect1, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
 
-    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text2);
+    textRange.lpstrText = buffer;
+    textRange.chrg.cpMin = 8;
+    textRange.chrg.cpMax = 12;
+    result = SendMessage(hwndRichEdit, EM_GETTEXTRANGE, 0, (LPARAM)&textRange);
+    ok(result == 4, "EM_GETTEXTRANGE returned %ld\n", result);
+    todo_wine ok(!strcmp(expect2, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
+
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text3);
 
     textRange.lpstrText = buffer;
     textRange.chrg.cpMin = 4;
@@ -489,7 +497,7 @@ static void test_EM_GETTEXTRANGE(void)
     result = SendMessage(hwndRichEdit, EM_GETTEXTRANGE, 0, (LPARAM)&textRange);
     ok(result == 7, "EM_GETTEXTRANGE returned %ld\n", result);
 
-    ok(!strcmp(expect2, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
+    ok(!strcmp(expect3, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
 
 
     DestroyWindow(hwndRichEdit);
