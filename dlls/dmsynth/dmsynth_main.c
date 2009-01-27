@@ -167,11 +167,11 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     TRACE("(%s, %s, %p)\n", debugstr_dmguid(rclsid), debugstr_dmguid(riid), ppv);
     if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSynth) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &Synth_CF;
+                *ppv = &Synth_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;		
 	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSynth) && IsEqualIID (riid, &IID_IClassFactory)) {
-		*ppv = (LPVOID) &SynthSink_CF;
+                *ppv = &SynthSink_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;		
 	} 
