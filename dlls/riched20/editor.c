@@ -3786,7 +3786,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   {
     ME_DisplayItem *item, *item_end;
     int nChars = 0, nThisLineOfs = 0, nNextLineOfs = 0;
-    
+    ME_Cursor cursor;
+
     if (wParam > ME_GetTextLength(editor))
       return 0;
     if (wParam == -1)
@@ -3794,8 +3795,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       FIXME("EM_LINELENGTH: returning number of unselected characters on lines with selection unsupported.\n");
       return 0;
     }
-    item = ME_FindItemAtOffset(editor, diRun, wParam, NULL);
-    item = ME_RowStart(item);
+    ME_CursorFromCharOfs(editor, wParam, &cursor);
+    item = ME_RowStart(cursor.pRun);
     nThisLineOfs = ME_CharOfsFromRunOfs(editor, ME_FindItemFwd(item, diRun), 0);
     item_end = ME_FindItemFwd(item, diStartRowOrParagraphOrEnd);
     if (item_end->type == diStartRow)

@@ -454,12 +454,8 @@ static void test_EM_LINELENGTH(void)
 
   for (i = 0; i < sizeof(offset_test)/sizeof(offset_test[0]); i++) {
     result = SendMessage(hwndRichEdit, EM_LINELENGTH, offset_test[i][0], 0);
-    if (i == 6)
-      todo_wine ok(result == offset_test[i][1], "Length of line at offset %d is %ld, expected %d\n",
-         offset_test[i][0], result, offset_test[i][1]);
-    else
-      ok(result == offset_test[i][1], "Length of line at offset %d is %ld, expected %d\n",
-         offset_test[i][0], result, offset_test[i][1]);
+    ok(result == offset_test[i][1], "Length of line at offset %d is %ld, expected %d\n",
+       offset_test[i][0], result, offset_test[i][1]);
   }
 
   DestroyWindow(hwndRichEdit);
