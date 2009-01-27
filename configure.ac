@@ -399,6 +399,9 @@ AC_CHECK_HEADERS(\
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
+     #ifdef HAVE_NET_ROUTE_H
+     # include <net/route.h>
+     #endif
      #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
      #endif
