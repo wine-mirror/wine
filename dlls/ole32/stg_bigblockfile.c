@@ -827,10 +827,12 @@ HRESULT BIGBLOCKFILE_WriteAt(BigBlockFile *This, ULARGE_INTEGER offset,
  * Sets the size of the file.
  *
  */
-void BIGBLOCKFILE_SetSize(BigBlockFile *This, ULARGE_INTEGER newSize)
+HRESULT BIGBLOCKFILE_SetSize(BigBlockFile *This, ULARGE_INTEGER newSize)
 {
+    HRESULT hr = S_OK;
+
     if (This->filesize.u.LowPart == newSize.u.LowPart)
-        return;
+        return hr;
 
     TRACE("from %u to %u\n", This->filesize.u.LowPart, newSize.u.LowPart);
 
@@ -882,6 +884,20 @@ void BIGBLOCKFILE_SetSize(BigBlockFile *This, ULARGE_INTEGER newSize)
     This->filesize.u.HighPart = newSize.u.HighPart;
 
     BIGBLOCKFILE_RemapAllMappedPages(This);
+    return hr;
+}
+
+/******************************************************************************
+ *      BIGBLOCKFILE_GetSize
+ *
+ * Gets the size of the file.
+ *
+ */
+static HRESULT BIGBLOCKFILE_GetSize(BigBlockFile *This, ULARGE_INTEGER *size)
+{
+    HRESULT hr = S_OK;
+    *size = This->filesize;
+    return hr;
 }
 
 /******************************************************************************
@@ -889,22 +905,27 @@ void BIGBLOCKFILE_SetSize(BigBlockFile *This, ULARGE_INTEGER newSize)
  *
  * Grows the file if necessary to make sure the block is valid.
  */
-void BIGBLOCKFILE_EnsureExists(BigBlockFile *This, ULONG index)
+HRESULT BIGBLOCKFILE_EnsureExists(BigBlockFile *This, ULONG index)
 {
+    ULARGE_INTEGER size;
+    HRESULT hr;
+
     /* Block index starts at -1 translate to zero based index */
     if (index == 0xffffffff)
         index = 0;
     else
         index++;
 
+    hr = BIGBLOCKFILE_GetSize(This, &size);
+    if(FAILED(hr)) return hr;
+
     /* make sure that the block physically exists */
-    if ((This->blocksize * (index + 1)) > This->filesize.u.LowPart)
+    if ((This->blocksize * (index + 1)) > size.QuadPart)
     {
         ULARGE_INTEGER newSize;
 
-        newSize.u.HighPart = 0;
-        newSize.u.LowPart = This->blocksize * (index + 1);
-
-        BIGBLOCKFILE_SetSize(This, newSize);
+        newSize.QuadPart = This->blocksize * (index + 1);
+        hr = BIGBLOCKFILE_SetSize(This, newSize);
     }
+    return hr;
 }

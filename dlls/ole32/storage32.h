@@ -164,8 +164,8 @@ BigBlockFile*  BIGBLOCKFILE_Construct(HANDLE hFile,
                                       ULONG blocksize,
                                       BOOL fileBased);
 void           BIGBLOCKFILE_Destructor(LPBIGBLOCKFILE This);
-void           BIGBLOCKFILE_EnsureExists(LPBIGBLOCKFILE This, ULONG index);
-void           BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize);
+HRESULT        BIGBLOCKFILE_EnsureExists(LPBIGBLOCKFILE This, ULONG index);
+HRESULT        BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize);
 HRESULT        BIGBLOCKFILE_ReadAt(LPBIGBLOCKFILE This, ULARGE_INTEGER offset,
            void* buffer, ULONG size, ULONG* bytesRead);
 HRESULT        BIGBLOCKFILE_WriteAt(LPBIGBLOCKFILE This, ULARGE_INTEGER offset,
