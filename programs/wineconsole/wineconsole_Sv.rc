@@ -22,7 +22,7 @@ STRINGTABLE
 BEGIN
 IDS_EDIT,		"R&edigera"
 IDS_DEFAULT,		"Ställ in s&tandardvärden"
-IDS_PROPERTIES,		"&Egenskaper"
+IDS_PROPERTIES,		"E&genskaper"
 IDS_MARK,		"&Markera"
 IDS_COPY,		"&Kopiera"
 IDS_PASTE,		"Klistra &in"
@@ -48,7 +48,7 @@ IDS_USAGE_HEADER           "\nAnvändning:\n  wineconsole [flaggor] <kommando>\n\
 IDS_USAGE_BACKEND          "  --backend={user|curses}  Välj user för att starta ett nytt fönster,\n"\
                            "                            curses för att ange aktuell terminal som en Wine-konsoll\n"
 IDS_USAGE_COMMAND          "  <kommando>                Wine-program att starta i konsollen\n"
-IDS_USAGE_FOOTER           "\nExempel:\n  wineconsole kmd\nStartar Wines kommandoprompt i en Wine-konsoll\n\n"
+IDS_USAGE_FOOTER           "\nExempel:\n  wineconsole cmd\nStartar Wines kommandoprompt i en Wine-konsoll\n\n"
 
 END
 
