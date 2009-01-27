@@ -2304,6 +2304,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,shell32.dll
 11,,shfolder.dll
 11,,shlwapi.dll
+11,,stdole2.tlb
 11,,urlmon.dll
 11,,user32.dll
 11,,version.dll
