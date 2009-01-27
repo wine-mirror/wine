@@ -35,7 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 
 static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc );
 static INT BITMAP_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
-static BOOL BITMAP_DeleteObject( HGDIOBJ handle, void *obj );
+static BOOL BITMAP_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs bitmap_funcs =
 {
@@ -624,9 +624,11 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
 /***********************************************************************
  *           BITMAP_DeleteObject
  */
-static BOOL BITMAP_DeleteObject( HGDIOBJ handle, void *obj )
+static BOOL BITMAP_DeleteObject( HGDIOBJ handle )
 {
-    BITMAPOBJ * bmp = obj;
+    BITMAPOBJ *bmp = GDI_GetObjPtr( handle, BITMAP_MAGIC );
+
+    if (!bmp) return FALSE;
 
     if (bmp->funcs && bmp->funcs->pDeleteBitmap)
         bmp->funcs->pDeleteBitmap( handle );
@@ -661,7 +663,7 @@ static BOOL BITMAP_DeleteObject( HGDIOBJ handle, void *obj )
         }
         HeapFree(GetProcessHeap(), 0, bmp->color_table);
     }
-    return GDI_FreeObject( handle, obj );
+    return GDI_FreeObject( handle, bmp );
 }
 
 

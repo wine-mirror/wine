@@ -43,6 +43,7 @@ typedef struct
 
 static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc );
 static INT PEN_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
+static BOOL PEN_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs pen_funcs =
 {
@@ -50,7 +51,7 @@ static const struct gdi_obj_funcs pen_funcs =
     PEN_GetObject,     /* pGetObjectA */
     PEN_GetObject,     /* pGetObjectW */
     NULL,              /* pUnrealizeObject */
-    GDI_FreeObject     /* pDeleteObject */
+    PEN_DeleteObject   /* pDeleteObject */
 };
 
 
@@ -247,6 +248,18 @@ static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc )
     }
     release_dc_ptr( dc );
     return ret;
+}
+
+
+/***********************************************************************
+ *           PEN_DeleteObject
+ */
+static BOOL PEN_DeleteObject( HGDIOBJ handle )
+{
+    PENOBJ *pen = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
+
+    if (!pen) return FALSE;
+    return GDI_FreeObject( handle, pen );
 }
 
 

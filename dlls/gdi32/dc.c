@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dc);
 
 static const WCHAR displayW[] = { 'd','i','s','p','l','a','y',0 };
 
-static BOOL DC_DeleteObject( HGDIOBJ handle, void *obj );
+static BOOL DC_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs dc_funcs =
 {
@@ -224,9 +224,8 @@ void update_dc( DC *dc )
 /***********************************************************************
  *           DC_DeleteObject
  */
-static BOOL DC_DeleteObject( HGDIOBJ handle, void *obj )
+static BOOL DC_DeleteObject( HGDIOBJ handle )
 {
-    GDI_ReleaseObj( handle );
     return DeleteDC( handle );
 }
 

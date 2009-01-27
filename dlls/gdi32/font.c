@@ -89,7 +89,7 @@ static inline INT INTERNAL_YWSTODS(DC *dc, INT height)
 static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc );
 static INT FONT_GetObjectA( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
 static INT FONT_GetObjectW( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
-static BOOL FONT_DeleteObject( HGDIOBJ handle, void *obj );
+static BOOL FONT_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs font_funcs =
 {
@@ -545,8 +545,10 @@ static INT FONT_GetObjectW( HGDIOBJ handle, void *obj, INT count, LPVOID buffer 
 /***********************************************************************
  *           FONT_DeleteObject
  */
-static BOOL FONT_DeleteObject( HGDIOBJ handle, void *obj )
+static BOOL FONT_DeleteObject( HGDIOBJ handle )
 {
+    FONTOBJ *obj = GDI_GetObjPtr( handle, FONT_MAGIC ); /* to grab the GDI lock (FIXME) */
+    if (!obj) return FALSE;
     WineEngDestroyFontInstance( handle );
     return GDI_FreeObject( handle, obj );
 }

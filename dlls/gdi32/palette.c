@@ -47,7 +47,7 @@ typedef struct tagPALETTEOBJ
 
 static INT PALETTE_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
 static BOOL PALETTE_UnrealizeObject( HGDIOBJ handle, void *obj );
-static BOOL PALETTE_DeleteObject( HGDIOBJ handle, void *obj );
+static BOOL PALETTE_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs palette_funcs =
 {
@@ -668,8 +668,11 @@ static BOOL PALETTE_UnrealizeObject( HGDIOBJ handle, void *obj )
 /***********************************************************************
  *           PALETTE_DeleteObject
  */
-static BOOL PALETTE_DeleteObject( HGDIOBJ handle, void *obj )
+static BOOL PALETTE_DeleteObject( HGDIOBJ handle )
 {
+    PALETTEOBJ *obj = GDI_GetObjPtr( handle, PALETTE_MAGIC );
+
+    if (!obj) return FALSE;
     PALETTE_UnrealizeObject( handle, obj );
     return GDI_FreeObject( handle, obj );
 }

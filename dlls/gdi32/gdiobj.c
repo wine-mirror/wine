@@ -809,7 +809,9 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
       /* Check if object is valid */
 
     struct hdc_list *hdcs_head;
+    const struct gdi_obj_funcs *funcs;
     GDIOBJHDR * header;
+
     if (HIWORD(obj)) return FALSE;
 
     if (!(header = GDI_GetObjPtr( obj, MAGIC_DONTCARE ))) return FALSE;
@@ -855,11 +857,12 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 
       /* Delete object */
 
-    if (header->funcs && header->funcs->pDeleteObject)
-        return header->funcs->pDeleteObject( obj, header );
-
+    funcs = header->funcs;
     GDI_ReleaseObj( obj );
-    return FALSE;
+    if (funcs && funcs->pDeleteObject)
+        return funcs->pDeleteObject( obj );
+    else
+        return FALSE;
 }
 
 /***********************************************************************

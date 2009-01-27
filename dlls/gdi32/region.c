@@ -121,7 +121,7 @@ typedef struct
 
 
 static HGDIOBJ REGION_SelectObject( HGDIOBJ handle, HDC hdc );
-static BOOL REGION_DeleteObject( HGDIOBJ handle, void *obj );
+static BOOL REGION_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs region_funcs =
 {
@@ -535,14 +535,13 @@ static void REGION_DestroyWineRegion( WINEREGION* pReg )
 /***********************************************************************
  *           REGION_DeleteObject
  */
-static BOOL REGION_DeleteObject( HGDIOBJ handle, void *obj )
+static BOOL REGION_DeleteObject( HGDIOBJ handle )
 {
-    RGNOBJ *rgn = obj;
+    RGNOBJ *rgn = GDI_GetObjPtr( handle, REGION_MAGIC );
 
-    TRACE(" %p\n", handle );
-
+    if (!rgn) return FALSE;
     REGION_DestroyWineRegion( rgn->rgn );
-    return GDI_FreeObject( handle, obj );
+    return GDI_FreeObject( handle, rgn );
 }
 
 /***********************************************************************
@@ -2815,7 +2814,8 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
         total += Count[poly];
     if (! (pETEs = HeapAlloc( GetProcessHeap(), 0, sizeof(EdgeTableEntry) * total )))
     {
-        REGION_DeleteObject( hrgn, obj );
+        REGION_DestroyWineRegion( region );
+        GDI_FreeObject( hrgn, obj );
 	return 0;
     }
     pts = FirstPtBlock.pts;
@@ -2905,7 +2905,8 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
 					       sizeof(POINTBLOCK) );
 			if(!tmpPtBlock) {
 			    WARN("Can't alloc tPB\n");
-			    REGION_DeleteObject( hrgn, obj );
+                            REGION_DestroyWineRegion( region );
+                            GDI_FreeObject( hrgn, obj );
                             HeapFree( GetProcessHeap(), 0, pETEs );
 			    return 0;
 			}

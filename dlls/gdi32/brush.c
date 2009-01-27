@@ -44,7 +44,7 @@ typedef struct
 
 static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc );
 static INT BRUSH_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
-static BOOL BRUSH_DeleteObject( HGDIOBJ handle, void *obj );
+static BOOL BRUSH_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs brush_funcs =
 {
@@ -405,10 +405,11 @@ static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
 /***********************************************************************
  *           BRUSH_DeleteObject
  */
-static BOOL BRUSH_DeleteObject( HGDIOBJ handle, void *obj )
+static BOOL BRUSH_DeleteObject( HGDIOBJ handle )
 {
-    BRUSHOBJ *brush = obj;
+    BRUSHOBJ *brush = GDI_GetObjPtr( handle, BRUSH_MAGIC );
 
+    if (!brush) return FALSE;
     switch(brush->logbrush.lbStyle)
     {
       case BS_PATTERN:
@@ -418,7 +419,7 @@ static BOOL BRUSH_DeleteObject( HGDIOBJ handle, void *obj )
 	  GlobalFree16( (HGLOBAL16)brush->logbrush.lbHatch );
 	  break;
     }
-    return GDI_FreeObject( handle, obj );
+    return GDI_FreeObject( handle, brush );
 }
 
 
