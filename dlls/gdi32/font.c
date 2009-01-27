@@ -87,8 +87,8 @@ static inline INT INTERNAL_YWSTODS(DC *dc, INT height)
 }
 
 static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc );
-static INT FONT_GetObjectA( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
-static INT FONT_GetObjectW( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
+static INT FONT_GetObjectA( HGDIOBJ handle, INT count, LPVOID buffer );
+static INT FONT_GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer );
 static BOOL FONT_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs font_funcs =
@@ -514,30 +514,38 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
 /***********************************************************************
  *           FONT_GetObjectA
  */
-static INT FONT_GetObjectA( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
+static INT FONT_GetObjectA( HGDIOBJ handle, INT count, LPVOID buffer )
 {
-    FONTOBJ *font = obj;
+    FONTOBJ *font = GDI_GetObjPtr( handle, FONT_MAGIC );
     LOGFONTA lfA;
 
-    if(!buffer)
-        return sizeof(lfA);
-    FONT_LogFontWToA( &font->logfont, &lfA );
-
-    if (count > sizeof(lfA)) count = sizeof(lfA);
-    memcpy( buffer, &lfA, count );
+    if (!font) return 0;
+    if (buffer)
+    {
+        FONT_LogFontWToA( &font->logfont, &lfA );
+        if (count > sizeof(lfA)) count = sizeof(lfA);
+        memcpy( buffer, &lfA, count );
+    }
+    else count = sizeof(lfA);
+    GDI_ReleaseObj( handle );
     return count;
 }
 
 /***********************************************************************
  *           FONT_GetObjectW
  */
-static INT FONT_GetObjectW( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
+static INT FONT_GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer )
 {
-    FONTOBJ *font = obj;
-    if(!buffer)
-        return sizeof(LOGFONTW);
-    if (count > sizeof(LOGFONTW)) count = sizeof(LOGFONTW);
-    memcpy( buffer, &font->logfont, count );
+    FONTOBJ *font = GDI_GetObjPtr( handle, FONT_MAGIC );
+
+    if (!font) return 0;
+    if (buffer)
+    {
+        if (count > sizeof(LOGFONTW)) count = sizeof(LOGFONTW);
+        memcpy( buffer, &font->logfont, count );
+    }
+    else count = sizeof(LOGFONTW);
+    GDI_ReleaseObj( handle );
     return count;
 }
 

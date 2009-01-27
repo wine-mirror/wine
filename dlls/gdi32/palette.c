@@ -45,7 +45,7 @@ typedef struct tagPALETTEOBJ
     LOGPALETTE          logpalette; /* _MUST_ be the last field */
 } PALETTEOBJ;
 
-static INT PALETTE_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
+static INT PALETTE_GetObject( HGDIOBJ handle, INT count, LPVOID buffer );
 static BOOL PALETTE_UnrealizeObject( HGDIOBJ handle );
 static BOOL PALETTE_DeleteObject( HGDIOBJ handle );
 
@@ -630,15 +630,19 @@ COLORREF WINAPI GetNearestColor(
 /***********************************************************************
  *           PALETTE_GetObject
  */
-static INT PALETTE_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
+static INT PALETTE_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
 {
-    PALETTEOBJ *palette = obj;
+    PALETTEOBJ *palette = GDI_GetObjPtr( handle, PALETTE_MAGIC );
 
-    if( !buffer )
-        return sizeof(WORD);
+    if (!palette) return 0;
 
-    if (count > sizeof(WORD)) count = sizeof(WORD);
-    memcpy( buffer, &palette->logpalette.palNumEntries, count );
+    if (buffer)
+    {
+        if (count > sizeof(WORD)) count = sizeof(WORD);
+        memcpy( buffer, &palette->logpalette.palNumEntries, count );
+    }
+    else count = sizeof(WORD);
+    GDI_ReleaseObj( handle );
     return count;
 }
 

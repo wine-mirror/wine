@@ -956,18 +956,21 @@ HGDIOBJ WINAPI GetStockObject( INT obj )
  */
 INT WINAPI GetObjectA( HGDIOBJ handle, INT count, LPVOID buffer )
 {
+    const struct gdi_obj_funcs *funcs;
     GDIOBJHDR * ptr;
     INT result = 0;
+
     TRACE("%p %d %p\n", handle, count, buffer );
 
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
+    funcs = ptr->funcs;
+    GDI_ReleaseObj( handle );
 
-    if (ptr->funcs && ptr->funcs->pGetObjectA)
-        result = ptr->funcs->pGetObjectA( handle, ptr, count, buffer );
+    if (funcs && funcs->pGetObjectA)
+        result = funcs->pGetObjectA( handle, count, buffer );
     else
         SetLastError( ERROR_INVALID_HANDLE );
 
-    GDI_ReleaseObj( handle );
     return result;
 }
 
@@ -976,18 +979,20 @@ INT WINAPI GetObjectA( HGDIOBJ handle, INT count, LPVOID buffer )
  */
 INT WINAPI GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer )
 {
+    const struct gdi_obj_funcs *funcs;
     GDIOBJHDR * ptr;
     INT result = 0;
     TRACE("%p %d %p\n", handle, count, buffer );
 
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
+    funcs = ptr->funcs;
+    GDI_ReleaseObj( handle );
 
-    if (ptr->funcs && ptr->funcs->pGetObjectW)
-        result = ptr->funcs->pGetObjectW( handle, ptr, count, buffer );
+    if (funcs && funcs->pGetObjectW)
+        result = funcs->pGetObjectW( handle, count, buffer );
     else
         SetLastError( ERROR_INVALID_HANDLE );
 
-    GDI_ReleaseObj( handle );
     return result;
 }
 

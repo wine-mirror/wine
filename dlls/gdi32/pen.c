@@ -42,7 +42,7 @@ typedef struct
 
 
 static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc );
-static INT PEN_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
+static INT PEN_GetObject( HGDIOBJ handle, INT count, LPVOID buffer );
 static BOOL PEN_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs pen_funcs =
@@ -266,9 +266,12 @@ static BOOL PEN_DeleteObject( HGDIOBJ handle )
 /***********************************************************************
  *           PEN_GetObject
  */
-static INT PEN_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
+static INT PEN_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
 {
-    PENOBJ *pen = obj;
+    PENOBJ *pen = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
+    INT ret = 0;
+
+    if (!pen) return 0;
 
     switch (GDIMAGIC(pen->header.wMagic))
     {
@@ -276,41 +279,36 @@ static INT PEN_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
     {
         LOGPEN *lp;
 
-        if (!buffer) return sizeof(LOGPEN);
-
-        if (count < sizeof(LOGPEN)) return 0;
-
-        if ((pen->logpen.elpPenStyle & PS_STYLE_MASK) == PS_NULL &&
-            count == sizeof(EXTLOGPEN))
+        if (!buffer) ret = sizeof(LOGPEN);
+        else if (count < sizeof(LOGPEN)) ret = 0;
+        else if ((pen->logpen.elpPenStyle & PS_STYLE_MASK) == PS_NULL && count == sizeof(EXTLOGPEN))
         {
             EXTLOGPEN *elp = buffer;
             *elp = pen->logpen;
             elp->elpWidth = 0;
-            return sizeof(EXTLOGPEN);
+            ret = sizeof(EXTLOGPEN);
         }
-
-        lp = buffer;
-        lp->lopnStyle = pen->logpen.elpPenStyle;
-        lp->lopnColor = pen->logpen.elpColor;
-        lp->lopnWidth.x = pen->logpen.elpWidth;
-        lp->lopnWidth.y = 0;
-        return sizeof(LOGPEN);
+        else
+        {
+            lp = buffer;
+            lp->lopnStyle = pen->logpen.elpPenStyle;
+            lp->lopnColor = pen->logpen.elpColor;
+            lp->lopnWidth.x = pen->logpen.elpWidth;
+            lp->lopnWidth.y = 0;
+            ret = sizeof(LOGPEN);
+        }
+        break;
     }
 
     case EXT_PEN_MAGIC:
-    {
-        INT size = sizeof(EXTLOGPEN) + pen->logpen.elpNumEntries * sizeof(DWORD) - sizeof(pen->logpen.elpStyleEntry);
-
-        if (!buffer) return size;
-
-        if (count < size) return 0;
-        memcpy(buffer, &pen->logpen, size);
-        return size;
-    }
-
-    default:
+        ret = sizeof(EXTLOGPEN) + pen->logpen.elpNumEntries * sizeof(DWORD) - sizeof(pen->logpen.elpStyleEntry);
+        if (buffer)
+        {
+            if (count < ret) ret = 0;
+            else memcpy(buffer, &pen->logpen, ret);
+        }
         break;
     }
-    assert(0);
-    return 0;
+    GDI_ReleaseObj( handle );
+    return ret;
 }

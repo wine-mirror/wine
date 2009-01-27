@@ -43,7 +43,7 @@ typedef struct
 #define NB_HATCH_STYLES  6
 
 static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc );
-static INT BRUSH_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
+static INT BRUSH_GetObject( HGDIOBJ handle, INT count, LPVOID buffer );
 static BOOL BRUSH_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs brush_funcs =
@@ -426,15 +426,18 @@ static BOOL BRUSH_DeleteObject( HGDIOBJ handle )
 /***********************************************************************
  *           BRUSH_GetObject
  */
-static INT BRUSH_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
+static INT BRUSH_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
 {
-    BRUSHOBJ *brush = obj;
+    BRUSHOBJ *brush = GDI_GetObjPtr( handle, BRUSH_MAGIC );
 
-    if( !buffer )
-        return sizeof(brush->logbrush);
-
-    if (count > sizeof(brush->logbrush)) count = sizeof(brush->logbrush);
-    memcpy( buffer, &brush->logbrush, count );
+    if (!brush) return 0;
+    if (buffer)
+    {
+        if (count > sizeof(brush->logbrush)) count = sizeof(brush->logbrush);
+        memcpy( buffer, &brush->logbrush, count );
+    }
+    else count = sizeof(brush->logbrush);
+    GDI_ReleaseObj( handle );
     return count;
 }
 

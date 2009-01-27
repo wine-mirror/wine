@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 
 
 static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc );
-static INT BITMAP_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
+static INT BITMAP_GetObject( HGDIOBJ handle, INT count, LPVOID buffer );
 static BOOL BITMAP_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs bitmap_funcs =
@@ -670,33 +670,37 @@ static BOOL BITMAP_DeleteObject( HGDIOBJ handle )
 /***********************************************************************
  *           BITMAP_GetObject
  */
-static INT BITMAP_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
+static INT BITMAP_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
 {
-    BITMAPOBJ *bmp = obj;
+    INT ret;
+    BITMAPOBJ *bmp = GDI_GetObjPtr( handle, BITMAP_MAGIC );
 
-    if( !buffer ) return sizeof(BITMAP);
-    if (count < sizeof(BITMAP)) return 0;
+    if (!bmp) return 0;
 
-    if (bmp->dib)
+    if (!buffer) ret = sizeof(BITMAP);
+    else if (count < sizeof(BITMAP)) ret = 0;
+    else if (bmp->dib)
     {
 	if (count >= sizeof(DIBSECTION))
 	{
             memcpy( buffer, bmp->dib, sizeof(DIBSECTION) );
-            return sizeof(DIBSECTION);
+            ret = sizeof(DIBSECTION);
 	}
 	else /* if (count >= sizeof(BITMAP)) */
         {
             DIBSECTION *dib = bmp->dib;
             memcpy( buffer, &dib->dsBm, sizeof(BITMAP) );
-            return sizeof(BITMAP);
+            ret = sizeof(BITMAP);
 	}
     }
     else
     {
         memcpy( buffer, &bmp->bitmap, sizeof(BITMAP) );
         ((BITMAP *) buffer)->bmBits = NULL;
-        return sizeof(BITMAP);
+        ret = sizeof(BITMAP);
     }
+    GDI_ReleaseObj( handle );
+    return ret;
 }
 
 
