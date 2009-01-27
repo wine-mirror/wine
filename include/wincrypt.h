@@ -3769,6 +3769,15 @@ typedef struct _CMSG_CMS_RECIPIENT_INFO {
 #define CMSG_ENCODED_SORTED_CTL_FLAG               0x1
 #define CMSG_ENCODE_HASHED_SUBJECT_IDENTIFIER_FLAG 0x2
 
+/* PFXImportCertStore flags */
+#define CRYPT_USER_KEYSET           0x00001000
+#define PKCS12_IMPORT_RESERVED_MASK 0xffff0000
+/* PFXExportCertStore flags */
+#define REPORT_NO_PRIVATE_KEY                 0x00000001
+#define REPORT_NOT_ABLE_TO_EXPORT_PRIVATE_KEY 0x00000002
+#define EXPORT_PRIVATE_KEYS                   0x00000004
+#define PKCS12_EXPORT_RESERVED_MASK           0xffff0000
+
 /* function declarations */
 /* advapi32.dll */
 WINADVAPI BOOL WINAPI CryptAcquireContextA(HCRYPTPROV *, LPCSTR, LPCSTR, DWORD, DWORD);
@@ -4388,6 +4397,17 @@ BOOL WINAPI CryptVerifyDetachedMessageHash(PCRYPT_HASH_MESSAGE_PARA pHashPara,
  BYTE *pbDetachedHashBlob, DWORD cbDetachedHashBlob, DWORD cToBeHashed,
  const BYTE *rgpbToBeHashed[], DWORD rgcbToBeHashed[], BYTE *pbComputedHash,
  DWORD *pcbComputedHash);
+
+/* PFX functions */
+HCERTSTORE WINAPI PFXImportCertStore(CRYPT_DATA_BLOB *pPFX, LPCWSTR szPassword,
+ DWORD dwFlags);
+BOOL WINAPI PFXIsPFXBlob(CRYPT_DATA_BLOB *pPFX);
+BOOL WINAPI PFXVerifyPassword(CRYPT_DATA_BLOB *pPFX, LPCWSTR szPassword,
+ DWORD dwFlags);
+BOOL WINAPI PFXExportCertStoreEx(HCERTSTORE hStore, CRYPT_DATA_BLOB *pPFX,
+ LPCWSTR szPassword, void *pvReserved, DWORD dwFlags);
+BOOL WINAPI PFXExportCertStore(HCERTSTORE hStore, CRYPT_DATA_BLOB *pPFX,
+ LPCWSTR szPassword, DWORD dwFlags);
 
 /* cryptnet.dll functions */
 BOOL WINAPI CryptCancelAsyncRetrieval(HCRYPTASYNC hAsyncRetrieval);
