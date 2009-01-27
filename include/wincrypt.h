@@ -3342,6 +3342,11 @@ typedef struct _CTL_FIND_SUBJECT_PARA
 #define CRYPT_ACQUIRE_COMPARE_KEY_FLAG   0x00000004
 #define CRYPT_ACQUIRE_SILENT_FLAG        0x00000040
 
+/* flags for CryptFindCertificateKeyProvInfo */
+#define CRYPT_FIND_USER_KEYSET_FLAG    0x00000001
+#define CRYPT_FIND_MACHINE_KEYSET_FLAG 0x00000002
+#define CRYPT_FIND_SILENT_KEYSET_FLAG  0x00000040
+
 /* Chain engines and chains */
 typedef HANDLE HCERTCHAINENGINE;
 #define HCCE_CURRENT_USER  ((HCERTCHAINENGINE)NULL)
@@ -4243,6 +4248,9 @@ BOOL WINAPI CryptImportPublicKeyInfoEx(HCRYPTPROV hCryptProv,
 BOOL WINAPI CryptAcquireCertificatePrivateKey(PCCERT_CONTEXT pCert,
  DWORD dwFlags, void *pvReserved, HCRYPTPROV_OR_NCRYPT_KEY_HANDLE *phCryptProv, DWORD *pdwKeySpec,
  BOOL *pfCallerFreeProv);
+
+BOOL WINAPI CryptFindCertificateKeyProvInfo(PCCERT_CONTEXT pCert,
+ DWORD dwFlags, void *pvReserved);
 
 BOOL WINAPI CryptProtectData( DATA_BLOB* pDataIn, LPCWSTR szDataDescr,
  DATA_BLOB* pOptionalEntropy, PVOID pvReserved,
