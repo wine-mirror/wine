@@ -538,7 +538,7 @@ static HRESULT WINAPI ICMStream_fnSetFormat(IAVIStream *iface, LONG pos,
     }
   } else {
     /* format change -- check that's only the palette */
-    LPBITMAPINFOHEADER lpbi = (LPBITMAPINFOHEADER)format;
+    LPBITMAPINFOHEADER lpbi = format;
 
     if (lpbi->biSize != This->lpbiInput->biSize ||
 	lpbi->biWidth != This->lpbiInput->biWidth ||
