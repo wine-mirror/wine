@@ -1973,7 +1973,7 @@ struct formats x8r8g8b8_format_list[] =
     { 0, 0, 0}
 };
 
-static void test_display_formats()
+static void test_display_formats(void)
 {
     /* Direct3D9 offers 4 display formats R5G6B5, X1R5G5B5, X8R8G8B8 and A2R10G10B10.
      * Next to these there are 6 different backbuffer formats. Only a fixed number of
