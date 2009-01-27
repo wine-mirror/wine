@@ -1,0 +1,70 @@
+/*
+ * View
+ * Swedish Language Support
+ *
+ * Copyright 2009 Anders Jonsson
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
+
+/*
+ *
+ * Menu
+ *
+ */
+
+VIEW MENU
+BEGIN
+    POPUP "&Arkiv"
+    BEGIN
+	MENUITEM "&Öppna",                   IDM_OPEN
+        MENUITEM "&Avsluta",                 IDM_EXIT
+    END
+    POPUP "&Panorera"
+    BEGIN
+      MENUITEM "&Skala till fönster",           IDM_SET_EXT_TO_WIN
+      MENUITEM SEPARATOR
+      MENUITEM "&Vänster",                      IDM_LEFT
+      MENUITEM "&Höger",                        IDM_RIGHT
+      MENUITEM "&Upp",                          IDM_UP
+      MENUITEM "&Ner",                          IDM_DOWN
+    END
+END
+
+
+/*
+ *
+ * Accelerator
+ *
+ */
+
+VIEW ACCELERATORS
+BEGIN
+    "Q", IDM_EXIT, VIRTKEY, CONTROL
+END
+
+
+/*
+ *
+ * String Table
+ *
+ */
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DESCRIPTION         "Regular Metafile viewer"
+END
