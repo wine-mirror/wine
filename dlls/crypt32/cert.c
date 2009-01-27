@@ -966,6 +966,17 @@ static BOOL compare_cert_by_name(PCCERT_CONTEXT pCertContext, DWORD dwType,
     return ret;
 }
 
+static BOOL compare_cert_by_public_key(PCCERT_CONTEXT pCertContext,
+ DWORD dwType, DWORD dwFlags, const void *pvPara)
+{
+    CERT_PUBLIC_KEY_INFO *publicKey = (CERT_PUBLIC_KEY_INFO *)pvPara;
+    BOOL ret;
+
+    ret = CertComparePublicKeyInfo(pCertContext->dwCertEncodingType,
+     &pCertContext->pCertInfo->SubjectPublicKeyInfo, publicKey);
+    return ret;
+}
+
 static BOOL compare_cert_by_subject_cert(PCCERT_CONTEXT pCertContext,
  DWORD dwType, DWORD dwFlags, const void *pvPara)
 {
@@ -1200,6 +1211,9 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
         break;
     case CERT_COMPARE_NAME:
         compare = compare_cert_by_name;
+        break;
+    case CERT_COMPARE_PUBLIC_KEY:
+        compare = compare_cert_by_public_key;
         break;
     case CERT_COMPARE_SUBJECT_CERT:
         compare = compare_cert_by_subject_cert;
