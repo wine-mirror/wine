@@ -503,7 +503,7 @@
 @ stub RtlDebugPrintTimes
 @ stdcall RtlDecodePointer(ptr)
 # @ stub RtlDecodeSystemPointer
-@ stub RtlDecompressBuffer
+@ stdcall RtlDecompressBuffer(long ptr long ptr long ptr)
 @ stub RtlDecompressFragment
 @ stub RtlDefaultNpAcl
 @ stub RtlDelete

@@ -1095,3 +1095,16 @@ NTSTATUS WINAPI RtlCompressBuffer(USHORT CompressionFormatAndEngine, PUCHAR Unco
 
     return STATUS_NOT_IMPLEMENTED;
 }
+
+/******************************************************************************
+ *  RtlDecompressBuffer		[NTDLL.@]
+ */
+NTSTATUS WINAPI RtlDecompressBuffer(USHORT CompressionFormat, PUCHAR UncompressedBuffer,
+                                    ULONG UncompressedBufferSize, PUCHAR CompressedBuffer,
+                                    ULONG CompressedBufferSize, PULONG FinalUncompressedSize)
+{
+    FIXME("0x%04x, %p, %u, %p, %u, %p :stub\n", CompressionFormat, UncompressedBuffer, UncompressedBufferSize,
+         CompressedBuffer, CompressedBufferSize, FinalUncompressedSize);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
