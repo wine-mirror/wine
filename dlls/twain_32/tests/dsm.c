@@ -50,10 +50,10 @@ static BOOL dsm_RegisterWindowClasses(void)
 }
 
 
-static void get_condition_code(TW_IDENTITY *appid, TW_STATUS *status)
+static void get_condition_code(TW_IDENTITY *appid, TW_IDENTITY *source, TW_STATUS *status)
 {
     TW_UINT16 rc;
-    rc = pDSM_Entry(appid, NULL, DG_CONTROL, DAT_STATUS, MSG_GET, status);
+    rc = pDSM_Entry(appid, source, DG_CONTROL, DAT_STATUS, MSG_GET, status);
     ok(rc == TWRC_SUCCESS, "Condition code not available, rc %d\n", rc);
 }
 
@@ -65,7 +65,7 @@ static void test_sources(TW_IDENTITY *appid)
 
     memset(&source, 0, sizeof(source));
     rc = pDSM_Entry(appid, NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETFIRST, &source);
-    get_condition_code(appid, &status);
+    get_condition_code(appid, NULL, &status);
     todo_wine
     ok(rc == TWRC_SUCCESS || rc == TWRC_FAILURE, "Get first error code, rc %d, cc %d\n", rc, status.ConditionCode);
     if (rc == TWRC_SUCCESS)
@@ -78,13 +78,13 @@ static void test_sources(TW_IDENTITY *appid)
         trace("Got scanner %s\n", source.ProductName);
         memset(&source, 0, sizeof(source));
         rc = pDSM_Entry(appid, NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETNEXT, &source);
-        get_condition_code(appid, &status);
+        get_condition_code(appid, NULL, &status);
         ok(rc == TWRC_SUCCESS || rc == TWRC_ENDOFLIST, "Get next source failed, rc %d, cc %d\n", rc, status.ConditionCode);
     }
 
     memset(&source, 0, sizeof(source));
     rc = pDSM_Entry(appid, NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT, &source);
-    get_condition_code(appid, &status);
+    get_condition_code(appid, NULL, &status);
     ok(rc == TWRC_SUCCESS || rc == TWRC_FAILURE, "Get default error code, rc %d, cc %d\n", rc, status.ConditionCode);
     if (rc == TWRC_SUCCESS)
     {
@@ -98,12 +98,12 @@ static void test_sources(TW_IDENTITY *appid)
     if (rc == TWRC_SUCCESS && status.ConditionCode == TWCC_SUCCESS)
     {
         rc = pDSM_Entry(appid, NULL, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, &source);
-        get_condition_code(appid, &status);
+        get_condition_code(appid, NULL, &status);
 
         if (rc == TWRC_SUCCESS && status.ConditionCode == TWCC_SUCCESS)
         {
             rc = pDSM_Entry(appid, NULL, DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, &source);
-            get_condition_code(appid, &status);
+            get_condition_code(appid, NULL, &status);
             ok(rc == TWRC_SUCCESS, "Close DS Failed, rc %d, cc %d\n", rc, status.ConditionCode);
         }
     }
@@ -113,7 +113,7 @@ static void test_sources(TW_IDENTITY *appid)
         trace("Interactive, so trying userselect\n");
         memset(&source, 0, sizeof(source));
         rc = pDSM_Entry(appid, NULL, DG_CONTROL, DAT_IDENTITY, MSG_USERSELECT, &source);
-        get_condition_code(appid, &status);
+        get_condition_code(appid, NULL, &status);
         ok(rc == TWRC_SUCCESS || rc == TWRC_CANCEL, "Userselect failed, rc %d, cc %d\n", rc, status.ConditionCode);
     }
 
