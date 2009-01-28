@@ -2040,6 +2040,19 @@ static void test_WM_QUIT_handling(void)
     }
 }
 
+static SIZE_T round_heap_size(SIZE_T size)
+{
+    static SIZE_T heap_size_alignment = -1;
+    if (heap_size_alignment == -1)
+    {
+        void *p = HeapAlloc(GetProcessHeap(), 0, 1);
+        heap_size_alignment = HeapSize(GetProcessHeap(), 0, p);
+        HeapFree(GetProcessHeap(), 0, p);
+    }
+
+    return ((size + heap_size_alignment - 1) & ~(heap_size_alignment - 1));
+}
+
 static void test_freethreadedmarshaldata(IStream *pStream, MSHCTX mshctx, void *ptr, DWORD mshlflags)
 {
     HGLOBAL hglobal;
@@ -2056,7 +2069,7 @@ static void test_freethreadedmarshaldata(IStream *pStream, MSHCTX mshctx, void *
 
     if (mshctx == MSHCTX_INPROC)
     {
-        DWORD expected_size = 3*sizeof(DWORD) + sizeof(GUID);
+        DWORD expected_size = round_heap_size(3*sizeof(DWORD) + sizeof(GUID));
         ok(size == expected_size, "size should have been %d instead of %d\n", expected_size, size);
 
         ok(*(DWORD *)marshal_data == mshlflags, "expected 0x%x, but got 0x%x for mshctx\n", mshlflags, *(DWORD *)marshal_data);
@@ -2715,9 +2728,12 @@ static DWORD CALLBACK get_global_interface_proc(LPVOID pv)
 
 	hr = IGlobalInterfaceTable_GetInterfaceFromGlobal(params->git, params->cookie, &IID_IClassFactory, (void **)&cf);
 	ok(hr == CO_E_NOTINITIALIZED ||
-		hr == E_UNEXPECTED, /* win2k */
+		broken(hr == E_UNEXPECTED) /* win2k */ ||
+		broken(hr == S_OK) /* NT 4 */,
 		"IGlobalInterfaceTable_GetInterfaceFromGlobal should have failed with error CO_E_NOTINITIALIZED or E_UNEXPECTED instead of 0x%08x\n",
 		hr);
+	if (hr == S_OK)
+		IClassFactory_Release(cf);
 
 	CoInitialize(NULL);
 
