@@ -32,10 +32,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-typedef struct {
+struct HTMLCommentElement {
     HTMLElement element;
     const IHTMLCommentElementVtbl   *lpIHTMLCommentElementVtbl;
-} HTMLCommentElement;
+};
 
 #define HTMLCOMMENT(x)  ((IHTMLCommentElement*)  &(x)->lpIHTMLCommentElementVtbl)
 

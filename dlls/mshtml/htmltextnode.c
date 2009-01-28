@@ -32,10 +32,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-typedef struct {
+struct HTMLDOMTextNode {
     HTMLDOMNode node;
     const IHTMLDOMTextNodeVtbl   *lpIHTMLDOMTextNodeVtbl;
-} HTMLDOMTextNode;
+};
 
 #define HTMLTEXT(x)  ((IHTMLDOMTextNode*)  &(x)->lpIHTMLDOMTextNodeVtbl)
 

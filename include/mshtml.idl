@@ -3446,6 +3446,46 @@ interface IHTMLDOMTextNode : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLDOMTextNode2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f809-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLDOMTextNode2 : IDispatch
+{
+    [id(DISPID_IHTMLDOMTEXTNODE2_SUBSTRINGDATA)]
+    HRESULT substringData([in] long offset,[in] long Count,[retval, out] BSTR* pbstrsubString);
+
+    [id(DISPID_IHTMLDOMTEXTNODE2_APPENDDATA)]
+    HRESULT appendData([in] BSTR bstrstring);
+
+    [id(DISPID_IHTMLDOMTEXTNODE2_INSERTDATA)]
+    HRESULT insertData([in] long offset,[in] BSTR bstrstring);
+
+    [id(DISPID_IHTMLDOMTEXTNODE2_DELETEDATA)]
+    HRESULT deleteData([in] long offset,[in] long Count);
+
+    [id(DISPID_IHTMLDOMTEXTNODE2_REPLACEDATA)]
+    HRESULT replaceData([in] long offset,[in] long Count,[in] BSTR bstrstring);
+}
+
+[
+    noncreatable,
+    uuid(3050f4ba-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLDOMTextNode
+{
+    [default]           dispinterface DispHTMLDOMTextNode;
+                        interface IHTMLDOMTextNode;
+                        interface IHTMLDOMTextNode2;
+                        interface IHTMLDOMNode;
+                        interface IHTMLDOMNode2;
+}
+
+/*****************************************************************************
  *    IHTMLDOMImplementation interface
  */
 [
@@ -16824,6 +16864,419 @@ methods:
             [in] long offset,
             [in] long Count,
             [in] BSTR bstrstring);
+}
+
+[
+    hidden,
+    uuid(3050f60f-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface HTMLElementEvents2
+{
+properties:
+methods:
+    [id(DISPID_HTMLELEMENTEVENTS2_ONHELP)]
+    VARIANT_BOOL onhelp([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONCLICK)]
+    VARIANT_BOOL onclick([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDBLCLICK)]
+    VARIANT_BOOL ondblclick([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONKEYPRESS)]
+    VARIANT_BOOL onkeypress([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONKEYDOWN)]
+    void onkeydown([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONKEYUP)]
+    void onkeyup([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOUSEOUT)]
+    void onmouseout([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOUSEOVER)]
+    void onmouseover([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOUSEMOVE)]
+    void onmousemove([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOUSEDOWN)]
+    void onmousedown([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOUSEUP)]
+    void onmouseup([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONSELECTSTART)]
+    VARIANT_BOOL onselectstart([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONFILTERCHANGE)]
+    void onfilterchange([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDRAGSTART)]
+    VARIANT_BOOL ondragstart([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONBEFOREUPDATE)]
+    VARIANT_BOOL onbeforeupdate([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONAFTERUPDATE)]
+    void onafterupdate([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONERRORUPDATE)]
+    VARIANT_BOOL onerrorupdate([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONROWEXIT)]
+    VARIANT_BOOL onrowexit([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONROWENTER)]
+    void onrowenter([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDATASETCHANGED)]
+    void ondatasetchanged([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDATAAVAILABLE)]
+    void ondataavailable([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDATASETCOMPLETE)]
+    void ondatasetcomplete([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONLOSECAPTURE)]
+    void onlosecapture([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONPROPERTYCHANGE)]
+    void onpropertychange([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONSCROLL)]
+    void onscroll([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONFOCUS)]
+    void onfocus([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONBLUR)]
+    void onblur([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONRESIZE)]
+    void onresize([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDRAG)]
+    VARIANT_BOOL ondrag([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDRAGEND)]
+    void ondragend([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDRAGENTER)]
+    VARIANT_BOOL ondragenter([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDRAGOVER)]
+    VARIANT_BOOL ondragover([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDRAGLEAVE)]
+    void ondragleave([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDROP)]
+    VARIANT_BOOL ondrop([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONBEFORECUT)]
+    VARIANT_BOOL onbeforecut([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONCUT)]
+    VARIANT_BOOL oncut([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONBEFORECOPY)]
+    VARIANT_BOOL onbeforecopy([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONCOPY)]
+    VARIANT_BOOL oncopy([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONBEFOREPASTE)]
+    VARIANT_BOOL onbeforepaste([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONPASTE)]
+    VARIANT_BOOL onpaste([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONCONTEXTMENU)]
+    VARIANT_BOOL oncontextmenu([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONROWSDELETE)]
+    void onrowsdelete([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONROWSINSERTED)]
+    void onrowsinserted([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONCELLCHANGE)]
+    void oncellchange([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONREADYSTATECHANGE)]
+    void onreadystatechange([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONLAYOUTCOMPLETE)]
+    void onlayoutcomplete([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONPAGE)]
+    void onpage([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOUSEENTER)]
+    void onmouseenter([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOUSELEAVE)]
+    void onmouseleave([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONACTIVATE)]
+    void onactivate([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDEACTIVATE)]
+    void ondeactivate([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONBEFOREDEACTIVATE)]
+    VARIANT_BOOL onbeforedeactivate([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONBEFOREACTIVATE)]
+    VARIANT_BOOL onbeforeactivate([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONFOCUSIN)]
+    void onfocusin([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONFOCUSOUT)]
+    void onfocusout([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOVE)]
+    void onmove([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONCONTROLSELECT)]
+    VARIANT_BOOL oncontrolselect([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOVESTART)]
+    VARIANT_BOOL onmovestart([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOVEEND)]
+    void onmoveend([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONRESIZESTART)]
+    VARIANT_BOOL onresizestart([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONRESIZEEND)]
+    void onresizeend([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOUSEWHEEL)]
+    VARIANT_BOOL onmousewheel([in] IHTMLEventObj* pEvtObj);
+};
+[
+    hidden,
+    uuid(3050f33c-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface HTMLElementEvents
+{
+properties:
+methods:
+    [id(DISPID_HTMLELEMENTEVENTS_ONHELP)]
+    VARIANT_BOOL onhelp();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONCLICK)]
+    VARIANT_BOOL onclick();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDBLCLICK)]
+    VARIANT_BOOL ondblclick();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONKEYPRESS)]
+    VARIANT_BOOL onkeypress();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONKEYDOWN)]
+    void onkeydown();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONKEYUP)]
+    void onkeyup();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEOUT)]
+    void onmouseout();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEOVER)]
+    void onmouseover();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEMOVE)]
+    void onmousemove();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEDOWN)]
+    void onmousedown();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEUP)]
+    void onmouseup();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONSELECTSTART)]
+    VARIANT_BOOL onselectstart();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONFILTERCHANGE)]
+    void onfilterchange();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDRAGSTART)]
+    VARIANT_BOOL ondragstart();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFOREUPDATE)]
+    VARIANT_BOOL onbeforeupdate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONAFTERUPDATE)]
+    void onafterupdate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONERRORUPDATE)]
+    VARIANT_BOOL onerrorupdate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONROWEXIT)]
+    VARIANT_BOOL onrowexit();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONROWENTER)]
+    void onrowenter();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDATASETCHANGED)]
+    void ondatasetchanged();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDATAAVAILABLE)]
+    void ondataavailable();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDATASETCOMPLETE)]
+    void ondatasetcomplete();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONLOSECAPTURE)]
+    void onlosecapture();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONPROPERTYCHANGE)]
+    void onpropertychange();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONSCROLL)]
+    void onscroll();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONFOCUS)]
+    void onfocus();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBLUR)]
+    void onblur();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONRESIZE)]
+    void onresize();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDRAG)]
+    VARIANT_BOOL ondrag();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDRAGEND)]
+    void ondragend();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDRAGENTER)]
+    VARIANT_BOOL ondragenter();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDRAGOVER)]
+    VARIANT_BOOL ondragover();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDRAGLEAVE)]
+    void ondragleave();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDROP)]
+    VARIANT_BOOL ondrop();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFORECUT)]
+    VARIANT_BOOL onbeforecut();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONCUT)]
+    VARIANT_BOOL oncut();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFORECOPY)]
+    VARIANT_BOOL onbeforecopy();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONCOPY)]
+    VARIANT_BOOL oncopy();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFOREPASTE)]
+    VARIANT_BOOL onbeforepaste();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONPASTE)]
+    VARIANT_BOOL onpaste();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONCONTEXTMENU)]
+    VARIANT_BOOL oncontextmenu();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONROWSDELETE)]
+    void onrowsdelete();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONROWSINSERTED)]
+    void onrowsinserted();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONCELLCHANGE)]
+    void oncellchange();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONREADYSTATECHANGE)]
+    void onreadystatechange();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFOREEDITFOCUS)]
+    void onbeforeeditfocus();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONLAYOUTCOMPLETE)]
+    void onlayoutcomplete();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONPAGE)]
+    void onpage();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFOREDEACTIVATE)]
+    VARIANT_BOOL onbeforedeactivate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFOREACTIVATE)]
+    VARIANT_BOOL onbeforeactivate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOVE)]
+    void onmove();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONCONTROLSELECT)]
+    VARIANT_BOOL oncontrolselect();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOVESTART)]
+    VARIANT_BOOL onmovestart();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOVEEND)]
+    void onmoveend();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONRESIZESTART)]
+    VARIANT_BOOL onresizestart();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONRESIZEEND)]
+    void onresizeend();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEENTER)]
+    void onmouseenter();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSELEAVE)]
+    void onmouseleave();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEWHEEL)]
+    VARIANT_BOOL onmousewheel();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONACTIVATE)]
+    void onactivate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDEACTIVATE)]
+    void ondeactivate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONFOCUSIN)]
+    void onfocusin();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONFOCUSOUT)]
+    void onfocusout();
+
+};
+
+[
+    noncreatable,
+    uuid(3050f317-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLCommentElement
+{
+    [default]           dispinterface DispHTMLCommentElement;
+    [source, default]   dispinterface HTMLElementEvents;
+    [source]            dispinterface HTMLElementEvents2;
+                        interface IHTMLElement;
+                        interface IHTMLElement2;
+                        interface IHTMLElement3;
+                        interface IHTMLElement4;
+                        interface IHTMLUniqueName;
+                        interface IHTMLDOMNode;
+                        interface IHTMLDOMNode2;
+                        interface IHTMLCommentElement;
+                        interface IHTMLCommentElement2;
 }
 
 /*****************************************************************************
