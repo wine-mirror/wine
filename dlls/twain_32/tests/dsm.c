@@ -148,6 +148,7 @@ static void test_sources(TW_IDENTITY *appid)
     TW_UINT16 rc;
     TW_IDENTITY source;
     TW_STATUS status;
+    int scannercount = 0;
 
     memset(&source, 0, sizeof(source));
     rc = pDSM_Entry(appid, NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETFIRST, &source);
@@ -161,7 +162,12 @@ static void test_sources(TW_IDENTITY *appid)
 
     while (rc == TWRC_SUCCESS)
     {
-        trace("Got scanner %s\n", source.ProductName);
+        scannercount++;
+        trace("[Scanner %d|Version %d.%d(%s)|Protocol %d.%d|SupportedGroups 0x%x|Manufacturer %s|Family %s|ProductName %s]\n",
+            scannercount,
+            source.Version.MajorNum, source.Version.MinorNum, source.Version.Info,
+            source.ProtocolMajor, source.ProtocolMinor, source.SupportedGroups,
+            source.Manufacturer, source.ProductFamily, source.ProductName);
         memset(&source, 0, sizeof(source));
         rc = pDSM_Entry(appid, NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETNEXT, &source);
         get_condition_code(appid, NULL, &status);
