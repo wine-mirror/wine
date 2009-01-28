@@ -163,9 +163,8 @@ DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic )
 BOOL free_dc_ptr( DC *dc )
 {
     assert( dc->refcount == 1 );
-    /* grab the gdi lock again */
-    if (!GDI_GetObjPtr( dc->hSelf, 0 )) return FALSE;  /* shouldn't happen */
-    return GDI_FreeObject( dc->hSelf, dc );
+    if (free_gdi_handle( dc->hSelf ) != dc) return FALSE;  /* shouldn't happen */
+    return HeapFree( GetProcessHeap(), 0, dc );
 }
 
 

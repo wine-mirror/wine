@@ -254,10 +254,10 @@ static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc )
  */
 static BOOL PEN_DeleteObject( HGDIOBJ handle )
 {
-    PENOBJ *pen = GDI_GetObjPtr( handle, 0 );
+    PENOBJ *pen = free_gdi_handle( handle );
 
     if (!pen) return FALSE;
-    return GDI_FreeObject( handle, pen );
+    return HeapFree( GetProcessHeap(), 0, pen );
 }
 
 

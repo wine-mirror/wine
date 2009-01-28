@@ -416,7 +416,7 @@ static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
  */
 static BOOL BRUSH_DeleteObject( HGDIOBJ handle )
 {
-    BRUSHOBJ *brush = GDI_GetObjPtr( handle, OBJ_BRUSH );
+    BRUSHOBJ *brush = free_gdi_handle( handle );
 
     if (!brush) return FALSE;
     switch(brush->logbrush.lbStyle)
@@ -428,7 +428,7 @@ static BOOL BRUSH_DeleteObject( HGDIOBJ handle )
 	  GlobalFree16( (HGLOBAL16)brush->logbrush.lbHatch );
 	  break;
     }
-    return GDI_FreeObject( handle, brush );
+    return HeapFree( GetProcessHeap(), 0, brush );
 }
 
 

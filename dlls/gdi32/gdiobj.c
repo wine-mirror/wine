@@ -689,25 +689,29 @@ void *GDI_ReallocObject( WORD size, HGDIOBJ handle, void *object )
 
 
 /***********************************************************************
- *           GDI_FreeObject
+ *           free_gdi_handle
+ *
+ * Free a GDI handle and return a pointer to the object.
  */
-BOOL GDI_FreeObject( HGDIOBJ handle, void *ptr )
+void *free_gdi_handle( HGDIOBJ handle )
 {
-    GDIOBJHDR *object = ptr;
+    GDIOBJHDR *object = NULL;
     int i;
 
-    object->type  = 0;  /* Mark it as invalid */
-    object->funcs = NULL;
     i = ((ULONG_PTR)handle >> 2) - FIRST_LARGE_HANDLE;
     if (i >= 0 && i < MAX_LARGE_HANDLES)
     {
-        HeapFree( GetProcessHeap(), 0, large_handles[i] );
+        _EnterSysLevel( &GDI_level );
+        object = large_handles[i];
         large_handles[i] = NULL;
+        _LeaveSysLevel( &GDI_level );
     }
-    else ERR( "Invalid handle %p\n", handle );
-    TRACE("(%p): leave %d\n", handle, GDI_level.crst.RecursionCount);
-    _LeaveSysLevel( &GDI_level );
-    return TRUE;
+    if (object)
+    {
+        object->type  = 0;  /* mark it as invalid */
+        object->funcs = NULL;
+    }
+    return object;
 }
 
 

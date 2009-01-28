@@ -542,11 +542,12 @@ static void REGION_DestroyWineRegion( WINEREGION* pReg )
  */
 static BOOL REGION_DeleteObject( HGDIOBJ handle )
 {
-    RGNOBJ *rgn = GDI_GetObjPtr( handle, OBJ_REGION );
+    RGNOBJ *rgn = free_gdi_handle( handle );
 
     if (!rgn) return FALSE;
     REGION_DestroyWineRegion( rgn->rgn );
-    return GDI_FreeObject( handle, rgn );
+    HeapFree( GetProcessHeap(), 0, rgn );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -2820,7 +2821,8 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
     if (! (pETEs = HeapAlloc( GetProcessHeap(), 0, sizeof(EdgeTableEntry) * total )))
     {
         REGION_DestroyWineRegion( region );
-        GDI_FreeObject( hrgn, obj );
+        free_gdi_handle( hrgn );
+        HeapFree( GetProcessHeap(), 0, obj );
 	return 0;
     }
     pts = FirstPtBlock.pts;
@@ -2911,8 +2913,8 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
 			if(!tmpPtBlock) {
 			    WARN("Can't alloc tPB\n");
                             REGION_DestroyWineRegion( region );
-                            GDI_FreeObject( hrgn, obj );
-                            HeapFree( GetProcessHeap(), 0, pETEs );
+                            free_gdi_handle( hrgn );
+                            HeapFree( GetProcessHeap(), 0, obj );
 			    return 0;
 			}
                         curPtBlock->next = tmpPtBlock;

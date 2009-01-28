@@ -276,7 +276,7 @@ HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk )
  */
 static BOOL EMF_Delete_HENHMETAFILE( HENHMETAFILE hmf )
 {
-    ENHMETAFILEOBJ *metaObj = GDI_GetObjPtr( hmf, OBJ_ENHMETAFILE );
+    ENHMETAFILEOBJ *metaObj = free_gdi_handle( hmf );
 
     if(!metaObj) return FALSE;
 
@@ -284,7 +284,7 @@ static BOOL EMF_Delete_HENHMETAFILE( HENHMETAFILE hmf )
         UnmapViewOfFile( metaObj->emh );
     else
         HeapFree( GetProcessHeap(), 0, metaObj->emh );
-    return GDI_FreeObject( hmf, metaObj );
+    return HeapFree( GetProcessHeap(), 0, metaObj );
 }
 
 /******************************************************************

@@ -679,8 +679,8 @@ static BOOL PALETTE_DeleteObject( HGDIOBJ handle )
     PALETTEOBJ *obj;
 
     PALETTE_UnrealizeObject( handle );
-    if (!(obj = GDI_GetObjPtr( handle, OBJ_PAL ))) return FALSE;
-    return GDI_FreeObject( handle, obj );
+    if (!(obj = free_gdi_handle( handle ))) return FALSE;
+    return HeapFree( GetProcessHeap(), 0, obj );
 }
 
 

@@ -628,12 +628,16 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
  */
 static BOOL BITMAP_DeleteObject( HGDIOBJ handle )
 {
+    const DC_FUNCTIONS *funcs;
     BITMAPOBJ *bmp = GDI_GetObjPtr( handle, OBJ_BITMAP );
 
     if (!bmp) return FALSE;
+    funcs = bmp->funcs;
+    GDI_ReleaseObj( handle );
 
-    if (bmp->funcs && bmp->funcs->pDeleteBitmap)
-        bmp->funcs->pDeleteBitmap( handle );
+    if (funcs && funcs->pDeleteBitmap) funcs->pDeleteBitmap( handle );
+
+    if (!(bmp = free_gdi_handle( handle ))) return FALSE;
 
     HeapFree( GetProcessHeap(), 0, bmp->bitmap.bmBits );
 
@@ -665,7 +669,7 @@ static BOOL BITMAP_DeleteObject( HGDIOBJ handle )
         }
         HeapFree(GetProcessHeap(), 0, bmp->color_table);
     }
-    return GDI_FreeObject( handle, bmp );
+    return HeapFree( GetProcessHeap(), 0, bmp );
 }
 
 

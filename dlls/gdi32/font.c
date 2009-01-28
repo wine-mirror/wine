@@ -559,10 +559,12 @@ static INT FONT_GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer )
  */
 static BOOL FONT_DeleteObject( HGDIOBJ handle )
 {
-    FONTOBJ *obj = GDI_GetObjPtr( handle, OBJ_FONT ); /* to grab the GDI lock (FIXME) */
-    if (!obj) return FALSE;
+    FONTOBJ *obj;
+
     WineEngDestroyFontInstance( handle );
-    return GDI_FreeObject( handle, obj );
+
+    if (!(obj = free_gdi_handle( handle ))) return FALSE;
+    return HeapFree( GetProcessHeap(), 0, obj );
 }
 
 
