@@ -939,6 +939,7 @@ static void test_CoFreeUnusedLibraries(void)
     if (hr == REGDB_E_CLASSNOTREG)
     {
         trace("IE not installed so can't run CoFreeUnusedLibraries test\n");
+        CoUninitialize();
         return;
     }
     ok_ole_success(hr, "CoCreateInstance");
