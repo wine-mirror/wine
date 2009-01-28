@@ -3621,12 +3621,11 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       return 0;
 
     while (nCharsLeft && (run = ME_FindItemFwd(run, diRunOrStartRow))
-           && !(run->member.run.nFlags & MERF_ENDPARA))
+           && run->type == diRun)
     {
       unsigned int nCopy;
       ME_String *strText;
-      if (run->type != diRun)
-        break;
+
       strText = run->member.run.strText;
       nCopy = min(nCharsLeft, strText->nLen);
 
@@ -3642,31 +3641,12 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     /* append line termination, space allowing */
     if (nCharsLeft > 0)
     {
-      if (run && (run->member.run.nFlags & MERF_ENDPARA))
-      {
-        int i;
-        /* Write as many \r as encoded in end-of-paragraph, space allowing */
-        for (i = 0; i < run->member.run.nCR && nCharsLeft > 0; i++, nCharsLeft--)
-        {
-          *((WCHAR *)dest) = '\r';
-          dest += unicode ? sizeof(WCHAR) : 1;
-        }
-        /* Write as many \n as encoded in end-of-paragraph, space allowing */
-        for (i = 0; i < run->member.run.nLF && nCharsLeft > 0; i++, nCharsLeft--)
-        {
-          *((WCHAR *)dest) = '\n';
-          dest += unicode ? sizeof(WCHAR) : 1;
-        }
-      }
-      if (nCharsLeft > 0)
-      {
-        if (unicode)
-          *((WCHAR *)dest) = '\0';
-        else
-          *dest = '\0';
-        nCharsLeft--;
-        wroteNull = TRUE;
-      }
+      if (unicode)
+        *((WCHAR *)dest) = '\0';
+      else
+        *dest = '\0';
+      nCharsLeft--;
+      wroteNull = TRUE;
     }
 
     TRACE("EM_GETLINE: got %u characters\n", nMaxChars - nCharsLeft);
@@ -3692,8 +3672,10 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     last_para = ME_FindItemBack(item, diRun);
     assert(last_para);
     assert(last_para->member.run.nFlags & MERF_ENDPARA);
-    if (editor->bEmulateVersion10 && prev_para && last_para->member.run.nCharOfs == 0
-        && prev_para->member.run.nCR == 1 && prev_para->member.run.nLF == 0)
+    if (editor->bEmulateVersion10 && prev_para &&
+        last_para->member.run.nCharOfs == 0 &&
+        prev_para->member.run.strText->nLen == 1 &&
+        prev_para->member.run.strText->szData[0] == '\r')
     {
       /* In 1.0 emulation, the last solitary \r at the very end of the text
          (if one exists) is NOT a line break.
@@ -3764,7 +3746,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       assert(endPara);
       assert(endPara->type == diRun);
       assert(endPara->member.run.nFlags & MERF_ENDPARA);
-      nNextLineOfs -= endPara->member.run.nCR + endPara->member.run.nLF;
+      nNextLineOfs -= endPara->member.run.strText->nLen;
     }
     nChars = nNextLineOfs - nThisLineOfs;
     TRACE("EM_LINELENGTH(%ld)==%d\n",wParam, nChars);
@@ -4550,29 +4532,22 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart,
         nLen = 0;
         nChars = 0;
       } else {
-        int numCR, numLF;
-        int i, j;
+        WCHAR cr_lf[] = {'\r', '\n', 0};
+        WCHAR *szData;
 
         if (bCRLF)
         {
-          numCR = 1;
-          numLF = 1;
+          nLen = 2;
+          szData = cr_lf;
         } else {
-          numCR = pRun->member.run.nCR;
-          numLF = pRun->member.run.nLF;
+          nLen = pRun->member.run.strText->nLen;
+          szData = pRun->member.run.strText->szData;
         }
-        numCR -= nOffset;
-
-        nLen = min(nChars, numCR + numLF);
-
-        for (i = 0; i < nLen && i < numCR; i++)
-          buffer[i] = '\r';
-
-        for (j = 0; i + j < nLen && j < numLF; j++)
-          buffer[i+j] = '\n';
+        nLen = min(nChars, nLen - nOffset);
+        CopyMemory(buffer, szData + nOffset, sizeof(WCHAR) * nLen);
       }
     } else {
-      nLen = min(nChars, ME_StrLen(pRun->member.run.strText) - nOffset);
+      nLen = min(nChars, pRun->member.run.strText->nLen - nOffset);
       CopyMemory(buffer, pRun->member.run.strText->szData + nOffset,
                  sizeof(WCHAR) * nLen);
     }

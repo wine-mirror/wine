@@ -421,7 +421,6 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
   ME_GetSelection(c->editor, &nSelFrom, &nSelTo);
 
   /* Draw selected end-of-paragraph mark */
-  /* you can always comment it out if you need visible paragraph marks */
   if (run->nFlags & MERF_ENDPARA)
   {
     if (runofs >= nSelFrom && runofs < nSelTo)

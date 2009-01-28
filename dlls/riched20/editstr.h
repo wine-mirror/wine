@@ -162,7 +162,6 @@ typedef struct tagME_Run
   int nAscent, nDescent; /* pixels above/below baseline */
   POINT pt; /* relative to para's position */
   REOBJECT *ole_obj; /* FIXME: should be a union with strText (at least) */
-  int nCR; int nLF;  /* for MERF_ENDPARA: number of \r and \n characters encoded by run */
 } ME_Run;
 
 typedef struct tagME_Document {
@@ -252,7 +251,7 @@ typedef struct tagME_UndoItem
 {
   ME_DisplayItem di;
   int nStart, nLen;
-  int nCR, nLF;      /* used by diUndoSplitParagraph */
+  ME_String *eol_str; /* used by diUndoSplitParagraph */
 } ME_UndoItem;
 
 typedef struct tagME_TextBuffer

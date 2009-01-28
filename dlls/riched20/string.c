@@ -83,6 +83,7 @@ ME_String *ME_StrDup(const ME_String *s)
 
 void ME_DestroyString(ME_String *s)
 {
+  if (!s) return;
   FREE_OBJ(s->szData);
   FREE_OBJ(s);
 }

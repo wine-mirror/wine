@@ -303,14 +303,11 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars,
       /* We aren't deleting anything in this run, so we will go back to the
        * last run we are deleting text in. */
       c.pRun = ME_FindItemBack(c.pRun, diRun);
-      if (c.pRun->member.run.nFlags & MERF_ENDPARA)
-        c.nOffset = c.pRun->member.run.nCR + c.pRun->member.run.nLF;
-      else
-        c.nOffset = c.pRun->member.run.strText->nLen;
+      c.nOffset = c.pRun->member.run.strText->nLen;
     }
     run = &c.pRun->member.run;
     if (run->nFlags & MERF_ENDPARA) {
-      int eollen = run->nCR + run->nLF;
+      int eollen = c.pRun->member.run.strText->nLen;
       BOOL keepFirstParaFormat;
 
       if (!ME_FindItemFwd(c.pRun, diParagraph))
@@ -539,31 +536,37 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
     } else { /* handle EOLs */
       ME_DisplayItem *tp, *end_run;
       ME_Style *tmp_style;
-      int numCR, numLF;
+      int eol_len = 0;
 
       /* Find number of CR and LF in end of paragraph run */
-      numCR = 0; numLF = 0;
       if (*pos =='\r')
       {
-        numCR++;
         if (len > 1 && pos[1] == '\n')
-          numLF++;
+          eol_len = 2;
         else if (len > 2 && pos[1] == '\r' && pos[2] == '\n')
-          numCR++, numLF++;
+          eol_len = 3;
+        else
+          eol_len = 1;
       } else {
         assert(*pos == '\n');
-        numLF++;
+        eol_len = 1;
       }
-      pos += numCR + numLF;
+      pos += eol_len;
 
-      if (!editor->bEmulateVersion10 && numCR == 2 && numLF == 1)
+      if (!editor->bEmulateVersion10 && eol_len == 3)
       {
         /* handle special \r\r\n sequence (richedit 2.x and higher only) */
         WCHAR space = ' ';
         ME_InternalInsertTextFromCursor(editor, nCursor, &space, 1, style, 0);
       } else {
-        if (!editor->bEmulateVersion10)
-          numCR = 1, numLF = 0;
+        ME_String *eol_str;
+
+        if (!editor->bEmulateVersion10) {
+          WCHAR cr = '\r';
+          eol_str = ME_MakeStringN(&cr, 1);
+        } else {
+          eol_str = ME_MakeStringN(str, eol_len);
+        }
 
         p = &editor->pCursors[nCursor];
         if (p->nOffset) {
@@ -572,7 +575,7 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
         }
         tmp_style = ME_GetInsertStyle(editor, nCursor);
         /* ME_SplitParagraph increases style refcount */
-        tp = ME_SplitParagraph(editor, p->pRun, p->pRun->member.run.style, numCR, numLF, 0);
+        tp = ME_SplitParagraph(editor, p->pRun, p->pRun->member.run.style, eol_str, 0);
         p->pRun = ME_FindItemFwd(tp, diRun);
         end_run = ME_FindItemBack(tp, diRun);
         ME_ReleaseStyle(end_run->member.run.style);

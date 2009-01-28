@@ -127,12 +127,8 @@ void ME_CheckCharOffsets(ME_TextEditor *editor)
           p->member.run.nFlags,
           p->member.run.style->fmt.dwMask & p->member.run.style->fmt.dwEffects);
         assert(ofs == p->member.run.nCharOfs);
-        if (p->member.run.nFlags & MERF_ENDPARA) {
-          assert(p->member.run.nCR + p->member.run.nLF > 0);
-          ofs += p->member.run.nCR + p->member.run.nLF;
-        }
-        else
-          ofs += ME_StrLen(p->member.run.strText);
+        assert(p->member.run.strText->nLen);
+        ofs += p->member.run.strText->nLen;
         break;
       case diCell:
         TRACE_(richedit_check)("cell\n");

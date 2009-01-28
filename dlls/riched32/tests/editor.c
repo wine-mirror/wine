@@ -672,8 +672,15 @@ static void run_tests_EM_FINDTEXT(HWND hwnd, const char *name, struct find_s *fi
   int i;
 
   for (i = 0; i < num_tests; i++) {
-    check_EM_FINDTEXT(hwnd, name, &find[i], i);
-    check_EM_FINDTEXTEX(hwnd, name, &find[i], i);
+    if (*name == '3' && i == 0) {
+        todo_wine {
+            check_EM_FINDTEXT(hwnd, name, &find[i], i);
+            check_EM_FINDTEXTEX(hwnd, name, &find[i], i);
+        }
+    } else {
+        check_EM_FINDTEXT(hwnd, name, &find[i], i);
+        check_EM_FINDTEXTEX(hwnd, name, &find[i], i);
+    }
   }
 }
 
@@ -694,7 +701,7 @@ static void test_EM_FINDTEXT(void)
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) haystack2);
 
   /* Haystack text 2 (with EOL characters) */
-  todo_wine run_tests_EM_FINDTEXT(hwndRichEdit, "3", find_tests3,
+  run_tests_EM_FINDTEXT(hwndRichEdit, "3", find_tests3,
       sizeof(find_tests3)/sizeof(struct find_s));
 
   DestroyWindow(hwndRichEdit);
