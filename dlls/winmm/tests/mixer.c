@@ -1001,7 +1001,7 @@ static void mixer_testsW(void)
         mixer_test_deviceW(d);
 }
 
-static void test_mixerOpen()
+static void test_mixerOpen(void)
 {
     HMIXER mix;
     MMRESULT rc;
