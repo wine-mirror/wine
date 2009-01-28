@@ -4338,10 +4338,51 @@ void WINAPI NdrUserMarshalFree(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           NdrGetUserMarshalInfo [RPCRT4.@]
  */
-RPC_STATUS RPC_ENTRY NdrGetUserMarshalInfo(ULONG *flags, ULONG level, NDR_USER_MARSHAL_INFO *mi)
+RPC_STATUS RPC_ENTRY NdrGetUserMarshalInfo(ULONG *flags, ULONG level, NDR_USER_MARSHAL_INFO *umi)
 {
-  FIXME("(%p,%u,%p)\n", flags, level, mi);
-  return RPC_X_INVALID_BUFFER;
+    USER_MARSHAL_CB *umcb = CONTAINING_RECORD(flags, USER_MARSHAL_CB, Flags);
+
+    TRACE("(%p,%u,%p)\n", flags, level, umi);
+
+    if (level != 1)
+        return RPC_S_INVALID_ARG;
+
+    memset(&umi->Level1, 0, sizeof(umi->Level1));
+    umi->InformationLevel = level;
+
+    if (umcb->Signature != USER_MARSHAL_CB_SIGNATURE)
+        return RPC_S_INVALID_ARG;
+
+    umi->Level1.pfnAllocate = umcb->pStubMsg->pfnAllocate;
+    umi->Level1.pfnFree = umcb->pStubMsg->pfnFree;
+    umi->Level1.pRpcChannelBuffer = umcb->pStubMsg->pRpcChannelBuffer;
+
+    switch (umcb->CBType)
+    {
+    case USER_MARSHAL_CB_MARSHALL:
+    case USER_MARSHAL_CB_UNMARSHALL:
+    {
+        RPC_MESSAGE *msg = umcb->pStubMsg->RpcMsg;
+        unsigned char *buffer_start = msg->Buffer;
+        unsigned char *buffer_end =
+            (unsigned char *)msg->Buffer + msg->BufferLength;
+
+        if (umcb->pStubMsg->Buffer < buffer_start ||
+            umcb->pStubMsg->Buffer > buffer_end)
+            return ERROR_INVALID_USER_BUFFER;
+
+        umi->Level1.Buffer = umcb->pStubMsg->Buffer;
+        umi->Level1.BufferSize = buffer_end - umcb->pStubMsg->Buffer;
+        break;
+    }
+    case USER_MARSHAL_CB_BUFFER_SIZE:
+    case USER_MARSHAL_CB_FREE:
+        break;
+    default:
+        WARN("unrecognised CBType %d\n", umcb->CBType);
+    }
+
+    return RPC_S_OK;
 }
 
 /***********************************************************************
