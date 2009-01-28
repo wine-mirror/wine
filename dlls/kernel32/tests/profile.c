@@ -681,7 +681,14 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(!lstrcmpA(buf, "default"), "Expected \"default\", got \"%s\"\n", buf);
 
     GetWindowsDirectoryA(windir, MAX_PATH);
-    GetTempFileNameA(windir, "pre", 0, path);
+    SetLastError(0xdeadbeef);
+    ret = GetTempFileNameA(windir, "pre", 0, path);
+    if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
+    {
+        skip("Not allowed to create a file in the Windows directory\n");
+        DeleteFileA(filename);
+        return;
+    }
     tempfile = strrchr(path, '\\') + 1;
     create_test_file(path, content, lstrlenA(content));
 
