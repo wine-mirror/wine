@@ -150,12 +150,9 @@ static void test_sources(TW_IDENTITY *appid)
     memset(&source, 0, sizeof(source));
     rc = pDSM_Entry(appid, NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETFIRST, &source);
     get_condition_code(appid, NULL, &status);
-    todo_wine
-    ok(rc == TWRC_SUCCESS || rc == TWRC_FAILURE, "Get first error code, rc %d, cc %d\n", rc, status.ConditionCode);
-    if (rc == TWRC_SUCCESS)
-        ok(status.ConditionCode == TWCC_SUCCESS,"Get first invalid condition code, rc %d, cc %d\n", rc, status.ConditionCode);
-    if (rc == TWRC_FAILURE)
-        ok(status.ConditionCode == TWCC_NODS,"Get first invalid condition code, rc %d, cc %d\n", rc, status.ConditionCode);
+    ok( (rc == TWRC_SUCCESS && status.ConditionCode == TWCC_SUCCESS) ||
+        (rc == TWRC_FAILURE && status.ConditionCode == TWCC_NODS),
+            "Get first invalid condition code, rc %d, cc %d\n", rc, status.ConditionCode);
 
     while (rc == TWRC_SUCCESS)
     {
