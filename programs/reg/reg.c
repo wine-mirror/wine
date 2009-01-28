@@ -63,12 +63,145 @@ static int reg_message(int msg)
     return reg_printfW(formatW, msg_buffer);
 }
 
+static HKEY get_rootkey(LPWSTR key)
+{
+    static const WCHAR szHKLM[] = {'H','K','L','M',0};
+    static const WCHAR szHKCU[] = {'H','K','C','U',0};
+    static const WCHAR szHKCR[] = {'H','K','C','R',0};
+    static const WCHAR szHKU[] = {'H','K','U',0};
+    static const WCHAR szHKCC[] = {'H','K','C','C',0};
+
+    if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,4,szHKLM,4)==2)
+        return HKEY_LOCAL_MACHINE;
+    else if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,4,szHKCU,4)==2)
+        return HKEY_CURRENT_USER;
+    else if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,4,szHKCR,4)==2)
+        return HKEY_CLASSES_ROOT;
+    else if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,3,szHKU,3)==2)
+        return HKEY_USERS;
+    else if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,4,szHKCC,4)==2)
+        return HKEY_CURRENT_CONFIG;
+    else return NULL;
+}
+
+static DWORD get_regtype(LPWSTR type)
+{
+    static const WCHAR szREG_SZ[] = {'R','E','G','_','S','Z',0};
+    static const WCHAR szREG_MULTI_SZ[] = {'R','E','G','_','M','U','L','T','I','_','S','Z',0};
+    static const WCHAR szREG_DWORD_BIG_ENDIAN[] = {'R','E','G','_','D','W','O','R','D','_','B','I','G','_','E','N','D','I','A','N',0};
+    static const WCHAR szREG_DWORD[] = {'R','E','G','_','D','W','O','R','D',0};
+    static const WCHAR szREG_BINARY[] = {'R','E','G','_','B','I','N','A','R','Y',0};
+    static const WCHAR szREG_DWORD_LITTLE_ENDIAN[] = {'R','E','G','_','D','W','O','R','D','_','L','I','T','T','L','E','_','E','N','D','I','A','N',0};
+    static const WCHAR szREG_NONE[] = {'R','E','G','_','N','O','N','E',0};
+    static const WCHAR szREG_EXPAND_SZ[] = {'R','E','G','_','E','X','P','A','N','D','_','S','Z',0};
+
+    if (!type)
+        return REG_SZ;
+
+    if (lstrcmpiW(type,szREG_SZ)==0) return REG_SZ;
+    if (lstrcmpiW(type,szREG_DWORD)==0) return REG_DWORD;
+    if (lstrcmpiW(type,szREG_MULTI_SZ)==0) return REG_MULTI_SZ;
+    if (lstrcmpiW(type,szREG_EXPAND_SZ)==0) return REG_EXPAND_SZ;
+    if (lstrcmpiW(type,szREG_DWORD_BIG_ENDIAN)==0) return REG_DWORD_BIG_ENDIAN;
+    if (lstrcmpiW(type,szREG_DWORD_LITTLE_ENDIAN)==0) return REG_DWORD_LITTLE_ENDIAN;
+    if (lstrcmpiW(type,szREG_BINARY)==0) return REG_BINARY;
+    if (lstrcmpiW(type,szREG_NONE)==0) return REG_NONE;
+
+    return -1;
+}
+
+static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *reg_count)
+{
+    LPBYTE out_data = NULL;
+    *reg_count = 0;
+
+    switch (reg_type)
+    {
+        case REG_SZ:
+        {
+            *reg_count = (lstrlenW(data) + 1) * sizeof(WCHAR);
+            out_data = HeapAlloc(GetProcessHeap(),0,*reg_count);
+            lstrcpyW((LPWSTR)out_data,data);
+            break;
+        }
+        default:
+        {
+            static const WCHAR unhandled[] = {'U','n','h','a','n','d','l','e','d',' ','T','y','p','e',' ','0','x','%','x',' ',' ','d','a','t','a',' ','%','s','\n',0};
+            reg_printfW(unhandled, reg_type,data);
+        }
+    }
+
+    return out_data;
+}
+
 static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     WCHAR *type, WCHAR separator, WCHAR *data, BOOL force)
 {
-    static const WCHAR stubW[] = {'S','T','U','B',' ','A','D','D',' ','-',' ','%','s',
+    static const WCHAR stubW[] = {'A','D','D',' ','-',' ','%','s',
         ' ','%','s',' ','%','d',' ','%','s',' ','%','s',' ','%','d','\n',0};
+    LPWSTR p;
+    HKEY root,subkey;
+
     reg_printfW(stubW, key_name, value_name, value_empty, type, data, force);
+
+    if (key_name[0]=='\\' && key_name[1]=='\\')
+    {
+        reg_message(STRING_NO_REMOTE);
+        return 0;
+    }
+
+    p = strchrW(key_name,'\\');
+    if (!p)
+    {
+        reg_message(STRING_INVALID_KEY);
+        return 0;
+    }
+    p++;
+
+    root = get_rootkey(key_name);
+    if (!root)
+    {
+        reg_message(STRING_INVALID_KEY);
+        return 0;
+    }
+
+    if(RegCreateKeyW(root,p,&subkey)!=ERROR_SUCCESS)
+    {
+        reg_message(STRING_INVALID_KEY);
+        return 0;
+    }
+
+    if (value_name || data)
+    {
+        DWORD reg_type;
+        DWORD reg_count = 0;
+        BYTE* reg_data = NULL;
+
+        if (!force)
+        {
+            if (RegQueryValueW(subkey,value_name,NULL,NULL)==ERROR_SUCCESS)
+            {
+                /* FIXME:  Prompt for overwrite */
+            }
+        }
+
+        reg_type = get_regtype(type);
+        if (reg_type == -1)
+        {
+            RegCloseKey(subkey);
+            reg_message(STRING_INVALID_CMDLINE);
+            return 0;
+        }
+
+        if (data)
+            reg_data = get_regdata(data,reg_type,separator,&reg_count);
+
+        RegSetValueExW(subkey,value_name,0,reg_type,reg_data,reg_count);
+        HeapFree(GetProcessHeap(),0,reg_data);
+    }
+
+    RegCloseKey(subkey);
+    reg_message(STRING_SUCCESS);
 
     return 1;
 }

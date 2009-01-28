@@ -23,3 +23,7 @@
 #define STRING_ADD_USAGE        102
 #define STRING_DELETE_USAGE     103
 #define STRING_QUERY_USAGE      104
+#define STRING_SUCCESS          105
+#define STRING_INVALID_KEY      106
+#define STRING_INVALID_CMDLINE  107
+#define STRING_NO_REMOTE        108
