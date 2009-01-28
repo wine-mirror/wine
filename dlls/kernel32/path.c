@@ -1539,6 +1539,26 @@ UINT WINAPI GetSystemWow64DirectoryA( LPSTR lpBuffer, UINT uSize )
     return 0;
 }
 
+/***********************************************************************
+ *           Wow64DisableWow64FsRedirection   (KERNEL32.@)
+ */
+BOOL WINAPI Wow64DisableWow64FsRedirection( PVOID *old_value )
+{
+    FIXME("%p\n", old_value);
+
+    if (old_value) *old_value = (void *)0xdeadbeef;
+    return TRUE;
+}
+
+/***********************************************************************
+ *           Wow64RevertWow64FsRedirection   (KERNEL32.@)
+ */
+BOOL WINAPI Wow64RevertWow64FsRedirection( PVOID old_value )
+{
+    FIXME("%p\n", old_value);
+    return TRUE;
+}
+
 
 /***********************************************************************
  *           NeedCurrentDirectoryForExePathW   (KERNEL32.@)
