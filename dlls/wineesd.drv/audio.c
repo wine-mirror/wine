@@ -1157,6 +1157,8 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 	    dwNextFeedTime = dwNextNotifyTime = INFINITE;
 	}
     }
+
+    return 0;
 }
 
 /**************************************************************************
