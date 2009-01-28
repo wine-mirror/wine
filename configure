@@ -24134,6 +24134,14 @@ dlls/atl/Makefile: dlls/atl/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/atl/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/authz/Makefile"
+test "x$enable_authz" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	authz"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/authz/Makefile: dlls/authz/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/authz/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/avicap32/Makefile"
 test "x$enable_avicap32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	avicap32"
@@ -28293,6 +28301,7 @@ do
     "dlls/amstream/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/amstream/Makefile" ;;
     "dlls/appwiz.cpl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/appwiz.cpl/Makefile" ;;
     "dlls/atl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/atl/Makefile" ;;
+    "dlls/authz/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/authz/Makefile" ;;
     "dlls/avicap32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/avicap32/Makefile" ;;
     "dlls/avifil32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/avifil32/Makefile" ;;
     "dlls/browseui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/browseui/Makefile" ;;
