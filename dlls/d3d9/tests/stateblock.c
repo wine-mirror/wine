@@ -1569,6 +1569,7 @@ START_TEST(stateblock)
     IDirect3DDevice9 *device_ptr = NULL;
     D3DPRESENT_PARAMETERS device_pparams;
     HRESULT hret;
+    ULONG refcount;
 
     d3d9_handle = LoadLibraryA("d3d9.dll");
     if (!d3d9_handle)
@@ -1584,9 +1585,6 @@ START_TEST(stateblock)
     test_state_management(device_ptr, &device_pparams);
     test_shader_constant_apply(device_ptr);
 
-    if (device_ptr)
-    {
-        ULONG refcount = IDirect3DDevice9_Release(device_ptr);
-        ok(!refcount, "Device has %u references left\n", refcount);
-    }
+    refcount = IDirect3DDevice9_Release(device_ptr);
+    ok(!refcount, "Device has %u references left\n", refcount);
 }
