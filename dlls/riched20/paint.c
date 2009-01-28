@@ -1067,14 +1067,16 @@ void ME_ScrollAbs(ME_TextEditor *editor, int x, int y)
   {
     LONG winStyle = GetWindowLongW(editor->hWnd, GWL_STYLE);
     bScrollBarIsVisible = (winStyle & WS_HSCROLL) != 0;
-    bScrollBarWillBeVisible = (editor->nTotalWidth > editor->sizeWindow.cx)
+    bScrollBarWillBeVisible = (editor->nTotalWidth > editor->sizeWindow.cx
+                               && (editor->styleFlags & WS_HSCROLL))
                               || (editor->styleFlags & ES_DISABLENOSCROLL);
     if (bScrollBarIsVisible != bScrollBarWillBeVisible)
       ITextHost_TxShowScrollBar(editor->texthost, SB_HORZ,
                                 bScrollBarWillBeVisible);
 
     bScrollBarIsVisible = (winStyle & WS_VSCROLL) != 0;
-    bScrollBarWillBeVisible = (editor->nTotalLength > editor->sizeWindow.cy)
+    bScrollBarWillBeVisible = (editor->nTotalLength > editor->sizeWindow.cy
+                               && (editor->styleFlags & WS_VSCROLL))
                               || (editor->styleFlags & ES_DISABLENOSCROLL);
     if (bScrollBarIsVisible != bScrollBarWillBeVisible)
       ITextHost_TxShowScrollBar(editor->texthost, SB_VERT,
@@ -1163,8 +1165,14 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     }
   }
 
-  if (si.fMask & SIF_DISABLENOSCROLL)
+  if (si.fMask & SIF_DISABLENOSCROLL) {
     bScrollBarWillBeVisible = TRUE;
+  } else if (!(editor->styleFlags & WS_HSCROLL)) {
+    /* SetScrollInfo or SetScrollRange may cause the scrollbar to be
+     * shown, so hide the scrollbar if necessary. */
+    bScrollBarWasVisible = bScrollBarWillBeVisible;
+    bScrollBarWillBeVisible = FALSE;
+  }
 
   if (bScrollBarWasVisible != bScrollBarWillBeVisible)
     ITextHost_TxShowScrollBar(editor->texthost, SB_HORZ, bScrollBarWillBeVisible);
@@ -1203,8 +1211,14 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     }
   }
 
-  if (si.fMask & SIF_DISABLENOSCROLL)
+  if (si.fMask & SIF_DISABLENOSCROLL) {
     bScrollBarWillBeVisible = TRUE;
+  } else if (!(editor->styleFlags & WS_VSCROLL)) {
+    /* SetScrollInfo or SetScrollRange may cause the scrollbar to be
+     * shown, so hide the scrollbar if necessary. */
+    bScrollBarWasVisible = bScrollBarWillBeVisible;
+    bScrollBarWillBeVisible = FALSE;
+  }
 
   if (bScrollBarWasVisible != bScrollBarWillBeVisible)
     ITextHost_TxShowScrollBar(editor->texthost, SB_VERT,
