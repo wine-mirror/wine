@@ -42,7 +42,9 @@ typedef struct tagPALETTEOBJ
 {
     GDIOBJHDR           header;
     const DC_FUNCTIONS *funcs;      /* DC function table */
-    LOGPALETTE          logpalette; /* _MUST_ be the last field */
+    WORD                version;    /* palette version */
+    WORD                count;      /* count of palette entries */
+    PALETTEENTRY       *entries;
 } PALETTEOBJ;
 
 static INT PALETTE_GetObject( HGDIOBJ handle, INT count, LPVOID buffer );
@@ -149,15 +151,22 @@ HPALETTE WINAPI CreatePalette(
 
     size = sizeof(LOGPALETTE) + (palette->palNumEntries - 1) * sizeof(PALETTEENTRY);
 
-    if (!(palettePtr = HeapAlloc( GetProcessHeap(), 0,
-                        FIELD_OFFSET( PALETTEOBJ, logpalette.palPalEntry[palette->palNumEntries] ))))
-        return 0;
-
-    memcpy( &palettePtr->logpalette, palette, size );
-    palettePtr->funcs = NULL;
-    if (!(hpalette = alloc_gdi_handle( &palettePtr->header, OBJ_PAL, &palette_funcs )))
+    if (!(palettePtr = HeapAlloc( GetProcessHeap(), 0, sizeof(*palettePtr) ))) return 0;
+    palettePtr->funcs   = NULL;
+    palettePtr->version = palette->palVersion;
+    palettePtr->count   = palette->palNumEntries;
+    size = palettePtr->count * sizeof(*palettePtr->entries);
+    if (!(palettePtr->entries = HeapAlloc( GetProcessHeap(), 0, size )))
+    {
         HeapFree( GetProcessHeap(), 0, palettePtr );
-
+        return 0;
+    }
+    memcpy( palettePtr->entries, palette->palPalEntry, size );
+    if (!(hpalette = alloc_gdi_handle( &palettePtr->header, OBJ_PAL, &palette_funcs )))
+    {
+        HeapFree( GetProcessHeap(), 0, palettePtr->entries );
+        HeapFree( GetProcessHeap(), 0, palettePtr );
+    }
     TRACE("   returning %p\n", hpalette);
     return hpalette;
 }
@@ -286,22 +295,17 @@ UINT WINAPI GetPaletteEntries(
     /* NOTE: not documented but test show this to be the case */
     if (count == 0)
     {
-        int rc = palPtr->logpalette.palNumEntries;
-	    GDI_ReleaseObj( hpalette );
-        return rc;
+        count = palPtr->count;
     }
-
-    numEntries = palPtr->logpalette.palNumEntries;
-    if (start+count > numEntries) count = numEntries - start;
-    if (entries)
+    else
     {
-      if (start >= numEntries)
-      {
-	GDI_ReleaseObj( hpalette );
-	return 0;
-      }
-      memcpy( entries, &palPtr->logpalette.palPalEntry[start],
-	      count * sizeof(PALETTEENTRY) );
+        numEntries = palPtr->count;
+        if (start+count > numEntries) count = numEntries - start;
+        if (entries)
+        {
+            if (start >= numEntries) count = 0;
+            else memcpy( entries, &palPtr->entries[start], count * sizeof(PALETTEENTRY) );
+        }
     }
 
     GDI_ReleaseObj( hpalette );
@@ -333,17 +337,16 @@ UINT WINAPI SetPaletteEntries(
     palPtr = GDI_GetObjPtr( hpalette, OBJ_PAL );
     if (!palPtr) return 0;
 
-    numEntries = palPtr->logpalette.palNumEntries;
+    numEntries = palPtr->count;
     if (start >= numEntries)
     {
       GDI_ReleaseObj( hpalette );
       return 0;
     }
     if (start+count > numEntries) count = numEntries - start;
-    memcpy( &palPtr->logpalette.palPalEntry[start], entries,
-	    count * sizeof(PALETTEENTRY) );
-    UnrealizeObject( hpalette );
+    memcpy( &palPtr->entries[start], entries, count * sizeof(PALETTEENTRY) );
     GDI_ReleaseObj( hpalette );
+    UnrealizeObject( hpalette );
     return count;
 }
 
@@ -362,23 +365,20 @@ BOOL WINAPI ResizePalette(
     UINT cEntries) /* [in] Number of entries in logical palette */
 {
     PALETTEOBJ * palPtr = GDI_GetObjPtr( hPal, OBJ_PAL );
-    UINT	 cPrevEnt, prevVer;
-    int		 prevsize, size = sizeof(LOGPALETTE) + (cEntries - 1) * sizeof(PALETTEENTRY);
+    PALETTEENTRY *entries;
 
-    TRACE("hpal = %p, prev = %i, new = %i\n",
-          hPal, palPtr ? palPtr->logpalette.palNumEntries : -1, cEntries );
     if( !palPtr ) return FALSE;
-    cPrevEnt = palPtr->logpalette.palNumEntries;
-    prevVer = palPtr->logpalette.palVersion;
-    prevsize = sizeof(LOGPALETTE) + (cPrevEnt - 1) * sizeof(PALETTEENTRY) +
-	      				sizeof(int*) + sizeof(GDIOBJHDR);
-    size += sizeof(int*) + sizeof(GDIOBJHDR);
+    TRACE("hpal = %p, prev = %i, new = %i\n", hPal, palPtr->count, cEntries );
 
-    if (!(palPtr = GDI_ReallocObject( size, hPal, palPtr ))) return FALSE;
+    if (!(entries = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                 palPtr->entries, cEntries * sizeof(*palPtr->entries) )))
+    {
+        GDI_ReleaseObj( hPal );
+        return FALSE;
+    }
+    palPtr->entries = entries;
+    palPtr->count = cEntries;
 
-    if( cEntries > cPrevEnt ) memset( (BYTE*)palPtr + prevsize, 0, size - prevsize );
-    palPtr->logpalette.palNumEntries = cEntries;
-    palPtr->logpalette.palVersion = prevVer;
     GDI_ReleaseObj( hPal );
     PALETTE_UnrealizeObject( hPal );
     return TRUE;
@@ -410,11 +410,12 @@ BOOL WINAPI AnimatePalette(
         PALETTEOBJ * palPtr;
         UINT pal_entries;
         const PALETTEENTRY *pptr = PaletteColors;
+        const DC_FUNCTIONS *funcs;
 
         palPtr = GDI_GetObjPtr( hPal, OBJ_PAL );
         if (!palPtr) return 0;
 
-        pal_entries = palPtr->logpalette.palNumEntries;
+        pal_entries = palPtr->count;
         if (StartIndex >= pal_entries)
         {
           GDI_ReleaseObj( hPal );
@@ -424,22 +425,20 @@ BOOL WINAPI AnimatePalette(
         
         for (NumEntries += StartIndex; StartIndex < NumEntries; StartIndex++, pptr++) {
           /* According to MSDN, only animate PC_RESERVED colours */
-          if (palPtr->logpalette.palPalEntry[StartIndex].peFlags & PC_RESERVED) {
+          if (palPtr->entries[StartIndex].peFlags & PC_RESERVED) {
             TRACE("Animating colour (%d,%d,%d) to (%d,%d,%d)\n",
-              palPtr->logpalette.palPalEntry[StartIndex].peRed,
-              palPtr->logpalette.palPalEntry[StartIndex].peGreen,
-              palPtr->logpalette.palPalEntry[StartIndex].peBlue,
+              palPtr->entries[StartIndex].peRed,
+              palPtr->entries[StartIndex].peGreen,
+              palPtr->entries[StartIndex].peBlue,
               pptr->peRed, pptr->peGreen, pptr->peBlue);
-            memcpy( &palPtr->logpalette.palPalEntry[StartIndex], pptr,
-                    sizeof(PALETTEENTRY) );
+            palPtr->entries[StartIndex] = *pptr;
           } else {
             TRACE("Not animating entry %d -- not PC_RESERVED\n", StartIndex);
           }
         }
-        if (palPtr->funcs && palPtr->funcs->pRealizePalette)
-            palPtr->funcs->pRealizePalette( NULL, hPal, hPal == hPrimaryPalette );
-
+        funcs = palPtr->funcs;
         GDI_ReleaseObj( hPal );
+        if (funcs && funcs->pRealizePalette) funcs->pRealizePalette( NULL, hPal, hPal == hPrimaryPalette );
     }
     return TRUE;
 }
@@ -545,9 +544,9 @@ UINT WINAPI GetNearestPaletteIndex(
     {
         int i, diff = 0x7fffffff;
         int r,g,b;
-        PALETTEENTRY* entry = palObj->logpalette.palPalEntry;
+        PALETTEENTRY* entry = palObj->entries;
 
-        for( i = 0; i < palObj->logpalette.palNumEntries && diff ; i++, entry++)
+        for( i = 0; i < palObj->count && diff ; i++, entry++)
         {
             r = entry->peRed - GetRValue(color);
             g = entry->peGreen - GetGValue(color);
@@ -641,7 +640,7 @@ static INT PALETTE_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
     if (buffer)
     {
         if (count > sizeof(WORD)) count = sizeof(WORD);
-        memcpy( buffer, &palette->logpalette.palNumEntries, count );
+        memcpy( buffer, &palette->count, count );
     }
     else count = sizeof(WORD);
     GDI_ReleaseObj( handle );
@@ -680,6 +679,7 @@ static BOOL PALETTE_DeleteObject( HGDIOBJ handle )
 
     PALETTE_UnrealizeObject( handle );
     if (!(obj = free_gdi_handle( handle ))) return FALSE;
+    HeapFree( GetProcessHeap(), 0, obj->entries );
     return HeapFree( GetProcessHeap(), 0, obj );
 }
 
