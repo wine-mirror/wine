@@ -142,6 +142,10 @@
 #define RTF_MULTICAST 0 /* Not available on NetBSD/OpenBSD */
 #endif
 
+#ifndef RTF_LLINFO
+#define RTF_LLINFO 0 /* Not available on FreeBSD 8 and above */
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 
 DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
