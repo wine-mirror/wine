@@ -70,7 +70,6 @@ static void test_single_source(TW_IDENTITY *appid, TW_IDENTITY *source)
 
     rc = pDSM_Entry(appid, source, DG_CONTROL, DAT_CAPABILITY, MSG_GET, &cap);
     get_condition_code(appid, source, &status);
-    todo_wine
     ok(rc == TWRC_SUCCESS || status.ConditionCode == TWCC_SUCCESS,
             "Error obtaining CAP_SUPPORTEDCAPS\n");
 
@@ -98,7 +97,6 @@ static void test_single_source(TW_IDENTITY *appid, TW_IDENTITY *source)
     }
 
     /* For Twain 1.6, all sources must support: */
-    todo_wine
     ok(capabilities[CAP_SUPPORTEDCAPS], "CAP_SUPPORTEDCAPS not supported\n");
     todo_wine
     ok(capabilities[CAP_XFERCOUNT], "CAP_XFERCOUNT not supported\n");
@@ -134,7 +132,6 @@ static void test_single_source(TW_IDENTITY *appid, TW_IDENTITY *source)
         ok(capabilities[ICAP_PIXELTYPE], "ICAP_PIXELTYPE not supported\n");
         todo_wine
         ok(capabilities[ICAP_UNITS], "ICAP_UNITS not supported\n");
-        todo_wine
         ok(capabilities[ICAP_XFERMECH], "ICAP_XFERMECH not supported\n");
         todo_wine
         ok(capabilities[ICAP_XRESOLUTION], "ICAP_XRESOLUTION not supported\n");

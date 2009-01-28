@@ -32,6 +32,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
 static TW_UINT16 SANE_ICAPXferMech (pTW_CAPABILITY pCapability, TW_UINT16 action);
+static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability);
 
 TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
@@ -41,6 +42,13 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 
     switch (pCapability->Cap)
     {
+        case CAP_SUPPORTEDCAPS:
+            if (action == MSG_GET)
+                twCC = TWAIN_GetSupportedCaps(pCapability);
+            else
+                twCC = TWCC_BADVALUE;
+            break;
+
         case CAP_DEVICEEVENT:
         case CAP_ALARMS:
         case CAP_ALARMVOLUME:
@@ -65,7 +73,6 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
         case ICAP_BARCODEMAXRETRIES:
         case ICAP_BARCODETIMEOUT:
         case CAP_EXTENDEDCAPS:
-        case CAP_SUPPORTEDCAPS:
         case ICAP_FILTER:
         case ICAP_GAMMA:
         case ICAP_PLANARCHUNKY:
@@ -175,6 +182,32 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 
     return twCC;
 }
+
+static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability)
+{
+    TW_ARRAY *a;
+    static const UINT16 supported_caps[] = { CAP_SUPPORTEDCAPS, ICAP_XFERMECH };
+
+    pCapability->hContainer = GlobalAlloc (0, FIELD_OFFSET( TW_ARRAY, ItemList[sizeof(supported_caps)] ));
+    pCapability->ConType = TWON_ARRAY;
+
+    if (pCapability->hContainer)
+    {
+        UINT16 *u;
+        int i;
+        a = GlobalLock (pCapability->hContainer);
+        a->ItemType = TWTY_UINT16;
+        a->NumItems = sizeof(supported_caps) / sizeof(supported_caps[0]);
+        u = (UINT16 *) a->ItemList;
+        for (i = 0; i < a->NumItems; i++)
+            u[i] = supported_caps[i];
+        GlobalUnlock (pCapability->hContainer);
+        return TWCC_SUCCESS;
+    }
+    else
+        return TWCC_LOWMEMORY;
+}
+
 
 static TW_BOOL TWAIN_OneValueSet (pTW_CAPABILITY pCapability, TW_UINT32 value)
 {
