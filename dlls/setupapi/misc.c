@@ -1127,8 +1127,27 @@ DWORD WINAPI InstallCatalog( LPCSTR catalog, LPCSTR basename, LPSTR fullname )
  */
 DWORD WINAPI pSetupInstallCatalog( LPCWSTR catalog, LPCWSTR basename, LPWSTR fullname )
 {
-    FIXME("%s, %s, %p\n", debugstr_w(catalog), debugstr_w(basename), fullname);
-    return 0;
+    HCATADMIN admin;
+    HCATINFO cat;
+
+    TRACE ("%s, %s, %p\n", debugstr_w(catalog), debugstr_w(basename), fullname);
+
+    if (!CryptCATAdminAcquireContext(&admin,NULL,0))
+        return GetLastError();
+
+    if (!(cat = CryptCATAdminAddCatalog( admin, (PWSTR)catalog, (PWSTR)basename, 0 )))
+    {
+        DWORD rc = GetLastError();
+        CryptCATAdminReleaseContext(admin, 0);
+        return rc;
+    }
+    CryptCATAdminReleaseCatalogContext(admin, cat, 0);
+    CryptCATAdminReleaseContext(admin,0);
+
+    if (fullname)
+        FIXME("not returning full installed catalog path\n");
+
+    return NO_ERROR;
 }
 
 static UINT detect_compression_type( LPCWSTR file )
