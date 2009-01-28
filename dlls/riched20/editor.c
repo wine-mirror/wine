@@ -3183,6 +3183,28 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_SHOWSCROLLBAR:
   {
+    DWORD flags;
+
+    switch (wParam)
+    {
+      case SB_HORZ:
+        flags = WS_HSCROLL;
+        break;
+      case SB_VERT:
+        flags = WS_VSCROLL;
+        break;
+      case SB_BOTH:
+        flags = WS_HSCROLL|WS_VSCROLL;
+        break;
+      default:
+        return 0;
+    }
+
+    if (lParam)
+      editor->styleFlags |= flags;
+    else
+      editor->styleFlags &= flags;
+
     ITextHost_TxShowScrollBar(editor->texthost, wParam, lParam);
     return 0;
   }
