@@ -753,52 +753,6 @@ LONG __cdecl NTDLL_atol( const char *nptr )
 
 
 /*********************************************************************
- *                  sprintf   (NTDLL.@)
- */
-int __cdecl NTDLL_sprintf( char *str, const char *format, ... )
-{
-    int ret;
-    va_list valist;
-    va_start( valist, format );
-    ret = vsprintf( str, format, valist );
-    va_end( valist );
-    return ret;
-}
-
-
-/*********************************************************************
- *                  vsprintf   (NTDLL.@)
- */
-int __cdecl NTDLL_vsprintf( char *str, const char *format, va_list args )
-{
-    return vsprintf( str, format, args );
-}
-
-
-/*********************************************************************
- *                  _snprintf   (NTDLL.@)
- */
-int __cdecl _snprintf( char *str, size_t len, const char *format, ... )
-{
-    int ret;
-    va_list valist;
-    va_start( valist, format );
-    ret = vsnprintf( str, len, format, valist );
-    va_end( valist );
-    return ret;
-}
-
-
-/*********************************************************************
- *                  _vsnprintf   (NTDLL.@)
- */
-int __cdecl _vsnprintf( char *str, size_t len, const char *format, va_list args )
-{
-    return vsnprintf( str, len, format, args );
-}
-
-
-/*********************************************************************
  *                  sscanf   (NTDLL.@)
  */
 int __cdecl NTDLL_sscanf( const char *str, const char *format, ... )

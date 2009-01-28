@@ -29,6 +29,7 @@ C_SRCS = \
 	nt.c \
 	om.c \
 	path.c \
+	printf.c \
 	process.c \
 	pthread.c \
 	reg.c \
