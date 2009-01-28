@@ -76,7 +76,7 @@ static void add_section( struct dll_info *info, const char *name, DWORD size, DW
     IMAGE_SECTION_HEADER *sec = (IMAGE_SECTION_HEADER *)(info->nt + 1);
 
     sec += info->nt->FileHeader.NumberOfSections;
-    memcpy( (char *)sec->Name, name, min( strlen(name), sizeof(sec->Name)) );
+    memcpy( sec->Name, name, min( strlen(name), sizeof(sec->Name)) );
     sec->Misc.VirtualSize = ALIGN( size, section_alignment );
     sec->VirtualAddress   = info->mem_pos;
     sec->SizeOfRawData    = size;

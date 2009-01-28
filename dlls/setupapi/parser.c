@@ -982,7 +982,7 @@ static struct inf_file *parse_file( HANDLE handle, const WCHAR *class, DWORD sty
     }
     else
     {
-        WCHAR *new_buff = (WCHAR *)buffer;
+        WCHAR *new_buff = buffer;
         /* UCS-16 files should start with the Unicode BOM; we should skip it */
         if (*new_buff == 0xfeff)
             new_buff++;

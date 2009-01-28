@@ -287,7 +287,7 @@ static INT_PTR CDECL sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
   TRACE("(fdint == %d, pfdin == ^%p)\n", fdint, pfdin);
 
   if (pfdin && pfdin->pv && (*((void **) pfdin->pv) == (void *)SC_HSC_A_MAGIC))
-    phsc = (PSC_HSC_A) pfdin->pv;
+    phsc = pfdin->pv;
   else {
     ERR("pv %p is not an SC_HSC_A.\n", (pfdin) ? pfdin->pv : NULL);
     return -1;
@@ -412,7 +412,7 @@ static INT_PTR CDECL sc_FNNOTIFY_W(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
   TRACE("(fdint == %d, pfdin == ^%p)\n", fdint, pfdin);
 
   if (pfdin && pfdin->pv && (*((void **) pfdin->pv) == (void *)SC_HSC_W_MAGIC))
-    phsc = (PSC_HSC_W) pfdin->pv;
+    phsc = pfdin->pv;
   else {
     ERR("pv %p is not an SC_HSC_W.\n", (pfdin) ? pfdin->pv : NULL);
     return -1;

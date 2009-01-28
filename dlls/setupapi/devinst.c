@@ -1242,7 +1242,7 @@ HKEY WINAPI SetupDiCreateDevRegKeyW(
         HINF InfHandle,
         PCWSTR InfSectionName)
 {
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
     struct DeviceInfo *devInfo;
     HKEY key = INVALID_HANDLE_VALUE;
 
@@ -1381,7 +1381,7 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(
        DWORD CreationFlags,
        PSP_DEVINFO_DATA DeviceInfoData)
 {
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
     BOOL ret = FALSE, allocatedInstanceId = FALSE;
     LPCWSTR instanceId = NULL;
 
@@ -1520,7 +1520,7 @@ BOOL WINAPI SetupDiRegisterDeviceInfo(
         PVOID CompareContext,
         PSP_DEVINFO_DATA DupDeviceInfoData)
 {
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
     struct DeviceInfo *devInfo;
 
     TRACE("%p %p %08x %p %p %p\n", DeviceInfoSet, DeviceInfoData, Flags,
@@ -1575,7 +1575,7 @@ BOOL WINAPI SetupDiEnumDeviceInfo(
     }
     if (devinfo && devinfo != INVALID_HANDLE_VALUE)
     {
-        struct DeviceInfoSet *list = (struct DeviceInfoSet *)devinfo;
+        struct DeviceInfoSet *list = devinfo;
         if (list->magic == SETUP_DEVICE_INFO_SET_MAGIC)
         {
             if (index < list->cDevices)
@@ -1676,7 +1676,7 @@ BOOL WINAPI SetupDiGetDeviceInstanceIdW(
 	DWORD DeviceInstanceIdSize,
 	PDWORD RequiredSize)
 {
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
     struct DeviceInfo *devInfo;
 
     TRACE("%p %p %p %d %p\n", DeviceInfoSet, DeviceInfoData, DeviceInstanceId,
@@ -2029,7 +2029,7 @@ static void SETUPDI_AddDeviceInterfaces(SP_DEVINFO_DATA *dev, HKEY key,
 static void SETUPDI_EnumerateMatchingInterfaces(HDEVINFO DeviceInfoSet,
         HKEY key, const GUID *interface, LPCWSTR enumstr)
 {
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
     DWORD i, len;
     WCHAR subKeyName[MAX_PATH];
     LONG l;
@@ -2227,7 +2227,7 @@ static void SETUPDI_EnumerateMatchingDeviceInstances(struct DeviceInfoSet *set,
 static void SETUPDI_EnumerateMatchingDevices(HDEVINFO DeviceInfoSet,
         LPCWSTR parent, HKEY key, const GUID *class, DWORD flags)
 {
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
     DWORD i, len;
     WCHAR subKeyName[MAX_PATH];
     LONG l = ERROR_SUCCESS;
@@ -2378,7 +2378,7 @@ BOOL WINAPI SetupDiGetDeviceInfoListDetailA(
         HDEVINFO DeviceInfoSet,
         PSP_DEVINFO_LIST_DETAIL_DATA_A DevInfoData )
 {
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
 
     TRACE("%p %p\n", DeviceInfoSet, DevInfoData);
 
@@ -2411,7 +2411,7 @@ BOOL WINAPI SetupDiGetDeviceInfoListDetailW(
         HDEVINFO DeviceInfoSet,
         PSP_DEVINFO_LIST_DETAIL_DATA_W DevInfoData )
 {
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
 
     TRACE("%p %p\n", DeviceInfoSet, DevInfoData);
 
@@ -2481,7 +2481,7 @@ BOOL WINAPI SetupDiCreateDeviceInterfaceW(
         DWORD CreationFlags,
         PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData)
 {
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
     struct DeviceInfo *devInfo;
     SP_DEVICE_INTERFACE_DATA *iface = NULL;
     BOOL ret;
@@ -2606,7 +2606,7 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(
         HINF InfHandle,
         PCWSTR InfSectionName)
 {
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
     HKEY key = INVALID_HANDLE_VALUE, interfacesKey;
     LONG l;
 
@@ -2714,7 +2714,7 @@ BOOL WINAPI SetupDiDeleteDeviceInterfaceRegKey(
         PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData,
         DWORD Reserved)
 {
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
     HKEY parent;
     BOOL ret = FALSE;
 
@@ -2786,7 +2786,7 @@ BOOL WINAPI SetupDiEnumDeviceInterfaces(
        DWORD MemberIndex,
        PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData)
 {
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
     BOOL ret = FALSE;
 
     TRACE("%p, %p, %s, %d, %p\n", DeviceInfoSet, DeviceInfoData,
@@ -2882,7 +2882,7 @@ BOOL WINAPI SetupDiDestroyDeviceInfoList(HDEVINFO devinfo)
     TRACE("%p\n", devinfo);
     if (devinfo && devinfo != INVALID_HANDLE_VALUE)
     {
-        struct DeviceInfoSet *list = (struct DeviceInfoSet *)devinfo;
+        struct DeviceInfoSet *list = devinfo;
 
         if (list->magic == SETUP_DEVICE_INFO_SET_MAGIC)
         {
@@ -2917,7 +2917,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
       PDWORD RequiredSize,
       PSP_DEVINFO_DATA DeviceInfoData)
 {
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
     struct InterfaceInfo *info;
     DWORD bytesNeeded = offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath)
         + 1;
@@ -2989,7 +2989,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
       PDWORD RequiredSize,
       PSP_DEVINFO_DATA DeviceInfoData)
 {
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
     struct InterfaceInfo *info;
     DWORD bytesNeeded = offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_W, DevicePath)
         + sizeof(WCHAR); /* include NULL terminator */
@@ -3088,7 +3088,7 @@ BOOL WINAPI SetupDiGetDeviceRegistryPropertyA(
         PDWORD  RequiredSize)
 {
     BOOL ret = FALSE;
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
     struct DeviceInfo *devInfo;
 
     TRACE("%04x %p %d %p %p %d %p\n", (DWORD)DeviceInfoSet, DeviceInfoData,
@@ -3149,7 +3149,7 @@ BOOL WINAPI SetupDiGetDeviceRegistryPropertyW(
         PDWORD  RequiredSize)
 {
     BOOL ret = FALSE;
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
     struct DeviceInfo *devInfo;
 
     TRACE("%04x %p %d %p %p %d %p\n", (DWORD)DeviceInfoSet, DeviceInfoData,
@@ -3208,7 +3208,7 @@ BOOL WINAPI SetupDiSetDeviceRegistryPropertyA(
 	DWORD PropertyBufferSize)
 {
     BOOL ret = FALSE;
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
     struct DeviceInfo *devInfo;
 
     TRACE("%p %p %d %p %d\n", DeviceInfoSet, DeviceInfoData, Property,
@@ -3256,7 +3256,7 @@ BOOL WINAPI SetupDiSetDeviceRegistryPropertyW(
 	DWORD PropertyBufferSize)
 {
     BOOL ret = FALSE;
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
     struct DeviceInfo *devInfo;
 
     TRACE("%p %p %d %p %d\n", DeviceInfoSet, DeviceInfoData, Property,
@@ -3733,7 +3733,7 @@ HKEY WINAPI SetupDiOpenDevRegKey(
        DWORD KeyType,
        REGSAM samDesired)
 {
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
     struct DeviceInfo *devInfo;
     HKEY key = INVALID_HANDLE_VALUE;
 
@@ -3849,7 +3849,7 @@ BOOL WINAPI SetupDiDeleteDevRegKey(
        DWORD HwProfile,
        DWORD KeyType)
 {
-    struct DeviceInfoSet *set = (struct DeviceInfoSet *)DeviceInfoSet;
+    struct DeviceInfoSet *set = DeviceInfoSet;
     struct DeviceInfo *devInfo;
     BOOL ret = FALSE;
 
