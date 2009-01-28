@@ -345,21 +345,9 @@ HFONT WINAPI CreateFontIndirectW( const LOGFONTW *plf )
 
     if (!plf) return 0;
 
-    if (!(fontPtr = GDI_AllocObject( sizeof(FONTOBJ), OBJ_FONT, (HGDIOBJ *)&hFont, &font_funcs )))
-        return 0;
+    if (!(fontPtr = HeapAlloc( GetProcessHeap(), 0, sizeof(*fontPtr) ))) return 0;
 
     fontPtr->logfont = *plf;
-
-    TRACE("(%d %d %d %d %x %d %x %d %d) %s %s %s %s => %p\n",
-          plf->lfHeight, plf->lfWidth,
-          plf->lfEscapement, plf->lfOrientation,
-          plf->lfPitchAndFamily,
-          plf->lfOutPrecision, plf->lfClipPrecision,
-          plf->lfQuality, plf->lfCharSet,
-          debugstr_w(plf->lfFaceName),
-          plf->lfWeight > 400 ? "Bold" : "",
-          plf->lfItalic ? "Italic" : "",
-          plf->lfUnderline ? "Underline" : "", hFont);
 
     if (plf->lfEscapement != plf->lfOrientation)
     {
@@ -367,7 +355,7 @@ HFONT WINAPI CreateFontIndirectW( const LOGFONTW *plf )
         fontPtr->logfont.lfOrientation = fontPtr->logfont.lfEscapement;
         WARN("orientation angle %f set to "
              "escapement angle %f for new font %p\n",
-             plf->lfOrientation/10., plf->lfEscapement/10., hFont);
+             plf->lfOrientation/10., plf->lfEscapement/10., fontPtr);
     }
 
     pFaceNameItalicSuffix = strstrW(fontPtr->logfont.lfFaceName, ItalicW);
@@ -388,7 +376,23 @@ HFONT WINAPI CreateFontIndirectW( const LOGFONTW *plf )
 
     if (pFaceNameSuffix) *pFaceNameSuffix = 0;
 
-    GDI_ReleaseObj( hFont );
+    if (!(hFont = alloc_gdi_handle( &fontPtr->header, OBJ_FONT, &font_funcs )))
+    {
+        HeapFree( GetProcessHeap(), 0, fontPtr );
+        return 0;
+    }
+
+    TRACE("(%d %d %d %d %x %d %x %d %d) %s %s %s %s => %p\n",
+          plf->lfHeight, plf->lfWidth,
+          plf->lfEscapement, plf->lfOrientation,
+          plf->lfPitchAndFamily,
+          plf->lfOutPrecision, plf->lfClipPrecision,
+          plf->lfQuality, plf->lfCharSet,
+          debugstr_w(plf->lfFaceName),
+          plf->lfWeight > 400 ? "Bold" : "",
+          plf->lfItalic ? "Italic" : "",
+          plf->lfUnderline ? "Underline" : "", hFont);
+
     return hFont;
 }
 

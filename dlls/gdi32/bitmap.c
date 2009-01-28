@@ -280,17 +280,12 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
         return 0;
     }
 
-      /* Create the BITMAPOBJ */
-    bmpobj = GDI_AllocObject( sizeof(BITMAPOBJ), OBJ_BITMAP, (HGDIOBJ *)&hbitmap, &bitmap_funcs );
-
-    if (!bmpobj)
+    /* Create the BITMAPOBJ */
+    if (!(bmpobj = HeapAlloc( GetProcessHeap(), 0, sizeof(*bmpobj) )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return NULL;
+        return 0;
     }
-
-    TRACE("%dx%d, %d colors returning %p\n", bm.bmWidth, bm.bmHeight,
-          1 << (bm.bmPlanes * bm.bmBitsPixel), hbitmap);
 
     bmpobj->size.cx = 0;
     bmpobj->size.cy = 0;
@@ -302,10 +297,18 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
     bmpobj->color_table = NULL;
     bmpobj->nb_colors = 0;
 
+    if (!(hbitmap = alloc_gdi_handle( &bmpobj->header, OBJ_BITMAP, &bitmap_funcs )))
+    {
+        HeapFree( GetProcessHeap(), 0, bmpobj );
+        return 0;
+    }
+
     if (bm.bmBits)
         SetBitmapBits( hbitmap, bm.bmHeight * bm.bmWidthBytes, bm.bmBits );
 
-    GDI_ReleaseObj( hbitmap );
+    TRACE("%dx%d, %d colors returning %p\n", bm.bmWidth, bm.bmHeight,
+          1 << (bm.bmPlanes * bm.bmBitsPixel), hbitmap);
+
     return hbitmap;
 }
 

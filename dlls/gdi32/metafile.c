@@ -107,13 +107,13 @@ static int MF_AddHandle(HANDLETABLE *ht, UINT htlen, HGDIOBJ hobj)
  */
 HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh)
 {
-    HMETAFILE hmf = 0;
-    METAFILEOBJ *metaObj = GDI_AllocObject( sizeof(METAFILEOBJ), OBJ_METAFILE, (HGDIOBJ *)&hmf, NULL );
-    if (metaObj)
-    {
-        metaObj->mh = mh;
-        GDI_ReleaseObj( hmf );
-    }
+    HMETAFILE hmf;
+    METAFILEOBJ *metaObj;
+
+    if (!(metaObj = HeapAlloc( GetProcessHeap(), 0, sizeof(*metaObj) ))) return 0;
+    metaObj->mh = mh;
+    if (!(hmf = alloc_gdi_handle( &metaObj->header, OBJ_METAFILE, NULL )))
+        HeapFree( GetProcessHeap(), 0, metaObj );
     return hmf;
 }
 

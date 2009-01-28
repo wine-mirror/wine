@@ -630,56 +630,34 @@ static GDIOBJHDR *large_handles[MAX_LARGE_HANDLES];
 static int next_large_handle;
 
 /***********************************************************************
- *           alloc_large_heap
+ *           alloc_gdi_handle
  *
- * Allocate a GDI handle from the large heap. Helper for GDI_AllocObject
+ * Allocate a GDI handle for an object, which must have been allocated on the process heap.
  */
-static inline GDIOBJHDR *alloc_large_heap( WORD size, HGDIOBJ *handle )
+HGDIOBJ alloc_gdi_handle( GDIOBJHDR *obj, WORD type, const struct gdi_obj_funcs *funcs )
 {
     int i;
-    GDIOBJHDR *obj;
 
-    for (i = next_large_handle + 1; i < MAX_LARGE_HANDLES; i++)
-        if (!large_handles[i]) goto found;
-    for (i = 0; i <= next_large_handle; i++)
-        if (!large_handles[i]) goto found;
-    *handle = 0;
-    return NULL;
-
- found:
-    if ((obj = HeapAlloc( GetProcessHeap(), 0, size )))
-    {
-        large_handles[i] = obj;
-        *handle = (HGDIOBJ)(ULONG_PTR)((i + FIRST_LARGE_HANDLE) << 2);
-        next_large_handle = i;
-    }
-    return obj;
-}
-
-
-/***********************************************************************
- *           GDI_AllocObject
- */
-void *GDI_AllocObject( WORD size, WORD type, HGDIOBJ *handle, const struct gdi_obj_funcs *funcs )
-{
-    GDIOBJHDR *obj = NULL;
-
-    _EnterSysLevel( &GDI_level );
-    if (!(obj = alloc_large_heap( size, handle ))) goto error;
-
+    /* initialize the object header */
     obj->type    = type;
     obj->system  = 0;
     obj->dwCount = 0;
     obj->funcs   = funcs;
     obj->hdcs    = NULL;
 
-    TRACE("(%p): enter %d\n", *handle, GDI_level.crst.RecursionCount);
-    return obj;
-
-error:
+    _EnterSysLevel( &GDI_level );
+    for (i = next_large_handle + 1; i < MAX_LARGE_HANDLES; i++)
+        if (!large_handles[i]) goto found;
+    for (i = 0; i <= next_large_handle; i++)
+        if (!large_handles[i]) goto found;
     _LeaveSysLevel( &GDI_level );
-    *handle = 0;
-    return NULL;
+    return 0;
+
+ found:
+    large_handles[i] = obj;
+    next_large_handle = i;
+    _LeaveSysLevel( &GDI_level );
+    return (HGDIOBJ)(ULONG_PTR)((i + FIRST_LARGE_HANDLE) << 2);
 }
 
 

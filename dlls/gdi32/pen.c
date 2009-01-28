@@ -87,7 +87,8 @@ HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
         if (hpen) return hpen;
     }
 
-    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), OBJ_PEN, (HGDIOBJ *)&hpen, &pen_funcs ))) return 0;
+    if (!(penPtr = HeapAlloc( GetProcessHeap(), 0, sizeof(*penPtr) ))) return 0;
+
     if (pen->lopnStyle == PS_USERSTYLE || pen->lopnStyle == PS_ALTERNATE)
         penPtr->logpen.elpPenStyle = PS_SOLID;
     else
@@ -107,7 +108,8 @@ HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
     penPtr->logpen.elpNumEntries = 0;
     penPtr->logpen.elpStyleEntry[0] = 0;
 
-    GDI_ReleaseObj( hpen );
+    if (!(hpen = alloc_gdi_handle( &penPtr->header, OBJ_PEN, &pen_funcs )))
+        HeapFree( GetProcessHeap(), 0, penPtr );
     return hpen;
 }
 
@@ -196,9 +198,8 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
         }
     }
 
-    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ) +
-                                    style_count * sizeof(DWORD) - sizeof(penPtr->logpen.elpStyleEntry),
-                                    OBJ_EXTPEN, (HGDIOBJ *)&hpen, &pen_funcs ))) return 0;
+    if (!(penPtr = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(PENOBJ,logpen.elpStyleEntry[style_count]))))
+        return 0;
 
     penPtr->logpen.elpPenStyle = style;
     penPtr->logpen.elpWidth = abs(width);
@@ -207,12 +208,11 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
     penPtr->logpen.elpHatch = brush->lbHatch;
     penPtr->logpen.elpNumEntries = style_count;
     memcpy(penPtr->logpen.elpStyleEntry, style_bits, style_count * sizeof(DWORD));
-    
-    GDI_ReleaseObj( hpen );
 
+    if (!(hpen = alloc_gdi_handle( &penPtr->header, OBJ_EXTPEN, &pen_funcs )))
+        HeapFree( GetProcessHeap(), 0, penPtr );
     return hpen;
 }
-
 
 /***********************************************************************
  *           PEN_SelectObject

@@ -149,11 +149,14 @@ HPALETTE WINAPI CreatePalette(
 
     size = sizeof(LOGPALETTE) + (palette->palNumEntries - 1) * sizeof(PALETTEENTRY);
 
-    if (!(palettePtr = GDI_AllocObject( size + sizeof(int*) +sizeof(GDIOBJHDR),
-                                        OBJ_PAL, (HGDIOBJ *)&hpalette, &palette_funcs ))) return 0;
+    if (!(palettePtr = HeapAlloc( GetProcessHeap(), 0,
+                        FIELD_OFFSET( PALETTEOBJ, logpalette.palPalEntry[palette->palNumEntries] ))))
+        return 0;
+
     memcpy( &palettePtr->logpalette, palette, size );
     palettePtr->funcs = NULL;
-    GDI_ReleaseObj( hpalette );
+    if (!(hpalette = alloc_gdi_handle( &palettePtr->header, OBJ_PAL, &palette_funcs )))
+        HeapFree( GetProcessHeap(), 0, palettePtr );
 
     TRACE("   returning %p\n", hpalette);
     return hpalette;

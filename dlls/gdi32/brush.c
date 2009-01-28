@@ -104,8 +104,8 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
     BRUSHOBJ * ptr;
     HBRUSH hbrush;
 
-    if (!(ptr = GDI_AllocObject( sizeof(BRUSHOBJ), OBJ_BRUSH, (HGDIOBJ *)&hbrush, &brush_funcs )))
-        return 0;
+    if (!(ptr = HeapAlloc( GetProcessHeap(), 0, sizeof(*ptr) ))) return 0;
+
     ptr->logbrush.lbStyle = brush->lbStyle;
     ptr->logbrush.lbColor = brush->lbColor;
     ptr->logbrush.lbHatch = brush->lbHatch;
@@ -146,12 +146,21 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
         break;
     }
 
-    GDI_ReleaseObj( hbrush );
-    TRACE("%p\n", hbrush);
-    return hbrush;
+    if ((hbrush = alloc_gdi_handle( &ptr->header, OBJ_BRUSH, &brush_funcs )))
+    {
+        TRACE("%p\n", hbrush);
+        return hbrush;
+    }
 
  error:
-    GDI_FreeObject( hbrush, ptr );
+    if (ptr->logbrush.lbHatch)
+    {
+        if (ptr->logbrush.lbStyle == BS_PATTERN)
+            DeleteObject( (HGDIOBJ)ptr->logbrush.lbHatch );
+        else if (ptr->logbrush.lbStyle == BS_DIBPATTERN)
+            GlobalFree16( (HGLOBAL16)ptr->logbrush.lbHatch );
+    }
+    HeapFree( GetProcessHeap(), 0, ptr );
     return 0;
 }
 

@@ -74,12 +74,10 @@ static inline DC *get_dc_obj( HDC hdc )
  */
 DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic )
 {
-    HDC hdc;
     DC *dc;
 
-    if (!(dc = GDI_AllocObject( sizeof(*dc), magic, (HGDIOBJ*)&hdc, &dc_funcs ))) return NULL;
+    if (!(dc = HeapAlloc( GetProcessHeap(), 0, sizeof(*dc) ))) return NULL;
 
-    dc->hSelf               = hdc;
     dc->funcs               = funcs;
     dc->physDev             = NULL;
     dc->thread              = GetCurrentThreadId();
@@ -148,7 +146,12 @@ DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic )
     dc->BoundsRect.bottom   = 0;
     dc->saved_visrgn        = NULL;
     PATH_InitGdiPath(&dc->path);
-    GDI_ReleaseObj( dc->hSelf );
+
+    if (!(dc->hSelf = alloc_gdi_handle( &dc->header, magic, &dc_funcs )))
+    {
+        HeapFree( GetProcessHeap(), 0, dc );
+        dc = NULL;
+    }
     return dc;
 }
 
@@ -332,12 +335,11 @@ static HDC GetDCState( HDC hdc )
     HGDIOBJ handle;
 
     if (!(dc = get_dc_ptr( hdc ))) return 0;
-    if (!(newdc = GDI_AllocObject( sizeof(DC), dc->header.type, &handle, &dc_funcs )))
+    if (!(newdc = HeapAlloc( GetProcessHeap(), 0, sizeof(*newdc ))))
     {
       release_dc_ptr( dc );
       return 0;
     }
-    TRACE("(%p): returning %p\n", hdc, handle );
 
     newdc->flags            = dc->flags | DC_SAVED;
     newdc->layout           = dc->layout;
@@ -380,13 +382,12 @@ static HDC GetDCState( HDC hdc )
     newdc->vportExtX        = dc->vportExtX;
     newdc->vportExtY        = dc->vportExtY;
     newdc->BoundsRect       = dc->BoundsRect;
+    newdc->gdiFont          = dc->gdiFont;
 
-    newdc->hSelf = handle;
     newdc->thread    = GetCurrentThreadId();
     newdc->refcount  = 1;
     newdc->saveLevel = 0;
     newdc->saved_dc  = 0;
-    GDI_ReleaseObj( handle );
 
     PATH_InitGdiPath( &newdc->path );
 
@@ -394,6 +395,15 @@ static HDC GetDCState( HDC hdc )
     newdc->hookThunk  = NULL;
     newdc->hookProc   = 0;
     newdc->saved_visrgn = NULL;
+
+    if (!(newdc->hSelf = alloc_gdi_handle( &newdc->header, dc->header.type, &dc_funcs )))
+    {
+        HeapFree( GetProcessHeap(), 0, newdc );
+        release_dc_ptr( dc );
+        return 0;
+    }
+    handle = newdc->hSelf;
+    TRACE("(%p): returning %p\n", hdc, handle );
 
     /* Get/SetDCState() don't change hVisRgn field ("Undoc. Windows" p.559). */
 
@@ -412,11 +422,6 @@ static HDC GetDCState( HDC hdc )
         CombineRgn( newdc->hMetaRgn, dc->hMetaRgn, 0, RGN_COPY );
     }
     /* don't bother recomputing hMetaClipRgn, we'll do that in SetDCState */
-
-    if(dc->gdiFont) {
-	newdc->gdiFont = dc->gdiFont;
-    } else
-        newdc->gdiFont = 0;
 
     release_dc_ptr( newdc );
     release_dc_ptr( dc );
