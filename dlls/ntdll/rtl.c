@@ -303,11 +303,11 @@ void WINAPI RtlDumpResource(LPRTL_RWLOCK rwl)
 NTSTATUS WINAPIV DbgPrint(LPCSTR fmt, ...)
 {
   char buf[512];
-  va_list args;
+  __ms_va_list args;
 
-  va_start(args, fmt);
-  vsprintf(buf,fmt, args);
-  va_end(args);
+  __ms_va_start(args, fmt);
+  NTDLL__vsnprintf(buf, sizeof(buf), fmt, args);
+  __ms_va_end(args);
 
   MESSAGE("DbgPrint says: %s",buf);
   /* hmm, raise exception? */
@@ -321,18 +321,18 @@ NTSTATUS WINAPIV DbgPrint(LPCSTR fmt, ...)
 NTSTATUS WINAPIV DbgPrintEx(ULONG iComponentId, ULONG Level, LPCSTR fmt, ...)
 {
     NTSTATUS ret;
-    va_list args;
+    __ms_va_list args;
 
-    va_start(args, fmt);
+    __ms_va_start(args, fmt);
     ret = vDbgPrintEx(iComponentId, Level, fmt, args);
-    va_end(args);
+    __ms_va_end(args);
     return ret;
 }
 
 /******************************************************************************
  *	vDbgPrintEx	[NTDLL.@]
  */
-NTSTATUS WINAPI vDbgPrintEx( ULONG id, ULONG level, LPCSTR fmt, va_list args )
+NTSTATUS WINAPI vDbgPrintEx( ULONG id, ULONG level, LPCSTR fmt, __ms_va_list args )
 {
     return vDbgPrintExWithPrefix( "", id, level, fmt, args );
 }
@@ -340,11 +340,11 @@ NTSTATUS WINAPI vDbgPrintEx( ULONG id, ULONG level, LPCSTR fmt, va_list args )
 /******************************************************************************
  *	vDbgPrintExWithPrefix  [NTDLL.@]
  */
-NTSTATUS WINAPI vDbgPrintExWithPrefix( LPCSTR prefix, ULONG id, ULONG level, LPCSTR fmt, va_list args )
+NTSTATUS WINAPI vDbgPrintExWithPrefix( LPCSTR prefix, ULONG id, ULONG level, LPCSTR fmt, __ms_va_list args )
 {
     char buf[1024];
 
-    vsprintf(buf, fmt, args);
+    NTDLL__vsnprintf(buf, sizeof(buf), fmt, args);
 
     switch (level & DPFLTR_MASK)
     {

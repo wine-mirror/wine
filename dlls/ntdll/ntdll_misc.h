@@ -156,6 +156,9 @@ extern int ntdll_umbstowcs(DWORD flags, const char* src, int srclen, WCHAR* dst,
 extern int ntdll_wcstoumbs(DWORD flags, const WCHAR* src, int srclen, char* dst, int dstlen,
                            const char* defchar, int *used );
 
+extern int CDECL NTDLL__vsnprintf( char *str, SIZE_T len, const char *format, __ms_va_list args );
+extern int CDECL NTDLL__vsnwprintf( WCHAR *str, SIZE_T len, const WCHAR *format, __ms_va_list args );
+
 /* load order */
 
 enum loadorder
