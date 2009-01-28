@@ -209,11 +209,129 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
 static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     BOOL value_all, BOOL force)
 {
-    static const WCHAR stubW[] = {'S','T','U','B',' ','D','E','L','E','T','E',
+    LPWSTR p;
+    HKEY root,subkey;
+
+    static const WCHAR stubW[] = {'D','E','L','E','T','E',
         ' ','-',' ','%','s',' ','%','s',' ','%','d',' ','%','d',' ','%','d','\n'
         ,0};
     reg_printfW(stubW, key_name, value_name, value_empty, value_all, force);
 
+    if (key_name[0]=='\\' && key_name[1]=='\\')
+    {
+        reg_message(STRING_NO_REMOTE);
+        return 0;
+    }
+
+    p = strchrW(key_name,'\\');
+    if (!p)
+    {
+        reg_message(STRING_INVALID_KEY);
+        return 0;
+    }
+    p++;
+
+    root = get_rootkey(key_name);
+    if (!root)
+    {
+        reg_message(STRING_INVALID_KEY);
+        return 0;
+    }
+
+    if (value_name && value_empty)
+    {
+        RegCloseKey(subkey);
+        reg_message(STRING_INVALID_CMDLINE);
+        return 0;
+    }
+
+    if (value_empty && value_all)
+    {
+        RegCloseKey(subkey);
+        reg_message(STRING_INVALID_CMDLINE);
+        return 0;
+    }
+
+    if (!force)
+    {
+        /* FIXME:  Prompt for delete */
+    }
+
+    if (!value_name)
+    {
+        if (RegDeleteTreeW(root,p)!=ERROR_SUCCESS)
+        {
+            reg_message(STRING_CANNOT_FIND);
+            return 0;
+        }
+        reg_message(STRING_SUCCESS);
+        return 1;
+    }
+
+    if(RegOpenKeyW(root,p,&subkey)!=ERROR_SUCCESS)
+    {
+        reg_message(STRING_CANNOT_FIND);
+        return 0;
+    }
+
+    if (value_all)
+    {
+        LPWSTR szValue;
+        DWORD maxValue;
+        DWORD count;
+        LONG rc;
+
+        if (value_name)
+        {
+            RegCloseKey(subkey);
+            reg_message(STRING_INVALID_CMDLINE);
+            return 0;
+        }
+
+        rc = RegQueryInfoKeyW(subkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+            &maxValue, NULL, NULL, NULL);
+        if (rc != ERROR_SUCCESS)
+        {
+            /* FIXME: failure */
+            RegCloseKey(subkey);
+            return 0;
+        }
+        maxValue++;
+        szValue = HeapAlloc(GetProcessHeap(),0,maxValue*sizeof(WCHAR));
+
+        while (1)
+        {
+            count = maxValue;
+            rc = RegEnumValueW(subkey, 0, value_name, &count, NULL, NULL, NULL, NULL);
+            if (rc == ERROR_SUCCESS)
+            {
+                rc = RegDeleteValueW(subkey,value_name);
+                if (rc != ERROR_SUCCESS)
+                    break;
+            }
+            else break;
+        }
+        if (rc != ERROR_SUCCESS)
+        {
+            /* FIXME  delete failed */
+        }
+    }
+    else if (value_name)
+    {
+        if (RegDeleteValueW(subkey,value_name) != ERROR_SUCCESS)
+        {
+            RegCloseKey(subkey);
+            reg_message(STRING_CANNOT_FIND);
+            return 0;
+        }
+    }
+    else if (value_empty)
+    {
+        RegSetValueExW(subkey,NULL,0,REG_SZ,NULL,0);
+    }
+
+    RegCloseKey(subkey);
+    reg_message(STRING_SUCCESS);
     return 1;
 }
 
