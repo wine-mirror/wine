@@ -223,10 +223,15 @@ static void test_profile_sections_names(void)
     /* Test with exactly fitting buffer */
     memset(buf, 0xc, sizeof(buf));
     ret = GetPrivateProfileSectionNamesA( buf, 28, testfile3 );
-    ok( ret == 26, "expected return size 26, got %d\n", ret );
+    ok( ret == 26 ||
+        broken(ret == 28), /* Win9x, WinME */
+        "expected return size 26, got %d\n", ret );
     todo_wine
-    ok( buf[ret+1] == 0 && buf[ret] == 0, "returned buffer not terminated with double-null\n" );
-    
+    ok( (buf[ret+1] == 0 && buf[ret] == 0) || /* W2K3 and higher */
+        broken(buf[ret+1] == 0xc && buf[ret] == 0) || /* NT4, W2K, WinXP */
+        broken(buf[ret-1] == 0 && buf[ret-2] == 0), /* Win9x, WinME */
+        "returned buffer not terminated with double-null\n" );
+
     /* Test with a buffer too small */
     memset(buf, 0xc, sizeof(buf));
     ret = GetPrivateProfileSectionNamesA( buf, 27, testfile3 );
@@ -258,8 +263,10 @@ static void test_profile_sections_names(void)
     memset(bufW, 0xcc, sizeof(bufW));
     ret = GetPrivateProfileSectionNamesW( bufW, 28, testfile3W );
     ok( ret == 26, "expected return size 26, got %d\n", ret );
-    ok( bufW[ret+1] == 0 && bufW[ret] == 0, "returned buffer not terminated with double-null\n" );
-    
+    ok( (bufW[ret+1] == 0 && bufW[ret] == 0) || /* W2K3 and higher */
+        broken(bufW[ret+1] == 0xcccc && bufW[ret] == 0), /* NT4, W2K, WinXP */
+        "returned buffer not terminated with double-null\n" );
+
     /* Test with a buffer too small */
     memset(bufW, 0xcc, sizeof(bufW));
     ret = GetPrivateProfileSectionNamesW( bufW, 27, testfile3W );
