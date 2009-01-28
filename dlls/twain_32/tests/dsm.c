@@ -174,15 +174,9 @@ static void test_sources(TW_IDENTITY *appid)
     memset(&source, 0, sizeof(source));
     rc = pDSM_Entry(appid, NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT, &source);
     get_condition_code(appid, NULL, &status);
-    ok(rc == TWRC_SUCCESS || rc == TWRC_FAILURE, "Get default error code, rc %d, cc %d\n", rc, status.ConditionCode);
-    if (rc == TWRC_SUCCESS)
-    {
-        todo_wine
-        ok(status.ConditionCode == TWCC_SUCCESS,"Get default invalid condition code, rc %d, cc %d\n", rc, status.ConditionCode);
-    }
-
-    if (rc == TWRC_FAILURE)
-        ok(status.ConditionCode == TWCC_NODS,"Get default invalid condition code, rc %d, cc %d\n", rc, status.ConditionCode);
+    ok( (rc == TWRC_SUCCESS && status.ConditionCode == TWCC_SUCCESS) ||
+        (rc == TWRC_FAILURE && status.ConditionCode == TWCC_NODS),
+            "Get default invalid condition code, rc %d, cc %d\n", rc, status.ConditionCode);
 
     if (rc == TWRC_SUCCESS && status.ConditionCode == TWCC_SUCCESS)
     {

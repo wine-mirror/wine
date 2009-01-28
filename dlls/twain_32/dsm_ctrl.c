@@ -156,6 +156,7 @@ TW_UINT16 TWAIN_IdentityGetDefault (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 	if (!nrdevices)
 		return TWRC_FAILURE;
 	*pSourceIdentity = devices[0].identity;
+	DSM_twCC = TWCC_SUCCESS;
 	return TWRC_SUCCESS;
 }
 
