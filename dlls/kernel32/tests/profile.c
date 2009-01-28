@@ -215,22 +215,27 @@ static void test_profile_sections_names(void)
     CloseHandle( h);
 
     /* Test with sufficiently large buffer */
+    memset(buf, 0xc, sizeof(buf));
     ret = GetPrivateProfileSectionNamesA( buf, 29, testfile3 );
     ok( ret == 27, "expected return size 27, got %d\n", ret );
     ok( buf[ret-1] == 0 && buf[ret] == 0, "returned buffer not terminated with double-null\n" );
     
     /* Test with exactly fitting buffer */
+    memset(buf, 0xc, sizeof(buf));
     ret = GetPrivateProfileSectionNamesA( buf, 28, testfile3 );
     ok( ret == 26, "expected return size 26, got %d\n", ret );
+    todo_wine
     ok( buf[ret+1] == 0 && buf[ret] == 0, "returned buffer not terminated with double-null\n" );
     
     /* Test with a buffer too small */
+    memset(buf, 0xc, sizeof(buf));
     ret = GetPrivateProfileSectionNamesA( buf, 27, testfile3 );
     ok( ret == 25, "expected return size 25, got %d\n", ret );
+    todo_wine
     ok( buf[ret+1] == 0 && buf[ret] == 0, "returned buffer not terminated with double-null\n" );
     
     /* Tests on nonexistent file */
-    memset(buf, 0xcc, sizeof(buf));
+    memset(buf, 0xc, sizeof(buf));
     ret = GetPrivateProfileSectionNamesA( buf, 10, ".\\not_here.ini" );
     ok( ret == 0, "expected return size 0, got %d\n", ret );
     ok( buf[0] == 0, "returned buffer not terminated with null\n" );
@@ -238,6 +243,7 @@ static void test_profile_sections_names(void)
     
     /* Test with sufficiently large buffer */
     SetLastError(0xdeadbeef);
+    memset(bufW, 0xcc, sizeof(bufW));
     ret = GetPrivateProfileSectionNamesW( bufW, 29, testfile3W );
     if (ret == 0 && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
@@ -249,11 +255,13 @@ static void test_profile_sections_names(void)
     ok( bufW[ret-1] == 0 && bufW[ret] == 0, "returned buffer not terminated with double-null\n" );
     
     /* Test with exactly fitting buffer */
+    memset(bufW, 0xcc, sizeof(bufW));
     ret = GetPrivateProfileSectionNamesW( bufW, 28, testfile3W );
     ok( ret == 26, "expected return size 26, got %d\n", ret );
     ok( bufW[ret+1] == 0 && bufW[ret] == 0, "returned buffer not terminated with double-null\n" );
     
     /* Test with a buffer too small */
+    memset(bufW, 0xcc, sizeof(bufW));
     ret = GetPrivateProfileSectionNamesW( bufW, 27, testfile3W );
     ok( ret == 25, "expected return size 25, got %d\n", ret );
     ok( bufW[ret+1] == 0 && bufW[ret] == 0, "returned buffer not terminated with double-null\n" );
