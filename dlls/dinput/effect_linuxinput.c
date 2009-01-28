@@ -423,19 +423,19 @@ static HRESULT WINAPI LinuxInputEffectImpl_GetParameters(
 	    return diErr;
 	else {
 	    if (This->effect.type == FF_PERIODIC) {
-                LPDIPERIODIC tsp = (LPDIPERIODIC)(peff->lpvTypeSpecificParams);
+                LPDIPERIODIC tsp = peff->lpvTypeSpecificParams;
 		tsp->dwMagnitude = (This->effect.u.periodic.magnitude / 33) * 10;
 		tsp->lOffset = (This->effect.u.periodic.offset / 33) * 10;
 		tsp->dwPhase = (This->effect.u.periodic.phase / 33) * 36;
 		tsp->dwPeriod = (This->effect.u.periodic.period * 1000);
 	    } else if (This->effect.type == FF_CONSTANT) {
-                LPDICONSTANTFORCE tsp = (LPDICONSTANTFORCE)(peff->lpvTypeSpecificParams);
+                LPDICONSTANTFORCE tsp = peff->lpvTypeSpecificParams;
 		tsp->lMagnitude = (This->effect.u.constant.level / 33) * 10;
 	    } else if (This->effect.type == FF_SPRING 
 		    || This->effect.type == FF_FRICTION 
 		    || This->effect.type == FF_INERTIA 
 		    || This->effect.type == FF_DAMPER) {
-                LPDICONDITION tsp = (LPDICONDITION)(peff->lpvTypeSpecificParams);
+                LPDICONDITION tsp = peff->lpvTypeSpecificParams;
 		int i;
 		for (i = 0; i < 2; ++i) {
 		    tsp[i].lOffset = (This->effect.u.condition[i].center / 33) * 10; 
@@ -446,7 +446,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_GetParameters(
 		    tsp[i].lDeadBand = (This->effect.u.condition[i].deadband / 33) * 10;
 		}
 	    } else if (This->effect.type == FF_RAMP) {
-                LPDIRAMPFORCE tsp = (LPDIRAMPFORCE)(peff->lpvTypeSpecificParams);
+                LPDIRAMPFORCE tsp = peff->lpvTypeSpecificParams;
 		tsp->lStart = (This->effect.u.ramp.start_level / 33) * 10;
 		tsp->lEnd = (This->effect.u.ramp.end_level / 33) * 10;
 	    }
@@ -654,7 +654,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
             LPCDIPERIODIC tsp;
             if (peff->cbTypeSpecificParams != sizeof(DIPERIODIC))
                 return DIERR_INVALIDPARAM;
-            tsp = (LPCDIPERIODIC)(peff->lpvTypeSpecificParams);
+            tsp = peff->lpvTypeSpecificParams;
 	    This->effect.u.periodic.magnitude = (tsp->dwMagnitude / 10) * 32;
 	    This->effect.u.periodic.offset = (tsp->lOffset / 10) * 32;
 	    This->effect.u.periodic.phase = (tsp->dwPhase / 9) * 8; /* == (/ 36 * 32) */
@@ -663,17 +663,17 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
             LPCDICONSTANTFORCE tsp;
             if (peff->cbTypeSpecificParams != sizeof(DICONSTANTFORCE))
                 return DIERR_INVALIDPARAM;
-            tsp = (LPCDICONSTANTFORCE)(peff->lpvTypeSpecificParams);
+            tsp = peff->lpvTypeSpecificParams;
 	    This->effect.u.constant.level = (max(min(tsp->lMagnitude, 10000), -10000) / 10) * 32;
 	} else if (type == DIEFT_RAMPFORCE) {
             LPCDIRAMPFORCE tsp;
             if (peff->cbTypeSpecificParams != sizeof(DIRAMPFORCE))
                 return DIERR_INVALIDPARAM;
-            tsp = (LPCDIRAMPFORCE)(peff->lpvTypeSpecificParams);
+            tsp = peff->lpvTypeSpecificParams;
 	    This->effect.u.ramp.start_level = (tsp->lStart / 10) * 32;
 	    This->effect.u.ramp.end_level = (tsp->lStart / 10) * 32;
 	} else if (type == DIEFT_CONDITION) {
-            LPCDICONDITION tsp = (LPCDICONDITION)(peff->lpvTypeSpecificParams);
+            LPCDICONDITION tsp = peff->lpvTypeSpecificParams;
             if (peff->cbTypeSpecificParams == sizeof(DICONDITION)) {
 		/* One condition block.  This needs to be rotated to direction,
 		 * and expanded to separate x and y conditions. */
@@ -879,7 +879,7 @@ HRESULT linuxinput_get_info_A(
     info->dwDynamicParams = info->dwStaticParams;
 
     /* yes, this is windows behavior (print the GUID_Name for name) */
-    strcpy((char*)info->tszName, _dump_dinput_GUID(rguid));
+    strcpy(info->tszName, _dump_dinput_GUID(rguid));
 
     return DI_OK;
 }
@@ -914,7 +914,7 @@ HRESULT linuxinput_get_info_W(
 
     /* yes, this is windows behavior (print the GUID_Name for name) */
     MultiByteToWideChar(CP_ACP, 0, _dump_dinput_GUID(rguid), -1, 
-		        (WCHAR*)info->tszName, MAX_PATH);
+                        info->tszName, MAX_PATH);
 
     return DI_OK;
 }

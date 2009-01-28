@@ -269,7 +269,7 @@ void fill_DataFormat(void *out, DWORD size, const void *in, const DataFormat *df
 {
     int i;
     const char *in_c = in;
-    char *out_c = (char *) out;
+    char *out_c = out;
 
     memset(out, 0, size);
     if (df->dt == NULL) {

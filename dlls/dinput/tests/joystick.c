@@ -96,7 +96,7 @@ static BOOL CALLBACK EnumAxes(
     VOID* pContext)
 {
     HRESULT hr;
-    JoystickInfo * info = (JoystickInfo *)pContext;
+    JoystickInfo * info = pContext;
 
     if (IsEqualIID(&pdidoi->guidType, &GUID_XAxis) ||
         IsEqualIID(&pdidoi->guidType, &GUID_YAxis) ||
@@ -171,7 +171,7 @@ static BOOL CALLBACK EnumJoysticks(
     LPVOID pvRef)
 {
     HRESULT hr;
-    UserData * data = (UserData *)pvRef;
+    UserData * data = pvRef;
     LPDIRECTINPUTDEVICE pJoystick;
     DIDATAFORMAT format;
     DIDEVCAPS caps;
@@ -267,7 +267,7 @@ static BOOL CALLBACK EnumJoysticks(
     info.lMin = 0;
     info.lMax = 0xffff;
     /* enumerate objects */
-    hr = IDirectInputDevice_EnumObjects(pJoystick, EnumAxes, (VOID*)&info, DIDFT_ALL);
+    hr = IDirectInputDevice_EnumObjects(pJoystick, EnumAxes, &info, DIDFT_ALL);
     ok(hr==DI_OK,"IDirectInputDevice_EnumObjects() failed: %08x\n", hr);
 
     ok(caps.dwAxes == info.axis, "Number of enumerated axes (%d) doesn't match capabilities (%d)\n", info.axis, caps.dwAxes);
@@ -280,7 +280,7 @@ static BOOL CALLBACK EnumJoysticks(
     info.lMin = -2000;
     info.lMax = +2000;
     info.dZone= 123;
-    hr = IDirectInputDevice_EnumObjects(pJoystick, EnumAxes, (VOID*)&info, DIDFT_ALL);
+    hr = IDirectInputDevice_EnumObjects(pJoystick, EnumAxes, &info, DIDFT_ALL);
     ok(hr==DI_OK,"IDirectInputDevice_EnumObjects() failed: %08x\n", hr);
 
     hr = IDirectInputDevice_GetDeviceInfo(pJoystick, 0);

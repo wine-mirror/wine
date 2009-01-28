@@ -120,7 +120,7 @@ struct enum_data
 
 static BOOL CALLBACK enum_devices(LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 {
-    struct enum_data *data = (struct enum_data*)pvRef;
+    struct enum_data *data = pvRef;
     LPDIRECTINPUTDEVICE device;
     HRESULT hr;
 
