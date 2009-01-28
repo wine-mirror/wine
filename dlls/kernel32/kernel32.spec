@@ -835,7 +835,7 @@
 @ stdcall OpenMutexA(long long str)
 @ stdcall OpenMutexW(long long wstr)
 @ stdcall OpenProcess(long long long)
-@ stub OpenProfileUserMapping
+@ stdcall OpenProfileUserMapping()
 @ stdcall OpenSemaphoreA(long long str)
 @ stdcall OpenSemaphoreW(long long wstr)
 @ stdcall OpenThread(long long long)
