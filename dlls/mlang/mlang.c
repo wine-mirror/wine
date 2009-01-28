@@ -2910,8 +2910,7 @@ static HRESULT WINAPI fnIMultiLanguage2_ValidateCodePage(
     UINT uiCodePage,
     HWND hwnd)
 {
-    FIXME("%u, %p\n", uiCodePage, hwnd);
-    return E_NOTIMPL;
+    return IMultiLanguage2_ValidateCodePageEx(iface,uiCodePage,hwnd,0);
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_GetCodePageDescription(
@@ -2989,8 +2988,28 @@ static HRESULT WINAPI fnIMultiLanguage2_ValidateCodePageEx(
     HWND hwnd,
     DWORD dwfIODControl)
 {
+    int i;
     ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage3, iface);
-    FIXME("%p %u %p %08x: stub!\n", This, uiCodePage, hwnd, dwfIODControl);
+
+    TRACE("%p %u %p %08x\n", This, uiCodePage, hwnd, dwfIODControl);
+
+    /* quick check for kernel32 supported code pages */
+    if (IsValidCodePage(uiCodePage))
+        return S_OK;
+
+    /* check for mlang supported code pages */
+    for (i = 0; i < sizeof(mlang_data)/sizeof(mlang_data[0]); i++)
+    {
+        int n;
+        for (n = 0; n < mlang_data[i].number_of_cp; n++)
+        {
+            if (mlang_data[i].mime_cp_info[n].cp == uiCodePage)
+                return S_OK;
+        }
+    }
+
+    if (dwfIODControl != CPIOD_PEEK)
+        FIXME("Request to install codepage language pack not handled\n");
 
     return S_FALSE;
 }
