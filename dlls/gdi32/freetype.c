@@ -2085,6 +2085,9 @@ static void delete_external_font_keys(void)
 INT WineEngAddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
 {
     INT ret = 0;
+
+    GDI_CheckNotLock();
+
     if (ft_handle)  /* do it only if we have freetype up and running */
     {
         char *unixname;
@@ -2119,6 +2122,8 @@ INT WineEngAddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
  */
 HANDLE WineEngAddFontMemResourceEx(PVOID pbFont, DWORD cbFont, PVOID pdv, DWORD *pcFonts)
 {
+    GDI_CheckNotLock();
+
     if (ft_handle)  /* do it only if we have freetype up and running */
     {
         PVOID pFontCopy = HeapAlloc(GetProcessHeap(), 0, cbFont);
@@ -2153,6 +2158,7 @@ HANDLE WineEngAddFontMemResourceEx(PVOID pbFont, DWORD cbFont, PVOID pdv, DWORD 
  */
 BOOL WineEngRemoveFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
 {
+    GDI_CheckNotLock();
     FIXME(":stub\n");
     return TRUE;
 }
@@ -3342,6 +3348,7 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
     TRACE("DC transform %f %f %f %f\n", dcmat.eM11, dcmat.eM12,
                                         dcmat.eM21, dcmat.eM22);
 
+    GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
 
     /* check the cache first */
@@ -3711,6 +3718,7 @@ BOOL WineEngDestroyFontInstance(HFONT handle)
     struct list *font_elem_ptr, *hfontlist_elem_ptr;
     int i = 0;
 
+    GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
 
     LIST_FOR_EACH_ENTRY(gdiFont, &child_font_list, struct tagGdiFont, entry)
@@ -3896,6 +3904,7 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
 
     TRACE("facename = %s charset %d\n", debugstr_w(plf->lfFaceName), plf->lfCharSet);
 
+    GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
     if(plf->lfFaceName[0]) {
         FontSubst *psub;
@@ -4380,6 +4389,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
           font->font_desc.matrix.eM11, font->font_desc.matrix.eM12,
           font->font_desc.matrix.eM21, font->font_desc.matrix.eM22);
 
+    GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
 
     if(format & GGO_GLYPH_INDEX) {
@@ -5226,6 +5236,7 @@ static void scale_outline_font_metrics(const GdiFont *font, OUTLINETEXTMETRICW *
  */
 BOOL WineEngGetTextMetrics(GdiFont *font, LPTEXTMETRICW ptm)
 {
+    GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
     if(!font->potm) {
         if(!WineEngGetOutlineTextMetrics(font, 0, NULL))
@@ -5270,6 +5281,7 @@ UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
     if(!FT_IS_SCALABLE(ft_face))
         return 0;
 
+    GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
 
     if(font->potm) {
@@ -5595,6 +5607,7 @@ BOOL WineEngGetCharWidth(GdiFont *font, UINT firstChar, UINT lastChar,
 
     TRACE("%p, %d, %d, %p\n", font, firstChar, lastChar, buffer);
 
+    GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
     for(c = firstChar; c <= lastChar; c++) {
         get_glyph_index_linked(font, c, &linked_font, &glyph_index);
@@ -5623,6 +5636,7 @@ BOOL WineEngGetCharABCWidths(GdiFont *font, UINT firstChar, UINT lastChar,
     if(!FT_IS_SCALABLE(font->ft_face))
         return FALSE;
 
+    GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
 
     for(c = firstChar; c <= lastChar; c++) {
@@ -5653,6 +5667,7 @@ BOOL WineEngGetCharABCWidthsI(GdiFont *font, UINT firstChar, UINT count, LPWORD 
     if(!FT_HAS_HORIZONTAL(font->ft_face))
         return FALSE;
 
+    GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
 
     get_glyph_index_linked(font, 'a', &linked_font, &glyph_index);
@@ -5696,6 +5711,7 @@ BOOL WineEngGetTextExtentExPoint(GdiFont *font, LPCWSTR wstr, INT count,
     TRACE("%p, %s, %d, %d, %p\n", font, debugstr_wn(wstr, count), count,
 	  max_ext, size);
 
+    GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
 
     size->cx = 0;
@@ -5737,6 +5753,7 @@ BOOL WineEngGetTextExtentExPointI(GdiFont *font, const WORD *indices, INT count,
 
     TRACE("%p, %p, %d, %d, %p\n", font, indices, count, max_ext, size);
 
+    GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
 
     size->cx = 0;
@@ -5837,6 +5854,7 @@ BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph)
     struct list *first_hfont;
     BOOL ret;
 
+    GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
     ret = get_glyph_index_linked(font, c, &linked_font, glyph);
     TRACE("get_glyph_index_linked glyph %d font %p\n", *glyph, linked_font);
@@ -5932,6 +5950,7 @@ DWORD WineEngGetFontUnicodeRanges(GdiFont *font, LPGLYPHSET glyphset)
 BOOL WineEngFontIsLinked(GdiFont *font)
 {
     BOOL ret;
+    GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
     ret = !list_empty(&font->child_fonts);
     LeaveCriticalSection( &freetype_cs );
@@ -6120,6 +6139,7 @@ DWORD WineEngGetKerningPairs(GdiFont *font, DWORD cPairs, KERNINGPAIR *kern_pair
     USHORT i, nTables;
     USHORT *glyph_to_char;
 
+    GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
     if (font->total_kern_pairs != (DWORD)-1)
     {

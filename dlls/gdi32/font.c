@@ -489,11 +489,7 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
     }
 
     if (GetDeviceCaps( dc->hSelf, TEXTCAPS ) & TC_VA_ABLE)
-    {
-        FONTOBJ *font = GDI_GetObjPtr( handle, OBJ_FONT ); /* to grab the GDI lock (FIXME) */
         dc->gdiFont = WineEngCreateFontInstance( dc, handle );
-        if (font) GDI_ReleaseObj( handle );
-    }
 
     if (dc->funcs->pSelectFont) ret = dc->funcs->pSelectFont( dc->physDev, handle, dc->gdiFont );
 
