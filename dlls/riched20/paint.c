@@ -74,15 +74,12 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, const RECT *
     if (!bOnlyNew || (item->member.para.nFlags & MEPF_REPAINT))
     {
       /* Draw the pargraph if any of the paragraph is in the update region. */
-      BOOL bPaint = (rcUpdate == NULL);
-      if (rcUpdate)
-        bPaint = ys < rcUpdate->bottom && ye > rcUpdate->top;
-      if (bPaint)
+      if (ys < rcUpdate->bottom && ye > rcUpdate->top)
       {
         ME_DrawParagraph(&c, item);
         /* Clear the repaint flag if the whole paragraph is in the
          * update region. */
-        if (!rcUpdate || (rcUpdate->top <= ys && rcUpdate->bottom >= ye))
+        if (rcUpdate->top <= ys && rcUpdate->bottom >= ye)
           item->member.para.nFlags &= ~MEPF_REPAINT;
       }
     }
