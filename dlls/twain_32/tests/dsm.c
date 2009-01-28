@@ -57,6 +57,92 @@ static void get_condition_code(TW_IDENTITY *appid, TW_IDENTITY *source, TW_STATU
     ok(rc == TWRC_SUCCESS, "Condition code not available, rc %d\n", rc);
 }
 
+static void test_single_source(TW_IDENTITY *appid, TW_IDENTITY *source)
+{
+    TW_UINT16 rc;
+    TW_STATUS status;
+    TW_CAPABILITY cap;
+    UINT16 capabilities[CAP_CUSTOMBASE];
+
+    memset(&cap, 0, sizeof(cap));
+    cap.Cap = CAP_SUPPORTEDCAPS;
+    cap.ConType = TWON_DONTCARE16;
+
+    rc = pDSM_Entry(appid, source, DG_CONTROL, DAT_CAPABILITY, MSG_GET, &cap);
+    get_condition_code(appid, source, &status);
+    todo_wine
+    ok(rc == TWRC_SUCCESS || status.ConditionCode == TWCC_SUCCESS,
+            "Error obtaining CAP_SUPPORTEDCAPS\n");
+
+    memset(capabilities, 0, sizeof(capabilities));
+    if (rc == TWRC_SUCCESS && cap.ConType == TWON_ARRAY)
+    {
+        TW_ARRAY *a;
+        a = GlobalLock(cap.hContainer);
+        if (a)
+        {
+            if (a->ItemType == TWTY_UINT16)
+            {
+                int i;
+                UINT16 *u = (UINT16 *) a->ItemList;
+                trace("%d Capabilities:\n", a->NumItems);
+                for (i = 0; i < a->NumItems; i++)
+                    if (u[i] < sizeof(capabilities) / sizeof(capabilities[0]))
+                    {
+                        capabilities[u[i]] = 1;
+                        trace("  %d: 0x%x\n", i, u[i]);
+                    }
+            }
+            GlobalUnlock(cap.hContainer);
+        }
+    }
+
+    /* For Twain 1.6, all sources must support: */
+    todo_wine
+    ok(capabilities[CAP_SUPPORTEDCAPS], "CAP_SUPPORTEDCAPS not supported\n");
+    todo_wine
+    ok(capabilities[CAP_XFERCOUNT], "CAP_XFERCOUNT not supported\n");
+    todo_wine
+    ok(capabilities[CAP_UICONTROLLABLE], "CAP_UICONTROLLABLE not supported\n");
+
+    if (source->SupportedGroups & DG_IMAGE)
+    {
+        /* For Twain 1.6:
+            Sources that supply image information must support DG_CONTROL / DAT_CAPABILITY /
+            MSG_GET, MSG_GETCURRENT, MSG_GETDEFAULT on:
+        */
+        todo_wine
+        ok(capabilities[ICAP_COMPRESSION], "ICAP_COMPRESSION not supported\n");
+        todo_wine
+        ok(capabilities[ICAP_PLANARCHUNKY], "ICAP_PLANARCHUNKY not supported\n");
+        todo_wine
+        ok(capabilities[ICAP_PHYSICALHEIGHT], "ICAP_PHYSICALHEIGHT not supported\n");
+        todo_wine
+        ok(capabilities[ICAP_PHYSICALWIDTH], "ICAP_PHYSICALWIDTH not supported\n");
+        todo_wine
+        ok(capabilities[ICAP_PIXELFLAVOR], "ICAP_PIXELFLAVOR not supported\n");
+
+        /* For Twain 1.6:
+            Sources that supply image information must support DG_CONTROL / DAT_CAPABILITY /
+            MSG_GET, MSG_GETCURRENT, MSG_GETDEFAULT, MSG_RESET and MSG_SET on:
+        */
+        todo_wine
+        ok(capabilities[ICAP_BITDEPTH], "ICAP_BITDEPTH not supported\n");
+        todo_wine
+        ok(capabilities[ICAP_BITORDER], "ICAP_BITORDER not supported\n");
+        todo_wine
+        ok(capabilities[ICAP_PIXELTYPE], "ICAP_PIXELTYPE not supported\n");
+        todo_wine
+        ok(capabilities[ICAP_UNITS], "ICAP_UNITS not supported\n");
+        todo_wine
+        ok(capabilities[ICAP_XFERMECH], "ICAP_XFERMECH not supported\n");
+        todo_wine
+        ok(capabilities[ICAP_XRESOLUTION], "ICAP_XRESOLUTION not supported\n");
+        todo_wine
+        ok(capabilities[ICAP_YRESOLUTION], "ICAP_YRESOLUTION not supported\n");
+    }
+}
+
 static void test_sources(TW_IDENTITY *appid)
 {
     TW_UINT16 rc;
@@ -115,6 +201,19 @@ static void test_sources(TW_IDENTITY *appid)
         rc = pDSM_Entry(appid, NULL, DG_CONTROL, DAT_IDENTITY, MSG_USERSELECT, &source);
         get_condition_code(appid, NULL, &status);
         ok(rc == TWRC_SUCCESS || rc == TWRC_CANCEL, "Userselect failed, rc %d, cc %d\n", rc, status.ConditionCode);
+
+        if (rc == TWRC_SUCCESS && status.ConditionCode == TWCC_SUCCESS)
+        {
+            rc = pDSM_Entry(appid, NULL, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, &source);
+            get_condition_code(appid, NULL, &status);
+            if (rc == TWRC_SUCCESS && status.ConditionCode == TWCC_SUCCESS)
+            {
+                test_single_source(appid, &source);
+                rc = pDSM_Entry(appid, NULL, DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, &source);
+                get_condition_code(appid, NULL, &status);
+                ok(rc == TWRC_SUCCESS, "Close DS Failed, rc %d, cc %d\n", rc, status.ConditionCode);
+            }
+        }
     }
 
 }
