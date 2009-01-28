@@ -82,6 +82,8 @@ static void test_ParseDisplayName(void)
     IShellFolder *IDesktopFolder;
     static const char *cNonExistDir1A = "c:\\nonexist_subdir";
     static const char *cNonExistDir2A = "c:\\\\nonexist_subdir";
+    static const char *cInetTestA = "http:\\yyy";
+    static const char *cInetTest2A = "xx:yyy";
     DWORD res;
     WCHAR cTestDirW [MAX_PATH] = {0};
     ITEMIDLIST *newPIDL;
@@ -89,6 +91,30 @@ static void test_ParseDisplayName(void)
 
     hr = SHGetDesktopFolder(&IDesktopFolder);
     if(hr != S_OK) return;
+
+    MultiByteToWideChar(CP_ACP, 0, cInetTestA, -1, cTestDirW, MAX_PATH);
+    hr = IShellFolder_ParseDisplayName(IDesktopFolder,
+        NULL, NULL, cTestDirW, NULL, &newPIDL, 0);
+    todo_wine ok((SUCCEEDED(hr) || broken(hr == E_FAIL) /* NT4 */),
+        "ParseDisplayName returned %08x, expected SUCCESS or E_FAIL \n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(pILFindLastID(newPIDL)->mkid.abID[0] == 0x61, "Last pidl should be of type "
+           "PT_IESPECIAL1, but is: %02x\n", pILFindLastID(newPIDL)->mkid.abID[0]);
+        IMalloc_Free(ppM, newPIDL);
+    }
+
+    MultiByteToWideChar(CP_ACP, 0, cInetTest2A, -1, cTestDirW, MAX_PATH);
+    hr = IShellFolder_ParseDisplayName(IDesktopFolder,
+        NULL, NULL, cTestDirW, NULL, &newPIDL, 0);
+    todo_wine ok((SUCCEEDED(hr) || broken(hr == E_FAIL) /* NT4 */),
+        "ParseDisplayName returned %08x, expected SUCCESS or E_FAIL \n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(pILFindLastID(newPIDL)->mkid.abID[0] == 0x61, "Last pidl should be of type "
+           "PT_IESPECIAL1, but is: %02x\n", pILFindLastID(newPIDL)->mkid.abID[0]);
+        IMalloc_Free(ppM, newPIDL);
+    }
 
     res = GetFileAttributesA(cNonExistDir1A);
     if(res != INVALID_FILE_ATTRIBUTES) return;
