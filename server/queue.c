@@ -1720,7 +1720,7 @@ DECL_HANDLER(send_hardware_message)
 
     if (!(data = mem_alloc( sizeof(*data) )))
     {
-        release_object( thread );
+        if (thread) release_object( thread );
         return;
     }
     memset( data, 0, sizeof(*data) );
