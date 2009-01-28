@@ -615,6 +615,7 @@ SANE_GetIdentity( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
 	return TWRC_FAILURE;
     self->ProtocolMajor = TWON_PROTOCOLMAJOR;
     self->ProtocolMinor = TWON_PROTOCOLMINOR;
+    self->SupportedGroups = DG_CONTROL | DG_IMAGE;
     copy_sane_short_name(sane_devlist[cursanedev]->name, self->ProductName, sizeof(self->ProductName) - 1);
     lstrcpynA (self->Manufacturer, sane_devlist[cursanedev]->vendor, sizeof(self->Manufacturer) - 1);
     lstrcpynA (self->ProductFamily, sane_devlist[cursanedev]->model, sizeof(self->ProductFamily) - 1);
