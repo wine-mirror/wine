@@ -235,7 +235,7 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
             dwRop == SRCCOPY)
         {
             BITMAPOBJ *bmp;
-            if ((bmp = GDI_GetObjPtr( hBitmap, BITMAP_MAGIC )))
+            if ((bmp = GDI_GetObjPtr( hBitmap, OBJ_BITMAP )))
             {
                 if (bmp->bitmap.bmBitsPixel == bpp &&
                     bmp->bitmap.bmWidth == widthSrc &&
@@ -344,7 +344,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 
     update_dc( dc );
 
-    if (!(bitmap = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
+    if (!(bitmap = GDI_GetObjPtr( hbitmap, OBJ_BITMAP )))
     {
         release_dc_ptr( dc );
         return 0;
@@ -411,7 +411,7 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, CONST RGBQUA
 
     if (!(dc = get_dc_ptr( hdc ))) return 0;
 
-    if ((bitmap = GDI_GetObjPtr( dc->hBitmap, BITMAP_MAGIC )))
+    if ((bitmap = GDI_GetObjPtr( dc->hBitmap, OBJ_BITMAP )))
     {
         /* Check if currently selected bitmap is a DIB */
         if (bitmap->color_table)
@@ -448,7 +448,7 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries, RGBQUAD *col
         result = dc->funcs->pGetDIBColorTable(dc->physDev, startpos, entries, colors);
     else
     {
-        BITMAPOBJ *bitmap = GDI_GetObjPtr( dc->hBitmap, BITMAP_MAGIC );
+        BITMAPOBJ *bitmap = GDI_GetObjPtr( dc->hBitmap, OBJ_BITMAP );
         if (bitmap)
         {
             /* Check if currently selected bitmap is a DIB */
@@ -609,7 +609,7 @@ INT WINAPI GetDIBits(
         return 0;
     }
     update_dc( dc );
-    if (!(bmp = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
+    if (!(bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP )))
     {
         release_dc_ptr( dc );
 	return 0;
@@ -1153,7 +1153,7 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, const BITMAPINFO *bmi, UINT16 us
     hbitmap = CreateDIBSection( HDC_32(hdc), bmi, usage, &bits32, section, offset );
     if (hbitmap)
     {
-        BITMAPOBJ *bmp = GDI_GetObjPtr(hbitmap, BITMAP_MAGIC);
+        BITMAPOBJ *bmp = GDI_GetObjPtr(hbitmap, OBJ_BITMAP);
         if (bmp && bmp->dib && bits32)
         {
             const BITMAPINFOHEADER *bi = &bmi->bmiHeader;
@@ -1385,7 +1385,7 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
     ret = CreateBitmap( dib->dsBm.bmWidth, dib->dsBm.bmHeight, 1,
                         (bpp == 1) ? 1 : GetDeviceCaps(hdc, BITSPIXEL), NULL );
 
-    if (ret && ((bmp = GDI_GetObjPtr(ret, BITMAP_MAGIC))))
+    if (ret && ((bmp = GDI_GetObjPtr(ret, OBJ_BITMAP))))
     {
         bmp->dib = dib;
         bmp->funcs = dc->funcs;

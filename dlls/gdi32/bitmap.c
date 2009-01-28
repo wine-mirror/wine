@@ -281,8 +281,7 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
     }
 
       /* Create the BITMAPOBJ */
-    bmpobj = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC,
-                              (HGDIOBJ *)&hbitmap, &bitmap_funcs );
+    bmpobj = GDI_AllocObject( sizeof(BITMAPOBJ), OBJ_BITMAP, (HGDIOBJ *)&hbitmap, &bitmap_funcs );
 
     if (!bmpobj)
     {
@@ -325,7 +324,7 @@ LONG WINAPI GetBitmapBits(
     LONG count,        /* [in]  Number of bytes to copy */
     LPVOID bits)       /* [out] Pointer to buffer to receive bits */
 {
-    BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
+    BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
     LONG height, ret;
 
     if (!bmp) return 0;
@@ -436,7 +435,7 @@ LONG WINAPI SetBitmapBits(
     LONG count,        /* [in] Number of bytes in bitmap array */
     LPCVOID bits)      /* [in] Address of array with bitmap bits */
 {
-    BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
+    BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
     LONG height, ret;
 
     if ((!bmp) || (!bits))
@@ -540,7 +539,7 @@ BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, DC *dc )
     /* never set the owner of the stock bitmap since it can be selected in multiple DCs */
     if (hbitmap == GetStockObject(DEFAULT_BITMAP)) return TRUE;
 
-    if (!(bitmap = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC ))) return FALSE;
+    if (!(bitmap = GDI_GetObjPtr( hbitmap, OBJ_BITMAP ))) return FALSE;
 
     ret = TRUE;
     if (!bitmap->funcs)  /* not owned by a DC yet */
@@ -578,7 +577,7 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
     ret = dc->hBitmap;
     if (handle == dc->hBitmap) goto done;  /* nothing to do */
 
-    if (!(bitmap = GDI_GetObjPtr( handle, BITMAP_MAGIC )))
+    if (!(bitmap = GDI_GetObjPtr( handle, OBJ_BITMAP )))
     {
         ret = 0;
         goto done;
@@ -626,7 +625,7 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
  */
 static BOOL BITMAP_DeleteObject( HGDIOBJ handle )
 {
-    BITMAPOBJ *bmp = GDI_GetObjPtr( handle, BITMAP_MAGIC );
+    BITMAPOBJ *bmp = GDI_GetObjPtr( handle, OBJ_BITMAP );
 
     if (!bmp) return FALSE;
 
@@ -673,7 +672,7 @@ static BOOL BITMAP_DeleteObject( HGDIOBJ handle )
 static INT BITMAP_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
 {
     INT ret;
-    BITMAPOBJ *bmp = GDI_GetObjPtr( handle, BITMAP_MAGIC );
+    BITMAPOBJ *bmp = GDI_GetObjPtr( handle, OBJ_BITMAP );
 
     if (!bmp) return 0;
 
@@ -735,7 +734,7 @@ BOOL WINAPI GetBitmapDimensionEx(
     HBITMAP hbitmap, /* [in]  Handle to bitmap */
     LPSIZE size)     /* [out] Address of struct receiving dimensions */
 {
-    BITMAPOBJ * bmp = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
+    BITMAPOBJ * bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
     if (!bmp) return FALSE;
     *size = bmp->size;
     GDI_ReleaseObj( hbitmap );
@@ -760,7 +759,7 @@ BOOL WINAPI SetBitmapDimensionEx(
     INT y,           /* [in]  Bitmap height */
     LPSIZE prevSize) /* [out] Address of structure for orig dims */
 {
-    BITMAPOBJ * bmp = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
+    BITMAPOBJ * bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
     if (!bmp) return FALSE;
     if (prevSize) *prevSize = bmp->size;
     bmp->size.cx = x;

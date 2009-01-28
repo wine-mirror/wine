@@ -261,9 +261,7 @@ HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk )
         return 0;
     }
 
-    metaObj = GDI_AllocObject( sizeof(ENHMETAFILEOBJ),
-                               ENHMETAFILE_MAGIC,
-                               (HGDIOBJ *)&hmf, NULL );
+    metaObj = GDI_AllocObject( sizeof(ENHMETAFILEOBJ), OBJ_ENHMETAFILE, (HGDIOBJ *)&hmf, NULL );
     if (metaObj)
     {
         metaObj->emh = emh;
@@ -278,7 +276,7 @@ HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk )
  */
 static BOOL EMF_Delete_HENHMETAFILE( HENHMETAFILE hmf )
 {
-    ENHMETAFILEOBJ *metaObj = GDI_GetObjPtr( hmf, ENHMETAFILE_MAGIC );
+    ENHMETAFILEOBJ *metaObj = GDI_GetObjPtr( hmf, OBJ_ENHMETAFILE );
 
     if(!metaObj) return FALSE;
 
@@ -297,7 +295,7 @@ static BOOL EMF_Delete_HENHMETAFILE( HENHMETAFILE hmf )
 static ENHMETAHEADER *EMF_GetEnhMetaHeader( HENHMETAFILE hmf )
 {
     ENHMETAHEADER *ret = NULL;
-    ENHMETAFILEOBJ *metaObj = GDI_GetObjPtr( hmf, ENHMETAFILE_MAGIC );
+    ENHMETAFILEOBJ *metaObj = GDI_GetObjPtr( hmf, OBJ_ENHMETAFILE );
     TRACE("hmf %p -> enhmetaObj %p\n", hmf, metaObj);
     if (metaObj)
     {

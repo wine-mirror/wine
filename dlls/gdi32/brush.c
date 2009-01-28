@@ -104,8 +104,8 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
     BRUSHOBJ * ptr;
     HBRUSH hbrush;
 
-    if (!(ptr = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC,
-                                (HGDIOBJ *)&hbrush, &brush_funcs ))) return 0;
+    if (!(ptr = GDI_AllocObject( sizeof(BRUSHOBJ), OBJ_BRUSH, (HGDIOBJ *)&hbrush, &brush_funcs )))
+        return 0;
     ptr->logbrush.lbStyle = brush->lbStyle;
     ptr->logbrush.lbColor = brush->lbColor;
     ptr->logbrush.lbHatch = brush->lbHatch;
@@ -378,7 +378,7 @@ static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
         return 0;
     }
 
-    if ((brush = GDI_GetObjPtr( handle, BRUSH_MAGIC )))
+    if ((brush = GDI_GetObjPtr( handle, OBJ_BRUSH )))
     {
         if (brush->logbrush.lbStyle == BS_PATTERN)
             BITMAP_SetOwnerDC( (HBITMAP)brush->logbrush.lbHatch, dc );
@@ -407,7 +407,7 @@ static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
  */
 static BOOL BRUSH_DeleteObject( HGDIOBJ handle )
 {
-    BRUSHOBJ *brush = GDI_GetObjPtr( handle, BRUSH_MAGIC );
+    BRUSHOBJ *brush = GDI_GetObjPtr( handle, OBJ_BRUSH );
 
     if (!brush) return FALSE;
     switch(brush->logbrush.lbStyle)
@@ -428,7 +428,7 @@ static BOOL BRUSH_DeleteObject( HGDIOBJ handle )
  */
 static INT BRUSH_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
 {
-    BRUSHOBJ *brush = GDI_GetObjPtr( handle, BRUSH_MAGIC );
+    BRUSHOBJ *brush = GDI_GetObjPtr( handle, OBJ_BRUSH );
 
     if (!brush) return 0;
     if (buffer)
@@ -465,7 +465,7 @@ BOOL16 WINAPI SetSolidBrush16(HBRUSH16 hBrush, COLORREF newColor )
     BOOL16 res = FALSE;
 
     TRACE("(hBrush %04x, newColor %08x)\n", hBrush, newColor);
-    if (!(brushPtr = GDI_GetObjPtr( HBRUSH_32(hBrush), BRUSH_MAGIC )))
+    if (!(brushPtr = GDI_GetObjPtr( HBRUSH_32(hBrush), OBJ_BRUSH )))
 	return FALSE;
 
     if (brushPtr->logbrush.lbStyle == BS_SOLID)

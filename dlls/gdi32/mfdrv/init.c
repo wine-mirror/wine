@@ -166,7 +166,7 @@ static DC *MFDRV_AllocMetaFile(void)
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
 
-    if (!(dc = alloc_dc_ptr( &MFDRV_Funcs, METAFILE_DC_MAGIC ))) return NULL;
+    if (!(dc = alloc_dc_ptr( &MFDRV_Funcs, OBJ_METADC ))) return NULL;
 
     physDev = HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
     if (!physDev)
@@ -308,7 +308,7 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
     TRACE("(%p)\n", hdc );
 
     if (!(dc = get_dc_ptr( hdc ))) return NULL;
-    if (GDIMAGIC(dc->header.wMagic) != METAFILE_DC_MAGIC)
+    if (dc->header.type != OBJ_METADC)
     {
         release_dc_ptr( dc );
         return NULL;

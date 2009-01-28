@@ -53,13 +53,13 @@ static const struct gdi_obj_funcs dc_funcs =
 
 static inline DC *get_dc_obj( HDC hdc )
 {
-    DC *dc = GDI_GetObjPtr( hdc, MAGIC_DONTCARE );
+    DC *dc = GDI_GetObjPtr( hdc, 0 );
     if (!dc) return NULL;
 
-    if ((GDIMAGIC(dc->header.wMagic) != DC_MAGIC) &&
-        (GDIMAGIC(dc->header.wMagic) != MEMORY_DC_MAGIC) &&
-        (GDIMAGIC(dc->header.wMagic) != METAFILE_DC_MAGIC) &&
-        (GDIMAGIC(dc->header.wMagic) != ENHMETAFILE_DC_MAGIC))
+    if ((dc->header.type != OBJ_DC) &&
+        (dc->header.type != OBJ_MEMDC) &&
+        (dc->header.type != OBJ_METADC) &&
+        (dc->header.type != OBJ_ENHMETADC))
     {
         GDI_ReleaseObj( hdc );
         SetLastError( ERROR_INVALID_HANDLE );
@@ -161,7 +161,7 @@ BOOL free_dc_ptr( DC *dc )
 {
     assert( dc->refcount == 1 );
     /* grab the gdi lock again */
-    if (!GDI_GetObjPtr( dc->hSelf, MAGIC_DONTCARE )) return FALSE;  /* shouldn't happen */
+    if (!GDI_GetObjPtr( dc->hSelf, 0 )) return FALSE;  /* shouldn't happen */
     return GDI_FreeObject( dc->hSelf, dc );
 }
 
@@ -332,7 +332,7 @@ static HDC GetDCState( HDC hdc )
     HGDIOBJ handle;
 
     if (!(dc = get_dc_ptr( hdc ))) return 0;
-    if (!(newdc = GDI_AllocObject( sizeof(DC), GDIMAGIC(dc->header.wMagic), &handle, &dc_funcs )))
+    if (!(newdc = GDI_AllocObject( sizeof(DC), dc->header.type, &handle, &dc_funcs )))
     {
       release_dc_ptr( dc );
       return 0;
@@ -673,7 +673,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         ERR( "no driver found for %s\n", debugstr_w(buf) );
         return 0;
     }
-    if (!(dc = alloc_dc_ptr( funcs, DC_MAGIC ))) goto error;
+    if (!(dc = alloc_dc_ptr( funcs, OBJ_DC ))) goto error;
     hdc = dc->hSelf;
 
     dc->hBitmap = GetStockObject( DEFAULT_BITMAP );
@@ -789,7 +789,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
 
     if (!funcs && !(funcs = DRIVER_load_driver( displayW ))) return 0;
 
-    if (!(dc = alloc_dc_ptr( funcs, MEMORY_DC_MAGIC ))) goto error;
+    if (!(dc = alloc_dc_ptr( funcs, OBJ_MEMDC ))) goto error;
 
     TRACE("(%p): returning %p\n", hdc, dc->hSelf );
 

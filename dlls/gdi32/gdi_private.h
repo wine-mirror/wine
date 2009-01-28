@@ -42,33 +42,6 @@ typedef struct {
 /* extra stock object: default 1x1 bitmap for memory DCs */
 #define DEFAULT_BITMAP (STOCK_LAST+1)
 
-  /* GDI objects magic numbers */
-#define FIRST_MAGIC           0x4f47
-#define PEN_MAGIC             0x4f47
-#define BRUSH_MAGIC           0x4f48
-#define FONT_MAGIC            0x4f49
-#define PALETTE_MAGIC         0x4f4a
-#define BITMAP_MAGIC          0x4f4b
-#define REGION_MAGIC          0x4f4c
-#define DC_MAGIC              0x4f4d
-#define DISABLED_DC_MAGIC     0x4f4e
-#define META_DC_MAGIC         0x4f4f
-#define METAFILE_MAGIC        0x4f50
-#define METAFILE_DC_MAGIC     0x4f51
-#define ENHMETAFILE_MAGIC     0x4f52
-#define ENHMETAFILE_DC_MAGIC  0x4f53
-#define MEMORY_DC_MAGIC       0x4f54
-#define EXT_PEN_MAGIC         0x4f55
-#define LAST_MAGIC            0x4f55
-
-#define MAGIC_DONTCARE	      0xffff
-
-/* GDI constants for making objects private/system (naming undoc. !) */
-#define OBJECT_PRIVATE        0x2000
-#define OBJECT_NOSYSTEM       0x8000
-
-#define GDIMAGIC(magic) ((magic) & ~(OBJECT_PRIVATE|OBJECT_NOSYSTEM))
-
 struct gdi_obj_funcs
 {
     HGDIOBJ (*pSelectObject)( HGDIOBJ handle, HDC hdc );
@@ -86,7 +59,8 @@ struct hdc_list
 
 typedef struct tagGDIOBJHDR
 {
-    WORD        wMagic;
+    WORD        type;
+    WORD        system : 1;
     DWORD       dwCount;
     const struct gdi_obj_funcs *funcs;
     struct hdc_list *hdcs;

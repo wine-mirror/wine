@@ -87,8 +87,7 @@ HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
         if (hpen) return hpen;
     }
 
-    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, (HGDIOBJ *)&hpen,
-				    &pen_funcs ))) return 0;
+    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), OBJ_PEN, (HGDIOBJ *)&hpen, &pen_funcs ))) return 0;
     if (pen->lopnStyle == PS_USERSTYLE || pen->lopnStyle == PS_ALTERNATE)
         penPtr->logpen.elpPenStyle = PS_SOLID;
     else
@@ -199,8 +198,7 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
 
     if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ) +
                                     style_count * sizeof(DWORD) - sizeof(penPtr->logpen.elpStyleEntry),
-                                    EXT_PEN_MAGIC, (HGDIOBJ *)&hpen,
-				    &pen_funcs ))) return 0;
+                                    OBJ_EXTPEN, (HGDIOBJ *)&hpen, &pen_funcs ))) return 0;
 
     penPtr->logpen.elpPenStyle = style;
     penPtr->logpen.elpWidth = abs(width);
@@ -256,7 +254,7 @@ static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc )
  */
 static BOOL PEN_DeleteObject( HGDIOBJ handle )
 {
-    PENOBJ *pen = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
+    PENOBJ *pen = GDI_GetObjPtr( handle, 0 );
 
     if (!pen) return FALSE;
     return GDI_FreeObject( handle, pen );
@@ -268,14 +266,14 @@ static BOOL PEN_DeleteObject( HGDIOBJ handle )
  */
 static INT PEN_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
 {
-    PENOBJ *pen = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
+    PENOBJ *pen = GDI_GetObjPtr( handle, 0 );
     INT ret = 0;
 
     if (!pen) return 0;
 
-    switch (GDIMAGIC(pen->header.wMagic))
+    switch (pen->header.type)
     {
-    case PEN_MAGIC:
+    case OBJ_PEN:
     {
         LOGPEN *lp;
 
@@ -300,7 +298,7 @@ static INT PEN_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
         break;
     }
 
-    case EXT_PEN_MAGIC:
+    case OBJ_EXTPEN:
         ret = sizeof(EXTLOGPEN) + pen->logpen.elpNumEntries * sizeof(DWORD) - sizeof(pen->logpen.elpStyleEntry);
         if (buffer)
         {

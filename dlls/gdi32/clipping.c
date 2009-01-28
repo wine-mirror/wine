@@ -85,7 +85,7 @@ static inline void create_default_clip_region( DC * dc )
 {
     UINT width, height;
 
-    if (GDIMAGIC( dc->header.wMagic ) == MEMORY_DC_MAGIC)
+    if (dc->header.type == OBJ_MEMDC)
     {
         BITMAP bitmap;
 

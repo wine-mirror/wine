@@ -345,8 +345,8 @@ HFONT WINAPI CreateFontIndirectW( const LOGFONTW *plf )
 
     if (!plf) return 0;
 
-    if (!(fontPtr = GDI_AllocObject( sizeof(FONTOBJ), FONT_MAGIC, (HGDIOBJ *)&hFont,
-                                     &font_funcs ))) return 0;
+    if (!(fontPtr = GDI_AllocObject( sizeof(FONTOBJ), OBJ_FONT, (HGDIOBJ *)&hFont, &font_funcs )))
+        return 0;
 
     fontPtr->logfont = *plf;
 
@@ -486,7 +486,7 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
 
     if (GetDeviceCaps( dc->hSelf, TEXTCAPS ) & TC_VA_ABLE)
     {
-        FONTOBJ *font = GDI_GetObjPtr( handle, FONT_MAGIC ); /* to grab the GDI lock (FIXME) */
+        FONTOBJ *font = GDI_GetObjPtr( handle, OBJ_FONT ); /* to grab the GDI lock (FIXME) */
         dc->gdiFont = WineEngCreateFontInstance( dc, handle );
         if (font) GDI_ReleaseObj( handle );
     }
@@ -516,7 +516,7 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
  */
 static INT FONT_GetObjectA( HGDIOBJ handle, INT count, LPVOID buffer )
 {
-    FONTOBJ *font = GDI_GetObjPtr( handle, FONT_MAGIC );
+    FONTOBJ *font = GDI_GetObjPtr( handle, OBJ_FONT );
     LOGFONTA lfA;
 
     if (!font) return 0;
@@ -536,7 +536,7 @@ static INT FONT_GetObjectA( HGDIOBJ handle, INT count, LPVOID buffer )
  */
 static INT FONT_GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer )
 {
-    FONTOBJ *font = GDI_GetObjPtr( handle, FONT_MAGIC );
+    FONTOBJ *font = GDI_GetObjPtr( handle, OBJ_FONT );
 
     if (!font) return 0;
     if (buffer)
@@ -555,7 +555,7 @@ static INT FONT_GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer )
  */
 static BOOL FONT_DeleteObject( HGDIOBJ handle )
 {
-    FONTOBJ *obj = GDI_GetObjPtr( handle, FONT_MAGIC ); /* to grab the GDI lock (FIXME) */
+    FONTOBJ *obj = GDI_GetObjPtr( handle, OBJ_FONT ); /* to grab the GDI lock (FIXME) */
     if (!obj) return FALSE;
     WineEngDestroyFontInstance( handle );
     return GDI_FreeObject( handle, obj );
@@ -838,7 +838,7 @@ INT WINAPI GetTextFaceW( HDC hdc, INT count, LPWSTR name )
 
     if(dc->gdiFont)
         ret = WineEngGetTextFace(dc->gdiFont, count, name);
-    else if ((font = GDI_GetObjPtr( dc->hFont, FONT_MAGIC )))
+    else if ((font = GDI_GetObjPtr( dc->hFont, OBJ_FONT )))
     {
         INT n = strlenW(font->logfont.lfFaceName) + 1;
         if (name)

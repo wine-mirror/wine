@@ -444,14 +444,8 @@ static const struct DefaultFontInfo default_fonts[] =
  */
 void CDECL __wine_make_gdi_object_system( HGDIOBJ handle, BOOL set)
 {
-    GDIOBJHDR *ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
-
-    /* touch the "system" bit of the wMagic field of a GDIOBJHDR */
-    if (set)
-        ptr->wMagic &= ~OBJECT_NOSYSTEM;
-    else
-        ptr->wMagic |= OBJECT_NOSYSTEM;
-
+    GDIOBJHDR *ptr = GDI_GetObjPtr( handle, 0 );
+    ptr->system = !!set;
     GDI_ReleaseObj( handle );
 }
 
@@ -532,7 +526,7 @@ BOOL GDI_inc_ref_count( HGDIOBJ handle )
 {
     GDIOBJHDR *header;
 
-    if ((header = GDI_GetObjPtr( handle, MAGIC_DONTCARE )))
+    if ((header = GDI_GetObjPtr( handle, 0 )))
     {
         header->dwCount++;
         GDI_ReleaseObj( handle );
@@ -550,7 +544,7 @@ BOOL GDI_dec_ref_count( HGDIOBJ handle )
 {
     GDIOBJHDR *header;
 
-    if ((header = GDI_GetObjPtr( handle, MAGIC_DONTCARE )))
+    if ((header = GDI_GetObjPtr( handle, 0 )))
     {
         if (header->dwCount) header->dwCount--;
         if (header->dwCount != 0x80000000) GDI_ReleaseObj( handle );
@@ -666,14 +660,15 @@ static inline GDIOBJHDR *alloc_large_heap( WORD size, HGDIOBJ *handle )
 /***********************************************************************
  *           GDI_AllocObject
  */
-void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle, const struct gdi_obj_funcs *funcs )
+void *GDI_AllocObject( WORD size, WORD type, HGDIOBJ *handle, const struct gdi_obj_funcs *funcs )
 {
     GDIOBJHDR *obj = NULL;
 
     _EnterSysLevel( &GDI_level );
     if (!(obj = alloc_large_heap( size, handle ))) goto error;
 
-    obj->wMagic  = magic|OBJECT_NOSYSTEM;
+    obj->type    = type;
+    obj->system  = 0;
     obj->dwCount = 0;
     obj->funcs   = funcs;
     obj->hdcs    = NULL;
@@ -723,8 +718,8 @@ BOOL GDI_FreeObject( HGDIOBJ handle, void *ptr )
     GDIOBJHDR *object = ptr;
     int i;
 
-    object->wMagic = 0;  /* Mark it as invalid */
-    object->funcs  = NULL;
+    object->type  = 0;  /* Mark it as invalid */
+    object->funcs = NULL;
     i = ((ULONG_PTR)handle >> 2) - FIRST_LARGE_HANDLE;
     if (i >= 0 && i < MAX_LARGE_HANDLES)
     {
@@ -745,7 +740,7 @@ BOOL GDI_FreeObject( HGDIOBJ handle, void *ptr )
  * Return NULL if the object has the wrong magic number.
  * The object must be released with GDI_ReleaseObj.
  */
-void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
+void *GDI_GetObjPtr( HGDIOBJ handle, WORD type )
 {
     GDIOBJHDR *ptr = NULL;
     int i;
@@ -756,7 +751,7 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
     if (i >= 0 && i < MAX_LARGE_HANDLES)
     {
         ptr = large_handles[i];
-        if (ptr && (magic != MAGIC_DONTCARE) && (GDIMAGIC(ptr->wMagic) != magic)) ptr = NULL;
+        if (ptr && type && ptr->type != type) ptr = NULL;
     }
 
     if (!ptr)
@@ -814,10 +809,9 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 
     if (HIWORD(obj)) return FALSE;
 
-    if (!(header = GDI_GetObjPtr( obj, MAGIC_DONTCARE ))) return FALSE;
+    if (!(header = GDI_GetObjPtr( obj, 0 ))) return FALSE;
 
-    if (!(header->wMagic & OBJECT_NOSYSTEM)
-    &&   (header->wMagic >= FIRST_MAGIC) && (header->wMagic <= LAST_MAGIC))
+    if (header->system)
     {
 	TRACE("Preserving system object %p\n", obj);
         GDI_ReleaseObj( obj );
@@ -837,7 +831,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
             {
                 GDI_ReleaseObj( obj );  /* release the GDI lock */
                 dc->funcs->pDeleteObject( dc->physDev, obj );
-                header = GDI_GetObjPtr( obj, MAGIC_DONTCARE );  /* and grab it again */
+                header = GDI_GetObjPtr( obj, 0 );  /* and grab it again */
             }
             release_dc_ptr( dc );
         }
@@ -877,10 +871,9 @@ BOOL GDI_hdc_using_object(HGDIOBJ obj, HDC hdc)
 
     TRACE("obj %p hdc %p\n", obj, hdc);
 
-    if (!(header = GDI_GetObjPtr( obj, MAGIC_DONTCARE ))) return FALSE;
+    if (!(header = GDI_GetObjPtr( obj, 0 ))) return FALSE;
 
-    if (!(header->wMagic & OBJECT_NOSYSTEM) &&
-         (header->wMagic >= FIRST_MAGIC) && (header->wMagic <= LAST_MAGIC))
+    if (header->system)
     {
         GDI_ReleaseObj(obj);
         return FALSE;
@@ -911,10 +904,9 @@ BOOL GDI_hdc_not_using_object(HGDIOBJ obj, HDC hdc)
 
     TRACE("obj %p hdc %p\n", obj, hdc);
 
-    if (!(header = GDI_GetObjPtr( obj, MAGIC_DONTCARE ))) return FALSE;
+    if (!(header = GDI_GetObjPtr( obj, 0 ))) return FALSE;
 
-    if (!(header->wMagic & OBJECT_NOSYSTEM) &&
-         (header->wMagic >= FIRST_MAGIC) && (header->wMagic <= LAST_MAGIC))
+    if (header->system)
     {
         GDI_ReleaseObj(obj);
         return FALSE;
@@ -962,7 +954,7 @@ INT WINAPI GetObjectA( HGDIOBJ handle, INT count, LPVOID buffer )
 
     TRACE("%p %d %p\n", handle, count, buffer );
 
-    if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
+    if (!(ptr = GDI_GetObjPtr( handle, 0 ))) return 0;
     funcs = ptr->funcs;
     GDI_ReleaseObj( handle );
 
@@ -984,7 +976,7 @@ INT WINAPI GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer )
     INT result = 0;
     TRACE("%p %d %p\n", handle, count, buffer );
 
-    if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
+    if (!(ptr = GDI_GetObjPtr( handle, 0 ))) return 0;
     funcs = ptr->funcs;
     GDI_ReleaseObj( handle );
 
@@ -1002,64 +994,16 @@ INT WINAPI GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer )
 DWORD WINAPI GetObjectType( HGDIOBJ handle )
 {
     GDIOBJHDR * ptr;
-    INT result = 0;
-    TRACE("%p\n", handle );
+    DWORD result;
 
-    if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE )))
+    if (!(ptr = GDI_GetObjPtr( handle, 0 )))
     {
         SetLastError( ERROR_INVALID_HANDLE );
         return 0;
     }
-
-    switch(GDIMAGIC(ptr->wMagic))
-    {
-      case PEN_MAGIC:
-	  result = OBJ_PEN;
-	  break;
-      case EXT_PEN_MAGIC:
-	  result = OBJ_EXTPEN;
-	  break;
-      case BRUSH_MAGIC:
-	  result = OBJ_BRUSH;
-	  break;
-      case BITMAP_MAGIC:
-	  result = OBJ_BITMAP;
-	  break;
-      case FONT_MAGIC:
-	  result = OBJ_FONT;
-	  break;
-      case PALETTE_MAGIC:
-	  result = OBJ_PAL;
-	  break;
-      case REGION_MAGIC:
-	  result = OBJ_REGION;
-	  break;
-      case DC_MAGIC:
-	  result = OBJ_DC;
-	  break;
-      case META_DC_MAGIC:
-	  result = OBJ_METADC;
-	  break;
-      case METAFILE_MAGIC:
-	  result = OBJ_METAFILE;
-	  break;
-      case METAFILE_DC_MAGIC:
-	  result = OBJ_METADC;
-	  break;
-      case ENHMETAFILE_MAGIC:
-	  result = OBJ_ENHMETAFILE;
-	  break;
-      case ENHMETAFILE_DC_MAGIC:
-	  result = OBJ_ENHMETADC;
-	  break;
-      case MEMORY_DC_MAGIC:
-	  result = OBJ_MEMDC;
-	  break;
-      default:
-	  FIXME("Magic %04x not implemented\n", GDIMAGIC(ptr->wMagic) );
-	  break;
-    }
+    result = ptr->type;
     GDI_ReleaseObj( handle );
+    TRACE("%p -> %u\n", handle, result );
     return result;
 }
 
@@ -1134,7 +1078,7 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ hObj )
 
     TRACE( "(%p,%p)\n", hdc, hObj );
 
-    header = GDI_GetObjPtr( hObj, MAGIC_DONTCARE );
+    header = GDI_GetObjPtr( hObj, 0 );
     if (header)
     {
         const struct gdi_obj_funcs *funcs = header->funcs;
@@ -1151,7 +1095,7 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ hObj )
 BOOL WINAPI UnrealizeObject( HGDIOBJ obj )
 {
     BOOL result = FALSE;
-    GDIOBJHDR * header = GDI_GetObjPtr( obj, MAGIC_DONTCARE );
+    GDIOBJHDR * header = GDI_GetObjPtr( obj, 0 );
 
     if (header)
     {
@@ -1259,21 +1203,10 @@ void WINAPI SetObjectOwner( HGDIOBJ handle, HANDLE owner )
  * What does that mean ?
  * Some little docu can be found in "Undocumented Windows",
  * but this is basically useless.
- * At least we know that this flags the GDI object's wMagic
- * with 0x2000 (OBJECT_PRIVATE), so we just do it.
- * But Wine doesn't react on that yet.
  */
 void WINAPI MakeObjectPrivate16( HGDIOBJ16 handle16, BOOL16 private )
 {
-    HGDIOBJ handle = HGDIOBJ_32( handle16 );
-    GDIOBJHDR *ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
-    if (!ptr)
-    {
-	ERR("invalid GDI object %p !\n", handle);
-	return;
-    }
-    ptr->wMagic |= OBJECT_PRIVATE;
-    GDI_ReleaseObj( handle );
+    FIXME( "stub: %x %u\n", handle16, private );
 }
 
 

@@ -108,8 +108,7 @@ static int MF_AddHandle(HANDLETABLE *ht, UINT htlen, HGDIOBJ hobj)
 HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh)
 {
     HMETAFILE hmf = 0;
-    METAFILEOBJ *metaObj = GDI_AllocObject( sizeof(METAFILEOBJ), METAFILE_MAGIC,
-					    (HGDIOBJ *)&hmf, NULL );
+    METAFILEOBJ *metaObj = GDI_AllocObject( sizeof(METAFILEOBJ), OBJ_METAFILE, (HGDIOBJ *)&hmf, NULL );
     if (metaObj)
     {
         metaObj->mh = mh;
@@ -126,7 +125,7 @@ HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh)
 static METAHEADER *MF_GetMetaHeader( HMETAFILE hmf )
 {
     METAHEADER *ret = NULL;
-    METAFILEOBJ * metaObj = GDI_GetObjPtr( hmf, METAFILE_MAGIC );
+    METAFILEOBJ * metaObj = GDI_GetObjPtr( hmf, OBJ_METAFILE );
     if (metaObj)
     {
         ret = metaObj->mh;
@@ -164,7 +163,7 @@ static POINT *convert_points( UINT count, POINT16 *pt16 )
 
 BOOL WINAPI DeleteMetaFile( HMETAFILE hmf )
 {
-    METAFILEOBJ * metaObj = GDI_GetObjPtr( hmf, METAFILE_MAGIC );
+    METAFILEOBJ * metaObj = GDI_GetObjPtr( hmf, OBJ_METAFILE );
     if (!metaObj) return FALSE;
     HeapFree( GetProcessHeap(), 0, metaObj->mh );
     GDI_FreeObject( hmf, metaObj );

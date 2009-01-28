@@ -315,7 +315,7 @@ HDC WINAPI CreateEnhMetaFileW(
 
     TRACE("%s\n", debugstr_w(filename) );
 
-    if (!(dc = alloc_dc_ptr( &EMFDRV_Funcs, ENHMETAFILE_DC_MAGIC ))) return 0;
+    if (!(dc = alloc_dc_ptr( &EMFDRV_Funcs, OBJ_ENHMETADC ))) return 0;
 
     physDev = HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
     if (!physDev) {
@@ -438,7 +438,7 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
     TRACE("(%p)\n", hdc );
 
     if (!(dc = get_dc_ptr( hdc ))) return NULL;
-    if (GDIMAGIC(dc->header.wMagic) != ENHMETAFILE_DC_MAGIC)
+    if (dc->header.type != OBJ_ENHMETADC)
     {
         release_dc_ptr( dc );
         return NULL;
