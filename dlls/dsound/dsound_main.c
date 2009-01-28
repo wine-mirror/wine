@@ -308,7 +308,7 @@ HRESULT WINAPI DirectSoundEnumerateA(
 	if (GetDeviceID(&DSDEVID_DefaultPlayback, &guid) == DS_OK) {
 	    for (wod = 0; wod < devs; ++wod) {
                 if (IsEqualGUID( &guid, &DSOUND_renderer_guids[wod]) ) {
-                    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
+                    err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
                     if (err == DS_OK) {
                         TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
                               "Primary Sound Driver","",lpContext);
@@ -321,7 +321,7 @@ HRESULT WINAPI DirectSoundEnumerateA(
     }
 
     for (wod = 0; wod < devs; ++wod) {
-	err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
+        err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
 	if (err == DS_OK) {
             TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
                   debugstr_guid(&DSOUND_renderer_guids[wod]),desc.szDesc,desc.szDrvname,lpContext);
@@ -370,7 +370,7 @@ HRESULT WINAPI DirectSoundEnumerateW(
             static const WCHAR empty[] = { 0 };
 	    for (wod = 0; wod < devs; ++wod) {
                 if (IsEqualGUID( &guid, &DSOUND_renderer_guids[wod] ) ) {
-                    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
+                    err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
                     if (err == DS_OK) {
                         TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
                               "Primary Sound Driver",desc.szDrvname,lpContext);
@@ -385,7 +385,7 @@ HRESULT WINAPI DirectSoundEnumerateW(
     }
 
     for (wod = 0; wod < devs; ++wod) {
-	err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
+        err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
 	if (err == DS_OK) {
             TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
                   debugstr_guid(&DSOUND_renderer_guids[wod]),desc.szDesc,desc.szDrvname,lpContext);

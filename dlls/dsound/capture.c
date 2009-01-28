@@ -289,7 +289,7 @@ DirectSoundCaptureEnumerateA(
 	if (GetDeviceID(&DSDEVID_DefaultCapture, &guid) == DS_OK) {
     	    for (wid = 0; wid < devs; ++wid) {
                 if (IsEqualGUID( &guid, &DSOUND_capture_guids[wid] ) ) {
-                    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
+                    err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
                     if (err == DS_OK) {
                         TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
                               "Primary Sound Capture Driver",desc.szDrvname,lpContext);
@@ -302,7 +302,7 @@ DirectSoundCaptureEnumerateA(
     }
 
     for (wid = 0; wid < devs; ++wid) {
-	err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
+        err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
 	if (err == DS_OK) {
             TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
                   debugstr_guid(&DSOUND_capture_guids[wid]),desc.szDesc,desc.szDrvname,lpContext);
@@ -351,7 +351,7 @@ DirectSoundCaptureEnumerateW(
 	if (GetDeviceID(&DSDEVID_DefaultCapture, &guid) == DS_OK) {
     	    for (wid = 0; wid < devs; ++wid) {
                 if (IsEqualGUID( &guid, &DSOUND_capture_guids[wid] ) ) {
-                    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
+                    err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
                     if (err == DS_OK) {
                         TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
                               "Primary Sound Capture Driver",desc.szDrvname,lpContext);
@@ -368,7 +368,7 @@ DirectSoundCaptureEnumerateW(
     }
 
     for (wid = 0; wid < devs; ++wid) {
-	err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
+        err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
 	if (err == DS_OK) {
             TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
                   debugstr_guid(&DSOUND_capture_guids[wid]),desc.szDesc,desc.szDrvname,lpContext);
@@ -1550,7 +1550,7 @@ HRESULT DirectSoundCaptureDevice_Initialize(
     device->driver = NULL;
     if (ds_hw_accel != DS_HW_ACCEL_EMULATION)
     {
-        err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDIFACE,(DWORD_PTR)&(device->driver),0));
+        err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDIFACE,(DWORD_PTR)&device->driver,0));
         if ( (err != DS_OK) && (err != DSERR_UNSUPPORTED) ) {
             WARN("waveInMessage failed; err=%x\n",err);
             return err;
