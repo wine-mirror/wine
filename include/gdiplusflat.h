@@ -93,6 +93,7 @@ GpStatus WINGDIPAPI GdipGetFontHeight(GDIPCONST GpFont*, GDIPCONST GpGraphics*,
 GpStatus WINGDIPAPI GdipGetFontHeightGivenDPI(GDIPCONST GpFont*, REAL, REAL*);
 
 /* FontCollection */
+GpStatus WINGDIPAPI GdipNewInstalledFontCollection(GpFontCollection**);
 GpStatus WINGDIPAPI GdipNewPrivateFontCollection(GpFontCollection**);
 GpStatus WINGDIPAPI GdipDeletePrivateFontCollection(GpFontCollection**);
 GpStatus WINGDIPAPI GdipPrivateAddFontFile(GpFontCollection*, GDIPCONST WCHAR*);

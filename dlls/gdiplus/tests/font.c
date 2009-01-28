@@ -340,6 +340,19 @@ monospace:
     expect (Ok, stat);
 }
 
+static void test_installedfonts (void)
+{
+    GpStatus stat;
+    GpFontCollection* collection=NULL;
+
+    stat = GdipNewInstalledFontCollection(NULL);
+    expect (InvalidParameter, stat);
+
+    stat = GdipNewInstalledFontCollection(&collection);
+    todo_wine expect (Ok, stat);
+    todo_wine ok (collection != NULL, "got NULL font collection\n");
+}
+
 START_TEST(font)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -357,6 +370,7 @@ START_TEST(font)
     test_fontfamily();
     test_fontfamily_properties();
     test_getgenerics();
+    test_installedfonts();
 
     GdiplusShutdown(gdiplusToken);
 }
