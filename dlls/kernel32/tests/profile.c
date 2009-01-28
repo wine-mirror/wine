@@ -217,9 +217,13 @@ static void test_profile_sections_names(void)
     /* Test with sufficiently large buffer */
     memset(buf, 0xc, sizeof(buf));
     ret = GetPrivateProfileSectionNamesA( buf, 29, testfile3 );
-    ok( ret == 27, "expected return size 27, got %d\n", ret );
-    ok( buf[ret-1] == 0 && buf[ret] == 0, "returned buffer not terminated with double-null\n" );
-    
+    ok( ret == 27 ||
+        broken(ret == 28), /* Win9x, WinME */
+        "expected return size 27, got %d\n", ret );
+    ok( (buf[ret-1] == 0 && buf[ret] == 0) ||
+        broken(buf[ret-1] == 0 && buf[ret-2] == 0), /* Win9x, WinME */
+        "returned buffer not terminated with double-null\n" );
+
     /* Test with exactly fitting buffer */
     memset(buf, 0xc, sizeof(buf));
     ret = GetPrivateProfileSectionNamesA( buf, 28, testfile3 );
@@ -236,13 +240,19 @@ static void test_profile_sections_names(void)
     memset(buf, 0xc, sizeof(buf));
     ret = GetPrivateProfileSectionNamesA( buf, 27, testfile3 );
     ok( ret == 25, "expected return size 25, got %d\n", ret );
+    /* Win9x and WinME only fills the buffer with complete section names (double-null terminated) */
+    count = strlen("section1") + sizeof(CHAR) + strlen("section2");
     todo_wine
-    ok( buf[ret+1] == 0 && buf[ret] == 0, "returned buffer not terminated with double-null\n" );
-    
+    ok( (buf[ret+1] == 0 && buf[ret] == 0) ||
+        broken(buf[count] == 0 && buf[count+1] == 0), /* Win9x, WinME */
+        "returned buffer not terminated with double-null\n" );
+
     /* Tests on nonexistent file */
     memset(buf, 0xc, sizeof(buf));
     ret = GetPrivateProfileSectionNamesA( buf, 10, ".\\not_here.ini" );
-    ok( ret == 0, "expected return size 0, got %d\n", ret );
+    ok( ret == 0 ||
+        broken(ret == 1), /* Win9x, WinME */
+        "expected return size 0, got %d\n", ret );
     ok( buf[0] == 0, "returned buffer not terminated with null\n" );
     ok( buf[1] != 0, "returned buffer terminated with double-null\n" );
     
