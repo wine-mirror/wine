@@ -1834,7 +1834,8 @@ static void test_HttpSendRequestW(int port)
     ret = HttpSendRequestW(req, header, ~0u, NULL, 0);
     error = GetLastError();
     ok(!ret, "HttpSendRequestW succeeded\n");
-    ok(error == ERROR_IO_PENDING, "got %u expected ERROR_IO_PENDING\n", error);
+    ok(error == ERROR_IO_PENDING || broken(error == ERROR_HTTP_HEADER_NOT_FOUND), /* IE6 */
+       "got %u expected ERROR_IO_PENDING\n", error);
 
     InternetCloseHandle(req);
     InternetCloseHandle(con);
