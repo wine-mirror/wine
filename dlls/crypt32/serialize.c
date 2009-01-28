@@ -627,7 +627,7 @@ static BOOL CRYPT_WriteSerializedStoreToFile(HANDLE file, HCERTSTORE store)
 static BOOL CRYPT_SavePKCSToMem(HCERTSTORE store,
  DWORD dwMsgAndCertEncodingType, void *handle)
 {
-    CERT_BLOB *blob = (CERT_BLOB *)handle;
+    CERT_BLOB *blob = handle;
     CRYPT_SIGNED_INFO signedInfo = { 0 };
     PCCERT_CONTEXT cert = NULL;
     PCCRL_CONTEXT crl = NULL;
@@ -767,7 +767,7 @@ struct MemWrittenTracker
 /* handle is a pointer to a MemWrittenTracker.  Assumes its pointer is valid. */
 static BOOL CRYPT_MemOutputFunc(void *handle, const void *buffer, DWORD size)
 {
-    struct MemWrittenTracker *tracker = (struct MemWrittenTracker *)handle;
+    struct MemWrittenTracker *tracker = handle;
     BOOL ret;
 
     if (tracker->written + size > tracker->cbData)
@@ -797,7 +797,7 @@ static BOOL CRYPT_CountSerializedBytes(void *handle, const void *buffer,
 static BOOL CRYPT_SaveSerializedToMem(HCERTSTORE store,
  DWORD dwMsgAndCertEncodingType, void *handle)
 {
-    CERT_BLOB *blob = (CERT_BLOB *)handle;
+    CERT_BLOB *blob = handle;
     DWORD size = 0;
     BOOL ret;
 
@@ -864,11 +864,11 @@ BOOL WINAPI CertSaveStore(HCERTSTORE hCertStore, DWORD dwMsgAndCertEncodingType,
         closeFile = FALSE;
         break;
     case CERT_STORE_SAVE_TO_FILENAME_A:
-        handle = CreateFileA((LPCSTR)pvSaveToPara, GENERIC_WRITE, 0, NULL,
+        handle = CreateFileA(pvSaveToPara, GENERIC_WRITE, 0, NULL,
          CREATE_ALWAYS, 0, NULL);
         break;
     case CERT_STORE_SAVE_TO_FILENAME_W:
-        handle = CreateFileW((LPCWSTR)pvSaveToPara, GENERIC_WRITE, 0, NULL,
+        handle = CreateFileW(pvSaveToPara, GENERIC_WRITE, 0, NULL,
          CREATE_ALWAYS, 0, NULL);
         break;
     case CERT_STORE_SAVE_TO_MEMORY:
