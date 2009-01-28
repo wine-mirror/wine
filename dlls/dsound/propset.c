@@ -543,14 +543,14 @@ static HRESULT DSPROPERTY_Description1(
                     ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
                     ppd->WaveDeviceId = wid;
                     ppd->Devnode = wid;
-                    err = mmErr(waveInMessage((HWAVEIN)wod,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&(desc),0));
+                    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD_PTR)&(desc),0));
                     if (err == DS_OK) {
                         PIDSDRIVER drv = NULL;
                         lstrcpynA(ppd->DescriptionA, desc.szDesc, sizeof(ppd->DescriptionA));
                         lstrcpynA(ppd->ModuleA, desc.szDrvname, sizeof(ppd->ModuleA));
                         MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, ppd->DescriptionW, sizeof(ppd->DescriptionW)/sizeof(WCHAR) );
                         MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1, ppd->ModuleW, sizeof(ppd->ModuleW)/sizeof(WCHAR) );
-                        err = mmErr(waveInMessage((HWAVEIN)wod, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&drv, 0));
+                        err = mmErr(waveInMessage((HWAVEIN)wid, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&drv, 0));
                         if (err == DS_OK && drv)
                             ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                         else
