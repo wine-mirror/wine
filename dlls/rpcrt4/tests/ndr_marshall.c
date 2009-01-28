@@ -1196,7 +1196,7 @@ static void test_client_init(void)
        stubMsg.fIsOut == -1, /* XP-SP3 */
        "fIsOut should have been set to 0 or -1 instead of %d\n", stubMsg.fIsOut);
     TEST_ZERO(fIsOicf, "%d");
-    TEST_ZERO(fBufferValid, "%d");
+    trace("NdrClientInitializeNew: fBufferValid = %d\n", stubMsg.fBufferValid);
     ok(stubMsg.fHasMemoryValidateCallback == 0 ||
        stubMsg.fHasMemoryValidateCallback == -1, /* XP-SP3 */
        "fHasMemoryValidateCallback should have been set to 0 or -1 instead of %d\n", stubMsg.fHasMemoryValidateCallback);
@@ -1313,7 +1313,7 @@ todo_wine
        stubMsg.fIsOut == -1, /* XP-SP3 */
        "fIsOut should have been set to 0 or -1 instead of %d\n", stubMsg.fIsOut);
     TEST_ZERO(fIsOicf, "%d");
-    trace("fBufferValid = %d\n", stubMsg.fBufferValid);
+    trace("NdrServerInitializeNew: fBufferValid = %d\n", stubMsg.fBufferValid);
     ok(stubMsg.fHasMemoryValidateCallback == 0 ||
        stubMsg.fHasMemoryValidateCallback == -1, /* XP-SP3 */
        "fHasMemoryValidateCallback should have been set to 0 or -1 instead of %d\n", stubMsg.fHasMemoryValidateCallback);
