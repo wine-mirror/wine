@@ -986,7 +986,7 @@ static LRESULT WINAPI dde_msg_client_wndproc(HWND hwnd, UINT msg, WPARAM wparam,
     return DefWindowProcA(hwnd, msg, wparam, lparam);
 }
 
-static HGLOBAL create_poke()
+static HGLOBAL create_poke(void)
 {
     HGLOBAL hglobal;
     DDEPOKE *poke;
@@ -1022,7 +1022,7 @@ static HGLOBAL create_execute(LPCSTR command)
     return hglobal;
 }
 
-static void test_msg_client()
+static void test_msg_client(void)
 {
     HGLOBAL hglobal;
     LPARAM lparam;
