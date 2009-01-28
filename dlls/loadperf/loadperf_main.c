@@ -135,14 +135,14 @@ DWORD WINAPI LoadPerfCounterTextStringsW(LPCWSTR cmdline, BOOL quiet)
  * NOTES
  *   See UnloadPerfCounterTextStringsW
  */
-DWORD WINAPI UnloadPerfCounterTextStringsA(LPCSTR cmdline, BOOL verbose)
+DWORD WINAPI UnloadPerfCounterTextStringsA(LPCSTR cmdline, BOOL quiet)
 {
     DWORD ret;
     LPWSTR cmdlineW = NULL;
 
     if (cmdline && !(cmdlineW = strdupAW(cmdline))) return ERROR_OUTOFMEMORY;
 
-    ret = UnloadPerfCounterTextStringsW(cmdlineW, verbose);
+    ret = UnloadPerfCounterTextStringsW(cmdlineW, quiet);
 
     HeapFree(GetProcessHeap(), 0, cmdlineW);
 
@@ -154,12 +154,12 @@ DWORD WINAPI UnloadPerfCounterTextStringsA(LPCSTR cmdline, BOOL verbose)
  *
  * PARAMS
  *   cmdline [in] Last argument in command line - application counters to be removed
- *   verbose [in] TRUE - the function may write to stdout
+ *   quiet   [in] FALSE - the function may write to stdout
  *
  */
-DWORD WINAPI UnloadPerfCounterTextStringsW(LPCWSTR cmdline, BOOL verbose)
+DWORD WINAPI UnloadPerfCounterTextStringsW(LPCWSTR cmdline, BOOL quiet)
 {
-    FIXME("(%s, %d): stub\n", debugstr_w(cmdline), verbose);
+    FIXME("(%s, %d): stub\n", debugstr_w(cmdline), quiet);
 
     return ERROR_SUCCESS;
 }
