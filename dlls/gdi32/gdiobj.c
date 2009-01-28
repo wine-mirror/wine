@@ -662,33 +662,6 @@ HGDIOBJ alloc_gdi_handle( GDIOBJHDR *obj, WORD type, const struct gdi_obj_funcs 
 
 
 /***********************************************************************
- *           GDI_ReallocObject
- *
- * The object ptr must have been obtained with GDI_GetObjPtr.
- * The new pointer must be released with GDI_ReleaseObj.
- */
-void *GDI_ReallocObject( WORD size, HGDIOBJ handle, void *object )
-{
-    void *new_ptr = NULL;
-    int i;
-
-    i = ((ULONG_PTR)handle >> 2) - FIRST_LARGE_HANDLE;
-    if (i >= 0 && i < MAX_LARGE_HANDLES && large_handles[i])
-    {
-        new_ptr = HeapReAlloc( GetProcessHeap(), 0, large_handles[i], size );
-        if (new_ptr) large_handles[i] = new_ptr;
-    }
-    else ERR( "Invalid handle %p\n", handle );
-    if (!new_ptr)
-    {
-        TRACE("(%p): leave %d\n", handle, GDI_level.crst.RecursionCount);
-        _LeaveSysLevel( &GDI_level );
-    }
-    return new_ptr;
-}
-
-
-/***********************************************************************
  *           free_gdi_handle
  *
  * Free a GDI handle and return a pointer to the object.

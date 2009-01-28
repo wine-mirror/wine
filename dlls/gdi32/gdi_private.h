@@ -438,7 +438,6 @@ extern BOOL WineEngRemoveFontResourceEx(LPCWSTR, DWORD, PVOID) DECLSPEC_HIDDEN;
 /* gdiobj.c */
 extern BOOL GDI_Init(void) DECLSPEC_HIDDEN;
 extern HGDIOBJ alloc_gdi_handle( GDIOBJHDR *obj, WORD type, const struct gdi_obj_funcs *funcs ) DECLSPEC_HIDDEN;
-extern void *GDI_ReallocObject( WORD, HGDIOBJ, void *obj ) DECLSPEC_HIDDEN;
 extern void *free_gdi_handle( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern void *GDI_GetObjPtr( HGDIOBJ, WORD ) DECLSPEC_HIDDEN;
 extern void GDI_ReleaseObj( HGDIOBJ ) DECLSPEC_HIDDEN;
