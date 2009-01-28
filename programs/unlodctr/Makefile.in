@@ -2,13 +2,12 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = loadperf.dll
-IMPORTLIB = loadperf
-IMPORTS   = kernel32
+MODULE    = unlodctr.exe
+APPMODE   = -mconsole -municode
+IMPORTS   = loadperf kernel32
 
-C_SRCS = \
-           loadperf_main.c
+C_SRCS = unlodctr_main.c
 
-@MAKE_DLL_RULES@
+@MAKE_PROG_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

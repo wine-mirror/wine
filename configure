@@ -27293,6 +27293,15 @@ programs/iexplore/Makefile: programs/iexplore/Makefile.in programs/Makeprog.rule
 ac_config_files="$ac_config_files programs/iexplore/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	programs/lodctr/Makefile"
+test "x$enable_lodctr" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	lodctr" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	lodctr"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+programs/lodctr/Makefile: programs/lodctr/Makefile.in programs/Makeprog.rules"
+ac_config_files="$ac_config_files programs/lodctr/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/msiexec/Makefile"
 test "x$enable_msiexec" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
 	msiexec" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
@@ -27450,6 +27459,15 @@ test "x$enable_uninstaller" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/uninstaller/Makefile: programs/uninstaller/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/uninstaller/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
+	programs/unlodctr/Makefile"
+test "x$enable_unlodctr" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	unlodctr" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	unlodctr"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+programs/unlodctr/Makefile: programs/unlodctr/Makefile.in programs/Makeprog.rules"
+ac_config_files="$ac_config_files programs/unlodctr/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/view/Makefile"
@@ -28711,6 +28729,7 @@ do
     "programs/hh/Makefile") CONFIG_FILES="$CONFIG_FILES programs/hh/Makefile" ;;
     "programs/icinfo/Makefile") CONFIG_FILES="$CONFIG_FILES programs/icinfo/Makefile" ;;
     "programs/iexplore/Makefile") CONFIG_FILES="$CONFIG_FILES programs/iexplore/Makefile" ;;
+    "programs/lodctr/Makefile") CONFIG_FILES="$CONFIG_FILES programs/lodctr/Makefile" ;;
     "programs/msiexec/Makefile") CONFIG_FILES="$CONFIG_FILES programs/msiexec/Makefile" ;;
     "programs/net/Makefile") CONFIG_FILES="$CONFIG_FILES programs/net/Makefile" ;;
     "programs/notepad/Makefile") CONFIG_FILES="$CONFIG_FILES programs/notepad/Makefile" ;;
@@ -28728,6 +28747,7 @@ do
     "programs/svchost/Makefile") CONFIG_FILES="$CONFIG_FILES programs/svchost/Makefile" ;;
     "programs/taskmgr/Makefile") CONFIG_FILES="$CONFIG_FILES programs/taskmgr/Makefile" ;;
     "programs/uninstaller/Makefile") CONFIG_FILES="$CONFIG_FILES programs/uninstaller/Makefile" ;;
+    "programs/unlodctr/Makefile") CONFIG_FILES="$CONFIG_FILES programs/unlodctr/Makefile" ;;
     "programs/view/Makefile") CONFIG_FILES="$CONFIG_FILES programs/view/Makefile" ;;
     "programs/wineboot/Makefile") CONFIG_FILES="$CONFIG_FILES programs/wineboot/Makefile" ;;
     "programs/winebrowser/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winebrowser/Makefile" ;;

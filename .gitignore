@@ -236,6 +236,7 @@ programs/explorer/explorer
 programs/hh/hh
 programs/icinfo/icinfo
 programs/iexplore/iexplore
+programs/lodctr/lodctr
 programs/msiexec/msiexec
 programs/net/net
 programs/notepad/notepad
@@ -259,6 +260,7 @@ programs/start/start
 programs/svchost/svchost
 programs/taskmgr/taskmgr
 programs/uninstaller/uninstaller
+programs/unlodctr/unlodctr
 programs/view/view
 programs/wineapploader
 programs/wineboot/wineboot

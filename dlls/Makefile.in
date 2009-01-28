@@ -232,6 +232,7 @@ IMPORT_LIBS = \
 	inetcomm/libinetcomm.$(IMPLIBEXT) \
 	iphlpapi/libiphlpapi.$(IMPLIBEXT) \
 	kernel32/libkernel32.$(IMPLIBEXT) \
+	loadperf/libloadperf.$(IMPLIBEXT) \
 	lz32/liblz32.$(IMPLIBEXT) \
 	mapi32/libmapi32.$(IMPLIBEXT) \
 	mlang/libmlang.$(IMPLIBEXT) \
@@ -375,6 +376,7 @@ CROSS_IMPLIBS = \
 	inetcomm/libinetcomm.a \
 	iphlpapi/libiphlpapi.a \
 	kernel32/libkernel32.a \
+	loadperf/libloadperf.a \
 	lz32/liblz32.a \
 	mapi32/libmapi32.a \
 	mlang/libmlang.a \
@@ -633,6 +635,9 @@ iphlpapi/libiphlpapi.def iphlpapi/libiphlpapi.a: iphlpapi/iphlpapi.spec $(WINEBU
 
 kernel32/libkernel32.def kernel32/libkernel32.a: kernel32/kernel32.spec $(WINEBUILD)
 	@cd kernel32 && $(MAKE) `basename $@`
+
+loadperf/libloadperf.def loadperf/libloadperf.a: loadperf/loadperf.spec $(WINEBUILD)
+	@cd loadperf && $(MAKE) `basename $@`
 
 lz32/liblz32.def lz32/liblz32.a: lz32/lz32.spec $(WINEBUILD)
 	@cd lz32 && $(MAKE) `basename $@`
