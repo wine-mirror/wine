@@ -1090,8 +1090,10 @@ static void ReadStyleSheet(RTF_Info *info)
 		if (RTFCheckCM (info, rtfGroup, rtfEndGroup))
 			break;
 		sp = New (RTFStyle);
-		if (sp == NULL)
+		if (sp == NULL) {
 			ERR ( "%s: cannot allocate stylesheet entry\n", fn);
+			break;
+		}
 		sp->rtfSName = NULL;
 		sp->rtfSNum = -1;
 		sp->rtfSType = rtfParStyle;
