@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
         case FILE_COMPRESSION_MSZIP:
         {
             outfile_basename[0] = 0;
-            if (!SetupIterateCabinetA( infile, 0, set_outfile, (PVOID)outfile_basename ))
+            if (!SetupIterateCabinetA( infile, 0, set_outfile, outfile_basename ))
             {
                 fprintf( stderr, "%s: can't determine original name\n", argv[0] );
                 return 1;
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
     {
     case FILE_COMPRESSION_MSZIP:
     {
-        if (!SetupIterateCabinetA( infile, 0, extract_callback, (PVOID)outfile ))
+        if (!SetupIterateCabinetA( infile, 0, extract_callback, outfile ))
         {
             fprintf( stderr, "%s: cabinet extraction failed\n", argv[0] );
             return 1;
