@@ -2028,12 +2028,19 @@ static BOOL INT21_FileAttributes( CONTEXT86 *context,
     FILETIME filetime;
     DWORD    result;
     WORD     date, time;
+    int      len;
 
     switch (subfunction)
     {
     case 0x00: /* GET FILE ATTRIBUTES */
         TRACE( "GET FILE ATTRIBUTES for %s\n", fileA );
-        MultiByteToWideChar(CP_OEMCP, 0, fileA, -1, fileW, MAX_PATH);
+        len = MultiByteToWideChar(CP_OEMCP, 0, fileA, -1, fileW, MAX_PATH);
+
+        /* Winbench 96 Disk Test fails if we don't complain
+         * about a filename that ends in \
+         */
+        if (!len || (fileW[len-1] == '/') || (fileW[len-1] == '\\'))
+            return FALSE;
 
         result = GetFileAttributesW( fileW );
         if (result == INVALID_FILE_ATTRIBUTES)
