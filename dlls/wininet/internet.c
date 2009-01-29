@@ -2154,8 +2154,7 @@ DWORD INET_QueryOption(DWORD option, void *buffer, DWORD *size, BOOL unicode)
             case INTERNET_PER_CONN_AUTOCONFIG_LAST_DETECT_TIME:
             case INTERNET_PER_CONN_AUTOCONFIG_LAST_DETECT_URL:
                 FIXME("Unhandled dwOption %d\n", option->dwOption);
-                option->Value.dwValue = 0;
-                res = ERROR_INVALID_PARAMETER;
+                memset(&option->Value, 0, sizeof(option->Value));
                 break;
 
             default:
