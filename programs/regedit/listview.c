@@ -533,7 +533,12 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highli
     max_val_size++;
 
     valName = HeapAlloc(GetProcessHeap(), 0, max_val_name_len * sizeof(WCHAR));
+    if (!valName)
+        goto done;
     valBuf = HeapAlloc(GetProcessHeap(), 0, max_val_size);
+    if (!valBuf)
+        goto done;
+
     if (RegQueryValueExW(hKey, NULL, NULL, &valType, valBuf, &valSize) == ERROR_FILE_NOT_FOUND) {
         AddEntryToList(hwndLV, NULL, REG_SZ, NULL, 0, !highlightValue);
     }
@@ -545,7 +550,7 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highli
         errCode = RegEnumValueW(hKey, index, valName, &valNameLen, NULL, &valType, valBuf, &valSize);
 	if (errCode != ERROR_SUCCESS) goto done;
         valBuf[valSize] = 0;
-        if (valName && highlightValue && !lstrcmpW(valName, highlightValue))
+        if (highlightValue && !lstrcmpW(valName, highlightValue))
             bSelected = TRUE;
         AddEntryToList(hwndLV, valName[0] ? valName : NULL, valType, valBuf, valSize, bSelected);
     }
