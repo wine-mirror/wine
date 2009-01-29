@@ -2443,6 +2443,23 @@ BOOL WINAPI RSAENH_CPExportKey(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTKEY hPubK
 }
 
 /******************************************************************************
+ * release_and_install_key [Internal]
+ *
+ * Release an existing key, if present, and replaces it with a new one.
+ *
+ * PARAMS
+ *  hProv     [I] Key container into which the key is to be imported.
+ *  src       [I] Key which will replace *dest
+ *  dest      [I] Points to key to be released and replaced with src
+ */
+static void release_and_install_key(HCRYPTPROV hProv, HCRYPTKEY src,
+                                    HCRYPTKEY *dest)
+{
+    RSAENH_CPDestroyKey(hProv, *dest);
+    copy_handle(&handle_table, src, RSAENH_MAGIC_KEY, dest);
+}
+
+/******************************************************************************
  * CPImportKey (RSAENH.@)
  *
  * Import a BLOB'ed key into a key container.
@@ -2517,16 +2534,14 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
                 case AT_SIGNATURE:
                 case CALG_RSA_SIGN:
                     TRACE("installing signing key\n");
-                    RSAENH_CPDestroyKey(hProv, pKeyContainer->hSignatureKeyPair);
-                    copy_handle(&handle_table, *phKey, RSAENH_MAGIC_KEY,
-                                &pKeyContainer->hSignatureKeyPair);
+                    release_and_install_key(hProv, *phKey,
+                                            &pKeyContainer->hSignatureKeyPair);
                     break;
                 case AT_KEYEXCHANGE:
                 case CALG_RSA_KEYX:
                     TRACE("installing key exchange key\n");
-                    RSAENH_CPDestroyKey(hProv, pKeyContainer->hKeyExchangeKeyPair);
-                    copy_handle(&handle_table, *phKey, RSAENH_MAGIC_KEY,
-                                &pKeyContainer->hKeyExchangeKeyPair);
+                    release_and_install_key(hProv, *phKey,
+                                            &pKeyContainer->hKeyExchangeKeyPair);
                     break;
                 }
             }
@@ -2558,9 +2573,8 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
                 case AT_KEYEXCHANGE:
                 case CALG_RSA_KEYX:
                     TRACE("installing public key\n");
-                    RSAENH_CPDestroyKey(hProv, pKeyContainer->hKeyExchangeKeyPair);
-                    copy_handle(&handle_table, *phKey, RSAENH_MAGIC_KEY,
-                                &pKeyContainer->hKeyExchangeKeyPair);
+                    release_and_install_key(hProv, *phKey,
+                                            &pKeyContainer->hKeyExchangeKeyPair);
                     break;
                 }
             }
