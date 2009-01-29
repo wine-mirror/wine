@@ -871,8 +871,10 @@ static void ReadFontTbl(RTF_Info *info)
 				break;
 		}
 		fp = New (RTFFont);
-		if (fp == NULL)
+		if (fp == NULL) {
 			ERR ( "%s: cannot allocate font entry\n", fn);
+			break;
+		}
 
 		fp->rtfNextFont = info->fontList;
 		info->fontList = fp;
@@ -992,7 +994,7 @@ static void ReadFontTbl(RTF_Info *info)
                         TRACE("default font codepage %d\n", info->codePage);
                 }
 	}
-	if (fp->rtfFNum == -1)
+	if (!fp || (fp->rtfFNum == -1))
 		ERR( "%s: missing font number\n", fn);
 /*
  * Could check other pieces of structure here, too, I suppose.
