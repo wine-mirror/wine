@@ -48,7 +48,7 @@ static HWND new_richedit(HWND parent) {
   return new_window(RICHEDIT_CLASS10A, ES_MULTILINE, parent);
 }
 
-static void test_WM_SETTEXT()
+static void test_WM_SETTEXT(void)
 {
   HWND hwndRichEdit = new_richedit(NULL);
   const char * TestItem1 = "TestSomeText";
