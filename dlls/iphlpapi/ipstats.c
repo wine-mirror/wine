@@ -869,7 +869,7 @@ DWORD getUDPStats(MIB_UDPSTATS *stats)
 
 static DWORD getNumWithOneHeader(const char *filename)
 {
-#if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_NETINET_IN_PCB_H)
+#if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_STRUCT_XINPGEN)
    size_t Len = 0;
    char *Buf;
    struct xinpgen *pXIG, *pOrigXIG;
@@ -1581,7 +1581,7 @@ DWORD getTcpTable(PMIB_TCPTABLE *ppTcpTable, DWORD maxEntries, HANDLE heap,
 {
    DWORD numEntries;
    PMIB_TCPTABLE table;
-#if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_NETINET_IN_PCB_H)
+#if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_STRUCT_XINPGEN)
    size_t Len = 0;
    char *Buf;
    struct xinpgen *pXIG, *pOrigXIG;
@@ -1615,7 +1615,7 @@ DWORD getTcpTable(PMIB_TCPTABLE *ppTcpTable, DWORD maxEntries, HANDLE heap,
    if (!numEntries)
       return NO_ERROR;
 
-#if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_NETINET_IN_PCB_H)
+#if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_STRUCT_XINPGEN)
 
    if (sysctlbyname ("net.inet.tcp.pcblist", NULL, &Len, NULL, 0) < 0)
    {

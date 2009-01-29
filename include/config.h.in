@@ -780,6 +780,9 @@
 /* Define to 1 if `st_mtim' is member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_MTIM
 
+/* Define to 1 if the system has the type `struct xinpgen'. */
+#undef HAVE_STRUCT_XINPGEN
+
 /* Define to 1 if you have the `symlink' function. */
 #undef HAVE_SYMLINK
 
