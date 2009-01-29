@@ -4059,7 +4059,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     origNPos = editor->vert_si.nPos;
     lineHeight = 24;
 
-    if (editor && editor->pBuffer && editor->pBuffer->pDefaultStyle)
+    if (editor->pBuffer && editor->pBuffer->pDefaultStyle)
       lineHeight = editor->pBuffer->pDefaultStyle->tm.tmHeight;
     if (lineHeight <= 0) lineHeight = 24;
 
