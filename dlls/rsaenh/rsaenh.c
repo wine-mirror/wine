@@ -932,7 +932,6 @@ static void store_key_pair(HCRYPTKEY hCryptKey, HKEY hKey, LPCSTR szValueName, D
                 HeapFree(GetProcessHeap(), 0, pbKey);
             }
         }
-        release_handle(&handle_table, hCryptKey, RSAENH_MAGIC_KEY);
     }
 }
 
@@ -1060,6 +1059,22 @@ static void store_key_container_keys(KEYCONTAINER *pKeyContainer)
 }
 
 /******************************************************************************
+ * release_key_container_keys [Internal]
+ *
+ * Releases key container's keys.
+ *
+ * PARAMS
+ *  pKeyContainer [I] Pointer to the key container whose keys are to be released.
+ */
+static void release_key_container_keys(KEYCONTAINER *pKeyContainer)
+{
+    release_handle(&handle_table, pKeyContainer->hKeyExchangeKeyPair,
+                   RSAENH_MAGIC_KEY);
+    release_handle(&handle_table, pKeyContainer->hSignatureKeyPair,
+                   RSAENH_MAGIC_KEY);
+}
+
+/******************************************************************************
  * destroy_key_container [Internal]
  *
  * Destructor for key containers.
@@ -1072,7 +1087,10 @@ static void destroy_key_container(OBJECTHDR *pObjectHdr)
     KEYCONTAINER *pKeyContainer = (KEYCONTAINER*)pObjectHdr;
 
     if (!(pKeyContainer->dwFlags & CRYPT_VERIFYCONTEXT))
+    {
         store_key_container_keys(pKeyContainer);
+        release_key_container_keys(pKeyContainer);
+    }
     HeapFree( GetProcessHeap(), 0, pKeyContainer );
 }
 
