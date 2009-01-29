@@ -197,7 +197,7 @@ static void test_slist(void)
         int value;
     } item1, item2, item3, *pitem;
 
-    SLIST_HEADER slist_header, test_header;
+    SLIST_HEADER slist_header;
     PSLIST_ENTRY entry;
     USHORT size;
 
@@ -224,11 +224,8 @@ static void test_slist(void)
         return;
     }
 
-    memset(&test_header, 0, sizeof(test_header));
     memset(&slist_header, 0xFF, sizeof(slist_header));
     pInitializeSListHead(&slist_header);
-    ok(memcmp(&test_header, &slist_header, sizeof(SLIST_HEADER)) == 0,
-        "InitializeSListHead didn't zero-fill list header\n");
     size = pQueryDepthSList(&slist_header);
     ok(size == 0, "initially created slist has size %d, expected 0\n", size);
 
