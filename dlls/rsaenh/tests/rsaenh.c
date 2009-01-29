@@ -2137,7 +2137,6 @@ static void test_key_permissions(void)
     dwLen = sizeof(DWORD);
     result = CryptGetKeyParam(hKey1, KP_PERMISSIONS, (BYTE*)&dwVal, &dwLen, 0);
     ok(result, "%08x\n", GetLastError());
-    todo_wine
     ok(dwVal ==
         (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT),
         "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT,"

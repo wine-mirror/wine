@@ -755,7 +755,8 @@ static inline void setup_key(CRYPTKEY *pCryptKey) {
  *  hProv      [I] Handle to the provider to which the created key will belong.
  *  aiAlgid    [I] The new key shall use the crypto algorithm idenfied by aiAlgid.
  *  dwFlags    [I] Upper 16 bits give the key length.
- *                 Lower 16 bits: CRYPT_CREATE_SALT, CRYPT_NO_SALT
+ *                 Lower 16 bits: CRYPT_EXPORTABLE, CRYPT_CREATE_SALT,
+ *                 CRYPT_NO_SALT
  *  ppCryptKey [O] Pointer to the created key
  *
  * RETURNS
@@ -836,6 +837,8 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
         pCryptKey->dwModeBits = 0;
         pCryptKey->dwPermissions = CRYPT_ENCRYPT | CRYPT_DECRYPT | CRYPT_READ | CRYPT_WRITE | 
                                    CRYPT_MAC;
+        if (dwFlags & CRYPT_EXPORTABLE)
+            pCryptKey->dwPermissions |= CRYPT_EXPORT;
         pCryptKey->dwKeyLen = dwKeyLen >> 3;
         pCryptKey->dwEffectiveKeyLen = 0;
         if ((dwFlags & CRYPT_CREATE_SALT) || (dwKeyLen == 40 && !(dwFlags & CRYPT_NO_SALT))) 
