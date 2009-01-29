@@ -262,7 +262,7 @@ static void test_profile_sections_names(void)
     ret = GetPrivateProfileSectionNamesW( bufW, 29, testfile3W );
     if (ret == 0 && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
-        skip("GetPrivateProfileSectionNamesW is not implemented\n");
+        win_skip("GetPrivateProfileSectionNamesW is not implemented\n");
         DeleteFileA( testfile3 );
         return;
     }
@@ -474,6 +474,18 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     static const char filename[] = ".\\winetest.ini";
 
     trace("test_GetPrivateProfileStringA: %s\n", descript);
+
+    if(!lstrcmpA(descript, "CR only"))
+    {
+        SetLastError(0xdeadbeef);
+        ret = GetPrivateProfileStringW(NULL, NULL, NULL,
+                                       NULL, 0, NULL);
+        if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+        {
+            win_skip("Win9x and WinME don't handle 'CR only' correctly\n");
+            return;
+        }
+    }
 
     create_test_file(filename, content, lstrlenA(content));
 
