@@ -1574,7 +1574,6 @@ static void test_rsa_encrypt(void)
     /* but its private key may not be. */
     SetLastError(0xdeadbeef);
     result = CryptExportKey(hRSAKey, 0, PRIVATEKEYBLOB, 0, NULL, &dwLen);
-    todo_wine
     ok(!result && GetLastError() == NTE_BAD_KEY_STATE,
         "expected NTE_BAD_KEY_STATE, got %08x\n", GetLastError());
     /* Setting the permissions of the key exchange key isn't allowed, either. */
@@ -1606,7 +1605,6 @@ static void test_rsa_encrypt(void)
     /* but its private key may not be. */
     SetLastError(0xdeadbeef);
     result = CryptExportKey(hRSAKey, 0, PRIVATEKEYBLOB, 0, NULL, &dwLen);
-    todo_wine
     ok(!result && GetLastError() == NTE_BAD_KEY_STATE,
         "expected NTE_BAD_KEY_STATE, got %08x\n", GetLastError());
     /* Setting the permissions of the signature key isn't allowed, either. */

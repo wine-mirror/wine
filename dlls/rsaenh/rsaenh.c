@@ -311,13 +311,12 @@ RSAENH_CPDestroyHash(
     HCRYPTHASH hHash
 );
 
-BOOL WINAPI 
-RSAENH_CPExportKey(
-    HCRYPTPROV hProv, 
-    HCRYPTKEY hKey, 
+static BOOL crypt_export_key(
+    CRYPTKEY *pCryptKey,
     HCRYPTKEY hPubKey, 
     DWORD dwBlobType, 
     DWORD dwFlags, 
+    BOOL force,
     BYTE *pbData, 
     DWORD *pdwDataLen
 );
@@ -911,14 +910,13 @@ static void store_key_pair(HCRYPTKEY hCryptKey, HKEY hKey, LPCSTR szValueName, D
     if (lookup_handle(&handle_table, hCryptKey, RSAENH_MAGIC_KEY,
                       (OBJECTHDR**)&pKey))
     {
-        if (RSAENH_CPExportKey(pKey->hProv, hCryptKey, 0, PRIVATEKEYBLOB, 0, 0,
-            &dwLen))
+        if (crypt_export_key(pKey, 0, PRIVATEKEYBLOB, 0, TRUE, 0, &dwLen))
         {
             pbKey = HeapAlloc(GetProcessHeap(), 0, dwLen);
             if (pbKey)
             {
-                if (RSAENH_CPExportKey(pKey->hProv, hCryptKey, 0,
-                                       PRIVATEKEYBLOB, 0, pbKey, &dwLen))
+                if (crypt_export_key(pKey, 0, PRIVATEKEYBLOB, 0, TRUE, pbKey,
+                    &dwLen))
                 {
                     blobIn.pbData = pbKey;
                     blobIn.cbData = dwLen;
@@ -2282,8 +2280,8 @@ static BOOL crypt_export_public_key(CRYPTKEY *pCryptKey, BYTE *pbData,
     return TRUE;
 }
 
-static BOOL crypt_export_private_key(CRYPTKEY *pCryptKey, BYTE *pbData,
-    DWORD *pdwDataLen)
+static BOOL crypt_export_private_key(CRYPTKEY *pCryptKey, BOOL force,
+    BYTE *pbData, DWORD *pdwDataLen)
 {
     BLOBHEADER *pBlobHeader = (BLOBHEADER*)pbData;
     RSAPUBKEY *pRSAPubKey = (RSAPUBKEY*)(pBlobHeader+1);
@@ -2291,6 +2289,11 @@ static BOOL crypt_export_private_key(CRYPTKEY *pCryptKey, BYTE *pbData,
 
     if ((pCryptKey->aiAlgid != CALG_RSA_KEYX) && (pCryptKey->aiAlgid != CALG_RSA_SIGN)) {
         SetLastError(NTE_BAD_KEY);
+        return FALSE;
+    }
+    if (!force && !(pCryptKey->dwPermissions & CRYPT_EXPORT))
+    {
+        SetLastError(NTE_BAD_KEY_STATE);
         return FALSE;
     }
 
@@ -2319,6 +2322,67 @@ static BOOL crypt_export_private_key(CRYPTKEY *pCryptKey, BYTE *pbData,
 }
 
 /******************************************************************************
+ * crypt_export_key [Internal]
+ *
+ * Export a key into a binary large object (BLOB).  Called by CPExportKey and
+ * by store_key_pair.
+ *
+ * PARAMS
+ *  pCryptKey  [I]   Key to be exported.
+ *  hPubKey    [I]   Key used to encrypt sensitive BLOB data.
+ *  dwBlobType [I]   SIMPLEBLOB, PUBLICKEYBLOB or PRIVATEKEYBLOB.
+ *  dwFlags    [I]   Currently none defined.
+ *  force      [I]   If TRUE, the key is written no matter what the key's
+ *                   permissions are.  Otherwise the key's permissions are
+ *                   checked before exporting.
+ *  pbData     [O]   Pointer to a buffer where the BLOB will be written to.
+ *  pdwDataLen [I/O] I: Size of buffer at pbData, O: Size of BLOB
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE.
+ */
+static BOOL crypt_export_key(CRYPTKEY *pCryptKey, HCRYPTKEY hPubKey,
+                             DWORD dwBlobType, DWORD dwFlags, BOOL force,
+                             BYTE *pbData, DWORD *pdwDataLen)
+{
+    CRYPTKEY *pPubKey;
+    
+    if (dwFlags & CRYPT_SSL2_FALLBACK) {
+        if (pCryptKey->aiAlgid != CALG_SSL2_MASTER) {
+            SetLastError(NTE_BAD_KEY);
+            return FALSE;
+        }
+    }
+    
+    switch ((BYTE)dwBlobType)
+    {
+        case SIMPLEBLOB:
+            if (!lookup_handle(&handle_table, hPubKey, RSAENH_MAGIC_KEY, (OBJECTHDR**)&pPubKey)){
+                SetLastError(NTE_BAD_PUBLIC_KEY); /* FIXME: error_code? */
+                return FALSE;
+            }
+            return crypt_export_simple(pCryptKey, pPubKey, dwFlags, pbData,
+                                       pdwDataLen);
+            
+        case PUBLICKEYBLOB:
+            if (is_valid_handle(&handle_table, hPubKey, RSAENH_MAGIC_KEY)) {
+                SetLastError(NTE_BAD_KEY); /* FIXME: error code? */
+                return FALSE;
+            }
+
+            return crypt_export_public_key(pCryptKey, pbData, pdwDataLen);
+
+        case PRIVATEKEYBLOB:
+            return crypt_export_private_key(pCryptKey, force, pbData, pdwDataLen);
+            
+        default:
+            SetLastError(NTE_BAD_TYPE); /* FIXME: error code? */
+            return FALSE;
+    }
+}
+
+/******************************************************************************
  * CPExportKey (RSAENH.@)
  *
  * Export a key into a binary large object (BLOB).
@@ -2336,14 +2400,14 @@ static BOOL crypt_export_private_key(CRYPTKEY *pCryptKey, BYTE *pbData,
  *  Success: TRUE.
  *  Failure: FALSE.
  */
-BOOL WINAPI RSAENH_CPExportKey(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTKEY hPubKey, 
+BOOL WINAPI RSAENH_CPExportKey(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTKEY hPubKey,
                                DWORD dwBlobType, DWORD dwFlags, BYTE *pbData, DWORD *pdwDataLen)
 {
-    CRYPTKEY *pCryptKey, *pPubKey;
-    
+    CRYPTKEY *pCryptKey;
+
     TRACE("(hProv=%08lx, hKey=%08lx, hPubKey=%08lx, dwBlobType=%08x, dwFlags=%08x, pbData=%p,"
           "pdwDataLen=%p)\n", hProv, hKey, hPubKey, dwBlobType, dwFlags, pbData, pdwDataLen);
-    
+
     if (!is_valid_handle(&handle_table, hProv, RSAENH_MAGIC_CONTAINER))
     {
         SetLastError(NTE_BAD_UID);
@@ -2356,37 +2420,8 @@ BOOL WINAPI RSAENH_CPExportKey(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTKEY hPubK
         return FALSE;
     }
 
-    if (dwFlags & CRYPT_SSL2_FALLBACK) {
-        if (pCryptKey->aiAlgid != CALG_SSL2_MASTER) {
-            SetLastError(NTE_BAD_KEY);
-            return FALSE;
-        }
-    }
-    
-    switch ((BYTE)dwBlobType)
-    {
-        case SIMPLEBLOB:
-            if (!lookup_handle(&handle_table, hPubKey, RSAENH_MAGIC_KEY, (OBJECTHDR**)&pPubKey)){
-                SetLastError(NTE_BAD_PUBLIC_KEY); /* FIXME: error_code? */
-                return FALSE;
-            }
-            return crypt_export_simple(pCryptKey, pPubKey, dwFlags, pbData, pdwDataLen);
-            
-        case PUBLICKEYBLOB:
-            if (is_valid_handle(&handle_table, hPubKey, RSAENH_MAGIC_KEY)) {
-                SetLastError(NTE_BAD_KEY); /* FIXME: error code? */
-                return FALSE;
-            }
-
-            return crypt_export_public_key(pCryptKey, pbData, pdwDataLen);
-
-        case PRIVATEKEYBLOB:
-            return crypt_export_private_key(pCryptKey, pbData, pdwDataLen);
-            
-        default:
-            SetLastError(NTE_BAD_TYPE); /* FIXME: error code? */
-            return FALSE;
-    }
+    return crypt_export_key(pCryptKey, hPubKey, dwBlobType, dwFlags, FALSE,
+        pbData, pdwDataLen);
 }
 
 /******************************************************************************
