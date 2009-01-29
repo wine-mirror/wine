@@ -495,30 +495,6 @@ static BOOL init_region( WINEREGION *pReg, INT n )
     return TRUE;
 }
 
-
-/***********************************************************************
- *          REGION_CreateRegion
- *          Create a new empty region.
- */
-static HRGN REGION_CreateRegion( INT n )
-{
-    HRGN hrgn;
-    RGNOBJ *obj;
-
-    if (!(obj = HeapAlloc( GetProcessHeap(), 0, sizeof(*obj) ))) return 0;
-    if (!init_region( &obj->rgn, n ))
-    {
-        HeapFree( GetProcessHeap(), 0, obj );
-        return 0;
-    }
-    if (!(hrgn = alloc_gdi_handle( &obj->header, OBJ_REGION, &region_funcs )))
-    {
-        HeapFree( GetProcessHeap(), 0, obj->rgn.rects );
-        HeapFree( GetProcessHeap(), 0, obj );
-    }
-    return hrgn;
-}
-
 /***********************************************************************
  *           destroy_region
  */
@@ -669,12 +645,23 @@ INT WINAPI GetRgnBox( HRGN hrgn, LPRECT rect )
 HRGN WINAPI CreateRectRgn(INT left, INT top, INT right, INT bottom)
 {
     HRGN hrgn;
+    RGNOBJ *obj;
+
+    if (!(obj = HeapAlloc( GetProcessHeap(), 0, sizeof(*obj) ))) return 0;
 
     /* Allocate 2 rects by default to reduce the number of reallocs */
-
-    if (!(hrgn = REGION_CreateRegion(RGN_DEFAULT_RECTS)))
-	return 0;
-    TRACE("%d,%d-%d,%d\n", left, top, right, bottom);
+    if (!init_region( &obj->rgn, RGN_DEFAULT_RECTS ))
+    {
+        HeapFree( GetProcessHeap(), 0, obj );
+        return 0;
+    }
+    if (!(hrgn = alloc_gdi_handle( &obj->header, OBJ_REGION, &region_funcs )))
+    {
+        HeapFree( GetProcessHeap(), 0, obj->rgn.rects );
+        HeapFree( GetProcessHeap(), 0, obj );
+        return 0;
+    }
+    TRACE( "%d,%d-%d,%d returning %p\n", left, top, right, bottom, hrgn );
     SetRectRgn(hrgn, left, top, right, bottom);
     return hrgn;
 }
@@ -796,10 +783,12 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
       /* Create region */
 
     d = (ellipse_height < 128) ? ((3 * ellipse_height) >> 2) : 64;
-    if (!(hrgn = REGION_CreateRegion(d))) return 0;
-    if (!(obj = GDI_GetObjPtr( hrgn, OBJ_REGION ))) return 0;
-    TRACE("(%d,%d-%d,%d %dx%d): ret=%p\n",
-	  left, top, right, bottom, ellipse_width, ellipse_height, hrgn );
+    if (!(obj = HeapAlloc( GetProcessHeap(), 0, sizeof(*obj) ))) return 0;
+    if (!init_region( &obj->rgn, d ))
+    {
+        HeapFree( GetProcessHeap(), 0, obj );
+        return 0;
+    }
 
       /* Ellipse algorithm, based on an article by K. Porter */
       /* in DDJ Graphics Programming Column, 8/89 */
@@ -866,7 +855,17 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
 	rect.bottom = bottom;
 	REGION_UnionRectWithRegion( &rect, &obj->rgn );
     }
-    GDI_ReleaseObj( hrgn );
+
+    hrgn = alloc_gdi_handle( &obj->header, OBJ_REGION, &region_funcs );
+
+    TRACE("(%d,%d-%d,%d %dx%d): ret=%p\n",
+	  left, top, right, bottom, ellipse_width, ellipse_height, hrgn );
+
+    if (!hrgn)
+    {
+        HeapFree( GetProcessHeap(), 0, obj->rgn.rects );
+        HeapFree( GetProcessHeap(), 0, obj );
+    }
     return hrgn;
 }
 
@@ -1013,8 +1012,7 @@ static void translate( POINT *pt, UINT count, const XFORM *xform )
 HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA* rgndata)
 {
     HRGN hrgn;
-
-    TRACE(" %p %d %p\n", lpXform, dwCount, rgndata );
+    RGNOBJ *obj;
 
     if (!rgndata)
     {
@@ -1059,27 +1057,33 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
         return hrgn;
     }
 
-    if( (hrgn = REGION_CreateRegion( rgndata->rdh.nCount )) )
+    if (!(obj = HeapAlloc( GetProcessHeap(), 0, sizeof(*obj) ))) return 0;
+
+    if (init_region( &obj->rgn, rgndata->rdh.nCount ))
     {
 	RECT *pCurRect, *pEndRect;
-        RGNOBJ *obj = GDI_GetObjPtr( hrgn, OBJ_REGION );
 
-	if (obj) {
-            pEndRect = (RECT *)rgndata->Buffer + rgndata->rdh.nCount;
-            for(pCurRect = (RECT *)rgndata->Buffer; pCurRect < pEndRect; pCurRect++)
-            {
-                if (pCurRect->left < pCurRect->right && pCurRect->top < pCurRect->bottom)
-                    REGION_UnionRectWithRegion( pCurRect, &obj->rgn );
-            }
-	    GDI_ReleaseObj( hrgn );
-
-            TRACE("-- %p\n", hrgn );
-            return hrgn;
+        pEndRect = (RECT *)rgndata->Buffer + rgndata->rdh.nCount;
+        for(pCurRect = (RECT *)rgndata->Buffer; pCurRect < pEndRect; pCurRect++)
+        {
+            if (pCurRect->left < pCurRect->right && pCurRect->top < pCurRect->bottom)
+                REGION_UnionRectWithRegion( pCurRect, &obj->rgn );
         }
-	else ERR("Could not get pointer to newborn Region!\n");
+        hrgn = alloc_gdi_handle( &obj->header, OBJ_REGION, &region_funcs );
+    }
+    else
+    {
+        HeapFree( GetProcessHeap(), 0, obj );
+        return 0;
     }
 
-    return 0;
+    if (!hrgn)
+    {
+        HeapFree( GetProcessHeap(), 0, obj->rgn.rects );
+        HeapFree( GetProcessHeap(), 0, obj );
+    }
+    TRACE("%p %d %p returning %p\n", lpXform, dwCount, rgndata, hrgn );
+    return hrgn;
 }
 
 
@@ -2689,8 +2693,8 @@ static void REGION_FreeStorage(ScanLineListBlock *pSLLBlock)
  *
  *     Create an array of rectangles from a list of points.
  */
-static int REGION_PtsToRegion(int numFullPtBlocks, int iCurPtBlock,
-		       POINTBLOCK *FirstPtBlock, WINEREGION *reg)
+static BOOL REGION_PtsToRegion(int numFullPtBlocks, int iCurPtBlock,
+                               POINTBLOCK *FirstPtBlock, WINEREGION *reg)
 {
     RECT *rects;
     POINT *pts;
@@ -2702,10 +2706,7 @@ static int REGION_PtsToRegion(int numFullPtBlocks, int iCurPtBlock,
     extents = &reg->extents;
 
     numRects = ((numFullPtBlocks * NUMPTSTOBUFFER) + iCurPtBlock) >> 1;
-
-    if (!(reg->rects = HeapReAlloc( GetProcessHeap(), 0, reg->rects,
-			   sizeof(RECT) * numRects )))
-        return(0);
+    if (!init_region( reg, numRects )) return FALSE;
 
     reg->size = numRects;
     CurPtBlock = FirstPtBlock;
@@ -2760,7 +2761,7 @@ static int REGION_PtsToRegion(int numFullPtBlocks, int iCurPtBlock,
 HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
 		      INT nbpolygons, INT mode)
 {
-    HRGN hrgn;
+    HRGN hrgn = 0;
     RGNOBJ *obj;
     EdgeTableEntry *pAET;            /* Active Edge Table       */
     INT y;                           /* current scanline        */
@@ -2781,10 +2782,6 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
 
     TRACE("%p, count %d, polygons %d, mode %d\n", Pts, *Count, nbpolygons, mode);
 
-    if(!(hrgn = REGION_CreateRegion(nbpolygons)))
-        return 0;
-    obj = GDI_GetObjPtr( hrgn, OBJ_REGION );
-
     /* special case a rectangle */
 
     if (((nbpolygons == 1) && ((*Count == 4) ||
@@ -2797,22 +2794,14 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
 	  (Pts[1].y == Pts[2].y) &&
 	  (Pts[2].x == Pts[3].x) &&
 	  (Pts[3].y == Pts[0].y))))
-    {
-        SetRectRgn( hrgn, min(Pts[0].x, Pts[2].x), min(Pts[0].y, Pts[2].y),
-		            max(Pts[0].x, Pts[2].x), max(Pts[0].y, Pts[2].y) );
-	GDI_ReleaseObj( hrgn );
-	return hrgn;
-    }
+        return CreateRectRgn( min(Pts[0].x, Pts[2].x), min(Pts[0].y, Pts[2].y),
+                              max(Pts[0].x, Pts[2].x), max(Pts[0].y, Pts[2].y) );
 
     for(poly = total = 0; poly < nbpolygons; poly++)
         total += Count[poly];
     if (! (pETEs = HeapAlloc( GetProcessHeap(), 0, sizeof(EdgeTableEntry) * total )))
-    {
-        destroy_region( &obj->rgn );
-        free_gdi_handle( hrgn );
-        HeapFree( GetProcessHeap(), 0, obj );
 	return 0;
-    }
+
     pts = FirstPtBlock.pts;
     REGION_CreateETandAET(Count, nbpolygons, Pts, &ET, &AET, pETEs, &SLLBlock);
     pSLL = ET.scanlines.next;
@@ -2846,11 +2835,7 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
                  */
                 if (iPts == NUMPTSTOBUFFER) {
                     tmpPtBlock = HeapAlloc( GetProcessHeap(), 0, sizeof(POINTBLOCK));
-		    if(!tmpPtBlock) {
-		        WARN("Can't alloc tPB\n");
-                        HeapFree( GetProcessHeap(), 0, pETEs );
-			return 0;
-		    }
+		    if(!tmpPtBlock) goto done;
                     curPtBlock->next = tmpPtBlock;
                     curPtBlock = tmpPtBlock;
                     pts = curPtBlock->pts;
@@ -2898,17 +2883,12 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
                     if (iPts == NUMPTSTOBUFFER) {
                         tmpPtBlock = HeapAlloc( GetProcessHeap(), 0,
 					       sizeof(POINTBLOCK) );
-			if(!tmpPtBlock) {
-			    WARN("Can't alloc tPB\n");
-                            destroy_region( &obj->rgn );
-                            free_gdi_handle( hrgn );
-                            HeapFree( GetProcessHeap(), 0, obj );
-			    return 0;
-			}
+			if(!tmpPtBlock) goto done;
                         curPtBlock->next = tmpPtBlock;
                         curPtBlock = tmpPtBlock;
                         pts = curPtBlock->pts;
-                        numFullPtBlocks++;    iPts = 0;
+                        numFullPtBlocks++;
+                        iPts = 0;
                     }
                     pWETE = pWETE->nextWETE;
                 }
@@ -2925,16 +2905,28 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
             }
         }
     }
-    REGION_FreeStorage(SLLBlock.next);
-    REGION_PtsToRegion(numFullPtBlocks, iPts, &FirstPtBlock, &obj->rgn);
 
+    if (!(obj = HeapAlloc( GetProcessHeap(), 0, sizeof(*obj) ))) goto done;
+
+    if (!REGION_PtsToRegion(numFullPtBlocks, iPts, &FirstPtBlock, &obj->rgn))
+    {
+        HeapFree( GetProcessHeap(), 0, obj );
+        goto done;
+    }
+    if (!(hrgn = alloc_gdi_handle( &obj->header, OBJ_REGION, &region_funcs )))
+    {
+        HeapFree( GetProcessHeap(), 0, obj->rgn.rects );
+        HeapFree( GetProcessHeap(), 0, obj );
+    }
+
+done:
+    REGION_FreeStorage(SLLBlock.next);
     for (curPtBlock = FirstPtBlock.next; --numFullPtBlocks >= 0;) {
 	tmpPtBlock = curPtBlock->next;
 	HeapFree( GetProcessHeap(), 0, curPtBlock );
 	curPtBlock = tmpPtBlock;
     }
     HeapFree( GetProcessHeap(), 0, pETEs );
-    GDI_ReleaseObj( hrgn );
     return hrgn;
 }
 
