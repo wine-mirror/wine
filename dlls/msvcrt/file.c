@@ -2109,7 +2109,7 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
       unsigned int i, j, nr_lf;
       char *p = NULL;
       const char *q;
-      const char *s = (const char *)buf, *buf_start = (const char *)buf;
+      const char *s = buf, *buf_start = buf;
       /* find number of \n ( without preceding \r ) */
       for ( nr_lf=0,i = 0; i <count; i++)
       {
@@ -2123,7 +2123,7 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
       {
           if ((q = p = MSVCRT_malloc(count + nr_lf)))
           {
-              for (s = (const char *)buf, i = 0, j = 0; i < count; i++)
+              for (s = buf, i = 0, j = 0; i < count; i++)
               {
                   if (s[i]== '\n')
                   {

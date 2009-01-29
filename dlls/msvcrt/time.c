@@ -173,7 +173,7 @@ MSVCRT_wchar_t* CDECL _wstrdate(MSVCRT_wchar_t* date)
 {
   static const WCHAR format[] = { 'M','M','\'','/','\'','d','d','\'','/','\'','y','y',0 };
 
-  GetDateFormatW(LOCALE_NEUTRAL, 0, NULL, format, (LPWSTR)date, 9);
+  GetDateFormatW(LOCALE_NEUTRAL, 0, NULL, format, date, 9);
 
   return date;
 }
@@ -197,7 +197,7 @@ MSVCRT_wchar_t* CDECL _wstrtime(MSVCRT_wchar_t* time)
 {
   static const WCHAR format[] = { 'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0 };
 
-  GetTimeFormatW(LOCALE_NEUTRAL, 0, NULL, format, (LPWSTR)time, 9);
+  GetTimeFormatW(LOCALE_NEUTRAL, 0, NULL, format, time, 9);
 
   return time;
 }

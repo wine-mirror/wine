@@ -265,7 +265,7 @@ static void msvcrt_set_ctype(unsigned int codepage, LCID lcid)
   {
     int i;
     char str[3];
-    unsigned char *traverse = (unsigned char *)cp.LeadByte;
+    unsigned char *traverse = cp.LeadByte;
 
     memset(MSVCRT_current_ctype, 0, sizeof(MSVCRT__ctype));
     MSVCRT___lc_codepage = codepage;
