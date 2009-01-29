@@ -31,6 +31,7 @@ static BOOL (WINAPI *pInternetTimeFromSystemTimeA)(CONST SYSTEMTIME *,DWORD ,LPS
 static BOOL (WINAPI *pInternetTimeFromSystemTimeW)(CONST SYSTEMTIME *,DWORD ,LPWSTR ,DWORD);
 static BOOL (WINAPI *pInternetTimeToSystemTimeA)(LPCSTR ,SYSTEMTIME *,DWORD);
 static BOOL (WINAPI *pInternetTimeToSystemTimeW)(LPCWSTR ,SYSTEMTIME *,DWORD);
+static BOOL (WINAPI *pIsDomainLegalCookieDomainW)(LPCWSTR, LPCWSTR);
 
 /* ############################### */
 
@@ -526,6 +527,131 @@ static void InternetTimeToSystemTimeW_test(void)
     ok( ret, "InternetTimeToSystemTimeW failed (%u)\n", GetLastError() );
 }
 
+static void test_IsDomainLegalCookieDomainW(void)
+{
+    BOOL ret;
+    DWORD error;
+    static const WCHAR empty[]          = {0};
+    static const WCHAR dot[]            = {'.',0};
+    static const WCHAR uk[]             = {'u','k',0};
+    static const WCHAR com[]            = {'c','o','m',0};
+    static const WCHAR dot_com[]        = {'.','c','o','m',0};
+    static const WCHAR gmail_com[]      = {'g','m','a','i','l','.','c','o','m',0};
+    static const WCHAR dot_gmail_com[]  = {'.','g','m','a','i','l','.','c','o','m',0};
+    static const WCHAR mail_gmail_com[] = {'m','a','i','l','.','g','m','a','i','l','.','c','o','m',0};
+    static const WCHAR gmail_co_uk[]    = {'g','m','a','i','l','.','c','o','.','u','k',0};
+    static const WCHAR co_uk[]          = {'c','o','.','u','k',0};
+    static const WCHAR dot_co_uk[]      = {'.','c','o','.','u','k',0};
+
+    SetLastError(0xdeadbeef);
+    ret = pIsDomainLegalCookieDomainW(NULL, NULL);
+    error = GetLastError();
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+    ok(error == ERROR_INVALID_PARAMETER, "got %u expected ERROR_INVALID_PARAMETER\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pIsDomainLegalCookieDomainW(com, NULL);
+    error = GetLastError();
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+    ok(error == ERROR_INVALID_PARAMETER, "got %u expected ERROR_INVALID_PARAMETER\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pIsDomainLegalCookieDomainW(NULL, gmail_com);
+    error = GetLastError();
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+    ok(error == ERROR_INVALID_PARAMETER, "got %u expected ERROR_INVALID_PARAMETER\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pIsDomainLegalCookieDomainW(empty, gmail_com);
+    error = GetLastError();
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+    ok(error == ERROR_INVALID_NAME, "got %u expected ERROR_INVALID_NAME\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pIsDomainLegalCookieDomainW(com, empty);
+    error = GetLastError();
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+    ok(error == ERROR_INVALID_NAME, "got %u expected ERROR_INVALID_NAME\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pIsDomainLegalCookieDomainW(gmail_com, dot);
+    error = GetLastError();
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+    ok(error == ERROR_INVALID_NAME, "got %u expected ERROR_INVALID_NAME\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pIsDomainLegalCookieDomainW(dot, gmail_com);
+    error = GetLastError();
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+    ok(error == ERROR_INVALID_NAME, "got %u expected ERROR_INVALID_NAME\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pIsDomainLegalCookieDomainW(com, com);
+    error = GetLastError();
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+    ok(error == 0xdeadbeef, "got %u expected 0xdeadbeef\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pIsDomainLegalCookieDomainW(com, dot_com);
+    error = GetLastError();
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+    ok(error == ERROR_INVALID_NAME, "got %u expected ERROR_INVALID_NAME\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pIsDomainLegalCookieDomainW(dot_com, com);
+    error = GetLastError();
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+    ok(error == ERROR_INVALID_NAME, "got %u expected ERROR_INVALID_NAME\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pIsDomainLegalCookieDomainW(com, gmail_com);
+    error = GetLastError();
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+    ok(error == 0xdeadbeef, "got %u expected 0xdeadbeef\n", error);
+
+    ret = pIsDomainLegalCookieDomainW(gmail_com, gmail_com);
+    ok(ret, "IsDomainLegalCookieDomainW failed\n");
+
+    SetLastError(0xdeadbeef);
+    ret = pIsDomainLegalCookieDomainW(gmail_co_uk, co_uk);
+    error = GetLastError();
+    ok(!ret, "IsDomainLegalCookieDomainW failed\n");
+    ok(error == 0xdeadbeef, "got %u expected 0xdeadbeef\n", error);
+
+    ret = pIsDomainLegalCookieDomainW(uk, co_uk);
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+
+    ret = pIsDomainLegalCookieDomainW(gmail_co_uk, dot_co_uk);
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+
+    ret = pIsDomainLegalCookieDomainW(gmail_co_uk, gmail_co_uk);
+    ok(ret, "IsDomainLegalCookieDomainW failed\n");
+
+    ret = pIsDomainLegalCookieDomainW(gmail_com, com);
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+
+    SetLastError(0xdeadbeef);
+    ret = pIsDomainLegalCookieDomainW(dot_gmail_com, mail_gmail_com);
+    error = GetLastError();
+    ok(!ret, "IsDomainLegalCookieDomainW failed\n");
+    ok(error == ERROR_INVALID_NAME, "got %u expected ERROR_INVALID_NAME\n", error);
+
+    ret = pIsDomainLegalCookieDomainW(gmail_com, mail_gmail_com);
+    ok(ret, "IsDomainLegalCookieDomainW failed\n");
+
+    ret = pIsDomainLegalCookieDomainW(mail_gmail_com, gmail_com);
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+
+    ret = pIsDomainLegalCookieDomainW(mail_gmail_com, com);
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+
+    ret = pIsDomainLegalCookieDomainW(dot_gmail_com, mail_gmail_com);
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+
+    ret = pIsDomainLegalCookieDomainW(mail_gmail_com, dot_gmail_com);
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+}
+
 /* ############################### */
 
 START_TEST(internet)
@@ -536,6 +662,7 @@ START_TEST(internet)
     pInternetTimeFromSystemTimeW = (void*)GetProcAddress(hdll, "InternetTimeFromSystemTimeW");
     pInternetTimeToSystemTimeA = (void*)GetProcAddress(hdll, "InternetTimeToSystemTimeA");
     pInternetTimeToSystemTimeW = (void*)GetProcAddress(hdll, "InternetTimeToSystemTimeW");
+    pIsDomainLegalCookieDomainW = (void*)GetProcAddress(hdll, (LPCSTR)117);
 
     test_InternetCanonicalizeUrlA();
     test_InternetQueryOptionA();
@@ -552,4 +679,8 @@ START_TEST(internet)
         InternetTimeToSystemTimeA_test();
         InternetTimeToSystemTimeW_test();
     }
+    if (!pIsDomainLegalCookieDomainW)
+        skip("skipping IsDomainLegalCookieDomainW tests\n");
+    else
+        test_IsDomainLegalCookieDomainW();
 }

@@ -696,3 +696,28 @@ BOOL WINAPI InternetSetPerSiteCookieDecisionW( LPCWSTR pchHostName, DWORD dwDeci
     FIXME("(%s, 0x%08x) stub\n", debugstr_w(pchHostName), dwDecision);
     return FALSE;
 }
+
+/***********************************************************************
+ *           IsDomainLegalCookieDomainW (WININET.@)
+ */
+BOOL WINAPI IsDomainLegalCookieDomainW( LPCWSTR s1, LPCWSTR s2 )
+{
+    const WCHAR *p;
+
+    FIXME("(%s, %s)\n", debugstr_w(s1), debugstr_w(s2));
+
+    if (!s1 || !s2)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (s1[0] == '.' || !s1[0] || s2[0] == '.' || !s2[0])
+    {
+        SetLastError(ERROR_INVALID_NAME);
+        return FALSE;
+    }
+    if (!(p = strchrW(s2, '.'))) return FALSE;
+    if (strchrW(p + 1, '.') && !strcmpW(p + 1, s1)) return TRUE;
+    else if (!strcmpW(s1, s2)) return TRUE;
+    return FALSE;
+}

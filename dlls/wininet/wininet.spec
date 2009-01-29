@@ -9,7 +9,7 @@
 111 stub -noname ExportCookieFileW
 112 stub -noname IsProfilesEnabled
 116 stub -noname IsDomainlegalCookieDomainA
-117 stub -noname IsDomainLegalCookieDomainW
+117 stdcall -noname IsDomainLegalCookieDomainW(wstr wstr)
 118 stub -noname FindP3PPolicySymbol
 120 stub -noname MapResourceToPolicy
 121 stub -noname GetP3PPolicy
