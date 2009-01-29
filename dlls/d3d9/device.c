@@ -617,7 +617,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_StretchRect(LPDIRECT3DDEVICE9EX ifa
 
     TRACE("(%p)->(%p,%p,%p,%p,%d)\n" , This, src, pSourceRect, dst, pDestRect, Filter);
     EnterCriticalSection(&d3d9_cs);
-    hr = IWineD3DSurface_Blt(dst->wineD3DSurface, (RECT *) pDestRect, src->wineD3DSurface, (RECT *) pSourceRect, 0, NULL, Filter);
+    hr = IWineD3DSurface_Blt(dst->wineD3DSurface, pDestRect, src->wineD3DSurface, pSourceRect, 0, NULL, Filter);
     LeaveCriticalSection(&d3d9_cs);
     return hr;
 }

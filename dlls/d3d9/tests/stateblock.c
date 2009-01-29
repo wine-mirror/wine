@@ -269,7 +269,7 @@ static int switch_render_target(
   
     HRESULT hret;
     D3DPRESENT_PARAMETERS present_parameters;
-    event_data* edata = (event_data*) data;
+    event_data* edata = data;
     IDirect3DSwapChain9* swapchain = NULL;
     IDirect3DSurface9* backbuffer = NULL;
 
@@ -313,8 +313,8 @@ static int revert_render_target(
     void* data) {
 
     HRESULT hret;
-    event_data* edata = (event_data*) data;
-   
+    event_data* edata = data;
+
     /* Reset the old render target */
     hret = IDirect3DDevice9_SetRenderTarget(device, 0, edata->original_render_target);
     ok (hret == D3D_OK, "SetRenderTarget returned %#x.\n", hret);
@@ -347,7 +347,7 @@ static int end_stateblock(
     void* data) {
 
     HRESULT hret;
-    event_data* edata = (event_data*) data;
+    event_data* edata = data;
 
     hret = IDirect3DDevice9_EndStateBlock(device, &edata->stateblock);
     ok(hret == D3D_OK, "EndStateBlock returned %#x.\n", hret);
@@ -359,7 +359,7 @@ static int abort_stateblock(
     IDirect3DDevice9* device,
     void* data) {
 
-    event_data* edata = (event_data*) data;
+    event_data* edata = data;
 
     IUnknown_Release(edata->stateblock);
     return EVENT_OK;
@@ -369,7 +369,7 @@ static int apply_stateblock(
     IDirect3DDevice9* device,
     void* data) {
 
-    event_data* edata = (event_data*) data;
+    event_data* edata = data;
     HRESULT hret;
 
     hret = IDirect3DStateBlock9_Apply(edata->stateblock);
@@ -388,7 +388,7 @@ static int capture_stateblock(
     void* data) {
 
     HRESULT hret;
-    event_data* edata = (event_data*) data;
+    event_data* edata = data;
 
     hret = IDirect3DStateBlock9_Capture(edata->stateblock);
     ok(hret == D3D_OK, "Capture returned %#x.\n", hret);
@@ -548,7 +548,7 @@ static void shader_constant_get_handler(
     IDirect3DDevice9* device, const state_test* test, void* data) {
 
     HRESULT hret;
-    shader_constant_data* scdata = (shader_constant_data*) data;
+    shader_constant_data* scdata = data;
     const shader_constant_arg* scarg = test->test_arg;
     unsigned int index = scarg->idx;
 
@@ -848,7 +848,7 @@ static void transform_get_handler(
     IDirect3DDevice9* device, const state_test* test, void* data) {
 
     HRESULT hret;
-    transform_data* tdata = (transform_data*) data;
+    transform_data* tdata = data;
 
     hret = IDirect3DDevice9_GetTransform(device, D3DTS_VIEW, &tdata->view);
     ok(hret == D3D_OK, "GetTransform returned %#x.\n", hret);
@@ -1100,7 +1100,7 @@ static void render_state_get_handler(
     IDirect3DDevice9* device, const state_test* test, void* data) {
 
     HRESULT hret;
-    render_state_data* rsdata = (render_state_data*) data;
+    render_state_data* rsdata = data;
     unsigned int i = 0;
 
     for (i = 0; i < D3D9_RENDER_STATES; i++) {
