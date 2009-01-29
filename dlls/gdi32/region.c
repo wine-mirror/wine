@@ -141,30 +141,32 @@ static const struct gdi_obj_funcs region_funcs =
 	 (r1)->bottom > (r2)->top && \
 	 (r1)->top < (r2)->bottom)
 
-/*
- *   Check to see if there is enough memory in the present region.
- */
 
-static inline int xmemcheck(WINEREGION *reg, LPRECT *rect, LPRECT *firstrect ) {
-    if (reg->numRects >= (reg->size - 1)) {
-	*firstrect = HeapReAlloc( GetProcessHeap(), 0, *firstrect, (2 * (sizeof(RECT)) * (reg->size)));
-	if (*firstrect == 0)
-	    return 0;
+static BOOL add_rect( WINEREGION *reg, INT left, INT top, INT right, INT bottom )
+{
+    RECT *rect;
+    if (reg->numRects >= reg->size)
+    {
+        RECT *newrects = HeapReAlloc( GetProcessHeap(), 0, reg->rects, 2 * sizeof(RECT) * reg->size );
+        if (!newrects) return FALSE;
+        reg->rects = newrects;
 	reg->size *= 2;
-	*rect = (*firstrect)+reg->numRects;
     }
-    return 1;
+    rect = reg->rects + reg->numRects++;
+    rect->left = left;
+    rect->top = top;
+    rect->right = right;
+    rect->bottom = bottom;
+    return TRUE;
 }
 
-#define MEMCHECK(reg, rect, firstrect) xmemcheck(reg,&(rect),&(firstrect))
-
-#define EMPTY_REGION(pReg) { \
+#define EMPTY_REGION(pReg) do { \
     (pReg)->numRects = 0; \
     (pReg)->extents.left = (pReg)->extents.top = 0; \
     (pReg)->extents.right = (pReg)->extents.bottom = 0; \
- }
+ } while(0)
 
-#define REGION_NOT_EMPTY(pReg) pReg->numRects
+#define REGION_NOT_EMPTY(pReg) ((pReg)->numRects)
 
 #define INRECT(r, x, y) \
       ( ( ((r).right >  x)) && \
@@ -1887,9 +1889,6 @@ static void REGION_IntersectO(WINEREGION *pReg,  RECT *r1, RECT *r1End,
 
 {
     INT       left, right;
-    RECT      *pNextRect;
-
-    pNextRect = &pReg->rects[pReg->numRects];
 
     while ((r1 != r1End) && (r2 != r2End))
     {
@@ -1904,15 +1903,7 @@ static void REGION_IntersectO(WINEREGION *pReg,  RECT *r1, RECT *r1End,
 	 * right next to each other. Since that should never happen...
 	 */
 	if (left < right)
-	{
-	    MEMCHECK(pReg, pNextRect, pReg->rects);
-	    pNextRect->left = left;
-	    pNextRect->top = top;
-	    pNextRect->right = right;
-	    pNextRect->bottom = bottom;
-	    pReg->numRects += 1;
-	    pNextRect++;
-	}
+            add_rect( pReg, left, top, right, bottom );
 
 	/*
 	 * Need to advance the pointers. Shift the one that extends
@@ -1981,19 +1972,9 @@ static void REGION_IntersectRegion(WINEREGION *newReg, WINEREGION *reg1,
 static void REGION_UnionNonO (WINEREGION *pReg, RECT *r, RECT *rEnd,
 			      INT top, INT bottom)
 {
-    RECT *pNextRect;
-
-    pNextRect = &pReg->rects[pReg->numRects];
-
     while (r != rEnd)
     {
-	MEMCHECK(pReg, pNextRect, pReg->rects);
-	pNextRect->left = r->left;
-	pNextRect->top = top;
-	pNextRect->right = r->right;
-	pNextRect->bottom = bottom;
-	pReg->numRects += 1;
-	pNextRect++;
+        add_rect( pReg, r->left, top, r->right, bottom );
 	r++;
     }
     return;
@@ -2016,31 +1997,17 @@ static void REGION_UnionNonO (WINEREGION *pReg, RECT *r, RECT *rEnd,
 static void REGION_UnionO (WINEREGION *pReg, RECT *r1, RECT *r1End,
 			   RECT *r2, RECT *r2End, INT top, INT bottom)
 {
-    RECT *pNextRect;
-
-    pNextRect = &pReg->rects[pReg->numRects];
-
 #define MERGERECT(r) \
     if ((pReg->numRects != 0) &&  \
-	(pNextRect[-1].top == top) &&  \
-	(pNextRect[-1].bottom == bottom) &&  \
-	(pNextRect[-1].right >= r->left))  \
+	(pReg->rects[pReg->numRects-1].top == top) &&  \
+	(pReg->rects[pReg->numRects-1].bottom == bottom) &&  \
+	(pReg->rects[pReg->numRects-1].right >= r->left))  \
     {  \
-	if (pNextRect[-1].right < r->right)  \
-	{  \
-	    pNextRect[-1].right = r->right;  \
-	}  \
+	if (pReg->rects[pReg->numRects-1].right < r->right)  \
+	    pReg->rects[pReg->numRects-1].right = r->right;  \
     }  \
     else  \
-    {  \
-	MEMCHECK(pReg, pNextRect, pReg->rects);  \
-	pNextRect->top = top;  \
-	pNextRect->bottom = bottom;  \
-	pNextRect->left = r->left;  \
-	pNextRect->right = r->right;  \
-	pReg->numRects += 1;  \
-	pNextRect += 1;  \
-    }  \
+        add_rect( pReg, r->left, top, r->right, bottom ); \
     r++;
 
     while ((r1 != r1End) && (r2 != r2End))
@@ -2067,6 +2034,7 @@ static void REGION_UnionO (WINEREGION *pReg, RECT *r1, RECT *r1End,
 	MERGERECT(r2);
     }
     return;
+#undef MERGERECT
 }
 
 /***********************************************************************
@@ -2153,19 +2121,9 @@ static void REGION_UnionRegion(WINEREGION *newReg, WINEREGION *reg1,
 static void REGION_SubtractNonO1 (WINEREGION *pReg, RECT *r, RECT *rEnd,
 		INT top, INT bottom)
 {
-    RECT *pNextRect;
-
-    pNextRect = &pReg->rects[pReg->numRects];
-
     while (r != rEnd)
     {
-	MEMCHECK(pReg, pNextRect, pReg->rects);
-	pNextRect->left = r->left;
-	pNextRect->top = top;
-	pNextRect->right = r->right;
-	pNextRect->bottom = bottom;
-	pReg->numRects += 1;
-	pNextRect++;
+        add_rect( pReg, r->left, top, r->right, bottom );
 	r++;
     }
     return;
@@ -2234,13 +2192,7 @@ static void REGION_SubtractO (WINEREGION *pReg, RECT *r1, RECT *r1End,
 	     * Left part of subtrahend covers part of minuend: add uncovered
 	     * part of minuend to region and skip to next subtrahend.
 	     */
-	    MEMCHECK(pReg, pNextRect, pReg->rects);
-	    pNextRect->left = left;
-	    pNextRect->top = top;
-	    pNextRect->right = r2->left;
-	    pNextRect->bottom = bottom;
-	    pReg->numRects += 1;
-	    pNextRect++;
+            add_rect( pReg, left, top, r2->left, bottom );
 	    left = r2->right;
 	    if (left >= r1->right)
 	    {
@@ -2266,13 +2218,7 @@ static void REGION_SubtractO (WINEREGION *pReg, RECT *r1, RECT *r1End,
 	     */
 	    if (r1->right > left)
 	    {
-		MEMCHECK(pReg, pNextRect, pReg->rects);
-		pNextRect->left = left;
-		pNextRect->top = top;
-		pNextRect->right = r1->right;
-		pNextRect->bottom = bottom;
-		pReg->numRects += 1;
-		pNextRect++;
+                add_rect( pReg, left, top, r1->right, bottom );
 	    }
 	    r1++;
 	    left = r1->left;
@@ -2284,13 +2230,7 @@ static void REGION_SubtractO (WINEREGION *pReg, RECT *r1, RECT *r1End,
      */
     while (r1 != r1End)
     {
-	MEMCHECK(pReg, pNextRect, pReg->rects);
-	pNextRect->left = left;
-	pNextRect->top = top;
-	pNextRect->right = r1->right;
-	pNextRect->bottom = bottom;
-	pReg->numRects += 1;
-	pNextRect++;
+        add_rect( pReg, left, top, r1->right, bottom );
 	r1++;
 	if (r1 != r1End)
 	{
