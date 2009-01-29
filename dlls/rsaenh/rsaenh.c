@@ -2207,6 +2207,117 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
     return TRUE;
 }
 
+static BOOL crypt_export_simple(CRYPTKEY *pCryptKey, CRYPTKEY *pPubKey,
+    DWORD dwFlags, BYTE *pbData, DWORD *pdwDataLen)
+{
+    BLOBHEADER *pBlobHeader = (BLOBHEADER*)pbData;
+    ALG_ID *pAlgid = (ALG_ID*)(pBlobHeader+1);
+    DWORD dwDataLen;
+
+    if (!(GET_ALG_CLASS(pCryptKey->aiAlgid)&(ALG_CLASS_DATA_ENCRYPT|ALG_CLASS_MSG_ENCRYPT))) {
+        SetLastError(NTE_BAD_KEY); /* FIXME: error code? */
+        return FALSE;
+    }
+
+    dwDataLen = sizeof(BLOBHEADER) + sizeof(ALG_ID) + pPubKey->dwBlockLen;
+    if (pbData) {
+        if (*pdwDataLen < dwDataLen) {
+            SetLastError(ERROR_MORE_DATA);
+            *pdwDataLen = dwDataLen;
+            return FALSE;
+        }
+
+        pBlobHeader->bType = SIMPLEBLOB;
+        pBlobHeader->bVersion = CUR_BLOB_VERSION;
+        pBlobHeader->reserved = 0;
+        pBlobHeader->aiKeyAlg = pCryptKey->aiAlgid;
+
+        *pAlgid = pPubKey->aiAlgid;
+
+        if (!pad_data(pCryptKey->abKeyValue, pCryptKey->dwKeyLen, (BYTE*)(pAlgid+1),
+                      pPubKey->dwBlockLen, dwFlags))
+        {
+            return FALSE;
+        }
+
+        encrypt_block_impl(pPubKey->aiAlgid, PK_PUBLIC, &pPubKey->context, (BYTE*)(pAlgid+1),
+                           (BYTE*)(pAlgid+1), RSAENH_ENCRYPT);
+    }
+    *pdwDataLen = dwDataLen;
+    return TRUE;
+}
+
+static BOOL crypt_export_public_key(CRYPTKEY *pCryptKey, BYTE *pbData,
+    DWORD *pdwDataLen)
+{
+    BLOBHEADER *pBlobHeader = (BLOBHEADER*)pbData;
+    RSAPUBKEY *pRSAPubKey = (RSAPUBKEY*)(pBlobHeader+1);
+    DWORD dwDataLen;
+
+    if ((pCryptKey->aiAlgid != CALG_RSA_KEYX) && (pCryptKey->aiAlgid != CALG_RSA_SIGN)) {
+        SetLastError(NTE_BAD_KEY);
+        return FALSE;
+    }
+
+    dwDataLen = sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) + pCryptKey->dwKeyLen;
+    if (pbData) {
+        if (*pdwDataLen < dwDataLen) {
+            SetLastError(ERROR_MORE_DATA);
+            *pdwDataLen = dwDataLen;
+            return FALSE;
+        }
+
+        pBlobHeader->bType = PUBLICKEYBLOB;
+        pBlobHeader->bVersion = CUR_BLOB_VERSION;
+        pBlobHeader->reserved = 0;
+        pBlobHeader->aiKeyAlg = pCryptKey->aiAlgid;
+
+        pRSAPubKey->magic = RSAENH_MAGIC_RSA1;
+        pRSAPubKey->bitlen = pCryptKey->dwKeyLen << 3;
+
+        export_public_key_impl((BYTE*)(pRSAPubKey+1), &pCryptKey->context,
+                               pCryptKey->dwKeyLen, &pRSAPubKey->pubexp);
+    }
+    *pdwDataLen = dwDataLen;
+    return TRUE;
+}
+
+static BOOL crypt_export_private_key(CRYPTKEY *pCryptKey, BYTE *pbData,
+    DWORD *pdwDataLen)
+{
+    BLOBHEADER *pBlobHeader = (BLOBHEADER*)pbData;
+    RSAPUBKEY *pRSAPubKey = (RSAPUBKEY*)(pBlobHeader+1);
+    DWORD dwDataLen;
+
+    if ((pCryptKey->aiAlgid != CALG_RSA_KEYX) && (pCryptKey->aiAlgid != CALG_RSA_SIGN)) {
+        SetLastError(NTE_BAD_KEY);
+        return FALSE;
+    }
+
+    dwDataLen = sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) +
+                2 * pCryptKey->dwKeyLen + 5 * ((pCryptKey->dwKeyLen + 1) >> 1);
+    if (pbData) {
+        if (*pdwDataLen < dwDataLen) {
+            SetLastError(ERROR_MORE_DATA);
+            *pdwDataLen = dwDataLen;
+            return FALSE;
+        }
+
+        pBlobHeader->bType = PRIVATEKEYBLOB;
+        pBlobHeader->bVersion = CUR_BLOB_VERSION;
+        pBlobHeader->reserved = 0;
+        pBlobHeader->aiKeyAlg = pCryptKey->aiAlgid;
+
+        pRSAPubKey->magic = RSAENH_MAGIC_RSA2;
+        pRSAPubKey->bitlen = pCryptKey->dwKeyLen << 3;
+
+        export_private_key_impl((BYTE*)(pRSAPubKey+1), &pCryptKey->context,
+                                pCryptKey->dwKeyLen, &pRSAPubKey->pubexp);
+    }
+    *pdwDataLen = dwDataLen;
+    return TRUE;
+}
+
 /******************************************************************************
  * CPExportKey (RSAENH.@)
  *
@@ -2229,10 +2340,6 @@ BOOL WINAPI RSAENH_CPExportKey(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTKEY hPubK
                                DWORD dwBlobType, DWORD dwFlags, BYTE *pbData, DWORD *pdwDataLen)
 {
     CRYPTKEY *pCryptKey, *pPubKey;
-    BLOBHEADER *pBlobHeader = (BLOBHEADER*)pbData;
-    RSAPUBKEY *pRSAPubKey = (RSAPUBKEY*)(pBlobHeader+1);
-    ALG_ID *pAlgid = (ALG_ID*)(pBlobHeader+1);
-    DWORD dwDataLen;
     
     TRACE("(hProv=%08lx, hKey=%08lx, hPubKey=%08lx, dwBlobType=%08x, dwFlags=%08x, pbData=%p,"
           "pdwDataLen=%p)\n", hProv, hKey, hPubKey, dwBlobType, dwFlags, pbData, pdwDataLen);
@@ -2263,38 +2370,7 @@ BOOL WINAPI RSAENH_CPExportKey(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTKEY hPubK
                 SetLastError(NTE_BAD_PUBLIC_KEY); /* FIXME: error_code? */
                 return FALSE;
             }
-
-            if (!(GET_ALG_CLASS(pCryptKey->aiAlgid)&(ALG_CLASS_DATA_ENCRYPT|ALG_CLASS_MSG_ENCRYPT))) {
-                SetLastError(NTE_BAD_KEY); /* FIXME: error code? */
-                return FALSE;
-            }
-
-            dwDataLen = sizeof(BLOBHEADER) + sizeof(ALG_ID) + pPubKey->dwBlockLen;
-            if (pbData) {
-                if (*pdwDataLen < dwDataLen) {
-                    SetLastError(ERROR_MORE_DATA);
-                    *pdwDataLen = dwDataLen;
-                    return FALSE;
-                }
-
-                pBlobHeader->bType = SIMPLEBLOB;
-                pBlobHeader->bVersion = CUR_BLOB_VERSION;
-                pBlobHeader->reserved = 0;
-                pBlobHeader->aiKeyAlg = pCryptKey->aiAlgid;
-
-                *pAlgid = pPubKey->aiAlgid;
-       
-                if (!pad_data(pCryptKey->abKeyValue, pCryptKey->dwKeyLen, (BYTE*)(pAlgid+1), 
-                              pPubKey->dwBlockLen, dwFlags))
-                {
-                    return FALSE;
-                }
-                
-                encrypt_block_impl(pPubKey->aiAlgid, PK_PUBLIC, &pPubKey->context, (BYTE*)(pAlgid+1), 
-                                   (BYTE*)(pAlgid+1), RSAENH_ENCRYPT); 
-            }
-            *pdwDataLen = dwDataLen;
-            return TRUE;
+            return crypt_export_simple(pCryptKey, pPubKey, dwFlags, pbData, pdwDataLen);
             
         case PUBLICKEYBLOB:
             if (is_valid_handle(&handle_table, hPubKey, RSAENH_MAGIC_KEY)) {
@@ -2302,61 +2378,10 @@ BOOL WINAPI RSAENH_CPExportKey(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTKEY hPubK
                 return FALSE;
             }
 
-            if ((pCryptKey->aiAlgid != CALG_RSA_KEYX) && (pCryptKey->aiAlgid != CALG_RSA_SIGN)) {
-                SetLastError(NTE_BAD_KEY);
-                return FALSE;
-            }
-
-            dwDataLen = sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) + pCryptKey->dwKeyLen;
-            if (pbData) {
-                if (*pdwDataLen < dwDataLen) {
-                    SetLastError(ERROR_MORE_DATA);
-                    *pdwDataLen = dwDataLen;
-                    return FALSE;
-                }
-
-                pBlobHeader->bType = PUBLICKEYBLOB;
-                pBlobHeader->bVersion = CUR_BLOB_VERSION;
-                pBlobHeader->reserved = 0;
-                pBlobHeader->aiKeyAlg = pCryptKey->aiAlgid;
-
-                pRSAPubKey->magic = RSAENH_MAGIC_RSA1; 
-                pRSAPubKey->bitlen = pCryptKey->dwKeyLen << 3;
-        
-                export_public_key_impl((BYTE*)(pRSAPubKey+1), &pCryptKey->context, 
-                                       pCryptKey->dwKeyLen, &pRSAPubKey->pubexp);
-            }
-            *pdwDataLen = dwDataLen;
-            return TRUE;
+            return crypt_export_public_key(pCryptKey, pbData, pdwDataLen);
 
         case PRIVATEKEYBLOB:
-            if ((pCryptKey->aiAlgid != CALG_RSA_KEYX) && (pCryptKey->aiAlgid != CALG_RSA_SIGN)) {
-                SetLastError(NTE_BAD_KEY);
-                return FALSE;
-            }
-    
-            dwDataLen = sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) + 
-                        2 * pCryptKey->dwKeyLen + 5 * ((pCryptKey->dwKeyLen + 1) >> 1);
-            if (pbData) {
-                if (*pdwDataLen < dwDataLen) {
-                    SetLastError(ERROR_MORE_DATA);
-                    *pdwDataLen = dwDataLen;
-                    return FALSE;
-                }
-                
-                pBlobHeader->bType = PRIVATEKEYBLOB;
-                pBlobHeader->bVersion = CUR_BLOB_VERSION;
-                pBlobHeader->reserved = 0;
-                pBlobHeader->aiKeyAlg = pCryptKey->aiAlgid;
-
-                pRSAPubKey->magic = RSAENH_MAGIC_RSA2;
-                pRSAPubKey->bitlen = pCryptKey->dwKeyLen << 3;
-                
-                export_private_key_impl((BYTE*)(pRSAPubKey+1), &pCryptKey->context, 
-                                        pCryptKey->dwKeyLen, &pRSAPubKey->pubexp);
-            }
-            *pdwDataLen = dwDataLen;
-            return TRUE;
+            return crypt_export_private_key(pCryptKey, pbData, pdwDataLen);
             
         default:
             SetLastError(NTE_BAD_TYPE); /* FIXME: error code? */
