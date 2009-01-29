@@ -2460,6 +2460,221 @@ static void release_and_install_key(HCRYPTPROV hProv, HCRYPTKEY src,
 }
 
 /******************************************************************************
+ * import_private_key [Internal]
+ *
+ * Import a BLOB'ed private key into a key container.
+ *
+ * PARAMS
+ *  hProv     [I] Key container into which the private key is to be imported.
+ *  pbData    [I] Pointer to a buffer which holds the private key BLOB.
+ *  dwDataLen [I] Length of data in buffer at pbData.
+ *  dwFlags   [I] One of:
+ *                CRYPT_EXPORTABLE: the imported key is marked exportable
+ *  phKey     [O] Handle to the imported key.
+ *
+ *
+ * NOTES
+ *  Assumes the caller has already checked the BLOBHEADER at pbData to ensure
+ *  it's a PRIVATEKEYBLOB.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE.
+ */
+static BOOL import_private_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen,
+                               DWORD dwFlags, HCRYPTKEY *phKey)
+{
+    KEYCONTAINER *pKeyContainer;
+    CRYPTKEY *pCryptKey;
+    CONST BLOBHEADER *pBlobHeader = (CONST BLOBHEADER*)pbData;
+    CONST RSAPUBKEY *pRSAPubKey = (CONST RSAPUBKEY*)(pBlobHeader+1);
+    BOOL ret;
+
+    if (!lookup_handle(&handle_table, hProv, RSAENH_MAGIC_CONTAINER,
+                       (OBJECTHDR**)&pKeyContainer))
+    {
+        SetLastError(NTE_BAD_UID);
+        return FALSE;
+    }
+
+    if ((dwDataLen < sizeof(BLOBHEADER) + sizeof(RSAPUBKEY)) ||
+        (pRSAPubKey->magic != RSAENH_MAGIC_RSA2) ||
+        (dwDataLen < sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) +
+            (2 * pRSAPubKey->bitlen >> 3) + (5 * ((pRSAPubKey->bitlen+8)>>4))))
+    {
+        SetLastError(NTE_BAD_DATA);
+        return FALSE;
+    }
+
+    *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, MAKELONG(0,pRSAPubKey->bitlen), &pCryptKey);
+    if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE) return FALSE;
+    setup_key(pCryptKey);
+    ret = import_private_key_impl((CONST BYTE*)(pRSAPubKey+1), &pCryptKey->context,
+                                   pRSAPubKey->bitlen/8, pRSAPubKey->pubexp);
+    if (ret) {
+        if (dwFlags & CRYPT_EXPORTABLE)
+            pCryptKey->dwPermissions |= CRYPT_EXPORT;
+        switch (pBlobHeader->aiKeyAlg)
+        {
+        case AT_SIGNATURE:
+        case CALG_RSA_SIGN:
+            TRACE("installing signing key\n");
+            release_and_install_key(hProv, *phKey, &pKeyContainer->hSignatureKeyPair);
+            break;
+        case AT_KEYEXCHANGE:
+        case CALG_RSA_KEYX:
+            TRACE("installing key exchange key\n");
+            release_and_install_key(hProv, *phKey, &pKeyContainer->hKeyExchangeKeyPair);
+            break;
+        }
+    }
+    return ret;
+}
+
+/******************************************************************************
+ * import_public_key [Internal]
+ *
+ * Import a BLOB'ed public key into a key container.
+ *
+ * PARAMS
+ *  hProv     [I] Key container into which the public key is to be imported.
+ *  pbData    [I] Pointer to a buffer which holds the public key BLOB.
+ *  dwDataLen [I] Length of data in buffer at pbData.
+ *  dwFlags   [I] One of:
+ *                CRYPT_EXPORTABLE: the imported key is marked exportable
+ *  phKey     [O] Handle to the imported key.
+ *
+ *
+ * NOTES
+ *  Assumes the caller has already checked the BLOBHEADER at pbData to ensure
+ *  it's a PUBLICKEYBLOB.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE.
+ */
+static BOOL import_public_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen,
+                              DWORD dwFlags, HCRYPTKEY *phKey)
+{
+    KEYCONTAINER *pKeyContainer;
+    CRYPTKEY *pCryptKey;
+    CONST BLOBHEADER *pBlobHeader = (CONST BLOBHEADER*)pbData;
+    CONST RSAPUBKEY *pRSAPubKey = (CONST RSAPUBKEY*)(pBlobHeader+1);
+    ALG_ID algID;
+    BOOL ret;
+
+    if (!lookup_handle(&handle_table, hProv, RSAENH_MAGIC_CONTAINER,
+                       (OBJECTHDR**)&pKeyContainer))
+    {
+        SetLastError(NTE_BAD_UID);
+        return FALSE;
+    }
+
+    if ((dwDataLen < sizeof(BLOBHEADER) + sizeof(RSAPUBKEY)) ||
+        (pRSAPubKey->magic != RSAENH_MAGIC_RSA1) ||
+        (dwDataLen < sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) + (pRSAPubKey->bitlen >> 3)))
+    {
+        SetLastError(NTE_BAD_DATA);
+        return FALSE;
+    }
+
+    /* Since this is a public key blob, only the public key is
+     * available, so only signature verification is possible.
+     */
+    algID = pBlobHeader->aiKeyAlg;
+    *phKey = new_key(hProv, algID, MAKELONG(0,pRSAPubKey->bitlen), &pCryptKey);
+    if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE) return FALSE;
+    setup_key(pCryptKey);
+    ret = import_public_key_impl((CONST BYTE*)(pRSAPubKey+1), &pCryptKey->context,
+                                  pRSAPubKey->bitlen >> 3, pRSAPubKey->pubexp);
+    if (ret) {
+        if (dwFlags & CRYPT_EXPORTABLE)
+            pCryptKey->dwPermissions |= CRYPT_EXPORT;
+        switch (pBlobHeader->aiKeyAlg)
+        {
+        case AT_KEYEXCHANGE:
+        case CALG_RSA_KEYX:
+            TRACE("installing public key\n");
+            release_and_install_key(hProv, *phKey, &pKeyContainer->hKeyExchangeKeyPair);
+            break;
+        }
+    }
+    return ret;
+}
+
+/******************************************************************************
+ * import_symmetric_key [Internal]
+ *
+ * Import a BLOB'ed symmetric key into a key container.
+ *
+ * PARAMS
+ *  hProv     [I] Key container into which the symmetric key is to be imported.
+ *  pbData    [I] Pointer to a buffer which holds the symmetric key BLOB.
+ *  dwDataLen [I] Length of data in buffer at pbData.
+ *  hPubKey   [I] Key used to decrypt sensitive BLOB data.
+ *  dwFlags   [I] One of:
+ *                CRYPT_EXPORTABLE: the imported key is marked exportable
+ *  phKey     [O] Handle to the imported key.
+ *
+ *
+ * NOTES
+ *  Assumes the caller has already checked the BLOBHEADER at pbData to ensure
+ *  it's a SIMPLEBLOB.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE.
+ */
+static BOOL import_symmetric_key(HCRYPTPROV hProv, CONST BYTE *pbData,
+                                 DWORD dwDataLen, HCRYPTKEY hPubKey,
+                                 DWORD dwFlags, HCRYPTKEY *phKey)
+{
+    CRYPTKEY *pCryptKey, *pPubKey;
+    CONST BLOBHEADER *pBlobHeader = (CONST BLOBHEADER*)pbData;
+    CONST ALG_ID *pAlgid = (CONST ALG_ID*)(pBlobHeader+1);
+    CONST BYTE *pbKeyStream = (CONST BYTE*)(pAlgid + 1);
+    BYTE *pbDecrypted;
+    DWORD dwKeyLen;
+
+    if (!lookup_handle(&handle_table, hPubKey, RSAENH_MAGIC_KEY, (OBJECTHDR**)&pPubKey) ||
+        pPubKey->aiAlgid != CALG_RSA_KEYX)
+    {
+        SetLastError(NTE_BAD_PUBLIC_KEY); /* FIXME: error code? */
+        return FALSE;
+    }
+
+    if (dwDataLen < sizeof(BLOBHEADER)+sizeof(ALG_ID)+pPubKey->dwBlockLen)
+    {
+        SetLastError(NTE_BAD_DATA); /* FIXME: error code */
+        return FALSE;
+    }
+
+    pbDecrypted = HeapAlloc(GetProcessHeap(), 0, pPubKey->dwBlockLen);
+    if (!pbDecrypted) return FALSE;
+    encrypt_block_impl(pPubKey->aiAlgid, PK_PRIVATE, &pPubKey->context, pbKeyStream, pbDecrypted,
+                       RSAENH_DECRYPT);
+
+    dwKeyLen = RSAENH_MAX_KEY_SIZE;
+    if (!unpad_data(pbDecrypted, pPubKey->dwBlockLen, pbDecrypted, &dwKeyLen, dwFlags)) {
+        HeapFree(GetProcessHeap(), 0, pbDecrypted);
+        return FALSE;
+    }
+
+    *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, dwKeyLen<<19, &pCryptKey);
+    if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE)
+    {
+        HeapFree(GetProcessHeap(), 0, pbDecrypted);
+        return FALSE;
+    }
+    memcpy(pCryptKey->abKeyValue, pbDecrypted, dwKeyLen);
+    HeapFree(GetProcessHeap(), 0, pbDecrypted);
+    setup_key(pCryptKey);
+    if (dwFlags & CRYPT_EXPORTABLE)
+        pCryptKey->dwPermissions |= CRYPT_EXPORT;
+    return TRUE;
+}
+
+/******************************************************************************
  * CPImportKey (RSAENH.@)
  *
  * Import a BLOB'ed key into a key container.
@@ -2481,15 +2696,7 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
                                HCRYPTKEY hPubKey, DWORD dwFlags, HCRYPTKEY *phKey)
 {
     KEYCONTAINER *pKeyContainer;
-    CRYPTKEY *pCryptKey, *pPubKey;
     CONST BLOBHEADER *pBlobHeader = (CONST BLOBHEADER*)pbData;
-    CONST RSAPUBKEY *pRSAPubKey = (CONST RSAPUBKEY*)(pBlobHeader+1);
-    CONST ALG_ID *pAlgid = (CONST ALG_ID*)(pBlobHeader+1);
-    CONST BYTE *pbKeyStream = (CONST BYTE*)(pAlgid + 1);
-    ALG_ID algID;
-    BYTE *pbDecrypted;
-    DWORD dwKeyLen;
-    BOOL ret;
 
     TRACE("(hProv=%08lx, pbData=%p, dwDataLen=%d, hPubKey=%08lx, dwFlags=%08x, phKey=%p)\n",
         hProv, pbData, dwDataLen, hPubKey, dwFlags, phKey);
@@ -2512,111 +2719,14 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
     switch (pBlobHeader->bType)
     {
         case PRIVATEKEYBLOB:    
-            if ((dwDataLen < sizeof(BLOBHEADER) + sizeof(RSAPUBKEY)) || 
-                (pRSAPubKey->magic != RSAENH_MAGIC_RSA2) ||
-                (dwDataLen < sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) + 
-                    (2 * pRSAPubKey->bitlen >> 3) + (5 * ((pRSAPubKey->bitlen+8)>>4)))) 
-            {
-                SetLastError(NTE_BAD_DATA);
-                return FALSE;
-            }
-    
-            *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, MAKELONG(0,pRSAPubKey->bitlen), &pCryptKey);
-            if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE) return FALSE;
-            setup_key(pCryptKey);
-            ret = import_private_key_impl((CONST BYTE*)(pRSAPubKey+1), &pCryptKey->context, 
-                                           pRSAPubKey->bitlen/8, pRSAPubKey->pubexp);
-            if (ret) {
-                if (dwFlags & CRYPT_EXPORTABLE)
-                    pCryptKey->dwPermissions |= CRYPT_EXPORT;
-                switch (pBlobHeader->aiKeyAlg)
-                {
-                case AT_SIGNATURE:
-                case CALG_RSA_SIGN:
-                    TRACE("installing signing key\n");
-                    release_and_install_key(hProv, *phKey,
-                                            &pKeyContainer->hSignatureKeyPair);
-                    break;
-                case AT_KEYEXCHANGE:
-                case CALG_RSA_KEYX:
-                    TRACE("installing key exchange key\n");
-                    release_and_install_key(hProv, *phKey,
-                                            &pKeyContainer->hKeyExchangeKeyPair);
-                    break;
-                }
-            }
-            return ret;
+            return import_private_key(hProv, pbData, dwDataLen, dwFlags, phKey);
                 
         case PUBLICKEYBLOB:
-            if ((dwDataLen < sizeof(BLOBHEADER) + sizeof(RSAPUBKEY)) || 
-                (pRSAPubKey->magic != RSAENH_MAGIC_RSA1) ||
-                (dwDataLen < sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) + (pRSAPubKey->bitlen >> 3))) 
-            {
-                SetLastError(NTE_BAD_DATA);
-                return FALSE;
-            }
-    
-            /* Since this is a public key blob, only the public key is
-             * available, so only signature verification is possible.
-             */
-            algID = pBlobHeader->aiKeyAlg;
-            *phKey = new_key(hProv, algID, MAKELONG(0,pRSAPubKey->bitlen), &pCryptKey); 
-            if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE) return FALSE; 
-            setup_key(pCryptKey);
-            ret = import_public_key_impl((CONST BYTE*)(pRSAPubKey+1), &pCryptKey->context, 
-                                          pRSAPubKey->bitlen >> 3, pRSAPubKey->pubexp);
-            if (ret) {
-                if (dwFlags & CRYPT_EXPORTABLE)
-                    pCryptKey->dwPermissions |= CRYPT_EXPORT;
-                switch (pBlobHeader->aiKeyAlg)
-                {
-                case AT_KEYEXCHANGE:
-                case CALG_RSA_KEYX:
-                    TRACE("installing public key\n");
-                    release_and_install_key(hProv, *phKey,
-                                            &pKeyContainer->hKeyExchangeKeyPair);
-                    break;
-                }
-            }
-            return ret;
+            return import_public_key(hProv, pbData, dwDataLen, dwFlags, phKey);
                 
         case SIMPLEBLOB:
-            if (!lookup_handle(&handle_table, hPubKey, RSAENH_MAGIC_KEY, (OBJECTHDR**)&pPubKey) ||
-                pPubKey->aiAlgid != CALG_RSA_KEYX) 
-            {
-                SetLastError(NTE_BAD_PUBLIC_KEY); /* FIXME: error code? */
-                return FALSE;
-            }
-
-            if (dwDataLen < sizeof(BLOBHEADER)+sizeof(ALG_ID)+pPubKey->dwBlockLen) 
-            {
-                SetLastError(NTE_BAD_DATA); /* FIXME: error code */
-                return FALSE;
-            }
-
-            pbDecrypted = HeapAlloc(GetProcessHeap(), 0, pPubKey->dwBlockLen);
-            if (!pbDecrypted) return FALSE;
-            encrypt_block_impl(pPubKey->aiAlgid, PK_PRIVATE, &pPubKey->context, pbKeyStream, pbDecrypted, 
-                               RSAENH_DECRYPT);
-
-            dwKeyLen = RSAENH_MAX_KEY_SIZE;
-            if (!unpad_data(pbDecrypted, pPubKey->dwBlockLen, pbDecrypted, &dwKeyLen, dwFlags)) {
-                HeapFree(GetProcessHeap(), 0, pbDecrypted);
-                return FALSE;
-            }
-            
-            *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, dwKeyLen<<19, &pCryptKey);
-            if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE)
-            {
-                HeapFree(GetProcessHeap(), 0, pbDecrypted);
-                return FALSE;
-            }
-            memcpy(pCryptKey->abKeyValue, pbDecrypted, dwKeyLen);
-            HeapFree(GetProcessHeap(), 0, pbDecrypted);
-            setup_key(pCryptKey);
-            if (dwFlags & CRYPT_EXPORTABLE)
-                pCryptKey->dwPermissions |= CRYPT_EXPORT;
-            return TRUE;
+            return import_symmetric_key(hProv, pbData, dwDataLen, hPubKey,
+                                        dwFlags, phKey);
 
         default:
             SetLastError(NTE_BAD_TYPE); /* FIXME: error code? */
