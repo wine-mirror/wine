@@ -890,6 +890,37 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
 }
 
 /******************************************************************************
+ * map_key_spec_to_key_pair_name [Internal]
+ *
+ * Returns the name of the registry value associated with a key spec.
+ *
+ * PARAMS
+ *  dwKeySpec     [I] AT_KEYEXCHANGE or AT_SIGNATURE
+ *
+ * RETURNS
+ *  Success: Name of registry value.
+ *  Failure: NULL
+ */
+static LPCSTR map_key_spec_to_key_pair_name(DWORD dwKeySpec)
+{
+    LPCSTR szValueName;
+
+    switch (dwKeySpec)
+    {
+    case AT_KEYEXCHANGE:
+        szValueName = "KeyExchangeKeyPair";
+        break;
+    case AT_SIGNATURE:
+        szValueName = "SignatureKeyPair";
+        break;
+    default:
+        WARN("invalid key spec %d\n", dwKeySpec);
+        szValueName = NULL;
+    }
+    return szValueName;
+}
+
+/******************************************************************************
  * store_key_pair [Internal]
  *
  * Stores a key pair to the registry
@@ -897,16 +928,19 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
  * PARAMS
  *  hCryptKey     [I] Handle to the key to be stored
  *  hKey          [I] Registry key where the key pair is to be stored
- *  szValueName   [I] Registry value where key pair's value is to be stored
+ *  dwKeySpec     [I] AT_KEYEXCHANGE or AT_SIGNATURE
  *  dwFlags       [I] Flags for protecting the key
  */
-static void store_key_pair(HCRYPTKEY hCryptKey, HKEY hKey, LPCSTR szValueName, DWORD dwFlags)
+static void store_key_pair(HCRYPTKEY hCryptKey, HKEY hKey, DWORD dwKeySpec, DWORD dwFlags)
 {
+    LPCSTR szValueName;
     DATA_BLOB blobIn, blobOut;
     CRYPTKEY *pKey;
     DWORD dwLen;
     BYTE *pbKey;
 
+    if (!(szValueName = map_key_spec_to_key_pair_name(dwKeySpec)))
+        return;
     if (lookup_handle(&handle_table, hCryptKey, RSAENH_MAGIC_KEY,
                       (OBJECTHDR**)&pKey))
     {
@@ -1051,9 +1085,9 @@ static void store_key_container_keys(KEYCONTAINER *pKeyContainer)
     if (create_container_key(pKeyContainer, KEY_WRITE, &hKey))
     {
         store_key_pair(pKeyContainer->hKeyExchangeKeyPair, hKey,
-                       "KeyExchangeKeyPair", dwFlags);
+                       AT_KEYEXCHANGE, dwFlags);
         store_key_pair(pKeyContainer->hSignatureKeyPair, hKey,
-                       "SignatureKeyPair", dwFlags);
+                       AT_SIGNATURE, dwFlags);
         RegCloseKey(hKey);
     }
 }
@@ -1158,17 +1192,20 @@ static HCRYPTPROV new_key_container(PCCH pszContainerName, DWORD dwFlags, const 
  * PARAMS
  *  hKeyContainer [I] Crypt provider to use to import the key
  *  hKey          [I] Registry key from which to read the key pair
- *  szValueName   [I] Registry value from which to read the key pair's value
+ *  dwKeySpec     [I] AT_KEYEXCHANGE or AT_SIGNATURE
  *  dwFlags       [I] Flags for unprotecting the key
  *  phCryptKey    [O] Returned key
  */
-static BOOL read_key_value(HCRYPTPROV hKeyContainer, HKEY hKey, LPCSTR szValueName, DWORD dwFlags, HCRYPTKEY *phCryptKey)
+static BOOL read_key_value(HCRYPTPROV hKeyContainer, HKEY hKey, DWORD dwKeySpec, DWORD dwFlags, HCRYPTKEY *phCryptKey)
 {
+    LPCSTR szValueName;
     DWORD dwValueType, dwLen;
     BYTE *pbKey;
     DATA_BLOB blobIn, blobOut;
     BOOL ret = FALSE;
 
+    if (!(szValueName = map_key_spec_to_key_pair_name(dwKeySpec)))
+        return FALSE;
     if (RegQueryValueExA(hKey, szValueName, 0, &dwValueType, NULL, &dwLen) ==
         ERROR_SUCCESS)
     {
@@ -1232,10 +1269,10 @@ static HCRYPTPROV read_key_container(PCHAR pszContainerName, DWORD dwFlags, cons
                            (OBJECTHDR**)&pKeyContainer))
             return (HCRYPTPROV)INVALID_HANDLE_VALUE;
     
-        if (read_key_value(hKeyContainer, hKey, "KeyExchangeKeyPair",
+        if (read_key_value(hKeyContainer, hKey, AT_KEYEXCHANGE,
             dwProtectFlags, &hCryptKey))
             pKeyContainer->hKeyExchangeKeyPair = hCryptKey;
-        if (read_key_value(hKeyContainer, hKey, "SignatureKeyPair",
+        if (read_key_value(hKeyContainer, hKey, AT_SIGNATURE,
             dwProtectFlags, &hCryptKey))
             pKeyContainer->hSignatureKeyPair = hCryptKey;
     }
