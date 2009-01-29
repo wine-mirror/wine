@@ -2233,7 +2233,6 @@ static void test_key_initialization(void)
     result = CryptAcquireContext(&prov2, szContainer, szProvider, PROV_RSA_FULL, 0);
     ok(result, "%08x\n", GetLastError());
     result = CryptGetUserKey(prov2, AT_KEYEXCHANGE, &hKey);
-    todo_wine
     ok(result, "%08x\n", GetLastError());
     if (result) CryptDestroyKey(hKey);
     CryptReleaseContext(prov2, 0);

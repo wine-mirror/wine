@@ -2451,12 +2451,21 @@ BOOL WINAPI RSAENH_CPExportKey(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTKEY hPubK
  *  hProv     [I] Key container into which the key is to be imported.
  *  src       [I] Key which will replace *dest
  *  dest      [I] Points to key to be released and replaced with src
+ *  fStoreKey [I] If TRUE, the newly installed key is stored to the registry.
  */
 static void release_and_install_key(HCRYPTPROV hProv, HCRYPTKEY src,
-                                    HCRYPTKEY *dest)
+                                    HCRYPTKEY *dest, DWORD fStoreKey)
 {
     RSAENH_CPDestroyKey(hProv, *dest);
     copy_handle(&handle_table, src, RSAENH_MAGIC_KEY, dest);
+    if (fStoreKey)
+    {
+        KEYCONTAINER *pKeyContainer;
+
+        if (lookup_handle(&handle_table, hProv, RSAENH_MAGIC_CONTAINER,
+                          (OBJECTHDR**)&pKeyContainer))
+            store_key_container_keys(pKeyContainer);
+    }
 }
 
 /******************************************************************************
@@ -2470,6 +2479,7 @@ static void release_and_install_key(HCRYPTPROV hProv, HCRYPTKEY src,
  *  dwDataLen [I] Length of data in buffer at pbData.
  *  dwFlags   [I] One of:
  *                CRYPT_EXPORTABLE: the imported key is marked exportable
+ *  fStoreKey [I] If TRUE, the imported key is stored to the registry.
  *  phKey     [O] Handle to the imported key.
  *
  *
@@ -2482,7 +2492,7 @@ static void release_and_install_key(HCRYPTPROV hProv, HCRYPTKEY src,
  *  Failure: FALSE.
  */
 static BOOL import_private_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen,
-                               DWORD dwFlags, HCRYPTKEY *phKey)
+                               DWORD dwFlags, BOOL fStoreKey, HCRYPTKEY *phKey)
 {
     KEYCONTAINER *pKeyContainer;
     CRYPTKEY *pCryptKey;
@@ -2519,12 +2529,14 @@ static BOOL import_private_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
         case AT_SIGNATURE:
         case CALG_RSA_SIGN:
             TRACE("installing signing key\n");
-            release_and_install_key(hProv, *phKey, &pKeyContainer->hSignatureKeyPair);
+            release_and_install_key(hProv, *phKey, &pKeyContainer->hSignatureKeyPair,
+                                    fStoreKey);
             break;
         case AT_KEYEXCHANGE:
         case CALG_RSA_KEYX:
             TRACE("installing key exchange key\n");
-            release_and_install_key(hProv, *phKey, &pKeyContainer->hKeyExchangeKeyPair);
+            release_and_install_key(hProv, *phKey, &pKeyContainer->hKeyExchangeKeyPair,
+                                    fStoreKey);
             break;
         }
     }
@@ -2542,6 +2554,7 @@ static BOOL import_private_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
  *  dwDataLen [I] Length of data in buffer at pbData.
  *  dwFlags   [I] One of:
  *                CRYPT_EXPORTABLE: the imported key is marked exportable
+ *  fStoreKey [I] If TRUE, the imported key is stored to the registry.
  *  phKey     [O] Handle to the imported key.
  *
  *
@@ -2554,7 +2567,7 @@ static BOOL import_private_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
  *  Failure: FALSE.
  */
 static BOOL import_public_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen,
-                              DWORD dwFlags, HCRYPTKEY *phKey)
+                              DWORD dwFlags, BOOL fStoreKey, HCRYPTKEY *phKey)
 {
     KEYCONTAINER *pKeyContainer;
     CRYPTKEY *pCryptKey;
@@ -2595,7 +2608,8 @@ static BOOL import_public_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwData
         case AT_KEYEXCHANGE:
         case CALG_RSA_KEYX:
             TRACE("installing public key\n");
-            release_and_install_key(hProv, *phKey, &pKeyContainer->hKeyExchangeKeyPair);
+            release_and_install_key(hProv, *phKey, &pKeyContainer->hKeyExchangeKeyPair,
+                                    fStoreKey);
             break;
         }
     }
@@ -2675,6 +2689,72 @@ static BOOL import_symmetric_key(HCRYPTPROV hProv, CONST BYTE *pbData,
 }
 
 /******************************************************************************
+ * import_key [Internal]
+ *
+ * Import a BLOB'ed key into a key container, optionally storing the key's
+ * value to the registry.
+ *
+ * PARAMS
+ *  hProv     [I] Key container into which the key is to be imported.
+ *  pbData    [I] Pointer to a buffer which holds the BLOB.
+ *  dwDataLen [I] Length of data in buffer at pbData.
+ *  hPubKey   [I] Key used to decrypt sensitive BLOB data.
+ *  dwFlags   [I] One of:
+ *                CRYPT_EXPORTABLE: the imported key is marked exportable
+ *  fStoreKey [I] If TRUE, the imported key is stored to the registry.
+ *  phKey     [O] Handle to the imported key.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE.
+ */
+static BOOL import_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen,
+                       HCRYPTKEY hPubKey, DWORD dwFlags, BOOL fStoreKey,
+                       HCRYPTKEY *phKey)
+{
+    KEYCONTAINER *pKeyContainer;
+    CONST BLOBHEADER *pBlobHeader = (CONST BLOBHEADER*)pbData;
+
+    if (!lookup_handle(&handle_table, hProv, RSAENH_MAGIC_CONTAINER,
+                       (OBJECTHDR**)&pKeyContainer)) 
+    {
+        SetLastError(NTE_BAD_UID);
+        return FALSE;
+    }
+
+    if (dwDataLen < sizeof(BLOBHEADER) || 
+        pBlobHeader->bVersion != CUR_BLOB_VERSION ||
+        pBlobHeader->reserved != 0) 
+    {
+        SetLastError(NTE_BAD_DATA);
+        return FALSE;
+    }
+
+    /* If this is a verify-only context, the key is not persisted regardless of
+     * fStoreKey's original value.
+     */
+    fStoreKey = fStoreKey && !(dwFlags & CRYPT_VERIFYCONTEXT);
+    switch (pBlobHeader->bType)
+    {
+        case PRIVATEKEYBLOB:    
+            return import_private_key(hProv, pbData, dwDataLen, dwFlags,
+                                      fStoreKey, phKey);
+                
+        case PUBLICKEYBLOB:
+            return import_public_key(hProv, pbData, dwDataLen, dwFlags,
+                                     fStoreKey, phKey);
+                
+        case SIMPLEBLOB:
+            return import_symmetric_key(hProv, pbData, dwDataLen, hPubKey,
+                                        dwFlags, phKey);
+
+        default:
+            SetLastError(NTE_BAD_TYPE); /* FIXME: error code? */
+            return FALSE;
+    }
+}
+
+/******************************************************************************
  * CPImportKey (RSAENH.@)
  *
  * Import a BLOB'ed key into a key container.
@@ -2692,46 +2772,13 @@ static BOOL import_symmetric_key(HCRYPTPROV hProv, CONST BYTE *pbData,
  *  Success: TRUE.
  *  Failure: FALSE.
  */
-BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen, 
+BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen,
                                HCRYPTKEY hPubKey, DWORD dwFlags, HCRYPTKEY *phKey)
 {
-    KEYCONTAINER *pKeyContainer;
-    CONST BLOBHEADER *pBlobHeader = (CONST BLOBHEADER*)pbData;
-
     TRACE("(hProv=%08lx, pbData=%p, dwDataLen=%d, hPubKey=%08lx, dwFlags=%08x, phKey=%p)\n",
         hProv, pbData, dwDataLen, hPubKey, dwFlags, phKey);
-    
-    if (!lookup_handle(&handle_table, hProv, RSAENH_MAGIC_CONTAINER,
-                       (OBJECTHDR**)&pKeyContainer)) 
-    {
-        SetLastError(NTE_BAD_UID);
-        return FALSE;
-    }
 
-    if (dwDataLen < sizeof(BLOBHEADER) || 
-        pBlobHeader->bVersion != CUR_BLOB_VERSION ||
-        pBlobHeader->reserved != 0) 
-    {
-        SetLastError(NTE_BAD_DATA);
-        return FALSE;
-    }
-
-    switch (pBlobHeader->bType)
-    {
-        case PRIVATEKEYBLOB:    
-            return import_private_key(hProv, pbData, dwDataLen, dwFlags, phKey);
-                
-        case PUBLICKEYBLOB:
-            return import_public_key(hProv, pbData, dwDataLen, dwFlags, phKey);
-                
-        case SIMPLEBLOB:
-            return import_symmetric_key(hProv, pbData, dwDataLen, hPubKey,
-                                        dwFlags, phKey);
-
-        default:
-            SetLastError(NTE_BAD_TYPE); /* FIXME: error code? */
-            return FALSE;
-    }
+    return import_key(hProv, pbData, dwDataLen, hPubKey, dwFlags, TRUE, phKey);
 }
 
 /******************************************************************************
