@@ -801,6 +801,17 @@ static BOOL BrsFolder_OnWindowPosChanging(browse_info *info, WINDOWPOS *pos)
     return 0;
 }
 
+static INT BrsFolder_OnDestroy(browse_info *info)
+{
+    if (info->layout)
+    {
+        SHFree(info->layout);
+        info->layout = NULL;
+    }
+
+    return 0;
+}
+
 /*************************************************************************
  *             BrsFolderDlgProc32  (not an exported API function)
  */
@@ -860,6 +871,9 @@ static INT_PTR CALLBACK BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 
     case BFFM_SETEXPANDED: /* unicode only */
         return BrsFolder_OnSetExpanded(info, (LPVOID)lParam, (BOOL)wParam, NULL);
+
+    case WM_DESTROY:
+        return BrsFolder_OnDestroy(info);
     }
     return FALSE;
 }
