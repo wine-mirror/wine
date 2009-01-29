@@ -399,7 +399,7 @@ static void test_CreateDispTypeInfo(void)
     ok(pFuncDesc->invkind == methdata[1].wFlags, "invkind %d\n", pFuncDesc->invkind);
     ok(pFuncDesc->callconv == methdata[1].cc, "callconv %d\n", pFuncDesc->callconv);
     ok(pFuncDesc->cParams == methdata[1].cArgs, "cParams %d\n", pFuncDesc->cParams);
-    ok(pFuncDesc->oVft == 4, "oVft %d\n", pFuncDesc->oVft);
+    ok(pFuncDesc->oVft == sizeof(void *), "oVft %d\n", pFuncDesc->oVft);
     ok(pFuncDesc->wFuncFlags == 0, "oVft %d\n", pFuncDesc->wFuncFlags);
     ok(pFuncDesc->elemdescFunc.tdesc.vt == VT_I4, "ret vt %x\n", pFuncDesc->elemdescFunc.tdesc.vt);
     ITypeInfo_ReleaseFuncDesc(pTI2, pFuncDesc);
@@ -410,7 +410,7 @@ static void test_CreateDispTypeInfo(void)
     ok(pFuncDesc->invkind == methdata[2].wFlags, "invkind %d\n", pFuncDesc->invkind);
     ok(pFuncDesc->callconv == methdata[2].cc, "callconv %d\n", pFuncDesc->callconv);
     ok(pFuncDesc->cParams == methdata[2].cArgs, "cParams %d\n", pFuncDesc->cParams);
-    ok(pFuncDesc->oVft == 12, "oVft %d\n", pFuncDesc->oVft);
+    ok(pFuncDesc->oVft == 3 * sizeof(void *), "oVft %d\n", pFuncDesc->oVft);
     ok(pFuncDesc->wFuncFlags == 0, "oVft %d\n", pFuncDesc->wFuncFlags);
     ok(pFuncDesc->elemdescFunc.tdesc.vt == VT_HRESULT, "ret vt %x\n", pFuncDesc->elemdescFunc.tdesc.vt);
     ok(pFuncDesc->lprgelemdescParam[0].tdesc.vt == VT_I4, "parm 0 vt %x\n", pFuncDesc->lprgelemdescParam[0].tdesc.vt);
@@ -423,7 +423,7 @@ static void test_CreateDispTypeInfo(void)
     ok(pFuncDesc->invkind == methdata[3].wFlags, "invkind %d\n", pFuncDesc->invkind);
     ok(pFuncDesc->callconv == methdata[3].cc, "callconv %d\n", pFuncDesc->callconv);
     ok(pFuncDesc->cParams == methdata[3].cArgs, "cParams %d\n", pFuncDesc->cParams);
-    ok(pFuncDesc->oVft == 16, "oVft %d\n", pFuncDesc->oVft);
+    ok(pFuncDesc->oVft == 4 * sizeof(void *), "oVft %d\n", pFuncDesc->oVft);
     ok(pFuncDesc->wFuncFlags == 0, "oVft %d\n", pFuncDesc->wFuncFlags);
     ok(pFuncDesc->elemdescFunc.tdesc.vt == VT_I4, "ret vt %x\n", pFuncDesc->elemdescFunc.tdesc.vt);
     ITypeInfo_ReleaseFuncDesc(pTI2, pFuncDesc);
@@ -703,7 +703,7 @@ static void test_inheritance(void)
     hr = ITypeInfo_GetTypeAttr(pTI, &pTA);
     ok(hr == S_OK, "hr %08x\n", hr);
     ok(pTA->typekind == TKIND_DISPATCH, "kind %04x\n", pTA->typekind);
-    ok(pTA->cbSizeVft == 28, "sizevft %d\n", pTA->cbSizeVft);
+    ok(pTA->cbSizeVft == 7 * sizeof(void *), "sizevft %d\n", pTA->cbSizeVft);
     ok(pTA->wTypeFlags == TYPEFLAG_FDISPATCHABLE, "typeflags %x\n", pTA->wTypeFlags);
 if(use_midl_tlb) {
     ok(pTA->cFuncs == 6, "cfuncs %d\n", pTA->cFuncs);
@@ -725,7 +725,7 @@ if(use_midl_tlb) {
     hr = ITypeInfo_GetFuncDesc(pTI, 5, &pFD);
     ok(hr == S_OK, "hr %08x\n", hr);
     ok(pFD->memid == 0x60020000, "memid %08x\n", pFD->memid);
-    ok(pFD->oVft == 20, "oVft %d\n", pFD->oVft);
+    ok(pFD->oVft == 5 * sizeof(void *), "oVft %d\n", pFD->oVft);
     ITypeInfo_ReleaseFuncDesc(pTI, pFD);
 }
     ITypeInfo_Release(pTI);
@@ -738,7 +738,7 @@ if(use_midl_tlb) {
     hr = ITypeInfo_GetTypeAttr(pTI, &pTA);
     ok(hr == S_OK, "hr %08x\n", hr);
     ok(pTA->typekind == TKIND_DISPATCH, "kind %04x\n", pTA->typekind);
-    ok(pTA->cbSizeVft == 28, "sizevft %d\n", pTA->cbSizeVft);
+    ok(pTA->cbSizeVft == 7 * sizeof(void *), "sizevft %d\n", pTA->cbSizeVft);
     ok(pTA->wTypeFlags == TYPEFLAG_FDISPATCHABLE, "typeflags %x\n", pTA->wTypeFlags);
     ok(pTA->cFuncs == 1, "cfuncs %d\n", pTA->cFuncs);
     ok(pTA->cImplTypes == 1, "cimpltypes %d\n", pTA->cImplTypes);
@@ -768,7 +768,7 @@ if(use_midl_tlb) {
     hr = ITypeInfo_GetTypeAttr(pTI, &pTA);
     ok(hr == S_OK, "hr %08x\n", hr);
     ok(pTA->typekind == TKIND_DISPATCH, "kind %04x\n", pTA->typekind);
-    ok(pTA->cbSizeVft == 28, "sizevft %d\n", pTA->cbSizeVft);
+    ok(pTA->cbSizeVft == 7 * sizeof(void *), "sizevft %d\n", pTA->cbSizeVft);
 if(use_midl_tlb) {
     ok(pTA->wTypeFlags == TYPEFLAG_FDUAL, "typeflags %x\n", pTA->wTypeFlags);
  }
@@ -799,7 +799,7 @@ if(use_midl_tlb) {
     hr = ITypeInfo_GetTypeAttr(pTI, &pTA);
     ok(hr == S_OK, "hr %08x\n", hr);
     ok(pTA->typekind == TKIND_DISPATCH, "kind %04x\n", pTA->typekind);
-    ok(pTA->cbSizeVft == 28, "sizevft %d\n", pTA->cbSizeVft);
+    ok(pTA->cbSizeVft == 7 * sizeof(void *), "sizevft %d\n", pTA->cbSizeVft);
     ok(pTA->wTypeFlags == (TYPEFLAG_FDISPATCHABLE|TYPEFLAG_FDUAL), "typeflags %x\n", pTA->wTypeFlags);
     ok(pTA->cFuncs == 10, "cfuncs %d\n", pTA->cFuncs);
     ok(pTA->cImplTypes == 1, "cimpltypes %d\n", pTA->cImplTypes);
@@ -827,7 +827,7 @@ if(use_midl_tlb) {
     hr = ITypeInfo_GetTypeAttr(pTI, &pTA);
     ok(hr == S_OK, "hr %08x\n", hr);
     ok(pTA->typekind == TKIND_DISPATCH, "kind %04x\n", pTA->typekind);
-    ok(pTA->cbSizeVft == 28, "sizevft %d\n", pTA->cbSizeVft);
+    ok(pTA->cbSizeVft == 7 * sizeof(void *), "sizevft %d\n", pTA->cbSizeVft);
     ok(pTA->wTypeFlags == TYPEFLAG_FDISPATCHABLE, "typeflags %x\n", pTA->wTypeFlags);
 if(use_midl_tlb) {
     ok(pTA->cFuncs == 3, "cfuncs %d\n", pTA->cFuncs);
@@ -851,7 +851,7 @@ if(use_midl_tlb) {
     hr = ITypeInfo_GetFuncDesc(pTI, 2, &pFD);
     ok(hr == S_OK, "hr %08x\n", hr);
     ok(pFD->memid == 0x60010000, "memid %08x\n", pFD->memid);
-    ok(pFD->oVft == 8, "oVft %d\n", pFD->oVft);
+    ok(pFD->oVft == 2 * sizeof(void *), "oVft %d\n", pFD->oVft);
     ITypeInfo_ReleaseFuncDesc(pTI, pFD);
 }
     ITypeInfo_Release(pTI);
@@ -863,7 +863,7 @@ if(use_midl_tlb) {
     hr = ITypeInfo_GetTypeAttr(pTI, &pTA);
     ok(hr == S_OK, "hr %08x\n", hr);
     ok(pTA->typekind == TKIND_DISPATCH, "kind %04x\n", pTA->typekind);
-    ok(pTA->cbSizeVft == 28, "sizevft %d\n", pTA->cbSizeVft);
+    ok(pTA->cbSizeVft == 7 * sizeof(void *), "sizevft %d\n", pTA->cbSizeVft);
     ok(pTA->wTypeFlags == TYPEFLAG_FDISPATCHABLE, "typeflags %x\n", pTA->wTypeFlags);
 if(use_midl_tlb) {
     ok(pTA->cFuncs == 10, "cfuncs %d\n", pTA->cFuncs);
@@ -885,7 +885,7 @@ if(use_midl_tlb) {
     hr = ITypeInfo_GetFuncDesc(pTI, 9, &pFD);
     ok(hr == S_OK, "hr %08x\n", hr);
     ok(pFD->memid == 0x1236, "memid %08x\n", pFD->memid);
-    ok(pFD->oVft == 36, "oVft %d\n", pFD->oVft);
+    ok(pFD->oVft == 9 * sizeof(void *), "oVft %d\n", pFD->oVft);
     ITypeInfo_ReleaseFuncDesc(pTI, pFD);
 }
     ITypeInfo_Release(pTI);
@@ -898,7 +898,7 @@ if(use_midl_tlb) {
     hr = ITypeInfo_GetTypeAttr(pTI, &pTA);
     ok(hr == S_OK, "hr %08x\n", hr);
     ok(pTA->typekind == TKIND_INTERFACE, "kind %04x\n", pTA->typekind);
-    ok(pTA->cbSizeVft == 24, "sizevft %d\n", pTA->cbSizeVft);
+    ok(pTA->cbSizeVft == 6 * sizeof(void *), "sizevft %d\n", pTA->cbSizeVft);
     ok(pTA->wTypeFlags == 0, "typeflags %x\n", pTA->wTypeFlags);
 if(use_midl_tlb) {
     ok(pTA->cFuncs == 1, "cfuncs %d\n", pTA->cFuncs);
@@ -911,7 +911,7 @@ if(use_midl_tlb) {
     hr = ITypeInfo_GetFuncDesc(pTI, 0, &pFD);
     ok(hr == S_OK, "hr %08x\n", hr);
     ok(pFD->memid == 0x60020000, "memid %08x\n", pFD->memid);
-    ok(pFD->oVft == 20, "oVft %d\n", pFD->oVft);
+    ok(pFD->oVft == 5 * sizeof(void *), "oVft %d\n", pFD->oVft);
     ITypeInfo_ReleaseFuncDesc(pTI, pFD);
 }
     ITypeInfo_Release(pTI);
