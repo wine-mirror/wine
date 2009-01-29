@@ -3467,6 +3467,10 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                 if ((dwStatusCode==HTTP_STATUS_REDIRECT || dwStatusCode==HTTP_STATUS_MOVED) &&
                     HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,NULL))
                 {
+                    /* redirects are always GETs */
+                    HeapFree(GetProcessHeap(), 0, lpwhr->lpszVerb);
+                    lpwhr->lpszVerb = WININET_strdupW(szGET);
+
                     HTTP_DrainContent(lpwhr);
                     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                                           INTERNET_STATUS_REDIRECT, szNewLocation,
