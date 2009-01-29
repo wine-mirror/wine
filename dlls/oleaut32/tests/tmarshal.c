@@ -135,7 +135,7 @@ struct host_object_data
 
 static DWORD CALLBACK host_object_proc(LPVOID p)
 {
-    struct host_object_data *data = (struct host_object_data *)p;
+    struct host_object_data *data = p;
     HRESULT hr;
     MSG msg;
 

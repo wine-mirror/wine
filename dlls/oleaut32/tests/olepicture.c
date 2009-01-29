@@ -760,11 +760,11 @@ static HRESULT WINAPI NoStatStreamImpl_QueryInterface(
   *ppvObject = 0;
   if (memcmp(&IID_IUnknown, riid, sizeof(IID_IUnknown)) == 0)
   {
-    *ppvObject = (IStream*)This;
+    *ppvObject = This;
   }
   else if (memcmp(&IID_IStream, riid, sizeof(IID_IStream)) == 0)
   {
-    *ppvObject = (IStream*)This;
+    *ppvObject = This;
   }
 
   if ((*ppvObject)==0)

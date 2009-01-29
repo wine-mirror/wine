@@ -1274,7 +1274,7 @@ static void test_SafeArrayCopyData(void)
   /* Fill the source array with some data; it doesn't matter what */
   for (dimension = 0; dimension < size; dimension++)
   {
-    int* data = (int*)sa->pvData;
+    int* data = sa->pvData;
     data[dimension] = dimension;
   }
 
@@ -1420,7 +1420,7 @@ static void test_SafeArrayCreateEx(void)
 
   /* Win32 doesn't care if GetSize fails */
   fail_GetSize = TRUE;
-  sa = pSafeArrayCreateEx(VT_RECORD, 1, sab, (LPVOID)iRec);
+  sa = pSafeArrayCreateEx(VT_RECORD, 1, sab, iRec);
   ok(sa != NULL, "CreateEx (Fail Size) failed\n");
   ok(iRec->ref == START_REF_COUNT + 1, "Wrong iRec refcount %d\n", iRec->ref);
   ok(iRec->sizeCalled == 1, "GetSize called %d times\n", iRec->sizeCalled);
@@ -1437,7 +1437,7 @@ static void test_SafeArrayCreateEx(void)
   iRec->ref = START_REF_COUNT;
   iRec->sizeCalled = 0;
   iRec->clearCalled = 0;
-  sa = pSafeArrayCreateEx(VT_RECORD, 1, sab, (LPVOID)iRec);
+  sa = pSafeArrayCreateEx(VT_RECORD, 1, sab, iRec);
   ok(sa != NULL, "CreateEx (Rec) failed\n");
   ok(iRec->ref == START_REF_COUNT + 1, "Wrong iRec refcount %d\n", iRec->ref);
   ok(iRec->sizeCalled == 1, "GetSize called %d times\n", iRec->sizeCalled);
