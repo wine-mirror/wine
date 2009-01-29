@@ -1133,7 +1133,7 @@ static void testRegisterAndGetDetail(void)
     }
 }
 
-static void testDeviceRegistryPropertyA()
+static void testDeviceRegistryPropertyA(void)
 {
     HDEVINFO set;
     SP_DEVINFO_DATA devInfo = { sizeof(SP_DEVINFO_DATA), { 0 } };
@@ -1237,7 +1237,7 @@ static void testDeviceRegistryPropertyA()
     }
 }
 
-static void testDeviceRegistryPropertyW()
+static void testDeviceRegistryPropertyW(void)
 {
     HDEVINFO set;
     SP_DEVINFO_DATA devInfo = { sizeof(SP_DEVINFO_DATA), { 0 } };
