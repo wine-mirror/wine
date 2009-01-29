@@ -2184,6 +2184,67 @@ static void test_key_permissions(void)
     clean_up_base_environment();
 }
 
+static void test_key_initialization(void)
+{
+    DWORD dwLen;
+    HCRYPTPROV prov1, prov2;
+    HCRYPTKEY hKeyExchangeKey, hSessionKey, hKey;
+    BOOL result;
+    static BYTE abSessionKey[148] = {
+        0x01, 0x02, 0x00, 0x00, 0x01, 0x68, 0x00, 0x00,
+        0x00, 0xa4, 0x00, 0x00, 0xb8, 0xa4, 0xdf, 0x5e,
+        0x9e, 0xb1, 0xbf, 0x85, 0x3d, 0x24, 0x2d, 0x1e,
+        0x69, 0xb7, 0x67, 0x13, 0x8e, 0x78, 0xf2, 0xdf,
+        0xc6, 0x69, 0xce, 0x46, 0x7e, 0xf2, 0xf2, 0x33,
+        0x20, 0x6f, 0xa1, 0xa5, 0x59, 0x83, 0x25, 0xcb,
+        0x3a, 0xb1, 0x8a, 0x12, 0x63, 0x02, 0x3c, 0xfb,
+        0x4a, 0xfa, 0xef, 0x8e, 0xf7, 0x29, 0x57, 0xb1,
+        0x9e, 0xa7, 0xf3, 0x02, 0xfd, 0xca, 0xdf, 0x5a,
+        0x1f, 0x71, 0xb6, 0x26, 0x09, 0x24, 0x39, 0xda,
+        0xc0, 0xde, 0x2a, 0x0e, 0xcd, 0x1f, 0xe5, 0xb6,
+        0x4f, 0x82, 0xa0, 0xa9, 0x90, 0xd3, 0xd9, 0x6a,
+        0x43, 0x14, 0x2a, 0xf7, 0xac, 0xd5, 0xa0, 0x54,
+        0x93, 0xc4, 0xb9, 0xe7, 0x24, 0x84, 0x4d, 0x69,
+        0x5e, 0xcc, 0x2a, 0x32, 0xb5, 0xfb, 0xe4, 0xb4,
+        0x08, 0xd5, 0x36, 0x58, 0x59, 0x40, 0xfb, 0x29,
+        0x7f, 0xa7, 0x17, 0x25, 0xc4, 0x0d, 0x78, 0x37,
+        0x04, 0x8c, 0x49, 0x92
+    };
+
+    /* Like init_base_environment, but doesn't generate new keys, as they'll
+     * be imported instead.
+     */
+    if (!CryptAcquireContext(&prov1, szContainer, szProvider, PROV_RSA_FULL, 0))
+    {
+        result = CryptAcquireContext(&prov1, szContainer, szProvider, PROV_RSA_FULL,
+                                     CRYPT_NEWKEYSET);
+        ok(result, "%08x\n", GetLastError());
+    }
+    dwLen = (DWORD)sizeof(abPlainPrivateKey);
+    result = CryptImportKey(prov1, abPlainPrivateKey, dwLen, 0, 0, &hKeyExchangeKey);
+
+    dwLen = (DWORD)sizeof(abSessionKey);
+    result = CryptImportKey(prov1, abSessionKey, dwLen, hKeyExchangeKey, 0, &hSessionKey);
+    ok(result, "%08x\n", GetLastError());
+
+    /* Once the key has been imported, subsequently acquiring a context with
+     * the same name will allow retrieving the key.
+     */
+    result = CryptAcquireContext(&prov2, szContainer, szProvider, PROV_RSA_FULL, 0);
+    ok(result, "%08x\n", GetLastError());
+    result = CryptGetUserKey(prov2, AT_KEYEXCHANGE, &hKey);
+    todo_wine
+    ok(result, "%08x\n", GetLastError());
+    if (result) CryptDestroyKey(hKey);
+    CryptReleaseContext(prov2, 0);
+
+    CryptDestroyKey(hSessionKey);
+    CryptDestroyKey(hKeyExchangeKey);
+    CryptReleaseContext(prov1, 0);
+    CryptAcquireContext(&prov1, szContainer, NULL, PROV_RSA_FULL,
+     CRYPT_DELETEKEYSET);
+}
+
 START_TEST(rsaenh)
 {
     if (!init_base_environment(0))
@@ -2206,6 +2267,7 @@ START_TEST(rsaenh)
     test_enum_container();
     clean_up_base_environment();
     test_key_permissions();
+    test_key_initialization();
     test_schannel_provider();
     test_null_provider();
     if (!init_aes_environment())
