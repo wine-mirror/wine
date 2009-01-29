@@ -321,13 +321,13 @@ static BOOL crypt_export_key(
     DWORD *pdwDataLen
 );
 
-BOOL WINAPI 
-RSAENH_CPImportKey(
+static BOOL import_key(
     HCRYPTPROV hProv, 
     CONST BYTE *pbData, 
     DWORD dwDataLen, 
     HCRYPTKEY hPubKey, 
     DWORD dwFlags, 
+    BOOL fStoreKey,
     HCRYPTKEY *phKey
 );
 
@@ -1184,8 +1184,8 @@ static BOOL read_key_value(HCRYPTPROV hKeyContainer, HKEY hKey, LPCSTR szValueNa
                 if (CryptUnprotectData(&blobIn, NULL, NULL, NULL, NULL,
                     dwFlags, &blobOut))
                 {
-                    ret = RSAENH_CPImportKey(hKeyContainer, blobOut.pbData, blobOut.cbData, 0, 0,
-                                             phCryptKey);
+                    ret = import_key(hKeyContainer, blobOut.pbData, blobOut.cbData, 0, 0,
+                                     FALSE, phCryptKey);
                     LocalFree(blobOut.pbData);
                 }
             }
