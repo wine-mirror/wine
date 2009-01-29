@@ -3225,7 +3225,7 @@ static DWORD CALLBACK test_WM_SETTEXT_esCallback(DWORD_PTR dwCookie,
   return 0;
 }
 
-static void test_WM_SETTEXT()
+static void test_WM_SETTEXT(void)
 {
   HWND hwndRichEdit = new_richedit(NULL);
   const char * TestItem1 = "TestSomeText";
