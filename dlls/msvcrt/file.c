@@ -2592,6 +2592,8 @@ int CDECL MSVCRT__flsbuf(int c, MSVCRT_FILE* file)
   } else {
 	unsigned char cc=c;
         int len;
+        /* set _cnt to 0 for unbuffered FILEs */
+        file->_cnt = 0;
 	len = MSVCRT__write(file->_file, &cc, 1);
         if (len == 1) return c & 0xff;
         file->_flag |= MSVCRT__IOERR;

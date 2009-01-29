@@ -471,9 +471,10 @@ static void test_flsbuf( void )
 {
   char* tempf;
   FILE *tempfh;
+  int  c;
   int  ret;
   int  bufmode;
-  int  bufmodes[] = {_IOFBF,_IONBF};
+  static const int bufmodes[] = {_IOFBF,_IONBF};
 
   tempf=_tempnam(".","wne");
   for (bufmode=0; bufmode < sizeof(bufmodes)/sizeof(bufmodes[0]); bufmode++)
@@ -495,6 +496,26 @@ static void test_flsbuf( void )
   tempfh = fopen(tempf,"rb");
   ret = _flsbuf(0,tempfh);
   ok(EOF == ret, "_flsbuf(0,tempfh) on r/o file expected %x got %x\n", EOF, ret);
+  fclose(tempfh);
+
+  /* See bug 17123, exposed by WinAVR's make */
+  tempfh = fopen(tempf,"w");
+  ok(tempfh->_cnt == 0, "_cnt on freshly opened file was %d\n", tempfh->_cnt);
+  setbuf(tempfh, NULL);
+  ok(tempfh->_cnt == 0, "_cnt on unbuffered file was %d\n", tempfh->_cnt);
+  /* Inlined putchar sets _cnt to -1.  Native seems to ignore the value... */
+  tempfh->_cnt = 1234;
+  ret = _flsbuf('Q',tempfh);
+  ok('Q' == ret, "_flsbuf('Q',tempfh) expected %x got %x\n", 'Q', ret);
+  /* ... and reset it to zero */
+  ok(tempfh->_cnt == 0, "after unbuf _flsbuf, _cnt was %d\n", tempfh->_cnt);
+  fclose(tempfh);
+  /* And just for grins, make sure the file is correct */
+  tempfh = fopen(tempf,"r");
+  c = fgetc(tempfh);
+  ok(c == 'Q', "first byte should be 'Q'\n");
+  c = fgetc(tempfh);
+  ok(c == EOF, "there should only be one byte\n");
   fclose(tempfh);
 
   unlink(tempf);
