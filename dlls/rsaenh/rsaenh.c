@@ -2606,7 +2606,10 @@ static void release_and_install_key(HCRYPTPROV hProv, HCRYPTKEY src,
 
         if (lookup_handle(&handle_table, hProv, RSAENH_MAGIC_CONTAINER,
                           (OBJECTHDR**)&pKeyContainer))
+        {
             store_key_container_keys(pKeyContainer);
+            store_key_container_permissions(pKeyContainer);
+        }
     }
 }
 
