@@ -112,7 +112,7 @@ static void trace_hex(BYTE *pbData, DWORD dwLen) {
 }
 */
 
-static int init_base_environment(void)
+static int init_base_environment(DWORD dwKeyFlags)
 {
     HCRYPTKEY hKey;
     BOOL result;
@@ -132,10 +132,10 @@ static int init_base_environment(void)
                                      CRYPT_NEWKEYSET);
         ok(result, "%08x\n", GetLastError());
         if (!result) return 0;
-        result = CryptGenKey(hProv, AT_KEYEXCHANGE, 0, &hKey);
+        result = CryptGenKey(hProv, AT_KEYEXCHANGE, dwKeyFlags, &hKey);
         ok(result, "%08x\n", GetLastError());
         if (result) CryptDestroyKey(hKey);
-        result = CryptGenKey(hProv, AT_SIGNATURE, 0, &hKey);
+        result = CryptGenKey(hProv, AT_SIGNATURE, dwKeyFlags, &hKey);
         ok(result, "%08x\n", GetLastError());
         if (result) CryptDestroyKey(hKey);
     }
@@ -788,6 +788,15 @@ static void test_rc2(void)
         result = CryptGetKeyParam(hKey, KP_MODE_BITS, (BYTE*)&dwModeBits, &dwLen, 0);
         ok(result, "%08x\n", GetLastError());
 
+        dwModeBits = 0xdeadbeef;
+        dwLen = sizeof(DWORD);
+        result = CryptGetKeyParam(hKey, KP_PERMISSIONS, (BYTE*)&dwModeBits, &dwLen, 0);
+        ok(result, "%08x\n", GetLastError());
+        ok(dwModeBits ==
+            (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT),
+            "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT,"
+            " got %08x\n", dwModeBits);
+
         dwLen = sizeof(DWORD);
         result = CryptGetKeyParam(hKey, KP_PERMISSIONS, (BYTE*)&dwModeBits, &dwLen, 0);
         ok(result, "%08x\n", GetLastError());
@@ -1177,7 +1186,7 @@ static BYTE abPlainPrivateKey[596] = {
 
 static void test_import_private(void) 
 {
-    DWORD dwLen;
+    DWORD dwLen, dwVal;
     HCRYPTKEY hKeyExchangeKey, hSessionKey;
     BOOL result;
     static BYTE abSessionKey[148] = {
@@ -1217,6 +1226,15 @@ static void test_import_private(void)
     result = CryptImportKey(hProv, abSessionKey, dwLen, hKeyExchangeKey, 0, &hSessionKey);
     ok(result, "%08x\n", GetLastError());
     if (!result) return;
+
+    dwVal = 0xdeadbeef;
+    dwLen = sizeof(DWORD);
+    result = CryptGetKeyParam(hSessionKey, KP_PERMISSIONS, (BYTE*)&dwVal, &dwLen, 0);
+    ok(result, "%08x\n", GetLastError());
+    ok(dwVal ==
+        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT),
+        "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT,"
+        " got %08x\n", dwVal);
 
     dwLen = (DWORD)sizeof(abEncryptedMessage);
     result = CryptDecrypt(hSessionKey, 0, TRUE, 0, abEncryptedMessage, &dwLen);
@@ -1522,7 +1540,7 @@ static void test_rsa_encrypt(void)
     HCRYPTKEY hRSAKey;
     BYTE abData[2048] = "Wine rocks!";
     BOOL result;
-    DWORD dwLen;
+    DWORD dwVal, dwLen;
 
     /* It is allowed to use the key exchange key for encryption/decryption */
     result = CryptGetUserKey(hProv, AT_KEYEXCHANGE, &hRSAKey);
@@ -1541,12 +1559,64 @@ static void test_rsa_encrypt(void)
     result = CryptDecrypt(hRSAKey, 0, TRUE, 0, abData, &dwLen);
     ok (result && dwLen == 12 && !memcmp(abData, "Wine rocks!", 12), "%08x\n", GetLastError());
     
+    dwVal = 0xdeadbeef;
+    dwLen = sizeof(DWORD);
+    result = CryptGetKeyParam(hRSAKey, KP_PERMISSIONS, (BYTE*)&dwVal, &dwLen, 0);
+    ok(result, "%08x\n", GetLastError());
+    ok(dwVal ==
+        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT),
+        "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT,"
+        " got %08x\n", dwVal);
+
+    /* The key exchange key's public key may be exported.. */
+    result = CryptExportKey(hRSAKey, 0, PUBLICKEYBLOB, 0, NULL, &dwLen);
+    ok(result, "%08x\n", GetLastError());
+    /* but its private key may not be. */
+    SetLastError(0xdeadbeef);
+    result = CryptExportKey(hRSAKey, 0, PRIVATEKEYBLOB, 0, NULL, &dwLen);
+    todo_wine
+    ok(!result && GetLastError() == NTE_BAD_KEY_STATE,
+        "expected NTE_BAD_KEY_STATE, got %08x\n", GetLastError());
+    /* Setting the permissions of the key exchange key isn't allowed, either. */
+    dwVal |= CRYPT_EXPORT;
+    SetLastError(0xdeadbeef);
+    result = CryptSetKeyParam(hRSAKey, KP_PERMISSIONS, (BYTE *)&dwVal, 0);
+    todo_wine
+    ok(!result && GetLastError() == NTE_BAD_DATA,
+        "expected NTE_BAD_DATA, got %08x\n", GetLastError());
+
     CryptDestroyKey(hRSAKey);
 
     /* It is not allowed to use the signature key for encryption/decryption */
     result = CryptGetUserKey(hProv, AT_SIGNATURE, &hRSAKey);
     ok (result, "%08x\n", GetLastError());
     if (!result) return;
+
+    dwVal = 0xdeadbeef;
+    dwLen = sizeof(DWORD);
+    result = CryptGetKeyParam(hRSAKey, KP_PERMISSIONS, (BYTE*)&dwVal, &dwLen, 0);
+    ok(result, "%08x\n", GetLastError());
+    ok(dwVal ==
+        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT),
+        "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT,"
+        " got %08x\n", dwVal);
+
+    /* The signature key's public key may also be exported.. */
+    result = CryptExportKey(hRSAKey, 0, PUBLICKEYBLOB, 0, NULL, &dwLen);
+    ok(result, "%08x\n", GetLastError());
+    /* but its private key may not be. */
+    SetLastError(0xdeadbeef);
+    result = CryptExportKey(hRSAKey, 0, PRIVATEKEYBLOB, 0, NULL, &dwLen);
+    todo_wine
+    ok(!result && GetLastError() == NTE_BAD_KEY_STATE,
+        "expected NTE_BAD_KEY_STATE, got %08x\n", GetLastError());
+    /* Setting the permissions of the signature key isn't allowed, either. */
+    dwVal |= CRYPT_EXPORT;
+    SetLastError(0xdeadbeef);
+    result = CryptSetKeyParam(hRSAKey, KP_PERMISSIONS, (BYTE *)&dwVal, 0);
+    todo_wine
+    ok(!result && GetLastError() == NTE_BAD_DATA,
+        "expected NTE_BAD_DATA, got %08x\n", GetLastError());
 
     dwLen = 12;
     result = CryptEncrypt(hRSAKey, 0, TRUE, 0, abData, &dwLen, (DWORD)sizeof(abData));
@@ -1557,7 +1627,7 @@ static void test_rsa_encrypt(void)
 
 static void test_import_export(void)
 {
-    DWORD dwLen, dwDataLen;
+    DWORD dwLen, dwDataLen, dwVal;
     HCRYPTKEY hPublicKey;
     BOOL result;
     ALG_ID algID;
@@ -1585,6 +1655,14 @@ static void test_import_export(void)
     ok(result, "failed to get the KP_ALGID from the imported public key\n");
     ok(algID == CALG_RSA_KEYX, "Expected CALG_RSA_KEYX, got %x\n", algID);
         
+    dwVal = 0xdeadbeef;
+    dwDataLen = sizeof(DWORD);
+    result = CryptGetKeyParam(hPublicKey, KP_PERMISSIONS, (BYTE*)&dwVal, &dwDataLen, 0);
+    ok(result, "%08x\n", GetLastError());
+    ok(dwVal ==
+        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT),
+        "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT,"
+        " got %08x\n", dwVal);
     result = CryptExportKey(hPublicKey, 0, PUBLICKEYBLOB, 0, emptyKey, &dwLen);
     ok(result, "failed to export the fresh imported public key\n");
     ok(dwLen == 84, "Expected exported key to be 84 bytes long but got %d bytes.\n",dwLen);
@@ -2041,9 +2119,81 @@ static void test_null_provider(void)
 
 }
 
+static void test_key_permissions(void)
+{
+    HCRYPTKEY hKey1, hKey2;
+    DWORD dwVal, dwLen;
+    BOOL result;
+
+    /* Create keys that are exportable */
+    if (!init_base_environment(CRYPT_EXPORTABLE))
+        return;
+
+    result = CryptGetUserKey(hProv, AT_KEYEXCHANGE, &hKey1);
+    ok (result, "%08x\n", GetLastError());
+    if (!result) return;
+
+    dwVal = 0xdeadbeef;
+    dwLen = sizeof(DWORD);
+    result = CryptGetKeyParam(hKey1, KP_PERMISSIONS, (BYTE*)&dwVal, &dwLen, 0);
+    ok(result, "%08x\n", GetLastError());
+    todo_wine
+    ok(dwVal ==
+        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT),
+        "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT,"
+        " got %08x\n", dwVal);
+
+    /* The key exchange key's public key may be exported.. */
+    result = CryptExportKey(hKey1, 0, PUBLICKEYBLOB, 0, NULL, &dwLen);
+    ok(result, "%08x\n", GetLastError());
+    /* and its private key may be too. */
+    result = CryptExportKey(hKey1, 0, PRIVATEKEYBLOB, 0, NULL, &dwLen);
+    ok(result, "%08x\n", GetLastError());
+    /* Turning off the key's export permissions is "allowed".. */
+    dwVal &= ~CRYPT_EXPORT;
+    result = CryptSetKeyParam(hKey1, KP_PERMISSIONS, (BYTE *)&dwVal, 0);
+    ok(result, "%08x\n", GetLastError());
+    /* but it has no effect. */
+    dwVal = 0xdeadbeef;
+    dwLen = sizeof(DWORD);
+    result = CryptGetKeyParam(hKey1, KP_PERMISSIONS, (BYTE*)&dwVal, &dwLen, 0);
+    ok(result, "%08x\n", GetLastError());
+    todo_wine
+    ok(dwVal ==
+        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT),
+        "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT,"
+        " got %08x\n", dwVal);
+    /* Thus, changing the export flag of the key doesn't affect whether the key
+     * may be exported.
+     */
+    result = CryptExportKey(hKey1, 0, PRIVATEKEYBLOB, 0, NULL, &dwLen);
+    ok(result, "%08x\n", GetLastError());
+
+    result = CryptGetUserKey(hProv, AT_KEYEXCHANGE, &hKey2);
+    ok (result, "%08x\n", GetLastError());
+
+    /* A subsequent get of the same key, into a different handle, also doesn't
+     * show that the permissions have been changed.
+     */
+    dwVal = 0xdeadbeef;
+    dwLen = sizeof(DWORD);
+    result = CryptGetKeyParam(hKey2, KP_PERMISSIONS, (BYTE*)&dwVal, &dwLen, 0);
+    ok(result, "%08x\n", GetLastError());
+    todo_wine
+    ok(dwVal ==
+        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT),
+        "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT,"
+        " got %08x\n", dwVal);
+
+    CryptDestroyKey(hKey2);
+    CryptDestroyKey(hKey1);
+
+    clean_up_base_environment();
+}
+
 START_TEST(rsaenh)
 {
-    if (!init_base_environment())
+    if (!init_base_environment(0))
         return;
     test_prov();
     test_gen_random();
@@ -2062,6 +2212,7 @@ START_TEST(rsaenh)
     test_import_export();
     test_enum_container();
     clean_up_base_environment();
+    test_key_permissions();
     test_schannel_provider();
     test_null_provider();
     if (!init_aes_environment())
