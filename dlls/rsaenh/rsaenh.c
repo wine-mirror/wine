@@ -2371,7 +2371,8 @@ BOOL WINAPI RSAENH_CPExportKey(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTKEY hPubK
  *  pbData    [I] Pointer to a buffer which holds the BLOB.
  *  dwDataLen [I] Length of data in buffer at pbData.
  *  hPubKey   [I] Key used to decrypt sensitive BLOB data.
- *  dwFlags   [I] Currently none defined.
+ *  dwFlags   [I] One of:
+ *                CRYPT_EXPORTABLE: the imported key is marked exportable
  *  phKey     [O] Handle to the imported key.
  *
  * RETURNS
@@ -2428,6 +2429,8 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
             ret = import_private_key_impl((CONST BYTE*)(pRSAPubKey+1), &pCryptKey->context, 
                                            pRSAPubKey->bitlen/8, pRSAPubKey->pubexp);
             if (ret) {
+                if (dwFlags & CRYPT_EXPORTABLE)
+                    pCryptKey->dwPermissions |= CRYPT_EXPORT;
                 switch (pBlobHeader->aiKeyAlg)
                 {
                 case AT_SIGNATURE:
@@ -2467,6 +2470,8 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
             ret = import_public_key_impl((CONST BYTE*)(pRSAPubKey+1), &pCryptKey->context, 
                                           pRSAPubKey->bitlen >> 3, pRSAPubKey->pubexp);
             if (ret) {
+                if (dwFlags & CRYPT_EXPORTABLE)
+                    pCryptKey->dwPermissions |= CRYPT_EXPORT;
                 switch (pBlobHeader->aiKeyAlg)
                 {
                 case AT_KEYEXCHANGE:
@@ -2514,6 +2519,8 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
             memcpy(pCryptKey->abKeyValue, pbDecrypted, dwKeyLen);
             HeapFree(GetProcessHeap(), 0, pbDecrypted);
             setup_key(pCryptKey);
+            if (dwFlags & CRYPT_EXPORTABLE)
+                pCryptKey->dwPermissions |= CRYPT_EXPORT;
             return TRUE;
 
         default:
