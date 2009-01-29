@@ -461,7 +461,7 @@ static BOOL emptystr_ok(CHAR emptystr[MAX_PATH])
 
 static void test_GetPrivateProfileString(const char *content, const char *descript)
 {
-    DWORD ret;
+    DWORD ret, len;
     CHAR buf[MAX_PATH];
     CHAR def_val[MAX_PATH];
     CHAR path[MAX_PATH];
@@ -497,8 +497,11 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA(NULL, "name1", "default",
                                    buf, MAX_PATH, filename);
-    ok(ret == 18, "Expected 18, got %d\n", ret);
-    ok(!memcmp(buf, "section1\0section2\0", ret + 1),
+    ok(ret == 18 ||
+       broken(ret == 19), /* Win9x and WinME */
+       "Expected 18, got %d\n", ret);
+    len = lstrlenA("section1") + sizeof(CHAR) + lstrlenA("section2") + 2 * sizeof(CHAR);
+    ok(!memcmp(buf, "section1\0section2\0", len),
        "Expected \"section1\\0section2\\0\", got \"%s\"\n", buf);
 
     /* lpAppName is empty */
@@ -685,7 +688,9 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ret = GetPrivateProfileStringA(NULL, "name1", "default",
                                    buf, 16, filename);
     ok(ret == 14, "Expected 14, got %d\n", ret);
-    ok(!memcmp(buf, "section1\0secti\0", ret + 1),
+    len = lstrlenA("section1") + 2 * sizeof(CHAR);
+    ok(!memcmp(buf, "section1\0secti\0", ret + 1) ||
+       broken(!memcmp(buf, "section1\0\0", len)), /* Win9x, WinME */
        "Expected \"section1\\0secti\\0\", got \"%s\"\n", buf);
 
     /* lpKeyName is NULL, not enough room for final key name */
@@ -693,7 +698,8 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ret = GetPrivateProfileStringA("section1", NULL, "default",
                                    buf, 16, filename);
     ok(ret == 14, "Expected 14, got %d\n", ret);
-    ok(!memcmp(buf, "name1\0name2\0na\0", ret + 1),
+    ok(!memcmp(buf, "name1\0name2\0na\0", ret + 1) ||
+       broken(!memcmp(buf, "name1\0name2\0n\0\0", ret + 1)), /* Win9x, WinME */
        "Expected \"name1\\0name2\\0na\\0\", got \"%s\"\n", buf);
 
     /* key value has quotation marks which are stripped */
