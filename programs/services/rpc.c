@@ -87,7 +87,7 @@ struct sc_lock
 /* Check if the given handle is of the required type and allows the requested access. */
 static DWORD validate_context_handle(SC_RPC_HANDLE handle, DWORD type, DWORD needed_access, struct sc_handle **out_hdr)
 {
-    struct sc_handle *hdr = (struct sc_handle *)handle;
+    struct sc_handle *hdr = handle;
 
     if (type != SC_HTYPE_DONT_CARE && hdr->type != type)
     {
@@ -158,7 +158,7 @@ DWORD svcctl_OpenSCManagerW(
 
 static void SC_RPC_HANDLE_destroy(SC_RPC_HANDLE handle)
 {
-    struct sc_handle *hdr = (struct sc_handle *)handle;
+    struct sc_handle *hdr = handle;
     switch (hdr->type)
     {
         case SC_HTYPE_MANAGER:
