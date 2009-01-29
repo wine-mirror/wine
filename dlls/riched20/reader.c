@@ -1044,8 +1044,10 @@ static void ReadColorTbl(RTF_Info *info)
                 }
 
 		cp = New (RTFColor);
-		if (cp == NULL)
+		if (cp == NULL) {
 			ERR ( "%s: cannot allocate color entry\n", fn);
+			break;
+		}
 		cp->rtfCNum = cnum++;
 		cp->rtfCRed = cp->rtfCGreen = cp->rtfCBlue = -1;
 		cp->rtfNextColor = info->colorList;
