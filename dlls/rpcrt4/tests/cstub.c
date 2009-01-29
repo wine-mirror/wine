@@ -625,7 +625,9 @@ static void test_CreateStub(IPSFactoryBuffer *ppsf)
     ok(cstd_stub->RefCount == 1, "ref count %d\n", cstd_stub->RefCount);
     /* 0xdeadbeef returned from create_stub_test_QI */
     ok(cstd_stub->pvServerObject == (void*)0xdeadbeef, "pvServerObject %p\n", cstd_stub->pvServerObject);
-    ok(cstd_stub->pPSFactory == ppsf, "pPSFactory %p\n", cstd_stub->pPSFactory);
+    ok(cstd_stub->pPSFactory == ppsf ||
+       broken(cstd_stub->pPSFactory == (void *)0x00001000) /* Win9x & NT4 */,
+       "pPSFactory was %p instead of %p\n", cstd_stub->pPSFactory, ppsf);
 
     vtbl = &create_stub_test_fail_vtbl;
     pstub = create_stub(ppsf, &IID_if1, obj, E_NOINTERFACE);
