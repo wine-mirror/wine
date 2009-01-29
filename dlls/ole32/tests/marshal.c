@@ -2246,13 +2246,13 @@ static void reg_unreg_wine_test_class(BOOL Register)
 
     hr = StringFromCLSID(&CLSID_WineTest, &pszClsid);
     ok_ole_success(hr, "StringFromCLSID");
-    strcpy(buffer, "Software\\Classes\\CLSID\\");
+    strcpy(buffer, "CLSID\\");
     WideCharToMultiByte(CP_ACP, 0, pszClsid, -1, buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), NULL, NULL);
     CoTaskMemFree(pszClsid);
     strcat(buffer, "\\InprocHandler32");
     if (Register)
     {
-        error = RegCreateKeyEx(HKEY_CURRENT_USER, buffer, 0, NULL, 0, KEY_SET_VALUE, NULL, &hkey, &dwDisposition);
+        error = RegCreateKeyEx(HKEY_CLASSES_ROOT, buffer, 0, NULL, 0, KEY_SET_VALUE, NULL, &hkey, &dwDisposition);
         ok(error == ERROR_SUCCESS, "RegCreateKeyEx failed with error %d\n", error);
         error = RegSetValueEx(hkey, NULL, 0, REG_SZ, (const unsigned char *)"ole32.dll", strlen("ole32.dll") + 1);
         ok(error == ERROR_SUCCESS, "RegSetValueEx failed with error %d\n", error);
@@ -2260,9 +2260,9 @@ static void reg_unreg_wine_test_class(BOOL Register)
     }
     else
     {
-        RegDeleteKey(HKEY_CURRENT_USER, buffer);
+        RegDeleteKey(HKEY_CLASSES_ROOT, buffer);
         *strrchr(buffer, '\\') = '\0';
-        RegDeleteKey(HKEY_CURRENT_USER, buffer);
+        RegDeleteKey(HKEY_CLASSES_ROOT, buffer);
     }
 }
 
