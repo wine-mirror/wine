@@ -116,7 +116,7 @@ typedef struct {
 typedef struct
 {
     GDIOBJHDR   header;
-    WINEREGION  *rgn;
+    WINEREGION  rgn;
 } RGNOBJ;
 
 
@@ -455,7 +455,7 @@ static void REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn);
  */
 static inline INT get_region_type( const RGNOBJ *obj )
 {
-    switch(obj->rgn->numRects)
+    switch(obj->rgn.numRects)
     {
     case 0:  return NULLREGION;
     case 1:  return SIMPLEREGION;
@@ -483,24 +483,16 @@ static void REGION_DumpRegion(WINEREGION *pReg)
 
 
 /***********************************************************************
- *            REGION_AllocWineRegion
- *            Create a new empty WINEREGION.
+ *            init_region
+ *
+ * Initialize a new empty region.
  */
-static WINEREGION *REGION_AllocWineRegion( INT n )
+static BOOL init_region( WINEREGION *pReg, INT n )
 {
-    WINEREGION *pReg;
-
-    if ((pReg = HeapAlloc(GetProcessHeap(), 0, sizeof( WINEREGION ))))
-    {
-        if ((pReg->rects = HeapAlloc(GetProcessHeap(), 0, n * sizeof( RECT ))))
-        {
-            pReg->size = n;
-            EMPTY_REGION(pReg);
-            return pReg;
-        }
-        HeapFree(GetProcessHeap(), 0, pReg);
-    }
-    return NULL;
+    if (!(pReg->rects = HeapAlloc(GetProcessHeap(), 0, n * sizeof( RECT )))) return FALSE;
+    pReg->size = n;
+    EMPTY_REGION(pReg);
+    return TRUE;
 }
 
 
@@ -514,27 +506,25 @@ static HRGN REGION_CreateRegion( INT n )
     RGNOBJ *obj;
 
     if (!(obj = HeapAlloc( GetProcessHeap(), 0, sizeof(*obj) ))) return 0;
-    if (!(obj->rgn = REGION_AllocWineRegion(n)))
+    if (!init_region( &obj->rgn, n ))
     {
         HeapFree( GetProcessHeap(), 0, obj );
         return 0;
     }
     if (!(hrgn = alloc_gdi_handle( &obj->header, OBJ_REGION, &region_funcs )))
     {
-        HeapFree( GetProcessHeap(), 0, obj->rgn->rects );
-        HeapFree( GetProcessHeap(), 0, obj->rgn );
+        HeapFree( GetProcessHeap(), 0, obj->rgn.rects );
         HeapFree( GetProcessHeap(), 0, obj );
     }
     return hrgn;
 }
 
 /***********************************************************************
- *           REGION_DestroyWineRegion
+ *           destroy_region
  */
-static void REGION_DestroyWineRegion( WINEREGION* pReg )
+static void destroy_region( WINEREGION *pReg )
 {
     HeapFree( GetProcessHeap(), 0, pReg->rects );
-    HeapFree( GetProcessHeap(), 0, pReg );
 }
 
 /***********************************************************************
@@ -545,7 +535,7 @@ static BOOL REGION_DeleteObject( HGDIOBJ handle )
     RGNOBJ *rgn = free_gdi_handle( handle );
 
     if (!rgn) return FALSE;
-    REGION_DestroyWineRegion( rgn->rgn );
+    HeapFree( GetProcessHeap(), 0, rgn->rgn.rects );
     HeapFree( GetProcessHeap(), 0, rgn );
     return TRUE;
 }
@@ -616,7 +606,7 @@ INT WINAPI OffsetRgn( HRGN hrgn, INT x, INT y )
     if (!obj)
         return ERROR;
 
-    REGION_OffsetRegion( obj->rgn, obj->rgn, x, y);
+    REGION_OffsetRegion( &obj->rgn, &obj->rgn, x, y);
 
     ret = get_region_type( obj );
     GDI_ReleaseObj( hrgn );
@@ -647,10 +637,10 @@ INT WINAPI GetRgnBox( HRGN hrgn, LPRECT rect )
     if (obj)
     {
 	INT ret;
-	rect->left = obj->rgn->extents.left;
-	rect->top = obj->rgn->extents.top;
-	rect->right = obj->rgn->extents.right;
-	rect->bottom = obj->rgn->extents.bottom;
+	rect->left = obj->rgn.extents.left;
+	rect->top = obj->rgn.extents.top;
+	rect->right = obj->rgn.extents.right;
+	rect->bottom = obj->rgn.extents.bottom;
 	TRACE("%p (%d,%d-%d,%d)\n", hrgn,
                rect->left, rect->top, rect->right, rect->bottom);
 	ret = get_region_type( obj );
@@ -741,14 +731,14 @@ BOOL WINAPI SetRectRgn( HRGN hrgn, INT left, INT top,
 
     if((left != right) && (top != bottom))
     {
-        obj->rgn->rects->left = obj->rgn->extents.left = left;
-        obj->rgn->rects->top = obj->rgn->extents.top = top;
-        obj->rgn->rects->right = obj->rgn->extents.right = right;
-        obj->rgn->rects->bottom = obj->rgn->extents.bottom = bottom;
-        obj->rgn->numRects = 1;
+        obj->rgn.rects->left = obj->rgn.extents.left = left;
+        obj->rgn.rects->top = obj->rgn.extents.top = top;
+        obj->rgn.rects->right = obj->rgn.extents.right = right;
+        obj->rgn.rects->bottom = obj->rgn.extents.bottom = bottom;
+        obj->rgn.numRects = 1;
     }
     else
-	EMPTY_REGION(obj->rgn);
+	EMPTY_REGION(&obj->rgn);
 
     GDI_ReleaseObj( hrgn );
     return TRUE;
@@ -832,10 +822,10 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
 	      /* move toward center */
 	    rect.top = top++;
 	    rect.bottom = rect.top + 1;
-	    REGION_UnionRectWithRegion( &rect, obj->rgn );
+	    REGION_UnionRectWithRegion( &rect, &obj->rgn );
 	    rect.top = --bottom;
 	    rect.bottom = rect.top + 1;
-	    REGION_UnionRectWithRegion( &rect, obj->rgn );
+	    REGION_UnionRectWithRegion( &rect, &obj->rgn );
 	    yd -= 2*asq;
 	    d  -= yd;
 	}
@@ -853,10 +843,10 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
 	  /* next vertical point */
 	rect.top = top++;
 	rect.bottom = rect.top + 1;
-	REGION_UnionRectWithRegion( &rect, obj->rgn );
+	REGION_UnionRectWithRegion( &rect, &obj->rgn );
 	rect.top = --bottom;
 	rect.bottom = rect.top + 1;
-	REGION_UnionRectWithRegion( &rect, obj->rgn );
+	REGION_UnionRectWithRegion( &rect, &obj->rgn );
 	if (d < 0)   /* if nearest pixel is outside ellipse */
 	{
 	    rect.left--;     /* move away from center */
@@ -874,7 +864,7 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
     {
 	rect.top = top;
 	rect.bottom = bottom;
-	REGION_UnionRectWithRegion( &rect, obj->rgn );
+	REGION_UnionRectWithRegion( &rect, &obj->rgn );
     }
     GDI_ReleaseObj( hrgn );
     return hrgn;
@@ -964,7 +954,7 @@ DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
 
     if(!obj) return 0;
 
-    size = obj->rgn->numRects * sizeof(RECT);
+    size = obj->rgn.numRects * sizeof(RECT);
     if(count < (size + sizeof(RGNDATAHEADER)) || rgndata == NULL)
     {
         GDI_ReleaseObj( hrgn );
@@ -976,14 +966,14 @@ DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
 
     rgndata->rdh.dwSize = sizeof(RGNDATAHEADER);
     rgndata->rdh.iType = RDH_RECTANGLES;
-    rgndata->rdh.nCount = obj->rgn->numRects;
+    rgndata->rdh.nCount = obj->rgn.numRects;
     rgndata->rdh.nRgnSize = size;
-    rgndata->rdh.rcBound.left = obj->rgn->extents.left;
-    rgndata->rdh.rcBound.top = obj->rgn->extents.top;
-    rgndata->rdh.rcBound.right = obj->rgn->extents.right;
-    rgndata->rdh.rcBound.bottom = obj->rgn->extents.bottom;
+    rgndata->rdh.rcBound.left = obj->rgn.extents.left;
+    rgndata->rdh.rcBound.top = obj->rgn.extents.top;
+    rgndata->rdh.rcBound.right = obj->rgn.extents.right;
+    rgndata->rdh.rcBound.bottom = obj->rgn.extents.bottom;
 
-    memcpy( rgndata->Buffer, obj->rgn->rects, size );
+    memcpy( rgndata->Buffer, obj->rgn.rects, size );
 
     GDI_ReleaseObj( hrgn );
     return size + sizeof(RGNDATAHEADER);
@@ -1079,7 +1069,7 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
             for(pCurRect = (RECT *)rgndata->Buffer; pCurRect < pEndRect; pCurRect++)
             {
                 if (pCurRect->left < pCurRect->right && pCurRect->top < pCurRect->bottom)
-                    REGION_UnionRectWithRegion( pCurRect, obj->rgn );
+                    REGION_UnionRectWithRegion( pCurRect, &obj->rgn );
             }
 	    GDI_ReleaseObj( hrgn );
 
@@ -1115,9 +1105,9 @@ BOOL WINAPI PtInRegion( HRGN hrgn, INT x, INT y )
     {
 	int i;
 
-	if (obj->rgn->numRects > 0 && INRECT(obj->rgn->extents, x, y))
-	    for (i = 0; i < obj->rgn->numRects; i++)
-		if (INRECT (obj->rgn->rects[i], x, y))
+	if (obj->rgn.numRects > 0 && INRECT(obj->rgn.extents, x, y))
+	    for (i = 0; i < obj->rgn.numRects; i++)
+		if (INRECT (obj->rgn.rects[i], x, y))
                 {
 		    ret = TRUE;
                     break;
@@ -1151,11 +1141,10 @@ BOOL WINAPI RectInRegion( HRGN hrgn, const RECT *rect )
 	RECT *pCurRect, *pRectEnd;
 
     /* this is (just) a useful optimization */
-	if ((obj->rgn->numRects > 0) && EXTENTCHECK(&obj->rgn->extents,
-						      rect))
+	if ((obj->rgn.numRects > 0) && EXTENTCHECK(&obj->rgn.extents, rect))
 	{
-	    for (pCurRect = obj->rgn->rects, pRectEnd = pCurRect +
-	     obj->rgn->numRects; pCurRect < pRectEnd; pCurRect++)
+	    for (pCurRect = obj->rgn.rects, pRectEnd = pCurRect +
+	     obj->rgn.numRects; pCurRect < pRectEnd; pCurRect++)
 	    {
 	        if (pCurRect->bottom <= rect->top)
 		    continue;             /* not far enough down yet */
@@ -1202,23 +1191,23 @@ BOOL WINAPI EqualRgn( HRGN hrgn1, HRGN hrgn2 )
 	{
 	    int i;
 
-	    if ( obj1->rgn->numRects != obj2->rgn->numRects ) goto done;
-            if ( obj1->rgn->numRects == 0 )
+	    if ( obj1->rgn.numRects != obj2->rgn.numRects ) goto done;
+            if ( obj1->rgn.numRects == 0 )
             {
                 ret = TRUE;
                 goto done;
 
             }
-            if (obj1->rgn->extents.left   != obj2->rgn->extents.left) goto done;
-            if (obj1->rgn->extents.right  != obj2->rgn->extents.right) goto done;
-            if (obj1->rgn->extents.top    != obj2->rgn->extents.top) goto done;
-            if (obj1->rgn->extents.bottom != obj2->rgn->extents.bottom) goto done;
-            for( i = 0; i < obj1->rgn->numRects; i++ )
+            if (obj1->rgn.extents.left   != obj2->rgn.extents.left) goto done;
+            if (obj1->rgn.extents.right  != obj2->rgn.extents.right) goto done;
+            if (obj1->rgn.extents.top    != obj2->rgn.extents.top) goto done;
+            if (obj1->rgn.extents.bottom != obj2->rgn.extents.bottom) goto done;
+            for( i = 0; i < obj1->rgn.numRects; i++ )
             {
-                if (obj1->rgn->rects[i].left   != obj2->rgn->rects[i].left) goto done;
-                if (obj1->rgn->rects[i].right  != obj2->rgn->rects[i].right) goto done;
-                if (obj1->rgn->rects[i].top    != obj2->rgn->rects[i].top) goto done;
-                if (obj1->rgn->rects[i].bottom != obj2->rgn->rects[i].bottom) goto done;
+                if (obj1->rgn.rects[i].left   != obj2->rgn.rects[i].left) goto done;
+                if (obj1->rgn.rects[i].right  != obj2->rgn.rects[i].right) goto done;
+                if (obj1->rgn.rects[i].top    != obj2->rgn.rects[i].top) goto done;
+                if (obj1->rgn.rects[i].bottom != obj2->rgn.rects[i].bottom) goto done;
 	    }
             ret = TRUE;
         done:
@@ -1255,30 +1244,32 @@ static void REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn)
  */
 BOOL REGION_FrameRgn( HRGN hDest, HRGN hSrc, INT x, INT y )
 {
-    BOOL bRet;
+    BOOL bRet = FALSE;
+    RGNOBJ* destObj = NULL;
     RGNOBJ *srcObj = GDI_GetObjPtr( hSrc, OBJ_REGION );
 
     if (!srcObj) return FALSE;
-    if (srcObj->rgn->numRects != 0)
+    if (srcObj->rgn.numRects != 0)
     {
-        RGNOBJ* destObj = GDI_GetObjPtr( hDest, OBJ_REGION );
-        WINEREGION *tmprgn = REGION_AllocWineRegion( srcObj->rgn->numRects);
+        WINEREGION tmprgn;
 
-        REGION_OffsetRegion( destObj->rgn, srcObj->rgn, -x, 0);
-        REGION_OffsetRegion( tmprgn, srcObj->rgn, x, 0);
-        REGION_IntersectRegion( destObj->rgn, destObj->rgn, tmprgn);
-        REGION_OffsetRegion( tmprgn, srcObj->rgn, 0, -y);
-        REGION_IntersectRegion( destObj->rgn, destObj->rgn, tmprgn);
-        REGION_OffsetRegion( tmprgn, srcObj->rgn, 0, y);
-        REGION_IntersectRegion( destObj->rgn, destObj->rgn, tmprgn);
-        REGION_SubtractRegion( destObj->rgn, srcObj->rgn, destObj->rgn);
+        if (!(destObj = GDI_GetObjPtr( hDest, OBJ_REGION ))) goto done;
+        if (!init_region( &tmprgn, srcObj->rgn.numRects )) goto done;
 
-        REGION_DestroyWineRegion(tmprgn);
-	GDI_ReleaseObj ( hDest );
+        REGION_OffsetRegion( &destObj->rgn, &srcObj->rgn, -x, 0);
+        REGION_OffsetRegion( &tmprgn, &srcObj->rgn, x, 0);
+        REGION_IntersectRegion( &destObj->rgn, &destObj->rgn, &tmprgn );
+        REGION_OffsetRegion( &tmprgn, &srcObj->rgn, 0, -y);
+        REGION_IntersectRegion( &destObj->rgn, &destObj->rgn, &tmprgn );
+        REGION_OffsetRegion( &tmprgn, &srcObj->rgn, 0, y);
+        REGION_IntersectRegion( &destObj->rgn, &destObj->rgn, &tmprgn );
+        REGION_SubtractRegion( &destObj->rgn, &srcObj->rgn, &destObj->rgn );
+
+        destroy_region( &tmprgn );
 	bRet = TRUE;
     }
-    else
-	bRet = FALSE;
+done:
+    if (destObj) GDI_ReleaseObj ( hDest );
     GDI_ReleaseObj( hSrc );
     return bRet;
 }
@@ -1326,10 +1317,10 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 	{
 	    TRACE("dump src1Obj:\n");
 	    if(TRACE_ON(region))
-	      REGION_DumpRegion(src1Obj->rgn);
+	      REGION_DumpRegion(&src1Obj->rgn);
 	    if (mode == RGN_COPY)
 	    {
-		REGION_CopyRegion( destObj->rgn, src1Obj->rgn );
+		REGION_CopyRegion( &destObj->rgn, &src1Obj->rgn );
 		result = get_region_type( destObj );
 	    }
 	    else
@@ -1340,20 +1331,20 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 		{
 		    TRACE("dump src2Obj:\n");
 		    if(TRACE_ON(region))
-		        REGION_DumpRegion(src2Obj->rgn);
+		        REGION_DumpRegion(&src2Obj->rgn);
 		    switch (mode)
 		    {
 		    case RGN_AND:
-			REGION_IntersectRegion( destObj->rgn, src1Obj->rgn, src2Obj->rgn);
+			REGION_IntersectRegion( &destObj->rgn, &src1Obj->rgn, &src2Obj->rgn );
 			break;
 		    case RGN_OR:
-			REGION_UnionRegion( destObj->rgn, src1Obj->rgn, src2Obj->rgn );
+			REGION_UnionRegion( &destObj->rgn, &src1Obj->rgn, &src2Obj->rgn );
 			break;
 		    case RGN_XOR:
-			REGION_XorRegion( destObj->rgn, src1Obj->rgn, src2Obj->rgn );
+			REGION_XorRegion( &destObj->rgn, &src1Obj->rgn, &src2Obj->rgn );
 			break;
 		    case RGN_DIFF:
-			REGION_SubtractRegion( destObj->rgn, src1Obj->rgn, src2Obj->rgn );
+			REGION_SubtractRegion( &destObj->rgn, &src1Obj->rgn, &src2Obj->rgn );
 			break;
 		    }
 		    result = get_region_type( destObj );
@@ -1364,7 +1355,7 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 	}
 	TRACE("dump destObj:\n");
 	if(TRACE_ON(region))
-	  REGION_DumpRegion(destObj->rgn);
+	  REGION_DumpRegion(&destObj->rgn);
 
 	GDI_ReleaseObj( hDest );
     } else {
@@ -2344,20 +2335,19 @@ static void REGION_SubtractRegion(WINEREGION *regD, WINEREGION *regM,
 /***********************************************************************
  *	     REGION_XorRegion
  */
-static void REGION_XorRegion(WINEREGION *dr, WINEREGION *sra,
-							WINEREGION *srb)
+static void REGION_XorRegion(WINEREGION *dr, WINEREGION *sra, WINEREGION *srb)
 {
-    WINEREGION *tra, *trb;
+    WINEREGION tra, trb;
 
-    if ((! (tra = REGION_AllocWineRegion(sra->numRects + 1))) ||
-	(! (trb = REGION_AllocWineRegion(srb->numRects + 1))))
-	return;
-    REGION_SubtractRegion(tra,sra,srb);
-    REGION_SubtractRegion(trb,srb,sra);
-    REGION_UnionRegion(dr,tra,trb);
-    REGION_DestroyWineRegion(tra);
-    REGION_DestroyWineRegion(trb);
-    return;
+    if (!init_region( &tra, sra->numRects + 1 )) return;
+    if (init_region( &trb, srb->numRects + 1 ))
+    {
+        REGION_SubtractRegion(&tra,sra,srb);
+        REGION_SubtractRegion(&trb,srb,sra);
+        REGION_UnionRegion(dr,&tra,&trb);
+        destroy_region(&trb);
+    }
+    destroy_region(&tra);
 }
 
 /**************************************************************************
@@ -2772,13 +2762,12 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
 {
     HRGN hrgn;
     RGNOBJ *obj;
-    WINEREGION *region;
-    register EdgeTableEntry *pAET;   /* Active Edge Table       */
-    register INT y;                /* current scanline        */
-    register int iPts = 0;           /* number of pts in buffer */
-    register EdgeTableEntry *pWETE;  /* Winding Edge Table Entry*/
-    register ScanLineList *pSLL;     /* current scanLineList    */
-    register POINT *pts;           /* output buffer           */
+    EdgeTableEntry *pAET;            /* Active Edge Table       */
+    INT y;                           /* current scanline        */
+    int iPts = 0;                    /* number of pts in buffer */
+    EdgeTableEntry *pWETE;           /* Winding Edge Table Entry*/
+    ScanLineList *pSLL;              /* current scanLineList    */
+    POINT *pts;                      /* output buffer           */
     EdgeTableEntry *pPrevAET;        /* ptr to previous AET     */
     EdgeTable ET;                    /* header node for ET      */
     EdgeTableEntry AET;              /* header node for AET     */
@@ -2795,7 +2784,6 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
     if(!(hrgn = REGION_CreateRegion(nbpolygons)))
         return 0;
     obj = GDI_GetObjPtr( hrgn, OBJ_REGION );
-    region = obj->rgn;
 
     /* special case a rectangle */
 
@@ -2820,7 +2808,7 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
         total += Count[poly];
     if (! (pETEs = HeapAlloc( GetProcessHeap(), 0, sizeof(EdgeTableEntry) * total )))
     {
-        REGION_DestroyWineRegion( region );
+        destroy_region( &obj->rgn );
         free_gdi_handle( hrgn );
         HeapFree( GetProcessHeap(), 0, obj );
 	return 0;
@@ -2912,7 +2900,7 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
 					       sizeof(POINTBLOCK) );
 			if(!tmpPtBlock) {
 			    WARN("Can't alloc tPB\n");
-                            REGION_DestroyWineRegion( region );
+                            destroy_region( &obj->rgn );
                             free_gdi_handle( hrgn );
                             HeapFree( GetProcessHeap(), 0, obj );
 			    return 0;
@@ -2938,7 +2926,7 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
         }
     }
     REGION_FreeStorage(SLLBlock.next);
-    REGION_PtsToRegion(numFullPtBlocks, iPts, &FirstPtBlock, region);
+    REGION_PtsToRegion(numFullPtBlocks, iPts, &FirstPtBlock, &obj->rgn);
 
     for (curPtBlock = FirstPtBlock.next; --numFullPtBlocks >= 0;) {
 	tmpPtBlock = curPtBlock->next;
