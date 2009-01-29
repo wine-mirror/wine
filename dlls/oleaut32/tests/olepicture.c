@@ -495,7 +495,7 @@ static void test_OleCreatePictureIndirect(void)
     IPicture_Release(pict);
 }
 
-static void test_apm()
+static void test_apm(void)
 {
     OLE_HANDLE handle;
     LPSTREAM stream;
