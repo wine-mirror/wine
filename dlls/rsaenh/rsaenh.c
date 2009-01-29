@@ -2824,8 +2824,26 @@ BOOL WINAPI RSAENH_CPSetKeyParam(HCRYPTPROV hProv, HCRYPTKEY hKey, DWORD dwParam
             return TRUE;
 
         case KP_PERMISSIONS:
-            pCryptKey->dwPermissions = *(DWORD*)pbData;
+        {
+            DWORD perms = *(DWORD *)pbData;
+
+            if ((perms & CRYPT_EXPORT) &&
+                !(pCryptKey->dwPermissions & CRYPT_EXPORT))
+            {
+                SetLastError(NTE_BAD_DATA);
+                return FALSE;
+            }
+            else if (!(perms & CRYPT_EXPORT) &&
+                (pCryptKey->dwPermissions & CRYPT_EXPORT))
+            {
+                /* Clearing the export permission appears to be ignored,
+                 * see tests.
+                 */
+                perms |= CRYPT_EXPORT;
+            }
+            pCryptKey->dwPermissions = perms;
             return TRUE;
+        }
 
         case KP_IV:
             memcpy(pCryptKey->abInitVector, pbData, pCryptKey->dwBlockLen);

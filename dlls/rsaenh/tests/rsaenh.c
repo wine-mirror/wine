@@ -1581,7 +1581,6 @@ static void test_rsa_encrypt(void)
     dwVal |= CRYPT_EXPORT;
     SetLastError(0xdeadbeef);
     result = CryptSetKeyParam(hRSAKey, KP_PERMISSIONS, (BYTE *)&dwVal, 0);
-    todo_wine
     ok(!result && GetLastError() == NTE_BAD_DATA,
         "expected NTE_BAD_DATA, got %08x\n", GetLastError());
 
@@ -1614,7 +1613,6 @@ static void test_rsa_encrypt(void)
     dwVal |= CRYPT_EXPORT;
     SetLastError(0xdeadbeef);
     result = CryptSetKeyParam(hRSAKey, KP_PERMISSIONS, (BYTE *)&dwVal, 0);
-    todo_wine
     ok(!result && GetLastError() == NTE_BAD_DATA,
         "expected NTE_BAD_DATA, got %08x\n", GetLastError());
 
@@ -2157,7 +2155,6 @@ static void test_key_permissions(void)
     dwLen = sizeof(DWORD);
     result = CryptGetKeyParam(hKey1, KP_PERMISSIONS, (BYTE*)&dwVal, &dwLen, 0);
     ok(result, "%08x\n", GetLastError());
-    todo_wine
     ok(dwVal ==
         (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT),
         "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT,"
@@ -2178,7 +2175,6 @@ static void test_key_permissions(void)
     dwLen = sizeof(DWORD);
     result = CryptGetKeyParam(hKey2, KP_PERMISSIONS, (BYTE*)&dwVal, &dwLen, 0);
     ok(result, "%08x\n", GetLastError());
-    todo_wine
     ok(dwVal ==
         (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT),
         "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT,"
