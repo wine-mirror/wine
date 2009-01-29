@@ -662,6 +662,10 @@ static void testDupCert(void)
         CertFreeCertificateContext(context);
     }
     CertCloseStore(store, 0);
+
+    SetLastError(0xdeadbeef);
+    context = CertDuplicateCertificateContext(NULL);
+    ok(context == NULL, "Expected context to be NULL\n");
 }
 
 static BYTE subjectName3[] = { 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06,
@@ -3136,16 +3140,6 @@ static void testGetPublicKeyLength(void)
     ok(ret == 56, "Expected length 56, got %d\n", ret);
 }
 
-static void testCertDuplicateCertificateContext(void)
-{
-    PCCERT_CONTEXT context;
-
-    SetLastError(0xdeadbeef);
-    context = CertDuplicateCertificateContext(NULL);
-    ok(context == NULL, "Expected context to be NULL\n");
-}
-
-
 START_TEST(cert)
 {
     init_function_pointers();
@@ -3173,5 +3167,4 @@ START_TEST(cert)
     testVerifyRevocation();
     testAcquireCertPrivateKey();
     testGetPublicKeyLength();
-    testCertDuplicateCertificateContext();
 }
