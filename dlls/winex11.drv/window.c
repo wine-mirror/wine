@@ -1226,7 +1226,7 @@ void make_window_embedded( Display *display, struct x11drv_win_data *data )
  *
  * Convert a rect from client to X window coordinates
  */
-void X11DRV_window_to_X_rect( struct x11drv_win_data *data, RECT *rect )
+static void X11DRV_window_to_X_rect( struct x11drv_win_data *data, RECT *rect )
 {
     RECT rc;
 
@@ -1827,7 +1827,7 @@ Window X11DRV_get_whole_window( HWND hwnd )
  *
  * Return the X window associated with the client area of a window
  */
-Window X11DRV_get_client_window( HWND hwnd )
+static Window X11DRV_get_client_window( HWND hwnd )
 {
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
 

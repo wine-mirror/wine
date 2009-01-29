@@ -247,7 +247,6 @@ extern RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp );
 
 extern BOOL X11DRV_SetupGCForPatBlt( X11DRV_PDEVICE *physDev, GC gc, BOOL fMapColors );
 extern BOOL X11DRV_SetupGCForBrush( X11DRV_PDEVICE *physDev );
-extern BOOL X11DRV_SetupGCForPen( X11DRV_PDEVICE *physDev );
 extern BOOL X11DRV_SetupGCForText( X11DRV_PDEVICE *physDev );
 extern INT X11DRV_XWStoDS( X11DRV_PDEVICE *physDev, INT width );
 extern INT X11DRV_YWStoDS( X11DRV_PDEVICE *physDev, INT height );
@@ -718,7 +717,6 @@ struct x11drv_win_data
 extern struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd );
 extern struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd );
 extern Window X11DRV_get_whole_window( HWND hwnd );
-extern Window X11DRV_get_client_window( HWND hwnd );
 extern XIC X11DRV_get_ic( HWND hwnd );
 
 extern int pixelformat_from_fbconfig_id( XID fbconfig_id );
@@ -753,7 +751,6 @@ typedef int (*x11drv_error_callback)( Display *display, XErrorEvent *event, void
 
 extern void X11DRV_expect_error( Display *display, x11drv_error_callback callback, void *arg );
 extern int X11DRV_check_error(void);
-extern void X11DRV_window_to_X_rect( struct x11drv_win_data *data, RECT *rect );
 extern void X11DRV_X_to_window_rect( struct x11drv_win_data *data, RECT *rect );
 extern void xinerama_init( unsigned int width, unsigned int height );
 

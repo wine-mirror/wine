@@ -286,7 +286,7 @@ BOOL X11DRV_SetupGCForBrush( X11DRV_PDEVICE *physDev )
  * Setup physDev->gc for drawing operations using current pen.
  * Return FALSE if pen is PS_NULL, TRUE otherwise.
  */
-BOOL X11DRV_SetupGCForPen( X11DRV_PDEVICE *physDev )
+static BOOL X11DRV_SetupGCForPen( X11DRV_PDEVICE *physDev )
 {
     XGCValues val;
     UINT rop2 = GetROP2(physDev->hdc);
