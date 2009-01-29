@@ -512,12 +512,6 @@ static HRESULT WINAPI LinuxInputEffectImpl_Start(
     }
 
     event.type = EV_FF;
-
-    event.code = FF_GAIN;
-    event.value = This->gain;
-    if (write(*(This->fd), &event, sizeof(event)) == -1)
-	FIXME("Failed setting gain. Error: %d \"%s\".\n", errno, strerror(errno));
-
     event.code = This->effect.id;
     event.value = dwIterations;
     if (write(*(This->fd), &event, sizeof(event)) == -1) {
@@ -627,8 +621,10 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
 
     /* Gain and Sample Period settings are not supported by the linux
      * event system */
-    if (dwFlags & DIEP_GAIN)
+    if (dwFlags & DIEP_GAIN) {
 	This->gain = 0xFFFF * peff->dwGain / 10000;
+	TRACE("Effect gain requested but no effect gain functionality present.\n");
+    }
 
     if (dwFlags & DIEP_SAMPLEPERIOD)
 	TRACE("Sample period requested but no sample period functionality present.\n");

@@ -330,6 +330,7 @@ static BOOL CALLBACK EnumJoysticks(
         LONG cnt1, cnt2;
         HWND real_hWnd;
         HINSTANCE hInstance = GetModuleHandle(NULL);
+        DIPROPDWORD dip_gain_set, dip_gain_get;
 
         trace("Testing force-feedback\n");
         memset(&eff, 0, sizeof(eff));
@@ -485,6 +486,65 @@ static BOOL CALLBACK EnumJoysticks(
             hr = IDirectInputDevice_Acquire(pJoystick);
             ok(hr==DI_OK,"IDirectInputDevice_Acquire() failed: %08x\n", hr);
             hr = IDirectInputDevice2_GetProperty(pJoystick, DIPROP_AUTOCENTER, &diprop_word.diph);
+
+            /* Device gain (DIPROP_FFGAIN).
+             * From MSDN:
+             *  0..10000 range, otherwise DIERR_INVALIDPARAM.
+             *  Can be changed even if device is acquired.
+             * Difference found by tests:
+             *  <0 is refused, >10000 is accepted
+             */
+            dip_gain_set.diph.dwSize       = sizeof(DIPROPDWORD);
+            dip_gain_set.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+            dip_gain_set.diph.dwObj        = 0;
+            dip_gain_set.diph.dwHow        = DIPH_DEVICE;
+            dip_gain_set.dwData            = 10000;
+            dip_gain_get.diph.dwSize       = sizeof(DIPROPDWORD);
+            dip_gain_get.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+            dip_gain_get.diph.dwObj        = 0;
+            dip_gain_get.diph.dwHow        = DIPH_DEVICE;
+            dip_gain_get.dwData            = 0;
+
+            /* Test device is acquisition (non)impact. */
+            hr = IDirectInputDevice_Unacquire(pJoystick);
+            ok(hr == DI_OK, "IDirectInputDevice_Unacquire() should have returned S_FALSE, got: %08x\n", hr);
+            dip_gain_set.dwData = 1;
+            hr = IDirectInputDevice_SetProperty(pJoystick, DIPROP_FFGAIN, &dip_gain_set.diph);
+            ok(hr==DI_OK, "IDirectInputDevice_SetProperty() failed: %08x\n", hr);
+            hr = IDirectInputDevice_GetProperty(pJoystick, DIPROP_FFGAIN, &dip_gain_get.diph);
+            ok(hr==DI_OK, "IDirectInputDevice_GetProperty() failed: %08x\n", hr);
+            ok(dip_gain_get.dwData==dip_gain_set.dwData, "Gain not udated: %i\n", dip_gain_get.dwData);
+            hr = IDirectInputDevice_Acquire(pJoystick);
+            ok(hr==DI_OK,"IDirectInputDevice_Acquire() failed: %08x\n", hr);
+            dip_gain_set.dwData = 2;
+            hr = IDirectInputDevice_SetProperty(pJoystick, DIPROP_FFGAIN, &dip_gain_set.diph);
+            ok(hr==DI_OK, "IDirectInputDevice_SetProperty() failed: %08x\n", hr);
+            hr = IDirectInputDevice_GetProperty(pJoystick, DIPROP_FFGAIN, &dip_gain_get.diph);
+            ok(hr==DI_OK, "IDirectInputDevice_GetProperty() failed: %08x\n", hr);
+            ok(dip_gain_get.dwData==dip_gain_set.dwData, "Gain not udated: %i\n", dip_gain_get.dwData);
+            /* Test range and internal clamping. */
+            dip_gain_set.dwData = -1;
+            hr = IDirectInputDevice_SetProperty(pJoystick, DIPROP_FFGAIN, &dip_gain_set.diph);
+            todo_wine ok(hr==DIERR_INVALIDPARAM, "IDirectInputDevice_SetProperty() should have returned %08x: %08x\n", DIERR_INVALIDPARAM, hr);
+            dip_gain_set.dwData = 0;
+            hr = IDirectInputDevice_SetProperty(pJoystick, DIPROP_FFGAIN, &dip_gain_set.diph);
+            ok(hr==DI_OK, "IDirectInputDevice_SetProperty() failed: %08x\n", hr);
+            hr = IDirectInputDevice_GetProperty(pJoystick, DIPROP_FFGAIN, &dip_gain_get.diph);
+            ok(hr==DI_OK, "IDirectInputDevice_GetProperty() failed: %08x\n", hr);
+            ok(dip_gain_get.dwData==dip_gain_set.dwData, "Gain not updated: %i\n", dip_gain_get.dwData);
+            dip_gain_set.dwData = 10000;
+            hr = IDirectInputDevice_SetProperty(pJoystick, DIPROP_FFGAIN, &dip_gain_set.diph);
+            ok(hr==DI_OK, "IDirectInputDevice_SetProperty() failed: %08x\n", hr);
+            hr = IDirectInputDevice_GetProperty(pJoystick, DIPROP_FFGAIN, &dip_gain_get.diph);
+            ok(hr==DI_OK, "IDirectInputDevice_GetProperty() failed: %08x\n", hr);
+            ok(dip_gain_get.dwData==dip_gain_set.dwData, "Gain not updated: %i\n", dip_gain_get.dwData);
+            /* WARNING: This call succeeds, on the contrary of what is stated on MSDN. */
+            dip_gain_set.dwData = 10001;
+            hr = IDirectInputDevice_SetProperty(pJoystick, DIPROP_FFGAIN, &dip_gain_set.diph);
+            ok(hr==DI_OK, "IDirectInputDevice_SetProperty() failed: %08x\n", hr);
+            hr = IDirectInputDevice_GetProperty(pJoystick, DIPROP_FFGAIN, &dip_gain_get.diph);
+            ok(hr==DI_OK, "IDirectInputDevice_GetProperty() failed: %08x\n", hr);
+            ok(dip_gain_get.dwData==dip_gain_set.dwData, "Gain not updated: %i\n", dip_gain_get.dwData);
 
             ref = IUnknown_Release(effect);
             ok(ref == 0, "IDirectInputDevice_Release() reference count = %d\n", ref);
