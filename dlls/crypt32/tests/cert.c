@@ -3136,6 +3136,16 @@ static void testGetPublicKeyLength(void)
     ok(ret == 56, "Expected length 56, got %d\n", ret);
 }
 
+static void testCertDuplicateCertificateContext(void)
+{
+    PCCERT_CONTEXT context;
+
+    SetLastError(0xdeadbeef);
+    context = CertDuplicateCertificateContext(NULL);
+    ok(context == NULL, "Expected context to be NULL\n");
+}
+
+
 START_TEST(cert)
 {
     init_function_pointers();
@@ -3163,4 +3173,5 @@ START_TEST(cert)
     testVerifyRevocation();
     testAcquireCertPrivateKey();
     testGetPublicKeyLength();
+    testCertDuplicateCertificateContext();
 }
