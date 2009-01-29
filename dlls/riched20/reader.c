@@ -219,8 +219,10 @@ void RTFInit(RTF_Info *info)
 	{
 		info->rtfTextBuf = heap_alloc (rtfBufSiz);
 		info->pushedTextBuf = heap_alloc (rtfBufSiz);
-		if (info->rtfTextBuf == NULL || info->pushedTextBuf == NULL)
+		if (info->rtfTextBuf == NULL || info->pushedTextBuf == NULL) {
 			ERR ("Cannot allocate text buffers.\n");
+			return;
+		}
 		info->rtfTextBuf[0] = info->pushedTextBuf[0] = '\0';
 	}
 
