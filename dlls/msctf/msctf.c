@@ -39,9 +39,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msctf);
 
-LONG MSCTF_refCount = 0;
+static LONG MSCTF_refCount;
 
-HINSTANCE MSCTF_hinstance = 0;
+static HINSTANCE MSCTF_hinstance;
 
 typedef HRESULT (*LPFNCONSTRUCTOR)(IUnknown *pUnkOuter, IUnknown **ppvOut);
 
