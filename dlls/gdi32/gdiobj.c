@@ -528,7 +528,7 @@ HGDIOBJ GDI_inc_ref_count( HGDIOBJ handle )
 
     if ((header = GDI_GetObjPtr( handle, 0 )))
     {
-        header->dwCount++;
+        header->selcount++;
         GDI_ReleaseObj( handle );
     }
     else handle = 0;
@@ -548,16 +548,16 @@ BOOL GDI_dec_ref_count( HGDIOBJ handle )
 
     if ((header = GDI_GetObjPtr( handle, 0 )))
     {
-        if (header->dwCount) header->dwCount--;
-        if (header->dwCount != 0x80000000) GDI_ReleaseObj( handle );
-        else
+        assert( header->selcount );
+        if (!--header->selcount && header->deleted)
         {
             /* handle delayed DeleteObject*/
-            header->dwCount = 0;
+            header->deleted = 0;
             GDI_ReleaseObj( handle );
             TRACE( "executing delayed DeleteObject for %p\n", handle );
             DeleteObject( handle );
         }
+        else GDI_ReleaseObj( handle );
     }
     return header != NULL;
 }
@@ -641,11 +641,12 @@ HGDIOBJ alloc_gdi_handle( GDIOBJHDR *obj, WORD type, const struct gdi_obj_funcs 
     int i;
 
     /* initialize the object header */
-    obj->type    = type;
-    obj->system  = 0;
-    obj->dwCount = 0;
-    obj->funcs   = funcs;
-    obj->hdcs    = NULL;
+    obj->type     = type;
+    obj->system   = 0;
+    obj->deleted  = 0;
+    obj->selcount = 0;
+    obj->funcs    = funcs;
+    obj->hdcs     = NULL;
 
     _EnterSysLevel( &GDI_level );
     for (i = next_large_handle + 1; i < MAX_LARGE_HANDLES; i++)
@@ -796,10 +797,10 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
         if (!header) return FALSE;
     }
 
-    if (header->dwCount)
+    if (header->selcount)
     {
-        TRACE("delayed for %p because object in use, count %d\n", obj, header->dwCount );
-        header->dwCount |= 0x80000000; /* mark for delete */
+        TRACE("delayed for %p because object in use, count %u\n", obj, header->selcount );
+        header->deleted = 1;  /* mark for delete */
         GDI_ReleaseObj( obj );
         return TRUE;
     }

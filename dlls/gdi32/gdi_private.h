@@ -59,9 +59,10 @@ struct hdc_list
 
 typedef struct tagGDIOBJHDR
 {
-    WORD        type;
-    WORD        system : 1;
-    DWORD       dwCount;
+    WORD        type;         /* object type (one of the OBJ_* constants) */
+    WORD        system : 1;   /* system object flag */
+    WORD        deleted : 1;  /* whether DeleteObject has been called on this object */
+    DWORD       selcount;     /* number of times the object is selected in a DC */
     const struct gdi_obj_funcs *funcs;
     struct hdc_list *hdcs;
 } GDIOBJHDR;
