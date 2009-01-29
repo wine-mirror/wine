@@ -2805,9 +2805,9 @@ static HKEY WINSPOOL_OpenDriverReg( LPCVOID pEnvironment, BOOL unicode)
     {
         /* pEnvironment was an ANSI-String: convert to unicode first */
         LPWSTR  buffer;
-        INT len = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pEnvironment, -1, NULL, 0);
+        INT len = MultiByteToWideChar(CP_ACP, 0, pEnvironment, -1, NULL, 0);
         buffer = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-        if (buffer) MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pEnvironment, -1, buffer, len);
+        if (buffer) MultiByteToWideChar(CP_ACP, 0, pEnvironment, -1, buffer, len);
         env = validate_envW(buffer);
         HeapFree(GetProcessHeap(), 0, buffer);
     }
