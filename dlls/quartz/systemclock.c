@@ -89,7 +89,7 @@ static void QUARTZ_InsertAviseEntryFromQueue(SystemClockImpl* This, SystemClockA
 #define ADVISE_ADD_PERIODIC    (WM_APP + 8)
 
 static DWORD WINAPI SystemClockAdviseThread(LPVOID lpParam) {
-  SystemClockImpl* This = (SystemClockImpl*) lpParam;
+  SystemClockImpl* This = lpParam;
   DWORD timeOut = INFINITE;
   DWORD tmpTimeOut;
   MSG msg;

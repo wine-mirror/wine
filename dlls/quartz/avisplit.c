@@ -403,7 +403,7 @@ static HRESULT AVISplitter_done_process(LPVOID iface);
  */
 static HRESULT AVISplitter_first_request(LPVOID iface)
 {
-    AVISplitterImpl *This = (AVISplitterImpl *)iface;
+    AVISplitterImpl *This = iface;
     HRESULT hr = S_OK;
     DWORD x;
     IMediaSample *sample = NULL;
@@ -740,7 +740,7 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
                 pvi = (VIDEOINFOHEADER *)amt.pbFormat;
                 pvi->AvgTimePerFrame = (LONGLONG)(10000000.0 / fSamplesPerSec);
 
-                CopyMemory(&pvi->bmiHeader, (const BYTE *)(pChunk + 1), pChunk->cb);
+                CopyMemory(&pvi->bmiHeader, pChunk + 1, pChunk->cb);
                 if (pvi->bmiHeader.biCompression)
                     amt.subtype.Data1 = pvi->bmiHeader.biCompression;
             }
@@ -751,13 +751,13 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
                     amt.cbFormat = sizeof(WAVEFORMATEX);
                 amt.pbFormat = CoTaskMemAlloc(amt.cbFormat);
                 ZeroMemory(amt.pbFormat, amt.cbFormat);
-                CopyMemory(amt.pbFormat, (const BYTE *)(pChunk + 1), pChunk->cb);
+                CopyMemory(amt.pbFormat, pChunk + 1, pChunk->cb);
             }
             else
             {
                 amt.cbFormat = pChunk->cb;
                 amt.pbFormat = CoTaskMemAlloc(amt.cbFormat);
-                CopyMemory(amt.pbFormat, (const BYTE *)(pChunk + 1), amt.cbFormat);
+                CopyMemory(amt.pbFormat, pChunk + 1, amt.cbFormat);
             }
             break;
         case ckidSTREAMNAME:
@@ -1193,7 +1193,7 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin,
 
 static HRESULT AVISplitter_Flush(LPVOID iface)
 {
-    AVISplitterImpl *This = (AVISplitterImpl*)iface;
+    AVISplitterImpl *This = iface;
     DWORD x;
 
     TRACE("(%p)->()\n", This);
@@ -1433,7 +1433,7 @@ HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
     if (FAILED(hr))
         return hr;
 
-    *ppv = (LPVOID)This;
+    *ppv = This;
 
     return hr;
 }

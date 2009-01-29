@@ -99,9 +99,9 @@ static HRESULT WINAPI BaseMemAllocator_QueryInterface(IMemAllocator * iface, REF
     *ppv = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IMemAllocator))
-        *ppv = (LPVOID)This;
+        *ppv = This;
 
     if (*ppv)
     {
@@ -439,11 +439,11 @@ static HRESULT WINAPI StdMediaSample2_QueryInterface(IMediaSample2 * iface, REFI
     *ppv = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IMediaSample))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IMediaSample2))
-        *ppv = (LPVOID)This;
+        *ppv = This;
 
     if (*ppv)
     {
@@ -877,7 +877,7 @@ HRESULT StdMemAllocator_create(LPUNKNOWN lpUnkOuter, LPVOID * ppv)
     pMemAlloc->pMemory = NULL;
 
     if (SUCCEEDED(hr = BaseMemAllocator_Init(StdMemAllocator_Alloc, StdMemAllocator_Free, NULL, NULL, NULL, StdMemAllocator_Destroy, &pMemAlloc->csState, &pMemAlloc->base)))
-        *ppv = (LPVOID)pMemAlloc;
+        *ppv = pMemAlloc;
     else
         CoTaskMemFree(pMemAlloc);
 

@@ -63,7 +63,7 @@ static HRESULT TransformFilter_Input_QueryAccept(LPVOID iface, const AM_MEDIA_TY
 
 static HRESULT TransformFilter_Output_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
 {
-    TransformFilterImpl* pTransformFilter = (TransformFilterImpl*)iface;
+    TransformFilterImpl* pTransformFilter = iface;
     AM_MEDIA_TYPE* outpmt = &pTransformFilter->pmt;
     TRACE("%p\n", iface);
 
@@ -225,13 +225,13 @@ static HRESULT WINAPI TransformFilter_QueryInterface(IBaseFilter * iface, REFIID
     *ppv = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IPersist))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IMediaFilter))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IBaseFilter))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IMediaSeeking))
         *ppv = &This->mediaSeeking;
 

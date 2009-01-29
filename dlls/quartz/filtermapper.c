@@ -970,8 +970,8 @@ static BOOL MatchTypes(
 /* internal helper function for qsort of MONIKER_MERIT array */
 static int mm_compare(const void * left, const void * right)
 {
-    const struct MONIKER_MERIT * mmLeft = (const struct MONIKER_MERIT *)left;
-    const struct MONIKER_MERIT * mmRight = (const struct MONIKER_MERIT *)right;
+    const struct MONIKER_MERIT * mmLeft = left;
+    const struct MONIKER_MERIT * mmRight = right;
 
     if (mmLeft->dwMerit == mmRight->dwMerit)
         return 0;
@@ -1346,7 +1346,7 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
 
         if (SUCCEEDED(hrSub))
         {
-            len = (strlenW((WCHAR*)V_UNION(&var, bstrVal))+1) * sizeof(WCHAR);
+            len = (strlenW(V_UNION(&var, bstrVal))+1) * sizeof(WCHAR);
             if (!(regfilters[idx].Name = CoTaskMemAlloc(len*2)))
                 hr = E_OUTOFMEMORY;
         }

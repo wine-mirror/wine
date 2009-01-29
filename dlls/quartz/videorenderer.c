@@ -204,7 +204,7 @@ static BOOL CreateRenderingWindow(VideoRendererImpl* This)
 
 static DWORD WINAPI MessageLoop(LPVOID lpParameter)
 {
-    VideoRendererImpl* This = (VideoRendererImpl*) lpParameter;
+    VideoRendererImpl* This = lpParameter;
     MSG msg; 
     BOOL fGotMessage;
 
@@ -237,7 +237,7 @@ static BOOL CreateRenderingSubsystem(VideoRendererImpl* This)
     if (!This->hEvent)
         return FALSE;
 
-    This->hThread = CreateThread(NULL, 0, MessageLoop, (LPVOID)This, 0, &This->ThreadID);
+    This->hThread = CreateThread(NULL, 0, MessageLoop, This, 0, &This->ThreadID);
     if (!This->hThread)
     {
         CloseHandle(This->hEvent);
@@ -337,7 +337,7 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
 
 static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
 {
-    VideoRendererImpl *This = (VideoRendererImpl *)iface;
+    VideoRendererImpl *This = iface;
     LPBYTE pbSrcStream = NULL;
     long cbSrcStream = 0;
     REFERENCE_TIME tStart, tStop;
@@ -477,7 +477,7 @@ static HRESULT VideoRenderer_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt
         IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_RGB565) ||
         IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_RGB8))
     {
-        VideoRendererImpl* This = (VideoRendererImpl*) iface;
+        VideoRendererImpl* This = iface;
 
         if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo))
         {
@@ -609,7 +609,7 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
         pVideoRenderer->mediaSeeking.lpVtbl = &VideoRendererImpl_Seeking_Vtbl;
 
         pVideoRenderer->sample_held = NULL;
-        *ppv = (LPVOID)pVideoRenderer;
+        *ppv = pVideoRenderer;
     }
     else
     {
@@ -648,17 +648,17 @@ static HRESULT WINAPI VideoRendererInner_QueryInterface(IUnknown * iface, REFIID
     *ppv = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = (LPVOID)&(This->IInner_vtbl);
+        *ppv = &This->IInner_vtbl;
     else if (IsEqualIID(riid, &IID_IPersist))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IMediaFilter))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IBaseFilter))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IBasicVideo))
-        *ppv = (LPVOID)&(This->IBasicVideo_vtbl);
+        *ppv = &This->IBasicVideo_vtbl;
     else if (IsEqualIID(riid, &IID_IVideoWindow))
-        *ppv = (LPVOID)&(This->IVideoWindow_vtbl);
+        *ppv = &This->IVideoWindow_vtbl;
     else if (IsEqualIID(riid, &IID_IMediaSeeking))
         *ppv = &This->mediaSeeking;
 

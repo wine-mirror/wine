@@ -2717,7 +2717,7 @@ static HRESULT GetTargetInterface(IFilterGraphImpl* pGraph, REFIID riid, LPVOID*
         {
             pGraph->ItfCacheEntries[entry].riid = riid;
             pGraph->ItfCacheEntries[entry].filter = pGraph->ppFiltersInGraph[i];
-            pGraph->ItfCacheEntries[entry].iface = (IUnknown*)*ppvObj;
+            pGraph->ItfCacheEntries[entry].iface = *ppvObj;
             if (entry >= pGraph->nItfCacheEntries)
                 pGraph->nItfCacheEntries++;
             return S_OK;

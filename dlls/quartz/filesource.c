@@ -361,7 +361,7 @@ HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv)
     pAsyncRead->pszFileName = NULL;
     pAsyncRead->pmt = NULL;
 
-    *ppv = (LPVOID)pAsyncRead;
+    *ppv = pAsyncRead;
 
     TRACE("-- created at %p\n", pAsyncRead);
 
@@ -379,15 +379,15 @@ static HRESULT WINAPI AsyncReader_QueryInterface(IBaseFilter * iface, REFIID rii
     *ppv = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IPersist))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IMediaFilter))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IBaseFilter))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IFileSourceFilter))
-        *ppv = (LPVOID)(&This->lpVtblFSF);
+        *ppv = &This->lpVtblFSF;
 
     if (*ppv)
     {
@@ -531,7 +531,7 @@ static HRESULT AsyncReader_GetPin(IBaseFilter *iface, ULONG pos, IPin **pin, DWO
     if (pos >= 1 || !This->pOutputPin)
         return S_FALSE;
 
-    *pin = (IPin *)This->pOutputPin;
+    *pin = This->pOutputPin;
     IPin_AddRef(*pin);
     return S_OK;
 }
@@ -781,8 +781,8 @@ static inline FileAsyncReader *impl_from_IAsyncReader( IAsyncReader *iface )
 
 static HRESULT AcceptProcAFR(LPVOID iface, const AM_MEDIA_TYPE *pmt)
 {
-    AsyncReader *This = (AsyncReader *)iface;
-    
+    AsyncReader *This = iface;
+
     FIXME("(%p, %p)\n", iface, pmt);
 
     if (IsEqualGUID(&pmt->majortype, &This->pmt->majortype) &&
@@ -803,11 +803,11 @@ static HRESULT WINAPI FileAsyncReaderPin_QueryInterface(IPin * iface, REFIID rii
     *ppv = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IPin))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IAsyncReader))
-        *ppv = (LPVOID)&This->lpVtblAR;
+        *ppv = &This->lpVtblAR;
 
     if (*ppv)
     {

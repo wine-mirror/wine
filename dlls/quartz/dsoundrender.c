@@ -233,7 +233,7 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, const BYTE *d
 
 static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
 {
-    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
+    DSoundRenderImpl *This = iface;
     LPBYTE pbSrcStream = NULL;
     long cbSrcStream = 0;
     REFERENCE_TIME tStart, tStop;
@@ -438,7 +438,7 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
             return HRESULT_FROM_WIN32(GetLastError());
         }
 
-        *ppv = (LPVOID)pDSoundRender;
+        *ppv = pDSoundRender;
     }
     else
     {
@@ -460,17 +460,17 @@ static HRESULT WINAPI DSoundRender_QueryInterface(IBaseFilter * iface, REFIID ri
     *ppv = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IPersist))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IMediaFilter))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IBaseFilter))
-        *ppv = (LPVOID)This;
+        *ppv = This;
     else if (IsEqualIID(riid, &IID_IBasicAudio))
-        *ppv = (LPVOID)&(This->IBasicAudio_vtbl);
+        *ppv = &This->IBasicAudio_vtbl;
     else if (IsEqualIID(riid, &IID_IReferenceClock))
-        *ppv = (LPVOID)&(This->IReferenceClock_vtbl);
+        *ppv = &This->IReferenceClock_vtbl;
     else if (IsEqualIID(riid, &IID_IMediaSeeking))
         *ppv = &This->mediaSeeking.lpVtbl;
 
