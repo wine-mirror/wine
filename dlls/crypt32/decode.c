@@ -5516,7 +5516,7 @@ BOOL WINAPI PFXIsPFXBlob(CRYPT_DATA_BLOB *pPFX)
 {
     BOOL ret;
 
-    TRACE("(%p)\n", pPFX);
+    TRACE_(crypt)("(%p)\n", pPFX);
 
     /* A PFX blob is an asn.1-encoded sequence, consisting of at least a
      * version integer of length 1 (3 encoded byes) and at least one other
@@ -5550,6 +5550,6 @@ BOOL WINAPI PFXIsPFXBlob(CRYPT_DATA_BLOB *pPFX)
 HCERTSTORE WINAPI PFXImportCertStore(CRYPT_DATA_BLOB *pPFX, LPCWSTR szPassword,
  DWORD dwFlags)
 {
-    FIXME("(%p, %p, %08x): stub\n", pPFX, szPassword, dwFlags);
+    FIXME_(crypt)("(%p, %p, %08x): stub\n", pPFX, szPassword, dwFlags);
     return NULL;
 }
