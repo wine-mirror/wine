@@ -185,7 +185,7 @@ static const char afile[] = "test.avi";
  * By avoiding the filtergraph all together and connecting streams directly to
  * the null renderer I am sure that this is not the case here.
  */
-static void test_threads()
+static void test_threads(void)
 {
     IFileSourceFilter *pfile = NULL;
     IBaseFilter *preader = NULL, *pavi = NULL;
