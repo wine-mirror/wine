@@ -166,8 +166,6 @@ static BOOL add_rect( WINEREGION *reg, INT left, INT top, INT right, INT bottom 
     (pReg)->extents.right = (pReg)->extents.bottom = 0; \
  } while(0)
 
-#define REGION_NOT_EMPTY(pReg) ((pReg)->numRects)
-
 #define INRECT(r, x, y) \
       ( ( ((r).right >  x)) && \
         ( ((r).left <= x)) && \
@@ -441,13 +439,13 @@ typedef struct _ScanLineListBlock {
 
 /* Note the parameter order is different from the X11 equivalents */
 
-static void REGION_CopyRegion(WINEREGION *d, WINEREGION *s);
-static void REGION_OffsetRegion(WINEREGION *d, WINEREGION *s, INT x, INT y);
-static void REGION_IntersectRegion(WINEREGION *d, WINEREGION *s1, WINEREGION *s2);
-static void REGION_UnionRegion(WINEREGION *d, WINEREGION *s1, WINEREGION *s2);
-static void REGION_SubtractRegion(WINEREGION *d, WINEREGION *s1, WINEREGION *s2);
-static void REGION_XorRegion(WINEREGION *d, WINEREGION *s1, WINEREGION *s2);
-static void REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn);
+static BOOL REGION_CopyRegion(WINEREGION *d, WINEREGION *s);
+static BOOL REGION_OffsetRegion(WINEREGION *d, WINEREGION *s, INT x, INT y);
+static BOOL REGION_IntersectRegion(WINEREGION *d, WINEREGION *s1, WINEREGION *s2);
+static BOOL REGION_UnionRegion(WINEREGION *d, WINEREGION *s1, WINEREGION *s2);
+static BOOL REGION_SubtractRegion(WINEREGION *d, WINEREGION *s1, WINEREGION *s2);
+static BOOL REGION_XorRegion(WINEREGION *d, WINEREGION *s1, WINEREGION *s2);
+static BOOL REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn);
 
 #define RGN_DEFAULT_RECTS	2
 
@@ -531,11 +529,12 @@ static HGDIOBJ REGION_SelectObject( HGDIOBJ handle, HDC hdc )
  *           REGION_OffsetRegion
  *           Offset a WINEREGION by x,y
  */
-static void REGION_OffsetRegion( WINEREGION *rgn, WINEREGION *srcrgn,
-                                INT x, INT y )
+static BOOL REGION_OffsetRegion( WINEREGION *rgn, WINEREGION *srcrgn, INT x, INT y )
 {
     if( rgn != srcrgn)
-        REGION_CopyRegion( rgn, srcrgn);
+    {
+        if (!REGION_CopyRegion( rgn, srcrgn)) return FALSE;
+    }
     if(x || y) {
 	int nbox = rgn->numRects;
 	RECT *pbox = rgn->rects;
@@ -554,6 +553,7 @@ static void REGION_OffsetRegion( WINEREGION *rgn, WINEREGION *srcrgn,
 	    rgn->extents.bottom += y;
 	}
     }
+    return TRUE;
 }
 
 /***********************************************************************
@@ -760,7 +760,7 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
 				    INT ellipse_width, INT ellipse_height )
 {
     RGNOBJ * obj;
-    HRGN hrgn;
+    HRGN hrgn = 0;
     int asq, bsq, d, xd, yd;
     RECT rect;
 
@@ -813,10 +813,10 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
 	      /* move toward center */
 	    rect.top = top++;
 	    rect.bottom = rect.top + 1;
-	    REGION_UnionRectWithRegion( &rect, &obj->rgn );
+	    if (!REGION_UnionRectWithRegion( &rect, &obj->rgn )) goto done;
 	    rect.top = --bottom;
 	    rect.bottom = rect.top + 1;
-	    REGION_UnionRectWithRegion( &rect, &obj->rgn );
+	    if (!REGION_UnionRectWithRegion( &rect, &obj->rgn )) goto done;
 	    yd -= 2*asq;
 	    d  -= yd;
 	}
@@ -834,10 +834,10 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
 	  /* next vertical point */
 	rect.top = top++;
 	rect.bottom = rect.top + 1;
-	REGION_UnionRectWithRegion( &rect, &obj->rgn );
+	if (!REGION_UnionRectWithRegion( &rect, &obj->rgn )) goto done;
 	rect.top = --bottom;
 	rect.bottom = rect.top + 1;
-	REGION_UnionRectWithRegion( &rect, &obj->rgn );
+	if (!REGION_UnionRectWithRegion( &rect, &obj->rgn )) goto done;
 	if (d < 0)   /* if nearest pixel is outside ellipse */
 	{
 	    rect.left--;     /* move away from center */
@@ -855,14 +855,14 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
     {
 	rect.top = top;
 	rect.bottom = bottom;
-	REGION_UnionRectWithRegion( &rect, &obj->rgn );
+	if (!REGION_UnionRectWithRegion( &rect, &obj->rgn )) goto done;
     }
 
     hrgn = alloc_gdi_handle( &obj->header, OBJ_REGION, &region_funcs );
 
     TRACE("(%d,%d-%d,%d %dx%d): ret=%p\n",
 	  left, top, right, bottom, ellipse_width, ellipse_height, hrgn );
-
+done:
     if (!hrgn)
     {
         HeapFree( GetProcessHeap(), 0, obj->rgn.rects );
@@ -1013,7 +1013,7 @@ static void translate( POINT *pt, UINT count, const XFORM *xform )
  */
 HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA* rgndata)
 {
-    HRGN hrgn;
+    HRGN hrgn = 0;
     RGNOBJ *obj;
 
     if (!rgndata)
@@ -1069,7 +1069,9 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
         for(pCurRect = (RECT *)rgndata->Buffer; pCurRect < pEndRect; pCurRect++)
         {
             if (pCurRect->left < pCurRect->right && pCurRect->top < pCurRect->bottom)
-                REGION_UnionRectWithRegion( pCurRect, &obj->rgn );
+            {
+                if (!REGION_UnionRectWithRegion( pCurRect, &obj->rgn )) goto done;
+            }
         }
         hrgn = alloc_gdi_handle( &obj->header, OBJ_REGION, &region_funcs );
     }
@@ -1079,6 +1081,7 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
         return 0;
     }
 
+done:
     if (!hrgn)
     {
         HeapFree( GetProcessHeap(), 0, obj->rgn.rects );
@@ -1228,7 +1231,7 @@ BOOL WINAPI EqualRgn( HRGN hrgn1, HRGN hrgn2 )
  *           REGION_UnionRectWithRegion
  *           Adds a rectangle to a WINEREGION
  */
-static void REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn)
+static BOOL REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn)
 {
     WINEREGION region;
 
@@ -1236,7 +1239,7 @@ static void REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn)
     region.numRects = 1;
     region.size = 1;
     region.extents = *rect;
-    REGION_UnionRegion(rgn, rgn, &region);
+    return REGION_UnionRegion(rgn, rgn, &region);
 }
 
 
@@ -1250,31 +1253,30 @@ static void REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn)
  */
 BOOL REGION_FrameRgn( HRGN hDest, HRGN hSrc, INT x, INT y )
 {
+    WINEREGION tmprgn;
     BOOL bRet = FALSE;
     RGNOBJ* destObj = NULL;
     RGNOBJ *srcObj = GDI_GetObjPtr( hSrc, OBJ_REGION );
 
+    tmprgn.rects = NULL;
     if (!srcObj) return FALSE;
     if (srcObj->rgn.numRects != 0)
     {
-        WINEREGION tmprgn;
-
         if (!(destObj = GDI_GetObjPtr( hDest, OBJ_REGION ))) goto done;
         if (!init_region( &tmprgn, srcObj->rgn.numRects )) goto done;
 
-        REGION_OffsetRegion( &destObj->rgn, &srcObj->rgn, -x, 0);
-        REGION_OffsetRegion( &tmprgn, &srcObj->rgn, x, 0);
-        REGION_IntersectRegion( &destObj->rgn, &destObj->rgn, &tmprgn );
-        REGION_OffsetRegion( &tmprgn, &srcObj->rgn, 0, -y);
-        REGION_IntersectRegion( &destObj->rgn, &destObj->rgn, &tmprgn );
-        REGION_OffsetRegion( &tmprgn, &srcObj->rgn, 0, y);
-        REGION_IntersectRegion( &destObj->rgn, &destObj->rgn, &tmprgn );
-        REGION_SubtractRegion( &destObj->rgn, &srcObj->rgn, &destObj->rgn );
-
-        destroy_region( &tmprgn );
+        if (!REGION_OffsetRegion( &destObj->rgn, &srcObj->rgn, -x, 0)) goto done;
+        if (!REGION_OffsetRegion( &tmprgn, &srcObj->rgn, x, 0)) goto done;
+        if (!REGION_IntersectRegion( &destObj->rgn, &destObj->rgn, &tmprgn )) goto done;
+        if (!REGION_OffsetRegion( &tmprgn, &srcObj->rgn, 0, -y)) goto done;
+        if (!REGION_IntersectRegion( &destObj->rgn, &destObj->rgn, &tmprgn )) goto done;
+        if (!REGION_OffsetRegion( &tmprgn, &srcObj->rgn, 0, y)) goto done;
+        if (!REGION_IntersectRegion( &destObj->rgn, &destObj->rgn, &tmprgn )) goto done;
+        if (!REGION_SubtractRegion( &destObj->rgn, &srcObj->rgn, &destObj->rgn )) goto done;
 	bRet = TRUE;
     }
 done:
+    HeapFree( GetProcessHeap(), 0, tmprgn.rects );
     if (destObj) GDI_ReleaseObj ( hDest );
     GDI_ReleaseObj( hSrc );
     return bRet;
@@ -1326,8 +1328,8 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 	      REGION_DumpRegion(&src1Obj->rgn);
 	    if (mode == RGN_COPY)
 	    {
-		REGION_CopyRegion( &destObj->rgn, &src1Obj->rgn );
-		result = get_region_type( destObj );
+		if (REGION_CopyRegion( &destObj->rgn, &src1Obj->rgn ))
+                    result = get_region_type( destObj );
 	    }
 	    else
 	    {
@@ -1341,19 +1343,22 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 		    switch (mode)
 		    {
 		    case RGN_AND:
-			REGION_IntersectRegion( &destObj->rgn, &src1Obj->rgn, &src2Obj->rgn );
+			if (REGION_IntersectRegion( &destObj->rgn, &src1Obj->rgn, &src2Obj->rgn ))
+                            result = get_region_type( destObj );
 			break;
 		    case RGN_OR:
-			REGION_UnionRegion( &destObj->rgn, &src1Obj->rgn, &src2Obj->rgn );
+			if (REGION_UnionRegion( &destObj->rgn, &src1Obj->rgn, &src2Obj->rgn ))
+                            result = get_region_type( destObj );
 			break;
 		    case RGN_XOR:
-			REGION_XorRegion( &destObj->rgn, &src1Obj->rgn, &src2Obj->rgn );
+			if (REGION_XorRegion( &destObj->rgn, &src1Obj->rgn, &src2Obj->rgn ))
+                            result = get_region_type( destObj );
 			break;
 		    case RGN_DIFF:
-			REGION_SubtractRegion( &destObj->rgn, &src1Obj->rgn, &src2Obj->rgn );
+			if (REGION_SubtractRegion( &destObj->rgn, &src1Obj->rgn, &src2Obj->rgn ))
+                            result = get_region_type( destObj );
 			break;
 		    }
-		    result = get_region_type( destObj );
 		    GDI_ReleaseObj( hSrc2 );
 		}
 	    }
@@ -1364,8 +1369,6 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 	  REGION_DumpRegion(&destObj->rgn);
 
 	GDI_ReleaseObj( hDest );
-    } else {
-       ERR("Invalid rgn=%p\n", hDest);
     }
     return result;
 }
@@ -1416,15 +1419,15 @@ static void REGION_SetExtents (WINEREGION *pReg)
 /***********************************************************************
  *           REGION_CopyRegion
  */
-static void REGION_CopyRegion(WINEREGION *dst, WINEREGION *src)
+static BOOL REGION_CopyRegion(WINEREGION *dst, WINEREGION *src)
 {
     if (dst != src) /*  don't want to copy to itself */
     {
 	if (dst->size < src->numRects)
 	{
-	    if (! (dst->rects = HeapReAlloc( GetProcessHeap(), 0, dst->rects,
-				src->numRects * sizeof(RECT) )))
-		return;
+            RECT *rects = HeapReAlloc( GetProcessHeap(), 0, dst->rects, src->numRects * sizeof(RECT) );
+            if (!rects) return FALSE;
+	    dst->rects = rects;
 	    dst->size = src->numRects;
 	}
 	dst->numRects = src->numRects;
@@ -1434,7 +1437,7 @@ static void REGION_CopyRegion(WINEREGION *dst, WINEREGION *src)
 	dst->extents.bottom = src->extents.bottom;
         memcpy(dst->rects, src->rects, src->numRects * sizeof(RECT));
     }
-    return;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -1599,21 +1602,21 @@ static INT REGION_Coalesce (
  *      to reduce the number of rectangles in the region.
  *
  */
-static void REGION_RegionOp(
-	    WINEREGION *newReg, /* Place to store result */
+static BOOL REGION_RegionOp(
+	    WINEREGION *destReg, /* Place to store result */
 	    WINEREGION *reg1,   /* First region in operation */
             WINEREGION *reg2,   /* 2nd region in operation */
-	    void (*overlapFunc)(WINEREGION*, RECT*, RECT*, RECT*, RECT*, INT, INT),     /* Function to call for over-lapping bands */
-	    void (*nonOverlap1Func)(WINEREGION*, RECT*, RECT*, INT, INT), /* Function to call for non-overlapping bands in region 1 */
-	    void (*nonOverlap2Func)(WINEREGION*, RECT*, RECT*, INT, INT)  /* Function to call for non-overlapping bands in region 2 */
+	    BOOL (*overlapFunc)(WINEREGION*, RECT*, RECT*, RECT*, RECT*, INT, INT),     /* Function to call for over-lapping bands */
+	    BOOL (*nonOverlap1Func)(WINEREGION*, RECT*, RECT*, INT, INT), /* Function to call for non-overlapping bands in region 1 */
+	    BOOL (*nonOverlap2Func)(WINEREGION*, RECT*, RECT*, INT, INT)  /* Function to call for non-overlapping bands in region 2 */
 ) {
+    WINEREGION newReg;
     RECT *r1;                         /* Pointer into first region */
     RECT *r2;                         /* Pointer into 2d region */
     RECT *r1End;                      /* End of 1st region */
     RECT *r2End;                      /* End of 2d region */
     INT ybot;                         /* Bottom of intersection */
     INT ytop;                         /* Top of intersection */
-    RECT *oldRects;                   /* Old rects for newReg */
     INT prevBand;                     /* Index of start of
 						 * previous band in newReg */
     INT curBand;                      /* Index of start of current
@@ -1635,16 +1638,6 @@ static void REGION_RegionOp(
     r1End = r1 + reg1->numRects;
     r2End = r2 + reg2->numRects;
 
-
-    /*
-     * newReg may be one of the src regions so we can't empty it. We keep a
-     * note of its rects pointer (so that we can free them later), preserve its
-     * extents and simply set numRects to zero.
-     */
-
-    oldRects = newReg->rects;
-    newReg->numRects = 0;
-
     /*
      * Allocate a reasonable number of rectangles for the new region. The idea
      * is to allocate enough so the individual functions don't need to
@@ -1652,14 +1645,7 @@ static void REGION_RegionOp(
      * have to worry about using too much memory. I hope to be able to
      * nuke the Xrealloc() at the end of this function eventually.
      */
-    newReg->size = max(reg1->numRects,reg2->numRects) * 2;
-
-    if (! (newReg->rects = HeapAlloc( GetProcessHeap(), 0,
-			          sizeof(RECT) * newReg->size )))
-    {
-	newReg->size = 0;
-	return;
-    }
+    if (!init_region( &newReg, max(reg1->numRects,reg2->numRects) * 2 )) return FALSE;
 
     /*
      * Initialize ybot and ytop.
@@ -1692,7 +1678,7 @@ static void REGION_RegionOp(
 
     do
     {
-	curBand = newReg->numRects;
+	curBand = newReg.numRects;
 
 	/*
 	 * This algorithm proceeds one source-band (as opposed to a
@@ -1728,7 +1714,7 @@ static void REGION_RegionOp(
 
             if ((top != bot) && (nonOverlap1Func != NULL))
 	    {
-		(* nonOverlap1Func) (newReg, r1, r1BandEnd, top, bot);
+		if (!nonOverlap1Func(&newReg, r1, r1BandEnd, top, bot)) return FALSE;
 	    }
 
 	    ytop = r2->top;
@@ -1740,7 +1726,7 @@ static void REGION_RegionOp(
 
             if ((top != bot) && (nonOverlap2Func != NULL))
 	    {
-		(* nonOverlap2Func) (newReg, r2, r2BandEnd, top, bot);
+		if (!nonOverlap2Func(&newReg, r2, r2BandEnd, top, bot)) return FALSE;
 	    }
 
 	    ytop = r1->top;
@@ -1756,9 +1742,9 @@ static void REGION_RegionOp(
 	 * this test in miCoalesce, but some machines incur a not
 	 * inconsiderable cost for function calls, so...
 	 */
-	if (newReg->numRects != curBand)
+	if (newReg.numRects != curBand)
 	{
-	    prevBand = REGION_Coalesce (newReg, prevBand, curBand);
+	    prevBand = REGION_Coalesce (&newReg, prevBand, curBand);
 	}
 
 	/*
@@ -1766,16 +1752,15 @@ static void REGION_RegionOp(
 	 * intersect if ybot > ytop
 	 */
 	ybot = min(r1->bottom, r2->bottom);
-	curBand = newReg->numRects;
+	curBand = newReg.numRects;
 	if (ybot > ytop)
 	{
-	    (* overlapFunc) (newReg, r1, r1BandEnd, r2, r2BandEnd, ytop, ybot);
-
+	    if (!overlapFunc(&newReg, r1, r1BandEnd, r2, r2BandEnd, ytop, ybot)) return FALSE;
 	}
 
-	if (newReg->numRects != curBand)
+	if (newReg.numRects != curBand)
 	{
-	    prevBand = REGION_Coalesce (newReg, prevBand, curBand);
+	    prevBand = REGION_Coalesce (&newReg, prevBand, curBand);
 	}
 
 	/*
@@ -1795,7 +1780,7 @@ static void REGION_RegionOp(
     /*
      * Deal with whichever region still has rectangles left.
      */
-    curBand = newReg->numRects;
+    curBand = newReg.numRects;
     if (r1 != r1End)
     {
         if (nonOverlap1Func != NULL)
@@ -1807,8 +1792,8 @@ static void REGION_RegionOp(
 		{
 		    r1BandEnd++;
 		}
-		(* nonOverlap1Func) (newReg, r1, r1BandEnd,
-				     max(r1->top,ybot), r1->bottom);
+		if (!nonOverlap1Func(&newReg, r1, r1BandEnd, max(r1->top,ybot), r1->bottom))
+                    return FALSE;
 		r1 = r1BandEnd;
 	    } while (r1 != r1End);
 	}
@@ -1822,15 +1807,15 @@ static void REGION_RegionOp(
 	    {
 		 r2BandEnd++;
 	    }
-	    (* nonOverlap2Func) (newReg, r2, r2BandEnd,
-				max(r2->top,ybot), r2->bottom);
+	    if (!nonOverlap2Func(&newReg, r2, r2BandEnd, max(r2->top,ybot), r2->bottom))
+                return FALSE;
 	    r2 = r2BandEnd;
 	} while (r2 != r2End);
     }
 
-    if (newReg->numRects != curBand)
+    if (newReg.numRects != curBand)
     {
-	(void) REGION_Coalesce (newReg, prevBand, curBand);
+	REGION_Coalesce (&newReg, prevBand, curBand);
     }
 
     /*
@@ -1841,30 +1826,20 @@ static void REGION_RegionOp(
      * Only do this stuff if the number of rectangles allocated is more than
      * twice the number of rectangles in the region (a simple optimization...).
      */
-    if ((newReg->numRects < (newReg->size >> 1)) && (newReg->numRects > 2))
+    if ((newReg.numRects < (newReg.size >> 1)) && (newReg.numRects > 2))
     {
-	if (REGION_NOT_EMPTY(newReg))
-	{
-	    RECT *prev_rects = newReg->rects;
-	    newReg->size = newReg->numRects;
-	    newReg->rects = HeapReAlloc( GetProcessHeap(), 0, newReg->rects,
-				   sizeof(RECT) * newReg->size );
-	    if (! newReg->rects)
-		newReg->rects = prev_rects;
-	}
-	else
-	{
-	    /*
-	     * No point in doing the extra work involved in an Xrealloc if
-	     * the region is empty
-	     */
-	    newReg->size = 1;
-	    HeapFree( GetProcessHeap(), 0, newReg->rects );
-	    newReg->rects = HeapAlloc( GetProcessHeap(), 0, sizeof(RECT) );
-	}
+        RECT *new_rects = HeapReAlloc( GetProcessHeap(), 0, newReg.rects, newReg.numRects * sizeof(RECT) );
+        if (new_rects)
+        {
+            newReg.rects = new_rects;
+            newReg.size = newReg.numRects;
+        }
     }
-    HeapFree( GetProcessHeap(), 0, oldRects );
-    return;
+    HeapFree( GetProcessHeap(), 0, destReg->rects );
+    destReg->rects    = newReg.rects;
+    destReg->size     = newReg.size;
+    destReg->numRects = newReg.numRects;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -1884,8 +1859,8 @@ static void REGION_RegionOp(
  *      Rectangles may be added to the region.
  *
  */
-static void REGION_IntersectO(WINEREGION *pReg,  RECT *r1, RECT *r1End,
-		RECT *r2, RECT *r2End, INT top, INT bottom)
+static BOOL REGION_IntersectO(WINEREGION *pReg,  RECT *r1, RECT *r1End,
+                              RECT *r2, RECT *r2End, INT top, INT bottom)
 
 {
     INT       left, right;
@@ -1903,7 +1878,9 @@ static void REGION_IntersectO(WINEREGION *pReg,  RECT *r1, RECT *r1End,
 	 * right next to each other. Since that should never happen...
 	 */
 	if (left < right)
-            add_rect( pReg, left, top, right, bottom );
+        {
+            if (!add_rect( pReg, left, top, right, bottom )) return FALSE;
+        }
 
 	/*
 	 * Need to advance the pointers. Shift the one that extends
@@ -1924,13 +1901,13 @@ static void REGION_IntersectO(WINEREGION *pReg,  RECT *r1, RECT *r1End,
 	    r2++;
 	}
     }
-    return;
+    return TRUE;
 }
 
 /***********************************************************************
  *	     REGION_IntersectRegion
  */
-static void REGION_IntersectRegion(WINEREGION *newReg, WINEREGION *reg1,
+static BOOL REGION_IntersectRegion(WINEREGION *newReg, WINEREGION *reg1,
 				   WINEREGION *reg2)
 {
    /* check for trivial reject */
@@ -1938,7 +1915,7 @@ static void REGION_IntersectRegion(WINEREGION *newReg, WINEREGION *reg1,
 	(!EXTENTCHECK(&reg1->extents, &reg2->extents)))
 	newReg->numRects = 0;
     else
-	REGION_RegionOp (newReg, reg1, reg2, REGION_IntersectO, NULL, NULL);
+	if (!REGION_RegionOp (newReg, reg1, reg2, REGION_IntersectO, NULL, NULL)) return FALSE;
 
     /*
      * Can't alter newReg's extents before we call miRegionOp because
@@ -1948,6 +1925,7 @@ static void REGION_IntersectRegion(WINEREGION *newReg, WINEREGION *reg1,
      * due to coalescing, so we have to examine fewer rectangles.
      */
     REGION_SetExtents(newReg);
+    return TRUE;
 }
 
 /***********************************************************************
@@ -1969,15 +1947,14 @@ static void REGION_IntersectRegion(WINEREGION *newReg, WINEREGION *reg1,
  *      with the rectangles we're passed.
  *
  */
-static void REGION_UnionNonO (WINEREGION *pReg, RECT *r, RECT *rEnd,
-			      INT top, INT bottom)
+static BOOL REGION_UnionNonO(WINEREGION *pReg, RECT *r, RECT *rEnd, INT top, INT bottom)
 {
     while (r != rEnd)
     {
-        add_rect( pReg, r->left, top, r->right, bottom );
+        if (!add_rect( pReg, r->left, top, r->right, bottom )) return FALSE;
 	r++;
     }
-    return;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -1994,7 +1971,7 @@ static void REGION_UnionNonO (WINEREGION *pReg, RECT *r, RECT *rEnd,
  *      be changed.
  *
  */
-static void REGION_UnionO (WINEREGION *pReg, RECT *r1, RECT *r1End,
+static BOOL REGION_UnionO (WINEREGION *pReg, RECT *r1, RECT *r1End,
 			   RECT *r2, RECT *r2End, INT top, INT bottom)
 {
 #define MERGERECT(r) \
@@ -2007,7 +1984,9 @@ static void REGION_UnionO (WINEREGION *pReg, RECT *r1, RECT *r1End,
 	    pReg->rects[pReg->numRects-1].right = r->right;  \
     }  \
     else  \
-        add_rect( pReg, r->left, top, r->right, bottom ); \
+    { \
+        if (!add_rect( pReg, r->left, top, r->right, bottom )) return FALSE; \
+    } \
     r++;
 
     while ((r1 != r1End) && (r2 != r2End))
@@ -2033,16 +2012,17 @@ static void REGION_UnionO (WINEREGION *pReg, RECT *r1, RECT *r1End,
     {
 	MERGERECT(r2);
     }
-    return;
+    return TRUE;
 #undef MERGERECT
 }
 
 /***********************************************************************
  *	     REGION_UnionRegion
  */
-static void REGION_UnionRegion(WINEREGION *newReg, WINEREGION *reg1,
-			       WINEREGION *reg2)
+static BOOL REGION_UnionRegion(WINEREGION *newReg, WINEREGION *reg1, WINEREGION *reg2)
 {
+    BOOL ret = TRUE;
+
     /*  checks all the simple cases */
 
     /*
@@ -2051,8 +2031,8 @@ static void REGION_UnionRegion(WINEREGION *newReg, WINEREGION *reg1,
     if ( (reg1 == reg2) || (!(reg1->numRects)) )
     {
 	if (newReg != reg2)
-	    REGION_CopyRegion(newReg, reg2);
-	return;
+	    ret = REGION_CopyRegion(newReg, reg2);
+	return ret;
     }
 
     /*
@@ -2061,8 +2041,8 @@ static void REGION_UnionRegion(WINEREGION *newReg, WINEREGION *reg1,
     if (!(reg2->numRects))
     {
 	if (newReg != reg1)
-	    REGION_CopyRegion(newReg, reg1);
-	return;
+	    ret = REGION_CopyRegion(newReg, reg1);
+	return ret;
     }
 
     /*
@@ -2075,8 +2055,8 @@ static void REGION_UnionRegion(WINEREGION *newReg, WINEREGION *reg1,
 	(reg1->extents.bottom >= reg2->extents.bottom))
     {
 	if (newReg != reg1)
-	    REGION_CopyRegion(newReg, reg1);
-	return;
+	    ret = REGION_CopyRegion(newReg, reg1);
+	return ret;
     }
 
     /*
@@ -2089,16 +2069,18 @@ static void REGION_UnionRegion(WINEREGION *newReg, WINEREGION *reg1,
 	(reg2->extents.bottom >= reg1->extents.bottom))
     {
 	if (newReg != reg2)
-	    REGION_CopyRegion(newReg, reg2);
-	return;
+	    ret = REGION_CopyRegion(newReg, reg2);
+	return ret;
     }
 
-    REGION_RegionOp (newReg, reg1, reg2, REGION_UnionO, REGION_UnionNonO, REGION_UnionNonO);
-
-    newReg->extents.left = min(reg1->extents.left, reg2->extents.left);
-    newReg->extents.top = min(reg1->extents.top, reg2->extents.top);
-    newReg->extents.right = max(reg1->extents.right, reg2->extents.right);
-    newReg->extents.bottom = max(reg1->extents.bottom, reg2->extents.bottom);
+    if ((ret = REGION_RegionOp (newReg, reg1, reg2, REGION_UnionO, REGION_UnionNonO, REGION_UnionNonO)))
+    {
+        newReg->extents.left = min(reg1->extents.left, reg2->extents.left);
+        newReg->extents.top = min(reg1->extents.top, reg2->extents.top);
+        newReg->extents.right = max(reg1->extents.right, reg2->extents.right);
+        newReg->extents.bottom = max(reg1->extents.bottom, reg2->extents.bottom);
+    }
+    return ret;
 }
 
 /***********************************************************************
@@ -2118,15 +2100,14 @@ static void REGION_UnionRegion(WINEREGION *newReg, WINEREGION *reg1,
  *      pReg may be affected.
  *
  */
-static void REGION_SubtractNonO1 (WINEREGION *pReg, RECT *r, RECT *rEnd,
-		INT top, INT bottom)
+static BOOL REGION_SubtractNonO1 (WINEREGION *pReg, RECT *r, RECT *rEnd, INT top, INT bottom)
 {
     while (r != rEnd)
     {
-        add_rect( pReg, r->left, top, r->right, bottom );
+        if (!add_rect( pReg, r->left, top, r->right, bottom )) return FALSE;
 	r++;
     }
-    return;
+    return TRUE;
 }
 
 
@@ -2143,14 +2124,10 @@ static void REGION_SubtractNonO1 (WINEREGION *pReg, RECT *r, RECT *rEnd,
  *      pReg may have rectangles added to it.
  *
  */
-static void REGION_SubtractO (WINEREGION *pReg, RECT *r1, RECT *r1End,
-		RECT *r2, RECT *r2End, INT top, INT bottom)
+static BOOL REGION_SubtractO (WINEREGION *pReg, RECT *r1, RECT *r1End,
+                              RECT *r2, RECT *r2End, INT top, INT bottom)
 {
-    RECT *pNextRect;
-    INT left;
-
-    left = r1->left;
-    pNextRect = &pReg->rects[pReg->numRects];
+    INT left = r1->left;
 
     while ((r1 != r1End) && (r2 != r2End))
     {
@@ -2192,7 +2169,7 @@ static void REGION_SubtractO (WINEREGION *pReg, RECT *r1, RECT *r1End,
 	     * Left part of subtrahend covers part of minuend: add uncovered
 	     * part of minuend to region and skip to next subtrahend.
 	     */
-            add_rect( pReg, left, top, r2->left, bottom );
+            if (!add_rect( pReg, left, top, r2->left, bottom )) return FALSE;
 	    left = r2->right;
 	    if (left >= r1->right)
 	    {
@@ -2218,7 +2195,7 @@ static void REGION_SubtractO (WINEREGION *pReg, RECT *r1, RECT *r1End,
 	     */
 	    if (r1->right > left)
 	    {
-                add_rect( pReg, left, top, r1->right, bottom );
+                if (!add_rect( pReg, left, top, r1->right, bottom )) return FALSE;
 	    }
 	    r1++;
 	    left = r1->left;
@@ -2230,14 +2207,14 @@ static void REGION_SubtractO (WINEREGION *pReg, RECT *r1, RECT *r1End,
      */
     while (r1 != r1End)
     {
-        add_rect( pReg, left, top, r1->right, bottom );
+        if (!add_rect( pReg, left, top, r1->right, bottom )) return FALSE;
 	r1++;
 	if (r1 != r1End)
 	{
 	    left = r1->left;
 	}
     }
-    return;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -2253,18 +2230,15 @@ static void REGION_SubtractO (WINEREGION *pReg, RECT *r1, RECT *r1End,
  *      regD is overwritten.
  *
  */
-static void REGION_SubtractRegion(WINEREGION *regD, WINEREGION *regM,
-				                       WINEREGION *regS )
+static BOOL REGION_SubtractRegion(WINEREGION *regD, WINEREGION *regM, WINEREGION *regS )
 {
    /* check for trivial reject */
     if ( (!(regM->numRects)) || (!(regS->numRects))  ||
 	(!EXTENTCHECK(&regM->extents, &regS->extents)) )
-    {
-	REGION_CopyRegion(regD, regM);
-	return;
-    }
+	return REGION_CopyRegion(regD, regM);
 
-    REGION_RegionOp (regD, regM, regS, REGION_SubtractO, REGION_SubtractNonO1, NULL);
+    if (!REGION_RegionOp (regD, regM, regS, REGION_SubtractO, REGION_SubtractNonO1, NULL))
+        return FALSE;
 
     /*
      * Can't alter newReg's extents before we call miRegionOp because
@@ -2274,24 +2248,27 @@ static void REGION_SubtractRegion(WINEREGION *regD, WINEREGION *regM,
      * due to coalescing, so we have to examine fewer rectangles.
      */
     REGION_SetExtents (regD);
+    return TRUE;
 }
 
 /***********************************************************************
  *	     REGION_XorRegion
  */
-static void REGION_XorRegion(WINEREGION *dr, WINEREGION *sra, WINEREGION *srb)
+static BOOL REGION_XorRegion(WINEREGION *dr, WINEREGION *sra, WINEREGION *srb)
 {
     WINEREGION tra, trb;
+    BOOL ret;
 
-    if (!init_region( &tra, sra->numRects + 1 )) return;
-    if (init_region( &trb, srb->numRects + 1 ))
+    if (!init_region( &tra, sra->numRects + 1 )) return FALSE;
+    if ((ret = init_region( &trb, srb->numRects + 1 )))
     {
-        REGION_SubtractRegion(&tra,sra,srb);
-        REGION_SubtractRegion(&trb,srb,sra);
-        REGION_UnionRegion(dr,&tra,&trb);
+        ret = REGION_SubtractRegion(&tra,sra,srb) &&
+              REGION_SubtractRegion(&trb,srb,sra) &&
+              REGION_UnionRegion(dr,&tra,&trb);
         destroy_region(&trb);
     }
     destroy_region(&tra);
+    return ret;
 }
 
 /**************************************************************************
