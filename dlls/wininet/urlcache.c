@@ -3617,3 +3617,12 @@ BOOL WINAPI IsUrlCacheEntryExpiredW( LPCWSTR url, DWORD dwFlags, FILETIME* pftLa
 
     return TRUE;
 }
+
+/***********************************************************************
+ *           GetDiskInfoA (WININET.@)
+ */
+DWORD WINAPI GetDiskInfoA(void *p0, void *p1, void *p2, void *p3)
+{
+    FIXME("(%p, %p, %p, %p)\n", p0, p1, p2, p3);
+    return 0;
+}
