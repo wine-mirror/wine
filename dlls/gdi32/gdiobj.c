@@ -522,7 +522,7 @@ static DWORD get_dpi( void )
  *
  * Increment the reference count of a GDI object.
  */
-BOOL GDI_inc_ref_count( HGDIOBJ handle )
+HGDIOBJ GDI_inc_ref_count( HGDIOBJ handle )
 {
     GDIOBJHDR *header;
 
@@ -531,7 +531,9 @@ BOOL GDI_inc_ref_count( HGDIOBJ handle )
         header->dwCount++;
         GDI_ReleaseObj( handle );
     }
-    return header != NULL;
+    else handle = 0;
+
+    return handle;
 }
 
 

@@ -103,9 +103,9 @@ DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic )
     dc->hMetaRgn            = 0;
     dc->hMetaClipRgn        = 0;
     dc->hVisRgn             = 0;
-    dc->hPen                = GetStockObject( BLACK_PEN );
-    dc->hBrush              = GetStockObject( WHITE_BRUSH );
-    dc->hFont               = GetStockObject( SYSTEM_FONT );
+    dc->hPen                = GDI_inc_ref_count( GetStockObject( BLACK_PEN ));
+    dc->hBrush              = GDI_inc_ref_count( GetStockObject( WHITE_BRUSH ));
+    dc->hFont               = GDI_inc_ref_count( GetStockObject( SYSTEM_FONT ));
     dc->hBitmap             = 0;
     dc->hDevice             = 0;
     dc->hPalette            = GetStockObject( DEFAULT_PALETTE );
@@ -680,7 +680,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
     if (!(dc = alloc_dc_ptr( funcs, OBJ_DC ))) goto error;
     hdc = dc->hSelf;
 
-    dc->hBitmap = GetStockObject( DEFAULT_BITMAP );
+    dc->hBitmap = GDI_inc_ref_count( GetStockObject( DEFAULT_BITMAP ));
     if (!(dc->hVisRgn = CreateRectRgn( 0, 0, 1, 1 ))) goto error;
 
     TRACE("(driver=%s, device=%s, output=%s): returning %p\n",
@@ -797,7 +797,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
 
     TRACE("(%p): returning %p\n", hdc, dc->hSelf );
 
-    dc->hBitmap = GetStockObject( DEFAULT_BITMAP );
+    dc->hBitmap = GDI_inc_ref_count( GetStockObject( DEFAULT_BITMAP ));
     if (!(dc->hVisRgn = CreateRectRgn( 0, 0, 1, 1 ))) goto error;   /* default bitmap is 1x1 */
 
     /* Copy the driver-specific physical device info into
