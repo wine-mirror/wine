@@ -970,6 +970,62 @@ static void store_key_pair(HCRYPTKEY hCryptKey, HKEY hKey, DWORD dwKeySpec, DWOR
 }
 
 /******************************************************************************
+ * map_key_spec_to_permissions_name [Internal]
+ *
+ * Returns the name of the registry value associated with the permissions for
+ * a key spec.
+ *
+ * PARAMS
+ *  dwKeySpec     [I] AT_KEYEXCHANGE or AT_SIGNATURE
+ *
+ * RETURNS
+ *  Success: Name of registry value.
+ *  Failure: NULL
+ */
+static LPCSTR map_key_spec_to_permissions_name(DWORD dwKeySpec)
+{
+    LPCSTR szValueName;
+
+    switch (dwKeySpec)
+    {
+    case AT_KEYEXCHANGE:
+        szValueName = "KeyExchangePermissions";
+        break;
+    case AT_SIGNATURE:
+        szValueName = "SignaturePermissions";
+        break;
+    default:
+        WARN("invalid key spec %d\n", dwKeySpec);
+        szValueName = NULL;
+    }
+    return szValueName;
+}
+
+/******************************************************************************
+ * store_key_permissions [Internal]
+ *
+ * Stores a key's permissions to the registry
+ *
+ * PARAMS
+ *  hCryptKey     [I] Handle to the key whose permissions are to be stored
+ *  hKey          [I] Registry key where the key permissions are to be stored
+ *  dwKeySpec     [I] AT_KEYEXCHANGE or AT_SIGNATURE
+ */
+static void store_key_permissions(HCRYPTKEY hCryptKey, HKEY hKey, DWORD dwKeySpec)
+{
+    LPCSTR szValueName;
+    CRYPTKEY *pKey;
+
+    if (!(szValueName = map_key_spec_to_permissions_name(dwKeySpec)))
+        return;
+    if (lookup_handle(&handle_table, hCryptKey, RSAENH_MAGIC_KEY,
+                      (OBJECTHDR**)&pKey))
+        RegSetValueExA(hKey, szValueName, 0, REG_DWORD,
+                       (BYTE *)&pKey->dwPermissions,
+                       sizeof(pKey->dwPermissions));
+}
+
+/******************************************************************************
  * create_container_key [Internal]
  *
  * Creates the registry key for a key container's persistent storage.
@@ -1093,6 +1149,39 @@ static void store_key_container_keys(KEYCONTAINER *pKeyContainer)
 }
 
 /******************************************************************************
+ * store_key_container_permissions [Internal]
+ *
+ * Stores key container's key permissions in a persistent location.
+ *
+ * PARAMS
+ *  pKeyContainer [I] Pointer to the key container whose key permissions are to
+ *                    be saved
+ */
+static void store_key_container_permissions(KEYCONTAINER *pKeyContainer)
+{
+    HKEY hKey;
+    DWORD dwFlags;
+
+    /* On WinXP, persistent keys are stored in a file located at:
+     * $AppData$\\Microsoft\\Crypto\\RSA\\$SID$\\some_hex_string
+     */
+
+    if (pKeyContainer->dwFlags & CRYPT_MACHINE_KEYSET)
+        dwFlags = CRYPTPROTECT_LOCAL_MACHINE;
+    else
+        dwFlags = 0;
+
+    if (create_container_key(pKeyContainer, KEY_WRITE, &hKey))
+    {
+        store_key_permissions(pKeyContainer->hKeyExchangeKeyPair, hKey,
+                       AT_KEYEXCHANGE);
+        store_key_permissions(pKeyContainer->hSignatureKeyPair, hKey,
+                       AT_SIGNATURE);
+        RegCloseKey(hKey);
+    }
+}
+
+/******************************************************************************
  * release_key_container_keys [Internal]
  *
  * Releases key container's keys.
@@ -1123,6 +1212,7 @@ static void destroy_key_container(OBJECTHDR *pObjectHdr)
     if (!(pKeyContainer->dwFlags & CRYPT_VERIFYCONTEXT))
     {
         store_key_container_keys(pKeyContainer);
+        store_key_container_permissions(pKeyContainer);
         release_key_container_keys(pKeyContainer);
     }
     HeapFree( GetProcessHeap(), 0, pKeyContainer );
@@ -1227,6 +1317,21 @@ static BOOL read_key_value(HCRYPTPROV hKeyContainer, HKEY hKey, DWORD dwKeySpec,
                 }
             }
             HeapFree(GetProcessHeap(), 0, pbKey);
+        }
+    }
+    if (ret)
+    {
+        CRYPTKEY *pKey;
+
+        if (lookup_handle(&handle_table, *phCryptKey, RSAENH_MAGIC_KEY,
+                          (OBJECTHDR**)&pKey))
+        {
+            if ((szValueName = map_key_spec_to_permissions_name(dwKeySpec)))
+            {
+                dwLen = sizeof(pKey->dwPermissions);
+                RegQueryValueExA(hKey, szValueName, 0, NULL,
+                                 (BYTE *)&pKey->dwPermissions, &dwLen);
+            }
         }
     }
     return ret;
