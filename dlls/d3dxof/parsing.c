@@ -1149,12 +1149,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
     {
       token = get_TOKEN(buf);
       if ((token != TOKEN_SEMICOLON) && (token != TOKEN_COMMA))
-      {
-        /* Allow comma instead of semicolon in some specific cases */
-        if (!((token == TOKEN_COMMA) && ((i+1) < pt->nb_members) && (pt->members[i].type == pt->members[i+1].type)
-          && (!pt->members[i].nb_dims) && (!pt->members[i+1].nb_dims)))
-          return FALSE;
-      }
+        return FALSE;
     }
   }
 
