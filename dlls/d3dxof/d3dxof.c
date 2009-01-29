@@ -143,7 +143,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   {
     TRACE("Open source file '%s'\n", (char*)pvSource);
 
-    hFile = CreateFileA((char*)pvSource, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    hFile = CreateFileA(pvSource, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
     if (hFile == INVALID_HANDLE_VALUE)
     {
       TRACE("File '%s' not found\n", (char*)pvSource);
@@ -164,11 +164,11 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   }
   else if (dwLoadOptions == DXFILELOAD_FROMMEMORY)
   {
-    lpdxflm = (LPDXFILELOADMEMORY)pvSource;
+    lpdxflm = pvSource;
 
     TRACE("Source in memory at %p with size %d\n", lpdxflm->lpMemory, lpdxflm->dSize);
 
-    memcpy(header, (char*)lpdxflm->lpMemory, 16);
+    memcpy(header, lpdxflm->lpMemory, 16);
   }
   else
   {
@@ -311,7 +311,7 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
   DWORD token_header;
   parse_buffer buf;
 
-  buf.buffer = (LPBYTE)pvData;
+  buf.buffer = pvData;
   buf.rem_bytes = cbSize;
   buf.txt = FALSE;
   buf.token_present = FALSE;
