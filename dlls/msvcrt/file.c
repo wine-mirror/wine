@@ -910,6 +910,14 @@ int CDECL MSVCRT_fseek(MSVCRT_FILE* file, long offset, int whence)
 
   if(whence == SEEK_CUR && file->_flag & MSVCRT__IOREAD ) {
 	offset -= file->_cnt;
+	if (MSVCRT_fdesc[file->_file].wxflag & WX_TEXT) {
+		/* Black magic correction for CR removal */
+		int i;
+		for (i=0; i<file->_cnt; i++) {
+			if (file->_ptr[i] == '\n')
+				offset--;
+		}
+	}
   }
   /* Discard buffered input */
   file->_cnt = 0;
