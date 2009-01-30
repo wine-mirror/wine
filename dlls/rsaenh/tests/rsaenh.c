@@ -1577,9 +1577,8 @@ static void test_rsa_encrypt(void)
     /* but its private key may not be. */
     SetLastError(0xdeadbeef);
     result = CryptExportKey(hRSAKey, 0, PRIVATEKEYBLOB, 0, NULL, &dwLen);
-    ok(!result &&
-        (GetLastError() == NTE_BAD_KEY_STATE ||
-        broken(GetLastError() == 0xdeadbeef) /* Win9x/NT4 */),
+    ok((!result && GetLastError() == NTE_BAD_KEY_STATE) ||
+        broken(result), /* Win9x/NT4 */
         "expected NTE_BAD_KEY_STATE, got %08x\n", GetLastError());
     /* Setting the permissions of the key exchange key isn't allowed, either. */
     dwVal |= CRYPT_EXPORT;
@@ -1612,9 +1611,8 @@ static void test_rsa_encrypt(void)
     /* but its private key may not be. */
     SetLastError(0xdeadbeef);
     result = CryptExportKey(hRSAKey, 0, PRIVATEKEYBLOB, 0, NULL, &dwLen);
-    ok(!result &&
-        (GetLastError() == NTE_BAD_KEY_STATE ||
-        broken(GetLastError() == 0xdeadbeef) /* Win9x/NT4 */),
+    ok((!result && GetLastError() == NTE_BAD_KEY_STATE) ||
+        broken(result), /* Win9x/NT4 */
         "expected NTE_BAD_KEY_STATE, got %08x\n", GetLastError());
     /* Setting the permissions of the signature key isn't allowed, either. */
     dwVal |= CRYPT_EXPORT;
@@ -2159,7 +2157,10 @@ static void test_key_permissions(void)
     /* Turning off the key's export permissions is "allowed".. */
     dwVal &= ~CRYPT_EXPORT;
     result = CryptSetKeyParam(hKey1, KP_PERMISSIONS, (BYTE *)&dwVal, 0);
-    ok(result, "%08x\n", GetLastError());
+    ok(result ||
+        broken(!result && GetLastError() == NTE_BAD_DATA) || /* W2K */
+        broken(!result && GetLastError() == NTE_BAD_FLAGS), /* Win9x/WinME/NT4 */
+        "%08x\n", GetLastError());
     /* but it has no effect. */
     dwVal = 0xdeadbeef;
     dwLen = sizeof(DWORD);
