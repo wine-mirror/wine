@@ -1369,10 +1369,49 @@ static void test_JapaneseConversion(void)
     ok(memcmp(outputW,&unc_jp[i][1],destsz)==0,"(%i) Strings do not match\n",i);
 }
 
+static void test_GetScriptFontInfo(IMLangFontLink2 *font_link)
+{
+    HRESULT hr;
+    UINT nfonts;
+    SCRIPTFONTINFO sfi[1];
+
+    nfonts = 0;
+    hr = IMLangFontLink2_GetScriptFontInfo(font_link, sidLatin, 0, &nfonts, NULL);
+    ok(hr == S_OK, "GetScriptFontInfo failed %u\n", GetLastError());
+    ok(nfonts, "unexpected result\n");
+
+    nfonts = 0;
+    hr = IMLangFontLink2_GetScriptFontInfo(font_link, sidLatin, SCRIPTCONTF_FIXED_FONT, &nfonts, NULL);
+    ok(hr == S_OK, "GetScriptFontInfo failed %u\n", GetLastError());
+    ok(nfonts, "unexpected result\n");
+
+    nfonts = 0;
+    hr = IMLangFontLink2_GetScriptFontInfo(font_link, sidLatin, SCRIPTCONTF_PROPORTIONAL_FONT, &nfonts, NULL);
+    ok(hr == S_OK, "GetScriptFontInfo failed %u\n", GetLastError());
+    ok(nfonts, "unexpected result\n");
+
+    nfonts = 1;
+    memset(sfi, 0, sizeof(sfi));
+    hr = IMLangFontLink2_GetScriptFontInfo(font_link, sidLatin, SCRIPTCONTF_FIXED_FONT, &nfonts, sfi);
+    ok(hr == S_OK, "GetScriptFontInfo failed %u\n", GetLastError());
+    ok(nfonts == 1, "got %u, expected 1\n", nfonts);
+    ok(sfi[0].scripts, "unexpected result\n");
+    ok(sfi[0].wszFont[0], "unexpected result\n");
+
+    nfonts = 1;
+    memset(sfi, 0, sizeof(sfi));
+    hr = IMLangFontLink2_GetScriptFontInfo(font_link, sidLatin, SCRIPTCONTF_PROPORTIONAL_FONT, &nfonts, sfi);
+    ok(hr == S_OK, "GetScriptFontInfo failed %u\n", GetLastError());
+    ok(nfonts == 1, "got %u, expected 1\n", nfonts);
+    ok(sfi[0].scripts, "unexpected result\n");
+    ok(sfi[0].wszFont[0], "unexpected result\n");
+}
+
 START_TEST(mlang)
 {
     IMultiLanguage2 *iML2 = NULL;
     IMLangFontLink  *iMLFL = NULL;
+    IMLangFontLink2 *iMLFL2 = NULL;
     HRESULT ret;
 
     if (!init_function_ptrs())
@@ -1415,10 +1454,17 @@ START_TEST(mlang)
 
     ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
                            &IID_IMLangFontLink, (void **)&iMLFL);
-    if (ret != S_OK || !iML2) return;
+    if (ret != S_OK || !iMLFL) return;
 
     IMLangFontLink_Test(iMLFL);
     IMLangFontLink_Release(iMLFL);
+
+    ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_IMLangFontLink2, (void **)&iMLFL2);
+    if (ret != S_OK || !iMLFL2) return;
+
+    test_GetScriptFontInfo(iMLFL2);
+    IMLangFontLink2_Release(iMLFL2);
 
     CoUninitialize();
 }

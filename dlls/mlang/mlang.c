@@ -450,10 +450,11 @@ static const struct mlang_data
     const MIME_CP_INFO *mime_cp_info;
     const char *fixed_font;
     const char *proportional_font;
+    SCRIPT_ID sid;
 } mlang_data[] =
 {
     { "Arabic",1256,sizeof(arabic_cp)/sizeof(arabic_cp[0]),arabic_cp,
-      "Courier","Arial" }, /* FIXME */
+      "Courier","Arial", sidArabic }, /* FIXME */
     { "Baltic",1257,sizeof(baltic_cp)/sizeof(baltic_cp[0]),baltic_cp,
       "Courier","Arial" }, /* FIXME */
     { "Chinese Simplified",936,sizeof(chinese_simplified_cp)/sizeof(chinese_simplified_cp[0]),chinese_simplified_cp,
@@ -463,23 +464,23 @@ static const struct mlang_data
     { "Central European",1250,sizeof(central_european_cp)/sizeof(central_european_cp[0]),central_european_cp,
       "Courier","Arial" }, /* FIXME */
     { "Cyrillic",1251,sizeof(cyrillic_cp)/sizeof(cyrillic_cp[0]),cyrillic_cp,
-      "Courier","Arial" }, /* FIXME */
+      "Courier","Arial", sidCyrillic }, /* FIXME */
     { "Greek",1253,sizeof(greek_cp)/sizeof(greek_cp[0]),greek_cp,
-      "Courier","Arial" }, /* FIXME */
+      "Courier","Arial", sidGreek }, /* FIXME */
     { "Hebrew",1255,sizeof(hebrew_cp)/sizeof(hebrew_cp[0]),hebrew_cp,
-      "Courier","Arial" }, /* FIXME */
+      "Courier","Arial", sidHebrew }, /* FIXME */
     { "Japanese",932,sizeof(japanese_cp)/sizeof(japanese_cp[0]),japanese_cp,
       "MS Gothic","MS PGothic" },
     { "Korean",949,sizeof(korean_cp)/sizeof(korean_cp[0]),korean_cp,
       "Courier","Arial" }, /* FIXME */
     { "Thai",874,sizeof(thai_cp)/sizeof(thai_cp[0]),thai_cp,
-      "Courier","Arial" }, /* FIXME */
+      "Courier","Arial", sidThai }, /* FIXME */
     { "Turkish",1254,sizeof(turkish_cp)/sizeof(turkish_cp[0]),turkish_cp,
       "Courier","Arial" }, /* FIXME */
     { "Vietnamese",1258,sizeof(vietnamese_cp)/sizeof(vietnamese_cp[0]),vietnamese_cp,
       "Courier","Arial" }, /* FIXME */
     { "Western European",1252,sizeof(western_cp)/sizeof(western_cp[0]),western_cp,
-      "Courier","Arial" }, /* FIXME */
+      "Courier","Arial", sidLatin }, /* FIXME */
     { "Unicode",CP_UNICODE,sizeof(unicode_cp)/sizeof(unicode_cp[0]),unicode_cp,
       "Courier","Arial" } /* FIXME */
 };
@@ -3177,8 +3178,37 @@ static HRESULT WINAPI fnIMLangFontLink2_GetScriptFontInfo(IMLangFontLink2* This,
         SCRIPT_ID sid, DWORD dwFlags, UINT *puiFonts,
         SCRIPTFONTINFO *pScriptFont)
 {
-    FIXME("(%p)->%i %i %p %p\n",This, sid, dwFlags, puiFonts, pScriptFont);
-    return E_NOTIMPL;
+    UINT i, j;
+
+    TRACE("(%p)->%u %x %p %p\n", This, sid, dwFlags, puiFonts, pScriptFont);
+
+    if (!dwFlags) dwFlags = SCRIPTCONTF_PROPORTIONAL_FONT;
+
+    for (i = 0, j = 0; i < sizeof(mlang_data)/sizeof(mlang_data[0]); i++)
+    {
+        if (sid == mlang_data[i].sid)
+        {
+            if (pScriptFont)
+            {
+                if (j >= *puiFonts) break;
+
+                pScriptFont[j].scripts = 1 << mlang_data[i].sid;
+                if (dwFlags == SCRIPTCONTF_FIXED_FONT)
+                {
+                    MultiByteToWideChar(CP_ACP, 0, mlang_data[i].fixed_font, -1,
+                        pScriptFont[j].wszFont, MAX_MIMEFACE_NAME);
+                }
+                else if (dwFlags == SCRIPTCONTF_PROPORTIONAL_FONT)
+                {
+                    MultiByteToWideChar(CP_ACP, 0, mlang_data[i].proportional_font, -1,
+                        pScriptFont[j].wszFont, MAX_MIMEFACE_NAME);
+                }
+            }
+            j++;
+        }
+    }
+    *puiFonts = j;
+    return S_OK;
 }
 
 static HRESULT WINAPI fnIMLangFontLink2_CodePageToScriptID(IMLangFontLink2* This,
