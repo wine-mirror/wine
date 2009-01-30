@@ -406,7 +406,9 @@ static void test_crypt_ui_wiz_import(void)
         if (ca)
         {
             ret = find_and_delete_cert_in_store(ca, info.u.pCertContext);
-            ok(ret, "expected to find v1CertWithValidPubKey in CA store\n");
+            ok(ret ||
+             broken(!ret) /* Win9x/NT4 */,
+             "expected to find v1CertWithValidPubKey in CA store\n");
             CertCloseStore(ca, 0);
         }
     }
@@ -463,7 +465,9 @@ static void test_crypt_ui_wiz_import(void)
      CRYPTUI_WIZ_IMPORT_NO_CHANGE_DEST_STORE, 0, NULL, &info, store);
     ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
     ret = find_and_delete_cert_in_store(store, info.u.pCertContext);
-    ok(ret, "expected to find iTunesCert3 in memory store\n");
+    ok(ret ||
+     broken(!ret) /* Win9x/NT4 */,
+     "expected to find iTunesCert3 in memory store\n");
     CertFreeCertificateContext(info.u.pCertContext);
     CertCloseStore(store, 0);
 
@@ -503,7 +507,9 @@ static void test_crypt_ui_wiz_import(void)
         if (ca)
         {
             ret = find_and_delete_cert_in_store(ca, info.u.pCertContext);
-            ok(ret, "expected to find iTunesCert2 in CA store\n");
+            ok(ret ||
+             broken(!ret) /* Win9x/NT4 */,
+             "expected to find iTunesCert2 in CA store\n");
             CertCloseStore(ca, 0);
         }
     }
