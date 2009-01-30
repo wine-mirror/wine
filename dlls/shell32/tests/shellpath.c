@@ -76,6 +76,7 @@ static GUID CLSID_CommonDocuments = { 0x0000000c, 0x0000, 0x0000, { 0x00, 0x00, 
 struct shellExpectedValues {
     int  folder;
     BYTE pidlType;
+    BYTE altPidlType;
 };
 
 static HRESULT (WINAPI *pDllGetVersion)(DLLVERSIONINFO *);
@@ -90,69 +91,73 @@ static HRESULT (WINAPI *pSHGetMalloc)(LPMALLOC *);
 static DLLVERSIONINFO shellVersion = { 0 };
 static LPMALLOC pMalloc;
 static const struct shellExpectedValues requiredShellValues[] = {
- { CSIDL_BITBUCKET, PT_GUID },
- { CSIDL_CONTROLS, PT_SHELLEXT },
- { CSIDL_COOKIES, PT_FOLDER },
- { CSIDL_DESKTOPDIRECTORY, PT_FOLDER },
- { CSIDL_DRIVES, PT_GUID },
- { CSIDL_FAVORITES, PT_FOLDER },
- { CSIDL_FONTS, PT_FOLDER },
-/* FIXME: the following fails in Wine, returns type PT_FOLDER
- { CSIDL_HISTORY, PT_IESPECIAL2 },
+ { CSIDL_BITBUCKET, PT_GUID, 0 },
+ { CSIDL_CONTROLS, PT_SHELLEXT, PT_GUID },
+ { CSIDL_COOKIES, PT_FOLDER, 0 },
+ { CSIDL_DESKTOPDIRECTORY, PT_FOLDER, 0 },
+ { CSIDL_DRIVES, PT_GUID, 0 },
+/* Note that 0 is an expected type for CSIDL_FAVORITES.  Inverting the order
+ * will cause the test to fail, as it'll only check for PT_FOLDER.
  */
- { CSIDL_INTERNET, PT_GUID },
- { CSIDL_NETHOOD, PT_FOLDER },
- { CSIDL_NETWORK, PT_GUID },
- { CSIDL_PRINTERS, PT_YAGUID },
- { CSIDL_PRINTHOOD, PT_FOLDER },
- { CSIDL_PROGRAMS, PT_FOLDER },
- { CSIDL_RECENT, PT_FOLDER },
- { CSIDL_SENDTO, PT_FOLDER },
- { CSIDL_STARTMENU, PT_FOLDER },
- { CSIDL_STARTUP, PT_FOLDER },
- { CSIDL_TEMPLATES, PT_FOLDER },
+ { CSIDL_FAVORITES, 0, PT_FOLDER },
+ { CSIDL_FONTS, PT_FOLDER, PT_IESPECIAL2 },
+/* FIXME: the following fails in Wine, returns type PT_FOLDER
+ { CSIDL_HISTORY, PT_IESPECIAL2, 0 },
+ */
+ { CSIDL_INTERNET, PT_GUID, 0 },
+ { CSIDL_NETHOOD, PT_FOLDER, 0 },
+ { CSIDL_NETWORK, PT_GUID, 0 },
+/* FIXME: don't know the type of 0x71 returned by Vista/2008 for printers */
+ { CSIDL_PRINTERS, PT_YAGUID, 0x71 },
+ { CSIDL_PRINTHOOD, PT_FOLDER, 0 },
+ { CSIDL_PROGRAMS, PT_FOLDER, 0 },
+ { CSIDL_RECENT, PT_FOLDER, PT_IESPECIAL2 },
+ { CSIDL_SENDTO, PT_FOLDER, 0 },
+ { CSIDL_STARTMENU, PT_FOLDER, 0 },
+ { CSIDL_STARTUP, PT_FOLDER, 0 },
+ { CSIDL_TEMPLATES, PT_FOLDER, 0 },
 };
 static const struct shellExpectedValues optionalShellValues[] = {
 /* FIXME: the following only semi-succeed; they return NULL PIDLs on XP.. hmm.
- { CSIDL_ALTSTARTUP, PT_FOLDER },
- { CSIDL_COMMON_ALTSTARTUP, PT_FOLDER },
- { CSIDL_COMMON_OEM_LINKS, PT_FOLDER },
+ { CSIDL_ALTSTARTUP, PT_FOLDER, 0 },
+ { CSIDL_COMMON_ALTSTARTUP, PT_FOLDER, 0 },
+ { CSIDL_COMMON_OEM_LINKS, PT_FOLDER, 0 },
  */
 /* Windows NT-only: */
- { CSIDL_COMMON_DESKTOPDIRECTORY, PT_FOLDER },
- { CSIDL_COMMON_DOCUMENTS, PT_SHELLEXT },
- { CSIDL_COMMON_FAVORITES, PT_FOLDER },
- { CSIDL_COMMON_PROGRAMS, PT_FOLDER },
- { CSIDL_COMMON_STARTMENU, PT_FOLDER },
- { CSIDL_COMMON_STARTUP, PT_FOLDER },
- { CSIDL_COMMON_TEMPLATES, PT_FOLDER },
+ { CSIDL_COMMON_DESKTOPDIRECTORY, PT_FOLDER, 0 },
+ { CSIDL_COMMON_DOCUMENTS, PT_SHELLEXT, 0 },
+ { CSIDL_COMMON_FAVORITES, PT_FOLDER, 0 },
+ { CSIDL_COMMON_PROGRAMS, PT_FOLDER, 0 },
+ { CSIDL_COMMON_STARTMENU, PT_FOLDER, 0 },
+ { CSIDL_COMMON_STARTUP, PT_FOLDER, 0 },
+ { CSIDL_COMMON_TEMPLATES, PT_FOLDER, 0 },
 /* first appearing in shell32 version 4.71: */
- { CSIDL_APPDATA, PT_FOLDER },
+ { CSIDL_APPDATA, PT_FOLDER, 0 },
 /* first appearing in shell32 version 4.72: */
- { CSIDL_INTERNET_CACHE, PT_IESPECIAL2 },
+ { CSIDL_INTERNET_CACHE, PT_IESPECIAL2, 0 },
 /* first appearing in shell32 version 5.0: */
- { CSIDL_ADMINTOOLS, PT_FOLDER },
- { CSIDL_COMMON_APPDATA, PT_FOLDER },
- { CSIDL_LOCAL_APPDATA, PT_FOLDER },
- { OLD_CSIDL_MYDOCUMENTS, PT_FOLDER },
- { CSIDL_MYMUSIC, PT_FOLDER },
- { CSIDL_MYPICTURES, PT_FOLDER },
- { CSIDL_MYVIDEO, PT_FOLDER },
- { CSIDL_PROFILE, PT_FOLDER },
- { CSIDL_PROGRAM_FILES, PT_FOLDER },
- { CSIDL_PROGRAM_FILESX86, PT_FOLDER },
- { CSIDL_PROGRAM_FILES_COMMON, PT_FOLDER },
- { CSIDL_PROGRAM_FILES_COMMONX86, PT_FOLDER },
- { CSIDL_SYSTEM, PT_FOLDER },
- { CSIDL_WINDOWS, PT_FOLDER },
+ { CSIDL_ADMINTOOLS, PT_FOLDER, 0 },
+ { CSIDL_COMMON_APPDATA, PT_FOLDER, 0 },
+ { CSIDL_LOCAL_APPDATA, PT_FOLDER, 0 },
+ { OLD_CSIDL_MYDOCUMENTS, PT_FOLDER, 0 },
+ { CSIDL_MYMUSIC, PT_FOLDER, 0 },
+ { CSIDL_MYPICTURES, PT_FOLDER, 0 },
+ { CSIDL_MYVIDEO, PT_FOLDER, 0 },
+ { CSIDL_PROFILE, PT_FOLDER, 0 },
+ { CSIDL_PROGRAM_FILES, PT_FOLDER, 0 },
+ { CSIDL_PROGRAM_FILESX86, PT_FOLDER, 0 },
+ { CSIDL_PROGRAM_FILES_COMMON, PT_FOLDER, 0 },
+ { CSIDL_PROGRAM_FILES_COMMONX86, PT_FOLDER, 0 },
+ { CSIDL_SYSTEM, PT_FOLDER, 0 },
+ { CSIDL_WINDOWS, PT_FOLDER, 0 },
 /* first appearing in shell32 6.0: */
- { CSIDL_CDBURN_AREA, PT_FOLDER },
- { CSIDL_COMMON_MUSIC, PT_FOLDER },
- { CSIDL_COMMON_PICTURES, PT_FOLDER },
- { CSIDL_COMMON_VIDEO, PT_FOLDER },
- { CSIDL_COMPUTERSNEARME, PT_WORKGRP },
- { CSIDL_RESOURCES, PT_FOLDER },
- { CSIDL_RESOURCES_LOCALIZED, PT_FOLDER },
+ { CSIDL_CDBURN_AREA, PT_FOLDER, 0 },
+ { CSIDL_COMMON_MUSIC, PT_FOLDER, 0 },
+ { CSIDL_COMMON_PICTURES, PT_FOLDER, 0 },
+ { CSIDL_COMMON_VIDEO, PT_FOLDER, 0 },
+ { CSIDL_COMPUTERSNEARME, PT_WORKGRP, 0 },
+ { CSIDL_RESOURCES, PT_FOLDER, 0 },
+ { CSIDL_RESOURCES_LOCALIZED, PT_FOLDER, 0 },
 };
 
 static void loadShell32(void)
@@ -473,16 +478,36 @@ static void testShellValues(const struct shellExpectedValues testEntries[],
         if (pSHGetFolderLocation)
         {
             type = testSHGetFolderLocation(optional, testEntries[i].folder);
-            ok(type == testEntries[i].pidlType || optional,
+            if (!testEntries[i].altPidlType)
+                ok(type == testEntries[i].pidlType || optional ||
+                 broken(type == 0xff) /* Win9x */,
+                 "%s has type %d (0x%02x), expected %d (0x%02x)\n",
+                 getFolderName(testEntries[i].folder), type, type,
+                 testEntries[i].pidlType, testEntries[i].pidlType);
+            else
+                ok(type == testEntries[i].pidlType ||
+                 type == testEntries[i].altPidlType ||
+                 optional || broken(type == 0xff) /* Win9x */,
+                 "%s has type %d (0x%02x), expected %d (0x%02x) or %d (0x%02x)\n",
+                 getFolderName(testEntries[i].folder), type, type,
+                 testEntries[i].pidlType, testEntries[i].pidlType,
+                 testEntries[i].altPidlType, testEntries[i].altPidlType);
+        }
+        type = testSHGetSpecialFolderLocation(optional, testEntries[i].folder);
+        if (!testEntries[i].altPidlType)
+            ok(type == testEntries[i].pidlType || optional ||
+             broken(type == 0xff) /* Win9x */,
              "%s has type %d (0x%02x), expected %d (0x%02x)\n",
              getFolderName(testEntries[i].folder), type, type,
              testEntries[i].pidlType, testEntries[i].pidlType);
-        }
-        type = testSHGetSpecialFolderLocation(optional, testEntries[i].folder);
-        ok(type == testEntries[i].pidlType || optional,
-         "%s has type %d (0x%02x), expected %d (0x%02x)\n",
-         getFolderName(testEntries[i].folder), type, type,
-         testEntries[i].pidlType, testEntries[i].pidlType);
+        else
+            ok(type == testEntries[i].pidlType ||
+             type == testEntries[i].altPidlType ||
+             optional || broken(type == 0xff) /* Win9x */,
+             "%s has type %d (0x%02x), expected %d (0x%02x) or %d (0x%02x)\n",
+             getFolderName(testEntries[i].folder), type, type,
+             testEntries[i].pidlType, testEntries[i].pidlType,
+             testEntries[i].altPidlType, testEntries[i].altPidlType);
         switch (type)
         {
             case PT_FOLDER:
@@ -575,9 +600,10 @@ static void testPersonal(void)
     if (pSHGetFolderLocation)
     {
         type = testSHGetFolderLocation(FALSE, CSIDL_PERSONAL);
-        ok(type == PT_FOLDER || type == PT_GUID || type == PT_DRIVE,
+        ok(type == PT_FOLDER || type == PT_GUID || type == PT_DRIVE ||
+         broken(type == 0xff) /* Win9x */,
          "CSIDL_PERSONAL returned invalid type 0x%02x, "
-         "expected PT_FOLDER or PT_GUID\n", type);
+         "expected PT_FOLDER or PT_GUID or PT_DRIVE\n", type);
         if (type == PT_FOLDER)
             testSHGetFolderPath(FALSE, CSIDL_PERSONAL);
     }
