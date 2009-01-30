@@ -323,7 +323,7 @@ DWORD getICMPStats(MIB_ICMP *stats)
   stats->stats.icmpInStats.dwAddrMasks = icmp_stat.icps_inhist[ICMP_MASKREQ];
   stats->stats.icmpInStats.dwAddrMaskReps = icmp_stat.icps_inhist[ICMP_MASKREPLY];
 
-
+#ifdef HAVE_ICPS_OUTHIST
   /* out stats */
   stats->stats.icmpOutStats.dwMsgs = icmp_stat.icps_oldshort + icmp_stat.icps_oldicmp;
   for(i = 0; i <= ICMP_MAXTYPE; i++)
@@ -342,9 +342,13 @@ DWORD getICMPStats(MIB_ICMP *stats)
   stats->stats.icmpOutStats.dwTimestampReps = icmp_stat.icps_outhist[ICMP_TSTAMPREPLY];
   stats->stats.icmpOutStats.dwAddrMasks = icmp_stat.icps_outhist[ICMP_MASKREQ];
   stats->stats.icmpOutStats.dwAddrMaskReps = icmp_stat.icps_outhist[ICMP_MASKREPLY];
+#else /* ICPS_OUTHIST */
+  memset( &stats->stats.icmpOutStats, 0, sizeof(stats->stats.icmpOutStats) );
+#endif /* ICPS_OUTHIST */
 
   return NO_ERROR;
-#else
+
+#else /* ICMPCTL_STATS */
   FILE *fp;
 
   if (!stats)

@@ -23567,6 +23567,177 @@ _ACEOF
 fi
 
 
+{ $as_echo "$as_me:$LINENO: checking for struct icmpstat.icps_outhist" >&5
+$as_echo_n "checking for struct icmpstat.icps_outhist... " >&6; }
+if test "${ac_cv_member_struct_icmpstat_icps_outhist+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_ALIAS_H
+#include <alias.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_SOCKETVAR_H
+#include <sys/socketvar.h>
+#endif
+#ifdef HAVE_SYS_TIMEOUT_H
+#include <sys/timeout.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_NETINET_IN_SYSTM_H
+#include <netinet/in_systm.h>
+#endif
+#ifdef HAVE_NETINET_IP_H
+#include <netinet/ip.h>
+#endif
+#ifdef HAVE_NETINET_IP_VAR_H
+#include <netinet/ip_var.h>
+#endif
+#ifdef HAVE_NETINET_IP_ICMP_H
+#include <netinet/ip_icmp.h>
+#endif
+#ifdef HAVE_NETINET_ICMP_VAR
+#include <netinet/icmp_var.h>
+#endif
+
+int
+main ()
+{
+static struct icmpstat ac_aggr;
+if (ac_aggr.icps_outhist)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  ac_cv_member_struct_icmpstat_icps_outhist=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_ALIAS_H
+#include <alias.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_SOCKETVAR_H
+#include <sys/socketvar.h>
+#endif
+#ifdef HAVE_SYS_TIMEOUT_H
+#include <sys/timeout.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_NETINET_IN_SYSTM_H
+#include <netinet/in_systm.h>
+#endif
+#ifdef HAVE_NETINET_IP_H
+#include <netinet/ip.h>
+#endif
+#ifdef HAVE_NETINET_IP_VAR_H
+#include <netinet/ip_var.h>
+#endif
+#ifdef HAVE_NETINET_IP_ICMP_H
+#include <netinet/ip_icmp.h>
+#endif
+#ifdef HAVE_NETINET_ICMP_VAR
+#include <netinet/icmp_var.h>
+#endif
+
+int
+main ()
+{
+static struct icmpstat ac_aggr;
+if (sizeof ac_aggr.icps_outhist)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  ac_cv_member_struct_icmpstat_icps_outhist=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_member_struct_icmpstat_icps_outhist=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_member_struct_icmpstat_icps_outhist" >&5
+$as_echo "$ac_cv_member_struct_icmpstat_icps_outhist" >&6; }
+if test "x$ac_cv_member_struct_icmpstat_icps_outhist" = x""yes; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_ICMPSTAT_ICPS_OUTHIST 1
+_ACEOF
+
+
+fi
+
+
 { $as_echo "$as_me:$LINENO: checking for timezone variable" >&5
 $as_echo_n "checking for timezone variable... " >&6; }
 if test "${ac_cv_have_timezone+set}" = set; then

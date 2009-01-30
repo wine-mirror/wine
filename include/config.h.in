@@ -720,6 +720,9 @@
 /* Define to 1 if `direction' is member of `struct ff_effect'. */
 #undef HAVE_STRUCT_FF_EFFECT_DIRECTION
 
+/* Define to 1 if `icps_outhist' is member of `struct icmpstat'. */
+#undef HAVE_STRUCT_ICMPSTAT_ICPS_OUTHIST
+
 /* Define to 1 if `msg_accrights' is member of `struct msghdr'. */
 #undef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
 

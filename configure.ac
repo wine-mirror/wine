@@ -1730,6 +1730,42 @@ AC_CHECK_MEMBERS([ns_msg._msg_ptr],,,
 # include <arpa/nameser.h>
 #endif])
 
+dnl Check for struct icmpstat.icps_outhist
+AC_CHECK_MEMBERS([struct icmpstat.icps_outhist],,,
+[#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_ALIAS_H
+#include <alias.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_SOCKETVAR_H
+#include <sys/socketvar.h>
+#endif
+#ifdef HAVE_SYS_TIMEOUT_H
+#include <sys/timeout.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_NETINET_IN_SYSTM_H
+#include <netinet/in_systm.h>
+#endif
+#ifdef HAVE_NETINET_IP_H
+#include <netinet/ip.h>
+#endif
+#ifdef HAVE_NETINET_IP_VAR_H
+#include <netinet/ip_var.h>
+#endif
+#ifdef HAVE_NETINET_IP_ICMP_H
+#include <netinet/ip_icmp.h>
+#endif
+#ifdef HAVE_NETINET_ICMP_VAR
+#include <netinet/icmp_var.h>
+#endif])
+
 dnl Check for the external timezone variables timezone and daylight
 AC_CACHE_CHECK([for timezone variable], ac_cv_have_timezone,
                AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <time.h>]], [[timezone = 1]])],[ac_cv_have_timezone="yes"],[ac_cv_have_timezone="no"]))
