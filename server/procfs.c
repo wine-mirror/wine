@@ -180,7 +180,7 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
     if (!pos)
     {
         set_error( STATUS_ACCESS_DENIED );
-        return 0;
+        return;
     }
     if ((fd = open_proc_as( thread->process, O_RDONLY )) == -1) return;
 
