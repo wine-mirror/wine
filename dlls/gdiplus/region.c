@@ -567,15 +567,58 @@ GpStatus WINGDIPAPI GdipCreateRegionRgnData(GDIPCONST BYTE *data, INT size, GpRe
     return NotImplemented;
 }
 
+
+/******************************************************************************
+ * GdipCreateRegionHrgn [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipCreateRegionHrgn(HRGN hrgn, GpRegion **region)
 {
-    FIXME("(%p, %p): stub\n", hrgn, region);
+    union {
+        RGNDATA data;
+        char buf[sizeof(RGNDATAHEADER) + sizeof(RECT)];
+    } rdata;
+    DWORD size;
+    GpRectF rectf;
+    GpPath *path;
+    GpStatus stat;
 
-    if(!hrgn || !region)
+    TRACE("(%p, %p)\n", hrgn, region);
+
+    if(!region || !(size = GetRegionData(hrgn, 0, NULL)))
         return InvalidParameter;
 
-    *region = NULL;
-    return NotImplemented;
+    if(size > sizeof(RGNDATAHEADER) + sizeof(RECT)){
+        FIXME("Only simple rect regions supported.\n");
+        *region = NULL;
+        return NotImplemented;
+    }
+
+    if(!GetRegionData(hrgn, sizeof(rdata), &rdata.data))
+        return GenericError;
+
+    /* return empty region */
+    if(IsRectEmpty(&rdata.data.rdh.rcBound)){
+        stat = GdipCreateRegion(region);
+        if(stat == Ok)
+            GdipSetEmpty(*region);
+        return stat;
+    }
+
+    rectf.X = (REAL)rdata.data.rdh.rcBound.left;
+    rectf.Y = (REAL)rdata.data.rdh.rcBound.top;
+    rectf.Width  = (REAL)rdata.data.rdh.rcBound.right - rectf.X;
+    rectf.Height = (REAL)rdata.data.rdh.rcBound.bottom - rectf.Y;
+
+    stat = GdipCreatePath(FillModeAlternate, &path);
+    if(stat != Ok)
+        return stat;
+
+    GdipAddPathRectangle(path, rectf.X, rectf.Y, rectf.Width, rectf.Height);
+
+    stat = GdipCreateRegionPath(path, region);
+    GdipDeletePath(path);
+
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipDeleteRegion(GpRegion *region)

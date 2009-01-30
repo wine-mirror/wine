@@ -709,6 +709,9 @@ static void test_fromhrgn(void)
     UINT needed;
     DWORD buf[220];
     RegionDataPoint *point;
+    GpGraphics *graphics = NULL;
+    HDC hdc;
+    BOOL res;
 
     /* NULL */
     status = GdipCreateRegionHrgn(NULL, NULL);
@@ -716,24 +719,42 @@ static void test_fromhrgn(void)
     status = GdipCreateRegionHrgn(NULL, &region);
     expect(InvalidParameter, status);
     status = GdipCreateRegionHrgn((HRGN)0xdeadbeef, &region);
-    todo_wine expect(InvalidParameter, status);
+    expect(InvalidParameter, status);
+
+    /* empty rectangle */
+    hrgn = CreateRectRgn(0, 0, 0, 0);
+    status = GdipCreateRegionHrgn(hrgn, &region);
+    expect(Ok, status);
+    if(status == Ok) {
+
+    hdc = GetDC(0);
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    res = FALSE;
+    status = GdipIsEmptyRegion(region, graphics, &res);
+    expect(Ok, status);
+    expect(TRUE, res);
+    GdipDeleteGraphics(graphics);
+    ReleaseDC(0, hdc);
+    GdipDeleteRegion(region);
+
+    }
+    DeleteObject(hrgn);
 
     /* rectangle */
     hrgn = CreateRectRgn(0, 0, 100, 10);
     status = GdipCreateRegionHrgn(hrgn, &region);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
 
     status = GdipGetRegionDataSize(region, &needed);
-todo_wine{
     expect(Ok, status);
     expect(56, needed);
-}
 
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
 
     if(status == Ok){
-todo_wine{
+
     expect(56, needed);
     expect_dword(buf, 48);
     expect_magic((DWORD*)(buf + 2));
@@ -742,25 +763,23 @@ todo_wine{
     expect_dword(buf + 5, 0x00000020);
     expect_magic((DWORD*)(buf + 6));
     expect_dword(buf + 7, 0x00000004);
-    expect_dword(buf + 8, 0x00006000); /* ?? */
-}
+    todo_wine expect_dword(buf + 8, 0x00006000); /* ?? */
+
     point = (RegionDataPoint*)buf + 9;
 
     expect(0,  point[0].X);
     expect(0,  point[0].Y);
 
-todo_wine{
     expect(100,point[1].X); /* buf + 10 */
     expect(0,  point[1].Y);
     expect(100,point[2].X); /* buf + 11 */
     expect(10, point[2].Y);
-}
+
     expect(0,  point[3].X); /* buf + 12 */
 
-todo_wine{
     expect(10, point[3].Y);
     expect_dword(buf + 13, 0x81010100); /* closed */
-}
+
     }
 
     GdipDeleteRegion(region);
@@ -777,6 +796,10 @@ todo_wine{
     expect(216, needed);
 }
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
+    todo_wine expect(Ok, status);
+
+    if(status == Ok)
+    {
 todo_wine{
     expect(Ok, status);
     expect(216, needed);
@@ -789,6 +812,8 @@ todo_wine{
     expect_dword(buf + 7, 0x00000024);
     expect_dword(buf + 8, 0x00006000); /* ?? */
 }
+    }
+
     GdipDeleteRegion(region);
     DeleteObject(hrgn);
 }
