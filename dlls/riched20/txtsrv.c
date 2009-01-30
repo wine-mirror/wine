@@ -110,7 +110,7 @@ static HRESULT WINAPI fnTextSrv_QueryInterface(ITextServices * iface,
    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppv);
    *ppv = NULL;
    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_ITextServices))
-      *ppv = (LPVOID)This;
+      *ppv = This;
 
    if (*ppv)
    {

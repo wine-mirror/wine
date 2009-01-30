@@ -466,7 +466,7 @@ HRESULT WINAPI ITextHostImpl_TxNotify(ITextHost *iface,
         case EN_STOPNOUNDO:
         {
             /* FIXME: Verify this assumption that pv starts with NMHDR. */
-            NMHDR *info = (NMHDR*)pv;
+            NMHDR *info = pv;
             if (!info)
                 return E_FAIL;
 

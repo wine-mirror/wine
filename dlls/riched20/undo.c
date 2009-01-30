@@ -55,7 +55,7 @@ ME_UndoItem *ME_AddUndoItem(ME_TextEditor *editor, ME_DIType type, const ME_Disp
     return NULL;
   else
   {
-    ME_DisplayItem *pItem = (ME_DisplayItem *)ALLOC_OBJ(ME_UndoItem);
+    ME_DisplayItem *pItem = ALLOC_OBJ(ME_UndoItem);
     switch(type)
     {
     case diUndoPotentialEndTransaction:

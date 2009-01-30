@@ -2727,7 +2727,7 @@ RTFFlushCPOutputBuffer(RTF_Info *info)
         info->dwCPOutputCount = 0;
 
         RTFPutUnicodeString(info, buffer, length);
-        heap_free((char *)buffer);
+        heap_free(buffer);
 }
 
 void

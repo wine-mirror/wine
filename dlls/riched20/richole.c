@@ -1694,7 +1694,7 @@ LRESULT CreateIRichEditOle(ME_TextEditor *editor, LPVOID *ppObj)
         return 0;
     }
     TRACE("Created %p\n",reo);
-    *ppObj = (LPVOID) reo;
+    *ppObj = reo;
 
     return 1;
 }
