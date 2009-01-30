@@ -609,8 +609,8 @@
 @ stdcall GdipTransformPoints(ptr long long ptr long)
 @ stdcall GdipTransformPointsI(ptr long long ptr long)
 @ stdcall GdipTransformRegion(ptr ptr)
-@ stub GdipTranslateClip
-@ stub GdipTranslateClipI
+@ stdcall GdipTranslateClip(ptr long long)
+@ stdcall GdipTranslateClipI(ptr long long)
 @ stdcall GdipTranslateLineTransform(ptr long long long)
 @ stdcall GdipTranslateMatrix(ptr long long long)
 @ stub GdipTranslatePathGradientTransform

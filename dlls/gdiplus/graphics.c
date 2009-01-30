@@ -3318,3 +3318,29 @@ HPALETTE WINGDIPAPI GdipCreateHalftonePalette(void)
 
     return NULL;
 }
+
+/*****************************************************************************
+ * GdipTranslateClip [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipTranslateClip(GpGraphics *graphics, REAL dx, REAL dy)
+{
+    TRACE("(%p, %.2f, %.2f)\n", graphics, dx, dy);
+
+    if(!graphics)
+        return InvalidParameter;
+
+    return GdipTranslateRegion(graphics->clip, dx, dy);
+}
+
+/*****************************************************************************
+ * GdipTranslateClipI [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipTranslateClipI(GpGraphics *graphics, INT dx, INT dy)
+{
+    TRACE("(%p, %d, %d)\n", graphics, dx, dy);
+
+    if(!graphics)
+        return InvalidParameter;
+
+    return GdipTranslateRegion(graphics->clip, (REAL)dx, (REAL)dy);
+}
