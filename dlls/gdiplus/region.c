@@ -1006,12 +1006,39 @@ GpStatus WINGDIPAPI GdipIsEmptyRegion(GpRegion *region, GpGraphics *graphics, BO
     return Ok;
 }
 
+/*****************************************************************************
+ * GdipIsEqualRegion [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipIsEqualRegion(GpRegion *region, GpRegion *region2, GpGraphics *graphics,
                                       BOOL *res)
 {
-    FIXME("(%p, %p, %p, %p): stub\n", region, region2, graphics, res);
+    HRGN hrgn1, hrgn2;
+    GpStatus stat;
 
-    return NotImplemented;
+    TRACE("(%p, %p, %p, %p)\n", region, region2, graphics, res);
+
+    if(!region || !region2 || !graphics || !res)
+        return InvalidParameter;
+
+    stat = GdipGetRegionHRgn(region, graphics, &hrgn1);
+    if(stat != Ok)
+        return stat;
+    stat = GdipGetRegionHRgn(region2, graphics, &hrgn2);
+    if(stat != Ok){
+        DeleteObject(hrgn1);
+        return stat;
+    }
+
+    *res = EqualRgn(hrgn1, hrgn2);
+
+    /* one of GpRegions is infinite */
+    if(*res == ERROR)
+        *res = (!hrgn1 && !hrgn2);
+
+    DeleteObject(hrgn1);
+    DeleteObject(hrgn2);
+
+    return Ok;
 }
 
 /*****************************************************************************
