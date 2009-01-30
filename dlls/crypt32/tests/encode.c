@@ -1984,10 +1984,10 @@ static void test_encodeBits(DWORD dwEncoding)
         if (buf)
         {
             ok(bufSize == bits[i].encoded[1] + 2,
-             "Got unexpected size %d, expected %d\n", bufSize,
+             "%d: Got unexpected size %d, expected %d\n", i, bufSize,
              bits[i].encoded[1] + 2);
             ok(!memcmp(buf, bits[i].encoded, bits[i].encoded[1] + 2),
-             "Unexpected value\n");
+             "%d: Unexpected value\n", i);
             LocalFree(buf);
         }
     }
