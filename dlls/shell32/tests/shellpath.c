@@ -299,8 +299,8 @@ static void testSHGetFolderLocationInvalidArgs(void)
     /* check a bogus user token: */
     pidl = NULL;
     hr = pSHGetFolderLocation(NULL, CSIDL_FAVORITES, (HANDLE)2, 0, &pidl);
-    ok(hr == E_FAIL,
-     "SHGetFolderLocation(NULL, CSIDL_FAVORITES, 2, 0, &pidl) returned 0x%08x, expected E_FAIL\n", hr);
+    ok(hr == E_FAIL || hr == E_HANDLE,
+     "SHGetFolderLocation(NULL, CSIDL_FAVORITES, 2, 0, &pidl) returned 0x%08x, expected E_FAIL or E_HANDLE\n", hr);
     if (SUCCEEDED(hr))
         IMalloc_Free(pMalloc, pidl);
     /* check reserved is not zero: */
