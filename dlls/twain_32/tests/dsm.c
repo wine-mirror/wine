@@ -247,12 +247,12 @@ START_TEST(dsm)
                         NULL, NULL, GetModuleHandleA(0), NULL);
 
     rc = pDSM_Entry(&appid, NULL, DG_CONTROL, DAT_PARENT, MSG_OPENDSM, (TW_MEMREF) &hwnd);
-    ok(rc == TWRC_SUCCESS, "MSG_OPENDSM returned %d", rc);
+    ok(rc == TWRC_SUCCESS, "MSG_OPENDSM returned %d\n", rc);
 
     test_sources(&appid);
 
     rc = pDSM_Entry(&appid, NULL, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, (TW_MEMREF) &hwnd);
-    ok(rc == TWRC_SUCCESS, "MSG_CLOSEDSM returned %d", rc);
+    ok(rc == TWRC_SUCCESS, "MSG_CLOSEDSM returned %d\n", rc);
 
     DestroyWindow(hwnd);
     FreeLibrary(htwain);
