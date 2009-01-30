@@ -546,7 +546,9 @@ static void test_IsDomainLegalCookieDomainW(void)
     SetLastError(0xdeadbeef);
     ret = pIsDomainLegalCookieDomainW(NULL, NULL);
     error = GetLastError();
-    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+    ok(!ret ||
+        broken(ret), /* Win98, NT4, W2K, XP (some) */
+        "IsDomainLegalCookieDomainW succeeded\n");
     ok(error == ERROR_INVALID_PARAMETER, "got %u expected ERROR_INVALID_PARAMETER\n", error);
 
     SetLastError(0xdeadbeef);
@@ -565,25 +567,33 @@ static void test_IsDomainLegalCookieDomainW(void)
     ret = pIsDomainLegalCookieDomainW(empty, gmail_com);
     error = GetLastError();
     ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
-    ok(error == ERROR_INVALID_NAME, "got %u expected ERROR_INVALID_NAME\n", error);
+    ok(error == ERROR_INVALID_NAME ||
+        broken(error == ERROR_INVALID_PARAMETER), /* Win98, NT4, W2K, XP (some) */
+        "got %u expected ERROR_INVALID_NAME\n", error);
 
     SetLastError(0xdeadbeef);
     ret = pIsDomainLegalCookieDomainW(com, empty);
     error = GetLastError();
     ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
-    ok(error == ERROR_INVALID_NAME, "got %u expected ERROR_INVALID_NAME\n", error);
+    ok(error == ERROR_INVALID_NAME ||
+        broken(error == ERROR_INVALID_PARAMETER), /* Win98, NT4, W2K, XP (some) */
+        "got %u expected ERROR_INVALID_NAME\n", error);
 
     SetLastError(0xdeadbeef);
     ret = pIsDomainLegalCookieDomainW(gmail_com, dot);
     error = GetLastError();
     ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
-    ok(error == ERROR_INVALID_NAME, "got %u expected ERROR_INVALID_NAME\n", error);
+    ok(error == ERROR_INVALID_NAME ||
+        broken(error == 0xdeadbeef), /* Win98, NT4, W2K, XP (some) */
+        "got %u expected ERROR_INVALID_NAME\n", error);
 
     SetLastError(0xdeadbeef);
     ret = pIsDomainLegalCookieDomainW(dot, gmail_com);
     error = GetLastError();
     ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
-    ok(error == ERROR_INVALID_NAME, "got %u expected ERROR_INVALID_NAME\n", error);
+    ok(error == ERROR_INVALID_NAME ||
+        broken(error == 0xdeadbeef), /* Win98, NT4, W2K, XP (some) */
+        "got %u expected ERROR_INVALID_NAME\n", error);
 
     SetLastError(0xdeadbeef);
     ret = pIsDomainLegalCookieDomainW(com, com);
@@ -595,13 +605,17 @@ static void test_IsDomainLegalCookieDomainW(void)
     ret = pIsDomainLegalCookieDomainW(com, dot_com);
     error = GetLastError();
     ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
-    ok(error == ERROR_INVALID_NAME, "got %u expected ERROR_INVALID_NAME\n", error);
+    ok(error == ERROR_INVALID_NAME ||
+        broken(error == 0xdeadbeef), /* Win98, NT4, W2K, XP (some) */
+        "got %u expected ERROR_INVALID_NAME\n", error);
 
     SetLastError(0xdeadbeef);
     ret = pIsDomainLegalCookieDomainW(dot_com, com);
     error = GetLastError();
     ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
-    ok(error == ERROR_INVALID_NAME, "got %u expected ERROR_INVALID_NAME\n", error);
+    ok(error == ERROR_INVALID_NAME ||
+        broken(error == 0xdeadbeef), /* Win98, NT4, W2K, XP (some) */
+        "got %u expected ERROR_INVALID_NAME\n", error);
 
     SetLastError(0xdeadbeef);
     ret = pIsDomainLegalCookieDomainW(com, gmail_com);
@@ -615,7 +629,7 @@ static void test_IsDomainLegalCookieDomainW(void)
     SetLastError(0xdeadbeef);
     ret = pIsDomainLegalCookieDomainW(gmail_co_uk, co_uk);
     error = GetLastError();
-    ok(!ret, "IsDomainLegalCookieDomainW failed\n");
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
     ok(error == 0xdeadbeef, "got %u expected 0xdeadbeef\n", error);
 
     ret = pIsDomainLegalCookieDomainW(uk, co_uk);
@@ -633,8 +647,10 @@ static void test_IsDomainLegalCookieDomainW(void)
     SetLastError(0xdeadbeef);
     ret = pIsDomainLegalCookieDomainW(dot_gmail_com, mail_gmail_com);
     error = GetLastError();
-    ok(!ret, "IsDomainLegalCookieDomainW failed\n");
-    ok(error == ERROR_INVALID_NAME, "got %u expected ERROR_INVALID_NAME\n", error);
+    ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
+    ok(error == ERROR_INVALID_NAME ||
+        broken(error == 0xdeadbeef), /* Win98, NT4, W2K, XP (some) */
+        "got %u expected ERROR_INVALID_NAME\n", error);
 
     ret = pIsDomainLegalCookieDomainW(gmail_com, mail_gmail_com);
     ok(ret, "IsDomainLegalCookieDomainW failed\n");
