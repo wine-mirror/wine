@@ -135,7 +135,7 @@ static BOOL PSAPI_GetLdrModule(HANDLE hProcess, HMODULE hModule,
     while ((ret = PSAPI_ModuleIteratorNext(&iter)) > 0)
         /* When hModule is NULL we return the process image - which will be
          * the first module since our iterator uses InLoadOrderModuleList */
-        if (!hModule || hModule == (HMODULE)iter.LdrModule.BaseAddress)
+        if (!hModule || hModule == iter.LdrModule.BaseAddress)
         {
             *pLdrModule = iter.LdrModule;
             return TRUE;
@@ -256,7 +256,7 @@ BOOL WINAPI EnumProcessModules(HANDLE hProcess, HMODULE *lphModule,
     {
         if (cb >= sizeof(HMODULE))
         {
-            *lphModule++ = (HMODULE)iter.LdrModule.BaseAddress;
+            *lphModule++ = iter.LdrModule.BaseAddress;
             cb -= sizeof(HMODULE);
         }
         *lpcbNeeded += sizeof(HMODULE);
