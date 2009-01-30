@@ -793,7 +793,8 @@ static void test_rc2(void)
         result = CryptGetKeyParam(hKey, KP_PERMISSIONS, (BYTE*)&dwModeBits, &dwLen, 0);
         ok(result, "%08x\n", GetLastError());
         ok(dwModeBits ==
-            (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT),
+            (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT) ||
+            broken(dwModeBits == 0xffffffff), /* Win9x/NT4 */
             "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT,"
             " got %08x\n", dwModeBits);
 
@@ -1232,7 +1233,8 @@ static void test_import_private(void)
     result = CryptGetKeyParam(hSessionKey, KP_PERMISSIONS, (BYTE*)&dwVal, &dwLen, 0);
     ok(result, "%08x\n", GetLastError());
     ok(dwVal ==
-        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT),
+        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT) ||
+        broken(dwVal == 0xffffffff), /* Win9x/NT4 */
         "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT,"
         " got %08x\n", dwVal);
 
@@ -1564,7 +1566,8 @@ static void test_rsa_encrypt(void)
     result = CryptGetKeyParam(hRSAKey, KP_PERMISSIONS, (BYTE*)&dwVal, &dwLen, 0);
     ok(result, "%08x\n", GetLastError());
     ok(dwVal ==
-        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT),
+        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT) ||
+        broken(dwVal == 0xffffffff), /* Win9x/NT4 */
         "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT,"
         " got %08x\n", dwVal);
 
@@ -1574,14 +1577,17 @@ static void test_rsa_encrypt(void)
     /* but its private key may not be. */
     SetLastError(0xdeadbeef);
     result = CryptExportKey(hRSAKey, 0, PRIVATEKEYBLOB, 0, NULL, &dwLen);
-    ok(!result && GetLastError() == NTE_BAD_KEY_STATE,
+    ok(!result &&
+        (GetLastError() == NTE_BAD_KEY_STATE ||
+        broken(GetLastError() == 0xdeadbeef) /* Win9x/NT4 */),
         "expected NTE_BAD_KEY_STATE, got %08x\n", GetLastError());
     /* Setting the permissions of the key exchange key isn't allowed, either. */
     dwVal |= CRYPT_EXPORT;
     SetLastError(0xdeadbeef);
     result = CryptSetKeyParam(hRSAKey, KP_PERMISSIONS, (BYTE *)&dwVal, 0);
-    ok(!result && GetLastError() == NTE_BAD_DATA,
-        "expected NTE_BAD_DATA, got %08x\n", GetLastError());
+    ok(!result &&
+        (GetLastError() == NTE_BAD_DATA || GetLastError() == NTE_BAD_FLAGS),
+        "expected NTE_BAD_DATA or NTE_BAD_FLAGS, got %08x\n", GetLastError());
 
     CryptDestroyKey(hRSAKey);
 
@@ -1595,7 +1601,8 @@ static void test_rsa_encrypt(void)
     result = CryptGetKeyParam(hRSAKey, KP_PERMISSIONS, (BYTE*)&dwVal, &dwLen, 0);
     ok(result, "%08x\n", GetLastError());
     ok(dwVal ==
-        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT),
+        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT) ||
+        broken(dwVal == 0xffffffff), /* Win9x/NT4 */
         "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT,"
         " got %08x\n", dwVal);
 
@@ -1605,14 +1612,17 @@ static void test_rsa_encrypt(void)
     /* but its private key may not be. */
     SetLastError(0xdeadbeef);
     result = CryptExportKey(hRSAKey, 0, PRIVATEKEYBLOB, 0, NULL, &dwLen);
-    ok(!result && GetLastError() == NTE_BAD_KEY_STATE,
+    ok(!result &&
+        (GetLastError() == NTE_BAD_KEY_STATE ||
+        broken(GetLastError() == 0xdeadbeef) /* Win9x/NT4 */),
         "expected NTE_BAD_KEY_STATE, got %08x\n", GetLastError());
     /* Setting the permissions of the signature key isn't allowed, either. */
     dwVal |= CRYPT_EXPORT;
     SetLastError(0xdeadbeef);
     result = CryptSetKeyParam(hRSAKey, KP_PERMISSIONS, (BYTE *)&dwVal, 0);
-    ok(!result && GetLastError() == NTE_BAD_DATA,
-        "expected NTE_BAD_DATA, got %08x\n", GetLastError());
+    ok(!result &&
+        (GetLastError() == NTE_BAD_DATA || GetLastError() == NTE_BAD_FLAGS),
+        "expected NTE_BAD_DATA or NTE_BAD_FLAGS, got %08x\n", GetLastError());
 
     dwLen = 12;
     result = CryptEncrypt(hRSAKey, 0, TRUE, 0, abData, &dwLen, (DWORD)sizeof(abData));
@@ -1656,7 +1666,8 @@ static void test_import_export(void)
     result = CryptGetKeyParam(hPublicKey, KP_PERMISSIONS, (BYTE*)&dwVal, &dwDataLen, 0);
     ok(result, "%08x\n", GetLastError());
     ok(dwVal ==
-        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT),
+        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT) ||
+        broken(dwVal == 0xffffffff), /* Win9x/NT4 */
         "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_DECRYPT|CRYPT_ENCRYPT,"
         " got %08x\n", dwVal);
     result = CryptExportKey(hPublicKey, 0, PUBLICKEYBLOB, 0, emptyKey, &dwLen);
@@ -2134,7 +2145,8 @@ static void test_key_permissions(void)
     result = CryptGetKeyParam(hKey1, KP_PERMISSIONS, (BYTE*)&dwVal, &dwLen, 0);
     ok(result, "%08x\n", GetLastError());
     ok(dwVal ==
-        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT),
+        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT) ||
+        broken(dwVal == 0xffffffff), /* Win9x/NT4 */
         "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT,"
         " got %08x\n", dwVal);
 
@@ -2154,7 +2166,8 @@ static void test_key_permissions(void)
     result = CryptGetKeyParam(hKey1, KP_PERMISSIONS, (BYTE*)&dwVal, &dwLen, 0);
     ok(result, "%08x\n", GetLastError());
     ok(dwVal ==
-        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT),
+        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT) ||
+        broken(dwVal == 0xffffffff), /* Win9x/NT4 */
         "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT,"
         " got %08x\n", dwVal);
     /* Thus, changing the export flag of the key doesn't affect whether the key
@@ -2174,7 +2187,8 @@ static void test_key_permissions(void)
     result = CryptGetKeyParam(hKey2, KP_PERMISSIONS, (BYTE*)&dwVal, &dwLen, 0);
     ok(result, "%08x\n", GetLastError());
     ok(dwVal ==
-        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT),
+        (CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT) ||
+        broken(dwVal == 0xffffffff), /* Win9x/NT4 */
         "expected CRYPT_MAC|CRYPT_WRITE|CRYPT_READ|CRYPT_EXPORT|CRYPT_DECRYPT|CRYPT_ENCRYPT,"
         " got %08x\n", dwVal);
 
