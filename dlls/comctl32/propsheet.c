@@ -740,7 +740,7 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
   HWND hwndTabCtrl = GetDlgItem(hwndDlg, IDC_TABCONTROL);
   HWND hwndButton = GetDlgItem(hwndDlg, IDOK);
   RECT rc,tabRect;
-  int tabOffsetX, tabOffsetY, buttonHeight;
+  int buttonHeight;
   PADDING_INFO padding = PROPSHEET_GetPaddingInfo(hwndDlg);
   RECT units;
 
@@ -784,9 +784,6 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
 
   SendMessageW(hwndTabCtrl, TCM_ADJUSTRECT, TRUE, (LPARAM)&rc);
 
-  tabOffsetX = -(rc.left);
-  tabOffsetY = -(rc.top);
-
   rc.right -= rc.left;
   rc.bottom -= rc.top;
   TRACE("setting tab %p, rc (0,0)-(%d,%d)\n",
@@ -798,8 +795,14 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
 
   TRACE("tab client rc %s\n", wine_dbgstr_rect(&rc));
 
-  rc.right += ((padding.x * 2) + tabOffsetX);
-  rc.bottom += (buttonHeight + (3 * padding.y) + tabOffsetY);
+  rc.right += (padding.x * 2);
+  rc.bottom += buttonHeight + (3 * padding.y);
+
+  if (!psInfo->isModeless)
+    AdjustWindowRect(&rc, GetWindowLongW(hwndDlg, GWL_STYLE), FALSE);
+
+  rc.right -= rc.left;
+  rc.bottom -= rc.top;
 
   /*
    * Resize the property sheet.
