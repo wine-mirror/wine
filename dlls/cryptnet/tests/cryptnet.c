@@ -285,10 +285,10 @@ static void test_retrieveObjectByUrl(void)
     pBlobArray = (CRYPT_BLOB_ARRAY *)0xdeadbeef;
     ret = CryptRetrieveObjectByUrlA(url, NULL, 0, 0, (void **)&pBlobArray,
      NULL, NULL, NULL, NULL);
-    if (!ret && GetLastError() == ERROR_NOT_SUPPORTED)
+    if (!ret)
     {
         /* File URL support was apparently removed in Vista/Windows 2008 */
-        skip("File URLs not supported\n");
+        win_skip("File URLs not supported\n");
         return;
     }
     ok(ret, "CryptRetrieveObjectByUrlA failed: %d\n", GetLastError());
