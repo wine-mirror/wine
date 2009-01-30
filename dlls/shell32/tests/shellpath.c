@@ -303,13 +303,6 @@ static void testSHGetFolderLocationInvalidArgs(void)
      "SHGetFolderLocation(NULL, CSIDL_FAVORITES, 2, 0, &pidl) returned 0x%08x, expected E_FAIL or E_HANDLE\n", hr);
     if (SUCCEEDED(hr))
         IMalloc_Free(pMalloc, pidl);
-    /* check reserved is not zero: */
-    pidl = NULL;
-    hr = pSHGetFolderLocation(NULL, CSIDL_DESKTOP, NULL, 1, &pidl);
-    ok(hr == E_INVALIDARG,
-     "SHGetFolderLocation(NULL, CSIDL_DESKTOP, NULL, 1, &pidl) returned 0x%08x, expected E_INVALIDARG\n", hr);
-    if (SUCCEEDED(hr))
-        IMalloc_Free(pMalloc, pidl);
     /* a NULL pidl pointer crashes, so don't test it */
 }
 
