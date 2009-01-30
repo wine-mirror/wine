@@ -1043,6 +1043,83 @@ static void test_isequal(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_translate(void)
+{
+    GpRegion *region, *region2;
+    GpGraphics *graphics;
+    GpPath *path;
+    GpRectF rectf;
+    GpStatus status;
+    HDC hdc = GetDC(0);
+    BOOL res;
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    ok(status == Ok, "status %08x\n", status);
+
+    status = GdipCreatePath(FillModeAlternate, &path);
+    ok(status == Ok, "status %08x\n", status);
+
+    status = GdipCreateRegion(&region);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipCreateRegion(&region2);
+    ok(status == Ok, "status %08x\n", status);
+
+    /* NULL */
+    status = GdipTranslateRegion(NULL, 0.0, 0.0);
+    ok(status == InvalidParameter, "status %08x\n", status);
+
+    /* infinite */
+    status = GdipTranslateRegion(region, 10.0, 10.0);
+    ok(status == Ok, "status %08x\n", status);
+    /* empty */
+    status = GdipSetEmpty(region);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipTranslateRegion(region, 10.0, 10.0);
+    ok(status == Ok, "status %08x\n", status);
+    /* rect */
+    rectf.X = 10.0; rectf.Y = 0.0;
+    rectf.Width = rectf.Height = 100.0;
+    status = GdipCombineRegionRect(region, &rectf, CombineModeReplace);
+    ok(status == Ok, "status %08x\n", status);
+    rectf.X = 15.0; rectf.Y = -2.0;
+    rectf.Width = rectf.Height = 100.0;
+    status = GdipCombineRegionRect(region2, &rectf, CombineModeReplace);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipTranslateRegion(region, 5.0, -2.0);
+    ok(status == Ok, "status %08x\n", status);
+    res = FALSE;
+    status = GdipIsEqualRegion(region, region2, graphics, &res);
+    ok(status == Ok, "status %08x\n", status);
+    ok(res, "Expected to be equal.\n");
+    /* path */
+    status = GdipAddPathEllipse(path, 0.0, 10.0, 100.0, 150.0);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipCombineRegionPath(region, path, CombineModeReplace);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipResetPath(path);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipAddPathEllipse(path, 10.0, 21.0, 100.0, 150.0);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipCombineRegionPath(region2, path, CombineModeReplace);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipTranslateRegion(region, 10.0, 11.0);
+    ok(status == Ok, "status %08x\n", status);
+    res = FALSE;
+    status = GdipIsEqualRegion(region, region2, graphics, &res);
+    ok(status == Ok, "status %08x\n", status);
+    ok(res, "Expected to be equal.\n");
+
+    status = GdipDeleteRegion(region);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipDeleteRegion(region2);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipDeleteGraphics(graphics);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipDeletePath(path);
+    ok(status == Ok, "status %08x\n", status);
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(region)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -1062,6 +1139,7 @@ START_TEST(region)
     test_fromhrgn();
     test_gethrgn();
     test_isequal();
+    test_translate();
 
     GdiplusShutdown(gdiplusToken);
 }

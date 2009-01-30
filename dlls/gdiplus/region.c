@@ -1097,11 +1097,46 @@ GpStatus WINGDIPAPI GdipTransformRegion(GpRegion *region, GpMatrix *matrix)
     return NotImplemented;
 }
 
+/* Translates GpRegion elements with specified offsets */
+static void translate_region_element(region_element* element, REAL dx, REAL dy)
+{
+    INT i;
+
+    switch(element->type)
+    {
+        case RegionDataEmptyRect:
+        case RegionDataInfiniteRect:
+            return;
+        case RegionDataRect:
+            element->elementdata.rect.X += dx;
+            element->elementdata.rect.Y += dy;
+            return;
+        case RegionDataPath:
+            for(i = 0; i < element->elementdata.pathdata.path->pathdata.Count; i++){
+                element->elementdata.pathdata.path->pathdata.Points[i].X += dx;
+                element->elementdata.pathdata.path->pathdata.Points[i].Y += dy;
+            }
+            return;
+        default:
+            translate_region_element(element->elementdata.combine.left,  dx, dy);
+            translate_region_element(element->elementdata.combine.right, dx, dy);
+            return;
+    }
+}
+
+/*****************************************************************************
+ * GdipTranslateRegion [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipTranslateRegion(GpRegion *region, REAL dx, REAL dy)
 {
-    FIXME("(%p, %f, %f): stub\n", region, dx, dy);
+    TRACE("(%p, %f, %f)\n", region, dx, dy);
 
-    return NotImplemented;
+    if(!region)
+        return InvalidParameter;
+
+    translate_region_element(&region->node, dx, dy);
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipTranslateRegionI(GpRegion *region, INT dx, INT dy)
