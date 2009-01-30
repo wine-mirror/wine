@@ -1139,9 +1139,12 @@ GpStatus WINGDIPAPI GdipTranslateRegion(GpRegion *region, REAL dx, REAL dy)
     return Ok;
 }
 
+/*****************************************************************************
+ * GdipTranslateRegionI [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipTranslateRegionI(GpRegion *region, INT dx, INT dy)
 {
-    FIXME("(%p, %d, %d): stub\n", region, dx, dy);
+    TRACE("(%p, %d, %d)\n", region, dx, dy);
 
-    return NotImplemented;
+    return GdipTranslateRegion(region, (REAL)dx, (REAL)dy);
 }
