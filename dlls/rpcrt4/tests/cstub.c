@@ -48,7 +48,7 @@ static GUID IID_if4 = {0x1234567b, 1234, 5678, {12,34,56,78,90,0xab,0xcd,0xef}};
 static int my_alloc_called;
 static int my_free_called;
 
-static void * CALLBACK my_alloc(size_t size)
+static void * CALLBACK my_alloc(SIZE_T size)
 {
     my_alloc_called++;
     return NdrOleAllocate(size);

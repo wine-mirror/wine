@@ -1234,7 +1234,7 @@ void __RPC_USER SC_RPC_HANDLE_rundown(SC_RPC_HANDLE handle)
     SC_RPC_HANDLE_destroy(handle);
 }
 
-void  __RPC_FAR * __RPC_USER MIDL_user_allocate(size_t len)
+void  __RPC_FAR * __RPC_USER MIDL_user_allocate(SIZE_T len)
 {
     return HeapAlloc(GetProcessHeap(), 0, len);
 }

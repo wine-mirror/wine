@@ -36,7 +36,7 @@
 
 static int my_alloc_called;
 static int my_free_called;
-static void * CALLBACK my_alloc(size_t size)
+static void * CALLBACK my_alloc(SIZE_T size)
 {
     my_alloc_called++;
     return NdrOleAllocate(size);

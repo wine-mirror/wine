@@ -990,7 +990,7 @@ static void write_rpc_interface_start(FILE *header, const type_t *iface)
   if (!allocate_written)
   {
     allocate_written = 1;
-    fprintf(header, "void * __RPC_USER MIDL_user_allocate(size_t);\n");
+    fprintf(header, "void * __RPC_USER MIDL_user_allocate(SIZE_T);\n");
     fprintf(header, "void __RPC_USER MIDL_user_free(void *);\n\n");
   }
 

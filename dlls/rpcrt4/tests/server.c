@@ -51,7 +51,7 @@ static void InitFunctionPointers(void)
 }
 
 void __RPC_FAR *__RPC_USER
-midl_user_allocate(size_t n)
+midl_user_allocate(SIZE_T n)
 {
   return malloc(n);
 }
