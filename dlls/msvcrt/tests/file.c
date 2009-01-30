@@ -369,7 +369,7 @@ static void test_asciimode(void)
     fclose(fp);
     fp = fopen("ascii.tst", "r");
     fseek(fp, 3 ,SEEK_SET);
-    ok((c = fgetc(fp)) == '1', "fgetc fails to read next char when positioned on \\r \n");
+    ok((c = fgetc(fp)) == '1', "fgetc fails to read next char when positioned on \\r\n");
     fclose(fp);
 
     unlink("ascii.tst");
