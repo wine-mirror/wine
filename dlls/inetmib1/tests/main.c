@@ -231,13 +231,6 @@ static void testQuery(void)
                 "expected ASN_INTEGER, got %02x\n", vars2[1].value.asnType);
             ok(vars2[2].value.asnType == ASN_INTEGER,
                 "expected ASN_INTEGER, got %02x\n", vars2[2].value.asnType);
-            /* Check that the operational status of an interface correctly
-             * follows the MIB2 definition of it, rather than the values
-             * defined for IPHlpApi's dwOperStatus field.
-             */
-            ok(vars2[2].value.asnValue.unsigned32 <= 2,
-                "expected a value of 0, 1, or 2, got %u\n",
-                vars2[2].value.asnValue.unsigned32);
         }
         else if (noChange)
             skip("no change in OID, no MIB2 IF table implementation\n");
