@@ -634,18 +634,66 @@ GpStatus WINGDIPAPI GdipDeleteRegion(GpRegion *region)
     return Ok;
 }
 
+/*****************************************************************************
+ * GdipGetRegionBounds [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipGetRegionBounds(GpRegion *region, GpGraphics *graphics, GpRectF *rect)
 {
-    FIXME("(%p, %p, %p): stub\n", region, graphics, rect);
+    HRGN hrgn;
+    RECT r;
+    GpStatus status;
 
-    return NotImplemented;
+    TRACE("(%p, %p, %p)\n", region, graphics, rect);
+
+    if(!region || !graphics || !rect)
+        return InvalidParameter;
+
+    status = GdipGetRegionHRgn(region, graphics, &hrgn);
+    if(status != Ok)
+        return status;
+
+    /* infinite */
+    if(!hrgn){
+        rect->X = rect->Y = -(REAL)(1 << 22);
+        rect->Width = rect->Height = (REAL)(1 << 23);
+        return Ok;
+    }
+
+    if(!GetRgnBox(hrgn, &r)){
+        DeleteObject(hrgn);
+        return GenericError;
+    }
+
+    rect->X = r.left;
+    rect->Y = r.top;
+    rect->Width  = r.right  - r.left;
+    rect->Height = r.bottom - r.top;
+
+    return Ok;
 }
 
+/*****************************************************************************
+ * GdipGetRegionBoundsI [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipGetRegionBoundsI(GpRegion *region, GpGraphics *graphics, GpRect *rect)
 {
-    FIXME("(%p, %p, %p): stub\n", region, graphics, rect);
+    GpRectF rectf;
+    GpStatus status;
 
-    return NotImplemented;
+    TRACE("(%p, %p, %p)\n", region, graphics, rect);
+
+    if(!rect)
+        return InvalidParameter;
+
+    status = GdipGetRegionBounds(region, graphics, &rectf);
+    if(status == Ok){
+        rect->X = roundr(rectf.X);
+        rect->Y = roundr(rectf.X);
+        rect->Width  = roundr(rectf.Width);
+        rect->Height = roundr(rectf.Height);
+    }
+
+    return status;
 }
 
 static inline void write_dword(DWORD* location, INT* offset, const DWORD write)
