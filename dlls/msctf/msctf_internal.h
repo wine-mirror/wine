@@ -22,5 +22,6 @@
 #define __WINE_MSCTF_I_H
 
 extern HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut);
+extern HRESULT DocumentMgr_Constructor(ITfDocumentMgr **ppOut);
 
 #endif /* __WINE_MSCTF_I_H */

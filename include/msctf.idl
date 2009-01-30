@@ -25,10 +25,13 @@ import "comcat.idl";
 
 cpp_quote("EXTERN_C const CLSID CLSID_TF_ThreadMgr;")
 
+typedef [uuid(7213778c-7bb0-4270-b050-6189ee594e97)]  DWORD TfEditCookie;
 typedef [uuid(de403c21-89fd-4f85-8b87-64584d063fbc)] DWORD TfClientId;
 
 interface ITfDocumentMgr;
+interface ITfContext;
 interface IEnumTfDocumentMgrs;
+interface IEnumTfContexts;
 interface ITfFunctionProvider;
 interface IEnumTfFunctionProviders;
 interface ITfCompartmentMgr;
@@ -74,4 +77,37 @@ interface ITfThreadMgr: IUnknown
 
     HRESULT GetGlobalCompartment(
         [out] ITfCompartmentMgr **ppCompMgr);
+};
+
+
+[
+    object,
+    uuid(aa80e7f4-2021-11d2-93e0-0060b067b86e),
+    pointer_default(unique)
+]
+interface ITfDocumentMgr: IUnknown
+{
+    HRESULT CreateContext(
+        [in] TfClientId tidOwner,
+        [in] DWORD dwFlags,
+        [in, unique] IUnknown *punk,
+        [out] ITfContext **ppic,
+        [out] TfEditCookie *pecTextStore);
+
+    HRESULT Push(
+        [in] ITfContext *pic);
+
+    const DWORD TF_POPF_ALL = 0x0001;
+
+    HRESULT Pop(
+        [in] DWORD dwFlags);
+
+    HRESULT GetTop(
+        [out] ITfContext **ppic);
+
+    HRESULT GetBase(
+        [out] ITfContext **ppic);
+
+    HRESULT EnumContexts(
+        [out] IEnumTfContexts **ppEnum);
 };
