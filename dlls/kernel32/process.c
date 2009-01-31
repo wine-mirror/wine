@@ -495,6 +495,7 @@ static void set_additional_environment(void)
         MultiByteToWideChar( CP_UNIXCP, 0, name, -1, user_name, len );
         SetEnvironmentVariableW( usernameW, user_name );
     }
+    else WARN( "user name %s not convertible.\n", debugstr_a(name) );
 
     /* set the USERPROFILE and ALLUSERSPROFILE variables */
 
@@ -522,8 +523,10 @@ static void set_additional_environment(void)
         strcpyW( value, profile_dir );
         p = value + strlenW(value);
         if (p > value && p[-1] != '\\') *p++ = '\\';
-        strcpyW( p, user_name );
-        SetEnvironmentVariableW( userprofileW, value );
+        if (user_name) {
+            strcpyW( p, user_name );
+            SetEnvironmentVariableW( userprofileW, value );
+        }
         if (all_users_dir)
         {
             strcpyW( p, all_users_dir );
