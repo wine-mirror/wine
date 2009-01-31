@@ -102,7 +102,7 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG base,
          */
         if (!types_get_info(&type, TI_GET_VALUE, &v) || (v.n1.n2.vt & VT_BYREF))
         {
-            snprintf(buffer, sz, "Couldn't dereference pointer for const value");
+            if (buffer) snprintf(buffer, sz, "Couldn't dereference pointer for const value");
             return FALSE;
         }
         pdw = (DWORD*)lexeme_alloc_size(sizeof(*pdw));
