@@ -3952,23 +3952,23 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 
       }
 
-      if(pTITail) { /* could get cFuncs, cVars and cImplTypes from here
+      /* could get cFuncs, cVars and cImplTypes from here
 		       but we've already set those */
 #define X(x) TRACE_(typelib)("tt "#x": %x\n",pTITail->res##x);
-	  X(06);
-	  X(16);
-	  X(18);
-	  X(1a);
-	  X(1e);
-	  X(24);
-	  X(26);
-	  X(2a);
-	  X(2c);
-	  X(2e);
-	  X(30);
-	  X(32);
-	  X(34);
-      }
+      X(06);
+      X(16);
+      X(18);
+      X(1a);
+      X(1e);
+      X(24);
+      X(26);
+      X(2a);
+      X(2c);
+      X(2e);
+      X(30);
+      X(32);
+      X(34);
+#undef X
       ppTypeInfoImpl = &((*ppTypeInfoImpl)->next);
       pBlk = (char*)pBlk + pBlkEntry[order].len;
     }
