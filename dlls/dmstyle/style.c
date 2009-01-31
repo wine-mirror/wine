@@ -500,9 +500,9 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePartRefList (LPPERSIST
     case DMUS_FOURCC_PARTREF_CHUNK: {
       TRACE_(dmfile)(": PartRef chunk\n");
       pNewItem = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_STYLE_PARTREF_ITEM));
-      if (NULL == pNewItem) {
+      if (!pNewItem) {
 	ERR(": no more memory\n");
-	return  E_OUTOFMEMORY;
+	return E_OUTOFMEMORY;
       }
       hr = IStream_Read (pStm, &pNewItem->part_ref, sizeof(DMUS_IO_PARTREF), NULL);
       /*TRACE_(dmfile)(" - sizeof %lu\n",  sizeof(DMUS_IO_PARTREF));*/
@@ -523,6 +523,10 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePartRefList (LPPERSIST
 	  ListCount[1] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
           TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 	  
+          if (!pNewItem) {
+	    ERR(": pNewItem not yet allocated, chunk order bad?\n");
+	    return E_OUTOFMEMORY;
+          }
 	  hr = IDirectMusicUtils_IPersistStream_ParseUNFOGeneric(&Chunk, pStm, &pNewItem->desc);
 	  if (FAILED(hr)) return hr;
 	  
