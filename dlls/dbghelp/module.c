@@ -543,7 +543,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
         if (!(module = pe_load_native_module(pcs, wImageName, hFile, BaseOfDll, SizeOfDll)))
         {
             /* and finally and ELF module */
-            if (module_get_type_by_name(wImageName) == DMT_ELF)
+            if (wImageName && (module_get_type_by_name(wImageName) == DMT_ELF))
                 module = elf_load_module(pcs, wImageName, BaseOfDll);
         }
     }
