@@ -289,18 +289,29 @@ PWINE_ACMDRIVERID MSACM_RegisterDriver(LPCWSTR pszDriverAlias, LPCWSTR pszFileNa
           debugstr_w(pszDriverAlias), debugstr_w(pszFileName), pLocalDriver);
 
     padid = HeapAlloc(MSACM_hHeap, 0, sizeof(WINE_ACMDRIVERID));
+    if (!padid)
+        return NULL;
     padid->obj.dwType = WINE_ACMOBJ_DRIVERID;
     padid->obj.pACMDriverID = padid;
     padid->pszDriverAlias = NULL;
     if (pszDriverAlias)
     {
         padid->pszDriverAlias = HeapAlloc( MSACM_hHeap, 0, (strlenW(pszDriverAlias)+1) * sizeof(WCHAR) );
+        if (!padid->pszDriverAlias) {
+            HeapFree(MSACM_hHeap, 0, padid);
+            return NULL;
+        }
         strcpyW( padid->pszDriverAlias, pszDriverAlias );
     }
     padid->pszFileName = NULL;
     if (pszFileName)
     {
         padid->pszFileName = HeapAlloc( MSACM_hHeap, 0, (strlenW(pszFileName)+1) * sizeof(WCHAR) );
+        if (!padid->pszFileName) {
+            HeapFree(MSACM_hHeap, 0, padid->pszDriverAlias);
+            HeapFree(MSACM_hHeap, 0, padid);
+            return NULL;
+        }
         strcpyW( padid->pszFileName, pszFileName );
     }
     padid->pLocalDriver = pLocalDriver;
