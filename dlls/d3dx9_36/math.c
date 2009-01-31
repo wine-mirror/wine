@@ -164,13 +164,13 @@ D3DXMATRIX* WINAPI D3DXMatrixTransformation2D(
     {
         sca.x=pscaling->x;
         sca.y=pscaling->y;
-        sca.z=0.0f;
+        sca.z=1.0f;
     }
     else
     {
-        sca.x=0.0f;
-        sca.y=0.0f;
-        sca.z=0.0f;
+        sca.x=1.0f;
+        sca.y=1.0f;
+        sca.z=1.0f;
     }
 
     if ( protationcenter )

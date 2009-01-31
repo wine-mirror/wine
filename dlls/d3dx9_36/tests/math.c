@@ -612,7 +612,7 @@ static void test_Matrix_Transformation2D(void)
     U(exp_mat).m[3][1] = -13.401899f;
     U(exp_mat).m[0][2] = 0.0f;
     U(exp_mat).m[1][2] = 0.0f;
-    U(exp_mat).m[2][2] = 0.0f;
+    U(exp_mat).m[2][2] = 1.0f;
     U(exp_mat).m[3][2] = 0.0f;
     U(exp_mat).m[0][3] = 0.0f;
     U(exp_mat).m[1][3] = 0.0f;
@@ -635,17 +635,17 @@ static void test_Matrix_Transformation2D(void)
 
     sca_rot = 5.0f*D3DX_PI/4.0f;
 
-    U(exp_mat).m[0][0] = 0.0f;
-    U(exp_mat).m[1][0] = 0.0f;
+    U(exp_mat).m[0][0] = 0.50f;
+    U(exp_mat).m[1][0] = -0.866025f;
     U(exp_mat).m[2][0] = 0.0f;
-    U(exp_mat).m[3][0] = 2.830127f;
-    U(exp_mat).m[0][1] = 0.0f;
-    U(exp_mat).m[1][1] = 0.0f;
+    U(exp_mat).m[3][0] = -6.0f;
+    U(exp_mat).m[0][1] = 0.866025f;
+    U(exp_mat).m[1][1] = 0.50f;
     U(exp_mat).m[2][1] = 0.0f;
-    U(exp_mat).m[3][1] = 12.294229f;
+    U(exp_mat).m[3][1] = 7.0f;
     U(exp_mat).m[0][2] = 0.0f;
     U(exp_mat).m[1][2] = 0.0f;
-    U(exp_mat).m[2][2] = 0.0f;
+    U(exp_mat).m[2][2] = 1.0f;
     U(exp_mat).m[3][2] = 0.0f;
     U(exp_mat).m[0][3] = 0.0f;
     U(exp_mat).m[1][3] = 0.0f;
@@ -653,6 +653,29 @@ static void test_Matrix_Transformation2D(void)
     U(exp_mat).m[3][3] = 1.0f;
 
     D3DXMatrixTransformation2D(&got_mat, &sca_center, sca_rot, NULL, NULL, rot, &trans);
+
+    expect_mat(&exp_mat, &got_mat);
+
+/*_________*/
+
+    U(exp_mat).m[0][0] = 0.50f;
+    U(exp_mat).m[1][0] = -0.866025f;
+    U(exp_mat).m[2][0] = 0.0f;
+    U(exp_mat).m[3][0] = 0.0f;
+    U(exp_mat).m[0][1] = 0.866025f;
+    U(exp_mat).m[1][1] = 0.50f;
+    U(exp_mat).m[2][1] = 0.0f;
+    U(exp_mat).m[3][1] = 0.0f;
+    U(exp_mat).m[0][2] = 0.0f;
+    U(exp_mat).m[1][2] = 0.0f;
+    U(exp_mat).m[2][2] = 1.0f;
+    U(exp_mat).m[3][2] = 0.0f;
+    U(exp_mat).m[0][3] = 0.0f;
+    U(exp_mat).m[1][3] = 0.0f;
+    U(exp_mat).m[2][3] = 0.0f;
+    U(exp_mat).m[3][3] = 1.0f;
+
+    D3DXMatrixTransformation2D(&got_mat, NULL, sca_rot, NULL, NULL, rot, NULL);
 
     expect_mat(&exp_mat, &got_mat);
 }
