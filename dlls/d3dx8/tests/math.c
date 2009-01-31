@@ -166,6 +166,15 @@ static void D3DXColorTest(void)
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 }
 
+static void D3DXFresnelTest(void)
+{
+    FLOAT expected, got;
+
+    expected = 0.089187;
+    got = D3DXFresnelTerm(0.5f,1.5);
+    ok( fabs(got - expected) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+}
+
 static void D3DXMatrixTest(void)
 {
     D3DXMATRIX expectedmat, gotmat, mat, mat2, mat3;
@@ -1498,6 +1507,7 @@ static void test_matrix_stack(void)
 START_TEST(math)
 {
     D3DXColorTest();
+    D3DXFresnelTest();
     D3DXMatrixTest();
     D3DXPlaneTest();
     D3X8QuaternionTest();

@@ -271,6 +271,8 @@ extern "C" {
 D3DXCOLOR* WINAPI D3DXColorAdjustContrast(D3DXCOLOR *pout, CONST D3DXCOLOR *pc, FLOAT s);
 D3DXCOLOR* WINAPI D3DXColorAdjustSaturation(D3DXCOLOR *pout, CONST D3DXCOLOR *pc, FLOAT s);
 
+FLOAT WINAPI D3DXFresnelTerm(FLOAT costheta, FLOAT refractionindex);
+
 D3DXMATRIX* WINAPI D3DXMatrixAffineTransformation(D3DXMATRIX *pout, FLOAT scaling, CONST D3DXVECTOR3 *rotationcenter, CONST D3DXQUATERNION *rotation, CONST D3DXVECTOR3 *translation);
 FLOAT WINAPI D3DXMatrixfDeterminant(CONST D3DXMATRIX *pm);
 D3DXMATRIX* WINAPI D3DXMatrixInverse(D3DXMATRIX *pout, FLOAT *pdeterminant, CONST D3DXMATRIX *pm);

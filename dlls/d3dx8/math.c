@@ -58,6 +58,20 @@ D3DXCOLOR* WINAPI D3DXColorAdjustSaturation(D3DXCOLOR *pout, CONST D3DXCOLOR *pc
     return pout;
 }
 
+/*_________________Misc__________________________*/
+
+FLOAT WINAPI D3DXFresnelTerm(FLOAT costheta, FLOAT refractionindex)
+{
+    FLOAT a, d, g, result;
+
+    g = sqrt(refractionindex * refractionindex + costheta * costheta - 1.0f);
+    a = g + costheta;
+    d = g - costheta;
+    result = ( costheta * a - 1.0f ) * ( costheta * a - 1.0f ) / ( ( costheta * d + 1.0f ) * ( costheta * d + 1.0f ) ) + 1.0f;
+    result = result * 0.5f * d * d / ( a * a );
+    return result;
+}
+
 /*_________________D3DXMatrix____________________*/
 
 D3DXMATRIX* WINAPI D3DXMatrixAffineTransformation(D3DXMATRIX *pout, FLOAT scaling, CONST D3DXVECTOR3 *rotationcenter, CONST D3DXQUATERNION *rotation, CONST D3DXVECTOR3 *translation)
