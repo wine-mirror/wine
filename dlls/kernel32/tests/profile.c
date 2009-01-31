@@ -174,13 +174,17 @@ static void test_profile_sections(void)
     SetLastError(0xdeadbeef);
     ret = GetPrivateProfileSectionA( NULL, buf, sizeof(buf), testfile4 );
     ok( ret == 0, "expected return size 0, got %d\n", ret );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok( GetLastError() == ERROR_INVALID_PARAMETER ||
+        broken(GetLastError() == 0xdeadbeef), /* Win9x, WinME */
+        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = GetPrivateProfileSectionA( "section1", buf, sizeof(buf), NULL );
     ok( ret == 0, "expected return size 0, got %d\n", ret );
     todo_wine
-    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND ||
+        broken(GetLastError() == 0xdeadbeef), /* Win9x, WinME */
+        "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
 
     /* And a real one */
     SetLastError(0xdeadbeef);
@@ -190,7 +194,9 @@ static void test_profile_sections(void)
     ok( ret == 35 && !strcmp( buf, "name1=val1,name2=,name3,name4=val4"), "wrong section returned(%d): %s\n",
             ret, buf);
     ok( buf[ret-1] == 0 && buf[ret] == 0, "returned buffer not terminated with double-null\n" );
-    ok( GetLastError() == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", GetLastError());
+    ok( GetLastError() == ERROR_SUCCESS ||
+        broken(GetLastError() == 0xdeadbeef), /* Win9x, WinME */
+        "expected ERROR_SUCCESS, got %d\n", GetLastError());
 
     DeleteFileA( testfile4 );
 }
