@@ -1365,9 +1365,10 @@ BOOL WINAPI QueryServiceConfig2A(SC_HANDLE hService, DWORD dwLevel, LPBYTE buffe
 
     switch(dwLevel) {
         case SERVICE_CONFIG_DESCRIPTION:
-            {   LPSERVICE_DESCRIPTIONA configA = (LPSERVICE_DESCRIPTIONA) buffer;
+            if (buffer && bufferW) {
+                LPSERVICE_DESCRIPTIONA configA = (LPSERVICE_DESCRIPTIONA) buffer;
                 LPSERVICE_DESCRIPTIONW configW = (LPSERVICE_DESCRIPTIONW) bufferW;
-                if (configW->lpDescription) {
+                if (configW->lpDescription && (size > sizeof(SERVICE_DESCRIPTIONA))) {
                     DWORD sz;
                     configA->lpDescription = (LPSTR)(configA + 1);
                     sz = WideCharToMultiByte( CP_ACP, 0, configW->lpDescription, -1,
@@ -1380,10 +1381,11 @@ BOOL WINAPI QueryServiceConfig2A(SC_HANDLE hService, DWORD dwLevel, LPBYTE buffe
                 }
                 else configA->lpDescription = NULL;
             }
-        break;
+            break;
         default:
             FIXME("conversation W->A not implemented for level %d\n", dwLevel);
             ret = FALSE;
+            break;
     }
 
 cleanup:
