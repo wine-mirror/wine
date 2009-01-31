@@ -1346,15 +1346,15 @@ D3DXVECTOR3* WINAPI D3DXVec3Normalize(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv)
 
 D3DXVECTOR3* WINAPI D3DXVec3Project(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv, CONST D3DVIEWPORT8 *pviewport, CONST D3DXMATRIX *pprojection, CONST D3DXMATRIX *pview, CONST D3DXMATRIX *pworld)
 {
-    D3DXMATRIX m1, m2;
-    D3DXVECTOR3 out, vec;
+    D3DXMATRIX m;
+    D3DXVECTOR3 out;
 
-    D3DXMatrixMultiply(&m1, pworld, pview);
-    D3DXMatrixMultiply(&m2, &m1, pprojection);
-    D3DXVec3TransformCoord(&vec, pv, &m2);
-    out.x = pviewport->X +  ( 1.0f + vec.x ) * pviewport->Width / 2.0f;
-    out.y = pviewport->Y +  ( 1.0f - vec.y ) * pviewport->Height / 2.0f;
-    out.z = pviewport->MinZ + vec.z * ( pviewport->MaxZ - pviewport->MinZ );
+    D3DXMatrixMultiply(&m, pworld, pview);
+    D3DXMatrixMultiply(&m, &m, pprojection);
+    D3DXVec3TransformCoord(&out, pv, &m);
+    out.x = pviewport->X +  ( 1.0f + out.x ) * pviewport->Width / 2.0f;
+    out.y = pviewport->Y +  ( 1.0f - out.y ) * pviewport->Height / 2.0f;
+    out.z = pviewport->MinZ + out.z * ( pviewport->MaxZ - pviewport->MinZ );
     *pout = out;
     return pout;
 }
@@ -1404,16 +1404,16 @@ D3DXVECTOR3* WINAPI D3DXVec3TransformNormal(D3DXVECTOR3 *pout, CONST D3DXVECTOR3
 
 D3DXVECTOR3* WINAPI D3DXVec3Unproject(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv, CONST D3DVIEWPORT8 *pviewport, CONST D3DXMATRIX *pprojection, CONST D3DXMATRIX *pview, CONST D3DXMATRIX *pworld)
 {
-    D3DXMATRIX m1, m2, m3;
-    D3DXVECTOR3 out, vec;
+    D3DXMATRIX m;
+    D3DXVECTOR3 out;
 
-    D3DXMatrixMultiply(&m1, pworld, pview);
-    D3DXMatrixMultiply(&m2, &m1, pprojection);
-    D3DXMatrixInverse(&m3, NULL, &m2);
-    vec.x = 2.0f * ( pv->x - pviewport->X ) / pviewport->Width - 1.0f;
-    vec.y = 1.0f - 2.0f * ( pv->y - pviewport->Y ) / pviewport->Height;
-    vec.z = ( pv->z - pviewport->MinZ) / ( pviewport->MaxZ - pviewport->MinZ );
-    D3DXVec3TransformCoord(&out, &vec, &m3);
+    D3DXMatrixMultiply(&m, pworld, pview);
+    D3DXMatrixMultiply(&m, &m, pprojection);
+    D3DXMatrixInverse(&m, NULL, &m);
+    out.x = 2.0f * ( pv->x - pviewport->X ) / pviewport->Width - 1.0f;
+    out.y = 1.0f - 2.0f * ( pv->y - pviewport->Y ) / pviewport->Height;
+    out.z = ( pv->z - pviewport->MinZ) / ( pviewport->MaxZ - pviewport->MinZ );
+    D3DXVec3TransformCoord(&out, &out, &m);
     *pout = out;
     return pout;
 }
