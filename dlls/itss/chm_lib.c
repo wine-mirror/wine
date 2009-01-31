@@ -759,6 +759,10 @@ struct chmFile *chm_openW(const WCHAR *filename)
     if (newHandle->index_root == -1)
         newHandle->index_root = newHandle->index_head;
 
+    /* initialize cache */
+    chm_set_param(newHandle, CHM_PARAM_MAX_BLOCKS_CACHED,
+                  CHM_MAX_BLOCKS_CACHED);
+
     /* By default, compression is enabled. */
     newHandle->compression_enabled = 1;
 
@@ -821,10 +825,6 @@ struct chmFile *chm_openW(const WCHAR *filename)
                                     ctlData.windowsPerReset;
 #endif
     }
-
-    /* initialize cache */
-    chm_set_param(newHandle, CHM_PARAM_MAX_BLOCKS_CACHED,
-                  CHM_MAX_BLOCKS_CACHED);
 
     return newHandle;
 }
