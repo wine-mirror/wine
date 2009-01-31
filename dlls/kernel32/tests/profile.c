@@ -402,8 +402,11 @@ static void test_profile_delete_on_close(void)
                     "Cannot write test file: %x\n", GetLastError() );
     ok( size == sizeof contents - 1, "Test file: partial write\n");
 
+    SetLastError(0xdeadbeef);
     res = GetPrivateProfileInt(SECTION, KEY, 0, testfile);
-    ok( res == 123, "Got %d instead of 123\n", res);
+    ok( res == 123 ||
+        broken(res == 0 && GetLastError() == ERROR_SHARING_VIOLATION), /* Win9x, WinME */
+        "Got %d instead of 123\n", res);
 
     /* This also deletes the file */
     CloseHandle(h);
@@ -423,8 +426,11 @@ static void test_profile_refresh(void)
                     "Cannot write test file: %x\n", GetLastError() );
     ok( size == sizeof contents1 - 1, "Test file: partial write\n");
 
+    SetLastError(0xdeadbeef);
     res = GetPrivateProfileInt(SECTION, KEY, 0, testfile);
-    ok( res == 123, "Got %d instead of 123\n", res);
+    ok( res == 123 ||
+        broken(res == 0 && GetLastError() == ERROR_SHARING_VIOLATION), /* Win9x, WinME */
+        "Got %d instead of 123\n", res);
 
     CloseHandle(h);
 
@@ -436,8 +442,11 @@ static void test_profile_refresh(void)
                     "Cannot write test file: %x\n", GetLastError() );
     ok( size == sizeof contents2 - 1, "Test file: partial write\n");
 
+    SetLastError(0xdeadbeef);
     res = GetPrivateProfileInt(SECTION, KEY, 0, testfile);
-    ok( res == 124, "Got %d instead of 124\n", res);
+    ok( res == 124 ||
+        broken(res == 0 && GetLastError() == 0xdeadbeef), /* Win9x, WinME */
+        "Got %d instead of 124\n", res);
 
     /* This also deletes the file */
     CloseHandle(h);
