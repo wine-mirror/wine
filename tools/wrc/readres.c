@@ -292,7 +292,10 @@ static resource_t *read_res32(FILE *fp)
 			usrres = new_user(type, NULL, new_int(memopt));
 		}
 		else
+		{
+			free (type);
 			usrres = NULL;
+		}
 		rsc = new_resource(res_type,
 				   usrres,
 				   memopt,
