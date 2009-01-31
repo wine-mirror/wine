@@ -125,29 +125,15 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_EnumObject
 
 	TRACE("(%p, %s, %d, %p, %p)\n", This, debugstr_dmguid(rguidClass), dwIndex, pDesc, pwszAlias);
 
-	/* check if we can write to whole pDesc */
-	if (pDesc) {
-		if (IsBadReadPtr (pDesc, sizeof(DWORD))) {
-			ERR(": pDesc->dwSize bad read pointer\n");
-			return E_POINTER;
-		}
-		if (pDesc->dwSize != sizeof(DMUS_OBJECTDESC)) {
-			ERR(": invalid pDesc->dwSize\n");
-			return E_INVALIDARG;
-		}
-		if (IsBadWritePtr (pDesc, sizeof(DMUS_OBJECTDESC))) {
-			ERR(": pDesc bad write pointer\n");
-			return E_POINTER;
-		}
+	if (!pDesc)
+		return E_POINTER;
+	if (pDesc->dwSize != sizeof(DMUS_OBJECTDESC)) {
+		ERR(": invalid pDesc->dwSize %d\n", pDesc->dwSize);
+		return E_INVALIDARG;
 	}
-	/* check if wszAlias is big enough */
-	if (pwszAlias && IsBadWritePtr (pwszAlias, DMUS_MAX_FILENAME_SIZE)) {
-		ERR(": wszAlias bad write pointer\n");
-		return E_POINTER;		
-	}
-	
+
 	DM_STRUCT_INIT(pDesc);
-	
+
 	LIST_FOR_EACH (pEntry, This->pContainedObjects) {
 		pContainedObject = LIST_ENTRY (pEntry, WINE_CONTAINER_ENTRY, entry);
 		
