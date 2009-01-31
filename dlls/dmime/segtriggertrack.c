@@ -274,7 +274,7 @@ static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegment (LPPERSIS
       TRACE_(dmfile)(": segment item chunk\n"); 
       /** alloc new item entry */
       pNewItem = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_SEGMENT_ITEM));
-      if (NULL == pNewItem) {
+      if (!pNewItem) {
 	ERR(": no more memory\n");
 	return  E_OUTOFMEMORY;
       }
@@ -288,6 +288,10 @@ static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegment (LPPERSIS
     }
     case DMUS_FOURCC_SEGMENTITEMNAME_CHUNK: {
       TRACE_(dmfile)(": segment item name chunk\n");
+      if (!pNewItem) {
+	ERR(": pNewItem not allocated, bad chunk order?\n");
+	return E_FAIL;
+      }
       IStream_Read (pStm, pNewItem->wszName, Chunk.dwSize, NULL);
       TRACE_(dmfile)(" - name: %s\n", debugstr_w(pNewItem->wszName));
       break;
@@ -305,6 +309,10 @@ static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegment (LPPERSIS
 	  ERR(": could not load Reference\n");
 	  return hr;
 	}
+        if (!pNewItem) {
+	  ERR(": pNewItem not allocated, bad chunk order?\n");
+	  return E_FAIL;
+        }
 	pNewItem->pObject = pObject;
 	break;						
       }
