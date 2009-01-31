@@ -494,6 +494,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     Sleep(2500);
 
     /* lpAppName is NULL */
+    memset(buf, 0xc, sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA(NULL, "name1", "default",
                                    buf, MAX_PATH, filename);
@@ -501,10 +502,11 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
        broken(ret == 19), /* Win9x and WinME */
        "Expected 18, got %d\n", ret);
     len = lstrlenA("section1") + sizeof(CHAR) + lstrlenA("section2") + 2 * sizeof(CHAR);
-    ok(!memcmp(buf, "section1\0section2\0", len),
-       "Expected \"section1\\0section2\\0\", got \"%s\"\n", buf);
+    ok(!memcmp(buf, "section1\0section2\0\0", len),
+       "Expected \"section1\\0section2\\0\\0\", got \"%s\"\n", buf);
 
     /* lpAppName is empty */
+    memset(buf, 0xc, sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA(emptystr, "name1", "default",
                                    buf, MAX_PATH, filename);
@@ -513,6 +515,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(emptystr_ok(emptystr), "AppName modified\n");
 
     /* lpAppName is missing */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("notasection", "name1", "default",
                                    buf, MAX_PATH, filename);
@@ -520,6 +523,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(!lstrcmpA(buf, "default"), "Expected \"default\", got \"%s\"\n", buf);
 
     /* lpAppName is empty, lpDefault is NULL */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA(emptystr, "name1", NULL,
                                    buf, MAX_PATH, filename);
@@ -530,6 +534,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(emptystr_ok(emptystr), "AppName modified\n");
 
     /* lpAppName is empty, lpDefault is empty */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA(emptystr, "name1", "",
                                    buf, MAX_PATH, filename);
@@ -538,6 +543,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(emptystr_ok(emptystr), "AppName modified\n");
 
     /* lpAppName is empty, lpDefault has trailing blank characters */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     /* lpDefault must be writable (trailing blanks are removed inplace in win9x) */
     lstrcpyA(def_val, "default  ");
@@ -548,6 +554,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(emptystr_ok(emptystr), "AppName modified\n");
 
     /* lpAppName is empty, many blank characters in lpDefault */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     /* lpDefault must be writable (trailing blanks are removed inplace in win9x) */
     lstrcpyA(def_val, "one two  ");
@@ -558,6 +565,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(emptystr_ok(emptystr), "AppName modified\n");
 
     /* lpAppName is empty, blank character but not trailing in lpDefault */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA(emptystr, "name1", "one two",
                                    buf, MAX_PATH, filename);
@@ -566,6 +574,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(emptystr_ok(emptystr), "AppName modified\n");
 
     /* lpKeyName is NULL */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", NULL, "default",
                                    buf, MAX_PATH, filename);
@@ -574,6 +583,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
        "Expected \"name1\\0name2\\0name4\\0\", got \"%s\"\n", buf);
 
     /* lpKeyName is empty */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", emptystr, "default",
                                    buf, MAX_PATH, filename);
@@ -582,6 +592,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(emptystr_ok(emptystr), "KeyName modified\n");
 
     /* lpKeyName is missing */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", "notakey", "default",
                                    buf, MAX_PATH, filename);
@@ -589,6 +600,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(!lstrcmpA(buf, "default"), "Expected \"default\", got \"%s\"\n", buf);
 
     /* lpKeyName is empty, lpDefault is NULL */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", emptystr, NULL,
                                    buf, MAX_PATH, filename);
@@ -599,6 +611,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(emptystr_ok(emptystr), "KeyName modified\n");
 
     /* lpKeyName is empty, lpDefault is empty */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", emptystr, "",
                                    buf, MAX_PATH, filename);
@@ -607,6 +620,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(emptystr_ok(emptystr), "KeyName modified\n");
 
     /* lpKeyName is empty, lpDefault has trailing blank characters */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     /* lpDefault must be writable (trailing blanks are removed inplace in win9x) */
     lstrcpyA(def_val, "default  ");
@@ -624,6 +638,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     }
 
     /* lpFileName is NULL */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", "name1", "default",
                                    buf, MAX_PATH, NULL);
@@ -635,6 +650,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
        "Expected \"default\", got \"%s\"\n", buf);
 
     /* lpFileName is empty */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", "name1", "default",
                                    buf, MAX_PATH, "");
@@ -642,6 +658,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(!lstrcmpA(buf, "default"), "Expected \"default\", got \"%s\"\n", buf);
 
     /* lpFileName is nonexistent */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", "name1", "default",
                                    buf, MAX_PATH, "nonexistent");
@@ -649,6 +666,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(!lstrcmpA(buf, "default"), "Expected \"default\", got \"%s\"\n", buf);
 
     /* nSize is 0 */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", "name1", "default",
                                    buf, 0, filename);
@@ -656,6 +674,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(!lstrcmpA(buf, "kumquat"), "Expected buf to be unchanged, got \"%s\"\n", buf);
 
     /* nSize is exact size of output */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", "name1", "default",
                                    buf, 4, filename);
@@ -663,6 +682,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(!lstrcmpA(buf, "val"), "Expected \"val\", got \"%s\"\n", buf);
 
     /* nSize has room for NULL terminator */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", "name1", "default",
                                    buf, 5, filename);
@@ -670,6 +690,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(!lstrcmpA(buf, "val1"), "Expected \"val1\", got \"%s\"\n", buf);
 
     /* output is 1 character */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", "name4", "default",
                                    buf, MAX_PATH, filename);
@@ -677,6 +698,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(!lstrcmpA(buf, "a"), "Expected \"a\", got \"%s\"\n", buf);
 
     /* output is 1 character, no room for NULL terminator */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", "name4", "default",
                                    buf, 1, filename);
@@ -684,25 +706,30 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
 
     /* lpAppName is NULL, not enough room for final section name */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA(NULL, "name1", "default",
                                    buf, 16, filename);
     ok(ret == 14, "Expected 14, got %d\n", ret);
     len = lstrlenA("section1") + 2 * sizeof(CHAR);
-    ok(!memcmp(buf, "section1\0secti\0", ret + 1) ||
+    todo_wine
+    ok(!memcmp(buf, "section1\0secti\0\0", ret + 2) ||
        broken(!memcmp(buf, "section1\0\0", len)), /* Win9x, WinME */
-       "Expected \"section1\\0secti\\0\", got \"%s\"\n", buf);
+       "Expected \"section1\\0secti\\0\\0\", got \"%s\"\n", buf);
 
     /* lpKeyName is NULL, not enough room for final key name */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", NULL, "default",
                                    buf, 16, filename);
     ok(ret == 14, "Expected 14, got %d\n", ret);
-    ok(!memcmp(buf, "name1\0name2\0na\0", ret + 1) ||
+    todo_wine
+    ok(!memcmp(buf, "name1\0name2\0na\0\0", ret + 2) ||
        broken(!memcmp(buf, "name1\0name2\0n\0\0", ret + 1)), /* Win9x, WinME */
-       "Expected \"name1\\0name2\\0na\\0\", got \"%s\"\n", buf);
+       "Expected \"name1\\0name2\\0na\\0\\0\", got \"%s\"\n", buf);
 
     /* key value has quotation marks which are stripped */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", "name2", "default",
                                    buf, MAX_PATH, filename);
@@ -710,6 +737,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(!lstrcmpA(buf, "val2"), "Expected \"val2\", got \"%s\"\n", buf);
 
     /* case does not match */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", "NaMe1", "default",
                                    buf, MAX_PATH, filename);
@@ -717,6 +745,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(!lstrcmpA(buf, "val1"), "Expected \"val1\", got \"%s\"\n", buf);
 
     /* only filename is used */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", "NaMe1", "default",
                                    buf, MAX_PATH, "winetest.ini");
@@ -736,6 +765,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     create_test_file(path, content, lstrlenA(content));
 
     /* only filename is used, file exists in windows directory */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", "NaMe1", "default",
                                    buf, MAX_PATH, tempfile);
@@ -743,6 +773,7 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(!lstrcmpA(buf, "val1"), "Expected \"val1\", got \"%s\"\n", buf);
 
     /* successful case */
+    memset(buf, 0xc,sizeof(buf));
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", "name1", "default",
                                    buf, MAX_PATH, filename);
