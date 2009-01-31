@@ -377,8 +377,11 @@ static void test_profile_existing(void)
         ok(INVALID_HANDLE_VALUE != h, "%d: CreateFile failed\n",i);
         SetLastError(0xdeadbeef);
         ret = GetPrivateProfileStringA(SECTION, KEY, NULL, buffer, MAX_PATH, testfile2);
+        /* Win9x and WinME returns 0 for all cases except the first one */
         if (!pe[i].read_error)
-            ok( ret, "%d: GetPrivateProfileString failed with error %u\n", i, GetLastError() );
+            ok( ret ||
+                broken(!ret && GetLastError() == 0xdeadbeef), /* Win9x, WinME */
+                "%d: GetPrivateProfileString failed with error %u\n", i, GetLastError() );
         else
             ok( !ret, "%d: GetPrivateProfileString succeeded\n", i );
         CloseHandle(h);
