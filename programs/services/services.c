@@ -242,10 +242,12 @@ static void scmdatabase_autostart_services(struct scmdatabase *db)
         {
             if (i+1 >= size)
             {
+                struct service_entry **slist_new;
                 size *= 2;
-                services_list = HeapReAlloc(GetProcessHeap(), 0, services_list, size * sizeof(services_list[0]));
-                if (!services_list)
+                slist_new = HeapReAlloc(GetProcessHeap(), 0, services_list, size * sizeof(services_list[0]));
+                if (!slist_new)
                     break;
+                services_list = slist_new;
             }
             services_list[i] = service;
             service->ref_count++;
