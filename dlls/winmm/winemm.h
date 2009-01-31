@@ -202,14 +202,9 @@ void            MMDRV_InstallMap(unsigned int, MMDRV_MAPFUNC, MMDRV_UNMAPFUNC,
                                  MMDRV_MAPFUNC, MMDRV_UNMAPFUNC, LPDRVCALLBACK);
 
 WINE_MCIDRIVER* MCI_GetDriver(UINT16 uDevID);
-UINT		MCI_GetDriverFromString(LPCWSTR str);
-DWORD		MCI_WriteString(LPWSTR lpDstStr, DWORD dstSize, LPCWSTR lpSrcStr);
 const char* 	MCI_MessageToString(UINT wMsg);
-UINT	WINAPI	MCI_DefYieldProc(MCIDEVICEID wDevID, DWORD data);
 LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2);
 DWORD		MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2, BOOL bFrom32);
-DWORD		MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
-DWORD		MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
 UINT		MCI_SetCommandTable(void *table, UINT uDevType);
 BOOL	        MCI_DeleteCommandTable(UINT uTbl, BOOL delete);
 LPWSTR          MCI_strdupAtoW(LPCSTR str);

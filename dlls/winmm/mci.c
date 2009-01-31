@@ -85,6 +85,8 @@ static const WCHAR wszSystemIni[] = {'s','y','s','t','e','m','.','i','n','i',0};
 
 static WINE_MCIDRIVER *MciDrivers;
 
+static UINT WINAPI MCI_DefYieldProc(MCIDEVICEID wDevID, DWORD data);
+
 /* dup a string and uppercase it */
 static inline LPWSTR str_dup_upper( LPCWSTR str )
 {
@@ -117,7 +119,7 @@ LPWINE_MCIDRIVER	MCI_GetDriver(UINT16 wDevID)
 /**************************************************************************
  * 				MCI_GetDriverFromString		[internal]
  */
-UINT	MCI_GetDriverFromString(LPCWSTR lpstrName)
+static UINT MCI_GetDriverFromString(LPCWSTR lpstrName)
 {
     LPWINE_MCIDRIVER	wmd;
     UINT		ret = 0;
@@ -931,6 +933,41 @@ errCleanUp:
 }
 
 /**************************************************************************
+ * 			MCI_SendCommandFrom32			[internal]
+ */
+static DWORD MCI_SendCommandFrom32(MCIDEVICEID wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+{
+    DWORD		dwRet = MCIERR_INVALID_DEVICE_ID;
+    LPWINE_MCIDRIVER	wmd = MCI_GetDriver(wDevID);
+
+    if (wmd) {
+	if (wmd->bIs32) {
+	    dwRet = SendDriverMessage(wmd->hDriver, wMsg, dwParam1, dwParam2);
+	} else if (pFnMciMapMsg32WTo16) {
+	    WINMM_MapType	res;
+
+	    switch (res = pFnMciMapMsg32WTo16(wmd->wType, wMsg, dwParam1, &dwParam2)) {
+	    case WINMM_MAP_MSGERROR:
+		TRACE("Not handled yet (%s)\n", MCI_MessageToString(wMsg));
+		dwRet = MCIERR_DRIVER_INTERNAL;
+		break;
+	    case WINMM_MAP_NOMEM:
+		TRACE("Problem mapping msg=%s from 32a to 16\n", MCI_MessageToString(wMsg));
+		dwRet = MCIERR_OUT_OF_MEMORY;
+		break;
+	    case WINMM_MAP_OK:
+	    case WINMM_MAP_OKMEM:
+		dwRet = SendDriverMessage(wmd->hDriver, wMsg, dwParam1, dwParam2);
+		if (res == WINMM_MAP_OKMEM)
+		    pFnMciUnMapMsg32WTo16(wmd->wType, wMsg, dwParam1, dwParam2);
+		break;
+	    }
+	}
+    }
+    return dwRet;
+}
+
+/**************************************************************************
  * 			MCI_FinishOpen				[internal]
  */
 static	DWORD	MCI_FinishOpen(LPWINE_MCIDRIVER wmd, LPMCI_OPEN_PARMSW lpParms,
@@ -1551,44 +1588,9 @@ BOOL WINAPI mciFreeCommandResource(UINT uTable)
 }
 
 /**************************************************************************
- * 			MCI_SendCommandFrom32			[internal]
- */
-DWORD MCI_SendCommandFrom32(MCIDEVICEID wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
-{
-    DWORD		dwRet = MCIERR_INVALID_DEVICE_ID;
-    LPWINE_MCIDRIVER	wmd = MCI_GetDriver(wDevID);
-
-    if (wmd) {
-	if (wmd->bIs32) {
-	    dwRet = SendDriverMessage(wmd->hDriver, wMsg, dwParam1, dwParam2);
-	} else if (pFnMciMapMsg32WTo16) {
-	    WINMM_MapType	res;
-
-	    switch (res = pFnMciMapMsg32WTo16(wmd->wType, wMsg, dwParam1, &dwParam2)) {
-	    case WINMM_MAP_MSGERROR:
-		TRACE("Not handled yet (%s)\n", MCI_MessageToString(wMsg));
-		dwRet = MCIERR_DRIVER_INTERNAL;
-		break;
-	    case WINMM_MAP_NOMEM:
-		TRACE("Problem mapping msg=%s from 32a to 16\n", MCI_MessageToString(wMsg));
-		dwRet = MCIERR_OUT_OF_MEMORY;
-		break;
-	    case WINMM_MAP_OK:
-	    case WINMM_MAP_OKMEM:
-		dwRet = SendDriverMessage(wmd->hDriver, wMsg, dwParam1, dwParam2);
-		if (res == WINMM_MAP_OKMEM)
-		    pFnMciUnMapMsg32WTo16(wmd->wType, wMsg, dwParam1, dwParam2);
-		break;
-	    }
-	}
-    }
-    return dwRet;
-}
-
-/**************************************************************************
  * 			MCI_SendCommandFrom16			[internal]
  */
-DWORD MCI_SendCommandFrom16(MCIDEVICEID wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+static DWORD MCI_SendCommandFrom16(MCIDEVICEID wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     DWORD		dwRet = MCIERR_INVALID_DEVICE_ID;
     LPWINE_MCIDRIVER	wmd = MCI_GetDriver(wDevID);
@@ -1805,7 +1807,7 @@ static	DWORD MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms
 /**************************************************************************
  * 			MCI_WriteString				[internal]
  */
-DWORD	MCI_WriteString(LPWSTR lpDstStr, DWORD dstSize, LPCWSTR lpSrcStr)
+static DWORD MCI_WriteString(LPWSTR lpDstStr, DWORD dstSize, LPCWSTR lpSrcStr)
 {
     DWORD	ret = 0;
 
@@ -2301,7 +2303,7 @@ static void MyUserYield(void)
 /**************************************************************************
  * 				MCI_DefYieldProc	       	[internal]
  */
-UINT WINAPI MCI_DefYieldProc(MCIDEVICEID wDevID, DWORD data)
+static UINT WINAPI MCI_DefYieldProc(MCIDEVICEID wDevID, DWORD data)
 {
     INT16	ret;
 
