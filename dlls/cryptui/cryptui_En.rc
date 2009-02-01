@@ -161,6 +161,8 @@ STRINGTABLE DISCARDABLE
     IDS_NO "No"
     IDS_EXPORT_SUCCEEDED "The export was successful."
     IDS_EXPORT_FAILED "The export failed."
+    IDS_EXPORT_PRIVATE_KEY_TITLE "Export Private Key"
+    IDS_EXPORT_PRIVATE_KEY_SUBTITLE "The certificate contains a private key which may be exported along with the certificate."
 }
 
 IDD_GENERAL DIALOG DISCARDABLE 0, 0, 255, 236
@@ -379,6 +381,18 @@ BEGIN
     -1, 115,56,195,40
   LTEXT "To continue, click Next.",
     -1, 115,103,195,8
+END
+
+IDD_EXPORT_PRIVATE_KEY DIALOG DISCARDABLE 0,0,317,143
+CAPTION "Certificate Export Wizard"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "If you choose to export the private key, you will be prompted for a password to protect the private key on a later page.", -1, 21,1,195,23
+  LTEXT "Do you wish to export the private key?", -1, 21,24,195,15
+  AUTORADIOBUTTON "&Yes, export the private key",
+    IDC_EXPORT_PRIVATE_KEY_YES, 31,36,200,12, BS_AUTORADIOBUTTON|WS_TABSTOP
+  AUTORADIOBUTTON "N&o, do not export the private key",
+    IDC_EXPORT_PRIVATE_KEY_NO, 31,48,200,12, BS_AUTORADIOBUTTON
 END
 
 IDD_EXPORT_FORMAT DIALOG DISCARDABLE 0,0,317,143

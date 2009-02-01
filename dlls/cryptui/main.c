@@ -5566,6 +5566,42 @@ static LRESULT CALLBACK export_welcome_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
     return ret;
 }
 
+static LRESULT CALLBACK export_private_key_dlg_proc(HWND hwnd, UINT msg,
+ WPARAM wp, LPARAM lp)
+{
+    LRESULT ret = 0;
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+    {
+        struct ExportWizData *data;
+        PROPSHEETPAGEW *page = (PROPSHEETPAGEW *)lp;
+
+        data = (struct ExportWizData *)page->lParam;
+        SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
+        SendMessageW(GetDlgItem(hwnd, IDC_EXPORT_PRIVATE_KEY_NO), BM_CLICK,
+         0, 0);
+        break;
+    }
+    case WM_NOTIFY:
+    {
+        NMHDR *hdr = (NMHDR *)lp;
+
+        switch (hdr->code)
+        {
+        case PSN_SETACTIVE:
+            PostMessageW(GetParent(hwnd), PSM_SETWIZBUTTONS, 0,
+             PSWIZB_BACK | PSWIZB_NEXT);
+            ret = TRUE;
+            break;
+        }
+        break;
+    }
+    }
+    return ret;
+}
+
 static BOOL export_info_has_private_key(PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo)
 {
     BOOL ret = FALSE;
@@ -6370,10 +6406,10 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
  LPCWSTR pwszWizardTitle, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo, void *pvoid)
 {
     PROPSHEETHEADERW hdr;
-    PROPSHEETPAGEW pages[4];
+    PROPSHEETPAGEW pages[6];
     struct ExportWizData data;
     int nPages = 0;
-    BOOL showFormatPage = TRUE;
+    BOOL hasPrivateKey, showFormatPage = TRUE;
 
     data.dwFlags = dwFlags;
     data.pwszWizardTitle = pwszWizardTitle;
@@ -6402,6 +6438,7 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     pages[nPages].lParam = (LPARAM)&data;
     nPages++;
 
+    hasPrivateKey = export_info_has_private_key(pExportInfo);
     switch (pExportInfo->dwSubjectChoice)
     {
     case CRYPTUI_WIZ_EXPORT_CRL_CONTEXT:
@@ -6419,6 +6456,21 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
         data.contextInfo.dwExportFormat = CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7;
         break;
     }
+
+    if (hasPrivateKey && showFormatPage)
+    {
+        pages[nPages].dwSize = sizeof(pages[0]);
+        pages[nPages].hInstance = hInstance;
+        pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_PRIVATE_KEY);
+        pages[nPages].pfnDlgProc = export_private_key_dlg_proc;
+        pages[nPages].dwFlags = PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
+        pages[nPages].pszHeaderTitle =
+         MAKEINTRESOURCEW(IDS_EXPORT_PRIVATE_KEY_TITLE);
+        pages[nPages].pszHeaderSubTitle =
+         MAKEINTRESOURCEW(IDS_EXPORT_PRIVATE_KEY_SUBTITLE);
+        pages[nPages].lParam = (LPARAM)&data;
+        nPages++;
+    }
     if (showFormatPage)
     {
         pages[nPages].dwSize = sizeof(pages[0]);
@@ -6432,6 +6484,10 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
          MAKEINTRESOURCEW(IDS_EXPORT_FORMAT_SUBTITLE);
         pages[nPages].lParam = (LPARAM)&data;
         nPages++;
+    }
+    if (hasPrivateKey && showFormatPage)
+    {
+        FIXME("add password page\n");
     }
 
     pages[nPages].dwSize = sizeof(pages[0]);
