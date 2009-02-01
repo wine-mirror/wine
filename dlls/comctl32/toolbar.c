@@ -4659,10 +4659,12 @@ TOOLBAR_SetExtendedStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	FIXME("Unknown Toolbar Extended Style 0x%08x. Please report.\n",
 	      (infoPtr->dwExStyle & ~TBSTYLE_EX_ALL));
 
-    TOOLBAR_CalcToolbar (hwnd);
+    if ((dwOldStyle ^ infoPtr->dwExStyle) & TBSTYLE_EX_MIXEDBUTTONS)
+        TOOLBAR_CalcToolbar(hwnd);
+    else
+        TOOLBAR_LayoutToolbar(hwnd);
 
     TOOLBAR_AutoSize(hwnd);
-
     InvalidateRect(hwnd, NULL, TRUE);
 
     return (LRESULT)dwOldStyle;

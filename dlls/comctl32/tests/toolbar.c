@@ -1025,11 +1025,30 @@ static BOOL did_recalc(HWND hToolbar)
     return (rect.top == 0);
 }
 
+/* call after a recalc did happen to return to an unstable state */
+static void restore_recalc_state(HWND hToolbar)
+{
+    RECT rect;
+    /* return to style with a 2px top margin */
+    SetWindowLong(hToolbar, GWL_STYLE,
+        GetWindowLong(hToolbar, GWL_STYLE) & ~TBSTYLE_FLAT);
+    /* recalc */
+    SendMessage(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[3]);
+    /* top margin will be 0px if a recalc occures */
+    SetWindowLong(hToolbar, GWL_STYLE,
+        GetWindowLong(hToolbar, GWL_STYLE) | TBSTYLE_FLAT);
+    /* safety check */
+    SendMessage(hToolbar, TB_GETITEMRECT, 1, (LPARAM)&rect);
+    ok(rect.top == 2, "Test will make no sense because initial top is %d instead of 2\n",
+        rect.top);
+}
+
 static void test_recalc(void)
 {
     HWND hToolbar;
     TBBUTTONINFO bi;
     CHAR test[] = "Test";
+    const int EX_STYLES_COUNT = 5;
     int i;
 
     /* Like TB_ADDBUTTONS tested in test_sized, inserting a button without text
@@ -1050,16 +1069,34 @@ static void test_recalc(void)
     SendMessage(hToolbar, TB_SETBUTTONINFO, 1, (LPARAM)&bi);
     ok(!did_recalc(hToolbar), "Unexpected recalc - setting a button text\n");
 
-    for (i = 0; i < 32; i++)
+    /* most extended styled doesn't force a recalc (testing all the bits gives
+     * the same results, but prints some ERRs while testing) */
+    for (i = 0; i < EX_STYLES_COUNT; i++)
     {
         if (i == 1 || i == 3)  /* an undoc style and TBSTYLE_EX_MIXEDBUTTONS */
             continue;
         prepare_recalc_test(&hToolbar);
         expect(0, (int)SendMessage(hToolbar, TB_GETEXTENDEDSTYLE, 0, 0));
         SendMessage(hToolbar, TB_SETEXTENDEDSTYLE, 0, (1 << i));
+        ok(!did_recalc(hToolbar), "Unexpected recalc - setting bit %d\n", i);
         SendMessage(hToolbar, TB_SETEXTENDEDSTYLE, 0, 0);
+        ok(!did_recalc(hToolbar), "Unexpected recalc - clearing bit %d\n", i);
         expect(0, (int)SendMessage(hToolbar, TB_GETEXTENDEDSTYLE, 0, 0));
     }
+
+    /* TBSTYLE_EX_MIXEDBUTTONS does a recalc on change */
+    prepare_recalc_test(&hToolbar);
+    SendMessage(hToolbar, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_MIXEDBUTTONS);
+    ok(did_recalc(hToolbar), "Expected a recalc - setting TBSTYLE_EX_MIXEDBUTTONS\n");
+    restore_recalc_state(hToolbar);
+    SendMessage(hToolbar, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_MIXEDBUTTONS);
+    ok(!did_recalc(hToolbar), "Unexpected recalc - setting TBSTYLE_EX_MIXEDBUTTONS again\n");
+    restore_recalc_state(hToolbar);
+    SendMessage(hToolbar, TB_SETEXTENDEDSTYLE, 0, 0);
+    ok(did_recalc(hToolbar), "Expected a recalc - clearing TBSTYLE_EX_MIXEDBUTTONS\n");
+
+    /* undocumented exstyle 0x2 seems to changes the top margin, what
+     * interferes with these tests */
 
     DestroyWindow(hToolbar);
 }
