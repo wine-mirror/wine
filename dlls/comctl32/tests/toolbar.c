@@ -1028,6 +1028,8 @@ static BOOL did_recalc(HWND hToolbar)
 static void test_recalc(void)
 {
     HWND hToolbar;
+    TBBUTTONINFO bi;
+    CHAR test[] = "Test";
 
     /* Like TB_ADDBUTTONS tested in test_sized, inserting a button without text
      * results in a relayout, while adding one with text forces a recalc */
@@ -1038,6 +1040,14 @@ static void test_recalc(void)
     prepare_recalc_test(&hToolbar);
     SendMessage(hToolbar, TB_INSERTBUTTON, 1, (LPARAM)&buttons3[3]);
     ok(did_recalc(hToolbar), "Expected a recalc - adding button with text\n");
+
+    /* TB_SETBUTTONINFO, even when adding a text, results only in a relayout */
+    prepare_recalc_test(&hToolbar);
+    bi.cbSize = sizeof(bi);
+    bi.dwMask = TBIF_TEXT;
+    bi.pszText = test;
+    SendMessage(hToolbar, TB_SETBUTTONINFO, 1, (LPARAM)&bi);
+    ok(!did_recalc(hToolbar), "Unexpected recalc - setting a button text\n");
 
     DestroyWindow(hToolbar);
 }

@@ -4447,7 +4447,7 @@ TOOLBAR_SetButtonInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* save the button rect to see if we need to redraw the whole toolbar */
     oldBtnRect = btnPtr->rect;
-    TOOLBAR_CalcToolbar(hwnd);
+    TOOLBAR_LayoutToolbar(hwnd);
 
     if (!EqualRect(&oldBtnRect, &btnPtr->rect))
         InvalidateRect(hwnd, NULL, TRUE);
@@ -4500,7 +4500,7 @@ TOOLBAR_SetButtonInfoW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* save the button rect to see if we need to redraw the whole toolbar */
     oldBtnRect = btnPtr->rect;
-    TOOLBAR_CalcToolbar(hwnd);
+    TOOLBAR_LayoutToolbar(hwnd);
 
     if (!EqualRect(&oldBtnRect, &btnPtr->rect))
         InvalidateRect(hwnd, NULL, TRUE);
