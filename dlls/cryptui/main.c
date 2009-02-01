@@ -5570,12 +5570,12 @@ static LRESULT CALLBACK export_private_key_dlg_proc(HWND hwnd, UINT msg,
  WPARAM wp, LPARAM lp)
 {
     LRESULT ret = 0;
+    struct ExportWizData *data;
 
     switch (msg)
     {
     case WM_INITDIALOG:
     {
-        struct ExportWizData *data;
         PROPSHEETPAGEW *page = (PROPSHEETPAGEW *)lp;
 
         data = (struct ExportWizData *)page->lParam;
@@ -5594,6 +5594,21 @@ static LRESULT CALLBACK export_private_key_dlg_proc(HWND hwnd, UINT msg,
             PostMessageW(GetParent(hwnd), PSM_SETWIZBUTTONS, 0,
              PSWIZB_BACK | PSWIZB_NEXT);
             ret = TRUE;
+            break;
+        case PSN_WIZNEXT:
+            data = (struct ExportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
+            if (IsDlgButtonChecked(hwnd, IDC_EXPORT_PRIVATE_KEY_NO))
+            {
+                data->contextInfo.dwExportFormat =
+                 CRYPTUI_WIZ_EXPORT_FORMAT_DER;
+                data->contextInfo.fExportPrivateKeys = FALSE;
+            }
+            else
+            {
+                data->contextInfo.dwExportFormat =
+                 CRYPTUI_WIZ_EXPORT_FORMAT_PFX;
+                data->contextInfo.fExportPrivateKeys = TRUE;
+            }
             break;
         }
         break;
