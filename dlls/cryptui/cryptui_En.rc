@@ -165,6 +165,7 @@ STRINGTABLE DISCARDABLE
     IDS_EXPORT_PRIVATE_KEY_SUBTITLE "The certificate contains a private key which may be exported along with the certificate."
     IDS_EXPORT_PASSWORD_TITLE "Enter Password"
     IDS_EXPORT_PASSWORD_SUBTITLE "You may password-protect a private key."
+    IDS_EXPORT_PASSWORD_MISMATCH "The passwords do not match."
 }
 
 IDD_GENERAL DIALOG DISCARDABLE 0, 0, 255, 236

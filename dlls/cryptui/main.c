@@ -5517,6 +5517,7 @@ struct ExportWizData
     LPCWSTR pwszWizardTitle;
     CRYPTUI_WIZ_EXPORT_INFO exportInfo;
     CRYPTUI_WIZ_EXPORT_CERTCONTEXT_INFO contextInfo;
+    BOOL freePassword;
     LPWSTR fileName;
     HANDLE file;
     BOOL success;
@@ -5776,6 +5777,25 @@ static LRESULT CALLBACK export_format_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
     return ret;
 }
 
+static void export_password_mismatch(HWND hwnd, struct ExportWizData *data)
+{
+    WCHAR title[MAX_STRING_LEN], error[MAX_STRING_LEN];
+    LPCWSTR pTitle;
+
+    if (data->pwszWizardTitle)
+        pTitle = data->pwszWizardTitle;
+    else
+    {
+        LoadStringW(hInstance, IDS_EXPORT_WIZARD, title,
+         sizeof(title) / sizeof(title[0]));
+        pTitle = title;
+    }
+    LoadStringW(hInstance, IDS_EXPORT_PASSWORD_MISMATCH, error,
+     sizeof(error) / sizeof(error[0]));
+    MessageBoxW(hwnd, error, pTitle, MB_ICONERROR | MB_OK);
+    SetFocus(GetDlgItem(hwnd, IDC_EXPORT_PASSWORD));
+}
+
 static LRESULT CALLBACK export_password_dlg_proc(HWND hwnd, UINT msg,
  WPARAM wp, LPARAM lp)
 {
@@ -5803,6 +5823,58 @@ static LRESULT CALLBACK export_password_dlg_proc(HWND hwnd, UINT msg,
              PSWIZB_BACK | PSWIZB_NEXT);
             ret = TRUE;
             break;
+        case PSN_WIZNEXT:
+        {
+            HWND passwordEdit = GetDlgItem(hwnd, IDC_EXPORT_PASSWORD);
+            HWND passwordConfirmEdit = GetDlgItem(hwnd,
+             IDC_EXPORT_PASSWORD_CONFIRM);
+            DWORD passwordLen = SendMessageW(passwordEdit, WM_GETTEXTLENGTH,
+             0, 0);
+            DWORD passwordConfirmLen = SendMessageW(passwordConfirmEdit,
+             WM_GETTEXTLENGTH, 0, 0);
+
+            data = (struct ExportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
+            if (!passwordLen && !passwordConfirmLen)
+                data->contextInfo.pwszPassword = NULL;
+            else if (passwordLen != passwordConfirmLen)
+            {
+                export_password_mismatch(hwnd, data);
+                SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, 1);
+                ret = 1;
+            }
+            else
+            {
+                LPWSTR password = HeapAlloc(GetProcessHeap(), 0,
+                 (passwordLen + 1) * sizeof(WCHAR));
+                LPWSTR passwordConfirm = HeapAlloc(GetProcessHeap(), 0,
+                 (passwordConfirmLen + 1) * sizeof(WCHAR));
+                BOOL freePassword = TRUE;
+
+                if (password && passwordConfirm)
+                {
+                    SendMessageW(passwordEdit, WM_GETTEXT, passwordLen + 1,
+                     (LPARAM)password);
+                    SendMessageW(passwordConfirmEdit, WM_GETTEXT,
+                     passwordConfirmLen + 1, (LPARAM)passwordConfirm);
+                    if (strcmpW(password, passwordConfirm))
+                    {
+                        export_password_mismatch(hwnd, data);
+                        SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, 1);
+                        ret = 1;
+                    }
+                    else
+                    {
+                        data->contextInfo.pwszPassword = password;
+                        freePassword = FALSE;
+                        data->freePassword = TRUE;
+                    }
+                }
+                if (freePassword)
+                    HeapFree(GetProcessHeap(), 0, password);
+                HeapFree(GetProcessHeap(), 0, passwordConfirm);
+            }
+            break;
+        }
         }
         break;
     }
@@ -6493,6 +6565,8 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     data.contextInfo.fExportChain = FALSE;
     data.contextInfo.fStrongEncryption = FALSE;
     data.contextInfo.fExportPrivateKeys = FALSE;
+    data.contextInfo.pwszPassword = NULL;
+    data.freePassword = FALSE;
     if (pExportInfo->dwSubjectChoice == CRYPTUI_WIZ_EXPORT_CERT_CONTEXT &&
      pvoid)
         memcpy(&data.contextInfo, pvoid,
@@ -6609,6 +6683,9 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     hdr.u5.pszbmHeader = MAKEINTRESOURCEW(IDB_CERT_HEADER);
     PropertySheetW(&hdr);
     DeleteObject(data.titleFont);
+    if (data.freePassword)
+        HeapFree(GetProcessHeap(), 0,
+         (LPWSTR)data.contextInfo.pwszPassword);
     CloseHandle(data.file);
     HeapFree(GetProcessHeap(), 0, data.fileName);
     return data.success;
