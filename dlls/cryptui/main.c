@@ -5770,6 +5770,40 @@ static LRESULT CALLBACK export_format_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
     return ret;
 }
 
+static LRESULT CALLBACK export_password_dlg_proc(HWND hwnd, UINT msg,
+ WPARAM wp, LPARAM lp)
+{
+    LRESULT ret = 0;
+    struct ExportWizData *data;
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+    {
+        PROPSHEETPAGEW *page = (PROPSHEETPAGEW *)lp;
+
+        data = (struct ExportWizData *)page->lParam;
+        SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
+        break;
+    }
+    case WM_NOTIFY:
+    {
+        NMHDR *hdr = (NMHDR *)lp;
+
+        switch (hdr->code)
+        {
+        case PSN_SETACTIVE:
+            PostMessageW(GetParent(hwnd), PSM_SETWIZBUTTONS, 0,
+             PSWIZB_BACK | PSWIZB_NEXT);
+            ret = TRUE;
+            break;
+        }
+        break;
+    }
+    }
+    return ret;
+}
+
 static LPWSTR export_append_extension(struct ExportWizData *data,
  LPWSTR fileName)
 {
@@ -6521,7 +6555,17 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     }
     if (hasPrivateKey && showFormatPage)
     {
-        FIXME("add password page\n");
+        pages[nPages].dwSize = sizeof(pages[0]);
+        pages[nPages].hInstance = hInstance;
+        pages[nPages].u.pszTemplate = MAKEINTRESOURCEW(IDD_EXPORT_PASSWORD);
+        pages[nPages].pfnDlgProc = export_password_dlg_proc;
+        pages[nPages].dwFlags = PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
+        pages[nPages].pszHeaderTitle =
+         MAKEINTRESOURCEW(IDS_EXPORT_PASSWORD_TITLE);
+        pages[nPages].pszHeaderSubTitle =
+         MAKEINTRESOURCEW(IDS_EXPORT_PASSWORD_SUBTITLE);
+        pages[nPages].lParam = (LPARAM)&data;
+        nPages++;
     }
 
     pages[nPages].dwSize = sizeof(pages[0]);
