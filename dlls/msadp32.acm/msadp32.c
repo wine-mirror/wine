@@ -618,6 +618,9 @@ static	LRESULT	ADPCM_StreamClose(PACMDRVSTREAMINSTANCE adsi)
  */
 static	LRESULT ADPCM_StreamSize(const ACMDRVSTREAMINSTANCE *adsi, PACMDRVSTREAMSIZE adss)
 {
+    DWORD nblocks;
+    WORD wSamplesPerBlock;
+    /* wSamplesPerBlock formula comes from MSDN ADPCMWAVEFORMAT page.*/
     switch (adss->fdwSize)
     {
     case ACM_STREAMSIZEF_DESTINATION:
@@ -625,14 +628,20 @@ static	LRESULT ADPCM_StreamSize(const ACMDRVSTREAMINSTANCE *adsi, PACMDRVSTREAMS
 	if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
 	    adsi->pwfxDst->wFormatTag == WAVE_FORMAT_ADPCM)
         {
-	    /* don't take block overhead into account, doesn't matter too much */
-	    adss->cbSrcLength = adss->cbDstLength * 4;
+	    wSamplesPerBlock = adsi->pwfxDst->nBlockAlign * 2 / adsi->pwfxDst->nChannels - 12;
+	    nblocks = adss->cbDstLength / adsi->pwfxDst->nBlockAlign;
+	    if (nblocks == 0)
+		return ACMERR_NOTPOSSIBLE;
+	    adss->cbSrcLength = nblocks * adsi->pwfxSrc->nBlockAlign * wSamplesPerBlock;
 	}
         else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_ADPCM &&
                  adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
         {
-	    FIXME("misses the block header overhead\n");
-	    adss->cbSrcLength = 256 + adss->cbDstLength / 4;
+	    wSamplesPerBlock = adsi->pwfxSrc->nBlockAlign * 2 / adsi->pwfxSrc->nChannels - 12;
+	    nblocks = adss->cbDstLength / (adsi->pwfxDst->nBlockAlign * wSamplesPerBlock);
+	    if (nblocks == 0)
+		return ACMERR_NOTPOSSIBLE;
+	    adss->cbSrcLength = nblocks * adsi->pwfxSrc->nBlockAlign;
 	}
         else
         {
@@ -644,14 +653,26 @@ static	LRESULT ADPCM_StreamSize(const ACMDRVSTREAMINSTANCE *adsi, PACMDRVSTREAMS
 	if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
 	    adsi->pwfxDst->wFormatTag == WAVE_FORMAT_ADPCM)
         {
-	    FIXME("misses the block header overhead\n");
-	    adss->cbDstLength = 256 + adss->cbSrcLength / 4;
+	    wSamplesPerBlock = adsi->pwfxDst->nBlockAlign * 2 / adsi->pwfxDst->nChannels - 12;
+	    nblocks = adss->cbSrcLength / (adsi->pwfxSrc->nBlockAlign * wSamplesPerBlock);
+	    if (nblocks == 0)
+		return ACMERR_NOTPOSSIBLE;
+	    if (adss->cbSrcLength % (adsi->pwfxSrc->nBlockAlign * wSamplesPerBlock))
+		/* Round block count up. */
+		nblocks++;
+	    adss->cbDstLength = nblocks * adsi->pwfxSrc->nBlockAlign;
 	}
         else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_ADPCM &&
                  adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
         {
-	    /* don't take block overhead into account, doesn't matter too much */
-	    adss->cbDstLength = adss->cbSrcLength * 4;
+	    wSamplesPerBlock = adsi->pwfxSrc->nBlockAlign * 2 / adsi->pwfxSrc->nChannels - 12;
+	    nblocks = adss->cbSrcLength / adsi->pwfxSrc->nBlockAlign;
+	    if (nblocks == 0)
+		return ACMERR_NOTPOSSIBLE;
+	    if (adss->cbSrcLength % adsi->pwfxSrc->nBlockAlign)
+		/* Round block count up. */
+		nblocks++;
+	    adss->cbDstLength = nblocks * adsi->pwfxSrc->nBlockAlign * wSamplesPerBlock;
 	}
         else
         {
