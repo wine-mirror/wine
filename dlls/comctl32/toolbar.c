@@ -277,18 +277,24 @@ TOOLBAR_GetText(const TOOLBAR_INFO *infoPtr, const TBUTTON_INFO *btnPtr)
 }
 
 static void
-TOOLBAR_DumpButton(const TOOLBAR_INFO *infoPtr, const TBUTTON_INFO *bP, INT btn_num, BOOL internal)
+TOOLBAR_DumpTBButton(const TBBUTTON *tbb, BOOL fUnicode)
+{
+    TRACE("TBBUTTON: id %d, bitmap=%d, state=%02x, style=%02x, data=%08lx, stringid=0x%08lx (%s)\n",
+          tbb->idCommand,tbb->iBitmap, tbb->fsState, tbb->fsStyle, tbb->dwData, tbb->iString,
+          (fUnicode ? wine_dbgstr_w((LPWSTR)tbb->iString) : wine_dbgstr_a((LPSTR)tbb->iString)));
+}
+
+static void
+TOOLBAR_DumpButton(const TOOLBAR_INFO *infoPtr, const TBUTTON_INFO *bP, INT btn_num)
 {
     if (TRACE_ON(toolbar)){
         TRACE("button %d id %d, bitmap=%d, state=%02x, style=%02x, data=%08lx, stringid=0x%08lx\n",
               btn_num, bP->idCommand, GETIBITMAP(infoPtr, bP->iBitmap), 
               bP->fsState, bP->fsStyle, bP->dwData, bP->iString);
 	TRACE("string %s\n", debugstr_w(TOOLBAR_GetText(infoPtr,bP)));
-	if (internal)
-            TRACE("button %d id %d, hot=%s, row=%d, rect=(%s)\n",
-		  btn_num, bP->idCommand,
-		  (bP->bHot) ? "TRUE":"FALSE", bP->nRow,
-                  wine_dbgstr_rect(&bP->rect));
+        TRACE("button %d id %d, hot=%s, row=%d, rect=(%s)\n",
+              btn_num, bP->idCommand, (bP->bHot) ? "TRUE":"FALSE", bP->nRow,
+              wine_dbgstr_rect(&bP->rect));
     }
 }
 
@@ -308,7 +314,7 @@ TOOLBAR_DumpToolbar(const TOOLBAR_INFO *iP, INT line)
 	      iP->himlInt, iP->himlDef, iP->himlHot, iP->himlDis,
 	      (iP->bDoRedraw) ? "TRUE" : "FALSE");
  	for(i=0; i<iP->nNumButtons; i++) {
-	    TOOLBAR_DumpButton(iP, &iP->buttons[i], i, TRUE);
+            TOOLBAR_DumpButton(iP, &iP->buttons[i], i);
 	}
     }
 }
@@ -1836,6 +1842,9 @@ TOOLBAR_InternalInsertButtonsT(TOOLBAR_INFO *infoPtr, INT iIndex, UINT nAddButto
     /* insert new buttons data */
     for (iButton = 0; iButton < nAddButtons; iButton++) {
         TBUTTON_INFO *btnPtr = &infoPtr->buttons[iIndex + iButton];
+
+        TOOLBAR_DumpTBButton(lpTbb, fUnicode);
+
         ZeroMemory(btnPtr, sizeof(*btnPtr));
         btnPtr->iBitmap   = lpTbb[iButton].iBitmap;
         btnPtr->idCommand = lpTbb[iButton].idCommand;
@@ -3775,8 +3784,6 @@ TOOLBAR_InsertButtonT(HWND hwnd, WPARAM wParam, LPARAM lParam, BOOL fUnicode)
 
     if (lpTbb == NULL)
 	return FALSE;
-
-    TOOLBAR_DumpButton(infoPtr, (TBUTTON_INFO *)lpTbb, nIndex, FALSE);
 
     if (nIndex == -1) {
        /* EPP: this seems to be an undocumented call (from my IE4)
