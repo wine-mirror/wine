@@ -6650,6 +6650,7 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     struct ExportWizData data;
     int nPages = 0;
     BOOL hasPrivateKey, showFormatPage = TRUE;
+    INT_PTR l;
 
     data.dwFlags = dwFlags;
     data.pwszWizardTitle = pwszWizardTitle;
@@ -6779,14 +6780,20 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     hdr.nPages = nPages;
     hdr.u4.pszbmWatermark = MAKEINTRESOURCEW(IDB_CERT_WATERMARK);
     hdr.u5.pszbmHeader = MAKEINTRESOURCEW(IDB_CERT_HEADER);
-    PropertySheetW(&hdr);
+    l = PropertySheetW(&hdr);
     DeleteObject(data.titleFont);
     if (data.freePassword)
         HeapFree(GetProcessHeap(), 0,
          (LPWSTR)data.contextInfo.pwszPassword);
     CloseHandle(data.file);
     HeapFree(GetProcessHeap(), 0, data.fileName);
-    return data.success;
+    if (l == 0)
+    {
+        SetLastError(ERROR_CANCELLED);
+        return FALSE;
+    }
+    else
+        return data.success;
 }
 
 BOOL WINAPI CryptUIWizExport(DWORD dwFlags, HWND hwndParent,
