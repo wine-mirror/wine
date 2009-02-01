@@ -5702,6 +5702,8 @@ static LRESULT CALLBACK export_format_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             break;
         case PSN_WIZNEXT:
         {
+            BOOL skipPasswordPage = TRUE;
+
             data = (struct ExportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
             if (IsDlgButtonChecked(hwnd, IDC_EXPORT_FORMAT_DER))
                 data->contextInfo.dwExportFormat =
@@ -5727,7 +5729,11 @@ static LRESULT CALLBACK export_format_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
                     data->contextInfo.fStrongEncryption = TRUE;
                 if (IsDlgButtonChecked(hwnd, IDC_EXPORT_PFX_DELETE_PRIVATE_KEY))
                     data->contextInfo.fExportPrivateKeys = TRUE;
+                skipPasswordPage = FALSE;
             }
+            SetWindowLongPtrW(hwnd, DWLP_MSGRESULT,
+             skipPasswordPage ? IDD_EXPORT_FILE : 0);
+            ret = 1;
             break;
         }
         }
