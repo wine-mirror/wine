@@ -6114,6 +6114,15 @@ static LRESULT CALLBACK export_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
 
         switch (hdr->code)
         {
+        case PSN_WIZBACK:
+            data = (struct ExportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
+            if (data->contextInfo.dwExportFormat !=
+             CRYPTUI_WIZ_EXPORT_FORMAT_PFX)
+            {
+                SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, IDD_EXPORT_FORMAT);
+                ret = 1;
+            }
+            break;
         case PSN_WIZNEXT:
         {
             HWND fileNameEdit = GetDlgItem(hwnd, IDC_EXPORT_FILENAME);
