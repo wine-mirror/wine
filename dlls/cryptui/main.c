@@ -6413,6 +6413,96 @@ static BOOL save_serialized_store(HANDLE file, HCERTSTORE store)
      CERT_STORE_SAVE_AS_STORE, CERT_STORE_SAVE_TO_FILE, file, 0);
 }
 
+static BOOL save_pfx(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
+ PCCRYPTUI_WIZ_EXPORT_CERTCONTEXT_INFO pContextInfo)
+{
+    HCERTSTORE store = CertOpenStore(CERT_STORE_PROV_MEMORY, X509_ASN_ENCODING,
+     0, CERT_STORE_CREATE_NEW_FLAG, NULL);
+    BOOL ret = FALSE;
+
+    if (store)
+    {
+        CRYPT_DATA_BLOB pfxBlob = { 0, NULL };
+
+        if (pContextInfo->fExportChain)
+        {
+            HCERTCHAINENGINE engine = NULL;
+
+            if (pExportInfo->cStores)
+            {
+                CERT_CHAIN_ENGINE_CONFIG config;
+
+                memset(&config, 0, sizeof(config));
+                config.cbSize = sizeof(config);
+                config.cAdditionalStore = pExportInfo->cStores;
+                config.rghAdditionalStore = pExportInfo->rghStores;
+                ret = CertCreateCertificateChainEngine(&config, &engine);
+            }
+            else
+                ret = TRUE;
+            if (ret)
+            {
+                CERT_CHAIN_PARA chainPara;
+                PCCERT_CHAIN_CONTEXT chain;
+
+                memset(&chainPara, 0, sizeof(chainPara));
+                chainPara.cbSize = sizeof(chainPara);
+                ret = CertGetCertificateChain(engine,
+                 pExportInfo->u.pCertContext, NULL, NULL, &chainPara, 0, NULL,
+                 &chain);
+                if (ret)
+                {
+                    DWORD i, j;
+
+                    for (i = 0; ret && i < chain->cChain; i++)
+                        for (j = 0; ret && j < chain->rgpChain[i]->cElement;
+                         j++)
+                            ret = CertAddCertificateContextToStore(store,
+                             chain->rgpChain[i]->rgpElement[j]->pCertContext,
+                             CERT_STORE_ADD_ALWAYS, NULL);
+                    CertFreeCertificateChain(chain);
+                }
+            }
+            if (engine)
+                CertFreeCertificateChainEngine(engine);
+        }
+        else
+            ret = CertAddCertificateContextToStore(store,
+             pExportInfo->u.pCertContext, CERT_STORE_ADD_ALWAYS, NULL);
+        if (ret)
+        {
+            DWORD exportFlags =
+             REPORT_NOT_ABLE_TO_EXPORT_PRIVATE_KEY | EXPORT_PRIVATE_KEYS;
+
+            ret = PFXExportCertStore(store, &pfxBlob,
+             pContextInfo->pwszPassword, exportFlags);
+            if (ret)
+            {
+                pfxBlob.pbData = HeapAlloc(GetProcessHeap(), 0, pfxBlob.cbData);
+                if (pfxBlob.pbData)
+                {
+                    ret = PFXExportCertStore(store, &pfxBlob,
+                     pContextInfo->pwszPassword, exportFlags);
+                    if (ret)
+                    {
+                        DWORD bytesWritten;
+
+                        ret = WriteFile(file, pfxBlob.pbData, pfxBlob.cbData,
+                         &bytesWritten, NULL);
+                    }
+                }
+                else
+                {
+                    SetLastError(ERROR_OUTOFMEMORY);
+                    ret = FALSE;
+                }
+            }
+        }
+        CertCloseStore(store, 0);
+    }
+    return ret;
+}
+
 static BOOL do_export(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
  PCCRYPTUI_WIZ_EXPORT_CERTCONTEXT_INFO pContextInfo)
 {
@@ -6458,8 +6548,7 @@ static BOOL do_export(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
              pContextInfo->fExportChain);
             break;
         case CRYPTUI_WIZ_EXPORT_FORMAT_PFX:
-            FIXME("unimplemented for PFX\n");
-            ret = FALSE;
+            ret = save_pfx(file, pExportInfo, pContextInfo);
             break;
         default:
             SetLastError(E_FAIL);
