@@ -561,6 +561,7 @@ GpStatus WINGDIPAPI GdipSetStringFormatMeasurableCharacterRanges(
         GpStringFormat*, INT, GDIPCONST CharacterRange*);
 GpStatus WINGDIPAPI GdipSetStringFormatTabStops(GpStringFormat*,REAL,INT,GDIPCONST REAL*);
 GpStatus WINGDIPAPI GdipSetStringFormatTrimming(GpStringFormat*,StringTrimming);
+GpStatus WINGDIPAPI GdipSetStringFormatFlags(GpStringFormat*, INT);
 GpStatus WINGDIPAPI GdipStringFormatGetGenericDefault(GpStringFormat **);
 GpStatus WINGDIPAPI GdipStringFormatGetGenericTypographic(GpStringFormat **);
 
