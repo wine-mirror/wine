@@ -4648,11 +4648,10 @@ static LRESULT
 TOOLBAR_SetExtendedStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
-    DWORD dwTemp;
+    DWORD dwOldStyle;
 
-    dwTemp = infoPtr->dwExStyle;
-    infoPtr->dwExStyle &= ~wParam;
-    infoPtr->dwExStyle |= (DWORD)lParam;
+    dwOldStyle = infoPtr->dwExStyle;
+    infoPtr->dwExStyle = (DWORD)lParam;
 
     TRACE("new style 0x%08x\n", infoPtr->dwExStyle);
 
@@ -4666,7 +4665,7 @@ TOOLBAR_SetExtendedStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     InvalidateRect(hwnd, NULL, TRUE);
 
-    return (LRESULT)dwTemp;
+    return (LRESULT)dwOldStyle;
 }
 
 
