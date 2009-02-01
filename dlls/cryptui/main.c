@@ -5635,6 +5635,41 @@ static BOOL export_info_has_private_key(PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo)
     return ret;
 }
 
+static void export_format_enable_controls(HWND hwnd, struct ExportWizData *data)
+{
+    int defaultFormatID;
+
+    switch (data->contextInfo.dwExportFormat)
+    {
+    case CRYPTUI_WIZ_EXPORT_FORMAT_BASE64:
+        defaultFormatID = IDC_EXPORT_FORMAT_BASE64;
+        break;
+    case CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7:
+        defaultFormatID = IDC_EXPORT_FORMAT_CMS;
+        break;
+    case CRYPTUI_WIZ_EXPORT_FORMAT_PFX:
+        defaultFormatID = IDC_EXPORT_FORMAT_PFX;
+        break;
+    default:
+        defaultFormatID = IDC_EXPORT_FORMAT_DER;
+    }
+    SendMessageW(GetDlgItem(hwnd, defaultFormatID), BM_CLICK, 0, 0);
+    if (defaultFormatID == IDC_EXPORT_FORMAT_PFX)
+    {
+        EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_FORMAT_DER), FALSE);
+        EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_FORMAT_BASE64), FALSE);
+        EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_FORMAT_CMS), FALSE);
+        EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_FORMAT_PFX), TRUE);
+    }
+    else
+    {
+        EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_FORMAT_DER), TRUE);
+        EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_FORMAT_BASE64), TRUE);
+        EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_FORMAT_CMS), TRUE);
+        EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_FORMAT_PFX), FALSE);
+    }
+}
+
 static LRESULT CALLBACK export_format_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
@@ -5646,32 +5681,10 @@ static LRESULT CALLBACK export_format_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
     case WM_INITDIALOG:
     {
         PROPSHEETPAGEW *page = (PROPSHEETPAGEW *)lp;
-        int defaultFormatID;
-        BOOL hasPrivateKey;
 
         data = (struct ExportWizData *)page->lParam;
         SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
-        hasPrivateKey = export_info_has_private_key(&data->exportInfo);
-        if (hasPrivateKey)
-            EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_FORMAT_PFX), TRUE);
-        switch (data->contextInfo.dwExportFormat)
-        {
-        case CRYPTUI_WIZ_EXPORT_FORMAT_BASE64:
-            defaultFormatID = IDC_EXPORT_FORMAT_BASE64;
-            break;
-        case CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7:
-            defaultFormatID = IDC_EXPORT_FORMAT_CMS;
-            break;
-        case CRYPTUI_WIZ_EXPORT_FORMAT_PFX:
-            if (hasPrivateKey)
-                defaultFormatID = IDC_EXPORT_FORMAT_PFX;
-            else
-                defaultFormatID = IDC_EXPORT_FORMAT_DER;
-            break;
-        default:
-            defaultFormatID = IDC_EXPORT_FORMAT_DER;
-        }
-        SendMessageW(GetDlgItem(hwnd, defaultFormatID), BM_CLICK, 0, 0);
+        export_format_enable_controls(hwnd, data);
         break;
     }
     case WM_NOTIFY:
@@ -5683,6 +5696,8 @@ static LRESULT CALLBACK export_format_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         case PSN_SETACTIVE:
             PostMessageW(GetParent(hwnd), PSM_SETWIZBUTTONS, 0,
              PSWIZB_BACK | PSWIZB_NEXT);
+            data = (struct ExportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
+            export_format_enable_controls(hwnd, data);
             ret = TRUE;
             break;
         case PSN_WIZNEXT:
