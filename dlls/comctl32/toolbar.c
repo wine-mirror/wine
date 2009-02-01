@@ -251,6 +251,7 @@ static void TOOLBAR_SetHotItemEx (TOOLBAR_INFO *infoPtr, INT nHit, DWORD dwReaso
 static void TOOLBAR_LayoutToolbar(HWND hwnd);
 static LRESULT TOOLBAR_AutoSize(HWND hwnd);
 static void TOOLBAR_CheckImageListIconSize(TOOLBAR_INFO *infoPtr);
+static void TOOLBAR_TooltipAddTool(const TOOLBAR_INFO *infoPtr, const TBUTTON_INFO *button);
 static void TOOLBAR_TooltipSetRect(const TOOLBAR_INFO *infoPtr, const TBUTTON_INFO *button);
 
 static LRESULT
@@ -1814,6 +1815,59 @@ TOOLBAR_InternalHitTest (HWND hwnd, const POINT *lpPt)
 }
 
 
+/* worker for TB_ADDBUTTONS and TB_INSERTBUTTON */
+static BOOL
+TOOLBAR_InternalInsertButtonsT(TOOLBAR_INFO *infoPtr, INT iIndex, UINT nAddButtons, TBBUTTON *lpTbb, BOOL fUnicode)
+{
+    INT nOldButtons, nNewButtons, iButton;
+    BOOL fHasString = FALSE;
+
+    if (iIndex < 0)  /* iIndex can be negative, what means adding at the end */
+        iIndex = infoPtr->nNumButtons;
+
+    nOldButtons = infoPtr->nNumButtons;
+    nNewButtons = nOldButtons + nAddButtons;
+
+    infoPtr->buttons = ReAlloc(infoPtr->buttons, sizeof(TBUTTON_INFO)*nNewButtons);
+    memmove(&infoPtr->buttons[iIndex + nAddButtons], &infoPtr->buttons[iIndex],
+            (nOldButtons - iIndex) * sizeof(TBUTTON_INFO));
+    infoPtr->nNumButtons += nAddButtons;
+
+    /* insert new buttons data */
+    for (iButton = 0; iButton < nAddButtons; iButton++) {
+        TBUTTON_INFO *btnPtr = &infoPtr->buttons[iIndex + iButton];
+        ZeroMemory(btnPtr, sizeof(*btnPtr));
+        btnPtr->iBitmap   = lpTbb[iButton].iBitmap;
+        btnPtr->idCommand = lpTbb[iButton].idCommand;
+        btnPtr->fsState   = lpTbb[iButton].fsState;
+        btnPtr->fsStyle   = lpTbb[iButton].fsStyle;
+        btnPtr->dwData    = lpTbb[iButton].dwData;
+        if(HIWORD(lpTbb[iButton].iString) && lpTbb[iButton].iString != -1)
+        {
+            if (fUnicode)
+                Str_SetPtrW((LPWSTR*)&btnPtr->iString, (LPWSTR)lpTbb[iButton].iString );
+            else
+                Str_SetPtrAtoW((LPWSTR*)&btnPtr->iString, (LPSTR)lpTbb[iButton].iString);
+            fHasString = TRUE;
+        }
+        else
+            btnPtr->iString   = lpTbb[iButton].iString;
+
+        TOOLBAR_TooltipAddTool(infoPtr, btnPtr);
+    }
+
+    if (infoPtr->nNumStrings > 0 || fHasString)
+        TOOLBAR_CalcToolbar(infoPtr->hwndSelf);
+    else
+        TOOLBAR_LayoutToolbar(infoPtr->hwndSelf);
+    TOOLBAR_AutoSize(infoPtr->hwndSelf);
+
+    TOOLBAR_DumpToolbar(infoPtr, __LINE__);
+    InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
+    return TRUE;
+}
+
+
 static INT
 TOOLBAR_GetButtonIndex (const TOOLBAR_INFO *infoPtr, INT idCommand, BOOL CommandIsIndex)
 {
@@ -2839,52 +2893,11 @@ TOOLBAR_AddButtonsT(HWND hwnd, WPARAM wParam, LPARAM lParam, BOOL fUnicode)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     LPTBBUTTON lpTbb = (LPTBBUTTON)lParam;
-    INT nOldButtons, nNewButtons, nAddButtons, nCount;
-    BOOL fHasString = FALSE;
+    INT nAddButtons = (UINT)wParam;
 
     TRACE("adding %ld buttons (unicode=%d)!\n", wParam, fUnicode);
 
-    nAddButtons = (UINT)wParam;
-    nOldButtons = infoPtr->nNumButtons;
-    nNewButtons = nOldButtons + nAddButtons;
-
-    infoPtr->buttons = ReAlloc(infoPtr->buttons, sizeof(TBUTTON_INFO)*nNewButtons);
-    infoPtr->nNumButtons = nNewButtons;
-
-    /* insert new button data */
-    for (nCount = 0; nCount < nAddButtons; nCount++) {
-	TBUTTON_INFO *btnPtr = &infoPtr->buttons[nOldButtons+nCount];
-	btnPtr->iBitmap   = lpTbb[nCount].iBitmap;
-	btnPtr->idCommand = lpTbb[nCount].idCommand;
-	btnPtr->fsState   = lpTbb[nCount].fsState;
-	btnPtr->fsStyle   = lpTbb[nCount].fsStyle;
-	btnPtr->dwData    = lpTbb[nCount].dwData;
-	btnPtr->bHot      = FALSE;
-        if(HIWORD(lpTbb[nCount].iString) && lpTbb[nCount].iString != -1)
-        {
-            if (fUnicode)
-                Str_SetPtrW ((LPWSTR*)&btnPtr->iString, (LPWSTR)lpTbb[nCount].iString );
-            else
-                Str_SetPtrAtoW((LPWSTR*)&btnPtr->iString, (LPSTR)lpTbb[nCount].iString);
-            fHasString = TRUE;
-        }
-        else
-            btnPtr->iString   = lpTbb[nCount].iString;
-
-        TOOLBAR_TooltipAddTool(infoPtr, btnPtr);
-    }
-
-    if (infoPtr->nNumStrings > 0 || fHasString)
-        TOOLBAR_CalcToolbar(hwnd);
-    else
-        TOOLBAR_LayoutToolbar(hwnd);
-    TOOLBAR_AutoSize (hwnd);
-
-    TOOLBAR_DumpToolbar (infoPtr, __LINE__);
-
-    InvalidateRect(hwnd, NULL, TRUE);
-
-    return TRUE;
+    return TOOLBAR_InternalInsertButtonsT(infoPtr, -1, nAddButtons, lpTbb, fUnicode);
 }
 
 
@@ -3783,39 +3796,7 @@ TOOLBAR_InsertButtonT(HWND hwnd, WPARAM wParam, LPARAM lParam, BOOL fUnicode)
 	TRACE("adjust index=%d\n", nIndex);
     }
 
-    infoPtr->nNumButtons++;
-    infoPtr->buttons = ReAlloc(infoPtr->buttons, sizeof(TBUTTON_INFO) * infoPtr->nNumButtons);
-    memmove(&infoPtr->buttons[nIndex+1], &infoPtr->buttons[nIndex],
-	    (infoPtr->nNumButtons - nIndex - 1) * sizeof(TBUTTON_INFO));
-
-    /* insert new button */
-    ZeroMemory(&infoPtr->buttons[nIndex], sizeof(infoPtr->buttons[nIndex]));
-    infoPtr->buttons[nIndex].iBitmap   = lpTbb->iBitmap;
-    infoPtr->buttons[nIndex].idCommand = lpTbb->idCommand;
-    infoPtr->buttons[nIndex].fsState   = lpTbb->fsState;
-    infoPtr->buttons[nIndex].fsStyle   = lpTbb->fsStyle;
-    infoPtr->buttons[nIndex].dwData    = lpTbb->dwData;
-    /* if passed string and not index, then add string */
-    if(HIWORD(lpTbb->iString) && lpTbb->iString!=-1) {
-        if (fUnicode)
-            Str_SetPtrW((LPWSTR *)&infoPtr->buttons[nIndex].iString, (LPWSTR)lpTbb->iString);
-        else
-            Str_SetPtrAtoW((LPWSTR *)&infoPtr->buttons[nIndex].iString, (LPCSTR )lpTbb->iString);
-    }
-    else
-        infoPtr->buttons[nIndex].iString   = lpTbb->iString;
-
-    TOOLBAR_TooltipAddTool(infoPtr, &infoPtr->buttons[nIndex]);
-
-    if (infoPtr->nNumStrings > 0)
-        TOOLBAR_CalcToolbar(hwnd);
-    else
-        TOOLBAR_LayoutToolbar(hwnd);
-    TOOLBAR_AutoSize (hwnd);
-
-    InvalidateRect (hwnd, NULL, TRUE);
-
-    return TRUE;
+    return TOOLBAR_InternalInsertButtonsT(infoPtr, nIndex, 1, lpTbb, fUnicode);
 }
 
 /* << TOOLBAR_InsertMarkHitTest >> */

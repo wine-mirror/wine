@@ -999,6 +999,49 @@ static void test_sizes(void)
     DestroyWindow(hToolbar);
 }
 
+/* Toolbar control has two ways of reacting to a change. We call them a
+ * relayout and recalc. A recalc forces a recompute of values like button size
+ * and top margin (the latter in comctl32 <v6), while a relayout uses the cached
+ * values. This functions creates a flat toolbar with a top margin of a non-flat
+ * toolbar. We will notice a recalc, as it will recompte the top margin and
+ * change it to zero*/
+static void prepare_recalc_test(HWND *phToolbar)
+{
+    RECT rect;
+    rebuild_toolbar_with_buttons(phToolbar);
+    SetWindowLong(*phToolbar, GWL_STYLE,
+        GetWindowLong(*phToolbar, GWL_STYLE) | TBSTYLE_FLAT);
+    SendMessage(*phToolbar, TB_GETITEMRECT, 1, (LPARAM)&rect);
+    ok(rect.top == 2, "Test will make no sense because initial top is %d instead of 2\n",
+        rect.top);
+}
+
+static BOOL did_recalc(HWND hToolbar)
+{
+    RECT rect;
+    SendMessage(hToolbar, TB_GETITEMRECT, 1, (LPARAM)&rect);
+    ok(rect.top == 2 || rect.top == 0, "Unexpected top margin %d in recalc test\n",
+        rect.top);
+    return (rect.top == 0);
+}
+
+static void test_recalc(void)
+{
+    HWND hToolbar;
+
+    /* Like TB_ADDBUTTONS tested in test_sized, inserting a button without text
+     * results in a relayout, while adding one with text forces a recalc */
+    prepare_recalc_test(&hToolbar);
+    SendMessage(hToolbar, TB_INSERTBUTTON, 1, (LPARAM)&buttons3[0]);
+    ok(!did_recalc(hToolbar), "Unexpected recalc - adding button without text\n");
+
+    prepare_recalc_test(&hToolbar);
+    SendMessage(hToolbar, TB_INSERTBUTTON, 1, (LPARAM)&buttons3[3]);
+    ok(did_recalc(hToolbar), "Expected a recalc - adding button with text\n");
+
+    DestroyWindow(hToolbar);
+}
+
 static void test_getbuttoninfo(void)
 {
     HWND hToolbar = NULL;
@@ -1224,6 +1267,7 @@ START_TEST(toolbar)
     test_add_string();
     test_hotitem();
     test_sizes();
+    test_recalc();
     test_getbuttoninfo();
     test_createtoolbarex();
     test_dispinfo();
