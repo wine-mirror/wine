@@ -5515,7 +5515,7 @@ struct ExportWizData
     HFONT titleFont;
     DWORD dwFlags;
     LPCWSTR pwszWizardTitle;
-    PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo;
+    CRYPTUI_WIZ_EXPORT_INFO exportInfo;
     CRYPTUI_WIZ_EXPORT_CERTCONTEXT_INFO contextInfo;
     LPWSTR fileName;
     HANDLE file;
@@ -5636,7 +5636,7 @@ static LRESULT CALLBACK export_format_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
 
         data = (struct ExportWizData *)page->lParam;
         SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
-        hasPrivateKey = export_info_has_private_key(data->pExportInfo);
+        hasPrivateKey = export_info_has_private_key(&data->exportInfo);
         if (hasPrivateKey)
             EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_FORMAT_PFX), TRUE);
         switch (data->contextInfo.dwExportFormat)
@@ -5762,7 +5762,7 @@ static LPWSTR export_append_extension(struct ExportWizData *data,
         extension = pfx;
         break;
     default:
-        switch (data->pExportInfo->dwSubjectChoice)
+        switch (data->exportInfo.dwSubjectChoice)
         {
         case CRYPTUI_WIZ_EXPORT_CRL_CONTEXT:
             extension = crl;
@@ -5961,9 +5961,9 @@ static LRESULT CALLBACK export_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
 
         data = (struct ExportWizData *)page->lParam;
         SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
-        if (data->pExportInfo->pwszExportFileName)
+        if (data->exportInfo.pwszExportFileName)
             SendMessageW(GetDlgItem(hwnd, IDC_EXPORT_FILENAME), WM_SETTEXT, 0,
-             (LPARAM)data->pExportInfo->pwszExportFileName);
+             (LPARAM)data->exportInfo.pwszExportFileName);
         break;
     }
     case WM_NOTIFY:
@@ -6041,7 +6041,7 @@ static LRESULT CALLBACK export_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             ofn.hwndOwner = hwnd;
             ofn.lpstrFilter = make_export_file_filter(
              data->contextInfo.dwExportFormat,
-             data->pExportInfo->dwSubjectChoice);
+             data->exportInfo.dwSubjectChoice);
             ofn.lpstrFile = fileBuf;
             ofn.nMaxFile = sizeof(fileBuf) / sizeof(fileBuf[0]);
             fileBuf[0] = 0;
@@ -6078,7 +6078,7 @@ static void show_export_details(HWND lv, struct ExportWizData *data)
     }
 
     item.pszText = text;
-    switch (data->pExportInfo->dwSubjectChoice)
+    switch (data->exportInfo.dwSubjectChoice)
     {
     case CRYPTUI_WIZ_EXPORT_CRL_CONTEXT:
     case CRYPTUI_WIZ_EXPORT_CTL_CONTEXT:
@@ -6119,7 +6119,7 @@ static void show_export_details(HWND lv, struct ExportWizData *data)
     SendMessageW(lv, LVM_INSERTITEMW, 0, (LPARAM)&item);
 
     item.iSubItem = 1;
-    switch (data->pExportInfo->dwSubjectChoice)
+    switch (data->exportInfo.dwSubjectChoice)
     {
     case CRYPTUI_WIZ_EXPORT_CRL_CONTEXT:
         contentID = IDS_EXPORT_FILTER_CRL;
@@ -6371,7 +6371,7 @@ static LRESULT CALLBACK export_finish_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             DWORD mbFlags;
 
             data = (struct ExportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
-            if ((data->success = do_export(data->file, data->pExportInfo,
+            if ((data->success = do_export(data->file, &data->exportInfo,
              &data->contextInfo)))
             {
                 messageID = IDS_EXPORT_SUCCEEDED;
@@ -6413,7 +6413,11 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
 
     data.dwFlags = dwFlags;
     data.pwszWizardTitle = pwszWizardTitle;
-    data.pExportInfo = pExportInfo;
+    memset(&data.exportInfo, 0, sizeof(data.exportInfo));
+    memcpy(&data.exportInfo, pExportInfo,
+     min(sizeof(data.exportInfo), pExportInfo->dwSize));
+    if (pExportInfo->dwSize > sizeof(data.exportInfo))
+        data.exportInfo.dwSize = sizeof(data.exportInfo);
     data.contextInfo.dwSize = sizeof(data.contextInfo);
     data.contextInfo.dwExportFormat = CRYPTUI_WIZ_EXPORT_FORMAT_DER;
     data.contextInfo.fExportChain = FALSE;
