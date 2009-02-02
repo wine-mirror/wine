@@ -172,8 +172,16 @@ static HRESULT WINAPI DocumentMgr_GetTop(ITfDocumentMgr *iface, ITfContext **ppi
 static HRESULT WINAPI DocumentMgr_GetBase(ITfDocumentMgr *iface, ITfContext **ppic)
 {
     DocumentMgr *This = (DocumentMgr *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p)\n",This);
+    if (!ppic)
+        return E_INVALIDARG;
+
+    if (This->contextStack[1])
+        ITfContext_AddRef(This->contextStack[1]);
+
+    *ppic = This->contextStack[1];
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DocumentMgr_EnumContexts(ITfDocumentMgr *iface, IEnumTfContexts **ppEnum)
