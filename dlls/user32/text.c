@@ -900,8 +900,8 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 
     if (dtp)
     {
-        lmargin = dtp->iLeftMargin * tm.tmAveCharWidth;
-        rmargin = dtp->iRightMargin * tm.tmAveCharWidth;
+        lmargin = dtp->iLeftMargin;
+        rmargin = dtp->iRightMargin;
         if (!(flags & (DT_CENTER | DT_RIGHT)))
             x += lmargin;
         dtp->uiLengthDrawn = 0;     /* This param RECEIVES number of chars processed */
