@@ -42,11 +42,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(msctf);
 
 typedef struct tagContext {
     const ITfContextVtbl *ContextVtbl;
+    const ITfSourceVtbl *SourceVtbl;
     LONG refCount;
 
     TfClientId tidOwner;
     IUnknown *punk;  /* possible ITextStoreACP or ITfContextOwnerCompositionSink */
 } Context;
+
+static inline Context *impl_from_ITfSourceVtbl(ITfSource *iface)
+{
+    return (Context *)((char *)iface - FIELD_OFFSET(Context,SourceVtbl));
+}
 
 static void Context_Destructor(Context *This)
 {
@@ -62,6 +68,10 @@ static HRESULT WINAPI Context_QueryInterface(ITfContext *iface, REFIID iid, LPVO
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfContext))
     {
         *ppvOut = This;
+    }
+    else if (IsEqualIID(iid, &IID_ITfSource))
+    {
+        *ppvOut = &This->SourceVtbl;
     }
 
     if (*ppvOut)
@@ -241,6 +251,52 @@ static const ITfContextVtbl Context_ContextVtbl =
     Context_CreateRangeBackup
 };
 
+static HRESULT WINAPI Source_QueryInterface(ITfSource *iface, REFIID iid, LPVOID *ppvOut)
+{
+    Context *This = impl_from_ITfSourceVtbl(iface);
+    return Context_QueryInterface((ITfContext *)This, iid, *ppvOut);
+}
+
+static ULONG WINAPI Source_AddRef(ITfSource *iface)
+{
+    Context *This = impl_from_ITfSourceVtbl(iface);
+    return Context_AddRef((ITfContext *)This);
+}
+
+static ULONG WINAPI Source_Release(ITfSource *iface)
+{
+    Context *This = impl_from_ITfSourceVtbl(iface);
+    return Context_Release((ITfContext *)This);
+}
+
+/*****************************************************
+ * ITfSource functions
+ *****************************************************/
+static WINAPI HRESULT ContextSource_AdviseSink(ITfSource *iface,
+        REFIID riid, IUnknown *punk, DWORD *pdwCookie)
+{
+    Context *This = impl_from_ITfSourceVtbl(iface);
+    FIXME("STUB:(%p)\n",This);
+    return E_NOTIMPL;
+}
+
+static WINAPI HRESULT ContextSource_UnadviseSink(ITfSource *iface, DWORD pdwCookie)
+{
+    Context *This = impl_from_ITfSourceVtbl(iface);
+    FIXME("STUB:(%p)\n",This);
+    return E_NOTIMPL;
+}
+
+static const ITfSourceVtbl Context_SourceVtbl =
+{
+    Source_QueryInterface,
+    Source_AddRef,
+    Source_Release,
+
+    ContextSource_AdviseSink,
+    ContextSource_UnadviseSink,
+};
+
 HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfContext **ppOut, TfEditCookie *pecTextStore)
 {
     Context *This;
@@ -250,6 +306,7 @@ HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfContext **pp
         return E_OUTOFMEMORY;
 
     This->ContextVtbl= &Context_ContextVtbl;
+    This->SourceVtbl = &Context_SourceVtbl;
     This->refCount = 1;
     This->tidOwner = tidOwner;
     This->punk = punk;
