@@ -243,7 +243,10 @@ static LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
     LIST_FOR_EACH( ptr, &vectored_handlers )
     {
         VECTORED_HANDLER *handler = LIST_ENTRY( ptr, VECTORED_HANDLER, entry );
+        TRACE( "calling handler at %p code=%x flags=%x\n",
+               handler->func, rec->ExceptionCode, rec->ExceptionFlags );
         ret = handler->func( &except_ptrs );
+        TRACE( "handler at %p returned %x\n", handler->func, ret );
         if (ret == EXCEPTION_CONTINUE_EXECUTION) break;
     }
     RtlLeaveCriticalSection( &vectored_handlers_section );
