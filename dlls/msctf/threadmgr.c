@@ -43,11 +43,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(msctf);
 typedef struct tagACLMulti {
     const ITfThreadMgrVtbl *ThreadMgrVtbl;
     LONG refCount;
+
+    ITfDocumentMgr *focus;
 } ThreadMgr;
 
 static void ThreadMgr_Destructor(ThreadMgr *This)
 {
     TRACE("destroying %p\n", This);
+    if (This->focus)
+        ITfDocumentMgr_Release(This->focus);
     HeapFree(GetProcessHeap(),0,This);
 }
 
@@ -125,15 +129,38 @@ static HRESULT WINAPI ThreadMgr_GetFocus( ITfThreadMgr* iface, ITfDocumentMgr
 **ppdimFocus)
 {
     ThreadMgr *This = (ThreadMgr *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p)\n",This);
+
+    if (!ppdimFocus)
+        return E_INVALIDARG;
+
+    *ppdimFocus = This->focus;
+
+    TRACE("->%p\n",This->focus);
+
+    if (This->focus == NULL)
+        return S_FALSE;
+
+    ITfDocumentMgr_AddRef(This->focus);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ThreadMgr_SetFocus( ITfThreadMgr* iface, ITfDocumentMgr *pdimFocus)
 {
+    ITfDocumentMgr *check;
     ThreadMgr *This = (ThreadMgr *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+
+    TRACE("(%p) %p\n",This,pdimFocus);
+
+    if (!pdimFocus || FAILED(IUnknown_QueryInterface(pdimFocus,&IID_ITfDocumentMgr,(LPVOID*) &check)))
+        return E_INVALIDARG;
+
+    if (This->focus)
+        ITfDocumentMgr_Release(This->focus);
+
+    This->focus = check;
+    return S_OK;
 }
 
 static HRESULT WINAPI ThreadMgr_AssociateFocus( ITfThreadMgr* iface, HWND hwnd,
