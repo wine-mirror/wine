@@ -144,9 +144,21 @@ static sigset_t signal_mask;
 
 enum processor { proc_cc, proc_cxx, proc_cpp, proc_as };
 
+enum target_cpu
+{
+    CPU_x86, CPU_x86_64, CPU_SPARC, CPU_ALPHA, CPU_POWERPC
+};
+
+enum target_platform
+{
+    PLATFORM_UNSPECIFIED, PLATFORM_APPLE, PLATFORM_SOLARIS, PLATFORM_WINDOWS
+};
+
 struct options 
 {
     enum processor processor;
+    enum target_cpu target_cpu;
+    enum target_platform target_platform;
     int shared;
     int use_msvcrt;
     int nostdinc;
@@ -168,6 +180,30 @@ struct options
     strarray* winebuild_args;
     strarray* files;
 };
+
+#ifdef __i386__
+static const enum target_cpu build_cpu = CPU_x86;
+#elif defined(__x86_64__)
+static const enum target_cpu build_cpu = CPU_x86_64;
+#elif defined(__sparc__)
+static const enum target_cpu build_cpu = CPU_SPARC;
+#elif defined(__ALPHA__)
+static const enum target_cpu build_cpu = CPU_ALPHA;
+#elif defined(__powerpc__)
+static const enum target_cpu build_cpu = CPU_POWERPC;
+#else
+#error Unsupported CPU
+#endif
+
+#ifdef __APPLE__
+static enum target_platform build_platform = PLATFORM_APPLE;
+#elif defined(__sun)
+static enum target_platform build_platform = PLATFORM_SOLARIS;
+#elif defined(_WINDOWS)
+static enum target_platform build_platform = PLATFORM_WINDOWS;
+#else
+static enum target_platform build_platform = PLATFORM_UNSPECIFIED;
+#endif
 
 static void clean_temp_files(void)
 {
@@ -243,68 +279,72 @@ static void compile(struct options* opts, const char* lang)
     unsigned int j;
     int gcc_defs = 0;
 
+    strarray_addall(comp_args, get_translator(opts->processor));
     switch(opts->processor)
     {
-	case proc_cpp:  gcc_defs = 1; break;
-#ifdef __GNUC__
+	case proc_cpp: gcc_defs = 1; break;
+	case proc_as:  gcc_defs = 0; break;
 	/* Note: if the C compiler is gcc we assume the C++ compiler is too */
 	/* mixing different C and C++ compilers isn't supported in configure anyway */
-	case proc_cc:  gcc_defs = 1; break;
-	case proc_cxx: gcc_defs = 1; break;
-#else
-	case proc_cc:  gcc_defs = 0; break;
-	case proc_cxx: gcc_defs = 0; break;
-#endif
-	case proc_as:  gcc_defs = 0; break;
+	case proc_cc:
+	case proc_cxx:
+            gcc_defs = strendswith(comp_args->base[0], "gcc") || strendswith(comp_args->base[0], "g++");
+            break;
     }
-    strarray_addall(comp_args, get_translator(opts->processor));
+
+    if (opts->target_platform == PLATFORM_WINDOWS) goto no_compat_defines;
 
     if (opts->processor != proc_cpp)
     {
-#ifdef CC_FLAG_SHORT_WCHAR
-	if (!opts->wine_objdir && !opts->noshortwchar)
+	if (gcc_defs && !opts->wine_objdir && !opts->noshortwchar)
 	{
-            strarray_add(comp_args, CC_FLAG_SHORT_WCHAR);
+            strarray_add(comp_args, "-fshort-wchar");
             strarray_add(comp_args, "-DWINE_UNICODE_NATIVE");
 	}
-#endif
         strarray_addall(comp_args, strarray_fromstring(DLLFLAGS, " "));
     }
 
-#ifdef _WIN64
-    strarray_add(comp_args, "-DWIN64");
-    strarray_add(comp_args, "-D_WIN64");
-    strarray_add(comp_args, "-D__WIN64");
-    strarray_add(comp_args, "-D__WIN64__");
-#else
+    if (opts->target_cpu == CPU_x86_64)
+    {
+        strarray_add(comp_args, "-DWIN64");
+        strarray_add(comp_args, "-D_WIN64");
+        strarray_add(comp_args, "-D__WIN64");
+        strarray_add(comp_args, "-D__WIN64__");
+    }
+
     strarray_add(comp_args, "-DWIN32");
     strarray_add(comp_args, "-D_WIN32");
     strarray_add(comp_args, "-D__WIN32");
     strarray_add(comp_args, "-D__WIN32__");
-#endif
     strarray_add(comp_args, "-D__WINNT");
     strarray_add(comp_args, "-D__WINNT__");
 
     if (gcc_defs)
     {
-#ifdef __x86_64__
-        strarray_add(comp_args, "-D__stdcall=__attribute__((ms_abi))");
-        strarray_add(comp_args, "-D__cdecl=__attribute__((ms_abi))");
-        strarray_add(comp_args, "-D_stdcall=__attribute__((ms_abi))");
-        strarray_add(comp_args, "-D_cdecl=__attribute__((ms_abi))");
-        strarray_add(comp_args, "-D__fastcall=__attribute__((ms_abi))");
-        strarray_add(comp_args, "-D_fastcall=__attribute__((ms_abi))");
-#elif defined(__APPLE__) /* Mac OS X uses a 16-byte aligned stack and not a 4-byte one */
-	strarray_add(comp_args, "-D__stdcall=__attribute__((__stdcall__)) __attribute__((__force_align_arg_pointer__))");
-	strarray_add(comp_args, "-D__cdecl=__attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))");
-	strarray_add(comp_args, "-D_stdcall=__attribute__((__stdcall__)) __attribute__((__force_align_arg_pointer__))");
-	strarray_add(comp_args, "-D_cdecl=__attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))");
-#else
-	strarray_add(comp_args, "-D__stdcall=__attribute__((__stdcall__))");
-	strarray_add(comp_args, "-D__cdecl=__attribute__((__cdecl__))");
-	strarray_add(comp_args, "-D_stdcall=__attribute__((__stdcall__))");
-	strarray_add(comp_args, "-D_cdecl=__attribute__((__cdecl__))");
-#endif
+        if (opts->target_cpu == CPU_x86_64)
+        {
+            strarray_add(comp_args, "-D__stdcall=__attribute__((ms_abi))");
+            strarray_add(comp_args, "-D__cdecl=__attribute__((ms_abi))");
+            strarray_add(comp_args, "-D_stdcall=__attribute__((ms_abi))");
+            strarray_add(comp_args, "-D_cdecl=__attribute__((ms_abi))");
+            strarray_add(comp_args, "-D__fastcall=__attribute__((ms_abi))");
+            strarray_add(comp_args, "-D_fastcall=__attribute__((ms_abi))");
+        }
+        else if (opts->target_platform == PLATFORM_APPLE)
+        {
+            /* Mac OS X uses a 16-byte aligned stack and not a 4-byte one */
+            strarray_add(comp_args, "-D__stdcall=__attribute__((__stdcall__)) __attribute__((__force_align_arg_pointer__))");
+            strarray_add(comp_args, "-D__cdecl=__attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))");
+            strarray_add(comp_args, "-D_stdcall=__attribute__((__stdcall__)) __attribute__((__force_align_arg_pointer__))");
+            strarray_add(comp_args, "-D_cdecl=__attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))");
+        }
+        else
+        {
+            strarray_add(comp_args, "-D__stdcall=__attribute__((__stdcall__))");
+            strarray_add(comp_args, "-D__cdecl=__attribute__((__cdecl__))");
+            strarray_add(comp_args, "-D_stdcall=__attribute__((__stdcall__))");
+            strarray_add(comp_args, "-D_cdecl=__attribute__((__cdecl__))");
+        }
 
 	strarray_add(comp_args, "-D__fastcall=__attribute__((__fastcall__))");
 	strarray_add(comp_args, "-D_fastcall=__attribute__((__fastcall__))");
@@ -323,15 +363,16 @@ static void compile(struct options* opts, const char* lang)
 	strarray_add(comp_args, "-D__declspec_thread=__thread");
     }
 
-    /* Wine specific defines */
-    strarray_add(comp_args, "-D__WINE__");
     strarray_add(comp_args, "-D__int8=char");
     strarray_add(comp_args, "-D__int16=short");
-    /* FIXME: what about 64-bit platforms? */
     strarray_add(comp_args, "-D__int32=int");
-#ifdef HAVE_LONG_LONG
-    strarray_add(comp_args, "-D__int64=long long");
-#endif
+    if (opts->target_cpu == CPU_x86_64)
+        strarray_add(comp_args, "-D__int64=long");
+    else
+        strarray_add(comp_args, "-D__int64=long long");
+
+no_compat_defines:
+    strarray_add(comp_args, "-D__WINE__");
 
     /* options we handle explicitly */
     if (opts->compile_only)
@@ -358,21 +399,18 @@ static void compile(struct options* opts, const char* lang)
     }
 
     /* standard includes come last in the include search path */
-#ifdef __GNUC__
-#define SYS_INCLUDE "-isystem"
-#else
-#define SYS_INCLUDE "-I"
-#endif
     if (!opts->wine_objdir && !opts->nostdinc)
     {
         if (opts->use_msvcrt)
         {
-            strarray_add(comp_args, SYS_INCLUDE INCLUDEDIR "/msvcrt");
+            if (gcc_defs) strarray_add(comp_args, "-isystem" INCLUDEDIR "/msvcrt");
+            else strarray_add(comp_args, "-I" INCLUDEDIR "/msvcrt");
             strarray_add(comp_args, "-D__MSVCRT__");
         }
-        strarray_add(comp_args, SYS_INCLUDE INCLUDEDIR "/windows");
+        strarray_add(comp_args, gcc_defs ? "-isystem" INCLUDEDIR "/windows" : "-I" INCLUDEDIR "/windows" );
     }
-#undef SYS_INCLUDE
+    else if (opts->wine_objdir)
+        strarray_add(comp_args, strmake("-I%s/include", opts->wine_objdir) );
 
     spawn(opts->prefix, comp_args, 0);
 }
@@ -640,24 +678,28 @@ static void build(struct options* opts)
     for ( j = 0 ; j < opts->linker_args->size ; j++ ) 
         strarray_add(link_args, opts->linker_args->base[j]);
 
-#ifdef __APPLE__
-    if (opts->image_base)
+    switch (opts->target_platform)
     {
-        strarray_add(link_args, "-image_base");
-        strarray_add(link_args, opts->image_base);
-    }
-#endif
+    case PLATFORM_APPLE:
+        if (opts->image_base)
+        {
+            strarray_add(link_args, "-image_base");
+            strarray_add(link_args, opts->image_base);
+        }
+        break;
+    case PLATFORM_SOLARIS:
+        {
+            char *mapfile = get_temp_file( output_name, ".map" );
+            const char *align = opts->section_align ? opts->section_align : "0x1000";
 
-#ifdef __sun
-    {
-        char *mapfile = get_temp_file( output_name, ".map" );
-        const char *align = opts->section_align ? opts->section_align : "0x1000";
-
-        create_file( mapfile, 0644, "text = A%s;\ndata = A%s;\n", align, align );
-        strarray_add(link_args, strmake("-Wl,-M,%s", mapfile));
-        strarray_add(tmp_files, mapfile);
+            create_file( mapfile, 0644, "text = A%s;\ndata = A%s;\n", align, align );
+            strarray_add(link_args, strmake("-Wl,-M,%s", mapfile));
+            strarray_add(tmp_files, mapfile);
+        }
+        break;
+    default:
+        break;
     }
-#endif
 
     for ( j = 0; j < lib_dirs->size; j++ )
 	strarray_add(link_args, strmake("-L%s", lib_dirs->base[j]));
@@ -828,6 +870,8 @@ int main(int argc, char **argv)
     
     /* initialize options */
     memset(&opts, 0, sizeof(opts));
+    opts.target_cpu = build_cpu;
+    opts.target_platform = build_platform;
     opts.lib_dirs = strarray_alloc();
     opts.files = strarray_alloc();
     opts.linker_args = strarray_alloc();
