@@ -507,7 +507,7 @@
 @ stdcall GdipSetAdjustableArrowCapMiddleInset(ptr long)
 @ stdcall GdipSetAdjustableArrowCapWidth(ptr long)
 @ stdcall GdipSetClipGraphics(ptr ptr long)
-@ stub GdipSetClipHrgn
+@ stdcall GdipSetClipHrgn(ptr long long)
 @ stdcall GdipSetClipPath(ptr ptr long)
 @ stdcall GdipSetClipRect(ptr long long long long long)
 @ stdcall GdipSetClipRectI(ptr long long long long long)

@@ -3083,6 +3083,29 @@ GpStatus WINGDIPAPI GdipTranslateWorldTransform(GpGraphics *graphics, REAL dx,
     return GdipTranslateMatrix(graphics->worldtrans, dx, dy, order);
 }
 
+/*****************************************************************************
+ * GdipSetClipHrgn [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipSetClipHrgn(GpGraphics *graphics, HRGN hrgn, CombineMode mode)
+{
+    GpRegion *region;
+    GpStatus status;
+
+    TRACE("(%p, %p, %d)\n", graphics, hrgn, mode);
+
+    if(!graphics)
+        return InvalidParameter;
+
+    status = GdipCreateRegionHrgn(hrgn, &region);
+    if(status != Ok)
+        return status;
+
+    status = GdipSetClipRegion(graphics, region, mode);
+
+    GdipDeleteRegion(region);
+    return status;
+}
+
 GpStatus WINGDIPAPI GdipSetClipPath(GpGraphics *graphics, GpPath *path, CombineMode mode)
 {
     TRACE("(%p, %p, %d)\n", graphics, path, mode);
