@@ -42,10 +42,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(msctf);
 
 typedef struct tagACLMulti {
     const ITfThreadMgrVtbl *ThreadMgrVtbl;
+    const ITfSourceVtbl *SourceVtbl;
     LONG refCount;
 
     ITfDocumentMgr *focus;
 } ThreadMgr;
+
+static inline ThreadMgr *impl_from_ITfSourceVtbl(ITfSource *iface)
+{
+    return (ThreadMgr *)((char *)iface - FIELD_OFFSET(ThreadMgr,SourceVtbl));
+}
 
 static void ThreadMgr_Destructor(ThreadMgr *This)
 {
@@ -64,6 +70,10 @@ static HRESULT WINAPI ThreadMgr_QueryInterface(ITfThreadMgr *iface, REFIID iid, 
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfThreadMgr))
     {
         *ppvOut = This;
+    }
+    else if (IsEqualIID(iid, &IID_ITfSource))
+    {
+        *ppvOut = &This->SourceVtbl;
     }
 
     if (*ppvOut)
@@ -222,6 +232,53 @@ static const ITfThreadMgrVtbl ThreadMgr_ThreadMgrVtbl =
     ThreadMgr_GetGlobalCompartment
 };
 
+
+static HRESULT WINAPI Source_QueryInterface(ITfSource *iface, REFIID iid, LPVOID *ppvOut)
+{
+    ThreadMgr *This = impl_from_ITfSourceVtbl(iface);
+    return ThreadMgr_QueryInterface((ITfThreadMgr *)This, iid, *ppvOut);
+}
+
+static ULONG WINAPI Source_AddRef(ITfSource *iface)
+{
+    ThreadMgr *This = impl_from_ITfSourceVtbl(iface);
+    return ThreadMgr_AddRef((ITfThreadMgr*)This);
+}
+
+static ULONG WINAPI Source_Release(ITfSource *iface)
+{
+    ThreadMgr *This = impl_from_ITfSourceVtbl(iface);
+    return ThreadMgr_Release((ITfThreadMgr *)This);
+}
+
+/*****************************************************
+ * ITfSource functions
+ *****************************************************/
+static WINAPI HRESULT ThreadMgrSource_AdviseSink(ITfSource *iface,
+        REFIID riid, IUnknown *punk, DWORD *pdwCookie)
+{
+    ThreadMgr *This = impl_from_ITfSourceVtbl(iface);
+    FIXME("STUB:(%p)\n",This);
+    return E_NOTIMPL;
+}
+
+static WINAPI HRESULT ThreadMgrSource_UnadviseSink(ITfSource *iface, DWORD pdwCookie)
+{
+    ThreadMgr *This = impl_from_ITfSourceVtbl(iface);
+    FIXME("STUB:(%p)\n",This);
+    return E_NOTIMPL;
+}
+
+static const ITfSourceVtbl ThreadMgr_SourceVtbl =
+{
+    Source_QueryInterface,
+    Source_AddRef,
+    Source_Release,
+
+    ThreadMgrSource_AdviseSink,
+    ThreadMgrSource_UnadviseSink,
+};
+
 HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
 {
     ThreadMgr *This;
@@ -242,6 +299,7 @@ HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
         return E_OUTOFMEMORY;
 
     This->ThreadMgrVtbl= &ThreadMgr_ThreadMgrVtbl;
+    This->SourceVtbl = &ThreadMgr_SourceVtbl;
     This->refCount = 1;
     TlsSetValue(tlsIndex,This);
 
