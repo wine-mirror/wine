@@ -129,8 +129,29 @@ static HRESULT WINAPI DocumentMgr_Push(ITfDocumentMgr *iface, ITfContext *pic)
 static HRESULT WINAPI DocumentMgr_Pop(ITfDocumentMgr *iface, DWORD dwFlags)
 {
     DocumentMgr *This = (DocumentMgr *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p) 0x%x\n",This,dwFlags);
+
+    if (dwFlags == TF_POPF_ALL)
+    {
+        if (This->contextStack[0])
+            ITfContext_Release(This->contextStack[0]);
+        if (This->contextStack[1])
+            ITfContext_Release(This->contextStack[1]);
+        This->contextStack[0] = This->contextStack[1] = NULL;
+        return S_OK;
+    }
+
+    if (dwFlags)
+        return E_INVALIDARG;
+
+    if (This->contextStack[0] == NULL) /* Cannot pop last context */
+        return E_FAIL;
+
+    ITfContext_Release(This->contextStack[0]);
+    This->contextStack[0] = This->contextStack[1];
+    This->contextStack[1] = NULL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DocumentMgr_GetTop(ITfDocumentMgr *iface, ITfContext **ppic)
