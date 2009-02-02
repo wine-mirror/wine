@@ -43,11 +43,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(msctf);
 typedef struct tagDocumentMgr {
     const ITfDocumentMgrVtbl *DocumentMgrVtbl;
     LONG refCount;
+
+    ITfContext*  contextStack[2]; /* limit of 2 contexts */
 } DocumentMgr;
 
 static void DocumentMgr_Destructor(DocumentMgr *This)
 {
     TRACE("destroying %p\n", This);
+    if (This->contextStack[0])
+        ITfContext_Release(This->contextStack[0]);
+    if (This->contextStack[1])
+        ITfContext_Release(This->contextStack[1]);
     HeapFree(GetProcessHeap(),0,This);
 }
 
@@ -104,8 +110,20 @@ static HRESULT WINAPI DocumentMgr_CreateContext(ITfDocumentMgr *iface,
 static HRESULT WINAPI DocumentMgr_Push(ITfDocumentMgr *iface, ITfContext *pic)
 {
     DocumentMgr *This = (DocumentMgr *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    ITfContext *check;
+
+    TRACE("(%p) %p\n",This,pic);
+
+    if (This->contextStack[1])  /* FUll */
+        return TF_E_STACKFULL;
+
+    if (!pic || FAILED(IUnknown_QueryInterface(pic,&IID_ITfContext,(LPVOID*) &check)))
+        return E_INVALIDARG;
+
+    This->contextStack[1] = This->contextStack[0];
+    This->contextStack[0] = check;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DocumentMgr_Pop(ITfDocumentMgr *iface, DWORD dwFlags)

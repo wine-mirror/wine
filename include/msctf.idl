@@ -23,6 +23,7 @@ import "textstor.idl";
 /* import "ctfutb.idl"; */
 #endif
 
+cpp_quote("#define TF_E_STACKFULL MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x0501)")
 cpp_quote("EXTERN_C const CLSID CLSID_TF_ThreadMgr;")
 
 typedef [uuid(7213778c-7bb0-4270-b050-6189ee594e97)]  DWORD TfEditCookie;
