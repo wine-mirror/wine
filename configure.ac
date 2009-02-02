@@ -1312,10 +1312,6 @@ then
   fi
 
   dnl Check for some compiler flags
-
-  WINE_TRY_CFLAGS([-fshort-wchar],
-                  [AC_DEFINE(CC_FLAG_SHORT_WCHAR, "-fshort-wchar",
-                             [Specifies the compiler flag that forces a short wchar_t])])
   WINE_TRY_CFLAGS([-fno-builtin],[AC_SUBST(BUILTINFLAG,"-fno-builtin")])
   WINE_TRY_CFLAGS([-fno-strict-aliasing])
   WINE_TRY_CFLAGS([-Wdeclaration-after-statement])
