@@ -672,15 +672,8 @@ static void run_tests_EM_FINDTEXT(HWND hwnd, const char *name, struct find_s *fi
   int i;
 
   for (i = 0; i < num_tests; i++) {
-    if (*name == '3' && i == 0) {
-        todo_wine {
-            check_EM_FINDTEXT(hwnd, name, &find[i], i);
-            check_EM_FINDTEXTEX(hwnd, name, &find[i], i);
-        }
-    } else {
-        check_EM_FINDTEXT(hwnd, name, &find[i], i);
-        check_EM_FINDTEXTEX(hwnd, name, &find[i], i);
-    }
+    check_EM_FINDTEXT(hwnd, name, &find[i], i);
+    check_EM_FINDTEXTEX(hwnd, name, &find[i], i);
   }
 }
 

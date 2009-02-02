@@ -1763,7 +1763,6 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
         if (nCurStart + nMatched == ME_StrLen(pCurItem->member.run.strText))
         {
           pCurItem = ME_FindItemFwd(pCurItem, diRun);
-          para = ME_GetParagraph(pCurItem);
           nCurStart = -nMatched;
         }
       }
@@ -1814,14 +1813,13 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
       ME_DisplayItem *pCurItem = item;
       int nCurEnd = nEnd;
       int nMatched = 0;
-      
-      if (nCurEnd - nMatched == 0)
+
+      if (nCurEnd == 0)
       {
         pCurItem = ME_FindItemBack(pCurItem, diRun);
-        para = ME_GetParagraph(pCurItem);
         nCurEnd = ME_StrLen(pCurItem->member.run.strText) + nMatched;
       }
-      
+
       while (pCurItem && ME_CharCompare(pCurItem->member.run.strText->szData[nCurEnd - nMatched - 1], text[nLen - nMatched - 1], (flags & FR_MATCHCASE)))
       {
         if ((flags & FR_WHOLEWORD) && isalnumW(wLastChar))
@@ -1853,7 +1851,8 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
               break;
           }
 
-          nStart = para->member.para.nCharOfs + pCurItem->member.run.nCharOfs + nCurEnd - nMatched;
+          nStart = ME_GetParagraph(pCurItem)->member.para.nCharOfs
+                   + pCurItem->member.run.nCharOfs + nCurEnd - nMatched;
           if (chrgText)
           {
             chrgText->cpMin = nStart;
@@ -1867,7 +1866,6 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
           pCurItem = ME_FindItemBack(pCurItem, diRun);
           /* Don't care about pCurItem becoming NULL here; it's already taken
            * care of in the exterior loop condition */
-          para = ME_GetParagraph(pCurItem);
           nCurEnd = ME_StrLen(pCurItem->member.run.strText) + nMatched;
         }
       }
