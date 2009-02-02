@@ -559,7 +559,7 @@ EmitREBytecode(CompilerState *state, JSRegExp *re, size_t treeDepth,
             emitStateSP->jumpToJumpFlag = FALSE;
             ++emitStateSP;
             assert((size_t)(emitStateSP - emitStateStack) <= treeDepth);
-            t = (RENode *) t->kid;
+            t = t->kid;
             op = t->op;
             assert(op < REOP_LIMIT);
             continue;
@@ -572,7 +572,7 @@ EmitREBytecode(CompilerState *state, JSRegExp *re, size_t treeDepth,
             emitStateSP->continueOp = REOP_ENDALT;
             ++emitStateSP;
             assert((size_t)(emitStateSP - emitStateStack) <= treeDepth);
-            t = (RENode *) t->u.kid2;
+            t = t->u.kid2;
             op = t->op;
             assert(op < REOP_LIMIT);
             continue;
@@ -676,7 +676,7 @@ EmitREBytecode(CompilerState *state, JSRegExp *re, size_t treeDepth,
             emitStateSP->jumpToJumpFlag = FALSE;
             ++emitStateSP;
             assert((size_t)(emitStateSP - emitStateStack) <= treeDepth);
-            t = (RENode *) t->kid;
+            t = t->kid;
             op = t->op;
             assert(op < REOP_LIMIT);
             continue;
@@ -699,7 +699,7 @@ EmitREBytecode(CompilerState *state, JSRegExp *re, size_t treeDepth,
                 while (t->next &&
                        t->next->op == REOP_FLAT &&
                        (WCHAR*)t->kid + t->u.flat.length ==
-                       (WCHAR*)t->next->kid) {
+                       t->next->kid) {
                     t->u.flat.length += t->next->u.flat.length;
                     t->next = t->next->next;
                 }
@@ -727,7 +727,7 @@ EmitREBytecode(CompilerState *state, JSRegExp *re, size_t treeDepth,
             emitStateSP->continueOp = REOP_RPAREN;
             ++emitStateSP;
             assert((size_t)(emitStateSP - emitStateStack) <= treeDepth);
-            t = (RENode *) t->kid;
+            t = t->kid;
             op = t->op;
             continue;
 
@@ -747,7 +747,7 @@ EmitREBytecode(CompilerState *state, JSRegExp *re, size_t treeDepth,
             emitStateSP->continueOp = REOP_ASSERTTEST;
             ++emitStateSP;
             assert((size_t)(emitStateSP - emitStateStack) <= treeDepth);
-            t = (RENode *) t->kid;
+            t = t->kid;
             op = t->op;
             continue;
 
@@ -765,7 +765,7 @@ EmitREBytecode(CompilerState *state, JSRegExp *re, size_t treeDepth,
             emitStateSP->continueOp = REOP_ASSERTNOTTEST;
             ++emitStateSP;
             assert((size_t)(emitStateSP - emitStateStack) <= treeDepth);
-            t = (RENode *) t->kid;
+            t = t->kid;
             op = t->op;
             continue;
 
@@ -793,7 +793,7 @@ EmitREBytecode(CompilerState *state, JSRegExp *re, size_t treeDepth,
             emitStateSP->continueOp = REOP_ENDCHILD;
             ++emitStateSP;
             assert((size_t)(emitStateSP - emitStateStack) <= treeDepth);
-            t = (RENode *) t->kid;
+            t = t->kid;
             op = t->op;
             continue;
 

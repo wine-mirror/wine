@@ -497,7 +497,7 @@ static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, ex
     }
 
     if(item) {
-        exprval_set_idref(ret, (IDispatch*)item->disp, id);
+        exprval_set_idref(ret, item->disp, id);
         return S_OK;
     }
 

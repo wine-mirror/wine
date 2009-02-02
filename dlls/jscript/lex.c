@@ -479,7 +479,7 @@ int parser_lex(void *lval, parser_ctx_t *ctx)
         if(ret)
             return ret;
 
-        return parse_identifier(ctx, (const WCHAR**)lval);
+        return parse_identifier(ctx, lval);
     }
 
     if(isdigitW(*ctx->ptr))
@@ -684,7 +684,7 @@ int parser_lex(void *lval, parser_ctx_t *ctx)
 
     case '\"':
     case '\'':
-        return parse_string_literal(ctx, (const WCHAR**)lval, *ctx->ptr);
+        return parse_string_literal(ctx, lval, *ctx->ptr);
 
     case '_':
     case '$':

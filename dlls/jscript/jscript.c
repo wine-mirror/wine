@@ -44,11 +44,11 @@ typedef struct {
     parser_ctx_t *queue_tail;
 } JScript;
 
-#define ACTSCRIPT(x)    ((IActiveScript*)                 &(x)->lpIActiveScriptVtbl)
-#define ASPARSE(x)      ((IActiveScriptParse*)            &(x)->lpIActiveScriptParseVtbl)
-#define ASPARSEPROC(x)  ((IActiveScriptParseProcedure2*)  &(x)->lpIActiveScriptParseProcedure2Vtbl)
-#define ACTSCPPROP(x)   ((IActiveScriptProperty*)         &(x)->lpIActiveScriptPropertyVtbl)
-#define OBJSAFETY(x)    ((IObjectSafety*)                 &(x)->lpIObjectSafetyVtbl)
+#define ACTSCRIPT(x)    ((IActiveScript*) &(x)->lpIActiveScriptVtbl)
+#define ASPARSE(x)      (&(x)->lpIActiveScriptParseVtbl)
+#define ASPARSEPROC(x)  (&(x)->lpIActiveScriptParseProcedure2Vtbl)
+#define ACTSCPPROP(x)   (&(x)->lpIActiveScriptPropertyVtbl)
+#define OBJSAFETY(x)    (&(x)->lpIObjectSafetyVtbl)
 
 void script_release(script_ctx_t *ctx)
 {
