@@ -101,9 +101,24 @@ TW_UINT16 SANE_CapabilityGetDefault (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 TW_UINT16 SANE_CapabilityQuerySupport (pTW_IDENTITY pOrigin,
                                         TW_MEMREF pData)
 {
-    FIXME ("stub!\n");
+    TW_UINT16 twRC = TWRC_SUCCESS, twCC = TWCC_SUCCESS;
+    pTW_CAPABILITY pCapability = (pTW_CAPABILITY) pData;
 
-    return TWRC_FAILURE;
+    TRACE("DG_CONTROL/DAT_CAPABILITY/MSG_QUERYSUPPORT\n");
+
+    if (activeDS.currentState < 4 || activeDS.currentState > 7)
+    {
+        twRC = TWRC_FAILURE;
+        activeDS.twCC = TWCC_SEQERROR;
+    }
+    else
+    {
+        twCC = SANE_SaneCapability (pCapability, MSG_QUERYSUPPORT);
+        twRC = (twCC == TWCC_SUCCESS)?TWRC_SUCCESS:TWRC_FAILURE;
+        activeDS.twCC = twCC;
+    }
+
+    return twRC;
 }
 
 /* DG_CONTROL/DAT_CAPABILITY/MSG_RESET */
