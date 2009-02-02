@@ -42,10 +42,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(msctf);
 
 typedef struct tagDocumentMgr {
     const ITfDocumentMgrVtbl *DocumentMgrVtbl;
+    const ITfSourceVtbl *SourceVtbl;
     LONG refCount;
 
     ITfContext*  contextStack[2]; /* limit of 2 contexts */
 } DocumentMgr;
+
+static inline DocumentMgr *impl_from_ITfSourceVtbl(ITfSource *iface)
+{
+    return (DocumentMgr *)((char *)iface - FIELD_OFFSET(DocumentMgr,SourceVtbl));
+}
 
 static void DocumentMgr_Destructor(DocumentMgr *This)
 {
@@ -65,6 +71,10 @@ static HRESULT WINAPI DocumentMgr_QueryInterface(ITfDocumentMgr *iface, REFIID i
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfDocumentMgr))
     {
         *ppvOut = This;
+    }
+    else if (IsEqualIID(iid, &IID_ITfSource))
+    {
+        *ppvOut = &This->SourceVtbl;
     }
 
     if (*ppvOut)
@@ -205,6 +215,53 @@ static const ITfDocumentMgrVtbl DocumentMgr_DocumentMgrVtbl =
     DocumentMgr_EnumContexts
 };
 
+
+static HRESULT WINAPI Source_QueryInterface(ITfSource *iface, REFIID iid, LPVOID *ppvOut)
+{
+    DocumentMgr *This = impl_from_ITfSourceVtbl(iface);
+    return DocumentMgr_QueryInterface((ITfDocumentMgr*)This, iid, *ppvOut);
+}
+
+static ULONG WINAPI Source_AddRef(ITfSource *iface)
+{
+    DocumentMgr *This = impl_from_ITfSourceVtbl(iface);
+    return DocumentMgr_AddRef((ITfDocumentMgr*)This);
+}
+
+static ULONG WINAPI Source_Release(ITfSource *iface)
+{
+    DocumentMgr *This = impl_from_ITfSourceVtbl(iface);
+    return DocumentMgr_Release((ITfDocumentMgr*)This);
+}
+
+/*****************************************************
+ * ITfSource functions
+ *****************************************************/
+static WINAPI HRESULT DocumentMgrSource_AdviseSink(ITfSource *iface,
+        REFIID riid, IUnknown *punk, DWORD *pdwCookie)
+{
+    DocumentMgr *This = impl_from_ITfSourceVtbl(iface);
+    FIXME("STUB:(%p)\n",This);
+    return E_NOTIMPL;
+}
+
+static WINAPI HRESULT DocumentMgrSource_UnadviseSink(ITfSource *iface, DWORD pdwCookie)
+{
+    DocumentMgr *This = impl_from_ITfSourceVtbl(iface);
+    FIXME("STUB:(%p)\n",This);
+    return E_NOTIMPL;
+}
+
+static const ITfSourceVtbl DocumentMgr_SourceVtbl =
+{
+    Source_QueryInterface,
+    Source_AddRef,
+    Source_Release,
+
+    DocumentMgrSource_AdviseSink,
+    DocumentMgrSource_UnadviseSink,
+};
+
 HRESULT DocumentMgr_Constructor(ITfDocumentMgr **ppOut)
 {
     DocumentMgr *This;
@@ -214,6 +271,7 @@ HRESULT DocumentMgr_Constructor(ITfDocumentMgr **ppOut)
         return E_OUTOFMEMORY;
 
     This->DocumentMgrVtbl= &DocumentMgr_DocumentMgrVtbl;
+    This->SourceVtbl = &DocumentMgr_SourceVtbl;
     This->refCount = 1;
 
     TRACE("returning %p\n", This);
