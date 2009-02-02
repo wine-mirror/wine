@@ -385,7 +385,7 @@ WORD WINAPI GetASPISupportInfo16(void)
 }
 
 
-DWORD ASPI_SendASPICommand(DWORD ptrSRB, UINT16 mode)
+static DWORD ASPI_SendASPICommand(DWORD ptrSRB, UINT16 mode)
 {
 #ifdef linux
   LPSRB16 lpSRB = PTR_TO_LIN( ptrSRB, mode );

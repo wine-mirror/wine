@@ -148,7 +148,7 @@ int ASPI_GetNumControllers(void)
     return num_ha;
 }
 
-BOOL SCSI_GetDeviceName( int h, int c, int t, int d, LPSTR devstr, LPDWORD lpcbData )
+static BOOL SCSI_GetDeviceName( int h, int c, int t, int d, LPSTR devstr, LPDWORD lpcbData )
 {
     char buffer[200];
     HKEY hkeyScsi;

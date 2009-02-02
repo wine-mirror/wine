@@ -79,9 +79,6 @@ void
 SCSI_Fix_CMD_LEN( int fd, int cmd, int len );
 #endif
 
-BOOL
-SCSI_GetDeviceName(int h, int c, int t, int d, LPSTR devstr, LPDWORD lpcbData);
-
 DWORD
 ASPI_GetHCforController( int controller );
 
