@@ -49,6 +49,7 @@ typedef struct tagACLMulti {
 
 static void ThreadMgr_Destructor(ThreadMgr *This)
 {
+    TlsSetValue(tlsIndex,NULL);
     TRACE("destroying %p\n", This);
     if (This->focus)
         ITfDocumentMgr_Release(This->focus);
@@ -227,12 +228,22 @@ HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     if (pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
+    /* Only 1 ThreadMgr is created per thread */
+    This = TlsGetValue(tlsIndex);
+    if (This)
+    {
+        ThreadMgr_AddRef((ITfThreadMgr*)This);
+        *ppOut = (IUnknown*)This;
+        return S_OK;
+    }
+
     This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ThreadMgr));
     if (This == NULL)
         return E_OUTOFMEMORY;
 
     This->ThreadMgrVtbl= &ThreadMgr_ThreadMgrVtbl;
     This->refCount = 1;
+    TlsSetValue(tlsIndex,This);
 
     TRACE("returning %p\n", This);
     *ppOut = (IUnknown *)This;

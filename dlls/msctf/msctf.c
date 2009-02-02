@@ -43,6 +43,8 @@ static LONG MSCTF_refCount;
 
 static HINSTANCE MSCTF_hinstance;
 
+DWORD tlsIndex = 0;
+
 typedef HRESULT (*LPFNCONSTRUCTOR)(IUnknown *pUnkOuter, IUnknown **ppvOut);
 
 static const struct {
@@ -159,8 +161,11 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
         case DLL_WINE_PREATTACH:
             return FALSE;   /* prefer native version */
         case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hinst);
             MSCTF_hinstance = hinst;
+            tlsIndex = TlsAlloc();
+            break;
+        case DLL_PROCESS_DETACH:
+            TlsFree(tlsIndex);
             break;
     }
     return TRUE;
