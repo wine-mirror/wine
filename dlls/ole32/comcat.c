@@ -226,12 +226,6 @@ static HRESULT COMCAT_IsClassOfCategories(
     HKEY key,
     struct class_categories const* categories)
 {
-    static const WCHAR impl_keyname[] = { 'I', 'm', 'p', 'l', 'e', 'm', 'e', 'n',
-                                          't', 'e', 'd', ' ', 'C', 'a', 't', 'e',
-                                          'g', 'o', 'r', 'i', 'e', 's', 0 };
-    static const WCHAR req_keyname[]  = { 'R', 'e', 'q', 'u', 'i', 'r', 'e', 'd',
-                                          ' ', 'C', 'a', 't', 'e', 'g', 'o', 'r',
-                                          'i', 'e', 's', 0 };
     HKEY subkey;
     HRESULT res;
     DWORD index;
