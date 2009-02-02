@@ -304,10 +304,10 @@ static void test_jscript(void)
     test_state(script, SCRIPTSTATE_UNINITIALIZED);
     test_safety(unk);
 
-    hres = IActiveScriptParse_InitNew(parse);
+    hres = IActiveScriptParse64_InitNew(parse);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
 
-    hres = IActiveScriptParse_InitNew(parse);
+    hres = IActiveScriptParse64_InitNew(parse);
     ok(hres == E_UNEXPECTED, "InitNew failed: %08x, expected E_UNEXPECTED\n", hres);
 
     hres = IActiveScript_SetScriptSite(script, NULL);
@@ -345,7 +345,7 @@ static void test_jscript(void)
     test_state(script, SCRIPTSTATE_CLOSED);
     test_script_dispatch(script, FALSE);
 
-    IActiveScriptParse_Release(parse);
+    IUnknown_Release(parse);
     IActiveScript_Release(script);
 
     ref = IUnknown_Release(unk);
@@ -387,11 +387,11 @@ static void test_jscript2(void)
     test_state(script, SCRIPTSTATE_UNINITIALIZED);
 
     SET_EXPECT(OnStateChange_INITIALIZED);
-    hres = IActiveScriptParse_InitNew(parse);
+    hres = IActiveScriptParse64_InitNew(parse);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
     CHECK_CALLED(OnStateChange_INITIALIZED);
 
-    hres = IActiveScriptParse_InitNew(parse);
+    hres = IActiveScriptParse64_InitNew(parse);
     ok(hres == E_UNEXPECTED, "InitNew failed: %08x, expected E_UNEXPECTED\n", hres);
 
     SET_EXPECT(OnStateChange_CONNECTED);
@@ -413,7 +413,7 @@ static void test_jscript2(void)
     test_state(script, SCRIPTSTATE_CLOSED);
     test_script_dispatch(script, FALSE);
 
-    IActiveScriptParse_Release(parse);
+    IUnknown_Release(parse);
     IActiveScript_Release(script);
 
     ref = IUnknown_Release(unk);

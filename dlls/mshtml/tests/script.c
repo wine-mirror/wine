@@ -36,6 +36,18 @@
 
 DEFINE_GUID(CLSID_IdentityUnmarshal,0x0000001b,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 
+#ifdef _WIN64
+
+#define CTXARG_T DWORDLONG
+#define IActiveScriptParseVtbl IActiveScriptParse64Vtbl
+
+#else
+
+#define CTXARG_T DWORD
+#define IActiveScriptParseVtbl IActiveScriptParse32Vtbl
+
+#endif
+
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
 
@@ -579,7 +591,7 @@ static HRESULT WINAPI ActiveScriptParse_InitNew(IActiveScriptParse *iface)
 static HRESULT WINAPI ActiveScriptParse_AddScriptlet(IActiveScriptParse *iface,
         LPCOLESTR pstrDefaultName, LPCOLESTR pstrCode, LPCOLESTR pstrItemName,
         LPCOLESTR pstrSubItemName, LPCOLESTR pstrEventName, LPCOLESTR pstrDelimiter,
-        DWORD dwSourceContextCookie, ULONG ulStartingLineNumber, DWORD dwFlags,
+        CTXARG_T dwSourceContextCookie, ULONG ulStartingLineNumber, DWORD dwFlags,
         BSTR *pbstrName, EXCEPINFO *pexcepinfo)
 {
     ok(0, "unexpected call\n");
@@ -588,7 +600,7 @@ static HRESULT WINAPI ActiveScriptParse_AddScriptlet(IActiveScriptParse *iface,
 
 static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *iface,
         LPCOLESTR pstrCode, LPCOLESTR pstrItemName, IUnknown *punkContext,
-        LPCOLESTR pstrDelimiter, DWORD dwSourceContextCookie, ULONG ulStartingLine,
+        LPCOLESTR pstrDelimiter, CTXARG_T dwSourceContextCookie, ULONG ulStartingLine,
         DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
 {
     IDispatchEx *document;

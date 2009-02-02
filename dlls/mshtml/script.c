@@ -119,7 +119,7 @@ static BOOL init_script_engine(ScriptHost *script_host)
         WARN("Could not get IActiveScriptProperty: %08x\n", hres);
     }
 
-    hres = IActiveScriptParse_InitNew(script_host->parse);
+    hres = IActiveScriptParse64_InitNew(script_host->parse);
     if(FAILED(hres)) {
         WARN("InitNew failed: %08x\n", hres);
         return FALSE;
@@ -180,7 +180,7 @@ static void release_script_engine(ScriptHost *This)
         }
 
         if(This->parse) {
-            IActiveScriptParse_Release(This->parse);
+            IUnknown_Release(This->parse);
             This->parse = NULL;
         }
     }
@@ -552,7 +552,7 @@ static void parse_text(ScriptHost *script_host, LPCWSTR text)
 
     VariantInit(&var);
     memset(&excepinfo, 0, sizeof(excepinfo));
-    hres = IActiveScriptParse_ParseScriptText(script_host->parse, text, windowW, NULL, script_endW,
+    hres = IActiveScriptParse64_ParseScriptText(script_host->parse, text, windowW, NULL, script_endW,
                                               0, 0, SCRIPTTEXT_ISVISIBLE|SCRIPTTEXT_HOSTMANAGESSOURCE,
                                               &var, &excepinfo);
     if(FAILED(hres))
