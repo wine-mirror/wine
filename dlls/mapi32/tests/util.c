@@ -151,7 +151,8 @@ static void test_CbOfEncoded(void)
         memset(buff, '\0', sizeof(buff));
         memset(buff, '?', i);
         ulRet = pCbOfEncoded(buff);
-        ok(ulRet == ulExpected, "CbOfEncoded(length %d): expected %d, got %d\n",
+        ok(ulRet == ulExpected || broken(ulExpected == 0) /* Win9x */,
+           "CbOfEncoded(length %d): expected %d, got %d\n",
            i, ulExpected, ulRet);
     }
 }
