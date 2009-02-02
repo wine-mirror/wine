@@ -897,12 +897,12 @@ static void test_word_wrap(void)
 
     /* Test the effect of EM_SETTARGETDEVICE on word wrap. */
     res = SendMessage(hwnd, EM_SETTARGETDEVICE, 0, 1);
-    todo_wine ok(res, "EM_SETTARGETDEVICE failed (returned %d).\n", res);
+    ok(res, "EM_SETTARGETDEVICE failed (returned %d).\n", res);
     pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
     ok(!pos, "pos=%d indicating word wrap when none is expected.\n", pos);
 
     res = SendMessage(hwnd, EM_SETTARGETDEVICE, 0, 0);
-    todo_wine ok(res, "EM_SETTARGETDEVICE failed (returned %d).\n", res);
+    ok(res, "EM_SETTARGETDEVICE failed (returned %d).\n", res);
     pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
     ok(pos, "pos=%d indicating no word wrap when it is expected.\n", pos);
     DestroyWindow(hwnd);

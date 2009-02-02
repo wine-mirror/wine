@@ -4332,14 +4332,23 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     if (wParam == 0)
     {
       BOOL new = (lParam == 0);
-      if (editor->bWordWrap != new)
+      if (editor->nAvailWidth || editor->bWordWrap != new)
       {
         editor->bWordWrap = new;
+        editor->nAvailWidth = 0; /* wrap to client area */
         ME_RewrapRepaint(editor);
       }
+    } else {
+      int width = max(0, lParam);
+      if (!editor->bWordWrap || editor->nAvailWidth != width)
+      {
+        editor->nAvailWidth = width;
+        editor->bWordWrap = TRUE;
+        ME_RewrapRepaint(editor);
+      }
+      FIXME("EM_SETTARGETDEVICE doesn't use non-NULL target devices\n");
     }
-    else FIXME("Unsupported yet non NULL device in EM_SETTARGETDEVICE\n");
-    break;
+    return TRUE;
   default:
   do_default:
     *phresult = S_FALSE;
