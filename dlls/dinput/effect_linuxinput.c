@@ -55,6 +55,7 @@ struct LinuxInputEffectImpl
 
     struct ff_effect    effect; /* Effect data */
     int                 gain;   /* Effect gain */
+    int                 first_axis_is_x;
     int*                fd;     /* Parent device */
     struct list        *entry;  /* Entry into the parent's list of effects */
 };
@@ -548,6 +549,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
 	    return DIERR_INVALIDPARAM;
 	else if (peff->cAxes < 1)
 	    return DIERR_INCOMPLETEEFFECT;
+	This->first_axis_is_x = peff->rgdwAxes[0] == DIJOFS_X;
     }
 
     /* some of this may look funky, but it's 'cause the linux driver and directx have
@@ -572,15 +574,15 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
 	    }
 	} else { /* two axes */
 	    if (peff->dwFlags & DIEFF_CARTESIAN) {
-		/* avoid divide-by-zero */
-		if (peff->rglDirection[1] == 0) {
-                    if (peff->rglDirection[0] >= 0)
-                        This->effect.direction = 0x4000;
-                    else if (peff->rglDirection[0] < 0)
-                        This->effect.direction = 0xC000;
+		LONG x, y;
+		if (This->first_axis_is_x) {
+		    x = peff->rglDirection[0];
+		    y = peff->rglDirection[1];
 		} else {
-		    This->effect.direction = (int)(atan(peff->rglDirection[0] / peff->rglDirection[1]) * 0x7FFF / (3 * M_PI));
+		    x = peff->rglDirection[1];
+		    y = peff->rglDirection[0];
 		}
+		This->effect.direction = (int)((3 * M_PI / 2 - atan2(y, x)) * -0x7FFF / M_PI);
 	    } else {
 		/* Polar and spherical are the same for 2 axes */
 		/* Precision is important here, so we do double math with exact constants */
