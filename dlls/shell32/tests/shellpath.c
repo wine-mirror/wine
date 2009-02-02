@@ -693,8 +693,8 @@ static void testWinDir(void)
     }
 }
 
-/* Verifies the shell path for CSIDL_SYSTEM and CSIDL_SYSTEMX86 matches the
- * return from GetSystemDirectory.  If SHGetSpecialFolderPath fails, no harm,
+/* Verifies the shell path for CSIDL_SYSTEM matches the return from
+ * GetSystemDirectory.  If SHGetSpecialFolderPath fails, no harm,
  * no foul--not every shell32 version supports CSIDL_SYSTEM.
  */
 static void testSystemDir(void)
@@ -712,16 +712,10 @@ static void testSystemDir(void)
          "GetSystemDirectory returns %s SHGetSpecialFolderPath returns %s\n",
          systemDir, systemShellPath);
     }
-    /* check CSIDL_SYSTEMX86; note that this isn't always present, so don't
-     * worry if it fails
+    /* CSIDL_SYSTEMX86 isn't checked in the same way, since it's different
+     * on Win64 (and non-x86 Windows systems, if there are any still in
+     * existence) than on Win32.
      */
-    if (pSHGetSpecialFolderPathA(NULL, systemShellPath, CSIDL_SYSTEMX86, FALSE))
-    {
-        myPathRemoveBackslashA(systemShellPath);
-        ok(!lstrcmpiA(systemDir, systemShellPath),
-         "GetSystemDirectory returns %s SHGetSpecialFolderPath returns %s\n",
-         systemDir, systemShellPath);
-    }
 }
 
 /* Globals used by subprocesses */
