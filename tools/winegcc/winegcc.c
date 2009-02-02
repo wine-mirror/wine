@@ -1154,6 +1154,12 @@ int main(int argc, char **argv)
                 case '-':
                     if (strcmp("-static", argv[i]+1) == 0)
                         linking = -1;
+                    else if (!strncmp("--sysroot", argv[i], 9) && opts.wine_objdir)
+                    {
+                        if (argv[i][9] == '=') opts.wine_objdir = argv[i] + 10;
+                        else opts.wine_objdir = argv[++i];
+                        raw_compiler_arg = raw_linker_arg = 0;
+                    }
                     break;
             }
 
