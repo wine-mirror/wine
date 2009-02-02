@@ -157,8 +157,16 @@ static HRESULT WINAPI DocumentMgr_Pop(ITfDocumentMgr *iface, DWORD dwFlags)
 static HRESULT WINAPI DocumentMgr_GetTop(ITfDocumentMgr *iface, ITfContext **ppic)
 {
     DocumentMgr *This = (DocumentMgr *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p)\n",This);
+    if (!ppic)
+        return E_INVALIDARG;
+
+    if (This->contextStack[0])
+        ITfContext_AddRef(This->contextStack[0]);
+
+    *ppic = This->contextStack[0];
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DocumentMgr_GetBase(ITfDocumentMgr *iface, ITfContext **ppic)
