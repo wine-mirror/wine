@@ -66,6 +66,13 @@ void *xrealloc(void* p, size_t size)
     return p2;
 }
 
+char *xstrdup( const char *str )
+{
+    char *res = strdup( str );
+    if (!res) error("Virtual memory exhausted.\n");
+    return res;
+}
+
 int strendswith(const char* str, const char* end)
 {
     int l = strlen(str);

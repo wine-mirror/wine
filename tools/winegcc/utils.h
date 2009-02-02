@@ -35,6 +35,7 @@ void error(const char* s, ...) DECLSPEC_NORETURN;
 
 void* xmalloc(size_t size);
 void* xrealloc(void* p, size_t size);
+char *xstrdup( const char *str );
 char* strmake(const char* fmt, ...);
 int strendswith(const char* str, const char* end);
 

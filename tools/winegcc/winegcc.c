@@ -88,6 +88,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -154,11 +155,43 @@ enum target_platform
     PLATFORM_UNSPECIFIED, PLATFORM_APPLE, PLATFORM_SOLARIS, PLATFORM_WINDOWS
 };
 
-struct options 
+static const struct
+{
+    const char *name;
+    enum target_cpu cpu;
+} cpu_names[] =
+{
+    { "i386",    CPU_x86 },
+    { "i486",    CPU_x86 },
+    { "i586",    CPU_x86 },
+    { "i686",    CPU_x86 },
+    { "i786",    CPU_x86 },
+    { "x86_64",  CPU_x86_64 },
+    { "sparc",   CPU_SPARC },
+    { "alpha",   CPU_ALPHA },
+    { "powerpc", CPU_POWERPC }
+};
+
+static const struct
+{
+    const char *name;
+    enum target_platform platform;
+} platform_names[] =
+{
+    { "macos",   PLATFORM_APPLE },
+    { "darwin",  PLATFORM_APPLE },
+    { "solaris", PLATFORM_SOLARIS },
+    { "mingw32", PLATFORM_WINDOWS },
+    { "windows", PLATFORM_WINDOWS },
+    { "winnt",   PLATFORM_WINDOWS }
+};
+
+struct options
 {
     enum processor processor;
     enum target_cpu target_cpu;
     enum target_platform target_platform;
+    const char *target;
     int shared;
     int use_msvcrt;
     int nostdinc;
@@ -248,29 +281,20 @@ static char* get_temp_file(const char* prefix, const char* suffix)
     return tmp;
 }
 
-static const strarray* get_translator(enum processor processor)
+static const strarray* get_translator(struct options *opts)
 {
-    static strarray* cpp = 0;
-    static strarray* as = 0;
-    static strarray* cc = 0;
-    static strarray* cxx = 0;
+    const char *str;
 
-    switch(processor)
+    switch(opts->processor)
     {
-        case proc_cpp: 
-	    if (!cpp) cpp = strarray_fromstring(CPP, " ");
-	    return cpp;
-        case proc_cc:  
-	    if (!cc) cc = strarray_fromstring(CC, " ");
-	    return cc;
-        case proc_cxx: 
-	    if (!cxx) cxx = strarray_fromstring(CXX, " ");
-	    return cxx;
-        case proc_as:
-	    if (!as) as = strarray_fromstring(AS, " ");
-	    return as;
+    case proc_cpp: str = CPP; break;
+    case proc_cc:  str = CC;  break;
+    case proc_cxx: str = CXX; break;
+    case proc_as:  str = AS;  break;
+    default: assert(0);
     }
-    error("Unknown processor\n");
+    if (opts->target) str = strmake( "%s-%s", opts->target, str );
+    return strarray_fromstring( str, " " );
 }
 
 static void compile(struct options* opts, const char* lang)
@@ -279,7 +303,7 @@ static void compile(struct options* opts, const char* lang)
     unsigned int j;
     int gcc_defs = 0;
 
-    strarray_addall(comp_args, get_translator(opts->processor));
+    strarray_addall(comp_args, get_translator(opts));
     switch(opts->processor)
     {
 	case proc_cpp: gcc_defs = 1; break;
@@ -614,6 +638,11 @@ static void build(struct options* opts)
     strarray_add(spec_args, winebuild);
     if (verbose) strarray_add(spec_args, "-v");
     if (keep_generated) strarray_add(spec_args, "--save-temps");
+    if (opts->target)
+    {
+        strarray_add(spec_args, "--target");
+        strarray_add(spec_args, opts->target);
+    }
     strarray_add(spec_args, "--as-cmd");
     strarray_add(spec_args, AS);
     strarray_add(spec_args, "--ld-cmd");
@@ -669,7 +698,7 @@ static void build(struct options* opts)
 
     /* link everything together now */
     link_args = strarray_alloc();
-    strarray_addall(link_args, get_translator(opts->processor));
+    strarray_addall(link_args, get_translator(opts));
     strarray_addall(link_args, strarray_fromstring(LDDLLFLAGS, " "));
 
     strarray_add(link_args, "-o");
@@ -760,7 +789,7 @@ static void forward(int argc, char **argv, struct options* opts)
     strarray* args = strarray_alloc();
     int j;
 
-    strarray_addall(args, get_translator(opts->processor));
+    strarray_addall(args, get_translator(opts));
 
     for( j = 1; j < argc; j++ ) 
 	strarray_add(args, argv[j]);
@@ -841,6 +870,46 @@ static int is_mingw_arg(const char* arg)
 	if (strcmp(mingw_switches[j], arg) == 0) return 1;
 
     return 0;
+}
+
+static void parse_target_option( struct options *opts, const char *target )
+{
+    char *p, *platform, *spec = xstrdup( target );
+    unsigned int i;
+
+    /* target specification is in the form CPU-MANUFACTURER-OS or CPU-MANUFACTURER-KERNEL-OS */
+
+    /* get the CPU part */
+
+    if (!(p = strchr( spec, '-' ))) error( "Invalid target specification '%s'\n", target );
+    *p++ = 0;
+    for (i = 0; i < sizeof(cpu_names)/sizeof(cpu_names[0]); i++)
+    {
+        if (!strcmp( cpu_names[i].name, spec ))
+        {
+            opts->target_cpu = cpu_names[i].cpu;
+            break;
+        }
+    }
+    if (i == sizeof(cpu_names)/sizeof(cpu_names[0]))
+        error( "Unrecognized CPU '%s'\n", spec );
+    platform = p;
+    if ((p = strrchr( p, '-' ))) platform = p + 1;
+
+    /* get the OS part */
+
+    opts->target_platform = PLATFORM_UNSPECIFIED;  /* default value */
+    for (i = 0; i < sizeof(platform_names)/sizeof(platform_names[0]); i++)
+    {
+        if (!strncmp( platform_names[i].name, platform, strlen(platform_names[i].name) ))
+        {
+            opts->target_platform = platform_names[i].platform;
+            break;
+        }
+    }
+
+    free( spec );
+    opts->target = xstrdup( target );
 }
 
 int main(int argc, char **argv)
@@ -943,7 +1012,7 @@ int main(int argc, char **argv)
 		raw_linker_arg = 0;
 	    if (argv[i][1] == 'c' || argv[i][1] == 'L')
 		raw_compiler_arg = 0;
-	    if (argv[i][1] == 'o')
+	    if (argv[i][1] == 'o' || argv[i][1] == 'b')
 		raw_compiler_arg = raw_linker_arg = 0;
 
 	    /* do a bit of semantic analysis */
@@ -963,6 +1032,9 @@ int main(int argc, char **argv)
                     if (!opts.prefix) opts.prefix = strarray_alloc();
                     strarray_add(opts.prefix, str);
 		    break;
+                case 'b':
+                    parse_target_option( &opts, option_arg );
+                    break;
                 case 'c':        /* compile or assemble */
 		    if (argv[i][2] == 0) opts.compile_only = 1;
 		    /* fall through */
