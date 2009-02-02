@@ -2415,6 +2415,9 @@ GpStatus WINGDIPAPI GdipGetClipBounds(GpGraphics *graphics, GpRectF *rect)
     if(!graphics)
         return InvalidParameter;
 
+    if(graphics->busy)
+        return ObjectBusy;
+
     return GdipGetRegionBounds(graphics->clip, graphics, rect);
 }
 
@@ -2427,6 +2430,9 @@ GpStatus WINGDIPAPI GdipGetClipBoundsI(GpGraphics *graphics, GpRect *rect)
 
     if(!graphics)
         return InvalidParameter;
+
+    if(graphics->busy)
+        return ObjectBusy;
 
     return GdipGetRegionBoundsI(graphics->clip, graphics, rect);
 }
@@ -3378,6 +3384,9 @@ GpStatus WINGDIPAPI GdipTranslateClip(GpGraphics *graphics, REAL dx, REAL dy)
     if(!graphics)
         return InvalidParameter;
 
+    if(graphics->busy)
+        return ObjectBusy;
+
     return GdipTranslateRegion(graphics->clip, dx, dy);
 }
 
@@ -3390,6 +3399,9 @@ GpStatus WINGDIPAPI GdipTranslateClipI(GpGraphics *graphics, INT dx, INT dy)
 
     if(!graphics)
         return InvalidParameter;
+
+    if(graphics->busy)
+        return ObjectBusy;
 
     return GdipTranslateRegion(graphics->clip, (REAL)dx, (REAL)dy);
 }
