@@ -1166,17 +1166,18 @@ PVOID WINAPI MmGetSystemRoutineAddress(PUNICODE_STRING SystemRoutineName)
  */
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 {
+    static void *handler;
     LARGE_INTEGER count;
 
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( inst );
-        RtlAddVectoredExceptionHandler( TRUE, vectored_handler );
+        handler = RtlAddVectoredExceptionHandler( TRUE, vectored_handler );
         KeQueryTickCount( &count );  /* initialize the global KeTickCount */
         break;
     case DLL_PROCESS_DETACH:
-        RtlRemoveVectoredExceptionHandler( vectored_handler );
+        RtlRemoveVectoredExceptionHandler( handler );
         break;
     }
     return TRUE;
