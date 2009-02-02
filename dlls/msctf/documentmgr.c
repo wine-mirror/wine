@@ -97,8 +97,8 @@ static HRESULT WINAPI DocumentMgr_CreateContext(ITfDocumentMgr *iface,
         TfEditCookie *pecTextStore)
 {
     DocumentMgr *This = (DocumentMgr *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p) 0x%x 0x%x %p %p %p\n",This,tidOwner,dwFlags,punk,ppic,pecTextStore);
+    return Context_Constructor(tidOwner, punk, ppic, pecTextStore);
 }
 
 static HRESULT WINAPI DocumentMgr_Push(ITfDocumentMgr *iface, ITfContext *pic)

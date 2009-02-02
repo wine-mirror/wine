@@ -19,7 +19,7 @@
 #ifndef DO_NO_IMPORTS
 import "oaidl.idl";
 import "comcat.idl";
-/* import "textstor.idl"; */
+import "textstor.idl";
 /* import "ctfutb.idl"; */
 #endif
 
@@ -35,6 +35,14 @@ interface IEnumTfContexts;
 interface ITfFunctionProvider;
 interface IEnumTfFunctionProviders;
 interface ITfCompartmentMgr;
+interface ITfEditSession;
+interface ITfRange;
+interface ITfContextView;
+interface IEnumTfContextViews;
+interface ITfProperty;
+interface ITfReadOnlyProperty;
+interface IEnumTfProperties;
+interface ITfRangeBackup;
 
 [
     object,
@@ -110,4 +118,108 @@ interface ITfDocumentMgr: IUnknown
 
     HRESULT EnumContexts(
         [out] IEnumTfContexts **ppEnum);
+};
+
+[
+    object,
+    uuid(aa80e7fd-2021-11d2-93e0-0060b067b86e),
+    pointer_default(unique)
+]
+interface ITfContext : IUnknown
+{
+    const DWORD TF_ES_ASYNCDONTCARE = 0x0;
+    const DWORD TF_ES_SYNC          = 0x1;
+    const DWORD TF_ES_READ          = 0x2;
+    const DWORD TF_ES_READWRITE     = 0x6;
+    const DWORD TF_ES_ASYNC         = 0x8;
+
+    HRESULT RequestEditSession(
+        [in] TfClientId tid,
+        [in] ITfEditSession *pes,
+        [in] DWORD dwFlags,
+        [out] HRESULT *phrSession);
+
+    HRESULT InWriteSession(
+        [in] TfClientId tid,
+        [out] BOOL *pfWriteSession);
+
+    typedef [uuid(1690be9b-d3e9-49f6-8d8b-51b905af4c43)] enum { TF_AE_NONE, TF_AE_START, TF_AE_END } TfActiveSelEnd;
+
+    typedef [uuid(36ae42a4-6989-4bdc-b48a-6137b7bf2e42)] struct TF_SELECTIONSTYLE
+    {
+        TfActiveSelEnd ase;
+        BOOL fInterimChar;
+    } TF_SELECTIONSTYLE;
+
+    typedef [uuid(75eb22f2-b0bf-46a8-8006-975a3b6efcf1)] struct TF_SELECTION
+    {
+        ITfRange *range;
+        TF_SELECTIONSTYLE style;
+    } TF_SELECTION;
+
+    const ULONG TF_DEFAULT_SELECTION =  TS_DEFAULT_SELECTION;
+
+    HRESULT GetSelection(
+        [in] TfEditCookie ec,
+        [in] ULONG ulIndex,
+        [in] ULONG ulCount,
+        [out, size_is(ulCount), length_is(*pcFetched)] TF_SELECTION *pSelection,
+        [out] ULONG *pcFetched);
+
+    HRESULT SetSelection(
+        [in] TfEditCookie ec,
+        [in] ULONG ulCount,
+        [in, size_is(ulCount)] const TF_SELECTION *pSelection);
+
+    HRESULT GetStart(
+        [in] TfEditCookie ec,
+        [out] ITfRange **ppStart);
+
+    HRESULT GetEnd(
+        [in] TfEditCookie ec,
+        [out] ITfRange **ppEnd);
+
+    typedef [uuid(bc7d979a-846a-444d-afef-0a9bfa82b961)] TS_STATUS TF_STATUS;
+    const DWORD TF_SD_READONLY    = TS_SD_READONLY;
+    const DWORD TF_SD_LOADING     = TS_SD_LOADING;
+    const DWORD TF_SS_DISJOINTSEL = TS_SS_DISJOINTSEL;
+    const DWORD TF_SS_REGIONS     = TS_SS_REGIONS;
+    const DWORD TF_SS_TRANSITORY  = TS_SS_TRANSITORY;
+
+
+    HRESULT GetActiveView(
+        [out] ITfContextView **ppView);
+
+    HRESULT EnumViews(
+        [out] IEnumTfContextViews **ppEnum);
+
+    HRESULT GetStatus(
+        [out] TF_STATUS *pdcs);
+
+    HRESULT GetProperty(
+        [in] REFGUID guidProp,
+        [out] ITfProperty **ppProp);
+
+    HRESULT GetAppProperty(
+        [in] REFGUID guidProp,
+        [out] ITfReadOnlyProperty **ppProp);
+
+    HRESULT TrackProperties(
+        [in, size_is(cProp)] const GUID **prgProp,
+        [in] ULONG cProp,
+        [in, size_is(cAppProp)] const GUID **prgAppProp,
+        [in] ULONG cAppProp,
+        [out] ITfReadOnlyProperty **ppProperty);
+
+    HRESULT EnumProperties(
+        [out] IEnumTfProperties **ppEnum);
+
+    HRESULT GetDocumentMgr(
+        [out] ITfDocumentMgr **ppDm);
+
+    HRESULT CreateRangeBackup(
+        [in] TfEditCookie ec,
+        [in] ITfRange *pRange,
+        [out] ITfRangeBackup **ppBackup);
+
 };
