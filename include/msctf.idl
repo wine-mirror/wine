@@ -224,3 +224,19 @@ interface ITfContext : IUnknown
         [out] ITfRangeBackup **ppBackup);
 
 };
+
+[
+  object,
+  uuid(4ea48a35-60ae-446f-8fd6-e6a8d82459f7),
+  pointer_default(unique)
+]
+interface ITfSource : IUnknown
+{
+    HRESULT AdviseSink(
+        [in] REFIID riid,
+        [in, iid_is(riid)] IUnknown *punk,
+        [out] DWORD *pdwCookie);
+
+    HRESULT UnadviseSink(
+        [in] DWORD dwCookie);
+};
