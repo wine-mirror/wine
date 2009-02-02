@@ -1,0 +1,37 @@
+/*
+ * Copyright 2009 Aric Stewart, CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifndef DO_NO_IMPORTS
+import "oaidl.idl";
+#endif
+
+const ULONG TS_DEFAULT_SELECTION = ~0u;
+
+const DWORD TS_SD_READONLY     = 0x001;
+const DWORD TS_SD_LOADING      = 0x002;
+
+const DWORD TS_SS_DISJOINTSEL  = 0x001;
+const DWORD TS_SS_REGIONS      = 0x002;
+const DWORD TS_SS_TRANSITORY   = 0x004;
+const DWORD TS_SS_NOHIDDENTEXT = 0x008;
+
+typedef [uuid(fec4f516-c503-45b1-a5fd-7a3d8ab07049)] struct TS_STATUS
+{
+    DWORD dwDynamicFlags;
+    DWORD dwStaticFlags;
+} TS_STATUS;

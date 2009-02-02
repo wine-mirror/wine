@@ -194,6 +194,7 @@ include/shtypes.h
 include/stamp-h
 include/stdole2.tlb
 include/strmif.h
+include/textstor.h
 include/tom.h
 include/unknwn.h
 include/urlhist.h
