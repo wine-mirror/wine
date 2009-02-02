@@ -76,7 +76,7 @@
 @ stdcall GdipCreateBitmapFromGdiDib(ptr ptr ptr)
 @ stdcall GdipCreateBitmapFromGraphics(long long ptr ptr)
 @ stdcall GdipCreateBitmapFromHBITMAP(long long ptr)
-@ stub GdipCreateBitmapFromHICON
+@ stdcall GdipCreateBitmapFromHICON(long ptr)
 @ stdcall GdipCreateBitmapFromResource(long wstr ptr)
 @ stdcall GdipCreateBitmapFromScan0(long long long long ptr ptr)
 @ stdcall GdipCreateBitmapFromStream(ptr ptr)

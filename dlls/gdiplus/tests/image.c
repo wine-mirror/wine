@@ -18,11 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <math.h>
+
+#include "initguid.h"
 #include "windows.h"
 #include "gdiplus.h"
 #include "wine/test.h"
-#include <math.h>
-#include "wingdi.h"
 
 #define expect(expected, got) ok(((UINT)got) == ((UINT)expected), "Expected %.8x, got %.8x\n", (UINT)expected, (UINT)got)
 
@@ -530,6 +531,111 @@ static void test_testcontrol(void)
     ok(param != 0, "Build number expected, got %u\n", param);
 }
 
+static void test_fromhicon(void)
+{
+    static const BYTE bmp_bits[1024];
+    HBITMAP hbmMask, hbmColor;
+    ICONINFO info;
+    HICON hIcon;
+    GpStatus stat;
+    GpBitmap *bitmap = NULL;
+    UINT dim;
+    ImageType type;
+    PixelFormat format;
+    GUID raw;
+    WCHAR bufferW[39];
+    char buffer[39];
+    char buffer2[39];
+
+    /* NULL */
+    stat = GdipCreateBitmapFromHICON(NULL, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipCreateBitmapFromHICON(NULL, &bitmap);
+    expect(InvalidParameter, stat);
+
+    /* color icon 1 bit */
+    hbmMask = CreateBitmap(16, 16, 1, 1, bmp_bits);
+    ok(hbmMask != 0, "CreateBitmap failed\n");
+    hbmColor = CreateBitmap(16, 16, 1, 1, bmp_bits);
+    ok(hbmColor != 0, "CreateBitmap failed\n");
+    info.fIcon = TRUE;
+    info.xHotspot = 8;
+    info.yHotspot = 8;
+    info.hbmMask = hbmMask;
+    info.hbmColor = hbmColor;
+    hIcon = CreateIconIndirect(&info);
+    ok(hIcon != 0, "CreateIconIndirect failed\n");
+    DeleteObject(hbmMask);
+    DeleteObject(hbmColor);
+
+    stat = GdipCreateBitmapFromHICON(hIcon, &bitmap);
+    expect(Ok, stat);
+    if(stat == Ok){
+       /* check attributes */
+       stat = GdipGetImageHeight((GpImage*)bitmap, &dim);
+       expect(Ok, stat);
+       expect(16, dim);
+       stat = GdipGetImageWidth((GpImage*)bitmap, &dim);
+       expect(Ok, stat);
+       expect(16, dim);
+       stat = GdipGetImageType((GpImage*)bitmap, &type);
+       expect(Ok, stat);
+       expect(ImageTypeBitmap, type);
+       stat = GdipGetImagePixelFormat((GpImage*)bitmap, &format);
+       expect(PixelFormat32bppARGB, format);
+       /* raw format */
+       stat = GdipGetImageRawFormat((GpImage*)bitmap, &raw);
+       StringFromGUID2(&raw, bufferW, sizeof(bufferW)/sizeof(bufferW[0]));
+       WideCharToMultiByte(CP_ACP, 0, bufferW, sizeof(bufferW)/sizeof(bufferW[0]), buffer, sizeof(buffer), NULL, NULL);
+       StringFromGUID2(&ImageFormatMemoryBMP, bufferW, sizeof(bufferW)/sizeof(bufferW[0]));
+       WideCharToMultiByte(CP_ACP, 0, bufferW, sizeof(bufferW)/sizeof(bufferW[0]), buffer2, sizeof(buffer2), NULL, NULL);
+       todo_wine ok(IsEqualGUID(&raw, &ImageFormatMemoryBMP), "Expected format %s, got %s\n", buffer2, buffer);
+       GdipDisposeImage((GpImage*)bitmap);
+    }
+    DestroyIcon(hIcon);
+
+    /* color icon 8 bpp */
+    hbmMask = CreateBitmap(16, 16, 1, 8, bmp_bits);
+    ok(hbmMask != 0, "CreateBitmap failed\n");
+    hbmColor = CreateBitmap(16, 16, 1, 8, bmp_bits);
+    ok(hbmColor != 0, "CreateBitmap failed\n");
+    info.fIcon = TRUE;
+    info.xHotspot = 8;
+    info.yHotspot = 8;
+    info.hbmMask = hbmMask;
+    info.hbmColor = hbmColor;
+    hIcon = CreateIconIndirect(&info);
+    ok(hIcon != 0, "CreateIconIndirect failed\n");
+    DeleteObject(hbmMask);
+    DeleteObject(hbmColor);
+
+    stat = GdipCreateBitmapFromHICON(hIcon, &bitmap);
+    expect(Ok, stat);
+    if(stat == Ok){
+        /* check attributes */
+        stat = GdipGetImageHeight((GpImage*)bitmap, &dim);
+        expect(Ok, stat);
+        expect(16, dim);
+        stat = GdipGetImageWidth((GpImage*)bitmap, &dim);
+        expect(Ok, stat);
+        expect(16, dim);
+        stat = GdipGetImageType((GpImage*)bitmap, &type);
+        expect(Ok, stat);
+        expect(ImageTypeBitmap, type);
+        stat = GdipGetImagePixelFormat((GpImage*)bitmap, &format);
+        expect(PixelFormat32bppARGB, format);
+        /* raw format */
+        stat = GdipGetImageRawFormat((GpImage*)bitmap, &raw);
+        StringFromGUID2(&raw, bufferW, sizeof(bufferW)/sizeof(bufferW[0]));
+        WideCharToMultiByte(CP_ACP, 0, bufferW, sizeof(bufferW)/sizeof(bufferW[0]), buffer, sizeof(buffer), NULL, NULL);
+        StringFromGUID2(&ImageFormatMemoryBMP, bufferW, sizeof(bufferW)/sizeof(bufferW[0]));
+        WideCharToMultiByte(CP_ACP, 0, bufferW, sizeof(bufferW)/sizeof(bufferW[0]), buffer2, sizeof(buffer2), NULL, NULL);
+        todo_wine ok(IsEqualGUID(&raw, &ImageFormatMemoryBMP), "Expected format %s, got %s\n", buffer2, buffer);
+        GdipDisposeImage((GpImage*)bitmap);
+    }
+    DestroyIcon(hIcon);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -553,6 +659,7 @@ START_TEST(image)
     test_GdipGetImageFlags();
     test_GdipCloneImage();
     test_testcontrol();
+    test_fromhicon();
 
     GdiplusShutdown(gdiplusToken);
 }
