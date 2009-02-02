@@ -245,8 +245,8 @@
 @ stdcall GdipGetCellAscent(ptr long ptr)
 @ stdcall GdipGetCellDescent(ptr long ptr)
 @ stdcall GdipGetClip(ptr ptr)
-@ stub GdipGetClipBounds
-@ stub GdipGetClipBoundsI
+@ stdcall GdipGetClipBounds(ptr ptr)
+@ stdcall GdipGetClipBoundsI(ptr ptr)
 @ stdcall GdipGetCompositingMode(ptr ptr)
 @ stdcall GdipGetCompositingQuality(ptr ptr)
 @ stdcall GdipGetCustomLineCapBaseCap(ptr ptr)

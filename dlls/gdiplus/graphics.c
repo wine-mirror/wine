@@ -2405,6 +2405,32 @@ GpStatus WINGDIPAPI GdipFlush(GpGraphics *graphics, GpFlushIntention intention)
     return NotImplemented;
 }
 
+/*****************************************************************************
+ * GdipGetClipBounds [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipGetClipBounds(GpGraphics *graphics, GpRectF *rect)
+{
+    TRACE("(%p, %p)\n", graphics, rect);
+
+    if(!graphics)
+        return InvalidParameter;
+
+    return GdipGetRegionBounds(graphics->clip, graphics, rect);
+}
+
+/*****************************************************************************
+ * GdipGetClipBoundsI [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipGetClipBoundsI(GpGraphics *graphics, GpRect *rect)
+{
+    TRACE("(%p, %p)\n", graphics, rect);
+
+    if(!graphics)
+        return InvalidParameter;
+
+    return GdipGetRegionBoundsI(graphics->clip, graphics, rect);
+}
+
 /* FIXME: Compositing mode is not used anywhere except the getter/setter. */
 GpStatus WINGDIPAPI GdipGetCompositingMode(GpGraphics *graphics,
     CompositingMode *mode)
