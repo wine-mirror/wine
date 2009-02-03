@@ -308,6 +308,7 @@ static const IID * const style_iids[] = {
     &IID_IHTMLStyle,
     &IID_IHTMLStyle2,
     &IID_IHTMLStyle3,
+    &IID_IHTMLStyle4,
     NULL
 };
 

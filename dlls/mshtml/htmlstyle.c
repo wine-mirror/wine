@@ -471,6 +471,9 @@ static HRESULT WINAPI HTMLStyle_QueryInterface(IHTMLStyle *iface, REFIID riid, v
     }else if(IsEqualGUID(&IID_IHTMLStyle3, riid)) {
         TRACE("(%p)->(IID_IHTMLStyle3 %p)\n", This, ppv);
         *ppv = HTMLSTYLE3(This);
+    }else if(IsEqualGUID(&IID_IHTMLStyle4, riid)) {
+        TRACE("(%p)->(IID_IHTMLStyle4 %p)\n", This, ppv);
+        *ppv = HTMLSTYLE4(This);
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }
