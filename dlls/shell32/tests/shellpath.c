@@ -419,7 +419,9 @@ static BYTE testSHGetSpecialFolderLocation(BOOL optional, int folder)
 
     pidl = NULL;
     hr = pSHGetSpecialFolderLocation(NULL, folder, &pidl);
-    ok(SUCCEEDED(hr) || optional,
+    ok(SUCCEEDED(hr) || optional ||
+     broken((folder == CSIDL_COOKIES || folder == CSIDL_INTERNET) &&
+     hr == E_INVALIDARG) /* NT4 */,
      "SHGetSpecialFolderLocation(NULL, %s, &pidl) failed: 0x%08x\n", getFolderName(folder), hr);
     if (SUCCEEDED(hr))
     {
