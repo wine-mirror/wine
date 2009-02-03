@@ -133,90 +133,6 @@ struct _ModeInfoBlock {
 
 #include "poppack.h"
 
-/* VGA VESA definitions */
-enum modetype {TEXT=0, GRAPHIC=1};
-/*
- * Wine internal information about video modes.
- */
-typedef struct {
-    WORD Mode;
-    BOOL ModeType;
-    WORD TextCols;  /* columns of text in display */
-    WORD TextRows;  /* rows of text in display */
-    WORD CharWidth;
-    WORD CharHeight;
-    WORD Width;  /* width of display in pixels */
-    WORD Height; /* height of display in pixels */
-    WORD Depth;  /* bits per pixel */
-    WORD Colors; /* total available colors */
-    WORD ScreenPages;
-    BOOL Supported;
-} INT10_MODE;
-
-
-/*
- * List of supported video modes.
- *
- * should be expanded to contain most or all information
- * as required for SVGA VESA mode info block for VESA BIOS subsystem 1 (see _ModeInfoBlock)
- * this will allow proper support for FIXME items in VGA/VESA mode configuration
- *
- * FIXME - verify and define support for VESA modes
- * FIXME - add # bit planes, # video memory banks, & memory model
- */
-static const INT10_MODE INT10_modelist[] =
-{
-    /* VGA modes */
-    {0x0000,    TEXT, 40, 25,  9, 16,  360,  400,  0,  16, 8, TRUE},   /* VGA text mode 0 */
-    {0x0001,    TEXT, 40, 25,  9, 16,  360,  400,  0,  16, 8, TRUE},   /* VGA text mode 1 */
-    {0x0002,    TEXT, 80, 25,  9, 16,  360,  400,  0,  16, 8, TRUE},   /* VGA text mode 2 */
-    {0x0003,    TEXT, 80, 25,  9, 16,  360,  400,  0,  16, 8, TRUE},   /* VGA text mode 3 */
-    {0x0004, GRAPHIC, 40, 25,  8,  8,  320,  200,  2,   4, 1, TRUE},   /* VGA graphics mode 4 */
-    {0x0005, GRAPHIC, 40, 25,  8,  8,  320,  200,  2,   4, 1, FALSE},   /* VGA graphics mode 5 */
-    {0x0006, GRAPHIC, 80, 25,  8,  8,  640,  200,  1,   2, 1, FALSE},   /* VGA graphics mode 6 */
-    {0x0007,    TEXT, 80, 25,  9, 16,  720,  400,  0,   0, 8, FALSE},   /* VGA text mode 7 - FIXME bad default address */
-    {0x000d, GRAPHIC, 40, 25,  8,  8,  320,  200,  4,  16, 8, FALSE},   /* VGA graphics mode 13 */
-    {0x000e, GRAPHIC, 80, 25,  8,  8,  640,  200,  4,  16, 4, FALSE},   /* VGA graphics mode 14 */
-    {0x000f, GRAPHIC, 80, 25,  8, 14,  640,  350,  0,   0, 2, FALSE},   /* VGA graphics mode 15 */
-    {0x0010, GRAPHIC, 80, 25,  8, 14,  640,  350,  4,  16, 2, FALSE},   /* VGA graphics mode 16 */
-    {0x0012, GRAPHIC, 80, 30,  8, 16,  640,  480,  1,   2, 1, FALSE},   /* VGA graphics mode 17 */
-    {0x0012, GRAPHIC, 80, 30,  8, 16,  640,  480,  4,  16, 1, FALSE},   /* VGA graphics mode 18 */
-    {0x0013, GRAPHIC, 40, 25,  8,  8,  320,  200,  8, 256, 1, TRUE},   /* VGA graphics mode 19 */
-    /* VESA 7-bit modes */
-    {0x006a, GRAPHIC,  0,  0,  0,  0,  800,  600,  4,  16, 1, TRUE},   /* VESA graphics mode, same as 0x102 */
-    /* VESA 15-bit modes */
-    {0x0100, GRAPHIC,  0,  0,  0,  0,  640,  400,  8, 256, 1, TRUE},   /* VESA graphics mode */
-    {0x0101, GRAPHIC,  0,  0,  0,  0,  640,  480,  8, 256, 1, TRUE},   /* VESA graphics mode */
-    {0x0102, GRAPHIC,  0,  0,  0,  0,  800,  600,  4,  16, 1, TRUE},   /* VESA graphics mode */
-    {0x0103, GRAPHIC,  0,  0,  0,  0,  800,  600,  8, 256, 1, TRUE},   /* VESA graphics mode */
-    {0x0104, GRAPHIC,  0,  0,  0,  0, 1024,  768,  4,  16, 1, TRUE},   /* VESA graphics mode */
-    {0x0105, GRAPHIC,  0,  0,  0,  0, 1024,  768,  8, 256, 1, TRUE},   /* VESA graphics mode */
-    {0x0106, GRAPHIC,  0,  0,  0,  0, 1280, 1024,  4,  16, 1, TRUE},   /* VESA graphics mode */
-    {0x0107, GRAPHIC,  0,  0,  0,  0, 1280, 1024,  8, 256, 1, TRUE},   /* VESA graphics mode */
-    {0x0108,    TEXT,  0,  0,  0,  0,   80,   60,  0,   0, 1, TRUE},   /* VESA text mode */
-    {0x0109,    TEXT,  0,  0,  0,  0,  132,   25,  0,   0, 1, TRUE},   /* VESA text mode */
-    {0x010a,    TEXT,  0,  0,  0,  0,  132,   43,  0,   0, 1, TRUE},   /* VESA text mode */
-    {0x010b,    TEXT,  0,  0,  0,  0,  132,   50,  0,   0, 1, TRUE},   /* VESA text mode */
-    {0x010c,    TEXT,  0,  0,  0,  0,  132,   60,  0,   0, 1, TRUE},   /* VESA text mode */
-    /* VESA 1.2 modes */
-    {0x010d, GRAPHIC,  0,  0,  0,  0,  320,  200, 15,   0, 1, TRUE},   /* VESA graphics mode, 32K colors */
-    {0x010e, GRAPHIC,  0,  0,  0,  0,  320,  200, 16,   0, 1, TRUE},   /* VESA graphics mode, 64K colors */
-    {0x010f, GRAPHIC,  0,  0,  0,  0,  320,  200, 24,   0, 1, TRUE},   /* VESA graphics mode, 16.8 Million colors */
-    {0x0110, GRAPHIC,  0,  0,  0,  0,  640,  480, 15,   0, 1, TRUE},   /* VESA graphics mode, 32K colors */
-    {0x0111, GRAPHIC,  0,  0,  0,  0,  640,  480, 16,   0, 1, TRUE},   /* VESA graphics mode, 64K colors */
-    {0x0112, GRAPHIC,  0,  0,  0,  0,  640,  480, 24,   0, 1, TRUE},   /* VESA graphics mode, 16.8 Million colors */
-    {0x0113, GRAPHIC,  0,  0,  0,  0,  800,  600, 15,   0, 1, TRUE},   /* VESA graphics mode, 32K colors */
-    {0x0114, GRAPHIC,  0,  0,  0,  0,  800,  600, 16,   0, 1, TRUE},   /* VESA graphics mode, 64K colors */
-    {0x0115, GRAPHIC,  0,  0,  0,  0,  800,  600, 24,   0, 1, TRUE},   /* VESA graphics mode, 16.8 Million colors */
-    {0x0116, GRAPHIC,  0,  0,  0,  0, 1024,  768, 15,   0, 1, TRUE},   /* VESA graphics mode, 32K colors */
-    {0x0117, GRAPHIC,  0,  0,  0,  0, 1024,  768, 16,   0, 1, TRUE},   /* VESA graphics mode, 64K colors */
-    {0x0118, GRAPHIC,  0,  0,  0,  0, 1024,  768, 24,   0, 1, TRUE},   /* VESA graphics mode, 16.8 Million colors */
-    {0x0119, GRAPHIC,  0,  0,  0,  0, 1280, 1024, 15,   0, 1, TRUE},   /* VESA graphics mode, 32K colors */
-    {0x011a, GRAPHIC,  0,  0,  0,  0, 1280, 1024, 16,   0, 1, TRUE},   /* VESA graphics mode, 64K colors */
-    {0x011b, GRAPHIC,  0,  0,  0,  0, 1280, 1024, 24,   0, 1, TRUE},   /* VESA graphics mode, 16.8 Million colors */
-    {0xffff,    TEXT,  0,  0,  0,  0,    0,    0,  0,   0, 1, FALSE}
-};
-
 /* True if video mode is a vesa mode, false otherwise.
  * More correct would be to use something like (x > 0xff || x == 0x6a)
  * but as long as we have only the standard VGA and VESA modes this is ok too */
@@ -225,30 +141,6 @@ static const INT10_MODE INT10_modelist[] =
 /* Forward declarations. */
 static INT10_HEAP *INT10_GetHeap(void);
 static void INT10_SetCursorPos(BIOSDATA*, unsigned, unsigned, unsigned);
-
-
-/**********************************************************************
- *         INT10_FindMode
- */
-static const INT10_MODE *INT10_FindMode( WORD mode )
-{
-    const INT10_MODE *ptr = INT10_modelist;
-    
-    /*
-     * Filter out flags.
-     */
-    mode &= 0x17f;
-
-    while (ptr->Mode != 0xffff)
-    {
-        if (ptr->Mode == mode)
-            return ptr;
-        ptr++;
-    }
-
-    return NULL;
-}
-
 
 /**********************************************************************
  *         INT10_FillControllerInformation
@@ -342,7 +234,7 @@ static void INT10_FillControllerInformation( BYTE *buffer )
  */
 static BOOL INT10_FillModeInformation( struct _ModeInfoBlock *mib, WORD mode )
 {
-    const INT10_MODE *ptr = INT10_FindMode( mode );
+    const VGA_MODE *ptr = VGA_GetModeInfo( mode );
     if (!ptr)
         return FALSE;
 
@@ -754,8 +646,8 @@ INT10_HEAP *INT10_GetHeap( void )
 
         for (i=0; TRUE; i++)
         {
-            heap_pointer->VesaModeList[i] = INT10_modelist[i].Mode;
-            if (INT10_modelist[i].Mode == 0xffff)
+            heap_pointer->VesaModeList[i] = VGA_modelist[i].Mode;
+            if (VGA_modelist[i].Mode == 0xffff)
                 break;
         }
 
@@ -797,7 +689,7 @@ INT10_HEAP *INT10_GetHeap( void )
  */
 static BOOL INT10_SetVideoMode( BIOSDATA *data, WORD mode )
 {
-    const INT10_MODE *ptr = INT10_FindMode( mode );
+    const VGA_MODE *ptr = VGA_GetModeInfo( mode );
     INT10_HEAP *heap = INT10_GetHeap();
     BOOL clearScreen = TRUE;
 
@@ -858,7 +750,7 @@ static BOOL INT10_SetVideoMode( BIOSDATA *data, WORD mode )
                ptr->Width, ptr->Height, ptr->Depth,
                clearScreen ? "cleared" : "preserved" );
 
-        if (VGA_SetMode( ptr->Width, ptr->Height, ptr->Depth ))
+        if ( VGA_SetMode(mode) )
             return FALSE;
     }
 

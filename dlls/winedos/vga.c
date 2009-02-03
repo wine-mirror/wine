@@ -145,6 +145,73 @@ static BYTE vga_index_3d4;
 static BOOL vga_address_3c0 = TRUE;
 
 /*
+ * List of supported video modes.
+ *
+ * should be expanded to contain most or all information
+ * as required for SVGA VESA mode info block for VESA BIOS subsystem 1 (see _ModeInfoBlock)
+ * this will allow proper support for FIXME items in VGA/VESA mode configuration
+ *
+ * FIXME - verify and define support for VESA modes
+ * FIXME - add # bit planes, # video memory banks, & memory model
+ */
+static WORD VGA_CurrentMode;
+static BOOL CGA_ColorComposite = FALSE;  /* behave like composite monitor */
+
+const VGA_MODE VGA_modelist[] =
+{
+    /* Mode, ModeType, TextCols, TextRows, CharWidth, CharHeight, Width, Height, Depth, Colors, ScreenPages, Supported*/
+    /* VGA modes */
+    {0x0000,    TEXT, 40, 25,  9, 16,  360,  400,  0,  16, 8, TRUE},   /* VGA/CGA text mode 0 */
+    {0x0001,    TEXT, 40, 25,  9, 16,  360,  400,  0,  16, 8, TRUE},   /* VGA/CGA text mode 1 */
+    {0x0002,    TEXT, 80, 25,  9, 16,  360,  400,  0,  16, 8, TRUE},   /* VGA/CGA text mode 2 */
+    {0x0003,    TEXT, 80, 25,  9, 16,  360,  400,  0,  16, 8, TRUE},   /* VGA/CGA text mode 3 */
+    {0x0004, GRAPHIC, 40, 25,  8,  8,  320,  200,  2,   4, 1, TRUE},   /* VGA/CGA graphics mode 4 */
+    {0x0005, GRAPHIC, 40, 25,  8,  8,  320,  200,  2,   4, 1, TRUE},   /* VGA/CGA graphics mode 5 */
+    {0x0006, GRAPHIC, 80, 25,  8,  8,  640,  200,  1,   2, 1, TRUE},   /* VGA/CGA graphics mode 6 */
+    {0x0007,    TEXT, 80, 25,  9, 16,  720,  400,  0,   0, 8, FALSE},   /* VGA text mode 7 - FIXME bad default address */
+    {0x000d, GRAPHIC, 40, 25,  8,  8,  320,  200,  4,  16, 8, FALSE},   /* VGA graphics mode 13 */
+    {0x000e, GRAPHIC, 80, 25,  8,  8,  640,  200,  4,  16, 4, FALSE},   /* VGA graphics mode 14 */
+    {0x000f, GRAPHIC, 80, 25,  8, 14,  640,  350,  0,   0, 2, FALSE},   /* VGA graphics mode 15 */
+    {0x0010, GRAPHIC, 80, 25,  8, 14,  640,  350,  4,  16, 2, FALSE},   /* VGA graphics mode 16 */
+    {0x0012, GRAPHIC, 80, 30,  8, 16,  640,  480,  1,   2, 1, FALSE},   /* VGA graphics mode 17 */
+    {0x0012, GRAPHIC, 80, 30,  8, 16,  640,  480,  4,  16, 1, FALSE},   /* VGA graphics mode 18 */
+    {0x0013, GRAPHIC, 40, 25,  8,  8,  320,  200,  8, 256, 1, TRUE},   /* VGA graphics mode 19 */
+    /* VESA 7-bit modes */
+    {0x006a, GRAPHIC,  0,  0,  0,  0,  800,  600,  4,  16, 1, TRUE},   /* VESA graphics mode, same as 0x102 */
+    /* VESA 15-bit modes */
+    {0x0100, GRAPHIC,  0,  0,  0,  0,  640,  400,  8, 256, 1, TRUE},   /* VESA graphics mode */
+    {0x0101, GRAPHIC,  0,  0,  0,  0,  640,  480,  8, 256, 1, TRUE},   /* VESA graphics mode */
+    {0x0102, GRAPHIC,  0,  0,  0,  0,  800,  600,  4,  16, 1, TRUE},   /* VESA graphics mode */
+    {0x0103, GRAPHIC,  0,  0,  0,  0,  800,  600,  8, 256, 1, TRUE},   /* VESA graphics mode */
+    {0x0104, GRAPHIC,  0,  0,  0,  0, 1024,  768,  4,  16, 1, TRUE},   /* VESA graphics mode */
+    {0x0105, GRAPHIC,  0,  0,  0,  0, 1024,  768,  8, 256, 1, TRUE},   /* VESA graphics mode */
+    {0x0106, GRAPHIC,  0,  0,  0,  0, 1280, 1024,  4,  16, 1, TRUE},   /* VESA graphics mode */
+    {0x0107, GRAPHIC,  0,  0,  0,  0, 1280, 1024,  8, 256, 1, TRUE},   /* VESA graphics mode */
+    {0x0108,    TEXT,  0,  0,  0,  0,   80,   60,  0,   0, 1, TRUE},   /* VESA text mode */
+    {0x0109,    TEXT,  0,  0,  0,  0,  132,   25,  0,   0, 1, TRUE},   /* VESA text mode */
+    {0x010a,    TEXT,  0,  0,  0,  0,  132,   43,  0,   0, 1, TRUE},   /* VESA text mode */
+    {0x010b,    TEXT,  0,  0,  0,  0,  132,   50,  0,   0, 1, TRUE},   /* VESA text mode */
+    {0x010c,    TEXT,  0,  0,  0,  0,  132,   60,  0,   0, 1, TRUE},   /* VESA text mode */
+    /* VESA 1.2 modes */
+    {0x010d, GRAPHIC,  0,  0,  0,  0,  320,  200, 15,   0, 1, TRUE},   /* VESA graphics mode, 32K colors */
+    {0x010e, GRAPHIC,  0,  0,  0,  0,  320,  200, 16,   0, 1, TRUE},   /* VESA graphics mode, 64K colors */
+    {0x010f, GRAPHIC,  0,  0,  0,  0,  320,  200, 24,   0, 1, TRUE},   /* VESA graphics mode, 16.8 Million colors */
+    {0x0110, GRAPHIC,  0,  0,  0,  0,  640,  480, 15,   0, 1, TRUE},   /* VESA graphics mode, 32K colors */
+    {0x0111, GRAPHIC,  0,  0,  0,  0,  640,  480, 16,   0, 1, TRUE},   /* VESA graphics mode, 64K colors */
+    {0x0112, GRAPHIC,  0,  0,  0,  0,  640,  480, 24,   0, 1, TRUE},   /* VESA graphics mode, 16.8 Million colors */
+    {0x0113, GRAPHIC,  0,  0,  0,  0,  800,  600, 15,   0, 1, TRUE},   /* VESA graphics mode, 32K colors */
+    {0x0114, GRAPHIC,  0,  0,  0,  0,  800,  600, 16,   0, 1, TRUE},   /* VESA graphics mode, 64K colors */
+    {0x0115, GRAPHIC,  0,  0,  0,  0,  800,  600, 24,   0, 1, TRUE},   /* VESA graphics mode, 16.8 Million colors */
+    {0x0116, GRAPHIC,  0,  0,  0,  0, 1024,  768, 15,   0, 1, TRUE},   /* VESA graphics mode, 32K colors */
+    {0x0117, GRAPHIC,  0,  0,  0,  0, 1024,  768, 16,   0, 1, TRUE},   /* VESA graphics mode, 64K colors */
+    {0x0118, GRAPHIC,  0,  0,  0,  0, 1024,  768, 24,   0, 1, TRUE},   /* VESA graphics mode, 16.8 Million colors */
+    {0x0119, GRAPHIC,  0,  0,  0,  0, 1280, 1024, 15,   0, 1, TRUE},   /* VESA graphics mode, 32K colors */
+    {0x011a, GRAPHIC,  0,  0,  0,  0, 1280, 1024, 16,   0, 1, TRUE},   /* VESA graphics mode, 64K colors */
+    {0x011b, GRAPHIC,  0,  0,  0,  0, 1280, 1024, 24,   0, 1, TRUE},   /* VESA graphics mode, 16.8 Million colors */
+    {0xffff,    TEXT,  0,  0,  0,  0,    0,    0,  0,   0, 1, FALSE}
+};
+
+/*
  * This mutex is used to protect VGA state during asynchronous
  * screen updates (see VGA_Poll). It makes sure that VGA state changes
  * are atomic and the user interface is protected from flicker and
@@ -216,14 +283,13 @@ static PALETTEENTRY cga_palette2_bright[] = {
 };
 
 /*
- *  VGA Palette Registers, in actual 18 bit color
+ *  VGA Palette Registers, in actual 16 bit color
  *  port 3C0H - 6 bit rgbRGB format
  *
  *  16 color accesses will use these pointers and insert
  *  entries from the 64-color palette (mode 18) into the default
  *  palette.   --Robert 'Admiral' Coeyman
  */
-
 static char vga_16_palette[17]={
   0x00,  /* 0 - Black         */
   0x01,  /* 1 - Blue          */
@@ -795,18 +861,87 @@ static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
     return;
 }
 
-int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
+/**********************************************************************\
+* VGA_GetModeInfo
+*
+* Returns mode information, given mode number
+\**********************************************************************/
+const VGA_MODE *VGA_GetModeInfo(WORD mode)
+{
+    const VGA_MODE *ModeInfo = VGA_modelist;
+
+    /*
+     * Filter out flags.
+     */
+    mode &= 0x17f;
+
+    while (ModeInfo->Mode != 0xffff)
+    {
+        if (ModeInfo->Mode == mode)
+            return ModeInfo;
+        ModeInfo++;
+    }
+    return NULL;
+}
+
+const VGA_MODE *VGA_GetModeInfoList(void)
+{
+    return VGA_modelist;
+}
+
+int VGA_SetMode(WORD mode)
+{
+    const VGA_MODE *ModeInfo;
+    /* get info on VGA mode & set appropriately */
+    VGA_CurrentMode = mode;
+    ModeInfo = VGA_GetModeInfo(VGA_CurrentMode);
+
+    /* check if mode is supported */
+    if (ModeInfo->Supported)
+    {
+       FIXME("Setting VGA mode %i - Supported mode - Improve reporting of missing capabilities for modes & modetypes. \n", mode);
+    }
+    else
+    {
+       FIXME("Setting VGA mode %i - Unsupported mode - Will doubtfully work at all, but we'll try anyways. \n", mode);
+    }
+
+    /* set up graphic or text display */
+    if (ModeInfo->ModeType == TEXT)
+    {
+       VGA_SetAlphaMode(ModeInfo->TextCols, ModeInfo->TextRows);
+    }
+    else
+    {
+       return VGA_SetGraphicMode(mode);
+    }
+    return 0; /* assume all good & return zero */
+}
+
+int VGA_SetGraphicMode(WORD mode)
 {
     ModeSet par;
     int     newSize;
 
-    vga_fb_width = Xres;
-    vga_fb_height = Yres;
-    vga_fb_depth = Depth;
+    /* get info on VGA mode & set appropriately */
+    const VGA_MODE *ModeInfo = VGA_GetModeInfo(VGA_CurrentMode);
+    /* check if we're assuming composite display */
+    if ((mode == 6) && (CGA_ColorComposite))
+    {
+       vga_fb_width = (ModeInfo->Width / 4);
+       vga_fb_height = ModeInfo->Height;
+       vga_fb_depth = (ModeInfo->Depth * 4);
+    }
+    else
+    {
+       vga_fb_width = ModeInfo->Width;
+       vga_fb_height = ModeInfo->Height;
+       vga_fb_depth = ModeInfo->Depth;
+    }
     vga_fb_offset = 0;
-    vga_fb_pitch = Xres * ((Depth + 7) / 8);
+    vga_fb_pitch = vga_fb_width * ((vga_fb_depth + 7) / 8);
 
-    newSize = Xres * Yres * ((Depth + 7) / 8);
+    newSize = vga_fb_width * vga_fb_height * ((vga_fb_depth + 7) / 8);
     if(newSize < 256 * 1024)
       newSize = 256 * 1024;
 
@@ -816,9 +951,9 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
       vga_fb_size = newSize;
     }
 
-    if(Xres >= 640 || Yres >= 480) {
-      par.Xres = Xres;
-      par.Yres = Yres;
+    if(vga_fb_width >= 640 || vga_fb_height >= 480) {
+      par.Xres = vga_fb_width;
+      par.Yres = vga_fb_height;
     } else {
       par.Xres = 640;
       par.Yres = 480;
@@ -836,7 +971,7 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
     {
       vga_fb_window_data = CGA_WINDOW_START;
       vga_fb_window_size = CGA_WINDOW_SIZE;
-      if(Depth == 2)
+      if(vga_fb_depth == 2)
       {
         /* Select default 2 bit CGA palette */
         vga_fb_palette = cga_palette1;
@@ -859,7 +994,7 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
     /* Reset window start */
     VGA_SetWindowStart(0);
 
-    par.Depth = (Depth < 8) ? 8 : Depth;
+    par.Depth = (vga_fb_depth < 8) ? 8 : vga_fb_depth;
 
     MZ_RunInThread(VGA_DoSetMode, (ULONG_PTR)&par);
     return par.ret;
@@ -1267,10 +1402,18 @@ void VGA_GetCursorPos(unsigned*X,unsigned*Y)
 
 static void VGA_PutCharAt(unsigned x, unsigned y, BYTE ascii, int attr)
 {
-    char *dat = VGA_AlphaBuffer() + ((vga_text_width * y + x) * 2);
-    dat[0] = ascii;
-    if (attr>=0)
-        dat[1] = attr;
+    const VGA_MODE *ModeInfo = VGA_GetModeInfo(VGA_CurrentMode);
+    if ( ModeInfo->ModeType == TEXT )
+    {
+       char *dat = VGA_AlphaBuffer() + ((vga_text_width * y + x) * 2);
+       dat[0] = ascii;
+       if (attr>=0)
+          dat[1] = attr;
+    }
+    else
+    {
+       FIXME("Write %c at (%i,%i) - not yet supported in graphic modes.\n", (char)ascii, x, y);
+    }
 }
 
 void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count)
@@ -1441,7 +1584,7 @@ static void VGA_Poll_Graphics(void)
       VGA_SyncWindow( TRUE );
 
   /*
-   * CGA framebuffer (160x200)
+   * CGA framebuffer (160x200) - CGA_ColorComposite, special subtype of mode 6
    * This buffer is encoded as following:
    * - 4 bit pr. pixel, 2 pixels per byte
    * - 80 bytes per row
@@ -1511,6 +1654,9 @@ static void VGA_Poll_Graphics(void)
        surf[X*2+Pitch] = value;
        surf[X*2+Pitch+1] = value;
       }
+  /*
+   * Linear Buffer, including mode 19
+   */
   else
     for (Y=0; Y<vga_fb_height; Y++,surf+=Pitch,dat+=vga_fb_pitch)
       memcpy(surf, dat, vga_fb_width * bpp);
@@ -1656,19 +1802,89 @@ void VGA_ioport_out( WORD port, BYTE val )
            FIXME("Unsupported index, VGA crt controller register 0x3b4/0x3d4: 0x%02x (value 0x%02x)\n",
                  vga_index_3d4, val);
            break;
-
-        /* Mode control register (CGA) */
+        /* Mode control register - 6845 Motorola (MDA) */
+        case 0x3b8:
+        /* Mode control register - 6845 Motorola (CGA) */
         case 0x3d8:
+           /*
+            *  xxxxxxx1 = 80x25 text
+            *  xxxxxxx0 = 40x25 text (default)
+            *  xxxxxx1x = graphics (320x200)
+            *  xxxxxx0x = text
+            *  xxxxx1xx = B/W
+            *  xxxxx0xx = color
+            *  xxxx1xxx = enable video signal
+            *  xxx1xxxx = 640x200 B/W graphics
+            *  xx1xxxxx = blink
+            */
 
-           /* Detect 160x200, 16 color mode (composite) */
-           if((val & 0x02) && (val & 0x10))
+           /* check bits 6 and 7 */
+           if (val & 0xC0)
            {
-             /* Switch to 160x200x4 composite mode */
-             VGA_SetMode(160, 200, 4);
+              FIXME("Unsupported value, VGA register 0x3d8: 0x%02x - bits 7 and 6 not supported. \n", val);
+           }
+           /* check bits 5 - blink on */
+           if (val & 0x20)
+           {
+              FIXME("Unsupported value, VGA register 0x3d8: 0x%02x (bit 5) - blink is not supported. \n", val);
+           }
+           /* Enable Video Signal (bit 3) - Set the enabled bit */
+           VGA_SetEnabled((val & 0x08) && 1);
+
+           /* xxx1x010 - Detect 160x200, 16 color mode (CGA composite) */
+           if( (val & 0x17) == 0x12 )
+           {
+             /* Switch to 160x200x4 composite mode - special case of mode 6 */
+             CGA_ColorComposite = TRUE;
+             VGA_SetMode(6);
+           }
+           else
+           {
+             /* turn off composite colors otherwise, including 320x200 (80x200 16 color) */
+             CGA_ColorComposite = FALSE;
            }
 
-           /* Set the enabled bit */
-           VGA_SetEnabled((val & 0x08) && 1);
+           /* xxx0x100 - Detect VGA mode 0 */
+           if( (val & 0x17) == 0x04 )
+           {
+             VGA_SetMode(0);
+           }
+           /* xxx0x000 - Detect VGA mode 1 */
+           else if( (val & 0x17) == 0x00 )
+           {
+             VGA_SetMode(1);
+           }
+           /* xxx0x101 - Detect VGA mode 2 */
+           else if( (val & 0x17) == 0x05 )
+           {
+             VGA_SetMode(2);
+           }
+           /* xxx0x001 - Detect VGA mode 3 */
+           else if( (val & 0x17) == 0x01 )
+           {
+             VGA_SetMode(3);
+           }
+           /* xxx0x010 - Detect VGA mode 4 */
+           else if( (val & 0x17) == 0x02 )
+           {
+             VGA_SetMode(4);
+           }
+           /* xxx0x110 - Detect VGA mode 5 */
+           else if( (val & 0x17) == 0x06 )
+           {
+             VGA_SetMode(5);
+           }
+           /* xxx1x110 - Detect VGA mode 6 */
+           else if( (val & 0x17) == 0x16 )
+           {
+             VGA_SetMode(6);
+           }
+           /* unsupported mode */
+           else
+           {
+             FIXME("Unsupported value, VGA register 0x3d8: 0x%02x - unrecognized MDA/CGA mode \n", val); /* Set the enabled bit */
+           }
+
            break;
 
         /* Colour control register (CGA) */

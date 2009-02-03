@@ -27,8 +27,35 @@
 #include "winbase.h"
 #include "wingdi.h"
 
+/*
+ * VGA VESA definitions
+ */
+/* mode descriptor */
+enum modetype {TEXT=0, GRAPHIC=1};
+/* Wine internal information about video modes */
+typedef struct {
+    WORD Mode;
+    BOOL ModeType;
+    WORD TextCols;  /* columns of text in display */
+    WORD TextRows;  /* rows of text in display */
+    WORD CharWidth;
+    WORD CharHeight;
+    WORD Width;  /* width of display in pixels */
+    WORD Height; /* height of display in pixels */
+    WORD Depth;  /* bits per pixel */
+    WORD Colors; /* total available colors */
+    WORD ScreenPages;
+    BOOL Supported;
+} VGA_MODE;
+
+extern const VGA_MODE VGA_modelist[];
+
+/* all vga modes */
+const VGA_MODE *VGA_GetModeInfo(WORD mode);
+int VGA_SetMode(WORD mode);
+
 /* graphics mode */
-int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth);
+int VGA_SetGraphicMode(WORD mode);
 int VGA_GetMode(unsigned*Height,unsigned*Width,unsigned*Depth);
 void VGA_SetPalette(PALETTEENTRY*pal,int start,int len);
 void VGA_SetColor16(int reg,int color);
