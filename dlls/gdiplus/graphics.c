@@ -2375,18 +2375,39 @@ GpStatus WINGDIPAPI GdipFillRectanglesI(GpGraphics *graphics, GpBrush *brush, GD
     return ret;
 }
 
+/*****************************************************************************
+ * GdipFillRegion [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
         GpRegion* region)
 {
+    INT save_state;
+    GpStatus status;
+    HRGN hrgn;
+
+    TRACE("(%p, %p, %p)\n", graphics, brush, region);
+
     if (!(graphics && brush && region))
         return InvalidParameter;
 
     if(graphics->busy)
         return ObjectBusy;
 
-    FIXME("(%p, %p, %p): stub\n", graphics, brush, region);
+    status = GdipGetRegionHRgn(region, graphics, &hrgn);
+    if(status != Ok)
+        return status;
 
-    return NotImplemented;
+    save_state = SaveDC(graphics->hdc);
+    EndPath(graphics->hdc);
+    SelectObject(graphics->hdc, GetStockObject(NULL_PEN));
+
+    FillRgn(graphics->hdc, hrgn, brush->gdibrush);
+
+    RestoreDC(graphics->hdc, save_state);
+
+    DeleteObject(hrgn);
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipFlush(GpGraphics *graphics, GpFlushIntention intention)
