@@ -455,6 +455,13 @@ static struct regsvr_coclass const coclass_list[] = {
         "msctf.dll",
         "Apartment"
     },
+    {
+        &CLSID_TF_CategoryMgr,
+        "TF_CategoryMgr",
+        NULL,
+        "msctf.dll",
+        "Apartment"
+    },
     { NULL }			/* list terminator */
 };
 

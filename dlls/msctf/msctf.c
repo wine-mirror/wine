@@ -55,6 +55,7 @@ static const struct {
 } ClassesTable[] = {
     {&CLSID_TF_ThreadMgr, ThreadMgr_Constructor},
     {&CLSID_TF_InputProcessorProfiles, InputProcessorProfiles_Constructor},
+    {&CLSID_TF_CategoryMgr, CategoryMgr_Constructor},
     {NULL, NULL}
 };
 

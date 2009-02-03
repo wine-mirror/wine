@@ -26,9 +26,11 @@ import "textstor.idl";
 cpp_quote("#define TF_E_STACKFULL MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x0501)")
 cpp_quote("EXTERN_C const CLSID CLSID_TF_ThreadMgr;")
 cpp_quote("EXTERN_C const CLSID CLSID_TF_InputProcessorProfiles;")
+cpp_quote("EXTERN_C const CLSID CLSID_TF_CategoryMgr;")
 
 typedef [uuid(7213778c-7bb0-4270-b050-6189ee594e97)]  DWORD TfEditCookie;
 typedef [uuid(de403c21-89fd-4f85-8b87-64584d063fbc)] DWORD TfClientId;
+typedef [uuid(88a9c478-f3ec-4763-8345-cd9250443f8d)] DWORD TfGuidAtom;
 
 interface ITfDocumentMgr;
 interface ITfContext;
@@ -339,4 +341,63 @@ interface ITfInputProcessorProfiles : IUnknown
         [in] LANGID langid,
         [in] REFGUID guidProfile,
         [in] HKL hKL);
+};
+
+[
+  object,
+  local,
+  uuid(c3acefb5-f69d-4905-938f-fcadcf4be830),
+  pointer_default(unique)
+]
+interface ITfCategoryMgr : IUnknown
+{
+    HRESULT RegisterCategory([in] REFCLSID rclsid,
+                             [in] REFGUID rcatid,
+                             [in] REFGUID rguid);
+
+    HRESULT UnregisterCategory([in] REFCLSID rclsid,
+                               [in] REFGUID rcatid,
+                               [in] REFGUID rguid);
+
+    HRESULT EnumCategoriesInItem([in] REFGUID rguid,
+                                 [out] IEnumGUID **ppEnum);
+
+    HRESULT EnumItemsInCategory([in] REFGUID rcatid,
+                                [out] IEnumGUID **ppEnum);
+
+    HRESULT FindClosestCategory([in] REFGUID rguid,
+                                [out] GUID *pcatid,
+                                [in, size_is(ulCount)] const GUID **ppcatidList,
+                                [in] ULONG ulCount);
+
+    HRESULT RegisterGUIDDescription([in] REFCLSID rclsid,
+                                    [in] REFGUID rguid,
+                                    [in, size_is(cch)] const WCHAR *pchDesc,
+                                    [in] ULONG cch);
+
+    HRESULT UnregisterGUIDDescription([in] REFCLSID rclsid,
+                                      [in] REFGUID rguid);
+
+    HRESULT GetGUIDDescription([in] REFGUID rguid,
+                               [out] BSTR *pbstrDesc);
+
+    HRESULT RegisterGUIDDWORD([in] REFCLSID rclsid,
+                              [in] REFGUID rguid,
+                              [in] DWORD dw);
+
+    HRESULT UnregisterGUIDDWORD([in] REFCLSID rclsid,
+                                [in] REFGUID rguid);
+
+    HRESULT GetGUIDDWORD([in] REFGUID rguid,
+                         [out] DWORD *pdw);
+
+    HRESULT RegisterGUID([in] REFGUID rguid,
+                         [out] TfGuidAtom *pguidatom);
+
+    HRESULT GetGUID([in] TfGuidAtom guidatom,
+                    [out] GUID *pguid);
+
+    HRESULT IsEqualTfGuidAtom([in] TfGuidAtom guidatom,
+                              [in] REFGUID rguid,
+                              [out] BOOL *pfEqual);
 };
