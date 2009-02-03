@@ -95,9 +95,50 @@ static ULONG WINAPI CategoryMgr_Release(ITfCategoryMgr *iface)
 static HRESULT WINAPI CategoryMgr_RegisterCategory ( ITfCategoryMgr *iface,
         REFCLSID rclsid, REFGUID rcatid, REFGUID rguid)
 {
+    WCHAR fullkey[110];
+    WCHAR buf[39];
+    WCHAR buf2[39];
+    ULONG res;
+    HKEY tipkey,catkey,itmkey;
     CategoryMgr *This = (CategoryMgr*)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+
+    static const WCHAR ctg[] = {'C','a','t','e','g','o','r','y',0};
+    static const WCHAR itm[] = {'I','t','e','m',0};
+    static const WCHAR fmt[] = {'%','s','\\','%','s',0};
+    static const WCHAR fmt2[] = {'%','s','\\','%','s','\\','%','s','\\','%','s',0};
+
+    TRACE("(%p) %s %s %s\n",This,debugstr_guid(rclsid), debugstr_guid(rcatid), debugstr_guid(rguid));
+
+    StringFromGUID2(rclsid, buf, 39);
+    sprintfW(fullkey,fmt,szwSystemTIPKey,buf);
+
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE,fullkey, 0, KEY_READ | KEY_WRITE,
+                &tipkey ) != ERROR_SUCCESS)
+        return E_FAIL;
+
+    StringFromGUID2(rcatid, buf, 39);
+    StringFromGUID2(rguid, buf2, 39);
+    sprintfW(fullkey,fmt2,ctg,ctg,buf,buf2);
+
+    res = RegCreateKeyExW(tipkey, fullkey, 0, NULL, 0, KEY_READ | KEY_WRITE,
+            NULL, &catkey, NULL);
+    RegCloseKey(catkey);
+
+    if (!res)
+    {
+        sprintfW(fullkey,fmt2,ctg,itm,buf2,buf);
+        res = RegCreateKeyExW(tipkey, fullkey, 0, NULL, 0, KEY_READ | KEY_WRITE,
+                NULL, &itmkey, NULL);
+
+        RegCloseKey(itmkey);
+    }
+
+    RegCloseKey(tipkey);
+
+    if (!res)
+        return S_OK;
+    else
+        return E_FAIL;
 }
 
 static HRESULT WINAPI CategoryMgr_UnregisterCategory ( ITfCategoryMgr *iface,
