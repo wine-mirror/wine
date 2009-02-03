@@ -95,6 +95,7 @@ static const BYTE controlPanelType[] = { PT_SHELLEXT, PT_GUID };
 static const BYTE folderType[] = { PT_FOLDER };
 static const BYTE favoritesType[] = { PT_FOLDER, 0 };
 static const BYTE folderOrSpecialType[] = { PT_FOLDER, PT_IESPECIAL2 };
+static const BYTE personalType[] = { PT_FOLDER, PT_GUID, PT_DRIVE, 0xff /* Win9x */ };
 /* FIXME: don't know the type of 0x71 returned by Vista/2008 for printers */
 static const BYTE printersType[] = { PT_YAGUID, PT_SHELLEXT, 0x71 };
 static const BYTE ieSpecialType[] = { PT_IESPECIAL2 };
@@ -115,6 +116,7 @@ static const struct shellExpectedValues requiredShellValues[] = {
  DECLARE_TYPE(CSIDL_INTERNET, guidType),
  DECLARE_TYPE(CSIDL_NETHOOD, folderType),
  DECLARE_TYPE(CSIDL_NETWORK, guidType),
+ DECLARE_TYPE(CSIDL_PERSONAL, personalType),
  DECLARE_TYPE(CSIDL_PRINTERS, printersType),
  DECLARE_TYPE(CSIDL_PRINTHOOD, folderType),
  DECLARE_TYPE(CSIDL_PROGRAMS, folderType),
@@ -587,36 +589,10 @@ static void testDesktop(void)
     testSHGetSpecialFolderLocation(FALSE, CSIDL_DESKTOP);
 }
 
-static void testPersonal(void)
-{
-    BYTE type;
-
-    /* The pidl may be a real folder, or a virtual directory, or a drive if the
-     * home directory is set to the root directory of a drive.
-     */
-    if (pSHGetFolderLocation)
-    {
-        type = testSHGetFolderLocation(FALSE, CSIDL_PERSONAL);
-        ok(type == PT_FOLDER || type == PT_GUID || type == PT_DRIVE ||
-         broken(type == 0xff) /* Win9x */,
-         "CSIDL_PERSONAL returned invalid type 0x%02x, "
-         "expected PT_FOLDER or PT_GUID or PT_DRIVE\n", type);
-        if (type == PT_FOLDER)
-            testSHGetFolderPath(FALSE, CSIDL_PERSONAL);
-    }
-    type = testSHGetSpecialFolderLocation(FALSE, CSIDL_PERSONAL);
-    ok(type == PT_FOLDER || type == PT_GUID || type == PT_DRIVE,
-     "CSIDL_PERSONAL returned invalid type 0x%02x, "
-     "expected PT_FOLDER or PT_GUID\n", type);
-    if (type == PT_FOLDER)
-        testSHGetSpecialFolderPath(FALSE, CSIDL_PERSONAL);
-}
-
 /* Checks the PIDL type of all the known values. */
 static void testPidlTypes(void)
 {
     testDesktop();
-    testPersonal();
     testShellValues(requiredShellValues, ARRAY_SIZE(requiredShellValues),
      FALSE);
     testShellValues(optionalShellValues, ARRAY_SIZE(optionalShellValues),
