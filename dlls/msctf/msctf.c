@@ -45,6 +45,8 @@ static HINSTANCE MSCTF_hinstance;
 
 DWORD tlsIndex = 0;
 
+const WCHAR szwSystemTIPKey[] = {'S','O','F','T','W','A','R','E','\\','M','i','c','r','o','s','o','f','t','\\','C','T','F','\\','T','I','P',0};
+
 typedef HRESULT (*LPFNCONSTRUCTOR)(IUnknown *pUnkOuter, IUnknown **ppvOut);
 
 static const struct {

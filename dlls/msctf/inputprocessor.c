@@ -97,8 +97,23 @@ static HRESULT WINAPI InputProcessorProfiles_Register(
         ITfInputProcessorProfiles *iface, REFCLSID rclsid)
 {
     InputProcessorProfiles *This = (InputProcessorProfiles*)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    HKEY tipkey;
+    WCHAR buf[39];
+    static const WCHAR fmt[] = {'%','s','\\','%','s',0};
+    WCHAR fullkey[68];
+
+    TRACE("(%p) %s\n",This,debugstr_guid(rclsid));
+
+    StringFromGUID2(rclsid, buf, 39);
+    sprintfW(fullkey,fmt,szwSystemTIPKey,buf);
+
+    if (RegCreateKeyExW(HKEY_LOCAL_MACHINE,fullkey, 0, NULL, 0,
+                    KEY_READ | KEY_WRITE, NULL, &tipkey, NULL) != ERROR_SUCCESS)
+        return E_FAIL;
+
+    RegCloseKey(tipkey);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI InputProcessorProfiles_Unregister(
