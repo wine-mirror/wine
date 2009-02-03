@@ -55,6 +55,10 @@ static char build_id[64];
 static char *filters[64];
 static unsigned int nb_filters = 0;
 
+/* Needed to check for .NET dlls */
+static HMODULE hmscoree;
+static HRESULT (WINAPI *pLoadLibraryShim)(LPCWSTR, LPCWSTR, LPVOID, HMODULE *);
+
 /* check if test is being filtered out */
 static BOOL test_filtered_out( LPCSTR module, LPCSTR testname )
 {
@@ -494,6 +498,8 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
 {
     const char *tempdir = (const char *)lParam;
     char dllname[MAX_PATH];
+    char filename[MAX_PATH];
+    WCHAR dllnameW[MAX_PATH];
     HMODULE dll;
     DWORD err;
 
@@ -505,15 +511,21 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
     *strstr(dllname, testexe) = 0;
 
     dll = LoadLibraryExA(dllname, NULL, LOAD_LIBRARY_AS_DATAFILE);
+    if (!dll && pLoadLibraryShim)
+    {
+        MultiByteToWideChar(CP_ACP, 0, dllname, -1, dllnameW, MAX_PATH);
+        if (FAILED( pLoadLibraryShim(dllnameW, NULL, NULL, &dll) )) dll = 0;
+    }
     if (!dll) {
         xprintf ("    %s=dll is missing\n", dllname);
         return TRUE;
     }
+    GetModuleFileNameA(dll, filename, MAX_PATH);
     FreeLibrary(dll);
 
     if (!(err = get_subtests( tempdir, &wine_tests[nr_of_files], lpszName )))
     {
-        xprintf ("    %s=%s\n", dllname, get_file_version(dllname));
+        xprintf ("    %s=%s\n", dllname, get_file_version(filename));
         nr_of_tests += wine_tests[nr_of_files].subtest_count;
         nr_of_files++;
     }
@@ -614,6 +626,12 @@ run_tests (char *logname)
                 GetLastError ());
     wine_tests = xmalloc (nr_of_files * sizeof wine_tests[0]);
 
+    /* Do this only once during extraction (and version checking) */
+    hmscoree = LoadLibraryA("mscoree.dll");
+    pLoadLibraryShim = NULL;
+    if (hmscoree)
+        pLoadLibraryShim = (void *)GetProcAddress(hmscoree, "LoadLibraryShim");
+
     report (R_STATUS, "Extracting tests");
     report (R_PROGRESS, 0, nr_of_files);
     nr_of_files = 0;
@@ -622,6 +640,8 @@ run_tests (char *logname)
                             extract_test_proc, (LPARAM)tempdir))
         report (R_FATAL, "Can't enumerate test files: %d",
                 GetLastError ());
+
+    FreeLibrary(hmscoree);
 
     xprintf ("Test output:\n" );
 
