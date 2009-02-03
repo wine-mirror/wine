@@ -384,14 +384,16 @@ static void test_InitPathA(CHAR *newdir, CHAR *curDrive, CHAR *otherDrive)
   ok(CreateDirectoryA(tmpstr,NULL),"CreateDirectoryA failed\n");
   sprintf(tmpstr,"%s\\%s",newdir,LONGDIR);
   ok(CreateDirectoryA(tmpstr,NULL),"CreateDirectoryA failed\n");
-  bRes = CreateDirectoryA("c:",NULL);
-  ok(!bRes && (GetLastError() == ERROR_ACCESS_DENIED  || 
-               GetLastError() == ERROR_ALREADY_EXISTS),
-     "CreateDirectoryA(\"c:\" should have failed (%d)\n", GetLastError());
-  bRes = CreateDirectoryA("c:\\",NULL);
+  sprintf(tmpstr,"%c:", *curDrive);
+  bRes = CreateDirectoryA(tmpstr,NULL);
   ok(!bRes && (GetLastError() == ERROR_ACCESS_DENIED  ||
                GetLastError() == ERROR_ALREADY_EXISTS),
-     "CreateDirectoryA(\"c:\\\" should have failed (%d)\n", GetLastError());
+     "CreateDirectoryA(\"%s\" should have failed (%d)\n", tmpstr, GetLastError());
+  sprintf(tmpstr,"%c:\\", *curDrive);
+  bRes = CreateDirectoryA(tmpstr,NULL);
+  ok(!bRes && (GetLastError() == ERROR_ACCESS_DENIED  ||
+               GetLastError() == ERROR_ALREADY_EXISTS),
+     "CreateDirectoryA(\"%s\" should have failed (%d)\n", tmpstr, GetLastError());
   sprintf(tmpstr,"%s\\%s\\%s",newdir,SHORTDIR,SHORTFILE);
   hndl=CreateFileA(tmpstr,GENERIC_WRITE,0,NULL,
                    CREATE_NEW,FILE_ATTRIBUTE_NORMAL,NULL);
