@@ -87,7 +87,10 @@ static TW_HANDLE alloc_and_set_onevalue(TW_UINT32 val, TW_UINT16 type)
             GlobalUnlock(hcontainer);
         }
         else
+        {
+            GlobalFree(hcontainer);
             hcontainer = 0;
+        }
     }
     return hcontainer;
 }
