@@ -2477,6 +2477,61 @@ static void test_orientation(void)
     DeleteDC(hdc);
 }
 
+static void test_GetGlyphOutline(void)
+{
+    MAT2 mat = { {0,1}, {0,0}, {0,0}, {0,1} };
+    HDC hdc;
+    GLYPHMETRICS gm;
+    LOGFONTA lf;
+    HFONT hfont, old_hfont;
+    INT ret;
+
+    if (!is_truetype_font_installed("Tahoma"))
+    {
+        skip("Tahoma is not installed\n");
+        return;
+    }
+
+    hdc = CreateCompatibleDC(0);
+    memset(&lf, 0, sizeof(lf));
+    lf.lfHeight = 72;
+    lstrcpyA(lf.lfFaceName, "Tahoma");
+    SetLastError(0xdeadbeef);
+    hfont = CreateFontIndirectA(&lf);
+    ok(hfont != 0, "CreateFontIndirectA error %u\n", GetLastError());
+    old_hfont = SelectObject(hdc, hfont);
+
+    memset(&gm, 0, sizeof(gm));
+    SetLastError(0xdeadbeef);
+    ret = GetGlyphOutlineA(hdc, 'A', GGO_METRICS, &gm, 0, NULL, &mat);
+    ok(ret != GDI_ERROR, "GetGlyphOutlineA error %u\n", GetLastError());
+
+    memset(&gm, 0, sizeof(gm));
+    SetLastError(0xdeadbeef);
+    ret = GetGlyphOutlineA(hdc, 'A', GGO_METRICS, &gm, 0, NULL, NULL);
+    ok(ret == GDI_ERROR, "GetGlyphOutlineA should fail\n");
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %u\n", GetLastError());
+
+    memset(&gm, 0, sizeof(gm));
+    SetLastError(0xdeadbeef);
+    ret = GetGlyphOutlineW(hdc, 'A', GGO_METRICS, &gm, 0, NULL, &mat);
+    if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
+        ok(ret != GDI_ERROR, "GetGlyphOutlineW error %u\n", GetLastError());
+
+    memset(&gm, 0, sizeof(gm));
+    SetLastError(0xdeadbeef);
+    ret = GetGlyphOutlineW(hdc, 'A', GGO_METRICS, &gm, 0, NULL, NULL);
+    if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
+    {
+       ok(ret == GDI_ERROR, "GetGlyphOutlineW should fail\n");
+       ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %u\n", GetLastError());
+    }
+
+    SelectObject(hdc, old_hfont);
+    DeleteObject(hfont);
+    DeleteDC(hdc);
+}
+
 START_TEST(font)
 {
     init();
@@ -2514,4 +2569,5 @@ START_TEST(font)
     test_GetTextMetrics();
     test_GdiRealizationInfo();
     test_GetTextFace();
+    test_GetGlyphOutline();
 }

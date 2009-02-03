@@ -2336,6 +2336,8 @@ DWORD WINAPI GetGlyphOutlineA( HDC hdc, UINT uChar, UINT fuFormat,
     DWORD ret;
     UINT c;
 
+    if (!lpmat2) return GDI_ERROR;
+
     if(!(fuFormat & GGO_GLYPH_INDEX)) {
         int len;
         char mbchs[2];
@@ -2364,12 +2366,15 @@ DWORD WINAPI GetGlyphOutlineW( HDC hdc, UINT uChar, UINT fuFormat,
                                  LPGLYPHMETRICS lpgm, DWORD cbBuffer,
                                  LPVOID lpBuffer, const MAT2 *lpmat2 )
 {
-    DC *dc = get_dc_ptr(hdc);
+    DC *dc;
     DWORD ret;
 
     TRACE("(%p, %04x, %04x, %p, %d, %p, %p)\n",
 	  hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
 
+    if (!lpmat2) return GDI_ERROR;
+
+    dc = get_dc_ptr(hdc);
     if(!dc) return GDI_ERROR;
 
     if(dc->gdiFont)
