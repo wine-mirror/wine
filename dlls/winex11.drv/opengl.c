@@ -1902,7 +1902,8 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc, DWORD first, DWORD count, DWORD 
      wine_tsx11_unlock();
 
      for (glyph = first; glyph < first + count; glyph++) {
-         unsigned int needed_size = GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, 0, NULL, NULL);
+         static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
+         unsigned int needed_size = GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, 0, NULL, &identity);
          unsigned int height, width_int;
 
          TRACE("Glyph : %3d / List : %d\n", glyph, listBase);
@@ -1920,7 +1921,8 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc, DWORD first, DWORD count, DWORD 
              bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
              gl_bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
          }
-         if (GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, size, bitmap, NULL) == GDI_ERROR) goto error;
+         if (GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, size, bitmap, &identity) == GDI_ERROR)
+             goto error;
          if (TRACE_ON(wgl)) {
              unsigned int height, width, bitmask;
              unsigned char *bitmap_ = bitmap;

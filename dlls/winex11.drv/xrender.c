@@ -666,6 +666,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
     XRenderPictFormat pf;
     unsigned long pf_mask;
     static const char zero[4];
+    static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
 
     switch(format) {
     case AA_Grey:
@@ -691,15 +692,13 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
 	break;
     }
 
-    buflen = GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, 0, NULL,
-			      NULL);
+    buflen = GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, 0, NULL, &identity);
     if(buflen == GDI_ERROR) {
         if(format != AA_None) {
             format = AA_None;
             entry->aa_default = AA_None;
             ggo_format = GGO_GLYPH_INDEX | GGO_BITMAP;
-            buflen = GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, 0, NULL,
-                                      NULL);
+            buflen = GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, 0, NULL, &identity);
         }
         if(buflen == GDI_ERROR) {
             WARN("GetGlyphOutlineW failed\n");
@@ -800,7 +799,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
 
 
     buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buflen);
-    GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, buflen, buf, NULL);
+    GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, buflen, buf, &identity);
     formatEntry->realized[glyph] = TRUE;
 
     TRACE("buflen = %d. Got metrics: %dx%d adv=%d,%d origin=%d,%d\n",
