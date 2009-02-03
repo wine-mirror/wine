@@ -2185,7 +2185,7 @@ BOOL WINAPI mciDriverNotify(HWND hWndCallBack, MCIDEVICEID wDevID, UINT wStatus)
 /**************************************************************************
  * 			mciGetDriverData			[WINMM.@]
  */
-DWORD WINAPI mciGetDriverData(MCIDEVICEID uDeviceID)
+DWORD_PTR WINAPI mciGetDriverData(MCIDEVICEID uDeviceID)
 {
     LPWINE_MCIDRIVER	wmd;
 
@@ -2204,11 +2204,11 @@ DWORD WINAPI mciGetDriverData(MCIDEVICEID uDeviceID)
 /**************************************************************************
  * 			mciSetDriverData			[WINMM.@]
  */
-BOOL WINAPI mciSetDriverData(MCIDEVICEID uDeviceID, DWORD data)
+BOOL WINAPI mciSetDriverData(MCIDEVICEID uDeviceID, DWORD_PTR data)
 {
     LPWINE_MCIDRIVER	wmd;
 
-    TRACE("(%04x, %08x)\n", uDeviceID, data);
+    TRACE("(%04x, %08lx)\n", uDeviceID, data);
 
     wmd = MCI_GetDriver(uDeviceID);
 

@@ -389,10 +389,10 @@ typedef struct {
 typedef struct {
 	HWAVE			hWave;
 	LPWAVEFORMATEX		lpFormat;
-	DWORD			dwCallback;
-	DWORD			dwInstance;
+	DWORD_PTR		dwCallback;
+	DWORD_PTR		dwInstance;
 	UINT			uMappedDeviceID;
-        DWORD			dnDevNode;
+	DWORD_PTR		dnDevNode;
 } WAVEOPENDESC, *LPWAVEOPENDESC;
 
 typedef struct {
@@ -402,9 +402,9 @@ typedef struct {
 
 typedef struct {
 	HMIDI			hMidi;
-	DWORD			dwCallback;
-	DWORD			dwInstance;
-        DWORD          		dnDevNode;
+	DWORD_PTR		dwCallback;
+	DWORD_PTR		dwInstance;
+	DWORD_PTR		dnDevNode;
         DWORD          		cIds;
         MIDIOPENSTRMID 		rgIds;
 } MIDIOPENDESC, *LPMIDIOPENDESC;
@@ -415,6 +415,7 @@ typedef struct tMIXEROPENDESC
         LPVOID			pReserved0;
 	DWORD_PTR		dwCallback;
 	DWORD_PTR		dwInstance;
+	DWORD_PTR		dnDevNode;
 } MIXEROPENDESC, *LPMIXEROPENDESC;
 
 typedef struct {
@@ -433,8 +434,8 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(MCI_OPEN_DRIVER_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_OPEN_DRIVER_PARMS)
 
-DWORD 			WINAPI	mciGetDriverData(UINT uDeviceID);
-BOOL			WINAPI	mciSetDriverData(UINT uDeviceID, DWORD dwData);
+DWORD_PTR		WINAPI	mciGetDriverData(UINT uDeviceID);
+BOOL			WINAPI	mciSetDriverData(UINT uDeviceID, DWORD_PTR dwData);
 UINT			WINAPI	mciDriverYield(UINT uDeviceID);
 BOOL			WINAPI	mciDriverNotify(HWND hwndCallback, UINT uDeviceID,
 						UINT uStatus);
@@ -453,7 +454,7 @@ BOOL			WINAPI	mciFreeCommandResource(UINT uTable);
 BOOL WINAPI DriverCallback(DWORD_PTR dwCallBack, DWORD uFlags, HDRVR hDev,
                            DWORD wMsg, DWORD_PTR dwUser, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
 
-typedef VOID (*LPTASKCALLBACK)(DWORD dwInst);
+typedef VOID (*LPTASKCALLBACK)(DWORD_PTR dwInst);
 
 #define TASKERR_NOTASKSUPPORT 1
 #define TASKERR_OUTOFMEMORY   2

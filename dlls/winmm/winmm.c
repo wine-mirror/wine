@@ -2096,7 +2096,7 @@ UINT WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
     wod.dwInstance = dwInstance;
     wod.dnDevNode = 0L;
 
-    TRACE("cb=%08x\n", wod.dwCallback);
+    TRACE("cb=%08lx\n", wod.dwCallback);
 
     for (;;) {
         if (dwFlags & WAVE_MAPPED) {

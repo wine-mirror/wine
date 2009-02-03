@@ -141,7 +141,7 @@ typedef struct tagWINE_MCIDRIVER {
         LPWSTR			lpstrDeviceType;
         LPWSTR			lpstrAlias;
         HDRVR			hDriver;
-	DWORD			dwPrivate;
+        DWORD_PTR               dwPrivate;
         YIELDPROC		lpfnYieldProc;
         DWORD	                dwYieldData;
         BOOL			bIs32;
