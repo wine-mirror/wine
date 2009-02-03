@@ -450,6 +450,10 @@ static void test_EM_LINELENGTH(void)
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
 
   result = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
+  if (result == 4) {
+     win_skip("Win9x, WinME and NT4 don't handle '\\r only' correctly\n");
+     return;
+  }
   ok(result == 9, "Incorrect line count of %ld\n", result);
 
   for (i = 0; i < sizeof(offset_test)/sizeof(offset_test[0]); i++) {
