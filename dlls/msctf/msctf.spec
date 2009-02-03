@@ -14,7 +14,7 @@
 @ stub TF_CreateInputProcessorProfiles
 @ stub TF_CreateLangBarItemMgr
 @ stub TF_CreateLangBarMgr
-@ stub TF_CreateThreadMgr
+@ stdcall TF_CreateThreadMgr(ptr)
 @ stub TF_DllDetachInOther
 @ stub TF_GetGlobalCompartment
 @ stub TF_GetInputScope

@@ -201,3 +201,12 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, LPVOID *ppvOut)
     FIXME("CLSID %s not supported\n", debugstr_guid(clsid));
     return CLASS_E_CLASSNOTAVAILABLE;
 }
+
+/***********************************************************************
+ *              TF_CreateThreadMgr (MSCTF.@)
+ */
+HRESULT WINAPI TF_CreateThreadMgr(ITfThreadMgr **pptim)
+{
+    TRACE("\n");
+    return ThreadMgr_Constructor(NULL,(IUnknown**)pptim);
+}
