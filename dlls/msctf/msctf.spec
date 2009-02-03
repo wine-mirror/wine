@@ -22,7 +22,7 @@
 @ stub TF_GetMlngHKL
 @ stub TF_GetMlngIconIndex
 @ stub TF_GetThreadFlags
-@ stub TF_GetThreadMgr
+@ stdcall TF_GetThreadMgr(ptr)
 @ stub TF_InatExtractIcon
 @ stub TF_InitMlngInfo
 @ stub TF_InitSystem

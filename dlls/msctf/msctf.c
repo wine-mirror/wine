@@ -210,3 +210,17 @@ HRESULT WINAPI TF_CreateThreadMgr(ITfThreadMgr **pptim)
     TRACE("\n");
     return ThreadMgr_Constructor(NULL,(IUnknown**)pptim);
 }
+
+/***********************************************************************
+ *              TF_GetThreadMgr (MSCTF.@)
+ */
+HRESULT WINAPI TF_GetThreadMgr(ITfThreadMgr **pptim)
+{
+    TRACE("\n");
+    *pptim = (ITfThreadMgr*)TlsGetValue(tlsIndex);
+
+    if (*pptim)
+        ITfThreadMgr_AddRef(*pptim);
+
+    return S_OK;
+}
