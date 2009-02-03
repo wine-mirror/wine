@@ -74,9 +74,9 @@
 static GUID CLSID_CommonDocuments = { 0x0000000c, 0x0000, 0x0000, { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x74, 0x1a } };
 
 struct shellExpectedValues {
-    int  folder;
-    BYTE pidlType;
-    BYTE altPidlType;
+    int folder;
+    int numTypes;
+    const BYTE *types;
 };
 
 static HRESULT (WINAPI *pDllGetVersion)(DLLVERSIONINFO *);
@@ -90,75 +90,83 @@ static int (WINAPI *pSHFileOperationA)(LPSHFILEOPSTRUCTA);
 static HRESULT (WINAPI *pSHGetMalloc)(LPMALLOC *);
 static DLLVERSIONINFO shellVersion = { 0 };
 static LPMALLOC pMalloc;
-static const struct shellExpectedValues requiredShellValues[] = {
- { CSIDL_BITBUCKET, PT_GUID, 0 },
- { CSIDL_CONTROLS, PT_SHELLEXT, PT_GUID },
- { CSIDL_COOKIES, PT_FOLDER, 0 },
- { CSIDL_DESKTOPDIRECTORY, PT_FOLDER, 0 },
- { CSIDL_DRIVES, PT_GUID, 0 },
-/* Note that 0 is an expected type for CSIDL_FAVORITES.  Inverting the order
- * will cause the test to fail, as it'll only check for PT_FOLDER.
- */
- { CSIDL_FAVORITES, 0, PT_FOLDER },
- { CSIDL_FONTS, PT_FOLDER, PT_IESPECIAL2 },
-/* FIXME: the following fails in Wine, returns type PT_FOLDER
- { CSIDL_HISTORY, PT_IESPECIAL2, 0 },
- */
- { CSIDL_INTERNET, PT_GUID, 0 },
- { CSIDL_NETHOOD, PT_FOLDER, 0 },
- { CSIDL_NETWORK, PT_GUID, 0 },
+static const BYTE guidType[] = { PT_GUID };
+static const BYTE controlPanelType[] = { PT_SHELLEXT, PT_GUID };
+static const BYTE folderType[] = { PT_FOLDER };
+static const BYTE favoritesType[] = { PT_FOLDER, 0 };
+static const BYTE folderOrSpecialType[] = { PT_FOLDER, PT_IESPECIAL2 };
 /* FIXME: don't know the type of 0x71 returned by Vista/2008 for printers */
- { CSIDL_PRINTERS, PT_YAGUID, 0x71 },
- { CSIDL_PRINTHOOD, PT_FOLDER, 0 },
- { CSIDL_PROGRAMS, PT_FOLDER, 0 },
- { CSIDL_RECENT, PT_FOLDER, PT_IESPECIAL2 },
- { CSIDL_SENDTO, PT_FOLDER, 0 },
- { CSIDL_STARTMENU, PT_FOLDER, 0 },
- { CSIDL_STARTUP, PT_FOLDER, 0 },
- { CSIDL_TEMPLATES, PT_FOLDER, 0 },
+static const BYTE printersType[] = { PT_YAGUID, PT_SHELLEXT, 0x71 };
+static const BYTE ieSpecialType[] = { PT_IESPECIAL2 };
+static const BYTE shellExtType[] = { PT_SHELLEXT };
+static const BYTE workgroupType[] = { PT_WORKGRP };
+#define DECLARE_TYPE(x, y) { x, sizeof(y) / sizeof(y[0]), y }
+static const struct shellExpectedValues requiredShellValues[] = {
+ DECLARE_TYPE(CSIDL_BITBUCKET, guidType),
+ DECLARE_TYPE(CSIDL_CONTROLS, controlPanelType),
+ DECLARE_TYPE(CSIDL_COOKIES, folderType),
+ DECLARE_TYPE(CSIDL_DESKTOPDIRECTORY, folderType),
+ DECLARE_TYPE(CSIDL_DRIVES, guidType),
+ DECLARE_TYPE(CSIDL_FAVORITES, favoritesType),
+ DECLARE_TYPE(CSIDL_FONTS, folderOrSpecialType),
+/* FIXME: the following fails in Wine, returns type PT_FOLDER
+ DECLARE_TYPE(CSIDL_HISTORY, ieSpecialType),
+ */
+ DECLARE_TYPE(CSIDL_INTERNET, guidType),
+ DECLARE_TYPE(CSIDL_NETHOOD, folderType),
+ DECLARE_TYPE(CSIDL_NETWORK, guidType),
+ DECLARE_TYPE(CSIDL_PRINTERS, printersType),
+ DECLARE_TYPE(CSIDL_PRINTHOOD, folderType),
+ DECLARE_TYPE(CSIDL_PROGRAMS, folderType),
+ DECLARE_TYPE(CSIDL_RECENT, folderOrSpecialType),
+ DECLARE_TYPE(CSIDL_SENDTO, folderType),
+ DECLARE_TYPE(CSIDL_STARTMENU, folderType),
+ DECLARE_TYPE(CSIDL_STARTUP, folderType),
+ DECLARE_TYPE(CSIDL_TEMPLATES, folderType),
 };
 static const struct shellExpectedValues optionalShellValues[] = {
 /* FIXME: the following only semi-succeed; they return NULL PIDLs on XP.. hmm.
- { CSIDL_ALTSTARTUP, PT_FOLDER, 0 },
- { CSIDL_COMMON_ALTSTARTUP, PT_FOLDER, 0 },
- { CSIDL_COMMON_OEM_LINKS, PT_FOLDER, 0 },
+ DECLARE_TYPE(CSIDL_ALTSTARTUP, folderType),
+ DECLARE_TYPE(CSIDL_COMMON_ALTSTARTUP, folderType),
+ DECLARE_TYPE(CSIDL_COMMON_OEM_LINKS, folderType),
  */
 /* Windows NT-only: */
- { CSIDL_COMMON_DESKTOPDIRECTORY, PT_FOLDER, 0 },
- { CSIDL_COMMON_DOCUMENTS, PT_SHELLEXT, 0 },
- { CSIDL_COMMON_FAVORITES, PT_FOLDER, 0 },
- { CSIDL_COMMON_PROGRAMS, PT_FOLDER, 0 },
- { CSIDL_COMMON_STARTMENU, PT_FOLDER, 0 },
- { CSIDL_COMMON_STARTUP, PT_FOLDER, 0 },
- { CSIDL_COMMON_TEMPLATES, PT_FOLDER, 0 },
+ DECLARE_TYPE(CSIDL_COMMON_DESKTOPDIRECTORY, folderType),
+ DECLARE_TYPE(CSIDL_COMMON_DOCUMENTS, shellExtType),
+ DECLARE_TYPE(CSIDL_COMMON_FAVORITES, folderType),
+ DECLARE_TYPE(CSIDL_COMMON_PROGRAMS, folderType),
+ DECLARE_TYPE(CSIDL_COMMON_STARTMENU, folderType),
+ DECLARE_TYPE(CSIDL_COMMON_STARTUP, folderType),
+ DECLARE_TYPE(CSIDL_COMMON_TEMPLATES, folderType),
 /* first appearing in shell32 version 4.71: */
- { CSIDL_APPDATA, PT_FOLDER, 0 },
+ DECLARE_TYPE(CSIDL_APPDATA, folderType),
 /* first appearing in shell32 version 4.72: */
- { CSIDL_INTERNET_CACHE, PT_IESPECIAL2, 0 },
+ DECLARE_TYPE(CSIDL_INTERNET_CACHE, ieSpecialType),
 /* first appearing in shell32 version 5.0: */
- { CSIDL_ADMINTOOLS, PT_FOLDER, 0 },
- { CSIDL_COMMON_APPDATA, PT_FOLDER, 0 },
- { CSIDL_LOCAL_APPDATA, PT_FOLDER, 0 },
- { OLD_CSIDL_MYDOCUMENTS, PT_FOLDER, 0 },
- { CSIDL_MYMUSIC, PT_FOLDER, 0 },
- { CSIDL_MYPICTURES, PT_FOLDER, 0 },
- { CSIDL_MYVIDEO, PT_FOLDER, 0 },
- { CSIDL_PROFILE, PT_FOLDER, 0 },
- { CSIDL_PROGRAM_FILES, PT_FOLDER, 0 },
- { CSIDL_PROGRAM_FILESX86, PT_FOLDER, 0 },
- { CSIDL_PROGRAM_FILES_COMMON, PT_FOLDER, 0 },
- { CSIDL_PROGRAM_FILES_COMMONX86, PT_FOLDER, 0 },
- { CSIDL_SYSTEM, PT_FOLDER, 0 },
- { CSIDL_WINDOWS, PT_FOLDER, 0 },
+ DECLARE_TYPE(CSIDL_ADMINTOOLS, folderType),
+ DECLARE_TYPE(CSIDL_COMMON_APPDATA, folderType),
+ DECLARE_TYPE(CSIDL_LOCAL_APPDATA, folderType),
+ DECLARE_TYPE(OLD_CSIDL_MYDOCUMENTS, folderType),
+ DECLARE_TYPE(CSIDL_MYMUSIC, folderType),
+ DECLARE_TYPE(CSIDL_MYPICTURES, folderType),
+ DECLARE_TYPE(CSIDL_MYVIDEO, folderType),
+ DECLARE_TYPE(CSIDL_PROFILE, folderType),
+ DECLARE_TYPE(CSIDL_PROGRAM_FILES, folderType),
+ DECLARE_TYPE(CSIDL_PROGRAM_FILESX86, folderType),
+ DECLARE_TYPE(CSIDL_PROGRAM_FILES_COMMON, folderType),
+ DECLARE_TYPE(CSIDL_PROGRAM_FILES_COMMONX86, folderType),
+ DECLARE_TYPE(CSIDL_SYSTEM, folderType),
+ DECLARE_TYPE(CSIDL_WINDOWS, folderType),
 /* first appearing in shell32 6.0: */
- { CSIDL_CDBURN_AREA, PT_FOLDER, 0 },
- { CSIDL_COMMON_MUSIC, PT_FOLDER, 0 },
- { CSIDL_COMMON_PICTURES, PT_FOLDER, 0 },
- { CSIDL_COMMON_VIDEO, PT_FOLDER, 0 },
- { CSIDL_COMPUTERSNEARME, PT_WORKGRP, 0 },
- { CSIDL_RESOURCES, PT_FOLDER, 0 },
- { CSIDL_RESOURCES_LOCALIZED, PT_FOLDER, 0 },
+ DECLARE_TYPE(CSIDL_CDBURN_AREA, folderType),
+ DECLARE_TYPE(CSIDL_COMMON_MUSIC, folderType),
+ DECLARE_TYPE(CSIDL_COMMON_PICTURES, folderType),
+ DECLARE_TYPE(CSIDL_COMMON_VIDEO, folderType),
+ DECLARE_TYPE(CSIDL_COMPUTERSNEARME, workgroupType),
+ DECLARE_TYPE(CSIDL_RESOURCES, folderType),
+ DECLARE_TYPE(CSIDL_RESOURCES_LOCALIZED, folderType),
 };
+#undef DECLARE_TYPE
 
 static void loadShell32(void)
 {
@@ -476,40 +484,27 @@ static void testShellValues(const struct shellExpectedValues testEntries[],
     for (i = 0; i < numEntries; i++)
     {
         BYTE type;
+        int j;
+        BOOL foundTypeMatch = FALSE;
 
         if (pSHGetFolderLocation)
         {
             type = testSHGetFolderLocation(optional, testEntries[i].folder);
-            if (!testEntries[i].altPidlType)
-                ok(type == testEntries[i].pidlType || optional ||
-                 broken(type == 0xff) /* Win9x */,
-                 "%s has type %d (0x%02x), expected %d (0x%02x)\n",
-                 getFolderName(testEntries[i].folder), type, type,
-                 testEntries[i].pidlType, testEntries[i].pidlType);
-            else
-                ok(type == testEntries[i].pidlType ||
-                 type == testEntries[i].altPidlType ||
-                 optional || broken(type == 0xff) /* Win9x */,
-                 "%s has type %d (0x%02x), expected %d (0x%02x) or %d (0x%02x)\n",
-                 getFolderName(testEntries[i].folder), type, type,
-                 testEntries[i].pidlType, testEntries[i].pidlType,
-                 testEntries[i].altPidlType, testEntries[i].altPidlType);
+            for (j = 0; !foundTypeMatch && j < testEntries[i].numTypes; j++)
+                if (testEntries[i].types[j] == type)
+                    foundTypeMatch = TRUE;
+            ok(foundTypeMatch || optional || broken(type == 0xff) /* Win9x */,
+             "%s has unexpected type %d (0x%02x)\n",
+             getFolderName(testEntries[i].folder), type, type);
         }
         type = testSHGetSpecialFolderLocation(optional, testEntries[i].folder);
-        if (!testEntries[i].altPidlType)
-            ok(type == testEntries[i].pidlType || optional ||
-             broken(type == 0xff) /* Win9x */,
-             "%s has type %d (0x%02x), expected %d (0x%02x)\n",
-             getFolderName(testEntries[i].folder), type, type,
-             testEntries[i].pidlType, testEntries[i].pidlType);
-        else
-            ok(type == testEntries[i].pidlType ||
-             type == testEntries[i].altPidlType ||
-             optional || broken(type == 0xff) /* Win9x */,
-             "%s has type %d (0x%02x), expected %d (0x%02x) or %d (0x%02x)\n",
-             getFolderName(testEntries[i].folder), type, type,
-             testEntries[i].pidlType, testEntries[i].pidlType,
-             testEntries[i].altPidlType, testEntries[i].altPidlType);
+        for (j = 0, foundTypeMatch = FALSE; !foundTypeMatch &&
+         j < testEntries[i].numTypes; j++)
+            if (testEntries[i].types[j] == type)
+                foundTypeMatch = TRUE;
+        ok(foundTypeMatch || optional || broken(type == 0xff) /* Win9x */,
+         "%s has unexpected type %d (0x%02x)\n",
+         getFolderName(testEntries[i].folder), type, type);
         switch (type)
         {
             case PT_FOLDER:
