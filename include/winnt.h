@@ -3885,6 +3885,14 @@ typedef struct _SID_AND_ATTRIBUTES {
 #define DOMAIN_GROUP_RID_ENTERPRISE_ADMINS      0x00000207L
 #define DOMAIN_GROUP_RID_POLICY_ADMINS          0x00000208L
 
+#define SECURITY_MANDATORY_LABEL_AUTHORITY {0,0,0,0,0,16}
+#define SECURITY_MANDATORY_UNTRUSTED_RID        0x00000000L
+#define SECURITY_MANDATORY_LOW_RID              0x00001000L
+#define SECURITY_MANDATORY_MEDIUM_RID           0x00002000L
+#define SECURITY_MANDATORY_HIGH_RID             0x00003000L
+#define SECURITY_MANDATORY_SYSTEM_RID           0x00004000L
+#define SECURITY_MANDATORY_PROTECTED_PROCESS_RID 0x00005000L
+
 #define DOMAIN_ALIAS_RID_ADMINS                 0x00000220L
 #define DOMAIN_ALIAS_RID_USERS                  0x00000221L
 #define DOMAIN_ALIAS_RID_GUESTS                 0x00000222L
@@ -3975,7 +3983,22 @@ typedef enum {
     WinBuiltinPerfLoggingUsersSid               = 58,
     WinBuiltinAuthorizationAccessSid            = 59,
     WinBuiltinTerminalServerLicenseServersSid   = 60,
-    WinBuiltinDCOMUsersSid                      = 61
+    WinBuiltinDCOMUsersSid                      = 61,
+    WinBuiltinIUsersSid                         = 62,
+    WinIUserSid                                 = 63,
+    WinBuiltinCryptoOperatorsSid                = 64,
+    WinUntrustedLabelSid                        = 65,
+    WinLowLabelSid                              = 66,
+    WinMediumLabelSid                           = 67,
+    WinHighLabelSid                             = 68,
+    WinSystemLabelSid                           = 69,
+    WinWriteRestrictedCodeSid                   = 70,
+    WinCreatorOwnerRightsSid                    = 71,
+    WinCacheablePrincipalsGroupSid              = 72,
+    WinNonCacheablePrincipalsGroupSid           = 73,
+    WinEnterpriseReadonlyControllersSid         = 74,
+    WinAccountReadonlyControllersSid            = 75,
+    WinBuiltinEventLogReadersGroup              = 76,
 } WELL_KNOWN_SID_TYPE;
 
 /*
