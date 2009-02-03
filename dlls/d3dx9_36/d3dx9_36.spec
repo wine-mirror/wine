@@ -167,7 +167,7 @@
 @ stdcall D3DXGetVertexShaderProfile(ptr)
 @ stdcall D3DXIntersect(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) d3dx8.D3DXIntersect
 @ stdcall D3DXIntersectSubset(ptr long ptr ptr ptr ptr ptr ptr ptr ptr ptr) d3dx8.D3DXIntersectSubset
-@ stub D3DXIntersectTri
+@ stdcall D3DXIntersectTri(ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stub D3DXLoadMeshFromXA
 @ stub D3DXLoadMeshFromXInMemory
 @ stub D3DXLoadMeshFromXResource
