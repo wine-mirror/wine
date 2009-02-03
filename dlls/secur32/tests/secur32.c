@@ -102,9 +102,15 @@ static void test_InitSecurityInterface(void)
     sftA = pInitSecurityInterfaceA();
     ok(sftA != NULL, "pInitSecurityInterfaceA failed\n");
     ok(sftA->dwVersion == SECURITY_SUPPORT_PROVIDER_INTERFACE_VERSION, "wrong dwVersion %d in security function table\n", sftA->dwVersion);
-    ok(!sftA->Reserved2, "Reserved2 should be NULL instead of %p in security function table\n", sftA->Reserved2);
-    ok(sftA->Reserved3 == sftA->EncryptMessage, "Reserved3 should be equal to EncryptMessage in the security function table\n");
-    ok(sftA->Reserved4 == sftA->DecryptMessage, "Reserved4 should be equal to DecryptMessage in the security function table\n");
+    ok(!sftA->Reserved2 || broken(sftA->Reserved2 != NULL) /* WinME */,
+       "Reserved2 should be NULL instead of %p in security function table\n",
+       sftA->Reserved2);
+    ok(sftA->Reserved3 == sftA->EncryptMessage ||
+       broken(sftA->Reserved3 != sftA->EncryptMessage) /* Win9x */,
+       "Reserved3 should be equal to EncryptMessage in the security function table\n");
+    ok(sftA->Reserved4 == sftA->DecryptMessage ||
+       broken(sftA->Reserved4 != sftA->DecryptMessage) /* Win9x */,
+       "Reserved4 should be equal to DecryptMessage in the security function table\n");
 
     if (!pInitSecurityInterfaceW)
     {
