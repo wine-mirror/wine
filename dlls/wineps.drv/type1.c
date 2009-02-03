@@ -192,7 +192,7 @@ BOOL T1_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
     TTPOLYCURVE *ppc;
     LOGFONTW lf;
     RECT rc;
-
+    static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
     static const char glyph_def_begin[] =
       "/%s findfont dup\n"
       "/Private get begin\n"
@@ -226,11 +226,11 @@ BOOL T1_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
     unscaled_font = CreateFontIndirectW(&lf);
     old_font = SelectObject(physDev->hdc, unscaled_font);
     len = GetGlyphOutlineW(physDev->hdc, index, GGO_GLYPH_INDEX | GGO_BEZIER,
-			   &gm, 0, NULL, NULL);
+			   &gm, 0, NULL, &identity);
     if(len == GDI_ERROR) return FALSE;
     glyph_buf = HeapAlloc(GetProcessHeap(), 0, len);
     GetGlyphOutlineW(physDev->hdc, index, GGO_GLYPH_INDEX | GGO_BEZIER,
-		     &gm, len, glyph_buf, NULL);
+		     &gm, len, glyph_buf, &identity);
 
     SelectObject(physDev->hdc, old_font);
     DeleteObject(unscaled_font);
