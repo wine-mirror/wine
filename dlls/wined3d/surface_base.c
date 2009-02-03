@@ -1144,7 +1144,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
     assert(width <= dlock.Pitch);
 
     if (DestRect && Src != This)
-        dbuf = (BYTE*)dlock.pBits;
+        dbuf = dlock.pBits;
     else
         dbuf = (BYTE*)dlock.pBits+(xdst.top*dlock.Pitch)+(xdst.left*bpp);
 

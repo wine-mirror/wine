@@ -1741,7 +1741,7 @@ static GLuint create_arb_blt_fragment_program(const WineD3D_GL_Info *gl_info, en
 
 static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    struct shader_arb_priv *priv = (struct shader_arb_priv *) This->shader_priv;
+    struct shader_arb_priv *priv = This->shader_priv;
     const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
 
     if (useVS) {
@@ -1794,7 +1794,7 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
 
 static void shader_arb_select_depth_blt(IWineD3DDevice *iface, enum tex_types tex_type) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    struct shader_arb_priv *priv = (struct shader_arb_priv *) This->shader_priv;
+    struct shader_arb_priv *priv = This->shader_priv;
     GLuint *blt_fprogram = &priv->depth_blt_fprogram_id[tex_type];
     const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
 
@@ -1809,7 +1809,7 @@ static void shader_arb_select_depth_blt(IWineD3DDevice *iface, enum tex_types te
 
 static void shader_arb_deselect_depth_blt(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    struct shader_arb_priv *priv = (struct shader_arb_priv *) This->shader_priv;
+    struct shader_arb_priv *priv = This->shader_priv;
     const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
 
     if (priv->current_vprogram_id) {
@@ -1879,7 +1879,7 @@ static HRESULT shader_arb_alloc(IWineD3DDevice *iface) {
 static void shader_arb_free(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
-    struct shader_arb_priv *priv = (struct shader_arb_priv *) This->shader_priv;
+    struct shader_arb_priv *priv = This->shader_priv;
     int i;
 
     if(priv->depth_blt_vprogram_id) {
@@ -2295,7 +2295,7 @@ static HRESULT arbfp_alloc(IWineD3DDevice *iface) {
         This->fragment_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_arb_priv));
         if(!This->fragment_priv) return E_OUTOFMEMORY;
     }
-    priv = (struct shader_arb_priv *) This->fragment_priv;
+    priv = This->fragment_priv;
     priv->fragment_shaders = hash_table_create(ffp_frag_program_key_hash, ffp_frag_program_key_compare);
     priv->use_arbfp_fixed_func = TRUE;
     return WINED3D_OK;
@@ -2314,7 +2314,7 @@ static void arbfp_free_ffpshader(void *value, void *gli) {
 
 static void arbfp_free(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    struct shader_arb_priv *priv = (struct shader_arb_priv *) This->fragment_priv;
+    struct shader_arb_priv *priv = This->fragment_priv;
 
     hash_table_destroy(priv->fragment_shaders, arbfp_free_ffpshader, &This->adapter->gl_info);
     priv->use_arbfp_fixed_func = FALSE;
@@ -2953,7 +2953,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
 
 static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
-    struct shader_arb_priv *priv = (struct shader_arb_priv *) device->fragment_priv;
+    struct shader_arb_priv *priv = device->fragment_priv;
     BOOL use_pshader = use_ps(stateblock);
     BOOL use_vshader = use_vs(stateblock);
     struct ffp_frag_settings settings;
@@ -3259,7 +3259,7 @@ static HRESULT arbfp_blit_alloc(IWineD3DDevice *iface) {
 }
 static void arbfp_blit_free(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
-    struct arbfp_blit_priv *priv = (struct arbfp_blit_priv *) device->blit_priv;
+    struct arbfp_blit_priv *priv = device->blit_priv;
 
     ENTER_GL();
     GL_EXTCALL(glDeleteProgramsARB(1, &priv->yuy2_rect_shader));
@@ -3510,7 +3510,7 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum yuv_fixup yuv_fixu
     GLenum shader;
     SHADER_BUFFER buffer;
     char luminance_component;
-    struct arbfp_blit_priv *priv = (struct arbfp_blit_priv *) device->blit_priv;
+    struct arbfp_blit_priv *priv = device->blit_priv;
 
     /* Shader header */
     shader_buffer_init(&buffer);
@@ -3645,7 +3645,7 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum t
     GLenum shader;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
     float size[4] = {width, height, 1, 1};
-    struct arbfp_blit_priv *priv = (struct arbfp_blit_priv *) device->blit_priv;
+    struct arbfp_blit_priv *priv = device->blit_priv;
     const struct GlPixelFormatDesc *glDesc;
     enum yuv_fixup yuv_fixup;
 

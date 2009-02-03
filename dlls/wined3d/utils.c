@@ -2132,7 +2132,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
 const struct ffp_frag_desc *find_ffp_frag_shader(const struct hash_table_t *fragment_shaders,
         const struct ffp_frag_settings *settings)
 {
-    return (const struct ffp_frag_desc *)hash_table_get(fragment_shaders, settings);
+    return hash_table_get(fragment_shaders, settings);
 }
 
 void add_ffp_frag_shader(struct hash_table_t *shaders, struct ffp_frag_desc *desc) {

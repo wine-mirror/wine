@@ -484,7 +484,7 @@ static void shader_glsl_load_constants(
     char useVertexShader) {
    
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) device;
-    struct shader_glsl_priv *priv = (struct shader_glsl_priv *)deviceImpl->shader_priv;
+    struct shader_glsl_priv *priv = deviceImpl->shader_priv;
     IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
     const WineD3D_GL_Info *gl_info = &deviceImpl->adapter->gl_info;
 
@@ -621,7 +621,7 @@ static inline void update_heap_entry(struct constant_heap *heap, unsigned int id
 static void shader_glsl_update_float_vertex_constants(IWineD3DDevice *iface, UINT start, UINT count)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    struct shader_glsl_priv *priv = (struct shader_glsl_priv *)This->shader_priv;
+    struct shader_glsl_priv *priv = This->shader_priv;
     struct constant_heap *heap = &priv->vconst_heap;
     UINT i;
 
@@ -637,7 +637,7 @@ static void shader_glsl_update_float_vertex_constants(IWineD3DDevice *iface, UIN
 static void shader_glsl_update_float_pixel_constants(IWineD3DDevice *iface, UINT start, UINT count)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    struct shader_glsl_priv *priv = (struct shader_glsl_priv *)This->shader_priv;
+    struct shader_glsl_priv *priv = This->shader_priv;
     struct constant_heap *heap = &priv->pconst_heap;
     UINT i;
 
@@ -2931,7 +2931,7 @@ static struct glsl_shader_prog_link *get_glsl_program_entry(struct shader_glsl_p
     key.pshader = pshader;
     key.ps_args = *ps_args;
 
-    return (struct glsl_shader_prog_link *)hash_table_get(priv->glsl_program_lookup, &key);
+    return hash_table_get(priv->glsl_program_lookup, &key);
 }
 
 static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const WineD3D_GL_Info *gl_info,
@@ -3248,7 +3248,7 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
     ret = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
     checkGLcall("glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB)");
     GL_EXTCALL(glShaderSourceARB(ret, 1, (const char**)&buffer.buffer, NULL));
-    checkGLcall("glShaderSourceARB(ret, 1, (const char**)&buffer.buffer, NULL)");
+    checkGLcall("glShaderSourceARB(ret, 1, &buffer.buffer, NULL)");
     GL_EXTCALL(glCompileShaderARB(ret));
     checkGLcall("glCompileShaderARB(ret)");
 
@@ -3283,7 +3283,7 @@ static void hardcode_local_constants(IWineD3DBaseShaderImpl *shader, const WineD
  */
 static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use_vs) {
     IWineD3DDeviceImpl *This               = (IWineD3DDeviceImpl *)iface;
-    struct shader_glsl_priv *priv          = (struct shader_glsl_priv *)This->shader_priv;
+    struct shader_glsl_priv *priv          = This->shader_priv;
     const WineD3D_GL_Info *gl_info         = &This->adapter->gl_info;
     IWineD3DPixelShader  *pshader          = This->stateBlock->pixelShader;
     IWineD3DVertexShader *vshader          = This->stateBlock->vertexShader;
@@ -3543,7 +3543,7 @@ static GLhandleARB create_glsl_blt_shader(const WineD3D_GL_Info *gl_info, enum t
 
 static void shader_glsl_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    struct shader_glsl_priv *priv = (struct shader_glsl_priv *)This->shader_priv;
+    struct shader_glsl_priv *priv = This->shader_priv;
     const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
     GLhandleARB program_id = 0;
     GLenum old_vertex_color_clamp, current_vertex_color_clamp;
@@ -3573,7 +3573,7 @@ static void shader_glsl_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
 static void shader_glsl_select_depth_blt(IWineD3DDevice *iface, enum tex_types tex_type) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
-    struct shader_glsl_priv *priv = (struct shader_glsl_priv *) This->shader_priv;
+    struct shader_glsl_priv *priv = This->shader_priv;
     GLhandleARB *blt_program = &priv->depth_blt_program[tex_type];
 
     if (!*blt_program) {
@@ -3590,7 +3590,7 @@ static void shader_glsl_select_depth_blt(IWineD3DDevice *iface, enum tex_types t
 static void shader_glsl_deselect_depth_blt(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
-    struct shader_glsl_priv *priv = (struct shader_glsl_priv *) This->shader_priv;
+    struct shader_glsl_priv *priv = This->shader_priv;
     GLhandleARB program_id;
 
     program_id = priv->glsl_program ? priv->glsl_program->programId : 0;
@@ -3604,7 +3604,7 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     const struct list *linked_programs;
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *) iface;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)This->baseShader.device;
-    struct shader_glsl_priv *priv = (struct shader_glsl_priv *)device->shader_priv;
+    struct shader_glsl_priv *priv = device->shader_priv;
     const WineD3D_GL_Info *gl_info = &device->adapter->gl_info;
     IWineD3DPixelShaderImpl *ps = NULL;
     IWineD3DVertexShaderImpl *vs = NULL;
@@ -3753,7 +3753,7 @@ static HRESULT shader_glsl_alloc(IWineD3DDevice *iface) {
 static void shader_glsl_free(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
-    struct shader_glsl_priv *priv = (struct shader_glsl_priv *)This->shader_priv;
+    struct shader_glsl_priv *priv = This->shader_priv;
     int i;
 
     for (i = 0; i < tex_type_count; ++i)

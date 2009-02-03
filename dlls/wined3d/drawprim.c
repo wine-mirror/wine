@@ -964,7 +964,7 @@ void drawPrimitive(IWineD3DDevice *iface, int PrimitiveType, long NumPrimitives,
                     sprintf(buffer, "/tmp/texture_%p_%ld_%d.tga", This->stateBlock->textures[textureNo], primCounter, textureNo);
                     TRACE("Saving texture %s\n", buffer);
                     if (IWineD3DBaseTexture_GetType(This->stateBlock->textures[textureNo]) == WINED3DRTYPE_TEXTURE) {
-                            IWineD3DTexture_GetSurfaceLevel((IWineD3DTexture *)This->stateBlock->textures[textureNo], 0, &pSur);
+                            IWineD3DTexture_GetSurfaceLevel(This->stateBlock->textures[textureNo], 0, &pSur);
                             IWineD3DSurface_SaveSnapshot(pSur, buffer);
                             IWineD3DSurface_Release(pSur);
                     } else  {
