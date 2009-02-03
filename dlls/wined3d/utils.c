@@ -1365,8 +1365,6 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, B
 }
 #undef GLINFO_LOCATION
 
-#define GLINFO_LOCATION ((IWineD3DImpl *)(This->wineD3D))->gl_info
-
 /* This small helper function is used to convert a bitmask into the number of masked bits */
 unsigned int count_bits(unsigned int mask)
 {
@@ -1456,8 +1454,6 @@ BOOL getDepthStencilBits(WINED3DFORMAT fmt, short *depthSize, short *stencilSize
     TRACE("Returning depthSize: %d and stencilSize: %d for fmt=%s\n", *depthSize, *stencilSize, debug_d3dformat(fmt));
     return TRUE;
 }
-
-#undef GLINFO_LOCATION
 
 /* DirectDraw stuff */
 WINED3DFORMAT pixelformat_for_depth(DWORD depth) {
