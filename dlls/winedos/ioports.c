@@ -50,18 +50,26 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 static struct {
     WORD	countmax;
-    BOOL16	byte_toggle; /* if TRUE, then hi byte has already been written */
     WORD	latch;
-    BOOL16	latched;
     BYTE	ctrlbyte_ch;
-    WORD	oldval;
+    BYTE	flags;
+    LONG64	start_time;
 } tmr_8253[3] = {
-    {0xFFFF,	FALSE,	0,	FALSE,	0x36,	0},
-    {0x0012,	FALSE,	0,	FALSE,	0x74,	0},
-    {0x0001,	FALSE,	0,	FALSE,	0xB6,	0},
+    {0xFFFF,	0,	0x36,	0,	0},
+    {0x0012,	0,	0x74,	0,	0},
+    {0x0001,	0,	0xB6,	0,	0},
 };
+/* two byte read in progress */
+#define TMR_RTOGGLE 0x01
+/* two byte write in progress */
+#define TMR_WTOGGLE 0x02
+/* latch contains data */
+#define TMR_LATCHED 0x04
+/* counter is in update phase */
+#define TMR_UPDATE  0x08
+/* readback status request */
+#define TMR_STATUS  0x10
 
-static int dummy_ctr = 0;
 
 static BYTE parport_8255[4] = {0x4f, 0x20, 0xff, 0xff};
 
@@ -165,11 +173,26 @@ static int do_pp_port_access = -1; /* -1: uninitialized, 1: not available
 				       0: available);*/
 #endif
 
-static void set_timer_maxval(unsigned timer, unsigned maxval)
+#define BCD2BIN(a) \
+((a)%10 + ((a)>>4)%10*10 + ((a)>>8)%10*100 + ((a)>>12)%10*1000)
+#define BIN2BCD(a) \
+((a)%10 | (a)/10%10<<4 | (a)/100%10<<8 | (a)/1000%10<<12)
+
+
+static void set_timer(unsigned timer)
 {
+    DWORD val = tmr_8253[timer].countmax;
+
+    if (tmr_8253[timer].ctrlbyte_ch & 0x01)
+        val = BCD2BIN(val);
+
+    tmr_8253[timer].flags &= ~TMR_UPDATE;
+    if (!QueryPerformanceCounter((LARGE_INTEGER*)&tmr_8253[timer].start_time))
+        WARN("QueryPerformanceCounter should not fail!\n");
+
     switch (timer) {
         case 0: /* System timer counter divisor */
-            DOSVM_SetTimer(maxval);
+            DOSVM_SetTimer(val);
             break;
         case 1: /* RAM refresh */
             FIXME("RAM refresh counter handling not implemented !\n");
@@ -178,11 +201,57 @@ static void set_timer_maxval(unsigned timer, unsigned maxval)
             /* speaker on ? */
             if ((parport_8255[1] & 3) == 3)
             {
-                TRACE("Beep (freq: %d) !\n", 1193180 / maxval );
-                Beep(1193180 / maxval, 20);
+                TRACE("Beep (freq: %d) !\n", 1193180 / val);
+                Beep(1193180 / val, 20);
             }
             break;
     }
+}
+
+
+static WORD get_timer_val(unsigned timer)
+{
+    LARGE_INTEGER time;
+    WORD maxval, val = tmr_8253[timer].countmax;
+    BYTE mode = tmr_8253[timer].ctrlbyte_ch >> 1 & 0x07;
+
+    /* This is not strictly correct. In most cases the old countdown should
+     * finish normally (by counting down to 0) or halt and not jump to 0.
+     * But we are calculating and not countig, so this seems to be a good
+     * solution and should work well with most (all?) programs
+     */
+    if (tmr_8253[timer].flags & TMR_UPDATE)
+        return 0;
+
+    if (!QueryPerformanceCounter(&time))
+        WARN("QueryPerformanceCounter should not fail!\n");
+
+    time.QuadPart -= tmr_8253[timer].start_time;
+    if (tmr_8253[timer].ctrlbyte_ch & 0x01)
+        val = BCD2BIN(val);
+
+    switch ( mode )
+    {
+        case 0:
+        case 1:
+        case 4:
+        case 5:
+            maxval = tmr_8253[timer].ctrlbyte_ch & 0x01 ? 9999 : 0xFFFF;
+            break;
+        case 2:
+        case 3:
+            maxval = val;
+            break;
+        default:
+            ERR("Invalid PIT mode: %d\n", mode);
+            return 0;
+    }
+
+    val = (val - time.QuadPart) % (maxval + 1);
+    if (tmr_8253[timer].ctrlbyte_ch & 0x01)
+        val = BIN2BCD(val);
+
+    return val;
 }
 
 
@@ -401,24 +470,22 @@ DWORD WINAPI DOSVM_inport( int port, int size )
     case 0x42:
         {
             BYTE chan = port & 3;
-            WORD tempval = 0;
-            if (tmr_8253[chan].latched)
-                tempval = tmr_8253[chan].latch;
-            else
-            {
-                dummy_ctr -= 1 + (int)(10.0 * rand() / (RAND_MAX + 1.0));
-                if (chan == 0) /* System timer counter divisor */
-                {
-                    /* FIXME: DOSVM_GetTimer() returns quite rigid values */
-                    tempval = dummy_ctr + (WORD)DOSVM_GetTimer();
-                }
-                else
-                {
-                    /* FIXME: intelligent hardware timer emulation needed */
-                    tempval = dummy_ctr;
-                }
-            }
+            WORD tempval = tmr_8253[chan].flags & TMR_LATCHED
+                ? tmr_8253[chan].latch : get_timer_val(chan);
 
+            if (tmr_8253[chan].flags & TMR_STATUS)
+            {
+                WARN("Read-back status\n");
+                /* We differ slightly from the spec:
+                 * - TMR_UPDATE is already set with the first write
+                 *   of a two byte counter update
+                 * - 0x80 should be set if OUT signal is 1 (high)
+                 */
+                tmr_8253[chan].flags &= ~TMR_STATUS;
+                res = (tmr_8253[chan].ctrlbyte_ch & 0x3F) |
+                    (tmr_8253[chan].flags & TMR_UPDATE ? 0x40 : 0x00);
+                break;
+            }
             switch ((tmr_8253[chan].ctrlbyte_ch & 0x30) >> 4)
             {
             case 0:
@@ -426,11 +493,11 @@ DWORD WINAPI DOSVM_inport( int port, int size )
                 break;
             case 1: /* read lo byte */
                 res = (BYTE)tempval;
-                tmr_8253[chan].latched = FALSE;
+                tmr_8253[chan].flags &= ~TMR_LATCHED;
                 break;
             case 3: /* read lo byte, then hi byte */
-                tmr_8253[chan].byte_toggle ^= 1; /* toggle */
-                if (tmr_8253[chan].byte_toggle)
+                tmr_8253[chan].flags ^= TMR_RTOGGLE; /* toggle */
+                if (tmr_8253[chan].flags & TMR_RTOGGLE)
                 {
                     res = (BYTE)tempval;
                     break;
@@ -438,7 +505,7 @@ DWORD WINAPI DOSVM_inport( int port, int size )
                 /* else [fall through if read hi byte !] */
             case 2: /* read hi byte */
                 res = (BYTE)(tempval >> 8);
-                tmr_8253[chan].latched = FALSE;
+                tmr_8253[chan].flags &= ~TMR_LATCHED;
                 break;
             }
         }
@@ -601,10 +668,7 @@ void WINAPI DOSVM_outport( int port, int size, DWORD value )
         {
             BYTE chan = port & 3;
 
-            /* we need to get the oldval before any lo/hi byte change has been made */
-            if (((tmr_8253[chan].ctrlbyte_ch & 0x30) != 0x30) ||
-                !tmr_8253[chan].byte_toggle)
-                tmr_8253[chan].oldval = tmr_8253[chan].countmax;
+            tmr_8253[chan].flags |= TMR_UPDATE;
             switch ((tmr_8253[chan].ctrlbyte_ch & 0x30) >> 4)
             {
             case 0:
@@ -614,8 +678,8 @@ void WINAPI DOSVM_outport( int port, int size, DWORD value )
                     (tmr_8253[chan].countmax & 0xff00) | (BYTE)value;
                 break;
             case 3: /* write lo byte, then hi byte */
-                tmr_8253[chan].byte_toggle ^= TRUE; /* toggle */
-                if (tmr_8253[chan].byte_toggle)
+                tmr_8253[chan].flags ^= TMR_WTOGGLE; /* toggle */
+                if (tmr_8253[chan].flags & TMR_WTOGGLE)
                 {
                     tmr_8253[chan].countmax =
                         (tmr_8253[chan].countmax & 0xff00) | (BYTE)value;
@@ -627,12 +691,10 @@ void WINAPI DOSVM_outport( int port, int size, DWORD value )
                     (tmr_8253[chan].countmax & 0x00ff) | ((BYTE)value << 8);
                 break;
             }
-            /* if programming is finished and value has changed
-               then update to new value */
-            if ((((tmr_8253[chan].ctrlbyte_ch & 0x30) != 0x30) ||
-                 !tmr_8253[chan].byte_toggle) &&
-                (tmr_8253[chan].countmax != tmr_8253[chan].oldval))
-                set_timer_maxval(chan, tmr_8253[chan].countmax);
+            /* if programming is finished, update to new value */
+            if ((tmr_8253[chan].ctrlbyte_ch & 0x30) &&
+                !(tmr_8253[chan].flags & TMR_WTOGGLE))
+                set_timer(chan);
         }
         break;
     case 0x43:
@@ -641,28 +703,51 @@ void WINAPI DOSVM_outport( int port, int size, DWORD value )
            /* ctrl byte for specific timer channel */
            if (chan == 3)
            {
-               FIXME("8254 timer readback not implemented yet\n");
+               if ( !(value & 0x20) )
+               {
+                   if (value & 0x02 && !(tmr_8253[0].flags & TMR_LATCHED))
+                   {
+                       tmr_8253[0].flags |= TMR_LATCHED;
+                       tmr_8253[0].latch = get_timer_val(chan);
+                   }
+                   if (value & 0x04 && !(tmr_8253[1].flags & TMR_LATCHED))
+                   {
+                       tmr_8253[1].flags |= TMR_LATCHED;
+                       tmr_8253[1].latch = get_timer_val(chan);
+                   }
+                   if (value & 0x08 && !(tmr_8253[2].flags & TMR_LATCHED))
+                   {
+                       tmr_8253[2].flags |= TMR_LATCHED;
+                       tmr_8253[2].latch = get_timer_val(chan);
+                   }
+               }
+
+               if ( !(value & 0x10) )
+               {
+                   if (value & 0x02)
+                       tmr_8253[0].flags |= TMR_STATUS;
+                   if (value & 0x04)
+                       tmr_8253[1].flags |= TMR_STATUS;
+                   if (value & 0x08)
+                       tmr_8253[2].flags |= TMR_STATUS;
+               }
                break;
            }
            switch (((BYTE)value & 0x30) >> 4)
            {
            case 0:	/* latch timer */
-               tmr_8253[chan].latched = TRUE;
-               dummy_ctr -= 1 + (int)(10.0 * rand() / (RAND_MAX + 1.0));
-               if (chan == 0) /* System timer divisor */
-                   tmr_8253[chan].latch = dummy_ctr + (WORD)DOSVM_GetTimer();
-               else
+               if ( !(tmr_8253[chan].flags & TMR_LATCHED) )
                {
-                   /* FIXME: intelligent hardware timer emulation needed */
-                   tmr_8253[chan].latch = dummy_ctr;
+                   tmr_8253[chan].flags |= TMR_LATCHED;
+                   tmr_8253[chan].latch = get_timer_val(chan);
                }
                break;
-           case 3:	/* write lo byte, then hi byte */
-               tmr_8253[chan].byte_toggle = FALSE; /* init */
-               /* fall through */
            case 1:	/* write lo byte only */
            case 2:	/* write hi byte only */
+           case 3:	/* write lo byte, then hi byte */
                tmr_8253[chan].ctrlbyte_ch = (BYTE)value;
+               tmr_8253[chan].countmax = 0;
+               tmr_8253[chan].flags = TMR_UPDATE;
                break;
            }
        }
