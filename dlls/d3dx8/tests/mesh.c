@@ -20,6 +20,13 @@
 
 #include "wine/test.h"
 
+#define admitted_error 0.0001f
+
+BOOL compare(FLOAT u, FLOAT v)
+{
+    return (fabs(u-v) < admitted_error);
+}
+
 static void D3DXBoundProbeTest(void)
 {
     BOOL result;
@@ -94,7 +101,61 @@ static void D3DXBoundProbeTest(void)
     ok(result == FALSE, "expected FALSE, received TRUE\n");
 }
 
+static void D3DXIntersectTriTest(void)
+{
+    BOOL exp_res, got_res;
+    D3DXVECTOR3 position, ray, vertex[3];
+    FLOAT exp_dist, got_dist, exp_u, got_u, exp_v, got_v;
+
+    vertex[0].x = 1.0f; vertex[0].y = 0.0f; vertex[0].z = 0.0f;
+    vertex[1].x = 2.0f; vertex[1].y = 0.0f; vertex[1].z = 0.0f;
+    vertex[2].x = 1.0f; vertex[2].y = 1.0f; vertex[2].z = 0.0f;
+
+    position.x = -14.5f; position.y = -23.75f; position.z = -32.0f;
+
+    ray.x = 2.0f; ray.y = 3.0f; ray.z = 4.0f;
+
+    exp_res = TRUE; exp_u = 0.5f; exp_v = 0.25f; exp_dist = 8.0f;
+
+    got_res = D3DXIntersectTri(&vertex[0],&vertex[1],&vertex[2],&position,&ray,&got_u,&got_v,&got_dist);
+    ok( got_res == exp_res, "Expected result = %d, got %d\n",exp_res,got_res);
+    ok( compare(exp_u,got_u), "Expected u = %f, got %f\n",exp_u,got_u);
+    ok( compare(exp_v,got_v), "Expected v = %f, got %f\n",exp_v,got_v);
+    ok( compare(exp_dist,got_dist), "Expected distance = %f, got %f\n",exp_dist,got_dist);
+
+/*Only positive ray is taken in account*/
+
+    vertex[0].x = 1.0f; vertex[0].y = 0.0f; vertex[0].z = 0.0f;
+    vertex[1].x = 2.0f; vertex[1].y = 0.0f; vertex[1].z = 0.0f;
+    vertex[2].x = 1.0f; vertex[2].y = 1.0f; vertex[2].z = 0.0f;
+
+    position.x = 17.5f; position.y = 24.25f; position.z = 32.0f;
+
+    ray.x = 2.0f; ray.y = 3.0f; ray.z = 4.0f;
+
+    exp_res = FALSE;
+
+    got_res = D3DXIntersectTri(&vertex[0],&vertex[1],&vertex[2],&position,&ray,&got_u,&got_v,&got_dist);
+    ok( got_res == exp_res, "Expected result = %d, got %d\n",exp_res,got_res);
+
+/*Intersection between ray and triangle in a same plane is considered as empty*/
+
+    vertex[0].x = 4.0f; vertex[0].y = 0.0f; vertex[0].z = 0.0f;
+    vertex[1].x = 6.0f; vertex[1].y = 0.0f; vertex[1].z = 0.0f;
+    vertex[2].x = 4.0f; vertex[2].y = 2.0f; vertex[2].z = 0.0f;
+
+    position.x = 1.0f; position.y = 1.0f; position.z = 0.0f;
+
+    ray.x = 1.0f; ray.y = 0.0f; ray.z = 0.0f;
+
+    exp_res = FALSE;
+
+    got_res = D3DXIntersectTri(&vertex[0],&vertex[1],&vertex[2],&position,&ray,&got_u,&got_v,&got_dist);
+    ok( got_res == exp_res, "Expected result = %d, got %d\n",exp_res,got_res);
+}
+
 START_TEST(mesh)
 {
     D3DXBoundProbeTest();
+    D3DXIntersectTriTest();
 }
