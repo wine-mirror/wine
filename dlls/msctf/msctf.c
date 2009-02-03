@@ -52,6 +52,7 @@ static const struct {
     LPFNCONSTRUCTOR ctor;
 } ClassesTable[] = {
     {&CLSID_TF_ThreadMgr, ThreadMgr_Constructor},
+    {&CLSID_TF_InputProcessorProfiles, InputProcessorProfiles_Constructor},
     {NULL, NULL}
 };
 

@@ -25,6 +25,7 @@ import "textstor.idl";
 
 cpp_quote("#define TF_E_STACKFULL MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x0501)")
 cpp_quote("EXTERN_C const CLSID CLSID_TF_ThreadMgr;")
+cpp_quote("EXTERN_C const CLSID CLSID_TF_InputProcessorProfiles;")
 
 typedef [uuid(7213778c-7bb0-4270-b050-6189ee594e97)]  DWORD TfEditCookie;
 typedef [uuid(de403c21-89fd-4f85-8b87-64584d063fbc)] DWORD TfClientId;
@@ -44,6 +45,7 @@ interface ITfProperty;
 interface ITfReadOnlyProperty;
 interface IEnumTfProperties;
 interface ITfRangeBackup;
+interface IEnumTfLanguageProfiles;
 
 [
     object,
@@ -239,4 +241,102 @@ interface ITfSource : IUnknown
 
     HRESULT UnadviseSink(
         [in] DWORD dwCookie);
+};
+
+[
+  object,
+  local,
+  uuid(1F02B6C5-7842-4EE6-8A0B-9A24183A95CA),
+  pointer_default(unique)
+]
+interface ITfInputProcessorProfiles : IUnknown
+{
+    HRESULT Register(
+        [in] REFCLSID rclsid);
+
+    HRESULT Unregister(
+        [in] REFCLSID rclsid);
+
+    HRESULT AddLanguageProfile(
+        [in] REFCLSID rclsid,
+        [in] LANGID langid,
+        [in] REFGUID guidProfile,
+        [in, size_is(cchDesc)] const WCHAR *pchDesc,
+        [in] ULONG cchDesc,
+        [in, size_is(cchFile)] const WCHAR *pchIconFile,
+        [in] ULONG cchFile,
+        [in] ULONG uIconIndex);
+
+    HRESULT RemoveLanguageProfile(
+        [in] REFCLSID rclsid,
+        [in] LANGID langid,
+        [in] REFGUID guidProfile);
+
+    HRESULT EnumInputProcessorInfo(
+        [out] IEnumGUID **ppEnum);
+
+    HRESULT GetDefaultLanguageProfile(
+        [in] LANGID langid,
+        [in] REFGUID catid,
+        [out] CLSID *pclsid,
+        [out] GUID *pguidProfile);
+
+    HRESULT SetDefaultLanguageProfile(
+        [in] LANGID langid,
+        [in] REFCLSID rclsid,
+        [in] REFGUID guidProfiles);
+
+    HRESULT ActivateLanguageProfile(
+        [in] REFCLSID rclsid,
+        [in] LANGID langid,
+        [in] REFGUID guidProfiles);
+
+    HRESULT GetActiveLanguageProfile(
+        [in] REFCLSID rclsid,
+        [out] LANGID *plangid,
+        [out] GUID *pguidProfile);
+
+    HRESULT GetLanguageProfileDescription(
+        [in] REFCLSID rclsid,
+        [in] LANGID langid,
+        [in] REFGUID guidProfile,
+        [out] BSTR *pbstrProfile);
+
+    HRESULT GetCurrentLanguage(
+        [out] LANGID *plangid);
+
+    HRESULT ChangeCurrentLanguage(
+        [in] LANGID langid);
+
+    HRESULT GetLanguageList(
+        [out] LANGID **ppLangId,
+        [out] ULONG *pulCount);
+
+    HRESULT EnumLanguageProfiles(
+        [in] LANGID langid,
+        [out] IEnumTfLanguageProfiles **ppEnum);
+
+    HRESULT EnableLanguageProfile(
+        [in] REFCLSID rclsid,
+        [in] LANGID langid,
+        [in] REFGUID guidProfile,
+        [in] BOOL fEnable);
+
+    HRESULT IsEnabledLanguageProfile(
+        [in] REFCLSID rclsid,
+        [in] LANGID langid,
+        [in] REFGUID guidProfile,
+        [out] BOOL *pfEnable);
+
+    HRESULT EnableLanguageProfileByDefault(
+        [in] REFCLSID rclsid,
+        [in] LANGID langid,
+        [in] REFGUID guidProfile,
+        [in] BOOL fEnable);
+
+    HRESULT SubstituteKeyboardLayout(
+        [in] REFCLSID rclsid,
+        [in] LANGID langid,
+        [in] REFGUID guidProfile,
+        [in] HKL hKL);
 };
