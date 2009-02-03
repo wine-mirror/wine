@@ -43,6 +43,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msctf);
 typedef struct tagInputProcessorProfiles {
     const ITfInputProcessorProfilesVtbl *InputProcessorProfilesVtbl;
     LONG refCount;
+
+    LANGID  currentLanguage;
 } InputProcessorProfiles;
 
 static void InputProcessorProfiles_Destructor(InputProcessorProfiles *This)
@@ -184,8 +186,14 @@ static HRESULT WINAPI InputProcessorProfiles_GetCurrentLanguage(
         ITfInputProcessorProfiles *iface, LANGID *plangid)
 {
     InputProcessorProfiles *This = (InputProcessorProfiles*)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p) 0x%x\n",This,This->currentLanguage);
+
+    if (!plangid)
+        return E_INVALIDARG;
+
+    *plangid = This->currentLanguage;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI InputProcessorProfiles_ChangeCurrentLanguage(
@@ -288,6 +296,7 @@ HRESULT InputProcessorProfiles_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut
 
     This->InputProcessorProfilesVtbl= &InputProcessorProfiles_InputProcessorProfilesVtbl;
     This->refCount = 1;
+    This->currentLanguage = GetUserDefaultLCID();
 
     TRACE("returning %p\n", This);
     *ppOut = (IUnknown *)This;
