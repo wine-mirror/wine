@@ -130,9 +130,50 @@ static HRESULT WINAPI InputProcessorProfiles_AddLanguageProfile(
         ULONG cchDesc, const WCHAR *pchIconFile, ULONG cchFile,
         ULONG uIconIndex)
 {
+    HKEY tipkey,fmtkey;
+    WCHAR buf[39];
+    WCHAR fullkey[100];
+    ULONG res;
+
+    static const WCHAR fmt[] = {'%','s','\\','%','s',0};
+    static const WCHAR fmt2[] = {'%','s','\\','0','x','%','0','8','x','\\','%','s',0};
+    static const WCHAR lngp[] = {'L','a','n','g','u','a','g','e','P','r','o','f','i','l','e',0};
+    static const WCHAR desc[] = {'D','e','s','c','r','i','p','t','i','o','n',0};
+    static const WCHAR icnf[] = {'I','c','o','n','F','i','l','e',0};
+    static const WCHAR icni[] = {'I','c','o','n','I','n','d','e','x',0};
+
     InputProcessorProfiles *This = (InputProcessorProfiles*)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+
+    TRACE("(%p) %s %x %s %s %s %i\n",This,debugstr_guid(rclsid), langid,
+            debugstr_guid(guidProfile), debugstr_wn(pchDesc,cchDesc),
+            debugstr_wn(pchIconFile,cchFile),uIconIndex);
+
+    StringFromGUID2(rclsid, buf, 39);
+    sprintfW(fullkey,fmt,szwSystemTIPKey,buf);
+
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE,fullkey, 0, KEY_READ | KEY_WRITE,
+                &tipkey ) != ERROR_SUCCESS)
+        return E_FAIL;
+
+    StringFromGUID2(guidProfile, buf, 39);
+    sprintfW(fullkey,fmt2,lngp,langid,buf);
+
+    res = RegCreateKeyExW(tipkey,fullkey, 0, NULL, 0, KEY_READ | KEY_WRITE,
+            NULL, &fmtkey, NULL);
+
+    if (!res)
+    {
+        RegSetValueExW(fmtkey, desc, 0, REG_SZ, (LPBYTE)pchDesc, cchDesc * sizeof(WCHAR));
+        RegSetValueExW(fmtkey, icnf, 0, REG_SZ, (LPBYTE)pchIconFile, cchFile * sizeof(WCHAR));
+        RegSetValueExW(fmtkey, icni, 0, REG_DWORD, (LPBYTE)&uIconIndex, sizeof(DWORD));
+        RegCloseKey(fmtkey);
+    }
+    RegCloseKey(tipkey);
+
+    if (!res)
+        return S_OK;
+    else
+        return E_FAIL;
 }
 
 static HRESULT WINAPI InputProcessorProfiles_RemoveLanguageProfile(
