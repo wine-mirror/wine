@@ -199,14 +199,14 @@ struct ConnectionPoint {
     ConnectionPoint *next;
 };
 
-typedef struct {
+struct HTMLLocation {
     DispatchEx dispex;
     const IHTMLLocationVtbl *lpHTMLLocationVtbl;
 
     LONG ref;
 
     HTMLDocument *doc;
-} HTMLLocation;
+};
 
 typedef struct {
     const IHTMLOptionElementFactoryVtbl *lpHTMLOptionElementFactoryVtbl;

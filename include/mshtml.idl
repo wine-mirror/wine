@@ -12782,6 +12782,15 @@ interface IOmHistory : IDispatch
     HRESULT go([optional, in] VARIANT *pvargdistance);
 }
 
+[
+    noncreatable,
+    uuid(FECEAAA3-8405-11cf-8BA1-00AA00476DA6)
+]
+coclass HTMLHistory
+{
+    [default]           interface IOmHistory;
+}
+
 /*****************************************************************************
  *    IHTMLMimeTypesCollection interface
  */
@@ -12795,6 +12804,15 @@ interface IHTMLMimeTypesCollection : IDispatch
 {
     [propget, id(DISPID_IHTMLMIMETYPESCOLLECTION_LENGTH)]
     HRESULT length([retval, out] long *p);
+}
+
+[
+    noncreatable,
+    uuid(3050f3fe-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass CMimeTypes
+{
+    [default]           interface IHTMLMimeTypesCollection;
 }
 
 /*****************************************************************************
@@ -12813,6 +12831,15 @@ interface IHTMLPluginsCollection : IDispatch
 
     [id(DISPID_IHTMLPLUGINSCOLLECTION_REFRESH)]
     HRESULT refresh([defaultvalue(0), in] VARIANT_BOOL reload);
+}
+
+[
+    noncreatable,
+    uuid(3050f3ff-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass CPlugins
+{
+    [default]           interface IHTMLPluginsCollection;
 }
 
 /*****************************************************************************
@@ -12876,6 +12903,15 @@ interface IHTMLOpsProfile : IDispatch
 
     [id(DISPID_IHTMLOPSPROFILE_DOWRITEREQUEST)]
     HRESULT doWriteRequest([retval, out] VARIANT_BOOL *success);
+}
+
+[
+    noncreatable,
+    uuid(3050f402-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass COpsProfile
+{
+    [default]           interface IHTMLOpsProfile;
 }
 
 /*****************************************************************************
@@ -12950,6 +12986,15 @@ interface IOmNavigator : IDispatch
     HRESULT userProfile([retval, out] IHTMLOpsProfile **p);
 }
 
+[
+    noncreatable,
+    uuid(FECEAAA6-8405-11cf-8BA1-00AA00476DA6)
+]
+coclass HTMLNavigator
+{
+    [default]           interface IOmNavigator;
+}
+
 /*****************************************************************************
  *    IHTMLLocation interface
  */
@@ -13020,6 +13065,15 @@ interface IHTMLLocation : IDispatch
 
     [id(DISPID_IHTMLLOCATION_TOSTRING)]
     HRESULT toString([retval, out] BSTR *String);
+}
+
+[
+    noncreatable,
+    uuid(163BB1E1-6E00-11cf-837A-48DC04C10000)
+]
+coclass HTMLLocation
+{
+    [default]           interface IHTMLLocation;
 }
 
 [
