@@ -2033,8 +2033,12 @@ static void test_null_provider(void)
         uniquecontainer(container);
         todo_wine
         {
-            ok(dataLen == strlen(container)+1, "Expected a param length of 70, got %d\n", dataLen);
-            ok(!strcmp(container, szName), "Wrong container name : %s\n", szName);
+            ok(dataLen == strlen(container)+1 ||
+               broken(dataLen == strlen(szContainer)+1) /* WinME */,
+               "Expected a param length of 70, got %d\n", dataLen);
+            ok(!strcmp(container, szName) ||
+               broken(!strcmp(szName, szContainer)) /* WinME */,
+               "Wrong container name : %s\n", szName);
         }
     }
     result = CryptGetUserKey(prov, AT_KEYEXCHANGE, &key);
