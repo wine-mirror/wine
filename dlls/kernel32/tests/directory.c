@@ -363,7 +363,7 @@ static void test_CreateDirectoryW(void)
     GetTempPathW(MAX_PATH, tmpdir);
     tmpdir[3] = 0; /* truncate the path */
     ret = CreateDirectoryW(tmpdir, NULL);
-    ok(ret == FALSE && GetLastError() == ERROR_ACCESS_DENIED,
+    ok(ret == FALSE && (GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == ERROR_ALREADY_EXISTS),
        "should deny access to the drive root ret %u err %u\n", ret, GetLastError());
 
     GetTempPathW(MAX_PATH, tmpdir);
