@@ -1323,6 +1323,7 @@ static void test_FindFirstFileA(void)
     int err;
     char buffer[5] = "C:\\";
     char buffer2[100];
+    char nonexistent[MAX_PATH];
 
     /* try FindFirstFileA on "C:\" */
     buffer[0] = get_windows_drive();
@@ -1360,8 +1361,10 @@ static void test_FindFirstFileA(void)
 
     /* try FindFirstFileA on "C:\foo\" */
     SetLastError( 0xdeadbeaf );
-    strcpy(buffer2, buffer);
-    strcat(buffer2, "foo\\");
+    GetTempFileNameA( buffer, "foo", 0, nonexistent );
+    DeleteFileA( nonexistent );
+    strcpy(buffer2, nonexistent);
+    strcat(buffer2, "\\");
     handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
     ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
@@ -1371,8 +1374,8 @@ static void test_FindFirstFileA(void)
 
     /* try FindFirstFileA on "C:\foo\bar.txt" */
     SetLastError( 0xdeadbeaf );
-    strcpy(buffer2, buffer);
-    strcat(buffer2, "foo\\bar.txt");
+    strcpy(buffer2, nonexistent);
+    strcat(buffer2, "\\bar.txt");
     handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
     ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
@@ -1380,8 +1383,8 @@ static void test_FindFirstFileA(void)
 
     /* try FindFirstFileA on "C:\foo\*.*" */
     SetLastError( 0xdeadbeaf );
-    strcpy(buffer2, buffer);
-    strcat(buffer2, "foo\\*.*");
+    strcpy(buffer2, nonexistent);
+    strcat(buffer2, "\\*.*");
     handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
     ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
@@ -1389,7 +1392,8 @@ static void test_FindFirstFileA(void)
 
     /* try FindFirstFileA on "foo\bar.txt" */
     SetLastError( 0xdeadbeaf );
-    strcpy(buffer2, "foo\\bar.txt");
+    strcpy(buffer2, nonexistent + 3);
+    strcat(buffer2, "\\bar.txt");
     handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
     ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
