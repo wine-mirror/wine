@@ -89,7 +89,7 @@
 @ stub PSLookupPropertyHandlerCLSID
 @ stub PSPropertyKeyFromString
 @ stub PSRefreshPropertySchema
-@ stub PSRegisterPropertySchema
+@ stdcall PSRegisterPropertySchema(wstr)
 @ stub PSSetPropertyValue
 @ stub PSStringFromPropertyKey
 @ stub PSUnregisterPropertySchema
