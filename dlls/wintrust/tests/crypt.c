@@ -1079,7 +1079,7 @@ START_TEST(crypt)
 {
     int myARGC;
     char** myARGV;
-    char windir[MAX_PATH];
+    char sysdir[MAX_PATH];
 
     InitFunctionPtrs();
 
@@ -1089,11 +1089,11 @@ START_TEST(crypt)
         return;
     }
 
-    GetWindowsDirectoryA(windir, MAX_PATH);
-    lstrcpyA(catroot, windir);
-    lstrcatA(catroot, "\\system32\\CatRoot");
-    lstrcpyA(catroot2, windir);
-    lstrcatA(catroot2, "\\system32\\CatRoot2");
+    GetSystemDirectoryA(sysdir, MAX_PATH);
+    lstrcpyA(catroot, sysdir);
+    lstrcatA(catroot, "\\CatRoot");
+    lstrcpyA(catroot2, sysdir);
+    lstrcatA(catroot2, "\\CatRoot2");
 
     myARGC = winetest_get_mainargs(&myARGV);
     strcpy(selfname, myARGV[0]);
