@@ -307,6 +307,7 @@ static const IID * const style_iids[] = {
     &IID_IDispatchEx,
     &IID_IHTMLStyle,
     &IID_IHTMLStyle2,
+    &IID_IHTMLStyle3,
     NULL
 };
 

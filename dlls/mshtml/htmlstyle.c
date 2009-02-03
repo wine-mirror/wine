@@ -468,6 +468,9 @@ static HRESULT WINAPI HTMLStyle_QueryInterface(IHTMLStyle *iface, REFIID riid, v
     }else if(IsEqualGUID(&IID_IHTMLStyle2, riid)) {
         TRACE("(%p)->(IID_IHTMLStyle2 %p)\n", This, ppv);
         *ppv = HTMLSTYLE2(This);
+    }else if(IsEqualGUID(&IID_IHTMLStyle3, riid)) {
+        TRACE("(%p)->(IID_IHTMLStyle3 %p)\n", This, ppv);
+        *ppv = HTMLSTYLE3(This);
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }
@@ -2425,6 +2428,7 @@ IHTMLStyle *HTMLStyle_Create(nsIDOMCSSStyleDeclaration *nsstyle)
     ret->ref = 1;
     ret->nsstyle = nsstyle;
     HTMLStyle2_Init(ret);
+    HTMLStyle3_Init(ret);
 
     nsIDOMCSSStyleDeclaration_AddRef(nsstyle);
 
