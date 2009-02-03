@@ -1454,17 +1454,18 @@ BOOL PATH_ExtTextOut(DC *dc, INT x, INT y, UINT flags, const RECT *lprc,
 
     for (idx = 0; idx < count; idx++)
     {
+        static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
         GLYPHMETRICS gm;
         DWORD dwSize;
         void *outline;
 
-        dwSize = GetGlyphOutlineW(hdc, str[idx], GGO_GLYPH_INDEX | GGO_NATIVE, &gm, 0, NULL, NULL);
+        dwSize = GetGlyphOutlineW(hdc, str[idx], GGO_GLYPH_INDEX | GGO_NATIVE, &gm, 0, NULL, &identity);
         if (!dwSize) return FALSE;
 
         outline = HeapAlloc(GetProcessHeap(), 0, dwSize);
         if (!outline) return FALSE;
 
-        GetGlyphOutlineW(hdc, str[idx], GGO_GLYPH_INDEX | GGO_NATIVE, &gm, dwSize, outline, NULL);
+        GetGlyphOutlineW(hdc, str[idx], GGO_GLYPH_INDEX | GGO_NATIVE, &gm, dwSize, outline, &identity);
 
         PATH_add_outline(dc, org.x + x + xoff, org.x + y + yoff, outline, dwSize);
 

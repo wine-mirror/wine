@@ -1983,12 +1983,15 @@ DWORD WINAPI GetGlyphOutline16( HDC16 hdc, UINT16 uChar, UINT16 fuFormat,
     GLYPHMETRICS gm32;
 
     ret = GetGlyphOutlineA( HDC_32(hdc), uChar, fuFormat, &gm32, cbBuffer, lpBuffer, lpmat2);
-    lpgm->gmBlackBoxX = gm32.gmBlackBoxX;
-    lpgm->gmBlackBoxY = gm32.gmBlackBoxY;
-    lpgm->gmptGlyphOrigin.x = gm32.gmptGlyphOrigin.x;
-    lpgm->gmptGlyphOrigin.y = gm32.gmptGlyphOrigin.y;
-    lpgm->gmCellIncX = gm32.gmCellIncX;
-    lpgm->gmCellIncY = gm32.gmCellIncY;
+    if (ret && ret != GDI_ERROR)
+    {
+        lpgm->gmBlackBoxX = gm32.gmBlackBoxX;
+        lpgm->gmBlackBoxY = gm32.gmBlackBoxY;
+        lpgm->gmptGlyphOrigin.x = gm32.gmptGlyphOrigin.x;
+        lpgm->gmptGlyphOrigin.y = gm32.gmptGlyphOrigin.y;
+        lpgm->gmCellIncX = gm32.gmCellIncX;
+        lpgm->gmCellIncY = gm32.gmCellIncY;
+    }
     return ret;
 }
 
