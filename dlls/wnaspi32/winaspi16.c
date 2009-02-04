@@ -440,11 +440,7 @@ adapter name */
  */
 WORD WINAPI SendASPICommand16(SEGPTR segptr_srb)
 {
-#ifdef linux
     return ASPI_SendASPICommand(segptr_srb, ASPI_WIN16);
-#else
-    return 0;
-#endif
 }
 
 
