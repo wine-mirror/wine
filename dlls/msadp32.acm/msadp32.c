@@ -660,7 +660,7 @@ static	LRESULT ADPCM_StreamSize(const ACMDRVSTREAMINSTANCE *adsi, PACMDRVSTREAMS
 	    if (adss->cbSrcLength % (adsi->pwfxSrc->nBlockAlign * wSamplesPerBlock))
 		/* Round block count up. */
 		nblocks++;
-	    adss->cbDstLength = nblocks * adsi->pwfxSrc->nBlockAlign;
+	    adss->cbDstLength = nblocks * adsi->pwfxDst->nBlockAlign;
 	}
         else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_ADPCM &&
                  adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
@@ -672,7 +672,7 @@ static	LRESULT ADPCM_StreamSize(const ACMDRVSTREAMINSTANCE *adsi, PACMDRVSTREAMS
 	    if (adss->cbSrcLength % adsi->pwfxSrc->nBlockAlign)
 		/* Round block count up. */
 		nblocks++;
-	    adss->cbDstLength = nblocks * adsi->pwfxSrc->nBlockAlign * wSamplesPerBlock;
+	    adss->cbDstLength = nblocks * adsi->pwfxDst->nBlockAlign * wSamplesPerBlock;
 	}
         else
         {
