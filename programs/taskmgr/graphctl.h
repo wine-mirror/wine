@@ -91,11 +91,7 @@ double  GraphCtrl_AppendPoint(TGraphCtrl* this,
                               double dNewPoint2, double dNewPoint3);
 BOOL    GraphCtrl_Create(TGraphCtrl* this, HWND hWnd, HWND hParentWnd, 
 UINT nID);
-void    GraphCtrl_DrawPoint(TGraphCtrl* this);
-void    GraphCtrl_InvalidateCtrl(TGraphCtrl* this);
-void    GraphCtrl_Paint(TGraphCtrl* this, HWND hWnd, HDC dc);
 void    GraphCtrl_Reset(TGraphCtrl* this);
-void    GraphCtrl_Resize(TGraphCtrl* this); 
 void    GraphCtrl_SetBackgroundColor(TGraphCtrl* this, COLORREF 
 color);
 void    GraphCtrl_SetGridColor(TGraphCtrl* this, COLORREF color);
