@@ -48,6 +48,7 @@ interface ITfReadOnlyProperty;
 interface IEnumTfProperties;
 interface ITfRangeBackup;
 interface IEnumTfLanguageProfiles;
+interface ITfEditRecord;
 
 [
     object,
@@ -400,4 +401,17 @@ interface ITfCategoryMgr : IUnknown
     HRESULT IsEqualTfGuidAtom([in] TfGuidAtom guidatom,
                               [in] REFGUID rguid,
                               [out] BOOL *pfEqual);
+};
+
+[
+  object,
+  uuid(8127d409-ccd3-4683-967a-b43d5b482bf7),
+  pointer_default(unique)
+]
+interface ITfTextEditSink : IUnknown
+{
+    HRESULT OnEndEdit(
+        [in] ITfContext *pic,
+        [in] TfEditCookie ecReadOnly,
+        [in] ITfEditRecord *pEditRecord);
 };

@@ -32,13 +32,28 @@
 #include "shlwapi.h"
 #include "winerror.h"
 #include "objbase.h"
+#include "olectl.h"
 
 #include "wine/unicode.h"
+#include "wine/list.h"
 
 #include "msctf.h"
 #include "msctf_internal.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msctf);
+
+typedef struct tagContextSink {
+    struct list         entry;
+    union {
+        /* Context Sinks */
+        IUnknown            *pIUnknown;
+        /* ITfContextKeyEventSink  *pITfContextKeyEventSink; */
+        /* ITfEditTransactionSink  *pITfEditTransactionSink; */
+        /* ITfStatusSink           *pITfStatusSink; */
+        ITfTextEditSink     *pITfTextEditSink;
+        /* ITfTextLayoutSink       *pITfTextLayoutSink; */
+    } interfaces;
+} ContextSink;
 
 typedef struct tagContext {
     const ITfContextVtbl *ContextVtbl;
@@ -47,6 +62,14 @@ typedef struct tagContext {
 
     TfClientId tidOwner;
     IUnknown *punk;  /* possible ITextStoreACP or ITfContextOwnerCompositionSink */
+
+    /* kept as seperate lists to reduce unnesseccary iterations */
+    struct list     pContextKeyEventSink;
+    struct list     pEditTransactionSink;
+    struct list     pStatusSink;
+    struct list     pTextEditSink;
+    struct list     pTextLayoutSink;
+
 } Context;
 
 static inline Context *impl_from_ITfSourceVtbl(ITfSource *iface)
@@ -54,9 +77,48 @@ static inline Context *impl_from_ITfSourceVtbl(ITfSource *iface)
     return (Context *)((char *)iface - FIELD_OFFSET(Context,SourceVtbl));
 }
 
+static void free_sink(ContextSink *sink)
+{
+        IUnknown_Release(sink->interfaces.pIUnknown);
+        HeapFree(GetProcessHeap(),0,sink);
+}
+
 static void Context_Destructor(Context *This)
 {
+    struct list *cursor, *cursor2;
     TRACE("destroying %p\n", This);
+
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->pContextKeyEventSink)
+    {
+        ContextSink* sink = LIST_ENTRY(cursor,ContextSink,entry);
+        list_remove(cursor);
+        free_sink(sink);
+    }
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->pEditTransactionSink)
+    {
+        ContextSink* sink = LIST_ENTRY(cursor,ContextSink,entry);
+        list_remove(cursor);
+        free_sink(sink);
+    }
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->pStatusSink)
+    {
+        ContextSink* sink = LIST_ENTRY(cursor,ContextSink,entry);
+        list_remove(cursor);
+        free_sink(sink);
+    }
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->pTextEditSink)
+    {
+        ContextSink* sink = LIST_ENTRY(cursor,ContextSink,entry);
+        list_remove(cursor);
+        free_sink(sink);
+    }
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->pTextLayoutSink)
+    {
+        ContextSink* sink = LIST_ENTRY(cursor,ContextSink,entry);
+        list_remove(cursor);
+        free_sink(sink);
+    }
+
     HeapFree(GetProcessHeap(),0,This);
 }
 
@@ -275,16 +337,46 @@ static ULONG WINAPI Source_Release(ITfSource *iface)
 static WINAPI HRESULT ContextSource_AdviseSink(ITfSource *iface,
         REFIID riid, IUnknown *punk, DWORD *pdwCookie)
 {
+    ContextSink *es;
     Context *This = impl_from_ITfSourceVtbl(iface);
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p) %s %p %p\n",This,debugstr_guid(riid),punk,pdwCookie);
+
+    if (!riid || !punk || !pdwCookie)
+        return E_INVALIDARG;
+
+    if (IsEqualIID(riid, &IID_ITfTextEditSink))
+    {
+        es = HeapAlloc(GetProcessHeap(),0,sizeof(ContextSink));
+        if (!es)
+            return E_OUTOFMEMORY;
+        if (!SUCCEEDED(IUnknown_QueryInterface(punk, riid, (LPVOID*)&es->interfaces.pITfTextEditSink)))
+        {
+            HeapFree(GetProcessHeap(),0,es);
+            return CONNECT_E_CANNOTCONNECT;
+        }
+        list_add_head(&This->pTextEditSink ,&es->entry);
+        *pdwCookie = (DWORD)es;
+    }
+    else
+    {
+        FIXME("(%p) Unhandled Sink: %s\n",This,debugstr_guid(riid));
+        return E_NOTIMPL;
+    }
+
+    TRACE("cookie %x\n",*pdwCookie);
+    return S_OK;
 }
 
 static WINAPI HRESULT ContextSource_UnadviseSink(ITfSource *iface, DWORD pdwCookie)
 {
+    ContextSink *sink = (ContextSink*)pdwCookie;
     Context *This = impl_from_ITfSourceVtbl(iface);
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p) %x\n",This,pdwCookie);
+
+    list_remove(&sink->entry);
+    free_sink(sink);
+
+    return S_OK;
 }
 
 static const ITfSourceVtbl Context_SourceVtbl =
@@ -315,5 +407,12 @@ HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfContext **pp
     *ppOut = (ITfContext*)This;
     /* FIXME */
     *pecTextStore = 0xdeaddead;
+
+    list_init(&This->pContextKeyEventSink);
+    list_init(&This->pEditTransactionSink);
+    list_init(&This->pStatusSink);
+    list_init(&This->pTextEditSink);
+    list_init(&This->pTextLayoutSink);
+
     return S_OK;
 }
