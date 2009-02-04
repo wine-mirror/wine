@@ -87,6 +87,7 @@ typedef LONG_PTR LRESULT;
 
 typedef LONG HRESULT;
 typedef DWORD LCID;
+typedef USHORT LANGID;
 
 typedef unsigned __int64 DWORDLONG;
 typedef __int64 LONGLONG;
