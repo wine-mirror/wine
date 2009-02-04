@@ -180,7 +180,7 @@ static void test_onevalue_cap(TW_IDENTITY *appid, TW_IDENTITY *source, TW_UINT16
             "Error [rc %d|cc %d] doing MSG_QUERYSUPPORT for type 0x%x\n", rc, status.ConditionCode, captype);
     if (rc != TWRC_SUCCESS)
         return;
-    ok(get_onevalue(cap.hContainer, (TW_UINT32 *) &actual_support, NULL), "Returned cap.hContainer invalid for QuerySupport on type 0x%x", captype);
+    ok(get_onevalue(cap.hContainer, (TW_UINT32 *) &actual_support, NULL), "Returned cap.hContainer invalid for QuerySupport on type 0x%x\n", captype);
     ok(actual_support == expected_support,
             "Error:  expected support 0x%x for type 0x%x, got 0x%x\n", expected_support,
             captype, actual_support);
@@ -198,7 +198,7 @@ static void test_onevalue_cap(TW_IDENTITY *appid, TW_IDENTITY *source, TW_UINT16
                 "Error [rc %d|cc %d] doing MSG_GETCURRENT for type 0x%x\n", rc, status.ConditionCode, captype);
         if (rc == TWRC_SUCCESS)
         {
-            ok(get_onevalue(cap.hContainer, &orig_value, &rtype), "Returned cap.hContainer invalid for GETCURRENT on type 0x%x", captype);
+            ok(get_onevalue(cap.hContainer, &orig_value, &rtype), "Returned cap.hContainer invalid for GETCURRENT on type 0x%x\n", captype);
             ok(rtype == type, "Returned GETCURRENT type 0x%x for cap 0x%x is not expected 0x%x\n", rtype, captype, type);
             GlobalFree(cap.hContainer);
         }
@@ -216,7 +216,7 @@ static void test_onevalue_cap(TW_IDENTITY *appid, TW_IDENTITY *source, TW_UINT16
                 "Error [rc %d|cc %d] doing MSG_GETDEFAULT for type 0x%x\n", rc, status.ConditionCode, captype);
         if (rc == TWRC_SUCCESS)
         {
-            ok(get_onevalue(cap.hContainer, &default_value, &rtype), "Returned cap.hContainer invalid for GETDEFAULT on type 0x%x", captype);
+            ok(get_onevalue(cap.hContainer, &default_value, &rtype), "Returned cap.hContainer invalid for GETDEFAULT on type 0x%x\n", captype);
             ok(rtype == type, "Returned GETDEFAULT type 0x%x for cap 0x%x is not expected 0x%x\n", rtype, captype, type);
             GlobalFree(cap.hContainer);
         }
