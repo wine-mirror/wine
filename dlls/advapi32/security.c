@@ -2531,17 +2531,119 @@ LookupAccountNameA(
 }
 
 /******************************************************************************
- * LookupAccountNameW [ADVAPI32.@]
+ * lookup_user_account_name
  */
-BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSID Sid,
-                                LPDWORD cbSid, LPWSTR ReferencedDomainName,
-                                LPDWORD cchReferencedDomainName, PSID_NAME_USE peUse )
+static BOOL lookup_user_account_name(PSID Sid, PDWORD cbSid, LPWSTR ReferencedDomainName,
+                                     LPDWORD cchReferencedDomainName, PSID_NAME_USE peUse )
 {
     /* Default implementation: Always return a default SID */
     SID_IDENTIFIER_AUTHORITY identifierAuthority = {SECURITY_NT_AUTHORITY};
     BOOL ret;
     PSID pSid;
     static const WCHAR dm[] = {'D','O','M','A','I','N',0};
+    DWORD nameLen;
+    LPCWSTR domainName;
+
+    ret = AllocateAndInitializeSid(&identifierAuthority,
+        2,
+        SECURITY_BUILTIN_DOMAIN_RID,
+        DOMAIN_ALIAS_RID_ADMINS,
+        0, 0, 0, 0, 0, 0,
+        &pSid);
+
+    if (!ret)
+       return FALSE;
+
+    if (!RtlValidSid(pSid))
+    {
+       FreeSid(pSid);
+       return FALSE;
+    }
+
+    if (Sid != NULL && (*cbSid >= GetLengthSid(pSid)))
+       CopySid(*cbSid, Sid, pSid);
+    if (*cbSid < GetLengthSid(pSid))
+    {
+       SetLastError(ERROR_INSUFFICIENT_BUFFER);
+       ret = FALSE;
+    }
+    *cbSid = GetLengthSid(pSid);
+
+    domainName = dm;
+    nameLen = strlenW(domainName);
+
+    if (*cchReferencedDomainName <= nameLen || !ret)
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        nameLen += 1;
+        ret = FALSE;
+    }
+    else if (ReferencedDomainName)
+        strcpyW(ReferencedDomainName, domainName);
+
+    *cchReferencedDomainName = nameLen;
+
+    if (ret)
+        *peUse = SidTypeUser;
+
+    FreeSid(pSid);
+
+    return ret;
+}
+
+/******************************************************************************
+ * lookup_computer_account_name
+ */
+static BOOL lookup_computer_account_name(PSID Sid, PDWORD cbSid, LPWSTR ReferencedDomainName,
+                                         LPDWORD cchReferencedDomainName, PSID_NAME_USE peUse )
+{
+    MAX_SID local;
+    BOOL ret;
+    static const WCHAR dm[] = {'D','O','M','A','I','N',0};
+    DWORD nameLen;
+    LPCWSTR domainName;
+
+    if ((ret = ADVAPI_GetComputerSid(&local)))
+    {
+        if (Sid != NULL && (*cbSid >= GetLengthSid(&local)))
+           CopySid(*cbSid, Sid, &local);
+        if (*cbSid < GetLengthSid(&local))
+        {
+           SetLastError(ERROR_INSUFFICIENT_BUFFER);
+           ret = FALSE;
+        }
+        *cbSid = GetLengthSid(&local);
+    }
+
+    domainName = dm;
+    nameLen = strlenW(domainName);
+
+    if (*cchReferencedDomainName <= nameLen || !ret)
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        nameLen += 1;
+        ret = FALSE;
+    }
+    else if (ReferencedDomainName)
+        strcpyW(ReferencedDomainName, domainName);
+
+    *cchReferencedDomainName = nameLen;
+
+    if (ret)
+        *peUse = SidTypeDomain;
+
+    return ret;
+}
+
+/******************************************************************************
+ * LookupAccountNameW [ADVAPI32.@]
+ */
+BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSID Sid,
+                                LPDWORD cbSid, LPWSTR ReferencedDomainName,
+                                LPDWORD cchReferencedDomainName, PSID_NAME_USE peUse )
+{
+    BOOL ret;
+    PSID pSid;
     unsigned int i;
     DWORD nameLen;
     LPWSTR userName = NULL;
@@ -2621,68 +2723,23 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
 
     userName = HeapAlloc(GetProcessHeap(), 0, nameLen);
 
-    ret = GetUserNameW(userName, &nameLen);
-
-    if (ret && strcmpW(lpAccountName, userName) != 0)
+    if (GetUserNameW(userName, &nameLen) && !strcmpW(lpAccountName, userName))
+        ret = lookup_user_account_name(Sid, cbSid, ReferencedDomainName,
+                                       cchReferencedDomainName, peUse);
+    else
     {
-        SetLastError(ERROR_NONE_MAPPED);
-        ret = FALSE;
+        nameLen = UNLEN + 1;
+        if (GetComputerNameW(userName, &nameLen) && !strcmpW(lpAccountName, userName))
+            ret = lookup_computer_account_name(Sid, cbSid, ReferencedDomainName,
+                                               cchReferencedDomainName, peUse);
+        else
+        {
+            SetLastError(ERROR_NONE_MAPPED);
+            ret = FALSE;
+        }
     }
 
     HeapFree(GetProcessHeap(), 0, userName);
-
-    if (!ret)
-    {
-        return ret;
-    }
-
-    ret = AllocateAndInitializeSid(&identifierAuthority,
-        2,
-        SECURITY_BUILTIN_DOMAIN_RID,
-        DOMAIN_ALIAS_RID_ADMINS,
-        0, 0, 0, 0, 0, 0,
-        &pSid);
-
-    if (!ret)
-       return FALSE;
-
-    if (!RtlValidSid(pSid))
-    {
-       FreeSid(pSid);
-       return FALSE;
-    }
-
-    if (Sid != NULL && (*cbSid >= GetLengthSid(pSid)))
-       CopySid(*cbSid, Sid, pSid);
-    if (*cbSid < GetLengthSid(pSid))
-    {
-       SetLastError(ERROR_INSUFFICIENT_BUFFER);
-       ret = FALSE;
-    }
-    *cbSid = GetLengthSid(pSid);
-
-    domainName = dm;
-    nameLen = strlenW(domainName);
-
-    if (*cchReferencedDomainName <= nameLen || !ret)
-    {
-        SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        nameLen += 1;
-        ret = FALSE;
-    }
-    else if (ReferencedDomainName)
-    {
-        strcpyW(ReferencedDomainName, domainName);
-    }
-
-    *cchReferencedDomainName = nameLen;
-
-    if (ret)
-    {
-        *peUse = SidTypeUser;
-    }
-
-    FreeSid(pSid);
 
     return ret;
 }

@@ -1883,7 +1883,6 @@ static void test_LookupAccountName(void)
     sid_size = 0;
     domain_size = 0;
     ret = LookupAccountNameA(NULL, computer_name, NULL, &sid_size, NULL, &domain_size, &sid_use);
-    todo_wine
     ok(!ret && (GetLastError() == ERROR_INSUFFICIENT_BUFFER ||
        broken(GetLastError() == ERROR_TRUSTED_DOMAIN_FAILURE) ||
        broken(GetLastError() == ERROR_TRUSTED_RELATIONSHIP_FAILURE)),
