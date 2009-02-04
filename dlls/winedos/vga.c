@@ -899,11 +899,11 @@ int VGA_SetMode(WORD mode)
     /* check if mode is supported */
     if (ModeInfo->Supported)
     {
-       FIXME("Setting VGA mode %i - Supported mode - Improve reporting of missing capabilities for modes & modetypes. \n", mode);
+       FIXME("Setting VGA mode %i - Supported mode - Improve reporting of missing capabilities for modes & modetypes.\n", mode);
     }
     else
     {
-       FIXME("Setting VGA mode %i - Unsupported mode - Will doubtfully work at all, but we'll try anyways. \n", mode);
+       FIXME("Setting VGA mode %i - Unsupported mode - Will doubtfully work at all, but we'll try anyways.\n", mode);
     }
 
     /* set up graphic or text display */
@@ -1821,12 +1821,12 @@ void VGA_ioport_out( WORD port, BYTE val )
            /* check bits 6 and 7 */
            if (val & 0xC0)
            {
-              FIXME("Unsupported value, VGA register 0x3d8: 0x%02x - bits 7 and 6 not supported. \n", val);
+              FIXME("Unsupported value, VGA register 0x3d8: 0x%02x - bits 7 and 6 not supported.\n", val);
            }
            /* check bits 5 - blink on */
            if (val & 0x20)
            {
-              FIXME("Unsupported value, VGA register 0x3d8: 0x%02x (bit 5) - blink is not supported. \n", val);
+              FIXME("Unsupported value, VGA register 0x3d8: 0x%02x (bit 5) - blink is not supported.\n", val);
            }
            /* Enable Video Signal (bit 3) - Set the enabled bit */
            VGA_SetEnabled((val & 0x08) && 1);
@@ -1882,7 +1882,7 @@ void VGA_ioport_out( WORD port, BYTE val )
            /* unsupported mode */
            else
            {
-             FIXME("Unsupported value, VGA register 0x3d8: 0x%02x - unrecognized MDA/CGA mode \n", val); /* Set the enabled bit */
+             FIXME("Unsupported value, VGA register 0x3d8: 0x%02x - unrecognized MDA/CGA mode\n", val); /* Set the enabled bit */
            }
 
            break;
