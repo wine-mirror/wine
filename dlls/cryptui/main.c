@@ -1076,25 +1076,24 @@ static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         HWND tab = GetDlgItem(hwnd, IDC_MGR_STORES);
 
         data = HeapAlloc(GetProcessHeap(), 0, sizeof(struct CertMgrData));
-        if (data)
+        if (!data)
+            return 0;
+        data->imageList = ImageList_Create(16, 16, ILC_COLOR4 | ILC_MASK, 2, 0);
+        if (data->imageList)
         {
-            data->imageList = ImageList_Create(16, 16, ILC_COLOR4 | ILC_MASK,
-             2, 0);
-            if (data->imageList)
-            {
-                HBITMAP bmp;
-                COLORREF backColor = RGB(255, 0, 255);
+            HBITMAP bmp;
+            COLORREF backColor = RGB(255, 0, 255);
 
-                bmp = LoadBitmapW(hInstance, MAKEINTRESOURCEW(IDB_SMALL_ICONS));
-                ImageList_AddMasked(data->imageList, bmp, backColor);
-                DeleteObject(bmp);
-                ImageList_SetBkColor(data->imageList, CLR_NONE);
-                SendMessageW(GetDlgItem(hwnd, IDC_MGR_CERTS), LVM_SETIMAGELIST,
-                 LVSIL_SMALL, (LPARAM)data->imageList);
-            }
-            SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
-            data->title = pCryptUICertMgr->pwszTitle;
+            bmp = LoadBitmapW(hInstance, MAKEINTRESOURCEW(IDB_SMALL_ICONS));
+            ImageList_AddMasked(data->imageList, bmp, backColor);
+            DeleteObject(bmp);
+            ImageList_SetBkColor(data->imageList, CLR_NONE);
+            SendMessageW(GetDlgItem(hwnd, IDC_MGR_CERTS), LVM_SETIMAGELIST,
+                         LVSIL_SMALL, (LPARAM)data->imageList);
         }
+        SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
+        data->title = pCryptUICertMgr->pwszTitle;
+
         initialize_purpose_selection(hwnd);
         add_cert_columns(hwnd);
         if (pCryptUICertMgr->pwszTitle)
