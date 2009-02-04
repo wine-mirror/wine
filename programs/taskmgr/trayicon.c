@@ -33,7 +33,7 @@
 #include "taskmgr.h"
 #include "perfdata.h"
 
-HICON TrayIcon_GetProcessorUsageIcon(void)
+static HICON TrayIcon_GetProcessorUsageIcon(void)
 {
     HICON        hTrayIcon = NULL;
     HDC            hScreenDC = NULL;
