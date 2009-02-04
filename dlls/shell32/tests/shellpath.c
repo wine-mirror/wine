@@ -19,9 +19,6 @@
  * This is a test program for the SHGet{Special}Folder{Path|Location} functions
  * of shell32, that get either a filesystem path or a LPITEMIDLIST (shell
  * namespace) path for a given folder (CSIDL value).
- *
- * FIXME:
- * - Need to verify on more systems.
  */
 
 #define COBJMACROS
