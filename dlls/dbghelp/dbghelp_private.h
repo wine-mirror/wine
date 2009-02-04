@@ -92,7 +92,6 @@ void     hash_table_init(struct pool* pool, struct hash_table* ht,
                          unsigned num_buckets);
 void     hash_table_destroy(struct hash_table* ht);
 void     hash_table_add(struct hash_table* ht, struct hash_table_elt* elt);
-void*    hash_table_find(const struct hash_table* ht, const char* name);
 
 struct hash_table_iter
 {

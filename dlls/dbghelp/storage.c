@@ -396,18 +396,6 @@ void hash_table_add(struct hash_table* ht, struct hash_table_elt* elt)
     ht->num_elts++;
 }
 
-void* hash_table_find(const struct hash_table* ht, const char* name)
-{
-    unsigned                    hash = hash_table_hash(name, ht->num_buckets);
-    struct hash_table_elt*      elt;
-
-    if(!ht->buckets) return NULL;
-
-    for (elt = ht->buckets[hash]; elt; elt = elt->next)
-        if (!strcmp(name, elt->name)) return elt;
-    return NULL;
-}
-
 void hash_table_iter_init(const struct hash_table* ht, 
                           struct hash_table_iter* hti, const char* name)
 {
