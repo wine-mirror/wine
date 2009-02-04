@@ -1705,6 +1705,7 @@ static void test_LookupAccountName(void)
     DWORD sid_size, domain_size, user_size;
     DWORD sid_save, domain_save;
     CHAR user_name[UNLEN + 1];
+    CHAR computer_name[UNLEN + 1];
     SID_NAME_USE sid_use;
     LPSTR domain, account, sid_dom;
     PSID psid;
@@ -1875,6 +1876,28 @@ static void test_LookupAccountName(void)
        "Expected RPC_S_SERVER_UNAVAILABLE or RPC_S_INVALID_NET_ADDR, got %d\n", GetLastError());
     ok(sid_size == 0, "Expected 0, got %d\n", sid_size);
     ok(domain_size == 0, "Expected 0, got %d\n", domain_size);
+
+    /* try with the computer name as the account name */
+    domain_size = sizeof(computer_name);
+    GetComputerNameA(computer_name, &domain_size);
+    sid_size = 0;
+    domain_size = 0;
+    ret = LookupAccountNameA(NULL, computer_name, NULL, &sid_size, NULL, &domain_size, &sid_use);
+    todo_wine
+    ok(!ret && (GetLastError() == ERROR_INSUFFICIENT_BUFFER ||
+       broken(GetLastError() == ERROR_TRUSTED_DOMAIN_FAILURE) ||
+       broken(GetLastError() == ERROR_TRUSTED_RELATIONSHIP_FAILURE)),
+       "LookupAccountNameA failed: %d\n", GetLastError());
+    if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    {
+        psid = HeapAlloc(GetProcessHeap(), 0, sid_size);
+        domain = HeapAlloc(GetProcessHeap(), 0, domain_size);
+        ret = LookupAccountNameA(NULL, computer_name, psid, &sid_size, domain, &domain_size, &sid_use);
+        ok(ret, "LookupAccountNameA failed: %d\n", GetLastError());
+        ok(sid_use == SidTypeDomain, "expected SidTypeDomain, got %d\n", sid_use);
+        HeapFree(GetProcessHeap(), 0, domain);
+        HeapFree(GetProcessHeap(), 0, psid);
+    }
 }
 
 static void test_security_descriptor(void)
