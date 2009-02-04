@@ -2982,6 +2982,12 @@ static void test_default_style(IHTMLStyle *style)
     test_border_styles(style, str);
     SysFreeString(str);
 
+    hres = IHTMLStyle_get_backgroundColor(style, &v);
+    ok(hres == S_OK, "get_backgroundColor: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "type failed: %d\n", V_VT(&v));
+    ok(!V_BSTR(&v), "str=%s\n", dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
     if(SUCCEEDED(hres)) {
