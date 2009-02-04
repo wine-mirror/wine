@@ -311,7 +311,7 @@
 @ stdcall GdipGetLineSpacing(ptr long ptr)
 @ stub GdipGetLineTransform
 @ stdcall GdipGetLineWrapMode(ptr ptr)
-@ stub GdipGetLogFontA
+@ stdcall GdipGetLogFontA(ptr ptr ptr)
 @ stdcall GdipGetLogFontW(ptr ptr ptr)
 @ stdcall GdipGetMatrixElements(ptr ptr)
 @ stub GdipGetMetafileDownLevelRasterizationLimit
