@@ -627,7 +627,8 @@ static void test_LPropCompareProp(void)
             }
 
             iRet = pLPropCompareProp(&pvLeft, &pvRight);
-            ok(iRet == iExp, "pt %d (%d,%d): expected %d, got %d\n", ptTypes[i],
+            ok(iRet == iExp || broken(iRet == 0) /* Win9x */,
+               "pt %d (%d,%d): expected %d, got %d\n", ptTypes[i],
                LPCProp_Results[j].lVal, LPCProp_Results[j].rVal, iExp, iRet);
         }
     }
