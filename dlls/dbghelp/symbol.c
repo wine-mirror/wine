@@ -67,6 +67,8 @@ int symt_cmp_addr(const void* p1, const void* p2)
     return cmp_addr(a1, a2);
 }
 
+#ifdef HAVE_REGEX_H
+
 /* transforms a dbghelp's regular expression into a POSIX one
  * Here are the valid dbghelp reg ex characters:
  *      *       0 or more characters
@@ -120,6 +122,44 @@ static void compile_regex(const char* str, int numchar, regex_t* re, BOOL _case)
     if (regcomp(re, mask, flags)) FIXME("Couldn't compile %s\n", mask);
     HeapFree(GetProcessHeap(), 0, mask);
 }
+
+static int match_regexp( const regex_t *re, const char *str )
+{
+    return !regexec( re, str, 0, NULL, 0 );
+}
+
+#else /* HAVE_REGEX_H */
+
+/* if we don't have regexp support, fall back to a simple string comparison */
+
+typedef struct
+{
+    char *str;
+    BOOL  icase;
+} regex_t;
+
+static void compile_regex(const char* str, int numchar, regex_t* re, BOOL _case)
+{
+    if (numchar == -1) numchar = strlen( str );
+
+    re->str = HeapAlloc( GetProcessHeap(), 0, numchar + 1 );
+    memcpy( re->str, str, numchar );
+    re->str[numchar] = 0;
+    re->icase = _case;
+}
+
+static int match_regexp( const regex_t *re, const char *str )
+{
+    if (re->icase) return !lstrcmpiA( re->str, str );
+    return !strcmp( re->str, str );
+}
+
+static void regfree( regex_t *re )
+{
+    HeapFree( GetProcessHeap(), 0, re->str );
+}
+
+#endif /* HAVE_REGEX_H */
 
 struct symt_compiland* symt_new_compiland(struct module* module, 
                                           unsigned long address, unsigned src_idx)
@@ -658,8 +698,7 @@ static BOOL symt_enum_module(struct module_pair* pair, const regex_t* regex,
     while ((ptr = hash_table_iter_up(&hti)))
     {
         sym = GET_ENTRY(ptr, struct symt_ht, hash_elt);
-        if (sym->hash_elt.name &&
-            regexec(regex, sym->hash_elt.name, 0, NULL, 0) == 0)
+        if (sym->hash_elt.name && match_regexp(regex, sym->hash_elt.name))
         {
             se->sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
             se->sym_info->MaxNameLen = sizeof(se->buffer) - sizeof(SYMBOL_INFO);
@@ -808,7 +847,7 @@ static BOOL symt_enum_locals_helper(struct module_pair* pair,
             }
             break;
         case SymTagData:
-            if (regexec(preg, symt_get_name(lsym), 0, NULL, 0) == 0)
+            if (match_regexp(preg, symt_get_name(lsym)))
             {
                 if (send_symbol(se, pair, func, lsym)) return FALSE;
             }
@@ -912,7 +951,7 @@ static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
         {
             if (pair.requested->type == DMT_PE && module_get_debug(&pair))
             {
-                if (regexec(&mod_regex, pair.requested->module_name, 0, NULL, 0) == 0 &&
+                if (match_regexp(&mod_regex, pair.requested->module_name) &&
                     symt_enum_module(&pair, &sym_regex, se))
                     break;
             }
@@ -927,7 +966,7 @@ static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
                     !module_get_containee(pair.pcs, pair.requested) &&
                     module_get_debug(&pair))
                 {
-                    if (regexec(&mod_regex, pair.requested->module_name, 0, NULL, 0) == 0 &&
+                    if (match_regexp(&mod_regex, pair.requested->module_name) &&
                         symt_enum_module(&pair, &sym_regex, se))
                     break;
                 }
@@ -1641,7 +1680,7 @@ BOOL WINAPI SymMatchString(PCSTR string, PCSTR re, BOOL _case)
     TRACE("%s %s %c\n", string, re, _case ? 'Y' : 'N');
 
     compile_regex(re, -1, &preg, _case);
-    ret = regexec(&preg, string, 0, NULL, 0) == 0;
+    ret = match_regexp(&preg, string);
     regfree(&preg);
     return ret;
 }
