@@ -67,12 +67,6 @@ int symt_cmp_addr(const void* p1, const void* p2)
     return cmp_addr(a1, a2);
 }
 
-static inline void re_append(char** mask, unsigned* len, char ch)
-{
-    *mask = HeapReAlloc(GetProcessHeap(), 0, *mask, ++(*len));
-    (*mask)[*len - 2] = ch;
-}
-
 /* transforms a dbghelp's regular expression into a POSIX one
  * Here are the valid dbghelp reg ex characters:
  *      *       0 or more characters
@@ -84,42 +78,44 @@ static inline void re_append(char** mask, unsigned* len, char ch)
  */
 static void compile_regex(const char* str, int numchar, regex_t* re, BOOL _case)
 {
-    char*       mask = HeapAlloc(GetProcessHeap(), 0, 1);
-    unsigned    len = 1;
+    char *mask, *p;
     BOOL        in_escape = FALSE;
     unsigned    flags = REG_NOSUB;
 
-    re_append(&mask, &len, '^');
+    if (numchar == -1) numchar = strlen( str );
+
+    p = mask = HeapAlloc( GetProcessHeap(), 0, 2 * numchar + 3 );
+    *p++ = '^';
 
     while (*str && numchar--)
     {
         /* FIXME: this shouldn't be valid on '-' */
         if (in_escape)
         {
-            re_append(&mask, &len, '\\');
-            re_append(&mask, &len, *str);
+            *p++ = '\\';
+            *p++ = *str;
             in_escape = FALSE;
         }
         else switch (*str)
         {
         case '\\': in_escape = TRUE; break;
-        case '*':  re_append(&mask, &len, '.'); re_append(&mask, &len, '*'); break;
-        case '?':  re_append(&mask, &len, '.'); break;
-        case '#':  re_append(&mask, &len, '*'); break;
+        case '*':  *p++ = '.'; *p++ = '*'; break;
+        case '?':  *p++ = '.'; break;
+        case '#':  *p++ = '*'; break;
         /* escape some valid characters in dbghelp reg exp:s */
-        case '$':  re_append(&mask, &len, '\\'); re_append(&mask, &len, '$'); break;
+        case '$':  *p++ = '\\'; *p++ = '$'; break;
         /* +, [, ], - are the same in dbghelp & POSIX, use them as any other char */
-        default:   re_append(&mask, &len, *str); break;
+        default:   *p++ = *str; break;
         }
         str++;
     }
     if (in_escape)
     {
-        re_append(&mask, &len, '\\');
-        re_append(&mask, &len, '\\');
+        *p++ = '\\';
+        *p++ = '\\';
     }
-    re_append(&mask, &len, '$');
-    mask[len - 1] = '\0';
+    *p++ = '$';
+    *p = 0;
     if (_case) flags |= REG_ICASE;
     if (regcomp(re, mask, flags)) FIXME("Couldn't compile %s\n", mask);
     HeapFree(GetProcessHeap(), 0, mask);
