@@ -207,6 +207,13 @@ const char *get_as_command(void)
         {
             as_command = xstrdup( "as" );
         }
+
+        if (force_pointer_size)
+        {
+            const char *args = (force_pointer_size == 8) ? " --64" : " --32";
+            as_command = xrealloc( as_command, strlen(as_command) + strlen(args) + 1 );
+            strcat( as_command, args );
+        }
     }
     return as_command;
 }
@@ -224,6 +231,13 @@ const char *get_ld_command(void)
         else
         {
             ld_command = xstrdup( "ld" );
+        }
+
+        if (force_pointer_size)
+        {
+            const char *args = (force_pointer_size == 8) ? " -m elf_x86_64" : " -m elf_i386";
+            ld_command = xrealloc( ld_command, strlen(ld_command) + strlen(args) + 1 );
+            strcat( ld_command, args );
         }
     }
     return ld_command;
