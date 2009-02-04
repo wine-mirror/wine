@@ -22,7 +22,7 @@
 
 #define admitted_error 0.0001f
 
-BOOL compare(FLOAT u, FLOAT v)
+static BOOL compare(FLOAT u, FLOAT v)
 {
     return (fabs(u-v) < admitted_error);
 }
