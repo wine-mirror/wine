@@ -151,7 +151,7 @@ typedef struct fdi_cds_fwd {
 /****************************************************************
  * QTMupdatemodel (internal)
  */
-void QTMupdatemodel(struct QTMmodel *model, int sym) {
+static void QTMupdatemodel(struct QTMmodel *model, int sym) {
   struct QTMmodelsym temp;
   int i, j;
 
