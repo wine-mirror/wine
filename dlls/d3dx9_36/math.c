@@ -222,7 +222,7 @@ D3DXPLANE* WINAPI D3DXPlaneTransformArray(
     CONST D3DXMATRIX* matrix, UINT elements)
 {
     UINT i;
-    TRACE("\n");
+
     for (i = 0; i < elements; ++i) {
         D3DXPlaneTransform(
             (D3DXPLANE*)((char*)out + outstride * i),
@@ -242,7 +242,7 @@ D3DXVECTOR4* WINAPI D3DXVec2TransformArray(
     CONST D3DXMATRIX* matrix, UINT elements)
 {
     UINT i;
-    TRACE("\n");
+
     for (i = 0; i < elements; ++i) {
         D3DXVec2Transform(
             (D3DXVECTOR4*)((char*)out + outstride * i),
@@ -260,7 +260,7 @@ D3DXVECTOR2* WINAPI D3DXVec2TransformCoordArray(
     CONST D3DXMATRIX* matrix, UINT elements)
 {
     UINT i;
-    TRACE("\n");
+
     for (i = 0; i < elements; ++i) {
         D3DXVec2TransformCoord(
             (D3DXVECTOR2*)((char*)out + outstride * i),
@@ -278,7 +278,7 @@ D3DXVECTOR2* WINAPI D3DXVec2TransformNormalArray(
     CONST D3DXMATRIX *matrix, UINT elements)
 {
     UINT i;
-    TRACE("\n");
+
     for (i = 0; i < elements; ++i) {
         D3DXVec2TransformNormal(
             (D3DXVECTOR2*)((char*)out + outstride * i),
@@ -299,7 +299,7 @@ D3DXVECTOR3* WINAPI D3DXVec3ProjectArray(
     CONST D3DXMATRIX* view, CONST D3DXMATRIX* world, UINT elements)
 {
     UINT i;
-    TRACE("\n");
+
     for (i = 0; i < elements; ++i) {
         D3DXVec3Project(
             (D3DXVECTOR3*)((char*)out + outstride * i),
@@ -317,7 +317,7 @@ D3DXVECTOR4* WINAPI D3DXVec3TransformArray(
     CONST D3DXMATRIX* matrix, UINT elements)
 {
     UINT i;
-    TRACE("\n");
+
     for (i = 0; i < elements; ++i) {
         D3DXVec3Transform(
             (D3DXVECTOR4*)((char*)out + outstride * i),
@@ -335,7 +335,7 @@ D3DXVECTOR3* WINAPI D3DXVec3TransformCoordArray(
     CONST D3DXMATRIX* matrix, UINT elements)
 {
     UINT i;
-    TRACE("\n");
+
     for (i = 0; i < elements; ++i) {
         D3DXVec3TransformCoord(
             (D3DXVECTOR3*)((char*)out + outstride * i),
@@ -353,7 +353,7 @@ D3DXVECTOR3* WINAPI D3DXVec3TransformNormalArray(
     CONST D3DXMATRIX* matrix, UINT elements)
 {
     UINT i;
-    TRACE("\n");
+
     for (i = 0; i < elements; ++i) {
         D3DXVec3TransformNormal(
             (D3DXVECTOR3*)((char*)out + outstride * i),
@@ -372,7 +372,7 @@ D3DXVECTOR3* WINAPI D3DXVec3UnprojectArray(
     CONST D3DXMATRIX* view, CONST D3DXMATRIX* world, UINT elements)
 {
     UINT i;
-    TRACE("\n");
+
     for (i = 0; i < elements; ++i) {
         D3DXVec3Unproject(
             (D3DXVECTOR3*)((char*)out + outstride * i),
@@ -390,7 +390,7 @@ D3DXVECTOR4* WINAPI D3DXVec4TransformArray(
     CONST D3DXMATRIX* matrix, UINT elements)
 {
     UINT i;
-    TRACE("\n");
+
     for (i = 0; i < elements; ++i) {
         D3DXVec4Transform(
             (D3DXVECTOR4*)((char*)out + outstride * i),
