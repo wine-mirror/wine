@@ -69,6 +69,9 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define CLEAR_CALLED(func) \
+    expect_ ## func = called_ ## func = FALSE
+
 DEFINE_EXPECT(GetContainer);
 DEFINE_EXPECT(Site_GetWindow);
 DEFINE_EXPECT(ShowObject);
@@ -1787,15 +1790,19 @@ static void test_ambient_unknown(IWebBrowser2 *wb, IOleControl *control, BOOL is
     hres = IOleControl_OnAmbientPropertyChange(control, DISPID_UNKNOWN);
     ok(hres == S_OK, "OnAmbientPropertyChange failed %08x\n", hres);
 
-    if(is_clientsite)
-    {
-        CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
-        CHECK_CALLED(Invoke_AMBIENT_SILENT);
-        todo_wine CHECK_CALLED(Invoke_AMBIENT_USERMODE);
-        todo_wine CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);
-        todo_wine CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
-        todo_wine CHECK_CALLED(Invoke_AMBIENT_PALETTE);
-    }
+    CHECK_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    CHECK_EXPECT(Invoke_AMBIENT_SILENT);
+    CHECK_EXPECT(Invoke_AMBIENT_USERMODE);
+    CHECK_EXPECT(Invoke_AMBIENT_DLCONTROL);
+    CHECK_EXPECT(Invoke_AMBIENT_USERAGENT);
+    CHECK_EXPECT(Invoke_AMBIENT_PALETTE);
+
+    CLEAR_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    CLEAR_CALLED(Invoke_AMBIENT_SILENT);
+    CLEAR_CALLED(Invoke_AMBIENT_USERMODE);
+    CLEAR_CALLED(Invoke_AMBIENT_DLCONTROL);
+    CLEAR_CALLED(Invoke_AMBIENT_USERAGENT);
+    CLEAR_CALLED(Invoke_AMBIENT_PALETTE);
 }
 
 static void test_wb_funcs(IUnknown *unk, BOOL is_clientsite)
