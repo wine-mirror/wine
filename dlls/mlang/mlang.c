@@ -43,8 +43,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mlang);
 
 #define CP_UNICODE 1200
 
-#define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
-
 static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 static HRESULT EnumRfc1766_create(LANGID LangId, IEnumRfc1766 **ppEnum);
 
@@ -1486,12 +1484,17 @@ typedef struct tagEnumCodePage_impl
     DWORD total, pos;
 } EnumCodePage_impl;
 
+static inline EnumCodePage_impl *impl_from_IEnumCodePage( IEnumCodePage *iface )
+{
+    return (EnumCodePage_impl *)CONTAINING_RECORD( iface, EnumCodePage_impl, vtbl_IEnumCodePage );
+}
+
 static HRESULT WINAPI fnIEnumCodePage_QueryInterface(
         IEnumCodePage* iface,
         REFIID riid,
         void** ppvObject)
 {
-    ICOM_THIS_MULTI(EnumCodePage_impl, vtbl_IEnumCodePage, iface);
+    EnumCodePage_impl *This = impl_from_IEnumCodePage( iface );
 
     TRACE("%p -> %s\n", This, debugstr_guid(riid) );
 
@@ -1511,14 +1514,14 @@ static HRESULT WINAPI fnIEnumCodePage_QueryInterface(
 static ULONG WINAPI fnIEnumCodePage_AddRef(
         IEnumCodePage* iface)
 {
-    ICOM_THIS_MULTI(EnumCodePage_impl, vtbl_IEnumCodePage, iface);
+    EnumCodePage_impl *This = impl_from_IEnumCodePage( iface );
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI fnIEnumCodePage_Release(
         IEnumCodePage* iface)
 {
-    ICOM_THIS_MULTI(EnumCodePage_impl, vtbl_IEnumCodePage, iface);
+    EnumCodePage_impl *This = impl_from_IEnumCodePage( iface );
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("%p ref = %d\n", This, ref);
@@ -1536,7 +1539,7 @@ static HRESULT WINAPI fnIEnumCodePage_Clone(
         IEnumCodePage* iface,
         IEnumCodePage** ppEnum)
 {
-    ICOM_THIS_MULTI(EnumCodePage_impl, vtbl_IEnumCodePage, iface);
+    EnumCodePage_impl *This = impl_from_IEnumCodePage( iface );
     FIXME("%p %p\n", This, ppEnum);
     return E_NOTIMPL;
 }
@@ -1548,8 +1551,8 @@ static  HRESULT WINAPI fnIEnumCodePage_Next(
         ULONG* pceltFetched)
 {
     ULONG i;
+    EnumCodePage_impl *This = impl_from_IEnumCodePage( iface );
 
-    ICOM_THIS_MULTI(EnumCodePage_impl, vtbl_IEnumCodePage, iface);
     TRACE("%p %u %p %p\n", This, celt, rgelt, pceltFetched);
 
     if (!pceltFetched) return S_FALSE;
@@ -1585,7 +1588,8 @@ static  HRESULT WINAPI fnIEnumCodePage_Next(
 static HRESULT WINAPI fnIEnumCodePage_Reset(
         IEnumCodePage* iface)
 {
-    ICOM_THIS_MULTI(EnumCodePage_impl, vtbl_IEnumCodePage, iface);
+    EnumCodePage_impl *This = impl_from_IEnumCodePage( iface );
+
     TRACE("%p\n", This);
 
     This->pos = 0;
@@ -1596,7 +1600,8 @@ static  HRESULT WINAPI fnIEnumCodePage_Skip(
         IEnumCodePage* iface,
         ULONG celt)
 {
-    ICOM_THIS_MULTI(EnumCodePage_impl, vtbl_IEnumCodePage, iface);
+    EnumCodePage_impl *This = impl_from_IEnumCodePage( iface );
+
     TRACE("%p %u\n", This, celt);
 
     if (celt >= This->total) return S_FALSE;
@@ -1672,12 +1677,17 @@ typedef struct tagEnumScript_impl
     DWORD total, pos;
 } EnumScript_impl;
 
+static inline EnumScript_impl *impl_from_IEnumScript( IEnumScript *iface )
+{
+    return (EnumScript_impl *)CONTAINING_RECORD( iface, EnumScript_impl, vtbl_IEnumScript );
+}
+
 static HRESULT WINAPI fnIEnumScript_QueryInterface(
         IEnumScript* iface,
         REFIID riid,
         void** ppvObject)
 {
-    ICOM_THIS_MULTI(EnumScript_impl, vtbl_IEnumScript, iface);
+    EnumScript_impl *This = impl_from_IEnumScript( iface );
 
     TRACE("%p -> %s\n", This, debugstr_guid(riid) );
 
@@ -1697,14 +1707,14 @@ static HRESULT WINAPI fnIEnumScript_QueryInterface(
 static ULONG WINAPI fnIEnumScript_AddRef(
         IEnumScript* iface)
 {
-    ICOM_THIS_MULTI(EnumScript_impl, vtbl_IEnumScript, iface);
+    EnumScript_impl *This = impl_from_IEnumScript( iface );
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI fnIEnumScript_Release(
         IEnumScript* iface)
 {
-    ICOM_THIS_MULTI(EnumScript_impl, vtbl_IEnumScript, iface);
+    EnumScript_impl *This = impl_from_IEnumScript( iface );
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("%p ref = %d\n", This, ref);
@@ -1722,7 +1732,7 @@ static HRESULT WINAPI fnIEnumScript_Clone(
         IEnumScript* iface,
         IEnumScript** ppEnum)
 {
-    ICOM_THIS_MULTI(EnumScript_impl, vtbl_IEnumScript, iface);
+    EnumScript_impl *This = impl_from_IEnumScript( iface );
     FIXME("%p %p: stub!\n", This, ppEnum);
     return E_NOTIMPL;
 }
@@ -1733,7 +1743,8 @@ static  HRESULT WINAPI fnIEnumScript_Next(
         PSCRIPTINFO rgelt,
         ULONG* pceltFetched)
 {
-    ICOM_THIS_MULTI(EnumScript_impl, vtbl_IEnumScript, iface);
+    EnumScript_impl *This = impl_from_IEnumScript( iface );
+
     TRACE("%p %u %p %p\n", This, celt, rgelt, pceltFetched);
 
     if (!pceltFetched || !rgelt) return E_FAIL;
@@ -1755,7 +1766,8 @@ static  HRESULT WINAPI fnIEnumScript_Next(
 static HRESULT WINAPI fnIEnumScript_Reset(
         IEnumScript* iface)
 {
-    ICOM_THIS_MULTI(EnumScript_impl, vtbl_IEnumScript, iface);
+    EnumScript_impl *This = impl_from_IEnumScript( iface );
+
     TRACE("%p\n", This);
 
     This->pos = 0;
@@ -1766,7 +1778,8 @@ static  HRESULT WINAPI fnIEnumScript_Skip(
         IEnumScript* iface,
         ULONG celt)
 {
-    ICOM_THIS_MULTI(EnumScript_impl, vtbl_IEnumScript, iface);
+    EnumScript_impl *This = impl_from_IEnumScript( iface );
+
     TRACE("%p %u\n", This, celt);
 
     if (celt >= This->total) return S_FALSE;
@@ -1826,26 +1839,31 @@ static HRESULT EnumScript_create( MLang_impl* mlang, DWORD dwFlags,
 
 /******************************************************************************/
 
+static inline MLang_impl *impl_from_IMLangFontLink( IMLangFontLink *iface )
+{
+    return (MLang_impl *)CONTAINING_RECORD( iface, MLang_impl, vtbl_IMLangFontLink );
+}
+
 static HRESULT WINAPI fnIMLangFontLink_QueryInterface(
         IMLangFontLink* iface,
         REFIID riid,
         void** ppvObject)
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangFontLink, iface);
+    MLang_impl *This = impl_from_IMLangFontLink( iface );
     return MLang_QueryInterface( This, riid, ppvObject );
 }
 
 static ULONG WINAPI fnIMLangFontLink_AddRef(
         IMLangFontLink* iface)
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangFontLink, iface);
+    MLang_impl *This = impl_from_IMLangFontLink( iface );
     return MLang_AddRef( This );
 }
 
 static ULONG WINAPI fnIMLangFontLink_Release(
         IMLangFontLink* iface)
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangFontLink, iface);
+    MLang_impl *This = impl_from_IMLangFontLink( iface );
     return MLang_Release( This );
 }
 
@@ -1896,7 +1914,7 @@ static HRESULT WINAPI fnIMLangFontLink_CodePageToCodePages(
         UINT uCodePage,
         DWORD* pdwCodePages)
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangFontLink, iface);
+    MLang_impl *This = impl_from_IMLangFontLink( iface );
     CHARSETINFO cs;
     BOOL rc; 
 
@@ -1922,7 +1940,7 @@ static HRESULT WINAPI fnIMLangFontLink_CodePagesToCodePage(
         UINT uDefaultCodePage,
         UINT* puCodePage)
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangFontLink, iface);
+    MLang_impl *This = impl_from_IMLangFontLink( iface );
     DWORD mask = 0x00000000;
     UINT i;
     CHARSETINFO cs;
@@ -1975,7 +1993,7 @@ static HRESULT WINAPI fnIMLangFontLink_GetFontCodePages(
 {
     HFONT old_font;
     FONTSIGNATURE fontsig;
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangFontLink, iface);
+    MLang_impl *This = impl_from_IMLangFontLink( iface );
 
     TRACE("(%p)\n",This);
 
@@ -2033,24 +2051,29 @@ static const IMLangFontLinkVtbl IMLangFontLink_vtbl =
 
 /******************************************************************************/
 
+static inline MLang_impl *impl_from_IMultiLanguage( IMultiLanguage *iface )
+{
+    return (MLang_impl *)CONTAINING_RECORD( iface, MLang_impl, vtbl_IMultiLanguage );
+}
+
 static HRESULT WINAPI fnIMultiLanguage_QueryInterface(
     IMultiLanguage* iface,
     REFIID riid,
     void** ppvObject)
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage, iface);
+    MLang_impl *This = impl_from_IMultiLanguage( iface );
     return MLang_QueryInterface( This, riid, ppvObject );
 }
 
 static ULONG WINAPI fnIMultiLanguage_AddRef( IMultiLanguage* iface )
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage, iface);
+    MLang_impl *This = impl_from_IMultiLanguage( iface );
     return IMLangFontLink_AddRef( ((IMLangFontLink*)This) );
 }
 
 static ULONG WINAPI fnIMultiLanguage_Release( IMultiLanguage* iface )
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage, iface);
+    MLang_impl *This = impl_from_IMultiLanguage( iface );
     return IMLangFontLink_Release( ((IMLangFontLink*)This) );
 }
 
@@ -2068,8 +2091,8 @@ static HRESULT WINAPI fnIMultiLanguage_GetCodePageInfo(
     PMIMECPINFO pCodePageInfo)
 {
     UINT i, n;
+    MLang_impl *This = impl_from_IMultiLanguage( iface );
 
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage, iface);
     TRACE("%p, %u, %p\n", This, uiCodePage, pCodePageInfo);
 
     for (i = 0; i < sizeof(mlang_data)/sizeof(mlang_data[0]); i++)
@@ -2100,7 +2123,8 @@ static HRESULT WINAPI fnIMultiLanguage_EnumCodePages(
     DWORD grfFlags,
     IEnumCodePage** ppEnumCodePage)
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage, iface);
+    MLang_impl *This = impl_from_IMultiLanguage( iface );
+
     TRACE("%p %08x %p\n", This, grfFlags, ppEnumCodePage);
 
     return EnumCodePage_create( This, grfFlags, 0, ppEnumCodePage );
@@ -2111,7 +2135,7 @@ static HRESULT WINAPI fnIMultiLanguage_GetCharsetInfo(
     BSTR Charset,
     PMIMECSETINFO pCharsetInfo)
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage, iface);
+    MLang_impl *This = impl_from_IMultiLanguage( iface );
     return IMultiLanguage3_GetCharsetInfo((IMultiLanguage3*)&This->vtbl_IMultiLanguage3, Charset, pCharsetInfo);
 }
 
@@ -2220,12 +2244,17 @@ typedef struct tagEnumRfc1766_impl
     DWORD total, pos;
 } EnumRfc1766_impl;
 
+static inline EnumRfc1766_impl *impl_from_IEnumRfc1766( IEnumRfc1766 *iface )
+{
+    return (EnumRfc1766_impl *)CONTAINING_RECORD( iface, EnumRfc1766_impl, vtbl_IEnumRfc1766 );
+}
+
 static HRESULT WINAPI fnIEnumRfc1766_QueryInterface(
         IEnumRfc1766 *iface,
         REFIID riid,
         void** ppvObject)
 {
-    ICOM_THIS_MULTI(EnumRfc1766_impl, vtbl_IEnumRfc1766, iface);
+    EnumRfc1766_impl *This = impl_from_IEnumRfc1766( iface );
 
     TRACE("%p -> %s\n", This, debugstr_guid(riid) );
 
@@ -2245,14 +2274,14 @@ static HRESULT WINAPI fnIEnumRfc1766_QueryInterface(
 static ULONG WINAPI fnIEnumRfc1766_AddRef(
         IEnumRfc1766 *iface)
 {
-    ICOM_THIS_MULTI(EnumRfc1766_impl, vtbl_IEnumRfc1766, iface);
+    EnumRfc1766_impl *This = impl_from_IEnumRfc1766( iface );
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI fnIEnumRfc1766_Release(
         IEnumRfc1766 *iface)
 {
-    ICOM_THIS_MULTI(EnumRfc1766_impl, vtbl_IEnumRfc1766, iface);
+    EnumRfc1766_impl *This = impl_from_IEnumRfc1766( iface );
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("%p ref = %d\n", This, ref);
@@ -2269,7 +2298,8 @@ static HRESULT WINAPI fnIEnumRfc1766_Clone(
         IEnumRfc1766 *iface,
         IEnumRfc1766 **ppEnum)
 {
-    ICOM_THIS_MULTI(EnumRfc1766_impl, vtbl_IEnumRfc1766, iface);
+    EnumRfc1766_impl *This = impl_from_IEnumRfc1766( iface );
+
     FIXME("%p %p\n", This, ppEnum);
     return E_NOTIMPL;
 }
@@ -2281,8 +2311,8 @@ static  HRESULT WINAPI fnIEnumRfc1766_Next(
         ULONG *pceltFetched)
 {
     ULONG i;
+    EnumRfc1766_impl *This = impl_from_IEnumRfc1766( iface );
 
-    ICOM_THIS_MULTI(EnumRfc1766_impl, vtbl_IEnumRfc1766, iface);
     TRACE("%p %u %p %p\n", This, celt, rgelt, pceltFetched);
 
     if (!pceltFetched) return S_FALSE;
@@ -2312,7 +2342,8 @@ static  HRESULT WINAPI fnIEnumRfc1766_Next(
 static HRESULT WINAPI fnIEnumRfc1766_Reset(
         IEnumRfc1766 *iface)
 {
-    ICOM_THIS_MULTI(EnumRfc1766_impl, vtbl_IEnumRfc1766, iface);
+    EnumRfc1766_impl *This = impl_from_IEnumRfc1766( iface );
+
     TRACE("%p\n", This);
 
     This->pos = 0;
@@ -2323,7 +2354,8 @@ static  HRESULT WINAPI fnIEnumRfc1766_Skip(
         IEnumRfc1766 *iface,
         ULONG celt)
 {
-    ICOM_THIS_MULTI(EnumRfc1766_impl, vtbl_IEnumRfc1766, iface);
+    EnumRfc1766_impl *This = impl_from_IEnumRfc1766( iface );
+
     TRACE("%p %u\n", This, celt);
 
     if (celt >= This->total) return S_FALSE;
@@ -2428,7 +2460,8 @@ static HRESULT WINAPI fnIMultiLanguage_EnumRfc1766(
     IMultiLanguage *iface,
     IEnumRfc1766 **ppEnumRfc1766)
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage, iface);
+    MLang_impl *This = impl_from_IMultiLanguage( iface );
+
     TRACE("%p %p\n", This, ppEnumRfc1766);
 
     return EnumRfc1766_create(0, ppEnumRfc1766);
@@ -2481,24 +2514,29 @@ static const IMultiLanguageVtbl IMultiLanguage_vtbl =
 
 /******************************************************************************/
 
+static inline MLang_impl *impl_from_IMultiLanguage3( IMultiLanguage3 *iface )
+{
+    return (MLang_impl *)CONTAINING_RECORD( iface, MLang_impl, vtbl_IMultiLanguage3 );
+}
+
 static HRESULT WINAPI fnIMultiLanguage2_QueryInterface(
     IMultiLanguage3* iface,
     REFIID riid,
     void** ppvObject)
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage3, iface);
+    MLang_impl *This = impl_from_IMultiLanguage3( iface );
     return MLang_QueryInterface( This, riid, ppvObject );
 }
 
 static ULONG WINAPI fnIMultiLanguage2_AddRef( IMultiLanguage3* iface )
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage3, iface);
+    MLang_impl *This = impl_from_IMultiLanguage3( iface );
     return MLang_AddRef( This );
 }
 
 static ULONG WINAPI fnIMultiLanguage2_Release( IMultiLanguage3* iface )
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage3, iface);
+    MLang_impl *This = impl_from_IMultiLanguage3( iface );
     return MLang_Release( This );
 }
 
@@ -2506,7 +2544,8 @@ static HRESULT WINAPI fnIMultiLanguage2_GetNumberOfCodePageInfo(
     IMultiLanguage3* iface,
     UINT* pcCodePage)
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage3, iface);
+    MLang_impl *This = impl_from_IMultiLanguage3( iface );
+
     TRACE("%p, %p\n", This, pcCodePage);
 
     if (!pcCodePage) return S_FALSE;
@@ -2560,8 +2599,8 @@ static HRESULT WINAPI fnIMultiLanguage2_GetCodePageInfo(
     PMIMECPINFO pCodePageInfo)
 {
     UINT i, n;
+    MLang_impl *This = impl_from_IMultiLanguage3( iface );
 
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage3, iface);
     TRACE("%p, %u, %04x, %p\n", This, uiCodePage, LangId, pCodePageInfo);
 
     for (i = 0; i < sizeof(mlang_data)/sizeof(mlang_data[0]); i++)
@@ -2593,7 +2632,8 @@ static HRESULT WINAPI fnIMultiLanguage2_EnumCodePages(
     LANGID LangId,
     IEnumCodePage** ppEnumCodePage)
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage3, iface);
+    MLang_impl *This = impl_from_IMultiLanguage3( iface );
+
     TRACE("%p %08x %04x %p\n", This, grfFlags, LangId, ppEnumCodePage);
 
     return EnumCodePage_create( This, grfFlags, LangId, ppEnumCodePage );
@@ -2605,8 +2645,8 @@ static HRESULT WINAPI fnIMultiLanguage2_GetCharsetInfo(
     PMIMECSETINFO pCharsetInfo)
 {
     UINT i, n;
+    MLang_impl *This = impl_from_IMultiLanguage3( iface );
 
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage3, iface);
     TRACE("%p %s %p\n", This, debugstr_w(Charset), pCharsetInfo);
 
     if (!pCharsetInfo) return E_FAIL;
@@ -2753,7 +2793,8 @@ static HRESULT WINAPI fnIMultiLanguage2_EnumRfc1766(
     LANGID LangId,
     IEnumRfc1766** ppEnumRfc1766)
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage, iface);
+    MLang_impl *This = impl_from_IMultiLanguage3( iface );
+
     TRACE("%p %p\n", This, ppEnumRfc1766);
 
     return EnumRfc1766_create(LangId, ppEnumRfc1766);
@@ -2962,7 +3003,8 @@ static HRESULT WINAPI fnIMultiLanguage2_GetNumberOfScripts(
     IMultiLanguage3* iface,
     UINT* pnScripts)
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage3, iface);
+    MLang_impl *This = impl_from_IMultiLanguage3( iface );
+
     TRACE("%p %p\n", This, pnScripts);
 
     if (!pnScripts) return S_FALSE;
@@ -2977,7 +3019,8 @@ static HRESULT WINAPI fnIMultiLanguage2_EnumScripts(
     LANGID LangId,
     IEnumScript** ppEnumScript)
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage3, iface);
+    MLang_impl *This = impl_from_IMultiLanguage3( iface );
+
     TRACE("%p %08x %04x %p\n", This, dwFlags, LangId, ppEnumScript);
 
     return EnumScript_create( This, dwFlags, LangId, ppEnumScript );
@@ -2990,7 +3033,7 @@ static HRESULT WINAPI fnIMultiLanguage2_ValidateCodePageEx(
     DWORD dwfIODControl)
 {
     int i;
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage3, iface);
+    MLang_impl *This = impl_from_IMultiLanguage3( iface );
 
     TRACE("%p %u %p %08x\n", This, uiCodePage, hwnd, dwfIODControl);
 
@@ -3026,7 +3069,8 @@ static HRESULT WINAPI fnIMultiLanguage3_DetectOutboundCodePage(
     UINT *pnDetectedCodePages,
     WCHAR *lpSpecialChar)
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage3, iface);
+    MLang_impl *This = impl_from_IMultiLanguage3( iface );
+
     FIXME("(%p)->(%08x %s %u %p %u %p %p %p)\n", This, dwFlags, debugstr_w(lpWideCharStr),
           cchWideChar, puiPreferredCodePages, nPreferredCodePages, puiDetectedCodePages,
           pnDetectedCodePages, lpSpecialChar);
@@ -3043,7 +3087,8 @@ static HRESULT WINAPI fnIMultiLanguage3_DetectOutboundCodePageInIStream(
     UINT *pnDetectedCodePages,
     WCHAR *lpSpecialChar)
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage3, iface);
+    MLang_impl *This = impl_from_IMultiLanguage3( iface );
+
     FIXME("(%p)->(%08x %p %p %u %p %p %p)\n", This, dwFlags, pStrIn,
           puiPreferredCodePages, nPreferredCodePages, puiDetectedCodePages,
           pnDetectedCodePages, lpSpecialChar);
@@ -3087,24 +3132,30 @@ static const IMultiLanguage3Vtbl IMultiLanguage3_vtbl =
 };
 
 /******************************************************************************/
+
+static inline MLang_impl *impl_from_IMLangFontLink2( IMLangFontLink2 *iface )
+{
+    return (MLang_impl *)CONTAINING_RECORD( iface, MLang_impl, vtbl_IMLangFontLink2 );
+}
+
 static HRESULT WINAPI fnIMLangFontLink2_QueryInterface(
     IMLangFontLink2 * iface,
     REFIID riid,
     void** ppvObject)
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangFontLink2, iface);
+    MLang_impl *This = impl_from_IMLangFontLink2( iface );
     return MLang_QueryInterface( This, riid, ppvObject );
 }
 
 static ULONG WINAPI fnIMLangFontLink2_AddRef( IMLangFontLink2* iface )
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangFontLink2, iface);
+    MLang_impl *This = impl_from_IMLangFontLink2( iface );
     return MLang_AddRef( This );
 }
 
 static ULONG WINAPI fnIMLangFontLink2_Release( IMLangFontLink2* iface )
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangFontLink2, iface);
+    MLang_impl *This = impl_from_IMLangFontLink2( iface );
     return MLang_Release( This );
 }
 
@@ -3238,26 +3289,31 @@ static const IMLangFontLink2Vtbl IMLangFontLink2_vtbl =
 
 /******************************************************************************/
 
+static inline MLang_impl *impl_from_IMLangLineBreakConsole( IMLangLineBreakConsole *iface )
+{
+    return (MLang_impl *)CONTAINING_RECORD( iface, MLang_impl, vtbl_IMLangLineBreakConsole );
+}
+
 static HRESULT WINAPI fnIMLangLineBreakConsole_QueryInterface(
     IMLangLineBreakConsole* iface,
     REFIID riid,
     void** ppvObject)
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangLineBreakConsole, iface);
+    MLang_impl *This = impl_from_IMLangLineBreakConsole( iface );
     return MLang_QueryInterface( This, riid, ppvObject );
 }
 
 static ULONG WINAPI fnIMLangLineBreakConsole_AddRef(
     IMLangLineBreakConsole* iface )
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangLineBreakConsole, iface);
+    MLang_impl *This = impl_from_IMLangLineBreakConsole( iface );
     return MLang_AddRef( This );
 }
 
 static ULONG WINAPI fnIMLangLineBreakConsole_Release(
     IMLangLineBreakConsole* iface )
 {
-    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangLineBreakConsole, iface);
+    MLang_impl *This = impl_from_IMLangLineBreakConsole( iface );
     return MLang_Release( This );
 }
 
