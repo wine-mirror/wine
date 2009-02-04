@@ -358,7 +358,7 @@ static nsresult NSAPI nsDocumentObserver_QueryInterface(nsIDocumentObserver *ifa
 
     if(IsEqualGUID(&IID_nsISupports, riid)) {
         TRACE("(%p)->(IID_nsISupports, %p)\n", This, result);
-        *result = NSWBCHROME(This);
+        *result = NSDOCOBS(This);
     }else if(IsEqualGUID(&IID_nsIMutationObserver, riid)) {
         TRACE("(%p)->(IID_nsIMutationObserver %p)\n", This, result);
         *result = NSDOCOBS(This);
