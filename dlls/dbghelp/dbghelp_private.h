@@ -29,6 +29,7 @@
 #include "objbase.h"
 #include "oaidl.h"
 #include "winnls.h"
+#include "wine/list.h"
 #include "wine/unicode.h"
 
 #include "cvconst.h"
@@ -37,13 +38,14 @@
 
 struct pool /* poor's man */
 {
-    struct pool_arena*  first;
-    unsigned            arena_size;
+    struct list arena_list;
+    struct list arena_full;
+    size_t      arena_size;
 };
 
-void     pool_init(struct pool* a, unsigned arena_size);
+void     pool_init(struct pool* a, size_t arena_size);
 void     pool_destroy(struct pool* a);
-void*    pool_alloc(struct pool* a, unsigned len);
+void*    pool_alloc(struct pool* a, size_t len);
 char*    pool_strdup(struct pool* a, const char* str);
 
 struct vector
