@@ -41,6 +41,7 @@
 static CHAR does_not_exist_dll[]= "does_not_exist.dll";
 static CHAR does_not_exist[]    = "does_not_exist";
 static CHAR empty[]             = "";
+static CHAR env_x64[]           = "Windows x64";
 static CHAR env_x86[]           = "Windows NT x86";
 static CHAR env_win9x_case[]    = "windowS 4.0";
 static CHAR illegal_name[]      = "illegal,name";
@@ -176,6 +177,7 @@ static struct monitor_entry * find_installed_monitor(void)
     static struct monitor_entry  monitor_table[] = {
         {env_win9x_case, "localspl.dll"},
         {env_x86,        "localspl.dll"},
+        {env_x64,        "localspl.dll"},
         {env_win9x_case, "localmon.dll"},
         {env_x86,        "localmon.dll"},
         {env_win9x_case, "tcpmon.dll"},
@@ -196,6 +198,7 @@ static struct monitor_entry * find_installed_monitor(void)
     num_tests = (sizeof(monitor_table)/sizeof(struct monitor_entry));
 
     /* cleanup */
+    DeleteMonitorA(NULL, env_x64, winetest);
     DeleteMonitorA(NULL, env_x86, winetest);
     DeleteMonitorA(NULL, env_win9x_case, winetest);
 
