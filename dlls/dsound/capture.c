@@ -1634,14 +1634,6 @@ static HRESULT DirectSoundCaptureDevice_Create(
     return DS_OK;
 }
 
-ULONG DirectSoundCaptureDevice_AddRef(
-    DirectSoundCaptureDevice * device)
-{
-    ULONG ref = InterlockedIncrement(&(device->ref));
-    TRACE("(%p) ref was %d\n", device, ref - 1);
-    return ref;
-}
-
 ULONG DirectSoundCaptureDevice_Release(
     DirectSoundCaptureDevice * device)
 {
