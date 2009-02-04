@@ -199,7 +199,6 @@ void ApplicationPage_OnEndTask(void);
 void ApplicationPage_OnGotoProcess(void);
 
 void RefreshApplicationPage(void);
-void UpdateApplicationListControlViewSetting(void);
 void RefreshPerformancePage(void);
 void RefreshProcessPage(void);
 

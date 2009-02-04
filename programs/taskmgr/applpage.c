@@ -500,136 +500,6 @@ static void ApplicationPageOnNotify(WPARAM wParam, LPARAM lParam)
 
 }
 
-INT_PTR CALLBACK
-ApplicationPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    RECT        rc;
-    int         nXDifference;
-    int         nYDifference;
-    int         cx, cy;
-    LVCOLUMNW   column;
-
-    static const WCHAR wszTasks[] = {'T','a','s','k','s',0};
-    static WCHAR wszTask[] = {'T','a','s','k',0};
-    static WCHAR wszStatus[] = {'S','t','a','t','u','s',0};
-
-    switch (message) {
-    case WM_INITDIALOG:
-
-        /* Save the width and height */
-        GetClientRect(hDlg, &rc);
-        nApplicationPageWidth = rc.right;
-        nApplicationPageHeight = rc.bottom;
-
-        /* Update window position */
-        SetWindowPos(hDlg, NULL, 15, 30, 0, 0, SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOSIZE|SWP_NOZORDER);
-
-        /* Get handles to the controls */
-        hApplicationPageListCtrl = GetDlgItem(hDlg, IDC_APPLIST);
-        hApplicationPageEndTaskButton = GetDlgItem(hDlg, IDC_ENDTASK);
-        hApplicationPageSwitchToButton = GetDlgItem(hDlg, IDC_SWITCHTO);
-        hApplicationPageNewTaskButton = GetDlgItem(hDlg, IDC_NEWTASK);
-
-        SetWindowTextW(hApplicationPageListCtrl, wszTasks);
-
-        /* Initialize the application page's controls */
-        column.mask = LVCF_TEXT|LVCF_WIDTH;
-        column.pszText = wszTask;
-        column.cx = 250;
-        /* Add the "Task" column */
-        SendMessageW(hApplicationPageListCtrl, LVM_INSERTCOLUMNW, 0, (LPARAM) &column);
-        column.mask = LVCF_TEXT|LVCF_WIDTH;
-        column.pszText = wszStatus;
-        column.cx = 95;
-        /* Add the "Status" column */
-        SendMessageW(hApplicationPageListCtrl, LVM_INSERTCOLUMNW, 1, (LPARAM) &column);
-
-        SendMessageW(hApplicationPageListCtrl, LVM_SETIMAGELIST, LVSIL_SMALL,
-                    (LPARAM) ImageList_Create(16, 16, ILC_COLOR8|ILC_MASK, 0, 1));
-        SendMessageW(hApplicationPageListCtrl, LVM_SETIMAGELIST, LVSIL_NORMAL,
-                    (LPARAM) ImageList_Create(32, 32, ILC_COLOR8|ILC_MASK, 0, 1));
-
-        UpdateApplicationListControlViewSetting();
-
-        /* Start our refresh thread */
-        CreateThread(NULL, 0, ApplicationPageRefreshThread, NULL, 0, NULL);
-
-        return TRUE;
-
-    case WM_DESTROY:
-        /* Close the event handle, this will make the */
-        /* refresh thread exit when the wait fails */
-        CloseHandle(hApplicationPageEvent);
-        break;
-
-    case WM_COMMAND:
-
-        /* Handle the button clicks */
-        switch (LOWORD(wParam))
-        {
-        case IDC_ENDTASK:
-            ApplicationPage_OnEndTask();
-            break;
-        case IDC_SWITCHTO:
-            ApplicationPage_OnSwitchTo();
-            break;
-        case IDC_NEWTASK:
-            SendMessageW(hMainWnd, WM_COMMAND, MAKEWPARAM(ID_FILE_NEW, 0), 0);
-            break;
-        }
-
-        break;
-
-    case WM_SIZE:
-        if (wParam == SIZE_MINIMIZED)
-            return 0;
-
-        cx = LOWORD(lParam);
-        cy = HIWORD(lParam);
-        nXDifference = cx - nApplicationPageWidth;
-        nYDifference = cy - nApplicationPageHeight;
-        nApplicationPageWidth = cx;
-        nApplicationPageHeight = cy;
-
-        /* Reposition the application page's controls */
-        GetWindowRect(hApplicationPageListCtrl, &rc);
-        cx = (rc.right - rc.left) + nXDifference;
-        cy = (rc.bottom - rc.top) + nYDifference;
-        SetWindowPos(hApplicationPageListCtrl, NULL, 0, 0, cx, cy, SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOMOVE|SWP_NOZORDER);
-        InvalidateRect(hApplicationPageListCtrl, NULL, TRUE);
-        
-        GetClientRect(hApplicationPageEndTaskButton, &rc);
-        MapWindowPoints(hApplicationPageEndTaskButton, hDlg, (LPPOINT)(&rc), (sizeof(RECT)/sizeof(POINT)) );
-        cx = rc.left + nXDifference;
-        cy = rc.top + nYDifference;
-        SetWindowPos(hApplicationPageEndTaskButton, NULL, cx, cy, 0, 0, SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOSIZE|SWP_NOZORDER);
-        InvalidateRect(hApplicationPageEndTaskButton, NULL, TRUE);
-        
-        GetClientRect(hApplicationPageSwitchToButton, &rc);
-        MapWindowPoints(hApplicationPageSwitchToButton, hDlg, (LPPOINT)(&rc), (sizeof(RECT)/sizeof(POINT)) );
-        cx = rc.left + nXDifference;
-        cy = rc.top + nYDifference;
-        SetWindowPos(hApplicationPageSwitchToButton, NULL, cx, cy, 0, 0, SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOSIZE|SWP_NOZORDER);
-        InvalidateRect(hApplicationPageSwitchToButton, NULL, TRUE);
-        
-        GetClientRect(hApplicationPageNewTaskButton, &rc);
-        MapWindowPoints(hApplicationPageNewTaskButton, hDlg, (LPPOINT)(&rc), (sizeof(RECT)/sizeof(POINT)) );
-        cx = rc.left + nXDifference;
-        cy = rc.top + nYDifference;
-        SetWindowPos(hApplicationPageNewTaskButton, NULL, cx, cy, 0, 0, SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOSIZE|SWP_NOZORDER);
-        InvalidateRect(hApplicationPageNewTaskButton, NULL, TRUE);
-
-        break;
-
-    case WM_NOTIFY:
-        ApplicationPageOnNotify(wParam, lParam);
-        break;
-        
-    }
-
-  return 0;
-}
-
 void RefreshApplicationPage(void)
 {
     /* Signal the event so that our refresh thread */
@@ -956,4 +826,134 @@ void ApplicationPage_OnGotoProcess(void)
         for (i=0; i<ListView_GetItemCount(hProcessPage); i++) {
         }
     }
+}
+
+INT_PTR CALLBACK
+ApplicationPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    RECT        rc;
+    int         nXDifference;
+    int         nYDifference;
+    int         cx, cy;
+    LVCOLUMNW   column;
+
+    static const WCHAR wszTasks[] = {'T','a','s','k','s',0};
+    static WCHAR wszTask[] = {'T','a','s','k',0};
+    static WCHAR wszStatus[] = {'S','t','a','t','u','s',0};
+
+    switch (message) {
+    case WM_INITDIALOG:
+
+        /* Save the width and height */
+        GetClientRect(hDlg, &rc);
+        nApplicationPageWidth = rc.right;
+        nApplicationPageHeight = rc.bottom;
+
+        /* Update window position */
+        SetWindowPos(hDlg, NULL, 15, 30, 0, 0, SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOSIZE|SWP_NOZORDER);
+
+        /* Get handles to the controls */
+        hApplicationPageListCtrl = GetDlgItem(hDlg, IDC_APPLIST);
+        hApplicationPageEndTaskButton = GetDlgItem(hDlg, IDC_ENDTASK);
+        hApplicationPageSwitchToButton = GetDlgItem(hDlg, IDC_SWITCHTO);
+        hApplicationPageNewTaskButton = GetDlgItem(hDlg, IDC_NEWTASK);
+
+        SetWindowTextW(hApplicationPageListCtrl, wszTasks);
+
+        /* Initialize the application page's controls */
+        column.mask = LVCF_TEXT|LVCF_WIDTH;
+        column.pszText = wszTask;
+        column.cx = 250;
+        /* Add the "Task" column */
+        SendMessageW(hApplicationPageListCtrl, LVM_INSERTCOLUMNW, 0, (LPARAM) &column);
+        column.mask = LVCF_TEXT|LVCF_WIDTH;
+        column.pszText = wszStatus;
+        column.cx = 95;
+        /* Add the "Status" column */
+        SendMessageW(hApplicationPageListCtrl, LVM_INSERTCOLUMNW, 1, (LPARAM) &column);
+
+        SendMessageW(hApplicationPageListCtrl, LVM_SETIMAGELIST, LVSIL_SMALL,
+                    (LPARAM) ImageList_Create(16, 16, ILC_COLOR8|ILC_MASK, 0, 1));
+        SendMessageW(hApplicationPageListCtrl, LVM_SETIMAGELIST, LVSIL_NORMAL,
+                    (LPARAM) ImageList_Create(32, 32, ILC_COLOR8|ILC_MASK, 0, 1));
+
+        UpdateApplicationListControlViewSetting();
+
+        /* Start our refresh thread */
+        CreateThread(NULL, 0, ApplicationPageRefreshThread, NULL, 0, NULL);
+
+        return TRUE;
+
+    case WM_DESTROY:
+        /* Close the event handle, this will make the */
+        /* refresh thread exit when the wait fails */
+        CloseHandle(hApplicationPageEvent);
+        break;
+
+    case WM_COMMAND:
+
+        /* Handle the button clicks */
+        switch (LOWORD(wParam))
+        {
+        case IDC_ENDTASK:
+            ApplicationPage_OnEndTask();
+            break;
+        case IDC_SWITCHTO:
+            ApplicationPage_OnSwitchTo();
+            break;
+        case IDC_NEWTASK:
+            SendMessageW(hMainWnd, WM_COMMAND, MAKEWPARAM(ID_FILE_NEW, 0), 0);
+            break;
+        }
+
+        break;
+
+    case WM_SIZE:
+        if (wParam == SIZE_MINIMIZED)
+            return 0;
+
+        cx = LOWORD(lParam);
+        cy = HIWORD(lParam);
+        nXDifference = cx - nApplicationPageWidth;
+        nYDifference = cy - nApplicationPageHeight;
+        nApplicationPageWidth = cx;
+        nApplicationPageHeight = cy;
+
+        /* Reposition the application page's controls */
+        GetWindowRect(hApplicationPageListCtrl, &rc);
+        cx = (rc.right - rc.left) + nXDifference;
+        cy = (rc.bottom - rc.top) + nYDifference;
+        SetWindowPos(hApplicationPageListCtrl, NULL, 0, 0, cx, cy, SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOMOVE|SWP_NOZORDER);
+        InvalidateRect(hApplicationPageListCtrl, NULL, TRUE);
+
+        GetClientRect(hApplicationPageEndTaskButton, &rc);
+        MapWindowPoints(hApplicationPageEndTaskButton, hDlg, (LPPOINT)(&rc), (sizeof(RECT)/sizeof(POINT)) );
+        cx = rc.left + nXDifference;
+        cy = rc.top + nYDifference;
+        SetWindowPos(hApplicationPageEndTaskButton, NULL, cx, cy, 0, 0, SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOSIZE|SWP_NOZORDER);
+        InvalidateRect(hApplicationPageEndTaskButton, NULL, TRUE);
+
+        GetClientRect(hApplicationPageSwitchToButton, &rc);
+        MapWindowPoints(hApplicationPageSwitchToButton, hDlg, (LPPOINT)(&rc), (sizeof(RECT)/sizeof(POINT)) );
+        cx = rc.left + nXDifference;
+        cy = rc.top + nYDifference;
+        SetWindowPos(hApplicationPageSwitchToButton, NULL, cx, cy, 0, 0, SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOSIZE|SWP_NOZORDER);
+        InvalidateRect(hApplicationPageSwitchToButton, NULL, TRUE);
+
+        GetClientRect(hApplicationPageNewTaskButton, &rc);
+        MapWindowPoints(hApplicationPageNewTaskButton, hDlg, (LPPOINT)(&rc), (sizeof(RECT)/sizeof(POINT)) );
+        cx = rc.left + nXDifference;
+        cy = rc.top + nYDifference;
+        SetWindowPos(hApplicationPageNewTaskButton, NULL, cx, cy, 0, 0, SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOSIZE|SWP_NOZORDER);
+        InvalidateRect(hApplicationPageNewTaskButton, NULL, TRUE);
+
+        break;
+
+    case WM_NOTIFY:
+        ApplicationPageOnNotify(wParam, lParam);
+        break;
+
+    }
+
+  return 0;
 }
