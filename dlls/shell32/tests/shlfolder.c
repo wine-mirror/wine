@@ -96,7 +96,7 @@ static void test_ParseDisplayName(void)
     hr = IShellFolder_ParseDisplayName(IDesktopFolder,
         NULL, NULL, cTestDirW, NULL, &newPIDL, 0);
     todo_wine ok((SUCCEEDED(hr) || broken(hr == E_FAIL) /* NT4 */),
-        "ParseDisplayName returned %08x, expected SUCCESS or E_FAIL \n", hr);
+        "ParseDisplayName returned %08x, expected SUCCESS or E_FAIL\n", hr);
     if (SUCCEEDED(hr))
     {
         ok(pILFindLastID(newPIDL)->mkid.abID[0] == 0x61, "Last pidl should be of type "
@@ -108,7 +108,7 @@ static void test_ParseDisplayName(void)
     hr = IShellFolder_ParseDisplayName(IDesktopFolder,
         NULL, NULL, cTestDirW, NULL, &newPIDL, 0);
     todo_wine ok((SUCCEEDED(hr) || broken(hr == E_FAIL) /* NT4 */),
-        "ParseDisplayName returned %08x, expected SUCCESS or E_FAIL \n", hr);
+        "ParseDisplayName returned %08x, expected SUCCESS or E_FAIL\n", hr);
     if (SUCCEEDED(hr))
     {
         ok(pILFindLastID(newPIDL)->mkid.abID[0] == 0x61, "Last pidl should be of type "
