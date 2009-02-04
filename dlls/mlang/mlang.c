@@ -799,22 +799,30 @@ static UINT ConvertUnknownJapaneseToUnicode(LPCSTR input, DWORD count,
     int code = DetectJapaneseCode(input,count);
     TRACE("Japanese code %i\n",code);
 
-    if (code == 932)
+    switch (code)
     {
+    case 0:
+        if (output)
+            rc = MultiByteToWideChar(CP_ACP,0,input,count,output,out_count);
+        else
+            rc = MultiByteToWideChar(CP_ACP,0,input,count,0,0);
+        break;
+
+    case 932:
         if (output)
             rc = MultiByteToWideChar(932,0,input,count,output,out_count);
         else
             rc = MultiByteToWideChar(932,0,input,count,0,0);
-    }
-    else if (code == 51932)
-    {
+        break;
+
+    case 51932:
         if (output)
             rc = MultiByteToWideChar(20932,0,input,count,output,out_count);
         else
             rc = MultiByteToWideChar(20932,0,input,count,0,0);
-    }
-    else if (code == 50220)
-    {
+        break;
+
+    case 50220:
         sjis_string = HeapAlloc(GetProcessHeap(),0,count);
         rc = ConvertJIS2SJIS(input,count,sjis_string);
         if (rc)
@@ -826,6 +834,7 @@ static UINT ConvertUnknownJapaneseToUnicode(LPCSTR input, DWORD count,
                 rc = MultiByteToWideChar(932,0,sjis_string,rc,0,0);
         }
         HeapFree(GetProcessHeap(),0,sjis_string);
+        break;
     }
     return rc;
 }
