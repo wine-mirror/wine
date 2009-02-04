@@ -263,15 +263,6 @@ void X11DRV_XF86VM_Cleanup(void)
   wine_tsx11_unlock();
 }
 
-void X11DRV_XF86VM_SetExclusiveMode(int lock)
-{
-  if (!dd_modes) return; /* no XVidMode */
-
-  wine_tsx11_lock();
-  pXF86VidModeLockModeSwitch(gdi_display, DefaultScreen(gdi_display), lock);
-  wine_tsx11_unlock();
-}
-
 /***** GAMMA CONTROL *****/
 /* (only available in XF86VidMode 2.x) */
 
