@@ -2431,6 +2431,82 @@ static void test_default_style(IHTMLStyle *style)
     ok(hres == S_OK, "get_fontWeight failed: %08x\n", hres);
     ok(!str, "fontWeight = %s\n", dbgstr_w(str));
 
+    hres = IHTMLStyle_get_fontWeight(style, &sDefault);
+    ok(hres == S_OK, "get_fontWeight failed: %08x\n", hres);
+
+    str = a2bstr("test");
+    hres = IHTMLStyle_put_fontWeight(style, str);
+    ok(hres == E_INVALIDARG, "put_fontWeight failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("bold");
+    hres = IHTMLStyle_put_fontWeight(style, str);
+    ok(hres == S_OK, "put_fontWeight failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("bolder");
+    hres = IHTMLStyle_put_fontWeight(style, str);
+    ok(hres == S_OK, "put_fontWeight failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("lighter");
+    hres = IHTMLStyle_put_fontWeight(style, str);
+    ok(hres == S_OK, "put_fontWeight failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("100");
+    hres = IHTMLStyle_put_fontWeight(style, str);
+    ok(hres == S_OK, "put_fontWeight failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("200");
+    hres = IHTMLStyle_put_fontWeight(style, str);
+    ok(hres == S_OK, "put_fontWeight failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("300");
+    hres = IHTMLStyle_put_fontWeight(style, str);
+    ok(hres == S_OK, "put_fontWeight failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("400");
+    hres = IHTMLStyle_put_fontWeight(style, str);
+    ok(hres == S_OK, "put_fontWeight failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("500");
+    hres = IHTMLStyle_put_fontWeight(style, str);
+    ok(hres == S_OK, "put_fontWeight failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("600");
+    hres = IHTMLStyle_put_fontWeight(style, str);
+    ok(hres == S_OK, "put_fontWeight failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("700");
+    hres = IHTMLStyle_put_fontWeight(style, str);
+    ok(hres == S_OK, "put_fontWeight failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("800");
+    hres = IHTMLStyle_put_fontWeight(style, str);
+    ok(hres == S_OK, "put_fontWeight failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("900");
+    hres = IHTMLStyle_put_fontWeight(style, str);
+    ok(hres == S_OK, "put_fontWeight failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle_get_fontWeight(style, &str);
+    ok(hres == S_OK, "get_fontWeight failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "900"), "str != style900\n");
+    SysFreeString(str);
+
+    hres = IHTMLStyle_put_fontWeight(style, sDefault);
+    ok(hres == S_OK, "put_fontWeight failed: %08x\n", hres);
+
     /* font Variant */
     hres = IHTMLStyle_get_fontVariant(style, NULL);
     ok(hres == E_INVALIDARG, "get_fontVariant failed: %08x\n", hres);

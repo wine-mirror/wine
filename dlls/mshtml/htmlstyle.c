@@ -618,8 +618,35 @@ static HRESULT WINAPI HTMLStyle_get_fontVariant(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_fontWeight(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    static const WCHAR styleBold[] = {'b','o','l','d',0};
+    static const WCHAR styleBolder[] = {'b','o','l','d','e','r',0};
+    static const WCHAR styleLighter[]  = {'l','i','g','h','t','e','r',0};
+    static const WCHAR style100[] = {'1','0','0',0};
+    static const WCHAR style200[] = {'2','0','0',0};
+    static const WCHAR style300[] = {'3','0','0',0};
+    static const WCHAR style400[] = {'4','0','0',0};
+    static const WCHAR style500[] = {'5','0','0',0};
+    static const WCHAR style600[] = {'6','0','0',0};
+    static const WCHAR style700[] = {'7','0','0',0};
+    static const WCHAR style800[] = {'8','0','0',0};
+    static const WCHAR style900[] = {'9','0','0',0};
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    /* fontWeight can only be one of the following */
+    if(!v || strcmpiW(szNormal, v) == 0    || strcmpiW(styleBold, v) == 0    ||
+             strcmpiW(styleBolder, v) == 0 || strcmpiW(styleLighter, v) == 0 ||
+             strcmpiW(style100, v) == 0    || strcmpiW(style200, v) == 0     ||
+             strcmpiW(style300, v) == 0    || strcmpiW(style400, v) == 0     ||
+             strcmpiW(style500, v) == 0    || strcmpiW(style600, v) == 0     ||
+             strcmpiW(style700, v) == 0    || strcmpiW(style800, v) == 0     ||
+             strcmpiW(style900, v) == 0
+             )
+    {
+        return set_nsstyle_attr(This->nsstyle, STYLEID_FONT_WEIGHT, v, 0);
+    }
+
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI HTMLStyle_get_fontWeight(IHTMLStyle *iface, BSTR *p)
