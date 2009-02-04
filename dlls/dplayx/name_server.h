@@ -29,7 +29,6 @@
 #include "dplay_global.h"
 
 void NS_SetLocalComputerAsNameServer( LPCDPSESSIONDESC2 lpsd, LPVOID lpNSInfo );
-void NS_SetRemoteComputerAsNameServer( LPCDPSESSIONDESC2 lpsd, LPVOID lpNSInfo );
 void NS_AddRemoteComputerAsNameServer( LPCVOID lpNSAddrHdr,
                                        DWORD dwHdrSize,
                                        LPCDPMSG_ENUMSESSIONSREPLY lpcMsg,

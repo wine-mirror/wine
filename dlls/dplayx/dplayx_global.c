@@ -450,33 +450,6 @@ BOOL DPLAYX_CreateLobbyApplication( DWORD dwAppID )
   return FALSE;
 }
 
-/* I'm not sure when I'm going to need this, but here it is */
-BOOL DPLAYX_DestroyLobbyApplication( DWORD dwAppID )
-{
-  UINT i;
-
-  DPLAYX_AcquireSemaphore();
-
-  /* Find an empty space in the list and insert the data */
-  for( i=0; i < numSupportedLobbies; i++ )
-  {
-    if( lobbyData[ i ].dwAppID == dwAppID )
-    {
-      /* FIXME: Should free up anything unused. Tisk tisk :0 */
-      /* Mark this entry unused */
-      TRACE( "Marking lobbyData[%u] unused\n", i );
-      DPLAYX_InitializeLobbyDataEntry( &lobbyData[ i ] );
-
-      DPLAYX_ReleaseSemaphore();
-      return TRUE;
-    }
-  }
-
-  DPLAYX_ReleaseSemaphore();
-  ERR( "Unable to find global entry for application\n" );
-  return FALSE;
-}
-
 BOOL DPLAYX_SetLobbyHandles( DWORD dwAppID,
                              HANDLE hStart, HANDLE hDeath, HANDLE hConnRead )
 {

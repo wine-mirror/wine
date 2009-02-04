@@ -83,13 +83,6 @@ void NS_SetLocalComputerAsNameServer( LPCDPSESSIONDESC2 lpsd, LPVOID lpNSInfo )
   lpCache->bNsIsLocal = TRUE;
 }
 
-void NS_SetRemoteComputerAsNameServer( LPCDPSESSIONDESC2 lpsd, LPVOID lpNSInfo )
-{
-  lpNSCache lpCache = (lpNSCache)lpNSInfo;
-
-  lpCache->bNsIsLocal = FALSE;
-}
-
 static DPQ_DECL_COMPARECB( cbUglyPig, GUID )
 {
   return IsEqualGUID( elem1, elem2 );
