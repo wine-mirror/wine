@@ -307,12 +307,4 @@ void X11DRV_XRandR_Init(void)
     TRACE("Enabling XRandR\n");
 }
 
-void X11DRV_XRandR_Cleanup(void)
-{
-    HeapFree(GetProcessHeap(), 0, real_xrandr_rates);
-    real_xrandr_rates = NULL;
-    HeapFree(GetProcessHeap(), 0, real_xrandr_rates_count);
-    real_xrandr_rates_count = NULL;
-}
-
 #endif /* SONAME_LIBXRANDR */
