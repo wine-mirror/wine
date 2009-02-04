@@ -56,9 +56,7 @@ typedef struct tagHANDLETABLE
     CRITICAL_SECTION mutex;
 } HANDLETABLE;
 
-int  alloc_handle_table  (HANDLETABLE **lplpTable);
 void init_handle_table   (HANDLETABLE *lpTable);
-int  release_handle_table(HANDLETABLE *lpTable);
 void destroy_handle_table(HANDLETABLE *lpTable);
 int  release_handle      (HANDLETABLE *lpTable, HCRYPTKEY handle, DWORD dwType);
 int  copy_handle         (HANDLETABLE *lpTable, HCRYPTKEY handle, DWORD dwType, HCRYPTKEY *copy);

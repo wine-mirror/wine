@@ -44,10 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(handle);
  *  lpTable [I] Pointer to the HANDLETABLE structure, which is to be initalized.
  *
  * NOTES
- *  Note that alloc_handle_table calls init_handle_table on it's own, which 
- *  means that you only have to call init_handle_table, if you use a global
- *  variable of type HANDLETABLE for your handle table. However, in this
- *  case you have to call destroy_handle_table when you don't need the table
+ *  You have to call destroy_handle_table when you don't need the table
  *  any more.
  */
 void init_handle_table(HANDLETABLE *lpTable)
@@ -68,9 +65,6 @@ void init_handle_table(HANDLETABLE *lpTable)
  * 
  * PARAMS
  *  lpTable [I] Pointer to the handle table, which is to be destroyed.
- *
- * NOTES
- *  Note that release_handle_table takes care of this.
  */
 void destroy_handle_table(HANDLETABLE *lpTable)
 {
@@ -121,82 +115,6 @@ int is_valid_handle(HANDLETABLE *lpTable, HCRYPTKEY handle, DWORD dwType)
 exit:
     LeaveCriticalSection(&lpTable->mutex);
     return ret;
-}
-
-/******************************************************************************
- *  release_all_handles
- *
- * Releases all valid handles in the given handle table and shrinks the table
- * to zero size.
- *
- * PARAMS
- *  lpTable [I] The table of which all valid handles shall be released.
- */
-static void release_all_handles(HANDLETABLE *lpTable)
-{
-    unsigned int i;
-
-    TRACE("(lpTable=%p)\n", lpTable);
-
-    EnterCriticalSection(&lpTable->mutex);
-    for (i=0; i<lpTable->iEntries; i++)
-        if (lpTable->paEntries[i].pObject)
-            release_handle(lpTable, lpTable->paEntries[i].pObject->dwType, INDEX2HANDLE(i));
-    LeaveCriticalSection(&lpTable->mutex);
-}
-
-/******************************************************************************
- *  alloc_handle_table
- *
- * Allocates a new handle table
- * 
- * PARAMS
- *  lplpTable [O] Pointer to the variable, to which the pointer to the newly
- *                allocated handle table is written.
- * RETURNS
- *  non zero,  if successful
- *  zero,      if not successful (out of process heap memory)
- *
- * NOTES
- *  If all you need is a single handle table, you may as well declare a global 
- *  variable of type HANDLETABLE and call init_handle_table on your own. 
- */
-int alloc_handle_table(HANDLETABLE **lplpTable)
-{
-    TRACE("(lplpTable=%p)\n", lplpTable);
-        
-    *lplpTable = HeapAlloc(GetProcessHeap(), 0, sizeof(HANDLETABLE));
-    if (*lplpTable) 
-    {
-        init_handle_table(*lplpTable);
-        return 1;
-    }
-    else
-        return 0;
-}
-
-/******************************************************************************
- *  release_handle_table
- *
- * Releases a handle table and frees the resources it used.
- *
- * PARAMS
- *  lpTable [I] Pointer to the handle table, which is to be released.
- *
- * RETURNS
- *  non zero,  if successful
- *  zero,      if not successful
- *
- * NOTES
- *   All valid handles still in the table are released also.
- */
-int release_handle_table(HANDLETABLE *lpTable) 
-{
-    TRACE("(lpTable=%p)\n", lpTable);
-
-    release_all_handles(lpTable);
-    destroy_handle_table(lpTable);
-    return HeapFree(GetProcessHeap(), 0, lpTable);
 }
 
 /******************************************************************************
