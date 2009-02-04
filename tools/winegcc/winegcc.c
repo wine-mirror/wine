@@ -202,6 +202,7 @@ struct options
     int gui_app;
     int unicode_app;
     int compile_only;
+    int force_pointer_size;
     const char* wine_objdir;
     const char* output_name;
     const char* image_base;
@@ -643,6 +644,8 @@ static void build(struct options* opts)
         strarray_add(spec_args, "--target");
         strarray_add(spec_args, opts->target);
     }
+    if (opts->force_pointer_size)
+        strarray_add(spec_args, strmake("-m%u", 8 * opts->force_pointer_size ));
     strarray_add(spec_args, "--as-cmd");
     strarray_add(spec_args, AS);
     strarray_add(spec_args, "--ld-cmd");
@@ -1064,8 +1067,16 @@ int main(int argc, char **argv)
 			opts.gui_app = 0;
 		    else if (strcmp("-municode", argv[i]) == 0)
 			opts.unicode_app = 1;
-		    else if (strcmp("-m32", argv[i]) == 0 || strcmp("-m64", argv[i]) == 0)
+		    else if (strcmp("-m32", argv[i]) == 0)
+                    {
+                        opts.force_pointer_size = 4;
 			raw_linker_arg = 1;
+                    }
+		    else if (strcmp("-m64", argv[i]) == 0)
+                    {
+                        opts.force_pointer_size = 8;
+			raw_linker_arg = 1;
+                    }
 		    break;
                 case 'n':
                     if (strcmp("-nostdinc", argv[i]) == 0)
