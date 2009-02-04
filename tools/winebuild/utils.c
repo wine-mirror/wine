@@ -193,6 +193,59 @@ int output( const char *format, ... )
     return ret;
 }
 
+/* find a build tool in the path, trying the various names */
+char *find_tool( const char * const *names )
+{
+    static char **dirs;
+    static unsigned int count, maxlen;
+
+    char *p, *file;
+    unsigned int i, len;
+    struct stat st;
+
+    if (!dirs)
+    {
+        char *path;
+
+        /* split the path in directories */
+
+        if (!getenv( "PATH" )) return NULL;
+        path = xstrdup( getenv( "PATH" ));
+        for (p = path, count = 2; *p; p++) if (*p == ':') count++;
+        dirs = xmalloc( count * sizeof(*dirs) );
+        count = 0;
+        dirs[count++] = p = path;
+        while (*p)
+        {
+            while (*p && *p != ':') p++;
+            if (!*p) break;
+            *p++ = 0;
+            dirs[count++] = p;
+        }
+        for (i = 0; i < count; i++) maxlen = max( maxlen, strlen(dirs[i])+2 );
+    }
+
+    while (*names)
+    {
+        len = strlen(*names) + 1;
+        file = xmalloc( maxlen + len );
+
+        for (i = 0; i < count; i++)
+        {
+            strcpy( file, dirs[i] );
+            p = file + strlen(file);
+            if (p == file) *p++ = '.';
+            if (p[-1] != '/') *p++ = '/';
+            strcpy( p, *names );
+
+            if (!stat( file, &st ) && S_ISREG(st.st_mode) && (st.st_mode & 0111)) return file;
+        }
+        free( file );
+        names++;
+    }
+    return NULL;
+}
+
 const char *get_as_command(void)
 {
     if (!as_command)
@@ -205,7 +258,8 @@ const char *get_as_command(void)
         }
         else
         {
-            as_command = xstrdup( "as" );
+            static const char * const commands[] = { "gas", "as", NULL };
+            if (!(as_command = find_tool( commands ))) as_command = xstrdup("as");
         }
 
         if (force_pointer_size)
@@ -230,7 +284,8 @@ const char *get_ld_command(void)
         }
         else
         {
-            ld_command = xstrdup( "ld" );
+            static const char * const commands[] = { "ld", "gld", NULL };
+            if (!(ld_command = find_tool( commands ))) ld_command = xstrdup("ld");
         }
 
         if (force_pointer_size)
@@ -255,7 +310,8 @@ const char *get_nm_command(void)
         }
         else
         {
-            nm_command = xstrdup( "nm" );
+            static const char * const commands[] = { "nm", "gnm", NULL };
+            if (!(nm_command = find_tool( commands ))) nm_command = xstrdup("nm");
         }
     }
     return nm_command;
