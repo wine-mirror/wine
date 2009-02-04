@@ -383,10 +383,12 @@ static HRESULT WINAPI InstallCallback_OnDataAvailable(IBindStatusCallback *iface
     HRESULT hres;
 
     do {
+        DWORD written;
+
         size = 0;
         hres = IStream_Read(str, buf, sizeof(buf), &size);
         if(size)
-            WriteFile(tmp_file, buf, size, NULL, NULL);
+            WriteFile(tmp_file, buf, size, &written, NULL);
     }while(hres == S_OK);
 
     return S_OK;
