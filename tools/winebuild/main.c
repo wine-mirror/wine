@@ -74,6 +74,7 @@ enum target_platform target_platform = PLATFORM_WINDOWS;
 enum target_platform target_platform = PLATFORM_UNSPECIFIED;
 #endif
 
+char *target_alias = NULL;
 char **lib_path = NULL;
 
 char *input_file_name = NULL;
@@ -162,6 +163,8 @@ static void set_target( const char *target )
 
     /* target specification is in the form CPU-MANUFACTURER-OS or CPU-MANUFACTURER-KERNEL-OS */
 
+    target_alias = xstrdup( target );
+
     /* get the CPU part */
 
     if (!(p = strchr( spec, '-' ))) fatal_error( "Invalid target specification '%s'\n", target );
@@ -184,25 +187,6 @@ static void set_target( const char *target )
     }
 
     free( spec );
-
-    if (!as_command)
-    {
-        as_command = xmalloc( strlen(target) + sizeof("-as") );
-        strcpy( as_command, target );
-        strcat( as_command, "-as" );
-    }
-    if (!ld_command)
-    {
-        ld_command = xmalloc( strlen(target) + sizeof("-ld") );
-        strcpy( ld_command, target );
-        strcat( ld_command, "-ld" );
-    }
-    if (!nm_command)
-    {
-        nm_command = xmalloc( strlen(target) + sizeof("-nm") );
-        strcpy( nm_command, target );
-        strcat( nm_command, "-nm" );
-    }
 }
 
 /* cleanup on program exit */

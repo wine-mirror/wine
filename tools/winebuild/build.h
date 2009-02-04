@@ -119,6 +119,7 @@ enum target_platform
     PLATFORM_UNSPECIFIED, PLATFORM_APPLE, PLATFORM_SOLARIS, PLATFORM_WINDOWS
 };
 
+extern char *target_alias;
 extern enum target_cpu target_cpu;
 extern enum target_platform target_platform;
 
@@ -168,6 +169,9 @@ extern void warning( const char *msg, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
 extern int output( const char *format, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
+extern const char *get_as_command(void);
+extern const char *get_ld_command(void);
+extern const char *get_nm_command(void);
 extern char *get_temp_file_name( const char *prefix, const char *suffix );
 extern void output_standard_file_header(void);
 extern FILE *open_input_file( const char *srcdir, const char *name );

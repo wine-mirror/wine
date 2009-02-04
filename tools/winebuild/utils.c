@@ -193,6 +193,60 @@ int output( const char *format, ... )
     return ret;
 }
 
+const char *get_as_command(void)
+{
+    if (!as_command)
+    {
+        if (target_alias)
+        {
+            as_command = xmalloc( strlen(target_alias) + sizeof("-as") );
+            strcpy( as_command, target_alias );
+            strcat( as_command, "-as" );
+        }
+        else
+        {
+            as_command = xstrdup( "as" );
+        }
+    }
+    return as_command;
+}
+
+const char *get_ld_command(void)
+{
+    if (!ld_command)
+    {
+        if (target_alias)
+        {
+            ld_command = xmalloc( strlen(target_alias) + sizeof("-ld") );
+            strcpy( ld_command, target_alias );
+            strcat( ld_command, "-ld" );
+        }
+        else
+        {
+            ld_command = xstrdup( "ld" );
+        }
+    }
+    return ld_command;
+}
+
+const char *get_nm_command(void)
+{
+    if (!nm_command)
+    {
+        if (target_alias)
+        {
+            nm_command = xmalloc( strlen(target_alias) + sizeof("-nm") );
+            strcpy( nm_command, target_alias );
+            strcat( nm_command, "-nm" );
+        }
+        else
+        {
+            nm_command = xstrdup( "nm" );
+        }
+    }
+    return nm_command;
+}
+
 /* get a name for a temp file, automatically cleaned up on exit */
 char *get_temp_file_name( const char *prefix, const char *suffix )
 {
@@ -315,15 +369,15 @@ int remove_stdcall_decoration( char *name )
  */
 void assemble_file( const char *src_file, const char *obj_file )
 {
+    const char *prog = get_as_command();
     char *cmd;
     int err;
 
-    if (!as_command) as_command = xstrdup("as");
-    cmd = xmalloc( strlen(as_command) + strlen(obj_file) + strlen(src_file) + 6 );
-    sprintf( cmd, "%s -o %s %s", as_command, obj_file, src_file );
+    cmd = xmalloc( strlen(prog) + strlen(obj_file) + strlen(src_file) + 6 );
+    sprintf( cmd, "%s -o %s %s", prog, obj_file, src_file );
     if (verbose) fprintf( stderr, "%s\n", cmd );
     err = system( cmd );
-    if (err) fatal_error( "%s failed with status %d\n", as_command, err );
+    if (err) fatal_error( "%s failed with status %d\n", prog, err );
     free( cmd );
 }
 
