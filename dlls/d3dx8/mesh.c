@@ -97,6 +97,37 @@ done we've got an intersection of the ray with the box.
     return TRUE;
 }
 
+HRESULT WINAPI D3DXComputeBoundingSphere(PVOID ppointsFVF, DWORD numvertices, DWORD FVF, D3DXVECTOR3 *pcenter, FLOAT *pradius)
+{
+    D3DXVECTOR3 temp, temp1;
+    FLOAT d;
+    unsigned int i;
+
+    if( !ppointsFVF || !pcenter || !pradius ) return D3DERR_INVALIDCALL;
+
+    temp.x = 0.0f;
+    temp.y = 0.0f;
+    temp.z = 0.0f;
+    temp1 = temp;
+    d = 0.0f;
+    *pradius = 0.0f;
+
+    for(i=0; i<numvertices; i++)
+    {
+        D3DXVec3Add(&temp1, &temp, (D3DXVECTOR3*)((char*)ppointsFVF + D3DXGetFVFVertexSize(FVF) * i));
+        temp = temp1;
+    }
+
+    D3DXVec3Scale(pcenter, &temp, 1.0f/((FLOAT)numvertices));
+
+    for(i=0; i<numvertices; i++)
+    {
+        d = D3DXVec3Length(D3DXVec3Subtract(&temp, (D3DXVECTOR3*)((char*)ppointsFVF + D3DXGetFVFVertexSize(FVF) * i), pcenter));
+        if ( d > *pradius ) *pradius = d;
+    }
+    return D3D_OK;
+}
+
 static UINT Get_TexCoord_Size_From_FVF(DWORD FVF, int tex_num)
 {
     return (((((FVF) >> (16 + (2 * (tex_num)))) + 1) & 0x03) + 1);

@@ -32,6 +32,11 @@ static BOOL compare(FLOAT u, FLOAT v)
     return (fabs(u-v) < admitted_error);
 }
 
+BOOL compare_vec3(D3DXVECTOR3 u, D3DXVECTOR3 v)
+{
+    return ( compare(u.x, v.x) && compare(u.y, v.y) && compare(u.z, v.z) );
+}
+
 static void D3DXBoundProbeTest(void)
 {
     BOOL result;
@@ -104,6 +109,57 @@ static void D3DXBoundProbeTest(void)
     rayposition.x = 5.0f; rayposition.y = 11.0f; rayposition.z = 9.0f;
     result = D3DXSphereBoundProbe(&center, radius, &rayposition, &raydirection);
     ok(result == FALSE, "expected FALSE, received TRUE\n");
+}
+
+static void D3DXComputeBoundingSphereTest(void)
+{
+    D3DXVECTOR3 exp_cen, got_cen, vertex[5];
+    FLOAT exp_rad, got_rad;
+    HRESULT hr;
+
+    vertex[0].x = 1.0f; vertex[0].y = 1.0f; vertex[0].z = 1.0f;
+    vertex[1].x = 1.0f; vertex[1].y = 1.0f; vertex[1].z = 1.0f;
+    vertex[2].x = 1.0f; vertex[2].y = 1.0f; vertex[2].z = 1.0f;
+    vertex[3].x = 1.0f; vertex[3].y = 1.0f; vertex[3].z = 1.0f;
+    vertex[4].x = 9.0f; vertex[4].y = 9.0f; vertex[4].z = 9.0f;
+
+    exp_rad = 6.928203f;
+    exp_cen.x = 5.0; exp_cen.y = 5.0; exp_cen.z = 5.0;
+
+    hr = D3DXComputeBoundingSphere(&vertex[3],2,D3DFVF_XYZ,&got_cen,&got_rad);
+
+    ok( hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    ok( compare(exp_rad, got_rad), "Expected radius: %f, got radius: %f\n", exp_rad, got_rad);
+    ok( compare_vec3(exp_cen,got_cen), "Expected center: (%f, %f, %f), got center: (%f, %f, %f)\n", exp_cen.x,exp_cen.y,exp_cen.z,got_cen.x,got_cen.y,got_cen.z);
+
+/*________________________*/
+
+    vertex[0].x = 2.0f; vertex[0].y = 5.9f; vertex[0].z = -1.2f;
+    vertex[1].x = -1.87f; vertex[1].y = 7.9f; vertex[1].z = 7.4f;
+    vertex[2].x = 7.43f; vertex[2].y = -0.9f; vertex[2].z = 11.9f;
+    vertex[3].x = -6.92f; vertex[3].y = 6.3f; vertex[3].z = -3.8f;
+    vertex[4].x = 11.4f; vertex[4].y = -8.1f; vertex[4].z = 4.5f;
+
+    exp_rad = 13.707883f;
+    exp_cen.x = 2.408f; exp_cen.y = 2.22f; exp_cen.z = 3.76f;
+
+    hr = D3DXComputeBoundingSphere(&vertex[0],5,D3DFVF_XYZ,&got_cen,&got_rad);
+
+    ok( hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    ok( compare(exp_rad, got_rad), "Expected radius: %f, got radius: %f\n", exp_rad, got_rad);
+    ok( compare_vec3(exp_cen,got_cen), "Expected center: (%f, %f, %f), got center: (%f, %f, %f)\n", exp_cen.x,exp_cen.y,exp_cen.z,got_cen.x,got_cen.y,got_cen.z);
+
+/*________________________*/
+    hr = D3DXComputeBoundingSphere(NULL,5,D3DFVF_XYZ,&got_cen,&got_rad);
+    ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+/*________________________*/
+    hr = D3DXComputeBoundingSphere(&vertex[3],5,D3DFVF_XYZ,NULL,&got_rad);
+    ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+/*________________________*/
+    hr = D3DXComputeBoundingSphere(&vertex[3],5,D3DFVF_XYZ,&got_cen,NULL);
+    ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
 }
 
 static void D3DXGetFVFVertexSizeTest(void)
@@ -266,6 +322,7 @@ static void D3DXIntersectTriTest(void)
 START_TEST(mesh)
 {
     D3DXBoundProbeTest();
+    D3DXComputeBoundingSphereTest();
     D3DXGetFVFVertexSizeTest();
     D3DXIntersectTriTest();
 }

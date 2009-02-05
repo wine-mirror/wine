@@ -92,7 +92,7 @@
 @ stub D3DXValidMesh
 @ stub D3DXGeneratePMesh
 @ stub D3DXSimplifyMesh
-@ stub D3DXComputeBoundingSphere
+@ stdcall D3DXComputeBoundingSphere(ptr long long ptr ptr)
 @ stub D3DXComputeBoundingBox
 @ stub D3DXComputeNormals
 @ stdcall D3DXCreateBuffer(long ptr)
