@@ -510,6 +510,7 @@ void NSContainer_Release(NSContainer*);
 
 void init_mutation(NSContainer*);
 void set_mutation_observer(NSContainer*,nsIDOMHTMLDocument*);
+void remove_mutation_observer(NSContainer*,nsIDOMHTMLDocument*);
 
 void HTMLDocument_LockContainer(HTMLDocument*,BOOL);
 void show_context_menu(HTMLDocument*,DWORD,POINT*,IDispatch*);
