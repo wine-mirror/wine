@@ -35,3 +35,49 @@ typedef [uuid(fec4f516-c503-45b1-a5fd-7a3d8ab07049)] struct TS_STATUS
     DWORD dwDynamicFlags;
     DWORD dwStaticFlags;
 } TS_STATUS;
+
+typedef [uuid(f3181bd6-bcf0-41d3-a81c-474b17ec38fb)]  struct TS_TEXTCHANGE
+{
+    LONG acpStart;
+    LONG acpOldEnd;
+    LONG acpNewEnd;
+} TS_TEXTCHANGE;
+
+typedef [uuid(ef3457d9-8446-49a7-a9e6-b50d9d5f3fd9)]  GUID TS_ATTRID;
+typedef [uuid(7899d7c4-5f07-493c-a89a-fac8e777f476)]  enum { TS_LC_CREATE, TS_LC_CHANGE, TS_LC_DESTROY } TsLayoutCode;
+typedef [uuid(1faf509e-44c1-458e-950a-38a96705a62b)]  DWORD TsViewCookie;
+
+
+[
+  object,
+  uuid(22d44c94-a419-4542-a272-ae26093ececf),
+  pointer_default(unique)
+]
+interface ITextStoreACPSink : IUnknown
+{
+    HRESULT OnTextChange(
+        [in] DWORD dwFlags,
+        [in] const TS_TEXTCHANGE *pChange);
+
+    HRESULT OnSelectionChange();
+
+    HRESULT OnLayoutChange(
+        [in] TsLayoutCode lcode,
+        [in] TsViewCookie vcView);
+
+    HRESULT OnStatusChange(
+        [in] DWORD dwFlags);
+
+    HRESULT OnAttrsChange(
+        [in] LONG acpStart,
+        [in] LONG acpEnd,
+        [in] ULONG cAttrs,
+        [in, size_is(cAttrs)] const TS_ATTRID *paAttrs);
+
+    HRESULT OnLockGranted(
+        [in] DWORD dwLockFlags);
+
+    HRESULT OnStartEditTransaction();
+
+    HRESULT OnEndEditTransaction();
+};

@@ -72,6 +72,17 @@ typedef struct tagContext {
 
 } Context;
 
+
+typedef struct tagTextStoreACPSink {
+    const ITextStoreACPSinkVtbl *TextStoreACPSinkVtbl;
+    LONG refCount;
+
+    Context *pContext;
+} TextStoreACPSink;
+
+
+static HRESULT TextStoreACPSink_Constructor(ITextStoreACPSink **ppOut, Context *pContext);
+
 static inline Context *impl_from_ITfSourceVtbl(ITfSource *iface)
 {
     return (Context *)((char *)iface - FIELD_OFFSET(Context,SourceVtbl));
@@ -414,5 +425,151 @@ HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfContext **pp
     list_init(&This->pTextEditSink);
     list_init(&This->pTextLayoutSink);
 
+    return S_OK;
+}
+
+/**************************************************************************
+ *  ITextStoreACPSink
+ **************************************************************************/
+
+static void TextStoreACPSink_Destructor(TextStoreACPSink *This)
+{
+    TRACE("destroying %p\n", This);
+    HeapFree(GetProcessHeap(),0,This);
+}
+
+static HRESULT WINAPI TextStoreACPSink_QueryInterface(ITextStoreACPSink *iface, REFIID iid, LPVOID *ppvOut)
+{
+    TextStoreACPSink *This = (TextStoreACPSink *)iface;
+    *ppvOut = NULL;
+
+    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITextStoreACPSink))
+    {
+        *ppvOut = This;
+    }
+
+    if (*ppvOut)
+    {
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("unsupported interface: %s\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI TextStoreACPSink_AddRef(ITextStoreACPSink *iface)
+{
+    TextStoreACPSink *This = (TextStoreACPSink *)iface;
+    return InterlockedIncrement(&This->refCount);
+}
+
+static ULONG WINAPI TextStoreACPSink_Release(ITextStoreACPSink *iface)
+{
+    TextStoreACPSink *This = (TextStoreACPSink *)iface;
+    ULONG ret;
+
+    ret = InterlockedDecrement(&This->refCount);
+    if (ret == 0)
+        TextStoreACPSink_Destructor(This);
+    return ret;
+}
+
+/*****************************************************
+ * ITextStoreACPSink functions
+ *****************************************************/
+
+static HRESULT WINAPI TextStoreACPSink_OnTextChange(ITextStoreACPSink *iface,
+        DWORD dwFlags, const TS_TEXTCHANGE *pChange)
+{
+    TextStoreACPSink *This = (TextStoreACPSink *)iface;
+    FIXME("STUB:(%p)\n",This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextStoreACPSink_OnSelectionChange(ITextStoreACPSink *iface)
+{
+    TextStoreACPSink *This = (TextStoreACPSink *)iface;
+    FIXME("STUB:(%p)\n",This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextStoreACPSink_OnLayoutChange(ITextStoreACPSink *iface,
+    TsLayoutCode lcode, TsViewCookie vcView)
+{
+    TextStoreACPSink *This = (TextStoreACPSink *)iface;
+    FIXME("STUB:(%p)\n",This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextStoreACPSink_OnStatusChange(ITextStoreACPSink *iface,
+        DWORD dwFlags)
+{
+    TextStoreACPSink *This = (TextStoreACPSink *)iface;
+    FIXME("STUB:(%p)\n",This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextStoreACPSink_OnAttrsChange(ITextStoreACPSink *iface,
+        LONG acpStart, LONG acpEnd, ULONG cAttrs, const TS_ATTRID *paAttrs)
+{
+    TextStoreACPSink *This = (TextStoreACPSink *)iface;
+    FIXME("STUB:(%p)\n",This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextStoreACPSink_OnLockGranted(ITextStoreACPSink *iface,
+        DWORD dwLockFlags)
+{
+    TextStoreACPSink *This = (TextStoreACPSink *)iface;
+    FIXME("STUB:(%p)\n",This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextStoreACPSink_OnStartEditTransaction(ITextStoreACPSink *iface)
+{
+    TextStoreACPSink *This = (TextStoreACPSink *)iface;
+    FIXME("STUB:(%p)\n",This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextStoreACPSink_OnEndEditTransaction(ITextStoreACPSink *iface)
+{
+    TextStoreACPSink *This = (TextStoreACPSink *)iface;
+    FIXME("STUB:(%p)\n",This);
+    return E_NOTIMPL;
+}
+
+static const ITextStoreACPSinkVtbl TextStoreACPSink_TextStoreACPSinkVtbl =
+{
+    TextStoreACPSink_QueryInterface,
+    TextStoreACPSink_AddRef,
+    TextStoreACPSink_Release,
+
+    TextStoreACPSink_OnTextChange,
+    TextStoreACPSink_OnSelectionChange,
+    TextStoreACPSink_OnLayoutChange,
+    TextStoreACPSink_OnStatusChange,
+    TextStoreACPSink_OnAttrsChange,
+    TextStoreACPSink_OnLockGranted,
+    TextStoreACPSink_OnStartEditTransaction,
+    TextStoreACPSink_OnEndEditTransaction
+};
+
+static HRESULT TextStoreACPSink_Constructor(ITextStoreACPSink **ppOut, Context *pContext)
+{
+    TextStoreACPSink *This;
+
+    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(TextStoreACPSink));
+    if (This == NULL)
+        return E_OUTOFMEMORY;
+
+    This->TextStoreACPSinkVtbl= &TextStoreACPSink_TextStoreACPSinkVtbl;
+    This->refCount = 1;
+
+    This->pContext = pContext;
+
+    TRACE("returning %p\n", This);
+    *ppOut = (ITextStoreACPSink*)This;
     return S_OK;
 }
