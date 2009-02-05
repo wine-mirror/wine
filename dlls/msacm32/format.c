@@ -54,7 +54,8 @@ struct MSACM_FillFormatData {
 
 static BOOL CALLBACK MSACM_FillFormatTagsCB(HACMDRIVERID hadid,
 					    PACMFORMATTAGDETAILSA paftd,
-					    DWORD dwInstance, DWORD fdwSupport)
+                                            DWORD_PTR dwInstance,
+                                            DWORD fdwSupport)
 {
     struct MSACM_FillFormatData*	affd = (struct MSACM_FillFormatData*)dwInstance;
 
@@ -383,7 +384,7 @@ struct MSACM_FormatEnumWtoA_Instance {
 
 static BOOL CALLBACK MSACM_FormatEnumCallbackWtoA(HACMDRIVERID hadid,
 						  PACMFORMATDETAILSW pafdw,
-						  DWORD dwInstance,
+                                                  DWORD_PTR dwInstance,
 						  DWORD fdwSupport)
 {
     struct MSACM_FormatEnumWtoA_Instance* pafei;
@@ -404,8 +405,8 @@ static BOOL CALLBACK MSACM_FormatEnumCallbackWtoA(HACMDRIVERID hadid,
  *           acmFormatEnumA (MSACM32.@)
  */
 MMRESULT WINAPI acmFormatEnumA(HACMDRIVER had, PACMFORMATDETAILSA pafda,
-			       ACMFORMATENUMCBA fnCallback, DWORD dwInstance,
-			       DWORD fdwEnum)
+                               ACMFORMATENUMCBA fnCallback,
+                               DWORD_PTR dwInstance, DWORD fdwEnum)
 {
     ACMFORMATDETAILSW		afdw;
     struct MSACM_FormatEnumWtoA_Instance afei;
@@ -484,14 +485,14 @@ static BOOL MSACM_FormatEnumHelper(PWINE_ACMDRIVERID padid, HACMDRIVER had,
 /**********************************************************************/
 
 MMRESULT WINAPI acmFormatEnumW(HACMDRIVER had, PACMFORMATDETAILSW pafd,
-			       ACMFORMATENUMCBW fnCallback, DWORD dwInstance,
-			       DWORD fdwEnum)
+                               ACMFORMATENUMCBW fnCallback,
+                               DWORD_PTR dwInstance, DWORD fdwEnum)
 {
     PWINE_ACMDRIVERID		padid;
     WAVEFORMATEX		wfxRef;
     BOOL			ret;
 
-    TRACE("(%p, %p, %p, %d, %d)\n",
+    TRACE("(%p, %p, %p, %ld, %d)\n",
 	  had, pafd, fnCallback, dwInstance, fdwEnum);
 
     if (!pafd)
@@ -711,7 +712,7 @@ struct MSACM_FormatTagEnumWtoA_Instance {
 
 static BOOL CALLBACK MSACM_FormatTagEnumCallbackWtoA(HACMDRIVERID hadid,
 						     PACMFORMATTAGDETAILSW paftdw,
-						     DWORD dwInstance,
+                                                     DWORD_PTR dwInstance,
 						     DWORD fdwSupport)
 {
     struct MSACM_FormatTagEnumWtoA_Instance* paftei;
@@ -734,8 +735,8 @@ static BOOL CALLBACK MSACM_FormatTagEnumCallbackWtoA(HACMDRIVERID hadid,
  *           acmFormatTagEnumA (MSACM32.@)
  */
 MMRESULT WINAPI acmFormatTagEnumA(HACMDRIVER had, PACMFORMATTAGDETAILSA paftda,
-				  ACMFORMATTAGENUMCBA fnCallback, DWORD dwInstance,
-				  DWORD fdwEnum)
+                                  ACMFORMATTAGENUMCBA fnCallback,
+                                  DWORD_PTR dwInstance, DWORD fdwEnum)
 {
     ACMFORMATTAGDETAILSW	aftdw;
     struct MSACM_FormatTagEnumWtoA_Instance aftei;
@@ -766,14 +767,14 @@ MMRESULT WINAPI acmFormatTagEnumA(HACMDRIVER had, PACMFORMATTAGDETAILSA paftda,
  *           acmFormatTagEnumW (MSACM32.@)
  */
 MMRESULT WINAPI acmFormatTagEnumW(HACMDRIVER had, PACMFORMATTAGDETAILSW paftd,
-				  ACMFORMATTAGENUMCBW fnCallback, DWORD dwInstance,
-				  DWORD fdwEnum)
+                                  ACMFORMATTAGENUMCBW fnCallback,
+                                  DWORD_PTR dwInstance, DWORD fdwEnum)
 {
     PWINE_ACMDRIVERID		padid;
     unsigned int			i;
     BOOL			bPcmDone = FALSE;
 
-    TRACE("(%p, %p, %p, %d, %d)\n",
+    TRACE("(%p, %p, %p, %ld, %d)\n",
 	  had, paftd, fnCallback, dwInstance, fdwEnum);
 
     if (!paftd)

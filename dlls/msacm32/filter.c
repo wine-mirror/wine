@@ -144,7 +144,7 @@ struct MSACM_FilterEnumWtoA_Instance {
 
 static BOOL CALLBACK MSACM_FilterEnumCallbackWtoA(HACMDRIVERID hadid,
 						  PACMFILTERDETAILSW pafdw,
-						  DWORD dwInstance,
+                                                  DWORD_PTR dwInstance,
 						  DWORD fdwSupport)
 {
     struct MSACM_FilterEnumWtoA_Instance* pafei;
@@ -165,8 +165,8 @@ static BOOL CALLBACK MSACM_FilterEnumCallbackWtoA(HACMDRIVERID hadid,
  *           acmFilterEnumA (MSACM32.@)
  */
 MMRESULT WINAPI acmFilterEnumA(HACMDRIVER had, PACMFILTERDETAILSA pafda,
-			       ACMFILTERENUMCBA fnCallback, DWORD dwInstance,
-			       DWORD fdwEnum)
+                               ACMFILTERENUMCBA fnCallback,
+                               DWORD_PTR dwInstance, DWORD fdwEnum)
 {
     ACMFILTERDETAILSW		afdw;
     struct MSACM_FilterEnumWtoA_Instance afei;
@@ -222,13 +222,13 @@ static BOOL MSACM_FilterEnumHelper(PWINE_ACMDRIVERID padid, HACMDRIVER had,
  *           acmFilterEnumW (MSACM32.@)
  */
 MMRESULT WINAPI acmFilterEnumW(HACMDRIVER had, PACMFILTERDETAILSW pafd,
-			       ACMFILTERENUMCBW fnCallback, DWORD dwInstance,
-			       DWORD fdwEnum)
+                               ACMFILTERENUMCBW fnCallback,
+                               DWORD_PTR dwInstance, DWORD fdwEnum)
 {
     PWINE_ACMDRIVERID		padid;
     BOOL			ret;
 
-    TRACE("(%p, %p, %p, %d, %d)\n",
+    TRACE("(%p, %p, %p, %ld, %d)\n",
 	  had, pafd, fnCallback, dwInstance, fdwEnum);
 
     if (pafd->cbStruct < sizeof(*pafd)) return MMSYSERR_INVALPARAM;
@@ -375,7 +375,7 @@ struct MSACM_FilterTagEnumWtoA_Instance {
 
 static BOOL CALLBACK MSACM_FilterTagEnumCallbackWtoA(HACMDRIVERID hadid,
 						     PACMFILTERTAGDETAILSW paftdw,
-						     DWORD dwInstance,
+                                                     DWORD_PTR dwInstance,
 						     DWORD fdwSupport)
 {
     struct MSACM_FilterTagEnumWtoA_Instance* paftei;
@@ -398,8 +398,8 @@ static BOOL CALLBACK MSACM_FilterTagEnumCallbackWtoA(HACMDRIVERID hadid,
  *           acmFilterTagEnumA (MSACM32.@)
  */
 MMRESULT WINAPI acmFilterTagEnumA(HACMDRIVER had, PACMFILTERTAGDETAILSA paftda,
-				  ACMFILTERTAGENUMCBA fnCallback, DWORD dwInstance,
-				  DWORD fdwEnum)
+                                  ACMFILTERTAGENUMCBA fnCallback,
+                                  DWORD_PTR dwInstance, DWORD fdwEnum)
 {
     ACMFILTERTAGDETAILSW	aftdw;
     struct MSACM_FilterTagEnumWtoA_Instance aftei;
@@ -421,13 +421,13 @@ MMRESULT WINAPI acmFilterTagEnumA(HACMDRIVER had, PACMFILTERTAGDETAILSA paftda,
  *           acmFilterTagEnumW (MSACM32.@)
  */
 MMRESULT WINAPI acmFilterTagEnumW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd,
-				  ACMFILTERTAGENUMCBW fnCallback, DWORD dwInstance,
-				  DWORD fdwEnum)
+                                  ACMFILTERTAGENUMCBW fnCallback,
+                                  DWORD_PTR dwInstance, DWORD fdwEnum)
 {
     PWINE_ACMDRIVERID		padid;
     unsigned int			i;
 
-    TRACE("(%p, %p, %p, %d, %d)\n",
+    TRACE("(%p, %p, %p, %ld, %d)\n",
 	  had, paftd, fnCallback, dwInstance, fdwEnum);
 
     if (paftd->cbStruct < sizeof(*paftd)) return MMSYSERR_INVALPARAM;

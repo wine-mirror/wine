@@ -312,12 +312,13 @@ MMRESULT WINAPI acmDriverDetailsW(HACMDRIVERID hadid, PACMDRIVERDETAILSW padd, D
 /***********************************************************************
  *           acmDriverEnum (MSACM32.@)
  */
-MMRESULT WINAPI acmDriverEnum(ACMDRIVERENUMCB fnCallback, DWORD dwInstance, DWORD fdwEnum)
+MMRESULT WINAPI acmDriverEnum(ACMDRIVERENUMCB fnCallback, DWORD_PTR dwInstance,
+                              DWORD fdwEnum)
 {
     PWINE_ACMDRIVERID	padid;
     DWORD		fdwSupport;
 
-    TRACE("(%p, %08x, %08x)\n", fnCallback, dwInstance, fdwEnum);
+    TRACE("(%p, %08lx, %08x)\n", fnCallback, dwInstance, fdwEnum);
 
     if (!fnCallback) {
         WARN("invalid parameter\n");

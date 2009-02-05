@@ -141,9 +141,10 @@ MMRESULT WINAPI acmStreamMessage(HACMSTREAM has, UINT uMsg, LPARAM lParam1,
 /***********************************************************************
  *           acmStreamOpen (MSACM32.@)
  */
-MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pwfxSrc,
-			      PWAVEFORMATEX pwfxDst, PWAVEFILTER pwfltr, DWORD dwCallback,
-			      DWORD dwInstance, DWORD fdwOpen)
+MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had,
+                              PWAVEFORMATEX pwfxSrc, PWAVEFORMATEX pwfxDst,
+                              PWAVEFILTER pwfltr, DWORD_PTR dwCallback,
+                              DWORD_PTR dwInstance, DWORD fdwOpen)
 {
     PWINE_ACMSTREAM	was;
     PWINE_ACMDRIVER	wad;
@@ -152,7 +153,7 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
     int			wfxDstSize;
     WAVEFORMATEX	wfxSrc, wfxDst;
 
-    TRACE("(%p, %p, %p, %p, %p, %d, %d, %d)\n",
+    TRACE("(%p, %p, %p, %p, %p, %ld, %ld, %d)\n",
 	  phas, had, pwfxSrc, pwfxDst, pwfltr, dwCallback, dwInstance, fdwOpen);
 
     /* NOTE: pwfxSrc and/or pwfxDst can point to a structure smaller than
