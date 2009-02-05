@@ -2,7 +2,7 @@
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllUnregisterServer()
-@ stub SetInputScope
+@ stdcall SetInputScope(long long)
 @ stub SetInputScopeXML
 @ stub SetInputScopes
 @ stub TF_CUASAppFix

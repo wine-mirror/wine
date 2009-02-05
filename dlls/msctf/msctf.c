@@ -224,3 +224,12 @@ HRESULT WINAPI TF_GetThreadMgr(ITfThreadMgr **pptim)
 
     return S_OK;
 }
+
+/***********************************************************************
+ *              SetInputScope(MSCTF.@)
+ */
+HRESULT WINAPI SetInputScope(HWND hwnd, INT inputscope)
+{
+    FIXME("STUB: %p %i\n",hwnd,inputscope);
+    return S_OK;
+}
