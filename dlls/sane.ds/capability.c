@@ -183,6 +183,98 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
     return twCC;
 }
 
+
+static TW_UINT16 get_onevalue(pTW_CAPABILITY pCapability, TW_UINT16 *type, TW_UINT32 *value)
+{
+    if (pCapability->hContainer)
+    {
+        pTW_ONEVALUE pVal = GlobalLock (pCapability->hContainer);
+        if (pVal)
+        {
+            *value = pVal->Item;
+            if (type)
+                *type = pVal->ItemType;
+            GlobalUnlock (pCapability->hContainer);
+            return TWCC_SUCCESS;
+        }
+    }
+    return TWCC_BUMMER;
+}
+
+
+static TW_UINT16 set_onevalue(pTW_CAPABILITY pCapability, TW_UINT16 type, TW_UINT32 value)
+{
+    pCapability->hContainer = GlobalAlloc (0, sizeof(TW_ONEVALUE));
+
+    if (pCapability->hContainer)
+    {
+        pTW_ONEVALUE pVal = GlobalLock (pCapability->hContainer);
+        if (pVal)
+        {
+            pCapability->ConType = TWON_ONEVALUE;
+            pVal->ItemType = type;
+            pVal->Item = value;
+            GlobalUnlock (pCapability->hContainer);
+            return TWCC_SUCCESS;
+        }
+    }
+   return TWCC_LOWMEMORY;
+}
+
+static TW_UINT16 msg_set(pTW_CAPABILITY pCapability, TW_UINT32 *val)
+{
+    if (pCapability->ConType == TWON_ONEVALUE)
+        return get_onevalue(pCapability, NULL, val);
+
+    FIXME("Partial Stub:  MSG_SET only supports TW_ONEVALUE\n");
+    return TWCC_BADCAP;
+}
+
+
+static TW_UINT16 msg_get_enum(pTW_CAPABILITY pCapability, const TW_UINT32 *values, int value_count,
+                              TW_UINT16 type, TW_UINT32 current, TW_UINT32 default_value)
+{
+    TW_ENUMERATION *enumv = NULL;
+    TW_UINT32 *p32;
+    TW_UINT16 *p16;
+    int i;
+
+    pCapability->ConType = TWON_ENUMERATION;
+    pCapability->hContainer = 0;
+
+    if (type == TWTY_INT16 || type == TWTY_UINT16)
+        pCapability->hContainer = GlobalAlloc (0, FIELD_OFFSET( TW_ENUMERATION, ItemList[value_count * sizeof(TW_UINT16)]));
+
+    if (type == TWTY_INT32 || type == TWTY_UINT32)
+        pCapability->hContainer = GlobalAlloc (0, FIELD_OFFSET( TW_ENUMERATION, ItemList[value_count * sizeof(TW_UINT32)]));
+
+    if (pCapability->hContainer)
+        enumv = GlobalLock(pCapability->hContainer);
+
+    if (! enumv)
+        return TWCC_LOWMEMORY;
+
+    enumv->ItemType = type;
+    enumv->NumItems = value_count;
+
+    p16 = (TW_UINT16 *) enumv->ItemList;
+    p32 = (TW_UINT32 *) enumv->ItemList;
+    for (i = 0; i < value_count; i++)
+    {
+        if (values[i] == current)
+            enumv->CurrentIndex = i;
+        if (values[i] == default_value)
+            enumv->DefaultIndex = i;
+        if (type == TWTY_INT16 || type == TWTY_UINT16)
+            p16[i] = values[i];
+        if (type == TWTY_INT32 || type == TWTY_UINT32)
+            p32[i] = values[i];
+    }
+
+    GlobalUnlock(pCapability->hContainer);
+    return TWCC_SUCCESS;
+}
+
 static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability)
 {
     TW_ARRAY *a;
@@ -209,74 +301,48 @@ static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability)
 }
 
 
-static TW_BOOL TWAIN_OneValueSet (pTW_CAPABILITY pCapability, TW_UINT32 value)
-{
-    pCapability->hContainer = GlobalAlloc (0, sizeof(TW_ONEVALUE));
-
-    if (pCapability->hContainer)
-    {
-        pTW_ONEVALUE pVal = GlobalLock (pCapability->hContainer);
-        pVal->ItemType = TWTY_UINT32;
-        pVal->Item = value;
-        GlobalUnlock (pCapability->hContainer);
-        return TRUE;
-    }
-    else
-        return FALSE;
-}
-
-static TW_BOOL TWAIN_OneValueGet (pTW_CAPABILITY pCapability, TW_UINT32 *pValue)
-{
-    pTW_ONEVALUE pVal = GlobalLock (pCapability->hContainer);
-
-    if (pVal)
-    {
-        *pValue = pVal->Item;
-        GlobalUnlock (pCapability->hContainer);
-        return TRUE;
-    }
-    else
-        return FALSE;
-}
-
 /* ICAP_XFERMECH */
 static TW_UINT16 SANE_ICAPXferMech (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
+    static const TW_UINT32 possible_values[] = { TWSX_NATIVE, TWSX_MEMORY };
+    TW_UINT32 val;
+    TW_UINT16 twCC = TWCC_BADCAP;
+
     TRACE("ICAP_XFERMECH\n");
 
     switch (action)
     {
-        case MSG_GET:
-            if (pCapability->ConType == TWON_ONEVALUE)
-            {
-                if (!TWAIN_OneValueSet (pCapability, activeDS.capXferMech))
-                    return TWCC_LOWMEMORY;
-            }
+        case MSG_QUERYSUPPORT:
+            twCC = set_onevalue(pCapability, TWTY_INT32,
+                    TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET );
             break;
-        case MSG_SET:
-            if (pCapability->ConType == TWON_ONEVALUE)
-            {
-		TW_UINT32 xfermechtemp = 0;
-                if (!TWAIN_OneValueGet (pCapability, &xfermechtemp))
-                    return TWCC_LOWMEMORY;
-		activeDS.capXferMech = xfermechtemp;
-            }
-            else if (pCapability->ConType == TWON_ENUMERATION)
-            {
 
+        case MSG_GET:
+            twCC = msg_get_enum(pCapability, possible_values, sizeof(possible_values) / sizeof(possible_values[0]),
+                    TWTY_UINT16, activeDS.capXferMech, TWSX_NATIVE);
+            break;
+
+        case MSG_SET:
+            twCC = msg_set(pCapability, &val);
+            if (twCC == TWCC_SUCCESS)
+            {
+               activeDS.capXferMech = (TW_UINT16) val;
+               FIXME("Partial Stub:  XFERMECH set to %d, but ignored\n", val);
             }
             break;
-        case MSG_GETCURRENT:
-            if (!TWAIN_OneValueSet (pCapability, activeDS.capXferMech))
-                return TWCC_LOWMEMORY;
-            break;
+
         case MSG_GETDEFAULT:
-            if (!TWAIN_OneValueSet (pCapability, TWSX_NATIVE))
-                return TWCC_LOWMEMORY;
+            twCC = set_onevalue(pCapability, TWTY_UINT16, TWSX_NATIVE);
             break;
+
         case MSG_RESET:
             activeDS.capXferMech = TWSX_NATIVE;
+            /* .. fall through intentional .. */
+
+        case MSG_GETCURRENT:
+            twCC = set_onevalue(pCapability, TWTY_UINT16, activeDS.capXferMech);
+            FIXME("Partial Stub:  XFERMECH of %d not actually used\n", activeDS.capXferMech);
             break;
     }
-    return TWCC_SUCCESS;
+    return twCC;
 }
