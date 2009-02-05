@@ -807,9 +807,8 @@ sub source_scan_directory($$$$)
     }
     my $basename=$target_name;
     $basename=~ s/\.(dll|exe)$//i;
-    # This is the default link list of Visual Studio, except odbccp32
-    # which we don't have in Wine.
-    my @std_imports=qw(odbc32 ole32 oleaut32 winspool);
+    # This is the default link list of Visual Studio
+    my @std_imports=qw(odbc32 ole32 oleaut32 winspool odbccp32);
     my @std_libraries=qw(uuid);
     if ((@$target[$T_FLAGS] & $TF_NODLLS) == 0) {
       @$target[$T_DLLS]=\@std_imports;
