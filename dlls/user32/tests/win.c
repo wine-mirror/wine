@@ -1228,7 +1228,7 @@ static void test_MDI_create(HWND parent, HWND mdi_client, INT_PTR first_id)
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 mdi_client, 0, GetModuleHandle(0),
-                                (LPVOID)mdi_lParam_test_message);
+                                mdi_lParam_test_message);
     ok(mdi_child != 0, "MDI child creation failed\n");
     id = GetWindowLongPtrA(mdi_child, GWLP_ID);
     ok(id == first_id, "wrong child id %ld\n", id);
@@ -1240,7 +1240,7 @@ static void test_MDI_create(HWND parent, HWND mdi_client, INT_PTR first_id)
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 mdi_client, 0, GetModuleHandle(0),
-                                (LPVOID)mdi_lParam_test_message);
+                                mdi_lParam_test_message);
     ok(mdi_child != 0, "MDI child creation failed\n");
     id = GetWindowLongPtrA(mdi_child, GWLP_ID);
     ok(id == first_id, "wrong child id %ld\n", id);
@@ -1252,7 +1252,7 @@ static void test_MDI_create(HWND parent, HWND mdi_client, INT_PTR first_id)
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 mdi_client, 0, GetModuleHandle(0),
-                                (LPVOID)mdi_lParam_test_message);
+                                mdi_lParam_test_message);
     if (GetWindowLongA(mdi_client, GWL_STYLE) & MDIS_ALLCHILDSTYLES)
     {
         ok(!mdi_child, "MDI child with WS_POPUP and with MDIS_ALLCHILDSTYLES should fail\n");
@@ -1273,7 +1273,7 @@ static void test_MDI_create(HWND parent, HWND mdi_client, INT_PTR first_id)
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 mdi_client, 0, GetModuleHandle(0),
-                                (LPVOID)mdi_lParam_test_message);
+                                mdi_lParam_test_message);
     if (!mdi_child)
     {
         if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
@@ -1297,7 +1297,7 @@ static void test_MDI_create(HWND parent, HWND mdi_client, INT_PTR first_id)
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 parent, 0, GetModuleHandle(0),
-                                (LPVOID)mdi_lParam_test_message);
+                                mdi_lParam_test_message);
         ok(!mdi_child, "WS_EX_MDICHILD with a not MDIClient parent should fail\n");
     }
 
@@ -1306,7 +1306,7 @@ static void test_MDI_create(HWND parent, HWND mdi_client, INT_PTR first_id)
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 mdi_client, 0, GetModuleHandle(0),
-                                (LPVOID)mdi_lParam_test_message);
+                                mdi_lParam_test_message);
     ok(mdi_child != 0, "MDI child creation failed\n");
     id = GetWindowLongPtrA(mdi_child, GWLP_ID);
     ok(id == 0, "wrong child id %ld\n", id);
@@ -1317,7 +1317,7 @@ static void test_MDI_create(HWND parent, HWND mdi_client, INT_PTR first_id)
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 mdi_client, 0, GetModuleHandle(0),
-                                (LPVOID)mdi_lParam_test_message);
+                                mdi_lParam_test_message);
     ok(mdi_child != 0, "MDI child creation failed\n");
     id = GetWindowLongPtrA(mdi_child, GWLP_ID);
     ok(id == 0, "wrong child id %ld\n", id);
@@ -1329,7 +1329,7 @@ static void test_MDI_create(HWND parent, HWND mdi_client, INT_PTR first_id)
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 mdi_client, 0, GetModuleHandle(0),
-                                (LPVOID)mdi_lParam_test_message);
+                                mdi_lParam_test_message);
     ok(mdi_child != 0, "MDI child creation failed\n");
     id = GetWindowLongPtrA(mdi_child, GWLP_ID);
     ok(id == 0, "wrong child id %ld\n", id);
@@ -1341,7 +1341,7 @@ static void test_MDI_create(HWND parent, HWND mdi_client, INT_PTR first_id)
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 mdi_client, 0, GetModuleHandle(0),
-                                (LPVOID)mdi_lParam_test_message);
+                                mdi_lParam_test_message);
     ok(mdi_child != 0, "MDI child creation failed\n");
     id = GetWindowLongPtrA(mdi_child, GWLP_ID);
     ok(id == 0, "wrong child id %ld\n", id);
@@ -1353,7 +1353,7 @@ static void test_MDI_create(HWND parent, HWND mdi_client, INT_PTR first_id)
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 mdi_client, 0, GetModuleHandle(0),
-                                (LPVOID)mdi_lParam_test_message);
+                                mdi_lParam_test_message);
     ok(mdi_child != 0, "MDI child creation failed\n");
     id = GetWindowLongPtrA(mdi_child, GWLP_ID);
     ok(id == 0, "wrong child id %ld\n", id);
@@ -1394,7 +1394,7 @@ static LRESULT WINAPI mdi_child_wnd_proc_1(HWND hwnd, UINT msg, WPARAM wparam, L
         case WM_CREATE:
         {
             CREATESTRUCTA *cs = (CREATESTRUCTA *)lparam;
-            MDICREATESTRUCTA *mdi_cs = (MDICREATESTRUCTA *)cs->lpCreateParams;
+            MDICREATESTRUCTA *mdi_cs = cs->lpCreateParams;
 
             ok(cs->dwExStyle & WS_EX_MDICHILD, "WS_EX_MDICHILD should be set\n");
             ok(mdi_cs->lParam == (LPARAM)mdi_lParam_test_message, "wrong mdi_cs->lParam\n");
@@ -1625,7 +1625,7 @@ static LRESULT WINAPI mdi_main_wnd_procA(HWND hwnd, UINT msg, WPARAM wparam, LPA
                                           /* tests depend on a not zero MDIClient size */
                                          0, 0, rc.right, rc.bottom,
                                          hwnd, 0, GetModuleHandle(0),
-                                         (LPVOID)&client_cs);
+                                         &client_cs);
             assert(mdi_client);
             test_MDI_create(hwnd, mdi_client, client_cs.idFirstChild);
             DestroyWindow(mdi_client);
@@ -1637,7 +1637,7 @@ static LRESULT WINAPI mdi_main_wnd_procA(HWND hwnd, UINT msg, WPARAM wparam, LPA
                                           /* tests depend on a not zero MDIClient size */
                                          0, 0, rc.right, rc.bottom,
                                          hwnd, 0, GetModuleHandle(0),
-                                         (LPVOID)&client_cs);
+                                         &client_cs);
             assert(mdi_client);
             test_MDI_create(hwnd, mdi_client, client_cs.idFirstChild);
             DestroyWindow(mdi_client);
@@ -3066,7 +3066,7 @@ static LRESULT WINAPI StyleCheckProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
     case WM_NCCREATE:
     case WM_CREATE:
         lpcs = (LPCREATESTRUCT)lparam;
-        lpss = (LPSTYLESTRUCT)lpcs->lpCreateParams;
+        lpss = lpcs->lpCreateParams;
         if (lpss)
         {
             if ((lpcs->dwExStyle & WS_EX_DLGMODALFRAME) ||
@@ -5395,7 +5395,7 @@ static void test_thick_child_size(HWND parentWindow)
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandleA(0);
     cls.hIcon = 0;
-    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hCursor = LoadCursorA(0, IDC_ARROW);
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = className;

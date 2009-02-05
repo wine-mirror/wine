@@ -169,8 +169,8 @@ static LRESULT WINAPI menu_ownerdraw_wnd_proc(HWND hwnd, UINT msg,
                     RECT rc;
                     GetMenuItemRect( hwnd, (HMENU)pdis->hwndItem, pdis->itemData ,&rc);
                     trace("WM_DRAWITEM received hwnd %p hmenu %p itemdata %ld item %d rc %d,%d-%d,%d itemrc:  %d,%d-%d,%d\n",
-                            hwnd, (HMENU)pdis->hwndItem, pdis->itemData,
-                            pdis->itemID, pdis->rcItem.left, pdis->rcItem.top,
+                            hwnd, pdis->hwndItem, pdis->itemData, pdis->itemID,
+                            pdis->rcItem.left, pdis->rcItem.top,
                             pdis->rcItem.right,pdis->rcItem.bottom,
                             rc.left,rc.top,rc.right,rc.bottom);
                     oldpen=SelectObject( pdis->hDC, GetStockObject(
@@ -633,7 +633,7 @@ static void test_menu_add_string( void )
     ok (!strcmp( strback, "Dummy string" ), "Menu text from Ansi version incorrect\n");
 
     SetLastError(0xdeadbeef);
-    ret = GetMenuStringW( hmenu, 0, (WCHAR *)strbackW, 99, MF_BYPOSITION);
+    ret = GetMenuStringW( hmenu, 0, strbackW, 99, MF_BYPOSITION );
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
         skip("GetMenuStringW is not implemented\n");
     else
@@ -827,7 +827,7 @@ static void modify_menu( int line, HMENU hmenu, BOOL ansi, UINT flags, UINT_PTR 
 
     SetLastError( 0xdeadbeef );
     if (ansi) ret = ModifyMenuA( hmenu, 0, flags, id, data );
-    else ret = ModifyMenuW( hmenu, 0, flags, id, (WCHAR *)data );
+    else ret = ModifyMenuW( hmenu, 0, flags, id, data );
     ok_(__FILE__,line)( ret, "ModifyMenuA failed, err %u\n", GetLastError());
 }
 
@@ -864,8 +864,8 @@ static void set_menu_item_info( int line, HMENU hmenu, BOOL ansi, UINT mask, UIN
 #define TMII_INSMI( c1,d1,e1,f1,g1,h1,i1,j1,k1,l1,m1,eret1 )\
     hmenu = CreateMenu();\
     submenu = CreateMenu();\
-    if(ansi)strcpy( string, init);\
-    else strcpyW( (WCHAR*)string, (WCHAR*)init);\
+    if(ansi)strcpy( string, init );\
+    else strcpyW( string, init );\
     insert_menu_item( __LINE__, hmenu, ansi, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1, m1, eret1 )
 
 /* GetMenuItemInfo + GetMenuString  */
@@ -2248,7 +2248,7 @@ static void test_menu_resource_layout(void)
            "%u: expected wID %04x, got %04x\n", i, menu_data[i].id, mii.wID);
         ok(mii.cch == strlen(menu_data[i].str),
            "%u: expected cch %u, got %u\n", i, (UINT)strlen(menu_data[i].str), mii.cch);
-        ok(!strcmp((LPCSTR)mii.dwTypeData, menu_data[i].str),
+        ok(!strcmp(mii.dwTypeData, menu_data[i].str),
            "%u: expected dwTypeData %s, got %s\n", i, menu_data[i].str, (LPCSTR)mii.dwTypeData);
     }
 
@@ -2320,7 +2320,7 @@ static void compare_menu_data(HMENU hmenu, const struct menu_data *item, INT ite
         {
             ok(mii.cch == strlen(item[i].str),
                "%u: expected cch %u, got %u\n", i, (UINT)strlen(item[i].str), mii.cch);
-            ok(!strcmp((LPCSTR)mii.dwTypeData, item[i].str),
+            ok(!strcmp(mii.dwTypeData, item[i].str),
                "%u: expected dwTypeData %s, got %s\n", i, item[i].str, (LPCSTR)mii.dwTypeData);
         }
     }

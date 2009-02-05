@@ -279,7 +279,7 @@ struct class_info
 
 static DWORD WINAPI thread_proc(void *param)
 {
-    struct class_info *class_info = (struct class_info *)param;
+    struct class_info *class_info = param;
 
     check_instance(class_info->name, class_info->inst, class_info->info_inst, class_info->gcl_inst);
 
@@ -415,7 +415,7 @@ static void test_instances(void)
     cls.style = 3;
     ok( RegisterClassA( &cls ), "Failed to register local class for deadbeef\n" );
     hwnd2 = CreateWindowExA( 0, name, "test_window", 0, 0, 0, 0, 0, 0, 0, NULL, 0 );
-    ok( (HINSTANCE)GetClassLongPtrA( hwnd2, GCLP_HMODULE ) == (HINSTANCE)0xdeadbeef,
+    ok( GetClassLongPtrA( hwnd2, GCLP_HMODULE ) == 0xdeadbeef,
         "Didn't get deadbeef class for null instance\n" );
     DestroyWindow( hwnd2 );
     ok( UnregisterClassA( name, (HINSTANCE)0xdeadbeef ), "Unregister failed for deadbeef\n" );
@@ -592,8 +592,8 @@ static void test_builtinproc(void)
     HWND hwnd;
     int i;
 
-    pDefWindowProcA = (void *)GetProcAddress(GetModuleHandle("user32.dll"), "DefWindowProcA");
-    pDefWindowProcW = (void *)GetProcAddress(GetModuleHandle("user32.dll"), "DefWindowProcW");
+    pDefWindowProcA = GetProcAddress(GetModuleHandle("user32.dll"), "DefWindowProcA");
+    pDefWindowProcW = GetProcAddress(GetModuleHandle("user32.dll"), "DefWindowProcW");
 
     for (i = 0; i < 4; i++)
     {
@@ -800,10 +800,8 @@ static BOOL RegisterTestDialog(HINSTANCE hInstance)
     wcx.hbrBackground = GetStockObject(WHITE_BRUSH);
     wcx.lpszClassName = "TestDialog";
     wcx.lpszMenuName =  "TestDialog";
-    wcx.hIconSm = (HICON)LoadImage(hInstance, MAKEINTRESOURCE(5),
-        IMAGE_ICON,
-        GetSystemMetrics(SM_CXSMICON),
-        GetSystemMetrics(SM_CYSMICON),
+    wcx.hIconSm = LoadImage(hInstance, MAKEINTRESOURCE(5), IMAGE_ICON,
+        GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
         LR_DEFAULTCOLOR);
 
     atom = RegisterClassEx(&wcx);

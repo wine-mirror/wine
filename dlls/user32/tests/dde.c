@@ -736,7 +736,7 @@ static HDDEDATA CALLBACK server_ddeml_callback(UINT uType, UINT uFmt, HCONV hcon
             {
                 ok(!lstrcmpA(ptr, "[BadCommand(Var)]"), "Expected '[BadCommand(Var)]', got %s\n", ptr);
                 ok(size == 18, "Expected 18, got %d\n", size);
-                ret = (HDDEDATA)DDE_FNOTPROCESSED;
+                ret = DDE_FNOTPROCESSED;
             }
 
             DdeUnaccessData(hdata);

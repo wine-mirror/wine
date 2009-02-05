@@ -6240,7 +6240,7 @@ struct wnd_event
 static DWORD WINAPI thread_proc(void *param)
 {
     MSG msg;
-    struct wnd_event *wnd_event = (struct wnd_event *)param;
+    struct wnd_event *wnd_event = param;
 
     wnd_event->hwnd = CreateWindowExA(0, "TestWindowClass", "window caption text", WS_OVERLAPPEDWINDOW,
                                       100, 100, 200, 200, 0, 0, 0, NULL);
@@ -7877,7 +7877,7 @@ static void test_winevents(void)
 
     hevent = CreateEventA(NULL, 0, 0, NULL);
     assert(hevent);
-    hwnd2 = (HWND)hevent;
+    hwnd2 = hevent;
 
     hthread = CreateThread(NULL, 0, cbt_global_hook_thread_proc, &hwnd2, 0, &tid);
     ok(hthread != NULL, "CreateThread failed, error %d\n", GetLastError());
@@ -7930,7 +7930,7 @@ static void test_winevents(void)
     ok_sequence(WmWinEventsSeq, "notify winevents", FALSE);
 
     /****** start of event filtering test *************/
-    hhook = (HWINEVENTHOOK)pSetWinEventHook(
+    hhook = pSetWinEventHook(
 	EVENT_OBJECT_SHOW, /* 0x8002 */
 	EVENT_OBJECT_LOCATIONCHANGE, /* 0x800B */
 	GetModuleHandleA(0), win_event_global_hook_proc,
@@ -7940,7 +7940,7 @@ static void test_winevents(void)
 
     hevent = CreateEventA(NULL, 0, 0, NULL);
     assert(hevent);
-    hwnd2 = (HWND)hevent;
+    hwnd2 = hevent;
 
     hthread = CreateThread(NULL, 0, win_event_global_thread_proc, &hwnd2, 0, &tid);
     ok(hthread != NULL, "CreateThread failed, error %d\n", GetLastError());
@@ -7969,16 +7969,14 @@ static void test_winevents(void)
     /****** end of event filtering test *************/
 
     /****** start of out of context event test *************/
-    hhook = (HWINEVENTHOOK)pSetWinEventHook(
-	EVENT_MIN, EVENT_MAX,
-	0, win_event_global_hook_proc,
-	GetCurrentProcessId(), 0,
+    hhook = pSetWinEventHook(EVENT_MIN, EVENT_MAX, 0,
+        win_event_global_hook_proc, GetCurrentProcessId(), 0,
 	WINEVENT_OUTOFCONTEXT);
     ok(hhook != 0, "SetWinEventHook error %d\n", GetLastError());
 
     hevent = CreateEventA(NULL, 0, 0, NULL);
     assert(hevent);
-    hwnd2 = (HWND)hevent;
+    hwnd2 = hevent;
 
     flush_sequence();
 
@@ -8025,7 +8023,7 @@ static void test_winevents(void)
 
     hevent = CreateEventA(NULL, 0, 0, NULL);
     assert(hevent);
-    hwnd2 = (HWND)hevent;
+    hwnd2 = hevent;
 
     hthread = CreateThread(NULL, 0, mouse_ll_global_thread_proc, &hwnd2, 0, &tid);
     ok(hthread != NULL, "CreateThread failed, error %d\n", GetLastError());
@@ -8092,8 +8090,8 @@ static void test_set_hook(void)
 
     /* even process local incontext hooks require hmodule */
     SetLastError(0xdeadbeef);
-    hwinevent_hook = (HWINEVENTHOOK)pSetWinEventHook(EVENT_MIN, EVENT_MAX,
-	0, win_event_proc, GetCurrentProcessId(), 0, WINEVENT_INCONTEXT);
+    hwinevent_hook = pSetWinEventHook(EVENT_MIN, EVENT_MAX, 0, win_event_proc,
+        GetCurrentProcessId(), 0, WINEVENT_INCONTEXT);
     ok(!hwinevent_hook, "WINEVENT_INCONTEXT requires hModule != 0\n");
     ok(GetLastError() == ERROR_HOOK_NEEDS_HMOD || /* Win2k */
        GetLastError() == 0xdeadbeef, /* Win9x */
@@ -8101,8 +8099,8 @@ static void test_set_hook(void)
 
     /* even thread local incontext hooks require hmodule */
     SetLastError(0xdeadbeef);
-    hwinevent_hook = (HWINEVENTHOOK)pSetWinEventHook(EVENT_MIN, EVENT_MAX,
-	0, win_event_proc, GetCurrentProcessId(), GetCurrentThreadId(), WINEVENT_INCONTEXT);
+    hwinevent_hook = pSetWinEventHook(EVENT_MIN, EVENT_MAX, 0, win_event_proc,
+        GetCurrentProcessId(), GetCurrentThreadId(), WINEVENT_INCONTEXT);
     ok(!hwinevent_hook, "WINEVENT_INCONTEXT requires hModule != 0\n");
     ok(GetLastError() == ERROR_HOOK_NEEDS_HMOD || /* Win2k */
        GetLastError() == 0xdeadbeef, /* Win9x */
@@ -8112,27 +8110,27 @@ static void test_set_hook(void)
     {
     /* these 3 tests don't pass under Win9x */
     SetLastError(0xdeadbeef);
-    hwinevent_hook = (HWINEVENTHOOK)pSetWinEventHook(1, 0,
-	0, win_event_proc, GetCurrentProcessId(), 0, WINEVENT_OUTOFCONTEXT);
+    hwinevent_hook = pSetWinEventHook(1, 0, 0, win_event_proc,
+        GetCurrentProcessId(), 0, WINEVENT_OUTOFCONTEXT);
     ok(!hwinevent_hook, "SetWinEventHook with invalid event range should fail\n");
     ok(GetLastError() == ERROR_INVALID_HOOK_FILTER, "unexpected error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    hwinevent_hook = (HWINEVENTHOOK)pSetWinEventHook(-1, 1,
-	0, win_event_proc, GetCurrentProcessId(), 0, WINEVENT_OUTOFCONTEXT);
+    hwinevent_hook = pSetWinEventHook(-1, 1, 0, win_event_proc,
+        GetCurrentProcessId(), 0, WINEVENT_OUTOFCONTEXT);
     ok(!hwinevent_hook, "SetWinEventHook with invalid event range should fail\n");
     ok(GetLastError() == ERROR_INVALID_HOOK_FILTER, "unexpected error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    hwinevent_hook = (HWINEVENTHOOK)pSetWinEventHook(EVENT_MIN, EVENT_MAX,
-	0, win_event_proc, 0, 0xdeadbeef, WINEVENT_OUTOFCONTEXT);
+    hwinevent_hook = pSetWinEventHook(EVENT_MIN, EVENT_MAX, 0, win_event_proc,
+        0, 0xdeadbeef, WINEVENT_OUTOFCONTEXT);
     ok(!hwinevent_hook, "SetWinEventHook with invalid tid should fail\n");
     ok(GetLastError() == ERROR_INVALID_THREAD_ID, "unexpected error %d\n", GetLastError());
     }
 
     SetLastError(0xdeadbeef);
-    hwinevent_hook = (HWINEVENTHOOK)pSetWinEventHook(0, 0,
-	0, win_event_proc, GetCurrentProcessId(), 0, WINEVENT_OUTOFCONTEXT);
+    hwinevent_hook = pSetWinEventHook(0, 0, 0, win_event_proc,
+        GetCurrentProcessId(), 0, WINEVENT_OUTOFCONTEXT);
     ok(hwinevent_hook != 0, "SetWinEventHook error %d\n", GetLastError());
     ok(GetLastError() == 0xdeadbeef, "unexpected error %d\n", GetLastError());
     ret = pUnhookWinEvent(hwinevent_hook);
@@ -8142,8 +8140,8 @@ todo_wine {
     /* This call succeeds under win2k SP4, but fails under Wine.
        Does win2k test/use passed process id? */
     SetLastError(0xdeadbeef);
-    hwinevent_hook = (HWINEVENTHOOK)pSetWinEventHook(EVENT_MIN, EVENT_MAX,
-	0, win_event_proc, 0xdeadbeef, 0, WINEVENT_OUTOFCONTEXT);
+    hwinevent_hook = pSetWinEventHook(EVENT_MIN, EVENT_MAX, 0, win_event_proc,
+        0xdeadbeef, 0, WINEVENT_OUTOFCONTEXT);
     ok(hwinevent_hook != 0, "SetWinEventHook error %d\n", GetLastError());
     ok(GetLastError() == 0xdeadbeef, "unexpected error %d\n", GetLastError());
     ret = pUnhookWinEvent(hwinevent_hook);
@@ -11336,12 +11334,10 @@ START_TEST(msg)
 
     if (pSetWinEventHook)
     {
-	hEvent_hook = (HWINEVENTHOOK)pSetWinEventHook(EVENT_MIN, EVENT_MAX,
-						      GetModuleHandleA(0),
-						      win_event_proc,
-						      0,
-						      GetCurrentThreadId(),
-						      WINEVENT_INCONTEXT);
+        hEvent_hook = pSetWinEventHook(EVENT_MIN, EVENT_MAX,
+                                       GetModuleHandleA(0), win_event_proc,
+                                       0, GetCurrentThreadId(),
+                                       WINEVENT_INCONTEXT);
 	assert(hEvent_hook);
 
 	if (pIsWinEventHookInstalled)

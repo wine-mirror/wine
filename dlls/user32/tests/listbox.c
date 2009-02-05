@@ -59,10 +59,10 @@ create_listbox (DWORD add_style, HWND parent)
                             parent, (HMENU)ctl_id, NULL, 0);
 
   assert (handle);
-  SendMessage (handle, LB_ADDSTRING, 0, (LPARAM) (LPCTSTR) strings[0]);
-  SendMessage (handle, LB_ADDSTRING, 0, (LPARAM) (LPCTSTR) strings[1]);
-  SendMessage (handle, LB_ADDSTRING, 0, (LPARAM) (LPCTSTR) strings[2]);
-  SendMessage (handle, LB_ADDSTRING, 0, (LPARAM) (LPCTSTR) strings[3]);
+  SendMessage (handle, LB_ADDSTRING, 0, (LPARAM) strings[0]);
+  SendMessage (handle, LB_ADDSTRING, 0, (LPARAM) strings[1]);
+  SendMessage (handle, LB_ADDSTRING, 0, (LPARAM) strings[2]);
+  SendMessage (handle, LB_ADDSTRING, 0, (LPARAM) strings[3]);
 
 #ifdef VISIBLE
   ShowWindow (handle, SW_SHOW);
