@@ -2721,7 +2721,7 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
 
     nameLen = UNLEN + 1;
 
-    userName = HeapAlloc(GetProcessHeap(), 0, nameLen);
+    userName = HeapAlloc(GetProcessHeap(), 0, nameLen*sizeof(WCHAR));
 
     if (GetUserNameW(userName, &nameLen) && !strcmpW(lpAccountName, userName))
         ret = lookup_user_account_name(Sid, cbSid, ReferencedDomainName,
