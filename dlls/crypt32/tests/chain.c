@@ -1515,21 +1515,32 @@ static ChainCheck chainCheck[] = {
    { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_NOT_TIME_VALID, 0 },
      1, simpleStatus2 }, 0 },
+ /* Earlier versions of Windows incorrectly don't set
+  * CERT_TRUST_INVALID_BASIC_CONSTRAINTS on this chain.
+  */
  { { sizeof(chain3) / sizeof(chain3[0]), chain3 },
-   { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
+   { { CERT_TRUST_IS_NOT_TIME_NESTED | CERT_TRUST_INVALID_BASIC_CONSTRAINTS,
+       CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_UNTRUSTED_ROOT |
        CERT_TRUST_IS_NOT_TIME_VALID, 0 },
      1, simpleStatus3 }, 0 },
+ /* Earlier versions of Windows incorrectly don't set
+  * CERT_TRUST_INVALID_BASIC_CONSTRAINTS on this chain.
+  */
  { { sizeof(chain4) / sizeof(chain4[0]), chain4 },
-   { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
+   { { CERT_TRUST_IS_NOT_TIME_NESTED | CERT_TRUST_INVALID_BASIC_CONSTRAINTS,
+       CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_UNTRUSTED_ROOT |
        CERT_TRUST_IS_NOT_TIME_VALID, 0 },
      1, simpleStatus4 }, 0 },
  /* Windows versions prior to Vista/2008 incorrectly set
   * CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT on this chain, so ignore it.
+  * Similarly, some older versions of Windows incorrectly set
+  * CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT, ignore that too.
   */
  { { sizeof(chain5) / sizeof(chain5[0]), chain5 },
-   { { CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT,
+   { { CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT |
+       CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT,
        CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT |
        CERT_TRUST_IS_UNTRUSTED_ROOT, 0 }, 1, simpleStatus5 }, 0 },
@@ -1539,14 +1550,22 @@ static ChainCheck chainCheck[] = {
  { { sizeof(chain7) / sizeof(chain7[0]), chain7 },
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT, 0 }, 1, simpleStatus7 }, 0 },
+ /* Earlier versions of Windows incorrectly don't set
+  * CERT_TRUST_INVALID_BASIC_CONSTRAINTS on this chain.
+  */
  { { sizeof(chain8) / sizeof(chain8[0]), chain8 },
-   { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
+   { { CERT_TRUST_IS_NOT_TIME_NESTED | CERT_TRUST_INVALID_BASIC_CONSTRAINTS,
+       CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_UNTRUSTED_ROOT |
        CERT_TRUST_IS_NOT_TIME_VALID, 0 },
      1, simpleStatus8 },
    TODO_ERROR },
+ /* Earlier versions of Windows incorrectly don't set
+  * CERT_TRUST_INVALID_BASIC_CONSTRAINTS on this chain.
+  */
  { { sizeof(chain9) / sizeof(chain9[0]), chain9 },
-   { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
+   { { CERT_TRUST_IS_NOT_TIME_NESTED | CERT_TRUST_INVALID_BASIC_CONSTRAINTS,
+       CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_PARTIAL_CHAIN |
        CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_CYCLIC, 0 },
      1, simpleStatus9 },
