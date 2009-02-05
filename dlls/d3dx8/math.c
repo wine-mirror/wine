@@ -28,7 +28,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3dx8);
+WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 static const ID3DXMatrixStackVtbl ID3DXMatrixStack_Vtbl;
 
