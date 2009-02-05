@@ -607,7 +607,7 @@ BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr_in *
         return FALSE;
     }
     memset( sa, 0, sizeof(struct sockaddr_in) );
-    memcpy( (char *)&sa->sin_addr, he->h_addr, he->h_length );
+    memcpy( &sa->sin_addr, he->h_addr, he->h_length );
     sa->sin_family = he->h_addrtype;
     sa->sin_port = htons( port );
 

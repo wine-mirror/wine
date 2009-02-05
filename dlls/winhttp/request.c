@@ -566,7 +566,7 @@ static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID
         }
         else if (buffer)
         {
-            for (p = headers, q = (WCHAR *)buffer; *p; p++, q++)
+            for (p = headers, q = buffer; *p; p++, q++)
             {
                 if (*p != '\r') *q = *p;
                 else
@@ -576,7 +576,7 @@ static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID
                 }
             }
             *q = 0;
-            TRACE("returning data: %s\n", debugstr_wn((WCHAR *)buffer, len));
+            TRACE("returning data: %s\n", debugstr_wn(buffer, len));
             ret = TRUE;
         }
         *buflen = len * sizeof(WCHAR);
