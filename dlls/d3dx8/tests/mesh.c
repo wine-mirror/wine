@@ -1,5 +1,6 @@
 /*
  * Copyright 2008 David Adam
+ * Copyright 2008 Luis Busquets
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,6 +22,10 @@
 #include "wine/test.h"
 
 #define admitted_error 0.0001f
+
+#define compare_vertex_sizes(type, exp) \
+    got=D3DXGetFVFVertexSize(type); \
+    ok(got==exp, "Expected: %d, Got: %d\n", exp, got);
 
 static BOOL compare(FLOAT u, FLOAT v)
 {
@@ -101,6 +106,110 @@ static void D3DXBoundProbeTest(void)
     ok(result == FALSE, "expected FALSE, received TRUE\n");
 }
 
+static void D3DXGetFVFVertexSizeTest(void)
+{
+    UINT got;
+
+    compare_vertex_sizes (D3DFVF_XYZ, 12);
+
+    compare_vertex_sizes (D3DFVF_XYZB3, 24);
+
+    compare_vertex_sizes (D3DFVF_XYZB5, 32);
+
+    compare_vertex_sizes (D3DFVF_XYZ | D3DFVF_NORMAL, 24);
+
+    compare_vertex_sizes (D3DFVF_XYZ | D3DFVF_DIFFUSE, 16);
+
+    compare_vertex_sizes (
+        D3DFVF_XYZ |
+        D3DFVF_TEX1 |
+        D3DFVF_TEXCOORDSIZE1(0), 16);
+    compare_vertex_sizes (
+        D3DFVF_XYZ |
+        D3DFVF_TEX2 |
+        D3DFVF_TEXCOORDSIZE1(0) |
+        D3DFVF_TEXCOORDSIZE1(1), 20);
+
+    compare_vertex_sizes (
+        D3DFVF_XYZ |
+        D3DFVF_TEX1 |
+        D3DFVF_TEXCOORDSIZE2(0), 20);
+
+    compare_vertex_sizes (
+        D3DFVF_XYZ |
+        D3DFVF_TEX2 |
+        D3DFVF_TEXCOORDSIZE2(0) |
+        D3DFVF_TEXCOORDSIZE2(1), 28);
+
+    compare_vertex_sizes (
+        D3DFVF_XYZ |
+        D3DFVF_TEX6 |
+        D3DFVF_TEXCOORDSIZE2(0) |
+        D3DFVF_TEXCOORDSIZE2(1) |
+        D3DFVF_TEXCOORDSIZE2(2) |
+        D3DFVF_TEXCOORDSIZE2(3) |
+        D3DFVF_TEXCOORDSIZE2(4) |
+        D3DFVF_TEXCOORDSIZE2(5), 60);
+
+    compare_vertex_sizes (
+        D3DFVF_XYZ |
+        D3DFVF_TEX8 |
+        D3DFVF_TEXCOORDSIZE2(0) |
+        D3DFVF_TEXCOORDSIZE2(1) |
+        D3DFVF_TEXCOORDSIZE2(2) |
+        D3DFVF_TEXCOORDSIZE2(3) |
+        D3DFVF_TEXCOORDSIZE2(4) |
+        D3DFVF_TEXCOORDSIZE2(5) |
+        D3DFVF_TEXCOORDSIZE2(6) |
+        D3DFVF_TEXCOORDSIZE2(7), 76);
+
+    compare_vertex_sizes (
+        D3DFVF_XYZ |
+        D3DFVF_TEX1 |
+        D3DFVF_TEXCOORDSIZE3(0), 24);
+
+    compare_vertex_sizes (
+        D3DFVF_XYZ |
+        D3DFVF_TEX4 |
+        D3DFVF_TEXCOORDSIZE3(0) |
+        D3DFVF_TEXCOORDSIZE3(1) |
+        D3DFVF_TEXCOORDSIZE3(2) |
+        D3DFVF_TEXCOORDSIZE3(3), 60);
+
+    compare_vertex_sizes (
+        D3DFVF_XYZ |
+        D3DFVF_TEX1 |
+        D3DFVF_TEXCOORDSIZE4(0), 28);
+
+    compare_vertex_sizes (
+        D3DFVF_XYZ |
+        D3DFVF_TEX2 |
+        D3DFVF_TEXCOORDSIZE4(0) |
+        D3DFVF_TEXCOORDSIZE4(1), 44);
+
+    compare_vertex_sizes (
+        D3DFVF_XYZ |
+        D3DFVF_TEX3 |
+        D3DFVF_TEXCOORDSIZE4(0) |
+        D3DFVF_TEXCOORDSIZE4(1) |
+        D3DFVF_TEXCOORDSIZE4(2), 60);
+
+    compare_vertex_sizes (
+        D3DFVF_XYZB5 |
+        D3DFVF_NORMAL |
+        D3DFVF_DIFFUSE |
+        D3DFVF_SPECULAR |
+        D3DFVF_TEX8 |
+        D3DFVF_TEXCOORDSIZE4(0) |
+        D3DFVF_TEXCOORDSIZE4(1) |
+        D3DFVF_TEXCOORDSIZE4(2) |
+        D3DFVF_TEXCOORDSIZE4(3) |
+        D3DFVF_TEXCOORDSIZE4(4) |
+        D3DFVF_TEXCOORDSIZE4(5) |
+        D3DFVF_TEXCOORDSIZE4(6) |
+        D3DFVF_TEXCOORDSIZE4(7), 180);
+}
+
 static void D3DXIntersectTriTest(void)
 {
     BOOL exp_res, got_res;
@@ -157,5 +266,6 @@ static void D3DXIntersectTriTest(void)
 START_TEST(mesh)
 {
     D3DXBoundProbeTest();
+    D3DXGetFVFVertexSizeTest();
     D3DXIntersectTriTest();
 }
