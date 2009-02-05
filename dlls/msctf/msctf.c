@@ -233,3 +233,20 @@ HRESULT WINAPI SetInputScope(HWND hwnd, INT inputscope)
     FIXME("STUB: %p %i\n",hwnd,inputscope);
     return S_OK;
 }
+
+/***********************************************************************
+ *              SetInputScopes(MSCTF.@)
+ */
+HRESULT WINAPI SetInputScopes(HWND hwnd, const INT *pInputScopes,
+                              UINT cInputScopes, WCHAR **ppszPhraseList,
+                              UINT cPhrases, WCHAR *pszRegExp, WCHAR *pszSRGS)
+{
+    int i;
+    FIXME("STUB: %p ... %s %s\n",hwnd, debugstr_w(pszRegExp), debugstr_w(pszSRGS));
+    for (i = 0; i < cInputScopes; i++)
+        TRACE("\tScope[%i] = %i\n",i,pInputScopes[i]);
+    for (i = 0; i < cPhrases; i++)
+        TRACE("\tPhrase[%i] = %s\n",i,debugstr_w(ppszPhraseList[i]));
+
+    return S_OK;
+}

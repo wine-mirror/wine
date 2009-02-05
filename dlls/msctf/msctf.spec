@@ -4,7 +4,7 @@
 @ stdcall -private DllUnregisterServer()
 @ stdcall SetInputScope(long long)
 @ stub SetInputScopeXML
-@ stub SetInputScopes
+@ stdcall SetInputScopes(long ptr long ptr long wstr wstr)
 @ stub TF_CUASAppFix
 @ stub TF_CheckThreadInputIdle
 @ stub TF_ClearLangBarAddIns
