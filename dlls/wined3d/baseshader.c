@@ -1133,8 +1133,9 @@ static GLuint shader_none_generate_pshader(IWineD3DPixelShader *iface, SHADER_BU
     FIXME("NONE shader backend asked to generate a pixel shader\n");
     return 0;
 }
-static void shader_none_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer) {
+static GLuint shader_none_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer, const struct vs_compile_args *args) {
     FIXME("NONE shader backend asked to generate a vertex shader\n");
+    return 0;
 }
 
 #define GLINFO_LOCATION      (*gl_info)

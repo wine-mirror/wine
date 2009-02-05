@@ -101,16 +101,18 @@ struct glsl_shader_prog_link {
     GLhandleARB                 luminanceoffset_location[MAX_TEXTURES];
     GLhandleARB                 ycorrection_location;
     GLenum                      vertex_color_clamp;
-    GLhandleARB                 vshader;
+    IWineD3DVertexShader        *vshader;
     IWineD3DPixelShader         *pshader;
+    struct vs_compile_args      vs_args;
     struct ps_compile_args      ps_args;
     UINT                        constant_version;
 };
 
 typedef struct {
-    GLhandleARB                 vshader;
+    IWineD3DVertexShader        *vshader;
     IWineD3DPixelShader         *pshader;
     struct ps_compile_args      ps_args;
+    struct vs_compile_args      vs_args;
 } glsl_program_key_t;
 
 
@@ -1030,7 +1032,7 @@ static void shader_glsl_get_register_name(const DWORD param, const DWORD addr_to
                     strcpy(tmpStr, "gl_SecondaryColor");
             }
         } else {
-            if (((IWineD3DVertexShaderImpl *)This)->swizzle_map & (1 << reg)) *is_color = TRUE;
+            if (((IWineD3DVertexShaderImpl *)This)->cur_args->swizzle_map & (1 << reg)) *is_color = TRUE;
             sprintf(tmpStr, "attrib%u", reg);
         } 
         break;
@@ -2918,17 +2920,20 @@ static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_sh
     key = HeapAlloc(GetProcessHeap(), 0, sizeof(glsl_program_key_t));
     key->vshader = entry->vshader;
     key->pshader = entry->pshader;
+    key->vs_args = entry->vs_args;
     key->ps_args = entry->ps_args;
 
     hash_table_put(priv->glsl_program_lookup, key, entry);
 }
 
 static struct glsl_shader_prog_link *get_glsl_program_entry(struct shader_glsl_priv *priv,
-        GLhandleARB vshader, IWineD3DPixelShader *pshader, struct ps_compile_args *ps_args) {
+        IWineD3DVertexShader *vshader, IWineD3DPixelShader *pshader, struct vs_compile_args *vs_args,
+        struct ps_compile_args *ps_args) {
     glsl_program_key_t key;
 
     key.vshader = vshader;
     key.pshader = pshader;
+    key.vs_args = *vs_args;
     key.ps_args = *ps_args;
 
     return hash_table_get(priv->glsl_program_lookup, &key);
@@ -2942,6 +2947,7 @@ static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const WineD
     key = HeapAlloc(GetProcessHeap(), 0, sizeof(glsl_program_key_t));
     key->vshader = entry->vshader;
     key->pshader = entry->pshader;
+    key->vs_args = entry->vs_args;
     key->ps_args = entry->ps_args;
     hash_table_remove(priv->glsl_program_lookup, key);
 
@@ -3293,21 +3299,22 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     int i;
     char glsl_name[8];
     GLhandleARB vshader_id, pshader_id;
-    struct ps_compile_args compile_args;
+    struct ps_compile_args ps_compile_args;
+    struct vs_compile_args vs_compile_args;
 
     if(use_vs) {
-        IWineD3DVertexShaderImpl_CompileShader(vshader);
-        vshader_id = ((IWineD3DVertexShaderImpl*)vshader)->prgId;
-    } else {
-        vshader_id = 0;
-    }
-    if(use_ps) {
-        find_ps_compile_args((IWineD3DPixelShaderImpl*)This->stateBlock->pixelShader, This->stateBlock, &compile_args);
+        find_vs_compile_args((IWineD3DVertexShaderImpl*)This->stateBlock->vertexShader, This->stateBlock, &vs_compile_args);
     } else {
         /* FIXME: Do we really have to spend CPU cycles to generate a few zeroed bytes? */
-        memset(&compile_args, 0, sizeof(compile_args));
+        memset(&vs_compile_args, 0, sizeof(vs_compile_args));
     }
-    entry = get_glsl_program_entry(priv, vshader_id, pshader, &compile_args);
+    if(use_ps) {
+        find_ps_compile_args((IWineD3DPixelShaderImpl*)This->stateBlock->pixelShader, This->stateBlock, &ps_compile_args);
+    } else {
+        /* FIXME: Do we really have to spend CPU cycles to generate a few zeroed bytes? */
+        memset(&ps_compile_args, 0, sizeof(ps_compile_args));
+    }
+    entry = get_glsl_program_entry(priv, vshader, pshader, &vs_compile_args, &ps_compile_args);
     if (entry) {
         priv->glsl_program = entry;
         return;
@@ -3320,15 +3327,22 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     /* Create the entry */
     entry = HeapAlloc(GetProcessHeap(), 0, sizeof(struct glsl_shader_prog_link));
     entry->programId = programId;
-    entry->vshader = vshader_id;
+    entry->vshader = vshader;
     entry->pshader = pshader;
-    entry->ps_args = compile_args;
+    entry->vs_args = vs_compile_args;
+    entry->ps_args = ps_compile_args;
     entry->constant_version = 0;
     /* Add the hash table entry */
     add_glsl_program_entry(priv, entry);
 
     /* Set the current program */
     priv->glsl_program = entry;
+
+    if(use_vs) {
+        vshader_id = find_gl_vshader((IWineD3DVertexShaderImpl *) vshader, &vs_compile_args);
+    } else {
+        vshader_id = 0;
+    }
 
     /* Attach GLSL vshader */
     if (vshader_id) {
@@ -3369,7 +3383,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     }
 
     if(use_ps) {
-        pshader_id = find_gl_pshader((IWineD3DPixelShaderImpl *) pshader, &compile_args);
+        pshader_id = find_gl_pshader((IWineD3DPixelShaderImpl *) pshader, &ps_compile_args);
     } else {
         pshader_id = 0;
     }
@@ -3619,7 +3633,7 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
         if(ps->num_gl_shaders == 0) return;
     } else {
         vs = (IWineD3DVertexShaderImpl *) This;
-        if(vs->prgId == 0) return;
+        if(vs->num_gl_shaders == 0) return;
     }
 
     linked_programs = &This->baseShader.linked_programs;
@@ -3654,13 +3668,19 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
         ps->num_gl_shaders = 0;
         ps->shader_array_size = 0;
     } else {
-        TRACE("Deleting shader object %u\n", vs->prgId);
+        UINT i;
+
         ENTER_GL();
-        GL_EXTCALL(glDeleteObjectARB(vs->prgId));
-        checkGLcall("glDeleteObjectARB");
+        for(i = 0; i < vs->num_gl_shaders; i++) {
+            TRACE("deleting vshader %u\n", vs->gl_shaders[i].prgId);
+            GL_EXTCALL(glDeleteObjectARB(vs->gl_shaders[i].prgId));
+            checkGLcall("glDeleteObjectARB");
+        }
         LEAVE_GL();
-        vs->prgId = 0;
-        vs->baseShader.is_compiled = FALSE;
+        HeapFree(GetProcessHeap(), 0, vs->gl_shaders);
+        vs->gl_shaders = NULL;
+        vs->num_gl_shaders = 0;
+        vs->shader_array_size = 0;
     }
 }
 
@@ -3668,7 +3688,7 @@ static unsigned int glsl_program_key_hash(const void *key)
 {
     const glsl_program_key_t *k = key;
 
-    unsigned int hash = k->vshader | ((DWORD_PTR) k->pshader) << 16;
+    unsigned int hash = ((DWORD_PTR) k->vshader) | ((DWORD_PTR) k->pshader) << 16;
     hash += ~(hash << 15);
     hash ^=  (hash >> 10);
     hash +=  (hash << 3);
@@ -3685,7 +3705,8 @@ static BOOL glsl_program_key_compare(const void *keya, const void *keyb)
     const glsl_program_key_t *kb = keyb;
 
     return ka->vshader == kb->vshader && ka->pshader == kb->pshader &&
-           (memcmp(&ka->ps_args, &kb->ps_args, sizeof(kb->ps_args)) == 0);
+           (memcmp(&ka->ps_args, &kb->ps_args, sizeof(kb->ps_args)) == 0) &&
+           (memcmp(&ka->vs_args, &kb->vs_args, sizeof(kb->vs_args)) == 0);
 }
 
 static BOOL constant_heap_init(struct constant_heap *heap, unsigned int constant_count)
@@ -3870,7 +3891,7 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface, SHADER_BU
     return shader_obj;
 }
 
-static void shader_glsl_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer) {
+static GLuint shader_glsl_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer, const struct vs_compile_args *args) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     const struct shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
@@ -3920,8 +3941,7 @@ static void shader_glsl_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUF
     GL_EXTCALL(glCompileShaderARB(shader_obj));
     print_glsl_info_log(&GLINFO_LOCATION, shader_obj);
 
-    /* Store the shader object */
-    This->prgId = shader_obj;
+    return shader_obj;
 }
 
 static void shader_glsl_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct shader_caps *pCaps)
