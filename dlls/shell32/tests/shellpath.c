@@ -90,9 +90,10 @@ static LPMALLOC pMalloc;
 static const BYTE guidType[] = { PT_GUID };
 static const BYTE controlPanelType[] = { PT_SHELLEXT, PT_GUID };
 static const BYTE folderType[] = { PT_FOLDER };
-static const BYTE favoritesType[] = { PT_FOLDER, 0 };
+static const BYTE favoritesType[] = { PT_FOLDER, 0, PT_IESPECIAL2 /* Win98 */ };
 static const BYTE folderOrSpecialType[] = { PT_FOLDER, PT_IESPECIAL2 };
-static const BYTE personalType[] = { PT_FOLDER, PT_GUID, PT_DRIVE, 0xff /* Win9x */ };
+static const BYTE personalType[] = { PT_FOLDER, PT_GUID, PT_DRIVE, 0xff /* Win9x */,
+ PT_IESPECIAL2 /* Win98 */, 0 /* Vista */ };
 /* FIXME: don't know the type of 0x71 returned by Vista/2008 for printers */
 static const BYTE printersType[] = { PT_YAGUID, PT_SHELLEXT, 0x71 };
 static const BYTE ieSpecialType[] = { PT_IESPECIAL2 };
