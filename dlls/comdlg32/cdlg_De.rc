@@ -409,7 +409,7 @@ Bitte geben sie einen Wert zwischen %d und %d an."
     PD32_MARGINS_IN_MILLIMETERS           "Ränder [mm]"
     PD32_MILLIMETERS                      "mm"
 
-    PD32_PRINTER_STATUS_READY             "Bereit; "
+    PD32_PRINTER_STATUS_READY             "Bereit"
     PD32_PRINTER_STATUS_PAUSED            "Gestoppt; "
     PD32_PRINTER_STATUS_ERROR             "Fehler; "
     PD32_PRINTER_STATUS_PENDING_DELETION  "Wartet auf Löschung; "

@@ -419,7 +419,7 @@ Veuillez en installer une et réessayez."
     PD32_MARGINS_IN_MILLIMETERS           "Marges [mm]"
     PD32_MILLIMETERS                      "mm"
 
-    PD32_PRINTER_STATUS_READY             "Prêt ; "
+    PD32_PRINTER_STATUS_READY             "Prêt"
     PD32_PRINTER_STATUS_PAUSED            "Suspendu ; "
     PD32_PRINTER_STATUS_ERROR             "Erreur ; "
     PD32_PRINTER_STATUS_PENDING_DELETION  "En attente de suppression ; "
