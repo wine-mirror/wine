@@ -23,7 +23,7 @@
  * compatible with XPCOM, usable in C code.
  */
 
-cpp_quote("#define GECKO_VERSION \"0.9.0\"")
+cpp_quote("#define GECKO_VERSION \"0.9.1\"")
 cpp_quote("#define GECKO_VERSION_STRING \"Wine Gecko \" GECKO_VERSION")
 
 import "wtypes.idl";
@@ -873,6 +873,7 @@ interface nsIDOMNSDocument : nsISupports
 
     /* Wine extensions */
     nsresult WineAddObserver(nsIDocumentObserver *aObserver);
+    nsresult WineRemoveObserver(nsIDocumentObserver *aObserver);
     nsresult WineAddScriptRunner(nsIRunnable *aRunnable);
 }
 
