@@ -97,10 +97,39 @@ done we've got an intersection of the ray with the box.
     return TRUE;
 }
 
+static UINT Get_TexCoord_Size_From_FVF(DWORD FVF, int tex_num)
+{
+    return (((((FVF) >> (16 + (2 * (tex_num)))) + 1) & 0x03) + 1);
+}
+
 UINT WINAPI D3DXGetFVFVertexSize(DWORD FVF)
 {
-  FIXME("(void): stub\n");
-  return 0;
+    DWORD size = 0;
+    UINT i;
+    UINT numTextures = (FVF & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
+
+    if (FVF & D3DFVF_NORMAL) size +=  sizeof(D3DXVECTOR3);
+    if (FVF & D3DFVF_DIFFUSE) size += sizeof(DWORD);
+    if (FVF & D3DFVF_SPECULAR) size += sizeof(DWORD);
+    if (FVF & D3DFVF_PSIZE) size += sizeof(DWORD);
+
+    switch (FVF & D3DFVF_POSITION_MASK)
+    {
+        case D3DFVF_XYZ:    size += sizeof(D3DXVECTOR3); break;
+        case D3DFVF_XYZRHW: size += 4 * sizeof(FLOAT); break;
+        case D3DFVF_XYZB1:  size += 4 * sizeof(FLOAT); break;
+        case D3DFVF_XYZB2:  size += 5 * sizeof(FLOAT); break;
+        case D3DFVF_XYZB3:  size += 6 * sizeof(FLOAT); break;
+        case D3DFVF_XYZB4:  size += 7 * sizeof(FLOAT); break;
+        case D3DFVF_XYZB5:  size += 8 * sizeof(FLOAT); break;
+    }
+
+    for (i = 0; i < numTextures; i++)
+    {
+        size += Get_TexCoord_Size_From_FVF(FVF, i) * sizeof(FLOAT);
+    }
+
+    return size;
 }
 
 BOOL CDECL D3DXIntersectTri(CONST D3DXVECTOR3 *p0, CONST D3DXVECTOR3 *p1, CONST D3DXVECTOR3 *p2, CONST D3DXVECTOR3 *praypos, CONST D3DXVECTOR3 *praydir, FLOAT *pu, FLOAT *pv, FLOAT *pdist)
