@@ -447,7 +447,7 @@ static LPWSTR get_url(void)
 
     if(size > sizeof(httpW) && !memcmp(url, httpW, sizeof(httpW))) {
         strcatW(url, v_formatW);
-        MultiByteToWideChar(CP_ACP, 0, GECKO_VERSION, -1, url+strlenW(url), (size-strlenW(url))/sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, GECKO_VERSION, -1, url+strlenW(url), size/sizeof(WCHAR)-strlenW(url));
     }
 
     TRACE("Got URL %s\n", debugstr_w(url));
