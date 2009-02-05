@@ -61,7 +61,11 @@ typedef struct tagContext {
     LONG refCount;
 
     TfClientId tidOwner;
-    IUnknown *punk;  /* possible ITextStoreACP or ITfContextOwnerCompositionSink */
+
+    ITextStoreACP   *pITextStoreACP;
+    /* ITfContextOwnerCompositionSink */
+
+    ITextStoreACPSink *pITextStoreACPSink;
 
     /* kept as seperate lists to reduce unnesseccary iterations */
     struct list     pContextKeyEventSink;
@@ -98,6 +102,15 @@ static void Context_Destructor(Context *This)
 {
     struct list *cursor, *cursor2;
     TRACE("destroying %p\n", This);
+
+    if (This->pITextStoreACPSink)
+    {
+        ITextStoreACP_UnadviseSink(This->pITextStoreACP, (IUnknown*)This->pITextStoreACPSink);
+        ITextStoreACPSink_Release(This->pITextStoreACPSink);
+    }
+
+    if (This->pITextStoreACP)
+        ITextStoreACPSink_Release(This->pITextStoreACP);
 
     LIST_FOR_EACH_SAFE(cursor, cursor2, &This->pContextKeyEventSink)
     {
@@ -408,11 +421,22 @@ HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfContext **pp
     if (This == NULL)
         return E_OUTOFMEMORY;
 
+    TRACE("(%p) %x %p %p %p\n",This, tidOwner, punk, ppOut, pecTextStore);
+
     This->ContextVtbl= &Context_ContextVtbl;
     This->SourceVtbl = &Context_SourceVtbl;
     This->refCount = 1;
     This->tidOwner = tidOwner;
-    This->punk = punk;
+
+    if (punk && SUCCEEDED(IUnknown_QueryInterface(punk, &IID_ITextStoreACP,
+                          (LPVOID*)&This->pITextStoreACP)))
+    {
+        if (SUCCEEDED(TextStoreACPSink_Constructor(&This->pITextStoreACPSink, This)))
+            ITextStoreACP_AdviseSink(This->pITextStoreACP, &IID_ITextStoreACPSink,
+                                    (IUnknown*)This->pITextStoreACPSink, TS_AS_ALL_SINKS);
+    }
+    else if (punk)
+        FIXME("Unhandled pUnk\n");
 
     TRACE("returning %p\n", This);
     *ppOut = (ITfContext*)This;
