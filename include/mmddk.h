@@ -380,13 +380,6 @@ typedef JOYDEVMSGPROC *LPJOYDEVMSGPROC;
 #define MAKEMCIRESOURCE(wRet, wRes) MAKELRESULT((wRet), (wRes))
 
 typedef struct {
-	DWORD   		dwCallback;
-	DWORD   		dwInstance;
-	HMIDIOUT		hMidi;
-	DWORD   		dwFlags;
-} PORTALLOC, *LPPORTALLOC;
-
-typedef struct {
 	HWAVE			hWave;
 	LPWAVEFORMATEX		lpFormat;
 	DWORD_PTR		dwCallback;
