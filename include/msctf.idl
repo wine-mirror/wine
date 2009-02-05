@@ -49,6 +49,7 @@ interface IEnumTfProperties;
 interface ITfRangeBackup;
 interface IEnumTfLanguageProfiles;
 interface ITfEditRecord;
+interface ITfCompositionView;
 
 [
     object,
@@ -414,4 +415,23 @@ interface ITfTextEditSink : IUnknown
         [in] ITfContext *pic,
         [in] TfEditCookie ecReadOnly,
         [in] ITfEditRecord *pEditRecord);
+};
+
+[
+    object,
+    uuid(5F20AA40-B57A-4F34-96AB-3576F377CC79),
+    pointer_default(unique)
+]
+interface ITfContextOwnerCompositionSink : IUnknown
+{
+    HRESULT OnStartComposition(
+        [in] ITfCompositionView *pComposition,
+        [out] BOOL *pfOk);
+
+    HRESULT OnUpdateComposition(
+        [in] ITfCompositionView *pComposition,
+        [in] ITfRange *pRangeNew);
+
+    HRESULT OnEndComposition(
+        [in] ITfCompositionView *pComposition);
 };
