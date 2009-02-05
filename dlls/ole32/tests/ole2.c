@@ -1167,7 +1167,8 @@ static void test_data_cache(void)
                 ok(hr == S_OK, "IOleCache_Cache cfFormat = %d, tymed = %d should have returned S_OK instead of 0x%08x\n",
                     fmtetc.cfFormat, fmtetc.tymed, hr);
             else if (fmtetc.tymed == TYMED_HGLOBAL)
-                ok(hr == CACHE_S_FORMATETC_NOTSUPPORTED,
+                ok(hr == CACHE_S_FORMATETC_NOTSUPPORTED ||
+                   broken(hr == S_OK && fmtetc.cfFormat == CF_BITMAP) /* Win9x & NT4 */,
                     "IOleCache_Cache cfFormat = %d, tymed = %d should have returned CACHE_S_FORMATETC_NOTSUPPORTED instead of 0x%08x\n",
                     fmtetc.cfFormat, fmtetc.tymed, hr);
             else
