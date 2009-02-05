@@ -3333,7 +3333,7 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
     {
         /* Windows 3.1 compatibility mode GM_COMPATIBLE has only limited
            font scaling abilities. */
-        dcmat.eM11 = dcmat.eM22 = fabs(dc->xformWorld2Vport.eM22);
+        dcmat.eM11 = dcmat.eM22 = dc->vport2WorldValid ? fabs(dc->xformWorld2Vport.eM22) : 1.0;
         dcmat.eM21 = dcmat.eM12 = 0;
     }
 
