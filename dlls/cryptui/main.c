@@ -5518,6 +5518,7 @@ struct ExportWizData
     CRYPTUI_WIZ_EXPORT_INFO exportInfo;
     CRYPTUI_WIZ_EXPORT_CERTCONTEXT_INFO contextInfo;
     BOOL freePassword;
+    PCRYPT_KEY_PROV_INFO keyProvInfo;
     LPWSTR fileName;
     HANDLE file;
     BOOL success;
@@ -5567,6 +5568,63 @@ static LRESULT CALLBACK export_welcome_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
     return ret;
 }
 
+static PCRYPT_KEY_PROV_INFO export_get_private_key_info(PCCERT_CONTEXT cert)
+{
+    PCRYPT_KEY_PROV_INFO info = NULL;
+    DWORD size;
+
+    if (CertGetCertificateContextProperty(cert, CERT_KEY_PROV_INFO_PROP_ID,
+     NULL, &size))
+    {
+        info = HeapAlloc(GetProcessHeap(), 0, size);
+        if (info)
+        {
+            if (!CertGetCertificateContextProperty(cert,
+             CERT_KEY_PROV_INFO_PROP_ID, info, &size))
+            {
+                HeapFree(GetProcessHeap(), 0, info);
+                info = NULL;
+            }
+        }
+    }
+    return info;
+}
+
+static BOOL export_acquire_private_key(PCRYPT_KEY_PROV_INFO info,
+ HCRYPTPROV *phProv)
+{
+    BOOL ret;
+
+    ret = CryptAcquireContextW(phProv, info->pwszContainerName,
+     info->pwszProvName, info->dwProvType, 0);
+    if (ret)
+    {
+        DWORD i;
+
+        for (i = 0; i < info->cProvParam; i++)
+            CryptSetProvParam(*phProv, info->rgProvParam[i].dwParam,
+             info->rgProvParam[i].pbData, info->rgProvParam[i].dwFlags);
+    }
+    return ret;
+}
+
+static BOOL export_is_key_exportable(HCRYPTPROV hProv, DWORD keySpec)
+{
+    BOOL ret;
+    HCRYPTKEY key;
+
+    if ((ret = CryptGetUserKey(hProv, keySpec, &key)))
+    {
+        DWORD permissions, size = sizeof(permissions);
+
+        if ((ret = CryptGetKeyParam(key, KP_PERMISSIONS, (BYTE *)&permissions,
+         &size, 0)) && !(permissions & CRYPT_EXPORT))
+            ret = FALSE;
+        CryptDestroyKey(key);
+    }
+    return ret;
+}
+
 static LRESULT CALLBACK export_private_key_dlg_proc(HWND hwnd, UINT msg,
  WPARAM wp, LPARAM lp)
 {
@@ -5578,9 +5636,36 @@ static LRESULT CALLBACK export_private_key_dlg_proc(HWND hwnd, UINT msg,
     case WM_INITDIALOG:
     {
         PROPSHEETPAGEW *page = (PROPSHEETPAGEW *)lp;
+        PCRYPT_KEY_PROV_INFO info;
+        HCRYPTPROV hProv = 0;
+        int errorID = 0;
 
         data = (struct ExportWizData *)page->lParam;
         SetWindowLongPtrW(hwnd, DWLP_USER, (LPARAM)data);
+        /* Get enough information about a key to see whether it's exportable.
+         */
+        if (!(info = export_get_private_key_info(
+         data->exportInfo.u.pCertContext)))
+            errorID = IDS_EXPORT_PRIVATE_KEY_UNAVAILABLE;
+        else if (!export_acquire_private_key(info, &hProv))
+            errorID = IDS_EXPORT_PRIVATE_KEY_UNAVAILABLE;
+        else if (!export_is_key_exportable(hProv, info->dwKeySpec))
+            errorID = IDS_EXPORT_PRIVATE_KEY_NON_EXPORTABLE;
+
+        if (errorID)
+        {
+            WCHAR error[MAX_STRING_LEN];
+
+            LoadStringW(hInstance, errorID, error,
+             sizeof(error) / sizeof(error[0]));
+            SendMessageW(GetDlgItem(hwnd, IDC_EXPORT_PRIVATE_KEY_UNAVAILABLE),
+             WM_SETTEXT, 0, (LPARAM)error);
+            EnableWindow(GetDlgItem(hwnd, IDC_EXPORT_PRIVATE_KEY_YES), FALSE);
+        }
+        else
+            data->keyProvInfo = info;
+        if (hProv)
+            CryptReleaseContext(hProv, 0);
         SendMessageW(GetDlgItem(hwnd, IDC_EXPORT_PRIVATE_KEY_NO), BM_CLICK,
          0, 0);
         break;
@@ -6671,6 +6756,7 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
         memcpy(&data.contextInfo, pvoid,
          min(((PCCRYPTUI_WIZ_EXPORT_CERTCONTEXT_INFO)pvoid)->dwSize,
          sizeof(data.contextInfo)));
+    data.keyProvInfo = NULL;
     data.fileName = NULL;
     data.file = INVALID_HANDLE_VALUE;
     data.success = FALSE;
@@ -6785,6 +6871,7 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     if (data.freePassword)
         HeapFree(GetProcessHeap(), 0,
          (LPWSTR)data.contextInfo.pwszPassword);
+    HeapFree(GetProcessHeap(), 0, data.keyProvInfo);
     CloseHandle(data.file);
     HeapFree(GetProcessHeap(), 0, data.fileName);
     if (l == 0)
