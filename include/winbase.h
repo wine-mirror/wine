@@ -2312,8 +2312,8 @@ WINBASEAPI VOID        WINAPI _LeaveSysLevel(SYSLEVEL*);
 
 /* Wine internal functions */
 
-extern char CDECL *wine_get_unix_file_name( LPCWSTR dos );
-extern WCHAR CDECL *wine_get_dos_file_name( LPCSTR str );
+extern char * CDECL wine_get_unix_file_name( LPCWSTR dos );
+extern WCHAR * CDECL wine_get_dos_file_name( LPCSTR str );
 
 
 /* Interlocked functions */
