@@ -1005,10 +1005,11 @@ sym_not_found:
 /**************************************************************************
  * 			wodNotifyClient			[internal]
  */
-static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
+static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD_PTR dwParam1,
+                             DWORD_PTR dwParam2)
 {
-    TRACE("wMsg = 0x%04x dwParm1 = %04X dwParam2 = %04X\n", wMsg, dwParam1, dwParam2);
-    
+    TRACE("wMsg = %04X dwParm1 = %08lX dwParam2 = %08lX\n", wMsg, dwParam1, dwParam2);
+
     switch (wMsg) {
     case WOM_OPEN:
     case WOM_CLOSE:
@@ -1144,7 +1145,7 @@ static DWORD wodHelper_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
     TRACE("notifying client: lpWaveHdr=(%p) lpPlayPtr=(%p) dwFlags=(%d)\n",
 	  lpWaveHdr, wwo->lpPlayPtr, lpWaveHdr->dwFlags);
 
-    wodNotifyClient(wwo, WOM_DONE, (DWORD)lpWaveHdr, 0);
+    wodNotifyClient(wwo, WOM_DONE, (DWORD_PTR)lpWaveHdr, 0);
   }
   TRACE("Not notifying client: lpWaveHdr=(%p) lpPlayPtr=(%p) lpLoopPtr=(%p)\n",
 	lpWaveHdr, wwo->lpPlayPtr, wwo->lpLoopPtr);
@@ -1356,7 +1357,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     EnterCriticalSection(&wwo->access_crst);
-    retval = wodNotifyClient(wwo, WOM_OPEN, 0L, 0L);
+    retval = wodNotifyClient(wwo, WOM_OPEN, 0, 0);
     LeaveCriticalSection(&wwo->access_crst);
 
     return retval;
@@ -1397,7 +1398,7 @@ static DWORD wodClose(WORD wDevID)
 #endif
       DeleteCriticalSection(&wwo->access_crst); /* delete the critical section so we can initialize it again from wodOpen() */
 
-      ret = wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
+      ret = wodNotifyClient(wwo, WOM_CLOSE, 0, 0);
     }
 
     return ret;
@@ -1657,12 +1658,11 @@ static DWORD wodDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 /**************************************************************************
  * 				wodMessage (WINEJACK.7)
  */
-DWORD WINAPI JACK_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser, 
-			    DWORD dwParam1, DWORD dwParam2)
+DWORD WINAPI JACK_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
+                             DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-  TRACE("(%u, %04X, %08X, %08X, %08X);\n",
-  wDevID, wMsg, dwUser, dwParam1, dwParam2);
-    
+  TRACE("(%u, %04X, %08X, %08lX, %08lX);\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+
   switch (wMsg) {
   case DRVM_INIT:
   case DRVM_EXIT:
@@ -1750,10 +1750,11 @@ static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 /**************************************************************************
  * 			widNotifyClient			[internal]
  */
-static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
+static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD_PTR dwParam1,
+                             DWORD_PTR dwParam2)
 {
-    TRACE("wMsg = 0x%04x dwParm1 = %04X dwParam2 = %04X\n", wMsg, dwParam1, dwParam2);
-    
+    TRACE("wMsg = %04X dwParm1 = %08lX dwParam2 = %08lX\n", wMsg, dwParam1, dwParam2);
+
     switch (wMsg) {
     case WIM_OPEN:
     case WIM_CLOSE:
@@ -1847,7 +1848,7 @@ static int JACK_callback_wwi (nframes_t nframes, void *arg)
 
 		TRACE("WaveHdr full. dwBytesRecorded=(%u) dwFlags=(0x%x)\n",lpWaveHdr->dwBytesRecorded,lpWaveHdr->dwFlags);
 
-		widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+		widNotifyClient(wwi, WIM_DATA, (DWORD_PTR)lpWaveHdr, 0);
 
 		lpWaveHdr = wwi->lpQueuePtr = lpNext;
 	    }
@@ -2151,7 +2152,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     TRACE("notify client.\n");
     EnterCriticalSection(&wwi->access_crst);
-    retval = widNotifyClient(wwi, WIM_OPEN, 0L, 0L);
+    retval = widNotifyClient(wwi, WIM_OPEN, 0, 0);
     LeaveCriticalSection(&wwi->access_crst);
 
     return retval;
@@ -2190,8 +2191,8 @@ static DWORD widClose(WORD wDevID)
 	JACK_CloseWaveInDevice(wwi); /* close the jack device */
 #endif
 	DeleteCriticalSection(&wwi->access_crst); /* delete the critical section so we can initialize it again from wodOpen() */
-	
-	ret = widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
+
+	ret = widNotifyClient(wwi, WIM_CLOSE, 0, 0);
     }
 
     return ret;
@@ -2277,7 +2278,7 @@ static DWORD widStop(WORD wDevID)
 	    TRACE("stop %p %p\n", lpWaveHdr, lpWaveHdr->lpNext);
 	    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 	    lpWaveHdr->dwFlags |= WHDR_DONE;
-	    widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+            widNotifyClient(wwi, WIM_DATA, (DWORD_PTR)lpWaveHdr, 0);
 	    wwi->lpQueuePtr = lpNext;
 	}
     }
@@ -2307,8 +2308,8 @@ static DWORD widReset(WORD wDevID)
 	TRACE("reset %p %p\n", lpWaveHdr, lpWaveHdr->lpNext);
 	lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 	lpWaveHdr->dwFlags |= WHDR_DONE;
-	
-	widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+
+	widNotifyClient(wwi, WIM_DATA, (DWORD_PTR)lpWaveHdr, 0);
     }
     wwi->lpQueuePtr = NULL;
 
@@ -2354,11 +2355,10 @@ static DWORD widDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 /**************************************************************************
  * 				widMessage (WINEJACK.6)
  */
-DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-			    DWORD dwParam1, DWORD dwParam2)
+DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
+                             DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-  TRACE("(%u, %04X, %08X, %08X, %08X);\n",
-  wDevID, wMsg, dwUser, dwParam1, dwParam2);
+  TRACE("(%u, %04X, %08X, %08lX, %08lX);\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
     case DRVM_INIT:
@@ -2391,20 +2391,22 @@ DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 /**************************************************************************
  * 				widMessage (WINEJACK.6)
  */
-DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-			    DWORD dwParam1, DWORD dwParam2)
+DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
+                             DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-  FIXME("(%u, %04X, %08X, %08X, %08X):jack support not compiled into wine\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+  FIXME("(%u, %04X, %08X, %08lX, %08lX):jack support not compiled into wine\n",
+        wDevID, wMsg, dwUser, dwParam1, dwParam2);
   return MMSYSERR_NOTENABLED;
 }
 
 /**************************************************************************
  * 				wodMessage (WINEJACK.7)
  */
-DWORD WINAPI JACK_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-			    DWORD dwParam1, DWORD dwParam2)
+DWORD WINAPI JACK_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
+                             DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-  FIXME("(%u, %04X, %08X, %08X, %08X):jack support not compiled into wine\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+  FIXME("(%u, %04X, %08X, %08lX, %08lX):jack support not compiled into wine\n",
+        wDevID, wMsg, dwUser, dwParam1, dwParam2);
   return MMSYSERR_NOTENABLED;
 }
 
