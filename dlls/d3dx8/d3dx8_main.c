@@ -19,85 +19,10 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 
 #include "windef.h"
 #include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "wine/debug.h"
-#include "wine/unicode.h"
-#include "d3dx8_private.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
-
-HRESULT WINAPI D3DXCreateBuffer(DWORD NumBytes, LPD3DXBUFFER* ppBuffer) {
-  ID3DXBufferImpl *object;
-
-  object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ID3DXBufferImpl));
-  if (NULL == object) {
-    *ppBuffer = NULL;
-    return E_OUTOFMEMORY;
-  }
-  object->lpVtbl = &D3DXBuffer_Vtbl;
-  object->ref = 1;
-  object->bufferSize = NumBytes;
-  object->buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, NumBytes);
-  if (NULL == object->buffer) {
-    HeapFree(GetProcessHeap(), 0, object);
-    *ppBuffer = NULL;
-    return E_OUTOFMEMORY;
-  }
-  *ppBuffer = (LPD3DXBUFFER)object;
-  return D3D_OK;
-}
-
-HRESULT WINAPI D3DXCreateFont(LPDIRECT3DDEVICE8 pDevice, HFONT hFont, LPD3DXFONT* ppFont) {
-  FIXME("(void): stub\n");
-  return D3D_OK;
-}
-
-UINT WINAPI D3DXGetFVFVertexSize(DWORD FVF) {
-  FIXME("(void): stub\n");
-  return 0;
-}
-
-HRESULT WINAPI D3DXAssembleShader(LPCVOID pSrcData, UINT SrcDataLen, DWORD Flags, 
-			   LPD3DXBUFFER* ppConstants, 
-			   LPD3DXBUFFER* ppCompiledShader,
-			   LPD3DXBUFFER* ppCompilationErrors) {
-  FIXME("(void): stub\n");
-  return D3D_OK;
-}
-
-HRESULT WINAPI D3DXAssembleShaderFromFileA(LPCSTR pSrcFile, DWORD Flags,
-				    LPD3DXBUFFER* ppConstants,
-				    LPD3DXBUFFER* ppCompiledShader,
-				    LPD3DXBUFFER* ppCompilationErrors) {
-  LPWSTR pSrcFileW = NULL;
-  DWORD len;
-  HRESULT ret;
-
-  if (!pSrcFile) return D3DXERR_INVALIDDATA;
-
-  len = MultiByteToWideChar( CP_ACP, 0, pSrcFile, -1, NULL, 0 );
-  pSrcFileW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-  MultiByteToWideChar( CP_ACP, 0, pSrcFile, -1, pSrcFileW, len );
-  ret=D3DXAssembleShaderFromFileW(pSrcFileW, Flags, ppConstants, ppCompiledShader, ppCompilationErrors);
-  HeapFree( GetProcessHeap(), 0, pSrcFileW );
-  return ret;
-}
-
-HRESULT WINAPI D3DXAssembleShaderFromFileW(LPCWSTR pSrcFile, DWORD Flags,
-				    LPD3DXBUFFER* ppConstants,
-				    LPD3DXBUFFER* ppCompiledShader,
-				    LPD3DXBUFFER* ppCompilationErrors) {
-  FIXME("(void): stub\n");
-  return D3D_OK;
-}
 
 /***********************************************************************
  * DllMain.

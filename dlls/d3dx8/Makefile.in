@@ -7,8 +7,8 @@ IMPORTLIB = d3dx8
 IMPORTS   = dxguid uuid kernel32
 
 C_SRCS = \
+	core.c \
 	d3dx8_main.c \
-	d3dxbuffer.c \
 	math.c \
 	mesh.c
 

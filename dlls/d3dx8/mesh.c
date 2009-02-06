@@ -16,9 +16,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
-#include "d3dx8.h"
+#include "wine/debug.h"
+
+#include "d3dx8_private.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 BOOL WINAPI D3DXBoxBoundProbe(CONST D3DXVECTOR3 *pmin, CONST D3DXVECTOR3 *pmax, CONST D3DXVECTOR3 *prayposition, CONST D3DXVECTOR3 *praydirection)
 
@@ -88,6 +95,12 @@ done we've got an intersection of the ray with the box.
     if ( (tzmax < 0.0f ) || ( tmin > tzmax ) || ( tzmin > tmax ) ) return FALSE;
 
     return TRUE;
+}
+
+UINT WINAPI D3DXGetFVFVertexSize(DWORD FVF)
+{
+  FIXME("(void): stub\n");
+  return 0;
 }
 
 BOOL CDECL D3DXIntersectTri(CONST D3DXVECTOR3 *p0, CONST D3DXVECTOR3 *p1, CONST D3DXVECTOR3 *p2, CONST D3DXVECTOR3 *praypos, CONST D3DXVECTOR3 *praydir, FLOAT *pu, FLOAT *pv, FLOAT *pdist)
