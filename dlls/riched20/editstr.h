@@ -414,6 +414,7 @@ typedef struct tagME_WrapContext
   int nRow;
   POINT pt;
   BOOL bOverflown, bWordWrap;
+  ME_DisplayItem *pPara;
   ME_DisplayItem *pRowStart;
 
   ME_DisplayItem *pLastSplittableRun;
