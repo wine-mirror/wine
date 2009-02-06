@@ -382,6 +382,8 @@ static int rpcrt4_conn_np_read(RpcConnection *Connection,
   {
     DWORD bytes_read;
     ret = ReadFile(npc->pipe, buf, bytes_left, &bytes_read, NULL);
+    if (!ret && GetLastError() == ERROR_MORE_DATA)
+        ret = TRUE;
     if (!ret || !bytes_read)
         break;
     bytes_left -= bytes_read;
