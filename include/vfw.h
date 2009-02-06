@@ -1686,9 +1686,9 @@ typedef struct videohdr_tag {
     DWORD       dwBufferLength;
     DWORD       dwBytesUsed;
     DWORD       dwTimeCaptured;
-    DWORD       dwUser;
+    DWORD_PTR   dwUser;
     DWORD       dwFlags;
-    DWORD       dwReserved[4];
+    DWORD_PTR   dwReserved[4];
 } VIDEOHDR, *PVIDEOHDR, *LPVIDEOHDR;
 
 #define VHDR_DONE       0x00000001
