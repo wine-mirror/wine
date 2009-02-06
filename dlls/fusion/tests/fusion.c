@@ -168,7 +168,11 @@ static void test_GetCachePath(void)
         if (hr == S_OK)
         {
             lstrcpyA(nativeimgA, "NativeImages_");
+#ifdef _WIN64
+            lstrcpyA(zapfmtA, "%s\\%s\\%s%s_64");
+#else
             lstrcpyA(zapfmtA, "%s\\%s\\%s%s_32");
+#endif
         }
         else
         {
