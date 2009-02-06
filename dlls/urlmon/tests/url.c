@@ -313,7 +313,7 @@ static DWORD WINAPI thread_proc(PVOID arg)
         CHECK_CALLED(Obj_OnProgress_BEGINSYNCOPERATION);
         CHECK_CALLED(CreateInstance);
         CHECK_CALLED(PutProperty_MIMETYPEPROP);
-        CLEAR_CALLED(PutProperty_CLASSIDPROP);
+        CHECK_CALLED(PutProperty_CLASSIDPROP);
         CHECK_CALLED(Load);
         CHECK_CALLED(Obj_OnProgress_ENDSYNCOPERATION);
         CHECK_CALLED(OnObjectAvailable);
@@ -612,7 +612,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         CHECK_CALLED(Obj_OnProgress_BEGINSYNCOPERATION);
         CHECK_CALLED(CreateInstance);
         CHECK_CALLED(PutProperty_MIMETYPEPROP);
-        CLEAR_CALLED(PutProperty_CLASSIDPROP);
+        CHECK_CALLED(PutProperty_CLASSIDPROP);
         CHECK_CALLED(Load);
         CHECK_CALLED(Obj_OnProgress_ENDSYNCOPERATION);
         CHECK_CALLED(OnObjectAvailable);
