@@ -600,7 +600,7 @@ int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset)
   {
     if (nOffset)
       ME_GetOLEObjectSize(&c, pRun, &size);
-    ITextHost_TxReleaseDC(editor->texthost, c.hDC);
+    ME_DestroyContext(&c);
     return nOffset != 0;
   } else if (pRun->nFlags & MERF_ENDPARA) {
     nOffset = 0;
@@ -612,7 +612,7 @@ int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset)
     strRunText = pRun->strText;
 
   ME_GetTextExtent(&c,  strRunText->szData, nOffset, pRun->style, &size);
-  ITextHost_TxReleaseDC(editor->texthost, c.hDC);
+  ME_DestroyContext(&c);
   if (editor->cPasswordMask)
     ME_DestroyString(strRunText);
   return size.cx;
