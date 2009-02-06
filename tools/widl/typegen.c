@@ -3685,7 +3685,9 @@ void write_exceptions( FILE *file )
     fprintf( file, "\n");
     fprintf( file, "#else /* USE_COMPILER_EXCEPTIONS */\n");
     fprintf( file, "\n");
-    fprintf( file, "#define RpcExceptionInit(filter_func,finally_func) do {} while(0)\n");
+    fprintf( file, "#define RpcExceptionInit(filter_func,finally_func) \\\n");
+    fprintf( file, "    do { (void)(filter_func); } while(0)\n");
+    fprintf( file, "\n");
     fprintf( file, "#define __DECL_EXCEPTION_FRAME \\\n");
     fprintf( file, "    DWORD code;\n");
     fprintf( file, "\n");
