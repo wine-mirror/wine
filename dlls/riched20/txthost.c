@@ -258,14 +258,14 @@ HRESULT WINAPI ITextHostImpl_TxActivate(ITextHost *iface,
                                         LONG *plOldState)
 {
     ITextHostImpl *This = (ITextHostImpl *)iface;
-    *plOldState = (LONG)SetActiveWindow(This->hWnd);
+    *plOldState = HandleToLong(SetActiveWindow(This->hWnd));
     return (*plOldState ? S_OK : E_FAIL);
 }
 
 HRESULT WINAPI ITextHostImpl_TxDeactivate(ITextHost *iface,
                                           LONG lNewState)
 {
-    HWND ret = SetActiveWindow((HWND)lNewState);
+    HWND ret = SetActiveWindow(LongToHandle(lNewState));
     return (ret ? S_OK : E_FAIL);
 }
 
@@ -323,7 +323,7 @@ HRESULT WINAPI ITextHostImpl_TxGetScrollBars(ITextHost *iface,
                                              DWORD *pdwScrollBar)
 {
     ITextHostImpl *This = (ITextHostImpl *)iface;
-    ME_TextEditor *editor = (ME_TextEditor*)GetWindowLongW(This->hWnd, 0);
+    ME_TextEditor *editor = (ME_TextEditor*)GetWindowLongPtrW(This->hWnd, 0);
     const DWORD mask = WS_VSCROLL|
                        WS_HSCROLL|
                        ES_AUTOVSCROLL|
