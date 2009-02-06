@@ -1183,7 +1183,7 @@ static void checkElementStatus(const CERT_TRUST_STATUS *expected,
     else
         ok(got->dwErrorStatus == expected->dwErrorStatus ||
          broken((got->dwErrorStatus & ~ignore->dwErrorStatus) ==
-         expected->dwErrorStatus),
+         (expected->dwErrorStatus & ~ignore->dwErrorStatus)),
          "Chain %d, element [%d,%d]: expected error %08x, got %08x\n",
          testIndex, chainIndex, elementIndex, expected->dwErrorStatus,
          got->dwErrorStatus);
@@ -1258,7 +1258,8 @@ static void checkChainStatus(PCCERT_CHAIN_CONTEXT chain,
          chainStatus->status.dwErrorStatus ||
          broken((chain->TrustStatus.dwErrorStatus &
          ~chainStatus->statusToIgnore.dwErrorStatus) ==
-         chainStatus->status.dwErrorStatus),
+         (chainStatus->status.dwErrorStatus &
+         ~chainStatus->statusToIgnore.dwErrorStatus)),
          "Chain %d: expected error %08x, got %08x\n",
          testIndex, chainStatus->status.dwErrorStatus,
          chain->TrustStatus.dwErrorStatus);
