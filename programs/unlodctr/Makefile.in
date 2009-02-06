@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = unlodctr.exe
-APPMODE   = -mconsole -municode
+APPMODE   = -mconsole
 IMPORTS   = loadperf kernel32
 
 C_SRCS = unlodctr_main.c

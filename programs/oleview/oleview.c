@@ -534,8 +534,7 @@ static BOOL InitInstance(HINSTANCE hInst, int nCmdShow)
     return TRUE;
 }
 
-int APIENTRY wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst,
-                LPWSTR lpCmdLine, int nCmdShow)
+int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nCmdShow)
 {
     MSG msg;
     HANDLE hAccelTable;
