@@ -492,7 +492,7 @@ static HWND create_tooltip (HWND hTab, char toolTipText[])
     ti.rect = rect;
 
     /* Add toolinfo structure to the tooltip control */
-    SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &ti);
+    SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM) &ti);
 
     return hwndTT;
 }

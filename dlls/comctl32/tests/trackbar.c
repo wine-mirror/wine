@@ -511,7 +511,7 @@ static void test_trackbar_buddy(HWND hWndTrackbar){
 
     flush_sequences(sequences, NUM_MSG_SEQUENCE);
 
-    hWndLeftBuddy = (HWND) CreateWindowEx(0, STATUSCLASSNAME, NULL, 0,
+    hWndLeftBuddy = CreateWindowEx(0, STATUSCLASSNAME, NULL, 0,
         0,0,300,20, NULL, NULL, NULL, NULL);
     ok(hWndLeftBuddy != NULL, "Expected non NULL value\n");
 
@@ -524,7 +524,7 @@ static void test_trackbar_buddy(HWND hWndTrackbar){
     } else
         skip ("left buddy control not present?\n");
 
-    hWndRightBuddy = (HWND) CreateWindowEx(0, STATUSCLASSNAME, NULL, 0,
+    hWndRightBuddy = CreateWindowEx(0, STATUSCLASSNAME, NULL, 0,
         0,0,300,20,NULL,NULL, NULL, NULL);
 
     ok(hWndRightBuddy != NULL, "expected non NULL value\n");

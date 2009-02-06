@@ -1159,10 +1159,10 @@ static void test_hdm_index_messages(HWND hParent)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     iSize = SendMessage(hChild, HDM_GETITEMCOUNT, 0, (LPARAM) &hdItem);
-    retVal = SendMessage(hChild, HDM_SETORDERARRAY, (WPARAM) iSize , (LPARAM) (LPINT) lpiarray );
+    retVal = SendMessage(hChild, HDM_SETORDERARRAY, iSize, (LPARAM) lpiarray);
     ok(retVal == TRUE, "Setting header items order should return TRUE, got %d\n", retVal);
 
-    retVal = SendMessage(hChild, HDM_GETORDERARRAY, (WPARAM) iSize, (LPARAM) (LPINT) lpiarrayReceived );
+    retVal = SendMessage(hChild, HDM_GETORDERARRAY, iSize, (LPARAM) lpiarrayReceived);
     ok(retVal == TRUE, "Getting header items order should return TRUE, got %d\n", retVal);
 
     ok_sequence(sequences, HEADER_SEQ_INDEX, orderArray_seq, "set_get_orderArray sequence testing", FALSE);
