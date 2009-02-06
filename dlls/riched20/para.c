@@ -515,9 +515,12 @@ void
 ME_GetSelectionParas(ME_TextEditor *editor, ME_DisplayItem **para, ME_DisplayItem **para_end)
 {
   ME_Cursor *pEndCursor = &editor->pCursors[1];
-  
+
   *para = ME_GetParagraph(editor->pCursors[0].pRun);
   *para_end = ME_GetParagraph(editor->pCursors[1].pRun);
+  if (*para == *para_end)
+    return;
+
   if ((*para_end)->member.para.nCharOfs < (*para)->member.para.nCharOfs) {
     ME_DisplayItem *tmp = *para;
 
@@ -525,22 +528,20 @@ ME_GetSelectionParas(ME_TextEditor *editor, ME_DisplayItem **para, ME_DisplayIte
     *para_end = tmp;
     pEndCursor = &editor->pCursors[0];
   }
-  
-  /* selection consists of chars from nFrom up to nTo-1 */
-  if ((*para_end)->member.para.nCharOfs > (*para)->member.para.nCharOfs) {
-    if (!pEndCursor->nOffset) {
-      *para_end = ME_GetParagraph(ME_FindItemBack(pEndCursor->pRun, diRun));
-    }
-  }
+
+  /* The paragraph at the end of a non-empty selection isn't included
+   * if the selection ends at the start of the paragraph. */
+  if (!pEndCursor->pRun->member.run.nCharOfs && !pEndCursor->nOffset)
+    *para_end = (*para_end)->member.para.prev_para;
 }
 
 
 BOOL ME_SetSelectionParaFormat(ME_TextEditor *editor, const PARAFORMAT2 *pFmt)
 {
   ME_DisplayItem *para, *para_end;
-  
+
   ME_GetSelectionParas(editor, &para, &para_end);
- 
+
   do {
     ME_SetParaFormat(editor, para, pFmt);
     if (para == para_end)

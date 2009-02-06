@@ -89,14 +89,15 @@ ME_FindRowWithNumber(ME_TextEditor *editor, int nRow)
 {
   ME_DisplayItem *item = ME_FindItemFwd(editor->pBuffer->pFirst, diParagraph);
   int nCount = 0;
-  
-  while (item && nCount + item->member.para.nRows <= nRow)
+
+  while (item->type == diParagraph &&
+         nCount + item->member.para.nRows <= nRow)
   {
     nCount += item->member.para.nRows;
-    item = ME_FindItemFwd(item, diParagraph);
+    item = item->member.para.next_para;
   }
-  if (!item)
-    return item;
+  if (item->type != diParagraph)
+    return NULL;
   for (item = ME_FindItemFwd(item, diStartRow); item && nCount < nRow; nCount++)
     item = ME_FindItemFwd(item, diStartRow);
   return item;
@@ -106,18 +107,19 @@ ME_FindRowWithNumber(ME_TextEditor *editor, int nRow)
 int
 ME_RowNumberFromCharOfs(ME_TextEditor *editor, int nOfs)
 {
-  ME_DisplayItem *item = editor->pBuffer->pFirst->next;
+  ME_DisplayItem *item = ME_FindItemFwd(editor->pBuffer->pFirst, diParagraph);
   int nRow = 0;
 
-  while (item && item->member.para.next_para->member.para.nCharOfs <= nOfs)
+  while (item->type == diParagraph &&
+         item->member.para.next_para->member.para.nCharOfs <= nOfs)
   {
     nRow += item->member.para.nRows;
-    item = ME_FindItemFwd(item, diParagraph);
+    item = item->member.para.next_para;
   }
-  if (item)
+  if (item->type == diParagraph)
   {
     ME_DisplayItem *next_para = item->member.para.next_para;
-    
+
     nOfs -= item->member.para.nCharOfs;
     item = ME_FindItemFwd(item, diRun);
     while ((item = ME_FindItemFwd(item, diStartRowOrParagraph)) != NULL)
