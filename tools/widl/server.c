@@ -392,7 +392,10 @@ static void init_server(void)
     print_server("\n");
     print_server("static int __server_filter( struct __server_frame *__frame )\n");
     print_server( "{\n");
-    print_server( "    return RPC_BAD_STUB_DATA_EXCEPTION_FILTER;\n");
+    print_server( "    return (__frame->code == STATUS_ACCESS_VIOLATION) ||\n");
+    print_server( "           (__frame->code == STATUS_DATATYPE_MISALIGNMENT) ||\n");
+    print_server( "           (__frame->code == RPC_X_BAD_STUB_DATA) ||\n");
+    print_server( "           (__frame->code == RPC_S_INVALID_BOUND);\n");
     print_server( "}\n");
     print_server( "\n");
 }
