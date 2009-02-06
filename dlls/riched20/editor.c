@@ -2907,11 +2907,9 @@ get_msg_name(UINT msg)
 void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   int x,y;
-  ME_Cursor tmpCursor;
+  ME_DisplayItem *para, *run;
   BOOL isExact;
   int nCharOfs; /* The start of the clicked text. Absolute character offset */
-
-  ME_Run *tmpRun;
 
   ENLINK info;
   x = (short)LOWORD(lParam);
@@ -2919,11 +2917,10 @@ void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam
   nCharOfs = ME_CharFromPos(editor, x, y, &isExact);
   if (!isExact) return;
 
-  ME_CursorFromCharOfs(editor, nCharOfs, &tmpCursor);
-  tmpRun = &tmpCursor.pRun->member.run;
+  ME_RunOfsFromCharOfs(editor, nCharOfs, &para, &run, NULL);
 
-  if ((tmpRun->style->fmt.dwMask & CFM_LINK)
-    && (tmpRun->style->fmt.dwEffects & CFE_LINK))
+  if ((run->member.run.style->fmt.dwMask & CFM_LINK)
+    && (run->member.run.style->fmt.dwEffects & CFE_LINK))
   { /* The clicked run has CFE_LINK set */
     info.nmhdr.hwndFrom = editor->hWnd;
     info.nmhdr.idFrom = GetWindowLongW(editor->hWnd, GWLP_ID);
@@ -2931,8 +2928,8 @@ void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam
     info.msg = msg;
     info.wParam = wParam;
     info.lParam = lParam;
-    info.chrg.cpMin = ME_CharOfsFromRunOfs(editor,tmpCursor.pRun,0);
-    info.chrg.cpMax = info.chrg.cpMin + ME_StrVLen(tmpRun->strText);
+    info.chrg.cpMin = ME_CharOfsFromRunOfs(editor, para, run, 0);
+    info.chrg.cpMax = info.chrg.cpMin + run->member.run.strText->nLen;
     SendMessageW(GetParent(editor->hWnd), WM_NOTIFY,info.nmhdr.idFrom, (LPARAM)&info);
   }
 }
@@ -3709,7 +3706,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   {
     ME_DisplayItem *item, *item_end;
     int nChars = 0, nThisLineOfs = 0, nNextLineOfs = 0;
-    ME_Cursor cursor;
+    ME_DisplayItem *para, *run;
 
     if (wParam > ME_GetTextLength(editor))
       return 0;
@@ -3718,23 +3715,16 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       FIXME("EM_LINELENGTH: returning number of unselected characters on lines with selection unsupported.\n");
       return 0;
     }
-    ME_CursorFromCharOfs(editor, wParam, &cursor);
-    item = ME_RowStart(cursor.pRun);
-    nThisLineOfs = ME_CharOfsFromRunOfs(editor, ME_FindItemFwd(item, diRun), 0);
+    ME_RunOfsFromCharOfs(editor, wParam, &para, &run, NULL);
+    item = ME_RowStart(run);
+    nThisLineOfs = ME_CharOfsFromRunOfs(editor, para, ME_FindItemFwd(item, diRun), 0);
     item_end = ME_FindItemFwd(item, diStartRowOrParagraphOrEnd);
-    if (item_end->type == diStartRow)
-      nNextLineOfs = ME_CharOfsFromRunOfs(editor, ME_FindItemFwd(item_end, diRun), 0);
-    else
-    {
-      ME_DisplayItem *endPara;
-
-      nNextLineOfs = ME_FindItemFwd(item, diParagraphOrEnd)->member.para.nCharOfs;
-      endPara = ME_FindItemFwd(item, diParagraphOrEnd);
-      endPara = ME_FindItemBack(endPara, diRun);
-      assert(endPara);
-      assert(endPara->type == diRun);
-      assert(endPara->member.run.nFlags & MERF_ENDPARA);
-      nNextLineOfs -= endPara->member.run.strText->nLen;
+    if (item_end->type == diStartRow) {
+      nNextLineOfs = ME_CharOfsFromRunOfs(editor, para, ME_FindItemFwd(item_end, diRun), 0);
+    } else {
+      ME_DisplayItem *endRun = ME_FindItemBack(item_end, diRun);
+      assert(endRun && endRun->member.run.nFlags & MERF_ENDPARA);
+      nNextLineOfs = item_end->member.para.nCharOfs - endRun->member.run.strText->nLen;
     }
     nChars = nNextLineOfs - nThisLineOfs;
     TRACE("EM_LINELENGTH(%ld)==%d\n",wParam, nChars);

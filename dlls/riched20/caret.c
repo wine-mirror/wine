@@ -42,7 +42,9 @@ void ME_GetSelection(ME_TextEditor *editor, int *from, int *to)
 
 int ME_GetTextLength(ME_TextEditor *editor)
 {
-  return ME_CharOfsFromRunOfs(editor, ME_FindItemBack(editor->pBuffer->pLast, diRun), 0);   
+  ME_DisplayItem *pLast = editor->pBuffer->pLast;
+  return ME_CharOfsFromRunOfs(editor, pLast->member.para.prev_para,
+                              ME_FindItemBack(pLast, diRun), 0);
 }
 
 
