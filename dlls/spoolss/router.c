@@ -215,7 +215,10 @@ static backend_t * backend_load(LPWSTR dllname, LPWSTR name, LPWSTR regroot)
     id = used_backends;
 
     backend[id] = heap_alloc_zero(sizeof(backend_t));
-    if (!backend[id]) return NULL;
+    if (!backend[id]) {
+        LeaveCriticalSection(&backend_cs);
+        return NULL;
+    }
 
     backend[id]->dllname = strdupW(dllname);
     backend[id]->name = strdupW(name);
