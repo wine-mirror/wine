@@ -63,7 +63,7 @@ typedef struct tagContext {
     TfClientId tidOwner;
 
     ITextStoreACP   *pITextStoreACP;
-    /* ITfContextOwnerCompositionSink */
+    ITfContextOwnerCompositionSink *pITfContextOwnerCompositionSink;
 
     ITextStoreACPSink *pITextStoreACPSink;
 
@@ -111,6 +111,9 @@ static void Context_Destructor(Context *This)
 
     if (This->pITextStoreACP)
         ITextStoreACPSink_Release(This->pITextStoreACP);
+
+    if (This->pITfContextOwnerCompositionSink)
+        ITextStoreACPSink_Release(This->pITfContextOwnerCompositionSink);
 
     LIST_FOR_EACH_SAFE(cursor, cursor2, &This->pContextKeyEventSink)
     {
@@ -428,15 +431,22 @@ HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfContext **pp
     This->refCount = 1;
     This->tidOwner = tidOwner;
 
-    if (punk && SUCCEEDED(IUnknown_QueryInterface(punk, &IID_ITextStoreACP,
-                          (LPVOID*)&This->pITextStoreACP)))
+    if (punk)
     {
-        if (SUCCEEDED(TextStoreACPSink_Constructor(&This->pITextStoreACPSink, This)))
-            ITextStoreACP_AdviseSink(This->pITextStoreACP, &IID_ITextStoreACPSink,
-                                    (IUnknown*)This->pITextStoreACPSink, TS_AS_ALL_SINKS);
+        if (SUCCEEDED(IUnknown_QueryInterface(punk, &IID_ITextStoreACP,
+                          (LPVOID*)&This->pITextStoreACP)))
+        {
+            if (SUCCEEDED(TextStoreACPSink_Constructor(&This->pITextStoreACPSink, This)))
+                ITextStoreACP_AdviseSink(This->pITextStoreACP, &IID_ITextStoreACPSink,
+                                        (IUnknown*)This->pITextStoreACPSink, TS_AS_ALL_SINKS);
+        }
+
+        IUnknown_QueryInterface(punk, &IID_ITfContextOwnerCompositionSink,
+                                (LPVOID*)&This->pITfContextOwnerCompositionSink);
+
+        if (!This->pITextStoreACP && !This->pITfContextOwnerCompositionSink)
+            FIXME("Unhandled pUnk\n");
     }
-    else if (punk)
-        FIXME("Unhandled pUnk\n");
 
     TRACE("returning %p\n", This);
     *ppOut = (ITfContext*)This;
