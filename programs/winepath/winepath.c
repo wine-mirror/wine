@@ -90,7 +90,7 @@ static int option(int shortopt, const WCHAR *longopt)
 /*
  * Parse command line options
  */
-static int parse_options(const WCHAR *argv[])
+static int parse_options(WCHAR *argv[])
 {
     static const WCHAR longW[] = { 'l','o','n','g',0 };
     static const WCHAR shortW[] = { 's','h','o','r','t',0 };
@@ -140,7 +140,7 @@ static int parse_options(const WCHAR *argv[])
 /*
  * Main function
  */
-int wmain(int argc, const WCHAR *argv[])
+int wmain(int argc, WCHAR *argv[])
 {
     LPSTR (*CDECL wine_get_unix_file_name_ptr)(LPCWSTR) = NULL;
     LPWSTR (*CDECL wine_get_dos_file_name_ptr)(LPCSTR) = NULL;
