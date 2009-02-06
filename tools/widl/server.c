@@ -40,6 +40,7 @@ static FILE* server;
 static int indent = 0;
 
 
+static void print_server(const char *format, ...) __attribute__((format (printf, 1, 2)));
 static void print_server(const char *format, ...)
 {
     va_list va;
@@ -155,11 +156,9 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         assign_stub_out_args(server, indent, func, "__frame->");
 
         /* Call the real server function */
-        if (!is_void(type_function_get_rettype(func->type)))
-            print_server("__frame->_RetVal = ");
-        else
-            print_server("");
-        fprintf(server, "%s%s", prefix_server, get_name(func));
+        print_server("%s%s%s",
+                     is_void(type_function_get_rettype(func->type)) ? "" : "__frame->_RetVal = ",
+                     prefix_server, get_name(func));
 
         if (type_get_function_args(func->type))
         {
@@ -335,7 +334,7 @@ static void write_serverinterfacedecl(type_t *iface)
     print_server("{\n");
     indent++;
     print_server("sizeof(RPC_SERVER_INTERFACE),\n");
-    print_server("{{0x%08lx,0x%04x,0x%04x,{0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x}},{%d,%d}},\n",
+    print_server("{{0x%08x,0x%04x,0x%04x,{0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x}},{%d,%d}},\n",
                  uuid->Data1, uuid->Data2, uuid->Data3, uuid->Data4[0], uuid->Data4[1],
                  uuid->Data4[2], uuid->Data4[3], uuid->Data4[4], uuid->Data4[5], uuid->Data4[6],
                  uuid->Data4[7], MAJORVERSION(ver), MINORVERSION(ver));

@@ -551,6 +551,7 @@ static const char *get_context_handle_type_name(const type_t *type)
     } \
     while (0)
 
+static void print_file(FILE *file, int indent, const char *format, ...) __attribute__((format (printf, 3, 4)));
 static void print_file(FILE *file, int indent, const char *format, ...)
 {
     va_list va;
@@ -824,8 +825,8 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *structure,
 
         print_file(file, 2, "0x%x, /* Corr desc: constant, val = %ld */\n",
                    RPC_FC_CONSTANT_CONFORMANCE, expr->cval);
-        print_file(file, 2, "0x%x,\n", expr->cval & ~USHRT_MAX);
-        print_file(file, 2, "NdrFcShort(0x%x),\n", expr->cval & USHRT_MAX);
+        print_file(file, 2, "0x%lx,\n", expr->cval >> 16);
+        print_file(file, 2, "NdrFcShort(0x%lx),\n", expr->cval & USHRT_MAX);
 
         return 4;
     }
@@ -1263,11 +1264,11 @@ static void write_user_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
     print_file(file, 2, "0x%x,\t/* Alignment= %d, Flags= %02x */\n",
                flags | (align - 1), align - 1, flags);
     print_file(file, 2, "NdrFcShort(0x%hx),\t/* Function offset= %hu */\n", funoff, funoff);
-    print_file(file, 2, "NdrFcShort(0x%lx),\t/* %lu */\n", size, size);
-    print_file(file, 2, "NdrFcShort(0x%lx),\t/* %lu */\n", usize, usize);
+    print_file(file, 2, "NdrFcShort(0x%x),\t/* %u */\n", size, size);
+    print_file(file, 2, "NdrFcShort(0x%x),\t/* %u */\n", usize, usize);
     *tfsoff += 8;
     reloff = absoff - *tfsoff;
-    print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%lu) */\n", reloff, reloff, absoff);
+    print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n", reloff, reloff, absoff);
     *tfsoff += 2;
 }
 
@@ -1309,7 +1310,7 @@ static void write_member_type(FILE *file, const type_t *cont,
         print_file(file, 2, "0x4c,\t/* FC_EMBEDDED_COMPLEX */\n");
         /* FIXME: actually compute necessary padding */
         print_file(file, 2, "0x0,\t/* FIXME: padding */\n");
-        print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%lu) */\n",
+        print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n",
                    reloff, reloff, absoff);
         *tfsoff += 4;
     }
@@ -1917,12 +1918,12 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
     {
         if (real_type == RPC_FC_LGFARRAY || real_type == RPC_FC_LGVARRAY)
         {
-            print_file(file, 2, "NdrFcLong(0x%x),\t/* %lu */\n", size, size);
+            print_file(file, 2, "NdrFcLong(0x%x),\t/* %u */\n", size, size);
             *typestring_offset += 4;
         }
         else
         {
-            print_file(file, 2, "NdrFcShort(0x%x),\t/* %lu */\n", size, size);
+            print_file(file, 2, "NdrFcShort(0x%x),\t/* %u */\n", size, size);
             *typestring_offset += 2;
         }
 
@@ -1939,16 +1940,16 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
 
             if (real_type == RPC_FC_LGVARRAY)
             {
-                print_file(file, 2, "NdrFcLong(0x%x),\t/* %lu */\n", dim, dim);
+                print_file(file, 2, "NdrFcLong(0x%x),\t/* %u */\n", dim, dim);
                 *typestring_offset += 4;
             }
             else
             {
-                print_file(file, 2, "NdrFcShort(0x%x),\t/* %lu */\n", dim, dim);
+                print_file(file, 2, "NdrFcShort(0x%x),\t/* %u */\n", dim, dim);
                 *typestring_offset += 2;
             }
 
-            print_file(file, 2, "NdrFcShort(0x%x),\t/* %lu */\n", elsize, elsize);
+            print_file(file, 2, "NdrFcShort(0x%x),\t/* %u */\n", elsize, elsize);
             *typestring_offset += 2;
         }
 
@@ -2115,7 +2116,7 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
     {
         unsigned int absoff = array->type->typestring_offset;
         short reloff = absoff - *tfsoff;
-        print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%lu) */\n",
+        print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n",
                    reloff, reloff, absoff);
         *tfsoff += 2;
     }
@@ -2348,7 +2349,7 @@ static unsigned int write_union_tfs(FILE *file, type_t *type, unsigned int *tfso
             /* MIDL doesn't check for duplicate cases, even though that seems
                like a reasonable thing to do, it just dumps them to the TFS
                like we're going to do here.  */
-            print_file(file, 2, "NdrFcLong(0x%x),\t/* %d */\n", c->cval, c->cval);
+            print_file(file, 2, "NdrFcLong(0x%lx),\t/* %ld */\n", c->cval, c->cval);
             *tfsoff += 4;
             write_branch_type(file, ft, tfsoff);
         }
@@ -2402,7 +2403,7 @@ static unsigned int write_ip_tfs(FILE *file, const attr_list_t *attrs, type_t *t
         print_start_tfs_comment(file, type, start_offset);
         print_file(file, 2, "0x2f,\t/* FC_IP */\n");
         print_file(file, 2, "0x5a,\t/* FC_CONSTANT_IID */\n");
-        print_file(file, 2, "NdrFcLong(0x%08lx),\n", uuid->Data1);
+        print_file(file, 2, "NdrFcLong(0x%08x),\n", uuid->Data1);
         print_file(file, 2, "NdrFcShort(0x%04x),\n", uuid->Data2);
         print_file(file, 2, "NdrFcShort(0x%04x),\n", uuid->Data3);
         for (i = 0; i < 8; ++i)
@@ -2964,11 +2965,9 @@ void print_phase_basetype(FILE *file, int indent, const char *local_var_prefix,
         print_file(file, indent, "{\n");
         print_file(file, indent + 1, "RpcRaiseException(RPC_X_BAD_STUB_DATA);\n");
         print_file(file, indent, "}\n");
-        if (pass == PASS_IN || pass == PASS_RETURN)
-            print_file(file, indent, "");
-        else
-            print_file(file, indent, "*");
-        fprintf(file, "%s%s", local_var_prefix, varname);
+        print_file(file, indent, "%s%s%s",
+                   (pass == PASS_IN || pass == PASS_RETURN) ? "" : "*",
+                   local_var_prefix, varname);
         if (pass == PASS_IN && is_ptr(type))
             fprintf(file, " = (");
         else
@@ -3360,7 +3359,7 @@ void declare_stub_args( FILE *file, int indent, const var_t *func )
     /* declare return value '_RetVal' */
     if (!is_void(type_function_get_rettype(func->type)))
     {
-        print_file(file, indent, "");
+        print_file(file, indent, "%s", "");
         write_type_decl_left(file, type_function_get_rettype(func->type));
         fprintf(file, " _RetVal;\n");
     }
@@ -3384,7 +3383,7 @@ void declare_stub_args( FILE *file, int indent, const var_t *func )
             if (!in_attr && !is_conformant_array(var->type) && !is_string)
             {
                 type_t *type_to_print;
-                print_file(file, indent, "");
+                print_file(file, indent, "%s", "");
                 if (var->type->declarray)
                     type_to_print = var->type;
                 else
@@ -3393,7 +3392,7 @@ void declare_stub_args( FILE *file, int indent, const var_t *func )
                 fprintf(file, ";\n");
             }
 
-            print_file(file, indent, "");
+            print_file(file, indent, "%s", "");
             write_type_decl_left(file, var->type);
             fprintf(file, " ");
             if (var->type->declarray) {

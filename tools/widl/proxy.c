@@ -50,6 +50,7 @@ static int indent = 0;
 
 /* FIXME: support generation of stubless proxies */
 
+static void print_proxy( const char *format, ... ) __attribute__((format (printf, 1, 2)));
 static void print_proxy( const char *format, ... )
 {
   va_list va;
@@ -325,7 +326,7 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
   print_proxy( "struct __proxy_frame __f, * const __frame = &__f;\n" );
   /* local variables */
   if (has_ret) {
-    print_proxy( "" );
+    print_proxy( "%s", "" );
     write_type_decl_left(proxy, type_function_get_rettype(func->type));
     print_proxy( " _RetVal;\n");
   }
@@ -481,8 +482,7 @@ static void gen_stub(type_t *iface, const var_t *func, const char *cas,
 
   print_proxy("*_pdwStubPhase = STUB_CALL_SERVER;\n");
   fprintf(proxy, "\n");
-  print_proxy("");
-  if (has_ret) fprintf(proxy, "__frame->_RetVal = ");
+  print_proxy( "%s", has_ret ? "__frame->_RetVal = " : "" );
   if (cas) fprintf(proxy, "%s_%s_Stub", iface->name, cas);
   else fprintf(proxy, "__frame->_This->lpVtbl->%s", get_name(func));
   fprintf(proxy, "(__frame->_This");
@@ -651,7 +651,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   print_proxy( "static const CINTERFACE_PROXY_VTABLE(%d) _%sProxyVtbl =\n", count, iface->name);
   print_proxy( "{\n");
   indent++;
-  print_proxy( "{\n", iface->name);
+  print_proxy( "{\n");
   indent++;
   print_proxy( "&IID_%s,\n", iface->name);
   indent--;
@@ -686,7 +686,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   print_proxy( "%d,\n", count);
   print_proxy( "&%s_table[-3],\n", iface->name);
   indent--;
-  print_proxy( "},\n", iface->name);
+  print_proxy( "},\n");
   print_proxy( "{\n");
   indent++;
   print_proxy( "CStdStubBuffer_%s\n", need_delegation_indirect(iface) ? "DELEGATING_METHODS" : "METHODS");
