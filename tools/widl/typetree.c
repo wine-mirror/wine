@@ -79,7 +79,7 @@ type_t *type_new_module(char *name)
 }
 
 type_t *type_new_array(const char *name, type_t *element, int declarray,
-                       unsigned long dim, expr_t *size_is, expr_t *length_is)
+                       unsigned int dim, expr_t *size_is, expr_t *length_is)
 {
     type_t *t = make_type(RPC_FC_LGFARRAY, element);
     if (name) t->name = xstrdup(name);

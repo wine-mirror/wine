@@ -29,7 +29,7 @@ type_t *type_new_pointer(type_t *ref, attr_list_t *attrs);
 type_t *type_new_alias(type_t *t, const char *name);
 type_t *type_new_module(char *name);
 type_t *type_new_array(const char *name, type_t *element, int declarray,
-                       unsigned long dim, expr_t *size_is, expr_t *length_is);
+                       unsigned int dim, expr_t *size_is, expr_t *length_is);
 void type_interface_define(type_t *iface, type_t *inherit, statement_list_t *stmts);
 void type_dispinterface_define(type_t *iface, var_list_t *props, func_list_t *methods);
 void type_dispinterface_define_from_iface(type_t *dispiface, type_t *iface);
@@ -192,7 +192,7 @@ static inline int type_array_has_variance(const type_t *type)
     return (type->details.array.length_is != NULL);
 }
 
-static inline unsigned long type_array_get_dim(const type_t *type)
+static inline unsigned int type_array_get_dim(const type_t *type)
 {
     type = type_get_real_type(type);
     assert(type_get_type(type) == TYPE_ARRAY);

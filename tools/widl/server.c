@@ -248,8 +248,8 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 
 static void write_dispatchtable(type_t *iface)
 {
-    unsigned long ver = get_attrv(iface->attrs, ATTR_VERSION);
-    unsigned long method_count = 0;
+    unsigned int ver = get_attrv(iface->attrs, ATTR_VERSION);
+    unsigned int method_count = 0;
     const statement_t *stmt;
 
     print_server("static RPC_DISPATCH_FUNCTION %s_table[] =\n", iface->name);
@@ -323,7 +323,7 @@ static void write_stubdescriptor(type_t *iface, int expr_eval_routines)
 
 static void write_serverinterfacedecl(type_t *iface)
 {
-    unsigned long ver = get_attrv(iface->attrs, ATTR_VERSION);
+    unsigned int ver = get_attrv(iface->attrs, ATTR_VERSION);
     UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
     const str_list_t *endpoints = get_attrp(iface->attrs, ATTR_ENDPOINT);
 

@@ -387,7 +387,7 @@ static void write_stubdescriptor(type_t *iface, int expr_eval_routines)
 
 static void write_clientinterfacedecl(type_t *iface)
 {
-    unsigned long ver = get_attrv(iface->attrs, ATTR_VERSION);
+    unsigned int ver = get_attrv(iface->attrs, ATTR_VERSION);
     const UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
     const str_list_t *endpoints = get_attrp(iface->attrs, ATTR_ENDPOINT);
 

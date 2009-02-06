@@ -1086,12 +1086,12 @@ static int encode_var(
 
         chat("array with %d dimensions\n", num_dims);
         encode_var(typelib, atype, var, &target_type, width, alignment, NULL);
-        arrayoffset = ctl2_alloc_segment(typelib, MSFT_SEG_ARRAYDESC, (2 + 2 * num_dims) * sizeof(long), 0);
+        arrayoffset = ctl2_alloc_segment(typelib, MSFT_SEG_ARRAYDESC, (2 + 2 * num_dims) * sizeof(int), 0);
         arraydata = (void *)&typelib->typelib_segment_data[MSFT_SEG_ARRAYDESC][arrayoffset];
 
         arraydata[0] = target_type;
         arraydata[1] = num_dims;
-        arraydata[1] |= ((num_dims * 2 * sizeof(long)) << 16);
+        arraydata[1] |= ((num_dims * 2 * sizeof(int)) << 16);
 
         arraydata += 2;
         for (atype = type; atype->declarray; atype = type_array_get_element(atype))

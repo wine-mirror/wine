@@ -1485,9 +1485,9 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
       if (0)
       {
         unsigned int align = 0;
-        size_t size = type_memsize(v->type, &align);
+        unsigned int size = type_memsize(v->type, &align);
 
-        if (0xffffffffuL / size < (unsigned long) dim->cval)
+        if (0xffffffffu / size < dim->cval)
           error_loc("%s: total array size is too large\n", v->name);
       }
     }

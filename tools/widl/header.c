@@ -274,7 +274,7 @@ void write_type_right(FILE *h, type_t *t, int is_field)
       t = type_array_get_element(t);
     }
     for ( ; t->declarray; t = type_array_get_element(t))
-      fprintf(h, "[%lu]", type_array_get_dim(t));
+      fprintf(h, "[%u]", type_array_get_dim(t));
   }
 }
 

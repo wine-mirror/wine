@@ -292,7 +292,7 @@ struct module_details
 
 struct array_details
 {
-  unsigned long dim;
+  unsigned int dim;
   expr_t *size_is, *length_is;
 };
 
