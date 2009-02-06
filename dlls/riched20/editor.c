@@ -1687,33 +1687,18 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
       chrgText->cpMin = chrgText->cpMax = -1;
     return -1;
   }
- 
+
   if (flags & FR_DOWN) /* Forward search */
   {
     /* If possible, find the character before where the search starts */
     if ((flags & FR_WHOLEWORD) && nMin)
     {
-      nStart = nMin - 1;
-      ME_RunOfsFromCharOfs(editor, nStart, &item, &nStart);
-      if (!item)
-      {
-        if (chrgText)
-          chrgText->cpMin = chrgText->cpMax = -1;
-        return -1;
-      }
+      ME_RunOfsFromCharOfs(editor, nMin - 1, NULL, &item, &nStart);
       wLastChar = item->member.run.strText->szData[nStart];
     }
 
-    nStart = nMin;
-    ME_RunOfsFromCharOfs(editor, nStart, &item, &nStart);
-    if (!item)
-    {
-      if (chrgText)
-        chrgText->cpMin = chrgText->cpMax = -1;
-      return -1;
-    }
+    ME_RunOfsFromCharOfs(editor, nMin, &para, &item, &nStart);
 
-    para = ME_GetParagraph(item);
     while (item
            && para->member.para.nCharOfs + item->member.run.nCharOfs + nStart + nLen <= nMax)
     {
@@ -1785,28 +1770,12 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
     /* If possible, find the character after where the search ends */
     if ((flags & FR_WHOLEWORD) && nMax < nTextLen - 1)
     {
-      nEnd = nMax + 1;
-      ME_RunOfsFromCharOfs(editor, nEnd, &item, &nEnd);
-      if (!item)
-      {
-        if (chrgText)
-          chrgText->cpMin = chrgText->cpMax = -1;
-        return -1;
-      }
+      ME_RunOfsFromCharOfs(editor, nMax + 1, NULL, &item, &nEnd);
       wLastChar = item->member.run.strText->szData[nEnd];
     }
 
-    nEnd = nMax;
-    ME_RunOfsFromCharOfs(editor, nEnd, &item, &nEnd);
-    if (!item)
-    {
-      if (chrgText)
-        chrgText->cpMin = chrgText->cpMax = -1;
-      return -1;
-    }
-    
-    para = ME_GetParagraph(item);
-    
+    ME_RunOfsFromCharOfs(editor, nMax, &para, &item, &nEnd);
+
     while (item
            && para->member.para.nCharOfs + item->member.run.nCharOfs + nEnd - nLen >= nMin)
     {
@@ -3841,7 +3810,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     return ME_CharFromPos(editor, ((POINTL *)lParam)->x, ((POINTL *)lParam)->y, NULL);
   case EM_POSFROMCHAR:
   {
-    ME_DisplayItem *pRun;
+    ME_DisplayItem *pPara, *pRun;
     int nCharOfs, nOffset, nLength;
     POINTL pt = {0,0};
 
@@ -3853,11 +3822,11 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     nCharOfs = min(nCharOfs, nLength);
     nCharOfs = max(nCharOfs, 0);
 
-    ME_RunOfsFromCharOfs(editor, nCharOfs, &pRun, &nOffset);
+    ME_RunOfsFromCharOfs(editor, nCharOfs, &pPara, &pRun, &nOffset);
     assert(pRun->type == diRun);
     pt.y = pRun->member.run.pt.y;
     pt.x = pRun->member.run.pt.x + ME_PointFromChar(editor, &pRun->member.run, nOffset);
-    pt.y += ME_GetParagraph(pRun)->member.para.pt.y + editor->rcFormat.top;
+    pt.y += pPara->member.para.pt.y + editor->rcFormat.top;
     pt.x += editor->rcFormat.left;
 
     pt.x -= editor->horz_si.nPos;
@@ -4540,7 +4509,7 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart,
   int nOffset, nWritten = 0;
   WCHAR *pStart = buffer;
 
-  ME_RunOfsFromCharOfs(editor, nStart, &pRun, &nOffset);
+  ME_RunOfsFromCharOfs(editor, nStart, NULL, &pRun, &nOffset);
 
   /* bCRLF flag is only honored in 2.0 and up. 1.0 must always return text verbatim */
   if (editor->bEmulateVersion10) bCRLF = 0;
@@ -4728,10 +4697,8 @@ static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor, int sel_min, int sel_
   TRACE("sel_min = %d sel_max = %d\n", sel_min, sel_max);
 
   *candidate_min = *candidate_max = -1;
-  ME_RunOfsFromCharOfs(editor, sel_min, &item, &nStart);
-  if (!item) return FALSE;
+  ME_RunOfsFromCharOfs(editor, sel_min, &para, &item, &nStart);
   TRACE("nStart = %d\n", nStart);
-  para = ME_GetParagraph(item);
   if (sel_max == -1) sel_max = ME_GetTextLength(editor);
   while (item && para->member.para.nCharOfs + item->member.run.nCharOfs + nStart < sel_max)
   {

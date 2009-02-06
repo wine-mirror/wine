@@ -164,12 +164,12 @@ int ME_CharOfsFromRunOfs(ME_TextEditor *editor, ME_DisplayItem *pRun, int nOfs)
  * ME_CursorFromCharOfs
  *
  * Converts a character offset (relative to the start of the document) to
- * a cursor structure (which contains a run and a position relative to that 
+ * a cursor structure (which contains a run and a position relative to that
  * run).
  */
 void ME_CursorFromCharOfs(ME_TextEditor *editor, int nCharOfs, ME_Cursor *pCursor)
 {
-  ME_RunOfsFromCharOfs(editor, nCharOfs, &pCursor->pRun, &pCursor->nOffset);
+  ME_RunOfsFromCharOfs(editor, nCharOfs, NULL, &pCursor->pRun, &pCursor->nOffset);
 }
 
 /******************************************************************************
@@ -179,12 +179,13 @@ void ME_CursorFromCharOfs(ME_TextEditor *editor, int nCharOfs, ME_Cursor *pCurso
  * (absolute offset being an offset relative to the start of the document).
  * Kind of a "global to local" offset conversion.
  */
-void ME_RunOfsFromCharOfs(ME_TextEditor *editor, int nCharOfs, ME_DisplayItem **ppRun, int *pOfs)
+void ME_RunOfsFromCharOfs(ME_TextEditor *editor,
+                          int nCharOfs,
+                          ME_DisplayItem **ppPara,
+                          ME_DisplayItem **ppRun,
+                          int *pOfs)
 {
   ME_DisplayItem *item, *next_item;
-
-  assert(ppRun);
-  assert(pOfs);
 
   nCharOfs = max(nCharOfs, 0);
   nCharOfs = min(nCharOfs, ME_GetTextLength(editor));
@@ -197,6 +198,7 @@ void ME_RunOfsFromCharOfs(ME_TextEditor *editor, int nCharOfs, ME_DisplayItem **
   } while (next_item->member.para.nCharOfs <= nCharOfs);
   assert(item->type == diParagraph);
   nCharOfs -= item->member.para.nCharOfs;
+  if (ppPara) *ppPara = item;
 
   /* Find the run at the offset. */
   next_item = ME_FindItemFwd(item, diRun);
@@ -208,8 +210,8 @@ void ME_RunOfsFromCharOfs(ME_TextEditor *editor, int nCharOfs, ME_DisplayItem **
   assert(item->type == diRun);
   nCharOfs -= item->member.run.nCharOfs;
 
-  *ppRun = item;
-  *pOfs = nCharOfs;
+  if (ppRun) *ppRun = item;
+  if (pOfs) *pOfs = nCharOfs;
 }
 
 /******************************************************************************
@@ -878,17 +880,17 @@ void ME_GetSelectionCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt)
 
 /******************************************************************************
  * ME_GetCharFormat
- * 
+ *
  * Returns the style consisting of those attributes which are consistently set
- * in the whole character range.    
- */     
+ * in the whole character range.
+ */
 void ME_GetCharFormat(ME_TextEditor *editor, int nFrom, int nTo, CHARFORMAT2W *pFmt)
 {
   ME_DisplayItem *run, *run_end;
   int nOffset, nOffset2;
   CHARFORMAT2W tmp;
 
-  ME_RunOfsFromCharOfs(editor, nFrom, &run, &nOffset);
+  ME_RunOfsFromCharOfs(editor, nFrom, NULL, &run, &nOffset);
   if (nFrom == nTo) /* special case - if selection is empty, take previous char's formatting */
   {
     if (!nOffset)
@@ -905,7 +907,7 @@ void ME_GetCharFormat(ME_TextEditor *editor, int nFrom, int nTo, CHARFORMAT2W *p
   
   if (nTo>nFrom) /* selection consists of chars from nFrom up to nTo-1 */
     nTo--;
-  ME_RunOfsFromCharOfs(editor, nTo, &run_end, &nOffset2);
+  ME_RunOfsFromCharOfs(editor, nTo, NULL, &run_end, &nOffset2);
 
   ME_GetRunCharFormat(editor, run, pFmt);
 
