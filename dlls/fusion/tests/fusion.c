@@ -144,13 +144,37 @@ static void test_GetCachePath(void)
        "Expected HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), got %08x\n", hr);
     ok_w2("Expected \"%s\",  got \"%s\"\n", nochange, path);
 
+    lstrcpyW(cachepath, windir);
+    lstrcatW(cachepath, backslash);
+    lstrcatW(cachepath, assembly);
+
+    /* ASM_CACHE_ROOT */
+    lstrcpyW(path, nochange);
+    size = MAX_PATH;
+    hr = pGetCachePath(ASM_CACHE_ROOT, path, &size);
+    ok(hr == S_OK ||
+       broken(hr == E_INVALIDARG), /* .NET 1.1 */
+       "Expected S_OK, got %08x\n", hr);
+    if (hr == S_OK)
+        ok_w2("Expected \"%s\",  got \"%s\"\n", cachepath, path);
+
     if (pGetCORVersion)
     {
         CHAR versionA[MAX_PATH];
         CHAR cachepathA[MAX_PATH];
+        CHAR nativeimgA[MAX_PATH];
+        CHAR zapfmtA[MAX_PATH];
 
-        static const CHAR nativeimgA[] = "NativeImages_";
-        static const CHAR zapfmtA[] = "%s\\%s\\%s%s_32";
+        if (hr == S_OK)
+        {
+            lstrcpyA(nativeimgA, "NativeImages_");
+            lstrcpyA(zapfmtA, "%s\\%s\\%s%s_32");
+        }
+        else
+        {
+            lstrcpyA(nativeimgA, "NativeImages1_");
+            lstrcpyA(zapfmtA, "%s\\%s\\%s%s");
+        }
 
         pGetCORVersion(version, MAX_PATH, &size);
         WideCharToMultiByte(CP_ACP, 0, version, -1, versionA, MAX_PATH, 0, 0);
@@ -165,17 +189,6 @@ static void test_GetCachePath(void)
         ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
         ok_w2("Expected \"%s\",  got \"%s\"\n", cachepath, path);
     }
-
-    lstrcpyW(cachepath, windir);
-    lstrcatW(cachepath, backslash);
-    lstrcatW(cachepath, assembly);
-
-    /* ASM_CACHE_ROOT */
-    lstrcpyW(path, nochange);
-    size = MAX_PATH;
-    hr = pGetCachePath(ASM_CACHE_ROOT, path, &size);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok_w2("Expected \"%s\",  got \"%s\"\n", cachepath, path);
 
     /* two flags at once */
     lstrcpyW(path, nochange);
