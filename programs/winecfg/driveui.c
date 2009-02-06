@@ -86,34 +86,34 @@ static int lv_get_curr_select(HWND dialog)
 }
 
 /* sets the item in the listview at item->iIndex */
-static void lv_set_item(HWND dialog, LVITEM *item)
+static void lv_set_item(HWND dialog, LVITEMW *item)
 {
-    SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LVM_SETITEM, 0, (LPARAM) item);
+    SendDlgItemMessageW(dialog, IDC_LIST_DRIVES, LVM_SETITEMW, 0, (LPARAM) item);
 }
 
 /* sets specified item's text */
-static void lv_set_item_text(HWND dialog, int item, int subItem, char *text)
+static void lv_set_item_text(HWND dialog, int item, int subItem, WCHAR *text)
 {
-    LVITEM lvItem;
+    LVITEMW lvItem;
     if (item < 0 || subItem < 0) return;
     lvItem.mask = LVIF_TEXT;
     lvItem.iItem = item;
     lvItem.iSubItem = subItem;
     lvItem.pszText = text;
-    lvItem.cchTextMax = lstrlen(lvItem.pszText);
+    lvItem.cchTextMax = lstrlenW(lvItem.pszText);
     lv_set_item(dialog, &lvItem);
 }
 
 /* inserts an item into the listview */
-static void lv_insert_item(HWND dialog, LVITEM *item)
+static void lv_insert_item(HWND dialog, LVITEMW *item)
 {
-    SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LVM_INSERTITEM, 0, (LPARAM) item);
+    SendDlgItemMessageW(dialog, IDC_LIST_DRIVES, LVM_INSERTITEMW, 0, (LPARAM) item);
 }
 
 /* retrieve the item at index item->iIndex */
-static void lv_get_item(HWND dialog, LVITEM *item)
+static void lv_get_item(HWND dialog, LVITEMW *item)
 {
-    SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LVM_GETITEM, 0, (LPARAM) item);
+    SendDlgItemMessageW(dialog, IDC_LIST_DRIVES, LVM_GETITEMW, 0, (LPARAM) item);
 }
 
 static void set_advanced(HWND dialog)
@@ -235,7 +235,8 @@ static int fill_drives_list(HWND dialog)
 
     for(i = 0; i < 26; i++)
     {
-        LVITEM item;
+        LVITEMW item;
+        WCHAR *path;
         char letter[4];
 
         /* skip over any unused drives */
@@ -252,12 +253,16 @@ static int fill_drives_list(HWND dialog)
         item.mask = LVIF_TEXT | LVIF_PARAM;
         item.iItem = count;
         item.iSubItem = 0;
-        item.pszText = letter;
-        item.cchTextMax = lstrlen(item.pszText);
+        item.pszText = strdupU2W(letter);
+        item.cchTextMax = lstrlenW(item.pszText);
         item.lParam = (LPARAM) &drives[i];
 
         lv_insert_item(dialog, &item);
-        lv_set_item_text(dialog, count, 1, drives[i].unixpath);
+        HeapFree(GetProcessHeap(), 0, item.pszText);
+
+        path = strdupU2W(drives[i].unixpath);
+        lv_set_item_text(dialog, count, 1, path);
+        HeapFree(GetProcessHeap(), 0, path);
 
         count++;
     }
@@ -341,7 +346,7 @@ static void on_remove_click(HWND dialog)
 {
     int itemIndex;
     struct drive *drive;
-    LVITEM item;
+    LVITEMW item;
 
     itemIndex = lv_get_curr_select(dialog);
     if (itemIndex == -1) return; /* no selection */
@@ -379,12 +384,12 @@ static void on_remove_click(HWND dialog)
 static void update_controls(HWND dialog)
 {
     static const WCHAR emptyW[1];
-    char *path;
+    WCHAR *path;
     unsigned int type;
     char serial[16];
     const char *device;
     int i, selection = -1;
-    LVITEM item;
+    LVITEMW item;
 
     updating_ui = TRUE;
 
@@ -406,9 +411,10 @@ static void update_controls(HWND dialog)
     WINE_TRACE("Updating sheet for drive %c\n", current_drive->letter);
 
     /* path */
-    path = current_drive->unixpath;
-    WINE_TRACE("set path control text to '%s'\n", path);
-    set_text(dialog, IDC_EDIT_PATH, path);
+    WINE_TRACE("set path control text to '%s'\n", current_drive->unixpath);
+    path = strdupU2W(current_drive->unixpath);
+    set_textW(dialog, IDC_EDIT_PATH, path);
+    HeapFree(GetProcessHeap(), 0, path);
 
     /* drive type */
     type = current_drive->type;
@@ -498,9 +504,22 @@ static void on_edit_changed(HWND dialog, WORD id)
 
         case IDC_EDIT_PATH:
         {
+            WCHAR *wpath;
             char *path;
+            int lenW;
 
-            path = get_text(dialog, id);
+            wpath = get_textW(dialog, id);
+            if( (lenW = WideCharToMultiByte(CP_UNIXCP, 0, wpath, -1, NULL, 0, NULL, NULL)) )
+            {
+                path = HeapAlloc(GetProcessHeap(), 0, lenW);
+                WideCharToMultiByte(CP_UNIXCP, 0, wpath, -1, path, lenW, NULL, NULL);
+            }
+            else
+            {
+                path = NULL;
+                wpath = strdupU2W("drive_c");
+            }
+
             HeapFree(GetProcessHeap(), 0, current_drive->unixpath);
             current_drive->unixpath = path ? path : strdupA("drive_c");
             current_drive->modified = TRUE;
@@ -508,7 +527,8 @@ static void on_edit_changed(HWND dialog, WORD id)
             WINE_TRACE("set path to %s\n", current_drive->unixpath);
 
             lv_set_item_text(dialog, lv_get_curr_select(dialog), 1,
-                             current_drive->unixpath);
+                             wpath);
+            HeapFree(GetProcessHeap(), 0, wpath);
 
             /* enable the apply button  */
             SendMessage(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);

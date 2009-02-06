@@ -135,6 +135,19 @@ static inline WCHAR *strdupW(const WCHAR *s)
     return lstrcpyW(r, s);
 }
 
+/* create a unicode string from a string in Unix locale */
+static inline WCHAR *strdupU2W(const char *unix_str)
+{
+    WCHAR *unicode_str;
+    int lenW;
+
+    lenW = MultiByteToWideChar(CP_UNIXCP, 0, unix_str, -1, NULL, 0);
+    unicode_str = HeapAlloc(GetProcessHeap(), 0, lenW * sizeof(WCHAR));
+    if (unicode_str)
+        MultiByteToWideChar(CP_UNIXCP, 0, unix_str, -1, unicode_str, lenW);
+    return unicode_str;
+}
+
 static inline char *get_text(HWND dialog, WORD id)
 {
     HWND item = GetDlgItem(dialog, id);
