@@ -76,6 +76,8 @@ static BOOL init_functionpointers(void)
 
 static void test_GetCachePath(void)
 {
+    CHAR windirA[MAX_PATH];
+    WCHAR windir[MAX_PATH];
     WCHAR cachepath[MAX_PATH];
     WCHAR version[MAX_PATH];
     WCHAR path[MAX_PATH];
@@ -86,10 +88,6 @@ static void test_GetCachePath(void)
     static const WCHAR nochange[] = {'n','o','c','h','a','n','g','e',0};
     static const WCHAR assembly[] = {'a','s','s','e','m','b','l','y',0};
     static const WCHAR gac[] = {'G','A','C',0};
-    static const WCHAR nativeimg[] = {
-        'N','a','t','i','v','e','I','m','a','g','e','s','_',0};
-    static const WCHAR zapfmt[] = {
-        '%','s','\\','%','s','\\','%','s','%','s','_','3','2',0};
 
     if (!pGetCachePath)
     {
@@ -97,7 +95,9 @@ static void test_GetCachePath(void)
         return;
     }
 
-    GetWindowsDirectoryW(cachepath, MAX_PATH);
+    GetWindowsDirectoryA(windirA, MAX_PATH);
+    MultiByteToWideChar(CP_ACP, 0, windirA, -1, windir, MAX_PATH);
+    lstrcpyW(cachepath, windir);
     lstrcatW(cachepath, backslash);
     lstrcatW(cachepath, assembly);
     lstrcatW(cachepath, backslash);
@@ -146,9 +146,17 @@ static void test_GetCachePath(void)
 
     if (pGetCORVersion)
     {
+        CHAR versionA[MAX_PATH];
+        CHAR cachepathA[MAX_PATH];
+
+        static const CHAR nativeimgA[] = "NativeImages_";
+        static const CHAR zapfmtA[] = "%s\\%s\\%s%s_32";
+
         pGetCORVersion(version, MAX_PATH, &size);
-        GetWindowsDirectoryW(path, MAX_PATH);
-        wsprintfW(cachepath, zapfmt, path, assembly, nativeimg, version);
+        WideCharToMultiByte(CP_ACP, 0, version, -1, versionA, MAX_PATH, 0, 0);
+
+        wsprintfA(cachepathA, zapfmtA, windirA, "assembly", nativeimgA, versionA);
+        MultiByteToWideChar(CP_ACP, 0, cachepathA, -1, cachepath, MAX_PATH);
 
         /* ASM_CACHE_ZAP */
         lstrcpyW(path, nochange);
@@ -158,7 +166,7 @@ static void test_GetCachePath(void)
         ok_w2("Expected \"%s\",  got \"%s\"\n", cachepath, path);
     }
 
-    GetWindowsDirectoryW(cachepath, MAX_PATH);
+    lstrcpyW(cachepath, windir);
     lstrcatW(cachepath, backslash);
     lstrcatW(cachepath, assembly);
 
