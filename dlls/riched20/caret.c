@@ -273,14 +273,8 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars,
   int totalChars = nChars;
   ME_DisplayItem *start_para;
 
-  {
-    /* Prevent deletion past last end of paragraph run. */
-    ME_DisplayItem *pTextEnd = editor->pBuffer->pLast;
-    int nMaxChars = pTextEnd->member.para.prev_para->member.para.nCharOfs;
-    nMaxChars += ME_FindItemBack(pTextEnd, diRun)->member.run.nCharOfs;
-    nMaxChars -= nOfs;
-    nChars = min(nChars, nMaxChars);
-  }
+  /* Prevent deletion past last end of paragraph run. */
+  nChars = min(nChars, ME_GetTextLength(editor) - nOfs);
 
   ME_CursorFromCharOfs(editor, nOfs, &c);
   start_para = ME_GetParagraph(c.pRun);
