@@ -97,6 +97,34 @@ done we've got an intersection of the ray with the box.
     return TRUE;
 }
 
+HRESULT WINAPI D3DXComputeBoundingBox(PVOID ppointsFVF, DWORD numvertices, DWORD FVF, D3DXVECTOR3 *pmin, D3DXVECTOR3 *pmax)
+{
+    D3DXVECTOR3 vec;
+    unsigned int i;
+
+    if( !ppointsFVF || !pmin || !pmax ) return D3DERR_INVALIDCALL;
+
+    *pmin = *(D3DXVECTOR3*)((char*)ppointsFVF);
+    *pmax = *pmin;
+
+/* It looks like that D3DXComputeBoundingBox does not take in account the last vertex. */
+    for(i=0; i<numvertices-1; i++)
+    {
+        vec = *(D3DXVECTOR3*)((char*)ppointsFVF + D3DXGetFVFVertexSize(FVF) * i);
+
+        if ( vec.x < pmin->x ) pmin->x = vec.x;
+        if ( vec.x > pmax->x ) pmax->x = vec.x;
+
+        if ( vec.y < pmin->y ) pmin->y = vec.y;
+        if ( vec.y > pmax->y ) pmax->y = vec.y;
+
+        if ( vec.z < pmin->z ) pmin->z = vec.z;
+        if ( vec.z > pmax->z ) pmax->z = vec.z;
+    }
+
+    return D3D_OK;
+}
+
 HRESULT WINAPI D3DXComputeBoundingSphere(PVOID ppointsFVF, DWORD numvertices, DWORD FVF, D3DXVECTOR3 *pcenter, FLOAT *pradius)
 {
     D3DXVECTOR3 temp, temp1;

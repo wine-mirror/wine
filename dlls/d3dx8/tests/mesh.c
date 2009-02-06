@@ -111,6 +111,73 @@ static void D3DXBoundProbeTest(void)
     ok(result == FALSE, "expected FALSE, received TRUE\n");
 }
 
+static void D3DXComputeBoundingBoxTest(void)
+{
+    D3DXVECTOR3 exp_max, exp_min, got_max, got_min, vertex[5];
+    HRESULT hr;
+
+    vertex[0].x = 1.0f; vertex[0].y = 1.0f; vertex[0].z = 1.0f;
+    vertex[1].x = 1.0f; vertex[1].y = 1.0f; vertex[1].z = 1.0f;
+    vertex[2].x = 1.0f; vertex[2].y = 1.0f; vertex[2].z = 1.0f;
+    vertex[3].x = 1.0f; vertex[3].y = 1.0f; vertex[3].z = 1.0f;
+    vertex[4].x = 9.0f; vertex[4].y = 9.0f; vertex[4].z = 9.0f;
+
+    exp_min.x = 1.0f; exp_min.y = 1.0f; exp_min.z = 1.0f;
+    exp_max.x = 1.0f; exp_max.y = 1.0f; exp_max.z = 1.0f;
+
+    hr = D3DXComputeBoundingBox(&vertex[3],2,D3DFVF_XYZ,&got_min,&got_max);
+
+    ok( hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    ok( compare_vec3(exp_min,got_min), "Expected min: (%f, %f, %f), got: (%f, %f, %f)\n", exp_min.x,exp_min.y,exp_min.z,got_min.x,got_min.y,got_min.z);
+    ok( compare_vec3(exp_max,got_max), "Expected max: (%f, %f, %f), got: (%f, %f, %f)\n", exp_max.x,exp_max.y,exp_max.z,got_max.x,got_max.y,got_max.z);
+
+/*________________________*/
+
+    vertex[0].x = 2.0f; vertex[0].y = 5.9f; vertex[0].z = -1.2f;
+    vertex[1].x = -1.87f; vertex[1].y = 7.9f; vertex[1].z = 7.4f;
+    vertex[2].x = 7.43f; vertex[2].y = -0.9f; vertex[2].z = 11.9f;
+    vertex[3].x = -6.92f; vertex[3].y = 6.3f; vertex[3].z = -3.8f;
+    vertex[4].x = 11.4f; vertex[4].y = -8.1f; vertex[4].z = 4.5f;
+
+    exp_min.x = -6.92f; exp_min.y = -0.90f; exp_min.z = -3.80f;
+    exp_max.x = 7.43f; exp_max.y = 7.90f; exp_max.z = 11.9f;
+
+    hr = D3DXComputeBoundingBox(&vertex[0],5,D3DFVF_XYZ,&got_min,&got_max);
+
+    ok( hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    ok( compare_vec3(exp_min,got_min), "Expected min: (%f, %f, %f), got: (%f, %f, %f)\n", exp_min.x,exp_min.y,exp_min.z,got_min.x,got_min.y,got_min.z);
+    ok( compare_vec3(exp_max,got_max), "Expected max: (%f, %f, %f), got: (%f, %f, %f)\n", exp_max.x,exp_max.y,exp_max.z,got_max.x,got_max.y,got_max.z);
+
+/*________________________*/
+
+    vertex[0].x = 2.0f; vertex[0].y = 5.9f; vertex[0].z = -1.2f;
+    vertex[1].x = -1.87f; vertex[1].y = 7.9f; vertex[1].z = 7.4f;
+    vertex[2].x = 7.43f; vertex[2].y = -0.9f; vertex[2].z = 11.9f;
+    vertex[3].x = -6.92f; vertex[3].y = 6.3f; vertex[3].z = -3.8f;
+    vertex[4].x = 11.4f; vertex[4].y = -8.1f; vertex[4].z = 4.5f;
+
+    exp_min.x = -1.87f; exp_min.y = -0.90f; exp_min.z = -1.20f;
+    exp_max.x = 7.43f; exp_max.y = 7.90f; exp_max.z = 11.9f;
+
+    hr = D3DXComputeBoundingBox(&vertex[0],4,D3DFVF_XYZ,&got_min,&got_max);
+
+    ok( hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    ok( compare_vec3(exp_min,got_min), "Expected min: (%f, %f, %f), got: (%f, %f, %f)\n", exp_min.x,exp_min.y,exp_min.z,got_min.x,got_min.y,got_min.z);
+    ok( compare_vec3(exp_max,got_max), "Expected max: (%f, %f, %f), got: (%f, %f, %f)\n", exp_max.x,exp_max.y,exp_max.z,got_max.x,got_max.y,got_max.z);
+
+/*________________________*/
+    hr = D3DXComputeBoundingBox(NULL,5,D3DFVF_XYZ,&got_min,&got_max);
+    ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+/*________________________*/
+    hr = D3DXComputeBoundingBox(&vertex[3],5,D3DFVF_XYZ,NULL,&got_max);
+    ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+/*________________________*/
+    hr = D3DXComputeBoundingBox(&vertex[3],5,D3DFVF_XYZ,&got_min,NULL);
+    ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+}
+
 static void D3DXComputeBoundingSphereTest(void)
 {
     D3DXVECTOR3 exp_cen, got_cen, vertex[5];
@@ -322,6 +389,7 @@ static void D3DXIntersectTriTest(void)
 START_TEST(mesh)
 {
     D3DXBoundProbeTest();
+    D3DXComputeBoundingBoxTest();
     D3DXComputeBoundingSphereTest();
     D3DXGetFVFVertexSizeTest();
     D3DXIntersectTriTest();
