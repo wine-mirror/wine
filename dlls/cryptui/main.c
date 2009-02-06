@@ -5519,6 +5519,7 @@ struct ExportWizData
     CRYPTUI_WIZ_EXPORT_CERTCONTEXT_INFO contextInfo;
     BOOL freePassword;
     PCRYPT_KEY_PROV_INFO keyProvInfo;
+    BOOL deleteKeys;
     LPWSTR fileName;
     HANDLE file;
     BOOL success;
@@ -5814,7 +5815,7 @@ static LRESULT CALLBACK export_format_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
                 if (IsDlgButtonChecked(hwnd, IDC_EXPORT_PFX_STRONG_ENCRYPTION))
                     data->contextInfo.fStrongEncryption = TRUE;
                 if (IsDlgButtonChecked(hwnd, IDC_EXPORT_PFX_DELETE_PRIVATE_KEY))
-                    data->contextInfo.fExportPrivateKeys = TRUE;
+                    data->deleteKeys = TRUE;
                 skipPasswordPage = FALSE;
             }
             SetWindowLongPtrW(hwnd, DWLP_MSGRESULT,
@@ -6500,7 +6501,7 @@ static BOOL save_serialized_store(HANDLE file, HCERTSTORE store)
 
 static BOOL save_pfx(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
  PCCRYPTUI_WIZ_EXPORT_CERTCONTEXT_INFO pContextInfo,
- PCRYPT_KEY_PROV_INFO keyProvInfo)
+ PCRYPT_KEY_PROV_INFO keyProvInfo, BOOL deleteKeys)
 {
     HCERTSTORE store = CertOpenStore(CERT_STORE_PROV_MEMORY, X509_ASN_ENCODING,
      0, CERT_STORE_CREATE_NEW_FLAG, NULL);
@@ -6510,6 +6511,7 @@ static BOOL save_pfx(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
     {
         CRYPT_DATA_BLOB pfxBlob = { 0, NULL };
         PCCERT_CONTEXT cert = NULL;
+        BOOL freeKeyProvInfo = FALSE;
 
         if (pContextInfo->fExportChain)
         {
@@ -6579,7 +6581,7 @@ static BOOL save_pfx(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
                 {
                     ret = CertSetCertificateContextProperty(cert,
                      CERT_KEY_PROV_INFO_PROP_ID, 0, keyProvInfo);
-                    HeapFree(GetProcessHeap(), 0, keyProvInfo);
+                    freeKeyProvInfo = TRUE;
                 }
             }
         }
@@ -6612,6 +6614,16 @@ static BOOL save_pfx(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
                 }
             }
         }
+        if (ret && deleteKeys)
+        {
+            HCRYPTPROV prov;
+
+            CryptAcquireContextW(&prov, keyProvInfo->pwszContainerName,
+             keyProvInfo->pwszProvName, keyProvInfo->dwProvType,
+             CRYPT_DELETEKEYSET);
+        }
+        if (freeKeyProvInfo)
+            HeapFree(GetProcessHeap(), 0, keyProvInfo);
         CertFreeCertificateContext(cert);
         CertCloseStore(store, 0);
     }
@@ -6620,7 +6632,7 @@ static BOOL save_pfx(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
 
 static BOOL do_export(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
  PCCRYPTUI_WIZ_EXPORT_CERTCONTEXT_INFO pContextInfo,
- PCRYPT_KEY_PROV_INFO keyProvInfo)
+ PCRYPT_KEY_PROV_INFO keyProvInfo, BOOL deleteKeys)
 {
     BOOL ret;
 
@@ -6664,7 +6676,8 @@ static BOOL do_export(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
              pContextInfo->fExportChain);
             break;
         case CRYPTUI_WIZ_EXPORT_FORMAT_PFX:
-            ret = save_pfx(file, pExportInfo, pContextInfo, keyProvInfo);
+            ret = save_pfx(file, pExportInfo, pContextInfo, keyProvInfo,
+             deleteKeys);
             break;
         default:
             SetLastError(E_FAIL);
@@ -6728,7 +6741,7 @@ static LRESULT CALLBACK export_finish_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
 
             data = (struct ExportWizData *)GetWindowLongPtrW(hwnd, DWLP_USER);
             if ((data->success = do_export(data->file, &data->exportInfo,
-             &data->contextInfo, data->keyProvInfo)))
+             &data->contextInfo, data->keyProvInfo, data->deleteKeys)))
             {
                 messageID = IDS_EXPORT_SUCCEEDED;
                 mbFlags = MB_OK;
@@ -6788,6 +6801,7 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
          min(((PCCRYPTUI_WIZ_EXPORT_CERTCONTEXT_INFO)pvoid)->dwSize,
          sizeof(data.contextInfo)));
     data.keyProvInfo = NULL;
+    data.deleteKeys = FALSE;
     data.fileName = NULL;
     data.file = INVALID_HANDLE_VALUE;
     data.success = FALSE;
@@ -6933,7 +6947,7 @@ BOOL WINAPI CryptUIWizExport(DWORD dwFlags, HWND hwndParent,
 
         if (file != INVALID_HANDLE_VALUE)
         {
-            ret = do_export(file, pExportInfo, pvoid, NULL);
+            ret = do_export(file, pExportInfo, pvoid, NULL, FALSE);
             CloseHandle(file);
         }
         else
