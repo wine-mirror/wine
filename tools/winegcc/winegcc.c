@@ -646,12 +646,6 @@ static void build(struct options* opts)
     }
     if (opts->force_pointer_size)
         strarray_add(spec_args, strmake("-m%u", 8 * opts->force_pointer_size ));
-    strarray_add(spec_args, "--as-cmd");
-    strarray_add(spec_args, AS);
-    strarray_add(spec_args, "--ld-cmd");
-    strarray_add(spec_args, LD);
-    strarray_add(spec_args, "--nm-cmd");
-    strarray_add(spec_args, NM);
     strarray_addall(spec_args, strarray_fromstring(DLLFLAGS, " "));
     strarray_add(spec_args, opts->shared ? "--dll" : "--exe");
     strarray_add(spec_args, "-o");
