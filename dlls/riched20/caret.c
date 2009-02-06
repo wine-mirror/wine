@@ -237,8 +237,6 @@ ME_MoveCaret(ME_TextEditor *editor)
 {
   int x, y, height;
 
-  if (ME_WrapMarkedParagraphs(editor))
-    ME_UpdateScrollBar(editor);
   ME_GetCursorCoordinates(editor, &editor->pCursors[0], &x, &y, &height);
   if(editor->bHaveFocus && !ME_IsSelection(editor))
   {
@@ -1420,7 +1418,6 @@ static void ME_ArrowPageDown(ME_TextEditor *editor, ME_Cursor *pCursor)
 static void ME_ArrowHome(ME_TextEditor *editor, ME_Cursor *pCursor)
 {
   ME_DisplayItem *pRow = ME_FindItemBack(pCursor->pRun, diStartRow);
-  ME_WrapMarkedParagraphs(editor);
   if (pRow) {
     ME_DisplayItem *pRun;
     if (editor->bCaretAtEnd && !pCursor->nOffset) {
