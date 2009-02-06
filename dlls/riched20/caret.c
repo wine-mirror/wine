@@ -1266,8 +1266,6 @@ ME_MoveCursorLines(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs)
     pItem = ME_FindItemFwd(pRun, diStartRow);
     if (!pItem)
       return; /* row not found - ignore */
-    /* FIXME If diParagraph is before diStartRow, wrap the next paragraph?
-    */
     pNewPara = ME_GetParagraph(pItem);
     if (pOldPara->member.para.nFlags & MEPF_ROWSTART ||
         (pOldPara->member.para.pCell &&
