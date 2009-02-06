@@ -33,7 +33,7 @@ all: $(TESTPROGRAM)
 # Rules for .so main module
 
 $(MODULE).so: $(OBJS) $(RC_SRCS:.rc=.res) Makefile.in
-	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -mconsole $(APPMODE) $(OBJS) $(RC_SRCS:.rc=.res) -o $@ $(LIBPORT) $(ALL_LIBS)
+	$(WINEGCC) -mconsole $(APPMODE) $(OBJS) $(RC_SRCS:.rc=.res) -o $@ $(LIBPORT) $(ALL_LIBS)
 
 # Rules for .exe main module
 
