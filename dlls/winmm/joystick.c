@@ -143,7 +143,7 @@ UINT WINAPI joyGetNumDevs(void)
 
     for (i = 0; i < MAXJOYSTICK; i++) {
 	if (JOY_LoadDriver(i)) {
-	    ret += SendDriverMessage(JOY_Sticks[i].hDriver, JDD_GETNUMDEVS, 0L, 0L);
+            ret += SendDriverMessage(JOY_Sticks[i].hDriver, JDD_GETNUMDEVS, 0, 0);
 	}
     }
     return ret;
@@ -160,7 +160,7 @@ MMRESULT WINAPI joyGetDevCapsW(UINT_PTR wID, LPJOYCAPSW lpCaps, UINT wSize)
     lpCaps->wPeriodMin = JOY_PERIOD_MIN; /* FIXME */
     lpCaps->wPeriodMax = JOY_PERIOD_MAX; /* FIXME (same as MS Joystick Driver) */
 
-    return SendDriverMessage(JOY_Sticks[wID].hDriver, JDD_GETDEVCAPS, (DWORD)lpCaps, wSize);
+    return SendDriverMessage(JOY_Sticks[wID].hDriver, JDD_GETDEVCAPS, (LPARAM)lpCaps, wSize);
 }
 
 /**************************************************************************
@@ -234,7 +234,7 @@ MMRESULT WINAPI joyGetPosEx(UINT wID, LPJOYINFOEX lpInfo)
     lpInfo->dwReserved1 = 0;
     lpInfo->dwReserved2 = 0;
 
-    return SendDriverMessage(JOY_Sticks[wID].hDriver, JDD_GETPOSEX, (DWORD)lpInfo, 0L);
+    return SendDriverMessage(JOY_Sticks[wID].hDriver, JDD_GETPOSEX, (LPARAM)lpInfo, 0);
 }
 
 /**************************************************************************
@@ -252,7 +252,7 @@ MMRESULT WINAPI joyGetPos(UINT wID, LPJOYINFO lpInfo)
     lpInfo->wZpos = 0;
     lpInfo->wButtons = 0;
 
-    return SendDriverMessage(JOY_Sticks[wID].hDriver, JDD_GETPOS, (DWORD)lpInfo, 0L);
+    return SendDriverMessage(JOY_Sticks[wID].hDriver, JDD_GETPOS, (LPARAM)lpInfo, 0);
 }
 
 /**************************************************************************
