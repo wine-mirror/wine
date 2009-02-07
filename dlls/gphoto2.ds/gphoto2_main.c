@@ -63,7 +63,7 @@ load_filesystem(const char *folder) {
 	ret = gp_list_get_name (list, i, &name);
 	if (ret < GP_OK)
 	    continue;
-	gpfile = malloc(sizeof(struct gphoto2_file));
+	gpfile = HeapAlloc(GetProcessHeap(), 0, sizeof(struct gphoto2_file));
 	if (!gpfile)
 	    continue;
 	TRACE("adding %s/%s\n", folder, name);
@@ -93,7 +93,7 @@ load_filesystem(const char *folder) {
 	if (ret < GP_OK)
 	    continue;
 	TRACE("recursing into %s\n", name);
-	newfolder = malloc(strlen(folder)+1+strlen(name)+1);
+	newfolder = HeapAlloc(GetProcessHeap(), 0, strlen(folder)+1+strlen(name)+1);
 	if (!strcmp(folder,"/"))
 	    sprintf (newfolder, "/%s", name);
 	else
