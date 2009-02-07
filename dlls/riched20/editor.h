@@ -70,7 +70,6 @@ void ME_ClearTempStyle(ME_TextEditor *editor);
 void ME_DumpStyleToBuf(CHARFORMAT2W *pFmt, char buf[2048]);
 void ME_DumpStyle(ME_Style *s);
 CHARFORMAT2W *ME_ToCF2W(CHARFORMAT2W *to, CHARFORMAT2W *from);
-void ME_CopyToCF2W(CHARFORMAT2W *to, CHARFORMAT2W *from);
 void ME_CopyToCFAny(CHARFORMAT2W *to, CHARFORMAT2W *from);
 void ME_CopyCharFormat(CHARFORMAT2W *pDest, const CHARFORMAT2W *pSrc); /* only works with 2W structs */
 void ME_CharFormatFromLogFont(HDC hDC, const LOGFONTW *lf, CHARFORMAT2W *fmt); /* ditto */
@@ -81,7 +80,6 @@ void ME_Remove(ME_DisplayItem *diWhere);
 ME_DisplayItem *ME_FindItemBack(ME_DisplayItem *di, ME_DIType nTypeOrClass);
 ME_DisplayItem *ME_FindItemFwd(ME_DisplayItem *di, ME_DIType nTypeOrClass);
 ME_DisplayItem *ME_FindItemBackOrHere(ME_DisplayItem *di, ME_DIType nTypeOrClass);
-ME_DisplayItem *ME_FindItemFwdOrHere(ME_DisplayItem *di, ME_DIType nTypeOrClass);
 ME_DisplayItem *ME_MakeDI(ME_DIType type);
 void ME_DestroyDisplayItem(ME_DisplayItem *item);
 void ME_DumpDocument(ME_TextBuffer *buffer);
@@ -121,7 +119,6 @@ int ME_ReverseFindNonWhitespaceV(const ME_String *s, int nVChar);
 int ME_ReverseFindWhitespaceV(const ME_String *s, int nVChar);
 
 /* row.c */
-ME_DisplayItem *ME_FindRowStart(ME_Context *c, ME_DisplayItem *run, int nRelPos);
 ME_DisplayItem *ME_RowStart(ME_DisplayItem *item);
 /* ME_DisplayItem *ME_RowEnd(ME_DisplayItem *item); */
 void ME_RenumberParagraphs(ME_DisplayItem *item); /* TODO */

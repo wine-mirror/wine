@@ -24,50 +24,6 @@
 
 #include "editor.h"
 
-ME_DisplayItem *ME_FindRowStart(ME_Context *c, ME_DisplayItem *item, 
-                                int nRelPos) {
-  ME_DisplayItem *para = ME_GetParagraph(item);
-  ME_MustBeWrapped(c, para);
-  if(nRelPos<=0) { /* if this or preceding row */
-    do {
-      ME_DisplayItem *item2 = ME_FindItemBack(item, diStartRowOrParagraph);
-      if (item2->type == diParagraph)
-      {
-        if (item2->member.para.prev_para == NULL)
-          return item;
-        /* if skipping to the preceding paragraph, ensure it's wrapped */
-        ME_MustBeWrapped(c, item2->member.para.prev_para);
-        item = item2;
-        continue;
-      }
-      else if (item2->type == diStartRow)
-      {
-        nRelPos++;
-        if (nRelPos>0)
-          return item;
-        item = item2;
-        continue;
-      }
-      assert(0 == "bug in FindItemBack(item, diStartRowOrParagraph)");
-      item = item2;
-    } while(1);
-  }
-  while(nRelPos>0) { /* if one of the next rows */
-    ME_DisplayItem *item2 = ME_FindItemFwd(item, diStartRowOrParagraph);
-    if (!item2)
-      return item;
-    if (item2->type == diParagraph)
-    {
-      if (item2->member.para.next_para == NULL)
-        return item;
-      continue;
-    }
-    item = item2;
-    nRelPos--;
-  }
-  return item;
-}
-
 /* I'm sure these functions would simplify some code in caret ops etc,
  * I just didn't remember them when I wrote that code
  */ 
