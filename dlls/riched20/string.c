@@ -18,61 +18,49 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "editor.h"     
+#include "editor.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
 static int ME_GetOptimalBuffer(int nLen)
 {
-  return ((2*nLen+1)+128)&~63;
+  /* FIXME: This seems wasteful for tabs and end of lines strings,
+   *        since they have a small fixed length. */
+  return ((sizeof(WCHAR) * nLen) + 128) & ~63;
 }
 
-ME_String *ME_MakeString(LPCWSTR szText)
+/* Create a buffer (uninitialized string) of size nMaxChars */
+static ME_String *ME_MakeStringB(int nMaxChars)
 {
   ME_String *s = ALLOC_OBJ(ME_String);
-  s->nLen = lstrlenW(szText);
-  s->nBuffer = ME_GetOptimalBuffer(s->nLen+1);
+
+  s->nLen = nMaxChars;
+  s->nBuffer = ME_GetOptimalBuffer(s->nLen + 1);
   s->szData = ALLOC_N_OBJ(WCHAR, s->nBuffer);
-  lstrcpyW(s->szData, szText);
+  s->szData[s->nLen] = 0;
   return s;
 }
 
 ME_String *ME_MakeStringN(LPCWSTR szText, int nMaxChars)
 {
-  ME_String *s = ALLOC_OBJ(ME_String);
-  
-  s->nLen = nMaxChars;
-  s->nBuffer = ME_GetOptimalBuffer(s->nLen+1);
-  s->szData = ALLOC_N_OBJ(WCHAR, s->nBuffer);
-  /* Native allows NUL chars */
-  memmove(s->szData, szText, s->nLen * sizeof(WCHAR));
-  s->szData[s->nLen] = 0;
+  ME_String *s = ME_MakeStringB(nMaxChars);
+  /* Native allows NULL chars */
+  memcpy(s->szData, szText, s->nLen * sizeof(WCHAR));
   return s;
 }
 
+ME_String *ME_MakeString(LPCWSTR szText)
+{
+  return ME_MakeStringN(szText, lstrlenW(szText));
+}
+
+/* Make a string by repeating a char nMaxChars times */
 ME_String *ME_MakeStringR(WCHAR cRepeat, int nMaxChars)
-{ /* Make a string by repeating a char nMaxChars times */
+{
   int i;
-   ME_String *s = ALLOC_OBJ(ME_String);
-  
-  s->nLen = nMaxChars;
-  s->nBuffer = ME_GetOptimalBuffer(s->nLen+1);
-  s->szData = ALLOC_N_OBJ(WCHAR, s->nBuffer);
-
-  for (i = 0;i<nMaxChars;i++)
+  ME_String *s = ME_MakeStringB(nMaxChars);
+  for (i = 0; i < nMaxChars; i++)
     s->szData[i] = cRepeat;
-  s->szData[s->nLen] = 0;
-  return s;
-}
-
-ME_String *ME_MakeStringB(int nMaxChars)
-{ /* Create a buffer (uninitialized string) of size nMaxChars */
-  ME_String *s = ALLOC_OBJ(ME_String);
-  
-  s->nLen = nMaxChars;
-  s->nBuffer = ME_GetOptimalBuffer(s->nLen+1);
-  s->szData = ALLOC_N_OBJ(WCHAR, s->nBuffer);
-  s->szData[s->nLen] = 0;
   return s;
 }
 
