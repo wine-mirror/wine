@@ -311,7 +311,7 @@ static HRESULT WINAPI RecycleBin_GetDisplayNameOf(IShellFolder2 *This, LPCITEMID
     WIN32_FIND_DATAW data;
 
     TRACE("(%p, %p, %x, %p)\n", This, pidl, uFlags, pName);
-    TRASH_UnpackItemID(&pidl->mkid, NULL, &data);
+    TRASH_UnpackItemID(&pidl->mkid, &data);
     pName->uType = STRRET_WSTR;
     pName->u.pOleStr = StrDupW(PathFindFileNameW(data.cFileName));
     if (pName->u.pOleStr == NULL)
@@ -414,7 +414,7 @@ static HRESULT WINAPI RecycleBin_GetDetailsOf(IShellFolder2 *iface, LPCITEMIDLIS
     if (iColumn == COLUMN_NAME)
         return RecycleBin_GetDisplayNameOf(iface, pidl, SHGDN_NORMAL, &pDetails->str);
 
-    TRASH_UnpackItemID(&pidl->mkid, NULL, &data);
+    TRASH_UnpackItemID(&pidl->mkid, &data);
     switch (iColumn)
     {
         case COLUMN_DATEDEL:
