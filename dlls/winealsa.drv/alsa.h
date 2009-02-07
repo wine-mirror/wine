@@ -179,7 +179,6 @@ void	ALSA_ResetRingMessage(ALSA_MSG_RING* omr);
 void	ALSA_WaitRingMessage(ALSA_MSG_RING* omr, DWORD sleep);
 int	ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWORD_PTR param, BOOL wait);
 int	ALSA_RetrieveRingMessage(ALSA_MSG_RING* omr, enum win_wm_message *msg, DWORD_PTR *param, HANDLE *hEvent);
-int	ALSA_PeekRingMessage(ALSA_MSG_RING* omr, enum win_wm_message *msg, DWORD_PTR *param, HANDLE *hEvent);
 int	ALSA_CheckSetVolume(snd_hctl_t *hctl, int *out_left, int *out_right, int *out_min, int *out_max, int *out_step, int *new_left, int *new_right);
 
 const char * ALSA_getCmdString(enum win_wm_message msg);

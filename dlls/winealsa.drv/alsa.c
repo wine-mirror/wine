@@ -213,31 +213,6 @@ int ALSA_RetrieveRingMessage(ALSA_MSG_RING* omr, enum win_wm_message *msg,
     return 1;
 }
 
-/******************************************************************
- *              ALSA_PeekRingMessage
- *
- * Peek at a message from the ring but do not remove it.
- * Should be called by the playback/record thread.
- */
-int ALSA_PeekRingMessage(ALSA_MSG_RING* omr,
-                         enum win_wm_message *msg,
-                         DWORD_PTR *param, HANDLE *hEvent)
-{
-    EnterCriticalSection(&omr->msg_crst);
-
-    if (omr->msg_toget == omr->msg_tosave) /* buffer empty ? */
-    {
-        LeaveCriticalSection(&omr->msg_crst);
-        return 0;
-    }
-
-    *msg = omr->messages[omr->msg_toget].msg;
-    *param = omr->messages[omr->msg_toget].param;
-    *hEvent = omr->messages[omr->msg_toget].hEvent;
-    LeaveCriticalSection(&omr->msg_crst);
-    return 1;
-}
-
 /*======================================================================*
  *                  Utility functions                                   *
  *======================================================================*/
