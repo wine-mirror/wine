@@ -406,7 +406,7 @@ static INT_PTR CALLBACK DIALOG_SYMBOL_DlgProc(HWND hDlg, UINT msg, WPARAM wParam
  *
  *           DIALOG_Symbol
  */
-VOID DIALOG_Symbol(HICON *lphIcon, LPSTR lpszIconFile,
+static VOID DIALOG_Symbol(HICON *lphIcon, LPSTR lpszIconFile,
 		   INT *lpnIconIndex, INT nSize)
 {
   DLGPROC lpfnDlg = MakeProcInstance(DIALOG_SYMBOL_DlgProc, Globals.hInstance);

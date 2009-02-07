@@ -184,8 +184,6 @@ BOOL   DIALOG_ProgramAttributes(LPSTR lpszTitle, LPSTR lpszCmdLine,
 				LPSTR lpszWorkDir, LPSTR lpszIconFile,
 				HICON *lphIcon, INT *nIconIndex,
 				INT *lpnHotKey, INT *lpnCmdShow, INT nSize);
-VOID   DIALOG_Symbol(HICON *lphIcon, LPSTR lpszIconFile,
-		     INT *lpnIconIndex, INT nSize);
 VOID   DIALOG_Execute(void);
 
 VOID   STRING_LoadMenus(VOID);
