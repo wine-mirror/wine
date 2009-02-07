@@ -90,33 +90,23 @@ void ME_DestroyString(ME_String *s)
 
 void ME_AppendString(ME_String *s1, const ME_String *s2)
 {
-  if (s1->nLen+s2->nLen+1 <= s1->nBuffer) {
-    lstrcpyW(s1->szData+s1->nLen, s2->szData);
-    s1->nLen += s2->nLen;
-  }
-  else
+  if (s1->nLen+s2->nLen+1 <= s1->nBuffer)
   {
+    memcpy(s1->szData + s1->nLen, s2->szData, s2->nLen * sizeof(WCHAR));
+    s1->nLen += s2->nLen;
+    s1->szData[s1->nLen] = 0;
+  } else {
     WCHAR *buf;
     s1->nBuffer = ME_GetOptimalBuffer(s1->nLen+s2->nLen+1);
 
-    buf = ALLOC_N_OBJ(WCHAR, s1->nBuffer); 
-    lstrcpyW(buf, s1->szData);
-    lstrcpyW(buf+s1->nLen, s2->szData);
+    buf = ALLOC_N_OBJ(WCHAR, s1->nBuffer);
+    memcpy(buf, s1->szData, s1->nLen * sizeof(WCHAR));
+    memcpy(buf + s1->nLen, s2->szData, s2->nLen * sizeof(WCHAR));
     FREE_OBJ(s1->szData);
     s1->szData = buf;
     s1->nLen += s2->nLen;
+    s1->szData[s1->nLen] = 0;
   }
-}
-
-ME_String *ME_ConcatString(const ME_String *s1, const ME_String *s2)
-{
-  ME_String *s = ALLOC_OBJ(ME_String);
-  s->nLen = s1->nLen+s2->nLen;
-  s->nBuffer = ME_GetOptimalBuffer(s1->nLen+s2->nLen+1);
-  s->szData = ALLOC_N_OBJ(WCHAR, s->nBuffer);
-  lstrcpyW(s->szData, s1->szData);
-  lstrcpyW(s->szData+s1->nLen, s2->szData);
-  return s;  
 }
 
 ME_String *ME_VSplitString(ME_String *orig, int charidx)

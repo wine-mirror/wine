@@ -95,7 +95,6 @@ ME_String *ME_MakeStringB(int nMaxChars);
 ME_String *ME_StrDup(const ME_String *s);
 void ME_DestroyString(ME_String *s);
 void ME_AppendString(ME_String *s1, const ME_String *s2);
-ME_String *ME_ConcatString(const ME_String *s1, const ME_String *s2);
 ME_String *ME_VSplitString(ME_String *orig, int nVPos);
 int ME_IsWhitespaces(const ME_String *s);
 int ME_IsSplitable(const ME_String *s);
