@@ -3431,7 +3431,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     CHARFORMAT2W fmt;
     HDC hDC;
     BOOL bRepaint = LOWORD(lParam);
-    
+
     if (!wParam)
       wParam = (WPARAM)GetStockObject(SYSTEM_FONT); 
     GetObjectW((HGDIOBJ)wParam, sizeof(LOGFONTW), &lf);
@@ -3442,8 +3442,11 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     ME_SetDefaultCharFormat(editor, &fmt);
 
     ME_CommitUndo(editor);
+    ME_MarkAllForWrapping(editor);
+    ME_WrapMarkedParagraphs(editor);
+    ME_UpdateScrollBar(editor);
     if (bRepaint)
-      ME_RewrapRepaint(editor);
+      ME_Repaint(editor);
     return 0;
   }
   case WM_SETTEXT:
@@ -4139,8 +4142,11 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       ME_SetDefaultFormatRect(editor);
       editor->bDefaultFormatRect = TRUE;
     }
+    ME_MarkAllForWrapping(editor);
+    ME_WrapMarkedParagraphs(editor);
+    ME_UpdateScrollBar(editor);
     if (msg != EM_SETRECTNP)
-      ME_RewrapRepaint(editor);
+      ME_Repaint(editor);
     return 0;
   }
   case EM_REQUESTRESIZE:
