@@ -1807,16 +1807,6 @@ INT WINAPI LookupIconIdFromDirectoryEx( LPBYTE xdir, BOOL bIcon,
 }
 
 /**********************************************************************
- *              LookupIconIdFromDirectory (USER.?)
- */
-INT16 WINAPI LookupIconIdFromDirectory16( LPBYTE dir, BOOL16 bIcon )
-{
-    return LookupIconIdFromDirectoryEx16( dir, bIcon,
-           bIcon ? GetSystemMetrics(SM_CXICON) : GetSystemMetrics(SM_CXCURSOR),
-           bIcon ? GetSystemMetrics(SM_CYICON) : GetSystemMetrics(SM_CYCURSOR), bIcon ? 0 : LR_MONOCHROME );
-}
-
-/**********************************************************************
  *              LookupIconIdFromDirectory (USER32.@)
  */
 INT WINAPI LookupIconIdFromDirectory( LPBYTE dir, BOOL bIcon )
