@@ -168,69 +168,58 @@ void
 ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
                         int *x, int *y, int *height)
 {
-  ME_DisplayItem *pCursorRun = pCursor->pRun;
-  ME_DisplayItem *pSizeRun = pCursor->pRun;
+  ME_DisplayItem *row;
+  ME_DisplayItem *run = pCursor->pRun;
+  ME_DisplayItem *para = ME_GetParagraph(run);
+  ME_DisplayItem *pSizeRun = run;
+  ME_Context c;
+  SIZE sz = {0, 0};
 
   assert(height && x && y);
-  assert(!(ME_GetParagraph(pCursorRun)->member.para.nFlags & MEPF_REWRAP));
-  assert(pCursor->pRun);
-  assert(pCursor->pRun->type == diRun);
+  assert(~para->member.para.nFlags & MEPF_REWRAP);
+  assert(run && run->type == diRun);
+  assert(para && para->type == diParagraph);
 
-  if (pCursorRun->type == diRun) {
-    ME_DisplayItem *row = ME_FindItemBack(pCursorRun, diStartRowOrParagraph);
+  row = ME_FindItemBack(run, diStartRowOrParagraph);
+  assert(row && row->type == diStartRow);
 
-    if (row) {
-      HDC hDC = ITextHost_TxGetDC(editor->texthost);
-      ME_Context c;
-      ME_DisplayItem *run = pCursorRun;
-      ME_DisplayItem *para = NULL;
-      SIZE sz = {0, 0};
+  ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
 
-      ME_InitContext(&c, editor, hDC);
-
-      if (!pCursor->nOffset)
-      {
-        ME_DisplayItem *prev = ME_FindItemBack(pCursorRun, diRunOrParagraph);
-        assert(prev);
-        if (prev->type == diRun)
-          pSizeRun = prev;
-      }
-      assert(row->type == diStartRow); /* paragraph -> run without start row ?*/
-      para = ME_FindItemBack(row, diParagraph);
-      assert(para);
-      assert(para->type == diParagraph);
-      if (editor->bCaretAtEnd && !pCursor->nOffset &&
-          run == ME_FindItemFwd(row, diRun))
-      {
-        ME_DisplayItem *tmp = ME_FindItemBack(row, diRunOrParagraph);
-        assert(tmp);
-        if (tmp->type == diRun)
-        {
-          row = ME_FindItemBack(tmp, diStartRow);
-          pSizeRun = run = tmp;
-          assert(run);
-          assert(run->type == diRun);
-          sz = ME_GetRunSize(&c, &para->member.para,
-                             &run->member.run, ME_StrLen(run->member.run.strText),
-                             row->member.row.nLMargin);
-        }
-      }
-      if (pCursor->nOffset) {
-        sz = ME_GetRunSize(&c, &para->member.para, &run->member.run, pCursor->nOffset,
-                           row->member.row.nLMargin);
-      }
-
-      *height = pSizeRun->member.run.nAscent + pSizeRun->member.run.nDescent;
-      *x = c.rcView.left + run->member.run.pt.x + sz.cx - editor->horz_si.nPos;
-      *y = c.rcView.top + para->member.para.pt.y + row->member.row.nBaseline
-           + run->member.run.pt.y - pSizeRun->member.run.nAscent - editor->vert_si.nPos;
-      ME_DestroyContext(&c);
-      return;
+  if (!pCursor->nOffset)
+  {
+    ME_DisplayItem *prev = ME_FindItemBack(run, diRunOrParagraph);
+    assert(prev);
+    if (prev->type == diRun)
+      pSizeRun = prev;
+  }
+  if (editor->bCaretAtEnd && !pCursor->nOffset &&
+      run == ME_FindItemFwd(row, diRun))
+  {
+    ME_DisplayItem *tmp = ME_FindItemBack(row, diRunOrParagraph);
+    assert(tmp);
+    if (tmp->type == diRun)
+    {
+      row = ME_FindItemBack(tmp, diStartRow);
+      pSizeRun = run = tmp;
+      assert(run);
+      assert(run->type == diRun);
+      sz = ME_GetRunSize(&c, &para->member.para,
+                         &run->member.run, ME_StrLen(run->member.run.strText),
+                         row->member.row.nLMargin);
     }
   }
-  *height = 10; /* FIXME use global font */
-  *x = 0;
-  *y = 0;
+  if (pCursor->nOffset) {
+    sz = ME_GetRunSize(&c, &para->member.para, &run->member.run,
+                       pCursor->nOffset, row->member.row.nLMargin);
+  }
+
+  *height = pSizeRun->member.run.nAscent + pSizeRun->member.run.nDescent;
+  *x = c.rcView.left + run->member.run.pt.x + sz.cx - editor->horz_si.nPos;
+  *y = c.rcView.top + para->member.para.pt.y + row->member.row.nBaseline
+       + run->member.run.pt.y - pSizeRun->member.run.nAscent
+       - editor->vert_si.nPos;
+  ME_DestroyContext(&c);
+  return;
 }
 
 
