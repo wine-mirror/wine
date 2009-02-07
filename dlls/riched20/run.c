@@ -406,38 +406,39 @@ ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
 
 /******************************************************************************
  * ME_UpdateRunFlags
- * 
+ *
  * Determine some of run attributes given its content (style, text content).
- * Some flags cannot be determined by this function (MERF_GRAPHICS, 
- * MERF_ENDPARA)     
- */ 
+ * Some flags cannot be determined by this function (MERF_GRAPHICS,
+ * MERF_ENDPARA)
+ */
 void ME_UpdateRunFlags(ME_TextEditor *editor, ME_Run *run)
 {
-  assert(run->nCharOfs != -1);
+  ME_String *strText = run->strText;
+  assert(run->nCharOfs >= 0);
 
   if (RUN_IS_HIDDEN(run) || run->nFlags & MERF_TABLESTART)
     run->nFlags |= MERF_HIDDEN;
   else
     run->nFlags &= ~MERF_HIDDEN;
 
-  if (ME_IsSplitable(run->strText))
+  if (ME_IsSplitable(strText))
     run->nFlags |= MERF_SPLITTABLE;
   else
     run->nFlags &= ~MERF_SPLITTABLE;
 
   if (!(run->nFlags & MERF_NOTEXT)) {
-    if (ME_IsWhitespaces(run->strText))
+    if (ME_IsWhitespaces(strText))
       run->nFlags |= MERF_WHITESPACE | MERF_STARTWHITE | MERF_ENDWHITE;
     else
     {
       run->nFlags &= ~MERF_WHITESPACE;
 
-      if (ME_IsWSpace(ME_GetCharFwd(run->strText,0)))
+      if (ME_IsWSpace(strText->szData[0]))
         run->nFlags |= MERF_STARTWHITE;
       else
         run->nFlags &= ~MERF_STARTWHITE;
 
-      if (ME_IsWSpace(ME_GetCharBack(run->strText,0)))
+      if (ME_IsWSpace(strText->szData[strText->nLen - 1]))
         run->nFlags |= MERF_ENDWHITE;
       else
         run->nFlags &= ~MERF_ENDWHITE;

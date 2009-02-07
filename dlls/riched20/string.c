@@ -186,32 +186,6 @@ void ME_StrDeleteV(ME_String *s, int nVChar, int nChars)
   s->nLen -= (end_ofs - nVChar);
 }
 
-int ME_GetCharFwd(const ME_String *s, int nPos)
-{
-  int nVPos = 0;
-
-  assert(nPos < s->nLen);
-  if (nPos)
-    nVPos = ME_StrRelPos2(s, nVPos, nPos);
-  
-  if (nVPos < s->nLen)
-    return s->szData[nVPos];
-  return -1;
-}
-
-int ME_GetCharBack(const ME_String *s, int nPos)
-{
-  int nVPos = s->nLen;
-
-  assert(nPos < s->nLen);
-  if (nPos)
-    nVPos = ME_StrRelPos2(s, nVPos, -nPos);
-  
-  if (nVPos < s->nLen)
-    return s->szData[nVPos];
-  return -1;
-}
-
 int ME_FindNonWhitespaceV(const ME_String *s, int nVChar) {
   int i;
   for (i = nVChar; i<s->nLen && ME_IsWSpace(s->szData[i]); i++)
