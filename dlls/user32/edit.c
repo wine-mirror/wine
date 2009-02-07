@@ -180,46 +180,15 @@ typedef struct
  */
 
 /*
- *	These functions have trivial implementations
- *	We still like to call them internally
- *	"static inline" makes them more like macro's
- */
-static inline BOOL	EDIT_EM_CanUndo(const EDITSTATE *es);
-static inline void	EDIT_EM_EmptyUndoBuffer(EDITSTATE *es);
-static inline void	EDIT_WM_Clear(EDITSTATE *es);
-static inline void	EDIT_WM_Cut(EDITSTATE *es);
-
-/*
  *	Helper functions only valid for one type of control
  */
-static void	EDIT_BuildLineDefs_ML(EDITSTATE *es, INT iStart, INT iEnd, INT delta, HRGN hrgn);
-static void	EDIT_CalcLineWidth_SL(EDITSTATE *es);
 static LPWSTR	EDIT_GetPasswordPointer_SL(EDITSTATE *es);
-static void	EDIT_MoveDown_ML(EDITSTATE *es, BOOL extend);
-static void	EDIT_MovePageDown_ML(EDITSTATE *es, BOOL extend);
-static void	EDIT_MovePageUp_ML(EDITSTATE *es, BOOL extend);
-static void	EDIT_MoveUp_ML(EDITSTATE *es, BOOL extend);
 /*
  *	Helper functions valid for both single line _and_ multi line controls
  */
 static INT	EDIT_CallWordBreakProc(EDITSTATE *es, INT start, INT index, INT count, INT action);
-static INT	EDIT_CharFromPos(EDITSTATE *es, INT x, INT y, LPBOOL after_wrap);
-static void	EDIT_ConfinePoint(const EDITSTATE *es, LPINT x, LPINT y);
-static void	EDIT_GetLineRect(EDITSTATE *es, INT line, INT scol, INT ecol, LPRECT rc);
-static void	EDIT_InvalidateText(EDITSTATE *es, INT start, INT end);
 static void	EDIT_LockBuffer(EDITSTATE *es);
-static BOOL	EDIT_MakeFit(EDITSTATE *es, UINT size);
-static BOOL	EDIT_MakeUndoFit(EDITSTATE *es, UINT size);
-static void	EDIT_MoveBackward(EDITSTATE *es, BOOL extend);
-static void	EDIT_MoveEnd(EDITSTATE *es, BOOL extend, BOOL ctrl);
-static void	EDIT_MoveForward(EDITSTATE *es, BOOL extend);
-static void	EDIT_MoveHome(EDITSTATE *es, BOOL extend, BOOL ctrl);
-static void	EDIT_MoveWordBackward(EDITSTATE *es, BOOL extend);
-static void	EDIT_MoveWordForward(EDITSTATE *es, BOOL extend);
-static void	EDIT_PaintLine(EDITSTATE *es, HDC hdc, INT line, BOOL rev);
 static INT	EDIT_PaintText(EDITSTATE *es, HDC hdc, INT x, INT y, INT line, INT col, INT count, BOOL rev);
-static void	EDIT_SetCaretPos(EDITSTATE *es, INT pos, BOOL after_wrap);
-static void	EDIT_AdjustFormatRect(EDITSTATE *es);
 static void	EDIT_SetRectNP(EDITSTATE *es, const RECT *lprc);
 static void	EDIT_UnlockBuffer(EDITSTATE *es, BOOL force);
 static void	EDIT_UpdateScrollInfo(EDITSTATE *es);
