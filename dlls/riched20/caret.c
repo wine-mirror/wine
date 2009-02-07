@@ -1436,32 +1436,26 @@ static void ME_ArrowHome(ME_TextEditor *editor, ME_Cursor *pCursor)
 
 static void ME_ArrowCtrlHome(ME_TextEditor *editor, ME_Cursor *pCursor)
 {
-  ME_DisplayItem *pRow = ME_FindItemBack(pCursor->pRun, diTextStart);
-  if (pRow) {
-    ME_DisplayItem *pRun = ME_FindItemFwd(pRow, diRun);
-    if (pRun) {
-      pCursor->pRun = pRun;
-      pCursor->nOffset = 0;
-    }
-  }
+  pCursor->pRun = ME_FindItemFwd(editor->pBuffer->pFirst, diRun);
+  pCursor->nOffset = 0;
+  editor->bCaretAtEnd = FALSE;
 }
 
 static void ME_ArrowEnd(ME_TextEditor *editor, ME_Cursor *pCursor)
 {
   ME_DisplayItem *pRow;
-  
+
   if (editor->bCaretAtEnd && !pCursor->nOffset)
     return;
-  
+
   pRow = ME_FindItemFwd(pCursor->pRun, diStartRowOrParagraphOrEnd);
   assert(pRow);
   if (pRow->type == diStartRow) {
-    /* FIXME WTF was I thinking about here ? */
     ME_DisplayItem *pRun = ME_FindItemFwd(pRow, diRun);
     assert(pRun);
     pCursor->pRun = pRun;
     pCursor->nOffset = 0;
-    editor->bCaretAtEnd = 1;
+    editor->bCaretAtEnd = TRUE;
     return;
   }
   pCursor->pRun = ME_FindItemBack(pRow, diRun);
@@ -1469,15 +1463,11 @@ static void ME_ArrowEnd(ME_TextEditor *editor, ME_Cursor *pCursor)
   pCursor->nOffset = 0;
   editor->bCaretAtEnd = FALSE;
 }
-      
+
 static void ME_ArrowCtrlEnd(ME_TextEditor *editor, ME_Cursor *pCursor)
 {
-  ME_DisplayItem *p = ME_FindItemFwd(pCursor->pRun, diTextEnd);
-  assert(p);
-  p = ME_FindItemBack(p, diRun);
-  assert(p);
-  assert(p->member.run.nFlags & MERF_ENDPARA);
-  pCursor->pRun = p;
+  pCursor->pRun = ME_FindItemBack(editor->pBuffer->pLast, diRun);
+  assert(pCursor->pRun->member.run.nFlags & MERF_ENDPARA);
   pCursor->nOffset = 0;
   editor->bCaretAtEnd = FALSE;
 }
