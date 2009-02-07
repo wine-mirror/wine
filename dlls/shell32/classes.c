@@ -313,20 +313,6 @@ BOOL HCR_GetDefaultIconA(LPCSTR szClass, LPSTR szDest, DWORD len, int* picon_idx
 	return ret;
 }
 
-BOOL HCR_GetDefaultIconFromGUIDW(REFIID riid, LPWSTR szDest, DWORD len, int* picon_idx)
-{
-	HKEY	hkey;
-	BOOL	ret = FALSE;
-
-	if (HCR_RegOpenClassIDKey(riid, &hkey))
-	{
-	  ret = HCR_RegGetDefaultIconW(hkey, szDest, len, picon_idx);
-	  RegCloseKey(hkey);
-	}
-	TRACE("-- %s %i\n", debugstr_w(szDest), *picon_idx);
-	return ret;
-}
-
 /***************************************************************************************
 *	HCR_GetClassName	[internal]
 *
