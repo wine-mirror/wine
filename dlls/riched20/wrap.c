@@ -316,11 +316,9 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
   else
   {
     /* split point inside first character - no choice but split after that char */
-    int chars = 1;
-    int pos2 = ME_StrRelPos(run->strText, 0, &chars);
-    if (pos2 != len) {
+    if (len != 1) {
       /* the run is more than 1 char, so we may split */
-      return ME_SplitRun(wc, piter, pos2);
+      return ME_SplitRun(wc, piter, 1);
     }
     /* the run is one char, can't split it */
     return piter;

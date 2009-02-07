@@ -141,49 +141,17 @@ int ME_IsSplitable(const ME_String *s)
   return 0;
 }
 
-int ME_StrRelPos(const ME_String *s, int nVChar, int *pRelChars)
-{
-  int nRelChars = *pRelChars;
-
-  TRACE("%s,%d,&%d\n", debugstr_w(s->szData), nVChar, *pRelChars);
-
-  assert(*pRelChars);
-  if (!nRelChars)
-    return nVChar;
-  
-  if (nRelChars>0)
-    nRelChars = min(*pRelChars, s->nLen - nVChar);
-  else
-    nRelChars = max(*pRelChars, -nVChar);
-  nVChar += nRelChars;
-  *pRelChars -= nRelChars;
-  return nVChar;
-}
-
-int ME_StrRelPos2(const ME_String *s, int nVChar, int nRelChars)
-{
-  return ME_StrRelPos(s, nVChar, &nRelChars);
-}
-
-int ME_PosToVPos(const ME_String *s, int nPos)
-{
-  if (!nPos)
-    return 0;
-  return ME_StrRelPos2(s, 0, nPos);
-}
-
 void ME_StrDeleteV(ME_String *s, int nVChar, int nChars)
 {
-  int end_ofs;
-  
-  assert(nVChar >=0 && nVChar <= s->nLen);
+  int end_ofs = nVChar + nChars;
+
   assert(nChars >= 0);
-  assert(nVChar+nChars <= s->nLen);
-  
-  end_ofs = ME_StrRelPos2(s, nVChar, nChars);
+  assert(nVChar >= 0);
   assert(end_ofs <= s->nLen);
-  memmove(s->szData+nVChar, s->szData+end_ofs, 2*(s->nLen+1-end_ofs));
-  s->nLen -= (end_ofs - nVChar);
+
+  memmove(s->szData + nVChar, s->szData + end_ofs,
+          (s->nLen - end_ofs + 1) * sizeof(WCHAR));
+  s->nLen -= nChars;
 }
 
 int ME_FindNonWhitespaceV(const ME_String *s, int nVChar) {

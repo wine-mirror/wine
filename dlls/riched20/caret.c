@@ -576,7 +576,7 @@ static BOOL
 ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs)
 {
   ME_DisplayItem *pRun = pCursor->pRun;
-  
+
   if (nRelOfs == -1)
   {
     if (!pCursor->nOffset)
@@ -608,17 +608,17 @@ ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs)
       else
         pCursor->nOffset = pRun->member.run.strText->nLen;
     }
-    
+
     if (pCursor->nOffset)
-      pCursor->nOffset = ME_StrRelPos2(pCursor->pRun->member.run.strText, pCursor->nOffset, nRelOfs);
+      pCursor->nOffset = pCursor->nOffset + nRelOfs;
     return TRUE;
   }
   else
   {
     if (!(pRun->member.run.nFlags & MERF_ENDPARA))
     {
-      int new_ofs = ME_StrRelPos2(pRun->member.run.strText, pCursor->nOffset, nRelOfs);
-    
+      int new_ofs = pCursor->nOffset + nRelOfs;
+
       if (new_ofs < pRun->member.run.strText->nLen)
       {
         pCursor->nOffset = new_ofs;

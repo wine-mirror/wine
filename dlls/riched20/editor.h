@@ -100,9 +100,6 @@ int ME_IsSplitable(const ME_String *s);
 int ME_FindNonWhitespaceV(const ME_String *s, int nVChar);
 int ME_FindWhitespaceV(ME_String *s, int nVChar);
 int ME_CallWordBreakProc(ME_TextEditor *editor, ME_String *str, INT start, INT code);
-int ME_StrRelPos(const ME_String *s, int nVChar, int *pRelChars);
-int ME_StrRelPos2(const ME_String *s, int nVChar, int nRelChars);
-int ME_PosToVPos(const ME_String *s, int nPos);
 void ME_StrDeleteV(ME_String *s, int nVChar, int nChars);
 /* smart helpers for A<->W conversions, they reserve/free memory and call MultiByte<->WideChar functions */
 LPWSTR ME_ToUnicode(BOOL unicode, LPVOID psz);

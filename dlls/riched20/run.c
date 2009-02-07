@@ -500,21 +500,21 @@ int ME_CharFromPoint(ME_Context *c, int cx, ME_Run *run)
 
 /******************************************************************************
  * ME_CharFromPointCursor
- * 
+ *
  * Returns a character position inside the run given a run-relative
- * pixel horizontal position. This version rounds to the nearest character edge 
- * (ie. if the second character is at pixel position 8, then for cx=0..3 
+ * pixel horizontal position. This version rounds to the nearest character edge
+ * (ie. if the second character is at pixel position 8, then for cx=0..3
  * it returns 0, and for cx=4..7 it returns 1).
- * 
+ *
  * It is used for mouse click handling, for better usability (and compatibility
- * with the native control).        
- */     
+ * with the native control).
+ */
 int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
 {
   ME_String *strRunText;
   /* This could point to either the run's real text, or it's masked form in a password control */
-	
-  int fit = 0, fit1 = 0;
+
+  int fit = 0;
   ME_Context c;
   HGDIOBJ hOldFont;
   SIZE sz, sz2, sz3;
@@ -548,18 +548,15 @@ int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
                         cx, &fit, NULL, &sz);
   if (fit != strRunText->nLen)
   {
-    int chars = 1;
-
     GetTextExtentPoint32W(c.hDC, strRunText->szData, fit, &sz2);
-    fit1 = ME_StrRelPos(strRunText, fit, &chars);
-    GetTextExtentPoint32W(c.hDC, strRunText->szData, fit1, &sz3);
+    GetTextExtentPoint32W(c.hDC, strRunText->szData, fit + 1, &sz3);
     if (cx >= (sz2.cx+sz3.cx)/2)
-      fit = fit1;
+      fit = fit + 1;
   }
-  
+
   if (editor->cPasswordMask)
     ME_DestroyString(strRunText);
-  
+
   ME_UnselectStyleFont(&c, run->style, hOldFont);
   ME_DestroyContext(&c);
   return fit;
