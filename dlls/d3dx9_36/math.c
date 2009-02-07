@@ -24,10 +24,8 @@
 #include "config.h"
 #include "windef.h"
 #include "wingdi.h"
-#include "wine/debug.h"
 #include "d3dx9.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 /*************************************************************************
  * D3DXMatrixAffineTransformation2D
