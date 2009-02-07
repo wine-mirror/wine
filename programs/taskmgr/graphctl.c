@@ -124,7 +124,7 @@ TGraphCtrl::~TGraphCtrl(void)
 }
 #endif
 
-void GraphCtrl_Resize(TGraphCtrl* this)
+static void GraphCtrl_Resize(TGraphCtrl* this)
 {
     /*  NOTE: Resize automatically gets called during the setup of the control */
     GetClientRect(this->m_hWnd, &this->m_rectClient);
@@ -165,7 +165,7 @@ BOOL GraphCtrl_Create(TGraphCtrl* this, HWND hWnd, HWND hParentWnd, UINT nID)
     return 0;
 }
 
-void GraphCtrl_InvalidateCtrl(TGraphCtrl* this)
+static void GraphCtrl_InvalidateCtrl(TGraphCtrl* this)
 {
     /*  There is a lot of drawing going on here - particularly in terms of  */
     /*  drawing the grid.  Don't panic, this is all being drawn (only once) */
@@ -374,7 +374,7 @@ void GraphCtrl_SetBackgroundColor(TGraphCtrl* this, COLORREF color)
     GraphCtrl_InvalidateCtrl(this);
 }
 
-void GraphCtrl_DrawPoint(TGraphCtrl* this)
+static void GraphCtrl_DrawPoint(TGraphCtrl* this)
 {
     /*  this does the work of "scrolling" the plot to the left
      *  and appending a new data point all of the plotting is
@@ -477,7 +477,7 @@ double GraphCtrl_AppendPoint(TGraphCtrl* this,
     return dPrevious;
 }
 
-void GraphCtrl_Paint(TGraphCtrl* this, HWND hWnd, HDC dc)
+static void GraphCtrl_Paint(TGraphCtrl* this, HWND hWnd, HDC dc)
 {
     HDC memDC;
     HBITMAP memBitmap;

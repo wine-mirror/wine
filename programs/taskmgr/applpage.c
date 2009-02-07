@@ -507,7 +507,7 @@ void RefreshApplicationPage(void)
     SetEvent(hApplicationPageEvent);
 }
 
-void UpdateApplicationListControlViewSetting(void)
+static void UpdateApplicationListControlViewSetting(void)
 {
     DWORD   dwStyle = GetWindowLong(hApplicationPageListCtrl, GWL_STYLE);
 
