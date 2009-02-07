@@ -889,7 +889,7 @@ ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream, int nStart, int nC
           if (!ME_StreamOutRTFCharProps(pStream, &p->member.run.style->fmt))
             return FALSE;
         
-          nEnd = (p == pEnd) ? nEndLen : ME_StrLen(p->member.run.strText);
+          nEnd = (p == pEnd) ? nEndLen : p->member.run.strText->nLen;
           if (!ME_StreamOutRTFText(pStream, p->member.run.strText->szData + nOffset, nEnd - nOffset))
             return FALSE;
           nOffset = 0;
@@ -931,7 +931,7 @@ ME_StreamOutText(ME_TextEditor *editor, ME_OutStream *pStream, int nStart, int n
   /* TODO: Handle SF_TEXTIZED */
 
   while (success && nChars && item) {
-    nLen = min(nChars, ME_StrLen(item->member.run.strText) - nStart);
+    nLen = min(nChars, item->member.run.strText->nLen - nStart);
 
     if (!editor->bEmulateVersion10 && item->member.run.nFlags & MERF_ENDPARA)
     {

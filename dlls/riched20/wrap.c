@@ -254,7 +254,7 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
   ME_Run *run = &p->member.run;
 
   idesp = i = ME_CharFromPoint(wc->context, loc, run);
-  len = ME_StrVLen(run->strText);
+  len = run->strText->nLen;
   assert(len>0);
   assert(i<len);
   if (i) {
@@ -281,7 +281,7 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
 
       piter = wc->pLastSplittableRun;
       run = &piter->member.run;
-      len = ME_StrVLen(run->strText);
+      len = run->strText->nLen;
       /* don't split words */
       i = ME_ReverseFindWhitespaceV(run->strText, len);
       if (i == len)
@@ -340,7 +340,7 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
   run->pt.x = wc->pt.x;
   run->pt.y = wc->pt.y;
   ME_WrapSizeRun(wc, p);
-  len = ME_StrVLen(run->strText);
+  len = run->strText->nLen;
 
   if (wc->bOverflown) /* just skipping final whitespaces */
   {

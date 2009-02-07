@@ -141,25 +141,6 @@ int ME_IsSplitable(const ME_String *s)
   return 0;
 }
 
-/* FIXME multibyte */
-/*
-int ME_CalcSkipChars(ME_String *s)
-{
-  int cnt = 0;
-  while(cnt < s->nLen && s->szData[s->nLen-1-cnt]==' ')
-    cnt++;
-  return cnt;
-}
-*/
-
-int ME_StrLen(const ME_String *s) {
-  return s->nLen;
-}
-
-int ME_StrVLen(const ME_String *s) {
-  return s->nLen;
-}
-
 int ME_StrRelPos(const ME_String *s, int nVChar, int *pRelChars)
 {
   int nRelChars = *pRelChars;
@@ -209,7 +190,7 @@ int ME_GetCharFwd(const ME_String *s, int nPos)
 {
   int nVPos = 0;
 
-  assert(nPos < ME_StrLen(s));
+  assert(nPos < s->nLen);
   if (nPos)
     nVPos = ME_StrRelPos2(s, nVPos, nPos);
   
@@ -220,9 +201,9 @@ int ME_GetCharFwd(const ME_String *s, int nPos)
 
 int ME_GetCharBack(const ME_String *s, int nPos)
 {
-  int nVPos = ME_StrVLen(s);
+  int nVPos = s->nLen;
 
-  assert(nPos < ME_StrLen(s));
+  assert(nPos < s->nLen);
   if (nPos)
     nVPos = ME_StrRelPos2(s, nVPos, -nPos);
   

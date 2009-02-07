@@ -204,7 +204,7 @@ ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
       assert(run);
       assert(run->type == diRun);
       sz = ME_GetRunSize(&c, &para->member.para,
-                         &run->member.run, ME_StrLen(run->member.run.strText),
+                         &run->member.run, run->member.run.strText->nLen,
                          row->member.row.nLMargin);
     }
   }
@@ -347,7 +347,7 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars,
         nCharsToDelete, nChars, c.nOffset,
         debugstr_w(run->strText->szData), run->strText->nLen);
 
-      if (!c.nOffset && ME_StrVLen(run->strText) == nCharsToDelete)
+      if (!c.nOffset && run->strText->nLen == nCharsToDelete)
       {
         /* undo = reinsert whole run */
         /* nOfs is a character offset (from the start of the document
@@ -381,9 +381,9 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars,
             else
               pThisCur->nOffset -= nCharsToDelete;
             assert(pThisCur->nOffset >= 0);
-            assert(pThisCur->nOffset <= ME_StrVLen(run->strText));
+            assert(pThisCur->nOffset <= run->strText->nLen);
           }
-          if (pThisCur->nOffset == ME_StrVLen(run->strText))
+          if (pThisCur->nOffset == run->strText->nLen)
           {
             pThisCur->pRun = ME_FindItemFwd(pThisCur->pRun, diRunOrParagraphOrEnd);
             assert(pThisCur->pRun->type == diRun);
@@ -399,7 +399,7 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars,
       else
         ME_PropagateCharOffset(c.pRun, shift);
 
-      if (!ME_StrVLen(cursor.pRun->member.run.strText))
+      if (!cursor.pRun->member.run.strText->nLen)
       {
         TRACE("Removing useless run\n");
         ME_Remove(cursor.pRun);

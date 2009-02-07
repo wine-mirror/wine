@@ -225,7 +225,7 @@ void ME_JoinRuns(ME_TextEditor *editor, ME_DisplayItem *p)
   for (i=0; i<editor->nCursors; i++) {
     if (editor->pCursors[i].pRun == pNext) {
       editor->pCursors[i].pRun = p;
-      editor->pCursors[i].nOffset += ME_StrVLen(p->member.run.strText);
+      editor->pCursors[i].nOffset += p->member.run.strText->nLen;
     }
   }
 
@@ -302,7 +302,7 @@ ME_DisplayItem *ME_SplitRunSimple(ME_TextEditor *editor, ME_DisplayItem *item, i
   ME_DisplayItem *item2;
   ME_Run *run2;
   int i;
-  assert(nVChar > 0 && nVChar < ME_StrVLen(run->strText));
+  assert(nVChar > 0 && nVChar < run->strText->nLen);
   assert(item->type == diRun);
   assert(!(item->member.run.nFlags & MERF_NONTEXT));
   assert(item->member.run.nCharOfs != -1);
@@ -481,7 +481,7 @@ int ME_CharFromPoint(ME_Context *c, int cx, ME_Run *run)
   
   if (c->editor->cPasswordMask)
   {
-    ME_String *strMasked = ME_MakeStringR(c->editor->cPasswordMask,ME_StrVLen(run->strText));
+    ME_String *strMasked = ME_MakeStringR(c->editor->cPasswordMask, run->strText->nLen);
     GetTextExtentExPointW(c->hDC, strMasked->szData, run->strText->nLen,
       cx, &fit, NULL, &sz);
     ME_DestroyString(strMasked);
@@ -538,7 +538,7 @@ int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
   }
 
   if (editor->cPasswordMask)
-    strRunText = ME_MakeStringR(editor->cPasswordMask,ME_StrVLen(run->strText));
+    strRunText = ME_MakeStringR(editor->cPasswordMask, run->strText->nLen);
   else
     strRunText = run->strText;
 
@@ -602,7 +602,7 @@ int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset)
   }
 
   if (editor->cPasswordMask)
-    strRunText = ME_MakeStringR(editor->cPasswordMask,ME_StrVLen(pRun->strText));
+    strRunText = ME_MakeStringR(editor->cPasswordMask, pRun->strText->nLen);
   else
     strRunText = pRun->strText;
 
@@ -623,7 +623,7 @@ static SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run 
                                 int startx, int *pAscent, int *pDescent)
 {
   SIZE size;
-  int nMaxLen = ME_StrVLen(run->strText);
+  int nMaxLen = run->strText->nLen;
 
   if (nLen>nMaxLen)
     nLen = nMaxLen;
@@ -716,7 +716,7 @@ void ME_CalcRunExtent(ME_Context *c, const ME_Paragraph *para, int startx, ME_Ru
     run->nWidth = 0;
   else
   {
-    int nEnd = ME_StrVLen(run->strText);
+    int nEnd = run->strText->nLen;
     SIZE size = ME_GetRunSizeCommon(c, para, run, nEnd, startx,
                                     &run->nAscent, &run->nDescent);
     run->nWidth = size.cx;

@@ -446,9 +446,9 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
   {
     if (c->editor->cPasswordMask)
     {
-      ME_String *szMasked = ME_MakeStringR(c->editor->cPasswordMask,ME_StrVLen(run->strText));
+      ME_String *szMasked = ME_MakeStringR(c->editor->cPasswordMask, run->strText->nLen);
       ME_DrawTextWithStyle(c, x, y,
-        szMasked->szData, ME_StrVLen(szMasked), run->style, run->nWidth,
+        szMasked->szData, szMasked->nLen, run->style, run->nWidth,
         nSelFrom-runofs,nSelTo-runofs,
         c->pt.y + para->pt.y + start->member.row.pt.y,
         start->member.row.nHeight);
@@ -456,7 +456,7 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
     }
     else
       ME_DrawTextWithStyle(c, x, y,
-        run->strText->szData, ME_StrVLen(run->strText), run->style, run->nWidth,
+        run->strText->szData, run->strText->nLen, run->style, run->nWidth,
         nSelFrom-runofs,nSelTo-runofs,
         c->pt.y + para->pt.y + start->member.row.pt.y,
         start->member.row.nHeight);

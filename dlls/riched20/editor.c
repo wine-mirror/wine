@@ -1721,7 +1721,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
           /* Check to see if next character is a whitespace */
           if (flags & FR_WHOLEWORD)
           {
-            if (nCurStart + nMatched == ME_StrLen(pCurItem->member.run.strText))
+            if (nCurStart + nMatched == pCurItem->member.run.strText->nLen)
             {
               pNextItem = ME_FindItemFwd(pCurItem, diRun);
               nNextStart = -nMatched;
@@ -1745,7 +1745,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
           TRACE("found at %d-%d\n", nStart, nStart + nLen);
           return nStart;
         }
-        if (nCurStart + nMatched == ME_StrLen(pCurItem->member.run.strText))
+        if (nCurStart + nMatched == pCurItem->member.run.strText->nLen)
         {
           pCurItem = ME_FindItemFwd(pCurItem, diRun);
           nCurStart = -nMatched;
@@ -1757,7 +1757,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
         wLastChar = ' ';
 
       nStart++;
-      if (nStart == ME_StrLen(item->member.run.strText))
+      if (nStart == item->member.run.strText->nLen)
       {
         item = ME_FindItemFwd(item, diRun);
         para = ME_GetParagraph(item);
@@ -1786,7 +1786,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
       if (nCurEnd == 0)
       {
         pCurItem = ME_FindItemBack(pCurItem, diRun);
-        nCurEnd = ME_StrLen(pCurItem->member.run.strText) + nMatched;
+        nCurEnd = pCurItem->member.run.strText->nLen + nMatched;
       }
 
       while (pCurItem && ME_CharCompare(pCurItem->member.run.strText->szData[nCurEnd - nMatched - 1], text[nLen - nMatched - 1], (flags & FR_MATCHCASE)))
@@ -1808,7 +1808,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
             {
               pPrevItem = ME_FindItemBack(pCurItem, diRun);
               if (pPrevItem)
-                nPrevEnd = ME_StrLen(pPrevItem->member.run.strText) + nMatched;
+                nPrevEnd = pPrevItem->member.run.strText->nLen + nMatched;
             }
 
             if (pPrevItem)
@@ -1835,7 +1835,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
           pCurItem = ME_FindItemBack(pCurItem, diRun);
           /* Don't care about pCurItem becoming NULL here; it's already taken
            * care of in the exterior loop condition */
-          nCurEnd = ME_StrLen(pCurItem->member.run.strText) + nMatched;
+          nCurEnd = pCurItem->member.run.strText->nLen + nMatched;
         }
       }
       if (pCurItem)
@@ -1848,7 +1848,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
       {
         item = ME_FindItemBack(item, diRun);
         para = ME_GetParagraph(item);
-        nEnd = ME_StrLen(item->member.run.strText);
+        nEnd = item->member.run.strText->nLen;
       }
     }
   }
@@ -4687,12 +4687,12 @@ static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor, int sel_min, int sel_
     if (!(item->member.run.nFlags & MERF_ENDPARA)) {
       /* Find start of candidate */
       if (*candidate_min == -1) {
-        while (nStart < ME_StrLen(item->member.run.strText) &&
+        while (nStart < item->member.run.strText->nLen &&
                 !(isalnumW(item->member.run.strText->szData[nStart]) ||
                   isurlspecial(item->member.run.strText->szData[nStart]))) {
           nStart++;
         }
-        if (nStart < ME_StrLen(item->member.run.strText) &&
+        if (nStart < item->member.run.strText->nLen &&
                 (isalnumW(item->member.run.strText->szData[nStart]) ||
                  isurlspecial(item->member.run.strText->szData[nStart]))) {
           *candidate_min = para->member.para.nCharOfs + item->member.run.nCharOfs + nStart;
@@ -4703,7 +4703,7 @@ static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor, int sel_min, int sel_
 
       /* Find end of candidate */
       if (*candidate_min >= 0) {
-        while (nStart < ME_StrLen(item->member.run.strText) &&
+        while (nStart < item->member.run.strText->nLen &&
                 (isalnumW(item->member.run.strText->szData[nStart]) ||
                  isurlspecial(item->member.run.strText->szData[nStart]) ||
                  (!foundColon && item->member.run.strText->szData[nStart] == ':') )) {
@@ -4711,7 +4711,7 @@ static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor, int sel_min, int sel_
           lastAcceptedChar = item->member.run.strText->szData[nStart];
           nStart++;
         }
-        if (nStart < ME_StrLen(item->member.run.strText) &&
+        if (nStart < item->member.run.strText->nLen &&
                 !(isalnumW(item->member.run.strText->szData[nStart]) ||
                  isurlspecial(item->member.run.strText->szData[nStart]) )) {
           *candidate_max = para->member.para.nCharOfs + item->member.run.nCharOfs + nStart;

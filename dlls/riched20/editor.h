@@ -97,9 +97,6 @@ void ME_AppendString(ME_String *s1, const ME_String *s2);
 ME_String *ME_VSplitString(ME_String *orig, int nVPos);
 int ME_IsWhitespaces(const ME_String *s);
 int ME_IsSplitable(const ME_String *s);
-/* int ME_CalcSkipChars(ME_String *s); */
-int ME_StrLen(const ME_String *s);
-int ME_StrVLen(const ME_String *s);
 int ME_FindNonWhitespaceV(const ME_String *s, int nVChar);
 int ME_FindWhitespaceV(ME_String *s, int nVChar);
 int ME_CallWordBreakProc(ME_TextEditor *editor, ME_String *str, INT start, INT code);
