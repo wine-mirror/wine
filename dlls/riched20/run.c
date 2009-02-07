@@ -310,8 +310,7 @@ ME_DisplayItem *ME_SplitRunSimple(ME_TextEditor *editor, ME_DisplayItem *item, i
   item2 = ME_MakeRun(run->style,
       ME_VSplitString(run->strText, nVChar), run->nFlags&MERF_SPLITMASK);
 
-  item2->member.run.nCharOfs = item->member.run.nCharOfs+
-    ME_VPosToPos(item->member.run.strText, nVChar);
+  item2->member.run.nCharOfs = item->member.run.nCharOfs + nVChar;
 
   run2 = &item2->member.run;
   ME_InsertBefore(item->next, item2);

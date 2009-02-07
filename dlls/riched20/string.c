@@ -184,25 +184,6 @@ int ME_StrRelPos2(const ME_String *s, int nVChar, int nRelChars)
   return ME_StrRelPos(s, nVChar, &nRelChars);
 }
 
-int ME_VPosToPos(ME_String *s, int nVPos)
-{
-  return nVPos;
-  /*
-  int i = 0, len = 0;
-  if (!nVPos)
-    return 0;
-  while (i < s->nLen)
-  {
-    if (i == nVPos)
-      return len;
-    if (s->szData[i]=='\\') i++;
-    i++;
-    len++;
-  }
-  return len;
-  */
-}
-
 int ME_PosToVPos(const ME_String *s, int nPos)
 {
   if (!nPos)
