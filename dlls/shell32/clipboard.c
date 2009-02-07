@@ -151,24 +151,6 @@ HGLOBAL RenderSHELLIDLIST (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cid
 	return hGlobal;
 }
 
-HGLOBAL RenderSHELLIDLISTOFFSET (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
-{
-	FIXME("\n");
-	return 0;
-}
-
-HGLOBAL RenderFILECONTENTS (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
-{
-	FIXME("\n");
-	return 0;
-}
-
-HGLOBAL RenderFILEDESCRIPTOR (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
-{
-	FIXME("\n");
-	return 0;
-}
-
 HGLOBAL RenderFILENAMEA (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 {
 	int size = 0;
@@ -230,20 +212,5 @@ HGLOBAL RenderFILENAMEW (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 	memcpy(szFileName, szTemp, size);
 	GlobalUnlock(hGlobal);
 
-	return hGlobal;
-}
-
-HGLOBAL RenderPREFEREDDROPEFFECT (DWORD dwFlags)
-{
-	DWORD * pdwFlag;
-	HGLOBAL hGlobal;
-
-	TRACE("(0x%08x)\n", dwFlags);
-
-	hGlobal = GlobalAlloc(GHND|GMEM_SHARE, sizeof(DWORD));
-	if(!hGlobal) return hGlobal;
-	pdwFlag = GlobalLock(hGlobal);
-	*pdwFlag = dwFlags;
-	GlobalUnlock(hGlobal);
 	return hGlobal;
 }
