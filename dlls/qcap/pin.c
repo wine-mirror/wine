@@ -151,15 +151,6 @@ HRESULT WINAPI IPinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt)
     return (This->fnQueryAccept(This->pUserData, pmt) == S_OK ? S_OK : S_FALSE);
 }
 
-HRESULT WINAPI IPinImpl_QueryInternalConnections(IPin * iface, IPin ** apPin, ULONG * cPin)
-{
-    IPinImpl *This = (IPinImpl *)iface;
-
-    TRACE("(%p/%p)->(%p, %p)\n", This, iface, apPin, cPin);
-
-    return E_NOTIMPL; /* to tell caller that all input pins connected to all output pins */
-}
-
 /* Function called as a helper to IPin_Connect */
 /* specific AM_MEDIA_TYPE - it cannot be NULL */
 /* NOTE: not part of standard interface */
