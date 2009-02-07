@@ -5408,9 +5408,9 @@ LRESULT WINAPI EditWndProcA(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 /*********************************************************************
  *
- *	EditWndProcW   (USER32.@)
+ *	EditWndProcW
  */
-LRESULT WINAPI EditWndProcW(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT WINAPI EditWndProcW(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     return EditWndProc_common(hWnd, uMsg, wParam, lParam, TRUE);
 }
