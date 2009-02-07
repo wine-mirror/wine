@@ -2033,40 +2033,24 @@ ME_FilterEvent(ME_TextEditor *editor, UINT msg, WPARAM* wParam, LPARAM* lParam)
 
 static void ME_UpdateSelectionLinkAttribute(ME_TextEditor *editor)
 {
-  ME_DisplayItem * startPara, * endPara;
-  ME_DisplayItem * item;
-  ME_Cursor cursor;
+  ME_DisplayItem *startPara, *endPara;
+  ME_DisplayItem *prev_para;
   int from, to;
 
   ME_GetSelection(editor, &from, &to);
-  if (from > to) from ^= to, to ^=from, from ^= to;
-  startPara = NULL; endPara = NULL;
 
   /* Find paragraph previous to the one that contains start cursor */
-  ME_CursorFromCharOfs(editor, from, &cursor);
-  item = cursor.pRun;
-  if (item) {
-    startPara = ME_FindItemBack(item, diParagraph);
-    item = startPara->member.para.prev_para;
-    if (item && item->type == diParagraph) startPara = item;
-  }
+  ME_RunOfsFromCharOfs(editor, from, &startPara, NULL, NULL);
+  prev_para = startPara->member.para.prev_para;
+  if (prev_para->type == diParagraph) startPara = prev_para;
 
   /* Find paragraph that contains end cursor */
-  ME_CursorFromCharOfs(editor, to, &cursor);
-  item = cursor.pRun;
-  if (item) {
-    endPara = ME_FindItemFwd(item, diParagraph);
-  }
+  ME_RunOfsFromCharOfs(editor, to, &endPara, NULL, NULL);
+  endPara = endPara->member.para.next_para;
 
-  if (startPara && endPara) {
-    ME_UpdateLinkAttribute(editor,
-      startPara->member.para.nCharOfs,
-      endPara->member.para.nCharOfs);
-  } else if (startPara) {
-    ME_UpdateLinkAttribute(editor,
-      startPara->member.para.nCharOfs,
-      -1);
-  }
+  ME_UpdateLinkAttribute(editor,
+                         startPara->member.para.nCharOfs,
+                         endPara->member.para.nCharOfs);
 }
 
 static BOOL
