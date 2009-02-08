@@ -6,7 +6,7 @@
  * Copyright 1999 Klaas van Gend
  * Copyright 1999, 2000 Huw D M Davies
  * Copyright 2001 Marcus Meissner
- * Copyright 2005-2008 Detlef Riekenberg
+ * Copyright 2005-2009 Detlef Riekenberg
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -790,26 +790,6 @@ static void monitor_unload(monitor_t * pm)
 }
 
 /******************************************************************
- * monitor_unloadall [internal]
- *
- * release all printmonitors and unload them from memory, when needed 
- */
-
-static void monitor_unloadall(void)
-{
-    monitor_t * pm;
-    monitor_t * next;
-
-    EnterCriticalSection(&monitor_handles_cs);
-    /* iterate through the list, with safety against removal */
-    LIST_FOR_EACH_ENTRY_SAFE(pm, next, &monitor_handles, monitor_t, entry)
-    {
-        monitor_unload(pm);
-    }
-    LeaveCriticalSection(&monitor_handles_cs);
-}
-
-/******************************************************************
  * monitor_load [internal]
  *
  * load a printmonitor, get the dllname from the registry, when needed 
@@ -969,42 +949,6 @@ cleanup:
 }
 
 /******************************************************************
- * monitor_loadall [internal]
- *
- * Load all registered monitors
- *
- */
-static DWORD monitor_loadall(void)
-{
-    monitor_t * pm;
-    DWORD   registered = 0;
-    DWORD   loaded = 0;
-    HKEY    hmonitors;
-    WCHAR   buffer[MAX_PATH];
-    DWORD   id = 0;
-
-    if (RegOpenKeyW(HKEY_LOCAL_MACHINE, MonitorsW, &hmonitors) == ERROR_SUCCESS) {
-        RegQueryInfoKeyW(hmonitors, NULL, NULL, NULL, &registered, NULL, NULL,
-                        NULL, NULL, NULL, NULL, NULL);
-
-        TRACE("%d monitors registered\n", registered);
-
-        EnterCriticalSection(&monitor_handles_cs);
-        while (id < registered) {
-            buffer[0] = '\0';
-            RegEnumKeyW(hmonitors, id, buffer, MAX_PATH);
-            pm = monitor_load(buffer, NULL);
-            if (pm) loaded++;
-            id++;
-        }
-        LeaveCriticalSection(&monitor_handles_cs);
-        RegCloseKey(hmonitors);
-    }
-    TRACE("%d monitors loaded\n", loaded);
-    return loaded;
-}
-
-/******************************************************************
  * monitor_loadui [internal]
  *
  * load the userinterface-dll for a given portmonitor
@@ -1104,94 +1048,6 @@ static monitor_t * monitor_load_by_port(LPCWSTR portname)
     }
     HeapFree(GetProcessHeap(), 0, buffer);
     return pm;
-}
-
-/******************************************************************
- * enumerate the local Ports from all loaded monitors (internal)  
- *
- * returns the needed size (in bytes) for pPorts
- * and  *lpreturned is set to number of entries returned in pPorts
- *
- */
-static DWORD get_ports_from_all_monitors(DWORD level, LPBYTE pPorts, DWORD cbBuf, LPDWORD lpreturned)
-{
-    monitor_t * pm;
-    LPWSTR      ptr;
-    LPPORT_INFO_2W cache;
-    LPPORT_INFO_2W out;
-    LPBYTE  pi_buffer = NULL;
-    DWORD   pi_allocated = 0;
-    DWORD   pi_needed;
-    DWORD   pi_index;
-    DWORD   pi_returned;
-    DWORD   res;
-    DWORD   outindex = 0;
-    DWORD   needed;
-    DWORD   numentries;
-    DWORD   entrysize;
-
-
-    TRACE("(%d, %p, %d, %p)\n", level, pPorts, cbBuf, lpreturned);
-    entrysize = (level == 1) ? sizeof(PORT_INFO_1W) : sizeof(PORT_INFO_2W);
-
-    numentries = *lpreturned;       /* this is 0, when we scan the registry */
-    needed = entrysize * numentries;
-    ptr = (LPWSTR) &pPorts[needed];
-
-    numentries = 0;
-    needed = 0;
-
-    LIST_FOR_EACH_ENTRY(pm, &monitor_handles, monitor_t, entry)
-    {
-        if ((pm->monitor) && (pm->monitor->pfnEnumPorts)) {
-            pi_needed = 0;
-            pi_returned = 0;
-            res = pm->monitor->pfnEnumPorts(NULL, level, pi_buffer, pi_allocated, &pi_needed, &pi_returned);
-            if (!res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
-                /* Do not use HeapReAlloc (we do not need the old data in the buffer) */
-                HeapFree(GetProcessHeap(), 0, pi_buffer);
-                pi_buffer = HeapAlloc(GetProcessHeap(), 0, pi_needed);
-                pi_allocated = (pi_buffer) ? pi_needed : 0;
-                res = pm->monitor->pfnEnumPorts(NULL, level, pi_buffer, pi_allocated, &pi_needed, &pi_returned);
-            }
-            TRACE(  "(%s) got %d with %d (need %d byte for %d entries)\n",
-                    debugstr_w(pm->name), res, GetLastError(), pi_needed, pi_returned);
-
-            numentries += pi_returned;
-            needed += pi_needed;
-
-            /* fill the output-buffer (pPorts), if we have one */
-            if (pPorts && (cbBuf >= needed ) && pi_buffer) {
-                pi_index = 0;
-                while (pi_returned > pi_index) {
-                    cache = (LPPORT_INFO_2W) &pi_buffer[pi_index * entrysize];
-                    out = (LPPORT_INFO_2W) &pPorts[outindex * entrysize];
-                    out->pPortName = ptr;
-                    lstrcpyW(ptr, cache->pPortName);
-                    ptr += (lstrlenW(ptr)+1);
-                    if (level > 1) {
-                        out->pMonitorName = ptr;
-                        lstrcpyW(ptr,  cache->pMonitorName);
-                        ptr += (lstrlenW(ptr)+1);
-
-                        out->pDescription = ptr;
-                        lstrcpyW(ptr,  cache->pDescription);
-                        ptr += (lstrlenW(ptr)+1);
-                        out->fPortType = cache->fPortType;
-                        out->Reserved = cache->Reserved;
-                    }
-                    pi_index++;
-                    outindex++;
-                }
-            }
-        }
-    }
-    /* the temporary portinfo-buffer is no longer needed */
-    HeapFree(GetProcessHeap(), 0, pi_buffer);
-
-    *lpreturned = numentries;
-    TRACE("need %d byte for %d entries\n", needed, numentries);
-    return needed;
 }
 
 /******************************************************************
@@ -5504,80 +5360,38 @@ cleanup:
  * Enumerate available Ports
  *
  * PARAMS
- *  name        [I] Servername or NULL (local Computer)
- *  level       [I] Structure-Level (1 or 2)
- *  buffer      [O] PTR to Buffer that receives the Result
- *  bufsize     [I] Size of Buffer at buffer
- *  bufneeded   [O] PTR to DWORD that receives the size in Bytes used / required for buffer
- *  bufreturned [O] PTR to DWORD that receives the number of Ports in buffer
+ *  pName      [I] Servername or NULL (local Computer)
+ *  Level      [I] Structure-Level (1 or 2)
+ *  pPorts     [O] PTR to Buffer that receives the Result
+ *  cbBuf      [I] Size of Buffer at pPorts
+ *  pcbNeeded  [O] PTR to DWORD that receives the size in Bytes used / required for pPorts
+ *  pcReturned [O] PTR to DWORD that receives the number of Ports in pPorts
  *
  * RETURNS
  *  Success: TRUE
- *  Failure: FALSE and in bufneeded the Bytes required for buffer, if bufsize is too small
+ *  Failure: FALSE and in pcbNeeded the Bytes required for pPorts, if cbBuf is too small
  *
  */
-
 BOOL WINAPI EnumPortsW(LPWSTR pName, DWORD Level, LPBYTE pPorts, DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned)
 {
-    DWORD   needed = 0;
-    DWORD   numentries = 0;
-    BOOL    res = FALSE;
 
     TRACE("(%s, %d, %p, %d, %p, %p)\n", debugstr_w(pName), Level, pPorts,
           cbBuf, pcbNeeded, pcReturned);
 
-    if (pName && (pName[0])) {
-        FIXME("not implemented for Server %s\n", debugstr_w(pName));
-        SetLastError(ERROR_ACCESS_DENIED);
-        goto emP_cleanup;
-    }
+    if ((backend == NULL)  && !load_backend()) return FALSE;
 
     /* Level is not checked in win9x */
     if (!Level || (Level > 2)) {
         WARN("level (%d) is ignored in win9x\n", Level);
         SetLastError(ERROR_INVALID_LEVEL);
-        goto emP_cleanup;
+        return FALSE;
     }
-    if (!pcbNeeded) {
+    if (!pcbNeeded || (!pPorts && (cbBuf > 0))) {
         SetLastError(RPC_X_NULL_REF_POINTER);
-        goto emP_cleanup;
+        return FALSE;
     }
 
-    EnterCriticalSection(&monitor_handles_cs);
-    monitor_loadall();
-
-    /* Scan all local Ports */
-    numentries = 0;
-    needed = get_ports_from_all_monitors(Level, NULL, 0, &numentries);
-
-    /* we calculated the needed buffersize. now do the error-checks */
-    if (cbBuf < needed) {
-        monitor_unloadall();
-        SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        goto emP_cleanup_cs;
-    }
-    else if (!pPorts || !pcReturned) {
-        monitor_unloadall();
-        SetLastError(RPC_X_NULL_REF_POINTER);
-        goto emP_cleanup_cs;
-    }
-
-    /* Fill the Buffer */
-    needed = get_ports_from_all_monitors(Level, pPorts, cbBuf, &numentries);
-    res = TRUE;
-    monitor_unloadall();
-
-emP_cleanup_cs:
-    LeaveCriticalSection(&monitor_handles_cs);
-
-emP_cleanup:
-    if (pcbNeeded)  *pcbNeeded = needed;
-    if (pcReturned) *pcReturned = (res) ? numentries : 0;
-
-    TRACE("returning %d with %d (%d byte for %d of %d entries)\n", 
-            (res), GetLastError(), needed, (res)? numentries : 0, numentries);
-
-    return (res);
+    return backend->fpEnumPorts(pName, Level, pPorts, cbBuf, pcbNeeded, pcReturned);
 }
 
 /******************************************************************************
