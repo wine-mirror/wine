@@ -2413,6 +2413,7 @@ static void test_default_style(IHTMLStyle *style)
     float f;
     BSTR sOverflowDefault;
     BSTR sDefault;
+    VARIANT vDefault;
 
     test_disp((IUnknown*)style, &DIID_DispHTMLStyle);
     test_ifaces((IUnknown*)style, style_iids);
@@ -2987,6 +2988,23 @@ static void test_default_style(IHTMLStyle *style)
     ok(V_VT(&v) == VT_BSTR, "type failed: %d\n", V_VT(&v));
     ok(!V_BSTR(&v), "str=%s\n", dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
+
+    /* PaddingLeft */
+    hres = IHTMLStyle_get_paddingLeft(style, &vDefault);
+    ok(hres == S_OK, "get_paddingLeft: %08x\n", hres);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("10");
+    hres = IHTMLStyle_put_paddingLeft(style, v);
+    ok(hres == S_OK, "get_paddingLeft: %08x\n", hres);
+    VariantClear(&v);
+
+    hres = IHTMLStyle_get_paddingLeft(style, &v);
+    ok(hres == S_OK, "get_paddingLeft: %08x\n", hres);
+    ok(!strcmp_wa(V_BSTR(&v), "10px"), "expecte 10 = %s\n", dbgstr_w(V_BSTR(&v)));
+
+    hres = IHTMLStyle_put_paddingLeft(style, vDefault);
+    ok(hres == S_OK, "get_paddingLeft: %08x\n", hres);
 
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
