@@ -164,16 +164,16 @@ static void test_marshal_HGLOBAL(void)
     hglobal = NULL;
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
     size = HGLOBAL_UserSize(&umcb.Flags, 0, &hglobal);
-    /* native is poorly programmed and allocates 4 bytes more than it needs to
+    /* native is poorly programmed and allocates 4/8 bytes more than it needs to
      * here - Wine doesn't have to emulate that */
-    ok((size == 8) || (size == 12), "Size should be 12, instead of %d\n", size);
+    ok((size == 8) || broken(size == 12) || broken(size == 16), "Size should be 8, instead of %d\n", size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
     HGLOBAL_UserMarshal(&umcb.Flags, buffer, &hglobal);
     wirehglobal = buffer;
     ok(*(ULONG *)wirehglobal == WDT_REMOTE_CALL, "Context should be WDT_REMOTE_CALL instead of 0x%08x\n", *(ULONG *)wirehglobal);
     wirehglobal += sizeof(ULONG);
-    ok(*(ULONG *)wirehglobal == (ULONG)hglobal, "buffer+4 should be HGLOBAL\n");
+    ok(*(ULONG *)wirehglobal == 0, "buffer+4 should be HGLOBAL\n");
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
     HGLOBAL_UserUnmarshal(&umcb.Flags, buffer, &hglobal2);
     ok(hglobal2 == hglobal, "Didn't unmarshal properly\n");
@@ -188,20 +188,20 @@ static void test_marshal_HGLOBAL(void)
     GlobalUnlock(hglobal);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
     size = HGLOBAL_UserSize(&umcb.Flags, 0, &hglobal);
-    /* native is poorly programmed and allocates 4 bytes more than it needs to
+    /* native is poorly programmed and allocates 4/8 bytes more than it needs to
      * here - Wine doesn't have to emulate that */
-    ok((size == 24) || (size == 28), "Size should be 24 or 28, instead of %d\n", size);
+    ok((size == 24) || broken(size == 28) || broken(size == 32), "Size should be 24, instead of %d\n", size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
     HGLOBAL_UserMarshal(&umcb.Flags, buffer, &hglobal);
     wirehglobal = buffer;
     ok(*(ULONG *)wirehglobal == WDT_REMOTE_CALL, "Context should be WDT_REMOTE_CALL instead of 0x%08x\n", *(ULONG *)wirehglobal);
     wirehglobal += sizeof(ULONG);
-    ok(*(ULONG *)wirehglobal == (ULONG)hglobal, "buffer+0x4 should be HGLOBAL\n");
+    ok(*(ULONG *)wirehglobal == (ULONG)(ULONG_PTR)hglobal, "buffer+0x4 should be HGLOBAL\n");
     wirehglobal += sizeof(ULONG);
     ok(*(ULONG *)wirehglobal == 4, "buffer+0x8 should be size of HGLOBAL\n");
     wirehglobal += sizeof(ULONG);
-    ok(*(ULONG *)wirehglobal == (ULONG)hglobal, "buffer+0xc should be HGLOBAL\n");
+    ok(*(ULONG *)wirehglobal == (ULONG)(ULONG_PTR)hglobal, "buffer+0xc should be HGLOBAL\n");
     wirehglobal += sizeof(ULONG);
     ok(*(ULONG *)wirehglobal == 4, "buffer+0x10 should be size of HGLOBAL\n");
     wirehglobal += sizeof(ULONG);
