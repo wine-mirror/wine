@@ -240,14 +240,12 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
 
     if (value_name && value_empty)
     {
-        RegCloseKey(subkey);
         reg_message(STRING_INVALID_CMDLINE);
         return 0;
     }
 
     if (value_empty && value_all)
     {
-        RegCloseKey(subkey);
         reg_message(STRING_INVALID_CMDLINE);
         return 0;
     }
