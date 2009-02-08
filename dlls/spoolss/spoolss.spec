@@ -45,7 +45,7 @@
 @ stub EndPagePrinter
 @ stub EnumFormsW
 @ stub EnumJobsW
-@ stub EnumMonitorsW
+@ stdcall EnumMonitorsW(wstr long ptr long ptr ptr)
 @ stub EnumPerMachineConnectionsW
 @ stdcall EnumPortsW(wstr long ptr ptr ptr ptr) winspool.drv.EnumPortsW
 @ stub EnumPrintProcessorDatatypesW

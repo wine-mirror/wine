@@ -271,3 +271,66 @@ BOOL backend_load_all(void)
 
     return (pb != NULL);
 }
+
+/******************************************************************************
+ * backend_first [internal]
+ *
+ * find the first usable backend
+ *
+ * RETURNS
+ *  Success: PTR to the backend
+ *  Failure: NULL
+ *
+ */
+static backend_t * backend_first(LPWSTR name)
+{
+    /* test for the local system first */
+    if(!name || !name[0]) return backend[0];
+
+    FIXME("server %s not supported\n", debugstr_w(name));
+    return NULL;
+}
+
+/******************************************************************
+ * EnumMonitorsW (spoolss.@)
+ *
+ * Enumerate available Port-Monitors
+ *
+ * PARAMS
+ *  pName      [I] Servername or NULL (local Computer)
+ *  Level      [I] Structure-Level
+ *  pMonitors  [O] PTR to Buffer that receives the Result
+ *  cbBuf      [I] Size of Buffer at pMonitors
+ *  pcbNeeded  [O] PTR to DWORD that receives the size in Bytes used / required for pMonitors
+ *  pcReturned [O] PTR to DWORD that receives the number of Monitors in pMonitors
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE and in pcbNeeded the Bytes required for pMonitors, if cbBuf is too small
+ *
+ */
+BOOL WINAPI EnumMonitorsW(LPWSTR pName, DWORD Level, LPBYTE pMonitors, DWORD cbBuf,
+                          LPDWORD pcbNeeded, LPDWORD pcReturned)
+{
+    backend_t * pb;
+    DWORD res = ROUTER_UNKNOWN;
+
+    TRACE("(%s, %d, %p, %d, %p, %p)\n", debugstr_w(pName), Level, pMonitors,
+          cbBuf, pcbNeeded, pcReturned);
+
+    if (pcbNeeded) *pcbNeeded = 0;
+    if (pcReturned) *pcReturned = 0;
+
+    pb = backend_first(pName);
+    if (pb && pb->fpEnumMonitors)
+        res = pb->fpEnumMonitors(pName, Level, pMonitors, cbBuf, pcbNeeded, pcReturned);
+    else
+    {
+        SetLastError(ERROR_PROC_NOT_FOUND);
+    }
+
+    TRACE("got %u with %u (%u byte for %u entries)\n\n", res, GetLastError(),
+            pcbNeeded ? *pcbNeeded : 0, pcReturned ? *pcReturned : 0);
+
+    return (res == ROUTER_SUCCESS);
+}
