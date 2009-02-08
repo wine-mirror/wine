@@ -2566,6 +2566,17 @@ static void test_default_style(IHTMLStyle *style)
     ok(hres == S_OK, "get_textDecorationLineThrough failed: %08x\n", hres);
     ok(b == VARIANT_FALSE, "textDecorationLineThrough = %x\n", b);
 
+    hres = IHTMLStyle_put_textDecorationLineThrough(style, VARIANT_TRUE);
+    ok(hres == S_OK, "get_textDecorationLineThrough failed: %08x\n", hres);
+    ok(b == VARIANT_FALSE, "textDecorationLineThrough = %x\n", b);
+
+    hres = IHTMLStyle_get_textDecorationLineThrough(style, &b);
+    ok(hres == S_OK, "get_textDecorationLineThrough failed: %08x\n", hres);
+    ok(b == VARIANT_TRUE, "textDecorationLineThrough = %x\n", b);
+
+    hres = IHTMLStyle_put_textDecorationLineThrough(style, VARIANT_FALSE);
+    ok(hres == S_OK, "get_textDecorationLineThrough failed: %08x\n", hres);
+
     hres = IHTMLStyle_get_posWidth(style, NULL);
     ok(hres == E_POINTER, "get_posWidth failed: %08x\n", hres);
 

@@ -955,8 +955,10 @@ static HRESULT WINAPI HTMLStyle_get_textDecorationOverline(IHTMLStyle *iface, VA
 static HRESULT WINAPI HTMLStyle_put_textDecorationLineThrough(IHTMLStyle *iface, VARIANT_BOOL v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%x)\n", This, v);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%x)\n", This, v);
+
+    return set_style_attr(This, STYLEID_TEXT_DECORATION, v ? valLineThrough : emptyW, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_textDecorationLineThrough(IHTMLStyle *iface, VARIANT_BOOL *p)
