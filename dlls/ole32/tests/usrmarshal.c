@@ -199,11 +199,11 @@ static void test_marshal_HGLOBAL(void)
     wirehglobal += sizeof(ULONG);
     ok(*(ULONG *)wirehglobal == (ULONG)(ULONG_PTR)hglobal, "buffer+0x4 should be HGLOBAL\n");
     wirehglobal += sizeof(ULONG);
-    ok(*(ULONG *)wirehglobal == 4, "buffer+0x8 should be size of HGLOBAL\n");
+    ok(*(ULONG *)wirehglobal == 4, "buffer+0x8 should be size of HGLOBAL instead of %d\n", *(ULONG *)wirehglobal);
     wirehglobal += sizeof(ULONG);
     ok(*(ULONG *)wirehglobal == (ULONG)(ULONG_PTR)hglobal, "buffer+0xc should be HGLOBAL\n");
     wirehglobal += sizeof(ULONG);
-    ok(*(ULONG *)wirehglobal == 4, "buffer+0x10 should be size of HGLOBAL\n");
+    ok(*(ULONG *)wirehglobal == 4, "buffer+0x10 should be size of HGLOBAL instead of %d\n", *(ULONG *)wirehglobal);
     wirehglobal += sizeof(ULONG);
     for (i = 0; i < 4; i++)
         ok(wirehglobal[i] == i, "buffer+0x%x should be %d\n", 0x10 + i, i);
