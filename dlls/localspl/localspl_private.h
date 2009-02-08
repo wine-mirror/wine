@@ -24,6 +24,7 @@
 
 /* ## DLL-wide Globals ## */
 extern HINSTANCE LOCALSPL_hInstance;
+void setup_provider(void);
 
 /* ## Resource-ID ## */
 #define IDS_LOCALPORT       500

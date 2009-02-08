@@ -7,7 +7,8 @@ IMPORTS   = spoolss user32 advapi32 kernel32
 
 C_SRCS = \
 	localmon.c \
-	localspl_main.c
+	localspl_main.c \
+	provider.c
 
 RC_SRCS = localspl.rc
 
