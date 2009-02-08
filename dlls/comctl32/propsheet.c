@@ -743,6 +743,7 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
   int buttonHeight;
   PADDING_INFO padding = PROPSHEET_GetPaddingInfo(hwndDlg);
   RECT units;
+  LONG style;
 
   /* Get the height of buttons */
   GetClientRect(hwndButton, &rc);
@@ -798,8 +799,9 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
   rc.right += (padding.x * 2);
   rc.bottom += buttonHeight + (3 * padding.y);
 
-  if (!psInfo->isModeless)
-    AdjustWindowRect(&rc, GetWindowLongW(hwndDlg, GWL_STYLE), FALSE);
+  style = GetWindowLongW(hwndDlg, GWL_STYLE);
+  if (!(style & WS_CHILD))
+    AdjustWindowRect(&rc, style, FALSE);
 
   rc.right -= rc.left;
   rc.bottom -= rc.top;
