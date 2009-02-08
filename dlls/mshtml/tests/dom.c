@@ -2561,6 +2561,17 @@ static void test_default_style(IHTMLStyle *style)
     ok(hres == S_OK, "get_textDecorationUnderline failed: %08x\n", hres);
     ok(b == VARIANT_FALSE, "textDecorationUnderline = %x\n", b);
 
+    hres = IHTMLStyle_put_textDecorationUnderline(style, VARIANT_TRUE);
+    ok(hres == S_OK, "get_textDecorationUnderline failed: %08x\n", hres);
+    ok(b == VARIANT_FALSE, "textDecorationUnderline = %x\n", b);
+
+    hres = IHTMLStyle_get_textDecorationUnderline(style, &b);
+    ok(hres == S_OK, "get_textDecorationUnderline failed: %08x\n", hres);
+    ok(b == VARIANT_TRUE, "textDecorationUnderline = %x\n", b);
+
+    hres = IHTMLStyle_put_textDecorationUnderline(style, VARIANT_FALSE);
+    ok(hres == S_OK, "get_textDecorationUnderline failed: %08x\n", hres);
+
     b = 0xfefe;
     hres = IHTMLStyle_get_textDecorationLineThrough(style, &b);
     ok(hres == S_OK, "get_textDecorationLineThrough failed: %08x\n", hres);
