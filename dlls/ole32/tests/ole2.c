@@ -683,10 +683,14 @@ static void test_OleCreate(IStorage *pStorage)
         { "OleObject_QueryInterface", 0 },
         { "OleObject_AddRef", 0 },
         { "OleObject_QueryInterface", 0 },
+        { "OleObject_AddRef", TEST_OPTIONAL },
+        { "OleObject_Release", TEST_OPTIONAL },
+        { "OleObject_QueryInterface", TEST_OPTIONAL },
         { "OleObjectPersistStg_AddRef", 0 },
         { "OleObjectPersistStg_InitNew", 0 },
         { "OleObjectPersistStg_Release", 0 },
         { "OleObject_Release", 0 },
+        { "OleObject_Release", TEST_OPTIONAL },
         { NULL, 0 }
     };
     static const struct expected_method methods_olerender_draw[] =
@@ -694,6 +698,9 @@ static void test_OleCreate(IStorage *pStorage)
         { "OleObject_QueryInterface", 0 },
         { "OleObject_AddRef", 0 },
         { "OleObject_QueryInterface", 0 },
+        { "OleObject_AddRef", TEST_OPTIONAL /* NT4 only */ },
+        { "OleObject_Release", TEST_OPTIONAL /* NT4 only */ },
+        { "OleObject_QueryInterface", TEST_OPTIONAL /* NT4 only */ },
         { "OleObjectPersistStg_AddRef", 0 },
         { "OleObjectPersistStg_InitNew", 0 },
         { "OleObjectPersistStg_Release", 0 },
@@ -706,6 +713,7 @@ static void test_OleCreate(IStorage *pStorage)
         { "OleObjectCache_Cache", 0 },
         { "OleObjectCache_Release", 0 },
         { "OleObject_Release", 0 },
+        { "OleObject_Release", TEST_OPTIONAL /* NT4 only */ },
         { NULL, 0 }
     };
     static const struct expected_method methods_olerender_format[] =
@@ -737,10 +745,14 @@ static void test_OleCreate(IStorage *pStorage)
         { "OleObject_QueryInterface", 0 },
         { "OleObject_AddRef", 0 },
         { "OleObject_QueryInterface", 0 },
+        { "OleObject_AddRef", TEST_OPTIONAL /* NT4 only */ },
+        { "OleObject_Release", TEST_OPTIONAL /* NT4 only */ },
+        { "OleObject_QueryInterface", TEST_OPTIONAL /* NT4 only */ },
         { "OleObjectPersistStg_AddRef", 0 },
         { "OleObjectPersistStg_InitNew", 0 },
         { "OleObjectPersistStg_Release", 0 },
         { "OleObject_Release", 0 },
+        { "OleObject_Release", TEST_OPTIONAL /* NT4 only */ },
         { NULL, 0 }
     };
     static const struct expected_method methods_olerender_draw_no_runnable[] =
@@ -748,6 +760,9 @@ static void test_OleCreate(IStorage *pStorage)
         { "OleObject_QueryInterface", 0 },
         { "OleObject_AddRef", 0 },
         { "OleObject_QueryInterface", 0 },
+        { "OleObject_AddRef", TEST_OPTIONAL /* NT4 only */ },
+        { "OleObject_Release", TEST_OPTIONAL /* NT4 only */ },
+        { "OleObject_QueryInterface", TEST_OPTIONAL /* NT4 only */ },
         { "OleObjectPersistStg_AddRef", 0 },
         { "OleObjectPersistStg_InitNew", 0 },
         { "OleObjectPersistStg_Release", 0 },
@@ -757,6 +772,7 @@ static void test_OleCreate(IStorage *pStorage)
         { "OleObjectCache_Cache", 0 },
         { "OleObjectCache_Release", 0 },
         { "OleObject_Release", 0 },
+        { "OleObject_Release", TEST_OPTIONAL /* NT4 only */ },
         { NULL, 0 },
     };
     static const struct expected_method methods_olerender_draw_no_cache[] =
@@ -764,6 +780,9 @@ static void test_OleCreate(IStorage *pStorage)
         { "OleObject_QueryInterface", 0 },
         { "OleObject_AddRef", 0 },
         { "OleObject_QueryInterface", 0 },
+        { "OleObject_AddRef", TEST_OPTIONAL /* NT4 only */ },
+        { "OleObject_Release", TEST_OPTIONAL /* NT4 only */ },
+        { "OleObject_QueryInterface", TEST_OPTIONAL /* NT4 only */ },
         { "OleObjectPersistStg_AddRef", 0 },
         { "OleObjectPersistStg_InitNew", 0 },
         { "OleObjectPersistStg_Release", 0 },
@@ -773,6 +792,7 @@ static void test_OleCreate(IStorage *pStorage)
         { "OleObjectRunnable_Release", 0 },
         { "OleObject_QueryInterface", 0 },
         { "OleObject_Release", 0 },
+        { "OleObject_Release", TEST_OPTIONAL /* NT4 only */ },
         { NULL, 0 }
     };
 
@@ -818,7 +838,7 @@ static void test_OleCreate(IStorage *pStorage)
 
     runnable = NULL;
     expected_method_list = methods_olerender_draw_no_runnable;
-    trace("OleCreate with OLERENDER_DRAW (no IOlObjectRunnable):\n");
+    trace("OleCreate with OLERENDER_DRAW (no IRunnableObject):\n");
     hr = OleCreate(&CLSID_Equation3, &IID_IOleObject, OLERENDER_DRAW, NULL, NULL, pStorage, (void **)&pObject);
     ok_ole_success(hr, "OleCreate");
     IOleObject_Release(pObject);
@@ -827,7 +847,7 @@ static void test_OleCreate(IStorage *pStorage)
     runnable = &OleObjectRunnable;
     cache = NULL;
     expected_method_list = methods_olerender_draw_no_cache;
-    trace("OleCreate with OLERENDER_DRAW (no IOlObjectRunnable):\n");
+    trace("OleCreate with OLERENDER_DRAW (no IOleCache):\n");
     hr = OleCreate(&CLSID_Equation3, &IID_IOleObject, OLERENDER_DRAW, NULL, NULL, pStorage, (void **)&pObject);
     ok_ole_success(hr, "OleCreate");
     IOleObject_Release(pObject);
