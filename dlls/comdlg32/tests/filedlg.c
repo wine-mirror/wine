@@ -29,7 +29,7 @@
 
 /* ##### */
 
-static UINT CALLBACK OFNHookProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static UINT_PTR CALLBACK OFNHookProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     LPNMHDR nmh;
 
@@ -135,7 +135,7 @@ static void test_DialogCancel(void)
     }
 }
 
-static UINT CALLBACK create_view_window2_hook(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static UINT_PTR CALLBACK create_view_window2_hook(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if (msg == WM_NOTIFY)
     {
