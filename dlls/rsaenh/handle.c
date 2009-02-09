@@ -47,7 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(handle);
  *  You have to call destroy_handle_table when you don't need the table
  *  any more.
  */
-void init_handle_table(HANDLETABLE *lpTable)
+void init_handle_table(struct handle_table *lpTable)
 {
     TRACE("(lpTable=%p)\n", lpTable);
         
@@ -66,7 +66,7 @@ void init_handle_table(HANDLETABLE *lpTable)
  * PARAMS
  *  lpTable [I] Pointer to the handle table, which is to be destroyed.
  */
-void destroy_handle_table(HANDLETABLE *lpTable)
+void destroy_handle_table(struct handle_table *lpTable)
 {
     TRACE("(lpTable=%p)\n", lpTable);
         
@@ -90,7 +90,7 @@ void destroy_handle_table(HANDLETABLE *lpTable)
  *  non zero,  if handle is valid.
  *  zero,      if handle is not valid.
  */
-int is_valid_handle(HANDLETABLE *lpTable, HCRYPTKEY handle, DWORD dwType)
+int is_valid_handle(struct handle_table *lpTable, HCRYPTKEY handle, DWORD dwType)
 {
     unsigned int index = HANDLE2INDEX(handle);
     int ret = 0;
@@ -132,20 +132,20 @@ exit:
  * NOTES
  *  This is a support function for alloc_handle. Do not call!
  */
-static int grow_handle_table(HANDLETABLE *lpTable) 
+static int grow_handle_table(struct handle_table *lpTable) 
 {
-    HANDLETABLEENTRY *newEntries;
+    struct handle_table_entry *newEntries;
     unsigned int i, newIEntries;
 
     newIEntries = lpTable->iEntries + TABLE_SIZE_INCREMENT;
 
-    newEntries = HeapAlloc(GetProcessHeap(), 0, sizeof(HANDLETABLEENTRY)*newIEntries);
+    newEntries = HeapAlloc(GetProcessHeap(), 0, sizeof(struct handle_table_entry)*newIEntries);
     if (!newEntries) 
         return 0;
 
     if (lpTable->paEntries)
     {
-        memcpy(newEntries, lpTable->paEntries, sizeof(HANDLETABLEENTRY)*lpTable->iEntries);
+        memcpy(newEntries, lpTable->paEntries, sizeof(struct handle_table_entry)*lpTable->iEntries);
         HeapFree(GetProcessHeap(), 0, lpTable->paEntries);
     }
 
@@ -177,7 +177,7 @@ static int grow_handle_table(HANDLETABLE *lpTable)
  *  non zero,  if successful
  *  zero,      if not successful (no free handle)
  */
-static int alloc_handle(HANDLETABLE *lpTable, OBJECTHDR *lpObject, HCRYPTKEY *lpHandle)
+static int alloc_handle(struct handle_table *lpTable, OBJECTHDR *lpObject, HCRYPTKEY *lpHandle)
 {
     int ret = 0;
 
@@ -224,7 +224,7 @@ exit:
  *  non zero,  if successful
  *  zero,      if not successful (invalid handle)
  */
-int release_handle(HANDLETABLE *lpTable, HCRYPTKEY handle, DWORD dwType)
+int release_handle(struct handle_table *lpTable, HCRYPTKEY handle, DWORD dwType)
 {
     unsigned int index = HANDLE2INDEX(handle);
     OBJECTHDR *pObject;
@@ -269,7 +269,7 @@ exit:
  *  non zero,  if successful
  *  zero,      if not successful (invalid handle)
  */
-int lookup_handle(HANDLETABLE *lpTable, HCRYPTKEY handle, DWORD dwType, OBJECTHDR **lplpObject)
+int lookup_handle(struct handle_table *lpTable, HCRYPTKEY handle, DWORD dwType, OBJECTHDR **lplpObject)
 {
     int ret = 0;
     
@@ -304,7 +304,7 @@ exit:
  *  non zero,  if successful
  *  zero,      if not successful (invalid handle or out of memory)
  */
-int copy_handle(HANDLETABLE *lpTable, HCRYPTKEY handle, DWORD dwType, HCRYPTKEY *copy)
+int copy_handle(struct handle_table *lpTable, HCRYPTKEY handle, DWORD dwType, HCRYPTKEY *copy)
 {
     OBJECTHDR *pObject;
     int ret;
@@ -347,7 +347,7 @@ int copy_handle(HANDLETABLE *lpTable, HCRYPTKEY handle, DWORD dwType, HCRYPTKEY 
  *  INVALID_HANDLE_VALUE,        if something went wrong.
  *  a handle to the new object,  if successful. 
  */
-HCRYPTKEY new_object(HANDLETABLE *lpTable, size_t cbSize, DWORD dwType, DESTRUCTOR destructor,
+HCRYPTKEY new_object(struct handle_table *lpTable, size_t cbSize, DWORD dwType, DESTRUCTOR destructor,
                         OBJECTHDR **ppObject)
 {
     OBJECTHDR *pObject;
