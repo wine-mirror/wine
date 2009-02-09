@@ -171,7 +171,7 @@ static void     init_wfx_adpcm(ADPCMWAVEFORMAT* awfx)
     pwfx->cbSize = 2 * sizeof(WORD) + 7 * sizeof(ADPCMCOEFSET);
     /* 7 is the size of the block head (which contains two samples) */
 
-    awfx->wSamplesPerBlock = (pwfx->nBlockAlign - (7 * pwfx->nChannels)) * (2 / pwfx->nChannels) + 2;
+    awfx->wSamplesPerBlock = pwfx->nBlockAlign * 2 / pwfx->nChannels - 12;
     pwfx->nAvgBytesPerSec = (pwfx->nSamplesPerSec * pwfx->nBlockAlign) / awfx->wSamplesPerBlock;
     awfx->wNumCoef = 7;
     memcpy(awfx->aCoef, MSADPCM_CoeffSet, 7 * sizeof(ADPCMCOEFSET));
