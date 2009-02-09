@@ -125,7 +125,7 @@ static TW_UINT16 msg_get_enum(pTW_CAPABILITY pCapability, const TW_UINT32 *value
 static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability)
 {
     TW_ARRAY *a;
-    static const UINT16 supported_caps[] = { CAP_SUPPORTEDCAPS, ICAP_XFERMECH };
+    static const UINT16 supported_caps[] = { CAP_SUPPORTEDCAPS, CAP_XFERCOUNT, ICAP_XFERMECH };
 
     pCapability->hContainer = GlobalAlloc (0, FIELD_OFFSET( TW_ARRAY, ItemList[sizeof(supported_caps)] ));
     pCapability->ConType = TWON_ARRAY;
@@ -195,6 +195,46 @@ static TW_UINT16 SANE_ICAPXferMech (pTW_CAPABILITY pCapability, TW_UINT16 action
 }
 
 
+/* CAP_XFERCOUNT */
+static TW_UINT16 SANE_CAPXferCount (pTW_CAPABILITY pCapability, TW_UINT16 action)
+{
+    TW_UINT32 val;
+    TW_UINT16 twCC = TWCC_BADCAP;
+
+    TRACE("CAP_XFERCOUNT\n");
+
+    switch (action)
+    {
+        case MSG_QUERYSUPPORT:
+            twCC = set_onevalue(pCapability, TWTY_INT32,
+                    TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET );
+            break;
+
+        case MSG_GET:
+            twCC = set_onevalue(pCapability, TWTY_INT16, -1);
+            FIXME("Partial Stub:  Reporting only support for transfer all\n");
+            break;
+
+        case MSG_SET:
+            twCC = msg_set(pCapability, &val);
+            if (twCC == TWCC_SUCCESS)
+               FIXME("Partial Stub:  XFERCOUNT set to %d, but ignored\n", val);
+            break;
+
+        case MSG_GETDEFAULT:
+            twCC = set_onevalue(pCapability, TWTY_INT16, -1);
+            break;
+
+        case MSG_RESET:
+            /* .. fall through intentional .. */
+
+        case MSG_GETCURRENT:
+            twCC = set_onevalue(pCapability, TWTY_INT16, -1);
+            break;
+    }
+    return twCC;
+}
+
 TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
     TW_UINT16 twCC = TWCC_CAPUNSUPPORTED;
@@ -211,9 +251,7 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
             break;
 
         case CAP_XFERCOUNT:
-            /* This is a required capability that every source needs to
-               support but we haven't implemented it yet. */
-            twCC = TWCC_SUCCESS;
+            twCC = SANE_CAPXferCount (pCapability, action);
             break;
 
         case ICAP_XFERMECH:

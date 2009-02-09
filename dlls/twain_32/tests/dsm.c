@@ -309,8 +309,10 @@ static void test_single_source(TW_IDENTITY *appid, TW_IDENTITY *source)
 
     /* For Twain 1.6, all sources must support: */
     ok(capabilities[CAP_SUPPORTEDCAPS], "CAP_SUPPORTEDCAPS not supported\n");
-    todo_wine
     ok(capabilities[CAP_XFERCOUNT], "CAP_XFERCOUNT not supported\n");
+    if (capabilities[CAP_XFERCOUNT])
+        test_onevalue_cap(appid, source, CAP_XFERCOUNT, TWTY_INT16,
+            TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET);
     todo_wine
     ok(capabilities[CAP_UICONTROLLABLE], "CAP_UICONTROLLABLE not supported\n");
 
