@@ -127,7 +127,7 @@ enum win_wm_message {
 
 typedef struct {
     enum win_wm_message 	msg;	/* message identifier */
-    DWORD	                param;  /* parameter for this message */
+    DWORD_PTR                   param;  /* parameter for this message */
     HANDLE	                hEvent;	/* if message is synchronous, handle of event for synchro */
 } RING_MSG;
 
@@ -556,8 +556,8 @@ static int NAS_AddRingMessage(MSG_RING* mr, enum win_wm_message msg, DWORD param
  *
  * Get a message from the ring. Should be called by the playback/record thread.
  */
-static int NAS_RetrieveRingMessage(MSG_RING* mr,
-                                   enum win_wm_message *msg, DWORD *param, HANDLE *hEvent)
+static int NAS_RetrieveRingMessage(MSG_RING* mr, enum win_wm_message *msg,
+                                   DWORD_PTR *param, HANDLE *hEvent)
 {
     EnterCriticalSection(&mr->msg_crst);
 
@@ -583,9 +583,10 @@ static int NAS_RetrieveRingMessage(MSG_RING* mr,
 /**************************************************************************
  * 			wodNotifyClient			[internal]
  */
-static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
+static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD_PTR dwParam1,
+                             DWORD_PTR dwParam2)
 {
-    TRACE("wMsg = 0x%04x dwParm1 = %04X dwParam2 = %04X\n", wMsg, dwParam1, dwParam2);
+    TRACE("wMsg = 0x%04x dwParm1 = %08lX dwParam2 = %08lX\n", wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
     case WOM_OPEN:
@@ -703,7 +704,7 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
 	lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 	lpWaveHdr->dwFlags |= WHDR_DONE;
 
-	wodNotifyClient(wwo, WOM_DONE, (DWORD)lpWaveHdr, 0);
+        wodNotifyClient(wwo, WOM_DONE, (DWORD_PTR)lpWaveHdr, 0);
     }
     return  (lpWaveHdr && lpWaveHdr != wwo->lpPlayPtr && lpWaveHdr != wwo->lpLoopPtr) ?
             1 : 1;
@@ -726,7 +727,7 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, BOOL reset)
 
     if (reset) {
         enum win_wm_message     msg;
-        DWORD                   param;
+        DWORD_PTR               param;
         HANDLE                  ev;
 
 	/* remove any buffer */
@@ -778,11 +779,11 @@ static void wodPlayer_ProcessMessages(WINE_WAVEOUT* wwo)
 {
     LPWAVEHDR           lpWaveHdr;
     enum win_wm_message	msg;
-    DWORD		param;
+    DWORD_PTR           param;
     HANDLE		ev;
 
     while (NAS_RetrieveRingMessage(&wwo->msgRing, &msg, &param, &ev)) {
-        TRACE("Received %s %x\n", wodPlayerCmdString[msg - WM_USER - 1], param);
+        TRACE("Received %s %lx\n", wodPlayerCmdString[msg - WM_USER - 1], param);
 	switch (msg) {
 	case WINE_WM_PAUSING:
 	    wodPlayer_Reset(wwo, FALSE);
@@ -841,7 +842,7 @@ static void wodPlayer_ProcessMessages(WINE_WAVEOUT* wwo)
  */
 static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 {
-    WORD       uDevID = (DWORD)pmt;
+    WORD       uDevID = (DWORD_PTR)pmt;
     WINE_WAVEOUT* wwo = &WOutDev[uDevID];
 
     wwo->state = WINE_WS_STOPPED;
@@ -960,7 +961,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     /* create player thread */
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
 	wwo->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-	wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
+        wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD_PTR)wDevID,
+                                    0, &(wwo->dwThreadID));
         if (wwo->hThread)
             SetThreadPriority(wwo->hThread, THREAD_PRIORITY_TIME_CRITICAL);
 	WaitForSingleObject(wwo->hStartUpEvent, INFINITE);
@@ -1048,7 +1050,7 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     lpWaveHdr->lpNext = 0;
 
     TRACE("adding ring message\n");
-    NAS_AddRingMessage(&WOutDev[wDevID].msgRing, WINE_WM_HEADER, (DWORD)lpWaveHdr, FALSE);
+    NAS_AddRingMessage(&WOutDev[wDevID].msgRing, WINE_WM_HEADER, (DWORD_PTR)lpWaveHdr, FALSE);
 
     return MMSYSERR_NOERROR;
 }
@@ -1205,9 +1207,9 @@ static	DWORD	wodGetNumDevs(void)
  * 				wodMessage (WINENAS.@)
  */
 DWORD WINAPI NAS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
-			    DWORD dwParam1, DWORD dwParam2)
+                            DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    TRACE("(%u, %04X, %08X, %08X, %08X);\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    TRACE("(%u, %04X, %08X, %08lX, %08lX);\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
     case DRVM_INIT:
