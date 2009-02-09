@@ -341,8 +341,10 @@ static void test_single_source(TW_IDENTITY *appid, TW_IDENTITY *source)
         ok(capabilities[ICAP_BITDEPTH], "ICAP_BITDEPTH not supported\n");
         todo_wine
         ok(capabilities[ICAP_BITORDER], "ICAP_BITORDER not supported\n");
-        todo_wine
         ok(capabilities[ICAP_PIXELTYPE], "ICAP_PIXELTYPE not supported\n");
+        if (capabilities[ICAP_PIXELTYPE])
+            test_onevalue_cap(appid, source, ICAP_PIXELTYPE, TWTY_UINT16,
+                TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET);
         todo_wine
         ok(capabilities[ICAP_UNITS], "ICAP_UNITS not supported\n");
         ok(capabilities[ICAP_XFERMECH], "ICAP_XFERMECH not supported\n");

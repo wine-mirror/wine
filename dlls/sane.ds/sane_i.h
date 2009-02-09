@@ -72,6 +72,7 @@ struct tagActiveDS
 #endif
     /* Capabilities */
     TW_UINT16		capXferMech;		/* ICAP_XFERMECH */
+    TW_UINT16		capPixelType;		/* ICAP_PIXELTYPE */
 } activeDS;
 
 /* Helper functions */
