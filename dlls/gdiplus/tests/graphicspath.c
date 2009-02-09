@@ -907,7 +907,12 @@ static path_test_t addpie_path[] = {
     {79.4, 46.8, PathPointTypeBezier,0, 0}, /*3*/
     {63.9, 49.0, PathPointTypeBezier | PathPointTypeCloseSubpath,  0, 0} /*4*/
     };
-
+static path_test_t addpie_path2[] = {
+    {0.0, 30.0, PathPointTypeStart | PathPointTypeCloseSubpath, 0, 0} /*0*/
+    };
+static path_test_t addpie_path3[] = {
+    {30.0, 0.0, PathPointTypeStart | PathPointTypeCloseSubpath, 0, 0} /*0*/
+    };
 static void test_addpie(void)
 {
     GpStatus status;
@@ -922,6 +927,20 @@ static void test_addpie(void)
     status = GdipAddPathPie(path, 0.0, 0.0, 100.0, 50.0, 10.0, 50.0);
     expect(Ok, status);
     ok_path(path, addpie_path, sizeof(addpie_path)/sizeof(path_test_t), FALSE);
+    status = GdipResetPath(path);
+    expect(Ok, status);
+
+    /* zero width base ellipse */
+    status = GdipAddPathPie(path, 0.0, 0.0, 0.0, 60.0, -90.0, 24.0);
+    expect(InvalidParameter, status);
+    ok_path(path, addpie_path2, sizeof(addpie_path2)/sizeof(path_test_t), FALSE);
+    status = GdipResetPath(path);
+    expect(Ok, status);
+
+    /* zero height base ellipse */
+    status = GdipAddPathPie(path, 0.0, 0.0, 60.0, 0.0 , -90.0, 24.0);
+    expect(InvalidParameter, status);
+    ok_path(path, addpie_path3, sizeof(addpie_path3)/sizeof(path_test_t), FALSE);
 
     GdipDeletePath(path);
 }
