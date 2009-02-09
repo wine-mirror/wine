@@ -162,10 +162,10 @@ static void     init_wfx_adpcm(ADPCMWAVEFORMAT* awfx)
 
     switch (pwfx->nSamplesPerSec)
     {
-    case  8000: pwfx->nBlockAlign = 256;   break;
-    case 11025: pwfx->nBlockAlign = 256;   break;
-    case 22050: pwfx->nBlockAlign = 512;   break;
-    case 44100: pwfx->nBlockAlign = 1024;  break;
+    case  8000: pwfx->nBlockAlign = 256 * pwfx->nChannels;   break;
+    case 11025: pwfx->nBlockAlign = 256 * pwfx->nChannels;   break;
+    case 22050: pwfx->nBlockAlign = 512 * pwfx->nChannels;   break;
+    case 44100: pwfx->nBlockAlign = 1024 * pwfx->nChannels;  break;
     default:                               break;
     }
     pwfx->cbSize = 2 * sizeof(WORD) + 7 * sizeof(ADPCMCOEFSET);
