@@ -104,10 +104,10 @@ static void check_get(TW_CAPABILITY *pCapability, TW_INT32 actual_support,
     p = GlobalLock(pCapability->hContainer);
     if (p)
     {
-        if (pCapability->ConType == TWON_ONEVALUE && actual_support & TWQC_GETCURRENT)
+        if (pCapability->ConType == TWON_ONEVALUE)
         {
             TW_ONEVALUE *onev = (TW_ONEVALUE *) p;
-            ok(onev->Item == orig_value, "MSG_GET of 0x%x returned 0x%x, expecting 0x%x\n",
+            ok(onev->Item == orig_value || !(actual_support & TWQC_GETCURRENT), "MSG_GET of 0x%x returned 0x%x, expecting 0x%x\n",
                 pCapability->Cap, onev->Item, orig_value);
         }
         else if (pCapability->ConType == TWON_ENUMERATION)
