@@ -1963,7 +1963,7 @@ static LRESULT WINAPI OLEDD_DragTrackerWindowProc(
     {
       LPCREATESTRUCTA createStruct = (LPCREATESTRUCTA)lParam;
 
-      SetWindowLongA(hwnd, 0, (LONG)createStruct->lpCreateParams);
+      SetWindowLongPtrA(hwnd, 0, (LONG_PTR)createStruct->lpCreateParams);
       SetTimer(hwnd, DRAG_TIMER_ID, 50, NULL);
 
       break;
@@ -1971,7 +1971,7 @@ static LRESULT WINAPI OLEDD_DragTrackerWindowProc(
     case WM_TIMER:
     case WM_MOUSEMOVE:
     {
-      OLEDD_TrackMouseMove((TrackerWindowInfo*)GetWindowLongA(hwnd, 0));
+      OLEDD_TrackMouseMove((TrackerWindowInfo*)GetWindowLongPtrA(hwnd, 0));
       break;
     }
     case WM_LBUTTONUP:
@@ -1981,7 +1981,7 @@ static LRESULT WINAPI OLEDD_DragTrackerWindowProc(
     case WM_MBUTTONDOWN:
     case WM_RBUTTONDOWN:
     {
-      OLEDD_TrackStateChange((TrackerWindowInfo*)GetWindowLongA(hwnd, 0));
+      OLEDD_TrackStateChange((TrackerWindowInfo*)GetWindowLongPtrA(hwnd, 0));
       break;
     }
     case WM_DESTROY:
