@@ -604,7 +604,6 @@ TW_UINT16 SANE_EnableDSUserInterface (pTW_IDENTITY pOrigin,
                 PostMessageA(activeDS.hwndOwner, activeDS.windowMessage, MSG_XFERREADY, 0);
         }
 
-        activeDS.hwndOwner = pUserInterface->hParent;
         twRC = TWRC_SUCCESS;
         activeDS.twCC = TWCC_SUCCESS;
     }
