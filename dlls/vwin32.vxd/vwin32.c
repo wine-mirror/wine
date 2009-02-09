@@ -29,6 +29,32 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vxd);
 
+typedef struct tagDIOCRegs {
+    DWORD   reg_EBX;
+    DWORD   reg_EDX;
+    DWORD   reg_ECX;
+    DWORD   reg_EAX;
+    DWORD   reg_EDI;
+    DWORD   reg_ESI;
+    DWORD   reg_Flags;
+} DIOC_REGISTERS, *PDIOC_REGISTERS;
+
+#define VWIN32_DIOC_DOS_IOCTL     1 /* This is the specified MS-DOS device I/O ctl - Interrupt 21h Function 4400h - 4411h */
+#define VWIN32_DIOC_DOS_INT25     2 /* This is the Absolute Disk Read command - Interrupt 25h */
+#define VWIN32_DIOC_DOS_INT26     3 /* This is the Absolute Disk Write command - Interrupt 25h */
+#define VWIN32_DIOC_DOS_INT13     4 /* This is Interrupt 13h commands */
+#define VWIN32_DIOC_SIMCTRLC      5 /* Simulate Ctrl-C */
+#define VWIN32_DIOC_DOS_DRIVEINFO 6 /* This is Interrupt 21h Function 730X commands */
+
+#include <pshpack1.h>
+typedef struct tagMID {
+    WORD  midInfoLevel;
+    DWORD midSerialNum;
+    BYTE  midVolLabel[11];
+    BYTE  midFileSysType[8];
+} MID, *PMID;
+#include <poppack.h>
+
 extern void WINAPI CallBuiltinHandler( CONTEXT86 *context, BYTE intnum );  /* from winedos */
 
 /* Pop a DWORD from the 32-bit stack */
