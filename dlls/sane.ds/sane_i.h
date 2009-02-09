@@ -48,6 +48,7 @@ MAKE_FUNCPTR(sane_strstatus)
 
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "twain.h"
 
 extern HINSTANCE SANE_instance;
@@ -58,8 +59,7 @@ struct tagActiveDS
     struct tagActiveDS	*next;			/* next active DS */
     TW_IDENTITY		identity;		/* identity */
     TW_UINT16		currentState;		/* current state */
-    TW_EVENT		pendingEvent;		/* pending event to be sent to
-                                                   application */
+    UINT                windowMessage;          /* message to use to send status */
     TW_UINT16		twCC;			/* condition code */
     HWND		hwndOwner;		/* window handle of the app */
     HWND		progressWnd;		/* window handle of the scanning window */

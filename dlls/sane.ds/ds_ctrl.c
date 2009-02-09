@@ -292,30 +292,25 @@ TW_UINT16 SANE_FileSystemRename (pTW_IDENTITY pOrigin,
 TW_UINT16 SANE_ProcessEvent (pTW_IDENTITY pOrigin, 
                               TW_MEMREF pData)
 {
-    TW_UINT16 twRC = TWRC_SUCCESS;
+    TW_UINT16 twRC = TWRC_NOTDSEVENT;
     pTW_EVENT pEvent = (pTW_EVENT) pData;
+    MSG *pMsg = pEvent->pEvent;
 
-    TRACE("DG_CONTROL/DAT_EVENT/MSG_PROCESSEVENT\n");
+    TRACE("DG_CONTROL/DAT_EVENT/MSG_PROCESSEVENT  msg 0x%x, wParam 0x%lx\n", pMsg->message, pMsg->wParam);
+
+    activeDS.twCC = TWCC_SUCCESS;
+    if (pMsg->message == activeDS.windowMessage && activeDS.windowMessage)
+    {
+        twRC = TWRC_DSEVENT;
+        pEvent->TWMessage = pMsg->wParam;
+    }
+    else
+        pEvent->TWMessage = MSG_NULL;  /* no message to the application */
 
     if (activeDS.currentState < 5 || activeDS.currentState > 7)
     {
         twRC = TWRC_FAILURE;
         activeDS.twCC = TWCC_SEQERROR;
-    }
-    else
-    {
-        if (activeDS.pendingEvent.TWMessage != MSG_NULL)
-        {
-            pEvent->TWMessage = activeDS.pendingEvent.TWMessage;
-            activeDS.pendingEvent.TWMessage = MSG_NULL;
-            twRC = TWRC_NOTDSEVENT;
-        }
-        else
-        {
-            pEvent->TWMessage = MSG_NULL;  /* no message to the application */
-            twRC = TWRC_NOTDSEVENT;
-        }
-        activeDS.twCC = TWCC_SUCCESS;
     }
 
     return twRC;
@@ -355,7 +350,8 @@ TW_UINT16 SANE_PendingXfersEndXfer (pTW_IDENTITY pOrigin,
         {
             activeDS.currentState = 5;
             /* Notify the application that it can close the data source */
-            activeDS.pendingEvent.TWMessage = MSG_CLOSEDSREQ;
+            if (activeDS.windowMessage)
+                PostMessageA(activeDS.hwndOwner, activeDS.windowMessage, MSG_CLOSEDSREQ, 0);
         }
         twRC = TWRC_SUCCESS;
         activeDS.twCC = TWCC_SUCCESS;
@@ -578,6 +574,8 @@ TW_UINT16 SANE_EnableDSUserInterface (pTW_IDENTITY pOrigin,
     else
     {
         activeDS.hwndOwner = pUserInterface->hParent;
+        if (! activeDS.windowMessage)
+            activeDS.windowMessage = RegisterWindowMessageA("SANE.DS ACTIVITY MESSAGE");
         if (pUserInterface->ShowUI)
         {
             BOOL rc;
@@ -586,7 +584,8 @@ TW_UINT16 SANE_EnableDSUserInterface (pTW_IDENTITY pOrigin,
             rc = DoScannerUI();
             if (!rc)
             {
-                activeDS.pendingEvent.TWMessage = MSG_CLOSEDSREQ;
+                if (activeDS.windowMessage)
+                    PostMessageA(activeDS.hwndOwner, activeDS.windowMessage, MSG_CLOSEDSREQ, 0);
             }
 #ifdef SONAME_LIBSANE
             else
@@ -599,8 +598,9 @@ TW_UINT16 SANE_EnableDSUserInterface (pTW_IDENTITY pOrigin,
         else
         {
             /* no UI will be displayed, so source is ready to transfer data */
-            activeDS.pendingEvent.TWMessage = MSG_XFERREADY;
             activeDS.currentState = 6; /* Transitions to state 6 directly */
+            if (activeDS.windowMessage)
+                PostMessageA(activeDS.hwndOwner, activeDS.windowMessage, MSG_XFERREADY, 0);
         }
 
         activeDS.hwndOwner = pUserInterface->hParent;
