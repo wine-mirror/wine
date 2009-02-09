@@ -708,17 +708,17 @@ void WINAPI DOSVM_outport( int port, int size, DWORD value )
                    if (value & 0x02 && !(tmr_8253[0].flags & TMR_LATCHED))
                    {
                        tmr_8253[0].flags |= TMR_LATCHED;
-                       tmr_8253[0].latch = get_timer_val(chan);
+                       tmr_8253[0].latch = get_timer_val(0);
                    }
                    if (value & 0x04 && !(tmr_8253[1].flags & TMR_LATCHED))
                    {
                        tmr_8253[1].flags |= TMR_LATCHED;
-                       tmr_8253[1].latch = get_timer_val(chan);
+                       tmr_8253[1].latch = get_timer_val(1);
                    }
                    if (value & 0x08 && !(tmr_8253[2].flags & TMR_LATCHED))
                    {
                        tmr_8253[2].flags |= TMR_LATCHED;
-                       tmr_8253[2].latch = get_timer_val(chan);
+                       tmr_8253[2].latch = get_timer_val(2);
                    }
                }
 
