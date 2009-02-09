@@ -257,10 +257,6 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
         case ICAP_XFERMECH:
             twCC = SANE_ICAPXferMech (pCapability, action);
             break;
-
-        default:
-            twCC = TWRC_FAILURE;
-
     }
 
     return twCC;
