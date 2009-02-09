@@ -128,6 +128,25 @@ static	DWORD	ADPCM_GetFormatIndex(const WAVEFORMATEX* wfx)
 	    return i;
     }
 
+    switch (wfx->wFormatTag)
+    {
+    case WAVE_FORMAT_PCM:
+	if(3 > wfx->nChannels &&
+	   wfx->nChannels > 0 &&
+	   wfx->nAvgBytesPerSec == 2 * wfx->nSamplesPerSec * wfx->nChannels &&
+	   wfx->nBlockAlign == 2 * wfx->nChannels &&
+	   wfx->wBitsPerSample == 16)
+	   return hi;
+	break;
+    case WAVE_FORMAT_ADPCM:
+	if(3 > wfx->nChannels &&
+	   wfx->nChannels > 0 &&
+	   wfx->wBitsPerSample == 4 &&
+	   wfx->cbSize == 32)
+	   return hi;
+	break;
+    }
+
     return 0xFFFFFFFF;
 }
 
@@ -146,8 +165,8 @@ static void     init_wfx_adpcm(ADPCMWAVEFORMAT* awfx)
     case  8000: pwfx->nBlockAlign = 256;   break;
     case 11025: pwfx->nBlockAlign = 256;   break;
     case 22050: pwfx->nBlockAlign = 512;   break;
-    default:
     case 44100: pwfx->nBlockAlign = 1024;  break;
+    default:                               break;
     }
     pwfx->cbSize = 2 * sizeof(WORD) + 7 * sizeof(ADPCMCOEFSET);
     /* 7 is the size of the block head (which contains two samples) */
@@ -477,18 +496,19 @@ static	LRESULT	ADPCM_FormatSuggest(PACMDRVFORMATSUGGEST adfs)
             adfs->pwfxDst->wFormatTag = WAVE_FORMAT_PCM;
     }
 
-    /* check if result is ok */
-    if (ADPCM_GetFormatIndex(adfs->pwfxDst) == 0xFFFFFFFF) return ACMERR_NOTPOSSIBLE;
-
     /* recompute other values */
     switch (adfs->pwfxDst->wFormatTag)
     {
     case WAVE_FORMAT_PCM:
         adfs->pwfxDst->nBlockAlign = (adfs->pwfxDst->nChannels * adfs->pwfxDst->wBitsPerSample) / 8;
         adfs->pwfxDst->nAvgBytesPerSec = adfs->pwfxDst->nSamplesPerSec * adfs->pwfxDst->nBlockAlign;
+        /* check if result is ok */
+        if (ADPCM_GetFormatIndex(adfs->pwfxDst) == 0xFFFFFFFF) return ACMERR_NOTPOSSIBLE;
         break;
     case WAVE_FORMAT_ADPCM:
         init_wfx_adpcm((ADPCMWAVEFORMAT*)adfs->pwfxDst);
+        /* check if result is ok */
+        if (ADPCM_GetFormatIndex(adfs->pwfxDst) == 0xFFFFFFFF) return ACMERR_NOTPOSSIBLE;
         break;
     default:
         FIXME("\n");
