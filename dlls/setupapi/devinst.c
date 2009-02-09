@@ -36,7 +36,6 @@
 #include "wine/list.h"
 #include "wine/unicode.h"
 #include "cfgmgr32.h"
-#include "initguid.h"
 #include "winioctl.h"
 #include "rpc.h"
 #include "rpcdce.h"
@@ -181,7 +180,7 @@ static void SETUPDI_FreeInterfaceInstances(struct InterfaceInstances *instances)
  * Returns FALSE if not found.
  */
 static BOOL SETUPDI_FindInterface(const struct DeviceInfo *devInfo,
-        const GUID *InterfaceClassGuid, struct InterfaceInstances **interface)
+        const GUID *InterfaceClassGuid, struct InterfaceInstances **iface_ret)
 {
     BOOL found = FALSE;
     struct InterfaceInstances *iface;
@@ -193,12 +192,12 @@ static BOOL SETUPDI_FindInterface(const struct DeviceInfo *devInfo,
     {
         if (IsEqualGUID(&iface->guid, InterfaceClassGuid))
         {
-            *interface = iface;
+            *iface_ret = iface;
             found = TRUE;
             break;
         }
     }
-    TRACE("returning %d (%p)\n", found, found ? *interface : NULL);
+    TRACE("returning %d (%p)\n", found, found ? *iface_ret : NULL);
     return found;
 }
 
@@ -1985,7 +1984,7 @@ end:
 }
 
 static void SETUPDI_AddDeviceInterfaces(SP_DEVINFO_DATA *dev, HKEY key,
-        const GUID *interface)
+        const GUID *guid)
 {
     DWORD i, len;
     WCHAR subKeyName[MAX_PATH];
@@ -2003,8 +2002,7 @@ static void SETUPDI_AddDeviceInterfaces(SP_DEVINFO_DATA *dev, HKEY key,
             if (*subKeyName == '#')
             {
                 /* The subkey name is the reference string, with a '#' prepended */
-                SETUPDI_AddInterfaceInstance(dev, interface, subKeyName + 1,
-                        &iface);
+                SETUPDI_AddInterfaceInstance(dev, guid, subKeyName + 1, &iface);
                 l = RegOpenKeyExW(key, subKeyName, 0, KEY_READ, &subKey);
                 if (!l)
                 {
@@ -2027,7 +2025,7 @@ static void SETUPDI_AddDeviceInterfaces(SP_DEVINFO_DATA *dev, HKEY key,
 }
 
 static void SETUPDI_EnumerateMatchingInterfaces(HDEVINFO DeviceInfoSet,
-        HKEY key, const GUID *interface, LPCWSTR enumstr)
+        HKEY key, const GUID *guid, LPCWSTR enumstr)
 {
     struct DeviceInfoSet *set = DeviceInfoSet;
     DWORD i, len;
@@ -2085,8 +2083,7 @@ static void SETUPDI_EnumerateMatchingInterfaces(HDEVINFO DeviceInfoSet,
                                 if (SETUPDI_AddDeviceToSet(set, &deviceClass,
                                         0 /* FIXME: DevInst */, deviceInst,
                                         FALSE, &dev))
-                                    SETUPDI_AddDeviceInterfaces(dev, subKey,
-                                            interface);
+                                    SETUPDI_AddDeviceInterfaces(dev, subKey, guid);
                             }
                             RegCloseKey(deviceKey);
                         }
@@ -2103,12 +2100,12 @@ static void SETUPDI_EnumerateMatchingInterfaces(HDEVINFO DeviceInfoSet,
 }
 
 static void SETUPDI_EnumerateInterfaces(HDEVINFO DeviceInfoSet,
-        const GUID *interface, LPCWSTR enumstr, DWORD flags)
+        const GUID *guid, LPCWSTR enumstr, DWORD flags)
 {
-    HKEY interfacesKey = SetupDiOpenClassRegKeyExW(interface, KEY_READ,
+    HKEY interfacesKey = SetupDiOpenClassRegKeyExW(guid, KEY_READ,
             DIOCR_INTERFACE, NULL, NULL);
 
-    TRACE("%p, %s, %s, %08x\n", DeviceInfoSet, debugstr_guid(interface),
+    TRACE("%p, %s, %s, %08x\n", DeviceInfoSet, debugstr_guid(guid),
             debugstr_w(enumstr), flags);
 
     if (interfacesKey != INVALID_HANDLE_VALUE)
@@ -2152,7 +2149,7 @@ static void SETUPDI_EnumerateInterfaces(HDEVINFO DeviceInfoSet,
              * interface's key, so just pass that long
              */
             SETUPDI_EnumerateMatchingInterfaces(DeviceInfoSet,
-                    interfacesKey, interface, enumstr);
+                    interfacesKey, guid, enumstr);
         }
         RegCloseKey(interfacesKey);
     }
