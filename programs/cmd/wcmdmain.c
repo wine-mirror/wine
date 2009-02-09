@@ -1204,9 +1204,9 @@ void WCMD_execute (WCHAR *command, WCHAR *redirects,
     SECURITY_ATTRIBUTES sa;
     WCHAR *new_cmd = NULL;
     WCHAR *new_redir = NULL;
-    HANDLE old_stdhandles[3] = {INVALID_HANDLE_VALUE,
-                                INVALID_HANDLE_VALUE,
-                                INVALID_HANDLE_VALUE};
+    HANDLE old_stdhandles[3] = {GetStdHandle (STD_INPUT_HANDLE),
+                                GetStdHandle (STD_OUTPUT_HANDLE),
+                                GetStdHandle (STD_ERROR_HANDLE)};
     DWORD  idx_stdhandles[3] = {STD_INPUT_HANDLE,
                                 STD_OUTPUT_HANDLE,
                                 STD_ERROR_HANDLE};
@@ -1325,7 +1325,6 @@ void WCMD_execute (WCHAR *command, WCHAR *redirects,
           HeapFree( GetProcessHeap(), 0, new_redir );
           return;
         }
-        old_stdhandles[0] = GetStdHandle (STD_INPUT_HANDLE);
         SetStdHandle (STD_INPUT_HANDLE, h);
 
         /* No need to remember the temporary name any longer once opened */
@@ -1341,7 +1340,6 @@ void WCMD_execute (WCHAR *command, WCHAR *redirects,
         HeapFree( GetProcessHeap(), 0, new_redir );
 	return;
       }
-      old_stdhandles[0] = GetStdHandle (STD_INPUT_HANDLE);
       SetStdHandle (STD_INPUT_HANDLE, h);
     }
 
@@ -1396,7 +1394,6 @@ void WCMD_execute (WCHAR *command, WCHAR *redirects,
         WINE_TRACE("Redirect %d to '%s' (%p)\n", handle, wine_dbgstr_w(param), h);
       }
 
-      old_stdhandles[handle] = GetStdHandle (idx_stdhandles[handle]);
       SetStdHandle (idx_stdhandles[handle], h);
     }
 
@@ -1559,7 +1556,7 @@ void WCMD_execute (WCHAR *command, WCHAR *redirects,
 
     /* Restore old handles */
     for (i=0; i<3; i++) {
-      if (old_stdhandles[i] != INVALID_HANDLE_VALUE) {
+      if (old_stdhandles[i] != GetStdHandle(idx_stdhandles[i])) {
         CloseHandle (GetStdHandle (idx_stdhandles[i]));
         SetStdHandle (idx_stdhandles[i], old_stdhandles[i]);
       }
