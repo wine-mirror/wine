@@ -135,17 +135,19 @@ static void testCreateCTL(void)
      */
     SetLastError(0xdeadbeef);
     ctl = CertCreateCTLContext(X509_ASN_ENCODING, signedCTL, sizeof(signedCTL));
-    ok(!ctl &&
+    ok((!ctl &&
      (GetLastError() == ERROR_INVALID_DATA ||
-      GetLastError() == CRYPT_E_UNEXPECTED_MSG_TYPE), /* win9x */
+      GetLastError() == CRYPT_E_UNEXPECTED_MSG_TYPE /* win9x */)) ||
+      broken(ctl /* some win98 */),
      "expected ERROR_INVALID_DATA, got %d (0x%08x)\n", GetLastError(),
      GetLastError());
     SetLastError(0xdeadbeef);
     ctl = CertCreateCTLContext(X509_ASN_ENCODING, ctlWithOneEntry,
      sizeof(ctlWithOneEntry));
-    ok(!ctl &&
+    ok((!ctl &&
      (GetLastError() == ERROR_INVALID_DATA ||
-      GetLastError() == OSS_DATA_ERROR), /* win9x */
+      GetLastError() == CRYPT_E_UNEXPECTED_MSG_TYPE /* win9x */)) ||
+      broken(ctl /* some win98 */),
      "expected ERROR_INVALID_DATA, got %d (0x%08x)\n", GetLastError(),
      GetLastError());
     SetLastError(0xdeadbeef);
@@ -228,12 +230,15 @@ static void testCTLProperties(void)
     /* An implicit property */
     ret = CertGetCTLContextProperty(ctl, CERT_ACCESS_STATE_PROP_ID, NULL,
      &size);
-    ok(ret, "CertGetCTLContextProperty failed: %08x\n", GetLastError());
+    ok(ret || broken(GetLastError() == CRYPT_E_NOT_FOUND /* some win98 */),
+     "CertGetCTLContextProperty failed: %08x\n", GetLastError());
     ret = CertGetCTLContextProperty(ctl, CERT_ACCESS_STATE_PROP_ID, &access,
      &size);
-    ok(ret, "CertGetCTLContextProperty failed: %08x\n", GetLastError());
-    ok(!(access & CERT_ACCESS_STATE_WRITE_PERSIST_FLAG),
-     "Didn't expect a persisted cert\n");
+    ok(ret || broken(GetLastError() == CRYPT_E_NOT_FOUND /* some win98 */),
+     "CertGetCTLContextProperty failed: %08x\n", GetLastError());
+    if (ret)
+        ok(!(access & CERT_ACCESS_STATE_WRITE_PERSIST_FLAG),
+         "Didn't expect a persisted cert\n");
 
     checkHash(signedCTLWithCTLInnerContent,
      sizeof(signedCTLWithCTLInnerContent), CALG_SHA1, ctl, CERT_HASH_PROP_ID);
