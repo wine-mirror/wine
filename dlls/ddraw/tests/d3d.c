@@ -1033,6 +1033,7 @@ static void Direct3D1Test(void)
     D3DVIEWPORT vp_data;
     D3DINSTRUCTION *instr;
     D3DBRANCH *branch;
+    IDirect3D *Direct3D_alt;
     unsigned int idx = 0;
     static struct v_in testverts[] = {
         {0.0, 0.0, 0.0},  { 1.0,  1.0,  1.0}, {-1.0, -1.0, -1.0},
@@ -1049,6 +1050,12 @@ static void Direct3D1Test(void)
     D3DHVERTEX outH[sizeof(testverts) / sizeof(testverts[0])];
     D3DTRANSFORMDATA transformdata;
     DWORD i = FALSE;
+
+    /* Interface consistency check. */
+    hr = IDirect3DDevice_GetDirect3D(Direct3DDevice1, &Direct3D_alt);
+    ok(hr == D3D_OK, "IDirect3DDevice_GetDirect3D failed: %08x\n", hr);
+    if (hr == D3D_OK)
+        ok(Direct3D_alt == Direct3D1, "Direct3D1 struct pointer missmatch: %p != %p\n", Direct3D_alt, Direct3D1);
 
     memset(&desc, 0, sizeof(desc));
     desc.dwSize = sizeof(desc);

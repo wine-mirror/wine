@@ -1790,7 +1790,7 @@ Thunk_IDirect3DDeviceImpl_3_GetDirect3D(IDirect3DDevice3 *iface,
     ret = IDirect3DDevice7_GetDirect3D((IDirect3DDevice7 *)This, &ret_ptr);
     if(ret != D3D_OK)
         return ret;
-    *Direct3D3 = ret_ptr ? (IDirect3D3 *)&((IDirectDrawImpl *)ret_ptr)->IDirect3D3_vtbl : NULL;
+    *Direct3D3 = ret_ptr ? (IDirect3D3 *)&ddraw_from_d3d7(ret_ptr)->IDirect3D3_vtbl : NULL;
     TRACE(" returning interface %p\n", *Direct3D3);
     return D3D_OK;
 }
@@ -1807,7 +1807,7 @@ Thunk_IDirect3DDeviceImpl_2_GetDirect3D(IDirect3DDevice2 *iface,
     ret = IDirect3DDevice7_GetDirect3D((IDirect3DDevice7 *)This, &ret_ptr);
     if(ret != D3D_OK)
         return ret;
-    *Direct3D2 = ret_ptr ? (IDirect3D2 *)&((IDirectDrawImpl *)ret_ptr)->IDirect3D2_vtbl : NULL;
+    *Direct3D2 = ret_ptr ? (IDirect3D2 *)&ddraw_from_d3d7(ret_ptr)->IDirect3D2_vtbl : NULL;
     TRACE(" returning interface %p\n", *Direct3D2);
     return D3D_OK;
 }
@@ -1824,7 +1824,7 @@ Thunk_IDirect3DDeviceImpl_1_GetDirect3D(IDirect3DDevice *iface,
     ret = IDirect3DDevice7_GetDirect3D((IDirect3DDevice7 *)This, &ret_ptr);
     if(ret != D3D_OK)
         return ret;
-    *Direct3D = ret_ptr ? (IDirect3D *)&((IDirectDrawImpl *)ret_ptr)->IDirect3D_vtbl : NULL;
+    *Direct3D = ret_ptr ? (IDirect3D *)&ddraw_from_d3d7(ret_ptr)->IDirect3D_vtbl : NULL;
     TRACE(" returning interface %p\n", *Direct3D);
     return D3D_OK;
 }
