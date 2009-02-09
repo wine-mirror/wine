@@ -835,6 +835,32 @@ static void create_assembly(LPCSTR file)
     CloseHandle(hfile);
 }
 
+static BOOL check_dotnet20(void)
+{
+    IAssemblyCache *cache;
+    HRESULT hr;
+    BOOL ret = FALSE;
+
+    static const WCHAR winedll[] = {'w','i','n','e','.','d','l','l',0};
+
+    create_assembly("wine.dll");
+
+    hr = pCreateAssemblyCache(&cache, 0);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IAssemblyCache_InstallAssembly(cache, 0, winedll, NULL);
+    if (hr == S_OK)
+        ret = TRUE;
+    else if (hr == CLDB_E_FILE_OLDVER)
+        win_skip("Tests can't be run on older .NET version (.NET 1.1)\n");
+    else
+        ok(0, "Expected S_OK, got %08x\n", hr);
+
+    DeleteFileA("wine.dll");
+    IAssemblyCache_Release(cache);
+    return ret;
+}
+
 static void test_CreateAssemblyCache(void)
 {
     IAssemblyCache *cache;
@@ -1462,6 +1488,9 @@ static void test_QueryAssemblyInfo(void)
 START_TEST(asmcache)
 {
     if (!init_functionpointers())
+        return;
+
+    if (!check_dotnet20())
         return;
 
     test_CreateAssemblyCache();
