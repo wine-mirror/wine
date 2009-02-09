@@ -137,7 +137,6 @@ void ME_Repaint(ME_TextEditor *editor)
 void ME_UpdateRepaint(ME_TextEditor *editor)
 {
   /* Should be called whenever the contents of the control have changed */
-  ME_Cursor *pCursor;
   BOOL wrappedParagraphs;
 
   wrappedParagraphs = ME_WrapMarkedParagraphs(editor);
@@ -145,8 +144,7 @@ void ME_UpdateRepaint(ME_TextEditor *editor)
     ME_UpdateScrollBar(editor);
 
   /* Ensure that the cursor is visible */
-  pCursor = &editor->pCursors[0];
-  ME_EnsureVisible(editor, pCursor);
+  ME_EnsureVisible(editor, &editor->pCursors[0]);
 
   /* send EN_CHANGE if the event mask asks for it */
   if(editor->nEventMask & ENM_CHANGE)
@@ -1226,7 +1224,7 @@ void ME_EnsureVisible(ME_TextEditor *editor, ME_Cursor *pCursor)
 {
   ME_Run *pRun = &pCursor->pRun->member.run;
   ME_DisplayItem *pRow = ME_FindItemBack(pCursor->pRun, diStartRow);
-  ME_DisplayItem *pPara = ME_FindItemBack(pCursor->pRun, diParagraph);
+  ME_DisplayItem *pPara = pCursor->pPara;
   int x, y, yheight;
 
   assert(pRow);

@@ -163,7 +163,8 @@ int ME_CharOfsFromRunOfs(ME_TextEditor *editor, const ME_DisplayItem *pPara,
  */
 void ME_CursorFromCharOfs(ME_TextEditor *editor, int nCharOfs, ME_Cursor *pCursor)
 {
-  ME_RunOfsFromCharOfs(editor, nCharOfs, NULL, &pCursor->pRun, &pCursor->nOffset);
+  ME_RunOfsFromCharOfs(editor, nCharOfs, &pCursor->pPara,
+                       &pCursor->pRun, &pCursor->nOffset);
 }
 
 /******************************************************************************
@@ -243,10 +244,10 @@ void ME_JoinRuns(ME_TextEditor *editor, ME_DisplayItem *p)
 
 /******************************************************************************
  * ME_SplitRun
- * 
+ *
  * Splits a run into two in a given place. It also updates the screen position
- * and size (extent) of the newly generated runs.  
- */    
+ * and size (extent) of the newly generated runs.
+ */
 ME_DisplayItem *ME_SplitRun(ME_WrapContext *wc, ME_DisplayItem *item, int nVChar)
 {
   ME_TextEditor *editor = wc->context->editor;
@@ -369,38 +370,38 @@ ME_DisplayItem *ME_InsertRun(ME_TextEditor *editor, int nCharOfs, ME_DisplayItem
 
 /******************************************************************************
  * ME_InsertRunAtCursor
- * 
+ *
  * Inserts a new run with given style, flags and content at a given position,
  * which is passed as a cursor structure (which consists of a run and 
- * a run-relative character offset). 
- */   
+ * a run-relative character offset).
+ */
 ME_DisplayItem *
 ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
                      const WCHAR *str, int len, int flags)
 {
   ME_DisplayItem *pDI;
   ME_UndoItem *pUI;
-  
+
   if (cursor->nOffset) {
   	/* We're inserting at the middle of the existing run, which means that
 		 * that run must be split. It isn't always necessary, but */
     cursor->pRun = ME_SplitRunSimple(editor, cursor->pRun, cursor->nOffset);
     cursor->nOffset = 0;
   }
-  
+
   pUI = ME_AddUndoItem(editor, diUndoDeleteRun, NULL);
   if (pUI) {
-    pUI->nStart = (ME_GetParagraph(cursor->pRun)->member.para.nCharOfs
-                   + cursor->pRun->member.run.nCharOfs);
+    pUI->nStart = cursor->pPara->member.para.nCharOfs
+                  + cursor->pRun->member.run.nCharOfs;
     pUI->nLen = len;
   }
-  
+
   pDI = ME_MakeRun(style, ME_MakeStringN(str, len), flags);
   pDI->member.run.nCharOfs = cursor->pRun->member.run.nCharOfs;
   ME_InsertBefore(cursor->pRun, pDI);
   TRACE("Shift length:%d\n", len);
   ME_PropagateCharOffset(cursor->pRun, len);
-  ME_GetParagraph(cursor->pRun)->member.para.nFlags |= MEPF_REWRAP;
+  cursor->pPara->member.para.nFlags |= MEPF_REWRAP;
   return pDI;
 }
 
@@ -577,10 +578,10 @@ static void ME_GetTextExtent(ME_Context *c, LPCWSTR szText, int nChars, ME_Style
 
 /******************************************************************************
  * ME_PointFromChar
- * 
+ *
  * Returns a run-relative pixel position given a run-relative character
  * position (character offset)
- */     
+ */
 int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset)
 {
   SIZE size;
@@ -776,7 +777,7 @@ void ME_SetCharFormat(ME_TextEditor *editor, int nOfs, int nChars, CHARFORMAT2W 
   if (tmp2.nOffset)
     tmp2.pRun = ME_SplitRunSimple(editor, tmp2.pRun, tmp2.nOffset);
 
-  para = ME_GetParagraph(tmp.pRun);
+  para = tmp.pPara;
   para->member.para.nFlags |= MEPF_REWRAP;
 
   while(tmp.pRun != tmp2.pRun)
