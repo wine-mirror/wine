@@ -1176,7 +1176,7 @@ static void checkElementStatus(const CERT_TRUST_STATUS *expected,
         todo_wine
         ok(got->dwErrorStatus == expected->dwErrorStatus ||
          broken((got->dwErrorStatus & ~ignore->dwErrorStatus) ==
-         expected->dwErrorStatus),
+         (expected->dwErrorStatus & ~ignore->dwErrorStatus)),
          "Chain %d, element [%d,%d]: expected error %08x, got %08x\n",
          testIndex, chainIndex, elementIndex, expected->dwErrorStatus,
          got->dwErrorStatus);
@@ -1196,14 +1196,14 @@ static void checkElementStatus(const CERT_TRUST_STATUS *expected,
         todo_wine
         ok(got->dwInfoStatus == expected->dwInfoStatus ||
          broken((got->dwInfoStatus & ~ignore->dwInfoStatus) ==
-         expected->dwInfoStatus),
+         (expected->dwInfoStatus & ignore->dwInfoStatus)),
          "Chain %d, element [%d,%d]: expected info %08x, got %08x\n",
          testIndex, chainIndex, elementIndex, expected->dwInfoStatus,
          got->dwInfoStatus);
     else
         ok(got->dwInfoStatus == expected->dwInfoStatus ||
          broken((got->dwInfoStatus & ~ignore->dwInfoStatus) ==
-         expected->dwInfoStatus),
+         (expected->dwInfoStatus & ~ignore->dwInfoStatus)),
          "Chain %d, element [%d,%d]: expected info %08x, got %08x\n",
          testIndex, chainIndex, elementIndex, expected->dwInfoStatus,
          got->dwInfoStatus);
@@ -1249,7 +1249,11 @@ static void checkChainStatus(PCCERT_CHAIN_CONTEXT chain,
     if (todo & TODO_ERROR &&
      chain->TrustStatus.dwErrorStatus != chainStatus->status.dwErrorStatus)
         todo_wine ok(chain->TrustStatus.dwErrorStatus ==
-         chainStatus->status.dwErrorStatus,
+         chainStatus->status.dwErrorStatus ||
+         broken((chain->TrustStatus.dwErrorStatus &
+         ~chainStatus->statusToIgnore.dwErrorStatus) ==
+         (chainStatus->status.dwErrorStatus &
+         ~chainStatus->statusToIgnore.dwErrorStatus)),
          "Chain %d: expected error %08x, got %08x\n",
          testIndex, chainStatus->status.dwErrorStatus,
          chain->TrustStatus.dwErrorStatus);
@@ -1266,7 +1270,11 @@ static void checkChainStatus(PCCERT_CHAIN_CONTEXT chain,
     if (todo & TODO_INFO &&
      chain->TrustStatus.dwInfoStatus != chainStatus->status.dwInfoStatus)
         todo_wine ok(chain->TrustStatus.dwInfoStatus ==
-         chainStatus->status.dwInfoStatus,
+         chainStatus->status.dwInfoStatus ||
+         broken((chain->TrustStatus.dwInfoStatus &
+         ~chainStatus->statusToIgnore.dwInfoStatus) ==
+         (chainStatus->status.dwInfoStatus &
+         ~chainStatus->statusToIgnore.dwInfoStatus)),
          "Chain %d: expected info %08x, got %08x\n",
          testIndex, chainStatus->status.dwInfoStatus,
          chain->TrustStatus.dwInfoStatus);
@@ -1275,7 +1283,8 @@ static void checkChainStatus(PCCERT_CHAIN_CONTEXT chain,
          chainStatus->status.dwInfoStatus ||
          broken((chain->TrustStatus.dwInfoStatus &
          ~chainStatus->statusToIgnore.dwInfoStatus) ==
-         chainStatus->status.dwInfoStatus),
+         (chainStatus->status.dwInfoStatus &
+         ~chainStatus->statusToIgnore.dwInfoStatus)),
          "Chain %d: expected info %08x, got %08x\n",
          testIndex, chainStatus->status.dwInfoStatus,
          chain->TrustStatus.dwInfoStatus);
