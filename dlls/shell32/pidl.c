@@ -59,7 +59,7 @@ static LPSTR _ILGetSTextPointer(LPCITEMIDLIST pidl);
 static LPWSTR _ILGetTextPointerW(LPCITEMIDLIST pidl);
 
 /*************************************************************************
- * ILGetDisplayNameEx        [SHELL32.186]
+ * ILGetDisplayNameExA
  *
  * Retrieves the display name of an ItemIDList
  *
@@ -75,7 +75,7 @@ static LPWSTR _ILGetTextPointerW(LPCITEMIDLIST pidl);
  * RETURNS
  *  True if the display name could be retrieved successfully, False otherwise
  */
-BOOL WINAPI ILGetDisplayNameExA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPSTR path, DWORD type)
+static BOOL ILGetDisplayNameExA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPSTR path, DWORD type)
 {
     BOOL ret = FALSE;
     WCHAR wPath[MAX_PATH];
@@ -160,6 +160,9 @@ BOOL WINAPI ILGetDisplayNameExW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPWSTR pa
     return SUCCEEDED(ret);
 }
 
+/*************************************************************************
+ * ILGetDisplayNameEx        [SHELL32.186]
+ */
 BOOL WINAPI ILGetDisplayNameEx(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPVOID path, DWORD type)
 {
     TRACE_(shell)("%p %p %p %d\n", psf, pidl, path, type);
