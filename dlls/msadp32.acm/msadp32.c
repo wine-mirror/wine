@@ -472,6 +472,7 @@ static	LRESULT	ADPCM_FormatSuggest(PACMDRVFORMATSUGGEST adfs)
     /* some tests ... */
     if (adfs->cbwfxSrc < sizeof(PCMWAVEFORMAT) ||
 	adfs->cbwfxDst < sizeof(PCMWAVEFORMAT) ||
+	adfs->pwfxSrc->wFormatTag == adfs->pwfxDst->wFormatTag ||
 	ADPCM_GetFormatIndex(adfs->pwfxSrc) == 0xFFFFFFFF) return ACMERR_NOTPOSSIBLE;
     /* FIXME: should do those tests against the real size (according to format tag */
 
