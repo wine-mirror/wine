@@ -2699,7 +2699,7 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
                 nameLen += 1;
                 ret = FALSE;
             }
-            else if (ReferencedDomainName && domainName)
+            else if (ReferencedDomainName)
             {
                 strcpyW(ReferencedDomainName, domainName);
             }
