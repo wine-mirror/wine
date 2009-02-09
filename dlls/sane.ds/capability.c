@@ -36,7 +36,7 @@ static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability);
 
 TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
-    TW_UINT16 twCC = TWCC_SUCCESS;
+    TW_UINT16 twCC = TWCC_CAPUNSUPPORTED;
 
     TRACE("capability=%d action=%d\n", pCapability->Cap, action);
 
@@ -49,132 +49,16 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
                 twCC = TWCC_BADVALUE;
             break;
 
-        case CAP_DEVICEEVENT:
-        case CAP_ALARMS:
-        case CAP_ALARMVOLUME:
-        case ACAP_AUDIOFILEFORMAT:
-        case ACAP_XFERMECH:
-        case ICAP_AUTOMATICBORDERDETECTION:
-        case ICAP_AUTOMATICDESKEW:
-        case ICAP_AUTODISCARDBLANKPAGES:
-        case ICAP_AUTOMATICROTATE:
-        case ICAP_FLIPROTATION:
-        case CAP_AUTOMATICCAPTURE:
-        case CAP_TIMEBEFOREFIRSTCAPTURE:
-        case CAP_TIMEBETWEENCAPTURES:
-        case CAP_AUTOSCAN:
-        case CAP_CLEARBUFFERS:
-        case CAP_MAXBATCHBUFFERS:
-        case ICAP_BARCODEDETECTIONENABLED:
-        case ICAP_SUPPORTEDBARCODETYPES:
-        case ICAP_BARCODEMAXSEARCHPRIORITIES:
-        case ICAP_BARCODESEARCHPRIORITIES:
-        case ICAP_BARCODESEARCHMODE:
-        case ICAP_BARCODEMAXRETRIES:
-        case ICAP_BARCODETIMEOUT:
-        case CAP_EXTENDEDCAPS:
-        case ICAP_FILTER:
-        case ICAP_GAMMA:
-        case ICAP_PLANARCHUNKY:
-        case ICAP_BITORDERCODES:
-        case ICAP_CCITTKFACTOR:
-        case ICAP_COMPRESSION:
-        case ICAP_JPEGPIXELTYPE:
-        /*case ICAP_JPEGQUALITY:*/
-        case ICAP_PIXELFLAVORCODES:
-        case ICAP_TIMEFILL:
-        case CAP_DEVICEONLINE:
-        case CAP_DEVICETIMEDATE:
-        case CAP_SERIALNUMBER:
-        case ICAP_EXPOSURETIME:
-        case ICAP_FLASHUSED2:
-        case ICAP_IMAGEFILTER:
-        case ICAP_LAMPSTATE:
-        case ICAP_LIGHTPATH:
-        case ICAP_NOISEFILTER:
-        case ICAP_OVERSCAN:
-        case ICAP_PHYSICALHEIGHT:
-        case ICAP_PHYSICALWIDTH:
-        case ICAP_UNITS:
-        case ICAP_ZOOMFACTOR:
-        case CAP_PRINTER:
-        case CAP_PRINTERENABLED:
-        case CAP_PRINTERINDEX:
-        case CAP_PRINTERMODE:
-        case CAP_PRINTERSTRING:
-        case CAP_PRINTERSUFFIX:
-        case CAP_AUTHOR:
-        case CAP_CAPTION:
-        case CAP_TIMEDATE:
-        case ICAP_AUTOBRIGHT:
-        case ICAP_BRIGHTNESS:
-        case ICAP_CONTRAST:
-        case ICAP_HIGHLIGHT:
-        case ICAP_ORIENTATION:
-        case ICAP_ROTATION:
-        case ICAP_SHADOW:
-        case ICAP_XSCALING:
-        case ICAP_YSCALING:
-        case ICAP_BITDEPTH:
-        case ICAP_BITDEPTHREDUCTION:
-        case ICAP_BITORDER:
-        case ICAP_CUSTHALFTONE:
-        case ICAP_HALFTONES:
-        case ICAP_PIXELFLAVOR:
-        case ICAP_PIXELTYPE:
-        case ICAP_THRESHOLD:
-        case CAP_LANGUAGE:
-        case ICAP_FRAMES:
-        case ICAP_MAXFRAMES:
-        case ICAP_SUPPORTEDSIZES:
-        case CAP_AUTOFEED:
-        case CAP_CLEARPAGE:
-        case CAP_FEEDERALIGNMENT:
-        case CAP_FEEDERENABLED:
-        case CAP_FEEDERLOADED:
-        case CAP_FEEDERORDER:
-        case CAP_FEEDPAGE:
-        case CAP_PAPERBINDING:
-        case CAP_PAPERDETECTABLE:
-        case CAP_REACQUIREALLOWED:
-        case CAP_REWINDPAGE:
-        case ICAP_PATCHCODEDETECTIONENABLED:
-        case ICAP_SUPPORTEDPATCHCODETYPES:
-        case ICAP_PATCHCODEMAXSEARCHPRIORITIES:
-        case ICAP_PATCHCODESEARCHPRIORITIES:
-        case ICAP_PATCHCODESEARCHMODE:
-        case ICAP_PATCHCODEMAXRETRIES:
-        case ICAP_PATCHCODETIMEOUT:
-        case CAP_BATTERYMINUTES:
-        case CAP_BATTERYPERCENTAGE:
-        case CAP_POWERDOWNTIME:
-        case CAP_POWERSUPPLY:
-        case ICAP_XNATIVERESOLUTION:
-        case ICAP_XRESOLUTION:
-        case ICAP_YNATIVERESOLUTION:
-        case ICAP_YRESOLUTION:
-            twCC = TWCC_CAPUNSUPPORTED;
-            break;
         case CAP_XFERCOUNT:
             /* This is a required capability that every source needs to
                support but we haven't implemented it yet. */
             twCC = TWCC_SUCCESS;
             break;
-        /*case ICAP_COMPRESSION:*/
-        case ICAP_IMAGEFILEFORMAT:
-        case ICAP_TILES:
-            twCC = TWCC_CAPUNSUPPORTED;
-            break;
+
         case ICAP_XFERMECH:
             twCC = SANE_ICAPXferMech (pCapability, action);
             break;
-        case ICAP_UNDEFINEDIMAGESIZE:
-        case CAP_CAMERAPREVIEWUI:
-        case CAP_ENABLEDSUIONLY:
-        case CAP_INDICATORS:
-        case CAP_UICONTROLLABLE:
-            twCC = TWCC_CAPUNSUPPORTED;
-            break;
+
         default:
             twCC = TWRC_FAILURE;
 
