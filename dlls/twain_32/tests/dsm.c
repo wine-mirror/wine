@@ -323,8 +323,10 @@ static void test_single_source(TW_IDENTITY *appid, TW_IDENTITY *source)
             Sources that supply image information must support DG_CONTROL / DAT_CAPABILITY /
             MSG_GET, MSG_GETCURRENT, MSG_GETDEFAULT on:
         */
-        todo_wine
         ok(capabilities[ICAP_COMPRESSION], "ICAP_COMPRESSION not supported\n");
+        if (capabilities[ICAP_COMPRESSION])
+            test_onevalue_cap(appid, source, ICAP_COMPRESSION, TWTY_UINT16,
+                TWQC_GET | TWQC_GETDEFAULT | TWQC_GETCURRENT);
         todo_wine
         ok(capabilities[ICAP_PLANARCHUNKY], "ICAP_PLANARCHUNKY not supported\n");
         todo_wine

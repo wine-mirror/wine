@@ -126,7 +126,7 @@ static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability)
 {
     TW_ARRAY *a;
     static const UINT16 supported_caps[] = { CAP_SUPPORTEDCAPS, CAP_XFERCOUNT, CAP_UICONTROLLABLE,
-                    ICAP_XFERMECH, ICAP_PIXELTYPE };
+                    ICAP_XFERMECH, ICAP_PIXELTYPE, ICAP_COMPRESSION };
 
     pCapability->hContainer = GlobalAlloc (0, FIELD_OFFSET( TW_ARRAY, ItemList[sizeof(supported_caps)] ));
     pCapability->ConType = TWON_ARRAY;
@@ -303,6 +303,48 @@ static TW_UINT16 SANE_CAPUiControllable(pTW_CAPABILITY pCapability, TW_UINT16 ac
     return twCC;
 }
 
+/* ICAP_COMPRESSION */
+static TW_UINT16 SANE_ICAPCompression (pTW_CAPABILITY pCapability, TW_UINT16 action)
+{
+    static const TW_UINT32 possible_values[] = { TWCP_NONE };
+    TW_UINT32 val;
+    TW_UINT16 twCC = TWCC_BADCAP;
+
+    TRACE("ICAP_COMPRESSION\n");
+
+    switch (action)
+    {
+        case MSG_QUERYSUPPORT:
+            twCC = set_onevalue(pCapability, TWTY_INT32,
+                    TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET );
+            break;
+
+        case MSG_GET:
+            twCC = msg_get_enum(pCapability, possible_values, sizeof(possible_values) / sizeof(possible_values[0]),
+                    TWTY_UINT16, TWCP_NONE, TWCP_NONE);
+            FIXME("Partial stub:  We don't attempt to support compression\n");
+            break;
+
+        case MSG_SET:
+            twCC = msg_set(pCapability, &val);
+            if (twCC == TWCC_SUCCESS)
+               FIXME("Partial Stub:  COMPRESSION set to %d, but ignored\n", val);
+            break;
+
+        case MSG_GETDEFAULT:
+            twCC = set_onevalue(pCapability, TWTY_UINT16, TWCP_NONE);
+            break;
+
+        case MSG_RESET:
+            /* .. fall through intentional .. */
+
+        case MSG_GETCURRENT:
+            twCC = set_onevalue(pCapability, TWTY_UINT16, TWCP_NONE);
+            break;
+    }
+    return twCC;
+}
+
 TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
     TW_UINT16 twCC = TWCC_CAPUNSUPPORTED;
@@ -332,6 +374,10 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 
         case ICAP_XFERMECH:
             twCC = SANE_ICAPXferMech (pCapability, action);
+            break;
+
+        case ICAP_COMPRESSION:
+            twCC = SANE_ICAPCompression(pCapability, action);
             break;
     }
 
