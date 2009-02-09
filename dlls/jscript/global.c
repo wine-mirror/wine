@@ -48,7 +48,7 @@ static const WCHAR isFiniteW[] = {'i','s','F','i','n','i','t','e',0};
 static const WCHAR parseIntW[] = {'p','a','r','s','e','I','n','t',0};
 static const WCHAR parseFloatW[] = {'p','a','r','s','e','F','l','o','a','t',0};
 static const WCHAR unescapeW[] = {'u','n','e','s','c','a','p','e',0};
-static const WCHAR GetObjectW[] = {'G','e','t','O','b','j','e','c','t',0};
+static const WCHAR _GetObjectW[] = {'G','e','t','O','b','j','e','c','t',0};
 static const WCHAR ScriptEngineW[] = {'S','c','r','i','p','t','E','n','g','i','n','e',0};
 static const WCHAR ScriptEngineMajorVersionW[] =
     {'S','c','r','i','p','t','E','n','g','i','n','e','M','a','j','o','r','V','e','r','s','i','o','n',0};
@@ -542,7 +542,7 @@ static const builtin_prop_t JSGlobal_props[] = {
     {DateW,                      JSGlobal_Date,                      PROPF_CONSTR},
     {EnumeratorW,                JSGlobal_Enumerator,                PROPF_METHOD},
     {FunctionW,                  JSGlobal_Function,                  PROPF_CONSTR},
-    {GetObjectW,                 JSGlobal_GetObject,                 PROPF_METHOD},
+    {_GetObjectW,                JSGlobal_GetObject,                 PROPF_METHOD},
     {InfinityW,                  JSGlobal_Infinity,                  0},
 /*  {MathW,                      JSGlobal_Math,                      0},  */
     {NaNW,                       JSGlobal_NaN,                       0},
