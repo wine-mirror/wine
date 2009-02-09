@@ -31,43 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
-static TW_UINT16 SANE_ICAPXferMech (pTW_CAPABILITY pCapability, TW_UINT16 action);
-static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability);
-
-TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
-{
-    TW_UINT16 twCC = TWCC_CAPUNSUPPORTED;
-
-    TRACE("capability=%d action=%d\n", pCapability->Cap, action);
-
-    switch (pCapability->Cap)
-    {
-        case CAP_SUPPORTEDCAPS:
-            if (action == MSG_GET)
-                twCC = TWAIN_GetSupportedCaps(pCapability);
-            else
-                twCC = TWCC_BADVALUE;
-            break;
-
-        case CAP_XFERCOUNT:
-            /* This is a required capability that every source needs to
-               support but we haven't implemented it yet. */
-            twCC = TWCC_SUCCESS;
-            break;
-
-        case ICAP_XFERMECH:
-            twCC = SANE_ICAPXferMech (pCapability, action);
-            break;
-
-        default:
-            twCC = TWRC_FAILURE;
-
-    }
-
-    return twCC;
-}
-
-
 static TW_UINT16 get_onevalue(pTW_CAPABILITY pCapability, TW_UINT16 *type, TW_UINT32 *value)
 {
     if (pCapability->hContainer)
@@ -228,5 +191,39 @@ static TW_UINT16 SANE_ICAPXferMech (pTW_CAPABILITY pCapability, TW_UINT16 action
             FIXME("Partial Stub:  XFERMECH of %d not actually used\n", activeDS.capXferMech);
             break;
     }
+    return twCC;
+}
+
+
+TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
+{
+    TW_UINT16 twCC = TWCC_CAPUNSUPPORTED;
+
+    TRACE("capability=%d action=%d\n", pCapability->Cap, action);
+
+    switch (pCapability->Cap)
+    {
+        case CAP_SUPPORTEDCAPS:
+            if (action == MSG_GET)
+                twCC = TWAIN_GetSupportedCaps(pCapability);
+            else
+                twCC = TWCC_BADVALUE;
+            break;
+
+        case CAP_XFERCOUNT:
+            /* This is a required capability that every source needs to
+               support but we haven't implemented it yet. */
+            twCC = TWCC_SUCCESS;
+            break;
+
+        case ICAP_XFERMECH:
+            twCC = SANE_ICAPXferMech (pCapability, action);
+            break;
+
+        default:
+            twCC = TWRC_FAILURE;
+
+    }
+
     return twCC;
 }
