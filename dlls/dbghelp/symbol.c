@@ -128,10 +128,11 @@ static BOOL compile_file_regex(regex_t* re, const char* srcfile)
     char *mask, *p;
     BOOL ret;
 
+    if (!srcfile || !*srcfile) return regcomp(re, ".*", REG_NOSUB);
+
     p = mask = HeapAlloc(GetProcessHeap(), 0, 5 * strlen(srcfile) + 4);
     *p++ = '^';
-    if (!srcfile || !*srcfile) *p++ = '*';
-    else while (*srcfile)
+    while (*srcfile)
     {
         switch (*srcfile)
         {
@@ -192,12 +193,14 @@ static void compile_regex(const char* str, int numchar, regex_t* re, BOOL _case)
 
 static BOOL compile_file_regex(regex_t* re, const char* srcfile)
 {
-    compile_regex( srcfile, -1, re, FALSE );
+    if (!srcfile || !*srcfile) re->str = NULL;
+    else compile_regex( srcfile, -1, re, FALSE );
     return TRUE;
 }
 
 static int match_regexp( const regex_t *re, const char *str )
 {
+    if (!re->str) return 1;
     if (re->icase) return !lstrcmpiA( re->str, str );
     return !strcmp( re->str, str );
 }
