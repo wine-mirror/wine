@@ -28,6 +28,11 @@ cpp_quote("#define GECKO_VERSION_STRING \"Wine Gecko \" GECKO_VERSION")
 
 import "wtypes.idl";
 
+cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
+cpp_quote("#undef GetForm")
+cpp_quote("#undef SetPort")
+cpp_quote("#endif")
+
 typedef HRESULT nsresult;
 typedef ULONG nsrefcnt;
 

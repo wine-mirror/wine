@@ -18,6 +18,10 @@
 
 import "oaidl.idl";
 
+cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
+cpp_quote("#undef FindText")
+cpp_quote("#endif")
+
 typedef enum tagTomConstants
 {
     tomFalse       = 0,

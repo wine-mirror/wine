@@ -33,6 +33,10 @@ cpp_quote("DEFINE_GUID(SID_SHTMLEditServices,   0x3050f7f9,0x98b5,0x11cf,0xbb,0x
 cpp_quote("#define SID_SHTMLWindow IID_IHTMLWindow2")
 cpp_quote("#define SID_SElementBehaviorFactory IID_IElementBehaviorFactory")
 
+cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
+cpp_quote("#undef FindText")
+cpp_quote("#endif")
+
 typedef enum {
     POINTER_GRAVITY_Left,
     POINTER_GRAVITY_Right,
