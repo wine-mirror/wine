@@ -159,7 +159,7 @@ static void check_get(TW_CAPABILITY *pCapability, TW_INT32 actual_support,
     }
 }
 
-static void test_onevalue_cap(TW_IDENTITY *appid, TW_IDENTITY *source, TW_UINT16 captype, TW_UINT16 type, TW_INT32 expected_support)
+static void test_onevalue_cap(TW_IDENTITY *appid, TW_IDENTITY *source, TW_UINT16 captype, TW_UINT16 type, TW_INT32 minimum_support)
 {
     TW_UINT16 rc;
     TW_UINT16 rtype;
@@ -180,9 +180,9 @@ static void test_onevalue_cap(TW_IDENTITY *appid, TW_IDENTITY *source, TW_UINT16
             "Error [rc %d|cc %d] doing MSG_QUERYSUPPORT for type 0x%x\n", rc, status.ConditionCode, captype);
     if (rc != TWRC_SUCCESS)
         return;
-    ok(get_onevalue(cap.hContainer, (TW_UINT32 *) &actual_support, NULL), "Returned cap.hContainer invalid for QuerySupport on type 0x%x\n", captype);
-    ok(actual_support == expected_support,
-            "Error:  expected support 0x%x for type 0x%x, got 0x%x\n", expected_support,
+    ok(get_onevalue(cap.hContainer, (TW_UINT32 *) &actual_support, NULL), "Returned cap.hContainer invalid for QuerySupport on type 0x%x", captype);
+    ok((actual_support & minimum_support) == minimum_support,
+            "Error:  minimum support 0x%x for type 0x%x, got 0x%x\n", minimum_support,
             captype, actual_support);
 
 
