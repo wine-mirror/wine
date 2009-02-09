@@ -40,11 +40,13 @@ DEFINE_GUID(CLSID_IdentityUnmarshal,0x0000001b,0x0000,0x0000,0xc0,0x00,0x00,0x00
 
 #define CTXARG_T DWORDLONG
 #define IActiveScriptParseVtbl IActiveScriptParse64Vtbl
+#define IActiveScriptParseProcedure2Vtbl IActiveScriptParseProcedure2_64Vtbl
 
 #else
 
 #define CTXARG_T DWORD
 #define IActiveScriptParseVtbl IActiveScriptParse32Vtbl
+#define IActiveScriptParseProcedure2Vtbl IActiveScriptParseProcedure2_32Vtbl
 
 #endif
 
@@ -550,7 +552,7 @@ static ULONG WINAPI ActiveScriptParseProcedure_Release(IActiveScriptParseProcedu
 static HRESULT WINAPI ActiveScriptParseProcedure_ParseProcedureText(IActiveScriptParseProcedure2 *iface,
         LPCOLESTR pstrCode, LPCOLESTR pstrFormalParams, LPCOLESTR pstrProcedureName,
         LPCOLESTR pstrItemName, IUnknown *punkContext, LPCOLESTR pstrDelimiter,
-        DWORD dwSourceContextCookie, ULONG ulStartingLineNumber, DWORD dwFlags, IDispatch **ppdisp)
+        CTXARG_T dwSourceContextCookie, ULONG ulStartingLineNumber, DWORD dwFlags, IDispatch **ppdisp)
 {
     ok(0, "unexpected call\n");
     return E_NOTIMPL;

@@ -175,7 +175,7 @@ static void release_script_engine(ScriptHost *This)
 
     default:
         if(This->parse_proc) {
-            IActiveScriptParseProcedure_Release(This->parse_proc);
+            IUnknown_Release(This->parse_proc);
             This->parse_proc = NULL;
         }
 
@@ -783,7 +783,7 @@ IDispatch *script_parse_event(HTMLDocument *doc, LPCWSTR text)
     if(!script_host || !script_host->parse_proc)
         return NULL;
 
-    hres = IActiveScriptParseProcedure_ParseProcedureText(script_host->parse_proc, ptr, NULL, emptyW,
+    hres = IActiveScriptParseProcedure64_ParseProcedureText(script_host->parse_proc, ptr, NULL, emptyW,
             NULL, NULL, delimiterW, 0 /* FIXME */, 0,
             SCRIPTPROC_HOSTMANAGESSOURCE|SCRIPTPROC_IMPLICIT_THIS|SCRIPTPROC_IMPLICIT_PARENTS, &disp);
     if(FAILED(hres)) {
