@@ -582,6 +582,7 @@ TW_UINT16 SANE_EnableDSUserInterface (pTW_IDENTITY pOrigin,
             activeDS.currentState = 5; /* Transitions to state 5 */
 		FIXME("showing UI\n");
             rc = DoScannerUI();
+            pUserInterface->ModalUI = TRUE;
             if (!rc)
             {
                 if (activeDS.windowMessage)
