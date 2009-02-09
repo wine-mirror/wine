@@ -125,7 +125,7 @@ static TW_UINT16 msg_get_enum(pTW_CAPABILITY pCapability, const TW_UINT32 *value
 static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability)
 {
     TW_ARRAY *a;
-    static const UINT16 supported_caps[] = { CAP_SUPPORTEDCAPS, CAP_XFERCOUNT,
+    static const UINT16 supported_caps[] = { CAP_SUPPORTEDCAPS, CAP_XFERCOUNT, CAP_UICONTROLLABLE,
                     ICAP_XFERMECH, ICAP_PIXELTYPE };
 
     pCapability->hContainer = GlobalAlloc (0, FIELD_OFFSET( TW_ARRAY, ItemList[sizeof(supported_caps)] ));
@@ -282,6 +282,27 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
     return twCC;
 }
 
+/* CAP_UICONTROLLABLE */
+static TW_UINT16 SANE_CAPUiControllable(pTW_CAPABILITY pCapability, TW_UINT16 action)
+{
+    TW_UINT16 twCC = TWCC_BADCAP;
+
+    TRACE("CAP_UICONTROLLABLE\n");
+
+    switch (action)
+    {
+        case MSG_QUERYSUPPORT:
+            twCC = set_onevalue(pCapability, TWTY_INT32, TWQC_GET);
+            break;
+
+        case MSG_GET:
+            twCC = set_onevalue(pCapability, TWTY_BOOL, TRUE);
+            break;
+
+    }
+    return twCC;
+}
+
 TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
     TW_UINT16 twCC = TWCC_CAPUNSUPPORTED;
@@ -299,6 +320,10 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 
         case CAP_XFERCOUNT:
             twCC = SANE_CAPXferCount (pCapability, action);
+            break;
+
+        case CAP_UICONTROLLABLE:
+            twCC = SANE_CAPUiControllable (pCapability, action);
             break;
 
         case ICAP_PIXELTYPE:

@@ -95,7 +95,7 @@ static TW_HANDLE alloc_and_set_onevalue(TW_UINT32 val, TW_UINT16 type)
     return hcontainer;
 }
 
-static void check_get(TW_CAPABILITY *pCapability,
+static void check_get(TW_CAPABILITY *pCapability, TW_INT32 actual_support,
                 TW_UINT32 orig_value, TW_UINT32 default_value, TW_UINT32 *suggested_set_value)
 {
     void *p;
@@ -104,7 +104,7 @@ static void check_get(TW_CAPABILITY *pCapability,
     p = GlobalLock(pCapability->hContainer);
     if (p)
     {
-        if (pCapability->ConType == TWON_ONEVALUE)
+        if (pCapability->ConType == TWON_ONEVALUE && actual_support & TWQC_GETCURRENT)
         {
             TW_ONEVALUE *onev = (TW_ONEVALUE *) p;
             ok(onev->Item == orig_value, "MSG_GET of 0x%x returned 0x%x, expecting 0x%x\n",
@@ -233,7 +233,7 @@ static void test_onevalue_cap(TW_IDENTITY *appid, TW_IDENTITY *source, TW_UINT16
         get_condition_code(appid, source, &status);
         ok(rc == TWRC_SUCCESS && status.ConditionCode == TWCC_SUCCESS,
                 "Error [rc %d|cc %d] doing MSG_GET for type 0x%x\n", rc, status.ConditionCode, captype);
-        check_get(&cap, orig_value, default_value, &new_value);
+        check_get(&cap, actual_support, orig_value, default_value, &new_value);
         if (rc == TWRC_SUCCESS)
             GlobalFree(cap.hContainer);
     }
@@ -313,8 +313,9 @@ static void test_single_source(TW_IDENTITY *appid, TW_IDENTITY *source)
     if (capabilities[CAP_XFERCOUNT])
         test_onevalue_cap(appid, source, CAP_XFERCOUNT, TWTY_INT16,
             TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET);
-    todo_wine
     ok(capabilities[CAP_UICONTROLLABLE], "CAP_UICONTROLLABLE not supported\n");
+    if (capabilities[CAP_UICONTROLLABLE])
+        test_onevalue_cap(appid, source, CAP_UICONTROLLABLE, TWTY_BOOL, TWQC_GET);
 
     if (source->SupportedGroups & DG_IMAGE)
     {
