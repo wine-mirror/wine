@@ -386,5 +386,8 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
     if (twCC == TWCC_CAPUNSUPPORTED && action == MSG_QUERYSUPPORT)
         twCC = set_onevalue(pCapability, 0, TWTY_INT32);
 
+    if (twCC == TWCC_CAPUNSUPPORTED)
+        TRACE("capability 0x%x/action=%d being reported as unsupported\n", pCapability->Cap, action);
+
     return twCC;
 }
