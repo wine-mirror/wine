@@ -986,6 +986,14 @@ static void test_shell_window(void)
         DWORD pid;
         HANDLE hProcess;
 
+        GetWindowThreadProcessId(shellWindow, &pid);
+        hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+        if (!hProcess)
+        {
+            skip( "cannot get access to shell process\n" );
+            return;
+        }
+
         SetLastError(0xdeadbeef);
         ret = DestroyWindow(shellWindow);
         error = GetLastError();
@@ -996,8 +1004,6 @@ static void test_shell_window(void)
            "got %u after DestroyWindow(shellWindow)\n", error);
 
         /* close old shell instance */
-        GetWindowThreadProcessId(shellWindow, &pid);
-        hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
         ret = TerminateProcess(hProcess, 0);
         ok(ret, "termination of previous shell process failed: GetLastError()=%d\n", GetLastError());
         WaitForSingleObject(hProcess, INFINITE);    /* wait for termination */
@@ -2624,9 +2630,16 @@ static void test_keyboard_input(HWND hwnd)
     flush_events( TRUE );
 
     PostMessageA(hwnd, WM_KEYDOWN, 0, 0);
-    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    do
+    {
+        ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+        ok( ret, "no message available\n");
+    }
+    while (ret && msg.message >= 0xc000);
     ok(msg.hwnd == hwnd && msg.message == WM_KEYDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
-    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    do
+        ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    while (ret && (msg.message == WM_TIMER || msg.message >= 0xc000));
     ok( !ret, "message %04x available\n", msg.message);
 
     ok(GetFocus() == hwnd, "wrong focus window %p\n", GetFocus());
@@ -2755,7 +2768,7 @@ static void test_mouse_input(HWND hwnd)
     /* FIXME: SetCursorPos in Wine generates additional WM_MOUSEMOVE message */
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
     {
-        if (msg.message >= 0xc000) continue;  /* skip registered messages */
+        if (msg.message == WM_TIMER || msg.message >= 0xc000) continue;  /* skip registered messages */
         ok(msg.hwnd == popup && msg.message == WM_MOUSEMOVE,
            "hwnd %p message %04x\n", msg.hwnd, msg.message);
     }
@@ -2778,8 +2791,10 @@ static void test_mouse_input(HWND hwnd)
     /* test mouse clicks */
 
     ShowWindow(hwnd, SW_SHOW);
+    SetWindowPos( hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE );
     flush_events( TRUE );
     ShowWindow(popup, SW_SHOW);
+    SetWindowPos( popup, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE );
     flush_events( TRUE );
 
     mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
@@ -3440,10 +3455,12 @@ static void test_params(void)
                       0, 0, 100, 100,
                       NULL, (HMENU)1, NULL, 0);
 
-    ok(!hwnd, "CreateWindow with invalid menu handle should fail\n");
-    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE || /* NT */
-       GetLastError() == 0xdeadbeef, /* Win9x */
-       "wrong last error value %d\n", GetLastError());
+    ok(!hwnd || broken(hwnd != NULL), /* w2k3 sp2 */
+       "CreateWindow with invalid menu handle should fail\n");
+    if (!hwnd)
+        ok(GetLastError() == ERROR_INVALID_MENU_HANDLE || /* NT */
+           GetLastError() == 0xdeadbeef, /* Win9x */
+           "wrong last error value %d\n", GetLastError());
 }
 
 static void test_AWRwindow(LPCSTR class, LONG style, LONG exStyle, BOOL menu)
@@ -4828,11 +4845,14 @@ static void test_GetWindowModuleFileName(void)
     buf2[0] = 0;
     SetLastError(0xdeadbeef);
     ret2 = pGetWindowModuleFileNameA(hwnd, buf2, sizeof(buf2));
-    ok(ret2, "GetWindowModuleFileNameA error %u\n", GetLastError());
+    ok(ret2 || broken(!ret2), /* nt4 sp 3 */
+       "GetWindowModuleFileNameA error %u\n", GetLastError());
 
-    ok(ret1 == ret2 || broken(ret2 == ret1 + 1), /* win98 */ "%u != %u\n", ret1, ret2);
-    ok(!strcmp(buf1, buf2), "%s != %s\n", buf1, buf2);
-
+    if (ret2)
+    {
+        ok(ret1 == ret2 || broken(ret2 == ret1 + 1), /* win98 */ "%u != %u\n", ret1, ret2);
+        ok(!strcmp(buf1, buf2), "%s != %s\n", buf1, buf2);
+    }
     hinst = GetModuleHandle(0);
 
     SetLastError(0xdeadbeef);
@@ -4852,7 +4872,7 @@ static void test_GetWindowModuleFileName(void)
 
     SetLastError(0xdeadbeef);
     ret2 = pGetWindowModuleFileNameA(hwnd, buf2, ret1 - 2);
-    ok(ret2 == ret1 - 2 || broken(ret2 == ret1 - 3), /* win98 */
+    ok(ret2 == ret1 - 2 || broken(ret2 == ret1 - 3) /* win98 */ || broken(!ret2), /* nt4 sp3 */
        "expected %u, got %u\n", ret1 - 2, ret2);
     ok(GetLastError() == 0xdeadbeef /* XP */ ||
        GetLastError() == ERROR_INSUFFICIENT_BUFFER, /* win2k3, vista */
