@@ -363,7 +363,8 @@ static void test_assembly_name_props_line(IAssemblyName *name,
         to_multibyte(val, str);
 
         ok(hr == vals[i].hr ||
-           broken(i >= ASM_NAME_CONFIG_MASK && hr == E_INVALIDARG), /* .NET 1.1 */
+           broken(i >= ASM_NAME_CONFIG_MASK && hr == E_INVALIDARG) || /* .NET 1.1 */
+           broken(i >= ASM_NAME_FILE_MAJOR_VERSION && hr == E_INVALIDARG), /* .NET 1.0 */
            "%d: prop %d: Expected %08x, got %08x\n", line, i, vals[i].hr, hr);
         if (hr != E_INVALIDARG)
         {
