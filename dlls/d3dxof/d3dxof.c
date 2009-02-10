@@ -127,11 +127,12 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   IDirectXFileImpl *This = (IDirectXFileImpl *)iface;
   IDirectXFileEnumObjectImpl* object;
   HRESULT hr;
-  DWORD header[4];
+  DWORD* header;
   HANDLE hFile = INVALID_HANDLE_VALUE;
   HANDLE file_mapping = 0;
   LPBYTE buffer = NULL;
-  DWORD file_size = 0;
+  LPBYTE file_buffer;
+  DWORD file_size;
 
   LPDXFILELOADMEMORY lpdxflm = NULL;
 
@@ -152,11 +153,6 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
     }
 
     file_size = GetFileSize(hFile, NULL);
-    if (file_size < 16)
-    {
-      hr = DXFILEERR_BADFILETYPE;
-      goto error;
-    }
 
     file_mapping = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
     if (!file_mapping)
@@ -171,7 +167,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
       hr = DXFILEERR_BADFILETYPE;
       goto error;
     }
-    memcpy(header, buffer, 16);
+    file_buffer = buffer;
   }
   else if (dwLoadOptions == DXFILELOAD_FROMMEMORY)
   {
@@ -179,7 +175,8 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
 
     TRACE("Source in memory at %p with size %d\n", lpdxflm->lpMemory, lpdxflm->dSize);
 
-    memcpy(header, lpdxflm->lpMemory, 16);
+    file_buffer = lpdxflm->lpMemory;
+    file_size = lpdxflm->dSize;
   }
   else
   {
@@ -188,12 +185,20 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
     goto error;
   }
 
+  header = (DWORD*)file_buffer;
+
   if (TRACE_ON(d3dxof))
   {
     char string[17];
     memcpy(string, header, 16);
     string[16] = 0;
     TRACE("header = '%s'\n", string);
+  }
+
+  if (file_size < 16)
+  {
+    hr = DXFILEERR_BADFILETYPE;
+    goto error;
   }
 
   if (header[0] != XOFFILE_FORMAT_MAGIC)
@@ -243,18 +248,11 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   object->buf.token_present = FALSE;
   object->buf.cur_subobject = 0;
 
-  if (dwLoadOptions == DXFILELOAD_FROMFILE)
-  {
-    object->buf.buffer = buffer + 16;
-    object->buf.rem_bytes = file_size - 16;
-  }
-  else
-  {
-    object->buf.buffer = ((LPBYTE)lpdxflm->lpMemory) + 16;
-    object->buf.rem_bytes = lpdxflm->dSize;
-  }
+  TRACE("File size is %d bytes\n", file_size);
 
-  TRACE("Object size is %d bytes\n", object->buf.rem_bytes + 16);
+  /* Go to data after header */
+  object->buf.buffer = file_buffer + 16;
+  object->buf.rem_bytes = file_size - 16;
 
   *ppEnumObj = (LPDIRECTXFILEENUMOBJECT)object;
 
