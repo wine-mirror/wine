@@ -138,7 +138,7 @@ static void testCreateCTL(void)
     ok((!ctl &&
      (GetLastError() == ERROR_INVALID_DATA ||
       GetLastError() == CRYPT_E_UNEXPECTED_MSG_TYPE /* win9x */)) ||
-      broken(ctl /* some win98 */),
+      broken(ctl != NULL /* some win98 */),
      "expected ERROR_INVALID_DATA, got %d (0x%08x)\n", GetLastError(),
      GetLastError());
     SetLastError(0xdeadbeef);
@@ -147,7 +147,7 @@ static void testCreateCTL(void)
     ok((!ctl &&
      (GetLastError() == ERROR_INVALID_DATA ||
       GetLastError() == CRYPT_E_UNEXPECTED_MSG_TYPE /* win9x */)) ||
-      broken(ctl /* some win98 */),
+      broken(ctl != NULL /* some win98 */),
      "expected ERROR_INVALID_DATA, got %d (0x%08x)\n", GetLastError(),
      GetLastError());
     SetLastError(0xdeadbeef);
