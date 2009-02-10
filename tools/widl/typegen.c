@@ -3383,12 +3383,14 @@ void declare_stub_args( FILE *file, int indent, const var_t *func )
             if (!in_attr && !is_conformant_array(var->type) && !is_string)
             {
                 type_t *type_to_print;
+                char name[16];
                 print_file(file, indent, "%s", "");
                 if (var->type->declarray)
                     type_to_print = var->type;
                 else
                     type_to_print = type_pointer_get_ref(var->type);
-                write_type_decl(file, type_to_print, "_W%u", i++);
+                sprintf(name, "_W%u", i++);
+                write_type_decl(file, type_to_print, name);
                 fprintf(file, ";\n");
             }
 

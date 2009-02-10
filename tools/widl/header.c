@@ -149,7 +149,7 @@ static void write_field(FILE *h, var_t *v)
   if (!v) return;
   if (v->type) {
     indent(h, 0);
-    write_type_def_or_decl(h, v->type, TRUE, "%s", v->name);
+    write_type_def_or_decl(h, v->type, TRUE, v->name);
     fprintf(h, ";\n");
   }
 }
@@ -278,8 +278,7 @@ void write_type_right(FILE *h, type_t *t, int is_field)
   }
 }
 
-void write_type_v(FILE *h, type_t *t, int is_field, int declonly,
-                  const char *fmt, va_list args)
+static void write_type_v(FILE *h, type_t *t, int is_field, int declonly, const char *name)
 {
   type_t *pt;
   int ptr_level = 0;
@@ -302,11 +301,9 @@ void write_type_v(FILE *h, type_t *t, int is_field, int declonly,
       fputc('*', h);
   } else
     write_type_left(h, t, declonly);
-  if (fmt) {
-    if (needs_space_after(t))
-      fputc(' ', h);
-    vfprintf(h, fmt, args);
-  }
+
+  if (name) fprintf(h, "%s%s", needs_space_after(t) ? " " : "", name );
+
   if (pt->type == RPC_FC_FUNCTION) {
     if (ptr_level) fputc(')', h);
     fputc('(', h);
@@ -316,20 +313,14 @@ void write_type_v(FILE *h, type_t *t, int is_field, int declonly,
     write_type_right(h, t, is_field);
 }
 
-void write_type_def_or_decl(FILE *f, type_t *t, int field, const char *fmt, ...)
+void write_type_def_or_decl(FILE *f, type_t *t, int field, const char *name)
 {
-  va_list args;
-  va_start(args, fmt);
-  write_type_v(f, t, field, FALSE, fmt, args);
-  va_end(args);
+  write_type_v(f, t, field, FALSE, name);
 }
 
-void write_type_decl(FILE *f, type_t *t, const char *fmt, ...)
+void write_type_decl(FILE *f, type_t *t, const char *name)
 {
-  va_list args;
-  va_start(args, fmt);
-  write_type_v(f, t, FALSE, TRUE, fmt, args);
-  va_end(args);
+  write_type_v(f, t, FALSE, TRUE, name);
 }
 
 void write_type_decl_left(FILE *f, type_t *t)
@@ -471,7 +462,7 @@ static void write_generic_handle_routines(FILE *header)
 static void write_typedef(FILE *header, type_t *type)
 {
   fprintf(header, "typedef ");
-  write_type_def_or_decl(header, type_alias_get_aliasee(type), FALSE, "%s", type->name);
+  write_type_def_or_decl(header, type_alias_get_aliasee(type), FALSE, type->name);
   fprintf(header, ";\n");
 }
 
@@ -515,7 +506,7 @@ static void write_declaration(FILE *header, const var_t *v)
         fprintf(header, "extern ");
         break;
     }
-    write_type_def_or_decl(header, v->type, FALSE, "%s", v->name);
+    write_type_def_or_decl(header, v->type, FALSE, v->name);
     fprintf(header, ";\n\n");
   }
 }
@@ -677,7 +668,7 @@ void write_args(FILE *h, const var_list_t *args, const char *name, int method, i
         }
         else fprintf(h, ",");
     }
-    write_type_decl(h, arg->type, "%s", arg->name);
+    write_type_decl(h, arg->type, arg->name);
     count++;
   }
   if (do_indent) indentation--;
