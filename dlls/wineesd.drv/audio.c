@@ -244,8 +244,8 @@ static const char *wodPlayerCmdString[] = {
 static void volume_effect16(void *bufin, void* bufout, int length, int left,
 		int right, int 	nChannels)
 {
-  short *d_out = (short *)bufout;
-  short *d_in = (short *)bufin;
+  short *d_out = bufout;
+  short *d_in = bufin;
   int i, v;
 
 /*
@@ -270,8 +270,8 @@ static void volume_effect16(void *bufin, void* bufout, int length, int left,
 static void volume_effect8(void *bufin, void* bufout, int length, int left,
 		int right, int 	nChannels)
 {
-  BYTE *d_out = (BYTE *)bufout;
-  BYTE *d_in = (BYTE *)bufin;
+  BYTE *d_out = bufout;
+  BYTE *d_in = bufin;
   int i, v;
 
 /*
@@ -1133,8 +1133,8 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
  */
 static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 {
-    WORD	  uDevID = (DWORD)pmt;
-    WINE_WAVEOUT* wwo = (WINE_WAVEOUT*)&WOutDev[uDevID];
+    WORD          uDevID = (DWORD)pmt;
+    WINE_WAVEOUT* wwo = &WOutDev[uDevID];
     DWORD         dwNextFeedTime = INFINITE;   /* Time before DSP needs feeding */
     DWORD         dwNextNotifyTime = INFINITE; /* Time before next wave completion */
     DWORD         dwSleepTime;
@@ -1679,7 +1679,7 @@ static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSW lpCaps, DWORD dwSize)
 static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 {
     WORD		uDevID = (DWORD)pmt;
-    WINE_WAVEIN*	wwi = (WINE_WAVEIN*)&WInDev[uDevID];
+    WINE_WAVEIN*        wwi = &WInDev[uDevID];
     WAVEHDR*		lpWaveHdr;
     DWORD		dwSleepTime;
     int			bytesRead;
