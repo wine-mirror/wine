@@ -203,8 +203,6 @@ static BOOL FTP_FtpGetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPWSTR lpszC
 static BOOL FTP_FtpRenameFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszSrc, LPCWSTR lpszDest);
 static BOOL FTP_FtpRemoveDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory);
 static BOOL FTP_FtpDeleteFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszFileName);
-static HINTERNET FTP_FtpOpenFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszFileName,
-        DWORD fdwAccess, DWORD dwFlags, DWORD_PTR dwContext);
 static BOOL FTP_FtpGetFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, LPCWSTR lpszNewFile,
         BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
         DWORD_PTR dwContext);
@@ -1075,118 +1073,6 @@ lend:
     return bSuccess;
 }
 
-/***********************************************************************
- *           FtpOpenFileA (WININET.@)
- *
- * Open a remote file for writing or reading
- *
- * RETURNS
- *    HINTERNET handle on success
- *    NULL on failure
- *
- */
-HINTERNET WINAPI FtpOpenFileA(HINTERNET hFtpSession,
-    LPCSTR lpszFileName, DWORD fdwAccess, DWORD dwFlags,
-    DWORD_PTR dwContext)
-{
-    LPWSTR lpwzFileName;
-    HINTERNET ret;
-    
-    lpwzFileName = lpszFileName?WININET_strdup_AtoW(lpszFileName):NULL;
-    ret = FtpOpenFileW(hFtpSession, lpwzFileName, fdwAccess, dwFlags, dwContext);
-    HeapFree(GetProcessHeap(), 0, lpwzFileName);
-    return ret;
-}
-
-
-static void AsyncFtpOpenFileProc(WORKREQUEST *workRequest)
-{
-    struct WORKREQ_FTPOPENFILEW const *req = &workRequest->u.FtpOpenFileW;
-    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
-
-    TRACE("%p\n", lpwfs);
-
-    FTP_FtpOpenFileW(lpwfs, req->lpszFilename,
-        req->dwAccess, req->dwFlags, req->dwContext);
-    HeapFree(GetProcessHeap(), 0, req->lpszFilename);
-}
-
-/***********************************************************************
- *           FtpOpenFileW (WININET.@)
- *
- * Open a remote file for writing or reading
- *
- * RETURNS
- *    HINTERNET handle on success
- *    NULL on failure
- *
- */
-HINTERNET WINAPI FtpOpenFileW(HINTERNET hFtpSession,
-    LPCWSTR lpszFileName, DWORD fdwAccess, DWORD dwFlags,
-    DWORD_PTR dwContext)
-{
-    LPWININETFTPSESSIONW lpwfs;
-    LPWININETAPPINFOW hIC = NULL;
-    HINTERNET r = NULL;
-    
-    TRACE("(%p,%s,0x%08x,0x%08x,0x%08lx)\n", hFtpSession,
-        debugstr_w(lpszFileName), fdwAccess, dwFlags, dwContext);
-
-    lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hFtpSession );
-    if (!lpwfs)
-    {
-        INTERNET_SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
-    }
-
-    if (WH_HFTPSESSION != lpwfs->hdr.htype)
-    {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-        goto lend;
-    }
-
-    if ((!lpszFileName) ||
-        ((fdwAccess != GENERIC_READ) && (fdwAccess != GENERIC_WRITE)) ||
-        ((dwFlags & FTP_CONDITION_MASK) > FTP_TRANSFER_TYPE_BINARY))
-    {
-        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
-        goto lend;
-    }
-
-    if (lpwfs->download_in_progress != NULL)
-    {
-        INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
-        goto lend;
-    }
-
-    hIC = lpwfs->lpAppInfo;
-    if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
-    {
-        WORKREQUEST workRequest;
-        struct WORKREQ_FTPOPENFILEW *req;
-
-        workRequest.asyncproc = AsyncFtpOpenFileProc;
-        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
-        req = &workRequest.u.FtpOpenFileW;
-	req->lpszFilename = WININET_strdupW(lpszFileName);
-	req->dwAccess = fdwAccess;
-	req->dwFlags = dwFlags;
-	req->dwContext = dwContext;
-
-	INTERNET_AsyncCall(&workRequest);
-	r = NULL;
-    }
-    else
-    {
-	r = FTP_FtpOpenFileW(lpwfs, lpszFileName, fdwAccess, dwFlags, dwContext);
-    }
-
-lend:
-    WININET_Release( &lpwfs->hdr );
-
-    return r;
-}
-
 
 /***********************************************************************
  *           FTPFILE_Destroy(internal)
@@ -1361,6 +1247,119 @@ lend:
         WININET_Release( &lpwh->hdr );
 
     return handle;
+}
+
+
+/***********************************************************************
+ *           FtpOpenFileA (WININET.@)
+ *
+ * Open a remote file for writing or reading
+ *
+ * RETURNS
+ *    HINTERNET handle on success
+ *    NULL on failure
+ *
+ */
+HINTERNET WINAPI FtpOpenFileA(HINTERNET hFtpSession,
+    LPCSTR lpszFileName, DWORD fdwAccess, DWORD dwFlags,
+    DWORD_PTR dwContext)
+{
+    LPWSTR lpwzFileName;
+    HINTERNET ret;
+
+    lpwzFileName = lpszFileName?WININET_strdup_AtoW(lpszFileName):NULL;
+    ret = FtpOpenFileW(hFtpSession, lpwzFileName, fdwAccess, dwFlags, dwContext);
+    HeapFree(GetProcessHeap(), 0, lpwzFileName);
+    return ret;
+}
+
+
+static void AsyncFtpOpenFileProc(WORKREQUEST *workRequest)
+{
+    struct WORKREQ_FTPOPENFILEW const *req = &workRequest->u.FtpOpenFileW;
+    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
+
+    TRACE("%p\n", lpwfs);
+
+    FTP_FtpOpenFileW(lpwfs, req->lpszFilename,
+        req->dwAccess, req->dwFlags, req->dwContext);
+    HeapFree(GetProcessHeap(), 0, req->lpszFilename);
+}
+
+/***********************************************************************
+ *           FtpOpenFileW (WININET.@)
+ *
+ * Open a remote file for writing or reading
+ *
+ * RETURNS
+ *    HINTERNET handle on success
+ *    NULL on failure
+ *
+ */
+HINTERNET WINAPI FtpOpenFileW(HINTERNET hFtpSession,
+    LPCWSTR lpszFileName, DWORD fdwAccess, DWORD dwFlags,
+    DWORD_PTR dwContext)
+{
+    LPWININETFTPSESSIONW lpwfs;
+    LPWININETAPPINFOW hIC = NULL;
+    HINTERNET r = NULL;
+
+    TRACE("(%p,%s,0x%08x,0x%08x,0x%08lx)\n", hFtpSession,
+        debugstr_w(lpszFileName), fdwAccess, dwFlags, dwContext);
+
+    lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hFtpSession );
+    if (!lpwfs)
+    {
+        INTERNET_SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    if (WH_HFTPSESSION != lpwfs->hdr.htype)
+    {
+        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+        goto lend;
+    }
+
+    if ((!lpszFileName) ||
+        ((fdwAccess != GENERIC_READ) && (fdwAccess != GENERIC_WRITE)) ||
+        ((dwFlags & FTP_CONDITION_MASK) > FTP_TRANSFER_TYPE_BINARY))
+    {
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        goto lend;
+    }
+
+    if (lpwfs->download_in_progress != NULL)
+    {
+        INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
+        goto lend;
+    }
+
+    hIC = lpwfs->lpAppInfo;
+    if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
+    {
+        WORKREQUEST workRequest;
+        struct WORKREQ_FTPOPENFILEW *req;
+
+        workRequest.asyncproc = AsyncFtpOpenFileProc;
+        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
+        req = &workRequest.u.FtpOpenFileW;
+	req->lpszFilename = WININET_strdupW(lpszFileName);
+	req->dwAccess = fdwAccess;
+	req->dwFlags = dwFlags;
+	req->dwContext = dwContext;
+
+	INTERNET_AsyncCall(&workRequest);
+	r = NULL;
+    }
+    else
+    {
+	r = FTP_FtpOpenFileW(lpwfs, lpszFileName, fdwAccess, dwFlags, dwContext);
+    }
+
+lend:
+    WININET_Release( &lpwfs->hdr );
+
+    return r;
 }
 
 
