@@ -273,10 +273,20 @@ static WORD get_operator_token(char c)
 
 static BOOL is_keyword(parse_buffer* buf, const char* keyword)
 {
-  char tmp[9]; /* template keyword size + 1 */
+  char tmp[8]; /* longest keyword size (template) */
   DWORD len = strlen(keyword);
-  read_bytes(buf, tmp, len+1);
-  if (!strncasecmp(tmp, keyword,len) && is_separator(tmp[len]))
+
+  if (!read_bytes(buf, tmp, len))
+    return FALSE;
+  if (strncasecmp(tmp, keyword, len))
+  {
+    rewind_bytes(buf, len);
+    return FALSE;
+  }
+
+  if (!read_bytes(buf, tmp, 1))
+    return TRUE;
+  if (is_separator(tmp[0]))
   {
     rewind_bytes(buf, 1);
     return TRUE;
