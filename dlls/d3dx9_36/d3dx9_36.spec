@@ -150,7 +150,7 @@
 @ stub D3DXGetDeclLength
 @ stub D3DXGetDeclVertexSize
 @ stdcall D3DXGetDriverLevel(ptr)
-@ stub D3DXGetFVFVertexSize
+@ stdcall D3DXGetFVFVertexSize(long)
 @ stdcall D3DXGetImageInfoFromFileA(ptr ptr) d3dx8.D3DXGetImageInfoFromFileA
 @ stdcall D3DXGetImageInfoFromFileInMemory(ptr long ptr) d3dx8.D3DXGetImageInfoFromFileInMemory
 @ stdcall D3DXGetImageInfoFromFileW(ptr ptr) d3dx8.D3DXGetImageInfoFromFileW
