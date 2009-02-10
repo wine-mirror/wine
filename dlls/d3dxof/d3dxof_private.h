@@ -151,6 +151,7 @@ typedef struct {
     HANDLE hFile;
     HANDLE file_mapping;
     LPBYTE buffer;
+    HGLOBAL resource_data;
     parse_buffer buf;
     IDirectXFileImpl* pDirectXFile;
     ULONG nb_xobjects;

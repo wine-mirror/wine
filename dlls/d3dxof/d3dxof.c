@@ -131,6 +131,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   HANDLE hFile = INVALID_HANDLE_VALUE;
   HANDLE file_mapping = 0;
   LPBYTE buffer = NULL;
+  HGLOBAL resource_data = 0;
   LPBYTE file_buffer;
   DWORD file_size;
 
@@ -168,6 +169,36 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
       goto error;
     }
     file_buffer = buffer;
+  }
+  else if (dwLoadOptions == DXFILELOAD_FROMRESOURCE)
+  {
+    HRSRC resource_info;
+    LPDXFILELOADRESOURCE lpdxflr = pvSource;
+
+    TRACE("Source in resource (module = %p, name = %s, type = %s\n", lpdxflr->hModule, debugstr_a(lpdxflr->lpName), debugstr_a(lpdxflr->lpType));
+
+    resource_info = FindResourceA(lpdxflr->hModule, lpdxflr->lpName, lpdxflr->lpType);
+    if (!resource_info)
+    {
+      hr = DXFILEERR_RESOURCENOTFOUND;
+      goto error;
+    }
+
+    file_size = SizeofResource(lpdxflr->hModule, resource_info);
+
+    resource_data = LoadResource(lpdxflr->hModule, resource_info);
+    if (!resource_data)
+    {
+      hr = DXFILEERR_BADRESOURCE;
+      goto error;
+    }
+
+    file_buffer = LockResource(resource_data);
+    if (!file_buffer)
+    {
+      hr = DXFILEERR_BADRESOURCE;
+      goto error;
+    }
   }
   else if (dwLoadOptions == DXFILELOAD_FROMMEMORY)
   {
@@ -289,6 +320,8 @@ error:
     CloseHandle(file_mapping);
   if (hFile != INVALID_HANDLE_VALUE)
     CloseHandle(hFile);
+  if (resource_data)
+    FreeResource(resource_data);
   *ppEnumObj = NULL;
 
   return hr;
@@ -977,6 +1010,8 @@ static ULONG WINAPI IDirectXFileEnumObjectImpl_Release(IDirectXFileEnumObject* i
       CloseHandle(This->file_mapping);
       CloseHandle(This->hFile);
     }
+    else if (This->source == DXFILELOAD_FROMRESOURCE)
+      FreeResource(This->resource_data);
     HeapFree(GetProcessHeap(), 0, This);
   }
 
