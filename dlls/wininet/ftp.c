@@ -2477,16 +2477,6 @@ lerror:
         handle = NULL;
     }
 
-    if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
-    {
-        INTERNET_ASYNC_RESULT iar;
-
-        iar.dwResult = bSuccess ? (DWORD_PTR)lpwfs : 0;
-        iar.dwError = bSuccess ? ERROR_SUCCESS : INTERNET_GetLastError();
-        SendAsyncCallback(&hIC->hdr, dwContext, INTERNET_STATUS_REQUEST_COMPLETE,
-            &iar, sizeof(INTERNET_ASYNC_RESULT));
-    }
-
     return handle;
 }
 
