@@ -438,6 +438,7 @@ no_compat_defines:
         strarray_add(comp_args, strmake("-I%s/include", opts->wine_objdir) );
 
     spawn(opts->prefix, comp_args, 0);
+    strarray_free(comp_args);
 }
 
 static const char* compile_to_object(struct options* opts, const char* file, const char* lang)
@@ -692,6 +693,7 @@ static void build(struct options* opts)
     }
 
     spawn(opts->prefix, spec_args, 0);
+    strarray_free (spec_args);
 
     /* link everything together now */
     link_args = strarray_alloc();
@@ -755,6 +757,7 @@ static void build(struct options* opts)
     }
 
     spawn(opts->prefix, link_args, 0);
+    strarray_free (link_args);
 
     /* set the base address */
     if (opts->image_base)
@@ -792,6 +795,7 @@ static void forward(int argc, char **argv, struct options* opts)
 	strarray_add(args, argv[j]);
 
     spawn(opts->prefix, args, 0);
+    strarray_free (args);
 }
 
 /*
