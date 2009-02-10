@@ -16,7 +16,7 @@
 @ stub D3DXCompileShaderFromFileW
 @ stub D3DXCompileShaderFromResourceA
 @ stub D3DXCompileShaderFromResourceW
-@ stub D3DXComputeBoundingBox
+@ stdcall D3DXComputeBoundingBox(ptr long long ptr ptr)
 @ stub D3DXComputeBoundingSphere
 @ stub D3DXComputeIMTFromPerTexelSignal
 @ stub D3DXComputeIMTFromPerVertexSignal

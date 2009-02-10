@@ -25,6 +25,36 @@
 
 
 /*************************************************************************
+ * D3DXComputeBoundingBox
+ */
+HRESULT WINAPI D3DXComputeBoundingBox(CONST D3DXVECTOR3 *pfirstposition, DWORD numvertices, DWORD dwstride, D3DXVECTOR3 *pmin, D3DXVECTOR3 *pmax)
+{
+    D3DXVECTOR3 vec;
+    unsigned int i;
+
+    if( !pfirstposition || !pmin || !pmax ) return D3DERR_INVALIDCALL;
+
+    *pmin = *pfirstposition;
+    *pmax = *pmin;
+
+    for(i=0; i<numvertices; i++)
+    {
+        vec = *( (D3DXVECTOR3*)((char*)pfirstposition + dwstride * i) );
+
+        if ( vec.x < pmin->x ) pmin->x = vec.x;
+        if ( vec.x > pmax->x ) pmax->x = vec.x;
+
+        if ( vec.y < pmin->y ) pmin->y = vec.y;
+        if ( vec.y > pmax->y ) pmax->y = vec.y;
+
+        if ( vec.z < pmin->z ) pmin->z = vec.z;
+        if ( vec.z > pmax->z ) pmax->z = vec.z;
+    }
+
+    return D3D_OK;
+}
+
+/*************************************************************************
  * D3DXIntersectTri
  */
 BOOL WINAPI D3DXIntersectTri(CONST D3DXVECTOR3 *p0, CONST D3DXVECTOR3 *p1, CONST D3DXVECTOR3 *p2, CONST D3DXVECTOR3 *praypos, CONST D3DXVECTOR3 *praydir, FLOAT *pu, FLOAT *pv, FLOAT *pdist)
