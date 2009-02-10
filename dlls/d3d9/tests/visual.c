@@ -9898,6 +9898,133 @@ static void zwriteenable_test(IDirect3DDevice9 *device) {
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with 0x%08x\n", hr);
 }
 
+static void alphatest_test(IDirect3DDevice9 *device) {
+#define ALPHATEST_PASSED 0x0000ff00
+#define ALPHATEST_FAILED 0x00ff0000
+    struct {
+        D3DCMPFUNC  func;
+        DWORD       color_less;
+        DWORD       color_equal;
+        DWORD       color_greater;
+    } testdata[] = {
+        {   D3DCMP_NEVER,           ALPHATEST_FAILED, ALPHATEST_FAILED, ALPHATEST_FAILED },
+        {   D3DCMP_LESS,            ALPHATEST_PASSED, ALPHATEST_FAILED, ALPHATEST_FAILED },
+        {   D3DCMP_EQUAL,           ALPHATEST_FAILED, ALPHATEST_PASSED, ALPHATEST_FAILED },
+        {   D3DCMP_LESSEQUAL,       ALPHATEST_PASSED, ALPHATEST_PASSED, ALPHATEST_FAILED },
+        {   D3DCMP_GREATER,         ALPHATEST_FAILED, ALPHATEST_FAILED, ALPHATEST_PASSED },
+        {   D3DCMP_NOTEQUAL,        ALPHATEST_PASSED, ALPHATEST_FAILED, ALPHATEST_PASSED },
+        {   D3DCMP_GREATEREQUAL,    ALPHATEST_FAILED, ALPHATEST_PASSED, ALPHATEST_PASSED },
+        {   D3DCMP_ALWAYS,          ALPHATEST_PASSED, ALPHATEST_PASSED, ALPHATEST_PASSED },
+    };
+    unsigned int i, j;
+    HRESULT hr;
+    DWORD color;
+    struct vertex quad[] = {
+        {   -1.0,    -1.0,   0.1,    ALPHATEST_PASSED | 0x80000000  },
+        {    1.0,    -1.0,   0.1,    ALPHATEST_PASSED | 0x80000000  },
+        {   -1.0,     1.0,   0.1,    ALPHATEST_PASSED | 0x80000000  },
+        {    1.0,     1.0,   0.1,    ALPHATEST_PASSED | 0x80000000  },
+    };
+    D3DCAPS9 caps;
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ALPHATESTENABLE, TRUE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with 0x%08x\n", hr);
+
+    for(j = 0; j < 2; j++) {
+        if(j == 1) {
+            /* Try a pixel shader instead of fixed function. The wined3d code may emulate
+             * the alpha test either for performance reasons(floating point RTs) or to work
+             * around driver bugs(Geforce 7x00 cards on MacOS). There may be a different
+             * codepath for ffp and shader in this case, and the test should cover both
+             */
+            IDirect3DPixelShader9 *ps;
+            DWORD shader_code[] = {
+                0xffff0101,                                 /* ps_1_1           */
+                0x00000001, 0x800f0000, 0x90e40000,         /* mov r0, v0       */
+                0x0000ffff                                  /* end              */
+            };
+            memset(&caps, 0, sizeof(caps));
+            IDirect3DDevice9_GetDeviceCaps(device, &caps);
+            ok(hr == D3D_OK, "IDirect3DDevice9_GetDeviceCaps failed with 0x%08x\n", hr);
+            if(caps.PixelShaderVersion < D3DPS_VERSION(1, 1)) {
+                break;
+            }
+
+            hr = IDirect3DDevice9_CreatePixelShader(device, shader_code, &ps);
+            ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader failed with 0x%08x\n", hr);
+            IDirect3DDevice9_SetPixelShader(device, ps);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed with 0x%08x\n", hr);
+            IDirect3DPixelShader9_Release(ps);
+        }
+
+        for(i = 0; i < (sizeof(testdata)/sizeof(testdata[0])); i++) {
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ALPHAFUNC, testdata[i].func);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with 0x%08x\n", hr);
+
+            hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, ALPHATEST_FAILED, 0.0, 0);
+            ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with 0x%08x\n", hr);
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ALPHAREF, 0x90);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with 0x%08x\n", hr);
+            hr = IDirect3DDevice9_BeginScene(device);
+            ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) {
+                hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+                ok(SUCCEEDED(hr), "DrawPrimitiveUP failed with 0x%08x\n", hr);
+                hr = IDirect3DDevice9_EndScene(device);
+                ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with 0x%08x\n", hr);
+            }
+            hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+            ok(SUCCEEDED(hr), "IDirect3DDevice9_Present failed with 0x%08x\n", hr);
+            color = getPixelColor(device, 320, 240);
+            ok(color_match(color, testdata[i].color_less, 1), "Alphatest failed. Got color 0x%08x, expected 0x%08x. alpha < ref, func %u\n",
+            color, testdata[i].color_less, testdata[i].func);
+
+            hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, ALPHATEST_FAILED, 0.0, 0);
+            ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with 0x%08x\n", hr);
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ALPHAREF, 0x80);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with 0x%08x\n", hr);
+            hr = IDirect3DDevice9_BeginScene(device);
+            ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) {
+                hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+                ok(SUCCEEDED(hr), "DrawPrimitiveUP failed with 0x%08x\n", hr);
+                hr = IDirect3DDevice9_EndScene(device);
+                ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with 0x%08x\n", hr);
+            }
+            hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+            ok(SUCCEEDED(hr), "IDirect3DDevice9_Present failed with 0x%08x\n", hr);
+            color = getPixelColor(device, 320, 240);
+            ok(color_match(color, testdata[i].color_equal, 1), "Alphatest failed. Got color 0x%08x, expected 0x%08x. alpha == ref, func %u\n",
+            color, testdata[i].color_equal, testdata[i].func);
+
+            hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, ALPHATEST_FAILED, 0.0, 0);
+            ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with 0x%08x\n", hr);
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ALPHAREF, 0x70);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with 0x%08x\n", hr);
+            hr = IDirect3DDevice9_BeginScene(device);
+            ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) {
+                hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+                ok(SUCCEEDED(hr), "DrawPrimitiveUP failed with 0x%08x\n", hr);
+                hr = IDirect3DDevice9_EndScene(device);
+                ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with 0x%08x\n", hr);
+            }
+            hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+            ok(SUCCEEDED(hr), "IDirect3DDevice9_Present failed with 0x%08x\n", hr);
+            color = getPixelColor(device, 320, 240);
+            ok(color_match(color, testdata[i].color_greater, 1), "Alphatest failed. Got color 0x%08x, expected 0x%08x. alpha > ref, func %u\n",
+            color, testdata[i].color_greater, testdata[i].func);
+        }
+    }
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ALPHATESTENABLE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with 0x%08x\n", hr);
+    IDirect3DDevice9_SetPixelShader(device, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed with 0x%08x\n", hr);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -9995,6 +10122,7 @@ START_TEST(visual)
     np2_stretch_rect_test(device_ptr);
     yuv_color_test(device_ptr);
     zwriteenable_test(device_ptr);
+    alphatest_test(device_ptr);
 
     if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1))
     {
