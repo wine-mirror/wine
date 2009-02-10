@@ -1863,7 +1863,9 @@ static void checkChainPolicyStatus(LPCSTR policy, const ChainPolicyCheck *check,
                  testIndex, check->status.dwError, policyStatus.dwError);
             if (policyStatus.dwError != check->status.dwError)
             {
-                skip("error doesn't match, not checking indexes\n");
+                skip("%s[%d]: error %08x doesn't match expected %08x, not checking indexes\n",
+                 HIWORD(policy) ? policy : num_to_str(LOWORD(policy)),
+                 testIndex, policyStatus.dwError, check->status.dwError);
                 pCertFreeCertificateChain(chain);
                 return;
             }
