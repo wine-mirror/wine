@@ -652,7 +652,9 @@ static void test_ROT(void)
         ROTFLAGS_REGISTRATIONKEEPSALIVE|ROTFLAGS_ALLOWANYCLIENT,
         (IUnknown*)&Test_ClassFactory, pMoniker, &dwCookie);
     todo_wine {
-    ok(hr == CO_E_WRONG_SERVER_IDENTITY, "IRunningObjectTable_Register should have returned CO_E_WRONG_SERVER_IDENTITY instead of 0x%08x\n", hr);
+    ok(hr == CO_E_WRONG_SERVER_IDENTITY ||
+       broken(hr == S_OK) /* Win9x */,
+       "IRunningObjectTable_Register should have returned CO_E_WRONG_SERVER_IDENTITY instead of 0x%08x\n", hr);
     }
     if (hr == S_OK) IRunningObjectTable_Revoke(pROT, dwCookie);
 
@@ -918,7 +920,8 @@ static void test_MkParseDisplayName(void)
         hr = IMoniker_BindToObject(pmk, pbc, NULL, &IID_IUnknown, (LPVOID*)&object);
         ok_ole_success(hr, IMoniker_BindToObject);
 
-        IUnknown_Release(object);
+        if (SUCCEEDED(hr))
+            IUnknown_Release(object);
         IMoniker_Release(pmk);
     }
     IBindCtx_Release(pbc);
