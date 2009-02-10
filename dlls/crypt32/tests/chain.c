@@ -1196,7 +1196,7 @@ static void checkElementStatus(const CERT_TRUST_STATUS *expected,
         todo_wine
         ok(got->dwInfoStatus == expected->dwInfoStatus ||
          broken((got->dwInfoStatus & ~ignore->dwInfoStatus) ==
-         (expected->dwInfoStatus & ignore->dwInfoStatus)),
+         (expected->dwInfoStatus & ~ignore->dwInfoStatus)),
          "Chain %d, element [%d,%d]: expected info %08x, got %08x\n",
          testIndex, chainIndex, elementIndex, expected->dwInfoStatus,
          got->dwInfoStatus);
