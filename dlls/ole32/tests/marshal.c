@@ -2070,21 +2070,26 @@ static void test_freethreadedmarshaldata(IStream *pStream, MSHCTX mshctx, void *
     if (mshctx == MSHCTX_INPROC)
     {
         DWORD expected_size = round_heap_size(3*sizeof(DWORD) + sizeof(GUID));
-        ok(size == expected_size, "size should have been %d instead of %d\n", expected_size, size);
+        ok(size == expected_size ||
+           broken(size == round_heap_size(2*sizeof(DWORD))) /* Win9x & NT4 */,
+           "size should have been %d instead of %d\n", expected_size, size);
 
         ok(*(DWORD *)marshal_data == mshlflags, "expected 0x%x, but got 0x%x for mshctx\n", mshlflags, *(DWORD *)marshal_data);
         marshal_data += sizeof(DWORD);
         ok(*(void **)marshal_data == ptr, "expected %p, but got %p for mshctx\n", ptr, *(void **)marshal_data);
         marshal_data += sizeof(void *);
-        if (sizeof(void*) == 4)
+        if (sizeof(void*) == 4 && size >= 3*sizeof(DWORD))
         {
             ok(*(DWORD *)marshal_data == 0, "expected 0x0, but got 0x%x\n", *(DWORD *)marshal_data);
             marshal_data += sizeof(DWORD);
         }
-        trace("got guid data: {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
-            ((GUID *)marshal_data)->Data1, ((GUID *)marshal_data)->Data2, ((GUID *)marshal_data)->Data3,
-            ((GUID *)marshal_data)->Data4[0], ((GUID *)marshal_data)->Data4[1], ((GUID *)marshal_data)->Data4[2], ((GUID *)marshal_data)->Data4[3],
-            ((GUID *)marshal_data)->Data4[4], ((GUID *)marshal_data)->Data4[5], ((GUID *)marshal_data)->Data4[6], ((GUID *)marshal_data)->Data4[7]);
+        if (size >= 3*sizeof(DWORD) + sizeof(GUID))
+        {
+            trace("got guid data: {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
+                ((GUID *)marshal_data)->Data1, ((GUID *)marshal_data)->Data2, ((GUID *)marshal_data)->Data3,
+                ((GUID *)marshal_data)->Data4[0], ((GUID *)marshal_data)->Data4[1], ((GUID *)marshal_data)->Data4[2], ((GUID *)marshal_data)->Data4[3],
+                ((GUID *)marshal_data)->Data4[4], ((GUID *)marshal_data)->Data4[5], ((GUID *)marshal_data)->Data4[6], ((GUID *)marshal_data)->Data4[7]);
+        }
     }
     else
     {
