@@ -132,7 +132,7 @@ enum win_wm_message {
 
 typedef struct {
     enum win_wm_message 	msg;	/* message identifier */
-    DWORD	                param;  /* parameter for this message */
+    DWORD_PTR                   param;  /* parameter for this message */
     HANDLE	                hEvent;	/* if message is synchronous, handle of event for synchro */
 } RING_MSG;
 
@@ -643,8 +643,8 @@ static int ESD_AddRingMessage(ESD_MSG_RING* mr, enum win_wm_message msg, DWORD p
  *
  * Get a message from the ring. Should be called by the playback/record thread.
  */
-static int ESD_RetrieveRingMessage(ESD_MSG_RING* mr,
-                                   enum win_wm_message *msg, DWORD *param, HANDLE *hEvent)
+static int ESD_RetrieveRingMessage(ESD_MSG_RING* mr, enum win_wm_message *msg,
+                                   DWORD_PTR *param, HANDLE *hEvent)
 {
     EnterCriticalSection(&mr->msg_crst);
 
@@ -671,9 +671,10 @@ static int ESD_RetrieveRingMessage(ESD_MSG_RING* mr,
 /**************************************************************************
  * 			wodNotifyClient			[internal]
  */
-static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
+static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD_PTR dwParam1,
+                             DWORD_PTR dwParam2)
 {
-    TRACE("wMsg = 0x%04x dwParm1 = %04X dwParam2 = %04X\n", wMsg, dwParam1, dwParam2);
+    TRACE("wMsg = 0x%04x dwParm1 = %08lX dwParam2 = %08lX\n", wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
     case WOM_OPEN:
@@ -931,7 +932,7 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
 	lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 	lpWaveHdr->dwFlags |= WHDR_DONE;
 
-	wodNotifyClient(wwo, WOM_DONE, (DWORD)lpWaveHdr, 0);
+        wodNotifyClient(wwo, WOM_DONE, (DWORD_PTR)lpWaveHdr, 0);
     }
     return  (lpWaveHdr && lpWaveHdr != wwo->lpPlayPtr && lpWaveHdr != wwo->lpLoopPtr) ?
         wodPlayer_NotifyWait(wwo, lpWaveHdr) : INFINITE;
@@ -953,7 +954,7 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, BOOL reset)
 
     if (reset) {
         enum win_wm_message     msg;
-        DWORD                   param;
+        DWORD_PTR               param;
         HANDLE                  ev;
 
 	/* remove any buffer */
@@ -1007,12 +1008,12 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, BOOL reset)
 static void wodPlayer_ProcessMessages(WINE_WAVEOUT* wwo)
 {
     LPWAVEHDR           lpWaveHdr;
-    enum win_wm_message	msg;
-    DWORD		param;
-    HANDLE		ev;
+    enum win_wm_message msg;
+    DWORD_PTR           param;
+    HANDLE              ev;
 
     while (ESD_RetrieveRingMessage(&wwo->msgRing, &msg, &param, &ev)) {
-	TRACE("Received %s %x\n", wodPlayerCmdString[msg - WM_USER - 1], param);
+        TRACE("Received %s %lx\n", wodPlayerCmdString[msg - WM_USER - 1], param);
 	switch (msg) {
 	case WINE_WM_PAUSING:
 	    wodPlayer_Reset(wwo, FALSE);
@@ -1133,7 +1134,7 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
  */
 static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 {
-    WORD          uDevID = (DWORD)pmt;
+    WORD          uDevID = (DWORD_PTR)pmt;
     WINE_WAVEOUT* wwo = &WOutDev[uDevID];
     DWORD         dwNextFeedTime = INFINITE;   /* Time before DSP needs feeding */
     DWORD         dwNextNotifyTime = INFINITE; /* Time before next wave completion */
@@ -1281,7 +1282,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     /* create player thread */
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
 	wwo->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-	wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
+        wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD_PTR)wDevID,
+                                    0, &(wwo->dwThreadID));
 	WaitForSingleObject(wwo->hStartUpEvent, INFINITE);
 	CloseHandle(wwo->hStartUpEvent);
     } else {
@@ -1366,7 +1368,8 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     lpWaveHdr->lpNext = 0;
 
     TRACE("adding ring message\n");
-    ESD_AddRingMessage(&WOutDev[wDevID].msgRing, WINE_WM_HEADER, (DWORD)lpWaveHdr, FALSE);
+    ESD_AddRingMessage(&WOutDev[wDevID].msgRing, WINE_WM_HEADER,
+                       (DWORD_PTR)lpWaveHdr, FALSE);
 
     return MMSYSERR_NOERROR;
 }
@@ -1547,9 +1550,9 @@ static DWORD wodDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
  * 				wodMessage (WINEESD.@)
  */
 DWORD WINAPI ESD_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
-			    DWORD dwParam1, DWORD dwParam2)
+                            DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    TRACE("(%u, %04X, %08X, %08X, %08X);\n",
+    TRACE("(%u, %04X, %08X, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
@@ -1632,9 +1635,10 @@ static DWORD widDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 /**************************************************************************
  * 			widNotifyClient			[internal]
  */
-static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
+static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD_PTR dwParam1,
+                             DWORD_PTR dwParam2)
 {
-    TRACE("wMsg = 0x%04x dwParm1 = %04X dwParam2 = %04X\n", wMsg, dwParam1, dwParam2);
+    TRACE("wMsg = 0x%04x dwParm1 = %08lX dwParam2 = %08lX\n", wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
     case WIM_OPEN:
@@ -1678,14 +1682,14 @@ static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSW lpCaps, DWORD dwSize)
  */
 static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 {
-    WORD		uDevID = (DWORD)pmt;
+    WORD                uDevID = (DWORD_PTR)pmt;
     WINE_WAVEIN*        wwi = &WInDev[uDevID];
-    WAVEHDR*		lpWaveHdr;
-    DWORD		dwSleepTime;
-    int			bytesRead;
+    WAVEHDR*            lpWaveHdr;
+    DWORD               dwSleepTime;
+    int                 bytesRead;
     enum win_wm_message msg;
-    DWORD		param;
-    HANDLE		ev;
+    DWORD_PTR           param;
+    HANDLE              ev;
 
     SetEvent(wwi->hStartUpEvent);
 
@@ -1727,7 +1731,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 		    lpWaveHdr->dwFlags |=  WHDR_DONE;
  
-		    widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+                    widNotifyClient(wwi, WIM_DATA, (DWORD_PTR)lpWaveHdr, 0);
 		    lpWaveHdr = wwi->lpQueuePtr = lpNext;
 		}
 	    }
@@ -1738,7 +1742,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
 	while (ESD_RetrieveRingMessage(&wwi->msgRing, &msg, &param, &ev))
 	{
-            TRACE("msg=%s param=0x%x\n",wodPlayerCmdString[msg - WM_USER - 1], param);
+            TRACE("msg=%s param=0x%lx\n",wodPlayerCmdString[msg - WM_USER - 1], param);
 	    switch(msg) {
 	    case WINE_WM_PAUSING:
 		wwi->state = WINE_WS_PAUSED;
@@ -1785,7 +1789,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		        TRACE("stop %p %p\n", lpWaveHdr, lpWaveHdr->lpNext);
 		        lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 		        lpWaveHdr->dwFlags |= WHDR_DONE;
-		        widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+                        widNotifyClient(wwi, WIM_DATA, (DWORD_PTR)lpWaveHdr, 0);
 		        wwi->lpQueuePtr = lpNext;
 		    }
 		}
@@ -1802,7 +1806,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 		    lpWaveHdr->dwFlags |= WHDR_DONE;
 
-		    widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+                    widNotifyClient(wwi, WIM_DATA, (DWORD_PTR)lpWaveHdr, 0);
 		}
 		wwi->lpQueuePtr = NULL; 
 		SetEvent(ev);
@@ -1935,7 +1939,8 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     /* create recorder thread */
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
 	wwi->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-	wwi->hThread = CreateThread(NULL, 0, widRecorder, (LPVOID)(DWORD)wDevID, 0, &(wwi->dwThreadID));
+        wwi->hThread = CreateThread(NULL, 0, widRecorder, (LPVOID)(DWORD_PTR)wDevID,
+                                    0, &(wwi->dwThreadID));
 	WaitForSingleObject(wwi->hStartUpEvent, INFINITE);
 	CloseHandle(wwi->hStartUpEvent);
     } else {
@@ -2003,7 +2008,8 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     lpWaveHdr->dwBytesRecorded = 0;
     lpWaveHdr->lpNext = NULL;
 
-    ESD_AddRingMessage(&WInDev[wDevID].msgRing, WINE_WM_HEADER, (DWORD)lpWaveHdr, FALSE);
+    ESD_AddRingMessage(&WInDev[wDevID].msgRing, WINE_WM_HEADER,
+                       (DWORD_PTR)lpWaveHdr, FALSE);
     return MMSYSERR_NOERROR;
 }
 
@@ -2056,9 +2062,9 @@ static DWORD widReset(WORD wDevID)
  * 				widMessage (WINEESD.6)
  */
 DWORD WINAPI ESD_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
-			    DWORD dwParam1, DWORD dwParam2)
+                            DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    TRACE("(%u, %04X, %08X, %08X, %08X);\n",
+    TRACE("(%u, %04X, %08X, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
     switch (wMsg) {
     case DRVM_INIT:
@@ -2111,9 +2117,9 @@ static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
  * 				wodMessage (WINEESD.@)
  */
 DWORD WINAPI ESD_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
-			    DWORD dwParam1, DWORD dwParam2)
+                            DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    FIXME("(%u, %04X, %08X, %08X, %08X):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    FIXME("(%u, %04X, %08X, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
     return MMSYSERR_NOTENABLED;
 }
 
@@ -2121,9 +2127,9 @@ DWORD WINAPI ESD_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
  * 				widMessage (WINEESD.6)
  */
 DWORD WINAPI ESD_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
-			    DWORD dwParam1, DWORD dwParam2)
+                            DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    FIXME("(%u, %04X, %08X, %08X, %08X):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    FIXME("(%u, %04X, %08X, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
     return MMSYSERR_NOTENABLED;
 }
 
