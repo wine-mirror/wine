@@ -1308,10 +1308,14 @@ HINTERNET FTP_FtpOpenFileW(LPWININETFTPSESSIONW lpwfs,
                 &iar, sizeof(INTERNET_ASYNC_RESULT));
 	}
 
-        iar.dwResult = bSuccess;
-        iar.dwError = bSuccess ? ERROR_SUCCESS : INTERNET_GetLastError();
-        SendAsyncCallback(&lpwfs->hdr, lpwfs->hdr.dwContext, INTERNET_STATUS_REQUEST_COMPLETE,
-            &iar, sizeof(INTERNET_ASYNC_RESULT));
+        if(bSuccess) {
+            FTP_ReceiveRequestData(lpwh, TRUE);
+        }else {
+            iar.dwResult = 0;
+            iar.dwError = INTERNET_GetLastError();
+            SendAsyncCallback(&lpwfs->hdr, lpwfs->hdr.dwContext, INTERNET_STATUS_REQUEST_COMPLETE,
+                    &iar, sizeof(INTERNET_ASYNC_RESULT));
+        }
     }
 
 lend:
