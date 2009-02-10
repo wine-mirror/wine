@@ -146,7 +146,8 @@ static void testCreateCTL(void)
      sizeof(ctlWithOneEntry));
     ok((!ctl &&
      (GetLastError() == ERROR_INVALID_DATA ||
-      GetLastError() == CRYPT_E_UNEXPECTED_MSG_TYPE /* win9x */)) ||
+      GetLastError() == CRYPT_E_UNEXPECTED_MSG_TYPE /* win9x */ ||
+      GetLastError() == OSS_DATA_ERROR /* some win98 */)) ||
       broken(ctl != NULL /* some win98 */),
      "expected ERROR_INVALID_DATA, got %d (0x%08x)\n", GetLastError(),
      GetLastError());
