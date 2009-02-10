@@ -46,6 +46,9 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
 #include <time.h>
 #include <assert.h>
 
@@ -1146,6 +1149,75 @@ static BOOL FTPFILE_WriteFile(WININETHANDLEHEADER *hdr, const void *buffer, DWOR
     return res >= 0;
 }
 
+static void FTP_ReceiveRequestData(WININETFTPFILE *file, BOOL first_notif)
+{
+    INTERNET_ASYNC_RESULT iar;
+    BYTE buffer[4096];
+    int available;
+
+    TRACE("%p\n", file);
+
+    available = recv(file->nDataSocket, buffer, sizeof(buffer), MSG_PEEK);
+
+    if(available != -1) {
+        iar.dwResult = (DWORD_PTR)file->hdr.hInternet;
+        iar.dwError = first_notif ? 0 : available;
+    }else {
+        iar.dwResult = 0;
+        iar.dwError = INTERNET_GetLastError();
+    }
+
+    INTERNET_SendCallback(&file->hdr, file->hdr.dwContext, INTERNET_STATUS_REQUEST_COMPLETE, &iar,
+                          sizeof(INTERNET_ASYNC_RESULT));
+}
+
+static void FTPFILE_AsyncQueryDataAvailableProc(WORKREQUEST *workRequest)
+{
+    WININETFTPFILE *file = (WININETFTPFILE*)workRequest->hdr;
+
+    FTP_ReceiveRequestData(file, FALSE);
+}
+
+static DWORD FTPFILE_QueryDataAvailable(WININETHANDLEHEADER *hdr, DWORD *available, DWORD flags, DWORD_PTR ctx)
+{
+    LPWININETFTPFILE file = (LPWININETFTPFILE) hdr;
+    int retval, unread = 0;
+
+    TRACE("(%p %p %x %lx)\n", file, available, flags, ctx);
+
+#ifdef FIONREAD
+    retval = ioctlsocket(file->nDataSocket, FIONREAD, &unread);
+    if (!retval)
+        TRACE("%d bytes of queued, but unread data\n", unread);
+#else
+    FIXME("FIONREAD not available\n");
+#endif
+
+    *available = unread;
+
+    if(!unread) {
+        BYTE byte;
+
+        *available = 0;
+
+        retval = recv(file->nDataSocket, &byte, 1, MSG_PEEK);
+        if(retval > 0) {
+            WORKREQUEST workRequest;
+
+            *available = 0;
+            workRequest.asyncproc = FTPFILE_AsyncQueryDataAvailableProc;
+            workRequest.hdr = WININET_AddRef( &file->hdr );
+
+            INTERNET_AsyncCall(&workRequest);
+
+            return ERROR_IO_PENDING;
+        }
+    }
+
+    return ERROR_SUCCESS;
+}
+
+
 static const HANDLEHEADERVtbl FTPFILEVtbl = {
     FTPFILE_Destroy,
     NULL,
@@ -1155,7 +1227,7 @@ static const HANDLEHEADERVtbl FTPFILEVtbl = {
     NULL,
     NULL,
     FTPFILE_WriteFile,
-    NULL,
+    FTPFILE_QueryDataAvailable,
     NULL
 };
 
