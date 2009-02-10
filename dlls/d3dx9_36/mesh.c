@@ -55,6 +55,40 @@ HRESULT WINAPI D3DXComputeBoundingBox(CONST D3DXVECTOR3 *pfirstposition, DWORD n
 }
 
 /*************************************************************************
+ * D3DXComputeBoundingSphere
+ */
+HRESULT WINAPI D3DXComputeBoundingSphere(CONST D3DXVECTOR3* pfirstposition, DWORD numvertices, DWORD dwstride, D3DXVECTOR3 *pcenter, FLOAT *pradius)
+{
+    D3DXVECTOR3 temp, temp1;
+    FLOAT d;
+    unsigned int i;
+
+    if( !pfirstposition || !pcenter || !pradius ) return D3DERR_INVALIDCALL;
+
+    temp.x = 0.0f;
+    temp.y = 0.0f;
+    temp.z = 0.0f;
+    temp1 = temp;
+    d = 0.0f;
+    *pradius = 0.0f;
+
+    for(i=0; i<numvertices; i++)
+    {
+        D3DXVec3Add(&temp1, &temp, (D3DXVECTOR3*)((char*)pfirstposition + dwstride * i));
+        temp = temp1;
+    }
+
+    D3DXVec3Scale(pcenter, &temp, 1.0f/((FLOAT)numvertices));
+
+    for(i=0; i<numvertices; i++)
+    {
+        d = D3DXVec3Length(D3DXVec3Subtract(&temp, (D3DXVECTOR3*)((char*)pfirstposition + dwstride * i), pcenter));
+        if ( d > *pradius ) *pradius = d;
+    }
+    return D3D_OK;
+}
+
+/*************************************************************************
  * D3DXIntersectTri
  */
 BOOL WINAPI D3DXIntersectTri(CONST D3DXVECTOR3 *p0, CONST D3DXVECTOR3 *p1, CONST D3DXVECTOR3 *p2, CONST D3DXVECTOR3 *praypos, CONST D3DXVECTOR3 *praydir, FLOAT *pu, FLOAT *pv, FLOAT *pdist)
