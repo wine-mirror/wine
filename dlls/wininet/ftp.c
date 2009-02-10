@@ -2260,7 +2260,7 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 
     assert( hIC->hdr.htype == WH_HINIT );
 
-    if ((!lpszUserName || !strlenW(lpszUserName)) && lpszPassword)
+    if ((!lpszUserName || !*lpszUserName) && lpszPassword && *lpszPassword)
     {
 	INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
         goto lerror;
