@@ -356,7 +356,7 @@ static void CRYPT_CheckRootCert(HCERTCHAINENGINE hRoot,
      CRYPT_VERIFY_CERT_SIGN_SUBJECT_CERT, (void *)root,
      CRYPT_VERIFY_CERT_SIGN_ISSUER_CERT, (void *)root, 0, NULL))
     {
-        TRACE("Last certificate's signature is invalid\n");
+        TRACE_(chain)("Last certificate's signature is invalid\n");
         rootElement->TrustStatus.dwErrorStatus |=
          CERT_TRUST_IS_NOT_SIGNATURE_VALID;
     }
@@ -433,7 +433,7 @@ static BOOL CRYPT_CheckBasicConstraintsForCA(PCCERT_CONTEXT cert,
     {
         if (!constraints.fCA)
         {
-            TRACE("chain element %d can't be a CA\n", remainingCAs + 1);
+            TRACE_(chain)("chain element %d can't be a CA\n", remainingCAs + 1);
             validBasicConstraints = FALSE;
         }
         else if (constraints.fPathLenConstraint)
@@ -445,7 +445,7 @@ static BOOL CRYPT_CheckBasicConstraintsForCA(PCCERT_CONTEXT cert,
              constraints.dwPathLenConstraint <
              chainConstraints->dwPathLenConstraint)
             {
-                TRACE("setting path length constraint to %d\n",
+                TRACE_(chain)("setting path length constraint to %d\n",
                  chainConstraints->dwPathLenConstraint);
                 chainConstraints->fPathLenConstraint = TRUE;
                 chainConstraints->dwPathLenConstraint =
@@ -456,8 +456,8 @@ static BOOL CRYPT_CheckBasicConstraintsForCA(PCCERT_CONTEXT cert,
     if (chainConstraints->fPathLenConstraint &&
      remainingCAs > chainConstraints->dwPathLenConstraint)
     {
-        TRACE("remaining CAs %d exceed max path length %d\n", remainingCAs,
-         chainConstraints->dwPathLenConstraint);
+        TRACE_(chain)("remaining CAs %d exceed max path length %d\n",
+         remainingCAs, chainConstraints->dwPathLenConstraint);
         validBasicConstraints = FALSE;
         *pathLengthConstraintViolated = TRUE;
     }
@@ -1016,7 +1016,7 @@ static BOOL CRYPT_BuildSimpleChain(PCertificateChainEngine engine,
         }
         else
         {
-            TRACE("Couldn't find issuer, halting chain creation\n");
+            TRACE_(chain)("Couldn't find issuer, halting chain creation\n");
             chain->TrustStatus.dwErrorStatus |= CERT_TRUST_IS_PARTIAL_CHAIN;
             break;
         }
