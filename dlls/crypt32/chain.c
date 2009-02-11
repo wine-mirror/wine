@@ -28,6 +28,7 @@
 #include "crypt32_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
+WINE_DECLARE_DEBUG_CHANNEL(chain);
 
 #define DEFAULT_CYCLE_MODULUS 7
 
@@ -709,6 +710,101 @@ static void CRYPT_CheckChainNameConstraints(PCERT_SIMPLE_CHAIN chain)
     }
 }
 
+static void dump_basic_constraints(PCERT_EXTENSION ext)
+{
+    CERT_BASIC_CONSTRAINTS_INFO *info;
+    DWORD size = 0;
+
+    if (CryptDecodeObjectEx(X509_ASN_ENCODING, szOID_BASIC_CONSTRAINTS,
+     ext->Value.pbData, ext->Value.cbData, CRYPT_DECODE_ALLOC_FLAG,
+     NULL, &info, &size))
+    {
+        TRACE_(chain)("SubjectType: %02x\n", info->SubjectType.pbData[0]);
+        TRACE_(chain)("%s path length constraint\n",
+         info->fPathLenConstraint ? "has" : "doesn't have");
+        TRACE_(chain)("path length=%d\n", info->dwPathLenConstraint);
+        LocalFree(info);
+    }
+}
+
+static void dump_basic_constraints2(PCERT_EXTENSION ext)
+{
+    CERT_BASIC_CONSTRAINTS2_INFO constraints;
+    DWORD size = sizeof(CERT_BASIC_CONSTRAINTS2_INFO);
+
+    if (CryptDecodeObjectEx(X509_ASN_ENCODING,
+     szOID_BASIC_CONSTRAINTS2, ext->Value.pbData, ext->Value.cbData,
+     0, NULL, &constraints, &size))
+    {
+        TRACE_(chain)("basic constraints:\n");
+        TRACE_(chain)("can%s be a CA\n", constraints.fCA ? "" : "not");
+        TRACE_(chain)("%s path length constraint\n",
+         constraints.fPathLenConstraint ? "has" : "doesn't have");
+        TRACE_(chain)("path length=%d\n", constraints.dwPathLenConstraint);
+    }
+}
+
+static void dump_extension(PCERT_EXTENSION ext)
+{
+    TRACE_(chain)("%s (%scritical)\n", debugstr_a(ext->pszObjId),
+     ext->fCritical ? "" : "not ");
+    if (!strcmp(ext->pszObjId, szOID_BASIC_CONSTRAINTS))
+        dump_basic_constraints(ext);
+    else if (!strcmp(ext->pszObjId, szOID_BASIC_CONSTRAINTS2))
+        dump_basic_constraints2(ext);
+}
+
+static LPCWSTR filetime_to_str(const FILETIME *time)
+{
+    static WCHAR date[80];
+    WCHAR dateFmt[80]; /* sufficient for all versions of LOCALE_SSHORTDATE */
+    SYSTEMTIME sysTime;
+
+    if (!time) return NULL;
+
+    GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_SSHORTDATE, dateFmt,
+     sizeof(dateFmt) / sizeof(dateFmt[0]));
+    FileTimeToSystemTime(time, &sysTime);
+    GetDateFormatW(LOCALE_SYSTEM_DEFAULT, 0, &sysTime, dateFmt, date,
+     sizeof(date) / sizeof(date[0]));
+    return date;
+}
+
+static void dump_element(PCCERT_CONTEXT cert)
+{
+    LPWSTR name = NULL;
+    DWORD len, i;
+
+    TRACE_(chain)("%p\n", cert);
+    len = CertGetNameStringW(cert, CERT_NAME_SIMPLE_DISPLAY_TYPE,
+     CERT_NAME_ISSUER_FLAG, NULL, NULL, 0);
+    name = CryptMemAlloc(len * sizeof(WCHAR));
+    if (name)
+    {
+        CertGetNameStringW(cert, CERT_NAME_SIMPLE_DISPLAY_TYPE,
+         CERT_NAME_ISSUER_FLAG, NULL, name, len);
+        TRACE_(chain)("issued by %s\n", debugstr_w(name));
+        CryptMemFree(name);
+    }
+    len = CertGetNameStringW(cert, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL,
+     NULL, 0);
+    name = CryptMemAlloc(len * sizeof(WCHAR));
+    if (name)
+    {
+        CertGetNameStringW(cert, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL,
+         name, len);
+        TRACE_(chain)("issued to %s\n", debugstr_w(name));
+        CryptMemFree(name);
+    }
+    TRACE_(chain)("valid from %s",
+     debugstr_w(filetime_to_str(&cert->pCertInfo->NotBefore)));
+    TRACE_(chain)("to %s\n",
+     debugstr_w(filetime_to_str(&cert->pCertInfo->NotAfter)));
+    TRACE_(chain)("%d extensions\n", cert->pCertInfo->cExtension);
+    for (i = 0; i < cert->pCertInfo->cExtension; i++)
+        dump_extension(&cert->pCertInfo->rgExtension[i]);
+}
+
 static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
  PCERT_SIMPLE_CHAIN chain, LPFILETIME time)
 {
@@ -717,8 +813,12 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
     BOOL pathLengthConstraintViolated = FALSE;
     CERT_BASIC_CONSTRAINTS2_INFO constraints = { TRUE, FALSE, 0 };
 
+    TRACE_(chain)("checking chain with %d elements for time %s\n",
+     chain->cElement, debugstr_w(filetime_to_str(time)));
     for (i = chain->cElement - 1; i >= 0; i--)
     {
+        if (TRACE_ON(chain))
+            dump_element(chain->rgpElement[i]->pCertContext);
         if (CertVerifyTimeValidity(time,
          chain->rgpElement[i]->pCertContext->pCertInfo) != 0)
             chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
