@@ -67,7 +67,7 @@ typedef struct tagContext {
 
     ITextStoreACPSink *pITextStoreACPSink;
 
-    /* kept as seperate lists to reduce unnesseccary iterations */
+    /* kept as separate lists to reduce unnecessary iterations */
     struct list     pContextKeyEventSink;
     struct list     pEditTransactionSink;
     struct list     pStatusSink;

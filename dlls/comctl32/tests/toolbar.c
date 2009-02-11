@@ -1034,7 +1034,7 @@ static void restore_recalc_state(HWND hToolbar)
         GetWindowLong(hToolbar, GWL_STYLE) & ~TBSTYLE_FLAT);
     /* recalc */
     SendMessage(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[3]);
-    /* top margin will be 0px if a recalc occures */
+    /* top margin will be 0px if a recalc occurs */
     SetWindowLong(hToolbar, GWL_STYLE,
         GetWindowLong(hToolbar, GWL_STYLE) | TBSTYLE_FLAT);
     /* safety check */

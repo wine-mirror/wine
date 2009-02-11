@@ -720,7 +720,7 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
     switch(dispID) {
     case DISPID_UNKNOWN:
         /* Unknown means multiple properties changed, so check them all.
-         * BUT the Webbrowser OleControl object doesnt appear to do this.
+         * BUT the Webbrowser OleControl object doesn't appear to do this.
          */
         return S_OK;
     case DISPID_AMBIENT_OFFLINEIFNOTCONNECTED:

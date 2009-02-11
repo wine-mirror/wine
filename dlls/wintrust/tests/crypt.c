@@ -740,7 +740,7 @@ static void test_create_catalog_file(void)
     ok(attrcount == 2, "Expected 2 attributes, got %d\n", attrcount);
 
     pCryptCATCDFClose(catcdf);
-    /* Eventhough the resulting catalogfile shows the attributes, they will not be enumerated */
+    /* Even though the resulting catalog file shows the attributes, they will not be enumerated */
     test_catalog_properties(catfileA, 0, 0);
     DeleteFileA(catfileA);
 
@@ -904,7 +904,7 @@ static void test_cdf_parsing(void)
     todo_wine
     ok(DeleteFileA(catfileA), "Expected a catalog file to be created\n");
 
-    /* Header and non-existing member */
+    /* Header and nonexistent member */
     lstrcpyA(cdf_contents, "[CatalogHeader]\r\n");
     lstrcatA(cdf_contents, "Name=tempfile.cat\r\n");
     lstrcatA(cdf_contents, "[CatalogFiles]\r\n");
@@ -1106,7 +1106,7 @@ START_TEST(crypt)
     test_CryptCATCDF_params();
     /* Test the parsing of a cdf file */
     test_cdf_parsing();
-    /* Create a catalogfile out of our own catalog definition file */
+    /* Create a catalog file out of our own catalog definition file */
     test_create_catalog_file();
     test_CryptCATAdminAddRemoveCatalog();
 }

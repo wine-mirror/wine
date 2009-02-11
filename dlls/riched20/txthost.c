@@ -59,7 +59,7 @@ ITextHost *ME_CreateTextHost(HWND hwnd, BOOL bEmulateVersion10)
 
         editor = ME_MakeEditor((ITextHost*)texthost, bEmulateVersion10);
         editor->exStyleFlags = GetWindowLongW(hwnd, GWL_EXSTYLE);
-        editor->hWnd = hwnd; /* FIXME: Remove editor's dependance on hWnd */
+        editor->hWnd = hwnd; /* FIXME: Remove editor's dependence on hWnd */
         SetWindowLongPtrW(hwnd, 0, (LONG_PTR)editor);
     }
 

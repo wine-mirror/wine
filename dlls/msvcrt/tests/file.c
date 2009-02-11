@@ -365,7 +365,7 @@ static void test_asciimode(void)
 	ok((c = fgetc(fp)) == '0'+ i, "fgetc after fseek with neg Offset failed in line %d\n", i);
 	fseek(fp, -4 ,SEEK_CUR);
     }
-    /* Show what happens is fseek positions filepointer on \\r */
+    /* Show what happens if fseek positions filepointer on \\r */
     fclose(fp);
     fp = fopen("ascii.tst", "r");
     fseek(fp, 3 ,SEEK_SET);

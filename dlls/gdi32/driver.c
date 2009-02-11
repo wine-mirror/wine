@@ -496,7 +496,7 @@ INT WINAPI GDI_CallExtDeviceModePropSheet16( HWND hWnd, LPCSTR lpszDevice,
 /*****************************************************************************
  *      @ [GDI32.102]
  *
- * This should load the correct driver for lpszDevice and calls this driver's
+ * This should load the correct driver for lpszDevice and call this driver's
  * ExtDeviceMode proc.
  *
  * FIXME: convert ExtDeviceMode to unicode in the driver interface
