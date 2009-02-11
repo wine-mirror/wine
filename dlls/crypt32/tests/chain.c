@@ -1566,8 +1566,7 @@ static ChainCheck chainCheck[] = {
        CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_UNTRUSTED_ROOT |
        CERT_TRUST_IS_NOT_TIME_VALID, 0 },
-     1, simpleStatus8 },
-   TODO_ERROR },
+     1, simpleStatus8 }, 0 },
  /* Earlier versions of Windows incorrectly don't set
   * CERT_TRUST_INVALID_BASIC_CONSTRAINTS on this chain.
   */
@@ -1795,8 +1794,7 @@ static const ChainPolicyCheck basicConstraintsPolicyCheck[] = {
  { { sizeof(chain7) / sizeof(chain7[0]), chain7 },
    { 0, 0, -1, -1, NULL }, 0 },
  { { sizeof(chain8) / sizeof(chain8[0]), chain8 },
-   { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL },
-   TODO_ERROR | TODO_CHAINS | TODO_ELEMENTS },
+   { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL }, 0 },
  { { sizeof(chain9) / sizeof(chain9[0]), chain9 },
    { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL }, 0 },
  { { sizeof(chain10) / sizeof(chain10[0]), chain10 },

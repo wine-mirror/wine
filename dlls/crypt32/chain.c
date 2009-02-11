@@ -412,8 +412,12 @@ static BOOL CRYPT_DecodeBasicConstraints(PCCERT_CONTEXT cert,
 }
 
 /* Checks element's basic constraints to see if it can act as a CA, with
- * remainingCAs CAs left in this chain.  Updates chainConstraints with the
- * element's constraints, if:
+ * remainingCAs CAs left in this chain.  A root certificate is assumed to be
+ * allowed to be a CA whether or not the basic constraints extension is present,
+ * whereas an intermediate CA cert is not.  This matches the expected usage in
+ * RFC 3280:  a conforming intermediate CA MUST contain the basic constraints
+ * extension.  It also appears to match Microsoft's implementation.
+ * Updates chainConstraints with the element's constraints, if:
  * 1. chainConstraints doesn't have a path length constraint, or
  * 2. element's path length constraint is smaller than chainConstraints's
  * Sets *pathLengthConstraintViolated to TRUE if a path length violation
@@ -423,13 +427,13 @@ static BOOL CRYPT_DecodeBasicConstraints(PCCERT_CONTEXT cert,
  */
 static BOOL CRYPT_CheckBasicConstraintsForCA(PCCERT_CONTEXT cert,
  CERT_BASIC_CONSTRAINTS2_INFO *chainConstraints, DWORD remainingCAs,
- BOOL *pathLengthConstraintViolated)
+ BOOL isRoot, BOOL *pathLengthConstraintViolated)
 {
     BOOL validBasicConstraints;
     CERT_BASIC_CONSTRAINTS2_INFO constraints;
 
     if ((validBasicConstraints = CRYPT_DecodeBasicConstraints(cert,
-     &constraints, TRUE)))
+     &constraints, isRoot)))
     {
         if (!constraints.fCA)
         {
@@ -825,6 +829,13 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
              CERT_TRUST_IS_NOT_TIME_VALID;
         if (i != 0)
         {
+            BOOL isRoot;
+
+            if (i == chain->cElement - 1)
+                isRoot = CRYPT_IsCertificateSelfSigned(
+                 chain->rgpElement[i]->pCertContext);
+            else
+                isRoot = FALSE;
             /* Check the signature of the cert this issued */
             if (!CryptVerifyCertificateSignatureEx(0, X509_ASN_ENCODING,
              CRYPT_VERIFY_CERT_SIGN_SUBJECT_CERT,
@@ -841,7 +852,7 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
                  CERT_TRUST_INVALID_BASIC_CONSTRAINTS;
             else if (!CRYPT_CheckBasicConstraintsForCA(
              chain->rgpElement[i]->pCertContext, &constraints, i - 1,
-             &pathLengthConstraintViolated))
+             isRoot, &pathLengthConstraintViolated))
                 chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
                  CERT_TRUST_INVALID_BASIC_CONSTRAINTS;
             else if (constraints.fPathLenConstraint &&
