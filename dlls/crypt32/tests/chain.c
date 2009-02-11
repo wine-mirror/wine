@@ -1709,102 +1709,110 @@ static void testGetCertChain(void)
 
 typedef struct _ChainPolicyCheck
 {
-    CONST_BLOB_ARRAY         certs;
-    CERT_CHAIN_POLICY_STATUS status;
-    DWORD                    todo;
+    CONST_BLOB_ARRAY                certs;
+    CERT_CHAIN_POLICY_STATUS        status;
+    const CERT_CHAIN_POLICY_STATUS *brokenStatus;
+    DWORD                           todo;
 } ChainPolicyCheck;
 
 static const ChainPolicyCheck basePolicyCheck[] = {
  { { sizeof(chain0) / sizeof(chain0[0]), chain0 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain1) / sizeof(chain1[0]), chain1 },
-   { 0, TRUST_E_CERT_SIGNATURE, 0, 0, NULL }, 0 },
+   { 0, TRUST_E_CERT_SIGNATURE, 0, 0, NULL }, NULL, 0 },
  { { sizeof(chain2) / sizeof(chain2[0]), chain2 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain3) / sizeof(chain3[0]), chain3 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain4) / sizeof(chain4[0]), chain4 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 2, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 2, NULL }, NULL, 0 },
  { { sizeof(chain5) / sizeof(chain5[0]), chain5 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain6) / sizeof(chain6[0]), chain6 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain7) / sizeof(chain7[0]), chain7 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain8) / sizeof(chain8[0]), chain8 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 2, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 2, NULL }, NULL, 0 },
  { { sizeof(chain9) / sizeof(chain9[0]), chain9 },
-   { 0, CERT_E_CHAINING, 0, -1, NULL }, 0 },
+   { 0, CERT_E_CHAINING, 0, -1, NULL }, NULL, 0 },
  { { sizeof(chain10) / sizeof(chain10[0]), chain10 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain11) / sizeof(chain11[0]), chain11 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain12) / sizeof(chain12[0]), chain12 },
-   { 0, TRUST_E_CERT_SIGNATURE, 0, 1, NULL }, 0 },
+   { 0, TRUST_E_CERT_SIGNATURE, 0, 1, NULL }, NULL, 0 },
  { { sizeof(selfSignedChain) / sizeof(selfSignedChain[0]), selfSignedChain },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 0, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 0, NULL }, NULL, 0 },
 };
 
 static const ChainPolicyCheck authenticodePolicyCheck[] = {
  { { sizeof(chain0) / sizeof(chain0[0]), chain0 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain1) / sizeof(chain1[0]), chain1 },
-   { 0, TRUST_E_CERT_SIGNATURE, 0, 0, NULL }, 0 },
+   { 0, TRUST_E_CERT_SIGNATURE, 0, 0, NULL }, NULL, 0 },
  { { sizeof(chain2) / sizeof(chain2[0]), chain2 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain3) / sizeof(chain3[0]), chain3 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain4) / sizeof(chain4[0]), chain4 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 2, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 2, NULL }, NULL, 0 },
  { { sizeof(chain5) / sizeof(chain5[0]), chain5 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain6) / sizeof(chain6[0]), chain6 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain7) / sizeof(chain7[0]), chain7 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain8) / sizeof(chain8[0]), chain8 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 2, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 2, NULL }, NULL, 0 },
  { { sizeof(chain9) / sizeof(chain9[0]), chain9 },
-   { 0, CERT_E_CHAINING, 0, -1, NULL }, 0 },
+   { 0, CERT_E_CHAINING, 0, -1, NULL }, NULL, 0 },
  { { sizeof(chain10) / sizeof(chain10[0]), chain10 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain11) / sizeof(chain11[0]), chain11 },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain12) / sizeof(chain12[0]), chain12 },
-   { 0, TRUST_E_CERT_SIGNATURE, 0, 1, NULL }, 0 },
+   { 0, TRUST_E_CERT_SIGNATURE, 0, 1, NULL }, NULL, 0 },
  { { sizeof(selfSignedChain) / sizeof(selfSignedChain[0]), selfSignedChain },
-   { 0, CERT_E_UNTRUSTEDROOT, 0, 0, NULL }, 0 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 0, NULL }, NULL, 0 },
 };
+
+/* On some older systems, the element index is set to 2 rather than 1 for
+ * chain 4, because they do not catch the basic constraints error in the
+ * chain, which occurs at element 1.
+ */
+static const CERT_CHAIN_POLICY_STATUS chain4BrokenStatus =
+ { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 2, NULL };
 
 static const ChainPolicyCheck basicConstraintsPolicyCheck[] = {
  { { sizeof(chain0) / sizeof(chain0[0]), chain0 },
-   { 0, 0, -1, -1, NULL }, 0 },
+   { 0, 0, -1, -1, NULL }, NULL, 0 },
  { { sizeof(chain1) / sizeof(chain1[0]), chain1 },
-   { 0, 0, -1, -1, NULL }, 0 },
+   { 0, 0, -1, -1, NULL }, NULL, 0 },
  { { sizeof(chain2) / sizeof(chain2[0]), chain2 },
-   { 0, 0, -1, -1, NULL }, 0 },
+   { 0, 0, -1, -1, NULL }, NULL, 0 },
  { { sizeof(chain3) / sizeof(chain3[0]), chain3 },
-   { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL }, 0 },
+   { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain4) / sizeof(chain4[0]), chain4 },
-   { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL }, 0 },
+   { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain5) / sizeof(chain5[0]), chain5 },
-   { 0, 0, -1, -1, NULL }, 0 },
+   { 0, 0, -1, -1, NULL }, NULL, 0 },
  { { sizeof(chain6) / sizeof(chain6[0]), chain6 },
-   { 0, 0, -1, -1, NULL }, 0 },
+   { 0, 0, -1, -1, NULL }, NULL, 0 },
  { { sizeof(chain7) / sizeof(chain7[0]), chain7 },
-   { 0, 0, -1, -1, NULL }, 0 },
+   { 0, 0, -1, -1, NULL }, NULL, 0 },
  { { sizeof(chain8) / sizeof(chain8[0]), chain8 },
-   { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL }, 0 },
+   { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain9) / sizeof(chain9[0]), chain9 },
-   { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL }, 0 },
+   { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain10) / sizeof(chain10[0]), chain10 },
-   { 0, 0, -1, -1, NULL }, 0 },
+   { 0, 0, -1, -1, NULL }, NULL, 0 },
  { { sizeof(chain11) / sizeof(chain11[0]), chain11 },
-   { 0, 0, -1, -1, NULL }, 0 },
+   { 0, 0, -1, -1, NULL }, NULL, 0 },
  { { sizeof(chain12) / sizeof(chain12[0]), chain12 },
-   { 0, 0, -1, -1, NULL }, 0 },
+   { 0, 0, -1, -1, NULL }, NULL, 0 },
  { { sizeof(selfSignedChain) / sizeof(selfSignedChain[0]), selfSignedChain },
-   { 0, 0, -1, -1, NULL }, 0 },
+   { 0, 0, -1, -1, NULL }, NULL, 0 },
 };
 
 static const char *num_to_str(WORD num)
@@ -1849,13 +1857,17 @@ static void checkChainPolicyStatus(LPCSTR policy, const ChainPolicyCheck *check,
         {
             if (check->todo & TODO_ERROR)
                 todo_wine ok(policyStatus.dwError == check->status.dwError ||
-                 broken(policyStatus.dwError == CERT_TRUST_NO_ERROR),
+                 broken(policyStatus.dwError == CERT_TRUST_NO_ERROR) ||
+                 (check->brokenStatus && broken(policyStatus.dwError ==
+                 check->brokenStatus->dwError)),
                  "%s[%d]: expected %08x, got %08x\n",
                  HIWORD(policy) ? policy : num_to_str(LOWORD(policy)),
                  testIndex, check->status.dwError, policyStatus.dwError);
             else
                 ok(policyStatus.dwError == check->status.dwError ||
-                 broken(policyStatus.dwError == CERT_TRUST_NO_ERROR),
+                 broken(policyStatus.dwError == CERT_TRUST_NO_ERROR) ||
+                 (check->brokenStatus && broken(policyStatus.dwError ==
+                 check->brokenStatus->dwError)),
                  "%s[%d]: expected %08x, got %08x\n",
                  HIWORD(policy) ? policy : num_to_str(LOWORD(policy)),
                  testIndex, check->status.dwError, policyStatus.dwError);
@@ -1869,25 +1881,34 @@ static void checkChainPolicyStatus(LPCSTR policy, const ChainPolicyCheck *check,
             }
             if (check->todo & TODO_CHAINS)
                 todo_wine ok(policyStatus.lChainIndex ==
-                 check->status.lChainIndex, "%s[%d]: expected %d, got %d\n",
+                 check->status.lChainIndex ||
+                 (check->brokenStatus && broken(policyStatus.lChainIndex ==
+                 check->brokenStatus->lChainIndex)),
+                 "%s[%d]: expected %d, got %d\n",
                  HIWORD(policy) ? policy : num_to_str(LOWORD(policy)),
                  testIndex, check->status.lChainIndex,
                  policyStatus.lChainIndex);
             else
-                ok(policyStatus.lChainIndex == check->status.lChainIndex,
+                ok(policyStatus.lChainIndex == check->status.lChainIndex ||
+                 (check->brokenStatus && broken(policyStatus.lChainIndex ==
+                 check->brokenStatus->lChainIndex)),
                  "%s[%d]: expected %d, got %d\n",
                  HIWORD(policy) ? policy : num_to_str(LOWORD(policy)),
                  testIndex,
                  check->status.lChainIndex, policyStatus.lChainIndex);
             if (check->todo & TODO_ELEMENTS)
                 todo_wine ok(policyStatus.lElementIndex ==
-                 check->status.lElementIndex,
+                 check->status.lElementIndex ||
+                 (check->brokenStatus && broken(policyStatus.lElementIndex ==
+                 check->brokenStatus->lElementIndex)),
                  "%s[%d]: expected %d, got %d\n",
                  HIWORD(policy) ? policy : num_to_str(LOWORD(policy)),
                  testIndex,
                  check->status.lElementIndex, policyStatus.lElementIndex);
             else
-                ok(policyStatus.lElementIndex == check->status.lElementIndex,
+                ok(policyStatus.lElementIndex == check->status.lElementIndex ||
+                 (check->brokenStatus && broken(policyStatus.lElementIndex ==
+                 check->brokenStatus->lElementIndex)),
                  "%s[%d]: expected %d, got %d\n",
                  HIWORD(policy) ? policy : num_to_str(LOWORD(policy)),
                  testIndex,
