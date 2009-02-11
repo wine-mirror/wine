@@ -218,7 +218,7 @@ static void MouseRelay(CONTEXT86 *context,void *mdata)
   ctx.Edi   = data->my;
   ctx.SegCs = SELECTOROF(data->proc);
   ctx.Eip   = OFFSETOF(data->proc);
-  free(data);
+  HeapFree(GetProcessHeap(), 0, data);
   DPMI_CallRMProc(&ctx, NULL, 0, 0);
 }
 
@@ -264,7 +264,7 @@ static void QueueMouseRelay(DWORD mx, DWORD my, WORD mask)
   }
 
   if ((mask & mouse_info.callmask) && mouse_info.callback) {
-    MCALLDATA *data = calloc(1,sizeof(MCALLDATA));
+    MCALLDATA *data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MCALLDATA));
     data->proc = mouse_info.callback;
     data->mask = mask & mouse_info.callmask;
     data->but = mouse_info.but;

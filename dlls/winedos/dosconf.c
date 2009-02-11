@@ -264,7 +264,7 @@ static int DOSCONF_Country(char **confline)
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
     TRACE( "Country '%s'\n", *confline );
     if (DOSCONF_config.country == NULL)
-        DOSCONF_config.country = malloc(strlen(*confline) + 1);
+        DOSCONF_config.country = HeapAlloc(GetProcessHeap(), 0, strlen(*confline) + 1);
     strcpy(DOSCONF_config.country, *confline);
     return 1;
 }
@@ -304,7 +304,7 @@ static int DOSCONF_Shell(char **confline)
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
     TRACE( "Shell '%s'\n", *confline );
     if (DOSCONF_config.shell == NULL)
-        DOSCONF_config.shell = malloc(strlen(*confline) + 1);
+        DOSCONF_config.shell = HeapAlloc(GetProcessHeap(), 0, strlen(*confline) + 1);
     strcpy(DOSCONF_config.shell, *confline);
     return 1;
 }
@@ -354,7 +354,7 @@ static int DOSCONF_Menu(char **confline)
             && (!(strncasecmp(*confline, DOSCONF_menu_default, 
                               strlen(DOSCONF_menu_default)))))
         {
-            free(DOSCONF_menu_default);
+            HeapFree(GetProcessHeap(), 0, DOSCONF_menu_default);
             DOSCONF_menu_default = NULL;
             DOSCONF_menu_skip = 0;
         }
@@ -367,7 +367,7 @@ static int DOSCONF_Menu(char **confline)
     {
 	if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
         *confline = strtok(*confline, ",");
-        DOSCONF_menu_default = malloc(strlen(*confline) + 1);
+        DOSCONF_menu_default = HeapAlloc(GetProcessHeap(), 0, strlen(*confline) + 1);
 	strcpy(DOSCONF_menu_default, *confline);
     }
 
@@ -384,10 +384,10 @@ static int DOSCONF_Include(char **confline)
     fgetpos(DOSCONF_fd, &oldpos);
     fseek(DOSCONF_fd, 0, SEEK_SET);
     TRACE( "Including menu '%s'\n", *confline );
-    temp = malloc(strlen(*confline) + 1);
+    temp = HeapAlloc(GetProcessHeap(), 0, strlen(*confline) + 1);
     strcpy(temp, *confline);
     DOSCONF_Parse(temp);
-    free(temp);
+    HeapFree(GetProcessHeap(), 0, temp);
     fsetpos(DOSCONF_fd, &oldpos);
     return 1;
 }

@@ -134,7 +134,7 @@ static void do_strategy(CONTEXT86*ctx, int id, int extra)
   void **hdr_ptr = strategy_data[id];
 
   if (!hdr_ptr) {
-    hdr_ptr = calloc(1,sizeof(void *)+extra);
+    hdr_ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(void *)+extra);
     strategy_data[id] = hdr_ptr;
   }
   *hdr_ptr = hdr;

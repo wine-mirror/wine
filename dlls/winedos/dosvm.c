@@ -182,7 +182,7 @@ static void DOSVM_SendOneEvent( CONTEXT86 *context )
             DOSVM_BuildCallFrame( context, event->relay, event->data );
         }
 
-        free(event);
+        HeapFree(GetProcessHeap(), 0, event);
     }
 }
 
@@ -257,7 +257,7 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
   BOOL       old_pending;
 
   if (MZ_Current()) {
-    event = malloc(sizeof(DOSEVENT));
+    event = HeapAlloc(GetProcessHeap(), 0, sizeof(DOSEVENT));
     if (!event) {
       ERR("out of memory allocating event entry\n");
       return;
@@ -622,7 +622,7 @@ void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val)
             current_event = event->next;
             if (event->relay)
                 (*event->relay)(NULL,event->data);
-            free(event);
+            HeapFree(GetProcessHeap(), 0, event);
 
             if (DOSVM_HasPendingEvents()) 
             {
