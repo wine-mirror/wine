@@ -172,8 +172,6 @@ then
     AC_SUBST(TARGETFLAGS,"-b $host_alias")
 fi
 
-AC_PATH_XTRA
-
 dnl Check for flex
 AC_CHECK_PROGS(FLEX,flex,none)
 if test "$FLEX" = "none"
@@ -538,6 +536,8 @@ case $host_os in
     enable_ws2_32=${enable_ws2_32:-no}
     enable_loader=${enable_loader:-no}
     enable_server=${enable_server:-no}
+    dnl Disable dependencies that are not useful on Windows
+    with_x=${with_x:-no}
     ;;
   darwin*|macosx*)
     DLLEXT=".so"
@@ -669,6 +669,8 @@ then
 fi
 
 dnl **** Check for X11 ****
+
+AC_PATH_XTRA
 
 if test "$have_x" = "yes"
 then
