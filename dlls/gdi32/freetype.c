@@ -5420,31 +5420,54 @@ UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
     else
         TM.tmPitchAndFamily = 0;
 
-    switch(pOS2->panose[PAN_FAMILYTYPE_INDEX]) {
+    switch(pOS2->panose[PAN_FAMILYTYPE_INDEX])
+    {
     case PAN_FAMILY_SCRIPT:
         TM.tmPitchAndFamily |= FF_SCRIPT;
-	break;
+        break;
+
     case PAN_FAMILY_DECORATIVE:
-    case PAN_FAMILY_PICTORIAL:
         TM.tmPitchAndFamily |= FF_DECORATIVE;
-	break;
+        break;
+
+    case PAN_ANY:
+    case PAN_NO_FIT:
     case PAN_FAMILY_TEXT_DISPLAY:
+    case PAN_FAMILY_PICTORIAL: /* symbol fonts get treated as if they were text */
+                               /* which is clearly not what the panose spec says. */
+    default:
         if(TM.tmPitchAndFamily == 0) /* fixed */
 	    TM.tmPitchAndFamily = FF_MODERN;
-	else {
-	    switch(pOS2->panose[PAN_SERIFSTYLE_INDEX]) {
-	    case PAN_SERIF_NORMAL_SANS:
-	    case PAN_SERIF_OBTUSE_SANS:
-	    case PAN_SERIF_PERP_SANS:
-	        TM.tmPitchAndFamily |= FF_SWISS;
-		break;
-	    default:
-	        TM.tmPitchAndFamily |= FF_ROMAN;
-	    }
+        else
+        {
+            switch(pOS2->panose[PAN_SERIFSTYLE_INDEX])
+            {
+            case PAN_ANY:
+            case PAN_NO_FIT:
+            default:
+                TM.tmPitchAndFamily |= FF_DONTCARE;
+                break;
+
+            case PAN_SERIF_COVE:
+            case PAN_SERIF_OBTUSE_COVE:
+            case PAN_SERIF_SQUARE_COVE:
+            case PAN_SERIF_OBTUSE_SQUARE_COVE:
+            case PAN_SERIF_SQUARE:
+            case PAN_SERIF_THIN:
+            case PAN_SERIF_BONE:
+            case PAN_SERIF_EXAGGERATED:
+            case PAN_SERIF_TRIANGLE:
+                TM.tmPitchAndFamily |= FF_ROMAN;
+                break;
+
+            case PAN_SERIF_NORMAL_SANS:
+            case PAN_SERIF_OBTUSE_SANS:
+            case PAN_SERIF_PERP_SANS:
+                TM.tmPitchAndFamily |= FF_SWISS;
+                break;
+            }
 	}
 	break;
-    default:
-        TM.tmPitchAndFamily |= FF_DONTCARE;
     }
 
     if(FT_IS_SCALABLE(ft_face))
