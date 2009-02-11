@@ -410,16 +410,12 @@ static void capture_CheckNotify(IDirectSoundCaptureBufferImpl *This, DWORD from,
 }
 
 static void CALLBACK
-DSOUND_capture_callback(
-    HWAVEIN hwi,
-    UINT msg,
-    DWORD dwUser,
-    DWORD dw1,
-    DWORD dw2 )
+DSOUND_capture_callback(HWAVEIN hwi, UINT msg, DWORD_PTR dwUser, DWORD_PTR dw1,
+                        DWORD_PTR dw2)
 {
     DirectSoundCaptureDevice * This = (DirectSoundCaptureDevice*)dwUser;
     IDirectSoundCaptureBufferImpl * Moi = This->capture_buffer;
-    TRACE("(%p,%08x(%s),%08x,%08x,%08x) entering at %d\n",hwi,msg,
+    TRACE("(%p,%08x(%s),%08lx,%08lx,%08lx) entering at %d\n",hwi,msg,
 	msg == MM_WIM_OPEN ? "MM_WIM_OPEN" : msg == MM_WIM_CLOSE ? "MM_WIM_CLOSE" :
 	msg == MM_WIM_DATA ? "MM_WIM_DATA" : "UNKNOWN",dwUser,dw1,dw2,GetTickCount());
 
@@ -1157,7 +1153,7 @@ IDirectSoundCaptureBufferImpl_Start(
                 else
                     device->pwave[c].dwBufferLength = blocksize;
                 device->pwave[c].dwBytesRecorded = 0;
-                device->pwave[c].dwUser = (DWORD)device;
+                device->pwave[c].dwUser = (DWORD_PTR)device;
                 device->pwave[c].dwFlags = 0;
                 device->pwave[c].dwLoops = 0;
                 hres = mmErr(waveInPrepareHeader(device->hwi, &(device->pwave[c]),sizeof(WAVEHDR)));
@@ -1460,7 +1456,7 @@ HRESULT IDirectSoundCaptureBufferImpl_Create(
 	    DWORD flags = CALLBACK_FUNCTION;
             err = mmErr(waveInOpen(&(device->hwi),
                 device->drvdesc.dnDevNode, device->pwfx,
-                (DWORD_PTR)DSOUND_capture_callback, (DWORD)device, flags));
+                (DWORD_PTR)DSOUND_capture_callback, (DWORD_PTR)device, flags));
             if (err != DS_OK) {
                 WARN("waveInOpen failed\n");
 		This->device->capture_buffer = 0;

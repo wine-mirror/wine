@@ -253,7 +253,7 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 		for (c=0; c<device->helfrags; c++) {
 			device->pwave[c].lpData = (char*)device->buffer + c*device->fraglen;
 			device->pwave[c].dwBufferLength = device->fraglen;
-			device->pwave[c].dwUser = (DWORD)device;
+			device->pwave[c].dwUser = (DWORD_PTR)device;
 			device->pwave[c].dwFlags = 0;
 			device->pwave[c].dwLoops = 0;
 			err = mmErr(waveOutPrepareHeader(device->hwo,&device->pwave[c],sizeof(WAVEHDR)));
