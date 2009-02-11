@@ -1323,6 +1323,117 @@ static void test_overlapped(void)
     CloseHandle(thread);
 }
 
+static void test_NamedPipeHandleState(void)
+{
+    HANDLE server, client;
+    BOOL ret;
+    DWORD state, instances, maxCollectionCount, collectDataTimeout;
+    char userName[MAX_PATH];
+
+    server = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX,
+        /* dwOpenMode */ PIPE_TYPE_BYTE | PIPE_WAIT,
+        /* nMaxInstances */ 1,
+        /* nOutBufSize */ 1024,
+        /* nInBufSize */ 1024,
+        /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
+        /* lpSecurityAttrib */ NULL);
+    ok(server != INVALID_HANDLE_VALUE, "cf failed\n");
+    ret = GetNamedPipeHandleState(server, NULL, NULL, NULL, NULL, NULL, 0);
+    todo_wine
+    ok(ret, "GetNamedPipeHandleState failed: %d\n", GetLastError());
+    ret = GetNamedPipeHandleState(server, &state, &instances, NULL, NULL, NULL,
+        0);
+    todo_wine
+    ok(ret, "GetNamedPipeHandleState failed: %d\n", GetLastError());
+    if (ret)
+    {
+        ok(state == 0, "unexpected state %08x\n", state);
+        ok(instances == 1, "expected 1 instances, got %d\n", instances);
+    }
+    /* Some parameters have no meaning, and therefore can't be retrieved,
+     * on a local pipe.
+     */
+    SetLastError(0xdeadbeef);
+    ret = GetNamedPipeHandleState(server, &state, &instances,
+        &maxCollectionCount, &collectDataTimeout, userName,
+        sizeof(userName) / sizeof(userName[0]));
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    /* A byte-mode pipe server can't be changed to message mode. */
+    state = PIPE_READMODE_MESSAGE;
+    SetLastError(0xdeadbeef);
+    ret = SetNamedPipeHandleState(server, &state, NULL, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    client = CreateFileA(PIPENAME, GENERIC_READ|GENERIC_WRITE, 0, NULL,
+        OPEN_EXISTING, 0, NULL);
+    ok(client != INVALID_HANDLE_VALUE, "cf failed\n");
+
+    state = PIPE_READMODE_BYTE;
+    ret = SetNamedPipeHandleState(client, &state, NULL, NULL);
+    todo_wine
+    ok(ret, "SetNamedPipeHandleState failed: %d\n", GetLastError());
+    /* A byte-mode pipe client can't be changed to message mode, either. */
+    state = PIPE_READMODE_MESSAGE;
+    SetLastError(0xdeadbeef);
+    ret = SetNamedPipeHandleState(server, &state, NULL, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    CloseHandle(client);
+    CloseHandle(server);
+
+    server = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX,
+        /* dwOpenMode */ PIPE_TYPE_MESSAGE | PIPE_WAIT,
+        /* nMaxInstances */ 1,
+        /* nOutBufSize */ 1024,
+        /* nInBufSize */ 1024,
+        /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
+        /* lpSecurityAttrib */ NULL);
+    ok(server != INVALID_HANDLE_VALUE, "cf failed\n");
+    ret = GetNamedPipeHandleState(server, NULL, NULL, NULL, NULL, NULL, 0);
+    todo_wine
+    ok(ret, "GetNamedPipeHandleState failed: %d\n", GetLastError());
+    ret = GetNamedPipeHandleState(server, &state, &instances, NULL, NULL, NULL,
+        0);
+    todo_wine
+    ok(ret, "GetNamedPipeHandleState failed: %d\n", GetLastError());
+    if (ret)
+    {
+        ok(state == 0, "unexpected state %08x\n", state);
+        ok(instances == 1, "expected 1 instances, got %d\n", instances);
+    }
+    /* In contrast to byte-mode pipes, a message-mode pipe server can be
+     * changed to byte mode.
+     */
+    state = PIPE_READMODE_BYTE;
+    ret = SetNamedPipeHandleState(server, &state, NULL, NULL);
+    todo_wine
+    ok(ret, "SetNamedPipeHandleState failed: %d\n", GetLastError());
+
+    client = CreateFileA(PIPENAME, GENERIC_READ|GENERIC_WRITE, 0, NULL,
+        OPEN_EXISTING, 0, NULL);
+    ok(client != INVALID_HANDLE_VALUE, "cf failed\n");
+
+    state = PIPE_READMODE_MESSAGE;
+    ret = SetNamedPipeHandleState(client, &state, NULL, NULL);
+    todo_wine
+    ok(ret, "SetNamedPipeHandleState failed: %d\n", GetLastError());
+    /* A message-mode pipe client can also be changed to byte mode.
+     */
+    state = PIPE_READMODE_BYTE;
+    ret = SetNamedPipeHandleState(client, &state, NULL, NULL);
+    todo_wine
+    ok(ret, "SetNamedPipeHandleState failed: %d\n", GetLastError());
+
+    CloseHandle(client);
+    CloseHandle(server);
+}
+
 START_TEST(pipe)
 {
     HMODULE hmod;
@@ -1339,4 +1450,5 @@ START_TEST(pipe)
     test_CreatePipe();
     test_impersonation();
     test_overlapped();
+    test_NamedPipeHandleState();
 }
