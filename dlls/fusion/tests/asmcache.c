@@ -853,6 +853,8 @@ static BOOL check_dotnet20(void)
         ret = TRUE;
     else if (hr == CLDB_E_FILE_OLDVER)
         win_skip("Tests can't be run on older .NET version (.NET 1.1)\n");
+    else if (hr == E_ACCESSDENIED)
+        skip("Not enough rights to install an assembly\n");
     else
         ok(0, "Expected S_OK, got %08x\n", hr);
 
