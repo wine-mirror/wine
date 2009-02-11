@@ -2291,7 +2291,7 @@ BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
         data->imeWnd = CreateWindowExW( WS_EX_TOOLWINDOW,
                     data->immKbd->imeClassName, NULL, WS_POPUP, 0, 0, 1, 1, 0,
                     0, data->immKbd->hIME, 0);
-        SetWindowLongW(data->imeWnd, IMMGWL_IMC, (LONG)data);
+        SetWindowLongPtrW(data->imeWnd, IMMGWL_IMC, (LONG_PTR)data);
         IMM_GetThreadData()->hwndDefault = data->imeWnd;
     }
 

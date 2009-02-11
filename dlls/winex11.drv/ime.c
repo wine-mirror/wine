@@ -135,7 +135,7 @@ static void IME_RegisterClasses(void)
     wndClass.style = CS_GLOBALCLASS | CS_IME | CS_HREDRAW | CS_VREDRAW;
     wndClass.lpfnWndProc = IME_WindowProc;
     wndClass.cbClsExtra = 0;
-    wndClass.cbWndExtra = 2 * sizeof(LONG);
+    wndClass.cbWndExtra = 2 * sizeof(LONG_PTR);
     wndClass.hInstance = x11drv_module;
     wndClass.hCursor = LoadCursorW(NULL, (LPWSTR)IDC_ARROW);
     wndClass.hIcon = LoadIconW(NULL, (LPWSTR)IDI_APPLICATION);
@@ -1326,7 +1326,7 @@ static LRESULT WINAPI IME_WindowProc(HWND hwnd, UINT msg, WPARAM wParam,
      * messages.
      */
 
-    hIMC = (HIMC)GetWindowLongW(hwnd,IMMGWL_IMC);
+    hIMC = (HIMC)GetWindowLongPtrW(hwnd,IMMGWL_IMC);
     if (!hIMC)
         hIMC = RealIMC(FROM_X11);
 

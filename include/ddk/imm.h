@@ -114,7 +114,7 @@ HIMCC  WINAPI ImmReSizeIMCC(HIMCC, DWORD);
 DWORD  WINAPI ImmGetIMCCSize(HIMCC);
 
 #define IMMGWL_IMC                      0
-#define IMMGWL_PRIVATE                  (sizeof(LONG))
+#define IMMGWL_PRIVATE                  (sizeof(LONG_PTR))
 
 /* IME Property bits */
 #define IME_PROP_END_UNLOAD             0x0001
