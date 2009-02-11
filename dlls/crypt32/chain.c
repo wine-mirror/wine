@@ -995,8 +995,7 @@ static PCCERT_CONTEXT CRYPT_GetIssuer(HCERTSTORE store, PCCERT_CONTEXT subject,
         issuer = CertFindCertificateInStore(store,
          subject->dwCertEncodingType, 0, CERT_FIND_SUBJECT_NAME,
          &subject->pCertInfo->Issuer, prevIssuer);
-        if (issuer)
-            *infoStatus = CERT_TRUST_HAS_NAME_MATCH_ISSUER;
+        *infoStatus = CERT_TRUST_HAS_NAME_MATCH_ISSUER;
     }
     return issuer;
 }
@@ -1013,12 +1012,13 @@ static BOOL CRYPT_BuildSimpleChain(PCertificateChainEngine engine,
     while (ret && !CRYPT_IsSimpleChainCyclic(chain) &&
      !CRYPT_IsCertificateSelfSigned(cert))
     {
-        DWORD infoStatus;
-        PCCERT_CONTEXT issuer = CRYPT_GetIssuer(world, cert, NULL, &infoStatus);
+        PCCERT_CONTEXT issuer = CRYPT_GetIssuer(world, cert, NULL,
+         &chain->rgpElement[chain->cElement - 1]->TrustStatus.dwInfoStatus);
 
         if (issuer)
         {
-            ret = CRYPT_AddCertToSimpleChain(engine, chain, issuer, infoStatus);
+            ret = CRYPT_AddCertToSimpleChain(engine, chain, issuer,
+             chain->rgpElement[chain->cElement - 1]->TrustStatus.dwInfoStatus);
             /* CRYPT_AddCertToSimpleChain add-ref's the issuer, so free it to
              * close the enumeration that found it
              */
