@@ -180,7 +180,7 @@ static void test_onevalue_cap(TW_IDENTITY *appid, TW_IDENTITY *source, TW_UINT16
             "Error [rc %d|cc %d] doing MSG_QUERYSUPPORT for type 0x%x\n", rc, status.ConditionCode, captype);
     if (rc != TWRC_SUCCESS)
         return;
-    ok(get_onevalue(cap.hContainer, (TW_UINT32 *) &actual_support, NULL), "Returned cap.hContainer invalid for QuerySupport on type 0x%x", captype);
+    ok(get_onevalue(cap.hContainer, (TW_UINT32 *) &actual_support, NULL), "Returned cap.hContainer invalid for QuerySupport on type 0x%x\n", captype);
     ok((actual_support & minimum_support) == minimum_support,
             "Error:  minimum support 0x%x for type 0x%x, got 0x%x\n", minimum_support,
             captype, actual_support);
