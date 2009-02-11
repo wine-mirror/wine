@@ -500,15 +500,10 @@ HRESULT WINAPI DoDragDrop (
   trackerInfo.curTargetHWND     = 0;
   trackerInfo.curDragTarget     = 0;
 
-  hwndTrackWindow = CreateWindowA(OLEDD_DRAGTRACKERCLASS,
-				    "TrackerWindow",
-				    WS_POPUP,
-				    CW_USEDEFAULT, CW_USEDEFAULT,
-				    CW_USEDEFAULT, CW_USEDEFAULT,
-				    0,
-				    0,
-				    0,
-				    (LPVOID)&trackerInfo);
+  hwndTrackWindow = CreateWindowA(OLEDD_DRAGTRACKERCLASS, "TrackerWindow",
+                                  WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT,
+                                  CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, 0,
+                                  &trackerInfo);
 
   if (hwndTrackWindow!=0)
   {
@@ -2599,7 +2594,7 @@ BSTR WINAPI PropSysAllocString(LPCOLESTR str)
     stringBuffer = (WCHAR*)newBuffer;
     stringBuffer[len] = '\0';
 
-    return (LPWSTR)stringBuffer;
+    return stringBuffer;
 }
 
 /***********************************************************************
