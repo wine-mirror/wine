@@ -5210,8 +5210,10 @@ static void test_button_messages(void)
     ok(hwnd != 0, "Failed to create button window\n");
 
     SetForegroundWindow(hwnd);
-    SetFocus(0);
     flush_events();
+
+    SetActiveWindow(hwnd);
+    SetFocus(0);
     flush_sequence();
 
     SendMessageA(hwnd, WM_LBUTTONDOWN, 0, 0);
@@ -6537,19 +6539,19 @@ static const struct message WmAltPressRelease[] = {
     { WM_SYSKEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
     { 0 }
 };
-static const struct message WmAltMouseButton[] = {
-    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_MENU, 0x20000001 }, /* XP */
-    { WM_SYSKEYDOWN, wparam|lparam, VK_MENU, 0x20000001 },
-    { WM_SYSKEYDOWN, sent|wparam|lparam, VK_MENU, 0x20000001 },
+static const struct message WmShiftMouseButton[] = {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_SHIFT, 1 }, /* XP */
+    { WM_KEYDOWN, wparam|lparam, VK_SHIFT, 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_SHIFT, 1 },
     { WM_MOUSEMOVE, wparam|optional, 0, 0 },
     { WM_MOUSEMOVE, sent|wparam|optional, 0, 0 },
-    { WM_LBUTTONDOWN, wparam, MK_LBUTTON, 0 },
-    { WM_LBUTTONDOWN, sent|wparam, MK_LBUTTON, 0 },
-    { WM_LBUTTONUP, wparam, 0, 0 },
-    { WM_LBUTTONUP, sent|wparam, 0, 0 },
-    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_MENU, 0xc0000001 }, /* XP */
-    { WM_SYSKEYUP, wparam|lparam, VK_MENU, 0xc0000001 },
-    { WM_SYSKEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
+    { WM_LBUTTONDOWN, wparam, MK_LBUTTON|MK_SHIFT, 0 },
+    { WM_LBUTTONDOWN, sent|wparam, MK_LBUTTON|MK_SHIFT, 0 },
+    { WM_LBUTTONUP, wparam, MK_SHIFT, 0 },
+    { WM_LBUTTONUP, sent|wparam, MK_SHIFT, 0 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_SHIFT, 0xc0000001 }, /* XP */
+    { WM_KEYUP, wparam|lparam, VK_SHIFT, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_SHIFT, 0xc0000001 },
     { 0 }
 };
 static const struct message WmF1Seq[] = {
@@ -6770,22 +6772,23 @@ static void test_accelerators(void)
     /* this test doesn't pass in Wine for managed windows */
     ok_sequence(WmAltPressRelease, "Alt press/release", TRUE);
 
-    trace("testing Alt+MouseButton press/release\n");
+    trace("testing Shift+MouseButton press/release\n");
     /* first, move mouse pointer inside of the window client area */
     GetClientRect(hwnd, &rc);
     MapWindowPoints(hwnd, 0, (LPPOINT)&rc, 2);
     rc.left += (rc.right - rc.left)/2;
     rc.top += (rc.bottom - rc.top)/2;
     SetCursorPos(rc.left, rc.top);
+    SetActiveWindow(hwnd);
 
     flush_events();
     flush_sequence();
-    keybd_event(VK_MENU, 0, 0, 0);
+    keybd_event(VK_SHIFT, 0, 0, 0);
     mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
     mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
-    keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, 0);
-    ok_sequence(WmAltMouseButton, "Alt+MouseButton press/release", FALSE);
+    ok_sequence(WmShiftMouseButton, "Shift+MouseButton press/release", FALSE);
 
     trace("testing VK_F1 press/release\n");
     keybd_event(VK_F1, 0, 0, 0);
@@ -9342,7 +9345,7 @@ static void wait_move_event(HWND hwnd, int x, int y)
     }
 }
 
-#define STEP 20
+#define STEP 5
 static void test_PeekMessage2(void)
 {
     HWND hwnd;
@@ -9372,7 +9375,7 @@ static void test_PeekMessage2(void)
     /* Do initial mousemove, wait until we can see it
        and then do our test peek with PM_NOREMOVE. */
     mouse_event(MOUSEEVENTF_MOVE, STEP, STEP, 0, 0);
-    wait_move_event(hwnd, 80, 80);
+    wait_move_event(hwnd, 100-STEP, 100-STEP);
 
     ret = PeekMessageA(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_NOREMOVE);
     ok(ret, "no message available\n");
@@ -9383,7 +9386,6 @@ static void test_PeekMessage2(void)
 	x1 = msg.pt.x;
 	y1 = msg.pt.y;
         ok(message == WM_MOUSEMOVE, "message not WM_MOUSEMOVE, %04x instead\n", message);
-        PeekMessageA(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE);
     }
 
     /* Allow time to advance a bit, and then simulate the user moving their
@@ -9391,7 +9393,7 @@ static void test_PeekMessage2(void)
      * Although the previous mousemove message was never removed, the
      * mousemove we now peek should reflect the recent mouse movements
      * because the input queue will merge the move events. */
-    Sleep(2);
+    Sleep(100);
     mouse_event(MOUSEEVENTF_MOVE, STEP, STEP, 0, 0);
     wait_move_event(hwnd, x1, y1);
 
@@ -9406,11 +9408,10 @@ static void test_PeekMessage2(void)
         ok(message == WM_MOUSEMOVE, "message not WM_MOUSEMOVE, %04x instead\n", message);
 	ok(time2 > time1, "message time not advanced: %x %x\n", time1, time2);
 	ok(x2 != x1 && y2 != y1, "coords not changed: (%d %d) (%d %d)\n", x1, y1, x2, y2);
-        PeekMessageA(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE);
     }
 
     /* Have another go, to drive the point home */
-    Sleep(2);
+    Sleep(100);
     mouse_event(MOUSEEVENTF_MOVE, STEP, STEP, 0, 0);
     wait_move_event(hwnd, x2, y2);
 
