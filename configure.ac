@@ -56,6 +56,8 @@ AC_ARG_WITH(oss,       AS_HELP_STRING([--without-oss],[do not use the OSS sound 
             [if test "x$withval" = "xno"; then ac_cv_header_soundcard_h=no; ac_cv_header_sys_soundcard_h=no; ac_cv_header_machine_soundcard_h=no; fi])
 AC_ARG_WITH(png,       AS_HELP_STRING([--without-png],[do not use PNG]),
             [if test "x$withval" = "xno"; then ac_cv_header_png_h=no; fi])
+AC_ARG_WITH(pthread,   AS_HELP_STRING([--without-pthread],[do not use the pthread library]),
+            [if test "x$withval" = "xno"; then ac_cv_header_pthread_h=no; fi])
 AC_ARG_WITH(sane,      AS_HELP_STRING([--without-sane],[do not use SANE (scanner support)]))
 AC_ARG_WITH(xcomposite,AS_HELP_STRING([--without-xcomposite],[do not use the Xcomposite extension]),
             [if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_Xcomposite_h=no; fi])
@@ -240,8 +242,6 @@ dnl Check for -li386 for NetBSD and OpenBSD
 AC_CHECK_LIB(i386,i386_set_ldt)
 dnl Check for -lossaudio for NetBSD
 AC_CHECK_LIB(ossaudio,_oss_ioctl)
-dnl Check for -lpthread
-AC_CHECK_LIB(pthread,pthread_create,AC_SUBST(LIBPTHREAD,"-lpthread"))
 
 AC_SUBST(XLIB,"")
 AC_SUBST(OPENGL_LIBS,"")
@@ -538,6 +538,7 @@ case $host_os in
     enable_server=${enable_server:-no}
     dnl Disable dependencies that are not useful on Windows
     with_x=${with_x:-no}
+    with_pthread=${with_pthread:-no}
     ;;
   darwin*|macosx*)
     DLLEXT=".so"
@@ -667,6 +668,15 @@ then
         AC_SUBST(CROSSTEST,"\$(CROSSTEST)")
     fi
 fi
+
+dnl **** Check for pthread ****
+
+if test "$ac_cv_header_pthread_h" = "yes"
+then
+    AC_CHECK_LIB(pthread,pthread_create,[AC_SUBST(LIBPTHREAD,"-lpthread")])
+fi
+WINE_ERROR_WITH(pthread,[test "x$LIBPTHREAD" = "x"],[pthread ${notice_platform}development files not found.
+Wine cannot support threads without libpthread.])
 
 dnl **** Check for X11 ****
 

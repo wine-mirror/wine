@@ -690,6 +690,7 @@ X_LIBS
 X_PRE_LIBS
 X_CFLAGS
 XMKMF
+LIBPTHREAD
 CROSSTEST
 CROSSWINDRES
 CROSSCC
@@ -715,7 +716,6 @@ DLLEXT
 CPP
 OPENGL_LIBS
 XLIB
-LIBPTHREAD
 PRELINK
 ICOTOOL
 RSVG
@@ -840,6 +840,7 @@ with_opengl
 with_openssl
 with_oss
 with_png
+with_pthread
 with_sane
 with_xcomposite
 with_xcursor
@@ -1529,6 +1530,7 @@ Optional Packages:
   --without-openssl       do not use OpenSSL
   --without-oss           do not use the OSS sound support
   --without-png           do not use PNG
+  --without-pthread       do not use the pthread library
   --without-sane          do not use SANE (scanner support)
   --without-xcomposite    do not use the Xcomposite extension
   --without-xcursor       do not use the Xcursor extension
@@ -2195,6 +2197,12 @@ fi
 # Check whether --with-png was given.
 if test "${with_png+set}" = set; then
   withval=$with_png; if test "x$withval" = "xno"; then ac_cv_header_png_h=no; fi
+fi
+
+
+# Check whether --with-pthread was given.
+if test "${with_pthread+set}" = set; then
+  withval=$with_pthread; if test "x$withval" = "xno"; then ac_cv_header_pthread_h=no; fi
 fi
 
 
@@ -5445,76 +5453,6 @@ _ACEOF
 
 fi
 
-{ $as_echo "$as_me:$LINENO: checking for pthread_create in -lpthread" >&5
-$as_echo_n "checking for pthread_create in -lpthread... " >&6; }
-if test "${ac_cv_lib_pthread_pthread_create+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lpthread  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char pthread_create ();
-int
-main ()
-{
-return pthread_create ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 $as_test_x conftest$ac_exeext
-       }; then
-  ac_cv_lib_pthread_pthread_create=yes
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_pthread_pthread_create=no
-fi
-
-rm -rf conftest.dSYM
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_pthread_pthread_create" >&5
-$as_echo "$ac_cv_lib_pthread_pthread_create" >&6; }
-if test "x$ac_cv_lib_pthread_pthread_create" = x""yes; then
-  LIBPTHREAD="-lpthread"
-
-fi
-
 
 XLIB=""
 
@@ -7570,6 +7508,7 @@ fi
     enable_loader=${enable_loader:-no}
     enable_server=${enable_server:-no}
         with_x=${with_x:-no}
+    with_pthread=${with_pthread:-no}
     ;;
   darwin*|macosx*)
     DLLEXT=".so"
@@ -8616,6 +8555,94 @@ test -n "$MINGWAR" || MINGWAR="false"
 
     fi
 fi
+
+
+if test "$ac_cv_header_pthread_h" = "yes"
+then
+    { $as_echo "$as_me:$LINENO: checking for pthread_create in -lpthread" >&5
+$as_echo_n "checking for pthread_create in -lpthread... " >&6; }
+if test "${ac_cv_lib_pthread_pthread_create+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpthread  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char pthread_create ();
+int
+main ()
+{
+return pthread_create ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then
+  ac_cv_lib_pthread_pthread_create=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_pthread_pthread_create=no
+fi
+
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_pthread_pthread_create" >&5
+$as_echo "$ac_cv_lib_pthread_pthread_create" >&6; }
+if test "x$ac_cv_lib_pthread_pthread_create" = x""yes; then
+  LIBPTHREAD="-lpthread"
+
+fi
+
+fi
+if test "x$LIBPTHREAD" = "x"; then
+  case "x$with_pthread" in
+  xno) ;;
+  *)   { { $as_echo "$as_me:$LINENO: error: pthread ${notice_platform}development files not found.
+Wine cannot support threads without libpthread.
+Use the --without-pthread option if you really want this." >&5
+$as_echo "$as_me: error: pthread ${notice_platform}development files not found.
+Wine cannot support threads without libpthread.
+Use the --without-pthread option if you really want this." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+fi
+
 
 
 { $as_echo "$as_me:$LINENO: checking for X" >&5
