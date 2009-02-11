@@ -46,7 +46,7 @@ my %options_short = (
     "v" => "verbose"
 );
 
-my $options_usage = "usage: winapi_test [--help]\n";
+my $options_usage = "Usage: winapi_test [--help]\n\nGenerates tests checking the size and alignment of the Windows structures.\n\n";
 
 $options = '_options'->new(\%options_long, \%options_short, $options_usage);
 
