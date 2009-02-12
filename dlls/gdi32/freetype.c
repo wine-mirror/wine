@@ -5463,6 +5463,8 @@ UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
             case PAN_SERIF_NORMAL_SANS:
             case PAN_SERIF_OBTUSE_SANS:
             case PAN_SERIF_PERP_SANS:
+            case PAN_SERIF_FLARED:
+            case PAN_SERIF_ROUNDED:
                 TM.tmPitchAndFamily |= FF_SWISS;
                 break;
             }
