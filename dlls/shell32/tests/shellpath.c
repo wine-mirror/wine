@@ -384,7 +384,7 @@ static void testApiParameters(void)
 }
 
 /* Returns the folder's PIDL type, or 0xff if one can't be found. */
-static BYTE testSHGetFolderLocation(BOOL optional, int folder)
+static BYTE testSHGetFolderLocation(int folder)
 {
     LPITEMIDLIST pidl;
     HRESULT hr;
@@ -395,12 +395,8 @@ static BYTE testSHGetFolderLocation(BOOL optional, int folder)
 
     pidl = NULL;
     hr = pSHGetFolderLocation(NULL, folder, NULL, 0, &pidl);
-    ok(SUCCEEDED(hr) || optional,
-     "SHGetFolderLocation(NULL, %s, NULL, 0, &pidl) failed: 0x%08x\n", getFolderName(folder), hr);
     if (SUCCEEDED(hr))
     {
-        ok(pidl != NULL,
-         "SHGetFolderLocation(NULL, %s, NULL, 0, &pidl) succeeded, but returned pidl is NULL\n", getFolderName(folder));
         if (pidl)
         {
             LPITEMIDLIST pidlLast = pILFindLastID(pidl);
@@ -416,7 +412,7 @@ static BYTE testSHGetFolderLocation(BOOL optional, int folder)
 }
 
 /* Returns the folder's PIDL type, or 0xff if one can't be found. */
-static BYTE testSHGetSpecialFolderLocation(BOOL optional, int folder)
+static BYTE testSHGetSpecialFolderLocation(int folder)
 {
     LPITEMIDLIST pidl;
     HRESULT hr;
@@ -427,14 +423,8 @@ static BYTE testSHGetSpecialFolderLocation(BOOL optional, int folder)
 
     pidl = NULL;
     hr = pSHGetSpecialFolderLocation(NULL, folder, &pidl);
-    ok(SUCCEEDED(hr) || optional ||
-     broken((folder == CSIDL_COOKIES || folder == CSIDL_INTERNET) &&
-     hr == E_INVALIDARG) /* NT4 */,
-     "SHGetSpecialFolderLocation(NULL, %s, &pidl) failed: 0x%08x\n", getFolderName(folder), hr);
     if (SUCCEEDED(hr))
     {
-        ok(pidl != NULL,
-         "SHGetSpecialFolderLocation(NULL, %s, &pidl) succeeded, but returned pidl is NULL\n", getFolderName(folder));
         if (pidl)
         {
             LPITEMIDLIST pidlLast = pILFindLastID(pidl);
@@ -489,7 +479,7 @@ static void testShellValues(const struct shellExpectedValues testEntries[],
 
         if (pSHGetFolderLocation)
         {
-            type = testSHGetFolderLocation(optional, testEntries[i].folder);
+            type = testSHGetFolderLocation(testEntries[i].folder);
             for (j = 0; !foundTypeMatch && j < testEntries[i].numTypes; j++)
                 if (testEntries[i].types[j] == type)
                     foundTypeMatch = TRUE;
@@ -497,7 +487,7 @@ static void testShellValues(const struct shellExpectedValues testEntries[],
              "%s has unexpected type %d (0x%02x)\n",
              getFolderName(testEntries[i].folder), type, type);
         }
-        type = testSHGetSpecialFolderLocation(optional, testEntries[i].folder);
+        type = testSHGetSpecialFolderLocation(testEntries[i].folder);
         for (j = 0, foundTypeMatch = FALSE; !foundTypeMatch &&
          j < testEntries[i].numTypes; j++)
             if (testEntries[i].types[j] == type)
@@ -579,12 +569,6 @@ static void testDesktop(void)
 {
     testSHGetFolderPath(FALSE, CSIDL_DESKTOP);
     testSHGetSpecialFolderPath(FALSE, CSIDL_DESKTOP);
-    /* Test the desktop; even though SHITEMID should always contain abID of at
-     * least one type, when cb is 0 its value is undefined.  So don't check
-     * what the returned type is, just make sure it exists.
-     */
-    testSHGetFolderLocation(FALSE, CSIDL_DESKTOP);
-    testSHGetSpecialFolderLocation(FALSE, CSIDL_DESKTOP);
 }
 
 /* Checks the PIDL type of all the known values. */
