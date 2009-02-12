@@ -24,9 +24,7 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(mssign32);
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID lpv )
 {
