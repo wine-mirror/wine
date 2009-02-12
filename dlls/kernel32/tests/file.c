@@ -2217,27 +2217,32 @@ static void test_ReplaceFileA(void)
     /* make sure that the "replaced" file has the size of the replacement file */
     hReplacedFile = CreateFileA(replaced, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
     ok(hReplacedFile != INVALID_HANDLE_VALUE,
-        "failed to open replaced file\n");
-    ret = GetFileSize(hReplacedFile, NULL);
-    ok(ret == sizeof(replacementData),
-        "replaced file has wrong size %d\n", ret);
-    /* make sure that the replacement file no-longer exists */
-    hReplacementFile = CreateFileA(replacement, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
-    ok(hReplacementFile == INVALID_HANDLE_VALUE,
-       "unexpected error, replacement file should not exist %d\n", GetLastError());
-    /* make sure that the backup has the old "replaced" filetime */
-    ret = GetFileTime(hBackupFile, NULL, NULL, &ftBackup);
-    ok( ret, "GetFileTime error (backup %d\n", GetLastError());
-    ok(check_file_time(&ftBackup, &ftReplaced, 20000000), "backup file has wrong filetime\n");
-    CloseHandle(hBackupFile);
-    /* make sure that the "replaced" has the old replacement filetime */
-    ret = GetFileTime(hReplacedFile, NULL, NULL, &ftReplaced);
-    ok( ret, "GetFileTime error (backup %d\n", GetLastError());
-    ok(check_file_time(&ftReplaced, &ftReplacement, 20000000),
-       "replaced file has wrong filetime %x%08x / %x%08x\n",
-       ftReplaced.dwHighDateTime, ftReplaced.dwLowDateTime,
-       ftReplacement.dwHighDateTime, ftReplacement.dwLowDateTime );
-    CloseHandle(hReplacedFile);
+        "failed to open replaced file: %d\n", GetLastError());
+    if (hReplacedFile != INVALID_HANDLE_VALUE)
+    {
+        ret = GetFileSize(hReplacedFile, NULL);
+        ok(ret == sizeof(replacementData),
+            "replaced file has wrong size %d\n", ret);
+        /* make sure that the replacement file no-longer exists */
+        hReplacementFile = CreateFileA(replacement, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+        ok(hReplacementFile == INVALID_HANDLE_VALUE,
+           "unexpected error, replacement file should not exist %d\n", GetLastError());
+        /* make sure that the backup has the old "replaced" filetime */
+        ret = GetFileTime(hBackupFile, NULL, NULL, &ftBackup);
+        ok( ret, "GetFileTime error (backup %d\n", GetLastError());
+        ok(check_file_time(&ftBackup, &ftReplaced, 20000000), "backup file has wrong filetime\n");
+        CloseHandle(hBackupFile);
+        /* make sure that the "replaced" has the old replacement filetime */
+        ret = GetFileTime(hReplacedFile, NULL, NULL, &ftReplaced);
+        ok( ret, "GetFileTime error (backup %d\n", GetLastError());
+        ok(check_file_time(&ftReplaced, &ftReplacement, 20000000),
+           "replaced file has wrong filetime %x%08x / %x%08x\n",
+           ftReplaced.dwHighDateTime, ftReplaced.dwLowDateTime,
+           ftReplacement.dwHighDateTime, ftReplacement.dwLowDateTime );
+        CloseHandle(hReplacedFile);
+    }
+    else
+        skip("couldn't open replacement file, skipping tests\n");
 
     /* re-create replacement file for pass w/o backup (blank) */
     ret = GetTempFileNameA(temp_path, prefix, 0, replacement);
