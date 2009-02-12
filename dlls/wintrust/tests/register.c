@@ -165,12 +165,10 @@ static void test_AddRem_ActionID(void)
 static void test_AddDefaultForUsage(void)
 {
     BOOL ret;
-    LONG res;
     static GUID ActionID        = { 0xdeadbeef, 0xdead, 0xbeef, { 0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef }};
     static WCHAR DummyDllW[]    = {'d','e','a','d','b','e','e','f','.','d','l','l',0 };
     static CHAR DummyFunction[] = "dummyfunction";
     static const CHAR oid[]     = "1.2.3.4.5.6.7.8.9.10";
-    static const CHAR Usages[]  = "SOFTWARE\\Microsoft\\Cryptography\\Providers\\Trust\\Usages\\1.2.3.4.5.6.7.8.9.10";
     static CRYPT_PROVIDER_REGDEFUSAGE DefUsage;
 
     if (!pWintrustAddDefaultForUsage)
@@ -206,27 +204,6 @@ static void test_AddDefaultForUsage(void)
     ok (GetLastError() == ERROR_INVALID_PARAMETER,
         "Expected ERROR_INVALID_PARAMETER, got %u.\n", GetLastError());
 
-    /* Just the ActionID */
-    memset(&DefUsage, 0 , sizeof(CRYPT_PROVIDER_REGDEFUSAGE));
-    DefUsage.cbStruct = sizeof(CRYPT_PROVIDER_REGDEFUSAGE);
-    DefUsage.pgActionID = &ActionID;
-    SetLastError(0xdeadbeef);
-    ret = pWintrustAddDefaultForUsage(oid, &DefUsage);
-    ok ( ret, "Expected WintrustAddDefaultForUsage to succeed\n");
-    ok (GetLastError() == 0xdeadbeef,
-        "Last error should not have been changed: %u\n", GetLastError());
-   
-    /* No ActionID */
-    memset(&DefUsage, 0 , sizeof(CRYPT_PROVIDER_REGDEFUSAGE));
-    DefUsage.cbStruct = sizeof(CRYPT_PROVIDER_REGDEFUSAGE);
-    DefUsage.pwszDllName = DummyDllW;
-    DefUsage.pwszLoadCallbackDataFunctionName = DummyFunction;
-    DefUsage.pwszFreeCallbackDataFunctionName = DummyFunction;
-    ret = pWintrustAddDefaultForUsage(oid, &DefUsage);
-    ok (!ret, "Expected WintrustAddDefaultForUsage to fail.\n");
-    ok (GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %u.\n", GetLastError());
-
     /* cbStruct set to 0 */
     memset(&DefUsage, 0 , sizeof(CRYPT_PROVIDER_REGDEFUSAGE));
     DefUsage.cbStruct = 0;
@@ -239,28 +216,6 @@ static void test_AddDefaultForUsage(void)
     ok (!ret, "Expected WintrustAddDefaultForUsage to fail.\n");
     ok (GetLastError() == ERROR_INVALID_PARAMETER,
         "Expected ERROR_INVALID_PARAMETER, got %u.\n", GetLastError());
-
-    /* All OK */
-    memset(&DefUsage, 0 , sizeof(CRYPT_PROVIDER_REGDEFUSAGE));
-    DefUsage.cbStruct = sizeof(CRYPT_PROVIDER_REGDEFUSAGE);
-    DefUsage.pgActionID = &ActionID;
-    DefUsage.pwszDllName = DummyDllW;
-    DefUsage.pwszLoadCallbackDataFunctionName = DummyFunction;
-    DefUsage.pwszFreeCallbackDataFunctionName = DummyFunction;
-    SetLastError(0xdeadbeef);
-    ret = pWintrustAddDefaultForUsage(oid, &DefUsage);
-    ok ( ret, "Expected WintrustAddDefaultForUsage to succeed\n");
-    ok (GetLastError() == 0xdeadbeef,
-        "Last error should not have been changed: %u\n", GetLastError());
-
-    /* There is no corresponding remove for WintrustAddDefaultForUsage
-     * so we delete the registry key manually.
-     */
-    if (ret)
-    {
-        res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, Usages);
-        ok (res == ERROR_SUCCESS, "Key delete failed : 0x%08x\n", res);
-    }
 }
 
 static void test_LoadFunctionPointers(void)
