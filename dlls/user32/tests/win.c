@@ -614,13 +614,13 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
             /* Uncomment this once the test succeeds in all cases */
             ok(EqualRect(&rc1, &rc2), "rects do not match (%d,%d-%d,%d) / (%d,%d-%d,%d)\n",
                rc1.left, rc1.top, rc1.right, rc1.bottom, rc2.left, rc2.top, rc2.right, rc2.bottom );
-            }
 
             GetClientRect(hwnd, &rc2);
             DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc1);
             MapWindowPoints(0, hwnd, (LPPOINT)&rc1, 2);
             ok(EqualRect(&rc1, &rc2), "rects do not match (%d,%d-%d,%d) / (%d,%d-%d,%d)\n",
                rc1.left, rc1.top, rc1.right, rc1.bottom, rc2.left, rc2.top, rc2.right, rc2.bottom );
+            }
 	    break;
 	}
 	case WM_NCCREATE:
@@ -2076,8 +2076,10 @@ static void check_z_order_debug(HWND hwnd, HWND next, HWND prev, HWND owner,
 
     test = GetWindow(hwnd, GW_HWNDNEXT);
     /* skip foreign windows */
-    while (test && (GetWindowThreadProcessId(test, NULL) != our_pid ||
-                    UlongToHandle(GetWindowLongPtr(test, GWLP_HINSTANCE)) != GetModuleHandle(0)))
+    while (test && test != next &&
+           (GetWindowThreadProcessId(test, NULL) != our_pid ||
+            UlongToHandle(GetWindowLongPtr(test, GWLP_HINSTANCE)) != GetModuleHandle(0) ||
+            GetWindow(test, GW_OWNER) == next))
     {
         /*trace("skipping next %p (%p)\n", test, UlongToHandle(GetWindowLongPtr(test, GWLP_HINSTANCE)));*/
         test = GetWindow(test, GW_HWNDNEXT);
@@ -2086,8 +2088,10 @@ static void check_z_order_debug(HWND hwnd, HWND next, HWND prev, HWND owner,
 
     test = GetWindow(hwnd, GW_HWNDPREV);
     /* skip foreign windows */
-    while (test && (GetWindowThreadProcessId(test, NULL) != our_pid ||
-                    UlongToHandle(GetWindowLongPtr(test, GWLP_HINSTANCE)) != GetModuleHandle(0)))
+    while (test && test != prev &&
+           (GetWindowThreadProcessId(test, NULL) != our_pid ||
+            UlongToHandle(GetWindowLongPtr(test, GWLP_HINSTANCE)) != GetModuleHandle(0) ||
+            GetWindow(test, GW_OWNER) == hwnd))
     {
         /*trace("skipping prev %p (%p)\n", test, UlongToHandle(GetWindowLongPtr(test, GWLP_HINSTANCE)));*/
         test = GetWindow(test, GW_HWNDPREV);
@@ -4896,7 +4900,7 @@ static void test_GetWindowModuleFileName(void)
        "expected ERROR_INVALID_WINDOW_HANDLE, got %u\n", GetLastError());
 
     hwnd = FindWindow("Shell_TrayWnd", NULL);
-    ok(IsWindow(hwnd), "got invalid tray window %p\n", hwnd);
+    ok(IsWindow(hwnd) || broken(!hwnd), "got invalid tray window %p\n", hwnd);
     SetLastError(0xdeadbeef);
     ret1 = pGetWindowModuleFileNameA(hwnd, buf1, sizeof(buf1));
     ok(!ret1 || broken(ret1), /* win98 */ "expected 0, got %u\n", ret1);
