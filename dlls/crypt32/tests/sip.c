@@ -72,9 +72,14 @@ static void test_AddRemoveProvider(void)
     }
     else
     {
-        ok (!ret, "Expected CryptSIPRemoveProvider to fail.\n");
-        ok (GetLastError() == ERROR_FILE_NOT_FOUND,
-            "Expected ERROR_FILE_NOT_FOUND, got %d.\n", GetLastError());
+        /* On some Win98 systems, CryptSIPRemoveProvider always succeeds if
+         * the arguments are correct, whether or not the registry key is
+         * present, so don't test ret, just check the last error if it does
+         * return FALSE.
+         */
+        if (!ret)
+            ok (GetLastError() == ERROR_FILE_NOT_FOUND,
+                "Expected ERROR_FILE_NOT_FOUND, got %d.\n", GetLastError());
     }
 
     /* Everything OK, pwszIsFunctionName and pwszIsFunctionNameFmt2 are left NULL
@@ -104,9 +109,14 @@ static void test_AddRemoveProvider(void)
      */
     SetLastError(0xdeadbeef);
     ret = CryptSIPRemoveProvider(&actionid);
-    ok (!ret, "Expected CryptSIPRemoveProvider to fail.\n");
-    ok (GetLastError() == ERROR_FILE_NOT_FOUND,
-        "Expected ERROR_FILE_NOT_FOUND, got %d.\n", GetLastError());
+    /* On some Win98 systems, CryptSIPRemoveProvider always succeeds if
+     * the arguments are correct, whether or not the registry key is
+     * present, so don't test ret, just check the last error if it does
+     * return FALSE.
+     */
+    if (!ret)
+        ok (GetLastError() == ERROR_FILE_NOT_FOUND,
+            "Expected ERROR_FILE_NOT_FOUND, got %d.\n", GetLastError());
 
     /* Everything OK */
     memset(&newprov, 0, sizeof(SIP_ADD_NEWPROVIDER));
