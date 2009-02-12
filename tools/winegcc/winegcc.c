@@ -285,17 +285,38 @@ static char* get_temp_file(const char* prefix, const char* suffix)
 static const strarray* get_translator(struct options *opts)
 {
     const char *str;
+    strarray *ret;
 
     switch(opts->processor)
     {
-    case proc_cpp: str = CPP; break;
-    case proc_cc:  str = CC;  break;
-    case proc_cxx: str = CXX; break;
-    case proc_as:  str = AS;  break;
-    default: assert(0);
+    case proc_cpp:
+        if (opts->target) str = strmake( "%s-cpp", opts->target );
+        else str = CPP;
+        break;
+    case proc_cc:
+        if (opts->target) str = strmake( "%s-gcc", opts->target );
+        else str = CC;
+        break;
+    case proc_cxx:
+        if (opts->target) str = strmake( "%s-g++", opts->target );
+        else str = CXX;
+        break;
+    case proc_as:
+        if (opts->target) str = strmake( "%s-as", opts->target );
+        else str = AS;
+        break;
+    default:
+        assert(0);
     }
-    if (opts->target) str = strmake( "%s-%s", opts->target, str );
-    return strarray_fromstring( str, " " );
+    ret = strarray_fromstring( str, " " );
+    if (opts->force_pointer_size)
+    {
+        if (opts->processor == proc_as)
+            strarray_add( ret, strmake("--%u", 8 * opts->force_pointer_size ));
+        else
+            strarray_add( ret, strmake("-m%u", 8 * opts->force_pointer_size ));
+    }
+    return ret;
 }
 
 static void compile(struct options* opts, const char* lang)
