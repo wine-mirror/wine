@@ -139,8 +139,7 @@ static void testAlgIDToOID(void)
             if (strcmp(oid, algIDToOID[i].oid))
             {
                 if (algIDToOID[i].altOid)
-                    ok(!strcmp(oid, algIDToOID[i].oid) ||
-                     !strcmp(oid, algIDToOID[i].altOid),
+                    ok(!strcmp(oid, algIDToOID[i].altOid),
                      "Expected %s or %s, got %s\n", algIDToOID[i].oid,
                      algIDToOID[i].altOid, oid);
                 else
