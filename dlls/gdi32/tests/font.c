@@ -2019,10 +2019,10 @@ typedef struct
                     ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24))
 #define MS_OS2_TAG MS_MAKE_TAG('O','S','/','2')
 
-static void expect_ff(const TEXTMETRICW *tmW, const TT_OS2_V2 *os2, WORD family, const char *name)
+static void expect_ff(const TEXTMETRICA *tmA, const TT_OS2_V2 *os2, WORD family, const char *name)
 {
-    ok((tmW->tmPitchAndFamily & 0xf0) == family, "%s: expected family %02x got %02x. panose %d-%d-%d-%d-...\n",
-       name, family, tmW->tmPitchAndFamily, os2->panose.bFamilyType, os2->panose.bSerifStyle,
+    ok((tmA->tmPitchAndFamily & 0xf0) == family, "%s: expected family %02x got %02x. panose %d-%d-%d-%d-...\n",
+       name, family, tmA->tmPitchAndFamily, os2->panose.bFamilyType, os2->panose.bSerifStyle,
        os2->panose.bWeight, os2->panose.bProportion);
 
 }
@@ -2146,9 +2146,9 @@ static void test_text_metrics(const LOGFONTA *lf)
     case PAN_FAMILY_TEXT_DISPLAY:
     case PAN_FAMILY_PICTORIAL:
     default:
-        if((tmW.tmPitchAndFamily & 1) == 0) /* fixed */
+        if((tmA.tmPitchAndFamily & 1) == 0) /* fixed */
         {
-            expect_ff(&tmW, &tt_os2, FF_MODERN, font_name);
+            expect_ff(&tmA, &tt_os2, FF_MODERN, font_name);
             break;
         }
         switch(tt_os2.panose.bSerifStyle)
@@ -2156,7 +2156,7 @@ static void test_text_metrics(const LOGFONTA *lf)
         case PAN_ANY:
         case PAN_NO_FIT:
         default:
-            expect_ff(&tmW, &tt_os2, FF_DONTCARE, font_name);
+            expect_ff(&tmA, &tt_os2, FF_DONTCARE, font_name);
             break;
 
         case PAN_SERIF_COVE:
@@ -2168,7 +2168,7 @@ static void test_text_metrics(const LOGFONTA *lf)
         case PAN_SERIF_BONE:
         case PAN_SERIF_EXAGGERATED:
         case PAN_SERIF_TRIANGLE:
-            expect_ff(&tmW, &tt_os2, FF_ROMAN, font_name);
+            expect_ff(&tmA, &tt_os2, FF_ROMAN, font_name);
             break;
 
         case PAN_SERIF_NORMAL_SANS:
@@ -2176,17 +2176,17 @@ static void test_text_metrics(const LOGFONTA *lf)
         case PAN_SERIF_PERP_SANS:
         case PAN_SERIF_FLARED:
         case PAN_SERIF_ROUNDED:
-            expect_ff(&tmW, &tt_os2, FF_SWISS, font_name);
+            expect_ff(&tmA, &tt_os2, FF_SWISS, font_name);
             break;
         }
         break;
 
     case PAN_FAMILY_SCRIPT:
-        expect_ff(&tmW, &tt_os2, FF_SCRIPT, font_name);
+        expect_ff(&tmA, &tt_os2, FF_SCRIPT, font_name);
         break;
 
     case PAN_FAMILY_DECORATIVE:
-        expect_ff(&tmW, &tt_os2, FF_DECORATIVE, font_name);
+        expect_ff(&tmA, &tt_os2, FF_DECORATIVE, font_name);
         break;
     }
 
