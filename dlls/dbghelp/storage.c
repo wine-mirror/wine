@@ -110,7 +110,7 @@ void* pool_alloc(struct pool* pool, size_t len)
 
     size = max( pool->arena_size, len + sizeof(struct pool_arena) );
     arena = HeapAlloc(GetProcessHeap(), 0, size);
-    if (!arena) {ERR("OOM for %u\n", size);return NULL;}
+    if (!arena) return NULL;
 
     ret = arena + 1;
     arena->current = (char*)ret + len;
