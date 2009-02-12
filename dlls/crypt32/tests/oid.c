@@ -221,7 +221,8 @@ static void test_oidFunctionSet(void)
 
         ret = CryptGetOIDFunctionAddress(set1, X509_ASN_ENCODING, X509_CERT, 0,
          &funcAddr, &hFuncAddr);
-        ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+        ok((!ret && GetLastError() == ERROR_FILE_NOT_FOUND) ||
+         broken(ret) /* some Win98 */,
          "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
     }
 }
@@ -273,8 +274,10 @@ static void test_installOIDFunctionAddress(void)
          */
         ret = CryptGetOIDFunctionAddress(set, X509_ASN_ENCODING, 0, 0,
          (void **)&funcAddr, &hFuncAddr);
-        ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
-         "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+        ok(!ret && (GetLastError() == ERROR_FILE_NOT_FOUND ||
+         GetLastError() == E_INVALIDARG /* some Win98 */),
+         "Expected ERROR_FILE_NOT_FOUND or E_INVALIDARG, got %d\n",
+         GetLastError());
         ret = CryptGetOIDFunctionAddress(set, X509_ASN_ENCODING, X509_CERT, 0,
          (void **)&funcAddr, &hFuncAddr);
         ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
