@@ -2323,6 +2323,7 @@ static void test_ReplaceFileW(void)
     static const WCHAR prefix[] = {'p','f','x',0};
     WCHAR temp_path[MAX_PATH];
     DWORD ret;
+    BOOL removeBackup = FALSE;
 
     if (!pReplaceFileW)
     {
@@ -2351,25 +2352,31 @@ static void test_ReplaceFileW(void)
     ret = GetTempFileNameW(temp_path, prefix, 0, replacement);
     ok(ret != 0, "GetTempFileNameW error (replacement) %d\n", GetLastError());
     ret = pReplaceFileW(replaced, replacement, NULL, 0, 0, 0);
-    ok(ret, "ReplaceFileW: error %d\n", GetLastError());
+    ok(ret || GetLastError() == ERROR_ACCESS_DENIED,
+       "ReplaceFileW: error %d\n", GetLastError());
 
     ret = GetTempFileNameW(temp_path, prefix, 0, replacement);
     ok(ret != 0, "GetTempFileNameW error (replacement) %d\n", GetLastError());
     ret = DeleteFileW(backup);
     ok(ret, "DeleteFileW: error (backup) %d\n", GetLastError());
     ret = pReplaceFileW(replaced, replacement, backup, 0, 0, 0);
-    ok(ret, "ReplaceFileW: error %d\n", GetLastError());
+    ok(ret || GetLastError() == ERROR_ACCESS_DENIED,
+       "ReplaceFileW: error %d\n", GetLastError());
 
     ret = GetTempFileNameW(temp_path, prefix, 0, replacement);
     ok(ret != 0, "GetTempFileNameW error (replacement) %d\n", GetLastError());
     ret = SetFileAttributesW(replaced, FILE_ATTRIBUTE_READONLY);
-    ok(ret, "SetFileAttributesW: error setting to read only %d\n", GetLastError());
+    ok(ret || GetLastError() == ERROR_ACCESS_DENIED,
+       "SetFileAttributesW: error setting to read only %d\n", GetLastError());
 
     ret = pReplaceFileW(replaced, replacement, backup, 0, 0, 0);
     ok(ret != ERROR_UNABLE_TO_REMOVE_REPLACED,
         "ReplaceFileW: unexpected error %d\n", GetLastError());
     ret = SetFileAttributesW(replaced, FILE_ATTRIBUTE_NORMAL);
-    ok(ret, "SetFileAttributesW: error setting to normal %d\n", GetLastError());
+    ok(ret || GetLastError() == ERROR_ACCESS_DENIED,
+       "SetFileAttributesW: error setting to normal %d\n", GetLastError());
+    if (ret)
+        removeBackup = TRUE;
 
     ret = DeleteFileW(replaced);
     ok(ret, "DeleteFileW: error (replaced) %d\n", GetLastError());
@@ -2377,13 +2384,17 @@ static void test_ReplaceFileW(void)
     ok(!ret, "ReplaceFileW: error %d\n", GetLastError());
 
     ret = pReplaceFileW(replaced, replacement, NULL, 0, 0, 0);
-    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+    ok(!ret && (GetLastError() == ERROR_FILE_NOT_FOUND ||
+       GetLastError() == ERROR_ACCESS_DENIED),
         "ReplaceFileW: unexpected error %d\n", GetLastError());
 
-    ret = DeleteFileW(backup);
-    ok(ret ||
-       broken(GetLastError() == ERROR_ACCESS_DENIED), /* win2k */
-       "DeleteFileW: error (backup) %d\n", GetLastError());
+    if (removeBackup)
+    {
+        ret = DeleteFileW(backup);
+        ok(ret ||
+           broken(GetLastError() == ERROR_ACCESS_DENIED), /* win2k */
+           "DeleteFileW: error (backup) %d\n", GetLastError());
+    }
 }
 
 START_TEST(file)
