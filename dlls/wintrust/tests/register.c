@@ -291,7 +291,7 @@ static void test_RegPolicyFlags(void)
     size = sizeof(flags1);
     r = RegQueryValueExA(key, State, NULL, NULL, (LPBYTE)&flags1, &size);
     ok(!r || r == ERROR_FILE_NOT_FOUND, "RegQueryValueEx failed: %d\n", r);
-    if (r)
+    if (!r)
         ok(flags1 == flags2, "Got %08x flags instead of %08x\n", flags1, flags2);
 
     flags3 = flags2 | 1;
