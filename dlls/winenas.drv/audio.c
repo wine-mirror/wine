@@ -1382,11 +1382,11 @@ event_handler(AuServer* aud, AuEvent* ev, AuEventHandlerRec* hnd)
 static void
 buffer_resize(WINE_WAVEOUT* wwo, int len)
 {
-        void *newbuf = malloc(wwo->BufferUsed + len);
+        void *newbuf = HeapAlloc(GetProcessHeap(), 0, wwo->BufferUsed + len);
         void *oldbuf = wwo->SoundBuffer;
         memcpy(newbuf, oldbuf, wwo->BufferUsed);
         wwo->SoundBuffer = newbuf;
-        free(oldbuf);
+        HeapFree(GetProcessHeap(), 0, oldbuf);
 }
 
 static int nas_add_buffer(WINE_WAVEOUT* wwo) {
@@ -1417,9 +1417,9 @@ static int nas_send_buffer(WINE_WAVEOUT* wwo) {
      ptr = wwo->SoundBuffer;
   } else {
      len = wwo->freeBytes;
-     ptr = malloc(len);
+     ptr = HeapAlloc(GetProcessHeap(), 0, len);
      memcpy(ptr,wwo->SoundBuffer,len);
-     newdata = malloc(wwo->BufferUsed - len);
+     newdata = HeapAlloc(GetProcessHeap(), 0, wwo->BufferUsed - len);
      memcpy(newdata, wwo->SoundBuffer + len, wwo->BufferUsed - len);
   }
 
@@ -1431,7 +1431,7 @@ static int nas_send_buffer(WINE_WAVEOUT* wwo) {
  wwo->freeBytes -= len;
  wwo->writeBytes += len;
 
- free(ptr);
+ HeapFree(GetProcessHeap(), 0, ptr);
 
  wwo->SoundBuffer = NULL;
 
