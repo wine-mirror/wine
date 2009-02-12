@@ -144,6 +144,10 @@
 @ stub CM_Open_Class_Key_ExW
 @ stub CM_Open_DevNode_Key
 @ stub CM_Open_DevNode_Key_Ex
+@ stub CM_Query_And_Remove_SubTreeA
+@ stub CM_Query_And_Remove_SubTreeW
+@ stub CM_Query_And_Remove_SubTree_ExA
+@ stub CM_Query_And_Remove_SubTree_ExW
 @ stub CM_Query_Arbitrator_Free_Data
 @ stub CM_Query_Arbitrator_Free_Data_Ex
 @ stub CM_Query_Arbitrator_Free_Size
