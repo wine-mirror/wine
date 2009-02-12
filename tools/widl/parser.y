@@ -28,9 +28,6 @@
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
 
 #include "widl.h"
 #include "utils.h"

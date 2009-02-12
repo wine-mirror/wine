@@ -129,9 +129,6 @@
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
 
 #include "wrc.h"
 #include "utils.h"
