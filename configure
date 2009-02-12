@@ -3943,9 +3943,9 @@ fi
 $as_echo "$wine_cv_toolsdir" >&6; }
 TOOLSDIR=$wine_cv_toolsdir
 
-if test "$cross_compiling" = "yes"
+if test -n "$host_alias"
 then
-    TARGETFLAGS="-b $host_alias"
+    TARGETFLAGS="-b $host_alias $TARGETFLAGS"
 
 fi
 
