@@ -18,8 +18,11 @@
 
 #include "config.h"
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 
+#include "windef.h"
+#include "winbase.h"
 #include "wine/debug.h"
 #include "mpg123.h"
 #include "mpglib.h"
@@ -57,9 +60,9 @@ void ClearMP3Buffer(struct mpstr *mp)
 
 	b = mp->tail;
 	while(b) {
-		free(b->pnt);
+		HeapFree(GetProcessHeap(), 0, b->pnt);
 		bn = b->next;
-		free(b);
+		HeapFree(GetProcessHeap(), 0, b);
 		b = bn;
 	}
 	mp->tail = NULL;
@@ -71,14 +74,14 @@ static struct buf *addbuf(struct mpstr *mp,const unsigned char *buf,int size)
 {
 	struct buf *nbuf;
 
-	nbuf = malloc( sizeof(struct buf) );
+	nbuf = HeapAlloc(GetProcessHeap(), 0, sizeof(struct buf));
 	if(!nbuf) {
 		WARN("Out of memory!\n");
 		return NULL;
 	}
-	nbuf->pnt = malloc(size);
+	nbuf->pnt = HeapAlloc(GetProcessHeap(), 0, size);
 	if(!nbuf->pnt) {
-		free(nbuf);
+		HeapFree(GetProcessHeap(), 0, nbuf);
 		WARN("Out of memory!\n");
 		return NULL;
 	}
@@ -112,8 +115,8 @@ static void remove_buf(struct mpstr *mp)
     mp->tail = mp->head = NULL;
   }
 
-  free(buf->pnt);
-  free(buf);
+  HeapFree(GetProcessHeap(), 0, buf->pnt);
+  HeapFree(GetProcessHeap(), 0, buf);
 
 }
 
