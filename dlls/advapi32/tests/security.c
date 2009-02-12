@@ -1884,6 +1884,7 @@ static void test_LookupAccountName(void)
     domain_size = 0;
     ret = LookupAccountNameA(NULL, computer_name, NULL, &sid_size, NULL, &domain_size, &sid_use);
     ok(!ret && (GetLastError() == ERROR_INSUFFICIENT_BUFFER ||
+       GetLastError() == ERROR_NONE_MAPPED /* in a domain */ ||
        broken(GetLastError() == ERROR_TRUSTED_DOMAIN_FAILURE) ||
        broken(GetLastError() == ERROR_TRUSTED_RELATIONSHIP_FAILURE)),
        "LookupAccountNameA failed: %d\n", GetLastError());
