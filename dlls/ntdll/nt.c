@@ -293,13 +293,15 @@ NTSTATUS WINAPI NtQueryInformationToken(
         char stack_buffer[256];
         unsigned int server_buf_len = sizeof(stack_buffer);
         void *buffer = stack_buffer;
-        BOOLEAN need_more_memory = FALSE;
+        BOOLEAN need_more_memory;
 
         /* we cannot work out the size of the server buffer required for the
          * input size, since there are two factors affecting how much can be
          * stored in the buffer - number of groups and lengths of sids */
         do
         {
+            need_more_memory = FALSE;
+
             SERVER_START_REQ( get_token_groups )
             {
                 TOKEN_GROUPS *groups = tokeninfo;
