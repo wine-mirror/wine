@@ -28,6 +28,7 @@
 #include "wine/test.h"
 
 #define expect(expected, got) ok(((UINT)got) == ((UINT)expected), "Expected %.8x, got %.8x\n", (UINT)expected, (UINT)got)
+#define expectf(expected, got) ok(fabs(expected - got) < 0.0001, "Expected %.2f, got %.2f\n", expected, got)
 
 static void expect_rawformat(REFGUID expected, GpImage *img, int line, BOOL todo)
 {
@@ -167,8 +168,8 @@ static void test_GetImageDimension(void)
     h = -1;
     stat = GdipGetImageDimension((GpImage*)bm,&w,&h);
     expect(Ok, stat);
-    ok(fabs(WIDTH - w) < 0.0001, "Width wrong\n");
-    ok(fabs(HEIGHT - h) < 0.0001, "Height wrong\n");
+    expectf(WIDTH,  w);
+    expectf(HEIGHT, h);
     GdipDisposeImage((GpImage*)bm);
 }
 
@@ -274,8 +275,8 @@ static void test_SavingImages(void)
     stat = GdipGetImageDimension((GpImage*)bm, &w, &h);
     if (stat != Ok) goto cleanup;
 
-    ok((fabs(w - WIDTH) < 0.01) && (fabs(h - HEIGHT) < 0.01),
-       "Saved image dimensions are different!\n");
+    expectf(WIDTH, w);
+    expectf(HEIGHT, h);
 
  cleanup:
     GdipFree(codecs);
@@ -471,8 +472,8 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     stat = GdipCreateBitmapFromHBITMAP(hbm, NULL, &gpbm);
     expect(Ok, stat);
     expect(Ok, GdipGetImageDimension((GpImage*) gpbm, &width, &height));
-    ok(fabs(WIDTH1 - width) < .0001, "width wrong\n");
-    ok(fabs(HEIGHT1 - height) < .0001, "height wrong\n");
+    expectf(WIDTH1,  width);
+    expectf(HEIGHT1, height);
     if (stat == Ok)
         GdipDisposeImage((GpImage*)gpbm);
     GlobalFree(hbm);
@@ -484,8 +485,8 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     expect_rawformat(&ImageFormatMemoryBMP, (GpImage*)gpbm, __LINE__, TRUE);
 
     expect(Ok, GdipGetImageDimension((GpImage*) gpbm, &width, &height));
-    ok(fabs(WIDTH2 - width) < .0001, "width wrong\n");
-    ok(fabs(HEIGHT2 - height) < .0001, "height wrong\n");
+    expectf(WIDTH2,  width);
+    expectf(HEIGHT2, height);
     if (stat == Ok)
         GdipDisposeImage((GpImage*)gpbm);
     GlobalFree(hbm);
@@ -505,8 +506,8 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     stat = GdipCreateBitmapFromHBITMAP(hbm, NULL, &gpbm);
     expect(Ok, stat);
     expect(Ok, GdipGetImageDimension((GpImage*) gpbm, &width, &height));
-    ok(fabs(WIDTH1 - width) < .0001, "width wrong\n");
-    ok(fabs(HEIGHT1 - height) < .0001, "height wrong\n");
+    expectf(WIDTH1,  width);
+    expectf(HEIGHT1, height);
     if (stat == Ok)
         GdipDisposeImage((GpImage*)gpbm);
 
@@ -572,8 +573,8 @@ static void test_GdipCloneImage(void)
     expect(Ok, stat);
 
     /* Treat FP values carefully */
-    ok(fabsf(rectF.Width-WIDTH)<1e-5, "Expected: %d, got %.05f\n", WIDTH, rectF.Width);
-    ok(fabsf(rectF.Height-HEIGHT)<1e-5, "Expected: %d, got %.05f\n", HEIGHT, rectF.Height);
+    expectf((REAL)WIDTH, rectF.Width);
+    expectf((REAL)HEIGHT, rectF.Height);
 
     stat = GdipDisposeImage(image_dest);
     expect(Ok, stat);
