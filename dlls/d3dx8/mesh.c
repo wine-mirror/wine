@@ -21,11 +21,9 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "wine/debug.h"
 
 #include "d3dx8_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 BOOL WINAPI D3DXBoxBoundProbe(CONST D3DXVECTOR3 *pmin, CONST D3DXVECTOR3 *pmax, CONST D3DXVECTOR3 *prayposition, CONST D3DXVECTOR3 *praydirection)
 
