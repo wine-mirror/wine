@@ -55,11 +55,6 @@ void WINAPI ILGlobalFree(LPITEMIDLIST pidl);
 LPITEMIDLIST WINAPI SHSimpleIDListFromPathA (LPCSTR lpszPath);
 LPITEMIDLIST WINAPI SHSimpleIDListFromPathW (LPCWSTR lpszPath);
 
-HRESULT WINAPI SHILCreateFromPathA (
-	LPCSTR path,
-	LPITEMIDLIST * ppidl,
-	DWORD *attributes);
-
 HRESULT WINAPI SHILCreateFromPathW (
 	LPCWSTR path,
 	LPITEMIDLIST * ppidl,

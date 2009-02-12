@@ -381,7 +381,7 @@ HRESULT WINAPI ILSaveToStream (IStream * pStream, LPCITEMIDLIST pPidl)
  * NOTES
  *  Wrapper for IShellFolder_ParseDisplayName().
  */
-HRESULT WINAPI SHILCreateFromPathA(LPCSTR path, LPITEMIDLIST * ppidl, DWORD * attributes)
+static HRESULT SHILCreateFromPathA(LPCSTR path, LPITEMIDLIST * ppidl, DWORD * attributes)
 {
     WCHAR lpszDisplayName[MAX_PATH];
 
