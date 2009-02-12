@@ -156,7 +156,8 @@ static void testCreateCTL(void)
      signedCTLWithSubjectAlgorithm, sizeof(signedCTLWithSubjectAlgorithm));
     ok(!ctl &&
      (GetLastError() == ERROR_INVALID_DATA ||
-      GetLastError() == CRYPT_E_UNEXPECTED_MSG_TYPE), /* win9x */
+      GetLastError() == CRYPT_E_UNEXPECTED_MSG_TYPE /* win9x */ ||
+      GetLastError() == ERROR_SUCCESS /* some win98 */),
      "expected ERROR_INVALID_DATA, got %d (0x%08x)\n", GetLastError(),
      GetLastError());
     /* This signed CTL with the appropriate inner content type can be decoded.
@@ -326,7 +327,7 @@ static void testAddCTLToStore(void)
 {
     HCERTSTORE store;
     BOOL ret;
-    DWORD numCTLs;
+    DWORD numCTLs, expectedCTLs;
     PCCTL_CONTEXT ctl;
 
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
@@ -368,7 +369,8 @@ static void testAddCTLToStore(void)
     if (ret)
     {
         /* win9x */
-        ok(GetLastError() == CRYPT_E_NOT_FOUND,
+        ok(GetLastError() == CRYPT_E_NOT_FOUND ||
+           GetLastError() == OSS_DATA_ERROR /* some win98 */,
            "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
     }
     else
@@ -389,10 +391,14 @@ static void testAddCTLToStore(void)
      signedCTLWithCTLInnerContent, sizeof(signedCTLWithCTLInnerContent),
      CERT_STORE_ADD_NEW, NULL);
     ok(ret, "CertAddEncodedCTLToStore failed: %08x\n", GetLastError());
+    expectedCTLs = 1;
     ret = CertAddEncodedCTLToStore(store, X509_ASN_ENCODING,
      signedCTLWithUsage, sizeof(signedCTLWithUsage), CERT_STORE_ADD_NEW,
      NULL);
-    ok(ret, "CertAddEncodedCTLToStore failed: %08x\n", GetLastError());
+    ok(ret || broken(GetLastError() == OSS_DATA_ERROR /* some win98 */),
+       "CertAddEncodedCTLToStore failed: %08x\n", GetLastError());
+    if (ret)
+        expectedCTLs++;
     /* Check that two exist */
     numCTLs = 0;
     ctl = NULL;
@@ -401,8 +407,8 @@ static void testAddCTLToStore(void)
         if (ctl)
             numCTLs++;
     } while (ctl);
-    ok(numCTLs == 2 || broken(numCTLs == 1 /* some Win98 */),
-     "expected 2 CTLs, got %d\n", numCTLs);
+    ok(numCTLs == expectedCTLs, "expected %d CTLs, got %d\n", expectedCTLs,
+       numCTLs);
     CertCloseStore(store, 0);
 
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
