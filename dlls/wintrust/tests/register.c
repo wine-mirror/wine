@@ -120,8 +120,10 @@ static void test_AddRem_ActionID(void)
     SetLastError(0xdeadbeef);
     ret = pWintrustAddActionID(&ActionID, 0, &ActionIDFunctions);
     ok (ret, "Expected WintrustAddActionID to succeed.\n");
-    ok (GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %u.\n", GetLastError());
+    ok (GetLastError() == ERROR_INVALID_PARAMETER ||
+        GetLastError() == ERROR_ACCESS_DENIED,
+        "Expected ERROR_INVALID_PARAMETER or ERROR_ACCESS_DENIED, got %u.\n",
+        GetLastError());
 
     /* All OK and all functions are correctly defined. The DLL and entrypoints
      * are not present.
@@ -139,8 +141,9 @@ static void test_AddRem_ActionID(void)
     SetLastError(0xdeadbeef);
     ret = pWintrustAddActionID(&ActionID, 0, &ActionIDFunctions);
     ok (ret, "Expected WintrustAddActionID to succeed.\n");
-    ok (GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got %u.\n", GetLastError());
+    ok (GetLastError() == 0xdeadbeef || GetLastError() == ERROR_ACCESS_DENIED,
+        "Expected 0xdeadbeef or ERROR_ACCESS_DENIED, got %u.\n",
+        GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pWintrustRemoveActionID(&ActionID);
