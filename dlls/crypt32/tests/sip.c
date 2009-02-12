@@ -238,8 +238,9 @@ static void test_SIPRetrieveSubjectGUID(void)
     ok ( !ret, "Expected CryptSIPRetrieveSubjectGuid to fail\n");
     ok ( GetLastError() == ERROR_FILE_INVALID ||
          GetLastError() == ERROR_INVALID_PARAMETER /* Vista */ ||
-         GetLastError() == ERROR_SUCCESS /* Win98 */,
-        "Expected ERROR_FILE_INVALID, ERROR_INVALID_PARAMETER or ERROR_SUCCESS, got 0x%08x\n", GetLastError());
+         GetLastError() == ERROR_SUCCESS /* most Win98 */ ||
+         GetLastError() == TRUST_E_SUBJECT_FORM_UNKNOWN /* some Win98 */,
+        "Expected ERROR_FILE_INVALID, ERROR_INVALID_PARAMETER, ERROR_SUCCESS or TRUST_E_SUBJECT_FORM_UNKNOWN, got 0x%08x\n", GetLastError());
     ok ( !memcmp(&subject, &nullSubject, sizeof(GUID)),
         "Expected a NULL GUID for empty file %s, not %s\n", tempfile, show_guid(&subject, guid1));
 
@@ -253,8 +254,9 @@ static void test_SIPRetrieveSubjectGUID(void)
     ret = CryptSIPRetrieveSubjectGuid(tempfileW, NULL, &subject);
     ok ( !ret, "Expected CryptSIPRetrieveSubjectGuid to fail\n");
     ok ( GetLastError() == ERROR_INVALID_PARAMETER ||
-         GetLastError() == ERROR_SUCCESS /* Win98 */,
-        "Expected ERROR_INVALID_PARAMETER or ERROR_SUCCESS, got 0x%08x\n", GetLastError());
+         GetLastError() == ERROR_SUCCESS /* most Win98 */ ||
+         GetLastError() == TRUST_E_SUBJECT_FORM_UNKNOWN /* some Win98 */,
+        "Expected ERROR_INVALID_PARAMETER, ERROR_SUCCESS or TRUST_E_SUBJECT_FORM_UNKNOWN, got 0x%08x\n", GetLastError());
     ok ( !memcmp(&subject, &nullSubject, sizeof(GUID)),
         "Expected a NULL GUID for empty file %s, not %s\n", tempfile, show_guid(&subject, guid1));
 
