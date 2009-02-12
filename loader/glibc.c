@@ -56,11 +56,23 @@ static void *xmalloc( size_t size )
 /* separate thread to check for NPTL and TLS features */
 static void *needs_pthread( void *arg )
 {
+    const char *loader;
     pid_t tid = gettid();
     /* check for NPTL */
     if (tid != -1 && tid != getpid()) return (void *)1;
     /* check for TLS glibc */
-    return (void *)(wine_get_gs() != 0);
+    if (wine_get_gs() != 0) return (void *)1;
+    /* check for exported epoll_create to detect new glibc versions without TLS */
+    if (wine_dlsym( RTLD_DEFAULT, "epoll_create", NULL, 0 ))
+        fprintf( stderr,
+                 "wine: glibc >= 2.3 without NPTL or TLS is not a supported combination.\n"
+                 "      Please upgrade to a glibc with NPTL support.\n" );
+    else
+        fprintf( stderr,
+                 "wine: Your C library is too old. You need at least glibc 2.3 with NPTL support.\n" );
+    if (!(loader = getenv( "WINELOADER" )) || !strstr( loader, "wine-kthread" ))
+        exit(1);
+    return 0;
 }
 
 /* return the name of the Wine threading variant to use */
