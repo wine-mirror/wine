@@ -2132,7 +2132,7 @@ static void test_ReplaceFileA(void)
     static const char prefix[] = "pfx";
     char temp_path[MAX_PATH];
     DWORD ret;
-    BOOL retok;
+    BOOL retok, removeBackup = FALSE;
 
     if (!pReplaceFileA)
     {
@@ -2252,7 +2252,8 @@ static void test_ReplaceFileA(void)
      */
     SetLastError(0xdeadbeef);
     ret = pReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
-    ok(ret, "ReplaceFileA: unexpected error %d\n", GetLastError());
+    ok(ret || GetLastError() == ERROR_ACCESS_DENIED,
+       "ReplaceFileA: unexpected error %d\n", GetLastError());
 
     /* re-create replacement file for pass w/ backup (backup-file not existing) */
     ret = GetTempFileNameA(temp_path, prefix, 0, replacement);
@@ -2264,13 +2265,17 @@ static void test_ReplaceFileA(void)
      */
     SetLastError(0xdeadbeef);
     ret = pReplaceFileA(replaced, replacement, backup, 0, 0, 0);
-    ok(ret, "ReplaceFileA: unexpected error %d\n", GetLastError());
+    ok(ret || GetLastError() == ERROR_ACCESS_DENIED,
+       "ReplaceFileA: unexpected error %d\n", GetLastError());
+    if (ret)
+        removeBackup = TRUE;
 
     /* re-create replacement file for pass w/ no permissions to "replaced" */
     ret = GetTempFileNameA(temp_path, prefix, 0, replacement);
     ok(ret != 0, "GetTempFileNameA error (replacement) %d\n", GetLastError());
     ret = SetFileAttributesA(replaced, FILE_ATTRIBUTE_READONLY);
-    ok(ret, "SetFileAttributesA: error setting to read only %d\n", GetLastError());
+    ok(ret || GetLastError() == ERROR_ACCESS_DENIED,
+       "SetFileAttributesA: error setting to read only %d\n", GetLastError());
     /* perform replacement w/ backup (no permission to "replaced")
      * TODO: flags are not implemented
      */
@@ -2284,25 +2289,29 @@ static void test_ReplaceFileA(void)
        "unexpected error, replacement file should still exist %d\n", GetLastError());
     CloseHandle(hReplacementFile);
     ret = SetFileAttributesA(replaced, FILE_ATTRIBUTE_NORMAL);
-    ok(ret, "SetFileAttributesA: error setting to normal %d\n", GetLastError());
+    ok(ret || GetLastError() == ERROR_ACCESS_DENIED,
+       "SetFileAttributesA: error setting to normal %d\n", GetLastError());
 
     /* replacement file still exists, make pass w/o "replaced" */
     ret = DeleteFileA(replaced);
-    ok(ret, "DeleteFileA: error (replaced) %d\n", GetLastError());
+    ok(ret || GetLastError() == ERROR_ACCESS_DENIED,
+       "DeleteFileA: error (replaced) %d\n", GetLastError());
     /* perform replacement w/ backup (no pre-existing backup or "replaced")
      * TODO: flags are not implemented
      */
     SetLastError(0xdeadbeef);
     ret = pReplaceFileA(replaced, replacement, backup, 0, 0, 0);
-    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
-			"ReplaceFileA: unexpected error %d\n", GetLastError());
+    ok(!ret && (GetLastError() == ERROR_FILE_NOT_FOUND ||
+       GetLastError() == ERROR_ACCESS_DENIED),
+       "ReplaceFileA: unexpected error %d\n", GetLastError());
 
     /* perform replacement w/o existing "replacement" file
      * TODO: flags are not implemented
      */
     SetLastError(0xdeadbeef);
     ret = pReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
-    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+    ok(!ret && (GetLastError() == ERROR_FILE_NOT_FOUND ||
+        GetLastError() == ERROR_ACCESS_DENIED),
         "ReplaceFileA: unexpected error %d\n", GetLastError());
 
     /*
@@ -2312,10 +2321,13 @@ static void test_ReplaceFileA(void)
      */
 
     /* delete temporary files, replacement and replaced are already deleted */
-    ret = DeleteFileA(backup);
-    ok(ret ||
-       broken(GetLastError() == ERROR_ACCESS_DENIED), /* win2k */
-       "DeleteFileA: error (backup) %d\n", GetLastError());
+    if (removeBackup)
+    {
+        ret = DeleteFileA(backup);
+        ok(ret ||
+           broken(GetLastError() == ERROR_ACCESS_DENIED), /* win2k */
+           "DeleteFileA: error (backup) %d\n", GetLastError());
+    }
 }
 
 /*
