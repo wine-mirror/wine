@@ -40,6 +40,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msctf);
 
+static const WCHAR szwLngp[] = {'L','a','n','g','u','a','g','e','P','r','o','f','i','l','e',0};
+static const WCHAR szwEnabled[] = {'E','n','a','b','l','e','d',0};
+static const WCHAR szwTipfmt[] = {'%','s','\\','%','s',0};
+static const WCHAR szwFullLangfmt[] = {'%','s','\\','%','s','\\','%','s','\\','0','x','%','0','8','x','\\','%','s',0};
+
 typedef struct tagInputProcessorProfiles {
     const ITfInputProcessorProfilesVtbl *InputProcessorProfilesVtbl;
     LONG refCount;
@@ -51,6 +56,35 @@ static void InputProcessorProfiles_Destructor(InputProcessorProfiles *This)
 {
     TRACE("destroying %p\n", This);
     HeapFree(GetProcessHeap(),0,This);
+}
+
+static void add_userkey( REFCLSID rclsid, LANGID langid,
+                                REFGUID guidProfile)
+{
+    HKEY key;
+    WCHAR buf[39];
+    WCHAR buf2[39];
+    WCHAR fullkey[168];
+    DWORD disposition = 0;
+    ULONG res;
+
+    TRACE("\n");
+
+    StringFromGUID2(rclsid, buf, 39);
+    StringFromGUID2(guidProfile, buf2, 39);
+    sprintfW(fullkey,szwFullLangfmt,szwSystemTIPKey,buf,szwLngp,langid,buf2);
+
+    res = RegCreateKeyExW(HKEY_CURRENT_USER,fullkey, 0, NULL, 0,
+                   KEY_READ | KEY_WRITE, NULL, &key, &disposition);
+
+    if (!res && disposition == REG_CREATED_NEW_KEY)
+    {
+        DWORD zero = 0x0;
+        RegSetValueExW(key, szwEnabled, 0, REG_DWORD, (LPBYTE)&zero, sizeof(DWORD));
+    }
+
+    if (!res)
+        RegCloseKey(key);
 }
 
 static HRESULT WINAPI InputProcessorProfiles_QueryInterface(ITfInputProcessorProfiles *iface, REFIID iid, LPVOID *ppvOut)
@@ -99,13 +133,12 @@ static HRESULT WINAPI InputProcessorProfiles_Register(
     InputProcessorProfiles *This = (InputProcessorProfiles*)iface;
     HKEY tipkey;
     WCHAR buf[39];
-    static const WCHAR fmt[] = {'%','s','\\','%','s',0};
     WCHAR fullkey[68];
 
     TRACE("(%p) %s\n",This,debugstr_guid(rclsid));
 
     StringFromGUID2(rclsid, buf, 39);
-    sprintfW(fullkey,fmt,szwSystemTIPKey,buf);
+    sprintfW(fullkey,szwTipfmt,szwSystemTIPKey,buf);
 
     if (RegCreateKeyExW(HKEY_LOCAL_MACHINE,fullkey, 0, NULL, 0,
                     KEY_READ | KEY_WRITE, NULL, &tipkey, NULL) != ERROR_SUCCESS)
@@ -134,10 +167,9 @@ static HRESULT WINAPI InputProcessorProfiles_AddLanguageProfile(
     WCHAR buf[39];
     WCHAR fullkey[100];
     ULONG res;
+    DWORD disposition = 0;
 
-    static const WCHAR fmt[] = {'%','s','\\','%','s',0};
     static const WCHAR fmt2[] = {'%','s','\\','0','x','%','0','8','x','\\','%','s',0};
-    static const WCHAR lngp[] = {'L','a','n','g','u','a','g','e','P','r','o','f','i','l','e',0};
     static const WCHAR desc[] = {'D','e','s','c','r','i','p','t','i','o','n',0};
     static const WCHAR icnf[] = {'I','c','o','n','F','i','l','e',0};
     static const WCHAR icni[] = {'I','c','o','n','I','n','d','e','x',0};
@@ -149,24 +181,29 @@ static HRESULT WINAPI InputProcessorProfiles_AddLanguageProfile(
             debugstr_wn(pchIconFile,cchFile),uIconIndex);
 
     StringFromGUID2(rclsid, buf, 39);
-    sprintfW(fullkey,fmt,szwSystemTIPKey,buf);
+    sprintfW(fullkey,szwTipfmt,szwSystemTIPKey,buf);
 
     if (RegOpenKeyExW(HKEY_LOCAL_MACHINE,fullkey, 0, KEY_READ | KEY_WRITE,
                 &tipkey ) != ERROR_SUCCESS)
         return E_FAIL;
 
     StringFromGUID2(guidProfile, buf, 39);
-    sprintfW(fullkey,fmt2,lngp,langid,buf);
+    sprintfW(fullkey,fmt2,szwLngp,langid,buf);
 
     res = RegCreateKeyExW(tipkey,fullkey, 0, NULL, 0, KEY_READ | KEY_WRITE,
-            NULL, &fmtkey, NULL);
+            NULL, &fmtkey, &disposition);
 
     if (!res)
     {
+        DWORD zero = 0x0;
         RegSetValueExW(fmtkey, desc, 0, REG_SZ, (LPBYTE)pchDesc, cchDesc * sizeof(WCHAR));
         RegSetValueExW(fmtkey, icnf, 0, REG_SZ, (LPBYTE)pchIconFile, cchFile * sizeof(WCHAR));
         RegSetValueExW(fmtkey, icni, 0, REG_DWORD, (LPBYTE)&uIconIndex, sizeof(DWORD));
+        if (disposition == REG_CREATED_NEW_KEY)
+            RegSetValueExW(fmtkey, szwEnabled, 0, REG_DWORD, (LPBYTE)&zero, sizeof(DWORD));
         RegCloseKey(fmtkey);
+
+        add_userkey(rclsid, langid, guidProfile);
     }
     RegCloseKey(tipkey);
 
