@@ -1273,8 +1273,14 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_EnumSearches(IShellFolder2* iface
 static HRESULT WINAPI UnixFolder_IShellFolder2_GetDefaultColumn(IShellFolder2* iface, 
     DWORD dwReserved, ULONG *pSort, ULONG *pDisplay) 
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    TRACE("(iface=%p,dwReserved=%x,pSort=%p,pDisplay=%p)\n", iface, dwReserved, pSort, pDisplay);
+
+    if (pSort)
+        *pSort = 0;
+    if (pDisplay)
+        *pDisplay = 0;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI UnixFolder_IShellFolder2_GetDefaultColumnState(IShellFolder2* iface, 
