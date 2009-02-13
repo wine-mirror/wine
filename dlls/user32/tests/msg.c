@@ -515,7 +515,7 @@ static const struct message WmShowRestoreMaxOverlappedSeq[] = {
 };
 /* ShowWindow(SW_RESTORE) for a not visible minimized overlapped window */
 static const struct message WmShowRestoreMinOverlappedSeq[] = {
-    { HCBT_MINMAX, hook|lparam|optional, 0, SW_RESTORE },
+    { HCBT_MINMAX, hook|lparam, 0, SW_RESTORE },
     { WM_QUERYOPEN, sent|optional },
     { WM_GETTEXT, sent|optional },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED|SWP_NOCOPYBITS },
@@ -576,6 +576,7 @@ static const struct message WmShowMinOverlappedSeq[] = {
     { WM_ACTIVATE, sent },
     { WM_ACTIVATEAPP, sent|wparam, 0 },
     { WM_SYSCOMMAND, sent|optional|wparam, SC_RESTORE },
+    { HCBT_SYSCOMMAND, hook|optional|wparam, SC_RESTORE },
     { WM_PAINT, sent|optional },
     { WM_NCPAINT, sent|beginpaint|optional },
     { WM_ERASEBKGND, sent|beginpaint|optional },
@@ -1837,7 +1838,6 @@ static void flush_events(void)
         if (MsgWaitForMultipleObjects( 0, NULL, FALSE, min_timeout, QS_ALLINPUT ) == WAIT_TIMEOUT) break;
         while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
         diff = time - GetTickCount();
-        min_timeout = 50;
     }
 }
 
@@ -4439,21 +4439,28 @@ static void test_messages(void)
     ShowWindow(hwnd, SW_SHOWMAXIMIZED);
     flush_events();
     ok_sequence(WmShowMaxOverlappedSeq, "ShowWindow(SW_SHOWMAXIMIZED):overlapped", TRUE);
-
-    ShowWindow(hwnd, SW_RESTORE);
-    ok_sequence(WmShowRestoreMaxOverlappedSeq, "ShowWindow(SW_RESTORE):overlapped", FALSE);
-    flush_events();
     flush_sequence();
+
+    if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_MAXIMIZE)
+    {
+        ShowWindow(hwnd, SW_RESTORE);
+        flush_events();
+        ok_sequence(WmShowRestoreMaxOverlappedSeq, "ShowWindow(SW_RESTORE):overlapped", FALSE);
+        flush_sequence();
+    }
 
     ShowWindow(hwnd, SW_MINIMIZE);
     flush_events();
     ok_sequence(WmShowMinOverlappedSeq, "ShowWindow(SW_SHOWMINIMIZED):overlapped", TRUE);
     flush_sequence();
 
-    ShowWindow(hwnd, SW_RESTORE);
-    flush_events();
-    ok_sequence(WmShowRestoreMinOverlappedSeq, "ShowWindow(SW_RESTORE):overlapped", TRUE);
-    flush_sequence();
+    if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_MINIMIZE)
+    {
+        ShowWindow(hwnd, SW_RESTORE);
+        flush_events();
+        ok_sequence(WmShowRestoreMinOverlappedSeq, "ShowWindow(SW_RESTORE):overlapped", TRUE);
+        flush_sequence();
+    }
 
     ShowWindow(hwnd, SW_SHOW);
     flush_events();
@@ -6614,6 +6621,7 @@ static void pump_msg_loop(HWND hwnd, HACCEL hAccel)
 static void test_accelerators(void)
 {
     RECT rc;
+    POINT pt;
     SHORT state;
     HACCEL hAccel;
     HWND hwnd = CreateWindowExA(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
@@ -6784,12 +6792,16 @@ static void test_accelerators(void)
 
     flush_events();
     flush_sequence();
-    keybd_event(VK_SHIFT, 0, 0, 0);
-    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
-    mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
-    keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
-    pump_msg_loop(hwnd, 0);
-    ok_sequence(WmShiftMouseButton, "Shift+MouseButton press/release", FALSE);
+    GetCursorPos(&pt);
+    if (pt.x == rc.left && pt.y == rc.top)
+    {
+        keybd_event(VK_SHIFT, 0, 0, 0);
+        mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+        mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+        keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
+        pump_msg_loop(hwnd, 0);
+        ok_sequence(WmShiftMouseButton, "Shift+MouseButton press/release", FALSE);
+    }
 
     trace("testing VK_F1 press/release\n");
     keybd_event(VK_F1, 0, 0, 0);
@@ -10368,6 +10380,9 @@ static const struct message SetActiveWindowSeq0[] =
     { WM_NCACTIVATE, sent|wparam, 0 },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ACTIVATE, sent|wparam, 0 },
+    { WM_ACTIVATEAPP, sent|wparam|optional, 0 },
+    { WM_ACTIVATEAPP, sent|wparam|optional, 0 },
+    { WM_KILLFOCUS, sent|wparam|optional, 0 },
     { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
