@@ -2148,7 +2148,7 @@ static void HTTP_DrainContent(WININETHTTPREQW *req)
     do
     {
         char buffer[2048];
-        if (HTTP_Read(req, buffer, sizeof(buffer), &bytes_read, TRUE) != ERROR_SUCCESS)
+        if (HTTPREQ_Read(req, buffer, sizeof(buffer), &bytes_read, TRUE) != ERROR_SUCCESS)
             return;
     } while (bytes_read);
 }
