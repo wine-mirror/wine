@@ -659,7 +659,7 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
 		{
                     lpszBuffer[nRecv++] = '\0';
                     *dwBuffer = nRecv;
-                    TRACE(":%u %s\n", nRecv, lpszBuffer);
+                    TRACE(":%u %s\n", nRecv, debugstr_a(lpszBuffer));
                     return TRUE;
 		}
 		if (lpszBuffer[nRecv] != '\r')
