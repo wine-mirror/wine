@@ -1794,7 +1794,7 @@ static const ChainPolicyCheck basicConstraintsPolicyCheck[] = {
  { { sizeof(chain3) / sizeof(chain3[0]), chain3 },
    { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL }, NULL, 0 },
  { { sizeof(chain4) / sizeof(chain4[0]), chain4 },
-   { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL }, NULL, 0 },
+   { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL }, &chain4BrokenStatus, 0 },
  { { sizeof(chain5) / sizeof(chain5[0]), chain5 },
    { 0, 0, -1, -1, NULL }, NULL, 0 },
  { { sizeof(chain6) / sizeof(chain6[0]), chain6 },
