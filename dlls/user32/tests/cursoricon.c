@@ -840,7 +840,8 @@ static void test_LoadImage(void)
         ok(icon_info.fIcon == FALSE, "fIcon != FALSE.\n");
         ok(icon_info.xHotspot == 1, "xHotspot is %u.\n", icon_info.xHotspot);
         ok(icon_info.yHotspot == 1, "yHotspot is %u.\n", icon_info.yHotspot);
-        ok(icon_info.hbmColor != NULL, "No hbmColor!\n");
+        ok(icon_info.hbmColor != NULL || broken(!icon_info.hbmColor) /* no color cursor support */,
+           "No hbmColor!\n");
         ok(icon_info.hbmMask != NULL, "No hbmMask!\n");
     }
 
