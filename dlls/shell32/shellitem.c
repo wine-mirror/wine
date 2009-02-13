@@ -42,7 +42,14 @@ typedef struct _ShellItem {
     const IShellItemVtbl    *lpIShellItemVtbl;
     LONG                    ref;
     LPITEMIDLIST            pidl;
+    const IPersistIDListVtbl *lpIPersistIDListVtbl;
 } ShellItem;
+
+
+static inline ShellItem *impl_from_IPersistIDList( IPersistIDList *iface )
+{
+    return (ShellItem*)((char*)iface - FIELD_OFFSET(ShellItem, lpIPersistIDListVtbl));
+}
 
 
 static HRESULT WINAPI ShellItem_QueryInterface(IShellItem *iface, REFIID riid,
@@ -57,6 +64,10 @@ static HRESULT WINAPI ShellItem_QueryInterface(IShellItem *iface, REFIID riid,
     if (IsEqualIID(&IID_IUnknown, riid) || IsEqualIID(&IID_IShellItem, riid))
     {
         *ppv = This;
+    }
+    else if (IsEqualIID(&IID_IPersist, riid) || IsEqualIID(&IID_IPersistIDList, riid))
+    {
+        *ppv = &(This->lpIPersistIDListVtbl);
     }
     else {
         FIXME("not implemented for %s\n", shdebugstr_guid(riid));
@@ -153,6 +164,70 @@ static const IShellItemVtbl ShellItem_Vtbl = {
 };
 
 
+static HRESULT WINAPI ShellItem_GetClassID(ShellItem* This, CLSID *pClassID)
+{
+    TRACE("(%p,%p)\n", This, pClassID);
+
+    *pClassID = CLSID_ShellItem;
+    return S_OK;
+}
+
+
+static HRESULT WINAPI ShellItem_IPersistIDList_QueryInterface(IPersistIDList *iface,
+    REFIID riid, void **ppv)
+{
+    ShellItem *This = impl_from_IPersistIDList(iface);
+    return ShellItem_QueryInterface((IShellItem*)This, riid, ppv);
+}
+
+static ULONG WINAPI ShellItem_IPersistIDList_AddRef(IPersistIDList *iface)
+{
+    ShellItem *This = impl_from_IPersistIDList(iface);
+    return ShellItem_AddRef((IShellItem*)This);
+}
+
+static ULONG WINAPI ShellItem_IPersistIDList_Release(IPersistIDList *iface)
+{
+    ShellItem *This = impl_from_IPersistIDList(iface);
+    return ShellItem_Release((IShellItem*)This);
+}
+
+static HRESULT WINAPI ShellItem_IPersistIDList_GetClassID(IPersistIDList* iface,
+    CLSID *pClassID)
+{
+    ShellItem *This = impl_from_IPersistIDList(iface);
+
+    return ShellItem_GetClassID(This, pClassID);
+}
+
+static HRESULT WINAPI ShellItem_IPersistIDList_SetIDList(IPersistIDList* iface,
+    LPCITEMIDLIST pidl)
+{
+    ShellItem *This = impl_from_IPersistIDList(iface);
+
+    FIXME("(%p,%p)\n", This, pidl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellItem_IPersistIDList_GetIDList(IPersistIDList* iface,
+    LPITEMIDLIST *ppidl)
+{
+    ShellItem *This = impl_from_IPersistIDList(iface);
+
+    FIXME("(%p,%p)\n", This, ppidl);
+    return E_NOTIMPL;
+}
+
+static const IPersistIDListVtbl ShellItem_IPersistIDList_Vtbl = {
+    ShellItem_IPersistIDList_QueryInterface,
+    ShellItem_IPersistIDList_AddRef,
+    ShellItem_IPersistIDList_Release,
+    ShellItem_IPersistIDList_GetClassID,
+    ShellItem_IPersistIDList_SetIDList,
+    ShellItem_IPersistIDList_GetIDList
+};
+
+
 HRESULT WINAPI IShellItem_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv)
 {
     ShellItem *This;
@@ -168,6 +243,7 @@ HRESULT WINAPI IShellItem_Constructor(IUnknown *pUnkOuter, REFIID riid, void **p
     This->lpIShellItemVtbl = &ShellItem_Vtbl;
     This->ref = 1;
     This->pidl = NULL;
+    This->lpIPersistIDListVtbl = &ShellItem_IPersistIDList_Vtbl;
 
     ret = ShellItem_QueryInterface((IShellItem*)This, riid, ppv);
     ShellItem_Release((IShellItem*)This);
