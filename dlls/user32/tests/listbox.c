@@ -569,6 +569,7 @@ static void test_listbox_LB_DIR(void)
     char pathBuffer[MAX_PATH];
     char * p;
     char driveletter;
+    const char *wildcard = "*";
     HANDLE file;
 
     file = CreateFileA( "wtest1.tmp.c", GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL );
@@ -587,12 +588,13 @@ static void test_listbox_LB_DIR(void)
     /* Test for standard usage */
 
     /* This should list all the files in the test directory. */
-    strcpy(pathBuffer, "*");
+    strcpy(pathBuffer, wildcard);
     SendMessage(hList, LB_RESETCONTENT, 0, 0);
     res = SendMessage(hList, LB_DIR, 0, (LPARAM)pathBuffer);
     if (res == -1)  /* "*" wildcard doesn't work on win9x */
     {
-        strcpy(pathBuffer, "*.*");
+        wildcard = "*.*";
+        strcpy(pathBuffer, wildcard);
         res = SendMessage(hList, LB_DIR, 0, (LPARAM)pathBuffer);
     }
     ok (res >= 0, "SendMessage(LB_DIR, 0, *) failed - 0x%08x\n", GetLastError());
@@ -647,15 +649,9 @@ static void test_listbox_LB_DIR(void)
     }
 
     /* Test DDL_DIRECTORY */
-    strcpy(pathBuffer, "*");
+    strcpy(pathBuffer, wildcard);
     SendMessage(hList, LB_RESETCONTENT, 0, 0);
     res = SendMessage(hList, LB_DIR, DDL_DIRECTORY, (LPARAM)pathBuffer);
-    if (res == -1 || res <= itemCount_allFiles)  /* "*" wildcard doesn't work on win9x */
-    {
-        strcpy(pathBuffer, "*.*");
-        SendMessage(hList, LB_RESETCONTENT, 0, 0);
-        res = SendMessage(hList, LB_DIR, DDL_DIRECTORY, (LPARAM)pathBuffer);
-    }
     ok (res > 0, "SendMessage(LB_DIR, DDL_DIRECTORY, *) failed - 0x%08x\n", GetLastError());
 
     /* There should be some content in the listbox.
@@ -711,7 +707,7 @@ static void test_listbox_LB_DIR(void)
 
 
     /* Test DDL_DRIVES|DDL_EXCLUSIVE */
-    strcpy(pathBuffer, "*");
+    strcpy(pathBuffer, wildcard);
     SendMessage(hList, LB_RESETCONTENT, 0, 0);
     res = SendMessage(hList, LB_DIR, DDL_DRIVES|DDL_EXCLUSIVE, (LPARAM)pathBuffer);
     ok (res >= 0, "SendMessage(LB_DIR, DDL_DRIVES|DDL_EXCLUSIVE, *)  failed - 0x%08x\n", GetLastError());
@@ -758,7 +754,7 @@ static void test_listbox_LB_DIR(void)
         itemCount_justFiles, itemCount_justDrives);
 
     /* Test DDL_DRIVES. */
-    strcpy(pathBuffer, "*");
+    strcpy(pathBuffer, wildcard);
     SendMessage(hList, LB_RESETCONTENT, 0, 0);
     res = SendMessage(hList, LB_DIR, DDL_DRIVES, (LPARAM)pathBuffer);
     ok (res > 0, "SendMessage(LB_DIR, DDL_DRIVES, *)  failed - 0x%08x\n", GetLastError());
@@ -769,8 +765,7 @@ static void test_listbox_LB_DIR(void)
      * been added.
      */
     itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
-    ok (itemCount == itemCount_justDrives + itemCount_allFiles ||
-        broken(itemCount == itemCount_justDrives),  /* "*" wildcard broken on win9x */
+    ok (itemCount == itemCount_justDrives + itemCount_allFiles,
         "SendMessage(LB_DIR, DDL_DRIVES, *) filled with %d entries, expected %d\n",
         itemCount, itemCount_justDrives + itemCount_allFiles);
     ok(res + 1 == itemCount, "SendMessage(LB_DIR, DDL_DRIVES, *) returned incorrect index!\n");
@@ -822,7 +817,7 @@ static void test_listbox_LB_DIR(void)
 
 
     /* Test DDL_DIRECTORY|DDL_DRIVES. This does *not* imply DDL_EXCLUSIVE */
-    strcpy(pathBuffer, "*");
+    strcpy(pathBuffer, wildcard);
     SendMessage(hList, LB_RESETCONTENT, 0, 0);
     res = SendMessage(hList, LB_DIR, DDL_DIRECTORY|DDL_DRIVES, (LPARAM)pathBuffer);
     ok (res > 0, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES, *) failed - 0x%08x\n", GetLastError());
@@ -831,8 +826,7 @@ static void test_listbox_LB_DIR(void)
      * be exactly the number of plain files, plus the number of mapped drives.
      */
     itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
-    ok (itemCount == itemCount_allFiles + itemCount_justDrives + itemCount_allDirs ||
-        broken(itemCount == itemCount_justDrives + itemCount_allDirs), /* "*" wildcard broken on win9x */
+    ok (itemCount == itemCount_allFiles + itemCount_justDrives + itemCount_allDirs,
         "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES) filled with %d entries, expected %d\n",
         itemCount, itemCount_allFiles + itemCount_justDrives + itemCount_allDirs);
     ok(res + 1 == itemCount, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES, w*.c) returned incorrect index!\n");
@@ -898,7 +892,7 @@ static void test_listbox_LB_DIR(void)
     }
 
     /* Test DDL_DIRECTORY|DDL_EXCLUSIVE. */
-    strcpy(pathBuffer, "*");
+    strcpy(pathBuffer, wildcard);
     SendMessage(hList, LB_RESETCONTENT, 0, 0);
     res = SendMessage(hList, LB_DIR, DDL_DIRECTORY|DDL_EXCLUSIVE, (LPARAM)pathBuffer);
     ok (res != -1, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_EXCLUSIVE, *) failed err %u\n", GetLastError());
@@ -940,7 +934,7 @@ static void test_listbox_LB_DIR(void)
         itemCount, 0);
 
     /* Test DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE. */
-    strcpy(pathBuffer, "*");
+    strcpy(pathBuffer, wildcard);
     SendMessage(hList, LB_RESETCONTENT, 0, 0);
     res = SendMessage(hList, LB_DIR, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE, (LPARAM)pathBuffer);
     ok (res > 0, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE, w*.c,) failed - 0x%08x\n", GetLastError());
