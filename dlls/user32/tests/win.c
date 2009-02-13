@@ -2657,7 +2657,12 @@ static void test_keyboard_input(HWND hwnd)
     ok(GetFocus() == hwnd, "wrong focus window %p\n", GetFocus());
 
     keybd_event(VK_SPACE, 0, 0, 0);
-    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    if (!ret)
+    {
+        skip( "keybd_event didn't work, skipping keyboard test\n" );
+        return;
+    }
     ok(msg.hwnd == hwnd && msg.message == WM_KEYDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
     ok( !ret, "message %04x available\n", msg.message);
@@ -2742,7 +2747,11 @@ static void test_mouse_input(HWND hwnd)
 
     SetCursorPos(x, y);
     GetCursorPos(&pt);
-    ok(x == pt.x && y == pt.y, "wrong cursor pos (%d,%d), expected (%d,%d)\n", pt.x, pt.y, x, y);
+    if (x != pt.x || y != pt.y)
+    {
+        skip( "failed to set mouse position, skipping mouse input tests\n" );
+        goto done;
+    }
 
     flush_events( TRUE );
 
@@ -2807,7 +2816,11 @@ static void test_mouse_input(HWND hwnd)
     mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
 
     ret = wait_for_message( &msg );
-    ok(ret, "no message available\n");
+    if (!ret)
+    {
+        skip( "simulating mouse click doesn't work, skipping mouse button tests\n" );
+        goto done;
+    }
     if (msg.message == WM_MOUSEMOVE)  /* win2k has an extra WM_MOUSEMOVE here */
     {
         ret = wait_for_message( &msg );
@@ -2895,6 +2908,7 @@ static void test_mouse_input(HWND hwnd)
     TEST_MOUSEACTIVATE(HTCLOSE,MA_ACTIVATE);
     TEST_MOUSEACTIVATE(HTHELP,MA_ACTIVATE);
 
+done:
     /* Clear any messages left behind by WM_MOUSEACTIVATE tests */
     flush_events( TRUE );
 
