@@ -238,7 +238,13 @@ static void test_generic(void)
     new_cred.UserName = (char *)"winetest";
 
     ret = pCredWriteA(&new_cred, 0);
-    ok(ret, "CredWriteA failed with error %d\n", GetLastError());
+    ok(ret || broken(GetLastError() == ERROR_NO_SUCH_LOGON_SESSION),
+       "CredWriteA failed with error %d\n", GetLastError());
+    if (!ret)
+    {
+        skip("couldn't write generic credentials, skipping tests\n");
+        return;
+    }
 
     ret = pCredEnumerateA(NULL, 0, &count, &creds);
     ok(ret, "CredEnumerateA failed with error %d\n", GetLastError());
