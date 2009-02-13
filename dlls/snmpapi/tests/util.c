@@ -330,7 +330,7 @@ static void test_SnmpUtilOctetsCmp(void)
     ok(ret == 1, "SnmpUtilOctetsCmp failed\n");
 
     ret = pSnmpUtilOctetsCmp(&octets1, &octets2);
-    ok(ret == -1, "SnmpUtilOctetsCmp failed\n");
+    ok(ret < 0, "SnmpUtilOctetsCmp failed\n");
 }
 
 static void test_SnmpUtilOidNCmp(void)
@@ -370,19 +370,19 @@ static void test_SnmpUtilOidNCmp(void)
     ok(!ret, "SnmpUtilOidNCmp failed\n");
 
     ret = SnmpUtilOidNCmp(&oid1, &oid2, 4);
-    ok(ret == -1, "SnmpUtilOidNCmp failed: %d\n", ret);
+    ok(ret < 0, "SnmpUtilOidNCmp failed: %d\n", ret);
 
     ret = SnmpUtilOidNCmp(&oid2, &oid1, 4);
-    ok(ret == 1, "SnmpUtilOidNCmp failed: %d\n", ret);
+    ok(ret > 0, "SnmpUtilOidNCmp failed: %d\n", ret);
 
     oid1.idLength = 3;
     memcpy(oid1.ids, oid2.ids, sizeof(UINT) * 4);
     ret = SnmpUtilOidNCmp(&oid1, &oid1, 4);
     ok(!ret, "SnmpUtilOidNCmp failed: %d\n", ret);
     ret = SnmpUtilOidNCmp(&oid2, &oid1, 4);
-    ok(ret == 1, "SnmpUtilOidNCmp failed: %d\n", ret);
+    ok(ret > 0, "SnmpUtilOidNCmp failed: %d\n", ret);
     ret = SnmpUtilOidNCmp(&oid1, &oid2, 4);
-    ok(ret == -1, "SnmpUtilOidNCmp failed: %d\n", ret);
+    ok(ret < 0, "SnmpUtilOidNCmp failed: %d\n", ret);
 
     ret = SnmpUtilOidNCmp(&oid1, &oid2, 2);
     ok(!ret, "SnmpUtilOidNCmp failed: %d\n", ret);
@@ -410,10 +410,10 @@ static void test_SnmpUtilOidCmp(void)
     }
 
     ret = SnmpUtilOidCmp(&oid2, &oid1);
-    ok(ret == 1, "SnmpUtilOidCmp failed\n");
+    ok(ret > 0, "SnmpUtilOidCmp failed\n");
 
     ret = SnmpUtilOidCmp(&oid1, &oid2);
-    ok(ret == -1, "SnmpUtilOidCmp failed\n");
+    ok(ret < 0, "SnmpUtilOidCmp failed\n");
 }
 
 static void test_SnmpUtilOidAppend(void)
