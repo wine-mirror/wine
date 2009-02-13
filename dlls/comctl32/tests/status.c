@@ -40,7 +40,8 @@ static WNDPROC g_status_wndproc;
 static RECT g_rcCreated;
 static HWND g_hMainWnd;
 static int g_wmsize_count = 0;
-static DWORD g_height;
+static DWORD g_ysize;
+static DWORD g_dpisize;
 
 static HWND create_status_control(DWORD style, DWORD exstyle)
 {
@@ -141,9 +142,9 @@ static int CALLBACK check_height_font_enumproc(ENUMLOGFONTEX *enumlf, NEWTEXTMET
         GetTextMetrics(hdc, &tm);
         y = tm.tmHeight + (tm.tmInternalLeading ? tm.tmInternalLeading : 2) + 4;
 
-        ok( rcCtrl.bottom == max(y, g_height),
-            "got %d (expected %d) for %s #%d\n",
-            rcCtrl.bottom, max(y, g_height), facename, sizes[i]);
+        ok( (rcCtrl.bottom == max(y, g_ysize)) || (rcCtrl.bottom == max(y, g_dpisize)),
+            "got %d (expected %d or %d) for %s #%d\n",
+            rcCtrl.bottom, max(y, g_ysize), max(y, g_dpisize), facename, sizes[i]);
 
         SelectObject(hdc, hOldFont);
         SendMessage(hwndStatus, WM_SETFONT, (WPARAM)hCtrlFont, TRUE);
@@ -225,10 +226,18 @@ static void test_height(void)
     SendMessage(hwndStatus, SB_SETMINHEIGHT, 0, 0);
     hdc = GetDC(NULL);
 
-    g_height = GetSystemMetrics(SM_CYSIZE) + 2;
-    if (g_height & 1) g_height--;   /* The height is always even */
+    /* used only for some fonts (tahoma as example) */
+    g_ysize = GetSystemMetrics(SM_CYSIZE) + 2;
+    if (g_ysize & 1) g_ysize--;     /* The min height is always even */
 
-    trace("dpi=%d (min height: %d)\n", GetDeviceCaps(hdc, LOGPIXELSY), g_height);
+    g_dpisize = MulDiv(18, GetDeviceCaps(hdc, LOGPIXELSY), 96) + 2;
+    if (g_dpisize & 1) g_dpisize--; /* The min height is always even */
+
+
+    trace("dpi=%d (min height: %d or %d) SM_CYSIZE: %d\n",
+            GetDeviceCaps(hdc, LOGPIXELSY), g_ysize, g_dpisize,
+            GetSystemMetrics(SM_CYSIZE));
+
     EnumFontFamiliesEx(hdc, &lf, (FONTENUMPROC)check_height_family_enumproc, (LPARAM)hwndStatus, 0);
     ReleaseDC(NULL, hdc);
 
