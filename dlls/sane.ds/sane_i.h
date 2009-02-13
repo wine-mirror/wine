@@ -211,4 +211,10 @@ TW_UINT16 SANE_RGBResponseSet
 BOOL DoScannerUI(void);
 HWND ScanningDialogBox(HWND dialog, LONG progress);
 
+/* Option functions */
+#ifdef SONAME_LIBSANE
+SANE_Status sane_option_get_int(SANE_Handle h, const char *option_name, SANE_Int *val);
+#endif
+
+
 #endif

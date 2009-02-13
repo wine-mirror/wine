@@ -10,6 +10,7 @@ C_SRCS = \
 	capability.c \
 	ds_ctrl.c \
 	ds_image.c \
+	options.c \
 	sane_main.c \
 	ui.c
 

@@ -86,6 +86,7 @@ TW_UINT16 SANE_ImageInfoGet (pTW_IDENTITY pOrigin,
     TW_UINT16 twRC = TWRC_SUCCESS;
     pTW_IMAGEINFO pImageInfo = (pTW_IMAGEINFO) pData;
     SANE_Status status;
+    SANE_Int resolution;
 
     TRACE("DG_IMAGE/DAT_IMAGEINFO/MSG_GET\n");
 
@@ -111,9 +112,11 @@ TW_UINT16 SANE_ImageInfoGet (pTW_IDENTITY pOrigin,
             activeDS.sane_param_valid = TRUE;
         }
 
-        pImageInfo->XResolution.Whole = -1;
+        if (sane_option_get_int(activeDS.deviceHandle, "resolution", &resolution) == SANE_STATUS_GOOD)
+            pImageInfo->XResolution.Whole = pImageInfo->YResolution.Whole = resolution;
+        else
+            pImageInfo->XResolution.Whole = pImageInfo->YResolution.Whole = -1;
         pImageInfo->XResolution.Frac = 0;
-        pImageInfo->YResolution.Whole = -1;
         pImageInfo->YResolution.Frac = 0;
         pImageInfo->ImageWidth = activeDS.sane_param.pixels_per_line;
         pImageInfo->ImageLength = activeDS.sane_param.lines;
