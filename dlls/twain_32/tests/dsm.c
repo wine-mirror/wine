@@ -333,8 +333,10 @@ static void test_single_source(TW_IDENTITY *appid, TW_IDENTITY *source)
         ok(capabilities[ICAP_PHYSICALHEIGHT], "ICAP_PHYSICALHEIGHT not supported\n");
         todo_wine
         ok(capabilities[ICAP_PHYSICALWIDTH], "ICAP_PHYSICALWIDTH not supported\n");
-        todo_wine
         ok(capabilities[ICAP_PIXELFLAVOR], "ICAP_PIXELFLAVOR not supported\n");
+        if (capabilities[ICAP_PIXELFLAVOR])
+            test_onevalue_cap(appid, source, ICAP_PIXELFLAVOR, TWTY_UINT16,
+                TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET);
 
         /* For Twain 1.6:
             Sources that supply image information must support DG_CONTROL / DAT_CAPABILITY /
