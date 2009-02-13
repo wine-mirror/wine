@@ -204,9 +204,20 @@ static HRESULT WINAPI ShellItem_IPersistIDList_SetIDList(IPersistIDList* iface,
     LPCITEMIDLIST pidl)
 {
     ShellItem *This = impl_from_IPersistIDList(iface);
+    LPITEMIDLIST new_pidl;
 
-    FIXME("(%p,%p)\n", This, pidl);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", This, pidl);
+
+    new_pidl = ILClone(pidl);
+
+    if (new_pidl)
+    {
+        ILFree(This->pidl);
+        This->pidl = new_pidl;
+        return S_OK;
+    }
+    else
+        return E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI ShellItem_IPersistIDList_GetIDList(IPersistIDList* iface,
@@ -214,8 +225,13 @@ static HRESULT WINAPI ShellItem_IPersistIDList_GetIDList(IPersistIDList* iface,
 {
     ShellItem *This = impl_from_IPersistIDList(iface);
 
-    FIXME("(%p,%p)\n", This, ppidl);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", This, ppidl);
+
+    *ppidl = ILClone(This->pidl);
+    if (*ppidl)
+        return S_OK;
+    else
+        return E_OUTOFMEMORY;
 }
 
 static const IPersistIDListVtbl ShellItem_IPersistIDList_Vtbl = {
