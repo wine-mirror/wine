@@ -3207,9 +3207,7 @@ TOOLBAR_Customize (HWND hwnd)
 	return FALSE;
 
     ret = DialogBoxIndirectParamW ((HINSTANCE)GetWindowLongPtrW(hwnd, GWLP_HINSTANCE),
-                                   (LPCDLGTEMPLATEW)template,
-                                   hwnd,
-                                   TOOLBAR_CustomizeDialogProc,
+                                   template, hwnd, TOOLBAR_CustomizeDialogProc,
                                    (LPARAM)&custInfo);
 
     /* send TBN_ENDADJUST notification */
@@ -7169,7 +7167,7 @@ static BOOL TOOLBAR_GetButtonInfo(const TOOLBAR_INFO *infoPtr, NMTOOLBARW *nmtb)
         {
             int ccht = strlen(nmtba.pszText);
             if (ccht)
-               MultiByteToWideChar(CP_ACP, 0, (LPCSTR)nmtba.pszText, -1, 
+               MultiByteToWideChar(CP_ACP, 0, nmtba.pszText, -1,
                   nmtb->pszText, nmtb->cchText);
 
             nmtb->tbButton = nmtba.tbButton;

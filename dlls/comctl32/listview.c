@@ -1373,7 +1373,7 @@ static inline COLUMN_INFO * LISTVIEW_GetColumnInfo(const LISTVIEW_INFO *infoPtr,
 
     if (nSubItem == 0 && DPA_GetPtrCount(infoPtr->hdpaColumns) == 0) return &mainItem;
     assert (nSubItem >= 0 && nSubItem < DPA_GetPtrCount(infoPtr->hdpaColumns));
-    return (COLUMN_INFO *)DPA_GetPtr(infoPtr->hdpaColumns, nSubItem);
+    return DPA_GetPtr(infoPtr->hdpaColumns, nSubItem);
 }
 	
 static inline void LISTVIEW_GetHeaderRect(const LISTVIEW_INFO *infoPtr, INT nSubItem, LPRECT lprc)
@@ -2584,8 +2584,8 @@ static INT CALLBACK ranges_cmp(LPVOID range1, LPVOID range2, LPARAM flags)
 	cmp = 1;
     else 
 	cmp = 0;
-    
-    TRACE("range1=%s, range2=%s, cmp=%d\n", debugrange((RANGE*)range1), debugrange((RANGE*)range2), cmp);
+
+    TRACE("range1=%s, range2=%s, cmp=%d\n", debugrange(range1), debugrange(range2), cmp);
 
     return cmp;
 }
@@ -6473,8 +6473,8 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
 */
 static INT WINAPI LISTVIEW_InsertCompare(  LPVOID first, LPVOID second,  LPARAM lParam)
 {
-    ITEM_INFO* lv_first = DPA_GetPtr( (HDPA)first, 0 );
-    ITEM_INFO* lv_second = DPA_GetPtr( (HDPA)second, 0 );
+    ITEM_INFO* lv_first = DPA_GetPtr( first, 0 );
+    ITEM_INFO* lv_second = DPA_GetPtr( second, 0 );
     INT cmpv = textcmpWT(lv_first->hdr.pszText, lv_second->hdr.pszText, TRUE); 
 
     /* if we're sorting descending, negate the return value */
@@ -7755,8 +7755,8 @@ static BOOL LISTVIEW_SetUnicodeFormat( LISTVIEW_INFO *infoPtr, BOOL fUnicode)
 static INT WINAPI LISTVIEW_CallBackCompare(LPVOID first, LPVOID second, LPARAM lParam)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)lParam;
-  ITEM_INFO* lv_first = DPA_GetPtr( (HDPA)first, 0 );
-  ITEM_INFO* lv_second = DPA_GetPtr( (HDPA)second, 0 );
+  ITEM_INFO* lv_first = DPA_GetPtr( first, 0 );
+  ITEM_INFO* lv_second = DPA_GetPtr( second, 0 );
 
   /* Forward the call to the client defined callback */
   return (infoPtr->pfnCompare)( lv_first->lParam , lv_second->lParam, infoPtr->lParamSort );

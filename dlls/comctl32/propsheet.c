@@ -673,19 +673,15 @@ static INT_PTR PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
   if( psInfo->unicode )
   {
     ret = (INT_PTR)CreateDialogIndirectParamW(psInfo->ppshheader.hInstance,
-                                          (LPDLGTEMPLATEW) temp,
-                                          psInfo->ppshheader.hwndParent,
-                                          PROPSHEET_DialogProc,
-                                          (LPARAM)psInfo);
+                                          temp, psInfo->ppshheader.hwndParent,
+                                          PROPSHEET_DialogProc, (LPARAM)psInfo);
     if ( !ret ) ret = -1;
   }
   else
   {
     ret = (INT_PTR)CreateDialogIndirectParamA(psInfo->ppshheader.hInstance,
-                                          (LPDLGTEMPLATEA) temp,
-                                          psInfo->ppshheader.hwndParent,
-                                          PROPSHEET_DialogProc,
-                                          (LPARAM)psInfo);
+                                          temp, psInfo->ppshheader.hwndParent,
+                                          PROPSHEET_DialogProc, (LPARAM)psInfo);
     if ( !ret ) ret = -1;
   }
 
@@ -2724,7 +2720,7 @@ static void PROPSHEET_CleanUp(HWND hwndDlg)
   Free(psInfo->strPropertiesFor);
   ImageList_Destroy(psInfo->hImageList);
 
-  GlobalFree((HGLOBAL)psInfo);
+  GlobalFree(psInfo);
 }
 
 static INT do_loop(const PropSheetInfo *psInfo)
@@ -3236,7 +3232,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
 	MapWindowPoints(hwndLineHeader, hwnd, (LPPOINT) &r, 2);
 	SetRect(&rzone, 0, 0, r.right + 1, r.top - 1);
 
-	GetObjectW(psInfo->ppshheader.u5.hbmHeader, sizeof(BITMAP), (LPVOID)&bm);		
+	GetObjectW(psInfo->ppshheader.u5.hbmHeader, sizeof(BITMAP), &bm);
 
  	if (psInfo->ppshheader.dwFlags & PSH_WIZARD97_OLD)
  	{
@@ -3344,7 +3340,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
 	hbr = GetSysColorBrush(COLOR_WINDOW);
 	FillRect(hdc, &rzone, hbr);
 
-	GetObjectW(psInfo->ppshheader.u4.hbmWatermark, sizeof(BITMAP), (LPVOID)&bm);
+	GetObjectW(psInfo->ppshheader.u4.hbmWatermark, sizeof(BITMAP), &bm);
 	hbmp = SelectObject(hdcSrc, psInfo->ppshheader.u4.hbmWatermark);
 
         /* The watermark is truncated to a width of 164 pixels */
@@ -3399,7 +3395,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       /* Using PropSheetInfoStr to store extra data doesn't match the native
        * common control: native uses TCM_[GS]ETITEM
        */
-      SetPropW(hwnd, PropSheetInfoStr, (HANDLE)psInfo);
+      SetPropW(hwnd, PropSheetInfoStr, psInfo);
 
       /*
        * psInfo->hwnd is not being used by WINE code - it exists
