@@ -2896,9 +2896,9 @@ HRESULT WINAPI PropVariantCopy(PROPVARIANT *pvarDest,      /* [out] */
             case VT_FILETIME: elemSize = sizeof(pvarSrc->u.filetime); break;
             case VT_CLSID:    elemSize = sizeof(*pvarSrc->u.puuid); break;
             case VT_CF:       elemSize = sizeof(*pvarSrc->u.pclipdata); break;
-            case VT_BSTR:     elemSize = sizeof(*pvarSrc->u.bstrVal); break;
-            case VT_LPSTR:    elemSize = sizeof(*pvarSrc->u.pszVal); break;
-            case VT_LPWSTR:   elemSize = sizeof(*pvarSrc->u.pwszVal); break;
+            case VT_BSTR:     elemSize = sizeof(pvarSrc->u.bstrVal); break;
+            case VT_LPSTR:    elemSize = sizeof(pvarSrc->u.pszVal); break;
+            case VT_LPWSTR:   elemSize = sizeof(pvarSrc->u.pwszVal); break;
             case VT_VARIANT:  elemSize = sizeof(*pvarSrc->u.pvarVal); break;
 
             default:
