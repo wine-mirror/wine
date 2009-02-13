@@ -554,10 +554,7 @@ static void test_instances(void)
     ok( !UnregisterClass( "BUTTON", (HINSTANCE)0x87654321 ), "Unregistered button a second time\n" );
     ok( GetLastError() == ERROR_CLASS_DOES_NOT_EXIST, "Wrong error code %d\n", GetLastError() );
     ok( !GetClassInfo( 0, "BUTTON", &wc ), "Button still exists\n" );
-    ok( GetLastError() == ERROR_CLASS_DOES_NOT_EXIST ||
-        GetLastError() == ERROR_INVALID_PARAMETER || /* W2K3 */
-        GetLastError() == ERROR_SUCCESS /* Vista */,
-        "Wrong error code %d\n", GetLastError() );
+    /* last error not set reliably */
 
     /* we can change the instance of a system class */
     check_instance( "EDIT", (HINSTANCE)0xdeadbeef, (HINSTANCE)0xdeadbeef, user32 );
