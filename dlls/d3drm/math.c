@@ -19,12 +19,8 @@
 
 #define NONAMELESSUNION
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <assert.h>
 #include <math.h>
-
+#include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
