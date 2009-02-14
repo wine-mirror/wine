@@ -130,25 +130,41 @@ static BOOL InitFunctionPtrs(void)
 static void VectorTest(void)
 {
     D3DVALUE mod,par,theta;
-    D3DVECTOR e,r,u,v,w,axis,casnul,norm,ray;
+    D3DVECTOR e,r,u,v,w,axis,casnul,norm,ray,self;
 
     U1(u).x=2.0f; U2(u).y=2.0f; U3(u).z=1.0f;
     U1(v).x=4.0f; U2(v).y=4.0f; U3(v).z=0.0f;
+
 
 /*______________________VectorAdd_________________________________*/
     pD3DRMVectorAdd(&r,&u,&v);
     U1(e).x=6.0f; U2(e).y=6.0f; U3(e).z=1.0f;
     expect_vec(e,r);
 
+    U1(self).x=9.0f; U1(self).y=18.0f; U3(self).z=27.0f;
+    pD3DRMVectorAdd(&self,&self,&u);
+    U1(e).x=11.0f; U2(e).y=20.0f; U3(e).z=28.0f;
+    expect_vec(e,self);
+
 /*_______________________VectorSubtract__________________________*/
     pD3DRMVectorSubtract(&r,&u,&v);
     U1(e).x=-2.0f; U2(e).y=-2.0f; U3(e).z=1.0f;
     expect_vec(e,r);
 
+    U1(self).x=9.0f; U1(self).y=18.0f; U3(self).z=27.0f;
+    pD3DRMVectorSubtract(&self,&self,&u);
+    U1(e).x=7.0f; U2(e).y=16.0f; U3(e).z=26.0f;
+    expect_vec(e,self);
+
 /*_______________________VectorCrossProduct_______________________*/
     pD3DRMVectorCrossProduct(&r,&u,&v);
     U1(e).x=-4.0f; U2(e).y=4.0f; U3(e).z=0.0f;
     expect_vec(e,r);
+
+    U1(self).x=9.0f; U1(self).y=18.0f; U3(self).z=27.0f;
+    pD3DRMVectorCrossProduct(&self,&self,&u);
+    U1(e).x=-36.0f; U2(e).y=45.0f; U3(e).z=-18.0f;
+    expect_vec(e,self);
 
 /*_______________________VectorDotProduct__________________________*/
     mod=pD3DRMVectorDotProduct(&u,&v);
@@ -191,11 +207,21 @@ static void VectorTest(void)
     U1(e).x=1.4f/sqrtf(2.0f); U2(e).y=0.2f/sqrtf(2.0f); U3(e).z=0.0f;
     expect_vec(e,r);
 
+    theta=PI/8.0f;
+    pD3DRMVectorRotate(&self,&self,&axis,theta);
+    U1(e).x=0.989950; U2(e).y=0.141421f; U3(e).z=0.0f;
+    expect_vec(e,r);
+
 /*_______________________VectorScale__________________________*/
     par=2.5f;
     pD3DRMVectorScale(&r,&v,par);
     U1(e).x=10.0f; U2(e).y=10.0f; U3(e).z=0.0f;
     expect_vec(e,r);
+
+    U1(self).x=9.0f; U1(self).y=18.0f; U3(self).z=27.0f;
+    pD3DRMVectorScale(&self,&self,2);
+    U1(e).x=18.0f; U2(e).y=36.0f; U3(e).z=54.0f;
+    expect_vec(e,self);
 }
 
 static void MatrixTest(void)

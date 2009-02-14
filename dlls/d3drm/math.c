@@ -77,12 +77,16 @@ D3DVALUE WINAPI D3DRMColorGetRed(D3DCOLOR color)
 /* Product of 2 quaternions */
 LPD3DRMQUATERNION WINAPI D3DRMQuaternionMultiply(LPD3DRMQUATERNION q, LPD3DRMQUATERNION a, LPD3DRMQUATERNION b)
 {
+    D3DRMQUATERNION temp;
     D3DVECTOR cross_product;
+
     D3DRMVectorCrossProduct(&cross_product, &a->v, &b->v);
-    q->s = a->s * b->s - D3DRMVectorDotProduct(&a->v, &b->v);
-    q->v.u1.x = a->s * b->v.u1.x + b->s * a->v.u1.x + cross_product.u1.x;
-    q->v.u2.y = a->s * b->v.u2.y + b->s * a->v.u2.y + cross_product.u2.y;
-    q->v.u3.z = a->s * b->v.u3.z + b->s * a->v.u3.z + cross_product.u3.z;
+    temp.s = a->s * b->s - D3DRMVectorDotProduct(&a->v, &b->v);
+    temp.v.u1.x = a->s * b->v.u1.x + b->s * a->v.u1.x + cross_product.u1.x;
+    temp.v.u2.y = a->s * b->v.u2.y + b->s * a->v.u2.y + cross_product.u2.y;
+    temp.v.u3.z = a->s * b->v.u3.z + b->s * a->v.u3.z + cross_product.u3.z;
+
+    *q = temp;
     return q;
 }
 
@@ -149,27 +153,39 @@ LPD3DRMQUATERNION WINAPI D3DRMQuaternionSlerp(LPD3DRMQUATERNION q, LPD3DRMQUATER
 /* Add Two Vectors */
 LPD3DVECTOR WINAPI D3DRMVectorAdd(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DVECTOR s2)
 {
-    d->u1.x=s1->u1.x + s2->u1.x;
-    d->u2.y=s1->u2.y + s2->u2.y;
-    d->u3.z=s1->u3.z + s2->u3.z;
+    D3DVECTOR temp;
+
+    temp.u1.x=s1->u1.x + s2->u1.x;
+    temp.u2.y=s1->u2.y + s2->u2.y;
+    temp.u3.z=s1->u3.z + s2->u3.z;
+
+    *d = temp;
     return d;
 }
 
 /* Subtract Two Vectors */
 LPD3DVECTOR WINAPI D3DRMVectorSubtract(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DVECTOR s2)
 {
-    d->u1.x=s1->u1.x - s2->u1.x;
-    d->u2.y=s1->u2.y - s2->u2.y;
-    d->u3.z=s1->u3.z - s2->u3.z;
+    D3DVECTOR temp;
+
+    temp.u1.x=s1->u1.x - s2->u1.x;
+    temp.u2.y=s1->u2.y - s2->u2.y;
+    temp.u3.z=s1->u3.z - s2->u3.z;
+
+    *d = temp;
     return d;
 }
 
 /* Cross Product of Two Vectors */
 LPD3DVECTOR WINAPI D3DRMVectorCrossProduct(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DVECTOR s2)
 {
-    d->u1.x=s1->u2.y * s2->u3.z - s1->u3.z * s2->u2.y;
-    d->u2.y=s1->u3.z * s2->u1.x - s1->u1.x * s2->u3.z;
-    d->u3.z=s1->u1.x * s2->u2.y - s1->u2.y * s2->u1.x;
+    D3DVECTOR temp;
+
+    temp.u1.x=s1->u2.y * s2->u3.z - s1->u3.z * s2->u2.y;
+    temp.u2.y=s1->u3.z * s2->u1.x - s1->u1.x * s2->u3.z;
+    temp.u3.z=s1->u1.x * s2->u2.y - s1->u2.y * s2->u1.x;
+
+    *d = temp;
     return d;
 }
 
@@ -219,8 +235,10 @@ LPD3DVECTOR WINAPI D3DRMVectorRandom(LPD3DVECTOR d)
 /* Reflection of a vector on a surface */
 LPD3DVECTOR WINAPI D3DRMVectorReflect(LPD3DVECTOR r, LPD3DVECTOR ray, LPD3DVECTOR norm)
 {
-    D3DVECTOR sca;
-    D3DRMVectorSubtract(r, D3DRMVectorScale(&sca, norm, 2.0*D3DRMVectorDotProduct(ray,norm)), ray);
+    D3DVECTOR sca, temp;
+    D3DRMVectorSubtract(&temp, D3DRMVectorScale(&sca, norm, 2.0*D3DRMVectorDotProduct(ray,norm)), ray);
+
+    *r = temp;
     return r;
 }
 
@@ -246,8 +264,12 @@ LPD3DVECTOR WINAPI D3DRMVectorRotate(LPD3DVECTOR r, LPD3DVECTOR v, LPD3DVECTOR a
 /* Scale a vector */
 LPD3DVECTOR WINAPI D3DRMVectorScale(LPD3DVECTOR d, LPD3DVECTOR s, D3DVALUE factor)
 {
-    d->u1.x=factor * s->u1.x;
-    d->u2.y=factor * s->u2.y;
-    d->u3.z=factor * s->u3.z;
+    D3DVECTOR temp;
+
+    temp.u1.x=factor * s->u1.x;
+    temp.u2.y=factor * s->u2.y;
+    temp.u3.z=factor * s->u3.z;
+
+    *d = temp;
     return d;
 }
