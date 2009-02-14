@@ -4643,7 +4643,7 @@ TOOLBAR_SetDrawTextFlags (HWND hwnd, WPARAM wParam, LPARAM lParam)
  *  (MSDN says that this parameter is reserved)
  */
 static LRESULT
-TOOLBAR_SetExtendedStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
+TOOLBAR_SetExtendedStyle (HWND hwnd, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     DWORD dwOldStyle;
@@ -5401,7 +5401,7 @@ TOOLBAR_Create (HWND hwnd, LPARAM lParam)
 
 
 static LRESULT
-TOOLBAR_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
+TOOLBAR_Destroy (HWND hwnd)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
@@ -5521,7 +5521,7 @@ TOOLBAR_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-TOOLBAR_GetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
+TOOLBAR_GetFont (HWND hwnd)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
@@ -5987,7 +5987,7 @@ TOOLBAR_CaptureChanged(HWND hwnd)
 }
 
 static LRESULT
-TOOLBAR_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
+TOOLBAR_MouseLeave (HWND hwnd)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
@@ -6460,7 +6460,7 @@ TOOLBAR_Paint (HWND hwnd, WPARAM wParam)
 
 
 static LRESULT
-TOOLBAR_SetFocus (HWND hwnd, WPARAM wParam)
+TOOLBAR_SetFocus (HWND hwnd)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
@@ -6493,7 +6493,7 @@ TOOLBAR_SetFont(HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 static LRESULT
-TOOLBAR_SetRedraw (HWND hwnd, WPARAM wParam, LPARAM lParam)
+TOOLBAR_SetRedraw (HWND hwnd, WPARAM wParam)
      /*****************************************************
       *
       * Function;
@@ -6522,7 +6522,7 @@ TOOLBAR_SetRedraw (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-TOOLBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
+TOOLBAR_Size (HWND hwnd)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
@@ -6610,7 +6610,7 @@ TOOLBAR_StyleChanged (HWND hwnd, INT nType, const STYLESTRUCT *lpStyle)
 
 
 static LRESULT
-TOOLBAR_SysColorChange (HWND hwnd)
+TOOLBAR_SysColorChange ()
 {
     COMCTL32_RefreshSysColors();
 
@@ -6857,7 +6857,7 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return TOOLBAR_SetDrawTextFlags (hwnd, wParam, lParam);
 
 	case TB_SETEXTENDEDSTYLE:
-	    return TOOLBAR_SetExtendedStyle (hwnd, wParam, lParam);
+	    return TOOLBAR_SetExtendedStyle (hwnd, lParam);
 
 	case TB_SETHOTIMAGELIST:
 	    return TOOLBAR_SetHotImageList (hwnd, wParam, lParam);
@@ -6942,13 +6942,13 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return TOOLBAR_Create (hwnd, lParam);
 
 	case WM_DESTROY:
-	  return TOOLBAR_Destroy (hwnd, wParam, lParam);
+	  return TOOLBAR_Destroy (hwnd);
 
 	case WM_ERASEBKGND:
 	    return TOOLBAR_EraseBackground (hwnd, wParam, lParam);
 
 	case WM_GETFONT:
-		return TOOLBAR_GetFont (hwnd, wParam, lParam);
+		return TOOLBAR_GetFont (hwnd);
 
 	case WM_KEYDOWN:
 	    return TOOLBAR_KeyDown (hwnd, wParam, lParam);
@@ -6974,7 +6974,7 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return TOOLBAR_MouseMove (hwnd, wParam, lParam);
 
 	case WM_MOUSELEAVE:
-	    return TOOLBAR_MouseLeave (hwnd, wParam, lParam);
+	    return TOOLBAR_MouseLeave (hwnd);
 
 	case WM_CAPTURECHANGED:
 	    return TOOLBAR_CaptureChanged(hwnd);
@@ -7002,22 +7002,22 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return TOOLBAR_Paint (hwnd, wParam);
 
 	case WM_SETFOCUS:
-	    return TOOLBAR_SetFocus (hwnd, wParam);
+	    return TOOLBAR_SetFocus (hwnd);
 
 	case WM_SETFONT:
             return TOOLBAR_SetFont(hwnd, wParam, lParam);
 
 	case WM_SETREDRAW:
-	    return TOOLBAR_SetRedraw (hwnd, wParam, lParam);
+	    return TOOLBAR_SetRedraw (hwnd, wParam);
 
 	case WM_SIZE:
-	    return TOOLBAR_Size (hwnd, wParam, lParam);
+	    return TOOLBAR_Size (hwnd);
 
 	case WM_STYLECHANGED:
 	    return TOOLBAR_StyleChanged (hwnd, (INT)wParam, (LPSTYLESTRUCT)lParam);
 
 	case WM_SYSCOLORCHANGE:
-	    return TOOLBAR_SysColorChange (hwnd);
+	    return TOOLBAR_SysColorChange ();
             
         case WM_THEMECHANGED:
             return theme_changed (hwnd);
