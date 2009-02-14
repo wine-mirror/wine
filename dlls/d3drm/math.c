@@ -128,7 +128,7 @@ LPD3DRMQUATERNION WINAPI D3DRMQuaternionFromRotation(LPD3DRMQUATERNION q, LPD3DV
 LPD3DRMQUATERNION WINAPI D3DRMQuaternionSlerp(LPD3DRMQUATERNION q, LPD3DRMQUATERNION a, LPD3DRMQUATERNION b, D3DVALUE alpha)
 {
     D3DVALUE dot, epsilon, temp, theta, u;
-    D3DVECTOR sca1,sca2;
+
     dot = a->s * b->s + D3DRMVectorDotProduct(&a->v, &b->v);
     epsilon = 1.0f;
     temp = 1.0f - alpha;
@@ -145,8 +145,8 @@ LPD3DRMQUATERNION WINAPI D3DRMQuaternionSlerp(LPD3DRMQUATERNION q, LPD3DRMQUATER
         u = sin(theta * alpha) / sin(theta);
     }
     q->s = temp * a->s + epsilon * u * b->s;
-    D3DRMVectorAdd(&q->v, D3DRMVectorScale(&sca1, &a->v, temp),
-                   D3DRMVectorScale(&sca2, &b->v, epsilon * u));
+    D3DRMVectorAdd(&q->v, D3DRMVectorScale(&a->v, &a->v, temp),
+                   D3DRMVectorScale(&b->v, &b->v, epsilon * u));
     return q;
 }
 
@@ -245,19 +245,20 @@ LPD3DVECTOR WINAPI D3DRMVectorReflect(LPD3DVECTOR r, LPD3DVECTOR ray, LPD3DVECTO
 /* Rotation of a vector */
 LPD3DVECTOR WINAPI D3DRMVectorRotate(LPD3DVECTOR r, LPD3DVECTOR v, LPD3DVECTOR axis, D3DVALUE theta)
 {
-    D3DRMQUATERNION quaternion,quaternion1, quaternion2, quaternion3, resultq;
-    D3DVECTOR NORM;
+    D3DRMQUATERNION quaternion1, quaternion2, quaternion3;
+    D3DVECTOR norm;
 
-    quaternion1.s = cos(theta*.5);
-    quaternion2.s = cos(theta*.5);
-    NORM = *D3DRMVectorNormalize(axis);
-    D3DRMVectorScale(&quaternion1.v, &NORM, sin(theta * .5));
-    D3DRMVectorScale(&quaternion2.v, &NORM, -sin(theta * .5));
+    quaternion1.s = cos(theta * 0.5f);
+    quaternion2.s = cos(theta * 0.5f);
+    norm = *D3DRMVectorNormalize(axis);
+    D3DRMVectorScale(&quaternion1.v, &norm, sin(theta * 0.5f));
+    D3DRMVectorScale(&quaternion2.v, &norm, -sin(theta * 0.5f));
     quaternion3.s = 0.0;
     quaternion3.v = *v;
-    D3DRMQuaternionMultiply(&quaternion, &quaternion1, &quaternion3);
-    D3DRMQuaternionMultiply(&resultq, &quaternion, &quaternion2);
-    *r = *D3DRMVectorNormalize(&resultq.v);
+    D3DRMQuaternionMultiply(&quaternion1, &quaternion1, &quaternion3);
+    D3DRMQuaternionMultiply(&quaternion1, &quaternion1, &quaternion2);
+
+    *r = *D3DRMVectorNormalize(&quaternion1.v);
     return r;
 }
 
