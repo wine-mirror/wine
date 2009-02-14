@@ -1173,15 +1173,27 @@ D3DXQUATERNION* WINAPI D3DXQuaternionRotationYawPitchRoll(D3DXQUATERNION *pout, 
 
 D3DXQUATERNION* WINAPI D3DXQuaternionSlerp(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq1, CONST D3DXQUATERNION *pq2, FLOAT t)
 {
-    FLOAT dot, epsilon;
+    FLOAT dot, epsilon, temp, theta, u;
 
     epsilon = 1.0f;
+    temp = 1.0f - t;
+    u = t;
     dot = D3DXQuaternionDot(pq1, pq2);
-    if ( dot < 0.0f) epsilon = -1.0f;
-    pout->x = (1.0f - t) * pq1->x + epsilon * t * pq2->x;
-    pout->y = (1.0f - t) * pq1->y + epsilon * t * pq2->y;
-    pout->z = (1.0f - t) * pq1->z + epsilon * t * pq2->z;
-    pout->w = (1.0f - t) * pq1->w + epsilon * t * pq2->w;
+    if ( dot < 0.0f )
+    {
+        epsilon = -1.0f;
+        dot = -dot;
+    }
+    if( 1.0f - dot > 0.001f )
+    {
+        theta = acos(dot);
+        temp  = sin(theta * temp) / sin(theta);
+        u = sin(theta * u) / sin(theta);
+    }
+    pout->x = temp * pq1->x + epsilon * u * pq2->x;
+    pout->y = temp * pq1->y + epsilon * u * pq2->y;
+    pout->z = temp * pq1->z + epsilon * u * pq2->z;
+    pout->w = temp * pq1->w + epsilon * u * pq2->w;
     return pout;
 }
 
