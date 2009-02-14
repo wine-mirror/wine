@@ -3146,14 +3146,19 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
     }
     else if (is_string_type(var->attrs, var->type))
     {
-        if (is_array(type) && !is_conformant_array(type))
-            print_phase_function(file, indent, "NonConformantString", local_var_prefix,
-                                 phase, var, start_offset);
+        if (phase == PHASE_FREE || pass == PASS_RETURN ||
+            pointer_type != RPC_FC_RP)
+        {
+            unsigned int ptr_start_offset = (start_offset - (is_conformant_array(type) ? 4 : 2));
+            print_phase_function(file, indent, "Pointer", local_var_prefix,
+                                 phase, var, ptr_start_offset);
+        }
         else
         {
-            if (phase == PHASE_FREE || pass == PASS_RETURN || pointer_type == RPC_FC_UP)
-                print_phase_function(file, indent, "Pointer", local_var_prefix, phase, var,
-                                     start_offset - (is_conformant_array(type) ? 4 : 2));
+            if (is_array(type) && !is_conformant_array(type))
+                print_phase_function(file, indent, "NonConformantString",
+                                     local_var_prefix, phase, var,
+                                     start_offset);
             else
                 print_phase_function(file, indent, "ConformantString", local_var_prefix,
                                      phase, var, start_offset);
