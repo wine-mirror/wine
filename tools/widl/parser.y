@@ -1446,9 +1446,19 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
     }
     if (ptr && is_ptr(ptr) && (ptr_attr || top))
     {
-      /* duplicate type to avoid changing original type */
-      *pt = duptype(*pt, 1);
-      (*pt)->type = ptr_attr ? ptr_attr : RPC_FC_RP;
+      if (!ptr_attr)
+        ptr_attr = RPC_FC_RP;
+      if (ptr_attr != (*pt)->type)
+      {
+        /* create new type to avoid changing original type */
+        /* FIXME: this is a horrible hack - we might be changing the pointer
+         * type of an alias here, so we also need corresponding hacks in
+         * get_pointer_fc to handle this. The type of pointer that the type
+         * ends up having is context sensitive and so we shouldn't be
+         * setting it here, but rather determining it when it is used. */
+        *pt = duptype(*pt, 1);
+        (*pt)->type = ptr_attr;
+      }
     }
     else if (ptr_attr)
        error_loc("%s: pointer attribute applied to non-pointer type\n", v->name);
