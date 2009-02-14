@@ -29,6 +29,9 @@
  */
 
 #include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "tomcrypt.h"
 
 /* Known optimal configurations
@@ -69,7 +72,7 @@ static int mp_grow (mp_int * a, int size)
      * in case the operation failed we don't want
      * to overwrite the dp member of a.
      */
-    tmp = realloc (a->dp, sizeof (mp_digit) * size);
+    tmp = HeapReAlloc(GetProcessHeap(), 0, a->dp, sizeof (mp_digit) * size);
     if (tmp == NULL) {
       /* reallocation failed but "a" is still valid [can be freed] */
       return MP_MEM;
@@ -154,7 +157,7 @@ static int mp_init (mp_int * a)
   int i;
 
   /* allocate memory required and clear it */
-  a->dp = malloc (sizeof (mp_digit) * MP_PREC);
+  a->dp = HeapAlloc(GetProcessHeap(), 0, sizeof (mp_digit) * MP_PREC);
   if (a->dp == NULL) {
     return MP_MEM;
   }
@@ -182,7 +185,7 @@ static int mp_init_size (mp_int * a, int size)
   size += (MP_PREC * 2) - (size % MP_PREC);
 
   /* alloc mem */
-  a->dp = malloc (sizeof (mp_digit) * size);
+  a->dp = HeapAlloc(GetProcessHeap(), 0, sizeof (mp_digit) * size);
   if (a->dp == NULL) {
     return MP_MEM;
   }
@@ -214,7 +217,7 @@ mp_clear (mp_int * a)
     }
 
     /* free ram */
-    free(a->dp);
+    HeapFree(GetProcessHeap(), 0, a->dp);
 
     /* reset members to make debugging easier */
     a->dp    = NULL;
@@ -3378,7 +3381,7 @@ int mp_prime_random_ex(mp_int *a, int t, int size, int flags, ltm_prime_callback
    bsize = (size>>3)+((size&7)?1:0);
 
    /* we need a buffer of bsize bytes */
-   tmp = malloc(bsize);
+   tmp = HeapAlloc(GetProcessHeap(), 0, bsize);
    if (tmp == NULL) {
       return MP_MEM;
    }
@@ -3443,7 +3446,7 @@ int mp_prime_random_ex(mp_int *a, int t, int size, int flags, ltm_prime_callback
 
    err = MP_OKAY;
 error:
-   free(tmp);
+   HeapFree(GetProcessHeap(), 0, tmp);
    return err;
 }
 
@@ -3665,7 +3668,7 @@ int mp_shrink (mp_int * a)
 {
   mp_digit *tmp;
   if (a->alloc != a->used && a->used > 0) {
-    if ((tmp = realloc (a->dp, sizeof (mp_digit) * a->used)) == NULL) {
+    if ((tmp = HeapReAlloc(GetProcessHeap(), 0, a->dp, sizeof (mp_digit) * a->used)) == NULL) {
       return MP_MEM;
     }
     a->dp    = tmp;
