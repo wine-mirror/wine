@@ -3071,7 +3071,6 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
 {
     int in_attr, out_attr, pointer_type;
     const type_t *type = var->type;
-    unsigned char rtype;
     unsigned int start_offset = type->typestring_offset;
 
     pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
@@ -3097,7 +3096,6 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
         }
 
     write_parameter_conf_or_var_exprs(file, indent, local_var_prefix, phase, var);
-    rtype = get_struct_type(type);
 
     if (is_context_handle(type))
     {
@@ -3204,14 +3202,29 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
             }
         }
     }
-    else if (!is_ptr(var->type) && is_base_type(rtype))
+    else if (is_base_type(type->type))
     {
-        if (phase != PHASE_FREE)
-            print_phase_basetype(file, indent, local_var_prefix, phase, pass, var, var->name);
+        if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
+        {
+            if (type->type == RPC_FC_ENUM16 || type->type == RPC_FC_ENUM32)
+            {
+                if (phase == PHASE_MARSHAL)
+                    print_file(file, indent, "NdrSimpleTypeMarshall(\n");
+                else
+                    print_file(file, indent, "NdrSimpleTypeUnmarshall(\n");
+                print_file(file, indent+1, "&__frame->_StubMsg,\n");
+                print_file(file, indent+1, "(unsigned char *)&%s%s,\n",
+                           local_var_prefix,
+                           var->name);
+                print_file(file, indent+1, "0x%02x /* %s */);\n", type->type, string_of_type(type->type));
+            }
+            else
+                print_phase_basetype(file, indent, local_var_prefix, phase, pass, var, var->name);
+        }
     }
-    else if (!is_ptr(var->type))
+    else if (is_struct(type->type))
     {
-        switch (rtype)
+        switch (get_struct_type(type))
         {
         case RPC_FC_STRUCT:
         case RPC_FC_PSTRUCT:
@@ -3228,7 +3241,7 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
             print_phase_function(file, indent, "ComplexStruct", local_var_prefix, phase, var, start_offset);
             break;
         default:
-            error("write_remoting_arguments: Unsupported type: %s (0x%02x)\n", var->name, rtype);
+            error("write_remoting_arguments: Unsupported type: %s (0x%02x)\n", var->name, get_struct_type(type));
         }
     }
     else
@@ -3236,13 +3249,21 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
         const type_t *ref = type_pointer_get_ref(type);
         if (type->type == RPC_FC_RP && is_base_type(ref->type))
         {
-            if (phase != PHASE_FREE)
-                print_phase_basetype(file, indent, local_var_prefix, phase, pass, var, var->name);
+            /* base types have known sizes, so don't need a sizing pass
+             * and don't have any memory to free and so don't need a
+             * freeing pass */
+            if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
+            {
+                if (ref->type == RPC_FC_ENUM16 || ref->type == RPC_FC_ENUM32)
+                    print_phase_function(file, indent, "Pointer", local_var_prefix, phase, var, start_offset);
+                else
+                    print_phase_basetype(file, indent, local_var_prefix, phase, pass, var, var->name);
+            }
         }
         else if (type->type == RPC_FC_RP && get_struct_type(ref) == RPC_FC_STRUCT &&
                  !is_user_type(ref))
         {
-            if (phase != PHASE_BUFFERSIZE && phase != PHASE_FREE)
+            if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
                 print_phase_function(file, indent, "SimpleStruct",
                                      local_var_prefix, phase, var,
                                      ref->typestring_offset);
