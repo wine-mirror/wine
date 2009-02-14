@@ -3227,6 +3227,9 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
         switch (get_struct_type(type))
         {
         case RPC_FC_STRUCT:
+            if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
+                print_phase_function(file, indent, "SimpleStruct", local_var_prefix, phase, var, start_offset);
+            break;
         case RPC_FC_PSTRUCT:
             print_phase_function(file, indent, "SimpleStruct", local_var_prefix, phase, var, start_offset);
             break;
@@ -3244,6 +3247,19 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
             error("write_remoting_arguments: Unsupported type: %s (0x%02x)\n", var->name, get_struct_type(type));
         }
     }
+    else if (is_union(type->type))
+    {
+        unsigned char tc = type->type;
+        const char *union_type = NULL;
+
+        if (tc == RPC_FC_NON_ENCAPSULATED_UNION)
+            union_type = "NonEncapsulatedUnion";
+        else if (tc == RPC_FC_ENCAPSULATED_UNION)
+            union_type = "EncapsulatedUnion";
+
+        print_phase_function(file, indent, union_type, local_var_prefix,
+                             phase, var, start_offset);
+    }
     else
     {
         const type_t *ref = type_pointer_get_ref(type);
@@ -3260,13 +3276,64 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
                     print_phase_basetype(file, indent, local_var_prefix, phase, pass, var, var->name);
             }
         }
-        else if (type->type == RPC_FC_RP && get_struct_type(ref) == RPC_FC_STRUCT &&
+        else if (type->type == RPC_FC_RP && is_struct(ref->type) &&
                  !is_user_type(ref))
         {
-            if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
-                print_phase_function(file, indent, "SimpleStruct",
-                                     local_var_prefix, phase, var,
-                                     ref->typestring_offset);
+            const char *struct_type = NULL;
+            switch (get_struct_type(ref))
+            {
+            case RPC_FC_STRUCT:
+                /* simple structs have known sizes, so don't need a sizing
+                 * pass and don't have any memory to free and so don't
+                 * need a freeing pass */
+                if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
+                    struct_type = "SimpleStruct";
+                break;
+            case RPC_FC_PSTRUCT:
+                struct_type = "SimpleStruct";
+                break;
+            case RPC_FC_CSTRUCT:
+            case RPC_FC_CPSTRUCT:
+                struct_type = "ConformantStruct";
+                break;
+            case RPC_FC_CVSTRUCT:
+                struct_type = "ConformantVaryingStruct";
+                break;
+            case RPC_FC_BOGUS_STRUCT:
+                struct_type = "ComplexStruct";
+                break;
+            default:
+                error("write_remoting_arguments: Unsupported type: %s (0x%02x)\n", var->name, get_struct_type(ref));
+            }
+
+            if (struct_type)
+            {
+                if (phase == PHASE_FREE)
+                    struct_type = "Pointer";
+                else
+                    start_offset = ref->typestring_offset;
+                print_phase_function(file, indent, struct_type, local_var_prefix, phase, var, start_offset);
+            }
+        }
+        else if (type->type == RPC_FC_RP && is_union(type->type))
+        {
+            const char *union_type = NULL;
+            if (phase == PHASE_FREE)
+                union_type = "Pointer";
+            else
+            {
+                unsigned char tc = type->type;
+
+                if (tc == RPC_FC_NON_ENCAPSULATED_UNION)
+                    union_type = "NonEncapsulatedUnion";
+                else if (tc == RPC_FC_ENCAPSULATED_UNION)
+                    union_type = "EncapsulatedUnion";
+
+                start_offset = ref->typestring_offset;
+            }
+
+            print_phase_function(file, indent, union_type, local_var_prefix,
+                                 phase, var, start_offset);
         }
         else
         {
