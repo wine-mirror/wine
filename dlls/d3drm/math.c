@@ -123,12 +123,26 @@ LPD3DRMQUATERNION WINAPI D3DRMQuaternionFromRotation(LPD3DRMQUATERNION q, LPD3DV
 /* Interpolation between two quaternions */
 LPD3DRMQUATERNION WINAPI D3DRMQuaternionSlerp(LPD3DRMQUATERNION q, LPD3DRMQUATERNION a, LPD3DRMQUATERNION b, D3DVALUE alpha)
 {
-    D3DVALUE epsilon=1.0;
+    D3DVALUE dot, epsilon, temp, theta, u;
     D3DVECTOR sca1,sca2;
-    if (a->s * b->s + D3DRMVectorDotProduct(&a->v, &b->v) < 0.0) epsilon = -1.0;
-    q->s = (1.0 - alpha) * a->s + epsilon * alpha * b->s;
-    D3DRMVectorAdd(&q->v, D3DRMVectorScale(&sca1, &a->v, 1.0 - alpha),
-                   D3DRMVectorScale(&sca2, &b->v, epsilon * alpha));
+    dot = a->s * b->s + D3DRMVectorDotProduct(&a->v, &b->v);
+    epsilon = 1.0f;
+    temp = 1.0f - alpha;
+    u = alpha;
+    if (dot < 0.0)
+    {
+     epsilon = -1.0;
+     dot = -dot;
+    }
+    if( 1.0f - dot > 0.001f )
+    {
+        theta = acos(dot);
+        temp  = sin(theta * temp) / sin(theta);
+        u = sin(theta * alpha) / sin(theta);
+    }
+    q->s = temp * a->s + epsilon * u * b->s;
+    D3DRMVectorAdd(&q->v, D3DRMVectorScale(&sca1, &a->v, temp),
+                   D3DRMVectorScale(&sca2, &b->v, epsilon * u));
     return q;
 }
 

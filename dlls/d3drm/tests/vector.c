@@ -227,10 +227,9 @@ static void QuaternionTest(void)
     expect_quat(q,r);
 
 /*_________________QuaternionSlerp_________________________*/
-/* Interpolation slerp is in fact a linear interpolation, not a spherical linear
- * interpolation. Moreover, if the angle of the two quaternions is in ]PI/2;3PI/2[, QuaternionSlerp
+/* If the angle of the two quaternions is in ]PI/2;3PI/2[, QuaternionSlerp
  * interpolates between the first quaternion and the opposite of the second one. The test proves
- * these two facts. */
+ * this fact. */
     par=0.31f;
     q1.s=1.0f; U1(q1.v).x=2.0f; U2(q1.v).y=3.0f; U3(q1.v).z=50.0f;
     q2.s=-4.0f; U1(q2.v).x=6.0f; U2(q2.v).y=7.0f; U3(q2.v).z=8.0f;
@@ -254,6 +253,13 @@ static void QuaternionTest(void)
     U1(q.v).x=g*U1(q1.v).x+h*U1(q2.v).x;
     U2(q.v).y=g*U2(q1.v).y+h*U2(q2.v).y;
     U3(q.v).z=g*U3(q1.v).z+h*U3(q2.v).z;
+    pD3DRMQuaternionSlerp(&r,&q1,&q2,par);
+    expect_quat(q,r);
+
+/* Test the spherical interpolation part */
+    q1.s=0.1f; U1(q1.v).x=0.2f; U2(q1.v).y=0.3f; U3(q1.v).z=0.4f;
+    q2.s=0.5f; U1(q2.v).x=0.6f; U2(q2.v).y=0.7f; U3(q2.v).z=0.8f;
+    q.s = 0.243943f; U1(q.v).x = 0.351172f; U2(q.v).y = 0.458401f; U3(q.v).z = 0.565629f;
     pD3DRMQuaternionSlerp(&r,&q1,&q2,par);
     expect_quat(q,r);
 }
