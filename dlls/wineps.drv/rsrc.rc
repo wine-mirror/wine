@@ -43,6 +43,7 @@
 #include "wps_It.rc"
 #include "wps_Ja.rc"
 #include "wps_Ko.rc"
+#include "wps_Lt.rc"
 #include "wps_Nl.rc"
 #include "wps_No.rc"
 #include "wps_Pt.rc"
