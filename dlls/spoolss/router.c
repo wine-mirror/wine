@@ -211,6 +211,8 @@ static backend_t * backend_load(LPWSTR dllname, LPWSTR name, LPWSTR regroot)
     DWORD id;
     DWORD res;
 
+    TRACE("(%s, %s, %s)\n", debugstr_w(dllname), debugstr_w(name), debugstr_w(regroot));
+
     EnterCriticalSection(&backend_cs);
     id = used_backends;
 
@@ -263,13 +265,22 @@ static backend_t * backend_load(LPWSTR dllname, LPWSTR name, LPWSTR regroot)
  */
 BOOL backend_load_all(void)
 {
+    static BOOL failed = FALSE;
     backend_t * pb;
 
-    pb = backend_load(localsplW, NULL, NULL);
+    EnterCriticalSection(&backend_cs);
 
-    /* ToDo: parse the registry and load all other backends */
+    /* if we failed before, dont try again */
+    if (!failed && (used_backends == 0)) {
+        pb = backend_load(localsplW, NULL, NULL);
 
-    return (pb != NULL);
+        /* ToDo: parse the registry and load all other backends */
+
+        failed = (used_backends == 0);
+    }
+    LeaveCriticalSection(&backend_cs);
+    TRACE("-> %d\n", !failed);
+    return (!failed);
 }
 
 /******************************************************************************
@@ -284,10 +295,20 @@ BOOL backend_load_all(void)
  */
 static backend_t * backend_first(LPWSTR name)
 {
-    /* test for the local system first */
-    if(!name || !name[0]) return backend[0];
 
-    FIXME("server %s not supported\n", debugstr_w(name));
+    EnterCriticalSection(&backend_cs);
+    /* Load all backends, when not done yet */
+    if (used_backends || backend_load_all()) {
+
+        /* test for the local system first */
+        if (!name || !name[0]) {
+            LeaveCriticalSection(&backend_cs);
+            return backend[0];
+        }
+    }
+
+    FIXME("server %s not supported in %d backends\n", debugstr_w(name), used_backends);
+    LeaveCriticalSection(&backend_cs);
     return NULL;
 }
 
