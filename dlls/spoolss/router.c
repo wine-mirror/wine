@@ -355,3 +355,47 @@ BOOL WINAPI EnumMonitorsW(LPWSTR pName, DWORD Level, LPBYTE pMonitors, DWORD cbB
 
     return (res == ROUTER_SUCCESS);
 }
+
+/******************************************************************
+ * EnumPortsW (spoolss.@)
+ *
+ * Enumerate available Ports
+ *
+ * PARAMS
+ *  pName      [I] Servername or NULL (local Computer)
+ *  Level      [I] Structure-Level (1 or 2)
+ *  pPorts     [O] PTR to Buffer that receives the Result
+ *  cbBuf      [I] Size of Buffer at pPorts
+ *  pcbNeeded  [O] PTR to DWORD that receives the size in Bytes used / required for pPorts
+ *  pcReturned [O] PTR to DWORD that receives the number of Ports in pPorts
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE and in pcbNeeded the Bytes required for pPorts, if cbBuf is too small
+ *
+ */
+BOOL WINAPI EnumPortsW(LPWSTR pName, DWORD Level, LPBYTE pPorts, DWORD cbBuf,
+                       LPDWORD pcbNeeded, LPDWORD pcReturned)
+{
+    backend_t * pb;
+    DWORD res = ROUTER_UNKNOWN;
+
+    TRACE("(%s, %d, %p, %d, %p, %p)\n", debugstr_w(pName), Level, pPorts, cbBuf,
+            pcbNeeded, pcReturned);
+
+    if (pcbNeeded) *pcbNeeded = 0;
+    if (pcReturned) *pcReturned = 0;
+
+    pb = backend_first(pName);
+    if (pb && pb->fpEnumPorts)
+        res = pb->fpEnumPorts(pName, Level, pPorts, cbBuf, pcbNeeded, pcReturned);
+    else
+    {
+        SetLastError(ERROR_PROC_NOT_FOUND);
+    }
+
+    TRACE("got %u with %u (%u byte for %u entries)\n", res, GetLastError(),
+            pcbNeeded ? *pcbNeeded : 0, pcReturned ? *pcReturned : 0);
+
+    return (res == ROUTER_SUCCESS);
+}

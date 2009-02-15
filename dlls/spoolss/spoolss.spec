@@ -47,7 +47,7 @@
 @ stub EnumJobsW
 @ stdcall EnumMonitorsW(wstr long ptr long ptr ptr)
 @ stub EnumPerMachineConnectionsW
-@ stdcall EnumPortsW(wstr long ptr ptr ptr ptr) winspool.drv.EnumPortsW
+@ stdcall EnumPortsW(wstr long ptr long ptr ptr)
 @ stub EnumPrintProcessorDatatypesW
 @ stub EnumPrintProcessorsW
 @ stub EnumPrinterDataExW
