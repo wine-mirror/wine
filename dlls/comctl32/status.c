@@ -759,8 +759,6 @@ STATUSBAR_SetTextT (STATUS_INFO *infoPtr, INT nPart, WORD style,
     if (style & SBT_OWNERDRAW) {
         if (!(oldStyle & SBT_OWNERDRAW))
             Free (part->text);
-        else if (part->text == text)
-            return TRUE;
         part->text = (LPWSTR)text;
     } else {
 	LPWSTR ntext;

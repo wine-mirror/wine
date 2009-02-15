@@ -42,6 +42,8 @@ static HWND g_hMainWnd;
 static int g_wmsize_count = 0;
 static DWORD g_ysize;
 static DWORD g_dpisize;
+static int g_wmdrawitm_ctr;
+static WNDPROC g_wndproc_saved;
 
 static HWND create_status_control(DWORD style, DWORD exstyle)
 {
@@ -407,6 +409,53 @@ static void test_status_control(void)
     DestroyWindow(hWndStatus);
 }
 
+static LRESULT WINAPI ownerdraw_test_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    LRESULT ret;
+    if (msg == WM_DRAWITEM)
+        g_wmdrawitm_ctr++;
+    ret = CallWindowProc(g_wndproc_saved, hwnd, msg, wParam, lParam);
+    return ret;
+}
+
+static void test_status_ownerdraw(void)
+{
+    HWND hWndStatus;
+    int r;
+    const char* statustext = "STATUS TEXT";
+    LONG oldstyle;
+
+    /* subclass the main window and make sure it is visible */
+    g_wndproc_saved = (WNDPROC) SetWindowLongPtr( g_hMainWnd, GWLP_WNDPROC,
+                                                  (LONG_PTR)ownerdraw_test_wndproc );
+    ok( g_wndproc_saved != 0, "failed to set the WndProc\n");
+    SetWindowPos( g_hMainWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
+    oldstyle = GetWindowLong( g_hMainWnd, GWL_STYLE);
+    SetWindowLong( g_hMainWnd, GWL_STYLE, oldstyle | WS_VISIBLE);
+    /* create a status child window */
+    ok((hWndStatus = CreateWindowA(SUBCLASS_NAME, "", WS_CHILD|WS_VISIBLE, 0, 0, 100, 100,
+                    g_hMainWnd, NULL, NULL, 0)) != NULL, "CreateWindowA failed\n");
+    /* set text */
+    g_wmdrawitm_ctr = 0;
+    r = SendMessage(hWndStatus, SB_SETTEXT, 0, (LPARAM)statustext);
+    ok( r == TRUE, "Sendmessage returned %d, expected 1\n", r);
+    ok( 0 == g_wmdrawitm_ctr, "got %d drawitem messages expected none\n", g_wmdrawitm_ctr);
+    /* set same text, with ownerdraw flag */
+    g_wmdrawitm_ctr = 0;
+    r = SendMessage(hWndStatus, SB_SETTEXT, SBT_OWNERDRAW, (LPARAM)statustext);
+    ok( r == TRUE, "Sendmessage returned %d, expected 1\n", r);
+    ok( 1 == g_wmdrawitm_ctr, "got %d drawitem messages expected 1\n", g_wmdrawitm_ctr);
+    /* ;and again */
+    g_wmdrawitm_ctr = 0;
+    r = SendMessage(hWndStatus, SB_SETTEXT, SBT_OWNERDRAW, (LPARAM)statustext);
+    ok( r == TRUE, "Sendmessage returned %d, expected 1\n", r);
+    ok( 1 == g_wmdrawitm_ctr, "got %d drawitem messages expected 1\n", g_wmdrawitm_ctr);
+    /* clean up */
+    DestroyWindow(hWndStatus);
+    SetWindowLong( g_hMainWnd, GWL_STYLE, oldstyle);
+    SetWindowLongPtr( g_hMainWnd, GWLP_WNDPROC, (LONG_PTR)g_wndproc_saved );
+}
+
 START_TEST(status)
 {
     hinst = GetModuleHandleA(NULL);
@@ -423,4 +472,5 @@ START_TEST(status)
     test_status_control();
     test_create();
     test_height();
+    test_status_ownerdraw();
 }
