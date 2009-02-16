@@ -462,7 +462,7 @@ int main(int argc,char *argv[])
                     FILE *output;
 
                     if (!(output = fopen( output_name, "w" )))
-                        error( "Could not open %s for writing\n", output_name );
+                        fatal_perror( "Could not open %s for writing", output_name );
                     ret = wpp_parse( input_name, output );
                     fclose( output );
                 }
@@ -487,7 +487,7 @@ int main(int argc,char *argv[])
 	chat("Starting parse\n");
 
 	if(!(parser_in = fopen(input_name, "rb")))
-		error("Could not open %s for input\n", input_name);
+            fatal_perror("Could not open %s for input", input_name);
 
 	ret = parser_parse();
 

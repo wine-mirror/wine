@@ -354,7 +354,7 @@ resource_t *read_resfile(char *inname)
 
 	fp = fopen(inname, "rb");
 	if(!fp)
-		error("Could not open inputfile %s\n", inname);
+            fatal_perror("Could not open %s", inname);
 
 	/* Determine 16 or 32 bit .res file */
 	if(fread(&rh, 1, sizeof(rh), fp) != sizeof(rh))
