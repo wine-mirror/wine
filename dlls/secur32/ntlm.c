@@ -1982,6 +1982,7 @@ void SECUR32_initNTLMSP(void)
         /* Cheat and allocate a helper anyway, so cleanup later will work. */
         helper = HeapAlloc(GetProcessHeap(),0, sizeof(NegoHelper));
         helper->major = helper->minor = helper->micro = -1;
+        helper->pipe_in = helper->pipe_out = -1;
     }
     else
         check_version(helper);
