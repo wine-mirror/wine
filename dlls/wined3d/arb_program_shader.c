@@ -567,56 +567,6 @@ static void vshader_program_add_param(const SHADER_OPCODE_ARG *arg, const DWORD 
   }
 }
 
-static void shader_hw_sample(const SHADER_OPCODE_ARG *arg, DWORD sampler_idx, const char *dst_str,
-        const char *coord_reg, BOOL projected, BOOL bias)
-{
-    SHADER_BUFFER* buffer = arg->buffer;
-    DWORD sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
-    const char *tex_type;
-
-    switch(sampler_type) {
-        case WINED3DSTT_1D:
-            tex_type = "1D";
-            break;
-
-        case WINED3DSTT_2D:
-        {
-            IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *) arg->shader;
-            IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
-            if(device->stateBlock->textures[sampler_idx] &&
-               IWineD3DBaseTexture_GetTextureDimensions(device->stateBlock->textures[sampler_idx]) == GL_TEXTURE_RECTANGLE_ARB) {
-                tex_type = "RECT";
-            } else {
-                tex_type = "2D";
-            }
-            break;
-        }
-
-        case WINED3DSTT_VOLUME:
-            tex_type = "3D";
-            break;
-
-        case WINED3DSTT_CUBE:
-            tex_type = "CUBE";
-            break;
-
-        default:
-            ERR("Unexpected texture type %d\n", sampler_type);
-            tex_type = "";
-    }
-
-    if (bias) {
-        /* Shouldn't be possible, but let's check for it */
-        if(projected) FIXME("Biased and Projected texture sampling\n");
-        /* TXB takes the 4th component of the source vector automatically, as d3d. Nothing more to do */
-        shader_addline(buffer, "TXB %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
-    } else if (projected) {
-        shader_addline(buffer, "TXP %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
-    } else {
-        shader_addline(buffer, "TEX %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
-    }
-}
-
 static const char *shader_arb_get_fixup_swizzle(enum fixup_channel_source channel_source)
 {
     switch(channel_source)
@@ -634,7 +584,7 @@ static const char *shader_arb_get_fixup_swizzle(enum fixup_channel_source channe
 }
 
 static void gen_color_correction(SHADER_BUFFER *buffer, const char *reg, DWORD dst_mask,
-        const char *one, const char *two, struct color_fixup_desc fixup)
+                                 const char *one, const char *two, struct color_fixup_desc fixup)
 {
     DWORD mask;
 
@@ -685,11 +635,58 @@ static void gen_color_correction(SHADER_BUFFER *buffer, const char *reg, DWORD d
     }
 }
 
-static void shader_arb_color_correction(const struct SHADER_OPCODE_ARG* arg, struct color_fixup_desc fixup)
+static void shader_hw_sample(const SHADER_OPCODE_ARG *arg, DWORD sampler_idx, const char *dst_str,
+        const char *coord_reg, BOOL projected, BOOL bias)
 {
-    char reg[256];
-    pshader_get_register_name(arg->shader, arg->dst, reg);
-    gen_color_correction(arg->buffer, reg, arg->dst & WINED3DSP_WRITEMASK_ALL, "one", "coefmul.x", fixup);
+    SHADER_BUFFER* buffer = arg->buffer;
+    DWORD sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
+    const char *tex_type;
+    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *) arg->shader;
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
+
+    switch(sampler_type) {
+        case WINED3DSTT_1D:
+            tex_type = "1D";
+            break;
+
+        case WINED3DSTT_2D:
+            if(device->stateBlock->textures[sampler_idx] &&
+               IWineD3DBaseTexture_GetTextureDimensions(device->stateBlock->textures[sampler_idx]) == GL_TEXTURE_RECTANGLE_ARB) {
+                tex_type = "RECT";
+            } else {
+                tex_type = "2D";
+            }
+            break;
+
+        case WINED3DSTT_VOLUME:
+            tex_type = "3D";
+            break;
+
+        case WINED3DSTT_CUBE:
+            tex_type = "CUBE";
+            break;
+
+        default:
+            ERR("Unexpected texture type %d\n", sampler_type);
+            tex_type = "";
+    }
+
+    if (bias) {
+        /* Shouldn't be possible, but let's check for it */
+        if(projected) FIXME("Biased and Projected texture sampling\n");
+        /* TXB takes the 4th component of the source vector automatically, as d3d. Nothing more to do */
+        shader_addline(buffer, "TXB %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
+    } else if (projected) {
+        shader_addline(buffer, "TXP %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
+    } else {
+        shader_addline(buffer, "TEX %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
+    }
+
+    if(shader_is_pshader_version(arg->reg_maps->shader_version)) {
+        IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) arg->shader;
+        gen_color_correction(buffer, dst_str, arg->dst & WINED3DSP_WRITEMASK_ALL, "one", "coefmul.x",
+                             ps->cur_args->color_fixup[sampler_idx]);
+    }
 }
 
 static void pshader_gen_input_modifier_line (
@@ -2262,7 +2259,6 @@ const shader_backend_t arb_program_shader_backend = {
     shader_arb_update_float_vertex_constants,
     shader_arb_update_float_pixel_constants,
     shader_arb_load_constants,
-    shader_arb_color_correction,
     shader_arb_destroy,
     shader_arb_alloc,
     shader_arb_free,

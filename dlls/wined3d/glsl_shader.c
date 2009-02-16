@@ -2345,6 +2345,7 @@ static void pshader_glsl_tex(const SHADER_OPCODE_ARG *arg)
                     sample_function.name, sampler_idx, coord_param.param_str, dst_swizzle);
         }
     }
+    shader_glsl_color_correction(arg, This->cur_args->color_fixup[sampler_idx]);
 }
 
 static void shader_glsl_texldl(const SHADER_OPCODE_ARG *arg)
@@ -2373,11 +2374,14 @@ static void shader_glsl_texldl(const SHADER_OPCODE_ARG *arg)
 
     if (shader_is_pshader_version(arg->reg_maps->shader_version))
     {
+        IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) This;
+
         /* The GLSL spec claims the Lod sampling functions are only supported in vertex shaders.
          * However, they seem to work just fine in fragment shaders as well. */
         WARN("Using %sLod in fragment shader.\n", sample_function.name);
         shader_addline(arg->buffer, "%sLod(Psampler%u, %s, %s)%s);\n",
                 sample_function.name, sampler_idx, coord_param.param_str, lod_param.param_str, dst_swizzle);
+        shader_glsl_color_correction(arg, ps->cur_args->color_fixup[sampler_idx]);
     } else {
         shader_addline(arg->buffer, "%sLod(Vsampler%u, %s, %s)%s);\n",
                 sample_function.name, sampler_idx, coord_param.param_str, lod_param.param_str, dst_swizzle);
@@ -2442,6 +2446,7 @@ static void pshader_glsl_texdp3tex(const SHADER_OPCODE_ARG *arg)
     DWORD sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     DWORD sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
+    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
 
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src_mask, &src0_param);
 
@@ -2473,6 +2478,7 @@ static void pshader_glsl_texdp3tex(const SHADER_OPCODE_ARG *arg)
         default:
             FIXME("Unexpected mask bitcount %d\n", count_bits(sample_function.coord_mask));
     }
+    shader_glsl_color_correction(arg, This->cur_args->color_fixup[sampler_idx]);
 }
 
 /** Process the WINED3DSIO_TEXDP3 instruction in GLSL:
@@ -2600,6 +2606,7 @@ static void pshader_glsl_texm3x3tex(const SHADER_OPCODE_ARG *arg)
 
     /* Sample the texture using the calculated coordinates */
     shader_addline(arg->buffer, "%s(Psampler%u, tmp0.xyz)%s);\n", sample_function.name, reg, dst_mask);
+    shader_glsl_color_correction(arg, This->cur_args->color_fixup[reg]);
 
     current_state->current_row = 0;
 }
@@ -2654,6 +2661,7 @@ static void pshader_glsl_texm3x3spec(const SHADER_OPCODE_ARG *arg)
 
     /* Sample the texture */
     shader_addline(buffer, "%s(Psampler%u, tmp0.xyz)%s);\n", sample_function.name, reg, dst_mask);
+    shader_glsl_color_correction(arg, shader->cur_args->color_fixup[reg]);
 
     current_state->current_row = 0;
 }
@@ -2689,6 +2697,7 @@ static void pshader_glsl_texm3x3vspec(const SHADER_OPCODE_ARG *arg)
 
     /* Sample the texture using the calculated coordinates */
     shader_addline(buffer, "%s(Psampler%u, tmp0.xyz)%s);\n", sample_function.name, reg, dst_mask);
+    shader_glsl_color_correction(arg, shader->cur_args->color_fixup[reg]);
 
     current_state->current_row = 0;
 }
@@ -2743,13 +2752,19 @@ static void pshader_glsl_texbem(const SHADER_OPCODE_ARG *arg)
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0|WINED3DSP_WRITEMASK_1, &coord_param);
     if(arg->opcode->opcode == WINED3DSIO_TEXBEML) {
         glsl_src_param_t luminance_param;
+        shader_glsl_append_dst(arg->buffer, arg);
         shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_2, &luminance_param);
-        shader_addline(arg->buffer, "(%s(Psampler%u, T%u%s + vec4(bumpenvmat%d * %s, 0.0, 0.0)%s )*(%s * luminancescale%d + luminanceoffset%d))%s);\n",
+        shader_addline(arg->buffer, "%s(Psampler%u, T%u%s + vec4(bumpenvmat%d * %s, 0.0, 0.0)%s )%s);\n",
                        sample_function.name, sampler_idx, sampler_idx, coord_mask, sampler_idx, coord_param.param_str, coord_mask,
-                       luminance_param.param_str, sampler_idx, sampler_idx, dst_swizzle);
+                       dst_swizzle);
+        shader_glsl_color_correction(arg, This->cur_args->color_fixup[sampler_idx]);
+        shader_glsl_append_dst(arg->buffer, arg);
+        shader_addline(arg->buffer, "(temp*(%s * luminancescale%d + luminanceoffset%d)));\n",
+                       luminance_param.param_str, sampler_idx, sampler_idx);
     } else {
         shader_addline(arg->buffer, "%s(Psampler%u, T%u%s + vec4(bumpenvmat%d * %s, 0.0, 0.0)%s )%s);\n",
                        sample_function.name, sampler_idx, sampler_idx, coord_mask, sampler_idx, coord_param.param_str, coord_mask, dst_swizzle);
+        shader_glsl_color_correction(arg, This->cur_args->color_fixup[sampler_idx]); /* FIXME */
     }
 }
 
@@ -2805,6 +2820,7 @@ static void pshader_glsl_texreg2rgb(const SHADER_OPCODE_ARG *arg)
     DWORD sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
     DWORD sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
     glsl_sample_function_t sample_function;
+    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
 
     shader_glsl_append_dst(arg->buffer, arg);
     shader_glsl_get_write_mask(arg->dst, dst_mask);
@@ -2813,6 +2829,7 @@ static void pshader_glsl_texreg2rgb(const SHADER_OPCODE_ARG *arg)
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], sample_function.coord_mask, &src0_param);
 
     shader_addline(arg->buffer, "%s(Psampler%u, %s)%s);\n", sample_function.name, sampler_idx, src0_param.param_str, dst_mask);
+    shader_glsl_color_correction(arg, This->cur_args->color_fixup[sampler_idx]);
 }
 
 /** Process the WINED3DSIO_TEXKILL instruction in GLSL.
@@ -4120,7 +4137,6 @@ const shader_backend_t glsl_shader_backend = {
     shader_glsl_update_float_vertex_constants,
     shader_glsl_update_float_pixel_constants,
     shader_glsl_load_constants,
-    shader_glsl_color_correction,
     shader_glsl_destroy,
     shader_glsl_alloc,
     shader_glsl_free,

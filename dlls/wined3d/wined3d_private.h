@@ -479,7 +479,6 @@ typedef struct {
     void (*shader_update_float_vertex_constants)(IWineD3DDevice *iface, UINT start, UINT count);
     void (*shader_update_float_pixel_constants)(IWineD3DDevice *iface, UINT start, UINT count);
     void (*shader_load_constants)(IWineD3DDevice *iface, char usePS, char useVS);
-    void (*shader_color_correction)(const struct SHADER_OPCODE_ARG *arg, struct color_fixup_desc fixup);
     void (*shader_destroy)(IWineD3DBaseShader *iface);
     HRESULT (*shader_alloc_private)(IWineD3DDevice *iface);
     void (*shader_free_private)(IWineD3DDevice *iface);
@@ -2274,9 +2273,6 @@ typedef struct IWineD3DBaseShaderClass
     struct list constantsI;
     shader_reg_maps reg_maps;
 
-    UINT                sampled_samplers[MAX_COMBINED_SAMPLERS];
-    UINT                num_sampled_samplers;
-
     UINT recompile_count;
 
     /* Pointer to the parent device */
@@ -2447,6 +2443,8 @@ typedef struct IWineD3DPixelShaderImpl {
     char                        numbumpenvmatconsts;
     struct stb_const_desc       luminanceconst[MAX_TEXTURES];
     char                        vpos_uniform;
+
+    const struct ps_compile_args *cur_args;
 } IWineD3DPixelShaderImpl;
 
 extern const SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[];

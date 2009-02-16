@@ -754,66 +754,6 @@ static void shader_dump_param(const DWORD param, const DWORD addr_token, int inp
     }
 }
 
-static void shader_color_correction(IWineD3DBaseShaderImpl *shader,
-        IWineD3DDeviceImpl *device, const struct SHADER_OPCODE_ARG *arg, DWORD shader_version)
-{
-    IWineD3DBaseTextureImpl *texture;
-    struct color_fixup_desc fixup;
-    BOOL recorded = FALSE;
-    DWORD sampler_idx;
-    UINT i;
-
-    switch(arg->opcode->opcode)
-    {
-        case WINED3DSIO_TEX:
-            if (WINED3DSHADER_VERSION_MAJOR(shader_version) < 2) sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
-            else sampler_idx = arg->src[1] & WINED3DSP_REGNUM_MASK;
-            break;
-
-        case WINED3DSIO_TEXLDL:
-            FIXME("Add color fixup for vertex texture WINED3DSIO_TEXLDL\n");
-            return;
-
-        case WINED3DSIO_TEXDP3TEX:
-        case WINED3DSIO_TEXM3x3TEX:
-        case WINED3DSIO_TEXM3x3SPEC:
-        case WINED3DSIO_TEXM3x3VSPEC:
-        case WINED3DSIO_TEXBEM:
-        case WINED3DSIO_TEXREG2AR:
-        case WINED3DSIO_TEXREG2GB:
-        case WINED3DSIO_TEXREG2RGB:
-            sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
-            break;
-
-        default:
-            /* Not a texture sampling instruction, nothing to do */
-            return;
-    };
-
-    texture = (IWineD3DBaseTextureImpl *)device->stateBlock->textures[sampler_idx];
-    if (texture) fixup = texture->baseTexture.shader_color_fixup;
-    else fixup = COLOR_FIXUP_IDENTITY;
-
-    /* before doing anything, record the sampler with the format in the format conversion list,
-     * but check if it's not there already */
-    for (i = 0; i < shader->baseShader.num_sampled_samplers; ++i)
-    {
-        if (shader->baseShader.sampled_samplers[i] == sampler_idx)
-        {
-            recorded = TRUE;
-            break;
-        }
-    }
-
-    if (!recorded)
-    {
-        shader->baseShader.sampled_samplers[shader->baseShader.num_sampled_samplers] = sampler_idx;
-        ++shader->baseShader.num_sampled_samplers;
-    }
-
-    device->shader_backend->shader_color_correction(arg, fixup);
-}
-
 /* Shared code in order to generate the bulk of the shader string.
  * NOTE: A description of how to parse tokens can be found on msdn */
 void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
@@ -914,9 +854,6 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
 
         /* Call appropriate function for output target */
         hw_fct(&hw_arg);
-
-        /* Add color correction if needed */
-        shader_color_correction(This, device, &hw_arg, shader_version);
 
         /* Process instruction modifiers for GLSL apps ( _sat, etc. ) */
         /* FIXME: This should be internal to the shader backend.
@@ -1124,7 +1061,6 @@ static void shader_none_deselect_depth_blt(IWineD3DDevice *iface) {}
 static void shader_none_update_float_vertex_constants(IWineD3DDevice *iface, UINT start, UINT count) {}
 static void shader_none_update_float_pixel_constants(IWineD3DDevice *iface, UINT start, UINT count) {}
 static void shader_none_load_constants(IWineD3DDevice *iface, char usePS, char useVS) {}
-static void shader_none_color_correction(const struct SHADER_OPCODE_ARG *arg, struct color_fixup_desc fixup) {}
 static void shader_none_destroy(IWineD3DBaseShader *iface) {}
 static HRESULT shader_none_alloc(IWineD3DDevice *iface) {return WINED3D_OK;}
 static void shader_none_free(IWineD3DDevice *iface) {}
@@ -1174,7 +1110,6 @@ const shader_backend_t none_shader_backend = {
     shader_none_update_float_vertex_constants,
     shader_none_update_float_pixel_constants,
     shader_none_load_constants,
-    shader_none_color_correction,
     shader_none_destroy,
     shader_none_alloc,
     shader_none_free,
