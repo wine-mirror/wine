@@ -1798,7 +1798,7 @@ static void _test_border_styles(unsigned line, IHTMLStyle *pStyle, BSTR Name)
     HRESULT hres;
     DISPID dispid;
 
-    hres = IHTMLStyle_GetIDsOfNames(pStyle, &IID_NULL, (LPOLESTR*)&Name, 1,
+    hres = IHTMLStyle_GetIDsOfNames(pStyle, &IID_NULL, &Name, 1,
                         LOCALE_USER_DEFAULT, &dispid);
     ok_(__FILE__,line) (hres == S_OK, "GetIDsOfNames: %08x\n", hres);
     if(hres == S_OK)

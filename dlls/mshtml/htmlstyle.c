@@ -2163,7 +2163,7 @@ static HRESULT WINAPI HTMLStyle_setAttribute(IHTMLStyle *iface, BSTR strAttribut
     if(lFlags == 1)
         FIXME("Parameter lFlags ignored\n");
 
-    hres = HTMLStyle_GetIDsOfNames(iface, &IID_NULL, (LPOLESTR*)&strAttributeName, 1,
+    hres = HTMLStyle_GetIDsOfNames(iface, &IID_NULL, &strAttributeName, 1,
                         LOCALE_USER_DEFAULT, &dispid);
     if(hres == S_OK)
     {
@@ -2205,7 +2205,7 @@ static HRESULT WINAPI HTMLStyle_getAttribute(IHTMLStyle *iface, BSTR strAttribut
     if(lFlags == 1)
         FIXME("Parameter lFlags ignored\n");
 
-    hres = HTMLStyle_GetIDsOfNames(iface, &IID_NULL, (LPOLESTR*)&strAttributeName, 1,
+    hres = HTMLStyle_GetIDsOfNames(iface, &IID_NULL, &strAttributeName, 1,
                         LOCALE_USER_DEFAULT, &dispid);
     if(hres == S_OK)
     {
