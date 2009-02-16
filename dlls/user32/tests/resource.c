@@ -199,12 +199,12 @@ static void test_accel1(void)
 
     if (++n == r) goto done;
     ok( ac[n].cmd == 0xfff0, "cmd 2 not preserved got %x\n", ac[n].cmd);
-    ok( ac[n].key == 0x00ff, "key 2 not preserved got %x\n", ac[n].key);
+    ok( (ac[n].key & 0xff) == 0xff, "key 2 not preserved got %x\n", ac[n].key);
     ok( ac[n].fVirt == 0x0070, "fVirt 2 wrong got %x\n", ac[n].fVirt);
 
     if (++n == r) goto done;
     ok( ac[n].cmd == 0xfff0, "cmd 3 not preserved got %x\n", ac[n].cmd);
-    ok( ac[n].key == 0x00ff, "key 3 not preserved got %x\n", ac[n].key);
+    ok( (ac[n].key & 0xff) == 0xff, "key 3 not preserved got %x\n", ac[n].key);
     ok( ac[n].fVirt == 0x0000, "fVirt 3 wrong got %x\n", ac[n].fVirt);
 
     if (++n == r) goto done;
