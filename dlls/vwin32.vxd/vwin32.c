@@ -99,20 +99,6 @@ static void CONTEXT_2_DIOCRegs( CONTEXT86 *pCxt, DIOC_REGISTERS *pOut )
     pOut->reg_Flags = pCxt->EFlags;
 }
 
-#define DIOC_AH(regs) (((unsigned char*)&((regs)->reg_EAX))[1])
-#define DIOC_AL(regs) (((unsigned char*)&((regs)->reg_EAX))[0])
-#define DIOC_BH(regs) (((unsigned char*)&((regs)->reg_EBX))[1])
-#define DIOC_BL(regs) (((unsigned char*)&((regs)->reg_EBX))[0])
-#define DIOC_DH(regs) (((unsigned char*)&((regs)->reg_EDX))[1])
-#define DIOC_DL(regs) (((unsigned char*)&((regs)->reg_EDX))[0])
-
-#define DIOC_AX(regs) (((unsigned short*)&((regs)->reg_EAX))[0])
-#define DIOC_BX(regs) (((unsigned short*)&((regs)->reg_EBX))[0])
-#define DIOC_CX(regs) (((unsigned short*)&((regs)->reg_ECX))[0])
-#define DIOC_DX(regs) (((unsigned short*)&((regs)->reg_EDX))[0])
-
-#define DIOC_SET_CARRY(regs) (((regs)->reg_Flags)|=0x00000001)
-
 /***********************************************************************
  *           DeviceIoControl   (VWIN32.VXD.@)
  */
