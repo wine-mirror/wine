@@ -2658,7 +2658,9 @@ static void test_GetTextFace(void)
     ok(bufA[0] == faceA[0] && bufA[1] == '\0', "GetTextFaceA didn't copy\n");
 
     n = GetTextFaceA(dc, 0, NULL);
-    ok(n == sizeof faceA, "GetTextFaceA returned %d\n", n);
+    ok(n == sizeof faceA ||
+       broken(n == 0), /* win98, winMe */
+       "GetTextFaceA returned %d\n", n);
 
     DeleteObject(SelectObject(dc, g));
     ReleaseDC(NULL, dc);
