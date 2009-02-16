@@ -242,7 +242,7 @@ static void MatrixTest(void)
 static void QuaternionTest(void)
 {
     D3DVECTOR axis;
-    D3DVALUE g,h,epsilon,par,theta;
+    D3DVALUE par,theta;
     D3DRMQUATERNION q,q1,q2,r;
 
 /*_________________QuaternionFromRotation___________________*/
@@ -254,31 +254,20 @@ static void QuaternionTest(void)
 
 /*_________________QuaternionSlerp_________________________*/
 /* If the angle of the two quaternions is in ]PI/2;3PI/2[, QuaternionSlerp
- * interpolates between the first quaternion and the opposite of the second one. The test proves
- * this fact. */
+ * interpolates between the first quaternion and the opposite of the second one.
+ * The test proves this fact. */
     par=0.31f;
     q1.s=1.0f; U1(q1.v).x=2.0f; U2(q1.v).y=3.0f; U3(q1.v).z=50.0f;
     q2.s=-4.0f; U1(q2.v).x=6.0f; U2(q2.v).y=7.0f; U3(q2.v).z=8.0f;
 /* The angle between q1 and q2 is in [-PI/2,PI/2]. So, one interpolates between q1 and q2. */
-    epsilon=1.0f;
-    g=1.0f-par; h=epsilon*par;
-/* Part of the test proving that the interpolation is linear. */
-    q.s=g*q1.s+h*q2.s;
-    U1(q.v).x=g*U1(q1.v).x+h*U1(q2.v).x;
-    U2(q.v).y=g*U2(q1.v).y+h*U2(q2.v).y;
-    U3(q.v).z=g*U3(q1.v).z+h*U3(q2.v).z;
+    q.s = -0.55f; U1(q.v).x=3.24f; U2(q.v).y=4.24f; U3(q.v).z=36.98f;
     pD3DRMQuaternionSlerp(&r,&q1,&q2,par);
     expect_quat(q,r);
 
     q1.s=1.0f; U1(q1.v).x=2.0f; U2(q1.v).y=3.0f; U3(q1.v).z=50.0f;
     q2.s=-94.0f; U1(q2.v).x=6.0f; U2(q2.v).y=7.0f; U3(q2.v).z=-8.0f;
 /* The angle between q1 and q2 is not in [-PI/2,PI/2]. So, one interpolates between q1 and -q2. */
-    epsilon=-1.0f;
-    g=1.0f-par; h=epsilon*par;
-    q.s=g*q1.s+h*q2.s;
-    U1(q.v).x=g*U1(q1.v).x+h*U1(q2.v).x;
-    U2(q.v).y=g*U2(q1.v).y+h*U2(q2.v).y;
-    U3(q.v).z=g*U3(q1.v).z+h*U3(q2.v).z;
+    q.s=29.83f; U1(q.v).x=-0.48f; U2(q.v).y=-0.10f; U3(q.v).z=36.98f;
     pD3DRMQuaternionSlerp(&r,&q1,&q2,par);
     expect_quat(q,r);
 
