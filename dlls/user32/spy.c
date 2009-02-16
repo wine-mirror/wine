@@ -2080,10 +2080,6 @@ const char *SPY_GetClassLongOffsetName( INT offset )
  */
 static void SPY_GetClassName( SPY_INSTANCE *sp_e )
 {
-    DWORD save_error;
-
-    /* save and restore error code over the next call */
-    save_error = GetLastError();
     /* special code to detect a property sheet dialog   */
     if ((GetClassLongW(sp_e->msg_hwnd, GCW_ATOM) == WC_DIALOG) &&
         (GetPropW(sp_e->msg_hwnd, PropSheetInfoStr))) {
@@ -2092,7 +2088,6 @@ static void SPY_GetClassName( SPY_INSTANCE *sp_e )
     else {
         GetClassNameW(sp_e->msg_hwnd, sp_e->wnd_class, sizeof(sp_e->wnd_class)/sizeof(WCHAR));
     }
-    SetLastError(save_error);
 }
 
 /***********************************************************************
@@ -2190,6 +2185,7 @@ static void SPY_GetWndName( SPY_INSTANCE *sp_e )
 const char *SPY_GetMsgName( UINT msg, HWND hWnd )
 {
     SPY_INSTANCE ext_sp_e;
+    DWORD save_error = GetLastError();
 
     ext_sp_e.msgnum = msg;
     ext_sp_e.msg_hwnd   = hWnd;
@@ -2197,6 +2193,7 @@ const char *SPY_GetMsgName( UINT msg, HWND hWnd )
     ext_sp_e.wParam = 0;
     ext_sp_e.wnd_class[0] = 0;
     SPY_GetMsgStuff(&ext_sp_e);
+    SetLastError( save_error );
     return wine_dbg_sprintf("%s", ext_sp_e.msg_name);
 }
 
@@ -2519,6 +2516,7 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
 {
     SPY_INSTANCE sp_e;
     int indent;
+    DWORD save_error = GetLastError();
 
     if (!TRACE_ON(message) || SPY_EXCLUDE(msg)) return;
 
@@ -2581,6 +2579,7 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
         break;
     }
     set_indent_level( indent + SPY_INDENT_UNIT );
+    SetLastError( save_error );
 }
 
 
@@ -2592,6 +2591,7 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
 {
     SPY_INSTANCE sp_e;
     int indent;
+    DWORD save_error = GetLastError();
 
     if (!TRACE_ON(message) || SPY_EXCLUDE(msg) ||
         (SPY_ExcludeDWP && (iFlag == SPY_RESULT_DEFWND16 || iFlag == SPY_RESULT_DEFWND)) )
@@ -2645,7 +2645,8 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
                         indent, "", hWnd, debugstr_w(sp_e.wnd_name), msg,
                         sp_e.msg_name );
         break;
-   }
+    }
+    SetLastError( save_error );
 }
 
 
