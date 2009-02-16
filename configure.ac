@@ -169,7 +169,7 @@ AC_CACHE_CHECK([for the directory containing the Wine tools], wine_cv_toolsdir,
      AC_MSG_ERROR([could not find Wine tools in $with_wine_tools.])
    fi])
 AC_SUBST(TOOLSDIR,$wine_cv_toolsdir)
-if test -n "$host_alias"
+if test -n "$host_alias" -a "$host_alias" != "$build_alias"
 then
     AC_SUBST(TARGETFLAGS,"-b $host_alias $TARGETFLAGS")
 fi
