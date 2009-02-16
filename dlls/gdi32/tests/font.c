@@ -2767,7 +2767,9 @@ static void test_GetGlyphOutline(void)
     SetLastError(0xdeadbeef);
     ret = GetGlyphOutlineA(hdc, 'A', GGO_METRICS, &gm, 0, NULL, NULL);
     ok(ret == GDI_ERROR, "GetGlyphOutlineA should fail\n");
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %u\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef ||
+       GetLastError() == ERROR_INVALID_PARAMETER, /* win98, winMe */
+       "expected 0xdeadbeef, got %u\n", GetLastError());
 
     memset(&gm, 0, sizeof(gm));
     SetLastError(0xdeadbeef);
