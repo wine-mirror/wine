@@ -2580,7 +2580,7 @@ static void test_GdiRealizationInfo(void)
     memset(info, 0xcc, sizeof(info));
     r = pGdiRealizationInfo(hdc, info);
     ok(r != 0, "ret 0\n");
-    ok(info[0] == 1, "info[0] = %x for the system font\n", info[0]);
+    ok((info[0] & 0xf) == 1, "info[0] = %x for the system font\n", info[0]);
     ok(info[3] == 0xcccccccc, "structure longer than 3 dwords\n");
 
     if (!is_truetype_font_installed("Arial"))
@@ -2599,7 +2599,7 @@ static void test_GdiRealizationInfo(void)
     memset(info, 0xcc, sizeof(info));
     r = pGdiRealizationInfo(hdc, info);
     ok(r != 0, "ret 0\n");
-    ok(info[0] == 3, "info[0] = %x for arial\n", info[0]);
+    ok((info[0] & 0xf) == 3, "info[0] = %x for arial\n", info[0]);
     ok(info[3] == 0xcccccccc, "structure longer than 3 dwords\n");
 
     DeleteObject(SelectObject(hdc, hfont_old));
