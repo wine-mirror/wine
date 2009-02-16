@@ -2284,8 +2284,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     NTSTATUS res;
     mem_size_t full_size;
     ACCESS_MASK access;
-    SIZE_T size = 0;
-    SIZE_T mask = get_mask( zero_bits );
+    SIZE_T size, mask = get_mask( zero_bits );
     int unix_handle = -1, needs_close;
     unsigned int map_vprot, vprot;
     void *base;
@@ -2298,7 +2297,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     offset.QuadPart = offset_ptr ? offset_ptr->QuadPart : 0;
 
     TRACE("handle=%p process=%p addr=%p off=%x%08x size=%lx access=%x\n",
-          handle, process, *addr_ptr, offset.u.HighPart, offset.u.LowPart, size, protect );
+          handle, process, *addr_ptr, offset.u.HighPart, offset.u.LowPart, *size_ptr, protect );
 
     /* Check parameters */
 
@@ -2367,19 +2366,17 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     SERVER_END_REQ;
     if (res) return res;
 
-    size = full_size;
-    if (size != full_size)
-    {
-        WARN( "Sizes larger than 4Gb (%s) not supported on this platform\n",
-              wine_dbgstr_longlong(full_size) );
-        if (dup_mapping) NtClose( dup_mapping );
-        return STATUS_INVALID_PARAMETER;
-    }
-
     if ((res = server_get_unix_fd( handle, 0, &unix_handle, &needs_close, NULL, NULL ))) goto done;
 
     if (map_vprot & VPROT_IMAGE)
     {
+        size = full_size;
+        if (size != full_size)  /* truncated */
+        {
+            WARN( "Modules larger than 4Gb (%s) not supported\n", wine_dbgstr_longlong(full_size) );
+            res = STATUS_INVALID_PARAMETER;
+            goto done;
+        }
         if (shared_file)
         {
             int shared_fd, shared_needs_close;
@@ -2401,13 +2398,24 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         return res;
     }
 
-    if ((offset.QuadPart >= size) || (*size_ptr > size - offset.QuadPart))
+    res = STATUS_INVALID_PARAMETER;
+    if (offset.QuadPart >= full_size) goto done;
+    if (*size_ptr)
     {
-        res = STATUS_INVALID_PARAMETER;
-        goto done;
+        if (*size_ptr > full_size - offset.QuadPart) goto done;
+        size = ROUND_SIZE( offset.u.LowPart, *size_ptr );
+        if (size < *size_ptr) goto done;  /* wrap-around */
     }
-    if (*size_ptr) size = ROUND_SIZE( offset.u.LowPart, *size_ptr );
-    else size = size - offset.QuadPart;
+    else
+    {
+        size = full_size - offset.QuadPart;
+        if (size != full_size - offset.QuadPart)  /* truncated */
+        {
+            WARN( "Files larger than 4Gb (%s) not supported on this platform\n",
+                  wine_dbgstr_longlong(full_size) );
+            goto done;
+        }
+    }
 
     /* Reserve a properly aligned area */
 
