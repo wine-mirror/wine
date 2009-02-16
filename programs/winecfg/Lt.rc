@@ -1,0 +1,329 @@
+/*
+ * WineCfg resources
+ * Lithuanian Language Support
+ *
+ * Copyright 2009 Aurimas Fišeras <aurimas@gmail.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ *
+ */
+
+/* UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
+
+IDR_WINECFG MENU DISCARDABLE
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "Konfigūruoti", IDC_AUDIO_CONFIGURE
+    END
+END
+
+IDD_ABOUTCFG DIALOGEX 0, 0, 260, 270
+STYLE WS_CHILD
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           PACKAGE_STRING,IDC_STATIC,119,17,120,8
+    CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP ,15,17,157,111
+    LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
+    LTEXT           "Ši programa yra laisva programinė įranga; galite ją platinti ir/ar modifikuoti GNU laisvosios bendrosios viešosios licencijos (LGPL) sąlygomis, kurios paskelbtos Laisvosios programinės įrangos fondo (FSF); 2.1-osios arba (Jūsų pasirinkimu) bet kurios vėlesnės licencijos versijos sąlygomis.",
+                    IDC_STATIC,119,44,124,72
+    GROUPBOX        " Windows registracijos informacija ", IDC_STATIC, 15, 120, 230, 55
+    LTEXT           "Savininkas:", IDC_STATIC, 22, 136, 40, 20
+    LTEXT           "Organizacija:", IDC_STATIC, 22, 150, 50, 20
+    EDITTEXT        IDC_ABT_OWNER, 75, 136, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_ABT_ORG, 75, 150, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
+END
+
+IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Programos nuostatos ",IDC_STATIC, 8,4,244,240
+    LTEXT           "Wine gali pamėgdžioti skirtingas Windows versijas skirtingoms programoms. Ši kortelė yra susijusi su bibliotekų ir grafikos kortelėmis, kuriose taip pat galima keisti sistemines nuostatas ar kiekvienos programos nuostatas atskirai.",
+                    IDC_STATIC,15,15,227,35
+    CONTROL         "Programos",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
+                    15,50,230,150
+    PUSHBUTTON	    "&Pridėti programą...",IDC_APP_ADDAPP, 90,204,75,14
+    PUSHBUTTON	    "Pa&šalinti programą",IDC_APP_REMOVEAPP, 170,204,75,14
+    LTEXT           "&Windows versija:",IDC_STATIC,17,226,58,8
+    COMBOBOX        IDC_WINVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX    " Langų nuostatos ",IDC_STATIC,8,4,244,84
+    CONTROL     "Leisti DirectX programoms sulaikyti &žymeklį savo lange",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "Leisti langų tvarkytuvei &dekoruoti langus",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
+    CONTROL     "Leisti langų tvarkytuvei kontroliuoti &langus",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "&Emuliuoti virtualų darbalaukį",IDC_ENABLE_DESKTOP,"Button",
+                BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
+    LTEXT       "Darbalaukio d&ydis:",IDC_DESKTOP_SIZE,15,70,60,8,WS_DISABLED
+    LTEXT       "X",IDC_DESKTOP_BY,125,70,8,8,WS_DISABLED
+    EDITTEXT    IDC_DESKTOP_WIDTH,80,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT    IDC_DESKTOP_HEIGHT,133,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+
+    GROUPBOX    " Direct3D ",IDC_STATIC,8,95,244,49
+    LTEXT       "&Vertex Shader palaikymas: ",IDC_STATIC,15,110,90,32
+    COMBOBOX    IDC_D3D_VSHADER_MODE,110,108,135,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL     "Leisti &Pixel Shader (jei palaiko aparatinė įranga)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
+
+    GROUPBOX    " Ekrano &skiriamoji geba ",IDC_STATIC,8,151,244,93
+    CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,167,15
+    EDITTEXT    IDC_RES_DPIEDIT,184,161,23,13,ES_NUMBER|WS_TABSTOP
+    LTEXT       "tašk./col.",IDC_STATIC,215,163,30,8
+    LTEXT       "Tai yra pavyzdinis tekstas naudojantis 10 taškų Tahoma",IDC_RES_FONT_PREVIEW,15,181,230,55
+END
+
+IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " DLL nustelbimai ",IDC_STATIC,8,4,244,240
+    LTEXT           "Kiekviena dinaminė biblioteka gali būti įtaisyta (pateikta su Wine) ar sava (paimta iš Windows ar pateikta programos)."
+                    ,IDC_STATIC,16,16,220,32
+    LTEXT           "&Naujas nustelbimas bibliotekai:",IDC_STATIC,16,58,100,8
+    COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
+    PUSHBUTTON      "&Pridėti",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON
+    LTEXT           "Egzistuojantys n&ustelbimai:",IDC_STATIC,16,86,100,8
+    LISTBOX         IDC_DLLS_LIST,16,96,140,140,WS_BORDER | WS_TABSTOP | WS_VSCROLL
+    PUSHBUTTON      "&Redaguoti...",IDC_DLLS_EDITDLL,164,96,82,14
+    PUSHBUTTON      "Pa&šalinti",IDC_DLLS_REMOVEDLL,164,114,82,14
+END
+
+IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 110, 92
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Edit Override"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Įkėlimo tvarka ",IDC_STATIC,8,4,94,66
+    CONTROL         "&Įtaisyta (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
+    CONTROL         "&Sava (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
+    CONTROL         "Į&taisyta po to sava",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
+    CONTROL         "S&ava po to įtaisyta",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
+    CONTROL         "&Išjungti",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
+    DEFPUSHBUTTON   "Gerai",IDOK,8,74,45,14,WS_GROUP
+    PUSHBUTTON      "Atsisakyti",IDCANCEL,57,74,45,14,WS_GROUP
+END
+
+IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Diskų &atvaizdavimas ",IDC_STATIC,8,4,244,240
+    LTEXT           "Nepavyko prisijungti prie diskų tvarkytuvės, diskų konfigūracija negali būti redaguojama.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,220,76
+    CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+                    LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
+    PUSHBUTTON      "&Pridėti...",IDC_BUTTON_ADD,15,98,37,14
+    PUSHBUTTON      "Pa&šalinti",IDC_BUTTON_REMOVE,56,98,37,14
+    PUSHBUTTON      "Automatiškai &aptikti...",IDC_BUTTON_AUTODETECT,172,98,74,14
+
+    /* editing drive details */
+    LTEXT           "&Kelias:",IDC_STATIC_PATH,15,123,20,9
+    EDITTEXT        IDC_EDIT_PATH,41,120,160,13,ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Naršyti...",IDC_BUTTON_BROWSE_PATH,206,120,40,13
+
+    LTEXT           "&Tipas:",IDC_STATIC_TYPE,15,138,21,10
+    COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    LTEXT           "Žymė ir numeris",IDC_LABELSERIAL_STATIC,15,155,95,10
+
+    PUSHBUTTON      "Rodyti papil&domas",IDC_BUTTON_SHOW_HIDE_ADVANCED,180,136,66,13
+    CONTROL         "Automatiškai aptikti iš įrenginio:",IDC_RADIO_AUTODETECT,"Button",
+                    BS_AUTORADIOBUTTON,15,166,116,10
+    EDITTEXT        IDC_EDIT_DEVICE,27,176,174,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Naršyti...",IDC_BUTTON_BROWSE_DEVICE,206,176,40,13
+    CONTROL         "P&riskirti rankiniu būdu:",IDC_RADIO_ASSIGN,"Button",
+                    BS_AUTORADIOBUTTON,15,195,85,10
+
+    LTEXT           "&Žymė:",IDC_STATIC_LABEL,33,208,29,12
+    EDITTEXT        IDC_EDIT_LABEL,63,205,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "N&umeris:",IDC_STATIC_SERIAL,33,225,29,12
+    EDITTEXT        IDC_EDIT_SERIAL,63,221,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+
+    CONTROL         "Rodyti failus su taš&ku",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
+END
+
+IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Tvarkyklių parinkimas ",IDC_STATIC,8,4,244,179
+    LTEXT           "Pasirinkite garso tvarkyklę pažymėdami norimos tvarkyklės langelį. Garsą išjungti galima nepažymint nė vienos tvarkyklės. Kelių tvarkyklių pasirinkimas yra nerekomenduojamas. Tvarkyklę konfigūruoti galima spustelėjus dešiniuoju pelės klavišu.",IDC_STATIC,15,15,227,35
+    CONTROL         "Įrenginiai",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,124
+    PUSHBUTTON      "&Testuoti garsą",IDC_AUDIO_TEST,170,50,63,14
+    PUSHBUTTON      "&Valdymo skydelis",IDC_AUDIO_CONTROL_PANEL,170,70,63,14
+    GROUPBOX        " DirectSound ",IDC_STATIC,8,189,244,76
+    LTEXT           "&Aparatinis spartinimas: ",IDC_STATIC,15,199,90,10
+    COMBOBOX        IDC_DSOUND_HW_ACCEL,100,197,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Numatytasis garso elemento &dažnis:",IDC_STATIC,15,216,140,8
+    COMBOBOX        IDC_DSOUND_RATES,160,214,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Numatytasis garso elemento &bitų skaičius:",IDC_STATIC,15,232,140,8
+    COMBOBOX        IDC_DSOUND_BITS,160,230,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Tvarkyklės &emuliavimas",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
+END
+
+IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Išvaizda ",IDC_STATIC,8,4,244,106
+    LTEXT           "&Apipavidalinimas:",IDC_STATIC,15,16,130,8
+    COMBOBOX        IDC_THEME_THEMECOMBO,15,24,130,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Įdiegti apipavidalinimą...",IDC_THEME_INSTALL,152,23,93,14
+    LTEXT           "&Spalva:",IDC_THEME_COLORTEXT,15,40,112,8
+    COMBOBOX        IDC_THEME_COLORCOMBO,15,48,112,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "&Dydis:",IDC_THEME_SIZETEXT,135,40,110,8
+    COMBOBOX        IDC_THEME_SIZECOMBO,135,48,110,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "&Elementas:",IDC_STATIC,15,64,112,8
+    COMBOBOX        IDC_SYSPARAM_COMBO,15,74,112,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | CBS_SORT
+    LTEXT           "S&palva:",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
+    PUSHBUTTON      "",IDC_SYSPARAM_COLOR,135,74,25,13,WS_DISABLED | BS_OWNERDRAW
+    LTEXT           "D&ydis:",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
+    EDITTEXT        IDC_SYSPARAM_SIZE,166,74,23,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
+    CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,187,74,15,13
+    PUSHBUTTON      "&Šriftas...",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
+    GROUPBOX        " Ap&lankai ",IDC_STATIC,8,114,244,100
+    CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
+    CONTROL         "S&usieti su:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
+    EDITTEXT         IDC_EDIT_SFPATH,65,195,125,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
+    PUSHBUTTON      "&Naršyti...",IDC_BROWSE_SFPATH,195,195,50,13,WS_DISABLED
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_TAB_APPLICATIONS    "Programos"
+    IDS_TAB_DLLS            "Bibliotekos"
+    IDS_TAB_DRIVES          "Diskai"
+    IDS_CHOOSE_PATH         "Prašome išsirinkti unix paskirties aplanką."
+    IDS_HIDE_ADVANCED       "Slėpti papil&domas"
+    IDS_SHOW_ADVANCED       "Rodyti papil&domas"
+    IDS_NOTHEME             "(Nėra apipavidalinimo)"
+    IDS_TAB_GRAPHICS        "Grafika"
+    IDS_TAB_DESKTOP_INTEGRATION "Darbalaukio integravimas"
+    IDS_TAB_AUDIO           "Garsas"
+    IDS_TAB_ABOUT           "Apie"
+    IDS_WINECFG_TITLE       "Wine konfigūravimas"
+    IDS_WINECFG_TITLE_APP   "Wine konfigūravimas: %s"
+    IDS_THEMEFILE           "Apipavidalinimo failai"
+    IDS_THEMEFILE_SELECT    "Pasirinkite apipavidalinimo failą"
+    IDS_AUDIO_MISSING       "Registre nėra nurodyta garso tvarkyklė.\n\nRekomenduojama tvarkyklė buvo parinkta.\nGalite naudoti šią tvarkyklę ar pasirinkti kitą, jei tokių yra.\n\nTurite paspausti 'Vykdyti', kad pasirinkimas įsigaliotų."
+    IDS_SHELL_FOLDER        "Aplankas"
+    IDS_LINKS_TO            "Susietas su"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DLL_WARNING         "Keisti šios bibliotekos įkėlimo tvarką yra nerekomenduojama.\nAr tikrai norite tai padaryti?"
+    IDS_DLL_WARNING_CAPTION "Įspėjimas: sisteminė biblioteka"
+    IDS_DLL_NATIVE          "sava"
+    IDS_DLL_BUILTIN         "įtaisyta"
+    IDS_DLL_NATIVE_BUILTIN  "sava, įtaisyta"
+    IDS_DLL_BUILTIN_NATIVE  "įtaisyta, sava"
+    IDS_DLL_DISABLED        "išjungta"
+    IDS_DEFAULT_SETTINGS    "Numatytosios nuostatos"
+    IDS_EXECUTABLE_FILTER   "Wine programos (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_USE_GLOBAL_SETTINGS "Naudoti globalias nuostatas"
+    IDS_SELECT_EXECUTABLE   "Pasirikite vykdomąjį failą"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_SHADER_MODE_HARDWARE    "Aparatinis"
+    IDS_SHADER_MODE_NONE        "Nėra"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DRIVE_UNKNOWN           "Automatiškai aptikti"
+    IDS_DRIVE_FIXED             "Vietinis standusis diskas"
+    IDS_DRIVE_REMOTE            "Tinklo diskas"
+    IDS_DRIVE_REMOVABLE         "Diskelis"
+    IDS_DRIVE_CDROM             "CD-ROM"
+    IDS_DRIVE_LETTERS_EXCEEDED  "Nebegalite pridėti daugiau diskų.\n\nKiekvienas diskas turi turėti raidę, nuo A iki Z, todėl negalite turėti daugiau nei 26"
+    IDS_SYSTEM_DRIVE_LABEL      "Sisteminis diskas"
+    IDS_CONFIRM_DELETE_C        "Ar tikrai norite ištrinti C diską?\n\nDaugelis Windows programų mano, kad C diskas egzistuoja ir neveikia, jei jis neegzistuoja. Jei tęsite, nepamirškite atkurti C disko!"
+    IDS_COL_DRIVELETTER         "Raidė"
+    IDS_COL_DRIVEMAPPING        "Disko atvaizdavimas"
+    IDS_NO_DRIVE_C              "Neturite C disko. Tai nėra gerai.\n\nNepamirškite paspausti 'Pridėti' diskų kortelėje, kad jį sukurtumėte!\n"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ACCEL_FULL              "Visiškas"
+    IDS_ACCEL_STANDARD          "Standartinis"
+    IDS_ACCEL_BASIC             "Bazinis"
+    IDS_ACCEL_EMULATION         "Emuliacija"
+    IDS_DRIVER_ALSA             "ALSA tvarkyklė"
+    IDS_DRIVER_ESOUND           "EsounD tvarkyklė"
+    IDS_DRIVER_OSS              "OSS tvarkyklė"
+    IDS_DRIVER_JACK             "JACK tvarkyklė"
+    IDS_DRIVER_NAS              "NAS tvarkyklė"
+    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) tvarkyklė"
+    IDS_DRIVER_COREAUDIO        "CoreAudio tvarkyklė"
+    IDS_OPEN_DRIVER_ERROR       "Nepavyko atverti %s!"
+    IDS_SOUNDDRIVERS            "Garso tvarkyklės"
+    IDS_DEVICES_WAVEOUT         "Wave Out įrenginiai"
+    IDS_DEVICES_WAVEIN          "Wave In įrenginiai"
+    IDS_DEVICES_MIDIOUT         "MIDI Out įrenginiai"
+    IDS_DEVICES_MIDIIN          "MIDI In įrenginiai"
+    IDS_DEVICES_AUX             "Aux įrenginiai"
+    IDS_DEVICES_MIXER           "Mixer įrenginiai"
+    IDS_UNAVAILABLE_DRIVER      "Registre rasta tvarkyklė, kuri yra neprieinama!\n\nPašalinti '%s' iš registro?"
+    IDS_WARNING                 "Įspėjimas"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDC_SYSPARAMS_BUTTON            "Valdiklių fonas"
+    IDC_SYSPARAMS_BUTTON_TEXT       "Valdiklių tekstas"
+    IDC_SYSPARAMS_DESKTOP           "Darbalaukis"
+    IDC_SYSPARAMS_MENU              "Meniu fonas"
+    IDC_SYSPARAMS_MENU_TEXT         "Meniu tekstas"
+    IDC_SYSPARAMS_SCROLLBAR         "Slankjuostė"
+    IDC_SYSPARAMS_SELECTION         "Žymėjimo fonas"
+    IDC_SYSPARAMS_SELECTION_TEXT    "Žymėjimo tekstas"
+    IDC_SYSPARAMS_TOOLTIP           "Patarimo fonas"
+    IDC_SYSPARAMS_TOOLTIP_TEXT      "Patarimo tekstas"
+    IDC_SYSPARAMS_WINDOW            "Lango fonas"
+    IDC_SYSPARAMS_WINDOW_TEXT       "Lango tekstas"
+    IDC_SYSPARAMS_ACTIVE_TITLE      "Aktyvi lango antraštės juosta"
+    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Aktyvios lango antraštės tekstas"
+    IDC_SYSPARAMS_INACTIVE_TITLE    "Neaktyvi lango antraštės juosta"
+    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Neaktyvios lango antraštės tekstas"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "Pranešimo lango tekstas"
+    IDC_SYSPARAMS_APPWORKSPACE      "Programos erdvė"
+    IDC_SYSPARAMS_WINDOW_FRAME      "Lango rėmelis"
+    IDC_SYSPARAMS_ACTIVE_BORDER     "Aktyvi kraštinė"
+    IDC_SYSPARAMS_INACTIVE_BORDER   "Neaktyvi kraštinė"
+    IDC_SYSPARAMS_BUTTON_SHADOW     "Valdiklių šešėlis"
+    IDC_SYSPARAMS_GRAY_TEXT         "Pilkas tekstas"
+    IDC_SYSPARAMS_BUTTON_HILIGHT    "Valdiklių paryškinimas"
+    IDC_SYSPARAMS_BUTTON_DARK_SHADOW "Valdiklių tamsus šešėlis"
+    IDC_SYSPARAMS_BUTTON_LIGHT      "Valdiklių šviesumas"
+    IDC_SYSPARAMS_BUTTON_ALTERNATE  "Valdiklių alternatyvus fonas"
+    IDC_SYSPARAMS_HOT_TRACKING      "Pažymėtas elementas"
+    IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT "Aktyvios lango antraštės gradientas"
+    IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT "Neaktyvios lango antraštės gradientas"
+    IDC_SYSPARAMS_MENU_HILIGHT      "Meniu paryškinimas"
+    IDC_SYSPARAMS_MENUBAR           "Meniu juosta"
+END
+
+#pragma code_page(default)
