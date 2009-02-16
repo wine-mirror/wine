@@ -119,8 +119,10 @@ static void test_GetDiskFreeSpaceA(void)
             {
                 ok(ret ||
                    GetLastError() == ERROR_NOT_READY ||
+                   GetLastError() == ERROR_INVALID_FUNCTION ||
                    GetLastError() == ERROR_INVALID_DRIVE ||
                    GetLastError() == ERROR_PATH_NOT_FOUND ||
+                   GetLastError() == ERROR_REQUEST_ABORTED ||
                    GetLastError() == ERROR_UNRECOGNIZED_VOLUME,
                    "GetDiskFreeSpaceA(%s): ret=%d GetLastError=%d\n",
                    drive, ret, GetLastError());
@@ -137,7 +139,9 @@ static void test_GetDiskFreeSpaceA(void)
                     ret = pGetDiskFreeSpaceExA( drive, &d, &totEx, NULL);
                     ok( ret ||
                         GetLastError() == ERROR_NOT_READY ||
+                        GetLastError() == ERROR_INVALID_FUNCTION ||
                         GetLastError() == ERROR_PATH_NOT_FOUND ||
+                        GetLastError() == ERROR_REQUEST_ABORTED ||
                         GetLastError() == ERROR_UNRECOGNIZED_VOLUME,
                         "GetDiskFreeSpaceExA( %s ) failed. GetLastError=%d\n", drive, GetLastError());
                     ok( bytes_per_sector == 0 || /* empty cd rom drive */
@@ -196,7 +200,9 @@ static void test_GetDiskFreeSpaceW(void)
             else
                 ok( ret ||
                     GetLastError() == ERROR_NOT_READY ||
+                    GetLastError() == ERROR_INVALID_FUNCTION ||
                     GetLastError() == ERROR_PATH_NOT_FOUND ||
+                    GetLastError() == ERROR_REQUEST_ABORTED ||
                     GetLastError() == ERROR_UNRECOGNIZED_VOLUME,
                    "GetDiskFreeSpaceW(%c): ret=%d GetLastError=%d\n",
                    drive[0], ret, GetLastError());
