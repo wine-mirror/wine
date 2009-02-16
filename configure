@@ -17203,7 +17203,7 @@ static int Array[3];
   for(i=0; i<B; i++) Array[i] = i - 3;
   for(i=0; i<4 - 1; i++) L[i] = L[i + 1];
   L[i] = 4;
-  exit( Array[1] != -2 || L[2] != 3)
+  return (Array[1] != -2 || L[2] != 3)
   ;
   return 0;
 }
@@ -17916,6 +17916,8 @@ MAIN_BINARY="wine-pthread"
 esac
 
 
+ac_save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS $BUILTINFLAG"
 
 
 
@@ -18163,6 +18165,7 @@ _ACEOF
 fi
 done
 
+CFLAGS="$ac_save_CFLAGS"
 
 if test "$ac_cv_func_dlopen" = no
 then

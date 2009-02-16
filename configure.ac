@@ -1316,7 +1316,7 @@ then
   for(i=0; i<B; i++) Array[[i]] = i - 3;
   for(i=0; i<4 - 1; i++) L[[i]] = L[[i + 1]];
   L[[i]] = 4;
-  exit( Array[[1]] != -2 || L[[2]] != 3)]])],
+  return (Array[[1]] != -2 || L[[2]] != 3)]])],
     [ac_cv_c_gcc_strength_bug="no"],[ac_cv_c_gcc_strength_bug="yes"],[ac_cv_c_gcc_strength_bug="yes"]) )
   if test "$ac_cv_c_gcc_strength_bug" = "yes"
   then
@@ -1426,6 +1426,8 @@ esac
 
 dnl **** Check for functions ****
 
+ac_save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS $BUILTINFLAG"
 AC_CHECK_FUNCS(\
 	_pclose \
 	_popen \
@@ -1501,6 +1503,7 @@ AC_CHECK_FUNCS(\
 	wait4 \
 	waitpid \
 )
+CFLAGS="$ac_save_CFLAGS"
 
 dnl Check for -ldl
 if test "$ac_cv_func_dlopen" = no
