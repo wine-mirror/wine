@@ -54,7 +54,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 static HWND crypt_hWindow;
 
 #define CRYPT_Alloc(size) (LocalAlloc(LMEM_ZEROINIT, size))
-#define CRYPT_Free(buffer) (LocalFree((HLOCAL)buffer))
+#define CRYPT_Free(buffer) (LocalFree(buffer))
 
 static inline PWSTR CRYPT_GetProvKeyName(PCWSTR pProvName)
 {

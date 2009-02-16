@@ -74,7 +74,7 @@ static DWORD read_credential_blob(HKEY hkey, const BYTE key_data[KEY_SIZE],
         struct ustring data;
         struct ustring key;
 
-        ret = RegQueryValueExW(hkey, wszPasswordValue, 0, &type, (LPVOID)credential_blob,
+        ret = RegQueryValueExW(hkey, wszPasswordValue, 0, &type, credential_blob,
                                credential_blob_size);
         if (ret != ERROR_SUCCESS)
             return ret;
@@ -460,7 +460,7 @@ static DWORD write_credential_blob(HKEY hkey, LPCWSTR target_name, DWORD type,
     data.Buffer = encrypted_credential_blob;
     SystemFunction032(&data, &key);
 
-    ret = RegSetValueExW(hkey, wszPasswordValue, 0, REG_BINARY, (LPVOID)encrypted_credential_blob, credential_blob_size);
+    ret = RegSetValueExW(hkey, wszPasswordValue, 0, REG_BINARY, encrypted_credential_blob, credential_blob_size);
     HeapFree(GetProcessHeap(), 0, encrypted_credential_blob);
 
     return ret;
@@ -647,7 +647,7 @@ static DWORD get_cred_mgr_encryption_key(HKEY hkeyMgr, BYTE key_data[KEY_SIZE])
     memcpy(key_data, my_key_data, KEY_SIZE);
 
     count = KEY_SIZE;
-    ret = RegQueryValueExW(hkeyMgr, wszEncryptionKeyValue, NULL, &type, (LPVOID)key_data,
+    ret = RegQueryValueExW(hkeyMgr, wszEncryptionKeyValue, NULL, &type, key_data,
                            &count);
     if (ret == ERROR_SUCCESS)
     {
@@ -668,14 +668,14 @@ static DWORD get_cred_mgr_encryption_key(HKEY hkeyMgr, BYTE key_data[KEY_SIZE])
     *(DWORD *)(key_data + 4) = value;
 
     ret = RegSetValueExW(hkeyMgr, wszEncryptionKeyValue, 0, REG_BINARY,
-                         (LPVOID)key_data, KEY_SIZE);
+                         key_data, KEY_SIZE);
     if (ret == ERROR_ACCESS_DENIED)
     {
         ret = open_cred_mgr_key(&hkeyMgr, TRUE);
         if (ret == ERROR_SUCCESS)
         {
             ret = RegSetValueExW(hkeyMgr, wszEncryptionKeyValue, 0, REG_BINARY,
-                                 (LPVOID)key_data, KEY_SIZE);
+                                 key_data, KEY_SIZE);
             RegCloseKey(hkeyMgr);
         }
     }

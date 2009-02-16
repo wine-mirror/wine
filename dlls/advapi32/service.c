@@ -1809,7 +1809,7 @@ BOOL WINAPI ChangeServiceConfig2A( SC_HANDLE hService, DWORD dwInfoLevel,
 
     if (dwInfoLevel == SERVICE_CONFIG_DESCRIPTION)
     {
-        LPSERVICE_DESCRIPTIONA sd = (LPSERVICE_DESCRIPTIONA) lpInfo;
+        LPSERVICE_DESCRIPTIONA sd = lpInfo;
         SERVICE_DESCRIPTIONW sdw;
 
         sdw.lpDescription = SERV_dup( sd->lpDescription );
@@ -1820,7 +1820,7 @@ BOOL WINAPI ChangeServiceConfig2A( SC_HANDLE hService, DWORD dwInfoLevel,
     }
     else if (dwInfoLevel == SERVICE_CONFIG_FAILURE_ACTIONS)
     {
-        LPSERVICE_FAILURE_ACTIONSA fa = (LPSERVICE_FAILURE_ACTIONSA) lpInfo;
+        LPSERVICE_FAILURE_ACTIONSA fa = lpInfo;
         SERVICE_FAILURE_ACTIONSW faw;
 
         faw.dwResetPeriod = fa->dwResetPeriod;

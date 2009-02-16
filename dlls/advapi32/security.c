@@ -341,7 +341,7 @@ static const WCHAR SDDL_AUDIT_FAILURE[]      = {'F','A',0};
 const char * debugstr_sid(PSID sid)
 {
     int auth = 0;
-    SID * psid = (SID *)sid;
+    SID * psid = sid;
 
     if (psid == NULL)
         return "(null)";
@@ -3172,7 +3172,7 @@ VOID WINAPI BuildTrusteeWithSidA(PTRUSTEEA pTrustee, PSID pSid)
     pTrustee->MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
     pTrustee->TrusteeForm = TRUSTEE_IS_SID;
     pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
-    pTrustee->ptstrName = (LPSTR) pSid;
+    pTrustee->ptstrName = pSid;
 }
 
 /******************************************************************************
@@ -3186,7 +3186,7 @@ VOID WINAPI BuildTrusteeWithSidW(PTRUSTEEW pTrustee, PSID pSid)
     pTrustee->MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
     pTrustee->TrusteeForm = TRUSTEE_IS_SID;
     pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
-    pTrustee->ptstrName = (LPWSTR) pSid;
+    pTrustee->ptstrName = pSid;
 }
 
 /******************************************************************************
@@ -3955,7 +3955,7 @@ static BOOL ParseStringAclToAcl(LPCWSTR StringAcl, LPDWORD lpdwFlags,
         StringAcl++;
 
         /* Parse ACE account sid */
-        if (ParseStringSidToSid(StringAcl, pAce ? (PSID)&pAce->SidStart : NULL, &sidlen))
+        if (ParseStringSidToSid(StringAcl, pAce ? &pAce->SidStart : NULL, &sidlen))
 	{
             while (*StringAcl && *StringAcl != ')')
                 StringAcl++;
@@ -4051,7 +4051,7 @@ static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
             {
                 DWORD bytes;
 
-                if (!ParseStringSidToSid(tok, (PSID)lpNext, &bytes))
+                if (!ParseStringSidToSid(tok, lpNext, &bytes))
                     goto lend;
 
                 if (SecurityDescriptor)
@@ -4069,7 +4069,7 @@ static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
             {
                 DWORD bytes;
 
-                if (!ParseStringSidToSid(tok, (PSID)lpNext, &bytes))
+                if (!ParseStringSidToSid(tok, lpNext, &bytes))
                     goto lend;
 
                 if (SecurityDescriptor)
@@ -4203,8 +4203,7 @@ BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorW(
         NULL, &cBytes))
 	goto lend;
 
-    psd = *SecurityDescriptor = (SECURITY_DESCRIPTOR*) LocalAlloc(
-        GMEM_ZEROINIT, cBytes);
+    psd = *SecurityDescriptor = LocalAlloc(GMEM_ZEROINIT, cBytes);
     if (!psd) goto lend;
 
     psd->Revision = SID_REVISION;
@@ -4383,7 +4382,7 @@ static BOOL DumpAce(LPVOID pace, WCHAR **pwptr, ULONG *plen)
         return FALSE;
     }
 
-    piace = (ACCESS_ALLOWED_ACE *)pace;
+    piace = pace;
     DumpString(&openbr, 1, pwptr, plen);
     switch (piace->Header.AceType)
     {
@@ -4423,7 +4422,7 @@ static BOOL DumpAce(LPVOID pace, WCHAR **pwptr, ULONG *plen)
     DumpString(&semicolon, 1, pwptr, plen);
     /* objects not supported */
     DumpString(&semicolon, 1, pwptr, plen);
-    if (!DumpSid((PSID)&piace->SidStart, pwptr, plen))
+    if (!DumpSid(&piace->SidStart, pwptr, plen))
         return FALSE;
     DumpString(&closebr, 1, pwptr, plen);
     return TRUE;
@@ -5074,7 +5073,7 @@ DWORD WINAPI GetNamedSecurityInfoW( LPWSTR name, SE_OBJECT_TYPE type,
         return ERROR_INVALID_SECURITY_DESCR;
     }
 
-    relative = (SECURITY_DESCRIPTOR_RELATIVE *)*descriptor;
+    relative = *descriptor;
     relative->Control |= SE_SELF_RELATIVE;
     buffer = (BYTE *)relative;
     offset = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
