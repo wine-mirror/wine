@@ -5396,18 +5396,26 @@ UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
     /* It appears that for fonts with SYMBOL_CHARSET Windows always sets
      * symbol range to 0 - f0ff
      */
-    if (font->charset == SYMBOL_CHARSET)
+    if (font->charset == SYMBOL_CHARSET || (pOS2->usFirstCharIndex >= 0xf000 && pOS2->usFirstCharIndex < 0xf100))
     {
         TM.tmFirstChar = 0;
-        TM.tmDefaultChar = pOS2->usDefaultChar ? pOS2->usDefaultChar : 0x1f;
+        TM.tmLastChar = 0xf0ff;
+        TM.tmBreakChar = 0x20;
+        TM.tmDefaultChar = 0x1f;
     }
     else
     {
-        TM.tmFirstChar = pOS2->usFirstCharIndex;
-        TM.tmDefaultChar = pOS2->usDefaultChar ? pOS2->usDefaultChar : 0xffff;
+        TM.tmFirstChar = pOS2->usFirstCharIndex; /* Should be the first char in the cmap */
+        TM.tmLastChar = pOS2->usLastCharIndex;   /* Should be min(cmap_last, os2_last) */
+
+        if(pOS2->usFirstCharIndex <= 1)
+            TM.tmBreakChar = pOS2->usFirstCharIndex + 2;
+        else if (pOS2->usFirstCharIndex > 0xff)
+            TM.tmBreakChar = 0x20;
+        else
+            TM.tmBreakChar = pOS2->usFirstCharIndex;
+        TM.tmDefaultChar = TM.tmBreakChar - 1;
     }
-    TM.tmLastChar = pOS2->usLastCharIndex;
-    TM.tmBreakChar = pOS2->usBreakChar ? pOS2->usBreakChar : ' ';
     TM.tmItalic = font->fake_italic ? 255 : ((ft_face->style_flags & FT_STYLE_FLAG_ITALIC) ? 255 : 0);
     TM.tmUnderlined = font->underline;
     TM.tmStruckOut = font->strikeout;

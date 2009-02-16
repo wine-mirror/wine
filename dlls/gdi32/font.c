@@ -212,14 +212,16 @@ static void FONT_TextMetricWToA(const TEXTMETRICW *ptmW, LPTEXTMETRICA ptmA )
     ptmA->tmFirstChar = min(ptmW->tmFirstChar, 255);
     if (ptmW->tmCharSet == SYMBOL_CHARSET)
     {
-        UINT last_char = ptmW->tmLastChar;
-        if (last_char > 0xf000) last_char -= 0xf000;
-        ptmA->tmLastChar = min(last_char, 255);
+        ptmA->tmFirstChar = 0x1e;
+        ptmA->tmLastChar = 0xff;  /* win9x behaviour - we need the OS2 table data to calculate correctly */
     }
     else
-        ptmA->tmLastChar = min(ptmW->tmLastChar, 255);
-    ptmA->tmDefaultChar = min(ptmW->tmDefaultChar, 255);
-    ptmA->tmBreakChar = min(ptmW->tmBreakChar, 255);
+    {
+        ptmA->tmFirstChar = ptmW->tmDefaultChar - 1;
+        ptmA->tmLastChar = min(ptmW->tmLastChar, 0xff);
+    }
+    ptmA->tmDefaultChar = ptmW->tmDefaultChar;
+    ptmA->tmBreakChar = ptmW->tmBreakChar;
     ptmA->tmItalic = ptmW->tmItalic;
     ptmA->tmUnderlined = ptmW->tmUnderlined;
     ptmA->tmStruckOut = ptmW->tmStruckOut;

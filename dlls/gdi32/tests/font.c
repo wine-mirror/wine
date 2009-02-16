@@ -963,7 +963,7 @@ static void test_GetGlyphIndices(void)
     testtext[0] = textm.tmDefaultChar;
     charcount = pGetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
     ok(charcount == 5, "GetGlyphIndicesW count of glyphs should = 5 not %d\n", charcount);
-    todo_wine ok(glyphs[0] == 0, "GetGlyphIndicesW for tmDefaultChar should be 0 not %04x\n", glyphs[0]);
+    ok(glyphs[0] == 0, "GetGlyphIndicesW for tmDefaultChar should be 0 not %04x\n", glyphs[0]);
     ok(glyphs[4] == 0, "GetGlyphIndicesW should have returned 0 not %04x\n", glyphs[4]);
     DeleteObject(SelectObject(hdc, hOldFont));
 }
@@ -2010,21 +2010,194 @@ typedef struct
 
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)
+#define GET_BE_DWORD(x) (x)
 #else
 #define GET_BE_WORD(x) MAKEWORD(HIBYTE(x), LOBYTE(x))
+#define GET_BE_DWORD(x) MAKELONG(GET_BE_WORD(HIWORD(x)), GET_BE_WORD(LOWORD(x)));
 #endif
 
 #define MS_MAKE_TAG(ch0, ch1, ch2, ch3) \
                     ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | \
                     ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24))
 #define MS_OS2_TAG MS_MAKE_TAG('O','S','/','2')
+#define MS_CMAP_TAG MS_MAKE_TAG('c','m','a','p')
+
+typedef struct
+{
+    USHORT version;
+    USHORT num_tables;
+} cmap_header;
+
+typedef struct
+{
+    USHORT plat_id;
+    USHORT enc_id;
+    ULONG offset;
+} cmap_encoding_record;
+
+typedef struct
+{
+    USHORT format;
+    USHORT length;
+    USHORT language;
+
+    BYTE glyph_ids[256];
+} cmap_format_0;
+
+typedef struct
+{
+    USHORT format;
+    USHORT length;
+    USHORT language;
+
+    USHORT seg_countx2;
+    USHORT search_range;
+    USHORT entry_selector;
+    USHORT range_shift;
+
+    USHORT end_count[1]; /* this is a variable-sized array of length seg_countx2 / 2 */
+/* Then follows:
+    USHORT pad;
+    USHORT start_count[seg_countx2 / 2];
+    USHORT id_delta[seg_countx2 / 2];
+    USHORT id_range_offset[seg_countx2 / 2];
+    USHORT glyph_ids[];
+*/
+} cmap_format_4;
+
+typedef struct
+{
+    USHORT end_count;
+    USHORT start_count;
+    USHORT id_delta;
+    USHORT id_range_offset;
+} cmap_format_4_seg;
 
 static void expect_ff(const TEXTMETRICA *tmA, const TT_OS2_V2 *os2, WORD family, const char *name)
 {
     ok((tmA->tmPitchAndFamily & 0xf0) == family, "%s: expected family %02x got %02x. panose %d-%d-%d-%d-...\n",
        name, family, tmA->tmPitchAndFamily, os2->panose.bFamilyType, os2->panose.bSerifStyle,
        os2->panose.bWeight, os2->panose.bProportion);
+}
 
+static BOOL get_first_last_from_cmap0(void *ptr, DWORD *first, DWORD *last)
+{
+    int i;
+    cmap_format_0 *cmap = (cmap_format_0*)ptr;
+
+    *first = 256;
+
+    for(i = 0; i < 256; i++)
+    {
+        if(cmap->glyph_ids[i] == 0) continue;
+        *last = i;
+        if(*first == 256) *first = i;
+    }
+    if(*first == 256) return FALSE;
+    return TRUE;
+}
+
+static void get_seg4(cmap_format_4 *cmap, USHORT seg_num, cmap_format_4_seg *seg)
+{
+    USHORT segs = GET_BE_WORD(cmap->seg_countx2) / 2;
+    seg->end_count = GET_BE_WORD(cmap->end_count[seg_num]);
+    seg->start_count = GET_BE_WORD(cmap->end_count[segs + 1 + seg_num]);
+    seg->id_delta = GET_BE_WORD(cmap->end_count[2 * segs + 1 + seg_num]);
+    seg->id_range_offset = GET_BE_WORD(cmap->end_count[3 * segs + 1 + seg_num]);
+}
+
+static BOOL get_first_last_from_cmap4(void *ptr, DWORD *first, DWORD *last)
+{
+    int i;
+    cmap_format_4 *cmap = (cmap_format_4*)ptr;
+    USHORT seg_count = GET_BE_WORD(cmap->seg_countx2) / 2;
+    USHORT const *glyph_ids = cmap->end_count + 4 * seg_count + 1;
+
+    *first = 0x10000;
+
+    for(i = 0; i < seg_count; i++)
+    {
+        DWORD code, index;
+        cmap_format_4_seg seg;
+
+        get_seg4(cmap, i, &seg);
+        for(code = seg.start_count; code <= seg.end_count; code++)
+        {
+            if(seg.id_range_offset == 0)
+                index = (seg.id_delta + code) & 0xffff;
+            else
+            {
+                index = seg.id_range_offset / 2
+                    + code - seg.start_count
+                    + i - seg_count;
+
+                index = GET_BE_WORD(glyph_ids[index]);
+                if(index) index += seg.id_delta;
+            }
+            if(index)
+            {
+                *last = code;
+                if(*first == 0x10000) *first = code;
+            }
+        }
+    }
+
+    if(*first == 0x10000) return FALSE;
+    return TRUE;
+}
+
+static void *get_cmap(cmap_header *header, USHORT plat_id, USHORT enc_id)
+{
+    USHORT i;
+    cmap_encoding_record *record = (cmap_encoding_record *)(header + 1);
+
+    for(i = 0; i < GET_BE_WORD(header->num_tables); i++)
+    {
+        if(GET_BE_WORD(record->plat_id) == plat_id && GET_BE_WORD(record->enc_id) == enc_id)
+            return (BYTE *)header + GET_BE_DWORD(record->offset);
+        record++;
+    }
+    return NULL;
+}
+
+static BOOL get_first_last_from_cmap(HDC hdc, DWORD *first, DWORD *last)
+{
+    LONG size, ret;
+    cmap_header *header;
+    void *cmap;
+    BOOL r = FALSE;
+    WORD format;
+
+    size = GetFontData(hdc, MS_CMAP_TAG, 0, NULL, 0);
+    ok(size != GDI_ERROR, "no cmap table found\n");
+    if(size == GDI_ERROR) return FALSE;
+
+    header = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = GetFontData(hdc, MS_CMAP_TAG, 0, header, size);
+    ok(ret == size, "GetFontData should return %u not %u\n", size, ret);
+    ok(GET_BE_WORD(header->version) == 0, "got cmap version %d\n", GET_BE_WORD(header->version));
+
+    cmap = get_cmap(header, 3, 1);
+    if(!cmap) cmap = get_cmap(header, 3, 0);
+    if(!cmap) goto end;
+
+    format = GET_BE_WORD(*(WORD *)cmap);
+    switch(format)
+    {
+    case 0:
+        r = get_first_last_from_cmap0(cmap, first, last);
+        break;
+    case 4:
+        r = get_first_last_from_cmap4(cmap, first, last);
+        break;
+    default:
+        trace("unhandled cmap format %d\n", format);
+        break;
+    }
+
+end:
+    HeapFree(GetProcessHeap(), 0, header);
+    return r;
 }
 
 static void test_text_metrics(const LOGFONTA *lf)
@@ -2032,13 +2205,10 @@ static void test_text_metrics(const LOGFONTA *lf)
     HDC hdc;
     HFONT hfont, hfont_old;
     TEXTMETRICA tmA;
-    TEXTMETRICW tmW;
-    UINT first_unicode_char, last_unicode_char, default_char, break_char;
-    INT test_char;
     TT_OS2_V2 tt_os2;
-    USHORT version;
     LONG size, ret;
     const char *font_name = lf->lfFaceName;
+    DWORD cmap_first = 0, cmap_last = 0;
 
     hdc = GetDC(0);
 
@@ -2064,78 +2234,103 @@ static void test_text_metrics(const LOGFONTA *lf)
     ret = GetFontData(hdc, MS_OS2_TAG, 0, &tt_os2, size);
     ok(ret == size, "GetFontData should return %u not %u\n", size, ret);
 
-    version = GET_BE_WORD(tt_os2.version);
-
-    first_unicode_char = GET_BE_WORD(tt_os2.usFirstCharIndex);
-    last_unicode_char = GET_BE_WORD(tt_os2.usLastCharIndex);
-    default_char = GET_BE_WORD(tt_os2.usDefaultChar);
-    break_char = GET_BE_WORD(tt_os2.usBreakChar);
-
-    trace("font %s charset %u: %x-%x default %x break %x OS/2 version %u vendor %4.4s\n",
-          font_name, lf->lfCharSet, first_unicode_char, last_unicode_char, default_char, break_char,
-          version, (LPCSTR)&tt_os2.achVendID);
-
     SetLastError(0xdeadbeef);
     ret = GetTextMetricsA(hdc, &tmA);
     ok(ret, "GetTextMetricsA error %u\n", GetLastError());
 
-#if 0 /* FIXME: This doesn't appear to be what Windows does */
-    test_char = min(first_unicode_char - 1, 255);
-    ok(tmA.tmFirstChar == test_char, "A: tmFirstChar for %s %02x != %02x\n",
-       font_name, tmA.tmFirstChar, test_char);
-#endif
-    if (lf->lfCharSet == SYMBOL_CHARSET)
+    if(!get_first_last_from_cmap(hdc, &cmap_first, &cmap_last))
     {
-        test_char = min(last_unicode_char - 0xf000, 255);
-        ok(tmA.tmLastChar == test_char, "A: tmLastChar for %s %02x != %02x\n",
-           font_name, tmA.tmLastChar, test_char);
+        skip("Unable to retrieve first and last glyphs from cmap\n");
     }
     else
     {
-        test_char = min(last_unicode_char, 255);
-        ok(tmA.tmLastChar == test_char, "A: tmLastChar for %s %02x != %02x\n",
-           font_name, tmA.tmLastChar, test_char);
-    }
+        USHORT expect_first_A, expect_last_A, expect_break_A, expect_default_A;
+        USHORT expect_first_W, expect_last_W, expect_break_W, expect_default_W;
+        UINT os2_first_char, os2_last_char, default_char, break_char;
+        USHORT version;
+        TEXTMETRICW tmW;
 
-    SetLastError(0xdeadbeef);
-    ret = GetTextMetricsW(hdc, &tmW);
-    ok(ret || GetLastError() == ERROR_CALL_NOT_IMPLEMENTED,
-       "GetTextMetricsW error %u\n", GetLastError());
-    if (ret)
-    {
-        trace("%04x-%04x (%02x-%02x) default %x (%x) break %x (%x)\n",
-              tmW.tmFirstChar, tmW.tmLastChar, tmA.tmFirstChar, tmA.tmLastChar,
-              tmW.tmDefaultChar, tmA.tmDefaultChar, tmW.tmBreakChar, tmA.tmBreakChar);
+        version = GET_BE_WORD(tt_os2.version);
 
-        if (lf->lfCharSet == SYMBOL_CHARSET)
+        os2_first_char = GET_BE_WORD(tt_os2.usFirstCharIndex);
+        os2_last_char = GET_BE_WORD(tt_os2.usLastCharIndex);
+        default_char = GET_BE_WORD(tt_os2.usDefaultChar);
+        break_char = GET_BE_WORD(tt_os2.usBreakChar);
+
+        trace("font %s charset %u: %x-%x (%x-%x) default %x break %x OS/2 version %u vendor %4.4s\n",
+              font_name, lf->lfCharSet, os2_first_char, os2_last_char, cmap_first, cmap_last,
+              default_char, break_char, version, (LPCSTR)&tt_os2.achVendID);
+
+        if (lf->lfCharSet == SYMBOL_CHARSET || (cmap_first >= 0xf000 && cmap_first < 0xf100))
         {
-            /* It appears that for fonts with SYMBOL_CHARSET Windows always
-             * sets symbol range to 0 - f0ff
-             */
-            ok(tmW.tmFirstChar == 0, "W: tmFirstChar for %s %02x != 0\n",
-               font_name, tmW.tmFirstChar);
-            /* FIXME: Windows returns f0ff here, while Wine f0xx */
-            ok(tmW.tmLastChar >= 0xf000, "W: tmLastChar for %s %02x < 0xf000\n",
-               font_name, tmW.tmLastChar);
-
-            ok(tmW.tmDefaultChar == 0x1f, "W: tmDefaultChar for %s %02x != 0x1f\n",
-               font_name, tmW.tmDefaultChar);
-            ok(tmW.tmBreakChar == 0x20, "W: tmBreakChar for %s %02x != 0x20\n",
-               font_name, tmW.tmBreakChar);
+            expect_first_W    = 0;
+            expect_last_W     = 0xf0ff;
+            expect_break_W    = 0x20;
+            expect_default_W  = expect_break_W - 1;
+            expect_first_A    = 0x1e;
+            expect_last_A     = min(os2_last_char - os2_first_char + 0x20, 0xff);
         }
         else
         {
-            ok(tmW.tmFirstChar == first_unicode_char, "W: tmFirstChar for %s %02x != %02x\n",
-               font_name, tmW.tmFirstChar, first_unicode_char);
-            ok(tmW.tmLastChar == last_unicode_char, "W: tmLastChar for %s %02x != %02x\n",
-               font_name, tmW.tmLastChar, last_unicode_char);
+            expect_first_W    = cmap_first;
+            expect_last_W     = min(cmap_last, os2_last_char);
+            if(os2_first_char <= 1)
+                expect_break_W = os2_first_char + 2;
+            else if(os2_first_char > 0xff)
+                expect_break_W = 0x20;
+            else
+                expect_break_W = os2_first_char;
+            expect_default_W  = expect_break_W - 1;
+            expect_first_A    = expect_default_W - 1;
+            expect_last_A     = min(expect_last_W, 0xff);
         }
-        ret = GetDeviceCaps(hdc, LOGPIXELSX);
-        ok(tmW.tmDigitizedAspectX == ret, "W: tmDigitizedAspectX %u != %u\n",
-           tmW.tmDigitizedAspectX, ret);
-        ret = GetDeviceCaps(hdc, LOGPIXELSY);
-        ok(tmW.tmDigitizedAspectX == ret, "W: tmDigitizedAspectY %u != %u\n",
-           tmW.tmDigitizedAspectX, ret);
+        expect_break_A    = expect_break_W;
+        expect_default_A  = expect_default_W;
+
+        ok(tmA.tmFirstChar == expect_first_A ||
+           tmA.tmFirstChar == expect_first_A + 1 /* win9x */,
+           "A: tmFirstChar for %s got %02x expected %02x\n", font_name, tmA.tmFirstChar, expect_first_A);
+        ok(tmA.tmLastChar == expect_last_A ||
+           tmA.tmLastChar == 0xff /* win9x */,
+           "A: tmLastChar for %s got %02x expected %02x\n", font_name, tmA.tmLastChar, expect_last_A);
+        ok(tmA.tmBreakChar == expect_break_A, "A: tmBreakChar for %s got %02x expected %02x\n",
+           font_name, tmA.tmBreakChar, expect_break_A);
+        ok(tmA.tmDefaultChar == expect_default_A, "A: tmDefaultChar for %s got %02x expected %02x\n",
+           font_name, tmA.tmDefaultChar, expect_default_A);
+
+
+        SetLastError(0xdeadbeef);
+        ret = GetTextMetricsW(hdc, &tmW);
+        ok(ret || GetLastError() == ERROR_CALL_NOT_IMPLEMENTED,
+           "GetTextMetricsW error %u\n", GetLastError());
+        if (ret)
+        {
+            if(cmap_first != os2_first_char && tmW.tmCharSet != SYMBOL_CHARSET)
+                todo_wine ok(tmW.tmFirstChar == expect_first_W, "W: tmFirstChar for %s got %02x expected %02x\n",
+                             font_name, tmW.tmFirstChar, expect_first_W);
+            else
+                ok(tmW.tmFirstChar == expect_first_W, "W: tmFirstChar for %s got %02x expected %02x\n",
+                   font_name, tmW.tmFirstChar, expect_first_W);
+
+            if(expect_last_W != os2_last_char && tmW.tmCharSet != SYMBOL_CHARSET)
+                todo_wine ok(tmW.tmLastChar == expect_last_W, "W: tmLastChar for %s got %02x expected %02x\n",
+                             font_name, tmW.tmLastChar, expect_last_W);
+            else
+                ok(tmW.tmLastChar == expect_last_W, "W: tmLastChar for %s got %02x expected %02x\n",
+                   font_name, tmW.tmLastChar, expect_last_W);
+            ok(tmW.tmBreakChar == expect_break_W, "W: tmBreakChar for %s got %02x expected %02x\n",
+               font_name, tmW.tmBreakChar, expect_break_W);
+            ok(tmW.tmDefaultChar == expect_default_W, "W: tmDefaultChar for %s got %02x expected %02x\n",
+               font_name, tmW.tmDefaultChar, expect_default_W);
+
+            /* Test the aspect ratio while we have tmW */
+            ret = GetDeviceCaps(hdc, LOGPIXELSX);
+            ok(tmW.tmDigitizedAspectX == ret, "W: tmDigitizedAspectX %u != %u\n",
+               tmW.tmDigitizedAspectX, ret);
+            ret = GetDeviceCaps(hdc, LOGPIXELSY);
+            ok(tmW.tmDigitizedAspectX == ret, "W: tmDigitizedAspectY %u != %u\n",
+               tmW.tmDigitizedAspectX, ret);
+        }
     }
 
     /* test FF_ values */
