@@ -278,7 +278,7 @@ static void test_ExpandEnvironmentStringsA(void)
     /* v5.1.2600.2945 (XP SP2) needs and returns len + 2 here! */
     ret_size = ExpandEnvironmentStringsA(buf, buf1, ret_size);
     ok(ret_size == strlen(value)+1 || ret_size == strlen(value)+2 ||
-       ret_size == strlen(value)*2 /* NT4 */,
+       ret_size == (strlen(value)+1)*2 /* NT4 */,
        "ExpandEnvironmentStrings returned %d instead of %d\n",
        ret_size, lstrlenA(value)+1);
     ok(!strcmp(buf1, value), "ExpandEnvironmentStrings returned [%s]\n", buf1);
