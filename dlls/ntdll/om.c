@@ -540,12 +540,13 @@ NTSTATUS WINAPI NtCreateSymbolicLinkObject(OUT PHANDLE SymbolicLinkHandle,IN ACC
                                            IN PUNICODE_STRING TargetName)
 {
     NTSTATUS ret;
-    TRACE("(%p,0x%08x,%p, -> %s)\n", SymbolicLinkHandle, DesiredAccess, ObjectAttributes,
-                                      debugstr_us(TargetName));
-    dump_ObjectAttributes(ObjectAttributes);
 
     if (!SymbolicLinkHandle || !TargetName) return STATUS_ACCESS_VIOLATION;
     if (!TargetName->Buffer) return STATUS_INVALID_PARAMETER;
+
+    TRACE("(%p,0x%08x,%p, -> %s)\n", SymbolicLinkHandle, DesiredAccess, ObjectAttributes,
+                                      debugstr_us(TargetName));
+    dump_ObjectAttributes(ObjectAttributes);
 
     SERVER_START_REQ(create_symlink)
     {
