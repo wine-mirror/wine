@@ -2398,7 +2398,11 @@ static void test_SetForegroundWindow(HWND hwnd)
         check_wnd_state(0, 0, 0, 0);
 
     ret = SetForegroundWindow(hwnd);
-    ok(ret, "SetForegroundWindow returned FALSE instead of TRUE\n");
+    if (!ret)
+    {
+        skip( "SetForegroundWindow not working\n" );
+        return;
+    }
     check_wnd_state(hwnd, hwnd, hwnd, 0);
 
     SetLastError(0xdeadbeef);
