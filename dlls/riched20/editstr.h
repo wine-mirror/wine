@@ -164,12 +164,6 @@ typedef struct tagME_Run
   REOBJECT *ole_obj; /* FIXME: should be a union with strText (at least) */
 } ME_Run;
 
-typedef struct tagME_Document {
-  struct tagME_DisplayItem *def_char_style;
-  struct tagME_DisplayItem *def_para_style;
-  int last_wrapped_line;
-} ME_Document;
-
 typedef struct tagME_Border
 {
   int width;
@@ -197,7 +191,7 @@ typedef struct tagME_Paragraph
   int nHeight, nWidth;
   int nLastPaintYPos, nLastPaintHeight;
   int nRows;
-  struct tagME_DisplayItem *prev_para, *next_para, *document;
+  struct tagME_DisplayItem *prev_para, *next_para;
 } ME_Paragraph;
 
 typedef struct tagME_Cell /* v4.1 */
@@ -242,7 +236,6 @@ typedef struct tagME_DisplayItem
     ME_Row row;
     ME_Cell cell;
     ME_Paragraph para;
-    ME_Document doc; /* not used */
     ME_Style *ustyle; /* used by diUndoSetCharFormat */
   } member;
 } ME_DisplayItem;
