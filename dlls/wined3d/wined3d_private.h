@@ -1351,6 +1351,14 @@ typedef enum winetexturestates {
     MAX_WINETEXTURESTATES        = 13,
 } winetexturestates;
 
+enum WINED3DSRGB
+{
+    SRGB_ANY                                = 0,    /* Uses the cached value(e.g. external calls) */
+    SRGB_RGB                                = 1,    /* Loads the rgb texture */
+    SRGB_SRGB                               = 2,    /* Loads the srgb texture */
+    SRGB_BOTH                               = 3,    /* Loads both textures */
+};
+
 /*****************************************************************************
  * IWineD3DBaseTexture implementation structure (extends IWineD3DResourceImpl)
  */
@@ -1370,7 +1378,13 @@ typedef struct IWineD3DBaseTextureClass
     const struct min_lookup *minMipLookup;
     const GLenum            *magLookup;
     struct color_fixup_desc shader_color_fixup;
+    void                    (*internal_preload)(IWineD3DBaseTexture *iface, enum WINED3DSRGB srgb);
 } IWineD3DBaseTextureClass;
+
+void texture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRGB srgb);
+void cubetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRGB srgb);
+void volumetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRGB srgb);
+void surface_internal_preload(IWineD3DSurface *iface, enum WINED3DSRGB srgb);
 
 typedef struct IWineD3DBaseTextureImpl
 {

@@ -124,7 +124,7 @@ static void context_apply_attachment_filter_states(IWineD3DDevice *iface, IWineD
             glGetIntegerv(GL_TEXTURE_BINDING_CUBE_MAP_ARB, &old_binding);
         }
 
-        IWineD3DSurface_PreLoad(surface);
+        surface_internal_preload(surface, SRGB_RGB);
 
         glBindTexture(bind_target, surface_impl->glDescription.textureName);
         if (update_minfilter) glTexParameteri(bind_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -1399,7 +1399,11 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
         /* Do that before switching the context:
          * Read the back buffer of the old drawable into the destination texture
          */
-        IWineD3DSurface_PreLoad(This->lastActiveRenderTarget);
+        if(((IWineD3DSurfaceImpl *)This->lastActiveRenderTarget)->glDescription.srgbTextureName) {
+            surface_internal_preload(This->lastActiveRenderTarget, SRGB_BOTH);
+        } else {
+            surface_internal_preload(This->lastActiveRenderTarget, SRGB_RGB);
+        }
 
         /* Assume that the drawable will be modified by some other things now */
         IWineD3DSurface_ModifyLocation(This->lastActiveRenderTarget, SFLAG_INDRAWABLE, FALSE);

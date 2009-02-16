@@ -91,13 +91,22 @@ static DWORD WINAPI IWineD3DCubeTextureImpl_GetPriority(IWineD3DCubeTexture *ifa
     return resource_get_priority((IWineD3DResource *)iface);
 }
 
-static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
+void cubetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRGB srgb) {
     /* Override the IWineD3DResource Preload method */
     unsigned int i,j;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-    BOOL srgb_mode = This->baseTexture.is_srgb;
-    BOOL *dirty = srgb_mode ? &This->baseTexture.srgbDirty : &This->baseTexture.dirty;
+    BOOL srgb_mode;
+    BOOL *dirty;
+
+    switch(srgb) {
+        case SRGB_RGB:      srgb_mode = FALSE; break;
+        case SRGB_BOTH:     cubetexture_internal_preload(iface, SRGB_RGB);
+        case SRGB_SRGB:     srgb_mode = TRUE; break;
+        /* DONTKNOW, and shut up the compiler */
+        default:            srgb_mode = This->baseTexture.is_srgb; break;
+    }
+    dirty = srgb_mode ? &This->baseTexture.srgbDirty : &This->baseTexture.dirty;
 
     TRACE("(%p) : About to load texture: dirtified(%d)\n", This, *dirty);
 
@@ -138,6 +147,10 @@ static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
     /* No longer dirty */
     *dirty = FALSE;
     return;
+}
+
+static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
+    cubetexture_internal_preload((IWineD3DBaseTexture *) iface, SRGB_ANY);
 }
 
 static void WINAPI IWineD3DCubeTextureImpl_UnLoad(IWineD3DCubeTexture *iface) {

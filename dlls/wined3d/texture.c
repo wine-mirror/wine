@@ -92,16 +92,25 @@ static DWORD WINAPI IWineD3DTextureImpl_GetPriority(IWineD3DTexture *iface) {
     return resource_get_priority((IWineD3DResource *)iface);
 }
 
-static void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface) {
+void texture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRGB srgb) {
 
     /* Override the IWineD3DResource PreLoad method */
     unsigned int i;
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-    BOOL srgb_mode = This->baseTexture.is_srgb;
-    BOOL *dirty = srgb_mode ? &This->baseTexture.srgbDirty : &This->baseTexture.dirty;
+    BOOL srgb_mode;
+    BOOL *dirty;
 
     TRACE("(%p) : About to load texture\n", This);
+
+    switch(srgb) {
+        case SRGB_RGB:      srgb_mode = FALSE; break;
+        case SRGB_BOTH:     texture_internal_preload(iface, SRGB_RGB);
+        case SRGB_SRGB:     srgb_mode = TRUE; break;
+        /* DONTKNOW, and shut up the compiler */
+        default:            srgb_mode = This->baseTexture.is_srgb; break;
+    }
+    dirty = srgb_mode ? &This->baseTexture.srgbDirty : &This->baseTexture.dirty;
 
     if(!device->isInDraw) {
         /* ActivateContext sets isInDraw to TRUE when loading a pbuffer into a texture, thus no danger of
@@ -134,6 +143,10 @@ static void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface) {
     *dirty = FALSE;
 
     return ;
+}
+
+static void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface) {
+    texture_internal_preload((IWineD3DBaseTexture *) iface, SRGB_ANY);
 }
 
 static void WINAPI IWineD3DTextureImpl_UnLoad(IWineD3DTexture *iface) {

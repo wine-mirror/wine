@@ -921,6 +921,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
         tmpH = max(1, tmpH >> 1);
     }
     object->baseTexture.shader_color_fixup = glDesc->color_fixup;
+    object->baseTexture.internal_preload = texture_internal_preload;
 
     TRACE("(%p) : Created  texture %p\n", This, object);
     return WINED3D_OK;
@@ -1043,6 +1044,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
         tmpD = max(1, tmpD >> 1);
     }
     object->baseTexture.shader_color_fixup = glDesc->color_fixup;
+    object->baseTexture.internal_preload = volumetexture_internal_preload;
 
     *ppVolumeTexture = (IWineD3DVolumeTexture *) object;
     TRACE("(%p) : Created volume texture %p\n", This, object);
@@ -1241,6 +1243,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
         tmpW = max(1, tmpW >> 1);
     }
     object->baseTexture.shader_color_fixup = glDesc->color_fixup;
+    object->baseTexture.internal_preload = cubetexture_internal_preload;
 
     TRACE("(%p) : Created Cube Texture %p\n", This, object);
     *ppCubeTexture = (IWineD3DCubeTexture *) object;
@@ -5529,9 +5532,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, I
     }
 
     if (WINED3D_OK == hr) {
+        IWineD3DBaseTextureImpl *pDestImpl = (IWineD3DBaseTextureImpl *) pDestinationTexture;
 
         /* Make sure that the destination texture is loaded */
-        IWineD3DBaseTexture_PreLoad(pDestinationTexture);
+        pDestImpl->baseTexture.internal_preload(pDestinationTexture, SRGB_RGB);
 
         /* Update every surface level of the texture */
         levels = IWineD3DBaseTexture_GetLevelCount(pDestinationTexture);
@@ -5921,7 +5925,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     LEAVE_GL();
 
     /* Make sure the surface is loaded and up to date */
-    IWineD3DSurface_PreLoad(pDestinationSurface);
+    surface_internal_preload(pDestinationSurface, SRGB_RGB);
     IWineD3DSurface_BindTexture(pDestinationSurface, FALSE);
 
     IWineD3DSurface_GetGlDesc(pDestinationSurface, &glDescription);

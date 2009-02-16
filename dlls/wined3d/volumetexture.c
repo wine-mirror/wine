@@ -90,7 +90,7 @@ static DWORD WINAPI IWineD3DVolumeTextureImpl_GetPriority(IWineD3DVolumeTexture 
     return resource_get_priority((IWineD3DResource *)iface);
 }
 
-static void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *iface) {
+void volumetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRGB srgb) {
     /* Overrider the IWineD3DResource Preload method */
     int i;
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
@@ -125,6 +125,10 @@ static void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *ifac
     This->baseTexture.dirty = FALSE;
 
     return ;
+}
+
+static void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *iface) {
+    volumetexture_internal_preload((IWineD3DBaseTexture *) iface, SRGB_ANY);
 }
 
 static void WINAPI IWineD3DVolumeTextureImpl_UnLoad(IWineD3DVolumeTexture *iface) {
