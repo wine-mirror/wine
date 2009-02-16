@@ -173,7 +173,7 @@ static PFORMAT_STRING client_get_handle(
                 if (pDesc->flag_and_size & HANDLE_PARAM_IS_VIA_PTR)
                     pArg = *(void **)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
                 else
-                    pArg = (void *)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
+                    pArg = ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
                 memcpy(&pObject, pArg, pDesc->flag_and_size & 0xf);
                 pGenPair = &pStubMsg->StubDesc->aGenericBindingRoutinePairs[pDesc->binding_routine_pair_index];
                 *phBinding = pGenPair->pfnBind(pObject);
@@ -256,7 +256,7 @@ static void client_free_handle(
                 if (pDesc->flag_and_size & HANDLE_PARAM_IS_VIA_PTR)
                     pArg = *(void **)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
                 else
-                    pArg = (void *)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
+                    pArg = ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
                 memcpy(&pObject, pArg, pDesc->flag_and_size & 0xf);
                 pGenPair = &pStubMsg->StubDesc->aGenericBindingRoutinePairs[pDesc->binding_routine_pair_index];
                 pGenPair->pfnUnbind(pObject, hBinding);

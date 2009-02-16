@@ -367,7 +367,7 @@ static DWORD CALLBACK RPCRT4_worker_thread(LPVOID the_arg)
 
 static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
 {
-  RpcConnection* conn = (RpcConnection*)the_arg;
+  RpcConnection* conn = the_arg;
   RpcPktHdr *hdr;
   RPC_MESSAGE *msg;
   RPC_STATUS status;
@@ -823,7 +823,7 @@ RPC_STATUS WINAPI RpcServerRegisterIfEx( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid
 RPC_STATUS WINAPI RpcServerRegisterIf2( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv,
                       UINT Flags, UINT MaxCalls, UINT MaxRpcSize, RPC_IF_CALLBACK_FN* IfCallbackFn )
 {
-  PRPC_SERVER_INTERFACE If = (PRPC_SERVER_INTERFACE)IfSpec;
+  PRPC_SERVER_INTERFACE If = IfSpec;
   RpcServerInterface* sif;
   unsigned int i;
 
@@ -876,7 +876,7 @@ RPC_STATUS WINAPI RpcServerRegisterIf2( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid,
  */
 RPC_STATUS WINAPI RpcServerUnregisterIf( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, UINT WaitForCallsToComplete )
 {
-  PRPC_SERVER_INTERFACE If = (PRPC_SERVER_INTERFACE)IfSpec;
+  PRPC_SERVER_INTERFACE If = IfSpec;
   HANDLE event = NULL;
   BOOL found = FALSE;
   BOOL completed = TRUE;

@@ -715,11 +715,11 @@ static void test_simple_struct_marshal(const unsigned char *formattypes,
     NdrClientInitializeNew(&RpcMessage, &StubMsg, &StubDesc, 0);
 
     StubMsg.BufferLength = 0;
-    NdrSimpleStructBufferSize( &StubMsg, (unsigned char *)memsrc, formattypes );
+    NdrSimpleStructBufferSize( &StubMsg, memsrc, formattypes );
     ok(StubMsg.BufferLength >= wiredatalen, "%s: length %d\n", msgpfx, StubMsg.BufferLength);
     StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = HeapAlloc(GetProcessHeap(), 0, StubMsg.BufferLength);
     StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
-    ptr = NdrSimpleStructMarshall( &StubMsg,  (unsigned char*)memsrc, formattypes );
+    ptr = NdrSimpleStructMarshall( &StubMsg,  memsrc, formattypes );
     ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart);
     ok(!memcmp(StubMsg.BufferStart, wiredata, wiredatalen), "%s: incorrectly marshaled %08x %08x %08x\n", msgpfx, *(DWORD*)StubMsg.BufferStart,*((DWORD*)StubMsg.BufferStart+1),*((DWORD*)StubMsg.BufferStart+2));
@@ -1693,16 +1693,14 @@ static void test_nonconformant_string(void)
 
     StubMsg.BufferLength = 0;
 
-    NdrNonConformantStringBufferSize( &StubMsg,
-                          (unsigned char *)memsrc,
-                          fmtstr_nonconf_str );
+    NdrNonConformantStringBufferSize( &StubMsg, memsrc, fmtstr_nonconf_str );
     ok(StubMsg.BufferLength >= strlen((char *)memsrc) + 1 + 8, "length %d\n", StubMsg.BufferLength);
 
     /*NdrGetBuffer(&_StubMsg, _StubMsg.BufferLength, NULL);*/
     StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = HeapAlloc(GetProcessHeap(), 0, StubMsg.BufferLength);
     StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
 
-    ptr = NdrNonConformantStringMarshall( &StubMsg, (unsigned char *)memsrc, fmtstr_nonconf_str );
+    ptr = NdrNonConformantStringMarshall( &StubMsg, memsrc, fmtstr_nonconf_str );
     ok(ptr == NULL, "ret %p\n", ptr);
     size = StubMsg.Buffer - StubMsg.BufferStart;
     ok(size == strlen((char *)memsrc) + 1 + 8, "Buffer %p Start %p len %d\n",
@@ -1768,16 +1766,14 @@ static void test_nonconformant_string(void)
 
     StubMsg.BufferLength = 0;
 
-    NdrNonConformantStringBufferSize( &StubMsg,
-                          (unsigned char *)memsrc2,
-                          fmtstr_nonconf_str );
+    NdrNonConformantStringBufferSize( &StubMsg, memsrc2, fmtstr_nonconf_str );
     ok(StubMsg.BufferLength >= strlen((char *)memsrc2) + 1 + 8, "length %d\n", StubMsg.BufferLength);
 
     /*NdrGetBuffer(&_StubMsg, _StubMsg.BufferLength, NULL);*/
     StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = HeapAlloc(GetProcessHeap(), 0, StubMsg.BufferLength);
     StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
 
-    ptr = NdrNonConformantStringMarshall( &StubMsg, (unsigned char *)memsrc2, fmtstr_nonconf_str );
+    ptr = NdrNonConformantStringMarshall( &StubMsg, memsrc2, fmtstr_nonconf_str );
     ok(ptr == NULL, "ret %p\n", ptr);
     size = StubMsg.Buffer - StubMsg.BufferStart;
     ok(size == strlen((char *)memsrc2) + 1 + 8, "Buffer %p Start %p len %d\n",

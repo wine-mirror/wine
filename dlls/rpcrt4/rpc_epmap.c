@@ -116,7 +116,7 @@ static BOOL start_rpcss(void)
 
 static inline BOOL is_epm_destination_local(RPC_BINDING_HANDLE handle)
 {
-    RpcBinding *bind = (RpcBinding *)handle;
+    RpcBinding *bind = handle;
     const char *protseq = bind->Protseq;
     const char *network_addr = bind->NetworkAddr;
 
@@ -127,7 +127,7 @@ static inline BOOL is_epm_destination_local(RPC_BINDING_HANDLE handle)
 
 static RPC_STATUS get_epm_handle_client(RPC_BINDING_HANDLE handle, RPC_BINDING_HANDLE *epm_handle)
 {
-    RpcBinding *bind = (RpcBinding *)handle;
+    RpcBinding *bind = handle;
     const char * pszEndpoint = NULL;
     RPC_STATUS status;
     RpcBinding* epm_bind;
@@ -149,7 +149,7 @@ static RPC_STATUS get_epm_handle_client(RPC_BINDING_HANDLE handle, RPC_BINDING_H
     status = RpcBindingCopy(handle, epm_handle);
     if (status != RPC_S_OK) return status;
 
-    epm_bind = (RpcBinding*)*epm_handle;
+    epm_bind = *epm_handle;
     if (epm_bind->AuthInfo)
     {
         /* don't bother with authenticating against the EPM by default
@@ -187,7 +187,7 @@ static LONG WINAPI rpc_filter(EXCEPTION_POINTERS *__eptr)
 RPC_STATUS WINAPI RpcEpRegisterA( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *BindingVector,
                                   UUID_VECTOR *UuidVector, RPC_CSTR Annotation )
 {
-  PRPC_SERVER_INTERFACE If = (PRPC_SERVER_INTERFACE)IfSpec;
+  PRPC_SERVER_INTERFACE If = IfSpec;
   unsigned long i;
   RPC_STATUS status = RPC_S_OK;
   error_status_t status2;
@@ -197,7 +197,7 @@ RPC_STATUS WINAPI RpcEpRegisterA( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *Bind
   TRACE("(%p,%p,%p,%s)\n", IfSpec, BindingVector, UuidVector, debugstr_a((char*)Annotation));
   TRACE(" ifid=%s\n", debugstr_guid(&If->InterfaceId.SyntaxGUID));
   for (i=0; i<BindingVector->Count; i++) {
-    RpcBinding* bind = (RpcBinding*)(BindingVector->BindingH[i]);
+    RpcBinding* bind = BindingVector->BindingH[i];
     TRACE(" protseq[%ld]=%s\n", i, debugstr_a(bind->Protseq));
     TRACE(" endpoint[%ld]=%s\n", i, debugstr_a(bind->Endpoint));
   }
@@ -222,7 +222,7 @@ RPC_STATUS WINAPI RpcEpRegisterA( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *Bind
   for (i = 0; i < BindingVector->Count; i++)
   {
       unsigned j;
-      RpcBinding* bind = (RpcBinding*)(BindingVector->BindingH[i]);
+      RpcBinding* bind = BindingVector->BindingH[i];
       for (j = 0; j < (UuidVector ? UuidVector->Count : 1); j++)
       {
           int len = strlen((char *)Annotation);
@@ -286,7 +286,7 @@ RPC_STATUS WINAPI RpcEpRegisterA( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *Bind
 RPC_STATUS WINAPI RpcEpUnregister( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *BindingVector,
                                    UUID_VECTOR *UuidVector )
 {
-  PRPC_SERVER_INTERFACE If = (PRPC_SERVER_INTERFACE)IfSpec;
+  PRPC_SERVER_INTERFACE If = IfSpec;
   unsigned long i;
   RPC_STATUS status = RPC_S_OK;
   error_status_t status2;
@@ -296,7 +296,7 @@ RPC_STATUS WINAPI RpcEpUnregister( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *Bin
   TRACE("(%p,%p,%p)\n", IfSpec, BindingVector, UuidVector);
   TRACE(" ifid=%s\n", debugstr_guid(&If->InterfaceId.SyntaxGUID));
   for (i=0; i<BindingVector->Count; i++) {
-    RpcBinding* bind = (RpcBinding*)(BindingVector->BindingH[i]);
+    RpcBinding* bind = BindingVector->BindingH[i];
     TRACE(" protseq[%ld]=%s\n", i, debugstr_a(bind->Protseq));
     TRACE(" endpoint[%ld]=%s\n", i, debugstr_a(bind->Endpoint));
   }
@@ -319,7 +319,7 @@ RPC_STATUS WINAPI RpcEpUnregister( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *Bin
   for (i = 0; i < BindingVector->Count; i++)
   {
       unsigned j;
-      RpcBinding* bind = (RpcBinding*)(BindingVector->BindingH[i]);
+      RpcBinding* bind = BindingVector->BindingH[i];
       for (j = 0; j < (UuidVector ? UuidVector->Count : 1); j++)
       {
           status = TowerConstruct(&If->InterfaceId, &If->TransferSyntax,
@@ -372,8 +372,8 @@ RPC_STATUS WINAPI RpcEpUnregister( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *Bin
  */
 RPC_STATUS WINAPI RpcEpResolveBinding( RPC_BINDING_HANDLE Binding, RPC_IF_HANDLE IfSpec )
 {
-  PRPC_CLIENT_INTERFACE If = (PRPC_CLIENT_INTERFACE)IfSpec;
-  RpcBinding* bind = (RpcBinding*)Binding;
+  PRPC_CLIENT_INTERFACE If = IfSpec;
+  RpcBinding* bind = Binding;
   RPC_STATUS status;
   error_status_t status2;
   handle_t handle;

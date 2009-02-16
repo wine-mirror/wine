@@ -368,10 +368,10 @@ static const CInterfaceProxyVtbl *cstub_ProxyVtblList[] =
 
 static const CInterfaceStubVtbl *cstub_StubVtblList[] =
 {
-    (const CInterfaceStubVtbl *) &if1_stub_vtbl,
-    (const CInterfaceStubVtbl *) &if2_stub_vtbl,
-    (const CInterfaceStubVtbl *) &if3_stub_vtbl,
-    (const CInterfaceStubVtbl *) &if4_stub_vtbl,
+    &if1_stub_vtbl,
+    &if2_stub_vtbl,
+    &if3_stub_vtbl,
+    &if4_stub_vtbl,
     NULL
 };
 

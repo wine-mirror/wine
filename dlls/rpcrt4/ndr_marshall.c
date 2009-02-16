@@ -6627,7 +6627,7 @@ static unsigned char *WINAPI NdrContextHandleMarshall(
     if (pFormat[1] & 0x80)
         NdrClientContextMarshall(pStubMsg, *(NDR_CCONTEXT **)pMemory, FALSE);
     else
-        NdrClientContextMarshall(pStubMsg, (NDR_CCONTEXT *)pMemory, FALSE);
+        NdrClientContextMarshall(pStubMsg, pMemory, FALSE);
 
     return NULL;
 }

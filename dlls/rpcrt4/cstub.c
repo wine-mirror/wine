@@ -126,7 +126,7 @@ static struct
 
 static HRESULT WINAPI delegating_QueryInterface(IUnknown *pUnk, REFIID iid, void **ppv)
 {
-    *ppv = (void *)pUnk;
+    *ppv = pUnk;
     return S_OK;
 }
 

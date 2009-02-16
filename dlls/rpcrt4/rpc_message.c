@@ -998,7 +998,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
  */
 RPC_STATUS WINAPI I_RpcNegotiateTransferSyntax(PRPC_MESSAGE pMsg)
 {
-  RpcBinding* bind = (RpcBinding*)pMsg->Handle;
+  RpcBinding* bind = pMsg->Handle;
   RpcConnection* conn;
   RPC_STATUS status = RPC_S_OK;
 
@@ -1063,7 +1063,7 @@ RPC_STATUS WINAPI I_RpcNegotiateTransferSyntax(PRPC_MESSAGE pMsg)
 RPC_STATUS WINAPI I_RpcGetBuffer(PRPC_MESSAGE pMsg)
 {
   RPC_STATUS status;
-  RpcBinding* bind = (RpcBinding*)pMsg->Handle;
+  RpcBinding* bind = pMsg->Handle;
 
   TRACE("(%p): BufferLength=%d\n", pMsg, pMsg->BufferLength);
 
@@ -1120,7 +1120,7 @@ static RPC_STATUS I_RpcReAllocateBuffer(PRPC_MESSAGE pMsg)
  */
 RPC_STATUS WINAPI I_RpcFreeBuffer(PRPC_MESSAGE pMsg)
 {
-  RpcBinding* bind = (RpcBinding*)pMsg->Handle;
+  RpcBinding* bind = pMsg->Handle;
 
   TRACE("(%p) Buffer=%p\n", pMsg, pMsg->Buffer);
 
@@ -1214,7 +1214,7 @@ static DWORD WINAPI async_notifier_proc(LPVOID p)
  */
 RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
 {
-  RpcBinding* bind = (RpcBinding*)pMsg->Handle;
+  RpcBinding* bind = pMsg->Handle;
   RpcConnection* conn;
   RPC_STATUS status;
   RpcPktHdr *hdr;
@@ -1268,7 +1268,7 @@ static inline BOOL is_hard_error(RPC_STATUS status)
  */
 RPC_STATUS WINAPI I_RpcReceive(PRPC_MESSAGE pMsg)
 {
-  RpcBinding* bind = (RpcBinding*)pMsg->Handle;
+  RpcBinding* bind = pMsg->Handle;
   RPC_STATUS status;
   RpcPktHdr *hdr = NULL;
   RpcConnection *conn;
@@ -1360,7 +1360,7 @@ RPC_STATUS WINAPI I_RpcSendReceive(PRPC_MESSAGE pMsg)
  */
 RPC_STATUS WINAPI I_RpcAsyncSetHandle(PRPC_MESSAGE pMsg, PRPC_ASYNC_STATE pAsync)
 {
-    RpcBinding* bind = (RpcBinding*)pMsg->Handle;
+    RpcBinding* bind = pMsg->Handle;
     RpcConnection *conn;
 
     TRACE("(%p, %p)\n", pMsg, pAsync);
