@@ -1220,6 +1220,17 @@ void dump_color_fixup_desc(struct color_fixup_desc fixup)
     TRACE("\tW: %s%s\n", debug_fixup_channel_source(fixup.w_source), fixup.w_sign_fixup ? ", SIGN_FIXUP" : "");
 }
 
+const char *debug_surflocation(DWORD flag) {
+    char buf[128];
+
+    buf[0] = 0;
+    if(flag & SFLAG_INSYSMEM) strcat(buf, " | SFLAG_INSYSMEM");
+    if(flag & SFLAG_INDRAWABLE) strcat(buf, " | SFLAG_INDRAWABLE");
+    if(flag & SFLAG_INTEXTURE) strcat(buf, " | SFLAG_INTEXTURE");
+    if(flag & SFLAG_INSRGBTEX) strcat(buf, " | SFLAG_INSRGBTEX");
+    return wine_dbg_sprintf("%s", buf[0] ? buf + 3 : "0");
+}
+
 /*****************************************************************************
  * Useful functions mapping GL <-> D3D values
  */

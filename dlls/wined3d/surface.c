@@ -4197,8 +4197,7 @@ static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DW
     IWineD3DBaseTexture *texture;
     IWineD3DSurfaceImpl *overlay;
 
-    TRACE("(%p)->(%s, %s)\n", iface,
-          flag == SFLAG_INSYSMEM ? "SFLAG_INSYSMEM" : flag == SFLAG_INDRAWABLE ? "SFLAG_INDRAWABLE" : "SFLAG_INTEXTURE",
+    TRACE("(%p)->(%s, %s)\n", iface, debug_surflocation(flag),
           persistent ? "TRUE" : "FALSE");
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
@@ -4481,9 +4480,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
         }
     }
 
-    TRACE("(%p)->(%s, %p)\n", iface,
-          flag == SFLAG_INSYSMEM ? "SFLAG_INSYSMEM" : flag == SFLAG_INDRAWABLE ? "SFLAG_INDRAWABLE" : "SFLAG_INTEXTURE",
-          rect);
+    TRACE("(%p)->(%s, %p)\n", iface, debug_surflocation(flag), rect);
     if(rect) {
         TRACE("Rectangle: (%d,%d)-(%d,%d)\n", rect->left, rect->top, rect->right, rect->bottom);
     }

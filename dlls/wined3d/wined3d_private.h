@@ -2037,6 +2037,7 @@ const char* debug_d3dtop(WINED3DTEXTUREOP d3dtop);
 const char *debug_fixup_channel_source(enum fixup_channel_source source);
 const char *debug_yuv_fixup(enum yuv_fixup yuv_fixup);
 void dump_color_fixup_desc(struct color_fixup_desc fixup);
+const char *debug_surflocation(DWORD flag);
 
 /* Routines for GL <-> D3D values */
 GLenum StencilOp(DWORD op);
