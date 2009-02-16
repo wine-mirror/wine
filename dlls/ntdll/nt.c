@@ -63,10 +63,9 @@ NTSTATUS WINAPI NtDuplicateToken(
 {
     NTSTATUS status;
 
-    TRACE("(%p,0x%08x,%p,0x%08x,0x%08x,%p)\n",
-        ExistingToken, DesiredAccess, ObjectAttributes,
-        ImpersonationLevel, TokenType, NewToken);
-        dump_ObjectAttributes(ObjectAttributes);
+    TRACE("(%p,0x%08x,%s,0x%08x,0x%08x,%p)\n",
+          ExistingToken, DesiredAccess, debugstr_ObjectAttributes(ObjectAttributes),
+          ImpersonationLevel, TokenType, NewToken);
 
     if (ObjectAttributes && ObjectAttributes->SecurityQualityOfService)
     {

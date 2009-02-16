@@ -693,10 +693,9 @@ NTSTATUS WINAPI NtReplaceKey(
 	IN HANDLE Key,
 	IN POBJECT_ATTRIBUTES ReplacedObjectAttributes)
 {
-	FIXME("(%p),stub!\n", Key);
-	dump_ObjectAttributes(ObjectAttributes);
-	dump_ObjectAttributes(ReplacedObjectAttributes);
-	return STATUS_SUCCESS;
+    FIXME("(%s,%p,%s),stub!\n", debugstr_ObjectAttributes(ObjectAttributes), Key,
+          debugstr_ObjectAttributes(ReplacedObjectAttributes) );
+    return STATUS_SUCCESS;
 }
 /******************************************************************************
  * NtRestoreKey [NTDLL.@]

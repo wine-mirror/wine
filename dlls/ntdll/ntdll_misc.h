@@ -43,9 +43,9 @@ extern void wait_suspend( CONTEXT *context );
 extern void WINAPI __regs_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
 extern void set_cpu_context( const CONTEXT *context );
 
-/* debug helper */
+/* debug helpers */
 extern LPCSTR debugstr_us( const UNICODE_STRING *str );
-extern void dump_ObjectAttributes (const OBJECT_ATTRIBUTES *ObjectAttributes);
+extern LPCSTR debugstr_ObjectAttributes(const OBJECT_ATTRIBUTES *oa);
 
 extern NTSTATUS NTDLL_queue_process_apc( HANDLE process, const apc_call_t *call, apc_result_t *result );
 extern NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UINT flags,
