@@ -122,20 +122,6 @@ INT16 WINAPI SetAbortProc16(HDC16 hdc16, ABORTPROC16 abrtprc)
     return TRUE;
 }
 
-/**********************************************************************
- *           SetAbortProc   (GDI32.@)
- *
- */
-INT WINAPI SetAbortProc(HDC hdc, ABORTPROC abrtprc)
-{
-    DC *dc = get_dc_ptr( hdc );
-
-    if (!dc) return FALSE;
-    dc->pAbortProc = abrtprc;
-    release_dc_ptr( dc );
-    return TRUE;
-}
-
 
 /****************** misc. printer related functions */
 
