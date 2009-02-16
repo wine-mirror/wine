@@ -118,8 +118,8 @@ BOOL WINAPI VWIN32_DeviceIoControl(DWORD dwIoControlCode,
     case VWIN32_DIOC_DOS_DRIVEINFO:
         {
             CONTEXT86 cxt;
-            DIOC_REGISTERS *pIn  = (DIOC_REGISTERS *)lpvInBuffer;
-            DIOC_REGISTERS *pOut = (DIOC_REGISTERS *)lpvOutBuffer;
+            DIOC_REGISTERS *pIn  = lpvInBuffer;
+            DIOC_REGISTERS *pOut = lpvOutBuffer;
             BYTE intnum = 0;
 
             TRACE( "Control '%s': "
