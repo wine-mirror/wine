@@ -106,8 +106,21 @@ static void check_font(const char* test, const LOGFONTA* lf, HFONT hfont)
         minlen++;
     minlen += FIELD_OFFSET(LOGFONTA, lfFaceName) + 1;
     ok(ret == sizeof(LOGFONTA) || ret == minlen, "%s: GetObject returned %d\n", test, ret);
-    ok(!memcmp(lf, &getobj_lf, FIELD_OFFSET(LOGFONTA, lfFaceName)), "%s: fonts don't match\n", test);
-    ok(!lstrcmpA(lf->lfFaceName, getobj_lf.lfFaceName),
+    ok(lf->lfHeight == getobj_lf.lfHeight, "lfHeight: expect %08x got %08x\n", lf->lfHeight, getobj_lf.lfHeight);
+    ok(lf->lfWidth == getobj_lf.lfWidth, "lfWidth: expect %08x got %08x\n", lf->lfWidth, getobj_lf.lfWidth);
+    ok(lf->lfEscapement == getobj_lf.lfEscapement, "lfEscapement: expect %08x got %08x\n", lf->lfEscapement, getobj_lf.lfEscapement);
+    ok(lf->lfOrientation == getobj_lf.lfOrientation, "lfOrientation: expect %08x got %08x\n", lf->lfOrientation, getobj_lf.lfOrientation);
+    ok(lf->lfWeight == getobj_lf.lfWeight, "lfWeight: expect %08x got %08x\n", lf->lfWeight, getobj_lf.lfWeight);
+    ok(lf->lfItalic == getobj_lf.lfItalic, "lfItalic: expect %02x got %02x\n", lf->lfItalic, getobj_lf.lfItalic);
+    ok(lf->lfUnderline == getobj_lf.lfUnderline, "lfUnderline: expect %02x got %02x\n", lf->lfUnderline, getobj_lf.lfUnderline);
+    ok(lf->lfStrikeOut == getobj_lf.lfStrikeOut, "lfStrikeOut: expect %02x got %02x\n", lf->lfStrikeOut, getobj_lf.lfStrikeOut);
+    ok(lf->lfCharSet == getobj_lf.lfCharSet, "lfCharSet: expect %02x got %02x\n", lf->lfCharSet, getobj_lf.lfCharSet);
+    ok(lf->lfOutPrecision == getobj_lf.lfOutPrecision, "lfOutPrecision: expect %02x got %02x\n", lf->lfOutPrecision, getobj_lf.lfOutPrecision);
+    ok(lf->lfClipPrecision == getobj_lf.lfClipPrecision, "lfClipPrecision: expect %02x got %02x\n", lf->lfClipPrecision, getobj_lf.lfClipPrecision);
+    ok(lf->lfQuality == getobj_lf.lfQuality, "lfQuality: expect %02x got %02x\n", lf->lfQuality, getobj_lf.lfQuality);
+    ok(lf->lfPitchAndFamily == getobj_lf.lfPitchAndFamily, "lfPitchAndFamily: expect %02x got %02x\n", lf->lfPitchAndFamily, getobj_lf.lfPitchAndFamily);
+    ok(!lstrcmpA(lf->lfFaceName, getobj_lf.lfFaceName) ||
+       broken(!memcmp(lf->lfFaceName, getobj_lf.lfFaceName, LF_FACESIZE-1)), /* win9x doesn't ensure '\0' termination */
        "%s: font names don't match: %s != %s\n", test, lf->lfFaceName, getobj_lf.lfFaceName);
 }
 
