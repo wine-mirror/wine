@@ -1171,7 +1171,7 @@ const char *debug_d3ddegree(WINED3DDEGREETYPE degree) {
     }
 }
 
-const char *debug_fixup_channel_source(enum fixup_channel_source source)
+static const char *debug_fixup_channel_source(enum fixup_channel_source source)
 {
     switch(source)
     {
@@ -1191,7 +1191,7 @@ const char *debug_fixup_channel_source(enum fixup_channel_source source)
     }
 }
 
-const char *debug_yuv_fixup(enum yuv_fixup yuv_fixup)
+static const char *debug_yuv_fixup(enum yuv_fixup yuv_fixup)
 {
     switch(yuv_fixup)
     {

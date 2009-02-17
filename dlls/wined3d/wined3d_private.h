@@ -2048,8 +2048,6 @@ const char *debug_glerror(GLenum error);
 const char *debug_d3dbasis(WINED3DBASISTYPE basis);
 const char *debug_d3ddegree(WINED3DDEGREETYPE order);
 const char* debug_d3dtop(WINED3DTEXTUREOP d3dtop);
-const char *debug_fixup_channel_source(enum fixup_channel_source source);
-const char *debug_yuv_fixup(enum yuv_fixup yuv_fixup);
 void dump_color_fixup_desc(struct color_fixup_desc fixup);
 const char *debug_surflocation(DWORD flag);
 
