@@ -8986,6 +8986,7 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
             nmlv.iItem = -1;
             nmlv.iSubItem = lpnmh->iItem;
             notify_listview(infoPtr, LVN_COLUMNCLICK, &nmlv);
+            notify_forward_header(infoPtr, lpnmh);
         }
 	break;
 
