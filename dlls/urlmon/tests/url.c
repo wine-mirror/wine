@@ -69,6 +69,12 @@ DEFINE_GUID(IID_IBindStatusCallbackHolder,0x79eac9cc,0xbaf9,0x11ce,0x8c,0x82,0x0
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define CHECK_CALLED_BROKEN(func) \
+    do { \
+        ok(called_ ## func || broken(!called_ ## func), "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
 #define CLEAR_CALLED(func) \
     expect_ ## func = called_ ## func = FALSE
 
@@ -313,7 +319,7 @@ static DWORD WINAPI thread_proc(PVOID arg)
         CHECK_CALLED(Obj_OnProgress_BEGINSYNCOPERATION);
         CHECK_CALLED(CreateInstance);
         CHECK_CALLED(PutProperty_MIMETYPEPROP);
-        CHECK_CALLED(PutProperty_CLASSIDPROP);
+        CHECK_CALLED_BROKEN(PutProperty_CLASSIDPROP);
         CHECK_CALLED(Load);
         CHECK_CALLED(Obj_OnProgress_ENDSYNCOPERATION);
         CHECK_CALLED(OnObjectAvailable);
@@ -612,7 +618,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         CHECK_CALLED(Obj_OnProgress_BEGINSYNCOPERATION);
         CHECK_CALLED(CreateInstance);
         CHECK_CALLED(PutProperty_MIMETYPEPROP);
-        CHECK_CALLED(PutProperty_CLASSIDPROP);
+        CHECK_CALLED_BROKEN(PutProperty_CLASSIDPROP);
         CHECK_CALLED(Load);
         CHECK_CALLED(Obj_OnProgress_ENDSYNCOPERATION);
         CHECK_CALLED(OnObjectAvailable);
