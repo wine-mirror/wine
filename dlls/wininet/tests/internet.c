@@ -244,6 +244,102 @@ static void test_get_cookie(void)
     ret ? "TRUE" : "FALSE", GetLastError());
 }
 
+
+static void test_complicated_cookie(void)
+{
+  DWORD len;
+  BOOL ret;
+
+  CHAR buffer[1024];
+
+  ret = InternetSetCookie("http://www.example.com/bar",NULL,"A=B; domain=.example.com");
+  ok(ret == TRUE,"InternetSetCookie failed\n");
+  ret = InternetSetCookie("http://www.example.com/bar",NULL,"C=D; domain=.example.com; path=/");
+  ok(ret == TRUE,"InternetSetCookie failed\n");
+
+  /* Technically illegal! domain should require 2 dots, but native wininet accepts it */
+  ret = InternetSetCookie("http://www.example.com",NULL,"E=F; domain=example.com");
+  ok(ret == TRUE,"InternetSetCookie failed\n");
+  ret = InternetSetCookie("http://www.example.com",NULL,"G=H; domain=.example.com; path=/foo");
+  ok(ret == TRUE,"InternetSetCookie failed\n");
+  ret = InternetSetCookie("http://www.example.com/bar.html",NULL,"I=J; domain=.example.com");
+  ok(ret == TRUE,"InternetSetCookie failed\n");
+  ret = InternetSetCookie("http://www.example.com/bar/",NULL,"K=L; domain=.example.com");
+  ok(ret == TRUE,"InternetSetCookie failed\n");
+  ret = InternetSetCookie("http://www.example.com/bar/",NULL,"M=N; domain=.example.com; path=/foo/");
+  ok(ret == TRUE,"InternetSetCookie failed\n");
+
+  len = 1024;
+  ret = InternetGetCookie("http://testing.example.com", NULL, buffer, &len);
+  ok(strstr(buffer,"A=B")!=NULL,"A=B missing\n");
+  ok(strstr(buffer,"C=D")!=NULL,"C=D missing\n");
+  ok(strstr(buffer,"E=F")!=NULL,"E=F missing\n");
+  ok(strstr(buffer,"G=H")==NULL,"G=H present\n");
+  ok(strstr(buffer,"I=J")!=NULL,"I=J missing\n");
+  ok(strstr(buffer,"K=L")==NULL,"K=L present\n");
+  ok(strstr(buffer,"M=N")==NULL,"M=N present\n");
+
+  len = 1024;
+  ret = InternetGetCookie("http://testing.example.com/foobar", NULL, buffer, &len);
+  ok(strstr(buffer,"A=B")!=NULL,"A=B missing\n");
+  ok(strstr(buffer,"C=D")!=NULL,"C=D missing\n");
+  ok(strstr(buffer,"E=F")!=NULL,"E=F missing\n");
+  ok(strstr(buffer,"G=H")==NULL,"G=H present\n");
+  ok(strstr(buffer,"I=J")!=NULL,"I=J missing\n");
+  ok(strstr(buffer,"K=L")==NULL,"K=L present\n");
+  ok(strstr(buffer,"M=N")==NULL,"M=N present\n");
+
+  len = 1024;
+  ret = InternetGetCookie("http://testing.example.com/foobar/", NULL, buffer, &len);
+  ok(strstr(buffer,"A=B")!=NULL,"A=B missing\n");
+  ok(strstr(buffer,"C=D")!=NULL,"C=D missing\n");
+  ok(strstr(buffer,"E=F")!=NULL,"E=F missing\n");
+  ok(strstr(buffer,"G=H")!=NULL,"G=H missing\n");
+  ok(strstr(buffer,"I=J")!=NULL,"I=J missing\n");
+  ok(strstr(buffer,"K=L")==NULL,"K=L present\n");
+  ok(strstr(buffer,"M=N")==NULL,"M=N present\n");
+
+  len = 1024;
+  ret = InternetGetCookie("http://testing.example.com/foo/bar", NULL, buffer, &len);
+  ok(strstr(buffer,"A=B")!=NULL,"A=B missing\n");
+  ok(strstr(buffer,"C=D")!=NULL,"C=D missing\n");
+  ok(strstr(buffer,"E=F")!=NULL,"E=F missing\n");
+  ok(strstr(buffer,"G=H")!=NULL,"G=H missing\n");
+  ok(strstr(buffer,"I=J")!=NULL,"I=J missing\n");
+  ok(strstr(buffer,"K=L")==NULL,"K=L present\n");
+  ok(strstr(buffer,"M=N")!=NULL,"M=N missing\n");
+
+  len = 1024;
+  ret = InternetGetCookie("http://testing.example.com/barfoo", NULL, buffer, &len);
+  ok(strstr(buffer,"A=B")!=NULL,"A=B missing\n");
+  ok(strstr(buffer,"C=D")!=NULL,"C=D missing\n");
+  ok(strstr(buffer,"E=F")!=NULL,"E=F missing\n");
+  ok(strstr(buffer,"G=H")==NULL,"G=H present\n");
+  ok(strstr(buffer,"I=J")!=NULL,"I=J missing\n");
+  ok(strstr(buffer,"K=L")==NULL,"K=L present\n");
+  ok(strstr(buffer,"M=N")==NULL,"M=N present\n");
+
+  len = 1024;
+  ret = InternetGetCookie("http://testing.example.com/barfoo/", NULL, buffer, &len);
+  ok(strstr(buffer,"A=B")!=NULL,"A=B missing\n");
+  ok(strstr(buffer,"C=D")!=NULL,"C=D missing\n");
+  ok(strstr(buffer,"E=F")!=NULL,"E=F missing\n");
+  ok(strstr(buffer,"G=H")==NULL,"G=H present\n");
+  ok(strstr(buffer,"I=J")!=NULL,"I=J missing\n");
+  ok(strstr(buffer,"K=L")==NULL,"K=L present\n");
+  ok(strstr(buffer,"M=N")==NULL,"M=N present\n");
+
+  len = 1024;
+  ret = InternetGetCookie("http://testing.example.com/bar/foo", NULL, buffer, &len);
+  ok(strstr(buffer,"A=B")!=NULL,"A=B missing\n");
+  ok(strstr(buffer,"C=D")!=NULL,"C=D missing\n");
+  ok(strstr(buffer,"E=F")!=NULL,"E=F missing\n");
+  ok(strstr(buffer,"G=H")==NULL,"G=H present\n");
+  ok(strstr(buffer,"I=J")!=NULL,"I=J missing\n");
+  ok(strstr(buffer,"K=L")!=NULL,"K=L missing\n");
+  ok(strstr(buffer,"M=N")==NULL,"M=N present\n");
+}
+
 static void test_null(void)
 {
   HINTERNET hi, hc;
@@ -683,6 +779,7 @@ START_TEST(internet)
     test_InternetCanonicalizeUrlA();
     test_InternetQueryOptionA();
     test_get_cookie();
+    test_complicated_cookie();
     test_version();
     test_null();
 
