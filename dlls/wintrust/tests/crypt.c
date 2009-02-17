@@ -469,13 +469,13 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
     hcatinfo = pCryptCATAdminAddCatalog(NULL, NULL, NULL, 0);
     error = GetLastError();
     ok(hcatinfo == NULL, "CryptCATAdminAddCatalog succeeded\n");
-    ok(error == ERROR_INVALID_PARAMETER, "got %u expected ERROR_INVALID_PARAMTER\n", GetLastError());
+    ok(error == ERROR_INVALID_PARAMETER, "got %u expected ERROR_INVALID_PARAMETER\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hcatinfo = pCryptCATAdminAddCatalog(hcatadmin, NULL, NULL, 0);
     error = GetLastError();
     ok(hcatinfo == NULL, "CryptCATAdminAddCatalog succeeded\n");
-    ok(error == ERROR_INVALID_PARAMETER, "got %u expected INVALID_PARAMTER\n", GetLastError());
+    ok(error == ERROR_INVALID_PARAMETER, "got %u expected ERROR_INVALID_PARAMETER\n", GetLastError());
 
     MultiByteToWideChar(0, 0, tmpfile, -1, tmpfileW, MAX_PATH);
 
@@ -491,7 +491,7 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
     hcatinfo = pCryptCATAdminAddCatalog(hcatadmin, tmpfileW, basenameW, 1);
     error = GetLastError();
     ok(hcatinfo == NULL, "CryptCATAdminAddCatalog succeeded\n");
-    ok(error == ERROR_INVALID_PARAMETER, "got %u expected ERROR_INVALID_PARAMTER\n", GetLastError());
+    ok(error == ERROR_INVALID_PARAMETER, "got %u expected ERROR_INVALID_PARAMETER\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hcatinfo = pCryptCATAdminAddCatalog(hcatadmin, tmpfileW, NULL, 0);
