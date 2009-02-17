@@ -348,9 +348,47 @@ static HRESULT WINAPI InputProcessorProfiles_IsEnabledLanguageProfile(
         ITfInputProcessorProfiles *iface, REFCLSID rclsid, LANGID langid,
         REFGUID guidProfile, BOOL *pfEnable)
 {
+    HKEY key;
+    WCHAR buf[39];
+    WCHAR buf2[39];
+    WCHAR fullkey[168];
+    ULONG res;
+
     InputProcessorProfiles *This = (InputProcessorProfiles*)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p) %s, %i, %s, %p\n",This,debugstr_guid(rclsid),langid,debugstr_guid(guidProfile),pfEnable);
+
+    if (!pfEnable)
+        return E_INVALIDARG;
+
+    StringFromGUID2(rclsid, buf, 39);
+    StringFromGUID2(guidProfile, buf2, 39);
+    sprintfW(fullkey,szwFullLangfmt,szwSystemTIPKey,buf,szwLngp,langid,buf2);
+
+    res = RegOpenKeyExW(HKEY_CURRENT_USER, fullkey, 0, KEY_READ | KEY_WRITE, &key);
+
+    if (!res)
+    {
+        DWORD count = sizeof(DWORD);
+        res = RegQueryValueExW(key, szwEnabled, 0, NULL, (LPBYTE)pfEnable, &count);
+        RegCloseKey(key);
+    }
+
+    if (res)  /* Try Default */
+    {
+        res = RegOpenKeyExW(HKEY_LOCAL_MACHINE, fullkey, 0, KEY_READ | KEY_WRITE, &key);
+
+        if (!res)
+        {
+            DWORD count = sizeof(DWORD);
+            res = RegQueryValueExW(key, szwEnabled, 0, NULL, (LPBYTE)pfEnable, &count);
+            RegCloseKey(key);
+        }
+    }
+
+    if (!res)
+        return S_OK;
+    else
+        return E_FAIL;
 }
 
 static HRESULT WINAPI InputProcessorProfiles_EnableLanguageProfileByDefault(
