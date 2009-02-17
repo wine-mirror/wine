@@ -330,7 +330,7 @@ MMRESULT WINAPI acmStreamPrepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
     padsh->pbPreparedDst = 0;
     padsh->cbPreparedDstLength = 0;
 
-    ret = MSACM_Message((HACMDRIVER)was->pDrv, ACMDM_STREAM_PREPARE, (LPARAM)&was->drvInst, (DWORD)padsh);
+    ret = MSACM_Message((HACMDRIVER)was->pDrv, ACMDM_STREAM_PREPARE, (LPARAM)&was->drvInst, (LPARAM)padsh);
     if (ret == MMSYSERR_NOERROR || ret == MMSYSERR_NOTSUPPORTED) {
 	ret = MMSYSERR_NOERROR;
 	padsh->fdwStatus &= ~(ACMSTREAMHEADER_STATUSF_DONE|ACMSTREAMHEADER_STATUSF_INQUEUE);

@@ -137,9 +137,9 @@ MMRESULT WINAPI acmFilterDetailsW(HACMDRIVER had, PACMFILTERDETAILSW pafd,
 }
 
 struct MSACM_FilterEnumWtoA_Instance {
-    PACMFILTERDETAILSA	pafda;
-    DWORD		dwInstance;
-    ACMFILTERENUMCBA 	fnCallback;
+    PACMFILTERDETAILSA pafda;
+    DWORD_PTR          dwInstance;
+    ACMFILTERENUMCBA   fnCallback;
 };
 
 static BOOL CALLBACK MSACM_FilterEnumCallbackWtoA(HACMDRIVERID hadid,
@@ -183,13 +183,13 @@ MMRESULT WINAPI acmFilterEnumA(HACMDRIVER had, PACMFILTERDETAILSA pafda,
     afei.fnCallback = fnCallback;
 
     return acmFilterEnumW(had, &afdw, MSACM_FilterEnumCallbackWtoA,
-			  (DWORD)&afei, fdwEnum);
+                          (DWORD_PTR)&afei, fdwEnum);
 }
 
 static BOOL MSACM_FilterEnumHelper(PWINE_ACMDRIVERID padid, HACMDRIVER had,
 				   PACMFILTERDETAILSW pafd,
-				   ACMFILTERENUMCBW fnCallback, DWORD dwInstance,
-				   DWORD fdwEnum)
+                                   ACMFILTERENUMCBW fnCallback,
+                                   DWORD_PTR dwInstance, DWORD fdwEnum)
 {
     ACMFILTERTAGDETAILSW	aftd;
     unsigned int i, j;
@@ -368,9 +368,9 @@ MMRESULT WINAPI acmFilterTagDetailsW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd
 }
 
 struct MSACM_FilterTagEnumWtoA_Instance {
-    PACMFILTERTAGDETAILSA	paftda;
-    DWORD			dwInstance;
-    ACMFILTERTAGENUMCBA 	fnCallback;
+    PACMFILTERTAGDETAILSA paftda;
+    DWORD_PTR             dwInstance;
+    ACMFILTERTAGENUMCBA   fnCallback;
 };
 
 static BOOL CALLBACK MSACM_FilterTagEnumCallbackWtoA(HACMDRIVERID hadid,
@@ -414,7 +414,7 @@ MMRESULT WINAPI acmFilterTagEnumA(HACMDRIVER had, PACMFILTERTAGDETAILSA paftda,
     aftei.fnCallback = fnCallback;
 
     return acmFilterTagEnumW(had, &aftdw, MSACM_FilterTagEnumCallbackWtoA,
-			     (DWORD)&aftei, fdwEnum);
+                             (DWORD_PTR)&aftei, fdwEnum);
 }
 
 /***********************************************************************

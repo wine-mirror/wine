@@ -62,10 +62,10 @@ static BOOL CALLBACK MSACM_FillFormatTagsCB(HACMDRIVERID hadid,
     switch (affd->mode) {
     case WINE_ACMFF_TAG:
 	if (SendDlgItemMessageA(affd->hWnd, IDD_ACMFORMATCHOOSE_CMB_FORMATTAG,
-				CB_FINDSTRINGEXACT,
-				(WPARAM)-1, (LPARAM)paftd->szFormatTag) == CB_ERR)
+                                CB_FINDSTRINGEXACT, -1,
+                                (LPARAM)paftd->szFormatTag) == CB_ERR)
 	    SendDlgItemMessageA(affd->hWnd, IDD_ACMFORMATCHOOSE_CMB_FORMATTAG,
-				CB_ADDSTRING, 0, (DWORD)paftd->szFormatTag);
+                                CB_ADDSTRING, 0, (LPARAM)paftd->szFormatTag);
 	break;
     case WINE_ACMFF_FORMAT:
 	if (strcmp(affd->szFormatTag, paftd->szFormatTag) == 0) {
@@ -97,7 +97,7 @@ static BOOL CALLBACK MSACM_FillFormatTagsCB(HACMDRIVERID hadid,
 				  (afd.pwfx->nAvgBytesPerSec + 512) / 1024);
 			SendDlgItemMessageA(affd->hWnd,
 					    IDD_ACMFORMATCHOOSE_CMB_FORMAT,
-					    CB_ADDSTRING, 0, (DWORD)buffer);
+                                            CB_ADDSTRING, 0, (LPARAM)buffer);
 		    }
 		}
 		acmDriverClose(had, 0);
@@ -145,7 +145,7 @@ static BOOL MSACM_FillFormatTags(HWND hWnd)
     affd.hWnd = hWnd;
     affd.mode = WINE_ACMFF_TAG;
 
-    acmFormatTagEnumA(NULL, &aftd, MSACM_FillFormatTagsCB, (DWORD)&affd, 0);
+    acmFormatTagEnumA(NULL, &aftd, MSACM_FillFormatTagsCB, (DWORD_PTR)&affd, 0);
     SendDlgItemMessageA(hWnd, IDD_ACMFORMATCHOOSE_CMB_FORMATTAG, CB_SETCURSEL, 0, 0);
     return TRUE;
 }
@@ -166,9 +166,9 @@ static BOOL MSACM_FillFormat(HWND hWnd)
 			CB_GETLBTEXT,
 			SendDlgItemMessageA(hWnd, IDD_ACMFORMATCHOOSE_CMB_FORMATTAG,
 					    CB_GETCURSEL, 0, 0),
-			(DWORD)affd.szFormatTag);
+                        (LPARAM)affd.szFormatTag);
 
-    acmFormatTagEnumA(NULL, &aftd, MSACM_FillFormatTagsCB, (DWORD)&affd, 0);
+    acmFormatTagEnumA(NULL, &aftd, MSACM_FillFormatTagsCB, (DWORD_PTR)&affd, 0);
     SendDlgItemMessageA(hWnd, IDD_ACMFORMATCHOOSE_CMB_FORMAT, CB_SETCURSEL, 0, 0);
     return TRUE;
 }
@@ -189,9 +189,9 @@ static MMRESULT MSACM_GetWFX(HWND hWnd, PACMFORMATCHOOSEA afc)
 			CB_GETLBTEXT,
 			SendDlgItemMessageA(hWnd, IDD_ACMFORMATCHOOSE_CMB_FORMATTAG,
 					    CB_GETCURSEL, 0, 0),
-			(DWORD)affd.szFormatTag);
+                        (LPARAM)affd.szFormatTag);
 
-    acmFormatTagEnumA(NULL, &aftd, MSACM_FillFormatTagsCB, (DWORD)&affd, 0);
+    acmFormatTagEnumA(NULL, &aftd, MSACM_FillFormatTagsCB, (DWORD_PTR)&affd, 0);
     return affd.ret;
 }
 
@@ -377,9 +377,9 @@ MMRESULT WINAPI acmFormatDetailsW(HACMDRIVER had, PACMFORMATDETAILSW pafd, DWORD
 }
 
 struct MSACM_FormatEnumWtoA_Instance {
-    PACMFORMATDETAILSA	pafda;
-    DWORD		dwInstance;
-    ACMFORMATENUMCBA 	fnCallback;
+    PACMFORMATDETAILSA pafda;
+    DWORD_PTR          dwInstance;
+    ACMFORMATENUMCBA   fnCallback;
 };
 
 static BOOL CALLBACK MSACM_FormatEnumCallbackWtoA(HACMDRIVERID hadid,
@@ -429,7 +429,7 @@ MMRESULT WINAPI acmFormatEnumA(HACMDRIVER had, PACMFORMATDETAILSA pafda,
     afei.fnCallback = fnCallback;
 
     return acmFormatEnumW(had, &afdw, MSACM_FormatEnumCallbackWtoA,
-			  (DWORD)&afei, fdwEnum);
+                          (DWORD_PTR)&afei, fdwEnum);
 }
 
 /***********************************************************************
@@ -437,8 +437,8 @@ MMRESULT WINAPI acmFormatEnumA(HACMDRIVER had, PACMFORMATDETAILSA pafda,
  */
 static BOOL MSACM_FormatEnumHelper(PWINE_ACMDRIVERID padid, HACMDRIVER had,
 				   PACMFORMATDETAILSW pafd, PWAVEFORMATEX pwfxRef,
-				   ACMFORMATENUMCBW fnCallback, DWORD dwInstance,
-				   DWORD fdwEnum)
+                                   ACMFORMATENUMCBW fnCallback,
+                                   DWORD_PTR dwInstance, DWORD fdwEnum)
 {
     ACMFORMATTAGDETAILSW	aftd;
     unsigned int			i, j;
@@ -705,9 +705,9 @@ MMRESULT WINAPI acmFormatTagDetailsW(HACMDRIVER had, PACMFORMATTAGDETAILSW paftd
 }
 
 struct MSACM_FormatTagEnumWtoA_Instance {
-    PACMFORMATTAGDETAILSA	paftda;
-    DWORD			dwInstance;
-    ACMFORMATTAGENUMCBA 	fnCallback;
+    PACMFORMATTAGDETAILSA paftda;
+    DWORD_PTR             dwInstance;
+    ACMFORMATTAGENUMCBA   fnCallback;
 };
 
 static BOOL CALLBACK MSACM_FormatTagEnumCallbackWtoA(HACMDRIVERID hadid,
@@ -760,7 +760,7 @@ MMRESULT WINAPI acmFormatTagEnumA(HACMDRIVER had, PACMFORMATTAGDETAILSA paftda,
     aftei.fnCallback = fnCallback;
 
     return acmFormatTagEnumW(had, &aftdw, MSACM_FormatTagEnumCallbackWtoA,
-			     (DWORD)&aftei, fdwEnum);
+                             (DWORD_PTR)&aftei, fdwEnum);
 }
 
 /***********************************************************************

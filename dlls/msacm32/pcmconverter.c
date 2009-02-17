@@ -894,7 +894,7 @@ static	LRESULT	PCM_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
         return MMSYSERR_NOMEM;
     }
 
-    adsi->dwDriver = (DWORD)apd;
+    adsi->dwDriver = (DWORD_PTR)apd;
     adsi->fdwDriver = 0;
 
     if (adsi->pwfxSrc->wBitsPerSample == 16) idx += 8;
