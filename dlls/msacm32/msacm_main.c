@@ -28,7 +28,7 @@
 #include "mmreg.h"
 #include "msacm.h"
 #include "msacmdrv.h"
-#include "wineacm.h"
+#include "wineacm16.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msacm);
