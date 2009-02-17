@@ -2588,7 +2588,7 @@ static void test_register_local_server(void)
 
     do
     {
-        wait = MsgWaitForMultipleObjects(1, &quit_event, FALSE, INFINITE, QS_ALLINPUT);
+        wait = MsgWaitForMultipleObjects(1, &quit_event, FALSE, 30000, QS_ALLINPUT);
         if (wait == WAIT_OBJECT_0+1)
         {
             MSG msg;
@@ -2603,6 +2603,7 @@ static void test_register_local_server(void)
     }
     while (wait == WAIT_OBJECT_0+1);
 
+    ok( wait == WAIT_OBJECT_0, "quit event wait timed out\n" );
     hr = CoRevokeClassObject(cookie);
     ok_ole_success(hr, CoRevokeClassObject);
 }
