@@ -2290,7 +2290,7 @@ void WCMD_type (WCHAR *command) {
         static const WCHAR fmt[] = {'\n','%','s','\n','\n','\0'};
         WCMD_output(fmt, thisArg);
       }
-      while (WCMD_ReadFile (h, buffer, sizeof(buffer)/sizeof(WCHAR), &count, NULL)) {
+      while (WCMD_ReadFile (h, buffer, sizeof(buffer)/sizeof(WCHAR) - 1, &count, NULL)) {
         if (count == 0) break;	/* ReadFile reports success on EOF! */
         buffer[count] = 0;
         WCMD_output_asis (buffer);
