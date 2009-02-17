@@ -1499,6 +1499,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
     BITMAP bm;
     GpStatus retval;
     PixelFormat format;
+    BYTE* bits;
 
     TRACE("%p %p %p\n", hbm, hpal, bitmap);
 
@@ -1539,8 +1540,16 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
             return InvalidParameter;
     }
 
-    retval = GdipCreateBitmapFromScan0(bm.bmWidth, bm.bmHeight, bm.bmWidthBytes,
-        format, bm.bmBits, bitmap);
+    if (bm.bmBits)
+        bits = (BYTE*)bm.bmBits + (bm.bmHeight - 1) * bm.bmWidthBytes;
+    else
+    {
+        FIXME("can only get image data from DIB sections\n");
+        bits = NULL;
+    }
+
+    retval = GdipCreateBitmapFromScan0(bm.bmWidth, bm.bmHeight, -bm.bmWidthBytes,
+        format, bits, bitmap);
 
     return retval;
 }
