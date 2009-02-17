@@ -129,10 +129,8 @@ static void test_Scan0(void)
 
     bm = NULL;
     stat = GdipCreateBitmapFromScan0(10, 10, -8, PixelFormat24bppRGB, buff, &bm);
-    todo_wine{
-        expect(Ok, stat);
-        ok(NULL != bm, "Expected bitmap to be initialized\n");
-    }
+    expect(Ok, stat);
+    ok(NULL != bm, "Expected bitmap to be initialized\n");
     if (stat == Ok)
         GdipDisposeImage((GpImage*)bm);
 
