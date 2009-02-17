@@ -2040,17 +2040,17 @@ static void test_WM_QUIT_handling(void)
     }
 }
 
-static SIZE_T round_heap_size(SIZE_T size)
+static SIZE_T round_global_size(SIZE_T size)
 {
-    static SIZE_T heap_size_alignment = -1;
-    if (heap_size_alignment == -1)
+    static SIZE_T global_size_alignment = -1;
+    if (global_size_alignment == -1)
     {
-        void *p = HeapAlloc(GetProcessHeap(), 0, 1);
-        heap_size_alignment = HeapSize(GetProcessHeap(), 0, p);
-        HeapFree(GetProcessHeap(), 0, p);
+        void *p = GlobalAlloc(GMEM_FIXED, 1);
+        global_size_alignment = GlobalSize(p);
+        GlobalFree(p);
     }
 
-    return ((size + heap_size_alignment - 1) & ~(heap_size_alignment - 1));
+    return ((size + global_size_alignment - 1) & ~(global_size_alignment - 1));
 }
 
 static void test_freethreadedmarshaldata(IStream *pStream, MSHCTX mshctx, void *ptr, DWORD mshlflags)
@@ -2069,9 +2069,9 @@ static void test_freethreadedmarshaldata(IStream *pStream, MSHCTX mshctx, void *
 
     if (mshctx == MSHCTX_INPROC)
     {
-        DWORD expected_size = round_heap_size(3*sizeof(DWORD) + sizeof(GUID));
+        DWORD expected_size = round_global_size(3*sizeof(DWORD) + sizeof(GUID));
         ok(size == expected_size ||
-           broken(size == round_heap_size(2*sizeof(DWORD))) /* Win9x & NT4 */,
+           broken(size == round_global_size(2*sizeof(DWORD))) /* Win9x & NT4 */,
            "size should have been %d instead of %d\n", expected_size, size);
 
         ok(*(DWORD *)marshal_data == mshlflags, "expected 0x%x, but got 0x%x for mshctx\n", mshlflags, *(DWORD *)marshal_data);

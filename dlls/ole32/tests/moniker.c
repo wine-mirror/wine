@@ -82,17 +82,17 @@ static void UnlockModule(void)
     InterlockedDecrement(&cLocks);
 }
 
-static SIZE_T round_heap_size(SIZE_T size)
+static SIZE_T round_global_size(SIZE_T size)
 {
-    static SIZE_T heap_size_alignment = -1;
-    if (heap_size_alignment == -1)
+    static SIZE_T global_size_alignment = -1;
+    if (global_size_alignment == -1)
     {
-        void *p = HeapAlloc(GetProcessHeap(), 0, 1);
-        heap_size_alignment = HeapSize(GetProcessHeap(), 0, p);
-        HeapFree(GetProcessHeap(), 0, p);
+        void *p = GlobalAlloc(GMEM_FIXED, 1);
+        global_size_alignment = GlobalSize(p);
+        GlobalFree(p);
     }
 
-    return ((size + heap_size_alignment - 1) & ~(heap_size_alignment - 1));
+    return ((size + global_size_alignment - 1) & ~(global_size_alignment - 1));
 }
 
 static HRESULT WINAPI Test_IClassFactory_QueryInterface(
@@ -1220,12 +1220,12 @@ static void test_moniker(
     moniker_data = GlobalLock(hglobal);
 
     /* first check we have the right amount of data */
-    ok(moniker_size == round_heap_size(sizeof_expected_moniker_saved_data),
+    ok(moniker_size == round_global_size(sizeof_expected_moniker_saved_data),
         "%s: Size of saved data differs (expected %d, actual %d)\n",
-        testname, (DWORD)round_heap_size(sizeof_expected_moniker_saved_data), moniker_size);
+        testname, (DWORD)round_global_size(sizeof_expected_moniker_saved_data), moniker_size);
 
     /* then do a byte-by-byte comparison */
-    for (i = 0; i < min(moniker_size, round_heap_size(sizeof_expected_moniker_saved_data)); i++)
+    for (i = 0; i < min(moniker_size, round_global_size(sizeof_expected_moniker_saved_data)); i++)
     {
         if (expected_moniker_saved_data[i] != moniker_data[i])
         {
@@ -1266,14 +1266,14 @@ static void test_moniker(
     moniker_data = GlobalLock(hglobal);
 
     /* first check we have the right amount of data */
-    ok(moniker_size == round_heap_size(sizeof_expected_moniker_marshal_data),
+    ok(moniker_size == round_global_size(sizeof_expected_moniker_marshal_data),
         "%s: Size of marshaled data differs (expected %d, actual %d)\n",
-        testname, (DWORD)round_heap_size(sizeof_expected_moniker_marshal_data), moniker_size);
+        testname, (DWORD)round_global_size(sizeof_expected_moniker_marshal_data), moniker_size);
 
     /* then do a byte-by-byte comparison */
     if (expected_moniker_marshal_data)
     {
-        for (i = 0; i < min(moniker_size, round_heap_size(sizeof_expected_moniker_marshal_data)); i++)
+        for (i = 0; i < min(moniker_size, round_global_size(sizeof_expected_moniker_marshal_data)); i++)
         {
             if (expected_moniker_marshal_data[i] != moniker_data[i])
             {
