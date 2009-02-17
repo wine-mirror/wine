@@ -329,73 +329,18 @@ static void HTTP_ProcessCookies( LPWININETHTTPREQW lpwhr )
 
         if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_COOKIES) && setCookieHeader->lpszValue)
         {
-            int nPosStart = 0, nPosEnd = 0, len;
-            static const WCHAR szFmt[] = { 'h','t','t','p',':','/','/','%','s','/',0};
+            int len;
+            static const WCHAR szFmt[] = { 'h','t','t','p',':','/','/','%','s','%','s',0};
+            LPWSTR buf_url;
+            LPHTTPHEADERW Host;
 
-            while (setCookieHeader->lpszValue[nPosEnd] != '\0')
-            {
-                LPWSTR buf_cookie, cookie_name, cookie_data;
-                LPWSTR buf_url;
-                LPWSTR domain = NULL;
-                LPHTTPHEADERW Host;
+            Host = HTTP_GetHeader(lpwhr,szHost);
+            len = lstrlenW(Host->lpszValue) + 9 + lstrlenW(lpwhr->lpszPath);
+            buf_url = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+            sprintfW(buf_url, szFmt, Host->lpszValue, lpwhr->lpszPath);
+            InternetSetCookieW(buf_url, NULL, setCookieHeader->lpszValue);
 
-                int nEqualPos = 0;
-                while (setCookieHeader->lpszValue[nPosEnd] != ';' && setCookieHeader->lpszValue[nPosEnd] != ',' &&
-                       setCookieHeader->lpszValue[nPosEnd] != '\0')
-                {
-                    nPosEnd++;
-                }
-                if (setCookieHeader->lpszValue[nPosEnd] == ';')
-                {
-                    /* fixme: not case sensitive, strcasestr is gnu only */
-                    int nDomainPosEnd = 0;
-                    int nDomainPosStart = 0, nDomainLength = 0;
-                    static const WCHAR szDomain[] = {'d','o','m','a','i','n','=',0};
-                    LPWSTR lpszDomain = strstrW(&setCookieHeader->lpszValue[nPosEnd], szDomain);
-                    if (lpszDomain)
-                    { /* they have specified their own domain, lets use it */
-                        while (lpszDomain[nDomainPosEnd] != ';' && lpszDomain[nDomainPosEnd] != ',' &&
-                               lpszDomain[nDomainPosEnd] != '\0')
-                        {
-                            nDomainPosEnd++;
-                        }
-                        nDomainPosStart = strlenW(szDomain);
-                        nDomainLength = (nDomainPosEnd - nDomainPosStart) + 1;
-                        domain = HeapAlloc(GetProcessHeap(), 0, (nDomainLength + 1)*sizeof(WCHAR));
-                        lstrcpynW(domain, &lpszDomain[nDomainPosStart], nDomainLength + 1);
-                    }
-                }
-                if (setCookieHeader->lpszValue[nPosEnd] == '\0') break;
-                buf_cookie = HeapAlloc(GetProcessHeap(), 0, ((nPosEnd - nPosStart) + 1)*sizeof(WCHAR));
-                lstrcpynW(buf_cookie, &setCookieHeader->lpszValue[nPosStart], (nPosEnd - nPosStart) + 1);
-                TRACE("%s\n", debugstr_w(buf_cookie));
-                while (buf_cookie[nEqualPos] != '=' && buf_cookie[nEqualPos] != '\0')
-                {
-                    nEqualPos++;
-                }
-                if (buf_cookie[nEqualPos] == '\0' || buf_cookie[nEqualPos + 1] == '\0')
-                {
-                    HeapFree(GetProcessHeap(), 0, buf_cookie);
-                    break;
-                }
-
-                cookie_name = HeapAlloc(GetProcessHeap(), 0, (nEqualPos + 1)*sizeof(WCHAR));
-                lstrcpynW(cookie_name, buf_cookie, nEqualPos + 1);
-                cookie_data = &buf_cookie[nEqualPos + 1];
-
-                Host = HTTP_GetHeader(lpwhr,szHost);
-                len = lstrlenW((domain ? domain : (Host?Host->lpszValue:NULL))) +
-                    strlenW(lpwhr->lpszPath) + 9;
-                buf_url = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-                sprintfW(buf_url, szFmt, (domain ? domain : (Host?Host->lpszValue:NULL))); /* FIXME PATH!!! */
-                InternetSetCookieW(buf_url, cookie_name, cookie_data);
-
-                HeapFree(GetProcessHeap(), 0, buf_url);
-                HeapFree(GetProcessHeap(), 0, buf_cookie);
-                HeapFree(GetProcessHeap(), 0, cookie_name);
-                HeapFree(GetProcessHeap(), 0, domain);
-                nPosStart = nPosEnd;
-            }
+            HeapFree(GetProcessHeap(), 0, buf_url);
         }
         numCookies++;
     }
@@ -3249,14 +3194,14 @@ static BOOL HTTP_SecureProxyConnect(LPWININETHTTPREQW lpwhr)
 
 static void HTTP_InsertCookies(LPWININETHTTPREQW lpwhr)
 {
-    static const WCHAR szUrlForm[] = {'h','t','t','p',':','/','/','%','s',0};
+    static const WCHAR szUrlForm[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
     LPWSTR lpszCookies, lpszUrl = NULL;
     DWORD nCookieSize, size;
     LPHTTPHEADERW Host = HTTP_GetHeader(lpwhr,szHost);
 
-    size = (strlenW(Host->lpszValue) + strlenW(szUrlForm)) * sizeof(WCHAR);
+    size = (strlenW(Host->lpszValue) + strlenW(szUrlForm) + strlenW(lpwhr->lpszPath)) * sizeof(WCHAR);
     if (!(lpszUrl = HeapAlloc(GetProcessHeap(), 0, size))) return;
-    sprintfW( lpszUrl, szUrlForm, Host->lpszValue );
+    sprintfW( lpszUrl, szUrlForm, Host->lpszValue, lpwhr->lpszPath);
 
     if (InternetGetCookieW(lpszUrl, NULL, NULL, &nCookieSize))
     {
