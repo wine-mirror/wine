@@ -82,7 +82,7 @@ static inline void VARIANT_CopyData(const VARIANT *srcVar, VARTYPE vt, void *pOu
   else if (fract == -0.5) { typ is_odd = (typ)whole & 1; res = whole - is_odd; } \
   else if (fract > -0.5) res = (typ)whole; \
   else res = (typ)whole - (typ)1; \
-} while(0);
+} while(0)
 
 
 /* Coerce VT_BSTR to a numeric type */
@@ -3980,9 +3980,9 @@ HRESULT WINAPI VarCyRound(const CY cyIn, int cDecimals, CY* pCyOut)
 
     _VarR8FromCy(cyIn, &d);
     d = d * div;
-    VARIANT_DutchRound(LONGLONG, d, pCyOut->int64)
+    VARIANT_DutchRound(LONGLONG, d, pCyOut->int64);
     d = (double)pCyOut->int64 / div * CY_MULTIPLIER_F;
-    VARIANT_DutchRound(LONGLONG, d, pCyOut->int64)
+    VARIANT_DutchRound(LONGLONG, d, pCyOut->int64);
     return S_OK;
   }
 }
