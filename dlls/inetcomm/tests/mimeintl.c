@@ -52,7 +52,9 @@ static void test_create(void)
         /* test to show that the object is a singleton with
            a reference held by the dll. */
         ref = IMimeInternational_Release(internat2);
-        ok(ref == 2, "got %d\n", ref);
+        ok(ref == 2 ||
+           ref == 1, /* win95 - object is a static singleton */
+           "got %d\n", ref);
 
         ref = IMimeInternational_Release(internat);
         ok(ref == 1, "got %d\n", ref);
