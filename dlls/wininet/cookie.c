@@ -181,6 +181,7 @@ static cookie_domain *COOKIE_addDomain(LPCWSTR domain, LPCWSTR path)
 static BOOL COOKIE_crackUrlSimple(LPCWSTR lpszUrl, LPWSTR hostName, int hostNameLen, LPWSTR path, int pathLen)
 {
     URL_COMPONENTSW UrlComponents;
+    BOOL rc;
 
     UrlComponents.lpszExtraInfo = NULL;
     UrlComponents.lpszPassword = NULL;
@@ -195,7 +196,22 @@ static BOOL COOKIE_crackUrlSimple(LPCWSTR lpszUrl, LPWSTR hostName, int hostName
     UrlComponents.dwHostNameLength = hostNameLen;
     UrlComponents.dwUrlPathLength = pathLen;
 
-    return InternetCrackUrlW(lpszUrl, 0, 0, &UrlComponents);
+    rc = InternetCrackUrlW(lpszUrl, 0, 0, &UrlComponents);
+
+    /* discard the webpage off the end of the path */
+    if (pathLen > 0 && path[pathLen-1] != '/')
+    {
+        LPWSTR ptr;
+        ptr = strrchrW(path,'/');
+        if (ptr)
+            *(++ptr) = 0;
+        else
+        {
+            path[0] = '/';
+            path[1] = 0;
+        }
+    }
+    return rc;
 }
 
 /* match a domain. domain must match if the domain is not NULL. path must match if the path is not NULL */
