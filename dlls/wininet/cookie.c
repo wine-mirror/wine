@@ -409,6 +409,48 @@ static BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWST
     cookie_domain *thisCookieDomain = NULL;
     cookie *thisCookie;
     struct list *cursor;
+    LPWSTR data;
+    WCHAR *ptr;
+
+    data = HeapAlloc(GetProcessHeap(),0,(lstrlenW(cookie_data)+1) * sizeof(WCHAR));
+    strcpyW(data,cookie_data);
+
+    /* lots of informations can be parsed out of the cookie value */
+
+    ptr = data;
+    for (;;)
+    {
+        static const WCHAR szDomain[] = {'d','o','m','a','i','n','=',0};
+        static const WCHAR szPath[] = {'p','a','t','h','=',0};
+        static const WCHAR szExpires[] = {'e','x','p','i','r','e','s','=',0};
+        static const WCHAR szSecure[] = {'s','e','c','u','r','e',0};
+        static const WCHAR szHttpOnly[] = {'h','t','t','p','o','n','l','y',0};
+
+        if (!(ptr = strchrW(ptr,';'))) break;
+        *ptr++ = 0;
+        while (*ptr == ' ') ptr++; /* whitespace */
+
+        if (strncmpiW(ptr, szDomain, 7) == 0)
+        {
+            ptr+=strlenW(szDomain);
+            domain = ptr;
+            TRACE("Parsing new domain %s\n",debugstr_w(domain));
+        }
+        else if (strncmpiW(ptr, szPath, 5) == 0)
+        {
+            ptr+=strlenW(szPath);
+            path = ptr;
+            TRACE("Parsing new path %s\n",debugstr_w(path));
+        }
+        else if (strncmpiW(ptr, szExpires, 8) == 0)
+            FIXME("expires not handled (%s)\n",debugstr_w(ptr));
+        else if (strncmpiW(ptr, szSecure, 6) == 0)
+            FIXME("secure not handled (%s)\n",debugstr_w(ptr));
+        else if (strncmpiW(ptr, szHttpOnly, 8) == 0)
+            FIXME("httponly not handled (%s)\n",debugstr_w(ptr));
+        else
+            FIXME("Unknown additional option %s\n",debugstr_w(ptr));
+    }
 
     LIST_FOR_EACH(cursor, &domain_list)
     {
@@ -425,11 +467,15 @@ static BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWST
         COOKIE_deleteCookie(thisCookie, FALSE);
 
     TRACE("setting cookie %s=%s for domain %s\n", debugstr_w(cookie_name),
-          debugstr_w(cookie_data), debugstr_w(thisCookieDomain->lpCookieDomain));
+          debugstr_w(data), debugstr_w(thisCookieDomain->lpCookieDomain));
 
-    if (!COOKIE_addCookie(thisCookieDomain, cookie_name, cookie_data))
+    if (!COOKIE_addCookie(thisCookieDomain, cookie_name,data))
+    {
+        HeapFree(GetProcessHeap(),0,data);
         return FALSE;
+    }
 
+    HeapFree(GetProcessHeap(),0,data);
     return TRUE;
 }
 
@@ -479,7 +525,7 @@ BOOL WINAPI InternetSetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
          * the cookie data in the form of name[=data].
          */
         if (!(data = strchrW(cookie, '='))) data = cookie + len;
-        else data++;
+        else *data++ = 0;
 
         ret = set_cookie(hostName, path, cookie, data);
 
