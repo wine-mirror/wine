@@ -1,0 +1,309 @@
+/*
+ * Copyright 2009 Aurimas Fišeras <aurimas@gmail.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+/* UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
+
+MENU_001 MENU DISCARDABLE
+BEGIN
+	MENUITEM "&Didelės piktogramos",	FCIDM_SHVIEW_BIGICON
+	MENUITEM "&Mažos piktogramos",	FCIDM_SHVIEW_SMALLICON
+	MENUITEM "&Sąrašas",			FCIDM_SHVIEW_LISTVIEW
+	MENUITEM "&Išsamus",			FCIDM_SHVIEW_REPORTVIEW
+END
+
+/*
+ shellview background menu
+*/
+MENU_002 MENU DISCARDABLE
+BEGIN
+	POPUP ""
+	BEGIN
+	  POPUP "&Rodymas"
+	  BEGIN
+	    MENUITEM "&Didelės piktogramos",	FCIDM_SHVIEW_BIGICON
+	    MENUITEM "&Mažos piktogramos",		FCIDM_SHVIEW_SMALLICON
+	    MENUITEM "&Sąrašas",				FCIDM_SHVIEW_LISTVIEW
+	    MENUITEM "&Išsamus",				FCIDM_SHVIEW_REPORTVIEW
+	  END
+	  MENUITEM SEPARATOR
+	  POPUP "Išdėstyti &piktogramas"
+	  BEGIN
+	    MENUITEM "Pagal &vardą",	0x30	/* column 0 */
+	    MENUITEM "Pagal &tipą",		0x32	/* column 2 */
+	    MENUITEM "Pagal d&ydį",		0x31	/* ... */
+	    MENUITEM "Pagal &datą",		0x33
+	    MENUITEM SEPARATOR
+	    MENUITEM "&Automatiškai išdėstyti",	FCIDM_SHVIEW_AUTOARRANGE
+	  END
+	  MENUITEM "Sulygiuoti piktogramas",	FCIDM_SHVIEW_SNAPTOGRID
+	  MENUITEM SEPARATOR
+	  MENUITEM "Atnaujinti",		FCIDM_SHVIEW_REFRESH
+	  MENUITEM SEPARATOR
+	  MENUITEM "Įdėti",		FCIDM_SHVIEW_INSERT
+	  MENUITEM "Įdėti kaip nuorodą",	FCIDM_SHVIEW_INSERTLINK
+	  MENUITEM SEPARATOR
+	  POPUP "Naujas"
+	  BEGIN
+	    MENUITEM "Naujas &aplankas",	FCIDM_SHVIEW_NEWFOLDER
+	    MENUITEM "Nauja &nuoroda",	FCIDM_SHVIEW_NEWLINK
+	    MENUITEM SEPARATOR
+	  END
+	  MENUITEM SEPARATOR
+	  MENUITEM "Savybės",	FCIDM_SHVIEW_PROPERTIES
+	END
+END
+
+/*
+ shellview item menu
+*/
+MENU_SHV_FILE MENU DISCARDABLE
+BEGIN
+	POPUP ""
+	BEGIN
+	  MENUITEM "Iš&rinkti"		FCIDM_SHVIEW_OPEN
+	  MENUITEM "Naršy&ti",		FCIDM_SHVIEW_EXPLORE
+	  MENUITEM "&Atverti",		FCIDM_SHVIEW_OPEN
+	  MENUITEM SEPARATOR
+	  MENUITEM "&Iškirpti",		FCIDM_SHVIEW_CUT
+	  MENUITEM "&Kopijuoti",		FCIDM_SHVIEW_COPY
+	  MENUITEM SEPARATOR
+	  MENUITEM "Sukurti &nuorodą",	FCIDM_SHVIEW_CREATELINK
+	  MENUITEM "&Šalinti",		FCIDM_SHVIEW_DELETE
+	  MENUITEM "&Pervadinti",		FCIDM_SHVIEW_RENAME
+	  MENUITEM SEPARATOR
+	  MENUITEM "&Savybės",	FCIDM_SHVIEW_PROPERTIES
+	END
+END
+
+MENU_CPANEL MENU
+BEGIN
+    POPUP "&Failas"
+    BEGIN
+        MENUITEM SEPARATOR
+        MENUITEM "&Išeiti", IDM_CPANEL_EXIT
+    END
+
+    POPUP "&Rodymas"
+    BEGIN
+        MENUITEM "&Didelės piktogramos", FCIDM_SHVIEW_BIGICON
+        MENUITEM "&Mažos piktogramos", FCIDM_SHVIEW_SMALLICON
+        MENUITEM "&Sąrašas", FCIDM_SHVIEW_LISTVIEW
+        MENUITEM "&Išsamus", FCIDM_SHVIEW_REPORTVIEW
+    END
+
+    POPUP "&Žinynas"
+    BEGIN
+        MENUITEM "&Apie valdymo skydelį...", IDM_CPANEL_ABOUT
+    END
+END
+
+SHBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 188, 192
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "Parinkti aplanką"
+FONT 8, "MS Shell Dlg"
+{
+ DEFPUSHBUTTON "Gerai", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Atsisakyti", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
+ LTEXT "", IDD_TITLE, 4, 4, 180, 12
+ LTEXT "", IDD_STATUS, 4, 25, 180, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+	TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+	WS_BORDER | WS_TABSTOP,
+	4, 40, 180, 120
+}
+
+SHNEWBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 218, 196
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | WS_SIZEBOX | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "Parinkti aplanką"
+FONT 8, "MS Shell Dlg"
+{
+ LTEXT "", IDD_TITLE, 10, 8, 198, 24
+ LTEXT "", IDD_STATUS, 10, 25, 198, 12
+ LTEXT "Aplankas:", IDD_FOLDER, 10, 156, 40, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+	TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+	WS_BORDER | WS_TABSTOP,
+	12, 38, 194, 105
+ EDITTEXT IDD_FOLDERTEXT, 46, 150, 160, 14, WS_BORDER | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "&Kurti naują aplanką", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "Gerai", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Atsisakyti", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
+}
+
+SHELL_YESTOALL_MSGBOX DIALOG 200, 100, 280, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Pranešimas"
+FONT 8, "MS Shell Dlg"
+{
+    DEFPUSHBUTTON "&Taip", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "Taip &visiems", IDD_YESTOALL, 92, 69, 65, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Ne", IDNO, 162, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Atsisakyti", IDCANCEL, 220, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    ICON "", IDD_ICON, 10, 10, 16, 16
+    LTEXT "", IDD_MESSAGE, 40, 10, 238, 52, 0
+}
+
+SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 220, 152
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Apie %s"
+FONT 10, "MS Shell Dlg"
+{
+ DEFPUSHBUTTON "Gerai", IDOK, 153, 133, 60, 12, WS_TABSTOP
+ PUSHBUTTON "Wine &licencija...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
+ LISTBOX IDC_ABOUT_LISTBOX, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
+ ICON "", stc1, 10, 10, 30, 30
+ LTEXT "", IDC_ABOUT_STATIC_TEXT1, 42, 10, 170, 10
+ LTEXT "", IDC_ABOUT_STATIC_TEXT2, 42, 22, 170, 10
+ LTEXT "Paleista su %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
+ LTEXT "Prie Wine kūrimo prisidėjo:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
+}
+
+SHELL_RUN_DLG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 227, 95
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION ""
+FONT 8, "MS Shell Dlg"
+{
+ ICON "", IDC_RUNDLG_ICON, 7, 11, 18, 20, WS_VISIBLE
+ LTEXT "Įrašykite programos pavadinimą, aplanką, dokumentą ar interneto resursą ir Wine jums jį atvers.", IDC_RUNDLG_DESCRIPTION, 36, 11, 182, 18
+ LTEXT "&Atverti:", IDC_RUNDLG_LABEL, 7, 39, 24, 10
+ CONTROL "", IDC_RUNDLG_EDITPATH, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
+ DEFPUSHBUTTON "Gerai", IDOK, 62, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "Atsisakyti", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "&Parinkti...", IDC_RUNDLG_BROWSE, 170, 63, 50, 14, WS_TABSTOP
+}
+
+STRINGTABLE
+{
+        /* columns in the shellview */
+	IDS_SHV_COLUMN1		"Failas"
+	IDS_SHV_COLUMN2		"Dydis"
+	IDS_SHV_COLUMN3		"Tipas"
+	IDS_SHV_COLUMN4		"Modifikuotas"
+	IDS_SHV_COLUMN5		"Atributai"
+	IDS_SHV_COLUMN6		"Dydis"
+	IDS_SHV_COLUMN7		"Prieinamas dydis"
+	IDS_SHV_COLUMN8		"Vardas"
+	IDS_SHV_COLUMN9		"Komentarai"
+	IDS_SHV_COLUMN10	"Savininkas"
+	IDS_SHV_COLUMN11	"Grupė"
+	IDS_SHV_COLUMN_DELFROM	"Originali vieta"
+	IDS_SHV_COLUMN_DELDATE	"Pašalinimo data"
+
+        /* special folders */
+	IDS_DESKTOP		"Darbalaukis"
+	IDS_MYCOMPUTER		"Kompiuteris"
+	IDS_RECYCLEBIN_FOLDER_NAME      "Šiukšlinė"
+	IDS_CONTROLPANEL	"Valdymo skydelis"
+
+        /* context menus */
+	IDS_VIEW_LARGE		"&Didelės piktogramos"
+	IDS_VIEW_SMALL		"&Mažos piktogramos"
+	IDS_VIEW_LIST		"&Sąrašas"
+	IDS_VIEW_DETAILS	"&Išsamus"
+	IDS_SELECT		"Iš&rinkti"
+	IDS_OPEN		"&Atverti"
+
+	IDS_CREATEFOLDER_DENIED "Nepavyko sukurti naujo aplanko: neužtenka teisių."
+	IDS_CREATEFOLDER_CAPTION "Klaida kuriant naują aplanką"
+	IDS_DELETEITEM_CAPTION "Patvirtinti failo šalinimą"
+	IDS_DELETEFOLDER_CAPTION "Patvirtinti aplanko šalinimą"
+	IDS_DELETEITEM_TEXT "Ar tikrai norite pašalinti '%1'?"
+	IDS_DELETEMULTIPLE_TEXT "Ar tikrai norite pašalinti šiuos %1 elementus?"
+	IDS_DELETESELECTED_TEXT "Ar tikrai norite pašalinti išrinktus elementus?"
+	IDS_TRASHITEM_TEXT "Ar tikrai norite perkelti '%1' į šiukšlinę?"
+	IDS_TRASHFOLDER_TEXT "Ar tikrai norite perkelti '%1' ir jo turinį į šiukšlinę?"
+	IDS_TRASHMULTIPLE_TEXT "Ar tikrai norite perkelti šiuos %1 elementus į šiukšlinę?"
+	IDS_CANTTRASH_TEXT "Šis elementas '%1' negali būti perkeltas į šiukšlinę. Ar norite jį pašalinti vietoj šiukšlinės?"
+	IDS_OVERWRITEFILE_TEXT "Šis aplankas jau turi failą vardu '%1'.\n\nAr norite jį pakeisti?"
+	IDS_OVERWRITEFILE_CAPTION "Patvirtinti failo perrašymą"
+	IDS_OVERWRITEFOLDER_TEXT "Šis aplankas jau turi aplanką vardu '%1'.\n\n"\
+	    "Jei failai paskirties aplanke yra pavadinti tais pačiais vardais kaip ir failai\n"\
+	    "išrinktame aplanke, tai jie bus pakeisti. Ar vis dar norite perkelti ar kopijuoti\n"\
+	    "šį aplanką?"
+
+        /* message box strings */
+        IDS_RESTART_TITLE       "Paleisti iš naujo"
+        IDS_RESTART_PROMPT      "Ar norite simuliuoti Windows paleidimą iš naujo?"
+        IDS_SHUTDOWN_TITLE      "Stabdyti"
+        IDS_SHUTDOWN_PROMPT     "Ar norite sustabdyti šią Wine sesiją?"
+
+        /* Run File dialog */
+        IDS_RUNDLG_ERROR           "Nepavyko parodyti failo paleidimo dialogo lango (vidinė klaida)"
+        IDS_RUNDLG_BROWSE_ERROR    "Nepavyko parodyti parinkimo dialogo lango (vidinė klaida)"
+        IDS_RUNDLG_BROWSE_CAPTION  "Parinkti"
+        IDS_RUNDLG_BROWSE_FILTER   "Vykdomieji failai\0*.exe\0Visi failai\0*.*\0\0"
+
+        /* shell folder path default values */
+	IDS_PROGRAMS                "Pradžios meniu\\Programos"
+	IDS_PERSONAL                "Dokumentai"
+	IDS_FAVORITES               "Adresynas"
+	IDS_STARTUP                 "Pradžios meniu\\Programos\\Paleidimas"
+	IDS_RECENT                  "Paskiausi"
+	IDS_SENDTO                  "Siųsti"
+	IDS_STARTMENU               "Pradžios meniu"
+	IDS_MYMUSIC                 "Muzika"
+	IDS_MYVIDEO                 "Vaizdai"
+	IDS_DESKTOPDIRECTORY        "Darbalaukis"
+	IDS_NETHOOD                 "Tinkle"
+	IDS_TEMPLATES               "Šablonai"
+	IDS_APPDATA                 "Programų duomenys"
+	IDS_PRINTHOOD               "Spausdintuvai"
+	IDS_LOCAL_APPDATA           "Vietinės nuostatos\\Programų duomenys"
+	IDS_INTERNET_CACHE          "Vietinės nuostatos\\Laikini interneto failai"
+	IDS_COOKIES                 "Slapukai"
+	IDS_HISTORY                 "Vietinės nuostatos\\Istorija"
+	IDS_PROGRAM_FILES           "Programų failai"
+	IDS_MYPICTURES              "Paveikslai"
+	IDS_PROGRAM_FILES_COMMON    "Programų failai\\Bendrieji failai"
+	IDS_COMMON_DOCUMENTS        "Dokumentai"
+	IDS_ADMINTOOLS              "Pradžios meniu\\Programos\\Administravimo įrankiai"
+	IDS_COMMON_MUSIC            "Dokumentai\\Muzika"
+	IDS_COMMON_PICTURES         "Dokumentai\\Paveikslai"
+	IDS_COMMON_VIDEO            "Dokumentai\\Vaizdai"
+	IDS_CDBURN_AREA             "Vietinės nuostatos\\Programų duomenys\\Microsoft\\CD rašymas"
+
+	IDS_NEWFOLDER		"Naujas aplankas"
+
+	IDS_CPANEL_TITLE            "Wine valdymo skydelis"
+	IDS_CPANEL_NAME             "Pavadinimas"
+	IDS_CPANEL_DESCRIPTION      "Aprašas"
+}
+
+STRINGTABLE
+{
+IDS_LICENSE_CAPTION,            "Wine licencija"
+IDS_LICENSE,
+"Wine yra laisva programinė įranga; galite ją platinti ir/ar \
+modifikuoti GNU laisvosios bendrosios viešosios licencijos (LGPL) \
+sąlygomis, kurios paskelbtos Laisvosios programinės įrangos fondo \
+(FSF); 2.1-osios arba (Jūsų pasirinkimu) bet kurios vėlesnės \
+licencijos versijos sąlygomis.\n\n\
+Wine yra platinama tikintis, kad ji bus naudinga, bet BE JOKIŲ \
+GARANTIJŲ; net be numanomų PERKAMUMO ar TINKAMUMO KONKREČIAI \
+UŽDUOČIAI garantijų. Išsamią informaciją rasite GNU laisvojoje \
+bendrojoje viešojoje licencijoje.\n\n\
+Jūs turėjote gauti GNU laisvosios bendrosios viešosios licencijos \
+kopiją kartu su Wine; jei negavote, rašykite adresu \
+Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, \
+Boston, MA 02110-1301, USA."
+}
+
+#pragma code_page(default)
