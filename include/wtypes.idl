@@ -434,7 +434,7 @@ typedef struct tagRemHGLOBAL {
 typedef union _userHGLOBAL switch(long fContext) u {
   case WDT_INPROC_CALL: long               hInproc;
   case WDT_REMOTE_CALL: FLAGGED_BYTE_BLOB *hRemote;
-  default:              long               hGlobal;
+  case WDT_INPROC64_CALL: __int64          hInproc64;
 } userHGLOBAL;
 
 typedef [unique] userHGLOBAL *wireHGLOBAL;
@@ -450,7 +450,7 @@ typedef struct tagRemHMETAFILEPICT {
 typedef union _userHMETAFILE switch(long fContext) u {
   case WDT_INPROC_CALL: long       hInproc;
   case WDT_REMOTE_CALL: BYTE_BLOB *hRemote;
-  default:              long       hGlobal;
+  case WDT_INPROC64_CALL: __int64  hInproc64;
 } userHMETAFILE;
 
 typedef [unique] userHMETAFILE *wireHMETAFILE;
@@ -465,7 +465,7 @@ typedef struct _remoteMETAFILEPICT {
 typedef union _userHMETAFILEPICT switch(long fContext) u {
   case WDT_INPROC_CALL: long                hInproc;
   case WDT_REMOTE_CALL: remoteMETAFILEPICT *hRemote;
-  default:              long                hGlobal;
+  case WDT_INPROC64_CALL: __int64           hInproc64;
 } userHMETAFILEPICT;
 
 typedef [unique] userHMETAFILEPICT *wireHMETAFILEPICT;
@@ -478,7 +478,7 @@ typedef struct tagRemHENHMETAFILE {
 typedef union _userHENHMETAFILE switch(long fContext) u {
   case WDT_INPROC_CALL: long       hInproc;
   case WDT_REMOTE_CALL: BYTE_BLOB *hRemote;
-  default:              long       hGlobal;
+  case WDT_INPROC64_CALL: __int64  hInproc64;
 } userHENHMETAFILE;
 
 typedef [unique] userHENHMETAFILE *wireHENHMETAFILE;
@@ -503,7 +503,7 @@ typedef struct _userBITMAP {
 typedef union _userHBITMAP switch(long fContext) u {
   case WDT_INPROC_CALL: long        hInproc;
   case WDT_REMOTE_CALL: userBITMAP *hRemote;
-  default:              long        hGlobal;
+  case WDT_INPROC64_CALL: __int64   hInproc64;
 } userHBITMAP;
 
 typedef [unique] userHBITMAP *wireHBITMAP;
@@ -522,7 +522,7 @@ typedef struct tagrpcLOGPALETTE {
 typedef union _userHPALETTE switch(long fContext) u {
   case WDT_INPROC_CALL: long           hInproc;
   case WDT_REMOTE_CALL: rpcLOGPALETTE *hRemote;
-  default:              long           hGlobal;
+  case WDT_INPROC64_CALL: __int64      hInproc64;
 } userHPALETTE;
 
 typedef [unique] userHPALETTE *wireHPALETTE;
