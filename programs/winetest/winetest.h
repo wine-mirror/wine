@@ -28,9 +28,6 @@
 
 void fatal (const char* msg);
 void warning (const char* msg);
-void *xmalloc (size_t len);
-void *xrealloc (void *op, size_t len);
-char *xstrdup( const char *str );
 void xprintf (const char *fmt, ...);
 char *vstrmake (size_t *lenp, va_list ap);
 char *strmake (size_t *lenp, ...);
@@ -44,6 +41,13 @@ extern HANDLE logfile;
 /* GUI definitions */
 
 #include <windows.h>
+
+#ifndef __WINE_ALLOC_SIZE
+#define __WINE_ALLOC_SIZE(x)
+#endif
+void *xmalloc (size_t len) __WINE_ALLOC_SIZE(1);
+void *xrealloc (void *op, size_t len) __WINE_ALLOC_SIZE(2);
+char *xstrdup( const char *str );
 
 enum report_type {
     R_STATUS = 0,
