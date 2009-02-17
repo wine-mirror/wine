@@ -2403,9 +2403,35 @@ static void test_style2(IHTMLStyle2 *style2)
     SysFreeString(str);
 }
 
+static void test_style4(IHTMLStyle4 *style4)
+{
+    HRESULT hres;
+    VARIANT v;
+    VARIANT vdefault;
+
+    hres = IHTMLStyle4_get_minHeight(style4, &vdefault);
+    ok(hres == S_OK, "get_minHeight failed: %08x\n", hres);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("10px");
+    hres = IHTMLStyle4_put_minHeight(style4, v);
+    ok(hres == S_OK, "put_minHeight failed: %08x\n", hres);
+    VariantClear(&v);
+
+    hres = IHTMLStyle4_get_minHeight(style4, &v);
+    ok(hres == S_OK, "get_minHeight failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
+    ok( !strcmp_wa(V_BSTR(&v), "10px"), "expect 10px got (%s)\n", dbgstr_w(V_BSTR(&v)));
+
+    hres = IHTMLStyle4_put_minHeight(style4, vdefault);
+    ok(hres == S_OK, "put_minHeight failed: %08x\n", hres);
+    VariantClear(&vdefault);
+}
+
 static void test_default_style(IHTMLStyle *style)
 {
     IHTMLStyle2 *style2;
+    IHTMLStyle4 *style4;
     VARIANT_BOOL b;
     VARIANT v;
     BSTR str;
@@ -3033,6 +3059,13 @@ static void test_default_style(IHTMLStyle *style)
     if(SUCCEEDED(hres)) {
         test_style2(style2);
         IHTMLStyle2_Release(style2);
+    }
+
+    hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle4, (void**)&style4);
+    ok(hres == S_OK, "Could not get IHTMLStyle4 iface: %08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        test_style4(style4);
+        IHTMLStyle4_Release(style4);
     }
 }
 

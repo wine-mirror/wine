@@ -83,6 +83,8 @@ static const WCHAR attrMarginLeft[] =
     {'m','a','r','g','i','n','-','l','e','f','t',0};
 static const WCHAR attrMarginRight[] =
     {'m','a','r','g','i','n','-','r','i','g','h','t',0};
+static const WCHAR attrMinHeight[] =
+    {'m','i','n','-','h','e','i','g','h','t',0};
 static const WCHAR attrOverflow[] =
     {'o','v','e','r','f','l','o','w',0};
 static const WCHAR attrPaddingLeft[] =
@@ -132,6 +134,7 @@ static const struct{
     {attrMargin,               DISPID_IHTMLSTYLE_MARGIN},
     {attrMarginLeft,           DISPID_IHTMLSTYLE_MARGINLEFT},
     {attrMarginRight,          DISPID_IHTMLSTYLE_MARGINRIGHT},
+    {attrMinHeight,            DISPID_IHTMLSTYLE4_MINHEIGHT},
     {attrOverflow,             DISPID_IHTMLSTYLE_OVERFLOW},
     {attrPaddingLeft,          DISPID_IHTMLSTYLE_PADDINGLEFT},
     {attrPosition,             DISPID_IHTMLSTYLE2_POSITION},
@@ -242,7 +245,7 @@ HRESULT set_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, LPCW
     return S_OK;
 }
 
-static HRESULT set_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *value, DWORD flags)
+HRESULT set_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *value, DWORD flags)
 {
     switch(V_VT(value)) {
     case VT_NULL:
@@ -308,7 +311,7 @@ HRESULT get_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, BSTR
     return S_OK;
 }
 
-static HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *p, DWORD flags)
+HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *p, DWORD flags)
 {
     nsAString str_value;
     const PRUnichar *value;
