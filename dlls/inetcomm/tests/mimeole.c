@@ -324,7 +324,9 @@ static void test_CreateMessage(void)
     IMimeMessage_Release(msg);
 
     ref = IStream_AddRef(stream);
-    ok(ref == 2, "ref %d\n", ref);
+    ok(ref == 2 ||
+       broken(ref == 1), /* win95 */
+       "ref %d\n", ref);
     IStream_Release(stream);
 
     IStream_Release(stream);
