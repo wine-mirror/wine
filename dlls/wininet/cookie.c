@@ -235,11 +235,22 @@ static BOOL COOKIE_matchDomain(LPCWSTR lpszCookieDomain, LPCWSTR lpszCookiePath,
  	}
     if (lpszCookiePath)
     {
+        INT len;
         TRACE("comparing paths: %s with %s\n", debugstr_w(lpszCookiePath), debugstr_w(searchDomain->lpCookiePath));
+        /* paths match at the beginning.  so a path of  /foo would match
+         * /foobar and /foo/bar
+         */
         if (!searchDomain->lpCookiePath)
             return FALSE;
-        if (strcmpW(lpszCookiePath, searchDomain->lpCookiePath))
+        if (allow_partial)
+        {
+            len = lstrlenW(searchDomain->lpCookiePath);
+            if (strncmpiW(searchDomain->lpCookiePath, lpszCookiePath, len)!=0)
+                return FALSE;
+        }
+        else if (strcmpW(lpszCookiePath, searchDomain->lpCookiePath))
             return FALSE;
+
 	}
 	return TRUE;
 }
@@ -299,7 +310,7 @@ BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
     LIST_FOR_EACH(cursor, &domain_list)
     {
         cookie_domain *cookiesDomain = LIST_ENTRY(cursor, cookie_domain, entry);
-        if (COOKIE_matchDomain(hostName, NULL /* FIXME: path */, cookiesDomain, TRUE))
+        if (COOKIE_matchDomain(hostName, path, cookiesDomain, TRUE))
         {
             struct list * cursor;
             domain_count++;
@@ -471,7 +482,7 @@ static BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWST
     LIST_FOR_EACH(cursor, &domain_list)
     {
         thisCookieDomain = LIST_ENTRY(cursor, cookie_domain, entry);
-        if (COOKIE_matchDomain(domain, NULL /* FIXME: path */, thisCookieDomain, FALSE))
+        if (COOKIE_matchDomain(domain, path, thisCookieDomain, FALSE))
             break;
         thisCookieDomain = NULL;
     }
@@ -482,8 +493,8 @@ static BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWST
     if ((thisCookie = COOKIE_findCookie(thisCookieDomain, cookie_name)))
         COOKIE_deleteCookie(thisCookie, FALSE);
 
-    TRACE("setting cookie %s=%s for domain %s\n", debugstr_w(cookie_name),
-          debugstr_w(data), debugstr_w(thisCookieDomain->lpCookieDomain));
+    TRACE("setting cookie %s=%s for domain %s path %s\n", debugstr_w(cookie_name),
+          debugstr_w(data), debugstr_w(thisCookieDomain->lpCookieDomain),debugstr_w(thisCookieDomain->lpCookiePath));
 
     if (!COOKIE_addCookie(thisCookieDomain, cookie_name,data))
     {
