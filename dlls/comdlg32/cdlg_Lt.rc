@@ -38,7 +38,7 @@ FONT 8, "MS Shell Dlg"
  LISTBOX 1121, 110, 32, 92, 68, LBS_STANDARD | LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | LBS_DISABLENOSCROLL | WS_TABSTOP
  LTEXT "Rodyti šių &tipų failus:", 1089, 6, 104, 90, 9
  COMBOBOX cmb1, 6, 114, 90, 36, CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_BORDER | WS_VSCROLL | WS_TABSTOP
- LTEXT "&Diskasukiai:", 1091, 110, 104, 92, 9
+ LTEXT "&Diskai:", 1091, 110, 104, 92, 9
  COMBOBOX cmb2, 110, 114, 92, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
  DEFPUSHBUTTON "Atverti", 1, 208, 6, 56, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Atsisakyti", 2, 208, 24, 56, 14, WS_GROUP | WS_TABSTOP
@@ -60,7 +60,7 @@ FONT 8, "MS Shell Dlg"
  LISTBOX 1121, 110, 32, 92, 68, LBS_STANDARD | LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | LBS_DISABLENOSCROLL | WS_TABSTOP
  LTEXT "Rodyti šių &tipų failus:", 1089, 6, 104, 90, 9
  COMBOBOX cmb1, 6, 114, 90, 36, CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_BORDER | WS_VSCROLL | WS_TABSTOP
- LTEXT "&Diskasukiai:", 1091, 110, 104, 92, 9
+ LTEXT "&Diskai:", 1091, 110, 104, 92, 9
  COMBOBOX cmb2, 110, 114, 92, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
  DEFPUSHBUTTON "Išsaugoti kaip", 1, 208, 6, 56, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Atsisakyti", 2, 208, 24, 56, 14, WS_GROUP | WS_TABSTOP
@@ -356,12 +356,12 @@ STRINGTABLE DISCARDABLE
 {
     IDS_ABOUTBOX            "&Apie FolderPicker testą"
     IDS_DOCUMENTFOLDERS     "Dokumentų aplankai"
-    IDS_PERSONAL            "Mano dokumentai"
-    IDS_FAVORITES           "Mano adresynas"
+    IDS_PERSONAL            "Dokumentai"
+    IDS_FAVORITES           "Adresynas"
     IDS_PATH                "Sistemos kelias"
     IDS_DESKTOP             "Darbalaukis"
     IDS_FONTS               "Šriftai"
-    IDS_MYCOMPUTER          "Mano kompiuteris"
+    IDS_MYCOMPUTER          "Kompiuteris"
 }
 
 STRINGTABLE DISCARDABLE
@@ -421,7 +421,7 @@ Prašome įdeigti spausdintuvą ir pakartoti."
     PD32_PRINTER_STATUS_READY             "Parengtas"
     PD32_PRINTER_STATUS_PAUSED            "Pristabdytas; "
     PD32_PRINTER_STATUS_ERROR             "Klaida; "
-    PD32_PRINTER_STATUS_PENDING_DELETION  "Laukia trynimo; "
+    PD32_PRINTER_STATUS_PENDING_DELETION  "Laukia pašalinimo; "
     PD32_PRINTER_STATUS_PAPER_JAM         "Užstrigęs popierius; "
     PD32_PRINTER_STATUS_PAPER_OUT         "Pasibaigęs popierius; "
     PD32_PRINTER_STATUS_MANUAL_FEED       "Rankinis popieriaus padavimas; "
