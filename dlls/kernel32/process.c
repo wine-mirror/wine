@@ -1185,7 +1185,7 @@ static char **build_envp( const WCHAR *envW )
     const WCHAR *end;
     char **envp;
     char *env, *p;
-    int count = 0, length;
+    int count = 1, length;
     unsigned int i;
 
     for (end = envW; *end; count++) end += strlenW(end) + 1;
