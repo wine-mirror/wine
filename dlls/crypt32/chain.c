@@ -800,9 +800,8 @@ static void dump_element(PCCERT_CONTEXT cert)
         TRACE_(chain)("issued to %s\n", debugstr_w(name));
         CryptMemFree(name);
     }
-    TRACE_(chain)("valid from %s",
-     debugstr_w(filetime_to_str(&cert->pCertInfo->NotBefore)));
-    TRACE_(chain)("to %s\n",
+    TRACE_(chain)("valid from %s to %s\n",
+     debugstr_w(filetime_to_str(&cert->pCertInfo->NotBefore)),
      debugstr_w(filetime_to_str(&cert->pCertInfo->NotAfter)));
     TRACE_(chain)("%d extensions\n", cert->pCertInfo->cExtension);
     for (i = 0; i < cert->pCertInfo->cExtension; i++)
