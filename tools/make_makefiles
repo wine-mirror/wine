@@ -34,12 +34,9 @@ my %bin_install =
 (
   "msiexec" => 1,
   "notepad" => 1,
-  "progman" => 1,
   "regedit" => 1,
   "regsvr32" => 1,
-  "uninstaller" => 1,
   "wineboot" => 1,
-  "winebrowser" => 1,
   "winecfg" => 1,
   "wineconsole" => 1,
   "winedbg" => 1,

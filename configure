@@ -27629,7 +27629,6 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/progman/Makefile"
 test "x$enable_progman" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
 	progman" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
-	progman" && ALL_PROGRAM_BIN_INSTALL_DIRS="$ALL_PROGRAM_BIN_INSTALL_DIRS \\
 	progman"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/progman/Makefile: programs/progman/Makefile.in programs/Makeprog.rules"
@@ -27740,7 +27739,6 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/uninstaller/Makefile"
 test "x$enable_uninstaller" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
 	uninstaller" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
-	uninstaller" && ALL_PROGRAM_BIN_INSTALL_DIRS="$ALL_PROGRAM_BIN_INSTALL_DIRS \\
 	uninstaller"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/uninstaller/Makefile: programs/uninstaller/Makefile.in programs/Makeprog.rules"
@@ -27777,7 +27775,6 @@ ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/winebrowser/Makefile"
 test "x$enable_winebrowser" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
 	winebrowser" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
-	winebrowser" && ALL_PROGRAM_BIN_INSTALL_DIRS="$ALL_PROGRAM_BIN_INSTALL_DIRS \\
 	winebrowser"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/winebrowser/Makefile: programs/winebrowser/Makefile.in programs/Makeprog.rules"
