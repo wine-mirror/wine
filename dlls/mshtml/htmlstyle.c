@@ -251,6 +251,13 @@ static HRESULT set_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_
     case VT_BSTR:
         return set_nsstyle_attr(nsstyle, sid, V_BSTR(value), flags);
 
+    case VT_I4: {
+        WCHAR str[14];
+        static const WCHAR format[] = {'%','d',0};
+
+        wsprintfW(str, format, V_I4(value));
+        return set_nsstyle_attr(nsstyle, sid, str, flags);
+    }
     default:
         FIXME("not implemented vt %d\n", V_VT(value));
         return E_NOTIMPL;
