@@ -77,7 +77,7 @@ static	BOOL	WAVEMAP_IsData(const WAVEMAPDATA* wm)
  *======================================================================*/
 
 static void CALLBACK wodCallback(HWAVEOUT hWave, UINT uMsg, DWORD_PTR dwInstance,
-				     LPARAM dwParam1, LPARAM dwParam2)
+                                 DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     WAVEMAPDATA*	wom = (WAVEMAPDATA*)dwInstance;
 
@@ -104,7 +104,7 @@ static void CALLBACK wodCallback(HWAVEOUT hWave, UINT uMsg, DWORD_PTR dwInstance
 
 	    lpWaveHdrSrc->dwFlags &= ~WHDR_INQUEUE;
 	    lpWaveHdrSrc->dwFlags |= WHDR_DONE;
-	    dwParam1 = (DWORD)lpWaveHdrSrc;
+            dwParam1 = (DWORD_PTR)lpWaveHdrSrc;
 	}
 	break;
     default:
@@ -137,8 +137,9 @@ static	DWORD	wodOpenHelper(WAVEMAPDATA* wom, UINT idx,
 	ret = acmStreamOpen(&wom->hAcmStream, 0, lpDesc->lpFormat, lpwfx, NULL, 0L, 0L, 0L);
     }
     if (ret == MMSYSERR_NOERROR) {
-	ret = waveOutOpen(&wom->u.out.hInnerWave, idx, lpwfx, (DWORD)wodCallback,
-			  (DWORD)wom, (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION);
+        ret = waveOutOpen(&wom->u.out.hInnerWave, idx, lpwfx,
+                          (DWORD_PTR)wodCallback, (DWORD_PTR)wom,
+                          (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION);
 	if (ret != MMSYSERR_NOERROR && !(dwFlags & WAVE_FORMAT_QUERY)) {
 	    acmStreamClose(wom->hAcmStream, 0);
 	    wom->hAcmStream = 0;
@@ -187,8 +188,9 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	/* if no ACM stuff is involved, no need to handle callbacks at this
 	 * level, this will be done transparently
 	 */
-	if (waveOutOpen(&wom->u.out.hInnerWave, i, lpDesc->lpFormat, (DWORD)wodCallback,
-			(DWORD)wom, (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION | WAVE_FORMAT_DIRECT) == MMSYSERR_NOERROR) {
+        if (waveOutOpen(&wom->u.out.hInnerWave, i, lpDesc->lpFormat,
+                        (DWORD_PTR)wodCallback, (DWORD_PTR)wom,
+                        (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION | WAVE_FORMAT_DIRECT) == MMSYSERR_NOERROR) {
 	    wom->hAcmStream = 0;
 	    goto found;
 	}
@@ -278,7 +280,7 @@ found:
 	*lpdwUser = 0L;
 	HeapFree(GetProcessHeap(), 0, wom);
     } else {
-	*lpdwUser = (DWORD)wom;
+        *lpdwUser = (DWORD_PTR)wom;
     }
     return MMSYSERR_NOERROR;
 error:
@@ -369,7 +371,7 @@ static	DWORD	wodPrepare(WAVEMAPDATA* wom, LPWAVEHDR lpWaveHdrSrc, DWORD dwParam2
 
     ash->cbStruct = sizeof(*ash);
     ash->fdwStatus = 0L;
-    ash->dwUser = (DWORD)lpWaveHdrSrc;
+    ash->dwUser = (DWORD_PTR)lpWaveHdrSrc;
     ash->pbSrc = (LPBYTE)lpWaveHdrSrc->lpData;
     ash->cbSrcLength = lpWaveHdrSrc->dwBufferLength;
     /* ash->cbSrcLengthUsed */
@@ -395,7 +397,7 @@ static	DWORD	wodPrepare(WAVEMAPDATA* wom, LPWAVEHDR lpWaveHdrSrc, DWORD dwParam2
 	goto errCleanUp;
     }
 
-    lpWaveHdrSrc->reserved = (DWORD)ash;
+    lpWaveHdrSrc->reserved = (DWORD_PTR)ash;
     lpWaveHdrSrc->dwFlags = WHDR_PREPARED;
     TRACE("=> (0)\n");
     return MMSYSERR_NOERROR;
@@ -498,7 +500,7 @@ static	DWORD	wodGetDevCaps(UINT wDevID, WAVEMAPDATA* wom, LPWAVEOUTCAPSW lpWaveC
 
     /* if opened low driver, forward message */
     if (WAVEMAP_IsData(wom))
-	return waveOutGetDevCapsW((UINT)wom->u.out.hInnerWave, lpWaveCaps, dwParam2);
+        return waveOutGetDevCapsW((UINT_PTR)wom->u.out.hInnerWave, lpWaveCaps, dwParam2);
     /* else if no drivers, nothing to map so return bad device */
     if (waveOutGetNumDevs() == 0) {
         WARN("bad device id\n");
@@ -612,10 +614,10 @@ static  DWORD   wodMapperReconfigure(WAVEMAPDATA* wom, DWORD dwParam1, DWORD dwP
 /**************************************************************************
  * 				wodMessage (MSACM.@)
  */
-DWORD WINAPI WAVEMAP_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
-				DWORD dwParam1, DWORD dwParam2)
+DWORD WINAPI WAVEMAP_wodMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
+                                DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    TRACE("(%u, %04X, %08X, %08X, %08X);\n",
+    TRACE("(%u, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
@@ -659,12 +661,12 @@ DWORD WINAPI WAVEMAP_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
  *                  WAVE IN part                                        *
  *======================================================================*/
 
-static void	CALLBACK widCallback(HWAVEIN hWave, UINT uMsg, DWORD dwInstance,
-				     DWORD dwParam1, DWORD dwParam2)
+static void CALLBACK widCallback(HWAVEIN hWave, UINT uMsg, DWORD_PTR dwInstance,
+                                 DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    WAVEMAPDATA*	wim = (WAVEMAPDATA*)dwInstance;
+    WAVEMAPDATA* wim = (WAVEMAPDATA*)dwInstance;
 
-    TRACE("(%p %u %d %x %x);\n", hWave, uMsg, dwInstance, dwParam1, dwParam2);
+    TRACE("(%p %u %lx %lx %lx);\n", hWave, uMsg, dwInstance, dwParam1, dwParam2);
 
     if (!WAVEMAP_IsData(wim)) {
 	ERR("Bad data\n");
@@ -696,7 +698,7 @@ static void	CALLBACK widCallback(HWAVEIN hWave, UINT uMsg, DWORD dwInstance,
 	    lpWaveHdrDst->dwFlags &= ~WHDR_INQUEUE;
 	    lpWaveHdrDst->dwFlags |= WHDR_DONE;
 	    lpWaveHdrDst->dwBytesRecorded = ash->cbDstLengthUsed;
-	    dwParam1 = (DWORD)lpWaveHdrDst;
+            dwParam1 = (DWORD_PTR)lpWaveHdrDst;
 	}
 	break;
     default:
@@ -724,8 +726,9 @@ static	DWORD	widOpenHelper(WAVEMAPDATA* wim, UINT idx,
 	ret = acmStreamOpen(&wim->hAcmStream, 0, lpwfx, lpDesc->lpFormat, NULL, 0L, 0L, 0L);
     }
     if (ret == MMSYSERR_NOERROR) {
-	ret = waveInOpen(&wim->u.in.hInnerWave, idx, lpwfx, (DWORD)widCallback,
-			 (DWORD)wim, (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION);
+        ret = waveInOpen(&wim->u.in.hInnerWave, idx, lpwfx,
+                         (DWORD_PTR)widCallback, (DWORD_PTR)wim,
+                         (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION);
 	if (ret != MMSYSERR_NOERROR && !(dwFlags & WAVE_FORMAT_QUERY)) {
 	    acmStreamClose(wim->hAcmStream, 0);
 	    wim->hAcmStream = 0;
@@ -769,8 +772,9 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wim->nSamplesPerSecOuter = wim->nSamplesPerSecInner = lpDesc->lpFormat->nSamplesPerSec;
 
     for (i = ndlo; i < ndhi; i++) {
-	if (waveInOpen(&wim->u.in.hInnerWave, i, lpDesc->lpFormat, (DWORD)widCallback,
-                       (DWORD)wim, (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION | WAVE_FORMAT_DIRECT) == MMSYSERR_NOERROR) {
+        if (waveInOpen(&wim->u.in.hInnerWave, i, lpDesc->lpFormat,
+                       (DWORD_PTR)widCallback, (DWORD_PTR)wim,
+                       (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION | WAVE_FORMAT_DIRECT) == MMSYSERR_NOERROR) {
 	    wim->hAcmStream = 0;
 	    goto found;
 	}
@@ -847,9 +851,9 @@ found:
 	*lpdwUser = 0L;
 	HeapFree(GetProcessHeap(), 0, wim);
     } else {
-	*lpdwUser = (DWORD)wim;
+        *lpdwUser = (DWORD_PTR)wim;
     }
-    TRACE("Ok (stream=%08x)\n", (DWORD)wim->hAcmStream);
+    TRACE("Ok (stream=%p)\n", wim->hAcmStream);
     return MMSYSERR_NOERROR;
 error:
     HeapFree(GetProcessHeap(), 0, wim);
@@ -923,7 +927,7 @@ static	DWORD	widPrepare(WAVEMAPDATA* wim, LPWAVEHDR lpWaveHdrDst, DWORD dwParam2
 
     ash->cbStruct = sizeof(*ash);
     ash->fdwStatus = 0L;
-    ash->dwUser = (DWORD)lpWaveHdrDst;
+    ash->dwUser = (DWORD_PTR)lpWaveHdrDst;
     ash->pbSrc = (LPBYTE)ash + sizeof(ACMSTREAMHEADER) + sizeof(WAVEHDR);
     ash->cbSrcLength = size;
     /* ash->cbSrcLengthUsed */
@@ -949,7 +953,7 @@ static	DWORD	widPrepare(WAVEMAPDATA* wim, LPWAVEHDR lpWaveHdrDst, DWORD dwParam2
 	goto errCleanUp;
     }
 
-    lpWaveHdrDst->reserved = (DWORD)ash;
+    lpWaveHdrDst->reserved = (DWORD_PTR)ash;
     lpWaveHdrDst->dwFlags = WHDR_PREPARED;
     TRACE("=> (0)\n");
     return MMSYSERR_NOERROR;
@@ -1050,7 +1054,7 @@ static	DWORD	widGetDevCaps(UINT wDevID, WAVEMAPDATA* wim, LPWAVEINCAPSW lpWaveCa
 
     /* if opened low driver, forward message */
     if (WAVEMAP_IsData(wim))
-	return waveInGetDevCapsW((UINT)wim->u.in.hInnerWave, lpWaveCaps, dwParam2);
+        return waveInGetDevCapsW((UINT_PTR)wim->u.in.hInnerWave, lpWaveCaps, dwParam2);
     /* else if no drivers, nothing to map so return bad device */
     if (waveInGetNumDevs() == 0) {
         WARN("bad device id\n");
@@ -1139,10 +1143,10 @@ static  DWORD   widMapperReconfigure(WAVEMAPDATA* wim, DWORD dwParam1, DWORD dwP
 /**************************************************************************
  * 				widMessage (MSACM.@)
  */
-DWORD WINAPI WAVEMAP_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
-				DWORD dwParam1, DWORD dwParam2)
+DWORD WINAPI WAVEMAP_widMessage(WORD wDevID, WORD wMsg, DWORD_PTR dwUser,
+                                DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    TRACE("(%u, %04X, %08X, %08X, %08X);\n",
+    TRACE("(%u, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
