@@ -318,9 +318,30 @@ static HRESULT WINAPI InputProcessorProfiles_EnableLanguageProfile(
         ITfInputProcessorProfiles *iface, REFCLSID rclsid, LANGID langid,
         REFGUID guidProfile, BOOL fEnable)
 {
+    HKEY key;
+    WCHAR buf[39];
+    WCHAR buf2[39];
+    WCHAR fullkey[168];
+    ULONG res;
+
     InputProcessorProfiles *This = (InputProcessorProfiles*)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p) %s %x %s %i\n",This, debugstr_guid(rclsid), langid, debugstr_guid(guidProfile), fEnable);
+
+    StringFromGUID2(rclsid, buf, 39);
+    StringFromGUID2(guidProfile, buf2, 39);
+    sprintfW(fullkey,szwFullLangfmt,szwSystemTIPKey,buf,szwLngp,langid,buf2);
+
+    res = RegOpenKeyExW(HKEY_CURRENT_USER, fullkey, 0, KEY_READ | KEY_WRITE, &key);
+
+    if (!res)
+    {
+        RegSetValueExW(key, szwEnabled, 0, REG_DWORD, (LPBYTE)&fEnable, sizeof(DWORD));
+        RegCloseKey(key);
+    }
+    else
+        return E_FAIL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI InputProcessorProfiles_IsEnabledLanguageProfile(
