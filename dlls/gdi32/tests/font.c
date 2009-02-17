@@ -106,11 +106,21 @@ static void check_font(const char* test, const LOGFONTA* lf, HFONT hfont)
         minlen++;
     minlen += FIELD_OFFSET(LOGFONTA, lfFaceName) + 1;
     ok(ret == sizeof(LOGFONTA) || ret == minlen, "%s: GetObject returned %d\n", test, ret);
-    ok(lf->lfHeight == getobj_lf.lfHeight, "lfHeight: expect %08x got %08x\n", lf->lfHeight, getobj_lf.lfHeight);
-    ok(lf->lfWidth == getobj_lf.lfWidth, "lfWidth: expect %08x got %08x\n", lf->lfWidth, getobj_lf.lfWidth);
-    ok(lf->lfEscapement == getobj_lf.lfEscapement, "lfEscapement: expect %08x got %08x\n", lf->lfEscapement, getobj_lf.lfEscapement);
-    ok(lf->lfOrientation == getobj_lf.lfOrientation, "lfOrientation: expect %08x got %08x\n", lf->lfOrientation, getobj_lf.lfOrientation);
-    ok(lf->lfWeight == getobj_lf.lfWeight, "lfWeight: expect %08x got %08x\n", lf->lfWeight, getobj_lf.lfWeight);
+    ok(lf->lfHeight == getobj_lf.lfHeight ||
+       broken((SHORT)lf->lfHeight == getobj_lf.lfHeight), /* win9x */
+       "lfHeight: expect %08x got %08x\n", lf->lfHeight, getobj_lf.lfHeight);
+    ok(lf->lfWidth == getobj_lf.lfWidth ||
+       broken((SHORT)lf->lfWidth == getobj_lf.lfWidth), /* win9x */
+       "lfWidth: expect %08x got %08x\n", lf->lfWidth, getobj_lf.lfWidth);
+    ok(lf->lfEscapement == getobj_lf.lfEscapement ||
+       broken((SHORT)lf->lfEscapement == getobj_lf.lfEscapement), /* win9x */
+       "lfEscapement: expect %08x got %08x\n", lf->lfEscapement, getobj_lf.lfEscapement);
+    ok(lf->lfOrientation == getobj_lf.lfOrientation ||
+       broken((SHORT)lf->lfOrientation == getobj_lf.lfOrientation), /* win9x */
+       "lfOrientation: expect %08x got %08x\n", lf->lfOrientation, getobj_lf.lfOrientation);
+    ok(lf->lfWeight == getobj_lf.lfWeight ||
+       broken((SHORT)lf->lfWeight == getobj_lf.lfWeight), /* win9x */
+       "lfWeight: expect %08x got %08x\n", lf->lfWeight, getobj_lf.lfWeight);
     ok(lf->lfItalic == getobj_lf.lfItalic, "lfItalic: expect %02x got %02x\n", lf->lfItalic, getobj_lf.lfItalic);
     ok(lf->lfUnderline == getobj_lf.lfUnderline, "lfUnderline: expect %02x got %02x\n", lf->lfUnderline, getobj_lf.lfUnderline);
     ok(lf->lfStrikeOut == getobj_lf.lfStrikeOut, "lfStrikeOut: expect %02x got %02x\n", lf->lfStrikeOut, getobj_lf.lfStrikeOut);
