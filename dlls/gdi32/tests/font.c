@@ -2147,11 +2147,10 @@ static BOOL get_first_last_from_cmap4(void *ptr, DWORD *first, DWORD *last)
                 index = GET_BE_WORD(glyph_ids[index]);
                 if(index) index += seg.id_delta;
             }
-            if(index)
-            {
+            if(*first == 0x10000)
+                *last = *first = code;
+            else if(index)
                 *last = code;
-                if(*first == 0x10000) *first = code;
-            }
         }
     }
 
