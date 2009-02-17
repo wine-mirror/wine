@@ -2379,6 +2379,11 @@ static void test_current_style(IHTMLCurrentStyle *current_style)
     ok(hres == S_OK, "get_display failed: %08x\n", hres);
     ok(!strcmp_wa(str, "block"), "get_display returned %s\n", dbgstr_w(str));
     SysFreeString(str);
+
+    hres = IHTMLCurrentStyle_get_position(current_style, &str);
+    ok(hres == S_OK, "get_position failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "absolute"), "get_position returned %s\n", dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_style2(IHTMLStyle2 *style2)
