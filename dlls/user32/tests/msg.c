@@ -6283,7 +6283,7 @@ static void test_interthread_messages(void)
     wnd_event.event = CreateEventW(NULL, 0, 0, NULL);
     if (!wnd_event.event)
     {
-        trace("skipping interthread message test under win9x\n");
+        skip("skipping interthread message test under win9x\n");
         return;
     }
 
@@ -6653,6 +6653,11 @@ static void test_accelerators(void)
     keybd_event('N', 0, 0, 0);
     keybd_event('N', 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, hAccel);
+    if (!sequence_cnt)  /* we didn't get any message */
+    {
+        skip( "queuing key events not supported\n" );
+        goto done;
+    }
     ok_sequence(WmVkN, "VK_N press/release", FALSE);
 
     trace("testing Shift+VK_N press/release\n");
@@ -6770,6 +6775,7 @@ static void test_accelerators(void)
 
     ret = DestroyAcceleratorTable(hAccel);
     ok( ret, "DestroyAcceleratorTable error %d\n", GetLastError());
+    hAccel = 0;
 
     trace("testing Alt press/release\n");
     flush_sequence();
@@ -6814,7 +6820,8 @@ static void test_accelerators(void)
     keybd_event(VK_APPS, 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, 0);
     ok_sequence(WmVkAppsSeq, "VK_APPS press/release", FALSE);
-
+done:
+    if (hAccel) DestroyAcceleratorTable(hAccel);
     DestroyWindow(hwnd);
 }
 
@@ -8957,6 +8964,11 @@ static void test_PeekMessage(void)
     keybd_event('N', 0, 0, 0);
     keybd_event('N', 0, KEYEVENTF_KEYUP, 0);
     qstatus = GetQueueStatus(qs_all_input);
+    if (!(qstatus & MAKELONG(QS_KEY, QS_KEY)))
+    {
+        skip( "queuing key events not supported\n" );
+        goto done;
+    }
     ok(qstatus == MAKELONG(QS_KEY, QS_KEY),
        "wrong qstatus %08x\n", qstatus);
 
@@ -11354,15 +11366,14 @@ START_TEST(msg)
                                        GetModuleHandleA(0), win_event_proc,
                                        0, GetCurrentThreadId(),
                                        WINEVENT_INCONTEXT);
-	assert(hEvent_hook);
-
-	if (pIsWinEventHookInstalled)
+        if (pIsWinEventHookInstalled && hEvent_hook)
 	{
 	    UINT event;
 	    for (event = EVENT_MIN; event <= EVENT_MAX; event++)
 		ok(pIsWinEventHookInstalled(event), "IsWinEventHookInstalled(%u) failed\n", event);
 	}
     }
+    if (!hEvent_hook) skip( "no win event hook support\n" );
 
     cbt_hook_thread_id = GetCurrentThreadId();
     hCBT_hook = SetWindowsHookExA(WH_CBT, cbt_hook_proc, 0, GetCurrentThreadId());
@@ -11427,7 +11438,7 @@ START_TEST(msg)
     test_SetForegroundWindow();
 
     UnhookWindowsHookEx(hCBT_hook);
-    if (pUnhookWinEvent)
+    if (pUnhookWinEvent && hEvent_hook)
     {
 	ret = pUnhookWinEvent(hEvent_hook);
 	ok( ret, "UnhookWinEvent error %d\n", GetLastError());
@@ -11437,6 +11448,4 @@ START_TEST(msg)
 	   GetLastError() == 0xdeadbeef, /* Win9x */
            "unexpected error %d\n", GetLastError());
     }
-    else
-        skip("UnhookWinEvent is not available\n");
 }
