@@ -801,11 +801,8 @@ static const WCHAR ProfilesDirectoryW[] = {'P','r','o','f','i','l','e','s','D','
 static const WCHAR AllUsersProfileValueW[] = {'A','l','l','U','s','e','r','s','P','r','o','f','i','l','e','\0'};
 static const WCHAR szSHFolders[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l','o','r','e','r','\\','S','h','e','l','l',' ','F','o','l','d','e','r','s','\0'};
 static const WCHAR szSHUserFolders[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l','o','r','e','r','\\','U','s','e','r',' ','S','h','e','l','l',' ','F','o','l','d','e','r','s','\0'};
-/* This defaults to L"Documents and Settings" on Windows 2000/XP, but we're
- * acting more Windows 9x-like for now.
- */
-static const WCHAR szDefaultProfileDirW[] = {'p','r','o','f','i','l','e','s','\0'};
-static const WCHAR AllUsersW[] = {'A','l','l',' ','U','s','e','r','s','\0'};
+static const WCHAR szDefaultProfileDirW[] = {'u','s','e','r','s',0};
+static const WCHAR AllUsersW[] = {'P','u','b','l','i','c',0};
 
 typedef enum _CSIDL_Type {
     CSIDL_Type_User,
@@ -1568,13 +1565,14 @@ static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest)
     hr = _SHOpenProfilesKey(&key);
     if (SUCCEEDED(hr))
     {
-        WCHAR szDefaultProfilesPrefix[MAX_PATH];
+        WCHAR def_val[MAX_PATH];
 
-        GetWindowsDirectoryW(szDefaultProfilesPrefix, MAX_PATH);
-        PathAddBackslashW(szDefaultProfilesPrefix);
-        PathAppendW(szDefaultProfilesPrefix, szDefaultProfileDirW);
-        hr = _SHGetProfilesValue(key, ProfilesDirectoryW, szProfilesPrefix,
-         szDefaultProfilesPrefix);
+        /* get the system drive */
+        GetSystemDirectoryW(def_val, MAX_PATH);
+        if (def_val[1] == ':') strcpyW( def_val + 3, szDefaultProfileDirW );
+        else FIXME("non-drive system paths unsupported\n");
+
+        hr = _SHGetProfilesValue(key, ProfilesDirectoryW, szProfilesPrefix, def_val );
     }
 
     *szDest = 0;
