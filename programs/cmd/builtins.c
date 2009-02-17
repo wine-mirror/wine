@@ -2296,6 +2296,8 @@ void WCMD_type (WCHAR *command) {
         WCMD_output_asis (buffer);
       }
       CloseHandle (h);
+      if (!writeHeaders)
+          WCMD_output_asis (newline);
     }
   }
 }
