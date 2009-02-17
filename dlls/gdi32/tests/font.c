@@ -2277,7 +2277,14 @@ static void test_text_metrics(const LOGFONTA *lf)
         if (lf->lfCharSet == SYMBOL_CHARSET || (cmap_first >= 0xf000 && cmap_first < 0xf100))
         {
             expect_first_W    = 0;
-            expect_last_W     = 0xf0ff;
+            switch(GetACP())
+            {
+            case 1257:  /* Baltic */
+                expect_last_W = 0xf8fd;
+                break;
+            default:
+                expect_last_W = 0xf0ff;
+            }
             expect_break_W    = 0x20;
             expect_default_W  = expect_break_W - 1;
             expect_first_A    = 0x1e;

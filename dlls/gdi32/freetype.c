@@ -5399,7 +5399,14 @@ UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
     if (font->charset == SYMBOL_CHARSET || (pOS2->usFirstCharIndex >= 0xf000 && pOS2->usFirstCharIndex < 0xf100))
     {
         TM.tmFirstChar = 0;
-        TM.tmLastChar = 0xf0ff;
+        switch(GetACP())
+        {
+        case 1257: /* Baltic */
+            TM.tmLastChar = 0xf8fd;
+            break;
+        default:
+            TM.tmLastChar = 0xf0ff;
+        }
         TM.tmBreakChar = 0x20;
         TM.tmDefaultChar = 0x1f;
     }
