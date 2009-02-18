@@ -75,13 +75,13 @@ static inline IGenericSFImpl *impl_from_IPersistFolder2( IPersistFolder2 *iface 
 /*
   converts This to an interface pointer
 */
-#define _IUnknown_(This)    (IUnknown*)&(This->lpVtbl)
-#define _IShellFolder_(This)    (IShellFolder*)&(This->lpVtbl)
-#define _IShellFolder2_(This)    (IShellFolder2*)&(This->lpVtbl)
+#define _IUnknown_(This)        ((IUnknown*)&(This)->lpVtbl)
+#define _IShellFolder_(This)    ((IShellFolder*)&(This)->lpVtbl)
+#define _IShellFolder2_(This)   (&(This)->lpVtbl)
 
-#define _IPersist_(This)    (IPersist*)&(This->lpVtblPersistFolder2)
-#define _IPersistFolder_(This)    (IPersistFolder*)&(This->lpVtblPersistFolder2)
-#define _IPersistFolder2_(This)    (IPersistFolder2*)&(This->lpVtblPersistFolder2)
+#define _IPersist_(This)        (&(This)->lpVtblPersistFolder2)
+#define _IPersistFolder_(This)  (&(This)->lpVtblPersistFolder2)
+#define _IPersistFolder2_(This) (&(This)->lpVtblPersistFolder2)
 
 /***********************************************************************
 *   IShellFolder [MyComputer] implementation

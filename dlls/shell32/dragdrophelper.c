@@ -54,8 +54,8 @@ typedef struct {
 
 static const IDropTargetHelperVtbl vt_IDropTargetHelper;
 
-#define _IUnknown_(This) (IUnknown*)&(This->lpVtbl)
-#define _IDropTargetHelper_(This) (IDropTargetHelper*)&(This->lpVtbl)
+#define _IUnknown_(This)          ((IUnknown*)&(This)->lpVtbl)
+#define _IDropTargetHelper_(This) (&(This)->lpVtbl)
 
 /**************************************************************************
 *	IDropTargetHelper_Constructor

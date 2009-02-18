@@ -84,9 +84,9 @@ static const IAutoCompleteDropDownVtbl acdropdownvt;
 /*
   converts This to an interface pointer
 */
-#define _IUnknown_(This) (IUnknown*)&(This->lpVtbl)
-#define _IAutoComplete2_(This)  (IAutoComplete2*)&(This->lpVtbl)
-#define _IAutoCompleteDropDown_(This)  (IAutoCompleteDropDown*)&(This->lpDropDownVtbl)
+#define _IUnknown_(This)              ((IUnknown*)&(This)->lpVtbl)
+#define _IAutoComplete2_(This)        ((IAutoComplete2*)&(This)->lpVtbl)
+#define _IAutoCompleteDropDown_(This) (&(This)->lpDropDownVtbl)
 
 static inline IAutoCompleteImpl *impl_from_IAutoCompleteDropDown(IAutoCompleteDropDown *iface)
 {

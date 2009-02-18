@@ -69,9 +69,9 @@ static const IPersistFolder2Vtbl vt_NP_PersistFolder2;
 #define _ICOM_THIS_From_IPersistFolder2(class, name) class* This = \
     (class*)(((char*)name) - FIELD_OFFSET(IGenericSFImpl, lpVtblPersistFolder2))
 
-#define _IUnknown_(This)	(IUnknown*)&(This->lpVtbl)
-#define _IShellFolder_(This)	(IShellFolder*)&(This->lpVtbl)
-#define _IPersistFolder2_(This)	(IPersistFolder2*)&(This->lpVtblPersistFolder2)
+#define _IUnknown_(This)        ((IUnknown*)&(This)->lpVtbl)
+#define _IShellFolder_(This)    ((IShellFolder*)&(This)->lpVtbl)
+#define _IPersistFolder2_(This) (&(This)->lpVtblPersistFolder2)
 
 static const shvheader NetworkPlacesSFHeader[] = {
     {IDS_SHV_COLUMN1, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 15},
