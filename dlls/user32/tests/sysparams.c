@@ -176,8 +176,13 @@ static LRESULT CALLBACK SysParamsTestWndProc( HWND hWnd, UINT msg, WPARAM wParam
     case WM_SETTINGCHANGE:
         if (change_counter>0) { 
             /* ignore these messages caused by resizing of toolbars */
-            if( wParam == SPI_SETWORKAREA || displaychange_test_active) break;
-            if( change_last_param == SPI_SETWORKAREA) {
+            if( wParam == SPI_SETWORKAREA ||
+                wParam == SPI_ICONVERTICALSPACING ||
+                displaychange_test_active)
+                break;
+            if( change_last_param == SPI_SETWORKAREA ||
+                change_last_param == SPI_ICONVERTICALSPACING)
+            {
                 change_last_param = wParam;
                 break;
             }
@@ -1244,9 +1249,8 @@ static void test_SPI_SETMOUSEBUTTONSWAP( void )        /*     33 */
         SetLastError(0xdeadbeef);
         rc=SystemParametersInfoA( SPI_SETMOUSEBUTTONSWAP, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
-        if (!test_error_msg(rc,"SPI_{GET,SET}MOUSEBUTTONSWAP"))
-            break;
-            
+        if (!test_error_msg(rc,"SPI_SETMOUSEBUTTONSWAP")) return;
+
         test_change_message( SPI_SETMOUSEBUTTONSWAP, 0 );
         test_reg_key( SPI_SETMOUSEBUTTONSWAP_REGKEY,
                       SPI_SETMOUSEBUTTONSWAP_VALNAME,
