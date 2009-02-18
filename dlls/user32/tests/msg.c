@@ -11351,6 +11351,22 @@ static void test_paintingloop(void)
     DestroyWindow(hwnd);
 }
 
+static void test_defwinproc(void)
+{
+    HWND hwnd;
+    MSG msg;
+    int gotwmquit = FALSE;
+    hwnd = CreateWindowExA(0, "static", "test_defwndproc", WS_POPUP, 0,0,0,0,0,0,0, NULL);
+    assert(hwnd);
+    DefWindowProcA( hwnd, WM_ENDSESSION, 1, 0);
+    while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE )) {
+        if( msg.message == WM_QUIT) gotwmquit = TRUE;
+        DispatchMessageA( &msg );
+    }
+    ok( gotwmquit == FALSE, "Unexpected WM_QUIT message!\n");
+    DestroyWindow( hwnd);
+}
+
 START_TEST(msg)
 {
     BOOL ret;
@@ -11432,6 +11448,7 @@ START_TEST(msg)
     test_dbcs_wm_char();
     test_menu_messages();
     test_paintingloop();
+    test_defwinproc();
     /* keep it the last test, under Windows it tends to break the tests
      * which rely on active/foreground windows being correct.
      */
