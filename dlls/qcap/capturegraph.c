@@ -78,9 +78,9 @@ static inline CaptureGraphImpl *impl_from_ICaptureGraphBuilder2( ICaptureGraphBu
 /*
   converts This to an interface pointer
 */
-#define _IUnknown_(This)                (IUnknown*)&(This->lpVtbl2)
-#define _ICaptureGraphBuilder_(This)    (ICaptureGraphBuilder*)&(This->lpVtbl)
-#define _ICaptureGraphBuilder2_(This)   (ICaptureGraphBuilder2*)&(This->lpVtbl2)
+#define _IUnknown_(This)              (&(This)->lpVtbl2)
+#define _ICaptureGraphBuilder_(This)  (&(This)->lpVtbl)
+#define _ICaptureGraphBuilder2_(This) ((ICaptureGraphBuilder2*)&(This)->lpVtbl2)
 
 
 IUnknown * CALLBACK QCAP_createCaptureGraphBuilder2(IUnknown *pUnkOuter,
