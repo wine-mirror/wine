@@ -270,8 +270,8 @@ if (0) /* these metrics are scaled too, but with rounding errors */
 
     cx = tm.tmAveCharWidth / tm_orig->tmAveCharWidth;
     cy = tm.tmHeight / tm_orig->tmHeight;
-    ok(cx == scale_x && cy == scale_y, "expected scale_x %d, scale_y %d, got cx %d, cy %d\n",
-       scale_x, scale_y, cx, cy);
+    ok(cx == scale_x && cy == scale_y, "height %d: expected scale_x %d, scale_y %d, got cx %d, cy %d\n",
+       lfHeight, scale_x, scale_y, cx, cy);
     ok(tm.tmHeight == tm_orig->tmHeight * scale_y, "height %d != %d\n", tm.tmHeight, tm_orig->tmHeight * scale_y);
     ok(tm.tmAscent == tm_orig->tmAscent * scale_y, "ascent %d != %d\n", tm.tmAscent, tm_orig->tmAscent * scale_y);
     ok(tm.tmDescent == tm_orig->tmDescent * scale_y, "descent %d != %d\n", tm.tmDescent, tm_orig->tmDescent * scale_y);
