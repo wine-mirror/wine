@@ -90,6 +90,40 @@ static void promptdisk_init(HWND hwnd, struct promptdisk_params *params)
         ShowWindow(GetDlgItem(hwnd, IDC_RUNDLG_BROWSE), SW_HIDE);
 }
 
+/* When the user clicks in the Ok button in SetupPromptForDisk dialog
+ * if the parameters are good it copies the path from the dialog to the output buffer
+ * saves the required size for the buffer if PathRequiredSize is given
+ * returns NO_ERROR if there is no PathBuffer to copy too
+ * returns DPROMPT_BUFFERTOOSMALL if the path is too big to fit in PathBuffer
+ */
+static void promptdisk_ok(HWND hwnd, struct promptdisk_params *params)
+{
+    int requiredSize;
+    WCHAR aux[MAX_PATH];
+    GetWindowTextW(GetDlgItem(hwnd, IDC_PATH), aux, MAX_PATH);
+    requiredSize = strlenW(aux)+1;
+
+    if(params->PathRequiredSize)
+    {
+        *params->PathRequiredSize = requiredSize;
+        TRACE("returning PathRequiredSize=%d\n",*params->PathRequiredSize);
+    }
+    if(!params->PathBuffer && !params->PathBufferSize)
+    {
+        EndDialog(hwnd, NO_ERROR);
+        return;
+    }
+    if(params->PathBuffer && (requiredSize > params->PathBufferSize
+        || params->PathBufferSize < MAX_PATH))
+    {
+        EndDialog(hwnd, DPROMPT_BUFFERTOOSMALL);
+        return;
+    }
+    strcpyW(params->PathBuffer, aux);
+    TRACE("returning PathBuffer=%s\n", debugstr_w(params->PathBuffer));
+    EndDialog(hwnd, DPROMPT_SUCCESS);
+}
+
 /* When the user clicks the browse button in SetupPromptForDisk dialog
  * it copies the path of the selected file to the dialog path field
  */
@@ -126,6 +160,13 @@ static INT_PTR CALLBACK promptdisk_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
         case WM_COMMAND:
             switch(wParam)
             {
+                case IDOK:
+                {
+                    struct promptdisk_params *params =
+                        (struct promptdisk_params *)GetWindowLongPtrW(hwnd, DWLP_USER);
+                    promptdisk_ok(hwnd, params);
+                    return TRUE;
+                }
                 case IDCANCEL:
                     EndDialog(hwnd, DPROMPT_CANCEL);
                     return TRUE;
