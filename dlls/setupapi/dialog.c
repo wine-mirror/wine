@@ -47,12 +47,58 @@ struct promptdisk_params {
     PDWORD PathRequiredSize;
 };
 
+/* initiates the fields of the SetupPromptForDisk dialog according to the parameters
+*/
+static void promptdisk_init(HWND hwnd, struct promptdisk_params *params)
+{
+    WCHAR format[256];
+    WCHAR message[256];
+
+    SetWindowLongPtrW(hwnd, DWLP_USER, (LONG_PTR)params);
+
+    if(params->DialogTitle)
+        SetWindowTextW(hwnd, params->DialogTitle);
+    if(params->PathToSource)
+        SetDlgItemTextW(hwnd, IDC_PATH, params->PathToSource);
+
+    if(!(params->DiskPromptStyle & IDF_OEMDISK))
+    {
+        LoadStringW(SETUPAPI_hInstance, IDS_PROMPTDISK, format,
+            sizeof(format)/sizeof(format[0]));
+
+        if(params->DiskName)
+            snprintfW(message, sizeof(message)/sizeof(message[0]), format,
+                params->FileSought, params->DiskName);
+        else
+        {
+            WCHAR unknown[256];
+            LoadStringW(SETUPAPI_hInstance, IDS_UNKNOWN, unknown,
+                sizeof(unknown)/sizeof(unknown[0]));
+            snprintfW(message, sizeof(message)/sizeof(message[0]), format,
+                params->FileSought, unknown);
+        }
+        SetDlgItemTextW(hwnd, IDC_FILENEEDED, message);
+
+        LoadStringW(SETUPAPI_hInstance, IDS_INFO, message,
+            sizeof(message)/sizeof(message[0]));
+        SetDlgItemTextW(hwnd, IDC_INFO, message);
+        LoadStringW(SETUPAPI_hInstance, IDS_COPYFROM, message,
+            sizeof(message)/sizeof(message[0]));
+        SetDlgItemTextW(hwnd, IDC_COPYFROM, message);
+    }
+    if(params->DiskPromptStyle & IDF_NOBROWSE)
+        ShowWindow(GetDlgItem(hwnd, IDC_RUNDLG_BROWSE), SW_HIDE);
+}
+
 /* Handles the messages sent to the SetupPromptForDisk dialog
 */
 static INT_PTR CALLBACK promptdisk_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg)
     {
+        case WM_INITDIALOG:
+            promptdisk_init(hwnd, (struct promptdisk_params *)lParam);
+            return TRUE;
         case WM_COMMAND:
             switch(wParam)
             {
