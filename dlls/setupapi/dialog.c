@@ -90,6 +90,30 @@ static void promptdisk_init(HWND hwnd, struct promptdisk_params *params)
         ShowWindow(GetDlgItem(hwnd, IDC_RUNDLG_BROWSE), SW_HIDE);
 }
 
+/* When the user clicks the browse button in SetupPromptForDisk dialog
+ * it copies the path of the selected file to the dialog path field
+ */
+static void promptdisk_browse(HWND hwnd, struct promptdisk_params *params)
+{
+    OPENFILENAMEW ofn;
+    ZeroMemory(&ofn, sizeof(ofn));
+
+    ofn.lStructSize = sizeof(ofn);
+    ofn.Flags = OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+    ofn.hwndOwner = hwnd;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrFile = HeapAlloc(GetProcessHeap(), 0, MAX_PATH*sizeof(WCHAR));
+    strcpyW(ofn.lpstrFile, params->FileSought);
+
+    if(GetOpenFileNameW(&ofn))
+    {
+        WCHAR* last_slash = strrchrW(ofn.lpstrFile, '\\');
+        if (last_slash) *last_slash = 0;
+        SetDlgItemTextW(hwnd, IDC_PATH, ofn.lpstrFile);
+    }
+    HeapFree(GetProcessHeap(), 0, ofn.lpstrFile);
+}
+
 /* Handles the messages sent to the SetupPromptForDisk dialog
 */
 static INT_PTR CALLBACK promptdisk_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -105,6 +129,13 @@ static INT_PTR CALLBACK promptdisk_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
                 case IDCANCEL:
                     EndDialog(hwnd, DPROMPT_CANCEL);
                     return TRUE;
+                case IDC_RUNDLG_BROWSE:
+                {
+                    struct promptdisk_params *params =
+                        (struct promptdisk_params *)GetWindowLongPtrW(hwnd, DWLP_USER);
+                    promptdisk_browse(hwnd, params);
+                    return TRUE;
+                }
             }
     }
     return FALSE;
