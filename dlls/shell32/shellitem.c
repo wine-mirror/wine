@@ -174,3 +174,38 @@ HRESULT WINAPI IShellItem_Constructor(IUnknown *pUnkOuter, REFIID riid, void **p
 
     return ret;
 }
+
+HRESULT WINAPI SHCreateShellItem(LPCITEMIDLIST pidlParent,
+    IShellFolder *psfParent, LPCITEMIDLIST pidl, IShellItem **ppsi)
+{
+    ShellItem *This;
+    LPITEMIDLIST new_pidl;
+    HRESULT ret;
+
+    TRACE("(%p,%p,%p,%p)\n", pidlParent, psfParent, pidl, ppsi);
+
+    if (!pidlParent && !psfParent && pidl)
+    {
+        new_pidl = ILClone(pidl);
+        if (!new_pidl)
+            return E_OUTOFMEMORY;
+    }
+    else
+    {
+        FIXME("(%p,%p,%p) not implemented\n", pidlParent, psfParent, pidl);
+        return E_NOINTERFACE;
+    }
+
+    ret = IShellItem_Constructor(NULL, &IID_IShellItem, (void**)&This);
+    if (This)
+    {
+        *ppsi = (IShellItem*)This;
+        This->pidl = new_pidl;
+    }
+    else
+    {
+        *ppsi = NULL;
+        ILFree(new_pidl);
+    }
+    return ret;
+}

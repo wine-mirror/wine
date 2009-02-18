@@ -2369,10 +2369,3 @@ LPITEMIDLIST* _ILCopyCidaToaPidl(LPITEMIDLIST* pidl, const CIDA * cida)
 
     return dst;
 }
-
-HRESULT WINAPI SHCreateShellItem(LPCITEMIDLIST pidlParent,
-    IShellFolder *psfParent, LPCITEMIDLIST pidl, IShellItem **ppsi)
-{
-    FIXME("STUB: %p %p %p %p\n",pidlParent, psfParent, pidl, ppsi);
-    return E_NOINTERFACE;
-}
