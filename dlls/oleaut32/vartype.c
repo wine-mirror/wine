@@ -5702,14 +5702,22 @@ HRESULT WINAPI VarDecFix(const DECIMAL* pDecIn, DECIMAL* pDecOut)
  */
 HRESULT WINAPI VarDecInt(const DECIMAL* pDecIn, DECIMAL* pDecOut)
 {
+  double dbl;
+  HRESULT hr;
+
   if (DEC_SIGN(pDecIn) & ~DECIMAL_NEG)
     return E_INVALIDARG;
 
   if (!(DEC_SIGN(pDecIn) & DECIMAL_NEG) || !DEC_SCALE(pDecIn))
     return VarDecFix(pDecIn, pDecOut); /* The same, if +ve or no fractionals */
 
-  FIXME("semi-stub!\n");
-  return DISP_E_OVERFLOW;
+  hr = VarR8FromDec(pDecIn, &dbl);
+  if (SUCCEEDED(hr)) {
+    LONGLONG rounded = dbl >= 0.0 ? dbl + 0.5 : dbl - 0.5;
+
+    hr = VarDecFromI8(rounded, pDecOut);
+  }
+  return hr;
 }
 
 /************************************************************************
