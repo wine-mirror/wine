@@ -52,7 +52,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
  *     Cookies are currently memory only.
  *     Cookies are NOT THREAD SAFE
  *     Cookies could use A LOT OF MEMORY. We need some kind of memory management here!
- *     Cookies should care about the expiry time
  */
 
 typedef struct _cookie_domain cookie_domain;
@@ -66,7 +65,7 @@ struct _cookie
 
     LPWSTR lpCookieName;
     LPWSTR lpCookieData;
-    time_t expiry; /* FIXME: not used */
+    FILETIME expiry;
 };
 
 struct _cookie_domain
@@ -80,7 +79,7 @@ struct _cookie_domain
 
 static struct list domain_list = LIST_INIT(domain_list);
 
-static cookie *COOKIE_addCookie(cookie_domain *domain, LPCWSTR name, LPCWSTR data);
+static cookie *COOKIE_addCookie(cookie_domain *domain, LPCWSTR name, LPCWSTR data, FILETIME expiry);
 static cookie *COOKIE_findCookie(cookie_domain *domain, LPCWSTR lpszCookieName);
 static void COOKIE_deleteCookie(cookie *deadCookie, BOOL deleteDomain);
 static cookie_domain *COOKIE_addDomain(LPCWSTR domain, LPCWSTR path);
@@ -88,13 +87,14 @@ static void COOKIE_deleteDomain(cookie_domain *deadDomain);
 
 
 /* adds a cookie to the domain */
-static cookie *COOKIE_addCookie(cookie_domain *domain, LPCWSTR name, LPCWSTR data)
+static cookie *COOKIE_addCookie(cookie_domain *domain, LPCWSTR name, LPCWSTR data, FILETIME expiry)
 {
     cookie *newCookie = HeapAlloc(GetProcessHeap(), 0, sizeof(cookie));
 
     list_init(&newCookie->entry);
     newCookie->lpCookieName = NULL;
     newCookie->lpCookieData = NULL;
+    newCookie->expiry = expiry;
 
     if (name)
     {
@@ -293,6 +293,7 @@ BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
     struct list * cursor;
     unsigned int cnt = 0, domain_count = 0, cookie_count = 0;
     WCHAR hostName[2048], path[2048];
+    FILETIME tm;
 
     TRACE("(%s, %s, %p, %p)\n", debugstr_w(lpszUrl),debugstr_w(lpszCookieName),
           lpCookieData, lpdwSize);
@@ -307,6 +308,8 @@ BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
     ret = COOKIE_crackUrlSimple(lpszUrl, hostName, sizeof(hostName)/sizeof(hostName[0]), path, sizeof(path)/sizeof(path[0]));
     if (!ret || !hostName[0]) return FALSE;
 
+    GetSystemTimeAsFileTime(&tm);
+
     LIST_FOR_EACH(cursor, &domain_list)
     {
         cookie_domain *cookiesDomain = LIST_ENTRY(cursor, cookie_domain, entry);
@@ -319,6 +322,14 @@ BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
             LIST_FOR_EACH(cursor, &cookiesDomain->cookie_list)
             {
                 cookie *thisCookie = LIST_ENTRY(cursor, cookie, entry);
+                /* check for expiry */
+                if ((thisCookie->expiry.dwLowDateTime != 0 || thisCookie->expiry.dwHighDateTime != 0) && CompareFileTime(&tm,&thisCookie->expiry)  > 0)
+                {
+                    TRACE("Found expired cookie. deleting\n");
+                    COOKIE_deleteCookie(thisCookie, FALSE);
+                    continue;
+                }
+
                 if (lpCookieData == NULL) /* return the size of the buffer required to lpdwSize */
                 {
                     unsigned int len;
@@ -438,9 +449,12 @@ static BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWST
     struct list *cursor;
     LPWSTR data;
     WCHAR *ptr;
+    FILETIME expiry;
+    BOOL expired = FALSE;
 
     data = HeapAlloc(GetProcessHeap(),0,(lstrlenW(cookie_data)+1) * sizeof(WCHAR));
     strcpyW(data,cookie_data);
+    memset(&expiry,0,sizeof(expiry));
 
     /* lots of informations can be parsed out of the cookie value */
 
@@ -470,7 +484,23 @@ static BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWST
             TRACE("Parsing new path %s\n",debugstr_w(path));
         }
         else if (strncmpiW(ptr, szExpires, 8) == 0)
-            FIXME("expires not handled (%s)\n",debugstr_w(ptr));
+        {
+            FILETIME ft;
+            SYSTEMTIME st;
+            FIXME("persistent cookies not handled (%s)\n",debugstr_w(ptr));
+            ptr+=strlenW(szExpires);
+            if (InternetTimeToSystemTimeW(ptr, &st, 0))
+            {
+                SystemTimeToFileTime(&st, &expiry);
+                GetSystemTimeAsFileTime(&ft);
+
+                if (CompareFileTime(&ft,&expiry) > 0)
+                {
+                    TRACE("Cookie already expired.\n");
+                    expired = TRUE;
+                }
+            }
+        }
         else if (strncmpiW(ptr, szSecure, 6) == 0)
             FIXME("secure not handled (%s)\n",debugstr_w(ptr));
         else if (strncmpiW(ptr, szHttpOnly, 8) == 0)
@@ -488,7 +518,15 @@ static BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWST
     }
 
     if (!thisCookieDomain)
-        thisCookieDomain = COOKIE_addDomain(domain, path);
+    {
+        if (!expired)
+            thisCookieDomain = COOKIE_addDomain(domain, path);
+        else
+        {
+            HeapFree(GetProcessHeap(),0,data);
+            return TRUE;
+        }
+    }
 
     if ((thisCookie = COOKIE_findCookie(thisCookieDomain, cookie_name)))
         COOKIE_deleteCookie(thisCookie, FALSE);
@@ -496,7 +534,7 @@ static BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWST
     TRACE("setting cookie %s=%s for domain %s path %s\n", debugstr_w(cookie_name),
           debugstr_w(data), debugstr_w(thisCookieDomain->lpCookieDomain),debugstr_w(thisCookieDomain->lpCookiePath));
 
-    if (!COOKIE_addCookie(thisCookieDomain, cookie_name,data))
+    if (!expired && !COOKIE_addCookie(thisCookieDomain, cookie_name,data, expiry))
     {
         HeapFree(GetProcessHeap(),0,data);
         return FALSE;
