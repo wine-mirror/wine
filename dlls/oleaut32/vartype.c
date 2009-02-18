@@ -3265,7 +3265,7 @@ HRESULT WINAPI VarR8FromUI4(ULONG ulIn, double *pDblOut)
  *  Success: S_OK.
  *  Failure: E_INVALIDARG, if the source value is invalid.
  */
-HRESULT WINAPI VarR8FromDec(DECIMAL* pDecIn, double *pDblOut)
+HRESULT WINAPI VarR8FromDec(const DECIMAL* pDecIn, double *pDblOut)
 {
   BYTE scale = DEC_SCALE(pDecIn);
   double divisor = 1.0, highPart;
