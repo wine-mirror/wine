@@ -168,7 +168,10 @@ static HANDLE msvcrt_fdtoh(int fd)
 /* INTERNAL: free a file entry fd */
 static void msvcrt_free_fd(int fd)
 {
+  HANDLE old_handle;
+
   LOCK_FILES();
+  old_handle = MSVCRT_fdesc[fd].handle;
   MSVCRT_fdesc[fd].handle = INVALID_HANDLE_VALUE;
   MSVCRT_fdesc[fd].wxflag = 0;
   TRACE(":fd (%d) freed\n",fd);
@@ -176,9 +179,15 @@ static void msvcrt_free_fd(int fd)
   {
     switch (fd)
     {
-    case 0: SetStdHandle(STD_INPUT_HANDLE,  NULL); break;
-    case 1: SetStdHandle(STD_OUTPUT_HANDLE, NULL); break;
-    case 2: SetStdHandle(STD_ERROR_HANDLE,  NULL); break;
+    case 0:
+        if (GetStdHandle(STD_INPUT_HANDLE) == old_handle) SetStdHandle(STD_INPUT_HANDLE, 0);
+        break;
+    case 1:
+        if (GetStdHandle(STD_OUTPUT_HANDLE) == old_handle) SetStdHandle(STD_OUTPUT_HANDLE, 0);
+        break;
+    case 2:
+        if (GetStdHandle(STD_ERROR_HANDLE) == old_handle) SetStdHandle(STD_ERROR_HANDLE, 0);
+        break;
     }
   }
   else
@@ -361,24 +370,27 @@ void msvcrt_init_io(void)
 
   if (!(MSVCRT_fdesc[0].wxflag & WX_OPEN) || MSVCRT_fdesc[0].handle == INVALID_HANDLE_VALUE)
   {
-    DuplicateHandle(GetCurrentProcess(), GetStdHandle(STD_INPUT_HANDLE),
-                    GetCurrentProcess(), &MSVCRT_fdesc[0].handle, 0, TRUE, 
-                    DUPLICATE_SAME_ACCESS);
-    MSVCRT_fdesc[0].wxflag = WX_OPEN | WX_TEXT;
+      HANDLE std = GetStdHandle(STD_INPUT_HANDLE);
+      if (std != INVALID_HANDLE_VALUE && DuplicateHandle(GetCurrentProcess(), std,
+                                                         GetCurrentProcess(), &MSVCRT_fdesc[0].handle,
+                                                         0, TRUE, DUPLICATE_SAME_ACCESS))
+          MSVCRT_fdesc[0].wxflag = WX_OPEN | WX_TEXT;
   }
   if (!(MSVCRT_fdesc[1].wxflag & WX_OPEN) || MSVCRT_fdesc[1].handle == INVALID_HANDLE_VALUE)
   {
-    DuplicateHandle(GetCurrentProcess(), GetStdHandle(STD_OUTPUT_HANDLE),
-                    GetCurrentProcess(), &MSVCRT_fdesc[1].handle, 0, TRUE, 
-                    DUPLICATE_SAME_ACCESS);
-    MSVCRT_fdesc[1].wxflag = WX_OPEN | WX_TEXT;
+      HANDLE std = GetStdHandle(STD_OUTPUT_HANDLE);
+      if (std != INVALID_HANDLE_VALUE && DuplicateHandle(GetCurrentProcess(), std,
+                                                         GetCurrentProcess(), &MSVCRT_fdesc[1].handle,
+                                                         0, TRUE, DUPLICATE_SAME_ACCESS))
+          MSVCRT_fdesc[1].wxflag = WX_OPEN | WX_TEXT;
   }
   if (!(MSVCRT_fdesc[2].wxflag & WX_OPEN) || MSVCRT_fdesc[2].handle == INVALID_HANDLE_VALUE)
   {
-    DuplicateHandle(GetCurrentProcess(), GetStdHandle(STD_ERROR_HANDLE),
-                    GetCurrentProcess(), &MSVCRT_fdesc[2].handle, 0, TRUE, 
-                    DUPLICATE_SAME_ACCESS);
-    MSVCRT_fdesc[2].wxflag = WX_OPEN | WX_TEXT;
+      HANDLE std = GetStdHandle(STD_ERROR_HANDLE);
+      if (std != INVALID_HANDLE_VALUE && DuplicateHandle(GetCurrentProcess(), std,
+                                                         GetCurrentProcess(), &MSVCRT_fdesc[2].handle,
+                                                         0, TRUE, DUPLICATE_SAME_ACCESS))
+          MSVCRT_fdesc[2].wxflag = WX_OPEN | WX_TEXT;
   }
 
   TRACE(":handles (%p)(%p)(%p)\n",MSVCRT_fdesc[0].handle,
