@@ -3320,14 +3320,14 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
                 print_phase_function(file, indent, struct_type, local_var_prefix, phase, var, start_offset);
             }
         }
-        else if (type->type == RPC_FC_RP && is_union(type->type))
+        else if (type->type == RPC_FC_RP && is_union(ref->type))
         {
             const char *union_type = NULL;
             if (phase == PHASE_FREE)
                 union_type = "Pointer";
             else
             {
-                unsigned char tc = type->type;
+                unsigned char tc = ref->type;
 
                 if (tc == RPC_FC_NON_ENCAPSULATED_UNION)
                     union_type = "NonEncapsulatedUnion";
