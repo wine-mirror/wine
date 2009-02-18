@@ -296,7 +296,7 @@ HANDLE thread_init(void)
     thread_info.teb_base   = teb;
     thread_info.teb_sel    = thread_data->fs;
     wine_pthread_get_functions( &pthread_functions, sizeof(pthread_functions) );
-    pthread_functions.init_current_teb( &thread_info );
+    signal_init_thread( teb );
     pthread_functions.init_thread( &thread_info );
     virtual_init_threading();
 
@@ -424,8 +424,7 @@ static void start_thread( struct wine_pthread_thread_info *info )
     debug_info.out_pos = debug_info.output;
     thread_data->debug_info = &debug_info;
 
-    pthread_functions.init_current_teb( info );
-    signal_init_thread();
+    signal_init_thread( teb );
     server_init_thread( func );
     pthread_functions.init_thread( info );
     virtual_alloc_thread_stack( info->stack_base, info->stack_size );
@@ -1471,30 +1470,3 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
         return STATUS_NOT_IMPLEMENTED;
     }
 }
-
-
-/**********************************************************************
- *           NtCurrentTeb   (NTDLL.@)
- */
-#if defined(__i386__) && defined(__GNUC__)
-
-__ASM_GLOBAL_FUNC( NtCurrentTeb, ".byte 0x64\n\tmovl 0x18,%eax\n\tret" )
-
-#elif defined(__i386__) && defined(_MSC_VER)
-
-/* Nothing needs to be done. MS C "magically" exports the inline version from winnt.h */
-
-#elif defined(__x86_64__) && defined(__GNUC__)
-
-/* not exported on x86_64 */
-
-#else
-
-/**********************************************************************/
-
-TEB * WINAPI NtCurrentTeb(void)
-{
-    return pthread_functions.get_current_teb();
-}
-
-#endif  /* __i386__ */

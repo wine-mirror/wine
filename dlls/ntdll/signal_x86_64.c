@@ -55,6 +55,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
  */
 #ifdef linux
 
+#include <asm/prctl.h>
+extern int arch_prctl(int func, void *ptr);
+
 typedef struct ucontext SIGCONTEXT;
 
 # define HANDLER_DEF(name) void name( int __signal, struct siginfo *__siginfo, SIGCONTEXT *__context )
@@ -532,8 +535,13 @@ int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
 /**********************************************************************
  *		signal_init_thread
  */
-void signal_init_thread(void)
+void signal_init_thread( TEB *teb )
 {
+#ifdef __linux__
+    arch_prctl( ARCH_SET_GS, teb );
+#else
+# error Please define setting %gs for your architecture
+#endif
 }
 
 /**********************************************************************
@@ -554,7 +562,6 @@ void signal_init_process(void)
 #ifdef SIGTRAP
     if (set_handler( SIGTRAP, (void (*)())trap_handler ) == -1) goto error;
 #endif
-    signal_init_thread();
     return;
 
  error:

@@ -60,6 +60,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
+static pthread_key_t teb_key;
 
 /***********************************************************************
  * signal context platform-specific definitions
@@ -646,9 +647,18 @@ int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
 /**********************************************************************
  *		signal_init_thread
  */
-void signal_init_thread(void)
+void signal_init_thread( TEB *teb )
 {
+    static int init_done;
+
+    if (!init_done)
+    {
+        pthread_key_create( &teb_key, NULL );
+        init_done = 1;
+    }
+    pthread_setspecific( teb_key, teb );
 }
+
 
 /**********************************************************************
  *		signal_init_process
@@ -668,7 +678,6 @@ void signal_init_process(void)
 #ifdef SIGTRAP
     if (set_handler( SIGTRAP, (void (*)())trap_handler ) == -1) goto error;
 #endif
-    signal_init_thread();
     return;
 
  error:
@@ -699,6 +708,14 @@ void WINAPI DbgBreakPoint(void)
 void WINAPI DbgUserBreakPoint(void)
 {
      kill(getpid(), SIGTRAP);
+}
+
+/**********************************************************************
+ *           NtCurrentTeb   (NTDLL.@)
+ */
+TEB * WINAPI NtCurrentTeb(void)
+{
+    return pthread_getspecific( teb_key );
 }
 
 #endif  /* __powerpc__ */

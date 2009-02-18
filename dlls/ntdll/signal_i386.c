@@ -372,6 +372,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
 typedef int (*wine_signal_handler)(unsigned int sig);
 
+static const size_t teb_size = 4096;  /* we reserve one page for the TEB */
 static size_t signal_stack_mask;
 static size_t signal_stack_size;
 
@@ -1578,8 +1579,6 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 size_t get_signal_stack_total_size(void)
 {
-    static const size_t teb_size = 4096;  /* we reserve one page for the TEB */
-
     if (!signal_stack_size)
     {
         size_t size = 8192, min_size = teb_size + max( MINSIGSTKSZ, 8192 );
@@ -1607,9 +1606,10 @@ int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
 /**********************************************************************
  *		signal_init_thread
  */
-void signal_init_thread(void)
+void signal_init_thread( TEB *teb )
 {
-#ifdef HAVE_SIGALTSTACK
+    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
+    LDT_ENTRY fs_entry;
     stack_t ss;
 
 #ifdef __APPLE__
@@ -1620,13 +1620,16 @@ void signal_init_thread(void)
     sysctl( mib, 2, NULL, NULL, &val, sizeof(val) );
 #endif
 
-    ss.ss_sp    = get_signal_stack();
+    ss.ss_sp    = (char *)teb + teb_size;
     ss.ss_size  = signal_stack_size;
     ss.ss_flags = 0;
     if (sigaltstack(&ss, NULL) == -1) perror( "sigaltstack" );
-#endif  /* HAVE_SIGALTSTACK */
 
-    ntdll_get_thread_data()->gs = wine_get_gs();
+    wine_ldt_set_base( &fs_entry, teb );
+    wine_ldt_set_limit( &fs_entry, teb_size - 1 );
+    wine_ldt_set_flags( &fs_entry, WINE_LDT_FLAGS_DATA|WINE_LDT_FLAGS_32BIT );
+    wine_ldt_init_fs( thread_data->fs, &fs_entry );
+    thread_data->gs = wine_get_gs();
 }
 
 /**********************************************************************
@@ -1670,7 +1673,6 @@ void signal_init_process(void)
     if (sigaction( SIGUSR2, &sig_act, NULL ) == -1) goto error;
 #endif
 
-    signal_init_thread();
     return;
 
  error:
@@ -1774,6 +1776,11 @@ __ASM_GLOBAL_FUNC( DbgBreakPoint, "int $3; ret")
  *		DbgUserBreakPoint   (NTDLL.@)
  */
 __ASM_GLOBAL_FUNC( DbgUserBreakPoint, "int $3; ret")
+
+/**********************************************************************
+ *           NtCurrentTeb   (NTDLL.@)
+ */
+__ASM_GLOBAL_FUNC( NtCurrentTeb, ".byte 0x64\n\tmovl 0x18,%eax\n\tret" )
 
 
 /**********************************************************************

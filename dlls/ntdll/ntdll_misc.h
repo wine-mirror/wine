@@ -22,6 +22,9 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <sys/types.h>
+#ifdef HAVE_PTHREAD_H
+# include <pthread.h>
+#endif
 
 #include "windef.h"
 #include "winnt.h"
@@ -52,7 +55,7 @@ extern NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handl
                                                  const LARGE_INTEGER *timeout, HANDLE signal_object );
 
 /* init routines */
-extern void signal_init_thread(void);
+extern void signal_init_thread( TEB *teb );
 extern void signal_init_process(void);
 extern size_t get_signal_stack_total_size(void);
 extern void version_init( const WCHAR *appname );
