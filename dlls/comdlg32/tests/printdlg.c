@@ -298,6 +298,7 @@ static void test_abort_proc(void)
     DOCINFOA doc_info = {0};
     PRINTDLGA pd = {0};
     char filename[MAX_PATH];
+    int job_id;
 
     if (!GetTempFileNameA(".", "prn", 0, filename))
     {
@@ -333,7 +334,14 @@ static void test_abort_proc(void)
     doc_info.lpszDocName = "Some document";
     doc_info.lpszOutput = filename;
 
-    ok(StartDocA(print_dc, &doc_info) > 0, "StartDocA failed\n");
+    job_id = StartDocA(print_dc, &doc_info);
+    ok(job_id > 0, "StartDocA failed ret %d gle %d\n", job_id, GetLastError());
+    if(job_id <= 0)
+    {
+        skip("StartDoc failed\n");
+        goto end;
+    }
+
     ok(abort_proc_called, "AbortProc didn't get called by StartDoc.\n");
     abort_proc_called = FALSE;
 
@@ -357,6 +365,7 @@ static void test_abort_proc(void)
     ok(!abort_proc_called, "AbortProc got called unexpectedly by DeleteDC.\n");
     abort_proc_called = FALSE;
 
+end:
     ok(DeleteFileA(filename), "Failed to delete temporary file\n");
 }
 
