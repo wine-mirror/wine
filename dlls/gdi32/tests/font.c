@@ -1292,7 +1292,6 @@ static void testJustification(HDC hdc, PSTR str, RECT *clientArea)
 {
     INT         x, y,
                 breakCount,
-                outputWidth = 0,    /* to test TabbedTextOut() */
                 justifiedWidth = 0, /* to test GetTextExtentExPointW() */
                 areaWidth = clientArea->right - clientArea->left,
                 nErrors = 0, e;
@@ -1304,7 +1303,6 @@ static void testJustification(HDC hdc, PSTR str, RECT *clientArea)
     {
         char extent[100];
         int  GetTextExtentExPointWWidth;
-        int  TabbedTextOutWidth;
     } error[10];
 
     GetTextMetricsA(hdc, &tm);
@@ -1350,15 +1348,11 @@ static void testJustification(HDC hdc, PSTR str, RECT *clientArea)
 
         x = clientArea->left;
 
-        outputWidth = LOWORD(TabbedTextOut(
-                             hdc, x, y, pFirstChar, pLastChar - pFirstChar,
-                             0, NULL, 0));
         /* catch errors and report them */
-        if (!lastExtent && ((outputWidth != areaWidth) || (justifiedWidth != areaWidth)))
+        if (!lastExtent && (justifiedWidth != areaWidth))
         {
             memset(error[nErrors].extent, 0, 100);
             memcpy(error[nErrors].extent, pFirstChar, pLastChar - pFirstChar);
-            error[nErrors].TabbedTextOutWidth = outputWidth;
             error[nErrors].GetTextExtentExPointWWidth = justifiedWidth;
             nErrors++;
         }
@@ -1369,9 +1363,6 @@ static void testJustification(HDC hdc, PSTR str, RECT *clientArea)
 
     for (e = 0; e < nErrors; e++)
     {
-        ok(near_match(error[e].TabbedTextOutWidth, areaWidth),
-            "The output text (\"%s\") width should be %d, not %d.\n",
-            error[e].extent, areaWidth, error[e].TabbedTextOutWidth);
         /* The width returned by GetTextExtentPoint32() is exactly the same
            returned by GetTextExtentExPointW() - see dlls/gdi32/font.c */
         ok(error[e].GetTextExtentExPointWWidth == areaWidth,
