@@ -518,7 +518,7 @@ void WINAPI DragAcceptFiles(HWND hWnd, BOOL b)
 void WINAPI DragFinish(HDROP h)
 {
 	TRACE("\n");
-	GlobalFree((HGLOBAL)h);
+	GlobalFree(h);
 }
 
 /*************************************************************************

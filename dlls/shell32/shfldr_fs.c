@@ -196,7 +196,7 @@ static ULONG WINAPI IUnknown_fnRelease (IUnknown * iface)
 
         SHFree (This->pidlRoot);
         SHFree (This->sPathTarget);
-        LocalFree ((HLOCAL) This);
+        LocalFree (This);
     }
     return refCount;
 }
@@ -324,7 +324,7 @@ LPITEMIDLIST SHELL32_CreatePidlFromBindCtx(IBindCtx *pbc, LPCWSTR path)
         return NULL;
 
     /* see if the caller bound File System Bind Data */
-    r = IBindCtx_GetObjectParam( pbc, (LPOLESTR) szfsbc, &param );
+    r = IBindCtx_GetObjectParam( pbc, szfsbc, &param );
     if (FAILED(r))
         return NULL;
 

@@ -311,7 +311,7 @@ static ULONG ShellLink_Release( IShellLinkImpl *This )
     if (This->pPidl)
         ILFree(This->pPidl);
 
-    LocalFree((HANDLE)This);
+    LocalFree(This);
 
     return 0;
 }
@@ -585,20 +585,20 @@ static HRESULT Stream_LoadString( IStream* stm, BOOL unicode, LPWSTR *pstr )
     /* convert to unicode if necessary */
     if( !unicode )
     {
-        count = MultiByteToWideChar( CP_ACP, 0, (LPSTR) temp, len, NULL, 0 );
+        count = MultiByteToWideChar( CP_ACP, 0, temp, len, NULL, 0 );
         str = HeapAlloc( GetProcessHeap(), 0, (count+1)*sizeof (WCHAR) );
         if( !str )
         {
             HeapFree( GetProcessHeap(), 0, temp );
             return E_OUTOFMEMORY;
         }
-        MultiByteToWideChar( CP_ACP, 0, (LPSTR) temp, len, str, count );
+        MultiByteToWideChar( CP_ACP, 0, temp, len, str, count );
         HeapFree( GetProcessHeap(), 0, temp );
     }
     else
     {
         count /= 2;
-        str = (LPWSTR) temp;
+        str = temp;
     }
     str[count] = 0;
 
@@ -637,7 +637,7 @@ static HRESULT Stream_ReadChunk( IStream* stm, LPVOID *data )
 
     TRACE("Read %d bytes\n",chunk->size);
 
-    *data = (LPVOID) chunk;
+    *data = chunk;
 
     return S_OK;
 }
@@ -1308,7 +1308,7 @@ HRESULT WINAPI IShellLink_ConstructFromFile( IUnknown* pUnkOuter, REFIID riid,
                 hr = E_FAIL;
 
 	    if (SUCCEEDED(hr))
-		*ppv = (IUnknown*) psl;
+                *ppv = psl;
 
 	    IPersistFile_Release(ppf);
 	}

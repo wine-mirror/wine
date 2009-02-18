@@ -167,7 +167,7 @@ static HRESULT WINAPI IAutoComplete2_fnQueryInterface(
         IsEqualIID(riid, &IID_IAutoComplete) ||
         IsEqualIID(riid, &IID_IAutoComplete2))
     {
-	*ppvObj = (IAutoComplete2*)This;
+        *ppvObj = This;
     }
     else if (IsEqualIID(riid, &IID_IAutoCompleteDropDown))
     {
@@ -483,9 +483,8 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 	    }
 	    return CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
 	case WM_KEYUP:
-	    
-	    GetWindowTextW( hwnd, (LPWSTR)hwndText, 255);
-      
+            GetWindowTextW( hwnd, hwndText, 255);
+
 	    switch(wParam) {
 		case VK_RETURN:
 		    /* If quickComplete is set and control is pressed, replace the string */

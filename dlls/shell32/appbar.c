@@ -109,7 +109,7 @@ UINT_PTR WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
         return 0;
     }
 
-    response = (struct appbar_response*)return_view;
+    response = return_view;
 
     ret = response->result;
     *data = response->abd;

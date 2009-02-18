@@ -244,9 +244,9 @@ static BOOL Control_CreateListView (CPanel *panel)
 
 static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTW* cs)
 {
-   CPanel*	panel = (CPanel*)cs->lpCreateParams;
+   CPanel* panel = cs->lpCreateParams;
    HMENU hMenu, hSubMenu;
-   CPlApplet*	applet;
+   CPlApplet* applet;
    MENUITEMINFOW mii;
    unsigned int i;
    int menucount, index;
@@ -292,7 +292,7 @@ static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTW* cs)
          if (!item)
             continue;
 
-         item->applet = (CPlApplet *) applet;
+         item->applet = applet;
          item->id = i;
 
          mii.cbSize = sizeof(MENUITEMINFOW);

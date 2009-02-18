@@ -382,7 +382,7 @@ int WINAPIV ShellMessageBoxW(
 	__ms_va_end(args);
 
 	ret = MessageBoxW(hWnd,pszTemp,pszTitle,uType);
-	LocalFree((HLOCAL)pszTemp);
+        LocalFree(pszTemp);
 	return ret;
 }
 
@@ -440,7 +440,7 @@ int WINAPIV ShellMessageBoxA(
 	__ms_va_end(args);
 
 	ret = MessageBoxA(hWnd,pszTemp,pszTitle,uType);
-	LocalFree((HLOCAL)pszTemp);
+        LocalFree(pszTemp);
 	return ret;
 }
 
@@ -663,7 +663,7 @@ static INT SHADD_create_add_mru_data(HANDLE mruhandle, LPCSTR doc_name, LPCSTR n
 
     /* Add the new entry into the MRU list
      */
-    return AddMRUData(mruhandle, (LPCVOID)buffer, *len);
+    return AddMRUData(mruhandle, buffer, *len);
 }
 
 /*************************************************************************
@@ -814,15 +814,15 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
     switch (uFlags)
     {
     case SHARD_PIDL:
-	SHGetPathFromIDListA((LPCITEMIDLIST) pv, doc_name);
+        SHGetPathFromIDListA(pv, doc_name);
         break;
 
     case SHARD_PATHA:
-        lstrcpynA(doc_name, (LPCSTR)pv, MAX_PATH);
+        lstrcpynA(doc_name, pv, MAX_PATH);
         break;
 
     case SHARD_PATHW:
-        WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)pv, -1, doc_name, MAX_PATH, NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, pv, -1, doc_name, MAX_PATH, NULL, NULL);
         break;
 
     default:
@@ -970,9 +970,9 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 
 	    /* Set the document path or pidl */
 	    if (uFlags == SHARD_PIDL) {
-		hres = IShellLinkA_SetIDList(psl, (LPCITEMIDLIST) pv);
+                hres = IShellLinkA_SetIDList(psl, pv);
 	    } else {
-		hres = IShellLinkA_SetPath(psl, (LPCSTR) pv);
+                hres = IShellLinkA_SetPath(psl, pv);
 	    }
 	    if(FAILED(hres)) {
 		/* bombed */
@@ -1771,7 +1771,7 @@ void WINAPI SHDestroyPropSheetExtArray(HPSXA hpsxa)
             psxa->pspsx[i]->lpVtbl->Release(psxa->pspsx[i]);
         }
 
-        LocalFree((HLOCAL)psxa);
+        LocalFree(psxa);
     }
 }
 

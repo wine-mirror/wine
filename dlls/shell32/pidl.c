@@ -299,7 +299,7 @@ HRESULT WINAPI ILLoadFromStream (IStream * pStream, LPITEMIDLIST * ppPidl)
 
     IStream_AddRef (pStream);
 
-    if (SUCCEEDED(IStream_Read(pStream, (LPVOID)&wLen, 2, &dwBytesRead)))
+    if (SUCCEEDED(IStream_Read(pStream, &wLen, 2, &dwBytesRead)))
     {
         TRACE("PIDL length is %d\n", wLen);
         if (wLen != 0)
@@ -354,7 +354,7 @@ HRESULT WINAPI ILSaveToStream (IStream * pStream, LPCITEMIDLIST pPidl)
 
     wLen = ILGetSize(pPidl);
 
-    if (SUCCEEDED(IStream_Write(pStream, (LPVOID)&wLen, 2, NULL)))
+    if (SUCCEEDED(IStream_Write(pStream, &wLen, 2, NULL)))
     {
         if (SUCCEEDED(IStream_Write(pStream, pPidl, wLen, NULL)))
             ret = S_OK;
@@ -1977,21 +1977,21 @@ LPSTR _ILGetTextPointer(LPCITEMIDLIST pidl)
     case PT_DRIVE1:
     case PT_DRIVE2:
     case PT_DRIVE3:
-        return (LPSTR)pdata->u.drive.szDriveName;
+        return pdata->u.drive.szDriveName;
 
     case PT_FOLDER:
     case PT_FOLDER1:
     case PT_VALUE:
     case PT_IESPECIAL1:
     case PT_IESPECIAL2:
-        return (LPSTR)pdata->u.file.szNames;
+        return pdata->u.file.szNames;
 
     case PT_WORKGRP:
     case PT_COMP:
     case PT_NETWORK:
     case PT_NETPROVIDER:
     case PT_SHARE:
-        return (LPSTR)pdata->u.network.szNames;
+        return pdata->u.network.szNames;
     }
     return NULL;
 }
@@ -2015,10 +2015,10 @@ static LPSTR _ILGetSTextPointer(LPCITEMIDLIST pidl)
     case PT_VALUE:
     case PT_IESPECIAL1:
     case PT_IESPECIAL2:
-        return (LPSTR)(pdata->u.file.szNames + strlen (pdata->u.file.szNames) + 1);
+        return pdata->u.file.szNames + strlen (pdata->u.file.szNames) + 1;
 
     case PT_WORKGRP:
-        return (LPSTR)(pdata->u.network.szNames + strlen (pdata->u.network.szNames) + 1);
+        return pdata->u.network.szNames + strlen (pdata->u.network.szNames) + 1;
     }
     return NULL;
 }

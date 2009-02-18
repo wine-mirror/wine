@@ -64,7 +64,7 @@ static HRESULT WINAPI IEnumFORMATETC_fnQueryInterface(
 	}
 	else if(IsEqualIID(riid, &IID_IEnumFORMATETC))
 	{
-	  *ppvObj = (IEnumFORMATETC*)This;
+          *ppvObj = This;
 	}
 
 	if(*ppvObj)
@@ -232,7 +232,7 @@ static HRESULT WINAPI IDataObject_fnQueryInterface(LPDATAOBJECT iface, REFIID ri
 	}
 	else if(IsEqualIID(riid, &IID_IDataObject))  /*IDataObject*/
 	{
-	  *ppvObj = (IDataObject*)This;
+          *ppvObj = This;
 	}
 
 	if(*ppvObj)

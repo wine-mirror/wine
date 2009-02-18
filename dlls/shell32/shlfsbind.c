@@ -114,7 +114,7 @@ static HRESULT WINAPI IFileSystemBindData_fnQueryInterface(
     if (IsEqualIID(riid, &IID_IUnknown))
         *ppV = This;
     else if (IsEqualIID(riid, &IID_IFileSystemBindData))
-        *ppV = (IFileSystemBindData*)This;
+        *ppV = This;
 
     if (*ppV)
     {

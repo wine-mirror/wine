@@ -1212,7 +1212,7 @@ typedef struct
 
 static DWORD CALLBACK ddeThread(LPVOID arg)
 {
-    dde_thread_info_t *info = (dde_thread_info_t *)arg;
+    dde_thread_info_t *info = arg;
     assert(info && info->filename);
     PostThreadMessage(info->threadIdParent,
                       WM_QUIT,
@@ -1266,7 +1266,7 @@ static void test_dde(void)
         denyNextConnection = TRUE;
         ddeExec[0] = 0;
 
-        assert(CreateThread(NULL, 0, ddeThread, (LPVOID)&info, 0, &threadId));
+        assert(CreateThread(NULL, 0, ddeThread, &info, 0, &threadId));
         while (GetMessage(&msg, NULL, 0, 0)) DispatchMessage(&msg);
         rc = msg.wParam > 32 ? 33 : msg.wParam;
         if ((test->todo & 0x1)==0)
@@ -1419,7 +1419,7 @@ static void test_dde_default_app(void)
          * so don't wait for it */
         SetEvent(hEvent);
 
-        assert(CreateThread(NULL, 0, ddeThread, (LPVOID)&info, 0, &threadId));
+        assert(CreateThread(NULL, 0, ddeThread, &info, 0, &threadId));
         while (GetMessage(&msg, NULL, 0, 0)) DispatchMessage(&msg);
         rc = msg.wParam > 32 ? 33 : msg.wParam;
 

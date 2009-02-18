@@ -224,7 +224,7 @@ static HRESULT WINAPI IEnumIDList_fnQueryInterface(
 	{ *ppvObj = This;
 	}
 	else if(IsEqualIID(riid, &IID_IEnumIDList))  /*IEnumIDList*/
-	{    *ppvObj = (IEnumIDList*)This;
+	{    *ppvObj = This;
 	}
 
 	if(*ppvObj)

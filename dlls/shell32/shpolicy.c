@@ -897,15 +897,15 @@ BOOL WINAPI SHInitRestricted(LPCVOID unused, LPCVOID inpRegKey)
 	{
 	  if (SHELL_OsIsUnicode())
 	  {
-	    if (lstrcmpiW((LPCWSTR)inpRegKey, strRegistryPolicyW) &&
-	        lstrcmpiW((LPCWSTR)inpRegKey, strPolicyW))
+            if (lstrcmpiW(inpRegKey, strRegistryPolicyW) &&
+                lstrcmpiW(inpRegKey, strPolicyW))
 	      /* doesn't match, fail */
 	      return 0;
 	  }
 	  else
 	  {
-	    if (lstrcmpiA((LPCSTR)inpRegKey, strRegistryPolicyA) &&
-	        lstrcmpiA((LPCSTR)inpRegKey, strPolicyA))
+            if (lstrcmpiA(inpRegKey, strRegistryPolicyA) &&
+                lstrcmpiA(inpRegKey, strPolicyA))
 	      /* doesn't match, fail */
 	      return 0;
 	  }

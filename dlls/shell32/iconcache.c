@@ -77,8 +77,9 @@ static CRITICAL_SECTION SHELL32_SicCS = { &critsect_debug, -1, 0, 0, 0, 0 };
  *  Callback for DPA_Search
  */
 static INT CALLBACK SIC_CompareEntries( LPVOID p1, LPVOID p2, LPARAM lparam)
-{	LPSIC_ENTRY e1 = (LPSIC_ENTRY)p1, e2 = (LPSIC_ENTRY)p2;
-	
+{
+        LPSIC_ENTRY e1 = p1, e2 = p2;
+
 	TRACE("%p %p %8lx\n", p1, p2, lparam);
 
 	/* Icons in the cache are keyed by the name of the file they are

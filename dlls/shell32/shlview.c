@@ -455,8 +455,8 @@ static INT CALLBACK ShellView_ListViewCompareItems(LPVOID lParam1, LPVOID lParam
     FILETIME fd1, fd2;
     char strName1[MAX_PATH], strName2[MAX_PATH];
     BOOL bIsFolder1, bIsFolder2,bIsBothFolder;
-    LPITEMIDLIST pItemIdList1 = (LPITEMIDLIST) lParam1;
-    LPITEMIDLIST pItemIdList2 = (LPITEMIDLIST) lParam2;
+    LPITEMIDLIST pItemIdList1 = lParam1;
+    LPITEMIDLIST pItemIdList2 = lParam2;
     LISTVIEW_SORT_INFO *pSortInfo = (LPLISTVIEW_SORT_INFO) lpData;
 
 
@@ -945,7 +945,7 @@ static HRESULT ShellView_OpenSelectedItems(IShellViewImpl * This)
 
 	    ShellExecuteExW(&shexinfo);    /* Discard error/success info */
 
-	    ILFree((LPITEMIDLIST)shexinfo.lpIDList);
+            ILFree(shexinfo.lpIDList);
 	  }
 	}
 
@@ -1029,7 +1029,7 @@ static void ShellView_DoContextMenu(IShellViewImpl * This, WORD x, WORD y, BOOL 
 		    ZeroMemory(&cmi, sizeof(cmi));
 		    cmi.cbSize = sizeof(cmi);
 		    cmi.hwnd = This->hWndParent; /* this window has to answer CWM_GETISHELLBROWSER */
-		    cmi.lpVerb = (LPCSTR)MAKEINTRESOURCEA(uCommand);
+                    cmi.lpVerb = MAKEINTRESOURCEA(uCommand);
 		    IContextMenu_InvokeCommand(pContextMenu, &cmi);
 		  }
 		}
@@ -1054,7 +1054,7 @@ static void ShellView_DoContextMenu(IShellViewImpl * This, WORD x, WORD y, BOOL 
 
 	  ZeroMemory(&cmi, sizeof(cmi));
 	  cmi.cbSize = sizeof(cmi);
-	  cmi.lpVerb = (LPCSTR)MAKEINTRESOURCEA(uCommand);
+          cmi.lpVerb = MAKEINTRESOURCEA(uCommand);
 	  cmi.hwnd = This->hWndParent;
 	  IContextMenu2_InvokeCommand(pCM, &cmi);
 
@@ -1625,7 +1625,7 @@ static LRESULT CALLBACK ShellView_WndProc(HWND hWnd, UINT uMessage, WPARAM wPara
 	{
 	  case WM_NCCREATE:
 	    lpcs = (LPCREATESTRUCTW)lParam;
-	    pThis = (IShellViewImpl*)(lpcs->lpCreateParams);
+            pThis = lpcs->lpCreateParams;
 	    SetWindowLongPtrW(hWnd, GWLP_USERDATA, (ULONG_PTR)pThis);
 	    pThis->hWnd = hWnd;        /*set the window handle*/
 	    break;
@@ -1687,27 +1687,27 @@ static HRESULT WINAPI IShellView_fnQueryInterface(IShellView2 * iface,REFIID rii
 	}
 	else if(IsEqualIID(riid, &IID_IShellView))
 	{
-	  *ppvObj = (IShellView*)This;
+          *ppvObj = This;
 	}
 	else if(IsEqualIID(riid, &IID_IShellView2))
 	{
-	  *ppvObj = (IShellView2*)This;
+          *ppvObj = This;
 	}
 	else if(IsEqualIID(riid, &IID_IOleCommandTarget))
 	{
-	  *ppvObj = (IOleCommandTarget*)&(This->lpvtblOleCommandTarget);
+          *ppvObj = &This->lpvtblOleCommandTarget;
 	}
 	else if(IsEqualIID(riid, &IID_IDropTarget))
 	{
-	  *ppvObj = (IDropTarget*)&(This->lpvtblDropTarget);
+          *ppvObj = &This->lpvtblDropTarget;
 	}
 	else if(IsEqualIID(riid, &IID_IDropSource))
 	{
-	  *ppvObj = (IDropSource*)&(This->lpvtblDropSource);
+          *ppvObj = &This->lpvtblDropSource;
 	}
 	else if(IsEqualIID(riid, &IID_IViewObject))
 	{
-	  *ppvObj = (IViewObject*)&(This->lpvtblViewObject);
+          *ppvObj = &This->lpvtblViewObject;
 	}
 
 	if(*ppvObj)
@@ -2104,18 +2104,11 @@ static HRESULT WINAPI IShellView2_fnCreateViewWindow2(IShellView2* iface, LPSV2C
         if (!RegisterClassW(&wc)) return E_FAIL;
     }
 
-    wnd = CreateWindowExW(0,
-            SV_CLASS_NAME,
-            NULL,
-            WS_CHILD | WS_TABSTOP,
-            view_params->prcView->left,
-            view_params->prcView->top,
+    wnd = CreateWindowExW(0, SV_CLASS_NAME, NULL, WS_CHILD | WS_TABSTOP,
+            view_params->prcView->left, view_params->prcView->top,
             view_params->prcView->right - view_params->prcView->left,
             view_params->prcView->bottom - view_params->prcView->top,
-            This->hWndParent,
-            0,
-            shell32_hInstance,
-            (LPVOID)This);
+            This->hWndParent, 0, shell32_hInstance, This);
 
     CheckToolbar(This);
 

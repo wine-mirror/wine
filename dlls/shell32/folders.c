@@ -108,15 +108,15 @@ static HRESULT WINAPI IExtractIconW_fnQueryInterface(IExtractIconW *iface, REFII
 	}
 	else if (IsEqualIID(riid, &IID_IPersistFile))	/*IExtractIcon*/
 	{
-	  *ppvObj = (IPersistFile*)&(This->lpvtblPersistFile);
+          *ppvObj = &This->lpvtblPersistFile;
 	}
 	else if (IsEqualIID(riid, &IID_IExtractIconA))	/*IExtractIcon*/
 	{
-	  *ppvObj = (IExtractIconA*)&(This->lpvtblExtractIconA);
+          *ppvObj = &This->lpvtblExtractIconA;
 	}
 	else if (IsEqualIID(riid, &IID_IExtractIconW))	/*IExtractIcon*/
 	{
-	  *ppvObj = (IExtractIconW*)This;
+          *ppvObj = This;
 	}
 
 	if(*ppvObj)

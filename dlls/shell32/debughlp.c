@@ -82,21 +82,21 @@ LPSTR _dbg_ILGetTextPointer(LPCITEMIDLIST pidl)
 	    case PT_DRIVE1:
 	    case PT_DRIVE2:
 	    case PT_DRIVE3:
-	      return (LPSTR)pdata->u.drive.szDriveName;
+              return pdata->u.drive.szDriveName;
 
 	    case PT_FOLDER:
 	    case PT_FOLDER1:
 	    case PT_VALUE:
 	    case PT_IESPECIAL1:
 	    case PT_IESPECIAL2:
-	      return (LPSTR)pdata->u.file.szNames;
+              return pdata->u.file.szNames;
 
 	    case PT_WORKGRP:
 	    case PT_COMP:
 	    case PT_NETWORK:
 	    case PT_NETPROVIDER:
 	    case PT_SHARE:
-	      return (LPSTR)pdata->u.network.szNames;
+              return pdata->u.network.szNames;
 	  }
 	}
 	return NULL;
@@ -160,10 +160,10 @@ LPSTR _dbg_ILGetSTextPointer(LPCITEMIDLIST pidl)
 	    case PT_VALUE:
 	    case PT_IESPECIAL1:
 	    case PT_IESPECIAL2:
-	      return (LPSTR)(pdata->u.file.szNames + strlen (pdata->u.file.szNames) + 1);
+              return pdata->u.file.szNames + strlen (pdata->u.file.szNames) + 1;
 
 	    case PT_WORKGRP:
-	      return (LPSTR)(pdata->u.network.szNames + strlen (pdata->u.network.szNames) + 1);
+              return pdata->u.network.szNames + strlen (pdata->u.network.szNames) + 1;
 	  }
 	}
 	return NULL;

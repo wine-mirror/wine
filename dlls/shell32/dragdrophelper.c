@@ -128,8 +128,8 @@ static ULONG WINAPI IDropTargetHelper_fnRelease (IDropTargetHelper * iface)
     TRACE ("(%p)->(count=%u)\n", This, refCount + 1);
 
     if (!refCount) {
-        TRACE("-- destroying (%p)\n", This);
-        LocalFree ((HLOCAL) This);
+        TRACE ("-- destroying (%p)\n", This);
+        LocalFree (This);
         return 0;
     }
     return refCount;

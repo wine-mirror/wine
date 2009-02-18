@@ -187,7 +187,7 @@ static ULONG WINAPI ISF_MyComputer_fnRelease (IShellFolder2 * iface)
     {
         TRACE ("-- destroying IShellFolder(%p)\n", This);
         SHFree (This->pidlRoot);
-        LocalFree ((HLOCAL) This);
+        LocalFree (This);
     }
     return refCount;
 }

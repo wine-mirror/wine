@@ -126,7 +126,7 @@ static INT_PTR ConfirmMsgBox_Paint(HWND hDlg)
     /* this will remap the rect to dialog coords */
     MapWindowPoints(GetDlgItem(hDlg, IDD_MESSAGE), hDlg, (LPPOINT)&r, 2);
     hOldFont = SelectObject(hdc, (HFONT)SendDlgItemMessageW(hDlg, IDD_MESSAGE, WM_GETFONT, 0, 0));
-    DrawTextW(hdc, (LPWSTR)GetPropW(hDlg, CONFIRM_MSG_PROP), -1, &r, DT_NOPREFIX | DT_PATH_ELLIPSIS | DT_WORDBREAK);
+    DrawTextW(hdc, GetPropW(hDlg, CONFIRM_MSG_PROP), -1, &r, DT_NOPREFIX | DT_PATH_ELLIPSIS | DT_WORDBREAK);
     SelectObject(hdc, hOldFont);
     EndPaint(hDlg, &ps);
     return TRUE;
@@ -143,7 +143,7 @@ static INT_PTR ConfirmMsgBox_Init(HWND hDlg, LPARAM lParam)
 
     SetWindowTextW(hDlg, info->lpszCaption);
     ShowWindow(GetDlgItem(hDlg, IDD_MESSAGE), SW_HIDE);
-    SetPropW(hDlg, CONFIRM_MSG_PROP, (HANDLE)info->lpszText);
+    SetPropW(hDlg, CONFIRM_MSG_PROP, info->lpszText);
     SendDlgItemMessageW(hDlg, IDD_ICON, STM_SETICON, (WPARAM)info->hIcon, 0);
 
     /* compute the text height and resize the dialog */
@@ -1569,12 +1569,12 @@ void WINAPI SHFreeNameMappings(HANDLE hNameMapping)
 
 	  for (; i>= 0; i--)
 	  {
-	    LPSHNAMEMAPPINGW lp = DSA_GetItemPtr((HDSA)hNameMapping, i);
+            LPSHNAMEMAPPINGW lp = DSA_GetItemPtr(hNameMapping, i);
 
 	    SHFree(lp->pszOldPath);
 	    SHFree(lp->pszNewPath);
 	  }
-	  DSA_Destroy((HDSA)hNameMapping);
+          DSA_Destroy(hNameMapping);
 	}
 }
 

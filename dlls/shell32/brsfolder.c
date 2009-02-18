@@ -686,7 +686,7 @@ static BOOL BrsFolder_OnCommand( browse_info *info, UINT id )
 static BOOL BrsFolder_OnSetExpanded(browse_info *info, LPVOID selection, 
     BOOL is_str, HTREEITEM *pItem)
 {
-    LPITEMIDLIST pidlSelection = (LPITEMIDLIST)selection;
+    LPITEMIDLIST pidlSelection = selection;
     LPCITEMIDLIST pidlCurrent, pidlRoot;
     TVITEMEXW item;
     BOOL bResult = FALSE;
@@ -701,7 +701,7 @@ static BOOL BrsFolder_OnSetExpanded(browse_info *info, LPVOID selection,
             goto done;
 
         hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, 
-                     (LPOLESTR)selection, NULL, &pidlSelection, NULL);
+                     selection, NULL, &pidlSelection, NULL);
         IShellFolder_Release(psfDesktop);
         if (FAILED(hr)) 
             goto done;
@@ -751,7 +751,7 @@ static BOOL BrsFolder_OnSetExpanded(browse_info *info, LPVOID selection,
         bResult = TRUE;
 
 done:
-    if (pidlSelection && pidlSelection != (LPITEMIDLIST)selection)
+    if (pidlSelection && pidlSelection != selection)
         ILFree(pidlSelection);
 
     if (pItem) 
@@ -777,10 +777,10 @@ static BOOL BrsFolder_OnSetSelectionA(browse_info *info, LPVOID selection, BOOL 
     
     if (!is_str)
         return BrsFolder_OnSetSelectionW(info, selection, is_str);
-    
-    if ((length = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)selection, -1, NULL, 0)) &&
+
+    if ((length = MultiByteToWideChar(CP_ACP, 0, selection, -1, NULL, 0)) &&
         (selectionW = HeapAlloc(GetProcessHeap(), 0, length * sizeof(WCHAR))) &&
-        MultiByteToWideChar(CP_ACP, 0, (LPCSTR)selection, -1, selectionW, length))
+        MultiByteToWideChar(CP_ACP, 0, selection, -1, selectionW, length))
     {
         result = BrsFolder_OnSetSelectionW(info, selectionW, is_str);
     }

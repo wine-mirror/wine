@@ -135,7 +135,7 @@ static LPNOTIFICATIONLIST FindNode( HANDLE hitem )
 {
     LPNOTIFICATIONLIST ptr;
     for( ptr = head; ptr; ptr = ptr->next )
-        if( ptr == (LPNOTIFICATIONLIST) hitem )
+        if( ptr == hitem )
             return ptr;
     return NULL;
 }
@@ -315,16 +315,16 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
     switch (typeFlag)
     {
     case SHCNF_PATHA:
-        if (dwItem1) Pidls[0] = SHSimpleIDListFromPathA((LPCSTR)dwItem1);
-        if (dwItem2) Pidls[1] = SHSimpleIDListFromPathA((LPCSTR)dwItem2);
+        if (dwItem1) Pidls[0] = SHSimpleIDListFromPathA(dwItem1);
+        if (dwItem2) Pidls[1] = SHSimpleIDListFromPathA(dwItem2);
         break;
     case SHCNF_PATHW:
-        if (dwItem1) Pidls[0] = SHSimpleIDListFromPathW((LPCWSTR)dwItem1);
-        if (dwItem2) Pidls[1] = SHSimpleIDListFromPathW((LPCWSTR)dwItem2);
+        if (dwItem1) Pidls[0] = SHSimpleIDListFromPathW(dwItem1);
+        if (dwItem2) Pidls[1] = SHSimpleIDListFromPathW(dwItem2);
         break;
     case SHCNF_IDLIST:
-        Pidls[0] = (LPCITEMIDLIST)dwItem1;
-        Pidls[1] = (LPCITEMIDLIST)dwItem2;
+        Pidls[0] = dwItem1;
+        Pidls[1] = dwItem2;
         break;
     case SHCNF_PRINTERA:
     case SHCNF_PRINTERW:
@@ -458,7 +458,7 @@ HANDLE WINAPI SHChangeNotification_Lock(
 
     /* LeaveCriticalSection(&SHELL32_ChangenotifyCS); */
 
-    return (HANDLE) node;
+    return node;
 }
 
 /*************************************************************************
