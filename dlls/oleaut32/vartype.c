@@ -5662,6 +5662,9 @@ HRESULT WINAPI VarDecAbs(const DECIMAL* pDecIn, DECIMAL* pDecOut)
  */
 HRESULT WINAPI VarDecFix(const DECIMAL* pDecIn, DECIMAL* pDecOut)
 {
+  double dbl;
+  HRESULT hr;
+
   if (DEC_SIGN(pDecIn) & ~DECIMAL_NEG)
     return E_INVALIDARG;
 
@@ -5671,8 +5674,13 @@ HRESULT WINAPI VarDecFix(const DECIMAL* pDecIn, DECIMAL* pDecOut)
     return S_OK;
   }
 
-  FIXME("semi-stub!\n");
-  return DISP_E_OVERFLOW;
+  hr = VarR8FromDec(pDecIn, &dbl);
+  if (SUCCEEDED(hr)) {
+    LONGLONG rounded = dbl;
+
+    hr = VarDecFromI8(rounded, pDecOut);
+  }
+  return hr;
 }
 
 /************************************************************************
