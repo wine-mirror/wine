@@ -306,7 +306,7 @@ HANDLE thread_init(void)
 
     /* setup the server connection */
     server_init_process();
-    info_size = server_init_thread( thread_info.pid, thread_info.tid, NULL );
+    info_size = server_init_thread( NULL );
 
     /* create the process heap */
     if (!(peb->ProcessHeap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL )))
@@ -426,7 +426,7 @@ static void start_thread( struct wine_pthread_thread_info *info )
 
     pthread_functions.init_current_teb( info );
     signal_init_thread();
-    server_init_thread( info->pid, info->tid, func );
+    server_init_thread( func );
     pthread_functions.init_thread( info );
     virtual_alloc_thread_stack( info->stack_base, info->stack_size );
     pthread_functions.sigprocmask( SIG_UNBLOCK, &server_block_set, NULL );

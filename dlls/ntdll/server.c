@@ -51,6 +51,10 @@
 #ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
 #endif
+#ifdef HAVE_SYS_THR_H
+#include <sys/ucontext.h>
+#include <sys/thr.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -927,6 +931,32 @@ static void send_server_task_port(void)
 }
 #endif  /* __APPLE__ */
 
+
+/***********************************************************************
+ *           get_unix_tid
+ *
+ * Retrieve the Unix tid to use on the server side for the current thread.
+ */
+static int get_unix_tid(void)
+{
+    int ret = -1;
+#if defined(linux) && defined(__i386__)
+    __asm__("int $0x80" : "=a" (ret) : "0" (224) /* SYS_gettid */);
+#elif defined(linux) && defined(__x86_64__)
+    __asm__("syscall" : "=a" (ret) : "0" (186) /* SYS_gettid */);
+#elif defined(__sun)
+    ret = pthread_self();
+#elif defined(__APPLE__)
+    ret = mach_thread_self();
+#elif defined(__FreeBSD__)
+    long lwpid;
+    thr_self( &lwpid );
+    ret = lwpid;
+#endif
+    return ret;
+}
+
+
 /***********************************************************************
  *           server_init_process
  *
@@ -1012,7 +1042,7 @@ NTSTATUS server_init_process_done(void)
  *
  * Send an init thread request. Return 0 if OK.
  */
-size_t server_init_thread( int unix_pid, int unix_tid, void *entry_point )
+size_t server_init_thread( void *entry_point )
 {
     int ret;
     int reply_pipe[2];
@@ -1046,8 +1076,8 @@ size_t server_init_thread( int unix_pid, int unix_tid, void *entry_point )
 
     SERVER_START_REQ( init_thread )
     {
-        req->unix_pid    = unix_pid;
-        req->unix_tid    = unix_tid;
+        req->unix_pid    = getpid();
+        req->unix_tid    = get_unix_tid();
         req->teb         = wine_server_client_ptr( NtCurrentTeb() );
         req->peb         = wine_server_client_ptr( NtCurrentTeb()->Peb );
         req->entry       = wine_server_client_ptr( entry_point );

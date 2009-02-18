@@ -67,7 +67,7 @@ extern void virtual_init_threading(void);
 extern timeout_t server_start_time;
 extern void server_init_process(void);
 extern NTSTATUS server_init_process_done(void);
-extern size_t server_init_thread( int unix_pid, int unix_tid, void *entry_point );
+extern size_t server_init_thread( void *entry_point );
 extern void DECLSPEC_NORETURN server_protocol_error( const char *err, ... );
 extern void DECLSPEC_NORETURN server_protocol_perror( const char *err );
 extern void DECLSPEC_NORETURN server_exit_thread( int status );
