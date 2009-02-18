@@ -5257,6 +5257,17 @@ BOOL WineEngGetTextMetrics(GdiFont *font, LPTEXTMETRICW ptm)
     return TRUE;
 }
 
+static BOOL face_has_symbol_charmap(FT_Face ft_face)
+{
+    int i;
+
+    for(i = 0; i < ft_face->num_charmaps; i++)
+    {
+        if(ft_face->charmaps[i]->encoding == FT_ENCODING_MS_SYMBOL)
+            return TRUE;
+    }
+    return FALSE;
+}
 
 /*************************************************************
  * WineEngGetOutlineTextMetrics
@@ -5396,7 +5407,8 @@ UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
     /* It appears that for fonts with SYMBOL_CHARSET Windows always sets
      * symbol range to 0 - f0ff
      */
-    if (font->charset == SYMBOL_CHARSET || (pOS2->usFirstCharIndex >= 0xf000 && pOS2->usFirstCharIndex < 0xf100))
+
+    if (face_has_symbol_charmap(ft_face) || (pOS2->usFirstCharIndex >= 0xf000 && pOS2->usFirstCharIndex < 0xf100))
     {
         TM.tmFirstChar = 0;
         switch(GetACP())

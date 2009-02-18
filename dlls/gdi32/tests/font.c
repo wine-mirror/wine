@@ -2182,7 +2182,14 @@ static void *get_cmap(cmap_header *header, USHORT plat_id, USHORT enc_id)
     return NULL;
 }
 
-static BOOL get_first_last_from_cmap(HDC hdc, DWORD *first, DWORD *last)
+typedef enum
+{
+    cmap_none,
+    cmap_ms_unicode,
+    cmap_ms_symbol
+} cmap_type;
+
+static BOOL get_first_last_from_cmap(HDC hdc, DWORD *first, DWORD *last, cmap_type *cmap_type)
 {
     LONG size, ret;
     cmap_header *header;
@@ -2200,8 +2207,18 @@ static BOOL get_first_last_from_cmap(HDC hdc, DWORD *first, DWORD *last)
     ok(GET_BE_WORD(header->version) == 0, "got cmap version %d\n", GET_BE_WORD(header->version));
 
     cmap = get_cmap(header, 3, 1);
-    if(!cmap) cmap = get_cmap(header, 3, 0);
-    if(!cmap) goto end;
+    if(cmap)
+        *cmap_type = cmap_ms_unicode;
+    else
+    {
+        cmap = get_cmap(header, 3, 0);
+        if(cmap) *cmap_type = cmap_ms_symbol;
+    }
+    if(!cmap)
+    {
+        *cmap_type = cmap_none;
+        goto end;
+    }
 
     format = GET_BE_WORD(*(WORD *)cmap);
     switch(format)
@@ -2231,6 +2248,7 @@ static void test_text_metrics(const LOGFONTA *lf)
     LONG size, ret;
     const char *font_name = lf->lfFaceName;
     DWORD cmap_first = 0, cmap_last = 0;
+    cmap_type cmap_type;
 
     hdc = GetDC(0);
 
@@ -2260,7 +2278,7 @@ static void test_text_metrics(const LOGFONTA *lf)
     ret = GetTextMetricsA(hdc, &tmA);
     ok(ret, "GetTextMetricsA error %u\n", GetLastError());
 
-    if(!get_first_last_from_cmap(hdc, &cmap_first, &cmap_last))
+    if(!get_first_last_from_cmap(hdc, &cmap_first, &cmap_last, &cmap_type))
     {
         skip("Unable to retrieve first and last glyphs from cmap\n");
     }
@@ -2283,7 +2301,7 @@ static void test_text_metrics(const LOGFONTA *lf)
               font_name, lf->lfCharSet, os2_first_char, os2_last_char, cmap_first, cmap_last,
               default_char, break_char, version, (LPCSTR)&tt_os2.achVendID);
 
-        if (lf->lfCharSet == SYMBOL_CHARSET || (cmap_first >= 0xf000 && cmap_first < 0xf100))
+        if (cmap_type == cmap_ms_symbol || (cmap_first >= 0xf000 && cmap_first < 0xf100))
         {
             expect_first_W    = 0;
             switch(GetACP())
@@ -2316,9 +2334,15 @@ static void test_text_metrics(const LOGFONTA *lf)
         expect_break_A    = expect_break_W;
         expect_default_A  = expect_default_W;
 
-        ok(tmA.tmFirstChar == expect_first_A ||
-           tmA.tmFirstChar == expect_first_A + 1 /* win9x */,
-           "A: tmFirstChar for %s got %02x expected %02x\n", font_name, tmA.tmFirstChar, expect_first_A);
+        /* Wine currently uses SYMBOL_CHARSET to identify whether the ANSI metrics need special handling */
+        if(cmap_type != cmap_ms_symbol && tmA.tmCharSet == SYMBOL_CHARSET && expect_first_A != 0x1e)
+            todo_wine ok(tmA.tmFirstChar == expect_first_A ||
+                         tmA.tmFirstChar == expect_first_A + 1 /* win9x */,
+                         "A: tmFirstChar for %s got %02x expected %02x\n", font_name, tmA.tmFirstChar, expect_first_A);
+        else
+            ok(tmA.tmFirstChar == expect_first_A ||
+               tmA.tmFirstChar == expect_first_A + 1 /* win9x */,
+               "A: tmFirstChar for %s got %02x expected %02x\n", font_name, tmA.tmFirstChar, expect_first_A);
         ok(tmA.tmLastChar == expect_last_A ||
            tmA.tmLastChar == 0xff /* win9x */,
            "A: tmLastChar for %s got %02x expected %02x\n", font_name, tmA.tmLastChar, expect_last_A);
@@ -2334,14 +2358,16 @@ static void test_text_metrics(const LOGFONTA *lf)
            "GetTextMetricsW error %u\n", GetLastError());
         if (ret)
         {
-            if(cmap_first != os2_first_char && tmW.tmCharSet != SYMBOL_CHARSET)
+            /* Wine uses the os2 first char */
+            if(cmap_first != os2_first_char && cmap_type != cmap_ms_symbol)
                 todo_wine ok(tmW.tmFirstChar == expect_first_W, "W: tmFirstChar for %s got %02x expected %02x\n",
                              font_name, tmW.tmFirstChar, expect_first_W);
             else
                 ok(tmW.tmFirstChar == expect_first_W, "W: tmFirstChar for %s got %02x expected %02x\n",
                    font_name, tmW.tmFirstChar, expect_first_W);
 
-            if(expect_last_W != os2_last_char && tmW.tmCharSet != SYMBOL_CHARSET)
+            /* Wine uses the os2 last char */
+            if(expect_last_W != os2_last_char && cmap_type != cmap_ms_symbol)
                 todo_wine ok(tmW.tmLastChar == expect_last_W, "W: tmLastChar for %s got %02x expected %02x\n",
                              font_name, tmW.tmLastChar, expect_last_W);
             else
