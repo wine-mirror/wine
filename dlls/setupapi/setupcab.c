@@ -65,6 +65,7 @@
 OSVERSIONINFOW OsVersionInfo;
 
 static HINSTANCE CABINET_hInstance = 0;
+HINSTANCE SETUPAPI_hInstance = 0;
 
 static HFDI (__cdecl *sc_FDICreate)(PFNALLOC, PFNFREE, PFNOPEN,
                 PFNREAD, PFNWRITE, PFNCLOSE, PFNSEEK, int, PERF);
@@ -695,6 +696,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         OsVersionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
         if (!GetVersionExW(&OsVersionInfo))
             return FALSE;
+        SETUPAPI_hInstance = hinstDLL;
         break;
     case DLL_PROCESS_DETACH:
         UnloadCABINETDll();

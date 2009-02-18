@@ -29,6 +29,8 @@
 #define REGPART_RENAME "\\Rename"
 #define REG_VERSIONCONFLICT "Software\\Microsoft\\VersionConflictManager"
 
+extern HINSTANCE SETUPAPI_hInstance;
+
 static inline WCHAR *strdupW( const WCHAR *str )
 {
     WCHAR *ret = NULL;

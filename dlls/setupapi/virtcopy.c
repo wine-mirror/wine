@@ -43,8 +43,6 @@ static BOOL VCP_opened = FALSE;
 
 static VCPSTATUS vcp_status;
 
-static HINSTANCE SETUPAPI_hInstance;
-
 static WORD VCP_Callback( LPVOID obj, UINT16 msg, WPARAM16 wParam, LPARAM lParam, LPARAM lParamRef )
 {
     WORD args[8];
@@ -308,13 +306,6 @@ RETERR16 WINAPI VcpOpen16(VIFPROC vifproc, LPARAM lparamMsgRef)
     VCP_Proc = (FARPROC16)vifproc;
     VCP_MsgRef = lparamMsgRef;
 
-    /* load SETUPAPI needed for dialog resources etc. */
-    SETUPAPI_hInstance = GetModuleHandleA("setupapi.dll");
-    if (!SETUPAPI_hInstance)
-    {
-	ERR("Could not load sibling setupapi.dll\n");
-	return ERR_VCP_NOMEM;
-    }
     VCP_opened = TRUE;
     return OK;
 }
