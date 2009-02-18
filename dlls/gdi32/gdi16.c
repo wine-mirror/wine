@@ -3268,3 +3268,383 @@ BOOL16 WINAPI SetLayout16( HDC16 hdc, DWORD layout )
 {
     return SetLayout( HDC_32(hdc), layout );
 }
+
+
+/***********************************************************************
+ *           SetSolidBrush   (GDI.604)
+ *
+ * Change the color of a solid brush.
+ *
+ * PARAMS
+ *  hBrush   [I] Brush to change the color of
+ *  newColor [I] New color for hBrush
+ *
+ * RETURNS
+ *  Success: TRUE. The color of hBrush is set to newColor.
+ *  Failure: FALSE.
+ *
+ * FIXME
+ *  This function is undocumented and untested. The implementation may
+ *  not be correct.
+ */
+BOOL16 WINAPI SetSolidBrush16(HBRUSH16 hBrush, COLORREF newColor )
+{
+    TRACE("(hBrush %04x, newColor %08x)\n", hBrush, newColor);
+
+    return BRUSH_SetSolid( HBRUSH_32(hBrush), newColor );
+}
+
+
+/***********************************************************************
+ *           Copy   (GDI.250)
+ */
+void WINAPI Copy16( LPVOID src, LPVOID dst, WORD size )
+{
+    memcpy( dst, src, size );
+}
+
+/***********************************************************************
+ *           RealizeDefaultPalette    (GDI.365)
+ */
+UINT16 WINAPI RealizeDefaultPalette16( HDC16 hdc )
+{
+    UINT16 ret = 0;
+    DC          *dc;
+
+    TRACE("%04x\n", hdc );
+
+    if (!(dc = get_dc_ptr( HDC_32(hdc) ))) return 0;
+
+    if (dc->funcs->pRealizeDefaultPalette) ret = dc->funcs->pRealizeDefaultPalette( dc->physDev );
+    release_dc_ptr( dc );
+    return ret;
+}
+
+/***********************************************************************
+ *           IsDCCurrentPalette   (GDI.412)
+ */
+BOOL16 WINAPI IsDCCurrentPalette16(HDC16 hDC)
+{
+    DC *dc = get_dc_ptr( HDC_32(hDC) );
+    if (dc)
+    {
+      BOOL bRet = dc->hPalette == hPrimaryPalette;
+      release_dc_ptr( dc );
+      return bRet;
+    }
+    return FALSE;
+}
+
+/*********************************************************************
+ *           SetMagicColors   (GDI.606)
+ */
+VOID WINAPI SetMagicColors16(HDC16 hDC, COLORREF color, UINT16 index)
+{
+    FIXME("(hDC %04x, color %04x, index %04x): stub\n", hDC, (int)color, index);
+
+}
+
+
+/***********************************************************************
+ *           DPtoLP    (GDI.67)
+ */
+BOOL16 WINAPI DPtoLP16( HDC16 hdc, LPPOINT16 points, INT16 count )
+{
+    DC * dc = get_dc_ptr( HDC_32(hdc) );
+    if (!dc) return FALSE;
+
+    while (count--)
+    {
+        points->x = MulDiv( points->x - dc->vportOrgX, dc->wndExtX, dc->vportExtX ) + dc->wndOrgX;
+        points->y = MulDiv( points->y - dc->vportOrgY, dc->wndExtY, dc->vportExtY ) + dc->wndOrgY;
+        points++;
+    }
+    release_dc_ptr( dc );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           LPtoDP    (GDI.99)
+ */
+BOOL16 WINAPI LPtoDP16( HDC16 hdc, LPPOINT16 points, INT16 count )
+{
+    DC * dc = get_dc_ptr( HDC_32(hdc) );
+    if (!dc) return FALSE;
+
+    while (count--)
+    {
+        points->x = MulDiv( points->x - dc->wndOrgX, dc->vportExtX, dc->wndExtX ) + dc->vportOrgX;
+        points->y = MulDiv( points->y - dc->wndOrgY, dc->vportExtY, dc->wndExtY ) + dc->vportOrgY;
+        points++;
+    }
+    release_dc_ptr( dc );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetDCState   (GDI.179)
+ */
+HDC16 WINAPI GetDCState16( HDC16 hdc )
+{
+    return HDC_16( get_dc_state( HDC_32(hdc) ));
+}
+
+
+/***********************************************************************
+ *           SetDCState   (GDI.180)
+ */
+void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
+{
+    set_dc_state( HDC_32(hdc), HDC_32(hdcs) );
+}
+
+/***********************************************************************
+ *           SetDCOrg   (GDI.117)
+ */
+DWORD WINAPI SetDCOrg16( HDC16 hdc16, INT16 x, INT16 y )
+{
+    DWORD prevOrg = 0;
+    HDC hdc = HDC_32( hdc16 );
+    DC *dc = get_dc_ptr( hdc );
+    if (!dc) return 0;
+    if (dc->funcs->pSetDCOrg) prevOrg = dc->funcs->pSetDCOrg( dc->physDev, x, y );
+    release_dc_ptr( dc );
+    return prevOrg;
+}
+
+
+/***********************************************************************
+ *		InquireVisRgn   (GDI.131)
+ */
+HRGN16 WINAPI InquireVisRgn16( HDC16 hdc )
+{
+    HRGN16 ret = 0;
+    DC * dc = get_dc_ptr( HDC_32(hdc) );
+    if (dc)
+    {
+        ret = HRGN_16(dc->hVisRgn);
+        release_dc_ptr( dc );
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           OffsetVisRgn    (GDI.102)
+ */
+INT16 WINAPI OffsetVisRgn16( HDC16 hdc16, INT16 x, INT16 y )
+{
+    INT16 retval;
+    HDC hdc = HDC_32( hdc16 );
+    DC * dc = get_dc_ptr( hdc );
+
+    if (!dc) return ERROR;
+    TRACE("%p %d,%d\n", hdc, x, y );
+    update_dc( dc );
+    retval = OffsetRgn( dc->hVisRgn, x, y );
+    CLIPPING_UpdateGCRegion( dc );
+    release_dc_ptr( dc );
+    return retval;
+}
+
+
+/***********************************************************************
+ *           ExcludeVisRect   (GDI.73)
+ */
+INT16 WINAPI ExcludeVisRect16( HDC16 hdc16, INT16 left, INT16 top, INT16 right, INT16 bottom )
+{
+    HRGN tempRgn;
+    INT16 ret;
+    POINT pt[2];
+    HDC hdc = HDC_32( hdc16 );
+    DC * dc = get_dc_ptr( hdc );
+    if (!dc) return ERROR;
+
+    pt[0].x = left;
+    pt[0].y = top;
+    pt[1].x = right;
+    pt[1].y = bottom;
+
+    LPtoDP( hdc, pt, 2 );
+
+    TRACE("%p %d,%d - %d,%d\n", hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
+
+    if (!(tempRgn = CreateRectRgn( pt[0].x, pt[0].y, pt[1].x, pt[1].y ))) ret = ERROR;
+    else
+    {
+        update_dc( dc );
+        ret = CombineRgn( dc->hVisRgn, dc->hVisRgn, tempRgn, RGN_DIFF );
+        DeleteObject( tempRgn );
+    }
+    if (ret != ERROR) CLIPPING_UpdateGCRegion( dc );
+    release_dc_ptr( dc );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           IntersectVisRect   (GDI.98)
+ */
+INT16 WINAPI IntersectVisRect16( HDC16 hdc16, INT16 left, INT16 top, INT16 right, INT16 bottom )
+{
+    HRGN tempRgn;
+    INT16 ret;
+    POINT pt[2];
+    HDC hdc = HDC_32( hdc16 );
+    DC * dc = get_dc_ptr( hdc );
+    if (!dc) return ERROR;
+
+    pt[0].x = left;
+    pt[0].y = top;
+    pt[1].x = right;
+    pt[1].y = bottom;
+
+    LPtoDP( hdc, pt, 2 );
+
+    TRACE("%p %d,%d - %d,%d\n", hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
+
+    if (!(tempRgn = CreateRectRgn( pt[0].x, pt[0].y, pt[1].x, pt[1].y ))) ret = ERROR;
+    else
+    {
+        update_dc( dc );
+        ret = CombineRgn( dc->hVisRgn, dc->hVisRgn, tempRgn, RGN_AND );
+        DeleteObject( tempRgn );
+    }
+    if (ret != ERROR) CLIPPING_UpdateGCRegion( dc );
+    release_dc_ptr( dc );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           SaveVisRgn   (GDI.129)
+ */
+HRGN16 WINAPI SaveVisRgn16( HDC16 hdc16 )
+{
+    struct saved_visrgn *saved;
+    HDC hdc = HDC_32( hdc16 );
+    DC *dc = get_dc_ptr( hdc );
+
+    if (!dc) return 0;
+    TRACE("%p\n", hdc );
+
+    update_dc( dc );
+    if (!(saved = HeapAlloc( GetProcessHeap(), 0, sizeof(*saved) ))) goto error;
+    if (!(saved->hrgn = CreateRectRgn( 0, 0, 0, 0 ))) goto error;
+    CombineRgn( saved->hrgn, dc->hVisRgn, 0, RGN_COPY );
+    saved->next = dc->saved_visrgn;
+    dc->saved_visrgn = saved;
+    release_dc_ptr( dc );
+    return HRGN_16(saved->hrgn);
+
+error:
+    release_dc_ptr( dc );
+    HeapFree( GetProcessHeap(), 0, saved );
+    return 0;
+}
+
+
+/***********************************************************************
+ *           RestoreVisRgn   (GDI.130)
+ */
+INT16 WINAPI RestoreVisRgn16( HDC16 hdc16 )
+{
+    struct saved_visrgn *saved;
+    HDC hdc = HDC_32( hdc16 );
+    DC *dc = get_dc_ptr( hdc );
+    INT16 ret = ERROR;
+
+    if (!dc) return ERROR;
+
+    TRACE("%p\n", hdc );
+
+    if (!(saved = dc->saved_visrgn)) goto done;
+
+    ret = CombineRgn( dc->hVisRgn, saved->hrgn, 0, RGN_COPY );
+    dc->saved_visrgn = saved->next;
+    DeleteObject( saved->hrgn );
+    HeapFree( GetProcessHeap(), 0, saved );
+    CLIPPING_UpdateGCRegion( dc );
+ done:
+    release_dc_ptr( dc );
+    return ret;
+}
+
+
+/***********************************************************************
+ *		GetClipRgn (GDI.173)
+ */
+HRGN16 WINAPI GetClipRgn16( HDC16 hdc )
+{
+    HRGN16 ret = 0;
+    DC * dc = get_dc_ptr( HDC_32(hdc) );
+    if (dc)
+    {
+        ret = HRGN_16(dc->hClipRgn);
+        release_dc_ptr( dc );
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           MakeObjectPrivate    (GDI.463)
+ *
+ * What does that mean ?
+ * Some little docu can be found in "Undocumented Windows",
+ * but this is basically useless.
+ */
+void WINAPI MakeObjectPrivate16( HGDIOBJ16 handle16, BOOL16 private )
+{
+    FIXME( "stub: %x %u\n", handle16, private );
+}
+
+/***********************************************************************
+ *           CreateDIBSection    (GDI.489)
+ */
+HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, const BITMAPINFO *bmi, UINT16 usage,
+                                     SEGPTR *bits16, HANDLE section, DWORD offset)
+{
+    LPVOID bits32;
+    HBITMAP hbitmap;
+
+    hbitmap = CreateDIBSection( HDC_32(hdc), bmi, usage, &bits32, section, offset );
+    if (hbitmap)
+    {
+        BITMAPOBJ *bmp = GDI_GetObjPtr(hbitmap, OBJ_BITMAP);
+        if (bmp && bmp->dib && bits32)
+        {
+            const BITMAPINFOHEADER *bi = &bmi->bmiHeader;
+            LONG width, height;
+            WORD planes, bpp;
+            DWORD compr, size;
+            INT width_bytes;
+            WORD count, sel;
+            int i;
+
+            DIB_GetBitmapInfo(bi, &width, &height, &planes, &bpp, &compr, &size);
+
+            height = height >= 0 ? height : -height;
+            width_bytes = DIB_GetDIBWidthBytes(width, bpp);
+
+            if (!size || (compr != BI_RLE4 && compr != BI_RLE8)) size = width_bytes * height;
+
+            /* calculate number of sel's needed for size with 64K steps */
+            count = (size + 0xffff) / 0x10000;
+            sel = AllocSelectorArray16(count);
+
+            for (i = 0; i < count; i++)
+            {
+                SetSelectorBase(sel + (i << __AHSHIFT), (DWORD)bits32 + i * 0x10000);
+                SetSelectorLimit16(sel + (i << __AHSHIFT), size - 1); /* yep, limit is correct */
+                size -= 0x10000;
+            }
+            bmp->segptr_bits = MAKESEGPTR( sel, 0 );
+            if (bits16) *bits16 = bmp->segptr_bits;
+        }
+        if (bmp) GDI_ReleaseObj( hbitmap );
+    }
+    return HBITMAP_16(hbitmap);
+}

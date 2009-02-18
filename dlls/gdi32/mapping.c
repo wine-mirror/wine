@@ -58,25 +58,6 @@ static void MAPPING_FixIsotropic( DC * dc )
 
 
 /***********************************************************************
- *           DPtoLP    (GDI.67)
- */
-BOOL16 WINAPI DPtoLP16( HDC16 hdc, LPPOINT16 points, INT16 count )
-{
-    DC * dc = get_dc_ptr( HDC_32(hdc) );
-    if (!dc) return FALSE;
-
-    while (count--)
-    {
-        points->x = MulDiv( points->x - dc->vportOrgX, dc->wndExtX, dc->vportExtX ) + dc->wndOrgX;
-        points->y = MulDiv( points->y - dc->vportOrgY, dc->wndExtY, dc->vportExtY ) + dc->wndOrgY;
-        points++;
-    }
-    release_dc_ptr( dc );
-    return TRUE;
-}
-
-
-/***********************************************************************
  *           DPtoLP    (GDI32.@)
  */
 BOOL WINAPI DPtoLP( HDC hdc, LPPOINT points, INT count )
@@ -101,25 +82,6 @@ BOOL WINAPI DPtoLP( HDC hdc, LPPOINT points, INT count )
     }
     release_dc_ptr( dc );
     return (count < 0);
-}
-
-
-/***********************************************************************
- *           LPtoDP    (GDI.99)
- */
-BOOL16 WINAPI LPtoDP16( HDC16 hdc, LPPOINT16 points, INT16 count )
-{
-    DC * dc = get_dc_ptr( HDC_32(hdc) );
-    if (!dc) return FALSE;
-
-    while (count--)
-    {
-        points->x = MulDiv( points->x - dc->wndOrgX, dc->vportExtX, dc->wndExtX ) + dc->vportOrgX;
-        points->y = MulDiv( points->y - dc->wndOrgY, dc->vportExtY, dc->wndExtY ) + dc->vportOrgY;
-        points++;
-    }
-    release_dc_ptr( dc );
-    return TRUE;
 }
 
 

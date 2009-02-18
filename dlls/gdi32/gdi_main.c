@@ -23,7 +23,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "wine/winbase16.h"
 #include "gdi_private.h"
 
 /***********************************************************************
@@ -35,13 +34,4 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID lpvReserved)
     DisableThreadLibraryCalls(hinstDLL);
     LoadLibrary16( "gdi.exe" );
     return GDI_Init();
-}
-
-
-/***********************************************************************
- *           Copy   (GDI.250)
- */
-void WINAPI Copy16( LPVOID src, LPVOID dst, WORD size )
-{
-    memcpy( dst, src, size );
 }

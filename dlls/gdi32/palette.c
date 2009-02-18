@@ -29,12 +29,12 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winerror.h"
 #include "wingdi.h"
-#include "wownt32.h"
-#include "wine/winuser16.h"
+#include "winuser.h"
+
 #include "gdi_private.h"
 #include "wine/debug.h"
-#include "winerror.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(palette);
 
@@ -67,7 +67,7 @@ UINT (WINAPI *pfnRealizePalette)(HDC hdc) = GDIRealizePalette;
 
 static UINT SystemPaletteUse = SYSPAL_STATIC;  /* currently not considered */
 
-static HPALETTE hPrimaryPalette = 0; /* used for WM_PALETTECHANGED */
+HPALETTE hPrimaryPalette = 0; /* used for WM_PALETTECHANGED */
 static HPALETTE hLastRealizedPalette = 0; /* UnrealizeObject() needs it */
 
 #define NB_RESERVED_COLORS  20   /* number of fixed colors in system palette */
@@ -753,39 +753,6 @@ UINT WINAPI GDIRealizePalette( HDC hdc )
 
 
 /***********************************************************************
- *           RealizeDefaultPalette    (GDI.365)
- */
-UINT16 WINAPI RealizeDefaultPalette16( HDC16 hdc )
-{
-    UINT16 ret = 0;
-    DC          *dc;
-
-    TRACE("%04x\n", hdc );
-
-    if (!(dc = get_dc_ptr( HDC_32(hdc) ))) return 0;
-
-    if (dc->funcs->pRealizeDefaultPalette) ret = dc->funcs->pRealizeDefaultPalette( dc->physDev );
-    release_dc_ptr( dc );
-    return ret;
-}
-
-/***********************************************************************
- *           IsDCCurrentPalette   (GDI.412)
- */
-BOOL16 WINAPI IsDCCurrentPalette16(HDC16 hDC)
-{
-    DC *dc = get_dc_ptr( HDC_32(hDC) );
-    if (dc)
-    {
-      BOOL bRet = dc->hPalette == hPrimaryPalette;
-      release_dc_ptr( dc );
-      return bRet;
-    }
-    return FALSE;
-}
-
-
-/***********************************************************************
  * SelectPalette [GDI32.@]
  *
  * Selects logical palette into DC.
@@ -858,16 +825,6 @@ BOOL WINAPI UpdateColors(
         }
     }
     return 0x666;
-}
-
-
-/*********************************************************************
- *           SetMagicColors   (GDI.606)
- */
-VOID WINAPI SetMagicColors16(HDC16 hDC, COLORREF color, UINT16 index)
-{
-    FIXME("(hDC %04x, color %04x, index %04x): stub\n", hDC, (int)color, index);
-
 }
 
 /*********************************************************************

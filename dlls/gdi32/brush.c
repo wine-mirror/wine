@@ -26,8 +26,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "wine/wingdi16.h"
-#include "wownt32.h"
 #include "gdi_private.h"
 #include "wine/debug.h"
 
@@ -450,39 +448,23 @@ static INT BRUSH_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
     return count;
 }
 
-
 /***********************************************************************
- *           SetSolidBrush   (GDI.604)
- *
- * Change the color of a solid brush.
- *
- * PARAMS
- *  hBrush   [I] Brush to change the color of
- *  newColor [I] New color for hBrush
- *
- * RETURNS
- *  Success: TRUE. The color of hBrush is set to newColor.
- *  Failure: FALSE.
- *
- * FIXME
- *  This function is undocumented and untested. The implementation may
- *  not be correct.
+ *           BRUSH_SetSolid
  */
-BOOL16 WINAPI SetSolidBrush16(HBRUSH16 hBrush, COLORREF newColor )
+BOOL BRUSH_SetSolid( HGDIOBJ handle, COLORREF new_color )
 {
     BRUSHOBJ * brushPtr;
-    BOOL16 res = FALSE;
+    BOOL res = FALSE;
 
-    TRACE("(hBrush %04x, newColor %08x)\n", hBrush, newColor);
-    if (!(brushPtr = GDI_GetObjPtr( HBRUSH_32(hBrush), OBJ_BRUSH )))
+    if (!(brushPtr = GDI_GetObjPtr( handle, OBJ_BRUSH )))
 	return FALSE;
 
     if (brushPtr->logbrush.lbStyle == BS_SOLID)
     {
-        brushPtr->logbrush.lbColor = newColor;
+        brushPtr->logbrush.lbColor = new_color;
 	res = TRUE;
     }
 
-     GDI_ReleaseObj( HBRUSH_32(hBrush) );
-     return res;
+    GDI_ReleaseObj( handle );
+    return res;
 }

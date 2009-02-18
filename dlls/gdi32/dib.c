@@ -151,8 +151,8 @@ int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
  * Get the info from a bitmap header.
  * Return 0 for COREHEADER, 1 for INFOHEADER, -1 for error.
  */
-static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
-                              LONG *height, WORD *planes, WORD *bpp, DWORD *compr, DWORD *size )
+int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
+                       LONG *height, WORD *planes, WORD *bpp, DWORD *compr, DWORD *size )
 {
     if (header->biSize == sizeof(BITMAPCOREHEADER))
     {
@@ -1139,54 +1139,6 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
     }
 
     return handle;
-}
-
-/***********************************************************************
- *           CreateDIBSection    (GDI.489)
- */
-HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, const BITMAPINFO *bmi, UINT16 usage,
-                                     SEGPTR *bits16, HANDLE section, DWORD offset)
-{
-    LPVOID bits32;
-    HBITMAP hbitmap;
-
-    hbitmap = CreateDIBSection( HDC_32(hdc), bmi, usage, &bits32, section, offset );
-    if (hbitmap)
-    {
-        BITMAPOBJ *bmp = GDI_GetObjPtr(hbitmap, OBJ_BITMAP);
-        if (bmp && bmp->dib && bits32)
-        {
-            const BITMAPINFOHEADER *bi = &bmi->bmiHeader;
-            LONG width, height;
-            WORD planes, bpp;
-            DWORD compr, size;
-            INT width_bytes;
-            WORD count, sel;
-            int i;
-
-            DIB_GetBitmapInfo(bi, &width, &height, &planes, &bpp, &compr, &size);
-
-            height = height >= 0 ? height : -height;
-            width_bytes = DIB_GetDIBWidthBytes(width, bpp);
-
-            if (!size || (compr != BI_RLE4 && compr != BI_RLE8)) size = width_bytes * height;
-
-            /* calculate number of sel's needed for size with 64K steps */
-            count = (size + 0xffff) / 0x10000;
-            sel = AllocSelectorArray16(count);
-
-            for (i = 0; i < count; i++)
-            {
-                SetSelectorBase(sel + (i << __AHSHIFT), (DWORD)bits32 + i * 0x10000);
-                SetSelectorLimit16(sel + (i << __AHSHIFT), size - 1); /* yep, limit is correct */
-                size -= 0x10000;
-            }
-            bmp->segptr_bits = MAKESEGPTR( sel, 0 );
-            if (bits16) *bits16 = bmp->segptr_bits;
-        }
-        if (bmp) GDI_ReleaseObj( hbitmap );
-    }
-    return HBITMAP_16(hbitmap);
 }
 
 /* Copy/synthesize RGB palette from BITMAPINFO. Ripped from dlls/winex11.drv/dib.c */

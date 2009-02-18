@@ -368,6 +368,9 @@ extern HBITMAP BITMAP_CopyBitmap( HBITMAP hbitmap ) DECLSPEC_HIDDEN;
 extern BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, DC *dc ) DECLSPEC_HIDDEN;
 extern INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp ) DECLSPEC_HIDDEN;
 
+/* brush.c */
+extern BOOL BRUSH_SetSolid( HGDIOBJ handle, COLORREF new_color ) DECLSPEC_HIDDEN;
+
 /* clipping.c */
 extern void CLIPPING_UpdateGCRegion( DC * dc ) DECLSPEC_HIDDEN;
 
@@ -379,11 +382,15 @@ extern void release_dc_ptr( DC *dc ) DECLSPEC_HIDDEN;
 extern void update_dc( DC *dc ) DECLSPEC_HIDDEN;
 extern void DC_InitDC( DC * dc ) DECLSPEC_HIDDEN;
 extern void DC_UpdateXforms( DC * dc ) DECLSPEC_HIDDEN;
+extern HDC get_dc_state( HDC hdc ) DECLSPEC_HIDDEN;
+extern void set_dc_state( HDC hdc, HDC hdcs ) DECLSPEC_HIDDEN;
 
 /* dib.c */
 extern int DIB_GetDIBWidthBytes( int width, int depth ) DECLSPEC_HIDDEN;
 extern int DIB_GetDIBImageBytes( int width, int height, int depth ) DECLSPEC_HIDDEN;
 extern int bitmap_info_size( const BITMAPINFO * info, WORD coloruse ) DECLSPEC_HIDDEN;
+extern int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
+                              LONG *height, WORD *planes, WORD *bpp, DWORD *compr, DWORD *size ) DECLSPEC_HIDDEN;
 
 /* driver.c */
 extern const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name ) DECLSPEC_HIDDEN;
@@ -493,6 +500,7 @@ extern POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut ) DECLSPE
 extern HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg);
 extern UINT WINAPI GDIRealizePalette( HDC hdc );
 extern HPALETTE PALETTE_Init(void) DECLSPEC_HIDDEN;
+extern HPALETTE hPrimaryPalette DECLSPEC_HIDDEN;
 
 /* region.c */
 extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT x, INT y ) DECLSPEC_HIDDEN;

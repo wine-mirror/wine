@@ -23,7 +23,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "wownt32.h"
 #include "gdi_private.h"
 #include "wine/debug.h"
 
@@ -214,25 +213,6 @@ INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
 
 
 /***********************************************************************
- *           OffsetVisRgn    (GDI.102)
- */
-INT16 WINAPI OffsetVisRgn16( HDC16 hdc16, INT16 x, INT16 y )
-{
-    INT16 retval;
-    HDC hdc = HDC_32( hdc16 );
-    DC * dc = get_dc_ptr( hdc );
-
-    if (!dc) return ERROR;
-    TRACE("%p %d,%d\n", hdc, x, y );
-    update_dc( dc );
-    retval = OffsetRgn( dc->hVisRgn, x, y );
-    CLIPPING_UpdateGCRegion( dc );
-    release_dc_ptr( dc );
-    return retval;
-}
-
-
-/***********************************************************************
  *           ExcludeClipRect    (GDI32.@)
  */
 INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
@@ -321,74 +301,6 @@ INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom 
         }
         if (ret != ERROR) CLIPPING_UpdateGCRegion( dc );
     }
-    release_dc_ptr( dc );
-    return ret;
-}
-
-
-/***********************************************************************
- *           ExcludeVisRect   (GDI.73)
- */
-INT16 WINAPI ExcludeVisRect16( HDC16 hdc16, INT16 left, INT16 top, INT16 right, INT16 bottom )
-{
-    HRGN tempRgn;
-    INT16 ret;
-    POINT pt[2];
-    HDC hdc = HDC_32( hdc16 );
-    DC * dc = get_dc_ptr( hdc );
-    if (!dc) return ERROR;
-
-    pt[0].x = left;
-    pt[0].y = top;
-    pt[1].x = right;
-    pt[1].y = bottom;
-
-    LPtoDP( hdc, pt, 2 );
-
-    TRACE("%p %d,%d - %d,%d\n", hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
-
-    if (!(tempRgn = CreateRectRgn( pt[0].x, pt[0].y, pt[1].x, pt[1].y ))) ret = ERROR;
-    else
-    {
-        update_dc( dc );
-        ret = CombineRgn( dc->hVisRgn, dc->hVisRgn, tempRgn, RGN_DIFF );
-        DeleteObject( tempRgn );
-    }
-    if (ret != ERROR) CLIPPING_UpdateGCRegion( dc );
-    release_dc_ptr( dc );
-    return ret;
-}
-
-
-/***********************************************************************
- *           IntersectVisRect   (GDI.98)
- */
-INT16 WINAPI IntersectVisRect16( HDC16 hdc16, INT16 left, INT16 top, INT16 right, INT16 bottom )
-{
-    HRGN tempRgn;
-    INT16 ret;
-    POINT pt[2];
-    HDC hdc = HDC_32( hdc16 );
-    DC * dc = get_dc_ptr( hdc );
-    if (!dc) return ERROR;
-
-    pt[0].x = left;
-    pt[0].y = top;
-    pt[1].x = right;
-    pt[1].y = bottom;
-
-    LPtoDP( hdc, pt, 2 );
-
-    TRACE("%p %d,%d - %d,%d\n", hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
-
-    if (!(tempRgn = CreateRectRgn( pt[0].x, pt[0].y, pt[1].x, pt[1].y ))) ret = ERROR;
-    else
-    {
-        update_dc( dc );
-        ret = CombineRgn( dc->hVisRgn, dc->hVisRgn, tempRgn, RGN_AND );
-        DeleteObject( tempRgn );
-    }
-    if (ret != ERROR) CLIPPING_UpdateGCRegion( dc );
     release_dc_ptr( dc );
     return ret;
 }
@@ -506,61 +418,6 @@ INT WINAPI GetMetaRgn( HDC hdc, HRGN hRgn )
             ret = 1;
         release_dc_ptr( dc );
     }
-    return ret;
-}
-
-
-/***********************************************************************
- *           SaveVisRgn   (GDI.129)
- */
-HRGN16 WINAPI SaveVisRgn16( HDC16 hdc16 )
-{
-    struct saved_visrgn *saved;
-    HDC hdc = HDC_32( hdc16 );
-    DC *dc = get_dc_ptr( hdc );
-
-    if (!dc) return 0;
-    TRACE("%p\n", hdc );
-
-    update_dc( dc );
-    if (!(saved = HeapAlloc( GetProcessHeap(), 0, sizeof(*saved) ))) goto error;
-    if (!(saved->hrgn = CreateRectRgn( 0, 0, 0, 0 ))) goto error;
-    CombineRgn( saved->hrgn, dc->hVisRgn, 0, RGN_COPY );
-    saved->next = dc->saved_visrgn;
-    dc->saved_visrgn = saved;
-    release_dc_ptr( dc );
-    return HRGN_16(saved->hrgn);
-
-error:
-    release_dc_ptr( dc );
-    HeapFree( GetProcessHeap(), 0, saved );
-    return 0;
-}
-
-
-/***********************************************************************
- *           RestoreVisRgn   (GDI.130)
- */
-INT16 WINAPI RestoreVisRgn16( HDC16 hdc16 )
-{
-    struct saved_visrgn *saved;
-    HDC hdc = HDC_32( hdc16 );
-    DC *dc = get_dc_ptr( hdc );
-    INT16 ret = ERROR;
-
-    if (!dc) return ERROR;
-
-    TRACE("%p\n", hdc );
-
-    if (!(saved = dc->saved_visrgn)) goto done;
-
-    ret = CombineRgn( dc->hVisRgn, saved->hrgn, 0, RGN_COPY );
-    dc->saved_visrgn = saved->next;
-    DeleteObject( saved->hrgn );
-    HeapFree( GetProcessHeap(), 0, saved );
-    CLIPPING_UpdateGCRegion( dc );
- done:
-    release_dc_ptr( dc );
     return ret;
 }
 

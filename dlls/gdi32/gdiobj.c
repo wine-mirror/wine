@@ -1156,19 +1156,6 @@ void WINAPI SetObjectOwner( HGDIOBJ handle, HANDLE owner )
 
 
 /***********************************************************************
- *           MakeObjectPrivate    (GDI.463)
- *
- * What does that mean ?
- * Some little docu can be found in "Undocumented Windows",
- * but this is basically useless.
- */
-void WINAPI MakeObjectPrivate16( HGDIOBJ16 handle16, BOOL16 private )
-{
-    FIXME( "stub: %x %u\n", handle16, private );
-}
-
-
-/***********************************************************************
  *           GdiFlush    (GDI32.@)
  */
 BOOL WINAPI GdiFlush(void)

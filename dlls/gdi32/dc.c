@@ -326,9 +326,9 @@ void DC_UpdateXforms( DC *dc )
 
 
 /***********************************************************************
- *           GetDCState   (Not a Windows API)
+ *           get_dc_state   (Not a Windows API)
  */
-static HDC GetDCState( HDC hdc )
+HDC get_dc_state( HDC hdc )
 {
     DC * newdc, * dc;
     HGDIOBJ handle;
@@ -429,9 +429,9 @@ static HDC GetDCState( HDC hdc )
 
 
 /***********************************************************************
- *           SetDCState   (Not a Windows API)
+ *           set_dc_state   (Not a Windows API)
  */
-static void SetDCState( HDC hdc, HDC hdcs )
+void set_dc_state( HDC hdc, HDC hdcs )
 {
     DC *dc, *dcs;
 
@@ -523,24 +523,6 @@ static void SetDCState( HDC hdc, HDC hdcs )
 
 
 /***********************************************************************
- *           GetDCState   (GDI.179)
- */
-HDC16 WINAPI GetDCState16( HDC16 hdc )
-{
-    return HDC_16( GetDCState( HDC_32(hdc) ));
-}
-
-
-/***********************************************************************
- *           SetDCState   (GDI.180)
- */
-void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
-{
-    SetDCState( HDC_32(hdc), HDC_32(hdcs) );
-}
-
-
-/***********************************************************************
  *           SaveDC    (GDI32.@)
  */
 INT WINAPI SaveDC( HDC hdc )
@@ -561,7 +543,7 @@ INT WINAPI SaveDC( HDC hdc )
         return ret;
     }
 
-    if (!(hdcs = GetDCState( hdc )))
+    if (!(hdcs = get_dc_state( hdc )))
     {
         release_dc_ptr( dc );
         return 0;
@@ -635,7 +617,7 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
         dcs->saved_dc = 0;
 	if (--dc->saveLevel < level)
 	{
-	    SetDCState( hdc, hdcs );
+	    set_dc_state( hdc, hdcs );
             if (!PATH_AssignGdiPath( &dc->path, &dcs->path ))
 		/* FIXME: This might not be quite right, since we're
 		 * returning FALSE but still destroying the saved DC state */
@@ -1100,21 +1082,6 @@ BOOL WINAPI GetDCOrgEx( HDC hDC, LPPOINT lpp )
     if (dc->funcs->pGetDCOrgEx) dc->funcs->pGetDCOrgEx( dc->physDev, lpp );
     release_dc_ptr( dc );
     return TRUE;
-}
-
-
-/***********************************************************************
- *           SetDCOrg   (GDI.117)
- */
-DWORD WINAPI SetDCOrg16( HDC16 hdc16, INT16 x, INT16 y )
-{
-    DWORD prevOrg = 0;
-    HDC hdc = HDC_32( hdc16 );
-    DC *dc = get_dc_ptr( hdc );
-    if (!dc) return 0;
-    if (dc->funcs->pSetDCOrg) prevOrg = dc->funcs->pSetDCOrg( dc->physDev, x, y );
-    release_dc_ptr( dc );
-    return prevOrg;
 }
 
 
@@ -1971,38 +1938,6 @@ BOOL WINAPI GetWindowOrgEx( HDC hdc, LPPOINT pt )
     pt->y = dc->wndOrgY;
     release_dc_ptr( dc );
     return TRUE;
-}
-
-
-/***********************************************************************
- *		InquireVisRgn   (GDI.131)
- */
-HRGN16 WINAPI InquireVisRgn16( HDC16 hdc )
-{
-    HRGN16 ret = 0;
-    DC * dc = get_dc_ptr( HDC_32(hdc) );
-    if (dc)
-    {
-        ret = HRGN_16(dc->hVisRgn);
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
- *		GetClipRgn (GDI.173)
- */
-HRGN16 WINAPI GetClipRgn16( HDC16 hdc )
-{
-    HRGN16 ret = 0;
-    DC * dc = get_dc_ptr( HDC_32(hdc) );
-    if (dc)
-    {
-        ret = HRGN_16(dc->hClipRgn);
-        release_dc_ptr( dc );
-    }
-    return ret;
 }
 
 
