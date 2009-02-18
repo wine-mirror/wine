@@ -2454,6 +2454,12 @@ static void test_default_style(IHTMLStyle *style)
     ok(V_VT(&v) == VT_BSTR, "V_VT(marginRight) = %d\n", V_VT(&v));
     ok(!V_BSTR(&v), "V_BSTR(marginRight) = %s\n", dbgstr_w(V_BSTR(&v)));
 
+    V_VT(&v) = VT_NULL;
+    hres = IHTMLStyle_get_marginLeft(style, &v);
+    ok(hres == S_OK, "get_marginLeft failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(marginLeft) = %d\n", V_VT(&v));
+    ok(!V_BSTR(&v), "V_BSTR(marginLeft) = %s\n", dbgstr_w(V_BSTR(&v)));
+
     str = (void*)0xdeadbeef;
     hres = IHTMLStyle_get_fontFamily(style, &str);
     ok(hres == S_OK, "get_fontFamily failed: %08x\n", hres);
