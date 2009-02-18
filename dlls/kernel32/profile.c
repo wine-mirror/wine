@@ -807,6 +807,7 @@ static BOOL PROFILE_Open( LPCWSTR filename, BOOL write_access )
                 {
                     TRACE("(%s): already opened, needs refreshing (mru=%d)\n",
                           debugstr_w(buffer), i);
+                    PROFILE_Free(CurProfile->section);
                     CurProfile->section = PROFILE_Load(hFile, &CurProfile->encoding);
                     CurProfile->LastWriteTime = LastWriteTime;
                 }
