@@ -2574,16 +2574,16 @@ todo_wine /* Wine uses Arial for all substitutions */
         cs = GetTextCharset(hdc);
         if (font_subst[i].charset == expected_cs)
         {
-            ok(cs == expected_cs, "expected %d, got %d\n", expected_cs, cs);
+            ok(cs == expected_cs, "expected %d, got %d for font %s\n", expected_cs, cs, font_subst[i].name);
             GetTextFaceA(hdc, sizeof(buf), buf);
             ok(!lstrcmpiA(buf, font_subst[i].name), "expected %s, got %s\n", font_subst[i].name, buf);
         }
         else
         {
-            ok(cs == ANSI_CHARSET, "expected ANSI_CHARSET, got %d\n", cs);
+            ok(cs == ANSI_CHARSET, "expected ANSI_CHARSET, got %d for font %s\n", cs, font_subst[i].name);
             GetTextFaceA(hdc, sizeof(buf), buf);
             ok(!lstrcmpiA(buf, "Arial") /* XP, Vista */ ||
-               !lstrcmpiA(buf, "Times New Roman") /* Win9x */, "got %s\n", buf);
+               !lstrcmpiA(buf, "Times New Roman") /* Win9x */, "got %s for font %s\n", buf, font_subst[i].name);
         }
         DeleteObject(SelectObject(hdc, hfont));
 
@@ -2598,9 +2598,9 @@ todo_wine /* Wine uses Arial for all substitutions */
            !lstrcmpiA(buf, font_subst[i].name) /* XP, Vista */ ||
            !lstrcmpiA(buf, "MS Serif") /* Win9x */ ||
            !lstrcmpiA(buf, "MS Sans Serif"), /* win2k3 */
-           "got %s\n", buf);
+           "got %s for font %s\n", buf, font_subst[i].name);
         cs = GetTextCharset(hdc);
-        ok(cs == expected_cs, "expected %d, got %d\n", expected_cs, cs);
+        ok(cs == expected_cs, "expected %d, got %d for font %s\n", expected_cs, cs, font_subst[i].name);
         DeleteObject(SelectObject(hdc, hfont));
     }
 
