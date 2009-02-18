@@ -6,10 +6,11 @@ VPATH     = @srcdir@
 MODULE    = setupapi.dll
 IMPORTLIB = setupapi
 IMPORTS   = uuid user32 version advapi32 rpcrt4 kernel32 ntdll
-DELAYIMPORTS = shell32 wintrust ole32 winspool
+DELAYIMPORTS = shell32 wintrust ole32 winspool comdlg32
 
 C_SRCS = \
 	devinst.c \
+	dialog.c \
 	dirid.c \
 	diskspace.c \
 	fakedll.c \

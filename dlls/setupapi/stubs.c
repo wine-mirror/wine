@@ -261,20 +261,6 @@ UINT WINAPI SetupPromptForDiskA(HWND hwndParent, PCSTR DialogTitle, PCSTR DiskNa
 }
 
 /***********************************************************************
- *      SetupPromptForDiskW (SETUPAPI.@)
- */
-UINT WINAPI SetupPromptForDiskW(HWND hwndParent, PCWSTR DialogTitle, PCWSTR DiskName,
-        PCWSTR PathToSource, PCWSTR FileSought, PCWSTR TagFile, DWORD DiskPromptStyle,
-        PWSTR PathBuffer, DWORD PathBufferSize, PDWORD PathRequiredSize)
-{
-    FIXME("%p %s %s %s %s %s %d %p %d %p: stub\n", hwndParent, debugstr_w(DialogTitle),
-          debugstr_w(DiskName), debugstr_w(PathToSource), debugstr_w(FileSought),
-          debugstr_w(TagFile), DiskPromptStyle, PathBuffer, PathBufferSize,
-          PathRequiredSize);
-    return 0;
-}
-
-/***********************************************************************
  *      CM_Locate_DevNodeA (SETUPAPI.@)
  */
 CONFIGRET WINAPI CM_Locate_DevNodeA(PDEVINST pdnDevInst, DEVINSTID_A pDeviceID, ULONG ulFlags)

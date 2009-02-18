@@ -24,6 +24,17 @@
 #define DESTSTRORD	501
 #define PROGRESSORD	502
 
+#define IDPROMPTFORDISK   1001
+#define IDC_FILENEEDED    503
+#define IDC_INFO          504
+#define IDC_COPYFROM      505
+#define IDC_PATH          506
+#define IDC_RUNDLG_BROWSE 507
+
+#define IDS_PROMPTDISK  508
+#define IDS_UNKNOWN     509
+#define IDS_COPYFROM    510
+#define IDS_INFO        511
 
 #define REG_INSTALLEDFILES "System\\CurrentControlSet\\Control\\InstalledFiles"
 #define REGPART_RENAME "\\Rename"
