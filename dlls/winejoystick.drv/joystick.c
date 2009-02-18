@@ -221,7 +221,7 @@ static const WCHAR ini[] = {'W','i','n','e',' ','J','o','y','s','t','i','c','k',
 	  driverVersion, identString, nrOfAxes, nrOfButtons);
     lpCaps->wMid = MM_MICROSOFT;
     lpCaps->wPid = MM_PC_JOYSTICK;
-    MultiByteToWideChar(CP_ACP, 0, identString, -1, lpCaps->szPname, MAXPNAMELEN);
+    MultiByteToWideChar(CP_UNIXCP, 0, identString, -1, lpCaps->szPname, MAXPNAMELEN);
     lpCaps->szPname[MAXPNAMELEN-1] = '\0';
     lpCaps->wXmin = 0;
     lpCaps->wXmax = 0xFFFF;
