@@ -625,7 +625,7 @@ static DWORD MIX_GetDevCaps(WORD wDevID, LPMIXERCAPSW lpCaps, DWORD dwSize)
     capsW.wPid = WINE_MIXER_PRODUCT_ID;
     capsW.vDriverVersion = WINE_MIXER_VERSION;
     if (!(name = mix->name)) name = WINE_MIXER_NAME;
-    MultiByteToWideChar(CP_ACP, 0, name, -1, capsW.szPname, sizeof(capsW.szPname) / sizeof(WCHAR));
+    MultiByteToWideChar(CP_UNIXCP, 0, name, -1, capsW.szPname, sizeof(capsW.szPname) / sizeof(WCHAR));
     capsW.cDestinations = 2; /* speakers & record */
     capsW.fdwSupport = 0; /* No bits defined yet */
 
@@ -665,8 +665,8 @@ static	DWORD	MIX_GetLineInfoDst(struct mixer* mix, LPMIXERLINEW lpMl,
 	return MMSYSERR_ERROR;
     }
     lpMl->dwSource = 0xFFFFFFFF;
-    MultiByteToWideChar(CP_ACP, 0, MIX_Labels[j], -1, lpMl->szShortName, sizeof(lpMl->szShortName) / sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, MIX_Names[j],  -1, lpMl->szName,      sizeof(lpMl->szName) / sizeof(WCHAR));
+    MultiByteToWideChar(CP_UNIXCP, 0, MIX_Labels[j], -1, lpMl->szShortName, sizeof(lpMl->szShortName) / sizeof(WCHAR));
+    MultiByteToWideChar(CP_UNIXCP, 0, MIX_Names[j],  -1, lpMl->szName,      sizeof(lpMl->szName) / sizeof(WCHAR));
 
     /* we have all connections found in the MIX_DevMask */
     lpMl->cConnections = 0;
@@ -696,8 +696,8 @@ static	DWORD	MIX_GetLineInfoSrc(struct mixer* mix, LPMIXERLINEW lpMl,
 
     TRACE("(%p, %p, %d, %08x)\n", mix, lpMl, idx, dst);
 
-    MultiByteToWideChar(CP_ACP, 0, MIX_Labels[idx], -1, lpMl->szShortName, sizeof(lpMl->szShortName) / sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, MIX_Names[idx],  -1, lpMl->szName,      sizeof(lpMl->szName) / sizeof(WCHAR));
+    MultiByteToWideChar(CP_UNIXCP, 0, MIX_Labels[idx], -1, lpMl->szShortName, sizeof(lpMl->szShortName) / sizeof(WCHAR));
+    MultiByteToWideChar(CP_UNIXCP, 0, MIX_Names[idx],  -1, lpMl->szName,      sizeof(lpMl->szName) / sizeof(WCHAR));
     lpMl->dwLineID = MAKELONG(dst, idx);
     lpMl->dwDestination = dst;
     lpMl->cConnections = 1;
@@ -929,7 +929,7 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEW lpMl, DWORD fdwInfo)
         lpMl->Target.wPid = WINE_MIXER_PRODUCT_ID;
         lpMl->Target.vDriverVersion = WINE_MIXER_VERSION;
         if (!(name = mix->name)) name = WINE_MIXER_NAME;
-        MultiByteToWideChar(CP_ACP, 0, name, -1, lpMl->Target.szPname, sizeof(lpMl->Target.szPname) / sizeof(WCHAR));
+        MultiByteToWideChar(CP_UNIXCP, 0, name, -1, lpMl->Target.szPname, sizeof(lpMl->Target.szPname) / sizeof(WCHAR));
     }
 
     return ret;
@@ -1236,7 +1236,7 @@ static	DWORD	MIX_GetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
 		    {
 			mcdlt[i].dwParam1 = MAKELONG(LINEID_RECORD, j);
 			mcdlt[i].dwParam2 = 0;
-			MultiByteToWideChar(CP_ACP, 0, MIX_Names[j], -1, 
+			MultiByteToWideChar(CP_UNIXCP, 0, MIX_Names[j], -1,
                                             mcdlt[i].szName, sizeof(mcdlt[i]) / sizeof(WCHAR));
 			i++;
 		    }

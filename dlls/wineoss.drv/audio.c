@@ -183,17 +183,17 @@ static DWORD wodDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
 {
     TRACE("(%u, %p)\n", wDevID, dwParam1);
 
-    *dwParam1 = MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].ossdev.interface_name, -1,
+    *dwParam1 = MultiByteToWideChar(CP_UNIXCP, 0, WOutDev[wDevID].ossdev.interface_name, -1,
                                     NULL, 0 ) * sizeof(WCHAR);
     return MMSYSERR_NOERROR;
 }
 
 static DWORD wodDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 {
-    if (dwParam2 >= MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].ossdev.interface_name, -1,
+    if (dwParam2 >= MultiByteToWideChar(CP_UNIXCP, 0, WOutDev[wDevID].ossdev.interface_name, -1,
                                         NULL, 0 ) * sizeof(WCHAR))
     {
-        MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].ossdev.interface_name, -1,
+        MultiByteToWideChar(CP_UNIXCP, 0, WOutDev[wDevID].ossdev.interface_name, -1,
                             dwParam1, dwParam2 / sizeof(WCHAR));
 	return MMSYSERR_NOERROR;
     }
@@ -205,17 +205,17 @@ static DWORD widDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
 {
     TRACE("(%u, %p)\n", wDevID, dwParam1);
 
-    *dwParam1 = MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].ossdev.interface_name, -1,
+    *dwParam1 = MultiByteToWideChar(CP_UNIXCP, 0, WInDev[wDevID].ossdev.interface_name, -1,
                                     NULL, 0 ) * sizeof(WCHAR);
     return MMSYSERR_NOERROR;
 }
 
 static DWORD widDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 {
-    if (dwParam2 >= MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].ossdev.interface_name, -1,
+    if (dwParam2 >= MultiByteToWideChar(CP_UNIXCP, 0, WInDev[wDevID].ossdev.interface_name, -1,
                                         NULL, 0 ) * sizeof(WCHAR))
     {
-        MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].ossdev.interface_name, -1,
+        MultiByteToWideChar(CP_UNIXCP, 0, WInDev[wDevID].ossdev.interface_name, -1,
                             dwParam1, dwParam2 / sizeof(WCHAR));
 	return MMSYSERR_NOERROR;
     }
@@ -720,7 +720,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
             if (ioctl(mixer, SNDCTL_MIXERINFO, &info) >= 0) {
                 lstrcpynA(ossdev->ds_desc.szDesc, info.name, sizeof(info.name));
                 strcpy(ossdev->ds_desc.szDrvname, "wineoss.drv");
-                MultiByteToWideChar(CP_ACP, 0, info.name, sizeof(info.name),
+                MultiByteToWideChar(CP_UNIXCP, 0, info.name, sizeof(info.name),
                                     ossdev->out_caps.szPname,
                                     sizeof(ossdev->out_caps.szPname) / sizeof(WCHAR));
                 TRACE("%s: %s\n", ossdev->mixer_name, ossdev->ds_desc.szDesc);
@@ -741,7 +741,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
             if (ioctl(mixer, SOUND_MIXER_INFO, &info) >= 0) {
                 lstrcpynA(ossdev->ds_desc.szDesc, info.name, sizeof(info.name));
                 strcpy(ossdev->ds_desc.szDrvname, "wineoss.drv");
-                MultiByteToWideChar(CP_ACP, 0, info.name, sizeof(info.name), 
+                MultiByteToWideChar(CP_UNIXCP, 0, info.name, sizeof(info.name),
                                     ossdev->out_caps.szPname, 
                                     sizeof(ossdev->out_caps.szPname) / sizeof(WCHAR));
                 TRACE("%s: %s\n", ossdev->mixer_name, ossdev->ds_desc.szDesc);
@@ -893,7 +893,7 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
             oss_mixerinfo info;
             info.dev = 0;
             if (ioctl(mixer, SNDCTL_MIXERINFO, &info) >= 0) {
-                MultiByteToWideChar(CP_ACP, 0, info.name, -1,
+                MultiByteToWideChar(CP_UNIXCP, 0, info.name, -1,
                                     ossdev->in_caps.szPname,
                                     sizeof(ossdev->in_caps.szPname) / sizeof(WCHAR));
                 TRACE("%s: %s\n", ossdev->mixer_name, ossdev->ds_desc.szDesc);
@@ -911,7 +911,7 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
         if ((mixer = open(ossdev->mixer_name, O_RDONLY|O_NDELAY)) >= 0) {
             mixer_info info;
             if (ioctl(mixer, SOUND_MIXER_INFO, &info) >= 0) {
-                MultiByteToWideChar(CP_ACP, 0, info.name, -1, 
+                MultiByteToWideChar(CP_UNIXCP, 0, info.name, -1,
                                     ossdev->in_caps.szPname, 
                                     sizeof(ossdev->in_caps.szPname) / sizeof(WCHAR));
                 TRACE("%s: %s\n", ossdev->mixer_name, ossdev->ds_desc.szDesc);

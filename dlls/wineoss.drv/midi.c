@@ -239,7 +239,7 @@ LRESULT OSS_MidiInit(void)
             MidiOutDev[i].caps.wNotes      = 16;
             MidiOutDev[i].bEnabled = FALSE;
 	} else {
-            MultiByteToWideChar( CP_ACP, 0, sinfo.name, -1,
+            MultiByteToWideChar( CP_UNIXCP, 0, sinfo.name, -1,
                                  MidiOutDev[i].caps.szPname,
                                  sizeof(MidiOutDev[i].caps.szPname)/sizeof(WCHAR) );
 
@@ -313,7 +313,7 @@ LRESULT OSS_MidiInit(void)
             wsprintfW(MidiOutDev[numsynthdevs + i].caps.szPname, fmt, numsynthdevs + i);
             MidiOutDev[numsynthdevs + i].bEnabled = FALSE;
         } else {
-            MultiByteToWideChar(CP_ACP, 0, minfo.name, -1, 
+            MultiByteToWideChar(CP_UNIXCP, 0, minfo.name, -1,
                                 MidiOutDev[numsynthdevs + i].caps.szPname,
                                 sizeof(MidiOutDev[numsynthdevs + i].caps.szPname) / sizeof(WCHAR));
             MidiOutDev[numsynthdevs + i].bEnabled = TRUE;
@@ -344,7 +344,7 @@ LRESULT OSS_MidiInit(void)
             wsprintfW(MidiInDev[i].caps.szPname, fmt, numsynthdevs + i);
             MidiInDev[i].state = -1;
         } else {
-            MultiByteToWideChar(CP_ACP, 0, minfo.name, -1, 
+            MultiByteToWideChar(CP_UNIXCP, 0, minfo.name, -1,
                                 MidiInDev[i].caps.szPname,
                                 sizeof(MidiInDev[i].caps.szPname) / sizeof(WCHAR));
             MidiInDev[i].state = 0;
