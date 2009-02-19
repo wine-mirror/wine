@@ -167,6 +167,7 @@ static HRESULT WINAPI IDirect3DSwapChain9Impl_GetPresentParameters(LPDIRECT3DSWA
     pPresentationParameters->hDeviceWindow              = winePresentParameters.hDeviceWindow;
     pPresentationParameters->Windowed                   = winePresentParameters.Windowed;
     pPresentationParameters->EnableAutoDepthStencil     = winePresentParameters.EnableAutoDepthStencil;
+    pPresentationParameters->AutoDepthStencilFormat     = winePresentParameters.AutoDepthStencilFormat;
     pPresentationParameters->Flags                      = winePresentParameters.Flags;
     pPresentationParameters->FullScreen_RefreshRateInHz = winePresentParameters.FullScreen_RefreshRateInHz;
     pPresentationParameters->PresentationInterval       = winePresentParameters.PresentationInterval;
