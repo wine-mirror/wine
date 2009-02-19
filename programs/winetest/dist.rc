@@ -22,6 +22,3 @@
 
 /* @makedep: build.nfo */
 BUILD_INFO STRINGRES "build.nfo"
-
-/* @makedep: tests.url */
-TESTS_URL  STRINGRES "tests.url"

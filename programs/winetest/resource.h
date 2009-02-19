@@ -52,4 +52,3 @@
 /* String resources */
 
 #define BUILD_INFO 10001
-#define TESTS_URL  10002

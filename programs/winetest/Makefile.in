@@ -55,7 +55,7 @@ winetest-dist.exe: $(OBJS) dist.res.o Makefile.in
 	$(CC) $(APPMODE) $(OBJS) dist.res.o -o $@ -L$(DLLDIR) $(IMPORTS:%=-L$(DLLDIR)/%) $(ALL_LIBS)
 	-upx -9 -qqq $@
 
-dist.res: winetest.rc tests.rc build.nfo tests.url winetest.ico $(TESTBINS)
+dist.res: winetest.rc tests.rc build.nfo winetest.ico $(TESTBINS)
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend
 

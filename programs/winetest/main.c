@@ -631,10 +631,7 @@ run_tests (char *logname)
 
     xprintf ("Version 4\n");
     xprintf ("Tests from build %s\n", build_id[0] ? build_id : "-" );
-    strres = extract_rcdata (MAKEINTRESOURCE(TESTS_URL), STRINGRES, &strsize);
-    xprintf ("Archive: ");
-    if (strres) xprintf ("%.*s", strsize, strres);
-    else xprintf ("-\n");
+    xprintf ("Archive: -\n");  /* no longer used */
     xprintf ("Tag: %s\n", tag);
     xprintf ("Build info:\n");
     strres = extract_rcdata (MAKEINTRESOURCE(BUILD_INFO), STRINGRES, &strsize);
