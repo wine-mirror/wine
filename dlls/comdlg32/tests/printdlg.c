@@ -335,7 +335,11 @@ static void test_abort_proc(void)
     doc_info.lpszOutput = filename;
 
     job_id = StartDocA(print_dc, &doc_info);
-    ok(job_id > 0, "StartDocA failed ret %d gle %d\n", job_id, GetLastError());
+
+    ok(job_id > 0 ||
+       GetLastError() == ERROR_SPL_NO_STARTDOC, /* Vista can fail with this error when using the XPS driver */
+       "StartDocA failed ret %d gle %d\n", job_id, GetLastError());
+
     if(job_id <= 0)
     {
         skip("StartDoc failed\n");
