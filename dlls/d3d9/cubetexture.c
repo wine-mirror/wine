@@ -228,12 +228,13 @@ static HRESULT WINAPI IDirect3DCubeTexture9Impl_GetLevelDesc(LPDIRECT3DCUBETEXTU
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
     WINED3DSURFACE_DESC    wined3ddesc;
     UINT                   tmpInt = -1;
+    WINED3DFORMAT format;
     HRESULT hr;
 
     TRACE("(%p) Relay\n", This);
 
     /* As d3d8 and d3d9 structures differ, pass in ptrs to where data needs to go */
-    wined3ddesc.Format              = (WINED3DFORMAT *)&pDesc->Format;
+    wined3ddesc.Format              = &format;
     wined3ddesc.Type                = (WINED3DRESOURCETYPE *) &pDesc->Type;
     wined3ddesc.Usage               = &pDesc->Usage;
     wined3ddesc.Pool                = (WINED3DPOOL *) &pDesc->Pool;
@@ -246,6 +247,9 @@ static HRESULT WINAPI IDirect3DCubeTexture9Impl_GetLevelDesc(LPDIRECT3DCUBETEXTU
     EnterCriticalSection(&d3d9_cs);
     hr = IWineD3DCubeTexture_GetLevelDesc(This->wineD3DCubeTexture, Level, &wined3ddesc);
     LeaveCriticalSection(&d3d9_cs);
+
+    if (SUCCEEDED(hr)) pDesc->Format = d3dformat_from_wined3dformat(format);
+
     return hr;
 }
 
@@ -355,7 +359,8 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateCubeTexture(LPDIRECT3DDEVICE9EX ifac
     object->ref = 1;
     EnterCriticalSection(&d3d9_cs);
     hr = IWineD3DDevice_CreateCubeTexture(This->WineD3DDevice, EdgeLength, Levels, Usage,
-            Format, Pool, &object->wineD3DCubeTexture, pSharedHandle, (IUnknown*)object);
+            wined3dformat_from_d3dformat(Format), Pool, &object->wineD3DCubeTexture,
+            pSharedHandle, (IUnknown*)object);
     LeaveCriticalSection(&d3d9_cs);
 
     if (hr != D3D_OK){

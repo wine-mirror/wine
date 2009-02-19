@@ -25,6 +25,135 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
+D3DFORMAT d3dformat_from_wined3dformat(WINED3DFORMAT format)
+{
+    BYTE *c = (BYTE *)&format;
+
+    /* Don't translate FOURCC formats */
+    if (isprint(c[0]) && isprint(c[1]) && isprint(c[2]) && isprint(c[3])) return format;
+
+    switch(format)
+    {
+        case WINED3DFMT_UNKNOWN: return D3DFMT_UNKNOWN;
+        case WINED3DFMT_R8G8B8: return D3DFMT_R8G8B8;
+        case WINED3DFMT_A8R8G8B8: return D3DFMT_A8R8G8B8;
+        case WINED3DFMT_X8R8G8B8: return D3DFMT_X8R8G8B8;
+        case WINED3DFMT_R5G6B5: return D3DFMT_R5G6B5;
+        case WINED3DFMT_X1R5G5B5: return D3DFMT_X1R5G5B5;
+        case WINED3DFMT_A1R5G5B5: return D3DFMT_A1R5G5B5;
+        case WINED3DFMT_A4R4G4B4: return D3DFMT_A4R4G4B4;
+        case WINED3DFMT_R3G3B2: return D3DFMT_R3G3B2;
+        case WINED3DFMT_A8: return D3DFMT_A8;
+        case WINED3DFMT_A8R3G3B2: return D3DFMT_A8R3G3B2;
+        case WINED3DFMT_X4R4G4B4: return D3DFMT_X4R4G4B4;
+        case WINED3DFMT_A2B10G10R10: return D3DFMT_A2B10G10R10;
+        case WINED3DFMT_A8B8G8R8: return D3DFMT_A8B8G8R8;
+        case WINED3DFMT_X8B8G8R8: return D3DFMT_X8B8G8R8;
+        case WINED3DFMT_G16R16: return D3DFMT_G16R16;
+        case WINED3DFMT_A2R10G10B10: return D3DFMT_A2R10G10B10;
+        case WINED3DFMT_A16B16G16R16: return D3DFMT_A16B16G16R16;
+        case WINED3DFMT_A8P8: return D3DFMT_A8P8;
+        case WINED3DFMT_P8: return D3DFMT_P8;
+        case WINED3DFMT_L8: return D3DFMT_L8;
+        case WINED3DFMT_A8L8: return D3DFMT_A8L8;
+        case WINED3DFMT_A4L4: return D3DFMT_A4L4;
+        case WINED3DFMT_V8U8: return D3DFMT_V8U8;
+        case WINED3DFMT_L6V5U5: return D3DFMT_L6V5U5;
+        case WINED3DFMT_X8L8V8U8: return D3DFMT_X8L8V8U8;
+        case WINED3DFMT_Q8W8V8U8: return D3DFMT_Q8W8V8U8;
+        case WINED3DFMT_V16U16: return D3DFMT_V16U16;
+        case WINED3DFMT_A2W10V10U10: return D3DFMT_A2W10V10U10;
+        case WINED3DFMT_D16_LOCKABLE: return D3DFMT_D16_LOCKABLE;
+        case WINED3DFMT_D32: return D3DFMT_D32;
+        case WINED3DFMT_D15S1: return D3DFMT_D15S1;
+        case WINED3DFMT_D24S8: return D3DFMT_D24S8;
+        case WINED3DFMT_D24X8: return D3DFMT_D24X8;
+        case WINED3DFMT_D24X4S4: return D3DFMT_D24X4S4;
+        case WINED3DFMT_D16: return D3DFMT_D16;
+        case WINED3DFMT_L16: return D3DFMT_L16;
+        case WINED3DFMT_D32F_LOCKABLE: return D3DFMT_D32F_LOCKABLE;
+        case WINED3DFMT_D24FS8: return D3DFMT_D24FS8;
+        case WINED3DFMT_VERTEXDATA: return D3DFMT_VERTEXDATA;
+        case WINED3DFMT_INDEX16: return D3DFMT_INDEX16;
+        case WINED3DFMT_INDEX32: return D3DFMT_INDEX32;
+        case WINED3DFMT_Q16W16V16U16: return D3DFMT_Q16W16V16U16;
+        case WINED3DFMT_R16F: return D3DFMT_R16F;
+        case WINED3DFMT_G16R16F: return D3DFMT_G16R16F;
+        case WINED3DFMT_A16B16G16R16F: return D3DFMT_A16B16G16R16F;
+        case WINED3DFMT_R32F: return D3DFMT_R32F;
+        case WINED3DFMT_G32R32F: return D3DFMT_G32R32F;
+        case WINED3DFMT_A32B32G32R32F: return D3DFMT_A32B32G32R32F;
+        case WINED3DFMT_CxV8U8: return D3DFMT_CxV8U8;
+        default:
+            FIXME("Unhandled WINED3DFORMAT %#x\n", format);
+            return D3DFMT_UNKNOWN;
+    }
+}
+
+WINED3DFORMAT wined3dformat_from_d3dformat(D3DFORMAT format)
+{
+    BYTE *c = (BYTE *)&format;
+
+    /* Don't translate FOURCC formats */
+    if (isprint(c[0]) && isprint(c[1]) && isprint(c[2]) && isprint(c[3])) return format;
+
+    switch(format)
+    {
+        case D3DFMT_UNKNOWN: return WINED3DFMT_UNKNOWN;
+        case D3DFMT_R8G8B8: return WINED3DFMT_R8G8B8;
+        case D3DFMT_A8R8G8B8: return WINED3DFMT_A8R8G8B8;
+        case D3DFMT_X8R8G8B8: return WINED3DFMT_X8R8G8B8;
+        case D3DFMT_R5G6B5: return WINED3DFMT_R5G6B5;
+        case D3DFMT_X1R5G5B5: return WINED3DFMT_X1R5G5B5;
+        case D3DFMT_A1R5G5B5: return WINED3DFMT_A1R5G5B5;
+        case D3DFMT_A4R4G4B4: return WINED3DFMT_A4R4G4B4;
+        case D3DFMT_R3G3B2: return WINED3DFMT_R3G3B2;
+        case D3DFMT_A8: return WINED3DFMT_A8;
+        case D3DFMT_A8R3G3B2: return WINED3DFMT_A8R3G3B2;
+        case D3DFMT_X4R4G4B4: return WINED3DFMT_X4R4G4B4;
+        case D3DFMT_A2B10G10R10: return WINED3DFMT_A2B10G10R10;
+        case D3DFMT_A8B8G8R8: return WINED3DFMT_A8B8G8R8;
+        case D3DFMT_X8B8G8R8: return WINED3DFMT_X8B8G8R8;
+        case D3DFMT_G16R16: return WINED3DFMT_G16R16;
+        case D3DFMT_A2R10G10B10: return WINED3DFMT_A2R10G10B10;
+        case D3DFMT_A16B16G16R16: return WINED3DFMT_A16B16G16R16;
+        case D3DFMT_A8P8: return WINED3DFMT_A8P8;
+        case D3DFMT_P8: return WINED3DFMT_P8;
+        case D3DFMT_L8: return WINED3DFMT_L8;
+        case D3DFMT_A8L8: return WINED3DFMT_A8L8;
+        case D3DFMT_A4L4: return WINED3DFMT_A4L4;
+        case D3DFMT_V8U8: return WINED3DFMT_V8U8;
+        case D3DFMT_L6V5U5: return WINED3DFMT_L6V5U5;
+        case D3DFMT_X8L8V8U8: return WINED3DFMT_X8L8V8U8;
+        case D3DFMT_Q8W8V8U8: return WINED3DFMT_Q8W8V8U8;
+        case D3DFMT_V16U16: return WINED3DFMT_V16U16;
+        case D3DFMT_A2W10V10U10: return WINED3DFMT_A2W10V10U10;
+        case D3DFMT_D16_LOCKABLE: return WINED3DFMT_D16_LOCKABLE;
+        case D3DFMT_D32: return WINED3DFMT_D32;
+        case D3DFMT_D15S1: return WINED3DFMT_D15S1;
+        case D3DFMT_D24S8: return WINED3DFMT_D24S8;
+        case D3DFMT_D24X8: return WINED3DFMT_D24X8;
+        case D3DFMT_D24X4S4: return WINED3DFMT_D24X4S4;
+        case D3DFMT_D16: return WINED3DFMT_D16;
+        case D3DFMT_L16: return WINED3DFMT_L16;
+        case D3DFMT_D32F_LOCKABLE: return WINED3DFMT_D32F_LOCKABLE;
+        case D3DFMT_D24FS8: return WINED3DFMT_D24FS8;
+        case D3DFMT_VERTEXDATA: return WINED3DFMT_VERTEXDATA;
+        case D3DFMT_INDEX16: return WINED3DFMT_INDEX16;
+        case D3DFMT_INDEX32: return WINED3DFMT_INDEX32;
+        case D3DFMT_Q16W16V16U16: return WINED3DFMT_Q16W16V16U16;
+        case D3DFMT_R16F: return WINED3DFMT_R16F;
+        case D3DFMT_G16R16F: return WINED3DFMT_G16R16F;
+        case D3DFMT_A16B16G16R16F: return WINED3DFMT_A16B16G16R16F;
+        case D3DFMT_R32F: return WINED3DFMT_R32F;
+        case D3DFMT_G32R32F: return WINED3DFMT_G32R32F;
+        case D3DFMT_A32B32G32R32F: return WINED3DFMT_A32B32G32R32F;
+        case D3DFMT_CxV8U8: return WINED3DFMT_CxV8U8;
+        default:
+            FIXME("Unhandled D3DFORMAT %#x\n", format);
+            return WINED3DFMT_UNKNOWN;
+    }
+}
 
 /* IDirect3D IUnknown parts follow: */
 static HRESULT WINAPI IDirect3DDevice9Impl_QueryInterface(LPDIRECT3DDEVICE9EX iface, REFIID riid, LPVOID* ppobj) {
@@ -213,6 +342,9 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetDisplayMode(LPDIRECT3DDEVICE9EX 
     EnterCriticalSection(&d3d9_cs);
     hr = IWineD3DDevice_GetDisplayMode(This->WineD3DDevice, iSwapChain, (WINED3DDISPLAYMODE *) pMode);
     LeaveCriticalSection(&d3d9_cs);
+
+    if (SUCCEEDED(hr)) pMode->Format = d3dformat_from_wined3dformat(pMode->Format);
+
     return hr;
 }
 
@@ -372,7 +504,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9EX iface, D3
 
     localParameters.BackBufferWidth                     = pPresentationParameters->BackBufferWidth;
     localParameters.BackBufferHeight                    = pPresentationParameters->BackBufferHeight;
-    localParameters.BackBufferFormat                    = pPresentationParameters->BackBufferFormat;
+    localParameters.BackBufferFormat                    = wined3dformat_from_d3dformat(pPresentationParameters->BackBufferFormat);
     localParameters.BackBufferCount                     = pPresentationParameters->BackBufferCount;
     localParameters.MultiSampleType                     = pPresentationParameters->MultiSampleType;
     localParameters.MultiSampleQuality                  = pPresentationParameters->MultiSampleQuality;
@@ -380,7 +512,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9EX iface, D3
     localParameters.hDeviceWindow                       = pPresentationParameters->hDeviceWindow;
     localParameters.Windowed                            = pPresentationParameters->Windowed;
     localParameters.EnableAutoDepthStencil              = pPresentationParameters->EnableAutoDepthStencil;
-    localParameters.AutoDepthStencilFormat              = pPresentationParameters->AutoDepthStencilFormat;
+    localParameters.AutoDepthStencilFormat              = wined3dformat_from_d3dformat(pPresentationParameters->AutoDepthStencilFormat);
     localParameters.Flags                               = pPresentationParameters->Flags;
     localParameters.FullScreen_RefreshRateInHz          = pPresentationParameters->FullScreen_RefreshRateInHz;
     localParameters.PresentationInterval                = pPresentationParameters->PresentationInterval;
@@ -394,7 +526,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9EX iface, D3
 
         pPresentationParameters->BackBufferWidth            = localParameters.BackBufferWidth;
         pPresentationParameters->BackBufferHeight           = localParameters.BackBufferHeight;
-        pPresentationParameters->BackBufferFormat           = localParameters.BackBufferFormat;
+        pPresentationParameters->BackBufferFormat           = d3dformat_from_wined3dformat(localParameters.BackBufferFormat);
         pPresentationParameters->BackBufferCount            = localParameters.BackBufferCount;
         pPresentationParameters->MultiSampleType            = localParameters.MultiSampleType;
         pPresentationParameters->MultiSampleQuality         = localParameters.MultiSampleQuality;
@@ -402,7 +534,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9EX iface, D3
         pPresentationParameters->hDeviceWindow              = localParameters.hDeviceWindow;
         pPresentationParameters->Windowed                   = localParameters.Windowed;
         pPresentationParameters->EnableAutoDepthStencil     = localParameters.EnableAutoDepthStencil;
-        pPresentationParameters->AutoDepthStencilFormat     = localParameters.AutoDepthStencilFormat;
+        pPresentationParameters->AutoDepthStencilFormat     = d3dformat_from_wined3dformat(localParameters.AutoDepthStencilFormat);
         pPresentationParameters->Flags                      = localParameters.Flags;
         pPresentationParameters->FullScreen_RefreshRateInHz = localParameters.FullScreen_RefreshRateInHz;
         pPresentationParameters->PresentationInterval       = localParameters.PresentationInterval;
@@ -511,11 +643,13 @@ static HRESULT IDirect3DDevice9Impl_CreateSurface(LPDIRECT3DDEVICE9EX iface, UIN
 
     object->lpVtbl = &Direct3DSurface9_Vtbl;
     object->ref = 1;
-    
+
     TRACE("(%p) : w(%d) h(%d) fmt(%d) surf@%p\n", This, Width, Height, Format, *ppSurface);
-           
-    hrc = IWineD3DDevice_CreateSurface(This->WineD3DDevice, Width, Height, Format, Lockable, Discard, Level,  &object->wineD3DSurface, Type, Usage & WINED3DUSAGE_MASK, (WINED3DPOOL) Pool,MultiSample,MultisampleQuality,pSharedHandle,SURFACE_OPENGL,(IUnknown *)object);
-    
+
+    hrc = IWineD3DDevice_CreateSurface(This->WineD3DDevice, Width, Height, wined3dformat_from_d3dformat(Format),
+            Lockable, Discard, Level, &object->wineD3DSurface, Type, Usage & WINED3DUSAGE_MASK, (WINED3DPOOL)Pool,
+            MultiSample, MultisampleQuality, pSharedHandle, SURFACE_OPENGL, (IUnknown *)object);
+
     if (hrc != D3D_OK || NULL == object->wineD3DSurface) {
 
        /* free up object */
@@ -1261,8 +1395,9 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_DrawIndexedPrimitiveUP(LPDIRECT3DDE
     TRACE("(%p) Relay\n" , This);
 
     EnterCriticalSection(&d3d9_cs);
-    hr = IWineD3DDevice_DrawIndexedPrimitiveUP(This->WineD3DDevice, PrimitiveType, MinVertexIndex, NumVertexIndices, PrimitiveCount,
-                                                 pIndexData, IndexDataFormat, pVertexStreamZeroData, VertexStreamZeroStride);
+    hr = IWineD3DDevice_DrawIndexedPrimitiveUP(This->WineD3DDevice, PrimitiveType, MinVertexIndex,
+            NumVertexIndices, PrimitiveCount, pIndexData, wined3dformat_from_d3dformat(IndexDataFormat),
+            pVertexStreamZeroData, VertexStreamZeroStride);
     LeaveCriticalSection(&d3d9_cs);
     return hr;
 }
@@ -1810,8 +1945,9 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
     if (pool == D3DPOOL_DEFAULT && !(usage & D3DUSAGE_DYNAMIC)) lockable = FALSE;
 
     hr = IDirect3DDevice9Impl_CreateSurface((IDirect3DDevice9Ex *)This, width, height,
-            format, lockable, FALSE /* Discard */, level, (IDirect3DSurface9 **)&d3d_surface,
-            D3DRTYPE_SURFACE, usage, pool, D3DMULTISAMPLE_NONE, 0 /* MultisampleQuality */, NULL);
+            d3dformat_from_wined3dformat(format), lockable, FALSE /* Discard */, level,
+            (IDirect3DSurface9 **)&d3d_surface, D3DRTYPE_SURFACE, usage, pool,
+            D3DMULTISAMPLE_NONE, 0 /* MultisampleQuality */, NULL);
     if (FAILED(hr))
     {
         ERR("(%p) CreateSurface failed, returning %#x\n", iface, hr);
@@ -1839,8 +1975,9 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
             "\tmultisample_quality %u, lockable %u, surface %p\n",
             iface, superior, width, height, format, multisample_type, multisample_quality, lockable, surface);
 
-    hr = IDirect3DDevice9Impl_CreateRenderTarget((IDirect3DDevice9Ex *)This, width, height, format,
-            multisample_type, multisample_quality, lockable, (IDirect3DSurface9 **)&d3d_surface, NULL);
+    hr = IDirect3DDevice9Impl_CreateRenderTarget((IDirect3DDevice9Ex *)This, width, height,
+            d3dformat_from_wined3dformat(format), multisample_type, multisample_quality, lockable,
+            (IDirect3DSurface9 **)&d3d_surface, NULL);
     if (FAILED(hr))
     {
         ERR("(%p) CreateRenderTarget failed, returning %#x\n", iface, hr);
@@ -1868,8 +2005,9 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
             "\tmultisample_quality %u, discard %u, surface %p\n",
             iface, superior, width, height, format, multisample_type, multisample_quality, discard, surface);
 
-    hr = IDirect3DDevice9Impl_CreateDepthStencilSurface((IDirect3DDevice9Ex *)This, width, height, format,
-            multisample_type, multisample_quality, discard, (IDirect3DSurface9 **)&d3d_surface, NULL);
+    hr = IDirect3DDevice9Impl_CreateDepthStencilSurface((IDirect3DDevice9Ex *)This, width, height,
+            d3dformat_from_wined3dformat(format), multisample_type, multisample_quality, discard,
+            (IDirect3DSurface9 **)&d3d_surface, NULL);
     if (FAILED(hr))
     {
         ERR("(%p) CreateDepthStencilSurface failed, returning %#x\n", iface, hr);
@@ -1939,7 +2077,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
     /* Copy the presentation parameters */
     local_parameters.BackBufferWidth = present_parameters->BackBufferWidth;
     local_parameters.BackBufferHeight = present_parameters->BackBufferHeight;
-    local_parameters.BackBufferFormat = present_parameters->BackBufferFormat;
+    local_parameters.BackBufferFormat = d3dformat_from_wined3dformat(present_parameters->BackBufferFormat);
     local_parameters.BackBufferCount = present_parameters->BackBufferCount;
     local_parameters.MultiSampleType = present_parameters->MultiSampleType;
     local_parameters.MultiSampleQuality = present_parameters->MultiSampleQuality;
@@ -1947,7 +2085,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
     local_parameters.hDeviceWindow = present_parameters->hDeviceWindow;
     local_parameters.Windowed = present_parameters->Windowed;
     local_parameters.EnableAutoDepthStencil = present_parameters->EnableAutoDepthStencil;
-    local_parameters.AutoDepthStencilFormat = present_parameters->AutoDepthStencilFormat;
+    local_parameters.AutoDepthStencilFormat = d3dformat_from_wined3dformat(present_parameters->AutoDepthStencilFormat);
     local_parameters.Flags = present_parameters->Flags;
     local_parameters.FullScreen_RefreshRateInHz = present_parameters->FullScreen_RefreshRateInHz;
     local_parameters.PresentationInterval = present_parameters->PresentationInterval;
@@ -1969,7 +2107,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
     /* Copy back the presentation parameters */
     present_parameters->BackBufferWidth = local_parameters.BackBufferWidth;
     present_parameters->BackBufferHeight = local_parameters.BackBufferHeight;
-    present_parameters->BackBufferFormat = local_parameters.BackBufferFormat;
+    present_parameters->BackBufferFormat = wined3dformat_from_d3dformat(local_parameters.BackBufferFormat);
     present_parameters->BackBufferCount = local_parameters.BackBufferCount;
     present_parameters->MultiSampleType = local_parameters.MultiSampleType;
     present_parameters->MultiSampleQuality = local_parameters.MultiSampleQuality;
@@ -1977,7 +2115,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
     present_parameters->hDeviceWindow = local_parameters.hDeviceWindow;
     present_parameters->Windowed = local_parameters.Windowed;
     present_parameters->EnableAutoDepthStencil = local_parameters.EnableAutoDepthStencil;
-    present_parameters->AutoDepthStencilFormat = local_parameters.AutoDepthStencilFormat;
+    present_parameters->AutoDepthStencilFormat = wined3dformat_from_d3dformat(local_parameters.AutoDepthStencilFormat);
     present_parameters->Flags = local_parameters.Flags;
     present_parameters->FullScreen_RefreshRateInHz = local_parameters.FullScreen_RefreshRateInHz;
     present_parameters->PresentationInterval = local_parameters.PresentationInterval;

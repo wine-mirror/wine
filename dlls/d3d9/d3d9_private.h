@@ -45,6 +45,8 @@ extern HRESULT vdecl_convert_fvf(
     DWORD FVF,
     D3DVERTEXELEMENT9** ppVertexElements);
 extern CRITICAL_SECTION d3d9_cs;
+D3DFORMAT d3dformat_from_wined3dformat(WINED3DFORMAT format);
+WINED3DFORMAT wined3dformat_from_d3dformat(D3DFORMAT format);
 
 /* ===========================================================================
     Macros

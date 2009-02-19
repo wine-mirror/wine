@@ -137,7 +137,7 @@ static UINT WINAPI IDirect3D9Impl_GetAdapterModeCount(LPDIRECT3D9EX iface, UINT 
     }
 
     EnterCriticalSection(&d3d9_cs);
-    hr = IWineD3D_GetAdapterModeCount(This->WineD3D, Adapter, Format);
+    hr = IWineD3D_GetAdapterModeCount(This->WineD3D, Adapter, wined3dformat_from_d3dformat(Format));
     LeaveCriticalSection(&d3d9_cs);
     return hr;
 }
@@ -148,18 +148,27 @@ static HRESULT WINAPI IDirect3D9Impl_EnumAdapterModes(LPDIRECT3D9EX iface, UINT 
     TRACE("(%p)->(%d, %d, %d, %p)\n", This, Adapter, Format, Mode, pMode);
     /* We can't pass this to WineD3D, otherwise it'll think it came from D3D8 or DDraw.
        It's supposed to fail anyway, so no harm returning failure. */
-    if(Format != WINED3DFMT_X8R8G8B8 && Format != WINED3DFMT_R5G6B5)
+    if(Format != D3DFMT_X8R8G8B8 && Format != D3DFMT_R5G6B5)
         return D3DERR_INVALIDCALL;
 
     EnterCriticalSection(&d3d9_cs);
-    hr = IWineD3D_EnumAdapterModes(This->WineD3D, Adapter, Format, Mode, (WINED3DDISPLAYMODE *) pMode);
+    hr = IWineD3D_EnumAdapterModes(This->WineD3D, Adapter, wined3dformat_from_d3dformat(Format),
+            Mode, (WINED3DDISPLAYMODE *) pMode);
     LeaveCriticalSection(&d3d9_cs);
+
+    if (SUCCEEDED(hr)) pMode->Format = d3dformat_from_wined3dformat(pMode->Format);
+
     return hr;
 }
 
 static HRESULT WINAPI IDirect3D9Impl_GetAdapterDisplayMode(LPDIRECT3D9EX iface, UINT Adapter, D3DDISPLAYMODE* pMode) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    return IWineD3D_GetAdapterDisplayMode(This->WineD3D, Adapter, (WINED3DDISPLAYMODE *) pMode);
+    HRESULT hr;
+
+    hr = IWineD3D_GetAdapterDisplayMode(This->WineD3D, Adapter, (WINED3DDISPLAYMODE *) pMode);
+    if (SUCCEEDED(hr)) pMode->Format = d3dformat_from_wined3dformat(pMode->Format);
+
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3D9Impl_CheckDeviceType(LPDIRECT3D9EX iface,
@@ -171,8 +180,8 @@ static HRESULT WINAPI IDirect3D9Impl_CheckDeviceType(LPDIRECT3D9EX iface,
           BackBufferFormat, Windowed ? "true" : "false");
 
     EnterCriticalSection(&d3d9_cs);
-    hr = IWineD3D_CheckDeviceType(This->WineD3D, Adapter, CheckType, DisplayFormat,
-                                    BackBufferFormat, Windowed);
+    hr = IWineD3D_CheckDeviceType(This->WineD3D, Adapter, CheckType, wined3dformat_from_d3dformat(DisplayFormat),
+            wined3dformat_from_d3dformat(BackBufferFormat), Windowed);
     LeaveCriticalSection(&d3d9_cs);
     return hr;
 }
@@ -185,8 +194,8 @@ static HRESULT WINAPI IDirect3D9Impl_CheckDeviceFormat(LPDIRECT3D9EX iface,
     TRACE("%p\n", This);
 
     EnterCriticalSection(&d3d9_cs);
-    hr = IWineD3D_CheckDeviceFormat(This->WineD3D, Adapter, DeviceType, AdapterFormat,
-                                    Usage, RType, CheckFormat, SURFACE_OPENGL);
+    hr = IWineD3D_CheckDeviceFormat(This->WineD3D, Adapter, DeviceType, wined3dformat_from_d3dformat(AdapterFormat),
+            Usage, RType, wined3dformat_from_d3dformat(CheckFormat), SURFACE_OPENGL);
     LeaveCriticalSection(&d3d9_cs);
     return hr;
 }
@@ -199,8 +208,8 @@ static HRESULT WINAPI IDirect3D9Impl_CheckDeviceMultiSampleType(LPDIRECT3D9EX if
     TRACE("%p\n", This);
 
     EnterCriticalSection(&d3d9_cs);
-    hr = IWineD3D_CheckDeviceMultiSampleType(This->WineD3D, Adapter, DeviceType, SurfaceFormat,
-                                               Windowed, MultiSampleType, pQualityLevels);
+    hr = IWineD3D_CheckDeviceMultiSampleType(This->WineD3D, Adapter, DeviceType,
+            wined3dformat_from_d3dformat(SurfaceFormat), Windowed, MultiSampleType, pQualityLevels);
     LeaveCriticalSection(&d3d9_cs);
     return hr;
 }
@@ -213,8 +222,9 @@ static HRESULT WINAPI IDirect3D9Impl_CheckDepthStencilMatch(LPDIRECT3D9EX iface,
     TRACE("%p\n", This);
 
     EnterCriticalSection(&d3d9_cs);
-    hr = IWineD3D_CheckDepthStencilMatch(This->WineD3D, Adapter, DeviceType, AdapterFormat,
-                                           RenderTargetFormat, DepthStencilFormat);
+    hr = IWineD3D_CheckDepthStencilMatch(This->WineD3D, Adapter, DeviceType,
+            wined3dformat_from_d3dformat(AdapterFormat), wined3dformat_from_d3dformat(RenderTargetFormat),
+            wined3dformat_from_d3dformat(DepthStencilFormat));
     LeaveCriticalSection(&d3d9_cs);
     return hr;
 }
@@ -225,8 +235,8 @@ static HRESULT WINAPI IDirect3D9Impl_CheckDeviceFormatConversion(LPDIRECT3D9EX i
     TRACE("%p\n", This);
 
     EnterCriticalSection(&d3d9_cs);
-    hr = IWineD3D_CheckDeviceFormatConversion(This->WineD3D, Adapter, DeviceType, SourceFormat,
-                                                TargetFormat);
+    hr = IWineD3D_CheckDeviceFormatConversion(This->WineD3D, Adapter, DeviceType,
+            wined3dformat_from_d3dformat(SourceFormat), wined3dformat_from_d3dformat(TargetFormat));
     LeaveCriticalSection(&d3d9_cs);
     return hr;
 }
@@ -404,7 +414,7 @@ static HRESULT WINAPI IDirect3D9Impl_CreateDevice(LPDIRECT3D9EX iface, UINT Adap
 
     localParameters.BackBufferWidth                     = pPresentationParameters->BackBufferWidth;
     localParameters.BackBufferHeight                    = pPresentationParameters->BackBufferHeight;
-    localParameters.BackBufferFormat                    = pPresentationParameters->BackBufferFormat;
+    localParameters.BackBufferFormat                    = wined3dformat_from_d3dformat(pPresentationParameters->BackBufferFormat);
     localParameters.BackBufferCount                     = pPresentationParameters->BackBufferCount;
     localParameters.MultiSampleType                     = pPresentationParameters->MultiSampleType;
     localParameters.MultiSampleQuality                  = pPresentationParameters->MultiSampleQuality;
@@ -412,7 +422,7 @@ static HRESULT WINAPI IDirect3D9Impl_CreateDevice(LPDIRECT3D9EX iface, UINT Adap
     localParameters.hDeviceWindow                       = pPresentationParameters->hDeviceWindow;
     localParameters.Windowed                            = pPresentationParameters->Windowed;
     localParameters.EnableAutoDepthStencil              = pPresentationParameters->EnableAutoDepthStencil;
-    localParameters.AutoDepthStencilFormat              = pPresentationParameters->AutoDepthStencilFormat;
+    localParameters.AutoDepthStencilFormat              = wined3dformat_from_d3dformat(pPresentationParameters->AutoDepthStencilFormat);
     localParameters.Flags                               = pPresentationParameters->Flags;
     localParameters.FullScreen_RefreshRateInHz          = pPresentationParameters->FullScreen_RefreshRateInHz;
     localParameters.PresentationInterval                = pPresentationParameters->PresentationInterval;
@@ -426,7 +436,7 @@ static HRESULT WINAPI IDirect3D9Impl_CreateDevice(LPDIRECT3D9EX iface, UINT Adap
 
     pPresentationParameters->BackBufferWidth            = localParameters.BackBufferWidth;
     pPresentationParameters->BackBufferHeight           = localParameters.BackBufferHeight;
-    pPresentationParameters->BackBufferFormat           = localParameters.BackBufferFormat;
+    pPresentationParameters->BackBufferFormat           = d3dformat_from_wined3dformat(localParameters.BackBufferFormat);
     pPresentationParameters->BackBufferCount            = localParameters.BackBufferCount;
     pPresentationParameters->MultiSampleType            = localParameters.MultiSampleType;
     pPresentationParameters->MultiSampleQuality         = localParameters.MultiSampleQuality;
@@ -434,7 +444,7 @@ static HRESULT WINAPI IDirect3D9Impl_CreateDevice(LPDIRECT3D9EX iface, UINT Adap
     pPresentationParameters->hDeviceWindow              = localParameters.hDeviceWindow;
     pPresentationParameters->Windowed                   = localParameters.Windowed;
     pPresentationParameters->EnableAutoDepthStencil     = localParameters.EnableAutoDepthStencil;
-    pPresentationParameters->AutoDepthStencilFormat     = localParameters.AutoDepthStencilFormat;
+    pPresentationParameters->AutoDepthStencilFormat     = d3dformat_from_wined3dformat(localParameters.AutoDepthStencilFormat);
     pPresentationParameters->Flags                      = localParameters.Flags;
     pPresentationParameters->FullScreen_RefreshRateInHz = localParameters.FullScreen_RefreshRateInHz;
     pPresentationParameters->PresentationInterval       = localParameters.PresentationInterval;

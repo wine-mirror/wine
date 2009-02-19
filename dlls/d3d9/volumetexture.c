@@ -156,11 +156,13 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetLevelDesc(LPDIRECT3DVOLUMET
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     WINED3DVOLUME_DESC     wined3ddesc;
     UINT                   tmpInt = -1;
+    WINED3DFORMAT format;
+    HRESULT hr;
 
     TRACE("(%p) Relay\n", This);
 
     /* As d3d8 and d3d9 structures differ, pass in ptrs to where data needs to go */
-    wined3ddesc.Format              = (WINED3DFORMAT *)&pDesc->Format;
+    wined3ddesc.Format              = &format;
     wined3ddesc.Type                = (WINED3DRESOURCETYPE *)&pDesc->Type;
     wined3ddesc.Usage               = &pDesc->Usage;
     wined3ddesc.Pool                = (WINED3DPOOL *) &pDesc->Pool;
@@ -169,7 +171,11 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetLevelDesc(LPDIRECT3DVOLUMET
     wined3ddesc.Height              = &pDesc->Height;
     wined3ddesc.Depth               = &pDesc->Depth;
 
-    return IWineD3DVolumeTexture_GetLevelDesc(This->wineD3DVolumeTexture, Level, &wined3ddesc);
+    hr = IWineD3DVolumeTexture_GetLevelDesc(This->wineD3DVolumeTexture, Level, &wined3ddesc);
+
+    if (SUCCEEDED(hr)) pDesc->Format = d3dformat_from_wined3dformat(format);
+
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetVolumeLevel(LPDIRECT3DVOLUMETEXTURE9 iface, UINT Level, IDirect3DVolume9** ppVolumeLevel) {
@@ -259,7 +265,8 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVolumeTexture(LPDIRECT3DDEVICE9EX if
     object->lpVtbl = &Direct3DVolumeTexture9_Vtbl;
     object->ref = 1;
     hrc = IWineD3DDevice_CreateVolumeTexture(This->WineD3DDevice, Width, Height, Depth, Levels,
-            Usage & WINED3DUSAGE_MASK, Format, Pool, &object->wineD3DVolumeTexture, pSharedHandle, (IUnknown *)object);
+            Usage & WINED3DUSAGE_MASK, wined3dformat_from_d3dformat(Format), Pool,
+            &object->wineD3DVolumeTexture, pSharedHandle, (IUnknown *)object);
     if (hrc != D3D_OK) {
 
         /* free up object */
