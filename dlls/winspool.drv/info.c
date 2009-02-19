@@ -460,6 +460,7 @@ static BOOL add_printer_driver(const char *name)
 }
 
 #ifdef SONAME_LIBCUPS
+static typeof(cupsFreeDests) *pcupsFreeDests;
 static typeof(cupsGetDests)  *pcupsGetDests;
 static typeof(cupsGetPPD)    *pcupsGetPPD;
 static typeof(cupsPrintFile) *pcupsPrintFile;
@@ -486,6 +487,7 @@ static BOOL CUPS_LoadPrinters(void)
     	p##x = wine_dlsym(cupshandle, #x, NULL,0);	\
 	if (!p##x) return FALSE;
 
+    DYNCUPS(cupsFreeDests);
     DYNCUPS(cupsGetPPD);
     DYNCUPS(cupsGetDests);
     DYNCUPS(cupsPrintFile);
@@ -566,6 +568,7 @@ static BOOL CUPS_LoadPrinters(void)
     }
     if (hadprinter & !haddefault)
         WINSPOOL_SetDefaultPrinter(dests[0].name, dests[0].name, TRUE);
+    pcupsFreeDests(nrofdests, dests);
     RegCloseKey(hkeyPrinters);
     return hadprinter;
 }
