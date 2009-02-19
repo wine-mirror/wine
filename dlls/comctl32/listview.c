@@ -106,7 +106,6 @@
  *   -- LVN_GETINFOTIP
  *   -- LVN_HOTTRACK
  *   -- LVN_MARQUEEBEGIN
- *   -- LVN_ODFINDITEM
  *   -- LVN_SETDISPINFO
  *   -- NM_HOVER
  *   -- LVN_BEGINRDRAG
@@ -1574,6 +1573,28 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
         endidx=infoPtr->nItemCount;
         idx=0;
     }
+
+    /* Let application handle this for virtual listview */
+    if (infoPtr->dwStyle & LVS_OWNERDATA)
+    {
+        NMLVFINDITEMW nmlv;
+        LVFINDINFOW lvfi;
+
+        ZeroMemory(&lvfi, sizeof(lvfi));
+        lvfi.flags = (LVFI_WRAP | LVFI_PARTIAL);
+        infoPtr->szSearchParam[infoPtr->nSearchParamLength] = '\0';
+        lvfi.psz = infoPtr->szSearchParam;
+        nmlv.iStart = idx;
+        nmlv.lvfi = lvfi;
+
+        nItem = notify_hdr(infoPtr, LVN_ODFINDITEMW, (LPNMHDR)&nmlv.hdr);
+
+        if (nItem != -1)
+            LISTVIEW_KeySelection(infoPtr, nItem);
+
+        return 0;
+    }
+
     do {
         if (idx == infoPtr->nItemCount) {
             if (endidx == infoPtr->nItemCount || endidx == 0)
@@ -5074,6 +5095,17 @@ static INT LISTVIEW_FindItemW(const LISTVIEW_INFO *infoPtr, INT nStart,
     ULONG xdist, ydist, dist, mindist = 0x7fffffff;
     POINT Position, Destination;
     LVITEMW lvItem;
+
+    /* Search in virtual listviews should be done by application, not by
+       listview control, so we just send LVN_ODFINDITEMW and return the result */
+    if (infoPtr->dwStyle & LVS_OWNERDATA)
+    {
+        NMLVFINDITEMW nmlv;
+
+        nmlv.iStart = nStart;
+        nmlv.lvfi = *lpFindInfo;
+        return notify_hdr(infoPtr, LVN_ODFINDITEMW, (LPNMHDR)&nmlv.hdr);
+    }
 
     if (!lpFindInfo || nItem < 0) return -1;
     
