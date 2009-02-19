@@ -2387,7 +2387,8 @@ static void test_text_metrics(const LOGFONTA *lf)
     case PAN_FAMILY_TEXT_DISPLAY:
     case PAN_FAMILY_PICTORIAL:
     default:
-        if((tmA.tmPitchAndFamily & 1) == 0) /* fixed */
+        if((tmA.tmPitchAndFamily & 1) == 0 || /* fixed */
+           tt_os2.panose.bProportion == PAN_PROP_MONOSPACED)
         {
             expect_ff(&tmA, &tt_os2, FF_MODERN, font_name);
             break;

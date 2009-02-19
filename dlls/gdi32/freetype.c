@@ -5463,7 +5463,8 @@ UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
     case PAN_FAMILY_PICTORIAL: /* symbol fonts get treated as if they were text */
                                /* which is clearly not what the panose spec says. */
     default:
-        if(TM.tmPitchAndFamily == 0) /* fixed */
+        if(TM.tmPitchAndFamily == 0 || /* fixed */
+           pOS2->panose[PAN_PROPORTION_INDEX] == PAN_PROP_MONOSPACED)
 	    TM.tmPitchAndFamily = FF_MODERN;
         else
         {
