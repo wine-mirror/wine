@@ -298,8 +298,13 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
 
     if (!This->init)
     {
+        DWORD style = GetWindowLongW(This->hWnd, GWL_STYLE);
+        DWORD style_ex = GetWindowLongW(This->hWnd, GWL_EXSTYLE);
+
         if (!This->WindowPos.right || !This->WindowPos.bottom)
             This->WindowPos = This->SourceRect;
+
+        AdjustWindowRectEx(&This->WindowPos, style, TRUE, style_ex);
 
         TRACE("WindowPos: %d %d %d %d\n", This->WindowPos.left, This->WindowPos.top, This->WindowPos.right, This->WindowPos.bottom);
         SetWindowPos(This->hWnd, NULL,
