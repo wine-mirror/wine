@@ -310,23 +310,7 @@ static void TestSysKeys( HWND hWnd)
 static LRESULT CALLBACK WndProc( HWND hWnd, UINT msg, WPARAM wParam,
         LPARAM lParam )
 {
-    switch (msg) {
-        case WM_USER:
-            SetFocus(hWnd);
-            /* window has focus, now do the test */
-            if( hWnd == hWndTest) TestSysKeys( hWnd);
-            /* finished :-) */
-            break;
-
-        case WM_DESTROY:
-            PostQuitMessage( 0 );
-            break;
-
-        default:
-            return( DefWindowProcA( hWnd, msg, wParam, lParam ) );
-    }
-
-    return 0;
+    return DefWindowProcA( hWnd, msg, wParam, lParam );
 }
 
 static void test_Input_whitebox(void)
@@ -345,18 +329,22 @@ static void test_Input_whitebox(void)
     wclass.lpszMenuName = 0;
     wclass.cbClsExtra    = 0;
     wclass.cbWndExtra    = 0;
-    assert (RegisterClassA( &wclass ));
+    RegisterClassA( &wclass );
     /* create the test window that will receive the keystrokes */
-    assert ( hWndTest = CreateWindowA( wclass.lpszClassName, "InputSysKeyTest",
-                WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, 100, 100,
-                NULL, NULL, hInstance, NULL) );
+    hWndTest = CreateWindowA( wclass.lpszClassName, "InputSysKeyTest",
+                              WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, 100, 100,
+                              NULL, NULL, hInstance, NULL);
+    assert( hWndTest );
     ShowWindow( hWndTest, SW_SHOW);
+    SetWindowPos( hWndTest, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE );
+    SetForegroundWindow( hWndTest );
     UpdateWindow( hWndTest);
 
     /* flush pending messages */
     while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageA( &msg );
 
-    SendMessageA(hWndTest, WM_USER, 0, 0);
+    SetFocus( hWndTest );
+    TestSysKeys( hWndTest );
     DestroyWindow(hWndTest);
 }
 
@@ -377,7 +365,6 @@ static void empty_message_queue(void)
             DispatchMessage(&msg);
         }
         diff = time - GetTickCount();
-        min_timeout = 20;
     }
 }
 
@@ -859,6 +846,8 @@ static void test_Input_blackbox(void)
         |WS_VISIBLE, 0, 0, 200, 60, NULL, NULL,
         NULL, NULL);
     ok(window != NULL, "error: %d\n", (int) GetLastError());
+    SetWindowPos( window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE );
+    SetForegroundWindow( window );
 
     hook = SetWindowsHookExA(WH_KEYBOARD_LL, hook_proc, GetModuleHandleA( NULL ), 0);
 
