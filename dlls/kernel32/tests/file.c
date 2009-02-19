@@ -564,6 +564,9 @@ static void test_CopyFileA(void)
     ret = GetTempFileNameA(temp_path, prefix, 0, source);
     ok(ret != 0, "GetTempFileNameA error %d\n", GetLastError());
 
+    ret = MoveFileA(source, source);
+    todo_wine ok(ret, "MoveFileA: failed, error %d\n", GetLastError());
+
     /* make the source have not zero size */
     hfile = CreateFileA(source, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0 );
     ok(hfile != INVALID_HANDLE_VALUE, "failed to open source file\n");
