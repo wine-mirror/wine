@@ -5876,13 +5876,13 @@ static UINT parse_assembly_name(MSIRECORD *rec, LPVOID param)
     static const WCHAR PublicKeyToken[] = {
         'P','u','b','l','i','c','K','e','y','T','o','k','e','n',0};
 
-    if (!lstrcmpW(name, Name))
+    if (!strcmpiW(name, Name))
         asmname->name = val;
-    else if (!lstrcmpW(name, Version))
+    else if (!strcmpiW(name, Version))
         asmname->version = val;
-    else if (!lstrcmpW(name, Culture))
+    else if (!strcmpiW(name, Culture))
         asmname->culture = val;
-    else if (!lstrcmpW(name, PublicKeyToken))
+    else if (!strcmpiW(name, PublicKeyToken))
         asmname->pubkeytoken = val;
     else
         msi_free(val);
