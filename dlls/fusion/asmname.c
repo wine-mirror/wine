@@ -209,7 +209,7 @@ static HRESULT WINAPI IAssemblyNameImpl_GetDisplayName(IAssemblyName *iface,
 {
     IAssemblyNameImpl *name = (IAssemblyNameImpl *)iface;
 
-    TRACE("(%p, %s, %p, %d)\n", iface, debugstr_w(szDisplayName),
+    TRACE("(%p, %p, %p, %d)\n", iface, szDisplayName,
           pccDisplayName, dwDisplayFlags);
 
     if (!name->displayname || !*name->displayname)
