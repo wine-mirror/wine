@@ -1020,11 +1020,8 @@ static void test_QueryAssemblyInfo(void)
     /* assembly not installed yet */
     INIT_ASM_INFO();
     hr = IAssemblyCache_QueryAssemblyInfo(cache, 0, wine, &info);
-    todo_wine
-    {
-        ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
-           "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
-    }
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
+       "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
     ok(info.dwAssemblyFlags == 0, "Expected 0, got %08x\n", info.dwAssemblyFlags);
@@ -1043,10 +1040,7 @@ static void test_QueryAssemblyInfo(void)
     INIT_ASM_INFO();
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_VALIDATE,
                                           NULL, &info);
-    todo_wine
-    {
-        ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
-    }
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
     ok(info.dwAssemblyFlags == 0, "Expected 0, got %08x\n", info.dwAssemblyFlags);
@@ -1062,10 +1056,7 @@ static void test_QueryAssemblyInfo(void)
     INIT_ASM_INFO();
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_VALIDATE,
                                           empty, &info);
-    todo_wine
-    {
-        ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
-    }
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
     ok(info.dwAssemblyFlags == 0, "Expected 0, got %08x\n", info.dwAssemblyFlags);
@@ -1080,17 +1071,17 @@ static void test_QueryAssemblyInfo(void)
     /* no dwFlags */
     INIT_ASM_INFO();
     hr = IAssemblyCache_QueryAssemblyInfo(cache, 0, wine, &info);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
+    ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
+       "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
     ok(info.uliAssemblySizeInKB.u.HighPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     ok(info.uliAssemblySizeInKB.u.LowPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
     todo_wine
     {
-        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-        ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
-           "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
         ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, asmpath),
            "Wrong assembly path returned\n");
         ok(info.cchBuf == lstrlenW(asmpath) + 1,
@@ -1100,11 +1091,8 @@ static void test_QueryAssemblyInfo(void)
     /* pwzCachePath is full filename */
     INIT_ASM_INFO();
     hr = IAssemblyCache_QueryAssemblyInfo(cache, 0, winedll, &info);
-    todo_wine
-    {
-        ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
-           "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
-    }
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
+       "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
     ok(info.dwAssemblyFlags == 0, "Expected 0, got %08x\n", info.dwAssemblyFlags);
@@ -1119,35 +1107,29 @@ static void test_QueryAssemblyInfo(void)
     /* NULL pAsmInfo, QUERYASMINFO_FLAG_VALIDATE */
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_VALIDATE,
                                           wine, NULL);
-    todo_wine
-    {
-        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    }
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     /* NULL pAsmInfo, QUERYASMINFO_FLAG_GETSIZE */
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           wine, NULL);
-    todo_wine
-    {
-        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    }
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     /* info.cbAssemblyInfo is 0 */
     INIT_ASM_INFO();
     info.cbAssemblyInfo = 0;
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_VALIDATE,
                                           wine, &info);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
+       "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
+    ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
+       "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
     ok(info.uliAssemblySizeInKB.u.HighPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     ok(info.uliAssemblySizeInKB.u.LowPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
     todo_wine
     {
-        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-        ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
-           "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
-        ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
-           "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
         ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, asmpath),
            "Wrong assembly path returned\n");
         ok(info.cchBuf == lstrlenW(asmpath) + 1,
@@ -1159,10 +1141,7 @@ static void test_QueryAssemblyInfo(void)
     info.cbAssemblyInfo = 1;
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_VALIDATE,
                                           wine, &info);
-    todo_wine
-    {
-        ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
-    }
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
     ok(info.cbAssemblyInfo == 1, "Expected 1, got %d\n", info.cbAssemblyInfo);
     ok(info.dwAssemblyFlags == 0, "Expected 0, got %08x\n", info.dwAssemblyFlags);
     ok(info.uliAssemblySizeInKB.u.HighPart == 0,
@@ -1178,10 +1157,7 @@ static void test_QueryAssemblyInfo(void)
     info.cbAssemblyInfo = sizeof(ASSEMBLY_INFO) * 2;
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           wine, &info);
-    todo_wine
-    {
-        ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
-    }
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO) * 2,
        "Expected sizeof(ASSEMBLY_INFO) * 2, got %d\n", info.cbAssemblyInfo);
     ok(info.dwAssemblyFlags == 0, "Expected 0, got %08x\n", info.dwAssemblyFlags);
@@ -1197,15 +1173,15 @@ static void test_QueryAssemblyInfo(void)
     INIT_ASM_INFO();
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           wine, &info);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
+    ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
+       "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
     ok(info.uliAssemblySizeInKB.u.HighPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     todo_wine
     {
-        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-        ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
-           "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
         ok(info.uliAssemblySizeInKB.u.LowPart == 4,
            "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
         ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, asmpath),
@@ -1218,15 +1194,15 @@ static void test_QueryAssemblyInfo(void)
     INIT_ASM_INFO();
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE |
                                           QUERYASMINFO_FLAG_VALIDATE,wine, &info);
-    ok(info.uliAssemblySizeInKB.u.HighPart == 0,
-       "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
+    ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
+       "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
+    ok(info.uliAssemblySizeInKB.u.HighPart == 0,
+       "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     todo_wine
     {
-        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-        ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
-           "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
         ok(info.uliAssemblySizeInKB.u.LowPart == 4,
            "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
         ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, asmpath),
@@ -1242,14 +1218,14 @@ static void test_QueryAssemblyInfo(void)
                                           wine, &info);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
+    ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
+       "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
     ok(info.uliAssemblySizeInKB.u.HighPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     todo_wine
     {
         ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER),
            "Expected HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), got %08x\n", hr);
-        ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
-           "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
         ok(info.uliAssemblySizeInKB.u.LowPart == 4,
            "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
         ok(info.cchBuf == lstrlenW(asmpath) + 1,
@@ -1263,6 +1239,8 @@ static void test_QueryAssemblyInfo(void)
                                           wine, &info);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
+    ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
+       "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
     ok(info.uliAssemblySizeInKB.u.HighPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, empty),
@@ -1271,8 +1249,6 @@ static void test_QueryAssemblyInfo(void)
     {
         ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER),
            "Expected HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), got %08x\n", hr);
-        ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
-           "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
         ok(info.uliAssemblySizeInKB.u.LowPart == 4,
            "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
         ok(info.cchBuf == lstrlenW(asmpath) + 1,
@@ -1284,17 +1260,17 @@ static void test_QueryAssemblyInfo(void)
     info.cchBuf = lstrlenW(asmpath) + 1;
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           wine, &info);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
+    ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
+       "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
     ok(info.uliAssemblySizeInKB.u.HighPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     ok(info.cchBuf == lstrlenW(asmpath) + 1,
        "Expected %d, got %d\n", lstrlenW(asmpath) + 1, info.cchBuf);
     todo_wine
     {
-        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-        ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
-           "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
         ok(info.uliAssemblySizeInKB.u.LowPart == 4,
            "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
         ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, asmpath),
@@ -1308,15 +1284,15 @@ static void test_QueryAssemblyInfo(void)
     lstrcatW(name, ver);
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           name, &info);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
+    ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
+       "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
     ok(info.uliAssemblySizeInKB.u.HighPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     todo_wine
     {
-        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-        ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
-           "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
         ok(info.uliAssemblySizeInKB.u.LowPart == 4,
            "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
         ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, asmpath),
@@ -1332,11 +1308,8 @@ static void test_QueryAssemblyInfo(void)
     lstrcatW(name, badver);
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           name, &info);
-    todo_wine
-    {
-        ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
-           "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
-    }
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
+       "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
     ok(info.dwAssemblyFlags == 0, "Expected 0, got %08x\n", info.dwAssemblyFlags);
@@ -1355,15 +1328,15 @@ static void test_QueryAssemblyInfo(void)
     lstrcatW(name, culture);
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           name, &info);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
+    ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
+       "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
     ok(info.uliAssemblySizeInKB.u.HighPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     todo_wine
     {
-        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-        ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
-           "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
         ok(info.uliAssemblySizeInKB.u.LowPart == 4,
            "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
         ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, asmpath),
@@ -1383,10 +1356,10 @@ static void test_QueryAssemblyInfo(void)
     {
         ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
            "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
+        ok(info.dwAssemblyFlags == 0, "Expected 0, got %08x\n", info.dwAssemblyFlags);
     }
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
-    ok(info.dwAssemblyFlags == 0, "Expected 0, got %08x\n", info.dwAssemblyFlags);
     ok(info.uliAssemblySizeInKB.u.HighPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     ok(info.uliAssemblySizeInKB.u.LowPart == 0,
@@ -1402,15 +1375,15 @@ static void test_QueryAssemblyInfo(void)
     lstrcatW(name, pubkey);
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           name, &info);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
+    ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
+       "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
     ok(info.uliAssemblySizeInKB.u.HighPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     todo_wine
     {
-        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-        ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
-           "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
         ok(info.uliAssemblySizeInKB.u.LowPart == 4,
            "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
         ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, asmpath),
@@ -1426,11 +1399,8 @@ static void test_QueryAssemblyInfo(void)
     lstrcatW(name, badpubkey);
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           name, &info);
-    todo_wine
-    {
-        ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
-           "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
-    }
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
+       "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
     ok(info.dwAssemblyFlags == 0, "Expected 0, got %08x\n", info.dwAssemblyFlags);
@@ -1449,17 +1419,17 @@ static void test_QueryAssemblyInfo(void)
     lstrcatW(name, badprop);
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           name, &info);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
+    ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
+       "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
     ok(info.uliAssemblySizeInKB.u.HighPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     todo_wine
     {
-        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
         ok(info.uliAssemblySizeInKB.u.LowPart == 4,
            "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
-        ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
-           "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
         ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, asmpath),
            "Wrong assembly path returned\n");
         ok(info.cchBuf == lstrlenW(asmpath) + 1,

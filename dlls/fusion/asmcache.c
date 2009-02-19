@@ -160,10 +160,48 @@ static HRESULT WINAPI IAssemblyCacheImpl_QueryAssemblyInfo(IAssemblyCache *iface
                                                            LPCWSTR pszAssemblyName,
                                                            ASSEMBLY_INFO *pAsmInfo)
 {
-    FIXME("(%p, %d, %s, %p) stub!\n", iface, dwFlags,
+    IAssemblyName *asmname, *next = NULL;
+    IAssemblyEnum *asmenum = NULL;
+    HRESULT hr;
+
+    TRACE("(%p, %d, %s, %p)\n", iface, dwFlags,
           debugstr_w(pszAssemblyName), pAsmInfo);
 
-    return E_NOTIMPL;
+    if (pAsmInfo)
+    {
+        if (pAsmInfo->cbAssemblyInfo == 0)
+            pAsmInfo->cbAssemblyInfo = sizeof(ASSEMBLY_INFO);
+        else if (pAsmInfo->cbAssemblyInfo != sizeof(ASSEMBLY_INFO))
+            return E_INVALIDARG;
+    }
+
+    hr = CreateAssemblyNameObject(&asmname, pszAssemblyName,
+                                  CANOF_PARSE_DISPLAY_NAME, NULL);
+    if (FAILED(hr))
+        return hr;
+
+    hr = CreateAssemblyEnum(&asmenum, NULL, asmname, ASM_CACHE_GAC, NULL);
+    if (FAILED(hr))
+        goto done;
+
+    hr = IAssemblyEnum_GetNextAssembly(asmenum, NULL, &next, 0);
+    if (hr == S_FALSE)
+    {
+        hr = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+        goto done;
+    }
+
+    if (!pAsmInfo)
+        goto done;
+
+    pAsmInfo->dwAssemblyFlags = ASSEMBLYINFO_FLAG_INSTALLED;
+
+done:
+    IAssemblyName_Release(asmname);
+    if (next) IAssemblyName_Release(next);
+    if (asmenum) IAssemblyEnum_Release(asmenum);
+
+    return hr;
 }
 
 static HRESULT WINAPI IAssemblyCacheImpl_CreateAssemblyCacheItem(IAssemblyCache *iface,
