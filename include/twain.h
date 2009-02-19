@@ -62,11 +62,6 @@
 
 #undef FAR
 #define FAR
-#define huge
-#define WIN32
-#define _WIN32
-#undef __declspec
-#define __declspec(spec)
 
 /****************************************************************************
  * TWAIN Version                                                            *
@@ -86,16 +81,8 @@
 #ifdef  _MSWIN_
     typedef HANDLE         TW_HANDLE;
     typedef LPVOID         TW_MEMREF;
-
-    /*  SDH - 05/05/95 - TWUNK */
-    /*  For common code between 16 and 32 bits.  */
-# ifdef  WIN32
-#  define TW_HUGE
-# else   /* WIN32 */
-#  define TW_HUGE    huge
-# endif  /* WIN32 */
-    typedef BYTE TW_HUGE * HPBYTE;
-    typedef void TW_HUGE * HPVOID;
+    typedef BYTE         * HPBYTE;
+    typedef void         * HPVOID;
 #endif  /* _MSWIN_ */
 
 #ifdef  _MAC_
@@ -1830,19 +1817,11 @@ typedef TW_UINT16 (*DSMENTRYPROC)(pTW_IDENTITY, pTW_IDENTITY,
 extern "C" {
 #endif  /* __cplusplus */
 #ifdef  _MSWIN_
-# ifdef _WIN32
-     __declspec(dllexport) TW_UINT16 FAR PASCAL DS_Entry (pTW_IDENTITY pOrigin,
-                                                          TW_UINT32    DG,
-                                                          TW_UINT16    DAT,
-                                                          TW_UINT16    MSG,
-                                                          TW_MEMREF    pData);
-# else   /* _WIN32 */
-     TW_UINT16 FAR PASCAL DS_Entry (pTW_IDENTITY pOrigin,
-                                    TW_UINT32    DG,
-                                    TW_UINT16    DAT,
-                                    TW_UINT16    MSG,
-                                    TW_MEMREF    pData);
-# endif  /* _WIN32 */
+  TW_UINT16 DECLSPEC_EXPORT PASCAL DS_Entry (pTW_IDENTITY pOrigin,
+                                             TW_UINT32    DG,
+                                             TW_UINT16    DAT,
+                                             TW_UINT16    MSG,
+                                             TW_MEMREF    pData);
 
   typedef TW_UINT16 (FAR PASCAL *DSENTRYPROC) (pTW_IDENTITY pOrigin,
                                                TW_UINT32    DG,
