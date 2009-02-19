@@ -793,45 +793,27 @@ HRESULT assembly_get_path(ASSEMBLY *assembly, LPSTR *path)
 
 HRESULT assembly_get_version(ASSEMBLY *assembly, LPSTR *version)
 {
-    LPSTR verdata;
-    VS_FIXEDFILEINFO *ffi;
-    HRESULT hr = S_OK;
-    DWORD size;
+    ASSEMBLYTABLE *asmtbl;
+    LONG offset;
 
-    size = GetFileVersionInfoSizeA(assembly->path, NULL);
-    if (!size)
-        return HRESULT_FROM_WIN32(GetLastError());
+    *version = NULL;
 
-    verdata = HeapAlloc(GetProcessHeap(), 0, size);
-    if (!verdata)
+    offset = assembly->tables[TableFromToken(mdtAssembly)].offset;
+    if (offset == -1)
+        return E_FAIL;
+
+    asmtbl = assembly_data_offset(assembly, offset);
+    if (!asmtbl)
+        return E_FAIL;
+
+    *version = HeapAlloc(GetProcessHeap(), 0, sizeof("%u.%u.%u.%u") + 4 * strlen("65535"));
+    if (!*version)
         return E_OUTOFMEMORY;
 
-    if (!GetFileVersionInfoA(assembly->path, 0, size, verdata))
-    {
-        hr = HRESULT_FROM_WIN32(GetLastError());
-        goto done;
-    }
+    sprintf(*version, "%u.%u.%u.%u", asmtbl->MajorVersion, asmtbl->MinorVersion,
+            asmtbl->BuildNumber, asmtbl->RevisionNumber);
 
-    if (!VerQueryValueA(verdata, "\\", (LPVOID *)&ffi, &size))
-    {
-        hr = HRESULT_FROM_WIN32(GetLastError());
-        goto done;
-    }
-
-    *version = HeapAlloc(GetProcessHeap(), 0, MAX_PATH);
-    if (!*version)
-    {
-        hr = E_OUTOFMEMORY;
-        goto done;
-    }
-
-    sprintf(*version, "%d.%d.%d.%d", HIWORD(ffi->dwFileVersionMS),
-            LOWORD(ffi->dwFileVersionMS), HIWORD(ffi->dwFileVersionLS),
-            LOWORD(ffi->dwFileVersionLS));
-
-done:
-    HeapFree(GetProcessHeap(), 0, verdata);
-    return hr;
+    return S_OK;
 }
 
 HRESULT assembly_get_architecture(ASSEMBLY *assembly, DWORD fixme)
