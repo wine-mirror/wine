@@ -622,6 +622,8 @@ typedef struct IDirect3DPixelShader8Impl {
  *
  * to see how not defined it here
  */
+D3DFORMAT d3dformat_from_wined3dformat(WINED3DFORMAT format);
+WINED3DFORMAT wined3dformat_from_d3dformat(D3DFORMAT format);
 void load_local_constants(const DWORD *d3d8_elements, IWineD3DVertexShader *wined3d_vertex_shader);
 UINT convert_to_wined3d_declaration(const DWORD *d3d8_elements, DWORD *d3d8_elements_size, WINED3DVERTEXELEMENT **wined3d_elements);
 size_t parse_token(const DWORD* pToken);
