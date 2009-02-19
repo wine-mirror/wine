@@ -258,29 +258,31 @@ int winetest_vok( int condition, const char *msg, va_list args )
     {
         if (condition)
         {
-            fprintf( stdout, "%s:%d: Test succeeded inside todo block",
+            fprintf( stdout, "%s:%d: Test succeeded inside todo block: ",
                      data->current_file, data->current_line );
-            if (msg[0])
-            {
-                fprintf(stdout,": ");
-                vfprintf(stdout, msg, args);
-            }
+            vfprintf(stdout, msg, args);
             InterlockedIncrement(&todo_failures);
             return 0;
         }
-        else InterlockedIncrement(&todo_successes);
+        else
+        {
+            if (winetest_debug > 0)
+            {
+                fprintf( stdout, "%s:%d: Test marked todo: ",
+                         data->current_file, data->current_line );
+                vfprintf(stdout, msg, args);
+            }
+            InterlockedIncrement(&todo_successes);
+            return 1;
+        }
     }
     else
     {
         if (!condition)
         {
-            fprintf( stdout, "%s:%d: Test failed",
+            fprintf( stdout, "%s:%d: Test failed: ",
                      data->current_file, data->current_line );
-            if (msg[0])
-            {
-                fprintf( stdout,": ");
-                vfprintf(stdout, msg, args);
-            }
+            vfprintf(stdout, msg, args);
             InterlockedIncrement(&failures);
             return 0;
         }
@@ -290,9 +292,9 @@ int winetest_vok( int condition, const char *msg, va_list args )
                 fprintf( stdout, "%s:%d: Test succeeded\n",
                          data->current_file, data->current_line);
             InterlockedIncrement(&successes);
+            return 1;
         }
     }
-    return 1;
 }
 
 int winetest_ok( int condition, const char *msg, ... )
