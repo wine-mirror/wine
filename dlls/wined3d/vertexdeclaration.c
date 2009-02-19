@@ -142,6 +142,10 @@ static BOOL declaration_element_valid_ffp(const WINED3DVERTEXELEMENT *element)
         case WINED3DDECLUSAGE_BLENDWEIGHT:
             switch(element->Type)
             {
+                case WINED3DDECLTYPE_FLOAT1:
+                case WINED3DDECLTYPE_FLOAT2:
+                case WINED3DDECLTYPE_FLOAT3:
+                case WINED3DDECLTYPE_FLOAT4:
                 case WINED3DDECLTYPE_D3DCOLOR:
                 case WINED3DDECLTYPE_UBYTE4:
                 case WINED3DDECLTYPE_SHORT2:
