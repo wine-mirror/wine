@@ -38,6 +38,9 @@
 const char *debug_d3d10_primitive_topology(D3D10_PRIMITIVE_TOPOLOGY topology);
 const char *debug_dxgi_format(DXGI_FORMAT format);
 
+DXGI_FORMAT dxgi_format_from_wined3dformat(WINED3DFORMAT format);
+WINED3DFORMAT wined3dformat_from_dxgi_format(DXGI_FORMAT format);
+
 /* IDirect3D10Device */
 extern const struct ID3D10DeviceVtbl d3d10_device_vtbl;
 extern const struct IUnknownVtbl d3d10_device_inner_unknown_vtbl;

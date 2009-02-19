@@ -632,10 +632,11 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture2D(ID3D10Device *ifac
         wined3d_device = IWineDXGIDevice_get_wined3d_device(wine_device);
         IWineDXGIDevice_Release(wine_device);
 
-        FIXME("Implement DXGI<->wined3d format and usage conversion\n");
+        FIXME("Implement DXGI<->wined3d usage conversion\n");
 
-        hr = IWineD3DDevice_CreateSurface(wined3d_device, desc->Width, desc->Height, desc->Format, FALSE,
-                FALSE, 0, &object->wined3d_surface, WINED3DRTYPE_SURFACE, desc->Usage, WINED3DPOOL_DEFAULT,
+        hr = IWineD3DDevice_CreateSurface(wined3d_device, desc->Width, desc->Height,
+                wined3dformat_from_dxgi_format(desc->Format), FALSE, FALSE, 0,
+                &object->wined3d_surface, WINED3DRTYPE_SURFACE, desc->Usage, WINED3DPOOL_DEFAULT,
                 desc->SampleDesc.Count, desc->SampleDesc.Quality, NULL, SURFACE_OPENGL, (IUnknown *)object);
         IWineD3DDevice_Release(wined3d_device);
         if (FAILED(hr))
@@ -1156,13 +1157,13 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
             "\tpool %#x, level %u, face %u, surface %p partial stub!\n",
             iface, superior, width, height, format, usage, pool, level, face, surface);
 
-    FIXME("Implement DXGI<->wined3d format and usage conversion\n");
+    FIXME("Implement DXGI<->wined3d usage conversion\n");
 
     desc.Width = width;
     desc.Height = height;
     desc.MipLevels = 1;
     desc.ArraySize = 1;
-    desc.Format = format;
+    desc.Format = dxgi_format_from_wined3dformat(format);
     desc.SampleDesc.Count = 1;
     desc.SampleDesc.Quality = 0;
     desc.Usage = usage;
@@ -1195,13 +1196,13 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
             "\tmultisample_quality %u, lockable %u, surface %p stub!\n",
             iface, superior, width, height, format, multisample_type, multisample_quality, lockable, surface);
 
-    FIXME("Implement DXGI<->wined3d format and usage conversion\n");
+    FIXME("Implement DXGI<->wined3d usage conversion\n");
 
     desc.Width = width;
     desc.Height = height;
     desc.MipLevels = 1;
     desc.ArraySize = 1;
-    desc.Format = format;
+    desc.Format = dxgi_format_from_wined3dformat(format);
     desc.SampleDesc.Count = multisample_type;
     desc.SampleDesc.Quality = multisample_quality;
     desc.Usage = D3D10_USAGE_DEFAULT;
@@ -1234,13 +1235,13 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
             "\tmultisample_quality %u, discard %u, surface %p stub!\n",
             iface, superior, width, height, format, multisample_type, multisample_quality, discard, surface);
 
-    FIXME("Implement DXGI<->wined3d format and usage conversion\n");
+    FIXME("Implement DXGI<->wined3d usage conversion\n");
 
     desc.Width = width;
     desc.Height = height;
     desc.MipLevels = 1;
     desc.ArraySize = 1;
-    desc.Format = format;
+    desc.Format = dxgi_format_from_wined3dformat(format);
     desc.SampleDesc.Count = multisample_type;
     desc.SampleDesc.Quality = multisample_quality;
     desc.Usage = D3D10_USAGE_DEFAULT;
