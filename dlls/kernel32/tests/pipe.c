@@ -541,7 +541,7 @@ static DWORD CALLBACK serverThreadMain3(LPVOID arg)
         OVERLAPPED oOverlap;
         int letWFSOEwait = (i & 2);
         int letGORwait = (i & 1);
-	DWORD err;
+        DWORD err;
 
         memset(&oOverlap, 0, sizeof(oOverlap));
         oOverlap.hEvent = hEvent;
@@ -550,51 +550,74 @@ static DWORD CALLBACK serverThreadMain3(LPVOID arg)
         trace("Server calling overlapped ConnectNamedPipe...\n");
         success = ConnectNamedPipe(hnp, &oOverlap);
         err = GetLastError();
-        ok(success || err == ERROR_IO_PENDING
-            || err == ERROR_PIPE_CONNECTED, "overlapped ConnectNamedPipe\n");
+        ok(!success && (err == ERROR_IO_PENDING || err == ERROR_PIPE_CONNECTED), "overlapped ConnectNamedPipe\n");
         trace("overlapped ConnectNamedPipe returned.\n");
-        if (!success && (err == ERROR_IO_PENDING) && letWFSOEwait)
-            ok(WaitForSingleObjectEx(hEvent, INFINITE, TRUE) == 0, "wait ConnectNamedPipe\n");
-        success = GetOverlappedResult(hnp, &oOverlap, &dummy, letGORwait);
-	if (!letGORwait && !letWFSOEwait && !success) {
-	    ok(GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult\n");
-	    success = GetOverlappedResult(hnp, &oOverlap, &dummy, TRUE);
-	}
-	ok(success, "GetOverlappedResult ConnectNamedPipe\n");
+        if (!success && (err == ERROR_IO_PENDING)) {
+            if (letWFSOEwait)
+            {
+                DWORD ret;
+                do {
+                    ret = WaitForSingleObjectEx(hEvent, INFINITE, TRUE);
+                } while (ret == WAIT_IO_COMPLETION);
+                ok(ret == 0, "wait ConnectNamedPipe returned %x\n", ret);
+            }
+            success = GetOverlappedResult(hnp, &oOverlap, &dummy, letGORwait);
+            if (!letGORwait && !letWFSOEwait && !success) {
+                ok(GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult\n");
+                success = GetOverlappedResult(hnp, &oOverlap, &dummy, TRUE);
+            }
+        }
+        ok(success || (err == ERROR_PIPE_CONNECTED), "GetOverlappedResult ConnectNamedPipe\n");
         trace("overlapped ConnectNamedPipe operation complete.\n");
 
         /* Echo bytes once */
         memset(buf, 0, sizeof(buf));
 
         trace("Server reading...\n");
-        success = ReadFile(hnp, buf, sizeof(buf), NULL, &oOverlap);
+        success = ReadFile(hnp, buf, sizeof(buf), &readden, &oOverlap);
         trace("Server ReadFile returned...\n");
         err = GetLastError();
         ok(success || err == ERROR_IO_PENDING, "overlapped ReadFile\n");
         trace("overlapped ReadFile returned.\n");
-        if (!success && (err == ERROR_IO_PENDING) && letWFSOEwait)
-            ok(WaitForSingleObjectEx(hEvent, INFINITE, TRUE) == 0, "wait ReadFile\n");
-        success = GetOverlappedResult(hnp, &oOverlap, &readden, letGORwait);
-	if (!letGORwait && !letWFSOEwait && !success) {
-	    ok(GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult\n");
-	    success = GetOverlappedResult(hnp, &oOverlap, &readden, TRUE);
-	}
+        if (!success && (err == ERROR_IO_PENDING)) {
+            if (letWFSOEwait)
+            {
+                DWORD ret;
+                do {
+                    ret = WaitForSingleObjectEx(hEvent, INFINITE, TRUE);
+                } while (ret == WAIT_IO_COMPLETION);
+                ok(ret == 0, "wait ReadFile returned %x\n", ret);
+            }
+            success = GetOverlappedResult(hnp, &oOverlap, &readden, letGORwait);
+            if (!letGORwait && !letWFSOEwait && !success) {
+                ok(GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult\n");
+                success = GetOverlappedResult(hnp, &oOverlap, &readden, TRUE);
+            }
+        }
         trace("Server done reading.\n");
         ok(success, "overlapped ReadFile\n");
 
         trace("Server writing...\n");
-        success = WriteFile(hnp, buf, readden, NULL, &oOverlap);
+        success = WriteFile(hnp, buf, readden, &written, &oOverlap);
         trace("Server WriteFile returned...\n");
         err = GetLastError();
         ok(success || err == ERROR_IO_PENDING, "overlapped WriteFile\n");
         trace("overlapped WriteFile returned.\n");
-        if (!success && (err == ERROR_IO_PENDING) && letWFSOEwait)
-            ok(WaitForSingleObjectEx(hEvent, INFINITE, TRUE) == 0, "wait WriteFile\n");
-        success = GetOverlappedResult(hnp, &oOverlap, &written, letGORwait);
-	if (!letGORwait && !letWFSOEwait && !success) {
-	    ok(GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult\n");
-	    success = GetOverlappedResult(hnp, &oOverlap, &written, TRUE);
-	}
+        if (!success && (err == ERROR_IO_PENDING)) {
+            if (letWFSOEwait)
+            {
+                DWORD ret;
+                do {
+                    ret = WaitForSingleObjectEx(hEvent, INFINITE, TRUE);
+                } while (ret == WAIT_IO_COMPLETION);
+                ok(ret == 0, "wait WriteFile returned %x\n", ret);
+            }
+            success = GetOverlappedResult(hnp, &oOverlap, &written, letGORwait);
+            if (!letGORwait && !letWFSOEwait && !success) {
+                ok(GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult\n");
+                success = GetOverlappedResult(hnp, &oOverlap, &written, TRUE);
+            }
+        }
         trace("Server done writing.\n");
         ok(success, "overlapped WriteFile\n");
         ok(written == readden, "write file len\n");
@@ -683,13 +706,10 @@ static void test_NamedPipe_2(void)
     ok(serverThread != INVALID_HANDLE_VALUE, "CreateThread\n");
     exercizeServer(PIPENAME "serverThreadMain2", serverThread);
 
-    if( 0 ) /* overlapped pipe server doesn't work yet - it randomly fails */
-    {
     /* Try server #3 */
     serverThread = CreateThread(NULL, 0, serverThreadMain3, 0, 0, &serverThreadId);
     ok(serverThread != INVALID_HANDLE_VALUE, "CreateThread\n");
     exercizeServer(PIPENAME "serverThreadMain3", serverThread);
-    }
 
     ok(SetEvent( alarm_event ), "SetEvent\n");
     CloseHandle( alarm_event );
