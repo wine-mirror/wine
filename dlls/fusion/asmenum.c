@@ -162,17 +162,19 @@ static const IAssemblyEnumVtbl AssemblyEnumVtbl = {
 static void parse_name(IAssemblyName *name, int depth, LPWSTR path, LPWSTR buf)
 {
     WCHAR disp[MAX_PATH];
-    LPWSTR ptr, end;
     LPCWSTR verptr, pubkeyptr;
     HRESULT hr;
-    DWORD size;
+    DWORD size, major_size, minor_size, build_size, revision_size;
+    WORD major, minor, build, revision;
 
     static const WCHAR star[] = {'*',0};
     static const WCHAR ss_fmt[] = {'%','s','\\','%','s',0};
     static const WCHAR verpubkey[] = {'%','s','\\','%','s','_','_','%','s',0};
-    static const WCHAR version[] = {'V','e','r','s','i','o','n','=',0};
-    static const WCHAR pubkeytok[] = {
-        'P','u','b','l','i','c','K','e','y','T','o','k','e','n','=',0};
+    static const WCHAR ver_fmt[] = {'%','u','.','%','u','.','%','u','.','%','u',0};
+
+    WCHAR version[24]; /* strlen("65535") * 4 + 3 + 1 */
+    WCHAR token_str[TOKEN_LENGTH + 1];
+    BYTE token[BYTES_PER_TOKEN];
 
     if (depth == 0)
     {
@@ -186,36 +188,33 @@ static void parse_name(IAssemblyName *name, int depth, LPWSTR path, LPWSTR buf)
     }
     else if (depth == 1)
     {
-        size = MAX_PATH;
-        hr = IAssemblyName_GetDisplayName(name, disp, &size, 0);
-        if (FAILED(hr))
-        {
-            sprintfW(buf, verpubkey, path, star, star);
-            return;
-        }
+        major_size = sizeof(major);
+        IAssemblyName_GetProperty(name, ASM_NAME_MAJOR_VERSION, &major, &major_size);
 
-        ptr = disp;
-        verptr = strstrW(ptr, version);
-        if (!verptr)
-            verptr = star;
+        minor_size = sizeof(minor);
+        IAssemblyName_GetProperty(name, ASM_NAME_MINOR_VERSION, &minor, &minor_size);
+
+        build_size = sizeof(build);
+        IAssemblyName_GetProperty(name, ASM_NAME_BUILD_NUMBER, &build, &build_size);
+
+        revision_size = sizeof(revision);
+        IAssemblyName_GetProperty(name, ASM_NAME_REVISION_NUMBER, &revision, &revision_size);
+
+        if (!major_size || !minor_size || !build_size || !revision_size) verptr = star;
         else
         {
-            verptr = strchrW(verptr, '=') + 1;
-            if ((end = strchrW(verptr, ',')))
-            {
-                *end = '\0';
-                ptr = end + 1;
-            }
+            sprintfW(version, ver_fmt, major, minor, build, revision);
+            verptr = version;
         }
 
-        pubkeyptr = strstrW(ptr, pubkeytok);
-        if (!pubkeyptr)
-            pubkeyptr = star;
+        size = sizeof(token);
+        IAssemblyName_GetProperty(name, ASM_NAME_PUBLIC_KEY_TOKEN, token, &size);
+
+        if (!size) pubkeyptr = star;
         else
         {
-            pubkeyptr = strchrW(pubkeyptr, '=') + 1;
-            if ((end = strchrW(pubkeyptr, ',')))
-                *end = '\0';
+            token_to_str(token, token_str);
+            pubkeyptr = token_str;
         }
 
         sprintfW(buf, verpubkey, path, verptr, pubkeyptr);

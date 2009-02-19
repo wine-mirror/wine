@@ -989,6 +989,8 @@ static void test_QueryAssemblyInfo(void)
     static const WCHAR wine[] = {'w','i','n','e',0};
     static const WCHAR ver[] = {
         'V','e','r','s','i','o','n','=','1','.','0','.','0','.','0',0};
+    static const WCHAR otherver[] = {
+        'V','e','r','s','i','o','n','=','1','.','0','.','0','.','0','0','0','0','0',0};
     static const WCHAR badver[] = {
         'V','e','r','s','i','o','n','=','1','.','0','.','0','.','1',0};
     static const WCHAR culture[] = {
@@ -1284,6 +1286,30 @@ static void test_QueryAssemblyInfo(void)
     lstrcpyW(name, wine);
     lstrcatW(name, commasep);
     lstrcatW(name, ver);
+    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
+                                          name, &info);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
+       "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
+    ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
+       "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
+    ok(info.uliAssemblySizeInKB.u.HighPart == 0,
+       "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
+    todo_wine
+    {
+        ok(info.uliAssemblySizeInKB.u.LowPart == 4,
+           "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
+        ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, asmpath),
+           "Wrong assembly path returned\n");
+        ok(info.cchBuf == lstrlenW(asmpath) + 1,
+           "Expected %d, got %d\n", lstrlenW(asmpath) + 1, info.cchBuf);
+    }
+
+    /* display name is "wine, Version=1.0.0.00000" */
+    INIT_ASM_INFO();
+    lstrcpyW(name, wine);
+    lstrcatW(name, commasep);
+    lstrcatW(name, otherver);
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           name, &info);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
