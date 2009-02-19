@@ -887,6 +887,8 @@ static void test_InstallAssembly(void)
     HRESULT hr;
     ULONG disp;
     DWORD attr;
+    char dllpath[MAX_PATH];
+    UINT size;
 
     static const WCHAR empty[] = {0};
     static const WCHAR noext[] = {'f','i','l','e',0};
@@ -940,8 +942,10 @@ static void test_InstallAssembly(void)
     hr = IAssemblyCache_InstallAssembly(cache, 0, winedll, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    attr = GetFileAttributes("C:\\windows\\assembly\\GAC_MSIL\\wine\\"
-                             "1.0.0.0__2d03617b1c31e2f5/wine.dll");
+    size = GetWindowsDirectoryA(dllpath, MAX_PATH);
+    strcat(dllpath, "\\assembly\\GAC_MSIL\\wine\\\\1.0.0.0__2d03617b1c31e2f5\\wine.dll");
+
+    attr = GetFileAttributes(dllpath);
     ok(attr != INVALID_FILE_ATTRIBUTES, "Expected assembly to exist\n");
 
     /* uninstall the assembly from the GAC */
@@ -955,10 +959,11 @@ static void test_InstallAssembly(void)
     }
 
     /* FIXME: remove once UninstallAssembly is implemented */
-    DeleteFileA("C:\\windows\\assembly\\GAC_MSIL\\wine\\"
-                "1.0.0.0__2d03617b1c31e2f5\\wine.dll");
-    RemoveDirectoryA("C:\\windows\\assembly\\GAC_MSIL\\wine\\1.0.0.0__2d03617b1c31e2f5");
-    RemoveDirectoryA("C:\\windows\\assembly\\GAC_MSIL\\wine");
+    DeleteFileA(dllpath);
+    dllpath[size + sizeof("\\assembly\\GAC_MSIL\\wine\\1.0.0.0__2d03617b1c31e2f5")] = '\0';
+    RemoveDirectoryA(dllpath);
+    dllpath[size + sizeof("\\assembly\\GAC_MSIL\\wine")] = '\0';
+    RemoveDirectoryA(dllpath);
 
     DeleteFileA("test.dll");
     DeleteFileA("wine.dll");
