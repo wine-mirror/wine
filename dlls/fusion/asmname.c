@@ -44,7 +44,7 @@ typedef struct {
     LPWSTR name;
     LPWSTR culture;
 
-    BYTE version[4];
+    WORD version[4];
     DWORD versize;
 
     BYTE pubkey[8];
@@ -144,28 +144,28 @@ static HRESULT WINAPI IAssemblyNameImpl_GetProperty(IAssemblyName *iface,
 
         case ASM_NAME_MAJOR_VERSION:
             *pcbProperty = 0;
-            *((LPDWORD)pvProperty) = name->version[0];
+            *((WORD *)pvProperty) = name->version[0];
             if (name->versize >= 1)
                 *pcbProperty = sizeof(WORD);
             break;
 
         case ASM_NAME_MINOR_VERSION:
             *pcbProperty = 0;
-            *((LPDWORD)pvProperty) = name->version[1];
+            *((WORD *)pvProperty) = name->version[1];
             if (name->versize >= 2)
                 *pcbProperty = sizeof(WORD);
             break;
 
         case ASM_NAME_BUILD_NUMBER:
             *pcbProperty = 0;
-            *((LPDWORD)pvProperty) = name->version[2];
+            *((WORD *)pvProperty) = name->version[2];
             if (name->versize >= 3)
                 *pcbProperty = sizeof(WORD);
             break;
 
         case ASM_NAME_REVISION_NUMBER:
             *pcbProperty = 0;
-            *((LPDWORD)pvProperty) = name->version[3];
+            *((WORD *)pvProperty) = name->version[3];
             if (name->versize >= 4)
                 *pcbProperty = sizeof(WORD);
             break;
