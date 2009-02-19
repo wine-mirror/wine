@@ -41,24 +41,24 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(fusion);
 
-static BOOL create_full_path(LPCSTR path)
+static BOOL create_full_path(LPCWSTR path)
 {
-    LPSTR new_path;
+    LPWSTR new_path;
     BOOL ret = TRUE;
     int len;
 
-    new_path = HeapAlloc(GetProcessHeap(), 0, lstrlenA(path) + 1);
+    new_path = HeapAlloc(GetProcessHeap(), 0, (strlenW(path) + 1) * sizeof(WCHAR));
     if (!new_path)
         return FALSE;
 
-    lstrcpyA(new_path, path);
+    strcpyW(new_path, path);
 
-    while ((len = lstrlenA(new_path)) && new_path[len - 1] == '\\')
+    while ((len = strlenW(new_path)) && new_path[len - 1] == '\\')
         new_path[len - 1] = 0;
 
-    while (!CreateDirectoryA(new_path, NULL))
+    while (!CreateDirectoryW(new_path, NULL))
     {
-        LPSTR slash;
+        LPWSTR slash;
         DWORD last_error = GetLastError();
 
         if(last_error == ERROR_ALREADY_EXISTS)
@@ -70,7 +70,7 @@ static BOOL create_full_path(LPCSTR path)
             break;
         }
 
-        if(!(slash = strrchr(new_path, '\\')))
+        if(!(slash = strrchrW(new_path, '\\')))
         {
             ret = FALSE;
             break;
@@ -89,6 +89,18 @@ static BOOL create_full_path(LPCSTR path)
 
     HeapFree(GetProcessHeap(), 0, new_path);
     return ret;
+}
+
+static BOOL get_assembly_directory(LPWSTR dir, DWORD size)
+{
+    static const WCHAR gac[] =
+        {'\\','a','s','s','e','m','b','l','y','\\','G','A','C','_','M','S','I','L',0};
+
+    FIXME("Ignoring assembly architecture\n");
+
+    GetWindowsDirectoryW(dir, size);
+    strcatW(dir, gac);
+    return TRUE;
 }
 
 /* IAssemblyCache */
@@ -228,14 +240,17 @@ static HRESULT WINAPI IAssemblyCacheImpl_InstallAssembly(IAssemblyCache *iface,
                                                          LPCWSTR pszManifestFilePath,
                                                          LPCFUSION_INSTALL_REFERENCE pRefData)
 {
+    static const WCHAR format[] =
+        {'%','s','\\','%','s','\\','%','s','_','_','%','s','\\',0};
+
     ASSEMBLY *assembly;
-    LPSTR filename;
-    LPSTR name = NULL;
-    LPSTR token = NULL;
-    LPSTR version = NULL;
-    LPSTR asmpath = NULL;
-    CHAR path[MAX_PATH];
-    CHAR windir[MAX_PATH];
+    LPWSTR filename;
+    LPWSTR name = NULL;
+    LPWSTR token = NULL;
+    LPWSTR version = NULL;
+    LPWSTR asmpath = NULL;
+    WCHAR path[MAX_PATH];
+    WCHAR asmdir[MAX_PATH];
     LPWSTR ext;
     HRESULT hr;
 
@@ -276,12 +291,9 @@ static HRESULT WINAPI IAssemblyCacheImpl_InstallAssembly(IAssemblyCache *iface,
     if (FAILED(hr))
         goto done;
 
-    GetWindowsDirectoryA(windir, MAX_PATH);
+    get_assembly_directory(asmdir, MAX_PATH);
 
-    FIXME("Ignoring assembly architecture!\n");
-
-    sprintf(path, "%s\\assembly\\GAC_MSIL\\%s\\%s__%s\\", windir, name,
-            version, token);
+    sprintfW(path, format, asmdir, name, version, token);
 
     create_full_path(path);
 
@@ -289,10 +301,10 @@ static HRESULT WINAPI IAssemblyCacheImpl_InstallAssembly(IAssemblyCache *iface,
     if (FAILED(hr))
         goto done;
 
-    filename = PathFindFileNameA(asmpath);
+    filename = PathFindFileNameW(asmpath);
 
-    lstrcatA(path, filename);
-    if (!CopyFileA(asmpath, path, FALSE))
+    strcatW(path, filename);
+    if (!CopyFileW(asmpath, path, FALSE))
         hr = HRESULT_FROM_WIN32(GetLastError());
 
 done:
