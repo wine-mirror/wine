@@ -5974,7 +5974,6 @@ static BOOL check_assembly_installed(MSIDATABASE *db, IAssemblyCache *cache,
     found = (asminfo.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED);
 
 done:
-    msiobj_release(&view->hdr);
     msi_free(disp);
     msi_free(name.name);
     msi_free(name.version);
