@@ -2975,6 +2975,8 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
     const struct arbfp_ffp_desc *desc;
     unsigned int i;
 
+    TRACE("state %#x, stateblock %p, context %p\n", state, stateblock, context);
+
     if(isStateDirty(context, STATE_RENDER(WINED3DRS_FOGENABLE))) {
         if(!use_pshader && device->shader_backend == &arb_program_shader_backend && context->last_was_pshader) {
             /* Reload fixed function constants since they collide with the pixel shader constants */
@@ -3060,6 +3062,8 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
  */
 static void state_arbfp_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     enum fogsource new_source;
+
+    TRACE("state %#x, stateblock %p, context %p\n", state, stateblock, context);
 
     if(!isStateDirty(context, STATE_PIXELSHADER)) {
         fragment_prog_arbfp(state, stateblock, context);

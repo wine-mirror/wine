@@ -469,6 +469,8 @@ static void state_alpha(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     float ref;
     BOOL enable_ckey = FALSE;
 
+    TRACE("state %#x, stateblock %p, context %p\n", state, stateblock, context);
+
     /* Find out if the texture on the first stage has a ckey set
      * The alpha state func reads the texture settings, even though alpha and texture are not grouped
      * together. This is to avoid making a huge alpha+texture+texture stage+ckey block due to the hardly
@@ -897,6 +899,9 @@ static void state_stencilwrite(DWORD state, IWineD3DStateBlockImpl *stateblock, 
 }
 
 static void state_fog_vertexpart(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+
+    TRACE("state %#x, stateblock %p, context %p\n", state, stateblock, context);
+
     if (!stateblock->renderState[WINED3DRS_FOGENABLE]) return;
 
     /* Table fog on: Never use fog coords, and use per-fragment fog */
@@ -980,6 +985,8 @@ void state_fogstartend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DC
 
 void state_fog_fragpart(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     enum fogsource new_source;
+
+    TRACE("state %#x, stateblock %p, context %p\n", state, stateblock, context);
 
     if (!stateblock->renderState[WINED3DRS_FOGENABLE]) {
         /* No fog? Disable it, and we're done :-) */
@@ -3284,6 +3291,8 @@ static void sampler_texmatrix(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     BOOL texIsPow2 = FALSE;
     DWORD sampler = state - STATE_SAMPLER(0);
     IWineD3DBaseTexture *texture = stateblock->textures[sampler];
+
+    TRACE("state %#x, stateblock %p, context %p\n", state, stateblock, context);
 
     if(!texture) return;
     /* The fixed function np2 texture emulation uses the texture matrix to fix up the coordinates
