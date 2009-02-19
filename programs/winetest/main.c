@@ -28,9 +28,11 @@
 #include "config.h"
 #include "wine/port.h"
 
+#define COBJMACROS
 #include <stdio.h>
 #include <assert.h>
 #include <windows.h>
+#include <mshtml.h>
 
 #include "winetest.h"
 #include "resource.h"
@@ -147,6 +149,34 @@ static int running_on_visible_desktop (void)
         return (uoflags.dwFlags & WSF_VISIBLE) != 0;
     }
     return IsWindowVisible(desktop);
+}
+
+/* check if Gecko is present, trying to trigger the install if not */
+static BOOL gecko_check(void)
+{
+    HMODULE mshtml;
+    HRESULT (WINAPI *pDllGetClassObject)(REFCLSID rclsid, REFIID riid, LPVOID *ppv);
+    IClassFactory *factory = NULL;
+    IHTMLDocument2 *doc = NULL;
+    IHTMLElement *body;
+    BOOL ret = FALSE;
+
+    if (!(mshtml = LoadLibraryA( "mshtml.dll" ))) return FALSE;
+    if (!(pDllGetClassObject = (void *)GetProcAddress( mshtml, "DllGetClassObject" )))
+        goto done;
+    if (FAILED(pDllGetClassObject( &CLSID_HTMLDocument, &IID_IClassFactory, (void **)&factory )))
+        goto done;
+    if (FAILED(IClassFactory_CreateInstance( factory, NULL, &IID_IHTMLDocument2, (void **)&doc )))
+        goto done;
+    if (FAILED(IHTMLDocument2_get_body( doc, &body )))
+        goto done;
+    IHTMLElement_Release( body );
+    ret = TRUE;
+done:
+    if (doc) IHTMLDocument_Release( doc );
+    if (factory) IClassFactory_Release( factory );
+    FreeLibrary( mshtml );
+    return ret;
 }
 
 static void print_version (void)
@@ -518,6 +548,12 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
     }
     if (!dll) {
         xprintf ("    %s=dll is missing\n", dllname);
+        return TRUE;
+    }
+    if (!strcmp( dllname, "mshtml" ) && running_under_wine() && !gecko_check())
+    {
+        FreeLibrary(dll);
+        xprintf ("    %s=load error Gecko is not installed\n", dllname);
         return TRUE;
     }
     GetModuleFileNameA(dll, filename, MAX_PATH);
