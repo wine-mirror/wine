@@ -55,18 +55,6 @@ HRESULT WINAPI CompareAssemblyIdentity(LPCWSTR pwzAssemblyIdentity1, BOOL fUnifi
 }
 
 /******************************************************************
- *  CreateAssemblyEnum   (FUSION.@)
- */
-HRESULT WINAPI CreateAssemblyEnum(IAssemblyEnum **pEnum, IUnknown *pUnkReserved,
-                                  IAssemblyName *pName, DWORD dwFlags, LPVOID pvReserved)
-{
-    FIXME("(%p, %p, %p, %08x, %p) stub!\n", pEnum, pUnkReserved,
-          pName, dwFlags, pvReserved);
-
-    return E_NOTIMPL;
-}
-
-/******************************************************************
  *  CreateInstallReferenceEnum   (FUSION.@)
  */
 HRESULT WINAPI CreateInstallReferenceEnum(IInstallReferenceEnum **ppRefEnum,

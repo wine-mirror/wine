@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winver.h"
 
 #include <pshpack1.h>
 
@@ -434,5 +435,19 @@ HRESULT assembly_get_path(ASSEMBLY *assembly, LPSTR *path);
 HRESULT assembly_get_version(ASSEMBLY *assembly, LPSTR *version);
 HRESULT assembly_get_architecture(ASSEMBLY *assembly, DWORD fixme);
 HRESULT assembly_get_pubkey_token(ASSEMBLY *assembly, LPSTR *token);
+
+static inline LPWSTR strdupW(LPCWSTR src)
+{
+    LPWSTR dest;
+
+    if (!src)
+        return NULL;
+
+    dest = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(src) + 1) * sizeof(WCHAR));
+    if (dest)
+        lstrcpyW(dest, src);
+
+    return dest;
+}
 
 #endif /* __WINE_FUSION_PRIVATE__ */

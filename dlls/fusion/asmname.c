@@ -33,22 +33,9 @@
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "fusionpriv.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(fusion);
-
-static inline LPWSTR strdupW(LPCWSTR src)
-{
-    LPWSTR dest;
-
-    if (!src)
-        return NULL;
-
-    dest = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(src) + 1) * sizeof(WCHAR));
-    if (dest)
-        lstrcpyW(dest, src);
-
-    return dest;
-}
 
 typedef struct {
     const IAssemblyNameVtbl *lpIAssemblyNameVtbl;

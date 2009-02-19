@@ -7,6 +7,7 @@ IMPORTS   = advapi32 dbghelp kernel32 shlwapi version
 
 C_SRCS = \
 	asmcache.c \
+	asmenum.c \
 	asmname.c \
 	assembly.c \
 	fusion.c \
