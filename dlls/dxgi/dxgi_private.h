@@ -39,6 +39,8 @@ extern CRITICAL_SECTION dxgi_cs;
 /* TRACE helper functions */
 const char *debug_dxgi_format(DXGI_FORMAT format);
 
+WINED3DFORMAT wined3dformat_from_dxgi_format(DXGI_FORMAT format);
+
 /* IDXGIFactory */
 extern const struct IWineDXGIFactoryVtbl dxgi_factory_vtbl;
 struct dxgi_factory

@@ -160,7 +160,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
         return E_FAIL;
     }
 
-    FIXME("Implement DXGI<->wined3d format and usage conversion\n");
+    FIXME("Implement DXGI<->wined3d usage conversion\n");
 
     memset(surface, 0, surface_count * sizeof(*surface));
     for (i = 0; i < surface_count; ++i)
@@ -168,8 +168,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
         IWineD3DSurface *wined3d_surface;
         IUnknown *parent;
 
-        hr = IWineD3DDeviceParent_CreateSurface(device_parent, NULL, desc->Width, desc->Height, desc->Format,
-                usage, WINED3DPOOL_DEFAULT, 0, WINED3DCUBEMAP_FACE_POSITIVE_X, &wined3d_surface);
+        hr = IWineD3DDeviceParent_CreateSurface(device_parent, NULL, desc->Width, desc->Height,
+                wined3dformat_from_dxgi_format(desc->Format), usage, WINED3DPOOL_DEFAULT, 0,
+                WINED3DCUBEMAP_FACE_POSITIVE_X, &wined3d_surface);
         if (FAILED(hr))
         {
             ERR("CreateSurface failed, returning %#x\n", hr);
