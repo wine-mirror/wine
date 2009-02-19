@@ -454,6 +454,8 @@ static HRESULT parse_display_name(IAssemblyNameImpl *name, LPCWSTR szAssemblyNam
 
         *ptr2 = '\0';
 
+        while (*str == ' ') str++;
+
         if (!lstrcmpW(str, version))
             hr = parse_version(name, ptr);
         else if (!lstrcmpW(str, culture))
