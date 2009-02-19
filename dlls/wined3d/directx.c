@@ -1729,17 +1729,17 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const WineD3D_Pixe
 
         return TRUE;
     } else if(cfg->iPixelType == WGL_TYPE_RGBA_FLOAT_ARB) { /* Float RGBA formats; TODO: WGL_NV_float_buffer */
-        if(Format == WINED3DFMT_R16F)
+        if(Format == WINED3DFMT_R16_FLOAT)
             return (cfg->redSize == 16 && cfg->greenSize == 0 && cfg->blueSize == 0 && cfg->alphaSize == 0);
-        if(Format == WINED3DFMT_G16R16F)
+        if(Format == WINED3DFMT_R16G16_FLOAT)
             return (cfg->redSize == 16 && cfg->greenSize == 16 && cfg->blueSize == 0 && cfg->alphaSize == 0);
-        if(Format == WINED3DFMT_A16B16G16R16F)
+        if(Format == WINED3DFMT_R16G16B16A16_FLOAT)
             return (cfg->redSize == 16 && cfg->greenSize == 16 && cfg->blueSize == 16 && cfg->alphaSize == 16);
-        if(Format == WINED3DFMT_R32F)
+        if(Format == WINED3DFMT_R32_FLOAT)
             return (cfg->redSize == 32 && cfg->greenSize == 0 && cfg->blueSize == 0 && cfg->alphaSize == 0);
-        if(Format == WINED3DFMT_G32R32F)
+        if(Format == WINED3DFMT_R32G32_FLOAT)
             return (cfg->redSize == 32 && cfg->greenSize == 32 && cfg->blueSize == 0 && cfg->alphaSize == 0);
-        if(Format == WINED3DFMT_A32B32G32R32F)
+        if(Format == WINED3DFMT_R32G32B32A32_FLOAT)
             return (cfg->redSize == 32 && cfg->greenSize == 32 && cfg->blueSize == 32 && cfg->alphaSize == 32);
     } else {
         /* Probably a color index mode */
@@ -1997,11 +1997,11 @@ static BOOL CheckBumpMapCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
     const struct GlPixelFormatDesc *glDesc;
 
     switch(CheckFormat) {
-        case WINED3DFMT_V8U8:
-        case WINED3DFMT_V16U16:
+        case WINED3DFMT_R8G8_SNORM:
+        case WINED3DFMT_R16G16_SNORM:
         case WINED3DFMT_L6V5U5:
         case WINED3DFMT_X8L8V8U8:
-        case WINED3DFMT_Q8W8V8U8:
+        case WINED3DFMT_R8G8B8A8_SNORM:
             /* Ask the fixed function pipeline implementation if it can deal
              * with the conversion. If we've got a GL extension giving native
              * support this will be an identity conversion. */
@@ -2222,13 +2222,13 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
         case WINED3DFMT_X1R5G5B5:
         case WINED3DFMT_A1R5G5B5:
         case WINED3DFMT_A4R4G4B4:
-        case WINED3DFMT_A8:
+        case WINED3DFMT_A8_UNORM:
         case WINED3DFMT_X4R4G4B4:
-        case WINED3DFMT_A8B8G8R8:
+        case WINED3DFMT_R8G8B8A8_UNORM:
         case WINED3DFMT_X8B8G8R8:
         case WINED3DFMT_A2R10G10B10:
-        case WINED3DFMT_A2B10G10R10:
-        case WINED3DFMT_G16R16:
+        case WINED3DFMT_R10G10B10A2_UNORM:
+        case WINED3DFMT_R16G16_UNORM:
             TRACE_(d3d_caps)("[OK]\n");
             return TRUE;
 
@@ -2264,7 +2264,7 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
          *  Supported: Depth/Stencil formats
          */
         case WINED3DFMT_D16_LOCKABLE:
-        case WINED3DFMT_D16:
+        case WINED3DFMT_D16_UNORM:
         case WINED3DFMT_D15S1:
         case WINED3DFMT_D24X8:
         case WINED3DFMT_D24X4S4:
@@ -2278,11 +2278,11 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
          *  Not supported everywhere(depends on GL_ATI_envmap_bumpmap or
          *  GL_NV_texture_shader). Emulated by shaders
          */
-        case WINED3DFMT_V8U8:
+        case WINED3DFMT_R8G8_SNORM:
         case WINED3DFMT_X8L8V8U8:
         case WINED3DFMT_L6V5U5:
-        case WINED3DFMT_Q8W8V8U8:
-        case WINED3DFMT_V16U16:
+        case WINED3DFMT_R8G8B8A8_SNORM:
+        case WINED3DFMT_R16G16_SNORM:
             /* Ask the shader backend if it can deal with the conversion. If
              * we've got a GL extension giving native support this will be an
              * identity conversion. */
@@ -2313,9 +2313,9 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
          *  Odd formats - not supported
          */
         case WINED3DFMT_VERTEXDATA:
-        case WINED3DFMT_INDEX16:
-        case WINED3DFMT_INDEX32:
-        case WINED3DFMT_Q16W16V16U16:
+        case WINED3DFMT_R16_UINT:
+        case WINED3DFMT_R32_UINT:
+        case WINED3DFMT_R16G16B16A16_SNORM:
         case WINED3DFMT_A2W10V10U10:
         case WINED3DFMT_W11V11U10:
             TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
@@ -2342,14 +2342,14 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
             return FALSE;
 
             /* Not supported */
-        case WINED3DFMT_A16B16G16R16:
+        case WINED3DFMT_R16G16B16A16_UNORM:
         case WINED3DFMT_A8R3G3B2:
             TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
             return FALSE;
 
             /* Floating point formats */
-        case WINED3DFMT_R16F:
-        case WINED3DFMT_A16B16G16R16F:
+        case WINED3DFMT_R16_FLOAT:
+        case WINED3DFMT_R16G16B16A16_FLOAT:
             if(GL_SUPPORT(ARB_TEXTURE_FLOAT) && GL_SUPPORT(ARB_HALF_FLOAT_PIXEL)) {
                 TRACE_(d3d_caps)("[OK]\n");
                 return TRUE;
@@ -2357,8 +2357,8 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
             TRACE_(d3d_caps)("[FAILED]\n");
             return FALSE;
 
-        case WINED3DFMT_R32F:
-        case WINED3DFMT_A32B32G32R32F:
+        case WINED3DFMT_R32_FLOAT:
+        case WINED3DFMT_R32G32B32A32_FLOAT:
             if (GL_SUPPORT(ARB_TEXTURE_FLOAT)) {
                 TRACE_(d3d_caps)("[OK]\n");
                 return TRUE;
@@ -2366,8 +2366,8 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
             TRACE_(d3d_caps)("[FAILED]\n");
             return FALSE;
 
-        case WINED3DFMT_G16R16F:
-        case WINED3DFMT_G32R32F:
+        case WINED3DFMT_R16G16_FLOAT:
+        case WINED3DFMT_R32G32_FLOAT:
             if(GL_SUPPORT(ARB_TEXTURE_RG)) {
                 TRACE_(d3d_caps)("[OK]\n");
                 return TRUE;
@@ -2455,15 +2455,15 @@ static BOOL CheckSurfaceCapability(UINT Adapter, WINED3DFORMAT AdapterFormat, WI
             case WINED3DFMT_A1R5G5B5:
             case WINED3DFMT_A4R4G4B4:
             case WINED3DFMT_R3G3B2:
-            case WINED3DFMT_A8:
+            case WINED3DFMT_A8_UNORM:
             case WINED3DFMT_A8R3G3B2:
             case WINED3DFMT_X4R4G4B4:
-            case WINED3DFMT_A2B10G10R10:
-            case WINED3DFMT_A8B8G8R8:
+            case WINED3DFMT_R10G10B10A2_UNORM:
+            case WINED3DFMT_R8G8B8A8_UNORM:
             case WINED3DFMT_X8B8G8R8:
-            case WINED3DFMT_G16R16:
+            case WINED3DFMT_R16G16_UNORM:
             case WINED3DFMT_A2R10G10B10:
-            case WINED3DFMT_A16B16G16R16:
+            case WINED3DFMT_R16G16B16A16_UNORM:
             case WINED3DFMT_P8:
                 TRACE_(d3d_caps)("[OK]\n");
                 return TRUE;
@@ -2500,7 +2500,7 @@ static BOOL CheckVertexTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat
     }
 
     switch (CheckFormat) {
-        case WINED3DFMT_A32B32G32R32F:
+        case WINED3DFMT_R32G32B32A32_FLOAT:
             if (!GL_SUPPORT(ARB_TEXTURE_FLOAT)) {
                 TRACE_(d3d_caps)("[FAILED]\n");
                 return FALSE;
@@ -2920,23 +2920,23 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         switch(CheckFormat) {
             case WINED3DFMT_P8:
             case WINED3DFMT_A4L4:
-            case WINED3DFMT_R32F:
-            case WINED3DFMT_R16F:
+            case WINED3DFMT_R32_FLOAT:
+            case WINED3DFMT_R16_FLOAT:
             case WINED3DFMT_X8L8V8U8:
             case WINED3DFMT_L6V5U5:
-            case WINED3DFMT_G16R16:
+            case WINED3DFMT_R16G16_UNORM:
                 TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
                 return WINED3DERR_NOTAVAILABLE;
 
-            case WINED3DFMT_Q8W8V8U8:
-            case WINED3DFMT_V16U16:
+            case WINED3DFMT_R8G8B8A8_SNORM:
+            case WINED3DFMT_R16G16_SNORM:
             if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
                 TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
                 return WINED3DERR_NOTAVAILABLE;
             }
             break;
 
-            case WINED3DFMT_V8U8:
+            case WINED3DFMT_R8G8_SNORM:
             if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
                 TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
                 return WINED3DERR_NOTAVAILABLE;

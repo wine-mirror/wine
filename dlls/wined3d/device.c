@@ -5303,7 +5303,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *
           minIndex, NumVertices, startIndex, primCount);
 
     IWineD3DIndexBuffer_GetDesc(pIB, &IdxBufDsc);
-    if (IdxBufDsc.Format == WINED3DFMT_INDEX16) {
+    if (IdxBufDsc.Format == WINED3DFMT_R16_UINT) {
         idxStride = 2;
     } else {
         idxStride = 4;
@@ -5380,7 +5380,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (IndexDataFormat == WINED3DFMT_INDEX16) {
+    if (IndexDataFormat == WINED3DFMT_R16_UINT) {
         idxStride = 2;
     } else {
         idxStride = 4;
@@ -5443,7 +5443,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveStrided(IWineD3DDev
         WINED3DFORMAT IndexDataFormat)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    DWORD idxSize = (IndexDataFormat == WINED3DFMT_INDEX32 ? 4 : 2);
+    DWORD idxSize = (IndexDataFormat == WINED3DFMT_R32_UINT ? 4 : 2);
 
     /* Mark the state dirty until we have nicer tracking
      * its fine to change baseVertexIndex because that call is only called by ddraw which does not need
@@ -6263,7 +6263,7 @@ static inline DWORD argb_to_fmt(DWORD color, WINED3DFORMAT destfmt) {
             TRACE("Returning %08x\n", ret);
             return ret;
 
-        case WINED3DFMT_A8:
+        case WINED3DFMT_A8_UNORM:
             TRACE("Returning %08x\n", a);
             return a;
 
@@ -6291,7 +6291,7 @@ static inline DWORD argb_to_fmt(DWORD color, WINED3DFORMAT destfmt) {
             return ret;
 
         case WINED3DFMT_X8B8G8R8:
-        case WINED3DFMT_A8B8G8R8:
+        case WINED3DFMT_R8G8B8A8_UNORM:
             ret  = a << 24;
             ret |= b << 16;
             ret |= g <<  8;
@@ -6311,7 +6311,7 @@ static inline DWORD argb_to_fmt(DWORD color, WINED3DFORMAT destfmt) {
             TRACE("Returning %08x\n", ret);
             return ret;
 
-        case WINED3DFMT_A2B10G10R10:
+        case WINED3DFMT_R10G10B10A2_UNORM:
             a = (a *    4) / 256;
             r = (r * 1024) / 256;
             g = (g * 1024) / 256;

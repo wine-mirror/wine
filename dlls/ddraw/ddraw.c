@@ -1339,8 +1339,8 @@ IDirectDrawImpl_EnumDisplayModes(IDirectDraw7 *iface,
         WINED3DFMT_R3G3B2,
         WINED3DFMT_A8R3G3B2,
         WINED3DFMT_X4R4G4B4,
-        WINED3DFMT_A2B10G10R10,
-        WINED3DFMT_A8B8G8R8,
+        WINED3DFMT_R10G10B10A2_UNORM,
+        WINED3DFMT_R8G8B8A8_UNORM,
         WINED3DFMT_X8B8G8R8,
         WINED3DFMT_A2R10G10B10,
         WINED3DFMT_A8P8,
@@ -2484,7 +2484,7 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
                     PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, WINED3DFMT_D15S1);
                     break;
                 case 16:
-                    PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, WINED3DFMT_D16);
+                    PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, WINED3DFMT_D16_UNORM);
                     break;
                 case 24:
                     PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, WINED3DFMT_D24X8);
@@ -3045,7 +3045,7 @@ IDirectDrawImpl_AttachD3DDevice(IDirectDrawImpl *This,
     localParameters.hDeviceWindow                   = window;
     localParameters.Windowed                        = !(This->cooperative_level & DDSCL_FULLSCREEN);
     localParameters.EnableAutoDepthStencil          = TRUE;
-    localParameters.AutoDepthStencilFormat          = WINED3DFMT_D16;
+    localParameters.AutoDepthStencilFormat          = WINED3DFMT_D16_UNORM;
     localParameters.Flags                           = 0;
     localParameters.FullScreen_RefreshRateInHz      = WINED3DPRESENT_RATE_DEFAULT; /* Default rate: It's already set */
     localParameters.PresentationInterval            = WINED3DPRESENT_INTERVAL_DEFAULT;

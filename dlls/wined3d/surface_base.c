@@ -617,12 +617,12 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
         case WINED3DFMT_X4R4G4B4:
         case WINED3DFMT_R3G3B2:
         case WINED3DFMT_A8R3G3B2:
-        case WINED3DFMT_A2B10G10R10:
-        case WINED3DFMT_A8B8G8R8:
+        case WINED3DFMT_R10G10B10A2_UNORM:
+        case WINED3DFMT_R8G8B8A8_UNORM:
         case WINED3DFMT_X8B8G8R8:
         case WINED3DFMT_A2R10G10B10:
         case WINED3DFMT_R5G6B5:
-        case WINED3DFMT_A16B16G16R16:
+        case WINED3DFMT_R16G16B16A16_UNORM:
             usage = 0;
             b_info->bmiHeader.biCompression = BI_BITFIELDS;
             masks[0] = formatEntry->redMask;
@@ -681,7 +681,7 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
     return WINED3D_OK;
 }
 
-static void convert_r32f_r16f(const BYTE *src, BYTE *dst, DWORD pitch_in, DWORD pitch_out,
+static void convert_r32_float_r16_float(const BYTE *src, BYTE *dst, DWORD pitch_in, DWORD pitch_out,
                               unsigned int w, unsigned int h)
 {
     unsigned int x, y;
@@ -745,7 +745,7 @@ struct d3dfmt_convertor_desc {
 
 static const struct d3dfmt_convertor_desc convertors[] =
 {
-    {WINED3DFMT_R32F,       WINED3DFMT_R16F,        convert_r32f_r16f},
+    {WINED3DFMT_R32_FLOAT,  WINED3DFMT_R16_FLOAT,   convert_r32_float_r16_float},
     {WINED3DFMT_R5G6B5,     WINED3DFMT_X8R8G8B8,    convert_r5g6b5_x8r8g8b8},
 };
 

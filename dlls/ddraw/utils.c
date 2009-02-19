@@ -154,7 +154,7 @@ PixelFormat_WineD3DtoDD(DDPIXELFORMAT *DDPixelFormat,
             DDPixelFormat->u4.dwBBitMask = 0x00;
             break;
 
-        case WINED3DFMT_A8:
+        case WINED3DFMT_A8_UNORM:
             DDPixelFormat->dwFlags = DDPF_ALPHA;
             DDPixelFormat->dwFourCC = 0;
             DDPixelFormat->u1.dwAlphaBitDepth = 8;
@@ -186,7 +186,7 @@ PixelFormat_WineD3DtoDD(DDPIXELFORMAT *DDPixelFormat,
 
         /* How are Z buffer bit depth and Stencil buffer bit depth related?
          */
-        case WINED3DFMT_D16:
+        case WINED3DFMT_D16_UNORM:
             DDPixelFormat->dwFlags = DDPF_ZBUFFER;
             DDPixelFormat->dwFourCC = 0;
             DDPixelFormat->u1.dwZBufferBitDepth = 16;
@@ -305,7 +305,7 @@ PixelFormat_WineD3DtoDD(DDPIXELFORMAT *DDPixelFormat,
             break;
 
         /* Bump mapping */
-        case WINED3DFMT_V8U8:
+        case WINED3DFMT_R8G8_SNORM:
             DDPixelFormat->dwFlags = DDPF_BUMPDUDV;
             DDPixelFormat->dwFourCC = 0;
             DDPixelFormat->u1.dwBumpBitCount = 16;
@@ -447,7 +447,7 @@ PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat)
             case 4:
                 ERR("Unsupported Alpha-Only bit depth 0x%x\n", DDPixelFormat->u1.dwAlphaBitDepth);
             case 8:
-                return WINED3DFMT_A8;
+                return WINED3DFMT_A8_UNORM;
 
             default:
                 ERR("Invalid AlphaBitDepth in Alpha-Only Pixelformat\n");
@@ -538,10 +538,10 @@ PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat)
             {
                 case 8:
                     ERR("8 Bit Z buffers are not supported. Trying a 16 Bit one\n");
-                    return WINED3DFMT_D16;
+                    return WINED3DFMT_D16_UNORM;
 
                 case 16:
-                    return WINED3DFMT_D16;
+                    return WINED3DFMT_D16_UNORM;
 
                 case 24:
                     FIXME("24 Bit depth buffer, treating like a 32 bit one\n");
@@ -611,7 +611,7 @@ PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat)
             (DDPixelFormat->u3.dwBumpDvBitMask        == 0x0000ff00) &&
             (DDPixelFormat->u4.dwBumpLuminanceBitMask == 0x00000000) )
         {
-            return WINED3DFMT_V8U8;
+            return WINED3DFMT_R8G8_SNORM;
         }
         else if ( (DDPixelFormat->u1.dwBumpBitCount         == 16        ) &&
                   (DDPixelFormat->u2.dwBumpDuBitMask        == 0x0000001f) &&

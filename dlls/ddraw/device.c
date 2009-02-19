@@ -1166,11 +1166,11 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
     };
 
     WINED3DFORMAT BumpFormatList[] = {
-        WINED3DFMT_V8U8,
+        WINED3DFMT_R8G8_SNORM,
         WINED3DFMT_L6V5U5,
         WINED3DFMT_X8L8V8U8,
-        WINED3DFMT_Q8W8V8U8,
-        WINED3DFMT_V16U16,
+        WINED3DFMT_R8G8B8A8_SNORM,
+        WINED3DFMT_R16G16_SNORM,
         WINED3DFMT_W11V11U10,
         WINED3DFMT_A2W10V10U10
     };
@@ -3673,15 +3673,9 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
         return hr;
     }
 
-    hr = IWineD3DDevice_DrawIndexedPrimitiveUP(This->wineD3DDevice,
-                                               PrimitiveType,
-                                               0 /* MinVertexIndex */,
-                                               VertexCount /* UINT NumVertexIndex */,
-                                               PrimitiveCount,
-                                               Indices,
-                                               WINED3DFMT_INDEX16,
-                                               Vertices,
-                                               get_flexible_vertex_size(VertexType));
+    hr = IWineD3DDevice_DrawIndexedPrimitiveUP(This->wineD3DDevice, PrimitiveType, 0 /* MinVertexIndex */,
+            VertexCount /* UINT NumVertexIndex */, PrimitiveCount, Indices, WINED3DFMT_R16_UINT, Vertices,
+            get_flexible_vertex_size(VertexType));
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -4152,13 +4146,8 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
 
     /* WineD3D doesn't need the FVF here */
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_DrawIndexedPrimitiveStrided(This->wineD3DDevice,
-                                                    PrimitiveType,
-                                                    PrimitiveCount,
-                                                    &WineD3DStrided,
-                                                    VertexCount,
-                                                    Indices,
-                                                    WINED3DFMT_INDEX16);
+    hr = IWineD3DDevice_DrawIndexedPrimitiveStrided(This->wineD3DDevice, PrimitiveType,
+            PrimitiveCount, &WineD3DStrided, VertexCount, Indices, WINED3DFMT_R16_UINT);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }

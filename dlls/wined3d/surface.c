@@ -1708,7 +1708,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             }
             break;
 
-        case WINED3DFMT_V8U8:
+        case WINED3DFMT_R8G8_SNORM:
             if(GL_SUPPORT(NV_TEXTURE_SHADER3)) break;
             *convert = CONVERT_V8U8;
             *format = GL_BGR;
@@ -1748,7 +1748,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             }
             break;
 
-        case WINED3DFMT_Q8W8V8U8:
+        case WINED3DFMT_R8G8B8A8_SNORM:
             if(GL_SUPPORT(NV_TEXTURE_SHADER3)) break;
             *convert = CONVERT_Q8W8V8U8;
             *format = GL_BGRA;
@@ -1757,7 +1757,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             *target_bpp = 4;
             break;
 
-        case WINED3DFMT_V16U16:
+        case WINED3DFMT_R16G16_SNORM:
             if(GL_SUPPORT(NV_TEXTURE_SHADER3)) break;
             *convert = CONVERT_V16U16;
             *format = GL_BGR;
@@ -1778,7 +1778,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             *target_bpp = 2;
             break;
 
-        case WINED3DFMT_G16R16:
+        case WINED3DFMT_R16G16_UNORM:
             *convert = CONVERT_G16R16;
             *format = GL_RGB;
             *internal = GL_RGB16_EXT;
@@ -3641,7 +3641,7 @@ static HRESULT IWineD3DSurfaceImpl_BltZ(IWineD3DSurfaceImpl *This, const RECT *D
 
     if (Flags & WINEDDBLT_DEPTHFILL) {
         switch(This->resource.format) {
-            case WINED3DFMT_D16:
+            case WINED3DFMT_D16_UNORM:
                 depth = (float) DDBltFx->u5.dwFillDepth / (float) 0x0000ffff;
                 break;
             case WINED3DFMT_D15S1:

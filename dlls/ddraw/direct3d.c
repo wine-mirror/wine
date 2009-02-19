@@ -823,14 +823,9 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
      * Ideally, a IWineD3DIndexBuffer::SetData method could be created, which
      * takes the pointer and avoids the memcpy
      */
-    hr = IWineD3DDevice_CreateIndexBuffer(This->wineD3DDevice,
-                                          0x40000, /* Length. Don't know how long it should be */
-                                          WINED3DUSAGE_DYNAMIC, /* Usage */
-                                          WINED3DFMT_INDEX16, /* Format. D3D7 uses WORDS */
-                                          WINED3DPOOL_DEFAULT,
-                                          &object->indexbuffer,
-                                          0 /* Handle */,
-                                          (IUnknown *)IndexBufferParent);
+    hr = IWineD3DDevice_CreateIndexBuffer(This->wineD3DDevice, 0x40000 /* Length. Don't know how long it should be */,
+            WINED3DUSAGE_DYNAMIC /* Usage */, WINED3DFMT_R16_UINT /* Format. D3D7 uses WORDS */, WINED3DPOOL_DEFAULT,
+            &object->indexbuffer, 0 /* Handle */, (IUnknown *)IndexBufferParent);
 
     if(FAILED(hr))
     {
@@ -1120,7 +1115,7 @@ IDirect3DImpl_7_EnumZBufferFormats(IDirect3D7 *iface,
      * 16-bit depth formats to be listed before the 24 and 32 ones. */
     WINED3DFORMAT FormatList[] = {
         WINED3DFMT_D15S1,
-        WINED3DFMT_D16,
+        WINED3DFMT_D16_UNORM,
         WINED3DFMT_D24X8,
         WINED3DFMT_D24X4S4,
         WINED3DFMT_D24S8,
