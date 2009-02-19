@@ -840,6 +840,7 @@ static BOOL check_dotnet20(void)
     IAssemblyCache *cache;
     HRESULT hr;
     BOOL ret = FALSE;
+    ULONG disp;
 
     static const WCHAR winedll[] = {'w','i','n','e','.','d','l','l',0};
 
@@ -859,6 +860,7 @@ static BOOL check_dotnet20(void)
         ok(0, "Expected S_OK, got %08x\n", hr);
 
     DeleteFileA("wine.dll");
+    IAssemblyCache_UninstallAssembly(cache, 0, winedll, NULL, &disp);
     IAssemblyCache_Release(cache);
     return ret;
 }
