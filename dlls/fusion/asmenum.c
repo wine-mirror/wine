@@ -221,6 +221,66 @@ static void parse_name(IAssemblyName *name, int depth, LPWSTR path, LPWSTR buf)
     }
 }
 
+static int compare_assembly_names(ASMNAME *asmname1, ASMNAME *asmname2)
+{
+    int ret;
+    WORD version1, version2;
+    WCHAR name1[MAX_PATH], name2[MAX_PATH];
+    WCHAR token_str1[TOKEN_LENGTH + 1], token_str2[TOKEN_LENGTH + 1];
+    BYTE token1[BYTES_PER_TOKEN], token2[BYTES_PER_TOKEN];
+    DWORD size, i;
+
+    size = sizeof(name1);
+    IAssemblyName_GetProperty(asmname1->name, ASM_NAME_NAME, &name1, &size);
+    size = sizeof(name2);
+    IAssemblyName_GetProperty(asmname2->name, ASM_NAME_NAME, &name2, &size);
+
+    if ((ret = strcmpiW(name1, name2))) return ret;
+
+    for (i = ASM_NAME_MAJOR_VERSION; i < ASM_NAME_CULTURE; i++)
+    {
+        size = sizeof(version1);
+        IAssemblyName_GetProperty(asmname1->name, i, &version1, &size);
+        size = sizeof(version2);
+        IAssemblyName_GetProperty(asmname2->name, i, &version2, &size);
+
+        if (version1 < version2) return -1;
+        if (version1 > version2) return 1;
+    }
+
+    /* FIXME: compare cultures */
+
+    size = sizeof(token1);
+    IAssemblyName_GetProperty(asmname1->name, ASM_NAME_PUBLIC_KEY_TOKEN, token1, &size);
+    size = sizeof(token2);
+    IAssemblyName_GetProperty(asmname2->name, ASM_NAME_PUBLIC_KEY_TOKEN, token2, &size);
+
+    token_to_str(token1, token_str1);
+    token_to_str(token2, token_str2);
+
+    if ((ret = strcmpiW(token_str1, token_str2))) return ret;
+
+    return 0;
+}
+
+/* insert assembly in list preserving sort order */
+static void insert_assembly(struct list *assemblies, ASMNAME *to_insert)
+{
+    struct list *item;
+
+    LIST_FOR_EACH(item, assemblies)
+    {
+        ASMNAME *name = LIST_ENTRY(item, ASMNAME, entry);
+
+        if (compare_assembly_names(name, to_insert) > 0)
+        {
+            list_add_before(&name->entry, &to_insert->entry);
+            return;
+        }
+    }
+    list_add_tail(assemblies, &to_insert->entry);
+}
+
 static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
                                    int depth, LPWSTR path)
 {
@@ -292,7 +352,7 @@ static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
                 break;
             }
 
-            list_add_tail(assemblies, &asmname->entry);
+            insert_assembly(assemblies, asmname);
             continue;
         }
 
