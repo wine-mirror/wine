@@ -52,6 +52,16 @@ typedef struct tagInputProcessorProfiles {
     LANGID  currentLanguage;
 } InputProcessorProfiles;
 
+typedef struct tagProfilesEnumGuid {
+    const IEnumGUIDVtbl *Vtbl;
+    LONG refCount;
+
+    HKEY key;
+    DWORD next_index;
+} ProfilesEnumGuid;
+
+static HRESULT ProfilesEnumGuid_Constructor(IEnumGUID **ppOut);
+
 static void InputProcessorProfiles_Destructor(InputProcessorProfiles *This)
 {
     TRACE("destroying %p\n", This);
@@ -236,8 +246,8 @@ static HRESULT WINAPI InputProcessorProfiles_EnumInputProcessorInfo(
         ITfInputProcessorProfiles *iface, IEnumGUID **ppEnum)
 {
     InputProcessorProfiles *This = (InputProcessorProfiles*)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p) %p\n",This,ppEnum);
+    return ProfilesEnumGuid_Constructor(ppEnum);
 }
 
 static HRESULT WINAPI InputProcessorProfiles_GetDefaultLanguageProfile(
@@ -483,5 +493,155 @@ HRESULT InputProcessorProfiles_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut
 
     TRACE("returning %p\n", This);
     *ppOut = (IUnknown *)This;
+    return S_OK;
+}
+
+/**************************************************
+ * IEnumGUID implementaion for ITfInputProcessorProfiles::EnumInputProcessorInfo
+ **************************************************/
+static void ProfilesEnumGuid_Destructor(ProfilesEnumGuid *This)
+{
+    TRACE("destroying %p\n", This);
+    RegCloseKey(This->key);
+    HeapFree(GetProcessHeap(),0,This);
+}
+
+static HRESULT WINAPI ProfilesEnumGuid_QueryInterface(IEnumGUID *iface, REFIID iid, LPVOID *ppvOut)
+{
+    ProfilesEnumGuid *This = (ProfilesEnumGuid *)iface;
+    *ppvOut = NULL;
+
+    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_IEnumGUID))
+    {
+        *ppvOut = This;
+    }
+
+    if (*ppvOut)
+    {
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("unsupported interface: %s\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ProfilesEnumGuid_AddRef(IEnumGUID *iface)
+{
+    ProfilesEnumGuid *This = (ProfilesEnumGuid*)iface;
+    return InterlockedIncrement(&This->refCount);
+}
+
+static ULONG WINAPI ProfilesEnumGuid_Release(IEnumGUID *iface)
+{
+    ProfilesEnumGuid *This = (ProfilesEnumGuid *)iface;
+    ULONG ret;
+
+    ret = InterlockedDecrement(&This->refCount);
+    if (ret == 0)
+        ProfilesEnumGuid_Destructor(This);
+    return ret;
+}
+
+/*****************************************************
+ * IEnumGuid functions
+ *****************************************************/
+static HRESULT WINAPI ProfilesEnumGuid_Next( LPENUMGUID iface,
+    ULONG celt, GUID *rgelt, ULONG *pceltFetched)
+{
+    ProfilesEnumGuid *This = (ProfilesEnumGuid *)iface;
+    ULONG fetched = 0;
+
+    TRACE("(%p)\n",This);
+
+    if (rgelt == NULL) return E_POINTER;
+
+    if (This->key) while (fetched < celt)
+    {
+        LSTATUS res;
+        HRESULT hr;
+        WCHAR catid[39];
+        DWORD cName = 39;
+
+        res = RegEnumKeyExW(This->key, This->next_index, catid, &cName,
+                    NULL, NULL, NULL, NULL);
+        if (res != ERROR_SUCCESS && res != ERROR_MORE_DATA) break;
+        ++(This->next_index);
+
+        hr = CLSIDFromString(catid, rgelt);
+        if (FAILED(hr)) continue;
+
+        ++fetched;
+        ++rgelt;
+    }
+
+    if (pceltFetched) *pceltFetched = fetched;
+    return fetched == celt ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI ProfilesEnumGuid_Skip( LPENUMGUID iface, ULONG celt)
+{
+    ProfilesEnumGuid *This = (ProfilesEnumGuid *)iface;
+    TRACE("(%p)\n",This);
+
+    This->next_index += celt;
+    return S_OK;
+}
+
+static HRESULT WINAPI ProfilesEnumGuid_Reset( LPENUMGUID iface)
+{
+    ProfilesEnumGuid *This = (ProfilesEnumGuid *)iface;
+    TRACE("(%p)\n",This);
+    This->next_index = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI ProfilesEnumGuid_Clone( LPENUMGUID iface,
+    IEnumGUID **ppenum)
+{
+    ProfilesEnumGuid *This = (ProfilesEnumGuid *)iface;
+    HRESULT res;
+
+    TRACE("(%p)\n",This);
+
+    if (ppenum == NULL) return E_POINTER;
+
+    res = ProfilesEnumGuid_Constructor(ppenum);
+    if (SUCCEEDED(res))
+    {
+        ProfilesEnumGuid *new_This = (ProfilesEnumGuid *)*ppenum;
+        new_This->next_index = This->next_index;
+    }
+    return res;
+}
+
+static const IEnumGUIDVtbl IEnumGUID_Vtbl ={
+    ProfilesEnumGuid_QueryInterface,
+    ProfilesEnumGuid_AddRef,
+    ProfilesEnumGuid_Release,
+
+    ProfilesEnumGuid_Next,
+    ProfilesEnumGuid_Skip,
+    ProfilesEnumGuid_Reset,
+    ProfilesEnumGuid_Clone
+};
+
+static HRESULT ProfilesEnumGuid_Constructor(IEnumGUID **ppOut)
+{
+    ProfilesEnumGuid *This;
+
+    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ProfilesEnumGuid));
+    if (This == NULL)
+        return E_OUTOFMEMORY;
+
+    This->Vtbl= &IEnumGUID_Vtbl;
+    This->refCount = 1;
+
+    if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, szwSystemTIPKey, 0, NULL, 0,
+                    KEY_READ | KEY_WRITE, NULL, &This->key, NULL) != ERROR_SUCCESS)
+        return E_FAIL;
+
+    TRACE("returning %p\n", This);
+    *ppOut = (IEnumGUID*)This;
     return S_OK;
 }

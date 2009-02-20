@@ -84,6 +84,24 @@ static void test_Unregister(void)
     ok(SUCCEEDED(hr),"Unable to unregister text service(%x)\n",hr);
 }
 
+static void test_EnumInputProcessorInfo(void)
+{
+    IEnumGUID *ppEnum;
+    BOOL found = FALSE;
+
+    if (SUCCEEDED(ITfInputProcessorProfiles_EnumInputProcessorInfo(g_ipp, &ppEnum)))
+    {
+        ULONG fetched;
+        GUID g;
+        while (IEnumGUID_Next(ppEnum, 1, &g, &fetched) == S_OK)
+        {
+            if(IsEqualGUID(&g,&CLSID_FakeService))
+                found = TRUE;
+        }
+    }
+    ok(found,"Did not find registered text service\n");
+}
+
 static void test_RegisterCategory(void)
 {
     HRESULT hr;
@@ -105,6 +123,7 @@ START_TEST(inputprocessor)
         gLangid = GetUserDefaultLCID();
         test_Register();
         test_RegisterCategory();
+        test_EnumInputProcessorInfo();
         test_UnregisterCategory();
         test_Unregister();
     }
