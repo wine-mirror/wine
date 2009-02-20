@@ -88,7 +88,7 @@ static void ldt_lock(void)
 {
     sigset_t sigset;
 
-    pthread_functions.sigprocmask( SIG_BLOCK, &server_block_set, &sigset );
+    pthread_sigmask( SIG_BLOCK, &server_block_set, &sigset );
     RtlEnterCriticalSection( &ldt_section );
     if (ldt_section.RecursionCount == 1) ldt_sigset = sigset;
 }
@@ -99,7 +99,7 @@ static void ldt_unlock(void)
     {
         sigset_t sigset = ldt_sigset;
         RtlLeaveCriticalSection( &ldt_section );
-        pthread_functions.sigprocmask( SIG_SETMASK, &sigset, NULL );
+        pthread_sigmask( SIG_SETMASK, &sigset, NULL );
     }
     else RtlLeaveCriticalSection( &ldt_section );
 }
@@ -428,7 +428,7 @@ static void start_thread( struct wine_pthread_thread_info *info )
     server_init_thread( func );
     pthread_functions.init_thread( info );
     virtual_alloc_thread_stack( info->stack_base, info->stack_size );
-    pthread_functions.sigprocmask( SIG_UNBLOCK, &server_block_set, NULL );
+    pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
 
     RtlAcquirePebLock();
     InsertHeadList( &tls_links, &teb->TlsLinks );
@@ -524,7 +524,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
         return status;
     }
 
-    pthread_functions.sigprocmask( SIG_BLOCK, &server_block_set, &sigset );
+    pthread_sigmask( SIG_BLOCK, &server_block_set, &sigset );
 
     addr = NULL;
     size = sigstack_total_size;
@@ -577,7 +577,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
         status = STATUS_NO_MEMORY;
         goto error;
     }
-    pthread_functions.sigprocmask( SIG_SETMASK, &sigset, NULL );
+    pthread_sigmask( SIG_SETMASK, &sigset, NULL );
 
     if (id) id->UniqueThread = ULongToHandle(tid);
     if (handle_ptr) *handle_ptr = handle;
@@ -593,7 +593,7 @@ error:
         NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
     }
     if (handle) NtClose( handle );
-    pthread_functions.sigprocmask( SIG_SETMASK, &sigset, NULL );
+    pthread_sigmask( SIG_SETMASK, &sigset, NULL );
     close( request_pipe[1] );
     return status;
 }

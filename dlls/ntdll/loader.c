@@ -39,7 +39,6 @@
 
 #include "wine/exception.h"
 #include "wine/library.h"
-#include "wine/pthread.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/server.h"
@@ -55,8 +54,6 @@ WINE_DECLARE_DEBUG_CHANNEL(imports);
 /* we don't want to include winuser.h */
 #define RT_MANIFEST                         ((ULONG_PTR)24)
 #define ISOLATIONAWARE_MANIFEST_RESOURCE_ID ((ULONG_PTR)2)
-
-extern struct wine_pthread_functions pthread_functions;
 
 typedef DWORD (CALLBACK *DLLENTRYPROC)(HMODULE,DWORD,LPVOID);
 
@@ -2426,7 +2423,7 @@ static NTSTATUS attach_process_dlls( void *wm )
 {
     NTSTATUS status;
 
-    pthread_functions.sigprocmask( SIG_UNBLOCK, &server_block_set, NULL );
+    pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
 
     RtlEnterCriticalSection( &loader_section );
     if ((status = process_attach( wm, (LPVOID)1 )) != STATUS_SUCCESS)

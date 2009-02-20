@@ -163,7 +163,7 @@ void server_exit_thread( int status )
     fds[1] = ntdll_get_thread_data()->wait_fd[1];
     fds[2] = ntdll_get_thread_data()->reply_fd;
     fds[3] = ntdll_get_thread_data()->request_fd;
-    pthread_functions.sigprocmask( SIG_BLOCK, &server_block_set, NULL );
+    pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
 
     info.stack_size = virtual_free_system_view( &info.stack_base );
     info.teb_size = virtual_free_system_view( &info.teb_base );
@@ -181,7 +181,7 @@ void server_exit_thread( int status )
  */
 void server_abort_thread( int status )
 {
-    pthread_functions.sigprocmask( SIG_BLOCK, &server_block_set, NULL );
+    pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
     close( ntdll_get_thread_data()->wait_fd[0] );
     close( ntdll_get_thread_data()->wait_fd[1] );
     close( ntdll_get_thread_data()->reply_fd );
@@ -323,10 +323,10 @@ unsigned int wine_server_call( void *req_ptr )
     sigset_t old_set;
     unsigned int ret;
 
-    pthread_functions.sigprocmask( SIG_BLOCK, &server_block_set, &old_set );
+    pthread_sigmask( SIG_BLOCK, &server_block_set, &old_set );
     ret = send_request( req );
     if (!ret) ret = wait_reply( req );
-    pthread_functions.sigprocmask( SIG_SETMASK, &old_set, NULL );
+    pthread_sigmask( SIG_SETMASK, &old_set, NULL );
     return ret;
 }
 
@@ -336,7 +336,7 @@ unsigned int wine_server_call( void *req_ptr )
  */
 void server_enter_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset )
 {
-    pthread_functions.sigprocmask( SIG_BLOCK, &server_block_set, sigset );
+    pthread_sigmask( SIG_BLOCK, &server_block_set, sigset );
     RtlEnterCriticalSection( cs );
 }
 
@@ -347,7 +347,7 @@ void server_enter_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sig
 void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset )
 {
     RtlLeaveCriticalSection( cs );
-    pthread_functions.sigprocmask( SIG_SETMASK, sigset, NULL );
+    pthread_sigmask( SIG_SETMASK, sigset, NULL );
 }
 
 
@@ -985,7 +985,7 @@ void server_init_process(void)
     sigaddset( &server_block_set, SIGUSR1 );
     sigaddset( &server_block_set, SIGUSR2 );
     sigaddset( &server_block_set, SIGCHLD );
-    pthread_functions.sigprocmask( SIG_BLOCK, &server_block_set, NULL );
+    pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
 
     /* receive the first thread request fd on the main socket */
     ntdll_get_thread_data()->request_fd = receive_fd( &version );
