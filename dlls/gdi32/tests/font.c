@@ -344,7 +344,7 @@ static void test_bitmap_font(void)
     bitmap_lf.lfWidth = lfWidth;
 
     /* test fractional scaling */
-    for (i = 1; i <= height_orig * 3; i++)
+    for (i = 1; i <= height_orig * 6; i++)
     {
         INT nearest_height;
 
@@ -352,8 +352,10 @@ static void test_bitmap_font(void)
 	hfont = create_font("fractional", &bitmap_lf);
         scale = (i + height_orig - 1) / height_orig;
         nearest_height = scale * height_orig;
-        /* XP allows not more than 10% deviation */
-        if (scale > 1 && nearest_height - i > nearest_height / 10) scale--;
+        /* Only jump to the next height if the difference <= 25% original height */
+        if (scale > 2 && nearest_height - i > height_orig / 4) scale--;
+        /* The jump between unscaled and doubled is delayed by 1 */
+        else if(scale == 2 && nearest_height - i > (height_orig / 4 - 1)) scale--;
         old_hfont = SelectObject(hdc, hfont);
         test_font_metrics(hdc, hfont, bitmap_lf.lfHeight, 0, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 1, scale);
         SelectObject(hdc, old_hfont);

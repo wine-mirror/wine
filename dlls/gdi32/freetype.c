@@ -3627,8 +3627,10 @@ found:
 
         scale = (height + face->size.height - 1) / face->size.height;
         scaled_height = scale * face->size.height;
-        /* XP allows not more than 10% deviation */
-        if (scale > 1 && scaled_height - height > scaled_height / 10) scale--;
+        /* Only jump to the next height if the difference <= 25% original height */
+        if (scale > 2 && scaled_height - height > face->size.height / 4) scale--;
+        /* The jump between unscaled and doubled is delayed by 1 */
+        else if (scale == 2 && scaled_height - height > (face->size.height / 4 - 1)) scale--;
         ret->scale_y = scale;
 
         width = face->size.x_ppem >> 6;
