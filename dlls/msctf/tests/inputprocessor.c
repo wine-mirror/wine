@@ -68,7 +68,7 @@ static void test_Unregister(void)
 {
     HRESULT hr;
     hr = ITfInputProcessorProfiles_Unregister(g_ipp, &CLSID_FakeService);
-    todo_wine ok(SUCCEEDED(hr),"Unable to unregister text service(%x)\n",hr);
+    ok(SUCCEEDED(hr),"Unable to unregister text service(%x)\n",hr);
 }
 
 START_TEST(inputprocessor)

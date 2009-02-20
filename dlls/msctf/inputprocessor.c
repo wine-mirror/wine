@@ -152,9 +152,19 @@ static HRESULT WINAPI InputProcessorProfiles_Register(
 static HRESULT WINAPI InputProcessorProfiles_Unregister(
         ITfInputProcessorProfiles *iface, REFCLSID rclsid)
 {
+    WCHAR buf[39];
+    WCHAR fullkey[68];
     InputProcessorProfiles *This = (InputProcessorProfiles*)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+
+    TRACE("(%p) %s\n",This,debugstr_guid(rclsid));
+
+    StringFromGUID2(rclsid, buf, 39);
+    sprintfW(fullkey,szwTipfmt,szwSystemTIPKey,buf);
+
+    RegDeleteTreeW(HKEY_LOCAL_MACHINE, fullkey);
+    RegDeleteTreeW(HKEY_CURRENT_USER, fullkey);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI InputProcessorProfiles_AddLanguageProfile(
