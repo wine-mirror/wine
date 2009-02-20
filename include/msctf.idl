@@ -57,6 +57,15 @@ interface IEnumTfLanguageProfiles;
 interface ITfEditRecord;
 interface ITfCompositionView;
 
+typedef [uuid(e1b5808d-1e46-4c19-84dc-68c5f5978cc8)] struct TF_LANGUAGEPROFILE
+{
+    CLSID clsid;
+    LANGID langid;
+    GUID catid;
+    BOOL fActive;
+    GUID guidProfile;
+} TF_LANGUAGEPROFILE;
+
 [
     object,
     uuid(aa80e801-2021-11d2-93e0-0060b067b86e),
