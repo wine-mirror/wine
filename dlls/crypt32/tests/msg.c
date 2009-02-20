@@ -196,7 +196,7 @@ static void test_msg_get_param(void)
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, &value, &size);
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     ok(value == CMSG_DATA, "Expected CMSG_DATA, got %d\n", value);
-    for (i = CMSG_CONTENT_PARAM; i <= CMSG_CMS_SIGNER_INFO_PARAM; i++)
+    for (i = CMSG_CONTENT_PARAM; have_nt && (i <= CMSG_CMS_SIGNER_INFO_PARAM); i++)
     {
         size = 0;
         ret = CryptMsgGetParam(msg, i, 0, NULL, &size);
@@ -211,7 +211,7 @@ static void test_msg_get_param(void)
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, &value, &size);
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     ok(value == CMSG_ENVELOPED, "Expected CMSG_ENVELOPED, got %d\n", value);
-    for (i = CMSG_CONTENT_PARAM; i <= CMSG_CMS_SIGNER_INFO_PARAM; i++)
+    for (i = CMSG_CONTENT_PARAM; have_nt && (i <= CMSG_CMS_SIGNER_INFO_PARAM); i++)
     {
         size = 0;
         ret = CryptMsgGetParam(msg, i, 0, NULL, &size);
@@ -226,7 +226,7 @@ static void test_msg_get_param(void)
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, &value, &size);
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     ok(value == CMSG_HASHED, "Expected CMSG_HASHED, got %d\n", value);
-    for (i = CMSG_CONTENT_PARAM; i <= CMSG_CMS_SIGNER_INFO_PARAM; i++)
+    for (i = CMSG_CONTENT_PARAM; have_nt && (i <= CMSG_CMS_SIGNER_INFO_PARAM); i++)
     {
         size = 0;
         ret = CryptMsgGetParam(msg, i, 0, NULL, &size);
@@ -241,7 +241,7 @@ static void test_msg_get_param(void)
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, &value, &size);
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     ok(value == CMSG_SIGNED, "Expected CMSG_SIGNED, got %d\n", value);
-    for (i = CMSG_CONTENT_PARAM; i <= CMSG_CMS_SIGNER_INFO_PARAM; i++)
+    for (i = CMSG_CONTENT_PARAM; have_nt && (i <= CMSG_CMS_SIGNER_INFO_PARAM); i++)
     {
         size = 0;
         ret = CryptMsgGetParam(msg, i, 0, NULL, &size);
@@ -3040,6 +3040,8 @@ START_TEST(msg)
 {
     init_function_pointers();
     have_nt = detect_nt();
+    if (!have_nt)
+        win_skip("Win9x crashes on some parameter checks\n");
 
     /* Basic parameter checking tests */
     test_msg_open_to_encode();
