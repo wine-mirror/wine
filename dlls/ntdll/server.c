@@ -62,7 +62,6 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "wine/library.h"
-#include "wine/pthread.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
@@ -92,8 +91,6 @@ struct cmsg_fd
 #endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
 timeout_t server_start_time = 0;  /* time of server startup */
-
-extern struct wine_pthread_functions pthread_functions;
 
 sigset_t server_block_set;  /* signals to block during server calls */
 static int fd_socket = -1;  /* socket to exchange file descriptors with the server */
@@ -141,56 +138,6 @@ static void fatal_perror( const char *err, ... )
 
 
 /***********************************************************************
- *           server_exit_thread
- */
-void server_exit_thread( int status )
-{
-    struct wine_pthread_thread_info info;
-    int fds[4];
-
-    RtlAcquirePebLock();
-    RemoveEntryList( &NtCurrentTeb()->TlsLinks );
-    RtlReleasePebLock();
-    RtlFreeHeap( GetProcessHeap(), 0, NtCurrentTeb()->FlsSlots );
-    RtlFreeHeap( GetProcessHeap(), 0, NtCurrentTeb()->TlsExpansionSlots );
-
-    info.stack_base  = NtCurrentTeb()->DeallocationStack;
-    info.teb_base    = NtCurrentTeb();
-    info.teb_sel     = wine_get_fs();
-    info.exit_status = status;
-
-    fds[0] = ntdll_get_thread_data()->wait_fd[0];
-    fds[1] = ntdll_get_thread_data()->wait_fd[1];
-    fds[2] = ntdll_get_thread_data()->reply_fd;
-    fds[3] = ntdll_get_thread_data()->request_fd;
-    pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
-
-    info.stack_size = virtual_free_system_view( &info.stack_base );
-    info.teb_size = virtual_free_system_view( &info.teb_base );
-
-    close( fds[0] );
-    close( fds[1] );
-    close( fds[2] );
-    close( fds[3] );
-    pthread_functions.exit_thread( &info );
-}
-
-
-/***********************************************************************
- *           server_abort_thread
- */
-void server_abort_thread( int status )
-{
-    pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
-    close( ntdll_get_thread_data()->wait_fd[0] );
-    close( ntdll_get_thread_data()->wait_fd[1] );
-    close( ntdll_get_thread_data()->reply_fd );
-    close( ntdll_get_thread_data()->request_fd );
-    pthread_functions.abort_thread( status );
-}
-
-
-/***********************************************************************
  *           server_protocol_error
  */
 void server_protocol_error( const char *err, ... )
@@ -201,7 +148,7 @@ void server_protocol_error( const char *err, ... )
     fprintf( stderr, "wine client error:%x: ", GetCurrentThreadId() );
     vfprintf( stderr, err, args );
     va_end( args );
-    server_abort_thread(1);
+    abort_thread(1);
 }
 
 
@@ -212,7 +159,7 @@ void server_protocol_perror( const char *err )
 {
     fprintf( stderr, "wine client error:%x: ", GetCurrentThreadId() );
     perror( err );
-    server_abort_thread(1);
+    abort_thread(1);
 }
 
 
@@ -248,7 +195,7 @@ static unsigned int send_request( const struct __server_request_info *req )
     }
 
     if (ret >= 0) server_protocol_error( "partial write %d\n", ret );
-    if (errno == EPIPE) server_abort_thread(0);
+    if (errno == EPIPE) abort_thread(0);
     if (errno == EFAULT) return STATUS_ACCESS_VIOLATION;
     server_protocol_perror( "write" );
 }
@@ -277,7 +224,7 @@ static void read_reply_data( void *buffer, size_t size )
         server_protocol_perror("read");
     }
     /* the server closed the connection; time to die... */
-    server_abort_thread(0);
+    abort_thread(0);
 }
 
 
@@ -401,7 +348,7 @@ void CDECL wine_server_send_fd( int fd )
         if ((ret = sendmsg( fd_socket, &msghdr, 0 )) == sizeof(data)) return;
         if (ret >= 0) server_protocol_error( "partial write %d\n", ret );
         if (errno == EINTR) continue;
-        if (errno == EPIPE) server_abort_thread(0);
+        if (errno == EPIPE) abort_thread(0);
         server_protocol_perror( "sendmsg" );
     }
 }
@@ -459,7 +406,7 @@ static int receive_fd( obj_handle_t *handle )
         server_protocol_perror("recvmsg");
     }
     /* the server closed the connection; time to die... */
-    server_abort_thread(0);
+    abort_thread(0);
 }
 
 

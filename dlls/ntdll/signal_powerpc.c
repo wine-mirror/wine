@@ -584,7 +584,7 @@ static HANDLER_DEF(abrt_handler)
  */
 static HANDLER_DEF(quit_handler)
 {
-    server_abort_thread(0);
+    abort_thread(0);
 }
 
 

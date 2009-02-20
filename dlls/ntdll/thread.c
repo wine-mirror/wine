@@ -68,7 +68,7 @@ static LIST_ENTRY tls_links;
 static size_t sigstack_total_size;
 static ULONG sigstack_zero_bits;
 
-struct wine_pthread_functions pthread_functions = { NULL };
+static struct wine_pthread_functions pthread_functions;
 
 
 static RTL_CRITICAL_SECTION ldt_section;
@@ -346,6 +346,57 @@ HANDLE thread_init(void)
     return exe_file;
 }
 
+
+/***********************************************************************
+ *           abort_thread
+ */
+void abort_thread( int status )
+{
+    pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
+    close( ntdll_get_thread_data()->wait_fd[0] );
+    close( ntdll_get_thread_data()->wait_fd[1] );
+    close( ntdll_get_thread_data()->reply_fd );
+    close( ntdll_get_thread_data()->request_fd );
+    pthread_functions.abort_thread( status );
+}
+
+
+/***********************************************************************
+ *           exit_thread
+ */
+static void DECLSPEC_NORETURN exit_thread( int status )
+{
+    struct wine_pthread_thread_info info;
+    int fds[4];
+
+    RtlAcquirePebLock();
+    RemoveEntryList( &NtCurrentTeb()->TlsLinks );
+    RtlReleasePebLock();
+    RtlFreeHeap( GetProcessHeap(), 0, NtCurrentTeb()->FlsSlots );
+    RtlFreeHeap( GetProcessHeap(), 0, NtCurrentTeb()->TlsExpansionSlots );
+
+    info.stack_base  = NtCurrentTeb()->DeallocationStack;
+    info.teb_base    = NtCurrentTeb();
+    info.teb_sel     = wine_get_fs();
+    info.exit_status = status;
+
+    fds[0] = ntdll_get_thread_data()->wait_fd[0];
+    fds[1] = ntdll_get_thread_data()->wait_fd[1];
+    fds[2] = ntdll_get_thread_data()->reply_fd;
+    fds[3] = ntdll_get_thread_data()->request_fd;
+    pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
+
+    info.stack_size = virtual_free_system_view( &info.stack_base );
+    info.teb_size = virtual_free_system_view( &info.teb_base );
+
+    close( fds[0] );
+    close( fds[1] );
+    close( fds[2] );
+    close( fds[3] );
+    pthread_functions.exit_thread( &info );
+}
+
+
 #ifdef __i386__
 /* wrapper for apps that don't declare the thread function correctly */
 extern DWORD call_thread_entry_point( PRTL_THREAD_START_ROUTINE entry, void *arg );
@@ -401,7 +452,7 @@ static void DECLSPEC_NORETURN call_thread_func( PRTL_THREAD_START_ROUTINE rtl_fu
     else
     {
         LdrShutdownThread();
-        server_exit_thread( exit_code );
+        exit_thread( exit_code );
     }
 }
 
@@ -624,7 +675,7 @@ void WINAPI RtlExitUserThread( ULONG status )
     else
     {
         LdrShutdownThread();
-        server_exit_thread( status );
+        exit_thread( status );
     }
 }
 
@@ -730,8 +781,8 @@ NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code )
 
     if (self)
     {
-        if (last) exit( exit_code );
-        else server_abort_thread( exit_code );
+        if (last) _exit( exit_code );
+        else abort_thread( exit_code );
     }
     return ret;
 }

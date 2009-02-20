@@ -831,7 +831,7 @@ static int wait_reply( void *cookie )
         server_protocol_perror("wakeup read");
     }
     /* the server closed the connection; time to die... */
-    server_abort_thread(0);
+    abort_thread(0);
 }
 
 

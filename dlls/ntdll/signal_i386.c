@@ -1109,7 +1109,7 @@ static EXCEPTION_RECORD *setup_exception_record( SIGCONTEXT *sigcontext, void *s
                   GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
                   (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->Tib.StackLimit,
                   NtCurrentTeb()->Tib.StackBase );
-        server_abort_thread(1);
+        abort_thread(1);
     }
 
     if (stack - 1 > stack || /* check for overflow in subtraction */
@@ -1129,7 +1129,7 @@ static EXCEPTION_RECORD *setup_exception_record( SIGCONTEXT *sigcontext, void *s
                   diff, GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
                   (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
                   NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
-        server_abort_thread(1);
+        abort_thread(1);
     }
     else if ((char *)(stack - 1) < (char *)NtCurrentTeb()->Tib.StackLimit)
     {
@@ -1142,7 +1142,7 @@ static EXCEPTION_RECORD *setup_exception_record( SIGCONTEXT *sigcontext, void *s
                       diff, GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
                       (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
                       NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
-            server_abort_thread(1);
+            abort_thread(1);
         }
     }
 
@@ -1550,7 +1550,7 @@ static void quit_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     WORD fs, gs;
     init_handler( sigcontext, &fs, &gs );
-    server_abort_thread(0);
+    abort_thread(0);
 }
 
 
