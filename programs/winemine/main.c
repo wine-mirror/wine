@@ -53,8 +53,8 @@ void CheckLevel( BOARD *p_board )
     if( p_board->mines < BEGINNER_MINES )
         p_board->mines = BEGINNER_MINES;
 
-    if( p_board->mines > p_board->cols * p_board->rows - 2 )
-        p_board->mines = p_board->cols * p_board->rows - 2;
+    if( p_board->mines > ( p_board->cols - 1 ) * ( p_board->rows - 1 ) )
+        p_board->mines = ( p_board->cols - 1 ) * ( p_board->rows - 1 );
 }
 
 static void LoadBoard( BOARD *p_board )
