@@ -67,6 +67,7 @@ static RTL_BITMAP fls_bitmap;
 static LIST_ENTRY tls_links;
 static size_t sigstack_total_size;
 static ULONG sigstack_zero_bits;
+static int nb_threads = 1;
 
 static struct wine_pthread_functions pthread_functions;
 
@@ -352,12 +353,14 @@ HANDLE thread_init(void)
  */
 void abort_thread( int status )
 {
+    if (interlocked_xchg_add( &nb_threads, -1 ) <= 1) _exit( status );
+
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
     close( ntdll_get_thread_data()->wait_fd[0] );
     close( ntdll_get_thread_data()->wait_fd[1] );
     close( ntdll_get_thread_data()->reply_fd );
     close( ntdll_get_thread_data()->request_fd );
-    pthread_functions.abort_thread( status );
+    pthread_exit( UIntToPtr(status) );
 }
 
 
@@ -366,8 +369,11 @@ void abort_thread( int status )
  */
 static void DECLSPEC_NORETURN exit_thread( int status )
 {
-    struct wine_pthread_thread_info info;
     int fds[4];
+    void *teb_addr;
+    SIZE_T teb_size;
+
+    if (interlocked_xchg_add( &nb_threads, -1 ) <= 1) exit( status );
 
     RtlAcquirePebLock();
     RemoveEntryList( &NtCurrentTeb()->TlsLinks );
@@ -375,25 +381,24 @@ static void DECLSPEC_NORETURN exit_thread( int status )
     RtlFreeHeap( GetProcessHeap(), 0, NtCurrentTeb()->FlsSlots );
     RtlFreeHeap( GetProcessHeap(), 0, NtCurrentTeb()->TlsExpansionSlots );
 
-    info.stack_base  = NtCurrentTeb()->DeallocationStack;
-    info.teb_base    = NtCurrentTeb();
-    info.teb_sel     = wine_get_fs();
-    info.exit_status = status;
-
     fds[0] = ntdll_get_thread_data()->wait_fd[0];
     fds[1] = ntdll_get_thread_data()->wait_fd[1];
     fds[2] = ntdll_get_thread_data()->reply_fd;
     fds[3] = ntdll_get_thread_data()->request_fd;
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
 
-    info.stack_size = virtual_free_system_view( &info.stack_base );
-    info.teb_size = virtual_free_system_view( &info.teb_base );
+    virtual_free_system_view( &NtCurrentTeb()->DeallocationStack );
+    teb_addr = NtCurrentTeb();
+    teb_size = virtual_free_system_view( &teb_addr );
 
     close( fds[0] );
     close( fds[1] );
     close( fds[2] );
     close( fds[3] );
-    pthread_functions.exit_thread( &info );
+
+    wine_ldt_free_fs( wine_get_fs() );
+    if (teb_size) munmap( teb_addr, teb_size );
+    pthread_exit( UIntToPtr(status) );
 }
 
 
@@ -514,6 +519,8 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
                                      HANDLE *handle_ptr, CLIENT_ID *id )
 {
     sigset_t sigset;
+    pthread_t pthread_id;
+    pthread_attr_t attr;
     struct ntdll_thread_data *thread_data = NULL;
     struct ntdll_thread_regs *thread_regs;
     struct startup_info *info = NULL;
@@ -623,11 +630,19 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     info->entry_point             = start;
     info->entry_arg               = param;
 
-    if (pthread_functions.create_thread( &info->pthread_info ) == -1)
+    pthread_attr_init( &attr );
+    pthread_attr_setstacksize( &attr, stack_reserve );
+    pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_DETACHED );
+    pthread_attr_setscope( &attr, PTHREAD_SCOPE_SYSTEM ); /* force creating a kernel thread */
+    interlocked_xchg_add( &nb_threads, 1 );
+    if (pthread_create( &pthread_id, &attr, (void * (*)(void *))start_thread, info ))
     {
+        interlocked_xchg_add( &nb_threads, -1 );
+        pthread_attr_destroy( &attr );
         status = STATUS_NO_MEMORY;
         goto error;
     }
+    pthread_attr_destroy( &attr );
     pthread_sigmask( SIG_SETMASK, &sigset, NULL );
 
     if (id) id->UniqueThread = ULongToHandle(tid);
