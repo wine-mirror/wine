@@ -391,7 +391,7 @@ static void test_LZOpenFileA(void)
   ok(file >= 0, "LZOpenFileA failed on read\n");
   ok(test.cBytes == sizeof(OFSTRUCT) ||
      broken(test.cBytes == 40), /* win95 */
-     "LZOpenFileA set test.cBytes to %d\n", test.cBytes);
+     "LZOpenFileA set test.cBytes to %d '%s'('%s')\n", test.cBytes, expected, short_expected);
   ok(test.nErrCode == ERROR_SUCCESS,
      "LZOpenFileA set test.nErrCode to %d\n", test.nErrCode);
   ok(lstrcmpA(test.szPathName, expected) == 0 ||
