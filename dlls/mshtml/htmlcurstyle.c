@@ -174,8 +174,8 @@ static HRESULT WINAPI HTMLCurrentStyle_get_fontStyle(IHTMLCurrentStyle *iface, B
 static HRESULT WINAPI HTMLCurrentStyle_get_fontVariant(IHTMLCurrentStyle *iface, BSTR *p)
 {
     HTMLCurrentStyle *This = HTMLCURSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_FONT_VARIANT, p);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_fontWeight(IHTMLCurrentStyle *iface, VARIANT *p)
