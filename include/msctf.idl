@@ -28,6 +28,12 @@ cpp_quote("EXTERN_C const CLSID CLSID_TF_ThreadMgr;")
 cpp_quote("EXTERN_C const CLSID CLSID_TF_InputProcessorProfiles;")
 cpp_quote("EXTERN_C const CLSID CLSID_TF_CategoryMgr;")
 
+/* GUIDs for Categories */
+cpp_quote("EXTERN_C const GUID GUID_TFCAT_TIP_KEYBOARD;")
+cpp_quote("EXTERN_C const GUID GUID_TFCAT_TIP_SPEECH;")
+cpp_quote("EXTERN_C const GUID GUID_TFCAT_TIP_HANDWRITING;")
+cpp_quote("EXTERN_C const GUID GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER;")
+
 typedef [uuid(7213778c-7bb0-4270-b050-6189ee594e97)]  DWORD TfEditCookie;
 typedef [uuid(de403c21-89fd-4f85-8b87-64584d063fbc)] DWORD TfClientId;
 typedef [uuid(88a9c478-f3ec-4763-8345-cd9250443f8d)] DWORD TfGuidAtom;
