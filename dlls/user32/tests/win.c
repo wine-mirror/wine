@@ -3440,8 +3440,6 @@ static void test_scrolldc( HWND parent)
     SetRectRgn( tmprgn, 25, 35, 35, 75);
     CombineRgn(exprgn, exprgn, tmprgn, RGN_OR);
     ok(EqualRgn(exprgn, hrgn), "wrong update region\n");
-    colr = GetPixel( hdc, 80, 80);
-    ok ( colr == 0, "pixel should be black, color is %08x\n", colr);
     trace("update rect: %d,%d - %d,%d\n",
            rcu.left, rcu.top, rcu.right, rcu.bottom);
     if (winetest_debug > 0) dump_region(hrgn);
@@ -3651,7 +3649,8 @@ static void test_redrawnow(void)
    ShowWindow(hwndMain, SW_SHOW);
    ok( WMPAINT_count == 0, "Multiple unexpected WM_PAINT calls %d\n", WMPAINT_count);
    RedrawWindow(hwndMain, NULL,NULL,RDW_UPDATENOW | RDW_ALLCHILDREN);
-   ok( WMPAINT_count == 1, "Multiple unexpected WM_PAINT calls %d\n", WMPAINT_count);
+   ok( WMPAINT_count == 1 || broken(WMPAINT_count == 0), /* sometimes on win9x */
+       "Multiple unexpected WM_PAINT calls %d\n", WMPAINT_count);
    redrawComplete = TRUE;
    ok( WMPAINT_count < 10, "RedrawWindow (RDW_UPDATENOW) never completed (%d)\n", WMPAINT_count);
 
