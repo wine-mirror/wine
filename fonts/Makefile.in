@@ -48,6 +48,7 @@ BITMAP_FONTS  = \
 
 TRUETYPE_FONTS = \
 	marlett.ttf \
+	symbol.ttf \
 	tahoma.ttf \
 	tahomabd.ttf
 
@@ -177,6 +178,9 @@ cvgasys.fon: $(SRCDIR)/system.ttf
 # Use $(TOPSRCDIR)/fonts instead of $(SRCDIR) to confuse make when building in the source tree
 marlett.ttf: $(TOPSRCDIR)/fonts/marlett.ttf
 	[ $(SRCDIR) = . ] || ($(RM) $@ && $(LN_S) $(SRCDIR)/marlett.ttf $@)
+
+symbol.ttf: $(TOPSRCDIR)/fonts/symbol.ttf
+	[ $(SRCDIR) = . ] || ($(RM) $@ && $(LN_S) $(SRCDIR)/symbol.ttf $@)
 
 tahoma.ttf: $(TOPSRCDIR)/fonts/tahoma.ttf
 	[ $(SRCDIR) = . ] || ($(RM) $@ && $(LN_S) $(SRCDIR)/tahoma.ttf $@)
