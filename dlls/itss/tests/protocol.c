@@ -571,7 +571,9 @@ static void test_its_protocol(void)
     test_protocol = ITS_PROTOCOL;
 
     hres = CoGetClassObject(&CLSID_ITSProtocol, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
-    ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
+    ok(hres == S_OK ||
+       broken(hres == REGDB_E_CLASSNOTREG), /* Some W95 and NT4 */
+       "CoGetClassObject failed: %08x\n", hres);
     if(FAILED(hres))
         return;
 
@@ -629,7 +631,9 @@ static void test_mk_protocol(void)
 
     hres = CoGetClassObject(&CLSID_MkProtocol, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory,
                             (void**)&cf);
-    ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
+    ok(hres == S_OK ||
+       broken(hres == REGDB_E_CLASSNOTREG), /* Some W95 and NT4 */
+       "CoGetClassObject failed: %08x\n", hres);
     if(FAILED(hres))
         return;
 
