@@ -60,7 +60,22 @@ typedef struct tagProfilesEnumGuid {
     DWORD next_index;
 } ProfilesEnumGuid;
 
+typedef struct tagEnumTfLanguageProfiles {
+    const IEnumTfLanguageProfilesVtbl *Vtbl;
+    LONG refCount;
+
+    HKEY    tipkey;
+    DWORD   tip_index;
+    WCHAR   szwCurrentClsid[39];
+
+    HKEY    langkey;
+    DWORD   lang_index;
+
+    LANGID  langid;
+} EnumTfLanguageProfiles;
+
 static HRESULT ProfilesEnumGuid_Constructor(IEnumGUID **ppOut);
+static HRESULT EnumTfLanguageProfiles_Constructor(LANGID langid, IEnumTfLanguageProfiles **ppOut);
 
 static void InputProcessorProfiles_Destructor(InputProcessorProfiles *This)
 {
@@ -330,8 +345,8 @@ static HRESULT WINAPI InputProcessorProfiles_EnumLanguageProfiles(
         IEnumTfLanguageProfiles **ppEnum)
 {
     InputProcessorProfiles *This = (InputProcessorProfiles*)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p) %x %p\n",This,langid,ppEnum);
+    return EnumTfLanguageProfiles_Constructor(langid, ppEnum);
 }
 
 static HRESULT WINAPI InputProcessorProfiles_EnableLanguageProfile(
@@ -643,5 +658,228 @@ static HRESULT ProfilesEnumGuid_Constructor(IEnumGUID **ppOut)
 
     TRACE("returning %p\n", This);
     *ppOut = (IEnumGUID*)This;
+    return S_OK;
+}
+
+/**************************************************
+ * IEnumTfLanguageProfiles implementaion
+ **************************************************/
+static void EnumTfLanguageProfiles_Destructor(EnumTfLanguageProfiles *This)
+{
+    TRACE("destroying %p\n", This);
+    RegCloseKey(This->tipkey);
+    if (This->langkey)
+        RegCloseKey(This->langkey);
+    HeapFree(GetProcessHeap(),0,This);
+}
+
+static HRESULT WINAPI EnumTfLanguageProfiles_QueryInterface(IEnumTfLanguageProfiles *iface, REFIID iid, LPVOID *ppvOut)
+{
+    EnumTfLanguageProfiles *This = (EnumTfLanguageProfiles *)iface;
+    *ppvOut = NULL;
+
+    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_IEnumTfLanguageProfiles))
+    {
+        *ppvOut = This;
+    }
+
+    if (*ppvOut)
+    {
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("unsupported interface: %s\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI EnumTfLanguageProfiles_AddRef(IEnumTfLanguageProfiles *iface)
+{
+    EnumTfLanguageProfiles *This = (EnumTfLanguageProfiles*)iface;
+    return InterlockedIncrement(&This->refCount);
+}
+
+static ULONG WINAPI EnumTfLanguageProfiles_Release(IEnumTfLanguageProfiles *iface)
+{
+    EnumTfLanguageProfiles *This = (EnumTfLanguageProfiles *)iface;
+    ULONG ret;
+
+    ret = InterlockedDecrement(&This->refCount);
+    if (ret == 0)
+        EnumTfLanguageProfiles_Destructor(This);
+    return ret;
+}
+
+/*****************************************************
+ * IEnumGuid functions
+ *****************************************************/
+static INT next_LanguageProfile(EnumTfLanguageProfiles *This, CLSID clsid, TF_LANGUAGEPROFILE *tflp)
+{
+    WCHAR fullkey[168];
+    ULONG res;
+    WCHAR profileid[39];
+    DWORD cName = 39;
+    GUID  profile;
+
+    static const WCHAR fmt[] = {'%','s','\\','%','s','\\','0','x','%','0','8','x',0};
+
+    if (This->langkey == NULL)
+    {
+        sprintfW(fullkey,fmt,This->szwCurrentClsid,szwLngp,This->langid);
+        res = RegOpenKeyExW(This->tipkey, fullkey, 0, KEY_READ | KEY_WRITE, &This->langkey);
+        if (res)
+        {
+            This->langkey = NULL;
+            return -1;
+        }
+        This->lang_index = 0;
+    }
+    res = RegEnumKeyExW(This->langkey, This->lang_index, profileid, &cName,
+                NULL, NULL, NULL, NULL);
+    if (res != ERROR_SUCCESS && res != ERROR_MORE_DATA)
+    {
+        RegCloseKey(This->langkey);
+        This->langkey = NULL;
+        return -1;
+    }
+    ++(This->lang_index);
+
+    if (tflp)
+    {
+        res = CLSIDFromString(profileid, &profile);
+        if (FAILED(res)) return 0;
+
+        tflp->clsid = clsid;
+        tflp->langid = This->langid;
+        /* FIXME */
+        tflp->fActive = FALSE;
+        tflp->guidProfile = profile;
+        /* FIXME set catid */
+    }
+
+    return 1;
+}
+
+static HRESULT WINAPI EnumTfLanguageProfiles_Next(IEnumTfLanguageProfiles *iface,
+    ULONG ulCount, TF_LANGUAGEPROFILE *pProfile, ULONG *pcFetch)
+{
+    EnumTfLanguageProfiles *This = (EnumTfLanguageProfiles *)iface;
+    ULONG fetched = 0;
+
+    TRACE("(%p)\n",This);
+
+    if (pProfile == NULL) return E_POINTER;
+
+    if (This->tipkey) while (fetched < ulCount)
+    {
+        LSTATUS res;
+        HRESULT hr;
+        DWORD cName = 39;
+        GUID clsid;
+
+        res = RegEnumKeyExW(This->tipkey, This->tip_index,
+                    This->szwCurrentClsid, &cName, NULL, NULL, NULL, NULL);
+        if (res != ERROR_SUCCESS && res != ERROR_MORE_DATA) break;
+        ++(This->tip_index);
+        hr = CLSIDFromString(This->szwCurrentClsid, &clsid);
+        if (FAILED(hr)) continue;
+
+        while ( fetched < ulCount)
+        {
+            INT res = next_LanguageProfile(This, clsid, pProfile);
+            if (res == 1)
+            {
+                ++fetched;
+                ++pProfile;
+            }
+            else if (res == -1)
+                break;
+            else
+                continue;
+        }
+    }
+
+    if (pcFetch) *pcFetch = fetched;
+    return fetched == ulCount ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI EnumTfLanguageProfiles_Skip( IEnumTfLanguageProfiles* iface, ULONG celt)
+{
+    EnumTfLanguageProfiles *This = (EnumTfLanguageProfiles *)iface;
+    FIXME("STUB (%p)\n",This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EnumTfLanguageProfiles_Reset( IEnumTfLanguageProfiles* iface)
+{
+    EnumTfLanguageProfiles *This = (EnumTfLanguageProfiles *)iface;
+    TRACE("(%p)\n",This);
+    This->tip_index = 0;
+    if (This->langkey)
+        RegCloseKey(This->langkey);
+    This->langkey = NULL;
+    This->lang_index = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI EnumTfLanguageProfiles_Clone( IEnumTfLanguageProfiles *iface,
+    IEnumTfLanguageProfiles **ppenum)
+{
+    EnumTfLanguageProfiles *This = (EnumTfLanguageProfiles *)iface;
+    HRESULT res;
+
+    TRACE("(%p)\n",This);
+
+    if (ppenum == NULL) return E_POINTER;
+
+    res = EnumTfLanguageProfiles_Constructor(This->langid, ppenum);
+    if (SUCCEEDED(res))
+    {
+        EnumTfLanguageProfiles *new_This = (EnumTfLanguageProfiles *)*ppenum;
+        new_This->tip_index = This->tip_index;
+        lstrcpynW(new_This->szwCurrentClsid,This->szwCurrentClsid,39);
+
+        if (This->langkey)
+        {
+            WCHAR fullkey[168];
+            static const WCHAR fmt[] = {'%','s','\\','%','s','\\','0','x','%','0','8','x',0};
+
+            sprintfW(fullkey,fmt,This->szwCurrentClsid,szwLngp,This->langid);
+            res = RegOpenKeyExW(new_This->tipkey, fullkey, 0, KEY_READ | KEY_WRITE, &This->langkey);
+            new_This->lang_index = This->lang_index;
+        }
+    }
+    return res;
+}
+
+static const IEnumTfLanguageProfilesVtbl IEnumTfLanguageProfiles_Vtbl ={
+    EnumTfLanguageProfiles_QueryInterface,
+    EnumTfLanguageProfiles_AddRef,
+    EnumTfLanguageProfiles_Release,
+
+    EnumTfLanguageProfiles_Clone,
+    EnumTfLanguageProfiles_Next,
+    EnumTfLanguageProfiles_Reset,
+    EnumTfLanguageProfiles_Skip
+};
+
+static HRESULT EnumTfLanguageProfiles_Constructor(LANGID langid, IEnumTfLanguageProfiles **ppOut)
+{
+    EnumTfLanguageProfiles *This;
+
+    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(EnumTfLanguageProfiles));
+    if (This == NULL)
+        return E_OUTOFMEMORY;
+
+    This->Vtbl= &IEnumTfLanguageProfiles_Vtbl;
+    This->refCount = 1;
+    This->langid = langid;
+
+    if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, szwSystemTIPKey, 0, NULL, 0,
+                    KEY_READ | KEY_WRITE, NULL, &This->tipkey, NULL) != ERROR_SUCCESS)
+        return E_FAIL;
+
+    TRACE("returning %p\n", This);
+    *ppOut = (IEnumTfLanguageProfiles*)This;
     return S_OK;
 }

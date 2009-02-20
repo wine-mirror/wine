@@ -450,3 +450,24 @@ interface ITfContextOwnerCompositionSink : IUnknown
     HRESULT OnEndComposition(
         [in] ITfCompositionView *pComposition);
 };
+
+[
+  object,
+  uuid(3d61bf11-ac5f-42c8-a4cb-931bcc28c744),
+  pointer_default(unique)
+]
+interface IEnumTfLanguageProfiles : IUnknown
+{
+    HRESULT Clone(
+        [out] IEnumTfLanguageProfiles **ppEnum);
+
+    HRESULT Next(
+        [in] ULONG ulCount,
+        [out, size_is(ulCount), length_is(*pcFetch)] TF_LANGUAGEPROFILE *pProfile,
+        [out] ULONG *pcFetch);
+
+    HRESULT Reset();
+
+    HRESULT Skip(
+        [in] ULONG ulCount);
+};

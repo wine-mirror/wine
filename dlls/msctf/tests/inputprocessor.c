@@ -102,6 +102,27 @@ static void test_EnumInputProcessorInfo(void)
     ok(found,"Did not find registered text service\n");
 }
 
+static void test_EnumLanguageProfiles(void)
+{
+    BOOL found = FALSE;
+    IEnumTfLanguageProfiles *ppEnum;
+    if (SUCCEEDED(ITfInputProcessorProfiles_EnumLanguageProfiles(g_ipp,gLangid,&ppEnum)))
+    {
+        TF_LANGUAGEPROFILE profile;
+        while (IEnumTfLanguageProfiles_Next(ppEnum,1,&profile,NULL)==S_OK)
+        {
+            if (IsEqualGUID(&profile.clsid,&CLSID_FakeService))
+            {
+                found = TRUE;
+                ok(profile.langid == gLangid, "LangId Incorrect\n");
+                todo_wine ok(IsEqualGUID(&profile.catid,&GUID_TFCAT_TIP_KEYBOARD), "CatId Incorrect\n");
+                ok(IsEqualGUID(&profile.guidProfile,&CLSID_FakeService), "guidProfile Incorrect\n");
+            }
+        }
+    }
+    ok(found,"Registered text service not found\n");
+}
+
 static void test_RegisterCategory(void)
 {
     HRESULT hr;
@@ -124,6 +145,7 @@ START_TEST(inputprocessor)
         test_Register();
         test_RegisterCategory();
         test_EnumInputProcessorInfo();
+        test_EnumLanguageProfiles();
         test_UnregisterCategory();
         test_Unregister();
     }
