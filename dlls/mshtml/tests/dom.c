@@ -2403,6 +2403,11 @@ static void test_current_style(IHTMLCurrentStyle *current_style)
     ok(hres == S_OK, "get_fontVariant failed: %08x\n", hres);
     ok(!strcmp_wa(str, "normal"), "get_fontVariant returned %s\n", dbgstr_w(str));
     SysFreeString(str);
+
+    hres = IHTMLCurrentStyle_get_borderTopStyle(current_style, &str);
+    ok(hres == S_OK, "get_borderTopStyle failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "none"), "get_borderTopStyle returned %s\n", dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_style2(IHTMLStyle2 *style2)
