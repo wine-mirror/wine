@@ -9403,8 +9403,13 @@ static void test_PeekMessage2(void)
     wait_move_event(hwnd, 100-STEP, 100-STEP);
 
     ret = PeekMessageA(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_NOREMOVE);
-    ok(ret, "no message available\n");
-    if (ret) {
+    if (!ret)
+    {
+        skip( "queuing mouse events not supported\n" );
+        goto done;
+    }
+    else
+    {
 	trace("1st move event: %04x %x %d %d\n", msg.message, msg.time, msg.pt.x, msg.pt.y);
 	message = msg.message;
 	time1 = msg.time;
@@ -9453,6 +9458,7 @@ static void test_PeekMessage2(void)
 	ok(x3 != x2 && y3 != y2, "coords not changed: (%d %d) (%d %d)\n", x2, y2, x3, y3);
     }
 
+done:
     DestroyWindow(hwnd);
     SetCursorPos(pos.x, pos.y);
     flush_events();
@@ -11269,6 +11275,11 @@ static void test_menu_messages(void)
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
+    if (!sequence_cnt)  /* we didn't get any message */
+    {
+        skip( "queuing key events not supported\n" );
+        goto done;
+    }
     ok_sequence(wm_popup_menu_1, "popup menu command", FALSE);
 
     /* Alt+F, Right, Enter */
@@ -11322,6 +11333,7 @@ static void test_menu_messages(void)
     }
     ok_sequence(wm_popup_menu_3, "submenu of a popup menu command", FALSE);
 
+done:
     DestroyWindow(hwnd);
     DestroyMenu(hmenu);
 }
