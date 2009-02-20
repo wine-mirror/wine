@@ -253,7 +253,8 @@ static BOOL enum_gac_assemblies(struct list *assemblies, int depth, LPSTR path)
             lstrcatA(disp, buf);
 
             name = HeapAlloc(GetProcessHeap(), 0, sizeof(ASMNAME));
-            name->data = strdup(disp);
+            name->data = HeapAlloc(GetProcessHeap(), 0, lstrlenA(disp) + 1);
+            lstrcpyA(name->data, disp);
             list_add_tail(assemblies, &name->entry);
 
             continue;
