@@ -629,6 +629,112 @@ static DWORD CALLBACK serverThreadMain3(LPVOID arg)
     return 0;
 }
 
+/** Trivial byte echo server - uses i/o completion ports */
+static DWORD CALLBACK serverThreadMain4(LPVOID arg)
+{
+    int i;
+    HANDLE hcompletion;
+
+    trace("serverThreadMain4\n");
+    /* Set up a simple echo server */
+    hnp = CreateNamedPipe(PIPENAME "serverThreadMain4", PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+        PIPE_TYPE_BYTE | PIPE_WAIT,
+        /* nMaxInstances */ 1,
+        /* nOutBufSize */ 1024,
+        /* nInBufSize */ 1024,
+        /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
+        /* lpSecurityAttrib */ NULL);
+    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
+
+    hcompletion = CreateIoCompletionPort(hnp, NULL, 12345, 1);
+    ok(hcompletion != NULL, "CreateIoCompletionPort failed, error=%i\n", GetLastError());
+
+    for (i = 0; i < NB_SERVER_LOOPS; i++) {
+        char buf[512];
+        DWORD written;
+        DWORD readden;
+        DWORD dummy;
+        DWORD success;
+        OVERLAPPED oConnect;
+        OVERLAPPED oRead;
+        OVERLAPPED oWrite;
+        OVERLAPPED *oResult;
+        DWORD err;
+        ULONG_PTR compkey;
+
+        memset(&oConnect, 0, sizeof(oConnect));
+        memset(&oRead, 0, sizeof(oRead));
+        memset(&oWrite, 0, sizeof(oWrite));
+
+        /* Wait for client to connect */
+        trace("Server calling overlapped ConnectNamedPipe...\n");
+        success = ConnectNamedPipe(hnp, &oConnect);
+        err = GetLastError();
+        ok(!success && (err == ERROR_IO_PENDING || err == ERROR_PIPE_CONNECTED) , "overlapped ConnectNamedPipe\n");
+        trace("overlapped ConnectNamedPipe returned.\n");
+        if (!success && err == ERROR_IO_PENDING) {
+            trace("ConnectNamedPipe GetQueuedCompletionStatus\n");
+            success = GetQueuedCompletionStatus(hcompletion, &dummy, &compkey, &oResult, 0);
+            if (!success)
+            {
+                ok( GetLastError() == WAIT_TIMEOUT,
+                    "ConnectNamedPipe GetQueuedCompletionStatus wrong error %u\n", GetLastError());
+                success = GetQueuedCompletionStatus(hcompletion, &dummy, &compkey, &oResult, 10000);
+            }
+            ok(success, "ConnectNamedPipe GetQueuedCompletionStatus failed, errno=%i\n", GetLastError());
+            if (success)
+            {
+                ok(compkey == 12345, "got completion key %i instead of 12345\n", (int)compkey);
+                ok(oResult == &oConnect, "got overlapped pointer %p instead of %p\n", oResult, &oConnect);
+            }
+        }
+        trace("overlapped ConnectNamedPipe operation complete.\n");
+
+        /* Echo bytes once */
+        memset(buf, 0, sizeof(buf));
+
+        trace("Server reading...\n");
+        success = ReadFile(hnp, buf, sizeof(buf), &readden, &oRead);
+        trace("Server ReadFile returned...\n");
+        err = GetLastError();
+        ok(success || err == ERROR_IO_PENDING, "overlapped ReadFile, err=%i\n", err);
+        success = GetQueuedCompletionStatus(hcompletion, &readden, &compkey,
+            &oResult, 10000);
+        ok(success, "ReadFile GetQueuedCompletionStatus failed, errno=%i\n", GetLastError());
+        if (success)
+        {
+            ok(compkey == 12345, "got completion key %i instead of 12345\n", (int)compkey);
+            ok(oResult == &oRead, "got overlapped pointer %p instead of %p\n", oResult, &oRead);
+        }
+        trace("Server done reading.\n");
+
+        trace("Server writing...\n");
+        success = WriteFile(hnp, buf, readden, &written, &oWrite);
+        trace("Server WriteFile returned...\n");
+        err = GetLastError();
+        ok(success || err == ERROR_IO_PENDING, "overlapped WriteFile\n");
+        success = GetQueuedCompletionStatus(hcompletion, &written, &compkey,
+            &oResult, 10000);
+        ok(success, "WriteFile GetQueuedCompletionStatus failed, errno=%i\n", GetLastError());
+        if (success)
+        {
+            ok(compkey == 12345, "got completion key %i instead of 12345\n", (int)compkey);
+            ok(oResult == &oWrite, "got overlapped pointer %p instead of %p\n", oResult, &oWrite);
+            ok(written == readden, "write file len\n");
+        }
+        trace("Server done writing.\n");
+
+        /* finish this connection, wait for next one */
+        ok(FlushFileBuffers(hnp), "FlushFileBuffers\n");
+        ok(DisconnectNamedPipe(hnp), "DisconnectNamedPipe\n");
+    }
+
+    ok(CloseHandle(hnp), "CloseHandle named pipe failed, err=%i\n", GetLastError());
+    ok(CloseHandle(hcompletion), "CloseHandle completion failed, err=%i\n", GetLastError());
+
+    return 0;
+}
+
 static void exercizeServer(const char *pipename, HANDLE serverThread)
 {
     int i;
@@ -710,6 +816,11 @@ static void test_NamedPipe_2(void)
     serverThread = CreateThread(NULL, 0, serverThreadMain3, 0, 0, &serverThreadId);
     ok(serverThread != INVALID_HANDLE_VALUE, "CreateThread\n");
     exercizeServer(PIPENAME "serverThreadMain3", serverThread);
+
+    /* Try server #4 */
+    serverThread = CreateThread(NULL, 0, serverThreadMain4, 0, 0, &serverThreadId);
+    ok(serverThread != INVALID_HANDLE_VALUE, "CreateThread\n");
+    exercizeServer(PIPENAME "serverThreadMain4", serverThread);
 
     ok(SetEvent( alarm_event ), "SetEvent\n");
     CloseHandle( alarm_event );
