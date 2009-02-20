@@ -2388,6 +2388,11 @@ static void test_current_style(IHTMLCurrentStyle *current_style)
     hres = IHTMLCurrentStyle_get_fontFamily(current_style, &str);
     ok(hres == S_OK, "get_fontFamily failed: %08x\n", hres);
     SysFreeString(str);
+
+    hres = IHTMLCurrentStyle_get_fontStyle(current_style, &str);
+    ok(hres == S_OK, "get_fontStyle failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "normal"), "get_fontStyle returned %s\n", dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_style2(IHTMLStyle2 *style2)
