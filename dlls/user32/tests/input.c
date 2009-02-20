@@ -203,7 +203,7 @@ static int KbdMessage( KEV kev, WPARAM *pwParam, LPARAM *plParam )
  * . retrieve the messages from the input queue
  * . verify
  */
-static void do_test( HWND hwnd, int seqnr, const KEV td[] )
+static BOOL do_test( HWND hwnd, int seqnr, const KEV td[] )
 {
     INPUT inputs[MAXKEYEVENTS];
     KMSG expmsg[MAXKEYEVENTS];
@@ -238,20 +238,25 @@ static void do_test( HWND hwnd, int seqnr, const KEV td[] )
             ok( msg.message == expmsg[i].message &&
                     msg.wParam == expmsg[i].wParam &&
                     msg.lParam == expmsg[i].lParam,
-                    "wrong message! expected:\n"
-                    "message[%d] %-15s wParam %04lx lParam %08lx\n",i,
-                    MSGNAME[(expmsg[i]).message - WM_KEYFIRST],
+                    "%u: wrong message %x expected %s wParam %04lx lParam %08lx\n",
+                    i, msg.message, MSGNAME[(expmsg[i]).message - WM_KEYFIRST],
                     expmsg[i].wParam, expmsg[i].lParam );
         }
         i++;
     }
     if (winetest_debug > 1)
         trace("%d messages retrieved\n", i);
+    if (!i && kmctr)
+    {
+        skip( "simulated keyboard input doesn't work\n" );
+        return FALSE;
+    }
     ok( i == kmctr, "message count is wrong: got %d expected: %d\n", i, kmctr);
+    return TRUE;
 }
 
 /* test all combinations of the specified key events */
-static void TestASet( HWND hWnd, int nrkev, const KEV kevdwn[], const KEV kevup[] )
+static BOOL TestASet( HWND hWnd, int nrkev, const KEV kevdwn[], const KEV kevup[] )
 {
     int i,j,k,l,m,n;
     static int count=0;
@@ -266,7 +271,7 @@ static void TestASet( HWND hWnd, int nrkev, const KEV kevdwn[], const KEV kevup[
                 kbuf[1] = kevdwn[1-i];
                 kbuf[2] = kevup[j];
                 kbuf[3] = kevup[1-j];
-                do_test( hWnd, count++, kbuf);
+                if (!do_test( hWnd, count++, kbuf)) return FALSE;
             }
         }
     }
@@ -288,7 +293,7 @@ static void TestASet( HWND hWnd, int nrkev, const KEV kevdwn[], const KEV kevup[
                                 kbuf[3] = kevup[l];
                                 kbuf[4] = kevup[m];
                                 kbuf[5] = kevup[n];
-                                do_test( hWnd, count++, kbuf);
+                                if (!do_test( hWnd, count++, kbuf)) return FALSE;
                             }
                         }
                     }
@@ -296,6 +301,7 @@ static void TestASet( HWND hWnd, int nrkev, const KEV kevdwn[], const KEV kevup[
             }
         }
     }
+    return TRUE;
 }
 
 /* test each set specified in the global testkeyset array */
@@ -303,8 +309,7 @@ static void TestSysKeys( HWND hWnd)
 {
     int i;
     for(i=0; testkeyset[i].nrkev;i++)
-        TestASet( hWnd, testkeyset[i].nrkev, testkeyset[i].keydwn,
-                testkeyset[i].keyup);
+        if (!TestASet( hWnd, testkeyset[i].nrkev, testkeyset[i].keydwn, testkeyset[i].keyup)) break;
 }
 
 static LRESULT CALLBACK WndProc( HWND hWnd, UINT msg, WPARAM wParam,
