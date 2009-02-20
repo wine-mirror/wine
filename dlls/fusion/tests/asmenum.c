@@ -181,8 +181,12 @@ static void test_CreateAssemblyEnum(void)
     ok(asmname != NULL, "Expected non-NULL asmname\n");
 
     /* pEnum is NULL */
-    hr = pCreateAssemblyEnum(NULL, NULL, asmname, ASM_CACHE_GAC, NULL);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+    if (0)
+    {
+        /* Crashes on .NET 1.x */
+        hr = pCreateAssemblyEnum(NULL, NULL, asmname, ASM_CACHE_GAC, NULL);
+        ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+    }
 
     /* pName is NULL */
     asmenum = NULL;
