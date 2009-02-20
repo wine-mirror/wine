@@ -263,7 +263,7 @@ static WINE_PLAYSOUND*  PlaySound_Alloc(const void* pszSound, HMODULE hmod,
 
 static DWORD WINAPI proc_PlaySound(LPVOID arg)
 {
-    WINE_PLAYSOUND*     wps = (WINE_PLAYSOUND*)arg;
+    WINE_PLAYSOUND*     wps = arg;
     BOOL		bRet = FALSE;
     HMMIO		hmmio = 0;
     MMCKINFO		ckMainRIFF;
@@ -302,7 +302,7 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
 
 	memset(&mminfo, 0, sizeof(mminfo));
 	mminfo.fccIOProc = FOURCC_MEM;
-	mminfo.pchBuffer = (LPSTR)data;
+	mminfo.pchBuffer = data;
 	mminfo.cchBuffer = -1; /* FIXME: when a resource, could grab real size */
 	TRACE("Memory sound %p\n", data);
 	hmmio = mmioOpenW(NULL, &mminfo, MMIO_READ);

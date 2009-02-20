@@ -69,7 +69,7 @@ static void DRIVER_Dump(const char *comment)
 
     for (lpDrv = lpDrvItemList; lpDrv != NULL; lpDrv = lpDrv->lpNextItem)
     {
-        TRACE("%p, magic %04lx, id %p, next %p\n", lpDrv, lpDrv->dwMagic, (void *)lpDrv->d.d32.dwDriverID, lpDrv->lpNextItem);
+        TRACE("%p, magic %04lx, id %p, next %p\n", lpDrv, lpDrv->dwMagic, lpDrv->d.d32.dwDriverID, lpDrv->lpNextItem);
     }
 
     LeaveCriticalSection( &mmdriver_lock );
@@ -143,10 +143,10 @@ static inline LRESULT DRIVER_SendMessage(LPWINE_DRIVER lpDrv, UINT msg,
             ret = pFnSendMessage16(lpDrv->d.d16.hDriver16, msg, lParam1, lParam2);
     } else {
         TRACE("Before call32 proc=%p drvrID=%08lx hDrv=%p wMsg=%04x p1=%08lx p2=%08lx\n", 
-              lpDrv->d.d32.lpDrvProc, lpDrv->d.d32.dwDriverID, (HDRVR)lpDrv, msg, lParam1, lParam2);
+              lpDrv->d.d32.lpDrvProc, lpDrv->d.d32.dwDriverID, lpDrv, msg, lParam1, lParam2);
         ret = lpDrv->d.d32.lpDrvProc(lpDrv->d.d32.dwDriverID, (HDRVR)lpDrv, msg, lParam1, lParam2);
         TRACE("After  call32 proc=%p drvrID=%08lx hDrv=%p wMsg=%04x p1=%08lx p2=%08lx => %08lx\n", 
-              lpDrv->d.d32.lpDrvProc, lpDrv->d.d32.dwDriverID, (HDRVR)lpDrv, msg, lParam1, lParam2, ret);
+              lpDrv->d.d32.lpDrvProc, lpDrv->d.d32.dwDriverID, lpDrv, msg, lParam1, lParam2, ret);
     }
     return ret;
 }

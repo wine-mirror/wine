@@ -363,7 +363,7 @@ UINT  MIXER_Open(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
     wmld = MMDRV_Alloc(sizeof(WINE_MIXER), MMDRV_MIXER, &hMix, &fdwOpen,
 		       &dwCallback, &dwInstance, bFrom32);
     wmld->uDeviceID = uDeviceID;
-    mod.hmx = (HMIXEROBJ)hMix;
+    mod.hmx = hMix;
 
     dwRet = MMDRV_Open(wmld, MXDM_OPEN, (DWORD)&mod, CALLBACK_FUNCTION);
 
@@ -464,7 +464,7 @@ UINT WINAPI mixerGetControlDetailsA(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdA
 	break;
     case MIXER_GETCONTROLDETAILSF_LISTTEXT:
 	{
-	    MIXERCONTROLDETAILS_LISTTEXTA *pDetailsA = (MIXERCONTROLDETAILS_LISTTEXTA *)lpmcdA->paDetails;
+            MIXERCONTROLDETAILS_LISTTEXTA *pDetailsA = lpmcdA->paDetails;
             MIXERCONTROLDETAILS_LISTTEXTW *pDetailsW;
 	    int size = max(1, lpmcdA->cChannels) * sizeof(MIXERCONTROLDETAILS_LISTTEXTW);
             unsigned int i;
@@ -926,7 +926,7 @@ static	LPWINE_MIDI	MIDI_OutAlloc(HMIDIOUT* lphMidiOut, DWORD_PTR* lpdwCallback,
 	*lphMidiOut = hMidiOut;
 
     if (lpwm) {
-	lpwm->mod.hMidi = (HMIDI) hMidiOut;
+        lpwm->mod.hMidi = hMidiOut;
 	lpwm->mod.dwCallback = *lpdwCallback;
 	lpwm->mod.dwInstance = *lpdwInstance;
 	lpwm->mod.dnDevNode = 0;
@@ -1253,7 +1253,7 @@ UINT MIDI_InOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD_PTR dwCallback,
     if (lpwm == NULL)
 	return MMSYSERR_NOMEM;
 
-    lpwm->mod.hMidi = (HMIDI) hMidiIn;
+    lpwm->mod.hMidi = hMidiIn;
     lpwm->mod.dwCallback = dwCallback;
     lpwm->mod.dwInstance = dwInstance;
 

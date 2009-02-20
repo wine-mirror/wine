@@ -2103,7 +2103,7 @@ static  WINMM_MapType	MCI_UnMapMsg16To32W(WORD uDevType, WORD wMsg, DWORD dwFlag
                                 mip32w->lpstrReturn, mip32w->dwRetSize / sizeof(WCHAR),
                                 MapSL(mip16->lpstrReturn), mip16->dwRetSize,
                                 NULL, NULL);
-            HeapFree(GetProcessHeap(), 0, (LPVOID)mip32w->lpstrReturn);
+            HeapFree(GetProcessHeap(), 0, mip32w->lpstrReturn);
             HeapFree(GetProcessHeap(), 0, (LPVOID)lParam);
         }
 	return WINMM_MAP_OK;
@@ -2116,7 +2116,7 @@ static  WINMM_MapType	MCI_UnMapMsg16To32W(WORD uDevType, WORD wMsg, DWORD dwFlag
                                 msip32w->lpstrReturn, msip32w->dwRetSize,
                                 MapSL(msip16->lpstrReturn), msip16->dwRetSize,
                                 NULL, NULL);
-            HeapFree(GetProcessHeap(), 0, (LPVOID)msip32w->lpstrReturn);
+            HeapFree(GetProcessHeap(), 0, msip32w->lpstrReturn);
             HeapFree(GetProcessHeap(), 0, (LPVOID)lParam);
         }
 	return WINMM_MAP_OK;
@@ -2194,7 +2194,7 @@ static	WINMM_MapType	MCI_MsgMapper32WTo16_Create(void** ptr, int size16, DWORD m
     if (!lp) {
 	return WINMM_MAP_NOMEM;
     }
-    p32 = (LPBYTE)(*ptr);
+    p32 = *ptr;
     if (keep) {
 	*(void**)lp = *ptr;
 	p16 = (LPBYTE)lp + sizeof(void**);

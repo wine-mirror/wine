@@ -164,10 +164,10 @@ static int TIME_MMSysTimeCallback(void)
         switch(timer->wFlags & (TIME_CALLBACK_EVENT_SET|TIME_CALLBACK_EVENT_PULSE))
         {
         case TIME_CALLBACK_EVENT_SET:
-            SetEvent((HANDLE)timer->lpFunc);
+            SetEvent(timer->lpFunc);
             break;
         case TIME_CALLBACK_EVENT_PULSE:
-            PulseEvent((HANDLE)timer->lpFunc);
+            PulseEvent(timer->lpFunc);
             break;
         case TIME_CALLBACK_FUNCTION:
             {

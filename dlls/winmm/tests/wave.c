@@ -569,7 +569,7 @@ static DWORD WINAPI callback_thread(LPVOID lpParameter)
     MSG msg;
 
     PeekMessageW( &msg, 0, 0, 0, PM_NOREMOVE );  /* make sure the thread has a message queue */
-    SetEvent((HANDLE)lpParameter);
+    SetEvent(lpParameter);
 
     while (GetMessage(&msg, 0, 0, 0)) {
         UINT message = msg.message;
@@ -578,9 +578,9 @@ static DWORD WINAPI callback_thread(LPVOID lpParameter)
             message == WOM_CLOSE || message == WM_USER || message == WM_APP,
             "GetMessage returned unexpected message: %u\n", message);
         if (message == WOM_OPEN || message == WOM_DONE || message == WOM_CLOSE)
-            SetEvent((HANDLE)lpParameter);
+            SetEvent(lpParameter);
         else if (message == WM_APP) {
-            SetEvent((HANDLE)lpParameter);
+            SetEvent(lpParameter);
             return 0;
         }
     }

@@ -1883,7 +1883,7 @@ extern DWORD	WINAPI	GetProcessFlags(DWORD);
  */
 static  WINE_MMTHREAD*	WINMM_GetmmThread(HANDLE16 h)
 {
-    return (WINE_MMTHREAD*)MapSL( MAKESEGPTR(h, 0) );
+    return MapSL(MAKESEGPTR(h, 0));
 }
 
 DWORD WINAPI WINE_mmThreadEntryPoint(LPVOID);
