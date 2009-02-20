@@ -1960,10 +1960,7 @@ static void test_negative_width(HDC hdc, const LOGFONTA *lf)
     MAT2 mat = { {0,1}, {0,0}, {0,0}, {0,1} };
 
     if(!pGetGlyphIndicesA)
-    {
-        skip("GetGlyphIndicesA is unavailable\n");
         return;
-    }
 
     /* negative widths are handled just as positive ones */
     lf2.lfWidth = -lf->lfWidth;
@@ -2507,6 +2504,10 @@ static void test_GetTextMetrics(void)
     LOGFONTA lf;
     HDC hdc;
     INT enumed;
+
+    /* Report only once */
+    if(!pGetGlyphIndicesA)
+        skip("GetGlyphIndicesA is unavailable, negative width will not be checked\n");
 
     hdc = GetDC(0);
 
