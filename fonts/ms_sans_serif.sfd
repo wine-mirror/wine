@@ -1,18 +1,23 @@
-SplineFontDB: 1.0
+SplineFontDB: 3.0
 FontName: ms_sans_serif
 FullName: MS Sans Serif
 FamilyName: MS Sans Serif
 Weight: Medium
 Copyright: Copyright (C) 2004 Huw D M Davies, Dmitry Timoshkov
-Comments: 2004-6-17: Created.
 Version: 001.000
 ItalicAngle: 0
 UnderlinePosition: -100
 UnderlineWidth: 50
 Ascent: 11
 Descent: 2
+LayerCount: 2
+Layer: 0 0 "Back" 1
+Layer: 1 0 "Fore" 0
 NeedsXUIDChange: 1
 FSType: 8
+OS2Version: 0
+OS2_WeightWidthSlopeOnly: 0
+OS2_UseTypoMetrics: 0
 PfmFamily: 33
 TTFWeight: 400
 TTFWidth: 5
@@ -33,2030 +38,2758 @@ HheadAOffset: 1
 HheadDescent: 0
 HheadDOffset: 1
 OS2Vendor: 'Wine'
-ScriptLang: 2
- 1 DFLT 1 dflt 
- 1 latn 1 dflt 
-TtfTable: cvt  4
-!!!!)
-EndTtf
-LangName: 1033 "" "" "" "FontForge 1.0 : MS Sans Serif : 14-6-2004" "" "" "" "" "Created with FontForge 1.0 (http://fontforge.sourceforge.net)" "Huw D M Davies" "" "http://www.winehq.org" "" "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.+AAoA +AAoA-This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.+AAoA +AAoA-You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA+AAoA" "http://www.gnu.org/licenses/lgpl.html" 
+Lookup: 4 0 1 "'liga' Standard Ligatures in Latin lookup 0" {"'liga' Standard Ligatures in Latin lookup 0 subtable" } ['liga' ('latn' <'dflt' > ) ]
+Lookup: 4 0 1 "'liga' Standard Ligatures lookup 1" {"'liga' Standard Ligatures lookup 1 subtable" } ['liga' ('DFLT' <'dflt' > ) ]
+Lookup: 4 0 0 "'frac' Diagonal Fractions lookup 2" {"'frac' Diagonal Fractions lookup 2 subtable" } ['frac' ('DFLT' <'dflt' > ) ]
+DEI: 91125
+ShortTable: cvt  2
+  0
+  8
+EndShort
+LangName: 1033 "" "" "" "FontForge 1.0 : MS Sans Serif : 14-6-2004" "" "" "" "" "Created with FontForge 1.0 (http://fontforge.sourceforge.net)" "Huw D M Davies" "" "http://www.winehq.org" "" "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.+AAoA +AAoA-This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.+AAoA +AAoA-You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA+AAoA" "http://www.gnu.org/licenses/lgpl.html"
 Encoding: UnicodeBmp
 UnicodeInterp: none
 NameList: Adobe Glyph List
 DisplaySize: 13
 AntiAlias: 0
 FitToEm: 1
-WinInfo: 0 34 13
+WinInfo: 34 34 13
 OnlyBitmaps: 1
 BeginChars: 65536 373
+
 StartChar: space
 Encoding: 32 32 0
 Width: 2
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: exclam
 Encoding: 33 33 1
 Width: 2
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: quotedbl
 Encoding: 34 34 2
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: numbersign
 Encoding: 35 35 3
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: dollar
 Encoding: 36 36 4
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: percent
 Encoding: 37 37 5
 Width: 9
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: ampersand
 Encoding: 38 38 6
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: quotesingle
 Encoding: 39 39 7
 Width: 1
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: parenleft
 Encoding: 40 40 8
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: parenright
 Encoding: 41 41 9
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: asterisk
 Encoding: 42 42 10
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: plus
 Encoding: 43 43 11
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: comma
 Encoding: 44 44 12
 Width: 2
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: hyphen
 Encoding: 45 45 13
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: period
 Encoding: 46 46 14
 Width: 2
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: slash
 Encoding: 47 47 15
 Width: 2
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: zero
 Encoding: 48 48 16
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: one
 Encoding: 49 49 17
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: two
 Encoding: 50 50 18
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: three
 Encoding: 51 51 19
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: four
 Encoding: 52 52 20
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: five
 Encoding: 53 53 21
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: six
 Encoding: 54 54 22
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: seven
 Encoding: 55 55 23
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: eight
 Encoding: 56 56 24
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: nine
 Encoding: 57 57 25
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: colon
 Encoding: 58 58 26
 Width: 2
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: semicolon
 Encoding: 59 59 27
 Width: 2
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: less
 Encoding: 60 60 28
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: equal
 Encoding: 61 61 29
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: greater
 Encoding: 62 62 30
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: question
 Encoding: 63 63 31
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: at
 Encoding: 64 64 32
 Width: 10
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: A
 Encoding: 65 65 33
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: B
 Encoding: 66 66 34
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: C
 Encoding: 67 67 35
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: D
 Encoding: 68 68 36
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: E
 Encoding: 69 69 37
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: F
 Encoding: 70 70 38
 Width: 6
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: G
 Encoding: 71 71 39
 Width: 8
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: H
 Encoding: 72 72 40
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: I
 Encoding: 73 73 41
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: J
 Encoding: 74 74 42
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: K
 Encoding: 75 75 43
 Width: 6
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: L
 Encoding: 76 76 44
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: M
 Encoding: 77 77 45
 Width: 8
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: N
 Encoding: 78 78 46
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: O
 Encoding: 79 79 47
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: P
 Encoding: 80 80 48
 Width: 6
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: Q
 Encoding: 81 81 49
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: R
 Encoding: 82 82 50
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: S
 Encoding: 83 83 51
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: T
 Encoding: 84 84 52
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: U
 Encoding: 85 85 53
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: V
 Encoding: 86 86 54
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: W
 Encoding: 87 87 55
 Width: 9
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: X
 Encoding: 88 88 56
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: Y
 Encoding: 89 89 57
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: Z
 Encoding: 90 90 58
 Width: 6
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: bracketleft
 Encoding: 91 91 59
 Width: 2
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: backslash
 Encoding: 92 92 60
 Width: 2
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: bracketright
 Encoding: 93 93 61
 Width: 2
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: asciicircum
 Encoding: 94 94 62
 Width: 4
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: underscore
 Encoding: 95 95 63
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: grave
 Encoding: 96 96 64
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: a
 Encoding: 97 97 65
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: b
 Encoding: 98 98 66
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: c
 Encoding: 99 99 67
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: d
 Encoding: 100 100 68
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: e
 Encoding: 101 101 69
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: f
 Encoding: 102 102 70
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: g
 Encoding: 103 103 71
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: h
 Encoding: 104 104 72
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: i
 Encoding: 105 105 73
 Width: 1
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: j
 Encoding: 106 106 74
 Width: 1
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: k
 Encoding: 107 107 75
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: l
 Encoding: 108 108 76
 Width: 1
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: m
 Encoding: 109 109 77
 Width: 8
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: n
 Encoding: 110 110 78
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: o
 Encoding: 111 111 79
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: p
 Encoding: 112 112 80
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: q
 Encoding: 113 113 81
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: r
 Encoding: 114 114 82
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: s
 Encoding: 115 115 83
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: t
 Encoding: 116 116 84
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: u
 Encoding: 117 117 85
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: v
 Encoding: 118 118 86
 Width: 4
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: w
 Encoding: 119 119 87
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: x
 Encoding: 120 120 88
 Width: 4
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: y
 Encoding: 121 121 89
 Width: 4
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: z
 Encoding: 122 122 90
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: braceleft
 Encoding: 123 123 91
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: bar
 Encoding: 124 124 92
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: braceright
 Encoding: 125 125 93
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: asciitilde
 Encoding: 126 126 94
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: uni007F
 Encoding: 127 127 95
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: uni0081
 Encoding: 129 129 96
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: uni0083
 Encoding: 131 131 97
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: uni0088
 Encoding: 136 136 98
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: uni008F
 Encoding: 143 143 99
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: uni0090
 Encoding: 144 144 100
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: uni0098
 Encoding: 152 152 101
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: uni009E
 Encoding: 158 158 102
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: yen
 Encoding: 165 165 103
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: brokenbar
 Encoding: 166 166 104
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: section
 Encoding: 167 167 105
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: dieresis
 Encoding: 168 168 106
 Width: 3
 Flags: W
-Ligature: 0 0 'liga' space uni0308
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures lookup 1 subtable" space uni0308
 EndChar
+
 StartChar: copyright
 Encoding: 169 169 107
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: ordfeminine
 Encoding: 170 170 108
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: guillemotleft
 Encoding: 171 171 109
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: logicalnot
 Encoding: 172 172 110
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: softhyphen
 Encoding: 173 173 111
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: registered
 Encoding: 174 174 112
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: macron
 Encoding: 175 175 113
 Width: 5
 Flags: W
-Ligature: 0 0 'liga' space uni0304
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures lookup 1 subtable" space uni0304
 EndChar
+
 StartChar: degree
 Encoding: 176 176 114
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: plusminus
 Encoding: 177 177 115
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: uni00B2
 Encoding: 178 178 116
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: uni00B3
 Encoding: 179 179 117
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: acute
 Encoding: 180 180 118
 Width: 3
 Flags: W
-Ligature: 0 0 'liga' space acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures lookup 1 subtable" space acutecomb
 EndChar
+
 StartChar: mu
 Encoding: 181 181 119
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: paragraph
 Encoding: 182 182 120
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: periodcentered
 Encoding: 183 183 121
 Width: 2
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: cedilla
 Encoding: 184 184 122
 Width: 3
 Flags: W
-Ligature: 0 0 'liga' space uni0327
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures lookup 1 subtable" space uni0327
 EndChar
+
 StartChar: uni00B9
 Encoding: 185 185 123
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: ordmasculine
 Encoding: 186 186 124
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: guillemotright
 Encoding: 187 187 125
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: onequarter
 Encoding: 188 188 126
 Width: 7
 Flags: W
-Ligature: 0 0 'frac' one slash four
-Ligature: 0 0 'frac' one fraction four
+LayerCount: 2
+Ligature2: "'frac' Diagonal Fractions lookup 2 subtable" one slash four
+Ligature2: "'frac' Diagonal Fractions lookup 2 subtable" one fraction four
 EndChar
+
 StartChar: onehalf
 Encoding: 189 189 127
 Width: 7
 Flags: W
-Ligature: 0 0 'frac' one slash two
-Ligature: 0 0 'frac' one fraction two
+LayerCount: 2
+Ligature2: "'frac' Diagonal Fractions lookup 2 subtable" one slash two
+Ligature2: "'frac' Diagonal Fractions lookup 2 subtable" one fraction two
 EndChar
+
 StartChar: threequarters
 Encoding: 190 190 128
 Width: 7
 Flags: W
-Ligature: 0 0 'frac' three slash four
-Ligature: 0 0 'frac' three fraction four
+LayerCount: 2
+Ligature2: "'frac' Diagonal Fractions lookup 2 subtable" three slash four
+Ligature2: "'frac' Diagonal Fractions lookup 2 subtable" three fraction four
 EndChar
+
 StartChar: questiondown
 Encoding: 191 191 129
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: Agrave
 Encoding: 192 192 130
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' A gravecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" A gravecomb
 EndChar
+
 StartChar: Aacute
 Encoding: 193 193 131
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' A acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" A acutecomb
 EndChar
+
 StartChar: Acircumflex
 Encoding: 194 194 132
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' A uni0302
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" A uni0302
 EndChar
+
 StartChar: Atilde
 Encoding: 195 195 133
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' A tildecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" A tildecomb
 EndChar
+
 StartChar: Adieresis
 Encoding: 196 196 134
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' A uni0308
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" A uni0308
 EndChar
+
 StartChar: Aring
 Encoding: 197 197 135
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' A uni030A
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" A uni030A
 EndChar
+
 StartChar: AE
 Encoding: 198 198 136
 Width: 10
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: Ccedilla
 Encoding: 199 199 137
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' C uni0327
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" C uni0327
 EndChar
+
 StartChar: Egrave
 Encoding: 200 200 138
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' E gravecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" E gravecomb
 EndChar
+
 StartChar: Eacute
 Encoding: 201 201 139
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' E acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" E acutecomb
 EndChar
+
 StartChar: Ecircumflex
 Encoding: 202 202 140
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' E uni0302
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" E uni0302
 EndChar
+
 StartChar: Edieresis
 Encoding: 203 203 141
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' E uni0308
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" E uni0308
 EndChar
+
 StartChar: Igrave
 Encoding: 204 204 142
 Width: 3
 Flags: W
-Ligature: 0 1 'liga' I gravecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" I gravecomb
 EndChar
+
 StartChar: Iacute
 Encoding: 205 205 143
 Width: 3
 Flags: W
-Ligature: 0 1 'liga' I acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" I acutecomb
 EndChar
+
 StartChar: Icircumflex
 Encoding: 206 206 144
 Width: 3
 Flags: W
-Ligature: 0 1 'liga' I uni0302
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" I uni0302
 EndChar
+
 StartChar: Idieresis
 Encoding: 207 207 145
 Width: 3
 Flags: W
-Ligature: 0 1 'liga' I uni0308
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" I uni0308
 EndChar
+
 StartChar: Eth
 Encoding: 208 208 146
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: Ntilde
 Encoding: 209 209 147
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' N tildecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" N tildecomb
 EndChar
+
 StartChar: Ograve
 Encoding: 210 210 148
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' O gravecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" O gravecomb
 EndChar
+
 StartChar: Oacute
 Encoding: 211 211 149
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' O acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" O acutecomb
 EndChar
+
 StartChar: Ocircumflex
 Encoding: 212 212 150
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' O uni0302
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" O uni0302
 EndChar
+
 StartChar: Otilde
 Encoding: 213 213 151
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' O tildecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" O tildecomb
 EndChar
+
 StartChar: Odieresis
 Encoding: 214 214 152
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' O uni0308
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" O uni0308
 EndChar
+
 StartChar: multiply
 Encoding: 215 215 153
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: Oslash
 Encoding: 216 216 154
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: Ugrave
 Encoding: 217 217 155
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' U gravecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" U gravecomb
 EndChar
+
 StartChar: Uacute
 Encoding: 218 218 156
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' U acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" U acutecomb
 EndChar
+
 StartChar: Ucircumflex
 Encoding: 219 219 157
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' U uni0302
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" U uni0302
 EndChar
+
 StartChar: Udieresis
 Encoding: 220 220 158
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' U uni0308
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" U uni0308
 EndChar
+
 StartChar: Yacute
 Encoding: 221 221 159
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' Y acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" Y acutecomb
 EndChar
+
 StartChar: Thorn
 Encoding: 222 222 160
 Width: 6
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: germandbls
 Encoding: 223 223 161
 Width: 6
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: agrave
 Encoding: 224 224 162
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' a gravecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" a gravecomb
 EndChar
+
 StartChar: aacute
 Encoding: 225 225 163
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' a acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" a acutecomb
 EndChar
+
 StartChar: acircumflex
 Encoding: 226 226 164
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' a uni0302
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" a uni0302
 EndChar
+
 StartChar: atilde
 Encoding: 227 227 165
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' a tildecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" a tildecomb
 EndChar
+
 StartChar: adieresis
 Encoding: 228 228 166
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' a uni0308
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" a uni0308
 EndChar
+
 StartChar: aring
 Encoding: 229 229 167
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' a uni030A
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" a uni030A
 EndChar
+
 StartChar: ae
 Encoding: 230 230 168
 Width: 9
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: ccedilla
 Encoding: 231 231 169
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' c uni0327
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" c uni0327
 EndChar
+
 StartChar: egrave
 Encoding: 232 232 170
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' e gravecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" e gravecomb
 EndChar
+
 StartChar: eacute
 Encoding: 233 233 171
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' e acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" e acutecomb
 EndChar
+
 StartChar: ecircumflex
 Encoding: 234 234 172
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' e uni0302
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" e uni0302
 EndChar
+
 StartChar: edieresis
 Encoding: 235 235 173
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' e uni0308
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" e uni0308
 EndChar
+
 StartChar: igrave
 Encoding: 236 236 174
 Width: 1
 Flags: W
-Ligature: 0 1 'liga' i gravecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" i gravecomb
 EndChar
+
 StartChar: iacute
 Encoding: 237 237 175
 Width: 1
 Flags: W
-Ligature: 0 1 'liga' i acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" i acutecomb
 EndChar
+
 StartChar: icircumflex
 Encoding: 238 238 176
 Width: 1
 Flags: W
-Ligature: 0 1 'liga' i uni0302
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" i uni0302
 EndChar
+
 StartChar: idieresis
 Encoding: 239 239 177
 Width: 1
 Flags: W
-Ligature: 0 1 'liga' i uni0308
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" i uni0308
 EndChar
+
 StartChar: eth
 Encoding: 240 240 178
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: ntilde
 Encoding: 241 241 179
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' n tildecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" n tildecomb
 EndChar
+
 StartChar: ograve
 Encoding: 242 242 180
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' o gravecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" o gravecomb
 EndChar
+
 StartChar: oacute
 Encoding: 243 243 181
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' o acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" o acutecomb
 EndChar
+
 StartChar: ocircumflex
 Encoding: 244 244 182
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' o uni0302
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" o uni0302
 EndChar
+
 StartChar: otilde
 Encoding: 245 245 183
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' o tildecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" o tildecomb
 EndChar
+
 StartChar: odieresis
 Encoding: 246 246 184
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' o uni0308
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" o uni0308
 EndChar
+
 StartChar: divide
 Encoding: 247 247 185
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: oslash
 Encoding: 248 248 186
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: ugrave
 Encoding: 249 249 187
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' u gravecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" u gravecomb
 EndChar
+
 StartChar: uacute
 Encoding: 250 250 188
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' u acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" u acutecomb
 EndChar
+
 StartChar: ucircumflex
 Encoding: 251 251 189
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' u uni0302
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" u uni0302
 EndChar
+
 StartChar: udieresis
 Encoding: 252 252 190
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' u uni0308
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" u uni0308
 EndChar
+
 StartChar: yacute
 Encoding: 253 253 191
 Width: 4
 Flags: W
-Ligature: 0 1 'liga' y acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" y acutecomb
 EndChar
+
 StartChar: thorn
 Encoding: 254 254 192
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: ydieresis
 Encoding: 255 255 193
 Width: 4
 Flags: W
-Ligature: 0 1 'liga' y uni0308
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" y uni0308
 EndChar
+
 StartChar: Abreve
 Encoding: 258 258 194
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' A uni0306
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" A uni0306
 EndChar
+
 StartChar: abreve
 Encoding: 259 259 195
 Width: 6
 Flags: W
-Ligature: 0 1 'liga' a uni0306
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" a uni0306
 EndChar
+
 StartChar: Aogonek
 Encoding: 260 260 196
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' A uni0328
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" A uni0328
 EndChar
+
 StartChar: aogonek
 Encoding: 261 261 197
 Width: 6
 Flags: W
-Ligature: 0 1 'liga' a uni0328
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" a uni0328
 EndChar
+
 StartChar: Cacute
 Encoding: 262 262 198
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' C acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" C acutecomb
 EndChar
+
 StartChar: cacute
 Encoding: 263 263 199
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' c acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" c acutecomb
 EndChar
+
 StartChar: Ccaron
 Encoding: 268 268 200
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' C uni030C
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" C uni030C
 EndChar
+
 StartChar: ccaron
 Encoding: 269 269 201
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' c uni030C
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" c uni030C
 EndChar
+
 StartChar: Dcaron
 Encoding: 270 270 202
 Width: 8
 Flags: W
-Ligature: 0 1 'liga' D uni030C
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" D uni030C
 EndChar
+
 StartChar: dcaron
 Encoding: 271 271 203
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' d uni030C
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" d uni030C
 EndChar
+
 StartChar: Dcroat
 Encoding: 272 272 204
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: dcroat
 Encoding: 273 273 205
 Width: 6
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: Eogonek
 Encoding: 280 280 206
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' E uni0328
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" E uni0328
 EndChar
+
 StartChar: eogonek
 Encoding: 281 281 207
 Width: 6
 Flags: W
-Ligature: 0 1 'liga' e uni0328
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" e uni0328
 EndChar
+
 StartChar: Ecaron
 Encoding: 282 282 208
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' E uni030C
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" E uni030C
 EndChar
+
 StartChar: ecaron
 Encoding: 283 283 209
 Width: 6
 Flags: W
-Ligature: 0 1 'liga' e uni030C
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" e uni030C
 EndChar
+
 StartChar: Lacute
 Encoding: 313 313 210
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' L acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" L acutecomb
 EndChar
+
 StartChar: lacute
 Encoding: 314 314 211
 Width: 2
 Flags: W
-Ligature: 0 1 'liga' l acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" l acutecomb
 EndChar
+
 StartChar: Lcaron
 Encoding: 317 317 212
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' L uni030C
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" L uni030C
 EndChar
+
 StartChar: lcaron
 Encoding: 318 318 213
 Width: 3
 Flags: W
-Ligature: 0 1 'liga' l uni030C
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" l uni030C
 EndChar
+
 StartChar: Lslash
 Encoding: 321 321 214
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: lslash
 Encoding: 322 322 215
 Width: 2
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: Nacute
 Encoding: 323 323 216
 Width: 8
 Flags: W
-Ligature: 0 1 'liga' N acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" N acutecomb
 EndChar
+
 StartChar: nacute
 Encoding: 324 324 217
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' n acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" n acutecomb
 EndChar
+
 StartChar: Ncaron
 Encoding: 327 327 218
 Width: 8
 Flags: W
-Ligature: 0 1 'liga' N uni030C
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" N uni030C
 EndChar
+
 StartChar: ncaron
 Encoding: 328 328 219
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' n uni030C
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" n uni030C
 EndChar
+
 StartChar: Ohungarumlaut
 Encoding: 336 336 220
 Width: 8
 Flags: W
-Ligature: 0 1 'liga' O uni030B
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" O uni030B
 EndChar
+
 StartChar: ohungarumlaut
 Encoding: 337 337 221
 Width: 6
 Flags: W
-Ligature: 0 1 'liga' o uni030B
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" o uni030B
 EndChar
+
 StartChar: afii10049
 Encoding: 1071 1071 222
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10065
 Encoding: 1072 1072 223
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10066
 Encoding: 1073 1073 224
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10067
 Encoding: 1074 1074 225
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10068
 Encoding: 1075 1075 226
 Width: 4
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10069
 Encoding: 1076 1076 227
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10070
 Encoding: 1077 1077 228
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10072
 Encoding: 1078 1078 229
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10073
 Encoding: 1079 1079 230
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10074
 Encoding: 1080 1080 231
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10075
 Encoding: 1081 1081 232
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10076
 Encoding: 1082 1082 233
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10077
 Encoding: 1083 1083 234
 Width: 6
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10078
 Encoding: 1084 1084 235
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10079
 Encoding: 1085 1085 236
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10080
 Encoding: 1086 1086 237
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10081
 Encoding: 1087 1087 238
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10082
 Encoding: 1088 1088 239
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10083
 Encoding: 1089 1089 240
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10084
 Encoding: 1090 1090 241
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10085
 Encoding: 1091 1091 242
 Width: 4
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10086
 Encoding: 1092 1092 243
 Width: 9
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10087
 Encoding: 1093 1093 244
 Width: 4
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10088
 Encoding: 1094 1094 245
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10089
 Encoding: 1095 1095 246
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10090
 Encoding: 1096 1096 247
 Width: 8
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10091
 Encoding: 1097 1097 248
 Width: 8
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10092
 Encoding: 1098 1098 249
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10093
 Encoding: 1099 1099 250
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10094
 Encoding: 1100 1100 251
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10095
 Encoding: 1101 1101 252
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10096
 Encoding: 1102 1102 253
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10097
 Encoding: 1103 1103 254
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: uni008D
 Encoding: 141 141 255
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: uni008E
 Encoding: 142 142 256
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: uni009D
 Encoding: 157 157 257
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: nonbreakingspace
 Encoding: 160 160 258
 Width: 2
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: exclamdown
 Encoding: 161 161 259
 Width: 2
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: cent
 Encoding: 162 162 260
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: sterling
 Encoding: 163 163 261
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: currency
 Encoding: 164 164 262
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: OE
 Encoding: 338 338 263
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: oe
 Encoding: 339 339 264
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: Racute
 Encoding: 340 340 265
 Width: 8
 Flags: W
-Ligature: 0 1 'liga' R acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" R acutecomb
 EndChar
+
 StartChar: racute
 Encoding: 341 341 266
 Width: 3
 Flags: W
-Ligature: 0 1 'liga' r acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" r acutecomb
 EndChar
+
 StartChar: Rcaron
 Encoding: 344 344 267
 Width: 8
 Flags: W
-Ligature: 0 1 'liga' R uni030C
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" R uni030C
 EndChar
+
 StartChar: rcaron
 Encoding: 345 345 268
 Width: 3
 Flags: W
-Ligature: 0 1 'liga' r uni030C
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" r uni030C
 EndChar
+
 StartChar: Sacute
 Encoding: 346 346 269
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' S acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" S acutecomb
 EndChar
+
 StartChar: sacute
 Encoding: 347 347 270
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' s acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" s acutecomb
 EndChar
+
 StartChar: Scedilla
 Encoding: 350 350 271
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' S uni0327
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" S uni0327
 EndChar
+
 StartChar: scedilla
 Encoding: 351 351 272
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' s uni0327
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" s uni0327
 EndChar
+
 StartChar: Scaron
 Encoding: 352 352 273
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' S uni030C
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" S uni030C
 EndChar
+
 StartChar: scaron
 Encoding: 353 353 274
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' s uni030C
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" s uni030C
 EndChar
+
 StartChar: Tcommaaccent
 Encoding: 354 354 275
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' T uni0327
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" T uni0327
 EndChar
+
 StartChar: tcommaaccent
 Encoding: 355 355 276
 Width: 2
 Flags: W
-Ligature: 0 1 'liga' t uni0327
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" t uni0327
 EndChar
+
 StartChar: Tcaron
 Encoding: 356 356 277
 Width: 7
 Flags: W
-Ligature: 0 1 'liga' T uni030C
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" T uni030C
 EndChar
+
 StartChar: tcaron
 Encoding: 357 357 278
 Width: 3
 Flags: W
-Ligature: 0 1 'liga' t uni030C
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" t uni030C
 EndChar
+
 StartChar: Uring
 Encoding: 366 366 279
 Width: 8
 Flags: W
-Ligature: 0 1 'liga' U uni030A
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" U uni030A
 EndChar
+
 StartChar: uring
 Encoding: 367 367 280
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' u uni030A
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" u uni030A
 EndChar
+
 StartChar: Uhungarumlaut
 Encoding: 368 368 281
 Width: 8
 Flags: W
-Ligature: 0 1 'liga' U uni030B
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" U uni030B
 EndChar
+
 StartChar: uhungarumlaut
 Encoding: 369 369 282
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' u uni030B
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" u uni030B
 EndChar
+
 StartChar: Ydieresis
 Encoding: 376 376 283
 Width: 3
 Flags: W
-Ligature: 0 1 'liga' Y uni0308
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" Y uni0308
 EndChar
+
 StartChar: Zacute
 Encoding: 377 377 284
 Width: 6
 Flags: W
-Ligature: 0 1 'liga' Z acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" Z acutecomb
 EndChar
+
 StartChar: zacute
 Encoding: 378 378 285
 Width: 4
 Flags: W
-Ligature: 0 1 'liga' z acutecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" z acutecomb
 EndChar
+
 StartChar: Zdotaccent
 Encoding: 379 379 286
 Width: 6
 Flags: W
-Ligature: 0 1 'liga' Z uni0307
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" Z uni0307
 EndChar
+
 StartChar: zdotaccent
 Encoding: 380 380 287
 Width: 4
 Flags: W
-Ligature: 0 1 'liga' z uni0307
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" z uni0307
 EndChar
+
 StartChar: Zcaron
 Encoding: 381 381 288
 Width: 6
 Flags: W
-Ligature: 0 1 'liga' Z uni030C
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" Z uni030C
 EndChar
+
 StartChar: zcaron
 Encoding: 382 382 289
 Width: 5
 Flags: W
-Ligature: 0 1 'liga' z uni030C
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" z uni030C
 EndChar
+
 StartChar: florin
 Encoding: 402 402 290
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: circumflex
 Encoding: 710 710 291
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: caron
 Encoding: 711 711 292
 Width: 4
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: breve
 Encoding: 728 728 293
 Width: 4
 Flags: W
-Ligature: 0 0 'liga' space uni0306
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures lookup 1 subtable" space uni0306
 EndChar
+
 StartChar: dotaccent
 Encoding: 729 729 294
 Width: 2
 Flags: W
-Ligature: 0 0 'liga' space uni0307
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures lookup 1 subtable" space uni0307
 EndChar
+
 StartChar: ogonek
 Encoding: 731 731 295
 Width: 2
 Flags: W
-Ligature: 0 0 'liga' space uni0328
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures lookup 1 subtable" space uni0328
 EndChar
+
 StartChar: tilde
 Encoding: 732 732 296
 Width: 3
 Flags: W
-Ligature: 0 0 'liga' space tildecomb
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures lookup 1 subtable" space tildecomb
 EndChar
+
 StartChar: hungarumlaut
 Encoding: 733 733 297
 Width: 5
 Flags: W
-Ligature: 0 0 'liga' space uni030B
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures lookup 1 subtable" space uni030B
 EndChar
+
 StartChar: afii10017
 Encoding: 1040 1040 298
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10018
 Encoding: 1041 1041 299
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10019
 Encoding: 1042 1042 300
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10020
 Encoding: 1043 1043 301
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10021
 Encoding: 1044 1044 302
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10022
 Encoding: 1045 1045 303
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10024
 Encoding: 1046 1046 304
 Width: 8
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10025
 Encoding: 1047 1047 305
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10026
 Encoding: 1048 1048 306
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10027
 Encoding: 1049 1049 307
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10028
 Encoding: 1050 1050 308
 Width: 6
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10029
 Encoding: 1051 1051 309
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10030
 Encoding: 1052 1052 310
 Width: 8
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10031
 Encoding: 1053 1053 311
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10032
 Encoding: 1054 1054 312
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10033
 Encoding: 1055 1055 313
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10034
 Encoding: 1056 1056 314
 Width: 6
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10035
 Encoding: 1057 1057 315
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10036
 Encoding: 1058 1058 316
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10037
 Encoding: 1059 1059 317
 Width: 6
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10038
 Encoding: 1060 1060 318
 Width: 9
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10039
 Encoding: 1061 1061 319
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10040
 Encoding: 1062 1062 320
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10041
 Encoding: 1063 1063 321
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10042
 Encoding: 1064 1064 322
 Width: 8
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10043
 Encoding: 1065 1065 323
 Width: 8
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10044
 Encoding: 1066 1066 324
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10045
 Encoding: 1067 1067 325
 Width: 8
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10046
 Encoding: 1068 1068 326
 Width: 6
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10047
 Encoding: 1069 1069 327
 Width: 7
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10048
 Encoding: 1070 1070 328
 Width: 9
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: endash
 Encoding: 8211 8211 329
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: emdash
 Encoding: 8212 8212 330
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: quoteleft
 Encoding: 8216 8216 331
 Width: 2
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: quoteright
 Encoding: 8217 8217 332
 Width: 2
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: quotesinglbase
 Encoding: 8218 8218 333
 Width: 2
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: quotedblleft
 Encoding: 8220 8220 334
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: quotedblright
 Encoding: 8221 8221 335
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: quotedblbase
 Encoding: 8222 8222 336
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: dagger
 Encoding: 8224 8224 337
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: daggerdbl
 Encoding: 8225 8225 338
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: bullet
 Encoding: 8226 8226 339
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: ellipsis
 Encoding: 8230 8230 340
 Width: 3
 Flags: W
-Ligature: 0 0 'liga' period period period
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures lookup 1 subtable" period period period
 EndChar
+
 StartChar: perthousand
 Encoding: 8240 8240 341
 Width: 10
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: guilsinglleft
 Encoding: 8249 8249 342
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: guilsinglright
 Encoding: 8250 8250 343
 Width: 3
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: Euro
 Encoding: 8364 8364 344
 Width: 5
 Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: trademark
 Encoding: 8482 8482 345
 Width: 6
 Flags: W
-Ligature: 0 0 'liga' T M
+LayerCount: 2
+Ligature2: "'liga' Standard Ligatures lookup 1 subtable" T M
 EndChar
+
 StartChar: Gbreve
 Encoding: 286 286 346
 Width: 8
 Flags: W
-TeX: 71 0 0 0
+TeX: 71 0
+LayerCount: 2
 EndChar
+
 StartChar: gbreve
 Encoding: 287 287 347
 Width: 5
 Flags: W
-TeX: 103 0 0 0
+TeX: 103 0
+LayerCount: 2
 EndChar
+
 StartChar: Idotaccent
 Encoding: 304 304 348
 Width: 3
 Flags: W
-TeX: 73 0 0 0
+TeX: 73 0
+LayerCount: 2
 EndChar
+
 StartChar: dotlessi
 Encoding: 305 305 349
 Width: 1
 Flags: W
-TeX: 100 0 0 0
+TeX: 100 0
+LayerCount: 2
 EndChar
+
 StartChar: afii61352
 Encoding: 8470 8470 350
 Width: 9
 Flags: W
-TeX: 97 0 0 0
+TeX: 97 0
+LayerCount: 2
 EndChar
+
 StartChar: afii10023
 Encoding: 1025 1025 351
 Width: 7
 Flags: W
-TeX: 97 0 0 0
+TeX: 97 0
+LayerCount: 2
 EndChar
+
 StartChar: afii10071
 Encoding: 1105 1105 352
 Width: 5
 Flags: W
-TeX: 97 0 0 0
+TeX: 97 0
+LayerCount: 2
 EndChar
+
 StartChar: scommaaccent
 Encoding: 537 537 353
 Width: 13
-TeX: 0 0 0 0
+LayerCount: 2
 EndChar
+
 StartChar: afii10103
 Encoding: 1110 1110 354
 Width: 13
-Flags: HW
-TeX: 0 0 0 0
+Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10104
 Encoding: 1111 1111 355
 Width: 13
-Flags: HW
-TeX: 0 0 0 0
+Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10101
 Encoding: 1108 1108 356
 Width: 13
-Flags: HW
-TeX: 0 0 0 0
+Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10053
 Encoding: 1028 1028 357
 Width: 13
-Flags: HW
-TeX: 0 0 0 0
+Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10055
 Encoding: 1030 1030 358
 Width: 13
-Flags: HW
-TeX: 0 0 0 0
+Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10056
 Encoding: 1031 1031 359
 Width: 13
 Flags: W
-TeX: 0 0 0 0
+LayerCount: 2
 EndChar
+
 StartChar: afii10062
 Encoding: 1038 1038 360
 Width: 13
-Flags: HW
-TeX: 0 0 0 0
+Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10110
 Encoding: 1118 1118 361
 Width: 13
-Flags: HW
-TeX: 0 0 0 0
+Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10050
 Encoding: 1168 1168 362
 Width: 13
-Flags: HW
-TeX: 0 0 0 0
+Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: afii10098
 Encoding: 1169 1169 363
 Width: 13
-Flags: HW
-TeX: 0 0 0 0
+Flags: W
+LayerCount: 2
 EndChar
+
 StartChar: Edotaccent
 Encoding: 278 278 364
 Width: 13
 Flags: W
-TeX: 0 0 0 0
+LayerCount: 2
 EndChar
+
 StartChar: edotaccent
 Encoding: 279 279 365
 Width: 13
 Flags: W
-TeX: 0 0 0 0
+LayerCount: 2
 EndChar
+
 StartChar: Iogonek
 Encoding: 302 302 366
 Width: 13
 Flags: W
-TeX: 0 0 0 0
+LayerCount: 2
 EndChar
+
 StartChar: iogonek
 Encoding: 303 303 367
 Width: 13
 Flags: W
-TeX: 0 0 0 0
+LayerCount: 2
 EndChar
+
 StartChar: Umacron
 Encoding: 362 362 368
 Width: 13
 Flags: W
-TeX: 0 0 0 0
+LayerCount: 2
 EndChar
+
 StartChar: umacron
 Encoding: 363 363 369
 Width: 13
 Flags: W
-TeX: 0 0 0 0
+LayerCount: 2
 EndChar
+
 StartChar: Uogonek
 Encoding: 370 370 370
 Width: 13
 Flags: W
-TeX: 0 0 0 0
+LayerCount: 2
 EndChar
+
 StartChar: uogonek
 Encoding: 371 371 371
 Width: 13
 Flags: W
-TeX: 0 0 0 0
+LayerCount: 2
 EndChar
+
 StartChar: uni001B
 Encoding: 27 27 372
 Width: 13
-TeX: 0 0 0 0
+LayerCount: 2
 EndChar
 EndChars
 BitmapFont: 13 374 11 2 1

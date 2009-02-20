@@ -1,4 +1,4 @@
-SplineFontDB: 1.0
+SplineFontDB: 3.0
 FontName: marlett
 FullName: Marlett
 FamilyName: Marlett
@@ -10,41 +10,58 @@ UnderlinePosition: 0
 UnderlineWidth: 0
 Ascent: 2048
 Descent: 0
-Order2: 1
+LayerCount: 2
+Layer: 0 1 "Back" 1
+Layer: 1 1 "Fore" 0
 NeedsXUIDChange: 1
 FSType: 0
+OS2Version: 0
+OS2_WeightWidthSlopeOnly: 0
+OS2_UseTypoMetrics: 0
 PfmFamily: 81
 TTFWeight: 500
 TTFWidth: 5
-Panose: 0 0 0 0 0 0 0 0 0 0
 LineGap: 0
 VLineGap: 0
+Panose: 0 0 0 0 0 0 0 0 0 0
+OS2TypoAscent: 0
+OS2TypoAOffset: 1
+OS2TypoDescent: 0
+OS2TypoDOffset: 1
+OS2TypoLinegap: 0
 OS2WinAscent: 0
 OS2WinAOffset: 1
 OS2WinDescent: 0
 OS2WinDOffset: 1
-OS2Vendor: 'Wine'
 HheadAscent: 0
 HheadAOffset: 1
 HheadDescent: 0
 HheadDOffset: 1
-TtfTable: cvt  4
-!(6u&
-EndTtf
-LangName: 1033 "" "" "" "" "" "" "" "" "" "" "" "http://www.winehq.org" "" "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.+AAoACgAA-This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.+AAoACgAA-You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA+AAoA" "http://www.gnu.org/licenses/lgpl.html" 
+OS2Vendor: 'Wine'
+DEI: 91125
+ShortTable: cvt  2
+  68
+  1297
+EndShort
+LangName: 1033 "" "" "" "" "" "" "" "" "" "" "" "http://www.winehq.org" "" "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.+AAoACgAA-This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.+AAoACgAA-You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA+AAoA" "http://www.gnu.org/licenses/lgpl.html"
 Encoding: Symbol
 UnicodeInterp: none
+NameList: Adobe Glyph List
 DisplaySize: -24
 AntiAlias: 1
 FitToEm: 1
 WinInfo: 0 24 5
 TeXData: 1 0 0 708670 354335 236222 1342177 -2147484 236222 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
 BeginChars: 257 36
+
 StartChar: f020
 Encoding: 0 61472 0
+AltUni2: 000000.ffffffff.0
 Width: 1024
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 41 41 m 1,0,-1
  819 41 l 1,1,-1
  819 1324 l 1,2,-1
@@ -57,11 +74,13 @@ Fore
  0 0 l 1,4,-1
 EndSplineSet
 EndChar
+
 StartChar: zero
 Encoding: 48 48 1
 Width: 2048
-Flags: H
+LayerCount: 2
 Fore
+SplineSet
 256 256 m 1,0,-1
  256 512 l 1,1,-1
  1280 512 l 5,2,-1
@@ -69,11 +88,13 @@ Fore
  256 256 l 1,0,-1
 EndSplineSet
 EndChar
+
 StartChar: one
 Encoding: 49 49 2
 Width: 2048
-Flags: H
+LayerCount: 2
 Fore
+SplineSet
 256 384 m 5,0,-1
  1536 384 l 5,1,-1
  1536 1408 l 5,2,-1
@@ -86,11 +107,13 @@ Fore
  128 256 l 5,4,-1
 EndSplineSet
 EndChar
+
 StartChar: two
 Encoding: 50 50 3
 Width: 2048
-Flags: H
+LayerCount: 2
 Fore
+SplineSet
 128 256 m 1,0,-1
  128 1152 l 1,1,-1
  512 1152 l 1,2,-1
@@ -114,55 +137,70 @@ Fore
  640 1152 l 1,12,-1
 EndSplineSet
 EndChar
+
 StartChar: three
 Encoding: 51 51 4
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 1150 1726 m 29,0,-1
  1150 446 l 29,1,-1
  510 1086 l 29,2,-1
  1150 1726 l 29,0,-1
 EndSplineSet
 EndChar
+
 StartChar: four
 Encoding: 52 52 5
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 842 1732 m 25,0,-1
  842 452 l 25,1,-1
  1482 1092 l 25,2,-1
  842 1732 l 25,0,-1
 EndSplineSet
 EndChar
+
 StartChar: five
 Encoding: 53 53 6
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 320 768 m 29,0,-1
  1600 768 l 29,1,-1
  960 1408 l 29,2,-1
  320 768 l 29,0,-1
 EndSplineSet
 EndChar
+
 StartChar: six
 Encoding: 54 54 7
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 320 1282 m 29,0,-1
  1600 1282 l 29,1,-1
  960 642 l 29,2,-1
  320 1282 l 29,0,-1
 EndSplineSet
 EndChar
+
 StartChar: seven
 Encoding: 55 55 8
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 320 640 m 1,0,-1
  1600 640 l 1,1,-1
  1600 512 l 1,2,-1
@@ -174,11 +212,14 @@ Fore
  320 1522 l 25,4,-1
 EndSplineSet
 EndChar
+
 StartChar: eight
 Encoding: 56 56 9
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 1452 1272 m 25,0,-1
  306 420 l 25,1,-1
  408 288 l 25,2,-1
@@ -191,11 +232,14 @@ Fore
  564 1296 l 25,4,-1
 EndSplineSet
 EndChar
+
 StartChar: nine
 Encoding: 57 57 10
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 1452 1272 m 29,0,-1
  306 420 l 29,1,-1
  408 288 l 29,2,-1
@@ -208,11 +252,14 @@ Fore
  564 1296 l 29,4,-1
 EndSplineSet
 EndChar
+
 StartChar: a
 Encoding: 97 97 11
+AltUni2: 0003b1.ffffffff.0
 Width: 2048
-Flags: H
+LayerCount: 2
 Fore
+SplineSet
 510 834 m 25,0,-1
  834 504 l 29,1,-1
  1410 1080 l 25,2,-1
@@ -222,11 +269,15 @@ Fore
  510 834 l 25,0,-1
 EndSplineSet
 EndChar
+
 StartChar: b
 Encoding: 98 98 12
+AltUni2: 0003b2.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 510 972 m 25,0,-1
  834 642 l 25,1,-1
  1410 1218 l 25,2,-1
@@ -236,11 +287,14 @@ Fore
  510 972 l 25,0,-1
 EndSplineSet
 EndChar
+
 StartChar: c
 Encoding: 99 99 13
+AltUni2: 0003c7.ffffffff.0
 Width: 2048
-Flags: H
+LayerCount: 2
 Fore
+SplineSet
 0 128 m 29,0,-1
  128 128 l 29,1,-1
  128 1920 l 29,2,-1
@@ -250,11 +304,15 @@ Fore
  0 128 l 29,0,-1
 EndSplineSet
 EndChar
+
 StartChar: d
 Encoding: 100 100 14
+AltUni2: 0003b4.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 0 0 m 25,0,-1
  0 126 l 25,1,-1
  1920 128 l 25,2,-1
@@ -264,11 +322,15 @@ Fore
  0 0 l 25,0,-1
 EndSplineSet
 EndChar
+
 StartChar: e
 Encoding: 101 101 15
+AltUni2: 0003b5.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 128 256 m 29,0,-1
  256 256 l 29,1,-1
  256 1792 l 29,2,-1
@@ -278,11 +340,15 @@ Fore
  128 256 l 29,0,-1
 EndSplineSet
 EndChar
+
 StartChar: f
 Encoding: 102 102 16
+AltUni2: 0003c6.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 264 124 m 25,0,-1
  264 252 l 25,1,-1
  1800 252 l 25,2,-1
@@ -292,11 +358,15 @@ Fore
  264 124 l 25,0,-1
 EndSplineSet
 EndChar
+
 StartChar: g
 Encoding: 103 103 17
+AltUni2: 0003b3.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 256 256 m 1,0,-1
  256 1792 l 5,1,-1
  1792 1792 l 1,2,-1
@@ -304,11 +374,15 @@ Fore
  256 256 l 1,0,-1
 EndSplineSet
 EndChar
+
 StartChar: h
 Encoding: 104 104 18
+AltUni2: 0003b7.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 971 1077 m 29,0,-1
  971 972 l 29,1,-1
  1024 1024 l 29,2,-1
@@ -328,11 +402,15 @@ Fore
  675 968.634 675 968.634 675 1062 c 0,3,4
 EndSplineSet
 EndChar
+
 StartChar: i
 Encoding: 105 105 19
+AltUni2: 0003b9.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 981 1067 m 29,0,-1
  981 981 l 29,1,-1
  1024 1024 l 29,2,-1
@@ -352,11 +430,15 @@ Fore
  642 921.168 642 921.168 642 1026 c 0,3,4
 EndSplineSet
 EndChar
+
 StartChar: j
 Encoding: 106 106 20
+AltUni2: 0003d5.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 971 1077 m 29,0,-1
  971 972 l 29,1,-1
  1024 1024 l 29,2,-1
@@ -378,11 +460,15 @@ Fore
  1536 1764 l 20,3,4
 EndSplineSet
 EndChar
+
 StartChar: k
 Encoding: 107 107 21
+AltUni2: 0003ba.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 971 1077 m 25,0,-1
  971 972 l 25,1,-1
  1024 1024 l 25,2,-1
@@ -404,11 +490,15 @@ Fore
  1748 1580 l 16,3,4
 EndSplineSet
 EndChar
+
 StartChar: l
 Encoding: 108 108 22
+AltUni2: 0003bb.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 981 1067 m 29,0,-1
  981 981 l 29,1,-1
  1024 1024 l 29,2,-1
@@ -430,11 +520,15 @@ Fore
  1438.8 1717.56 l 16,3,4
 EndSplineSet
 EndChar
+
 StartChar: m
 Encoding: 109 109 23
+AltUni2: 0003bc.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 981 1067 m 25,0,-1
  981 981 l 25,1,-1
  1024 1024 l 25,2,-1
@@ -456,11 +550,15 @@ Fore
  1646.56 1561.8 l 16,3,4
 EndSplineSet
 EndChar
+
 StartChar: n
 Encoding: 110 110 24
+AltUni2: 0003bd.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 981 1067 m 25,0,-1
  981 981 l 25,1,-1
  1024 1024 l 25,2,-1
@@ -480,11 +578,14 @@ Fore
  282 838.182 282 838.182 282 1020 c 0,3,4
 EndSplineSet
 EndChar
+
 StartChar: o
 Encoding: 111 111 25
+AltUni2: 0003bf.ffffffff.0
 Width: 2048
-Flags: H
+LayerCount: 2
 Fore
+SplineSet
 624 0 m 29,0,-1
  2048 1422 l 29,1,-1
  2048 1578 l 29,2,-1
@@ -502,11 +603,15 @@ Fore
  1602 0 l 29,8,-1
 EndSplineSet
 EndChar
+
 StartChar: p
 Encoding: 112 112 26
+AltUni2: 0003c0.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 738 0 m 29,0,-1
  2048 1320 l 29,1,-1
  2048 1578 l 29,2,-1
@@ -524,11 +629,15 @@ Fore
  1656 0 l 29,8,-1
 EndSplineSet
 EndChar
+
 StartChar: q
 Encoding: 113 113 27
+AltUni2: 0003b8.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 1452 1272 m 25,0,-1
  306 420 l 25,1,-1
  408 288 l 25,2,-1
@@ -541,11 +650,14 @@ Fore
  564 1296 l 25,4,-1
 EndSplineSet
 EndChar
+
 StartChar: r
 Encoding: 114 114 28
+AltUni2: 0003c1.ffffffff.0
 Width: 2048
-Flags: H
+LayerCount: 2
 Fore
+SplineSet
 352 352 m 25,0,-1
  550 352 l 25,1,-1
  1024 826 l 17,2,-1
@@ -565,11 +677,15 @@ Fore
  352 352 l 25,0,-1
 EndSplineSet
 EndChar
+
 StartChar: s
 Encoding: 115 115 29
+AltUni2: 0003c3.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 1452 1272 m 29,0,-1
  306 420 l 29,1,-1
  408 288 l 29,2,-1
@@ -582,33 +698,45 @@ Fore
  564 1296 l 29,4,-1
 EndSplineSet
 EndChar
+
 StartChar: t
 Encoding: 116 116 30
+AltUni2: 0003c4.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 320 768 m 29,0,-1
  1600 768 l 29,1,-1
  960 1408 l 29,2,-1
  320 768 l 29,0,-1
 EndSplineSet
 EndChar
+
 StartChar: u
 Encoding: 117 117 31
+AltUni2: 0003c5.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 320 1282 m 29,0,-1
  1600 1282 l 29,1,-1
  960 642 l 29,2,-1
  320 1282 l 29,0,-1
 EndSplineSet
 EndChar
+
 StartChar: v
 Encoding: 118 118 32
+AltUni2: 0003d6.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 1452 1272 m 29,0,-1
  306 420 l 29,1,-1
  408 288 l 29,2,-1
@@ -621,11 +749,15 @@ Fore
  564 1296 l 29,4,-1
 EndSplineSet
 EndChar
+
 StartChar: w
 Encoding: 119 119 33
+AltUni2: 0003c9.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 1452 1272 m 29,0,-1
  306 420 l 29,1,-1
  408 288 l 29,2,-1
@@ -638,11 +770,15 @@ Fore
  564 1296 l 29,4,-1
 EndSplineSet
 EndChar
+
 StartChar: x
 Encoding: 120 120 34
+AltUni2: 0003be.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 0 1422 m 25,0,-1
  1422 -2 l 25,1,-1
  1578 -2 l 25,2,-1
@@ -660,11 +796,15 @@ Fore
  0 444 l 25,8,-1
 EndSplineSet
 EndChar
+
 StartChar: y
 Encoding: 121 121 35
+AltUni2: 0003c8.ffffffff.0
 Width: 2048
-Flags: HW
+Flags: W
+LayerCount: 2
 Fore
+SplineSet
 1310 0 m 25,0,-1
  0 1320 l 25,1,-1
  0 1578 l 25,2,-1
