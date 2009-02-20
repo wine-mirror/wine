@@ -244,11 +244,24 @@ static BOOL enum_gac_assemblies(struct list *assemblies, int depth, LPSTR path)
         }
         else if (depth == 1)
         {
-            ptr = strstr(ffd.cFileName, "__");
+            char culture[MAX_PATH];
+
+            ptr = strstr(ffd.cFileName, "_");
             *ptr = '\0';
-            ptr += 2;
-            sprintf(buf, "Version=%s, Culture=neutral, PublicKeyToken=%s",
-                    ffd.cFileName, ptr);
+            ptr++;
+
+            if (*ptr != '_')
+            {
+                lstrcpyA(culture, ptr);
+                *strstr(culture, "_") = '\0';
+            }
+            else
+                lstrcpyA(culture, "neutral");
+
+            ptr = strchr(ptr, '_');
+            ptr++;
+            sprintf(buf, "Version=%s, Culture=%s, PublicKeyToken=%s",
+                    ffd.cFileName, culture, ptr);
             lstrcpyA(disp, parent);
             lstrcatA(disp, buf);
 
