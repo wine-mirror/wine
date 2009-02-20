@@ -2423,6 +2423,11 @@ static void test_current_style(IHTMLCurrentStyle *current_style)
     ok(hres == S_OK, "get_borderLeftStyle failed: %08x\n", hres);
     ok(!strcmp_wa(str, "none"), "get_borderLeftStyle returned %s\n", dbgstr_w(str));
     SysFreeString(str);
+
+    hres = IHTMLCurrentStyle_get_textAlign(current_style, &str);
+    ok(hres == S_OK, "get_textAlign failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "center"), "get_textAlign returned %s\n", dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_style2(IHTMLStyle2 *style2)
