@@ -1,2 +1,6 @@
 Open($1)
-Generate($2, "ttf", 0);
+flags = 0
+if ($1 == "symbol.sfd")
+    flags = 0x2000
+endif
+Generate($2, "ttf", flags)
