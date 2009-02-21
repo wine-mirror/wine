@@ -57,6 +57,7 @@
 #include "resources/user32_Hu.rc"
 #include "resources/user32_It.rc"
 #include "resources/user32_Ko.rc"
+#include "resources/user32_Lt.rc"
 #include "resources/user32_Nl.rc"
 #include "resources/user32_No.rc"
 #include "resources/user32_Pl.rc"
