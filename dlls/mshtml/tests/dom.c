@@ -2445,6 +2445,11 @@ static void test_current_style(IHTMLCurrentStyle *current_style)
     ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
     ok( V_I4(&v) == 400, "expect 400 got (%d)\n", V_I4(&v));
     VariantClear(&v);
+
+    hres = IHTMLCurrentStyle_get_fontSize(current_style, &v);
+    ok(hres == S_OK, "get_fontSize failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
+    VariantClear(&v);
 }
 
 static void test_style2(IHTMLStyle2 *style2)
