@@ -212,10 +212,6 @@ static LPWSTR fix_url_value(LPCWSTR val)
     return ret;
 }
 
-#define ATTR_FIX_PX      1
-#define ATTR_FIX_URL     2
-#define ATTR_STR_TO_INT  4
-
 HRESULT set_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, LPCWSTR value, DWORD flags)
 {
     nsAString str_name, str_value, str_empty;

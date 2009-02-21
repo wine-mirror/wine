@@ -2371,6 +2371,7 @@ static void test_current_style(IHTMLCurrentStyle *current_style)
 {
     BSTR str;
     HRESULT hres;
+    VARIANT v;
 
     test_disp((IUnknown*)current_style, &DIID_DispHTMLCurrentStyle);
     test_ifaces((IUnknown*)current_style, cstyle_iids);
@@ -2438,6 +2439,12 @@ static void test_current_style(IHTMLCurrentStyle *current_style)
     ok(hres == S_OK, "get_cursor failed: %08x\n", hres);
     ok(!strcmp_wa(str, "default"), "get_cursor returned %s\n", dbgstr_w(str));
     SysFreeString(str);
+
+    hres = IHTMLCurrentStyle_get_fontWeight(current_style, &v);
+    ok(hres == S_OK, "get_fontWeight failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
+    ok( V_I4(&v) == 400, "expect 400 got (%d)\n", V_I4(&v));
+    VariantClear(&v);
 }
 
 static void test_style2(IHTMLStyle2 *style2)

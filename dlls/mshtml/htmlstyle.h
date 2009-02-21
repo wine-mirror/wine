@@ -80,3 +80,7 @@ HRESULT set_nsstyle_attr(nsIDOMCSSStyleDeclaration*,styleid_t,LPCWSTR,DWORD);
 
 HRESULT set_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *value, DWORD flags);
 HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *p, DWORD flags);
+
+#define ATTR_FIX_PX      1
+#define ATTR_FIX_URL     2
+#define ATTR_STR_TO_INT  4
