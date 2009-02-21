@@ -899,8 +899,7 @@ static LRESULT CALLBACK LL_hook_proc( int code, WPARAM wparam, LPARAM lparam )
             if (dev->acquired && dev->event_proc)
             {
                 TRACE("calling %p->%p (%lx %lx)\n", dev, dev->event_proc, wparam, lparam);
-                dev->event_proc( (LPDIRECTINPUTDEVICE8A)dev, wparam, lparam );
-                skip |= dev->dwCoopLevel & DISCL_EXCLUSIVE;
+                skip |= dev->event_proc( (LPDIRECTINPUTDEVICE8A)dev, wparam, lparam );
             }
         LeaveCriticalSection( &dinput->crit );
     }

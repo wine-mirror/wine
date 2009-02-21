@@ -78,7 +78,7 @@ struct SysMouseImpl
     WARP_MOUSE                      warp_override;
 };
 
-static void dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam );
+static int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam );
 
 const GUID DInput_Wine_Mouse_GUID = { /* 9e573ed8-7734-11d2-8d4a-23903fb6bdf7 */
     0x9e573ed8, 0x7734, 0x11d2, {0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7}
@@ -286,17 +286,18 @@ const struct dinput_device mouse_device = {
  */
 
 /* low-level mouse hook */
-static void dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam )
+static int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam )
 {
     MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
     SysMouseImpl* This = (SysMouseImpl*) iface;
     DWORD dwCoop;
-    int wdata = 0, inst_id = -1;
+    int wdata = 0, inst_id = -1, ret;
 
     TRACE("msg %lx @ (%d %d)\n", wparam, hook->pt.x, hook->pt.y);
 
     EnterCriticalSection(&This->base.crit);
     dwCoop = This->base.dwCoopLevel;
+    ret = dwCoop & DISCL_EXCLUSIVE;
 
     switch(wparam) {
         case WM_MOUSEMOVE:
@@ -370,6 +371,8 @@ static void dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARA
             inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 2 + HIWORD(hook->mouseData)) | DIDFT_PSHBUTTON;
             This->m_state.rgbButtons[2 + HIWORD(hook->mouseData)] = wdata = 0x00;
             break;
+        default:
+            ret = 0;
     }
 
 
@@ -381,6 +384,7 @@ static void dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARA
     }
 
     LeaveCriticalSection(&This->base.crit);
+    return ret;
 }
 
 static BOOL dinput_window_check(SysMouseImpl* This) {

@@ -74,16 +74,16 @@ static BYTE map_dik_code(DWORD scanCode, DWORD vkCode)
     return out_code;
 }
 
-static void KeyboardCallback( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam )
+static int KeyboardCallback( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam )
 {
     SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
-    int dik_code;
+    int dik_code, ret = This->base.dwCoopLevel & DISCL_EXCLUSIVE;
     KBDLLHOOKSTRUCT *hook = (KBDLLHOOKSTRUCT *)lparam;
     BYTE new_diks;
 
     if (wparam != WM_KEYDOWN && wparam != WM_KEYUP &&
         wparam != WM_SYSKEYDOWN && wparam != WM_SYSKEYUP)
-        return;
+        return 0;
 
     TRACE("(%p) %ld,%ld\n", iface, wparam, lparam);
 
@@ -96,15 +96,17 @@ static void KeyboardCallback( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM
 
     /* returns now if key event already known */
     if (new_diks == This->DInputKeyState[dik_code])
-        return;
+        return ret;
 
     This->DInputKeyState[dik_code] = new_diks;
     TRACE(" setting %02X to %02X\n", dik_code, This->DInputKeyState[dik_code]);
-      
+
     dik_code = id_to_offset(&This->base.data_format, DIDFT_MAKEINSTANCE(dik_code) | DIDFT_PSHBUTTON);
     EnterCriticalSection(&This->base.crit);
     queue_event((LPDIRECTINPUTDEVICE8A)This, dik_code, new_diks, hook->time, This->base.dinput->evsequence++);
     LeaveCriticalSection(&This->base.crit);
+
+    return ret;
 }
 
 const GUID DInput_Wine_Keyboard_GUID = { /* 0ab8648a-7735-11d2-8c73-71df54a96441 */
