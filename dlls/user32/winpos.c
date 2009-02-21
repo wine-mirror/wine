@@ -187,6 +187,7 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
             ret = !wine_server_call_err( req );
         }
         SERVER_END_REQ;
+        HeapFree( GetProcessHeap(), 0, data );
     }
     else  /* clear existing region */
     {
