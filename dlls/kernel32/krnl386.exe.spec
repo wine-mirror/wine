@@ -249,7 +249,7 @@
 262 stub WOWWaitForMsgAndEvent
 263 stub WOWMsgBox
 273 stub K273
-274 stub GetShortPathName
+274 pascal -ret16 GetShortPathName(str ptr word) GetShortPathName16
 
 
 # 310-356 are again shared between all versions

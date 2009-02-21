@@ -540,6 +540,15 @@ UINT16 WINAPI SetHandleCount16( UINT16 count )
 
 
 /***********************************************************************
+ *           GetShortPathName   (KERNEL.274)
+ */
+WORD WINAPI GetShortPathName16( LPCSTR longpath, LPSTR shortpath, WORD len )
+{
+    return GetShortPathNameA( longpath, shortpath, len );
+}
+
+
+/***********************************************************************
  *           WritePrivateProfileStruct (KERNEL.406)
  */
 BOOL16 WINAPI WritePrivateProfileStruct16 (LPCSTR section, LPCSTR key,
