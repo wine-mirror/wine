@@ -575,8 +575,10 @@ static const struct message WmShowMinOverlappedSeq[] = {
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ACTIVATE, sent },
     { WM_ACTIVATEAPP, sent|wparam, 0 },
+    /* Vista sometimes restores the window right away... */
     { WM_SYSCOMMAND, sent|optional|wparam, SC_RESTORE },
     { HCBT_SYSCOMMAND, hook|optional|wparam, SC_RESTORE },
+    { HCBT_MINMAX, hook|optional|lparam, 0, SW_RESTORE },
     { WM_PAINT, sent|optional },
     { WM_NCPAINT, sent|beginpaint|optional },
     { WM_ERASEBKGND, sent|beginpaint|optional },
@@ -1910,9 +1912,17 @@ static void dump_sequence(const struct message *expected, const char *context, c
     }
 
     if (expected->message)
+    {
         trace_(file, line)( "  %u: expected: msg %04x - actual: nothing\n", count, expected->message );
-    else if (actual->message && actual->output[0])
+        return;
+    }
+
+    while (actual->message && actual->output[0])
+    {
         trace_(file, line)( "  %u: expected: nothing - actual: %s\n", count, actual->output );
+        actual++;
+        count++;
+    }
 }
 
 #define ok_sequence( exp, contx, todo) \
@@ -6787,6 +6797,18 @@ static void test_accelerators(void)
     /* this test doesn't pass in Wine for managed windows */
     ok_sequence(WmAltPressRelease, "Alt press/release", TRUE);
 
+    trace("testing VK_F1 press/release\n");
+    keybd_event(VK_F1, 0, 0, 0);
+    keybd_event(VK_F1, 0, KEYEVENTF_KEYUP, 0);
+    pump_msg_loop(hwnd, 0);
+    ok_sequence(WmF1Seq, "F1 press/release", FALSE);
+
+    trace("testing VK_APPS press/release\n");
+    keybd_event(VK_APPS, 0, 0, 0);
+    keybd_event(VK_APPS, 0, KEYEVENTF_KEYUP, 0);
+    pump_msg_loop(hwnd, 0);
+    ok_sequence(WmVkAppsSeq, "VK_APPS press/release", FALSE);
+
     trace("testing Shift+MouseButton press/release\n");
     /* first, move mouse pointer inside of the window client area */
     GetClientRect(hwnd, &rc);
@@ -6809,17 +6831,6 @@ static void test_accelerators(void)
         ok_sequence(WmShiftMouseButton, "Shift+MouseButton press/release", FALSE);
     }
 
-    trace("testing VK_F1 press/release\n");
-    keybd_event(VK_F1, 0, 0, 0);
-    keybd_event(VK_F1, 0, KEYEVENTF_KEYUP, 0);
-    pump_msg_loop(hwnd, 0);
-    ok_sequence(WmF1Seq, "F1 press/release", FALSE);
-
-    trace("testing VK_APPS press/release\n");
-    keybd_event(VK_APPS, 0, 0, 0);
-    keybd_event(VK_APPS, 0, KEYEVENTF_KEYUP, 0);
-    pump_msg_loop(hwnd, 0);
-    ok_sequence(WmVkAppsSeq, "VK_APPS press/release", FALSE);
 done:
     if (hAccel) DestroyAcceleratorTable(hAccel);
     DestroyWindow(hwnd);
@@ -8181,6 +8192,7 @@ todo_wine {
 static const struct message ScrollWindowPaint1[] = {
     { WM_PAINT, sent },
     { WM_ERASEBKGND, sent|beginpaint },
+    { WM_GETTEXTLENGTH, sent|optional },
     { 0 }
 };
 
@@ -10408,8 +10420,9 @@ static const struct message SetActiveWindowSeq0[] =
     { WM_ACTIVATE, sent|wparam|optional, 1 },
     { HCBT_SETFOCUS, hook|optional },
     { WM_KILLFOCUS, sent|defwinproc },
-    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 0 },
-    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
+    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
+    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 1 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
     { WM_SETFOCUS, sent|defwinproc|optional },
