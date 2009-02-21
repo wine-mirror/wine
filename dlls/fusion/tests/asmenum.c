@@ -303,6 +303,10 @@ static void test_enumerate(void)
     enum_gac_assemblies(&assemblies, 0, path);
 
     to_multibyte(path, buf);
+    lstrcatA(path, "_64");
+    enum_gac_assemblies(&assemblies, 0, path);
+
+    to_multibyte(path, buf);
     lstrcatA(path, "_MSIL");
     enum_gac_assemblies(&assemblies, 0, path);
 
