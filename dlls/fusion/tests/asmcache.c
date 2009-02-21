@@ -987,6 +987,8 @@ static void test_QueryAssemblyInfo(void)
     HRESULT hr;
     DWORD size;
     ULONG disp;
+    char dllpath[MAX_PATH];
+    UINT len;
 
     static const WCHAR empty[] = {0};
     static const WCHAR commasep[] = {',',' ',0};
@@ -1480,10 +1482,13 @@ static void test_QueryAssemblyInfo(void)
     }
 
     /* FIXME: remove once UninstallAssembly is implemented */
-    DeleteFileA("C:\\windows\\assembly\\GAC_MSIL\\wine\\"
-                "1.0.0.0__2d03617b1c31e2f5\\wine.dll");
-    RemoveDirectoryA("C:\\windows\\assembly\\GAC_MSIL\\wine\\1.0.0.0__2d03617b1c31e2f5");
-    RemoveDirectoryA("C:\\windows\\assembly\\GAC_MSIL\\wine");
+    len = GetWindowsDirectoryA(dllpath, MAX_PATH);
+    strcat(dllpath, "\\assembly\\GAC_MSIL\\wine\\\\1.0.0.0__2d03617b1c31e2f5\\wine.dll");
+    DeleteFileA(dllpath);
+    dllpath[len + sizeof("\\assembly\\GAC_MSIL\\wine\\1.0.0.0__2d03617b1c31e2f5")] = '\0';
+    RemoveDirectoryA(dllpath);
+    dllpath[len + sizeof("\\assembly\\GAC_MSIL\\wine")] = '\0';
+    RemoveDirectoryA(dllpath);
 
     DeleteFileA("test.dll");
     DeleteFileA("wine.dll");
