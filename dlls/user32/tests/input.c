@@ -238,8 +238,8 @@ static BOOL do_test( HWND hwnd, int seqnr, const KEV td[] )
             ok( msg.message == expmsg[i].message &&
                     msg.wParam == expmsg[i].wParam &&
                     msg.lParam == expmsg[i].lParam,
-                    "%u: wrong message %x expected %s wParam %04lx lParam %08lx\n",
-                    i, msg.message, MSGNAME[(expmsg[i]).message - WM_KEYFIRST],
+                    "%u/%u: wrong message %x expected %s wParam %04lx lParam %08lx\n",
+                    seqnr, i, msg.message, MSGNAME[(expmsg[i]).message - WM_KEYFIRST],
                     expmsg[i].wParam, expmsg[i].lParam );
         }
         i++;
@@ -570,12 +570,14 @@ struct sendinput_test_s {
     /* RMENU == LMENU */
     /* 38 */
     {VK_RMENU, 0, 0,
-        {{VK_MENU, 0x00}, {VK_LMENU, 0x00}, {0}},
-        {{WM_SYSKEYDOWN, hook|wparam, VK_RMENU},
+        {{VK_MENU, 0x00}, {VK_LMENU, 0x00}, {VK_CONTROL, 0x00, 1}, {VK_LCONTROL, 0x01, 1}, {0}},
+        {{WM_SYSKEYDOWN, hook|wparam|optional, VK_LCONTROL},
+        {WM_SYSKEYDOWN, hook|wparam, VK_RMENU},
         {WM_SYSKEYDOWN, wparam|lparam, VK_MENU, 0}, {0}}},
     {VK_RMENU, KEYEVENTF_KEYUP, 1,
-        {{VK_MENU, 0x80}, {VK_LMENU, 0x80}, {0}},
-        {{WM_KEYUP, hook|wparam, VK_RMENU},
+        {{VK_MENU, 0x80}, {VK_LMENU, 0x80}, {VK_CONTROL, 0x81, 1}, {VK_LCONTROL, 0x80, 1}, {0}},
+        {{WM_KEYUP, hook|wparam|optional, VK_LCONTROL},
+        {WM_KEYUP, hook|wparam, VK_RMENU},
         {WM_SYSKEYUP, wparam|lparam, VK_MENU, KF_UP},
         {WM_SYSCOMMAND}, {0}}},
     /* LMENU | KEYEVENTF_EXTENDEDKEY == RMENU */
@@ -592,12 +594,14 @@ struct sendinput_test_s {
     /* RMENU | KEYEVENTF_EXTENDEDKEY == RMENU */
     /* 42 */
     {VK_RMENU, KEYEVENTF_EXTENDEDKEY, 0,
-        {{VK_MENU, 0x00}, {VK_RMENU, 0x00}, {0}},
-        {{WM_SYSKEYDOWN, hook|wparam|lparam, VK_RMENU, LLKHF_EXTENDED},
+        {{VK_MENU, 0x00}, {VK_RMENU, 0x00}, {VK_CONTROL, 0x00, 1}, {VK_LCONTROL, 0x01, 1}, {0}},
+        {{WM_SYSKEYDOWN, hook|wparam|lparam|optional, VK_LCONTROL, 0},
+        {WM_SYSKEYDOWN, hook|wparam|lparam, VK_RMENU, LLKHF_EXTENDED},
         {WM_SYSKEYDOWN, wparam|lparam, VK_MENU, KF_EXTENDED}, {0}}},
     {VK_RMENU, KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY, 1,
-        {{VK_MENU, 0x80}, {VK_RMENU, 0x80}, {0}},
-        {{WM_KEYUP, hook|wparam|lparam, VK_RMENU, LLKHF_UP|LLKHF_EXTENDED},
+        {{VK_MENU, 0x80}, {VK_RMENU, 0x80}, {VK_CONTROL, 0x81, 1}, {VK_LCONTROL, 0x80, 1}, {0}},
+        {{WM_KEYUP, hook|wparam|lparam|optional, VK_LCONTROL, LLKHF_UP},
+        {WM_KEYUP, hook|wparam|lparam, VK_RMENU, LLKHF_UP|LLKHF_EXTENDED},
         {WM_SYSKEYUP, wparam|lparam, VK_MENU, KF_UP|KF_EXTENDED},
         {WM_SYSCOMMAND}, {0}}},
     /* MENU == LMENU */
@@ -614,12 +618,14 @@ struct sendinput_test_s {
     /* MENU | KEYEVENTF_EXTENDEDKEY == RMENU */
     /* 46 */
     {VK_MENU, KEYEVENTF_EXTENDEDKEY, 0,
-        {{VK_MENU, 0x00}, {VK_RMENU, 0x00}, {0}},
-        {{WM_SYSKEYDOWN, hook/*|wparam*/|lparam, VK_MENU, LLKHF_EXTENDED},
+        {{VK_MENU, 0x00}, {VK_RMENU, 0x00}, {VK_CONTROL, 0x00, 1}, {VK_LCONTROL, 0x01, 1}, {0}},
+        {{WM_SYSKEYDOWN, hook|wparam|lparam|optional, VK_CONTROL, 0},
+        {WM_SYSKEYDOWN, hook/*|wparam*/|lparam, VK_MENU, LLKHF_EXTENDED},
         {WM_SYSKEYDOWN, wparam|lparam, VK_MENU, KF_EXTENDED}, {0}}},
     {VK_MENU, KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY, 1,
-        {{VK_MENU, 0x80}, {VK_RMENU, 0x80}, {0}},
-        {{WM_KEYUP, hook/*|wparam*/|lparam, VK_MENU, LLKHF_UP|LLKHF_EXTENDED},
+        {{VK_MENU, 0x80}, {VK_RMENU, 0x80}, {VK_CONTROL, 0x81, 1}, {VK_LCONTROL, 0x80, 1}, {0}},
+        {{WM_KEYUP, hook|wparam|lparam|optional, VK_CONTROL, LLKHF_UP},
+        {WM_KEYUP, hook/*|wparam*/|lparam, VK_MENU, LLKHF_UP|LLKHF_EXTENDED},
         {WM_SYSKEYUP, wparam|lparam, VK_MENU, KF_UP|KF_EXTENDED},
         {WM_SYSCOMMAND}, {0}}},
 
@@ -660,7 +666,7 @@ static void compare_and_check(int id, BYTE *ks1, BYTE *ks2, struct sendinput_tes
         int matched = ((ks1[t->wVk]&0x80) == (t->before_state&0x80)
                        && (ks2[t->wVk]&0x80) == (~t->before_state&0x80));
 
-        if (!matched && test->_todo_wine)
+        if (!matched && !t->optional && test->_todo_wine)
         {
             failcount++;
             todo_wine {
@@ -696,12 +702,13 @@ static void compare_and_check(int id, BYTE *ks1, BYTE *ks2, struct sendinput_tes
 
         if (expected->message == actual->message)
         {
-            ok((expected->flags & hook) == (actual->flags & hook),
-               "%2d (%x/%x): the msg 0x%04x should have been sent by a hook\n",
-               id, test->wVk, test->dwFlags, expected->message);
-
             if (expected->flags & wparam)
             {
+                if ((expected->flags & optional) && (expected->wParam != actual->wParam))
+                {
+                    expected++;
+                    continue;
+                }
                 if (expected->wParam != actual->wParam && test->_todo_wine)
                 {
                     failcount++;
@@ -728,6 +735,10 @@ static void compare_and_check(int id, BYTE *ks1, BYTE *ks2, struct sendinput_tes
                        "%2d (%x/%x): in msg 0x%04x expecting lParam 0x%lx got 0x%lx\n",
                        id, test->wVk, test->dwFlags, expected->message, expected->lParam, actual->lParam);
             }
+            ok((expected->flags & hook) == (actual->flags & hook),
+               "%2d (%x/%x): the msg 0x%04x should have been sent by a hook\n",
+               id, test->wVk, test->dwFlags, expected->message);
+
         }
         else if (expected->flags & optional)
         {
@@ -840,12 +851,6 @@ static void test_Input_blackbox(void)
     LONG_PTR prevWndProc;
     HWND window;
     HHOOK hook;
-
-    if (!pSendInput)
-    {
-        skip("SendInput is not available\n");
-        return;
-    }
 
     window = CreateWindow("Static", NULL, WS_POPUP|WS_HSCROLL|WS_VSCROLL
         |WS_VISIBLE, 0, 0, 200, 60, NULL, NULL,
@@ -1256,9 +1261,10 @@ START_TEST(input)
     if (!pSendInput)
         skip("SendInput is not available\n");
     else
+    {
+        test_Input_blackbox();
         test_Input_whitebox();
-
-    test_Input_blackbox();
+    }
     test_keynames();
     test_mouse_ll_hook();
     test_key_map();
