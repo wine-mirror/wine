@@ -419,7 +419,7 @@ static	LRESULT	MPEG3_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
     aad = HeapAlloc(GetProcessHeap(), 0, sizeof(AcmMpeg3Data));
     if (aad == 0) return MMSYSERR_NOMEM;
 
-    adsi->dwDriver = (DWORD)aad;
+    adsi->dwDriver = (DWORD_PTR)aad;
 
     if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
 	adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
