@@ -878,7 +878,7 @@ static FILE *create_temp_file( char **tmp_name )
     for (i = 0; i < 100; i++)
     {
         sprintf( name, "%s.tmp%08x", OutputFileName, id );
-        if ((fd = open( name, O_RDWR | O_CREAT | O_EXCL, 0600 )) != -1)
+        if ((fd = open( name, O_RDWR | O_CREAT | O_EXCL, 0666 )) != -1)
         {
             ret = fdopen( fd, "w" );
             break;
