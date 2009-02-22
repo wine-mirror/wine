@@ -2524,7 +2524,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
             }
             file_name = (const char*)file + size;
             file_name += strlen(file_name) + 1;
-            file = (BYTE*)((DWORD)(file_name + strlen(file_name) + 1 + 3) & ~3);
+            file = (BYTE*)((DWORD_PTR)(file_name + strlen(file_name) + 1 + 3) & ~3);
         }
         /* finish the remaining public and global information */
         if (globalimage)
