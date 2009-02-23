@@ -1048,7 +1048,18 @@ void CDECL __wine_kernel_init(void)
             if (!getenv("WINEPRELOADRESERVE")) exec_process( main_exe_name );
             /* if we get back here, it failed */
         }
-
+        else if (error == ERROR_MOD_NOT_FOUND)
+        {
+            if ((p = strrchrW( main_exe_name, '\\' ))) p++;
+            else p = main_exe_name;
+            if (!strcmpiW( p, winevdmW ) && __wine_main_argc > 3)
+            {
+                /* args 1 and 2 are --app-name full_path */
+                MESSAGE( "wine: could not run %s: 16-bit/DOS support missing\n",
+                         debugstr_w(__wine_main_wargv[3]) );
+                ExitProcess( ERROR_BAD_EXE_FORMAT );
+            }
+        }
         FormatMessageA( FORMAT_MESSAGE_FROM_SYSTEM, NULL, error, 0, msg, sizeof(msg), NULL );
         MESSAGE( "wine: could not load %s: %s", debugstr_w(main_exe_name), msg );
         ExitProcess( error );
