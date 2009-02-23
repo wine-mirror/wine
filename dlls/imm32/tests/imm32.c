@@ -162,7 +162,7 @@ static int init(void) {
     imc = ImmGetContext(hwnd);
     if (!imc)
     {
-        skip("IME support not implemented\n");
+        win_skip("IME support not implemented\n");
         return 0;
     }
     ImmReleaseContext(hwnd, imc);
