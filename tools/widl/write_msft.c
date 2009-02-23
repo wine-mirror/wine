@@ -983,34 +983,27 @@ static int encode_type(
         while (type->typelib_idx < 0 && type_is_alias(type) && !is_attr(type->attrs, ATTR_PUBLIC))
           type = type_alias_get_aliasee(type);
 
-        chat("encode_type: VT_USERDEFINED - type %p name = %s type->type %d idx %d\n", type,
-             type->name, type->type, type->typelib_idx);
+        chat("encode_type: VT_USERDEFINED - type %p name = %s real type %d idx %d\n", type,
+             type->name, type_get_type(type), type->typelib_idx);
 
         if(type->typelib_idx == -1) {
             chat("encode_type: trying to ref not added type\n");
-            switch(type->type) {
-            case RPC_FC_STRUCT:
-            case RPC_FC_PSTRUCT:
-            case RPC_FC_CSTRUCT:
-            case RPC_FC_CPSTRUCT:
-            case RPC_FC_CVSTRUCT:
-            case RPC_FC_BOGUS_STRUCT:
+            switch (type_get_type(type)) {
+            case TYPE_STRUCT:
                 add_structure_typeinfo(typelib, type);
                 break;
-            case RPC_FC_IP:
+            case TYPE_INTERFACE:
                 add_interface_typeinfo(typelib, type);
                 break;
-            case RPC_FC_ENUM16:
+            case TYPE_ENUM:
                 add_enum_typeinfo(typelib, type);
                 break;
-            case RPC_FC_COCLASS:
+            case TYPE_COCLASS:
                 add_coclass_typeinfo(typelib, type);
                 break;
-            case 0:
-                error("encode_type: VT_USERDEFINED - can't yet add typedef's on the fly\n");
-                break;
             default:
-                error("encode_type: VT_USERDEFINED - unhandled type %d\n", type->type);
+                error("encode_type: VT_USERDEFINED - unhandled type %d\n",
+                      type_get_type(type));
             }
         }
 
@@ -1047,7 +1040,7 @@ static int encode_type(
 
 static void dump_type(type_t *t)
 {
-    chat("dump_type: %p name %s type %d ref %p attrs %p\n", t, t->name, t->type, t->ref, t->attrs);
+    chat("dump_type: %p name %s type %d ref %p attrs %p\n", t, t->name, type_get_type(t), t->ref, t->attrs);
     if(t->ref) dump_type(t->ref);
 }
 
@@ -1482,7 +1475,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
               {
                 int vt;
                 expr_t *expr = (expr_t *)attr->u.pval;
-                if (arg->type->type == RPC_FC_ENUM16)
+                if (type_get_type(arg->type) == TYPE_ENUM)
                     vt = VT_INT;
                 else
                     vt = get_type_vt(arg->type);
@@ -2211,42 +2204,25 @@ static void add_module_typeinfo(msft_typelib_t *typelib, type_t *module)
 
 static void add_type_typeinfo(msft_typelib_t *typelib, type_t *type)
 {
-    switch (type->type) {
-    case RPC_FC_IP:
+    switch (type_get_type(type)) {
+    case TYPE_INTERFACE:
         add_interface_typeinfo(typelib, type);
         break;
-    case RPC_FC_STRUCT:
+    case TYPE_STRUCT:
         add_structure_typeinfo(typelib, type);
         break;
-    case RPC_FC_ENUM16:
-    case RPC_FC_ENUM32:
+    case TYPE_ENUM:
         add_enum_typeinfo(typelib, type);
         break;
-    case RPC_FC_COCLASS:
+    case TYPE_COCLASS:
         add_coclass_typeinfo(typelib, type);
         break;
-    case RPC_FC_BYTE:
-    case RPC_FC_CHAR:
-    case RPC_FC_USMALL:
-    case RPC_FC_SMALL:
-    case RPC_FC_WCHAR:
-    case RPC_FC_USHORT:
-    case RPC_FC_SHORT:
-    case RPC_FC_ULONG:
-    case RPC_FC_LONG:
-    case RPC_FC_HYPER:
-    case RPC_FC_IGNORE:
-    case RPC_FC_FLOAT:
-    case RPC_FC_DOUBLE:
-    case RPC_FC_ERROR_STATUS_T:
-    case RPC_FC_BIND_PRIMITIVE:
-    case RPC_FC_RP:
-    case RPC_FC_UP:
-    case RPC_FC_OP:
-    case RPC_FC_FP:
+    case TYPE_BASIC:
+    case TYPE_POINTER:
         break;
     default:
-        error("add_entry: unhandled type 0x%x for %s\n", type->type, type->name);
+        error("add_entry: unhandled type 0x%x for %s\n",
+              type_get_type(type), type->name);
         break;
     }
 }
