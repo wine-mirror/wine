@@ -2946,6 +2946,20 @@ DWORD WINAPI GetSecurityInfo(
 }
 
 /******************************************************************************
+ * GetSecurityInfoExA [ADVAPI32.@]
+ */
+DWORD WINAPI GetSecurityInfoExA(
+	HANDLE hObject, SE_OBJECT_TYPE ObjectType,
+	SECURITY_INFORMATION SecurityInfo, LPCSTR lpProvider,
+	LPCSTR lpProperty, PACTRL_ACCESSA *ppAccessList,
+	PACTRL_AUDITA *ppAuditList, LPSTR *lppOwner, LPSTR *lppGroup
+)
+{
+  FIXME("stub!\n");
+  return ERROR_BAD_PROVIDER;
+}
+
+/******************************************************************************
  * GetSecurityInfoExW [ADVAPI32.@]
  */
 DWORD WINAPI GetSecurityInfoExW(
