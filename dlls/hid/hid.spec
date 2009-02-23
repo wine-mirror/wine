@@ -15,7 +15,7 @@
 @ stub HidD_GetSerialNumberString
 @ stub HidD_Hello
 @ stub HidD_SetConfiguration
-@ stub HidD_SetFeature
+@ stdcall HidD_SetFeature(long ptr long)
 @ stub HidD_SetNumInputBuffers
 @ stub HidD_SetOutputReport
 @ stub HidP_GetButtonCaps

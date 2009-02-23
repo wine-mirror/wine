@@ -29,5 +29,6 @@ typedef LONG NTSTATUS;
 
 BOOLEAN WINAPI HidD_GetFeature(HANDLE HidDeviceObject, PVOID ReportBuffer, ULONG ReportBufferLength);
 void WINAPI HidD_GetHidGuid(LPGUID guid);
+BOOLEAN WINAPI HidD_SetFeature(HANDLE HidDeviceObject, PVOID ReportBuffer, ULONG ReportBufferLength);
 
 #endif  /* __WINE_HIDSDI_H */
