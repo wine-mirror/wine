@@ -20,7 +20,6 @@ C_SRCS = \
 	drawprim.c \
 	gl_compat.c \
 	glsl_shader.c \
-	indexbuffer.c \
 	nvidia_texture_shader.c \
 	palette.c \
 	pixelshader.c \
