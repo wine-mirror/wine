@@ -1396,33 +1396,33 @@ SIZE_T virtual_free_system_view( PVOID *addr_ptr )
 /***********************************************************************
  *           virtual_alloc_thread_stack
  */
-NTSTATUS virtual_alloc_thread_stack( void *base, SIZE_T size )
+NTSTATUS virtual_alloc_thread_stack( TEB *teb, SIZE_T reserve_size, SIZE_T commit_size )
 {
     FILE_VIEW *view;
     NTSTATUS status;
     sigset_t sigset;
+    SIZE_T size;
+
+    if (!reserve_size || !commit_size)
+    {
+        IMAGE_NT_HEADERS *nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress );
+        if (!reserve_size) reserve_size = nt->OptionalHeader.SizeOfStackReserve;
+        if (!commit_size) commit_size = nt->OptionalHeader.SizeOfStackCommit;
+    }
+
+    size = max( reserve_size, commit_size );
+    if (size < 1024 * 1024) size = 1024 * 1024;  /* Xlib needs a large stack */
+    size = (size + 0xffff) & ~0xffff;  /* round to 64K boundary */
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
-    if (base)  /* already allocated, create a system view */
-    {
-        size = ROUND_SIZE( base, size );
-        base = ROUND_ADDR( base, page_mask );
-        if ((status = create_view( &view, base, size,
-            VPROT_READ | VPROT_WRITE | VPROT_COMMITTED | VPROT_VALLOC | VPROT_SYSTEM )) != STATUS_SUCCESS)
-            goto done;
-    }
-    else
-    {
-        size = (size + 0xffff) & ~0xffff;  /* round to 64K boundary */
-        if ((status = map_view( &view, NULL, size, 0xffff, 0,
-                           VPROT_READ | VPROT_WRITE | VPROT_COMMITTED | VPROT_VALLOC )) != STATUS_SUCCESS)
-            goto done;
+    if ((status = map_view( &view, NULL, size, 0xffff, 0,
+                            VPROT_READ | VPROT_WRITE | VPROT_COMMITTED | VPROT_VALLOC )) != STATUS_SUCCESS)
+        goto done;
+
 #ifdef VALGRIND_STACK_REGISTER
-    /* no need to de-register the stack as it's the one of the main thread */
-        VALGRIND_STACK_REGISTER( view->base, (char *)view->base + view->size );
+    VALGRIND_STACK_REGISTER( view->base, (char *)view->base + view->size );
 #endif
-    }
 
     /* setup no access guard page */
     VIRTUAL_SetProt( view, view->base, page_size, VPROT_COMMITTED );
@@ -1430,10 +1430,9 @@ NTSTATUS virtual_alloc_thread_stack( void *base, SIZE_T size )
                      VPROT_READ | VPROT_WRITE | VPROT_COMMITTED | VPROT_GUARD );
 
     /* note: limit is lower than base since the stack grows down */
-    NtCurrentTeb()->DeallocationStack = view->base;
-    NtCurrentTeb()->Tib.StackBase     = (char *)view->base + view->size;
-    NtCurrentTeb()->Tib.StackLimit    = (char *)view->base + 2 * page_size;
-
+    teb->DeallocationStack = view->base;
+    teb->Tib.StackBase     = (char *)view->base + view->size;
+    teb->Tib.StackLimit    = (char *)view->base + 2 * page_size;
 done:
     server_leave_uninterrupted_section( &csVirtual, &sigset );
     return status;
