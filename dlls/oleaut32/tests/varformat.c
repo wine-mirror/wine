@@ -449,7 +449,7 @@ static void test_VarWeekdayName(void)
   GetLocaleInfoW(LOCALE_USER_DEFAULT, 0, NULL, 0);
   if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
   {
-    skip("GetLocaleInfoW is not implemented\n");
+    win_skip("GetLocaleInfoW is not implemented\n");
     return;
   }
 
