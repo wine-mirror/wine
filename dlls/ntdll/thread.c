@@ -353,9 +353,9 @@ HANDLE thread_init(void)
  */
 void abort_thread( int status )
 {
+    pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
     if (interlocked_xchg_add( &nb_threads, -1 ) <= 1) _exit( status );
 
-    pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
     close( ntdll_get_thread_data()->wait_fd[0] );
     close( ntdll_get_thread_data()->wait_fd[1] );
     close( ntdll_get_thread_data()->reply_fd );
@@ -369,11 +369,8 @@ void abort_thread( int status )
  */
 static void DECLSPEC_NORETURN exit_thread( int status )
 {
-    int fds[4];
-    void *teb_addr;
-    SIZE_T teb_size;
-
-    if (interlocked_xchg_add( &nb_threads, -1 ) <= 1) exit( status );
+    static void *prev_teb;
+    TEB *teb;
 
     RtlAcquirePebLock();
     RemoveEntryList( &NtCurrentTeb()->TlsLinks );
@@ -381,23 +378,26 @@ static void DECLSPEC_NORETURN exit_thread( int status )
     RtlFreeHeap( GetProcessHeap(), 0, NtCurrentTeb()->FlsSlots );
     RtlFreeHeap( GetProcessHeap(), 0, NtCurrentTeb()->TlsExpansionSlots );
 
-    fds[0] = ntdll_get_thread_data()->wait_fd[0];
-    fds[1] = ntdll_get_thread_data()->wait_fd[1];
-    fds[2] = ntdll_get_thread_data()->reply_fd;
-    fds[3] = ntdll_get_thread_data()->request_fd;
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
+    if (interlocked_xchg_add( &nb_threads, -1 ) <= 1) exit( status );
 
-    virtual_free_system_view( &NtCurrentTeb()->DeallocationStack );
-    teb_addr = NtCurrentTeb();
-    teb_size = virtual_free_system_view( &teb_addr );
+    if ((teb = interlocked_xchg_ptr( &prev_teb, NtCurrentTeb() )))
+    {
+        struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
+        SIZE_T size;
 
-    close( fds[0] );
-    close( fds[1] );
-    close( fds[2] );
-    close( fds[3] );
+        pthread_join( thread_data->pthread_id, NULL );
+        wine_ldt_free_fs( thread_data->fs );
+        size = 0;
+        NtFreeVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, &size, MEM_RELEASE );
+        size = 0;
+        NtFreeVirtualMemory( GetCurrentProcess(), (void **)&teb, &size, MEM_RELEASE );
+    }
 
-    wine_ldt_free_fs( wine_get_fs() );
-    if (teb_size) munmap( teb_addr, teb_size );
+    close( ntdll_get_thread_data()->wait_fd[0] );
+    close( ntdll_get_thread_data()->wait_fd[1] );
+    close( ntdll_get_thread_data()->reply_fd );
+    close( ntdll_get_thread_data()->request_fd );
     pthread_exit( UIntToPtr(status) );
 }
 
@@ -479,6 +479,7 @@ static void start_thread( struct wine_pthread_thread_info *info )
     debug_info.str_pos = debug_info.strings;
     debug_info.out_pos = debug_info.output;
     thread_data->debug_info = &debug_info;
+    thread_data->pthread_id = pthread_self();
 
     signal_init_thread( teb );
     server_init_thread( func );
@@ -632,7 +633,6 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
 
     pthread_attr_init( &attr );
     pthread_attr_setstacksize( &attr, stack_reserve );
-    pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_DETACHED );
     pthread_attr_setscope( &attr, PTHREAD_SCOPE_SYSTEM ); /* force creating a kernel thread */
     interlocked_xchg_add( &nb_threads, 1 );
     if (pthread_create( &pthread_id, &attr, (void * (*)(void *))start_thread, info ))

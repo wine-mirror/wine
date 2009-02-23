@@ -195,8 +195,7 @@ struct ntdll_thread_data
     int                wait_fd[2];    /* 1e8 fd for sleeping server requests */
     void              *vm86_ptr;      /* 1f0 data for vm86 mode */
     void              *pthread_data;  /* 1f4 private data for pthread emulation */
-
-    void              *pad[1];        /* 1f8 change this if you add fields! */
+    pthread_t          pthread_id;    /* 1f8 pthread thread id */
 };
 
 static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
