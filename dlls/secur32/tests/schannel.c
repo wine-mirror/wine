@@ -173,7 +173,7 @@ static void testAcquireSecurityContext(void)
         !pEnumerateSecurityPackagesA || !pFreeContextBuffer ||
         !pFreeCredentialsHandle || !pCryptAcquireContextW)
     {
-        skip("Needed functions are not available\n");
+        win_skip("Needed functions are not available\n");
         return;
     }
 

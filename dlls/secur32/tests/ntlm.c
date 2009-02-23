@@ -1292,7 +1292,7 @@ START_TEST(ntlm)
         test_cred_multiple_use();
     }
     else
-        skip("Needed functions are not available\n");
+        win_skip("Needed functions are not available\n");
 
     if(secdll)
         FreeLibrary(secdll);
