@@ -107,7 +107,7 @@ static void test_original_file_name(LPCSTR original, LPCSTR dest)
 
     if (!pSetupQueryInfOriginalFileInformationA)
     {
-        skip("SetupQueryInfOriginalFileInformationA is not available\n");
+        win_skip("SetupQueryInfOriginalFileInformationA is not available\n");
         return;
     }
 
@@ -591,14 +591,14 @@ START_TEST(misc)
     if (pSetupCopyOEMInfA)
         test_SetupCopyOEMInf();
     else
-        skip("SetupCopyOEMInfA is not available\n");
+        win_skip("SetupCopyOEMInfA is not available\n");
 
     test_SetupGetFileCompressionInfo();
 
     if (pSetupGetFileCompressionInfoExA)
         test_SetupGetFileCompressionInfoEx();
     else
-        skip("SetupGetFileCompressionInfoExA is not available\n");
+        win_skip("SetupGetFileCompressionInfoExA is not available\n");
 
     test_SetupDecompressOrCopyFile();
 }

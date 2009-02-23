@@ -259,7 +259,7 @@ static void test_SetupDiCreateDeviceInfoListEx(void)
     error = GetLastError();
     if (error == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("SetupDiCreateDeviceInfoListExW is not implemented\n");
+        win_skip("SetupDiCreateDeviceInfoListExW is not implemented\n");
         return;
     }
     ok(devlist == INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %d (expected %p)\n", devlist, error, INVALID_HANDLE_VALUE);
@@ -667,7 +667,7 @@ static void testCreateDeviceInterface(void)
 
     if (!pSetupDiCreateDeviceInterfaceA || !pSetupDiEnumDeviceInterfaces)
     {
-        skip("SetupDiCreateDeviceInterfaceA and/or SetupDiEnumDeviceInterfaces are not available\n");
+        win_skip("SetupDiCreateDeviceInterfaceA and/or SetupDiEnumDeviceInterfaces are not available\n");
         return;
     }
     SetLastError(0xdeadbeef);
@@ -764,7 +764,7 @@ static void testGetDeviceInterfaceDetail(void)
 
     if (!pSetupDiCreateDeviceInterfaceA || !pSetupDiGetDeviceInterfaceDetailA)
     {
-        skip("SetupDiCreateDeviceInterfaceA and/or SetupDiGetDeviceInterfaceDetailA are not available\n");
+        win_skip("SetupDiCreateDeviceInterfaceA and/or SetupDiGetDeviceInterfaceDetailA are not available\n");
         return;
     }
     SetLastError(0xdeadbeef);
@@ -1051,7 +1051,7 @@ static void testRegisterAndGetDetail(void)
     if (!pSetupDiCreateDeviceInterfaceA || !pSetupDiEnumDeviceInterfaces ||
         !pSetupDiGetDeviceInterfaceDetailA)
     {
-        skip("Needed functions are not available\n");
+        win_skip("Needed functions are not available\n");
         return;
     }
 
@@ -1357,19 +1357,19 @@ START_TEST(devinst)
     set = pSetupDiGetClassDevsW(NULL, NULL, 0, 0);
     if (set == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("Win9x/WinMe has totally different behavior\n");
+        win_skip("Win9x/WinMe has totally different behavior\n");
         return;
     }
 
     if (pSetupDiCreateDeviceInfoListExW)
         test_SetupDiCreateDeviceInfoListEx();
     else
-        skip("SetupDiCreateDeviceInfoListExW is not available\n");
+        win_skip("SetupDiCreateDeviceInfoListExW is not available\n");
 
     if (pSetupDiOpenClassRegKeyExA)
         test_SetupDiOpenClassRegKeyExA();
     else
-        skip("SetupDiOpenClassRegKeyExA is not available\n");
+        win_skip("SetupDiOpenClassRegKeyExA is not available\n");
 
     testInstallClass();
     testCreateDeviceInfo();

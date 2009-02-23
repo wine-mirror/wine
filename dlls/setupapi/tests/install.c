@@ -190,7 +190,7 @@ static void test_install_svc_from(void)
 
     if (!scm_handle && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
-        skip("OpenSCManagerA is not implemented, we are most likely on win9x\n");
+        win_skip("OpenSCManagerA is not implemented, we are most likely on win9x\n");
         return;
     }
     CloseServiceHandle(scm_handle);
@@ -348,7 +348,7 @@ static void test_driver_install(void)
 
     if (!scm_handle && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
-        skip("OpenSCManagerA is not implemented, we are most likely on win9x\n");
+        win_skip("OpenSCManagerA is not implemented, we are most likely on win9x\n");
         return;
     }
     else if (!scm_handle && (GetLastError() == ERROR_ACCESS_DENIED))
@@ -421,7 +421,7 @@ static void test_profile_items(void)
     pSHGetFolderPathA = (void*)GetProcAddress(hShell32, "SHGetFolderPathA");
     if (!pSHGetFolderPathA)
     {
-        skip("SHGetFolderPathA is not available\n");
+        win_skip("SHGetFolderPathA is not available\n");
         goto cleanup;
     }
 
@@ -500,7 +500,7 @@ START_TEST(install)
         ok(DeleteFile(inffile), "Expected source inf to exist, last error was %d\n", GetLastError());
     }
     if (!pInstallHinfSectionW && !pInstallHinfSectionA)
-        skip("InstallHinfSectionA and InstallHinfSectionW are not available\n");
+        win_skip("InstallHinfSectionA and InstallHinfSectionW are not available\n");
     else
     {
         /* Set CBT hook to disallow MessageBox creation in current thread */
