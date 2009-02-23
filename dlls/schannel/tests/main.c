@@ -177,7 +177,7 @@ START_TEST(main)
 {
     HMODULE hMod = LoadLibraryA("schannel.dll");
     if (!hMod) {
-        skip("schannel.dll not found.\n");
+        win_skip("schannel.dll not available\n");
         return;
     }
 
@@ -189,7 +189,7 @@ START_TEST(main)
         testInitialize();
         testGetInfo();
     }
-    else skip( "schannel functions not found\n" );
+    else win_skip( "schannel functions not found\n" );
 
     FreeLibrary(hMod);
 }
