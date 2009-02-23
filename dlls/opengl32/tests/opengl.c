@@ -613,12 +613,12 @@ START_TEST(opengl)
         if(strstr(wgl_extensions, "WGL_ARB_make_current_read"))
             test_make_current_read(hdc);
         else
-            trace("WGL_ARB_make_current_read not supported, skipping test\n");
+            skip("WGL_ARB_make_current_read not supported, skipping test\n");
 
         if(strstr(wgl_extensions, "WGL_ARB_pbuffer"))
             test_pbuffers(hdc);
         else
-            trace("WGL_ARB_pbuffer not supported, skipping pbuffer test\n");
+            skip("WGL_ARB_pbuffer not supported, skipping pbuffer test\n");
 
 cleanup:
         ReleaseDC(hwnd, hdc);
