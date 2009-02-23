@@ -354,7 +354,9 @@ static void test_bitmap_font(void)
         nearest_height = scale * height_orig;
         /* Only jump to the next height if the difference <= 25% original height */
         if (scale > 2 && nearest_height - i > height_orig / 4) scale--;
-        /* The jump between unscaled and doubled is delayed by 1 */
+        /* The jump between unscaled and doubled is delayed by 1 in winnt+ but not in win9x,
+           so we'll not test this particular height. */
+        else if(scale == 2 && nearest_height - i == (height_orig / 4)) continue;
         else if(scale == 2 && nearest_height - i > (height_orig / 4 - 1)) scale--;
         old_hfont = SelectObject(hdc, hfont);
         test_font_metrics(hdc, hfont, bitmap_lf.lfHeight, 0, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 1, scale);
