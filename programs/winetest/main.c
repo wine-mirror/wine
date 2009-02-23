@@ -154,28 +154,15 @@ static int running_on_visible_desktop (void)
 /* check if Gecko is present, trying to trigger the install if not */
 static BOOL gecko_check(void)
 {
-    HMODULE mshtml;
-    HRESULT (WINAPI *pDllGetClassObject)(REFCLSID rclsid, REFIID riid, LPVOID *ppv);
-    IClassFactory *factory = NULL;
-    IHTMLDocument2 *doc = NULL;
+    IHTMLDocument2 *doc;
     IHTMLElement *body;
     BOOL ret = FALSE;
 
-    if (!(mshtml = LoadLibraryA( "mshtml.dll" ))) return FALSE;
-    if (!(pDllGetClassObject = (void *)GetProcAddress( mshtml, "DllGetClassObject" )))
-        goto done;
-    if (FAILED(pDllGetClassObject( &CLSID_HTMLDocument, &IID_IClassFactory, (void **)&factory )))
-        goto done;
-    if (FAILED(IClassFactory_CreateInstance( factory, NULL, &IID_IHTMLDocument2, (void **)&doc )))
-        goto done;
-    if (FAILED(IHTMLDocument2_get_body( doc, &body )))
-        goto done;
-    IHTMLElement_Release( body );
-    ret = TRUE;
-done:
-    if (doc) IHTMLDocument_Release( doc );
-    if (factory) IClassFactory_Release( factory );
-    FreeLibrary( mshtml );
+    CoInitialize( NULL );
+    if (FAILED( CoCreateInstance( &CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER,
+                                  &IID_IHTMLDocument2, (void **)&doc ))) return FALSE;
+    if ((ret = SUCCEEDED( IHTMLDocument2_get_body( doc, &body )))) IHTMLElement_Release( body );
+    IHTMLDocument_Release( doc );
     return ret;
 }
 
