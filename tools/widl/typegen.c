@@ -724,7 +724,7 @@ static void write_procformatstring_stmts(FILE *file, int indent, const statement
     const statement_t *stmt;
     if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
     {
-        if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
+        if (stmt->type == STMT_TYPE && type_get_type(stmt->u.type) == TYPE_INTERFACE)
         {
             const statement_t *stmt_func;
             if (!pred(stmt->u.type))
@@ -2655,7 +2655,7 @@ static unsigned int process_tfs_stmts(FILE *file, const statement_list_t *stmts,
             process_tfs_stmts(file, stmt->u.lib->stmts, pred, typeformat_offset);
             continue;
         }
-        else if (stmt->type != STMT_TYPE || stmt->u.type->type != RPC_FC_IP)
+        else if (stmt->type != STMT_TYPE || type_get_type(stmt->u.type) != TYPE_INTERFACE)
             continue;
 
         iface = stmt->u.type;
@@ -3420,7 +3420,7 @@ unsigned int get_size_procformatstring(const statement_list_t *stmts, type_pred_
             size += get_size_procformatstring(stmt->u.lib->stmts, pred) - 1;
             continue;
         }
-        else if (stmt->type != STMT_TYPE || stmt->u.type->type != RPC_FC_IP)
+        else if (stmt->type != STMT_TYPE || type_get_type(stmt->u.type) != TYPE_INTERFACE)
             continue;
 
         iface = stmt->u.type;

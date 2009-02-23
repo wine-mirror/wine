@@ -349,7 +349,7 @@ static void write_id_data_stmts(const statement_list_t *stmts)
     if (stmt->type == STMT_TYPE)
     {
       const type_t *type = stmt->u.type;
-      if (type->type == RPC_FC_IP)
+      if (type_get_type(type) == TYPE_INTERFACE)
       {
         const UUID *uuid;
         if (!is_object(type->attrs) && !is_attr(type->attrs, ATTR_DISPINTERFACE))
@@ -358,7 +358,7 @@ static void write_id_data_stmts(const statement_list_t *stmts)
         write_guid(idfile, is_attr(type->attrs, ATTR_DISPINTERFACE) ? "DIID" : "IID",
                    type->name, uuid);
       }
-      else if (type->type == RPC_FC_COCLASS)
+      else if (type_get_type(type) == TYPE_COCLASS)
       {
         const UUID *uuid = get_attrp(type->attrs, ATTR_UUID);
         write_guid(idfile, "CLSID", type->name, uuid);

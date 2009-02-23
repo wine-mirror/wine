@@ -824,7 +824,7 @@ static void write_local_stubs_stmts(FILE *local_stubs, const statement_list_t *s
   const statement_t *stmt;
   if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
   {
-    if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
+    if (stmt->type == STMT_TYPE && type_get_type(stmt->u.type) == TYPE_INTERFACE)
       write_locals(local_stubs, stmt->u.type, TRUE);
     else if (stmt->type == STMT_LIBRARY)
       write_local_stubs_stmts(local_stubs, stmt->u.lib->stmts);
@@ -1047,7 +1047,7 @@ static void write_imports(FILE *header, const statement_list_t *stmts)
     switch (stmt->type)
     {
       case STMT_TYPE:
-        if (stmt->u.type->type == RPC_FC_IP)
+        if (type_get_type(stmt->u.type) == TYPE_INTERFACE)
           write_imports(header, type_iface_get_stmts(stmt->u.type));
         break;
       case STMT_TYPEREF:
@@ -1078,12 +1078,12 @@ static void write_forward_decls(FILE *header, const statement_list_t *stmts)
     switch (stmt->type)
     {
       case STMT_TYPE:
-        if (stmt->u.type->type == RPC_FC_IP)
+        if (type_get_type(stmt->u.type) == TYPE_INTERFACE)
         {
           if (is_object(stmt->u.type->attrs) || is_attr(stmt->u.type->attrs, ATTR_DISPINTERFACE))
             write_forward(header, stmt->u.type);
         }
-        else if (stmt->u.type->type == RPC_FC_COCLASS)
+        else if (type_get_type(stmt->u.type) == TYPE_COCLASS)
           write_coclass_forward(header, stmt->u.type);
         break;
       case STMT_TYPEREF:
@@ -1112,7 +1112,7 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
     switch (stmt->type)
     {
       case STMT_TYPE:
-        if (stmt->u.type->type == RPC_FC_IP)
+        if (type_get_type(stmt->u.type) == TYPE_INTERFACE)
         {
           type_t *iface = stmt->u.type;
           if (is_attr(stmt->u.type->attrs, ATTR_DISPINTERFACE) || is_object(stmt->u.type->attrs))
@@ -1128,7 +1128,7 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
             write_rpc_interface_end(header, iface);
           }
         }
-        else if (stmt->u.type->type == RPC_FC_COCLASS)
+        else if (type_get_type(stmt->u.type) == TYPE_COCLASS)
           write_coclass(header, stmt->u.type);
         else
         {
@@ -1139,7 +1139,7 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
       case STMT_TYPEREF:
         /* FIXME: shouldn't write out forward declarations for undefined
         * interfaces but a number of our IDL files depend on this */
-        if (stmt->u.type->type == RPC_FC_IP && !stmt->u.type->written)
+        if (type_get_type(stmt->u.type) == TYPE_INTERFACE && !stmt->u.type->written)
           write_forward(header, stmt->u.type);
         break;
       case STMT_IMPORTLIB:
@@ -1164,7 +1164,7 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
         fprintf(header, "%s\n", stmt->u.str);
         break;
       case STMT_DECLARATION:
-        if (iface && stmt->u.var->type->type == RPC_FC_FUNCTION)
+        if (iface && type_get_type(stmt->u.var->type) == TYPE_FUNCTION)
         {
           if (!ignore_funcs)
           {

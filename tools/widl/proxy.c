@@ -709,7 +709,7 @@ static int does_any_iface(const statement_list_t *stmts, type_pred_t pred)
           if (does_any_iface(stmt->u.lib->stmts, pred))
               return TRUE;
       }
-      else if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
+      else if (stmt->type == STMT_TYPE && type_get_type(stmt->u.type) == TYPE_INTERFACE)
       {
         if (pred(stmt->u.type))
           return TRUE;
@@ -746,7 +746,7 @@ static void write_proxy_stmts(const statement_list_t *stmts, unsigned int *proc_
   {
     if (stmt->type == STMT_LIBRARY)
       write_proxy_stmts(stmt->u.lib->stmts, proc_offset);
-    else if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
+    else if (stmt->type == STMT_TYPE && type_get_type(stmt->u.type) == TYPE_INTERFACE)
     {
       if (need_proxy(stmt->u.type))
         write_proxy(stmt->u.type, proc_offset);
@@ -772,7 +772,7 @@ static void build_iface_list( const statement_list_t *stmts, type_t **ifaces[], 
     {
         if (stmt->type == STMT_LIBRARY)
             build_iface_list(stmt->u.lib->stmts, ifaces, count);
-        else if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
+        else if (stmt->type == STMT_TYPE && type_get_type(stmt->u.type) == TYPE_INTERFACE)
         {
             type_t *iface = stmt->u.type;
             if (type_iface_get_inherit(iface) && need_proxy(iface))

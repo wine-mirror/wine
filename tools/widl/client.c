@@ -469,7 +469,7 @@ static void write_client_ifaces(const statement_list_t *stmts, int expr_eval_rou
     const statement_t *stmt;
     if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
     {
-        if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
+        if (stmt->type == STMT_TYPE && type_get_type(stmt->u.type) == TYPE_INTERFACE)
         {
             int has_func = 0;
             const statement_t *stmt2;

@@ -407,7 +407,7 @@ static void write_server_stmts(const statement_list_t *stmts, int expr_eval_rout
     {
         if (stmt->type == STMT_LIBRARY)
             write_server_stmts(stmt->u.lib->stmts, expr_eval_routines, proc_offset);
-        else if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
+        else if (stmt->type == STMT_TYPE && type_get_type(stmt->u.type) == TYPE_INTERFACE)
         {
             type_t *iface = stmt->u.type;
             if (!need_stub(iface))

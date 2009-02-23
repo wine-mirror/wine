@@ -2533,7 +2533,7 @@ static void check_statements(const statement_list_t *stmts, int is_inside_librar
     {
       if (stmt->type == STMT_LIBRARY)
           check_statements(stmt->u.lib->stmts, TRUE);
-      else if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
+      else if (stmt->type == STMT_TYPE && type_get_type(stmt->u.type) == TYPE_INTERFACE)
           check_functions(stmt->u.type, is_inside_library);
     }
 }
@@ -2546,7 +2546,7 @@ static void check_all_user_types(const statement_list_t *stmts)
   {
     if (stmt->type == STMT_LIBRARY)
       check_all_user_types(stmt->u.lib->stmts);
-    else if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP &&
+    else if (stmt->type == STMT_TYPE && type_get_type(stmt->u.type) == TYPE_INTERFACE &&
              !is_local(stmt->u.type->attrs))
     {
       const statement_t *stmt_func;
