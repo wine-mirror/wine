@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "widl.h"
 #include "utils.h"
@@ -157,4 +158,19 @@ type_t *type_coclass_define(type_t *coclass, ifref_list_t *ifaces)
     coclass->details.coclass.ifaces = ifaces;
     coclass->defined = TRUE;
     return coclass;
+}
+
+int type_is_equal(const type_t *type1, const type_t *type2)
+{
+    if (type_get_type_detect_alias(type1) != type_get_type_detect_alias(type2))
+        return FALSE;
+
+    if (type1->name && type2->name)
+        return !strcmp(type1->name, type2->name);
+    else if ((!type1->name && type2->name) || (type1->name && !type2->name))
+        return FALSE;
+
+    /* FIXME: do deep inspection of types to determine if they are equal */
+
+    return FALSE;
 }

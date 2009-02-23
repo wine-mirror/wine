@@ -813,7 +813,7 @@ int_std:  tINT					{ $$ = make_builtin($<str>1); }
 
 coclass:  tCOCLASS aIDENTIFIER			{ $$ = make_class($2); }
 	| tCOCLASS aKNOWNTYPE			{ $$ = find_type($2, 0);
-						  if ($$->type != RPC_FC_COCLASS)
+						  if (type_get_type_detect_alias($$) != TYPE_COCLASS)
 						    error_loc("%s was not declared a coclass at %s:%d\n",
 							      $2, $$->loc_info.input_name,
 							      $$->loc_info.line_number);
@@ -1470,7 +1470,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
 
   if (is_attr(v->attrs, ATTR_V1ENUM))
   {
-    if (v->type->type == RPC_FC_ENUM16)
+    if (type_get_type_detect_alias(v->type) == TYPE_ENUM)
       v->type->type = RPC_FC_ENUM32;
     else
       error_loc("'%s': [v1_enum] attribute applied to non-enum type\n", v->name);
@@ -1565,7 +1565,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
     v->type = func_type;
     for (ft = v->type; is_ptr(ft); ft = type_pointer_get_ref(ft))
       ;
-    assert(ft->type == RPC_FC_FUNCTION);
+    assert(type_get_type_detect_alias(ft) == TYPE_FUNCTION);
     ft->ref = return_type;
     /* move calling convention attribute, if present, from pointer nodes to
      * function node */
@@ -1771,7 +1771,10 @@ static type_t *reg_type(type_t *type, const char *name, int t)
 
 static int is_incomplete(const type_t *t)
 {
-  return !t->defined && (is_struct(t->type) || is_union(t->type));
+  return !t->defined &&
+    (type_get_type_detect_alias(t) == TYPE_STRUCT ||
+     type_get_type_detect_alias(t) == TYPE_UNION ||
+     type_get_type_detect_alias(t) == TYPE_ENCAPSULATED_UNION);
 }
 
 static void add_incomplete(type_t *t)
@@ -1786,7 +1789,9 @@ static void fix_type(type_t *t)
   if (type_is_alias(t) && is_incomplete(t)) {
     type_t *ot = type_alias_get_aliasee(t);
     fix_type(ot);
-    if (is_struct(ot->type) || is_union(ot->type))
+    if (type_get_type_detect_alias(ot) == TYPE_STRUCT ||
+        type_get_type_detect_alias(ot) == TYPE_UNION ||
+        type_get_type_detect_alias(ot) == TYPE_ENCAPSULATED_UNION)
       t->details.structure = ot->details.structure;
     t->defined = ot->defined;
   }
@@ -1809,12 +1814,9 @@ static void fix_incomplete_types(type_t *complete_type)
 
   LIST_FOR_EACH_ENTRY_SAFE(tn, next, &incomplete_types, struct typenode, entry)
   {
-    if (((is_struct(complete_type->type) && is_struct(tn->type->type)) ||
-         (is_union(complete_type->type) && is_union(tn->type->type))) &&
-        !strcmp(complete_type->name, tn->type->name))
+    if (type_is_equal(complete_type, tn->type))
     {
       tn->type->details.structure = complete_type->details.structure;
-      tn->type->type = complete_type->type;
       list_remove(&tn->entry);
       free(tn);
     }
@@ -1830,13 +1832,14 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
   if (is_str)
   {
     type_t *t = decl_spec->type;
-    unsigned char c;
 
     while (is_ptr(t))
       t = type_pointer_get_ref(t);
 
-    c = t->type;
-    if (c != RPC_FC_CHAR && c != RPC_FC_BYTE && c != RPC_FC_WCHAR)
+    if (type_get_type(t) != TYPE_BASIC &&
+        (type_basic_get_fc(t) != RPC_FC_CHAR &&
+         type_basic_get_fc(t) != RPC_FC_BYTE &&
+         type_basic_get_fc(t) != RPC_FC_WCHAR))
     {
       decl = LIST_ENTRY( list_head( decls ), const declarator_t, entry );
       error_loc("'%s': [string] attribute is only valid on 'char', 'byte', or 'wchar_t' pointers and arrays\n",
@@ -1847,8 +1850,10 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
   /* We must generate names for tagless enum, struct or union.
      Typedef-ing a tagless enum, struct or union means we want the typedef
      to be included in a library hence the public attribute.  */
-  if ((type->type == RPC_FC_ENUM16 || type->type == RPC_FC_ENUM32 ||
-       is_struct(type->type) || is_union(type->type)) &&
+  if ((type_get_type_detect_alias(type) == TYPE_ENUM ||
+       type_get_type_detect_alias(type) == TYPE_STRUCT ||
+       type_get_type_detect_alias(type) == TYPE_UNION ||
+       type_get_type_detect_alias(type) == TYPE_ENCAPSULATED_UNION) &&
       !type->name && !parse_only)
   {
     if (! is_attr(attrs, ATTR_PUBLIC))
@@ -2127,7 +2132,7 @@ static void check_arg(var_t *arg)
   const type_t *t = arg->type;
   const attr_t *attr;
 
-  if (t->type == 0 && ! is_var_ptr(arg))
+  if (type_get_type(t) == TYPE_VOID)
     error_loc("argument '%s' has void type\n", arg->name);
 
   if (arg->attrs)
@@ -2260,23 +2265,44 @@ static attr_list_t *check_coclass_attrs(const char *name, attr_list_t *attrs)
 
 static int is_allowed_conf_type(const type_t *type)
 {
-    switch (type->type)
+    switch (type_get_type(type))
     {
-    case RPC_FC_CHAR:
-    case RPC_FC_SMALL:
-    case RPC_FC_BYTE:
-    case RPC_FC_USMALL:
-    case RPC_FC_WCHAR:
-    case RPC_FC_SHORT:
-    case RPC_FC_ENUM16:
-    case RPC_FC_USHORT:
-    case RPC_FC_LONG:
-    case RPC_FC_ENUM32:
-    case RPC_FC_ULONG:
+    case TYPE_ENUM:
         return TRUE;
-    default:
+    case TYPE_BASIC:
+        switch (type_basic_get_fc(type))
+        {
+        case RPC_FC_CHAR:
+        case RPC_FC_SMALL:
+        case RPC_FC_BYTE:
+        case RPC_FC_USMALL:
+        case RPC_FC_WCHAR:
+        case RPC_FC_SHORT:
+        case RPC_FC_USHORT:
+        case RPC_FC_LONG:
+        case RPC_FC_ULONG:
+        case RPC_FC_ERROR_STATUS_T:
+            return TRUE;
+        default:
+            return FALSE;
+        }
+    case TYPE_ALIAS:
+        /* shouldn't get here because of type_get_type call above */
+        assert(0);
+        /* fall through */
+    case TYPE_STRUCT:
+    case TYPE_UNION:
+    case TYPE_ENCAPSULATED_UNION:
+    case TYPE_ARRAY:
+    case TYPE_POINTER:
+    case TYPE_VOID:
+    case TYPE_MODULE:
+    case TYPE_COCLASS:
+    case TYPE_FUNCTION:
+    case TYPE_INTERFACE:
         return FALSE;
     }
+    return FALSE;
 }
 
 static int is_ptr_guid_type(const type_t *type)
@@ -2320,12 +2346,23 @@ static void check_field_common(const type_t *container_type,
     int is_context_handle = 0;
     const char *container_type_name = NULL;
 
-    if (is_struct(container_type->type))
+    switch (type_get_type_detect_alias(type))
+    {
+    case TYPE_STRUCT:
         container_type_name = "struct";
-    else if (is_union(container_type->type))
+        break;
+    case TYPE_UNION:
         container_type_name = "union";
-    else if (container_type->type == RPC_FC_FUNCTION)
+        break;
+    case TYPE_ENCAPSULATED_UNION:
+        container_type_name = "encapsulated union";
+        break;
+    case TYPE_FUNCTION:
         container_type_name = "function";
+        break;
+    default:
+        break;
+    }
 
     if (is_attr(arg->attrs, ATTR_LENGTHIS) &&
         (is_attr(arg->attrs, ATTR_STRING) || is_aliaschain_attr(arg->type, ATTR_STRING)))
@@ -2396,11 +2433,11 @@ static void check_field_common(const type_t *container_type,
             break;
     }
 
-    if (type->type == 0 && !is_attr(arg->attrs, ATTR_IIDIS) && !is_wire_marshal && !is_context_handle)
+    if (type_get_type(type) == TYPE_VOID && !is_attr(arg->attrs, ATTR_IIDIS) && !is_wire_marshal && !is_context_handle)
         error_loc_info(&arg->loc_info, "parameter \'%s\' of %s \'%s\' cannot derive from void *\n", arg->name, container_type_name, container_name);
-    else if (type->type == RPC_FC_FUNCTION)
+    else if (type_get_type(type) == TYPE_FUNCTION)
         error_loc_info(&arg->loc_info, "parameter \'%s\' of %s \'%s\' cannot be a function pointer\n", arg->name, container_type_name, container_name);
-    else if (!is_wire_marshal && (is_struct(type->type) || is_union(type->type)))
+    else if (!is_wire_marshal && (type_get_type(type) == TYPE_STRUCT || type_get_type(type) == TYPE_UNION || type_get_type(type) == TYPE_ENCAPSULATED_UNION))
         check_remoting_fields(arg, type);
 }
 
@@ -2416,14 +2453,14 @@ static void check_remoting_fields(const var_t *var, type_t *type)
 
     type->checked = TRUE;
 
-    if (is_struct(type->type))
+    if (type_get_type(type) == TYPE_STRUCT)
     {
         if (type_is_complete(type))
             fields = type_struct_get_fields(type);
         else
             error_loc_info(&var->loc_info, "undefined type declaration %s\n", type->name);
     }
-    else if (is_union(type->type))
+    else if (type_get_type(type) == TYPE_UNION || type_get_type(type) == TYPE_ENCAPSULATED_UNION)
         fields = type_union_get_cases(type);
 
     if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
@@ -2466,7 +2503,7 @@ static void check_remoting_args(const var_t *func)
             {
                 if (!ptr_level)
                     error_loc_info(&arg->loc_info, "out parameter \'%s\' of function \'%s\' is not a pointer\n", arg->name, funcname);
-                if (type->type == RPC_FC_IP && ptr_level == 1)
+                if (type_get_type(type) == TYPE_INTERFACE && ptr_level == 1)
                     error_loc_info(&arg->loc_info, "out interface pointer \'%s\' of function \'%s\' is not a double pointer\n", arg->name, funcname);
             }
         }
@@ -2608,7 +2645,7 @@ static statement_t *make_statement_declaration(var_t *var)
             reg_const(var);
     }
     else if ((var->stgclass == STG_NONE || var->stgclass == STG_REGISTER) &&
-	     var->type->type != RPC_FC_FUNCTION)
+	     type_get_type(var->type) != TYPE_FUNCTION)
         error_loc("instantiation of data is illegal\n");
     return stmt;
 }

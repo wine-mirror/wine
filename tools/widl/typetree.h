@@ -35,6 +35,7 @@ void type_dispinterface_define(type_t *iface, var_list_t *props, func_list_t *me
 void type_dispinterface_define_from_iface(type_t *dispiface, type_t *iface);
 void type_module_define(type_t *module, statement_list_t *stmts);
 type_t *type_coclass_define(type_t *coclass, ifref_list_t *ifaces);
+int type_is_equal(const type_t *type1, const type_t *type2);
 
 /* FIXME: shouldn't need to export this */
 type_t *duptype(type_t *t, int dupname);
