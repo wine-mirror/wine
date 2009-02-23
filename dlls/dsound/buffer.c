@@ -380,17 +380,9 @@ static ULONG WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
 	DirectSoundDevice_RemoveBuffer(This->device, This);
 	RtlDeleteResource(&This->lock);
 
-	if (This->hwbuf) {
+	if (This->hwbuf)
 		IDsDriverBuffer_Release(This->hwbuf);
-		if (This->device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) {
-			This->buffer->ref--;
-			list_remove(&This->entry);
-			if (This->buffer->ref==0) {
-				HeapFree(GetProcessHeap(),0,This->buffer->memory);
-				HeapFree(GetProcessHeap(),0,This->buffer);
-			}
-		}
-	} else {
+	if (!This->hwbuf || (This->device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY)) {
 		This->buffer->ref--;
 		list_remove(&This->entry);
 		if (This->buffer->ref==0) {
