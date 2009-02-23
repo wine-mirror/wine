@@ -3045,8 +3045,8 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
      * type overwrites GL_ARB_fragment_program. This is currently the case with GLSL. If we really want to use
      * atifs or nvrc pixel shaders with arb fragment programs we'd have to disable GL_FRAGMENT_PROGRAM_ARB here
      *
-     * Don't call shader_select if the vertex shader is dirty, because some shader backends(GLSL) need both shaders
-     * to be compiled before activating them(needs some cleanups in the shader backend interface)
+     * Don't call shader_select if the vertex shader is dirty, because it will be called later on by the vertex
+     * shader handler
      */
     if(!isStateDirty(context, device->StateTable[STATE_VSHADER].representative)) {
         device->shader_backend->shader_select((IWineD3DDevice *)stateblock->wineD3DDevice, use_pshader, use_vshader);
