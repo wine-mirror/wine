@@ -335,7 +335,7 @@ static DWORD wait_process( HANDLE process, DWORD timeout )
     {
         wait = MsgWaitForMultipleObjects( 1, &process, FALSE, timeout - diff, QS_ALLINPUT );
         if (wait != WAIT_OBJECT_0 + 1) return wait;
-        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+        while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
         diff = GetTickCount() - start;
     }
     return WAIT_TIMEOUT;
