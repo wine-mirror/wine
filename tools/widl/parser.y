@@ -2342,8 +2342,7 @@ static void check_field_common(const type_t *container_type,
                                const char *container_name, const var_t *arg)
 {
     type_t *type = arg->type;
-    int is_wire_marshal = 0;
-    int is_context_handle = 0;
+    int more_to_do;
     const char *container_type_name = NULL;
 
     switch (type_get_type_detect_alias(type))
@@ -2410,35 +2409,56 @@ static void check_field_common(const type_t *container_type,
         }
     }
 
-    /* get fundamental type for the argument */
-    for (;;)
+    do
     {
-        if (is_attr(type->attrs, ATTR_WIREMARSHAL))
-        {
-            is_wire_marshal = 1;
-            break;
-        }
-        if (is_attr(type->attrs, ATTR_CONTEXTHANDLE))
-        {
-            is_context_handle = 1;
-            break;
-        }
-        if (type_is_alias(type))
-            type = type_alias_get_aliasee(type);
-        else if (is_ptr(type))
-            type = type_pointer_get_ref(type);
-        else if (is_array(type))
-            type = type_array_get_element(type);
-        else
-            break;
-    }
+        more_to_do = FALSE;
 
-    if (type_get_type(type) == TYPE_VOID && !is_attr(arg->attrs, ATTR_IIDIS) && !is_wire_marshal && !is_context_handle)
-        error_loc_info(&arg->loc_info, "parameter \'%s\' of %s \'%s\' cannot derive from void *\n", arg->name, container_type_name, container_name);
-    else if (type_get_type(type) == TYPE_FUNCTION)
-        error_loc_info(&arg->loc_info, "parameter \'%s\' of %s \'%s\' cannot be a function pointer\n", arg->name, container_type_name, container_name);
-    else if (!is_wire_marshal && (type_get_type(type) == TYPE_STRUCT || type_get_type(type) == TYPE_UNION || type_get_type(type) == TYPE_ENCAPSULATED_UNION))
-        check_remoting_fields(arg, type);
+        switch (typegen_detect_type(type, arg->attrs, TDT_IGNORE_STRINGS))
+        {
+        case TGT_STRUCT:
+        case TGT_UNION:
+            check_remoting_fields(arg, type);
+            break;
+        case TGT_INVALID:
+            switch (type_get_type(type))
+            {
+            case TYPE_VOID:
+                error_loc_info(&arg->loc_info, "parameter \'%s\' of %s \'%s\' cannot derive from void *\n",
+                               arg->name, container_type_name, container_name);
+                break;
+            case TYPE_FUNCTION:
+                error_loc_info(&arg->loc_info, "parameter \'%s\' of %s \'%s\' cannot be a function pointer\n",
+                               arg->name, container_type_name, container_name);
+                break;
+            case TYPE_COCLASS:
+            case TYPE_INTERFACE:
+            case TYPE_MODULE:
+                /* FIXME */
+                break;
+            default:
+                break;
+            }
+        case TGT_CTXT_HANDLE:
+        case TGT_CTXT_HANDLE_POINTER:
+            /* FIXME */
+            break;
+        case TGT_POINTER:
+            type = type_pointer_get_ref(type);
+            more_to_do = TRUE;
+            break;
+        case TGT_ARRAY:
+            type = type_array_get_element(type);
+            more_to_do = TRUE;
+            break;
+        case TGT_USER_TYPE:
+        case TGT_STRING:
+        case TGT_IFACE_POINTER:
+        case TGT_BASIC:
+        case TGT_ENUM:
+            /* nothing to do */
+            break;
+        }
+    } while (more_to_do);
 }
 
 static void check_remoting_fields(const var_t *var, type_t *type)
@@ -2475,36 +2495,37 @@ static void check_remoting_args(const var_t *func)
 
     if (func->type->details.function->args) LIST_FOR_EACH_ENTRY( arg, func->type->details.function->args, const var_t, entry )
     {
-        int ptr_level = 0;
         const type_t *type = arg->type;
-
-        /* get pointer level and fundamental type for the argument */
-        for (;;)
-        {
-            if (is_attr(type->attrs, ATTR_WIREMARSHAL))
-                break;
-            if (is_attr(type->attrs, ATTR_CONTEXTHANDLE))
-                break;
-            if (type_is_alias(type))
-                type = type_alias_get_aliasee(type);
-            else if (is_ptr(type))
-            {
-                ptr_level++;
-                type = type_pointer_get_ref(type);
-            }
-            else
-                break;
-        }
 
         /* check that [out] parameters have enough pointer levels */
         if (is_attr(arg->attrs, ATTR_OUT))
         {
-            if (!is_array(type))
+            switch (typegen_detect_type(type, arg->attrs, TDT_ALL_TYPES))
             {
-                if (!ptr_level)
-                    error_loc_info(&arg->loc_info, "out parameter \'%s\' of function \'%s\' is not a pointer\n", arg->name, funcname);
-                if (type_get_type(type) == TYPE_INTERFACE && ptr_level == 1)
-                    error_loc_info(&arg->loc_info, "out interface pointer \'%s\' of function \'%s\' is not a double pointer\n", arg->name, funcname);
+            case TGT_BASIC:
+            case TGT_ENUM:
+            case TGT_STRUCT:
+            case TGT_UNION:
+            case TGT_CTXT_HANDLE:
+            case TGT_USER_TYPE:
+                error_loc_info(&arg->loc_info, "out parameter \'%s\' of function \'%s\' is not a pointer\n", arg->name, funcname);
+                break;
+            case TGT_IFACE_POINTER:
+                error_loc_info(&arg->loc_info, "out interface pointer \'%s\' of function \'%s\' is not a double pointer\n", arg->name, funcname);
+                break;
+            case TGT_STRING:
+                if (!is_array(type))
+                {
+                    /* FIXME */
+                }
+                break;
+            case TGT_INVALID:
+                /* already error'd before we get here */
+            case TGT_CTXT_HANDLE_POINTER:
+            case TGT_POINTER:
+            case TGT_ARRAY:
+                /* OK */
+                break;
             }
         }
 

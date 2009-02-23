@@ -36,6 +36,28 @@ enum remoting_phase
     PHASE_FREE
 };
 
+enum typegen_detect_flags
+{
+    TDT_ALL_TYPES =      1 << 0,
+    TDT_IGNORE_STRINGS = 1 << 1,
+};
+
+enum typegen_type
+{
+    TGT_INVALID,
+    TGT_USER_TYPE,
+    TGT_CTXT_HANDLE,
+    TGT_CTXT_HANDLE_POINTER,
+    TGT_STRING,
+    TGT_POINTER,
+    TGT_ARRAY,
+    TGT_IFACE_POINTER,
+    TGT_BASIC,
+    TGT_ENUM,
+    TGT_STRUCT,
+    TGT_UNION,
+};
+
 typedef int (*type_pred_t)(const type_t *);
 
 void write_formatstringsdecl(FILE *f, int indent, const statement_list_t *stmts, type_pred_t pred);
@@ -68,3 +90,4 @@ void write_full_pointer_init(FILE *file, int indent, const var_t *func, int is_s
 void write_full_pointer_free(FILE *file, int indent, const var_t *func);
 unsigned char get_pointer_fc(const type_t *type);
 unsigned char get_struct_fc(const type_t *type);
+enum typegen_type typegen_detect_type(const type_t *type, const attr_list_t *attrs, unsigned int flags);

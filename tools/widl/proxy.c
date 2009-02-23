@@ -153,17 +153,20 @@ int is_var_ptr(const var_t *v)
 
 int cant_be_null(const var_t *v)
 {
-  const type_t *type = v->type;
+    switch (typegen_detect_type(v->type, v->attrs, TDT_IGNORE_STRINGS))
+    {
+    case TGT_ARRAY:
+        /* FIXME: work out pointer type */
+        return 0;
+    case TGT_IFACE_POINTER: /* FIXME */
+    case TGT_POINTER:
+        return (get_pointer_fc(v->type) == RPC_FC_RP);
+    case TGT_CTXT_HANDLE_POINTER:
+        return TRUE;
+    default:
+        return 0;
+    }
 
-  /* context handles have their own checking so they can be null for the
-   * purposes of null ref pointer checking */
-  if (is_aliaschain_attr(type, ATTR_CONTEXTHANDLE))
-      return 0;
-
-  if (is_user_type(type))
-      return 0;
-
-  return (get_pointer_fc(type) == RPC_FC_RP);
 }
 
 static int need_delegation(const type_t *iface)
@@ -225,28 +228,29 @@ static void free_variable( const var_t *arg, const char *local_var_prefix )
     return;
   }
 
-  switch (type_get_type(type))
+  switch (typegen_detect_type(type, arg->attrs, TDT_IGNORE_STRINGS))
   {
-  case TYPE_ENUM:
-  case TYPE_BASIC:
+  case TGT_ENUM:
+  case TGT_BASIC:
     break;
 
-  case TYPE_STRUCT:
+  case TGT_STRUCT:
     if (get_struct_fc(type) != RPC_FC_STRUCT)
-      print_proxy("/* FIXME: %s code for %s type %d missing */\n", __FUNCTION__, arg->name, type_get_type(type) );
+      print_proxy("/* FIXME: %s code for %s struct type 0x%x missing */\n", __FUNCTION__, arg->name, get_struct_fc(type) );
     break;
 
-  case TYPE_POINTER:
-  case TYPE_INTERFACE:
-    if (type_get_type(type) == TYPE_INTERFACE || get_pointer_fc(type) == RPC_FC_FP)
+  case TGT_IFACE_POINTER:
+    iid = get_attrp( arg->attrs, ATTR_IIDIS );
+    if( iid )
     {
-      iid = get_attrp( arg->attrs, ATTR_IIDIS );
-      if( iid )
-      {
-        print_proxy( "__frame->_StubMsg.MaxCount = (ULONG_PTR) " );
-        write_expr(proxy, iid, 1, 1, NULL, NULL, local_var_prefix);
-        print_proxy( ";\n\n" );
-      }
+      print_proxy( "__frame->_StubMsg.MaxCount = (ULONG_PTR) " );
+      write_expr(proxy, iid, 1, 1, NULL, NULL, local_var_prefix);
+      print_proxy( ";\n\n" );
+    }
+    /* fall through */
+  case TGT_POINTER:
+    if (get_pointer_fc(type) == RPC_FC_FP)
+    {
       print_proxy( "NdrClearOutParameters( &__frame->_StubMsg, ");
       fprintf(proxy, "&__MIDL_TypeFormatString.Format[%u], ", type_offset );
       fprintf(proxy, "(void*)%s );\n", arg->name );

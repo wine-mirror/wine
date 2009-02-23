@@ -138,6 +138,49 @@ static unsigned char get_enum_fc(const type_t *type)
         return RPC_FC_ENUM16;
 }
 
+enum typegen_type typegen_detect_type(const type_t *type, const attr_list_t *attrs, unsigned int flags)
+{
+    if (is_user_type(type))
+        return TGT_USER_TYPE;
+
+    if (is_aliaschain_attr(type, ATTR_CONTEXTHANDLE))
+        return TGT_CTXT_HANDLE;
+
+    if (!(flags & TDT_IGNORE_STRINGS) && is_string_type(attrs, type))
+        return TGT_STRING;
+
+    switch (type_get_type(type))
+    {
+    case TYPE_BASIC:
+        return TGT_BASIC;
+    case TYPE_ENUM:
+        return TGT_ENUM;
+    case TYPE_POINTER:
+        if (type_get_type(type_pointer_get_ref(type)) == TYPE_INTERFACE ||
+            (type_get_type(type_pointer_get_ref(type)) == TYPE_VOID && is_attr(attrs, ATTR_IIDIS)))
+            return TGT_IFACE_POINTER;
+        else if (is_aliaschain_attr(type_pointer_get_ref(type), ATTR_CONTEXTHANDLE))
+            return TGT_CTXT_HANDLE_POINTER;
+        else
+            return TGT_POINTER;
+    case TYPE_STRUCT:
+        return TGT_STRUCT;
+    case TYPE_ENCAPSULATED_UNION:
+    case TYPE_UNION:
+        return TGT_UNION;
+    case TYPE_ARRAY:
+        return TGT_ARRAY;
+    case TYPE_FUNCTION:
+    case TYPE_COCLASS:
+    case TYPE_INTERFACE:
+    case TYPE_MODULE:
+    case TYPE_VOID:
+    case TYPE_ALIAS:
+        break;
+    }
+    return TGT_INVALID;
+}
+
 unsigned char get_struct_fc(const type_t *type)
 {
   int has_pointer = 0;
@@ -154,11 +197,11 @@ unsigned char get_struct_fc(const type_t *type)
   if (fields) LIST_FOR_EACH_ENTRY( field, fields, var_t, entry )
   {
     type_t *t = field->type;
+    enum typegen_type typegen_type;
 
-    if (is_user_type(t))
-      return RPC_FC_BOGUS_STRUCT;
+    typegen_type = typegen_detect_type(t, field->attrs, TDT_IGNORE_STRINGS);
 
-    if (t->declarray)
+    if (typegen_type == TGT_ARRAY && t->declarray)
     {
         if (is_string_type(field->attrs, field->type))
         {
@@ -182,32 +225,26 @@ unsigned char get_struct_fc(const type_t *type)
             has_variance = 1;
 
         t = type_array_get_element(t);
+        typegen_type = typegen_detect_type(t, field->attrs, TDT_IGNORE_STRINGS);
     }
 
-    if (is_user_type(t))
-      return RPC_FC_BOGUS_STRUCT;
-
-    switch (type_get_type(t))
+    switch (typegen_type)
     {
-    case TYPE_VOID:
-    case TYPE_ALIAS:
-    case TYPE_MODULE:
-        assert(0);
+    case TGT_USER_TYPE:
+    case TGT_IFACE_POINTER:
+        return RPC_FC_BOGUS_STRUCT;
+    case TGT_BASIC:
         break;
-    case TYPE_BASIC:
-        break;
-    case TYPE_ENUM:
+    case TGT_ENUM:
         if (get_enum_fc(t) == RPC_FC_ENUM16)
             return RPC_FC_BOGUS_STRUCT;
         break;
-    case TYPE_POINTER:
+    case TGT_POINTER:
         if (get_pointer_fc(t) == RPC_FC_RP || pointer_size != 4)
-            return RPC_FC_BOGUS_STRUCT;
-        if (type_get_type(type_pointer_get_ref(t)) == TYPE_INTERFACE)
             return RPC_FC_BOGUS_STRUCT;
         has_pointer = 1;
         break;
-    case TYPE_ARRAY:
+    case TGT_ARRAY:
     {
         unsigned int ptr_type = get_attrv(field->attrs, ATTR_POINTERTYPE);
         if (!ptr_type || ptr_type == RPC_FC_RP)
@@ -217,13 +254,9 @@ unsigned char get_struct_fc(const type_t *type)
         has_pointer = 1;
         break;
     }
-    case TYPE_INTERFACE:
-    case TYPE_UNION:
-    case TYPE_ENCAPSULATED_UNION:
-    case TYPE_COCLASS:
-    case TYPE_FUNCTION:
+    case TGT_UNION:
         return RPC_FC_BOGUS_STRUCT;
-    case TYPE_STRUCT:
+    case TGT_STRUCT:
     {
         unsigned char fc = get_struct_fc(t);
         switch (fc)
@@ -265,6 +298,14 @@ unsigned char get_struct_fc(const type_t *type)
         }
         break;
     }
+    case TGT_STRING:
+        /* shouldn't get here because of TDT_IGNORE_STRINGS above. fall through */
+    case TGT_INVALID:
+    case TGT_CTXT_HANDLE:
+    case TGT_CTXT_HANDLE_POINTER:
+        /* checking after parsing should mean that we don't get here. if we do,
+         * it's a checker bug */
+        assert(0);
     }
   }
 
@@ -315,11 +356,12 @@ unsigned char get_array_fc(const type_t *type)
             fc = RPC_FC_CVARRAY;
     }
 
-    if (is_user_type(elem_type))
-        fc = RPC_FC_BOGUS_ARRAY;
-    else switch (type_get_type(elem_type))
+    switch (typegen_detect_type(elem_type, NULL, TDT_IGNORE_STRINGS))
     {
-    case TYPE_STRUCT:
+    case TGT_USER_TYPE:
+        fc = RPC_FC_BOGUS_ARRAY;
+        break;
+    case TGT_STRUCT:
         switch (get_struct_fc(elem_type))
         {
         case RPC_FC_BOGUS_STRUCT:
@@ -327,25 +369,29 @@ unsigned char get_array_fc(const type_t *type)
             break;
         }
         break;
-    case TYPE_ENUM:
+    case TGT_ENUM:
         /* is 16-bit enum - if so, wire size differs from mem size and so
          * the array cannot be block copied, which means the array is complex */
         if (get_enum_fc(elem_type) == RPC_FC_ENUM16)
             fc = RPC_FC_BOGUS_ARRAY;
         break;
-    case TYPE_UNION:
-    case TYPE_ENCAPSULATED_UNION:
+    case TGT_UNION:
+    case TGT_IFACE_POINTER:
         fc = RPC_FC_BOGUS_ARRAY;
         break;
-    case TYPE_POINTER:
+    case TGT_POINTER:
         /* ref pointers cannot just be block copied. unique pointers to
          * interfaces need special treatment. either case means the array is
          * complex */
-        if (get_pointer_fc(elem_type) == RPC_FC_RP ||
-            type_get_type(type_pointer_get_ref(elem_type)) == TYPE_INTERFACE)
+        if (get_pointer_fc(elem_type) == RPC_FC_RP)
             fc = RPC_FC_BOGUS_ARRAY;
         break;
-    default:
+    case TGT_BASIC:
+    case TGT_CTXT_HANDLE:
+    case TGT_CTXT_HANDLE_POINTER:
+    case TGT_STRING:
+    case TGT_INVALID:
+    case TGT_ARRAY:
         /* nothing to do for everything else */
         break;
     }
@@ -377,16 +423,16 @@ static int is_non_complex_struct(const type_t *type)
 
 static int type_has_pointers(const type_t *type)
 {
-    if (is_user_type(type))
-        return FALSE;
-
-    switch (type_get_type(type))
+    switch (typegen_detect_type(type, NULL, TDT_IGNORE_STRINGS))
     {
-    case TYPE_POINTER:
+    case TGT_USER_TYPE:
+        return FALSE;
+    case TGT_POINTER:
         return TRUE;
-    case TYPE_ARRAY:
+    case TGT_ARRAY:
+        /* FIXME: array can be pointer */
         return type_has_pointers(type_array_get_element(type));
-    case TYPE_STRUCT:
+    case TGT_STRUCT:
     {
         var_list_t *fields = type_struct_get_fields(type);
         const var_t *field;
@@ -397,8 +443,7 @@ static int type_has_pointers(const type_t *type)
         }
         break;
     }
-    case TYPE_UNION:
-    case TYPE_ENCAPSULATED_UNION:
+    case TGT_UNION:
     {
         var_list_t *fields;
         const var_t *field;
@@ -410,7 +455,13 @@ static int type_has_pointers(const type_t *type)
         }
         break;
     }
-    default:
+    case TGT_CTXT_HANDLE:
+    case TGT_CTXT_HANDLE_POINTER:
+    case TGT_STRING:
+    case TGT_IFACE_POINTER:
+    case TGT_BASIC:
+    case TGT_ENUM:
+    case TGT_INVALID:
         break;
     }
 
@@ -419,19 +470,19 @@ static int type_has_pointers(const type_t *type)
 
 static int type_has_full_pointer(const type_t *type)
 {
-    if (is_user_type(type))
-        return FALSE;
-
-    switch (type_get_type(type))
+    switch (typegen_detect_type(type, NULL, TDT_IGNORE_STRINGS))
     {
-    case TYPE_POINTER:
+    case TGT_USER_TYPE:
+        return FALSE;
+    case TGT_POINTER:
         if (get_pointer_fc(type) == RPC_FC_FP)
             return TRUE;
         else
             return FALSE;
-    case TYPE_ARRAY:
+    case TGT_ARRAY:
+        /* FIXME: array can be full pointer */
         return type_has_full_pointer(type_array_get_element(type));
-    case TYPE_STRUCT:
+    case TGT_STRUCT:
     {
         var_list_t *fields = type_struct_get_fields(type);
         const var_t *field;
@@ -442,8 +493,7 @@ static int type_has_full_pointer(const type_t *type)
         }
         break;
     }
-    case TYPE_UNION:
-    case TYPE_ENCAPSULATED_UNION:
+    case TGT_UNION:
     {
         var_list_t *fields;
         const var_t *field;
@@ -455,7 +505,13 @@ static int type_has_full_pointer(const type_t *type)
         }
         break;
     }
-    default:
+    case TGT_CTXT_HANDLE:
+    case TGT_CTXT_HANDLE_POINTER:
+    case TGT_STRING:
+    case TGT_IFACE_POINTER:
+    case TGT_BASIC:
+    case TGT_ENUM:
+    case TGT_INVALID:
         break;
     }
 
@@ -519,18 +575,14 @@ int is_user_type(const type_t *t)
 
 static int is_embedded_complex(const type_t *type)
 {
-    if (is_user_type(type))
-        return TRUE;
-
-    switch (type_get_type(type))
+    switch (typegen_detect_type(type, NULL, TDT_ALL_TYPES))
     {
-    case TYPE_STRUCT:
-    case TYPE_UNION:
-    case TYPE_ENCAPSULATED_UNION:
-    case TYPE_ARRAY:
+    case TGT_USER_TYPE:
+    case TGT_STRUCT:
+    case TGT_UNION:
+    case TGT_ARRAY:
+    case TGT_IFACE_POINTER:
         return TRUE;
-    case TYPE_POINTER:
-        return type_get_type(type_pointer_get_ref(type)) == TYPE_INTERFACE;
     default:
         return FALSE;
     }
@@ -2567,19 +2619,17 @@ static unsigned int write_typeformatstring_var(FILE *file, int indent, const var
 {
     unsigned int offset;
 
-    if (is_context_handle(type))
-        return write_contexthandle_tfs(file, type, var, typeformat_offset);
-
-    if (is_user_type(type))
+    switch (typegen_detect_type(type, var->attrs, TDT_ALL_TYPES))
     {
+    case TGT_CTXT_HANDLE:
+    case TGT_CTXT_HANDLE_POINTER:
+        return write_contexthandle_tfs(file, type, var, typeformat_offset);
+    case TGT_USER_TYPE:
         write_user_tfs(file, type, typeformat_offset);
         return type->typestring_offset;
-    }
-
-    if (is_string_type(var->attrs, type))
+    case TGT_STRING:
         return write_string_tfs(file, var->attrs, type, var->name, typeformat_offset);
-
-    if (is_array(type))
+    case TGT_ARRAY:
     {
         int ptr_type;
         unsigned int off;
@@ -2607,75 +2657,68 @@ static unsigned int write_typeformatstring_var(FILE *file, int indent, const var
         }
         return off;
     }
-
-    if (!is_ptr(type))
-    {
-        switch (type_get_type(type))
+    case TGT_STRUCT:
+        if (processed(type)) return type->typestring_offset;
+        return write_struct_tfs(file, type, var->name, typeformat_offset);
+    case TGT_UNION:
+        if (processed(type)) return type->typestring_offset;
+        return write_union_tfs(file, type, typeformat_offset);
+    case TGT_ENUM:
+    case TGT_BASIC:
+        /* nothing to do */
+        return 0;
+    case TGT_IFACE_POINTER:
+        return write_ip_tfs(file, var->attrs, type, typeformat_offset);
+    case TGT_POINTER:
+        if (last_ptr(type))
         {
-        case TYPE_STRUCT:
-            if (processed(type)) return type->typestring_offset;
-            return write_struct_tfs(file, type, var->name, typeformat_offset);
-        case TYPE_UNION:
-        case TYPE_ENCAPSULATED_UNION:
-            if (processed(type)) return type->typestring_offset;
-            return write_union_tfs(file, type, typeformat_offset);
-        case TYPE_ENUM:
-        case TYPE_BASIC:
-            /* nothing to do */
-            return 0;
-        default:
-            error("write_typeformatstring_var: Unsupported type %d for variable %s\n",
-                  type_get_type(type), var->name);
+            size_t start_offset = *typeformat_offset;
+            int in_attr = is_attr(var->attrs, ATTR_IN);
+            int out_attr = is_attr(var->attrs, ATTR_OUT);
+            const type_t *ref = type_pointer_get_ref(type);
+
+            switch (typegen_detect_type(ref, NULL, TDT_ALL_TYPES))
+            {
+            /* special case for pointers to base types */
+            case TGT_BASIC:
+            case TGT_ENUM:
+            {
+                unsigned char fc;
+
+                if (type_get_type(ref) == TYPE_ENUM)
+                    fc = get_enum_fc(ref);
+                else
+                    fc = type_basic_get_fc(ref);
+
+                print_file(file, indent, "0x%x, 0x%x,    /* %s %s[simple_pointer] */\n",
+                           get_pointer_fc(type),
+                           (!in_attr && out_attr) ? 0x0C : 0x08,
+                           string_of_type(get_pointer_fc(type)),
+                           (!in_attr && out_attr) ? "[allocated_on_stack] " : "");
+                print_file(file, indent, "0x%02x,    /* %s */\n",
+                           fc, string_of_type(fc));
+                print_file(file, indent, "0x5c,          /* FC_PAD */\n");
+                *typeformat_offset += 4;
+                return start_offset;
+            }
+            default:
+                break;
+            }
         }
+
+        offset = write_typeformatstring_var(file, indent, func,
+                                            type_pointer_get_ref(type), var,
+                                            typeformat_offset);
+        if (file)
+            fprintf(file, "/* %2u */\n", *typeformat_offset);
+        return write_pointer_only_tfs(file, var->attrs, get_pointer_fc(type),
+                               !last_ptr(type) ? 0x10 : 0,
+                               offset, typeformat_offset);
+    case TGT_INVALID:
+        break;
     }
-    else if (last_ptr(type))
-    {
-        unsigned int start_offset = *typeformat_offset;
-        int in_attr = is_attr(var->attrs, ATTR_IN);
-        int out_attr = is_attr(var->attrs, ATTR_OUT);
-        const type_t *ref = type_pointer_get_ref(type);
-
-        if (type_get_type(ref) == TYPE_INTERFACE
-            || (type_get_type(ref) == TYPE_VOID
-                && is_attr(var->attrs, ATTR_IIDIS)))
-        {
-            return write_ip_tfs(file, var->attrs, type, typeformat_offset);
-        }
-
-        /* special case for pointers to base types */
-        if (type_get_type(ref) == TYPE_BASIC ||
-            type_get_type(ref) == TYPE_ENUM)
-        {
-            unsigned char fc;
-
-            if (type_get_type(ref) == TYPE_ENUM)
-                fc = get_enum_fc(ref);
-            else
-                fc = type_basic_get_fc(ref);
-
-            print_file(file, indent, "0x%x, 0x%x,    /* %s %s[simple_pointer] */\n",
-                       get_pointer_fc(type),
-                       (!in_attr && out_attr) ? 0x0C : 0x08,
-                       string_of_type(get_pointer_fc(type)),
-                       (!in_attr && out_attr) ? "[allocated_on_stack] " : "");
-            print_file(file, indent, "0x%02x,    /* %s */\n",
-                       fc, string_of_type(fc));
-            print_file(file, indent, "0x5c,          /* FC_PAD */\n");
-            *typeformat_offset += 4;
-            return start_offset;
-        }
-    }
-
-    assert(is_ptr(type));
-
-    offset = write_typeformatstring_var(file, indent, func,
-                                        type_pointer_get_ref(type), var,
-                                        typeformat_offset);
-    if (file)
-        fprintf(file, "/* %2u */\n", *typeformat_offset);
-    return write_pointer_only_tfs(file, var->attrs, get_pointer_fc(type),
-                           !last_ptr(type) ? 0x10 : 0,
-                           offset, typeformat_offset);
+    error("invalid type %s for var %s\n", type->name, var->name);
+    return 0;
 }
 
 static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *type,
@@ -2683,39 +2726,31 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
 {
     int retmask = 0;
 
-    if (is_user_type(type))
+    switch (typegen_detect_type(type, attrs, TDT_ALL_TYPES))
     {
+    case TGT_USER_TYPE:
         write_user_tfs(file, type, tfsoff);
-    }
-    else if (is_string_type(attrs, type))
-    {
+        break;
+    case TGT_STRING:
         write_string_tfs(file, attrs, type, name, tfsoff);
-    }
-    else switch (type_get_type(type))
-    {
-    case TYPE_POINTER:
+        break;
+    case TGT_IFACE_POINTER:
+        write_ip_tfs(file, attrs, type, tfsoff);
+        break;
+    case TGT_POINTER:
     {
         type_t *ref = type_pointer_get_ref(type);
 
-        if (type_get_type(ref) == TYPE_INTERFACE
-            || (type_get_type(ref) == TYPE_VOID
-                && is_attr(attrs, ATTR_IIDIS)))
-        {
-            write_ip_tfs(file, attrs, type, tfsoff);
-        }
-        else
-        {
-            if (!processed(ref) && type_get_type(ref) != TYPE_BASIC)
-                retmask |= write_embedded_types(file, NULL, ref, name, TRUE, tfsoff);
+        if (!processed(ref) && type_get_type(ref) != TYPE_BASIC)
+            retmask |= write_embedded_types(file, NULL, ref, name, TRUE, tfsoff);
 
-            if (write_ptr)
-                write_pointer_tfs(file, type, tfsoff);
+        if (write_ptr)
+            write_pointer_tfs(file, type, tfsoff);
 
-            retmask |= 1;
-        }
+        retmask |= 1;
         break;
     }
-    case TYPE_ARRAY:
+    case TGT_ARRAY:
         /* conformant arrays and strings are handled specially */
         if (!type->declarray || !is_conformant_array(type))
         {
@@ -2724,26 +2759,23 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
                 retmask |= 1;
         }
         break;
-    case TYPE_STRUCT:
+    case TGT_STRUCT:
         if (!processed(type))
             write_struct_tfs(file, type, name, tfsoff);
         break;
-    case TYPE_UNION:
-    case TYPE_ENCAPSULATED_UNION:
+    case TGT_UNION:
         if (!processed(type))
             write_union_tfs(file, type, tfsoff);
         break;
-    case TYPE_ENUM:
-    case TYPE_BASIC:
+    case TGT_ENUM:
+    case TGT_BASIC:
         /* nothing to do */
         break;
-    case TYPE_VOID:
-    case TYPE_ALIAS:
-    case TYPE_MODULE:
-    case TYPE_COCLASS:
-    case TYPE_FUNCTION:
-    case TYPE_INTERFACE:
-        assert(0);
+    case TGT_CTXT_HANDLE:
+    case TGT_CTXT_HANDLE_POINTER:
+    case TGT_INVALID:
+        error("invalid type %s for var %s\n", type->name, name);
+        break;
     }
 
     return retmask;
@@ -2839,95 +2871,108 @@ void write_typeformatstring(FILE *file, const statement_list_t *stmts, type_pred
 static unsigned int get_required_buffer_size_type(
     const type_t *type, const char *name, unsigned int *alignment)
 {
-    const char *uname;
-    const type_t *utype;
-
     *alignment = 0;
-    if ((utype = get_user_type(type, &uname)))
+    switch (typegen_detect_type(type, NULL, TDT_IGNORE_STRINGS))
     {
+    case TGT_USER_TYPE:
+    {
+        const char *uname;
+        const type_t *utype = get_user_type(type, &uname);
         return get_required_buffer_size_type(utype, uname, alignment);
     }
-    else
-    {
-        switch (type_get_type(type))
+    case TGT_BASIC:
+        switch (type_basic_get_fc(type))
         {
-        case TYPE_BASIC:
-            switch (type_basic_get_fc(type))
-            {
-            case RPC_FC_BYTE:
-            case RPC_FC_CHAR:
-            case RPC_FC_USMALL:
-            case RPC_FC_SMALL:
-                *alignment = 4;
-                return 1;
+        case RPC_FC_BYTE:
+        case RPC_FC_CHAR:
+        case RPC_FC_USMALL:
+        case RPC_FC_SMALL:
+            *alignment = 4;
+            return 1;
 
-            case RPC_FC_WCHAR:
-            case RPC_FC_USHORT:
-            case RPC_FC_SHORT:
-                *alignment = 4;
-                return 2;
+        case RPC_FC_WCHAR:
+        case RPC_FC_USHORT:
+        case RPC_FC_SHORT:
+            *alignment = 4;
+            return 2;
 
-            case RPC_FC_ULONG:
-            case RPC_FC_LONG:
-            case RPC_FC_FLOAT:
-            case RPC_FC_ERROR_STATUS_T:
-                *alignment = 4;
-                return 4;
+        case RPC_FC_ULONG:
+        case RPC_FC_LONG:
+        case RPC_FC_FLOAT:
+        case RPC_FC_ERROR_STATUS_T:
+            *alignment = 4;
+            return 4;
 
-            case RPC_FC_HYPER:
-            case RPC_FC_DOUBLE:
-                *alignment = 8;
-                return 8;
+        case RPC_FC_HYPER:
+        case RPC_FC_DOUBLE:
+            *alignment = 8;
+            return 8;
 
-            case RPC_FC_IGNORE:
-            case RPC_FC_BIND_PRIMITIVE:
-                return 0;
-
-            default:
-                error("get_required_buffer_size: unknown basic type 0x%02x\n",
-                      type_basic_get_fc(type));
-                return 0;
-            }
-            break;
-
-        case TYPE_ENUM:
-            switch (get_enum_fc(type))
-            {
-            case RPC_FC_ENUM32:
-                *alignment = 4;
-                return 4;
-            case RPC_FC_ENUM16:
-                *alignment = 4;
-                return 2;
-            }
-            break;
-
-        case TYPE_STRUCT:
-            if (get_struct_fc(type) == RPC_FC_STRUCT)
-            {
-                if (!type_struct_get_fields(type)) return 0;
-                return fields_memsize(type_struct_get_fields(type), alignment);
-            }
-            break;
-
-        case TYPE_POINTER:
-            if (get_pointer_fc(type) == RPC_FC_RP)
-            {
-                const type_t *ref = type_pointer_get_ref(type);
-                return (type_get_type(ref) == TYPE_BASIC ||
-                    type_get_type(ref) == TYPE_ENUM ||
-                    (type_get_type(ref) == TYPE_STRUCT && get_struct_fc(ref) == RPC_FC_STRUCT)) ?
-                    get_required_buffer_size_type( ref, name, alignment ) : 0;
-            }
-            break;
-
-        case TYPE_ARRAY:
-            return type_array_get_dim(type) *
-                get_required_buffer_size_type(type_array_get_element(type), name, alignment);
+        case RPC_FC_IGNORE:
+        case RPC_FC_BIND_PRIMITIVE:
+            return 0;
 
         default:
-            break;
+            error("get_required_buffer_size: unknown basic type 0x%02x\n",
+                  type_basic_get_fc(type));
+            return 0;
         }
+        break;
+
+    case TGT_ENUM:
+        switch (get_enum_fc(type))
+        {
+        case RPC_FC_ENUM32:
+            *alignment = 4;
+            return 4;
+        case RPC_FC_ENUM16:
+            *alignment = 4;
+            return 2;
+        }
+        break;
+
+    case TGT_STRUCT:
+        if (get_struct_fc(type) == RPC_FC_STRUCT)
+        {
+            if (!type_struct_get_fields(type)) return 0;
+            return fields_memsize(type_struct_get_fields(type), alignment);
+        }
+        break;
+
+    case TGT_POINTER:
+        if (get_pointer_fc(type) == RPC_FC_RP)
+        {
+            const type_t *ref = type_pointer_get_ref(type);
+            switch (typegen_detect_type(ref, NULL, TDT_ALL_TYPES))
+            {
+            case TGT_BASIC:
+            case TGT_ENUM:
+                return get_required_buffer_size_type( ref, name, alignment );
+            case TGT_STRUCT:
+                if (get_struct_fc(ref) == RPC_FC_STRUCT)
+                    return get_required_buffer_size_type( ref, name, alignment );
+                break;
+            case TGT_USER_TYPE:
+            case TGT_CTXT_HANDLE:
+            case TGT_CTXT_HANDLE_POINTER:
+            case TGT_STRING:
+            case TGT_POINTER:
+            case TGT_ARRAY:
+            case TGT_IFACE_POINTER:
+            case TGT_UNION:
+            case TGT_INVALID:
+                break;
+            }
+        }
+        break;
+
+    case TGT_ARRAY:
+        /* FIXME: depends on pointer type */
+        return type_array_get_dim(type) *
+            get_required_buffer_size_type(type_array_get_element(type), name, alignment);
+
+    default:
+        break;
     }
     return 0;
 }
@@ -3252,8 +3297,10 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
 
     write_parameter_conf_or_var_exprs(file, indent, local_var_prefix, phase, var);
 
-    if (is_context_handle(type))
+    switch (typegen_detect_type(type, var->attrs, TDT_ALL_TYPES))
     {
+    case TGT_CTXT_HANDLE:
+    case TGT_CTXT_HANDLE_POINTER:
         if (phase == PHASE_MARSHAL)
         {
             if (pass == PASS_IN)
@@ -3294,13 +3341,11 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
                 print_file(file, indent + 1, "(PFORMAT_STRING)&__MIDL_TypeFormatString.Format[%d]);\n", start_offset);
             }
         }
-    }
-    else if (is_user_type(var->type))
-    {
+        break;
+    case TGT_USER_TYPE:
         print_phase_function(file, indent, "UserMarshal", local_var_prefix, phase, var, start_offset);
-    }
-    else if (is_string_type(var->attrs, var->type))
-    {
+        break;
+    case TGT_STRING:
         if (phase == PHASE_FREE || pass == PASS_RETURN ||
             pointer_type != RPC_FC_RP)
         {
@@ -3318,10 +3363,8 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
                 print_phase_function(file, indent, "ConformantString", local_var_prefix,
                                      phase, var, start_offset);
         }
-    }
-    else switch (type_get_type(type))
-    {
-    case TYPE_ARRAY:
+        break;
+    case TGT_ARRAY:
     {
         unsigned char tc = get_array_fc(type);
         const char *array_type = "FixedArray";
@@ -3365,11 +3408,11 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
         }
         break;
     }
-    case TYPE_BASIC:
+    case TGT_BASIC:
         if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
             print_phase_basetype(file, indent, local_var_prefix, phase, pass, var, var->name);
         break;
-    case TYPE_ENUM:
+    case TGT_ENUM:
         if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
         {
             if (phase == PHASE_MARSHAL)
@@ -3383,7 +3426,7 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
             print_file(file, indent+1, "0x%02x /* %s */);\n", get_enum_fc(type), string_of_type(get_enum_fc(type)));
         }
         break;
-    case TYPE_STRUCT:
+    case TGT_STRUCT:
         switch (get_struct_fc(type))
         {
         case RPC_FC_STRUCT:
@@ -3407,8 +3450,7 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
             error("write_remoting_arguments: Unsupported type: %s (0x%02x)\n", var->name, get_struct_fc(type));
         }
         break;
-    case TYPE_UNION:
-    case TYPE_ENCAPSULATED_UNION:
+    case TGT_UNION:
     {
         const char *union_type = NULL;
 
@@ -3421,7 +3463,7 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
                              phase, var, start_offset);
         break;
     }
-    case TYPE_POINTER:
+    case TGT_POINTER:
     {
         const type_t *ref = type_pointer_get_ref(type);
         if (get_pointer_fc(type) == RPC_FC_RP && !is_user_type(ref)) switch (type_get_type(ref))
@@ -3503,29 +3545,23 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
         case TYPE_ARRAY:
             print_phase_function(file, indent, "Pointer", local_var_prefix, phase, var, start_offset);
             break;
-        case TYPE_INTERFACE:
-            print_phase_function(file, indent, "InterfacePointer", local_var_prefix, phase, var, start_offset);
-            break;
         case TYPE_VOID:
         case TYPE_ALIAS:
         case TYPE_MODULE:
         case TYPE_COCLASS:
         case TYPE_FUNCTION:
+        case TYPE_INTERFACE:
             assert(0);
             break;
         }
-        else if (type_get_type(ref) == TYPE_INTERFACE)
-            print_phase_function(file, indent, "InterfacePointer", local_var_prefix, phase, var, start_offset);
         else
             print_phase_function(file, indent, "Pointer", local_var_prefix, phase, var, start_offset);
         break;
     }
-    case TYPE_VOID:
-    case TYPE_ALIAS:
-    case TYPE_MODULE:
-    case TYPE_COCLASS:
-    case TYPE_FUNCTION:
-    case TYPE_INTERFACE:
+    case TGT_IFACE_POINTER:
+        print_phase_function(file, indent, "InterfacePointer", local_var_prefix, phase, var, start_offset);
+        break;
+    case TGT_INVALID:
         assert(0);
         break;
     }
