@@ -50,6 +50,14 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     return TRUE;
 }
 
+BOOLEAN WINAPI HidD_GetFeature(HANDLE HidDeviceObject, PVOID ReportBuffer, ULONG ReportBufferLength)
+{
+    static int count = 0;
+    if (!count++)
+        FIXME("(%p %p %u) stub\n", HidDeviceObject, ReportBuffer, ReportBufferLength);
+    return FALSE;
+}
+
 void WINAPI HidD_GetHidGuid(LPGUID guid)
 {
     TRACE("(%p)\n", guid);
