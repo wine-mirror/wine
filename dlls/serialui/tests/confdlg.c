@@ -96,7 +96,7 @@ static void test_drvCommConfigDialogA(void)
         res = pGetDefaultCommConfigA(bufferA, pCC, &len);
         if (res == ERROR_CALL_NOT_IMPLEMENTED) {
             /* NT does not implement the ANSI API */
-            skip("*A not implemented\n");
+            win_skip("*A not implemented\n");
             return;
         }
 
@@ -171,7 +171,7 @@ static void test_drvCommConfigDialogW(void)
         SetLastError(0xdeadbeef);
         res = pGetDefaultCommConfigW(bufferW, pCC, &len);
         if (res == ERROR_CALL_NOT_IMPLEMENTED) {
-            skip("*W not implemented\n");
+            win_skip("*W not implemented\n");
             return;
         }
 
@@ -244,7 +244,7 @@ static void test_drvGetDefaultCommConfigA(void)
     res = pGetDefaultCommConfigA(com1A, pCC, &len);
     if (res == ERROR_CALL_NOT_IMPLEMENTED) {
         /* NT does not implement the ANSI API */
-        skip("*A not implemented\n");
+        win_skip("*A not implemented\n");
         return;
     }
     ok( (res == ERROR_INSUFFICIENT_BUFFER) && (len >= i),
@@ -336,7 +336,7 @@ static void test_drvGetDefaultCommConfigW(void)
     SetLastError(0xdeadbeef);
     res = pGetDefaultCommConfigW(com1W, pCC, &len);
     if (res == ERROR_CALL_NOT_IMPLEMENTED) {
-        skip("*W not implemented\n");
+        win_skip("*W not implemented\n");
         return;
     }
     ok( (res == ERROR_INSUFFICIENT_BUFFER) && (len >= i),
@@ -419,7 +419,7 @@ START_TEST(confdlg)
 
     ptr = load_functions();
     if (ptr) {
-        skip("got NULL with %u for %s\n", GetLastError(), ptr);
+        win_skip("got NULL with %u for %s\n", GetLastError(), ptr);
         return;
     }
 
