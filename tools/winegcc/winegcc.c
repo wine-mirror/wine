@@ -552,21 +552,16 @@ static void build(struct options* opts)
     }
 
     /* generate app loader only for .exe */
-    if (opts->shared || strendswith(output_file, ".exe.so"))
+    if (opts->shared || strendswith(output_file, ".so"))
 	generate_app_loader = 0;
 
     /* normalize the filename a bit: strip .so, ensure it has proper ext */
     if (strendswith(output_file, ".so")) 
 	output_file[strlen(output_file) - 3] = 0;
-    if (opts->shared)
-    {
-	if ((output_name = strrchr(output_file, '/'))) output_name++;
-	else output_name = output_file;
-	if (!strchr(output_name, '.'))
-	    output_file = strmake("%s.dll", output_file);
-    }
-    else if (!strendswith(output_file, ".exe"))
-	output_file = strmake("%s.exe", output_file);
+    if ((output_name = strrchr(output_file, '/'))) output_name++;
+    else output_name = output_file;
+    if (!strchr(output_name, '.'))
+        output_file = strmake("%s.%s", output_file, opts->shared ? "dll" : "exe");
 
     /* get the filename from the path */
     if ((output_name = strrchr(output_file, '/'))) output_name++;
@@ -798,10 +793,7 @@ static void build(struct options* opts)
 
     /* create the loader script */
     if (generate_app_loader)
-    {
-        if (strendswith(output_file, ".exe")) output_file[strlen(output_file) - 4] = 0;
-        create_file(output_file, 0755, app_loader_template, strmake("%s.exe.so", output_name));
-    }
+        create_file(output_file, 0755, app_loader_template, strmake("%s.so", output_name));
 }
 
 
