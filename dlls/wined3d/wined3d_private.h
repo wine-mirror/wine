@@ -1974,6 +1974,17 @@ typedef struct  WineQueryEventData {
     WineD3DContext *ctx;
 } WineQueryEventData;
 
+/* IWineD3DBuffer */
+struct wined3d_buffer
+{
+    const struct IWineD3DBufferVtbl *vtbl;
+    IWineD3DResourceClass resource;
+
+    struct wined3d_buffer_desc desc;
+};
+
+extern const IWineD3DBufferVtbl wined3d_buffer_vtbl;
+
 /*****************************************************************************
  * IWineD3DSwapChainImpl implementation structure (extends IUnknown)
  */

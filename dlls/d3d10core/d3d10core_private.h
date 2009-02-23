@@ -74,6 +74,8 @@ struct d3d10_buffer
 {
     const struct ID3D10BufferVtbl *vtbl;
     LONG refcount;
+
+    IWineD3DBuffer *wined3d_buffer;
 };
 
 /* ID3D10RenderTargetView */

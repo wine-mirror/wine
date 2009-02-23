@@ -560,7 +560,10 @@ static void STDMETHODCALLTYPE d3d10_device_Flush(ID3D10Device *iface)
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBuffer(ID3D10Device *iface,
         const D3D10_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data, ID3D10Buffer **buffer)
 {
+    struct d3d10_device *This = (struct d3d10_device *)iface;
+    struct wined3d_buffer_desc wined3d_desc;
     struct d3d10_buffer *object;
+    HRESULT hr;
 
     FIXME("iface %p, desc %p, data %p, buffer %p partial stub!\n", iface, desc, data, buffer);
 
@@ -573,6 +576,23 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBuffer(ID3D10Device *iface,
 
     object->vtbl = &d3d10_buffer_vtbl;
     object->refcount = 1;
+
+    FIXME("Implement DXGI<->wined3d usage conversion\n");
+
+    wined3d_desc.byte_width = desc->ByteWidth;
+    wined3d_desc.usage = desc->Usage;
+    wined3d_desc.bind_flags = desc->BindFlags;
+    wined3d_desc.cpu_access_flags = desc->CPUAccessFlags;
+    wined3d_desc.misc_flags = desc->MiscFlags;
+
+    hr = IWineD3DDevice_CreateBuffer(This->wined3d_device, &wined3d_desc,
+            (IUnknown *)object, &object->wined3d_buffer);
+    if (FAILED(hr))
+    {
+        ERR("CreateBuffer failed, returning %#x\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
 
     *buffer = (ID3D10Buffer *)object;
 

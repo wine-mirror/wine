@@ -762,6 +762,7 @@ typedef enum _WINED3DRESOURCETYPE
     WINED3DRTYPE_CUBETEXTURE                = 5,
     WINED3DRTYPE_VERTEXBUFFER               = 6,
     WINED3DRTYPE_INDEXBUFFER                = 7,
+    WINED3DRTYPE_BUFFER                     = 8,
     WINED3DRTYPE_FORCE_DWORD                = 0x7fffffff
 } WINED3DRESOURCETYPE;
 const UINT WINED3DRTYPECOUNT                = WINED3DRTYPE_INDEXBUFFER + 1;
@@ -2175,6 +2176,15 @@ typedef struct _WINEDDOVERLAYFX
     DWORD dwFlags;                                  /* flags */
 } WINEDDOVERLAYFX;
 
+struct wined3d_buffer_desc
+{
+    UINT byte_width;
+    DWORD usage;
+    UINT bind_flags;
+    UINT cpu_access_flags;
+    UINT misc_flags;
+};
+
 interface IWineD3DResource;
 interface IWineD3DSurface;
 interface IWineD3DVolume;
@@ -2892,6 +2902,15 @@ interface IWineD3DSwapChain : IWineD3DBase
 [
     object,
     local,
+    uuid(b3f028e8-1a40-4ab3-9292-5bf6cfd80209)
+]
+interface IWineD3DBuffer : IWineD3DResource
+{
+}
+
+[
+    object,
+    local,
     uuid(eac93065-a4df-446f-86a1-9ef2bca40a3c)
 ]
 interface IWineD3DBaseShader : IWineD3DBase
@@ -2948,6 +2967,11 @@ interface IWineD3DPixelShader : IWineD3DBaseShader
 ]
 interface IWineD3DDevice : IWineD3DBase
 {
+    HRESULT CreateBuffer(
+        [in] struct wined3d_buffer_desc *desc,
+        [in] IUnknown *parent,
+        [out] IWineD3DBuffer **buffer
+    );
     HRESULT CreateVertexBuffer(
         [in] UINT length,
         [in] DWORD usage,

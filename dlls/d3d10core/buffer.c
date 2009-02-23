@@ -65,6 +65,7 @@ static ULONG STDMETHODCALLTYPE d3d10_buffer_Release(ID3D10Buffer *iface)
 
     if (!refcount)
     {
+        IWineD3DBuffer_Release(This->wined3d_buffer);
         HeapFree(GetProcessHeap(), 0, This);
     }
 

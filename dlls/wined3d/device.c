@@ -133,6 +133,48 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetParent(IWineD3DDevice *iface, IUnkno
     return WINED3D_OK;
 }
 
+static HRESULT WINAPI IWineD3DDeviceImpl_CreateBuffer(IWineD3DDevice *iface,
+        struct wined3d_buffer_desc *desc, IUnknown *parent, IWineD3DBuffer **buffer)
+{
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    struct wined3d_buffer *object;
+    HRESULT hr;
+
+    TRACE("iface %p, desc %p, parent %p, buffer %p\n", iface, desc, parent, buffer);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->vtbl = &wined3d_buffer_vtbl;
+    object->desc = *desc;
+
+    FIXME("Ignoring access flags (pool)\n");
+
+    hr = resource_init(&object->resource, WINED3DRTYPE_BUFFER, This, desc->byte_width,
+            desc->usage, WINED3DFMT_UNKNOWN, WINED3DPOOL_MANAGED, parent);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize resource, returning %#x\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created resource %p\n", object);
+
+    IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object);
+
+    TRACE("size %#x, usage=%#x, format %s, memory @ %p, iface @ %p\n", object->resource.size, object->resource.usage,
+            debug_d3dformat(object->resource.format), object->resource.allocatedMemory, object);
+
+    *buffer = (IWineD3DBuffer *)object;
+
+    return WINED3D_OK;
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT Size, DWORD Usage, 
                              DWORD FVF, WINED3DPOOL Pool, IWineD3DVertexBuffer** ppVertexBuffer, HANDLE *sharedHandle,
                              IUnknown *parent) {
@@ -7478,8 +7520,12 @@ static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IW
                 This->stateBlock->pIndexData =  NULL;
             }
         }
-
         break;
+
+        case WINED3DRTYPE_BUFFER:
+            /* Nothing to do, yet.*/
+            break;
+
         default:
         FIXME("(%p) unknown resource type %p %u\n", This, resource, IWineD3DResource_GetType(resource));
         break;
@@ -7524,6 +7570,7 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     /*** IWineD3DDevice methods ***/
     IWineD3DDeviceImpl_GetParent,
     /*** Creation methods**/
+    IWineD3DDeviceImpl_CreateBuffer,
     IWineD3DDeviceImpl_CreateVertexBuffer,
     IWineD3DDeviceImpl_CreateIndexBuffer,
     IWineD3DDeviceImpl_CreateStateBlock,
