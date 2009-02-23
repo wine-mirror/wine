@@ -23,6 +23,10 @@
 #include <commctrl.h>
 #include <accctrl.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif  /* __cplusplus */
+
 typedef struct _SI_OBJECT_INFO
 {
     DWORD       dwFlags;
