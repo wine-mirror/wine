@@ -1146,7 +1146,6 @@ void state_fogdensity(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
     checkGLcall("glFogf(GL_FOG_DENSITY, (float) Value)");
 }
 
-/* TODO: Merge with primitive type + init_materials()!! */
 static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     GLenum Parm = 0;
