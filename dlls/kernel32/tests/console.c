@@ -162,7 +162,7 @@ static void testCursorInfo(HANDLE hCon)
 
     if (info.dwSize == 12)
     {
-        skip("NULL CONSOLE_CURSOR_INFO will crash on win9x\n");
+        win_skip("NULL CONSOLE_CURSOR_INFO will crash on win9x\n");
         return;
     }
 
