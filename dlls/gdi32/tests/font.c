@@ -839,7 +839,7 @@ static void test_GdiGetCharDimensions(void)
 
     if (!pGdiGetCharDimensions)
     {
-        skip("GdiGetCharDimensions not available on this platform\n");
+        win_skip("GdiGetCharDimensions not available on this platform\n");
         return;
     }
 
@@ -879,7 +879,7 @@ static void test_GetCharABCWidths(void)
 
     if (!pGetCharABCWidthsW || !pGetCharABCWidthsI)
     {
-        skip("GetCharABCWidthsW/I not available on this platform\n");
+        win_skip("GetCharABCWidthsW/I not available on this platform\n");
         return;
     }
 
@@ -944,7 +944,7 @@ static void test_text_extents(void)
     GetTextExtentExPointW(hdc, wt, 1, 1, &fit1, &fit2, &sz1);
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("Skipping remainder of text extents test on a Win9x platform\n");
+        win_skip("Skipping remainder of text extents test on a Win9x platform\n");
         hfont = SelectObject(hdc, hfont);
         DeleteObject(hfont);
         ReleaseDC(0, hdc);
@@ -1002,7 +1002,7 @@ static void test_GetGlyphIndices(void)
     HFONT hOldFont;
 
     if (!pGetGlyphIndicesW) {
-        skip("GetGlyphIndicesW not available on platform\n");
+        win_skip("GetGlyphIndicesW not available on platform\n");
         return;
     }
 
@@ -1137,7 +1137,7 @@ static void test_GetKerningPairs(void)
     GetKerningPairsW(hdc, 0, NULL);
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("Skipping the GetKerningPairs test on a Win9x platform\n");
+        win_skip("Skipping the GetKerningPairs test on a Win9x platform\n");
         ReleaseDC(0, hdc);
         return;
     }
@@ -1561,7 +1561,7 @@ static void test_font_charset(void)
 
     if (!pGetGlyphIndicesA || !pGetGlyphIndicesW)
     {
-        skip("Skipping the font charset test on a Win9x platform\n");
+        win_skip("Skipping the font charset test on a Win9x platform\n");
         return;
     }
 
@@ -1606,7 +1606,7 @@ static void test_GetFontUnicodeRanges(void)
 
     if (!pGetFontUnicodeRanges)
     {
-        skip("GetFontUnicodeRanges not available before W2K\n");
+        win_skip("GetFontUnicodeRanges not available before W2K\n");
         return;
     }
 
@@ -2511,7 +2511,7 @@ static void test_GetTextMetrics(void)
 
     /* Report only once */
     if(!pGetGlyphIndicesA)
-        skip("GetGlyphIndicesA is unavailable, negative width will not be checked\n");
+        win_skip("GetGlyphIndicesA is unavailable, negative width will not be checked\n");
 
     hdc = GetDC(0);
 
@@ -2672,7 +2672,7 @@ static void test_GdiRealizationInfo(void)
 
     if(!pGdiRealizationInfo)
     {
-        skip("GdiRealizationInfo not available\n");
+        win_skip("GdiRealizationInfo not available\n");
         return;
     }
 

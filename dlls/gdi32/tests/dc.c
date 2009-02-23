@@ -185,7 +185,7 @@ static void test_GdiConvertToDevmodeW(void)
     pGdiConvertToDevmodeW = (void *)GetProcAddress(GetModuleHandleA("gdi32.dll"), "GdiConvertToDevmodeW");
     if (!pGdiConvertToDevmodeW)
     {
-        skip("GdiConvertToDevmodeW is not available on this platform\n");
+        win_skip("GdiConvertToDevmodeW is not available on this platform\n");
         return;
     }
 
