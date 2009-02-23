@@ -52,6 +52,8 @@ struct d3d10_device
     const struct IWineD3DDeviceParentVtbl *device_parent_vtbl;
     IUnknown *outer_unknown;
     LONG refcount;
+
+    IWineD3DDevice *wined3d_device;
 };
 
 /* ID3D10Texture2D */

@@ -2188,6 +2188,10 @@ interface IWineD3DDevice;
 ]
 interface IWineD3DDeviceParent : IUnknown
 {
+    void WineD3DDeviceCreated(
+        [in] IWineD3DDevice *device
+    );
+
     HRESULT CreateSurface(
         [in] IUnknown *superior,
         [in] UINT width,

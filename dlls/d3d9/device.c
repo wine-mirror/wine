@@ -1929,6 +1929,11 @@ static ULONG STDMETHODCALLTYPE device_parent_Release(IWineD3DDeviceParent *iface
 
 /* IWineD3DDeviceParent methods */
 
+static void STDMETHODCALLTYPE device_parent_WineD3DDeviceCreated(IWineD3DDeviceParent *iface, IWineD3DDevice *device)
+{
+    TRACE("iface %p, device %p\n", iface, device);
+}
+
 static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParent *iface,
         IUnknown *superior, UINT width, UINT height, WINED3DFORMAT format, DWORD usage,
         WINED3DPOOL pool, UINT level, WINED3DCUBEMAP_FACES face, IWineD3DSurface **surface)
@@ -2130,6 +2135,7 @@ const IWineD3DDeviceParentVtbl d3d9_wined3d_device_parent_vtbl =
     device_parent_AddRef,
     device_parent_Release,
     /* IWineD3DDeviceParent methods */
+    device_parent_WineD3DDeviceCreated,
     device_parent_CreateSurface,
     device_parent_CreateRenderTarget,
     device_parent_CreateDepthStencilSurface,

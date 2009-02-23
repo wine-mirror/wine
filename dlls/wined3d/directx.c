@@ -3722,6 +3722,9 @@ static HRESULT WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter,
     for(i = 0; i < PATCHMAP_SIZE; i++) {
         list_init(&object->patches[i]);
     }
+
+    IWineD3DDeviceParent_WineD3DDeviceCreated(device_parent, *ppReturnedDeviceInterface);
+
     return WINED3D_OK;
 }
 #undef GLINFO_LOCATION
