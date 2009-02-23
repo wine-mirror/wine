@@ -1672,12 +1672,12 @@ static void testVerifyCertSig(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
 
     if (!pCryptVerifyCertificateSignatureEx)
     {
-        skip("no CryptVerifyCertificateSignatureEx support\n");
+        win_skip("no CryptVerifyCertificateSignatureEx support\n");
         return;
     }
     if (!pCryptEncodeObjectEx)
     {
-        skip("no CryptEncodeObjectEx support\n");
+        win_skip("no CryptEncodeObjectEx support\n");
         return;
     }
     ret = pCryptVerifyCertificateSignatureEx(0, 0, 0, NULL, 0, NULL, 0, NULL);
@@ -1897,7 +1897,7 @@ static void testCreateSelfSignCert(void)
 
     if (!pCertCreateSelfSignCertificate)
     {
-        skip("CertCreateSelfSignCertificate() is not available\n");
+        win_skip("CertCreateSelfSignCertificate() is not available\n");
         return;
     }
 
@@ -2334,7 +2334,7 @@ static void testGetValidUsages(void)
 
     if (!pCertGetValidUsages)
     {
-        skip("CertGetValidUsages() is not available\n");
+        win_skip("CertGetValidUsages() is not available\n");
         return;
     }
 
@@ -2875,7 +2875,7 @@ static void testAcquireCertPrivateKey(void)
 
     if (!pCryptAcquireCertificatePrivateKey)
     {
-        skip("CryptAcquireCertificatePrivateKey() is not available\n");
+        win_skip("CryptAcquireCertificatePrivateKey() is not available\n");
         return;
     }
 

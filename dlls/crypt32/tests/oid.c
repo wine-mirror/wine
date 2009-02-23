@@ -531,7 +531,7 @@ static void test_enumOIDInfo(void)
 
     if (!pCryptEnumOIDInfo)
     {
-        skip("CryptEnumOIDInfo() is not available\n");
+        win_skip("CryptEnumOIDInfo() is not available\n");
         return;
     }
 

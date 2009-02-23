@@ -68,7 +68,7 @@ static void testCreateCertChainEngine(void)
 
     if (!pCertCreateCertificateChainEngine || !pCertFreeCertificateChainEngine)
     {
-        skip("Cert*CertificateChainEngine() functions are not available\n");
+        win_skip("Cert*CertificateChainEngine() functions are not available\n");
         return;
     }
 
@@ -1930,7 +1930,7 @@ static void testVerifyCertChainPolicy(void)
 
     if (!pCertVerifyCertificateChainPolicy)
     {
-        skip("CertVerifyCertificateChainPolicy() is not available\n");
+        win_skip("CertVerifyCertificateChainPolicy() is not available\n");
         return;
     }
 
@@ -2010,7 +2010,7 @@ START_TEST(chain)
     testCreateCertChainEngine();
     if (!pCertGetCertificateChain)
     {
-        skip("CertGetCertificateChain() is not available\n");
+        win_skip("CertGetCertificateChain() is not available\n");
     }
     else
     {

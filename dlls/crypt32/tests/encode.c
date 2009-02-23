@@ -7497,7 +7497,7 @@ START_TEST(encode)
     pCryptEncodeObjectEx = (void*)GetProcAddress(hCrypt32, "CryptEncodeObjectEx");
     if (!pCryptDecodeObjectEx || !pCryptEncodeObjectEx)
     {
-        skip("CryptDecodeObjectEx() is not available\n");
+        win_skip("CryptDecodeObjectEx() is not available\n");
         return;
     }
 
