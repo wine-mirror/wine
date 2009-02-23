@@ -26,7 +26,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
 #ifdef SONAME_LIBSANE
-SANE_Status sane_option_get_int(SANE_Handle h, const char *option_name, SANE_Int *val)
+static SANE_Status sane_find_option(SANE_Handle h, const char *option_name,
+        const SANE_Option_Descriptor **opt_p, int *optno, SANE_Value_Type type)
 {
     SANE_Status rc;
     SANE_Int optcount;
@@ -41,9 +42,59 @@ SANE_Status sane_option_get_int(SANE_Handle h, const char *option_name, SANE_Int
     {
         opt = psane_get_option_descriptor(h, i);
         if (opt && (opt->name && strcmp(opt->name, option_name) == 0) &&
-               opt->type == SANE_TYPE_INT )
-            return psane_control_option(h, i, SANE_ACTION_GET_VALUE, val, NULL);
+               opt->type == type)
+        {
+            *opt_p = opt;
+            *optno = i;
+            return SANE_STATUS_GOOD;
+        }
     }
     return SANE_STATUS_EOF;
+}
+
+SANE_Status sane_option_get_int(SANE_Handle h, const char *option_name, SANE_Int *val)
+{
+    SANE_Status rc;
+    int optno;
+    const SANE_Option_Descriptor *opt;
+
+    rc = sane_find_option(h, option_name, &opt, &optno, SANE_TYPE_INT);
+    if (rc != SANE_STATUS_GOOD)
+        return rc;
+
+    return psane_control_option(h, optno, SANE_ACTION_GET_VALUE, val, NULL);
+}
+
+SANE_Status sane_option_set_int(SANE_Handle h, const char *option_name, SANE_Int val, SANE_Int *status)
+{
+    SANE_Status rc;
+    int optno;
+    const SANE_Option_Descriptor *opt;
+
+    rc = sane_find_option(h, option_name, &opt, &optno, SANE_TYPE_INT);
+    if (rc != SANE_STATUS_GOOD)
+        return rc;
+
+    return psane_control_option(h, optno, SANE_ACTION_SET_VALUE, (void *) &val, status);
+}
+
+SANE_Status sane_option_probe_resolution(SANE_Handle h, const char *option_name, SANE_Int *minval, SANE_Int *maxval, SANE_Int *quant)
+{
+    SANE_Status rc;
+    int optno;
+    const SANE_Option_Descriptor *opt;
+
+    rc = sane_find_option(h, option_name, &opt, &optno, SANE_TYPE_INT);
+    if (rc != SANE_STATUS_GOOD)
+        return rc;
+
+    if (opt->constraint_type != SANE_CONSTRAINT_RANGE)
+        return SANE_STATUS_UNSUPPORTED;
+
+    *minval = opt->constraint.range->min;
+    *maxval = opt->constraint.range->max;
+    *quant = opt->constraint.range->quant;
+
+    return rc;
 }
 #endif

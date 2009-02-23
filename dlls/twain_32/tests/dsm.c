@@ -267,6 +267,127 @@ static void test_onevalue_cap(TW_IDENTITY *appid, TW_IDENTITY *source, TW_UINT16
     }
 }
 
+static void test_resolution(TW_IDENTITY *appid, TW_IDENTITY *source, TW_UINT16 captype, TW_INT32 minimum_support)
+{
+    TW_UINT16 rc;
+    TW_STATUS status;
+    TW_CAPABILITY cap;
+    TW_UINT32 val;
+    TW_UINT16 type;
+    TW_INT32 actual_support;
+    TW_FIX32 orig_value = { 0, 0 };
+    TW_UINT32 new_value = 0;
+    TW_FIX32 default_value = { 0, 0 };
+
+    memset(&cap, 0, sizeof(cap));
+    cap.Cap = captype;
+    cap.ConType = TWON_DONTCARE16;
+
+    rc = pDSM_Entry(appid, source, DG_CONTROL, DAT_CAPABILITY, MSG_QUERYSUPPORT, &cap);
+    get_condition_code(appid, source, &status);
+    ok(rc == TWRC_SUCCESS && status.ConditionCode == TWCC_SUCCESS,
+            "Error [rc %d|cc %d] doing MSG_QUERYSUPPORT for type 0x%x\n", rc, status.ConditionCode, captype);
+    if (rc != TWRC_SUCCESS)
+        return;
+    ok(get_onevalue(cap.hContainer, (TW_UINT32 *) &actual_support, NULL), "Returned cap.hContainer invalid for QuerySupport on type 0x%x\n", captype);
+    ok((actual_support & minimum_support) == minimum_support,
+            "Error:  minimum support 0x%x for type 0x%x, got 0x%x\n", minimum_support,
+            captype, actual_support);
+
+
+    if (actual_support & TWQC_GETCURRENT)
+    {
+        memset(&cap, 0, sizeof(cap));
+        cap.Cap = captype;
+        cap.ConType = TWON_DONTCARE16;
+
+        rc = pDSM_Entry(appid, source, DG_CONTROL, DAT_CAPABILITY, MSG_GETCURRENT, &cap);
+        get_condition_code(appid, source, &status);
+        ok(rc == TWRC_SUCCESS && status.ConditionCode == TWCC_SUCCESS,
+                "Error [rc %d|cc %d] doing MSG_GETCURRENT for type 0x%x\n", rc, status.ConditionCode, captype);
+        if (rc == TWRC_SUCCESS)
+        {
+            get_onevalue(cap.hContainer, &val, &type);
+            ok(type == TWTY_FIX32, "GETCURRENT for RESOLUTION is not type FIX32, is type %d\n", type);
+            memcpy(&orig_value, &val, sizeof(orig_value));
+            GlobalFree(cap.hContainer);
+        }
+    }
+
+    if (actual_support & TWQC_GETDEFAULT)
+    {
+        memset(&cap, 0, sizeof(cap));
+        cap.Cap = captype;
+        cap.ConType = TWON_DONTCARE16;
+
+        rc = pDSM_Entry(appid, source, DG_CONTROL, DAT_CAPABILITY, MSG_GETDEFAULT, &cap);
+        get_condition_code(appid, source, &status);
+        ok(rc == TWRC_SUCCESS && status.ConditionCode == TWCC_SUCCESS,
+                "Error [rc %d|cc %d] doing MSG_GETDEFAULT for type 0x%x\n", rc, status.ConditionCode, captype);
+        if (rc == TWRC_SUCCESS)
+        {
+            ok(type == TWTY_FIX32, "GETDEFAULT for RESOLUTION is not type FIX32, is type %d\n", type);
+            memcpy(&default_value, &val, sizeof(default_value));
+            GlobalFree(cap.hContainer);
+        }
+    }
+
+    if (actual_support & TWQC_GET)
+    {
+        memset(&cap, 0, sizeof(cap));
+        cap.Cap = captype;
+        cap.ConType = TWON_DONTCARE16;
+
+        rc = pDSM_Entry(appid, source, DG_CONTROL, DAT_CAPABILITY, MSG_GET, &cap);
+        get_condition_code(appid, source, &status);
+        ok(rc == TWRC_SUCCESS && status.ConditionCode == TWCC_SUCCESS,
+                "Error [rc %d|cc %d] doing MSG_GET for type 0x%x\n", rc, status.ConditionCode, captype);
+        if (rc == TWRC_SUCCESS)
+        {
+            TW_RANGE *range;
+            ok(cap.ConType == TWON_RANGE, "MSG_GET for ICAP_[XY]RESOLUTION did not return TWON_RANGE, but %d\n", cap.ConType);
+            range = GlobalLock(cap.hContainer);
+            trace("MSG_GET of 0x%x returned [ItemType %d|MinValue %d|MaxValue %d|StepSize %d|DefaultValue %d|CurrentValue %d]:\n",
+                    cap.Cap, range->ItemType, range->MinValue, range->MaxValue, range->StepSize,
+                    range->DefaultValue, range->CurrentValue);
+            for (new_value = range->MinValue; new_value < range->MaxValue; new_value += range->StepSize)
+                if (new_value != range->CurrentValue)
+                    break;
+            GlobalUnlock(cap.hContainer);
+            GlobalFree(cap.hContainer);
+        }
+    }
+
+    if (actual_support & TWQC_SET)
+    {
+        memset(&cap, 0, sizeof(cap));
+        cap.Cap = captype;
+        cap.ConType = TWON_ONEVALUE;
+        cap.hContainer = alloc_and_set_onevalue(new_value, TWTY_FIX32);
+
+        rc = pDSM_Entry(appid, source, DG_CONTROL, DAT_CAPABILITY, MSG_SET, &cap);
+        get_condition_code(appid, source, &status);
+        ok(rc == TWRC_SUCCESS && status.ConditionCode == TWCC_SUCCESS,
+                "Error [rc %d|cc %d] doing MSG_SET for type 0x%x\n", rc, status.ConditionCode, captype);
+        GlobalFree(cap.hContainer);
+
+    }
+
+    if (actual_support & TWQC_RESET)
+    {
+        memset(&cap, 0, sizeof(cap));
+        cap.Cap = captype;
+        cap.ConType = TWON_DONTCARE16;
+
+        rc = pDSM_Entry(appid, source, DG_CONTROL, DAT_CAPABILITY, MSG_RESET, &cap);
+        get_condition_code(appid, source, &status);
+        ok(rc == TWRC_SUCCESS && status.ConditionCode == TWCC_SUCCESS,
+                "Error [rc %d|cc %d] doing MSG_RESET for type 0x%x\n", rc, status.ConditionCode, captype);
+        if (rc == TWRC_SUCCESS)
+            GlobalFree(cap.hContainer);
+    }
+}
+
 
 static void test_single_source(TW_IDENTITY *appid, TW_IDENTITY *source)
 {
@@ -356,10 +477,14 @@ static void test_single_source(TW_IDENTITY *appid, TW_IDENTITY *source)
         if (capabilities[ICAP_XFERMECH])
             test_onevalue_cap(appid, source, ICAP_XFERMECH, TWTY_UINT16,
                 TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET);
-        todo_wine
         ok(capabilities[ICAP_XRESOLUTION], "ICAP_XRESOLUTION not supported\n");
-        todo_wine
+        if (capabilities[ICAP_XRESOLUTION])
+            test_resolution(appid, source, ICAP_XRESOLUTION,
+                TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET);
         ok(capabilities[ICAP_YRESOLUTION], "ICAP_YRESOLUTION not supported\n");
+        if (capabilities[ICAP_YRESOLUTION])
+            test_resolution(appid, source, ICAP_YRESOLUTION,
+                TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET);
     }
 }
 

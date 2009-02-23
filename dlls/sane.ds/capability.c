@@ -122,11 +122,40 @@ static TW_UINT16 msg_get_enum(pTW_CAPABILITY pCapability, const TW_UINT32 *value
     return TWCC_SUCCESS;
 }
 
+#ifdef SONAME_LIBSANE
+static TW_UINT16 msg_get_range(pTW_CAPABILITY pCapability, TW_UINT16 type,
+            TW_UINT32 minval, TW_UINT32 maxval, TW_UINT32 step, TW_UINT32 def,  TW_UINT32 current)
+{
+    TW_RANGE *range = NULL;
+
+    pCapability->ConType = TWON_RANGE;
+    pCapability->hContainer = 0;
+
+    pCapability->hContainer = GlobalAlloc (0, sizeof(*range));
+    if (pCapability->hContainer)
+        range = GlobalLock(pCapability->hContainer);
+
+    if (! range)
+        return TWCC_LOWMEMORY;
+
+    range->ItemType = type;
+    range->MinValue = minval;
+    range->MaxValue = maxval;
+    range->StepSize = step;
+    range->DefaultValue = def;
+    range->CurrentValue = current;
+
+    GlobalUnlock(pCapability->hContainer);
+    return TWCC_SUCCESS;
+}
+#endif
+
 static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability)
 {
     TW_ARRAY *a;
     static const UINT16 supported_caps[] = { CAP_SUPPORTEDCAPS, CAP_XFERCOUNT, CAP_UICONTROLLABLE,
-                    ICAP_XFERMECH, ICAP_PIXELTYPE, ICAP_COMPRESSION, ICAP_PIXELFLAVOR };
+                    ICAP_XFERMECH, ICAP_PIXELTYPE, ICAP_COMPRESSION, ICAP_PIXELFLAVOR,
+                    ICAP_XRESOLUTION, ICAP_YRESOLUTION };
 
     pCapability->hContainer = GlobalAlloc (0, FIELD_OFFSET( TW_ARRAY, ItemList[sizeof(supported_caps)] ));
     pCapability->ConType = TWON_ARRAY;
@@ -345,6 +374,108 @@ static TW_UINT16 SANE_ICAPCompression (pTW_CAPABILITY pCapability, TW_UINT16 act
     return twCC;
 }
 
+/* ICAP_XRESOLUTION, ICAP_YRESOLUTION  */
+static TW_UINT16 SANE_ICAPResolution (pTW_CAPABILITY pCapability, TW_UINT16 action,  TW_UINT16 cap)
+{
+    TW_UINT16 twCC = TWCC_BADCAP;
+#ifdef SONAME_LIBSANE
+    TW_UINT32 val;
+    SANE_Int current_resolution;
+    TW_FIX32 *default_res;
+    const char *best_option_name;
+    SANE_Int minval, maxval, quantval;
+    SANE_Status sane_rc;
+    SANE_Int set_status;
+
+    TRACE("ICAP_%cRESOLUTION\n", cap == ICAP_XRESOLUTION ? 'X' : 'Y');
+
+    /* Some scanners support 'x-resolution', most seem to just support 'resolution' */
+    if (cap == ICAP_XRESOLUTION)
+    {
+        best_option_name = "x-resolution";
+        default_res = &activeDS.defaultXResolution;
+    }
+    else
+    {
+        best_option_name = "y-resolution";
+        default_res = &activeDS.defaultYResolution;
+    }
+    if (sane_option_get_int(activeDS.deviceHandle, best_option_name, &current_resolution) != SANE_STATUS_GOOD)
+    {
+        best_option_name = "resolution";
+        if (sane_option_get_int(activeDS.deviceHandle, best_option_name, &current_resolution) != SANE_STATUS_GOOD)
+            return TWCC_BADCAP;
+    }
+
+    /* Sane does not support a concept of 'default' resolution, so we have to
+     *   cache the resolution the very first time we load the scanner, and use that
+     *   as the default */
+    if (cap == ICAP_XRESOLUTION && ! activeDS.XResolutionSet)
+    {
+        default_res->Whole = current_resolution;
+        default_res->Frac = 0;
+        activeDS.XResolutionSet = TRUE;
+    }
+
+    if (cap == ICAP_YRESOLUTION && ! activeDS.YResolutionSet)
+    {
+        default_res->Whole = current_resolution;
+        default_res->Frac = 0;
+        activeDS.YResolutionSet = TRUE;
+    }
+
+    switch (action)
+    {
+        case MSG_QUERYSUPPORT:
+            twCC = set_onevalue(pCapability, TWTY_INT32,
+                    TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET );
+            break;
+
+        case MSG_GET:
+            sane_rc = sane_option_probe_resolution(activeDS.deviceHandle, best_option_name, &minval, &maxval, &quantval);
+            if (sane_rc != SANE_STATUS_GOOD)
+                twCC = TWCC_BADCAP;
+            else
+                twCC = msg_get_range(pCapability, TWTY_FIX32,
+                                minval, maxval, quantval == 0 ? 1 : quantval, default_res->Whole, current_resolution);
+            break;
+
+        case MSG_SET:
+            twCC = msg_set(pCapability, &val);
+            if (twCC == TWCC_SUCCESS)
+            {
+                TW_FIX32 f32;
+                memcpy(&f32, &val, sizeof(f32));
+                sane_rc = sane_option_set_int(activeDS.deviceHandle, best_option_name, f32.Whole, &set_status);
+                if (sane_rc != SANE_STATUS_GOOD)
+                {
+                    FIXME("Status of %d not expected or handled\n", sane_rc);
+                    twCC = TWCC_BADCAP;
+                }
+                else if (set_status == SANE_INFO_INEXACT)
+                    twCC = TWCC_CHECKSTATUS;
+            }
+            break;
+
+        case MSG_GETDEFAULT:
+            twCC = set_onevalue(pCapability, TWTY_FIX32, default_res->Whole);
+            break;
+
+        case MSG_RESET:
+            sane_rc = sane_option_set_int(activeDS.deviceHandle, best_option_name, default_res->Whole, NULL);
+            if (sane_rc != SANE_STATUS_GOOD)
+                return TWCC_BADCAP;
+
+            /* .. fall through intentional .. */
+
+        case MSG_GETCURRENT:
+            twCC = set_onevalue(pCapability, TWTY_FIX32, current_resolution);
+            break;
+    }
+#endif
+    return twCC;
+}
+
 /* ICAP_PIXELFLAVOR */
 static TW_UINT16 SANE_ICAPPixelFlavor (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
@@ -426,6 +557,14 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 
         case ICAP_COMPRESSION:
             twCC = SANE_ICAPCompression(pCapability, action);
+            break;
+
+        case ICAP_XRESOLUTION:
+            twCC = SANE_ICAPResolution(pCapability, action, pCapability->Cap);
+            break;
+
+        case ICAP_YRESOLUTION:
+            twCC = SANE_ICAPResolution(pCapability, action, pCapability->Cap);
             break;
     }
 

@@ -53,6 +53,8 @@ MAKE_FUNCPTR(sane_strstatus)
 
 extern HINSTANCE SANE_instance;
 
+#define TWCC_CHECKSTATUS     (TWCC_CUSTOMBASE + 1)
+
 /* internal information about an active data source */
 struct tagActiveDS
 {
@@ -73,6 +75,10 @@ struct tagActiveDS
     /* Capabilities */
     TW_UINT16		capXferMech;		/* ICAP_XFERMECH */
     TW_UINT16		capPixelType;		/* ICAP_PIXELTYPE */
+    BOOL                XResolutionSet;
+    TW_FIX32            defaultXResolution;
+    BOOL                YResolutionSet;
+    TW_FIX32            defaultYResolution;
 } activeDS;
 
 /* Helper functions */
@@ -214,6 +220,8 @@ HWND ScanningDialogBox(HWND dialog, LONG progress);
 /* Option functions */
 #ifdef SONAME_LIBSANE
 SANE_Status sane_option_get_int(SANE_Handle h, const char *option_name, SANE_Int *val);
+SANE_Status sane_option_set_int(SANE_Handle h, const char *option_name, SANE_Int val, SANE_Int *status);
+SANE_Status sane_option_probe_resolution(SANE_Handle h, const char *option_name, SANE_Int *minval, SANE_Int *maxval, SANE_Int *quant);
 #endif
 
 

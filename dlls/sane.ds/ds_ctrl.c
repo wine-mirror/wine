@@ -162,7 +162,13 @@ TW_UINT16 SANE_CapabilitySet (pTW_IDENTITY pOrigin,
     else
     {
         twCC = SANE_SaneCapability (pCapability, MSG_SET);
-        twRC = (twCC == TWCC_SUCCESS)?TWRC_SUCCESS:TWRC_FAILURE;
+        if (twCC == TWCC_CHECKSTATUS)
+        {
+            twCC = TWCC_SUCCESS;
+            twRC = TWRC_CHECKSTATUS;
+        }
+        else
+            twRC = (twCC == TWCC_SUCCESS)?TWRC_SUCCESS:TWRC_FAILURE;
         activeDS.twCC = twCC;
     }
     return twRC;
