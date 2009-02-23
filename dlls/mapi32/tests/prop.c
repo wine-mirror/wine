@@ -1362,7 +1362,7 @@ START_TEST(prop)
 
     if(!InitFuncPtrs())
     {
-        skip("Needed functions are not available\n");
+        win_skip("Needed functions are not available\n");
         return;
     }
 
@@ -1370,7 +1370,7 @@ START_TEST(prop)
     ret = pScInitMapiUtil(0);
     if ((ret != S_OK) && (GetLastError() == ERROR_PROC_NOT_FOUND))
     {
-        skip("ScInitMapiUtil is not implemented\n");
+        win_skip("ScInitMapiUtil is not implemented\n");
         FreeLibrary(hMapi32);
         return;
     }
