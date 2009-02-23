@@ -759,14 +759,14 @@ static BOOL init_functionpointers(void)
     hmscoree = LoadLibraryA("mscoree.dll");
     if (!hmscoree)
     {
-        skip("mscoree.dll not available\n");
+        win_skip("mscoree.dll not available\n");
         return FALSE;
     }
 
     pLoadLibraryShim = (void *)GetProcAddress(hmscoree, "LoadLibraryShim");
     if (!pLoadLibraryShim)
     {
-        skip("LoadLibraryShim not available\n");
+        win_skip("LoadLibraryShim not available\n");
         FreeLibrary(hmscoree);
         return FALSE;
     }
@@ -774,7 +774,7 @@ static BOOL init_functionpointers(void)
     hr = pLoadLibraryShim(szFusion, NULL, NULL, &hfusion);
     if (FAILED(hr))
     {
-        skip("fusion.dll not available\n");
+        win_skip("fusion.dll not available\n");
         FreeLibrary(hmscoree);
         return FALSE;
     }
@@ -784,7 +784,7 @@ static BOOL init_functionpointers(void)
 
     if (!pCreateAssemblyCache || !pGetCachePath)
     {
-        skip("fusion.dll not implemented\n");
+        win_skip("fusion.dll not implemented\n");
         return FALSE;
     }
 

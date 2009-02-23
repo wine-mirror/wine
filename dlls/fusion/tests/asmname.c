@@ -777,7 +777,7 @@ START_TEST(asmname)
 {
     if (!init_functionpointers())
     {
-        skip("fusion.dll not available\n");
+        win_skip("fusion.dll not available\n");
         return;
     }
 
