@@ -74,7 +74,7 @@ static int init_access_tests(void)
     rc=GetUserNameW(user_name, &dwSize);
     if (rc==FALSE && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("GetUserNameW is not available.\n");
+        win_skip("GetUserNameW is not available.\n");
         return 0;
     }
     ok(rc, "User Name Retrieved\n");
@@ -333,7 +333,7 @@ START_TEST(access)
      * if one is not available, none are.
      */
     if (!pNetApiBufferFree) {
-        skip("Needed functions are not available\n");
+        win_skip("Needed functions are not available\n");
         FreeLibrary(hnetapi32);
         return;
     }
