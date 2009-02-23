@@ -542,7 +542,7 @@ LONG CoreAudio_WaveInit(void)
     for (i = 0; i < MAX_WAVEOUTDRV; ++i)
     {
         static const WCHAR wszWaveOutFormat[] =
-            {'C','o','r','e','A','u','d','i','o',' ','W','a','v','e','I','n',' ','%','d',0};
+            {'C','o','r','e','A','u','d','i','o',' ','W','a','v','e','O','u','t',' ','%','d',0};
 
         WOutDev[i].state = WINE_WS_CLOSED;
         WOutDev[i].cadev = &CoreAudio_DefaultDevice; 
