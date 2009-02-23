@@ -339,6 +339,21 @@ extract_test (struct wine_test *test, const char *dir, LPTSTR res_name)
     CloseHandle(hfile);
 }
 
+static DWORD wait_process( HANDLE process, DWORD timeout )
+{
+    DWORD wait, diff = 0, start = GetTickCount();
+    MSG msg;
+
+    while (diff < timeout)
+    {
+        wait = MsgWaitForMultipleObjects( 1, &process, FALSE, timeout - diff, QS_ALLINPUT );
+        if (wait != WAIT_OBJECT_0 + 1) return wait;
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+        diff = GetTickCount() - start;
+    }
+    return WAIT_TIMEOUT;
+}
+
 /* Run a command for MS milliseconds.  If OUT != NULL, also redirect
    stdout to there.
 
@@ -359,49 +374,45 @@ run_ex (char *cmd, HANDLE out_file, const char *tempdir, DWORD ms)
     si.hStdError  = out_file ? out_file : GetStdHandle( STD_ERROR_HANDLE );
 
     if (!CreateProcessA (NULL, cmd, NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE,
-                         NULL, tempdir, &si, &pi)) {
-        status = -2;
-    } else {
-        CloseHandle (pi.hThread);
-        wait = WaitForSingleObject (pi.hProcess, ms);
-        if (wait == WAIT_OBJECT_0) {
-            GetExitCodeProcess (pi.hProcess, &status);
-        } else {
-            switch (wait) {
-            case WAIT_FAILED:
-                report (R_ERROR, "Wait for '%s' failed: %d", cmd,
-                        GetLastError ());
-                break;
-            case WAIT_TIMEOUT:
-                report (R_ERROR, "Process '%s' timed out.", cmd);
-                break;
-            default:
-                report (R_ERROR, "Wait returned %d", wait);
-            }
-            status = wait;
-            if (!TerminateProcess (pi.hProcess, 257))
-                report (R_ERROR, "TerminateProcess failed: %d",
-                        GetLastError ());
-            wait = WaitForSingleObject (pi.hProcess, 5000);
-            switch (wait) {
-            case WAIT_FAILED:
-                report (R_ERROR,
-                        "Wait for termination of '%s' failed: %d",
-                        cmd, GetLastError ());
-                break;
-            case WAIT_OBJECT_0:
-                break;
-            case WAIT_TIMEOUT:
-                report (R_ERROR, "Can't kill process '%s'", cmd);
-                break;
-            default:
-                report (R_ERROR, "Waiting for termination: %d",
-                        wait);
-            }
-        }
-        CloseHandle (pi.hProcess);
-    }
+                         NULL, tempdir, &si, &pi))
+        return -2;
 
+    CloseHandle (pi.hThread);
+    status = wait_process( pi.hProcess, ms );
+    switch (status)
+    {
+    case WAIT_OBJECT_0:
+        GetExitCodeProcess (pi.hProcess, &status);
+        CloseHandle (pi.hProcess);
+        return status;
+    case WAIT_FAILED:
+        report (R_ERROR, "Wait for '%s' failed: %d", cmd, GetLastError ());
+        break;
+    case WAIT_TIMEOUT:
+        report (R_ERROR, "Process '%s' timed out.", cmd);
+        break;
+    default:
+        report (R_ERROR, "Wait returned %d", status);
+        break;
+    }
+    if (!TerminateProcess (pi.hProcess, 257))
+        report (R_ERROR, "TerminateProcess failed: %d", GetLastError ());
+    wait = wait_process( pi.hProcess, 5000 );
+    switch (wait)
+    {
+    case WAIT_OBJECT_0:
+        break;
+    case WAIT_FAILED:
+        report (R_ERROR, "Wait for termination of '%s' failed: %d", cmd, GetLastError ());
+        break;
+    case WAIT_TIMEOUT:
+        report (R_ERROR, "Can't kill process '%s'", cmd);
+        break;
+    default:
+        report (R_ERROR, "Waiting for termination: %d", wait);
+        break;
+    }
+    CloseHandle (pi.hProcess);
     return status;
 }
 
