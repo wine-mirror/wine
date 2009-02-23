@@ -2968,11 +2968,14 @@ static void test_msg_get_and_verify_signer(void)
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     /* A "signed" message created with no signer cert likewise has no signer */
-    CryptMsgUpdate(msg, signedEmptyContent, sizeof(signedEmptyContent), TRUE);
-    SetLastError(0xdeadbeef);
-    ret = CryptMsgGetAndVerifySigner(msg, 0, NULL, 0, NULL, NULL);
-    ok(!ret && GetLastError() == CRYPT_E_NO_TRUSTED_SIGNER,
-     "expected CRYPT_E_NO_TRUSTED_SIGNER, got 0x%08x\n", GetLastError());
+    ret = CryptMsgUpdate(msg, signedEmptyContent, sizeof(signedEmptyContent), TRUE);
+    if (ret)
+    {
+        /* Crashes on most Win9x */
+        ret = CryptMsgGetAndVerifySigner(msg, 0, NULL, 0, NULL, NULL);
+        ok(!ret && GetLastError() == CRYPT_E_NO_TRUSTED_SIGNER,
+         "expected CRYPT_E_NO_TRUSTED_SIGNER, got 0x%08x\n", GetLastError());
+    }
     CryptMsgClose(msg);
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
