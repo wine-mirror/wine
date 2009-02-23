@@ -2883,7 +2883,7 @@ START_TEST(d3d)
 {
     init_function_pointers();
     if(!pDirectDrawCreateEx) {
-        skip("function DirectDrawCreateEx not available\n");
+        win_skip("function DirectDrawCreateEx not available\n");
         return;
     }
 
