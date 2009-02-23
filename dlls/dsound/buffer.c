@@ -117,11 +117,8 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
         } else if (howmuch > 0) {
 	    /* Make an internal copy of the caller-supplied array.
 	     * Replace the existing copy if one is already present. */
-	    if (This->dsb->notifies)
-		    This->dsb->notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-			This->dsb->notifies, howmuch * sizeof(DSBPOSITIONNOTIFY));
-	    else
-		    This->dsb->notifies = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+	    HeapFree(GetProcessHeap(), 0, This->dsb->notifies);
+	    This->dsb->notifies = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 			howmuch * sizeof(DSBPOSITIONNOTIFY));
 
 	    if (This->dsb->notifies == NULL) {
