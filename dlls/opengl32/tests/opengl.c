@@ -311,7 +311,7 @@ static void test_colorbits(HDC hdc)
 
     if (!pwglChoosePixelFormatARB)
     {
-        skip("wglChoosePixelFormatARB is not available\n");
+        win_skip("wglChoosePixelFormatARB is not available\n");
         return;
     }
 
@@ -345,7 +345,7 @@ static void test_gdi_dbuf(HDC hdc)
 
     if (!pwglGetPixelFormatAttribivARB)
     {
-        skip("wglGetPixelFormatAttribivARB is not available\n");
+        win_skip("wglGetPixelFormatAttribivARB is not available\n");
         return;
     }
 
@@ -595,7 +595,7 @@ START_TEST(opengl)
         /* The lack of wglGetExtensionsStringARB in general means broken software rendering or the lack of decent OpenGL support, skip tests in such cases */
         if (!pwglGetExtensionsStringARB)
         {
-            skip("wglGetExtensionsStringARB is not available\n");
+            win_skip("wglGetExtensionsStringARB is not available\n");
             return;
         }
 
