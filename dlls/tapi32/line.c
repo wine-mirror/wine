@@ -520,12 +520,21 @@ DWORD WINAPI lineGetNumRings(HLINE hLine, DWORD dwAddressID, LPDWORD lpdwNumRing
 }
 
 /***********************************************************************
- *		lineGetProviderList (TAPI32.@)
+ *		lineGetProviderListA (TAPI32.@)
  */
 DWORD WINAPI lineGetProviderListA(DWORD dwAPIVersion, LPLINEPROVIDERLIST lpProviderList)
 {
     FIXME("(%08x, %p): stub.\n", dwAPIVersion, lpProviderList);
-    return 0;
+    return LINEERR_OPERATIONFAILED;
+}
+
+/***********************************************************************
+ *		lineGetProviderListW (TAPI32.@)
+ */
+DWORD WINAPI lineGetProviderListW(DWORD dwAPIVersion, LPLINEPROVIDERLIST lpProviderList)
+{
+    FIXME("(%08x, %p): stub.\n", dwAPIVersion, lpProviderList);
+    return LINEERR_OPERATIONFAILED;
 }
 
 /***********************************************************************

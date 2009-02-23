@@ -54,6 +54,7 @@
 @ stdcall lineGetNumRings(long long ptr)
 @ stdcall lineGetProviderList(long ptr) lineGetProviderListA
 @ stdcall lineGetProviderListA(long ptr)
+@ stdcall lineGetProviderListW(long ptr)
 @ stdcall lineGetRequest(long long ptr) lineGetRequestA
 @ stdcall lineGetRequestA(long long ptr)
 @ stdcall lineGetStatusMessages(long ptr ptr)
