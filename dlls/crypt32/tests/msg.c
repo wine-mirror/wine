@@ -2679,27 +2679,31 @@ static void test_msg_control(void)
      "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
     CryptMsgClose(msg);
 
-    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, 0, NULL,
-     NULL);
-    /* Can't verify the hash of an empty message */
-    SetLastError(0xdeadbeef);
-    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
-    todo_wine
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
-    /* Crashes
-    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, NULL);
-     */
-    /* Can't verify the signature of a hash message */
-    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
-    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
-     "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
-    CryptMsgUpdate(msg, hashEmptyBareContent, sizeof(hashEmptyBareContent),
-     TRUE);
-    /* Oddly enough, this fails */
-    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
-    ok(!ret, "Expected failure\n");
-    CryptMsgClose(msg);
+    if (have_nt)
+    {
+        msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, 0, NULL,
+         NULL);
+        /* Can't verify the hash of an empty message */
+        SetLastError(0xdeadbeef);
+        /* Crashes on some Win9x */
+        ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
+        todo_wine
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+        /* Crashes
+        ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, NULL);
+         */
+        /* Can't verify the signature of a hash message */
+        ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
+        ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+         "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
+        CryptMsgUpdate(msg, hashEmptyBareContent, sizeof(hashEmptyBareContent),
+         TRUE);
+        /* Oddly enough, this fails, crashes on some Win9x */
+        ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
+        ok(!ret, "Expected failure\n");
+        CryptMsgClose(msg);
+    }
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, 0, NULL,
      NULL);
     CryptMsgUpdate(msg, hashBareContent, sizeof(hashBareContent), TRUE);
@@ -2801,63 +2805,71 @@ static void test_msg_control(void)
     /* This cert has a public key, but it's not in a usable form */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, 0, NULL,
      NULL);
-    CryptMsgUpdate(msg, signedWithCertWithPubKeyBareContent,
+    ret = CryptMsgUpdate(msg, signedWithCertWithPubKeyBareContent,
      sizeof(signedWithCertWithPubKeyBareContent), TRUE);
-    /* Again, cert info needs to have a public key set */
-    SetLastError(0xdeadbeef);
-    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
-    ok(!ret &&
-     (GetLastError() == CRYPT_E_ASN1_EOD ||
-      GetLastError() == TRUST_E_NOSIGNATURE /* Vista */),
-     "Expected CRYPT_E_ASN1_EOD or TRUST_E_NOSIGNATURE, got %08x\n", GetLastError());
-    /* The public key is supposed to be in encoded form.. */
-    certInfo.SubjectPublicKeyInfo.Algorithm.pszObjId = oid_rsa_rsa;
-    certInfo.SubjectPublicKeyInfo.PublicKey.cbData = sizeof(aKey);
-    certInfo.SubjectPublicKeyInfo.PublicKey.pbData = aKey;
-    SetLastError(0xdeadbeef);
-    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
-    ok(!ret &&
-     (GetLastError() == CRYPT_E_ASN1_BADTAG ||
-      GetLastError() == TRUST_E_NOSIGNATURE /* Vista */),
-     "Expected CRYPT_E_ASN1_BADTAG or TRUST_E_NOSIGNATURE, got %08x\n", GetLastError());
-    /* but not as a X509_PUBLIC_KEY_INFO.. */
-    certInfo.SubjectPublicKeyInfo.Algorithm.pszObjId = NULL;
-    certInfo.SubjectPublicKeyInfo.PublicKey.cbData = sizeof(encodedPubKey);
-    certInfo.SubjectPublicKeyInfo.PublicKey.pbData = encodedPubKey;
-    SetLastError(0xdeadbeef);
-    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
-    ok(!ret &&
-     (GetLastError() == CRYPT_E_ASN1_BADTAG ||
-      GetLastError() == TRUST_E_NOSIGNATURE /* Vista */),
-     "Expected CRYPT_E_ASN1_BADTAG or TRUST_E_NOSIGNATURE, got %08x\n", GetLastError());
-    /* This decodes successfully, but it doesn't match any key in the message */
-    certInfo.SubjectPublicKeyInfo.PublicKey.cbData = sizeof(mod_encoded);
-    certInfo.SubjectPublicKeyInfo.PublicKey.pbData = mod_encoded;
-    SetLastError(0xdeadbeef);
-    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
-    /* In Wine's rsaenh, this fails to decode because the key length is too
-     * small.  Not sure if that's a bug in rsaenh, so leaving todo_wine for
-     * now.
-     */
-    todo_wine
-    ok(!ret &&
-     (GetLastError() == NTE_BAD_SIGNATURE ||
-      GetLastError() == TRUST_E_NOSIGNATURE /* Vista */),
-     "Expected NTE_BAD_SIGNATURE or TRUST_E_NOSIGNATURE, got %08x\n", GetLastError());
+    if (ret)
+    {
+        /* Crashes on some Win9x */
+        /* Again, cert info needs to have a public key set */
+        SetLastError(0xdeadbeef);
+        ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
+        ok(!ret &&
+         (GetLastError() == CRYPT_E_ASN1_EOD ||
+          GetLastError() == TRUST_E_NOSIGNATURE /* Vista */),
+         "Expected CRYPT_E_ASN1_EOD or TRUST_E_NOSIGNATURE, got %08x\n", GetLastError());
+        /* The public key is supposed to be in encoded form.. */
+        certInfo.SubjectPublicKeyInfo.Algorithm.pszObjId = oid_rsa_rsa;
+        certInfo.SubjectPublicKeyInfo.PublicKey.cbData = sizeof(aKey);
+        certInfo.SubjectPublicKeyInfo.PublicKey.pbData = aKey;
+        SetLastError(0xdeadbeef);
+        ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
+        ok(!ret &&
+         (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+          GetLastError() == TRUST_E_NOSIGNATURE /* Vista */),
+         "Expected CRYPT_E_ASN1_BADTAG or TRUST_E_NOSIGNATURE, got %08x\n", GetLastError());
+        /* but not as a X509_PUBLIC_KEY_INFO.. */
+        certInfo.SubjectPublicKeyInfo.Algorithm.pszObjId = NULL;
+        certInfo.SubjectPublicKeyInfo.PublicKey.cbData = sizeof(encodedPubKey);
+        certInfo.SubjectPublicKeyInfo.PublicKey.pbData = encodedPubKey;
+        SetLastError(0xdeadbeef);
+        ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
+        ok(!ret &&
+         (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+          GetLastError() == TRUST_E_NOSIGNATURE /* Vista */),
+         "Expected CRYPT_E_ASN1_BADTAG or TRUST_E_NOSIGNATURE, got %08x\n", GetLastError());
+        /* This decodes successfully, but it doesn't match any key in the message */
+        certInfo.SubjectPublicKeyInfo.PublicKey.cbData = sizeof(mod_encoded);
+        certInfo.SubjectPublicKeyInfo.PublicKey.pbData = mod_encoded;
+        SetLastError(0xdeadbeef);
+        ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
+        /* In Wine's rsaenh, this fails to decode because the key length is too
+         * small.  Not sure if that's a bug in rsaenh, so leaving todo_wine for
+         * now.
+         */
+        todo_wine
+        ok(!ret &&
+         (GetLastError() == NTE_BAD_SIGNATURE ||
+          GetLastError() == TRUST_E_NOSIGNATURE /* Vista */),
+         "Expected NTE_BAD_SIGNATURE or TRUST_E_NOSIGNATURE, got %08x\n", GetLastError());
+    }
     CryptMsgClose(msg);
     /* A message with no data doesn't have a valid signature */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
-    CryptMsgUpdate(msg, signedWithCertWithValidPubKeyEmptyContent,
+    ret = CryptMsgUpdate(msg, signedWithCertWithValidPubKeyEmptyContent,
      sizeof(signedWithCertWithValidPubKeyEmptyContent), TRUE);
-    certInfo.SubjectPublicKeyInfo.Algorithm.pszObjId = oid_rsa_rsa;
-    certInfo.SubjectPublicKeyInfo.PublicKey.cbData = sizeof(pubKey);
-    certInfo.SubjectPublicKeyInfo.PublicKey.pbData = pubKey;
-    SetLastError(0xdeadbeef);
-    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
-    ok(!ret &&
-     (GetLastError() == NTE_BAD_SIGNATURE ||
-      GetLastError() == TRUST_E_NOSIGNATURE /* Vista */),
-     "Expected NTE_BAD_SIGNATURE or TRUST_E_NOSIGNATURE, got %08x\n", GetLastError());
+    if (ret)
+    {
+        certInfo.SubjectPublicKeyInfo.Algorithm.pszObjId = oid_rsa_rsa;
+        certInfo.SubjectPublicKeyInfo.PublicKey.cbData = sizeof(pubKey);
+        certInfo.SubjectPublicKeyInfo.PublicKey.pbData = pubKey;
+        SetLastError(0xdeadbeef);
+        /* Crashes on some Win9x */
+        ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
+        ok(!ret &&
+         (GetLastError() == NTE_BAD_SIGNATURE ||
+          GetLastError() == TRUST_E_NOSIGNATURE /* Vista */),
+         "Expected NTE_BAD_SIGNATURE or TRUST_E_NOSIGNATURE, got %08x\n", GetLastError());
+    }
     CryptMsgClose(msg);
     /* Finally, this succeeds */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
