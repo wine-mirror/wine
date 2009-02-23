@@ -2492,6 +2492,11 @@ static void test_current_style(IHTMLCurrentStyle *current_style)
     ok(hres == S_OK, "get_marginRight failed: %08x\n", hres);
     ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
     VariantClear(&v);
+
+    hres = IHTMLCurrentStyle_get_marginLeft(current_style, &v);
+    ok(hres == S_OK, "get_marginLeft failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
+    VariantClear(&v);
 }
 
 static void test_style2(IHTMLStyle2 *style2)
