@@ -128,6 +128,8 @@ static void test_RegisterCategory(void)
     HRESULT hr;
     hr = ITfCategoryMgr_RegisterCategory(g_cm, &CLSID_FakeService, &GUID_TFCAT_TIP_KEYBOARD, &CLSID_FakeService);
     ok(SUCCEEDED(hr),"ITfCategoryMgr_RegisterCategory failed\n");
+    hr = ITfCategoryMgr_RegisterCategory(g_cm, &CLSID_FakeService, &GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER, &CLSID_FakeService);
+    ok(SUCCEEDED(hr),"ITfCategoryMgr_RegisterCategory failed\n");
 }
 
 static void test_UnregisterCategory(void)
@@ -135,6 +137,27 @@ static void test_UnregisterCategory(void)
     HRESULT hr;
     hr = ITfCategoryMgr_UnregisterCategory(g_cm, &CLSID_FakeService, &GUID_TFCAT_TIP_KEYBOARD, &CLSID_FakeService);
     todo_wine ok(SUCCEEDED(hr),"ITfCategoryMgr_UnregisterCategory failed\n");
+    hr = ITfCategoryMgr_UnregisterCategory(g_cm, &CLSID_FakeService, &GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER, &CLSID_FakeService);
+    todo_wine ok(SUCCEEDED(hr),"ITfCategoryMgr_UnregisterCategory failed\n");
+}
+
+static void test_FindClosestCategory(void)
+{
+    GUID output;
+    HRESULT hr;
+    const GUID *list[3] = {&GUID_TFCAT_TIP_SPEECH, &GUID_TFCAT_TIP_KEYBOARD, &GUID_TFCAT_TIP_HANDWRITING};
+
+    hr = ITfCategoryMgr_FindClosestCategory(g_cm, &CLSID_FakeService, &output, NULL, 0);
+    ok(SUCCEEDED(hr),"ITfCategoryMgr_FindClosestCategory failed (%x)\n",hr);
+    ok(IsEqualGUID(&output,&GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER),"Wrong GUID\n");
+
+    hr = ITfCategoryMgr_FindClosestCategory(g_cm, &CLSID_FakeService, &output, list, 1);
+    ok(SUCCEEDED(hr),"ITfCategoryMgr_FindClosestCategory failed (%x)\n",hr);
+    ok(IsEqualGUID(&output,&GUID_NULL),"Wrong GUID\n");
+
+    hr = ITfCategoryMgr_FindClosestCategory(g_cm, &CLSID_FakeService, &output, list, 3);
+    ok(SUCCEEDED(hr),"ITfCategoryMgr_FindClosestCategory failed (%x)\n",hr);
+    ok(IsEqualGUID(&output,&GUID_TFCAT_TIP_KEYBOARD),"Wrong GUID\n");
 }
 
 START_TEST(inputprocessor)
@@ -146,6 +169,7 @@ START_TEST(inputprocessor)
         test_RegisterCategory();
         test_EnumInputProcessorInfo();
         test_EnumLanguageProfiles();
+        test_FindClosestCategory();
         test_UnregisterCategory();
         test_Unregister();
     }
