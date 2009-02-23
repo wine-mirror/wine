@@ -594,7 +594,7 @@ static void D3X8QuaternionTest(void)
     t.x = -1111.0f, t.y = 111.0f; t.z = -11.0f; t.w = 1.0f;
     u.x = 91.0f; u.y = - 82.0f; u.z = 7.3f; u.w = -6.4f;
     smallq.x = 0.1f; smallq.y = 0.2f; smallq.z= 0.3f; smallq.w = 0.4f;
-    smallr.x = 0.5f; smallr.y = 0.6f; smallr.z= 0.7f; smallq.w = 0.8f;
+    smallr.x = 0.5f; smallr.y = 0.6f; smallr.z= 0.7f; smallr.w = 0.8f;
 
     scale = 0.3f;
     scale2 = 0.78f;
@@ -875,7 +875,7 @@ static void D3X8QuaternionTest(void)
     expectedquat.x = 334.0f; expectedquat.y = -31.9f; expectedquat.z = 6.1f; expectedquat.w = 6.7f;
     D3DXQuaternionSlerp(&gotquat,&q,&t,scale);
     expect_vec4(expectedquat,gotquat);
-    expectedquat.x = 0.267071f; expectedquat.y = 0.384114f; expectedquat.z = 0.501157f; expectedquat.w = 0.636291f;
+    expectedquat.x = 0.239485f; expectedquat.y = 0.346580f; expectedquat.z = 0.453676f; expectedquat.w = 0.560772f;
     D3DXQuaternionSlerp(&gotquat,&smallq,&smallr,scale);
     expect_vec4(expectedquat,gotquat);
 
