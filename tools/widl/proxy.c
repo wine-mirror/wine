@@ -153,8 +153,6 @@ int is_var_ptr(const var_t *v)
 
 int cant_be_null(const var_t *v)
 {
-  /* Search backwards for the most recent pointer attribute.  */
-  const attr_list_t *attrs = v->attrs;
   const type_t *type = v->type;
 
   /* context handles have their own checking so they can be null for the
@@ -165,32 +163,7 @@ int cant_be_null(const var_t *v)
   if (is_user_type(type))
       return 0;
 
-  if (!attrs && is_ptr(type))
-  {
-    attrs = type->attrs;
-    type = type_pointer_get_ref(type);
-  }
-
-  while (attrs)
-  {
-    int t = get_attrv(attrs, ATTR_POINTERTYPE);
-
-    if (t == RPC_FC_FP || t == RPC_FC_OP || t == RPC_FC_UP)
-      return 0;
-
-    if (t == RPC_FC_RP)
-      return 1;
-
-    if (is_ptr(type))
-    {
-      attrs = type->attrs;
-      type = type_pointer_get_ref(type);
-    }
-    else
-      attrs = NULL;
-  }
-
-  return 1;                             /* Default is RPC_FC_RP.  */
+  return (get_pointer_fc(type) == RPC_FC_RP);
 }
 
 static int need_delegation(const type_t *iface)
@@ -252,36 +225,38 @@ static void free_variable( const var_t *arg, const char *local_var_prefix )
     return;
   }
 
-  switch( type->type )
+  switch (type_get_type(type))
   {
-  case RPC_FC_BYTE:
-  case RPC_FC_CHAR:
-  case RPC_FC_WCHAR:
-  case RPC_FC_SHORT:
-  case RPC_FC_USHORT:
-  case RPC_FC_ENUM16:
-  case RPC_FC_LONG:
-  case RPC_FC_ULONG:
-  case RPC_FC_ENUM32:
-  case RPC_FC_STRUCT:
+  case TYPE_ENUM:
+  case TYPE_BASIC:
     break;
 
-  case RPC_FC_FP:
-  case RPC_FC_IP:
-    iid = get_attrp( arg->attrs, ATTR_IIDIS );
-    if( iid )
+  case TYPE_STRUCT:
+    if (get_struct_fc(type) != RPC_FC_STRUCT)
+      print_proxy("/* FIXME: %s code for %s type %d missing */\n", __FUNCTION__, arg->name, type_get_type(type) );
+    break;
+
+  case TYPE_POINTER:
+  case TYPE_INTERFACE:
+    if (type_get_type(type) == TYPE_INTERFACE || get_pointer_fc(type) == RPC_FC_FP)
     {
-      print_proxy( "__frame->_StubMsg.MaxCount = (ULONG_PTR) " );
-      write_expr(proxy, iid, 1, 1, NULL, NULL, local_var_prefix);
-      print_proxy( ";\n\n" );
+      iid = get_attrp( arg->attrs, ATTR_IIDIS );
+      if( iid )
+      {
+        print_proxy( "__frame->_StubMsg.MaxCount = (ULONG_PTR) " );
+        write_expr(proxy, iid, 1, 1, NULL, NULL, local_var_prefix);
+        print_proxy( ";\n\n" );
+      }
+      print_proxy( "NdrClearOutParameters( &__frame->_StubMsg, ");
+      fprintf(proxy, "&__MIDL_TypeFormatString.Format[%u], ", type_offset );
+      fprintf(proxy, "(void*)%s );\n", arg->name );
     }
-    print_proxy( "NdrClearOutParameters( &__frame->_StubMsg, ");
-    fprintf(proxy, "&__MIDL_TypeFormatString.Format[%u], ", type_offset );
-    fprintf(proxy, "(void*)%s );\n", arg->name );
+    else
+      print_proxy("/* FIXME: %s code for %s type %d missing */\n", __FUNCTION__, arg->name, type_get_type(type) );
     break;
 
   default:
-    print_proxy("/* FIXME: %s code for %s type %d missing */\n", __FUNCTION__, arg->name, type->type );
+    print_proxy("/* FIXME: %s code for %s type %d missing */\n", __FUNCTION__, arg->name, type_get_type(type) );
   }
 }
 
