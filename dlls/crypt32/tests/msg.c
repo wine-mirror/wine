@@ -413,18 +413,22 @@ static void test_data_msg_update(void)
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     CryptMsgClose(msg);
 
-    /* Calling update after opening with an empty stream info (with a bogus
-     * output function) yields an error:
-     */
-    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, NULL,
-     &streamInfo);
-    SetLastError(0xdeadbeef);
-    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
-    ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
-     GetLastError() == STATUS_ILLEGAL_INSTRUCTION /* WinME */),
-     "Expected STATUS_ACCESS_VIOLATION or STATUS_ILLEGAL_INSTRUCTION, got %x\n",
-     GetLastError());
-    CryptMsgClose(msg);
+    if (have_nt)
+    {
+        /* Calling update after opening with an empty stream info (with a bogus
+         * output function) yields an error:
+         */
+        /* Crashes on some Win9x */
+        msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, NULL,
+         &streamInfo);
+        SetLastError(0xdeadbeef);
+        ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
+        ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
+         GetLastError() == STATUS_ILLEGAL_INSTRUCTION /* WinME */),
+         "Expected STATUS_ACCESS_VIOLATION or STATUS_ILLEGAL_INSTRUCTION, got %x\n",
+         GetLastError());
+        CryptMsgClose(msg);
+    }
     /* Calling update with a valid output function succeeds, even if the data
      * exceeds the size specified in the stream info.
      */
