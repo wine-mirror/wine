@@ -305,7 +305,7 @@ START_TEST(toolhelp)
         !pProcess32First || !pProcess32Next ||
         !pThread32First || !pThread32Next)
     {
-        skip("Needed functions are not available, most likely running on Windows NT\n");
+        win_skip("Needed functions are not available, most likely running on Windows NT\n");
         return;
     }
 

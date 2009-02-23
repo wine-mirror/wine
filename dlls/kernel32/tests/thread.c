@@ -308,7 +308,7 @@ static VOID test_CreateRemoteThread(void)
                                  hRemoteEvent, CREATE_SUSPENDED, &tid);
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("CreateRemoteThread is not implemented\n");
+        win_skip("CreateRemoteThread is not implemented\n");
         goto cleanup;
     }
     ok(hThread != NULL, "CreateRemoteThread failed, err=%u\n", GetLastError());
@@ -978,7 +978,7 @@ static void test_RegisterWaitForSingleObject(void)
 
     if (!pRegisterWaitForSingleObject || !pUnregisterWait)
     {
-        skip("RegisterWaitForSingleObject or UnregisterWait not implemented\n");
+        win_skip("RegisterWaitForSingleObject or UnregisterWait not implemented\n");
         return;
     }
 

@@ -264,7 +264,7 @@ static void test_ffcn(void)
     r = GetTempPathW( MAX_PATH, path );
     if (!r && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
-        skip("GetTempPathW is not implemented\n");
+        win_skip("GetTempPathW is not implemented\n");
         return;
     }
     ok( r != 0, "temp path failed\n");
@@ -387,7 +387,7 @@ static void test_readdirectorychanges(void)
 
     if (!pReadDirectoryChangesW)
     {
-        skip("ReadDirectoryChangesW is not available\n");
+        win_skip("ReadDirectoryChangesW is not available\n");
         return;
     }
 
@@ -395,7 +395,7 @@ static void test_readdirectorychanges(void)
     r = GetTempPathW( MAX_PATH, path );
     if (!r && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
-        skip("GetTempPathW is not implemented\n");
+        win_skip("GetTempPathW is not implemented\n");
         return;
     }
     ok( r != 0, "temp path failed\n");
@@ -615,14 +615,14 @@ static void test_readdirectorychanges_null(void)
 
     if (!pReadDirectoryChangesW)
     {
-        skip("ReadDirectoryChangesW is not available\n");
+        win_skip("ReadDirectoryChangesW is not available\n");
         return;
     }
     SetLastError(0xdeadbeef);
     r = GetTempPathW( MAX_PATH, path );
     if (!r && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
-        skip("GetTempPathW is not implemented\n");
+        win_skip("GetTempPathW is not implemented\n");
         return;
     }
     ok( r != 0, "temp path failed\n");
@@ -717,7 +717,7 @@ static void test_readdirectorychanges_filedir(void)
     r = GetTempPathW( MAX_PATH, path );
     if (!r && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
-        skip("GetTempPathW is not implemented\n");
+        win_skip("GetTempPathW is not implemented\n");
         return;
     }
     ok( r != 0, "temp path failed\n");

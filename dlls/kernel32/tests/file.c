@@ -1506,7 +1506,7 @@ static void test_FindFirstFileExA(void)
 
     if (!pFindFirstFileExA)
     {
-        skip("FindFirstFileExA() is missing\n");
+        win_skip("FindFirstFileExA() is missing\n");
         return;
     }
 
@@ -1519,7 +1519,7 @@ static void test_FindFirstFileExA(void)
     handle = pFindFirstFileExA("test-dir\\*", FindExInfoStandard, &search_results, FindExSearchLimitToDirectories, NULL, 0);
     if (handle == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("FindFirstFileExA is not implemented\n");
+        win_skip("FindFirstFileExA is not implemented\n");
         goto cleanup;
     }
     ok(handle != INVALID_HANDLE_VALUE, "FindFirstFile failed (err=%u)\n", GetLastError());
@@ -2139,7 +2139,7 @@ static void test_ReplaceFileA(void)
 
     if (!pReplaceFileA)
     {
-        skip("ReplaceFileA() is missing\n");
+        win_skip("ReplaceFileA() is missing\n");
         return;
     }
 
@@ -2347,7 +2347,7 @@ static void test_ReplaceFileW(void)
 
     if (!pReplaceFileW)
     {
-        skip("ReplaceFileW() is missing\n");
+        win_skip("ReplaceFileW() is missing\n");
         return;
     }
 

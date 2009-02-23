@@ -961,7 +961,7 @@ static void test_GetLongPathNameW(void)
     length = pGetLongPathNameW(NULL,NULL,0);
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("GetLongPathNameW is not implemented\n");
+        win_skip("GetLongPathNameW is not implemented\n");
         return;
     }
     ok(0==length,"GetLongPathNameW returned %d but expected 0\n",length);
@@ -990,7 +990,7 @@ static void test_GetShortPathNameW(void)
     GetTempPathW( MAX_PATH, path );
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("GetTempPathW is not implemented\n");
+        win_skip("GetTempPathW is not implemented\n");
         return;
     }
 

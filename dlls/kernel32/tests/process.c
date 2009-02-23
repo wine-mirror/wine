@@ -1409,7 +1409,7 @@ static void test_OpenProcess(void)
 
     /* not exported in all windows versions */
     if ((!pVirtualAllocEx) || (!pVirtualFreeEx)) {
-        skip("VirtualAllocEx not found\n");
+        win_skip("VirtualAllocEx not found\n");
         return;
     }
 
@@ -1423,7 +1423,7 @@ static void test_OpenProcess(void)
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {   /* Win9x */
         CloseHandle(hproc);
-        skip("VirtualAllocEx not implemented\n");
+        win_skip("VirtualAllocEx not implemented\n");
         return;
     }
     ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());

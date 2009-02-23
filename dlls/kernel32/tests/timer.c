@@ -39,14 +39,14 @@ static void test_timer(void)
     pCreateWaitableTimerA = (fnCreateWaitableTimerA) GetProcAddress( hker, "CreateWaitableTimerA");
     if( !pCreateWaitableTimerA )
     {
-        skip("CreateWaitableTimerA is not available\n");
+        win_skip("CreateWaitableTimerA is not available\n");
         return;
     }
 
     pSetWaitableTimer = (fnSetWaitableTimer) GetProcAddress( hker, "SetWaitableTimer");
     if( !pSetWaitableTimer )
     {
-        skip("SetWaitableTimer is not available\n");
+        win_skip("SetWaitableTimer is not available\n");
         return;
     }
        

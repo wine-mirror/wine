@@ -1202,7 +1202,7 @@ START_TEST(actctx)
 
     if (!init_funcs())
     {
-        skip("Needed functions are not available\n");
+        win_skip("Needed functions are not available\n");
         return;
     }
     init_paths();

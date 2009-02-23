@@ -66,7 +66,7 @@ static void test_VirtualAllocEx(void)
 
     /* not exported in all windows-versions  */
     if ((!pVirtualAllocEx) || (!pVirtualFreeEx)) {
-        skip("VirtualAllocEx not found\n");
+        win_skip("Virtual{Alloc,Free}Ex not available\n");
         return;
     }
 
@@ -78,7 +78,7 @@ static void test_VirtualAllocEx(void)
                            PAGE_EXECUTE_READWRITE);
     if (!addr1 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {   /* Win9x */
-        skip("VirtualAllocEx not implemented\n");
+        win_skip("VirtualAllocEx not implemented\n");
         TerminateProcess(hProcess, 0);
         CloseHandle(hProcess);
         return;
@@ -703,7 +703,7 @@ static void test_NtMapViewOfSection(void)
     pNtUnmapViewOfSection = (void *)GetProcAddress( GetModuleHandle("ntdll.dll"), "NtUnmapViewOfSection" );
     if (!pNtMapViewOfSection || !pNtUnmapViewOfSection)
     {
-        skip( "NtMapViewOfSection not found\n" );
+        win_skip( "NtMapViewOfSection not available\n" );
         return;
     }
 

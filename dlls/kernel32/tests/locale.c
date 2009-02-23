@@ -1909,7 +1909,7 @@ static void test_FoldStringW(void)
 
   if (!pFoldStringW)
   {
-    skip("FoldStringW is not available\n");
+    win_skip("FoldStringW is not available\n");
     return; /* FoldString is present in NT v3.1+, but not 95/98/Me */
   }
 
@@ -1921,7 +1921,7 @@ static void test_FoldStringW(void)
     ret = pFoldStringW(badFlags[i], src, 256, dst, 256);
     if (GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
     {
-      skip("FoldStringW is not implemented\n");
+      win_skip("FoldStringW is not implemented\n");
       return;
     }
     ok(!ret && GetLastError() == ERROR_INVALID_FLAGS,
@@ -2299,7 +2299,7 @@ static void test_EnumUILanguageA(void)
 {
   BOOL ret;
   if (!pEnumUILanguagesA) {
-    skip("EnumUILanguagesA is not available on Win9x or NT4\n");
+    win_skip("EnumUILanguagesA is not available on Win9x or NT4\n");
     return;
   }
 

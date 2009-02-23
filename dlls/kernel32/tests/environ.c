@@ -148,7 +148,7 @@ static void test_GetSetEnvironmentVariableW(void)
     if (ret == FALSE && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
     {
         /* Must be Win9x which doesn't support the Unicode functions */
-        skip("SetEnvironmentVariableW is not implemented\n");
+        win_skip("SetEnvironmentVariableW is not implemented\n");
         return;
     }
     ok(ret == TRUE,
@@ -359,7 +359,7 @@ static void test_GetComputerName(void)
     ret = GetComputerNameW((LPWSTR)0xdeadbeef, &size);
     error = GetLastError();
     if (error == ERROR_CALL_NOT_IMPLEMENTED)
-        skip("GetComputerNameW is not implemented\n");
+        win_skip("GetComputerNameW is not implemented\n");
     else
     {
         todo_wine
@@ -384,7 +384,7 @@ static void test_GetComputerNameExA(void)
 
     if (!pGetComputerNameExA)
     {
-        skip("GetComputerNameExA function not implemented\n");
+        win_skip("GetComputerNameExA function not implemented\n");
         return;
     }
 
@@ -458,7 +458,7 @@ static void test_GetComputerNameExW(void)
 
     if (!pGetComputerNameExW)
     {
-        skip("GetComputerNameExW function not implemented\n");
+        win_skip("GetComputerNameExW function not implemented\n");
         return;
     }
 
