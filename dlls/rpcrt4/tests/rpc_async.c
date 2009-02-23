@@ -85,7 +85,7 @@ START_TEST( rpc_async )
     pRpcAsyncGetCallStatus = (void *)GetProcAddress(hRpcRt4, "RpcAsyncGetCallStatus");
     if (!pRpcAsyncInitializeHandle || !pRpcAsyncGetCallStatus)
     {
-        skip("asynchronous functions not available\n");
+        win_skip("asynchronous functions not available\n");
         return;
     }
     test_RpcAsyncInitializeHandle();
