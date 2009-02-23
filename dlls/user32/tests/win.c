@@ -4848,7 +4848,7 @@ static void test_GetWindowModuleFileName(void)
 
     if (!pGetWindowModuleFileNameA)
     {
-        skip("GetWindowModuleFileNameA is not available\n");
+        win_skip("GetWindowModuleFileNameA is not available\n");
         return;
     }
 

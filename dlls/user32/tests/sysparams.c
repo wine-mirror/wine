@@ -2315,7 +2315,7 @@ static void test_WM_DISPLAYCHANGE(void)
 
     if (!pChangeDisplaySettingsExA)
     {
-        skip("ChangeDisplaySettingsExA is not available\n");
+        win_skip("ChangeDisplaySettingsExA is not available\n");
         return;
     }
 

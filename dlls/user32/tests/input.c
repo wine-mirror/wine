@@ -1223,7 +1223,7 @@ static void test_ToUnicode(void)
     ret = ToUnicode(VK_RETURN, SC_RETURN, state, wStr, 2, 0);
     if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("ToUnicode is not implemented\n");
+        win_skip("ToUnicode is not implemented\n");
         return;
     }
 
@@ -1258,13 +1258,13 @@ START_TEST(input)
 {
     init_function_pointers();
 
-    if (!pSendInput)
-        skip("SendInput is not available\n");
-    else
+    if (pSendInput)
     {
         test_Input_blackbox();
         test_Input_whitebox();
     }
+    else win_skip("SendInput is not available\n");
+
     test_keynames();
     test_mouse_ll_hook();
     test_key_map();
@@ -1274,5 +1274,5 @@ START_TEST(input)
     if(pGetMouseMovePointsEx)
         test_GetMouseMovePointsEx();
     else
-        skip("GetMouseMovePointsEx is not available\n");
+        win_skip("GetMouseMovePointsEx is not available\n");
 }

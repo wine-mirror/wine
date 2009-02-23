@@ -66,7 +66,10 @@ static BOOL init_procs(void)
         pBroadcastA = (PBROADCAST)GetProcAddress(user32, "BroadcastSystemMessage");
     ok(pBroadcastA != NULL, "No BroadcastSystemMessage found\n");
     if (!pBroadcastA)
+    {
+        win_skip("BroadcastA is not available\n");
         return FALSE;
+    }
 
     pBroadcastW = (PBROADCAST)GetProcAddress(user32, "BroadcastSystemMessageW");
     pBroadcastExA = (PBROADCASTEX)GetProcAddress(user32, "BroadcastSystemMessageExA");
@@ -86,7 +89,7 @@ static BOOL init_procs(void)
     cls.lpszClassName = "MainWindowClass";
 
     if (!RegisterClassA(&cls))
-        return 0;
+        return FALSE;
 
     if (!CreateWindowExA(0, "MainWindowClass", "Main window", WS_CAPTION | WS_SYSMENU |
                                WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP, 100, 100, 200,
@@ -105,7 +108,7 @@ static void test_parameters(PBROADCAST broadcast, const char *functionname)
     ret = broadcast( 0x80000000, &recips, WM_NULL, 0, 0 );
     if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("%s is not implemented\n", functionname);
+        win_skip("%s is not implemented\n", functionname);
         return;
     }
     ok(!ret || broken(ret), "Returned: %d\n", ret);
@@ -345,14 +348,14 @@ START_TEST(broadcast)
         test_parameters(pBroadcastW, "BroadcastSystemMessageW");
     }
     else
-        skip("No BroadcastSystemMessageW, skipping\n");
+        win_skip("No BroadcastSystemMessageW, skipping\n");
     if (pBroadcastExA)
     {
         trace("Running BroadcastSystemMessageExA tests\n");
         test_parametersEx(pBroadcastExA);
     }
     else
-        skip("No BroadcastSystemMessageExA, skipping\n");
+        win_skip("No BroadcastSystemMessageExA, skipping\n");
     if (pBroadcastExW)
     {
         trace("Running BroadcastSystemMessageExW tests\n");
@@ -361,5 +364,5 @@ START_TEST(broadcast)
         test_noprivileges();
     }
     else
-        skip("No BroadcastSystemMessageExW, skipping\n");
+        win_skip("No BroadcastSystemMessageExW, skipping\n");
 }

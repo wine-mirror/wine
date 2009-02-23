@@ -78,7 +78,7 @@ static void test_enumdisplaydevices(void)
 
     if (!pEnumDisplayDevicesA)
     {
-        skip("EnumDisplayDevicesA is not available\n");
+        win_skip("EnumDisplayDevicesA is not available\n");
         return;
     }
 
@@ -156,7 +156,7 @@ static void test_ChangeDisplaySettingsEx(void)
 
     if (!pChangeDisplaySettingsExA)
     {
-        skip("ChangeDisplaySettingsExA is not available\n");
+        win_skip("ChangeDisplaySettingsExA is not available\n");
         return;
     }
 
@@ -288,7 +288,7 @@ static void test_monitors(void)
 
     if (!pMonitorFromPoint || !pMonitorFromWindow)
     {
-        skip("MonitorFromPoint or MonitorFromWindow are not available\n");
+        win_skip("MonitorFromPoint or MonitorFromWindow are not available\n");
         return;
     }
 
@@ -331,7 +331,7 @@ static void test_work_area(void)
 
     if (!pEnumDisplayMonitors || !pGetMonitorInfoA)
     {
-        skip("EnumDisplayMonitors or GetMonitorInfoA are not available\n");
+        win_skip("EnumDisplayMonitors or GetMonitorInfoA are not available\n");
         return;
     }
 

@@ -6293,7 +6293,7 @@ static void test_interthread_messages(void)
     wnd_event.event = CreateEventW(NULL, 0, 0, NULL);
     if (!wnd_event.event)
     {
-        skip("skipping interthread message test under win9x\n");
+        win_skip("skipping interthread message test under win9x\n");
         return;
     }
 
@@ -8051,7 +8051,7 @@ static void test_winevents(void)
     /* WH_MOUSE_LL is not supported on Win9x platforms */
     if (!hCBT_global_hook)
     {
-        trace("Skipping WH_MOUSE_LL test on this platform\n");
+        win_skip("Skipping WH_MOUSE_LL test on this platform\n");
         goto skip_mouse_ll_hook_test;
     }
 
@@ -10612,7 +10612,7 @@ static void test_dbcs_wm_char(void)
 
     if (!pGetCPInfoExA)
     {
-        skip("GetCPInfoExA is not available\n");
+        win_skip("GetCPInfoExA is not available\n");
         return;
     }
 
@@ -11232,7 +11232,7 @@ static void test_menu_messages(void)
 
     if (!pGetMenuInfo || !pSetMenuInfo)
     {
-        skip("GetMenuInfo and/or SetMenuInfo are not available\n");
+        win_skip("GetMenuInfo and/or SetMenuInfo are not available\n");
         return;
     }
     cls.style = 0;
@@ -11414,11 +11414,11 @@ START_TEST(msg)
 		ok(pIsWinEventHookInstalled(event), "IsWinEventHookInstalled(%u) failed\n", event);
 	}
     }
-    if (!hEvent_hook) skip( "no win event hook support\n" );
+    if (!hEvent_hook) win_skip( "no win event hook support\n" );
 
     cbt_hook_thread_id = GetCurrentThreadId();
     hCBT_hook = SetWindowsHookExA(WH_CBT, cbt_hook_proc, 0, GetCurrentThreadId());
-    if (!hCBT_hook) skip( "cannot set global hook, will skip hook tests\n" );
+    if (!hCBT_hook) win_skip( "cannot set global hook, will skip hook tests\n" );
 
     test_winevents();
 
@@ -11462,7 +11462,7 @@ START_TEST(msg)
     test_SetActiveWindow();
 
     if (!pTrackMouseEvent)
-        skip("TrackMouseEvent is not available\n");
+        win_skip("TrackMouseEvent is not available\n");
     else
         test_TrackMouseEvent();
 

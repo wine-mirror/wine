@@ -527,7 +527,7 @@ static void test_menu_bmp_and_string(void)
 
     if( !pGetMenuInfo)
     {
-        skip("GetMenuInfo is not available\n");
+        win_skip("GetMenuInfo is not available\n");
         return;
     }
 
@@ -635,7 +635,7 @@ static void test_menu_add_string( void )
     SetLastError(0xdeadbeef);
     ret = GetMenuStringW( hmenu, 0, strbackW, 99, MF_BYPOSITION );
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-        skip("GetMenuStringW is not implemented\n");
+        win_skip("GetMenuStringW is not implemented\n");
     else
     {
         ok (ret, "GetMenuStringW on ownerdraw entry failed\n");
@@ -698,7 +698,7 @@ static void test_menu_add_string( void )
     SetLastError(0xdeadbeef);
     ret = GetMenuStringW( hmenu, 0, NULL, 0, MF_BYPOSITION);
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-        skip("GetMenuStringW is not implemented\n");
+        win_skip("GetMenuStringW is not implemented\n");
     else
         ok (!ret, "GetMenuStringW on ownerdraw entry succeeded.\n");
 
@@ -2428,7 +2428,7 @@ START_TEST(menu)
     test_menu_bmp_and_string();
 
     if( !pSendInput)
-        skip("SendInput is not available\n");
+        win_skip("SendInput is not available\n");
     else
         test_menu_input();
     test_menu_flags();
