@@ -2022,29 +2022,33 @@ static void test_decode_msg_update(void)
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     CryptMsgClose(msg);
 
-    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, &streamInfo);
-    /* Updating a message that has a NULL stream callback fails */
-    SetLastError(0xdeadbeef);
-    ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent),
-     FALSE);
-    todo_wine
-    ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
-     GetLastError() == STATUS_ILLEGAL_INSTRUCTION /* WinME */),
-     "Expected STATUS_ACCESS_VIOLATION or STATUS_ILLEGAL_INSTRUCTION, got %x\n",
-     GetLastError());
-    /* Changing the callback pointer after the fact yields the same error (so
-     * the message must copy the stream info, not just store a pointer to it)
-     */
-    streamInfo.pfnStreamOutput = nop_stream_output;
-    SetLastError(0xdeadbeef);
-    ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent),
-     FALSE);
-    todo_wine
-    ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
-     GetLastError() == STATUS_ILLEGAL_INSTRUCTION /* WinME */),
-     "Expected STATUS_ACCESS_VIOLATION or STATUS_ILLEGAL_INSTRUCTION, got %x\n",
-     GetLastError());
-    CryptMsgClose(msg);
+    if (have_nt)
+    {
+        msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, &streamInfo);
+        /* Updating a message that has a NULL stream callback fails */
+        SetLastError(0xdeadbeef);
+        /* Crashes on some Win9x */
+        ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent),
+         FALSE);
+        todo_wine
+        ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
+         GetLastError() == STATUS_ILLEGAL_INSTRUCTION /* WinME */),
+         "Expected STATUS_ACCESS_VIOLATION or STATUS_ILLEGAL_INSTRUCTION, got %x\n",
+         GetLastError());
+        /* Changing the callback pointer after the fact yields the same error (so
+         * the message must copy the stream info, not just store a pointer to it)
+         */
+        streamInfo.pfnStreamOutput = nop_stream_output;
+        SetLastError(0xdeadbeef);
+        ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent),
+         FALSE);
+        todo_wine
+        ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
+         GetLastError() == STATUS_ILLEGAL_INSTRUCTION /* WinME */),
+         "Expected STATUS_ACCESS_VIOLATION or STATUS_ILLEGAL_INSTRUCTION, got %x\n",
+         GetLastError());
+        CryptMsgClose(msg);
+    }
 
     /* Empty non-final updates are allowed when streaming.. */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, &streamInfo);
@@ -2353,10 +2357,14 @@ static void test_decode_msg_get_param(void)
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     ret = CryptMsgUpdate(msg, hashEmptyContent, sizeof(hashEmptyContent), TRUE);
-    check_param("empty hash content", msg, CMSG_CONTENT_PARAM, NULL, 0);
-    check_param("empty hash hash data", msg, CMSG_HASH_DATA_PARAM, NULL, 0);
-    check_param("empty hash computed hash", msg, CMSG_COMPUTED_HASH_PARAM,
-     emptyHashParam, sizeof(emptyHashParam));
+    if (ret)
+    {
+        /* Crashes on some Win9x */
+        check_param("empty hash content", msg, CMSG_CONTENT_PARAM, NULL, 0);
+        check_param("empty hash hash data", msg, CMSG_HASH_DATA_PARAM, NULL, 0);
+        check_param("empty hash computed hash", msg, CMSG_COMPUTED_HASH_PARAM,
+         emptyHashParam, sizeof(emptyHashParam));
+    }
     CryptMsgClose(msg);
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     ret = CryptMsgUpdate(msg, hashContent, sizeof(hashContent), TRUE);
@@ -2477,6 +2485,12 @@ static void test_decode_msg_get_param(void)
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     ret = CryptMsgUpdate(msg, signedKeyIdEmptyContent,
      sizeof(signedKeyIdEmptyContent), TRUE);
+    if (!ret && GetLastError() == OSS_DATA_ERROR)
+    {
+        /* Subsequent tests crashes on some Win9x, so bail out */
+        CryptMsgClose(msg);
+        return;
+    }
     ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
     size = sizeof(value);
     ret = CryptMsgGetParam(msg, CMSG_SIGNER_COUNT_PARAM, 0, &value, &size);
