@@ -30,6 +30,7 @@
 #include "exdisp.h"
 #include "htiframe.h"
 #include "mshtmhst.h"
+#include "mshtmcid.h"
 #include "idispids.h"
 #include "olectl.h"
 #include "mshtmdid.h"
@@ -2123,6 +2124,36 @@ static void test_download(void)
     CHECK_CALLED(Invoke_DOCUMENTCOMPLETE);
 }
 
+static void test_olecmd(IUnknown *unk, BOOL loaded)
+{
+    IOleCommandTarget *cmdtrg;
+    OLECMD cmds[3];
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    ok(hres == S_OK, "Could not get IOleCommandTarget iface: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    cmds[0].cmdID = OLECMDID_SPELL;
+    cmds[0].cmdf = 0xdeadbeef;
+    cmds[1].cmdID = OLECMDID_REFRESH;
+    cmds[1].cmdf = 0xdeadbeef;
+    hres = IOleCommandTarget_QueryStatus(cmdtrg, NULL, 2, cmds, NULL);
+    if(loaded) {
+        ok(hres == S_OK, "QueryStatus failed: %08x\n", hres);
+        ok(cmds[0].cmdf == OLECMDF_SUPPORTED, "OLECMDID_SPELL cmdf = %x\n", cmds[0].cmdf);
+        ok(cmds[1].cmdf == (OLECMDF_ENABLED|OLECMDF_SUPPORTED),
+           "OLECMDID_REFRESH cmdf = %x\n", cmds[1].cmdf);
+    }else {
+        ok(hres == 0x80040104, "QueryStatus failed: %08x\n", hres);
+        ok(cmds[0].cmdf == 0xdeadbeef, "OLECMDID_SPELL cmdf = %x\n", cmds[0].cmdf);
+        ok(cmds[1].cmdf == 0xdeadbeef, "OLECMDID_REFRESH cmdf = %x\n", cmds[0].cmdf);
+    }
+
+    IOleCommandTarget_Release(cmdtrg);
+}
+
 static void test_IServiceProvider(IUnknown *unk)
 {
     IServiceProvider *servprov = (void*)0xdeadbeef;
@@ -2213,10 +2244,12 @@ static void test_WebBrowser(BOOL do_download)
     test_Extent(unk);
     test_wb_funcs(unk, TRUE);
     test_DoVerb(unk);
+    test_olecmd(unk, FALSE);
     test_Navigate2(unk);
 
     if(do_download) {
         test_download();
+        test_olecmd(unk, TRUE);
     }
 
     test_ClientSite(unk, NULL);
