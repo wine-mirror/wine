@@ -53,12 +53,21 @@ DWORD WINAPI lineAccept(HCALL hCall, LPCSTR lpsUserUserInfo, DWORD dwSize)
 }
 
 /***********************************************************************
- *		lineAddProvider (TAPI32.@)
+ *		lineAddProviderA (TAPI32.@)
  */
 DWORD WINAPI lineAddProviderA(LPCSTR lpszProviderName, HWND hwndOwner, LPDWORD lpdwPermanentProviderID)
 {
     FIXME("(%s, %p, %p): stub.\n", lpszProviderName, hwndOwner, lpdwPermanentProviderID);
-    return 1;
+    return LINEERR_OPERATIONFAILED;
+}
+
+/***********************************************************************
+ *		lineAddProviderW (TAPI32.@)
+ */
+DWORD WINAPI lineAddProviderW(LPCWSTR lpszProviderName, HWND hwndOwner, LPDWORD lpdwPermanentProviderID)
+{
+    FIXME("(%s, %p, %p): stub.\n", wine_dbgstr_w(lpszProviderName), hwndOwner, lpdwPermanentProviderID);
+    return LINEERR_OPERATIONFAILED;
 }
 
 /***********************************************************************

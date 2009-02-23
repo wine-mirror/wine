@@ -1,6 +1,7 @@
 @ stdcall lineAccept(long str long)
 @ stdcall lineAddProvider(str long ptr) lineAddProviderA
 @ stdcall lineAddProviderA(str long ptr)
+@ stdcall lineAddProviderW(wstr long ptr)
 @ stdcall lineAddToConference(long long)
 @ stdcall lineAnswer(long str long)
 @ stdcall lineBlindTransfer(long str long) lineBlindTransferA
