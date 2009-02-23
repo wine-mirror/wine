@@ -541,7 +541,7 @@ sub update_gitignore(@)
         }
         if ($dir =~ /^programs\/(.*)\/$/)
         {
-            push @ignores, "$dir$1";
+            push @ignores, "$dir$1" if $bin_install{$1};
         }
     }
 

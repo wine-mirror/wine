@@ -639,6 +639,7 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+ALL_PROGRAM_BIN_WRAPPERS
 ALL_WINETEST_DEPENDS
 ALL_PROGRAM_BIN_INSTALL_DIRS
 ALL_PROGRAM_INSTALL_DIRS
@@ -27998,6 +27999,19 @@ do
         ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
 $testname: \$(DLLDIR)/$dir/$testname\$(DLLEXT)
 	cp \$(DLLDIR)/$dir/$testname\$(DLLEXT) \$@ && \$(STRIP) \$@"
+    fi
+done
+
+test -n "$DLLEXT" || ALL_PROGRAM_BIN_INSTALL_DIRS=""
+
+ALL_PROGRAM_BIN_WRAPPERS=""
+
+for dir in $ALL_PROGRAM_BIN_INSTALL_DIRS
+do
+    if test "$dir" != "\\"
+    then
+        ALL_PROGRAM_BIN_WRAPPERS="$ALL_PROGRAM_BIN_WRAPPERS \\
+	$dir/$dir"
     fi
 done
 

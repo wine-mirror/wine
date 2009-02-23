@@ -12,21 +12,17 @@
 DLLFLAGS    = @DLLFLAGS@
 DEFS        = $(EXTRADEFS)
 ALL_LIBS    = $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(EXTRALIBS) $(LIBPORT) $(LDFLAGS) $(LIBS)
-BASEMODULE  = $(MODULE:.exe=)
 RUNTESTFLAGS= -q -P wine -T $(TOPOBJDIR)
 INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(dlldir) $(DESTDIR)$(mandir)/man$(prog_manext)
 
 @MAKE_RULES@
 
-all: $(MODULE)$(DLLEXT) $(BASEMODULE)$(EXEEXT)
+all: $(MODULE)$(DLLEXT)
 
 # Rules for .so main module
 
 $(MODULE).so: $(OBJS) $(RC_SRCS:.rc=.res) Makefile.in
 	$(WINEGCC) $(APPMODE) $(OBJS) $(RC_SRCS:.rc=.res) -o $@ $(ALL_LIBS) $(DELAYIMPORTS:%=-Wb,-d%)
-
-$(BASEMODULE): $(WINEWRAPPER)
-	$(RM) $@ && $(LN_S) $(WINEWRAPPER) $@
 
 # Rules for .exe main module
 
@@ -60,4 +56,4 @@ install install-lib:: install_prog$(DLLEXT)
 uninstall:: uninstall_prog$(DLLEXT)
 
 clean::
-	$(RM) $(BASEMODULE) $(MODULE)
+	$(RM) $(MODULE)

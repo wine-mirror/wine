@@ -2338,6 +2338,19 @@ $testname: \$(DLLDIR)/$dir/$testname\$(DLLEXT)
     fi
 done
 
+dnl Don't install in bin dir for Windows build
+test -n "$DLLEXT" || ALL_PROGRAM_BIN_INSTALL_DIRS=""
+
+AC_SUBST(ALL_PROGRAM_BIN_WRAPPERS,"")
+for dir in $ALL_PROGRAM_BIN_INSTALL_DIRS
+do
+    if test "$dir" != "\\"
+    then
+        ALL_PROGRAM_BIN_WRAPPERS="$ALL_PROGRAM_BIN_WRAPPERS \\
+	$dir/$dir"
+    fi
+done
+
 AC_OUTPUT
 
 if test "$no_create" = "yes"

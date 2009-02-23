@@ -36,7 +36,7 @@ tests.rc: Makefile.in $(TOPOBJDIR)/config.status
 	(for i in $(TESTBINS); do echo "$$i TESTRES \"$$i\""; done) >$@ || ($(RM) $@ && false)
 
 clean::
-	$(RM) tests.rc dist.res winetest-dist winetest-dist.exe $(TESTBINS)
+	$(RM) tests.rc dist.res winetest-dist.exe $(TESTBINS)
 
 depend: tests.rc
 
@@ -44,13 +44,10 @@ depend: tests.rc
 
 .PHONY: dist
 
-dist: winetest-dist.exe$(DLLEXT) winetest-dist$(EXEEXT)
+dist: winetest-dist.exe$(DLLEXT)
 
 winetest-dist.exe.so: $(OBJS) dist.res Makefile.in
 	$(WINEGCC) $(APPMODE) $(OBJS) dist.res -o $@ -L$(DLLDIR) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
-
-winetest-dist: $(WINEWRAPPER)
-	$(RM) $@ && $(LN_S) $(WINEWRAPPER) $@
 
 winetest-dist.exe: $(OBJS) dist.res.o Makefile.in
 	$(CC) $(APPMODE) $(OBJS) dist.res.o -o $@ -L$(DLLDIR) $(IMPORTS:%=-L$(DLLDIR)/%) $(ALL_LIBS)
