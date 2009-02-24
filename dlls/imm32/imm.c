@@ -223,22 +223,28 @@ static IMMThreadData* IMM_GetThreadData(void)
     return TlsGetValue(tlsIndex);
 }
 
-static void IMM_InitThreadData(void)
+static BOOL IMM_InitThreadData(void)
 {
     IMMThreadData* data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                                     sizeof(IMMThreadData));
+    if (!data) return FALSE;
+
     TlsSetValue(tlsIndex,data);
 
     TRACE("Thread Data Created\n");
+    return TRUE;
 }
 
 static void IMM_FreeThreadData(void)
 {
     IMMThreadData* data = TlsGetValue(tlsIndex);
-    IMM_DestroyContext(data->defaultContext);
-    DestroyWindow(data->hwndDefault);
-    HeapFree(GetProcessHeap(),0,data);
-    TRACE("Thread Data Destroyed\n");
+    if (data)
+    {
+        IMM_DestroyContext(data->defaultContext);
+        DestroyWindow(data->hwndDefault);
+        HeapFree(GetProcessHeap(),0,data);
+        TRACE("Thread Data Destroyed\n");
+    }
 }
 
 static HMODULE LoadDefaultWineIME(void)
@@ -378,7 +384,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
         case DLL_PROCESS_ATTACH:
             IMM_RegisterMessages();
             tlsIndex = TlsAlloc();
-            IMM_InitThreadData();
+            if (tlsIndex == TLS_OUT_OF_INDEXES || !IMM_InitThreadData())
+                return FALSE;
             break;
         case DLL_THREAD_ATTACH:
             IMM_InitThreadData();
