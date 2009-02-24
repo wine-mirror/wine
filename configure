@@ -3909,6 +3909,7 @@ then
     enable_w32skrnl=${enable_w32skrnl:-no}
     enable_winedos=${enable_winedos:-no}
     enable_winevdm=${enable_winevdm:-no}
+    enable_winoldap_mod16=${enable_winoldap_mod16:-no}
 fi
 
 { $as_echo "$as_me:$LINENO: checking for the directory containing the Wine tools" >&5
@@ -27889,6 +27890,15 @@ programs/winhlp32/Makefile: programs/winhlp32/Makefile.in programs/Makeprog.rule
 ac_config_files="$ac_config_files programs/winhlp32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	programs/winoldap.mod16/Makefile"
+test "x$enable_winoldap_mod16" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	winoldap.mod16" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	winoldap.mod16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+programs/winoldap.mod16/Makefile: programs/winoldap.mod16/Makefile.in programs/Makeprog.rules"
+ac_config_files="$ac_config_files programs/winoldap.mod16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/winver/Makefile"
 test "x$enable_winver" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
 	winver" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
@@ -29052,6 +29062,7 @@ do
     "programs/winetest/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winetest/Makefile" ;;
     "programs/winevdm/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winevdm/Makefile" ;;
     "programs/winhlp32/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winhlp32/Makefile" ;;
+    "programs/winoldap.mod16/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winoldap.mod16/Makefile" ;;
     "programs/winver/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winver/Makefile" ;;
     "programs/wordpad/Makefile") CONFIG_FILES="$CONFIG_FILES programs/wordpad/Makefile" ;;
     "programs/write/Makefile") CONFIG_FILES="$CONFIG_FILES programs/write/Makefile" ;;

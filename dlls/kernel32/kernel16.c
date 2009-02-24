@@ -162,54 +162,6 @@ static DWORD wait_input_idle( HANDLE process, DWORD timeout )
 
 
 /**************************************************************************
- *           WINOLDAP entry point
- */
-void WINAPI WINOLDAP_EntryPoint( CONTEXT86 *context )
-{
-    PDB16 *psp;
-    INT len;
-    LPSTR cmdline;
-    PROCESS_INFORMATION info;
-    STARTUPINFOA startup;
-    DWORD count, exit_code = 1;
-
-    InitTask16( context );
-
-    TRACE( "(ds=%x es=%x fs=%x gs=%x, bx=%04x cx=%04x di=%04x si=%x)\n",
-            context->SegDs, context->SegEs, context->SegFs, context->SegGs,
-            context->Ebx, context->Ecx, context->Edi, context->Esi );
-
-    psp = GlobalLock16( context->SegEs );
-    len = psp->cmdLine[0];
-    cmdline = HeapAlloc( GetProcessHeap(), 0, len + 1 );
-    memcpy( cmdline, psp->cmdLine + 1, len );
-    cmdline[len] = 0;
-
-    memset( &startup, 0, sizeof(startup) );
-    startup.cb = sizeof(startup);
-
-    if (CreateProcessA( NULL, cmdline, NULL, NULL, FALSE,
-                        0, NULL, NULL, &startup, &info ))
-    {
-        /* Give 10 seconds to the app to come up */
-        if (wait_input_idle( info.hProcess, 10000 ) == WAIT_FAILED)
-            WARN("WaitForInputIdle failed: Error %d\n", GetLastError() );
-        ReleaseThunkLock( &count );
-
-        WaitForSingleObject( info.hProcess, INFINITE );
-        GetExitCodeProcess( info.hProcess, &exit_code );
-        CloseHandle( info.hThread );
-        CloseHandle( info.hProcess );
-    }
-    else
-        ReleaseThunkLock( &count );
-
-    HeapFree( GetProcessHeap(), 0, cmdline );
-    ExitThread( exit_code );
-}
-
-
-/**************************************************************************
  *           WINHELP entry point
  *
  * FIXME: should go into winhlp32.exe, but we don't support 16-bit modules in executables yet.

@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = winoldap.mod16
+APPMODE   = -mwindows -Wb,--subsystem,win16
+IMPORTS   = kernel32 ntdll
+
+C_SRCS = winoldap.c
+
+@MAKE_PROG_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend
