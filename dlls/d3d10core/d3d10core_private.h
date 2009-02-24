@@ -85,7 +85,7 @@ struct d3d10_rendertarget_view
     const struct ID3D10RenderTargetViewVtbl *vtbl;
     LONG refcount;
 
-    ID3D10Resource *resource;
+    IWineD3DRendertargetView *wined3d_view;
     D3D10_RENDER_TARGET_VIEW_DESC desc;
 };
 

@@ -689,6 +689,26 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView(ID3D10Dev
     return E_NOTIMPL;
 }
 
+static IWineD3DResource *d3d10_device_wined3d_resource_from_resource(ID3D10Resource *resource)
+{
+    D3D10_RESOURCE_DIMENSION dimension;
+
+    ID3D10Resource_GetType(resource, &dimension);
+
+    switch(dimension)
+    {
+        case D3D10_RESOURCE_DIMENSION_BUFFER:
+            return (IWineD3DResource *)((struct d3d10_buffer *)resource)->wined3d_buffer;
+
+        case D3D10_RESOURCE_DIMENSION_TEXTURE2D:
+            return (IWineD3DResource *)((struct d3d10_texture2d *)resource)->wined3d_surface;
+
+        default:
+            FIXME("Unhandled resource dimension %#x\n", dimension);
+            return NULL;
+    }
+}
+
 static HRESULT d3d10_device_set_rtdesc_from_resource(D3D10_RENDER_TARGET_VIEW_DESC *desc, ID3D10Resource *resource)
 {
     D3D10_RESOURCE_DIMENSION dimension;
@@ -811,7 +831,9 @@ static HRESULT d3d10_device_set_rtdesc_from_resource(D3D10_RENDER_TARGET_VIEW_DE
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRenderTargetView(ID3D10Device *iface,
         ID3D10Resource *resource, const D3D10_RENDER_TARGET_VIEW_DESC *desc, ID3D10RenderTargetView **view)
 {
+    struct d3d10_device *This = (struct d3d10_device *)iface;
     struct d3d10_rendertarget_view *object;
+    IWineD3DResource *wined3d_resource;
 
     TRACE("iface %p, resource %p, desc %p, view %p stub!\n", iface, resource, desc, view);
 
@@ -839,8 +861,15 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRenderTargetView(ID3D10Devic
         object->desc = *desc;
     }
 
-    object->resource = resource;
-    ID3D10Resource_AddRef(resource);
+    wined3d_resource = d3d10_device_wined3d_resource_from_resource(resource);
+    if (!wined3d_resource)
+    {
+        FIXME("Failed to get wined3d resource for d3d10 resource %p\n", resource);
+        HeapFree(GetProcessHeap(), 0, object);
+        return E_FAIL;
+    }
+    IWineD3DDevice_CreateRendertargetView(This->wined3d_device,
+            wined3d_resource, (IUnknown *)object, &object->wined3d_view);
 
     *view = (ID3D10RenderTargetView *)object;
 

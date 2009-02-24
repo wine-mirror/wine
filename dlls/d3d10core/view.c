@@ -66,7 +66,7 @@ static ULONG STDMETHODCALLTYPE d3d10_rendertarget_view_Release(ID3D10RenderTarge
 
     if (!refcount)
     {
-        ID3D10Resource_Release(This->resource);
+        IWineD3DRendertargetView_Release(This->wined3d_view);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -112,11 +112,37 @@ static void STDMETHODCALLTYPE d3d10_rendertarget_view_GetResource(ID3D10RenderTa
         ID3D10Resource **resource)
 {
     struct d3d10_rendertarget_view *This = (struct d3d10_rendertarget_view *)iface;
+    IWineD3DResource *wined3d_resource;
+    IUnknown *parent;
+    HRESULT hr;
 
     TRACE("iface %p, resource %p\n", iface, resource);
 
-    ID3D10Resource_AddRef(This->resource);
-    *resource = This->resource;
+    hr = IWineD3DRendertargetView_GetResource(This->wined3d_view, &wined3d_resource);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get wined3d resource, hr %#x\n", hr);
+        *resource = NULL;
+        return;
+    }
+
+    hr = IWineD3DResource_GetParent(wined3d_resource, &parent);
+    IWineD3DResource_Release(wined3d_resource);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get wined3d resource parent, hr %#x\n", hr);
+        *resource = NULL;
+        return;
+    }
+
+    hr = IUnknown_QueryInterface(parent, &IID_ID3D10Resource, (void **)&resource);
+    IUnknown_Release(parent);
+    if (FAILED(hr))
+    {
+        ERR("Resource parent isn't a d3d10 resource, hr %#x\n", hr);
+        *resource = NULL;
+        return;
+    }
 }
 
 /* ID3D10RenderTargetView methods */
