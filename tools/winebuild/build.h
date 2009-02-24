@@ -207,13 +207,16 @@ extern int resolve_imports( DLLSPEC *spec );
 extern int has_imports(void);
 extern int has_relays( DLLSPEC *spec );
 extern void output_get_pc_thunk(void);
+extern void output_module( DLLSPEC *spec );
 extern void output_stubs( DLLSPEC *spec );
 extern void output_imports( DLLSPEC *spec );
+extern void output_exports( DLLSPEC *spec );
 extern int load_res32_file( const char *name, DLLSPEC *spec );
 extern void output_resources( DLLSPEC *spec );
 extern void load_res16_file( const char *name, DLLSPEC *spec );
 extern void output_res16_data( DLLSPEC *spec );
 extern void output_res16_directory( DLLSPEC *spec );
+extern void output_spec16_file( DLLSPEC *spec );
 
 extern void BuildRelays16(void);
 extern void BuildRelays32(void);
@@ -221,6 +224,7 @@ extern void BuildSpec16File( DLLSPEC *spec );
 extern void BuildSpec32File( DLLSPEC *spec );
 extern void BuildDef32File( DLLSPEC *spec );
 
+extern void add_16bit_exports( DLLSPEC *spec32, DLLSPEC *spec16 );
 extern int parse_spec_file( FILE *file, DLLSPEC *spec );
 extern int parse_def_file( FILE *file, DLLSPEC *spec );
 

@@ -146,13 +146,17 @@ static const char * GetToken( int allow_eol )
 
 static ORDDEF *add_entry_point( DLLSPEC *spec )
 {
+    ORDDEF *ret;
+
     if (spec->nb_entry_points == spec->alloc_entry_points)
     {
         spec->alloc_entry_points += 128;
         spec->entry_points = xrealloc( spec->entry_points,
                                        spec->alloc_entry_points * sizeof(*spec->entry_points) );
     }
-    return &spec->entry_points[spec->nb_entry_points++];
+    ret = &spec->entry_points[spec->nb_entry_points++];
+    memset( ret, 0, sizeof(*ret) );
+    return ret;
 }
 
 /*******************************************************************
@@ -475,9 +479,7 @@ static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
 {
     const char *token;
     size_t len;
-
     ORDDEF *odp = add_entry_point( spec );
-    memset( odp, 0, sizeof(*odp) );
 
     if (!(token = GetToken(0))) goto error;
 
@@ -724,6 +726,29 @@ static void assign_ordinals( DLLSPEC *spec )
 
 
 /*******************************************************************
+ *         add_16bit_exports
+ *
+ * Add the necessary exports to the 32-bit counterpart of a 16-bit module.
+ */
+void add_16bit_exports( DLLSPEC *spec32, DLLSPEC *spec16 )
+{
+    ORDDEF *odp;
+
+    /* add an export for the NE module */
+
+    odp = add_entry_point( spec32 );
+    odp->type = TYPE_EXTERN;
+    odp->name = xstrdup( "__wine_spec_dos_header" );
+    odp->lineno = 0;
+    odp->ordinal = 1;
+    odp->link_name = xstrdup( ".L__wine_spec_dos_header" );
+
+    assign_names( spec32 );
+    assign_ordinals( spec32 );
+}
+
+
+/*******************************************************************
  *         parse_spec_file
  *
  * Parse a .spec file.
@@ -844,9 +869,7 @@ static int parse_def_export( char *name, DLLSPEC *spec )
 {
     int i, args;
     const char *token = GetToken(1);
-
     ORDDEF *odp = add_entry_point( spec );
-    memset( odp, 0, sizeof(*odp) );
 
     odp->lineno = current_line;
     odp->ordinal = -1;

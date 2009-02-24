@@ -186,7 +186,7 @@ static void output_relay_debug( DLLSPEC *spec )
  *
  * Output the export table for a Win32 module.
  */
-static void output_exports( DLLSPEC *spec )
+void output_exports( DLLSPEC *spec )
 {
     int i, fwd_size = 0;
     int nr_exports = spec->base <= spec->limit ? spec->limit - spec->base + 1 : 0;
@@ -366,17 +366,14 @@ static void output_asm_constructor( const char *constructor )
 
 
 /*******************************************************************
- *         BuildSpec32File
+ *         output_module
  *
- * Build a Win32 C file from a spec file.
+ * Output the module data.
  */
-void BuildSpec32File( DLLSPEC *spec )
+void output_module( DLLSPEC *spec )
 {
     int machine = 0;
     unsigned int page_size = get_page_size();
-
-    resolve_imports( spec );
-    output_standard_file_header();
 
     /* Reserve some space for the PE header */
 
@@ -522,11 +519,24 @@ void BuildSpec32File( DLLSPEC *spec )
     if (target_platform == PLATFORM_APPLE)
         output( "\t.lcomm %s,4\n", asm_name("_end") );
 
+    output_asm_constructor( "__wine_spec_init_ctor" );
+}
+
+
+/*******************************************************************
+ *         BuildSpec32File
+ *
+ * Build a Win32 C file from a spec file.
+ */
+void BuildSpec32File( DLLSPEC *spec )
+{
+    resolve_imports( spec );
+    output_standard_file_header();
+    output_module( spec );
     output_stubs( spec );
     output_exports( spec );
     output_imports( spec );
     output_resources( spec );
-    output_asm_constructor( "__wine_spec_init_ctor" );
     output_gnu_stack_note();
 }
 

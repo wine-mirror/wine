@@ -522,19 +522,15 @@ static void output_init_code( const DLLSPEC *spec )
 
 
 /*******************************************************************
- *         BuildSpec16File
+ *         output_module16
  *
- * Build a Win16 assembly file from a spec file.
+ * Output code for a 16-bit module.
  */
-void BuildSpec16File( DLLSPEC *spec )
+static void output_module16( DLLSPEC *spec )
 {
     ORDDEF **typelist;
     ORDDEF *entry_point = NULL;
     int i, j, nb_funcs;
-
-    /* File header */
-
-    output_standard_file_header();
 
     if (!spec->file_name)
     {
@@ -827,14 +823,58 @@ void BuildSpec16File( DLLSPEC *spec )
         output( "\t.long %s\n", asm_name("wine_ldt_copy") );
     }
 
+    free( typelist );
+}
+
+
+/*******************************************************************
+ *         BuildSpec16File
+ *
+ * Build a Win16 assembly file from a spec file.
+ */
+void BuildSpec16File( DLLSPEC *spec )
+{
+    output_standard_file_header();
+    output_module16( spec );
+    output_init_code( spec );
+
     output( "\n\t%s\n", get_asm_string_section() );
     output( ".L__wine_spec_file_name:\n" );
     output( "\t%s \"%s\"\n", get_asm_string_keyword(), spec->file_name );
 
     output_stubs( spec );
     output_get_pc_thunk();
-    output_init_code( spec );
     output_gnu_stack_note();
+}
 
-    free( typelist );
+
+/*******************************************************************
+ *         output_spec16_file
+ *
+ * Output the complete data for a spec 16-bit file.
+ */
+void output_spec16_file( DLLSPEC *spec16 )
+{
+    DLLSPEC *spec32 = alloc_dll_spec();
+
+    spec32->file_name = xstrdup( spec16->file_name );
+
+    if (spec16->characteristics & IMAGE_FILE_DLL)
+    {
+        spec32->characteristics = IMAGE_FILE_DLL;
+        spec32->init_func = xstrdup( "__wine_spec_dll_entry" );
+    }
+
+    resolve_imports( spec16 );
+    add_16bit_exports( spec32, spec16 );
+
+    output_standard_file_header();
+    output_module( spec32 );
+    output_module16( spec16 );
+    output_stubs( spec16 );
+    output_exports( spec32 );
+    output_imports( spec16 );
+    output_resources( spec16 );
+    output_gnu_stack_note();
+    free_dll_spec( spec32 );
 }

@@ -82,6 +82,7 @@ char *spec_file_name = NULL;
 FILE *output_file = NULL;
 const char *output_file_name = NULL;
 static const char *output_file_source_name;
+static char *main_module;  /* FIXME: to be removed */
 
 char *as_command = NULL;
 char *ld_command = NULL;
@@ -142,6 +143,7 @@ static void set_subsystem( const char *subsystem, DLLSPEC *spec )
     if (!strcmp( str, "native" )) spec->subsystem = IMAGE_SUBSYSTEM_NATIVE;
     else if (!strcmp( str, "windows" )) spec->subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
     else if (!strcmp( str, "console" )) spec->subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+    else if (!strcmp( str, "win16" )) spec->type = SPEC_WIN16;
     else fatal_error( "Invalid subsystem name '%s'\n", subsystem );
     if (major)
     {
@@ -359,6 +361,7 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             break;
         case 'M':
             spec->type = SPEC_WIN16;
+            main_module = xstrdup( optarg );
             break;
         case 'N':
             spec->dll_name = xstrdup( optarg );
@@ -591,9 +594,13 @@ int main(int argc, char **argv)
         switch (spec->type)
         {
             case SPEC_WIN16:
-                if (argv[0])
-                    fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
-                BuildSpec16File( spec );
+                if (!main_module)
+                {
+                    read_undef_symbols( spec, argv );
+                    output_spec16_file( spec );
+                }
+                else
+                    BuildSpec16File( spec );
                 break;
             case SPEC_WIN32:
                 read_undef_symbols( spec, argv );
