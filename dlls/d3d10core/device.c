@@ -1331,11 +1331,28 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent
 static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDeviceParent *iface,
         WINED3DPRESENT_PARAMETERS *present_parameters, IWineD3DSwapChain **swapchain)
 {
-    FIXME("iface %p, present_parameters %p, swapchain %p stub!\n", iface, present_parameters, swapchain);
+    IWineDXGIDevice *wine_device;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, present_parameters %p, swapchain %p\n", iface, present_parameters, swapchain);
+
+    hr = IWineD3DDeviceParent_QueryInterface(iface, &IID_IWineDXGIDevice, (void **)&wine_device);
+    if (FAILED(hr))
+    {
+        ERR("Device should implement IWineDXGIDevice\n");
+        return E_FAIL;
+    }
+
+    hr = IWineDXGIDevice_create_swapchain(wine_device, present_parameters, swapchain);
+    IWineDXGIDevice_Release(wine_device);
+    if (FAILED(hr))
+    {
+        ERR("Failed to create DXGI swapchain, returning %#x\n", hr);
+        return hr;
+    }
+
+    return S_OK;
 }
-
 
 const struct IWineD3DDeviceParentVtbl d3d10_wined3d_device_parent_vtbl =
 {

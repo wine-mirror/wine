@@ -153,25 +153,98 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_GetWindowAssociation(IWineDXGIFact
     return E_NOTIMPL;
 }
 
+/* TODO: The DXGI swapchain desc is a bit nicer than WINED3DPRESENT_PARAMETERS,
+ * change wined3d to use a structure more similar to DXGI. */
 static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IWineDXGIFactory *iface,
         IUnknown *device, DXGI_SWAP_CHAIN_DESC *desc, IDXGISwapChain **swapchain)
 {
-    struct dxgi_swapchain *object;
+    WINED3DPRESENT_PARAMETERS present_parameters;
+    IWineD3DSwapChain *wined3d_swapchain;
+    IWineD3DDevice *wined3d_device;
+    IWineDXGIDevice *dxgi_device;
+    UINT count;
+    HRESULT hr;
 
     FIXME("iface %p, device %p, desc %p, swapchain %p partial stub!\n", iface, device, desc, swapchain);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    hr = IUnknown_QueryInterface(device, &IID_IWineDXGIDevice, (void **)&dxgi_device);
+    if (FAILED(hr))
     {
-        ERR("Failed to allocate DXGI swapchain object memory\n");
-        return E_OUTOFMEMORY;
+        ERR("This is not the device we're looking for\n");
+        return hr;
     }
 
-    object->vtbl = &dxgi_swapchain_vtbl;
-    object->refcount = 1;
-    *swapchain = (IDXGISwapChain *)object;
+    wined3d_device = IWineDXGIDevice_get_wined3d_device(dxgi_device);
+    IWineDXGIDevice_Release(dxgi_device);
 
-    TRACE("Created IDXGISwapChain %p\n", object);
+    count = IWineD3DDevice_GetNumberOfSwapChains(wined3d_device);
+    if (count)
+    {
+        FIXME("Only a single swapchain supported.\n");
+        IWineD3DDevice_Release(wined3d_device);
+        return E_FAIL;
+    }
+
+    if (!desc->OutputWindow)
+    {
+        FIXME("No output window, should use factory output window\n");
+    }
+
+    FIXME("Ignoring SwapEffect and Flags\n");
+
+    present_parameters.BackBufferWidth = desc->BufferDesc.Width;
+    present_parameters.BackBufferHeight = desc->BufferDesc.Height;
+    present_parameters.BackBufferFormat = wined3dformat_from_dxgi_format(desc->BufferDesc.Format);
+    present_parameters.BackBufferCount = desc->BufferCount;
+    if (desc->SampleDesc.Count > 1)
+    {
+        present_parameters.MultiSampleType = desc->SampleDesc.Count;
+        present_parameters.MultiSampleQuality = desc->SampleDesc.Quality;
+    }
+    else
+    {
+        present_parameters.MultiSampleType = WINED3DMULTISAMPLE_NONE;
+        present_parameters.MultiSampleQuality = 0;
+    }
+    present_parameters.SwapEffect = WINED3DSWAPEFFECT_DISCARD;
+    present_parameters.hDeviceWindow = desc->OutputWindow;
+    present_parameters.Windowed = desc->Windowed;
+    present_parameters.EnableAutoDepthStencil = FALSE;
+    present_parameters.AutoDepthStencilFormat = 0;
+    present_parameters.Flags = 0; /* WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL? */
+    present_parameters.FullScreen_RefreshRateInHz =
+            desc->BufferDesc.RefreshRate.Numerator / desc->BufferDesc.RefreshRate.Denominator;
+    present_parameters.PresentationInterval = WINED3DPRESENT_INTERVAL_DEFAULT;
+
+    hr = IWineD3DDevice_Init3D(wined3d_device, &present_parameters);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize 3D, returning %#x\n", hr);
+        IWineD3DDevice_Release(wined3d_device);
+        return hr;
+    }
+
+    hr = IWineD3DDevice_GetSwapChain(wined3d_device, 0, &wined3d_swapchain);
+    IWineD3DDevice_Release(wined3d_device);
+    if (FAILED(hr))
+    {
+        WARN("Failed to get swapchain, returning %#x\n", hr);
+        return hr;
+    }
+
+    hr = IWineD3DSwapChain_GetParent(wined3d_swapchain, (IUnknown **)swapchain);
+    IUnknown_Release(wined3d_swapchain);
+    if (FAILED(hr))
+    {
+        WARN("Failed to get swapchain, returning %#x\n", hr);
+        return hr;
+    }
+
+    /* FIXME? The swapchain is created with refcount 1 by the wined3d device,
+     * but the wined3d device can't hold a real reference. */
+    IUnknown_Release(*swapchain);
+
+    TRACE("Created IDXGISwapChain %p\n", *swapchain);
 
     return S_OK;
 }

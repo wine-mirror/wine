@@ -79,6 +79,7 @@ struct dxgi_swapchain
 {
     const struct IDXGISwapChainVtbl *vtbl;
     LONG refcount;
+    IWineD3DSwapChain *wined3d_swapchain;
 };
 
 /* IDXGISurface */

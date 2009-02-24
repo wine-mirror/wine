@@ -56,6 +56,25 @@ static ULONG STDMETHODCALLTYPE dxgi_swapchain_AddRef(IDXGISwapChain *iface)
     return refcount;
 }
 
+static ULONG STDMETHODCALLTYPE destroy_surface(IWineD3DSurface *surface)
+{
+    IDXGISurface *dxgi_surface;
+
+    TRACE("surface %p\n", surface);
+
+    IWineD3DSurface_GetParent(surface, (IUnknown **)&dxgi_surface);
+    IDXGISurface_Release(dxgi_surface);
+
+    return IDXGISurface_Release(dxgi_surface);
+}
+
+static ULONG STDMETHODCALLTYPE destroy_swapchain(IWineD3DSwapChain *swapchain)
+{
+    TRACE("swapchain %p\n", swapchain);
+
+    return IWineD3DSwapChain_Release(swapchain);
+}
+
 static ULONG STDMETHODCALLTYPE dxgi_swapchain_Release(IDXGISwapChain *iface)
 {
     struct dxgi_swapchain *This = (struct dxgi_swapchain *)iface;
@@ -65,6 +84,26 @@ static ULONG STDMETHODCALLTYPE dxgi_swapchain_Release(IDXGISwapChain *iface)
 
     if (!refcount)
     {
+        IWineD3DDevice *wined3d_device;
+        HRESULT hr;
+
+        FIXME("Only a single swapchain is supported\n");
+
+        hr = IWineD3DSwapChain_GetDevice(This->wined3d_swapchain, &wined3d_device);
+        if (FAILED(hr))
+        {
+            ERR("Failed to get the wined3d device, hr %#x\n", hr);
+        }
+        else
+        {
+            hr = IWineD3DDevice_Uninit3D(wined3d_device, destroy_surface, destroy_swapchain);
+            IWineD3DDevice_Release(wined3d_device);
+            if (FAILED(hr))
+            {
+                ERR("Uninit3D failed, hr %#x\n", hr);
+            }
+        }
+
         HeapFree(GetProcessHeap(), 0, This);
     }
 
