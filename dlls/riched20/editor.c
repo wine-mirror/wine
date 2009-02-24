@@ -2636,7 +2636,6 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->nLastSelStart = ed->nLastSelEnd = 0;
   ed->pLastSelStartPara = ed->pLastSelEndPara = ME_FindItemFwd(ed->pBuffer->pFirst, diParagraph);
   ed->nAvailWidth = 0; /* wrap to client area */
-  ed->bWordWrap = (props & TXTBIT_WORDWRAP) != 0;
   ed->bHideSelection = FALSE;
   ed->pfnWordBreak = NULL;
   ed->lpOleCallback = NULL;
@@ -2665,8 +2664,12 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
 
   if (props & TXTBIT_AUTOWORDSEL)
     ed->styleFlags |= ECO_AUTOWORDSELECTION;
-  if (props & TXTBIT_MULTILINE)
+  if (props & TXTBIT_MULTILINE) {
     ed->styleFlags |= ES_MULTILINE;
+    ed->bWordWrap = (props & TXTBIT_WORDWRAP) != 0;
+  } else {
+    ed->bWordWrap = FALSE;
+  }
   if (props & TXTBIT_READONLY)
     ed->styleFlags |= ES_READONLY;
   if (!(props & TXTBIT_HIDESELECTION))
@@ -4296,7 +4299,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_SETTARGETDEVICE:
     if (wParam == 0)
     {
-      BOOL new = (lParam == 0);
+      BOOL new = (lParam == 0 && (editor->styleFlags & ES_MULTILINE));
       if (editor->nAvailWidth || editor->bWordWrap != new)
       {
         editor->bWordWrap = new;
@@ -4305,7 +4308,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       }
     } else {
       int width = max(0, lParam);
-      if (!editor->bWordWrap || editor->nAvailWidth != width)
+      if ((editor->styleFlags & ES_MULTILINE) &&
+          (!editor->bWordWrap || editor->nAvailWidth != width))
       {
         editor->nAvailWidth = width;
         editor->bWordWrap = TRUE;
