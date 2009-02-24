@@ -158,7 +158,6 @@ int cant_be_null(const var_t *v)
     case TGT_ARRAY:
         /* FIXME: work out pointer type */
         return 0;
-    case TGT_IFACE_POINTER: /* FIXME */
     case TGT_POINTER:
         return (get_pointer_fc(v->type) == RPC_FC_RP);
     case TGT_CTXT_HANDLE_POINTER:

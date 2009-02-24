@@ -1446,7 +1446,12 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
     }
     if (ptr && is_ptr(ptr) && (ptr_attr || top))
     {
-      if (!ptr_attr)
+      if (ptr_attr && ptr_attr != RPC_FC_UP &&
+          type_get_type(type_pointer_get_ref(ptr)) == TYPE_INTERFACE)
+          warning_loc_info(&v->loc_info,
+                           "%s: pointer attribute applied to interface "
+                           "pointer type has no effect\n", v->name);
+      if (top)
         ptr_attr = RPC_FC_RP;
       if (ptr_attr != (*pt)->type)
       {
