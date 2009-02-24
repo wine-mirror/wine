@@ -2635,6 +2635,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->nParagraphs = 1;
   ed->nLastSelStart = ed->nLastSelEnd = 0;
   ed->pLastSelStartPara = ed->pLastSelEndPara = ME_FindItemFwd(ed->pBuffer->pFirst, diParagraph);
+  ed->nAvailWidth = 0; /* wrap to client area */
   ed->bWordWrap = (props & TXTBIT_WORDWRAP) != 0;
   ed->bHideSelection = FALSE;
   ed->pfnWordBreak = NULL;
