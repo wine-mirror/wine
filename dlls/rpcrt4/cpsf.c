@@ -266,7 +266,7 @@ HRESULT WINAPI NdrDllRegisterProxy(HMODULE hDll,
   if (len && len < sizeof(module)) {
       TRACE("registering CLSID %s => %s\n", debugstr_w(clsid), debugstr_w(module));
       if (RegCreateKeyW(HKEY_CLASSES_ROOT, keyname, &key) == ERROR_SUCCESS) {
-          RegSetValueExW(subkey, NULL, 0, REG_SZ, (const BYTE *)psfactoryW, sizeof(psfactoryW));
+          RegSetValueExW(key, NULL, 0, REG_SZ, (const BYTE *)psfactoryW, sizeof(psfactoryW));
           if (RegCreateKeyW(key, inprocserverW, &subkey) == ERROR_SUCCESS) {
               RegSetValueExW(subkey, NULL, 0, REG_SZ, (LPBYTE)module, (strlenW(module)+1)*sizeof(WCHAR));
               RegSetValueExW(subkey, threadingmodelW, 0, REG_SZ, (const BYTE *)bothW, sizeof(bothW));
