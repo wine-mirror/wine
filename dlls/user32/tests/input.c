@@ -236,11 +236,11 @@ static BOOL do_test( HWND hwnd, int seqnr, const KEV td[] )
                   MSGNAME[msg.message - WM_KEYFIRST], msg.wParam, msg.lParam, msg.time);
         if( i < kmctr ) {
             ok( msg.message == expmsg[i].message &&
-                    msg.wParam == expmsg[i].wParam &&
-                    msg.lParam == expmsg[i].lParam,
-                    "%u/%u: wrong message %x expected %s wParam %04lx lParam %08lx\n",
-                    seqnr, i, msg.message, MSGNAME[(expmsg[i]).message - WM_KEYFIRST],
-                    expmsg[i].wParam, expmsg[i].lParam );
+                msg.wParam == expmsg[i].wParam &&
+                msg.lParam == expmsg[i].lParam,
+                "%u/%u: wrong message %x/%08lx/%08lx expected %s/%08lx/%08lx\n",
+                seqnr, i, msg.message, msg.wParam, msg.lParam,
+                MSGNAME[(expmsg[i]).message - WM_KEYFIRST], expmsg[i].wParam, expmsg[i].lParam );
         }
         i++;
     }
@@ -578,6 +578,7 @@ struct sendinput_test_s {
         {{VK_MENU, 0x80}, {VK_LMENU, 0x80}, {VK_CONTROL, 0x81, 1}, {VK_LCONTROL, 0x80, 1}, {0}},
         {{WM_KEYUP, hook|wparam|optional, VK_LCONTROL},
         {WM_KEYUP, hook|wparam, VK_RMENU},
+        {WM_SYSKEYUP, wparam|lparam|optional, VK_CONTROL, KF_UP},
         {WM_SYSKEYUP, wparam|lparam, VK_MENU, KF_UP},
         {WM_SYSCOMMAND}, {0}}},
     /* LMENU | KEYEVENTF_EXTENDEDKEY == RMENU */
@@ -602,6 +603,7 @@ struct sendinput_test_s {
         {{VK_MENU, 0x80}, {VK_RMENU, 0x80}, {VK_CONTROL, 0x81, 1}, {VK_LCONTROL, 0x80, 1}, {0}},
         {{WM_KEYUP, hook|wparam|lparam|optional, VK_LCONTROL, LLKHF_UP},
         {WM_KEYUP, hook|wparam|lparam, VK_RMENU, LLKHF_UP|LLKHF_EXTENDED},
+        {WM_SYSKEYUP, wparam|lparam|optional, VK_CONTROL, KF_UP},
         {WM_SYSKEYUP, wparam|lparam, VK_MENU, KF_UP|KF_EXTENDED},
         {WM_SYSCOMMAND}, {0}}},
     /* MENU == LMENU */
@@ -800,6 +802,7 @@ static LRESULT CALLBACK WndProc2(HWND hWnd, UINT Msg, WPARAM wParam,
         Msg != WM_NCHITTEST &&
         Msg != WM_GETTEXT &&
         Msg != WM_GETICON &&
+        Msg != WM_IME_SELECT &&
         Msg != WM_DEVICECHANGE)
     {
         ok(sent_messages_cnt < MAXKEYMESSAGES, "Too many messages\n");
@@ -882,6 +885,11 @@ static void test_Input_blackbox(void)
         pSendInput(1, (INPUT*)&i, sizeof(TEST_INPUT));
         empty_message_queue();
         GetKeyboardState(ks2);
+        if (!ii && !sent_messages_cnt && !memcmp( ks1, ks2, sizeof(ks1) ))
+        {
+            win_skip( "window doesn't receive the queued input\n" );
+            break;
+        }
         compare_and_check(ii, ks1, ks2, &sendinput_test[ii]);
     }
 
@@ -1180,7 +1188,8 @@ static void test_key_map(void)
     s  = MapVirtualKeyEx(VK_SHIFT,  MAPVK_VK_TO_VSC, kl);
     ok(s != 0, "MapVirtualKeyEx(VK_SHIFT) should return non-zero\n");
     sL = MapVirtualKeyEx(VK_LSHIFT, MAPVK_VK_TO_VSC, kl);
-    ok(s == sL, "%x != %x\n", s, sL);
+    ok(s == sL || broken(sL == 0), /* win9x */
+       "%x != %x\n", s, sL);
 
     kL = MapVirtualKeyEx(0x2a, MAPVK_VSC_TO_VK, kl);
     ok(kL == VK_SHIFT, "Scan code -> vKey = %x (not VK_SHIFT)\n", kL);
@@ -1188,9 +1197,11 @@ static void test_key_map(void)
     ok(kR == VK_SHIFT, "Scan code -> vKey = %x (not VK_SHIFT)\n", kR);
 
     kL = MapVirtualKeyEx(0x2a, MAPVK_VSC_TO_VK_EX, kl);
-    ok(kL == VK_LSHIFT, "Scan code -> vKey = %x (not VK_LSHIFT)\n", kL);
+    ok(kL == VK_LSHIFT || broken(kL == 0), /* win9x */
+       "Scan code -> vKey = %x (not VK_LSHIFT)\n", kL);
     kR = MapVirtualKeyEx(0x36, MAPVK_VSC_TO_VK_EX, kl);
-    ok(kR == VK_RSHIFT, "Scan code -> vKey = %x (not VK_RSHIFT)\n", kR);
+    ok(kR == VK_RSHIFT || broken(kR == 0), /* win9x */
+       "Scan code -> vKey = %x (not VK_RSHIFT)\n", kR);
 
     /* test that MAPVK_VSC_TO_VK prefers the non-numpad vkey if there's ambiguity */
     for (i = 0; i < sizeof(numpad_collisions)/sizeof(numpad_collisions[0]); i++)
