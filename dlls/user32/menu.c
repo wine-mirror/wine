@@ -423,6 +423,7 @@ static HMENU MENU_CopySysPopup(void)
         MENUITEMINFOW miteminfo;
         POPUPMENU* menu = MENU_GetMenu(hMenu);
         menu->wFlags |= MF_SYSMENU | MF_POPUP;
+        /* decorate the menu with bitmaps */
         minfo.cbSize = sizeof( MENUINFO);
         minfo.dwStyle = MNS_CHECKORBMP;
         minfo.fMask = MIM_STYLE;
@@ -835,8 +836,8 @@ static void MENU_GetBitmapItemSize( MENUITEM *lpitem, SIZE *size,
     case (INT_PTR)HBMMENU_POPUP_RESTORE:
     case (INT_PTR)HBMMENU_POPUP_MAXIMIZE:
     case (INT_PTR)HBMMENU_POPUP_MINIMIZE:
-        size->cx = GetSystemMetrics( SM_CYMENU ) - 4; /* FIXME: test */
-        size->cy = size->cx;
+        size->cx = GetSystemMetrics( SM_CXMENUSIZE);
+        size->cy = GetSystemMetrics( SM_CYMENUSIZE);
         return;
     }
     if (GetObjectW(bmp, sizeof(bm), &bm ))
@@ -945,15 +946,17 @@ static void MENU_DrawBitmapItem( HDC hdc, MENUITEM *lpitem, const RECT *rect,
         }
         if (bmchr)
         {
+            /* draw the magic bitmaps using marlett font characters */
+            /* FIXME: fontsize and the position (x,y) could probably be better */
             HFONT hfont, hfontsav;
             LOGFONTW logfont = { 0, 0, 0, 0, FW_NORMAL,
                 0, 0, 0, SYMBOL_CHARSET, 0, 0, 0, 0,
                 { 'M','a','r','l','e','t','t',0 } };
-            logfont.lfHeight =  min( h, w) - 2 ;
+            logfont.lfHeight =  min( h, w) - 5 ;
             TRACE(" height %d rect %s\n", logfont.lfHeight, wine_dbgstr_rect( rect));
             hfont = CreateFontIndirectW( &logfont);
             hfontsav = SelectObject(hdc, hfont);
-            TextOutW( hdc,  rect->left, rect->top, &bmchr, 1);
+            TextOutW( hdc,  rect->left, rect->top + 2, &bmchr, 1);
             SelectObject(hdc, hfontsav);
             DeleteObject( hfont);
         }

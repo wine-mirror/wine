@@ -433,7 +433,7 @@ static void test_mbs_help( int ispop, int hassub, int mnuopt,
 
         sprintf( buf,"%d text \"%s\" mnuopt %d", count, text ? text: "(nil)", mnuopt);
         FillRect( hdc, &rc, (HBRUSH) COLOR_WINDOW);
-        TextOut( hdc, 100, 50, buf, strlen( buf));
+        TextOut( hdc, 10, 50, buf, strlen( buf));
         ReleaseDC( hwnd, hdc);
     }
     if(ispop)
@@ -445,13 +445,17 @@ static void test_mbs_help( int ispop, int hassub, int mnuopt,
     }
     ret = GetMenuItemRect( hwnd, hmenu, 0, &rc);
     if (0)  /* comment out menu size checks, behavior is different in almost every Windows version */
+            /* the tests should however succeed on win2000, XP and Wine (at least upto 1.1.15) */
+            /* with a variety of dpi's and desktop font sizes */
     {
         /* check menu width */
         if( ispop)
             expect = ( text || hbmp ?
                        4 + (mnuopt != 1 ? GetSystemMetrics(SM_CXMENUCHECK) : 0)
                        : 0) +
-                arrowwidth  + MOD_avec + (hbmp ? bmpsize.cx + 2 : 0) +
+                       arrowwidth  + MOD_avec + (hbmp ?
+                                    ((int)hbmp<0||(int)hbmp>12 ? bmpsize.cx + 2 : GetSystemMetrics( SM_CXMENUSIZE) + 2)
+                                    : 0) +
                 (text && hastab ? /* TAB space */
                  MOD_avec + ( hastab==2 ? sc_size.cx : 0) : 0) +
                 (text ?  2 + (text[0] ? size.cx :0): 0) ;
@@ -466,7 +470,11 @@ static void test_mbs_help( int ispop, int hassub, int mnuopt,
         if( ispop)
             expect = max( ( !(text || hbmp) ? GetSystemMetrics( SM_CYMENUSIZE)/2 : 0),
                           max( (text ? max( 2 + size.cy, MOD_hic + 4) : 0),
-                               (hbmp ? bmpsize.cy + 2 : 0)));
+                               (hbmp ?
+                                   ((int)hbmp<0||(int)hbmp>12 ?
+                                       bmpsize.cy + 2
+                                     : GetSystemMetrics( SM_CYMENUSIZE) + 2)
+                                 : 0)));
         else
             expect = ( !(text || hbmp) ? GetSystemMetrics( SM_CYMENUSIZE)/2 :
                        max( GetSystemMetrics( SM_CYMENU) - 1, (hbmp ? bmpsize.cy : 0)));
@@ -497,8 +505,8 @@ static void test_mbs_help( int ispop, int hassub, int mnuopt,
     }
     /* if there was a failure, report details */
     if( failed) {
-        trace("*** count %d text \"%s\" bitmap %p bmsize %d,%d textsize %d+%d,%d mnuopt %d hastab %d\n",
-                count, text ? text: "(nil)", hbmp, bmpsize.cx, bmpsize.cy,
+        trace("*** count %d %s text \"%s\" bitmap %p bmsize %d,%d textsize %d+%d,%d mnuopt %d hastab %d\n",
+                count, (ispop? "POPUP": "MENUBAR"),text ? text: "(nil)", hbmp, bmpsize.cx, bmpsize.cy,
                 size.cx, size.cy, sc_size.cx, mnuopt, hastab);
         trace("    check %d,%d arrow %d avechar %d\n",
                 GetSystemMetrics(SM_CXMENUCHECK ),
@@ -523,6 +531,9 @@ static void test_menu_bmp_and_string(void)
     BITMAP bm;
     INT arrowwidth;
     HWND hwnd;
+    HMENU hsysmenu;
+    MENUINFO mi= {sizeof(MENUINFO)};
+    MENUITEMINFOA mii= {sizeof(MENUITEMINFOA)};
     int count, szidx, txtidx, bmpidx, hassub, mnuopt, ispop;
 
     if( !pGetMenuInfo)
@@ -532,15 +543,28 @@ static void test_menu_bmp_and_string(void)
     }
 
     memset( bmfill, 0xcc, sizeof( bmfill));
-    hwnd = CreateWindowEx(0, MAKEINTATOM(atomMenuCheckClass), NULL,
+    hwnd = CreateWindowEx(0, MAKEINTATOM(atomMenuCheckClass), NULL, WS_SYSMENU |
                           WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200,
                           NULL, NULL, NULL, NULL);
     hbm_arrow=LoadBitmap( 0, (CHAR*)OBM_MNARROW);
     GetObject( hbm_arrow, sizeof(bm), &bm);
     arrowwidth = bm.bmWidth;
-
     ok(hwnd != NULL, "CreateWindowEx failed with error %d\n", GetLastError());
     if( !hwnd) return;
+    /* test system menu */
+    hsysmenu = GetSystemMenu( hwnd, FALSE);
+    ok( hsysmenu != NULL, "GetSystemMenu failed with error %d\n", GetLastError());
+    mi.fMask = MIM_STYLE;
+    mi.dwStyle = 0;
+    ok( pGetMenuInfo( hsysmenu, &mi), "GetMenuInfo failed gle=%d\n", GetLastError());
+    ok( MNS_CHECKORBMP == mi.dwStyle, "System Menu Style is %08x, without the bit %08x\n",
+        mi.dwStyle, MNS_CHECKORBMP);
+    mii.fMask = MIIM_BITMAP;
+    mii.hbmpItem = NULL;
+    ok( GetMenuItemInfoA( hsysmenu, SC_CLOSE, FALSE, &mii), "GetMenuItemInfoA failed gle=%d\n", GetLastError());
+    ok( HBMMENU_POPUP_CLOSE == mii.hbmpItem, "Item info did not get the right hbitmap: got %p  expected %p\n",
+        mii.hbmpItem, HBMMENU_POPUP_CLOSE);
+
     SetWindowLongPtr( hwnd, GWLP_WNDPROC, (LONG_PTR)menu_ownerdraw_wnd_proc);
 
     if( winetest_debug)
@@ -554,7 +578,7 @@ static void test_menu_bmp_and_string(void)
             {10,10},{38,38},{1,30},{55,5}};
         for( szidx=0; szidx < sizeof( bmsizes) / sizeof( SIZE); szidx++) {
             HBITMAP hbm = CreateBitmap( bmsizes[szidx].cx, bmsizes[szidx].cy,1,1,bmfill);
-            HBITMAP bitmaps[] = { HBMMENU_CALLBACK, hbm, NULL  };
+            HBITMAP bitmaps[] = { HBMMENU_CALLBACK, hbm, HBMMENU_POPUP_CLOSE, NULL  };
             ok( hbm != 0, "CreateBitmap failed err %d\n", GetLastError());
             for( txtidx = 0; txtidx < sizeof(MOD_txtsizes)/sizeof(MOD_txtsizes[0]); txtidx++) {
                 for( hassub = 0; hassub < 2 ; hassub++) { /* add submenu item */
@@ -562,6 +586,10 @@ static void test_menu_bmp_and_string(void)
                         for( bmpidx = 0; bmpidx <sizeof(bitmaps)/sizeof(HBITMAP); bmpidx++) {
                             /* no need to test NULL bitmaps of several sizes */
                             if( !bitmaps[bmpidx] && szidx > 0) continue;
+                            /* the HBMMENU_POPUP not to test for menu bars */
+                            if( !ispop &&
+                                bitmaps[bmpidx] >= HBMMENU_POPUP_CLOSE &&
+                                bitmaps[bmpidx] <= HBMMENU_POPUP_MINIMIZE) continue;
                             if( !ispop && hassub) continue;
                             test_mbs_help( ispop, hassub, mnuopt,
                                     hwnd, arrowwidth, ++count,
