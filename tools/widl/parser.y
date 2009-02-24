@@ -1451,7 +1451,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
           warning_loc_info(&v->loc_info,
                            "%s: pointer attribute applied to interface "
                            "pointer type has no effect\n", v->name);
-      if (top)
+      if (top && !ptr_attr)
         ptr_attr = RPC_FC_RP;
       if (ptr_attr != (*pt)->type)
       {
