@@ -1111,6 +1111,18 @@ void ME_ScrollRight(ME_TextEditor *editor, int cx)
   ME_HScrollAbs(editor, editor->horz_si.nPos + cx);
 }
 
+/* Calculates the visiblity after a call to SetScrollRange or
+ * SetScrollInfo with SIF_RANGE. */
+static BOOL ME_PostSetScrollRangeVisibility(SCROLLINFO *si)
+{
+  if (si->fMask & SIF_DISABLENOSCROLL)
+    return TRUE;
+
+  /* This must match the check in SetScrollInfo to determine whether
+   * to show or hide the scrollbars. */
+  return si->nMin < si->nMax - max(si->nPage - 1, 0);
+}
+
 void ME_UpdateScrollBar(ME_TextEditor *editor)
 {
   /* Note that this is the only function that should ever call
@@ -1158,15 +1170,14 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
         ITextHost_TxSetScrollRange(editor->texthost, SB_HORZ, si.nMin, si.nMax, FALSE);
         ITextHost_TxSetScrollPos(editor->texthost, SB_HORZ, si.nPos, TRUE);
       }
+      /* SetScrollInfo or SetScrollRange change scrollbar visibility. */
+      bScrollBarWasVisible = ME_PostSetScrollRangeVisibility(&si);
     }
   }
 
   if (si.fMask & SIF_DISABLENOSCROLL) {
     bScrollBarWillBeVisible = TRUE;
   } else if (!(editor->styleFlags & WS_HSCROLL)) {
-    /* SetScrollInfo or SetScrollRange may cause the scrollbar to be
-     * shown, so hide the scrollbar if necessary. */
-    bScrollBarWasVisible = bScrollBarWillBeVisible;
     bScrollBarWillBeVisible = FALSE;
   }
 
@@ -1205,15 +1216,14 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
         ITextHost_TxSetScrollRange(editor->texthost, SB_VERT, si.nMin, si.nMax, FALSE);
         ITextHost_TxSetScrollPos(editor->texthost, SB_VERT, si.nPos, TRUE);
       }
+      /* SetScrollInfo or SetScrollRange change scrollbar visibility. */
+      bScrollBarWasVisible = ME_PostSetScrollRangeVisibility(&si);
     }
   }
 
   if (si.fMask & SIF_DISABLENOSCROLL) {
     bScrollBarWillBeVisible = TRUE;
   } else if (!(editor->styleFlags & WS_VSCROLL)) {
-    /* SetScrollInfo or SetScrollRange may cause the scrollbar to be
-     * shown, so hide the scrollbar if necessary. */
-    bScrollBarWasVisible = bScrollBarWillBeVisible;
     bScrollBarWillBeVisible = FALSE;
   }
 
