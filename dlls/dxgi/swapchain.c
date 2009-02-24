@@ -164,10 +164,35 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_Present(IDXGISwapChain *iface, U
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetBuffer(IDXGISwapChain *iface,
         UINT buffer_idx, REFIID riid, void **surface)
 {
-    FIXME("iface %p, buffer_idx %u, riid %s, surface %p stub!\n",
+    struct dxgi_swapchain *This = (struct dxgi_swapchain *)iface;
+    IWineD3DSurface *backbuffer;
+    IUnknown *parent;
+    HRESULT hr;
+
+    TRACE("iface %p, buffer_idx %u, riid %s, surface %p\n",
             iface, buffer_idx, debugstr_guid(riid), surface);
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&dxgi_cs);
+
+    hr = IWineD3DSwapChain_GetBackBuffer(This->wined3d_swapchain, buffer_idx, WINED3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    if (FAILED(hr))
+    {
+        LeaveCriticalSection(&dxgi_cs);
+        return hr;
+    }
+
+    hr = IWineD3DSurface_GetParent(backbuffer, &parent);
+    IWineD3DSurface_Release(backbuffer);
+    LeaveCriticalSection(&dxgi_cs);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    hr = IUnknown_QueryInterface(parent, riid, surface);
+    IUnknown_Release(parent);
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_SetFullscreenState(IDXGISwapChain *iface,
