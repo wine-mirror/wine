@@ -182,6 +182,7 @@ static const struct message WmSWP_ShowOverlappedSeq[] = {
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { WM_PAINT, sent|optional },
     { WM_NCPAINT, sent|beginpaint|optional },
+    { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|beginpaint|optional },
     { 0 }
 };
@@ -2131,7 +2132,7 @@ static const struct message WmCreateMDIframeSeq[] = {
     { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE }, /* XP */
     { WM_ACTIVATEAPP, sent|wparam|optional, 1 }, /* Win9x doesn't send it */
-    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_NCACTIVATE, sent },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ACTIVATE, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE }, /* Win9x */
@@ -10031,6 +10032,10 @@ static const struct message WmMinMax_2[] = {
 static const struct message WmMinMax_3[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_MINIMIZE },
     { HCBT_SETFOCUS, hook|optional },
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED },
+    { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED },
+    { WM_MOVE, sent|defwinproc|optional },
+    { WM_SIZE, sent|wparam|defwinproc|optional, SIZE_RESTORED },
     { 0 }
 };
 static const struct message WmMinMax_4[] = {
