@@ -428,6 +428,15 @@ BOOL16 WINAPI AdjustWindowRect16( LPRECT16 rect, DWORD style, BOOL16 menu )
 }
 
 
+/***********************************************************************
+ *		MessageBeep (USER.104)
+ */
+void WINAPI MessageBeep16( UINT16 i )
+{
+    MessageBeep( i );
+}
+
+
 /**************************************************************************
  *		CloseClipboard (USER.138)
  */
@@ -674,6 +683,15 @@ BOOL16 WINAPI GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc,
         HeapFree( GetProcessHeap(), 0, info );
     }
     return ret;
+}
+
+
+/***********************************************************************
+ *		SwapMouseButton (USER.186)
+ */
+BOOL16 WINAPI SwapMouseButton16( BOOL16 fSwap )
+{
+    return SwapMouseButton( fSwap );
 }
 
 
@@ -999,6 +1017,31 @@ BOOL16 WINAPI SetDeskWallPaper16( LPCSTR filename )
 
 
 /***********************************************************************
+ *		keybd_event (USER.289)
+ */
+void WINAPI keybd_event16( CONTEXT86 *context )
+{
+    DWORD dwFlags = 0;
+
+    if (HIBYTE(context->Eax) & 0x80) dwFlags |= KEYEVENTF_KEYUP;
+    if (HIBYTE(context->Ebx) & 0x01) dwFlags |= KEYEVENTF_EXTENDEDKEY;
+
+    keybd_event( LOBYTE(context->Eax), LOBYTE(context->Ebx),
+                 dwFlags, MAKELONG(LOWORD(context->Esi), LOWORD(context->Edi)) );
+}
+
+
+/***********************************************************************
+ *		mouse_event (USER.299)
+ */
+void WINAPI mouse_event16( CONTEXT86 *context )
+{
+    mouse_event( LOWORD(context->Eax), LOWORD(context->Ebx), LOWORD(context->Ecx),
+                 LOWORD(context->Edx), MAKELONG(context->Esi, context->Edi) );
+}
+
+
+/***********************************************************************
  *		GetClipCursor (USER.309)
  */
 void WINAPI GetClipCursor16( RECT16 *rect )
@@ -1049,6 +1092,16 @@ BOOL16 WINAPI EnableHardwareInput16(BOOL16 bEnable)
 {
     FIXME("(%d) - stub\n", bEnable);
     return TRUE;
+}
+
+
+/***********************************************************************
+ *		GetMouseEventProc (USER.337)
+ */
+FARPROC16 WINAPI GetMouseEventProc16(void)
+{
+    HMODULE16 hmodule = GetModuleHandle16("USER");
+    return GetProcAddress16( hmodule, "mouse_event" );
 }
 
 
@@ -1675,6 +1728,15 @@ SEGPTR WINAPI AnsiPrev16( LPCSTR start, SEGPTR current )
 {
     char *ptr = MapSL(current);
     return current - (ptr - CharPrevA( start, ptr ));
+}
+
+
+/****************************************************************************
+ *		GetKeyboardLayoutName (USER.477)
+ */
+INT16 WINAPI GetKeyboardLayoutName16( LPSTR name )
+{
+    return GetKeyboardLayoutNameA( name );
 }
 
 

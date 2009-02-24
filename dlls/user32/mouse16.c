@@ -77,29 +77,3 @@ VOID WINAPI MOUSE_Disable(VOID)
 {
     DefMouseEventProc = 0;
 }
-
-/***********************************************************************
- *		SwapMouseButton (USER.186)
- */
-BOOL16 WINAPI SwapMouseButton16( BOOL16 fSwap )
-{
-    return SwapMouseButton( fSwap );
-}
-
-/***********************************************************************
- *		mouse_event (USER.299)
- */
-void WINAPI mouse_event16( CONTEXT86 *context )
-{
-    mouse_event( LOWORD(context->Eax), LOWORD(context->Ebx), LOWORD(context->Ecx),
-                 LOWORD(context->Edx), MAKELONG(context->Esi, context->Edi) );
-}
-
-/***********************************************************************
- *		GetMouseEventProc (USER.337)
- */
-FARPROC16 WINAPI GetMouseEventProc16(void)
-{
-    HMODULE16 hmodule = GetModuleHandle16("USER");
-    return GetProcAddress16( hmodule, "mouse_event" );
-}
