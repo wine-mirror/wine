@@ -213,7 +213,7 @@ extern int load_res32_file( const char *name, DLLSPEC *spec );
 extern void output_resources( DLLSPEC *spec );
 extern void load_res16_file( const char *name, DLLSPEC *spec );
 extern void output_res16_data( DLLSPEC *spec );
-extern void output_res16_directory( DLLSPEC *spec, const char *header_name );
+extern void output_res16_directory( DLLSPEC *spec );
 
 extern void BuildRelays16(void);
 extern void BuildRelays32(void);
