@@ -1985,6 +1985,18 @@ struct wined3d_buffer
 
 extern const IWineD3DBufferVtbl wined3d_buffer_vtbl;
 
+/* IWineD3DRendertargetView */
+struct wined3d_rendertarget_view
+{
+    const struct IWineD3DRendertargetViewVtbl *vtbl;
+    LONG refcount;
+
+    IWineD3DResource *resource;
+    IUnknown *parent;
+};
+
+extern const IWineD3DRendertargetViewVtbl wined3d_rendertarget_view_vtbl;
+
 /*****************************************************************************
  * IWineD3DSwapChainImpl implementation structure (extends IUnknown)
  */

@@ -2396,6 +2396,18 @@ interface IWineD3DResource : IWineD3DBase
 [
     object,
     local,
+    uuid(f7d8abf4-fb93-43e4-9c96-4618cf9b3cbc)
+]
+interface IWineD3DRendertargetView : IWineD3DBase
+{
+    HRESULT GetResource(
+        [out] IWineD3DResource **resource
+    );
+}
+
+[
+    object,
+    local,
     uuid(217f671e-6f30-11d9-c687-00046142c14f)
 ]
 interface IWineD3DVertexBuffer : IWineD3DResource
@@ -3011,6 +3023,11 @@ interface IWineD3DDevice : IWineD3DBase
         [in] HANDLE *shared_handle,
         [in] WINED3DSURFTYPE surface_type,
         [in] IUnknown *parent
+    );
+    HRESULT CreateRendertargetView(
+        [in] IWineD3DResource *resource,
+        [in] IUnknown *parent,
+        [out] IWineD3DRendertargetView **rendertarget_view
     );
     HRESULT CreateTexture(
         [in] UINT width,

@@ -37,6 +37,7 @@ C_SRCS = \
 	utils.c \
 	vertexdeclaration.c \
 	vertexshader.c \
+	view.c \
 	volume.c \
 	volumetexture.c \
 	wined3d_main.c

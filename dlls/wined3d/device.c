@@ -793,6 +793,29 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     return hr;
 }
 
+static HRESULT WINAPI IWineD3DDeviceImpl_CreateRendertargetView(IWineD3DDevice *iface,
+        IWineD3DResource *resource, IUnknown *parent, IWineD3DRendertargetView **rendertarget_view)
+{
+    struct wined3d_rendertarget_view *object;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->vtbl = &wined3d_rendertarget_view_vtbl;
+    object->refcount = 1;
+    IWineD3DResource_AddRef(resource);
+    object->resource = resource;
+    object->parent = parent;
+
+    *rendertarget_view = (IWineD3DRendertargetView *)object;
+
+    return WINED3D_OK;
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
         UINT Width, UINT Height, UINT Levels, DWORD Usage, WINED3DFORMAT Format, WINED3DPOOL Pool,
         IWineD3DTexture **ppTexture, HANDLE *pSharedHandle, IUnknown *parent)
@@ -7575,6 +7598,7 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_CreateIndexBuffer,
     IWineD3DDeviceImpl_CreateStateBlock,
     IWineD3DDeviceImpl_CreateSurface,
+    IWineD3DDeviceImpl_CreateRendertargetView,
     IWineD3DDeviceImpl_CreateTexture,
     IWineD3DDeviceImpl_CreateVolumeTexture,
     IWineD3DDeviceImpl_CreateVolume,
