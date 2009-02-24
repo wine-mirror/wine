@@ -451,7 +451,7 @@ void BuildSpec32File( DLLSPEC *spec )
     output( "\t.long 0\n" );              /* SizeOfUninitializedData */
     /* note: we expand the AddressOfEntryPoint field on 64-bit by overwriting the BaseOfCode field */
     output( "\t%s %s\n",                  /* AddressOfEntryPoint */
-             get_asm_ptr_keyword(), asm_name(spec->init_func) );
+            get_asm_ptr_keyword(), spec->init_func ? asm_name(spec->init_func) : "0" );
     if (get_ptr_size() == 4)
     {
         output( "\t.long 0\n" );          /* BaseOfCode */
