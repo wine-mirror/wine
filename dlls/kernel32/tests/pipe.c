@@ -62,13 +62,6 @@ static void test_CreateNamedPipe(int pipemode)
         /* nInBufSize */ 1024,
         /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
         /* lpSecurityAttrib */ NULL);
-
-    if (hnp == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
-        /* Is this the right way to notify user of skipped tests? */
-        ok(hnp == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED,
-            "CreateNamedPipe not supported on this platform, skipping tests.\n");
-        return;
-    }
     ok(hnp == INVALID_HANDLE_VALUE && GetLastError() == ERROR_INVALID_NAME,
         "CreateNamedPipe should fail if name doesn't start with \\\\.\\pipe\n");
 
