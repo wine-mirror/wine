@@ -3375,8 +3375,10 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_LINESCROLL:
   {
+    if (!(editor->styleFlags & ES_MULTILINE))
+      return FALSE;
     ME_ScrollDown(editor, lParam * 8); /* FIXME follow the original */
-    return TRUE; /* Should return false if a single line richedit control */
+    return TRUE;
   }
   case WM_CLEAR:
   {
