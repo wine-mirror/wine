@@ -96,8 +96,6 @@ MC_SRCS = \
 	nls/winerr_nor.mc
 
 EXTRA_OBJS   = relay16asm.o
-EXTRA_OBJS16 = winhelp.exe.o
-
 EXTRASUBDIRS = nls
 
 @MAKE_DLL_RULES@
@@ -106,9 +104,6 @@ kernel.res: $(MC_SRCS:.mc=.mc.rc)
 
 relay16asm.o: $(WINEBUILD)
 	$(WINEBUILD) $(WINEBUILDFLAGS) -o $@ --relay16
-
-winhelp.exe.o: $(WINEBUILD)
-	$(WINEBUILD) $(WINEBUILDFLAGS) --exe -o $@ --main-module $(MODULE) --entry WINHELP_EntryPoint
 
 # Special rules for 16-bit resource and spec files
 

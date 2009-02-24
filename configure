@@ -3909,6 +3909,7 @@ then
     enable_w32skrnl=${enable_w32skrnl:-no}
     enable_winedos=${enable_winedos:-no}
     enable_winevdm=${enable_winevdm:-no}
+    enable_winhelp_exe16=${enable_winhelp_exe16:-no}
     enable_winoldap_mod16=${enable_winoldap_mod16:-no}
 fi
 
@@ -27881,6 +27882,15 @@ programs/winevdm/Makefile: programs/winevdm/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/winevdm/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	programs/winhelp.exe16/Makefile"
+test "x$enable_winhelp_exe16" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	winhelp.exe16" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	winhelp.exe16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+programs/winhelp.exe16/Makefile: programs/winhelp.exe16/Makefile.in programs/Makeprog.rules"
+ac_config_files="$ac_config_files programs/winhelp.exe16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/winhlp32/Makefile"
 test "x$enable_winhlp32" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
 	winhlp32" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
@@ -29061,6 +29071,7 @@ do
     "programs/winepath/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winepath/Makefile" ;;
     "programs/winetest/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winetest/Makefile" ;;
     "programs/winevdm/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winevdm/Makefile" ;;
+    "programs/winhelp.exe16/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winhelp.exe16/Makefile" ;;
     "programs/winhlp32/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winhlp32/Makefile" ;;
     "programs/winoldap.mod16/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winoldap.mod16/Makefile" ;;
     "programs/winver/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winver/Makefile" ;;
