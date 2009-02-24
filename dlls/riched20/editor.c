@@ -3156,12 +3156,18 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
         return 0;
     }
 
-    if (lParam)
+    if (lParam) {
       editor->styleFlags |= flags;
-    else
-      editor->styleFlags &= flags;
-
-    ITextHost_TxShowScrollBar(editor->texthost, wParam, lParam);
+      if (flags & WS_HSCROLL)
+        ITextHost_TxShowScrollBar(editor->texthost, SB_HORZ,
+                          editor->nTotalWidth > editor->sizeWindow.cx);
+      if (flags & WS_VSCROLL)
+        ITextHost_TxShowScrollBar(editor->texthost, SB_VERT,
+                          editor->nTotalLength > editor->sizeWindow.cy);
+    } else {
+      editor->styleFlags &= ~flags;
+      ITextHost_TxShowScrollBar(editor->texthost, wParam, FALSE);
+    }
     return 0;
   }
   case EM_SETTEXTEX:
