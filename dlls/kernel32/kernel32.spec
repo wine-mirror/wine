@@ -1225,6 +1225,7 @@
 @ stdcall GlobalDOSFree16(long)
 @ stdcall GlobalFlags16(long)
 @ stdcall GlobalReAlloc16(long long long)
+@ stdcall InitTask16(ptr)
 @ stdcall IsBadReadPtr16(long long)
 @ stdcall IsTask16(long)
 @ stdcall LoadModule16(str long)
