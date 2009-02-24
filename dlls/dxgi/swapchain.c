@@ -156,9 +156,14 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDevice(IDXGISwapChain *iface,
 
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_Present(IDXGISwapChain *iface, UINT sync_interval, UINT flags)
 {
-    FIXME("iface %p, sync_interval %u, flags %#x stub!\n", iface, sync_interval, flags);
+    struct dxgi_swapchain *This = (struct dxgi_swapchain *)iface;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, sync_interval %u, flags %#x\n", iface, sync_interval, flags);
+
+    if (sync_interval) FIXME("Unimplemented sync interval %u\n", sync_interval);
+    if (flags) FIXME("Unimplemented flags %#x\n", flags);
+
+    return IWineD3DSwapChain_Present(This->wined3d_swapchain, NULL, NULL, NULL, NULL, 0);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetBuffer(IDXGISwapChain *iface,
