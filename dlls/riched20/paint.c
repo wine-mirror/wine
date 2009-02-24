@@ -1071,7 +1071,8 @@ void ME_ScrollAbs(ME_TextEditor *editor, int x, int y)
 
     bScrollBarIsVisible = (winStyle & WS_VSCROLL) != 0;
     bScrollBarWillBeVisible = (editor->nTotalLength > editor->sizeWindow.cy
-                               && (editor->styleFlags & WS_VSCROLL))
+                               && (editor->styleFlags & WS_VSCROLL)
+                               && (editor->styleFlags & ES_MULTILINE))
                               || (editor->styleFlags & ES_DISABLENOSCROLL);
     if (bScrollBarIsVisible != bScrollBarWillBeVisible)
       ITextHost_TxShowScrollBar(editor->texthost, SB_VERT,
@@ -1174,7 +1175,8 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
 
   /* Update vertical scrollbar */
   bScrollBarWasVisible = editor->vert_si.nMax > editor->vert_si.nPage;
-  bScrollBarWillBeVisible = editor->nTotalLength > editor->sizeWindow.cy;
+  bScrollBarWillBeVisible = editor->nTotalLength > editor->sizeWindow.cy &&
+                            (editor->styleFlags & ES_MULTILINE);
 
   if (editor->vert_si.nPos && !bScrollBarWillBeVisible)
   {
