@@ -1045,7 +1045,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
     NE_MODULE *pModule;
     const IMAGE_DOS_HEADER *descr = NULL;
     const char *file_name = NULL;
-    char dllname[20], owner[20], *p;
+    char dllname[32], owner[20], *p;
     const char *basename;
     int owner_exists = FALSE;
 
@@ -1056,14 +1056,30 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
     if ((p = strrchr( basename, '\\' ))) basename = p + 1;
     if ((p = strrchr( basename, '/' ))) basename = p + 1;
 
-    if (strlen(basename) < sizeof(dllname)-4)
+    if (strlen(basename) < sizeof(dllname)-6)
     {
         strcpy( dllname, basename );
         p = strrchr( dllname, '.' );
         if (!p) strcat( dllname, ".dll" );
         for (p = dllname; *p; p++) if (*p >= 'A' && *p <= 'Z') *p += 32;
 
-        if (wine_dll_get_owner( dllname, owner, sizeof(owner), &owner_exists ) != -1)
+        strcpy( p, "16" );
+        if ((mod32 = LoadLibraryA( dllname )))
+        {
+            if (!(descr = (void *)GetProcAddress( mod32, "__wine_spec_dos_header" )))
+            {
+                WARN( "loaded %s but does not contain a 16-bit module\n", debugstr_a(dllname) );
+                FreeLibrary( mod32 );
+            }
+            else
+            {
+                TRACE( "found %s with embedded 16-bit module\n", debugstr_a(dllname) );
+                file_name = basename;
+            }
+        }
+        *p = 0;
+
+        if (!descr && wine_dll_get_owner( dllname, owner, sizeof(owner), &owner_exists ) != -1)
         {
             mod32 = LoadLibraryA( owner );
             if (mod32)
