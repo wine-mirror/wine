@@ -295,7 +295,13 @@ static void check_param(LPCSTR test, HCRYPTMSG msg, DWORD param,
 
     size = 0xdeadbeef;
     ret = CryptMsgGetParam(msg, param, 0, NULL, &size);
-    ok(ret, "%s: CryptMsgGetParam failed: %08x\n", test, GetLastError());
+    ok(ret || broken(GetLastError() == OSS_LIMITED /* Win9x */),
+     "%s: CryptMsgGetParam failed: %08x\n", test, GetLastError());
+    if (!ret)
+    {
+        win_skip("parameter %d not supported, skipping tests\n", param);
+        return;
+    }
     buf = HeapAlloc(GetProcessHeap(), 0, size);
     ret = CryptMsgGetParam(msg, param, 0, buf, &size);
     ok(ret, "%s: CryptMsgGetParam failed: %08x\n", test, GetLastError());
@@ -801,12 +807,15 @@ static void test_hash_msg_get_param(void)
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_BARE_CONTENT_PARAM, 0, NULL, &size);
-    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(ret || broken(GetLastError() == OSS_LIMITED /* Win9x */),
+     "CryptMsgGetParam failed: %08x\n", GetLastError());
     /* For an encoded hash message, the hash data aren't available */
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetParam(msg, CMSG_HASH_DATA_PARAM, 0, NULL, &size);
-    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
-     "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
+    ok(!ret && (GetLastError() == CRYPT_E_INVALID_MSG_TYPE ||
+     GetLastError() == OSS_LIMITED /* Win9x */),
+     "Expected CRYPT_E_INVALID_MSG_TYPE or OSS_LIMITED, got %08x\n",
+     GetLastError());
     /* The hash is also available. */
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, NULL, &size);
@@ -2911,7 +2920,8 @@ static void test_msg_control(void)
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
-    ok(ret, "CryptMsgControl failed: %08x\n", GetLastError());
+    ok(ret || broken(GetLastError() == OSS_DATA_ERROR /* Win9x */),
+     "CryptMsgControl failed: %08x\n", GetLastError());
     CryptMsgClose(msg);
 }
 
