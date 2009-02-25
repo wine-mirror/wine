@@ -2654,8 +2654,13 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ME_CheckCharOffsets(ed);
   ed->bDefaultFormatRect = TRUE;
   ITextHost_TxGetSelectionBarWidth(ed->texthost, &selbarwidth);
-  /* FIXME: Convert selbarwidth from HIMETRIC to pixels */
-  ed->selofs = selbarwidth ? SELECTIONBAR_WIDTH : 0;
+  if (selbarwidth) {
+    /* FIXME: Convert selbarwidth from HIMETRIC to pixels */
+    ed->selofs = SELECTIONBAR_WIDTH;
+    ed->styleFlags |= ES_SELECTIONBAR;
+  } else {
+    ed->selofs = 0;
+  }
   ed->nSelectionType = stPosition;
 
   ed->cPasswordMask = 0;
@@ -3067,31 +3072,36 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     }
     changedSettings = oldSettings ^ settings;
 
-    if (oldSettings ^ settings) {
+    if (changedSettings) {
       editor->styleFlags = (editor->styleFlags & ~mask) | (settings & mask);
 
-      if (settings & ECO_SELECTIONBAR) {
-        editor->selofs = SELECTIONBAR_WIDTH;
-        editor->rcFormat.left += SELECTIONBAR_WIDTH;
-      } else {
-        editor->selofs = 0;
-        editor->rcFormat.left -= SELECTIONBAR_WIDTH;
+      if (changedSettings & ECO_SELECTIONBAR)
+      {
+        ITextHost_TxInvalidateRect(editor->texthost, &editor->rcFormat, TRUE);
+        if (settings & ECO_SELECTIONBAR) {
+          assert(!editor->selofs);
+          editor->selofs = SELECTIONBAR_WIDTH;
+          editor->rcFormat.left += editor->selofs;
+        } else {
+          editor->rcFormat.left -= editor->selofs;
+          editor->selofs = 0;
+        }
+        ME_RewrapRepaint(editor);
       }
-      ME_WrapMarkedParagraphs(editor);
-    }
 
-    if (settings & ECO_VERTICAL)
-      FIXME("ECO_VERTICAL not implemented yet!\n");
-    if (settings & ECO_AUTOHSCROLL)
-      FIXME("ECO_AUTOHSCROLL not implemented yet!\n");
-    if (settings & ECO_AUTOVSCROLL)
-      FIXME("ECO_AUTOVSCROLL not implemented yet!\n");
-    if (settings & ECO_NOHIDESEL)
-      FIXME("ECO_NOHIDESEL not implemented yet!\n");
-    if (settings & ECO_WANTRETURN)
-      FIXME("ECO_WANTRETURN not implemented yet!\n");
-    if (settings & ECO_AUTOWORDSELECTION)
-      FIXME("ECO_AUTOWORDSELECTION not implemented yet!\n");
+      if (changedSettings & settings & ECO_VERTICAL)
+        FIXME("ECO_VERTICAL not implemented yet!\n");
+      if (changedSettings & settings & ECO_AUTOHSCROLL)
+        FIXME("ECO_AUTOHSCROLL not implemented yet!\n");
+      if (changedSettings & settings & ECO_AUTOVSCROLL)
+        FIXME("ECO_AUTOVSCROLL not implemented yet!\n");
+      if (changedSettings & settings & ECO_NOHIDESEL)
+        FIXME("ECO_NOHIDESEL not implemented yet!\n");
+      if (changedSettings & settings & ECO_WANTRETURN)
+        FIXME("ECO_WANTRETURN not implemented yet!\n");
+      if (changedSettings & settings & ECO_AUTOWORDSELECTION)
+        FIXME("ECO_AUTOWORDSELECTION not implemented yet!\n");
+    }
 
     return settings;
   }
