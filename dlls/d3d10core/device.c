@@ -1256,7 +1256,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
     HRESULT hr;
 
     FIXME("iface %p, superior %p, width %u, height %u, format %#x, multisample_type %#x,\n"
-            "\tmultisample_quality %u, lockable %u, surface %p stub!\n",
+            "\tmultisample_quality %u, lockable %u, surface %p partial stub!\n",
             iface, superior, width, height, format, multisample_type, multisample_quality, lockable, surface);
 
     FIXME("Implement DXGI<->wined3d usage conversion\n");
@@ -1295,7 +1295,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
     HRESULT hr;
 
     FIXME("iface %p, superior %p, width %u, height %u, format %#x, multisample_type %#x,\n"
-            "\tmultisample_quality %u, discard %u, surface %p stub!\n",
+            "\tmultisample_quality %u, discard %u, surface %p partial stub!\n",
             iface, superior, width, height, format, multisample_type, multisample_quality, discard, surface);
 
     FIXME("Implement DXGI<->wined3d usage conversion\n");
