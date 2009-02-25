@@ -164,7 +164,7 @@ static const IShellItemVtbl ShellItem_Vtbl = {
 };
 
 
-static HRESULT WINAPI ShellItem_GetClassID(ShellItem* This, CLSID *pClassID)
+static HRESULT ShellItem_GetClassID(ShellItem* This, CLSID *pClassID)
 {
     TRACE("(%p,%p)\n", This, pClassID);
 
