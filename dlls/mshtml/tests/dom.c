@@ -3184,6 +3184,44 @@ static void test_default_style(IHTMLStyle *style)
     hres = IHTMLStyle_put_paddingLeft(style, vDefault);
     ok(hres == S_OK, "get_paddingLeft: %08x\n", hres);
 
+    /* BackgroundRepeat */
+    hres = IHTMLStyle_get_backgroundRepeat(style, &sDefault);
+    ok(hres == S_OK, "get_backgroundRepeat failed: %08x\n", hres);
+
+    str = a2bstr("invalid");
+    hres = IHTMLStyle_put_backgroundRepeat(style, str);
+    ok(hres == E_INVALIDARG, "put_backgroundRepeat failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("repeat");
+    hres = IHTMLStyle_put_backgroundRepeat(style, str);
+    ok(hres == S_OK, "put_backgroundRepeat failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("no-repeat");
+    hres = IHTMLStyle_put_backgroundRepeat(style, str);
+    ok(hres == S_OK, "put_backgroundRepeat failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("repeat-x");
+    hres = IHTMLStyle_put_backgroundRepeat(style, str);
+    ok(hres == S_OK, "put_backgroundRepeat failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("repeat-y");
+    hres = IHTMLStyle_put_backgroundRepeat(style, str);
+    ok(hres == S_OK, "put_backgroundRepeat failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle_get_backgroundRepeat(style, &str);
+    ok(hres == S_OK, "get_backgroundRepeat failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "repeat-y"), "str=%s\n", dbgstr_w(str));
+    SysFreeString(str);
+
+    hres = IHTMLStyle_put_backgroundRepeat(style, sDefault);
+    ok(hres == S_OK, "put_backgroundRepeat failed: %08x\n", hres);
+    SysFreeString(str);
+
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
     if(SUCCEEDED(hres)) {
