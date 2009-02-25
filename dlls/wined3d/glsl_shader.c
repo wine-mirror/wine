@@ -1300,27 +1300,47 @@ static inline const char* shader_get_comp_op(
     }
 }
 
-static void shader_glsl_get_sample_function(DWORD sampler_type, BOOL projected, BOOL texrect, glsl_sample_function_t *sample_function) {
+static void shader_glsl_get_sample_function(DWORD sampler_type, BOOL projected, BOOL texrect, BOOL lod, glsl_sample_function_t *sample_function) {
     /* Note that there's no such thing as a projected cube texture. */
     switch(sampler_type) {
         case WINED3DSTT_1D:
-            sample_function->name = projected ? "texture1DProj" : "texture1D";
+            if(lod) {
+                sample_function->name = projected ? "texture1DProjLod" : "texture1DLod";
+            } else {
+                sample_function->name = projected ? "texture1DProj" : "texture1D";
+            }
             sample_function->coord_mask = WINED3DSP_WRITEMASK_0;
             break;
         case WINED3DSTT_2D:
             if(texrect) {
-                sample_function->name = projected ? "texture2DRectProj" : "texture2DRect";
+                if(lod) {
+                    sample_function->name = projected ? "texture2DRectProjLod" : "texture2DRectLod";
+                } else {
+                    sample_function->name = projected ? "texture2DRectProj" : "texture2DRect";
+                }
             } else {
-                sample_function->name = projected ? "texture2DProj" : "texture2D";
+                if(lod) {
+                    sample_function->name = projected ? "texture2DProjLod" : "texture2DLod";
+                } else {
+                    sample_function->name = projected ? "texture2DProj" : "texture2D";
+                }
             }
             sample_function->coord_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1;
             break;
         case WINED3DSTT_CUBE:
-            sample_function->name = "textureCube";
+            if(lod) {
+                sample_function->name = "textureCubeLod";
+            } else {
+                sample_function->name = "textureCube";
+            }
             sample_function->coord_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
             break;
         case WINED3DSTT_VOLUME:
-            sample_function->name = projected ? "texture3DProj" : "texture3D";
+            if(lod) {
+                sample_function->name = projected ? "texture3DProjLod" : "texture3DLod";
+            } else {
+                sample_function->name = projected ? "texture3DProj" : "texture3D";
+            }
             sample_function->coord_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
             break;
         default:
@@ -2316,7 +2336,7 @@ static void pshader_glsl_tex(const SHADER_OPCODE_ARG *arg)
         texrect = TRUE;
     }
 
-    shader_glsl_get_sample_function(sampler_type, projected, texrect, &sample_function);
+    shader_glsl_get_sample_function(sampler_type, projected, texrect, FALSE, &sample_function);
     mask |= sample_function.coord_mask;
 
     if (shader_version < WINED3DPS_VERSION(2,0)) shader_glsl_get_write_mask(arg->dst, dst_swizzle);
@@ -2368,7 +2388,7 @@ static void shader_glsl_texldl(const SHADER_OPCODE_ARG *arg)
        IWineD3DBaseTexture_GetTextureDimensions(deviceImpl->stateBlock->textures[sampler_idx]) == GL_TEXTURE_RECTANGLE_ARB) {
         texrect = TRUE;
     }
-    shader_glsl_get_sample_function(sampler_type, FALSE, texrect, &sample_function);    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], sample_function.coord_mask, &coord_param);
+    shader_glsl_get_sample_function(sampler_type, FALSE, texrect, TRUE, &sample_function);    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], sample_function.coord_mask, &coord_param);
 
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_3, &lod_param);
 
@@ -2379,11 +2399,11 @@ static void shader_glsl_texldl(const SHADER_OPCODE_ARG *arg)
         /* The GLSL spec claims the Lod sampling functions are only supported in vertex shaders.
          * However, they seem to work just fine in fragment shaders as well. */
         WARN("Using %sLod in fragment shader.\n", sample_function.name);
-        shader_addline(arg->buffer, "%sLod(Psampler%u, %s, %s)%s);\n",
+        shader_addline(arg->buffer, "%s(Psampler%u, %s, %s)%s);\n",
                 sample_function.name, sampler_idx, coord_param.param_str, lod_param.param_str, dst_swizzle);
         shader_glsl_color_correction(arg, ps->cur_args->color_fixup[sampler_idx]);
     } else {
-        shader_addline(arg->buffer, "%sLod(Vsampler%u, %s, %s)%s);\n",
+        shader_addline(arg->buffer, "%s(Vsampler%u, %s, %s)%s);\n",
                 sample_function.name, sampler_idx, coord_param.param_str, lod_param.param_str, dst_swizzle);
     }
 }
@@ -2458,7 +2478,7 @@ static void pshader_glsl_texdp3tex(const SHADER_OPCODE_ARG *arg)
      *
      * It is a dependent read - not valid with conditional NP2 textures
      */
-    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, &sample_function);
+    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, FALSE, &sample_function);
 
     switch(count_bits(sample_function.coord_mask)) {
         case 1:
@@ -2602,7 +2622,7 @@ static void pshader_glsl_texm3x3tex(const SHADER_OPCODE_ARG *arg)
     shader_glsl_append_dst(arg->buffer, arg);
     shader_glsl_get_write_mask(arg->dst, dst_mask);
     /* Dependent read, not valid with conditional NP2 */
-    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, &sample_function);
+    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, FALSE, &sample_function);
 
     /* Sample the texture using the calculated coordinates */
     shader_addline(arg->buffer, "%s(Psampler%u, tmp0.xyz)%s);\n", sample_function.name, reg, dst_mask);
@@ -2657,7 +2677,7 @@ static void pshader_glsl_texm3x3spec(const SHADER_OPCODE_ARG *arg)
     shader_glsl_append_dst(buffer, arg);
     shader_glsl_get_write_mask(arg->dst, dst_mask);
     /* Dependent read, not valid with conditional NP2 */
-    shader_glsl_get_sample_function(stype, FALSE, FALSE, &sample_function);
+    shader_glsl_get_sample_function(stype, FALSE, FALSE, FALSE, &sample_function);
 
     /* Sample the texture */
     shader_addline(buffer, "%s(Psampler%u, tmp0.xyz)%s);\n", sample_function.name, reg, dst_mask);
@@ -2693,7 +2713,7 @@ static void pshader_glsl_texm3x3vspec(const SHADER_OPCODE_ARG *arg)
     shader_glsl_append_dst(buffer, arg);
     shader_glsl_get_write_mask(arg->dst, dst_mask);
     /* Dependent read, not valid with conditional NP2 */
-    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, &sample_function);
+    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, FALSE, &sample_function);
 
     /* Sample the texture using the calculated coordinates */
     shader_addline(buffer, "%s(Psampler%u, tmp0.xyz)%s);\n", sample_function.name, reg, dst_mask);
@@ -2724,7 +2744,7 @@ static void pshader_glsl_texbem(const SHADER_OPCODE_ARG *arg)
 
     sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
     /* Dependent read, not valid with conditional NP2 */
-    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, &sample_function);
+    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, FALSE, &sample_function);
     mask = sample_function.coord_mask;
 
     shader_glsl_get_write_mask(arg->dst, dst_swizzle);
@@ -2825,7 +2845,7 @@ static void pshader_glsl_texreg2rgb(const SHADER_OPCODE_ARG *arg)
     shader_glsl_append_dst(arg->buffer, arg);
     shader_glsl_get_write_mask(arg->dst, dst_mask);
     /* Dependent read, not valid with conditional NP2 */
-    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, &sample_function);
+    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, FALSE, &sample_function);
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], sample_function.coord_mask, &src0_param);
 
     shader_addline(arg->buffer, "%s(Psampler%u, %s)%s);\n", sample_function.name, sampler_idx, src0_param.param_str, dst_mask);
