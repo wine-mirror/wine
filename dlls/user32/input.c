@@ -1168,7 +1168,7 @@ int WINAPI GetMouseMovePointsEx(UINT size, LPMOUSEMOVEPOINT ptin, LPMOUSEMOVEPOI
         return -1;
     }
 
-    if(!ptin || !ptout) {
+    if(!ptin || (!ptout && count)) {
         SetLastError(ERROR_NOACCESS);
         return -1;
     }

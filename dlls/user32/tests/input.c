@@ -885,7 +885,7 @@ static void test_Input_blackbox(void)
         pSendInput(1, (INPUT*)&i, sizeof(TEST_INPUT));
         empty_message_queue();
         GetKeyboardState(ks2);
-        if (!ii && !sent_messages_cnt && !memcmp( ks1, ks2, sizeof(ks1) ))
+        if (!ii && sent_messages_cnt <= 1 && !memcmp( ks1, ks2, sizeof(ks1) ))
         {
             win_skip( "window doesn't receive the queued input\n" );
             break;
@@ -913,7 +913,7 @@ static void test_keynames(void)
 
 static POINT pt_old, pt_new;
 static BOOL clipped;
-#define STEP 20
+#define STEP 3
 
 static LRESULT CALLBACK hook_proc1( int code, WPARAM wparam, LPARAM lparam )
 {
@@ -1097,11 +1097,10 @@ static void test_GetMouseMovePointsEx(void)
     SetLastError(MYERROR);
     count = 0;
     retval = pGetMouseMovePointsEx(sizeof(MOUSEMOVEPOINT), &in, NULL, count, GMMP_USE_DISPLAY_POINTS);
-    todo_wine {
-    ok(retval == count, "expected GetMouseMovePointsEx to succeed, got %d\n", retval);
-    ok(MYERROR == GetLastError(),
-       "expected error %d, got %u\n", MYERROR, GetLastError());
-    }
+    if (retval == -1)
+        ok(GetLastError() == ERROR_POINT_NOT_FOUND, "unexpected error %u\n", GetLastError());
+    else
+        ok(retval == count, "expected GetMouseMovePointsEx to succeed, got %d\n", retval);
 
     /* test fourth parameter
      * a value higher than 64 is expected to fail with ERROR_INVALID_PARAMETER
@@ -1116,20 +1115,18 @@ static void test_GetMouseMovePointsEx(void)
     SetLastError(MYERROR);
     count = 0;
     retval = pGetMouseMovePointsEx(sizeof(MOUSEMOVEPOINT), &in, out, count, GMMP_USE_DISPLAY_POINTS);
-    todo_wine {
-    ok(retval == count, "expected GetMouseMovePointsEx to succeed, got %d\n", retval);
-    ok(MYERROR == GetLastError(),
-       "expected error %d, got %u\n", MYERROR, GetLastError());
-    }
+    if (retval == -1)
+        ok(GetLastError() == ERROR_POINT_NOT_FOUND, "unexpected error %u\n", GetLastError());
+    else
+        ok(retval == count, "expected GetMouseMovePointsEx to succeed, got %d\n", retval);
 
     SetLastError(MYERROR);
     count = BUFLIM;
     retval = pGetMouseMovePointsEx(sizeof(MOUSEMOVEPOINT), &in, out, count, GMMP_USE_DISPLAY_POINTS);
-    todo_wine {
-    ok((0 <= retval) && (retval <= count), "expected GetMouseMovePointsEx to succeed, got %d\n", retval);
-    ok(MYERROR == GetLastError(),
-       "expected error %d, got %u\n", MYERROR, GetLastError());
-    }
+    if (retval == -1)
+        ok(GetLastError() == ERROR_POINT_NOT_FOUND, "unexpected error %u\n", GetLastError());
+    else
+        ok((0 <= retval) && (retval <= count), "expected GetMouseMovePointsEx to succeed, got %d\n", retval);
 
     SetLastError(MYERROR);
     retval = pGetMouseMovePointsEx(sizeof(MOUSEMOVEPOINT), &in, out, BUFLIM+1, GMMP_USE_DISPLAY_POINTS);
