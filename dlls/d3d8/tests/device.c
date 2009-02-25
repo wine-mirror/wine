@@ -623,7 +623,7 @@ static void test_cursor(void)
     pGetCursorInfo = (void *)GetProcAddress(user32_handle, "GetCursorInfo");
     if (!pGetCursorInfo)
     {
-        skip("GetCursorInfo is not available\n");
+        win_skip("GetCursorInfo is not available\n");
         return;
     }
 
