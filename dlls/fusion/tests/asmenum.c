@@ -240,11 +240,19 @@ static BOOL enum_gac_assemblies(struct list *assemblies, int depth, LPSTR path)
 
         if (depth == 0)
         {
-            sprintf(parent, "%s, ", ffd.cFileName);
+            lstrcpyA(parent, ffd.cFileName);
         }
         else if (depth == 1)
         {
             char culture[MAX_PATH];
+            char dll[MAX_PATH], exe[MAX_PATH];
+
+            /* Directories with no dll or exe will not be enumerated */
+            sprintf(dll, "%s\\%s\\%s.dll", path, ffd.cFileName, parent);
+            sprintf(exe, "%s\\%s\\%s.exe", path, ffd.cFileName, parent);
+            if (GetFileAttributesA(dll) == INVALID_FILE_ATTRIBUTES &&
+                GetFileAttributesA(exe) == INVALID_FILE_ATTRIBUTES)
+                continue;
 
             ptr = strstr(ffd.cFileName, "_");
             *ptr = '\0';
@@ -260,7 +268,7 @@ static BOOL enum_gac_assemblies(struct list *assemblies, int depth, LPSTR path)
 
             ptr = strchr(ptr, '_');
             ptr++;
-            sprintf(buf, "Version=%s, Culture=%s, PublicKeyToken=%s",
+            sprintf(buf, ", Version=%s, Culture=%s, PublicKeyToken=%s",
                     ffd.cFileName, culture, ptr);
             lstrcpyA(disp, parent);
             lstrcatA(disp, buf);
