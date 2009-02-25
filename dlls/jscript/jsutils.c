@@ -27,6 +27,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
+WINE_DECLARE_DEBUG_CHANNEL(heap);
 
 const char *debugstr_variant(const VARIANT *v)
 {
@@ -51,6 +52,7 @@ const char *debugstr_variant(const VARIANT *v)
 }
 
 #define MIN_BLOCK_SIZE  128
+#define ARENA_FREE_FILLER  0xaa
 
 static inline DWORD block_size(DWORD block)
 {
@@ -137,6 +139,13 @@ void jsheap_clear(jsheap_t *heap)
     while((tmp = list_next(&heap->custom_blocks, &heap->custom_blocks))) {
         list_remove(tmp);
         heap_free(tmp);
+    }
+
+    if(WARN_ON(heap)) {
+        DWORD i;
+
+        for(i=0; i < heap->block_cnt; i++)
+            memset(heap->blocks[i], ARENA_FREE_FILLER, block_size(i));
     }
 
     heap->last_block = heap->offset = 0;
