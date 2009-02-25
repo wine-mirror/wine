@@ -44,6 +44,7 @@ struct wine_test
     int subtest_count;
     char **subtests;
     char *exename;
+    char *maindllpath;
 };
 
 char *tag = NULL;
@@ -60,6 +61,9 @@ static unsigned int nb_filters = 0;
 /* Needed to check for .NET dlls */
 static HMODULE hmscoree;
 static HRESULT (WINAPI *pLoadLibraryShim)(LPCWSTR, LPCWSTR, LPVOID, HMODULE *);
+
+/* To store the current PATH setting (related to .NET only provided dlls) */
+static char *curpath;
 
 /* check if test is being filtered out */
 static BOOL test_filtered_out( LPCSTR module, LPCSTR testname )
@@ -341,6 +345,19 @@ static DWORD wait_process( HANDLE process, DWORD timeout )
     return WAIT_TIMEOUT;
 }
 
+static void append_path( const char *path)
+{
+    char *newpath;
+
+    newpath = xmalloc(strlen(curpath) + 1 + strlen(path) + 1);
+    strcpy(newpath, curpath);
+    strcat(newpath, ";");
+    strcat(newpath, path);
+    SetEnvironmentVariableA("PATH", newpath);
+
+    free(newpath);
+}
+
 /* Run a command for MS milliseconds.  If OUT != NULL, also redirect
    stdout to there.
 
@@ -446,8 +463,16 @@ get_subtests (const char *tempdir, struct wine_test *test, LPTSTR res_name)
 
     extract_test (test, tempdir, res_name);
     cmd = strmake (NULL, "%s --list", test->exename);
+    if (test->maindllpath) {
+        /* We need to add the path (to the main dll) to PATH */
+        append_path(test->maindllpath);
+    }
     status = run_ex (cmd, subfile, tempdir, 5000);
     err = GetLastError();
+    if (test->maindllpath) {
+        /* Restore PATH again */
+        SetEnvironmentVariableA("PATH", curpath);
+    }
     free (cmd);
 
     if (status == -2)
@@ -538,11 +563,26 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
     strcpy(dllname, lpszName);
     *strstr(dllname, testexe) = 0;
 
+    wine_tests[nr_of_files].maindllpath = NULL;
     dll = LoadLibraryExA(dllname, NULL, LOAD_LIBRARY_AS_DATAFILE);
     if (!dll && pLoadLibraryShim)
     {
         MultiByteToWideChar(CP_ACP, 0, dllname, -1, dllnameW, MAX_PATH);
-        if (FAILED( pLoadLibraryShim(dllnameW, NULL, NULL, &dll) )) dll = 0;
+        if (FAILED( pLoadLibraryShim(dllnameW, NULL, NULL, &dll) ))
+            dll = 0;
+        else
+        {
+            char dllpath[MAX_PATH];
+
+            /* We have a dll that cannot be found through LoadLibraryExA. This
+             * is the case for .NET provided dll's. We will add the directory
+             * where the dll resides to the PATH variable when dealing with
+             * the tests for this dll.
+             */
+            GetModuleFileNameA(dll, dllpath, MAX_PATH);
+            *strrchr(dllpath, '\\') = '\0';
+            wine_tests[nr_of_files].maindllpath = xstrdup( dllpath );
+        }
     }
     if (!dll) {
         xprintf ("    %s=dll is missing\n", dllname);
@@ -578,6 +618,12 @@ run_tests (char *logname)
     DWORD strsize;
     SECURITY_ATTRIBUTES sa;
     char tmppath[MAX_PATH], tempdir[MAX_PATH+4];
+    DWORD needed;
+
+    /* Get the current PATH only once */
+    needed = GetEnvironmentVariableA("PATH", NULL, 0);
+    curpath = xmalloc(needed);
+    GetEnvironmentVariableA("PATH", curpath, needed);
 
     SetErrorMode (SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 
@@ -684,10 +730,20 @@ run_tests (char *logname)
         struct wine_test *test = wine_tests + i;
         int j;
 
+        if (test->maindllpath) {
+            /* We need to add the path (to the main dll) to PATH */
+            append_path(test->maindllpath);
+        }
+
 	for (j = 0; j < test->subtest_count; j++) {
             report (R_STEP, "Running: %s:%s", test->name,
                     test->subtests[j]);
 	    run_test (test, test->subtests[j], logfile, tempdir);
+        }
+
+        if (test->maindllpath) {
+            /* Restore PATH again */
+            SetEnvironmentVariableA("PATH", curpath);
         }
     }
     report (R_DELTA, 0, "Running: Done");
@@ -697,6 +753,7 @@ run_tests (char *logname)
     logfile = 0;
     remove_dir (tempdir);
     free (wine_tests);
+    free (curpath);
 
     return logname;
 }
