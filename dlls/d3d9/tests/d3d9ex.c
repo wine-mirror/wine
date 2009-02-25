@@ -199,7 +199,7 @@ START_TEST(d3d9ex)
 
     pDirect3DCreate9Ex = (void *)GetProcAddress(d3d9_handle, "Direct3DCreate9Ex");
     if (!pDirect3DCreate9Ex) {
-        skip("Failed to get address of Direct3DCreate9Ex\n");
+        win_skip("Failed to get address of Direct3DCreate9Ex\n");
         return;
     }
 
