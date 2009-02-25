@@ -755,6 +755,15 @@ static void compare_and_check(int id, BYTE *ks1, BYTE *ks2, struct sendinput_tes
                "%2d (%x/%x): the msg 0x%04x was expected, but got msg 0x%04x instead\n",
                id, test->wVk, test->dwFlags, expected->message, actual->message);
         }
+        /* NT4 doesn't send SYSKEYDOWN/UP to hooks, only KEYDOWN/UP */
+        else if ((expected->flags & hook) &&
+                 (expected->message == WM_SYSKEYDOWN || expected->message == WM_SYSKEYUP) &&
+                 (actual->message == expected->message - 4))
+        {
+            ok((expected->flags & hook) == (actual->flags & hook),
+               "%2d (%x/%x): the msg 0x%04x should have been sent by a hook\n",
+               id, test->wVk, test->dwFlags, expected->message);
+        }
         else
             ok(FALSE,
                "%2d (%x/%x): the msg 0x%04x was expected, but got msg 0x%04x instead\n",
@@ -888,6 +897,9 @@ static void test_Input_blackbox(void)
         if (!ii && sent_messages_cnt <= 1 && !memcmp( ks1, ks2, sizeof(ks1) ))
         {
             win_skip( "window doesn't receive the queued input\n" );
+            /* release the key */
+            i.u.ki.dwFlags |= KEYEVENTF_KEYUP;
+            pSendInput(1, (INPUT*)&i, sizeof(TEST_INPUT));
             break;
         }
         compare_and_check(ii, ks1, ks2, &sendinput_test[ii]);
@@ -973,7 +985,11 @@ static void test_mouse_ll_hook(void)
                         10, 10, 200, 200, NULL, NULL, NULL, NULL);
     SetCursorPos(100, 100);
 
-    hook2 = SetWindowsHookExA(WH_MOUSE_LL, hook_proc2, GetModuleHandleA(0), 0);
+    if (!(hook2 = SetWindowsHookExA(WH_MOUSE_LL, hook_proc2, GetModuleHandleA(0), 0)))
+    {
+        win_skip( "cannot set MOUSE_LL hook\n" );
+        goto done;
+    }
     hook1 = SetWindowsHookExA(WH_MOUSE_LL, hook_proc1, GetModuleHandleA(0), 0);
 
     GetCursorPos(&pt_old);
@@ -1030,6 +1046,7 @@ static void test_mouse_ll_hook(void)
     ok(pt.x == pt_new.x && pt.y == pt_new.y, "Position changed: (%d,%d)\n", pt.x, pt.y);
 
     UnhookWindowsHookEx(hook2);
+done:
     DestroyWindow(hwnd);
     SetCursorPos(pt_org.x, pt_org.y);
 }
@@ -1058,6 +1075,11 @@ static void test_GetMouseMovePointsEx(void)
      */
     SetLastError(MYERROR);
     retval = pGetMouseMovePointsEx(0, &in, out, BUFLIM, GMMP_USE_DISPLAY_POINTS);
+    if (retval == ERROR_INVALID_PARAMETER)
+    {
+        win_skip( "GetMouseMovePointsEx broken on WinME\n" );
+        return;
+    }
     ok(retval == -1, "expected GetMouseMovePointsEx to fail, got %d\n", retval);
     ok(GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == MYERROR,
        "expected error ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
