@@ -1290,6 +1290,9 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
     if(*ppv)
         return S_OK;
 
+    /* are there more interfaces, that a host can support? */
+    trace("%s: interface not supported\n", debugstr_guid(riid));
+
     return E_NOINTERFACE;
 }
 
