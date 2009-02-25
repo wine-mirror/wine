@@ -140,6 +140,7 @@ void jsheap_clear(jsheap_t *heap)
     }
 
     heap->last_block = heap->offset = 0;
+    heap->mark = FALSE;
 }
 
 void jsheap_free(jsheap_t *heap)
