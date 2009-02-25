@@ -372,7 +372,7 @@ static void test_appbarget(void)
 
     if (!pMonitorFromWindow)
     {
-        skip("MonitorFromWindow is not available\n");
+        win_skip("MonitorFromWindow is not available\n");
     }
     else
     {

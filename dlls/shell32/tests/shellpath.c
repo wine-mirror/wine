@@ -864,7 +864,7 @@ START_TEST(shellpath)
     {
         /* Report missing functions once */
         if (!pSHGetFolderLocation)
-            skip("SHGetFolderLocation is not available\n");
+            win_skip("SHGetFolderLocation is not available\n");
 
         /* first test various combinations of parameters: */
         testApiParameters();

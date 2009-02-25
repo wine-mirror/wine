@@ -512,7 +512,7 @@ static void test_load_save(void)
 
     if (!pGetLongPathNameA)
     {
-        skip("GetLongPathNameA is not available\n");
+        win_skip("GetLongPathNameA is not available\n");
         return;
     }
 
@@ -655,7 +655,7 @@ static void test_datalink(void)
         "CoCreateInstance failed (0x%08x)\n", r);
     if (!sl)
     {
-        skip("no shelllink\n");
+        win_skip("no shelllink\n");
         return;
     }
 
@@ -666,7 +666,7 @@ static void test_datalink(void)
 
     if (!dl)
     {
-        skip("no datalink interface\n");
+        win_skip("no datalink interface\n");
         IShellLinkW_Release( sl );
         return;
     }
