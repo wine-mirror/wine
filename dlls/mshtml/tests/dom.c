@@ -4142,8 +4142,8 @@ static void test_elems(IHTMLDocument2 *doc)
 
     str = a2bstr("img");
     hres = IHTMLDocument3_getElementsByTagName(doc3, str, &col);
+    ok(hres == S_OK, "getElementsByTagName(%s) failed: %08x\n", dbgstr_w(str), hres);
     SysFreeString(str);
-    ok(hres == S_OK, "getElementByTag(%s) failed: %08x\n", dbgstr_w(ifrW), hres);
     if(hres == S_OK)
     {
         static const elem_type_t img_types[] = { ET_IMG };
