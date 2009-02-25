@@ -774,7 +774,9 @@ static void test_display_modes(void)
     if(!pD3d) return;
 
     max_modes = IDirect3D8_GetAdapterModeCount(pD3d, D3DADAPTER_DEFAULT);
-    ok(max_modes > 0, "GetAdapterModeCount(D3DADAPTER_DEFAULT) returned 0!\n");
+    ok(max_modes > 0 ||
+       broken(max_modes == 0), /* VMware */
+       "GetAdapterModeCount(D3DADAPTER_DEFAULT) returned 0!\n");
 
     for(i=0; i<max_modes;i++) {
         res = IDirect3D8_EnumAdapterModes(pD3d, D3DADAPTER_DEFAULT, i, &dmode);
