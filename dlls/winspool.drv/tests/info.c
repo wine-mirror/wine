@@ -479,7 +479,7 @@ static void test_AddPortEx(void)
 
 
     if (!pAddPortExA) {
-        skip("AddPortEx not supported\n");
+        win_skip("AddPortEx not supported\n");
         return;
     }
 
@@ -2235,7 +2235,7 @@ static void test_EnumPrinters(void)
     /* EnumPrintersW is not supported on all platforms */
     if (!ret && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
-        skip("EnumPrintersW is not implemented\n");
+        win_skip("EnumPrintersW is not implemented\n");
         return;
     }
 
