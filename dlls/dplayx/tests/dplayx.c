@@ -1274,7 +1274,7 @@ static void test_EnumSessions(void)
 
     if ( hr == DPERR_UNINITIALIZED )
     {
-        skip( "EnumSessions not implemented\n" );
+        todo_wine win_skip( "EnumSessions not implemented\n" );
         return;
     }
 
@@ -1623,7 +1623,7 @@ static void test_SessionDesc(void)
 
     if ( hr == DPERR_UNINITIALIZED )
     {
-        skip("Get/SetSessionDesc not implemented\n");
+        todo_wine win_skip("Get/SetSessionDesc not implemented\n");
         return;
     }
 
@@ -1793,7 +1793,7 @@ static void test_CreatePlayer(void)
 
     if ( hr == DPERR_UNINITIALIZED )
     {
-        skip( "CreatePlayer not implemented\n" );
+        todo_wine win_skip( "CreatePlayer not implemented\n" );
         return;
     }
 
@@ -1975,7 +1975,7 @@ static void test_GetPlayerCaps(void)
 
     if ( hr == DPERR_UNINITIALIZED )
     {
-        skip( "GetPlayerCaps not implemented\n" );
+        todo_wine win_skip( "GetPlayerCaps not implemented\n" );
         return;
     }
 
@@ -2140,7 +2140,7 @@ static void test_PlayerData(void)
 
     if ( hr == DPERR_UNINITIALIZED )
     {
-        skip( "Get/SetPlayerData not implemented\n" );
+        todo_wine win_skip( "Get/SetPlayerData not implemented\n" );
         return;
     }
 
@@ -2395,7 +2395,7 @@ static void test_PlayerName(void)
 
     if ( hr == DPERR_UNINITIALIZED )
     {
-        skip( "Get/SetPlayerName not implemented\n" );
+        todo_wine win_skip( "Get/SetPlayerName not implemented\n" );
         return;
     }
 
@@ -2651,7 +2651,7 @@ static void test_GetPlayerAccount(void)
 
     if ( hr == DP_OK )
     {
-        skip( "GetPlayerAccount not implemented\n" );
+        todo_wine win_skip( "GetPlayerAccount not implemented\n" );
         return;
     }
 
@@ -2835,7 +2835,7 @@ static void test_GetPlayerAddress(void)
 
     if ( hr == DP_OK )
     {
-        skip( "GetPlayerAddress not implemented\n" );
+        todo_wine win_skip( "GetPlayerAddress not implemented\n" );
         return;
     }
 
@@ -2967,7 +2967,7 @@ static void test_GetPlayerFlags(void)
 
     if ( hr == DP_OK )
     {
-        skip( "GetPlayerFlags not implemented\n" );
+        todo_wine win_skip( "GetPlayerFlags not implemented\n" );
         return;
     }
 
@@ -3092,7 +3092,7 @@ static void test_CreateGroup(void)
 
     if ( hr == DPERR_UNINITIALIZED )
     {
-        skip( "CreateGroup not implemented\n" );
+        todo_wine win_skip( "CreateGroup not implemented\n" );
         return;
     }
 
@@ -3381,7 +3381,7 @@ static void test_GroupOwner(void)
 
     if ( hr == DP_OK )
     {
-        skip( "GetGroupOwner not implemented\n" );
+        todo_wine win_skip( "GetGroupOwner not implemented\n" );
         return;
     }
 
@@ -3568,7 +3568,7 @@ static void test_EnumPlayers(void)
 
     if ( hr == DPERR_UNINITIALIZED )
     {
-        skip( "EnumPlayers not implemented\n" );
+        todo_wine win_skip( "EnumPlayers not implemented\n" );
         return;
     }
 
@@ -3889,7 +3889,7 @@ static void test_EnumGroups(void)
 
     if ( hr == DPERR_UNINITIALIZED )
     {
-        skip( "EnumGroups not implemented\n" );
+        todo_wine win_skip( "EnumGroups not implemented\n" );
         return;
     }
 
@@ -4107,7 +4107,7 @@ static void test_EnumGroupsInGroup(void)
 
     if ( hr == DPERR_UNINITIALIZED )
     {
-        skip( "EnumGroupsInGroup not implemented\n" );
+        todo_wine win_skip( "EnumGroupsInGroup not implemented\n" );
         return;
     }
 
@@ -4333,7 +4333,7 @@ static void test_groups_p2p(void)
 
     if ( hr == DPERR_UNINITIALIZED )
     {
-        skip( "dplay not implemented enough for this test yet\n" );
+        todo_wine win_skip( "dplay not implemented enough for this test yet\n" );
         return;
     }
 
@@ -4568,7 +4568,7 @@ static void test_groups_cs(void)
 
     if ( hr == DPERR_UNINITIALIZED )
     {
-        skip( "dplay not implemented enough for this test yet\n" );
+        todo_wine win_skip( "dplay not implemented enough for this test yet\n" );
         return;
     }
 
@@ -4814,7 +4814,7 @@ static void test_Send(void)
 
     if ( hr == DPERR_UNINITIALIZED )
     {
-        skip( "Send not implemented\n" );
+        todo_wine win_skip( "Send not implemented\n" );
         return;
     }
 
@@ -5136,7 +5136,7 @@ static void test_Receive(void)
 
     if ( hr == DPERR_UNINITIALIZED )
     {
-        skip( "Receive not implemented\n" );
+        todo_wine win_skip( "Receive not implemented\n" );
         return;
     }
 
@@ -5409,7 +5409,7 @@ static void test_GetMessageCount(void)
 
     if ( hr == DP_OK )
     {
-        skip( "GetMessageCount not implemented\n" );
+        todo_wine win_skip( "GetMessageCount not implemented\n" );
         return;
     }
 
@@ -5633,7 +5633,7 @@ static void test_GetMessageQueue(void)
 
     if ( hr == DP_OK )
     {
-        skip( "GetMessageQueue not implemented\n" );
+        todo_wine win_skip( "GetMessageQueue not implemented\n" );
         return;
     }
 
@@ -5950,7 +5950,7 @@ static void test_remote_data_replication(void)
 
     if ( hr == DPERR_UNINITIALIZED )
     {
-        skip( "dplay not implemented enough for this test yet\n" );
+        todo_wine win_skip( "dplay not implemented enough for this test yet\n" );
         return;
     }
 
