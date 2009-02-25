@@ -9090,6 +9090,7 @@ static void test_MsiEnumPatches(void)
     CHAR patchcode[MAX_PATH], patch_squashed[MAX_PATH];
     CHAR prodcode[MAX_PATH], prod_squashed[MAX_PATH];
     CHAR transforms[MAX_PATH];
+    WCHAR patchW[MAX_PATH], prodcodeW[MAX_PATH], transformsW[MAX_PATH];
     HKEY prodkey, patches, udprod;
     HKEY userkey, hpatch, udpatch;
     DWORD size, data;
@@ -9298,7 +9299,7 @@ static void test_MsiEnumPatches(void)
        "Expected \"%s\", got \"%s\"\n", patchcode, patch);
     ok(!lstrcmpA(transforms, "whatever"),
        "Expected \"whatever\", got \"%s\"\n", transforms);
-    ok(size == 8, "Expected 8, got %d\n", size);
+    ok(size == 8 || size == MAX_PATH, "Expected 8 or MAX_PATH, got %d\n", size);
 
     /* lpPatchBuf is NULL */
     size = MAX_PATH;
@@ -9341,7 +9342,7 @@ static void test_MsiEnumPatches(void)
        "Expected \"%s\", got \"%s\"\n", patchcode, patch);
     ok(!lstrcmpA(transforms, "whate"),
        "Expected \"whate\", got \"%s\"\n", transforms);
-    ok(size == 16, "Expected 16, got %d\n", size);
+    ok(size == 8 || size == 16, "Expected 8 or 16, got %d\n", size);
 
     /* increase the index */
     size = MAX_PATH;
@@ -9507,7 +9508,7 @@ static void test_MsiEnumPatches(void)
        "Expected \"%s\", got \"%s\"\n", patchcode, patch);
     ok(!lstrcmpA(transforms, "whatever"),
        "Expected \"whatever\", got \"%s\"\n", transforms);
-    ok(size == 8, "Expected 8, got %d\n", size);
+    ok(size == 8 || size == MAX_PATH, "Expected 8 or MAX_PATH, got %d\n", size);
 
     RegDeleteKeyA(userkey, "");
     RegCloseKey(userkey);
@@ -9632,7 +9633,7 @@ static void test_MsiEnumPatches(void)
        "Expected \"%s\", got \"%s\"\n", patchcode, patch);
     ok(!lstrcmpA(transforms, "whatever"),
        "Expected \"whatever\", got \"%s\"\n", transforms);
-    ok(size == 8, "Expected 8, got %d\n", size);
+    ok(size == 8 || size == MAX_PATH, "Expected 8 or MAX_PATH, got %d\n", size);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
     lstrcatA(keypath, "Installer\\UserData\\S-1-5-18\\Products\\");
@@ -9651,7 +9652,7 @@ static void test_MsiEnumPatches(void)
        "Expected \"%s\", got \"%s\"\n", patchcode, patch);
     ok(!lstrcmpA(transforms, "whatever"),
        "Expected \"whatever\", got \"%s\"\n", transforms);
-    ok(size == 8, "Expected 8, got %d\n", size);
+    ok(size == 8 || size == MAX_PATH, "Expected 8 or MAX_PATH, got %d\n", size);
 
     res = RegCreateKeyA(udprod, "Patches", &udpatch);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -9666,7 +9667,7 @@ static void test_MsiEnumPatches(void)
        "Expected \"%s\", got \"%s\"\n", patchcode, patch);
     ok(!lstrcmpA(transforms, "whatever"),
        "Expected \"whatever\", got \"%s\"\n", transforms);
-    ok(size == 8, "Expected 8, got %d\n", size);
+    ok(size == 8 || size == MAX_PATH, "Expected 8 or MAX_PATH, got %d\n", size);
 
     res = RegCreateKeyA(udpatch, patch_squashed, &hpatch);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -9698,7 +9699,38 @@ static void test_MsiEnumPatches(void)
        "Expected \"%s\", got \"%s\"\n", patchcode, patch);
     ok(!lstrcmpA(transforms, "whatever"),
        "Expected \"whatever\", got \"%s\"\n", transforms);
+    ok(size == 8 || size == MAX_PATH, "Expected 8 or MAX_PATH, got %d\n", size);
+
+    /* now duplicate some of the tests for the W version */
+
+    /* pcchTransformsBuf is too small */
+    size = 6;
+    MultiByteToWideChar( CP_ACP, 0, prodcode, -1, prodcodeW, MAX_PATH );
+    MultiByteToWideChar( CP_ACP, 0, "apple", -1, patchW, MAX_PATH );
+    MultiByteToWideChar( CP_ACP, 0, "banana", -1, transformsW, MAX_PATH );
+    r = MsiEnumPatchesW(prodcodeW, 0, patchW, transformsW, &size);
+    ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
+    WideCharToMultiByte( CP_ACP, 0, patchW, -1, patch, MAX_PATH, NULL, NULL );
+    WideCharToMultiByte( CP_ACP, 0, transformsW, -1, transforms, MAX_PATH, NULL, NULL );
+    ok(!lstrcmpA(patch, patchcode),
+       "Expected \"%s\", got \"%s\"\n", patchcode, patch);
+    ok(!lstrcmpA(transforms, "whate"),
+       "Expected \"whate\", got \"%s\"\n", transforms);
     ok(size == 8, "Expected 8, got %d\n", size);
+
+    /* patch code value exists */
+    size = MAX_PATH;
+    MultiByteToWideChar( CP_ACP, 0, "apple", -1, patchW, MAX_PATH );
+    MultiByteToWideChar( CP_ACP, 0, "banana", -1, transformsW, MAX_PATH );
+    r = MsiEnumPatchesW(prodcodeW, 0, patchW, transformsW, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    WideCharToMultiByte( CP_ACP, 0, patchW, -1, patch, MAX_PATH, NULL, NULL );
+    WideCharToMultiByte( CP_ACP, 0, transformsW, -1, transforms, MAX_PATH, NULL, NULL );
+    ok(!lstrcmpA(patch, patchcode),
+       "Expected \"%s\", got \"%s\"\n", patchcode, patch);
+    ok(!lstrcmpA(transforms, "whatever"),
+       "Expected \"whatever\", got \"%s\"\n", transforms);
+    ok(size == 8 || size == MAX_PATH, "Expected 8 or MAX_PATH, got %d\n", size);
 
     RegDeleteValueA(patches, patch_squashed);
     RegDeleteValueA(patches, "Patches");
