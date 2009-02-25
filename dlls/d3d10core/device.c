@@ -323,8 +323,13 @@ static void STDMETHODCALLTYPE d3d10_device_UpdateSubresource(ID3D10Device *iface
 static void STDMETHODCALLTYPE d3d10_device_ClearRenderTargetView(ID3D10Device *iface,
         ID3D10RenderTargetView *render_target_view, const FLOAT color_rgba[4])
 {
-    FIXME("iface %p, render_target_view %p, color_rgba [%f %f %f %f] stub!\n",
+    struct d3d10_device *This = (struct d3d10_device *)iface;
+    IWineD3DRendertargetView *wined3d_view = ((struct d3d10_rendertarget_view *)render_target_view)->wined3d_view;
+
+    TRACE("iface %p, render_target_view %p, color_rgba [%f %f %f %f]\n",
             iface, render_target_view, color_rgba[0], color_rgba[1], color_rgba[2], color_rgba[3]);
+
+    IWineD3DDevice_ClearRendertargetView(This->wined3d_device, wined3d_view, color_rgba);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_ClearDepthStencilView(ID3D10Device *iface,

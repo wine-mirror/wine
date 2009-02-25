@@ -3476,6 +3476,10 @@ interface IWineD3DDevice : IWineD3DBase
         [in] float z,
         [in] DWORD stencil
     );
+    void ClearRendertargetView(
+        [in] IWineD3DRendertargetView *rendertarget_view,
+        [in] const float color[4]
+    );
     HRESULT DrawPrimitive(
         [in] WINED3DPRIMITIVETYPE primitive_type,
         [in] UINT start_vertex,

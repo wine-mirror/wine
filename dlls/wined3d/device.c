@@ -6219,7 +6219,9 @@ static IWineD3DSwapChain *get_swapchain(IWineD3DSurface *target) {
     return NULL;
 }
 
-static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface, CONST WINED3DRECT *rect, WINED3DCOLOR color) {
+static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
+        const WINED3DRECT *rect, const float color[4])
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DSwapChain *swapchain;
 
@@ -6267,7 +6269,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface, CONS
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
 
-    glClearColor(D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color));
+    glClearColor(color[0], color[1], color[2], color[3]);
     glClear(GL_COLOR_BUFFER_BIT);
     checkGLcall("glClear");
 
@@ -6406,7 +6408,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD
     }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-        color_fill_fbo(iface, pSurface, pRect, color);
+        const float c[4] = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
+        color_fill_fbo(iface, pSurface, pRect, c);
         return WINED3D_OK;
     } else {
         /* Just forward this to the DirectDraw blitting engine */
@@ -6416,6 +6419,59 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD
         return IWineD3DSurface_Blt(pSurface, (const RECT *)pRect, NULL, NULL,
                 WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_NONE);
     }
+}
+
+static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *iface,
+        IWineD3DRendertargetView *rendertarget_view, const float color[4])
+{
+    IWineD3DResource *resource;
+    IWineD3DSurface *surface;
+    HRESULT hr;
+
+    hr = IWineD3DRendertargetView_GetResource(rendertarget_view, &resource);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get resource, hr %#x\n", hr);
+        return;
+    }
+
+    if (IWineD3DResource_GetType(resource) != WINED3DRTYPE_SURFACE)
+    {
+        FIXME("Only supported on surface resources\n");
+        IWineD3DResource_Release(resource);
+        return;
+    }
+
+    surface = (IWineD3DSurface *)resource;
+
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    {
+        color_fill_fbo(iface, surface, NULL, color);
+    }
+    else
+    {
+        WINEDDBLTFX BltFx;
+        WINED3DCOLOR c;
+
+        WARN("Converting to WINED3DCOLOR, this might give incorrect results\n");
+
+        c = ((DWORD)(color[2] * 255.0));
+        c |= ((DWORD)(color[1] * 255.0)) << 8;
+        c |= ((DWORD)(color[0] * 255.0)) << 16;
+        c |= ((DWORD)(color[3] * 255.0)) << 24;
+
+        /* Just forward this to the DirectDraw blitting engine */
+        memset(&BltFx, 0, sizeof(BltFx));
+        BltFx.dwSize = sizeof(BltFx);
+        BltFx.u5.dwFillColor = argb_to_fmt(c, ((IWineD3DSurfaceImpl *)surface)->resource.format);
+        hr = IWineD3DSurface_Blt(surface, NULL, NULL, NULL, WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_NONE);
+        if (FAILED(hr))
+        {
+            ERR("Blt failed, hr %#x\n", hr);
+        }
+    }
+
+    IWineD3DResource_Release(resource);
 }
 
 /* rendertarget and depth stencil functions */
@@ -7710,6 +7766,7 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_EndScene,
     IWineD3DDeviceImpl_Present,
     IWineD3DDeviceImpl_Clear,
+    IWineD3DDeviceImpl_ClearRendertargetView,
     /*** Drawing ***/
     IWineD3DDeviceImpl_DrawPrimitive,
     IWineD3DDeviceImpl_DrawIndexedPrimitive,
