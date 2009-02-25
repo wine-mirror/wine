@@ -307,13 +307,18 @@ my $P_TARGETS=2;
 # - set the project's path
 # - initialize the target list
 # - create a default target (will be removed later if unnecessary)
-sub project_init($$)
+sub project_init($$$)
 {
-  my $project=$_[0];
-  my $path=$_[1];
+  my ($project, $path, $global_settings)=@_;
 
   my $project_settings=[];
   target_init($project_settings);
+  @$project_settings[$T_DEFINES]=[@{@$global_settings[$T_DEFINES]}];
+  @$project_settings[$T_INCLUDE_PATH]=[@{@$global_settings[$T_INCLUDE_PATH]}];
+  @$project_settings[$T_DLL_PATH]=[@{@$global_settings[$T_DLL_PATH]}];
+  @$project_settings[$T_DLLS]=[@{@$global_settings[$T_DLLS]}];
+  @$project_settings[$T_LIBRARY_PATH]=[@{@$global_settings[$T_LIBRARY_PATH]}];
+  @$project_settings[$T_LIBRARIES]=[@{@$global_settings[$T_LIBRARIES]}];
 
   @$project[$P_PATH]=$path;
   @$project[$P_SETTINGS]=$project_settings;
@@ -551,7 +556,7 @@ sub source_scan_directory($$$$)
     $project=$parent_project;
   } else {
     $project=[];
-    project_init($project,$path);
+    project_init($project, $path, \@global_settings);
   }
   my $project_settings=@$project[$P_SETTINGS];
 
@@ -1622,8 +1627,10 @@ sub generate_project_files($)
     generate_list("CEXTRA",1,@$project_settings[$T_CEXTRA]);
     generate_list("CXXEXTRA",1,@$project_settings[$T_CXXEXTRA]);
     generate_list("RCEXTRA",1,@$project_settings[$T_RCEXTRA]);
+    generate_list("DEFINES",1,@$project_settings[$T_DEFINES]);
     generate_list("INCLUDE_PATH",1,@$project_settings[$T_INCLUDE_PATH]);
     generate_list("DLL_PATH",1,@$project_settings[$T_DLL_PATH]);
+    generate_list("DLL_IMPORTS",1,@$project_settings[$T_DLLS]);
     generate_list("LIBRARY_PATH",1,@$project_settings[$T_LIBRARY_PATH]);
     generate_list("LIBRARIES",1,@$project_settings[$T_LIBRARIES]);
     print FILEO "\n\n";
@@ -1748,7 +1755,7 @@ sub generate_project_files($)
 
   if (@{@$project[$P_TARGETS]} > 0) {
     print FILEO "### Target specific build rules\n";
-    print FILEO "DEFLIB = \$(LIBRARY_PATH) \$(LIBRARIES) \$(DLL_PATH)\n\n";
+    print FILEO "DEFLIB = \$(LIBRARY_PATH) \$(LIBRARIES) \$(DLL_PATH) \$(DLL_IMPORTS:%=-l%)\n\n";
     foreach my $target (@{@$project[$P_TARGETS]}) {
       my $canon=canonize("@$target[$T_NAME]");
       $canon =~ s/_so$//;
@@ -1933,7 +1940,7 @@ if ($opt_no_banner == 0) {
   print_banner();
 }
 
-project_init(\@main_project,"");
+project_init(\@main_project, "", \@global_settings);
 
 # Fix the file and directory names
 fix_file_and_directory_names(".");
