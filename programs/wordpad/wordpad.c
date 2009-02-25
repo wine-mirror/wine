@@ -1636,13 +1636,16 @@ static INT_PTR CALLBACK tabstops_proc(HWND hWnd, UINT message, WPARAM wParam, LP
                         if(SendMessageW(hTabWnd, CB_FINDSTRINGEXACT, -1, (LPARAM)&buffer) == CB_ERR)
                         {
                             float number = 0;
+                            int item_count = SendMessage(hTabWnd, CB_GETCOUNT, 0, 0);
 
                             if(!number_from_string(buffer, &number, TRUE))
                             {
                                 MessageBoxWithResStringW(hWnd, MAKEINTRESOURCEW(STRING_INVALID_NUMBER),
                                              wszAppTitle, MB_OK | MB_ICONINFORMATION);
-                            } else
-                            {
+                            } else if (item_count >= MAX_TAB_STOPS) {
+                                MessageBoxWithResStringW(hWnd, MAKEINTRESOURCEW(STRING_MAX_TAB_STOPS),
+                                             wszAppTitle, MB_OK | MB_ICONINFORMATION);
+                            } else {
                                 SendMessageW(hTabWnd, CB_ADDSTRING, 0, (LPARAM)&buffer);
                                 SetWindowTextW(hTabWnd, 0);
                             }
