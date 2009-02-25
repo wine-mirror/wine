@@ -257,12 +257,13 @@ static const struct message WmSWP_MoveSeq[] = {
 static const struct message WmSWP_ResizeNoZOrder[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, /*SWP_NOZORDER|*/SWP_NOACTIVATE },
     { WM_GETMINMAXINFO, sent|defwinproc },
-    { WM_NCCALCSIZE, sent|wparam, 1 },
-    { WM_NCPAINT, sent },
+    { WM_NCCALCSIZE, sent|wparam|optional, 1 },
+    { WM_NCPAINT, sent|optional },
     { WM_GETTEXT, sent|defwinproc|optional },
-    { WM_ERASEBKGND, sent|optional }, /* FIXME: remove optional once Wine is fixed */
+    { WM_ERASEBKGND, sent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, /*SWP_NOZORDER|*/SWP_NOMOVE|SWP_NOCLIENTMOVE|SWP_NOACTIVATE },
-    { WM_SIZE, sent|defwinproc|wparam, SIZE_RESTORED },
+    { WM_MOVE, sent|defwinproc|optional },
+    { WM_SIZE, sent|defwinproc|wparam|optional, SIZE_RESTORED },
     { WM_NCCALCSIZE, sent|wparam|optional, 1 }, /* Win9x doesn't send it */
     { WM_NCPAINT, sent|optional }, /* Win9x doesn't send it */
     { WM_GETTEXT, sent|defwinproc|optional }, /* Win9x doesn't send it */
@@ -1234,7 +1235,7 @@ static const struct message WmCreateCustomDialogSeq[] = {
     { WM_GETTEXT, sent|optional|defwinproc },
     { WM_GETTEXT, sent|optional|defwinproc },
     { WM_ERASEBKGND, sent },
-    { WM_CTLCOLORDLG, sent|defwinproc },
+    { WM_CTLCOLORDLG, sent|optional|defwinproc },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { WM_GETTEXT, sent|optional },
     { WM_GETTEXT, sent|optional },
@@ -1326,10 +1327,10 @@ static const struct message WmModalDialogSeq[] = {
     { WM_ACTIVATE, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE },
     { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, 0, 0 },
-    { WM_NCPAINT, sent },
+    { WM_NCPAINT, sent|optional },
     { WM_GETTEXT, sent|optional },
-    { WM_ERASEBKGND, sent },
-    { WM_CTLCOLORDLG, sent },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_CTLCOLORDLG, sent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { WM_GETTEXT, sent|optional },
     { WM_NCCALCSIZE, sent|optional },
@@ -1637,7 +1638,7 @@ static const struct message WmSHOWNATopInvisible[] = {
     { WM_SHOWWINDOW, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
     { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, 0, 0 },
-    { WM_NCPAINT, sent|wparam, 1 },
+    { WM_NCPAINT, sent|wparam|optional, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
@@ -2428,7 +2429,7 @@ static const struct message WmCreateMDIchildVisibleMaxSeq1[] = {
     { WM_MDIREFRESHMENU, sent/*|wparam|lparam, 0, 0*/ },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE },
     { WM_CHILDACTIVATE, sent|wparam|lparam, 0, 0 },
-    { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc|optional, SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc|optional, SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE, 0, SWP_FRAMECHANGED },
 
     /* Win9x: message sequence terminates here. */
 
@@ -4086,7 +4087,7 @@ static void test_showwindow(void)
     /* ShowWindow( SW_SHOWNA) for invisible top level window */
     trace("calling ShowWindow( SW_SHOWNA) for invisible top level window\n");
     ok( ShowWindow(hwnd, SW_SHOWNA) == FALSE, "ShowWindow: window was visible\n" );
-    ok_sequence(WmSHOWNATopInvisible, "ShowWindow(SW_SHOWNA) on invisible top level window", TRUE);
+    ok_sequence(WmSHOWNATopInvisible, "ShowWindow(SW_SHOWNA) on invisible top level window", FALSE);
 
     /* ShowWindow( SW_SHOWNA) for now visible top level window */
     trace("calling ShowWindow( SW_SHOWNA) for now visible top level window\n");
@@ -9937,13 +9938,13 @@ static const struct message WmRestore_4[] = {
     { 0 }
 };
 static const struct message WmRestore_5[] = {
-    { HCBT_MINMAX, hook|lparam, 0, SW_SHOWNORMAL },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED, 0, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOSIZE|SWP_NOMOVE },
+    { HCBT_MINMAX, hook|lparam|optional, 0, SW_SHOWNORMAL },
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_FRAMECHANGED|SWP_STATECHANGED, 0, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOSIZE|SWP_NOMOVE },
     { HCBT_ACTIVATE, hook|optional },
     { HCBT_SETFOCUS, hook|optional },
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED, 0, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_FRAMECHANGED|SWP_STATECHANGED, 0, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOSIZE|SWP_NOMOVE },
     { WM_MOVE, sent|defwinproc|optional },
-    { WM_SIZE, sent|wparam|defwinproc, SIZE_RESTORED },
+    { WM_SIZE, sent|wparam|defwinproc|optional, SIZE_RESTORED },
     { 0 }
 };
 static const struct message WmHide_1[] = {
@@ -10008,8 +10009,10 @@ static const struct message WmMinimize_3[] = {
 };
 static const struct message WmShowMinNoActivate[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_SHOWMINNOACTIVE },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_WINDOWPOSCHANGING, sent },
+    { WM_WINDOWPOSCHANGED, sent },
+    { WM_MOVE, sent|defwinproc|optional },
+    { WM_SIZE, sent|wparam|defwinproc|optional, SIZE_MINIMIZED },
     { 0 }
 };
 static const struct message WmMinMax_1[] = {
@@ -10035,7 +10038,7 @@ static const struct message WmMinMax_3[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED },
     { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED },
     { WM_MOVE, sent|defwinproc|optional },
-    { WM_SIZE, sent|wparam|defwinproc|optional, SIZE_RESTORED },
+    { WM_SIZE, sent|wparam|defwinproc|optional, SIZE_MINIMIZED },
     { 0 }
 };
 static const struct message WmMinMax_4[] = {
@@ -10146,7 +10149,7 @@ static void test_ShowWindow(void)
 /* 48 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmShowMaximized_3, FALSE },
 /* 49 */ { SW_SHOW, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmEmptySeq, FALSE },
 /* 50 */ { SW_SHOWNORMAL, TRUE, WS_VISIBLE, WmRestore_5, FALSE },
-/* 51 */ { SW_SHOWNORMAL, TRUE, WS_VISIBLE, WmEmptySeq, FALSE },
+/* 51 */ { SW_SHOWNORMAL, TRUE, WS_VISIBLE, WmRestore_5, FALSE },
 /* 52 */ { SW_HIDE, TRUE, 0, WmHide_1, FALSE },
 /* 53 */ { SW_HIDE, FALSE, 0, WmEmptySeq, FALSE },
 /* 54 */ { SW_MINIMIZE, FALSE, WS_VISIBLE|WS_MINIMIZE, WmMinimize_3, FALSE },
