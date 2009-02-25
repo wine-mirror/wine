@@ -464,7 +464,7 @@ static void test_SHPackDispParams(void)
     HRESULT hres;
 
     if(!pSHPackDispParams)
-        skip("SHPackSidpParams not available\n");
+        win_skip("SHPackSidpParams not available\n");
 
     memset(&params, 0xc0, sizeof(params));
     memset(vars, 0xc0, sizeof(vars));
