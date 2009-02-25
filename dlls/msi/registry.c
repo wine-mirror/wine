@@ -1983,7 +1983,7 @@ UINT WINAPI MsiEnumPatchesExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
 UINT WINAPI MsiEnumPatchesA(LPCSTR szProduct, DWORD iPatchIndex,
         LPSTR lpPatchBuf, LPSTR lpTransformsBuf, LPDWORD pcchTransformsBuf)
 {
-    LPWSTR product, transforms = NULL;
+    LPWSTR product, transforms;
     WCHAR patch[GUID_SIZE];
     DWORD len;
     UINT r;
@@ -1998,12 +1998,8 @@ UINT WINAPI MsiEnumPatchesA(LPCSTR szProduct, DWORD iPatchIndex,
     if (!product)
         return ERROR_OUTOFMEMORY;
 
-    len = 0;
-    r = MsiEnumPatchesW(product, iPatchIndex, patch, patch, &len);
-    if (r != ERROR_MORE_DATA)
-        goto done;
-
-    transforms = msi_alloc(len);
+    len = *pcchTransformsBuf;
+    transforms = msi_alloc( len * sizeof(WCHAR) );
     if (!transforms)
     {
         r = ERROR_OUTOFMEMORY;
@@ -2011,24 +2007,23 @@ UINT WINAPI MsiEnumPatchesA(LPCSTR szProduct, DWORD iPatchIndex,
     }
 
     r = MsiEnumPatchesW(product, iPatchIndex, patch, transforms, &len);
-    if (r != ERROR_SUCCESS)
+    if (r != ERROR_SUCCESS && r != ERROR_MORE_DATA)
         goto done;
 
     WideCharToMultiByte(CP_ACP, 0, patch, -1, lpPatchBuf,
                         GUID_SIZE, NULL, NULL);
 
-    WideCharToMultiByte(CP_ACP, 0, transforms, -1, lpTransformsBuf,
-                        *pcchTransformsBuf - 1, NULL, NULL);
-
-    len = lstrlenW(transforms);
-    if (*pcchTransformsBuf < len + 1)
-    {
+    if (!WideCharToMultiByte(CP_ACP, 0, transforms, -1, lpTransformsBuf,
+                             *pcchTransformsBuf, NULL, NULL))
         r = ERROR_MORE_DATA;
+
+    if (r == ERROR_MORE_DATA)
+    {
         lpTransformsBuf[*pcchTransformsBuf - 1] = '\0';
-        *pcchTransformsBuf = len * sizeof(WCHAR);
+        *pcchTransformsBuf = len * 2;
     }
     else
-        *pcchTransformsBuf = len;
+        *pcchTransformsBuf = strlen( lpTransformsBuf );
 
 done:
     msi_free(transforms);
@@ -2078,7 +2073,7 @@ UINT WINAPI MsiEnumPatchesW(LPCWSTR szProduct, DWORD iPatchIndex,
     if (*pcchTransformsBuf <= lstrlenW(transforms))
     {
         r = ERROR_MORE_DATA;
-        *pcchTransformsBuf = lstrlenW(transforms) * sizeof(WCHAR);
+        *pcchTransformsBuf = lstrlenW(transforms);
     }
     else
         *pcchTransformsBuf = lstrlenW(transforms);
