@@ -550,24 +550,24 @@ START_TEST(util)
     test_SnmpUtilOidToA();
 
     if (!pSnmpUtilAsnAnyCpy || !pSnmpUtilAsnAnyFree)
-        skip("SnmpUtilAsnAnyCpy and/or SnmpUtilAsnAnyFree not available\n");
+        win_skip("SnmpUtilAsnAnyCpy and/or SnmpUtilAsnAnyFree not available\n");
     else
         test_SnmpUtilAsnAnyCpyFree();
 
     if (!pSnmpUtilOctetsCpy || !pSnmpUtilOctetsFree)
-        skip("SnmpUtilOctetsCpy and/or SnmpUtilOctetsFree not available\n");
+        win_skip("SnmpUtilOctetsCpy and/or SnmpUtilOctetsFree not available\n");
     else
         test_SnmpUtilOctetsCpyFree();
 
     test_SnmpUtilOidCpyFree();
 
     if (!pSnmpUtilOctetsNCmp)
-        skip("SnmpUtilOctetsNCmp not available\n");
+        win_skip("SnmpUtilOctetsNCmp not available\n");
     else
         test_SnmpUtilOctetsNCmp();
 
     if (!pSnmpUtilOctetsCmp)
-        skip("SnmpUtilOctetsCmp not available\n");
+        win_skip("SnmpUtilOctetsCmp not available\n");
     else
         test_SnmpUtilOctetsCmp();
 
