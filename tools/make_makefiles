@@ -541,10 +541,6 @@ sub update_gitignore(@)
         {
             push @ignores, map { s/\$\(EXEEXT\)//; $dir . $_; } @{$makefile{"PROGRAMS"}};
         }
-        if ($dir =~ /^programs\/(.*)\/$/)
-        {
-            push @ignores, "$dir$1" if $bin_install{$1};
-        }
     }
 
     # prepend a slash to paths that don't have one

@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 SUBDIRS        = @ALL_PROGRAM_DIRS@
 INSTALLSUBDIRS = @ALL_PROGRAM_INSTALL_DIRS@
 INSTALLPROGS   = @ALL_PROGRAM_BIN_INSTALL_DIRS@
-BIN_WRAPPERS   = @ALL_PROGRAM_BIN_WRAPPERS@
 
 INSTALLDIRS = $(DESTDIR)$(bindir)
 
@@ -14,13 +13,10 @@ PROGRAMS = wineapploader
 
 @MAKE_RULES@
 
-all: $(PROGRAMS) $(SUBDIRS) $(BIN_WRAPPERS)
+all: $(PROGRAMS) $(SUBDIRS)
 
 wineapploader: wineapploader.in
 	sed -e 's,@bindir\@,$(bindir),g' $(SRCDIR)/wineapploader.in >$@ || ($(RM) $@ && false)
-
-$(BIN_WRAPPERS): $(WINEWRAPPER)
-	$(RM) $@ && $(LN) $(WINEWRAPPER) $@
 
 # Rules for installation
 
@@ -42,9 +38,6 @@ install install-lib:: install-progs$(DLLEXT) $(INSTALLDIRS)
 uninstall::
 	-cd $(DESTDIR)$(bindir) && $(RM) wineapploader $(INSTALLPROGS)
 	-rmdir $(DESTDIR)$(dlldir)
-
-clean::
-	$(RM) $(BIN_WRAPPERS)
 
 # Rules for testing
 
