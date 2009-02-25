@@ -1533,7 +1533,7 @@ interface ID3D10Multithread : IUnknown
         BOOL GetMultithreadProtected();
 }
 
-cpp_quote("#include <d3d10misc.h>")
-/* TODO: Include "d310effect.h" as soon as it exists */
-/* TODO: Include "d310shader.h" as soon as it exists */
+cpp_quote("#include \"d3d10misc.h\"")
+cpp_quote("#include \"d3d10shader.h\"")
+cpp_quote("#include \"d3d10effect.h\"")
 /* TODO: Include "d310sdklayers.h" as soon as it exists */
