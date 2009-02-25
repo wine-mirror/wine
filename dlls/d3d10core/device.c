@@ -661,7 +661,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture2D(ID3D10Device *ifac
         hr = IWineD3DDevice_CreateSurface(This->wined3d_device, desc->Width, desc->Height,
                 wined3dformat_from_dxgi_format(desc->Format), FALSE, FALSE, 0,
                 &object->wined3d_surface, WINED3DRTYPE_SURFACE, desc->Usage, WINED3DPOOL_DEFAULT,
-                desc->SampleDesc.Count, desc->SampleDesc.Quality, NULL, SURFACE_OPENGL, (IUnknown *)object);
+                desc->SampleDesc.Count > 1 ? desc->SampleDesc.Count : WINED3DMULTISAMPLE_NONE,
+                desc->SampleDesc.Quality, NULL, SURFACE_OPENGL, (IUnknown *)object);
         if (FAILED(hr))
         {
             ERR("CreateSurface failed, returning %#x\n", hr);
@@ -1265,7 +1266,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
     desc.MipLevels = 1;
     desc.ArraySize = 1;
     desc.Format = dxgi_format_from_wined3dformat(format);
-    desc.SampleDesc.Count = multisample_type;
+    desc.SampleDesc.Count = multisample_type ? multisample_type : 1;
     desc.SampleDesc.Quality = multisample_quality;
     desc.Usage = D3D10_USAGE_DEFAULT;
     desc.BindFlags = D3D10_BIND_RENDER_TARGET;
@@ -1304,7 +1305,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
     desc.MipLevels = 1;
     desc.ArraySize = 1;
     desc.Format = dxgi_format_from_wined3dformat(format);
-    desc.SampleDesc.Count = multisample_type;
+    desc.SampleDesc.Count = multisample_type ? multisample_type : 1;
     desc.SampleDesc.Quality = multisample_quality;
     desc.Usage = D3D10_USAGE_DEFAULT;
     desc.BindFlags = D3D10_BIND_RENDER_TARGET;
