@@ -449,7 +449,7 @@ void version_init( const WCHAR *appname )
     HANDLE root, hkey, config_key;
     BOOL got_win_ver = FALSE;
 
-    current_version = &VersionData[NT2K];  /* default if nothing else is specified */
+    current_version = &VersionData[WINXP];  /* default if nothing else is specified */
 
     RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
     attr.Length = sizeof(attr);
