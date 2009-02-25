@@ -387,7 +387,7 @@ START_TEST(printdlg)
 
     /* PrintDlgEx not present before w2k */
     if (ptr) {
-        skip("%s\n", ptr);
+        win_skip("%s\n", ptr);
         return;
     }
 
