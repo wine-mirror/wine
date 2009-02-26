@@ -857,7 +857,7 @@ static void test_AccessCheck(void)
                           GetProcAddress(NtDllModule, "RtlAdjustPrivilege");
     if (!pRtlAdjustPrivilege)
     {
-        skip("missing RtlAdjustPrivilege, skipping test\n");
+        win_skip("missing RtlAdjustPrivilege, skipping test\n");
         return;
     }
 
@@ -1128,7 +1128,7 @@ static void test_AccessCheck(void)
         ok(ret, "AddAccessAllowedAceEx failed with error %d\n", GetLastError());
     }
     else
-        skip("AddAccessAllowedAceEx is not available\n");
+        win_skip("AddAccessAllowedAceEx is not available\n");
 
     ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
                       PrivSet, &PrivSetLen, &Access, &AccessStatus);
@@ -1190,7 +1190,7 @@ static void test_token_attr(void)
     ret = OpenProcessToken(GetCurrentProcess(), MAXIMUM_ALLOWED, &Token);
     if(!ret && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
-        skip("OpenProcessToken is not implemented\n");
+        win_skip("OpenProcessToken is not implemented\n");
         return;
     }
     ok(ret, "OpenProcessToken failed with error %d\n", GetLastError());
@@ -1209,7 +1209,7 @@ static void test_token_attr(void)
 
     if(!pConvertSidToStringSidA)
     {
-        skip("ConvertSidToStringSidA is not available\n");
+        win_skip("ConvertSidToStringSidA is not available\n");
         return;
     }
 
@@ -1359,7 +1359,7 @@ static void test_CreateWellKnownSid(void)
 
     if (!pCreateWellKnownSid)
     {
-        skip("CreateWellKnownSid not available\n");
+        win_skip("CreateWellKnownSid not available\n");
         return;
     }
 
@@ -1737,7 +1737,7 @@ static void test_LookupAccountName(void)
     ret = LookupAccountNameA(NULL, user_name, NULL, &sid_size, NULL, &domain_size, &sid_use);
     if(!ret && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
-        skip("LookupAccountNameA is not implemented\n");
+        win_skip("LookupAccountNameA is not implemented\n");
         return;
     }
     ok(!ret, "Expected 0, got %d\n", ret);
@@ -1913,7 +1913,7 @@ static void test_security_descriptor(void)
     ret = InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
     if (ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("InitializeSecurityDescriptor is not implemented\n");
+        win_skip("InitializeSecurityDescriptor is not implemented\n");
         return;
     }
 
@@ -2006,7 +2006,7 @@ static void test_process_security(void)
     res = InitializeAcl(Acl, 256, ACL_REVISION);
     if (!res && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("ACLs not implemented - skipping tests\n");
+        win_skip("ACLs not implemented - skipping tests\n");
         HeapFree(GetProcessHeap(), 0, Acl);
         return;
     }
@@ -2184,14 +2184,14 @@ static void test_impersonation_level(void)
 
     pDuplicateTokenEx = (fnDuplicateTokenEx) GetProcAddress(hmod, "DuplicateTokenEx");
     if( !pDuplicateTokenEx ) {
-        skip("DuplicateTokenEx is not available\n");
+        win_skip("DuplicateTokenEx is not available\n");
         return;
     }
     SetLastError(0xdeadbeef);
     ret = ImpersonateSelf(SecurityAnonymous);
     if(!ret && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
-        skip("ImpersonateSelf is not implemented\n");
+        win_skip("ImpersonateSelf is not implemented\n");
         return;
     }
     ok(ret, "ImpersonateSelf(SecurityAnonymous) failed with error %d\n", GetLastError());
@@ -2409,7 +2409,7 @@ static void test_GetNamedSecurityInfoA(void)
 
     if (!pGetNamedSecurityInfoA)
     {
-        skip("GetNamedSecurityInfoA is not available\n");
+        win_skip("GetNamedSecurityInfoA is not available\n");
         return;
     }
 
@@ -2422,7 +2422,7 @@ static void test_GetNamedSecurityInfoA(void)
         NULL, NULL, NULL, NULL, &pSecDesc);
     if (error != ERROR_SUCCESS && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
-        skip("GetNamedSecurityInfoA is not implemented\n");
+        win_skip("GetNamedSecurityInfoA is not implemented\n");
         return;
     }
     ok(!error, "GetNamedSecurityInfo failed with error %d\n", error);
@@ -2450,7 +2450,7 @@ static void test_ConvertStringSecurityDescriptor(void)
 
     if (!pConvertStringSecurityDescriptorToSecurityDescriptorA)
     {
-        skip("ConvertStringSecurityDescriptorToSecurityDescriptor is not available\n");
+        win_skip("ConvertStringSecurityDescriptorToSecurityDescriptor is not available\n");
         return;
     }
 
@@ -2601,12 +2601,12 @@ static void test_ConvertSecurityDescriptorToString(void)
 
     if (!pConvertSecurityDescriptorToStringSecurityDescriptorA)
     {
-        skip("ConvertSecurityDescriptorToStringSecurityDescriptor is not available\n");
+        win_skip("ConvertSecurityDescriptorToStringSecurityDescriptor is not available\n");
         return;
     }
     if (!pCreateWellKnownSid)
     {
-        skip("CreateWellKnownSid is not available\n");
+        win_skip("CreateWellKnownSid is not available\n");
         return;
     }
 
@@ -2801,7 +2801,7 @@ static void test_PrivateObjectSecurity(void)
 
     if (!pConvertStringSecurityDescriptorToSecurityDescriptorA)
     {
-        skip("ConvertStringSecurityDescriptorToSecurityDescriptor is not available\n");
+        win_skip("ConvertStringSecurityDescriptorToSecurityDescriptor is not available\n");
         return;
     }
 
@@ -2883,7 +2883,7 @@ static void test_acls(void)
     ret = InitializeAcl(pAcl, sizeof(ACL) - 1, ACL_REVISION);
     if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("InitializeAcl is not implemented\n");
+        win_skip("InitializeAcl is not implemented\n");
         return;
     }
 

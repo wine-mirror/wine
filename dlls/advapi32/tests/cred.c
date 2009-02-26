@@ -351,7 +351,7 @@ START_TEST(cred)
     if (!pCredEnumerateA || !pCredFree || !pCredWriteA || !pCredDeleteA ||
         !pCredReadA)
     {
-        skip("credentials functions not present in advapi32.dll\n");
+        win_skip("credentials functions not present in advapi32.dll\n");
         return;
     }
 

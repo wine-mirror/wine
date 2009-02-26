@@ -1829,7 +1829,7 @@ static void test_queryconfig2(void)
 
     if(!pQueryServiceConfig2A)
     {
-        skip("function QueryServiceConfig2A not present\n");
+        win_skip("function QueryServiceConfig2A not present\n");
         return;
     }
 
@@ -1933,7 +1933,7 @@ static void test_queryconfig2(void)
 
     if(!pChangeServiceConfig2A)
     {
-        skip("function ChangeServiceConfig2A not present\n");
+        win_skip("function ChangeServiceConfig2A not present\n");
         goto cleanup;
     }
 
@@ -1971,7 +1971,7 @@ static void test_queryconfig2(void)
 
     if(!pQueryServiceConfig2W)
     {
-        skip("function QueryServiceConfig2W not present\n");
+        win_skip("function QueryServiceConfig2W not present\n");
         goto cleanup;
     }
     SetLastError(0xdeadbeef);
@@ -2107,7 +2107,7 @@ START_TEST(service)
 
     if (!scm_handle && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
-        skip("OpenSCManagerA is not implemented, we are most likely on win9x\n");
+        win_skip("OpenSCManagerA is not implemented, we are most likely on win9x\n");
         return;
     }
     CloseServiceHandle(scm_handle);
