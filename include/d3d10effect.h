@@ -227,4 +227,18 @@ DECLARE_INTERFACE_(ID3D10Effect, IUnknown)
 };
 #undef INTERFACE
 
+DEFINE_GUID(IID_ID3D10EffectPool, 0x9537ab04, 0x3250, 0x412e, 0x82, 0x13, 0xfc, 0xd2, 0xf8, 0x67, 0x79, 0x33);
+
+#define INTERFACE ID3D10EffectPool
+DECLARE_INTERFACE_(ID3D10EffectPool, IUnknown)
+{
+    /* IUnknown methods */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID *object) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* ID3D10EffectPool methods */
+    STDMETHOD_(struct ID3D10Effect *, AsEffect)(THIS) PURE;
+};
+#undef INTERFACE
+
 #endif /* __WINE_D3D10EFFECT_H */
