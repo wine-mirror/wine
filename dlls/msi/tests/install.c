@@ -4628,10 +4628,15 @@ static void test_missingcab(void)
     create_pf_data("msitest\\caesar", "abcdefgh", TRUE);
 
     r = MsiInstallProductA(msifile, NULL);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-    ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+    ok(r == ERROR_SUCCESS ||
+       broken(r == ERROR_INSTALL_FAILURE), /* win9x */
+       "Expected ERROR_SUCCESS, got %u\n", r);
+    if (r == ERROR_SUCCESS)
+    {
+      ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+      ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    }
     ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
-    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(!delete_pf("msitest\\gaius", TRUE), "File installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
