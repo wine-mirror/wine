@@ -3877,17 +3877,21 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       notice_platform="32-bit "
       TARGETFLAGS="-m32"
 
+      enable_win16=${enable_win16:-yes}
     else
       TARGETFLAGS="-m64"
 
     fi
     ;;
+  *-mingw32*)
+    enable_win16=${enable_win16:-no}
+    ;;
+  i[3456789]86*)
+    enable_win16=${enable_win16:-yes}
+    ;;
 esac
 
-case $host_cpu in
-  *i[3456789]86*) enable_win16=${enable_win16:-yes} ;;
-  *)                enable_win16=${enable_win16:-no} ;;
-esac
+enable_win16=${enable_win16:-no}
 
 WIN16_FILES="\$(WIN16_FILES)"
 

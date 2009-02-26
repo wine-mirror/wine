@@ -116,17 +116,21 @@ case $host in
       host_cpu="i386"
       notice_platform="32-bit "
       AC_SUBST(TARGETFLAGS,"-m32")
+      enable_win16=${enable_win16:-yes}
     else
       AC_SUBST(TARGETFLAGS,"-m64")
     fi
     ;;
+  *-mingw32*)
+    enable_win16=${enable_win16:-no}
+    ;;
+  i[[3456789]]86*)
+    enable_win16=${enable_win16:-yes}
+    ;;
 esac
 
 dnl enable_win16 defaults to yes on x86, to no on other CPUs
-case $host_cpu in
-  *i[[3456789]]86*) enable_win16=${enable_win16:-yes} ;;
-  *)                enable_win16=${enable_win16:-no} ;;
-esac
+enable_win16=${enable_win16:-no}
 
 AC_SUBST(WIN16_FILES,"\$(WIN16_FILES)")
 AC_SUBST(WIN16_INSTALL,"\$(WIN16_INSTALL)")
