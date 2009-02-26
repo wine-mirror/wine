@@ -45,6 +45,7 @@
 #include "wine/winbase16.h"
 #include "shell32_main.h"
 #include "pidl.h"
+#include "shresdef.h"
 
 #include "wine/debug.h"
 
@@ -1454,7 +1455,10 @@ static void do_error_dialog( UINT_PTR retval, HWND hwnd )
     WCHAR msg[2048];
     int error_code=GetLastError();
 
-    FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, error_code, 0, msg, sizeof(msg)/sizeof(WCHAR), NULL);
+    if (retval == SE_ERR_NOASSOC)
+        LoadStringW(shell32_hInstance, IDS_SHLEXEC_NOASSOC, msg, sizeof(msg)/sizeof(WCHAR));
+    else
+        FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, error_code, 0, msg, sizeof(msg)/sizeof(WCHAR), NULL);
 
     MessageBoxW(hwnd, msg, NULL, MB_ICONERROR);
 }

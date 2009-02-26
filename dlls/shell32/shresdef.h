@@ -106,6 +106,8 @@
 #define IDS_RUNDLG_BROWSE_CAPTION   162
 #define IDS_RUNDLG_BROWSE_FILTER    163
 
+#define IDS_SHLEXEC_NOASSOC         164
+
 #define IDS_LICENSE                 256
 #define IDS_LICENSE_CAPTION         257
 
