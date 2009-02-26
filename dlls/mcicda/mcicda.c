@@ -37,6 +37,7 @@
 #include "winternl.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "dsound.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mcicda);
 
@@ -44,6 +45,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(mcicda);
 #define CDFRAMES_PERMIN                 (CDFRAMES_PERSEC * 60)
 #define FRAME_OF_ADDR(a) ((a)[1] * CDFRAMES_PERMIN + (a)[2] * CDFRAMES_PERSEC + (a)[3])
 #define FRAME_OF_TOC(toc, idx)  FRAME_OF_ADDR((toc).TrackData[idx - (toc).FirstTrack].Address)
+
+/* Defined by red-book standard; do not change! */
+#define RAW_SECTOR_SIZE  (2352)
+
+/* Must be >= RAW_SECTOR_SIZE */
+#define CDDA_FRAG_SIZE   (32768)
+/* Must be >= 2 */
+#define CDDA_FRAG_COUNT  (3)
 
 typedef struct {
     UINT		wDevID;
@@ -53,15 +62,97 @@ typedef struct {
     HANDLE 		hCallback;          /* Callback handle for pending notification */
     DWORD		dwTimeFormat;
     HANDLE              handle;
+
+    /* The following are used for digital playback only */
+    HANDLE hThread;
+    HANDLE stopEvent;
+    DWORD start, end;
+
+    IDirectSound *dsObj;
+    IDirectSoundBuffer *dsBuf;
+
+    CRITICAL_SECTION cs;
 } WINE_MCICDAUDIO;
 
 /*-----------------------------------------------------------------------*/
+
+typedef HRESULT(WINAPI*LPDIRECTSOUNDCREATE)(LPCGUID,LPDIRECTSOUND*,LPUNKNOWN);
+static LPDIRECTSOUNDCREATE pDirectSoundCreate;
+
+static DWORD CALLBACK MCICDA_playLoop(void *ptr)
+{
+    WINE_MCICDAUDIO *wmcda = (WINE_MCICDAUDIO*)ptr;
+    DWORD lastPos, curPos, endPos, br;
+    void *cdData;
+    DWORD lockLen, fragLen;
+    DSBCAPS caps;
+    RAW_READ_INFO rdInfo;
+    HRESULT hr = DS_OK;
+
+    memset(&caps, 0, sizeof(caps));
+    caps.dwSize = sizeof(caps);
+    hr = IDirectSoundBuffer_GetCaps(wmcda->dsBuf, &caps);
+
+    fragLen = caps.dwBufferBytes/CDDA_FRAG_COUNT;
+    curPos = lastPos = 0;
+    endPos = ~0u;
+    while (SUCCEEDED(hr) && endPos != lastPos &&
+           WaitForSingleObject(wmcda->stopEvent, 0) != WAIT_OBJECT_0) {
+        hr = IDirectSoundBuffer_GetCurrentPosition(wmcda->dsBuf, &curPos, NULL);
+        if ((curPos-lastPos+caps.dwBufferBytes)%caps.dwBufferBytes < fragLen) {
+            Sleep(1);
+            continue;
+        }
+
+        EnterCriticalSection(&wmcda->cs);
+        rdInfo.DiskOffset.QuadPart = wmcda->start<<11;
+        rdInfo.SectorCount = min(fragLen/RAW_SECTOR_SIZE, wmcda->end-wmcda->start);
+        rdInfo.TrackMode = CDDA;
+
+        hr = IDirectSoundBuffer_Lock(wmcda->dsBuf, lastPos, fragLen, &cdData, &lockLen, NULL, NULL, 0);
+        if (hr == DSERR_BUFFERLOST) {
+            if(FAILED(IDirectSoundBuffer_Restore(wmcda->dsBuf)) ||
+               FAILED(IDirectSoundBuffer_Play(wmcda->dsBuf, 0, 0, DSBPLAY_LOOPING))) {
+                LeaveCriticalSection(&wmcda->cs);
+                break;
+            }
+            hr = IDirectSoundBuffer_Lock(wmcda->dsBuf, lastPos, fragLen, &cdData, &lockLen, NULL, NULL, 0);
+        }
+
+        if (SUCCEEDED(hr)) {
+            if (rdInfo.SectorCount > 0) {
+                if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_RAW_READ, &rdInfo, sizeof(rdInfo), cdData, lockLen, &br, NULL))
+                    WARN("CD read failed at sector %d: 0x%x\n", wmcda->start, GetLastError());
+            }
+            if (rdInfo.SectorCount*RAW_SECTOR_SIZE < lockLen) {
+                if(endPos == ~0u) endPos = lastPos;
+                memset((BYTE*)cdData + rdInfo.SectorCount*RAW_SECTOR_SIZE, 0,
+                       lockLen - rdInfo.SectorCount*RAW_SECTOR_SIZE);
+            }
+            hr = IDirectSoundBuffer_Unlock(wmcda->dsBuf, cdData, lockLen, NULL, 0);
+        }
+
+        lastPos += fragLen;
+        lastPos %= caps.dwBufferBytes;
+        wmcda->start += rdInfo.SectorCount;
+
+        LeaveCriticalSection(&wmcda->cs);
+    }
+    IDirectSoundBuffer_Stop(wmcda->dsBuf);
+    SetEvent(wmcda->stopEvent);
+
+    ExitThread(0);
+    return 0;
+}
+
+
 
 /**************************************************************************
  * 				MCICDA_drvOpen			[internal]
  */
 static	DWORD	MCICDA_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
 {
+    static HMODULE dsHandle;
     WINE_MCICDAUDIO*	wmcda;
 
     if (!modp) return 0xFFFFFFFF;
@@ -71,10 +162,17 @@ static	DWORD	MCICDA_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
     if (!wmcda)
 	return 0;
 
+    if (!dsHandle) {
+        dsHandle = LoadLibraryA("dsound.dll");
+        if(dsHandle)
+            pDirectSoundCreate = (LPDIRECTSOUNDCREATE)GetProcAddress(dsHandle, "DirectSoundCreate");
+    }
+
     wmcda->wDevID = modp->wDeviceID;
     mciSetDriverData(wmcda->wDevID, (DWORD_PTR)wmcda);
     modp->wCustomCommandTable = MCI_NO_COMMAND_TABLE;
     modp->wType = MCI_DEVTYPE_CD_AUDIO;
+    InitializeCriticalSection(&wmcda->cs);
     return modp->wDeviceID;
 }
 
@@ -86,6 +184,7 @@ static	DWORD	MCICDA_drvClose(DWORD dwDevID)
     WINE_MCICDAUDIO*  wmcda = (WINE_MCICDAUDIO*)mciGetDriverData(dwDevID);
 
     if (wmcda) {
+	DeleteCriticalSection(&wmcda->cs);
 	HeapFree(GetProcessHeap(), 0, wmcda);
 	mciSetDriverData(dwDevID, 0);
     }
@@ -117,8 +216,24 @@ static	DWORD    MCICDA_GetStatus(WINE_MCICDAUDIO* wmcda)
     DWORD                       mode = MCI_MODE_NOT_READY;
 
     fmt.Format = IOCTL_CDROM_CURRENT_POSITION;
-    if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_READ_Q_CHANNEL, &fmt, sizeof(fmt),
-                         &data, sizeof(data), &br, NULL)) {
+    if(wmcda->hThread != 0) {
+        DWORD status;
+        HRESULT hr;
+
+        hr = IDirectSoundBuffer_GetStatus(wmcda->dsBuf, &status);
+        if(SUCCEEDED(hr)) {
+            if(!(status&DSBSTATUS_PLAYING)) {
+                if(WaitForSingleObject(wmcda->stopEvent, 0) == WAIT_OBJECT_0)
+                    mode = MCI_MODE_STOP;
+                else
+                    mode = MCI_MODE_PAUSE;
+            }
+            else
+                mode = MCI_MODE_PLAY;
+        }
+    }
+    else if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_READ_Q_CHANNEL, &fmt, sizeof(fmt),
+                              &data, sizeof(data), &br, NULL)) {
         if (GetLastError() == ERROR_NOT_READY) mode = MCI_MODE_OPEN;
     } else {
         switch (data.CurrentPosition.Header.AudioStatus)
@@ -338,7 +453,7 @@ static DWORD MCICDA_Open(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSW lpOpenPar
     /* now, open the handle */
     root[0] = root[1] = '\\'; root[2] = '.'; root[3] = '\\'; root[4] = drive; root[5] = ':'; root[6] = '\0';
     wmcda->handle = CreateFileW(root, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
-    if (wmcda->handle != INVALID_HANDLE_VALUE)
+    if (wmcda->handle != 0)
         return 0;
 
  the_error:
@@ -733,6 +848,12 @@ static DWORD MCICDA_Play(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     if (wmcda == NULL)
 	return MCIERR_INVALID_DEVICE_ID;
 
+    if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_READ_TOC, NULL, 0,
+                         &toc, sizeof(toc), &br, NULL)) {
+        WARN("error reading TOC !\n");
+        return MCICDA_GetError(wmcda);
+    }
+
     if (dwFlags & MCI_FROM) {
 	start = MCICDA_CalcFrame(wmcda, lpParms->dwFrom);
 	if ( (ret=MCICDA_SkipDataTracks(wmcda, &start)) )
@@ -752,14 +873,108 @@ static DWORD MCICDA_Play(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 	end = MCICDA_CalcFrame(wmcda, lpParms->dwTo);
 	TRACE("MCI_TO=%08X -> %u\n", lpParms->dwTo, end);
     } else {
-        if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_READ_TOC, NULL, 0,
-                             &toc, sizeof(toc), &br, NULL)) {
-            WARN("error reading TOC !\n");
-            return MCICDA_GetError(wmcda);
-        }
 	end = FRAME_OF_TOC(toc, toc.LastTrack + 1) - 1;
     }
     TRACE("Playing from %u to %u\n", start, end);
+
+    if (wmcda->hThread != 0) {
+        SetEvent(wmcda->stopEvent);
+        WaitForSingleObject(wmcda->hThread, INFINITE);
+
+        CloseHandle(wmcda->hThread);
+        wmcda->hThread = 0;
+        CloseHandle(wmcda->stopEvent);
+        wmcda->stopEvent = 0;
+
+        IDirectSoundBuffer_Stop(wmcda->dsBuf);
+        IDirectSoundBuffer_Release(wmcda->dsBuf);
+        wmcda->dsBuf = NULL;
+        IDirectSound_Release(wmcda->dsObj);
+        wmcda->dsObj = NULL;
+    }
+
+    if (pDirectSoundCreate) {
+        WAVEFORMATEX format;
+        DSBUFFERDESC desc;
+        DWORD lockLen;
+        void *cdData;
+        HRESULT hr;
+
+        hr = pDirectSoundCreate(NULL, &wmcda->dsObj, NULL);
+        if (SUCCEEDED(hr)) {
+            IDirectSound_SetCooperativeLevel(wmcda->dsObj, GetDesktopWindow(), DSSCL_PRIORITY);
+
+            /* The "raw" frame is relative to the start of the first track */
+            wmcda->start = start - FRAME_OF_TOC(toc, toc.FirstTrack);
+            wmcda->end = end - FRAME_OF_TOC(toc, toc.FirstTrack);
+
+            memset(&format, 0, sizeof(format));
+            format.wFormatTag = WAVE_FORMAT_PCM;
+            format.nChannels = 2;
+            format.nSamplesPerSec = 44100;
+            format.wBitsPerSample = 16;
+            format.nBlockAlign = format.nChannels * format.wBitsPerSample / 8;
+            format.nAvgBytesPerSec = format.nSamplesPerSec * format.nBlockAlign;
+            format.cbSize = 0;
+
+            memset(&desc, 0, sizeof(desc));
+            desc.dwSize = sizeof(desc);
+            desc.dwFlags = DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_GLOBALFOCUS;
+            desc.dwBufferBytes = (CDDA_FRAG_SIZE - (CDDA_FRAG_SIZE%RAW_SECTOR_SIZE)) * CDDA_FRAG_COUNT;
+            desc.lpwfxFormat = &format;
+
+            hr = IDirectSound_CreateSoundBuffer(wmcda->dsObj, &desc, &wmcda->dsBuf, NULL);
+        }
+        if (SUCCEEDED(hr)) {
+            hr = IDirectSoundBuffer_Lock(wmcda->dsBuf, 0, 0, &cdData, &lockLen,
+                                         NULL, NULL, DSBLOCK_ENTIREBUFFER);
+        }
+        if (SUCCEEDED(hr)) {
+            RAW_READ_INFO rdInfo;
+            int readok;
+
+            rdInfo.DiskOffset.QuadPart = wmcda->start<<11;
+            rdInfo.SectorCount = min(desc.dwBufferBytes/RAW_SECTOR_SIZE,
+                                     wmcda->end-wmcda->start);
+            rdInfo.TrackMode = CDDA;
+
+            readok = DeviceIoControl(wmcda->handle, IOCTL_CDROM_RAW_READ,
+                                     &rdInfo, sizeof(rdInfo), cdData, lockLen,
+                                     &br, NULL);
+            IDirectSoundBuffer_Unlock(wmcda->dsBuf, cdData, lockLen, NULL, 0);
+
+            if (readok) {
+                wmcda->start += rdInfo.SectorCount;
+                wmcda->stopEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
+            }
+            if (wmcda->stopEvent != 0)
+                wmcda->hThread = CreateThread(NULL, 0, MCICDA_playLoop, wmcda, 0, &br);
+            if (wmcda->hThread != 0) {
+                hr = IDirectSoundBuffer_Play(wmcda->dsBuf, 0, 0, DSBPLAY_LOOPING);
+                if (SUCCEEDED(hr))
+                    return ret;
+
+                SetEvent(wmcda->stopEvent);
+                WaitForSingleObject(wmcda->hThread, INFINITE);
+                CloseHandle(wmcda->hThread);
+                wmcda->hThread = 0;
+            }
+        }
+
+        if (wmcda->stopEvent != 0) {
+            CloseHandle(wmcda->stopEvent);
+            wmcda->stopEvent = 0;
+        }
+        if (wmcda->dsBuf) {
+            IDirectSoundBuffer_Release(wmcda->dsBuf);
+            wmcda->dsBuf = NULL;
+        }
+        if (wmcda->dsObj) {
+            IDirectSound_Release(wmcda->dsObj);
+            wmcda->dsObj = NULL;
+        }
+    }
+
     play.StartingM = start / CDFRAMES_PERMIN;
     play.StartingS = (start / CDFRAMES_PERSEC) % 60;
     play.StartingF = start % CDFRAMES_PERSEC;
@@ -791,8 +1006,22 @@ static DWORD MCICDA_Stop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms
 
     if (wmcda == NULL)	return MCIERR_INVALID_DEVICE_ID;
 
-    if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_STOP_AUDIO, NULL, 0, NULL, 0, &br, NULL))
-	return MCIERR_HARDWARE;
+    if (wmcda->hThread != 0) {
+        SetEvent(wmcda->stopEvent);
+        WaitForSingleObject(wmcda->hThread, INFINITE);
+
+        CloseHandle(wmcda->hThread);
+        wmcda->hThread = 0;
+        CloseHandle(wmcda->stopEvent);
+        wmcda->stopEvent = 0;
+
+        IDirectSoundBuffer_Release(wmcda->dsBuf);
+        wmcda->dsBuf = NULL;
+        IDirectSound_Release(wmcda->dsObj);
+        wmcda->dsObj = NULL;
+    }
+    else if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_STOP_AUDIO, NULL, 0, NULL, 0, &br, NULL))
+        return MCIERR_HARDWARE;
 
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
@@ -814,8 +1043,14 @@ static DWORD MCICDA_Pause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParm
 
     if (wmcda == NULL)	return MCIERR_INVALID_DEVICE_ID;
 
-    if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_PAUSE_AUDIO, NULL, 0, NULL, 0, &br, NULL))
-	return MCIERR_HARDWARE;
+    if (wmcda->hThread != 0) {
+        /* Don't bother calling stop if the playLoop thread has already stopped */
+        if(WaitForSingleObject(wmcda->stopEvent, 0) != WAIT_OBJECT_0 &&
+           FAILED(IDirectSoundBuffer_Stop(wmcda->dsBuf)))
+            return MCIERR_HARDWARE;
+    }
+    else if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_PAUSE_AUDIO, NULL, 0, NULL, 0, &br, NULL))
+        return MCIERR_HARDWARE;
 
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
         TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
@@ -837,8 +1072,14 @@ static DWORD MCICDA_Resume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
 
     if (wmcda == NULL)	return MCIERR_INVALID_DEVICE_ID;
 
-    if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_RESUME_AUDIO, NULL, 0, NULL, 0, &br, NULL))
-	return MCIERR_HARDWARE;
+    if (wmcda->hThread != 0) {
+        /* Don't restart if the playLoop thread has already stopped */
+        if(WaitForSingleObject(wmcda->stopEvent, 0) != WAIT_OBJECT_0 &&
+           FAILED(IDirectSoundBuffer_Play(wmcda->dsBuf, 0, 0, DSBPLAY_LOOPING)))
+            return MCIERR_HARDWARE;
+    }
+    else if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_RESUME_AUDIO, NULL, 0, NULL, 0, &br, NULL))
+        return MCIERR_HARDWARE;
 
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
@@ -893,12 +1134,21 @@ static DWORD MCICDA_Seek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 	      (dwFlags & ~(MCI_NOTIFY|MCI_WAIT)));
 	return MCIERR_UNSUPPORTED_FUNCTION;
     }
-    seek.M = at / CDFRAMES_PERMIN;
-    seek.S = (at / CDFRAMES_PERSEC) % 60;
-    seek.F = at % CDFRAMES_PERSEC;
-    if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_SEEK_AUDIO_MSF, &seek, sizeof(seek),
-                         NULL, 0, &br, NULL))
-	return MCIERR_HARDWARE;
+
+    if (wmcda->hThread != 0) {
+        EnterCriticalSection(&wmcda->cs);
+        wmcda->start = at - FRAME_OF_TOC(toc, toc.FirstTrack);
+        /* Flush remaining data, or just let it play into the new data? */
+        LeaveCriticalSection(&wmcda->cs);
+    }
+    else {
+        seek.M = at / CDFRAMES_PERMIN;
+        seek.S = (at / CDFRAMES_PERSEC) % 60;
+        seek.F = at % CDFRAMES_PERSEC;
+        if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_SEEK_AUDIO_MSF, &seek, sizeof(seek),
+                             NULL, 0, &br, NULL))
+            return MCIERR_HARDWARE;
+    }
 
     if (dwFlags & MCI_NOTIFY) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
