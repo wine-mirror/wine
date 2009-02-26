@@ -265,14 +265,104 @@ static TW_UINT16 SANE_CAPXferCount (pTW_CAPABILITY pCapability, TW_UINT16 action
     return twCC;
 }
 
+#ifdef SONAME_LIBSANE
+static BOOL pixeltype_to_sane_mode(TW_UINT16 pixeltype, SANE_String mode, int len)
+{
+    SANE_String_Const m = NULL;
+    switch (pixeltype)
+    {
+        case TWPT_GRAY:
+            m = SANE_VALUE_SCAN_MODE_GRAY;
+            break;
+        case TWPT_RGB:
+            m = SANE_VALUE_SCAN_MODE_COLOR;
+            break;
+        case TWPT_BW:
+            m = SANE_VALUE_SCAN_MODE_LINEART;
+            break;
+    }
+    if (! m)
+        return FALSE;
+    if (strlen(m) >= len)
+        return FALSE;
+    strcpy(mode, m);
+    return TRUE;
+}
+static BOOL sane_mode_to_pixeltype(SANE_String_Const mode, TW_UINT16 *pixeltype)
+{
+    if (strcmp(mode, SANE_VALUE_SCAN_MODE_LINEART) == 0)
+        *pixeltype = TWPT_BW;
+    else if (memcmp(mode, SANE_VALUE_SCAN_MODE_GRAY, strlen(SANE_VALUE_SCAN_MODE_GRAY)) == 0)
+        *pixeltype = TWPT_GRAY;
+    else if (strcmp(mode, SANE_VALUE_SCAN_MODE_COLOR) == 0)
+        *pixeltype = TWPT_RGB;
+    else
+        return FALSE;
+
+    return TRUE;
+}
+
+static TW_UINT16 sane_status_to_twcc(SANE_Status rc)
+{
+    switch (rc)
+    {
+        case SANE_STATUS_GOOD:
+            return TWCC_SUCCESS;
+        case SANE_STATUS_UNSUPPORTED:
+            return TWCC_CAPUNSUPPORTED;
+        case SANE_STATUS_JAMMED:
+            return TWCC_PAPERJAM;
+        case SANE_STATUS_NO_MEM:
+            return TWCC_LOWMEMORY;
+        case SANE_STATUS_ACCESS_DENIED:
+            return TWCC_DENIED;
+
+        case SANE_STATUS_IO_ERROR:
+        case SANE_STATUS_NO_DOCS:
+        case SANE_STATUS_COVER_OPEN:
+        case SANE_STATUS_EOF:
+        case SANE_STATUS_INVAL:
+        case SANE_STATUS_CANCELLED:
+        case SANE_STATUS_DEVICE_BUSY:
+        default:
+            return TWCC_BUMMER;
+    }
+}
+#endif
+
 /* ICAP_PIXELTYPE */
 static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
-    static const TW_UINT32 possible_values[] = { TWPT_BW, TWPT_GRAY, TWPT_RGB };
-    TW_UINT32 val;
     TW_UINT16 twCC = TWCC_BADCAP;
+#ifdef SONAME_LIBSANE
+    TW_UINT32 possible_values[3];
+    int possible_value_count;
+    TW_UINT32 val;
+    SANE_Status rc;
+    SANE_Int status;
+    SANE_String_Const *choices;
+    char current_mode[64];
+    TW_UINT16 current_pixeltype = TWPT_BW;
+    SANE_Char mode[64];
 
     TRACE("ICAP_PIXELTYPE\n");
+
+    rc = sane_option_probe_mode(activeDS.deviceHandle, &choices, current_mode, sizeof(current_mode));
+    if (rc != SANE_STATUS_GOOD)
+    {
+        ERR("Unable to retrieve mode from sane, ICAP_PIXELTYPE unsupported\n");
+        return twCC;
+    }
+
+    sane_mode_to_pixeltype(current_mode, &current_pixeltype);
+
+    /* Sane does not support a concept of a default mode, so we simply cache
+     *   the first mode we find */
+    if (! activeDS.PixelTypeSet)
+    {
+        activeDS.PixelTypeSet = TRUE;
+        activeDS.defaultPixelType = current_pixeltype;
+    }
 
     switch (action)
     {
@@ -282,32 +372,68 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
             break;
 
         case MSG_GET:
-            twCC = msg_get_enum(pCapability, possible_values, sizeof(possible_values) / sizeof(possible_values[0]),
-                    TWTY_UINT16, activeDS.capXferMech, TWPT_BW);
+            for (possible_value_count = 0; choices && *choices && possible_value_count < 3; choices++)
+            {
+                TW_UINT16 pix;
+                if (sane_mode_to_pixeltype(*choices, &pix))
+                    possible_values[possible_value_count++] = pix;
+            }
+            twCC = msg_get_enum(pCapability, possible_values, possible_value_count,
+                    TWTY_UINT16, current_pixeltype, activeDS.defaultPixelType);
             break;
 
         case MSG_SET:
             twCC = msg_set(pCapability, &val);
             if (twCC == TWCC_SUCCESS)
             {
-               activeDS.capPixelType = (TW_UINT16) val;
-               FIXME("Partial Stub:  PIXELTYPE set to %d, but ignored\n", val);
+                if (! pixeltype_to_sane_mode(val, mode, sizeof(mode)))
+                    return TWCC_BADVALUE;
+
+                status = 0;
+                rc = sane_option_set_str(activeDS.deviceHandle, "mode", mode, &status);
+                /* Some SANE devices use 'Grayscale' instead of the standard 'Gray' */
+                if (rc == SANE_STATUS_INVAL && strcmp(mode, SANE_VALUE_SCAN_MODE_GRAY) == 0)
+                {
+                    strcpy(mode, "Grayscale");
+                    rc = sane_option_set_str(activeDS.deviceHandle, "mode", mode, &status);
+                }
+                if (rc != SANE_STATUS_GOOD)
+                    return sane_status_to_twcc(rc);
+                if (status & SANE_INFO_RELOAD_PARAMS)
+                    psane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
             }
             break;
 
         case MSG_GETDEFAULT:
-            twCC = set_onevalue(pCapability, TWTY_UINT16, TWPT_BW);
+            twCC = set_onevalue(pCapability, TWTY_UINT16, activeDS.defaultPixelType);
             break;
 
         case MSG_RESET:
-            activeDS.capPixelType = TWPT_BW;
+            current_pixeltype = activeDS.defaultPixelType;
+            if (! pixeltype_to_sane_mode(current_pixeltype, mode, sizeof(mode)))
+                return TWCC_BADVALUE;
+
+            status = 0;
+            rc = sane_option_set_str(activeDS.deviceHandle, "mode", mode, &status);
+            /* Some SANE devices use 'Grayscale' instead of the standard 'Gray' */
+            if (rc == SANE_STATUS_INVAL && strcmp(mode, SANE_VALUE_SCAN_MODE_GRAY) == 0)
+            {
+                strcpy(mode, "Grayscale");
+                rc = sane_option_set_str(activeDS.deviceHandle, "mode", mode, &status);
+            }
+            if (rc != SANE_STATUS_GOOD)
+                return sane_status_to_twcc(rc);
+            if (status & SANE_INFO_RELOAD_PARAMS)
+                psane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
+
             /* .. fall through intentional .. */
 
         case MSG_GETCURRENT:
-            twCC = set_onevalue(pCapability, TWTY_UINT16, activeDS.capPixelType);
+            twCC = set_onevalue(pCapability, TWTY_UINT16, current_pixeltype);
             break;
     }
 
+#endif
     return twCC;
 }
 

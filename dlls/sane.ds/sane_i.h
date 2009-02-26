@@ -25,6 +25,7 @@
 
 #ifdef SONAME_LIBSANE
 # include <sane/sane.h>
+# include <sane/saneopts.h>
 
 #define MAKE_FUNCPTR(f) typeof(f) * p##f;
 MAKE_FUNCPTR(sane_init)
@@ -74,7 +75,8 @@ struct tagActiveDS
 #endif
     /* Capabilities */
     TW_UINT16		capXferMech;		/* ICAP_XFERMECH */
-    TW_UINT16		capPixelType;		/* ICAP_PIXELTYPE */
+    BOOL                PixelTypeSet;
+    TW_UINT16		defaultPixelType;		/* ICAP_PIXELTYPE */
     BOOL                XResolutionSet;
     TW_FIX32            defaultXResolution;
     BOOL                YResolutionSet;
@@ -221,7 +223,9 @@ HWND ScanningDialogBox(HWND dialog, LONG progress);
 #ifdef SONAME_LIBSANE
 SANE_Status sane_option_get_int(SANE_Handle h, const char *option_name, SANE_Int *val);
 SANE_Status sane_option_set_int(SANE_Handle h, const char *option_name, SANE_Int val, SANE_Int *status);
+SANE_Status sane_option_set_str(SANE_Handle h, const char *option_name, SANE_String val, SANE_Int *status);
 SANE_Status sane_option_probe_resolution(SANE_Handle h, const char *option_name, SANE_Int *minval, SANE_Int *maxval, SANE_Int *quant);
+SANE_Status sane_option_probe_mode(SANE_Handle h, SANE_String_Const **choices, char *current, int current_size);
 #endif
 
 

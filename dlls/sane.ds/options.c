@@ -34,6 +34,13 @@ static SANE_Status sane_find_option(SANE_Handle h, const char *option_name,
     const SANE_Option_Descriptor *opt;
     int i;
 
+    /* Debian, in 32_net_backend_standard_fix.dpatch,
+     *  forces a frontend (that's us) to reload options
+     *  manually by invoking get_option_descriptor. */
+    opt = psane_get_option_descriptor(h, 0);
+    if (! opt)
+        return SANE_STATUS_EOF;
+
     rc = psane_control_option(h, 0, SANE_ACTION_GET_VALUE, &optcount, NULL);
     if (rc != SANE_STATUS_GOOD)
         return rc;
@@ -78,6 +85,20 @@ SANE_Status sane_option_set_int(SANE_Handle h, const char *option_name, SANE_Int
     return psane_control_option(h, optno, SANE_ACTION_SET_VALUE, (void *) &val, status);
 }
 
+/* Important:  SANE has the side effect of of overwriting val with the returned value */
+SANE_Status sane_option_set_str(SANE_Handle h, const char *option_name, SANE_String val, SANE_Int *status)
+{
+    SANE_Status rc;
+    int optno;
+    const SANE_Option_Descriptor *opt;
+
+    rc = sane_find_option(h, option_name, &opt, &optno, SANE_TYPE_STRING);
+    if (rc != SANE_STATUS_GOOD)
+        return rc;
+
+    return psane_control_option(h, optno, SANE_ACTION_SET_VALUE, (void *) val, status);
+}
+
 SANE_Status sane_option_probe_resolution(SANE_Handle h, const char *option_name, SANE_Int *minval, SANE_Int *maxval, SANE_Int *quant)
 {
     SANE_Status rc;
@@ -96,5 +117,24 @@ SANE_Status sane_option_probe_resolution(SANE_Handle h, const char *option_name,
     *quant = opt->constraint.range->quant;
 
     return rc;
+}
+
+SANE_Status sane_option_probe_mode(SANE_Handle h, SANE_String_Const **choices, char *current, int current_size)
+{
+    SANE_Status rc;
+    int optno;
+    const SANE_Option_Descriptor *opt;
+    rc = sane_find_option(h, "mode", &opt, &optno, SANE_TYPE_STRING);
+    if (rc != SANE_STATUS_GOOD)
+        return rc;
+
+    if (choices && opt->constraint_type == SANE_CONSTRAINT_STRING_LIST)
+        *choices = (SANE_String_Const *) opt->constraint.string_list;
+
+    if (opt->size < current_size)
+        return psane_control_option(h, optno, SANE_ACTION_GET_VALUE, current, NULL);
+    else
+        return SANE_STATUS_NO_MEM;
+
 }
 #endif
