@@ -98,4 +98,43 @@ DECLARE_INTERFACE(ID3D10EffectVariable)
 };
 #undef INTERFACE
 
+DEFINE_GUID(IID_ID3D10EffectConstantBuffer, 0x56648f4d, 0xcc8b, 0x4444, 0xa5, 0xad, 0xb5, 0xa3, 0xd7, 0x6e, 0x91, 0xb3);
+
+#define INTERFACE ID3D10EffectConstantBuffer
+DECLARE_INTERFACE_(ID3D10EffectConstantBuffer, ID3D10EffectVariable)
+{
+    /* ID3D10EffectVariable methods */
+    STDMETHOD_(BOOL, IsValid)(THIS) PURE;
+    STDMETHOD_(struct ID3D10EffectType *, GetType)(THIS) PURE;
+    STDMETHOD(GetDesc)(THIS_ D3D10_EFFECT_VARIABLE_DESC *desc) PURE;
+    STDMETHOD_(struct ID3D10EffectVariable *, GetAnnotationByIndex)(THIS_ UINT index) PURE;
+    STDMETHOD_(struct ID3D10EffectVariable *, GetAnnotationByName)(THIS_ LPCSTR name) PURE;
+    STDMETHOD_(struct ID3D10EffectVariable *, GetMemberByIndex)(THIS_ UINT index) PURE;
+    STDMETHOD_(struct ID3D10EffectVariable *, GetMemberByName)(THIS_ LPCSTR name) PURE;
+    STDMETHOD_(struct ID3D10EffectVariable *, GetMemberBySemantic)(THIS_ LPCSTR semantic) PURE;
+    STDMETHOD_(struct ID3D10EffectVariable *, GetElement)(THIS_ UINT index) PURE;
+    STDMETHOD_(struct ID3D10EffectConstantBuffer *, GetParentConstantBuffer)(THIS) PURE;
+    STDMETHOD_(struct ID3D10EffectScalarVariable *, AsScalar)(THIS) PURE;
+    STDMETHOD_(struct ID3D10EffectVectorVariable *, AsVector)(THIS) PURE;
+    STDMETHOD_(struct ID3D10EffectMatrixVariable *, AsMatrix)(THIS) PURE;
+    STDMETHOD_(struct ID3D10EffectStringVariable *, AsString)(THIS) PURE;
+    STDMETHOD_(struct ID3D10EffectShaderResourceVariable *, AsShaderResource)(THIS) PURE;
+    STDMETHOD_(struct ID3D10EffectRenderTargetViewVariable *, AsRenderTargetView)(THIS) PURE;
+    STDMETHOD_(struct ID3D10EffectDepthStencilViewVariable *, AsDepthStencilView)(THIS) PURE;
+    STDMETHOD_(struct ID3D10EffectConstantBuffer *, AsConstantBuffer)(THIS) PURE;
+    STDMETHOD_(struct ID3D10EffectShaderVariable *, AsShader)(THIS) PURE;
+    STDMETHOD_(struct ID3D10EffectBlendVariable *, AsBlend)(THIS) PURE;
+    STDMETHOD_(struct ID3D10EffectDepthStencilVariable *, AsDepthStencil)(THIS) PURE;
+    STDMETHOD_(struct ID3D10EffectRasterizerVariable *, AsRasterizer)(THIS) PURE;
+    STDMETHOD_(struct ID3D10EffectSamplerVariable *, AsSampler)(THIS) PURE;
+    STDMETHOD(SetRawValue)(THIS_ void *data, UINT offset, UINT count) PURE;
+    STDMETHOD(GetRawValue)(THIS_ void *data, UINT offset, UINT count) PURE;
+    /* ID3D10EffectConstantBuffer methods */
+    STDMETHOD(SetConstantBuffer)(THIS_ ID3D10Buffer *buffer) PURE;
+    STDMETHOD(GetConstantBuffer)(THIS_ ID3D10Buffer **buffer) PURE;
+    STDMETHOD(SetTextureBuffer)(THIS_ ID3D10ShaderResourceView *view) PURE;
+    STDMETHOD(GetTextureBuffer)(THIS_ ID3D10ShaderResourceView **view) PURE;
+};
+#undef INTERFACE
+
 #endif /* __WINE_D3D10EFFECT_H */
