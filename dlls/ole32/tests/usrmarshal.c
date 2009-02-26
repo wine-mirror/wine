@@ -100,14 +100,16 @@ static void test_marshal_CLIPFORMAT(void)
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     size = CLIPFORMAT_UserSize(&umcb.Flags, 0, &cf);
-    ok(size == 8 + sizeof(cf_marshaled), "CLIPFORMAT: Wrong size %d\n", size);
+    ok(size == 8 + sizeof(cf_marshaled) ||
+       broken(size == 8 + sizeof(cf_marshaled) - 2), /* win9x and winnt don't include the '\0' */
+              "CLIPFORMAT: Wrong size %d\n", size);
 
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
     CLIPFORMAT_UserMarshal(&umcb.Flags, buffer, &cf);
     ok(*(LONG *)(buffer + 0) == WDT_REMOTE_CALL, "CLIPFORMAT: Context should be WDT_REMOTE_CALL instead of 0x%08x\n", *(LONG *)(buffer + 0));
     ok(*(DWORD *)(buffer + 4) == cf, "CLIPFORMAT: Marshaled value should be 0x%04x instead of 0x%04x\n", cf, *(DWORD *)(buffer + 4));
-    ok(!memcmp(buffer + 8, cf_marshaled, sizeof(cf_marshaled)), "Marshaled data differs\n");
+    ok(!memcmp(buffer + 8, cf_marshaled, size - 8), "Marshaled data differs\n");
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
     CLIPFORMAT_UserUnmarshal(&umcb.Flags, buffer, &cf2);
