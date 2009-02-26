@@ -21,7 +21,6 @@
 
 #include "config.h"
 #include "wine/port.h"
-#include "wine/debug.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -123,6 +122,8 @@
 #include "iprtrmib.h"
 #include "ifenum.h"
 #include "ipstats.h"
+
+#include "wine/debug.h"
 
 #ifndef HAVE_NETINET_TCP_FSM_H
 #define TCPS_ESTABLISHED  1
