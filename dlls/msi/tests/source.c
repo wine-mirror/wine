@@ -3145,6 +3145,8 @@ static void test_MsiSourceListAddSource(void)
     size = MAX_PATH;
     GetUserNameA(ptr, &size);
 
+    trace("username: %s\n", username);
+
     /* GetLastError is not set by the function */
 
     /* NULL szProduct */
