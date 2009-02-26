@@ -295,7 +295,8 @@ static void check_param(LPCSTR test, HCRYPTMSG msg, DWORD param,
 
     size = 0xdeadbeef;
     ret = CryptMsgGetParam(msg, param, 0, NULL, &size);
-    ok(ret || broken(GetLastError() == OSS_LIMITED /* Win9x */),
+    ok(ret || broken(GetLastError() == OSS_LIMITED /* Win9x */ ||
+     GetLastError() == CRYPT_E_INVALID_MSG_TYPE /* Win9x, for some params */),
      "%s: CryptMsgGetParam failed: %08x\n", test, GetLastError());
     if (!ret)
     {
@@ -406,15 +407,23 @@ static void test_data_msg_update(void)
 
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG,
      CMSG_DATA, NULL, NULL, NULL);
-    /* Doesn't appear to be able to update CMSG-DATA with non-final updates */
-    SetLastError(0xdeadbeef);
-    ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
-    ok((!ret && GetLastError() == E_INVALIDARG) || broken(ret /* Win9x */),
-     "Expected E_INVALIDARG, got %x\n", GetLastError());
-    SetLastError(0xdeadbeef);
-    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
-    ok((!ret && GetLastError() == E_INVALIDARG) || broken(ret /* Win9x */),
-     "Expected E_INVALIDARG, got %x\n", GetLastError());
+    if (have_nt)
+    {
+        /* Doesn't appear to be able to update CMSG-DATA with non-final updates.
+         * On Win9x, this sometimes succeeds, sometimes fails with
+         * GetLastError() == 0, so it's not worth checking there.
+         */
+        SetLastError(0xdeadbeef);
+        ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %x\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %x\n", GetLastError());
+    }
+    else
+        skip("not updating CMSG_DATA with a non-final update\n");
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     CryptMsgClose(msg);
@@ -1070,26 +1079,31 @@ static void test_signed_msg_open(void)
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
      NULL, NULL);
-    /* NT: E_INVALIDARG, 9x: unchanged */
-    ok(!msg && (GetLastError() == E_INVALIDARG || GetLastError() == 0xdeadbeef),
-       "Expected E_INVALIDARG or 0xdeadbeef, got 0x%x\n", GetLastError());
+    /* NT: E_INVALIDARG, 9x: unchanged or CRYPT_E_UNKNOWN_ALGO */
+    ok(!msg && (GetLastError() == E_INVALIDARG || GetLastError() == 0xdeadbeef
+     || GetLastError() == CRYPT_E_UNKNOWN_ALGO),
+     "Expected E_INVALIDARG or 0xdeadbeef or CRYPT_E_UNKNOWN_ALGO, got 0x%x\n",
+     GetLastError());
 
     certInfo.SerialNumber.cbData = sizeof(serialNum);
     certInfo.SerialNumber.pbData = serialNum;
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
      NULL, NULL);
-    /* NT: E_INVALIDARG, 9x: unchanged */
-    ok(!msg && (GetLastError() == E_INVALIDARG || GetLastError() == 0xdeadbeef),
-       "Expected E_INVALIDARG or 0xdeadbeef, got 0x%x\n", GetLastError());
+    /* NT: E_INVALIDARG, 9x: unchanged or CRYPT_E_UNKNOWN_ALGO */
+    ok(!msg && (GetLastError() == E_INVALIDARG || GetLastError() == 0xdeadbeef
+     || GetLastError() == CRYPT_E_UNKNOWN_ALGO),
+     "Expected E_INVALIDARG or 0xdeadbeef or CRYPT_E_UNKNOWN_ALGO, got 0x%x\n",
+     GetLastError());
 
     certInfo.Issuer.cbData = sizeof(encodedCommonName);
     certInfo.Issuer.pbData = encodedCommonName;
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
      NULL, NULL);
-    ok(!msg && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %x\n", GetLastError());
+    ok(!msg && (GetLastError() == E_INVALIDARG ||
+     GetLastError() == CRYPT_E_UNKNOWN_ALGO),
+     "Expected E_INVALIDARG or CRYPT_E_UNKNOWN_ALGO, got %x\n", GetLastError());
 
     /* The signer's hCryptProv must be set to something.  Whether it's usable
      * or not will be checked after the hash algorithm is checked (see next
@@ -1928,8 +1942,10 @@ static void test_signed_msg_get_param(void)
      */
     size = sizeof(value);
     ret = CryptMsgGetParam(msg, CMSG_VERSION_PARAM, 0, &value, &size);
-    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
-    ok(value == CMSG_SIGNED_DATA_V1, "expected version 1, got %d\n", value);
+    ok(ret || broken(GetLastError() == CRYPT_E_INVALID_MSG_TYPE),
+     "CryptMsgGetParam failed: %08x\n", GetLastError());
+    if (ret)
+        ok(value == CMSG_SIGNED_DATA_V1, "expected version 1, got %d\n", value);
     /* Apparently the encoded signer can be retrieved.. */
     ret = CryptMsgGetParam(msg, CMSG_ENCODED_SIGNER, 0, NULL, &size);
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
@@ -1965,7 +1981,9 @@ static void test_signed_msg_get_param(void)
     ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
     size = sizeof(value);
     ret = CryptMsgGetParam(msg, CMSG_VERSION_PARAM, 0, &value, &size);
-    ok(value == CMSG_SIGNED_DATA_V3, "expected version 3, got %d\n", value);
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    if (ret)
+        ok(value == CMSG_SIGNED_DATA_V3, "expected version 3, got %d\n", value);
     /* Even for a CMS message, the signer can be retrieved.. */
     ret = CryptMsgGetParam(msg, CMSG_ENCODED_SIGNER, 0, NULL, &size);
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
@@ -2099,16 +2117,20 @@ static void test_decode_msg_update(void)
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
-     "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+     GetLastError() == OSS_PDU_MISMATCH /* Win9x */),
+     "Expected CRYPT_E_ASN1_BADTAG or OSS_PDU_MISMATCH, got %x\n",
+     GetLastError());
     CryptMsgClose(msg);
     /* and as the final update in streaming mode.. */
     streamInfo.pfnStreamOutput = nop_stream_output;
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, &streamInfo);
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
-     "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+     GetLastError() == OSS_PDU_MISMATCH /* Win9x */),
+     "Expected CRYPT_E_ASN1_BADTAG or OSS_PDU_MISMATCH, got %x\n",
+     GetLastError());
     CryptMsgClose(msg);
     /* and even as a non-final update in streaming mode. */
     streamInfo.pfnStreamOutput = nop_stream_output;
@@ -2116,8 +2138,10 @@ static void test_decode_msg_update(void)
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
     todo_wine
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
-     "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+     GetLastError() == OSS_PDU_MISMATCH /* Win9x */),
+     "Expected CRYPT_E_ASN1_BADTAG or OSS_PDU_MISMATCH, got %x\n",
+     GetLastError());
     CryptMsgClose(msg);
 
     /* An empty message can be opened with undetermined type.. */
@@ -2132,8 +2156,10 @@ static void test_decode_msg_update(void)
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent),
      TRUE);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
-     "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+     GetLastError() == OSS_PDU_MISMATCH /* Win9x */),
+     "Expected CRYPT_E_ASN1_BADTAG or OSS_PDU_MISMATCH, got %x\n",
+     GetLastError());
     CryptMsgClose(msg);
     /* On the other hand, decoding the bare content of an empty message fails
      * with unspecified type..
@@ -2142,8 +2168,10 @@ static void test_decode_msg_update(void)
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, dataEmptyBareContent,
      sizeof(dataEmptyBareContent), TRUE);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
-     "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+     GetLastError() == OSS_PDU_MISMATCH /* Win9x */),
+     "Expected CRYPT_E_ASN1_BADTAG or OSS_PDU_MISMATCH, got %x\n",
+     GetLastError());
     CryptMsgClose(msg);
     /* but succeeds with explicit type. */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, 0, NULL,
@@ -2172,8 +2200,10 @@ static void test_decode_msg_update(void)
      NULL);
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, hashEmptyContent, sizeof(hashEmptyContent), TRUE);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
-     "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+     GetLastError() == OSS_PDU_MISMATCH /* Win9x */),
+     "Expected CRYPT_E_ASN1_BADTAG or OSS_PDU_MISMATCH, got %x\n",
+     GetLastError());
     CryptMsgClose(msg);
     /* On the other hand, decoding the bare content of an empty hash message
      * fails with unspecified type..
@@ -2182,8 +2212,10 @@ static void test_decode_msg_update(void)
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, hashEmptyBareContent,
      sizeof(hashEmptyBareContent), TRUE);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
-     "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+     GetLastError() == OSS_PDU_MISMATCH /* Win9x */),
+     "Expected CRYPT_E_ASN1_BADTAG or OSS_PDU_MISMATCH, got %x\n",
+     GetLastError());
     CryptMsgClose(msg);
     /* but succeeds with explicit type. */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, 0, NULL,
@@ -2206,8 +2238,10 @@ static void test_decode_msg_update(void)
      NULL);
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, hashContent, sizeof(hashContent), TRUE);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
-     "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+     GetLastError() == OSS_PDU_MISMATCH /* Win9x */),
+     "Expected CRYPT_E_ASN1_BADTAG or OSS_PDU_MISMATCH, got %x\n",
+     GetLastError());
     CryptMsgClose(msg);
     /* and decoding the bare content of a non-empty hash message fails with
      * unspecified type..
@@ -2215,8 +2249,10 @@ static void test_decode_msg_update(void)
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, hashBareContent, sizeof(hashBareContent), TRUE);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
-     "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+     GetLastError() == OSS_PDU_MISMATCH /* Win9x */),
+     "Expected CRYPT_E_ASN1_BADTAG or OSS_PDU_MISMATCH, got %x\n",
+     GetLastError());
     CryptMsgClose(msg);
     /* but succeeds with explicit type. */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, 0, NULL,
@@ -2393,12 +2429,16 @@ static void test_decode_msg_get_param(void)
      sizeof(hashParam));
     check_param("hash computed hash", msg, CMSG_COMPUTED_HASH_PARAM,
      hashParam, sizeof(hashParam));
-    /* Curiously, getting the hash of index 1 succeeds, even though there's
-     * only one hash.
+    /* Curiously, on NT-like systems, getting the hash of index 1 succeeds,
+     * even though there's only one hash.
      */
     ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 1, NULL, &size);
-    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
-    buf = CryptMemAlloc(size);
+    ok(ret || GetLastError() == OSS_DATA_ERROR /* Win9x */,
+     "CryptMsgGetParam failed: %08x\n", GetLastError());
+    if (ret)
+        buf = CryptMemAlloc(size);
+    else
+        buf = NULL;
     if (buf)
     {
         ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 1, buf, &size);
