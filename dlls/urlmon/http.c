@@ -77,6 +77,9 @@ typedef struct {
     LONG ref;
 } HttpProtocol;
 
+#define PROTOCOL(x)  ((IInternetProtocol*)  &(x)->lpInternetProtocolVtbl)
+#define PRIORITY(x)  ((IInternetPriority*)  &(x)->lpInternetPriorityVtbl)
+
 /* Default headers from native */
 static const WCHAR wszHeaders[] = {'A','c','c','e','p','t','-','E','n','c','o','d','i','n','g',
                                    ':',' ','g','z','i','p',',',' ','d','e','f','l','a','t','e',0};
@@ -186,10 +189,10 @@ static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
         if (This->grfBINDF & BINDF_FROMURLMON)
             IInternetProtocolSink_Switch(This->protocol_sink, &data);
         else
-            IInternetProtocol_Continue((IInternetProtocol *)This, &data);
+            IInternetProtocol_Continue(PROTOCOL(This), &data);
         return;
     case INTERNET_STATUS_HANDLE_CREATED:
-        IInternetProtocol_AddRef((IInternetProtocol *)This);
+        IInternetProtocol_AddRef(PROTOCOL(This));
         return;
     case INTERNET_STATUS_HANDLE_CLOSING:
         if (*(HINTERNET *)lpvStatusInformation == This->connect)
@@ -210,7 +213,7 @@ static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
                 memset(&This->bind_info, 0, sizeof(This->bind_info));
             }
         }
-        IInternetProtocol_Release((IInternetProtocol *)This);
+        IInternetProtocol_Release(PROTOCOL(This));
         return;
     default:
         WARN("Unhandled Internet status callback %d\n", dwInternetStatus);
@@ -235,9 +238,6 @@ static inline LPWSTR strndupW(LPCWSTR string, int len)
 /*
  * Interface implementations
  */
-
-#define PROTOCOL(x)  ((IInternetProtocol*)  &(x)->lpInternetProtocolVtbl)
-#define PRIORITY(x)  ((IInternetPriority*)  &(x)->lpInternetPriorityVtbl)
 
 #define PROTOCOL_THIS(iface) DEFINE_THIS(HttpProtocol, InternetProtocol, iface)
 
