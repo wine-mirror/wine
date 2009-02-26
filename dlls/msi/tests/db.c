@@ -3274,10 +3274,13 @@ static void test_temporary_table(void)
     r = run_query(hdb, 0, query);
     ok(r == ERROR_SUCCESS, "failed to add table\n");
 
-    todo_wine {
+    query = "SELECT * FROM `T2`";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_BAD_QUERY_SYNTAX,
+       "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
     cond = MsiDatabaseIsTablePersistent(hdb, "T2");
     ok( cond == MSICONDITION_NONE, "wrong return condition\n");
-    }
 
     query = "CREATE TABLE `T3` ( `B` SHORT NOT NULL TEMPORARY, `C` CHAR(255) PRIMARY KEY `C`)";
     r = run_query(hdb, 0, query);
