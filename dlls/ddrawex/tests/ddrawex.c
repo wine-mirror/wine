@@ -58,6 +58,12 @@ static void RefCountTest(void)
 
     IDirectDraw_AddRef(dd1);
     ref = get_ref((IUnknown *) dd1);
+    if (ref == 1)
+    {
+        win_skip("Refcounting is broken\n");
+        IDirectDraw_Release(dd1);
+        return;
+    }
     ok(ref == 2, "After AddRef the refcount is %u, expected 2\n", ref);
     IDirectDraw_Release(dd1);
     ref = get_ref((IUnknown *) dd1);
