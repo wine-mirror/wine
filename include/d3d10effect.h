@@ -26,6 +26,10 @@
 #define D3D10_EFFECT_VARIABLE_ANNOTATION            0x2
 #define D3D10_EFFECT_VARIABLE_EXPLICIT_BIND_POINT   0x4
 
+#ifndef D3D10_BYTES_FROM_BITS
+#define D3D10_BYTES_FROM_BITS(x) (((x) + 7) >> 3)
+#endif
+
 typedef struct _D3D10_EFFECT_TYPE_DESC
 {
     LPCSTR TypeName;
@@ -49,6 +53,41 @@ typedef struct _D3D10_EFFECT_VARIABLE_DESC
     UINT BufferOffset;
     UINT ExplicitBindPoint;
 } D3D10_EFFECT_VARIABLE_DESC;
+
+typedef struct _D3D10_TECHNIQUE_DESC
+{
+    LPCSTR Name;
+    UINT Passes;
+    UINT Annotations;
+} D3D10_TECHNIQUE_DESC;
+
+typedef struct _D3D10_STATE_BLOCK_MASK
+{
+    BYTE VS;
+    BYTE VSSamplers[D3D10_BYTES_FROM_BITS(D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT)];
+    BYTE VSShaderResources[D3D10_BYTES_FROM_BITS(D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT)];
+    BYTE VSConstantBuffers[D3D10_BYTES_FROM_BITS(D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT)];
+    BYTE GS;
+    BYTE GSSamplers[D3D10_BYTES_FROM_BITS(D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT)];
+    BYTE GSShaderResources[D3D10_BYTES_FROM_BITS(D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT)];
+    BYTE GSConstantBuffers[D3D10_BYTES_FROM_BITS(D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT)];
+    BYTE PS;
+    BYTE PSSamplers[D3D10_BYTES_FROM_BITS(D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT)];
+    BYTE PSShaderResources[D3D10_BYTES_FROM_BITS(D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT)];
+    BYTE PSConstantBuffers[D3D10_BYTES_FROM_BITS(D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT)];
+    BYTE IAVertexBuffers[D3D10_BYTES_FROM_BITS(D3D10_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT)];
+    BYTE IAIndexBuffer;
+    BYTE IAInputLayout;
+    BYTE IAPrimitiveTopology;
+    BYTE OMRenderTargets;
+    BYTE OMDepthStencilState;
+    BYTE OMBlendState;
+    BYTE RSViewports;
+    BYTE RSScissorRects;
+    BYTE RSRasterizerState;
+    BYTE SOBuffers;
+    BYTE Predication;
+} D3D10_STATE_BLOCK_MASK;
 
 DEFINE_GUID(IID_ID3D10EffectType, 0x4e9e1ddc, 0xcd9d, 0x4772, 0xa8, 0x37, 0x00, 0x18, 0x0b, 0x9b, 0x88, 0xfd);
 
@@ -134,6 +173,21 @@ DECLARE_INTERFACE_(ID3D10EffectConstantBuffer, ID3D10EffectVariable)
     STDMETHOD(GetConstantBuffer)(THIS_ ID3D10Buffer **buffer) PURE;
     STDMETHOD(SetTextureBuffer)(THIS_ ID3D10ShaderResourceView *view) PURE;
     STDMETHOD(GetTextureBuffer)(THIS_ ID3D10ShaderResourceView **view) PURE;
+};
+#undef INTERFACE
+
+DEFINE_GUID(IID_ID3D10EffectTechnique, 0xdb122ce8, 0xd1c9, 0x4292, 0xb2, 0x37, 0x24, 0xed, 0x3d, 0xe8, 0xb1, 0x75);
+
+#define INTERFACE ID3D10EffectTechnique
+DECLARE_INTERFACE(ID3D10EffectTechnique)
+{
+    STDMETHOD_(BOOL, IsValid)(THIS) PURE;
+    STDMETHOD(GetDesc)(THIS_ D3D10_TECHNIQUE_DESC *desc) PURE;
+    STDMETHOD_(struct ID3D10EffectVariable *, GetAnnotationByIndex)(THIS_ UINT index) PURE;
+    STDMETHOD_(struct ID3D10EffectVariable *, GetAnnotationByName)(THIS_ LPCSTR name) PURE;
+    STDMETHOD_(struct ID3D10EffectPass *, GetPassByIndex)(THIS_ UINT index) PURE;
+    STDMETHOD_(struct ID3D10EffectPass *, GetPassByName)(THIS_ LPCSTR name) PURE;
+    STDMETHOD(ComputeStateBlockMask)(THIS_ D3D10_STATE_BLOCK_MASK *mask) PURE;
 };
 #undef INTERFACE
 
