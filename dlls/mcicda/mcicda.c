@@ -141,6 +141,16 @@ static DWORD CALLBACK MCICDA_playLoop(void *ptr)
     IDirectSoundBuffer_Stop(wmcda->dsBuf);
     SetEvent(wmcda->stopEvent);
 
+    EnterCriticalSection(&wmcda->cs);
+    if (wmcda->hCallback) {
+        mciDriverNotify(wmcda->hCallback, wmcda->wNotifyDeviceID,
+                        FAILED(hr) ? MCI_NOTIFY_FAILURE :
+                        ((endPos!=lastPos) ? MCI_NOTIFY_ABORTED :
+                         MCI_NOTIFY_SUCCESSFUL));
+        wmcda->hCallback = NULL;
+    }
+    LeaveCriticalSection(&wmcda->cs);
+
     ExitThread(0);
     return 0;
 }
@@ -892,6 +902,14 @@ static DWORD MCICDA_Play(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
         IDirectSound_Release(wmcda->dsObj);
         wmcda->dsObj = NULL;
     }
+    else if(wmcda->hCallback) {
+        mciDriverNotify(wmcda->hCallback, wmcda->wNotifyDeviceID,
+                        MCI_NOTIFY_ABORTED);
+        wmcda->hCallback = NULL;
+    }
+
+    if ((dwFlags&MCI_NOTIFY))
+        wmcda->hCallback = HWND_32(LOWORD(lpParms->dwCallback));
 
     if (pDirectSoundCreate) {
         WAVEFORMATEX format;
@@ -983,6 +1001,7 @@ static DWORD MCICDA_Play(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     play.EndingF   = end % CDFRAMES_PERSEC;
     if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_PLAY_AUDIO_MSF, &play, sizeof(play),
                          NULL, 0, &br, NULL)) {
+	wmcda->hCallback = NULL;
 	ret = MCIERR_HARDWARE;
     } else if (dwFlags & MCI_NOTIFY) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
@@ -1023,6 +1042,11 @@ static DWORD MCICDA_Stop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms
     else if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_STOP_AUDIO, NULL, 0, NULL, 0, &br, NULL))
         return MCIERR_HARDWARE;
 
+    if (wmcda->hCallback) {
+        mciDriverNotify(wmcda->hCallback, wmcda->wNotifyDeviceID, MCI_NOTIFY_ABORTED);
+        wmcda->hCallback = NULL;
+    }
+
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
@@ -1051,6 +1075,13 @@ static DWORD MCICDA_Pause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParm
     }
     else if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_PAUSE_AUDIO, NULL, 0, NULL, 0, &br, NULL))
         return MCIERR_HARDWARE;
+
+    EnterCriticalSection(&wmcda->cs);
+    if (wmcda->hCallback) {
+        mciDriverNotify(wmcda->hCallback, wmcda->wNotifyDeviceID, MCI_NOTIFY_SUPERSEDED);
+        wmcda->hCallback = NULL;
+    }
+    LeaveCriticalSection(&wmcda->cs);
 
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
         TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
