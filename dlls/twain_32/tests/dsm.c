@@ -579,14 +579,14 @@ START_TEST(dsm)
     htwain = LoadLibraryA("twain_32.dll");
     if (! htwain)
     {
-        skip("twain_32.dll not available, skipping tests\n");
+        win_skip("twain_32.dll not available, skipping tests\n");
         return;
     }
     pDSM_Entry = (void*)GetProcAddress(htwain, "DSM_Entry");
     ok(pDSM_Entry != NULL, "Unable to GetProcAddress DSM_Entry\n");
     if (! pDSM_Entry)
     {
-        skip("DSM_Entry not available, skipping tests\n");
+        win_skip("DSM_Entry not available, skipping tests\n");
         return;
     }
 
