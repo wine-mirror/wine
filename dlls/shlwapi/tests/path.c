@@ -410,7 +410,9 @@ static void test_PathCombineW(void)
 
     wszString = pPathCombineW(wbuf, wstr1, wstr2);
     ok(wszString == NULL, "Expected a NULL return\n");
-    ok(wbuf[0] == 0, "Buffer contains data\n");
+    ok(wbuf[0] == 0 ||
+       broken(wbuf[0] = 0xbfbf), /* Win95 and some W2K */
+       "Buffer contains data\n");
 
     /* PathCombineW can be used in place */
     wstr1[3] = 0;
@@ -469,7 +471,9 @@ static void test_PathCombineA(void)
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, "", "");
     ok(str == dest, "Expected str == dest, got %p\n", str);
-    ok(!lstrcmp(str, "\\"), "Expected \\, got %s\n", str);
+    ok(!lstrcmp(str, "\\") ||
+       broken(!lstrcmp(str, "control")), /* Win95 and some W2K */
+       "Expected \\, got %s\n", str);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try NULL directory */
@@ -485,14 +489,20 @@ static void test_PathCombineA(void)
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, NULL, "");
     ok(str == dest, "Expected str == dest, got %p\n", str);
-    ok(!lstrcmp(str, "\\"), "Expected \\, got %s\n", str);
-    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(!lstrcmp(str, "\\") ||
+       broken(!lstrcmp(str, "one\\two\\three")), /* Win95 and some W2K */
+       "Expected \\, got %s\n", str);
+    ok(GetLastError() == 0xdeadbeef ||
+       broken(GetLastError() == ERROR_INVALID_PARAMETER), /* Win95 */
+       "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try NULL directory and file part */
     SetLastError(0xdeadbeef);
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, NULL, NULL);
-    ok(str == NULL, "Expected str == NULL, got %p\n", str);
+    ok(str == NULL ||
+       broken(str != NULL), /* Win95 and some W2K */
+       "Expected str == NULL, got %p\n", str);
     ok(lstrlenA(dest) == 0 ||
        broken(!lstrcmp(dest, "control")), /* Win95 and some W2K */
        "Expected 0 length, got %i\n", lstrlenA(dest));
@@ -776,7 +786,9 @@ static void test_PathAppendA(void)
     res = PathAppendA(too_long, "two\\three");
     ok(!res, "Expected failure\n");
     todo_wine ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(lstrlen(too_long) == 0, "Expected length of too_long to be zero, got %i\n", lstrlen(too_long));
+    ok(lstrlen(too_long) == 0 ||
+       broken(lstrlen(too_long) == (LONG_LEN - 1)), /* Win95 and some W2K */
+       "Expected length of too_long to be zero, got %i\n", lstrlen(too_long));
 
     /* pszMore is too long */
     lstrcpy(path, "C:\\one");
@@ -786,7 +798,9 @@ static void test_PathAppendA(void)
     res = PathAppendA(path, too_long);
     ok(!res, "Expected failure\n");
     todo_wine ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(lstrlen(path) == 0, "Expected length of path to be zero, got %i\n", lstrlen(path));
+    ok(lstrlen(path) == 0 ||
+       broken(!lstrcmp(path, "C:\\one")), /* Win95 and some W2K */
+       "Expected length of path to be zero, got %i\n", lstrlen(path));
 
     /* both params combined are too long */
     memset(one, 'a', HALF_LEN);
@@ -796,7 +810,9 @@ static void test_PathAppendA(void)
     SetLastError(0xdeadbeef);
     res = PathAppendA(one, two);
     ok(!res, "Expected failure\n");
-    ok(lstrlen(one) == 0, "Expected length of one to be zero, got %i\n", lstrlen(one));
+    ok(lstrlen(one) == 0 ||
+       broken(lstrlen(one) == (HALF_LEN - 1)), /* Win95 and some W2K */
+       "Expected length of one to be zero, got %i\n", lstrlen(one));
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 }
 
@@ -822,7 +838,9 @@ static void test_PathCanonicalizeA(void)
     res = PathCanonicalizeA(dest, "");
     ok(res, "Expected success\n");
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(!lstrcmp(dest, "\\"), "Expected \\, got %s\n", dest);
+    ok(!lstrcmp(dest, "\\") ||
+       broken(!lstrcmp(dest, "test")), /* Win95 and some W2K */
+       "Expected \\, got %s\n", dest);
 
     /* try a NULL dest */
     SetLastError(0xdeadbeef);
@@ -915,7 +933,9 @@ static void test_PathCanonicalizeA(void)
     lstrcpy(dest, "test");
     SetLastError(0xdeadbeef);
     res = PathCanonicalizeA(dest, too_long);
-    ok(!res, "Expected failure\n");
+    ok(!res ||
+       broken(res), /* Win95, some W2K and XP-SP1 */
+       "Expected failure\n");
     todo_wine
     {
         ok(GetLastError() == 0xdeadbeef || GetLastError() == ERROR_FILENAME_EXCED_RANGE /* Vista */,
