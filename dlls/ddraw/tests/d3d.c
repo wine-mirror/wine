@@ -2753,9 +2753,9 @@ static void SetMaterialTest(void)
 static void ComputeSphereVisibility(void)
 {
     D3DMATRIX proj, view, world;
-    D3DVALUE radius;
-    D3DVECTOR center;
-    DWORD result[1];
+    D3DVALUE radius[3];
+    D3DVECTOR center[3];
+    DWORD result[3];
     HRESULT rc;
 
     world._11=1.0; world._12=0.0; world._13=0.0; world._14=0.0;
@@ -2773,25 +2773,36 @@ static void ComputeSphereVisibility(void)
     proj._31=0.000000; proj._32=0.000000; proj._33=1.020408, proj._34=1.000000;
     proj._41=0.000000; proj._42=0.000000; proj._43=-0.102041; proj._44=0.000000;
 
-    center.x=11.461533;
-    center.y=-4.761727;
-    center.z=-1.171646;
-
-    radius=38.252632;
-
     IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_WORLD, &world);
     IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_VIEW , &view);
     IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_PROJECTION, &proj);
 
-    rc = IDirect3DDevice7_ComputeSphereVisibility(lpD3DDevice, &center, &radius, 1, 0, result);
+    center[0].x=11.461533;
+    center[0].y=-4.761727;
+    center[0].z=-1.171646;
+
+    radius[0]=38.252632;
+
+    rc = IDirect3DDevice7_ComputeSphereVisibility(lpD3DDevice, center, radius, 1, 0, result);
 
     ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
-    todo_wine ok(result[0] == 0x3f, "Expected 0x3f, got %x\n", result[0]);
+    ok(result[0] == 0x3f, "Expected 0x3f, got %x\n", result[0]);
 
-    world._11=1.0; world._12=0.0; world._13=0.0; world._14=0.0;
-    world._21=0.0; world._22=1.0; world._23=0.0; world._24=0.0;
-    world._31=0.0; world._32=0.0; world._33=1.0; world._34=0.0;
-    world._41=0.0; world._42=0.0; world._43=0.0; world._44=1.0;
+    center[0].x=-3.515620; center[0].y=-1.560661; center[0].z=-12.464638;
+    radius[0]=4.354097;
+    center[1].x=14.290396; center[1].y=-2.981143; center[1].z=-24.311312;
+    radius[1]=12.500704;
+    center[2].x=1.461626; center[2].y=-6.093709, center[2].z=-13.901010;
+    radius[2]=17.251318;
+
+    rc = IDirect3DDevice7_ComputeSphereVisibility(lpD3DDevice, center, radius, 3, 0, result);
+
+    ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
+    ok(result[0] == 0x103d, "Expected 0x103d, got %x\n", result[0]);
+    ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
+    ok(result[1] == 0x3f, "Expected 0x3f, got %x\n", result[1]);
+    ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
+    ok(result[2] == 0x3f, "Expected 0x3f, got %x\n", result[2]);
 
     view._11=1.0; view._12=0.0; view._13=0.0; view._14=0.0;
     view._21=0.0; view._22=1.0; view._23=0.0; view._24=0.0;
@@ -2803,80 +2814,125 @@ static void ComputeSphereVisibility(void)
     proj._31=0.0; proj._32=0.0; proj._33=10.0, proj._34=0.0;
     proj._41=0.0; proj._42=0.0; proj._43=0.0; proj._44=1.0;
 
-    center.x=0.0;
-    center.y=0.0;
-    center.z=0.05;
+    center[0].x=0.0;
+    center[0].y=0.0;
+    center[0].z=0.05;
 
-    radius=0.04;
+    radius[0]=0.04;
 
-    IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_WORLD, &world);
     IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_VIEW , &view);
     IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_PROJECTION, &proj);
 
-    rc = IDirect3DDevice7_ComputeSphereVisibility(lpD3DDevice, &center, &radius, 1, 0, result);
+    rc = IDirect3DDevice7_ComputeSphereVisibility(lpD3DDevice, center, radius, 1, 0, result);
 
     ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
-    todo_wine ok(result[0] == 0x0, "Expected 0x0, got %x\n", result[0]);
-
-    world._11=1.0; world._12=0.0; world._13=0.0; world._14=0.0;
-    world._21=0.0; world._22=1.0; world._23=0.0; world._24=0.0;
-    world._31=0.0; world._32=0.0; world._33=1.0; world._34=0.0;
-    world._41=0.0; world._42=0.0; world._43=0.0; world._44=1.0;
-
-    view._11=1.0; view._12=0.0; view._13=0.0; view._14=0.0;
-    view._21=0.0; view._22=1.0; view._23=0.0; view._24=0.0;
-    view._31=0.0; view._32=0.0; view._33=1.0; view._34=0.0;
-    view._41=0.0; view._42=0.0; view._43=0.0; view._44=1.0;
+    ok(result[0] == 0x0, "Expected 0x0, got %x\n", result[0]);
 
     proj._11=1.0; proj._12=0.0; proj._13=0.0; proj._14=0.0;
     proj._21=0.0; proj._22=1.0; proj._23=0.0, proj._24=0.0;
     proj._31=0.0; proj._32=0.0; proj._33=1.0, proj._34=0.0;
     proj._41=0.0; proj._42=0.0; proj._43=0.0; proj._44=1.0;
 
-    center.x=0.0;
-    center.y=0.0;
-    center.z=0.5;
-
-    radius=0.5;
-
-    IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_WORLD, &world);
-    IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_VIEW , &view);
     IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_PROJECTION, &proj);
 
-    rc = IDirect3DDevice7_ComputeSphereVisibility(lpD3DDevice, &center, &radius, 1, 0, result);
+    center[0].x=0.0;
+    center[0].y=0.0;
+    center[0].z=0.5;
+
+    radius[0]=0.5;
+
+    rc = IDirect3DDevice7_ComputeSphereVisibility(lpD3DDevice, center, radius, 1, 0, result);
 
     ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
-    todo_wine ok(result[0] == 0x0, "Expected 0x0, got %x\n", result[0]);
+    ok(result[0] == 0x0, "Expected 0x0, got %x\n", result[0]);
 
-    world._11=1.0; world._12=0.0; world._13=0.0; world._14=0.0;
-    world._21=0.0; world._22=1.0; world._23=0.0; world._24=0.0;
-    world._31=0.0; world._32=0.0; world._33=1.0; world._34=0.0;
-    world._41=0.0; world._42=0.0; world._43=0.0; world._44=1.0;
+    center[0].x=0.0;
+    center[0].y=0.0;
+    center[0].z=0.0;
 
-    view._11=1.0; view._12=0.0; view._13=0.0; view._14=0.0;
-    view._21=0.0; view._22=1.0; view._23=0.0; view._24=0.0;
-    view._31=0.0; view._32=0.0; view._33=1.0; view._34=0.0;
-    view._41=0.0; view._42=0.0; view._43=0.0; view._44=1.0;
+    radius[0]=0.0;
 
-    proj._11=1.0; proj._12=0.0; proj._13=0.0; proj._14=0.0;
-    proj._21=0.0; proj._22=1.0; proj._23=0.0, proj._24=0.0;
-    proj._31=0.0; proj._32=0.0; proj._33=1.0, proj._34=0.0;
-    proj._41=0.0; proj._42=0.0; proj._43=0.0; proj._44=1.0;
-
-    center.x=0.0;
-    center.y=0.0;
-    center.z=0.0;
-
-    radius=0.0;
-
-    IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_WORLD, &world);
-    IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_VIEW , &view);
-    IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_PROJECTION, &proj);
-
-    rc = IDirect3DDevice7_ComputeSphereVisibility(lpD3DDevice, &center, &radius, 1, 0, result);
+    rc = IDirect3DDevice7_ComputeSphereVisibility(lpD3DDevice, center, radius, 1, 0, result);
 
     ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
-    todo_wine ok(result[0] == 0x0, "Expected 0x0, got %x\n", result[0]);
+    ok(result[0] == 0x0, "Expected 0x0, got %x\n", result[0]);
+
+    center[0].x=-1.0;
+    center[0].y=-1.0;
+    center[0].z=0.50;
+
+    radius[0]=0.25;
+
+    rc = IDirect3DDevice7_ComputeSphereVisibility(lpD3DDevice, center, radius, 1, 0, result);
+
+    ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
+    ok(result[0] == 0x9, "Expected 0x9, got %x\n", result[0]);
+
+    center[0].x=-20.0;
+    center[0].y=0.0;
+    center[0].z=0.50;
+
+    radius[0]=3.0;
+
+    rc = IDirect3DDevice7_ComputeSphereVisibility(lpD3DDevice, center, radius, 1, 0, result);
+
+    ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
+    ok(result[0] == 0x103d, "Expected 0x103d, got %x\n", result[0]);
+
+    center[0].x=20.0;
+    center[0].y=0.0;
+    center[0].z=0.50;
+
+    radius[0]=3.0f;
+
+    rc = IDirect3DDevice7_ComputeSphereVisibility(lpD3DDevice, center, radius, 1, 0, result);
+
+    ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
+    ok(result[0] == 0x203e, "Expected 0x203e, got %x\n", result[0]);
+
+    center[0].x=0.0;
+    center[0].y=-20.0;
+    center[0].z=0.50;
+
+    radius[0]=3.0;
+
+    rc = IDirect3DDevice7_ComputeSphereVisibility(lpD3DDevice, center, radius, 1, 0, result);
+
+    ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
+    ok(result[0] == 0x803b, "Expected 0x803b, got %x\n", result[0]);
+
+    center[0].x=0.0;
+    center[0].y=20.0;
+    center[0].z=0.5;
+
+    radius[0]=3.0;
+
+    rc = IDirect3DDevice7_ComputeSphereVisibility(lpD3DDevice, center, radius, 1, 0, result);
+
+    ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
+    ok(result[0] == 0x4037, "Expected 0x4037, got %x\n", result[0]);
+
+    center[0].x=0.0;
+    center[0].y=0.0;
+    center[0].z=-20;
+
+    radius[0]=3.0;
+
+    rc = IDirect3DDevice7_ComputeSphereVisibility(lpD3DDevice, center, radius, 1, 0, result);
+
+    ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
+    ok(result[0] == 0x1001f, "Expected 0x1001f, got %x\n", result[0]);
+
+    center[0].x=0.0;
+    center[0].y=0.0;
+    center[0].z=20.0;
+
+    radius[0]=3.0;
+
+    rc = IDirect3DDevice7_ComputeSphereVisibility(lpD3DDevice, center, radius, 1, 0, result);
+
+    ok(rc == D3D_OK, "Expected D3D_OK, received %x\n", rc);
+    ok(result[0] == 0x2002f, "Expected 0x2002f, got %x\n", result[0]);
 }
 
 START_TEST(d3d)

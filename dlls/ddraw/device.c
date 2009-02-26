@@ -4593,6 +4593,19 @@ Thunk_IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB(IDirect3DDevice3 *iface,
  *  is singular)
  *
  *****************************************************************************/
+
+static DWORD in_plane(UINT plane, D3DVECTOR normal, D3DVALUE origin_plane, D3DVECTOR center, D3DVALUE radius)
+{
+    float distance, norm;
+
+    norm = sqrt( normal.u1.x * normal.u1.x + normal.u2.y * normal.u2.y + normal.u3.z * normal.u3.z );
+    distance = ( origin_plane + normal.u1.x * center.u1.x + normal.u2.y * center.u2.y + normal.u3.z * center.u3.z ) / norm;
+
+    if ( fabs( distance ) < radius ) return D3DSTATUS_CLIPUNIONLEFT << plane;
+    if ( distance < -radius ) return (D3DSTATUS_CLIPUNIONLEFT  | D3DSTATUS_CLIPINTERSECTIONLEFT) << plane;
+    return 0;
+}
+
 static HRESULT WINAPI
 IDirect3DDeviceImpl_7_ComputeSphereVisibility(IDirect3DDevice7 *iface,
                                               D3DVECTOR *Centers,
@@ -4601,30 +4614,65 @@ IDirect3DDeviceImpl_7_ComputeSphereVisibility(IDirect3DDevice7 *iface,
                                               DWORD Flags,
                                               DWORD *ReturnValues)
 {
-    IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
-    FIXME("(%p)->(%p,%p,%08x,%08x,%p): stub!\n", This, Centers, Radii, NumSpheres, Flags, ReturnValues);
+    D3DMATRIX m, temp;
+    D3DVALUE origin_plane[6];
+    D3DVECTOR vec[6];
+    HRESULT hr;
+    UINT i, j;
 
-    /* the DirectX 7 sdk says that the visibility is computed by
-     * back-transforming the viewing frustum to model space
-     * using the inverse of the combined world, view and projection
-     * matrix. If the matrix can't be reversed, D3DERR_INVALIDMATRIX
-     * is returned.
-     *
-     * Basic implementation idea:
-     * 1) Check if the center is in the viewing frustum
-     * 2) Cut the sphere with the planes of the viewing
-     *    frustum
-     *
-     * ->Center inside the frustum, no intersections:
-     *    Fully visible
-     * ->Center outside the frustum, no intersections:
-     *    Not visible
-     * ->Some intersections: Partially visible
-     *
-     * Implement this call in WineD3D. Either implement the
-     * matrix and vector stuff in WineD3D, or use some external
-     * math library.
-     */
+    TRACE("(%p)->(%p,%p,%08x,%08x,%p)\n", iface, Centers, Radii, NumSpheres, Flags, ReturnValues);
+
+    hr = IDirect3DDeviceImpl_7_GetTransform(iface, D3DTRANSFORMSTATE_WORLD, &m);
+    if ( hr != DD_OK ) return DDERR_INVALIDPARAMS;
+    hr = IDirect3DDeviceImpl_7_GetTransform(iface, D3DTRANSFORMSTATE_VIEW, &temp);
+    if ( hr != DD_OK ) return DDERR_INVALIDPARAMS;
+    multiply_matrix_D3D_way(&m, &m, &temp);
+
+    hr = IDirect3DDeviceImpl_7_GetTransform(iface, D3DTRANSFORMSTATE_PROJECTION, &temp);
+    if ( hr != DD_OK ) return DDERR_INVALIDPARAMS;
+    multiply_matrix_D3D_way(&m, &m, &temp);
+
+/* Left plane */
+    vec[0].u1.x = m._14 + m._11;
+    vec[0].u2.y = m._24 + m._21;
+    vec[0].u3.z = m._34 + m._31;
+    origin_plane[0] = m._44 + m._41;
+
+/* Right plane */
+    vec[1].u1.x = m._14 - m._11;
+    vec[1].u2.y = m._24 - m._21;
+    vec[1].u3.z = m._34 - m._31;
+    origin_plane[1] = m._44 - m._41;
+
+/* Top plane */
+    vec[2].u1.x = m._14 - m._12;
+    vec[2].u2.y = m._24 - m._22;
+    vec[2].u3.z = m._34 - m._32;
+    origin_plane[2] = m._44 - m._42;
+
+/* Bottom plane */
+    vec[3].u1.x = m._14 + m._12;
+    vec[3].u2.y = m._24 + m._22;
+    vec[3].u3.z = m._34 + m._32;
+    origin_plane[3] = m._44 + m._42;
+
+/* Front plane */
+    vec[4].u1.x = m._13;
+    vec[4].u2.y = m._23;
+    vec[4].u3.z = m._33;
+    origin_plane[4] = m._43;
+
+/* Back plane*/
+    vec[5].u1.x = m._14 - m._13;
+    vec[5].u2.y = m._24 - m._23;
+    vec[5].u3.z = m._34 - m._33;
+    origin_plane[5] = m._44 - m._43;
+
+    for(i=0; i<NumSpheres; i++)
+    {
+        ReturnValues[i] = 0;
+        for(j=0; j<6; j++) ReturnValues[i] |= in_plane(j, vec[j], origin_plane[j], Centers[i], Radii[i]);
+    }
 
     return D3D_OK;
 }
