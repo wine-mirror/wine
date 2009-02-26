@@ -25678,6 +25678,14 @@ dlls/mcicda/Makefile: dlls/mcicda/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/mcicda/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/mciqtz32/Makefile"
+test "x$enable_mciqtz32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	mciqtz32"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/mciqtz32/Makefile: dlls/mciqtz32/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/mciqtz32/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mciseq/Makefile"
 test "x$enable_mciseq" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	mciseq"
@@ -28805,6 +28813,7 @@ do
     "dlls/mapi32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mapi32/tests/Makefile" ;;
     "dlls/mciavi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mciavi32/Makefile" ;;
     "dlls/mcicda/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mcicda/Makefile" ;;
+    "dlls/mciqtz32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mciqtz32/Makefile" ;;
     "dlls/mciseq/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mciseq/Makefile" ;;
     "dlls/mciwave/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mciwave/Makefile" ;;
     "dlls/midimap/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/midimap/Makefile" ;;
