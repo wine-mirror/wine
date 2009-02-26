@@ -898,6 +898,13 @@ static void start_process( void *arg )
         entry = (LPTHREAD_START_ROUTINE)((char *)peb->ImageBaseAddress +
                                          nt->OptionalHeader.AddressOfEntryPoint);
 
+        if (!nt->OptionalHeader.AddressOfEntryPoint)
+        {
+            ERR( "%s doesn't have an entry point, it cannot be executed\n",
+                 debugstr_w(peb->ProcessParameters->ImagePathName.Buffer) );
+            ExitThread( 1 );
+        }
+
         if (TRACE_ON(relay))
             DPRINTF( "%04x:Starting process %s (entryproc=%p)\n", GetCurrentThreadId(),
                      debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), entry );
