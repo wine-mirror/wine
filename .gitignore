@@ -180,6 +180,7 @@ include/oleacc.h
 include/oledb.h
 include/oleidl.h
 include/optary.h
+include/perhist.h
 include/propidl.h
 include/pstore.h
 include/qedit.h

@@ -60,6 +60,7 @@ PUBLIC_IDL_H_SRCS = \
 	oledb.idl \
 	oleidl.idl \
 	optary.idl \
+	perhist.idl \
 	propidl.idl \
 	pstore.idl \
 	qedit.idl \
