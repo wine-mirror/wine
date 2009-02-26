@@ -109,6 +109,9 @@ static void check_get(TW_CAPABILITY *pCapability, TW_INT32 actual_support,
             TW_ONEVALUE *onev = (TW_ONEVALUE *) p;
             ok(onev->Item == orig_value || !(actual_support & TWQC_GETCURRENT), "MSG_GET of 0x%x returned 0x%x, expecting 0x%x\n",
                 pCapability->Cap, onev->Item, orig_value);
+            trace("MSG_GET of 0x%x returned val 0x%x, type %d\n", pCapability->Cap, onev->Item, onev->ItemType);
+            if (suggested_set_value)
+                *suggested_set_value = onev->Item;
         }
         else if (pCapability->ConType == TWON_ENUMERATION)
         {
@@ -473,8 +476,10 @@ static void test_single_source(TW_IDENTITY *appid, TW_IDENTITY *source)
         if (capabilities[ICAP_PIXELTYPE])
             test_onevalue_cap(appid, source, ICAP_PIXELTYPE, TWTY_UINT16,
                 TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET);
-        todo_wine
         ok(capabilities[ICAP_UNITS], "ICAP_UNITS not supported\n");
+        if (capabilities[ICAP_UNITS])
+            test_onevalue_cap(appid, source, ICAP_UNITS, TWTY_UINT16,
+                TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET);
         ok(capabilities[ICAP_XFERMECH], "ICAP_XFERMECH not supported\n");
         if (capabilities[ICAP_XFERMECH])
             test_onevalue_cap(appid, source, ICAP_XFERMECH, TWTY_UINT16,

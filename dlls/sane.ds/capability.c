@@ -154,7 +154,7 @@ static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability)
 {
     TW_ARRAY *a;
     static const UINT16 supported_caps[] = { CAP_SUPPORTEDCAPS, CAP_XFERCOUNT, CAP_UICONTROLLABLE,
-                    ICAP_XFERMECH, ICAP_PIXELTYPE, ICAP_BITDEPTH, ICAP_COMPRESSION, ICAP_PIXELFLAVOR,
+                    ICAP_XFERMECH, ICAP_PIXELTYPE, ICAP_UNITS, ICAP_BITDEPTH, ICAP_COMPRESSION, ICAP_PIXELFLAVOR,
                     ICAP_XRESOLUTION, ICAP_YRESOLUTION };
 
     pCapability->hContainer = GlobalAlloc (0, FIELD_OFFSET( TW_ARRAY, ItemList[sizeof(supported_caps)] ));
@@ -305,6 +305,49 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
 
         case MSG_GETCURRENT:
             twCC = set_onevalue(pCapability, TWTY_UINT16, activeDS.capPixelType);
+            break;
+    }
+
+    return twCC;
+}
+
+/* ICAP_UNITS */
+static TW_UINT16 SANE_ICAPUnits (pTW_CAPABILITY pCapability, TW_UINT16 action)
+{
+    TW_UINT32 val;
+    TW_UINT16 twCC = TWCC_BADCAP;
+
+    TRACE("ICAP_UNITS\n");
+
+    switch (action)
+    {
+        case MSG_QUERYSUPPORT:
+            twCC = set_onevalue(pCapability, TWTY_INT32,
+                    TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET );
+            break;
+
+        case MSG_GET:
+            twCC = set_onevalue(pCapability, TWTY_UINT16, TWUN_INCHES);
+            break;
+
+        case MSG_SET:
+            twCC = msg_set(pCapability, &val);
+            if (twCC == TWCC_SUCCESS)
+            {
+                if  (val != TWUN_INCHES)
+                {
+                    ERR("Sane supports only SANE_UNIT_DPI\n");
+                    twCC = TWCC_BADVALUE;
+                }
+            }
+            break;
+
+        case MSG_GETDEFAULT:
+        case MSG_RESET:
+            /* .. fall through intentional .. */
+
+        case MSG_GETCURRENT:
+            twCC = set_onevalue(pCapability, TWTY_UINT16, TWUN_INCHES);
             break;
     }
 
@@ -579,6 +622,10 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 
         case ICAP_PIXELTYPE:
             twCC = SANE_ICAPPixelType (pCapability, action);
+            break;
+
+        case ICAP_UNITS:
+            twCC = SANE_ICAPUnits (pCapability, action);
             break;
 
         case ICAP_BITDEPTH:
