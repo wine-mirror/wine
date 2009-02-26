@@ -60,11 +60,12 @@ static UINT CREATE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSICREATEVIEW *cv = (MSICREATEVIEW*)view;
     MSITABLE *table;
+    BOOL persist = (cv->bIsTemp) ? MSICONDITION_FALSE : MSICONDITION_TRUE;
 
     TRACE("%p Table %s (%s)\n", cv, debugstr_w(cv->name), 
           cv->bIsTemp?"temporary":"permanent");
 
-    return msi_create_table( cv->db, cv->name, cv->col_info, !cv->bIsTemp, &table);
+    return msi_create_table( cv->db, cv->name, cv->col_info, persist, &table);
 }
 
 static UINT CREATE_close( struct tagMSIVIEW *view )

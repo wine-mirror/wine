@@ -3237,13 +3237,11 @@ static void test_temporary_table(void)
     cond = MsiDatabaseIsTablePersistent(hdb, NULL);
     ok( cond == MSICONDITION_ERROR, "wrong return condition\n");
 
-    todo_wine {
     cond = MsiDatabaseIsTablePersistent(hdb, "_Tables");
     ok( cond == MSICONDITION_NONE, "wrong return condition\n");
 
     cond = MsiDatabaseIsTablePersistent(hdb, "_Columns");
     ok( cond == MSICONDITION_NONE, "wrong return condition\n");
-    }
 
     cond = MsiDatabaseIsTablePersistent(hdb, "_Storages");
     ok( cond == MSICONDITION_NONE, "wrong return condition\n");

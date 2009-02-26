@@ -78,7 +78,7 @@ struct tagMSITABLE
     struct list entry;
     MSICOLUMNINFO *colinfo;
     UINT col_count;
-    BOOL persistent;
+    MSICONDITION persistent;
     INT ref_count;
     WCHAR name[1];
 };
@@ -610,7 +610,7 @@ static UINT table_get_column_info( MSIDATABASE *db, LPCWSTR name, MSICOLUMNINFO 
 }
 
 UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
-                       BOOL persistent, MSITABLE **table_ret)
+                       MSICONDITION persistent, MSITABLE **table_ret)
 {
     UINT r, nField;
     MSIVIEW *tv = NULL;
@@ -683,7 +683,7 @@ UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
     if( r )
         goto err;
 
-    r = tv->ops->insert_row( tv, rec, !persistent );
+    r = tv->ops->insert_row( tv, rec, persistent == MSICONDITION_FALSE );
     TRACE("insert_row returned %x\n", r);
     if( r )
         goto err;
@@ -694,7 +694,7 @@ UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
     msiobj_release( &rec->hdr );
     rec = NULL;
 
-    if( persistent )
+    if( persistent != MSICONDITION_FALSE )
     {
         /* add each column to the _Columns table */
         r = TABLE_CreateView( db, szColumns, &tv );
@@ -785,8 +785,11 @@ static UINT get_table( MSIDATABASE *db, LPCWSTR name, MSITABLE **table_ret )
     table->nonpersistent_data = NULL;
     table->colinfo = NULL;
     table->col_count = 0;
-    table->persistent = TRUE;
+    table->persistent = MSICONDITION_TRUE;
     lstrcpyW( table->name, name );
+
+    if ( !lstrcmpW(name, szTables) || !lstrcmpW(name, szColumns) )
+        table->persistent = MSICONDITION_NONE;
 
     r = table_get_column_info( db, name, &table->colinfo, &table->col_count);
     if (r != ERROR_SUCCESS)
@@ -813,7 +816,7 @@ static UINT save_table( MSIDATABASE *db, const MSITABLE *t )
     UINT rawsize, r, i, j, row_size;
 
     /* Nothing to do for non-persistent tables */
-    if( !t->persistent )
+    if( t->persistent == MSICONDITION_FALSE )
         return ERROR_SUCCESS;
 
     TRACE("Saving %s\n", debugstr_w( t->name ) );
@@ -1298,7 +1301,8 @@ static UINT TABLE_set_row( struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, UI
             continue;
 
         /* if row >= tv->table->row_count then it is a non-persistent row */
-        persistent = tv->table->persistent && (row < tv->table->row_count);
+        persistent = (tv->table->persistent != MSICONDITION_FALSE) &&
+                     (row < tv->table->row_count);
         /* FIXME: should we allow updating keys? */
 
         val = 0;
@@ -2214,10 +2218,7 @@ MSICONDITION MSI_DatabaseIsTablePersistent( MSIDATABASE *db, LPCWSTR table )
     if (r != ERROR_SUCCESS)
         return MSICONDITION_NONE;
 
-    if (t->persistent)
-        return MSICONDITION_TRUE;
-    else
-        return MSICONDITION_FALSE;
+    return t->persistent;
 }
 
 static UINT read_raw_int(const BYTE *data, UINT col, UINT bytes)
