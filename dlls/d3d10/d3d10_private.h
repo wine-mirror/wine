@@ -31,6 +31,14 @@
 /* TRACE helper functions */
 const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type);
 
+/* ID3D10Effect */
+extern const struct ID3D10EffectVtbl d3d10_effect_vtbl;
+struct d3d10_effect
+{
+    const struct ID3D10EffectVtbl *vtbl;
+    LONG refcount;
+};
+
 /* D3D10Core */
 HRESULT WINAPI D3D10CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter,
         UINT flags, DWORD unknown0, ID3D10Device **device);

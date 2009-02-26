@@ -204,3 +204,28 @@ HRESULT WINAPI D3D10CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D10_DRIVER
 
     return S_OK;
 }
+
+HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT flags,
+        ID3D10Device *device, ID3D10EffectPool *effect_pool, ID3D10Effect **effect)
+{
+    struct d3d10_effect *object;
+
+    FIXME("data %p, data_size %lu, flags %#x, device %p, effect_pool %p, effect %p stub!\n",
+            data, data_size, flags, device, effect_pool, effect);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate D3D10 effect object memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->vtbl = &d3d10_effect_vtbl;
+    object->refcount = 1;
+
+    *effect = (ID3D10Effect *)object;
+
+    TRACE("Created ID3D10Effect %p\n", object);
+
+    return S_OK;
+}

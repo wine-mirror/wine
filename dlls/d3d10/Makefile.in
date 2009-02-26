@@ -8,6 +8,7 @@ IMPORTS   = dxguid uuid d3d10core dxgi kernel32
 
 C_SRCS = \
 	d3d10_main.c \
+	effect.c \
 	utils.c
 
 RC_SRCS = version.rc

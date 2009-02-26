@@ -241,4 +241,15 @@ DECLARE_INTERFACE_(ID3D10EffectPool, IUnknown)
 };
 #undef INTERFACE
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT flags,
+        ID3D10Device *device, ID3D10EffectPool *effect_pool, ID3D10Effect **effect);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __WINE_D3D10EFFECT_H */
