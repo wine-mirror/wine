@@ -842,7 +842,7 @@ struct msi_primary_key_record_info
 static UINT msi_primary_key_iterator( MSIRECORD *rec, LPVOID param )
 {
     struct msi_primary_key_record_info *info = param;
-    LPCWSTR name;
+    LPCWSTR name, table;
     DWORD type;
 
     type = MSI_RecordGetInteger( rec, 4 );
@@ -851,6 +851,12 @@ static UINT msi_primary_key_iterator( MSIRECORD *rec, LPVOID param )
         info->n++;
         if( info->rec )
         {
+            if ( info->n == 1 )
+            {
+                table = MSI_RecordGetString( rec, 1 );
+                MSI_RecordSetStringW( info->rec, 0, table);
+            }
+
             name = MSI_RecordGetString( rec, 3 );
             MSI_RecordSetStringW( info->rec, info->n, name );
         }

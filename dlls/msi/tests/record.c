@@ -552,17 +552,11 @@ static void test_fieldzero(void)
     lstrcpyA(buf, "apple");
     r = MsiRecordGetString(rec, 0, buf, &sz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(buf, "drone"), "Expected \"drone\", got \"%s\"\n", buf);
-        ok(sz == 5, "Expectd 5, got %d\n", sz);
-    }
+    ok(!lstrcmpA(buf, "drone"), "Expected \"drone\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expectd 5, got %d\n", sz);
 
     r = MsiRecordIsNull(rec, 0);
-    todo_wine
-    {
-        ok(r == FALSE, "Expected FALSE, got %d\n", r);
-    }
+    ok(r == FALSE, "Expected FALSE, got %d\n", r);
 
     MsiCloseHandle(rec);
 
