@@ -89,6 +89,16 @@ typedef struct _D3D10_STATE_BLOCK_MASK
     BYTE Predication;
 } D3D10_STATE_BLOCK_MASK;
 
+typedef struct _D3D10_EFFECT_DESC
+{
+    BOOL IsChildEffect;
+    UINT ConstantBuffers;
+    UINT SharedConstantBuffers;
+    UINT GlobalVariables;
+    UINT SharedGlobalVariables;
+    UINT Techniques;
+} D3D10_EFFECT_DESC;
+
 DEFINE_GUID(IID_ID3D10EffectType, 0x4e9e1ddc, 0xcd9d, 0x4772, 0xa8, 0x37, 0x00, 0x18, 0x0b, 0x9b, 0x88, 0xfd);
 
 #define INTERFACE ID3D10EffectType
@@ -188,6 +198,32 @@ DECLARE_INTERFACE(ID3D10EffectTechnique)
     STDMETHOD_(struct ID3D10EffectPass *, GetPassByIndex)(THIS_ UINT index) PURE;
     STDMETHOD_(struct ID3D10EffectPass *, GetPassByName)(THIS_ LPCSTR name) PURE;
     STDMETHOD(ComputeStateBlockMask)(THIS_ D3D10_STATE_BLOCK_MASK *mask) PURE;
+};
+#undef INTERFACE
+
+DEFINE_GUID(IID_ID3D10Effect, 0x51b0ca8b, 0xec0b, 0x4519, 0x87, 0x0d, 0x8e, 0xe1, 0xcb, 0x50, 0x17, 0xc7);
+
+#define INTERFACE ID3D10Effect
+DECLARE_INTERFACE_(ID3D10Effect, IUnknown)
+{
+    /* IUnknown methods */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID *object) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* ID3D10Effect methods */
+    STDMETHOD_(BOOL, IsValid)(THIS) PURE;
+    STDMETHOD_(BOOL, IsPool)(THIS) PURE;
+    STDMETHOD(GetDevice)(THIS_ ID3D10Device **device) PURE;
+    STDMETHOD(GetDesc)(THIS_ D3D10_EFFECT_DESC *desc) PURE;
+    STDMETHOD_(struct ID3D10EffectConstantBuffer *, GetConstantBufferByIndex)(THIS_ UINT index) PURE;
+    STDMETHOD_(struct ID3D10EffectConstantBuffer *, GetConstantBufferByName)(THIS_ LPCSTR name) PURE;
+    STDMETHOD_(struct ID3D10EffectVariable *, GetVariableByIndex)(THIS_ UINT index) PURE;
+    STDMETHOD_(struct ID3D10EffectVariable *, GetVariableByName)(THIS_ LPCSTR name) PURE;
+    STDMETHOD_(struct ID3D10EffectVariable *, GetVariableBySemantic)(THIS_ LPCSTR semantic) PURE;
+    STDMETHOD_(struct ID3D10EffectTechnique *, GetTechniqueByIndex)(THIS_ UINT index) PURE;
+    STDMETHOD_(struct ID3D10EffectTechnique *, GetTechniqueByName)(THIS_ LPCSTR name) PURE;
+    STDMETHOD(Optimize)(THIS) PURE;
+    STDMETHOD_(BOOL, IsOptimized)(THIS) PURE;
 };
 #undef INTERFACE
 
