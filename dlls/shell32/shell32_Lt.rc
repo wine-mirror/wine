@@ -285,6 +285,8 @@ STRINGTABLE
 	IDS_CPANEL_TITLE            "Wine valdymo skydelis"
 	IDS_CPANEL_NAME             "Pavadinimas"
 	IDS_CPANEL_DESCRIPTION      "Aprašas"
+
+	IDS_SHLEXEC_NOASSOC         "Jokia Windows programa nėra sukonfigūruota atidaryti šio tipo failų."
 }
 
 STRINGTABLE
