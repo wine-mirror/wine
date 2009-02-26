@@ -36,6 +36,7 @@
 #include "dispex.h"
 #include "idispids.h"
 #include "shlguid.h"
+#include "perhist.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(IID_IProxyManager,0x00000008,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
@@ -4160,6 +4161,26 @@ static void test_HTMLDoc_ISupportErrorInfo(void)
     ok(ref == 0, "ref=%d, expected 0\n", ref);
 }
 
+static void test_IPersistHistory(void)
+{
+    HRESULT hres;
+    IUnknown *unk;
+    LONG ref;
+    IPersistHistory *phist;
+
+    hres = create_document(&unk);
+    if(FAILED(hres))
+        return;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IPersistHistory, (void**)&phist);
+    todo_wine ok(hres == S_OK, "QueryInterface returned %08x, expected S_OK\n", hres);
+    if(hres == S_OK)
+        IPersistHistory_Release(phist);
+
+    ref = IUnknown_Release(unk);
+    ok(ref == 0, "ref=%d, expected 0\n", ref);
+}
+
 START_TEST(htmldoc)
 {
     gecko_installer_workaround(TRUE);
@@ -4177,6 +4198,7 @@ START_TEST(htmldoc)
         test_editing_mode(TRUE);
     }
     test_HTMLDoc_ISupportErrorInfo();
+    test_IPersistHistory();
 
     DestroyWindow(container_hwnd);
     CoUninitialize();
