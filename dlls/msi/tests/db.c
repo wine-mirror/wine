@@ -3286,14 +3286,12 @@ static void test_temporary_table(void)
     cond = MsiDatabaseIsTablePersistent(hdb, "T3");
     ok( cond == MSICONDITION_TRUE, "wrong return condition\n");
 
-    todo_wine {
     query = "CREATE TABLE `T4` ( `B` SHORT NOT NULL, `C` CHAR(255) TEMPORARY PRIMARY KEY `C`)";
     r = run_query(hdb, 0, query);
     ok(r == ERROR_FUNCTION_FAILED, "failed to add table\n");
 
     cond = MsiDatabaseIsTablePersistent(hdb, "T4");
     ok( cond == MSICONDITION_NONE, "wrong return condition\n");
-    }
 
     query = "CREATE TABLE `T5` ( `B` SHORT NOT NULL TEMP, `C` CHAR(255) TEMP PRIMARY KEY `C`) HOLD";
     r = run_query(hdb, 0, query);

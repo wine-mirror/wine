@@ -45,6 +45,7 @@ typedef struct tag_SQL_input
     MSIDATABASE *db;
     LPCWSTR command;
     DWORD n, len;
+    UINT r;
     MSIVIEW **view;  /* view structure for the resulting query */
     struct list *mem;
 } SQL_input;
@@ -166,12 +167,16 @@ onecreate:
         {
             SQL_input* sql = (SQL_input*) info;
             MSIVIEW *create = NULL;
+            UINT r;
 
             if( !$5 )
                 YYABORT;
-            CREATE_CreateView( sql->db, &create, $3, $5, FALSE );
+            r = CREATE_CreateView( sql->db, &create, $3, $5, FALSE );
             if( !create )
+            {
+                sql->r = r;
                 YYABORT;
+            }
             $$ = create;
         }
   | TK_CREATE TK_TABLE table TK_LP table_def TK_RP TK_HOLD
@@ -914,6 +919,7 @@ UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phview,
     sql.command = command;
     sql.n = 0;
     sql.len = 0;
+    sql.r = ERROR_BAD_QUERY_SYNTAX;
     sql.view = phview;
     sql.mem = mem;
 
@@ -923,7 +929,7 @@ UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phview,
     if( r )
     {
         *sql.view = NULL;
-        return ERROR_BAD_QUERY_SYNTAX;
+        return sql.r;
     }
 
     return ERROR_SUCCESS;

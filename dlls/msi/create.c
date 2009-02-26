@@ -161,6 +161,7 @@ UINT CREATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
     UINT r;
     column_info *col;
     BOOL temp = TRUE;
+    BOOL tempprim = FALSE;
 
     TRACE("%p\n", cv );
 
@@ -179,6 +180,14 @@ UINT CREATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
 
         if( !col->temporary )
             temp = FALSE;
+        else if ( col->type & MSITYPE_KEY )
+            tempprim = TRUE;
+    }
+
+    if ( !temp && tempprim )
+    {
+        msi_free( cv );
+        return ERROR_FUNCTION_FAILED;
     }
 
     /* fill the structure */
