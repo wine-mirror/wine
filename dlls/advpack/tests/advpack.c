@@ -83,7 +83,7 @@ static BOOL init_function_pointers(void)
     if (!pCloseINFEngine || !pDelNode || !pGetVersionFromFile ||
         !pOpenINFEngine || !pSetPerUserSecValues || !pTranslateInfString)
     {
-        skip("Needed functions are not available\n");
+        win_skip("Needed functions are not available\n");
         FreeLibrary(hAdvPack);
         return FALSE;
     }
@@ -333,7 +333,7 @@ static void translateinfstringex_test(void)
     hr = pOpenINFEngine(inf_file, NULL, 0, &hinf, NULL);
     if (hr == E_UNEXPECTED)
     {
-        skip("Skipping tests on win9x because of brokenness\n");
+        win_skip("Skipping tests on win9x because of brokenness\n");
         return;
     }
 
