@@ -154,7 +154,7 @@ static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability)
 {
     TW_ARRAY *a;
     static const UINT16 supported_caps[] = { CAP_SUPPORTEDCAPS, CAP_XFERCOUNT, CAP_UICONTROLLABLE,
-                    ICAP_XFERMECH, ICAP_PIXELTYPE, ICAP_COMPRESSION, ICAP_PIXELFLAVOR,
+                    ICAP_XFERMECH, ICAP_PIXELTYPE, ICAP_BITDEPTH, ICAP_COMPRESSION, ICAP_PIXELFLAVOR,
                     ICAP_XRESOLUTION, ICAP_YRESOLUTION };
 
     pCapability->hContainer = GlobalAlloc (0, FIELD_OFFSET( TW_ARRAY, ItemList[sizeof(supported_caps)] ));
@@ -308,6 +308,40 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
             break;
     }
 
+    return twCC;
+}
+
+/* ICAP_BITDEPTH */
+static TW_UINT16 SANE_ICAPBitDepth(pTW_CAPABILITY pCapability, TW_UINT16 action)
+{
+    TW_UINT16 twCC = TWCC_BADCAP;
+#ifdef SONAME_LIBSANE
+    TW_UINT32 possible_values[1];
+
+    TRACE("ICAP_BITDEPTH\n");
+
+    possible_values[0] = activeDS.sane_param.depth;
+
+    switch (action)
+    {
+        case MSG_QUERYSUPPORT:
+            twCC = set_onevalue(pCapability, TWTY_INT32,
+                    TWQC_GET | TWQC_GETDEFAULT | TWQC_GETCURRENT  );
+            break;
+
+        case MSG_GET:
+            twCC = msg_get_enum(pCapability, possible_values, sizeof(possible_values) / sizeof(possible_values[0]),
+                    TWTY_UINT16, activeDS.sane_param.depth, activeDS.sane_param.depth);
+            break;
+
+        case MSG_GETDEFAULT:
+            /* .. Fall through intentional .. */
+
+        case MSG_GETCURRENT:
+            twCC = set_onevalue(pCapability, TWTY_UINT16, activeDS.sane_param.depth);
+            break;
+    }
+#endif
     return twCC;
 }
 
@@ -545,6 +579,10 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 
         case ICAP_PIXELTYPE:
             twCC = SANE_ICAPPixelType (pCapability, action);
+            break;
+
+        case ICAP_BITDEPTH:
+            twCC = SANE_ICAPBitDepth(pCapability, action);
             break;
 
         case ICAP_XFERMECH:

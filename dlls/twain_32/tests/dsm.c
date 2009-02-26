@@ -463,8 +463,10 @@ static void test_single_source(TW_IDENTITY *appid, TW_IDENTITY *source)
             Sources that supply image information must support DG_CONTROL / DAT_CAPABILITY /
             MSG_GET, MSG_GETCURRENT, MSG_GETDEFAULT, MSG_RESET and MSG_SET on:
         */
-        todo_wine
         ok(capabilities[ICAP_BITDEPTH], "ICAP_BITDEPTH not supported\n");
+        if (capabilities[ICAP_BITDEPTH])
+            test_onevalue_cap(appid, source, ICAP_BITDEPTH, TWTY_UINT16,
+                TWQC_GET | TWQC_GETDEFAULT | TWQC_GETCURRENT );
         todo_wine
         ok(capabilities[ICAP_BITORDER], "ICAP_BITORDER not supported\n");
         ok(capabilities[ICAP_PIXELTYPE], "ICAP_PIXELTYPE not supported\n");
