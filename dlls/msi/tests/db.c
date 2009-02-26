@@ -321,10 +321,8 @@ static void test_msiinsert(void)
     r = MsiRecordGetFieldCount(hrec);
     ok(r == 3, "record count wrong\n");
 
-    todo_wine {
     r = MsiRecordIsNull(hrec, 0);
     ok(r == FALSE, "field 0 not null\n");
-    }
 
     r = MsiRecordGetInteger(hrec, 1);
     ok(r == 1, "field 1 contents wrong\n");
@@ -903,10 +901,7 @@ static void test_viewmodify(void)
     ok(r == ERROR_SUCCESS, "failed to set string\n");
 
     r = MsiViewModify(hview, MSIMODIFY_UPDATE, hrec);
-    todo_wine
-    {
-        ok(r == ERROR_FUNCTION_FAILED, "MsiViewModify failed\n");
-    }
+    ok(r == ERROR_FUNCTION_FAILED, "MsiViewModify failed\n");
 
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");
