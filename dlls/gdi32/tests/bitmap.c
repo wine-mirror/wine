@@ -1547,7 +1547,9 @@ static void test_GetDIBits(void)
     SetLastError(0xdeadbeef);
     lines = GetDIBits(0, hbmp, 0, bm.bmHeight, buf, bi, DIB_RGB_COLORS);
     ok(lines == 0, "GetDIBits copied %d lines with hdc = 0\n", lines);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER ||
+       broken(GetLastError() == 0xdeadbeef), /* winnt */
+       "wrong error %u\n", GetLastError());
     ok(bi->bmiHeader.biSizeImage == 0, "expected 0, got %u\n", bi->bmiHeader.biSizeImage);
 
     memset(buf, 0xAA, sizeof(buf));
