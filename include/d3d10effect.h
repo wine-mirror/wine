@@ -99,6 +99,23 @@ typedef struct _D3D10_EFFECT_DESC
     UINT Techniques;
 } D3D10_EFFECT_DESC;
 
+typedef struct _D3D10_PASS_DESC
+{
+    LPCSTR Name;
+    UINT Annotations;
+    BYTE *pIAInputSignature;
+    SIZE_T IAInputSignatureSize;
+    UINT StencilRef;
+    UINT SampleMask;
+    FLOAT BlendFactor[4];
+} D3D10_PASS_DESC;
+
+typedef struct _D3D10_PASS_SHADER_DESC
+{
+    struct ID3D10EffectShaderVariable *pShaderVariable;
+    UINT ShaderIndex;
+} D3D10_PASS_SHADER_DESC;
+
 DEFINE_GUID(IID_ID3D10EffectType, 0x4e9e1ddc, 0xcd9d, 0x4772, 0xa8, 0x37, 0x00, 0x18, 0x0b, 0x9b, 0x88, 0xfd);
 
 #define INTERFACE ID3D10EffectType
@@ -238,6 +255,23 @@ DECLARE_INTERFACE_(ID3D10EffectPool, IUnknown)
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /* ID3D10EffectPool methods */
     STDMETHOD_(struct ID3D10Effect *, AsEffect)(THIS) PURE;
+};
+#undef INTERFACE
+
+DEFINE_GUID(IID_ID3D10EffectPass, 0x5cfbeb89, 0x1a06, 0x46e0, 0xb2, 0x82, 0xe3, 0xf9, 0xbf, 0xa3, 0x6a, 0x54);
+
+#define INTERFACE ID3D10EffectPass
+DECLARE_INTERFACE(ID3D10EffectPass)
+{
+    STDMETHOD_(BOOL, IsValid)(THIS) PURE;
+    STDMETHOD(GetDesc)(THIS_ D3D10_PASS_DESC *desc) PURE;
+    STDMETHOD(GetVertexShaderDesc)(THIS_ D3D10_PASS_SHADER_DESC *desc) PURE;
+    STDMETHOD(GetGeometryShaderDesc)(THIS_ D3D10_PASS_SHADER_DESC *desc) PURE;
+    STDMETHOD(GetPixelShaderDesc)(THIS_ D3D10_PASS_SHADER_DESC *desc) PURE;
+    STDMETHOD_(struct ID3D10EffectVariable *, GetAnnotationByIndex)(THIS_ UINT index) PURE;
+    STDMETHOD_(struct ID3D10EffectVariable *, GetAnnotationByName)(THIS_ LPCSTR name) PURE;
+    STDMETHOD(Apply)(THIS_ UINT flags) PURE;
+    STDMETHOD(ComputeStateBlockMask)(THIS_ D3D10_STATE_BLOCK_MASK *mask) PURE;
 };
 #undef INTERFACE
 
