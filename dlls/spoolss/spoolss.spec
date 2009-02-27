@@ -68,7 +68,7 @@
 @ stub GetPrintProcessorDirectoryW
 @ stub GetPrinterDataExW
 @ stub GetPrinterDataW
-@ stub GetPrinterDriverDirectoryW
+@ stdcall GetPrinterDriverDirectoryW(wstr wstr long ptr long ptr)
 @ stub GetPrinterDriverExW
 @ stub GetPrinterDriverW
 @ stub GetPrinterW

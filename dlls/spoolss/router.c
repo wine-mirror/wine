@@ -399,3 +399,58 @@ BOOL WINAPI EnumPortsW(LPWSTR pName, DWORD Level, LPBYTE pPorts, DWORD cbBuf,
 
     return (res == ROUTER_SUCCESS);
 }
+
+/******************************************************************
+ * GetPrinterDriverDirectoryW (spoolss.@)
+ *
+ * Return the PATH for the Printer-Drivers
+ *
+ * PARAMS
+ *   pName            [I] Servername or NULL (local Computer)
+ *   pEnvironment     [I] Printing-Environment or NULL (Default)
+ *   Level            [I] Structure-Level (must be 1)
+ *   pDriverDirectory [O] PTR to Buffer that receives the Result
+ *   cbBuf            [I] Size of Buffer at pDriverDirectory
+ *   pcbNeeded        [O] PTR to DWORD that receives the size in Bytes used /
+ *                        required for pDriverDirectory
+ *
+ * RETURNS
+ *   Success: TRUE  and in pcbNeeded the Bytes used in pDriverDirectory
+ *   Failure: FALSE and in pcbNeeded the Bytes required for pDriverDirectory,
+ *   if cbBuf is too small
+ *
+ *   Native Values returned in pDriverDirectory on Success:
+ *|  NT(Windows NT x86): "%winsysdir%\\spool\\DRIVERS\\w32x86"
+ *|  NT(Windows x64):    "%winsysdir%\\spool\\DRIVERS\\x64"
+ *|  NT(Windows 4.0):    "%winsysdir%\\spool\\DRIVERS\\win40"
+ *|  win9x(Windows 4.0): "%winsysdir%"
+ *
+ *   "%winsysdir%" is the Value from GetSystemDirectoryW()
+ *
+ */
+BOOL WINAPI GetPrinterDriverDirectoryW(LPWSTR pName, LPWSTR pEnvironment,
+            DWORD Level, LPBYTE pDriverDirectory, DWORD cbBuf, LPDWORD pcbNeeded)
+{
+    backend_t * pb;
+    DWORD res = ROUTER_UNKNOWN;
+
+    TRACE("(%s, %s, %d, %p, %d, %p)\n", debugstr_w(pName),
+          debugstr_w(pEnvironment), Level, pDriverDirectory, cbBuf, pcbNeeded);
+
+    if (pcbNeeded) *pcbNeeded = 0;
+
+    pb = backend_first(pName);
+    if (pb && pb->fpGetPrinterDriverDirectory)
+        res = pb->fpGetPrinterDriverDirectory(pName, pEnvironment, Level,
+                                              pDriverDirectory, cbBuf, pcbNeeded);
+    else
+    {
+        SetLastError(ERROR_PROC_NOT_FOUND);
+    }
+
+    TRACE("got %u with %u (%u byte)\n",
+            res, GetLastError(), pcbNeeded ? *pcbNeeded : 0);
+
+    return (res == ROUTER_SUCCESS);
+
+}
