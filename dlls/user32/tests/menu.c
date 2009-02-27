@@ -211,6 +211,7 @@ static LRESULT WINAPI menu_ownerdraw_wnd_proc(HWND hwnd, UINT msg,
             }
         case WM_ENTERIDLE:
             {
+                ok( lparam, "Menu window handle is NULL!\n");
                 PostMessage(hwnd, WM_CANCELMODE, 0, 0);
                 return TRUE;
             }

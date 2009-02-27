@@ -137,7 +137,6 @@ typedef struct
 
   /* Internal MENU_TrackMenu() flags */
 #define TPM_INTERNAL		0xF0000000
-#define TPM_ENTERIDLEEX	 	0x80000000		/* set owner window for WM_ENTERIDLE */
 #define TPM_BUTTONDOWN		0x40000000		/* menu was clicked before tracking */
 #define TPM_POPUPMENU           0x20000000              /* menu is a popup menu */
 
@@ -3084,7 +3083,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
             {
                 if (!enterIdleSent)
                 {
-                    HWND win = (wFlags & TPM_ENTERIDLEEX && menu->wFlags & MF_POPUP) ? menu->hWnd : 0;
+                    HWND win = menu->wFlags & MF_POPUP ? menu->hWnd : 0;
                     enterIdleSent = TRUE;
                     SendMessageW( mt.hOwnerWnd, WM_ENTERIDLE, MSGF_MENU, (LPARAM)win );
                 }
@@ -3375,7 +3374,7 @@ static BOOL MENU_ExitTracking(HWND hWnd)
 void MENU_TrackMouseMenuBar( HWND hWnd, INT ht, POINT pt )
 {
     HMENU hMenu = (ht == HTSYSMENU) ? get_win_sys_menu( hWnd ) : GetMenu( hWnd );
-    UINT wFlags = TPM_ENTERIDLEEX | TPM_BUTTONDOWN | TPM_LEFTALIGN | TPM_LEFTBUTTON;
+    UINT wFlags = TPM_BUTTONDOWN | TPM_LEFTALIGN | TPM_LEFTBUTTON;
 
     TRACE("wnd=%p ht=0x%04x %s\n", hWnd, ht, wine_dbgstr_point( &pt));
 
@@ -3397,7 +3396,7 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar)
 {
     UINT uItem = NO_SELECTED_ITEM;
     HMENU hTrackMenu;
-    UINT wFlags = TPM_ENTERIDLEEX | TPM_LEFTALIGN | TPM_LEFTBUTTON;
+    UINT wFlags = TPM_LEFTALIGN | TPM_LEFTBUTTON;
 
     TRACE("hwnd %p wParam 0x%04x wChar 0x%04x\n", hwnd, wParam, wChar);
 
