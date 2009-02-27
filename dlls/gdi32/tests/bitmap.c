@@ -1988,7 +1988,6 @@ todo_wine
     test_mono_1x1_bmp(bm5);
     test_mono_1x1_bmp(old1);
     test_mono_1x1_bmp(curObj1);
-    test_mono_1x1_bmp(curObj2);
 
     DeleteObject(bm);
     DeleteObject(bm1);
