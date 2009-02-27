@@ -55,13 +55,15 @@ static const char * const builtin_only[] =
     "gdi32",
     "glu32",
     "icmp",
+    "gphoto2.ds",
     "iphlpapi",
     "kernel32",
+    "mountmgr.sys",
     "mswsock",
     "ntdll",
+    "ntoskrnl.exe",
     "opengl32",
-    "stdole2.tlb",
-    "stdole32.tlb",
+    "sane.ds",
     "twain_32",
     "unicows",
     "user32",
@@ -205,8 +207,33 @@ static int compare_dll( const void *ptr1, const void *ptr2 )
 /* check if dll is recommended as builtin only */
 static inline int is_builtin_only( const char *name )
 {
+    const char *ext = strrchr( name, '.' );
+
+    if (ext)
+    {
+        if (!strcmp( ext, ".vxd" ) ||
+            !strcmp( ext, ".drv" ) ||
+            !strcmp( ext, ".tlb" ))
+            return TRUE;
+    }
     return bsearch( &name, builtin_only, sizeof(builtin_only)/sizeof(builtin_only[0]),
                     sizeof(builtin_only[0]), compare_dll ) != NULL;
+}
+
+/* check if dll should be offered in the drop-down list */
+static int show_dll_in_list( const char *name )
+{
+    const char *ext = strrchr( name, '.' );
+
+    if (ext)
+    {
+        /* skip 16-bit dlls */
+        if (strlen(ext) > 2 && !strcmp( ext + strlen(ext) - 2, "16" )) return FALSE;
+        /* skip exes */
+        if (!strcmp( ext, ".exe" )) return FALSE;
+    }
+    /* skip dlls that should always be builtin */
+    return !is_builtin_only( name );
 }
 
 static void set_controls_from_selection(HWND dialog)
@@ -232,28 +259,6 @@ static void clear_settings(HWND dialog)
     }
 }
 
-/* check if a given dll is 16-bit */
-static int is_16bit_dll( const char *dir, const char *name )
-{
-    char buffer[64];
-    int res;
-    size_t len = strlen(dir) + strlen(name) + 2;
-    char *path = HeapAlloc( GetProcessHeap(), 0, len );
-
-    strcpy( path, dir );
-    strcat( path, "/" );
-    strcat( path, name );
-    res = readlink( path, buffer, sizeof(buffer) );
-    HeapFree( GetProcessHeap(), 0, path );
-
-    if (res == -1) return 0;  /* not a symlink */
-    if (res < 4 || res >= sizeof(buffer)) return 0;
-    buffer[res] = 0;
-    if (strchr( buffer, '/' )) return 0;  /* contains a path, not valid */
-    if (strcmp( buffer + res - 3, ".so" )) return 0;  /* does not end in .so, not valid */
-    return 1;
-}
-
 /* load the list of available libraries from a given dir */
 static void load_library_list_from_dir( HWND dialog, const char *dir_path, int check_subdirs )
 {
@@ -270,23 +275,31 @@ static void load_library_list_from_dir( HWND dialog, const char *dir_path, int c
     {
         size_t len = strlen(de->d_name);
         if (len > sizeof(name)) continue;
-        if (len > 7 && !strcmp( de->d_name + len - 7, ".dll.so"))
+        if (len > 3 && !strcmp( de->d_name + len - 3, ".so"))
         {
-            if (is_16bit_dll( dir_path, de->d_name )) continue;  /* 16-bit dlls can't be configured */
-            len -= 7;
+            len -= 3;
+            if (len > 4 && !strcmp( de->d_name + len - 4, ".dll.so")) len -= 4;
             memcpy( name, de->d_name, len );
             name[len] = 0;
-            /* skip dlls that should always be builtin */
-            if (is_builtin_only( name )) continue;
+            if (!show_dll_in_list( name )) continue;
             SendDlgItemMessageA( dialog, IDC_DLLCOMBO, CB_ADDSTRING, 0, (LPARAM)name );
         }
         else if (check_subdirs)
         {
             struct stat st;
-            if (is_builtin_only( de->d_name )) continue;
+            if (!show_dll_in_list( de->d_name )) continue;
             sprintf( buffer, "%s/%s/%s.dll.so", dir_path, de->d_name, de->d_name );
             if (!stat( buffer, &st ))
+            {
                 SendDlgItemMessageA( dialog, IDC_DLLCOMBO, CB_ADDSTRING, 0, (LPARAM)de->d_name );
+                continue;
+            }
+            sprintf( buffer, "%s/%s/%s.so", dir_path, de->d_name, de->d_name );
+            if (!stat( buffer, &st ))
+            {
+                SendDlgItemMessageA( dialog, IDC_DLLCOMBO, CB_ADDSTRING, 0, (LPARAM)de->d_name );
+                continue;
+            }
         }
     }
     closedir( dir );
