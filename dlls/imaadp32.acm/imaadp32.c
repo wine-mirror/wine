@@ -120,6 +120,25 @@ static	DWORD	ADPCM_GetFormatIndex(const WAVEFORMATEX *wfx)
 	    return i;
     }
 
+    switch (wfx->wFormatTag)
+    {
+    case WAVE_FORMAT_PCM:
+	if(3 > wfx->nChannels &&
+	   wfx->nChannels > 0 &&
+	   wfx->nAvgBytesPerSec == 2 * wfx->nSamplesPerSec * wfx->nChannels &&
+	   wfx->nBlockAlign == 2 * wfx->nChannels &&
+	   wfx->wBitsPerSample == 16)
+	   return hi;
+	break;
+    case WAVE_FORMAT_IMA_ADPCM:
+	if(3 > wfx->nChannels &&
+	   wfx->nChannels > 0 &&
+	   wfx->wBitsPerSample == 4 &&
+	   wfx->cbSize == 2)
+	   return hi;
+	break;
+    }
+
     return 0xFFFFFFFF;
 }
 
