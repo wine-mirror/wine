@@ -4606,9 +4606,9 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     }
 
     if(ft_face->glyph->format != ft_glyph_format_outline &&
-       (needsTransform || format == GGO_NATIVE || format == GGO_BEZIER ||
-                          format == GGO_GRAY2_BITMAP || format == GGO_GRAY4_BITMAP ||
-                          format == GGO_GRAY8_BITMAP))
+       (format == GGO_NATIVE || format == GGO_BEZIER ||
+        format == GGO_GRAY2_BITMAP || format == GGO_GRAY4_BITMAP ||
+        format == GGO_GRAY8_BITMAP))
     {
         TRACE("loaded a bitmap\n");
         LeaveCriticalSection( &freetype_cs );
