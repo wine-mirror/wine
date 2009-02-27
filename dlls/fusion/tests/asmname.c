@@ -417,7 +417,8 @@ static void test_CreateAssemblyNameObject(void)
 
     size = MAX_PATH;
     hr = IAssemblyName_GetDisplayName(name, str, &size, ASM_DISPLAYF_FULL);
-    ok(hr == FUSION_E_INVALID_NAME,
+    ok(hr == FUSION_E_INVALID_NAME ||
+       broken(hr == E_INVALIDARG), /* .NET 1.x */
        "Expected FUSION_E_INVALID_NAME, got %08x\n", hr);
 
     size = MAX_PATH;
@@ -430,7 +431,8 @@ static void test_CreateAssemblyNameObject(void)
     hi = 0xbeefcace;
     lo = 0xcafebabe;
     hr = IAssemblyName_GetVersion(name, &hi, &lo);
-    ok(hr == FUSION_E_INVALID_NAME,
+    ok(hr == FUSION_E_INVALID_NAME ||
+       broken(hr == S_OK), /* .NET 1.x */
        "Expected FUSION_E_INVALID_NAME, got %08x\n", hr);
     ok(hi == 0, "Expected 0, got %08x\n", hi);
     ok(lo == 0, "Expected 0, got %08x\n", lo);
@@ -447,7 +449,8 @@ static void test_CreateAssemblyNameObject(void)
 
     size = MAX_PATH;
     hr = IAssemblyName_GetDisplayName(name, str, &size, ASM_DISPLAYF_FULL);
-    ok(hr == FUSION_E_INVALID_NAME,
+    ok(hr == FUSION_E_INVALID_NAME ||
+       broken(hr == S_OK), /* .NET 1.x */
        "Expected FUSION_E_INVALID_NAME, got %08x\n", hr);
 
     size = MAX_PATH;
@@ -460,7 +463,8 @@ static void test_CreateAssemblyNameObject(void)
     hi = 0xbeefcace;
     lo = 0xcafebabe;
     hr = IAssemblyName_GetVersion(name, &hi, &lo);
-    ok(hr == FUSION_E_INVALID_NAME,
+    ok(hr == FUSION_E_INVALID_NAME ||
+       broken(hr == S_OK), /* .NET 1.x */
        "Expected FUSION_E_INVALID_NAME, got %08x\n", hr);
     ok(hi == 0, "Expected 0, got %08x\n", hi);
     ok(lo == 0, "Expected 0, got %08x\n", lo);
@@ -492,7 +496,8 @@ static void test_CreateAssemblyNameObject(void)
     hi = 0xbeefcace;
     lo = 0xcafebabe;
     hr = IAssemblyName_GetVersion(name, &hi, &lo);
-    ok(hr == FUSION_E_INVALID_NAME,
+    ok(hr == FUSION_E_INVALID_NAME ||
+       broken(hr == S_OK), /* .NET 1.x */
        "Expected FUSION_E_INVALID_NAME, got %08x\n", hr);
     ok(hi == 0, "Expected 0, got %08x\n", hi);
     ok(lo == 0, "Expected 0, got %08x\n", lo);
@@ -526,7 +531,8 @@ static void test_CreateAssemblyNameObject(void)
     hi = 0xbeefcace;
     lo = 0xcafebabe;
     hr = IAssemblyName_GetVersion(name, &hi, &lo);
-    ok(hr == FUSION_E_INVALID_NAME,
+    ok(hr == FUSION_E_INVALID_NAME ||
+       broken(hr == S_OK), /* .NET 1.x */
        "Expected FUSION_E_INVALID_NAME, got %08x\n", hr);
     ok(hi == 0, "Expected 0, got %08x\n", hi);
     ok(lo == 0, "Expected 0, got %08x\n", lo);
@@ -589,7 +595,8 @@ static void test_CreateAssemblyNameObject(void)
     hi = 0xbeefcace;
     lo = 0xcafebabe;
     hr = IAssemblyName_GetVersion(name, &hi, &lo);
-    ok(hr == FUSION_E_INVALID_NAME,
+    ok(hr == FUSION_E_INVALID_NAME ||
+       broken(hr == S_OK), /* .NET 1.x */
        "Expected FUSION_E_INVALID_NAME, got %08x\n", hr);
     ok(hi == 0, "Expected 0, got %08x\n", hi);
     ok(lo == 0, "Expected 0, got %08x\n", lo);
@@ -621,7 +628,8 @@ static void test_CreateAssemblyNameObject(void)
     hi = 0xbeefcace;
     lo = 0xcafebabe;
     hr = IAssemblyName_GetVersion(name, &hi, &lo);
-    ok(hr == FUSION_E_INVALID_NAME,
+    ok(hr == FUSION_E_INVALID_NAME ||
+       broken(hr == S_OK), /* .NET 1.x */
        "Expected FUSION_E_INVALID_NAME, got %08x\n", hr);
     ok(hi == 0, "Expected 0, got %08x\n", hi);
     ok(lo == 0, "Expected 0, got %08x\n", lo);
@@ -653,7 +661,8 @@ static void test_CreateAssemblyNameObject(void)
     hi = 0xbeefcace;
     lo = 0xcafebabe;
     hr = IAssemblyName_GetVersion(name, &hi, &lo);
-    ok(hr == FUSION_E_INVALID_NAME,
+    ok(hr == FUSION_E_INVALID_NAME ||
+       broken(hr == S_OK), /* .NET 1.x */
        "Expected FUSION_E_INVALID_NAME, got %08x\n", hr);
     ok(hi == 0, "Expected 0, got %08x\n", hi);
     ok(lo == 0, "Expected 0, got %08x\n", lo);
@@ -685,7 +694,8 @@ static void test_CreateAssemblyNameObject(void)
     hi = 0xbeefcace;
     lo = 0xcafebabe;
     hr = IAssemblyName_GetVersion(name, &hi, &lo);
-    ok(hr == FUSION_E_INVALID_NAME,
+    ok(hr == FUSION_E_INVALID_NAME ||
+       broken(hr == S_OK), /* .NET 1.x */
        "Expected FUSION_E_INVALID_NAME, got %08x\n", hr);
     ok(hi == 0, "Expected 0, got %08x\n", hi);
     ok(lo == 0, "Expected 0, got %08x\n", lo);
@@ -720,7 +730,8 @@ static void test_CreateAssemblyNameObject(void)
     hi = 0xbeefcace;
     lo = 0xcafebabe;
     hr = IAssemblyName_GetVersion(name, &hi, &lo);
-    ok(hr == FUSION_E_INVALID_NAME,
+    ok(hr == FUSION_E_INVALID_NAME ||
+       broken(hr == S_OK), /* .NET 1.x */
        "Expected FUSION_E_INVALID_NAME, got %08x\n", hr);
     ok(hi == 0, "Expected 0, got %08x\n", hi);
     ok(lo == 0, "Expected 0, got %08x\n", lo);
