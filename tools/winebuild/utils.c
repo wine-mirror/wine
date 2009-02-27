@@ -659,6 +659,7 @@ const char *asm_name( const char *sym )
     {
     case PLATFORM_APPLE:
     case PLATFORM_WINDOWS:
+        if (sym[0] == '.' && sym[1] == 'L') return sym;
         buffer[0] = '_';
         strcpy( buffer + 1, sym );
         return buffer;
