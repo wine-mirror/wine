@@ -5009,45 +5009,55 @@ BOOL WINAPI GetMenuItemRect (HWND hwnd, HMENU hMenu, UINT uItem,
      return TRUE;
 }
 
-
 /**********************************************************************
  *		SetMenuInfo    (USER32.@)
  *
  * FIXME
- *	MIM_APPLYTOSUBMENUS
  *	actually use the items to draw the menu
+ *      (recalculate and/or redraw)
  */
-BOOL WINAPI SetMenuInfo (HMENU hMenu, LPCMENUINFO lpmi)
+static BOOL menu_SetMenuInfo( HMENU hMenu, LPCMENUINFO lpmi)
 {
     POPUPMENU *menu;
+    if( !(menu = MENU_GetMenu(hMenu))) return FALSE;
 
-    TRACE("(%p %p)\n", hMenu, lpmi);
+    if (lpmi->fMask & MIM_BACKGROUND)
+        menu->hbrBack = lpmi->hbrBack;
 
-    if (lpmi && (lpmi->cbSize==sizeof(MENUINFO)) && (menu = MENU_GetMenu(hMenu)))
-    {
+    if (lpmi->fMask & MIM_HELPID)
+        menu->dwContextHelpID = lpmi->dwContextHelpID;
 
-	if (lpmi->fMask & MIM_BACKGROUND)
-	    menu->hbrBack = lpmi->hbrBack;
+    if (lpmi->fMask & MIM_MAXHEIGHT)
+        menu->cyMax = lpmi->cyMax;
 
-	if (lpmi->fMask & MIM_HELPID)
-	    menu->dwContextHelpID = lpmi->dwContextHelpID;
+    if (lpmi->fMask & MIM_MENUDATA)
+        menu->dwMenuData = lpmi->dwMenuData;
 
-	if (lpmi->fMask & MIM_MAXHEIGHT)
-	    menu->cyMax = lpmi->cyMax;
+    if (lpmi->fMask & MIM_STYLE)
+        menu->dwStyle = lpmi->dwStyle;
 
-	if (lpmi->fMask & MIM_MENUDATA)
-	    menu->dwMenuData = lpmi->dwMenuData;
-
-	if (lpmi->fMask & MIM_STYLE)
-	{
-	    menu->dwStyle = lpmi->dwStyle;
-	    if (menu->dwStyle & MNS_AUTODISMISS) FIXME("MNS_AUTODISMISS unimplemented\n");
-	    if (menu->dwStyle & MNS_DRAGDROP) FIXME("MNS_DRAGDROP unimplemented\n");
-	    if (menu->dwStyle & MNS_MODELESS) FIXME("MNS_MODELESS unimplemented\n");
-	}
-
-	return TRUE;
+    if( lpmi->fMask & MIM_APPLYTOSUBMENUS) {
+        int i;
+        MENUITEM *item = menu->items;
+        for( i = menu->nItems; i; i--, item++)
+            if( item->fType & MF_POPUP)
+                menu_SetMenuInfo( item->hSubMenu, lpmi);
     }
+    return TRUE;
+}
+
+BOOL WINAPI SetMenuInfo (HMENU hMenu, LPCMENUINFO lpmi)
+{
+    TRACE("(%p %p)\n", hMenu, lpmi);
+    if( lpmi && (lpmi->cbSize == sizeof( MENUINFO)) && (menu_SetMenuInfo( hMenu, lpmi))) {
+	if( lpmi->fMask & MIM_STYLE) {
+	    if (lpmi->dwStyle & MNS_AUTODISMISS) FIXME("MNS_AUTODISMISS unimplemented\n");
+	    if (lpmi->dwStyle & MNS_DRAGDROP) FIXME("MNS_DRAGDROP unimplemented\n");
+	    if (lpmi->dwStyle & MNS_MODELESS) FIXME("MNS_MODELESS unimplemented\n");
+	}
+        return TRUE;
+    }
+    SetLastError( ERROR_INVALID_PARAMETER);
     return FALSE;
 }
 
@@ -5063,7 +5073,7 @@ BOOL WINAPI GetMenuInfo (HMENU hMenu, LPMENUINFO lpmi)
 
     TRACE("(%p %p)\n", hMenu, lpmi);
 
-    if (lpmi && (menu = MENU_GetMenu(hMenu)))
+    if (lpmi && (lpmi->cbSize == sizeof( MENUINFO)) && (menu = MENU_GetMenu(hMenu)))
     {
 
 	if (lpmi->fMask & MIM_BACKGROUND)
@@ -5083,6 +5093,7 @@ BOOL WINAPI GetMenuInfo (HMENU hMenu, LPMENUINFO lpmi)
 
 	return TRUE;
     }
+    SetLastError( ERROR_INVALID_PARAMETER);
     return FALSE;
 }
 

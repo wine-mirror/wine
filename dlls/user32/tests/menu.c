@@ -2432,6 +2432,161 @@ static void test_InsertMenu(void)
 #undef compare_menu
 }
 
+static void test_menu_getmenuinfo(void)
+{
+    HMENU hmenu;
+    MENUINFO mi = {0};
+    BOOL ret;
+    DWORD gle;
+
+    /* create a menu */
+    hmenu = CreateMenu();
+    assert( hmenu);
+    /* test some parameter errors */
+    SetLastError(0xdeadbeef);
+    ret = pGetMenuInfo( hmenu, NULL);
+    gle= GetLastError();
+    ok( !ret, "GetMenuInfo() should have failed\n");
+    ok( gle == ERROR_INVALID_PARAMETER, "GetMenuInfo() error got %u expected %u\n", gle, ERROR_INVALID_PARAMETER);
+    SetLastError(0xdeadbeef);
+    mi.cbSize = 0;
+    ret = pGetMenuInfo( hmenu, &mi);
+    gle= GetLastError();
+    ok( !ret, "GetMenuInfo() should have failed\n");
+    ok( gle == ERROR_INVALID_PARAMETER, "GetMenuInfo() error got %u expected %u\n", gle, ERROR_INVALID_PARAMETER);
+    SetLastError(0xdeadbeef);
+    mi.cbSize = sizeof( MENUINFO);
+    ret = pGetMenuInfo( hmenu, &mi);
+    gle= GetLastError();
+    ok( ret, "GetMenuInfo() should have succeeded\n");
+    ok( gle == 0xdeadbeef, "GetMenuInfo() error got %u\n", gle);
+    SetLastError(0xdeadbeef);
+    mi.cbSize = 0;
+    ret = pGetMenuInfo( NULL, &mi);
+    gle= GetLastError();
+    ok( !ret, "GetMenuInfo() should have failed\n");
+    ok( gle == ERROR_INVALID_PARAMETER, "GetMenuInfo() error got %u expected %u\n", gle, ERROR_INVALID_PARAMETER);
+        /* clean up */
+    DestroyMenu( hmenu);
+    return;
+}
+
+static void test_menu_setmenuinfo(void)
+{
+    HMENU hmenu, hsubmenu;
+    MENUINFO mi = {0};
+    MENUITEMINFOA mii = {sizeof( MENUITEMINFOA)};
+    BOOL ret;
+    DWORD gle;
+
+    /* create a menu with a submenu */
+    hmenu = CreateMenu();
+    hsubmenu = CreateMenu();
+    assert( hmenu && hsubmenu);
+    mii.fMask = MIIM_SUBMENU;
+    mii.hSubMenu = hsubmenu;
+    ret = InsertMenuItem( hmenu, 0, FALSE, &mii);
+    ok( ret, "InsertMenuItem failed with error %d\n", GetLastError());
+    /* test some parameter errors */
+    SetLastError(0xdeadbeef);
+    ret = pSetMenuInfo( hmenu, NULL);
+    gle= GetLastError();
+    ok( !ret, "SetMenuInfo() should have failed\n");
+    ok( gle == ERROR_INVALID_PARAMETER, "SetMenuInfo() error got %u expected %u\n", gle, ERROR_INVALID_PARAMETER);
+    SetLastError(0xdeadbeef);
+    mi.cbSize = 0;
+    ret = pSetMenuInfo( hmenu, &mi);
+    gle= GetLastError();
+    ok( !ret, "SetMenuInfo() should have failed\n");
+    ok( gle == ERROR_INVALID_PARAMETER, "SetMenuInfo() error got %u expected %u\n", gle, ERROR_INVALID_PARAMETER);
+    SetLastError(0xdeadbeef);
+    mi.cbSize = sizeof( MENUINFO);
+    ret = pSetMenuInfo( hmenu, &mi);
+    gle= GetLastError();
+    ok( ret, "SetMenuInfo() should have succeeded\n");
+    ok( gle == 0xdeadbeef, "SetMenuInfo() error got %u\n", gle);
+    SetLastError(0xdeadbeef);
+    mi.cbSize = 0;
+    ret = pSetMenuInfo( NULL, &mi);
+    gle= GetLastError();
+    ok( !ret, "SetMenuInfo() should have failed\n");
+    ok( gle == ERROR_INVALID_PARAMETER, "SetMenuInfo() error got %u expected %u\n", gle, ERROR_INVALID_PARAMETER);
+    /* functional tests */
+    /* menu and submenu should have the CHECKORBMP style bit cleared */
+    SetLastError(0xdeadbeef);
+    mi.cbSize = sizeof( MENUINFO);
+    mi.fMask = MIM_STYLE;
+    ret = pGetMenuInfo( hmenu, &mi);
+    gle= GetLastError();
+    ok( ret, "GetMenuInfo() should have succeeded\n");
+    ok( gle == 0xdeadbeef, "GetMenuInfo() error got %u\n", gle);
+    ok( !(mi.dwStyle & MNS_CHECKORBMP), "menustyle was not expected to have the MNS_CHECKORBMP flag\n");
+    SetLastError(0xdeadbeef);
+    mi.cbSize = sizeof( MENUINFO);
+    mi.fMask = MIM_STYLE;
+    ret = pGetMenuInfo( hsubmenu, &mi);
+    gle= GetLastError();
+    ok( ret, "GetMenuInfo() should have succeeded\n");
+    ok( gle == 0xdeadbeef, "GetMenuInfo() error got %u\n", gle);
+    ok( !(mi.dwStyle & MNS_CHECKORBMP), "menustyle was not expected to have the MNS_CHECKORBMP flag\n");
+    /* SetMenuInfo() */
+    SetLastError(0xdeadbeef);
+    mi.cbSize = sizeof( MENUINFO);
+    mi.fMask = MIM_STYLE | MIM_APPLYTOSUBMENUS;
+    mi.dwStyle = MNS_CHECKORBMP;
+    ret = pSetMenuInfo( hmenu, &mi);
+    gle= GetLastError();
+    ok( ret, "SetMenuInfo() should have succeeded\n");
+    ok( gle == 0xdeadbeef, "SetMenuInfo() error got %u\n", gle);
+    /* Now both menus should have the MNS_CHECKORBMP style bit set */
+    SetLastError(0xdeadbeef);
+    mi.cbSize = sizeof( MENUINFO);
+    mi.fMask = MIM_STYLE;
+    ret = pGetMenuInfo( hmenu, &mi);
+    gle= GetLastError();
+    ok( ret, "GetMenuInfo() should have succeeded\n");
+    ok( gle == 0xdeadbeef, "GetMenuInfo() error got %u\n", gle);
+    ok( mi.dwStyle & MNS_CHECKORBMP, "menustyle was expected to have the MNS_CHECKORBMP flag\n");
+    SetLastError(0xdeadbeef);
+    mi.cbSize = sizeof( MENUINFO);
+    mi.fMask = MIM_STYLE;
+    ret = pGetMenuInfo( hsubmenu, &mi);
+    gle= GetLastError();
+    ok( ret, "GetMenuInfo() should have succeeded\n");
+    ok( gle == 0xdeadbeef, "GetMenuInfo() error got %u\n", gle);
+    ok( mi.dwStyle & MNS_CHECKORBMP, "menustyle was expected to have the MNS_CHECKORBMP flag\n");
+    /* now repeat that without the APPLYTOSUBMENUS flag and another style bit */
+    SetLastError(0xdeadbeef);
+    mi.cbSize = sizeof( MENUINFO);
+    mi.fMask = MIM_STYLE ;
+    mi.dwStyle = MNS_NOCHECK;
+    ret = pSetMenuInfo( hmenu, &mi);
+    gle= GetLastError();
+    ok( ret, "SetMenuInfo() should have succeeded\n");
+    ok( gle == 0xdeadbeef, "SetMenuInfo() error got %u\n", gle);
+    /* Now only the top menu should have the MNS_NOCHECK style bit set */
+    SetLastError(0xdeadbeef);
+    mi.cbSize = sizeof( MENUINFO);
+    mi.fMask = MIM_STYLE;
+    ret = pGetMenuInfo( hmenu, &mi);
+    gle= GetLastError();
+    ok( ret, "GetMenuInfo() should have succeeded\n");
+    ok( gle == 0xdeadbeef, "GetMenuInfo() error got %u\n", gle);
+    ok( mi.dwStyle & MNS_NOCHECK, "menustyle was expected to have the MNS_NOCHECK flag\n");
+    SetLastError(0xdeadbeef);
+    mi.cbSize = sizeof( MENUINFO);
+    mi.fMask = MIM_STYLE;
+    ret = pGetMenuInfo( hsubmenu, &mi);
+    gle= GetLastError();
+    ok( ret, "GetMenuInfo() should have succeeded\n");
+    ok( gle == 0xdeadbeef, "GetMenuInfo() error got %u\n", gle);
+    ok( !(mi.dwStyle & MNS_NOCHECK), "menustyle was not expected to have the MNS_NOCHECK flag\n");
+    /* clean up */
+    DestroyMenu( hsubmenu);
+    DestroyMenu( hmenu);
+    return;
+}
+
 START_TEST(menu)
 {
     init_function_pointers();
@@ -2454,7 +2609,12 @@ START_TEST(menu)
     test_menu_locked_by_window();
     test_menu_ownerdraw();
     test_menu_bmp_and_string();
-
+    /* test Get/SetMenuInfo if available */
+    if( pGetMenuInfo && pSetMenuInfo) {
+        test_menu_getmenuinfo();
+        test_menu_setmenuinfo();
+    } else
+        win_skip("Get/SetMenuInfo are not available\n");
     if( !pSendInput)
         win_skip("SendInput is not available\n");
     else
