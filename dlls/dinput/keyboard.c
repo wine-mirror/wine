@@ -87,11 +87,17 @@ static int KeyboardCallback( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM 
 
     TRACE("(%p) %ld,%ld\n", iface, wparam, lparam);
 
-    dik_code = map_dik_code(hook->scanCode & 0xff,hook->vkCode);
-    /* R-Shift is special - it is an extended key with separate scan code */
-    if (hook->flags & LLKHF_EXTENDED && dik_code != 0x36)
-        dik_code |= 0x80;
-
+    switch (hook->vkCode)
+    {
+        /* R-Shift is special - it is an extended key with separate scan code */
+        case VK_RSHIFT  : dik_code = DIK_RSHIFT; break;
+        case VK_PAUSE   : dik_code = DIK_PAUSE; break;
+        case VK_NUMLOCK : dik_code = DIK_NUMLOCK; break;
+        case VK_SUBTRACT: dik_code = DIK_SUBTRACT; break;
+        default:
+            dik_code = map_dik_code(hook->scanCode & 0xff, hook->vkCode);
+            if (hook->flags & LLKHF_EXTENDED) dik_code |= 0x80;
+    }
     new_diks = hook->flags & LLKHF_UP ? 0 : 0x80;
 
     /* returns now if key event already known */
