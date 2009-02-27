@@ -2,6 +2,7 @@
  * Direct3D 10
  *
  * Copyright 2007 Andras Kovacs
+ * Copyright 2009 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -209,6 +210,7 @@ HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT fl
         ID3D10Device *device, ID3D10EffectPool *effect_pool, ID3D10Effect **effect)
 {
     struct d3d10_effect *object;
+    HRESULT hr;
 
     FIXME("data %p, data_size %lu, flags %#x, device %p, effect_pool %p, effect %p stub!\n",
             data, data_size, flags, device, effect_pool, effect);
@@ -222,6 +224,14 @@ HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT fl
 
     object->vtbl = &d3d10_effect_vtbl;
     object->refcount = 1;
+
+    hr = d3d10_effect_parse(object, data, data_size);
+    if (FAILED(hr))
+    {
+        ERR("Failed to parse effect\n");
+        IUnknown_Release((IUnknown *)object);
+        return hr;
+    }
 
     *effect = (ID3D10Effect *)object;
 

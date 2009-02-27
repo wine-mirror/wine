@@ -24,6 +24,110 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 
+#define MAKE_TAG(ch0, ch1, ch2, ch3) \
+    ((DWORD)(ch0) | ((DWORD)(ch1) << 8) | \
+    ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))
+#define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
+
+static inline void read_dword(const char **ptr, DWORD *d)
+{
+    memcpy(d, *ptr, sizeof(d));
+    *ptr += sizeof(d);
+}
+
+static inline void skip_dword_unknown(const char **ptr, unsigned int count)
+{
+    unsigned int i;
+    DWORD d;
+
+    FIXME("Skipping %u unknown DWORDs:\n", count);
+    for (i = 0; i < count; ++i)
+    {
+        read_dword(ptr, &d);
+        FIXME("\t0x%08x\n", d);
+    }
+}
+
+static inline void read_tag(const char **ptr, DWORD *t, char t_str[5])
+{
+    read_dword(ptr, t);
+    memcpy(t_str, t, 4);
+    t_str[4] = '\0';
+}
+
+static HRESULT parse_dxbc(const char *data, SIZE_T data_size,
+        HRESULT (*chunk_handler)(const char *data, void *ctx), void *ctx)
+{
+    const char *ptr = data;
+    HRESULT hr = S_OK;
+    DWORD chunk_count;
+    DWORD total_size;
+    char tag_str[5];
+    unsigned int i;
+    DWORD tag;
+
+    read_tag(&ptr, &tag, tag_str);
+    TRACE("tag: %s\n", tag_str);
+
+    if (tag != TAG_DXBC)
+    {
+        WARN("Wrong tag.\n");
+        return E_FAIL;
+    }
+
+    /* checksum? */
+    skip_dword_unknown(&ptr, 4);
+
+    skip_dword_unknown(&ptr, 1);
+
+    read_dword(&ptr, &total_size);
+    TRACE("total size: %#x\n", total_size);
+
+    read_dword(&ptr, &chunk_count);
+    TRACE("chunk count: %#x\n", chunk_count);
+
+    for (i = 0; i < chunk_count; ++i)
+    {
+        DWORD chunk_offset;
+
+        read_dword(&ptr, &chunk_offset);
+        TRACE("chunk %u at offset %#x\n", i, chunk_offset);
+
+        hr = chunk_handler(data + chunk_offset, ctx);
+        if (FAILED(hr)) break;
+    }
+
+    return hr;
+}
+
+static HRESULT fx10_chunk_handler(const char *data, void *ctx)
+{
+    const char *ptr = data;
+    DWORD chunk_size;
+    char tag_str[5];
+    DWORD tag;
+
+    read_tag(&ptr, &tag, tag_str);
+    TRACE("tag: %s\n", tag_str);
+
+    read_dword(&ptr, &chunk_size);
+    TRACE("chunk size: %#x\n", chunk_size);
+
+    switch(tag)
+    {
+        default:
+            FIXME("Unhandled chunk %s\n", tag_str);
+            break;
+    }
+
+    return S_OK;
+}
+
+HRESULT d3d10_effect_parse(struct d3d10_effect *This, const void *data, SIZE_T data_size)
+{
+    return parse_dxbc(data, data_size, fx10_chunk_handler, This);
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_QueryInterface(ID3D10Effect *iface, REFIID riid, void **object)
