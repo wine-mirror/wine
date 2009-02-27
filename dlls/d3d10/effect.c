@@ -28,6 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
     ((DWORD)(ch0) | ((DWORD)(ch1) << 8) | \
     ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))
 #define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
+#define TAG_FX10 MAKE_TAG('F', 'X', '1', '0')
 
 static inline void read_dword(const char **ptr, DWORD *d)
 {
@@ -100,7 +101,69 @@ static HRESULT parse_dxbc(const char *data, SIZE_T data_size,
     return hr;
 }
 
-static HRESULT fx10_chunk_handler(const char *data, void *ctx)
+static HRESULT parse_fx10_pass_index(struct d3d10_effect_pass *p, const char **ptr)
+{
+    unsigned int i;
+
+    read_dword(ptr, &p->start);
+    TRACE("Pass starts at offset %#x\n", p->start);
+
+    read_dword(ptr, &p->variable_count);
+    TRACE("Pass has %u variables\n", p->variable_count);
+
+    skip_dword_unknown(ptr, 1);
+
+    p->variables = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, p->variable_count * sizeof(*p->variables));
+    if (!p->variables)
+    {
+        ERR("Failed to allocate variables memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < p->variable_count; ++i)
+    {
+        read_dword(ptr, &p->variables[i].type);
+        TRACE("Variable %u is of type %#x\n", i, p->variables[i].type);
+
+        skip_dword_unknown(ptr, 2);
+
+        read_dword(ptr, &p->variables[i].idx_offset);
+        TRACE("Variable %u idx is at offset %#x\n", i, p->variables[i].idx_offset);
+    }
+
+    return S_OK;
+}
+
+static HRESULT parse_fx10_technique_index(struct d3d10_effect_technique *t, const char **ptr)
+{
+    HRESULT hr = S_OK;
+    unsigned int i;
+
+    read_dword(ptr, &t->start);
+    TRACE("Technique starts at offset %#x\n", t->start);
+
+    read_dword(ptr, &t->pass_count);
+    TRACE("Technique has %u passes\n", t->pass_count);
+
+    skip_dword_unknown(ptr, 1);
+
+    t->passes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, t->pass_count * sizeof(*t->passes));
+    if (!t->passes)
+    {
+        ERR("Failed to allocate passes memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < t->pass_count; ++i)
+    {
+        hr = parse_fx10_pass_index(&t->passes[i], ptr);
+        if (FAILED(hr)) break;
+    }
+
+    return hr;
+}
+
+static HRESULT shader_chunk_handler(const char *data, void *ctx)
 {
     const char *ptr = data;
     DWORD chunk_size;
@@ -123,9 +186,254 @@ static HRESULT fx10_chunk_handler(const char *data, void *ctx)
     return S_OK;
 }
 
+static HRESULT parse_shader(struct d3d10_effect_variable *v, const char *data)
+{
+    const char *ptr = data;
+    DWORD dxbc_size;
+
+    read_dword(&ptr, &dxbc_size);
+    TRACE("dxbc size: %#x\n", dxbc_size);
+
+    return parse_dxbc(ptr, dxbc_size, shader_chunk_handler, v);
+}
+
+static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *data)
+{
+    const char *ptr;
+    DWORD offset;
+    HRESULT hr;
+
+    ptr = data + v->idx_offset;
+    read_dword(&ptr, &offset);
+
+    TRACE("Variable of type %#x starts at offset %#x\n", v->type, offset);
+
+    /* FIXME: This probably isn't completely correct. */
+    if (offset == 1)
+    {
+        WARN("Skipping variable\n");
+        return S_OK;
+    }
+
+    ptr = data + offset;
+    switch (v->type)
+    {
+        case D3D10_EVT_VERTEXSHADER:
+            TRACE("Vertex shader\n");
+            hr = parse_shader(v, ptr);
+            break;
+
+        case D3D10_EVT_PIXELSHADER:
+            TRACE("Pixel shader\n");
+            hr = parse_shader(v, ptr);
+            break;
+
+        case D3D10_EVT_GEOMETRYSHADER:
+            TRACE("Geometry shader\n");
+            hr = parse_shader(v, ptr);
+            break;
+
+        default:
+            FIXME("Unhandled variable type %#x\n", v->type);
+            hr = E_FAIL;
+            break;
+    }
+
+    return hr;
+}
+
+static HRESULT parse_fx10_pass(struct d3d10_effect_pass *p, const char *data)
+{
+    HRESULT hr = S_OK;
+    const char *ptr;
+    size_t name_len;
+    unsigned int i;
+
+    ptr = data + p->start;
+
+    name_len = strlen(ptr) + 1;
+    p->name = HeapAlloc(GetProcessHeap(), 0, name_len);
+    if (!p->name)
+    {
+        ERR("Failed to allocate name memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    memcpy(p->name, ptr, name_len);
+    ptr += name_len;
+
+    TRACE("pass name: %s\n", p->name);
+
+    for (i = 0; i < p->variable_count; ++i)
+    {
+        hr = parse_fx10_variable(&p->variables[i], data);
+        if (FAILED(hr)) break;
+    }
+
+    return hr;
+}
+
+static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char *data)
+{
+    HRESULT hr = S_OK;
+    const char *ptr;
+    size_t name_len;
+    unsigned int i;
+
+    ptr = data + t->start;
+
+    name_len = strlen(ptr) + 1;
+    t->name = HeapAlloc(GetProcessHeap(), 0, name_len);
+    if (!t->name)
+    {
+        ERR("Failed to allocate name memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    memcpy(t->name, ptr, name_len);
+    ptr += name_len;
+
+    TRACE("technique name: %s\n", t->name);
+
+    for (i = 0; i < t->pass_count; ++i)
+    {
+        hr = parse_fx10_pass(&t->passes[i], data);
+        if (FAILED(hr)) break;
+    }
+
+    return hr;
+}
+
+static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD data_size)
+{
+    const char *ptr = data + e->index_offset;
+    HRESULT hr = S_OK;
+    unsigned int i;
+
+    skip_dword_unknown(&ptr, 6);
+
+    e->techniques = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, e->technique_count * sizeof(*e->techniques));
+    if (!e->techniques)
+    {
+        ERR("Failed to allocate techniques memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < e->technique_count; ++i)
+    {
+        struct d3d10_effect_technique *t = &e->techniques[i];
+        hr = parse_fx10_technique_index(t, &ptr);
+        if (FAILED(hr)) break;
+
+        hr = parse_fx10_technique(t, data);
+        if (FAILED(hr)) break;
+    }
+
+    return hr;
+}
+
+static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_size)
+{
+    const char *ptr = data;
+    DWORD unknown;
+
+    /* version info? */
+    skip_dword_unknown(&ptr, 2);
+
+    read_dword(&ptr, &unknown);
+    FIXME("Unknown 0: %u\n", unknown);
+    read_dword(&ptr, &unknown);
+    FIXME("Unknown 1: %u\n", unknown);
+    read_dword(&ptr, &unknown);
+    FIXME("Unknown 2: %u\n", unknown);
+    read_dword(&ptr, &unknown);
+    FIXME("Unknown 3: %u\n", unknown);
+    read_dword(&ptr, &unknown);
+    FIXME("Unknown 4: %u\n", unknown);
+
+    read_dword(&ptr, &e->technique_count);
+    TRACE("Technique count: %u\n", e->technique_count);
+
+    read_dword(&ptr, &e->index_offset);
+    TRACE("Index offset: %#x\n", e->index_offset);
+
+    read_dword(&ptr, &unknown);
+    FIXME("Unknown 5: %u\n", unknown);
+    read_dword(&ptr, &unknown);
+    FIXME("Unknown 6: %u\n", unknown);
+    read_dword(&ptr, &unknown);
+    FIXME("Unknown 7: %u\n", unknown);
+
+    read_dword(&ptr, &e->blendstate_count);
+    TRACE("Blendstate count: %u\n", e->blendstate_count);
+
+    read_dword(&ptr, &unknown);
+    FIXME("Unknown 8: %u\n", unknown);
+    read_dword(&ptr, &unknown);
+    FIXME("Unknown 9: %u\n", unknown);
+    read_dword(&ptr, &unknown);
+    FIXME("Unknown 10: %u\n", unknown);
+    read_dword(&ptr, &unknown);
+    FIXME("Unknown 11: %u\n", unknown);
+    read_dword(&ptr, &unknown);
+    FIXME("Unknown 12: %u\n", unknown);
+    read_dword(&ptr, &unknown);
+    FIXME("Unknown 13: %u\n", unknown);
+
+    return parse_fx10_body(e, ptr, data_size - (ptr - data));
+}
+
+static HRESULT fx10_chunk_handler(const char *data, void *ctx)
+{
+    struct d3d10_effect *e = ctx;
+    const char *ptr = data;
+    DWORD chunk_size;
+    char tag_str[5];
+    DWORD tag;
+
+    read_tag(&ptr, &tag, tag_str);
+    TRACE("tag: %s\n", tag_str);
+
+    read_dword(&ptr, &chunk_size);
+    TRACE("chunk size: %#x\n", chunk_size);
+
+    switch(tag)
+    {
+        case TAG_FX10:
+            parse_fx10(e, ptr, chunk_size);
+            break;
+
+        default:
+            FIXME("Unhandled chunk %s\n", tag_str);
+            break;
+    }
+
+    return S_OK;
+}
+
 HRESULT d3d10_effect_parse(struct d3d10_effect *This, const void *data, SIZE_T data_size)
 {
     return parse_dxbc(data, data_size, fx10_chunk_handler, This);
+}
+
+static void d3d10_effect_pass_destroy(struct d3d10_effect_pass *p)
+{
+    HeapFree(GetProcessHeap(), 0, p->name);
+    HeapFree(GetProcessHeap(), 0, p->variables);
+}
+
+static void d3d10_effect_technique_destroy(struct d3d10_effect_technique *t)
+{
+    HeapFree(GetProcessHeap(), 0, t->name);
+    if (t->passes)
+    {
+        unsigned int i;
+        for (i = 0; i < t->pass_count; ++i)
+        {
+            d3d10_effect_pass_destroy(&t->passes[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, t->passes);
+    }
 }
 
 /* IUnknown methods */
@@ -167,6 +475,15 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
 
     if (!refcount)
     {
+        if (This->techniques)
+        {
+            unsigned int i;
+            for (i = 0; i < This->technique_count; ++i)
+            {
+                d3d10_effect_technique_destroy(&This->techniques[i]);
+            }
+            HeapFree(GetProcessHeap(), 0, This->techniques);
+        }
         HeapFree(GetProcessHeap(), 0, This);
     }
 

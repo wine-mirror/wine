@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Henri Verbeet for CodeWeavers
+ * Copyright 2008-2009 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,12 +31,46 @@
 /* TRACE helper functions */
 const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type);
 
+enum d3d10_effect_variable_type
+{
+    D3D10_EVT_VERTEXSHADER = 6,
+    D3D10_EVT_PIXELSHADER = 7,
+    D3D10_EVT_GEOMETRYSHADER = 8,
+};
+
+struct d3d10_effect_variable
+{
+    enum d3d10_effect_variable_type type;
+    DWORD idx_offset;
+};
+
+struct d3d10_effect_pass
+{
+    char *name;
+    DWORD start;
+    DWORD variable_count;
+    struct d3d10_effect_variable *variables;
+};
+
+struct d3d10_effect_technique
+{
+    char *name;
+    DWORD start;
+    DWORD pass_count;
+    struct d3d10_effect_pass *passes;
+};
+
 /* ID3D10Effect */
 extern const struct ID3D10EffectVtbl d3d10_effect_vtbl;
 struct d3d10_effect
 {
     const struct ID3D10EffectVtbl *vtbl;
     LONG refcount;
+
+    DWORD technique_count;
+    DWORD index_offset;
+    DWORD blendstate_count;
+    struct d3d10_effect_technique *techniques;
 };
 
 HRESULT d3d10_effect_parse(struct d3d10_effect *This, const void *data, SIZE_T data_size);
