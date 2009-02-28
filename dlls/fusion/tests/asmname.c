@@ -437,7 +437,11 @@ static void test_CreateAssemblyNameObject(void)
     ok(hi == 0, "Expected 0, got %08x\n", hi);
     ok(lo == 0, "Expected 0, got %08x\n", lo);
 
-    test_assembly_name_props(name, defaults);
+    if (hr == S_OK)
+        win_skip(".NET 1.x doesn't handle ASM_NAME_PROCESSOR_ID_ARRAY"
+                 " and ASM_NAME_OSINFO_ARRAY correctly\n");
+    else
+        test_assembly_name_props(name, defaults);
 
     IAssemblyName_Release(name);
 
@@ -469,7 +473,11 @@ static void test_CreateAssemblyNameObject(void)
     ok(hi == 0, "Expected 0, got %08x\n", hi);
     ok(lo == 0, "Expected 0, got %08x\n", lo);
 
-    test_assembly_name_props(name, emptyname);
+    if (hr == S_OK)
+        win_skip(".NET 1.x doesn't handle ASM_NAME_PROCESSOR_ID_ARRAY"
+                 " and ASM_NAME_OSINFO_ARRAY correctly\n");
+    else
+        test_assembly_name_props(name, emptyname);
 
     IAssemblyName_Release(name);
 
@@ -502,7 +510,11 @@ static void test_CreateAssemblyNameObject(void)
     ok(hi == 0, "Expected 0, got %08x\n", hi);
     ok(lo == 0, "Expected 0, got %08x\n", lo);
 
-    test_assembly_name_props(name, winename);
+    if (hr == S_OK)
+        win_skip(".NET 1.x doesn't handle ASM_NAME_PROCESSOR_ID_ARRAY"
+                 " and ASM_NAME_OSINFO_ARRAY correctly\n");
+    else
+        test_assembly_name_props(name, winename);
 
     IAssemblyName_Release(name);
 
