@@ -8,7 +8,7 @@
 @ stub AddPrintProcessorW
 @ stub AddPrintProvidorW
 @ stub AddPrinterConnectionW
-@ stub AddPrinterDriverExW
+@ stdcall AddPrinterDriverExW(wstr long ptr long)
 @ stub AddPrinterDriverW
 @ stub AddPrinterExW
 @ stub AddPrinterW
