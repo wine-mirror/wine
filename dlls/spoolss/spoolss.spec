@@ -1,7 +1,7 @@
 @ stub AbortPrinter
 @ stub AddFormW
 @ stub AddJobW
-@ stub AddMonitorW
+@ stdcall AddMonitorW(wstr long ptr)
 @ stub AddPerMachineConnectionW
 @ stub AddPortExW
 @ stub AddPortW

@@ -313,6 +313,48 @@ static backend_t * backend_first(LPWSTR name)
 }
 
 /******************************************************************
+ * AddMonitorW (spoolss.@)
+ *
+ * Install a Printmonitor
+ *
+ * PARAMS
+ *  pName       [I] Servername or NULL (local Computer)
+ *  Level       [I] Structure-Level (Must be 2)
+ *  pMonitors   [I] PTR to MONITOR_INFO_2
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  All Files for the Monitor must already be copied to %winsysdir% ("%SystemRoot%\system32")
+ *
+ */
+BOOL WINAPI AddMonitorW(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
+{
+    backend_t * pb;
+    DWORD res = ROUTER_UNKNOWN;
+
+    TRACE("(%s, %d, %p)\n", debugstr_w(pName), Level, pMonitors);
+
+    if (Level != 2) {
+        SetLastError(ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+
+    pb = backend_first(pName);
+    if (pb && pb->fpAddMonitor)
+        res = pb->fpAddMonitor(pName, Level, pMonitors);
+    else
+    {
+        SetLastError(ERROR_PROC_NOT_FOUND);
+    }
+
+    TRACE("got %u with %u\n", res, GetLastError());
+    return (res == ROUTER_SUCCESS);
+}
+
+/******************************************************************
  * EnumMonitorsW (spoolss.@)
  *
  * Enumerate available Port-Monitors
