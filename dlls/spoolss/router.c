@@ -355,6 +355,40 @@ BOOL WINAPI AddMonitorW(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
 }
 
 /******************************************************************
+ * DeleteMonitorW (spoolss.@)
+ *
+ * Delete a specific Printmonitor from a Printing-Environment
+ *
+ * PARAMS
+ *  pName        [I] Servername or NULL (local Computer)
+ *  pEnvironment [I] Printing-Environment of the Monitor or NULL (Default)
+ *  pMonitorName [I] Name of the Monitor, that should be deleted
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ */
+BOOL WINAPI DeleteMonitorW(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMonitorName)
+{
+    backend_t * pb;
+    DWORD res = ROUTER_UNKNOWN;
+
+    TRACE("(%s, %s, %s)\n", debugstr_w(pName), debugstr_w(pEnvironment), debugstr_w(pMonitorName));
+
+    pb = backend_first(pName);
+    if (pb && pb->fpDeleteMonitor)
+        res = pb->fpDeleteMonitor(pName, pEnvironment, pMonitorName);
+    else
+    {
+        SetLastError(ERROR_PROC_NOT_FOUND);
+    }
+
+    TRACE("got %u with %u\n", res, GetLastError());
+    return (res == ROUTER_SUCCESS);
+}
+
+/******************************************************************
  * EnumMonitorsW (spoolss.@)
  *
  * Enumerate available Port-Monitors

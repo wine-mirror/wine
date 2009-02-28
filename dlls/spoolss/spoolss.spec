@@ -25,7 +25,7 @@
 @ stub CreatePrinterIC
 @ stub DbgGetPointers
 @ stub DeleteFormW
-@ stub DeleteMonitorW
+@ stdcall DeleteMonitorW(wstr wstr wstr)
 @ stub DeletePerMachineConnectionW
 @ stub DeletePortW
 @ stub DeletePrintProcessorW
