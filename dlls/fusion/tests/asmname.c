@@ -610,7 +610,9 @@ static void test_CreateAssemblyNameObject(void)
     ok(hr == FUSION_E_INVALID_NAME ||
        broken(hr == S_OK), /* .NET 1.x */
        "Expected FUSION_E_INVALID_NAME, got %08x\n", hr);
-    ok(hi == 0, "Expected 0, got %08x\n", hi);
+    ok(hi == 0 ||
+       broken(hi == 0x10005), /* .NET 1.x */
+       "Expected 0, got %08x\n", hi);
     ok(lo == 0, "Expected 0, got %08x\n", lo);
 
     test_assembly_name_props(name, badvername);
