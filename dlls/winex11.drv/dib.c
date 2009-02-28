@@ -618,8 +618,11 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
                     }
                 }
                 if ((width&7)!=0) {
-                    *dstbyte=dstval;
+                    *dstbyte++=dstval;
                 }
+                /* pad with 0 to DWORD alignment */
+                for (x = (x+7)&~7; x < ((width + 31) & ~31); x+=8)
+                    *dstbyte++ = 0;
                 dstbits += linebytes;
             }
         } else {
