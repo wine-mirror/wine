@@ -203,7 +203,7 @@ struct statvfs
 
 /* Macros to define assembler functions somewhat portably */
 
-#if defined(__GNUC__) && !defined(__MINGW32__) && !defined(__CYGWIN__) && !defined(__APPLE__)
+#if defined(__GNUC__) && !defined(__INTERIX) && !defined(__MINGW32__) && !defined(__CYGWIN__) && !defined(__APPLE__)
 # define __ASM_GLOBAL_FUNC(name,code) \
       __asm__( ".text\n\t" \
                ".align 4\n\t" \
