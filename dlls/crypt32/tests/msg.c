@@ -2635,6 +2635,14 @@ static void test_msg_control(void)
     CMSG_HASHED_ENCODE_INFO hashInfo = { 0 };
     CMSG_SIGNED_ENCODE_INFO signInfo = { sizeof(signInfo), 0 };
     CMSG_CTRL_DECRYPT_PARA decryptPara = { sizeof(decryptPara), 0 };
+    BOOL old_crypt32 = FALSE;
+
+    /* I_CertUpdateStore can be used for verification if crypt32 is new enough */
+    if (!GetProcAddress(GetModuleHandleA("crypt32.dll"), "I_CertUpdateStore"))
+    {
+        win_skip("Some tests will crash on older crypt32 implementations\n");
+        old_crypt32 = TRUE;
+    }
 
     /* Crashes
     ret = CryptMsgControl(NULL, 0, 0, NULL);
@@ -2644,7 +2652,7 @@ static void test_msg_control(void)
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, NULL,
      NULL);
     /* either with no prior update.. */
-    for (i = 1; have_nt && (i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO); i++)
+    for (i = 1; !old_crypt32 && (i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO); i++)
     {
         SetLastError(0xdeadbeef);
         ret = CryptMsgControl(msg, 0, i, NULL);
@@ -2653,7 +2661,7 @@ static void test_msg_control(void)
     }
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
     /* or after an update. */
-    for (i = 1; have_nt && (i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO); i++)
+    for (i = 1; !old_crypt32 && (i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO); i++)
     {
         SetLastError(0xdeadbeef);
         ret = CryptMsgControl(msg, 0, i, NULL);
@@ -2668,7 +2676,7 @@ static void test_msg_control(void)
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
      NULL, NULL);
     /* either with no prior update.. */
-    for (i = 1; have_nt && (i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO); i++)
+    for (i = 1; !old_crypt32 && (i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO); i++)
     {
         SetLastError(0xdeadbeef);
         ret = CryptMsgControl(msg, 0, i, NULL);
@@ -2677,7 +2685,7 @@ static void test_msg_control(void)
     }
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
     /* or after an update. */
-    for (i = 1; have_nt && (i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO); i++)
+    for (i = 1; !old_crypt32 && (i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO); i++)
     {
         SetLastError(0xdeadbeef);
         ret = CryptMsgControl(msg, 0, i, NULL);
@@ -2691,7 +2699,7 @@ static void test_msg_control(void)
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
      NULL, NULL);
     /* either before an update.. */
-    for (i = 1; have_nt && (i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO); i++)
+    for (i = 1; !old_crypt32 && (i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO); i++)
     {
         SetLastError(0xdeadbeef);
         ret = CryptMsgControl(msg, 0, i, NULL);
@@ -2700,7 +2708,7 @@ static void test_msg_control(void)
     }
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
     /* or after an update. */
-    for (i = 1; have_nt && (i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO); i++)
+    for (i = 1; !old_crypt32 && (i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO); i++)
     {
         SetLastError(0xdeadbeef);
         ret = CryptMsgControl(msg, 0, i, NULL);
