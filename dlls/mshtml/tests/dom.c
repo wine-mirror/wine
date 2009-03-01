@@ -3225,7 +3225,7 @@ static void test_default_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_put_backgroundRepeat(style, sDefault);
     ok(hres == S_OK, "put_backgroundRepeat failed: %08x\n", hres);
-    SysFreeString(str);
+    SysFreeString(sDefault);
 
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
