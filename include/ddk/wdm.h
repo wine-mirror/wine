@@ -1001,6 +1001,13 @@ typedef struct _KUSER_SHARED_DATA {
     } DUMMYUNIONNAME;
 } KSHARED_USER_DATA, *PKSHARED_USER_DATA;
 
+typedef enum _MM_SYSTEM_SIZE
+{
+    MmSmallSystem,
+    MmMediumSystem,
+    MmLargeSystem
+} MM_SYSTEMSIZE;
+
 NTSTATUS WINAPI ObCloseHandle(IN HANDLE handle);
 
 #define IoGetCurrentIrpStackLocation(_Irp) ((_Irp)->Tail.Overlay.CurrentStackLocation)
@@ -1048,6 +1055,7 @@ ULONG     WINAPI KeQueryTimeIncrement(void);
 
 PVOID     WINAPI MmAllocateNonCachedMemory(SIZE_T);
 void      WINAPI MmFreeNonCachedMemory(PVOID,SIZE_T);
+MM_SYSTEMSIZE WINAPI MmQuerySystemSize(void);
 
 NTSTATUS  WINAPI ObReferenceObjectByHandle(HANDLE,ACCESS_MASK,POBJECT_TYPE,KPROCESSOR_MODE,PVOID*,POBJECT_HANDLE_INFORMATION);
 

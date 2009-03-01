@@ -706,7 +706,7 @@
 @ stub MmProbeAndLockProcessPages
 @ stub MmProbeAndLockSelectedPages
 @ stub MmProtectMdlSystemAddress
-@ stub MmQuerySystemSize
+@ stdcall MmQuerySystemSize()
 @ stub MmRemovePhysicalMemory
 @ stdcall MmResetDriverPaging(ptr)
 @ stub MmSectionObjectType

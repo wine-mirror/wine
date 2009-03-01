@@ -1161,6 +1161,17 @@ PVOID WINAPI MmGetSystemRoutineAddress(PUNICODE_STRING SystemRoutineName)
     return pFunc;
 }
 
+
+/***********************************************************************
+ *           MmQuerySystemSize   (NTOSKRNL.EXE.@)
+ */
+MM_SYSTEMSIZE WINAPI MmQuerySystemSize(void)
+{
+    FIXME("stub\n");
+    return MmLargeSystem;
+}
+
+
 /*****************************************************
  *           DllMain
  */
