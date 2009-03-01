@@ -2668,6 +2668,7 @@ static void test_default_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_put_fontWeight(style, sDefault);
     ok(hres == S_OK, "put_fontWeight failed: %08x\n", hres);
+    SysFreeString(sDefault);
 
     /* font Variant */
     hres = IHTMLStyle_get_fontVariant(style, NULL);
@@ -3071,6 +3072,7 @@ static void test_default_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_put_fontStyle(style, sDefault);
     ok(hres == S_OK, "put_fontStyle failed: %08x\n", hres);
+    SysFreeString(sDefault);
 
     /* overflow */
     hres = IHTMLStyle_get_overflow(style, NULL);
