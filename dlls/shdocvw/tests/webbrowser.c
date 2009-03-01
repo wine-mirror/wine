@@ -1355,14 +1355,22 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
         *ppv = &Dispatch;
     else if(IsEqualGUID(&IID_IServiceProvider, riid))
         *ppv = &ServiceProvider;
+    else if(IsEqualGUID(&IID_IDocHostShowUI, riid))
+        trace("interface IID_IDocHostShowUI\n");
+    else if(IsEqualGUID(&IID_IOleControlSite, riid))
+        trace("interface IID_IOleControlSite\n");
+    else if(IsEqualGUID(&IID_IOleCommandTarget, riid))
+        trace("interface IID_IOleCommandTarget\n");
 
-    if(*ppv)
-        return S_OK;
+    /* B6EA2050-048A-11D1-82B9-00C04FB9942E IAxWinHostWindow */
 
-    /* are there more interfaces, that a host can support? */
-    trace("%s: interface not supported\n", debugstr_guid(riid));
+    else
+    {
+        /* are there more interfaces, that a host can support? */
+        trace("%s: interface not supported\n", debugstr_guid(riid));
+    }
 
-    return E_NOINTERFACE;
+    return (*ppv) ? S_OK : E_NOINTERFACE;
 }
 
 static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
