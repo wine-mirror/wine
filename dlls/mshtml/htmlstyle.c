@@ -924,8 +924,18 @@ static HRESULT WINAPI HTMLStyle_get_letterSpacing(IHTMLStyle *iface, VARIANT *p)
 static HRESULT WINAPI HTMLStyle_put_textDecoration(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    /* textDecoration can only be one of the following */
+    if(!v || strcmpiW(styleNone, v)   == 0 || strcmpiW(valUnderline, v)   == 0 ||
+             strcmpiW(valOverline, v) == 0 || strcmpiW(valLineThrough, v) == 0 ||
+             strcmpiW(valBlink, v)    == 0)
+    {
+        return set_style_attr(This, STYLEID_TEXT_DECORATION , v, 0);
+    }
+
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI HTMLStyle_get_textDecoration(IHTMLStyle *iface, BSTR *p)

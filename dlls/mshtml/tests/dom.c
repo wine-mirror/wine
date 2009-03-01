@@ -2798,6 +2798,48 @@ static void test_default_style(IHTMLStyle *style)
     hres = IHTMLStyle_put_textDecorationBlink(style, VARIANT_FALSE);
     ok(hres == S_OK, "textDecorationBlink failed: %08x\n", hres);
 
+    hres = IHTMLStyle_get_textDecoration(style, &sDefault);
+    ok(hres == S_OK, "get_textDecoration failed: %08x\n", hres);
+
+    str = a2bstr("invalid");
+    hres = IHTMLStyle_put_textDecoration(style, str);
+    ok(hres == E_INVALIDARG, "put_textDecoration failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("none");
+    hres = IHTMLStyle_put_textDecoration(style, str);
+    ok(hres == S_OK, "put_textDecoration failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("underline");
+    hres = IHTMLStyle_put_textDecoration(style, str);
+    ok(hres == S_OK, "put_textDecoration failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("overline");
+    hres = IHTMLStyle_put_textDecoration(style, str);
+    ok(hres == S_OK, "put_textDecoration failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("line-through");
+    hres = IHTMLStyle_put_textDecoration(style, str);
+    ok(hres == S_OK, "put_textDecoration failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("blink");
+    hres = IHTMLStyle_put_textDecoration(style, str);
+    ok(hres == S_OK, "put_textDecoration failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle_get_textDecoration(style, &str);
+    ok(hres == S_OK, "get_textDecoration failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "blink"), "str != blink\n");
+    SysFreeString(str);
+
+    hres = IHTMLStyle_put_textDecoration(style, sDefault);
+    ok(hres == S_OK, "put_textDecoration failed: %08x\n", hres);
+    SysFreeString(sDefault);
+
     hres = IHTMLStyle_get_posWidth(style, NULL);
     ok(hres == E_POINTER, "get_posWidth failed: %08x\n", hres);
 
