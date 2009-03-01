@@ -226,7 +226,7 @@ static void be_i386_print_context(HANDLE hThread, const CONTEXT* ctx, int all_re
     if (ctx->EFlags & 0x00004000) *pt-- = 'N'; /* Nested Task Flag */
     if (ctx->EFlags & 0x00008000) *pt-- = '-';
     if (ctx->EFlags & 0x00010000) *pt-- = 'R'; /* Resume Flag */
-    if (ctx->EFlags & 0x00020000) *pt-- = 'V'; /* Vritual Mode Flag */
+    if (ctx->EFlags & 0x00020000) *pt-- = 'V'; /* Virtual Mode Flag */
     if (ctx->EFlags & 0x00040000) *pt-- = 'a'; /* Alignment Check Flag */
     
     switch (get_selector_type(hThread, ctx, ctx->SegCs))
