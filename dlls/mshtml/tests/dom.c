@@ -2782,6 +2782,22 @@ static void test_default_style(IHTMLStyle *style)
     hres = IHTMLStyle_put_textDecorationOverline(style, VARIANT_FALSE);
     ok(hres == S_OK, "put_textDecorationOverline failed: %08x\n", hres);
 
+    b = 0xfefe;
+    hres = IHTMLStyle_get_textDecorationBlink(style, &b);
+    ok(hres == S_OK, "get_textDecorationBlink failed: %08x\n", hres);
+    ok(b == VARIANT_FALSE, "textDecorationBlink = %x\n", b);
+
+    hres = IHTMLStyle_put_textDecorationBlink(style, VARIANT_TRUE);
+    ok(hres == S_OK, "put_textDecorationBlink failed: %08x\n", hres);
+    ok(b == VARIANT_FALSE, "textDecorationBlink = %x\n", b);
+
+    hres = IHTMLStyle_get_textDecorationBlink(style, &b);
+    ok(hres == S_OK, "get_textDecorationBlink failed: %08x\n", hres);
+    ok(b == VARIANT_TRUE, "textDecorationBlink = %x\n", b);
+
+    hres = IHTMLStyle_put_textDecorationBlink(style, VARIANT_FALSE);
+    ok(hres == S_OK, "textDecorationBlink failed: %08x\n", hres);
+
     hres = IHTMLStyle_get_posWidth(style, NULL);
     ok(hres == E_POINTER, "get_posWidth failed: %08x\n", hres);
 
