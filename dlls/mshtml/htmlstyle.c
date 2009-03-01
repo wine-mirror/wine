@@ -156,6 +156,8 @@ static const WCHAR valUnderline[] =
     {'u','n','d','e','r','l','i','n','e',0};
 static const WCHAR szNormal[] =
     {'n','o','r','m','a','l',0};
+static const WCHAR styleNone[] =
+    {'n','o','n','e',0};
 
 static const WCHAR px_formatW[] = {'%','d','p','x',0};
 static const WCHAR emptyW[] = {0};
@@ -436,7 +438,6 @@ static HRESULT get_nsstyle_pos(HTMLStyle *This, styleid_t sid, float *p)
 
 static BOOL is_valid_border_style(BSTR v)
 {
-    static const WCHAR styleNone[]   = {'n','o','n','e',0};
     static const WCHAR styleDotted[] = {'d','o','t','t','e','d',0};
     static const WCHAR styleDashed[] = {'d','a','s','h','e','d',0};
     static const WCHAR styleSolid[]  = {'s','o','l','i','d',0};
@@ -935,15 +936,19 @@ static HRESULT WINAPI HTMLStyle_get_textDecoration(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_textDecorationNone(IHTMLStyle *iface, VARIANT_BOOL v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%x)\n", This, v);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%x)\n", This, v);
+
+    return set_style_attr(This, STYLEID_TEXT_DECORATION, v ? styleNone : emptyW, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_textDecorationNone(IHTMLStyle *iface, VARIANT_BOOL *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, styleNone, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_textDecorationUnderline(IHTMLStyle *iface, VARIANT_BOOL v)
