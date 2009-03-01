@@ -158,6 +158,8 @@ static const WCHAR szNormal[] =
     {'n','o','r','m','a','l',0};
 static const WCHAR styleNone[] =
     {'n','o','n','e',0};
+static const WCHAR valOverline[] =
+    {'o','v','e','r','l','i','n','e',0};
 
 static const WCHAR px_formatW[] = {'%','d','p','x',0};
 static const WCHAR emptyW[] = {0};
@@ -972,15 +974,19 @@ static HRESULT WINAPI HTMLStyle_get_textDecorationUnderline(IHTMLStyle *iface, V
 static HRESULT WINAPI HTMLStyle_put_textDecorationOverline(IHTMLStyle *iface, VARIANT_BOOL v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%x)\n", This, v);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%x)\n", This, v);
+
+    return set_style_attr(This, STYLEID_TEXT_DECORATION, v ? valOverline : emptyW, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_textDecorationOverline(IHTMLStyle *iface, VARIANT_BOOL *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, valOverline, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_textDecorationLineThrough(IHTMLStyle *iface, VARIANT_BOOL v)

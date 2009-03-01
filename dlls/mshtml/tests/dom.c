@@ -2766,6 +2766,22 @@ static void test_default_style(IHTMLStyle *style)
     hres = IHTMLStyle_put_textDecorationNone(style, VARIANT_FALSE);
     ok(hres == S_OK, "put_textDecorationNone failed: %08x\n", hres);
 
+    b = 0xfefe;
+    hres = IHTMLStyle_get_textDecorationOverline(style, &b);
+    ok(hres == S_OK, "get_textDecorationOverline failed: %08x\n", hres);
+    ok(b == VARIANT_FALSE, "textDecorationOverline = %x\n", b);
+
+    hres = IHTMLStyle_put_textDecorationOverline(style, VARIANT_TRUE);
+    ok(hres == S_OK, "put_textDecorationOverline failed: %08x\n", hres);
+    ok(b == VARIANT_FALSE, "textDecorationOverline = %x\n", b);
+
+    hres = IHTMLStyle_get_textDecorationOverline(style, &b);
+    ok(hres == S_OK, "get_textDecorationOverline failed: %08x\n", hres);
+    ok(b == VARIANT_TRUE, "textDecorationOverline = %x\n", b);
+
+    hres = IHTMLStyle_put_textDecorationOverline(style, VARIANT_FALSE);
+    ok(hres == S_OK, "put_textDecorationOverline failed: %08x\n", hres);
+
     hres = IHTMLStyle_get_posWidth(style, NULL);
     ok(hres == E_POINTER, "get_posWidth failed: %08x\n", hres);
 
