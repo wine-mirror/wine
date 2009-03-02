@@ -219,18 +219,6 @@ static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
     IInternetProtocolSink_ReportProgress(This->base.protocol_sink, ulStatusCode, (LPWSTR)lpvStatusInformation);
 }
 
-static inline LPWSTR strndupW(LPCWSTR string, int len)
-{
-    LPWSTR ret = NULL;
-    if (string &&
-        (ret = heap_alloc((len+1)*sizeof(WCHAR))) != NULL)
-    {
-        memcpy(ret, string, len*sizeof(WCHAR));
-        ret[len] = 0;
-    }
-    return ret;
-}
-
 /*
  * Interface implementations
  */
@@ -345,10 +333,10 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
         hres = MK_E_SYNTAX;
         goto done;
     }
-    host = strndupW(url.lpszHostName, url.dwHostNameLength);
-    path = strndupW(url.lpszUrlPath, url.dwUrlPathLength);
-    user = strndupW(url.lpszUserName, url.dwUserNameLength);
-    pass = strndupW(url.lpszPassword, url.dwPasswordLength);
+    host = heap_strndupW(url.lpszHostName, url.dwHostNameLength);
+    path = heap_strndupW(url.lpszUrlPath, url.dwUrlPathLength);
+    user = heap_strndupW(url.lpszUserName, url.dwUserNameLength);
+    pass = heap_strndupW(url.lpszPassword, url.dwPasswordLength);
     if (!url.nPort)
         url.nPort = This->https ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT;
 
