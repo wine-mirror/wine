@@ -605,7 +605,7 @@ static obj_handle_t pipe_server_ioctl( struct fd *fd, ioctl_code_t code, const a
         {
         case ps_idle_server:
         case ps_wait_connect:
-            if (blocking)
+            if (blocking && !is_overlapped( get_fd_options(fd) ))
             {
                 async_data_t new_data = *async_data;
                 if (!(wait_handle = alloc_wait_event( current->process ))) break;
