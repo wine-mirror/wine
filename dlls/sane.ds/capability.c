@@ -386,6 +386,7 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
             twCC = msg_set(pCapability, &val);
             if (twCC == TWCC_SUCCESS)
             {
+                TRACE("Setting pixeltype to %d\n", val);
                 if (! pixeltype_to_sane_mode(val, mode, sizeof(mode)))
                     return TWCC_BADVALUE;
 
@@ -430,6 +431,7 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
 
         case MSG_GETCURRENT:
             twCC = set_onevalue(pCapability, TWTY_UINT16, current_pixeltype);
+            TRACE("Returning current pixeltype of %d\n", current_pixeltype);
             break;
     }
 
@@ -507,6 +509,7 @@ static TW_UINT16 SANE_ICAPBitDepth(pTW_CAPABILITY pCapability, TW_UINT16 action)
             /* .. Fall through intentional .. */
 
         case MSG_GETCURRENT:
+            TRACE("Returning current bitdepth of %d\n", activeDS.sane_param.depth);
             twCC = set_onevalue(pCapability, TWTY_UINT16, activeDS.sane_param.depth);
             break;
     }
