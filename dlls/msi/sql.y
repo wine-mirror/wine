@@ -961,7 +961,11 @@ UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phview,
     TRACE("Parse returned %d\n", r);
     if( r )
     {
-        *sql.view = NULL;
+        if (*sql.view)
+        {
+            (*sql.view)->ops->delete(*sql.view);
+            *sql.view = NULL;
+        }
         return sql.r;
     }
 
