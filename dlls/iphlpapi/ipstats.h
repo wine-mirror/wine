@@ -72,11 +72,6 @@ DWORD getArpTable(PMIB_IPNETTABLE *ppIpNetTable, HANDLE heap, DWORD flags);
 /* Returns the number of entries in the UDP state table. */
 DWORD getNumUdpEntries(void);
 
-/* Allocates the UDP state table from heap and returns it to you in *ppUdpTable.
- * Returns NO_ERROR on success, something else on failure.
- */
-DWORD getUdpTable(PMIB_UDPTABLE *ppUdpTable, HANDLE heap, DWORD flags);
-
 /* Returns the number of entries in the TCP state table. */
 DWORD getNumTcpEntries(void);
 
@@ -84,5 +79,7 @@ DWORD getNumTcpEntries(void);
  * Returns NO_ERROR on success, something else on failure.
  */
 DWORD getTcpTable(PMIB_TCPTABLE *ppTcpTable, HANDLE heap, DWORD flags);
+
+DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable, BOOL bOrder, HANDLE heap, DWORD flags);
 
 #endif /* ndef WINE_IPSTATS_H_ */

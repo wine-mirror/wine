@@ -352,57 +352,6 @@ DWORD WINAPI AllocateAndGetTcpTableFromStack(PMIB_TCPTABLE *ppTcpTable,
 }
 
 
-static int UdpTableSorter(const void *a, const void *b)
-{
-  int ret;
-
-  if (a && b) {
-    const MIB_UDPROW* rowA = (const MIB_UDPROW*)a;
-    const MIB_UDPROW* rowB = (const MIB_UDPROW*)b;
-
-    ret = rowA->dwLocalAddr - rowB->dwLocalAddr;
-    if (ret == 0)
-      ret = rowA->dwLocalPort - rowB->dwLocalPort;
-  }
-  else
-    ret = 0;
-  return ret;
-}
-
-
-/******************************************************************
- *    AllocateAndGetUdpTableFromStack (IPHLPAPI.@)
- *
- * Get the UDP listener table.
- * Like GetUdpTable(), but allocate the returned table from heap.
- *
- * PARAMS
- *  ppUdpTable [Out] pointer into which the MIB_UDPTABLE is
- *                   allocated and returned.
- *  bOrder     [In]  whether to sort the table
- *  heap       [In]  heap from which the table is allocated
- *  flags      [In]  flags to HeapAlloc
- *
- * RETURNS
- *  ERROR_INVALID_PARAMETER if ppUdpTable is NULL, whatever GetUdpTable()
- *  returns otherwise.
- */
-DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable,
- BOOL bOrder, HANDLE heap, DWORD flags)
-{
-  DWORD ret;
-
-  TRACE("ppUdpTable %p, bOrder %d, heap %p, flags 0x%08x\n",
-   ppUdpTable, bOrder, heap, flags);
-  ret = getUdpTable(ppUdpTable, heap, flags);
-  if (!ret && bOrder)
-    qsort((*ppUdpTable)->table, (*ppUdpTable)->dwNumEntries,
-     sizeof(MIB_UDPROW), UdpTableSorter);
-  TRACE("returning %d\n", ret);
-  return ret;
-}
-
-
 /******************************************************************
  *    CreateIpForwardEntry (IPHLPAPI.@)
  *
@@ -1650,7 +1599,7 @@ DWORD WINAPI GetUdpTable(PMIB_UDPTABLE pUdpTable, PDWORD pdwSize, BOOL bOrder)
 
     if (!pdwSize) return ERROR_INVALID_PARAMETER;
 
-    ret = getUdpTable(&table, GetProcessHeap(), 0);
+    ret = AllocateAndGetUdpTableFromStack( &table, bOrder, GetProcessHeap(), 0 );
     if (!ret) {
         DWORD size = FIELD_OFFSET( MIB_UDPTABLE, table[table->dwNumEntries] );
         if (!pUdpTable || *pdwSize < size) {
@@ -1660,9 +1609,6 @@ DWORD WINAPI GetUdpTable(PMIB_UDPTABLE pUdpTable, PDWORD pdwSize, BOOL bOrder)
         else {
           *pdwSize = size;
           memcpy(pUdpTable, table, size);
-          if (bOrder)
-            qsort(pUdpTable->table, pUdpTable->dwNumEntries,
-             sizeof(MIB_UDPROW), UdpTableSorter);
         }
         HeapFree(GetProcessHeap(), 0, table);
     }

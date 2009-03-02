@@ -1454,11 +1454,42 @@ static MIB_UDPTABLE *append_udp_row( HANDLE heap, DWORD flags, MIB_UDPTABLE *tab
     return table;
 }
 
-DWORD getUdpTable(PMIB_UDPTABLE *ppUdpTable, HANDLE heap, DWORD flags)
+static int compare_udp_rows(const void *a, const void *b)
+{
+    const MIB_UDPROW *rowA = a;
+    const MIB_UDPROW *rowB = b;
+    int ret;
+
+    if ((ret = rowA->dwLocalAddr - rowB->dwLocalAddr) != 0) return ret;
+    return rowA->dwLocalPort - rowB->dwLocalPort;
+}
+
+
+/******************************************************************
+ *    AllocateAndGetUdpTableFromStack (IPHLPAPI.@)
+ *
+ * Get the UDP listener table.
+ * Like GetUdpTable(), but allocate the returned table from heap.
+ *
+ * PARAMS
+ *  ppUdpTable [Out] pointer into which the MIB_UDPTABLE is
+ *                   allocated and returned.
+ *  bOrder     [In]  whether to sort the table
+ *  heap       [In]  heap from which the table is allocated
+ *  flags      [In]  flags to HeapAlloc
+ *
+ * RETURNS
+ *  ERROR_INVALID_PARAMETER if ppUdpTable is NULL, whatever GetUdpTable()
+ *  returns otherwise.
+ */
+DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable, BOOL bOrder,
+                                             HANDLE heap, DWORD flags)
 {
     MIB_UDPTABLE *table;
     MIB_UDPROW row;
     DWORD ret = NO_ERROR, count = 16;
+
+    TRACE("table %p, bOrder %d, heap %p, flags 0x%08x\n", ppUdpTable, bOrder, heap, flags);
 
     if (!ppUdpTable) return ERROR_INVALID_PARAMETER;
 
@@ -1496,8 +1527,14 @@ DWORD getUdpTable(PMIB_UDPTABLE *ppUdpTable, HANDLE heap, DWORD flags)
 #endif
 
     if (!table) return ERROR_OUTOFMEMORY;
-    if (!ret) *ppUdpTable = table;
+    if (!ret)
+    {
+        if (bOrder && table->dwNumEntries)
+            qsort( table->table, table->dwNumEntries, sizeof(row), compare_udp_rows );
+        *ppUdpTable = table;
+    }
     else HeapFree( heap, flags, table );
+    TRACE( "returning ret %u table %p\n", ret, table );
     return ret;
 }
 
