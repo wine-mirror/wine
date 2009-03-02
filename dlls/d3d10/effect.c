@@ -682,9 +682,22 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_technique_Ge
 static struct ID3D10EffectPass * STDMETHODCALLTYPE d3d10_effect_technique_GetPassByIndex(ID3D10EffectTechnique *iface,
         UINT index)
 {
-    FIXME("iface %p, index %u stub!\n", iface, index);
+    struct d3d10_effect_technique *This = (struct d3d10_effect_technique *)iface;
+    struct d3d10_effect_pass *p;
 
-    return NULL;
+    TRACE("iface %p, index %u\n", iface, index);
+
+    if (index >= This->pass_count)
+    {
+        WARN("Invalid index specified\n");
+        return NULL;
+    }
+
+    p = &This->passes[index];
+
+    TRACE("Returning pass %p, \"%s\"\n", p, p->name);
+
+    return (ID3D10EffectPass *)p;
 }
 
 static struct ID3D10EffectPass * STDMETHODCALLTYPE d3d10_effect_technique_GetPassByName(ID3D10EffectTechnique *iface,
