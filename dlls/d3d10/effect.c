@@ -32,8 +32,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 
 static inline void read_dword(const char **ptr, DWORD *d)
 {
-    memcpy(d, *ptr, sizeof(d));
-    *ptr += sizeof(d);
+    memcpy(d, *ptr, sizeof(*d));
+    *ptr += sizeof(*d);
 }
 
 static inline void skip_dword_unknown(const char **ptr, unsigned int count)
