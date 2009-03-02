@@ -656,7 +656,7 @@ static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
 	break;
     }
     if (!sane_devlist[i]) {
-	FIXME("Scanner not found.\n");
+	WARN("Scanner not found.\n");
 	return TWRC_FAILURE;
     }
     status = psane_open(sane_devlist[i]->name,&activeDS.deviceHandle);
@@ -665,7 +665,7 @@ static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
 	activeDS.twCC = TWRC_SUCCESS;
 	return TWRC_SUCCESS;
     }
-    FIXME("sane_open(%s): %s\n", sane_devlist[i]->name, psane_strstatus (status));
+    ERR("sane_open(%s): %s\n", sane_devlist[i]->name, psane_strstatus (status));
     return TWRC_FAILURE;
 }
 #endif
