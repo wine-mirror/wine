@@ -2447,13 +2447,17 @@ static void test_menu_getmenuinfo(void)
     ret = pGetMenuInfo( hmenu, NULL);
     gle= GetLastError();
     ok( !ret, "GetMenuInfo() should have failed\n");
-    ok( gle == ERROR_INVALID_PARAMETER, "GetMenuInfo() error got %u expected %u\n", gle, ERROR_INVALID_PARAMETER);
+    ok( gle == ERROR_INVALID_PARAMETER ||
+        broken(gle == 0xdeadbeef), /* Win98, WinME */
+        "GetMenuInfo() error got %u expected %u\n", gle, ERROR_INVALID_PARAMETER);
     SetLastError(0xdeadbeef);
     mi.cbSize = 0;
     ret = pGetMenuInfo( hmenu, &mi);
     gle= GetLastError();
     ok( !ret, "GetMenuInfo() should have failed\n");
-    ok( gle == ERROR_INVALID_PARAMETER, "GetMenuInfo() error got %u expected %u\n", gle, ERROR_INVALID_PARAMETER);
+    ok( gle == ERROR_INVALID_PARAMETER ||
+        broken(gle == 0xdeadbeef), /* Win98, WinME */
+        "GetMenuInfo() error got %u expected %u\n", gle, ERROR_INVALID_PARAMETER);
     SetLastError(0xdeadbeef);
     mi.cbSize = sizeof( MENUINFO);
     ret = pGetMenuInfo( hmenu, &mi);
@@ -2465,8 +2469,10 @@ static void test_menu_getmenuinfo(void)
     ret = pGetMenuInfo( NULL, &mi);
     gle= GetLastError();
     ok( !ret, "GetMenuInfo() should have failed\n");
-    ok( gle == ERROR_INVALID_PARAMETER, "GetMenuInfo() error got %u expected %u\n", gle, ERROR_INVALID_PARAMETER);
-        /* clean up */
+    ok( gle == ERROR_INVALID_PARAMETER ||
+        broken(gle == 0xdeadbeef), /* Win98, WinME */
+        "GetMenuInfo() error got %u expected %u\n", gle, ERROR_INVALID_PARAMETER);
+    /* clean up */
     DestroyMenu( hmenu);
     return;
 }
@@ -2492,13 +2498,17 @@ static void test_menu_setmenuinfo(void)
     ret = pSetMenuInfo( hmenu, NULL);
     gle= GetLastError();
     ok( !ret, "SetMenuInfo() should have failed\n");
-    ok( gle == ERROR_INVALID_PARAMETER, "SetMenuInfo() error got %u expected %u\n", gle, ERROR_INVALID_PARAMETER);
+    ok( gle == ERROR_INVALID_PARAMETER ||
+        broken(gle == 0xdeadbeef), /* Win98, WinME */
+        "SetMenuInfo() error got %u expected %u\n", gle, ERROR_INVALID_PARAMETER);
     SetLastError(0xdeadbeef);
     mi.cbSize = 0;
     ret = pSetMenuInfo( hmenu, &mi);
     gle= GetLastError();
     ok( !ret, "SetMenuInfo() should have failed\n");
-    ok( gle == ERROR_INVALID_PARAMETER, "SetMenuInfo() error got %u expected %u\n", gle, ERROR_INVALID_PARAMETER);
+    ok( gle == ERROR_INVALID_PARAMETER ||
+        broken(gle == 0xdeadbeef), /* Win98, WinME */
+        "SetMenuInfo() error got %u expected %u\n", gle, ERROR_INVALID_PARAMETER);
     SetLastError(0xdeadbeef);
     mi.cbSize = sizeof( MENUINFO);
     ret = pSetMenuInfo( hmenu, &mi);
@@ -2510,7 +2520,9 @@ static void test_menu_setmenuinfo(void)
     ret = pSetMenuInfo( NULL, &mi);
     gle= GetLastError();
     ok( !ret, "SetMenuInfo() should have failed\n");
-    ok( gle == ERROR_INVALID_PARAMETER, "SetMenuInfo() error got %u expected %u\n", gle, ERROR_INVALID_PARAMETER);
+    ok( gle == ERROR_INVALID_PARAMETER ||
+        broken(gle == 0xdeadbeef), /* Win98, WinME */
+        "SetMenuInfo() error got %u expected %u\n", gle, ERROR_INVALID_PARAMETER);
     /* functional tests */
     /* menu and submenu should have the CHECKORBMP style bit cleared */
     SetLastError(0xdeadbeef);
