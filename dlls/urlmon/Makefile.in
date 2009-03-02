@@ -17,6 +17,7 @@ C_SRCS = \
 	http.c \
 	internet.c \
 	mk.c \
+	protocol.c \
 	regsvr.c \
 	sec_mgr.c \
 	session.c \

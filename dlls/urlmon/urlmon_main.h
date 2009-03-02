@@ -98,6 +98,9 @@ typedef struct {
     LONG priority;
 } Protocol;
 
+HRESULT protocol_lock_request(Protocol*);
+HRESULT protocol_unlock_request(Protocol*);
+
 static inline void *heap_alloc(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), 0, len);

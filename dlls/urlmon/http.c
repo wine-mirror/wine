@@ -827,10 +827,7 @@ static HRESULT WINAPI HttpProtocol_LockRequest(IInternetProtocol *iface, DWORD d
 
     TRACE("(%p)->(%08x)\n", This, dwOptions);
 
-    if (!InternetLockRequestFile(This->base.request, &This->base.lock))
-        WARN("InternetLockRequest failed: %d\n", GetLastError());
-
-    return S_OK;
+    return protocol_lock_request(&This->base);
 }
 
 static HRESULT WINAPI HttpProtocol_UnlockRequest(IInternetProtocol *iface)
@@ -839,14 +836,7 @@ static HRESULT WINAPI HttpProtocol_UnlockRequest(IInternetProtocol *iface)
 
     TRACE("(%p)\n", This);
 
-    if (This->base.lock)
-    {
-        if (!InternetUnlockRequestFile(This->base.lock))
-            WARN("InternetUnlockRequest failed: %d\n", GetLastError());
-        This->base.lock = 0;
-    }
-
-    return S_OK;
+    return protocol_unlock_request(&This->base);
 }
 
 #undef PROTOCOL_THIS
