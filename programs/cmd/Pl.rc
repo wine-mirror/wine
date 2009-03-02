@@ -267,4 +267,5 @@ Wpisz HELP <komenda> dla dok³adniejszych informacji o komendzie\n"
   WCMD_CONSTITLE,"Wine Command Prompt"
   WCMD_VERSION,"CMD Version %s\n\n"
   WCMD_MOREPROMPT, "More? "
+  WCMD_LINETOOLONG, "The input line is too long.\n"
 }

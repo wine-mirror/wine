@@ -270,4 +270,5 @@ Entrez HELP <commande> pour plus d'informations sur les commandes ci-dessus\n"
   WCMD_CONSTITLE,"Invite de commande Wine"
   WCMD_VERSION,"CMD version %s\n\n"
   WCMD_MOREPROMPT, "Plus ? "
+  WCMD_LINETOOLONG, "The input line is too long.\n"
 }

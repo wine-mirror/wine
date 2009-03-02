@@ -292,4 +292,5 @@ obigen Befehle erhalten.\n"
   WCMD_CONSTITLE,"Wine Befehlsprozessor"
   WCMD_VERSION,"CMD Version %s\n\n"
   WCMD_MOREPROMPT, "Mehr? "
+  WCMD_LINETOOLONG, "The input line is too long.\n"
 }

@@ -270,6 +270,7 @@ Uporabite HELP <ukaz> za več informacijo o kateremkoli od zgoraj navedenih ukaz
   WCMD_CONSTITLE,"Wine ukazni poziv"
   WCMD_VERSION,"CMD različica %s\n\n"
   WCMD_MOREPROMPT, "Več? "
+  WCMD_LINETOOLONG, "The input line is too long.\n"
 }
 
 #pragma code_page(default)

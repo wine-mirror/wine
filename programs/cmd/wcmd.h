@@ -243,6 +243,7 @@ extern WCHAR version_string[];
 #define WCMD_CONSTITLE        1032
 #define WCMD_VERSION          1033
 #define WCMD_MOREPROMPT       1034
+#define WCMD_LINETOOLONG      1035
 
 /* msdn specified max for Win XP */
 #define MAXSTRING 8192

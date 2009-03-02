@@ -264,4 +264,5 @@ HELP <명령>을 치면 그 명령의 상세한 정보를 보여줌\n"
   WCMD_CONSTITLE,"Wine 명령 입력대기"
   WCMD_VERSION,"CMD 버젼 %s\n\n"
   WCMD_MOREPROMPT, " 더? "
+  WCMD_LINETOOLONG, "The input line is too long.\n"
 }

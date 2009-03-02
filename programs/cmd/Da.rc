@@ -254,4 +254,5 @@ Skriv «HELP <kommando>» for mere information om kommandoerne ovenover\n"
   WCMD_CONSTITLE,"Wine Command Prompt"
   WCMD_VERSION,"CMD Version %s\n\n"
   WCMD_MOREPROMPT, "Mere? "
+  WCMD_LINETOOLONG, "The input line is too long.\n"
 }

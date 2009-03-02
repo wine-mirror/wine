@@ -272,4 +272,5 @@ type HELP <opdracht> voor meer informatie over bovengenoemde opdrachten\n"
   WCMD_CONSTITLE,"Wine Command Prompt"
   WCMD_VERSION,"CMD Versie %s\n\n"
   WCMD_MOREPROMPT, "Meer? "
+  WCMD_LINETOOLONG, "The input line is too long.\n"
 }

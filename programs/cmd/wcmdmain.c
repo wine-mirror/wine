@@ -88,7 +88,7 @@ static const WCHAR equalsW[] = {'=','\0'};
 static const WCHAR closeBW[] = {')','\0'};
 WCHAR anykey[100];
 WCHAR version_string[100];
-WCHAR quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
+WCHAR quals[MAX_PATH], param1[MAXSTRING], param2[MAXSTRING];
 BATCH_CONTEXT *context = NULL;
 extern struct env_stack *pushd_directories;
 static const WCHAR *pagedMessage = NULL;
@@ -972,7 +972,8 @@ void WCMD_run_program (WCHAR *command, int called) {
   WCHAR  temp[MAX_PATH];
   WCHAR  pathtosearch[MAXSTRING];
   WCHAR *pathposn;
-  WCHAR  stemofsearch[MAX_PATH];
+  WCHAR  stemofsearch[MAX_PATH];    /* maximum allowed executable name is
+                                       MAX_PATH, including null character */
   WCHAR *lastSlash;
   WCHAR  pathext[MAXSTRING];
   BOOL  extensionsupplied = FALSE;
@@ -998,6 +999,12 @@ void WCMD_run_program (WCHAR *command, int called) {
       strcpyW (pathtosearch, curDir);
     }
     if (strchrW(param1, '.') != NULL) extensionsupplied = TRUE;
+    if (strlenW(param1) >= MAX_PATH)
+    {
+        WCMD_output_asis(WCMD_LoadMessage(WCMD_LINETOOLONG));
+        return;
+    }
+
     strcpyW(stemofsearch, param1);
 
   } else {
@@ -1584,22 +1591,17 @@ WCHAR *WCMD_LoadMessage(UINT id) {
  *	Dumps out the parsed command line to ensure syntax is correct
  */
 static void WCMD_DumpCommands(CMD_LIST *commands) {
-    WCHAR buffer[MAXSTRING];
     CMD_LIST *thisCmd = commands;
-    const WCHAR fmt[] = {'%','p',' ','%','d',' ','%','2','.','2','d',' ',
-                         '%','p',' ','%','s',' ','R','e','d','i','r',':',
-                         '%','s','\0'};
 
     WINE_TRACE("Parsed line:\n");
     while (thisCmd != NULL) {
-      sprintfW(buffer, fmt,
+      WINE_TRACE("%p %d %2.2d %p %s Redir:%s\n",
                thisCmd,
                thisCmd->prevDelim,
                thisCmd->bracketDepth,
                thisCmd->nextcommand,
-               thisCmd->command,
-               thisCmd->redirects);
-      WINE_TRACE("%s\n", wine_dbgstr_w(buffer));
+               wine_dbgstr_w(thisCmd->command),
+               wine_dbgstr_w(thisCmd->redirects));
       thisCmd = thisCmd->nextcommand;
     }
 }
