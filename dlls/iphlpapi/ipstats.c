@@ -793,6 +793,7 @@ DWORD getUDPStats(MIB_UDPSTATS *stats)
   int mib[] = {CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_STATS};
 #define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
   struct udpstat udp_stat;
+  MIB_UDPTABLE *udp_table;
   size_t needed;
   if (!stats)
       return ERROR_INVALID_PARAMETER;
@@ -809,7 +810,12 @@ DWORD getUDPStats(MIB_UDPSTATS *stats)
   stats->dwOutDatagrams = udp_stat.udps_opackets;
   stats->dwNoPorts = udp_stat.udps_noport;
   stats->dwInErrors = udp_stat.udps_hdrops + udp_stat.udps_badsum + udp_stat.udps_fullsock + udp_stat.udps_badlen;
-  stats->dwNumAddrs = getNumUdpEntries();
+  if (!AllocateAndGetUdpTableFromStack( &udp_table, FALSE, GetProcessHeap(), 0 ))
+  {
+      stats->dwNumAddrs = udp_table->dwNumEntries;
+      HeapFree( GetProcessHeap(), 0, udp_table );
+  }
+  else stats->dwNumAddrs = 0;
 
   return NO_ERROR;
 #else
@@ -1453,14 +1459,6 @@ done:
     return ret;
 }
 
-DWORD getNumUdpEntries(void)
-{
-#if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_NETINET_IN_PCB_H)
-   return getNumWithOneHeader ("net.inet.udp.pcblist");
-#else
-  return getNumWithOneHeader("/proc/net/udp");
-#endif
-}
 
 static MIB_UDPTABLE *append_udp_row( HANDLE heap, DWORD flags, MIB_UDPTABLE *table,
                                      DWORD *count, const MIB_UDPROW *row )

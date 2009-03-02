@@ -55,9 +55,6 @@ DWORD getUDPStats(MIB_UDPSTATS *stats);
 /* Returns the number of entries in the route table. */
 DWORD getNumRoutes(void);
 
-/* Returns the number of entries in the UDP state table. */
-DWORD getNumUdpEntries(void);
-
 /* Returns the number of entries in the TCP state table. */
 DWORD getNumTcpEntries(void);
 
