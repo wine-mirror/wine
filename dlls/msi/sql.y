@@ -58,7 +58,7 @@ static LPWSTR parser_add_table( LPWSTR list, LPWSTR table );
 static void *parser_alloc( void *info, unsigned int sz );
 static column_info *parser_alloc_column( void *info, LPCWSTR table, LPCWSTR column );
 
-static BOOL SQL_MarkPrimaryKeys( column_info *cols, column_info *keys);
+static BOOL SQL_MarkPrimaryKeys( column_info **cols, column_info *keys);
 
 static struct expr * EXPR_complex( void *info, struct expr *l, UINT op, struct expr *r );
 static struct expr * EXPR_unary( void *info, struct expr *l, UINT op );
@@ -289,7 +289,7 @@ onedrop:
 table_def:
     column_def TK_PRIMARY TK_KEY selcollist
         {
-            if( SQL_MarkPrimaryKeys( $1, $4 ) )
+            if( SQL_MarkPrimaryKeys( &$1, $4 ) )
                 $$ = $1;
             else
                 $$ = NULL;
@@ -884,23 +884,56 @@ static struct expr * EXPR_sval( void *info, const struct sql_str *str )
     return e;
 }
 
-static BOOL SQL_MarkPrimaryKeys( column_info *cols,
+static void swap_columns( column_info **cols, column_info *A, int idx )
+{
+    column_info *preA = NULL, *preB = NULL, *B, *ptr;
+    int i = 0;
+
+    B = NULL;
+    ptr = *cols;
+    while( ptr )
+    {
+        if( i++ == idx )
+            B = ptr;
+        else if( !B )
+            preB = ptr;
+
+        if( ptr->next == A )
+            preA = ptr;
+
+        ptr = ptr->next;
+    }
+
+    if( preB ) preB->next = A;
+    if( preA ) preA->next = B;
+    ptr = A->next;
+    A->next = B->next;
+    B->next = ptr;
+    if( idx == 0 )
+      *cols = A;
+}
+
+static BOOL SQL_MarkPrimaryKeys( column_info **cols,
                                  column_info *keys )
 {
     column_info *k;
     BOOL found = TRUE;
+    int count;
 
-    for( k = keys; k && found; k = k->next )
+    for( k = keys, count = 0; k && found; k = k->next, count++ )
     {
         column_info *c;
+        int idx;
 
         found = FALSE;
-        for( c = cols; c && !found; c = c->next )
+        for( c = *cols, idx = 0; c && !found; c = c->next, idx++ )
         {
-             if( lstrcmpW( k->column, c->column ) )
-                 continue;
-             c->type |= MSITYPE_KEY;
-             found = TRUE;
+            if( lstrcmpW( k->column, c->column ) )
+                continue;
+            c->type |= MSITYPE_KEY;
+            found = TRUE;
+            if (idx != count)
+                swap_columns( cols, c, count );
         }
     }
 
