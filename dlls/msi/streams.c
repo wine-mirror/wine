@@ -209,14 +209,19 @@ done:
     return r;
 }
 
-static UINT STREAMS_insert_row(struct tagMSIVIEW *view, MSIRECORD *rec, BOOL temporary)
+static UINT STREAMS_insert_row(struct tagMSIVIEW *view, MSIRECORD *rec, UINT row, BOOL temporary)
 {
     MSISTREAMSVIEW *sv = (MSISTREAMSVIEW *)view;
 
     if (!streams_set_table_size(sv, ++sv->num_rows))
         return ERROR_FUNCTION_FAILED;
 
-    return STREAMS_set_row(view, sv->num_rows - 1, rec, 0);
+    if (row == -1)
+        row = sv->num_rows - 1;
+
+    /* FIXME have to readjust rows */
+
+    return STREAMS_set_row(view, row, rec, 0);
 }
 
 static UINT STREAMS_delete_row(struct tagMSIVIEW *view, UINT row)
@@ -327,7 +332,7 @@ static UINT streams_modify_assign(struct tagMSIVIEW *view, MSIRECORD *rec)
     if (r == ERROR_SUCCESS)
         return streams_modify_update(view, rec);
 
-    return STREAMS_insert_row(view, rec, FALSE);
+    return STREAMS_insert_row(view, rec, -1, FALSE);
 }
 
 static UINT STREAMS_modify(struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIRECORD *rec, UINT row)
@@ -343,7 +348,7 @@ static UINT STREAMS_modify(struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIRE
         break;
 
     case MSIMODIFY_INSERT:
-        r = STREAMS_insert_row(view, rec, FALSE);
+        r = STREAMS_insert_row(view, rec, -1, FALSE);
         break;
 
     case MSIMODIFY_UPDATE:

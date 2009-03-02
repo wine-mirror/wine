@@ -243,14 +243,19 @@ done:
     return r;
 }
 
-static UINT STORAGES_insert_row(struct tagMSIVIEW *view, MSIRECORD *rec, BOOL temporary)
+static UINT STORAGES_insert_row(struct tagMSIVIEW *view, MSIRECORD *rec, UINT row, BOOL temporary)
 {
     MSISTORAGESVIEW *sv = (MSISTORAGESVIEW *)view;
 
     if (!storages_set_table_size(sv, ++sv->num_rows))
         return ERROR_FUNCTION_FAILED;
 
-    return STORAGES_set_row(view, sv->num_rows - 1, rec, 0);
+    if (row == -1)
+        row = sv->num_rows - 1;
+
+    /* FIXME have to readjust rows */
+
+    return STORAGES_set_row(view, row, rec, 0);
 }
 
 static UINT STORAGES_delete_row(struct tagMSIVIEW *view, UINT row)
@@ -361,7 +366,7 @@ static UINT storages_modify_assign(struct tagMSIVIEW *view, MSIRECORD *rec)
     if (r == ERROR_SUCCESS)
         return storages_modify_update(view, rec);
 
-    return STORAGES_insert_row(view, rec, FALSE);
+    return STORAGES_insert_row(view, rec, -1, FALSE);
 }
 
 static UINT STORAGES_modify(struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIRECORD *rec, UINT row)
@@ -377,7 +382,7 @@ static UINT STORAGES_modify(struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIR
         break;
 
     case MSIMODIFY_INSERT:
-        r = STORAGES_insert_row(view, rec, FALSE);
+        r = STORAGES_insert_row(view, rec, -1, FALSE);
         break;
 
     case MSIMODIFY_UPDATE:

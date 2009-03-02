@@ -683,7 +683,7 @@ UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
     if( r )
         goto err;
 
-    r = tv->ops->insert_row( tv, rec, persistent == MSICONDITION_FALSE );
+    r = tv->ops->insert_row( tv, rec, -1, persistent == MSICONDITION_FALSE );
     TRACE("insert_row returned %x\n", r);
     if( r )
         goto err;
@@ -733,7 +733,7 @@ UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
             if( r )
                 goto err;
 
-            r = tv->ops->insert_row( tv, rec, FALSE );
+            r = tv->ops->insert_row( tv, rec, -1, FALSE );
             if( r )
                 goto err;
 
@@ -1372,13 +1372,15 @@ static UINT table_create_new_row( struct tagMSIVIEW *view, UINT *num, BOOL tempo
     {
         row_count = &tv->table->nonpersistent_row_count;
         data_ptr = &tv->table->nonpersistent_data;
-        *num = tv->table->row_count + tv->table->nonpersistent_row_count;
+        if (*num == -1)
+            *num = tv->table->row_count + tv->table->nonpersistent_row_count;
     }
     else
     {
         row_count = &tv->table->row_count;
         data_ptr = &tv->table->data;
-        *num = tv->table->row_count;
+        if (*num == -1)
+            *num = tv->table->row_count;
     }
 
     sz = (*row_count + 1) * sizeof (BYTE*);
@@ -1497,10 +1499,11 @@ static UINT table_validate_new( MSITABLEVIEW *tv, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
-static UINT TABLE_insert_row( struct tagMSIVIEW *view, MSIRECORD *rec, BOOL temporary )
+static UINT TABLE_insert_row( struct tagMSIVIEW *view, MSIRECORD *rec, UINT row, BOOL temporary )
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
-    UINT r, row = -1;
+    UINT i, r, idx, size;
+    BYTE **data;
 
     TRACE("%p %p %s\n", tv, rec, temporary ? "TRUE" : "FALSE" );
 
@@ -1513,6 +1516,27 @@ static UINT TABLE_insert_row( struct tagMSIVIEW *view, MSIRECORD *rec, BOOL temp
     TRACE("insert_row returned %08x\n", r);
     if( r != ERROR_SUCCESS )
         return r;
+
+    idx = row;
+    if( temporary )
+    {
+        data = tv->table->nonpersistent_data;
+        size = tv->table->nonpersistent_row_count;
+        idx -= tv->table->row_count;
+    }
+    else
+    {
+        data = tv->table->data;
+        size = tv->table->row_count;
+    }
+
+    /* shift the rows to make room for the new row */
+    if( idx != size - 1 )
+    {
+        for (i = 1; i < size - idx; i++)
+            memmove(&(data[size - i][0]),
+                    &(data[size - i - 1][0]), tv->row_size);
+    }
 
     return TABLE_set_row( view, row, rec, (1<<tv->num_cols) - 1 );
 }
@@ -1641,14 +1665,14 @@ static UINT TABLE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
         r = table_validate_new( tv, rec );
         if (r != ERROR_SUCCESS)
             break;
-        r = TABLE_insert_row( view, rec, FALSE );
+        r = TABLE_insert_row( view, rec, -1, FALSE );
         break;
 
     case MSIMODIFY_INSERT_TEMPORARY:
         r = table_validate_new( tv, rec );
         if (r != ERROR_SUCCESS)
             break;
-        r = TABLE_insert_row( view, rec, TRUE );
+        r = TABLE_insert_row( view, rec, -1, TRUE );
         break;
 
     case MSIMODIFY_REFRESH:
@@ -1880,7 +1904,7 @@ static UINT TABLE_add_column(struct tagMSIVIEW *view, LPCWSTR table, UINT number
     MSI_RecordSetStringW(rec, 3, column);
     MSI_RecordSetInteger(rec, 4, type);
 
-    r = TABLE_insert_row(&tv->view, rec, FALSE);
+    r = TABLE_insert_row(&tv->view, rec, -1, FALSE);
     if (r != ERROR_SUCCESS)
         goto done;
 
@@ -2354,7 +2378,10 @@ static UINT* msi_record_to_row( const MSITABLEVIEW *tv, MSIRECORD *rec )
         else
         {
             data[i] = MSI_RecordGetInteger( rec, i+1 );
-            if ((tv->columns[i].type&0xff) == 2)
+
+            if (data[i] == MSI_NULL_INTEGER)
+                data[i] = 0;
+            else if ((tv->columns[i].type&0xff) == 2)
                 data[i] += 0x8000;
             else
                 data[i] += 0x80000000;
@@ -2548,7 +2575,7 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
                     }
                 }
 
-                r = TABLE_insert_row( &tv->view, rec, FALSE );
+                r = TABLE_insert_row( &tv->view, rec, -1, FALSE );
                 if (r != ERROR_SUCCESS)
                     ERR("insert row failed\n");
 

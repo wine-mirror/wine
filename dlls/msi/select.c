@@ -136,7 +136,7 @@ static UINT SELECT_set_row( struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, U
     return r;
 }
 
-static UINT SELECT_insert_row( struct tagMSIVIEW *view, MSIRECORD *record, BOOL temporary )
+static UINT SELECT_insert_row( struct tagMSIVIEW *view, MSIRECORD *record, UINT row, BOOL temporary )
 {
     MSISELECTVIEW *sv = (MSISELECTVIEW*)view;
     UINT i, table_cols, r;
@@ -161,7 +161,7 @@ static UINT SELECT_insert_row( struct tagMSIVIEW *view, MSIRECORD *record, BOOL 
             goto fail;
     }
 
-    r = sv->table->ops->insert_row( sv->table, outrec, temporary );
+    r = sv->table->ops->insert_row( sv->table, outrec, row, temporary );
 
 fail:
     msiobj_release( &outrec->hdr );

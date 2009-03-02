@@ -1349,7 +1349,7 @@ static UINT merge_table(MSIDATABASE *db, MERGETABLE *table)
         if (r != ERROR_SUCCESS)
             return r;
 
-        r = tv->ops->insert_row(tv, row->data, FALSE);
+        r = tv->ops->insert_row(tv, row->data, -1, FALSE);
         tv->ops->delete(tv);
 
         if (r != ERROR_SUCCESS)
