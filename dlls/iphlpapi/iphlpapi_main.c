@@ -1251,48 +1251,31 @@ DWORD WINAPI GetIpAddrTable(PMIB_IPADDRTABLE pIpAddrTable, PULONG pdwSize, BOOL 
  */
 DWORD WINAPI GetIpForwardTable(PMIB_IPFORWARDTABLE pIpForwardTable, PULONG pdwSize, BOOL bOrder)
 {
-  DWORD ret;
+    DWORD ret;
+    PMIB_IPFORWARDTABLE table;
 
-  TRACE("pIpForwardTable %p, pdwSize %p, bOrder %d\n", pIpForwardTable,
-   pdwSize, (DWORD)bOrder);
-  if (!pdwSize)
-    ret = ERROR_INVALID_PARAMETER;
-  else {
-    DWORD numRoutes = getNumRoutes();
-    ULONG sizeNeeded = sizeof(MIB_IPFORWARDTABLE);
+    TRACE("pIpForwardTable %p, pdwSize %p, bOrder %d\n", pIpForwardTable, pdwSize, bOrder);
 
-    if (numRoutes > 1)
-      sizeNeeded += (numRoutes - 1) * sizeof(MIB_IPFORWARDROW);
-    if (!pIpForwardTable || *pdwSize < sizeNeeded) {
-      *pdwSize = sizeNeeded;
-      ret = ERROR_INSUFFICIENT_BUFFER;
-    }
-    else {
-      PMIB_IPFORWARDTABLE table;
+    if (!pdwSize) return ERROR_INVALID_PARAMETER;
 
-      ret = getRouteTable(&table, GetProcessHeap(), 0);
-      if (!ret) {
-        sizeNeeded = sizeof(MIB_IPFORWARDTABLE);
-        if (table->dwNumEntries > 1)
-          sizeNeeded += (table->dwNumEntries - 1) * sizeof(MIB_IPFORWARDROW);
-        if (*pdwSize < sizeNeeded) {
-          *pdwSize = sizeNeeded;
+    ret = getRouteTable(&table, GetProcessHeap(), 0);
+    if (!ret) {
+        DWORD size = FIELD_OFFSET( MIB_IPFORWARDTABLE, table[table->dwNumEntries] );
+        if (!pIpForwardTable || *pdwSize < size) {
+          *pdwSize = size;
           ret = ERROR_INSUFFICIENT_BUFFER;
         }
         else {
-          *pdwSize = sizeNeeded;
-          memcpy(pIpForwardTable, table, sizeNeeded);
+          *pdwSize = size;
+          memcpy(pIpForwardTable, table, size);
           if (bOrder)
             qsort(pIpForwardTable->table, pIpForwardTable->dwNumEntries,
              sizeof(MIB_IPFORWARDROW), IpForwardTableSorter);
-          ret = NO_ERROR;
         }
         HeapFree(GetProcessHeap(), 0, table);
-      }
     }
-  }
-  TRACE("returning %d\n", ret);
-  return ret;
+    TRACE("returning %d\n", ret);
+    return ret;
 }
 
 

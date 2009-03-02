@@ -1044,52 +1044,109 @@ DWORD getNumRoutes(void)
 #endif
 }
 
-DWORD getRouteTable(PMIB_IPFORWARDTABLE *ppIpForwardTable, HANDLE heap,
- DWORD flags)
+static MIB_IPFORWARDTABLE *append_ipforward_row( HANDLE heap, DWORD flags, MIB_IPFORWARDTABLE *table,
+                                                 DWORD *count, const MIB_IPFORWARDROW *row )
 {
-  DWORD ret;
+    if (table->dwNumEntries >= *count)
+    {
+        MIB_IPFORWARDTABLE *new_table;
+        DWORD new_count = table->dwNumEntries * 2;
 
-  if (!ppIpForwardTable)
-    ret = ERROR_INVALID_PARAMETER;
-  else {
-    DWORD numRoutes = getNumRoutes();
-    DWORD size = sizeof(MIB_IPFORWARDTABLE);
-    PMIB_IPFORWARDTABLE table;
+        if (!(new_table = HeapReAlloc( heap, flags, table,
+                                       FIELD_OFFSET(MIB_IPFORWARDTABLE, table[new_count] ))))
+        {
+            HeapFree( heap, 0, table );
+            return NULL;
+        }
+        *count = new_count;
+        table = new_table;
+    }
+    memcpy( &table->table[table->dwNumEntries++], row, sizeof(*row) );
+    return table;
+}
 
-    if (numRoutes > 1)
-      size += (numRoutes - 1) * sizeof(MIB_IPFORWARDROW);
-    table = HeapAlloc(heap, flags, size);
-    if (table) {
-#if defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_DUMP)
+DWORD getRouteTable(PMIB_IPFORWARDTABLE *ppIpForwardTable, HANDLE heap, DWORD flags)
+{
+    MIB_IPFORWARDTABLE *table;
+    MIB_IPFORWARDROW row;
+    DWORD ret = NO_ERROR, count = 16;
+
+    if (!ppIpForwardTable) return ERROR_INVALID_PARAMETER;
+
+    if (!(table = HeapAlloc( heap, flags, FIELD_OFFSET(MIB_IPFORWARDTABLE, table[count] ))))
+        return ERROR_OUTOFMEMORY;
+
+    table->dwNumEntries = 0;
+
+#ifdef __linux__
+    {
+        FILE *fp;
+
+        if ((fp = fopen("/proc/net/route", "r")))
+        {
+            char buf[512], *ptr;
+            DWORD flags;
+
+            /* skip header line */
+            ptr = fgets(buf, sizeof(buf), fp);
+            while ((ptr = fgets(buf, sizeof(buf), fp)))
+            {
+                memset( &row, 0, sizeof(row) );
+
+                while (!isspace(*ptr)) ptr++;
+                *ptr++ = 0;
+                if (getInterfaceIndexByName(buf, &row.dwForwardIfIndex) != NO_ERROR)
+                    continue;
+
+                row.dwForwardDest = strtoul(ptr, &ptr, 16);
+                row.dwForwardNextHop = strtoul(ptr + 1, &ptr, 16);
+                flags = strtoul(ptr + 1, &ptr, 16);
+
+                if (!(flags & RTF_UP)) row.dwForwardType = MIB_IPROUTE_TYPE_INVALID;
+                else if (flags & RTF_GATEWAY) row.dwForwardType = MIB_IPROUTE_TYPE_INDIRECT;
+                else row.dwForwardType = MIB_IPROUTE_TYPE_DIRECT;
+
+                strtoul(ptr + 1, &ptr, 16); /* refcount, skip */
+                strtoul(ptr + 1, &ptr, 16); /* use, skip */
+                row.dwForwardMetric1 = strtoul(ptr + 1, &ptr, 16);
+                row.dwForwardMask = strtoul(ptr + 1, &ptr, 16);
+                /* FIXME: other protos might be appropriate, e.g. the default
+                 * route is typically set with MIB_IPPROTO_NETMGMT instead */
+                row.dwForwardProto = MIB_IPPROTO_LOCAL;
+
+                if (!(table = append_ipforward_row( heap, flags, table, &count, &row )))
+                    break;
+            }
+            fclose(fp);
+        }
+        else ret = ERROR_NOT_SUPPORTED;
+    }
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_DUMP)
+    {
        int mib[6] = {CTL_NET, PF_ROUTE, 0, PF_INET, NET_RT_DUMP, 0};
        size_t needed;
-       char *buf, *lim, *next, *addrPtr;
+       char *buf = NULL, *lim, *next, *addrPtr;
        struct rt_msghdr *rtm;
 
        if (sysctl (mib, 6, NULL, &needed, NULL, 0) < 0)
        {
           ERR ("sysctl 1 failed!\n");
-          HeapFree (GetProcessHeap (), 0, table);
-          return NO_ERROR;
+          ret = ERROR_NOT_SUPPORTED;
+          goto done;
        }
 
        buf = HeapAlloc (GetProcessHeap (), 0, needed);
        if (!buf)
        {
-          HeapFree (GetProcessHeap (), 0, table);
-          return ERROR_OUTOFMEMORY;
+          ret = ERROR_OUTOFMEMORY;
+          goto done;
        }
 
        if (sysctl (mib, 6, buf, &needed, NULL, 0) < 0)
        {
-          ERR ("sysctl 2 failed!\n");
-          HeapFree (GetProcessHeap (), 0, table);
-          HeapFree (GetProcessHeap (), 0, buf);
-          return NO_ERROR;
+          ret = ERROR_NOT_SUPPORTED;
+          goto done;
        }
-
-       *ppIpForwardTable = table;
-       table->dwNumEntries = 0;
 
        lim = buf + needed;
        for (next = buf; next < lim; next += rtm->rtm_msglen)
@@ -1111,15 +1168,11 @@ DWORD getRouteTable(PMIB_IPFORWARDTABLE *ppIpForwardTable, HANDLE heap,
               (rtm->rtm_flags & RTF_MULTICAST))
              continue;
 
-          memset (&table->table[table->dwNumEntries], 0,
-                  sizeof (MIB_IPFORWARDROW));
-          table->table[table->dwNumEntries].dwForwardIfIndex = rtm->rtm_index;
-          table->table[table->dwNumEntries].dwForwardType =
-             MIB_IPROUTE_TYPE_INDIRECT;
-          table->table[table->dwNumEntries].dwForwardMetric1 =
-             rtm->rtm_rmx.rmx_hopcount;
-          table->table[table->dwNumEntries].dwForwardProto =
-             MIB_IPPROTO_LOCAL;
+          memset( &row, 0, sizeof(row) );
+          row.dwForwardIfIndex = rtm->rtm_index;
+          row.dwForwardType = MIB_IPROUTE_TYPE_INDIRECT;
+          row.dwForwardMetric1 = rtm->rtm_rmx.rmx_hopcount;
+          row.dwForwardProto = MIB_IPPROTO_LOCAL;
 
           addrPtr = (char *)(rtm + 1);
 
@@ -1152,119 +1205,29 @@ DWORD getRouteTable(PMIB_IPFORWARDTABLE *ppIpForwardTable, HANDLE heap,
 
              switch (i)
              {
-                case RTA_DST:
-                   table->table[table->dwNumEntries].dwForwardDest = addr;
-                   break;
-
-                case RTA_GATEWAY:
-                   table->table[table->dwNumEntries].dwForwardNextHop = addr;
-                   break;
-
-                case RTA_NETMASK:
-                   table->table[table->dwNumEntries].dwForwardMask = addr;
-                   break;
-
+                case RTA_DST:     row.dwForwardDest = addr; break;
+                case RTA_GATEWAY: row.dwForwardNextHop = addr; break;
+                case RTA_NETMASK: row.dwForwardMask = addr; break;
                 default:
                    WARN ("Unexpected address type 0x%x\n", i);
              }
           }
 
-          table->dwNumEntries++;
+          if (!(table = append_ipforward_row( heap, flags, table, &count, &row )))
+              break;
        }
-
-       HeapFree (GetProcessHeap (), 0, buf);
-       ret = NO_ERROR;
-#else
-      FILE *fp;
-
-      ret = NO_ERROR;
-      *ppIpForwardTable = table;
-      table->dwNumEntries = 0;
-      /* get from /proc/net/route, no error if can't */
-      fp = fopen("/proc/net/route", "r");
-      if (fp) {
-        char buf[512] = { 0 }, *ptr;
-
-        /* skip header line */
-        ptr = fgets(buf, sizeof(buf), fp);
-        while (ptr && table->dwNumEntries < numRoutes) {
-          memset(&table->table[table->dwNumEntries], 0,
-           sizeof(MIB_IPFORWARDROW));
-          ptr = fgets(buf, sizeof(buf), fp);
-          if (ptr) {
-            DWORD index;
-
-            while (!isspace(*ptr))
-              ptr++;
-            *ptr = '\0';
-            ptr++;
-            if (getInterfaceIndexByName(buf, &index) == NO_ERROR) {
-              char *endPtr;
-
-              table->table[table->dwNumEntries].dwForwardIfIndex = index;
-              if (*ptr) {
-                table->table[table->dwNumEntries].dwForwardDest =
-                 strtoul(ptr, &endPtr, 16);
-                ptr = endPtr;
-              }
-              if (ptr && *ptr) {
-                table->table[table->dwNumEntries].dwForwardNextHop =
-                 strtoul(ptr, &endPtr, 16);
-                ptr = endPtr;
-              }
-              if (ptr && *ptr) {
-                DWORD flags = strtoul(ptr, &endPtr, 16);
-
-                if (!(flags & RTF_UP))
-                  table->table[table->dwNumEntries].dwForwardType =
-                   MIB_IPROUTE_TYPE_INVALID;
-                else if (flags & RTF_GATEWAY)
-                  table->table[table->dwNumEntries].dwForwardType =
-                   MIB_IPROUTE_TYPE_INDIRECT;
-                else
-                  table->table[table->dwNumEntries].dwForwardType =
-                   MIB_IPROUTE_TYPE_DIRECT;
-                ptr = endPtr;
-              }
-              if (ptr && *ptr) {
-                strtoul(ptr, &endPtr, 16); /* refcount, skip */
-                ptr = endPtr;
-              }
-              if (ptr && *ptr) {
-                strtoul(ptr, &endPtr, 16); /* use, skip */
-                ptr = endPtr;
-              }
-              if (ptr && *ptr) {
-                table->table[table->dwNumEntries].dwForwardMetric1 =
-                 strtoul(ptr, &endPtr, 16);
-                ptr = endPtr;
-              }
-              if (ptr && *ptr) {
-                table->table[table->dwNumEntries].dwForwardMask =
-                 strtoul(ptr, &endPtr, 16);
-                ptr = endPtr;
-              }
-              /* FIXME: other protos might be appropriate, e.g. the default
-               * route is typically set with MIB_IPPROTO_NETMGMT instead */
-              table->table[table->dwNumEntries].dwForwardProto =
-               MIB_IPPROTO_LOCAL;
-              table->dwNumEntries++;
-            }
-          }
-        }
-        fclose(fp);
-      }
-      else
-      {
-        ERR ("unimplemented!\n");
-        return ERROR_NOT_SUPPORTED;
-      }
-#endif
+done:
+      HeapFree( GetProcessHeap (), 0, buf );
     }
-    else
-      ret = ERROR_OUTOFMEMORY;
-  }
-  return ret;
+#else
+    FIXME( "not implemented\n" );
+    ret = ERROR_NOT_SUPPORTED;
+#endif
+
+    if (!table) return ERROR_OUTOFMEMORY;
+    if (!ret) *ppIpForwardTable = table;
+    else HeapFree( heap, flags, table );
+    return ret;
 }
 
 DWORD getNumArpEntries(void)
