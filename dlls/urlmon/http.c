@@ -60,21 +60,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 #define FLAG_RESULT_REPORTED 0x20
 
 typedef struct {
+    Protocol base;
+
     const IInternetProtocolVtbl *lpInternetProtocolVtbl;
     const IInternetPriorityVtbl *lpInternetPriorityVtbl;
 
-    BOOL https;
-    DWORD flags, grfBINDF;
-    BINDINFO bind_info;
-    IInternetProtocolSink *protocol_sink;
-    IHttpNegotiate *http_negotiate;
-    HINTERNET internet, connect, request;
-    LPWSTR full_header;
-    HANDLE lock;
-    ULONG current_position, content_length, available_bytes;
-    LONG priority;
-
     LONG ref;
+
+    BOOL https;
+    IHttpNegotiate *http_negotiate;
+    LPWSTR full_header;
+    HINTERNET connection;
 } HttpProtocol;
 
 #define PROTOCOL(x)  ((IInternetProtocol*)  &(x)->lpInternetProtocolVtbl)
@@ -90,45 +86,45 @@ static const WCHAR wszHeaders[] = {'A','c','c','e','p','t','-','E','n','c','o','
 
 static void HTTPPROTOCOL_ReportResult(HttpProtocol *This, HRESULT hres)
 {
-    if (!(This->flags & FLAG_RESULT_REPORTED) &&
-        This->protocol_sink)
+    if (!(This->base.flags & FLAG_RESULT_REPORTED) &&
+        This->base.protocol_sink)
     {
-        This->flags |= FLAG_RESULT_REPORTED;
-        IInternetProtocolSink_ReportResult(This->protocol_sink, hres, 0, NULL);
+        This->base.flags |= FLAG_RESULT_REPORTED;
+        IInternetProtocolSink_ReportResult(This->base.protocol_sink, hres, 0, NULL);
     }
 }
 
 static void HTTPPROTOCOL_ReportData(HttpProtocol *This)
 {
     DWORD bscf;
-    if (!(This->flags & FLAG_LAST_DATA_REPORTED) &&
-        This->protocol_sink)
+    if (!(This->base.flags & FLAG_LAST_DATA_REPORTED) &&
+        This->base.protocol_sink)
     {
-        if (This->flags & FLAG_FIRST_DATA_REPORTED)
+        if (This->base.flags & FLAG_FIRST_DATA_REPORTED)
         {
             bscf = BSCF_INTERMEDIATEDATANOTIFICATION;
         }
         else
         {
-            This->flags |= FLAG_FIRST_DATA_REPORTED;
+            This->base.flags |= FLAG_FIRST_DATA_REPORTED;
             bscf = BSCF_FIRSTDATANOTIFICATION;
         }
-        if (This->flags & FLAG_ALL_DATA_READ &&
-            !(This->flags & FLAG_LAST_DATA_REPORTED))
+        if (This->base.flags & FLAG_ALL_DATA_READ &&
+            !(This->base.flags & FLAG_LAST_DATA_REPORTED))
         {
-            This->flags |= FLAG_LAST_DATA_REPORTED;
+            This->base.flags |= FLAG_LAST_DATA_REPORTED;
             bscf |= BSCF_LASTDATANOTIFICATION;
         }
-        IInternetProtocolSink_ReportData(This->protocol_sink, bscf,
-                                         This->current_position+This->available_bytes,
-                                         This->content_length);
+        IInternetProtocolSink_ReportData(This->base.protocol_sink, bscf,
+                                         This->base.current_position+This->base.available_bytes,
+                                         This->base.content_length);
     }
 }
 
 static void HTTPPROTOCOL_AllDataRead(HttpProtocol *This)
 {
-    if (!(This->flags & FLAG_ALL_DATA_READ))
-        This->flags |= FLAG_ALL_DATA_READ;
+    if (!(This->base.flags & FLAG_ALL_DATA_READ))
+        This->base.flags |= FLAG_ALL_DATA_READ;
     HTTPPROTOCOL_ReportData(This);
     HTTPPROTOCOL_ReportResult(This, S_OK);
 }
@@ -140,14 +136,14 @@ static void HTTPPROTOCOL_Close(HttpProtocol *This)
         IHttpNegotiate_Release(This->http_negotiate);
         This->http_negotiate = 0;
     }
-    if (This->request)
-        InternetCloseHandle(This->request);
-    if (This->connect)
-        InternetCloseHandle(This->connect);
-    if (This->internet)
+    if (This->base.request)
+        InternetCloseHandle(This->base.request);
+    if (This->connection)
+        InternetCloseHandle(This->connection);
+    if (This->base.internet)
     {
-        InternetCloseHandle(This->internet);
-        This->internet = 0;
+        InternetCloseHandle(This->base.internet);
+        This->base.internet = 0;
     }
     if (This->full_header)
     {
@@ -155,7 +151,7 @@ static void HTTPPROTOCOL_Close(HttpProtocol *This)
             heap_free(This->full_header);
         This->full_header = 0;
     }
-    This->flags = 0;
+    This->base.flags = 0;
 }
 
 static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
@@ -178,16 +174,16 @@ static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
         ulStatusCode = BINDSTATUS_SENDINGREQUEST;
         break;
     case INTERNET_STATUS_REQUEST_COMPLETE:
-        This->flags |= FLAG_REQUEST_COMPLETE;
+        This->base.flags |= FLAG_REQUEST_COMPLETE;
         /* PROTOCOLDATA same as native */
         memset(&data, 0, sizeof(data));
         data.dwState = 0xf1000000;
-        if (This->flags & FLAG_FIRST_CONTINUE_COMPLETE)
+        if (This->base.flags & FLAG_FIRST_CONTINUE_COMPLETE)
             data.pData = (LPVOID)BINDSTATUS_ENDDOWNLOADCOMPONENTS;
         else
             data.pData = (LPVOID)BINDSTATUS_DOWNLOADINGDATA;
-        if (This->grfBINDF & BINDF_FROMURLMON)
-            IInternetProtocolSink_Switch(This->protocol_sink, &data);
+        if (This->base.bindf & BINDF_FROMURLMON)
+            IInternetProtocolSink_Switch(This->base.protocol_sink, &data);
         else
             IInternetProtocol_Continue(PROTOCOL(This), &data);
         return;
@@ -195,22 +191,22 @@ static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
         IInternetProtocol_AddRef(PROTOCOL(This));
         return;
     case INTERNET_STATUS_HANDLE_CLOSING:
-        if (*(HINTERNET *)lpvStatusInformation == This->connect)
+        if (*(HINTERNET *)lpvStatusInformation == This->connection)
         {
-            This->connect = 0;
+            This->connection = 0;
         }
-        else if (*(HINTERNET *)lpvStatusInformation == This->request)
+        else if (*(HINTERNET *)lpvStatusInformation == This->base.request)
         {
-            This->request = 0;
-            if (This->protocol_sink)
+            This->base.request = 0;
+            if (This->base.protocol_sink)
             {
-                IInternetProtocolSink_Release(This->protocol_sink);
-                This->protocol_sink = 0;
+                IInternetProtocolSink_Release(This->base.protocol_sink);
+                This->base.protocol_sink = 0;
             }
-            if (This->bind_info.cbSize)
+            if (This->base.bind_info.cbSize)
             {
-                ReleaseBindInfo(&This->bind_info);
-                memset(&This->bind_info, 0, sizeof(This->bind_info));
+                ReleaseBindInfo(&This->base.bind_info);
+                memset(&This->base.bind_info, 0, sizeof(This->base.bind_info));
             }
         }
         IInternetProtocol_Release(PROTOCOL(This));
@@ -220,7 +216,7 @@ static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
         return;
     }
 
-    IInternetProtocolSink_ReportProgress(This->protocol_sink, ulStatusCode, (LPWSTR)lpvStatusInformation);
+    IInternetProtocolSink_ReportProgress(This->base.protocol_sink, ulStatusCode, (LPWSTR)lpvStatusInformation);
 }
 
 static inline LPWSTR strndupW(LPCWSTR string, int len)
@@ -321,11 +317,11 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
             pOIBindInfo, grfPI, dwReserved);
 
     IInternetProtocolSink_AddRef(pOIProtSink);
-    This->protocol_sink = pOIProtSink;
+    This->base.protocol_sink = pOIProtSink;
 
-    memset(&This->bind_info, 0, sizeof(This->bind_info));
-    This->bind_info.cbSize = sizeof(BINDINFO);
-    hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &This->grfBINDF, &This->bind_info);
+    memset(&This->base.bind_info, 0, sizeof(This->base.bind_info));
+    This->base.bind_info.cbSize = sizeof(BINDINFO);
+    hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &This->base.bindf, &This->base.bind_info);
     if (hres != S_OK)
     {
         WARN("GetBindInfo failed: %08x\n", hres);
@@ -356,8 +352,8 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     if (!url.nPort)
         url.nPort = This->https ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT;
 
-    if(!(This->grfBINDF & BINDF_FROMURLMON))
-        IInternetProtocolSink_ReportProgress(This->protocol_sink, BINDSTATUS_DIRECTBIND, NULL);
+    if(!(This->base.bindf & BINDF_FROMURLMON))
+        IInternetProtocolSink_ReportProgress(This->base.protocol_sink, BINDSTATUS_DIRECTBIND, NULL);
 
     hres = IInternetBindInfo_GetBindString(pOIBindInfo, BINDSTRING_USER_AGENT, &user_agent,
                                            1, &num);
@@ -388,8 +384,8 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
         heap_free(user_agenta);
     }
 
-    This->internet = InternetOpenW(user_agent, 0, NULL, NULL, INTERNET_FLAG_ASYNC);
-    if (!This->internet)
+    This->base.internet = InternetOpenW(user_agent, 0, NULL, NULL, INTERNET_FLAG_ASYNC);
+    if (!This->base.internet)
     {
         WARN("InternetOpen failed: %d\n", GetLastError());
         hres = INET_E_NO_SESSION;
@@ -397,13 +393,13 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     }
 
     /* Native does not check for success of next call, so we won't either */
-    InternetSetStatusCallbackW(This->internet, HTTPPROTOCOL_InternetStatusCallback);
+    InternetSetStatusCallbackW(This->base.internet, HTTPPROTOCOL_InternetStatusCallback);
 
-    This->connect = InternetConnectW(This->internet, host, url.nPort, user,
+    This->connection = InternetConnectW(This->base.internet, host, url.nPort, user,
                                      pass, INTERNET_SERVICE_HTTP,
                                      This->https ? INTERNET_FLAG_SECURE : 0,
                                      (DWORD_PTR)This);
-    if (!This->connect)
+    if (!This->connection)
     {
         WARN("InternetConnect failed: %d\n", GetLastError());
         hres = INET_E_CANNOT_CONNECT;
@@ -422,25 +418,25 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     }
     accept_mimes[num] = 0;
 
-    if (This->grfBINDF & BINDF_NOWRITECACHE)
+    if (This->base.bindf & BINDF_NOWRITECACHE)
         request_flags |= INTERNET_FLAG_NO_CACHE_WRITE;
-    if (This->grfBINDF & BINDF_NEEDFILE)
+    if (This->base.bindf & BINDF_NEEDFILE)
         request_flags |= INTERNET_FLAG_NEED_FILE;
     if (This->https)
         request_flags |= INTERNET_FLAG_SECURE;
-    This->request = HttpOpenRequestW(This->connect, This->bind_info.dwBindVerb < BINDVERB_CUSTOM ?
-                                     wszBindVerb[This->bind_info.dwBindVerb] :
-                                     This->bind_info.szCustomVerb,
+    This->base.request = HttpOpenRequestW(This->connection, This->base.bind_info.dwBindVerb < BINDVERB_CUSTOM ?
+                                     wszBindVerb[This->base.bind_info.dwBindVerb] :
+                                     This->base.bind_info.szCustomVerb,
                                      path, NULL, NULL, (LPCWSTR *)accept_mimes,
                                      request_flags, (DWORD_PTR)This);
-    if (!This->request)
+    if (!This->base.request)
     {
         WARN("HttpOpenRequest failed: %d\n", GetLastError());
         hres = INET_E_RESOURCE_NOT_FOUND;
         goto done;
     }
 
-    hres = IInternetProtocolSink_QueryInterface(This->protocol_sink, &IID_IServiceProvider,
+    hres = IInternetProtocolSink_QueryInterface(This->base.protocol_sink, &IID_IServiceProvider,
                                                 (void **)&service_provider);
     if (hres != S_OK)
     {
@@ -501,13 +497,13 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 
     /* FIXME: Handle security_id. Native calls undocumented function IsHostInProxyBypassList. */
 
-    if (This->bind_info.dwBindVerb == BINDVERB_POST)
+    if (This->base.bind_info.dwBindVerb == BINDVERB_POST)
     {
         num = 0;
         hres = IInternetBindInfo_GetBindString(pOIBindInfo, BINDSTRING_POST_COOKIE, &post_cookie,
                                                1, &num);
         if (hres == S_OK && num &&
-            !InternetSetOptionW(This->request, INTERNET_OPTION_SECONDARY_CACHE_KEY,
+            !InternetSetOptionW(This->base.request, INTERNET_OPTION_SECONDARY_CACHE_KEY,
                                 post_cookie, lstrlenW(post_cookie)))
         {
             WARN("InternetSetOption INTERNET_OPTION_SECONDARY_CACHE_KEY failed: %d\n",
@@ -515,18 +511,18 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
         }
     }
 
-    if (This->bind_info.dwBindVerb != BINDVERB_GET)
+    if (This->base.bind_info.dwBindVerb != BINDVERB_GET)
     {
         /* Native does not use GlobalLock/GlobalUnlock, so we won't either */
-        if (This->bind_info.stgmedData.tymed != TYMED_HGLOBAL)
+        if (This->base.bind_info.stgmedData.tymed != TYMED_HGLOBAL)
             WARN("Expected This->bind_info.stgmedData.tymed to be TYMED_HGLOBAL, not %d\n",
-                 This->bind_info.stgmedData.tymed);
+                 This->base.bind_info.stgmedData.tymed);
         else
-            optional = (LPWSTR)This->bind_info.stgmedData.u.hGlobal;
+            optional = (LPWSTR)This->base.bind_info.stgmedData.u.hGlobal;
     }
-    if (!HttpSendRequestW(This->request, This->full_header, lstrlenW(This->full_header),
+    if (!HttpSendRequestW(This->base.request, This->full_header, lstrlenW(This->full_header),
                           optional,
-                          optional ? This->bind_info.cbstgmedData : 0) &&
+                          optional ? This->base.bind_info.cbstgmedData : 0) &&
         GetLastError() != ERROR_IO_PENDING)
     {
         WARN("HttpSendRequest failed: %d\n", GetLastError());
@@ -538,7 +534,7 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 done:
     if (hres != S_OK)
     {
-        IInternetProtocolSink_ReportResult(This->protocol_sink, hres, 0, NULL);
+        IInternetProtocolSink_ReportResult(This->base.protocol_sink, hres, 0, NULL);
         HTTPPROTOCOL_Close(This);
     }
 
@@ -578,7 +574,7 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
         WARN("Expected pProtocolData to be non-NULL\n");
         return S_OK;
     }
-    else if (!This->request)
+    else if (!This->base.request)
     {
         WARN("Expected request to be non-NULL\n");
         return S_OK;
@@ -588,7 +584,7 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
         WARN("Expected IHttpNegotiate pointer to be non-NULL\n");
         return S_OK;
     }
-    else if (!This->protocol_sink)
+    else if (!This->base.protocol_sink)
     {
         WARN("Expected IInternetProtocolSink pointer to be non-NULL\n");
         return S_OK;
@@ -596,7 +592,7 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
 
     if (pProtocolData->pData == (LPVOID)BINDSTATUS_DOWNLOADINGDATA)
     {
-        if (!HttpQueryInfoW(This->request, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER,
+        if (!HttpQueryInfoW(This->base.request, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER,
                             &status_code, &len, NULL))
         {
             WARN("HttpQueryInfo failed: %d\n", GetLastError());
@@ -604,11 +600,11 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
         else
         {
             len = 0;
-            if ((!HttpQueryInfoW(This->request, HTTP_QUERY_RAW_HEADERS_CRLF, response_headers, &len,
+            if ((!HttpQueryInfoW(This->base.request, HTTP_QUERY_RAW_HEADERS_CRLF, response_headers, &len,
                                  NULL) &&
                  GetLastError() != ERROR_INSUFFICIENT_BUFFER) ||
                 !(response_headers = heap_alloc(len)) ||
-                !HttpQueryInfoW(This->request, HTTP_QUERY_RAW_HEADERS_CRLF, response_headers, &len,
+                !HttpQueryInfoW(This->base.request, HTTP_QUERY_RAW_HEADERS_CRLF, response_headers, &len,
                                 NULL))
             {
                 WARN("HttpQueryInfo failed: %d\n", GetLastError());
@@ -626,17 +622,17 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
         }
 
         if(This->https)
-            IInternetProtocolSink_ReportProgress(This->protocol_sink, BINDSTATUS_ACCEPTRANGES, NULL);
+            IInternetProtocolSink_ReportProgress(This->base.protocol_sink, BINDSTATUS_ACCEPTRANGES, NULL);
 
         len = 0;
-        if ((!HttpQueryInfoW(This->request, HTTP_QUERY_CONTENT_TYPE, content_type, &len, NULL) &&
+        if ((!HttpQueryInfoW(This->base.request, HTTP_QUERY_CONTENT_TYPE, content_type, &len, NULL) &&
              GetLastError() != ERROR_INSUFFICIENT_BUFFER) ||
             !(content_type = heap_alloc(len)) ||
-            !HttpQueryInfoW(This->request, HTTP_QUERY_CONTENT_TYPE, content_type, &len, NULL))
+            !HttpQueryInfoW(This->base.request, HTTP_QUERY_CONTENT_TYPE, content_type, &len, NULL))
         {
             WARN("HttpQueryInfo failed: %d\n", GetLastError());
-            IInternetProtocolSink_ReportProgress(This->protocol_sink,
-                                                 (This->grfBINDF & BINDF_FROMURLMON) ?
+            IInternetProtocolSink_ReportProgress(This->base.protocol_sink,
+                                                 (This->base.bindf & BINDF_FROMURLMON) ?
                                                  BINDSTATUS_MIMETYPEAVAILABLE :
                                                  BINDSTATUS_RAWMIMETYPE,
                                                  wszDefaultContentType);
@@ -647,35 +643,35 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
             LPWSTR p = strchrW(content_type, ';');
             if (p) *p = '\0';
 
-            IInternetProtocolSink_ReportProgress(This->protocol_sink,
-                                                 (This->grfBINDF & BINDF_FROMURLMON) ?
+            IInternetProtocolSink_ReportProgress(This->base.protocol_sink,
+                                                 (This->base.bindf & BINDF_FROMURLMON) ?
                                                  BINDSTATUS_MIMETYPEAVAILABLE :
                                                  BINDSTATUS_RAWMIMETYPE,
                                                  content_type);
         }
 
         len = 0;
-        if ((!HttpQueryInfoW(This->request, HTTP_QUERY_CONTENT_LENGTH, content_length, &len, NULL) &&
+        if ((!HttpQueryInfoW(This->base.request, HTTP_QUERY_CONTENT_LENGTH, content_length, &len, NULL) &&
              GetLastError() != ERROR_INSUFFICIENT_BUFFER) ||
             !(content_length = heap_alloc(len)) ||
-            !HttpQueryInfoW(This->request, HTTP_QUERY_CONTENT_LENGTH, content_length, &len, NULL))
+            !HttpQueryInfoW(This->base.request, HTTP_QUERY_CONTENT_LENGTH, content_length, &len, NULL))
         {
             WARN("HttpQueryInfo failed: %d\n", GetLastError());
-            This->content_length = 0;
+            This->base.content_length = 0;
         }
         else
         {
-            This->content_length = atoiW(content_length);
+            This->base.content_length = atoiW(content_length);
         }
 
-    if(This->grfBINDF & BINDF_NEEDFILE) {
+    if(This->base.bindf & BINDF_NEEDFILE) {
         WCHAR cache_file[MAX_PATH];
         DWORD buflen = sizeof(cache_file);
 
-        if(InternetQueryOptionW(This->request, INTERNET_OPTION_DATAFILE_NAME,
+        if(InternetQueryOptionW(This->base.request, INTERNET_OPTION_DATAFILE_NAME,
                                 cache_file, &buflen))
         {
-            IInternetProtocolSink_ReportProgress(This->protocol_sink,
+            IInternetProtocolSink_ReportProgress(This->base.protocol_sink,
                                                  BINDSTATUS_CACHEFILENAMEAVAILABLE,
                                                  cache_file);
         }else {
@@ -683,7 +679,7 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
         }
     }
 
-        This->flags |= FLAG_FIRST_CONTINUE_COMPLETE;
+        This->base.flags |= FLAG_FIRST_CONTINUE_COMPLETE;
     }
 
     if (pProtocolData->pData >= (LPVOID)BINDSTATUS_DOWNLOADINGDATA)
@@ -691,19 +687,19 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
         /* InternetQueryDataAvailable may immediately fork and perform its asynchronous
          * read, so clear the flag _before_ calling so it does not incorrectly get cleared
          * after the status callback is called */
-        This->flags &= ~FLAG_REQUEST_COMPLETE;
-        if (!InternetQueryDataAvailable(This->request, &This->available_bytes, 0, 0))
+        This->base.flags &= ~FLAG_REQUEST_COMPLETE;
+        if (!InternetQueryDataAvailable(This->base.request, &This->base.available_bytes, 0, 0))
         {
             if (GetLastError() != ERROR_IO_PENDING)
             {
-                This->flags |= FLAG_REQUEST_COMPLETE;
+                This->base.flags |= FLAG_REQUEST_COMPLETE;
                 WARN("InternetQueryDataAvailable failed: %d\n", GetLastError());
                 HTTPPROTOCOL_ReportResult(This, INET_E_DATA_NOT_AVAILABLE);
             }
         }
         else
         {
-            This->flags |= FLAG_REQUEST_COMPLETE;
+            This->base.flags |= FLAG_REQUEST_COMPLETE;
             HTTPPROTOCOL_ReportData(This);
         }
     }
@@ -758,20 +754,20 @@ static HRESULT WINAPI HttpProtocol_Read(IInternetProtocol *iface, void *pv,
 
     TRACE("(%p)->(%p %u %p)\n", This, pv, cb, pcbRead);
 
-    if (!(This->flags & FLAG_REQUEST_COMPLETE))
+    if (!(This->base.flags & FLAG_REQUEST_COMPLETE))
     {
         hres = E_PENDING;
     }
-    else while (!(This->flags & FLAG_ALL_DATA_READ) &&
+    else while (!(This->base.flags & FLAG_ALL_DATA_READ) &&
                 read < cb)
     {
-        if (This->available_bytes == 0)
+        if (This->base.available_bytes == 0)
         {
             /* InternetQueryDataAvailable may immediately fork and perform its asynchronous
              * read, so clear the flag _before_ calling so it does not incorrectly get cleared
              * after the status callback is called */
-            This->flags &= ~FLAG_REQUEST_COMPLETE;
-            if (!InternetQueryDataAvailable(This->request, &This->available_bytes, 0, 0))
+            This->base.flags &= ~FLAG_REQUEST_COMPLETE;
+            if (!InternetQueryDataAvailable(This->base.request, &This->base.available_bytes, 0, 0))
             {
                 if (GetLastError() == ERROR_IO_PENDING)
                 {
@@ -785,16 +781,16 @@ static HRESULT WINAPI HttpProtocol_Read(IInternetProtocol *iface, void *pv,
                 }
                 goto done;
             }
-            else if (This->available_bytes == 0)
+            else if (This->base.available_bytes == 0)
             {
                 HTTPPROTOCOL_AllDataRead(This);
             }
         }
         else
         {
-            if (!InternetReadFile(This->request, ((BYTE *)pv)+read,
-                                  This->available_bytes > cb-read ?
-                                  cb-read : This->available_bytes, &len))
+            if (!InternetReadFile(This->base.request, ((BYTE *)pv)+read,
+                                  This->base.available_bytes > cb-read ?
+                                  cb-read : This->base.available_bytes, &len))
             {
                 WARN("InternetReadFile failed: %d\n", GetLastError());
                 hres = INET_E_DOWNLOAD_FAILURE;
@@ -808,8 +804,8 @@ static HRESULT WINAPI HttpProtocol_Read(IInternetProtocol *iface, void *pv,
             else
             {
                 read += len;
-                This->current_position += len;
-                This->available_bytes -= len;
+                This->base.current_position += len;
+                This->base.available_bytes -= len;
             }
         }
     }
@@ -824,7 +820,7 @@ done:
         *pcbRead = read;
 
     if (hres != E_PENDING)
-        This->flags |= FLAG_REQUEST_COMPLETE;
+        This->base.flags |= FLAG_REQUEST_COMPLETE;
 
     return hres;
 }
@@ -843,7 +839,7 @@ static HRESULT WINAPI HttpProtocol_LockRequest(IInternetProtocol *iface, DWORD d
 
     TRACE("(%p)->(%08x)\n", This, dwOptions);
 
-    if (!InternetLockRequestFile(This->request, &This->lock))
+    if (!InternetLockRequestFile(This->base.request, &This->base.lock))
         WARN("InternetLockRequest failed: %d\n", GetLastError());
 
     return S_OK;
@@ -855,11 +851,11 @@ static HRESULT WINAPI HttpProtocol_UnlockRequest(IInternetProtocol *iface)
 
     TRACE("(%p)\n", This);
 
-    if (This->lock)
+    if (This->base.lock)
     {
-        if (!InternetUnlockRequestFile(This->lock))
+        if (!InternetUnlockRequestFile(This->base.lock))
             WARN("InternetUnlockRequest failed: %d\n", GetLastError());
-        This->lock = 0;
+        This->base.lock = 0;
     }
 
     return S_OK;
@@ -893,7 +889,7 @@ static HRESULT WINAPI HttpPriority_SetPriority(IInternetPriority *iface, LONG nP
 
     TRACE("(%p)->(%d)\n", This, nPriority);
 
-    This->priority = nPriority;
+    This->base.priority = nPriority;
     return S_OK;
 }
 
@@ -903,7 +899,7 @@ static HRESULT WINAPI HttpPriority_GetPriority(IInternetPriority *iface, LONG *p
 
     TRACE("(%p)->(%p)\n", This, pnPriority);
 
-    *pnPriority = This->priority;
+    *pnPriority = This->base.priority;
     return S_OK;
 }
 
