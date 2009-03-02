@@ -535,13 +535,18 @@ DWORD getIPStats(PMIB_IPSTATS stats)
   return NO_ERROR;
 #else
   FILE *fp;
+  MIB_IPFORWARDTABLE *fwd_table;
 
   if (!stats)
     return ERROR_INVALID_PARAMETER;
 
   memset(stats, 0, sizeof(MIB_IPSTATS));
   stats->dwNumIf = stats->dwNumAddr = getNumInterfaces();
-  stats->dwNumRoutes = getNumRoutes();
+  if (!AllocateAndGetIpForwardTableFromStack( &fwd_table, FALSE, GetProcessHeap(), 0 ))
+  {
+      stats->dwNumRoutes = fwd_table->dwNumEntries;
+      HeapFree( GetProcessHeap(), 0, fwd_table );
+  }
 
   /* get most of these stats from /proc/net/snmp, no error if can't */
   fp = fopen("/proc/net/snmp", "r");
@@ -882,178 +887,6 @@ DWORD getUDPStats(MIB_UDPSTATS *stats)
 #endif
 }
 
-static DWORD getNumWithOneHeader(const char *filename)
-{
-#if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_STRUCT_XINPGEN)
-   size_t Len = 0;
-   char *Buf;
-   struct xinpgen *pXIG, *pOrigXIG;
-   int Protocol;
-   DWORD NumEntries = 0;
-
-   if (!strcmp (filename, "net.inet.tcp.pcblist"))
-      Protocol = IPPROTO_TCP;
-   else if (!strcmp (filename, "net.inet.udp.pcblist"))
-      Protocol = IPPROTO_UDP;
-   else
-   {
-      ERR ("Unsupported mib '%s', needs protocol mapping\n",
-           filename);
-      return 0;
-   }
-
-   if (sysctlbyname (filename, NULL, &Len, NULL, 0) < 0)
-   {
-      WARN ("Unable to read '%s' via sysctlbyname\n", filename);
-      return 0;
-   }
-
-   Buf = HeapAlloc (GetProcessHeap (), 0, Len);
-   if (!Buf)
-   {
-      ERR ("Out of memory!\n");
-      return 0;
-   }
-
-   if (sysctlbyname (filename, Buf, &Len, NULL, 0) < 0)
-   {
-      ERR ("Failure to read '%s' via sysctlbyname!\n", filename);
-      HeapFree (GetProcessHeap (), 0, Buf);
-      return 0;
-   }
-
-   /* Might be nothing here; first entry is just a header it seems */
-   if (Len <= sizeof (struct xinpgen))
-   {
-      HeapFree (GetProcessHeap (), 0, Buf);
-      return 0;
-   }
-
-   pOrigXIG = (struct xinpgen *)Buf;
-   pXIG = pOrigXIG;
-
-   for (pXIG = (struct xinpgen *)((char *)pXIG + pXIG->xig_len);
-        pXIG->xig_len > sizeof (struct xinpgen);
-        pXIG = (struct xinpgen *)((char *)pXIG + pXIG->xig_len))
-   {
-      struct tcpcb *pTCPData = NULL;
-      struct inpcb *pINData;
-      struct xsocket *pSockData;
-
-      if (Protocol == IPPROTO_TCP)
-      {
-         pTCPData = &((struct xtcpcb *)pXIG)->xt_tp;
-         pINData = &((struct xtcpcb *)pXIG)->xt_inp;
-         pSockData = &((struct xtcpcb *)pXIG)->xt_socket;
-      }
-      else
-      {
-         pINData = &((struct xinpcb *)pXIG)->xi_inp;
-         pSockData = &((struct xinpcb *)pXIG)->xi_socket;
-      }
-
-      /* Ignore sockets for other protocols */
-      if (pSockData->xso_protocol != Protocol)
-         continue;
-
-      /* Ignore PCBs that were freed while generating the data */
-      if (pINData->inp_gencnt > pOrigXIG->xig_gen)
-         continue;
-
-      /* we're only interested in IPv4 addresses */
-      if (!(pINData->inp_vflag & INP_IPV4) ||
-          (pINData->inp_vflag & INP_IPV6))
-         continue;
-
-      /* If all 0's, skip it */
-      if (!pINData->inp_laddr.s_addr &&
-          !pINData->inp_lport &&
-          !pINData->inp_faddr.s_addr &&
-          !pINData->inp_fport)
-         continue;
-
-      NumEntries++;
-   }
-
-   HeapFree (GetProcessHeap (), 0, Buf);
-   return NumEntries;
-#else
-  FILE *fp;
-  int ret = 0;
-
-  fp = fopen(filename, "r");
-  if (fp) {
-    char buf[512] = { 0 }, *ptr;
-
-
-    ptr = fgets(buf, sizeof(buf), fp);
-    if (ptr) {
-      do {
-        ptr = fgets(buf, sizeof(buf), fp);
-        if (ptr)
-          ret++;
-      } while (ptr);
-    }
-    fclose(fp);
-  }
-  else
-     ERR ("Unable to open '%s' to count entries!\n", filename);
-
-  return ret;
-#endif
-}
-
-DWORD getNumRoutes(void)
-{
-#if defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_DUMP)
-   int mib[6] = {CTL_NET, PF_ROUTE, 0, PF_INET, NET_RT_DUMP, 0};
-   size_t needed;
-   char *buf, *lim, *next;
-   struct rt_msghdr *rtm;
-   DWORD RouteCount = 0;
-
-   if (sysctl (mib, 6, NULL, &needed, NULL, 0) < 0)
-   {
-      ERR ("sysctl 1 failed!\n");
-      return 0;
-   }
-
-   buf = HeapAlloc (GetProcessHeap (), 0, needed);
-   if (!buf) return 0;
-
-   if (sysctl (mib, 6, buf, &needed, NULL, 0) < 0)
-   {
-      ERR ("sysctl 2 failed!\n");
-      HeapFree (GetProcessHeap (), 0, buf);
-      return 0;
-   }
-
-   lim = buf + needed;
-   for (next = buf; next < lim; next += rtm->rtm_msglen)
-   {
-      rtm = (struct rt_msghdr *)next;
-
-      if (rtm->rtm_type != RTM_GET)
-      {
-         WARN ("Got unexpected message type 0x%x!\n",
-               rtm->rtm_type);
-         continue;
-      }
-
-      /* Ignore all entries except for gateway routes which aren't
-         multicast */
-      if (!(rtm->rtm_flags & RTF_GATEWAY) || (rtm->rtm_flags & RTF_MULTICAST))
-         continue;
-
-      RouteCount++;
-   }
-
-   HeapFree (GetProcessHeap (), 0, buf);
-   return RouteCount;
-#else
-   return getNumWithOneHeader("/proc/net/route");
-#endif
-}
 
 static MIB_IPFORWARDTABLE *append_ipforward_row( HANDLE heap, DWORD flags, MIB_IPFORWARDTABLE *table,
                                                  DWORD *count, const MIB_IPFORWARDROW *row )
