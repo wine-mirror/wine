@@ -142,7 +142,10 @@ TW_UINT16 SANE_ImageInfoGet (pTW_IDENTITY pOrigin,
             pImageInfo->Planar = TRUE;
             pImageInfo->SamplesPerPixel = 1;
             pImageInfo->BitsPerSample[0] = activeDS.sane_param.depth;
-            pImageInfo->PixelType = TWPT_GRAY;
+            if (activeDS.sane_param.depth == 1)
+                pImageInfo->PixelType = TWPT_BW;
+            else
+                pImageInfo->PixelType = TWPT_GRAY;
         }
         else
         {
@@ -366,7 +369,10 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
     int dib_bytes;
     int dib_bytes_per_line;
     BYTE *line;
+    RGBQUAD *colors;
+    int color_size = 0;
     int i;
+    BYTE *p;
 
     TRACE("DG_IMAGE/DAT_IMAGENATIVEXFER/MSG_GET\n");
 
@@ -397,9 +403,23 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
             return TWRC_FAILURE;
         }
 
-        if (activeDS.sane_param.format != SANE_FRAME_RGB)
+        if (activeDS.sane_param.format == SANE_FRAME_GRAY)
         {
-            FIXME("For NATIVE, we support only RGB, not %d\n", activeDS.sane_param.format);
+            if (activeDS.sane_param.depth == 8)
+                color_size = (1 << 8) * sizeof(*colors);
+            else if (activeDS.sane_param.depth == 1)
+                ;
+            else
+            {
+                FIXME("For NATIVE, we support only 1 bit monochrome and 8 bit Grayscale, not %d\n", activeDS.sane_param.depth);
+                psane_cancel (activeDS.deviceHandle);
+                activeDS.twCC = TWCC_OPERATIONERROR;
+                return TWRC_FAILURE;
+            }
+        }
+        else if (activeDS.sane_param.format != SANE_FRAME_RGB)
+        {
+            FIXME("For NATIVE, we support only GRAY and RGB, not %d\n", activeDS.sane_param.format);
             psane_cancel (activeDS.deviceHandle);
             activeDS.twCC = TWCC_OPERATIONERROR;
             return TWRC_FAILURE;
@@ -413,7 +433,7 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
         dib_bytes_per_line = ((activeDS.sane_param.bytes_per_line + 3) / 4) * 4;
         dib_bytes = activeDS.sane_param.lines * dib_bytes_per_line;
 
-        hDIB = GlobalAlloc(GMEM_ZEROINIT, dib_bytes + sizeof(*header));
+        hDIB = GlobalAlloc(GMEM_ZEROINIT, dib_bytes + sizeof(*header) + color_size);
         if (hDIB)
            header = GlobalLock(hDIB);
 
@@ -430,18 +450,31 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
         header->biWidth = activeDS.sane_param.pixels_per_line;
         header->biHeight = activeDS.sane_param.lines;
         header->biPlanes = 1;
-        header->biBitCount = activeDS.sane_param.depth * 3;
         header->biCompression = BI_RGB;
+        if (activeDS.sane_param.format == SANE_FRAME_RGB)
+            header->biBitCount = activeDS.sane_param.depth * 3;
+        if (activeDS.sane_param.format == SANE_FRAME_GRAY)
+            header->biBitCount = activeDS.sane_param.depth;
         header->biSizeImage = dib_bytes;
         header->biXPelsPerMeter = 0;
         header->biYPelsPerMeter = 0;
         header->biClrUsed = 0;
         header->biClrImportant = 0;
 
+        p = (BYTE *)(header + 1);
+
+        if (color_size > 0)
+        {
+            colors = (RGBQUAD *) p;
+            p += color_size;
+            for (i = 0; i < (color_size / sizeof(*colors)); i++)
+                colors[i].rgbBlue = colors[i].rgbRed = colors[i].rgbGreen = i;
+        }
+
+
         /* Sane returns data in top down order.  Acrobat does best with
            a bottom up DIB being returned.  */
-        line = (BYTE *)(header + 1) +
-                (activeDS.sane_param.lines - 1) * dib_bytes_per_line;
+        line = p + (activeDS.sane_param.lines - 1) * dib_bytes_per_line;
         for (i = activeDS.sane_param.lines - 1; i >= 0; i--)
         {
             activeDS.progressWnd = ScanningDialogBox(activeDS.progressWnd,

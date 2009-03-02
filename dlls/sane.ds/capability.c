@@ -685,9 +685,11 @@ static TW_UINT16 SANE_ICAPResolution (pTW_CAPABILITY pCapability, TW_UINT16 acti
 /* ICAP_PIXELFLAVOR */
 static TW_UINT16 SANE_ICAPPixelFlavor (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
+    TW_UINT16 twCC = TWCC_BADCAP;
+#ifdef SONAME_LIBSANE
     static const TW_UINT32 possible_values[] = { TWPF_CHOCOLATE, TWPF_VANILLA };
     TW_UINT32 val;
-    TW_UINT16 twCC = TWCC_BADCAP;
+    TW_UINT32 flavor = activeDS.sane_param.depth == 1 ? TWPF_VANILLA : TWPF_CHOCOLATE;
 
     TRACE("ICAP_PIXELFLAVOR\n");
 
@@ -700,7 +702,7 @@ static TW_UINT16 SANE_ICAPPixelFlavor (pTW_CAPABILITY pCapability, TW_UINT16 act
 
         case MSG_GET:
             twCC = msg_get_enum(pCapability, possible_values, sizeof(possible_values) / sizeof(possible_values[0]),
-                    TWTY_UINT16, TWPF_CHOCOLATE, TWPF_CHOCOLATE);
+                    TWTY_UINT16, flavor, flavor);
             break;
 
         case MSG_SET:
@@ -712,16 +714,17 @@ static TW_UINT16 SANE_ICAPPixelFlavor (pTW_CAPABILITY pCapability, TW_UINT16 act
             break;
 
         case MSG_GETDEFAULT:
-            twCC = set_onevalue(pCapability, TWTY_UINT16, TWPF_CHOCOLATE);
+            twCC = set_onevalue(pCapability, TWTY_UINT16, flavor);
             break;
 
         case MSG_RESET:
             /* .. fall through intentional .. */
 
         case MSG_GETCURRENT:
-            twCC = set_onevalue(pCapability, TWTY_UINT16, TWPF_CHOCOLATE);
+            twCC = set_onevalue(pCapability, TWTY_UINT16, flavor);
             break;
     }
+#endif
     return twCC;
 }
 
