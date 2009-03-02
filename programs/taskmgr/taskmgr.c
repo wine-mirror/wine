@@ -151,7 +151,7 @@ static BOOL OnCreate(HWND hWnd)
     nParts[0] = 100;
     nParts[1] = 210;
     nParts[2] = 400;
-    SendMessageW(hStatusWnd, SB_SETPARTS, 3, (long)nParts);
+    SendMessageW(hStatusWnd, SB_SETPARTS, 3, (LPARAM)nParts);
 
     /* Create tab pages */
     hTabWnd = GetDlgItem(hWnd, IDC_TAB);
@@ -518,7 +518,7 @@ static void TaskManager_OnEnterMenuLoop(HWND hWnd)
 
     /* Update the status bar pane sizes */
     nParts = -1;
-    SendMessageW(hStatusWnd, SB_SETPARTS, 1, (long)&nParts);
+    SendMessageW(hStatusWnd, SB_SETPARTS, 1, (LPARAM)&nParts);
     bInMenuLoop = TRUE;
     SendMessageW(hStatusWnd, SB_SETTEXTW, 0, 0);
 }
@@ -538,7 +538,7 @@ static void TaskManager_OnExitMenuLoop(HWND hWnd)
     nParts[0] = 100;
     nParts[1] = 210;
     nParts[2] = rc.right;
-    SendMessageW(hStatusWnd, SB_SETPARTS, 3, (long)nParts);
+    SendMessageW(hStatusWnd, SB_SETPARTS, 3, (LPARAM)nParts);
     SendMessageW(hStatusWnd, SB_SETTEXT, 0, 0);
     wsprintfW(text, wszCPU_Usage, PerfDataGetProcessorUsage());
     SendMessageW(hStatusWnd, SB_SETTEXTW, 1, (LPARAM)text);
