@@ -17906,7 +17906,7 @@ MAIN_BINARY="wine-pthread"
       linux* | k*bsd*-gnu)
         MAIN_BINARY="wine-glibc"
 
-        EXTRA_BINARIES="wine-kthread wine-pthread wine-preloader"
+        EXTRA_BINARIES="wine-pthread wine-preloader"
  ;;
       freebsd*)
         MAIN_BINARY="wine-freebsd"
@@ -17991,8 +17991,6 @@ CFLAGS="$CFLAGS $BUILTINFLAG"
 
 
 
-
-
 for ac_func in \
 	_pclose \
 	_popen \
@@ -18006,7 +18004,6 @@ for ac_func in \
 	_vsnprintf \
 	asctime_r \
 	chsize \
-	clone \
 	dlopen \
 	epoll_create \
 	ffs \
@@ -18039,7 +18036,6 @@ for ac_func in \
 	pwrite \
 	readdir \
 	readlink \
-	rfork \
 	sched_yield \
 	select \
 	setproctitle \

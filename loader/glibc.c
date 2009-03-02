@@ -56,7 +56,6 @@ static void *xmalloc( size_t size )
 /* separate thread to check for NPTL and TLS features */
 static void *needs_pthread( void *arg )
 {
-    const char *loader;
     pid_t tid = gettid();
     /* check for NPTL */
     if (tid != -1 && tid != getpid()) return (void *)1;
@@ -70,20 +69,18 @@ static void *needs_pthread( void *arg )
     else
         fprintf( stderr,
                  "wine: Your C library is too old. You need at least glibc 2.3 with NPTL support.\n" );
-    if (!(loader = getenv( "WINELOADER" )) || !strstr( loader, "wine-kthread" ))
-        exit(1);
     return 0;
 }
 
-/* return the name of the Wine threading variant to use */
-static const char *get_threading(void)
+/* check if we support the glibc threading model */
+static void check_threading(void)
 {
     pthread_t id;
     void *ret;
 
     pthread_create( &id, NULL, needs_pthread, NULL );
     pthread_join( id, &ret );
-    return ret ? "wine-pthread" : "wine-kthread";
+    if (!ret) exit(1);
 }
 
 /* build a new full path from the specified path and name */
@@ -130,8 +127,7 @@ static void set_max_limit( int limit )
 int main( int argc, char *argv[] )
 {
     const char *loader = getenv( "WINELOADER" );
-    const char *threads = get_threading();
-    const char *new_argv0 = build_new_path( argv[0], threads );
+    const char *new_argv0 = build_new_path( argv[0], "wine-pthread" );
 
     wine_init_argv0_path( new_argv0 );
 
@@ -141,7 +137,7 @@ int main( int argc, char *argv[] )
     if (loader)
     {
         /* update WINELOADER with the new name */
-        const char *new_name = build_new_path( loader, threads );
+        const char *new_name = build_new_path( loader, "wine-pthread" );
         char *new_loader = xmalloc( sizeof("WINELOADER=") + strlen(new_name) );
         strcpy( new_loader, "WINELOADER=" );
         strcat( new_loader, new_name );
@@ -149,8 +145,9 @@ int main( int argc, char *argv[] )
         loader = new_name;
     }
 
+    check_threading();
     check_vmsplit( &argc );
     wine_exec_wine_binary( NULL, argv, loader );
-    fprintf( stderr, "wine: could not exec %s\n", threads );
+    fprintf( stderr, "wine: could not exec wine-pthread\n" );
     exit(1);
 }

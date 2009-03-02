@@ -7,12 +7,10 @@ MODULE    = wine
 C_SRCS = \
 	freebsd.c \
 	glibc.c \
-	kthread.c \
 	main.c \
 	preloader.c \
 	pthread.c
 
-KTHREAD_OBJS = kthread.o main.o
 PTHREAD_OBJS = pthread.o main.o
 
 MAIN_BINARY    = @MAIN_BINARY@
@@ -25,8 +23,6 @@ PROGRAMS = \
 	wine-freebsd-installed \
 	wine-glibc \
 	wine-glibc-installed \
-	wine-kthread \
-	wine-kthread-installed \
 	wine-preloader \
 	wine-preloader-installed \
 	wine-pthread \
@@ -64,12 +60,6 @@ wine-glibc-installed: glibc.o Makefile.in
 
 wine-preloader wine-preloader-installed: preloader.o Makefile.in
 	$(CC) -o $@ -static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7c000000 preloader.o $(LIBPORT) $(LDFLAGS)
-
-wine-kthread: $(KTHREAD_OBJS) Makefile.in
-	$(CC) -o $@ $(LDEXECFLAGS) $(KTHREAD_OBJS) $(LIBWINE) $(LIBPORT) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_LOCAL)
-
-wine-kthread-installed: $(KTHREAD_OBJS) Makefile.in
-	$(CC) -o $@ $(LDEXECFLAGS) $(KTHREAD_OBJS) $(LIBWINE) $(LIBPORT) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
 
 wine-pthread: $(PTHREAD_OBJS) Makefile.in
 	$(CC) -o $@ $(LDEXECFLAGS) $(PTHREAD_OBJS) $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_LOCAL)

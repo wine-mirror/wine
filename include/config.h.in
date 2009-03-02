@@ -41,9 +41,6 @@
 /* Define to 1 if you have the `chsize' function. */
 #undef HAVE_CHSIZE
 
-/* Define to 1 if you have the `clone' function. */
-#undef HAVE_CLONE
-
 /* Define to 1 if you have the <CoreAudio/CoreAudio.h> header file. */
 #undef HAVE_COREAUDIO_COREAUDIO_H
 
@@ -605,9 +602,6 @@
 
 /* Define to 1 if you have the <resolv.h> header file. */
 #undef HAVE_RESOLV_H
-
-/* Define to 1 if you have the `rfork' function. */
-#undef HAVE_RFORK
 
 /* Define to 1 if you have the <sched.h> header file. */
 #undef HAVE_SCHED_H

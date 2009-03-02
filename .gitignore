@@ -215,8 +215,6 @@ loader/wine-freebsd
 loader/wine-freebsd-installed
 loader/wine-glibc
 loader/wine-glibc-installed
-loader/wine-kthread
-loader/wine-kthread-installed
 loader/wine-preloader
 loader/wine-preloader-installed
 loader/wine-pthread

@@ -1417,7 +1417,7 @@ case $host_cpu in
     case $host_os in
       linux* | k*bsd*-gnu)
         AC_SUBST(MAIN_BINARY,"wine-glibc")
-        AC_SUBST(EXTRA_BINARIES,"wine-kthread wine-pthread wine-preloader") ;;
+        AC_SUBST(EXTRA_BINARIES,"wine-pthread wine-preloader") ;;
       freebsd*)
         AC_SUBST(MAIN_BINARY,"wine-freebsd")
         AC_SUBST(EXTRA_BINARIES,"wine-pthread") ;;
@@ -1442,7 +1442,6 @@ AC_CHECK_FUNCS(\
 	_vsnprintf \
 	asctime_r \
 	chsize \
-	clone \
 	dlopen \
 	epoll_create \
 	ffs \
@@ -1475,7 +1474,6 @@ AC_CHECK_FUNCS(\
 	pwrite \
 	readdir \
 	readlink \
-	rfork \
 	sched_yield \
 	select \
 	setproctitle \
