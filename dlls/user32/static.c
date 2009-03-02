@@ -151,7 +151,7 @@ static HICON STATIC_SetIcon( HWND hwnd, HICON hicon, DWORD style )
     CURSORICONINFO * info;
 
     if ((style & SS_TYPEMASK) != SS_ICON) return 0;
-    info = hicon?(CURSORICONINFO *) GlobalLock16(HICON_16(hicon)):NULL;
+    info = hicon ? GlobalLock16(HICON_16(hicon)) : NULL;
     if (hicon && !info) {
         WARN("hicon != 0, but info == 0\n");
         return 0;
@@ -805,7 +805,7 @@ static void STATIC_PaintIconfn( HWND hwnd, HDC hdc, DWORD style )
     GetClientRect( hwnd, &rc );
     hbrush = STATIC_SendWmCtlColorStatic(hwnd, hdc);
     hIcon = (HICON)GetWindowLongPtrW( hwnd, HICON_GWL_OFFSET );
-    info = hIcon ? (CURSORICONINFO *)GlobalLock16(HICON_16(hIcon)) : NULL;
+    info = hIcon ? GlobalLock16(HICON_16(hIcon)) : NULL;
     if (!hIcon || !info)
     {
         FillRect(hdc, &rc, hbrush);

@@ -2025,7 +2025,6 @@ static HWND MDI_MoreWindowsDialog(HWND hwnd)
     if (template == 0)
         return 0;
 
-    return (HWND) DialogBoxIndirectParamA(user32_module,
-                                          (const DLGTEMPLATE*) template,
-                                          hwnd, MDI_MoreWindowsDlgProc, (LPARAM) hwnd);
+    return (HWND) DialogBoxIndirectParamA(user32_module, template, hwnd,
+                                          MDI_MoreWindowsDlgProc, (LPARAM) hwnd);
 }

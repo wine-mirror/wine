@@ -236,7 +236,7 @@ BOOL DESKTOP_SetPattern( LPCWSTR pattern )
             int i;
 
             for (i = 0; i < 8; i++) pattern[i] = pat[i] & 0xffff;
-            hbitmap = CreateBitmap( 8, 8, 1, 1, (LPSTR)pattern );
+            hbitmap = CreateBitmap( 8, 8, 1, 1, pattern );
             hbrushPattern = CreatePatternBrush( hbitmap );
             DeleteObject( hbitmap );
         }

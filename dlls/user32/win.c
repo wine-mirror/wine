@@ -983,7 +983,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, UINT flags
         mdi_cs.style = cs->style;
         mdi_cs.lParam = (LPARAM)cs->lpCreateParams;
 
-        cs->lpCreateParams = (LPVOID)&mdi_cs;
+        cs->lpCreateParams = &mdi_cs;
 
         if (GetWindowLongW(cs->hwndParent, GWL_STYLE) & MDIS_ALLCHILDSTYLES)
         {

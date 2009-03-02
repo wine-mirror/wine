@@ -980,7 +980,7 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case WM_WINE_KEYBOARD_LL_HOOK:
     case WM_WINE_MOUSE_LL_HOOK:
     {
-        struct hook_extra_info *h_extra = (struct hook_extra_info *)*buffer;
+        struct hook_extra_info *h_extra = *buffer;
 
         minsize = sizeof(struct hook_extra_info) +
                   (message == WM_WINE_KEYBOARD_LL_HOOK ? sizeof(KBDLLHOOKSTRUCT)
@@ -1467,7 +1467,7 @@ static BOOL post_dde_message( struct packed_message *data, const struct send_mes
         {
             if ((ptr = GlobalLock( (HGLOBAL)uiLo) ))
             {
-                DDEDATA *dde_data = (DDEDATA *)ptr;
+                DDEDATA *dde_data = ptr;
                 TRACE("unused %d, fResponse %d, fRelease %d, fDeferUpd %d, fAckReq %d, cfFormat %d\n",
                        dde_data->unused, dde_data->fResponse, dde_data->fRelease,
                        dde_data->reserved, dde_data->fAckReq, dde_data->cfFormat);

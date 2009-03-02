@@ -77,11 +77,9 @@ HACCEL WINAPI LoadAcceleratorsW(HINSTANCE instance,LPCWSTR lpTableName)
     DWORD size;
 
     if (HIWORD(lpTableName))
-        TRACE_(accel)("%p '%s'\n",
-                      (LPVOID)instance, (const char *)( lpTableName ) );
+        TRACE_(accel)("%p '%s'\n", instance, (const char *)( lpTableName ) );
     else
-        TRACE_(accel)("%p 0x%04x\n",
-                       (LPVOID)instance, LOWORD(lpTableName) );
+        TRACE_(accel)("%p 0x%04x\n", instance, LOWORD(lpTableName) );
 
     if (!(hRsrc = FindResourceW( instance, lpTableName, (LPWSTR)RT_ACCELERATOR )))
     {
@@ -156,7 +154,7 @@ INT WINAPI CopyAcceleratorTableW(HACCEL src, LPACCEL dst,
      as far as possible. */
   if((dst && (entries < 1)) || (src == NULL) || !accel) {
     WARN_(accel)("Application sent invalid parameters (%p %p %d).\n",
-	 (LPVOID)src, (LPVOID)dst, entries);
+         src, dst, entries);
     return 0;
   }
   xsize = GlobalSize16(HACCEL_16(src))/sizeof(ACCEL16);

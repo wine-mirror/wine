@@ -1345,7 +1345,7 @@ HDDEDATA WINAPI DdeCreateDataHandle(DWORD idInst, LPBYTE pSrc, DWORD cb, DWORD c
     GlobalUnlock(hMem);
 
     TRACE("=> %p\n", hMem);
-    return (HDDEDATA)hMem;
+    return hMem;
 }
 
 /*****************************************************************
@@ -1577,8 +1577,8 @@ HGLOBAL WDML_DataHandle2Global(HDDEDATA hDdeData, BOOL fResponse, BOOL fRelease,
     DWORD                       dwSize;
     HGLOBAL                     hMem = 0;
 
-    dwSize = GlobalSize((HGLOBAL)hDdeData) - sizeof(DDE_DATAHANDLE_HEAD);
-    pDdh = GlobalLock((HGLOBAL)hDdeData);
+    dwSize = GlobalSize(hDdeData) - sizeof(DDE_DATAHANDLE_HEAD);
+    pDdh = GlobalLock(hDdeData);
     if (dwSize && pDdh)
     {
         WINE_DDEHEAD*    wdh = NULL;
@@ -1628,7 +1628,7 @@ HGLOBAL WDML_DataHandle2Global(HDDEDATA hDdeData, BOOL fResponse, BOOL fRelease,
             wdh->cfFormat = pDdh->cfFormat;
             GlobalUnlock(hMem);
         }
-        GlobalUnlock((HGLOBAL)hDdeData);
+        GlobalUnlock(hDdeData);
     }
 
     return hMem;

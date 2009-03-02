@@ -291,7 +291,7 @@ HDDEDATA WINAPI DdeClientTransaction16(LPVOID pData, DWORD cbData, HCONV hConv,
                                        HSZ hszItem, UINT16 wFmt, UINT16 wType,
                                        DWORD dwTimeout, LPDWORD pdwResult)
 {
-    return DdeClientTransaction((LPBYTE)pData, cbData, hConv, hszItem,
+    return DdeClientTransaction(pData, cbData, hConv, hszItem,
                                 wFmt, wType, dwTimeout, pdwResult);
 }
 

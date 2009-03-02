@@ -337,8 +337,8 @@ static INT_PTR CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
        LPMSGBOXPARAMSW mbp = (LPMSGBOXPARAMSW)lParam;
        SetWindowContextHelpId(hwnd, mbp->dwContextHelpId);
        hFont = MSGBOX_OnInit(hwnd, mbp);
-       SetPropA(hwnd, "WINE_MSGBOX_HFONT", (HANDLE)hFont);
-       SetPropA(hwnd, "WINE_MSGBOX_HELPCALLBACK", (HANDLE)mbp->lpfnMsgBoxCallback);
+       SetPropA(hwnd, "WINE_MSGBOX_HFONT", hFont);
+       SetPropA(hwnd, "WINE_MSGBOX_HELPCALLBACK", mbp->lpfnMsgBoxCallback);
        break;
    }
 

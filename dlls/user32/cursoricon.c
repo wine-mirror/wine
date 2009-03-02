@@ -838,7 +838,7 @@ static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi,
 
         /* Transfer the bitmap bits to the CURSORICONINFO structure */
 
-        GetBitmapBits( hAndBits, sizeAnd, (char *)(info + 1) );
+        GetBitmapBits( hAndBits, sizeAnd, info + 1 );
         GetBitmapBits( hXorBits, sizeXor, (char *)(info + 1) + sizeAnd );
         GlobalUnlock16( hObj );
     }
@@ -1613,8 +1613,7 @@ BOOL WINAPI DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
 
     if (!(ptr = GlobalLock16(HICON_16(hIcon)))) return FALSE;
     if (!(hMemDC = CreateCompatibleDC( hdc ))) return FALSE;
-    hAndBits = CreateBitmap( ptr->nWidth, ptr->nHeight, 1, 1,
-                               (char *)(ptr+1) );
+    hAndBits = CreateBitmap( ptr->nWidth, ptr->nHeight, 1, 1, ptr + 1 );
     hXorBits = CreateBitmap( ptr->nWidth, ptr->nHeight, ptr->bPlanes,
                                ptr->bBitsPerPixel, (char *)(ptr + 1)
                         + ptr->nHeight * get_bitmap_width_bytes(ptr->nWidth,1) );
@@ -1677,7 +1676,7 @@ HCURSOR WINAPI SetCursor( HCURSOR hCursor /* [in] Handle of cursor to show */ )
     /* Change the cursor shape only if it is visible */
     if (thread_info->cursor_count >= 0)
     {
-        USER_Driver->pSetCursor( (CURSORICONINFO*)GlobalLock16(HCURSOR_16(hCursor)) );
+        USER_Driver->pSetCursor(GlobalLock16(HCURSOR_16(hCursor)));
         GlobalUnlock16(HCURSOR_16(hCursor));
     }
     return hOldCursor;
@@ -1696,7 +1695,7 @@ INT WINAPI ShowCursor( BOOL bShow )
     {
         if (++thread_info->cursor_count == 0) /* Show it */
         {
-            USER_Driver->pSetCursor((CURSORICONINFO*)GlobalLock16(HCURSOR_16(thread_info->cursor)));
+            USER_Driver->pSetCursor(GlobalLock16(HCURSOR_16(thread_info->cursor)));
             GlobalUnlock16(HCURSOR_16(thread_info->cursor));
         }
     }
@@ -1977,7 +1976,7 @@ BOOL WINAPI GetIconInfo(HICON hIcon, PICONINFO iconinfo)
     }
 
     iconinfo->hbmMask = CreateBitmap ( ciconinfo->nWidth, height,
-                                1, 1, (char *)(ciconinfo + 1));
+                                1, 1, ciconinfo + 1);
 
     GlobalUnlock16(HICON_16(hIcon));
 
@@ -2062,7 +2061,7 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
         /* Some apps pass a color bitmap as a mask, convert it to b/w */
         if (bmpAnd.bmBitsPixel == 1)
         {
-            GetBitmapBits( iconinfo->hbmMask, sizeAnd, (char*)(info + 1) );
+            GetBitmapBits( iconinfo->hbmMask, sizeAnd, info + 1 );
         }
         else
         {
@@ -2085,7 +2084,7 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
             DeleteDC( hdc_mem );
             ReleaseDC( 0, hdc );
 
-            GetBitmapBits( hbmp_mono, sizeAnd, (char*)(info + 1) );
+            GetBitmapBits( hbmp_mono, sizeAnd, info + 1 );
             DeleteObject( hbmp_mono );
         }
 
@@ -2232,8 +2231,7 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
                                   (char *)(ptr + 1)
                                   + ptr->nHeight *
                                   get_bitmap_width_bytes(ptr->nWidth,1) );
-        hAndBits = CreateBitmap ( ptr->nWidth, ptr->nHeight,
-                                  1, 1, (char *)(ptr+1) );
+        hAndBits = CreateBitmap ( ptr->nWidth, ptr->nHeight, 1, 1, ptr + 1 );
         oldFg = SetTextColor( hdc, RGB(0,0,0) );
         oldBg = SetBkColor( hdc, RGB(255,255,255) );
 

@@ -4018,7 +4018,7 @@ HMENU WINAPI CreateMenu(void)
     HMENU hMenu;
     LPPOPUPMENU menu;
     if (!(hMenu = USER_HEAP_ALLOC( sizeof(POPUPMENU) ))) return 0;
-    menu = (LPPOPUPMENU) USER_HEAP_LIN_ADDR(hMenu);
+    menu = USER_HEAP_LIN_ADDR(hMenu);
 
     ZeroMemory(menu, sizeof(POPUPMENU));
     menu->wMagic = MENU_MAGIC;
@@ -4354,7 +4354,7 @@ HMENU WINAPI LoadMenuA( HINSTANCE instance, LPCSTR name )
 {
     HRSRC hrsrc = FindResourceA( instance, name, (LPSTR)RT_MENU );
     if (!hrsrc) return 0;
-    return LoadMenuIndirectA( (LPCVOID)LoadResource( instance, hrsrc ));
+    return LoadMenuIndirectA( LoadResource( instance, hrsrc ));
 }
 
 
@@ -4365,7 +4365,7 @@ HMENU WINAPI LoadMenuW( HINSTANCE instance, LPCWSTR name )
 {
     HRSRC hrsrc = FindResourceW( instance, name, (LPWSTR)RT_MENU );
     if (!hrsrc) return 0;
-    return LoadMenuIndirectW( (LPCVOID)LoadResource( instance, hrsrc ));
+    return LoadMenuIndirectW( LoadResource( instance, hrsrc ));
 }
 
 
@@ -4376,7 +4376,7 @@ HMENU16 WINAPI LoadMenuIndirect16( LPCVOID template )
 {
     HMENU hMenu;
     WORD version, offset;
-    LPCSTR p = (LPCSTR)template;
+    LPCSTR p = template;
 
     TRACE("(%p)\n", template );
     version = GET_WORD(p);
@@ -4405,7 +4405,7 @@ HMENU WINAPI LoadMenuIndirectW( LPCVOID template )
 {
     HMENU hMenu;
     WORD version, offset;
-    LPCSTR p = (LPCSTR)template;
+    LPCSTR p = template;
 
     version = GET_WORD(p);
     p += sizeof(WORD);

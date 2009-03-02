@@ -1641,7 +1641,7 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
 
             if (mdi_child)
             {
-                MDICREATESTRUCTA *mdi_cs = (MDICREATESTRUCTA *)cs32->lpCreateParams;
+                MDICREATESTRUCTA *mdi_cs = cs32->lpCreateParams;
                 MDICREATESTRUCT32Ato16( mdi_cs, &mdi_cs16 );
                 mdi_cs16.szTitle = MapLS( mdi_cs->szTitle );
                 mdi_cs16.szClass = MapLS( mdi_cs->szClass );
@@ -1680,7 +1680,7 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
             ret = callback( HWND_16(hwnd), msg, ((HWND)lParam == hwnd),
                             MAKELPARAM( LOWORD(lParam), LOWORD(wParam) ), result, arg );
         else
-            ret = callback( HWND_16(hwnd), msg, HWND_16( (HWND)wParam ), 0, result, arg );
+            ret = callback( HWND_16(hwnd), msg, HWND_16( wParam ), 0, result, arg );
         break;
     case WM_MDIGETACTIVE:
         ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
@@ -1916,7 +1916,7 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
             ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
         break;
     case WM_ACTIVATEAPP:
-        ret = callback( HWND_16(hwnd), msg, wParam, HTASK_16( (HANDLE)lParam ), result, arg );
+        ret = callback( HWND_16(hwnd), msg, wParam, HTASK_16( lParam ), result, arg );
         break;
     case WM_PAINT:
         if (IsIconic( hwnd ) && GetClassLongPtrW( hwnd, GCLP_HICON ))
@@ -1932,7 +1932,7 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
     case WM_DDE_TERMINATE:
     case WM_DDE_UNADVISE:
     case WM_DDE_REQUEST:
-        ret = callback( HWND_16(hwnd), msg, HWND_16((HWND)wParam), lParam, result, arg );
+        ret = callback( HWND_16(hwnd), msg, HWND_16(wParam), lParam, result, arg );
         break;
     case WM_DDE_ADVISE:
     case WM_DDE_DATA:
@@ -1943,7 +1943,7 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
 
             UnpackDDElParam( msg, lParam, &lo32, &hi );
             if (lo32 && !(lo16 = convert_handle_32_to_16(lo32, GMEM_DDESHARE))) break;
-            ret = callback( HWND_16(hwnd), msg, HWND_16((HWND)wParam),
+            ret = callback( HWND_16(hwnd), msg, HWND_16(wParam),
                             MAKELPARAM(lo16, hi), result, arg );
         }
         break; /* FIXME don't know how to free allocated memory (handle)  !! */
@@ -1975,7 +1975,7 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
                 hi = convert_handle_32_to_16(hi, GMEM_DDESHARE);
                 break;
             }
-            ret = callback( HWND_16(hwnd), msg, HWND_16((HWND)wParam),
+            ret = callback( HWND_16(hwnd), msg, HWND_16(wParam),
                             MAKELPARAM(lo, hi), result, arg );
         }
         break; /* FIXME don't know how to free allocated memory (handle) !! */

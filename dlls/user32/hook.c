@@ -379,7 +379,7 @@ static LRESULT call_hook( struct hook_info *info, INT code, WPARAM wparam, LPARA
 
             thread_info->hook = info->handle;
             thread_info->hook_unicode = info->next_unicode;
-            ret = call_hook_proc( (HOOKPROC)info->proc, info->id, code, wparam, lparam,
+            ret = call_hook_proc( info->proc, info->id, code, wparam, lparam,
                                   info->prev_unicode, info->next_unicode );
             thread_info->hook = prev;
             thread_info->hook_unicode = prev_unicode;

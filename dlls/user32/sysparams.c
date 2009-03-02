@@ -1389,7 +1389,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         break;
 
     case SPI_SETDESKWALLPAPER:			/*     20 */
-        if (!pvParam || !SetDeskWallPaper( (LPSTR)pvParam )) return FALSE;
+        if (!pvParam || !SetDeskWallPaper( pvParam )) return FALSE;
         SYSPARAMS_Save(SPI_SETDESKWALLPAPER_REGKEY, SPI_SETDESKWALLPAPER_VALNAME, pvParam, fWinIni);
 	break;
 	
@@ -1404,7 +1404,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                                buf, sizeof(buf)/sizeof(WCHAR) );
             ret = DESKTOP_SetPattern( buf );
         } else
-            ret = DESKTOP_SetPattern( (LPWSTR)pvParam );
+            ret = DESKTOP_SetPattern( pvParam );
 	break;
 
     case SPI_GETKEYBOARDDELAY:
@@ -1554,7 +1554,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     case SPI_SETICONTITLELOGFONT:       	/*     34 */
         if( uiParam == sizeof(LOGFONTW)) {
             ret = SYSPARAMS_SaveLogFont( SPI_SETICONTITLELOGFONT_REGKEY,
-                    SPI_SETICONTITLELOGFONT_VALNAME, (LOGFONTW *)pvParam, fWinIni);
+                    SPI_SETICONTITLELOGFONT_VALNAME, pvParam, fWinIni);
             if( ret) {
                 icon_metrics.lfFont = *(LOGFONTW *)pvParam;
                 spi_loaded[SPI_SETICONTITLELOGFONT_IDX] = TRUE;
@@ -1750,7 +1750,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         if (!pvParam) return FALSE;
 
         spi_idx = SPI_SETWORKAREA_IDX;
-        CopyRect( &work_area, (RECT *)pvParam );
+        CopyRect( &work_area, pvParam );
         spi_loaded[spi_idx] = TRUE;
         break;
     }
@@ -1768,7 +1768,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             EnumDisplayMonitors( 0, NULL, enum_monitors, (LPARAM)&work_area );
             spi_loaded[spi_idx] = TRUE;
         }
-        CopyRect( (RECT *)pvParam, &work_area );
+        CopyRect( pvParam, &work_area );
         TRACE("work area %s\n", wine_dbgstr_rect( &work_area ));
         break;
     }
@@ -1777,7 +1777,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     case SPI_GETFILTERKEYS:                     /*     50 */
     {
-        LPFILTERKEYS lpFilterKeys = (LPFILTERKEYS)pvParam;
+        LPFILTERKEYS lpFilterKeys = pvParam;
         WARN("SPI_GETFILTERKEYS not fully implemented\n");
         if (lpFilterKeys && lpFilterKeys->cbSize == sizeof(FILTERKEYS))
         {
@@ -1798,7 +1798,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     case SPI_GETTOGGLEKEYS:                     /*     52 */
     {
-        LPTOGGLEKEYS lpToggleKeys = (LPTOGGLEKEYS)pvParam;
+        LPTOGGLEKEYS lpToggleKeys = pvParam;
         WARN("SPI_GETTOGGLEKEYS not fully implemented\n");
         if (lpToggleKeys && lpToggleKeys->cbSize == sizeof(TOGGLEKEYS))
         {
@@ -1815,7 +1815,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     case SPI_GETMOUSEKEYS:                      /*     54 */
     {
-        LPMOUSEKEYS lpMouseKeys = (LPMOUSEKEYS)pvParam;
+        LPMOUSEKEYS lpMouseKeys = pvParam;
         WARN("SPI_GETMOUSEKEYS not fully implemented\n");
         if (lpMouseKeys && lpMouseKeys->cbSize == sizeof(MOUSEKEYS))
         {
@@ -1851,7 +1851,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     case SPI_GETSTICKYKEYS:                     /*     58 */
     {
-        LPSTICKYKEYS lpStickyKeys = (LPSTICKYKEYS)pvParam;
+        LPSTICKYKEYS lpStickyKeys = pvParam;
         WARN("SPI_GETSTICKYKEYS not fully implemented\n");
         if (lpStickyKeys && lpStickyKeys->cbSize == sizeof(STICKYKEYS))
         {
@@ -1868,7 +1868,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     case SPI_GETACCESSTIMEOUT:                  /*     60 */
     {
-        LPACCESSTIMEOUT lpAccessTimeout = (LPACCESSTIMEOUT)pvParam;
+        LPACCESSTIMEOUT lpAccessTimeout = pvParam;
         WARN("SPI_GETACCESSTIMEOUT not fully implemented\n");
         if (lpAccessTimeout && lpAccessTimeout->cbSize == sizeof(ACCESSTIMEOUT))
         {
@@ -1886,7 +1886,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     case SPI_GETSERIALKEYS:                     /*     62  WINVER >= 0x400 */
     {
-        LPSERIALKEYSW lpSerialKeysW = (LPSERIALKEYSW)pvParam;
+        LPSERIALKEYSW lpSerialKeysW = pvParam;
         WARN("SPI_GETSERIALKEYS not fully implemented\n");
         if (lpSerialKeysW && lpSerialKeysW->cbSize == sizeof(SERIALKEYSW))
         {
@@ -1907,7 +1907,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     case SPI_GETSOUNDSENTRY:                    /*     64 */
     {
-        LPSOUNDSENTRYW lpSoundSentryW = (LPSOUNDSENTRYW)pvParam;
+        LPSOUNDSENTRYW lpSoundSentryW = pvParam;
         WARN("SPI_GETSOUNDSENTRY not fully implemented\n");
         if (lpSoundSentryW && lpSoundSentryW->cbSize == sizeof(SOUNDSENTRYW))
         {
@@ -1934,7 +1934,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     case SPI_GETHIGHCONTRAST:			/*     66  WINVER >= 0x400 */
     {
-	LPHIGHCONTRASTW lpHighContrastW = (LPHIGHCONTRASTW)pvParam;
+        LPHIGHCONTRASTW lpHighContrastW = pvParam;
 	WARN("SPI_GETHIGHCONTRAST not fully implemented\n");
 	if (lpHighContrastW && lpHighContrastW->cbSize == sizeof(HIGHCONTRASTW))
 	{
@@ -1980,7 +1980,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     case SPI_GETANIMATION:			/*     72  WINVER >= 0x400 */
     {
-	LPANIMATIONINFO lpAnimInfo = (LPANIMATIONINFO)pvParam;
+        LPANIMATIONINFO lpAnimInfo = pvParam;
 
 	/* Tell it "disabled" */
 	if (lpAnimInfo && lpAnimInfo->cbSize == sizeof(ANIMATIONINFO))
@@ -2212,12 +2212,12 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
         if (SYSPARAMS_Load(SPI_SETDESKWALLPAPER_REGKEY, SPI_SETDESKWALLPAPER_VALNAME, buf, sizeof(buf)))
 	{
-	    lstrcpynW((WCHAR*)pvParam, buf, uiParam);
+            lstrcpynW(pvParam, buf, uiParam);
 	}
 	else
 	{
 	    /* Return an empty string */
-	    memset((WCHAR*)pvParam, 0, uiParam);
+            memset(pvParam, 0, uiParam);
 	}
 
 	break;
@@ -2563,7 +2563,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 	ret = SystemParametersInfoA( uAction, uParam, lpvParam ? &tmp : NULL, fuWinIni );
 	if (ret && lpvParam)
         {
-            RECT16 *r16 = (RECT16 *)lpvParam;
+            RECT16 *r16 = lpvParam;
             r16->left   = tmp.left;
             r16->top    = tmp.top;
             r16->right  = tmp.right;
@@ -2607,8 +2607,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     {
 	WCHAR buffer[256];
 	if (pvParam)
-            if (!MultiByteToWideChar( CP_ACP, 0, (LPSTR)pvParam, -1,
-                                      buffer, sizeof(buffer)/sizeof(WCHAR) ))
+            if (!MultiByteToWideChar( CP_ACP, 0, pvParam, -1, buffer,
+                                      sizeof(buffer)/sizeof(WCHAR) ))
                 buffer[sizeof(buffer)/sizeof(WCHAR)-1] = 0;
 	ret = SystemParametersInfoW( uiAction, uiParam, pvParam ? buffer : NULL, fuWinIni );
 	break;
@@ -2619,14 +2619,14 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	LOGFONTW tmp;
 	ret = SystemParametersInfoW( uiAction, uiParam, pvParam ? &tmp : NULL, fuWinIni );
 	if (ret && pvParam)
-	    SYSPARAMS_LogFont32WTo32A( &tmp, (LPLOGFONTA)pvParam );
+            SYSPARAMS_LogFont32WTo32A( &tmp, pvParam );
 	break;
     }
 
     case SPI_GETNONCLIENTMETRICS: 		/*     41  WINVER >= 0x400 */
     {
 	NONCLIENTMETRICSW tmp;
-	LPNONCLIENTMETRICSA lpnmA = (LPNONCLIENTMETRICSA)pvParam;
+        LPNONCLIENTMETRICSA lpnmA = pvParam;
 	if (lpnmA && lpnmA->cbSize == sizeof(NONCLIENTMETRICSA))
 	{
 	    tmp.cbSize = sizeof(NONCLIENTMETRICSW);
@@ -2642,7 +2642,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     case SPI_SETNONCLIENTMETRICS: 		/*     42  WINVER >= 0x400 */
     {
         NONCLIENTMETRICSW tmp;
-        LPNONCLIENTMETRICSA lpnmA = (LPNONCLIENTMETRICSA)pvParam;
+        LPNONCLIENTMETRICSA lpnmA = pvParam;
         if (lpnmA && lpnmA->cbSize == sizeof(NONCLIENTMETRICSA))
         {
             tmp.cbSize = sizeof(NONCLIENTMETRICSW);
@@ -2657,7 +2657,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     case SPI_GETICONMETRICS:			/*     45  WINVER >= 0x400 */
     {
 	ICONMETRICSW tmp;
-	LPICONMETRICSA lpimA = (LPICONMETRICSA)pvParam;
+        LPICONMETRICSA lpimA = pvParam;
 	if (lpimA && lpimA->cbSize == sizeof(ICONMETRICSA))
 	{
 	    tmp.cbSize = sizeof(ICONMETRICSW);
@@ -2678,7 +2678,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     case SPI_SETICONMETRICS:			/*     46  WINVER >= 0x400 */
     {
         ICONMETRICSW tmp;
-        LPICONMETRICSA lpimA = (LPICONMETRICSA)pvParam;
+        LPICONMETRICSA lpimA = pvParam;
         if (lpimA && lpimA->cbSize == sizeof(ICONMETRICSA))
         {
             tmp.cbSize = sizeof(ICONMETRICSW);
@@ -2696,7 +2696,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     case SPI_GETHIGHCONTRAST:			/*     66  WINVER >= 0x400 */
     {
 	HIGHCONTRASTW tmp;
-	LPHIGHCONTRASTA lphcA = (LPHIGHCONTRASTA)pvParam;
+        LPHIGHCONTRASTA lphcA = pvParam;
 	if (lphcA && lphcA->cbSize == sizeof(HIGHCONTRASTA))
 	{
 	    tmp.cbSize = sizeof(HIGHCONTRASTW);

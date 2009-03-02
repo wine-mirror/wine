@@ -764,7 +764,7 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
     if(BorderShrink < 1) BorderShrink = 1;
 
     if((uFlags & 0xff) == DFCS_BUTTONRADIOIMAGE)
-        FillRect(dc, r, (HBRUSH)GetStockObject(BLACK_BRUSH));
+        FillRect(dc, r, GetStockObject(BLACK_BRUSH));
 
     xc = myr.left + SmallDiam - SmallDiam/2;
     yc = myr.top  + SmallDiam - SmallDiam/2;
@@ -1145,7 +1145,7 @@ static BOOL UITOOLS95_DrawFrameMenu(HDC dc, LPRECT r, UINT uFlags)
     /* without luck. It seems as if this behavior is inherited from the */
     /* win31 DFC() implementation... (you remember, B/W menus). */
 
-    FillRect(dc, r, (HBRUSH)GetStockObject(WHITE_BRUSH));
+    FillRect(dc, r, GetStockObject(WHITE_BRUSH));
 
     hbsave = SelectObject(dc, GetStockObject(BLACK_BRUSH));
     hpsave = SelectObject(dc, GetStockObject(BLACK_PEN));
@@ -1667,7 +1667,7 @@ static BOOL UITOOLS_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM lp
     rc.left = rc.top = 0;
     rc.right = cx;
     rc.bottom = cy;
-    if(!FillRect(memdc, &rc, (HBRUSH)GetStockObject(WHITE_BRUSH))) goto cleanup;
+    if(!FillRect(memdc, &rc, GetStockObject(WHITE_BRUSH))) goto cleanup;
     SetBkColor(memdc, RGB(255, 255, 255));
     SetTextColor(memdc, RGB(0, 0, 0));
     hfsave  = SelectObject(memdc, GetCurrentObject(hdc, OBJ_FONT));

@@ -223,7 +223,7 @@ static BYTE * ICO_GetIconDirectory( LPBYTE peimage, LPicoICONDIR* lplpiID, ULONG
 	  /* copy the entries */
 	  for( i=0; i < lpcid->idCount; i++ )
 	  {
-	    memcpy((void*)&(lpID->idEntries[i]),(void*)&(lpcid->idEntries[i]), sizeof(CURSORICONDIRENTRY) - 2);
+            memcpy(&lpID->idEntries[i], &lpcid->idEntries[i], sizeof(CURSORICONDIRENTRY) - 2);
 	    lpID->idEntries[i].wResId = i;
 	  }
 
@@ -776,7 +776,7 @@ UINT WINAPI PrivateExtractIconExW (
 	  cxsmicon = GetSystemMetrics(SM_CXSMICON);
 	  cysmicon = GetSystemMetrics(SM_CYSMICON);
 
-	  ret = ICO_ExtractIconExW(lpwstrFile, (HICON*)hIcon, nIndex, 2, cxicon | (cxsmicon<<16),
+          ret = ICO_ExtractIconExW(lpwstrFile, hIcon, nIndex, 2, cxicon | (cxsmicon<<16),
 	                           cyicon | (cysmicon<<16), NULL, LR_DEFAULTCOLOR);
 	  *phIconLarge = hIcon[0];
 	  *phIconSmall = hIcon[1];

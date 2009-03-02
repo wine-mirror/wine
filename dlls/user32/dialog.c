@@ -205,7 +205,7 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
     }
     else
     {
-        info->className = (LPCWSTR)p;
+        info->className = p;
         p += strlenW( info->className ) + 1;
     }
 
@@ -216,7 +216,7 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
     }
     else
     {
-        info->windowName = (LPCWSTR)p;
+        info->windowName = p;
         p += strlenW( info->windowName ) + 1;
     }
 
@@ -393,7 +393,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
         TRACE(" MENU %04x\n", LOWORD(result->menuName) );
         break;
     default:
-        result->menuName = (LPCWSTR)p;
+        result->menuName = p;
         TRACE(" MENU %s\n", debugstr_w(result->menuName) );
         p += strlenW( result->menuName ) + 1;
         break;
@@ -413,7 +413,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
         TRACE(" CLASS %04x\n", LOWORD(result->className) );
         break;
     default:
-        result->className = (LPCWSTR)p;
+        result->className = p;
         TRACE(" CLASS %s\n", debugstr_w( result->className ));
         p += strlenW( result->className ) + 1;
         break;
@@ -421,7 +421,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
 
     /* Get the window caption */
 
-    result->caption = (LPCWSTR)p;
+    result->caption = p;
     p += strlenW( result->caption ) + 1;
     TRACE(" CAPTION %s\n", debugstr_w( result->caption ) );
 
@@ -441,7 +441,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
             result->weight = GET_WORD(p); p++;
             result->italic = LOBYTE(GET_WORD(p)); p++;
         }
-        result->faceName = (LPCWSTR)p;
+        result->faceName = p;
         p += strlenW( result->faceName ) + 1;
         TRACE(" FONT %d, %s, %d, %s\n",
               result->pointSize, debugstr_w( result->faceName ),
