@@ -5257,10 +5257,7 @@ static void test_quotes(void)
 
     query = "INSERT INTO `Table` ( `A` ) VALUES ( 'This is a ''string'' ok' )";
     r = run_query(hdb, 0, query);
-    todo_wine
-    {
-        ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
-    }
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
 
     query = "INSERT INTO `Table` ( `A` ) VALUES ( 'This is a '''string''' ok' )";
     r = run_query(hdb, 0, query);
@@ -5287,19 +5284,13 @@ static void test_quotes(void)
     size = MAX_PATH;
     r = MsiRecordGetString(hrec, 1, buf, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmp(buf, "This is a \"string\" ok"),
-           "Expected \"This is a \"string\" ok\", got %s\n", buf);
-    }
+    ok(!lstrcmp(buf, "This is a \"string\" ok"),
+       "Expected \"This is a \"string\" ok\", got %s\n", buf);
 
     MsiCloseHandle(hrec);
 
     r = MsiViewFetch(hview, &hrec);
-    todo_wine
-    {
-        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
-    }
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
 
     MsiViewClose(hview);
     MsiCloseHandle(hview);
