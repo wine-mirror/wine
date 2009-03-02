@@ -92,6 +92,7 @@ typedef struct {
 
     HINTERNET internet;
     HINTERNET request;
+    HINTERNET connection;
     DWORD flags;
     HANDLE lock;
 
@@ -103,10 +104,12 @@ typedef struct {
 } Protocol;
 
 struct ProtocolVtbl {
+    HRESULT (*open_request)(Protocol*,LPCWSTR,DWORD,IInternetBindInfo*);
     HRESULT (*start_downloading)(Protocol*);
     void (*close_connection)(Protocol*);
 };
 
+HRESULT protocol_start(Protocol*,IInternetProtocol*,LPCWSTR,IInternetProtocolSink*,IInternetBindInfo*);
 HRESULT protocol_continue(Protocol*,PROTOCOLDATA*);
 HRESULT protocol_read(Protocol*,void*,ULONG,ULONG*);
 HRESULT protocol_lock_request(Protocol*);

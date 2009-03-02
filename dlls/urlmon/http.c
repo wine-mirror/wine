@@ -29,48 +29,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
-/* Flags are needed for, among other things, return HRESULTs from the Read function
- * to conform to native. For example, Read returns:
- *
- * 1. E_PENDING if called before the request has completed,
- *        (flags = 0)
- * 2. S_FALSE after all data has been read and S_OK has been reported,
- *        (flags = FLAG_REQUEST_COMPLETE | FLAG_ALL_DATA_READ | FLAG_RESULT_REPORTED)
- * 3. INET_E_DATA_NOT_AVAILABLE if InternetQueryDataAvailable fails. The first time
- *    this occurs, INET_E_DATA_NOT_AVAILABLE will also be reported to the sink,
- *        (flags = FLAG_REQUEST_COMPLETE)
- *    but upon subsequent calls to Read no reporting will take place, yet
- *    InternetQueryDataAvailable will still be called, and, on failure,
- *    INET_E_DATA_NOT_AVAILABLE will still be returned.
- *        (flags = FLAG_REQUEST_COMPLETE | FLAG_RESULT_REPORTED)
- *
- * FLAG_FIRST_DATA_REPORTED and FLAG_LAST_DATA_REPORTED are needed for proper
- * ReportData reporting. For example, if OnResponse returns S_OK, Continue will
- * report BSCF_FIRSTDATANOTIFICATION, and when all data has been read Read will
- * report BSCF_INTERMEDIATEDATANOTIFICATION|BSCF_LASTDATANOTIFICATION. However,
- * if OnResponse does not return S_OK, Continue will not report data, and Read
- * will report BSCF_FIRSTDATANOTIFICATION|BSCF_LASTDATANOTIFICATION when all
- * data has been read.
- */
-#define FLAG_REQUEST_COMPLETE 0x1
-#define FLAG_FIRST_CONTINUE_COMPLETE 0x2
-#define FLAG_FIRST_DATA_REPORTED 0x4
-#define FLAG_ALL_DATA_READ 0x8
-#define FLAG_LAST_DATA_REPORTED 0x10
-#define FLAG_RESULT_REPORTED 0x20
-
 typedef struct {
     Protocol base;
 
     const IInternetProtocolVtbl *lpInternetProtocolVtbl;
     const IInternetPriorityVtbl *lpInternetPriorityVtbl;
 
-    LONG ref;
-
     BOOL https;
     IHttpNegotiate *http_negotiate;
     LPWSTR full_header;
-    HINTERNET connection;
+
+    LONG ref;
 } HttpProtocol;
 
 #define PROTOCOL(x)  ((IInternetProtocol*)  &(x)->lpInternetProtocolVtbl)
@@ -101,6 +70,153 @@ static LPWSTR query_http_info(HttpProtocol *This, DWORD option)
 }
 
 #define ASYNCPROTOCOL_THIS(iface) DEFINE_THIS2(HttpProtocol, base, iface)
+
+static HRESULT HttpProtocol_open_request(Protocol *prot, LPCWSTR url, DWORD request_flags,
+                                         IInternetBindInfo *bind_info)
+{
+    HttpProtocol *This = ASYNCPROTOCOL_THIS(prot);
+    LPWSTR addl_header = NULL, post_cookie = NULL, optional = NULL;
+    IServiceProvider *service_provider = NULL;
+    IHttpNegotiate2 *http_negotiate2 = NULL;
+    LPWSTR host, user, pass, path;
+    LPOLESTR accept_mimes[257];
+    URL_COMPONENTSW url_comp;
+    BYTE security_id[512];
+    DWORD len = 0;
+    ULONG num = 0;
+    BOOL res;
+    HRESULT hres;
+
+    static const WCHAR wszBindVerb[BINDVERB_CUSTOM][5] =
+        {{'G','E','T',0},
+         {'P','O','S','T',0},
+         {'P','U','T',0}};
+
+    memset(&url_comp, 0, sizeof(url_comp));
+    url_comp.dwStructSize = sizeof(url_comp);
+    url_comp.dwSchemeLength = url_comp.dwHostNameLength = url_comp.dwUrlPathLength =
+        url_comp.dwUserNameLength = url_comp.dwPasswordLength = 1;
+    if (!InternetCrackUrlW(url, 0, 0, &url_comp))
+        return MK_E_SYNTAX;
+
+    if(!url_comp.nPort)
+        url_comp.nPort = This->https ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT;
+
+    host = heap_strndupW(url_comp.lpszHostName, url_comp.dwHostNameLength);
+    user = heap_strndupW(url_comp.lpszUserName, url_comp.dwUserNameLength);
+    pass = heap_strndupW(url_comp.lpszPassword, url_comp.dwPasswordLength);
+    This->base.connection = InternetConnectW(This->base.internet, host, url_comp.nPort, user, pass,
+            INTERNET_SERVICE_HTTP, This->https ? INTERNET_FLAG_SECURE : 0, (DWORD_PTR)&This->base);
+    heap_free(pass);
+    heap_free(user);
+    heap_free(host);
+    if(!This->base.connection) {
+        WARN("InternetConnect failed: %d\n", GetLastError());
+        return INET_E_CANNOT_CONNECT;
+    }
+
+    num = sizeof(accept_mimes)/sizeof(accept_mimes[0])-1;
+    hres = IInternetBindInfo_GetBindString(bind_info, BINDSTRING_ACCEPT_MIMES, accept_mimes, num, &num);
+    if(hres != S_OK) {
+        WARN("GetBindString BINDSTRING_ACCEPT_MIMES failed: %08x\n", hres);
+        return INET_E_NO_VALID_MEDIA;
+    }
+    accept_mimes[num] = 0;
+
+    path = heap_strndupW(url_comp.lpszUrlPath, url_comp.dwUrlPathLength);
+    if(This->https)
+        request_flags |= INTERNET_FLAG_SECURE;
+    This->base.request = HttpOpenRequestW(This->base.connection,
+            This->base.bind_info.dwBindVerb < BINDVERB_CUSTOM
+                ? wszBindVerb[This->base.bind_info.dwBindVerb] : This->base.bind_info.szCustomVerb,
+            path, NULL, NULL, (LPCWSTR *)accept_mimes, request_flags, (DWORD_PTR)&This->base);
+    heap_free(path);
+    while (num<sizeof(accept_mimes)/sizeof(accept_mimes[0]) && accept_mimes[num])
+        CoTaskMemFree(accept_mimes[num++]);
+    if (!This->base.request) {
+        WARN("HttpOpenRequest failed: %d\n", GetLastError());
+        return INET_E_RESOURCE_NOT_FOUND;
+    }
+
+    hres = IInternetProtocolSink_QueryInterface(This->base.protocol_sink, &IID_IServiceProvider,
+            (void **)&service_provider);
+    if (hres != S_OK) {
+        WARN("IInternetProtocolSink_QueryInterface IID_IServiceProvider failed: %08x\n", hres);
+        return hres;
+    }
+
+    hres = IServiceProvider_QueryService(service_provider, &IID_IHttpNegotiate,
+            &IID_IHttpNegotiate, (void **)&This->http_negotiate);
+    if (hres != S_OK) {
+        WARN("IServiceProvider_QueryService IID_IHttpNegotiate failed: %08x\n", hres);
+        return hres;
+    }
+
+    hres = IHttpNegotiate_BeginningTransaction(This->http_negotiate, url, wszHeaders,
+            0, &addl_header);
+    if(hres != S_OK) {
+        WARN("IHttpNegotiate_BeginningTransaction failed: %08x\n", hres);
+        IServiceProvider_Release(service_provider);
+        return hres;
+    }
+
+    if(addl_header) {
+        int len_addl_header = strlenW(addl_header);
+
+        This->full_header = heap_alloc(len_addl_header*sizeof(WCHAR)+sizeof(wszHeaders));
+
+        lstrcpyW(This->full_header, addl_header);
+        lstrcpyW(&This->full_header[len_addl_header], wszHeaders);
+        CoTaskMemFree(addl_header);
+    }else {
+        This->full_header = (LPWSTR)wszHeaders;
+    }
+
+    hres = IServiceProvider_QueryService(service_provider, &IID_IHttpNegotiate2,
+            &IID_IHttpNegotiate2, (void **)&http_negotiate2);
+    IServiceProvider_Release(service_provider);
+    if(hres != S_OK) {
+        WARN("IServiceProvider_QueryService IID_IHttpNegotiate2 failed: %08x\n", hres);
+        /* No goto done as per native */
+    }else {
+        len = sizeof(security_id)/sizeof(security_id[0]);
+        hres = IHttpNegotiate2_GetRootSecurityId(http_negotiate2, security_id, &len, 0);
+        IHttpNegotiate2_Release(http_negotiate2);
+        if (hres != S_OK)
+            WARN("IHttpNegotiate2_GetRootSecurityId failed: %08x\n", hres);
+    }
+
+    /* FIXME: Handle security_id. Native calls undocumented function IsHostInProxyBypassList. */
+
+    if(This->base.bind_info.dwBindVerb == BINDVERB_POST) {
+        num = 0;
+        hres = IInternetBindInfo_GetBindString(bind_info, BINDSTRING_POST_COOKIE, &post_cookie, 1, &num);
+        if(hres == S_OK && num) {
+            if(!InternetSetOptionW(This->base.request, INTERNET_OPTION_SECONDARY_CACHE_KEY,
+                                   post_cookie, lstrlenW(post_cookie)))
+                WARN("InternetSetOption INTERNET_OPTION_SECONDARY_CACHE_KEY failed: %d\n", GetLastError());
+            CoTaskMemFree(post_cookie);
+        }
+    }
+
+    if(This->base.bind_info.dwBindVerb != BINDVERB_GET) {
+        /* Native does not use GlobalLock/GlobalUnlock, so we won't either */
+        if (This->base.bind_info.stgmedData.tymed != TYMED_HGLOBAL)
+            WARN("Expected This->base.bind_info.stgmedData.tymed to be TYMED_HGLOBAL, not %d\n",
+                 This->base.bind_info.stgmedData.tymed);
+        else
+            optional = (LPWSTR)This->base.bind_info.stgmedData.u.hGlobal;
+    }
+
+    res = HttpSendRequestW(This->base.request, This->full_header, lstrlenW(This->full_header),
+            optional, optional ? This->base.bind_info.cbstgmedData : 0);
+    if(!res && GetLastError() != ERROR_IO_PENDING) {
+        WARN("HttpSendRequest failed: %d\n", GetLastError());
+        return INET_E_DOWNLOAD_FAILURE;
+    }
+
+    return S_OK;
+}
 
 static HRESULT HttpProtocol_start_downloading(Protocol *prot)
 {
@@ -171,9 +287,6 @@ static void HttpProtocol_close_connection(Protocol *prot)
 {
     HttpProtocol *This = ASYNCPROTOCOL_THIS(prot);
 
-    if(This->connection)
-        InternetCloseHandle(This->connection);
-
     if(This->http_negotiate) {
         IHttpNegotiate_Release(This->http_negotiate);
         This->http_negotiate = 0;
@@ -189,78 +302,10 @@ static void HttpProtocol_close_connection(Protocol *prot)
 #undef ASYNCPROTOCOL_THIS
 
 static const ProtocolVtbl AsyncProtocolVtbl = {
+    HttpProtocol_open_request,
     HttpProtocol_start_downloading,
     HttpProtocol_close_connection
 };
-
-static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
-    HINTERNET hInternet, DWORD_PTR dwContext, DWORD dwInternetStatus,
-    LPVOID lpvStatusInformation, DWORD dwStatusInformationLength)
-{
-    HttpProtocol *This = (HttpProtocol *)dwContext;
-    PROTOCOLDATA data;
-    ULONG ulStatusCode;
-
-    switch (dwInternetStatus)
-    {
-    case INTERNET_STATUS_RESOLVING_NAME:
-        ulStatusCode = BINDSTATUS_FINDINGRESOURCE;
-        break;
-    case INTERNET_STATUS_CONNECTING_TO_SERVER:
-        ulStatusCode = BINDSTATUS_CONNECTING;
-        break;
-    case INTERNET_STATUS_SENDING_REQUEST:
-        ulStatusCode = BINDSTATUS_SENDINGREQUEST;
-        break;
-    case INTERNET_STATUS_REQUEST_COMPLETE:
-        This->base.flags |= FLAG_REQUEST_COMPLETE;
-        /* PROTOCOLDATA same as native */
-        memset(&data, 0, sizeof(data));
-        data.dwState = 0xf1000000;
-        if (This->base.flags & FLAG_FIRST_CONTINUE_COMPLETE)
-            data.pData = (LPVOID)BINDSTATUS_ENDDOWNLOADCOMPONENTS;
-        else
-            data.pData = (LPVOID)BINDSTATUS_DOWNLOADINGDATA;
-        if (This->base.bindf & BINDF_FROMURLMON)
-            IInternetProtocolSink_Switch(This->base.protocol_sink, &data);
-        else
-            IInternetProtocol_Continue(PROTOCOL(This), &data);
-        return;
-    case INTERNET_STATUS_HANDLE_CREATED:
-        IInternetProtocol_AddRef(PROTOCOL(This));
-        return;
-    case INTERNET_STATUS_HANDLE_CLOSING:
-        if (*(HINTERNET *)lpvStatusInformation == This->connection)
-        {
-            This->connection = 0;
-        }
-        else if (*(HINTERNET *)lpvStatusInformation == This->base.request)
-        {
-            This->base.request = 0;
-            if (This->base.protocol_sink)
-            {
-                IInternetProtocolSink_Release(This->base.protocol_sink);
-                This->base.protocol_sink = 0;
-            }
-            if (This->base.bind_info.cbSize)
-            {
-                ReleaseBindInfo(&This->base.bind_info);
-                memset(&This->base.bind_info, 0, sizeof(This->base.bind_info));
-            }
-        }
-        IInternetProtocol_Release(PROTOCOL(This));
-        return;
-    default:
-        WARN("Unhandled Internet status callback %d\n", dwInternetStatus);
-        return;
-    }
-
-    IInternetProtocolSink_ReportProgress(This->base.protocol_sink, ulStatusCode, (LPWSTR)lpvStatusInformation);
-}
-
-/*
- * Interface implementations
- */
 
 #define PROTOCOL_THIS(iface) DEFINE_THIS(HttpProtocol, InternetProtocol, iface)
 
@@ -322,267 +367,19 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
         DWORD grfPI, DWORD dwReserved)
 {
     HttpProtocol *This = PROTOCOL_THIS(iface);
-    URL_COMPONENTSW url;
-    DWORD len = 0, request_flags = INTERNET_FLAG_KEEP_CONNECTION;
-    ULONG num = 0;
-    IServiceProvider *service_provider = 0;
-    IHttpNegotiate2 *http_negotiate2 = 0;
-    LPWSTR host = 0, path = 0, user = 0, pass = 0, addl_header = 0,
-        post_cookie = 0, optional = 0;
-    BYTE security_id[512];
-    LPOLESTR user_agent = NULL, accept_mimes[257];
-    HRESULT hres;
 
     static const WCHAR httpW[] = {'h','t','t','p',':'};
     static const WCHAR httpsW[] = {'h','t','t','p','s',':'};
-    static const WCHAR wszBindVerb[BINDVERB_CUSTOM][5] =
-        {{'G','E','T',0},
-         {'P','O','S','T',0},
-         {'P','U','T',0}};
 
     TRACE("(%p)->(%s %p %p %08x %d)\n", This, debugstr_w(szUrl), pOIProtSink,
             pOIBindInfo, grfPI, dwReserved);
 
-    IInternetProtocolSink_AddRef(pOIProtSink);
-    This->base.protocol_sink = pOIProtSink;
-
-    memset(&This->base.bind_info, 0, sizeof(This->base.bind_info));
-    This->base.bind_info.cbSize = sizeof(BINDINFO);
-    hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &This->base.bindf, &This->base.bind_info);
-    if (hres != S_OK)
-    {
-        WARN("GetBindInfo failed: %08x\n", hres);
-        goto done;
-    }
-
     if(This->https
         ? strncmpW(szUrl, httpsW, sizeof(httpsW)/sizeof(WCHAR))
         : strncmpW(szUrl, httpW, sizeof(httpW)/sizeof(WCHAR)))
-    {
-        hres = MK_E_SYNTAX;
-        goto done;
-    }
+        return MK_E_SYNTAX;
 
-    memset(&url, 0, sizeof(url));
-    url.dwStructSize = sizeof(url);
-    url.dwSchemeLength = url.dwHostNameLength = url.dwUrlPathLength = url.dwUserNameLength =
-        url.dwPasswordLength = 1;
-    if (!InternetCrackUrlW(szUrl, 0, 0, &url))
-    {
-        hres = MK_E_SYNTAX;
-        goto done;
-    }
-    host = heap_strndupW(url.lpszHostName, url.dwHostNameLength);
-    path = heap_strndupW(url.lpszUrlPath, url.dwUrlPathLength);
-    user = heap_strndupW(url.lpszUserName, url.dwUserNameLength);
-    pass = heap_strndupW(url.lpszPassword, url.dwPasswordLength);
-    if (!url.nPort)
-        url.nPort = This->https ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT;
-
-    if(!(This->base.bindf & BINDF_FROMURLMON))
-        IInternetProtocolSink_ReportProgress(This->base.protocol_sink, BINDSTATUS_DIRECTBIND, NULL);
-
-    hres = IInternetBindInfo_GetBindString(pOIBindInfo, BINDSTRING_USER_AGENT, &user_agent,
-                                           1, &num);
-    if (hres != S_OK || !num)
-    {
-        CHAR null_char = 0;
-        LPSTR user_agenta = NULL;
-        len = 0;
-        if ((hres = ObtainUserAgentString(0, &null_char, &len)) != E_OUTOFMEMORY)
-        {
-            WARN("ObtainUserAgentString failed: %08x\n", hres);
-        }
-        else if (!(user_agenta = heap_alloc(len*sizeof(CHAR))))
-        {
-            WARN("Out of memory\n");
-        }
-        else if ((hres = ObtainUserAgentString(0, user_agenta, &len)) != S_OK)
-        {
-            WARN("ObtainUserAgentString failed: %08x\n", hres);
-        }
-        else
-        {
-            if (!(user_agent = CoTaskMemAlloc((len)*sizeof(WCHAR))))
-                WARN("Out of memory\n");
-            else
-                MultiByteToWideChar(CP_ACP, 0, user_agenta, -1, user_agent, len);
-        }
-        heap_free(user_agenta);
-    }
-
-    This->base.internet = InternetOpenW(user_agent, 0, NULL, NULL, INTERNET_FLAG_ASYNC);
-    if (!This->base.internet)
-    {
-        WARN("InternetOpen failed: %d\n", GetLastError());
-        hres = INET_E_NO_SESSION;
-        goto done;
-    }
-
-    /* Native does not check for success of next call, so we won't either */
-    InternetSetStatusCallbackW(This->base.internet, HTTPPROTOCOL_InternetStatusCallback);
-
-    This->connection = InternetConnectW(This->base.internet, host, url.nPort, user,
-                                     pass, INTERNET_SERVICE_HTTP,
-                                     This->https ? INTERNET_FLAG_SECURE : 0,
-                                     (DWORD_PTR)This);
-    if (!This->connection)
-    {
-        WARN("InternetConnect failed: %d\n", GetLastError());
-        hres = INET_E_CANNOT_CONNECT;
-        goto done;
-    }
-
-    num = sizeof(accept_mimes)/sizeof(accept_mimes[0])-1;
-    hres = IInternetBindInfo_GetBindString(pOIBindInfo, BINDSTRING_ACCEPT_MIMES,
-                                           accept_mimes,
-                                           num, &num);
-    if (hres != S_OK)
-    {
-        WARN("GetBindString BINDSTRING_ACCEPT_MIMES failed: %08x\n", hres);
-        hres = INET_E_NO_VALID_MEDIA;
-        goto done;
-    }
-    accept_mimes[num] = 0;
-
-    if (This->base.bindf & BINDF_NOWRITECACHE)
-        request_flags |= INTERNET_FLAG_NO_CACHE_WRITE;
-    if (This->base.bindf & BINDF_NEEDFILE)
-        request_flags |= INTERNET_FLAG_NEED_FILE;
-    if (This->https)
-        request_flags |= INTERNET_FLAG_SECURE;
-    This->base.request = HttpOpenRequestW(This->connection, This->base.bind_info.dwBindVerb < BINDVERB_CUSTOM ?
-                                     wszBindVerb[This->base.bind_info.dwBindVerb] :
-                                     This->base.bind_info.szCustomVerb,
-                                     path, NULL, NULL, (LPCWSTR *)accept_mimes,
-                                     request_flags, (DWORD_PTR)This);
-    if (!This->base.request)
-    {
-        WARN("HttpOpenRequest failed: %d\n", GetLastError());
-        hres = INET_E_RESOURCE_NOT_FOUND;
-        goto done;
-    }
-
-    hres = IInternetProtocolSink_QueryInterface(This->base.protocol_sink, &IID_IServiceProvider,
-                                                (void **)&service_provider);
-    if (hres != S_OK)
-    {
-        WARN("IInternetProtocolSink_QueryInterface IID_IServiceProvider failed: %08x\n", hres);
-        goto done;
-    }
-
-    hres = IServiceProvider_QueryService(service_provider, &IID_IHttpNegotiate,
-                                         &IID_IHttpNegotiate, (void **)&This->http_negotiate);
-    if (hres != S_OK)
-    {
-        WARN("IServiceProvider_QueryService IID_IHttpNegotiate failed: %08x\n", hres);
-        goto done;
-    }
-
-    hres = IHttpNegotiate_BeginningTransaction(This->http_negotiate, szUrl, wszHeaders,
-                                               0, &addl_header);
-    if (hres != S_OK)
-    {
-        WARN("IHttpNegotiate_BeginningTransaction failed: %08x\n", hres);
-        goto done;
-    }
-    else if (addl_header == NULL)
-    {
-        This->full_header = (LPWSTR)wszHeaders;
-    }
-    else
-    {
-        int len_addl_header = lstrlenW(addl_header);
-        This->full_header = heap_alloc(len_addl_header*sizeof(WCHAR)+sizeof(wszHeaders));
-        if (!This->full_header)
-        {
-            WARN("Out of memory\n");
-            hres = E_OUTOFMEMORY;
-            goto done;
-        }
-        lstrcpyW(This->full_header, addl_header);
-        lstrcpyW(&This->full_header[len_addl_header], wszHeaders);
-    }
-
-    hres = IServiceProvider_QueryService(service_provider, &IID_IHttpNegotiate2,
-                                         &IID_IHttpNegotiate2, (void **)&http_negotiate2);
-    if (hres != S_OK)
-    {
-        WARN("IServiceProvider_QueryService IID_IHttpNegotiate2 failed: %08x\n", hres);
-        /* No goto done as per native */
-    }
-    else
-    {
-        len = sizeof(security_id)/sizeof(security_id[0]);
-        hres = IHttpNegotiate2_GetRootSecurityId(http_negotiate2, security_id, &len, 0);
-        if (hres != S_OK)
-        {
-            WARN("IHttpNegotiate2_GetRootSecurityId failed: %08x\n", hres);
-            /* No goto done as per native */
-        }
-    }
-
-    /* FIXME: Handle security_id. Native calls undocumented function IsHostInProxyBypassList. */
-
-    if (This->base.bind_info.dwBindVerb == BINDVERB_POST)
-    {
-        num = 0;
-        hres = IInternetBindInfo_GetBindString(pOIBindInfo, BINDSTRING_POST_COOKIE, &post_cookie,
-                                               1, &num);
-        if (hres == S_OK && num &&
-            !InternetSetOptionW(This->base.request, INTERNET_OPTION_SECONDARY_CACHE_KEY,
-                                post_cookie, lstrlenW(post_cookie)))
-        {
-            WARN("InternetSetOption INTERNET_OPTION_SECONDARY_CACHE_KEY failed: %d\n",
-                 GetLastError());
-        }
-    }
-
-    if (This->base.bind_info.dwBindVerb != BINDVERB_GET)
-    {
-        /* Native does not use GlobalLock/GlobalUnlock, so we won't either */
-        if (This->base.bind_info.stgmedData.tymed != TYMED_HGLOBAL)
-            WARN("Expected This->bind_info.stgmedData.tymed to be TYMED_HGLOBAL, not %d\n",
-                 This->base.bind_info.stgmedData.tymed);
-        else
-            optional = (LPWSTR)This->base.bind_info.stgmedData.u.hGlobal;
-    }
-    if (!HttpSendRequestW(This->base.request, This->full_header, lstrlenW(This->full_header),
-                          optional,
-                          optional ? This->base.bind_info.cbstgmedData : 0) &&
-        GetLastError() != ERROR_IO_PENDING)
-    {
-        WARN("HttpSendRequest failed: %d\n", GetLastError());
-        hres = INET_E_DOWNLOAD_FAILURE;
-        goto done;
-    }
-
-    hres = S_OK;
-done:
-    if (hres != S_OK)
-    {
-        IInternetProtocolSink_ReportResult(This->base.protocol_sink, hres, 0, NULL);
-        protocol_close_connection(&This->base);
-    }
-
-    CoTaskMemFree(post_cookie);
-    CoTaskMemFree(addl_header);
-    if (http_negotiate2)
-        IHttpNegotiate2_Release(http_negotiate2);
-    if (service_provider)
-        IServiceProvider_Release(service_provider);
-
-    while (num<sizeof(accept_mimes)/sizeof(accept_mimes[0]) &&
-           accept_mimes[num])
-        CoTaskMemFree(accept_mimes[num++]);
-    CoTaskMemFree(user_agent);
-
-    heap_free(pass);
-    heap_free(user);
-    heap_free(path);
-    heap_free(host);
-
-    return hres;
+    return protocol_start(&This->base, PROTOCOL(This), szUrl, pOIProtSink, pOIBindInfo);
 }
 
 static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDATA *pProtocolData)

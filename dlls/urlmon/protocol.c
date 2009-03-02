@@ -100,6 +100,163 @@ static void all_data_read(Protocol *protocol)
     report_result(protocol, S_OK);
 }
 
+static void request_complete(Protocol *protocol, INTERNET_ASYNC_RESULT *ar)
+{
+    PROTOCOLDATA data;
+
+    if(!ar->dwResult) {
+        WARN("request failed: %d\n", ar->dwError);
+        return;
+    }
+
+    protocol->flags |= FLAG_REQUEST_COMPLETE;
+
+    if(!protocol->request) {
+        TRACE("setting request handle %p\n", (HINTERNET)ar->dwResult);
+        protocol->request = (HINTERNET)ar->dwResult;
+    }
+
+    /* PROTOCOLDATA same as native */
+    memset(&data, 0, sizeof(data));
+    data.dwState = 0xf1000000;
+    if(protocol->flags & FLAG_FIRST_CONTINUE_COMPLETE)
+        data.pData = (LPVOID)BINDSTATUS_ENDDOWNLOADCOMPONENTS;
+    else
+        data.pData = (LPVOID)BINDSTATUS_DOWNLOADINGDATA;
+
+    if (protocol->bindf & BINDF_FROMURLMON)
+        IInternetProtocolSink_Switch(protocol->protocol_sink, &data);
+    else
+        protocol_continue(protocol, &data);
+}
+
+static void WINAPI internet_status_callback(HINTERNET internet, DWORD_PTR context,
+        DWORD internet_status, LPVOID status_info, DWORD status_info_len)
+{
+    Protocol *protocol = (Protocol*)context;
+
+    switch(internet_status) {
+    case INTERNET_STATUS_RESOLVING_NAME:
+        TRACE("%p INTERNET_STATUS_RESOLVING_NAME\n", protocol);
+        report_progress(protocol, BINDSTATUS_FINDINGRESOURCE, (LPWSTR)status_info);
+        break;
+
+    case INTERNET_STATUS_CONNECTING_TO_SERVER:
+        TRACE("%p INTERNET_STATUS_CONNECTING_TO_SERVER\n", protocol);
+        report_progress(protocol, BINDSTATUS_CONNECTING, (LPWSTR)status_info);
+        break;
+
+    case INTERNET_STATUS_SENDING_REQUEST:
+        TRACE("%p INTERNET_STATUS_SENDING_REQUEST\n", protocol);
+        report_progress(protocol, BINDSTATUS_SENDINGREQUEST, (LPWSTR)status_info);
+        break;
+
+    case INTERNET_STATUS_REQUEST_COMPLETE:
+        request_complete(protocol, status_info);
+        break;
+
+    case INTERNET_STATUS_HANDLE_CREATED:
+        TRACE("%p INTERNET_STATUS_HANDLE_CREATED\n", protocol);
+        IInternetProtocol_AddRef(protocol->protocol);
+        break;
+
+    case INTERNET_STATUS_HANDLE_CLOSING:
+        TRACE("%p INTERNET_STATUS_HANDLE_CLOSING\n", protocol);
+
+        if(*(HINTERNET *)status_info == protocol->request) {
+            protocol->request = NULL;
+            if(protocol->protocol_sink) {
+                IInternetProtocolSink_Release(protocol->protocol_sink);
+                protocol->protocol_sink = NULL;
+            }
+
+            if(protocol->bind_info.cbSize) {
+                ReleaseBindInfo(&protocol->bind_info);
+                memset(&protocol->bind_info, 0, sizeof(protocol->bind_info));
+            }
+        }else if(*(HINTERNET *)status_info == protocol->connection) {
+            protocol->connection = NULL;
+        }
+
+        IInternetProtocol_Release(protocol->protocol);
+        break;
+
+    default:
+        WARN("Unhandled Internet status callback %d\n", internet_status);
+    }
+}
+
+HRESULT protocol_start(Protocol *protocol, IInternetProtocol *prot, LPCWSTR url,
+        IInternetProtocolSink *protocol_sink, IInternetBindInfo *bind_info)
+{
+    LPOLESTR user_agent = NULL;
+    DWORD request_flags;
+    ULONG size = 0;
+    HRESULT hres;
+
+    protocol->protocol = prot;
+
+    IInternetProtocolSink_AddRef(protocol_sink);
+    protocol->protocol_sink = protocol_sink;
+
+    memset(&protocol->bind_info, 0, sizeof(protocol->bind_info));
+    protocol->bind_info.cbSize = sizeof(BINDINFO);
+    hres = IInternetBindInfo_GetBindInfo(bind_info, &protocol->bindf, &protocol->bind_info);
+    if(hres != S_OK) {
+        WARN("GetBindInfo failed: %08x\n", hres);
+        return report_result(protocol, hres);
+    }
+
+    if(!(protocol->bindf & BINDF_FROMURLMON))
+        report_progress(protocol, BINDSTATUS_DIRECTBIND, NULL);
+
+    hres = IInternetBindInfo_GetBindString(bind_info, BINDSTRING_USER_AGENT, &user_agent, 1, &size);
+    if (hres != S_OK || !size) {
+        DWORD len;
+        CHAR null_char = 0;
+        LPSTR user_agenta = NULL;
+
+        len = 0;
+        if ((hres = ObtainUserAgentString(0, &null_char, &len)) != E_OUTOFMEMORY) {
+            WARN("ObtainUserAgentString failed: %08x\n", hres);
+        }else if (!(user_agenta = heap_alloc(len*sizeof(CHAR)))) {
+            WARN("Out of memory\n");
+        }else if ((hres = ObtainUserAgentString(0, user_agenta, &len)) != S_OK) {
+            WARN("ObtainUserAgentString failed: %08x\n", hres);
+        }else {
+            if(!(user_agent = CoTaskMemAlloc((len)*sizeof(WCHAR))))
+                WARN("Out of memory\n");
+            else
+                MultiByteToWideChar(CP_ACP, 0, user_agenta, -1, user_agent, len);
+        }
+        heap_free(user_agenta);
+    }
+
+    protocol->internet = InternetOpenW(user_agent, 0, NULL, NULL, INTERNET_FLAG_ASYNC);
+    CoTaskMemFree(user_agent);
+    if(!protocol->internet) {
+        WARN("InternetOpen failed: %d\n", GetLastError());
+        return report_result(protocol, INET_E_NO_SESSION);
+    }
+
+    /* Native does not check for success of next call, so we won't either */
+    InternetSetStatusCallbackW(protocol->internet, internet_status_callback);
+
+    request_flags = INTERNET_FLAG_KEEP_CONNECTION;
+    if(protocol->bindf & BINDF_NOWRITECACHE)
+        request_flags |= INTERNET_FLAG_NO_CACHE_WRITE;
+    if(protocol->bindf & BINDF_NEEDFILE)
+        request_flags |= INTERNET_FLAG_NEED_FILE;
+
+    hres = protocol->vtbl->open_request(protocol, url, request_flags, bind_info);
+    if(FAILED(hres)) {
+        protocol_close_connection(protocol);
+        return report_result(protocol, hres);
+    }
+
+    return S_OK;
+}
+
 HRESULT protocol_continue(Protocol *protocol, PROTOCOLDATA *data)
 {
     HRESULT hres;
@@ -260,6 +417,10 @@ void protocol_close_connection(Protocol *protocol)
 
     if(protocol->request)
         InternetCloseHandle(protocol->request);
+
+    if(protocol->connection)
+        InternetCloseHandle(protocol->connection);
+
     if(protocol->internet) {
         InternetCloseHandle(protocol->internet);
         protocol->internet = 0;
