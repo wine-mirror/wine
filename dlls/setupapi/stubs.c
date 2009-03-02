@@ -247,20 +247,6 @@ BOOL WINAPI SetupDiGetClassImageList(PSP_CLASSIMAGELIST_DATA ClassImageListData)
 }
 
 /***********************************************************************
- *      SetupPromptForDiskA (SETUPAPI.@)
- */
-UINT WINAPI SetupPromptForDiskA(HWND hwndParent, PCSTR DialogTitle, PCSTR DiskName,
-        PCSTR PathToSource, PCSTR FileSought, PCSTR TagFile, DWORD DiskPromptStyle,
-        PSTR PathBuffer, DWORD PathBufferSize, PDWORD PathRequiredSize)
-{
-    FIXME("%p %s %s %s %s %s %d %p %d %p: stub\n", hwndParent, debugstr_a(DialogTitle),
-          debugstr_a(DiskName), debugstr_a(PathToSource), debugstr_a(FileSought),
-          debugstr_a(TagFile), DiskPromptStyle, PathBuffer, PathBufferSize,
-          PathRequiredSize);
-    return 0;
-}
-
-/***********************************************************************
  *      CM_Locate_DevNodeA (SETUPAPI.@)
  */
 CONFIGRET WINAPI CM_Locate_DevNodeA(PDEVINST pdnDevInst, DEVINSTID_A pDeviceID, ULONG ulFlags)
