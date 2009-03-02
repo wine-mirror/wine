@@ -427,11 +427,9 @@ static void TestGetSetBkColor(void)
 {
     COLORREF crColor = RGB(0,0,0);
 
-    todo_wine{
-        /* If the value is -1, the control is using the system color for the background color. */
-        crColor = (COLORREF)SendMessage( hTree, TVM_GETBKCOLOR, 0, 0 );
-        ok(crColor == -1, "Default background color reported as 0x%.8x\n", crColor);
-    }
+    /* If the value is -1, the control is using the system color for the background color. */
+    crColor = (COLORREF)SendMessage( hTree, TVM_GETBKCOLOR, 0, 0 );
+    ok(crColor == -1, "Default background color reported as 0x%.8x\n", crColor);
 
     /* Test for black background */
     SendMessage( hTree, TVM_SETBKCOLOR, 0, (LPARAM)RGB(0,0,0) );
