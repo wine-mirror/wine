@@ -765,6 +765,12 @@ UINT MSI_RecordReadStream(MSIRECORD *rec, UINT iField, char *buf, LPDWORD sz)
     if( iField > rec->count)
         return ERROR_INVALID_PARAMETER;
 
+    if ( rec->fields[iField].type == MSIFIELD_NULL )
+    {
+        *sz = 0;
+        return ERROR_INVALID_DATA;
+    }
+
     if( rec->fields[iField].type != MSIFIELD_STREAM )
         return ERROR_INVALID_DATATYPE;
 

@@ -6077,12 +6077,9 @@ static void test_storages_table(void)
     size = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiRecordReadStream(hrec, 2, buf, &size);
+    ok(r == ERROR_INVALID_DATA, "Expected ERROR_INVALID_DATA, got %d\n", r);
     ok(!lstrcmp(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_DATA, "Expected ERROR_INVALID_DATA, got %d\n", r);
-        ok(size == 0, "Expected 0, got %d\n", size);
-    }
+    ok(size == 0, "Expected 0, got %d\n", size);
 
     MsiCloseHandle(hrec);
 
