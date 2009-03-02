@@ -80,7 +80,92 @@ typedef struct {
 static const WCHAR wszHeaders[] = {'A','c','c','e','p','t','-','E','n','c','o','d','i','n','g',
                                    ':',' ','g','z','i','p',',',' ','d','e','f','l','a','t','e',0};
 
+static LPWSTR query_http_info(HttpProtocol *This, DWORD option)
+{
+    LPWSTR ret = NULL;
+    DWORD len = 0;
+    BOOL res;
+
+    res = HttpQueryInfoW(This->base.request, option, NULL, &len, NULL);
+    if (!res && GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+        ret = heap_alloc(len);
+        res = HttpQueryInfoW(This->base.request, option, ret, &len, NULL);
+    }
+    if(!res) {
+        TRACE("HttpQueryInfoW(%d) failed: %08x\n", option, GetLastError());
+        heap_free(ret);
+        return NULL;
+    }
+
+    return ret;
+}
+
 #define ASYNCPROTOCOL_THIS(iface) DEFINE_THIS2(HttpProtocol, base, iface)
+
+static HRESULT HttpProtocol_start_downloading(Protocol *prot)
+{
+    HttpProtocol *This = ASYNCPROTOCOL_THIS(prot);
+    LPWSTR content_type = 0, content_length = 0;
+    DWORD len = sizeof(DWORD);
+    DWORD status_code;
+    BOOL res;
+    HRESULT hres;
+
+    static const WCHAR wszDefaultContentType[] =
+        {'t','e','x','t','/','h','t','m','l',0};
+
+    if(!This->http_negotiate) {
+        WARN("Expected IHttpNegotiate pointer to be non-NULL\n");
+        return S_OK;
+    }
+
+    res = HttpQueryInfoW(This->base.request, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER,
+            &status_code, &len, NULL);
+    if(res) {
+        LPWSTR response_headers = query_http_info(This, HTTP_QUERY_RAW_HEADERS_CRLF);
+        if(response_headers) {
+            hres = IHttpNegotiate_OnResponse(This->http_negotiate, status_code, response_headers,
+                    NULL, NULL);
+            heap_free(response_headers);
+            if (hres != S_OK) {
+                WARN("IHttpNegotiate_OnResponse failed: %08x\n", hres);
+                return S_OK;
+            }
+        }
+    }else {
+        WARN("HttpQueryInfo failed: %d\n", GetLastError());
+    }
+
+    if(This->https)
+        IInternetProtocolSink_ReportProgress(This->base.protocol_sink, BINDSTATUS_ACCEPTRANGES, NULL);
+
+    content_type = query_http_info(This, HTTP_QUERY_CONTENT_TYPE);
+    if(content_type) {
+        /* remove the charset, if present */
+        LPWSTR p = strchrW(content_type, ';');
+        if (p) *p = '\0';
+
+        IInternetProtocolSink_ReportProgress(This->base.protocol_sink,
+                (This->base.bindf & BINDF_FROMURLMON)
+                 ? BINDSTATUS_MIMETYPEAVAILABLE : BINDSTATUS_RAWMIMETYPE,
+                 content_type);
+        heap_free(content_type);
+    }else {
+        WARN("HttpQueryInfo failed: %d\n", GetLastError());
+        IInternetProtocolSink_ReportProgress(This->base.protocol_sink,
+                 (This->base.bindf & BINDF_FROMURLMON)
+                  ? BINDSTATUS_MIMETYPEAVAILABLE : BINDSTATUS_RAWMIMETYPE,
+                  wszDefaultContentType);
+    }
+
+    content_length = query_http_info(This, HTTP_QUERY_CONTENT_LENGTH);
+    if(content_length) {
+        This->base.content_length = atoiW(content_length);
+        heap_free(content_length);
+    }
+
+    return S_OK;
+}
 
 static void HttpProtocol_close_connection(Protocol *prot)
 {
@@ -104,45 +189,9 @@ static void HttpProtocol_close_connection(Protocol *prot)
 #undef ASYNCPROTOCOL_THIS
 
 static const ProtocolVtbl AsyncProtocolVtbl = {
+    HttpProtocol_start_downloading,
     HttpProtocol_close_connection
 };
-
-static void HTTPPROTOCOL_ReportResult(HttpProtocol *This, HRESULT hres)
-{
-    if (!(This->base.flags & FLAG_RESULT_REPORTED) &&
-        This->base.protocol_sink)
-    {
-        This->base.flags |= FLAG_RESULT_REPORTED;
-        IInternetProtocolSink_ReportResult(This->base.protocol_sink, hres, 0, NULL);
-    }
-}
-
-static void HTTPPROTOCOL_ReportData(HttpProtocol *This)
-{
-    DWORD bscf;
-    if (!(This->base.flags & FLAG_LAST_DATA_REPORTED) &&
-        This->base.protocol_sink)
-    {
-        if (This->base.flags & FLAG_FIRST_DATA_REPORTED)
-        {
-            bscf = BSCF_INTERMEDIATEDATANOTIFICATION;
-        }
-        else
-        {
-            This->base.flags |= FLAG_FIRST_DATA_REPORTED;
-            bscf = BSCF_FIRSTDATANOTIFICATION;
-        }
-        if (This->base.flags & FLAG_ALL_DATA_READ &&
-            !(This->base.flags & FLAG_LAST_DATA_REPORTED))
-        {
-            This->base.flags |= FLAG_LAST_DATA_REPORTED;
-            bscf |= BSCF_LASTDATANOTIFICATION;
-        }
-        IInternetProtocolSink_ReportData(This->base.protocol_sink, bscf,
-                                         This->base.current_position+This->base.available_bytes,
-                                         This->base.content_length);
-    }
-}
 
 static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
     HINTERNET hInternet, DWORD_PTR dwContext, DWORD dwInternetStatus,
@@ -539,156 +588,10 @@ done:
 static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDATA *pProtocolData)
 {
     HttpProtocol *This = PROTOCOL_THIS(iface);
-    DWORD len = sizeof(DWORD), status_code;
-    LPWSTR response_headers = 0, content_type = 0, content_length = 0;
-
-    static const WCHAR wszDefaultContentType[] =
-        {'t','e','x','t','/','h','t','m','l',0};
 
     TRACE("(%p)->(%p)\n", This, pProtocolData);
 
-    if (!pProtocolData)
-    {
-        WARN("Expected pProtocolData to be non-NULL\n");
-        return S_OK;
-    }
-    else if (!This->base.request)
-    {
-        WARN("Expected request to be non-NULL\n");
-        return S_OK;
-    }
-    else if (!This->http_negotiate)
-    {
-        WARN("Expected IHttpNegotiate pointer to be non-NULL\n");
-        return S_OK;
-    }
-    else if (!This->base.protocol_sink)
-    {
-        WARN("Expected IInternetProtocolSink pointer to be non-NULL\n");
-        return S_OK;
-    }
-
-    if (pProtocolData->pData == (LPVOID)BINDSTATUS_DOWNLOADINGDATA)
-    {
-        if (!HttpQueryInfoW(This->base.request, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER,
-                            &status_code, &len, NULL))
-        {
-            WARN("HttpQueryInfo failed: %d\n", GetLastError());
-        }
-        else
-        {
-            len = 0;
-            if ((!HttpQueryInfoW(This->base.request, HTTP_QUERY_RAW_HEADERS_CRLF, response_headers, &len,
-                                 NULL) &&
-                 GetLastError() != ERROR_INSUFFICIENT_BUFFER) ||
-                !(response_headers = heap_alloc(len)) ||
-                !HttpQueryInfoW(This->base.request, HTTP_QUERY_RAW_HEADERS_CRLF, response_headers, &len,
-                                NULL))
-            {
-                WARN("HttpQueryInfo failed: %d\n", GetLastError());
-            }
-            else
-            {
-                HRESULT hres = IHttpNegotiate_OnResponse(This->http_negotiate, status_code,
-                                                         response_headers, NULL, NULL);
-                if (hres != S_OK)
-                {
-                    WARN("IHttpNegotiate_OnResponse failed: %08x\n", hres);
-                    goto done;
-                }
-            }
-        }
-
-        if(This->https)
-            IInternetProtocolSink_ReportProgress(This->base.protocol_sink, BINDSTATUS_ACCEPTRANGES, NULL);
-
-        len = 0;
-        if ((!HttpQueryInfoW(This->base.request, HTTP_QUERY_CONTENT_TYPE, content_type, &len, NULL) &&
-             GetLastError() != ERROR_INSUFFICIENT_BUFFER) ||
-            !(content_type = heap_alloc(len)) ||
-            !HttpQueryInfoW(This->base.request, HTTP_QUERY_CONTENT_TYPE, content_type, &len, NULL))
-        {
-            WARN("HttpQueryInfo failed: %d\n", GetLastError());
-            IInternetProtocolSink_ReportProgress(This->base.protocol_sink,
-                                                 (This->base.bindf & BINDF_FROMURLMON) ?
-                                                 BINDSTATUS_MIMETYPEAVAILABLE :
-                                                 BINDSTATUS_RAWMIMETYPE,
-                                                 wszDefaultContentType);
-        }
-        else
-        {
-            /* remove the charset, if present */
-            LPWSTR p = strchrW(content_type, ';');
-            if (p) *p = '\0';
-
-            IInternetProtocolSink_ReportProgress(This->base.protocol_sink,
-                                                 (This->base.bindf & BINDF_FROMURLMON) ?
-                                                 BINDSTATUS_MIMETYPEAVAILABLE :
-                                                 BINDSTATUS_RAWMIMETYPE,
-                                                 content_type);
-        }
-
-        len = 0;
-        if ((!HttpQueryInfoW(This->base.request, HTTP_QUERY_CONTENT_LENGTH, content_length, &len, NULL) &&
-             GetLastError() != ERROR_INSUFFICIENT_BUFFER) ||
-            !(content_length = heap_alloc(len)) ||
-            !HttpQueryInfoW(This->base.request, HTTP_QUERY_CONTENT_LENGTH, content_length, &len, NULL))
-        {
-            WARN("HttpQueryInfo failed: %d\n", GetLastError());
-            This->base.content_length = 0;
-        }
-        else
-        {
-            This->base.content_length = atoiW(content_length);
-        }
-
-    if(This->base.bindf & BINDF_NEEDFILE) {
-        WCHAR cache_file[MAX_PATH];
-        DWORD buflen = sizeof(cache_file);
-
-        if(InternetQueryOptionW(This->base.request, INTERNET_OPTION_DATAFILE_NAME,
-                                cache_file, &buflen))
-        {
-            IInternetProtocolSink_ReportProgress(This->base.protocol_sink,
-                                                 BINDSTATUS_CACHEFILENAMEAVAILABLE,
-                                                 cache_file);
-        }else {
-            FIXME("Could not get cache file\n");
-        }
-    }
-
-        This->base.flags |= FLAG_FIRST_CONTINUE_COMPLETE;
-    }
-
-    if (pProtocolData->pData >= (LPVOID)BINDSTATUS_DOWNLOADINGDATA)
-    {
-        /* InternetQueryDataAvailable may immediately fork and perform its asynchronous
-         * read, so clear the flag _before_ calling so it does not incorrectly get cleared
-         * after the status callback is called */
-        This->base.flags &= ~FLAG_REQUEST_COMPLETE;
-        if (!InternetQueryDataAvailable(This->base.request, &This->base.available_bytes, 0, 0))
-        {
-            if (GetLastError() != ERROR_IO_PENDING)
-            {
-                This->base.flags |= FLAG_REQUEST_COMPLETE;
-                WARN("InternetQueryDataAvailable failed: %d\n", GetLastError());
-                HTTPPROTOCOL_ReportResult(This, INET_E_DATA_NOT_AVAILABLE);
-            }
-        }
-        else
-        {
-            This->base.flags |= FLAG_REQUEST_COMPLETE;
-            HTTPPROTOCOL_ReportData(This);
-        }
-    }
-
-done:
-    heap_free(response_headers);
-    heap_free(content_type);
-    heap_free(content_length);
-
-    /* Returns S_OK on native */
-    return S_OK;
+    return protocol_continue(&This->base, pProtocolData);
 }
 
 static HRESULT WINAPI HttpProtocol_Abort(IInternetProtocol *iface, HRESULT hrReason,

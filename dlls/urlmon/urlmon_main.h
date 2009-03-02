@@ -103,9 +103,11 @@ typedef struct {
 } Protocol;
 
 struct ProtocolVtbl {
+    HRESULT (*start_downloading)(Protocol*);
     void (*close_connection)(Protocol*);
 };
 
+HRESULT protocol_continue(Protocol*,PROTOCOLDATA*);
 HRESULT protocol_read(Protocol*,void*,ULONG,ULONG*);
 HRESULT protocol_lock_request(Protocol*);
 HRESULT protocol_unlock_request(Protocol*);
