@@ -1312,47 +1312,116 @@ DWORD getNumArpEntries(void)
   return getNumWithOneHeader("/proc/net/arp");
 }
 
+static MIB_IPNETTABLE *append_ipnet_row( HANDLE heap, DWORD flags, MIB_IPNETTABLE *table,
+                                         DWORD *count, const MIB_IPNETROW *row )
+{
+    if (table->dwNumEntries >= *count)
+    {
+        MIB_IPNETTABLE *new_table;
+        DWORD new_count = table->dwNumEntries * 2;
+
+        if (!(new_table = HeapReAlloc( heap, flags, table,
+                                       FIELD_OFFSET(MIB_IPNETTABLE, table[new_count] ))))
+        {
+            HeapFree( heap, 0, table );
+            return NULL;
+        }
+        *count = new_count;
+        table = new_table;
+    }
+    memcpy( &table->table[table->dwNumEntries++], row, sizeof(*row) );
+    return table;
+}
+
 DWORD getArpTable(PMIB_IPNETTABLE *ppIpNetTable, HANDLE heap, DWORD flags)
 {
-  DWORD ret = NO_ERROR;
-  if (!ppIpNetTable)
-    ret = ERROR_INVALID_PARAMETER;
-  else {
-    DWORD numEntries = getNumArpEntries();
-    DWORD size = sizeof(MIB_IPNETTABLE);
-    PMIB_IPNETTABLE table;
+    MIB_IPNETTABLE *table;
+    MIB_IPNETROW row;
+    DWORD ret = NO_ERROR, count = 16;
 
-    if (numEntries > 1)
-      size += (numEntries - 1) * sizeof(MIB_IPNETROW);
-    table = HeapAlloc(heap, flags, size);
-#if defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_DUMP)
-    if (table)
+    if (!ppIpNetTable) return ERROR_INVALID_PARAMETER;
+
+    if (!(table = HeapAlloc( heap, flags, FIELD_OFFSET(MIB_IPNETTABLE, table[count] ))))
+        return ERROR_OUTOFMEMORY;
+
+    table->dwNumEntries = 0;
+
+#ifdef __linux__
+    {
+        FILE *fp;
+
+        if ((fp = fopen("/proc/net/arp", "r")))
+        {
+            char buf[512], *ptr;
+            DWORD flags;
+
+            /* skip header line */
+            ptr = fgets(buf, sizeof(buf), fp);
+            while ((ptr = fgets(buf, sizeof(buf), fp)))
+            {
+                memset( &row, 0, sizeof(row) );
+
+                row.dwAddr = inet_addr(ptr);
+                while (*ptr && !isspace(*ptr)) ptr++;
+                strtoul(ptr + 1, &ptr, 16); /* hw type (skip) */
+                flags = strtoul(ptr + 1, &ptr, 16);
+
+#ifdef ATF_COM
+                if (flags & ATF_COM) row.dwType = MIB_IPNET_TYPE_DYNAMIC;
+                else
+#endif
+#ifdef ATF_PERM
+                if (flags & ATF_PERM) row.dwType = MIB_IPNET_TYPE_STATIC;
+                else
+#endif
+                    row.dwType = MIB_IPNET_TYPE_OTHER;
+
+                while (*ptr && isspace(*ptr)) ptr++;
+                while (*ptr && !isspace(*ptr))
+                {
+                    row.bPhysAddr[row.dwPhysAddrLen++] = strtoul(ptr, &ptr, 16);
+                    if (*ptr) ptr++;
+                }
+                while (*ptr && isspace(*ptr)) ptr++;
+                while (*ptr && !isspace(*ptr)) ptr++;   /* mask (skip) */
+                while (*ptr && isspace(*ptr)) ptr++;
+                getInterfaceIndexByName(ptr, &row.dwIndex);
+
+                if (!(table = append_ipnet_row( heap, flags, table, &count, &row )))
+                    break;
+            }
+            fclose(fp);
+        }
+        else ret = ERROR_NOT_SUPPORTED;
+    }
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_DUMP)
     {
       int mib[] = {CTL_NET, PF_ROUTE, 0, AF_INET, NET_RT_FLAGS, RTF_LLINFO};
 #define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
       size_t needed;
-      char *buf, *lim, *next;
+      char *buf = NULL, *lim, *next;
       struct rt_msghdr *rtm;
       struct sockaddr_inarp *sinarp;
       struct sockaddr_dl *sdl;
 
-      *ppIpNetTable = table;
-      table->dwNumEntries = 0;
-
       if (sysctl (mib, MIB_LEN,  NULL, &needed, NULL, 0) == -1)
       {
-         ERR ("failed to get size of arp table\n");
-         return ERROR_NOT_SUPPORTED;
+         ERR ("failed to get arp table\n");
+         ret = ERROR_NOT_SUPPORTED;
+         goto done;
       }
 
       buf = HeapAlloc (GetProcessHeap (), 0, needed);
-      if (!buf) return ERROR_OUTOFMEMORY;
+      if (!buf)
+      {
+          ret = ERROR_OUTOFMEMORY;
+          goto done;
+      }
 
       if (sysctl (mib, MIB_LEN, buf, &needed, NULL, 0) == -1)
       {
-         ERR ("failed to get arp table\n");
-         HeapFree (GetProcessHeap (), 0, buf);
-         return ERROR_NOT_SUPPORTED;
+         ret = ERROR_NOT_SUPPORTED;
+         goto done;
       }
 
       lim = buf + needed;
@@ -1364,110 +1433,33 @@ DWORD getArpTable(PMIB_IPNETTABLE *ppIpNetTable, HANDLE heap, DWORD flags)
           sdl = (struct sockaddr_dl *)((char *)sinarp + ROUNDUP(sinarp->sin_len));
           if(sdl->sdl_alen) /* arp entry */
           {
-              DWORD byte = strtoul(&sdl->sdl_data[sdl->sdl_alen], NULL, 16);
-              memset(&table->table[table->dwNumEntries], 0, sizeof(MIB_IPNETROW));
-              table->table[table->dwNumEntries].dwAddr = sinarp->sin_addr.s_addr;
-              table->table[table->dwNumEntries].dwIndex = sdl->sdl_index;
-              table->table[table->dwNumEntries].dwPhysAddrLen = sdl->sdl_alen;
+              memset( &row, 0, sizeof(row) );
+              row.dwAddr = sinarp->sin_addr.s_addr;
+              row.dwIndex = sdl->sdl_index;
+              row.dwPhysAddrLen = min( 8, sdl->sdl_alen );
+              memcpy( row.bPhysAddr, &sdl->sdl_data[sdl->sdl_nlen], row.dwPhysAddrLen );
+              if(rtm->rtm_rmx.rmx_expire == 0) row.dwType = MIB_IPNET_TYPE_STATIC;
+              else if(sinarp->sin_other & SIN_PROXY) row.dwType = MIB_IPNET_TYPE_OTHER;
+              else if(rtm->rtm_rmx.rmx_expire != 0) row.dwType = MIB_IPNET_TYPE_DYNAMIC;
+              else row.dwType = MIB_IPNET_TYPE_INVALID;
 
-              table->table[table->dwNumEntries].bPhysAddr[
-                  table->table[table->dwNumEntries].dwPhysAddrLen++] =
-                  byte & 0x0ff;
-              if(rtm->rtm_rmx.rmx_expire == 0)
-                  table->table[table->dwNumEntries].dwType = MIB_IPNET_TYPE_STATIC;
-              else if(sinarp->sin_other & SIN_PROXY)
-                  table->table[table->dwNumEntries].dwType = MIB_IPNET_TYPE_OTHER;
-              else if(rtm->rtm_rmx.rmx_expire != 0)
-                  table->table[table->dwNumEntries].dwType = MIB_IPNET_TYPE_DYNAMIC;
-              else
-                  table->table[table->dwNumEntries].dwType = MIB_IPNET_TYPE_INVALID;
-
-              table->dwNumEntries++;
+              if (!(table = append_ipnet_row( heap, flags, table, &count, &row )))
+                  break;
           }
           next += rtm->rtm_msglen;
       }
-      HeapFree (GetProcessHeap (), 0, buf);
+done:
+      HeapFree( GetProcessHeap (), 0, buf );
     }
-    else
-        ret = ERROR_OUTOFMEMORY;
-  return ret;
+#else
+    FIXME( "not implemented\n" );
+    ret = ERROR_NOT_SUPPORTED;
 #endif
 
-    if (table) {
-      FILE *fp;
-      *ppIpNetTable = table;
-      table->dwNumEntries = 0;
-      /* get from /proc/net/arp, no error if can't */
-      fp = fopen("/proc/net/arp", "r");
-      if (fp) {
-        char buf[512] = { 0 }, *ptr;
-
-        /* skip header line */
-        ptr = fgets(buf, sizeof(buf), fp);
-        while (ptr && table->dwNumEntries < numEntries) {
-          ptr = fgets(buf, sizeof(buf), fp);
-          if (ptr) {
-            char *endPtr;
-
-            memset(&table->table[table->dwNumEntries], 0, sizeof(MIB_IPNETROW));
-            table->table[table->dwNumEntries].dwAddr = inet_addr(ptr);
-            while (ptr && *ptr && !isspace(*ptr))
-              ptr++;
-
-            if (ptr && *ptr) {
-              strtoul(ptr, &endPtr, 16); /* hw type (skip) */
-              ptr = endPtr;
-            }
-            if (ptr && *ptr) {
-              DWORD flags = strtoul(ptr, &endPtr, 16);
-
-#ifdef ATF_COM
-              if (flags & ATF_COM)
-                table->table[table->dwNumEntries].dwType =
-                 MIB_IPNET_TYPE_DYNAMIC;
-              else
-#endif
-#ifdef ATF_PERM
-              if (flags & ATF_PERM)
-                table->table[table->dwNumEntries].dwType =
-                 MIB_IPNET_TYPE_STATIC;
-              else
-#endif
-                table->table[table->dwNumEntries].dwType = MIB_IPNET_TYPE_OTHER;
-
-              ptr = endPtr;
-            }
-            while (ptr && *ptr && isspace(*ptr))
-              ptr++;
-            while (ptr && *ptr && !isspace(*ptr)) {
-              DWORD byte = strtoul(ptr, &endPtr, 16);
-
-              if (endPtr && *endPtr) {
-                endPtr++;
-                table->table[table->dwNumEntries].bPhysAddr[
-                 table->table[table->dwNumEntries].dwPhysAddrLen++] =
-                 byte & 0x0ff;
-              }
-              ptr = endPtr;
-            }
-            if (ptr && *ptr) {
-              strtoul(ptr, &endPtr, 16); /* mask (skip) */
-              ptr = endPtr;
-            }
-            getInterfaceIndexByName(ptr,
-             &table->table[table->dwNumEntries].dwIndex);
-            table->dwNumEntries++;
-          }
-        }
-        fclose(fp);
-      }
-      else
-        ret = ERROR_NOT_SUPPORTED;
-    }
-    else
-      ret = ERROR_OUTOFMEMORY;
-  }
-  return ret;
+    if (!table) return ERROR_OUTOFMEMORY;
+    if (!ret) *ppIpNetTable = table;
+    else HeapFree( heap, flags, table );
+    return ret;
 }
 
 DWORD getNumUdpEntries(void)

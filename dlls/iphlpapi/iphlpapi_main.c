@@ -1318,31 +1318,17 @@ DWORD WINAPI GetIpForwardTable(PMIB_IPFORWARDTABLE pIpForwardTable, PULONG pdwSi
  */
 DWORD WINAPI GetIpNetTable(PMIB_IPNETTABLE pIpNetTable, PULONG pdwSize, BOOL bOrder)
 {
-  DWORD ret;
+    DWORD ret;
+    PMIB_IPNETTABLE table;
 
-  TRACE("pIpNetTable %p, pdwSize %p, bOrder %d\n", pIpNetTable, pdwSize,
-   (DWORD)bOrder);
-  if (!pdwSize)
-    ret = ERROR_INVALID_PARAMETER;
-  else {
-    DWORD numEntries = getNumArpEntries();
-    ULONG size = sizeof(MIB_IPNETTABLE);
+    TRACE("pIpNetTable %p, pdwSize %p, bOrder %d\n", pIpNetTable, pdwSize, bOrder);
 
-    if (numEntries > 1)
-      size += (numEntries - 1) * sizeof(MIB_IPNETROW);
-    if (!pIpNetTable || *pdwSize < size) {
-      *pdwSize = size;
-      ret = ERROR_INSUFFICIENT_BUFFER;
-    }
-    else {
-      PMIB_IPNETTABLE table;
+    if (!pdwSize) return ERROR_INVALID_PARAMETER;
 
-      ret = getArpTable(&table, GetProcessHeap(), 0);
-      if (!ret) {
-        size = sizeof(MIB_IPNETTABLE);
-        if (table->dwNumEntries > 1)
-          size += (table->dwNumEntries - 1) * sizeof(MIB_IPNETROW);
-        if (*pdwSize < size) {
+    ret = getArpTable(&table, GetProcessHeap(), 0);
+    if (!ret) {
+        DWORD size = FIELD_OFFSET( MIB_IPNETTABLE, table[table->dwNumEntries] );
+        if (!pIpNetTable || *pdwSize < size) {
           *pdwSize = size;
           ret = ERROR_INSUFFICIENT_BUFFER;
         }
@@ -1352,14 +1338,11 @@ DWORD WINAPI GetIpNetTable(PMIB_IPNETTABLE pIpNetTable, PULONG pdwSize, BOOL bOr
           if (bOrder)
             qsort(pIpNetTable->table, pIpNetTable->dwNumEntries,
              sizeof(MIB_IPNETROW), IpNetTableSorter);
-          ret = NO_ERROR;
         }
         HeapFree(GetProcessHeap(), 0, table);
-      }
     }
-  }
-  TRACE("returning %d\n", ret);
-  return ret;
+    TRACE("returning %d\n", ret);
+    return ret;
 }
 
 
