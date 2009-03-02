@@ -1940,10 +1940,16 @@ static struct fd *get_handle_fd_obj( struct process *process, obj_handle_t handl
     return fd;
 }
 
-void fd_assign_completion( struct fd *fd, struct completion **p_port, apc_param_t *p_key )
+struct completion *fd_get_completion( struct fd *fd, apc_param_t *p_key )
 {
     *p_key = fd->comp_key;
-    *p_port = fd->completion ? (struct completion *)grab_object( fd->completion ) : NULL;
+    return fd->completion ? (struct completion *)grab_object( fd->completion ) : NULL;
+}
+
+void fd_copy_completion( struct fd *src, struct fd *dst )
+{
+    assert( !dst->completion );
+    dst->completion = fd_get_completion( src, &dst->comp_key );
 }
 
 /* flush a file buffers */
