@@ -44,8 +44,11 @@ struct d3d10_effect_variable
     DWORD idx_offset;
 };
 
+/* ID3D10EffectPass */
 struct d3d10_effect_pass
 {
+    const struct ID3D10EffectPassVtbl *vtbl;
+
     char *name;
     DWORD start;
     DWORD variable_count;
