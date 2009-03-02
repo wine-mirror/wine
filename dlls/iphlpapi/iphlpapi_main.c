@@ -1685,31 +1685,17 @@ DWORD WINAPI GetUdpStatistics(PMIB_UDPSTATS pStats)
  */
 DWORD WINAPI GetUdpTable(PMIB_UDPTABLE pUdpTable, PDWORD pdwSize, BOOL bOrder)
 {
-  DWORD ret;
+    DWORD ret;
+    PMIB_UDPTABLE table;
 
-  TRACE("pUdpTable %p, pdwSize %p, bOrder %d\n", pUdpTable, pdwSize,
-   (DWORD)bOrder);
-  if (!pdwSize)
-    ret = ERROR_INVALID_PARAMETER;
-  else {
-    DWORD numEntries = getNumUdpEntries();
-    DWORD size = sizeof(MIB_UDPTABLE);
+    TRACE("pUdpTable %p, pdwSize %p, bOrder %d\n", pUdpTable, pdwSize, bOrder);
 
-    if (numEntries > 1)
-      size += (numEntries - 1) * sizeof(MIB_UDPROW);
-    if (!pUdpTable || *pdwSize < size) {
-      *pdwSize = size;
-      ret = ERROR_INSUFFICIENT_BUFFER;
-    }
-    else {
-      PMIB_UDPTABLE table;
+    if (!pdwSize) return ERROR_INVALID_PARAMETER;
 
-      ret = getUdpTable(&table, GetProcessHeap(), 0);
-      if (!ret) {
-        size = sizeof(MIB_UDPTABLE);
-        if (table->dwNumEntries > 1)
-          size += (table->dwNumEntries - 1) * sizeof(MIB_UDPROW);
-        if (*pdwSize < size) {
+    ret = getUdpTable(&table, GetProcessHeap(), 0);
+    if (!ret) {
+        DWORD size = FIELD_OFFSET( MIB_UDPTABLE, table[table->dwNumEntries] );
+        if (!pUdpTable || *pdwSize < size) {
           *pdwSize = size;
           ret = ERROR_INSUFFICIENT_BUFFER;
         }
@@ -1719,16 +1705,11 @@ DWORD WINAPI GetUdpTable(PMIB_UDPTABLE pUdpTable, PDWORD pdwSize, BOOL bOrder)
           if (bOrder)
             qsort(pUdpTable->table, pUdpTable->dwNumEntries,
              sizeof(MIB_UDPROW), UdpTableSorter);
-          ret = NO_ERROR;
         }
         HeapFree(GetProcessHeap(), 0, table);
-      }
-      else
-        ret = ERROR_OUTOFMEMORY;
     }
-  }
-  TRACE("returning %d\n", ret);
-  return ret;
+    TRACE("returning %d\n", ret);
+    return ret;
 }
 
 

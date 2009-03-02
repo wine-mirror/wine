@@ -1,5 +1,7 @@
-/* Copyright (C) 2003,2006 Juan Lang
+/*
+ * Copyright (C) 2003,2006 Juan Lang
  * Copyright (C) 2007 TransGaming Technologies Inc.
+ * Copyright (C) 2009 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,9 +16,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
- *
- * This file implements statistics getting using the /proc filesystem exported
- * by Linux, and maybe other OSes.
  */
 
 #include "config.h"
@@ -1480,72 +1479,71 @@ DWORD getNumUdpEntries(void)
 #endif
 }
 
+static MIB_UDPTABLE *append_udp_row( HANDLE heap, DWORD flags, MIB_UDPTABLE *table,
+                                     DWORD *count, const MIB_UDPROW *row )
+{
+    if (table->dwNumEntries >= *count)
+    {
+        MIB_UDPTABLE *new_table;
+        DWORD new_count = table->dwNumEntries * 2;
+
+        if (!(new_table = HeapReAlloc( heap, flags, table, FIELD_OFFSET(MIB_UDPTABLE, table[new_count] ))))
+        {
+            HeapFree( heap, 0, table );
+            return NULL;
+        }
+        *count = new_count;
+        table = new_table;
+    }
+    memcpy( &table->table[table->dwNumEntries++], row, sizeof(*row) );
+    return table;
+}
+
 DWORD getUdpTable(PMIB_UDPTABLE *ppUdpTable, HANDLE heap, DWORD flags)
 {
-  DWORD ret;
+    MIB_UDPTABLE *table;
+    MIB_UDPROW row;
+    DWORD ret = NO_ERROR, count = 16;
 
-#if defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_DUMP)
-  ERR ("unimplemented!\n");
-  return ERROR_NOT_SUPPORTED;
+    if (!ppUdpTable) return ERROR_INVALID_PARAMETER;
+
+    if (!(table = HeapAlloc( heap, flags, FIELD_OFFSET(MIB_UDPTABLE, table[count] ))))
+        return ERROR_OUTOFMEMORY;
+
+    table->dwNumEntries = 0;
+
+#ifdef __linux__
+    {
+        FILE *fp;
+
+        if ((fp = fopen("/proc/net/udp", "r")))
+        {
+            char buf[512], *ptr;
+            DWORD dummy;
+
+            /* skip header line */
+            ptr = fgets(buf, sizeof(buf), fp);
+            while ((ptr = fgets(buf, sizeof(buf), fp)))
+            {
+                if (sscanf( ptr, "%u: %x:%x", &dummy, &row.dwLocalAddr, &row.dwLocalPort ) != 3)
+                    continue;
+                row.dwLocalPort = htons( row.dwLocalPort );
+                if (!(table = append_udp_row( heap, flags, table, &count, &row )))
+                    break;
+            }
+            fclose(fp);
+        }
+        else ret = ERROR_NOT_SUPPORTED;
+    }
+#else
+    FIXME( "not implemented\n" );
+    ret = ERROR_NOT_SUPPORTED;
 #endif
 
-  if (!ppUdpTable)
-    ret = ERROR_INVALID_PARAMETER;
-  else {
-    DWORD numEntries = getNumUdpEntries();
-    DWORD size = sizeof(MIB_UDPTABLE);
-    PMIB_UDPTABLE table;
-
-    if (numEntries > 1)
-      size += (numEntries - 1) * sizeof(MIB_UDPROW);
-    table = HeapAlloc(heap, flags, size);
-    if (table) {
-      FILE *fp;
-
-      ret = NO_ERROR;
-      *ppUdpTable = table;
-      table->dwNumEntries = 0;
-      /* get from /proc/net/udp, no error if can't */
-      fp = fopen("/proc/net/udp", "r");
-      if (fp) {
-        char buf[512] = { 0 }, *ptr;
-
-        /* skip header line */
-        ptr = fgets(buf, sizeof(buf), fp);
-        while (ptr && table->dwNumEntries < numEntries) {
-          memset(&table->table[table->dwNumEntries], 0, sizeof(MIB_UDPROW));
-          ptr = fgets(buf, sizeof(buf), fp);
-          if (ptr) {
-            char *endPtr;
-
-            if (ptr && *ptr) {
-              strtoul(ptr, &endPtr, 16); /* skip */
-              ptr = endPtr;
-            }
-            if (ptr && *ptr) {
-              ptr++;
-              table->table[table->dwNumEntries].dwLocalAddr = strtoul(ptr,
-               &endPtr, 16);
-              ptr = endPtr;
-            }
-            if (ptr && *ptr) {
-              ptr++;
-              table->table[table->dwNumEntries].dwLocalPort = strtoul(ptr,
-               &endPtr, 16);
-              ptr = endPtr;
-            }
-            table->dwNumEntries++;
-          }
-        }
-        fclose(fp);
-      }
-      else
-        ret = ERROR_NOT_SUPPORTED;
-    }
-    else
-      ret = ERROR_OUTOFMEMORY;
-  }
-  return ret;
+    if (!table) return ERROR_OUTOFMEMORY;
+    if (!ret) *ppUdpTable = table;
+    else HeapFree( heap, flags, table );
+    return ret;
 }
 
 
