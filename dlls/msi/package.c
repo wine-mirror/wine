@@ -1403,16 +1403,36 @@ UINT WINAPI MsiSetPropertyW( MSIHANDLE hInstall, LPCWSTR szName, LPCWSTR szValue
 
 static MSIRECORD *MSI_GetPropertyRow( MSIPACKAGE *package, LPCWSTR name )
 {
+    MSIQUERY *view;
+    MSIRECORD *rec, *row = NULL;
+    UINT r;
+
     static const WCHAR query[]= {
         'S','E','L','E','C','T',' ','`','V','a','l','u','e','`',' ',
         'F','R','O','M',' ' ,'`','_','P','r','o','p','e','r','t','y','`',
         ' ','W','H','E','R','E',' ' ,'`','_','P','r','o','p','e','r','t','y','`',
-        '=','\'','%','s','\'',0};
+        '=','?',0};
 
     if (!name || !*name)
         return NULL;
 
-    return MSI_QueryGetRecord( package->db, query, name );
+    rec = MSI_CreateRecord(1);
+    if (!rec)
+        return NULL;
+
+    MSI_RecordSetStringW(rec, 1, name);
+
+    r = MSI_DatabaseOpenViewW(package->db, query, &view);
+    if (r == ERROR_SUCCESS)
+    {
+        MSI_ViewExecute(view, rec);
+        MSI_ViewFetch(view, &row);
+        MSI_ViewClose(view);
+        msiobj_release(&view->hdr);
+    }
+
+    msiobj_release(&rec->hdr);
+    return row;
 }
 
 /* internal function, not compatible with MsiGetPropertyW */
