@@ -3309,12 +3309,12 @@ static void test_temporary_table(void)
     sz = sizeof buf;
     r = MsiRecordGetString(rec, 1, buf, &sz);
     ok(r == ERROR_SUCCESS, "failed to get string\n");
-    todo_wine ok( 0 == strcmp("G255", buf), "wrong column type\n");
+    ok( 0 == strcmp("G255", buf), "wrong column type\n");
 
     sz = sizeof buf;
     r = MsiRecordGetString(rec, 2, buf, &sz);
     ok(r == ERROR_SUCCESS, "failed to get string\n");
-    todo_wine ok( 0 == strcmp("j2", buf), "wrong column type\n");
+    ok( 0 == strcmp("j2", buf), "wrong column type\n");
 
     MsiCloseHandle( rec );
     MsiCloseHandle( view );

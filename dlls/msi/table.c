@@ -59,6 +59,7 @@ typedef struct tagMSICOLUMNINFO
     UINT   type;
     UINT   offset;
     INT    ref_count;
+    BOOL   temporary;
     MSICOLUMNHASHENTRY **hash_table;
 } MSICOLUMNINFO;
 
@@ -102,14 +103,14 @@ static WCHAR szNumber[]  = { 'N','u','m','b','e','r',0 };
 static WCHAR szType[]    = { 'T','y','p','e',0 };
 
 static const MSICOLUMNINFO _Columns_cols[4] = {
-    { szColumns, 1, szTable,  MSITYPE_VALID | MSITYPE_STRING | MSITYPE_KEY | 64, 0, 0, NULL },
-    { szColumns, 2, szNumber, MSITYPE_VALID | MSITYPE_KEY | 2,     2, 0, NULL },
-    { szColumns, 3, szName,   MSITYPE_VALID | MSITYPE_STRING | 64, 4, 0, NULL },
-    { szColumns, 4, szType,   MSITYPE_VALID | 2,                   6, 0, NULL },
+    { szColumns, 1, szTable,  MSITYPE_VALID | MSITYPE_STRING | MSITYPE_KEY | 64, 0, 0, 0, NULL },
+    { szColumns, 2, szNumber, MSITYPE_VALID | MSITYPE_KEY | 2,     2, 0, 0, NULL },
+    { szColumns, 3, szName,   MSITYPE_VALID | MSITYPE_STRING | 64, 4, 0, 0, NULL },
+    { szColumns, 4, szType,   MSITYPE_VALID | 2,                   6, 0, 0, NULL },
 };
 
 static const MSICOLUMNINFO _Tables_cols[1] = {
-    { szTables,  1, szName,   MSITYPE_VALID | MSITYPE_STRING | MSITYPE_KEY | 64, 0, 0, NULL },
+    { szTables,  1, szName,   MSITYPE_VALID | MSITYPE_STRING | MSITYPE_KEY | 64, 0, 0, 0, NULL },
 };
 
 #define MAX_STREAM_NAME 0x1f
@@ -659,6 +660,7 @@ UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
         table->colinfo[ i ].offset = 0;
         table->colinfo[ i ].ref_count = 0;
         table->colinfo[ i ].hash_table = NULL;
+        table->colinfo[ i ].temporary = col->temporary;
     }
     table_calc_column_offsets( db, table->colinfo, table->col_count);
 
@@ -1438,7 +1440,7 @@ static UINT TABLE_get_dimensions( struct tagMSIVIEW *view, UINT *rows, UINT *col
 }
 
 static UINT TABLE_get_column_info( struct tagMSIVIEW *view,
-                UINT n, LPWSTR *name, UINT *type )
+                UINT n, LPWSTR *name, UINT *type, BOOL *temporary )
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
 
@@ -1453,8 +1455,12 @@ static UINT TABLE_get_column_info( struct tagMSIVIEW *view,
         if( !*name )
             return ERROR_FUNCTION_FAILED;
     }
+
     if( type )
         *type = tv->columns[n-1].type;
+
+    if( temporary )
+        *temporary = tv->columns[n-1].temporary;
 
     return ERROR_SUCCESS;
 }
