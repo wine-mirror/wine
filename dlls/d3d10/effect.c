@@ -566,9 +566,22 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
 static struct ID3D10EffectTechnique * STDMETHODCALLTYPE d3d10_effect_GetTechniqueByIndex(ID3D10Effect *iface,
         UINT index)
 {
-    FIXME("iface %p, index %u stub!\n", iface, index);
+    struct d3d10_effect *This = (struct d3d10_effect *)iface;
+    struct d3d10_effect_technique *t;
 
-    return NULL;
+    TRACE("iface %p, index %u\n", iface, index);
+
+    if (index >= This->technique_count)
+    {
+        WARN("Invalid index specified\n");
+        return NULL;
+    }
+
+    t = &This->techniques[index];
+
+    TRACE("Returning technique %p, \"%s\"\n", t, t->name);
+
+    return (ID3D10EffectTechnique *)t;
 }
 
 static struct ID3D10EffectTechnique * STDMETHODCALLTYPE d3d10_effect_GetTechniqueByName(ID3D10Effect *iface,
