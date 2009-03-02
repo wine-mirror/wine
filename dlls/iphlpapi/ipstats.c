@@ -1268,51 +1268,6 @@ done:
     return ret;
 }
 
-DWORD getNumArpEntries(void)
-{
-#if defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_DUMP)
-  int mib[] = {CTL_NET, PF_ROUTE, 0, AF_INET, NET_RT_FLAGS, RTF_LLINFO};
-#define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
-  DWORD arpEntries = 0;
-  size_t needed;
-  char *buf, *lim, *next;
-  struct rt_msghdr *rtm;
-  struct sockaddr_inarp *sinarp;
-  struct sockaddr_dl *sdl;
-
-  if (sysctl (mib, MIB_LEN,  NULL, &needed, NULL, 0) == -1)
-  {
-     ERR ("failed to get size of arp table\n");
-     return 0;
-  }
-
-  buf = HeapAlloc (GetProcessHeap (), 0, needed);
-  if (!buf) return 0;
-
-  if (sysctl (mib, MIB_LEN, buf, &needed, NULL, 0) == -1)
-  {
-     ERR ("failed to get arp table\n");
-     HeapFree (GetProcessHeap (), 0, buf);
-     return 0;
-  }
-
-  lim = buf + needed;
-  next = buf;
-  while(next < lim)
-  {
-      rtm = (struct rt_msghdr *)next;
-      sinarp=(struct sockaddr_inarp *)(rtm + 1);
-      sdl = (struct sockaddr_dl *)((char *)sinarp + ROUNDUP(sinarp->sin_len));
-      if(sdl->sdl_alen) /* arp entry */
-      arpEntries++;
-      next += rtm->rtm_msglen;
-  }
-  HeapFree (GetProcessHeap (), 0, buf);
-  return arpEntries;
-#endif
-  return getNumWithOneHeader("/proc/net/arp");
-}
-
 static MIB_IPNETTABLE *append_ipnet_row( HANDLE heap, DWORD flags, MIB_IPNETTABLE *table,
                                          DWORD *count, const MIB_IPNETROW *row )
 {
