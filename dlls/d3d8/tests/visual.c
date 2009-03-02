@@ -1278,14 +1278,14 @@ START_TEST(visual)
     d3d8_handle = LoadLibraryA("d3d8.dll");
     if (!d3d8_handle)
     {
-        skip("Could not load d3d8.dll\n");
+        win_skip("Could not load d3d8.dll\n");
         return;
     }
 
     device_ptr = init_d3d8();
     if (!device_ptr)
     {
-        skip("Could not initialize direct3d\n");
+        win_skip("Could not initialize direct3d\n");
         return;
     }
 
@@ -1295,7 +1295,7 @@ START_TEST(visual)
     hr = IDirect3DDevice8_Clear(device_ptr, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
     if(FAILED(hr))
     {
-        trace("Clear failed, can't assure correctness of the test results, skipping\n");
+        skip("Clear failed, can't assure correctness of the test results\n");
         goto cleanup;
     }
     IDirect3DDevice8_Present(device_ptr, NULL, NULL, NULL, NULL);
@@ -1303,14 +1303,14 @@ START_TEST(visual)
     color = getPixelColor(device_ptr, 1, 1);
     if(color !=0x00ff0000)
     {
-        trace("Sanity check returned an incorrect color(%08x), can't assure the correctness of the tests, skipping\n", color);
+        skip("Sanity check returned an incorrect color(%08x), can't assure the correctness of the tests\n", color);
         goto cleanup;
     }
 
     hr = IDirect3DDevice8_Clear(device_ptr, 0, NULL, D3DCLEAR_TARGET, 0xff00ddee, 0.0, 0);
     if(FAILED(hr))
     {
-        trace("Clear failed, can't assure correctness of the test results, skipping\n");
+        skip("Clear failed, can't assure correctness of the test results\n");
         goto cleanup;
     }
     IDirect3DDevice8_Present(device_ptr, NULL, NULL, NULL, NULL);
@@ -1318,7 +1318,7 @@ START_TEST(visual)
     color = getPixelColor(device_ptr, 639, 479);
     if(color != 0x0000ddee)
     {
-        trace("Sanity check returned an incorrect color(%08x), can't assure the correctness of the tests, skipping\n", color);
+        skip("Sanity check returned an incorrect color(%08x), can't assure the correctness of the tests\n", color);
         goto cleanup;
     }
 
