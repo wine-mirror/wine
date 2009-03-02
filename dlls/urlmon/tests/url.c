@@ -1201,8 +1201,7 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulP
         break;
     case BINDSTATUS_DOWNLOADINGDATA:
         CHECK_EXPECT2(OnProgress_DOWNLOADINGDATA);
-        if(iface == &objbsc)
-            todo_wine ok(0, "unexpected call\n");
+        ok(iface != &objbsc, "unexpected call\n");
         ok(download_state == DOWNLOADING, "Download state was %d, expected DOWNLOADING\n",
            download_state);
         break;
