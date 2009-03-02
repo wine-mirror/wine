@@ -1591,11 +1591,45 @@ static DWORD TCPStateToMIBState (int state)
 }
 
 
-DWORD getTcpTable(PMIB_TCPTABLE *ppTcpTable, HANDLE heap, DWORD flags)
+static int compare_tcp_rows(const void *a, const void *b)
+{
+    const MIB_TCPROW *rowA = a;
+    const MIB_TCPROW *rowB = b;
+    int ret;
+
+    if ((ret = ntohl (rowA->dwLocalAddr) - ntohl (rowB->dwLocalAddr)) != 0) return ret;
+    if ((ret = ntohs ((unsigned short)rowA->dwLocalPort) -
+               ntohs ((unsigned short)rowB->dwLocalPort)) != 0) return ret;
+    if ((ret = ntohl (rowA->dwRemoteAddr) - ntohl (rowB->dwRemoteAddr)) != 0) return ret;
+    return ntohs ((unsigned short)rowA->dwRemotePort) - ntohs ((unsigned short)rowB->dwRemotePort);
+}
+
+
+/******************************************************************
+ *    AllocateAndGetTcpTableFromStack (IPHLPAPI.@)
+ *
+ * Get the TCP connection table.
+ * Like GetTcpTable(), but allocate the returned table from heap.
+ *
+ * PARAMS
+ *  ppTcpTable [Out] pointer into which the MIB_TCPTABLE is
+ *                   allocated and returned.
+ *  bOrder     [In]  whether to sort the table
+ *  heap       [In]  heap from which the table is allocated
+ *  flags      [In]  flags to HeapAlloc
+ *
+ * RETURNS
+ *  ERROR_INVALID_PARAMETER if ppTcpTable is NULL, whatever GetTcpTable()
+ *  returns otherwise.
+ */
+DWORD WINAPI AllocateAndGetTcpTableFromStack( PMIB_TCPTABLE *ppTcpTable, BOOL bOrder,
+                                              HANDLE heap, DWORD flags)
 {
     MIB_TCPTABLE *table;
     MIB_TCPROW row;
     DWORD ret = NO_ERROR, count = 16;
+
+    TRACE("table %p, bOrder %d, heap %p, flags 0x%08x\n", ppTcpTable, bOrder, heap, flags);
 
     if (!ppTcpTable) return ERROR_INVALID_PARAMETER;
 
@@ -1713,7 +1747,13 @@ DWORD getTcpTable(PMIB_TCPTABLE *ppTcpTable, HANDLE heap, DWORD flags)
 #endif
 
     if (!table) return ERROR_OUTOFMEMORY;
-    if (!ret) *ppTcpTable = table;
+    if (!ret)
+    {
+        if (bOrder && table->dwNumEntries)
+            qsort( table->table, table->dwNumEntries, sizeof(row), compare_tcp_rows );
+        *ppTcpTable = table;
+    }
     else HeapFree( heap, flags, table );
+    TRACE( "returning ret %u table %p\n", ret, table );
     return ret;
 }

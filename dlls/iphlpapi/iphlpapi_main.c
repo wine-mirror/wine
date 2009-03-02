@@ -291,67 +291,6 @@ DWORD WINAPI AllocateAndGetIpNetTableFromStack(PMIB_IPNETTABLE *ppIpNetTable,
 }
 
 
-static int TcpTableSorter(const void *a, const void *b)
-{
-  int ret;
-
-  if (a && b) {
-    const MIB_TCPROW* rowA = a;
-    const MIB_TCPROW* rowB = b;
-
-    ret = ntohl (rowA->dwLocalAddr) - ntohl (rowB->dwLocalAddr);
-    if (ret == 0) {
-       ret = ntohs ((unsigned short)rowA->dwLocalPort) -
-          ntohs ((unsigned short)rowB->dwLocalPort);
-      if (ret == 0) {
-         ret = ntohl (rowA->dwRemoteAddr) - ntohl (rowB->dwRemoteAddr);
-        if (ret == 0)
-           ret = ntohs ((unsigned short)rowA->dwRemotePort) -
-              ntohs ((unsigned short)rowB->dwRemotePort);
-      }
-    }
-  }
-  else
-    ret = 0;
-  return ret;
-}
-
-
-/******************************************************************
- *    AllocateAndGetTcpTableFromStack (IPHLPAPI.@)
- *
- * Get the TCP connection table.
- * Like GetTcpTable(), but allocate the returned table from heap.
- *
- * PARAMS
- *  ppTcpTable [Out] pointer into which the MIB_TCPTABLE is
- *                   allocated and returned.
- *  bOrder     [In]  whether to sort the table
- *  heap       [In]  heap from which the table is allocated
- *  flags      [In]  flags to HeapAlloc
- *
- * RETURNS
- *  ERROR_INVALID_PARAMETER if ppTcpTable is NULL, whatever GetTcpTable()
- *  returns otherwise.
- */
-DWORD WINAPI AllocateAndGetTcpTableFromStack(PMIB_TCPTABLE *ppTcpTable,
- BOOL bOrder, HANDLE heap, DWORD flags)
-{
-  DWORD ret;
-
-  TRACE("ppTcpTable %p, bOrder %d, heap %p, flags 0x%08x\n",
-   ppTcpTable, bOrder, heap, flags);
-
-  *ppTcpTable = NULL;
-  ret = getTcpTable(ppTcpTable, heap, flags);
-  if (!ret && bOrder)
-    qsort((*ppTcpTable)->table, (*ppTcpTable)->dwNumEntries,
-     sizeof(MIB_TCPROW), TcpTableSorter);
-  TRACE("returning %d\n", ret);
-  return ret;
-}
-
-
 /******************************************************************
  *    CreateIpForwardEntry (IPHLPAPI.@)
  *
@@ -1525,7 +1464,7 @@ DWORD WINAPI GetTcpTable(PMIB_TCPTABLE pTcpTable, PDWORD pdwSize, BOOL bOrder)
 
     if (!pdwSize) return ERROR_INVALID_PARAMETER;
 
-    ret = getTcpTable(&table, GetProcessHeap(), 0);
+    ret = AllocateAndGetTcpTableFromStack(&table, bOrder, GetProcessHeap(), 0);
     if (!ret) {
         DWORD size = FIELD_OFFSET( MIB_TCPTABLE, table[table->dwNumEntries] );
         if (!pTcpTable || *pdwSize < size) {
@@ -1535,9 +1474,6 @@ DWORD WINAPI GetTcpTable(PMIB_TCPTABLE pTcpTable, PDWORD pdwSize, BOOL bOrder)
         else {
           *pdwSize = size;
           memcpy(pTcpTable, table, size);
-          if (bOrder)
-            qsort(pTcpTable->table, pTcpTable->dwNumEntries,
-             sizeof(MIB_TCPROW), TcpTableSorter);
         }
         HeapFree(GetProcessHeap(), 0, table);
     }
