@@ -54,6 +54,7 @@ static XRenderPictFormat *pict_formats[2];
 typedef struct
 {
     LOGFONTW lf;
+    XFORM    xform;
     SIZE     devsize;  /* size in device coords */
     DWORD    hash;
 } LFANDSIZE;
@@ -268,8 +269,9 @@ static BOOL fontcmp(LFANDSIZE *p1, LFANDSIZE *p2)
 {
   if(p1->hash != p2->hash) return TRUE;
   if(memcmp(&p1->devsize, &p2->devsize, sizeof(p1->devsize))) return TRUE;
+  if(memcmp(&p1->xform, &p2->xform, sizeof(p1->xform))) return TRUE;
   if(memcmp(&p1->lf, &p2->lf, offsetof(LOGFONTW, lfFaceName))) return TRUE;
-  return strcmpW(p1->lf.lfFaceName, p2->lf.lfFaceName);
+  return strcmpiW(p1->lf.lfFaceName, p2->lf.lfFaceName);
 }
 
 #if 0
@@ -549,18 +551,24 @@ static void dec_ref_cache(int index)
 
 static void lfsz_calc_hash(LFANDSIZE *plfsz)
 {
-  DWORD hash = 0, *ptr;
+  DWORD hash = 0, *ptr, two_chars;
+  WORD *pwc;
   int i;
 
   hash ^= plfsz->devsize.cx;
   hash ^= plfsz->devsize.cy;
+  for(i = 0, ptr = (DWORD*)&plfsz->xform; i < sizeof(XFORM)/sizeof(DWORD); i++, ptr++)
+    hash ^= *ptr;
   for(i = 0, ptr = (DWORD*)&plfsz->lf; i < 7; i++, ptr++)
     hash ^= *ptr;
   for(i = 0, ptr = (DWORD*)plfsz->lf.lfFaceName; i < LF_FACESIZE/2; i++, ptr++) {
-    WCHAR *pwc = (WCHAR *)ptr;
+    two_chars = *ptr;
+    pwc = (WCHAR *)&two_chars;
     if(!*pwc) break;
-    hash ^= *ptr;
+    *pwc = toupperW(*pwc);
     pwc++;
+    *pwc = toupperW(*pwc);
+    hash ^= two_chars;
     if(!*pwc) break;
   }
   plfsz->hash = hash;
@@ -592,8 +600,10 @@ BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE *physDev, HFONT hfont)
     TRACE("h=%d w=%d weight=%d it=%d charset=%d name=%s\n",
 	  lfsz.lf.lfHeight, lfsz.lf.lfWidth, lfsz.lf.lfWeight,
 	  lfsz.lf.lfItalic, lfsz.lf.lfCharSet, debugstr_w(lfsz.lf.lfFaceName));
+    lfsz.lf.lfWidth = abs( lfsz.lf.lfWidth );
     lfsz.devsize.cx = X11DRV_XWStoDS( physDev, lfsz.lf.lfWidth );
     lfsz.devsize.cy = X11DRV_YWStoDS( physDev, lfsz.lf.lfHeight );
+    GetWorldTransform( physDev->hdc, &lfsz.xform );
     lfsz_calc_hash(&lfsz);
 
     EnterCriticalSection(&xrender_cs);
