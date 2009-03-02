@@ -693,6 +693,7 @@ DWORD getTCPStats(MIB_TCPSTATS *stats)
 
 #else
   FILE *fp;
+  MIB_TCPTABLE *tcp_table;
 
   if (!stats)
     return ERROR_INVALID_PARAMETER;
@@ -772,7 +773,11 @@ DWORD getTCPStats(MIB_TCPSTATS *stats)
           stats->dwOutRsts = strtoul(ptr, &endPtr, 10);
           ptr = endPtr;
         }
-        stats->dwNumConns = getNumTcpEntries();
+        if (!AllocateAndGetTcpTableFromStack( &tcp_table, FALSE, GetProcessHeap(), 0 ))
+        {
+            stats->dwNumConns = tcp_table->dwNumEntries;
+            HeapFree( GetProcessHeap(), 0, tcp_table );
+        }
       }
     }
     fclose(fp);
@@ -1564,15 +1569,6 @@ DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable, BOOL bOr
     return ret;
 }
 
-
-DWORD getNumTcpEntries(void)
-{
-#if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_NETINET_IN_PCB_H)
-   return getNumWithOneHeader ("net.inet.tcp.pcblist");
-#else
-   return getNumWithOneHeader ("/proc/net/tcp");
-#endif
-}
 
 static MIB_TCPTABLE *append_tcp_row( HANDLE heap, DWORD flags, MIB_TCPTABLE *table,
                                      DWORD *count, const MIB_TCPROW *row )

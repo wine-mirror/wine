@@ -55,9 +55,6 @@ DWORD getUDPStats(MIB_UDPSTATS *stats);
 /* Returns the number of entries in the route table. */
 DWORD getNumRoutes(void);
 
-/* Returns the number of entries in the TCP state table. */
-DWORD getNumTcpEntries(void);
-
 DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable, BOOL bOrder, HANDLE heap, DWORD flags);
 DWORD WINAPI AllocateAndGetTcpTableFromStack(PMIB_TCPTABLE *ppTcpTable, BOOL bOrder, HANDLE heap, DWORD flags);
 DWORD WINAPI AllocateAndGetIpNetTableFromStack(PMIB_IPNETTABLE *ppIpNetTable, BOOL bOrder, HANDLE heap, DWORD flags);
