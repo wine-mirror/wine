@@ -1296,11 +1296,40 @@ static MIB_IPNETTABLE *append_ipnet_row( HANDLE heap, DWORD flags, MIB_IPNETTABL
     return table;
 }
 
-DWORD getArpTable(PMIB_IPNETTABLE *ppIpNetTable, HANDLE heap, DWORD flags)
+static int compare_ipnet_rows(const void *a, const void *b)
+{
+    const MIB_IPNETROW *rowA = a;
+    const MIB_IPNETROW *rowB = b;
+
+    return ntohl(rowA->dwAddr) - ntohl(rowB->dwAddr);
+}
+
+
+/******************************************************************
+ *    AllocateAndGetIpNetTableFromStack (IPHLPAPI.@)
+ *
+ * Get the IP-to-physical address mapping table.
+ * Like GetIpNetTable(), but allocate the returned table from heap.
+ *
+ * PARAMS
+ *  ppIpNetTable [Out] pointer into which the MIB_IPNETTABLE is
+ *                     allocated and returned.
+ *  bOrder       [In]  whether to sort the table
+ *  heap         [In]  heap from which the table is allocated
+ *  flags        [In]  flags to HeapAlloc
+ *
+ * RETURNS
+ *  ERROR_INVALID_PARAMETER if ppIpNetTable is NULL, other error codes
+ *  on failure, NO_ERROR on success.
+ */
+DWORD WINAPI AllocateAndGetIpNetTableFromStack(PMIB_IPNETTABLE *ppIpNetTable, BOOL bOrder,
+                                               HANDLE heap, DWORD flags)
 {
     MIB_IPNETTABLE *table;
     MIB_IPNETROW row;
     DWORD ret = NO_ERROR, count = 16;
+
+    TRACE("table %p, bOrder %d, heap %p, flags 0x%08x\n", ppIpNetTable, bOrder, heap, flags);
 
     if (!ppIpNetTable) return ERROR_INVALID_PARAMETER;
 
@@ -1420,8 +1449,14 @@ done:
 #endif
 
     if (!table) return ERROR_OUTOFMEMORY;
-    if (!ret) *ppIpNetTable = table;
+    if (!ret)
+    {
+        if (bOrder && table->dwNumEntries)
+            qsort( table->table, table->dwNumEntries, sizeof(row), compare_ipnet_rows );
+        *ppIpNetTable = table;
+    }
     else HeapFree( heap, flags, table );
+    TRACE( "returning ret %u table %p\n", ret, table );
     return ret;
 }
 

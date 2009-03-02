@@ -246,51 +246,6 @@ DWORD WINAPI AllocateAndGetIpForwardTableFromStack(PMIB_IPFORWARDTABLE *
 }
 
 
-static int IpNetTableSorter(const void *a, const void *b)
-{
-  int ret;
-
-  if (a && b)
-    ret = ((const MIB_IPNETROW*)a)->dwAddr - ((const MIB_IPNETROW*)b)->dwAddr;
-  else
-    ret = 0;
-  return ret;
-}
-
-
-/******************************************************************
- *    AllocateAndGetIpNetTableFromStack (IPHLPAPI.@)
- *
- * Get the IP-to-physical address mapping table.
- * Like GetIpNetTable(), but allocate the returned table from heap.
- *
- * PARAMS
- *  ppIpNetTable [Out] pointer into which the MIB_IPNETTABLE is
- *                     allocated and returned.
- *  bOrder       [In]  whether to sort the table
- *  heap         [In]  heap from which the table is allocated
- *  flags        [In]  flags to HeapAlloc
- *
- * RETURNS
- *  ERROR_INVALID_PARAMETER if ppIpNetTable is NULL, other error codes
- *  on failure, NO_ERROR on success.
- */
-DWORD WINAPI AllocateAndGetIpNetTableFromStack(PMIB_IPNETTABLE *ppIpNetTable,
- BOOL bOrder, HANDLE heap, DWORD flags)
-{
-  DWORD ret;
-
-  TRACE("ppIpNetTable %p, bOrder %d, heap %p, flags 0x%08x\n",
-   ppIpNetTable, bOrder, heap, flags);
-  ret = getArpTable(ppIpNetTable, heap, flags);
-  if (!ret && bOrder)
-    qsort((*ppIpNetTable)->table, (*ppIpNetTable)->dwNumEntries,
-     sizeof(MIB_IPADDRROW), IpNetTableSorter);
-  TRACE("returning %d\n", ret);
-  return ret;
-}
-
-
 /******************************************************************
  *    CreateIpForwardEntry (IPHLPAPI.@)
  *
@@ -1196,7 +1151,7 @@ DWORD WINAPI GetIpNetTable(PMIB_IPNETTABLE pIpNetTable, PULONG pdwSize, BOOL bOr
 
     if (!pdwSize) return ERROR_INVALID_PARAMETER;
 
-    ret = getArpTable(&table, GetProcessHeap(), 0);
+    ret = AllocateAndGetIpNetTableFromStack( &table, bOrder, GetProcessHeap(), 0 );
     if (!ret) {
         DWORD size = FIELD_OFFSET( MIB_IPNETTABLE, table[table->dwNumEntries] );
         if (!pIpNetTable || *pdwSize < size) {
@@ -1206,9 +1161,6 @@ DWORD WINAPI GetIpNetTable(PMIB_IPNETTABLE pIpNetTable, PULONG pdwSize, BOOL bOr
         else {
           *pdwSize = size;
           memcpy(pIpNetTable, table, size);
-          if (bOrder)
-            qsort(pIpNetTable->table, pIpNetTable->dwNumEntries,
-             sizeof(MIB_IPNETROW), IpNetTableSorter);
         }
         HeapFree(GetProcessHeap(), 0, table);
     }

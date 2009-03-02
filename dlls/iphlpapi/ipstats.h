@@ -64,11 +64,6 @@ DWORD getRouteTable(PMIB_IPFORWARDTABLE *ppIpForwardTable, HANDLE heap,
 /* Returns the number of entries in the arp table. */
 DWORD getNumArpEntries(void);
 
-/* Allocates the arp table from heap and returns it to you in *ppIpNetTable.
- * Returns NO_ERROR on success, something else on failure.
- */
-DWORD getArpTable(PMIB_IPNETTABLE *ppIpNetTable, HANDLE heap, DWORD flags);
-
 /* Returns the number of entries in the UDP state table. */
 DWORD getNumUdpEntries(void);
 
@@ -77,5 +72,6 @@ DWORD getNumTcpEntries(void);
 
 DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable, BOOL bOrder, HANDLE heap, DWORD flags);
 DWORD WINAPI AllocateAndGetTcpTableFromStack(PMIB_TCPTABLE *ppTcpTable, BOOL bOrder, HANDLE heap, DWORD flags);
+DWORD WINAPI AllocateAndGetIpNetTableFromStack(PMIB_IPNETTABLE *ppIpNetTable, BOOL bOrder, HANDLE heap, DWORD flags);
 
 #endif /* ndef WINE_IPSTATS_H_ */
