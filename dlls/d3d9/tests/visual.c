@@ -8578,23 +8578,23 @@ static void pointsize_test(IDirect3DDevice9 *device)
 
     /* ptsize = 16, ptsize_max = 1 --> point has size 1 */
     color = getPixelColor(device, 448-4, 64-4);
-    ok(color == 0x000000ff, "pSize: Pixel (448-4),(64-4) has color 0x%08x, expected 0x00ffffff\n", color);
+    ok(color == 0x000000ff, "pSize: Pixel (448-4),(64-4) has color 0x%08x, expected 0x000000ff\n", color);
     color = getPixelColor(device, 448+4, 64+4);
-    ok(color == 0x000000ff, "pSize: Pixel (448+4),(64+4) has color 0x%08x, expected 0x00ffffff\n", color);
+    ok(color == 0x000000ff, "pSize: Pixel (448+4),(64+4) has color 0x%08x, expected 0x000000ff\n", color);
 
     /* ptsize = 4, ptsize_max = 1, ptsize_min = 16 --> point has size 1 */
     color = getPixelColor(device, 512-4, 64-4);
-    ok(color == 0x000000ff, "pSize: Pixel (448-4),(64-4) has color 0x%08x, expected 0x00ffffff\n", color);
+    ok(color == 0x000000ff, "pSize: Pixel (512-4),(64-4) has color 0x%08x, expected 0x000000ff\n", color);
     color = getPixelColor(device, 512+4, 64+4);
-    ok(color == 0x000000ff, "pSize: Pixel (448+4),(64+4) has color 0x%08x, expected 0x00ffffff\n", color);
+    ok(color == 0x000000ff, "pSize: Pixel (512+4),(64+4) has color 0x%08x, expected 0x000000ff\n", color);
 
     /* ptsize = 1, ptsize_max = default(64), ptsize_min = 16 --> point has size 16
      * Don't be overly picky - just show that the point is bigger than 1 pixel
      */
     color = getPixelColor(device, 576-4, 64-4);
-    ok(color == 0x00ffffff, "pSize: Pixel (448-4),(64-4) has color 0x%08x, expected 0x00ffffff\n", color);
+    ok(color == 0x00ffffff, "pSize: Pixel (576-4),(64-4) has color 0x%08x, expected 0x00ffffff\n", color);
     color = getPixelColor(device, 576+4, 64+4);
-    ok(color == 0x00ffffff, "pSize: Pixel (448+4),(64+4) has color 0x%08x, expected 0x00ffffff\n", color);
+    ok(color == 0x00ffffff, "pSize: Pixel (576+4),(64+4) has color 0x%08x, expected 0x00ffffff\n", color);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, *((DWORD *) (&ptsize_orig)));
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed hr=%08x\n", hr);
@@ -8878,7 +8878,7 @@ static void pixelshader_blending_test(IDirect3DDevice9 *device)
                b0 >= max(b1, 1) - 1 && b0 <= b1 + 1,
                "Offscreen failed for %s: Got color %#08x, expected %#08x.\n", test_formats[fmt_index].fmtName, color, test_formats[fmt_index].resultColorBlending);
         } else {
-            /* No pixel shader blending is supported so expected garbage.The type of 'garbage' depends on the driver version and OS.
+            /* No pixel shader blending is supported so expect garbage. The type of 'garbage' depends on the driver version and OS.
              * E.g. on G16R16 ati reports (on old r9600 drivers) 0x00ffffff and on modern ones 0x002010ff which is also what Nvidia
              * reports. On Vista Nvidia seems to report 0x00ffffff on Geforce7 cards. */
             color = getPixelColor(device, 320, 240);
