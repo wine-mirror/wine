@@ -2230,7 +2230,8 @@ BOOL WINAPI GetQueuedCompletionStatus( HANDLE CompletionPort, LPDWORD lpNumberOf
         return TRUE;
     }
 
-    SetLastError( RtlNtStatusToDosError(status) );
+    if (status == STATUS_TIMEOUT) SetLastError( WAIT_TIMEOUT );
+    else SetLastError( RtlNtStatusToDosError(status) );
     return FALSE;
 }
 
