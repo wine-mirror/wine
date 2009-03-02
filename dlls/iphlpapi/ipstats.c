@@ -1556,6 +1556,26 @@ DWORD getNumTcpEntries(void)
 #endif
 }
 
+static MIB_TCPTABLE *append_tcp_row( HANDLE heap, DWORD flags, MIB_TCPTABLE *table,
+                                     DWORD *count, const MIB_TCPROW *row )
+{
+    if (table->dwNumEntries >= *count)
+    {
+        MIB_TCPTABLE *new_table;
+        DWORD new_count = table->dwNumEntries * 2;
+
+        if (!(new_table = HeapReAlloc( heap, flags, table, FIELD_OFFSET(MIB_TCPTABLE, table[new_count] ))))
+        {
+            HeapFree( heap, 0, table );
+            return NULL;
+        }
+        *count = new_count;
+        table = new_table;
+    }
+    memcpy( &table->table[table->dwNumEntries++], row, sizeof(*row) );
+    return table;
+}
+
 
 /* Why not a lookup table? Because the TCPS_* constants are different
    on different platforms */
@@ -1579,178 +1599,129 @@ static DWORD TCPStateToMIBState (int state)
 }
 
 
-DWORD getTcpTable(PMIB_TCPTABLE *ppTcpTable, DWORD maxEntries, HANDLE heap,
-                  DWORD flags)
+DWORD getTcpTable(PMIB_TCPTABLE *ppTcpTable, HANDLE heap, DWORD flags)
 {
-   DWORD numEntries;
-   PMIB_TCPTABLE table;
-#if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_STRUCT_XINPGEN)
-   size_t Len = 0;
-   char *Buf;
-   struct xinpgen *pXIG, *pOrigXIG;
+    MIB_TCPTABLE *table;
+    MIB_TCPROW row;
+    DWORD ret = NO_ERROR, count = 16;
+
+    if (!ppTcpTable) return ERROR_INVALID_PARAMETER;
+
+    if (!(table = HeapAlloc( heap, flags, FIELD_OFFSET(MIB_TCPTABLE, table[count] ))))
+        return ERROR_OUTOFMEMORY;
+
+    table->dwNumEntries = 0;
+
+#ifdef __linux__
+    {
+        FILE *fp;
+
+        if ((fp = fopen("/proc/net/tcp", "r")))
+        {
+            char buf[512], *ptr;
+            DWORD dummy;
+
+            /* skip header line */
+            ptr = fgets(buf, sizeof(buf), fp);
+            while ((ptr = fgets(buf, sizeof(buf), fp)))
+            {
+                if (sscanf( ptr, "%x: %x:%x %x:%x %x", &dummy, &row.dwLocalAddr, &row.dwLocalPort,
+                            &row.dwRemoteAddr, &row.dwRemotePort, &row.dwState ) != 6)
+                    continue;
+                row.dwLocalPort = htons( row.dwLocalPort );
+                row.dwRemotePort = htons( row.dwRemotePort );
+                row.dwState = TCPStateToMIBState( row.dwState );
+                if (!(table = append_tcp_row( heap, flags, table, &count, &row )))
+                    break;
+            }
+            fclose( fp );
+        }
+        else ret = ERROR_NOT_SUPPORTED;
+    }
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_STRUCT_XINPGEN)
+    {
+        size_t Len = 0;
+        char *Buf = NULL;
+        struct xinpgen *pXIG, *pOrigXIG;
+
+        if (sysctlbyname ("net.inet.tcp.pcblist", NULL, &Len, NULL, 0) < 0)
+        {
+            ERR ("Failure to read net.inet.tcp.pcblist via sysctlbyname!\n");
+            ret = ERROR_NOT_SUPPORTED;
+            goto done;
+        }
+
+        Buf = HeapAlloc (GetProcessHeap (), 0, Len);
+        if (!Buf)
+        {
+            ret = ERROR_OUTOFMEMORY;
+            goto done;
+        }
+
+        if (sysctlbyname ("net.inet.tcp.pcblist", Buf, &Len, NULL, 0) < 0)
+        {
+            ERR ("Failure to read net.inet.tcp.pcblist via sysctlbyname!\n");
+            ret = ERROR_NOT_SUPPORTED;
+            goto done;
+        }
+
+        /* Might be nothing here; first entry is just a header it seems */
+        if (Len <= sizeof (struct xinpgen)) goto done;
+
+        pOrigXIG = (struct xinpgen *)Buf;
+        pXIG = pOrigXIG;
+
+        for (pXIG = (struct xinpgen *)((char *)pXIG + pXIG->xig_len);
+             pXIG->xig_len > sizeof (struct xinpgen);
+             pXIG = (struct xinpgen *)((char *)pXIG + pXIG->xig_len))
+        {
+            struct tcpcb *pTCPData = NULL;
+            struct inpcb *pINData;
+            struct xsocket *pSockData;
+
+            pTCPData = &((struct xtcpcb *)pXIG)->xt_tp;
+            pINData = &((struct xtcpcb *)pXIG)->xt_inp;
+            pSockData = &((struct xtcpcb *)pXIG)->xt_socket;
+
+            /* Ignore sockets for other protocols */
+            if (pSockData->xso_protocol != IPPROTO_TCP)
+                continue;
+
+            /* Ignore PCBs that were freed while generating the data */
+            if (pINData->inp_gencnt > pOrigXIG->xig_gen)
+                continue;
+
+            /* we're only interested in IPv4 addresses */
+            if (!(pINData->inp_vflag & INP_IPV4) ||
+                (pINData->inp_vflag & INP_IPV6))
+                continue;
+
+            /* If all 0's, skip it */
+            if (!pINData->inp_laddr.s_addr &&
+                !pINData->inp_lport &&
+                !pINData->inp_faddr.s_addr &&
+                !pINData->inp_fport)
+                continue;
+
+            /* Fill in structure details */
+            row.dwLocalAddr = pINData->inp_laddr.s_addr;
+            row.dwLocalPort = pINData->inp_lport;
+            row.dwRemoteAddr = pINData->inp_faddr.s_addr;
+            row.dwRemotePort = pINData->inp_fport;
+            row.dwState = TCPStateToMIBState (pTCPData->t_state);
+            if (!(table = append_tcp_row( heap, flags, table, &count, &row ))) break;
+        }
+
+    done:
+        HeapFree (GetProcessHeap (), 0, Buf);
+    }
 #else
-   FILE *fp;
-   char buf[512] = { 0 }, *ptr;
+    FIXME( "not implemented\n" );
+    ret = ERROR_NOT_SUPPORTED;
 #endif
 
-   if (!ppTcpTable)
-      return ERROR_INVALID_PARAMETER;
-
-   numEntries = getNumTcpEntries ();
-
-   if (!*ppTcpTable)
-   {
-      DWORD size = sizeof(MIB_TCPTABLE);
-
-      if (numEntries > 1)
-         size += (numEntries - 1) * sizeof (MIB_TCPROW);
-      *ppTcpTable = HeapAlloc (heap, flags, size);
-      if (!*ppTcpTable)
-      {
-         ERR ("Out of memory!\n");
-         return ERROR_OUTOFMEMORY;
-      }
-      maxEntries = numEntries;
-   }
-
-   table = *ppTcpTable;
-   table->dwNumEntries = 0;
-   if (!numEntries)
-      return NO_ERROR;
-
-#if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_STRUCT_XINPGEN)
-
-   if (sysctlbyname ("net.inet.tcp.pcblist", NULL, &Len, NULL, 0) < 0)
-   {
-      ERR ("Failure to read net.inet.tcp.pcblist via sysctlbyname!\n");
-      return ERROR_OUTOFMEMORY;
-   }
-
-   Buf = HeapAlloc (GetProcessHeap (), 0, Len);
-   if (!Buf)
-   {
-      ERR ("Out of memory!\n");
-      return ERROR_OUTOFMEMORY;
-   }
-
-   if (sysctlbyname ("net.inet.tcp.pcblist", Buf, &Len, NULL, 0) < 0)
-   {
-      ERR ("Failure to read net.inet.tcp.pcblist via sysctlbyname!\n");
-      HeapFree (GetProcessHeap (), 0, Buf);
-      return ERROR_OUTOFMEMORY;
-   }
-
-   /* Might be nothing here; first entry is just a header it seems */
-   if (Len <= sizeof (struct xinpgen))
-   {
-      HeapFree (GetProcessHeap (), 0, Buf);
-      return NO_ERROR;
-   }
-
-   pOrigXIG = (struct xinpgen *)Buf;
-   pXIG = pOrigXIG;
-
-   for (pXIG = (struct xinpgen *)((char *)pXIG + pXIG->xig_len);
-        (pXIG->xig_len > sizeof (struct xinpgen)) &&
-           (table->dwNumEntries < maxEntries);
-        pXIG = (struct xinpgen *)((char *)pXIG + pXIG->xig_len))
-   {
-      struct tcpcb *pTCPData = NULL;
-      struct inpcb *pINData;
-      struct xsocket *pSockData;
-
-      pTCPData = &((struct xtcpcb *)pXIG)->xt_tp;
-      pINData = &((struct xtcpcb *)pXIG)->xt_inp;
-      pSockData = &((struct xtcpcb *)pXIG)->xt_socket;
-
-      /* Ignore sockets for other protocols */
-      if (pSockData->xso_protocol != IPPROTO_TCP)
-         continue;
-
-      /* Ignore PCBs that were freed while generating the data */
-      if (pINData->inp_gencnt > pOrigXIG->xig_gen)
-         continue;
-
-      /* we're only interested in IPv4 addresses */
-      if (!(pINData->inp_vflag & INP_IPV4) ||
-          (pINData->inp_vflag & INP_IPV6))
-         continue;
-
-      /* If all 0's, skip it */
-      if (!pINData->inp_laddr.s_addr &&
-          !pINData->inp_lport &&
-          !pINData->inp_faddr.s_addr &&
-          !pINData->inp_fport)
-         continue;
-
-      /* Fill in structure details */
-      table->table[table->dwNumEntries].dwLocalAddr =
-         pINData->inp_laddr.s_addr;
-      table->table[table->dwNumEntries].dwLocalPort =
-         pINData->inp_lport;
-      table->table[table->dwNumEntries].dwRemoteAddr =
-         pINData->inp_faddr.s_addr;
-      table->table[table->dwNumEntries].dwRemotePort =
-         pINData->inp_fport;
-      table->table[table->dwNumEntries].dwState =
-         TCPStateToMIBState (pTCPData->t_state);
-
-      table->dwNumEntries++;
-   }
-
-   HeapFree (GetProcessHeap (), 0, Buf);
-#else
-   /* get from /proc/net/tcp, no error if can't */
-   fp = fopen("/proc/net/tcp", "r");
-   if (!fp)
-      return ERROR_NOT_SUPPORTED;
-
-   /* skip header line */
-   ptr = fgets(buf, sizeof(buf), fp);
-   while (ptr && table->dwNumEntries < maxEntries) {
-      memset(&table->table[table->dwNumEntries], 0, sizeof(MIB_TCPROW));
-      ptr = fgets(buf, sizeof(buf), fp);
-      if (ptr) {
-         char *endPtr;
-
-         while (ptr && *ptr && *ptr != ':')
-            ptr++;
-         if (ptr && *ptr)
-            ptr++;
-         if (ptr && *ptr) {
-            table->table[table->dwNumEntries].dwLocalAddr =
-               strtoul(ptr, &endPtr, 16);
-            ptr = endPtr;
-         }
-         if (ptr && *ptr) {
-            ptr++;
-            table->table[table->dwNumEntries].dwLocalPort =
-               htons ((unsigned short)strtoul(ptr, &endPtr, 16));
-            ptr = endPtr;
-         }
-         if (ptr && *ptr) {
-            table->table[table->dwNumEntries].dwRemoteAddr =
-               strtoul(ptr, &endPtr, 16);
-            ptr = endPtr;
-         }
-         if (ptr && *ptr) {
-            ptr++;
-            table->table[table->dwNumEntries].dwRemotePort =
-               htons ((unsigned short)strtoul(ptr, &endPtr, 16));
-            ptr = endPtr;
-         }
-         if (ptr && *ptr) {
-            DWORD state = strtoul(ptr, &endPtr, 16);
-
-            table->table[table->dwNumEntries].dwState =
-               TCPStateToMIBState (state);
-            ptr = endPtr;
-         }
-         table->dwNumEntries++;
-      }
-   }
-   fclose(fp);
-#endif
-
-   return NO_ERROR;
+    if (!table) return ERROR_OUTOFMEMORY;
+    if (!ret) *ppTcpTable = table;
+    else HeapFree( heap, flags, table );
+    return ret;
 }

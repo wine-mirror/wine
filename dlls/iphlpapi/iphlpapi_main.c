@@ -343,7 +343,7 @@ DWORD WINAPI AllocateAndGetTcpTableFromStack(PMIB_TCPTABLE *ppTcpTable,
    ppTcpTable, bOrder, heap, flags);
 
   *ppTcpTable = NULL;
-  ret = getTcpTable(ppTcpTable, 0, heap, flags);
+  ret = getTcpTable(ppTcpTable, heap, flags);
   if (!ret && bOrder)
     qsort((*ppTcpTable)->table, (*ppTcpTable)->dwNumEntries,
      sizeof(MIB_TCPROW), TcpTableSorter);
@@ -1603,39 +1603,31 @@ DWORD WINAPI GetTcpStatistics(PMIB_TCPSTATS pStats)
  */
 DWORD WINAPI GetTcpTable(PMIB_TCPTABLE pTcpTable, PDWORD pdwSize, BOOL bOrder)
 {
-  DWORD ret;
+    DWORD ret;
+    PMIB_TCPTABLE table;
 
-  TRACE("pTcpTable %p, pdwSize %p, bOrder %d\n", pTcpTable, pdwSize,
-   (DWORD)bOrder);
-  if (!pdwSize)
-    ret = ERROR_INVALID_PARAMETER;
-  else {
-    DWORD numEntries = getNumTcpEntries();
-    DWORD size = sizeof(MIB_TCPTABLE);
+    TRACE("pTcpTable %p, pdwSize %p, bOrder %d\n", pTcpTable, pdwSize, bOrder);
 
-    if (numEntries > 1)
-      size += (numEntries - 1) * sizeof(MIB_TCPROW);
-    if (!pTcpTable || *pdwSize < size) {
-      *pdwSize = size;
-      ret = ERROR_INSUFFICIENT_BUFFER;
+    if (!pdwSize) return ERROR_INVALID_PARAMETER;
+
+    ret = getTcpTable(&table, GetProcessHeap(), 0);
+    if (!ret) {
+        DWORD size = FIELD_OFFSET( MIB_TCPTABLE, table[table->dwNumEntries] );
+        if (!pTcpTable || *pdwSize < size) {
+          *pdwSize = size;
+          ret = ERROR_INSUFFICIENT_BUFFER;
+        }
+        else {
+          *pdwSize = size;
+          memcpy(pTcpTable, table, size);
+          if (bOrder)
+            qsort(pTcpTable->table, pTcpTable->dwNumEntries,
+             sizeof(MIB_TCPROW), TcpTableSorter);
+        }
+        HeapFree(GetProcessHeap(), 0, table);
     }
-    else {
-      ret = getTcpTable(&pTcpTable, numEntries, 0, 0);
-      if (!ret) {
-        size = sizeof(MIB_TCPTABLE);
-        if (pTcpTable->dwNumEntries > 1)
-          size += (pTcpTable->dwNumEntries - 1) * sizeof(MIB_TCPROW);
-        *pdwSize = size;
-
-        if (bOrder)
-           qsort(pTcpTable->table, pTcpTable->dwNumEntries,
-                 sizeof(MIB_TCPROW), TcpTableSorter);
-        ret = NO_ERROR;
-      }
-    }
-  }
-  TRACE("returning %d\n", ret);
-  return ret;
+    TRACE("returning %d\n", ret);
+    return ret;
 }
 
 
