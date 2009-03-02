@@ -42,3 +42,17 @@ HRESULT protocol_unlock_request(Protocol *protocol)
 
     return S_OK;
 }
+
+void protocol_close_connection(Protocol *protocol)
+{
+    protocol->vtbl->close_connection(protocol);
+
+    if(protocol->request)
+        InternetCloseHandle(protocol->request);
+    if(protocol->internet) {
+        InternetCloseHandle(protocol->internet);
+        protocol->internet = 0;
+    }
+
+    protocol->flags = 0;
+}

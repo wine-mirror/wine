@@ -79,7 +79,11 @@ HRESULT bind_to_object(IMoniker *mon, LPCWSTR url, IBindCtx *pbc, REFIID riid, v
 HRESULT create_binding_protocol(LPCWSTR url, BOOL from_urlmon, IInternetProtocol **protocol);
 void set_binding_sink(IInternetProtocol *bind_protocol, IInternetProtocolSink *sink);
 
+typedef struct ProtocolVtbl ProtocolVtbl;
+
 typedef struct {
+    const ProtocolVtbl *vtbl;
+
     IInternetProtocol *protocol;
     IInternetProtocolSink *protocol_sink;
 
@@ -98,8 +102,13 @@ typedef struct {
     LONG priority;
 } Protocol;
 
+struct ProtocolVtbl {
+    void (*close_connection)(Protocol*);
+};
+
 HRESULT protocol_lock_request(Protocol*);
 HRESULT protocol_unlock_request(Protocol*);
+void protocol_close_connection(Protocol*);
 
 static inline void *heap_alloc(size_t len)
 {

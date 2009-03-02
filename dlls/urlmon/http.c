@@ -80,9 +80,32 @@ typedef struct {
 static const WCHAR wszHeaders[] = {'A','c','c','e','p','t','-','E','n','c','o','d','i','n','g',
                                    ':',' ','g','z','i','p',',',' ','d','e','f','l','a','t','e',0};
 
-/*
- * Helpers
- */
+#define ASYNCPROTOCOL_THIS(iface) DEFINE_THIS2(HttpProtocol, base, iface)
+
+static void HttpProtocol_close_connection(Protocol *prot)
+{
+    HttpProtocol *This = ASYNCPROTOCOL_THIS(prot);
+
+    if(This->connection)
+        InternetCloseHandle(This->connection);
+
+    if(This->http_negotiate) {
+        IHttpNegotiate_Release(This->http_negotiate);
+        This->http_negotiate = 0;
+    }
+
+    if(This->full_header) {
+        if(This->full_header != wszHeaders)
+            heap_free(This->full_header);
+        This->full_header = 0;
+    }
+}
+
+#undef ASYNCPROTOCOL_THIS
+
+static const ProtocolVtbl AsyncProtocolVtbl = {
+    HttpProtocol_close_connection
+};
 
 static void HTTPPROTOCOL_ReportResult(HttpProtocol *This, HRESULT hres)
 {
@@ -127,31 +150,6 @@ static void HTTPPROTOCOL_AllDataRead(HttpProtocol *This)
         This->base.flags |= FLAG_ALL_DATA_READ;
     HTTPPROTOCOL_ReportData(This);
     HTTPPROTOCOL_ReportResult(This, S_OK);
-}
-
-static void HTTPPROTOCOL_Close(HttpProtocol *This)
-{
-    if (This->http_negotiate)
-    {
-        IHttpNegotiate_Release(This->http_negotiate);
-        This->http_negotiate = 0;
-    }
-    if (This->base.request)
-        InternetCloseHandle(This->base.request);
-    if (This->connection)
-        InternetCloseHandle(This->connection);
-    if (This->base.internet)
-    {
-        InternetCloseHandle(This->base.internet);
-        This->base.internet = 0;
-    }
-    if (This->full_header)
-    {
-        if (This->full_header != wszHeaders)
-            heap_free(This->full_header);
-        This->full_header = 0;
-    }
-    This->base.flags = 0;
 }
 
 static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
@@ -269,7 +267,7 @@ static ULONG WINAPI HttpProtocol_Release(IInternetProtocol *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        HTTPPROTOCOL_Close(This);
+        protocol_close_connection(&This->base);
         heap_free(This);
 
         URLMON_UnlockModule();
@@ -523,7 +521,7 @@ done:
     if (hres != S_OK)
     {
         IInternetProtocolSink_ReportResult(This->base.protocol_sink, hres, 0, NULL);
-        HTTPPROTOCOL_Close(This);
+        protocol_close_connection(&This->base);
     }
 
     CoTaskMemFree(post_cookie);
@@ -714,8 +712,8 @@ static HRESULT WINAPI HttpProtocol_Terminate(IInternetProtocol *iface, DWORD dwO
     HttpProtocol *This = PROTOCOL_THIS(iface);
 
     TRACE("(%p)->(%08x)\n", This, dwOptions);
-    HTTPPROTOCOL_Close(This);
 
+    protocol_close_connection(&This->base);
     return S_OK;
 }
 
@@ -915,6 +913,7 @@ static HRESULT create_http_protocol(BOOL https, void **ppobj)
     if(!ret)
         return E_OUTOFMEMORY;
 
+    ret->base.vtbl = &AsyncProtocolVtbl;
     ret->lpInternetProtocolVtbl = &HttpProtocolVtbl;
     ret->lpInternetPriorityVtbl = &HttpPriorityVtbl;
 
