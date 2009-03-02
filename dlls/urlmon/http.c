@@ -461,6 +461,22 @@ static HRESULT WINAPI HttpProtocol_UnlockRequest(IInternetProtocol *iface)
 
 #undef PROTOCOL_THIS
 
+static const IInternetProtocolVtbl HttpProtocolVtbl = {
+    HttpProtocol_QueryInterface,
+    HttpProtocol_AddRef,
+    HttpProtocol_Release,
+    HttpProtocol_Start,
+    HttpProtocol_Continue,
+    HttpProtocol_Abort,
+    HttpProtocol_Terminate,
+    HttpProtocol_Suspend,
+    HttpProtocol_Resume,
+    HttpProtocol_Read,
+    HttpProtocol_Seek,
+    HttpProtocol_LockRequest,
+    HttpProtocol_UnlockRequest
+};
+
 #define PRIORITY_THIS(iface) DEFINE_THIS(HttpProtocol, InternetPriority, iface)
 
 static HRESULT WINAPI HttpPriority_QueryInterface(IInternetPriority *iface, REFIID riid, void **ppv)
@@ -509,22 +525,6 @@ static const IInternetPriorityVtbl HttpPriorityVtbl = {
     HttpPriority_Release,
     HttpPriority_SetPriority,
     HttpPriority_GetPriority
-};
-
-static const IInternetProtocolVtbl HttpProtocolVtbl = {
-    HttpProtocol_QueryInterface,
-    HttpProtocol_AddRef,
-    HttpProtocol_Release,
-    HttpProtocol_Start,
-    HttpProtocol_Continue,
-    HttpProtocol_Abort,
-    HttpProtocol_Terminate,
-    HttpProtocol_Suspend,
-    HttpProtocol_Resume,
-    HttpProtocol_Read,
-    HttpProtocol_Seek,
-    HttpProtocol_LockRequest,
-    HttpProtocol_UnlockRequest
 };
 
 static HRESULT create_http_protocol(BOOL https, void **ppobj)
