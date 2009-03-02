@@ -106,6 +106,7 @@ struct ProtocolVtbl {
     void (*close_connection)(Protocol*);
 };
 
+HRESULT protocol_read(Protocol*,void*,ULONG,ULONG*);
 HRESULT protocol_lock_request(Protocol*);
 HRESULT protocol_unlock_request(Protocol*);
 void protocol_close_connection(Protocol*);

@@ -144,14 +144,6 @@ static void HTTPPROTOCOL_ReportData(HttpProtocol *This)
     }
 }
 
-static void HTTPPROTOCOL_AllDataRead(HttpProtocol *This)
-{
-    if (!(This->base.flags & FLAG_ALL_DATA_READ))
-        This->base.flags |= FLAG_ALL_DATA_READ;
-    HTTPPROTOCOL_ReportData(This);
-    HTTPPROTOCOL_ReportResult(This, S_OK);
-}
-
 static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
     HINTERNET hInternet, DWORD_PTR dwContext, DWORD dwInternetStatus,
     LPVOID lpvStatusInformation, DWORD dwStatusInformationLength)
@@ -735,80 +727,10 @@ static HRESULT WINAPI HttpProtocol_Read(IInternetProtocol *iface, void *pv,
         ULONG cb, ULONG *pcbRead)
 {
     HttpProtocol *This = PROTOCOL_THIS(iface);
-    ULONG read = 0, len = 0;
-    HRESULT hres = S_FALSE;
 
     TRACE("(%p)->(%p %u %p)\n", This, pv, cb, pcbRead);
 
-    if (!(This->base.flags & FLAG_REQUEST_COMPLETE))
-    {
-        hres = E_PENDING;
-    }
-    else while (!(This->base.flags & FLAG_ALL_DATA_READ) &&
-                read < cb)
-    {
-        if (This->base.available_bytes == 0)
-        {
-            /* InternetQueryDataAvailable may immediately fork and perform its asynchronous
-             * read, so clear the flag _before_ calling so it does not incorrectly get cleared
-             * after the status callback is called */
-            This->base.flags &= ~FLAG_REQUEST_COMPLETE;
-            if (!InternetQueryDataAvailable(This->base.request, &This->base.available_bytes, 0, 0))
-            {
-                if (GetLastError() == ERROR_IO_PENDING)
-                {
-                    hres = E_PENDING;
-                }
-                else
-                {
-                    WARN("InternetQueryDataAvailable failed: %d\n", GetLastError());
-                    hres = INET_E_DATA_NOT_AVAILABLE;
-                    HTTPPROTOCOL_ReportResult(This, hres);
-                }
-                goto done;
-            }
-            else if (This->base.available_bytes == 0)
-            {
-                HTTPPROTOCOL_AllDataRead(This);
-            }
-        }
-        else
-        {
-            if (!InternetReadFile(This->base.request, ((BYTE *)pv)+read,
-                                  This->base.available_bytes > cb-read ?
-                                  cb-read : This->base.available_bytes, &len))
-            {
-                WARN("InternetReadFile failed: %d\n", GetLastError());
-                hres = INET_E_DOWNLOAD_FAILURE;
-                HTTPPROTOCOL_ReportResult(This, hres);
-                goto done;
-            }
-            else if (len == 0)
-            {
-                HTTPPROTOCOL_AllDataRead(This);
-            }
-            else
-            {
-                read += len;
-                This->base.current_position += len;
-                This->base.available_bytes -= len;
-            }
-        }
-    }
-
-    /* Per MSDN this should be if (read == cb), but native returns S_OK
-     * if any bytes were read, so we will too */
-    if (read)
-        hres = S_OK;
-
-done:
-    if (pcbRead)
-        *pcbRead = read;
-
-    if (hres != E_PENDING)
-        This->base.flags |= FLAG_REQUEST_COMPLETE;
-
-    return hres;
+    return protocol_read(&This->base, pv, cb, pcbRead);
 }
 
 static HRESULT WINAPI HttpProtocol_Seek(IInternetProtocol *iface, LARGE_INTEGER dlibMove,
