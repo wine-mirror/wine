@@ -7330,6 +7330,8 @@ static void test_appsearch_reglocator(void)
     BOOL space, version;
     HKEY hklm, classes;
     HKEY hkcu, users;
+    LPSTR pathdata;
+    LPSTR pathvar;
     LPCSTR str;
     LPSTR ptr;
     LONG res;
@@ -7772,12 +7774,22 @@ static void test_appsearch_reglocator(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(prop, "#-42"), "Expected \"#-42\", got \"%s\"\n", prop);
 
-    ExpandEnvironmentStringsA("%PATH%", path, MAX_PATH);
+    size = ExpandEnvironmentStringsA("%PATH%", NULL, 0);
+    pathvar = HeapAlloc(GetProcessHeap(), 0, size);
+    ExpandEnvironmentStringsA("%PATH%", pathvar, size);
 
-    size = MAX_PATH;
-    r = MsiGetPropertyA(hpkg, "SIGPROP4", prop, &size);
+    size = 0;
+    r = MsiGetPropertyA(hpkg, "SIGPROP4", NULL, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+
+    pathdata = HeapAlloc(GetProcessHeap(), 0, ++size);
+    r = MsiGetPropertyA(hpkg, "SIGPROP4", pathdata, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(pathdata, pathvar),
+       "Expected \"%s\", got \"%s\"\n", pathvar, pathdata);
+
+    HeapFree(GetProcessHeap(), 0, pathvar);
+    HeapFree(GetProcessHeap(), 0, pathdata);
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "SIGPROP5", prop, &size);
