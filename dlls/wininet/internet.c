@@ -186,7 +186,8 @@ BOOL WININET_Release( LPWININETHANDLEHEADER info )
             info->vtbl->CloseConnection( info );
         }
         /* Don't send a callback if this is a session handle created with InternetOpenUrl */
-        if (info->htype != WH_HHTTPSESSION || !(info->dwInternalFlags & INET_OPENURL))
+        if ((info->htype != WH_HHTTPSESSION && info->htype != WH_HFTPSESSION)
+            || !(info->dwInternalFlags & INET_OPENURL))
         {
             INTERNET_SendCallback(info, info->dwContext,
                                   INTERNET_STATUS_HANDLE_CLOSING, &info->hInternet,
