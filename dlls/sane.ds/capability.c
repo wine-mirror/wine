@@ -31,6 +31,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
+#ifndef SANE_VALUE_SCAN_MODE_COLOR
+#define SANE_VALUE_SCAN_MODE_COLOR		SANE_I18N("Color")
+#endif
+#ifndef SANE_VALUE_SCAN_MODE_GRAY
+#define SANE_VALUE_SCAN_MODE_GRAY		SANE_I18N("Gray")
+#endif
+#ifndef SANE_VALUE_SCAN_MODE_LINEART
+#define SANE_VALUE_SCAN_MODE_LINEART		SANE_I18N("Lineart")
+#endif
+
 static TW_UINT16 get_onevalue(pTW_CAPABILITY pCapability, TW_UINT16 *type, TW_UINT32 *value)
 {
     if (pCapability->hContainer)
