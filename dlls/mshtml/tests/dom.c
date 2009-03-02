@@ -3262,6 +3262,56 @@ static void test_default_style(IHTMLStyle *style)
     test_border_styles(style, str);
     SysFreeString(str);
 
+    hres = IHTMLStyle_get_borderStyle(style, &sDefault);
+    ok(hres == S_OK, "get_borderStyle failed: %08x\n", hres);
+
+    str = a2bstr("none dotted dashed solid");
+    hres = IHTMLStyle_put_borderStyle(style, str);
+    ok(hres == S_OK, "put_borderStyle failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("none dotted dashed solid");
+    hres = IHTMLStyle_get_borderStyle(style, &str);
+    ok(hres == S_OK, "get_borderStyle failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "none dotted dashed solid"),
+        "expected (none dotted dashed solid) = (%s)\n", dbgstr_w(V_BSTR(&v)));
+    SysFreeString(str);
+
+    str = a2bstr("double groove ridge inset");
+    hres = IHTMLStyle_put_borderStyle(style, str);
+    ok(hres == S_OK, "put_borderStyle failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("window-inset outset ridge inset");
+    hres = IHTMLStyle_put_borderStyle(style, str);
+    ok(hres == S_OK, "put_borderStyle failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("window-inset");
+    hres = IHTMLStyle_put_borderStyle(style, str);
+    ok(hres == S_OK, "put_borderStyle failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("none none none none none");
+    hres = IHTMLStyle_put_borderStyle(style, str);
+    ok(hres == S_OK, "put_borderStyle failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("invalid none none none");
+    hres = IHTMLStyle_put_borderStyle(style, str);
+    ok(hres == E_INVALIDARG, "put_borderStyle failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("none invalid none none");
+    hres = IHTMLStyle_put_borderStyle(style, str);
+    ok(hres == E_INVALIDARG, "put_borderStyle failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle_put_borderStyle(style, sDefault);
+    ok(hres == S_OK, "put_borderStyle failed: %08x\n", hres);
+    SysFreeString(sDefault);
+
+    /* backgoundColor */
     hres = IHTMLStyle_get_backgroundColor(style, &v);
     ok(hres == S_OK, "get_backgroundColor: %08x\n", hres);
     ok(V_VT(&v) == VT_BSTR, "type failed: %d\n", V_VT(&v));

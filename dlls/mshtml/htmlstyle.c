@@ -55,6 +55,8 @@ static const WCHAR attrBorderLeftStyle[] =
     {'b','o','r','d','e','r','-','l','e','f','t','-','s','t','y','l','e',0};
 static const WCHAR attrBorderRightStyle[] =
     {'b','o','r','d','e','r','-','r','i','g','h','t','-','s','t','y','l','e',0};
+static const WCHAR attrBorderStyle[] =
+    {'b','o','r','d','e','r','-','s','t','y','l','e',0};
 static const WCHAR attrBorderTopStyle[] =
     {'b','o','r','d','e','r','-','t','o','p','-','s','t','y','l','e',0};
 static const WCHAR attrBorderWidth[] =
@@ -124,6 +126,7 @@ static const struct{
     {attrBorderLeft,           DISPID_IHTMLSTYLE_BORDERLEFT},
     {attrBorderLeftStyle,      DISPID_IHTMLSTYLE_BORDERLEFTSTYLE},
     {attrBorderRightStyle,     DISPID_IHTMLSTYLE_BORDERRIGHTSTYLE},
+    {attrBorderStyle,          DISPID_IHTMLSTYLE_BORDERSTYLE},
     {attrBorderTopStyle,       DISPID_IHTMLSTYLE_BORDERTOPSTYLE},
     {attrBorderWidth,          DISPID_IHTMLSTYLE_BORDERWIDTH},
     {attrColor,                DISPID_IHTMLSTYLE_COLOR},
@@ -1562,15 +1565,52 @@ static HRESULT WINAPI HTMLStyle_get_borderLeftWidth(IHTMLStyle *iface, VARIANT *
 static HRESULT WINAPI HTMLStyle_put_borderStyle(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    static const WCHAR styleWindowInset[]  = {'w','i','n','d','o','w','-','i','n','s','e','t',0};
+    HRESULT hres = S_OK;
+    BSTR pstyle;
+    int i=0;
+    int last = 0;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    while(v[i] && hres == S_OK)
+    {
+        if(v[i] == (WCHAR)' ')
+        {
+            pstyle = SysAllocStringLen(&v[last], (i-last));
+            if( !(is_valid_border_style(pstyle) || strcmpiW(styleWindowInset, pstyle) == 0))
+            {
+                TRACE("1. Invalid style (%s)\n", debugstr_w(pstyle));
+                hres = E_INVALIDARG;
+            }
+            SysFreeString(pstyle);
+            last = i+1;
+        }
+        i++;
+    }
+
+    if(hres == S_OK)
+    {
+        pstyle = SysAllocStringLen(&v[last], i-last);
+        if( !(is_valid_border_style(pstyle) || strcmpiW(styleWindowInset, pstyle) == 0))
+        {
+            TRACE("2. Invalid style (%s)\n", debugstr_w(pstyle));
+            hres = E_INVALIDARG;
+        }
+        SysFreeString(pstyle);
+    }
+
+    if(hres == S_OK)
+        hres = set_nsstyle_attr(This->nsstyle, STYLEID_BORDER_STYLE, v, 0);
+
+    return hres;
 }
 
 static HRESULT WINAPI HTMLStyle_get_borderStyle(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_style_attr(This, STYLEID_BORDER_STYLE, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_borderTopStyle(IHTMLStyle *iface, BSTR v)
