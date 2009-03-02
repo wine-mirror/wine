@@ -1060,9 +1060,11 @@ BOOL TABLE_Exists( MSIDATABASE *db, LPCWSTR name )
     UINT r, table_id = 0, i, count;
     MSITABLE *table = NULL;
 
-    if( !lstrcmpW( name, szTables ) )
-        return TRUE;
-    if( !lstrcmpW( name, szColumns ) )
+    static const WCHAR szStreams[] = {'_','S','t','r','e','a','m','s',0};
+    static const WCHAR szStorages[] = {'_','S','t','o','r','a','g','e','s',0};
+
+    if( !lstrcmpW( name, szTables ) || !lstrcmpW( name, szColumns ) ||
+        !lstrcmpW( name, szStreams ) || !lstrcmpW( name, szStorages ) )
         return TRUE;
 
     r = msi_string2idW( db->strings, name, &table_id );

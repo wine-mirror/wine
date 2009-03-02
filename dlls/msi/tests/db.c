@@ -3965,12 +3965,12 @@ static void test_special_tables(void)
     query = "CREATE TABLE `_Storages` ( "
         "`foo` INT NOT NULL, `bar` INT LOCALIZABLE PRIMARY KEY `foo`)";
     r = run_query(hdb, 0, query);
-    todo_wine ok(r == ERROR_BAD_QUERY_SYNTAX, "created _Streams table\n");
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "created _Streams table\n");
 
     query = "CREATE TABLE `_Streams` ( "
         "`foo` INT NOT NULL, `bar` INT LOCALIZABLE PRIMARY KEY `foo`)";
     r = run_query(hdb, 0, query);
-    todo_wine ok(r == ERROR_BAD_QUERY_SYNTAX, "created _Streams table\n");
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "created _Streams table\n");
 
     query = "CREATE TABLE `_Tables` ( "
         "`foo` INT NOT NULL, `bar` INT LOCALIZABLE PRIMARY KEY `foo`)";
