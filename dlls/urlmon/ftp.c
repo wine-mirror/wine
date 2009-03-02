@@ -23,12 +23,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
 typedef struct {
     const IInternetProtocolVtbl  *lpInternetProtocolVtbl;
+    const IInternetPriorityVtbl  *lpInternetPriorityVtbl;
+
     LONG ref;
 } FtpProtocol;
 
 #define PROTOCOL_THIS(iface) DEFINE_THIS(FtpProtocol, InternetProtocol, iface)
 
 #define PROTOCOL(x)  ((IInternetProtocol*)  &(x)->lpInternetProtocolVtbl)
+#define PRIORITY(x)  ((IInternetPriority*)  &(x)->lpInternetPriorityVtbl)
 
 static HRESULT WINAPI FtpProtocol_QueryInterface(IInternetProtocol *iface, REFIID riid, void **ppv)
 {
@@ -44,6 +47,9 @@ static HRESULT WINAPI FtpProtocol_QueryInterface(IInternetProtocol *iface, REFII
     }else if(IsEqualGUID(&IID_IInternetProtocol, riid)) {
         TRACE("(%p)->(IID_IInternetProtocol %p)\n", This, ppv);
         *ppv = PROTOCOL(This);
+    }else if(IsEqualGUID(&IID_IInternetPriority, riid)) {
+        TRACE("(%p)->(IID_IInternetPriority %p)\n", This, ppv);
+        *ppv = PRIORITY(This);
     }
 
     if(*ppv) {
@@ -173,6 +179,50 @@ static const IInternetProtocolVtbl FtpProtocolVtbl = {
     FtpProtocol_UnlockRequest
 };
 
+#define PRIORITY_THIS(iface) DEFINE_THIS(FtpProtocol, InternetPriority, iface)
+
+static HRESULT WINAPI FtpPriority_QueryInterface(IInternetPriority *iface, REFIID riid, void **ppv)
+{
+    FtpProtocol *This = PRIORITY_THIS(iface);
+    return IInternetProtocol_QueryInterface(PROTOCOL(This), riid, ppv);
+}
+
+static ULONG WINAPI FtpPriority_AddRef(IInternetPriority *iface)
+{
+    FtpProtocol *This = PRIORITY_THIS(iface);
+    return IInternetProtocol_AddRef(PROTOCOL(This));
+}
+
+static ULONG WINAPI FtpPriority_Release(IInternetPriority *iface)
+{
+    FtpProtocol *This = PRIORITY_THIS(iface);
+    return IInternetProtocol_Release(PROTOCOL(This));
+}
+
+static HRESULT WINAPI FtpPriority_SetPriority(IInternetPriority *iface, LONG nPriority)
+{
+    FtpProtocol *This = PRIORITY_THIS(iface);
+    FIXME("(%p)->(%d)\n", This, nPriority);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FtpPriority_GetPriority(IInternetPriority *iface, LONG *pnPriority)
+{
+    FtpProtocol *This = PRIORITY_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pnPriority);
+    return E_NOTIMPL;
+}
+
+#undef PRIORITY_THIS
+
+static const IInternetPriorityVtbl FtpPriorityVtbl = {
+    FtpPriority_QueryInterface,
+    FtpPriority_AddRef,
+    FtpPriority_Release,
+    FtpPriority_SetPriority,
+    FtpPriority_GetPriority
+};
+
 HRESULT FtpProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
 {
     FtpProtocol *ret;
@@ -184,6 +234,7 @@ HRESULT FtpProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
     ret = heap_alloc(sizeof(FtpProtocol));
 
     ret->lpInternetProtocolVtbl = &FtpProtocolVtbl;
+    ret->lpInternetPriorityVtbl = &FtpPriorityVtbl;
     ret->ref = 1;
 
     *ppobj = PROTOCOL(ret);
