@@ -52,8 +52,11 @@ struct d3d10_effect_pass
     struct d3d10_effect_variable *variables;
 };
 
+/* ID3D10EffectTechnique */
 struct d3d10_effect_technique
 {
+    const struct ID3D10EffectTechniqueVtbl *vtbl;
+
     char *name;
     DWORD start;
     DWORD pass_count;

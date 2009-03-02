@@ -30,6 +30,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 #define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
 #define TAG_FX10 MAKE_TAG('F', 'X', '1', '0')
 
+static const struct ID3D10EffectTechniqueVtbl d3d10_effect_technique_vtbl;
+
 static inline void read_dword(const char **ptr, DWORD *d)
 {
     memcpy(d, *ptr, sizeof(*d));
@@ -322,6 +324,9 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
     for (i = 0; i < e->technique_count; ++i)
     {
         struct d3d10_effect_technique *t = &e->techniques[i];
+
+        t->vtbl = &d3d10_effect_technique_vtbl;
+
         hr = parse_fx10_technique_index(t, &ptr);
         if (FAILED(hr)) break;
 
@@ -569,7 +574,20 @@ static struct ID3D10EffectTechnique * STDMETHODCALLTYPE d3d10_effect_GetTechniqu
 static struct ID3D10EffectTechnique * STDMETHODCALLTYPE d3d10_effect_GetTechniqueByName(ID3D10Effect *iface,
         LPCSTR name)
 {
-    FIXME("iface %p, name \"%s\" stub!\n", iface, name);
+    struct d3d10_effect *This = (struct d3d10_effect *)iface;
+    unsigned int i;
+
+    TRACE("iface %p, name \"%s\"\n", iface, name);
+
+    for (i = 0; i < This->technique_count; ++i)
+    {
+        struct d3d10_effect_technique *t = &This->techniques[i];
+        if (!strcmp(t->name, name))
+        {
+            TRACE("Returning technique %p\n", t);
+            return (ID3D10EffectTechnique *)t;
+        }
+    }
 
     return NULL;
 }
@@ -608,4 +626,73 @@ const struct ID3D10EffectVtbl d3d10_effect_vtbl =
     d3d10_effect_GetTechniqueByName,
     d3d10_effect_Optimize,
     d3d10_effect_IsOptimized,
+};
+
+/* ID3D10EffectTechnique methods */
+
+static BOOL STDMETHODCALLTYPE d3d10_effect_technique_IsValid(ID3D10EffectTechnique *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return FALSE;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_effect_technique_GetDesc(ID3D10EffectTechnique *iface,
+        D3D10_TECHNIQUE_DESC *desc)
+{
+    FIXME("iface %p, desc %p stub!\n", iface, desc);
+
+    return E_NOTIMPL;
+}
+
+static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_technique_GetAnnotationByIndex(
+        ID3D10EffectTechnique *iface, UINT index)
+{
+    FIXME("iface %p, index %u stub!\n", iface, index);
+
+    return NULL;
+}
+
+static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_technique_GetAnnotationByName(
+        ID3D10EffectTechnique *iface, LPCSTR name)
+{
+    FIXME("iface %p, name \"%s\" stub!\n", iface, name);
+
+    return NULL;
+}
+
+static struct ID3D10EffectPass * STDMETHODCALLTYPE d3d10_effect_technique_GetPassByIndex(ID3D10EffectTechnique *iface,
+        UINT index)
+{
+    FIXME("iface %p, index %u stub!\n", iface, index);
+
+    return NULL;
+}
+
+static struct ID3D10EffectPass * STDMETHODCALLTYPE d3d10_effect_technique_GetPassByName(ID3D10EffectTechnique *iface,
+        LPCSTR name)
+{
+    FIXME("iface %p, name \"%s\" stub!\n", iface, name);
+
+    return NULL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_effect_technique_ComputeStateBlockMask(ID3D10EffectTechnique *iface,
+        D3D10_STATE_BLOCK_MASK *mask)
+{
+    FIXME("iface %p,mask %p stub!\n", iface, mask);
+
+    return E_NOTIMPL;
+}
+
+static const struct ID3D10EffectTechniqueVtbl d3d10_effect_technique_vtbl =
+{
+    /* ID3D10EffectTechnique methods */
+    d3d10_effect_technique_IsValid,
+    d3d10_effect_technique_GetDesc,
+    d3d10_effect_technique_GetAnnotationByIndex,
+    d3d10_effect_technique_GetAnnotationByName,
+    d3d10_effect_technique_GetPassByIndex,
+    d3d10_effect_technique_GetPassByName,
+    d3d10_effect_technique_ComputeStateBlockMask,
 };
