@@ -87,7 +87,7 @@ static void OnEnterMenuLoop(HWND hWnd)
 
     /* Update the status bar pane sizes */
     nParts = -1;
-    SendMessageW(hStatusBar, SB_SETPARTS, 1, (long)&nParts);
+    SendMessageW(hStatusBar, SB_SETPARTS, 1, (LPARAM)&nParts);
     bInMenuLoop = TRUE;
     SendMessageW(hStatusBar, SB_SETTEXTW, 0, (LPARAM)&empty);
 }
