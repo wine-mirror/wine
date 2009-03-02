@@ -1065,11 +1065,43 @@ static MIB_IPFORWARDTABLE *append_ipforward_row( HANDLE heap, DWORD flags, MIB_I
     return table;
 }
 
-DWORD getRouteTable(PMIB_IPFORWARDTABLE *ppIpForwardTable, HANDLE heap, DWORD flags)
+static int compare_ipforward_rows(const void *a, const void *b)
+{
+    const MIB_IPFORWARDROW *rowA = a;
+    const MIB_IPFORWARDROW *rowB = b;
+    int ret;
+
+    if ((ret = rowA->dwForwardDest - rowB->dwForwardDest) != 0) return ret;
+    if ((ret = rowA->dwForwardProto - rowB->dwForwardProto) != 0) return ret;
+    if ((ret = rowA->dwForwardPolicy - rowB->dwForwardPolicy) != 0) return ret;
+    return rowA->dwForwardNextHop - rowB->dwForwardNextHop;
+}
+
+/******************************************************************
+ *    AllocateAndGetIpForwardTableFromStack (IPHLPAPI.@)
+ *
+ * Get the route table.
+ * Like GetIpForwardTable(), but allocate the returned table from heap.
+ *
+ * PARAMS
+ *  ppIpForwardTable [Out] pointer into which the MIB_IPFORWARDTABLE is
+ *                         allocated and returned.
+ *  bOrder           [In]  whether to sort the table
+ *  heap             [In]  heap from which the table is allocated
+ *  flags            [In]  flags to HeapAlloc
+ *
+ * RETURNS
+ *  ERROR_INVALID_PARAMETER if ppIfTable is NULL, other error codes
+ *  on failure, NO_ERROR on success.
+ */
+DWORD WINAPI AllocateAndGetIpForwardTableFromStack(PMIB_IPFORWARDTABLE *ppIpForwardTable, BOOL bOrder,
+                                                   HANDLE heap, DWORD flags)
 {
     MIB_IPFORWARDTABLE *table;
     MIB_IPFORWARDROW row;
     DWORD ret = NO_ERROR, count = 16;
+
+    TRACE("table %p, bOrder %d, heap %p, flags 0x%08x\n", ppIpForwardTable, bOrder, heap, flags);
 
     if (!ppIpForwardTable) return ERROR_INVALID_PARAMETER;
 
@@ -1225,8 +1257,14 @@ done:
 #endif
 
     if (!table) return ERROR_OUTOFMEMORY;
-    if (!ret) *ppIpForwardTable = table;
+    if (!ret)
+    {
+        if (bOrder && table->dwNumEntries)
+            qsort( table->table, table->dwNumEntries, sizeof(row), compare_ipforward_rows );
+        *ppIpForwardTable = table;
+    }
     else HeapFree( heap, flags, table );
+    TRACE( "returning ret %u table %p\n", ret, table );
     return ret;
 }
 

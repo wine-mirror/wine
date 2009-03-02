@@ -189,63 +189,6 @@ DWORD WINAPI AllocateAndGetIpAddrTableFromStack(PMIB_IPADDRTABLE *ppIpAddrTable,
 }
 
 
-static int IpForwardTableSorter(const void *a, const void *b)
-{
-  int ret;
-
-  if (a && b) {
-   const MIB_IPFORWARDROW* rowA = (const MIB_IPFORWARDROW*)a;
-   const MIB_IPFORWARDROW* rowB = (const MIB_IPFORWARDROW*)b;
-
-    ret = rowA->dwForwardDest - rowB->dwForwardDest;
-    if (ret == 0) {
-      ret = rowA->dwForwardProto - rowB->dwForwardProto;
-      if (ret == 0) {
-        ret = rowA->dwForwardPolicy - rowB->dwForwardPolicy;
-        if (ret == 0)
-          ret = rowA->dwForwardNextHop - rowB->dwForwardNextHop;
-      }
-    }
-  }
-  else
-    ret = 0;
-  return ret;
-}
-
-
-/******************************************************************
- *    AllocateAndGetIpForwardTableFromStack (IPHLPAPI.@)
- *
- * Get the route table.
- * Like GetIpForwardTable(), but allocate the returned table from heap.
- *
- * PARAMS
- *  ppIpForwardTable [Out] pointer into which the MIB_IPFORWARDTABLE is
- *                         allocated and returned.
- *  bOrder           [In]  whether to sort the table
- *  heap             [In]  heap from which the table is allocated
- *  flags            [In]  flags to HeapAlloc
- *
- * RETURNS
- *  ERROR_INVALID_PARAMETER if ppIfTable is NULL, other error codes
- *  on failure, NO_ERROR on success.
- */
-DWORD WINAPI AllocateAndGetIpForwardTableFromStack(PMIB_IPFORWARDTABLE *
- ppIpForwardTable, BOOL bOrder, HANDLE heap, DWORD flags)
-{
-  DWORD ret;
-
-  TRACE("ppIpForwardTable %p, bOrder %d, heap %p, flags 0x%08x\n",
-   ppIpForwardTable, bOrder, heap, flags);
-  ret = getRouteTable(ppIpForwardTable, heap, flags);
-  if (!ret && bOrder)
-    qsort((*ppIpForwardTable)->table, (*ppIpForwardTable)->dwNumEntries,
-     sizeof(MIB_IPFORWARDROW), IpForwardTableSorter);
-  TRACE("returning %d\n", ret);
-  return ret;
-}
-
-
 /******************************************************************
  *    CreateIpForwardEntry (IPHLPAPI.@)
  *
@@ -535,7 +478,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
 
         ret = getIPAddrTable(&ipAddrTable, GetProcessHeap(), 0);
         if (!ret)
-          ret = getRouteTable(&routeTable, GetProcessHeap(), 0);
+          ret = AllocateAndGetIpForwardTableFromStack(&routeTable, FALSE, GetProcessHeap(), 0);
         if (!ret)
           table = getNonLoopbackInterfaceIndexTable();
         if (table) {
@@ -1101,7 +1044,7 @@ DWORD WINAPI GetIpForwardTable(PMIB_IPFORWARDTABLE pIpForwardTable, PULONG pdwSi
 
     if (!pdwSize) return ERROR_INVALID_PARAMETER;
 
-    ret = getRouteTable(&table, GetProcessHeap(), 0);
+    ret = AllocateAndGetIpForwardTableFromStack(&table, bOrder, GetProcessHeap(), 0);
     if (!ret) {
         DWORD size = FIELD_OFFSET( MIB_IPFORWARDTABLE, table[table->dwNumEntries] );
         if (!pIpForwardTable || *pdwSize < size) {
@@ -1111,9 +1054,6 @@ DWORD WINAPI GetIpForwardTable(PMIB_IPFORWARDTABLE pIpForwardTable, PULONG pdwSi
         else {
           *pdwSize = size;
           memcpy(pIpForwardTable, table, size);
-          if (bOrder)
-            qsort(pIpForwardTable->table, pIpForwardTable->dwNumEntries,
-             sizeof(MIB_IPFORWARDROW), IpForwardTableSorter);
         }
         HeapFree(GetProcessHeap(), 0, table);
     }
