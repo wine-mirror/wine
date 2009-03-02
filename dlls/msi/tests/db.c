@@ -1070,8 +1070,8 @@ static MSIHANDLE get_column_info(MSIHANDLE hdb, const char *query, MSICOLINFO ty
     if( r == ERROR_SUCCESS )
     {
         MsiViewGetColumnInfo( hview, type, &rec );
-        MsiViewClose(hview);
     }
+    MsiViewClose(hview);
     MsiCloseHandle(hview);
     return rec;
 }
@@ -1101,9 +1101,8 @@ static UINT get_columns_table_type(MSIHANDLE hdb, const char *table, UINT field)
                 type = MsiRecordGetInteger( rec, 4 );
             MsiCloseHandle( rec );
         }
-
-        MsiViewClose(hview);
     }
+    MsiViewClose(hview);
     MsiCloseHandle(hview);
     return type;
 }
@@ -1325,6 +1324,7 @@ static void test_longstrings(void)
     r = MsiViewFetch(hview, &hrec);
     ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
 
+    MsiViewClose(hview);
     MsiCloseHandle(hview);
 
     r = MsiRecordGetString(hrec, 2, NULL, &len);
@@ -1425,6 +1425,7 @@ static void test_streamtable(void)
     ok( r == ERROR_SUCCESS, "Failed to execute view: %d\n", r);
 
     MsiCloseHandle( rec );
+    MsiViewClose( view );
     MsiCloseHandle( view );
 
     r = MsiDatabaseOpenView( hdb,
@@ -1453,6 +1454,7 @@ static void test_streamtable(void)
     r = MsiViewFetch( view, &rec );
     ok( r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
 
+    MsiViewClose( view );
     MsiCloseHandle( view );
     MsiCloseHandle( hdb );
     DeleteFile(msifile);
@@ -1714,6 +1716,7 @@ static void test_msiimport(void)
     ok(i == -2147483640, "Expected -2147483640, got %d\n", i);
 
     MsiCloseHandle(rec);
+    MsiViewClose(view);
     MsiCloseHandle(view);
 
     query = "SELECT * FROM `TwoPrimary`";
@@ -2042,6 +2045,7 @@ static void test_handle_limit(void)
 
     for (i=0; i<MY_NVIEWS; i++) {
         if (hviews[i] != 0 && hviews[i] != 0xdeadbeeb) {
+            MsiViewClose(hviews[i]);
             r = MsiCloseHandle(hviews[i]);
             if (r != ERROR_SUCCESS)
                 break;
@@ -2529,6 +2533,7 @@ static void test_try_transform(void)
     ok(r == ERROR_NO_MORE_ITEMS, "view fetch succeeded\n");
 
     MsiCloseHandle(hrec);
+    MsiViewClose(hview);
     MsiCloseHandle(hview);
 
     /* check that the property was added */
@@ -3317,6 +3322,7 @@ static void test_temporary_table(void)
     ok( 0 == strcmp("j2", buf), "wrong column type\n");
 
     MsiCloseHandle( rec );
+    MsiViewClose( view );
     MsiCloseHandle( view );
 
     /* query the table data */
@@ -5295,6 +5301,7 @@ static void test_quotes(void)
         ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
     }
 
+    MsiViewClose(hview);
     MsiCloseHandle(hview);
 
     write_file("import.idt", import_dat, (sizeof(import_dat) - 1) * sizeof(char));
@@ -5325,8 +5332,8 @@ static void test_quotes(void)
     r = MsiViewFetch(hview, &hrec);
     ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
 
+    MsiViewClose(hview);
     MsiCloseHandle(hview);
-
     MsiCloseHandle(hdb);
     DeleteFileA(msifile);
 }
@@ -5731,8 +5738,6 @@ static void test_noquotes(void)
 
     MsiViewClose(hview);
     MsiCloseHandle(hview);
-
-
     MsiCloseHandle(hdb);
     DeleteFileA(msifile);
 }
