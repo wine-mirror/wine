@@ -396,7 +396,7 @@ static void test_PathCombineW(void)
         broken(wszString[0] = 'a'), /* Win95 and some W2K */
         "Expected a NULL return\n");
     ok (wszString2[0] == 0 ||
-        broken(wszString[0] = 'a'), /* Win95 and some W2K */
+        broken(wszString2[0] = 'a'), /* Win95 and some W2K */
         "Destination string not empty\n");
 
     HeapFree(GetProcessHeap(), 0, wszString2);
