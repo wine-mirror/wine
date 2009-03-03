@@ -854,9 +854,26 @@ static BOOL STDMETHODCALLTYPE d3d10_effect_pass_IsValid(ID3D10EffectPass *iface)
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *iface, D3D10_PASS_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d10_effect_pass *This = (struct d3d10_effect_pass *)iface;
+    unsigned int i;
 
-    return E_NOTIMPL;
+    FIXME("iface %p, desc %p partial stub!\n", iface, desc);
+
+    memset(desc, 0, sizeof(*desc));
+    desc->Name = This->name;
+    for (i = 0; i < This->variable_count; ++i)
+    {
+        struct d3d10_effect_variable *v = &This->variables[i];
+        if (v->type == D3D10_EVT_VERTEXSHADER)
+        {
+            struct d3d10_effect_shader_variable *s = v->data;
+            desc->pIAInputSignature = (BYTE *)s->input_signature;
+            desc->IAInputSignatureSize = s->input_signature_size;
+            break;
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetVertexShaderDesc(ID3D10EffectPass *iface,
