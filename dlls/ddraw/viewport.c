@@ -829,8 +829,51 @@ IDirect3DViewportImpl_NextLight(IDirect3DViewport3 *iface,
                                 DWORD dwFlags)
 {
     IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
-    FIXME("(%p)->(%p,%p,%08x): stub!\n", This, lpDirect3DLight, lplpDirect3DLight, dwFlags);
-    return D3D_OK;
+    IDirect3DLightImpl *cur_light, *prev_light = NULL;
+
+    TRACE("(%p)->(%p,%p,%08x)\n", This, lpDirect3DLight, lplpDirect3DLight, dwFlags);
+
+    if (!lplpDirect3DLight)
+        return DDERR_INVALIDPARAMS;
+
+    *lplpDirect3DLight = NULL;
+
+    EnterCriticalSection(&ddraw_cs);
+
+    cur_light = This->lights;
+
+    switch (dwFlags) {
+        case D3DNEXT_NEXT:
+            if (!lpDirect3DLight) {
+                LeaveCriticalSection(&ddraw_cs);
+                return DDERR_INVALIDPARAMS;
+            }
+            while (cur_light != NULL) {
+                if (cur_light == (IDirect3DLightImpl *)lpDirect3DLight) {
+                    *lplpDirect3DLight = (IDirect3DLight*)cur_light->next;
+                    break;
+                }
+                cur_light = cur_light->next;
+            }
+            break;
+        case D3DNEXT_HEAD:
+            *lplpDirect3DLight = (IDirect3DLight*)This->lights;
+            break;
+        case D3DNEXT_TAIL:
+            while (cur_light != NULL) {
+                prev_light = cur_light;
+                cur_light = cur_light->next;
+            }
+            *lplpDirect3DLight = (IDirect3DLight*)prev_light;
+            break;
+        default:
+            ERR("Unknown flag %d\n", dwFlags);
+            break;
+    }
+
+    LeaveCriticalSection(&ddraw_cs);
+
+    return *lplpDirect3DLight ? D3D_OK : DDERR_INVALIDPARAMS;
 }
 
 /*****************************************************************************
