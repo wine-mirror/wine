@@ -101,7 +101,17 @@ static void test_bitmap_info(HBITMAP hbm, INT expected_depth, const BITMAPINFOHE
     memset(buf, 0xAA, sizeof(buf));
     ret = GetBitmapBits(hbm, sizeof(buf), buf);
     ok(ret == bm.bmWidthBytes * bm.bmHeight, "%d != %d\n", ret, bm.bmWidthBytes * bm.bmHeight);
-    ok(!memcmp(buf, buf_cmp, sizeof(buf)), "buffers do not match\n");
+    ok(!memcmp(buf, buf_cmp, sizeof(buf)), "buffers do not match, depth %d\n", bmih->biBitCount);
+    if(memcmp(buf, buf_cmp, sizeof(buf)))
+    {
+        int i;
+        for(i = 0; i < sizeof(buf); i++)
+            if(buf[i] != buf_cmp[i])
+            {
+                trace("first mismatched byte %d: got %02x expected %02x\n", i, buf[i], buf_cmp[i]);
+                break;
+            }
+    }
 
     /* test various buffer sizes for GetObject */
     ret = GetObject(hbm, sizeof(*bma) * 2, bma);
@@ -427,7 +437,7 @@ static void test_dib_bits_access( HBITMAP hdib, void *bits )
     pbmi->bmiHeader.biCompression = BI_RGB;
 
     ret = SetDIBits( hdc, hdib, 0, 16, data, pbmi, DIB_RGB_COLORS );
-    ok( ret == 16, "SetDIBits failed\n" );
+    ok(ret == 16, "SetDIBits failed: expected 16 got %d\n", ret);
 
     ok(VirtualQuery(bits, &info, sizeof(info)) == sizeof(info),
         "VirtualQuery failed\n");
@@ -2185,7 +2195,7 @@ static void test_get16dibits(void)
     info->bmiHeader.biCompression = BI_RGB;
 
     ret = GetDIBits(screen_dc, hbmp, 0, 0, NULL, info, 0);
-    ok(ret != 0, "GetDIBits failed\n");
+    ok(ret != 0, "GetDIBits failed got %d\n", ret);
 
     for (p = ((BYTE *) info) + sizeof(info->bmiHeader); (p - ((BYTE *) info)) < info_len; p++)
         if (*p != '!')
