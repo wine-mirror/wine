@@ -1954,7 +1954,7 @@ static HRESULT WINAPI fnIMLangFontLink_CodePageToCodePages(
 
     TRACE("(%p) Seeking %u\n",This, uCodePage);
 
-    rc = TranslateCharsetInfo((DWORD*)uCodePage, &cs, TCI_SRCCODEPAGE);
+    rc = TranslateCharsetInfo((DWORD*)(DWORD_PTR)uCodePage, &cs, TCI_SRCCODEPAGE);
 
     if (rc)
     {
@@ -1985,8 +1985,9 @@ static HRESULT WINAPI fnIMLangFontLink_CodePagesToCodePage(
 
     *puCodePage = 0x00000000;
 
-    rc = TranslateCharsetInfo((DWORD*)uDefaultCodePage, &cs, TCI_SRCCODEPAGE);
-  
+    rc = TranslateCharsetInfo((DWORD*)(DWORD_PTR)uDefaultCodePage, &cs,
+                              TCI_SRCCODEPAGE);
+
     if (rc && (dwCodePages & cs.fs.fsCsb[0]))
     {
         TRACE("Found Default Codepage\n");
@@ -2592,7 +2593,8 @@ static void fill_cp_info(const struct mlang_data *ml_data, UINT index, MIMECPINF
 {
     CHARSETINFO csi;
 
-    if (TranslateCharsetInfo((DWORD *)ml_data->family_codepage, &csi, TCI_SRCCODEPAGE))
+    if (TranslateCharsetInfo((DWORD*)(DWORD_PTR)ml_data->family_codepage, &csi,
+                             TCI_SRCCODEPAGE))
         mime_cp_info->bGDICharset = csi.ciCharset;
     else
         mime_cp_info->bGDICharset = DEFAULT_CHARSET;
