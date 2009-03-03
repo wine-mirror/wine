@@ -410,15 +410,12 @@ static HRESULT fx10_chunk_handler(const char *data, void *ctx)
     switch(tag)
     {
         case TAG_FX10:
-            parse_fx10(e, ptr, chunk_size);
-            break;
+            return parse_fx10(e, ptr, chunk_size);
 
         default:
             FIXME("Unhandled chunk %s\n", tag_str);
-            break;
+            return S_OK;
     }
-
-    return S_OK;
 }
 
 HRESULT d3d10_effect_parse(struct d3d10_effect *This, const void *data, SIZE_T data_size)
