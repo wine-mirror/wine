@@ -271,10 +271,10 @@ $(SUBDIRS:%=%/__install-dev__): dummy
 $(SUBDIRS:%=%/__uninstall__): dummy
 	@cd `dirname $@` && $(MAKE) uninstall
 
-install:: $(INSTALLSUBDIRS:%=%/__install__)
-install-lib:: $(INSTALLSUBDIRS:%=%/__install-lib__)
-install-dev:: $(INSTALLSUBDIRS:%=%/__install-dev__)
-uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)
+install:: $(INSTALLSUBDIRS:%=%/__install__) dummy
+install-lib:: $(INSTALLSUBDIRS:%=%/__install-lib__) dummy
+install-dev:: $(INSTALLSUBDIRS:%=%/__install-dev__) dummy
+uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__) dummy
 
 $(INSTALLDIRS):
 	$(MKINSTALLDIRS) $@
@@ -294,11 +294,11 @@ $(TESTSUBDIRS:%=%/__crosstest__): dummy
 $(TESTSUBDIRS:%=%/__testclean__): dummy
 	@cd `dirname $@` && $(MAKE) testclean
 
-check test:: $(TESTSUBDIRS:%=%/__test__)
+check test:: $(TESTSUBDIRS:%=%/__test__) dummy
 
-crosstest:: $(TESTSUBDIRS:%=%/__crosstest__)
+crosstest:: $(TESTSUBDIRS:%=%/__crosstest__) dummy
 
-testclean:: $(TESTSUBDIRS:%=%/__testclean__)
+testclean:: $(TESTSUBDIRS:%=%/__testclean__) dummy
 
 .PHONY: check test testclean crosstest $(TESTSUBDIRS:%=%/__test__) $(TESTSUBDIRS:%=%/__crosstest__) $(TESTSUBDIRS:%=%/__testclean__) 
 

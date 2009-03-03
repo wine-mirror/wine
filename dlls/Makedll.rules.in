@@ -62,9 +62,9 @@ $(SUBDIRS): implib
 
 # Rules for testing
 
-check test:: $(SUBDIRS:%=%/__test__)
+check test:: $(SUBDIRS:%=%/__test__) dummy
 
-crosstest:: $(SUBDIRS:%=%/__crosstest__)
+crosstest:: $(SUBDIRS:%=%/__crosstest__) dummy
 
 # Rules for auto documentation
 
@@ -97,7 +97,7 @@ $(IMPLIB_SRCS:%=_install_static_implib_/%): install_static_implib_$(IMPLIBEXT)
 install install-lib:: $(MODULE)$(DLLEXT) $(DESTDIR)$(dlldir) dummy
 	$(INSTALL_PROGRAM) $(MODULE)$(DLLEXT) $(DESTDIR)$(dlldir)/$(MODULE)$(DLLEXT)
 
-install install-dev:: $(IMPORTLIB:%=_install_/%) $(IMPLIB_SRCS:%=_install_static_implib_/%)
+install install-dev:: $(IMPORTLIB:%=_install_/%) $(IMPLIB_SRCS:%=_install_static_implib_/%) dummy
 
 uninstall::
 	-cd $(DESTDIR)$(dlldir) && $(RM) $(MODULE)$(DLLEXT) $(IMPORTLIBFILE) $(STATICIMPLIB)

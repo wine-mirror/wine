@@ -31,7 +31,7 @@ $(MODULE): $(OBJS) $(RCOBJS) Makefile.in
 
 # Rules for testing
 
-check test:: $(SUBDIRS:%=%/__test__)
+check test:: $(SUBDIRS:%=%/__test__) dummy
 
 $(TESTRESULTS): $(MODULE)$(DLLEXT)
 
