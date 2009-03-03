@@ -2445,6 +2445,10 @@ static void test_current_style(IHTMLCurrentStyle *current_style)
     ok(!strcmp_wa(str, "repeat"), "get_backgroundRepeat returned %s\n", dbgstr_w(str));
     SysFreeString(str);
 
+    hres = IHTMLCurrentStyle_get_borderColor(current_style, &str);
+    ok(hres == S_OK, "get_borderColor failed: %08x\n", hres);
+    SysFreeString(str);
+
     hres = IHTMLCurrentStyle_get_fontWeight(current_style, &v);
     ok(hres == S_OK, "get_fontWeight failed: %08x\n", hres);
     ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
