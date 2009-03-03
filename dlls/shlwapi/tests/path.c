@@ -393,10 +393,10 @@ static void test_PathCombineW(void)
     wszString2[0] = 'a';
     wszString = pPathCombineW(wszString2, NULL, NULL);
     ok (wszString == NULL ||
-        broken(wszString[0] = 'a'), /* Win95 and some W2K */
+        broken(wszString[0] == 'a'), /* Win95 and some W2K */
         "Expected a NULL return\n");
     ok (wszString2[0] == 0 ||
-        broken(wszString2[0] = 'a'), /* Win95 and some W2K */
+        broken(wszString2[0] == 'a'), /* Win95 and some W2K */
         "Destination string not empty\n");
 
     HeapFree(GetProcessHeap(), 0, wszString2);
@@ -411,7 +411,7 @@ static void test_PathCombineW(void)
     wszString = pPathCombineW(wbuf, wstr1, wstr2);
     ok(wszString == NULL, "Expected a NULL return\n");
     ok(wbuf[0] == 0 ||
-       broken(wbuf[0] = 0xbfbf), /* Win95 and some W2K */
+       broken(wbuf[0] == 0xbfbf), /* Win95 and some W2K */
        "Buffer contains data\n");
 
     /* PathCombineW can be used in place */
