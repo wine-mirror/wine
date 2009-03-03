@@ -549,6 +549,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
         ERR("could not make stream\n");
         GdipFree(*bitmap);
         GdipFree(buff);
+        *bitmap = NULL;
         return GenericError;
     }
 
@@ -558,6 +559,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
         IStream_Release(stream);
         GdipFree(*bitmap);
         GdipFree(buff);
+        *bitmap = NULL;
         return GenericError;
     }
 
