@@ -45,8 +45,6 @@ static unsigned int numentries = 0;
 static int list_need_update = 1;
 static int oldsel = -1;
 static WCHAR *sFilter;
-static WCHAR sAppName[MAX_STRING_LEN];
-static WCHAR sUninstallFailed[MAX_STRING_LEN];
 
 static int FetchUninstallInformation(void);
 static void UninstallProgram(void);
@@ -123,7 +121,6 @@ static void RemoveSpecificProgram(WCHAR *nameW)
 int wmain(int argc, WCHAR *argv[])
 {
     LPCWSTR token = NULL;
-    HINSTANCE hInst = GetModuleHandleW(0);
     static const WCHAR listW[] = { '-','-','l','i','s','t',0 };
     static const WCHAR removeW[] = { '-','-','r','e','m','o','v','e',0 };
     int i = 1;
@@ -155,10 +152,6 @@ int wmain(int argc, WCHAR *argv[])
             return 1;
         }
     }
-
-    /* Load MessageBox's strings */
-    LoadStringW(hInst, IDS_APPNAME, sAppName, sizeof(sAppName)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_UNINSTALLFAILED, sUninstallFailed, sizeof(sUninstallFailed)/sizeof(WCHAR));
 
     /* Start the GUI control panel */
     Control_RunDLL(GetDesktopWindow(), 0, "appwiz.cpl", SW_SHOW);
@@ -267,6 +260,12 @@ static void UninstallProgram(void)
         }
         else
         {
+            WCHAR sAppName[MAX_STRING_LEN];
+            WCHAR sUninstallFailed[MAX_STRING_LEN];
+            HINSTANCE hInst = GetModuleHandleW(0);
+
+            LoadStringW(hInst, IDS_APPNAME, sAppName, sizeof(sAppName)/sizeof(WCHAR));
+            LoadStringW(hInst, IDS_UNINSTALLFAILED, sUninstallFailed, sizeof(sUninstallFailed)/sizeof(WCHAR));
             wsprintfW(errormsg, sUninstallFailed, entries[i].command);
             if(MessageBoxW(0, errormsg, sAppName, MB_YESNO | MB_ICONQUESTION)==IDYES)
             {
