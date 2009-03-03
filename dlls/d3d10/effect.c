@@ -656,9 +656,16 @@ static BOOL STDMETHODCALLTYPE d3d10_effect_technique_IsValid(ID3D10EffectTechniq
 static HRESULT STDMETHODCALLTYPE d3d10_effect_technique_GetDesc(ID3D10EffectTechnique *iface,
         D3D10_TECHNIQUE_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d10_effect_technique *This = (struct d3d10_effect_technique *)iface;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p\n", iface, desc);
+
+    desc->Name = This->name;
+    desc->Passes = This->pass_count;
+    WARN("Annotations not implemented\n");
+    desc->Annotations = 0;
+
+    return S_OK;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_technique_GetAnnotationByIndex(
