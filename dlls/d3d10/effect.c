@@ -60,7 +60,7 @@ static inline void read_tag(const char **ptr, DWORD *t, char t_str[5])
 }
 
 static HRESULT parse_dxbc(const char *data, SIZE_T data_size,
-        HRESULT (*chunk_handler)(const char *data, void *ctx), void *ctx)
+        HRESULT (*chunk_handler)(const char *data, DWORD data_size, DWORD tag, void *ctx), void *ctx)
 {
     const char *ptr = data;
     HRESULT hr = S_OK;
@@ -92,12 +92,19 @@ static HRESULT parse_dxbc(const char *data, SIZE_T data_size,
 
     for (i = 0; i < chunk_count; ++i)
     {
+        DWORD chunk_tag, chunk_size;
+        const char *chunk_ptr;
         DWORD chunk_offset;
 
         read_dword(&ptr, &chunk_offset);
         TRACE("chunk %u at offset %#x\n", i, chunk_offset);
 
-        hr = chunk_handler(data + chunk_offset, ctx);
+        chunk_ptr = data + chunk_offset;
+
+        read_dword(&chunk_ptr, &chunk_tag);
+        read_dword(&chunk_ptr, &chunk_size);
+
+        hr = chunk_handler(chunk_ptr, chunk_size, chunk_tag, ctx);
         if (FAILED(hr)) break;
     }
 
@@ -170,18 +177,15 @@ static HRESULT parse_fx10_technique_index(struct d3d10_effect_technique *t, cons
     return hr;
 }
 
-static HRESULT shader_chunk_handler(const char *data, void *ctx)
+static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
 {
-    const char *ptr = data;
-    DWORD chunk_size;
     char tag_str[5];
-    DWORD tag;
 
-    read_tag(&ptr, &tag, tag_str);
+    memcpy(tag_str, &tag, 4);
+    tag_str[4] = '\0';
     TRACE("tag: %s\n", tag_str);
 
-    read_dword(&ptr, &chunk_size);
-    TRACE("chunk size: %#x\n", chunk_size);
+    TRACE("chunk size: %#x\n", data_size);
 
     switch(tag)
     {
@@ -393,24 +397,21 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
     return parse_fx10_body(e, ptr, data_size - (ptr - data));
 }
 
-static HRESULT fx10_chunk_handler(const char *data, void *ctx)
+static HRESULT fx10_chunk_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
 {
     struct d3d10_effect *e = ctx;
-    const char *ptr = data;
-    DWORD chunk_size;
     char tag_str[5];
-    DWORD tag;
 
-    read_tag(&ptr, &tag, tag_str);
+    memcpy(tag_str, &tag, 4);
+    tag_str[4] = '\0';
     TRACE("tag: %s\n", tag_str);
 
-    read_dword(&ptr, &chunk_size);
-    TRACE("chunk size: %#x\n", chunk_size);
+    TRACE("chunk size: %#x\n", data_size);
 
     switch(tag)
     {
         case TAG_FX10:
-            return parse_fx10(e, ptr, chunk_size);
+            return parse_fx10(e, data, data_size);
 
         default:
             FIXME("Unhandled chunk %s\n", tag_str);
