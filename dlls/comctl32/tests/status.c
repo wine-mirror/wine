@@ -258,6 +258,8 @@ static void test_status_control(void)
     RECT rc;
     CHAR charArray[20];
     HICON hIcon;
+    char ch;
+    char chstr[10] = "Inval id";
 
     hWndStatus = create_status_control(WS_VISIBLE, 0);
 
@@ -307,7 +309,7 @@ static void test_status_control(void)
     /* Test resetting text with different characters */
     r = SendMessage(hWndStatus, SB_SETTEXT, 0, (LPARAM)"First@Again");
     expect(TRUE,r);
-    r = SendMessage(hWndStatus, SB_SETTEXT, 1, (LPARAM)"InvalidChars\\7\7");
+    r = SendMessage(hWndStatus, SB_SETTEXT, 1, (LPARAM)"Invalid\tChars\\7\7");
         expect(TRUE,r);
     r = SendMessage(hWndStatus, SB_SETTEXT, 2, (LPARAM)"InvalidChars\\n\n");
         expect(TRUE,r);
@@ -318,19 +320,27 @@ static void test_status_control(void)
     expect(11,LOWORD(r));
     expect(0,HIWORD(r));
     r = SendMessage(hWndStatus, SB_GETTEXT, 1, (LPARAM) charArray);
-    todo_wine
-    {
-        ok(strcmp(charArray,"InvalidChars\\7 ") == 0, "Expected InvalidChars\\7 , got %s\n", charArray);
-    }
-    expect(15,LOWORD(r));
+    ok(strcmp(charArray,"Invalid\tChars\\7 ") == 0, "Expected Invalid\tChars\\7 , got %s\n", charArray);
+
+    expect(16,LOWORD(r));
     expect(0,HIWORD(r));
     r = SendMessage(hWndStatus, SB_GETTEXT, 2, (LPARAM) charArray);
-    todo_wine
-    {
-        ok(strcmp(charArray,"InvalidChars\\n ") == 0, "Expected InvalidChars\\n , got %s\n", charArray);
-    }
+    ok(strcmp(charArray,"InvalidChars\\n ") == 0, "Expected InvalidChars\\n , got %s\n", charArray);
+
     expect(15,LOWORD(r));
     expect(0,HIWORD(r));
+
+    /* test more nonprintable chars */
+    for(ch = 0x00; ch < 0x7F; ch++) {
+        chstr[5] = ch;
+        r = SendMessage(hWndStatus, SB_SETTEXT, 0, (LPARAM)chstr);
+        expect(TRUE,r);
+        r = SendMessage(hWndStatus, SB_GETTEXT, 0, (LPARAM)charArray);
+        /* substitution with single space */
+        if (ch > 0x00 && ch < 0x20 && ch != '\t')
+            chstr[5] = ' ';
+        ok(strcmp(charArray, chstr) == 0, "Expected %s, got %s\n", chstr, charArray);
+    }
 
     /* Set background color */
     r = SendMessage(hWndStatus, SB_SETBKCOLOR , 0, RGB(255,0,0));
