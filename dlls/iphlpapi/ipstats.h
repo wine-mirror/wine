@@ -32,26 +32,6 @@
  */
 DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry);
 
-/* Gets ICMP statistics into stats.  Returns ERROR_INVALID_PARAMETER if stats is
- * NULL, NO_ERROR otherwise.
- */
-DWORD getICMPStats(MIB_ICMP *stats);
-
-/* Gets IP statistics into stats.  Returns ERROR_INVALID_PARAMETER if stats is
- * NULL, NO_ERROR otherwise.
- */
-DWORD getIPStats(PMIB_IPSTATS stats);
-
-/* Gets TCP statistics into stats.  Returns ERROR_INVALID_PARAMETER if stats is
- * NULL, NO_ERROR otherwise.
- */
-DWORD getTCPStats(MIB_TCPSTATS *stats);
-
-/* Gets UDP statistics into stats.  Returns ERROR_INVALID_PARAMETER if stats is
- * NULL, NO_ERROR otherwise.
- */
-DWORD getUDPStats(MIB_UDPSTATS *stats);
-
 DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable, BOOL bOrder, HANDLE heap, DWORD flags);
 DWORD WINAPI AllocateAndGetTcpTableFromStack(PMIB_TCPTABLE *ppTcpTable, BOOL bOrder, HANDLE heap, DWORD flags);
 DWORD WINAPI AllocateAndGetIpNetTableFromStack(PMIB_IPNETTABLE *ppIpNetTable, BOOL bOrder, HANDLE heap, DWORD flags);

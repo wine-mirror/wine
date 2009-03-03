@@ -733,29 +733,6 @@ DWORD WINAPI GetFriendlyIfIndex(DWORD IfIndex)
 
 
 /******************************************************************
- *    GetIcmpStatistics (IPHLPAPI.@)
- *
- * Get the ICMP statistics for the local computer.
- *
- * PARAMS
- *  pStats [Out] buffer for ICMP statistics
- *
- * RETURNS
- *  Success: NO_ERROR
- *  Failure: error code from winerror.h
- */
-DWORD WINAPI GetIcmpStatistics(PMIB_ICMP pStats)
-{
-  DWORD ret;
-
-  TRACE("pStats %p\n", pStats);
-  ret = getICMPStats(pStats);
-  TRACE("returning %d\n", ret);
-  return ret;
-}
-
-
-/******************************************************************
  *    GetIfEntry (IPHLPAPI.@)
  *
  * Get information about an interface.
@@ -1110,29 +1087,6 @@ DWORD WINAPI GetIpNetTable(PMIB_IPNETTABLE pIpNetTable, PULONG pdwSize, BOOL bOr
 
 
 /******************************************************************
- *    GetIpStatistics (IPHLPAPI.@)
- *
- * Get the IP statistics for the local computer.
- *
- * PARAMS
- *  pStats [Out] buffer for IP statistics
- *
- * RETURNS
- *  Success: NO_ERROR
- *  Failure: error code from winerror.h
- */
-DWORD WINAPI GetIpStatistics(PMIB_IPSTATS pStats)
-{
-  DWORD ret;
-
-  TRACE("pStats %p\n", pStats);
-  ret = getIPStats(pStats);
-  TRACE("returning %d\n", ret);
-  return ret;
-}
-
-
-/******************************************************************
  *    GetNetworkParams (IPHLPAPI.@)
  *
  * Get the network parameters for the local computer.
@@ -1303,29 +1257,6 @@ BOOL WINAPI GetRTTAndHopCount(IPAddr DestIpAddress, PULONG HopCount, ULONG MaxHo
 
 
 /******************************************************************
- *    GetTcpStatistics (IPHLPAPI.@)
- *
- * Get the TCP statistics for the local computer.
- *
- * PARAMS
- *  pStats [Out] buffer for TCP statistics
- *
- * RETURNS
- *  Success: NO_ERROR
- *  Failure: error code from winerror.h
- */
-DWORD WINAPI GetTcpStatistics(PMIB_TCPSTATS pStats)
-{
-  DWORD ret;
-
-  TRACE("pStats %p\n", pStats);
-  ret = getTCPStats(pStats);
-  TRACE("returning %d\n", ret);
-  return ret;
-}
-
-
-/******************************************************************
  *    GetTcpTable (IPHLPAPI.@)
  *
  * Get the table of active TCP connections.
@@ -1371,29 +1302,6 @@ DWORD WINAPI GetTcpTable(PMIB_TCPTABLE pTcpTable, PDWORD pdwSize, BOOL bOrder)
     }
     TRACE("returning %d\n", ret);
     return ret;
-}
-
-
-/******************************************************************
- *    GetUdpStatistics (IPHLPAPI.@)
- *
- * Get the UDP statistics for the local computer.
- *
- * PARAMS
- *  pStats [Out] buffer for UDP statistics
- *
- * RETURNS
- *  Success: NO_ERROR
- *  Failure: error code from winerror.h
- */
-DWORD WINAPI GetUdpStatistics(PMIB_UDPSTATS pStats)
-{
-  DWORD ret;
-
-  TRACE("pStats %p\n", pStats);
-  ret = getUDPStats(pStats);
-  TRACE("returning %d\n", ret);
-  return ret;
 }
 
 

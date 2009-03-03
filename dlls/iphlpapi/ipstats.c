@@ -284,7 +284,20 @@ DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
 #endif
 }
 
-DWORD getICMPStats(MIB_ICMP *stats)
+
+/******************************************************************
+ *    GetIcmpStatistics (IPHLPAPI.@)
+ *
+ * Get the ICMP statistics for the local computer.
+ *
+ * PARAMS
+ *  stats [Out] buffer for ICMP statistics
+ *
+ * RETURNS
+ *  Success: NO_ERROR
+ *  Failure: error code from winerror.h
+ */
+DWORD WINAPI GetIcmpStatistics(PMIB_ICMP stats)
 {
 #if defined(HAVE_SYS_SYSCTL_H) && defined(ICMPCTL_STATS)
   int mib[] = {CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_STATS};
@@ -481,7 +494,20 @@ DWORD getICMPStats(MIB_ICMP *stats)
 #endif
 }
 
-DWORD getIPStats(PMIB_IPSTATS stats)
+
+/******************************************************************
+ *    GetIpStatistics (IPHLPAPI.@)
+ *
+ * Get the IP statistics for the local computer.
+ *
+ * PARAMS
+ *  stats [Out] buffer for IP statistics
+ *
+ * RETURNS
+ *  Success: NO_ERROR
+ *  Failure: error code from winerror.h
+ */
+DWORD WINAPI GetIpStatistics(PMIB_IPSTATS stats)
 {
 #if defined(HAVE_SYS_SYSCTL_H) && defined(IPCTL_STATS)
   int mib[] = {CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS};
@@ -655,7 +681,20 @@ DWORD getIPStats(PMIB_IPSTATS stats)
 #endif
 }
 
-DWORD getTCPStats(MIB_TCPSTATS *stats)
+
+/******************************************************************
+ *    GetTcpStatistics (IPHLPAPI.@)
+ *
+ * Get the TCP statistics for the local computer.
+ *
+ * PARAMS
+ *  stats [Out] buffer for TCP statistics
+ *
+ * RETURNS
+ *  Success: NO_ERROR
+ *  Failure: error code from winerror.h
+ */
+DWORD WINAPI GetTcpStatistics(PMIB_TCPSTATS stats)
 {
 #if defined(HAVE_SYS_SYSCTL_H) && defined(UDPCTL_STATS)
 #ifndef TCPTV_MIN  /* got removed in Mac OS X for some reason */
@@ -797,7 +836,20 @@ DWORD getTCPStats(MIB_TCPSTATS *stats)
 #endif
 }
 
-DWORD getUDPStats(MIB_UDPSTATS *stats)
+
+/******************************************************************
+ *    GetUdpStatistics (IPHLPAPI.@)
+ *
+ * Get the UDP statistics for the local computer.
+ *
+ * PARAMS
+ *  stats [Out] buffer for UDP statistics
+ *
+ * RETURNS
+ *  Success: NO_ERROR
+ *  Failure: error code from winerror.h
+ */
+DWORD WINAPI GetUdpStatistics(PMIB_UDPSTATS stats)
 {
 #if defined(HAVE_SYS_SYSCTL_H) && defined(UDPCTL_STATS)
   int mib[] = {CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_STATS};
