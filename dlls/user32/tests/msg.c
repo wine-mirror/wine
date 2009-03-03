@@ -180,6 +180,7 @@ static const struct message WmSWP_ShowOverlappedSeq[] = {
     { WM_NCPAINT, sent|wparam|optional, 1 },
     { WM_ERASEBKGND, sent|optional },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_SYNCPAINT, sent|optional },
     { WM_PAINT, sent|optional },
     { WM_NCPAINT, sent|beginpaint|optional },
     { WM_GETTEXT, sent|defwinproc|optional },
@@ -405,9 +406,9 @@ static const struct message WmSWP_FrameChangedDeferErase[] = {
 static const struct message WmSWP_FrameChanged_noclip[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam|parent, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_FRAMECHANGED },
     { WM_NCCALCSIZE, sent|wparam|parent, 1 },
-    { WM_NCPAINT, sent|parent }, /* wparam != 1 */
+    { WM_NCPAINT, sent|parent|optional }, /* wparam != 1 */
     { WM_GETTEXT, sent|parent|defwinproc|optional },
-    { WM_ERASEBKGND, sent|parent|optional }, /* FIXME: remove optional once Wine is fixed */
+    { WM_ERASEBKGND, sent|parent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam|parent, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
@@ -449,6 +450,7 @@ static const struct message WmShowOverlappedSeq[] = {
     { WM_GETTEXT, sent|optional },
     { WM_NCPAINT, sent|optional },
     { WM_ERASEBKGND, sent|optional },
+    { WM_SYNCPAINT, sent|optional },
 #if 0 /* CreateWindow/ShowWindow(SW_SHOW) also generates WM_SIZE/WM_MOVE
        * messages. Does that mean that CreateWindow doesn't set initial
        * window dimensions for overlapped windows?
@@ -495,6 +497,7 @@ static const struct message WmShowMaxOverlappedSeq[] = {
     { WM_ERASEBKGND, sent|optional },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_SYNCPAINT, sent|optional },
     { WM_PAINT, sent|optional },
     { WM_NCPAINT, sent|beginpaint|optional },
     { WM_ERASEBKGND, sent|beginpaint|optional },
@@ -1269,6 +1272,8 @@ static const struct message WmEndCustomDialogSeq[] = {
     { WM_ACTIVATE, sent|wparam, 0 },
     { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_NOACTIVATE|SWP_NOREDRAW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_GETTEXT, sent|optional|defwinproc },
     { HCBT_SETFOCUS, hook },
     { WM_KILLFOCUS, sent },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
@@ -1346,7 +1351,7 @@ static const struct message WmModalDialogSeq[] = {
     { WM_CTLCOLORDLG, sent|optional },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { WM_PAINT, sent|optional },
-    { WM_CTLCOLORBTN, sent },
+    { WM_CTLCOLORBTN, sent|optional },
     { WM_ENTERIDLE, sent|parent|optional },
     { WM_ENTERIDLE, sent|parent|optional },
     { WM_ENTERIDLE, sent|parent|optional },
@@ -1815,6 +1820,7 @@ static void add_message_(int line, const struct recvd_message *msg)
                           msg->descr, msg->hwnd, dis->CtlType, dis->CtlID,
                           dis->itemID, dis->itemAction, dis->itemState);
 
+                di.u.lp = 0;
                 di.u.item.type = dis->CtlType;
                 di.u.item.ctl_id = dis->CtlID;
                 di.u.item.item_id = dis->itemID;
@@ -3665,7 +3671,7 @@ static void test_mdi_messages(void)
      */
     active_child = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, (LPARAM)&zoomed);
     ok(active_child == mdi_child || /* win2k */
-       !active_child, /* win9x */
+       !active_child || active_child == mdi_child2, /* win9x */
        "wrong active MDI child %p\n", active_child);
     flush_sequence();
 
@@ -4484,8 +4490,6 @@ static void test_messages(void)
     flush_events();
     ok_sequence(WmOptionalPaint, "ShowWindow(SW_SHOW):overlapped already visible", FALSE);
 
-    ok(GetActiveWindow() == hwnd, "window should be active\n");
-    ok(GetFocus() == hwnd, "window should have input focus\n");
     SetWindowPos(hwnd, 0,0,0,0,0, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE);
     ok_sequence(WmSWP_HideOverlappedSeq, "SetWindowPos:SWP_HIDEWINDOW:overlapped", FALSE);
     ok(!IsWindowVisible(hwnd), "window should not be visible at this point\n");
@@ -5622,7 +5626,7 @@ static const struct message WmInvalidateErasePaint[] = {
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|wparam|beginpaint, 1 },
     { WM_GETTEXT, sent|beginpaint|defwinproc|optional },
-    { WM_ERASEBKGND, sent|beginpaint },
+    { WM_ERASEBKGND, sent|beginpaint|optional },
     { 0 }
 };
 
@@ -5693,7 +5697,7 @@ static const struct message WmChildPaintNc[] = {
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|beginpaint },
     { WM_GETTEXT, sent|beginpaint|defwinproc|optional },
-    { WM_ERASEBKGND, sent|beginpaint },
+    { WM_ERASEBKGND, sent|beginpaint|optional },
     { 0 }
 };
 
@@ -8201,6 +8205,10 @@ static const struct message ScrollWindowPaint1[] = {
     { WM_PAINT, sent },
     { WM_ERASEBKGND, sent|beginpaint },
     { WM_GETTEXTLENGTH, sent|optional },
+    { WM_PAINT, sent|optional },
+    { WM_NCPAINT, sent|optional },
+    { WM_GETTEXT, sent|optional },
+    { WM_ERASEBKGND, sent|optional },
     { 0 }
 };
 
@@ -9886,6 +9894,7 @@ static const struct message WmShowNoActivate_2[] = {
     { HCBT_SETFOCUS, hook|optional },
     { HCBT_ACTIVATE, hook|optional }, /* win2003 doesn't send it */
     { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE }, /* win2003 doesn't send it */
+    { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { HCBT_SETFOCUS, hook|optional }, /* win2003 doesn't send it */
     { 0 }
 };
@@ -10434,6 +10443,7 @@ static const struct message SetActiveWindowSeq0[] =
     { WM_ACTIVATE, sent|wparam|optional, 1 },
     { HCBT_SETFOCUS, hook|optional },
     { WM_KILLFOCUS, sent|defwinproc },
+    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
     { WM_IME_SETCONTEXT, sent|defwinproc|optional },
     { WM_IME_SETCONTEXT, sent|defwinproc|optional },
     { WM_IME_SETCONTEXT, sent|defwinproc|optional },
