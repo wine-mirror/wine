@@ -7775,6 +7775,12 @@ static void test_appsearch_reglocator(void)
     ok(!lstrcmpA(prop, "#-42"), "Expected \"#-42\", got \"%s\"\n", prop);
 
     size = ExpandEnvironmentStringsA("%PATH%", NULL, 0);
+    if (size == 0 && GetLastError() == ERROR_INVALID_PARAMETER)
+    {
+        /* Workaround for Win95 */
+        CHAR tempbuf[1];
+        size = ExpandEnvironmentStringsA("%PATH%", tempbuf, 0);
+    }
     pathvar = HeapAlloc(GetProcessHeap(), 0, size);
     ExpandEnvironmentStringsA("%PATH%", pathvar, size);
 
