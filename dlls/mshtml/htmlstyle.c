@@ -47,6 +47,8 @@ static const WCHAR attrBorder[] =
     {'b','o','r','d','e','r',0};
 static const WCHAR attrBorderBottomStyle[] =
     {'b','o','r','d','e','r','-','b','o','t','t','o','m','-','s','t','y','l','e',0};
+static const WCHAR attrBorderColor[] =
+    {'b','o','r','d','e','r','-','c','o','l','o','r',0};
 static const WCHAR attrBorderLeft[] =
     {'b','o','r','d','e','r','-','l','e','f','t',0};
 static const WCHAR attrBorderLeftStyle[] =
@@ -118,6 +120,7 @@ static const struct{
     {attrBackgroundRepeat,     DISPID_IHTMLSTYLE_BACKGROUNDREPEAT},
     {attrBorder,               DISPID_IHTMLSTYLE_BORDER},
     {attrBorderBottomStyle,    DISPID_IHTMLSTYLE_BORDERBOTTOMSTYLE},
+    {attrBorderColor,          DISPID_IHTMLSTYLE_BORDERCOLOR},
     {attrBorderLeft,           DISPID_IHTMLSTYLE_BORDERLEFT},
     {attrBorderLeftStyle,      DISPID_IHTMLSTYLE_BORDERLEFTSTYLE},
     {attrBorderRightStyle,     DISPID_IHTMLSTYLE_BORDERRIGHTSTYLE},
@@ -1415,15 +1418,19 @@ static HRESULT WINAPI HTMLStyle_get_borderLeft(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_borderColor(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_style_attr(This, STYLEID_BORDER_COLOR, v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_borderColor(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_style_attr(This, STYLEID_BORDER_COLOR, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_borderTopColor(IHTMLStyle *iface, VARIANT v)

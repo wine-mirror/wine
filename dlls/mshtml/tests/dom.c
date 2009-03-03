@@ -3319,6 +3319,24 @@ static void test_default_style(IHTMLStyle *style)
     ok(hres == S_OK, "put_backgroundRepeat failed: %08x\n", hres);
     SysFreeString(sDefault);
 
+    /* BorderColor */
+    hres = IHTMLStyle_get_borderColor(style, &sDefault);
+    ok(hres == S_OK, "get_borderColor failed: %08x\n", hres);
+
+    str = a2bstr("red green red blue");
+    hres = IHTMLStyle_put_borderColor(style, str);
+    ok(hres == S_OK, "put_borderColor failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle_get_borderColor(style, &str);
+    ok(hres == S_OK, "get_borderColor failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "red green red blue"), "str=%s\n", dbgstr_w(str));
+    SysFreeString(str);
+
+    hres = IHTMLStyle_put_borderColor(style, sDefault);
+    ok(hres == S_OK, "put_borderColor failed: %08x\n", hres);
+    SysFreeString(sDefault);
+
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
     if(SUCCEEDED(hres)) {
