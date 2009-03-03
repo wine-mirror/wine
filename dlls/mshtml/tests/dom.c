@@ -3395,6 +3395,40 @@ static void test_default_style(IHTMLStyle *style)
     ok(hres == S_OK, "put_borderColor failed: %08x\n", hres);
     SysFreeString(sDefault);
 
+    /* BorderLeft */
+    hres = IHTMLStyle_get_borderLeft(style, &sDefault);
+    ok(hres == S_OK, "get_borderLeft failed: %08x\n", hres);
+
+    str = a2bstr("thick dotted red");
+    hres = IHTMLStyle_put_borderLeft(style, str);
+    ok(hres == S_OK, "put_borderLeft failed: %08x\n", hres);
+    SysFreeString(str);
+
+    /* IHTMLStyle_get_borderLeft appears to have a bug where
+        it returns the first letter of the color.  So we check
+        each style individually.
+     */
+    V_BSTR(&v) = NULL;
+    hres = IHTMLStyle_get_borderLeftColor(style, &v);
+    todo_wine ok(hres == S_OK, "get_borderLeftColor failed: %08x\n", hres);
+    todo_wine ok(!strcmp_wa(V_BSTR(&v), "red"), "str=%s\n", dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_BSTR(&v) = NULL;
+    hres = IHTMLStyle_get_borderLeftWidth(style, &v);
+    todo_wine ok(hres == S_OK, "get_borderLeftWidth failed: %08x\n", hres);
+    todo_wine ok(!strcmp_wa(V_BSTR(&v), "thick"), "str=%s\n", dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    hres = IHTMLStyle_get_borderLeftStyle(style, &str);
+    ok(hres == S_OK, "get_borderLeftStyle failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "dotted"), "str=%s\n", dbgstr_w(str));
+    SysFreeString(str);
+
+    hres = IHTMLStyle_put_borderLeft(style, sDefault);
+    ok(hres == S_OK, "put_borderLeft failed: %08x\n", hres);
+    SysFreeString(sDefault);
+
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
     if(SUCCEEDED(hres)) {
