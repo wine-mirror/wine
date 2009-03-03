@@ -42,6 +42,13 @@ struct d3d10_effect_variable
 {
     enum d3d10_effect_variable_type type;
     DWORD idx_offset;
+    void *data;
+};
+
+struct d3d10_effect_shader_variable
+{
+    char *input_signature;
+    UINT input_signature_size;
 };
 
 /* ID3D10EffectPass */

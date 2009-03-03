@@ -29,6 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
     ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))
 #define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
 #define TAG_FX10 MAKE_TAG('F', 'X', '1', '0')
+#define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
 
 static const struct ID3D10EffectTechniqueVtbl d3d10_effect_technique_vtbl;
 static const struct ID3D10EffectPassVtbl d3d10_effect_pass_vtbl;
@@ -50,6 +51,18 @@ static inline void skip_dword_unknown(const char **ptr, unsigned int count)
         read_dword(ptr, &d);
         FIXME("\t0x%08x\n", d);
     }
+}
+
+static inline void write_dword(char **ptr, DWORD d)
+{
+    memcpy(*ptr, &d, sizeof(d));
+    *ptr += sizeof(d);
+}
+
+static inline void write_dword_unknown(char **ptr, DWORD d)
+{
+    FIXME("Writing unknown DWORD 0x%08x\n", d);
+    write_dword(ptr, d);
 }
 
 static inline void read_tag(const char **ptr, DWORD *t, char t_str[5])
@@ -179,6 +192,8 @@ static HRESULT parse_fx10_technique_index(struct d3d10_effect_technique *t, cons
 
 static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
 {
+    struct d3d10_effect_variable *v = ctx;
+    struct d3d10_effect_shader_variable *s = v->data;
     char tag_str[5];
 
     memcpy(tag_str, &tag, 4);
@@ -189,6 +204,49 @@ static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag
 
     switch(tag)
     {
+        case TAG_ISGN:
+        {
+            /* 32 (DXBC header) + 1 * 4 (chunk index) + 2 * 4 (chunk header) + data_size (chunk data) */
+            UINT size = 44 + data_size;
+            char *ptr;
+
+            s->input_signature = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+            if (!s->input_signature)
+            {
+                ERR("Failed to allocate input signature data\n");
+                return E_OUTOFMEMORY;
+            }
+            s->input_signature_size = size;
+
+            ptr = s->input_signature;
+
+            write_dword(&ptr, TAG_DXBC);
+
+            /* signature(?) */
+            write_dword_unknown(&ptr, 0);
+            write_dword_unknown(&ptr, 0);
+            write_dword_unknown(&ptr, 0);
+            write_dword_unknown(&ptr, 0);
+
+            /* seems to be always 1 */
+            write_dword_unknown(&ptr, 1);
+
+            /* DXBC size */
+            write_dword(&ptr, size);
+
+            /* chunk count */
+            write_dword(&ptr, 1);
+
+            /* chunk index */
+            write_dword(&ptr, (ptr - s->input_signature) + 4);
+
+            /* chunk */
+            write_dword(&ptr, TAG_ISGN);
+            write_dword(&ptr, data_size);
+            memcpy(ptr, data, data_size);
+            break;
+        }
+
         default:
             FIXME("Unhandled chunk %s\n", tag_str);
             break;
@@ -201,6 +259,13 @@ static HRESULT parse_shader(struct d3d10_effect_variable *v, const char *data)
 {
     const char *ptr = data;
     DWORD dxbc_size;
+
+    v->data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct d3d10_effect_shader_variable));
+    if (!v->data)
+    {
+        ERR("Failed to allocate shader variable memory\n");
+        return E_OUTOFMEMORY;
+    }
 
     read_dword(&ptr, &dxbc_size);
     TRACE("dxbc size: %#x\n", dxbc_size);
@@ -424,14 +489,46 @@ HRESULT d3d10_effect_parse(struct d3d10_effect *This, const void *data, SIZE_T d
     return parse_dxbc(data, data_size, fx10_chunk_handler, This);
 }
 
+static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
+{
+    TRACE("variable %p\n", v);
+
+    if (!v->data) return;
+
+    switch(v->type)
+    {
+        case D3D10_EVT_VERTEXSHADER:
+        case D3D10_EVT_PIXELSHADER:
+        case D3D10_EVT_GEOMETRYSHADER:
+            HeapFree(GetProcessHeap(), 0, ((struct d3d10_effect_shader_variable *)v->data)->input_signature);
+            break;
+
+        default:
+            break;
+    }
+    HeapFree(GetProcessHeap(), 0, v->data);
+}
+
 static void d3d10_effect_pass_destroy(struct d3d10_effect_pass *p)
 {
+    TRACE("pass %p\n", p);
+
     HeapFree(GetProcessHeap(), 0, p->name);
-    HeapFree(GetProcessHeap(), 0, p->variables);
+    if (p->variables)
+    {
+        unsigned int i;
+        for (i = 0; i < p->variable_count; ++i)
+        {
+            d3d10_effect_variable_destroy(&p->variables[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, p->variables);
+    }
 }
 
 static void d3d10_effect_technique_destroy(struct d3d10_effect_technique *t)
 {
+    TRACE("technique %p\n", t);
+
     HeapFree(GetProcessHeap(), 0, t->name);
     if (t->passes)
     {
