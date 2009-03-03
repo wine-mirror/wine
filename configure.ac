@@ -1833,7 +1833,7 @@ AC_SUBST(DEPENDENCIES,["### Dependencies:
 Makefile: dummy
 	-\$(MAKEDEP) -C\$(SRCDIR) -S\$(TOPSRCDIR) -T\$(TOPOBJDIR) \$(EXTRAINCL) \$(DEPEND_SRCS)
 
-\$(OBJS): \$(IDL_GEN_HEADERS)
+\$(OBJS) \$(C_SRCS16:.c=.o): \$(IDL_GEN_HEADERS)
 \$(IDL_GEN_C_SRCS:.c=.o): \$(IDL_GEN_C_SRCS)
 \$(RC_SRCS:.rc=.res): \$(IDL_TLB_SRCS:.idl=.tlb)
 \$(LEX_SRCS:.l=.yy.o): \$(LEX_SRCS:.l=.yy.c)
