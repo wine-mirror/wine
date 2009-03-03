@@ -150,6 +150,7 @@ Makefile $(ALL_MAKERULES) $(ALL_MAKEFILES): config.status
 	@./config.status $@
 .INIT: Makefile
 .BEGIN: Makefile
+.MAKEFILEDEPS:
 
 $(RECURSE_TARGETS) $(MAKEDEP): $(ALL_MAKEFILES)
 

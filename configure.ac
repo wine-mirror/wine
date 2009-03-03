@@ -1830,6 +1830,7 @@ AC_SUBST(DEPENDENCIES,["### Dependencies:
 
 .INIT: Makefile
 .BEGIN: Makefile
+.MAKEFILEDEPS:
 Makefile: dummy
 	-\$(MAKEDEP) -C\$(SRCDIR) -S\$(TOPSRCDIR) -T\$(TOPOBJDIR) \$(EXTRAINCL) \$(DEPEND_SRCS)
 
