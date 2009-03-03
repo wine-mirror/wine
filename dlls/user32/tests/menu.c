@@ -114,6 +114,7 @@ typedef struct
 /* globals to communicate between test and wndproc */
 
 static BOOL bMenuVisible;
+static BOOL got_input;
 static HMENU hMenus[4];
 
 #define MOD_SIZE 10
@@ -211,7 +212,8 @@ static LRESULT WINAPI menu_ownerdraw_wnd_proc(HWND hwnd, UINT msg,
             }
         case WM_ENTERIDLE:
             {
-                ok( lparam, "Menu window handle is NULL!\n");
+                ok( lparam || broken(!lparam), /* win9x, nt4 */
+                    "Menu window handle is NULL!\n");
                 PostMessage(hwnd, WM_CANCELMODE, 0, 0);
                 return TRUE;
             }
@@ -263,7 +265,7 @@ static void test_menu_locked_by_window(void)
     ok(ret, "DrawMenuBar failed with error %d\n", GetLastError());
     }
     ret = IsMenu(GetMenu(hwnd));
-    ok(!ret, "Menu handle should have been destroyed\n");
+    ok(!ret || broken(ret) /* nt4 */, "Menu handle should have been destroyed\n");
 
     SendMessage(hwnd, WM_SYSCOMMAND, SC_KEYMENU, 0);
     /* did we process the WM_INITMENU message? */
@@ -1830,6 +1832,8 @@ static DWORD WINAPI test_menu_input_thread(LPVOID lpParameter)
     {
         int elapsed = 0;
 
+        got_input = i && menu_tests[i-1].bMenuVisible;
+
         if (menu_tests[i].type == INPUT_KEYBOARD)
             for (j = 0; menu_tests[i].wVk[j] != 0; j++)
                 send_key(menu_tests[i].wVk[j]);
@@ -1843,6 +1847,12 @@ static DWORD WINAPI test_menu_input_thread(LPVOID lpParameter)
                 break;
             elapsed += 20;
             Sleep(20);
+        }
+
+        if (!got_input)
+        {
+            skip( "test %u: didn't receive input\n", i );
+            return 0;
         }
 
         if (menu_tests[i]._todo_wine)
@@ -1867,6 +1877,16 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam,
         case WM_EXITMENULOOP:
             bMenuVisible = FALSE;
             break;
+        case WM_KEYDOWN:
+        case WM_SYSKEYDOWN:
+        case WM_MOUSEMOVE:
+        case WM_LBUTTONDOWN:
+        case WM_LBUTTONUP:
+        case WM_NCMOUSEMOVE:
+        case WM_NCLBUTTONDOWN:
+        case WM_NCLBUTTONUP:
+            got_input = TRUE;
+            /* fall through */
         default:
             return( DefWindowProcA( hWnd, msg, wParam, lParam ) );
     }
