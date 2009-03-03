@@ -1981,7 +1981,7 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
         {
             MENUITEM *ip = &lppop->items[lppop->FocusedItem];
 	    SendMessageW( hwndOwner, WM_MENUSELECT,
-                     MAKELONG(ip->fType & MF_POPUP ? wIndex: ip->wID,
+                     MAKEWPARAM(ip->fType & MF_POPUP ? wIndex: ip->wID,
                      ip->fType | ip->fState |
                      (lppop->wFlags & MF_SYSMENU)), (LPARAM)hmenu);
         }
@@ -1992,7 +1992,7 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
             if((pos=MENU_FindSubMenu(&topmenu, hmenu))!=NO_SELECTED_ITEM){
                 POPUPMENU *ptm = MENU_GetMenu( topmenu );
                 MENUITEM *ip = &ptm->items[pos];
-                SendMessageW( hwndOwner, WM_MENUSELECT, MAKELONG(pos,
+                SendMessageW( hwndOwner, WM_MENUSELECT, MAKEWPARAM(pos,
                          ip->fType | ip->fState |
                          (ptm->wFlags & MF_SYSMENU)), (LPARAM)topmenu);
             }
@@ -2386,7 +2386,7 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
     /* Send WM_INITMENUPOPUP message only if TPM_NONOTIFY flag is not specified */
     if (!(wFlags & TPM_NONOTIFY))
        SendMessageW( hwndOwner, WM_INITMENUPOPUP, (WPARAM)item->hSubMenu,
-                     MAKELONG( menu->FocusedItem, IS_SYSTEM_MENU(menu) ));
+                     MAKELPARAM( menu->FocusedItem, IS_SYSTEM_MENU(menu) ));
 
     item = &menu->items[menu->FocusedItem];
     rect = item->rect;
@@ -3307,7 +3307,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
                                  MAKELPARAM(0, IS_SYSTEM_MENU(menu)) );
 	    }
 	    MENU_SelectItem( mt.hOwnerWnd, mt.hTopMenu, NO_SELECTED_ITEM, FALSE, 0 );
-	    SendMessageW( mt.hOwnerWnd, WM_MENUSELECT, MAKELONG(0,0xffff), 0 );
+	    SendMessageW( mt.hOwnerWnd, WM_MENUSELECT, MAKEWPARAM(0,0xffff), 0 );
         }
 
         /* Reset the variable for hiding menu */
