@@ -72,7 +72,7 @@ static void test_bitmap_info(HBITMAP hbm, INT expected_depth, const BITMAPINFOHE
     BITMAP bm;
     BITMAP bma[2];
     INT ret, width_bytes;
-    char buf[512], buf_cmp[512];
+    BYTE buf[512], buf_cmp[512];
     DWORD gle;
 
     ret = GetObject(hbm, sizeof(bm), &bm);
@@ -101,17 +101,10 @@ static void test_bitmap_info(HBITMAP hbm, INT expected_depth, const BITMAPINFOHE
     memset(buf, 0xAA, sizeof(buf));
     ret = GetBitmapBits(hbm, sizeof(buf), buf);
     ok(ret == bm.bmWidthBytes * bm.bmHeight, "%d != %d\n", ret, bm.bmWidthBytes * bm.bmHeight);
-    ok(!memcmp(buf, buf_cmp, sizeof(buf)), "buffers do not match, depth %d\n", bmih->biBitCount);
-    if(memcmp(buf, buf_cmp, sizeof(buf)))
-    {
-        int i;
-        for(i = 0; i < sizeof(buf); i++)
-            if(buf[i] != buf_cmp[i])
-            {
-                trace("first mismatched byte %d: got %02x expected %02x\n", i, buf[i], buf_cmp[i]);
-                break;
-            }
-    }
+    if(bm.bmType == 21072)
+        win_skip("win9x does not initialize the bitmap\n");
+    else
+        ok(!memcmp(buf, buf_cmp, sizeof(buf)), "buffers do not match, depth %d\n", bmih->biBitCount);
 
     /* test various buffer sizes for GetObject */
     ret = GetObject(hbm, sizeof(*bma) * 2, bma);
