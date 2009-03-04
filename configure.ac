@@ -142,6 +142,7 @@ then
     enable_dispdib_dll16=${enable_dispdib_dll16:-no}
     enable_display_drv16=${enable_display_drv16:-no}
     enable_ifsmgr_vxd=${enable_ifsmgr_vxd:-no}
+    enable_keyboard_drv16=${enable_keyboard_drv16:-no}
     enable_mmdevldr_vxd=${enable_mmdevldr_vxd:-no}
     enable_monodebg_vxd=${enable_monodebg_vxd:-no}
     enable_stress_dll16=${enable_stress_dll16:-no}
@@ -2038,6 +2039,7 @@ WINE_CONFIG_MAKEFILE([dlls/jscript/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DL
 WINE_CONFIG_MAKEFILE([dlls/jscript/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
 WINE_CONFIG_MAKEFILE([dlls/kernel32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/kernel32/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
+WINE_CONFIG_MAKEFILE([dlls/keyboard.drv16/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/loadperf/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/localspl/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/localspl/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])

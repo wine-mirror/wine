@@ -10,7 +10,6 @@ DELAYIMPORTS = imm32
 
 SPEC_SRCS16 = \
 	ddeml.spec \
-	keyboard.drv.spec \
 	mouse.drv.spec \
 	user.exe.spec
 
@@ -68,7 +67,6 @@ C_SRCS16 = \
 	bidi16.c \
 	comm16.c \
 	hook16.c \
-	kbd16.c \
 	mouse16.c \
 	network.c \
 	user16.c \

@@ -3905,6 +3905,7 @@ then
     enable_dispdib_dll16=${enable_dispdib_dll16:-no}
     enable_display_drv16=${enable_display_drv16:-no}
     enable_ifsmgr_vxd=${enable_ifsmgr_vxd:-no}
+    enable_keyboard_drv16=${enable_keyboard_drv16:-no}
     enable_mmdevldr_vxd=${enable_mmdevldr_vxd:-no}
     enable_monodebg_vxd=${enable_monodebg_vxd:-no}
     enable_stress_dll16=${enable_stress_dll16:-no}
@@ -25617,6 +25618,14 @@ dlls/kernel32/tests/Makefile: dlls/kernel32/tests/Makefile.in dlls/Maketest.rule
 ac_config_files="$ac_config_files dlls/kernel32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/keyboard.drv16/Makefile"
+test "x$enable_keyboard_drv16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	keyboard.drv16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/keyboard.drv16/Makefile: dlls/keyboard.drv16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/keyboard.drv16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/loadperf/Makefile"
 test "x$enable_loadperf" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	loadperf"
@@ -28856,6 +28865,7 @@ do
     "dlls/jscript/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/jscript/tests/Makefile" ;;
     "dlls/kernel32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/kernel32/Makefile" ;;
     "dlls/kernel32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/kernel32/tests/Makefile" ;;
+    "dlls/keyboard.drv16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/keyboard.drv16/Makefile" ;;
     "dlls/loadperf/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/loadperf/Makefile" ;;
     "dlls/localspl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/localspl/Makefile" ;;
     "dlls/localspl/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/localspl/tests/Makefile" ;;

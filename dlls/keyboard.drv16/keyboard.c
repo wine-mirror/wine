@@ -54,7 +54,7 @@ static LPBYTE pKeyStateTable;
 /***********************************************************************
  *		Inquire (KEYBOARD.1)
  */
-WORD WINAPI KEYBOARD_Inquire(LPKBINFO kbInfo)
+WORD WINAPI Inquire16(LPKBINFO kbInfo)
 {
   kbInfo->Begin_First_Range = 0;
   kbInfo->End_First_Range = 0;
@@ -68,7 +68,7 @@ WORD WINAPI KEYBOARD_Inquire(LPKBINFO kbInfo)
 /***********************************************************************
  *		Enable (KEYBOARD.2)
  */
-VOID WINAPI KEYBOARD_Enable( FARPROC16 proc, LPBYTE lpKeyState )
+VOID WINAPI Enable16( FARPROC16 proc, LPBYTE lpKeyState )
 {
     DefKeybEventProc = proc;
     pKeyStateTable = lpKeyState;
@@ -79,10 +79,19 @@ VOID WINAPI KEYBOARD_Enable( FARPROC16 proc, LPBYTE lpKeyState )
 /***********************************************************************
  *		Disable (KEYBOARD.3)
  */
-VOID WINAPI KEYBOARD_Disable(VOID)
+VOID WINAPI Disable16(VOID)
 {
     DefKeybEventProc = NULL;
     pKeyStateTable = NULL;
+}
+
+/****************************************************************************
+ *		ToAscii (KEYBOARD.4)
+ */
+INT16 WINAPI ToAscii16(UINT16 virtKey,UINT16 scanCode, LPBYTE lpKeyState,
+                       LPVOID lpChar, UINT16 flags)
+{
+    return ToAscii( virtKey, scanCode, lpKeyState, lpChar, flags );
 }
 
 /***********************************************************************
@@ -184,28 +193,4 @@ void WINAPI AnsiToOemBuff16( LPCSTR s, LPSTR d, UINT16 len )
 void WINAPI OemToAnsiBuff16( LPCSTR s, LPSTR d, UINT16 len )
 {
     if (len != 0) OemToCharBuffA( s, d, len );
-}
-
-/****************************************************************************
- *		ToAscii (KEYBOARD.4)
- *
- * The ToAscii function translates the specified virtual-key code and keyboard
- * state to the corresponding Windows character or characters.
- *
- * If the specified key is a dead key, the return value is negative. Otherwise,
- * it is one of the following values:
- * Value	Meaning
- * 0	The specified virtual key has no translation for the current state of the keyboard.
- * 1	One Windows character was copied to the buffer.
- * 2	Two characters were copied to the buffer. This usually happens when a
- *      dead-key character (accent or diacritic) stored in the keyboard layout cannot
- *      be composed with the specified virtual key to form a single character.
- *
- * FIXME : should do the above (return 2 for non matching deadchar+char combinations)
- *
- */
-INT16 WINAPI ToAscii16(UINT16 virtKey,UINT16 scanCode, LPBYTE lpKeyState,
-                       LPVOID lpChar, UINT16 flags)
-{
-    return ToAscii( virtKey, scanCode, lpKeyState, lpChar, flags );
 }

@@ -41,7 +41,6 @@ dlls/kernel32/nls/winerr_enu.mc.rc
 dlls/kernel32/nls/winerr_fra.mc.rc
 dlls/kernel32/nls/winerr_kor.mc.rc
 dlls/kernel32/nls/winerr_nor.mc.rc
-dlls/keyboard.drv16
 dlls/krnl386.exe16
 dlls/libd3dx9.def
 dlls/libwinspool.def

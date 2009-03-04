@@ -1,6 +1,6 @@
-1   pascal -ret16 Inquire(ptr) KEYBOARD_Inquire
-2   pascal -ret16 Enable(segptr ptr) KEYBOARD_Enable
-3   pascal -ret16 Disable() KEYBOARD_Disable
+1   pascal -ret16 Inquire(ptr) Inquire16
+2   pascal -ret16 Enable(segptr ptr) Enable16
+3   pascal -ret16 Disable() Disable16
 4   pascal -ret16 ToAscii(word word ptr ptr word) ToAscii16
 5   pascal -ret16 AnsiToOem(str ptr) AnsiToOem16
 6   pascal -ret16 OemToAnsi(str ptr) OemToAnsi16
