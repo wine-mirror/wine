@@ -3902,6 +3902,7 @@ then
     WIN16_FILES=""
     WIN16_INSTALL=""
     enable_comm_drv16=${enable_comm_drv16:-no}
+    enable_dispdib_dll16=${enable_dispdib_dll16:-no}
     enable_ifsmgr_vxd=${enable_ifsmgr_vxd:-no}
     enable_mmdevldr_vxd=${enable_mmdevldr_vxd:-no}
     enable_monodebg_vxd=${enable_monodebg_vxd:-no}
@@ -25023,6 +25024,14 @@ dlls/dinput8/Makefile: dlls/dinput8/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/dinput8/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/dispdib.dll16/Makefile"
+test "x$enable_dispdib_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	dispdib.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/dispdib.dll16/Makefile: dlls/dispdib.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/dispdib.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dmband/Makefile"
 test "x$enable_dmband" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	dmband"
@@ -28764,6 +28773,7 @@ do
     "dlls/dinput/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dinput/Makefile" ;;
     "dlls/dinput/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dinput/tests/Makefile" ;;
     "dlls/dinput8/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dinput8/Makefile" ;;
+    "dlls/dispdib.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dispdib.dll16/Makefile" ;;
     "dlls/dmband/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dmband/Makefile" ;;
     "dlls/dmcompos/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dmcompos/Makefile" ;;
     "dlls/dmime/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dmime/Makefile" ;;

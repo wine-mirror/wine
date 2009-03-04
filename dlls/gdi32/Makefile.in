@@ -10,7 +10,6 @@ EXTRAINCL = @FREETYPEINCL@ @FONTCONFIGINCL@
 EXTRALIBS = @CARBONLIB@
 
 SPEC_SRCS16 = \
-	dispdib.spec \
 	gdi.exe.spec \
 	wing.spec
 
@@ -55,7 +54,6 @@ C_SRCS = \
 
 C_SRCS16 = \
 	bidi16.c \
-	dispdib.c \
 	env.c \
 	gdi16.c \
 	metafile16.c \

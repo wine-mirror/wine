@@ -24,7 +24,6 @@ WIN16_FILES = \
 	ctl3d.dll16 \
 	ctl3dv2.dll16 \
 	ddeml.dll16 \
-	dispdib.dll16 \
 	display.drv16 \
 	gdi.exe16 \
 	imm.dll16 \
@@ -81,7 +80,7 @@ commdlg.dll16:
 ctl3d.dll16 ctl3dv2.dll16:
 	echo "ctl3d32.dll" >$@
 
-dispdib.dll16 gdi.exe16 wing.dll16:
+gdi.exe16 wing.dll16:
 	echo "gdi32.dll" >$@
 
 imm.dll16:
