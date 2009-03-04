@@ -138,6 +138,7 @@ if test "x$enable_win16" != "xyes"
 then
     WIN16_FILES=""
     WIN16_INSTALL=""
+    enable_comm_drv16=${enable_comm_drv16:-no}
     enable_ifsmgr_vxd=${enable_ifsmgr_vxd:-no}
     enable_mmdevldr_vxd=${enable_mmdevldr_vxd:-no}
     enable_monodebg_vxd=${enable_monodebg_vxd:-no}
@@ -1902,6 +1903,7 @@ WINE_CONFIG_MAKEFILE([dlls/comctl32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_D
 WINE_CONFIG_MAKEFILE([dlls/comctl32/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
 WINE_CONFIG_MAKEFILE([dlls/comdlg32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/comdlg32/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
+WINE_CONFIG_MAKEFILE([dlls/comm.drv16/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/compstui/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/credui/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/credui/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])

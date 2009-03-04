@@ -10,7 +10,6 @@ EXTRALIBS = @COREFOUNDATIONLIB@ @LIBPOLL@
 EXTRADLLFLAGS = -Wb,-F,KERNEL32.dll -Wl,--image-base,0x7b800000
 
 SPEC_SRCS16 = \
-	comm.drv.spec \
 	krnl386.exe.spec \
 	system.drv.spec \
 	toolhelp.spec \
