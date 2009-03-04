@@ -969,8 +969,8 @@ static void test_EnumObjects_and_CompareIDs(void)
     ITEMIDLIST *newPIDL;
     IShellFolder *IDesktopFolder, *testIShellFolder;
     char  cCurrDirA [MAX_PATH] = {0};
-    WCHAR cCurrDirW [MAX_PATH];
-    static const WCHAR cTestDirW[] = {'\\','t','e','s','t','d','i','r',0};
+    static const CHAR cTestDirA[] = "\\testdir";
+    WCHAR cTestDirW[MAX_PATH];
     int len;
     HRESULT hr;
 
@@ -978,21 +978,21 @@ static void test_EnumObjects_and_CompareIDs(void)
     len = lstrlenA(cCurrDirA);
 
     if(len == 0) {
-        trace("GetCurrentDirectoryA returned empty string. Skipping test_EnumObjects_and_CompareIDs\n");
+        win_skip("GetCurrentDirectoryA returned empty string. Skipping test_EnumObjects_and_CompareIDs\n");
         return;
     }
     if(cCurrDirA[len-1] == '\\')
         cCurrDirA[len-1] = 0;
 
-    MultiByteToWideChar(CP_ACP, 0, cCurrDirA, -1, cCurrDirW, MAX_PATH);
-    lstrcatW(cCurrDirW, cTestDirW);
+    lstrcatA(cCurrDirA, cTestDirA);
+    MultiByteToWideChar(CP_ACP, 0, cCurrDirA, -1, cTestDirW, MAX_PATH);
 
     hr = SHGetDesktopFolder(&IDesktopFolder);
     ok(hr == S_OK, "SHGetDesktopfolder failed %08x\n", hr);
 
     CreateFilesFolders();
 
-    hr = IShellFolder_ParseDisplayName(IDesktopFolder, NULL, NULL, cCurrDirW, NULL, &newPIDL, 0);
+    hr = IShellFolder_ParseDisplayName(IDesktopFolder, NULL, NULL, cTestDirW, NULL, &newPIDL, 0);
     ok(hr == S_OK, "ParseDisplayName failed %08x\n", hr);
 
     hr = IShellFolder_BindToObject(IDesktopFolder, newPIDL, NULL, (REFIID)&IID_IShellFolder, (LPVOID *)&testIShellFolder);
