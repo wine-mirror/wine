@@ -1872,6 +1872,8 @@ static void test_gopher_protocol(void)
     IClassFactory_Release(factory);
     ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
 
+    test_priority(async_protocol);
+
     IInternetProtocol_Release(async_protocol);
 }
 
