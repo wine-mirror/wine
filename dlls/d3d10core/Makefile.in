@@ -10,6 +10,7 @@ C_SRCS = \
 	buffer.c \
 	d3d10core_main.c \
 	device.c \
+	inputlayout.c \
 	texture2d.c \
 	utils.c \
 	view.c

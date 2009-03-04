@@ -89,6 +89,14 @@ struct d3d10_rendertarget_view
     D3D10_RENDER_TARGET_VIEW_DESC desc;
 };
 
+/* ID3D10InputLayout */
+extern const struct ID3D10InputLayoutVtbl d3d10_input_layout_vtbl;
+struct d3d10_input_layout
+{
+    const struct ID3D10InputLayoutVtbl *vtbl;
+    LONG refcount;
+};
+
 /* Layered device */
 enum dxgi_device_layer_id
 {

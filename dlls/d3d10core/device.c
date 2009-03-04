@@ -894,12 +894,26 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateInputLayout(ID3D10Device *if
         const D3D10_INPUT_ELEMENT_DESC *element_descs, UINT element_count, const void *shader_byte_code,
         SIZE_T shader_byte_code_length, ID3D10InputLayout **input_layout)
 {
+    struct d3d10_input_layout *object;
+
     FIXME("iface %p, element_descs %p, element_count %u, shader_byte_code %p,"
             "\tshader_byte_code_length %lu, input_layout %p stub!\n",
             iface, element_descs, element_count, shader_byte_code,
             shader_byte_code_length, input_layout);
 
-    return E_NOTIMPL;
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate D3D10 input layout object memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->vtbl = &d3d10_input_layout_vtbl;
+    object->refcount = 1;
+
+    *input_layout = (ID3D10InputLayout *)object;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateVertexShader(ID3D10Device *iface,
