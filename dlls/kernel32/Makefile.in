@@ -14,7 +14,6 @@ SPEC_SRCS16 = \
 	krnl386.exe.spec \
 	system.drv.spec \
 	toolhelp.spec \
-	win87em.spec \
 	windebug.spec
 
 C_SRCS = \
@@ -78,8 +77,7 @@ C_SRCS16 = \
 	error16.c \
 	kernel16.c \
 	registry16.c \
-	toolhelp16.c \
-	win87em.c
+	toolhelp16.c
 
 RC_SRCS = kernel.rc
 

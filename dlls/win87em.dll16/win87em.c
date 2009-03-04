@@ -57,7 +57,7 @@ static WORD StackTop = 175;
 static WORD StackBottom = 0;
 static WORD Inthandler02hVar = 1;
 
-static void WIN87_ClearCtrlWord( CONTEXT86 *context )
+static void WIN87_ClearCtrlWord( CONTEXT *context )
 {
     context->Eax &= ~0xffff;  /* set AX to 0 */
     if (Installed)
@@ -69,7 +69,7 @@ static void WIN87_ClearCtrlWord( CONTEXT86 *context )
     StatusWord_3 = StatusWord_2 = 0;
 }
 
-static void WIN87_SetCtrlWord( CONTEXT86 *context )
+static void WIN87_SetCtrlWord( CONTEXT *context )
 {
     CtrlWord_1 = LOWORD(context->Eax);
     context->Eax &= ~0x00c3;
@@ -82,7 +82,7 @@ static void WIN87_SetCtrlWord( CONTEXT86 *context )
     CtrlWord_2 = LOWORD(context->Eax);
 }
 
-static void WIN87_Init( CONTEXT86 *context )
+static void WIN87_Init( CONTEXT *context )
 {
     if (Installed) {
 #ifdef __i386__
@@ -99,12 +99,11 @@ static void WIN87_Init( CONTEXT86 *context )
 /***********************************************************************
  *		_fpMath (WIN87EM.1)
  */
-void WINAPI WIN87_fpmath( CONTEXT86 *context )
+void WINAPI _fpMath( CONTEXT *context )
 {
-    TRACE("(cs:eip=%x:%x es=%x bx=%04x ax=%04x dx=%04x)\n",
-                 (WORD)context->SegCs, context->Eip,
-                 (WORD)context->SegEs, (WORD)context->Ebx,
-                 (WORD)context->Eax, (WORD)context->Edx );
+    TRACE("(cs:eip=%04x:%04x es=%04x bx=%04x ax=%04x dx=%04x)\n",
+          context->SegCs, context->Eip, context->SegEs, context->Ebx,
+          context->Eax, context->Edx );
 
     switch(LOWORD(context->Ebx))
     {
@@ -224,8 +223,7 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
 /***********************************************************************
  *		__WinEm87Info (WIN87EM.3)
  */
-void WINAPI WIN87_WinEm87Info(struct Win87EmInfoStruct *pWIS,
-                              int cbWin87EmInfoStruct)
+void WINAPI __WinEm87Info(struct Win87EmInfoStruct *pWIS, int cbWin87EmInfoStruct)
 {
   FIXME("(%p,%d), stub !\n",pWIS,cbWin87EmInfoStruct);
 }
@@ -233,8 +231,7 @@ void WINAPI WIN87_WinEm87Info(struct Win87EmInfoStruct *pWIS,
 /***********************************************************************
  *		__WinEm87Restore (WIN87EM.4)
  */
-void WINAPI WIN87_WinEm87Restore(void *pWin87EmSaveArea,
-                                 int cbWin87EmSaveArea)
+void WINAPI __WinEm87Restore(void *pWin87EmSaveArea, int cbWin87EmSaveArea)
 {
   FIXME("(%p,%d), stub !\n",
 	pWin87EmSaveArea,cbWin87EmSaveArea);
@@ -243,7 +240,7 @@ void WINAPI WIN87_WinEm87Restore(void *pWin87EmSaveArea,
 /***********************************************************************
  *		__WinEm87Save (WIN87EM.5)
  */
-void WINAPI WIN87_WinEm87Save(void *pWin87EmSaveArea, int cbWin87EmSaveArea)
+void WINAPI __WinEm87Save(void *pWin87EmSaveArea, int cbWin87EmSaveArea)
 {
   FIXME("(%p,%d), stub !\n",
 	pWin87EmSaveArea,cbWin87EmSaveArea);

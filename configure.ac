@@ -149,6 +149,7 @@ then
     enable_vtdapi_vxd=${enable_vtdapi_vxd:-no}
     enable_vwin32_vxd=${enable_vwin32_vxd:-no}
     enable_w32skrnl=${enable_w32skrnl:-no}
+    enable_win87em_dll16=${enable_win87em_dll16:-no}
     enable_winedos=${enable_winedos:-no}
     enable_winevdm=${enable_winevdm:-no}
     enable_winhelp_exe16=${enable_winhelp_exe16:-no}
@@ -2217,6 +2218,7 @@ WINE_CONFIG_MAKEFILE([dlls/vnetbios.vxd/Makefile],[dlls/Makedll.rules],[dlls],[A
 WINE_CONFIG_MAKEFILE([dlls/vtdapi.vxd/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/vwin32.vxd/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/w32skrnl/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
+WINE_CONFIG_MAKEFILE([dlls/win87em.dll16/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/winealsa.drv/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/wineaudioio.drv/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/winecoreaudio.drv/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])

@@ -3912,6 +3912,7 @@ then
     enable_vtdapi_vxd=${enable_vtdapi_vxd:-no}
     enable_vwin32_vxd=${enable_vwin32_vxd:-no}
     enable_w32skrnl=${enable_w32skrnl:-no}
+    enable_win87em_dll16=${enable_win87em_dll16:-no}
     enable_winedos=${enable_winedos:-no}
     enable_winevdm=${enable_winevdm:-no}
     enable_winhelp_exe16=${enable_winhelp_exe16:-no}
@@ -27084,6 +27085,14 @@ dlls/w32skrnl/Makefile: dlls/w32skrnl/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/w32skrnl/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/win87em.dll16/Makefile"
+test "x$enable_win87em_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	win87em.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/win87em.dll16/Makefile: dlls/win87em.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/win87em.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/winealsa.drv/Makefile"
 test "x$enable_winealsa_drv" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	winealsa.drv"
@@ -28995,6 +29004,7 @@ do
     "dlls/vtdapi.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/vtdapi.vxd/Makefile" ;;
     "dlls/vwin32.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/vwin32.vxd/Makefile" ;;
     "dlls/w32skrnl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/w32skrnl/Makefile" ;;
+    "dlls/win87em.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/win87em.dll16/Makefile" ;;
     "dlls/winealsa.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winealsa.drv/Makefile" ;;
     "dlls/wineaudioio.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wineaudioio.drv/Makefile" ;;
     "dlls/winecoreaudio.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winecoreaudio.drv/Makefile" ;;

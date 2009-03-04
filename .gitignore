@@ -118,7 +118,6 @@ dlls/user.exe16
 dlls/ver.dll16
 dlls/w32sys.dll16
 dlls/win32s16.dll16
-dlls/win87em.dll16
 dlls/winaspi.dll16
 dlls/windebug.dll16
 dlls/wineps16.drv16

@@ -57,7 +57,6 @@ WIN16_FILES = \
 	ver.dll16 \
 	w32sys.dll16 \
 	win32s16.dll16 \
-	win87em.dll16 \
 	winaspi.dll16 \
 	windebug.dll16 \
 	wineps16.drv16 \
@@ -90,7 +89,7 @@ dispdib.dll16 gdi.exe16 wing.dll16:
 imm.dll16:
 	echo "imm32.dll" >$@
 
-comm.drv16 krnl386.exe16 system.drv16 toolhelp.dll16 win87em.dll16 windebug.dll16:
+comm.drv16 krnl386.exe16 system.drv16 toolhelp.dll16 windebug.dll16:
 	echo "kernel32.dll" >$@
 
 lzexpand.dll16:
