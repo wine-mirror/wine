@@ -11,6 +11,7 @@ C_SRCS = \
 	d3d10core_main.c \
 	device.c \
 	inputlayout.c \
+	shader.c \
 	texture2d.c \
 	utils.c \
 	view.c

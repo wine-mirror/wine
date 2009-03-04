@@ -97,6 +97,14 @@ struct d3d10_input_layout
     LONG refcount;
 };
 
+/* ID3D10VertexShader */
+extern const struct ID3D10VertexShaderVtbl d3d10_vertex_shader_vtbl;
+struct d3d10_vertex_shader
+{
+    const struct ID3D10VertexShaderVtbl *vtbl;
+    LONG refcount;
+};
+
 /* Layered device */
 enum dxgi_device_layer_id
 {
