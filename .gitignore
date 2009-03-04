@@ -47,7 +47,6 @@ dlls/libwinspool.def
 dlls/libxinput.def
 dlls/lzexpand.dll16
 dlls/mmsystem.dll16
-dlls/mouse.drv16
 dlls/msacm.dll16
 dlls/mshtml.tlb/mshtml_tlb.tlb
 dlls/mshtml/nsiface.h

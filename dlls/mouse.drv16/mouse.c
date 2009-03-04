@@ -47,7 +47,7 @@ static FARPROC16 DefMouseEventProc;
 /***********************************************************************
  *           Inquire                       (MOUSE.1)
  */
-WORD WINAPI MOUSE_Inquire(LPMOUSEINFO mouseInfo)
+WORD WINAPI Inquire16(LPMOUSEINFO mouseInfo)
 {
     mouseInfo->msExist = TRUE;
     mouseInfo->msRelative = FALSE;
@@ -65,7 +65,7 @@ WORD WINAPI MOUSE_Inquire(LPMOUSEINFO mouseInfo)
 /***********************************************************************
  *           Enable                        (MOUSE.2)
  */
-VOID WINAPI MOUSE_Enable( FARPROC16 proc )
+VOID WINAPI Enable16( FARPROC16 proc )
 {
     DefMouseEventProc = proc;
 }
@@ -73,7 +73,7 @@ VOID WINAPI MOUSE_Enable( FARPROC16 proc )
 /***********************************************************************
  *           Disable                       (MOUSE.3)
  */
-VOID WINAPI MOUSE_Disable(VOID)
+VOID WINAPI Disable16(void)
 {
     DefMouseEventProc = 0;
 }

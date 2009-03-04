@@ -29,7 +29,6 @@ WIN16_FILES = \
 	krnl386.exe16 \
 	lzexpand.dll16 \
 	mmsystem.dll16 \
-	mouse.drv16 \
 	msacm.dll16 \
 	msvideo.dll16 \
 	ole2.dll16 \
@@ -120,7 +119,7 @@ shell.dll16:
 twain.dll16:
 	echo "twain_32.dll" >$@
 
-ddeml.dll16 mouse.drv16 user.exe16:
+ddeml.dll16 user.exe16:
 	echo "user32.dll" >$@
 
 ver.dll16:
