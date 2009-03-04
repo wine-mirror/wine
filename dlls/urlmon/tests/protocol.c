@@ -1844,6 +1844,37 @@ static void test_ftp_protocol(void)
     ok(!ref, "ref=%d\n", ref);
 }
 
+static void test_gopher_protocol(void)
+{
+    IInternetProtocolInfo *protocol_info;
+    IClassFactory *factory;
+    IUnknown *unk;
+    HRESULT hres;
+
+    trace("Testing gopher protocol...\n");
+
+    hres = CoGetClassObject(&CLSID_GopherProtocol, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
+    ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocolInfo, (void**)&protocol_info);
+    ok(hres == E_NOINTERFACE, "Could not get IInternetProtocolInfo interface: %08x, expected E_NOINTERFACE\n", hres);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IClassFactory, (void**)&factory);
+    ok(hres == S_OK, "Could not get IClassFactory interface\n");
+    IUnknown_Release(unk);
+    if(FAILED(hres))
+        return;
+
+    hres = IClassFactory_CreateInstance(factory, NULL, &IID_IInternetProtocol,
+                                        (void**)&async_protocol);
+    IClassFactory_Release(factory);
+    ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
+
+    IInternetProtocol_Release(async_protocol);
+}
+
 static void test_mk_protocol(void)
 {
     IInternetProtocolInfo *protocol_info;
@@ -2132,6 +2163,7 @@ START_TEST(protocol)
     test_http_protocol();
     test_https_protocol();
     test_ftp_protocol();
+    test_gopher_protocol();
     test_mk_protocol();
     test_CreateBinding();
     test_binding(FILE_TEST);
