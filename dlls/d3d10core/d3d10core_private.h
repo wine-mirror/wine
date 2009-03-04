@@ -113,6 +113,14 @@ struct d3d10_geometry_shader
     LONG refcount;
 };
 
+/* ID3D10PixelShader */
+extern const struct ID3D10PixelShaderVtbl d3d10_pixel_shader_vtbl;
+struct d3d10_pixel_shader
+{
+    const struct ID3D10PixelShaderVtbl *vtbl;
+    LONG refcount;
+};
+
 /* Layered device */
 enum dxgi_device_layer_id
 {

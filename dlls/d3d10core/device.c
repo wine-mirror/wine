@@ -977,10 +977,24 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShaderWithStreamOutp
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePixelShader(ID3D10Device *iface,
         const void *byte_code, SIZE_T byte_code_length, ID3D10PixelShader **shader)
 {
+    struct d3d10_pixel_shader *object;
+
     FIXME("iface %p, byte_code %p, byte_code_length %lu, shader %p stub!\n",
             iface, byte_code, byte_code_length, shader);
 
-    return E_NOTIMPL;
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate D3D10 pixel shader object memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->vtbl = &d3d10_pixel_shader_vtbl;
+    object->refcount = 1;
+
+    *shader = (ID3D10PixelShader *)object;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBlendState(ID3D10Device *iface,
