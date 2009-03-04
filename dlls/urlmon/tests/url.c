@@ -147,6 +147,9 @@ static const WCHAR MK_URL[] = {'m','k',':','@','M','S','I','T','S','t','o','r','
 static const WCHAR https_urlW[] =
     {'h','t','t','p','s',':','/','/','w','w','w','.','c','o','d','e','w','e','a','v','e','r','s','.','c','o','m',
      '/','t','e','s','t','.','h','t','m','l',0};
+static const WCHAR ftp_urlW[] = {'f','t','p',':','/','/','f','t','p','.','w','i','n','e','h','q','.','o','r','g',
+    '/','p','u','b','/','o','t','h','e','r','/',
+    'w','i','n','e','l','o','g','o','.','x','c','f','.','t','a','r','.','b','z','2',0};
 
 
 static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
@@ -179,7 +182,8 @@ static LPCWSTR urls[] = {
     INDEX_HTML,
     ITS_URL,
     MK_URL,
-    https_urlW
+    https_urlW,
+    ftp_urlW
 };
 
 static WCHAR file_url[INTERNET_MAX_URL_LENGTH];
@@ -190,7 +194,8 @@ static enum {
     FILE_TEST,
     ITS_TEST,
     MK_TEST,
-    HTTPS_TEST
+    HTTPS_TEST,
+    FTP_TEST
 } test_protocol;
 
 static enum {
@@ -1150,6 +1155,8 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulP
     case BINDSTATUS_FINDINGRESOURCE:
         if(iface == &objbsc)
             CHECK_EXPECT(Obj_OnProgress_FINDINGRESOURCE);
+        else if(test_protocol == FTP_TEST)
+            todo_wine CHECK_EXPECT(OnProgress_FINDINGRESOURCE);
         else
             CHECK_EXPECT(OnProgress_FINDINGRESOURCE);
         if((bindf & BINDF_ASYNCHRONOUS) && emulate_protocol)
@@ -1158,6 +1165,8 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulP
     case BINDSTATUS_CONNECTING:
         if(iface == &objbsc)
             CHECK_EXPECT(Obj_OnProgress_CONNECTING);
+        else if(test_protocol == FTP_TEST)
+            todo_wine CHECK_EXPECT(OnProgress_CONNECTING);
         else
             CHECK_EXPECT(OnProgress_CONNECTING);
         if((bindf & BINDF_ASYNCHRONOUS) && emulate_protocol)
@@ -1166,6 +1175,8 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulP
     case BINDSTATUS_SENDINGREQUEST:
         if(iface == &objbsc)
             CHECK_EXPECT(Obj_OnProgress_SENDINGREQUEST);
+        else if(test_protocol == FTP_TEST)
+            CHECK_EXPECT2(OnProgress_SENDINGREQUEST);
         else
             CHECK_EXPECT(OnProgress_SENDINGREQUEST);
         if((bindf & BINDF_ASYNCHRONOUS) && emulate_protocol)
@@ -2077,7 +2088,8 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
             SET_EXPECT(OnProgress_FINDINGRESOURCE);
             SET_EXPECT(OnProgress_CONNECTING);
         }
-        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == FILE_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == FTP_TEST
+           || test_protocol == FILE_TEST)
             SET_EXPECT(OnProgress_SENDINGREQUEST);
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             SET_EXPECT(OnResponse);
@@ -2085,7 +2097,7 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
         SET_EXPECT(OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == FILE_TEST)
             SET_EXPECT(OnProgress_CACHEFILENAMEAVAILABLE);
-        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == FTP_TEST)
             SET_EXPECT(OnProgress_DOWNLOADINGDATA);
         SET_EXPECT(OnProgress_ENDDOWNLOADDATA);
         if(tymed != TYMED_FILE || test_protocol != ABOUT_TEST)
@@ -2161,13 +2173,15 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
         }
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == FILE_TEST)
             CHECK_CALLED(OnProgress_SENDINGREQUEST);
+        else if(test_protocol == FTP_TEST)
+            todo_wine CHECK_CALLED(OnProgress_SENDINGREQUEST);
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             CHECK_CALLED(OnResponse);
         CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
         CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == FILE_TEST)
             CHECK_CALLED(OnProgress_CACHEFILENAMEAVAILABLE);
-        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == FTP_TEST)
             CLEAR_CALLED(OnProgress_DOWNLOADINGDATA);
         CHECK_CALLED(OnProgress_ENDDOWNLOADDATA);
         if(tymed != TYMED_FILE || test_protocol != ABOUT_TEST)
@@ -2707,6 +2721,11 @@ START_TEST(url)
 
         trace("test URLDownloadToFile for http protocol...\n");
         test_URLDownloadToFile(HTTP_TEST, FALSE);
+
+        bindf |= BINDF_NOWRITECACHE;
+
+        trace("ftp test...\n");
+        test_BindToStorage(FTP_TEST, FALSE, TYMED_ISTREAM);
 
         trace("test failures...\n");
         test_BindToStorage_fail();
