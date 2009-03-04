@@ -2069,6 +2069,9 @@ BOOL WINAPI EnableScrollBar( HWND hwnd, UINT nBar, UINT flags )
     if (bFineWithMe && infoPtr->flags == flags) return FALSE;
     infoPtr->flags = flags;
 
+    if (nBar == SB_CTL && (flags == ESB_DISABLE_BOTH || flags == ESB_ENABLE_BOTH))
+        EnableWindow(hwnd, flags == ESB_ENABLE_BOTH);
+
     SCROLL_RefreshScrollBar( hwnd, nBar, TRUE, TRUE );
     return TRUE;
 }

@@ -54,15 +54,26 @@ static void scrollbar_test1(void)
 
     ret = EnableScrollBar( hScroll, SB_CTL, ESB_DISABLE_BOTH );
     ok( ret, "The scrollbar should be disabled.\n" );
-    todo_wine
-    {
-        ok( !IsWindowEnabled( hScroll ), "The scrollbar window should be disabled.\n" );
-    }
+    ok( !IsWindowEnabled( hScroll ), "The scrollbar window should be disabled.\n" );
 
     ret = EnableScrollBar( hScroll, SB_CTL, ESB_ENABLE_BOTH );
     ok( ret, "The scrollbar should be enabled.\n" );
     ok( IsWindowEnabled( hScroll ), "The scrollbar window should be enabled.\n" );
 
+    /* test buttons separately */
+    ret = EnableScrollBar( hScroll, SB_CTL, ESB_DISABLE_LTUP );
+    ok( ret, "The scrollbar LTUP button should be disabled.\n" );
+    ok( IsWindowEnabled( hScroll ), "The scrollbar window should be enabled.\n" );
+    ret = EnableScrollBar( hScroll, SB_CTL, ESB_ENABLE_BOTH );
+    ok( ret, "The scrollbar should be enabled.\n" );
+    ok( IsWindowEnabled( hScroll ), "The scrollbar window should be enabled.\n" );
+
+    ret = EnableScrollBar( hScroll, SB_CTL, ESB_DISABLE_RTDN );
+    ok( ret, "The scrollbar RTDN button should be disabled.\n" );
+    ok( IsWindowEnabled( hScroll ), "The scrollbar window should be enabled.\n" );
+    ret = EnableScrollBar( hScroll, SB_CTL, ESB_ENABLE_BOTH );
+    ok( ret, "The scrollbar should be enabled.\n" );
+    ok( IsWindowEnabled( hScroll ), "The scrollbar window should be enabled.\n" );
 }
 
 static void scrollbar_test2(void)
