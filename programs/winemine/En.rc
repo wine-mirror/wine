@@ -40,12 +40,12 @@ MENU_WINEMINE MENU DISCARDABLE
         MENUITEM "&Beginner",      IDM_BEGINNER
         MENUITEM "&Advanced",      IDM_ADVANCED
         MENUITEM "&Expert",        IDM_EXPERT
-        MENUITEM "&Custom",        IDM_CUSTOM
+        MENUITEM "&Custom...",     IDM_CUSTOM
         MENUITEM SEPARATOR
         MENUITEM "E&xit\tAlt+X",   IDM_EXIT
     }
     POPUP "&Info" {
-        MENUITEM "&Fastest Times",    IDM_TIMES
+        MENUITEM "&Fastest Times...", IDM_TIMES
         MENUITEM "&About",         IDM_ABOUT
     }
 }
