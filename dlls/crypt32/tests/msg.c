@@ -1837,7 +1837,13 @@ static void test_signed_msg_get_param(void)
     /* Content and bare content are always gettable */
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, NULL, &size);
-    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(ret || broken(!ret /* Win9x */), "CryptMsgGetParam failed: %08x\n",
+     GetLastError());
+    if (!ret)
+    {
+        skip("message parameters are broken, skipping tests");
+        return;
+    }
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_BARE_CONTENT_PARAM, 0, NULL, &size);
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
@@ -2201,8 +2207,9 @@ static void test_decode_msg_update(void)
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, hashEmptyContent, sizeof(hashEmptyContent), TRUE);
     ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
-     GetLastError() == OSS_PDU_MISMATCH /* Win9x */),
-     "Expected CRYPT_E_ASN1_BADTAG or OSS_PDU_MISMATCH, got %x\n",
+     GetLastError() == OSS_PDU_MISMATCH /* some Win9x */ ||
+     GetLastError() == OSS_DATA_ERROR /* some Win9x */),
+     "Expected CRYPT_E_ASN1_BADTAG or OSS_PDU_MISMATCH or OSS_DATA_ERROR, got %x\n",
      GetLastError());
     CryptMsgClose(msg);
     /* On the other hand, decoding the bare content of an empty hash message
@@ -2213,8 +2220,9 @@ static void test_decode_msg_update(void)
     ret = CryptMsgUpdate(msg, hashEmptyBareContent,
      sizeof(hashEmptyBareContent), TRUE);
     ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
-     GetLastError() == OSS_PDU_MISMATCH /* Win9x */),
-     "Expected CRYPT_E_ASN1_BADTAG or OSS_PDU_MISMATCH, got %x\n",
+     GetLastError() == OSS_PDU_MISMATCH /* some Win9x */ ||
+     GetLastError() == OSS_DATA_ERROR /* some Win9x */),
+     "Expected CRYPT_E_ASN1_BADTAG or OSS_PDU_MISMATCH or OSS_DATA_ERROR, got %x\n",
      GetLastError());
     CryptMsgClose(msg);
     /* but succeeds with explicit type. */
@@ -2222,7 +2230,8 @@ static void test_decode_msg_update(void)
      NULL);
     ret = CryptMsgUpdate(msg, hashEmptyBareContent,
      sizeof(hashEmptyBareContent), TRUE);
-    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    ok(ret || broken(GetLastError() == OSS_DATA_ERROR /* win9x */),
+     "CryptMsgUpdate failed: %x\n", GetLastError());
     CryptMsgClose(msg);
 
     /* And again, opening a (non-empty) hash message with unspecified type
@@ -2239,8 +2248,9 @@ static void test_decode_msg_update(void)
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, hashContent, sizeof(hashContent), TRUE);
     ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
-     GetLastError() == OSS_PDU_MISMATCH /* Win9x */),
-     "Expected CRYPT_E_ASN1_BADTAG or OSS_PDU_MISMATCH, got %x\n",
+     GetLastError() == OSS_PDU_MISMATCH /* some Win9x */ ||
+     GetLastError() == OSS_DATA_ERROR /* some Win9x */),
+     "Expected CRYPT_E_ASN1_BADTAG or OSS_PDU_MISMATCH or OSS_DATA_ERROR, got %x\n",
      GetLastError());
     CryptMsgClose(msg);
     /* and decoding the bare content of a non-empty hash message fails with
@@ -2250,8 +2260,9 @@ static void test_decode_msg_update(void)
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, hashBareContent, sizeof(hashBareContent), TRUE);
     ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
-     GetLastError() == OSS_PDU_MISMATCH /* Win9x */),
-     "Expected CRYPT_E_ASN1_BADTAG or OSS_PDU_MISMATCH, got %x\n",
+     GetLastError() == OSS_PDU_MISMATCH /* some Win9x */ ||
+     GetLastError() == OSS_DATA_ERROR /* some Win9x */),
+     "Expected CRYPT_E_ASN1_BADTAG or OSS_PDU_MISMATCH or OSS_DATA_ERROR, got %x\n",
      GetLastError());
     CryptMsgClose(msg);
     /* but succeeds with explicit type. */
@@ -2278,8 +2289,10 @@ static void test_decode_msg_update(void)
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, signedWithCertAndCrlBareContent,
      sizeof(signedWithCertAndCrlBareContent), TRUE);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
-     "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+     GetLastError() == OSS_DATA_ERROR /* Win9x */),
+     "Expected CRYPT_E_ASN1_BADTAG or OSS_DATA_ERROR, got %08x\n",
+     GetLastError());
     CryptMsgClose(msg);
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, 0, NULL,
      NULL);
