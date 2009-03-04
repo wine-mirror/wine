@@ -853,7 +853,7 @@ static void test_SHGetPathFromIDList(void)
 
     if(!pSHGetPathFromIDListW || !pSHGetSpecialFolderPathW)
     {
-        skip("SHGetPathFromIDListW() or SHGetSpecialFolderPathW() is missing\n");
+        win_skip("SHGetPathFromIDListW() or SHGetSpecialFolderPathW() is missing\n");
         return;
     }
 
@@ -868,7 +868,16 @@ static void test_SHGetPathFromIDList(void)
     result = pSHGetSpecialFolderPathW(NULL, wszDesktop, CSIDL_DESKTOP, FALSE);
     ok(result, "SHGetSpecialFolderPathW(CSIDL_DESKTOP) failed! Last error: %u\n", GetLastError());
     if (!result) return;
-    
+
+    /* Check if we are on Win9x */
+    SetLastError(0xdeadbeef);
+    lstrcmpiW(wszDesktop, wszDesktop);
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("Most W-calls are not implemented\n");
+        return;
+    }
+
     result = pSHGetPathFromIDListW(pidlEmpty, wszPath);
     ok(result, "SHGetPathFromIDListW failed! Last error: %u\n", GetLastError());
     if (!result) return;
