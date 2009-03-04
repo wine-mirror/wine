@@ -743,6 +743,16 @@ void add_16bit_exports( DLLSPEC *spec32, DLLSPEC *spec16 )
     odp->ordinal = 1;
     odp->link_name = xstrdup( ".L__wine_spec_dos_header" );
 
+    if (spec16->main_module)
+    {
+        odp = add_entry_point( spec32 );
+        odp->type = TYPE_EXTERN;
+        odp->name = xstrdup( "__wine_spec_main_module" );
+        odp->lineno = 0;
+        odp->ordinal = 2;
+        odp->link_name = xstrdup( ".L__wine_spec_main_module" );
+    }
+
     assign_names( spec32 );
     assign_ordinals( spec32 );
 }

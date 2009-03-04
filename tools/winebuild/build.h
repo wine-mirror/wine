@@ -89,6 +89,7 @@ typedef struct
     char            *file_name;          /* file name of the dll */
     char            *dll_name;           /* internal name of the dll */
     char            *init_func;          /* initialization routine */
+    char            *main_module;        /* main Win32 module for Win16 specs */
     SPEC_TYPE        type;               /* type of dll (Win16/Win32) */
     int              base;               /* ordinal base */
     int              limit;              /* ordinal limit */
