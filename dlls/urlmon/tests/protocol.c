@@ -110,7 +110,7 @@ static const WCHAR emptyW[] = {0};
 
 static HRESULT expect_hrResult;
 static LPCWSTR file_name, http_url, expect_wsz;
-static IInternetProtocol *http_protocol = NULL;
+static IInternetProtocol *async_protocol = NULL;
 static BOOL first_data_notif = FALSE, http_is_first = FALSE,
     http_post_test = FALSE;
 static int state = 0, prot_state;
@@ -128,6 +128,7 @@ static enum {
     FILE_TEST,
     HTTP_TEST,
     HTTPS_TEST,
+    FTP_TEST,
     MK_TEST,
     BIND_TEST
 } tested_protocol;
@@ -135,13 +136,20 @@ static enum {
 static const WCHAR protocol_names[][10] = {
     {'f','i','l','e',0},
     {'h','t','t','p',0},
+    {'h','t','t','p','s',0},
+    {'f','t','p',0},
     {'m','k',0},
     {'t','e','s','t',0}
 };
 
-static const WCHAR binding_urls[][30] = {
+static const WCHAR binding_urls[][130] = {
     {'f','i','l','e',':','t','e','s','t','.','h','t','m','l',0},
     {'h','t','t','p',':','/','/','t','e','s','t','/','t','e','s','t','.','h','t','m','l',0},
+    {'h','t','t','p','s',':','/','/','w','w','w','.','c','o','d','e','w','e','a','v','e','r','s',
+     '.','c','o','m','/','t','e','s','t','.','h','t','m','l',0},
+    {'f','t','p',':','/','/','f','t','p','.','w','i','n','e','h','q','.','o','r','g',
+     '/','p','u','b','/','o','t','h','e','r',
+     '/','w','i','n','e','l','o','g','o','.','x','c','f','.','t','a','r','.','b','z','2',0},
     {'m','k',':','t','e','s','t',0},
     {'t','e','s','t',':','/','/','f','i','l','e','.','h','t','m','l',0}
 };
@@ -356,37 +364,49 @@ static HRESULT WINAPI ProtocolSink_Switch(IInternetProtocolSink *iface, PROTOCOL
     }
 
     if (!state) {
-        if (http_is_first) {
-            CLEAR_CALLED(ReportProgress_FINDINGRESOURCE);
-            CLEAR_CALLED(ReportProgress_CONNECTING);
-            CLEAR_CALLED(ReportProgress_PROXYDETECTING);
-        } else todo_wine {
-            CHECK_NOT_CALLED(ReportProgress_FINDINGRESOURCE);
-            /* IE7 does call this */
-            CLEAR_CALLED(ReportProgress_CONNECTING);
+        if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST || tested_protocol == FTP_TEST) {
+            if (http_is_first) {
+                CLEAR_CALLED(ReportProgress_FINDINGRESOURCE);
+                CLEAR_CALLED(ReportProgress_CONNECTING);
+                CLEAR_CALLED(ReportProgress_PROXYDETECTING);
+            } else todo_wine {
+                    CHECK_NOT_CALLED(ReportProgress_FINDINGRESOURCE);
+                    /* IE7 does call this */
+                    CLEAR_CALLED(ReportProgress_CONNECTING);
+                }
         }
-        CHECK_CALLED(ReportProgress_SENDINGREQUEST);
-        SET_EXPECT(OnResponse);
-        if(tested_protocol == HTTPS_TEST)
-            SET_EXPECT(ReportProgress_ACCEPTRANGES);
-        SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
-        if(bindf & BINDF_NEEDFILE)
-            SET_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
+        if(tested_protocol == FTP_TEST)
+            todo_wine CHECK_CALLED(ReportProgress_SENDINGREQUEST);
+        else
+            CHECK_CALLED(ReportProgress_SENDINGREQUEST);
+        if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST) {
+            SET_EXPECT(OnResponse);
+            if(tested_protocol == HTTPS_TEST)
+                SET_EXPECT(ReportProgress_ACCEPTRANGES);
+            SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
+            if(bindf & BINDF_NEEDFILE)
+                SET_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
+        }
     }
 
     SET_EXPECT(ReportData);
-    hres = IInternetProtocol_Continue(http_protocol, pProtocolData);
+    hres = IInternetProtocol_Continue(async_protocol, pProtocolData);
     ok(hres == S_OK, "Continue failed: %08x\n", hres);
-    CHECK_CALLED(ReportData);
+    if(tested_protocol == FTP_TEST)
+        CLEAR_CALLED(ReportData);
+    else
+        CHECK_CALLED(ReportData);
 
     if (!state) {
         state = 1;
-        CHECK_CALLED(OnResponse);
-        if(tested_protocol == HTTPS_TEST)
-            CHECK_CALLED(ReportProgress_ACCEPTRANGES);
-        CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
-        if(bindf & BINDF_NEEDFILE)
-            CHECK_CALLED(ReportProgress_CACHEFILENAMEAVAILABLE);
+        if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST) {
+            CHECK_CALLED(OnResponse);
+            if(tested_protocol == HTTPS_TEST)
+                CHECK_CALLED(ReportProgress_ACCEPTRANGES);
+            CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
+            if(bindf & BINDF_NEEDFILE)
+                CHECK_CALLED(ReportProgress_CACHEFILENAMEAVAILABLE);
+        }
     }
 
     SetEvent(event_complete);
@@ -451,7 +471,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         ok(szStatusText != NULL, "szStatusText == NULL\n");
         break;
     case BINDSTATUS_SENDINGREQUEST:
-        CHECK_EXPECT(ReportProgress_SENDINGREQUEST);
+        CHECK_EXPECT2(ReportProgress_SENDINGREQUEST);
         if(tested_protocol == FILE_TEST) {
             ok(szStatusText != NULL, "szStatusText == NULL\n");
             if(szStatusText)
@@ -508,7 +528,7 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
         ok(ulProgressMax == 13, "ulProgressMax=%d, expected 13\n", ulProgressMax);
         ok(grfBSCF == (BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION),
                 "grcfBSCF = %08x\n", grfBSCF);
-    }else if(!binding_test && (tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST)) {
+    }else if(!binding_test && (tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST || tested_protocol == FTP_TEST)) {
         if(!(grfBSCF & BSCF_LASTDATANOTIFICATION) || (grfBSCF & BSCF_DATAFULLYAVAILABLE))
             CHECK_EXPECT(ReportData);
         else if (http_post_test)
@@ -570,9 +590,12 @@ static HRESULT WINAPI ProtocolSink_ReportResult(IInternetProtocolSink *iface, HR
 {
     CHECK_EXPECT(ReportResult);
 
-    ok(hrResult == expect_hrResult, "hrResult = %08x, expected: %08x\n",
-            hrResult, expect_hrResult);
-    if(SUCCEEDED(hrResult))
+    if(tested_protocol == FTP_TEST)
+        ok(hrResult == E_PENDING || hrResult == S_OK, "hrResult = %08x, expected E_PENDING or S_OK\n", hrResult);
+    else
+        ok(hrResult == expect_hrResult, "hrResult = %08x, expected: %08x\n",
+           hrResult, expect_hrResult);
+    if(SUCCEEDED(hrResult) || tested_protocol == FTP_TEST)
         ok(dwError == ERROR_SUCCESS, "dwError = %d, expected ERROR_SUCCESS\n", dwError);
     else
         ok(dwError != ERROR_SUCCESS, "dwError == ERROR_SUCCESS\n");
@@ -1529,7 +1552,7 @@ static BOOL http_protocol_start(LPCWSTR url, BOOL is_first)
     if (http_post_test)
         SET_EXPECT(GetBindString_POST_COOKIE);
 
-    hres = IInternetProtocol_Start(http_protocol, url, &protocol_sink, &bind_info, 0, 0);
+    hres = IInternetProtocol_Start(async_protocol, url, &protocol_sink, &bind_info, 0, 0);
     ok(hres == S_OK, "Start failed: %08x\n", hres);
     if(FAILED(hres))
         return FALSE;
@@ -1556,6 +1579,35 @@ static BOOL http_protocol_start(LPCWSTR url, BOOL is_first)
         CHECK_CALLED(GetBindString_POST_COOKIE);
 
     return TRUE;
+}
+
+static void test_protocol_terminate(IInternetProtocol *protocol)
+{
+    BYTE buf[3600];
+    DWORD cb;
+    HRESULT hres;
+
+    hres = IInternetProtocol_LockRequest(protocol, 0);
+    ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
+
+    hres = IInternetProtocol_Read(protocol, buf, 1, &cb);
+    ok(hres == S_FALSE, "Read failed: %08x\n", hres);
+
+    hres = IInternetProtocol_Terminate(protocol, 0);
+    ok(hres == S_OK, "Terminate failed: %08x\n", hres);
+
+    /* This wait is to give the internet handles being freed in Terminate
+     * enough time to actually terminate in all cases. Internet handles
+     * terminate asynchronously and native reuses the main InternetOpen
+     * handle. The only case in which this seems to be necessary is on
+     * wine with native wininet and urlmon, resulting in the next time
+     * test_http_protocol_url being called the first data notification actually
+     * being an extra last data notification from the previous connection
+     * about once out of every ten times. */
+    Sleep(100);
+
+    hres = IInternetProtocol_UnlockRequest(protocol);
+    ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
 }
 
 /* is_first refers to whether this is the first call to this function
@@ -1588,13 +1640,14 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_https, BOOL is_first)
         return;
 
     hres = IClassFactory_CreateInstance(factory, NULL, &IID_IInternetProtocol,
-                                        (void**)&http_protocol);
+                                        (void**)&async_protocol);
     ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
     if(SUCCEEDED(hres)) {
         BYTE buf[3600];
         DWORD cb;
+        ULONG ref;
 
-        test_priority(http_protocol);
+        test_priority(async_protocol);
 
         SET_EXPECT(ReportProgress_FINDINGRESOURCE);
         SET_EXPECT(ReportProgress_CONNECTING);
@@ -1616,7 +1669,7 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_https, BOOL is_first)
         SET_EXPECT(ReportResult);
         expect_hrResult = S_OK;
 
-        hres = IInternetProtocol_Read(http_protocol, buf, 1, &cb);
+        hres = IInternetProtocol_Read(async_protocol, buf, 1, &cb);
         ok((hres == E_PENDING && cb==0) ||
            (hres == S_OK && cb==1), "Read failed: %08x (%d bytes)\n", hres, cb);
 
@@ -1631,9 +1684,9 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_https, BOOL is_first)
                 SET_EXPECT(Switch);
             else
                 SET_EXPECT(ReportData);
-            hres = IInternetProtocol_Read(http_protocol, buf, sizeof(buf), &cb);
+            hres = IInternetProtocol_Read(async_protocol, buf, sizeof(buf), &cb);
             if(hres == E_PENDING) {
-                hres = IInternetProtocol_Read(http_protocol, buf, 1, &cb);
+                hres = IInternetProtocol_Read(async_protocol, buf, 1, &cb);
                 ok((hres == E_PENDING && cb==0) ||
                    (hres == S_OK && cb==1), "Read failed: %08x (%d bytes)\n", hres, cb);
                 WaitForSingleObject(event_complete, INFINITE);
@@ -1641,7 +1694,7 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_https, BOOL is_first)
                     CHECK_CALLED(Switch);
                 else
                     CHECK_CALLED(ReportData);
-            } else {
+            }else {
                 if(bindf & BINDF_FROMURLMON)
                     CHECK_NOT_CALLED(Switch);
                 else
@@ -1652,29 +1705,9 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_https, BOOL is_first)
         ok(hres == S_FALSE, "Read failed: %08x\n", hres);
         CHECK_CALLED(ReportResult);
 
-        hres = IInternetProtocol_LockRequest(http_protocol, 0);
-        ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
-
-        hres = IInternetProtocol_Read(http_protocol, buf, 1, &cb);
-        ok(hres == S_FALSE, "Read failed: %08x\n", hres);
-
-        hres = IInternetProtocol_Terminate(http_protocol, 0);
-        ok(hres == S_OK, "Terminate failed: %08x\n", hres);
-
-        /* This wait is to give the internet handles being freed in Terminate
-         * enough time to actually terminate in all cases. Internet handles
-         * terminate asynchronously and native reuses the main InternetOpen
-         * handle. The only case in which this seems to be necessary is on
-         * wine with native wininet and urlmon, resulting in the next time
-         * test_http_protocol_url being called the first data notification actually
-         * being an extra last data notification from the previous connection
-         * about once out of every ten times. */
-        Sleep(100);
-
-        hres = IInternetProtocol_UnlockRequest(http_protocol);
-        ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
-
-        IInternetProtocol_Release(http_protocol);
+        test_protocol_terminate(async_protocol);
+        ref = IInternetProtocol_Release(async_protocol);
+        ok(!ref, "ref=%x\n", hres);
     }
 
     IClassFactory_Release(factory);
@@ -1722,6 +1755,93 @@ static void test_https_protocol(void)
     tested_protocol = HTTPS_TEST;
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
     test_http_protocol_url(codeweavers_url, TRUE, TRUE);
+}
+
+
+static void test_ftp_protocol(void)
+{
+    IInternetProtocolInfo *protocol_info;
+    IClassFactory *factory;
+    IUnknown *unk;
+    BYTE buf[4096];
+    ULONG ref;
+    DWORD cb;
+    HRESULT hres;
+
+    static const WCHAR ftp_urlW[] = {'f','t','p',':','/','/','f','t','p','.','w','i','n','e','h','q','.','o','r','g',
+    '/','p','u','b','/','o','t','h','e','r','/',
+    'w','i','n','e','l','o','g','o','.','x','c','f','.','t','a','r','.','b','z','2',0};
+
+    trace("Testing ftp protocol...\n");
+
+    bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
+    state = 0;
+    tested_protocol = FTP_TEST;
+    first_data_notif = TRUE;
+    expect_hrResult = E_PENDING;
+
+    hres = CoGetClassObject(&CLSID_FtpProtocol, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
+    ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocolInfo, (void**)&protocol_info);
+    ok(hres == E_NOINTERFACE, "Could not get IInternetProtocolInfo interface: %08x, expected E_NOINTERFACE\n", hres);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IClassFactory, (void**)&factory);
+    ok(hres == S_OK, "Could not get IClassFactory interface\n");
+    IUnknown_Release(unk);
+    if(FAILED(hres))
+        return;
+
+    hres = IClassFactory_CreateInstance(factory, NULL, &IID_IInternetProtocol,
+                                        (void**)&async_protocol);
+    IClassFactory_Release(factory);
+    ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
+
+    test_priority(async_protocol);
+
+    SET_EXPECT(GetBindInfo);
+    SET_EXPECT(GetBindString_USER_AGENT);
+    SET_EXPECT(ReportProgress_FINDINGRESOURCE);
+    SET_EXPECT(ReportProgress_CONNECTING);
+    SET_EXPECT(ReportProgress_SENDINGREQUEST);
+    SET_EXPECT(Switch);
+
+    hres = IInternetProtocol_Start(async_protocol, ftp_urlW, &protocol_sink, &bind_info, 0, 0);
+    ok(hres == S_OK, "Start failed: %08x\n", hres);
+    CHECK_CALLED(GetBindInfo);
+    todo_wine CHECK_NOT_CALLED(GetBindString_USER_AGENT);
+
+    SET_EXPECT(ReportResult);
+
+    hres = IInternetProtocol_Read(async_protocol, buf, 1, &cb);
+    ok((hres == E_PENDING && cb==0) ||
+       (hres == S_OK && cb==1), "Read failed: %08x (%d bytes)\n", hres, cb);
+
+    WaitForSingleObject(event_complete, INFINITE);
+    CHECK_CALLED(Switch);
+
+    while(1) {
+        SET_EXPECT(Switch);
+
+        hres = IInternetProtocol_Read(async_protocol, buf, sizeof(buf), &cb);
+        if(hres == E_PENDING) {
+            WaitForSingleObject(event_complete, INFINITE);
+            CHECK_CALLED(Switch);
+        }else {
+            CHECK_NOT_CALLED(Switch);
+            if(cb == 0) break;
+        }
+    }
+
+    ok(hres == S_FALSE, "Read failed: %08x\n", hres);
+    CHECK_CALLED(ReportResult);
+
+    test_protocol_terminate(async_protocol);
+
+    ref = IInternetProtocol_Release(async_protocol);
+    ok(!ref, "ref=%d\n", ref);
 }
 
 static void test_mk_protocol(void)
@@ -2011,6 +2131,7 @@ START_TEST(protocol)
     test_file_protocol();
     test_http_protocol();
     test_https_protocol();
+    test_ftp_protocol();
     test_mk_protocol();
     test_CreateBinding();
     test_binding(FILE_TEST);
