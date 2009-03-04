@@ -707,7 +707,6 @@ static void test_GetAttributesOf(void)
     char  cCurrDirA [MAX_PATH] = {0};
     WCHAR cCurrDirW [MAX_PATH];
     static WCHAR cTestDirW[] = {'t','e','s','t','d','i','r',0};
-    static const WCHAR cBackSlash[] = {'\\',0};
     IShellFolder *IDesktopFolder, *testIShellFolder;
     ITEMIDLIST *newPIDL;
     int len;
@@ -768,18 +767,18 @@ static void test_GetAttributesOf(void)
 
     IShellFolder_Release(psfMyComputer);
 
-    /* create test directory */
-    CreateFilesFolders();
-
     GetCurrentDirectoryA(MAX_PATH, cCurrDirA);
     len = lstrlenA(cCurrDirA);
 
     if (len == 0) {
-	trace("GetCurrentDirectoryA returned empty string. Skipping test_EnumObjects_and_CompareIDs\n");
+	win_skip("GetCurrentDirectoryA returned empty string. Skipping test_GetAttributesOf\n");
 	return;
     }
     if(cCurrDirA[len-1] == '\\')
 	cCurrDirA[len-1] = 0;
+
+    /* create test directory */
+    CreateFilesFolders();
 
     MultiByteToWideChar(CP_ACP, 0, cCurrDirA, -1, cCurrDirW, MAX_PATH);
  
@@ -808,8 +807,8 @@ static void test_GetAttributesOf(void)
     IMalloc_Free(ppM, newPIDL);
 
     /* append testdirectory name to path */
-    lstrcatW(cCurrDirW, cBackSlash);
-    lstrcatW(cCurrDirW, cTestDirW);
+    lstrcatA(cCurrDirA, "\\testdir");
+    MultiByteToWideChar(CP_ACP, 0, cCurrDirA, -1, cCurrDirW, MAX_PATH);
 
     hr = IShellFolder_ParseDisplayName(IDesktopFolder, NULL, NULL, cCurrDirW, NULL, &newPIDL, 0);
     ok(hr == S_OK, "ParseDisplayName failed %08x\n", hr);
