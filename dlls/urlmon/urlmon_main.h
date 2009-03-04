@@ -56,19 +56,6 @@ static inline void URLMON_UnlockModule(void) { InterlockedDecrement( &URLMON_ref
 #define DEFINE_THIS2(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,ifc)))
 #define DEFINE_THIS(cls,ifc,iface) DEFINE_THIS2(cls,lp ## ifc ## Vtbl,iface)
 
-typedef struct
-{	
-	const IStreamVtbl	*lpVtbl;
-	LONG		ref;
-	HANDLE		handle;
-	BOOL		closed;
-	WCHAR		*pszFileName;
-	WCHAR		*pszURL;
-} IUMCacheStream;
-
-HRESULT	UMCreateStreamOnCacheFile(LPCWSTR pszURL, DWORD dwSize, LPWSTR pszFileName, HANDLE *phfile, IUMCacheStream **ppstr);
-void	UMCloseCacheFileStream(IUMCacheStream *pstr);
-
 IInternetProtocolInfo *get_protocol_info(LPCWSTR url);
 HRESULT get_protocol_handler(LPCWSTR url, CLSID *clsid, IClassFactory **ret);
 BOOL is_registered_protocol(LPCWSTR);
