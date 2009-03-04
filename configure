@@ -3904,6 +3904,7 @@ then
     enable_ifsmgr_vxd=${enable_ifsmgr_vxd:-no}
     enable_mmdevldr_vxd=${enable_mmdevldr_vxd:-no}
     enable_monodebg_vxd=${enable_monodebg_vxd:-no}
+    enable_stress_dll16=${enable_stress_dll16:-no}
     enable_vdhcp_vxd=${enable_vdhcp_vxd:-no}
     enable_vmm_vxd=${enable_vmm_vxd:-no}
     enable_vnbt_vxd=${enable_vnbt_vxd:-no}
@@ -26827,6 +26828,14 @@ dlls/sti/Makefile: dlls/sti/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/sti/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/stress.dll16/Makefile"
+test "x$enable_stress_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	stress.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/stress.dll16/Makefile: dlls/stress.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/stress.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/strmiids/Makefile"
 test "x$enable_strmiids" != xno && ALL_IMPLIB_DIRS="$ALL_IMPLIB_DIRS \\
 	strmiids"
@@ -28954,6 +28963,7 @@ do
     "dlls/stdole2.tlb/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/stdole2.tlb/Makefile" ;;
     "dlls/stdole32.tlb/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/stdole32.tlb/Makefile" ;;
     "dlls/sti/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sti/Makefile" ;;
+    "dlls/stress.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/stress.dll16/Makefile" ;;
     "dlls/strmiids/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/strmiids/Makefile" ;;
     "dlls/svrapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/svrapi/Makefile" ;;
     "dlls/sxs/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sxs/Makefile" ;;

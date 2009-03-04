@@ -49,7 +49,6 @@ WIN16_FILES = \
 	shell.dll16 \
 	sound.drv16 \
 	storage.dll16 \
-	stress.dll16 \
 	system.drv16 \
 	toolhelp.dll16 \
 	twain.dll16 \
@@ -91,7 +90,7 @@ dispdib.dll16 gdi.exe16 wing.dll16:
 imm.dll16:
 	echo "imm32.dll" >$@
 
-comm.drv16 krnl386.exe16 stress.dll16 system.drv16 toolhelp.dll16 win87em.dll16 windebug.dll16:
+comm.drv16 krnl386.exe16 system.drv16 toolhelp.dll16 win87em.dll16 windebug.dll16:
 	echo "kernel32.dll" >$@
 
 lzexpand.dll16:
