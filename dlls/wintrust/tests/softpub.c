@@ -266,6 +266,8 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
         PROVDATA_SIP provDataSIP = { 0 };
         static const GUID unknown = { 0xC689AAB8, 0x8E78, 0x11D0, { 0x8C,0x47,
          0x00,0xC0,0x4F,0xC2,0x95,0xEE } };
+        static GUID bogusGuid = { 0xdeadbeef, 0xbaad, 0xf00d, { 0x00,0x00,0x00,
+         0x00,0x00,0x00,0x00,0x00 } };
 
         ret = funcs->pfnObjectTrust(&data);
         ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
@@ -316,6 +318,28 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
             ok(provDataSIP.pSip != NULL, "Expected a SIP\n");
             ok(provDataSIP.psSipSubjectInfo != NULL,
              "Expected a subject info\n");
+        }
+        /* Specifying the GUID results in that GUID being the subject GUID */
+        fileInfo.pgKnownSubject = &bogusGuid;
+        ret = funcs->pfnObjectTrust(&data);
+        ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
+        ok(data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
+         TRUST_E_NOSIGNATURE ||
+         data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
+         TRUST_E_SUBJECT_FORM_UNKNOWN,
+         "Expected TRUST_E_NOSIGNATURE or TRUST_E_SUBJECT_FORM_UNKNOWN, got %08x\n",
+         data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
+        if (data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
+         TRUST_E_NOSIGNATURE)
+        {
+            ok(!memcmp(&provDataSIP.gSubject, &bogusGuid, sizeof(bogusGuid)),
+             "unexpected subject GUID\n");
+        }
+        /* Specifying a bogus GUID pointer crashes */
+        if (0)
+        {
+            fileInfo.pgKnownSubject = (GUID *)0xdeadbeef;
+            ret = funcs->pfnObjectTrust(&data);
         }
         funcs->pfnFree(data.padwTrustStepErrors);
     }
