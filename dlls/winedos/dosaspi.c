@@ -196,7 +196,7 @@ static void WINAPI ASPI_DOS_func(CONTEXT86 *context)
  */
 void WINAPI DOSVM_ASPIHandler( CONTEXT86 *context )
 {
-	FARPROC16 *p = (FARPROC16 *)CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+	FARPROC16 *p = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
 	TRACE("DOS ASPI opening\n");
 	if ((CX_reg(context) == 4) || (CX_reg(context) == 5))
 	{

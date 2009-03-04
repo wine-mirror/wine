@@ -53,7 +53,7 @@ typedef struct {
 static BYTE * XMS_Offset( MOVEOFS *ofs )
 {
     if (ofs->Handle) return (BYTE*)GlobalLock16(ofs->Handle)+ofs->Offset;
-    else return (BYTE*)PTR_REAL_TO_LIN(SELECTOROF(ofs->Offset),OFFSETOF(ofs->Offset));
+    else return PTR_REAL_TO_LIN(SELECTOROF(ofs->Offset),OFFSETOF(ofs->Offset));
 }
 
 /**********************************************************************

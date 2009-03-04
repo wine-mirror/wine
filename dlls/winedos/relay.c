@@ -108,7 +108,7 @@ static void __stdcall RELAY_RelayStub( DOSRELAY       proc,
 {
     if (proc)
     {
-        CONTEXT86     *context    = (CONTEXT86*)ctx86;
+        CONTEXT86     *context    = ctx86;
         RELAY_Stack16 *stack      = RELAY_GetPointer( context->Esp );
 
         DWORD          old_seg_cs = context->SegCs;

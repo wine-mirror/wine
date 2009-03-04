@@ -460,7 +460,7 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
       WORD fullCmdLength;
       LPBYTE psp_start = (LPBYTE)((DWORD)DOSVM_psp << 4);
       PDB16 *psp = (PDB16 *)psp_start;
-      ExecBlock *blk = (ExecBlock *)paramblk;
+      ExecBlock *blk = paramblk;
       LPBYTE cmdline = PTR_REAL_TO_LIN(SELECTOROF(blk->cmdline),OFFSETOF(blk->cmdline));
       LPBYTE envblock = PTR_REAL_TO_LIN(psp->environment, 0);
       int    cmdLength = cmdline[0];
@@ -530,7 +530,7 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
       /* MZ_LoadImage created a new PSP and loaded new values into it,
        * let's work on the new values now */
       LPBYTE psp_start = (LPBYTE)((DWORD)DOSVM_psp << 4);
-      ExecBlock *blk = (ExecBlock *)paramblk;
+      ExecBlock *blk = paramblk;
       LPBYTE cmdline = PTR_REAL_TO_LIN(SELECTOROF(blk->cmdline),OFFSETOF(blk->cmdline));
 
       /* First character contains the length of the command line. */
@@ -547,7 +547,7 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
          */
         LPBYTE stack;
         init_sp -= 2;
-        stack = (LPBYTE) CTX_SEG_OFF_TO_LIN(context, init_ss, init_sp);
+        stack = CTX_SEG_OFF_TO_LIN(context, init_ss, init_sp);
         /* FIXME: push AX correctly */
         stack[0] = 0x00;    /* push AL */
         stack[1] = 0x00;    /* push AH */
@@ -570,7 +570,7 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
     break;
   case 3: /* load overlay */
     {
-      OverlayBlock *blk = (OverlayBlock *)paramblk;
+      OverlayBlock *blk = paramblk;
       ret = MZ_DoLoadImage( hFile, filename, blk, 0);
     }
     break;

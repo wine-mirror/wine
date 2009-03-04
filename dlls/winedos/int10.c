@@ -1249,7 +1249,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
                 BYTE *pt;
 
                 TRACE("Set Block of DAC registers\n");
-		pt = (BYTE*)CTX_SEG_OFF_TO_LIN(context,context->SegEs,context->Edx);
+                pt = CTX_SEG_OFF_TO_LIN(context,context->SegEs,context->Edx);
 		for (i=0;i<CX_reg(context);i++)
                 {
                     paldat.peRed   = (*(pt+i*3+0)) << 2;

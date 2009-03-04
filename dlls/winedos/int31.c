@@ -1004,9 +1004,8 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
     case 0x000b:  /* Get descriptor */
         TRACE( "get descriptor (0x%04x)\n", BX_reg(context) );
         {
-            LDT_ENTRY *entry = (LDT_ENTRY*)CTX_SEG_OFF_TO_LIN( context,
-                                                               context->SegEs, 
-                                                               context->Edi );
+            LDT_ENTRY *entry = CTX_SEG_OFF_TO_LIN( context, context->SegEs,
+                                                   context->Edi );
             wine_ldt_get_entry( BX_reg(context), entry );
         }
         break;
@@ -1014,9 +1013,8 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
     case 0x000c:  /* Set descriptor */
         TRACE( "set descriptor (0x%04x)\n", BX_reg(context) );
         {
-            LDT_ENTRY *entry = (LDT_ENTRY*)CTX_SEG_OFF_TO_LIN( context,
-                                                               context->SegEs, 
-                                                               context->Edi );
+            LDT_ENTRY *entry = CTX_SEG_OFF_TO_LIN( context, context->SegEs,
+                                                   context->Edi );
             wine_ldt_set_entry( BX_reg(context), entry );
         }
         break;

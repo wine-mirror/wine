@@ -201,7 +201,7 @@ typedef struct {
 
 static void MouseRelay(CONTEXT86 *context,void *mdata)
 {
-  MCALLDATA *data = (MCALLDATA *)mdata;
+  MCALLDATA *data = mdata;
   CONTEXT86 ctx = *context;
 
   if (!ISV86(&ctx))
