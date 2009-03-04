@@ -308,8 +308,7 @@ void output_exports( DLLSPEC *spec )
 
     /* output relays */
 
-    /* we only support relay debugging on i386 and x86_64 */
-    if (target_cpu != CPU_x86 && target_cpu != CPU_x86_64)
+    if (!has_relays( spec ))
     {
         output( "\t%s 0\n", get_asm_ptr_keyword() );
         return;
