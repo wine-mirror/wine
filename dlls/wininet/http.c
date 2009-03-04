@@ -3893,6 +3893,13 @@ static INT HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr, BOOL clear)
             LPWSTR * pFieldAndValue;
 
             TRACE("got line %s, now interpreting\n", debugstr_a(bufferA));
+
+            if (!bufferA[0]) break;
+            if (!strchr(bufferA, ':'))
+            {
+                WARN("invalid header\n");
+                continue;
+            }
             MultiByteToWideChar( CP_ACP, 0, bufferA, buflen, buffer, MAX_REPLY_LEN );
 
             while (cchRawHeaders + buflen + strlenW(szCrLf) > cchMaxRawHeaders)

@@ -1305,6 +1305,12 @@ static const char noauthmsg[] =
 "WWW-Authenticate: Basic realm=\"placebo\"\r\n"
 "\r\n";
 
+static const char noauthmsg2[] =
+"HTTP/1.0 401 Anonymous requests or requests on unsecure channel are not allowed\r\n"
+"HTTP/1.0 401 Anonymous requests or requests on unsecure channel are not allowed"
+"\0d`0|6\n"
+"Server: winetest\r\n";
+
 static const char proxymsg[] =
 "HTTP/1.1 407 Proxy Authentication Required\r\n"
 "Server: winetest\r\n"
@@ -1487,6 +1493,10 @@ static DWORD CALLBACK server_thread(LPVOID param)
         if (strstr(buffer, "/testD"))
         {
             send(c, okmsg2, sizeof okmsg2-1, 0);
+        }
+        if (strstr(buffer, "/testE"))
+        {
+            send(c, noauthmsg2, sizeof noauthmsg2-1, 0);
         }
         if (strstr(buffer, "GET /quit"))
         {
@@ -1917,6 +1927,49 @@ static void test_basic_authentication(int port)
     InternetCloseHandle(session);
 }
 
+static void test_invalid_response_headers(int port)
+{
+    HINTERNET session, connect, request;
+    DWORD size, status;
+    BOOL ret;
+    char buffer[256];
+
+    session = InternetOpen("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(session != NULL, "InternetOpen failed\n");
+
+    connect = InternetConnect(session, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(connect != NULL, "InternetConnect failed\n");
+
+    request = HttpOpenRequest(connect, NULL, "/testE", NULL, NULL, NULL, 0, 0);
+    ok(request != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpSendRequest(request, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed %u\n", GetLastError());
+
+    status = 0;
+    size = sizeof(status);
+    ret = HttpQueryInfo( request, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
+    ok(ret, "HttpQueryInfo failed\n");
+    ok(status == 401, "unexpected status %u\n", status);
+
+    buffer[0] = 0;
+    size = sizeof(buffer);
+    ret = HttpQueryInfo( request, HTTP_QUERY_RAW_HEADERS, buffer, &size, NULL);
+    ok(ret, "HttpQueryInfo failed\n");
+    ok(!strcmp(buffer, "HTTP/1.0 401 Anonymous requests or requests on unsecure channel are not allowed"),
+       "headers wrong \"%s\"\n", buffer);
+
+    buffer[0] = 0;
+    size = sizeof(buffer);
+    ret = HttpQueryInfo( request, HTTP_QUERY_SERVER, buffer, &size, NULL);
+    ok(ret, "HttpQueryInfo failed\n");
+    ok(!strcmp(buffer, "winetest"), "server wrong \"%s\"\n", buffer);
+
+    InternetCloseHandle(request);
+    InternetCloseHandle(connect);
+    InternetCloseHandle(session);
+}
+
 static void test_HttpQueryInfo(int port)
 {
     HINTERNET hi, hc, hr;
@@ -2050,6 +2103,7 @@ static void test_http_connection(void)
     test_http1_1(si.port);
     test_cookie_header(si.port);
     test_basic_authentication(si.port);
+    test_invalid_response_headers(si.port);
     test_HttpQueryInfo(si.port);
     test_HttpSendRequestW(si.port);
 
