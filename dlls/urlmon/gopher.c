@@ -33,6 +33,40 @@ typedef struct {
 #define PROTOCOL(x)  ((IInternetProtocol*)  &(x)->lpInternetProtocolVtbl)
 #define PRIORITY(x)  ((IInternetPriority*)  &(x)->lpInternetPriorityVtbl)
 
+#define ASYNCPROTOCOL_THIS(iface) DEFINE_THIS2(GopherProtocol, base, iface)
+
+static HRESULT GopherProtocol_open_request(Protocol *prot, LPCWSTR url, DWORD request_flags,
+                                        IInternetBindInfo *bind_info)
+{
+    GopherProtocol *This = ASYNCPROTOCOL_THIS(prot);
+
+    This->base.request = InternetOpenUrlW(This->base.internet, url, NULL, 0,
+            request_flags, (DWORD_PTR)&This->base);
+    if (!This->base.request && GetLastError() != ERROR_IO_PENDING) {
+        WARN("InternetOpenUrl failed: %d\n", GetLastError());
+        return INET_E_RESOURCE_NOT_FOUND;
+    }
+
+    return S_OK;
+}
+
+static HRESULT GopherProtocol_start_downloading(Protocol *prot)
+{
+    return S_OK;
+}
+
+static void GopherProtocol_close_connection(Protocol *prot)
+{
+}
+
+#undef ASYNCPROTOCOL_THIS
+
+static const ProtocolVtbl AsyncProtocolVtbl = {
+    GopherProtocol_open_request,
+    GopherProtocol_start_downloading,
+    GopherProtocol_close_connection
+};
+
 #define PROTOCOL_THIS(iface) DEFINE_THIS(GopherProtocol, InternetProtocol, iface)
 
 static HRESULT WINAPI GopherProtocol_QueryInterface(IInternetProtocol *iface, REFIID riid, void **ppv)
@@ -92,16 +126,20 @@ static HRESULT WINAPI GopherProtocol_Start(IInternetProtocol *iface, LPCWSTR szU
         DWORD grfPI, DWORD dwReserved)
 {
     GopherProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%s %p %p %08x %d)\n", This, debugstr_w(szUrl), pOIProtSink,
+
+    TRACE("(%p)->(%s %p %p %08x %d)\n", This, debugstr_w(szUrl), pOIProtSink,
           pOIBindInfo, grfPI, dwReserved);
-    return E_NOTIMPL;
+
+    return protocol_start(&This->base, PROTOCOL(This), szUrl, pOIProtSink, pOIBindInfo);
 }
 
 static HRESULT WINAPI GopherProtocol_Continue(IInternetProtocol *iface, PROTOCOLDATA *pProtocolData)
 {
     GopherProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pProtocolData);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pProtocolData);
+
+    return protocol_continue(&This->base, pProtocolData);
 }
 
 static HRESULT WINAPI GopherProtocol_Abort(IInternetProtocol *iface, HRESULT hrReason,
@@ -115,8 +153,11 @@ static HRESULT WINAPI GopherProtocol_Abort(IInternetProtocol *iface, HRESULT hrR
 static HRESULT WINAPI GopherProtocol_Terminate(IInternetProtocol *iface, DWORD dwOptions)
 {
     GopherProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%08x)\n", This, dwOptions);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%08x)\n", This, dwOptions);
+
+    protocol_close_connection(&This->base);
+    return S_OK;
 }
 
 static HRESULT WINAPI GopherProtocol_Suspend(IInternetProtocol *iface)
@@ -137,8 +178,10 @@ static HRESULT WINAPI GopherProtocol_Read(IInternetProtocol *iface, void *pv,
         ULONG cb, ULONG *pcbRead)
 {
     GopherProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%p %u %p)\n", This, pv, cb, pcbRead);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %u %p)\n", This, pv, cb, pcbRead);
+
+    return protocol_read(&This->base, pv, cb, pcbRead);
 }
 
 static HRESULT WINAPI GopherProtocol_Seek(IInternetProtocol *iface, LARGE_INTEGER dlibMove,
@@ -152,15 +195,19 @@ static HRESULT WINAPI GopherProtocol_Seek(IInternetProtocol *iface, LARGE_INTEGE
 static HRESULT WINAPI GopherProtocol_LockRequest(IInternetProtocol *iface, DWORD dwOptions)
 {
     GopherProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%08x)\n", This, dwOptions);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%08x)\n", This, dwOptions);
+
+    return protocol_lock_request(&This->base);
 }
 
 static HRESULT WINAPI GopherProtocol_UnlockRequest(IInternetProtocol *iface)
 {
     GopherProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    return protocol_unlock_request(&This->base);
 }
 
 #undef PROTOCOL_THIS
@@ -241,6 +288,7 @@ HRESULT GopherProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
 
     ret = heap_alloc_zero(sizeof(GopherProtocol));
 
+    ret->base.vtbl = &AsyncProtocolVtbl;
     ret->lpInternetProtocolVtbl = &GopherProtocolVtbl;
     ret->lpInternetPriorityVtbl = &GopherPriorityVtbl;
     ret->ref = 1;
