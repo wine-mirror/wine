@@ -23,7 +23,6 @@
 #include "wine/debug.h"
 #include "windef.h"
 #include "winbase.h"
-#include "user_private.h"
 #include "wine/winuser16.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cursor);
@@ -39,7 +38,7 @@ typedef struct tagCURSORINFO16
 /***********************************************************************
  *           Inquire			(DISPLAY.101)
  */
-WORD WINAPI DISPLAY_Inquire(LPCURSORINFO16 lpCursorInfo)
+WORD WINAPI Inquire16(LPCURSORINFO16 lpCursorInfo)
 {
     lpCursorInfo->wXMickeys = 1;
     lpCursorInfo->wYMickeys = 1;
@@ -52,21 +51,21 @@ WORD WINAPI DISPLAY_Inquire(LPCURSORINFO16 lpCursorInfo)
  */
 VOID WINAPI DISPLAY_SetCursor( struct tagCURSORICONINFO *lpCursor )
 {
-    USER_Driver->pSetCursor(lpCursor);
+    FIXME("stub\n" );
 }
 
 /***********************************************************************
  *           MoveCursor			(DISPLAY.103)
  */
-VOID WINAPI DISPLAY_MoveCursor( WORD wAbsX, WORD wAbsY )
+VOID WINAPI MoveCursor16( WORD wAbsX, WORD wAbsY )
 {
-    USER_Driver->pSetCursorPos(wAbsX, wAbsY);
+    SetCursorPos( wAbsX, wAbsY );
 }
 
 /***********************************************************************
  *           CheckCursor                  (DISPLAY.104)
  */
-VOID WINAPI DISPLAY_CheckCursor( void )
+VOID WINAPI CheckCursor16( void )
 {
     TRACE("stub\n" );
 }
@@ -79,7 +78,7 @@ VOID WINAPI DISPLAY_CheckCursor( void )
  * wQueriedResID is the ID USER asks about.
  * lpsResName does often contain "OEMBIN".
  */
-DWORD WINAPI DISPLAY_GetDriverResourceID( WORD wQueriedResID, LPSTR lpsResName )
+DWORD WINAPI GetDriverResourceID16( WORD wQueriedResID, LPSTR lpsResName )
 {
 	if (wQueriedResID == 3)
 		return (DWORD)1;

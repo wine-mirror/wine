@@ -10,7 +10,6 @@ DELAYIMPORTS = imm32
 
 SPEC_SRCS16 = \
 	ddeml.spec \
-	display.drv.spec \
 	keyboard.drv.spec \
 	mouse.drv.spec \
 	user.exe.spec
@@ -68,7 +67,6 @@ C_SRCS = \
 C_SRCS16 = \
 	bidi16.c \
 	comm16.c \
-	display.c \
 	hook16.c \
 	kbd16.c \
 	mouse16.c \
@@ -81,7 +79,6 @@ RC_SRCS = resources/user32.rc
 SVG_SRCS = resources/oic_winlogo.svg
 
 RC_SRCS16 = \
-	resources/display.rc \
 	resources/mouse.rc \
 	resources/version16.rc
 
@@ -94,14 +91,8 @@ EXTRASUBDIRS = resources
 user.exe.spec.o: user.exe.spec resources/version16.res
 	$(WINEBUILD) $(WINEBUILDFLAGS) --dll -o $@ --heap 65520 --main-module $(MODULE) --res resources/version16.res --export $(SRCDIR)/user.exe.spec
 
-display.drv.spec.o: display.drv.spec resources/display.res
-	$(WINEBUILD) $(WINEBUILDFLAGS) --dll -o $@ --main-module $(MODULE) --res resources/display.res --export $(SRCDIR)/display.drv.spec
-
 mouse.drv.spec.o: mouse.drv.spec resources/mouse.res
 	$(WINEBUILD) $(WINEBUILDFLAGS) --dll -o $@ --main-module $(MODULE) --res resources/mouse.res --export $(SRCDIR)/mouse.drv.spec
-
-resources/display.res: resources/display.rc
-	$(LDPATH) $(RC16) $(RC16FLAGS) -fo$@ $(SRCDIR)/resources/display.rc
 
 resources/mouse.res: resources/mouse.rc
 	$(LDPATH) $(RC16) $(RC16FLAGS) -fo$@ $(SRCDIR)/resources/mouse.rc
