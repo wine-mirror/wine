@@ -670,8 +670,8 @@ static DWORD CALLBACK serverThreadMain4(LPVOID arg)
         trace("Server calling overlapped ConnectNamedPipe...\n");
         success = ConnectNamedPipe(hnp, &oConnect);
         err = GetLastError();
-        ok(!success && (err == ERROR_IO_PENDING || err == ERROR_PIPE_CONNECTED) , "overlapped ConnectNamedPipe\n");
-        trace("overlapped ConnectNamedPipe returned.\n");
+        ok(!success && (err == ERROR_IO_PENDING || err == ERROR_PIPE_CONNECTED),
+           "overlapped ConnectNamedPipe got %u err %u\n", success, err );
         if (!success && err == ERROR_IO_PENDING) {
             trace("ConnectNamedPipe GetQueuedCompletionStatus\n");
             success = GetQueuedCompletionStatus(hcompletion, &dummy, &compkey, &oResult, 0);
@@ -712,7 +712,7 @@ static DWORD CALLBACK serverThreadMain4(LPVOID arg)
         success = WriteFile(hnp, buf, readden, &written, &oWrite);
         trace("Server WriteFile returned...\n");
         err = GetLastError();
-        ok(success || err == ERROR_IO_PENDING, "overlapped WriteFile\n");
+        ok(success || err == ERROR_IO_PENDING, "overlapped WriteFile failed, err=%u\n", err);
         success = GetQueuedCompletionStatus(hcompletion, &written, &compkey,
             &oResult, 10000);
         ok(success, "WriteFile GetQueuedCompletionStatus failed, errno=%i\n", GetLastError());
@@ -726,7 +726,8 @@ static DWORD CALLBACK serverThreadMain4(LPVOID arg)
 
         /* finish this connection, wait for next one */
         ok(FlushFileBuffers(hnp), "FlushFileBuffers\n");
-        ok(DisconnectNamedPipe(hnp), "DisconnectNamedPipe\n");
+        success = DisconnectNamedPipe(hnp);
+        ok(success, "DisconnectNamedPipe failed, err %u\n", GetLastError());
     }
 
     ok(CloseHandle(hnp), "CloseHandle named pipe failed, err=%i\n", GetLastError());
