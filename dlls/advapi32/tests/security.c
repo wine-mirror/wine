@@ -1196,7 +1196,7 @@ static void test_token_attr(void)
     ok(ret, "OpenProcessToken failed with error %d\n", GetLastError());
     if (ret)
     {
-        BYTE buf[1024];
+        DWORD buf[256]; /* GetTokenInformation wants a dword-aligned buffer */
         Size = sizeof(buf);
         ret = GetTokenInformation(Token, TokenUser,(void*)buf, Size, &Size);
         ok(ret, "GetTokenInformation failed with error %d\n", GetLastError());
