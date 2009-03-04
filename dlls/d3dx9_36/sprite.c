@@ -410,15 +410,39 @@ static HRESULT WINAPI ID3DXSpriteImpl_End(LPD3DXSPRITE iface)
 static HRESULT WINAPI ID3DXSpriteImpl_OnLostDevice(LPD3DXSPRITE iface)
 {
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+    TRACE("(%p)\n", This);
+
+    if(This->stateblock) IDirect3DStateBlock9_Release(This->stateblock);
+    if(This->vdecl) IDirect3DVertexDeclaration9_Release(This->vdecl);
+    This->vdecl=NULL;
+    This->stateblock=NULL;
+
+    /* Reset some variables */
+    ID3DXSprite_OnResetDevice(iface);
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXSpriteImpl_OnResetDevice(LPD3DXSPRITE iface)
 {
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+    int i;
+
+    TRACE("(%p)\n", This);
+
+    for(i=0;i<This->sprite_count;i++)
+        if(This->sprites[i].texture)
+            IDirect3DTexture9_Release(This->sprites[i].texture);
+
+    This->sprite_count=0;
+
+    This->flags=0;
+    This->ready=FALSE;
+
+    /* keep matrices */
+    /* device objects get restored on Begin */
+
+    return D3D_OK;
 }
 
 static const ID3DXSpriteVtbl D3DXSprite_Vtbl =
@@ -465,18 +489,15 @@ HRESULT WINAPI D3DXCreateSprite(LPDIRECT3DDEVICE9 device, LPD3DXSPRITE *sprite)
     D3DXMatrixIdentity(&object->transform);
     D3DXMatrixIdentity(&object->view);
 
-    object->flags=0;
-    object->ready=FALSE;
-
     IDirect3DDevice9_GetDeviceCaps(device, &caps);
     object->texfilter_caps=caps.TextureFilterCaps;
     object->maxanisotropy=caps.MaxAnisotropy;
     object->alphacmp_caps=caps.AlphaCmpCaps;
 
-    object->sprites=NULL;
-    object->sprite_count=0;
-    object->allocated_sprites=0;
+    ID3DXSprite_OnResetDevice((ID3DXSprite*)object);
 
+    object->sprites=NULL;
+    object->allocated_sprites=0;
     *sprite=(ID3DXSprite*)object;
 
     return D3D_OK;
