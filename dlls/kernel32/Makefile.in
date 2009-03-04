@@ -12,8 +12,7 @@ EXTRADLLFLAGS = -Wb,-F,KERNEL32.dll -Wl,--image-base,0x7b800000
 SPEC_SRCS16 = \
 	krnl386.exe.spec \
 	system.drv.spec \
-	toolhelp.spec \
-	windebug.spec
+	toolhelp.spec
 
 C_SRCS = \
 	actctx.c \
@@ -68,7 +67,6 @@ C_SRCS = \
 	virtual.c \
 	volume.c \
 	vxd.c \
-	windebug.c \
 	wowthunk.c
 
 C_SRCS16 = \
