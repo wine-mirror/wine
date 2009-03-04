@@ -942,7 +942,8 @@ START_TEST(console)
     ok(hConIn != INVALID_HANDLE_VALUE, "Opening ConIn\n");
     ok(hConOut != INVALID_HANDLE_VALUE, "Opening ConOut\n");
 
-    ok(ret = GetConsoleScreenBufferInfo(hConOut, &sbi), "Getting sb info\n");
+    ret = GetConsoleScreenBufferInfo(hConOut, &sbi);
+    ok(ret, "Getting sb info\n");
     if (!ret) return;
 
     /* Non interactive tests */
