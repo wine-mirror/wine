@@ -16,10 +16,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <d3dx9.h>
+
 #ifndef __WINE_D3DX9CORE_H
 #define __WINE_D3DX9CORE_H
-
-#include <d3dx9.h>
 
 /**********************************************
  ***************** Definitions ****************

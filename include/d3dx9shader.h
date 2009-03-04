@@ -16,10 +16,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "d3dx9.h"
+
 #ifndef __D3DX9SHADER_H__
 #define __D3DX9SHADER_H__
-
-#include "d3dx9.h"
 
 typedef LPCSTR D3DXHANDLE;
 
