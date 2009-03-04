@@ -40,6 +40,10 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 #define GLINFO_LOCATION      (*gl_info)
 
+#define WINED3D_GLSL_SAMPLE_PROJECTED   0x1
+#define WINED3D_GLSL_SAMPLE_RECT        0x2
+#define WINED3D_GLSL_SAMPLE_LOD         0x4
+
 typedef struct {
     char reg_name[150];
     char mask_str[6];
@@ -1300,7 +1304,12 @@ static inline const char* shader_get_comp_op(
     }
 }
 
-static void shader_glsl_get_sample_function(DWORD sampler_type, BOOL projected, BOOL texrect, BOOL lod, glsl_sample_function_t *sample_function) {
+static void shader_glsl_get_sample_function(DWORD sampler_type, DWORD flags, glsl_sample_function_t *sample_function)
+{
+    BOOL projected = flags & WINED3D_GLSL_SAMPLE_PROJECTED;
+    BOOL texrect = flags & WINED3D_GLSL_SAMPLE_RECT;
+    BOOL lod = flags & WINED3D_GLSL_SAMPLE_LOD;
+
     /* Note that there's no such thing as a projected cube texture. */
     switch(sampler_type) {
         case WINED3DSTT_1D:
@@ -2308,9 +2317,9 @@ static void pshader_glsl_tex(const SHADER_OPCODE_ARG *arg)
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     DWORD shader_version = arg->reg_maps->shader_version;
     glsl_sample_function_t sample_function;
+    DWORD sample_flags = 0;
     DWORD sampler_type;
     DWORD sampler_idx;
-    BOOL projected, texrect = FALSE;
     DWORD mask = 0, swizzle;
 
     /* 1.0-1.4: Use destination register as sampler source.
@@ -2325,7 +2334,7 @@ static void pshader_glsl_tex(const SHADER_OPCODE_ARG *arg)
 
         /* Projected cube textures don't make a lot of sense, the resulting coordinates stay the same. */
         if (flags & WINED3DTTFF_PROJECTED && sampler_type != WINED3DSTT_CUBE) {
-            projected = TRUE;
+            sample_flags |= WINED3D_GLSL_SAMPLE_PROJECTED;
             switch (flags & ~WINED3DTTFF_PROJECTED) {
                 case WINED3DTTFF_COUNT1: FIXME("WINED3DTTFF_PROJECTED with WINED3DTTFF_COUNT1?\n"); break;
                 case WINED3DTTFF_COUNT2: mask = WINED3DSP_WRITEMASK_1; break;
@@ -2333,8 +2342,6 @@ static void pshader_glsl_tex(const SHADER_OPCODE_ARG *arg)
                 case WINED3DTTFF_COUNT4:
                 case WINED3DTTFF_DISABLE: mask = WINED3DSP_WRITEMASK_3; break;
             }
-        } else {
-            projected = FALSE;
         }
     }
     else if (shader_version < WINED3DPS_VERSION(2,0))
@@ -2342,30 +2349,26 @@ static void pshader_glsl_tex(const SHADER_OPCODE_ARG *arg)
         DWORD src_mod = arg->src[0] & WINED3DSP_SRCMOD_MASK;
 
         if (src_mod == WINED3DSPSM_DZ) {
-            projected = TRUE;
+            sample_flags |= WINED3D_GLSL_SAMPLE_PROJECTED;
             mask = WINED3DSP_WRITEMASK_2;
         } else if (src_mod == WINED3DSPSM_DW) {
-            projected = TRUE;
+            sample_flags |= WINED3D_GLSL_SAMPLE_PROJECTED;
             mask = WINED3DSP_WRITEMASK_3;
-        } else {
-            projected = FALSE;
         }
     } else {
         if(arg->opcode_token & WINED3DSI_TEXLD_PROJECT) {
-                /* ps 2.0 texldp instruction always divides by the fourth component. */
-                projected = TRUE;
-                mask = WINED3DSP_WRITEMASK_3;
-        } else {
-            projected = FALSE;
+            /* ps 2.0 texldp instruction always divides by the fourth component. */
+            sample_flags |= WINED3D_GLSL_SAMPLE_PROJECTED;
+            mask = WINED3DSP_WRITEMASK_3;
         }
     }
 
     if(deviceImpl->stateBlock->textures[sampler_idx] &&
        IWineD3DBaseTexture_GetTextureDimensions(deviceImpl->stateBlock->textures[sampler_idx]) == GL_TEXTURE_RECTANGLE_ARB) {
-        texrect = TRUE;
+        sample_flags |= WINED3D_GLSL_SAMPLE_RECT;
     }
 
-    shader_glsl_get_sample_function(sampler_type, projected, texrect, FALSE, &sample_function);
+    shader_glsl_get_sample_function(sampler_type, sample_flags, &sample_function);
     mask |= sample_function.coord_mask;
 
     if (shader_version < WINED3DPS_VERSION(2,0)) swizzle = WINED3DVS_NOSWIZZLE;
@@ -2400,9 +2403,9 @@ static void shader_glsl_texldl(const SHADER_OPCODE_ARG *arg)
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     glsl_sample_function_t sample_function;
     glsl_src_param_t coord_param, lod_param;
+    DWORD sample_flags = WINED3D_GLSL_SAMPLE_LOD;
     DWORD sampler_type;
     DWORD sampler_idx;
-    BOOL texrect = FALSE;
     DWORD swizzle = arg->src[1] & WINED3DSP_SWIZZLE_MASK;
 
     shader_glsl_append_dst(arg->buffer, arg);
@@ -2411,9 +2414,9 @@ static void shader_glsl_texldl(const SHADER_OPCODE_ARG *arg)
     sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
     if(deviceImpl->stateBlock->textures[sampler_idx] &&
        IWineD3DBaseTexture_GetTextureDimensions(deviceImpl->stateBlock->textures[sampler_idx]) == GL_TEXTURE_RECTANGLE_ARB) {
-        texrect = TRUE;
+        sample_flags |= WINED3D_GLSL_SAMPLE_RECT;
     }
-    shader_glsl_get_sample_function(sampler_type, FALSE, texrect, TRUE, &sample_function);
+    shader_glsl_get_sample_function(sampler_type, sample_flags, &sample_function);
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], sample_function.coord_mask, &coord_param);
 
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_3, &lod_param);
@@ -2495,7 +2498,7 @@ static void pshader_glsl_texdp3tex(const SHADER_OPCODE_ARG *arg)
      *
      * It is a dependent read - not valid with conditional NP2 textures
      */
-    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, FALSE, &sample_function);
+    shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
 
     switch(count_bits(sample_function.coord_mask)) {
         case 1:
@@ -2616,7 +2619,7 @@ static void pshader_glsl_texm3x2tex(const SHADER_OPCODE_ARG *arg)
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src_mask, &src0_param);
     shader_addline(buffer, "tmp0.y = dot(T%u.xyz, %s);\n", reg, src0_param.param_str);
 
-    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, FALSE, &sample_function);
+    shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
 
     /* Sample the texture using the calculated coordinates */
     shader_glsl_gen_sample_code(arg, reg, "tmp0.xy",
@@ -2640,7 +2643,7 @@ static void pshader_glsl_texm3x3tex(const SHADER_OPCODE_ARG *arg)
     shader_addline(arg->buffer, "tmp0.z = dot(T%u.xyz, %s);\n", reg, src0_param.param_str);
 
     /* Dependent read, not valid with conditional NP2 */
-    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, FALSE, &sample_function);
+    shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
 
     /* Sample the texture using the calculated coordinates */
     shader_glsl_gen_sample_code(arg, reg, "tmp0.xyz",
@@ -2693,7 +2696,7 @@ static void pshader_glsl_texm3x3spec(const SHADER_OPCODE_ARG *arg)
     shader_addline(buffer, "tmp0.xyz = -reflect((%s), normalize(tmp0.xyz));\n", src1_param.param_str);
 
     /* Dependent read, not valid with conditional NP2 */
-    shader_glsl_get_sample_function(stype, FALSE, FALSE, FALSE, &sample_function);
+    shader_glsl_get_sample_function(stype, 0, &sample_function);
 
     /* Sample the texture */
     shader_glsl_gen_sample_code(arg, reg, "tmp0.xyz",
@@ -2727,7 +2730,7 @@ static void pshader_glsl_texm3x3vspec(const SHADER_OPCODE_ARG *arg)
     shader_addline(buffer, "tmp0.xyz = -reflect(tmp1.xyz, normalize(tmp0.xyz));\n");
 
     /* Dependent read, not valid with conditional NP2 */
-    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, FALSE, &sample_function);
+    shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
 
     /* Sample the texture using the calculated coordinates */
     shader_glsl_gen_sample_code(arg, reg, "tmp0.xyz",
@@ -2759,7 +2762,7 @@ static void pshader_glsl_texbem(const SHADER_OPCODE_ARG *arg)
 
     sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
     /* Dependent read, not valid with conditional NP2 */
-    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, FALSE, &sample_function);
+    shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
     mask = sample_function.coord_mask;
 
     shader_glsl_get_write_mask(mask, coord_mask);
@@ -2827,7 +2830,7 @@ static void pshader_glsl_texreg2ar(const SHADER_OPCODE_ARG *arg)
 
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_ALL, &src0_param);
 
-    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, FALSE, &sample_function);
+    shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
     sprintf(src, "%s.wx", src0_param.reg_name);
     shader_glsl_gen_sample_code(arg, sampler_idx, src,
                                 &sample_function, WINED3DVS_NOSWIZZLE,
@@ -2846,7 +2849,7 @@ static void pshader_glsl_texreg2gb(const SHADER_OPCODE_ARG *arg)
 
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_ALL, &src0_param);
 
-    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, FALSE, &sample_function);
+    shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
     sprintf(src, "%s.yz", src0_param.reg_name);
     shader_glsl_gen_sample_code(arg, sampler_idx, src,
                                 &sample_function, WINED3DVS_NOSWIZZLE,
@@ -2863,7 +2866,7 @@ static void pshader_glsl_texreg2rgb(const SHADER_OPCODE_ARG *arg)
     glsl_sample_function_t sample_function;
 
     /* Dependent read, not valid with conditional NP2 */
-    shader_glsl_get_sample_function(sampler_type, FALSE, FALSE, FALSE, &sample_function);
+    shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], sample_function.coord_mask, &src0_param);
 
     shader_glsl_gen_sample_code(arg, sampler_idx, src0_param.param_str,
