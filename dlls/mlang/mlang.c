@@ -1495,7 +1495,7 @@ typedef struct tagEnumCodePage_impl
 
 static inline EnumCodePage_impl *impl_from_IEnumCodePage( IEnumCodePage *iface )
 {
-    return (EnumCodePage_impl *)CONTAINING_RECORD( iface, EnumCodePage_impl, vtbl_IEnumCodePage );
+    return CONTAINING_RECORD( iface, EnumCodePage_impl, vtbl_IEnumCodePage );
 }
 
 static HRESULT WINAPI fnIEnumCodePage_QueryInterface(
@@ -1688,7 +1688,7 @@ typedef struct tagEnumScript_impl
 
 static inline EnumScript_impl *impl_from_IEnumScript( IEnumScript *iface )
 {
-    return (EnumScript_impl *)CONTAINING_RECORD( iface, EnumScript_impl, vtbl_IEnumScript );
+    return CONTAINING_RECORD( iface, EnumScript_impl, vtbl_IEnumScript );
 }
 
 static HRESULT WINAPI fnIEnumScript_QueryInterface(
@@ -1850,7 +1850,7 @@ static HRESULT EnumScript_create( MLang_impl* mlang, DWORD dwFlags,
 
 static inline MLang_impl *impl_from_IMLangFontLink( IMLangFontLink *iface )
 {
-    return (MLang_impl *)CONTAINING_RECORD( iface, MLang_impl, vtbl_IMLangFontLink );
+    return CONTAINING_RECORD( iface, MLang_impl, vtbl_IMLangFontLink );
 }
 
 static HRESULT WINAPI fnIMLangFontLink_QueryInterface(
@@ -2088,7 +2088,7 @@ static const IMLangFontLinkVtbl IMLangFontLink_vtbl =
 
 static inline MLang_impl *impl_from_IMultiLanguage( IMultiLanguage *iface )
 {
-    return (MLang_impl *)CONTAINING_RECORD( iface, MLang_impl, vtbl_IMultiLanguage );
+    return CONTAINING_RECORD( iface, MLang_impl, vtbl_IMultiLanguage );
 }
 
 static HRESULT WINAPI fnIMultiLanguage_QueryInterface(
@@ -2281,7 +2281,7 @@ typedef struct tagEnumRfc1766_impl
 
 static inline EnumRfc1766_impl *impl_from_IEnumRfc1766( IEnumRfc1766 *iface )
 {
-    return (EnumRfc1766_impl *)CONTAINING_RECORD( iface, EnumRfc1766_impl, vtbl_IEnumRfc1766 );
+    return CONTAINING_RECORD( iface, EnumRfc1766_impl, vtbl_IEnumRfc1766 );
 }
 
 static HRESULT WINAPI fnIEnumRfc1766_QueryInterface(
@@ -2551,7 +2551,7 @@ static const IMultiLanguageVtbl IMultiLanguage_vtbl =
 
 static inline MLang_impl *impl_from_IMultiLanguage3( IMultiLanguage3 *iface )
 {
-    return (MLang_impl *)CONTAINING_RECORD( iface, MLang_impl, vtbl_IMultiLanguage3 );
+    return CONTAINING_RECORD( iface, MLang_impl, vtbl_IMultiLanguage3 );
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_QueryInterface(
@@ -3171,7 +3171,7 @@ static const IMultiLanguage3Vtbl IMultiLanguage3_vtbl =
 
 static inline MLang_impl *impl_from_IMLangFontLink2( IMLangFontLink2 *iface )
 {
-    return (MLang_impl *)CONTAINING_RECORD( iface, MLang_impl, vtbl_IMLangFontLink2 );
+    return CONTAINING_RECORD( iface, MLang_impl, vtbl_IMLangFontLink2 );
 }
 
 static HRESULT WINAPI fnIMLangFontLink2_QueryInterface(
@@ -3325,7 +3325,7 @@ static const IMLangFontLink2Vtbl IMLangFontLink2_vtbl =
 
 static inline MLang_impl *impl_from_IMLangLineBreakConsole( IMLangLineBreakConsole *iface )
 {
-    return (MLang_impl *)CONTAINING_RECORD( iface, MLang_impl, vtbl_IMLangLineBreakConsole );
+    return CONTAINING_RECORD( iface, MLang_impl, vtbl_IMLangLineBreakConsole );
 }
 
 static HRESULT WINAPI fnIMLangLineBreakConsole_QueryInterface(
