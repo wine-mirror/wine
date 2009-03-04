@@ -942,10 +942,24 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateVertexShader(ID3D10Device *i
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShader(ID3D10Device *iface,
         const void *byte_code, SIZE_T byte_code_length, ID3D10GeometryShader **shader)
 {
+    struct d3d10_geometry_shader *object;
+
     FIXME("iface %p, byte_code %p, byte_code_length %lu, shader %p stub!\n",
             iface, byte_code, byte_code_length, shader);
 
-    return E_NOTIMPL;
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate D3D10 geometry shader object memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->vtbl = &d3d10_geometry_shader_vtbl;
+    object->refcount = 1;
+
+    *shader = (ID3D10GeometryShader *)object;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShaderWithStreamOutput(ID3D10Device *iface,

@@ -105,6 +105,14 @@ struct d3d10_vertex_shader
     LONG refcount;
 };
 
+/* ID3D10GeometryShader */
+extern const struct ID3D10GeometryShaderVtbl d3d10_geometry_shader_vtbl;
+struct d3d10_geometry_shader
+{
+    const struct ID3D10GeometryShaderVtbl *vtbl;
+    LONG refcount;
+};
+
 /* Layered device */
 enum dxgi_device_layer_id
 {
