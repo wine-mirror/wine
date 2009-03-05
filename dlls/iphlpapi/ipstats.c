@@ -150,138 +150,93 @@ WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 
 DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
 {
-#if defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_IFLIST)
-  int mib[] = {CTL_NET, PF_ROUTE, 0, AF_INET, NET_RT_IFLIST, if_nametoindex(name)};
+    DWORD ret = ERROR_NOT_SUPPORTED;
+
+    if (!name || !entry) return ERROR_INVALID_PARAMETER;
+
+#ifdef __linux__
+    {
+        FILE *fp;
+
+        if ((fp = fopen("/proc/net/dev", "r")))
+        {
+            DWORD skip;
+            char buf[512], *ptr;
+            int nameLen = strlen(name);
+
+            while ((ptr = fgets(buf, sizeof(buf), fp)))
+            {
+                while (*ptr && isspace(*ptr)) ptr++;
+                if (strncasecmp(ptr, name, nameLen) == 0 && *(ptr + nameLen) == ':')
+                {
+                    ptr += nameLen + 1;
+                    sscanf( ptr, "%u %u %u %u %u %u %u %u %u %u %u %u",
+                            &entry->dwInOctets, &entry->dwInUcastPkts,
+                            &entry->dwInErrors, &entry->dwInDiscards,
+                            &skip, &skip, &skip,
+                            &entry->dwInNUcastPkts, &entry->dwOutOctets,
+                            &entry->dwOutUcastPkts, &entry->dwOutErrors,
+                            &entry->dwOutDiscards );
+                    break;
+                }
+            }
+            fclose(fp);
+            ret = NO_ERROR;
+        }
+    }
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_IFLIST)
+    {
+        int mib[] = {CTL_NET, PF_ROUTE, 0, AF_INET, NET_RT_IFLIST, if_nametoindex(name)};
 #define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
 
-  size_t needed;
-  char *buf, *end;
-  struct if_msghdr *ifm;
-  struct if_data ifdata;
-  if (!name || !entry)
-    return ERROR_INVALID_PARAMETER;
+        size_t needed;
+        char *buf = NULL, *end;
+        struct if_msghdr *ifm;
+        struct if_data ifdata;
 
-  if(sysctl(mib, MIB_LEN, NULL, &needed, NULL, 0) == -1)
-  {
-      ERR ("failed to get size of iflist\n");
-      return ERROR_NOT_SUPPORTED;
-  }
-  buf = HeapAlloc (GetProcessHeap (), 0, needed);
-  if (!buf) return ERROR_NOT_SUPPORTED;
-  if(sysctl(mib, MIB_LEN, buf, &needed, NULL, 0) == -1)
-  {
-      ERR ("failed to get iflist\n");
-      HeapFree (GetProcessHeap (), 0, buf);
-      return ERROR_NOT_SUPPORTED;
-  }
-  else
-      for ( end = buf + needed; buf < end; buf += ifm->ifm_msglen)
-      {
-          ifm = (struct if_msghdr *) buf;
-          if(ifm->ifm_type == RTM_IFINFO && ifm->ifm_data.ifi_type == IFT_ETHER)
-          {
-              ifdata = ifm->ifm_data;
-              entry->dwMtu = ifdata.ifi_mtu;
-              entry->dwSpeed = ifdata.ifi_baudrate;
-              entry->dwInOctets = ifdata.ifi_ibytes;
-              entry->dwInErrors = ifdata.ifi_ierrors;
-              entry->dwInDiscards = ifdata.ifi_iqdrops;
-              entry->dwInUcastPkts = ifdata.ifi_ipackets;
-              entry->dwInNUcastPkts = ifdata.ifi_imcasts;
-              entry->dwOutOctets = ifdata.ifi_obytes;
-              entry->dwOutUcastPkts = ifdata.ifi_opackets;
-              entry->dwOutErrors = ifdata.ifi_oerrors;
-              HeapFree (GetProcessHeap (), 0, buf);
-              return NO_ERROR;
-          }
-      }
-      HeapFree (GetProcessHeap (), 0, buf);
-      return ERROR_NOT_SUPPORTED;
+        if(sysctl(mib, MIB_LEN, NULL, &needed, NULL, 0) == -1)
+        {
+            ERR ("failed to get size of iflist\n");
+            goto done;
+        }
+        buf = HeapAlloc (GetProcessHeap (), 0, needed);
+        if (!buf)
+        {
+            ret = ERROR_OUTOFMEMORY;
+            goto done;
+        }
+        if(sysctl(mib, MIB_LEN, buf, &needed, NULL, 0) == -1)
+        {
+            ERR ("failed to get iflist\n");
+            goto done;
+        }
+        for ( end = buf + needed; buf < end; buf += ifm->ifm_msglen)
+        {
+            ifm = (struct if_msghdr *) buf;
+            if(ifm->ifm_type == RTM_IFINFO && ifm->ifm_data.ifi_type == IFT_ETHER)
+            {
+                ifdata = ifm->ifm_data;
+                entry->dwMtu = ifdata.ifi_mtu;
+                entry->dwSpeed = ifdata.ifi_baudrate;
+                entry->dwInOctets = ifdata.ifi_ibytes;
+                entry->dwInErrors = ifdata.ifi_ierrors;
+                entry->dwInDiscards = ifdata.ifi_iqdrops;
+                entry->dwInUcastPkts = ifdata.ifi_ipackets;
+                entry->dwInNUcastPkts = ifdata.ifi_imcasts;
+                entry->dwOutOctets = ifdata.ifi_obytes;
+                entry->dwOutUcastPkts = ifdata.ifi_opackets;
+                entry->dwOutErrors = ifdata.ifi_oerrors;
+                ret = NO_ERROR;
+                break;
+            }
+        }
+    done:
+        HeapFree (GetProcessHeap (), 0, buf);
+    }
 #else
-  /* get interface stats from /proc/net/dev, no error if can't
-     no inUnknownProtos, outNUcastPkts, outQLen */
-  FILE *fp;
-
-  if (!name || !entry)
-    return ERROR_INVALID_PARAMETER;
-  fp = fopen("/proc/net/dev", "r");
-  if (fp) {
-    char buf[512] = { 0 }, *ptr;
-    int nameLen = strlen(name), nameFound = 0;
-
-
-    ptr = fgets(buf, sizeof(buf), fp);
-    while (ptr && !nameFound) {
-      while (*ptr && isspace(*ptr))
-        ptr++;
-      if (strncasecmp(ptr, name, nameLen) == 0 && *(ptr + nameLen) == ':')
-        nameFound = 1;
-      else
-        ptr = fgets(buf, sizeof(buf), fp);
-    }
-    if (nameFound) {
-      char *endPtr;
-
-      ptr += nameLen + 1;
-      if (ptr && *ptr) {
-        entry->dwInOctets = strtoul(ptr, &endPtr, 10);
-        ptr = endPtr;
-      }
-      if (ptr && *ptr) {
-        entry->dwInUcastPkts = strtoul(ptr, &endPtr, 10);
-        ptr = endPtr;
-      }
-      if (ptr && *ptr) {
-        entry->dwInErrors = strtoul(ptr, &endPtr, 10);
-        ptr = endPtr;
-      }
-      if (ptr && *ptr) {
-        entry->dwInDiscards = strtoul(ptr, &endPtr, 10);
-        ptr = endPtr;
-      }
-      if (ptr && *ptr) {
-        strtoul(ptr, &endPtr, 10); /* skip */
-        ptr = endPtr;
-      }
-      if (ptr && *ptr) {
-        strtoul(ptr, &endPtr, 10); /* skip */
-        ptr = endPtr;
-      }
-      if (ptr && *ptr) {
-        strtoul(ptr, &endPtr, 10); /* skip */
-        ptr = endPtr;
-      }
-      if (ptr && *ptr) {
-        entry->dwInNUcastPkts = strtoul(ptr, &endPtr, 10);
-        ptr = endPtr;
-      }
-      if (ptr && *ptr) {
-        entry->dwOutOctets = strtoul(ptr, &endPtr, 10);
-        ptr = endPtr;
-      }
-      if (ptr && *ptr) {
-        entry->dwOutUcastPkts = strtoul(ptr, &endPtr, 10);
-        ptr = endPtr;
-      }
-      if (ptr && *ptr) {
-        entry->dwOutErrors = strtoul(ptr, &endPtr, 10);
-        ptr = endPtr;
-      }
-      if (ptr && *ptr) {
-        entry->dwOutDiscards = strtoul(ptr, &endPtr, 10);
-        ptr = endPtr;
-      }
-    }
-    fclose(fp);
-  }
-  else
-  {
-     ERR ("unimplemented!\n");
-     return ERROR_NOT_SUPPORTED;
-  }
-
-  return NO_ERROR;
+    FIXME( "unimplemented\n" );
 #endif
+    return ret;
 }
 
 
