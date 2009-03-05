@@ -161,6 +161,16 @@ static DWORD kstat_get_ui32( kstat_t *ksp, const char *name )
         if (!strcmp( data[i].name, name )) return data[i].value.ui32;
     return 0;
 }
+
+static ULONGLONG kstat_get_ui64( kstat_t *ksp, const char *name )
+{
+    unsigned int i;
+    kstat_named_t *data = ksp->ks_data;
+
+    for (i = 0; i < ksp->ks_ndata; i++)
+        if (!strcmp( data[i].name, name )) return data[i].value.ui64;
+    return 0;
+}
 #endif
 
 DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
@@ -198,6 +208,36 @@ DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
             fclose(fp);
             ret = NO_ERROR;
         }
+    }
+#elif defined(HAVE_LIBKSTAT)
+    {
+        kstat_ctl_t *kc;
+        kstat_t *ksp;
+
+        if ((kc = kstat_open()) &&
+            (ksp = kstat_lookup( kc, NULL, -1, (char *)name )) &&
+            kstat_read( kc, ksp, NULL ) != -1 &&
+            ksp->ks_type == KSTAT_TYPE_NAMED)
+        {
+            entry->dwMtu             = 1500;  /* FIXME */
+            entry->dwSpeed           = min( kstat_get_ui64( ksp, "ifspeed" ), ~0u );
+            entry->dwInOctets        = kstat_get_ui32( ksp, "rbytes" );
+            entry->dwInNUcastPkts    = kstat_get_ui32( ksp, "multircv" );
+            entry->dwInNUcastPkts   += kstat_get_ui32( ksp, "brdcstrcv" );
+            entry->dwInUcastPkts     = kstat_get_ui32( ksp, "ipackets" ) - entry->dwInNUcastPkts;
+            entry->dwInDiscards      = kstat_get_ui32( ksp, "norcvbuf" );
+            entry->dwInErrors        = kstat_get_ui32( ksp, "ierrors" );
+            entry->dwInUnknownProtos = kstat_get_ui32( ksp, "unknowns" );
+            entry->dwOutOctets       = kstat_get_ui32( ksp, "obytes" );
+            entry->dwOutNUcastPkts   = kstat_get_ui32( ksp, "multixmt" );
+            entry->dwOutNUcastPkts  += kstat_get_ui32( ksp, "brdcstxmt" );
+            entry->dwOutUcastPkts    = kstat_get_ui32( ksp, "opackets" ) - entry->dwOutNUcastPkts;
+            entry->dwOutDiscards     = 0;  /* FIXME */
+            entry->dwOutErrors       = kstat_get_ui32( ksp, "oerrors" );
+            entry->dwOutQLen         = kstat_get_ui32( ksp, "noxmtbuf" );
+            ret = NO_ERROR;
+        }
+        if (kc) kstat_close( kc );
     }
 #elif defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_IFLIST)
     {
