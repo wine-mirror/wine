@@ -2018,11 +2018,14 @@ ME_FilterEvent(ME_TextEditor *editor, UINT msg, WPARAM* wParam, LPARAM* lParam)
 {
     MSGFILTER msgf;
 
+    if (!editor->hWnd) return FALSE;
+    msgf.nmhdr.hwndFrom = editor->hWnd;
+    msgf.nmhdr.idFrom = GetWindowLongW(editor->hWnd, GWLP_ID);
     msgf.nmhdr.code = EN_MSGFILTER;
     msgf.msg = msg;
     msgf.wParam = *wParam;
     msgf.lParam = *lParam;
-    if (ITextHost_TxNotify(editor->texthost, msgf.nmhdr.code, &msgf) == S_OK)
+    if (SendMessageW(GetParent(editor->hWnd), WM_NOTIFY, msgf.nmhdr.idFrom, (LPARAM)&msgf))
         return FALSE;
     *wParam = msgf.wParam;
     *lParam = msgf.lParam;

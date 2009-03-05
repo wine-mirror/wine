@@ -452,8 +452,6 @@ HRESULT WINAPI ITextHostImpl_TxNotify(ITextHost *iface,
     HWND parent = GetParent(hwnd);
     UINT id = GetWindowLongW(hwnd, GWLP_ID);
 
-    /* Note: EN_MSGFILTER is documented as not being sent to TxNotify */
-
     switch (iNotify)
     {
         case EN_DROPFILES:
@@ -492,6 +490,9 @@ HRESULT WINAPI ITextHostImpl_TxNotify(ITextHost *iface,
             SendMessageW(parent, WM_COMMAND, MAKEWPARAM(id, iNotify), (LPARAM)hwnd);
             break;
 
+        case EN_MSGFILTER:
+            FIXME("EN_MSGFILTER is documented as not being sent to TxNotify\n");
+            /* fall through */
         default:
             return E_FAIL;
     }
