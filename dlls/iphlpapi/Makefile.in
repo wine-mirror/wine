@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = iphlpapi.dll
 IMPORTLIB = iphlpapi
 IMPORTS   = advapi32 kernel32
-EXTRALIBS = @RESOLVLIBS@
+EXTRALIBS = @RESOLVLIBS@ @LIBKSTAT@
 
 C_SRCS = \
 	icmp.c \

@@ -107,6 +107,9 @@
 #ifdef HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
 #endif
+#ifdef HAVE_KSTAT_H
+#include <kstat.h>
+#endif
 
 #ifndef ROUNDUP
 #define ROUNDUP(a) \
@@ -147,6 +150,18 @@
 #endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
+
+#ifdef HAVE_LIBKSTAT
+static DWORD kstat_get_ui32( kstat_t *ksp, const char *name )
+{
+    unsigned int i;
+    kstat_named_t *data = ksp->ks_data;
+
+    for (i = 0; i < ksp->ks_ndata; i++)
+        if (!strcmp( data[i].name, name )) return data[i].value.ui32;
+    return 0;
+}
+#endif
 
 DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
 {
@@ -307,6 +322,47 @@ DWORD WINAPI GetIcmpStatistics(PMIB_ICMP stats)
             fclose(fp);
             ret = NO_ERROR;
         }
+    }
+#elif defined(HAVE_LIBKSTAT)
+    {
+        static char ip[] = "ip", icmp[] = "icmp";
+        kstat_ctl_t *kc;
+        kstat_t *ksp;
+
+        if ((kc = kstat_open()) &&
+            (ksp = kstat_lookup( kc, ip, 0, icmp )) &&
+            kstat_read( kc, ksp, NULL ) != -1 &&
+            ksp->ks_type == KSTAT_TYPE_NAMED)
+        {
+            stats->stats.icmpInStats.dwMsgs           = kstat_get_ui32( ksp, "inMsgs" );
+            stats->stats.icmpInStats.dwErrors         = kstat_get_ui32( ksp, "inErrors" );
+            stats->stats.icmpInStats.dwDestUnreachs   = kstat_get_ui32( ksp, "inDestUnreachs" );
+            stats->stats.icmpInStats.dwTimeExcds      = kstat_get_ui32( ksp, "inTimeExcds" );
+            stats->stats.icmpInStats.dwParmProbs      = kstat_get_ui32( ksp, "inParmProbs" );
+            stats->stats.icmpInStats.dwSrcQuenchs     = kstat_get_ui32( ksp, "inSrcQuenchs" );
+            stats->stats.icmpInStats.dwRedirects      = kstat_get_ui32( ksp, "inRedirects" );
+            stats->stats.icmpInStats.dwEchos          = kstat_get_ui32( ksp, "inEchos" );
+            stats->stats.icmpInStats.dwEchoReps       = kstat_get_ui32( ksp, "inEchoReps" );
+            stats->stats.icmpInStats.dwTimestamps     = kstat_get_ui32( ksp, "inTimestamps" );
+            stats->stats.icmpInStats.dwTimestampReps  = kstat_get_ui32( ksp, "inTimestampReps" );
+            stats->stats.icmpInStats.dwAddrMasks      = kstat_get_ui32( ksp, "inAddrMasks" );
+            stats->stats.icmpInStats.dwAddrMaskReps   = kstat_get_ui32( ksp, "inAddrMaskReps" );
+            stats->stats.icmpOutStats.dwMsgs          = kstat_get_ui32( ksp, "outMsgs" );
+            stats->stats.icmpOutStats.dwErrors        = kstat_get_ui32( ksp, "outErrors" );
+            stats->stats.icmpOutStats.dwDestUnreachs  = kstat_get_ui32( ksp, "outDestUnreachs" );
+            stats->stats.icmpOutStats.dwTimeExcds     = kstat_get_ui32( ksp, "outTimeExcds" );
+            stats->stats.icmpOutStats.dwParmProbs     = kstat_get_ui32( ksp, "outParmProbs" );
+            stats->stats.icmpOutStats.dwSrcQuenchs    = kstat_get_ui32( ksp, "outSrcQuenchs" );
+            stats->stats.icmpOutStats.dwRedirects     = kstat_get_ui32( ksp, "outRedirects" );
+            stats->stats.icmpOutStats.dwEchos         = kstat_get_ui32( ksp, "outEchos" );
+            stats->stats.icmpOutStats.dwEchoReps      = kstat_get_ui32( ksp, "outEchoReps" );
+            stats->stats.icmpOutStats.dwTimestamps    = kstat_get_ui32( ksp, "outTimestamps" );
+            stats->stats.icmpOutStats.dwTimestampReps = kstat_get_ui32( ksp, "outTimestampReps" );
+            stats->stats.icmpOutStats.dwAddrMasks     = kstat_get_ui32( ksp, "outAddrMasks" );
+            stats->stats.icmpOutStats.dwAddrMaskReps  = kstat_get_ui32( ksp, "outAddrMaskReps" );
+            ret = NO_ERROR;
+        }
+        if (kc) kstat_close( kc );
     }
 #elif defined(HAVE_SYS_SYSCTL_H) && defined(ICMPCTL_STATS)
     {
