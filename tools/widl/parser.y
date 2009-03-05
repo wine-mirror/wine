@@ -269,7 +269,6 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %token tSAFEARRAY
 %token tSHORT
 %token tSIGNED
-%token tSINGLE
 %token tSIZEIS tSIZEOF
 %token tSMALL
 %token tSOURCE
@@ -774,7 +773,6 @@ base_type: tBYTE				{ $$ = find_type_or_error($<str>1, 0); }
 	| tUNSIGNED int_std			{ $$ = type_new_int(type_basic_get_type($2), 1); }
 	| tUNSIGNED				{ $$ = type_new_int(TYPE_BASIC_INT, 1); }
 	| tFLOAT				{ $$ = find_type_or_error($<str>1, 0); }
-	| tSINGLE				{ $$ = find_type("float", 0); }
 	| tDOUBLE				{ $$ = find_type_or_error($<str>1, 0); }
 	| tBOOLEAN				{ $$ = find_type_or_error($<str>1, 0); }
 	| tERRORSTATUST				{ $$ = find_type_or_error($<str>1, 0); }
