@@ -424,15 +424,11 @@ static void testGetTcpTable(void)
     DWORD apiReturn;
     ULONG dwSize = 0;
 
-    apiReturn = gGetTcpTable(NULL, NULL, FALSE);
+    apiReturn = gGetTcpTable(NULL, &dwSize, FALSE);
     if (apiReturn == ERROR_NOT_SUPPORTED) {
       skip("GetTcpTable is not supported\n");
       return;
     }
-    ok(apiReturn == ERROR_INVALID_PARAMETER,
-     "GetTcpTable(NULL, NULL, FALSE) returned %d, expected ERROR_INVALID_PARAMETER\n",
-     apiReturn);
-    apiReturn = gGetTcpTable(NULL, &dwSize, FALSE);
     ok(apiReturn == ERROR_INSUFFICIENT_BUFFER ||
        broken(apiReturn == ERROR_NO_DATA), /* win95 */
      "GetTcpTable(NULL, &dwSize, FALSE) returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
@@ -455,15 +451,11 @@ static void testGetUdpTable(void)
     DWORD apiReturn;
     ULONG dwSize = 0;
 
-    apiReturn = gGetUdpTable(NULL, NULL, FALSE);
+    apiReturn = gGetUdpTable(NULL, &dwSize, FALSE);
     if (apiReturn == ERROR_NOT_SUPPORTED) {
       skip("GetUdpTable is not supported\n");
       return;
     }
-    ok(apiReturn == ERROR_INVALID_PARAMETER,
-     "GetUdpTable(NULL, NULL, FALSE) returned %d, expected ERROR_INVALID_PARAMETER\n",
-     apiReturn);
-    apiReturn = gGetUdpTable(NULL, &dwSize, FALSE);
     ok(apiReturn == ERROR_INSUFFICIENT_BUFFER,
      "GetUdpTable(NULL, &dwSize, FALSE) returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
      apiReturn);
