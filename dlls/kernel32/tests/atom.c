@@ -201,6 +201,7 @@ static void test_get_atom_name(void)
             sprintf( res, "#%d", i );
             memset( res + strlen(res) + 1, 'a', 10 );
             ok( !memcmp( res, buf, 10 ), "bad buffer contents %s\n", buf );
+            if (len <= 1 || len >= 7) break;  /* don't bother testing all of them */
         }
         else
             ok( !len, "bad length %d\n", len );
@@ -283,6 +284,7 @@ static void test_get_atom_name(void)
                 print_integral( res, i );
                 memset( res + lstrlenW(res) + 1, 'a', 10 * sizeof(WCHAR));
                 ok( !memcmp( res, outW, 10 * sizeof(WCHAR) ), "bad buffer contents for %d\n", i );
+                if (len <= 1 || len >= 7) break;  /* don't bother testing all of them */
             }
             else
                 ok( !len, "bad length %d\n", len );
