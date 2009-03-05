@@ -612,92 +612,65 @@ DWORD WINAPI GetTcpStatistics(PMIB_TCPSTATS stats)
  */
 DWORD WINAPI GetUdpStatistics(PMIB_UDPSTATS stats)
 {
-#if defined(HAVE_SYS_SYSCTL_H) && defined(UDPCTL_STATS)
-  int mib[] = {CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_STATS};
-#define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
-  struct udpstat udp_stat;
-  MIB_UDPTABLE *udp_table;
-  size_t needed;
-  if (!stats)
-      return ERROR_INVALID_PARAMETER;
+    DWORD ret = ERROR_NOT_SUPPORTED;
 
-  needed = sizeof(udp_stat);
+    if (!stats) return ERROR_INVALID_PARAMETER;
+    memset( stats, 0, sizeof(*stats) );
 
-  if(sysctl(mib, MIB_LEN, &udp_stat, &needed, NULL, 0) == -1)
-  {
-      ERR ("failed to get udpstat\n");
-      return ERROR_NOT_SUPPORTED;
-  }
+#ifdef __linux__
+    {
+        FILE *fp;
 
-  stats->dwInDatagrams = udp_stat.udps_ipackets;
-  stats->dwOutDatagrams = udp_stat.udps_opackets;
-  stats->dwNoPorts = udp_stat.udps_noport;
-  stats->dwInErrors = udp_stat.udps_hdrops + udp_stat.udps_badsum + udp_stat.udps_fullsock + udp_stat.udps_badlen;
-  if (!AllocateAndGetUdpTableFromStack( &udp_table, FALSE, GetProcessHeap(), 0 ))
-  {
-      stats->dwNumAddrs = udp_table->dwNumEntries;
-      HeapFree( GetProcessHeap(), 0, udp_table );
-  }
-  else stats->dwNumAddrs = 0;
+        if ((fp = fopen("/proc/net/snmp", "r")))
+        {
+            static const char hdr[] = "Udp:";
+            char buf[512], *ptr;
 
-  return NO_ERROR;
-#else
-  FILE *fp;
-
-  if (!stats)
-    return ERROR_INVALID_PARAMETER;
-
-  memset(stats, 0, sizeof(MIB_UDPSTATS));
-
-  /* get from /proc/net/snmp, no error if can't */
-  fp = fopen("/proc/net/snmp", "r");
-  if (fp) {
-    static const char hdr[] = "Udp:";
-    char buf[512] = { 0 }, *ptr;
-
-
-    do {
-      ptr = fgets(buf, sizeof(buf), fp);
-    } while (ptr && strncasecmp(buf, hdr, sizeof(hdr) - 1));
-    if (ptr) {
-      /* last line was a header, get another */
-      ptr = fgets(buf, sizeof(buf), fp);
-      if (ptr && strncasecmp(buf, hdr, sizeof(hdr) - 1) == 0) {
-        char *endPtr;
-
-        ptr += sizeof(hdr);
-        if (ptr && *ptr) {
-          stats->dwInDatagrams = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
+            while ((ptr = fgets(buf, sizeof(buf), fp)))
+            {
+                if (strncasecmp(buf, hdr, sizeof(hdr) - 1)) continue;
+                /* last line was a header, get another */
+                if (!(ptr = fgets(buf, sizeof(buf), fp))) break;
+                if (!strncasecmp(buf, hdr, sizeof(hdr) - 1))
+                {
+                    ptr += sizeof(hdr);
+                    sscanf( ptr, "%u %u %u %u %u",
+                            &stats->dwInDatagrams, &stats->dwNoPorts,
+                            &stats->dwInErrors, &stats->dwOutDatagrams, &stats->dwNumAddrs );
+                    break;
+                }
+            }
+            fclose(fp);
+            ret = NO_ERROR;
         }
-        if (ptr && *ptr) {
-          stats->dwNoPorts = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwInErrors = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwOutDatagrams = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwNumAddrs = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-      }
     }
-    fclose(fp);
-  }
-  else
-  {
-     ERR ("unimplemented!\n");
-     return ERROR_NOT_SUPPORTED;
-  }
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(UDPCTL_STATS)
+    {
+        int mib[] = {CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_STATS};
+#define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
+        struct udpstat udp_stat;
+        MIB_UDPTABLE *udp_table;
+        size_t needed = sizeof(udp_stat);
 
-  return NO_ERROR;
+        if(sysctl(mib, MIB_LEN, &udp_stat, &needed, NULL, 0) != -1)
+        {
+            stats->dwInDatagrams = udp_stat.udps_ipackets;
+            stats->dwOutDatagrams = udp_stat.udps_opackets;
+            stats->dwNoPorts = udp_stat.udps_noport;
+            stats->dwInErrors = udp_stat.udps_hdrops + udp_stat.udps_badsum + udp_stat.udps_fullsock + udp_stat.udps_badlen;
+            if (!AllocateAndGetUdpTableFromStack( &udp_table, FALSE, GetProcessHeap(), 0 ))
+            {
+                stats->dwNumAddrs = udp_table->dwNumEntries;
+                HeapFree( GetProcessHeap(), 0, udp_table );
+            }
+            ret = NO_ERROR;
+        }
+        else ERR ("failed to get udpstat\n");
+    }
+#else
+    FIXME( "unimplemented\n" );
 #endif
+    return ret;
 }
 
 
