@@ -96,20 +96,24 @@ type_t *type_new_alias(type_t *t, const char *name)
     return a;
 }
 
-type_t *type_new_module(const char *name)
+type_t *type_new_module(char *name)
 {
-    type_t *type = make_type(TYPE_MODULE);
+    type_t *type = get_type(TYPE_MODULE, name, 0);
+    if (type->type_type != TYPE_MODULE || type->defined)
+        error_loc("%s: redefinition error; original definition was at %s:%d\n",
+                  type->name, type->loc_info.input_name, type->loc_info.line_number);
     type->name = name;
-    /* FIXME: register type to detect multiple definitions */
     return type;
 }
 
-type_t *type_new_coclass(const char *name)
+type_t *type_new_coclass(char *name)
 {
-    type_t *c = make_type(TYPE_COCLASS);
-    c->name = name;
-    /* FIXME: register type to detect multiple definitions */
-    return c;
+    type_t *type = get_type(TYPE_COCLASS, name, 0);
+    if (type->type_type != TYPE_COCLASS || type->defined)
+        error_loc("%s: redefinition error; original definition was at %s:%d\n",
+                  type->name, type->loc_info.input_name, type->loc_info.line_number);
+    type->name = name;
+    return type;
 }
 
 
