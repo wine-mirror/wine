@@ -649,6 +649,36 @@ DWORD WINAPI GetTcpStatistics(PMIB_TCPSTATS stats)
             ret = NO_ERROR;
         }
     }
+#elif defined(HAVE_LIBKSTAT)
+    {
+        static char tcp[] = "tcp";
+        kstat_ctl_t *kc;
+        kstat_t *ksp;
+
+        if ((kc = kstat_open()) &&
+            (ksp = kstat_lookup( kc, tcp, 0, tcp )) &&
+            kstat_read( kc, ksp, NULL ) != -1 &&
+            ksp->ks_type == KSTAT_TYPE_NAMED)
+        {
+            stats->dwRtoAlgorithm = kstat_get_ui32( ksp, "rtoAlgorithm" );
+            stats->dwRtoMin       = kstat_get_ui32( ksp, "rtoMin" );
+            stats->dwRtoMax       = kstat_get_ui32( ksp, "rtoMax" );
+            stats->dwMaxConn      = kstat_get_ui32( ksp, "maxConn" );
+            stats->dwActiveOpens  = kstat_get_ui32( ksp, "activeOpens" );
+            stats->dwPassiveOpens = kstat_get_ui32( ksp, "passiveOpens" );
+            stats->dwAttemptFails = kstat_get_ui32( ksp, "attemptFails" );
+            stats->dwEstabResets  = kstat_get_ui32( ksp, "estabResets" );
+            stats->dwCurrEstab    = kstat_get_ui32( ksp, "currEstab" );
+            stats->dwInSegs       = kstat_get_ui32( ksp, "inSegs" );
+            stats->dwOutSegs      = kstat_get_ui32( ksp, "outSegs" );
+            stats->dwRetransSegs  = kstat_get_ui32( ksp, "retransSegs" );
+            stats->dwInErrs       = kstat_get_ui32( ksp, "inErrs" );
+            stats->dwOutRsts      = kstat_get_ui32( ksp, "outRsts" );
+            stats->dwNumConns     = kstat_get_ui32( ksp, "connTableSize" );
+            ret = NO_ERROR;
+        }
+        if (kc) kstat_close( kc );
+    }
 #elif defined(HAVE_SYS_SYSCTL_H) && defined(UDPCTL_STATS)
     {
 #ifndef TCPTV_MIN  /* got removed in Mac OS X for some reason */
