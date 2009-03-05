@@ -748,13 +748,16 @@ static HIMAGELIST test_create_imagelist;
 
 static LRESULT CALLBACK create_test_wndproc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    LRESULT ret;
+
     if (uMsg == WM_CREATE)
     {
         LPCREATESTRUCT lpcs = (LPCREATESTRUCT)lParam;
         lpcs->style |= LVS_REPORT;
-        SendMessage(hwnd, LVM_SETIMAGELIST, 0, (LPARAM)test_create_imagelist);
     }
-    return CallWindowProc(listviewWndProc, hwnd, uMsg, wParam, lParam);
+    ret = CallWindowProc(listviewWndProc, hwnd, uMsg, wParam, lParam);
+    if (uMsg == WM_CREATE) SendMessage(hwnd, LVM_SETIMAGELIST, 0, (LPARAM)test_create_imagelist);
+    return ret;
 }
 
 static void test_create(void)
