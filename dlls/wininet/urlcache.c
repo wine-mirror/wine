@@ -3626,3 +3626,12 @@ DWORD WINAPI GetDiskInfoA(void *p0, void *p1, void *p2, void *p3)
     FIXME("(%p, %p, %p, %p)\n", p0, p1, p2, p3);
     return 0;
 }
+
+/***********************************************************************
+ *           RegisterUrlCacheNotification (WININET.@)
+ */
+DWORD WINAPI RegisterUrlCacheNotification(LPVOID a, DWORD b, DWORD c, DWORD d, DWORD e, DWORD f)
+{
+    FIXME("(%p %x %x %x %x %x)\n", a, b, c, d, e, f);
+    return 0;
+}

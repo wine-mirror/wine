@@ -216,7 +216,7 @@
 @ stub PrivacyGetZonePreferenceW # (long long ptr ptr ptr)
 @ stub PrivacySetZonePreferenceW # (long long long wstr)
 @ stdcall ReadUrlCacheEntryStream(ptr long ptr ptr long)
-@ stub RegisterUrlCacheNotification
+@ stdcall RegisterUrlCacheNotification(ptr long long long long long)
 @ stdcall ResumeSuspendedDownload(long long)
 @ stdcall RetrieveUrlCacheEntryFileA(str ptr ptr long)
 @ stdcall RetrieveUrlCacheEntryFileW(wstr ptr ptr long)
