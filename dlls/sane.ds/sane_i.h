@@ -85,6 +85,7 @@ struct tagActiveDS
 
 /* Helper functions */
 extern TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action);
+extern TW_UINT16 SANE_SaneSetDefaults (void);
 
 /* Implementation of operation triplets
  * From Application to Source (Control Information) */
@@ -228,6 +229,8 @@ SANE_Status sane_option_probe_resolution(SANE_Handle h, const char *option_name,
 SANE_Status sane_option_probe_mode(SANE_Handle h, SANE_String_Const **choices, char *current, int current_size);
 SANE_Status sane_option_probe_scan_area(SANE_Handle h, const char *option_name, SANE_Fixed *val,
                                         SANE_Unit *unit, SANE_Fixed *min, SANE_Fixed *max, SANE_Fixed *quant);
+SANE_Status sane_option_get_bool(SANE_Handle h, const char *option_name, SANE_Bool *val, SANE_Int *status);
+SANE_Status sane_option_set_bool(SANE_Handle h, const char *option_name, SANE_Bool val, SANE_Int *status);
 #endif
 
 

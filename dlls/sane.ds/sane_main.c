@@ -661,11 +661,16 @@ static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
     }
     status = psane_open(sane_devlist[i]->name,&activeDS.deviceHandle);
     if (status == SANE_STATUS_GOOD) {
-	activeDS.currentState = 4;
-	activeDS.twCC = TWRC_SUCCESS;
-	return TWRC_SUCCESS;
+        activeDS.twCC = SANE_SaneSetDefaults();
+        if (activeDS.twCC == TWCC_SUCCESS) {
+	    activeDS.currentState = 4;
+	    return TWRC_SUCCESS;
+        }
+        else
+            psane_close(activeDS.deviceHandle);
     }
-    ERR("sane_open(%s): %s\n", sane_devlist[i]->name, psane_strstatus (status));
+    else
+        ERR("sane_open(%s): %s\n", sane_devlist[i]->name, psane_strstatus (status));
     return TWRC_FAILURE;
 }
 #endif

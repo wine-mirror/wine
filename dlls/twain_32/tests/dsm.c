@@ -578,6 +578,12 @@ static void test_single_source(TW_IDENTITY *appid, TW_IDENTITY *source)
         if (capabilities[ICAP_YRESOLUTION])
             test_resolution(appid, source, ICAP_YRESOLUTION,
                 TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET);
+
+        /* Optional capabilities */
+        if (capabilities[CAP_AUTOFEED])
+            test_onevalue_cap(appid, source, CAP_AUTOFEED, TWTY_BOOL,
+                TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET);
+
     }
 }
 

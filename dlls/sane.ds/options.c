@@ -85,6 +85,33 @@ SANE_Status sane_option_set_int(SANE_Handle h, const char *option_name, SANE_Int
     return psane_control_option(h, optno, SANE_ACTION_SET_VALUE, (void *) &val, status);
 }
 
+SANE_Status sane_option_get_bool(SANE_Handle h, const char *option_name, SANE_Bool *val, SANE_Int *status)
+{
+    SANE_Status rc;
+    int optno;
+    const SANE_Option_Descriptor *opt;
+
+    rc = sane_find_option(h, option_name, &opt, &optno, SANE_TYPE_BOOL);
+    if (rc != SANE_STATUS_GOOD)
+        return rc;
+
+    return psane_control_option(h, optno, SANE_ACTION_GET_VALUE, (void *) val, status);
+}
+
+SANE_Status sane_option_set_bool(SANE_Handle h, const char *option_name, SANE_Bool val, SANE_Int *status)
+{
+    SANE_Status rc;
+    int optno;
+    const SANE_Option_Descriptor *opt;
+
+    rc = sane_find_option(h, option_name, &opt, &optno, SANE_TYPE_BOOL);
+    if (rc != SANE_STATUS_GOOD)
+        return rc;
+
+    return psane_control_option(h, optno, SANE_ACTION_SET_VALUE, (void *) &val, status);
+}
+
+
 /* Important:  SANE has the side effect of of overwriting val with the returned value */
 SANE_Status sane_option_set_str(SANE_Handle h, const char *option_name, SANE_String val, SANE_Int *status)
 {

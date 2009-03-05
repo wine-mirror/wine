@@ -166,6 +166,7 @@ static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability)
 {
     TW_ARRAY *a;
     static const UINT16 supported_caps[] = { CAP_SUPPORTEDCAPS, CAP_XFERCOUNT, CAP_UICONTROLLABLE,
+                    CAP_AUTOFEED,
                     ICAP_XFERMECH, ICAP_PIXELTYPE, ICAP_UNITS, ICAP_BITDEPTH, ICAP_COMPRESSION, ICAP_PIXELFLAVOR,
                     ICAP_XRESOLUTION, ICAP_YRESOLUTION, ICAP_PHYSICALHEIGHT, ICAP_PHYSICALWIDTH };
 
@@ -815,6 +816,72 @@ static TW_UINT16 SANE_ICAPPixelFlavor (pTW_CAPABILITY pCapability, TW_UINT16 act
     return twCC;
 }
 
+/* CAP_AUTOFEED */
+static TW_UINT16 SANE_CAPAutofeed (pTW_CAPABILITY pCapability, TW_UINT16 action)
+{
+    TW_UINT16 twCC = TWCC_BADCAP;
+#ifdef SONAME_LIBSANE
+    TW_UINT32 val;
+    SANE_Bool autofeed;
+    SANE_Status status;
+
+    TRACE("CAP_AUTOFEED\n");
+
+    if (sane_option_get_bool(activeDS.deviceHandle, "batch-scan", &autofeed, NULL) != SANE_STATUS_GOOD)
+        return TWCC_BADCAP;
+
+    switch (action)
+    {
+        case MSG_QUERYSUPPORT:
+            twCC = set_onevalue(pCapability, TWTY_INT32,
+                    TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET );
+            break;
+
+        case MSG_GET:
+            twCC = set_onevalue(pCapability, TWTY_BOOL, autofeed);
+            break;
+
+        case MSG_SET:
+            twCC = msg_set(pCapability, &val);
+            if (twCC == TWCC_SUCCESS)
+            {
+                if (val)
+                    autofeed = SANE_TRUE;
+                else
+                    autofeed = SANE_FALSE;
+
+                status = sane_option_set_bool(activeDS.deviceHandle, "batch-scan", autofeed, NULL);
+                if (status != SANE_STATUS_GOOD)
+                {
+                    ERR("Error %s: Could not set batch-scan to %d\n", psane_strstatus(status), autofeed);
+                    return sane_status_to_twcc(status);
+                }
+            }
+            break;
+
+        case MSG_GETDEFAULT:
+            twCC = set_onevalue(pCapability, TWTY_BOOL, SANE_TRUE);
+            break;
+
+        case MSG_RESET:
+            autofeed = SANE_TRUE;
+            status = sane_option_set_bool(activeDS.deviceHandle, "batch-scan", autofeed, NULL);
+            if (status != SANE_STATUS_GOOD)
+            {
+                ERR("Error %s: Could not reset batch-scan to SANE_TRUE\n", psane_strstatus(status));
+                return sane_status_to_twcc(status);
+            }
+            /* .. fall through intentional .. */
+
+        case MSG_GETCURRENT:
+            twCC = set_onevalue(pCapability, TWTY_BOOL, autofeed);
+            break;
+    }
+#endif
+    return twCC;
+}
+
+
 
 TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
@@ -837,6 +904,10 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 
         case CAP_UICONTROLLABLE:
             twCC = SANE_CAPUiControllable (pCapability, action);
+            break;
+
+        case CAP_AUTOFEED:
+            twCC = SANE_CAPAutofeed (pCapability, action);
             break;
 
         case ICAP_PIXELTYPE:
@@ -890,4 +961,18 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
         TRACE("capability 0x%x/action=%d being reported as unsupported\n", pCapability->Cap, action);
 
     return twCC;
+}
+
+TW_UINT16 SANE_SaneSetDefaults (void)
+{
+    TW_CAPABILITY cap;
+
+    memset(&cap, 0, sizeof(cap));
+    cap.Cap = CAP_AUTOFEED;
+    cap.ConType = TWON_DONTCARE16;
+
+    if (SANE_SaneCapability(&cap, MSG_RESET) == TWCC_SUCCESS)
+        GlobalFree(cap.hContainer);
+
+   return TWCC_SUCCESS;
 }
