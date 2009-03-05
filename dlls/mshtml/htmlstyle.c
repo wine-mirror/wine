@@ -51,6 +51,8 @@ static const WCHAR attrBorder[] =
     {'b','o','r','d','e','r',0};
 static const WCHAR attrBorderBottomStyle[] =
     {'b','o','r','d','e','r','-','b','o','t','t','o','m','-','s','t','y','l','e',0};
+static const WCHAR attrBorderBottomWidth[] =
+    {'b','o','r','d','e','r','-','b','o','t','t','o','m','-','w','i','d','t','h',0};
 static const WCHAR attrBorderColor[] =
     {'b','o','r','d','e','r','-','c','o','l','o','r',0};
 static const WCHAR attrBorderLeft[] =
@@ -132,6 +134,7 @@ static const struct{
     {attrBackgroundRepeat,     DISPID_IHTMLSTYLE_BACKGROUNDREPEAT},
     {attrBorder,               DISPID_IHTMLSTYLE_BORDER},
     {attrBorderBottomStyle,    DISPID_IHTMLSTYLE_BORDERBOTTOMSTYLE},
+    {attrBorderBottomWidth,    DISPID_IHTMLSTYLE_BORDERBOTTOMWIDTH},
     {attrBorderColor,          DISPID_IHTMLSTYLE_BORDERCOLOR},
     {attrBorderLeft,           DISPID_IHTMLSTYLE_BORDERLEFT},
     {attrBorderLeftStyle,      DISPID_IHTMLSTYLE_BORDERLEFTSTYLE},
@@ -1553,15 +1556,16 @@ static HRESULT WINAPI HTMLStyle_get_borderRightWidth(IHTMLStyle *iface, VARIANT 
 static HRESULT WINAPI HTMLStyle_put_borderBottomWidth(IHTMLStyle *iface, VARIANT v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(v%d)\n", This, V_VT(&v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(v%d)\n", This, V_VT(&v));
+    return set_nsstyle_attr_var(This->nsstyle, STYLEID_BORDER_BOTTOM_WIDTH, &v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_borderBottomWidth(IHTMLStyle *iface, VARIANT *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_nsstyle_attr_var(This->nsstyle, STYLEID_BORDER_BOTTOM_WIDTH, p, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_put_borderLeftWidth(IHTMLStyle *iface, VARIANT v)
