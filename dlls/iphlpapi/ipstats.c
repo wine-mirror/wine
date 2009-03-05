@@ -381,176 +381,116 @@ DWORD WINAPI GetIcmpStatistics(PMIB_ICMP stats)
  */
 DWORD WINAPI GetIpStatistics(PMIB_IPSTATS stats)
 {
-#if defined(HAVE_SYS_SYSCTL_H) && defined(IPCTL_STATS)
-  int mib[] = {CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS};
-#define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
-  int ip_ttl, ip_forwarding;
-  struct ipstat ip_stat;
-  size_t needed;
+    DWORD ret = ERROR_NOT_SUPPORTED;
+    MIB_IPFORWARDTABLE *fwd_table;
 
-  if (!stats)
-      return ERROR_INVALID_PARAMETER;
+    if (!stats) return ERROR_INVALID_PARAMETER;
+    memset( stats, 0, sizeof(*stats) );
 
-  needed = sizeof(ip_stat);
-  if(sysctl(mib, MIB_LEN, &ip_stat, &needed, NULL, 0) == -1)
-  {
-      ERR ("failed to get ipstat\n");
-      return ERROR_NOT_SUPPORTED;
-  }
-
-  needed = sizeof(ip_ttl);
-  if (sysctlbyname ("net.inet.ip.ttl", &ip_ttl, &needed, NULL, 0) == -1)
-  {
-      ERR ("failed to get ip Default TTL\n");
-      return ERROR_NOT_SUPPORTED;
-  }
-
-  needed = sizeof(ip_forwarding);
-  if (sysctlbyname ("net.inet.ip.forwarding", &ip_forwarding, &needed, NULL, 0) == -1)
-  {
-      ERR ("failed to get ip forwarding\n");
-      return ERROR_NOT_SUPPORTED;
-  }
-
-  stats->dwForwarding = ip_forwarding;
-  stats->dwDefaultTTL = ip_ttl;
-  stats->dwInDelivers = ip_stat.ips_delivered;
-  stats->dwInHdrErrors = ip_stat.ips_badhlen + ip_stat.ips_badsum + ip_stat.ips_tooshort + ip_stat.ips_badlen;
-  stats->dwInAddrErrors = ip_stat.ips_cantforward;
-  stats->dwInReceives = ip_stat.ips_total;
-  stats->dwForwDatagrams = ip_stat.ips_forward;
-  stats->dwInUnknownProtos = ip_stat.ips_noproto;
-  stats->dwInDiscards = ip_stat.ips_fragdropped;
-  stats->dwOutDiscards = ip_stat.ips_odropped;
-  stats->dwReasmOks = ip_stat.ips_reassembled;
-  stats->dwFragOks = ip_stat.ips_fragmented;
-  stats->dwFragFails = ip_stat.ips_cantfrag;
-  stats->dwReasmTimeout = ip_stat.ips_fragtimeout;
-  stats->dwOutNoRoutes = ip_stat.ips_noroute;
-  stats->dwOutRequests = ip_stat.ips_localout;
-  stats->dwReasmReqds = ip_stat.ips_fragments;
-
-  return NO_ERROR;
-#else
-  FILE *fp;
-  MIB_IPFORWARDTABLE *fwd_table;
-
-  if (!stats)
-    return ERROR_INVALID_PARAMETER;
-
-  memset(stats, 0, sizeof(MIB_IPSTATS));
-  stats->dwNumIf = stats->dwNumAddr = getNumInterfaces();
-  if (!AllocateAndGetIpForwardTableFromStack( &fwd_table, FALSE, GetProcessHeap(), 0 ))
-  {
-      stats->dwNumRoutes = fwd_table->dwNumEntries;
-      HeapFree( GetProcessHeap(), 0, fwd_table );
-  }
-
-  /* get most of these stats from /proc/net/snmp, no error if can't */
-  fp = fopen("/proc/net/snmp", "r");
-  if (fp) {
-    static const char hdr[] = "Ip:";
-    char buf[512] = { 0 }, *ptr;
-
-    do {
-      ptr = fgets(buf, sizeof(buf), fp);
-    } while (ptr && strncasecmp(buf, hdr, sizeof(hdr) - 1));
-    if (ptr) {
-      /* last line was a header, get another */
-      ptr = fgets(buf, sizeof(buf), fp);
-      if (ptr && strncasecmp(buf, hdr, sizeof(hdr) - 1) == 0) {
-        char *endPtr;
-
-        ptr += sizeof(hdr);
-        if (ptr && *ptr) {
-          stats->dwForwarding = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwDefaultTTL = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwInReceives = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwInHdrErrors = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwInAddrErrors = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwForwDatagrams = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwInUnknownProtos = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwInDiscards = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwInDelivers = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwOutRequests = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwOutDiscards = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwOutNoRoutes = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwReasmTimeout = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwReasmReqds = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwReasmOks = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwReasmFails = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwFragOks = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwFragFails = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwFragCreates = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        /* hmm, no routingDiscards */
-      }
+    stats->dwNumIf = stats->dwNumAddr = getNumInterfaces();
+    if (!AllocateAndGetIpForwardTableFromStack( &fwd_table, FALSE, GetProcessHeap(), 0 ))
+    {
+        stats->dwNumRoutes = fwd_table->dwNumEntries;
+        HeapFree( GetProcessHeap(), 0, fwd_table );
     }
-    fclose(fp);
-  }
-  else
-  {
-     ERR ("unimplemented!\n");
-     return ERROR_NOT_SUPPORTED;
-  }
 
-  return NO_ERROR;
+#ifdef __linux__
+    {
+        FILE *fp;
+
+        if ((fp = fopen("/proc/net/snmp", "r")))
+        {
+            static const char hdr[] = "Ip:";
+            char buf[512], *ptr;
+
+            while ((ptr = fgets(buf, sizeof(buf), fp)))
+            {
+                if (strncasecmp(buf, hdr, sizeof(hdr) - 1)) continue;
+                /* last line was a header, get another */
+                if (!(ptr = fgets(buf, sizeof(buf), fp))) break;
+                if (!strncasecmp(buf, hdr, sizeof(hdr) - 1))
+                {
+                    ptr += sizeof(hdr);
+                    sscanf( ptr, "%u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u",
+                            &stats->dwForwarding,
+                            &stats->dwDefaultTTL,
+                            &stats->dwInReceives,
+                            &stats->dwInHdrErrors,
+                            &stats->dwInAddrErrors,
+                            &stats->dwForwDatagrams,
+                            &stats->dwInUnknownProtos,
+                            &stats->dwInDiscards,
+                            &stats->dwInDelivers,
+                            &stats->dwOutRequests,
+                            &stats->dwOutDiscards,
+                            &stats->dwOutNoRoutes,
+                            &stats->dwReasmTimeout,
+                            &stats->dwReasmReqds,
+                            &stats->dwReasmOks,
+                            &stats->dwReasmFails,
+                            &stats->dwFragOks,
+                            &stats->dwFragFails,
+                            &stats->dwFragCreates );
+                    /* hmm, no routingDiscards */
+                    break;
+                }
+            }
+            fclose(fp);
+            ret = NO_ERROR;
+        }
+    }
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(IPCTL_STATS)
+    {
+        int mib[] = {CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS};
+#define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
+        int ip_ttl, ip_forwarding;
+        struct ipstat ip_stat;
+        size_t needed;
+
+        needed = sizeof(ip_stat);
+        if(sysctl(mib, MIB_LEN, &ip_stat, &needed, NULL, 0) == -1)
+        {
+            ERR ("failed to get ipstat\n");
+            return ERROR_NOT_SUPPORTED;
+        }
+
+        needed = sizeof(ip_ttl);
+        if (sysctlbyname ("net.inet.ip.ttl", &ip_ttl, &needed, NULL, 0) == -1)
+        {
+            ERR ("failed to get ip Default TTL\n");
+            return ERROR_NOT_SUPPORTED;
+        }
+
+        needed = sizeof(ip_forwarding);
+        if (sysctlbyname ("net.inet.ip.forwarding", &ip_forwarding, &needed, NULL, 0) == -1)
+        {
+            ERR ("failed to get ip forwarding\n");
+            return ERROR_NOT_SUPPORTED;
+        }
+
+        stats->dwForwarding = ip_forwarding;
+        stats->dwDefaultTTL = ip_ttl;
+        stats->dwInDelivers = ip_stat.ips_delivered;
+        stats->dwInHdrErrors = ip_stat.ips_badhlen + ip_stat.ips_badsum + ip_stat.ips_tooshort + ip_stat.ips_badlen;
+        stats->dwInAddrErrors = ip_stat.ips_cantforward;
+        stats->dwInReceives = ip_stat.ips_total;
+        stats->dwForwDatagrams = ip_stat.ips_forward;
+        stats->dwInUnknownProtos = ip_stat.ips_noproto;
+        stats->dwInDiscards = ip_stat.ips_fragdropped;
+        stats->dwOutDiscards = ip_stat.ips_odropped;
+        stats->dwReasmOks = ip_stat.ips_reassembled;
+        stats->dwFragOks = ip_stat.ips_fragmented;
+        stats->dwFragFails = ip_stat.ips_cantfrag;
+        stats->dwReasmTimeout = ip_stat.ips_fragtimeout;
+        stats->dwOutNoRoutes = ip_stat.ips_noroute;
+        stats->dwOutRequests = ip_stat.ips_localout;
+        stats->dwReasmReqds = ip_stat.ips_fragments;
+        ret = NO_ERROR;
+    }
+#else
+    FIXME( "unimplemented\n" );
 #endif
+    return ret;
 }
 
 
