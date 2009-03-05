@@ -1750,23 +1750,23 @@ static struct menu_mouse_tests_s {
     BOOL _todo_wine;
 } menu_tests[] = {
     /* for each test, send keys or clicks and check for menu visibility */
-    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 0}, TRUE, FALSE }, /* test 0 */
+    { INPUT_KEYBOARD, {{0}}, {VK_MENU, 0}, TRUE, FALSE }, /* test 0 */
     { INPUT_KEYBOARD, {{0}}, {VK_ESCAPE, 0}, FALSE, FALSE },
-    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 0}, TRUE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_MENU, 0}, TRUE, FALSE },
     { INPUT_KEYBOARD, {{0}}, {'D', 0}, FALSE, FALSE },
-    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 0}, TRUE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_MENU, 0}, TRUE, FALSE },
     { INPUT_KEYBOARD, {{0}}, {'E', 0}, FALSE, FALSE },
-    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 0}, TRUE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_MENU, 'M', 0}, TRUE, FALSE },
     { INPUT_KEYBOARD, {{0}}, {VK_ESCAPE, VK_ESCAPE, 0}, FALSE, FALSE },
-    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', VK_ESCAPE, 0}, TRUE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_MENU, 'M', VK_ESCAPE, 0}, TRUE, FALSE },
     { INPUT_KEYBOARD, {{0}}, {VK_ESCAPE, 0}, FALSE, FALSE },
-    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 0}, TRUE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_MENU, 'M', 0}, TRUE, FALSE },
     { INPUT_KEYBOARD, {{0}}, {'D', 0}, FALSE, FALSE },
-    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 0}, TRUE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_MENU, 'M', 0}, TRUE, FALSE },
     { INPUT_KEYBOARD, {{0}}, {'E', 0}, FALSE, FALSE },
-    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 'P', 0}, TRUE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_MENU, 'M', 'P', 0}, TRUE, FALSE },
     { INPUT_KEYBOARD, {{0}}, {'D', 0}, FALSE, FALSE },
-    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 'P', 0}, TRUE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_MENU, 'M', 'P', 0}, TRUE, FALSE },
     { INPUT_KEYBOARD, {{0}}, {'E', 0}, FALSE, FALSE },
 
     { INPUT_MOUSE, {{1, 2}, {0}}, {0}, TRUE, TRUE }, /* test 18 */
@@ -1793,7 +1793,7 @@ static void send_key(WORD wVk)
     pSendInput(2, (INPUT *) i, sizeof(INPUT));
 }
 
-static void click_menu(HANDLE hWnd, struct menu_item_pair_s *mi)
+static BOOL click_menu(HANDLE hWnd, struct menu_item_pair_s *mi)
 {
     HMENU hMenu = hMenus[mi->uMenu];
     TEST_INPUT i[3];
@@ -1802,7 +1802,7 @@ static void click_menu(HANDLE hWnd, struct menu_item_pair_s *mi)
     int screen_w = GetSystemMetrics(SM_CXSCREEN);
     int screen_h = GetSystemMetrics(SM_CYSCREEN);
     BOOL ret = GetMenuItemRect(mi->uMenu > 2 ? NULL : hWnd, hMenu, mi->uItem, &r);
-    if(!ret) return;
+    if(!ret) return FALSE;
 
     memset(i, 0, sizeof(i));
     i[0].type = i[1].type = i[2].type = INPUT_MOUSE;
@@ -1815,10 +1815,11 @@ static void click_menu(HANDLE hWnd, struct menu_item_pair_s *mi)
     i[0].u.mi.dwFlags |= MOUSEEVENTF_MOVE;
     i[1].u.mi.dwFlags |= MOUSEEVENTF_LEFTDOWN;
     i[2].u.mi.dwFlags |= MOUSEEVENTF_LEFTUP;
-    pSendInput(3, (INPUT *) i, sizeof(INPUT));
+    ret = pSendInput(3, (INPUT *) i, sizeof(INPUT));
 
     /* hack to prevent mouse message buildup in Wine */
     while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageA( &msg );
+    return ret;
 }
 
 static DWORD WINAPI test_menu_input_thread(LPVOID lpParameter)
@@ -1830,7 +1831,7 @@ static DWORD WINAPI test_menu_input_thread(LPVOID lpParameter)
     /* mixed keyboard/mouse test */
     for (i = 0; menu_tests[i].type != -1; i++)
     {
-        int elapsed = 0;
+        int ret = TRUE, elapsed = 0;
 
         got_input = i && menu_tests[i-1].bMenuVisible;
 
@@ -1839,8 +1840,14 @@ static DWORD WINAPI test_menu_input_thread(LPVOID lpParameter)
                 send_key(menu_tests[i].wVk[j]);
         else
             for (j = 0; menu_tests[i].menu_item_pairs[j].uMenu != 0; j++)
-                click_menu(hWnd, &menu_tests[i].menu_item_pairs[j]);
+                if (!(ret = click_menu(hWnd, &menu_tests[i].menu_item_pairs[j]))) break;
 
+        if (!ret)
+        {
+            skip( "test %u: failed to send input\n", i );
+            PostMessage( hWnd, WM_CANCELMODE, 0, 0 );
+            return 0;
+        }
         while (menu_tests[i].bMenuVisible != bMenuVisible)
         {
             if (elapsed > 200)
@@ -1852,6 +1859,7 @@ static DWORD WINAPI test_menu_input_thread(LPVOID lpParameter)
         if (!got_input)
         {
             skip( "test %u: didn't receive input\n", i );
+            PostMessage( hWnd, WM_CANCELMODE, 0, 0 );
             return 0;
         }
 
