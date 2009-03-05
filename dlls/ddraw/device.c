@@ -3463,43 +3463,12 @@ IDirect3DDeviceImpl_7_DrawPrimitive(IDirect3DDevice7 *iface,
                                     DWORD Flags)
 {
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
-    UINT PrimitiveCount, stride;
+    UINT stride;
     HRESULT hr;
     TRACE("(%p)->(%08x,%08x,%p,%08x,%08x): Relay!\n", This, PrimitiveType, VertexType, Vertices, VertexCount, Flags);
 
     if(!Vertices)
         return DDERR_INVALIDPARAMS;
-
-    /* Get the vertex count */
-    switch(PrimitiveType)
-    {
-      case D3DPT_POINTLIST: 
-        PrimitiveCount = VertexCount;
-        break;
-
-      case D3DPT_LINELIST: 
-        PrimitiveCount = VertexCount / 2;
-        break;
-
-      case D3DPT_LINESTRIP:
-        PrimitiveCount = VertexCount - 1;
-        break;
-
-      case D3DPT_TRIANGLELIST:
-        PrimitiveCount = VertexCount / 3;
-        break;
-
-      case D3DPT_TRIANGLESTRIP:
-        PrimitiveCount = VertexCount - 2;
-        break;
-
-      case D3DPT_TRIANGLEFAN:
-        PrimitiveCount = VertexCount - 2;
-        break;
-
-      default:
-        return DDERR_INVALIDPARAMS;
-    }
 
     /* Get the stride */
     stride = get_flexible_vertex_size(VertexType);
@@ -3517,7 +3486,7 @@ IDirect3DDeviceImpl_7_DrawPrimitive(IDirect3DDevice7 *iface,
     /* This method translates to the user pointer draw of WineD3D */
     hr = IWineD3DDevice_DrawPrimitiveUP(This->wineD3DDevice,
                                         PrimitiveType,
-                                        PrimitiveCount,
+                                        VertexCount,
                                         Vertices,
                                         stride);
     LeaveCriticalSection(&ddraw_cs);
@@ -3627,40 +3596,8 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
                                            DWORD Flags)
 {
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
-    UINT PrimitiveCount = 0;
     HRESULT hr;
     TRACE("(%p)->(%08x,%08x,%p,%08x,%p,%08x,%08x): Relay!\n", This, PrimitiveType, VertexType, Vertices, VertexCount, Indices, IndexCount, Flags);
-
-    /* Get the primitive number */
-    switch(PrimitiveType)
-    {
-      case D3DPT_POINTLIST: 
-        PrimitiveCount = IndexCount;
-        break;
-
-      case D3DPT_LINELIST: 
-        PrimitiveCount = IndexCount / 2;
-        break;
-
-      case D3DPT_LINESTRIP:
-        PrimitiveCount = IndexCount - 1;
-        break;
-
-      case D3DPT_TRIANGLELIST:
-        PrimitiveCount = IndexCount / 3;
-        break;
-
-      case D3DPT_TRIANGLESTRIP:
-        PrimitiveCount = IndexCount - 2;
-        break;
-
-      case D3DPT_TRIANGLEFAN:
-        PrimitiveCount = IndexCount - 2;
-        break;
-
-      default:
-        return DDERR_INVALIDPARAMS;
-    }
 
     /* Set the D3DDevice's FVF */
     EnterCriticalSection(&ddraw_cs);
@@ -3674,7 +3611,7 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
     }
 
     hr = IWineD3DDevice_DrawIndexedPrimitiveUP(This->wineD3DDevice, PrimitiveType, 0 /* MinVertexIndex */,
-            VertexCount /* UINT NumVertexIndex */, PrimitiveCount, Indices, WINED3DFMT_R16_UINT, Vertices,
+            VertexCount /* UINT NumVertexIndex */, IndexCount, Indices, WINED3DFMT_R16_UINT, Vertices,
             get_flexible_vertex_size(VertexType));
     LeaveCriticalSection(&ddraw_cs);
     return hr;
@@ -3879,7 +3816,6 @@ IDirect3DDeviceImpl_7_DrawPrimitiveStrided(IDirect3DDevice7 *iface,
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
     WineDirect3DVertexStridedData WineD3DStrided;
     DWORD i;
-    UINT PrimitiveCount;
     HRESULT hr;
 
     TRACE("(%p)->(%08x,%08x,%p,%08x,%08x): stub!\n", This, PrimitiveType, VertexType, D3DDrawPrimStrideData, VertexCount, Flags);
@@ -3940,41 +3876,11 @@ IDirect3DDeviceImpl_7_DrawPrimitiveStrided(IDirect3DDevice7 *iface,
         }
     }
 
-    /* Get the primitive count */
-    switch(PrimitiveType)
-    {
-        case D3DPT_POINTLIST: 
-          PrimitiveCount = VertexCount;
-          break;
-
-        case D3DPT_LINELIST: 
-          PrimitiveCount = VertexCount / 2;
-          break;
-
-        case D3DPT_LINESTRIP:
-          PrimitiveCount = VertexCount - 1;
-          break;
-
-        case D3DPT_TRIANGLELIST:
-          PrimitiveCount = VertexCount / 3;
-          break;
-
-        case D3DPT_TRIANGLESTRIP:
-          PrimitiveCount = VertexCount - 2;
-          break;
-
-        case D3DPT_TRIANGLEFAN:
-          PrimitiveCount = VertexCount - 2;
-          break;
-
-        default: return DDERR_INVALIDPARAMS;
-    }
-
     /* WineD3D doesn't need the FVF here */
     EnterCriticalSection(&ddraw_cs);
     hr = IWineD3DDevice_DrawPrimitiveStrided(This->wineD3DDevice,
                                              PrimitiveType,
-                                             PrimitiveCount,
+                                             VertexCount,
                                              &WineD3DStrided);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
@@ -4053,7 +3959,6 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
     WineDirect3DVertexStridedData WineD3DStrided;
     DWORD i;
-    UINT PrimitiveCount;
     HRESULT hr;
 
     TRACE("(%p)->(%08x,%08x,%p,%08x,%p,%08x,%08x)\n", This, PrimitiveType, VertexType, D3DDrawPrimStrideData, VertexCount, Indices, IndexCount, Flags);
@@ -4114,40 +4019,10 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
         }
     }
 
-    /* Get the primitive count */
-    switch(PrimitiveType)
-    {
-        case D3DPT_POINTLIST:
-            PrimitiveCount = IndexCount;
-            break;
-
-        case D3DPT_LINELIST:
-            PrimitiveCount = IndexCount / 2;
-            break;
-
-        case D3DPT_LINESTRIP:
-            PrimitiveCount = IndexCount - 1;
-            break;
-
-        case D3DPT_TRIANGLELIST:
-            PrimitiveCount = IndexCount / 3;
-            break;
-
-        case D3DPT_TRIANGLESTRIP:
-            PrimitiveCount = IndexCount - 2;
-            break;
-
-        case D3DPT_TRIANGLEFAN:
-            PrimitiveCount = IndexCount - 2;
-            break;
-
-            default: return DDERR_INVALIDPARAMS;
-    }
-
     /* WineD3D doesn't need the FVF here */
     EnterCriticalSection(&ddraw_cs);
     hr = IWineD3DDevice_DrawIndexedPrimitiveStrided(This->wineD3DDevice, PrimitiveType,
-            PrimitiveCount, &WineD3DStrided, VertexCount, Indices, WINED3DFMT_R16_UINT);
+            IndexCount, &WineD3DStrided, VertexCount, Indices, WINED3DFMT_R16_UINT);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -4230,7 +4105,6 @@ IDirect3DDeviceImpl_7_DrawPrimitiveVB(IDirect3DDevice7 *iface,
 {
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
     IDirect3DVertexBufferImpl *vb = (IDirect3DVertexBufferImpl *)D3DVertexBuf;
-    UINT PrimitiveCount;
     HRESULT hr;
     DWORD stride;
     WINED3DVERTEXBUFFER_DESC Desc;
@@ -4242,37 +4116,6 @@ IDirect3DDeviceImpl_7_DrawPrimitiveVB(IDirect3DDevice7 *iface,
     {
         ERR("(%p) No Vertex buffer specified\n", This);
         return DDERR_INVALIDPARAMS;
-    }
-
-    /* Get the primitive count */
-    switch(PrimitiveType)
-    {
-        case D3DPT_POINTLIST: 
-          PrimitiveCount = NumVertices;
-          break;
-
-        case D3DPT_LINELIST: 
-          PrimitiveCount = NumVertices / 2;
-          break;
-
-        case D3DPT_LINESTRIP:
-          PrimitiveCount = NumVertices - 1;
-          break;
-
-        case D3DPT_TRIANGLELIST:
-          PrimitiveCount = NumVertices / 3;
-          break;
-
-        case D3DPT_TRIANGLESTRIP:
-          PrimitiveCount = NumVertices - 2;
-          break;
-
-        case D3DPT_TRIANGLEFAN:
-          PrimitiveCount = NumVertices - 2;
-          break;
-
-        default:
-          return DDERR_INVALIDPARAMS;
     }
 
     /* Get the FVF of the vertex buffer, and its stride */
@@ -4313,7 +4156,7 @@ IDirect3DDeviceImpl_7_DrawPrimitiveVB(IDirect3DDevice7 *iface,
     hr = IWineD3DDevice_DrawPrimitive(This->wineD3DDevice,
                                       PrimitiveType,
                                       StartVertex,
-                                      PrimitiveCount);
+                                      NumVertices);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -4393,7 +4236,6 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
     IDirect3DVertexBufferImpl *vb = (IDirect3DVertexBufferImpl *)D3DVertexBuf;
     DWORD stride;
-    UINT PrimitiveCount;
     WORD *LockedIndices;
     HRESULT hr;
     WINED3DVERTEXBUFFER_DESC Desc;
@@ -4401,42 +4243,12 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     TRACE("(%p)->(%08x,%p,%d,%d,%p,%d,%08x)\n", This, PrimitiveType, vb, StartVertex, NumVertices, Indices, IndexCount, Flags);
 
     /* Steps:
-     * 1) Calculate some things: Vertex count -> Primitive count, stride, ...
+     * 1) Calculate some things: stride, ...
      * 2) Upload the Indices to the index buffer
      * 3) Set the index source
      * 4) Set the Vertex Buffer as the Stream source
      * 5) Call IWineD3DDevice::DrawIndexedPrimitive
      */
-
-    /* Get the primitive count */
-    switch(PrimitiveType)
-    {
-        case D3DPT_POINTLIST: 
-          PrimitiveCount = IndexCount;
-          break;
-
-        case D3DPT_LINELIST: 
-          PrimitiveCount = IndexCount / 2;
-          break;
-
-        case D3DPT_LINESTRIP:
-          PrimitiveCount = IndexCount - 1;
-          break;
-
-        case D3DPT_TRIANGLELIST:
-          PrimitiveCount = IndexCount / 3;
-          break;
-
-        case D3DPT_TRIANGLESTRIP:
-          PrimitiveCount = IndexCount - 2;
-          break;
-
-        case D3DPT_TRIANGLEFAN:
-          PrimitiveCount = IndexCount - 2;
-          break;
-
-        default: return DDERR_INVALIDPARAMS;
-    }
 
     EnterCriticalSection(&ddraw_cs);
     /* Get the FVF of the vertex buffer, and its stride */
@@ -4510,7 +4322,7 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
                                              0 /* minIndex */,
                                              NumVertices,
                                              0 /* StartIndex */,
-                                             PrimitiveCount);
+                                             IndexCount);
 
     LeaveCriticalSection(&ddraw_cs);
     return hr;

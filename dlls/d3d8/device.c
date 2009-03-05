@@ -136,6 +136,32 @@ WINED3DFORMAT wined3dformat_from_d3dformat(D3DFORMAT format)
     }
 }
 
+static UINT vertex_count_from_primitive_count(D3DPRIMITIVETYPE primitive_type, UINT primitive_count)
+{
+    switch(primitive_type)
+    {
+        case D3DPT_POINTLIST:
+            return primitive_count;
+
+        case D3DPT_LINELIST:
+            return primitive_count * 2;
+
+        case D3DPT_LINESTRIP:
+            return primitive_count + 1;
+
+        case D3DPT_TRIANGLELIST:
+            return primitive_count * 3;
+
+        case D3DPT_TRIANGLESTRIP:
+        case D3DPT_TRIANGLEFAN:
+            return primitive_count + 2;
+
+        default:
+            FIXME("Unhandled primitive type %#x\n", primitive_type);
+            return 0;
+    }
+}
+
 /* Shader handle functions */
 static shader_handle *alloc_shader_handle(IDirect3DDevice8Impl *This) {
     if (This->free_shader_handles) {
@@ -1512,7 +1538,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DrawPrimitive(LPDIRECT3DDEVICE8 iface
     TRACE("(%p) Relay\n" , This);
 
     EnterCriticalSection(&d3d8_cs);
-    hr = IWineD3DDevice_DrawPrimitive(This->WineD3DDevice, PrimitiveType, StartVertex, PrimitiveCount);
+    hr = IWineD3DDevice_DrawPrimitive(This->WineD3DDevice, PrimitiveType, StartVertex,
+            vertex_count_from_primitive_count(PrimitiveType, PrimitiveCount));
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }
@@ -1524,7 +1551,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DrawIndexedPrimitive(LPDIRECT3DDEVICE
     TRACE("(%p) Relay\n" , This);
 
     EnterCriticalSection(&d3d8_cs);
-    hr = IWineD3DDevice_DrawIndexedPrimitive(This->WineD3DDevice, PrimitiveType, MinVertexIndex, NumVertices, startIndex, primCount);
+    hr = IWineD3DDevice_DrawIndexedPrimitive(This->WineD3DDevice, PrimitiveType, MinVertexIndex, NumVertices,
+            startIndex, vertex_count_from_primitive_count(PrimitiveType, primCount));
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }
@@ -1535,7 +1563,9 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DrawPrimitiveUP(LPDIRECT3DDEVICE8 ifa
     TRACE("(%p) Relay\n" , This);
 
     EnterCriticalSection(&d3d8_cs);
-    hr = IWineD3DDevice_DrawPrimitiveUP(This->WineD3DDevice, PrimitiveType, PrimitiveCount, pVertexStreamZeroData, VertexStreamZeroStride);
+    hr = IWineD3DDevice_DrawPrimitiveUP(This->WineD3DDevice, PrimitiveType,
+            vertex_count_from_primitive_count(PrimitiveType, PrimitiveCount),
+            pVertexStreamZeroData, VertexStreamZeroStride);
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }
@@ -1550,8 +1580,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DrawIndexedPrimitiveUP(LPDIRECT3DDEVI
 
     EnterCriticalSection(&d3d8_cs);
     hr = IWineD3DDevice_DrawIndexedPrimitiveUP(This->WineD3DDevice, PrimitiveType, MinVertexIndex,
-            NumVertexIndices, PrimitiveCount, pIndexData, wined3dformat_from_d3dformat(IndexDataFormat),
-            pVertexStreamZeroData, VertexStreamZeroStride);
+            NumVertexIndices, vertex_count_from_primitive_count(PrimitiveType, PrimitiveCount), pIndexData,
+            wined3dformat_from_d3dformat(IndexDataFormat), pVertexStreamZeroData, VertexStreamZeroStride);
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }

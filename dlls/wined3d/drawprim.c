@@ -32,56 +32,34 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_draw);
 #include <stdio.h>
 #include <math.h>
 
-/* Issues the glBegin call for gl given the primitive type and count */
-static DWORD primitiveToGl(WINED3DPRIMITIVETYPE PrimitiveType,
-                    DWORD            NumPrimitives,
-                    GLenum          *primType)
+/* Note that except for WINED3DPT_POINTLIST and WINED3DPT_LINELIST these
+ * actually have the same values in GL and D3D. */
+static GLenum primitive_to_gl(WINED3DPRIMITIVETYPE primitive_type)
 {
-    DWORD   NumVertexes = NumPrimitives;
+    switch(primitive_type)
+    {
+        case WINED3DPT_POINTLIST:
+            return GL_POINTS;
 
-    switch (PrimitiveType) {
-    case WINED3DPT_POINTLIST:
-        TRACE("POINTS\n");
-        *primType   = GL_POINTS;
-        NumVertexes = NumPrimitives;
-        break;
+        case WINED3DPT_LINELIST:
+            return GL_LINES;
 
-    case WINED3DPT_LINELIST:
-        TRACE("LINES\n");
-        *primType   = GL_LINES;
-        NumVertexes = NumPrimitives * 2;
-        break;
+        case WINED3DPT_LINESTRIP:
+            return GL_LINE_STRIP;
 
-    case WINED3DPT_LINESTRIP:
-        TRACE("LINE_STRIP\n");
-        *primType   = GL_LINE_STRIP;
-        NumVertexes = NumPrimitives + 1;
-        break;
+        case WINED3DPT_TRIANGLELIST:
+            return GL_TRIANGLES;
 
-    case WINED3DPT_TRIANGLELIST:
-        TRACE("TRIANGLES\n");
-        *primType   = GL_TRIANGLES;
-        NumVertexes = NumPrimitives * 3;
-        break;
+        case WINED3DPT_TRIANGLESTRIP:
+            return GL_TRIANGLE_STRIP;
 
-    case WINED3DPT_TRIANGLESTRIP:
-        TRACE("TRIANGLE_STRIP\n");
-        *primType   = GL_TRIANGLE_STRIP;
-        NumVertexes = NumPrimitives + 2;
-        break;
+        case WINED3DPT_TRIANGLEFAN:
+            return GL_TRIANGLE_FAN;
 
-    case WINED3DPT_TRIANGLEFAN:
-        TRACE("TRIANGLE_FAN\n");
-        *primType   = GL_TRIANGLE_FAN;
-        NumVertexes = NumPrimitives + 2;
-        break;
-
-    default:
-        FIXME("Unhandled primitive\n");
-        *primType    = GL_POINTS;
-        break;
+        default:
+            FIXME("Unhandled primitive type %s\n", debug_d3dprimitivetype(primitive_type));
+            return GL_NONE;
     }
-    return NumVertexes;
 }
 
 static BOOL fixed_get_input(
@@ -829,7 +807,7 @@ static inline void remove_vbos(IWineD3DDeviceImpl *This, WineDirect3DVertexStrid
 }
 
 /* Routine common to the draw primitive and draw indexed primitive routines */
-void drawPrimitive(IWineD3DDevice *iface, int PrimitiveType, long NumPrimitives,
+void drawPrimitive(IWineD3DDevice *iface, WINED3DPRIMITIVETYPE PrimitiveType, UINT index_count,
         UINT numberOfVertices, long StartIdx, short idxSize, const void *idxData, int minIndex)
 {
 
@@ -837,7 +815,7 @@ void drawPrimitive(IWineD3DDevice *iface, int PrimitiveType, long NumPrimitives,
     IWineD3DSurfaceImpl          *target;
     unsigned int i;
 
-    if (NumPrimitives == 0) return;
+    if (!index_count) return;
 
     /* Invalidate the back buffer memory so LockRect will read it the next time */
     for(i = 0; i < GL_LIMITS(buffers); i++) {
@@ -870,9 +848,9 @@ void drawPrimitive(IWineD3DDevice *iface, int PrimitiveType, long NumPrimitives,
         WineDirect3DVertexStridedData stridedlcl;
         /* Ok, Work out which primitive is requested and how many vertexes that
            will be                                                              */
-        UINT calculatedNumberOfindices = primitiveToGl(PrimitiveType, NumPrimitives, &glPrimType);
-        if (numberOfVertices == 0 )
-            numberOfVertices = calculatedNumberOfindices;
+        glPrimType = primitive_to_gl(PrimitiveType);
+
+        if (!numberOfVertices) numberOfVertices = index_count;
 
         if (!use_vs(This->stateBlock))
         {
@@ -920,19 +898,17 @@ void drawPrimitive(IWineD3DDevice *iface, int PrimitiveType, long NumPrimitives,
                 } else {
                     TRACE("Using immediate mode with vertex shaders for half float emulation\n");
                 }
-                drawStridedSlowVs(iface, strided, calculatedNumberOfindices,
-                        glPrimType, idxData, idxSize, minIndex, StartIdx);
+                drawStridedSlowVs(iface, strided, index_count, glPrimType, idxData, idxSize, minIndex, StartIdx);
             } else {
-                drawStridedSlow(iface, strided, calculatedNumberOfindices,
-                        glPrimType, idxData, idxSize, minIndex, StartIdx);
+                drawStridedSlow(iface, strided, index_count, glPrimType, idxData, idxSize, minIndex, StartIdx);
             }
         } else if(This->instancedDraw) {
             /* Instancing emulation with mixing immediate mode and arrays */
-            drawStridedInstanced(iface, &This->strided_streams, calculatedNumberOfindices, glPrimType,
-                            idxData, idxSize, minIndex, StartIdx);
+            drawStridedInstanced(iface, &This->strided_streams, index_count,
+                    glPrimType, idxData, idxSize, minIndex, StartIdx);
         } else {
             drawStridedFast(iface, glPrimType, minIndex, minIndex + numberOfVertices - 1,
-                    calculatedNumberOfindices, idxSize, idxData, StartIdx);
+                    index_count, idxSize, idxData, StartIdx);
         }
     }
 

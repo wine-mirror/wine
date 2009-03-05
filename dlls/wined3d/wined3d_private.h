@@ -653,7 +653,7 @@ extern LONG primCounter;
  */
 
 /* Routine common to the draw primitive and draw indexed primitive routines */
-void drawPrimitive(IWineD3DDevice *iface, int PrimitiveType, long NumPrimitives,
+void drawPrimitive(IWineD3DDevice *iface, WINED3DPRIMITIVETYPE PrimitiveType, UINT index_count,
         UINT numberOfVertices, long start_idx, short idxBytes, const void *idxData, int minIndex);
 
 void primitiveDeclarationConvertToStridedData(
