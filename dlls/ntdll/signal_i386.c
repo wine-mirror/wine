@@ -636,7 +636,7 @@ static void wine_sigacthandler( int signal, siginfo_t *siginfo, void *sigcontext
 
     __asm__ __volatile__("mov %ss,%ax; mov %ax,%ds; mov %ax,%es");
 
-    thread_data = get_current_teb()->SystemReserved2;
+    thread_data = (struct ntdll_thread_data *)get_current_teb()->SystemReserved2;
     wine_set_fs( thread_data->fs );
     wine_set_gs( thread_data->gs );
 
@@ -672,7 +672,6 @@ typedef void (WINAPI *raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
 static inline void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *gs )
 {
     TEB *teb = get_current_teb();
-    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
 
     /* get %fs and %gs at time of the fault */
 #ifdef FS_sig
@@ -687,8 +686,11 @@ static inline void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *
 #endif
 
 #ifndef __sun  /* see above for Solaris handling */
-    wine_set_fs( thread_data->fs );
-    wine_set_gs( thread_data->gs );
+    {
+        struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
+        wine_set_fs( thread_data->fs );
+        wine_set_gs( thread_data->gs );
+    }
 #endif
 
     if (!wine_ldt_is_system(CS_sig(sigcontext)) ||
