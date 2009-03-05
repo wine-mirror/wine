@@ -117,9 +117,9 @@ static type_t *make_safearray(type_t *type);
 static typelib_t *make_library(const char *name, const attr_list_t *attrs);
 static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type);
 
-static type_t *type_new_enum(char *name, var_list_t *enums);
+static type_t *type_new_enum(const char *name, int defined, var_list_t *enums);
 static type_t *type_new_struct(char *name, int defined, var_list_t *fields);
-static type_t *type_new_nonencapsulated_union(char *name, var_list_t *fields);
+static type_t *type_new_nonencapsulated_union(const char *name, int defined, var_list_t *fields);
 static type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *union_field, var_list_t *cases);
 
 static type_t *reg_type(type_t *type, const char *name, int t);
@@ -614,7 +614,7 @@ enum:	  ident '=' expr_int_const		{ $$ = reg_const($1);
 						}
 	;
 
-enumdef: tENUM t_ident '{' enums '}'		{ $$ = type_new_enum($2, $4); }
+enumdef: tENUM t_ident '{' enums '}'		{ $$ = type_new_enum($2, TRUE, $4); }
 	;
 
 m_exprs:  m_expr                                { $$ = append_expr( NULL, $1 ); }
@@ -980,11 +980,11 @@ type:	  tVOID					{ $$ = type_new_void(); }
 	| aKNOWNTYPE				{ $$ = find_type_or_error($1, 0); }
 	| base_type				{ $$ = $1; }
 	| enumdef				{ $$ = $1; }
-	| tENUM aIDENTIFIER			{ $$ = find_type_or_error2($2, tsENUM); }
+	| tENUM aIDENTIFIER			{ $$ = type_new_enum($2, FALSE, NULL); }
 	| structdef				{ $$ = $1; }
 	| tSTRUCT aIDENTIFIER			{ $$ = type_new_struct($2, FALSE, NULL); }
 	| uniondef				{ $$ = $1; }
-	| tUNION aIDENTIFIER			{ $$ = find_type_or_error2($2, tsUNION); }
+	| tUNION aIDENTIFIER			{ $$ = type_new_nonencapsulated_union($2, FALSE, NULL); }
 	| tSAFEARRAY '(' type ')'		{ $$ = make_safearray($3); }
 	;
 
@@ -995,7 +995,7 @@ typedef: tTYPEDEF m_attributes decl_spec declarator_list
 	;
 
 uniondef: tUNION t_ident '{' ne_union_fields '}'
-						{ $$ = type_new_nonencapsulated_union($2, $4); }
+						{ $$ = type_new_nonencapsulated_union($2, TRUE, $4); }
 	| tUNION t_ident
 	  tSWITCH '(' s_field ')'
 	  m_ident '{' cases '}'			{ $$ = type_new_encapsulated_union($2, $5, $7, $9); }
@@ -1240,17 +1240,28 @@ void clear_all_offsets(void)
     node->data.typestring_offset = node->data.ptrdesc = 0;
 }
 
-static type_t *type_new_enum(char *name, var_list_t *enums)
+static type_t *type_new_enum(const char *name, int defined, var_list_t *enums)
 {
-    type_t *t = get_type(TYPE_ENUM, name, tsENUM);
-    if (enums)
+    type_t *tag_type = name ? find_type(name, tsENUM) : NULL;
+    type_t *t = make_type(TYPE_ENUM);
+    t->name = name;
+
+    if (tag_type && tag_type->details.enumeration)
+        t->details.enumeration = tag_type->details.enumeration;
+    else if (defined)
     {
         t->details.enumeration = xmalloc(sizeof(*t->details.enumeration));
         t->details.enumeration->enums = enums;
+        t->defined = TRUE;
     }
-    else
-        t->details.enumeration = NULL;
-    t->defined = TRUE;
+
+    if (name)
+    {
+        if (defined)
+            reg_type(t, name, tsENUM);
+        else
+            add_incomplete(t);
+    }
     return t;
 }
 
@@ -1280,12 +1291,26 @@ static type_t *type_new_struct(char *name, int defined, var_list_t *fields)
   return t;
 }
 
-static type_t *type_new_nonencapsulated_union(char *name, var_list_t *fields)
+static type_t *type_new_nonencapsulated_union(const char *name, int defined, var_list_t *fields)
 {
-  type_t *t = get_type(TYPE_UNION, name, tsUNION);
-  t->details.structure = xmalloc(sizeof(*t->details.structure));
-  t->details.structure->fields = fields;
-  t->defined = TRUE;
+  type_t *tag_type = name ? find_type(name, tsUNION) : NULL;
+  type_t *t = make_type(TYPE_UNION);
+  t->name = name;
+  if (tag_type && tag_type->details.structure)
+    t->details.structure = tag_type->details.structure;
+  else if (defined)
+  {
+    t->details.structure = xmalloc(sizeof(*t->details.structure));
+    t->details.structure->fields = fields;
+    t->defined = TRUE;
+  }
+  if (name)
+  {
+    if (defined)
+      reg_type(t, name, tsUNION);
+    else
+      add_incomplete(t);
+  }
   return t;
 }
 
