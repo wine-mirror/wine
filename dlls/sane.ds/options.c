@@ -137,4 +137,30 @@ SANE_Status sane_option_probe_mode(SANE_Handle h, SANE_String_Const **choices, c
         return SANE_STATUS_NO_MEM;
 
 }
+
+SANE_Status sane_option_probe_scan_area(SANE_Handle h, const char *option_name, SANE_Fixed *val,
+                                        SANE_Unit *unit, SANE_Fixed *min, SANE_Fixed *max, SANE_Fixed *quant)
+{
+    SANE_Status rc;
+    int optno;
+    const SANE_Option_Descriptor *opt;
+
+    rc = sane_find_option(h, option_name, &opt, &optno, SANE_TYPE_FIXED);
+    if (rc != SANE_STATUS_GOOD)
+        return rc;
+
+    if (unit)
+        *unit = opt->unit;
+    if (min)
+        *min = opt->constraint.range->min;
+    if (max)
+        *max = opt->constraint.range->max;
+    if (quant)
+        *quant = opt->constraint.range->quant;
+
+    if (val)
+        rc = psane_control_option(h, optno, SANE_ACTION_GET_VALUE, val, NULL);
+
+    return rc;
+}
 #endif

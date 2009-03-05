@@ -22,6 +22,8 @@
 #include "config.h"
 
 #include <stdarg.h>
+#include <stdio.h>
+#include <math.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -165,7 +167,7 @@ static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability)
     TW_ARRAY *a;
     static const UINT16 supported_caps[] = { CAP_SUPPORTEDCAPS, CAP_XFERCOUNT, CAP_UICONTROLLABLE,
                     ICAP_XFERMECH, ICAP_PIXELTYPE, ICAP_UNITS, ICAP_BITDEPTH, ICAP_COMPRESSION, ICAP_PIXELFLAVOR,
-                    ICAP_XRESOLUTION, ICAP_YRESOLUTION };
+                    ICAP_XRESOLUTION, ICAP_YRESOLUTION, ICAP_PHYSICALHEIGHT, ICAP_PHYSICALWIDTH };
 
     pCapability->hContainer = GlobalAlloc (0, FIELD_OFFSET( TW_ARRAY, ItemList[sizeof(supported_caps)] ));
     pCapability->ConType = TWON_ARRAY;
@@ -692,6 +694,81 @@ static TW_UINT16 SANE_ICAPResolution (pTW_CAPABILITY pCapability, TW_UINT16 acti
     return twCC;
 }
 
+static void convert_double_fix32(double d, TW_FIX32 *fix32)
+{
+    TW_INT32 value = (TW_INT32) (d * 65536.0 + 0.5);
+    fix32->Whole = value >> 16;
+    fix32->Frac = value & 0x0000ffffL;
+}
+
+
+#ifdef SONAME_LIBSANE
+static BOOL convert_sane_res_to_twain(double sane_res, SANE_Unit unit, TW_FIX32 *twain_res, TW_UINT16 twtype)
+{
+    double d;
+
+    if (unit != SANE_UNIT_MM)
+        return FALSE;
+
+    if (twtype != TWUN_INCHES)
+        return FALSE;
+
+    d = (sane_res / 10.0) / 2.54;
+    convert_double_fix32((sane_res / 10.0) / 2.54, twain_res);
+
+    return TRUE;
+}
+#endif
+
+/* ICAP_PHYSICALHEIGHT, ICAP_PHYSICALWIDTH */
+static TW_UINT16 SANE_ICAPPhysical (pTW_CAPABILITY pCapability, TW_UINT16 action,  TW_UINT16 cap)
+{
+    TW_UINT16 twCC = TWCC_BADCAP;
+#ifdef SONAME_LIBSANE
+    TW_FIX32 res;
+    char option_name[64];
+    SANE_Fixed lower, upper;
+    SANE_Unit lowerunit, upperunit;
+    SANE_Status status;
+
+    TRACE("ICAP_PHYSICAL%s\n", cap == ICAP_PHYSICALHEIGHT? "HEIGHT" : "WIDTH");
+
+    sprintf(option_name, "tl-%c", cap == ICAP_PHYSICALHEIGHT ? 'y' : 'x');
+    status = sane_option_probe_scan_area(activeDS.deviceHandle, option_name, NULL, &lowerunit, &lower, NULL, NULL);
+    if (status != SANE_STATUS_GOOD)
+        return sane_status_to_twcc(status);
+
+    sprintf(option_name, "br-%c", cap == ICAP_PHYSICALHEIGHT ? 'y' : 'x');
+    status = sane_option_probe_scan_area(activeDS.deviceHandle, option_name, NULL, &upperunit, NULL, &upper, NULL);
+    if (status != SANE_STATUS_GOOD)
+        return sane_status_to_twcc(status);
+
+    if (upperunit != lowerunit)
+        return TWCC_BADCAP;
+
+    if (! convert_sane_res_to_twain(SANE_UNFIX(upper) - SANE_UNFIX(lower), upperunit, &res, TWUN_INCHES))
+        return TWCC_BADCAP;
+
+    switch (action)
+    {
+        case MSG_QUERYSUPPORT:
+            twCC = set_onevalue(pCapability, TWTY_INT32,
+                    TWQC_GET | TWQC_GETDEFAULT | TWQC_GETCURRENT );
+            break;
+
+        case MSG_GET:
+        case MSG_GETDEFAULT:
+
+            /* .. fall through intentional .. */
+
+        case MSG_GETCURRENT:
+            twCC = set_onevalue(pCapability, TWTY_FIX32, res.Whole | (res.Frac << 16));
+            break;
+    }
+#endif
+    return twCC;
+}
+
 /* ICAP_PIXELFLAVOR */
 static TW_UINT16 SANE_ICAPPixelFlavor (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
@@ -793,6 +870,15 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
         case ICAP_YRESOLUTION:
             twCC = SANE_ICAPResolution(pCapability, action, pCapability->Cap);
             break;
+
+        case ICAP_PHYSICALHEIGHT:
+            twCC = SANE_ICAPPhysical(pCapability, action, pCapability->Cap);
+            break;
+
+        case ICAP_PHYSICALWIDTH:
+            twCC = SANE_ICAPPhysical(pCapability, action, pCapability->Cap);
+            break;
+
     }
 
     /* Twain specifies that you should return a 0 in response to QUERYSUPPORT,
