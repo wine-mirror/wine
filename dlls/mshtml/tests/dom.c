@@ -3429,6 +3429,25 @@ static void test_default_style(IHTMLStyle *style)
     ok(hres == S_OK, "put_borderLeft failed: %08x\n", hres);
     SysFreeString(sDefault);
 
+    /* backgroundPositionX */
+    hres = IHTMLStyle_get_backgroundPositionX(style, &vDefault);
+    ok(hres == S_OK, "get_backgroundPositionX failed: %08x\n", hres);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("10px");
+    hres = IHTMLStyle_put_backgroundPositionX(style, v);
+    ok(hres == S_OK, "put_backgroundPositionX failed: %08x\n", hres);
+    VariantClear(&v);
+
+    hres = IHTMLStyle_get_backgroundPositionX(style, &v);
+    ok(hres == S_OK, "get_backgroundPositionX failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    VariantClear(&v);
+
+    hres = IHTMLStyle_put_backgroundPositionX(style, vDefault);
+    ok(hres == S_OK, "put_backgroundPositionX failed: %08x\n", hres);
+    VariantClear(&vDefault);
+
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
     if(SUCCEEDED(hres)) {
