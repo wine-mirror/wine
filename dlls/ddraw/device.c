@@ -3484,11 +3484,8 @@ IDirect3DDeviceImpl_7_DrawPrimitive(IDirect3DDevice7 *iface,
     }
 
     /* This method translates to the user pointer draw of WineD3D */
-    hr = IWineD3DDevice_DrawPrimitiveUP(This->wineD3DDevice,
-                                        PrimitiveType,
-                                        VertexCount,
-                                        Vertices,
-                                        stride);
+    IWineD3DDevice_SetPrimitiveType(This->wineD3DDevice, PrimitiveType);
+    hr = IWineD3DDevice_DrawPrimitiveUP(This->wineD3DDevice, VertexCount, Vertices, stride);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -3610,9 +3607,10 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
         return hr;
     }
 
-    hr = IWineD3DDevice_DrawIndexedPrimitiveUP(This->wineD3DDevice, PrimitiveType, 0 /* MinVertexIndex */,
-            VertexCount /* UINT NumVertexIndex */, IndexCount, Indices, WINED3DFMT_R16_UINT, Vertices,
-            get_flexible_vertex_size(VertexType));
+    IWineD3DDevice_SetPrimitiveType(This->wineD3DDevice, PrimitiveType);
+    hr = IWineD3DDevice_DrawIndexedPrimitiveUP(This->wineD3DDevice, 0 /* MinVertexIndex */,
+            VertexCount /* UINT NumVertexIndex */, IndexCount, Indices, WINED3DFMT_R16_UINT,
+            Vertices, get_flexible_vertex_size(VertexType));
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -3878,10 +3876,8 @@ IDirect3DDeviceImpl_7_DrawPrimitiveStrided(IDirect3DDevice7 *iface,
 
     /* WineD3D doesn't need the FVF here */
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_DrawPrimitiveStrided(This->wineD3DDevice,
-                                             PrimitiveType,
-                                             VertexCount,
-                                             &WineD3DStrided);
+    IWineD3DDevice_SetPrimitiveType(This->wineD3DDevice, PrimitiveType);
+    hr = IWineD3DDevice_DrawPrimitiveStrided(This->wineD3DDevice, VertexCount, &WineD3DStrided);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -4021,7 +4017,8 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
 
     /* WineD3D doesn't need the FVF here */
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_DrawIndexedPrimitiveStrided(This->wineD3DDevice, PrimitiveType,
+    IWineD3DDevice_SetPrimitiveType(This->wineD3DDevice, PrimitiveType);
+    hr = IWineD3DDevice_DrawIndexedPrimitiveStrided(This->wineD3DDevice,
             IndexCount, &WineD3DStrided, VertexCount, Indices, WINED3DFMT_R16_UINT);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
@@ -4153,10 +4150,8 @@ IDirect3DDeviceImpl_7_DrawPrimitiveVB(IDirect3DDevice7 *iface,
     }
 
     /* Now draw the primitives */
-    hr = IWineD3DDevice_DrawPrimitive(This->wineD3DDevice,
-                                      PrimitiveType,
-                                      StartVertex,
-                                      NumVertices);
+    IWineD3DDevice_SetPrimitiveType(This->wineD3DDevice, PrimitiveType);
+    hr = IWineD3DDevice_DrawPrimitive(This->wineD3DDevice, StartVertex, NumVertices);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -4317,12 +4312,9 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     }
 
 
+    IWineD3DDevice_SetPrimitiveType(This->wineD3DDevice, PrimitiveType);
     hr = IWineD3DDevice_DrawIndexedPrimitive(This->wineD3DDevice,
-                                             PrimitiveType,
-                                             0 /* minIndex */,
-                                             NumVertices,
-                                             0 /* StartIndex */,
-                                             IndexCount);
+            0 /* minIndex */, NumVertices, 0 /* StartIndex */, IndexCount);
 
     LeaveCriticalSection(&ddraw_cs);
     return hr;

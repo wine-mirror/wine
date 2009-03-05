@@ -77,6 +77,7 @@ static void stateblock_savedstates_copy(IWineD3DStateBlock* iface, SAVEDSTATES *
     unsigned bsize = sizeof(BOOL);
 
     /* Single values */
+    dest->primitive_type = source->primitive_type;
     dest->indices = source->indices;
     dest->material = source->material;
     dest->viewport = source->viewport;
@@ -121,6 +122,7 @@ void stateblock_savedstates_set(
     unsigned bsize = sizeof(BOOL);
 
     /* Single values */
+    states->primitive_type = value;
     states->indices = value;
     states->material = value;
     states->viewport = value;
@@ -188,6 +190,7 @@ void stateblock_copy(
     stateblock_savedstates_copy(source, &Dest->changed, &This->changed);
 
     /* Single items */
+    Dest->gl_primitive_type = This->gl_primitive_type;
     Dest->vertexDecl = This->vertexDecl;
     Dest->vertexShader = This->vertexShader;
     Dest->streamIsUP = This->streamIsUP;
@@ -499,6 +502,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
                 targetStateBlock->transforms[This->contained_transform_states[i]];
         }
 
+        if (This->changed.primitive_type) This->gl_primitive_type = targetStateBlock->gl_primitive_type;
+
         if (This->changed.indices && ((This->pIndexData != targetStateBlock->pIndexData)
                         || (This->baseVertexIndex != targetStateBlock->baseVertexIndex))) {
             TRACE("Updating pIndexData to %p, baseVertexIndex to %d\n",
@@ -628,6 +633,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         memcpy(This->vertexShaderConstantB, targetStateBlock->vertexShaderConstantB, sizeof(This->vertexShaderConstantI));
         memcpy(This->vertexShaderConstantI, targetStateBlock->vertexShaderConstantI, sizeof(This->vertexShaderConstantF));
         memcpy(This->vertexShaderConstantF, targetStateBlock->vertexShaderConstantF, sizeof(float) * GL_LIMITS(vshader_constantsF) * 4);
+        This->gl_primitive_type = targetStateBlock->gl_primitive_type;
         memcpy(This->streamStride, targetStateBlock->streamStride, sizeof(This->streamStride));
         memcpy(This->streamOffset, targetStateBlock->streamOffset, sizeof(This->streamOffset));
         memcpy(This->streamFreq, targetStateBlock->streamFreq, sizeof(This->streamFreq));
@@ -827,6 +833,12 @@ should really perform a delta so that only the changes get updated*/
                                         &This->transforms[This->contained_transform_states[i]]);
         }
 
+        if (This->changed.primitive_type)
+        {
+                This->wineD3DDevice->updateStateBlock->changed.primitive_type = TRUE;
+                This->wineD3DDevice->updateStateBlock->gl_primitive_type = This->gl_primitive_type;
+        }
+
         if (This->changed.indices) {
             IWineD3DDevice_SetIndices(pDevice, This->pIndexData);
             IWineD3DDevice_SetBaseVertexIndex(pDevice, This->baseVertexIndex);
@@ -1009,6 +1021,7 @@ should really perform a delta so that only the changes get updated*/
         for(i = 1; i <= HIGHEST_TRANSFORMSTATE; i++) {
             IWineD3DDevice_SetTransform(pDevice, i, &This->transforms[i]);
         }
+        This->wineD3DDevice->updateStateBlock->gl_primitive_type = This->gl_primitive_type;
         IWineD3DDevice_SetIndices(pDevice, This->pIndexData);
         IWineD3DDevice_SetBaseVertexIndex(pDevice, This->baseVertexIndex);
         IWineD3DDevice_SetVertexDeclaration(pDevice, This->vertexDecl);

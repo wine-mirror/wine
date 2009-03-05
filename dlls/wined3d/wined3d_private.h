@@ -653,8 +653,8 @@ extern LONG primCounter;
  */
 
 /* Routine common to the draw primitive and draw indexed primitive routines */
-void drawPrimitive(IWineD3DDevice *iface, WINED3DPRIMITIVETYPE PrimitiveType, UINT index_count,
-        UINT numberOfVertices, UINT start_idx, UINT idxBytes, const void *idxData, UINT minIndex);
+void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT numberOfVertices,
+        UINT start_idx, UINT idxBytes, const void *idxData, UINT minIndex);
 
 void primitiveDeclarationConvertToStridedData(
      IWineD3DDevice *iface,
@@ -1796,14 +1796,15 @@ typedef struct SAVEDSTATES {
     WORD vertexShaderConstantsB;                /* MAX_CONST_B, 16 */
     WORD vertexShaderConstantsI;                /* MAX_CONST_I, 16 */
     BOOL *vertexShaderConstantsF;
-    BYTE indices : 1;
-    BYTE material : 1;
-    BYTE viewport : 1;
-    BYTE vertexDecl : 1;
-    BYTE pixelShader : 1;
-    BYTE vertexShader : 1;
-    BYTE scissorRect : 1;
-    BYTE padding : 1;
+    WORD primitive_type : 1;
+    WORD indices : 1;
+    WORD material : 1;
+    WORD viewport : 1;
+    WORD vertexDecl : 1;
+    WORD pixelShader : 1;
+    WORD vertexShader : 1;
+    WORD scissorRect : 1;
+    WORD padding : 1;
 } SAVEDSTATES;
 
 struct StageState {
@@ -1834,6 +1835,9 @@ struct IWineD3DStateBlockImpl
     BOOL                       vertexShaderConstantB[MAX_CONST_B];
     INT                        vertexShaderConstantI[MAX_CONST_I * 4];
     float                     *vertexShaderConstantF;
+
+    /* primitive type */
+    GLenum gl_primitive_type;
 
     /* Stream Source */
     BOOL                      streamIsUP;

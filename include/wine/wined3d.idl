@@ -3485,26 +3485,28 @@ interface IWineD3DDevice : IWineD3DBase
         [in] IWineD3DRendertargetView *rendertarget_view,
         [in] const float color[4]
     );
+    void SetPrimitiveType(
+        [in] WINED3DPRIMITIVETYPE primitive_topology
+    );
+    void GetPrimitiveType(
+        [out] WINED3DPRIMITIVETYPE *primitive_topology
+    );
     HRESULT DrawPrimitive(
-        [in] WINED3DPRIMITIVETYPE primitive_type,
         [in] UINT start_vertex,
         [in] UINT vertex_count
     );
     HRESULT DrawIndexedPrimitive(
-        [in] WINED3DPRIMITIVETYPE primitive_type,
         [in] UINT min_vertex_idx,
         [in] UINT vertex_count,
         [in] UINT start_idx,
         [in] UINT index_count
     );
     HRESULT DrawPrimitiveUP(
-        [in] WINED3DPRIMITIVETYPE primitive_type,
         [in] UINT vertex_count,
         [in] const void *stream_data,
         [in] UINT stream_stride
     );
     HRESULT DrawIndexedPrimitiveUP(
-        [in] WINED3DPRIMITIVETYPE primitive_type,
         [in] UINT min_vertex_idx,
         [in] UINT vertex_count,
         [in] UINT index_count,
@@ -3514,12 +3516,10 @@ interface IWineD3DDevice : IWineD3DBase
         [in] UINT stream_stride
     );
     HRESULT DrawPrimitiveStrided(
-        [in] WINED3DPRIMITIVETYPE primitive_type,
         [in] UINT vertex_count,
         [in] const WineDirect3DVertexStridedData *strided_data
     );
     HRESULT DrawIndexedPrimitiveStrided(
-        [in] WINED3DPRIMITIVETYPE primitive_type,
         [in] UINT index_count,
         [in] const WineDirect3DVertexStridedData *strided_data,
         [in] UINT vertex_count,

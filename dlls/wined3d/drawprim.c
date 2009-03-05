@@ -32,48 +32,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_draw);
 #include <stdio.h>
 #include <math.h>
 
-/* Note that except for WINED3DPT_POINTLIST and WINED3DPT_LINELIST these
- * actually have the same values in GL and D3D. */
-static GLenum primitive_to_gl(WINED3DPRIMITIVETYPE primitive_type)
-{
-    switch(primitive_type)
-    {
-        case WINED3DPT_POINTLIST:
-            return GL_POINTS;
-
-        case WINED3DPT_LINELIST:
-            return GL_LINES;
-
-        case WINED3DPT_LINESTRIP:
-            return GL_LINE_STRIP;
-
-        case WINED3DPT_TRIANGLELIST:
-            return GL_TRIANGLES;
-
-        case WINED3DPT_TRIANGLESTRIP:
-            return GL_TRIANGLE_STRIP;
-
-        case WINED3DPT_TRIANGLEFAN:
-            return GL_TRIANGLE_FAN;
-
-        case WINED3DPT_LINELIST_ADJ:
-            return GL_LINES_ADJACENCY_ARB;
-
-        case WINED3DPT_LINESTRIP_ADJ:
-            return GL_LINE_STRIP_ADJACENCY_ARB;
-
-        case WINED3DPT_TRIANGLELIST_ADJ:
-            return GL_TRIANGLES_ADJACENCY_ARB;
-
-        case WINED3DPT_TRIANGLESTRIP_ADJ:
-            return GL_TRIANGLE_STRIP_ADJACENCY_ARB;
-
-        default:
-            FIXME("Unhandled primitive type %s\n", debug_d3dprimitivetype(primitive_type));
-            return GL_NONE;
-    }
-}
-
 static BOOL fixed_get_input(
     BYTE usage, BYTE usage_idx,
     unsigned int* regnum) {
@@ -819,8 +777,8 @@ static inline void remove_vbos(IWineD3DDeviceImpl *This, WineDirect3DVertexStrid
 }
 
 /* Routine common to the draw primitive and draw indexed primitive routines */
-void drawPrimitive(IWineD3DDevice *iface, WINED3DPRIMITIVETYPE PrimitiveType, UINT index_count,
-        UINT numberOfVertices, UINT StartIdx, UINT idxSize, const void *idxData, UINT minIndex)
+void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT numberOfVertices,
+        UINT StartIdx, UINT idxSize, const void *idxData, UINT minIndex)
 {
 
     IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
@@ -854,13 +812,10 @@ void drawPrimitive(IWineD3DDevice *iface, WINED3DPRIMITIVETYPE PrimitiveType, UI
     /* Ok, we will be updating the screen from here onwards so grab the lock */
     ENTER_GL();
     {
-        GLenum glPrimType;
+        GLenum glPrimType = This->stateBlock->gl_primitive_type;
         BOOL emulation = FALSE;
         const WineDirect3DVertexStridedData *strided = &This->strided_streams;
         WineDirect3DVertexStridedData stridedlcl;
-        /* Ok, Work out which primitive is requested and how many vertexes that
-           will be                                                              */
-        glPrimType = primitive_to_gl(PrimitiveType);
 
         if (!numberOfVertices) numberOfVertices = index_count;
 
