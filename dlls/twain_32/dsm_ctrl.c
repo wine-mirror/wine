@@ -103,8 +103,8 @@ twain_autodetect(void) {
 	if (detectionrun) return;
 	detectionrun = 1;
 
-	twain_add_onedriver("gphoto2.ds");
 	twain_add_onedriver("sane.ds");
+	twain_add_onedriver("gphoto2.ds");
 #if 0
 	twain_add_onedriver("c:\\windows\\Twain_32\\Largan\\sp503a.ds");
 	twain_add_onedriver("c:\\windows\\Twain_32\\vivicam10\\vivicam10.ds");
