@@ -564,6 +564,7 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
     *strstr(dllname, testexe) = 0;
 
     wine_tests[nr_of_files].maindllpath = NULL;
+    strcpy(filename, dllname);
     dll = LoadLibraryExA(dllname, NULL, LOAD_LIBRARY_AS_DATAFILE);
     if (!dll && pLoadLibraryShim)
     {
@@ -580,6 +581,7 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
              * the tests for this dll.
              */
             GetModuleFileNameA(dll, dllpath, MAX_PATH);
+            strcpy(filename, dllpath);
             *strrchr(dllpath, '\\') = '\0';
             wine_tests[nr_of_files].maindllpath = xstrdup( dllpath );
         }
@@ -594,7 +596,6 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
         xprintf ("    %s=load error Gecko is not installed\n", dllname);
         return TRUE;
     }
-    GetModuleFileNameA(dll, filename, MAX_PATH);
     FreeLibrary(dll);
 
     if (!(err = get_subtests( tempdir, &wine_tests[nr_of_files], lpszName )))
