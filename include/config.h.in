@@ -273,6 +273,9 @@
 /* Define to 1 if you have the `kqueue' function. */
 #undef HAVE_KQUEUE
 
+/* Define to 1 if you have the <kstat.h> header file. */
+#undef HAVE_KSTAT_H
+
 /* Define to 1 if you have the <lber.h> header file. */
 #undef HAVE_LBER_H
 
@@ -323,6 +326,9 @@
 
 /* Define to 1 if you have the `i386' library (-li386). */
 #undef HAVE_LIBI386
+
+/* Define to 1 if you have the `kstat' library (-lkstat). */
+#undef HAVE_LIBKSTAT
 
 /* Define to 1 if you have the `ossaudio' library (-lossaudio). */
 #undef HAVE_LIBOSSAUDIO

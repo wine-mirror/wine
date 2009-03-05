@@ -282,6 +282,7 @@ AC_CHECK_HEADERS(\
 	io.h \
 	jack/jack.h \
 	jpeglib.h \
+	kstat.h \
 	lber.h \
 	lcms.h \
 	lcms/lcms.h \
@@ -1295,6 +1296,14 @@ then
 fi
 WINE_WARNING_WITH(png,[test "x$ac_cv_lib_soname_png" = "x"],
                  [libpng ${notice_platform}development files not found, PNG won't be supported.])
+
+dnl **** Check for libkstat ****
+if test "$ac_cv_header_kstat_h" = "yes"
+then
+    AC_CHECK_LIB(kstat,kstat_open,
+                 [AC_DEFINE(HAVE_LIBKSTAT, 1, [Define to 1 if you have the `kstat' library (-lkstat).])
+                  AC_SUBST(LIBKSTAT,"-lkstat")])
+fi
 
 dnl **** Check for libodbc ****
 WINE_CHECK_SONAME(odbc,SQLConnect,,[AC_DEFINE_UNQUOTED(SONAME_LIBODBC,["libodbc.$LIBEXT"])])
