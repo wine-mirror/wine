@@ -765,6 +765,31 @@ DWORD WINAPI GetUdpStatistics(PMIB_UDPSTATS stats)
             ret = NO_ERROR;
         }
     }
+#elif defined(HAVE_LIBKSTAT)
+    {
+        static char udp[] = "udp";
+        kstat_ctl_t *kc;
+        kstat_t *ksp;
+        MIB_UDPTABLE *udp_table;
+
+        if ((kc = kstat_open()) &&
+            (ksp = kstat_lookup( kc, udp, 0, udp )) &&
+            kstat_read( kc, ksp, NULL ) != -1 &&
+            ksp->ks_type == KSTAT_TYPE_NAMED)
+        {
+            stats->dwInDatagrams  = kstat_get_ui32( ksp, "inDatagrams" );
+            stats->dwNoPorts      = 0;  /* FIXME */
+            stats->dwInErrors     = kstat_get_ui32( ksp, "inErrors" );
+            stats->dwOutDatagrams = kstat_get_ui32( ksp, "outDatagrams" );
+            if (!AllocateAndGetUdpTableFromStack( &udp_table, FALSE, GetProcessHeap(), 0 ))
+            {
+                stats->dwNumAddrs = udp_table->dwNumEntries;
+                HeapFree( GetProcessHeap(), 0, udp_table );
+            }
+            ret = NO_ERROR;
+        }
+        if (kc) kstat_close( kc );
+    }
 #elif defined(HAVE_SYS_SYSCTL_H) && defined(UDPCTL_STATS)
     {
         int mib[] = {CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_STATS};
