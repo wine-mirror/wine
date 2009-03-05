@@ -495,6 +495,41 @@ DWORD WINAPI GetIpStatistics(PMIB_IPSTATS stats)
             ret = NO_ERROR;
         }
     }
+#elif defined(HAVE_LIBKSTAT)
+    {
+        static char ip[] = "ip";
+        kstat_ctl_t *kc;
+        kstat_t *ksp;
+
+        if ((kc = kstat_open()) &&
+            (ksp = kstat_lookup( kc, ip, 0, ip )) &&
+            kstat_read( kc, ksp, NULL ) != -1 &&
+            ksp->ks_type == KSTAT_TYPE_NAMED)
+        {
+            stats->dwForwarding      = kstat_get_ui32( ksp, "forwarding" );
+            stats->dwDefaultTTL      = kstat_get_ui32( ksp, "defaultTTL" );
+            stats->dwInReceives      = kstat_get_ui32( ksp, "inReceives" );
+            stats->dwInHdrErrors     = kstat_get_ui32( ksp, "inHdrErrors" );
+            stats->dwInAddrErrors    = kstat_get_ui32( ksp, "inAddrErrors" );
+            stats->dwForwDatagrams   = kstat_get_ui32( ksp, "forwDatagrams" );
+            stats->dwInUnknownProtos = kstat_get_ui32( ksp, "inUnknownProtos" );
+            stats->dwInDiscards      = kstat_get_ui32( ksp, "inDiscards" );
+            stats->dwInDelivers      = kstat_get_ui32( ksp, "inDelivers" );
+            stats->dwOutRequests     = kstat_get_ui32( ksp, "outRequests" );
+            stats->dwRoutingDiscards = kstat_get_ui32( ksp, "routingDiscards" );
+            stats->dwOutDiscards     = kstat_get_ui32( ksp, "outDiscards" );
+            stats->dwOutNoRoutes     = kstat_get_ui32( ksp, "outNoRoutes" );
+            stats->dwReasmTimeout    = kstat_get_ui32( ksp, "reasmTimeout" );
+            stats->dwReasmReqds      = kstat_get_ui32( ksp, "reasmReqds" );
+            stats->dwReasmOks        = kstat_get_ui32( ksp, "reasmOKs" );
+            stats->dwReasmFails      = kstat_get_ui32( ksp, "reasmFails" );
+            stats->dwFragOks         = kstat_get_ui32( ksp, "fragOKs" );
+            stats->dwFragFails       = kstat_get_ui32( ksp, "fragFails" );
+            stats->dwFragCreates     = kstat_get_ui32( ksp, "fragCreates" );
+            ret = NO_ERROR;
+        }
+        if (kc) kstat_close( kc );
+    }
 #elif defined(HAVE_SYS_SYSCTL_H) && defined(IPCTL_STATS)
     {
         int mib[] = {CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS};
