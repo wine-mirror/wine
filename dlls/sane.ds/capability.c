@@ -166,7 +166,7 @@ static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability)
 {
     TW_ARRAY *a;
     static const UINT16 supported_caps[] = { CAP_SUPPORTEDCAPS, CAP_XFERCOUNT, CAP_UICONTROLLABLE,
-                    CAP_AUTOFEED,
+                    CAP_AUTOFEED, CAP_FEEDERENABLED,
                     ICAP_XFERMECH, ICAP_PIXELTYPE, ICAP_UNITS, ICAP_BITDEPTH, ICAP_COMPRESSION, ICAP_PIXELFLAVOR,
                     ICAP_XRESOLUTION, ICAP_YRESOLUTION, ICAP_PHYSICALHEIGHT, ICAP_PHYSICALWIDTH };
 
@@ -881,6 +881,80 @@ static TW_UINT16 SANE_CAPAutofeed (pTW_CAPABILITY pCapability, TW_UINT16 action)
     return twCC;
 }
 
+/* CAP_FEEDERENABLED */
+static TW_UINT16 SANE_CAPFeederEnabled (pTW_CAPABILITY pCapability, TW_UINT16 action)
+{
+    TW_UINT16 twCC = TWCC_BADCAP;
+#ifdef SONAME_LIBSANE
+    TW_UINT32 val;
+    TW_BOOL enabled;
+    SANE_Status status;
+    SANE_Char source[64];
+
+    TRACE("CAP_FEEDERENABLED\n");
+
+    if (sane_option_get_str(activeDS.deviceHandle, SANE_NAME_SCAN_SOURCE, source, sizeof(source), NULL) != SANE_STATUS_GOOD)
+        return TWCC_BADCAP;
+
+    if (strcmp(source, "Auto") == 0 || strcmp(source, "ADF") == 0)
+        enabled = TRUE;
+    else
+        enabled = FALSE;
+
+    switch (action)
+    {
+        case MSG_QUERYSUPPORT:
+            twCC = set_onevalue(pCapability, TWTY_INT32,
+                    TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET );
+            break;
+
+        case MSG_GET:
+            twCC = set_onevalue(pCapability, TWTY_BOOL, enabled);
+            break;
+
+        case MSG_SET:
+            twCC = msg_set(pCapability, &val);
+            if (twCC == TWCC_SUCCESS)
+            {
+                if (val)
+                    enabled = TRUE;
+                else
+                    enabled = FALSE;
+
+                strcpy(source, "ADF");
+                status = sane_option_set_str(activeDS.deviceHandle, SANE_NAME_SCAN_SOURCE, source, NULL);
+                if (status != SANE_STATUS_GOOD)
+                {
+                    strcpy(source, "Auto");
+                    status = sane_option_set_str(activeDS.deviceHandle, SANE_NAME_SCAN_SOURCE, source, NULL);
+                }
+                if (status != SANE_STATUS_GOOD)
+                {
+                    ERR("Error %s: Could not set source to either ADF or Auto\n", psane_strstatus(status));
+                    return sane_status_to_twcc(status);
+                }
+            }
+            break;
+
+        case MSG_GETDEFAULT:
+            twCC = set_onevalue(pCapability, TWTY_BOOL, TRUE);
+            break;
+
+        case MSG_RESET:
+            strcpy(source, "Auto");
+            if (sane_option_set_str(activeDS.deviceHandle, SANE_NAME_SCAN_SOURCE, source, NULL) == SANE_STATUS_GOOD)
+                enabled = TRUE;
+            twCC = TWCC_SUCCESS;
+            /* .. fall through intentional .. */
+
+        case MSG_GETCURRENT:
+            twCC = set_onevalue(pCapability, TWTY_BOOL, enabled);
+            break;
+    }
+#endif
+    return twCC;
+}
+
 
 
 TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
@@ -908,6 +982,10 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 
         case CAP_AUTOFEED:
             twCC = SANE_CAPAutofeed (pCapability, action);
+            break;
+
+        case CAP_FEEDERENABLED:
+            twCC = SANE_CAPFeederEnabled (pCapability, action);
             break;
 
         case ICAP_PIXELTYPE:
@@ -969,6 +1047,13 @@ TW_UINT16 SANE_SaneSetDefaults (void)
 
     memset(&cap, 0, sizeof(cap));
     cap.Cap = CAP_AUTOFEED;
+    cap.ConType = TWON_DONTCARE16;
+
+    if (SANE_SaneCapability(&cap, MSG_RESET) == TWCC_SUCCESS)
+        GlobalFree(cap.hContainer);
+
+    memset(&cap, 0, sizeof(cap));
+    cap.Cap = CAP_FEEDERENABLED;
     cap.ConType = TWON_DONTCARE16;
 
     if (SANE_SaneCapability(&cap, MSG_RESET) == TWCC_SUCCESS)
