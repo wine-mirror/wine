@@ -874,6 +874,9 @@ static const IHTMLCurrentStyleVtbl HTMLCurrentStyleVtbl = {
 
 static const tid_t HTMLCurrentStyle_iface_tids[] = {
     IHTMLCurrentStyle_tid,
+    IHTMLCurrentStyle2_tid,
+    IHTMLCurrentStyle3_tid,
+    IHTMLCurrentStyle4_tid,
     0
 };
 static dispex_static_data_t HTMLCurrentStyle_dispex = {
