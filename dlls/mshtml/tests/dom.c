@@ -3486,6 +3486,25 @@ static void test_default_style(IHTMLStyle *style)
     ok(hres == S_OK, "put_borderTopWidth: %08x\n", hres);
     VariantClear(&vDefault);
 
+    /* borderRightWidth */
+    hres = IHTMLStyle_get_borderRightWidth(style, &vDefault);
+    ok(hres == S_OK, "get_borderRightWidth: %08x\n", hres);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("10");
+    hres = IHTMLStyle_put_borderRightWidth(style, v);
+    ok(hres == S_OK, "put_borderRightWidth: %08x\n", hres);
+    VariantClear(&v);
+
+    hres = IHTMLStyle_get_borderRightWidth(style, &v);
+    ok(hres == S_OK, "get_borderRightWidth: %08x\n", hres);
+    ok(!strcmp_wa(V_BSTR(&v), "10px"), "expected 10px = %s\n", dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    hres = IHTMLStyle_put_borderRightWidth(style, vDefault);
+    ok(hres == S_OK, "put_borderRightWidth: %08x\n", hres);
+    VariantClear(&vDefault);
+
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
     if(SUCCEEDED(hres)) {
