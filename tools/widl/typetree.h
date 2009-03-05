@@ -115,7 +115,7 @@ static inline type_t *type_function_get_rettype(const type_t *type)
 {
     type = type_get_real_type(type);
     assert(type_get_type(type) == TYPE_FUNCTION);
-    return type->ref;
+    return type->details.function->rettype;
 }
 
 static inline var_list_t *type_enum_get_values(const type_t *type)
@@ -167,7 +167,7 @@ static inline type_t *type_iface_get_inherit(const type_t *type)
 {
     type = type_get_real_type(type);
     assert(type_get_type(type) == TYPE_INTERFACE);
-    return type->ref;
+    return type->details.iface->inherit;
 }
 
 static inline var_list_t *type_dispiface_get_props(const type_t *type)
@@ -254,7 +254,7 @@ static inline type_t *type_array_get_element(const type_t *type)
 {
     type = type_get_real_type(type);
     assert(type_get_type(type) == TYPE_ARRAY);
-    return type->ref;
+    return type->details.array.elem;
 }
 
 static inline int type_array_is_decl_as_ptr(const type_t *type)
@@ -286,7 +286,7 @@ static inline type_t *type_pointer_get_ref(const type_t *type)
 {
     type = type_get_real_type(type);
     assert(type_get_type(type) == TYPE_POINTER);
-    return type->ref;
+    return type->details.pointer.ref;
 }
 
 #endif /* WIDL_TYPE_TREE_H */

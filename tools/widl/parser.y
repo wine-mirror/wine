@@ -1240,29 +1240,6 @@ void clear_all_offsets(void)
     node->data.typestring_offset = node->data.ptrdesc = 0;
 }
 
-type_t *make_type(enum type_type type, type_t *ref)
-{
-  type_t *t = alloc_type();
-  t->name = NULL;
-  t->type_type = type;
-  t->ref = ref;
-  t->attrs = NULL;
-  t->orig = NULL;
-  memset(&t->details, 0, sizeof(t->details));
-  t->typestring_offset = 0;
-  t->ptrdesc = 0;
-  t->ignore = (parse_only != 0);
-  t->defined = FALSE;
-  t->written = FALSE;
-  t->user_types_registered = FALSE;
-  t->tfswrite = FALSE;
-  t->checked = FALSE;
-  t->is_alias = FALSE;
-  t->typelib_idx = -1;
-  init_loc_info(&t->loc_info);
-  return t;
-}
-
 static type_t *type_new_enum(char *name, var_list_t *enums)
 {
     type_t *t = get_type(TYPE_ENUM, name, tsENUM);
@@ -1280,7 +1257,7 @@ static type_t *type_new_enum(char *name, var_list_t *enums)
 static type_t *type_new_struct(char *name, int defined, var_list_t *fields)
 {
   type_t *tag_type = name ? find_type(name, tsSTRUCT) : NULL;
-  type_t *t = make_type(TYPE_STRUCT, NULL);
+  type_t *t = make_type(TYPE_STRUCT);
   t->name = name;
   if (defined || (tag_type && tag_type->details.structure))
   {
@@ -1316,7 +1293,7 @@ static type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_
 {
   type_t *t = get_type(TYPE_ENCAPSULATED_UNION, name, tsUNION);
   if (!union_field) union_field = make_var( xstrdup("tagged_union") );
-  union_field->type = make_type(TYPE_UNION, NULL);
+  union_field->type = make_type(TYPE_UNION);
   union_field->type->details.structure = xmalloc(sizeof(*union_field->type->details.structure));
   union_field->type->details.structure->fields = cases;
   union_field->type->defined = TRUE;
@@ -1342,9 +1319,10 @@ static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type)
   type_t *ptrchain_type;
   if (!ptrchain)
     return type;
-  for (ptrchain_type = ptrchain; ptrchain_type->ref; ptrchain_type = ptrchain_type->ref)
+  for (ptrchain_type = ptrchain; type_pointer_get_ref(ptrchain_type); ptrchain_type = type_pointer_get_ref(ptrchain_type))
     ;
-  ptrchain_type->ref = type;
+  assert(ptrchain_type->type_type == TYPE_POINTER);
+  ptrchain_type->details.pointer.ref = type;
   return ptrchain;
 }
 
@@ -1482,8 +1460,11 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
         error_loc("%s: size_is attribute applied to illegal type\n", v->name);
     }
 
-    ptype = &(*ptype)->ref;
-    if (*ptype == NULL)
+    if (is_ptr(*ptype))
+      ptype = &(*ptype)->details.pointer.ref;
+    else if (is_array(*ptype))
+      ptype = &(*ptype)->details.array.elem;
+    else
       error_loc("%s: too many expressions in size_is attribute\n", v->name);
   }
 
@@ -1505,8 +1486,11 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
         error_loc("%s: length_is attribute applied to illegal type\n", v->name);
     }
 
-    ptype = &(*ptype)->ref;
-    if (*ptype == NULL)
+    if (is_ptr(*ptype))
+      ptype = &(*ptype)->details.pointer.ref;
+    else if (is_array(*ptype))
+      ptype = &(*ptype)->details.array.elem;
+    else
       error_loc("%s: too many expressions in length_is attribute\n", v->name);
   }
 
@@ -1521,7 +1505,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
     for (ft = v->type; is_ptr(ft); ft = type_pointer_get_ref(ft))
       ;
     assert(type_get_type_detect_alias(ft) == TYPE_FUNCTION);
-    ft->ref = return_type;
+    ft->details.function->rettype = return_type;
     /* move calling convention attribute, if present, from pointer nodes to
      * function node */
     for (t = v->type; is_ptr(t); t = type_pointer_get_ref(t))
@@ -1876,7 +1860,7 @@ static type_t *get_type(enum type_type type, char *name, int t)
       return tp;
     }
   }
-  tp = make_type(type, NULL);
+  tp = make_type(type);
   tp->name = name;
   if (!name) return tp;
   return reg_type(tp, name, t);

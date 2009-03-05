@@ -41,9 +41,31 @@ type_t *duptype(type_t *t, int dupname)
   return d;
 }
 
+type_t *make_type(enum type_type type)
+{
+    type_t *t = alloc_type();
+    t->name = NULL;
+    t->type_type = type;
+    t->attrs = NULL;
+    t->orig = NULL;
+    memset(&t->details, 0, sizeof(t->details));
+    t->typestring_offset = 0;
+    t->ptrdesc = 0;
+    t->ignore = (parse_only != 0);
+    t->defined = FALSE;
+    t->written = FALSE;
+    t->user_types_registered = FALSE;
+    t->tfswrite = FALSE;
+    t->checked = FALSE;
+    t->is_alias = FALSE;
+    t->typelib_idx = -1;
+    init_loc_info(&t->loc_info);
+    return t;
+}
+
 type_t *type_new_function(var_list_t *args)
 {
-    type_t *t = make_type(TYPE_FUNCTION, NULL);
+    type_t *t = make_type(TYPE_FUNCTION);
     t->details.function = xmalloc(sizeof(*t->details.function));
     t->details.function->args = args;
     t->details.function->idx = -1;
@@ -52,8 +74,9 @@ type_t *type_new_function(var_list_t *args)
 
 type_t *type_new_pointer(type_t *ref, attr_list_t *attrs)
 {
-    type_t *t = make_type(TYPE_POINTER, ref);
+    type_t *t = make_type(TYPE_POINTER);
     t->details.pointer.fc = pointer_default;
+    t->details.pointer.ref = ref;
     t->attrs = attrs;
     return t;
 }
@@ -75,7 +98,7 @@ type_t *type_new_alias(type_t *t, const char *name)
 
 type_t *type_new_module(const char *name)
 {
-    type_t *type = make_type(TYPE_MODULE, NULL);
+    type_t *type = make_type(TYPE_MODULE);
     type->name = name;
     /* FIXME: register type to detect multiple definitions */
     return type;
@@ -83,7 +106,7 @@ type_t *type_new_module(const char *name)
 
 type_t *type_new_coclass(const char *name)
 {
-    type_t *c = make_type(TYPE_COCLASS, NULL);
+    type_t *c = make_type(TYPE_COCLASS);
     c->name = name;
     /* FIXME: register type to detect multiple definitions */
     return c;
@@ -93,7 +116,7 @@ type_t *type_new_coclass(const char *name)
 type_t *type_new_array(const char *name, type_t *element, int declptr,
                        unsigned int dim, expr_t *size_is, expr_t *length_is)
 {
-    type_t *t = make_type(TYPE_ARRAY, element);
+    type_t *t = make_type(TYPE_ARRAY);
     if (name) t->name = xstrdup(name);
     t->details.array.declptr = declptr;
     t->details.array.length_is = length_is;
@@ -101,12 +124,13 @@ type_t *type_new_array(const char *name, type_t *element, int declptr,
         t->details.array.size_is = size_is;
     else
         t->details.array.dim = dim;
+    t->details.array.elem = element;
     return t;
 }
 
 type_t *type_new_basic(enum type_basic_type basic_type)
 {
-    type_t *t = make_type(TYPE_BASIC, NULL);
+    type_t *t = make_type(TYPE_BASIC);
     t->details.basic.type = basic_type;
     t->details.basic.sign = 0;
     return t;
@@ -131,7 +155,7 @@ type_t *type_new_void(void)
 {
     static type_t *void_type = NULL;
     if (!void_type)
-        void_type = make_type(TYPE_VOID, NULL);
+        void_type = make_type(TYPE_VOID);
     return void_type;
 }
 
@@ -160,23 +184,23 @@ static int compute_method_indexes(type_t *iface)
 
 void type_interface_define(type_t *iface, type_t *inherit, statement_list_t *stmts)
 {
-    iface->ref = inherit;
     iface->details.iface = xmalloc(sizeof(*iface->details.iface));
     iface->details.iface->disp_props = NULL;
     iface->details.iface->disp_methods = NULL;
     iface->details.iface->stmts = stmts;
+    iface->details.iface->inherit = inherit;
     iface->defined = TRUE;
     compute_method_indexes(iface);
 }
 
 void type_dispinterface_define(type_t *iface, var_list_t *props, func_list_t *methods)
 {
-    iface->ref = find_type("IDispatch", 0);
-    if (!iface->ref) error_loc("IDispatch is undefined\n");
     iface->details.iface = xmalloc(sizeof(*iface->details.iface));
     iface->details.iface->disp_props = props;
     iface->details.iface->disp_methods = methods;
     iface->details.iface->stmts = NULL;
+    iface->details.iface->inherit = find_type("IDispatch", 0);
+    if (!iface->details.iface->inherit) error_loc("IDispatch is undefined\n");
     iface->defined = TRUE;
     compute_method_indexes(iface);
 }

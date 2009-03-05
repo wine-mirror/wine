@@ -295,6 +295,7 @@ struct enumeration_details
 struct func_details
 {
   var_list_t *args;
+  struct _type_t *rettype;
   int idx;
 };
 
@@ -303,6 +304,7 @@ struct iface_details
   statement_list_t *stmts;
   func_list_t *disp_methods;
   var_list_t *disp_props;
+  struct _type_t *inherit;
 };
 
 struct module_details
@@ -313,9 +315,10 @@ struct module_details
 
 struct array_details
 {
-  unsigned int dim;
   expr_t *size_is;
   expr_t *length_is;
+  struct _type_t *elem;
+  unsigned int dim;
   unsigned int declptr; /* if declared as a pointer */
 };
 
@@ -332,6 +335,7 @@ struct basic_details
 
 struct pointer_details
 {
+  struct _type_t *ref;
   unsigned char fc;
 };
 
@@ -355,7 +359,6 @@ enum type_type
 struct _type_t {
   const char *name;
   enum type_type type_type;
-  struct _type_t *ref;
   attr_list_t *attrs;
   union
   {
@@ -502,7 +505,7 @@ int is_union(unsigned char tc);
 
 var_t *find_const(const char *name, int f);
 type_t *find_type(const char *name, int t);
-type_t *make_type(enum type_type type, type_t *ref);
+type_t *make_type(enum type_type type);
 
 void init_loc_info(loc_info_t *);
 

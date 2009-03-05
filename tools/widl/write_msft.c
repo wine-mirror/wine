@@ -1032,8 +1032,7 @@ static int encode_type(
 
 static void dump_type(type_t *t)
 {
-    chat("dump_type: %p name %s type %d ref %p attrs %p\n", t, t->name, type_get_type(t), t->ref, t->attrs);
-    if(t->ref) dump_type(t->ref);
+    chat("dump_type: %p name %s type %d attrs %p\n", t, t->name, type_get_type(t), t->attrs);
 }
 
 static int encode_var(
@@ -1057,8 +1056,8 @@ static int encode_var(
     if (!decoded_size) decoded_size = &scratch;
     *decoded_size = 0;
 
-    chat("encode_var: var %p type %p type->name %s type->ref %p\n",
-         var, type, type->name ? type->name : "NULL", type->ref);
+    chat("encode_var: var %p type %p type->name %s\n",
+         var, type, type->name ? type->name : "NULL");
 
     if (is_array(type) && !type_array_is_decl_as_ptr(type)) {
         int num_dims, elements = 1, arrayoffset;
