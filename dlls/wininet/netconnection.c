@@ -124,12 +124,12 @@ MAKE_FUNCPTR(SSL_get_peer_certificate);
 MAKE_FUNCPTR(SSL_CTX_get_timeout);
 MAKE_FUNCPTR(SSL_CTX_set_timeout);
 MAKE_FUNCPTR(SSL_CTX_set_default_verify_paths);
-MAKE_FUNCPTR(i2d_X509);
 
 /* OpenSSL's libcrypto functions that we use */
 MAKE_FUNCPTR(BIO_new_fp);
 MAKE_FUNCPTR(ERR_get_error);
 MAKE_FUNCPTR(ERR_error_string);
+MAKE_FUNCPTR(i2d_X509);
 #undef MAKE_FUNCPTR
 
 #endif
@@ -188,7 +188,6 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 	DYNSSL(SSL_CTX_get_timeout);
 	DYNSSL(SSL_CTX_set_timeout);
 	DYNSSL(SSL_CTX_set_default_verify_paths);
-	DYNSSL(i2d_X509);
 #undef DYNSSL
 
 #define DYNCRYPTO(x) \
@@ -202,6 +201,7 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 	DYNCRYPTO(BIO_new_fp);
 	DYNCRYPTO(ERR_get_error);
 	DYNCRYPTO(ERR_error_string);
+	DYNCRYPTO(i2d_X509);
 #undef DYNCRYPTO
 
 	pSSL_library_init();

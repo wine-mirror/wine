@@ -103,11 +103,11 @@ MAKE_FUNCPTR( SSL_get_peer_certificate );
 MAKE_FUNCPTR( SSL_CTX_get_timeout );
 MAKE_FUNCPTR( SSL_CTX_set_timeout );
 MAKE_FUNCPTR( SSL_CTX_set_default_verify_paths );
-MAKE_FUNCPTR( i2d_X509 );
 
 MAKE_FUNCPTR( BIO_new_fp );
 MAKE_FUNCPTR( ERR_get_error );
 MAKE_FUNCPTR( ERR_error_string );
+MAKE_FUNCPTR( i2d_X509 );
 #undef MAKE_FUNCPTR
 
 #endif
@@ -221,7 +221,6 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     LOAD_FUNCPTR( SSL_CTX_get_timeout );
     LOAD_FUNCPTR( SSL_CTX_set_timeout );
     LOAD_FUNCPTR( SSL_CTX_set_default_verify_paths );
-    LOAD_FUNCPTR( i2d_X509 );
 #undef LOAD_FUNCPTR
 
 #define LOAD_FUNCPTR(x) \
@@ -234,6 +233,7 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     LOAD_FUNCPTR( BIO_new_fp );
     LOAD_FUNCPTR( ERR_get_error );
     LOAD_FUNCPTR( ERR_error_string );
+    LOAD_FUNCPTR( i2d_X509 );
 #undef LOAD_FUNCPTR
 
     pSSL_library_init();
