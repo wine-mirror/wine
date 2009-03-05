@@ -1389,7 +1389,8 @@ static void AttachmentTest(void)
     hr = IDirectDrawSurface_DeleteAttachedSurface(surface2, 0, surface1);
     ok(hr == DD_OK, "DeleteAttachedSurface failed with %08x\n", hr);
     hr = IDirectDrawSurface_AddAttachedSurface(surface2, surface3); /* Fails on refrast */
-    ok(hr == DD_OK, "Attaching an offscreen plain surface to another offscreen plain surface returned %08x\n", hr);
+    ok(hr == DD_OK || broken(hr == DDERR_CANNOTATTACHSURFACE),
+       "Attaching an offscreen plain surface to another offscreen plain surface returned %08x\n", hr);
     if(SUCCEEDED(hr))
     {
         hr = IDirectDrawSurface_DeleteAttachedSurface(surface2, 0, surface3);
