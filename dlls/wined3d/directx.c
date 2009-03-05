@@ -64,6 +64,7 @@ static const struct {
     {"GL_ARB_draw_buffers",                 ARB_DRAW_BUFFERS,               0                           },
     {"GL_ARB_fragment_program",             ARB_FRAGMENT_PROGRAM,           0                           },
     {"GL_ARB_fragment_shader",              ARB_FRAGMENT_SHADER,            0                           },
+    {"GL_ARB_geometry_shader4",             ARB_GEOMETRY_SHADER4,           0                           },
     {"GL_ARB_half_float_pixel",             ARB_HALF_FLOAT_PIXEL,           0                           },
     {"GL_ARB_imaging",                      ARB_IMAGING,                    0                           },
     {"GL_ARB_multisample",                  ARB_MULTISAMPLE,                0                           }, /* needs GLX_ARB_MULTISAMPLE as well */
