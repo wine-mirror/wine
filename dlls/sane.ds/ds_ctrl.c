@@ -335,8 +335,12 @@ TW_UINT16 SANE_PassThrough (pTW_IDENTITY pOrigin,
 TW_UINT16 SANE_PendingXfersEndXfer (pTW_IDENTITY pOrigin, 
                                      TW_MEMREF pData)
 {
+#ifndef SONAME_LIBSANE
+    return TWRC_FAILURE;
+#else
     TW_UINT16 twRC = TWRC_SUCCESS;
     pTW_PENDINGXFERS pPendingXfers = (pTW_PENDINGXFERS) pData;
+    SANE_Status status;
 
     TRACE("DG_CONTROL/DAT_PENDINGXFERS/MSG_ENDXFER\n");
 
@@ -347,31 +351,41 @@ TW_UINT16 SANE_PendingXfersEndXfer (pTW_IDENTITY pOrigin,
     }
     else
     {
-        if (pPendingXfers->Count != 0)
+        pPendingXfers->Count = -1;
+        activeDS.currentState = 6;
+        if (! activeDS.sane_started)
         {
-            pPendingXfers->Count --;
-            activeDS.currentState = 6;
-        }
-        else
-        {
-            activeDS.currentState = 5;
-            /* Notify the application that it can close the data source */
-            if (activeDS.windowMessage)
-                PostMessageA(activeDS.hwndOwner, activeDS.windowMessage, MSG_CLOSEDSREQ, 0);
+            status = psane_start (activeDS.deviceHandle);
+            if (status != SANE_STATUS_GOOD)
+            {
+                TRACE("PENDINGXFERS/MSG_ENDXFER sane_start returns %s\n", psane_strstatus(status));
+                pPendingXfers->Count = 0;
+                activeDS.currentState = 5;
+                /* Notify the application that it can close the data source */
+                if (activeDS.windowMessage)
+                    PostMessageA(activeDS.hwndOwner, activeDS.windowMessage, MSG_CLOSEDSREQ, 0);
+            }
+            else
+                activeDS.sane_started = TRUE;
         }
         twRC = TWRC_SUCCESS;
         activeDS.twCC = TWCC_SUCCESS;
     }
 
     return twRC;
+#endif
 }
 
 /* DG_CONTROL/DAT_PENDINGXFERS/MSG_GET */
 TW_UINT16 SANE_PendingXfersGet (pTW_IDENTITY pOrigin, 
                                  TW_MEMREF pData)
 {
+#ifndef SONAME_LIBSANE
+    return TWRC_FAILURE;
+#else
     TW_UINT16 twRC = TWRC_SUCCESS;
     pTW_PENDINGXFERS pPendingXfers = (pTW_PENDINGXFERS) pData;
+    SANE_Status status;
 
     TRACE("DG_CONTROL/DAT_PENDINGXFERS/MSG_GET\n");
 
@@ -382,19 +396,33 @@ TW_UINT16 SANE_PendingXfersGet (pTW_IDENTITY pOrigin,
     }
     else
     {
-        /* FIXME: we shouldn't return 1 here */
-        pPendingXfers->Count = 1;
+        pPendingXfers->Count = -1;
+        if (! activeDS.sane_started)
+        {
+            status = psane_start (activeDS.deviceHandle);
+            if (status != SANE_STATUS_GOOD)
+            {
+                TRACE("PENDINGXFERS/MSG_GET sane_start returns %s\n", psane_strstatus(status));
+                pPendingXfers->Count = 0;
+            }
+            else
+                activeDS.sane_started = TRUE;
+        }
         twRC = TWRC_SUCCESS;
         activeDS.twCC = TWCC_SUCCESS;
     }
 
     return twRC;
+#endif
 }
 
 /* DG_CONTROL/DAT_PENDINGXFERS/MSG_RESET */
 TW_UINT16 SANE_PendingXfersReset (pTW_IDENTITY pOrigin, 
                                    TW_MEMREF pData)
 {
+#ifndef SONAME_LIBSANE
+    return TWRC_FAILURE;
+#else
     TW_UINT16 twRC = TWRC_SUCCESS;
     pTW_PENDINGXFERS pPendingXfers = (pTW_PENDINGXFERS) pData;
 
@@ -411,9 +439,16 @@ TW_UINT16 SANE_PendingXfersReset (pTW_IDENTITY pOrigin,
         activeDS.currentState = 5;
         twRC = TWRC_SUCCESS;
         activeDS.twCC = TWCC_SUCCESS;
+
+        if (activeDS.sane_started)
+        {
+            psane_cancel (activeDS.deviceHandle);
+            activeDS.sane_started = FALSE;
+        }
     }
 
     return twRC;
+#endif
 }
 
 /* DG_CONTROL/DAT_PENDINGXFERS/MSG_STOPFEEDER */

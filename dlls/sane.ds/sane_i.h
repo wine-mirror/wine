@@ -71,6 +71,7 @@ struct tagActiveDS
     SANE_Parameters     sane_param;             /* parameters about the image
                                                    transferred */
     BOOL                sane_param_valid;  /* true if valid sane_param*/
+    BOOL                sane_started;      /* If sane_start has been called */
     INT                 deviceIndex;    /* index of the current device */
 #endif
     /* Capabilities */

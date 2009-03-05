@@ -106,6 +106,7 @@ TW_UINT16 SANE_ImageInfoGet (pTW_IDENTITY pOrigin,
             {
                 WARN("psane_get_parameters: %s\n", psane_strstatus (status));
                 psane_cancel (activeDS.deviceHandle);
+                activeDS.sane_started = FALSE;
                 activeDS.twCC = TWCC_OPERATIONERROR;
                 return TWRC_FAILURE;
             }
@@ -230,13 +231,17 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
 
             ScanningDialogBox(activeDS.progressWnd,0);
 
-            status = psane_start (activeDS.deviceHandle);
-            if (status != SANE_STATUS_GOOD)
+            if (! activeDS.sane_started)
             {
-                WARN("psane_start: %s\n", psane_strstatus (status));
-                psane_cancel (activeDS.deviceHandle);
-                activeDS.twCC = TWCC_OPERATIONERROR;
-                return TWRC_FAILURE;
+                status = psane_start (activeDS.deviceHandle);
+                if (status != SANE_STATUS_GOOD)
+                {
+                    WARN("psane_start: %s\n", psane_strstatus (status));
+                    psane_cancel (activeDS.deviceHandle);
+                    activeDS.twCC = TWCC_OPERATIONERROR;
+                    return TWRC_FAILURE;
+                }
+                activeDS.sane_started = TRUE;
             }
 
             status = psane_get_parameters (activeDS.deviceHandle,
@@ -247,6 +252,7 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
             {
                 WARN("psane_get_parameters: %s\n", psane_strstatus (status));
                 psane_cancel (activeDS.deviceHandle);
+                activeDS.sane_started = FALSE;
                 activeDS.twCC = TWCC_OPERATIONERROR;
                 return TWRC_FAILURE;
             }
@@ -263,6 +269,7 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
         if (pImageMemXfer->Memory.Length < activeDS.sane_param.bytes_per_line)
         {
             psane_cancel (activeDS.deviceHandle);
+            activeDS.sane_started = FALSE;
             activeDS.twCC = TWCC_BADVALUE;
             return TWRC_FAILURE;
         }
@@ -309,6 +316,7 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
                 ScanningDialogBox(activeDS.progressWnd, -1);
                 TRACE("psane_read: %s\n", psane_strstatus (status));
                 psane_cancel (activeDS.deviceHandle);
+                activeDS.sane_started = FALSE;
                 twRC = TWRC_XFERDONE;
             }
             activeDS.twCC = TWRC_SUCCESS;
@@ -318,6 +326,7 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
             ScanningDialogBox(activeDS.progressWnd, -1);
             WARN("psane_read: %s\n", psane_strstatus (status));
             psane_cancel (activeDS.deviceHandle);
+            activeDS.sane_started = FALSE;
             activeDS.twCC = TWCC_OPERATIONERROR;
             twRC = TWRC_FAILURE;
         }
@@ -384,13 +393,17 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
     else
     {
         /* Transfer an image from the source to the application */
-        status = psane_start (activeDS.deviceHandle);
-        if (status != SANE_STATUS_GOOD)
+        if (! activeDS.sane_started)
         {
-            WARN("psane_start: %s\n", psane_strstatus (status));
-            psane_cancel (activeDS.deviceHandle);
-            activeDS.twCC = TWCC_OPERATIONERROR;
-            return TWRC_FAILURE;
+            status = psane_start (activeDS.deviceHandle);
+            if (status != SANE_STATUS_GOOD)
+            {
+                WARN("psane_start: %s\n", psane_strstatus (status));
+                psane_cancel (activeDS.deviceHandle);
+                activeDS.twCC = TWCC_OPERATIONERROR;
+                return TWRC_FAILURE;
+            }
+            activeDS.sane_started = TRUE;
         }
 
         status = psane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
@@ -399,6 +412,7 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
         {
             WARN("psane_get_parameters: %s\n", psane_strstatus (status));
             psane_cancel (activeDS.deviceHandle);
+            activeDS.sane_started = FALSE;
             activeDS.twCC = TWCC_OPERATIONERROR;
             return TWRC_FAILURE;
         }
@@ -413,6 +427,7 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
             {
                 FIXME("For NATIVE, we support only 1 bit monochrome and 8 bit Grayscale, not %d\n", activeDS.sane_param.depth);
                 psane_cancel (activeDS.deviceHandle);
+                activeDS.sane_started = FALSE;
                 activeDS.twCC = TWCC_OPERATIONERROR;
                 return TWRC_FAILURE;
             }
@@ -421,6 +436,7 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
         {
             FIXME("For NATIVE, we support only GRAY and RGB, not %d\n", activeDS.sane_param.format);
             psane_cancel (activeDS.deviceHandle);
+            activeDS.sane_started = FALSE;
             activeDS.twCC = TWCC_OPERATIONERROR;
             return TWRC_FAILURE;
         }
@@ -440,6 +456,7 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
         if (!header)
         {
             psane_cancel (activeDS.deviceHandle);
+            activeDS.sane_started = FALSE;
             activeDS.twCC = TWCC_LOWMEMORY;
             if (hDIB)
                 GlobalFree(hDIB);
@@ -497,12 +514,14 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
         {
             WARN("psane_read: %s, reading line %d\n", psane_strstatus(status), i);
             psane_cancel (activeDS.deviceHandle);
+            activeDS.sane_started = FALSE;
             activeDS.twCC = TWCC_OPERATIONERROR;
             GlobalFree(hDIB);
             return TWRC_FAILURE;
         }
 
         psane_cancel (activeDS.deviceHandle);
+        activeDS.sane_started = FALSE;
         *pHandle = (TW_UINT32)hDIB;
         twRC = TWRC_XFERDONE;
         activeDS.twCC = TWCC_SUCCESS;

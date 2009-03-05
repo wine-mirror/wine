@@ -695,6 +695,7 @@ static TW_UINT16 SANE_ICAPResolution (pTW_CAPABILITY pCapability, TW_UINT16 acti
     return twCC;
 }
 
+#ifdef SONAME_LIBSANE
 static void convert_double_fix32(double d, TW_FIX32 *fix32)
 {
     TW_INT32 value = (TW_INT32) (d * 65536.0 + 0.5);
@@ -702,8 +703,6 @@ static void convert_double_fix32(double d, TW_FIX32 *fix32)
     fix32->Frac = value & 0x0000ffffL;
 }
 
-
-#ifdef SONAME_LIBSANE
 static BOOL convert_sane_res_to_twain(double sane_res, SANE_Unit unit, TW_FIX32 *twain_res, TW_UINT16 twtype)
 {
     double d;
