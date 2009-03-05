@@ -115,8 +115,6 @@ static func_list_t *append_func(func_list_t *list, func_t *func);
 static func_t *make_func(var_t *def);
 static type_t *make_class(char *name);
 static type_t *make_safearray(type_t *type);
-static type_t *make_builtin(char *name);
-static type_t *make_int(int sign);
 static typelib_t *make_library(const char *name, const attr_list_t *attrs);
 static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type);
 
@@ -611,10 +609,10 @@ enum_list: enum					{ if (!$1->eval)
 
 enum:	  ident '=' expr_int_const		{ $$ = reg_const($1);
 						  $$->eval = $3;
-                                                  $$->type = make_int(0);
+                                                  $$->type = type_new_int(TYPE_BASIC_INT, 0);
 						}
 	| ident					{ $$ = reg_const($1);
-                                                  $$->type = make_int(0);
+                                                  $$->type = type_new_int(TYPE_BASIC_INT, 0);
 						}
 	;
 
@@ -769,46 +767,31 @@ ident:	  aIDENTIFIER				{ $$ = make_var($1); }
 	| aKNOWNTYPE				{ $$ = make_var($<str>1); }
 	;
 
-base_type: tBYTE				{ $$ = make_builtin($<str>1); }
-	| tWCHAR				{ $$ = make_builtin($<str>1); }
+base_type: tBYTE				{ $$ = find_type_or_error($<str>1, 0); }
+	| tWCHAR				{ $$ = find_type_or_error($<str>1, 0); }
 	| int_std
-	| tSIGNED int_std			{ $$ = $2; $$->sign = 1; }
-	| tUNSIGNED int_std			{ $$ = $2; $$->sign = -1;
-						  switch ($$->type) {
-						  case RPC_FC_CHAR:  break;
-						  case RPC_FC_SMALL: $$->type = RPC_FC_USMALL; break;
-						  case RPC_FC_SHORT: $$->type = RPC_FC_USHORT; break;
-						  case RPC_FC_LONG:  $$->type = RPC_FC_ULONG;  break;
-						  case RPC_FC_HYPER:
-						    if ($$->name[0] == 'h') /* hyper, as opposed to __int64 */
-                                                    {
-                                                      $$ = type_new_alias($$, "MIDL_uhyper");
-                                                      $$->sign = 0;
-                                                    }
-						    break;
-						  default: break;
-						  }
-						}
-	| tUNSIGNED				{ $$ = make_int(-1); }
-	| tFLOAT				{ $$ = make_builtin($<str>1); }
+	| tSIGNED int_std			{ $$ = type_new_int(type_basic_get_type($2), -1); }
+	| tUNSIGNED int_std			{ $$ = type_new_int(type_basic_get_type($2), 1); }
+	| tUNSIGNED				{ $$ = type_new_int(TYPE_BASIC_INT, 1); }
+	| tFLOAT				{ $$ = find_type_or_error($<str>1, 0); }
 	| tSINGLE				{ $$ = find_type("float", 0); }
-	| tDOUBLE				{ $$ = make_builtin($<str>1); }
-	| tBOOLEAN				{ $$ = make_builtin($<str>1); }
-	| tERRORSTATUST				{ $$ = make_builtin($<str>1); }
-	| tHANDLET				{ $$ = make_builtin($<str>1); }
+	| tDOUBLE				{ $$ = find_type_or_error($<str>1, 0); }
+	| tBOOLEAN				{ $$ = find_type_or_error($<str>1, 0); }
+	| tERRORSTATUST				{ $$ = find_type_or_error($<str>1, 0); }
+	| tHANDLET				{ $$ = find_type_or_error($<str>1, 0); }
 	;
 
 m_int:
 	| tINT
 	;
 
-int_std:  tINT					{ $$ = make_builtin($<str>1); }
-	| tSHORT m_int				{ $$ = make_builtin($<str>1); }
-	| tSMALL				{ $$ = make_builtin($<str>1); }
-	| tLONG m_int				{ $$ = make_builtin($<str>1); }
-	| tHYPER m_int				{ $$ = make_builtin($<str>1); }
-	| tINT64				{ $$ = make_builtin($<str>1); }
-	| tCHAR					{ $$ = make_builtin($<str>1); }
+int_std:  tINT					{ $$ = type_new_int(TYPE_BASIC_INT, 0); }
+	| tSHORT m_int				{ $$ = type_new_int(TYPE_BASIC_INT16, 0); }
+	| tSMALL				{ $$ = type_new_int(TYPE_BASIC_INT8, 0); }
+	| tLONG m_int				{ $$ = type_new_int(TYPE_BASIC_INT32, 0); }
+	| tHYPER m_int				{ $$ = type_new_int(TYPE_BASIC_HYPER, 0); }
+	| tINT64				{ $$ = type_new_int(TYPE_BASIC_INT64, 0); }
+	| tCHAR					{ $$ = type_new_int(TYPE_BASIC_CHAR, 0); }
 	;
 
 coclass:  tCOCLASS aIDENTIFIER			{ $$ = make_class($2); }
@@ -996,7 +979,7 @@ pointer_type:
 structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = type_new_struct($2, TRUE, $4); }
 	;
 
-type:	  tVOID					{ $$ = find_type_or_error("void", 0); }
+type:	  tVOID					{ $$ = type_new_void(); }
 	| aKNOWNTYPE				{ $$ = find_type_or_error($1, 0); }
 	| base_type				{ $$ = $1; }
 	| enumdef				{ $$ = $1; }
@@ -1028,49 +1011,26 @@ version:
 
 %%
 
-static void decl_builtin(const char *name, unsigned char type)
+static void decl_builtin_basic(const char *name, enum type_basic_type type)
 {
-  type_t *t = make_type(type, NULL);
-  t->name = xstrdup(name);
+  type_t *t = type_new_basic(type);
   reg_type(t, name, 0);
 }
 
-static type_t *make_builtin(char *name)
+static void decl_builtin_alias(const char *name, type_t *t)
 {
-  /* NAME is strdup'd in the lexer */
-  type_t *t = duptype(find_type_or_error(name, 0), 0);
-  t->name = name;
-  return t;
-}
-
-static type_t *make_int(int sign)
-{
-  type_t *t = duptype(find_type_or_error("int", 0), 1);
-
-  t->sign = sign;
-  if (sign < 0)
-    t->type = t->type == RPC_FC_LONG ? RPC_FC_ULONG : RPC_FC_USHORT;
-
-  return t;
+  reg_type(type_new_alias(t, name), name, 0);
 }
 
 void init_types(void)
 {
-  decl_builtin("void", 0);
-  decl_builtin("byte", RPC_FC_BYTE);
-  decl_builtin("wchar_t", RPC_FC_WCHAR);
-  decl_builtin("int", RPC_FC_LONG);     /* win32 */
-  decl_builtin("short", RPC_FC_SHORT);
-  decl_builtin("small", RPC_FC_SMALL);
-  decl_builtin("long", RPC_FC_LONG);
-  decl_builtin("hyper", RPC_FC_HYPER);
-  decl_builtin("__int64", RPC_FC_HYPER);
-  decl_builtin("char", RPC_FC_CHAR);
-  decl_builtin("float", RPC_FC_FLOAT);
-  decl_builtin("double", RPC_FC_DOUBLE);
-  decl_builtin("boolean", RPC_FC_BYTE);
-  decl_builtin("error_status_t", RPC_FC_ERROR_STATUS_T);
-  decl_builtin("handle_t", RPC_FC_BIND_PRIMITIVE);
+  decl_builtin_basic("byte", TYPE_BASIC_BYTE);
+  decl_builtin_basic("wchar_t", TYPE_BASIC_WCHAR);
+  decl_builtin_basic("float", TYPE_BASIC_FLOAT);
+  decl_builtin_basic("double", TYPE_BASIC_DOUBLE);
+  decl_builtin_basic("error_status_t", TYPE_BASIC_ERROR_STATUS_T);
+  decl_builtin_basic("handle_t", TYPE_BASIC_HANDLE);
+  decl_builtin_alias("boolean", type_new_basic(TYPE_BASIC_BYTE));
 }
 
 static str_list_t *append_str(str_list_t *list, char *str)
@@ -1295,7 +1255,6 @@ type_t *make_type(unsigned char type, type_t *ref)
   t->typestring_offset = 0;
   t->ptrdesc = 0;
   t->ignore = (parse_only != 0);
-  t->sign = 0;
   t->defined = FALSE;
   t->written = FALSE;
   t->user_types_registered = FALSE;

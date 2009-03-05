@@ -434,22 +434,22 @@ static struct expression_type resolve_expression(const struct expr_loc *expr_loc
     case EXPR_TRUEFALSE:
         result.is_variable = FALSE;
         result.is_temporary = FALSE;
-        result.type = find_type("int", 0);
+        result.type = type_new_int(TYPE_BASIC_INT, 0);
         break;
     case EXPR_STRLIT:
         result.is_variable = FALSE;
         result.is_temporary = TRUE;
-        result.type = make_type(RPC_FC_RP, find_type("char", 0));
+        result.type = type_new_pointer(type_new_int(TYPE_BASIC_CHAR, 0), NULL);
         break;
     case EXPR_WSTRLIT:
         result.is_variable = FALSE;
         result.is_temporary = TRUE;
-        result.type = make_type(RPC_FC_RP, find_type("wchar_t", 0));
+        result.type = type_new_pointer(type_new_int(TYPE_BASIC_WCHAR, 0), NULL);
         break;
     case EXPR_DOUBLE:
         result.is_variable = FALSE;
-        result.is_temporary = FALSE;
-        result.type = find_type("double", 0);
+        result.is_temporary = TRUE;
+        result.type = type_new_basic(TYPE_BASIC_DOUBLE);
         break;
     case EXPR_IDENTIFIER:
     {
@@ -470,7 +470,7 @@ static struct expression_type resolve_expression(const struct expr_loc *expr_loc
         check_scalar_type(expr_loc, cont_type, result.type);
         result.is_variable = FALSE;
         result.is_temporary = FALSE;
-        result.type = find_type("int", 0);
+        result.type = type_new_int(TYPE_BASIC_INT, 0);
         break;
     case EXPR_NOT:
         result = resolve_expression(expr_loc, cont_type, e->ref);
@@ -491,7 +491,7 @@ static struct expression_type resolve_expression(const struct expr_loc *expr_loc
                            expr_loc->attr ? expr_loc->attr : "");
             result.is_variable = FALSE;
         result.is_temporary = TRUE;
-        result.type = make_type(RPC_FC_RP, result.type);
+        result.type = type_new_pointer(result.type, NULL);
         break;
     case EXPR_PPTR:
         result = resolve_expression(expr_loc, cont_type, e->ref);
@@ -512,7 +512,7 @@ static struct expression_type resolve_expression(const struct expr_loc *expr_loc
     case EXPR_SIZEOF:
         result.is_variable = FALSE;
         result.is_temporary = FALSE;
-        result.type = find_type("int", 0);
+        result.type = type_new_int(TYPE_BASIC_INT, 0);
         break;
     case EXPR_SHL:
     case EXPR_SHR:
@@ -550,7 +550,7 @@ static struct expression_type resolve_expression(const struct expr_loc *expr_loc
         check_scalar_type(expr_loc, cont_type, result_right.type);
         result.is_variable = FALSE;
         result.is_temporary = FALSE;
-        result.type = find_type("int", 0);
+        result.type = type_new_int(TYPE_BASIC_INT, 0);
         break;
     }
     case EXPR_MEMBER:

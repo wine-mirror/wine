@@ -92,6 +92,37 @@ type_t *type_new_array(const char *name, type_t *element, int declptr,
     return t;
 }
 
+type_t *type_new_basic(enum type_basic_type basic_type)
+{
+    type_t *t = make_type(TYPE_BASIC, NULL);
+    t->details.basic.type = basic_type;
+    t->details.basic.sign = 0;
+    return t;
+}
+
+type_t *type_new_int(enum type_basic_type basic_type, int sign)
+{
+    static type_t *int_types[TYPE_BASIC_INT_MAX+1][3];
+
+    assert(basic_type <= TYPE_BASIC_INT_MAX);
+
+    /* map sign { -1, 0, 1 } -> { 0, 1, 2 } */
+    if (!int_types[basic_type][sign + 1])
+    {
+        int_types[basic_type][sign + 1] = type_new_basic(basic_type);
+        int_types[basic_type][sign + 1]->details.basic.sign = sign;
+    }
+    return int_types[basic_type][sign + 1];
+}
+
+type_t *type_new_void(void)
+{
+    static type_t *void_type = NULL;
+    if (!void_type)
+        void_type = make_type(0, NULL);
+    return void_type;
+}
+
 static int compute_method_indexes(type_t *iface)
 {
     int idx;

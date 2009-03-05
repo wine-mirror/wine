@@ -221,6 +221,27 @@ enum statement_type
     STMT_CPPQUOTE
 };
 
+enum type_basic_type
+{
+    TYPE_BASIC_INT8 = 1,
+    TYPE_BASIC_INT16,
+    TYPE_BASIC_INT32,
+    TYPE_BASIC_INT64,
+    TYPE_BASIC_INT,
+    TYPE_BASIC_CHAR,
+    TYPE_BASIC_HYPER,
+    TYPE_BASIC_BYTE,
+    TYPE_BASIC_WCHAR,
+    TYPE_BASIC_FLOAT,
+    TYPE_BASIC_DOUBLE,
+    TYPE_BASIC_ERROR_STATUS_T,
+    TYPE_BASIC_HANDLE,
+};
+
+#define TYPE_BASIC_MAX TYPE_BASIC_HANDLE
+#define TYPE_BASIC_INT_MIN TYPE_BASIC_INT8
+#define TYPE_BASIC_INT_MAX TYPE_BASIC_HYPER
+
 struct _loc_info_t
 {
     const char *input_name;
@@ -303,6 +324,12 @@ struct coclass_details
   ifref_list_t *ifaces;
 };
 
+struct basic_details
+{
+  enum type_basic_type type;
+  int sign;
+};
+
 enum type_type
 {
     TYPE_VOID,
@@ -334,6 +361,7 @@ struct _type_t {
     struct module_details *module;
     struct array_details array;
     struct coclass_details coclass;
+    struct basic_details basic;
   } details;
   type_t *orig;                   /* dup'd types */
   unsigned int typestring_offset;
@@ -347,7 +375,6 @@ struct _type_t {
   unsigned int tfswrite : 1;   /* if the type needs to be written to the TFS */
   unsigned int checked : 1;
   unsigned int is_alias : 1; /* is the type an alias? */
-  int sign : 2;
 };
 
 struct _var_t {
