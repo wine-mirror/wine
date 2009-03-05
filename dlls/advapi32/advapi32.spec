@@ -635,7 +635,7 @@
 @ stdcall SystemFunction036(ptr long) # RtlGenRandom
 @ stdcall SystemFunction040(ptr long long) # RtlEncryptMemory
 @ stdcall SystemFunction041(ptr long long) # RtlDecryptMemory
-@ stub TraceEvent
+@ stdcall TraceEvent(double ptr)
 @ stub TraceEventInstance
 @ stub TraceMessage
 @ stub TraceMessageVa

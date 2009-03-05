@@ -492,6 +492,15 @@ ULONG WINAPI RegisterTraceGuidsA( WMIDPREQUEST RequestAddress,
 }
 
 /******************************************************************************
+ * TraceEvent [ADVAPI32.@]
+ */
+ULONG WINAPI TraceEvent( TRACEHANDLE SessionHandle, PEVENT_TRACE_HEADER EventTrace )
+{
+    FIXME("%s %p\n", wine_dbgstr_longlong(SessionHandle), EventTrace);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
  * UnregisterTraceGuids [ADVAPI32.@]
  *
  * See RegisterTraceGuids
