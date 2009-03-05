@@ -97,12 +97,17 @@ typedef enum _WINED3DLIGHTTYPE
 
 typedef enum _WINED3DPRIMITIVETYPE
 {
+    WINED3DPT_UNDEFINED                     = 0,
     WINED3DPT_POINTLIST                     = 1,
     WINED3DPT_LINELIST                      = 2,
     WINED3DPT_LINESTRIP                     = 3,
     WINED3DPT_TRIANGLELIST                  = 4,
     WINED3DPT_TRIANGLESTRIP                 = 5,
     WINED3DPT_TRIANGLEFAN                   = 6,
+    WINED3DPT_LINELIST_ADJ                  = 10,
+    WINED3DPT_LINESTRIP_ADJ                 = 11,
+    WINED3DPT_TRIANGLELIST_ADJ              = 12,
+    WINED3DPT_TRIANGLESTRIP_ADJ             = 13,
     WINED3DPT_FORCE_DWORD                   = 0x7fffffff
 } WINED3DPRIMITIVETYPE;
 
