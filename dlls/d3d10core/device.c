@@ -146,8 +146,12 @@ static void STDMETHODCALLTYPE d3d10_device_DrawIndexed(ID3D10Device *iface,
 static void STDMETHODCALLTYPE d3d10_device_Draw(ID3D10Device *iface,
         UINT vertex_count, UINT start_vertex_location)
 {
-    FIXME("iface %p, vertex_count %u, start_vertex_location %u stub!\n",
+    struct d3d10_device *This = (struct d3d10_device *)iface;
+
+    TRACE("iface %p, vertex_count %u, start_vertex_location %u\n",
             iface, vertex_count, start_vertex_location);
+
+    IWineD3DDevice_DrawPrimitive(This->wined3d_device, start_vertex_location, vertex_count);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_PSSetConstantBuffers(ID3D10Device *iface,
