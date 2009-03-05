@@ -503,9 +503,19 @@ int cant_be_null(const var_t *v);
 int is_struct(unsigned char tc);
 int is_union(unsigned char tc);
 
+#define tsENUM   1
+#define tsSTRUCT 2
+#define tsUNION  3
+
 var_t *find_const(const char *name, int f);
 type_t *find_type(const char *name, int t);
 type_t *make_type(enum type_type type);
+type_t *get_type(enum type_type type, char *name, int t);
+type_t *reg_type(type_t *type, const char *name, int t);
+void add_incomplete(type_t *t);
+
+var_t *make_var(char *name);
+var_list_t *append_var(var_list_t *list, var_t *var);
 
 void init_loc_info(loc_info_t *);
 

@@ -89,7 +89,6 @@ typedef struct _decl_spec_t
 
 typelist_t incomplete_types = LIST_INIT(incomplete_types);
 
-static void add_incomplete(type_t *t);
 static void fix_incomplete(void);
 static void fix_incomplete_types(type_t *complete_type);
 
@@ -106,9 +105,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
 static var_list_t *set_var_types(attr_list_t *attrs, decl_spec_t *decl_spec, declarator_list_t *decls);
 static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface);
 static ifref_t *make_ifref(type_t *iface);
-static var_list_t *append_var(var_list_t *list, var_t *var);
 static var_list_t *append_var_list(var_list_t *list, var_list_t *vars);
-static var_t *make_var(char *name);
 static declarator_list_t *append_declarator(declarator_list_t *list, declarator_t *p);
 static declarator_t *make_declarator(var_t *var);
 static func_list_t *append_func(func_list_t *list, func_t *func);
@@ -117,16 +114,9 @@ static type_t *make_safearray(type_t *type);
 static typelib_t *make_library(const char *name, const attr_list_t *attrs);
 static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type);
 
-static type_t *type_new_enum(const char *name, int defined, var_list_t *enums);
-static type_t *type_new_struct(char *name, int defined, var_list_t *fields);
-static type_t *type_new_nonencapsulated_union(const char *name, int defined, var_list_t *fields);
-static type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *union_field, var_list_t *cases);
-
-static type_t *reg_type(type_t *type, const char *name, int t);
 static type_t *reg_typedefs(decl_spec_t *decl_spec, var_list_t *names, attr_list_t *attrs);
 static type_t *find_type_or_error(const char *name, int t);
 static type_t *find_type_or_error2(char *name, int t);
-static type_t *get_type(enum type_type type, char *name, int t);
 
 static var_t *reg_const(var_t *var);
 
@@ -161,10 +151,6 @@ static statement_t *make_statement_typedef(var_list_t *names);
 static statement_t *make_statement_import(const char *str);
 static statement_t *make_statement_typedef(var_list_t *names);
 static statement_list_t *append_statement(statement_list_t *list, statement_t *stmt);
-
-#define tsENUM   1
-#define tsSTRUCT 2
-#define tsUNION  3
 
 %}
 %union {
@@ -1240,95 +1226,6 @@ void clear_all_offsets(void)
     node->data.typestring_offset = node->data.ptrdesc = 0;
 }
 
-static type_t *type_new_enum(const char *name, int defined, var_list_t *enums)
-{
-    type_t *tag_type = name ? find_type(name, tsENUM) : NULL;
-    type_t *t = make_type(TYPE_ENUM);
-    t->name = name;
-
-    if (tag_type && tag_type->details.enumeration)
-        t->details.enumeration = tag_type->details.enumeration;
-    else if (defined)
-    {
-        t->details.enumeration = xmalloc(sizeof(*t->details.enumeration));
-        t->details.enumeration->enums = enums;
-        t->defined = TRUE;
-    }
-
-    if (name)
-    {
-        if (defined)
-            reg_type(t, name, tsENUM);
-        else
-            add_incomplete(t);
-    }
-    return t;
-}
-
-static type_t *type_new_struct(char *name, int defined, var_list_t *fields)
-{
-  type_t *tag_type = name ? find_type(name, tsSTRUCT) : NULL;
-  type_t *t = make_type(TYPE_STRUCT);
-  t->name = name;
-  if (defined || (tag_type && tag_type->details.structure))
-  {
-    if (tag_type && tag_type->details.structure)
-      t->details.structure = tag_type->details.structure;
-    else if (defined)
-    {
-      t->details.structure = xmalloc(sizeof(*t->details.structure));
-      t->details.structure->fields = fields;
-      t->defined = TRUE;
-    }
-  }
-  if (name)
-  {
-    if (fields)
-      reg_type(t, name, tsSTRUCT);
-    else
-      add_incomplete(t);
-  }
-  return t;
-}
-
-static type_t *type_new_nonencapsulated_union(const char *name, int defined, var_list_t *fields)
-{
-  type_t *tag_type = name ? find_type(name, tsUNION) : NULL;
-  type_t *t = make_type(TYPE_UNION);
-  t->name = name;
-  if (tag_type && tag_type->details.structure)
-    t->details.structure = tag_type->details.structure;
-  else if (defined)
-  {
-    t->details.structure = xmalloc(sizeof(*t->details.structure));
-    t->details.structure->fields = fields;
-    t->defined = TRUE;
-  }
-  if (name)
-  {
-    if (defined)
-      reg_type(t, name, tsUNION);
-    else
-      add_incomplete(t);
-  }
-  return t;
-}
-
-static type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *union_field, var_list_t *cases)
-{
-  type_t *t = get_type(TYPE_ENCAPSULATED_UNION, name, tsUNION);
-  if (!union_field) union_field = make_var( xstrdup("tagged_union") );
-  union_field->type = make_type(TYPE_UNION);
-  union_field->type->details.structure = xmalloc(sizeof(*union_field->type->details.structure));
-  union_field->type->details.structure->fields = cases;
-  union_field->type->defined = TRUE;
-  t->details.structure = xmalloc(sizeof(*t->details.structure));
-  t->details.structure->fields = append_var( NULL, switch_field );
-  t->details.structure->fields = append_var( t->details.structure->fields, union_field );
-  t->defined = TRUE;
-  return t;
-}
-
 static void type_function_add_head_arg(type_t *type, var_t *arg)
 {
     if (!type->details.function->args)
@@ -1588,7 +1485,7 @@ static ifref_t *make_ifref(type_t *iface)
   return l;
 }
 
-static var_list_t *append_var(var_list_t *list, var_t *var)
+var_list_t *append_var(var_list_t *list, var_t *var)
 {
     if (!var) return list;
     if (!list)
@@ -1612,7 +1509,7 @@ static var_list_t *append_var_list(var_list_t *list, var_list_t *vars)
     return list;
 }
 
-static var_t *make_var(char *name)
+var_t *make_var(char *name)
 {
   var_t *v = xmalloc(sizeof(var_t));
   v->name = name;
@@ -1704,7 +1601,7 @@ struct rtype {
 
 struct rtype *type_hash[HASHMAX];
 
-static type_t *reg_type(type_t *type, const char *name, int t)
+type_t *reg_type(type_t *type, const char *name, int t)
 {
   struct rtype *nt;
   int hash;
@@ -1732,7 +1629,7 @@ static int is_incomplete(const type_t *t)
      type_get_type_detect_alias(t) == TYPE_ENCAPSULATED_UNION);
 }
 
-static void add_incomplete(type_t *t)
+void add_incomplete(type_t *t)
 {
   struct typenode *tn = xmalloc(sizeof *tn);
   tn->type = t;
@@ -1875,7 +1772,7 @@ int is_type(const char *name)
   return find_type(name, 0) != NULL;
 }
 
-static type_t *get_type(enum type_type type, char *name, int t)
+type_t *get_type(enum type_type type, char *name, int t)
 {
   type_t *tp;
   if (name) {
