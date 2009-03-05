@@ -413,7 +413,7 @@ static const struct message WmSWP_FrameChanged_noclip[] = {
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|beginpaint }, /* wparam != 1 */
-    { WM_ERASEBKGND, sent|beginpaint },
+    { WM_ERASEBKGND, sent|beginpaint|optional },
     { 0 }
 };
 
@@ -8206,7 +8206,9 @@ static const struct message ScrollWindowPaint1[] = {
     { WM_ERASEBKGND, sent|beginpaint },
     { WM_GETTEXTLENGTH, sent|optional },
     { WM_PAINT, sent|optional },
-    { WM_NCPAINT, sent|optional },
+    { WM_NCPAINT, sent|beginpaint|optional },
+    { WM_GETTEXT, sent|optional },
+    { WM_GETTEXT, sent|optional },
     { WM_GETTEXT, sent|optional },
     { WM_ERASEBKGND, sent|optional },
     { 0 }
