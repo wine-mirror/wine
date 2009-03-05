@@ -943,22 +943,27 @@ static void test_ZoneManager(void)
     IInternetZoneManager *zonemgr = NULL;
     BYTE buf[32];
     HRESULT hres;
+    DWORD action = URLACTION_CREDENTIALS_USE; /* Implemented on all IE versions */
 
     hres = CoInternetCreateZoneManager(NULL, &zonemgr, 0);
     ok(hres == S_OK, "CoInternetCreateZoneManager failed: %08x\n", hres);
     if(FAILED(hres))
         return;
 
-    hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 3, 0x1a10, buf,
+    hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 3, action, buf,
             sizeof(DWORD), URLZONEREG_DEFAULT);
     ok(hres == S_OK, "GetZoneActionPolicy failed: %08x\n", hres);
-    ok(*(DWORD*)buf == 1, "policy=%d, expected 1\n", *(DWORD*)buf);
+    ok(*(DWORD*)buf == URLPOLICY_CREDENTIALS_SILENT_LOGON_OK ||
+            *(DWORD*)buf == URLPOLICY_CREDENTIALS_MUST_PROMPT_USER ||
+            *(DWORD*)buf == URLPOLICY_CREDENTIALS_CONDITIONAL_PROMPT ||
+            *(DWORD*)buf == URLPOLICY_CREDENTIALS_ANONYMOUS_ONLY,
+            "unexpected policy=%d\n", *(DWORD*)buf);
 
-    hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 3, 0x1a10, NULL,
+    hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 3, action, NULL,
             sizeof(DWORD), URLZONEREG_DEFAULT);
     ok(hres == E_INVALIDARG, "GetZoneActionPolicy failed: %08x, expected E_INVALIDARG\n", hres);
 
-    hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 3, 0x1a10, buf,
+    hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 3, action, buf,
             2, URLZONEREG_DEFAULT);
     ok(hres == E_INVALIDARG, "GetZoneActionPolicy failed: %08x, expected E_INVALIDARG\n", hres);
 
@@ -966,7 +971,7 @@ static void test_ZoneManager(void)
             sizeof(DWORD), URLZONEREG_DEFAULT);
     ok(hres == E_FAIL, "GetZoneActionPolicy failed: %08x, expected E_FAIL\n", hres);
 
-    hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 13, 0x1a10, buf,
+    hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 13, action, buf,
             sizeof(DWORD), URLZONEREG_DEFAULT);
     ok(hres == E_INVALIDARG, "GetZoneActionPolicy failed: %08x, expected E_INVALIDARG\n", hres);
 
