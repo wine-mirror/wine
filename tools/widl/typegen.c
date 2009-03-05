@@ -201,7 +201,7 @@ unsigned char get_struct_fc(const type_t *type)
 
     typegen_type = typegen_detect_type(t, field->attrs, TDT_IGNORE_STRINGS);
 
-    if (typegen_type == TGT_ARRAY && t->declarray)
+    if (typegen_type == TGT_ARRAY && !type_array_is_decl_as_ptr(t))
     {
         if (is_string_type(field->attrs, field->type))
         {
@@ -885,7 +885,7 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *structure,
         return 4;
     }
 
-    if (is_ptr(type) || (is_array(type) && !type->declarray))
+    if (is_ptr(type) || (is_array(type) && type_array_is_decl_as_ptr(type)))
     {
         conftype = RPC_FC_POINTER_CONFORMANCE;
         conftype_string = "field pointer, ";
@@ -1185,7 +1185,7 @@ unsigned int type_memsize(const type_t *t, unsigned int *align)
         if (size > *align) *align = size;
         break;
     case TYPE_ARRAY:
-        if (t->declarray)
+        if (!type_array_is_decl_as_ptr(t))
         {
             if (is_conformant_array(t))
             {
@@ -1478,7 +1478,8 @@ static int write_no_repeat_pointer_descriptions(
     int written = 0;
     unsigned int align;
 
-    if (is_ptr(type) || (!type->declarray && is_conformant_array(type)))
+    if (is_ptr(type) ||
+        (is_conformant_array(type) && type_array_is_decl_as_ptr(type)))
     {
         unsigned int memsize;
 
@@ -1864,7 +1865,8 @@ static void write_pointer_description(FILE *file, type_t *type,
 
     /* pass 3: search for pointers in conformant only arrays (but don't descend
      * into conformant varying or varying arrays) */
-    if ((!type->declarray || !current_structure) && is_conformant_array(type))
+    if (is_conformant_array(type) &&
+        (type_array_is_decl_as_ptr(type) || !current_structure))
         write_conformant_array_pointer_descriptions(
             file, NULL, type, 0, typestring_offset);
     else if (type_get_type(type) == TYPE_STRUCT &&
@@ -1888,7 +1890,7 @@ static void write_pointer_description(FILE *file, type_t *type,
 
 int is_declptr(const type_t *t)
 {
-  return is_ptr(t) || (is_conformant_array(t) && !t->declarray);
+  return is_ptr(t) || (type_get_type(t) == TYPE_ARRAY && type_array_is_decl_as_ptr(t));
 }
 
 static unsigned int write_string_tfs(FILE *file, const attr_list_t *attrs,
@@ -1938,7 +1940,7 @@ static unsigned int write_string_tfs(FILE *file, const attr_list_t *attrs,
         return start_offset;
     }
 
-    if (type->declarray && !is_conformant_array(type))
+    if (type_get_type(type) == TYPE_ARRAY && !type_array_has_conformance(type))
     {
         unsigned int dim = type_array_get_dim(type);
 
@@ -1972,7 +1974,7 @@ static unsigned int write_string_tfs(FILE *file, const attr_list_t *attrs,
 
         *typestring_offset += write_conf_or_var_desc(
             file, current_structure,
-            (type->declarray && current_structure
+            (!type_array_is_decl_as_ptr(type) && current_structure
              ? type_memsize(current_structure, &align)
              : 0),
             type, type_array_get_conformance(type));
@@ -2004,7 +2006,7 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
     int has_pointer;
     int pointer_type = get_attrv(attrs, ATTR_POINTERTYPE);
     unsigned int baseoff
-        = type->declarray && current_structure
+        = !type_array_is_decl_as_ptr(type) && current_structure
         ? type_memsize(current_structure, &align)
         : 0;
 
@@ -2072,7 +2074,7 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
                 += write_conf_or_var_desc(file, current_structure, baseoff,
                                           type, length_is);
 
-        if (has_pointer && (!type->declarray || !current_structure))
+        if (has_pointer && (type_array_is_decl_as_ptr(type) || !current_structure))
         {
             print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
             print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
@@ -2115,7 +2117,7 @@ static const var_t *find_array_or_string_in_struct(const type_t *type)
     last_field = LIST_ENTRY( list_tail(fields), const var_t, entry );
     ft = last_field->type;
 
-    if (ft->declarray && is_conformant_array(ft))
+    if (is_conformant_array(ft) && !type_array_is_decl_as_ptr(ft))
         return last_field;
 
     if (type_get_type(ft) == TYPE_STRUCT)
@@ -2137,7 +2139,7 @@ static void write_struct_members(FILE *file, const type_t *type,
     if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
     {
         type_t *ft = field->type;
-        if (!ft->declarray || !is_conformant_array(ft))
+        if (!is_conformant_array(ft) || type_array_is_decl_as_ptr(ft))
         {
             unsigned int align = 0;
             unsigned int size = type_memsize(ft, &align);
@@ -2282,7 +2284,7 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
                 else
                     write_pointer_tfs(file, ft, tfsoff);
             }
-            else if (!ft->declarray && is_conformant_array(ft))
+            else if (type_get_type(ft) == TYPE_ARRAY && type_array_is_decl_as_ptr(ft))
             {
                 unsigned int absoff = ft->typestring_offset;
                 short reloff = absoff - (*tfsoff + 2);
@@ -2752,7 +2754,7 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
     }
     case TGT_ARRAY:
         /* conformant arrays and strings are handled specially */
-        if (!type->declarray || !is_conformant_array(type))
+        if (!is_conformant_array(type) || type_array_is_decl_as_ptr(type) )
         {
             write_array_tfs(file, attrs, type, name, tfsoff);
             if (is_conformant_array(type))
@@ -3695,7 +3697,8 @@ void declare_stub_args( FILE *file, int indent, const var_t *func )
                 type_t *type_to_print;
                 char name[16];
                 print_file(file, indent, "%s", "");
-                if (var->type->declarray)
+                if (type_get_type(var->type) == TYPE_ARRAY &&
+                    !type_array_is_decl_as_ptr(var->type))
                     type_to_print = var->type;
                 else
                     type_to_print = type_pointer_get_ref(var->type);
@@ -3707,7 +3710,8 @@ void declare_stub_args( FILE *file, int indent, const var_t *func )
             print_file(file, indent, "%s", "");
             write_type_decl_left(file, var->type);
             fprintf(file, " ");
-            if (var->type->declarray) {
+            if (type_get_type(var->type) == TYPE_ARRAY &&
+                !type_array_is_decl_as_ptr(var->type)) {
                 fprintf(file, "(*%s)", var->name);
             } else
                 fprintf(file, "%s", var->name);

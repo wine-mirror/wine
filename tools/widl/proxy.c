@@ -468,7 +468,7 @@ static void gen_stub(type_t *iface, const var_t *func, const char *cas,
   if (type_get_function_args(func->type))
   {
       LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->type), const var_t, entry )
-          fprintf(proxy, ", %s__frame->%s", arg->type->declarray ? "*" : "", arg->name);
+          fprintf(proxy, ", %s__frame->%s", is_array(arg->type) && !type_array_is_decl_as_ptr(arg->type) ? "*" :"" , arg->name);
   }
   fprintf(proxy, ");\n");
   fprintf(proxy, "\n");

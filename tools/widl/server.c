@@ -185,7 +185,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
                 }
                 else
                 {
-                    print_server("%s__frame->%s", var->type->declarray ? "*" : "", var->name);
+                    print_server("%s__frame->%s", is_array(var->type) && !type_array_is_decl_as_ptr(var->type) ? "*" : "", var->name);
                 }
             }
             fprintf(server, ");\n");

@@ -183,7 +183,7 @@ static void write_enums(FILE *h, var_list_t *enums)
 int needs_space_after(type_t *t)
 {
   return (type_is_alias(t) ||
-          (!is_ptr(t) && (!is_conformant_array(t) || t->declarray || (is_array(t) && t->name))));
+          (!is_ptr(t) && (!is_conformant_array(t) || !type_array_is_decl_as_ptr(t) || t->name)));
 }
 
 void write_type_left(FILE *h, type_t *t, int declonly)
@@ -191,11 +191,10 @@ void write_type_left(FILE *h, type_t *t, int declonly)
   if (!h) return;
 
   if (is_attr(t->attrs, ATTR_CONST) &&
-      (type_is_alias(t) || t->declarray || !is_ptr(t)))
+      (type_is_alias(t) || !is_ptr(t)))
     fprintf(h, "const ");
 
   if (type_is_alias(t)) fprintf(h, "%s", t->name);
-  else if (t->declarray) write_type_left(h, type_array_get_element(t), declonly);
   else {
     switch (type_get_type_detect_alias(t)) {
       case TYPE_ENUM:
@@ -244,12 +243,13 @@ void write_type_left(FILE *h, type_t *t, int declonly)
         if (is_attr(t->attrs, ATTR_CONST)) fprintf(h, "const ");
         break;
       case TYPE_ARRAY:
-        if (t->name)
+        if (t->name && type_array_is_decl_as_ptr(t))
           fprintf(h, "%s", t->name);
         else
         {
           write_type_left(h, type_array_get_element(t), declonly);
-          fprintf(h, "%s*", needs_space_after(type_array_get_element(t)) ? " " : "");
+          if (type_array_is_decl_as_ptr(t))
+            fprintf(h, "%s*", needs_space_after(type_array_get_element(t)) ? " " : "");
         }
         break;
       case TYPE_BASIC:
@@ -275,12 +275,14 @@ void write_type_right(FILE *h, type_t *t, int is_field)
 {
   if (!h) return;
 
-  if (t->declarray) {
+  if (type_get_type(t) == TYPE_ARRAY && !type_array_is_decl_as_ptr(t)) {
     if (is_conformant_array(t)) {
       fprintf(h, "[%s]", is_field ? "1" : "");
       t = type_array_get_element(t);
     }
-    for ( ; t->declarray; t = type_array_get_element(t))
+    for ( ;
+         type_get_type(t) == TYPE_ARRAY && !type_array_is_decl_as_ptr(t);
+         t = type_array_get_element(t))
       fprintf(h, "[%u]", type_array_get_dim(t));
   }
 }

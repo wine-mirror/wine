@@ -293,7 +293,9 @@ struct module_details
 struct array_details
 {
   unsigned int dim;
-  expr_t *size_is, *length_is;
+  expr_t *size_is;
+  expr_t *length_is;
+  unsigned int declptr; /* if declared as a pointer */
 };
 
 struct coclass_details
@@ -338,7 +340,6 @@ struct _type_t {
   unsigned int ptrdesc;           /* used for complex structs */
   int typelib_idx;
   loc_info_t loc_info;
-  unsigned int declarray : 1;     /* if declared as an array */
   unsigned int ignore : 1;
   unsigned int defined : 1;
   unsigned int written : 1;

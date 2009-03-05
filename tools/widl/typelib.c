@@ -186,7 +186,7 @@ unsigned short get_type_vt(type_t *t)
     return VT_PTR;
 
   case TYPE_ARRAY:
-    if (t->declarray)
+    if (!type_array_is_decl_as_ptr(t))
       error("get_type_vt: array types not supported\n");
     return VT_PTR;
 

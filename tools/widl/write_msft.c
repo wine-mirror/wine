@@ -1068,13 +1068,15 @@ static int encode_var(
     chat("encode_var: var %p type %p type->name %s type->ref %p\n",
          var, type, type->name ? type->name : "NULL", type->ref);
 
-    if (type->declarray) {
+    if (is_array(type) && !type_array_is_decl_as_ptr(type)) {
         int num_dims, elements = 1, arrayoffset;
         type_t *atype;
         int *arraydata;
 
         num_dims = 0;
-        for (atype = type; atype->declarray; atype = type_array_get_element(atype))
+        for (atype = type;
+             is_array(atype) && !type_array_is_decl_as_ptr(atype);
+             atype = type_array_get_element(atype))
             ++num_dims;
 
         chat("array with %d dimensions\n", num_dims);
@@ -1087,7 +1089,9 @@ static int encode_var(
         arraydata[1] |= ((num_dims * 2 * sizeof(int)) << 16);
 
         arraydata += 2;
-        for (atype = type; atype->declarray; atype = type_array_get_element(atype))
+        for (atype = type;
+             is_array(atype) && !type_array_is_decl_as_ptr(atype);
+             atype = type_array_get_element(atype))
         {
             arraydata[0] = type_array_get_dim(atype);
             arraydata[1] = 0;

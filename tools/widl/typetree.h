@@ -28,7 +28,7 @@ type_t *type_new_function(var_list_t *args);
 type_t *type_new_pointer(type_t *ref, attr_list_t *attrs);
 type_t *type_new_alias(type_t *t, const char *name);
 type_t *type_new_module(char *name);
-type_t *type_new_array(const char *name, type_t *element, int declarray,
+type_t *type_new_array(const char *name, type_t *element, int declptr,
                        unsigned int dim, expr_t *size_is, expr_t *length_is);
 void type_interface_define(type_t *iface, type_t *inherit, statement_list_t *stmts);
 void type_dispinterface_define(type_t *iface, var_list_t *props, func_list_t *methods);
@@ -219,6 +219,13 @@ static inline type_t *type_array_get_element(const type_t *type)
     type = type_get_real_type(type);
     assert(type_get_type(type) == TYPE_ARRAY);
     return type->ref;
+}
+
+static inline int type_array_is_decl_as_ptr(const type_t *type)
+{
+    type = type_get_real_type(type);
+    assert(type_get_type(type) == TYPE_ARRAY);
+    return type->details.array.declptr;
 }
 
 static inline int type_is_alias(const type_t *type)

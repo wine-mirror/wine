@@ -63,7 +63,6 @@ type_t *type_new_alias(type_t *t, const char *name)
 
     a->name = xstrdup(name);
     a->attrs = NULL;
-    a->declarray = FALSE;
     a->orig = t;
     a->is_alias = TRUE;
     init_loc_info(&a->loc_info);
@@ -79,12 +78,12 @@ type_t *type_new_module(char *name)
     return type;
 }
 
-type_t *type_new_array(const char *name, type_t *element, int declarray,
+type_t *type_new_array(const char *name, type_t *element, int declptr,
                        unsigned int dim, expr_t *size_is, expr_t *length_is)
 {
     type_t *t = make_type(RPC_FC_LGFARRAY, element);
     if (name) t->name = xstrdup(name);
-    t->declarray = declarray;
+    t->details.array.declptr = declptr;
     t->details.array.length_is = length_is;
     if (size_is)
         t->details.array.size_is = size_is;

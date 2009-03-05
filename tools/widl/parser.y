@@ -1294,7 +1294,6 @@ type_t *make_type(unsigned char type, type_t *ref)
   memset(&t->details, 0, sizeof(t->details));
   t->typestring_offset = 0;
   t->ptrdesc = 0;
-  t->declarray = FALSE;
   t->ignore = (parse_only != 0);
   t->sign = 0;
   t->defined = FALSE;
@@ -1506,7 +1505,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
     else
       sizeless = TRUE;
 
-    *ptype = type_new_array(NULL, *ptype, TRUE,
+    *ptype = type_new_array(NULL, *ptype, FALSE,
                             dim->is_const ? dim->cval : 0,
                             dim->is_const ? NULL : dim, NULL);
   }
@@ -1522,11 +1521,11 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
           error_loc("%s: cannot specify size_is for a fixed sized array\n", v->name);
         else
           *ptype = type_new_array((*ptype)->name,
-                                  type_array_get_element(*ptype), TRUE,
+                                  type_array_get_element(*ptype), FALSE,
                                   0, dim, NULL);
       }
       else if (is_ptr(*ptype))
-        *ptype = type_new_array((*ptype)->name, type_pointer_get_ref(*ptype), FALSE,
+        *ptype = type_new_array((*ptype)->name, type_pointer_get_ref(*ptype), TRUE,
                                 0, dim, NULL);
       else
         error_loc("%s: size_is attribute applied to illegal type\n", v->name);
@@ -1546,7 +1545,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
       {
         *ptype = type_new_array((*ptype)->name,
                                 type_array_get_element(*ptype),
-                                (*ptype)->declarray,
+                                type_array_is_decl_as_ptr(*ptype),
                                 type_array_get_dim(*ptype),
                                 type_array_get_conformance(*ptype),
                                 dim);
