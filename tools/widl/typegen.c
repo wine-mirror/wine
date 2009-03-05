@@ -1471,7 +1471,7 @@ static void write_descriptors(FILE *file, type_t *type, unsigned int *tfsoff)
 }
 
 static int write_no_repeat_pointer_descriptions(
-    FILE *file, type_t *type,
+    FILE *file, const attr_list_t *attrs, type_t *type,
     unsigned int *offset_in_memory, unsigned int *offset_in_buffer,
     unsigned int *typestring_offset)
 {
@@ -1493,7 +1493,7 @@ static int write_no_repeat_pointer_descriptions(
 
         if (is_ptr(type))
         {
-            if (is_string_type(type->attrs, type))
+            if (is_string_type(attrs, type))
                 write_string_tfs(file, NULL, type, NULL, typestring_offset);
             else
                 write_pointer_tfs(file, type, typestring_offset);
@@ -1534,7 +1534,7 @@ static int write_no_repeat_pointer_descriptions(
                 *offset_in_buffer += padding;
             }
             written += write_no_repeat_pointer_descriptions(
-                file, v->type,
+                file, v->attrs, v->type,
                 offset_in_memory, offset_in_buffer, typestring_offset);
         }
     }
@@ -1852,7 +1852,7 @@ static void write_pointer_description(FILE *file, type_t *type,
         offset_in_memory = 0;
         offset_in_buffer = 0;
         write_no_repeat_pointer_descriptions(
-            file, type,
+            file, NULL, type,
             &offset_in_memory, &offset_in_buffer, typestring_offset);
     }
 
