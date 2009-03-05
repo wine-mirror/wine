@@ -53,7 +53,8 @@ static const struct message create_parent_window_seq[] = {
     { WM_SHOWWINDOW, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_QUERYNEWPALETTE, sent|optional },
-    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, 0 },
+    { WM_WINDOWPOSCHANGED, sent|optional },
     { WM_ACTIVATEAPP, sent|wparam, 1 },
     { WM_NCACTIVATE, sent|wparam, 1 },
     { WM_ACTIVATE, sent|wparam, 1 },
@@ -447,7 +448,7 @@ static HWND create_parent_window(void)
     assert(hwnd);
 
     /* check for message sequences */
-    ok_sequence(sequences, PARENT_SEQ_INDEX, create_parent_window_seq, "create parent window", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, create_parent_window_seq, "create parent window", FALSE);
 
     return hwnd;
 }
