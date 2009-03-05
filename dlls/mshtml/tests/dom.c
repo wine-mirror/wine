@@ -3557,8 +3557,8 @@ static void test_default_style(IHTMLStyle *style)
 
     V_BSTR(&v) = NULL;
     hres = IHTMLStyle_get_borderLeftWidth(style, &v);
-    todo_wine ok(hres == S_OK, "get_borderLeftWidth failed: %08x\n", hres);
-    todo_wine ok(!strcmp_wa(V_BSTR(&v), "thick"), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(hres == S_OK, "get_borderLeftWidth failed: %08x\n", hres);
+    ok(!strcmp_wa(V_BSTR(&v), "thick"), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     hres = IHTMLStyle_get_borderLeftStyle(style, &str);
@@ -3663,6 +3663,25 @@ static void test_default_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_put_borderBottomWidth(style, vDefault);
     ok(hres == S_OK, "put_borderBottomWidth: %08x\n", hres);
+    VariantClear(&vDefault);
+
+    /* borderLeftWidth */
+    hres = IHTMLStyle_get_borderLeftWidth(style, &vDefault);
+    ok(hres == S_OK, "get_borderLeftWidth: %08x\n", hres);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("10");
+    hres = IHTMLStyle_put_borderLeftWidth(style, v);
+    ok(hres == S_OK, "put_borderLeftWidth: %08x\n", hres);
+    VariantClear(&v);
+
+    hres = IHTMLStyle_get_borderLeftWidth(style, &v);
+    ok(hres == S_OK, "get_borderLeftWidth: %08x\n", hres);
+    ok(!strcmp_wa(V_BSTR(&v), "10px"), "expected 10px = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    hres = IHTMLStyle_put_borderLeftWidth(style, vDefault);
+    ok(hres == S_OK, "put_borderLeftWidth: %08x\n", hres);
     VariantClear(&vDefault);
 
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
