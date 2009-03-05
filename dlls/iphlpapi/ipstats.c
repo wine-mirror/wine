@@ -508,144 +508,93 @@ DWORD WINAPI GetIpStatistics(PMIB_IPSTATS stats)
  */
 DWORD WINAPI GetTcpStatistics(PMIB_TCPSTATS stats)
 {
-#if defined(HAVE_SYS_SYSCTL_H) && defined(UDPCTL_STATS)
+    DWORD ret = ERROR_NOT_SUPPORTED;
+
+    if (!stats) return ERROR_INVALID_PARAMETER;
+    memset( stats, 0, sizeof(*stats) );
+
+#ifdef __linux__
+    {
+        FILE *fp;
+
+        if ((fp = fopen("/proc/net/snmp", "r")))
+        {
+            static const char hdr[] = "Tcp:";
+            MIB_TCPTABLE *tcp_table;
+            char buf[512], *ptr;
+
+            while ((ptr = fgets(buf, sizeof(buf), fp)))
+            {
+                if (strncasecmp(buf, hdr, sizeof(hdr) - 1)) continue;
+                /* last line was a header, get another */
+                if (!(ptr = fgets(buf, sizeof(buf), fp))) break;
+                if (!strncasecmp(buf, hdr, sizeof(hdr) - 1))
+                {
+                    ptr += sizeof(hdr);
+                    sscanf( ptr, "%u %u %u %u %u %u %u %u %u %u %u %u %u %u",
+                            &stats->dwRtoAlgorithm,
+                            &stats->dwRtoMin,
+                            &stats->dwRtoMax,
+                            &stats->dwMaxConn,
+                            &stats->dwActiveOpens,
+                            &stats->dwPassiveOpens,
+                            &stats->dwAttemptFails,
+                            &stats->dwEstabResets,
+                            &stats->dwCurrEstab,
+                            &stats->dwInSegs,
+                            &stats->dwOutSegs,
+                            &stats->dwRetransSegs,
+                            &stats->dwInErrs,
+                            &stats->dwOutRsts );
+                    break;
+                }
+            }
+            if (!AllocateAndGetTcpTableFromStack( &tcp_table, FALSE, GetProcessHeap(), 0 ))
+            {
+                stats->dwNumConns = tcp_table->dwNumEntries;
+                HeapFree( GetProcessHeap(), 0, tcp_table );
+            }
+            fclose(fp);
+            ret = NO_ERROR;
+        }
+    }
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(UDPCTL_STATS)
+    {
 #ifndef TCPTV_MIN  /* got removed in Mac OS X for some reason */
 #define TCPTV_MIN 2
 #define TCPTV_REXMTMAX 128
 #endif
-  int mib[] = {CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_STATS};
+        int mib[] = {CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_STATS};
 #define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
 #define hz 1000
-  struct tcpstat tcp_stat;
-  size_t needed;
+        struct tcpstat tcp_stat;
+        size_t needed = sizeof(tcp_stat);
 
-  if (!stats)
-    return ERROR_INVALID_PARAMETER;
-  needed = sizeof(tcp_stat);
-
-  if(sysctl(mib, MIB_LEN, &tcp_stat, &needed, NULL, 0) == -1)
-  {
-      ERR ("failed to get tcpstat\n");
-      return ERROR_NOT_SUPPORTED;
-  }
-
-  stats->dwRtoAlgorithm = MIB_TCP_RTO_VANJ;
-  stats->dwRtoMin = TCPTV_MIN;
-  stats->dwRtoMax = TCPTV_REXMTMAX;
-  stats->dwMaxConn = -1;
-  stats->dwActiveOpens = tcp_stat.tcps_connattempt;
-  stats->dwPassiveOpens = tcp_stat.tcps_accepts;
-  stats->dwAttemptFails = tcp_stat.tcps_conndrops;
-  stats->dwEstabResets = tcp_stat.tcps_drops;
-  stats->dwCurrEstab = 0;
-  stats->dwInSegs = tcp_stat.tcps_rcvtotal;
-  stats->dwOutSegs = tcp_stat.tcps_sndtotal - tcp_stat.tcps_sndrexmitpack;
-  stats->dwRetransSegs = tcp_stat.tcps_sndrexmitpack;
-  stats->dwInErrs = tcp_stat.tcps_rcvbadsum + tcp_stat.tcps_rcvbadoff + tcp_stat.tcps_rcvmemdrop + tcp_stat.tcps_rcvshort;
-  stats->dwOutRsts = tcp_stat.tcps_sndctrl - tcp_stat.tcps_closed;
-  stats->dwNumConns = tcp_stat.tcps_connects;
-
-  return NO_ERROR;
-
-#else
-  FILE *fp;
-  MIB_TCPTABLE *tcp_table;
-
-  if (!stats)
-    return ERROR_INVALID_PARAMETER;
-
-  memset(stats, 0, sizeof(MIB_TCPSTATS));
-
-  /* get from /proc/net/snmp, no error if can't */
-  fp = fopen("/proc/net/snmp", "r");
-  if (fp) {
-    static const char hdr[] = "Tcp:";
-    char buf[512] = { 0 }, *ptr;
-
-
-    do {
-      ptr = fgets(buf, sizeof(buf), fp);
-    } while (ptr && strncasecmp(buf, hdr, sizeof(hdr) - 1));
-    if (ptr) {
-      /* last line was a header, get another */
-      ptr = fgets(buf, sizeof(buf), fp);
-      if (ptr && strncasecmp(buf, hdr, sizeof(hdr) - 1) == 0) {
-        char *endPtr;
-
-        ptr += sizeof(hdr);
-        if (ptr && *ptr) {
-          stats->dwRtoAlgorithm = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwRtoMin = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwRtoMax = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwMaxConn = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwActiveOpens = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwPassiveOpens = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwAttemptFails = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwEstabResets = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwCurrEstab = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwInSegs = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwOutSegs = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwRetransSegs = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwInErrs = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->dwOutRsts = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (!AllocateAndGetTcpTableFromStack( &tcp_table, FALSE, GetProcessHeap(), 0 ))
+        if(sysctl(mib, MIB_LEN, &tcp_stat, &needed, NULL, 0) != -1)
         {
-            stats->dwNumConns = tcp_table->dwNumEntries;
-            HeapFree( GetProcessHeap(), 0, tcp_table );
+            stats->dwRtoAlgorithm = MIB_TCP_RTO_VANJ;
+            stats->dwRtoMin = TCPTV_MIN;
+            stats->dwRtoMax = TCPTV_REXMTMAX;
+            stats->dwMaxConn = -1;
+            stats->dwActiveOpens = tcp_stat.tcps_connattempt;
+            stats->dwPassiveOpens = tcp_stat.tcps_accepts;
+            stats->dwAttemptFails = tcp_stat.tcps_conndrops;
+            stats->dwEstabResets = tcp_stat.tcps_drops;
+            stats->dwCurrEstab = 0;
+            stats->dwInSegs = tcp_stat.tcps_rcvtotal;
+            stats->dwOutSegs = tcp_stat.tcps_sndtotal - tcp_stat.tcps_sndrexmitpack;
+            stats->dwRetransSegs = tcp_stat.tcps_sndrexmitpack;
+            stats->dwInErrs = tcp_stat.tcps_rcvbadsum + tcp_stat.tcps_rcvbadoff + tcp_stat.tcps_rcvmemdrop + tcp_stat.tcps_rcvshort;
+            stats->dwOutRsts = tcp_stat.tcps_sndctrl - tcp_stat.tcps_closed;
+            stats->dwNumConns = tcp_stat.tcps_connects;
+            ret = NO_ERROR;
         }
-      }
+        else ERR ("failed to get tcpstat\n");
     }
-    fclose(fp);
-  }
-  else
-  {
-     ERR ("unimplemented!\n");
-     return ERROR_NOT_SUPPORTED;
-  }
-
-  return NO_ERROR;
+#else
+    FIXME( "unimplemented\n" );
 #endif
+    return ret;
 }
 
 
