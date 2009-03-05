@@ -299,199 +299,116 @@ DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
  */
 DWORD WINAPI GetIcmpStatistics(PMIB_ICMP stats)
 {
-#if defined(HAVE_SYS_SYSCTL_H) && defined(ICMPCTL_STATS)
-  int mib[] = {CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_STATS};
+    DWORD ret = ERROR_NOT_SUPPORTED;
+
+    if (!stats) return ERROR_INVALID_PARAMETER;
+    memset( stats, 0, sizeof(MIB_ICMP) );
+
+#ifdef __linux__
+    {
+        FILE *fp;
+
+        if ((fp = fopen("/proc/net/snmp", "r")))
+        {
+            static const char hdr[] = "Icmp:";
+            char buf[512], *ptr;
+
+            while ((ptr = fgets(buf, sizeof(buf), fp)))
+            {
+                if (strncasecmp(buf, hdr, sizeof(hdr) - 1)) continue;
+                /* last line was a header, get another */
+                if (!(ptr = fgets(buf, sizeof(buf), fp))) break;
+                if (!strncasecmp(buf, hdr, sizeof(hdr) - 1))
+                {
+                    ptr += sizeof(hdr);
+                    sscanf( ptr, "%u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u",
+                            &stats->stats.icmpInStats.dwMsgs,
+                            &stats->stats.icmpInStats.dwErrors,
+                            &stats->stats.icmpInStats.dwDestUnreachs,
+                            &stats->stats.icmpInStats.dwTimeExcds,
+                            &stats->stats.icmpInStats.dwParmProbs,
+                            &stats->stats.icmpInStats.dwSrcQuenchs,
+                            &stats->stats.icmpInStats.dwRedirects,
+                            &stats->stats.icmpInStats.dwEchoReps,
+                            &stats->stats.icmpInStats.dwTimestamps,
+                            &stats->stats.icmpInStats.dwTimestampReps,
+                            &stats->stats.icmpInStats.dwAddrMasks,
+                            &stats->stats.icmpInStats.dwAddrMaskReps,
+                            &stats->stats.icmpOutStats.dwMsgs,
+                            &stats->stats.icmpOutStats.dwErrors,
+                            &stats->stats.icmpOutStats.dwDestUnreachs,
+                            &stats->stats.icmpOutStats.dwTimeExcds,
+                            &stats->stats.icmpOutStats.dwParmProbs,
+                            &stats->stats.icmpOutStats.dwSrcQuenchs,
+                            &stats->stats.icmpOutStats.dwRedirects,
+                            &stats->stats.icmpOutStats.dwEchoReps,
+                            &stats->stats.icmpOutStats.dwTimestamps,
+                            &stats->stats.icmpOutStats.dwTimestampReps,
+                            &stats->stats.icmpOutStats.dwAddrMasks,
+                            &stats->stats.icmpOutStats.dwAddrMaskReps );
+                    break;
+                }
+            }
+            fclose(fp);
+            ret = NO_ERROR;
+        }
+    }
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(ICMPCTL_STATS)
+    {
+        int mib[] = {CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_STATS};
 #define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
-  size_t needed;
-  struct icmpstat icmp_stat;
-  int i;
+        struct icmpstat icmp_stat;
+        size_t needed  = sizeof(icmp_stat);
+        int i;
 
-  if (!stats)
-    return ERROR_INVALID_PARAMETER;
+        if(sysctl(mib, MIB_LEN, &icmp_stat, &needed, NULL, 0) != -1)
+        {
+            /*in stats */
+            stats->stats.icmpInStats.dwMsgs = icmp_stat.icps_badcode + icmp_stat.icps_checksum + icmp_stat.icps_tooshort + icmp_stat.icps_badlen;
+            for(i = 0; i <= ICMP_MAXTYPE; i++)
+                stats->stats.icmpInStats.dwMsgs += icmp_stat.icps_inhist[i];
 
-  needed = sizeof(icmp_stat);
-  if(sysctl(mib, MIB_LEN, &icmp_stat, &needed, NULL, 0) == -1)
-  {
-      ERR ("failed to get icmpstat\n");
-      return ERROR_NOT_SUPPORTED;
-  }
+            stats->stats.icmpInStats.dwErrors = icmp_stat.icps_badcode + icmp_stat.icps_tooshort + icmp_stat.icps_checksum + icmp_stat.icps_badlen;
 
-
-  /*in stats */
-  stats->stats.icmpInStats.dwMsgs = icmp_stat.icps_badcode + icmp_stat.icps_checksum + icmp_stat.icps_tooshort + icmp_stat.icps_badlen;
-  for(i = 0; i <= ICMP_MAXTYPE; i++)
-      stats->stats.icmpInStats.dwMsgs += icmp_stat.icps_inhist[i];
-
-  stats->stats.icmpInStats.dwErrors = icmp_stat.icps_badcode + icmp_stat.icps_tooshort + icmp_stat.icps_checksum + icmp_stat.icps_badlen;
-
-  stats->stats.icmpInStats.dwDestUnreachs = icmp_stat.icps_inhist[ICMP_UNREACH];
-  stats->stats.icmpInStats.dwTimeExcds = icmp_stat.icps_inhist[ICMP_TIMXCEED];
-  stats->stats.icmpInStats.dwParmProbs = icmp_stat.icps_inhist[ICMP_PARAMPROB];
-  stats->stats.icmpInStats.dwSrcQuenchs = icmp_stat.icps_inhist[ICMP_SOURCEQUENCH];
-  stats->stats.icmpInStats.dwRedirects = icmp_stat.icps_inhist[ICMP_REDIRECT];
-  stats->stats.icmpInStats.dwEchos = icmp_stat.icps_inhist[ICMP_ECHO];
-  stats->stats.icmpInStats.dwEchoReps = icmp_stat.icps_inhist[ICMP_ECHOREPLY];
-  stats->stats.icmpInStats.dwTimestamps = icmp_stat.icps_inhist[ICMP_TSTAMP];
-  stats->stats.icmpInStats.dwTimestampReps = icmp_stat.icps_inhist[ICMP_TSTAMPREPLY];
-  stats->stats.icmpInStats.dwAddrMasks = icmp_stat.icps_inhist[ICMP_MASKREQ];
-  stats->stats.icmpInStats.dwAddrMaskReps = icmp_stat.icps_inhist[ICMP_MASKREPLY];
+            stats->stats.icmpInStats.dwDestUnreachs = icmp_stat.icps_inhist[ICMP_UNREACH];
+            stats->stats.icmpInStats.dwTimeExcds = icmp_stat.icps_inhist[ICMP_TIMXCEED];
+            stats->stats.icmpInStats.dwParmProbs = icmp_stat.icps_inhist[ICMP_PARAMPROB];
+            stats->stats.icmpInStats.dwSrcQuenchs = icmp_stat.icps_inhist[ICMP_SOURCEQUENCH];
+            stats->stats.icmpInStats.dwRedirects = icmp_stat.icps_inhist[ICMP_REDIRECT];
+            stats->stats.icmpInStats.dwEchos = icmp_stat.icps_inhist[ICMP_ECHO];
+            stats->stats.icmpInStats.dwEchoReps = icmp_stat.icps_inhist[ICMP_ECHOREPLY];
+            stats->stats.icmpInStats.dwTimestamps = icmp_stat.icps_inhist[ICMP_TSTAMP];
+            stats->stats.icmpInStats.dwTimestampReps = icmp_stat.icps_inhist[ICMP_TSTAMPREPLY];
+            stats->stats.icmpInStats.dwAddrMasks = icmp_stat.icps_inhist[ICMP_MASKREQ];
+            stats->stats.icmpInStats.dwAddrMaskReps = icmp_stat.icps_inhist[ICMP_MASKREPLY];
 
 #ifdef HAVE_ICPS_OUTHIST
-  /* out stats */
-  stats->stats.icmpOutStats.dwMsgs = icmp_stat.icps_oldshort + icmp_stat.icps_oldicmp;
-  for(i = 0; i <= ICMP_MAXTYPE; i++)
-  stats->stats.icmpOutStats.dwMsgs += icmp_stat.icps_outhist[i];
+            /* out stats */
+            stats->stats.icmpOutStats.dwMsgs = icmp_stat.icps_oldshort + icmp_stat.icps_oldicmp;
+            for(i = 0; i <= ICMP_MAXTYPE; i++)
+                stats->stats.icmpOutStats.dwMsgs += icmp_stat.icps_outhist[i];
 
-  stats->stats.icmpOutStats.dwErrors = icmp_stat.icps_oldshort + icmp_stat.icps_oldicmp;
+            stats->stats.icmpOutStats.dwErrors = icmp_stat.icps_oldshort + icmp_stat.icps_oldicmp;
 
-  stats->stats.icmpOutStats.dwDestUnreachs = icmp_stat.icps_outhist[ICMP_UNREACH];
-  stats->stats.icmpOutStats.dwTimeExcds = icmp_stat.icps_outhist[ICMP_TIMXCEED];
-  stats->stats.icmpOutStats.dwParmProbs = icmp_stat.icps_outhist[ICMP_PARAMPROB];
-  stats->stats.icmpOutStats.dwSrcQuenchs = icmp_stat.icps_outhist[ICMP_SOURCEQUENCH];
-  stats->stats.icmpOutStats.dwRedirects = icmp_stat.icps_outhist[ICMP_REDIRECT];
-  stats->stats.icmpOutStats.dwEchos = icmp_stat.icps_outhist[ICMP_ECHO];
-  stats->stats.icmpOutStats.dwEchoReps = icmp_stat.icps_outhist[ICMP_ECHOREPLY];
-  stats->stats.icmpOutStats.dwTimestamps = icmp_stat.icps_outhist[ICMP_TSTAMP];
-  stats->stats.icmpOutStats.dwTimestampReps = icmp_stat.icps_outhist[ICMP_TSTAMPREPLY];
-  stats->stats.icmpOutStats.dwAddrMasks = icmp_stat.icps_outhist[ICMP_MASKREQ];
-  stats->stats.icmpOutStats.dwAddrMaskReps = icmp_stat.icps_outhist[ICMP_MASKREPLY];
-#else /* ICPS_OUTHIST */
-  memset( &stats->stats.icmpOutStats, 0, sizeof(stats->stats.icmpOutStats) );
+            stats->stats.icmpOutStats.dwDestUnreachs = icmp_stat.icps_outhist[ICMP_UNREACH];
+            stats->stats.icmpOutStats.dwTimeExcds = icmp_stat.icps_outhist[ICMP_TIMXCEED];
+            stats->stats.icmpOutStats.dwParmProbs = icmp_stat.icps_outhist[ICMP_PARAMPROB];
+            stats->stats.icmpOutStats.dwSrcQuenchs = icmp_stat.icps_outhist[ICMP_SOURCEQUENCH];
+            stats->stats.icmpOutStats.dwRedirects = icmp_stat.icps_outhist[ICMP_REDIRECT];
+            stats->stats.icmpOutStats.dwEchos = icmp_stat.icps_outhist[ICMP_ECHO];
+            stats->stats.icmpOutStats.dwEchoReps = icmp_stat.icps_outhist[ICMP_ECHOREPLY];
+            stats->stats.icmpOutStats.dwTimestamps = icmp_stat.icps_outhist[ICMP_TSTAMP];
+            stats->stats.icmpOutStats.dwTimestampReps = icmp_stat.icps_outhist[ICMP_TSTAMPREPLY];
+            stats->stats.icmpOutStats.dwAddrMasks = icmp_stat.icps_outhist[ICMP_MASKREQ];
+            stats->stats.icmpOutStats.dwAddrMaskReps = icmp_stat.icps_outhist[ICMP_MASKREPLY];
 #endif /* ICPS_OUTHIST */
-
-  return NO_ERROR;
-
-#else /* ICMPCTL_STATS */
-  FILE *fp;
-
-  if (!stats)
-    return ERROR_INVALID_PARAMETER;
-
-  memset(stats, 0, sizeof(MIB_ICMP));
-  /* get most of these stats from /proc/net/snmp, no error if can't */
-  fp = fopen("/proc/net/snmp", "r");
-  if (fp) {
-    static const char hdr[] = "Icmp:";
-    char buf[512] = { 0 }, *ptr;
-
-    do {
-      ptr = fgets(buf, sizeof(buf), fp);
-    } while (ptr && strncasecmp(buf, hdr, sizeof(hdr) - 1));
-    if (ptr) {
-      /* last line was a header, get another */
-      ptr = fgets(buf, sizeof(buf), fp);
-      if (ptr && strncasecmp(buf, hdr, sizeof(hdr) - 1) == 0) {
-        char *endPtr;
-
-        ptr += sizeof(hdr);
-        if (ptr && *ptr) {
-          stats->stats.icmpInStats.dwMsgs = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
+            ret = NO_ERROR;
         }
-        if (ptr && *ptr) {
-          stats->stats.icmpInStats.dwErrors = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpInStats.dwDestUnreachs = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpInStats.dwTimeExcds = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpInStats.dwParmProbs = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpInStats.dwSrcQuenchs = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpInStats.dwRedirects = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpInStats.dwEchoReps = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpInStats.dwTimestamps = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpInStats.dwTimestampReps = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpInStats.dwAddrMasks = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpInStats.dwAddrMaskReps = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpOutStats.dwMsgs = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpOutStats.dwErrors = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpOutStats.dwDestUnreachs = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpOutStats.dwTimeExcds = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpOutStats.dwParmProbs = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpOutStats.dwSrcQuenchs = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpOutStats.dwRedirects = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpOutStats.dwEchoReps = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpOutStats.dwTimestamps = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpOutStats.dwTimestampReps = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpOutStats.dwAddrMasks = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-        if (ptr && *ptr) {
-          stats->stats.icmpOutStats.dwAddrMaskReps = strtoul(ptr, &endPtr, 10);
-          ptr = endPtr;
-        }
-      }
     }
-    fclose(fp);
-  }
-  else
-  {
-     ERR ("unimplemented!\n");
-     return ERROR_NOT_SUPPORTED;
-  }
-
-  return NO_ERROR;
+#else /* ICMPCTL_STATS */
+    FIXME( "unimplemented\n" );
 #endif
+    return ret;
 }
 
 
