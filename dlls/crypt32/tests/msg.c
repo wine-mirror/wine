@@ -1685,7 +1685,8 @@ static void test_signed_msg_encoding(void)
      detachedSignedContent, sizeof(detachedSignedContent));
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 1, NULL, &size);
-    ok(!ret && GetLastError() == CRYPT_E_INVALID_INDEX,
+    ok(!ret && (GetLastError() == CRYPT_E_INVALID_INDEX ||
+     broken(GetLastError() == CRYPT_E_INVALID_MSG_TYPE /* Win9x */)),
      "Expected CRYPT_E_INVALID_INDEX, got %x\n", GetLastError());
     check_param("detached signed encoded signer", msg, CMSG_ENCODED_SIGNER,
      signedEncodedSigner, sizeof(signedEncodedSigner));
@@ -2480,7 +2481,8 @@ static void test_decode_msg_get_param(void)
     ok(value == 1, "Expected 1 signer, got %d\n", value);
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_SIGNER_INFO_PARAM, 0, NULL, &size);
-    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(ret || broken(GetLastError() == OSS_DATA_ERROR /* Win9x */),
+     "CryptMsgGetParam failed: %08x\n", GetLastError());
     if (ret)
         buf = CryptMemAlloc(size);
     else
@@ -2502,7 +2504,8 @@ static void test_decode_msg_get_param(void)
     /* Getting the CMS signer info of a PKCS7 message is possible. */
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_CMS_SIGNER_INFO_PARAM, 0, NULL, &size);
-    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(ret || broken(GetLastError() == CRYPT_E_INVALID_MSG_TYPE /* Win9x */),
+     "CryptMsgGetParam failed: %08x\n", GetLastError());
     if (ret)
         buf = CryptMemAlloc(size);
     else
@@ -3096,17 +3099,22 @@ static void test_msg_get_and_verify_signer(void)
     CryptMsgUpdate(msg, signedWithCertWithValidPubKeyContent,
      sizeof(signedWithCertWithValidPubKeyContent), TRUE);
     ret = CryptMsgGetAndVerifySigner(msg, 0, NULL, 0, NULL, NULL);
-    ok(ret, "CryptMsgGetAndVerifySigner failed: 0x%08x\n", GetLastError());
+    ok(ret || broken(GetLastError() == OSS_DATA_ERROR /* Win9x */),
+     "CryptMsgGetAndVerifySigner failed: 0x%08x\n", GetLastError());
     /* the signer index can be retrieved, .. */
     signerIndex = 0xdeadbeef;
     ret = CryptMsgGetAndVerifySigner(msg, 0, NULL, 0, NULL, &signerIndex);
-    ok(ret, "CryptMsgGetAndVerifySigner failed: 0x%08x\n", GetLastError());
-    ok(signerIndex == 0, "expected 0, got %d\n", signerIndex);
+    ok(ret || broken(GetLastError() == OSS_DATA_ERROR /* Win9x */),
+     "CryptMsgGetAndVerifySigner failed: 0x%08x\n", GetLastError());
+    if (ret)
+        ok(signerIndex == 0, "expected 0, got %d\n", signerIndex);
     /* as can the signer cert. */
     signer = (PCCERT_CONTEXT)0xdeadbeef;
     ret = CryptMsgGetAndVerifySigner(msg, 0, NULL, 0, &signer, NULL);
-    ok(ret, "CryptMsgGetAndVerifySigner failed: 0x%08x\n", GetLastError());
-    ok(signer != NULL && signer != (PCCERT_CONTEXT)0xdeadbeef,
+    ok(ret || broken(GetLastError() == OSS_DATA_ERROR /* Win9x */),
+     "CryptMsgGetAndVerifySigner failed: 0x%08x\n", GetLastError());
+    if (ret)
+        ok(signer != NULL && signer != (PCCERT_CONTEXT)0xdeadbeef,
      "expected a valid signer\n");
     if (signer && signer != (PCCERT_CONTEXT)0xdeadbeef)
         CertFreeCertificateContext(signer);
@@ -3124,7 +3132,8 @@ static void test_msg_get_and_verify_signer(void)
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetAndVerifySigner(msg, 0, NULL, CMSG_TRUSTED_SIGNER_FLAG,
      NULL, NULL);
-    ok(!ret && GetLastError() == CRYPT_E_NO_TRUSTED_SIGNER,
+    ok(!ret && (GetLastError() == CRYPT_E_NO_TRUSTED_SIGNER ||
+     broken(GetLastError() == OSS_DATA_ERROR /* Win9x */)),
      "expected CRYPT_E_NO_TRUSTED_SIGNER, got 0x%08x\n", GetLastError());
     /* Specifying CMSG_TRUSTED_SIGNER_FLAG and an empty cert store also causes
      * the message signer not to be found.
@@ -3134,7 +3143,8 @@ static void test_msg_get_and_verify_signer(void)
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetAndVerifySigner(msg, 1, &store, CMSG_TRUSTED_SIGNER_FLAG,
      NULL, NULL);
-    ok(!ret && GetLastError() == CRYPT_E_NO_TRUSTED_SIGNER,
+    ok(!ret && (GetLastError() == CRYPT_E_NO_TRUSTED_SIGNER ||
+     broken(GetLastError() == OSS_DATA_ERROR /* Win9x */)),
      "expected CRYPT_E_NO_TRUSTED_SIGNER, got 0x%08x\n", GetLastError());
     ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
      v1CertWithValidPubKey, sizeof(v1CertWithValidPubKey),
@@ -3147,7 +3157,8 @@ static void test_msg_get_and_verify_signer(void)
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetAndVerifySigner(msg, 1, &store, CMSG_TRUSTED_SIGNER_FLAG,
      NULL, NULL);
-    ok(ret, "CryptMsgGetAndVerifySigner failed: 0x%08x\n", GetLastError());
+    ok(ret || broken(GetLastError() == OSS_DATA_ERROR /* Win9x */),
+     "CryptMsgGetAndVerifySigner failed: 0x%08x\n", GetLastError());
     CertCloseStore(store, 0);
     CryptMsgClose(msg);
 }
