@@ -330,6 +330,11 @@ struct basic_details
   int sign;
 };
 
+struct pointer_details
+{
+  unsigned char fc;
+};
+
 enum type_type
 {
     TYPE_VOID,
@@ -349,7 +354,7 @@ enum type_type
 
 struct _type_t {
   const char *name;
-  unsigned char type;
+  enum type_type type_type;
   struct _type_t *ref;
   attr_list_t *attrs;
   union
@@ -362,6 +367,7 @@ struct _type_t {
     struct array_details array;
     struct coclass_details coclass;
     struct basic_details basic;
+    struct pointer_details pointer;
   } details;
   type_t *orig;                   /* dup'd types */
   unsigned int typestring_offset;
@@ -496,7 +502,7 @@ int is_union(unsigned char tc);
 
 var_t *find_const(const char *name, int f);
 type_t *find_type(const char *name, int t);
-type_t *make_type(unsigned char type, type_t *ref);
+type_t *make_type(enum type_type type, type_t *ref);
 
 void init_loc_info(loc_info_t *);
 
@@ -509,65 +515,7 @@ static inline enum type_type type_get_type_detect_alias(const type_t *type)
 {
     if (type->is_alias)
         return TYPE_ALIAS;
-    switch (type->type)
-    {
-    case 0:
-        return TYPE_VOID;
-    case RPC_FC_BYTE:
-    case RPC_FC_CHAR:
-    case RPC_FC_USMALL:
-    case RPC_FC_SMALL:
-    case RPC_FC_WCHAR:
-    case RPC_FC_USHORT:
-    case RPC_FC_SHORT:
-    case RPC_FC_ULONG:
-    case RPC_FC_LONG:
-    case RPC_FC_HYPER:
-    case RPC_FC_IGNORE:
-    case RPC_FC_FLOAT:
-    case RPC_FC_DOUBLE:
-    case RPC_FC_ERROR_STATUS_T:
-    case RPC_FC_BIND_PRIMITIVE:
-        return TYPE_BASIC;
-    case RPC_FC_ENUM16:
-    case RPC_FC_ENUM32:
-        return TYPE_ENUM;
-    case RPC_FC_RP:
-    case RPC_FC_UP:
-    case RPC_FC_FP:
-    case RPC_FC_OP:
-        return TYPE_POINTER;
-    case RPC_FC_STRUCT:
-    case RPC_FC_PSTRUCT:
-    case RPC_FC_CSTRUCT:
-    case RPC_FC_CPSTRUCT:
-    case RPC_FC_CVSTRUCT:
-    case RPC_FC_BOGUS_STRUCT:
-        return TYPE_STRUCT;
-    case RPC_FC_ENCAPSULATED_UNION:
-        return TYPE_ENCAPSULATED_UNION;
-    case RPC_FC_NON_ENCAPSULATED_UNION:
-        return TYPE_UNION;
-    case RPC_FC_SMFARRAY:
-    case RPC_FC_LGFARRAY:
-    case RPC_FC_SMVARRAY:
-    case RPC_FC_LGVARRAY:
-    case RPC_FC_CARRAY:
-    case RPC_FC_CVARRAY:
-    case RPC_FC_BOGUS_ARRAY:
-        return TYPE_ARRAY;
-    case RPC_FC_FUNCTION:
-        return TYPE_FUNCTION;
-    case RPC_FC_COCLASS:
-        return TYPE_COCLASS;
-    case RPC_FC_IP:
-        return TYPE_INTERFACE;
-    case RPC_FC_MODULE:
-        return TYPE_MODULE;
-    default:
-        assert(0);
-        return 0;
-    }
+    return type->type_type;
 }
 
 #define STATEMENTS_FOR_EACH_FUNC(stmt, stmts) \

@@ -43,7 +43,7 @@ type_t *duptype(type_t *t, int dupname)
 
 type_t *type_new_function(var_list_t *args)
 {
-    type_t *t = make_type(RPC_FC_FUNCTION, NULL);
+    type_t *t = make_type(TYPE_FUNCTION, NULL);
     t->details.function = xmalloc(sizeof(*t->details.function));
     t->details.function->args = args;
     t->details.function->idx = -1;
@@ -52,7 +52,8 @@ type_t *type_new_function(var_list_t *args)
 
 type_t *type_new_pointer(type_t *ref, attr_list_t *attrs)
 {
-    type_t *t = make_type(pointer_default, ref);
+    type_t *t = make_type(TYPE_POINTER, ref);
+    t->details.pointer.fc = pointer_default;
     t->attrs = attrs;
     return t;
 }
@@ -65,23 +66,34 @@ type_t *type_new_alias(type_t *t, const char *name)
     a->attrs = NULL;
     a->orig = t;
     a->is_alias = TRUE;
+    /* for pointer types */
+    a->details = t->details;
     init_loc_info(&a->loc_info);
 
     return a;
 }
 
-type_t *type_new_module(char *name)
+type_t *type_new_module(const char *name)
 {
-    type_t *type = make_type(RPC_FC_MODULE, NULL);
+    type_t *type = make_type(TYPE_MODULE, NULL);
     type->name = name;
     /* FIXME: register type to detect multiple definitions */
     return type;
 }
 
+type_t *type_new_coclass(const char *name)
+{
+    type_t *c = make_type(TYPE_COCLASS, NULL);
+    c->name = name;
+    /* FIXME: register type to detect multiple definitions */
+    return c;
+}
+
+
 type_t *type_new_array(const char *name, type_t *element, int declptr,
                        unsigned int dim, expr_t *size_is, expr_t *length_is)
 {
-    type_t *t = make_type(RPC_FC_LGFARRAY, element);
+    type_t *t = make_type(TYPE_ARRAY, element);
     if (name) t->name = xstrdup(name);
     t->details.array.declptr = declptr;
     t->details.array.length_is = length_is;
@@ -119,7 +131,7 @@ type_t *type_new_void(void)
 {
     static type_t *void_type = NULL;
     if (!void_type)
-        void_type = make_type(0, NULL);
+        void_type = make_type(TYPE_VOID, NULL);
     return void_type;
 }
 

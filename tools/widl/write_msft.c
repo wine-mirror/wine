@@ -931,18 +931,10 @@ static int encode_type(
 
     case VT_SAFEARRAY:
 	{
-	int next_vt;
+	type_t *element_type = type_alias_get_aliasee(type_array_get_element(type));
+	int next_vt = get_type_vt(element_type);
 
-	/* skip over SAFEARRAY type straight to element type */
-	type = type->ref;
-
-	for(next_vt = 0; type->ref; type = type->ref) {
-	    next_vt = get_type_vt(type->ref);
-	    if (next_vt != 0)
-	        break;
-	}
-
-	encode_type(typelib, next_vt, type->ref, &target_type, NULL, NULL, &child_size);
+	encode_type(typelib, next_vt, type_alias_get_aliasee(type_array_get_element(type)), &target_type, NULL, NULL, &child_size);
 
 	for (typeoffset = 0; typeoffset < typelib->typelib_segdir[MSFT_SEG_TYPEDESC].length; typeoffset += 8) {
 	    typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];

@@ -191,12 +191,15 @@ unsigned short get_type_vt(type_t *t)
     break;
 
   case TYPE_POINTER:
-    if (match(type_pointer_get_ref(t)->name, "SAFEARRAY"))
-      return VT_SAFEARRAY;
     return VT_PTR;
 
   case TYPE_ARRAY:
-    if (!type_array_is_decl_as_ptr(t))
+    if (type_array_is_decl_as_ptr(t))
+    {
+      if (match(type_array_get_element(t)->name, "SAFEARRAY"))
+        return VT_SAFEARRAY;
+    }
+    else
       error("get_type_vt: array types not supported\n");
     return VT_PTR;
 

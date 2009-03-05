@@ -126,7 +126,7 @@ unsigned char get_pointer_fc(const type_t *type)
     /* FIXME: see corresponding hack in set_type - we shouldn't be getting
      * the pointer type from an alias, rather determining it from the
      * position */
-    return type->type;
+    return type->details.pointer.fc;
 }
 
 static unsigned char get_enum_fc(const type_t *type)

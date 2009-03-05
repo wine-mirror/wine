@@ -183,7 +183,7 @@ static void write_enums(FILE *h, var_list_t *enums)
 int needs_space_after(type_t *t)
 {
   return (type_is_alias(t) ||
-          (!is_ptr(t) && (!is_conformant_array(t) || !type_array_is_decl_as_ptr(t) || t->name)));
+          (!is_ptr(t) && (!is_array(t) || !type_array_is_decl_as_ptr(t) || t->name)));
 }
 
 void write_type_left(FILE *h, type_t *t, int declonly)

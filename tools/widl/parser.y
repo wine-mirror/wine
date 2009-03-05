@@ -113,7 +113,6 @@ static declarator_list_t *append_declarator(declarator_list_t *list, declarator_
 static declarator_t *make_declarator(var_t *var);
 static func_list_t *append_func(func_list_t *list, func_t *func);
 static func_t *make_func(var_t *def);
-static type_t *make_class(char *name);
 static type_t *make_safearray(type_t *type);
 static typelib_t *make_library(const char *name, const attr_list_t *attrs);
 static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type);
@@ -127,7 +126,7 @@ static type_t *reg_type(type_t *type, const char *name, int t);
 static type_t *reg_typedefs(decl_spec_t *decl_spec, var_list_t *names, attr_list_t *attrs);
 static type_t *find_type_or_error(const char *name, int t);
 static type_t *find_type_or_error2(char *name, int t);
-static type_t *get_type(unsigned char type, char *name, int t);
+static type_t *get_type(enum type_type type, char *name, int t);
 
 static var_t *reg_const(var_t *var);
 
@@ -792,7 +791,7 @@ int_std:  tINT					{ $$ = type_new_int(TYPE_BASIC_INT, 0); }
 	| tCHAR					{ $$ = type_new_int(TYPE_BASIC_CHAR, 0); }
 	;
 
-coclass:  tCOCLASS aIDENTIFIER			{ $$ = make_class($2); }
+coclass:  tCOCLASS aIDENTIFIER			{ $$ = type_new_coclass($2); }
 	| tCOCLASS aKNOWNTYPE			{ $$ = find_type($2, 0);
 						  if (type_get_type_detect_alias($$) != TYPE_COCLASS)
 						    error_loc("%s was not declared a coclass at %s:%d\n",
@@ -819,8 +818,8 @@ coclass_int:
 	  m_attributes interfacedec		{ $$ = make_ifref($2); $$->attrs = $1; }
 	;
 
-dispinterface: tDISPINTERFACE aIDENTIFIER	{ $$ = get_type(RPC_FC_IP, $2, 0); }
-	|      tDISPINTERFACE aKNOWNTYPE	{ $$ = get_type(RPC_FC_IP, $2, 0); }
+dispinterface: tDISPINTERFACE aIDENTIFIER	{ $$ = get_type(TYPE_INTERFACE, $2, 0); }
+	|      tDISPINTERFACE aKNOWNTYPE	{ $$ = get_type(TYPE_INTERFACE, $2, 0); }
 	;
 
 dispinterfacehdr: attributes dispinterface	{ attr_t *attrs;
@@ -857,8 +856,8 @@ inherit:					{ $$ = NULL; }
 	| ':' aKNOWNTYPE			{ $$ = find_type_or_error2($2, 0); }
 	;
 
-interface: tINTERFACE aIDENTIFIER		{ $$ = get_type(RPC_FC_IP, $2, 0); }
-	|  tINTERFACE aKNOWNTYPE		{ $$ = get_type(RPC_FC_IP, $2, 0); }
+interface: tINTERFACE aIDENTIFIER		{ $$ = get_type(TYPE_INTERFACE, $2, 0); }
+	|  tINTERFACE aKNOWNTYPE		{ $$ = get_type(TYPE_INTERFACE, $2, 0); }
 	;
 
 interfacehdr: attributes interface		{ $$.interface = $2;
@@ -1241,11 +1240,11 @@ void clear_all_offsets(void)
     node->data.typestring_offset = node->data.ptrdesc = 0;
 }
 
-type_t *make_type(unsigned char type, type_t *ref)
+type_t *make_type(enum type_type type, type_t *ref)
 {
   type_t *t = alloc_type();
   t->name = NULL;
-  t->type = type;
+  t->type_type = type;
   t->ref = ref;
   t->attrs = NULL;
   t->orig = NULL;
@@ -1266,7 +1265,7 @@ type_t *make_type(unsigned char type, type_t *ref)
 
 static type_t *type_new_enum(char *name, var_list_t *enums)
 {
-    type_t *t = get_type(RPC_FC_ENUM16, name, tsENUM);
+    type_t *t = get_type(TYPE_ENUM, name, tsENUM);
     if (enums)
     {
         t->details.enumeration = xmalloc(sizeof(*t->details.enumeration));
@@ -1281,15 +1280,12 @@ static type_t *type_new_enum(char *name, var_list_t *enums)
 static type_t *type_new_struct(char *name, int defined, var_list_t *fields)
 {
   type_t *tag_type = name ? find_type(name, tsSTRUCT) : NULL;
-  type_t *t = make_type(RPC_FC_STRUCT, NULL);
+  type_t *t = make_type(TYPE_STRUCT, NULL);
   t->name = name;
   if (defined || (tag_type && tag_type->details.structure))
   {
     if (tag_type && tag_type->details.structure)
-    {
       t->details.structure = tag_type->details.structure;
-      t->type = tag_type->type;
-    }
     else if (defined)
     {
       t->details.structure = xmalloc(sizeof(*t->details.structure));
@@ -1309,7 +1305,7 @@ static type_t *type_new_struct(char *name, int defined, var_list_t *fields)
 
 static type_t *type_new_nonencapsulated_union(char *name, var_list_t *fields)
 {
-  type_t *t = get_type(RPC_FC_NON_ENCAPSULATED_UNION, name, tsUNION);
+  type_t *t = get_type(TYPE_UNION, name, tsUNION);
   t->details.structure = xmalloc(sizeof(*t->details.structure));
   t->details.structure->fields = fields;
   t->defined = TRUE;
@@ -1318,9 +1314,9 @@ static type_t *type_new_nonencapsulated_union(char *name, var_list_t *fields)
 
 static type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *union_field, var_list_t *cases)
 {
-  type_t *t = get_type(RPC_FC_ENCAPSULATED_UNION, name, tsUNION);
+  type_t *t = get_type(TYPE_ENCAPSULATED_UNION, name, tsUNION);
   if (!union_field) union_field = make_var( xstrdup("tagged_union") );
-  union_field->type = make_type(RPC_FC_NON_ENCAPSULATED_UNION, NULL);
+  union_field->type = make_type(TYPE_UNION, NULL);
   union_field->type->details.structure = xmalloc(sizeof(*union_field->type->details.structure));
   union_field->type->details.structure->fields = cases;
   union_field->type->defined = TRUE;
@@ -1409,7 +1405,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
                            "pointer type has no effect\n", v->name);
       if (top && !ptr_attr)
         ptr_attr = RPC_FC_RP;
-      if (ptr_attr != (*pt)->type)
+      if (ptr_attr != (*pt)->details.pointer.fc)
       {
         /* create new type to avoid changing original type */
         /* FIXME: this is a horrible hack - we might be changing the pointer
@@ -1418,7 +1414,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
          * ends up having is context sensitive and so we shouldn't be
          * setting it here, but rather determining it when it is used. */
         *pt = duptype(*pt, 1);
-        (*pt)->type = ptr_attr;
+        (*pt)->details.pointer.fc = ptr_attr;
       }
     }
     else if (ptr_attr)
@@ -1431,9 +1427,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
 
   if (is_attr(v->attrs, ATTR_V1ENUM))
   {
-    if (type_get_type_detect_alias(v->type) == TYPE_ENUM)
-      v->type->type = RPC_FC_ENUM32;
-    else
+    if (type_get_type_detect_alias(v->type) != TYPE_ENUM)
       error_loc("'%s': [v1_enum] attribute applied to non-enum type\n", v->name);
   }
 
@@ -1661,18 +1655,9 @@ static func_t *make_func(var_t *def)
   return f;
 }
 
-static type_t *make_class(char *name)
-{
-  type_t *c = make_type(RPC_FC_COCLASS, NULL);
-  c->name = name;
-  return c;
-}
-
 static type_t *make_safearray(type_t *type)
 {
-  type_t *sa = find_type_or_error("SAFEARRAY", 0);
-  sa->ref = type;
-  return make_type(pointer_default, sa);
+  return type_new_array(NULL, type_new_alias(type, "SAFEARRAY"), TRUE, 0, NULL, NULL);
 }
 
 static typelib_t *make_library(const char *name, const attr_list_t *attrs)
@@ -1881,7 +1866,7 @@ int is_type(const char *name)
   return find_type(name, 0) != NULL;
 }
 
-static type_t *get_type(unsigned char type, char *name, int t)
+static type_t *get_type(enum type_type type, char *name, int t)
 {
   type_t *tp;
   if (name) {
