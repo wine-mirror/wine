@@ -541,6 +541,7 @@ static inline BOOL IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
             }
             else
             {
+                This->Flags |= VBFLAG_HASDESC;
                 return FALSE;
             }
         }
