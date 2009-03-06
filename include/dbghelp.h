@@ -58,12 +58,17 @@ typedef enum
     AddrModeFlat
 } ADDRESS_MODE;
 
+#if !defined(_IMAGEHLP_SOURCE_) && defined(_IMAGEHLP64)
+#define ADDRESS ADDRESS64
+#define LPADDRESS LPADDRESS64
+#else
 typedef struct _tagADDRESS
 {
     DWORD                       Offset;
     WORD                        Segment;
     ADDRESS_MODE                Mode;
 } ADDRESS, *LPADDRESS;
+#endif
 
 typedef struct _tagADDRESS64
 {
@@ -102,6 +107,10 @@ typedef enum
     NumSymTypes
 } SYM_TYPE;
 
+#if !defined(_IMAGEHLP_SOURCE_) && defined(_IMAGEHLP64)
+#define IMAGEHLP_SYMBOL IMAGEHLP_SYMBOL64
+#define PIMAGEHLP_SYMBOL PIMAGEHLP_SYMBOL64
+#else
 typedef struct _IMAGEHLP_SYMBOL
 {
     DWORD                       SizeOfStruct;
@@ -111,6 +120,7 @@ typedef struct _IMAGEHLP_SYMBOL
     DWORD                       MaxNameLength;
     CHAR                        Name[1];
 } IMAGEHLP_SYMBOL, *PIMAGEHLP_SYMBOL;
+#endif
 
 typedef struct _IMAGEHLP_SYMBOL64
 {
@@ -132,6 +142,12 @@ typedef struct _IMAGEHLP_SYMBOLW64
     WCHAR                       Name[1];
 } IMAGEHLP_SYMBOLW64, *PIMAGEHLP_SYMBOLW64;
 
+#if !defined(_IMAGEHLP_SOURCE_) && defined(_IMAGEHLP64)
+#define IMAGEHLP_MODULE IMAGEHLP_MODULE64
+#define PIMAGEHLP_MODULE PIMAGEHLP_MODULE64
+#define IMAGEHLP_MODULEW IMAGEHLP_MODULEW64
+#define PIMAGEHLP_MODULEW PIMAGEHLP_MODULEW64
+#else
 typedef struct _IMAGEHLP_MODULE
 {
     DWORD                       SizeOfStruct;
@@ -159,6 +175,7 @@ typedef struct _IMAGEHLP_MODULEW
     WCHAR                       ImageName[256];
     WCHAR                       LoadedImageName[256];
 } IMAGEHLP_MODULEW, *PIMAGEHLP_MODULEW;
+#endif
 
 typedef struct _IMAGEHLP_MODULE64
 {
@@ -214,6 +231,12 @@ typedef struct _IMAGEHLP_MODULEW64
     BOOL                        Publics;
 } IMAGEHLP_MODULEW64, *PIMAGEHLP_MODULEW64;
 
+#if !defined(_IMAGEHLP_SOURCE_) && defined(_IMAGEHLP64)
+#define IMAGEHLP_LINE IMAGEHLP_LINE64
+#define PIMAGEHLP_LINE PIMAGEHLP_LINE64
+#define IMAGEHLP_LINEW IMAGEHLP_LINEW64
+#define PIMAGEHLP_LINEW PIMAGEHLP_LINEW64
+#else
 typedef struct _IMAGEHLP_LINE
 {
     DWORD                       SizeOfStruct;
@@ -231,6 +254,7 @@ typedef struct _IMAGEHLP_LINEW
     PWSTR                       FileName;
     DWORD                       Address;
 } IMAGEHLP_LINEW, *PIMAGEHLP_LINEW;
+#endif
 
 typedef struct _IMAGEHLP_LINE64
 {
@@ -311,6 +335,10 @@ typedef struct _IMAGEHLP_CBA_EVENTW
     PVOID       object;
 } IMAGEHLP_CBA_EVENTW, *PIMAGEHLP_CBA_EVENTW;
 
+#if !defined(_IMAGEHLP_SOURCE_) && defined(_IMAGEHLP64)
+#define IMAGEHLP_DEFERRED_SYMBOL_LOAD IMAGEHLP_DEFERRED_SYMBOL_LOAD64
+#define PIMAGEHLP_DEFERRED_SYMBOL_LOAD PIMAGEHLP_DEFERRED_SYMBOL_LOAD64
+#else
 typedef struct _IMAGEHLP_DEFERRED_SYMBOL_LOAD
 {
     DWORD                       SizeOfStruct;
@@ -321,6 +349,7 @@ typedef struct _IMAGEHLP_DEFERRED_SYMBOL_LOAD
     BOOLEAN                     Reparse;
     HANDLE                      hFile;
 } IMAGEHLP_DEFERRED_SYMBOL_LOAD, *PIMAGEHLP_DEFERRED_SYMBOL_LOAD;
+#endif
 
 typedef struct _IMAGEHLP_DEFERRED_SYMBOL_LOAD64
 {
@@ -346,6 +375,10 @@ typedef struct _IMAGEHLP_DEFERRED_SYMBOL_LOADW64
     DWORD                       Flags;
 } IMAGEHLP_DEFERRED_SYMBOL_LOADW64, *PIMAGEHLP_DEFERRED_SYMBOL_LOADW64;
 
+#if !defined(_IMAGEHLP_SOURCE_) && defined(_IMAGEHLP64)
+#define IMAGEHLP_DUPLICATE_SYMBOL IMAGEHLP_DUPLICATE_SYMBOL64
+#define PIMAGEHLP_DUPLICATE_SYMBOL PIMAGEHLP_DUPLICATE_SYMBOL64
+#else
 typedef struct _IMAGEHLP_DUPLICATE_SYMBOL
 {
     DWORD                       SizeOfStruct;
@@ -353,6 +386,7 @@ typedef struct _IMAGEHLP_DUPLICATE_SYMBOL
     PIMAGEHLP_SYMBOL            Symbol;
     DWORD                       SelectedSymbol;
 } IMAGEHLP_DUPLICATE_SYMBOL, *PIMAGEHLP_DUPLICATE_SYMBOL;
+#endif
 
 typedef struct _IMAGEHLP_DUPLICATE_SYMBOL64
 {
@@ -1176,6 +1210,10 @@ BOOL WINAPI SymSetContext(HANDLE, PIMAGEHLP_STACK_FRAME, PIMAGEHLP_CONTEXT);
  *    Stack management   *
  *************************/
 
+#if !defined(_IMAGEHLP_SOURCE_) && defined(_IMAGEHLP64)
+#define KDHELP KDHELP64
+#define PKDHELP PKDHELP64
+#else
 typedef struct _KDHELP
 {
     DWORD       Thread;
@@ -1186,6 +1224,7 @@ typedef struct _KDHELP
     DWORD       KeUserCallbackDispatcher;
     DWORD       SystemRangeStart;
 } KDHELP, *PKDHELP;
+#endif
 
 typedef struct _KDHELP64
 {
@@ -1200,6 +1239,10 @@ typedef struct _KDHELP64
     DWORD64     Reserved[8];
 } KDHELP64, *PKDHELP64;
 
+#if !defined(_IMAGEHLP_SOURCE_) && defined(_IMAGEHLP64)
+#define STACKFRAME STACKFRAME64
+#define LPSTACKFRAME LPSTACKFRAME64
+#else
 typedef struct _STACKFRAME
 {
     ADDRESS     AddrPC;
@@ -1214,6 +1257,7 @@ typedef struct _STACKFRAME
     KDHELP      KdHelp;
     ADDRESS     AddrBStore;
 } STACKFRAME, *LPSTACKFRAME;
+#endif
 
 typedef struct _STACKFRAME64
 {
