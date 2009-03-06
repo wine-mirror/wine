@@ -539,6 +539,32 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
     HeapFree(GetProcessHeap(), 0, v->data);
 }
 
+static HRESULT d3d10_effect_variable_apply(struct d3d10_effect_variable *v)
+{
+    ID3D10Device *device = v->pass->technique->effect->device;
+
+    TRACE("variable %p, type %#x\n", v, v->type);
+
+    switch(v->type)
+    {
+        case D3D10_EVT_VERTEXSHADER:
+            ID3D10Device_VSSetShader(device, ((struct d3d10_effect_shader_variable *)v->data)->shader.vs);
+            return S_OK;
+
+        case D3D10_EVT_PIXELSHADER:
+            ID3D10Device_PSSetShader(device, ((struct d3d10_effect_shader_variable *)v->data)->shader.ps);
+            return S_OK;
+
+        case D3D10_EVT_GEOMETRYSHADER:
+            ID3D10Device_GSSetShader(device, ((struct d3d10_effect_shader_variable *)v->data)->shader.gs);
+            return S_OK;
+
+        default:
+            FIXME("Unhandled variable type %#x\n", v->type);
+            return E_FAIL;
+    }
+}
+
 static void d3d10_effect_pass_destroy(struct d3d10_effect_pass *p)
 {
     TRACE("pass %p\n", p);
@@ -954,9 +980,21 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_pass_GetAnno
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_Apply(ID3D10EffectPass *iface, UINT flags)
 {
-    FIXME("iface %p, flags %#x stub!\n", iface, flags);
+    struct d3d10_effect_pass *This = (struct d3d10_effect_pass *)iface;
+    HRESULT hr = S_OK;
+    unsigned int i;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, flags %#x\n", iface, flags);
+
+    if (flags) FIXME("Ignoring flags (%#x)\n", flags);
+
+    for (i = 0; i < This->variable_count; ++i)
+    {
+        hr = d3d10_effect_variable_apply(&This->variables[i]);
+        if (FAILED(hr)) break;
+    }
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_ComputeStateBlockMask(ID3D10EffectPass *iface,
