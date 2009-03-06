@@ -25,6 +25,12 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
+#ifdef _WIN64
+#ifndef _IMAGEHLP64
+#define _IMAGEHLP64
+#endif
+#endif
+
 #define IMAGEAPI WINAPI
 #define DBHLPAPI IMAGEAPI
 
