@@ -145,13 +145,17 @@ static HRESULT parse_fx10_pass_index(struct d3d10_effect_pass *p, const char **p
 
     for (i = 0; i < p->variable_count; ++i)
     {
-        read_dword(ptr, &p->variables[i].type);
-        TRACE("Variable %u is of type %#x\n", i, p->variables[i].type);
+        struct d3d10_effect_variable *v = &p->variables[i];
+
+        v->pass = p;
+
+        read_dword(ptr, &v->type);
+        TRACE("Variable %u is of type %#x\n", i, v->type);
 
         skip_dword_unknown(ptr, 2);
 
-        read_dword(ptr, &p->variables[i].idx_offset);
-        TRACE("Variable %u idx is at offset %#x\n", i, p->variables[i].idx_offset);
+        read_dword(ptr, &v->idx_offset);
+        TRACE("Variable %u idx is at offset %#x\n", i, v->idx_offset);
     }
 
     return S_OK;
@@ -182,6 +186,7 @@ static HRESULT parse_fx10_technique_index(struct d3d10_effect_technique *t, cons
         struct d3d10_effect_pass *p = &t->passes[i];
 
         p->vtbl = &d3d10_effect_pass_vtbl;
+        p->technique = t;
 
         hr = parse_fx10_pass_index(p, ptr);
         if (FAILED(hr)) break;
@@ -192,8 +197,7 @@ static HRESULT parse_fx10_technique_index(struct d3d10_effect_technique *t, cons
 
 static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
 {
-    struct d3d10_effect_variable *v = ctx;
-    struct d3d10_effect_shader_variable *s = v->data;
+    struct d3d10_effect_shader_variable *s = ctx;
     char tag_str[5];
 
     memcpy(tag_str, &tag, 4);
@@ -257,8 +261,11 @@ static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag
 
 static HRESULT parse_shader(struct d3d10_effect_variable *v, const char *data)
 {
+    ID3D10Device *device = v->pass->technique->effect->device;
+    struct d3d10_effect_shader_variable *s;
     const char *ptr = data;
     DWORD dxbc_size;
+    HRESULT hr;
 
     v->data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct d3d10_effect_shader_variable));
     if (!v->data)
@@ -267,10 +274,31 @@ static HRESULT parse_shader(struct d3d10_effect_variable *v, const char *data)
         return E_OUTOFMEMORY;
     }
 
+    if (!ptr) return S_OK;
+
+    s = v->data;
+
     read_dword(&ptr, &dxbc_size);
     TRACE("dxbc size: %#x\n", dxbc_size);
 
-    return parse_dxbc(ptr, dxbc_size, shader_chunk_handler, v);
+    switch (v->type)
+    {
+        case D3D10_EVT_VERTEXSHADER:
+            hr = ID3D10Device_CreateVertexShader(device, ptr, dxbc_size, &s->shader.vs);
+            if (FAILED(hr)) return hr;
+            break;
+
+        case D3D10_EVT_PIXELSHADER:
+            hr = ID3D10Device_CreatePixelShader(device, ptr, dxbc_size, &s->shader.ps);
+            if (FAILED(hr)) return hr;
+            break;
+        case D3D10_EVT_GEOMETRYSHADER:
+            hr = ID3D10Device_CreateGeometryShader(device, ptr, dxbc_size, &s->shader.gs);
+            if (FAILED(hr)) return hr;
+            break;
+    }
+
+    return parse_dxbc(ptr, dxbc_size, shader_chunk_handler, s);
 }
 
 static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *data)
@@ -288,10 +316,13 @@ static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *
     if (offset == 1)
     {
         WARN("Skipping variable\n");
-        return S_OK;
+        ptr = NULL;
+    }
+    else
+    {
+        ptr = data + offset;
     }
 
-    ptr = data + offset;
     switch (v->type)
     {
         case D3D10_EVT_VERTEXSHADER:
@@ -400,6 +431,7 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
         struct d3d10_effect_technique *t = &e->techniques[i];
 
         t->vtbl = &d3d10_effect_technique_vtbl;
+        t->effect = e;
 
         hr = parse_fx10_technique_index(t, &ptr);
         if (FAILED(hr)) break;
@@ -492,8 +524,6 @@ HRESULT d3d10_effect_parse(struct d3d10_effect *This, const void *data, SIZE_T d
 static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
 {
     TRACE("variable %p\n", v);
-
-    if (!v->data) return;
 
     switch(v->type)
     {
