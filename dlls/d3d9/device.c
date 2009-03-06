@@ -1507,26 +1507,31 @@ static IDirect3DVertexDeclaration9 *getConvertedDecl(IDirect3DDevice9Impl *This,
 
 static HRESULT WINAPI IDirect3DDevice9Impl_SetFVF(LPDIRECT3DDEVICE9EX iface, DWORD FVF) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    HRESULT hr = S_OK;
+    IDirect3DVertexDeclaration9 *decl;
+    HRESULT hr;
+
     TRACE("(%p) Relay\n" , This);
 
-    EnterCriticalSection(&d3d9_cs);
-    if (0 != FVF) {
-         IDirect3DVertexDeclaration9* pDecl = getConvertedDecl(This, FVF);
-
-         if(!pDecl) {
-             /* Any situation when this should happen, except out of memory? */
-             ERR("Failed to create a converted vertex declaration\n");
-             LeaveCriticalSection(&d3d9_cs);
-             return D3DERR_DRIVERINTERNALERROR;
-         }
-
-         hr = IDirect3DDevice9Impl_SetVertexDeclaration(iface, pDecl);
-         if (hr != S_OK) {
-             LeaveCriticalSection(&d3d9_cs);
-             return hr;
-         }
+    if (!FVF)
+    {
+        WARN("%#x is not a valid FVF\n", FVF);
+        return D3D_OK;
     }
+
+    EnterCriticalSection(&d3d9_cs);
+
+    decl = getConvertedDecl(This, FVF);
+    if (!decl)
+    {
+         /* Any situation when this should happen, except out of memory? */
+         ERR("Failed to create a converted vertex declaration\n");
+         LeaveCriticalSection(&d3d9_cs);
+         return D3DERR_DRIVERINTERNALERROR;
+    }
+
+    hr = IDirect3DDevice9Impl_SetVertexDeclaration(iface, decl);
+    if (FAILED(hr)) ERR("Failed to set vertex declaration\n");
+
     LeaveCriticalSection(&d3d9_cs);
 
     return hr;
