@@ -541,7 +541,6 @@ static inline BOOL IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
             }
             else
             {
-                This->Flags |= VBFLAG_HASDESC;
                 return FALSE;
             }
         }
@@ -603,7 +602,6 @@ static inline BOOL IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
         This->conv_map = NULL;
         This->stride = 0;
     }
-    This->Flags |= VBFLAG_HASDESC;
 
     if (ret) TRACE("Conversion information changed\n");
 
@@ -747,21 +745,10 @@ static void STDMETHODCALLTYPE IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuf
     if (device->isInDraw && This->bindCount > 0)
     {
         declChanged = IWineD3DVertexBufferImpl_FindDecl(This);
+        This->Flags |= VBFLAG_HASDESC;
     }
-    else if (This->Flags & VBFLAG_HASDESC)
-    {
-        /* Reuse the declaration stored in the buffer. It will most likely not change, and if it does
-         * the stream source state handler will call PreLoad again and the change will be caught
-         */
-    }
-    else
-    {
-        /* Cannot get a declaration, and no declaration is stored in the buffer. It is pointless to preload
-         * now. When the buffer is used, PreLoad will be called by the stream source state handler and a valid
-         * declaration for the buffer can be found
-         */
-        return;
-    }
+
+    if (!declChanged && !(This->Flags & VBFLAG_HASDESC && This->Flags & VBFLAG_DIRTY)) return;
 
     /* If applications change the declaration over and over, reconverting all the time is a huge
      * performance hit. So count the declaration changes and release the VBO if there are too many
@@ -811,7 +798,7 @@ static void STDMETHODCALLTYPE IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuf
         start = 0;
         end = This->resource.size;
     }
-    else if(This->Flags & VBFLAG_DIRTY)
+    else
     {
         /* No decl change, but dirty data, reload the changed stuff */
         if (This->conv_shift)
@@ -823,11 +810,6 @@ static void STDMETHODCALLTYPE IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuf
         }
         start = This->dirtystart;
         end = This->dirtyend;
-    }
-    else
-    {
-        /* Desc not changed, buffer not dirty, nothing to do :-) */
-        return;
     }
 
     /* Mark the buffer clean */
