@@ -233,6 +233,7 @@ SANE_Status sane_option_probe_scan_area(SANE_Handle h, const char *option_name, 
                                         SANE_Unit *unit, SANE_Fixed *min, SANE_Fixed *max, SANE_Fixed *quant);
 SANE_Status sane_option_get_bool(SANE_Handle h, const char *option_name, SANE_Bool *val, SANE_Int *status);
 SANE_Status sane_option_set_bool(SANE_Handle h, const char *option_name, SANE_Bool val, SANE_Int *status);
+SANE_Status sane_option_set_fixed(SANE_Handle h, const char *option_name, SANE_Fixed val, SANE_Int *status);
 #endif
 
 

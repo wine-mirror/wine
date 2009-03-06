@@ -29,6 +29,7 @@
 #include "winbase.h"
 #include "twain.h"
 #include "sane_i.h"
+#include "winnls.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
@@ -168,7 +169,7 @@ static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability)
     static const UINT16 supported_caps[] = { CAP_SUPPORTEDCAPS, CAP_XFERCOUNT, CAP_UICONTROLLABLE,
                     CAP_AUTOFEED, CAP_FEEDERENABLED,
                     ICAP_XFERMECH, ICAP_PIXELTYPE, ICAP_UNITS, ICAP_BITDEPTH, ICAP_COMPRESSION, ICAP_PIXELFLAVOR,
-                    ICAP_XRESOLUTION, ICAP_YRESOLUTION, ICAP_PHYSICALHEIGHT, ICAP_PHYSICALWIDTH };
+                    ICAP_XRESOLUTION, ICAP_YRESOLUTION, ICAP_PHYSICALHEIGHT, ICAP_PHYSICALWIDTH, ICAP_SUPPORTEDSIZES };
 
     pCapability->hContainer = GlobalAlloc (0, FIELD_OFFSET( TW_ARRAY, ItemList[sizeof(supported_caps)] ));
     pCapability->ConType = TWON_ARRAY;
@@ -815,6 +816,229 @@ static TW_UINT16 SANE_ICAPPixelFlavor (pTW_CAPABILITY pCapability, TW_UINT16 act
     return twCC;
 }
 
+#ifdef SONAME_LIBSANE
+static TW_UINT16 get_width_height(double *width, double *height, BOOL max)
+{
+    SANE_Status status;
+
+    SANE_Fixed tlx_current, tlx_min, tlx_max;
+    SANE_Fixed tly_current, tly_min, tly_max;
+    SANE_Fixed brx_current, brx_min, brx_max;
+    SANE_Fixed bry_current, bry_min, bry_max;
+
+    status = sane_option_probe_scan_area(activeDS.deviceHandle, "tl-x", &tlx_current, NULL, &tlx_min, &tlx_max, NULL);
+    if (status != SANE_STATUS_GOOD)
+        return sane_status_to_twcc(status);
+
+    status = sane_option_probe_scan_area(activeDS.deviceHandle, "tl-y", &tly_current, NULL, &tly_min, &tly_max, NULL);
+    if (status != SANE_STATUS_GOOD)
+        return sane_status_to_twcc(status);
+
+    status = sane_option_probe_scan_area(activeDS.deviceHandle, "br-x", &brx_current, NULL, &brx_min, &brx_max, NULL);
+    if (status != SANE_STATUS_GOOD)
+        return sane_status_to_twcc(status);
+
+    status = sane_option_probe_scan_area(activeDS.deviceHandle, "br-y", &bry_current, NULL, &bry_min, &bry_max, NULL);
+    if (status != SANE_STATUS_GOOD)
+        return sane_status_to_twcc(status);
+
+    if (max)
+        *width = SANE_UNFIX(brx_max) - SANE_UNFIX(tlx_min);
+    else
+        *width = SANE_UNFIX(brx_current) - SANE_UNFIX(tlx_current);
+
+    if (max)
+        *height = SANE_UNFIX(bry_max) - SANE_UNFIX(tly_min);
+    else
+        *height = SANE_UNFIX(bry_current) - SANE_UNFIX(tly_current);
+
+    return(TWCC_SUCCESS);
+}
+
+static TW_UINT16 set_one_coord(const char *name, double coord)
+{
+    SANE_Status status;
+    status = sane_option_set_fixed(activeDS.deviceHandle, name, SANE_FIX(coord), NULL);
+    if (status != SANE_STATUS_GOOD)
+        return sane_status_to_twcc(status);
+    return TWCC_SUCCESS;
+}
+
+static TW_UINT16 set_width_height(double width, double height)
+{
+    TW_UINT16 rc = TWCC_SUCCESS;
+    rc = set_one_coord("tl-x", 0);
+    if (rc != TWCC_SUCCESS)
+        return rc;
+    rc = set_one_coord("br-x", width);
+    if (rc != TWCC_SUCCESS)
+        return rc;
+    rc = set_one_coord("tl-y", 0);
+    if (rc != TWCC_SUCCESS)
+        return rc;
+    rc = set_one_coord("br-y", height);
+
+    return rc;
+}
+
+typedef struct
+{
+    TW_UINT32 size;
+    double x;
+    double y;
+} supported_size_t;
+
+static const supported_size_t supported_sizes[] =
+{
+    { TWSS_NONE,        0,      0       },
+    { TWSS_A4,          210,    297     },
+    { TWSS_JISB5,       182,    257     },
+    { TWSS_USLETTER,    215.9,  279.4   },
+    { TWSS_USLEGAL,     215.9,  355.6   },
+    { TWSS_A5,          148,    210     },
+    { TWSS_B4,          250,    353     },
+    { TWSS_B6,          125,    176     },
+    { TWSS_USLEDGER,    215.9,  431.8   },
+    { TWSS_USEXECUTIVE, 184.15, 266.7   },
+    { TWSS_A3,          297,    420     },
+};
+#define SUPPORTED_SIZE_COUNT (sizeof(supported_sizes) / sizeof(supported_sizes[0]))
+
+static TW_UINT16 get_default_paper_size(const supported_size_t *s, int n)
+{
+    DWORD paper;
+    int rc;
+    int defsize = -1;
+    double width, height;
+    int i;
+    rc = GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_IPAPERSIZE | LOCALE_RETURN_NUMBER, (void *) &paper, sizeof(paper));
+    if (rc > 0)
+        switch (paper)
+        {
+            case 1:
+                defsize = TWSS_USLETTER;
+                break;
+            case 5:
+                defsize = TWSS_USLEGAL;
+                break;
+            case 8:
+                defsize = TWSS_A3;
+                break;
+            case 9:
+                defsize = TWSS_A4;
+                break;
+        }
+
+    if (defsize == -1)
+        return TWSS_NONE;
+
+    if (get_width_height(&width, &height, TRUE) != TWCC_SUCCESS)
+        return TWSS_NONE;
+
+    for (i = 0; i < n; i++)
+        if (s[i].size == defsize)
+        {
+            /* Sane's use of integers to store floats is a hair lossy; deal with it */
+            if (s[i].x > (width + .01) || s[i].y > (height + 0.01))
+                return TWSS_NONE;
+            else
+                return s[i].size;
+        }
+
+    return TWSS_NONE;
+}
+
+static TW_UINT16 get_current_paper_size(const supported_size_t *s, int n)
+{
+    int i;
+    double width, height;
+    double xdelta, ydelta;
+
+    if (get_width_height(&width, &height, FALSE) != TWCC_SUCCESS)
+        return TWSS_NONE;
+
+    for (i = 0; i < n; i++)
+    {
+        /* Sane's use of integers to store floats results
+         * in a very small error; cope with that */
+        xdelta = s[i].x - width;
+        ydelta = s[i].y - height;
+        if (xdelta < 0.01 && xdelta > -0.01 &&
+            ydelta < 0.01 && ydelta > -0.01)
+            return s[i].size;
+    }
+
+    return TWSS_NONE;
+}
+#endif
+
+/* ICAP_SUPPORTEDSIZES */
+static TW_UINT16 SANE_ICAPSupportedSizes (pTW_CAPABILITY pCapability, TW_UINT16 action)
+{
+    TW_UINT16 twCC = TWCC_BADCAP;
+#ifdef SONAME_LIBSANE
+
+    static TW_UINT32 possible_values[SUPPORTED_SIZE_COUNT];
+    int i;
+    TW_UINT32 val;
+    TW_UINT16 default_size = get_default_paper_size(supported_sizes, SUPPORTED_SIZE_COUNT);
+    TW_UINT16 current_size = get_current_paper_size(supported_sizes, SUPPORTED_SIZE_COUNT);
+
+    TRACE("ICAP_SUPPORTEDSIZES\n");
+
+    switch (action)
+    {
+        case MSG_QUERYSUPPORT:
+            twCC = set_onevalue(pCapability, TWTY_INT32,
+                    TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET );
+            break;
+
+        case MSG_GET:
+            for (i = 0; i < sizeof(supported_sizes) / sizeof(supported_sizes[0]); i++)
+                possible_values[i] = supported_sizes[i].size;
+            twCC = msg_get_enum(pCapability, possible_values, sizeof(possible_values) / sizeof(possible_values[0]),
+                    TWTY_UINT16, current_size, default_size);
+            WARN("Partial Stub:  our supported size selection is a bit thin.\n");
+            break;
+
+        case MSG_SET:
+            twCC = msg_set(pCapability, &val);
+            if (twCC == TWCC_SUCCESS)
+                for (i = 1; i < SUPPORTED_SIZE_COUNT; i++)
+                    if (supported_sizes[i].size == val)
+                        return set_width_height(supported_sizes[i].x, supported_sizes[i].y);
+
+            ERR("Unsupported size %d\n", val);
+            twCC = TWCC_BADCAP;
+            break;
+
+        case MSG_GETDEFAULT:
+            twCC = set_onevalue(pCapability, TWTY_UINT16, default_size);
+            break;
+
+        case MSG_RESET:
+            twCC = TWCC_BADCAP;
+            for (i = 1; i < SUPPORTED_SIZE_COUNT; i++)
+                if (supported_sizes[i].size == default_size)
+                {
+                    twCC = set_width_height(supported_sizes[i].x, supported_sizes[i].y);
+                    break;
+                }
+            if (twCC != TWCC_SUCCESS)
+                return twCC;
+
+            /* .. fall through intentional .. */
+
+        case MSG_GETCURRENT:
+            twCC = set_onevalue(pCapability, TWTY_UINT16, current_size);
+            break;
+    }
+
+#undef SUPPORTED_SIZE_COUNT
+#endif
+    return twCC;
+}
+
 /* CAP_AUTOFEED */
 static TW_UINT16 SANE_CAPAutofeed (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
@@ -1027,6 +1251,10 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
             twCC = SANE_ICAPPhysical(pCapability, action, pCapability->Cap);
             break;
 
+        case ICAP_SUPPORTEDSIZES:
+            twCC = SANE_ICAPSupportedSizes (pCapability, action);
+            break;
+
     }
 
     /* Twain specifies that you should return a 0 in response to QUERYSUPPORT,
@@ -1053,6 +1281,13 @@ TW_UINT16 SANE_SaneSetDefaults (void)
 
     memset(&cap, 0, sizeof(cap));
     cap.Cap = CAP_FEEDERENABLED;
+    cap.ConType = TWON_DONTCARE16;
+
+    if (SANE_SaneCapability(&cap, MSG_RESET) == TWCC_SUCCESS)
+        GlobalFree(cap.hContainer);
+
+    memset(&cap, 0, sizeof(cap));
+    cap.Cap = ICAP_SUPPORTEDSIZES;
     cap.ConType = TWON_DONTCARE16;
 
     if (SANE_SaneCapability(&cap, MSG_RESET) == TWCC_SUCCESS)
