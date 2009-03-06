@@ -2413,26 +2413,6 @@ interface IWineD3DRendertargetView : IWineD3DBase
 [
     object,
     local,
-    uuid(217f671e-6f30-11d9-c687-00046142c14f)
-]
-interface IWineD3DVertexBuffer : IWineD3DResource
-{
-    HRESULT Lock(
-        [in] UINT offset,
-        [in] UINT size,
-        [out] BYTE **data,
-        [in] DWORD flags
-    );
-    HRESULT Unlock(
-    );
-    HRESULT GetDesc(
-        [out] WINED3DVERTEXBUFFER_DESC *desc
-    );
-}
-
-[
-    object,
-    local,
     uuid(3a02a54e-6f30-11d9-c687-00046142c14f)
 ]
 interface IWineD3DIndexBuffer : IWineD3DResource
@@ -2923,6 +2903,17 @@ interface IWineD3DSwapChain : IWineD3DBase
 ]
 interface IWineD3DBuffer : IWineD3DResource
 {
+    HRESULT Map(
+        [in] UINT offset,
+        [in] UINT size,
+        [out] BYTE **data,
+        [in] DWORD flags
+    );
+    HRESULT Unmap(
+    );
+    HRESULT GetDesc(
+        [out] WINED3DVERTEXBUFFER_DESC *desc
+    );
 }
 
 [
@@ -2994,7 +2985,7 @@ interface IWineD3DDevice : IWineD3DBase
         [in] DWORD usage,
         [in] DWORD fvf,
         [in] WINED3DPOOL pool,
-        [out] IWineD3DVertexBuffer **vertex_buffer,
+        [out] IWineD3DBuffer **vertex_buffer,
         [in] HANDLE *shared_handle,
         [in] IUnknown *parent
     );
@@ -3351,13 +3342,13 @@ interface IWineD3DDevice : IWineD3DBase
     );
     HRESULT SetStreamSource(
         [in] UINT stream_idx,
-        [in] IWineD3DVertexBuffer *vertex_buffer,
+        [in] IWineD3DBuffer *buffer,
         [in] UINT offset,
         [in] UINT stride
     );
     HRESULT GetStreamSource(
         [in] UINT stream_idx,
-        [out] IWineD3DVertexBuffer **vertex_buffer,
+        [out] IWineD3DBuffer **buffer,
         [out] UINT *offset,
         [out] UINT *stride
     );
@@ -3454,7 +3445,7 @@ interface IWineD3DDevice : IWineD3DBase
         [in] UINT src_start_idx,
         [in] UINT dst_idx,
         [in] UINT vertex_count,
-        [in] IWineD3DVertexBuffer *dest_buffer,
+        [in] IWineD3DBuffer *dest_buffer,
         [in] IWineD3DVertexDeclaration *declaration,
         [in] DWORD flags
     );

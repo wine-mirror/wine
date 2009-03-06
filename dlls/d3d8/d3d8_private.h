@@ -320,7 +320,7 @@ struct IDirect3DVertexBuffer8Impl
     LONG                              ref;
 
     /* IDirect3DResource8 fields */
-    IWineD3DVertexBuffer             *wineD3DVertexBuffer;
+    IWineD3DBuffer *wineD3DVertexBuffer;
 
     /* Parent reference */
     LPDIRECT3DDEVICE8                 parentDevice;

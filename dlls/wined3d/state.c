@@ -3842,7 +3842,7 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock,
     GLint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? -1 : 0;
     int i;
     const UINT *offset = stateblock->streamOffset;
-    IWineD3DVertexBufferImpl *vb;
+    struct wined3d_buffer *vb;
     DWORD_PTR shift_index;
 
     /* Default to no instancing */
@@ -3870,27 +3870,28 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock,
                 checkGLcall("glBindBufferARB");
                 curVBO = strided->u.input[i].VBO;
             }
-            vb = (IWineD3DVertexBufferImpl *) stateblock->streamSource[strided->u.input[i].streamNo];
+            vb = (struct wined3d_buffer *)stateblock->streamSource[strided->u.input[i].streamNo];
             /* Use the VBO to find out if a vertex buffer exists, not the vb pointer. vb can point to a
              * user pointer data blob. In that case curVBO will be 0. If there is a vertex buffer but no
              * vbo we won't be load converted attributes anyway
              */
-            if(curVBO && vb->conv_shift) {
+            if (curVBO && vb->conversion_shift)
+            {
                 TRACE("Loading attribute from shifted buffer\n");
-                TRACE("Attrib %d has original stride %d, new stride %d\n", i, strided->u.input[i].dwStride, vb->conv_stride);
-                TRACE("Original offset %p, additional offset 0x%08x\n",strided->u.input[i].lpData, vb->conv_shift[(DWORD_PTR) strided->u.input[i].lpData]);
+                TRACE("Attrib %d has original stride %d, new stride %d\n",
+                        i, strided->u.input[i].dwStride, vb->conversion_stride);
+                TRACE("Original offset %p, additional offset 0x%08x\n",
+                        strided->u.input[i].lpData, vb->conversion_shift[(DWORD_PTR) strided->u.input[i].lpData]);
                 TRACE("Opengl type %x\n", WINED3D_ATR_GLTYPE(strided->u.input[i].dwType));
                 shift_index = ((DWORD_PTR) strided->u.input[i].lpData + offset[strided->u.input[i].streamNo]);
                 shift_index = shift_index % strided->u.input[i].dwStride;
-                GL_EXTCALL(glVertexAttribPointerARB(i,
-                                WINED3D_ATR_FORMAT(strided->u.input[i].dwType),
-                                WINED3D_ATR_GLTYPE(strided->u.input[i].dwType),
-                                WINED3D_ATR_NORMALIZED(strided->u.input[i].dwType),
-                                vb->conv_stride,
-
-                                strided->u.input[i].lpData + vb->conv_shift[shift_index] +
-                                stateblock->loadBaseVertexIndex * strided->u.input[i].dwStride +
-                                offset[strided->u.input[i].streamNo]));
+                GL_EXTCALL(glVertexAttribPointerARB(i, WINED3D_ATR_FORMAT(strided->u.input[i].dwType),
+                        WINED3D_ATR_GLTYPE(strided->u.input[i].dwType),
+                        WINED3D_ATR_NORMALIZED(strided->u.input[i].dwType),
+                        vb->conversion_stride,
+                        strided->u.input[i].lpData + vb->conversion_shift[shift_index]
+                        + stateblock->loadBaseVertexIndex * strided->u.input[i].dwStride
+                        + offset[strided->u.input[i].streamNo]));
 
             } else {
                 GL_EXTCALL(glVertexAttribPointerARB(i,
@@ -3915,7 +3916,7 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock,
              */
             const BYTE *ptr = strided->u.input[i].lpData + offset[strided->u.input[i].streamNo];
             if(strided->u.input[i].VBO) {
-                vb = (IWineD3DVertexBufferImpl *) stateblock->streamSource[strided->u.input[i].streamNo];
+                vb = (struct wined3d_buffer *)stateblock->streamSource[strided->u.input[i].streamNo];
                 ptr += (long) vb->resource.allocatedMemory;
             }
 

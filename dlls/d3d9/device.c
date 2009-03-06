@@ -470,7 +470,7 @@ static HRESULT WINAPI reset_enum_callback(IWineD3DResource *resource, void *data
             break;
 
         case WINED3DRTYPE_VERTEXBUFFER:
-            IWineD3DVertexBuffer_GetDesc((IWineD3DVertexBuffer *) resource, &vertex_desc);
+            IWineD3DBuffer_GetDesc((IWineD3DBuffer *)resource, &vertex_desc);
             pool = vertex_desc.Pool;
             break;
 
@@ -1576,7 +1576,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetStreamSource(LPDIRECT3DDEVICE9EX i
 
 static HRESULT WINAPI IDirect3DDevice9Impl_GetStreamSource(LPDIRECT3DDEVICE9EX iface, UINT StreamNumber, IDirect3DVertexBuffer9 **pStream, UINT* OffsetInBytes, UINT* pStride) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    IWineD3DVertexBuffer *retStream = NULL;
+    IWineD3DBuffer *retStream = NULL;
     HRESULT rc = D3D_OK;
 
     TRACE("(%p) Relay\n" , This);
@@ -1588,8 +1588,8 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetStreamSource(LPDIRECT3DDEVICE9EX i
     EnterCriticalSection(&d3d9_cs);
     rc = IWineD3DDevice_GetStreamSource(This->WineD3DDevice, StreamNumber, &retStream, OffsetInBytes, pStride);
     if (rc == D3D_OK  && NULL != retStream) {
-        IWineD3DVertexBuffer_GetParent(retStream, (IUnknown **)pStream);
-        IWineD3DVertexBuffer_Release(retStream);
+        IWineD3DBuffer_GetParent(retStream, (IUnknown **)pStream);
+        IWineD3DBuffer_Release(retStream);
     }else{
         if (rc != D3D_OK){
             FIXME("Call to GetStreamSource failed %p %p\n", OffsetInBytes, pStride);

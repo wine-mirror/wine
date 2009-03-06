@@ -230,7 +230,7 @@ void stateblock_copy(
     
     memcpy(Dest->streamStride, This->streamStride, sizeof(UINT) * MAX_STREAMS);
     memcpy(Dest->streamOffset, This->streamOffset, sizeof(UINT) * MAX_STREAMS);
-    memcpy(Dest->streamSource, This->streamSource, sizeof(IWineD3DVertexBuffer*) * MAX_STREAMS);
+    memcpy(Dest->streamSource, This->streamSource, sizeof(IWineD3DBuffer *) * MAX_STREAMS);
     memcpy(Dest->streamFreq,   This->streamFreq,   sizeof(UINT) * MAX_STREAMS);
     memcpy(Dest->streamFlags,  This->streamFlags,  sizeof(UINT) * MAX_STREAMS);
     memcpy(Dest->transforms,   This->transforms,   sizeof(WINED3DMATRIX) * (HIGHEST_TRANSFORMSTATE + 1));
@@ -295,7 +295,8 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
 
         for (counter = 0; counter < MAX_STREAMS; counter++) {
             if(This->streamSource[counter]) {
-                if(0 != IWineD3DVertexBuffer_Release(This->streamSource[counter])) {
+                if (IWineD3DBuffer_Release(This->streamSource[counter]))
+                {
                     TRACE("Vertex buffer still referenced by stateblock, applications has leaked Stream %u, buffer %p\n", counter, This->streamSource[counter]);
                 }
             }
@@ -553,8 +554,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
                 TRACE("Updating stream source %u to %p, stride to %u\n",
                         i, targetStateBlock->streamSource[i], targetStateBlock->streamStride[i]);
                 This->streamStride[i] = targetStateBlock->streamStride[i];
-                if(targetStateBlock->streamSource[i]) IWineD3DVertexBuffer_AddRef(targetStateBlock->streamSource[i]);
-                if(This->streamSource[i]) IWineD3DVertexBuffer_Release(This->streamSource[i]);
+                if (targetStateBlock->streamSource[i]) IWineD3DBuffer_AddRef(targetStateBlock->streamSource[i]);
+                if (This->streamSource[i]) IWineD3DBuffer_Release(This->streamSource[i]);
                 This->streamSource[i] = targetStateBlock->streamSource[i];
             }
         }
@@ -655,14 +656,14 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         This->scissorRect = targetStateBlock->scissorRect;
 
         if(targetStateBlock->pIndexData != This->pIndexData) {
-            if(targetStateBlock->pIndexData) IWineD3DIndexBuffer_AddRef(targetStateBlock->pIndexData);
-            if(This->pIndexData) IWineD3DIndexBuffer_Release(This->pIndexData);
+            if (targetStateBlock->pIndexData) IWineD3DIndexBuffer_AddRef(targetStateBlock->pIndexData);
+            if (This->pIndexData) IWineD3DIndexBuffer_Release(This->pIndexData);
             This->pIndexData = targetStateBlock->pIndexData;
         }
         for(i = 0; i < MAX_STREAMS; i++) {
             if(targetStateBlock->streamSource[i] != This->streamSource[i]) {
-                if(targetStateBlock->streamSource[i]) IWineD3DVertexBuffer_AddRef(targetStateBlock->streamSource[i]);
-                if(This->streamSource[i]) IWineD3DVertexBuffer_Release(This->streamSource[i]);
+                if(targetStateBlock->streamSource[i]) IWineD3DBuffer_AddRef(targetStateBlock->streamSource[i]);
+                if(This->streamSource[i]) IWineD3DBuffer_Release(This->streamSource[i]);
                 This->streamSource[i] = targetStateBlock->streamSource[i];
             }
         }
@@ -696,8 +697,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         }
         for(i = 0; i < MAX_STREAMS; i++) {
             if(targetStateBlock->streamSource[i] != This->streamSource[i]) {
-                if(targetStateBlock->streamSource[i]) IWineD3DVertexBuffer_AddRef(targetStateBlock->streamSource[i]);
-                if(This->streamSource[i]) IWineD3DVertexBuffer_Release(This->streamSource[i]);
+                if (targetStateBlock->streamSource[i]) IWineD3DBuffer_AddRef(targetStateBlock->streamSource[i]);
+                if (This->streamSource[i]) IWineD3DBuffer_Release(This->streamSource[i]);
                 This->streamSource[i] = targetStateBlock->streamSource[i];
             }
         }

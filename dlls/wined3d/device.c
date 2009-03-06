@@ -258,11 +258,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateBuffer(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT Size, DWORD Usage, 
-                             DWORD FVF, WINED3DPOOL Pool, IWineD3DVertexBuffer** ppVertexBuffer, HANDLE *sharedHandle,
-                             IUnknown *parent) {
+static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT Size, DWORD Usage,
+        DWORD FVF, WINED3DPOOL Pool, IWineD3DBuffer **ppVertexBuffer, HANDLE *sharedHandle, IUnknown *parent)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DVertexBufferImpl *object;
+    struct wined3d_buffer *object;
     WINED3DFORMAT Format = WINED3DFMT_VERTEXDATA; /* Dummy format for now */
     int dxVersion = ( (IWineD3DImpl *) This->wineD3D)->dxVersion;
     HRESULT hr;
@@ -289,7 +289,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
-    object->lpVtbl = &IWineD3DVertexBuffer_Vtbl;
+    object->vtbl = &wined3d_buffer_vtbl;
     hr = resource_init(&object->resource, WINED3DRTYPE_VERTEXBUFFER, This, Size, Usage, Format, Pool, parent);
     if (FAILED(hr))
     {
@@ -304,7 +304,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
     IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object);
 
     TRACE("(%p) : Size=%d, Usage=0x%08x, FVF=%x, Pool=%d - Memory@%p, Iface@%p\n", This, Size, Usage, FVF, Pool, object->resource.allocatedMemory, object);
-    *ppVertexBuffer = (IWineD3DVertexBuffer *)object;
+    *ppVertexBuffer = (IWineD3DBuffer *)object;
 
     object->fvf = FVF;
 
@@ -333,7 +333,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
     } else if(dxVersion <= 7 && conv) {
         TRACE("Not creating a vbo because dxVersion is 7 and the fvf needs conversion\n");
     } else {
-        object->Flags |= VBFLAG_CREATEVBO;
+        object->flags |= WINED3D_BUFFER_CREATEBO;
     }
     return WINED3D_OK;
 }
@@ -552,7 +552,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
 
         for(i = 0; i < MAX_STREAMS; i++) {
             if(object->streamSource[i]) {
-                IWineD3DVertexBuffer_AddRef(object->streamSource[i]);
+                IWineD3DBuffer_AddRef(object->streamSource[i]);
             }
         }
         if(object->pIndexData) {
@@ -685,7 +685,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
 
         for(i = 0; i < MAX_STREAMS; i++) {
             if(object->streamSource[i]) {
-                IWineD3DVertexBuffer_AddRef(object->streamSource[i]);
+                IWineD3DBuffer_AddRef(object->streamSource[i]);
             }
         }
         if(object->vertexShader) {
@@ -2824,9 +2824,11 @@ static UINT WINAPI IWineD3DDeviceImpl_GetAvailableTextureMem(IWineD3DDevice *ifa
 /*****
  * Get / Set Stream Source
  *****/
-static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, UINT StreamNumber,IWineD3DVertexBuffer* pStreamData, UINT OffsetInBytes, UINT Stride) {
-        IWineD3DDeviceImpl       *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DVertexBuffer     *oldSrc;
+static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, UINT StreamNumber,
+        IWineD3DBuffer *pStreamData, UINT OffsetInBytes, UINT Stride)
+{
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DBuffer *oldSrc;
 
     if (StreamNumber >= MAX_STREAMS) {
         WARN("Stream out of range %d\n", StreamNumber);
@@ -2857,19 +2859,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
-        if(pStreamData) IWineD3DVertexBuffer_AddRef(pStreamData);
-        if(oldSrc) IWineD3DVertexBuffer_Release(oldSrc);
+        if (pStreamData) IWineD3DBuffer_AddRef(pStreamData);
+        if (oldSrc) IWineD3DBuffer_Release(oldSrc);
         return WINED3D_OK;
     }
 
     if (pStreamData != NULL) {
-        IWineD3DVertexBufferImpl *vbImpl = (IWineD3DVertexBufferImpl *) pStreamData;
-        InterlockedIncrement(&vbImpl->bindCount);
-        IWineD3DVertexBuffer_AddRef(pStreamData);
+        InterlockedIncrement(&((struct wined3d_buffer *)pStreamData)->bind_count);
+        IWineD3DBuffer_AddRef(pStreamData);
     }
     if (oldSrc != NULL) {
-        InterlockedDecrement(&((IWineD3DVertexBufferImpl *) oldSrc)->bindCount);
-        IWineD3DVertexBuffer_Release(oldSrc);
+        InterlockedDecrement(&((struct wined3d_buffer *)oldSrc)->bind_count);
+        IWineD3DBuffer_Release(oldSrc);
     }
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
@@ -2877,7 +2878,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface, UINT StreamNumber,IWineD3DVertexBuffer** pStream, UINT *pOffset, UINT* pStride) {
+static HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface,
+        UINT StreamNumber, IWineD3DBuffer **pStream, UINT *pOffset, UINT *pStride)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     TRACE("(%p) : StreamNo: %u, Stream (%p), Offset %u, Stride %u\n", This, StreamNumber,
@@ -2896,7 +2899,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface, 
     }
 
     if (*pStream != NULL) {
-        IWineD3DVertexBuffer_AddRef(*pStream); /* We have created a new reference to the VB */
+        IWineD3DBuffer_AddRef(*pStream); /* We have created a new reference to the VB */
     }
     return WINED3D_OK;
 }
@@ -4296,7 +4299,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantF(
 
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
 static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCount,
-        const WineDirect3DVertexStridedData *lpStrideData, IWineD3DVertexBufferImpl *dest, DWORD dwFlags)
+        const WineDirect3DVertexStridedData *lpStrideData, struct wined3d_buffer *dest, DWORD dwFlags)
 {
     char *dest_ptr, *dest_conv = NULL, *dest_conv_addr = NULL;
     unsigned int i;
@@ -4328,9 +4331,10 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
             ERR("Out of memory\n");
             return E_OUTOFMEMORY;
         }
-        if(dest->vbo) {
+        if (dest->buffer_object)
+        {
             const void *src;
-            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, dest->vbo));
+            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, dest->buffer_object));
             checkGLcall("glBindBufferARB");
             src = GL_EXTCALL(glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_READ_ONLY_ARB));
             if(src) {
@@ -4344,12 +4348,14 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
     /* Get a pointer into the destination vbo(create one if none exists) and
      * write correct opengl data into it. It's cheap and allows us to run drawStridedFast
      */
-    if(!dest->vbo && GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT)) {
-        dest->Flags |= VBFLAG_CREATEVBO;
-        IWineD3DVertexBuffer_PreLoad((IWineD3DVertexBuffer *) dest);
+    if (!dest->buffer_object && GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT))
+    {
+        dest->flags |= WINED3D_BUFFER_CREATEBO;
+        IWineD3DBuffer_PreLoad((IWineD3DBuffer *)dest);
     }
 
-    if(dest->vbo) {
+    if (dest->buffer_object)
+    {
         unsigned char extrabytes = 0;
         /* If the destination vertex buffer has D3DFVF_XYZ position(non-rhw), native d3d writes RHW position, where the RHW
          * gets written into the 4 bytes after the Z position. In the case of a dest buffer that only has D3DFVF_XYZ data,
@@ -4636,7 +4642,7 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
     }
 
     if(dest_conv) {
-        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, dest->vbo));
+        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, dest->buffer_object));
         checkGLcall("glBindBufferARB(GL_ARRAY_BUFFER_ARB)");
         GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, dwDestIndex * get_flexible_vertex_size(DestFVF),
                                       dwCount * get_flexible_vertex_size(DestFVF),
@@ -4651,7 +4657,9 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
 }
 #undef copy_and_next
 
-static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, UINT SrcStartIndex, UINT DestIndex, UINT VertexCount, IWineD3DVertexBuffer* pDestBuffer, IWineD3DVertexDeclaration* pVertexDecl, DWORD Flags) {
+static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, UINT SrcStartIndex, UINT DestIndex,
+        UINT VertexCount, IWineD3DBuffer *pDestBuffer, IWineD3DVertexDeclaration *pVertexDecl, DWORD Flags)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     WineDirect3DVertexStridedData strided;
     BOOL vbo = FALSE, streamWasUP = This->stateBlock->streamIsUP;
@@ -4681,12 +4689,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
          */
 #define FIXSRC(type) \
         if(strided.u.s.type.VBO) { \
-            IWineD3DVertexBufferImpl *vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[strided.u.s.type.streamNo]; \
+            struct wined3d_buffer *vb = (struct wined3d_buffer *)This->stateBlock->streamSource[strided.u.s.type.streamNo]; \
             strided.u.s.type.VBO = 0; \
             strided.u.s.type.lpData = (BYTE *) ((unsigned long) strided.u.s.type.lpData + (unsigned long) vb->resource.allocatedMemory); \
             ENTER_GL(); \
-            GL_EXTCALL(glDeleteBuffersARB(1, &vb->vbo)); \
-            vb->vbo = 0; \
+            GL_EXTCALL(glDeleteBuffersARB(1, &vb->buffer_object)); \
+            vb->buffer_object = 0; \
             LEAVE_GL(); \
         } \
         if(strided.u.s.type.lpData) { \
@@ -4713,7 +4721,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
 #undef FIXSRC
     }
 
-    return process_vertices_strided(This, DestIndex, VertexCount, &strided, (IWineD3DVertexBufferImpl *) pDestBuffer, Flags);
+    return process_vertices_strided(This, DestIndex, VertexCount, &strided,
+            (struct wined3d_buffer *)pDestBuffer, Flags);
 }
 
 /*****
@@ -5490,7 +5499,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
         const void *pVertexStreamZeroData, UINT VertexStreamZeroStride)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DVertexBuffer *vb;
+    IWineD3DBuffer *vb;
 
     TRACE("(%p) : vertex count %u, pVtxData %p, stride %u\n",
             This, vertex_count, pVertexStreamZeroData, VertexStreamZeroStride);
@@ -5502,8 +5511,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
 
     /* Note in the following, it's not this type, but that's the purpose of streamIsUP */
     vb = This->stateBlock->streamSource[0];
-    This->stateBlock->streamSource[0] = (IWineD3DVertexBuffer *)pVertexStreamZeroData;
-    if(vb) IWineD3DVertexBuffer_Release(vb);
+    This->stateBlock->streamSource[0] = (IWineD3DBuffer *)pVertexStreamZeroData;
+    if (vb) IWineD3DBuffer_Release(vb);
     This->stateBlock->streamOffset[0] = 0;
     This->stateBlock->streamStride[0] = VertexStreamZeroStride;
     This->stateBlock->streamIsUP = TRUE;
@@ -5531,7 +5540,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
 {
     int                 idxStride;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DVertexBuffer *vb;
+    IWineD3DBuffer *vb;
     IWineD3DIndexBuffer *ib;
 
     TRACE("(%p) : MinVtxIdx %u, NumVIdx %u, index count %u, pidxdata %p, IdxFmt %u, pVtxdata %p, stride=%u\n",
@@ -5551,8 +5560,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
 
     /* Note in the following, it's not this type, but that's the purpose of streamIsUP */
     vb = This->stateBlock->streamSource[0];
-    This->stateBlock->streamSource[0] = (IWineD3DVertexBuffer *)pVertexStreamZeroData;
-    if(vb) IWineD3DVertexBuffer_Release(vb);
+    This->stateBlock->streamSource[0] = (IWineD3DBuffer *)pVertexStreamZeroData;
+    if (vb) IWineD3DBuffer_Release(vb);
     This->stateBlock->streamIsUP = TRUE;
     This->stateBlock->streamOffset[0] = 0;
     This->stateBlock->streamStride[0] = VertexStreamZeroStride;

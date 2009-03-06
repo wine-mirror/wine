@@ -34,348 +34,106 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define VB_MAXDECLCHANGES     100     /* After that number we stop converting */
 #define VB_RESETDECLCHANGE    1000    /* Reset the changecount after that number of draws */
 
-/* IUnknown methods */
-
-static HRESULT STDMETHODCALLTYPE buffer_QueryInterface(IWineD3DBuffer *iface,
-        REFIID riid, void **object)
+static void buffer_create_buffer_object(struct wined3d_buffer *This)
 {
-    TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
+    GLenum error, gl_usage;
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
-    if (IsEqualGUID(riid, &IID_IWineD3DBuffer)
-            || IsEqualGUID(riid, &IID_IWineD3DResource)
-            || IsEqualGUID(riid, &IID_IWineD3DBase)
-            || IsEqualGUID(riid, &IID_IUnknown))
+    TRACE("Creating an OpenGL vertex buffer object for IWineD3DVertexBuffer %p Usage(%s)\n",
+            This, debug_d3dusage(This->resource.usage));
+
+    /* Make sure that a context is there. Needed in a multithreaded environment. Otherwise this call is a nop */
+    ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+    ENTER_GL();
+
+    /* Make sure that the gl error is cleared. Do not use checkGLcall
+    * here because checkGLcall just prints a fixme and continues. However,
+    * if an error during VBO creation occurs we can fall back to non-vbo operation
+    * with full functionality(but performance loss)
+    */
+    while (glGetError() != GL_NO_ERROR);
+
+    /* Basically the FVF parameter passed to CreateVertexBuffer is no good
+    * It is the FVF set with IWineD3DDevice::SetFVF or the Vertex Declaration set with
+    * IWineD3DDevice::SetVertexDeclaration that decides how the vertices in the buffer
+    * look like. This means that on each DrawPrimitive call the vertex buffer has to be verified
+    * to check if the rhw and color values are in the correct format.
+    */
+
+    GL_EXTCALL(glGenBuffersARB(1, &This->buffer_object));
+    error = glGetError();
+    if (!This->buffer_object || error != GL_NO_ERROR)
     {
-        IUnknown_AddRef(iface);
-        *object = iface;
-        return S_OK;
+        ERR("Failed to create a VBO with error %s (%#x)\n", debug_glerror(error), error);
+        goto fail;
     }
 
-    WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
-
-    *object = NULL;
-
-    return E_NOINTERFACE;
-}
-
-static ULONG STDMETHODCALLTYPE buffer_AddRef(IWineD3DBuffer *iface)
-{
-    struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
-    ULONG refcount = InterlockedIncrement(&This->resource.ref);
-
-    TRACE("%p increasing refcount to %u\n", This, refcount);
-
-    return refcount;
-}
-
-static ULONG STDMETHODCALLTYPE buffer_Release(IWineD3DBuffer *iface)
-{
-    struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
-    ULONG refcount = InterlockedDecrement(&This->resource.ref);
-
-    TRACE("%p decreasing refcount to %u\n", This, refcount);
-
-    if (!refcount)
+    GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->buffer_object));
+    error = glGetError();
+    if (error != GL_NO_ERROR)
     {
-        resource_cleanup((IWineD3DResource *)iface);
-        HeapFree(GetProcessHeap(), 0, This);
+        ERR("Failed to bind the VBO with error %s (%#x)\n", debug_glerror(error), error);
+        goto fail;
     }
 
-    return refcount;
-}
-
-/* IWineD3DBase methods */
-
-static HRESULT STDMETHODCALLTYPE buffer_GetParent(IWineD3DBuffer *iface, IUnknown **parent)
-{
-    return resource_get_parent((IWineD3DResource *)iface, parent);
-}
-
-/* IWineD3DResource methods */
-
-static HRESULT STDMETHODCALLTYPE buffer_GetDevice(IWineD3DBuffer *iface, IWineD3DDevice **device)
-{
-    return resource_get_device((IWineD3DResource *)iface, device);
-}
-
-static HRESULT STDMETHODCALLTYPE buffer_SetPrivateData(IWineD3DBuffer *iface,
-        REFGUID guid, const void *data, DWORD data_size, DWORD flags)
-{
-    return resource_set_private_data((IWineD3DResource *)iface, guid, data, data_size, flags);
-}
-
-static HRESULT STDMETHODCALLTYPE buffer_GetPrivateData(IWineD3DBuffer *iface,
-        REFGUID guid, void *data, DWORD *data_size)
-{
-    return resource_get_private_data((IWineD3DResource *)iface, guid, data, data_size);
-}
-
-static HRESULT STDMETHODCALLTYPE buffer_FreePrivateData(IWineD3DBuffer *iface, REFGUID guid)
-{
-    return resource_free_private_data((IWineD3DResource *)iface, guid);
-}
-
-static DWORD STDMETHODCALLTYPE buffer_SetPriority(IWineD3DBuffer *iface, DWORD priority)
-{
-    return resource_set_priority((IWineD3DResource *)iface, priority);
-}
-
-static DWORD STDMETHODCALLTYPE buffer_GetPriority(IWineD3DBuffer *iface)
-{
-    return resource_get_priority((IWineD3DResource *)iface);
-}
-
-static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
-{
-    TRACE("iface %p\n", iface);
-}
-
-static void STDMETHODCALLTYPE buffer_UnLoad(IWineD3DBuffer *iface)
-{
-    TRACE("iface %p\n", iface);
-}
-
-static WINED3DRESOURCETYPE STDMETHODCALLTYPE buffer_GetType(IWineD3DBuffer *iface)
-{
-    return resource_get_type((IWineD3DResource *)iface);
-}
-
-const struct IWineD3DBufferVtbl wined3d_buffer_vtbl =
-{
-    /* IUnknown methods */
-    buffer_QueryInterface,
-    buffer_AddRef,
-    buffer_Release,
-    /* IWineD3DBase methods */
-    buffer_GetParent,
-    /* IWineD3DResource methods */
-    buffer_GetDevice,
-    buffer_SetPrivateData,
-    buffer_GetPrivateData,
-    buffer_FreePrivateData,
-    buffer_SetPriority,
-    buffer_GetPriority,
-    buffer_PreLoad,
-    buffer_UnLoad,
-    buffer_GetType,
-};
-
-/* IUnknown methods */
-
-static HRESULT STDMETHODCALLTYPE IWineD3DVertexBufferImpl_QueryInterface(IWineD3DVertexBuffer *iface,
-        REFIID riid, void **object)
-{
-    TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
-
-    if (IsEqualGUID(riid, &IID_IWineD3DVertexBuffer)
-            || IsEqualGUID(riid, &IID_IWineD3DResource)
-            || IsEqualGUID(riid, &IID_IWineD3DBase)
-            || IsEqualGUID(riid, &IID_IUnknown))
+    /* Don't use static, because dx apps tend to update the buffer
+    * quite often even if they specify 0 usage. Because we always keep the local copy
+    * we never read from the vbo and can create a write only opengl buffer.
+    */
+    switch(This->resource.usage & (WINED3DUSAGE_WRITEONLY | WINED3DUSAGE_DYNAMIC))
     {
-        IUnknown_AddRef(iface);
-        *object = iface;
-        return S_OK;
+        case WINED3DUSAGE_WRITEONLY | WINED3DUSAGE_DYNAMIC:
+        case WINED3DUSAGE_DYNAMIC:
+            TRACE("Gl usage = GL_STREAM_DRAW\n");
+            gl_usage = GL_STREAM_DRAW_ARB;
+            break;
+
+        case WINED3DUSAGE_WRITEONLY:
+        default:
+            TRACE("Gl usage = GL_DYNAMIC_DRAW\n");
+            gl_usage = GL_DYNAMIC_DRAW_ARB;
+            break;
     }
 
-    WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
-
-    *object = NULL;
-
-    return E_NOINTERFACE;
-}
-
-static ULONG STDMETHODCALLTYPE IWineD3DVertexBufferImpl_AddRef(IWineD3DVertexBuffer *iface)
-{
-    IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
-    ULONG refcount = InterlockedIncrement(&This->resource.ref);
-
-    TRACE("%p increasing refcount to %u\n", This, refcount);
-
-    return refcount;
-}
-
-static ULONG STDMETHODCALLTYPE IWineD3DVertexBufferImpl_Release(IWineD3DVertexBuffer *iface)
-{
-    IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
-    ULONG refcount = InterlockedDecrement(&This->resource.ref);
-
-    TRACE("%p decreasing refcount to %u\n", This, refcount);
-
-    if (!refcount)
+    /* Reserve memory for the buffer. The amount of data won't change
+    * so we are safe with calling glBufferData once with a NULL ptr and
+    * calling glBufferSubData on updates
+    */
+    GL_EXTCALL(glBufferDataARB(GL_ARRAY_BUFFER_ARB, This->resource.size, NULL, gl_usage));
+    error = glGetError();
+    if (error != GL_NO_ERROR)
     {
-        if (This->vbo)
-        {
-            IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-
-            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-            ENTER_GL();
-            GL_EXTCALL(glDeleteBuffersARB(1, &This->vbo));
-            checkGLcall("glDeleteBuffersARB");
-            LEAVE_GL();
-        }
-
-        resource_cleanup((IWineD3DResource *)iface);
-        HeapFree(GetProcessHeap(), 0, This);
+        ERR("glBufferDataARB failed with error %s (%#x)\n", debug_glerror(error), error);
+        goto fail;
     }
 
-    return refcount;
+    LEAVE_GL();
+
+    This->buffer_object_size = This->resource.size;
+    This->buffer_object_usage = gl_usage;
+    This->dirty_start = 0;
+    This->dirty_end = This->resource.size;
+    This->flags |= WINED3D_BUFFER_DIRTY;
+
+    return;
+
+fail:
+    /* Clean up all vbo init, but continue because we can work without a vbo :-) */
+    ERR("Failed to create a vertex buffer object. Continuing, but performance issues may occur\n");
+    if (This->buffer_object) GL_EXTCALL(glDeleteBuffersARB(1, &This->buffer_object));
+    This->buffer_object = 0;
+    LEAVE_GL();
+
+    return;
 }
 
-/* IWineD3DBase methods */
-
-static HRESULT STDMETHODCALLTYPE IWineD3DVertexBufferImpl_GetParent(IWineD3DVertexBuffer *iface, IUnknown **parent)
-{
-    return resource_get_parent((IWineD3DResource *)iface, parent);
-}
-
-/* IWineD3DResource methods */
-
-static HRESULT STDMETHODCALLTYPE IWineD3DVertexBufferImpl_GetDevice(IWineD3DVertexBuffer *iface,
-        IWineD3DDevice **device)
-{
-    return resource_get_device((IWineD3DResource *)iface, device);
-}
-
-static HRESULT STDMETHODCALLTYPE IWineD3DVertexBufferImpl_SetPrivateData(IWineD3DVertexBuffer *iface,
-        REFGUID guid, const void *data, DWORD data_size, DWORD flags)
-{
-    return resource_set_private_data((IWineD3DResource *)iface, guid, data, data_size, flags);
-}
-
-static HRESULT STDMETHODCALLTYPE IWineD3DVertexBufferImpl_GetPrivateData(IWineD3DVertexBuffer *iface,
-        REFGUID guid, void *data, DWORD *data_size)
-{
-    return resource_get_private_data((IWineD3DResource *)iface, guid, data, data_size);
-}
-
-static HRESULT STDMETHODCALLTYPE IWineD3DVertexBufferImpl_FreePrivateData(IWineD3DVertexBuffer *iface, REFGUID guid)
-{
-    return resource_free_private_data((IWineD3DResource *)iface, guid);
-}
-
-static DWORD STDMETHODCALLTYPE IWineD3DVertexBufferImpl_SetPriority(IWineD3DVertexBuffer *iface, DWORD priority)
-{
-    return resource_set_priority((IWineD3DResource *)iface, priority);
-}
-
-static DWORD STDMETHODCALLTYPE IWineD3DVertexBufferImpl_GetPriority(IWineD3DVertexBuffer *iface)
-{
-    return resource_get_priority((IWineD3DResource *)iface);
-}
-
-static inline void fixup_d3dcolor(DWORD *pos)
-{
-    DWORD srcColor = *pos;
-
-    /* Color conversion like in drawStridedSlow. watch out for little endianity
-     * If we want that stuff to work on big endian machines too we have to consider more things
-     *
-     * 0xff000000: Alpha mask
-     * 0x00ff0000: Blue mask
-     * 0x0000ff00: Green mask
-     * 0x000000ff: Red mask
-     */
-    *pos = 0;
-    *pos |= (srcColor & 0xff00ff00)      ;   /* Alpha Green */
-    *pos |= (srcColor & 0x00ff0000) >> 16;   /* Red */
-    *pos |= (srcColor & 0x000000ff) << 16;   /* Blue */
-}
-
-static inline void fixup_transformed_pos(float *p)
-{
-    float x, y, z, w;
-
-    /* rhw conversion like in drawStridedSlow */
-    if (p[3] == 1.0 || ((p[3] < eps) && (p[3] > -eps)))
-    {
-        x = p[0];
-        y = p[1];
-        z = p[2];
-        w = 1.0;
-    }
-    else
-    {
-        w = 1.0 / p[3];
-        x = p[0] * w;
-        y = p[1] * w;
-        z = p[2] * w;
-    }
-    p[0] = x;
-    p[1] = y;
-    p[2] = z;
-    p[3] = w;
-}
-
-static DWORD *find_conversion_shift(IWineD3DVertexBufferImpl *This,
-        const WineDirect3DVertexStridedData *strided, DWORD stride)
-{
-    DWORD *ret, i, shift, j, type;
-    DWORD orig_type_size;
-
-    if (!stride)
-    {
-        TRACE("No shift\n");
-        return NULL;
-    }
-
-    This->conv_stride = stride;
-    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DWORD) * stride);
-    for (i = 0; i < MAX_ATTRIBS; ++i)
-    {
-        if (strided->u.input[i].VBO != This->vbo) continue;
-
-        type = strided->u.input[i].dwType;
-        if (type == WINED3DDECLTYPE_FLOAT16_2)
-        {
-            shift = 4;
-        }
-        else if (type == WINED3DDECLTYPE_FLOAT16_4)
-        {
-            shift = 8;
-            /* Pre-shift the last 4 bytes in the FLOAT16_4 by 4 bytes - this makes FLOAT16_2 and FLOAT16_4 conversions
-             * compatible
-             */
-            for (j = 4; j < 8; ++j)
-            {
-                ret[(DWORD_PTR)strided->u.input[i].lpData + j] += 4;
-            }
-        }
-        else
-        {
-            shift = 0;
-        }
-        This->conv_stride += shift;
-
-        if (shift)
-        {
-            orig_type_size = WINED3D_ATR_TYPESIZE(type) * WINED3D_ATR_SIZE(type);
-            for (j = (DWORD_PTR)strided->u.input[i].lpData + orig_type_size; j < stride; ++j)
-            {
-                ret[j] += shift;
-            }
-        }
-    }
-
-    if (TRACE_ON(d3d))
-    {
-        TRACE("Dumping conversion shift:\n");
-        for (i = 0; i < stride; ++i)
-        {
-            TRACE("[%d]", ret[i]);
-        }
-        TRACE("\n");
-    }
-
-    return ret;
-}
-
-static inline BOOL process_converted_attribute(IWineD3DVertexBufferImpl *This,
-        const enum vbo_conversion_type conv_type, const WineDirect3DStridedData *attrib,
-        DWORD *stride_this_run, const DWORD type)
+static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
+        const enum wined3d_buffer_conversion_type conversion_type,
+        const WineDirect3DStridedData *attrib, DWORD *stride_this_run, const DWORD type)
 {
     DWORD attrib_size;
     BOOL ret = FALSE;
-    int i;
+    unsigned int i;
     DWORD offset = This->resource.wineD3DDevice->stateBlock->streamOffset[attrib->streamNo];
     DWORD_PTR data;
 
@@ -403,8 +161,9 @@ static inline BOOL process_converted_attribute(IWineD3DVertexBufferImpl *This,
              */
             TRACE("Reconverting because converted attributes occur, and the stride changed\n");
             This->stride = *stride_this_run;
-            HeapFree(GetProcessHeap(), HEAP_ZERO_MEMORY, This->conv_map);
-            This->conv_map = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This->conv_map) * This->stride);
+            HeapFree(GetProcessHeap(), HEAP_ZERO_MEMORY, This->conversion_map);
+            This->conversion_map = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                    sizeof(*This->conversion_map) * This->stride);
             ret = TRUE;
         }
     }
@@ -413,19 +172,19 @@ static inline BOOL process_converted_attribute(IWineD3DVertexBufferImpl *This,
     attrib_size = WINED3D_ATR_SIZE(type) * WINED3D_ATR_TYPESIZE(type);
     for (i = 0; i < attrib_size; ++i)
     {
-        if (This->conv_map[data + i] != conv_type)
+        if (This->conversion_map[data + i] != conversion_type)
         {
             TRACE("Byte %ld in vertex changed\n", i + data);
-            TRACE("It was type %d, is %d now\n", This->conv_map[data + i], conv_type);
+            TRACE("It was type %d, is %d now\n", This->conversion_map[data + i], conversion_type);
             ret = TRUE;
-            This->conv_map[data + i] = conv_type;
+            This->conversion_map[data + i] = conversion_type;
         }
     }
 
     return ret;
 }
 
-static inline BOOL check_attribute(IWineD3DVertexBufferImpl *This,
+static BOOL buffer_check_attribute(struct wined3d_buffer *This,
         const WineDirect3DStridedData *attrib, const BOOL check_d3dcolor, const BOOL is_ffp_position,
         const BOOL is_ffp_color, DWORD *stride_this_run, BOOL *float16_used)
 {
@@ -435,13 +194,13 @@ static inline BOOL check_attribute(IWineD3DVertexBufferImpl *This,
     /* Ignore attributes that do not have our vbo. After that check we can be sure that the attribute is
      * there, on nonexistent attribs the vbo is 0.
      */
-    if (attrib->VBO != This->vbo) return FALSE;
+    if (attrib->VBO != This->buffer_object) return FALSE;
 
     type = attrib->dwType;
     /* Look for newly appeared conversion */
     if (!GL_SUPPORT(NV_HALF_FLOAT) && (type == WINED3DDECLTYPE_FLOAT16_2 || type == WINED3DDECLTYPE_FLOAT16_4))
     {
-        ret = process_converted_attribute(This, CONV_FLOAT16_2, attrib, stride_this_run, type);
+        ret = buffer_process_converted_attribute(This, CONV_FLOAT16_2, attrib, stride_this_run, type);
 
         if (is_ffp_position) FIXME("Test FLOAT16 fixed function processing positions\n");
         else if (is_ffp_color) FIXME("test FLOAT16 fixed function processing colors\n");
@@ -449,34 +208,100 @@ static inline BOOL check_attribute(IWineD3DVertexBufferImpl *This,
     }
     else if (check_d3dcolor && type == WINED3DDECLTYPE_D3DCOLOR)
     {
-        ret = process_converted_attribute(This, CONV_D3DCOLOR, attrib, stride_this_run, WINED3DDECLTYPE_D3DCOLOR);
+        ret = buffer_process_converted_attribute(This, CONV_D3DCOLOR,
+                attrib, stride_this_run, WINED3DDECLTYPE_D3DCOLOR);
 
         if (!is_ffp_color) FIXME("Test for non-color fixed function D3DCOLOR type\n");
     }
     else if (is_ffp_position && type == WINED3DDECLTYPE_FLOAT4)
     {
-        ret = process_converted_attribute(This, CONV_POSITIONT, attrib, stride_this_run, WINED3DDECLTYPE_FLOAT4);
+        ret = buffer_process_converted_attribute(This, CONV_POSITIONT,
+                attrib, stride_this_run, WINED3DDECLTYPE_FLOAT4);
     }
-    else if (This->conv_map)
+    else if (This->conversion_map)
     {
-        ret = process_converted_attribute(This, CONV_NONE, attrib, stride_this_run, type);
+        ret = buffer_process_converted_attribute(This, CONV_NONE,
+                attrib, stride_this_run, type);
     }
 
     return ret;
 }
 
-static inline BOOL IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *This)
+static UINT *find_conversion_shift(struct wined3d_buffer *This,
+        const WineDirect3DVertexStridedData *strided, UINT stride)
+{
+    UINT *ret, i, j, shift, orig_type_size;
+    DWORD type;
+
+    if (!stride)
+    {
+        TRACE("No shift\n");
+        return NULL;
+    }
+
+    This->conversion_stride = stride;
+    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DWORD) * stride);
+    for (i = 0; i < MAX_ATTRIBS; ++i)
+    {
+        if (strided->u.input[i].VBO != This->buffer_object) continue;
+
+        type = strided->u.input[i].dwType;
+        if (type == WINED3DDECLTYPE_FLOAT16_2)
+        {
+            shift = 4;
+        }
+        else if (type == WINED3DDECLTYPE_FLOAT16_4)
+        {
+            shift = 8;
+            /* Pre-shift the last 4 bytes in the FLOAT16_4 by 4 bytes - this makes FLOAT16_2 and FLOAT16_4 conversions
+             * compatible
+             */
+            for (j = 4; j < 8; ++j)
+            {
+                ret[(DWORD_PTR)strided->u.input[i].lpData + j] += 4;
+            }
+        }
+        else
+        {
+            shift = 0;
+        }
+        This->conversion_stride += shift;
+
+        if (shift)
+        {
+            orig_type_size = WINED3D_ATR_TYPESIZE(type) * WINED3D_ATR_SIZE(type);
+            for (j = (DWORD_PTR)strided->u.input[i].lpData + orig_type_size; j < stride; ++j)
+            {
+                ret[j] += shift;
+            }
+        }
+    }
+
+    if (TRACE_ON(d3d))
+    {
+        TRACE("Dumping conversion shift:\n");
+        for (i = 0; i < stride; ++i)
+        {
+            TRACE("[%d]", ret[i]);
+        }
+        TRACE("\n");
+    }
+
+    return ret;
+}
+
+static BOOL buffer_find_decl(struct wined3d_buffer *This)
 {
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-    BOOL ret = FALSE;
-    int i;
-    DWORD stride_this_run = 0;
+    UINT stride_this_run = 0;
     BOOL float16_used = FALSE;
+    BOOL ret = FALSE;
+    unsigned int i;
 
     /* In d3d7 the vertex buffer declaration NEVER changes because it is stored in the d3d7 vertex buffer.
      * Once we have our declaration there is no need to look it up again.
      */
-    if (((IWineD3DImpl *)device->wineD3D)->dxVersion == 7 && This->Flags & VBFLAG_HASDESC) return FALSE;
+    if (((IWineD3DImpl *)device->wineD3D)->dxVersion == 7 && This->flags & WINED3D_BUFFER_HASDESC) return FALSE;
 
     TRACE("Finding vertex buffer conversion information\n");
     /* Certain declaration types need some fixups before we can pass them to
@@ -528,15 +353,15 @@ static inline BOOL IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
          */
         if (!((IWineD3DVertexDeclarationImpl *) device->stateBlock->vertexDecl)->half_float_conv_needed)
         {
-            if (This->conv_map)
+            if (This->conversion_map)
             {
                 TRACE("Now using shaders without conversion, but conversion used before\n");
-                HeapFree(GetProcessHeap(), 0, This->conv_map);
-                HeapFree(GetProcessHeap(), 0, This->conv_shift);
-                This->conv_map = NULL;
+                HeapFree(GetProcessHeap(), 0, This->conversion_map);
+                HeapFree(GetProcessHeap(), 0, This->conversion_shift);
+                This->conversion_map = NULL;
                 This->stride = 0;
-                This->conv_shift = NULL;
-                This->conv_stride = 0;
+                This->conversion_shift = NULL;
+                This->conversion_stride = 0;
                 return TRUE;
             }
             else
@@ -546,17 +371,17 @@ static inline BOOL IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
         }
         for (i = 0; i < MAX_ATTRIBS; ++i)
         {
-            ret = check_attribute(This, &device->strided_streams.u.input[i],
+            ret = buffer_check_attribute(This, &device->strided_streams.u.input[i],
                     FALSE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
         }
 
         /* Recalculate the conversion shift map if the declaration has changed,
          * and we're using float16 conversion or used it on the last run
          */
-        if (ret && (float16_used || This->conv_map))
+        if (ret && (float16_used || This->conversion_map))
         {
-            HeapFree(GetProcessHeap(), 0, This->conv_shift);
-            This->conv_shift = find_conversion_shift(This, &device->strided_streams, This->stride);
+            HeapFree(GetProcessHeap(), 0, This->conversion_shift);
+            This->conversion_shift = find_conversion_shift(This, &device->strided_streams, This->stride);
         }
     }
     else
@@ -566,40 +391,40 @@ static inline BOOL IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
          * the attributes that our current fixed function pipeline implementation cares for.
          */
         BOOL support_d3dcolor = GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA);
-        ret = check_attribute(This, &device->strided_streams.u.s.position,
+        ret = buffer_check_attribute(This, &device->strided_streams.u.s.position,
                 TRUE, TRUE,  FALSE, &stride_this_run, &float16_used) || ret;
-        ret = check_attribute(This, &device->strided_streams.u.s.normal,
+        ret = buffer_check_attribute(This, &device->strided_streams.u.s.normal,
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = check_attribute(This, &device->strided_streams.u.s.diffuse,
+        ret = buffer_check_attribute(This, &device->strided_streams.u.s.diffuse,
                 !support_d3dcolor, FALSE, TRUE,  &stride_this_run, &float16_used) || ret;
-        ret = check_attribute(This, &device->strided_streams.u.s.specular,
+        ret = buffer_check_attribute(This, &device->strided_streams.u.s.specular,
                 !support_d3dcolor, FALSE, TRUE,  &stride_this_run, &float16_used) || ret;
-        ret = check_attribute(This, &device->strided_streams.u.s.texCoords[0],
+        ret = buffer_check_attribute(This, &device->strided_streams.u.s.texCoords[0],
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = check_attribute(This, &device->strided_streams.u.s.texCoords[1],
+        ret = buffer_check_attribute(This, &device->strided_streams.u.s.texCoords[1],
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = check_attribute(This, &device->strided_streams.u.s.texCoords[2],
+        ret = buffer_check_attribute(This, &device->strided_streams.u.s.texCoords[2],
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = check_attribute(This, &device->strided_streams.u.s.texCoords[3],
+        ret = buffer_check_attribute(This, &device->strided_streams.u.s.texCoords[3],
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = check_attribute(This, &device->strided_streams.u.s.texCoords[4],
+        ret = buffer_check_attribute(This, &device->strided_streams.u.s.texCoords[4],
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = check_attribute(This, &device->strided_streams.u.s.texCoords[5],
+        ret = buffer_check_attribute(This, &device->strided_streams.u.s.texCoords[5],
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = check_attribute(This, &device->strided_streams.u.s.texCoords[6],
+        ret = buffer_check_attribute(This, &device->strided_streams.u.s.texCoords[6],
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = check_attribute(This, &device->strided_streams.u.s.texCoords[7],
+        ret = buffer_check_attribute(This, &device->strided_streams.u.s.texCoords[7],
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
 
         if (float16_used) FIXME("Float16 conversion used with fixed function vertex processing\n");
     }
 
-    if (stride_this_run == 0 && This->conv_map)
+    if (stride_this_run == 0 && This->conversion_map)
     {
         /* Sanity test */
         if (!ret) ERR("no converted attributes found, old conversion map exists, and no declaration change?\n");
-        HeapFree(GetProcessHeap(), 0, This->conv_map);
-        This->conv_map = NULL;
+        HeapFree(GetProcessHeap(), 0, This->conversion_map);
+        This->conversion_map = NULL;
         This->stride = 0;
     }
 
@@ -608,132 +433,225 @@ static inline BOOL IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
     return ret;
 }
 
-static void check_vbo_size(IWineD3DVertexBufferImpl *This)
+static void buffer_check_buffer_object_size(struct wined3d_buffer *This)
 {
-    DWORD size = This->conv_stride ? This->conv_stride * (This->resource.size / This->stride) : This->resource.size;
-    if (This->vbo_size != size)
+    UINT size = This->conversion_stride ?
+            This->conversion_stride * (This->resource.size / This->stride) : This->resource.size;
+    if (This->buffer_object_size != size)
     {
-        TRACE("Old size %d, creating new size %d\n", This->vbo_size, size);
+        TRACE("Old size %u, creating new size %u\n", This->buffer_object_size, size);
         ENTER_GL();
-        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
+        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->buffer_object));
         checkGLcall("glBindBufferARB");
-        GL_EXTCALL(glBufferDataARB(GL_ARRAY_BUFFER_ARB, size, NULL, This->vbo_usage));
-        This->vbo_size = size;
+        GL_EXTCALL(glBufferDataARB(GL_ARRAY_BUFFER_ARB, size, NULL, This->buffer_object_usage));
+        This->buffer_object_size = size;
         checkGLcall("glBufferDataARB");
         LEAVE_GL();
     }
 }
 
-static void CreateVBO(IWineD3DVertexBufferImpl *This)
+static inline void fixup_d3dcolor(DWORD *dst_color)
 {
-    GLenum error, glUsage;
-    DWORD vboUsage = This->resource.usage;
-    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    DWORD src_color = *dst_color;
 
-    TRACE("Creating an OpenGL vertex buffer object for IWineD3DVertexBuffer %p  Usage(%s)\n",
-            This, debug_d3dusage(vboUsage));
-
-    /* Make sure that a context is there. Needed in a multithreaded environment. Otherwise this call is a nop */
-    ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-    ENTER_GL();
-
-    /* Make sure that the gl error is cleared. Do not use checkGLcall
-    * here because checkGLcall just prints a fixme and continues. However,
-    * if an error during VBO creation occurs we can fall back to non-vbo operation
-    * with full functionality(but performance loss)
-    */
-    while(glGetError() != GL_NO_ERROR);
-
-    /* Basically the FVF parameter passed to CreateVertexBuffer is no good
-    * It is the FVF set with IWineD3DDevice::SetFVF or the Vertex Declaration set with
-    * IWineD3DDevice::SetVertexDeclaration that decides how the vertices in the buffer
-    * look like. This means that on each DrawPrimitive call the vertex buffer has to be verified
-    * to check if the rhw and color values are in the correct format.
-    */
-
-    GL_EXTCALL(glGenBuffersARB(1, &This->vbo));
-    error = glGetError();
-    if (This->vbo == 0 || error != GL_NO_ERROR)
-    {
-        WARN("Failed to create a VBO with error %s (%#x)\n", debug_glerror(error), error);
-        goto error;
-    }
-
-    GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
-    error = glGetError();
-    if (error != GL_NO_ERROR)
-    {
-        WARN("Failed to bind the VBO with error %s (%#x)\n", debug_glerror(error), error);
-        goto error;
-    }
-
-    /* Don't use static, because dx apps tend to update the buffer
-    * quite often even if they specify 0 usage. Because we always keep the local copy
-    * we never read from the vbo and can create a write only opengl buffer.
-    */
-    switch(vboUsage & (WINED3DUSAGE_WRITEONLY | WINED3DUSAGE_DYNAMIC))
-    {
-        case WINED3DUSAGE_WRITEONLY | WINED3DUSAGE_DYNAMIC:
-        case WINED3DUSAGE_DYNAMIC:
-            TRACE("Gl usage = GL_STREAM_DRAW\n");
-            glUsage = GL_STREAM_DRAW_ARB;
-            break;
-
-        case WINED3DUSAGE_WRITEONLY:
-        default:
-            TRACE("Gl usage = GL_DYNAMIC_DRAW\n");
-            glUsage = GL_DYNAMIC_DRAW_ARB;
-            break;
-    }
-
-    /* Reserve memory for the buffer. The amount of data won't change
-    * so we are safe with calling glBufferData once with a NULL ptr and
-    * calling glBufferSubData on updates
-    */
-    GL_EXTCALL(glBufferDataARB(GL_ARRAY_BUFFER_ARB, This->resource.size, NULL, glUsage));
-    error = glGetError();
-    if (error != GL_NO_ERROR)
-    {
-        WARN("glBufferDataARB failed with error %s (%#x)\n", debug_glerror(error), error);
-        goto error;
-    }
-    This->vbo_size = This->resource.size;
-    This->vbo_usage = glUsage;
-    This->dirtystart = 0;
-    This->dirtyend = This->resource.size;
-    This->Flags |= VBFLAG_DIRTY;
-
-    LEAVE_GL();
-
-    return;
-
-error:
-    /* Clean up all vbo init, but continue because we can work without a vbo :-) */
-    FIXME("Failed to create a vertex buffer object. Continuing, but performance issues can occur\n");
-    if (This->vbo) GL_EXTCALL(glDeleteBuffersARB(1, &This->vbo));
-    This->vbo = 0;
-    LEAVE_GL();
-
-    return;
+    /* Color conversion like in drawStridedSlow. watch out for little endianity
+     * If we want that stuff to work on big endian machines too we have to consider more things
+     *
+     * 0xff000000: Alpha mask
+     * 0x00ff0000: Blue mask
+     * 0x0000ff00: Green mask
+     * 0x000000ff: Red mask
+     */
+    *dst_color = 0;
+    *dst_color |= (src_color & 0xff00ff00);         /* Alpha Green */
+    *dst_color |= (src_color & 0x00ff0000) >> 16;   /* Red */
+    *dst_color |= (src_color & 0x000000ff) << 16;   /* Blue */
 }
 
-static void STDMETHODCALLTYPE IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *iface)
+static inline void fixup_transformed_pos(float *p)
 {
-    IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *) iface;
-    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-    BYTE *data;
-    UINT start = 0, end = 0, vertices;
-    BOOL declChanged = FALSE;
-    int i, j;
-    TRACE("(%p)->()\n", This);
+    float x, y, z, w;
 
-    if (!This->vbo)
+    /* rhw conversion like in drawStridedSlow */
+    if (p[3] == 1.0 || ((p[3] < eps) && (p[3] > -eps)))
+    {
+        x = p[0];
+        y = p[1];
+        z = p[2];
+        w = 1.0;
+    }
+    else
+    {
+        w = 1.0 / p[3];
+        x = p[0] * w;
+        y = p[1] * w;
+        z = p[2] * w;
+    }
+    p[0] = x;
+    p[1] = y;
+    p[2] = z;
+    p[3] = w;
+}
+
+const BYTE *buffer_get_memory(IWineD3DBuffer *iface, UINT offset, GLuint *buffer_object)
+{
+    struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
+
+    *buffer_object = This->buffer_object;
+    if (!This->buffer_object)
+    {
+        if (This->flags & WINED3D_BUFFER_CREATEBO)
+        {
+            buffer_create_buffer_object(This);
+            This->flags &= ~WINED3D_BUFFER_CREATEBO;
+            if (This->buffer_object)
+            {
+                *buffer_object = This->buffer_object;
+                return (const BYTE *)offset;
+            }
+        }
+        return This->resource.allocatedMemory + offset;
+    }
+    else
+    {
+        return (const BYTE *)offset;
+    }
+}
+
+/* IUnknown methods */
+
+static HRESULT STDMETHODCALLTYPE buffer_QueryInterface(IWineD3DBuffer *iface,
+        REFIID riid, void **object)
+{
+    TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
+
+    if (IsEqualGUID(riid, &IID_IWineD3DBuffer)
+            || IsEqualGUID(riid, &IID_IWineD3DResource)
+            || IsEqualGUID(riid, &IID_IWineD3DBase)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IUnknown_AddRef(iface);
+        *object = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
+
+    *object = NULL;
+
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE buffer_AddRef(IWineD3DBuffer *iface)
+{
+    struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
+    ULONG refcount = InterlockedIncrement(&This->resource.ref);
+
+    TRACE("%p increasing refcount to %u\n", This, refcount);
+
+    return refcount;
+}
+
+static void STDMETHODCALLTYPE buffer_UnLoad(IWineD3DBuffer *iface)
+{
+    struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
+
+    TRACE("iface %p\n", iface);
+
+    /* This is easy: The whole content is shadowed in This->resource.allocatedMemory,
+     * so we only have to destroy the vbo. Only do it if we have a vbo, which implies
+     * that vbos are supported
+     */
+    if (This->buffer_object)
+    {
+        IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+
+        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        ENTER_GL();
+        GL_EXTCALL(glDeleteBuffersARB(1, &This->buffer_object));
+        checkGLcall("glDeleteBuffersARB");
+        LEAVE_GL();
+        This->buffer_object = 0;
+        This->flags |= WINED3D_BUFFER_CREATEBO; /* Recreate the buffer object next load */
+    }
+}
+
+static ULONG STDMETHODCALLTYPE buffer_Release(IWineD3DBuffer *iface)
+{
+    struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
+    ULONG refcount = InterlockedDecrement(&This->resource.ref);
+
+    TRACE("%p decreasing refcount to %u\n", This, refcount);
+
+    if (!refcount)
+    {
+        buffer_UnLoad(iface);
+        resource_cleanup((IWineD3DResource *)iface);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return refcount;
+}
+
+/* IWineD3DBase methods */
+
+static HRESULT STDMETHODCALLTYPE buffer_GetParent(IWineD3DBuffer *iface, IUnknown **parent)
+{
+    return resource_get_parent((IWineD3DResource *)iface, parent);
+}
+
+/* IWineD3DResource methods */
+
+static HRESULT STDMETHODCALLTYPE buffer_GetDevice(IWineD3DBuffer *iface, IWineD3DDevice **device)
+{
+    return resource_get_device((IWineD3DResource *)iface, device);
+}
+
+static HRESULT STDMETHODCALLTYPE buffer_SetPrivateData(IWineD3DBuffer *iface,
+        REFGUID guid, const void *data, DWORD data_size, DWORD flags)
+{
+    return resource_set_private_data((IWineD3DResource *)iface, guid, data, data_size, flags);
+}
+
+static HRESULT STDMETHODCALLTYPE buffer_GetPrivateData(IWineD3DBuffer *iface,
+        REFGUID guid, void *data, DWORD *data_size)
+{
+    return resource_get_private_data((IWineD3DResource *)iface, guid, data, data_size);
+}
+
+static HRESULT STDMETHODCALLTYPE buffer_FreePrivateData(IWineD3DBuffer *iface, REFGUID guid)
+{
+    return resource_free_private_data((IWineD3DResource *)iface, guid);
+}
+
+static DWORD STDMETHODCALLTYPE buffer_SetPriority(IWineD3DBuffer *iface, DWORD priority)
+{
+    return resource_set_priority((IWineD3DResource *)iface, priority);
+}
+
+static DWORD STDMETHODCALLTYPE buffer_GetPriority(IWineD3DBuffer *iface)
+{
+    return resource_get_priority((IWineD3DResource *)iface);
+}
+
+static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
+{
+    struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    UINT start = 0, end = 0, vertices;
+    BOOL decl_changed = FALSE;
+    unsigned int i, j;
+    BYTE *data;
+
+    TRACE("iface %p\n", iface);
+
+    if (!This->buffer_object)
     {
         /* TODO: Make converting independent from VBOs */
-        if (This->Flags & VBFLAG_CREATEVBO)
+        if (This->flags & WINED3D_BUFFER_CREATEBO)
         {
-            CreateVBO(This);
-            This->Flags &= ~VBFLAG_CREATEVBO;
+            buffer_create_buffer_object(This);
+            This->flags &= ~WINED3D_BUFFER_CREATEBO;
         }
         else
         {
@@ -742,33 +660,33 @@ static void STDMETHODCALLTYPE IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuf
     }
 
     /* Reading the declaration makes only sense if the stateblock is finalized and the buffer bound to a stream */
-    if (device->isInDraw && This->bindCount > 0)
+    if (device->isInDraw && This->bind_count > 0)
     {
-        declChanged = IWineD3DVertexBufferImpl_FindDecl(This);
-        This->Flags |= VBFLAG_HASDESC;
+        decl_changed = buffer_find_decl(This);
+        This->flags |= WINED3D_BUFFER_HASDESC;
     }
 
-    if (!declChanged && !(This->Flags & VBFLAG_HASDESC && This->Flags & VBFLAG_DIRTY)) return;
+    if (!decl_changed && !(This->flags & WINED3D_BUFFER_HASDESC && This->flags & WINED3D_BUFFER_DIRTY)) return;
 
     /* If applications change the declaration over and over, reconverting all the time is a huge
      * performance hit. So count the declaration changes and release the VBO if there are too many
      * of them (and thus stop converting)
      */
-    if (declChanged)
+    if (decl_changed)
     {
-        ++This->declChanges;
-        This->draws = 0;
+        ++This->conversion_count;
+        This->draw_count = 0;
 
-        if (This->declChanges > VB_MAXDECLCHANGES)
+        if (This->conversion_count > VB_MAXDECLCHANGES)
         {
             FIXME("Too many declaration changes, stopping converting\n");
             ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
             ENTER_GL();
-            GL_EXTCALL(glDeleteBuffersARB(1, &This->vbo));
+            GL_EXTCALL(glDeleteBuffersARB(1, &This->buffer_object));
             checkGLcall("glDeleteBuffersARB");
             LEAVE_GL();
-            This->vbo = 0;
-            HeapFree(GetProcessHeap(), 0, This->conv_shift);
+            This->buffer_object = 0;
+            HeapFree(GetProcessHeap(), 0, This->conversion_shift);
 
             /* The stream source state handler might have read the memory of the vertex buffer already
              * and got the memory in the vbo which is not valid any longer. Dirtify the stream source
@@ -779,7 +697,7 @@ static void STDMETHODCALLTYPE IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuf
 
             return;
         }
-        check_vbo_size(This);
+        buffer_check_buffer_object_size(This);
     }
     else
     {
@@ -787,11 +705,11 @@ static void STDMETHODCALLTYPE IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuf
          * changes it every minute drop the VBO after VB_MAX_DECL_CHANGES minutes. So count draws without
          * decl changes and reset the decl change count after a specific number of them
          */
-        ++This->draws;
-        if (This->draws > VB_RESETDECLCHANGE) This->declChanges = 0;
+        ++This->draw_count;
+        if (This->draw_count > VB_RESETDECLCHANGE) This->conversion_count = 0;
     }
 
-    if (declChanged)
+    if (decl_changed)
     {
         /* The declaration changed, reload the whole buffer */
         WARN("Reloading buffer because of decl change\n");
@@ -801,23 +719,23 @@ static void STDMETHODCALLTYPE IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuf
     else
     {
         /* No decl change, but dirty data, reload the changed stuff */
-        if (This->conv_shift)
+        if (This->conversion_shift)
         {
-            if (This->dirtystart != 0 || This->dirtyend != 0)
+            if (This->dirty_start != 0 || This->dirty_end != 0)
             {
                 FIXME("Implement partial buffer loading with shifted conversion\n");
             }
         }
-        start = This->dirtystart;
-        end = This->dirtyend;
+        start = This->dirty_start;
+        end = This->dirty_end;
     }
 
     /* Mark the buffer clean */
-    This->Flags &= ~VBFLAG_DIRTY;
-    This->dirtystart = 0;
-    This->dirtyend = 0;
+    This->flags &= ~WINED3D_BUFFER_DIRTY;
+    This->dirty_start = 0;
+    This->dirty_end = 0;
 
-    if (!This->conv_map)
+    if (!This->conversion_map)
     {
         /* That means that there is nothing to fixup. Just upload from This->resource.allocatedMemory
          * directly into the vbo. Do not free the system memory copy because drawPrimitive may need it if
@@ -830,7 +748,7 @@ static void STDMETHODCALLTYPE IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuf
             ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
         }
         ENTER_GL();
-        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
+        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->buffer_object));
         checkGLcall("glBindBufferARB");
         GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, start, end-start, This->resource.allocatedMemory + start));
         checkGLcall("glBufferSubDataARB");
@@ -841,24 +759,25 @@ static void STDMETHODCALLTYPE IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuf
     /* Now for each vertex in the buffer that needs conversion */
     vertices = This->resource.size / This->stride;
 
-    if (This->conv_shift)
+    if (This->conversion_shift)
     {
         TRACE("Shifted conversion\n");
-        data = HeapAlloc(GetProcessHeap(), 0, vertices * This->conv_stride);
+        data = HeapAlloc(GetProcessHeap(), 0, vertices * This->conversion_stride);
 
         for (i = start / This->stride; i < min((end / This->stride) + 1, vertices); ++i)
         {
             for (j = 0; j < This->stride; ++j)
             {
-                switch(This->conv_map[j])
+                switch(This->conversion_map[j])
                 {
                     case CONV_NONE:
-                        data[This->conv_stride * i + j + This->conv_shift[j]] = This->resource.allocatedMemory[This->stride * i + j];
+                        data[This->conversion_stride * i + j + This->conversion_shift[j]]
+                                = This->resource.allocatedMemory[This->stride * i + j];
                         break;
 
                     case CONV_FLOAT16_2:
                     {
-                        float *out = (float *)(&data[This->conv_stride * i + j + This->conv_shift[j]]);
+                        float *out = (float *)(&data[This->conversion_stride * i + j + This->conversion_shift[j]]);
                         const WORD *in = (WORD *)(&This->resource.allocatedMemory[i * This->stride + j]);
 
                         out[1] = float_16_to_32(in + 1);
@@ -868,15 +787,16 @@ static void STDMETHODCALLTYPE IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuf
                     }
 
                     default:
-                        FIXME("Unimplemented conversion %d in shifted conversion\n", This->conv_map[j]);
+                        FIXME("Unimplemented conversion %d in shifted conversion\n", This->conversion_map[j]);
+                        break;
                 }
             }
         }
 
         ENTER_GL();
-        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
+        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->buffer_object));
         checkGLcall("glBindBufferARB");
-        GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, vertices * This->conv_stride, data));
+        GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, vertices * This->conversion_stride, data));
         checkGLcall("glBufferSubDataARB");
         LEAVE_GL();
     }
@@ -888,7 +808,7 @@ static void STDMETHODCALLTYPE IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuf
         {
             for (j = 0; j < This->stride; ++j)
             {
-                switch(This->conv_map[j])
+                switch(This->conversion_map[j])
                 {
                     case CONV_NONE:
                         /* Done already */
@@ -907,13 +827,13 @@ static void STDMETHODCALLTYPE IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuf
                     case CONV_FLOAT16_2:
                         ERR("Did not expect FLOAT16 conversion in unshifted conversion\n");
                     default:
-                        FIXME("Unimplemented conversion %d in shifted conversion\n", This->conv_map[j]);
+                        FIXME("Unimplemented conversion %d in shifted conversion\n", This->conversion_map[j]);
                 }
             }
         }
 
         ENTER_GL();
-        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
+        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->buffer_object));
         checkGLcall("glBindBufferARB");
         GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, start, end - start, data + start));
         checkGLcall("glBufferSubDataARB");
@@ -923,163 +843,111 @@ static void STDMETHODCALLTYPE IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuf
     HeapFree(GetProcessHeap(), 0, data);
 }
 
-static void STDMETHODCALLTYPE IWineD3DVertexBufferImpl_UnLoad(IWineD3DVertexBuffer *iface)
-{
-    IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
-    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-
-    TRACE("(%p)\n", This);
-
-    /* This is easy: The whole content is shadowed in This->resource.allocatedMemory,
-     * so we only have to destroy the vbo. Only do it if we have a vbo, which implies
-     * that vbos are supported
-     */
-    if (This->vbo)
-    {
-        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-        ENTER_GL();
-        GL_EXTCALL(glDeleteBuffersARB(1, &This->vbo));
-        checkGLcall("glDeleteBuffersARB");
-        LEAVE_GL();
-        This->vbo = 0;
-        This->Flags |= VBFLAG_CREATEVBO; /* Recreate the VBO next load */
-    }
-}
-
-static WINED3DRESOURCETYPE STDMETHODCALLTYPE IWineD3DVertexBufferImpl_GetType(IWineD3DVertexBuffer *iface)
+static WINED3DRESOURCETYPE STDMETHODCALLTYPE buffer_GetType(IWineD3DBuffer *iface)
 {
     return resource_get_type((IWineD3DResource *)iface);
 }
 
-/* IWineD3DVertexBuffer methods */
+/* IWineD3DBuffer methods */
 
-static HRESULT STDMETHODCALLTYPE IWineD3DVertexBufferImpl_Lock(IWineD3DVertexBuffer *iface,
-        UINT OffsetToLock, UINT SizeToLock, BYTE **ppbData, DWORD Flags)
+static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, UINT size, BYTE **data, DWORD flags)
 {
-    IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
-    BYTE *data;
+    struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
 
-    TRACE("(%p)->%d, %d, %p, %08x\n", This, OffsetToLock, SizeToLock, ppbData, Flags);
+    TRACE("iface %p, offset %u, size %u, data %p, flags %#x\n", iface, offset, size, data, flags);
 
-    InterlockedIncrement(&This->lockcount);
+    InterlockedIncrement(&This->lock_count);
 
-    if (This->Flags & VBFLAG_DIRTY)
+    if (This->flags & WINED3D_BUFFER_DIRTY)
     {
-        if (This->dirtystart > OffsetToLock) This->dirtystart = OffsetToLock;
-        if (SizeToLock)
+        if (This->dirty_start > offset) This->dirty_start = offset;
+
+        if (size)
         {
-            if (This->dirtyend < OffsetToLock + SizeToLock) This->dirtyend = OffsetToLock + SizeToLock;
+            if (This->dirty_end < offset + size) This->dirty_end = offset + size;
         }
         else
         {
-            This->dirtyend = This->resource.size;
+            This->dirty_end = This->resource.size;
         }
     }
     else
     {
-        This->dirtystart = OffsetToLock;
-        if (SizeToLock) This->dirtyend = OffsetToLock + SizeToLock;
-        else This->dirtyend = This->resource.size;
+        This->dirty_start = offset;
+        if (size) This->dirty_end = offset + size;
+        else This->dirty_end = This->resource.size;
     }
 
-    data = This->resource.allocatedMemory;
-    This->Flags |= VBFLAG_DIRTY;
-    *ppbData = data + OffsetToLock;
+    This->flags |= WINED3D_BUFFER_DIRTY;
 
-    TRACE("(%p) : returning memory of %p (base:%p,offset:%u)\n", This, data + OffsetToLock, data, OffsetToLock);
+    *data = This->resource.allocatedMemory + offset;
+
+    TRACE("Returning memory at %p (base %p, offset %u)\n", *data, This->resource.allocatedMemory, offset);
     /* TODO: check Flags compatibility with This->currentDesc.Usage (see MSDN) */
 
     return WINED3D_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE IWineD3DVertexBufferImpl_Unlock(IWineD3DVertexBuffer *iface)
+static HRESULT STDMETHODCALLTYPE buffer_Unmap(IWineD3DBuffer *iface)
 {
-    IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
-    LONG lockcount;
+    struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
 
     TRACE("(%p)\n", This);
 
-    lockcount = InterlockedDecrement(&This->lockcount);
-    if (lockcount > 0)
+    if (InterlockedDecrement(&This->lock_count))
     {
         /* Delay loading the buffer until everything is unlocked */
-        TRACE("Ignoring the unlock\n");
+        TRACE("Ignoring unlock\n");
         return WINED3D_OK;
     }
 
-    if (This->Flags & VBFLAG_HASDESC)
+    if (This->flags & WINED3D_BUFFER_HASDESC)
     {
-        IWineD3DVertexBufferImpl_PreLoad(iface);
+        buffer_PreLoad(iface);
     }
 
     return WINED3D_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE IWineD3DVertexBufferImpl_GetDesc(IWineD3DVertexBuffer *iface,
-        WINED3DVERTEXBUFFER_DESC *pDesc)
+static HRESULT STDMETHODCALLTYPE buffer_GetDesc(IWineD3DBuffer *iface, WINED3DVERTEXBUFFER_DESC *desc)
 {
-    IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
+    struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
 
     TRACE("(%p)\n", This);
 
-    pDesc->Format = This->resource.format;
-    pDesc->Type = This->resource.resourceType;
-    pDesc->Usage = This->resource.usage;
-    pDesc->Pool = This->resource.pool;
-    pDesc->Size = This->resource.size;
-    pDesc->FVF = This->fvf;
+    desc->Format = This->resource.format;
+    desc->Type = This->resource.resourceType;
+    desc->Usage = This->resource.usage;
+    desc->Pool = This->resource.pool;
+    desc->Size = This->resource.size;
+    desc->FVF = This->fvf;
 
     return WINED3D_OK;
 }
 
-const IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl =
+const struct IWineD3DBufferVtbl wined3d_buffer_vtbl =
 {
     /* IUnknown methods */
-    IWineD3DVertexBufferImpl_QueryInterface,
-    IWineD3DVertexBufferImpl_AddRef,
-    IWineD3DVertexBufferImpl_Release,
+    buffer_QueryInterface,
+    buffer_AddRef,
+    buffer_Release,
     /* IWineD3DBase methods */
-    IWineD3DVertexBufferImpl_GetParent,
+    buffer_GetParent,
     /* IWineD3DResource methods */
-    IWineD3DVertexBufferImpl_GetDevice,
-    IWineD3DVertexBufferImpl_SetPrivateData,
-    IWineD3DVertexBufferImpl_GetPrivateData,
-    IWineD3DVertexBufferImpl_FreePrivateData,
-    IWineD3DVertexBufferImpl_SetPriority,
-    IWineD3DVertexBufferImpl_GetPriority,
-    IWineD3DVertexBufferImpl_PreLoad,
-    IWineD3DVertexBufferImpl_UnLoad,
-    IWineD3DVertexBufferImpl_GetType,
-    /* IWineD3DVertexBuffer methods */
-    IWineD3DVertexBufferImpl_Lock,
-    IWineD3DVertexBufferImpl_Unlock,
-    IWineD3DVertexBufferImpl_GetDesc,
+    buffer_GetDevice,
+    buffer_SetPrivateData,
+    buffer_GetPrivateData,
+    buffer_FreePrivateData,
+    buffer_SetPriority,
+    buffer_GetPriority,
+    buffer_PreLoad,
+    buffer_UnLoad,
+    buffer_GetType,
+    /* IWineD3DBuffer methods */
+    buffer_Map,
+    buffer_Unmap,
+    buffer_GetDesc,
 };
-
-const BYTE *IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer *iface, DWORD iOffset, GLint *vbo)
-{
-    IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
-
-    *vbo = This->vbo;
-    if (!This->vbo)
-    {
-        if (This->Flags & VBFLAG_CREATEVBO)
-        {
-            CreateVBO(This);
-            This->Flags &= ~VBFLAG_CREATEVBO;
-            if (This->vbo)
-            {
-                *vbo = This->vbo;
-                return (const BYTE *)iOffset;
-            }
-        }
-        return This->resource.allocatedMemory + iOffset;
-    }
-    else
-    {
-        return (const BYTE *)iOffset;
-    }
-}
 
 /* IUnknown methods */
 

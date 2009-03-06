@@ -4117,8 +4117,7 @@ IDirect3DDeviceImpl_7_DrawPrimitiveVB(IDirect3DDevice7 *iface,
 
     /* Get the FVF of the vertex buffer, and its stride */
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DVertexBuffer_GetDesc(vb->wineD3DVertexBuffer,
-                                      &Desc);
+    hr = IWineD3DBuffer_GetDesc(vb->wineD3DVertexBuffer, &Desc);
     if(hr != D3D_OK)
     {
         ERR("(%p) IWineD3DVertexBuffer::GetDesc failed with hr = %08x\n", This, hr);
@@ -4247,8 +4246,7 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
 
     EnterCriticalSection(&ddraw_cs);
     /* Get the FVF of the vertex buffer, and its stride */
-    hr = IWineD3DVertexBuffer_GetDesc(vb->wineD3DVertexBuffer,
-                                      &Desc);
+    hr = IWineD3DBuffer_GetDesc(vb->wineD3DVertexBuffer, &Desc);
     if(hr != D3D_OK)
     {
         ERR("(%p) IWineD3DVertexBuffer::GetDesc failed with hr = %08x\n", This, hr);

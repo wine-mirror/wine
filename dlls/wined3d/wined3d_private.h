@@ -1260,56 +1260,6 @@ HRESULT resource_set_private_data(IWineD3DResource *iface, REFGUID guid,
 #define RESOURCE_ALIGNMENT 32
 
 /*****************************************************************************
- * IWineD3DVertexBuffer implementation structure (extends IWineD3DResourceImpl)
- */
-enum vbo_conversion_type {
-    CONV_NONE               = 0,
-    CONV_D3DCOLOR           = 1,
-    CONV_POSITIONT          = 2,
-    CONV_FLOAT16_2          = 3 /* Also handles FLOAT16_4 */
-
-    /* TODO: Add tests and support for FLOAT16_4 POSITIONT, D3DCOLOR position, other
-     * fixed function semantics as D3DCOLOR or FLOAT16
-     */
-};
-
-typedef struct IWineD3DVertexBufferImpl
-{
-    /* IUnknown & WineD3DResource Information     */
-    const IWineD3DVertexBufferVtbl *lpVtbl;
-    IWineD3DResourceClass     resource;
-
-    /* WineD3DVertexBuffer specifics */
-    DWORD                     fvf;
-
-    /* Vertex buffer object support */
-    GLuint                    vbo;
-    BYTE                      Flags;
-    LONG                      bindCount;
-    LONG                      vbo_size;
-    GLenum                    vbo_usage;
-
-    UINT                      dirtystart, dirtyend;
-    LONG                      lockcount;
-
-    LONG                      declChanges, draws;
-    /* Last description of the buffer */
-    DWORD                     stride;       /* 0 if no conversion               */
-    enum vbo_conversion_type  *conv_map;    /* NULL if no conversion            */
-
-    /* Extra load offsets, for FLOAT16 conversion */
-    DWORD                     *conv_shift;  /* NULL if no shifted conversion    */
-    DWORD                     conv_stride;  /* 0 if no shifted conversion       */
-} IWineD3DVertexBufferImpl;
-
-extern const IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl;
-
-#define VBFLAG_OPTIMIZED      0x01    /* Optimize has been called for the VB */
-#define VBFLAG_DIRTY          0x02    /* Buffer data has been modified */
-#define VBFLAG_HASDESC        0x04    /* A vertex description has been found */
-#define VBFLAG_CREATEVBO      0x08    /* Attempt to create a VBO next PreLoad */
-
-/*****************************************************************************
  * IWineD3DIndexBuffer implementation structure (extends IWineD3DResourceImpl)
  */
 typedef struct IWineD3DIndexBufferImpl
@@ -1843,7 +1793,7 @@ struct IWineD3DStateBlockImpl
     BOOL                      streamIsUP;
     UINT                      streamStride[MAX_STREAMS];
     UINT                      streamOffset[MAX_STREAMS + 1 /* tesselated pseudo-stream */ ];
-    IWineD3DVertexBuffer     *streamSource[MAX_STREAMS];
+    IWineD3DBuffer           *streamSource[MAX_STREAMS];
     UINT                      streamFreq[MAX_STREAMS + 1];
     UINT                      streamFlags[MAX_STREAMS + 1];     /*0 | WINED3DSTREAMSOURCE_INSTANCEDATA | WINED3DSTREAMSOURCE_INDEXEDDATA  */
 
@@ -1978,15 +1928,54 @@ typedef struct  WineQueryEventData {
 } WineQueryEventData;
 
 /* IWineD3DBuffer */
+
+/* TODO: Add tests and support for FLOAT16_4 POSITIONT, D3DCOLOR position, other
+ * fixed function semantics as D3DCOLOR or FLOAT16 */
+enum wined3d_buffer_conversion_type
+{
+    CONV_NONE,
+    CONV_D3DCOLOR,
+    CONV_POSITIONT,
+    CONV_FLOAT16_2, /* Also handles FLOAT16_4 */
+};
+
+#define WINED3D_BUFFER_OPTIMIZED    0x01    /* Optimize has been called for the buffer */
+#define WINED3D_BUFFER_DIRTY        0x02    /* Buffer data has been modified */
+#define WINED3D_BUFFER_HASDESC      0x04    /* A vertex description has been found */
+#define WINED3D_BUFFER_CREATEBO     0x08    /* Attempt to create a buffer object next PreLoad */
+
 struct wined3d_buffer
 {
     const struct IWineD3DBufferVtbl *vtbl;
     IWineD3DResourceClass resource;
 
     struct wined3d_buffer_desc desc;
+
+    GLuint buffer_object;
+    GLenum buffer_object_usage;
+    UINT buffer_object_size;
+    LONG bind_count;
+    DWORD flags;
+
+    UINT dirty_start;
+    UINT dirty_end;
+    LONG lock_count;
+
+    /* legacy vertex buffers */
+    DWORD fvf;
+
+    /* conversion stuff */
+    UINT conversion_count;
+    UINT draw_count;
+    UINT stride;                                            /* 0 if no conversion */
+    UINT conversion_stride;                                 /* 0 if no shifted conversion */
+    enum wined3d_buffer_conversion_type *conversion_map;    /* NULL if no conversion */
+    /* Extra load offsets, for FLOAT16 conversion */
+    UINT *conversion_shift;                                 /* NULL if no shifted conversion */
 };
 
 extern const IWineD3DBufferVtbl wined3d_buffer_vtbl;
+const BYTE *buffer_get_memory(IWineD3DBuffer *iface, UINT offset, GLuint *buffer_object);
 
 /* IWineD3DRendertargetView */
 struct wined3d_rendertarget_view
@@ -2108,15 +2097,6 @@ BOOL getDepthStencilBits(WINED3DFORMAT fmt, short *depthSize, short *stencilSize
 void multiply_matrix(WINED3DMATRIX *dest, const WINED3DMATRIX *src1, const WINED3DMATRIX *src2);
 unsigned int count_bits(unsigned int mask);
 UINT wined3d_log2i(UINT32 x);
-
-/*****************************************************************************
- * To enable calling of inherited functions, requires prototypes 
- *
- * Note: Only require classes which are subclassed, ie resource, basetexture, 
- */
-
-    /* IWineD3DVertexBuffer */
-    extern const BYTE *IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer* iface, DWORD iOffset, GLint *vbo);
 
 /* TODO: Make this dynamic, based on shader limits ? */
 #define MAX_REG_ADDR 1

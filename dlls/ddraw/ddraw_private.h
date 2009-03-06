@@ -681,7 +681,7 @@ struct IDirect3DVertexBufferImpl
     LONG                 ref;
 
     /*** WineD3D and ddraw links ***/
-    IWineD3DVertexBuffer *wineD3DVertexBuffer;
+    IWineD3DBuffer *wineD3DVertexBuffer;
     IWineD3DVertexDeclaration *wineD3DVertexDeclaration;
     IDirectDrawImpl *ddraw;
 
