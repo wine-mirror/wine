@@ -80,6 +80,7 @@ struct d3d10_effect
     const struct ID3D10EffectVtbl *vtbl;
     LONG refcount;
 
+    ID3D10Device *device;
     DWORD technique_count;
     DWORD index_offset;
     DWORD blendstate_count;

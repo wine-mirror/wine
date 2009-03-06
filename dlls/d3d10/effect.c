@@ -589,6 +589,7 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
             }
             HeapFree(GetProcessHeap(), 0, This->techniques);
         }
+        ID3D10Device_Release(This->device);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -613,9 +614,14 @@ static BOOL STDMETHODCALLTYPE d3d10_effect_IsPool(ID3D10Effect *iface)
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_GetDevice(ID3D10Effect *iface, ID3D10Device **device)
 {
-    FIXME("iface %p, device %p stub!\n", iface, device);
+    struct d3d10_effect *This = (struct d3d10_effect *)iface;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, device %p\n", iface, device);
+
+    ID3D10Device_AddRef(This->device);
+    *device = This->device;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_GetDesc(ID3D10Effect *iface, D3D10_EFFECT_DESC *desc)

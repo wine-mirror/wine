@@ -224,6 +224,8 @@ HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT fl
 
     object->vtbl = &d3d10_effect_vtbl;
     object->refcount = 1;
+    ID3D10Device_AddRef(device);
+    object->device = device;
 
     hr = d3d10_effect_parse(object, data, data_size);
     if (FAILED(hr))
