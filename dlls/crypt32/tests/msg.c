@@ -1842,7 +1842,7 @@ static void test_signed_msg_get_param(void)
      GetLastError());
     if (!ret)
     {
-        skip("message parameters are broken, skipping tests");
+        skip("message parameters are broken, skipping tests\n");
         return;
     }
     size = 0;
@@ -2200,7 +2200,8 @@ static void test_decode_msg_update(void)
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, hashEmptyContent, sizeof(hashEmptyContent), TRUE);
-    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    ok(ret || broken(GetLastError() == OSS_DATA_ERROR /* Win9x */),
+     "CryptMsgUpdate failed: %08x\n", GetLastError());
     CryptMsgClose(msg);
     /* while with specified type it fails. */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, 0, NULL,
