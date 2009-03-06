@@ -106,7 +106,7 @@ static void check_get(TW_CAPABILITY *pCapability, TW_INT32 actual_support,
     {
         if (pCapability->ConType == TWON_ONEVALUE)
         {
-            TW_ONEVALUE *onev = (TW_ONEVALUE *) p;
+            TW_ONEVALUE *onev = p;
             ok(onev->Item == orig_value || !(actual_support & TWQC_GETCURRENT), "MSG_GET of 0x%x returned 0x%x, expecting 0x%x\n",
                 pCapability->Cap, onev->Item, orig_value);
             trace("MSG_GET of 0x%x returned val 0x%x, type %d\n", pCapability->Cap, onev->Item, onev->ItemType);
@@ -119,7 +119,7 @@ static void check_get(TW_CAPABILITY *pCapability, TW_INT32 actual_support,
             TW_UINT8 *p8;
             TW_UINT16 *p16;
             TW_UINT32 *p32;
-            TW_ENUMERATION *enumv = (TW_ENUMERATION *) p;
+            TW_ENUMERATION *enumv = p;
             p8 = enumv->ItemList;
             p16 = (TW_UINT16 *) p8;
             p32 = (TW_UINT32 *) p8;
