@@ -1255,6 +1255,14 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
             twCC = SANE_ICAPSupportedSizes (pCapability, action);
             break;
 
+        case ICAP_PLANARCHUNKY:
+            FIXME("ICAP_PLANARCHUNKY not implemented\n");
+            break;
+
+        case ICAP_BITORDER:
+            FIXME("ICAP_BITORDER not implemented\n");
+            break;
+
     }
 
     /* Twain specifies that you should return a 0 in response to QUERYSUPPORT,
