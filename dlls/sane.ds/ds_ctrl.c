@@ -610,7 +610,7 @@ TW_UINT16 SANE_EnableDSUserInterface (pTW_IDENTITY pOrigin,
     {
         twRC = TWRC_FAILURE;
         activeDS.twCC = TWCC_SEQERROR;
-	FIXME("sequence error %d\n", activeDS.currentState);
+	WARN("sequence error %d\n", activeDS.currentState);
     }
     else
     {
@@ -621,7 +621,6 @@ TW_UINT16 SANE_EnableDSUserInterface (pTW_IDENTITY pOrigin,
         {
             BOOL rc;
             activeDS.currentState = 5; /* Transitions to state 5 */
-		FIXME("showing UI\n");
             rc = DoScannerUI();
             pUserInterface->ModalUI = TRUE;
             if (!rc)

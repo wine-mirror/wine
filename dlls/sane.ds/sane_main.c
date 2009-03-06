@@ -388,7 +388,7 @@ static TW_UINT16 SANE_SourceControlHandler (
             break;
 
         default:
-	    FIXME("code unknown: %d\n", DAT);
+	    WARN("code unknown: %d\n", DAT);
             activeDS.twCC = TWCC_CAPUNSUPPORTED;
             twRC = TWRC_FAILURE;
             break;
@@ -440,7 +440,7 @@ static TW_UINT16 SANE_ImageGroupHandler (
                 default:
                     twRC = TWRC_FAILURE;
                     activeDS.twCC = TWCC_CAPBADOPERATION;
-                    FIXME("unrecognized operation triplet\n");
+                    WARN("unrecognized operation triplet\n");
                     break;
             }
             break;
@@ -572,7 +572,7 @@ static TW_UINT16 SANE_ImageGroupHandler (
         default:
             twRC = TWRC_FAILURE;
             activeDS.twCC = TWCC_CAPUNSUPPORTED;
-            FIXME("unrecognized DG type %d\n", DAT);
+            WARN("unrecognized DG type %d\n", DAT);
     }
     return twRC;
 }
@@ -598,7 +598,7 @@ DS_Entry ( pTW_IDENTITY pOrigin,
             twRC = SANE_ImageGroupHandler (pOrigin,DAT,MSG,pData);
             break;
         case DG_AUDIO:
-            FIXME("Audio group of controls not implemented yet.\n");
+            WARN("Audio group of controls not implemented yet.\n");
             twRC = TWRC_FAILURE;
             activeDS.twCC = TWCC_CAPUNSUPPORTED;
             break;
