@@ -486,7 +486,7 @@ static IHTMLElement *_get_elem_iface(unsigned line, IUnknown *unk)
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IHTMLElement, (void**)&elem);
-    ok_(__FILE__,line) (hres == S_OK, "Coule not get IHTMLElement: %08x\n", hres);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLElement: %08x\n", hres);
     return elem;
 }
 
@@ -497,7 +497,7 @@ static IHTMLElement2 *_get_elem2_iface(unsigned line, IUnknown *unk)
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IHTMLElement2, (void**)&elem);
-    ok_(__FILE__,line) (hres == S_OK, "Coule not get IHTMLElement2: %08x\n", hres);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLElement2: %08x\n", hres);
     return elem;
 }
 
@@ -508,7 +508,7 @@ static IHTMLElement3 *_get_elem3_iface(unsigned line, IUnknown *unk)
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IHTMLElement3, (void**)&elem);
-    ok_(__FILE__,line) (hres == S_OK, "Coule not get IHTMLElement3: %08x\n", hres);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLElement3: %08x\n", hres);
     return elem;
 }
 
@@ -519,7 +519,7 @@ static IHTMLDOMNode *_get_node_iface(unsigned line, IUnknown *unk)
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IHTMLDOMNode, (void**)&node);
-    ok_(__FILE__,line) (hres == S_OK, "Coule not get IHTMLDOMNode: %08x\n", hres);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLDOMNode: %08x\n", hres);
     return node;
 }
 
