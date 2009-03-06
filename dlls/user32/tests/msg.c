@@ -371,7 +371,7 @@ static const struct message WmSwitchNotMaximizedChild[] = {
 static const struct message WmSWP_FrameChanged_clip[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam|parent, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_FRAMECHANGED },
     { WM_NCCALCSIZE, sent|wparam|parent, 1 },
-    { WM_NCPAINT, sent|parent }, /* wparam != 1 */
+    { WM_NCPAINT, sent|parent|optional }, /* wparam != 1 */
     { WM_GETTEXT, sent|parent|defwinproc|optional },
     { WM_ERASEBKGND, sent|parent|optional }, /* FIXME: remove optional once Wine is fixed */
     { WM_NCPAINT, sent }, /* wparam != 1 */
@@ -390,12 +390,12 @@ static const struct message WmSWP_FrameChangedDeferErase[] = {
     { WM_NCCALCSIZE, sent|wparam|parent, 1 },
     { WM_WINDOWPOSCHANGED, sent|wparam|parent, SWP_NOSIZE|SWP_NOMOVE|SWP_DEFERERASE|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
-    { WM_PAINT, sent|parent },
-    { WM_NCPAINT, sent|beginpaint|parent }, /* wparam != 1 */
+    { WM_PAINT, sent|parent|optional },
+    { WM_NCPAINT, sent|beginpaint|parent|optional }, /* wparam != 1 */
     { WM_GETTEXT, sent|beginpaint|parent|defwinproc|optional },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|beginpaint }, /* wparam != 1 */
-    { WM_ERASEBKGND, sent|beginpaint },
+    { WM_ERASEBKGND, sent|beginpaint|optional },
     { 0 }
 };
 
@@ -2001,10 +2001,10 @@ static void ok_sequence_(const struct message *expected_list, const char *contex
                     if ((expected->lParam ^ actual->lParam) & ~expected->lp_mask) dump++;
                 }
             }
-	    if ((expected->flags & defwinproc) != (actual->flags & defwinproc) &&
-                (expected->flags & optional))
+	    if ((expected->flags & optional) &&
+                ((expected->flags ^ actual->flags) & (defwinproc|parent)))
             {
-                /* don't match messages if their defwinproc status differs */
+                /* don't match optional messages if their defwinproc or parent status differs */
                 expected++;
                 count++;
                 continue;
@@ -8210,6 +8210,8 @@ static const struct message ScrollWindowPaint1[] = {
     { WM_GETTEXT, sent|optional },
     { WM_GETTEXT, sent|optional },
     { WM_GETTEXT, sent|optional },
+    { WM_GETTEXT, sent|optional },
+    { WM_GETTEXT, sent|optional },
     { WM_ERASEBKGND, sent|optional },
     { 0 }
 };
@@ -8978,6 +8980,7 @@ static void test_PeekMessage(void)
         ok(GetLastError() == ERROR_INVALID_FLAGS, "wrong error %d\n", GetLastError());
         qstatus = GetQueueStatus(qs_all_input);
     }
+    qstatus &= ~MAKELONG( 0x4000, 0x4000 );  /* sometimes set on Win95 */
     ok(qstatus == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE),
        "wrong qstatus %08x\n", qstatus);
 
@@ -10438,13 +10441,19 @@ static const struct message SetActiveWindowSeq0[] =
     { WM_ACTIVATEAPP, sent|wparam|optional, 0 },
     { WM_ACTIVATEAPP, sent|wparam|optional, 0 },
     { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
+    { WM_KILLFOCUS, sent|optional },
     { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE },
     { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
     { WM_NCACTIVATE, sent|wparam|optional, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ACTIVATE, sent|wparam|optional, 1 },
     { HCBT_SETFOCUS, hook|optional },
-    { WM_KILLFOCUS, sent|defwinproc },
+    { WM_KILLFOCUS, sent|defwinproc|optional },
+    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
+    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
+    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
+    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
+    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
     { WM_IME_SETCONTEXT, sent|defwinproc|optional },
     { WM_IME_SETCONTEXT, sent|defwinproc|optional },
     { WM_IME_SETCONTEXT, sent|defwinproc|optional },
@@ -10553,7 +10562,7 @@ static void test_SetActiveWindow(void)
     trace("SetActiveWindow(0)\n");
     ret = SetActiveWindow(0);
     ok( ret == popup, "Failed to SetActiveWindow(0)\n");
-    ok_sequence(SetActiveWindowSeq0, "SetActiveWindow(0)", TRUE);
+    ok_sequence(SetActiveWindowSeq0, "SetActiveWindow(0)", FALSE);
     flush_sequence();
 
     trace("SetActiveWindow(hwnd), hwnd visible\n");
