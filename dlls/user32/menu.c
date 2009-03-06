@@ -3447,6 +3447,40 @@ track_menu:
     MENU_ExitTracking( hwnd );
 }
 
+/**********************************************************************
+ *           TrackPopupMenuEx   (USER32.@)
+ */
+BOOL WINAPI TrackPopupMenuEx( HMENU hMenu, UINT wFlags, INT x, INT y,
+                              HWND hWnd, LPTPMPARAMS lpTpm )
+{
+    BOOL ret = FALSE;
+
+    TRACE("hmenu %p flags %04x (%d,%d) hwnd %p lpTpm %p rect %s\n",
+            hMenu, wFlags, x, y, hWnd, lpTpm,
+            lpTpm ? wine_dbgstr_rect( &lpTpm->rcExclude) : "-" );
+
+    /* Parameter check */
+    /* FIXME: this check is performed several times, here and in the called
+       functions. That could be optimized */
+    if (!MENU_GetMenu( hMenu ))
+    {
+        SetLastError( ERROR_INVALID_MENU_HANDLE );
+        return FALSE;
+    }
+
+    MENU_InitTracking(hWnd, hMenu, TRUE, wFlags);
+
+    /* Send WM_INITMENUPOPUP message only if TPM_NONOTIFY flag is not specified */
+    if (!(wFlags & TPM_NONOTIFY))
+        SendMessageW( hWnd, WM_INITMENUPOPUP, (WPARAM)hMenu, 0);
+
+    if (MENU_ShowPopup( hWnd, hMenu, 0, wFlags, x, y, 0, 0 ))
+        ret = MENU_TrackMenu( hMenu, wFlags | TPM_POPUPMENU, 0, 0, hWnd,
+                              lpTpm ? &lpTpm->rcExclude : NULL );
+    MENU_ExitTracking(hWnd);
+
+    return ret;
+}
 
 /**********************************************************************
  *           TrackPopupMenu   (USER32.@)
@@ -3456,35 +3490,9 @@ track_menu:
  *
  */
 BOOL WINAPI TrackPopupMenu( HMENU hMenu, UINT wFlags, INT x, INT y,
-                           INT nReserved, HWND hWnd, const RECT *lpRect )
+                            INT nReserved, HWND hWnd, const RECT *lpRect )
 {
-    BOOL ret = FALSE;
-
-    TRACE("hmenu %p flags %04x (%d,%d) reserved %d hwnd %p rect %s\n",
-           hMenu, wFlags, x, y, nReserved, hWnd, wine_dbgstr_rect(lpRect));
-
-    MENU_InitTracking(hWnd, hMenu, TRUE, wFlags);
-
-    /* Send WM_INITMENUPOPUP message only if TPM_NONOTIFY flag is not specified */
-    if (!(wFlags & TPM_NONOTIFY))
-        SendMessageW( hWnd, WM_INITMENUPOPUP, (WPARAM)hMenu, 0);
-
-    if (MENU_ShowPopup( hWnd, hMenu, 0, wFlags, x, y, 0, 0 ))
-        ret = MENU_TrackMenu( hMenu, wFlags | TPM_POPUPMENU, 0, 0, hWnd, lpRect );
-    MENU_ExitTracking(hWnd);
-
-    return ret;
-}
-
-/**********************************************************************
- *           TrackPopupMenuEx   (USER32.@)
- */
-BOOL WINAPI TrackPopupMenuEx( HMENU hMenu, UINT wFlags, INT x, INT y,
-                                HWND hWnd, LPTPMPARAMS lpTpm )
-{
-    FIXME("not fully implemented\n" );
-    return TrackPopupMenu( hMenu, wFlags, x, y, 0, hWnd,
-                             lpTpm ? &lpTpm->rcExclude : NULL );
+    return TrackPopupMenuEx( hMenu, wFlags, x, y, hWnd, NULL);
 }
 
 /***********************************************************************

@@ -140,12 +140,25 @@ static int MOD_odheight;
 static SIZE MODsizes[MOD_NRMENUS]= { {MOD_SIZE, MOD_SIZE},{MOD_SIZE, MOD_SIZE},
     {MOD_SIZE, MOD_SIZE},{MOD_SIZE, MOD_SIZE}};
 static int MOD_GotDrawItemMsg = FALSE;
+static int  gflag_initmenupopup,
+            gflag_entermenuloop,
+            gflag_initmenu;
+
 /* wndproc used by test_menu_ownerdraw() */
 static LRESULT WINAPI menu_ownerdraw_wnd_proc(HWND hwnd, UINT msg,
         WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
     {
+        case WM_INITMENUPOPUP:
+            gflag_initmenupopup++;
+            break;
+        case WM_ENTERMENULOOP:
+            gflag_entermenuloop++;
+            break;
+        case WM_INITMENU:
+            gflag_initmenu++;
+            break;
         case WM_MEASUREITEM:
             {
                 MEASUREITEMSTRUCT* pmis = (MEASUREITEMSTRUCT*)lparam;
@@ -2628,6 +2641,113 @@ static void test_menu_setmenuinfo(void)
     return;
 }
 
+/* little func to easy switch either TrackPopupMenu() or TrackPopupMenuEx() */
+static DWORD MyTrackPopupMenu( int ex, HMENU hmenu, UINT flags, INT x, INT y, HWND hwnd, LPTPMPARAMS ptpm)
+{
+    return ex
+        ? TrackPopupMenuEx( hmenu, flags, x, y, hwnd, ptpm)
+        : TrackPopupMenu( hmenu, flags, x, y, 0, hwnd, NULL);
+}
+
+/* some TrackPopupMenu and TrackPopupMenuEx tests */
+/* the LastError values differ between NO_ERROR and invalid handle */
+/* between all windows versions tested. The first value is that valid on XP  */
+/* Vista was the only that made returned different error values */
+/* between the TrackPopupMenu and TrackPopupMenuEx functions */
+static void test_menu_trackpopupmenu(void)
+{
+    BOOL ret;
+    HMENU hmenu;
+    DWORD gle;
+    int Ex;
+    HWND hwnd = CreateWindowEx(0, MAKEINTATOM(atomMenuCheckClass), NULL,
+            WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200,
+            NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "CreateWindowEx failed with error %d\n", GetLastError());
+    if (!hwnd) return;
+    SetWindowLongPtr( hwnd, GWLP_WNDPROC, (LONG_PTR)menu_ownerdraw_wnd_proc);
+    for( Ex = 0; Ex < 2; Ex++)
+    {
+        hmenu = CreatePopupMenu();
+        ok(hmenu != NULL, "CreateMenu failed with error %d\n", GetLastError());
+        if (!hmenu)
+        {
+            DestroyWindow(hwnd);
+            return;
+        }
+        /* display the menu */
+        /* start with an invalid menu handle */
+        gle = 0xdeadbeef;
+        gflag_initmenupopup = gflag_entermenuloop = gflag_initmenu = 0;
+        ret = MyTrackPopupMenu( Ex, NULL, 0x100, 100,100, hwnd, NULL);
+        gle = GetLastError();
+        ok( !ret, "TrackPopupMenu%s should have failed\n", Ex ? "Ex" : "");
+        ok( gle == ERROR_INVALID_MENU_HANDLE
+            || broken (gle == 0xdeadbeef) /* win95 */
+            || broken (gle == NO_ERROR) /* win98/ME */
+            ,"TrackPopupMenu%s error got %u expected %u\n",
+            Ex ? "Ex" : "", gle, ERROR_INVALID_MENU_HANDLE);
+        ok( !(gflag_initmenupopup || gflag_entermenuloop || gflag_initmenu),
+                "got unexpected message(s)%s%s%s\n",
+                gflag_initmenupopup ? " WM_INITMENUPOPUP ": " ",
+                gflag_entermenuloop ? "WM_INITMENULOOP ": "",
+                gflag_initmenu ? "WM_INITMENU": "");
+        /* another one but not NULL */
+        gle = 0xdeadbeef;
+        gflag_initmenupopup = gflag_entermenuloop = gflag_initmenu = 0;
+        ret = MyTrackPopupMenu( Ex, (HMENU)hwnd, 0x100, 100,100, hwnd, NULL);
+        gle = GetLastError();
+        ok( !ret, "TrackPopupMenu%s should have failed\n", Ex ? "Ex" : "");
+        ok( gle == ERROR_INVALID_MENU_HANDLE
+            || broken (gle == 0xdeadbeef) /* win95 */
+            || broken (gle == NO_ERROR) /* win98/ME */
+            ,"TrackPopupMenu%s error got %u expected %u\n",
+            Ex ? "Ex" : "", gle, ERROR_INVALID_MENU_HANDLE);
+        ok( !(gflag_initmenupopup || gflag_entermenuloop || gflag_initmenu),
+                "got unexpected message(s)%s%s%s\n",
+                gflag_initmenupopup ? " WM_INITMENUPOPUP ": " ",
+                gflag_entermenuloop ? "WM_INITMENULOOP ": "",
+                gflag_initmenu ? "WM_INITMENU": "");
+        /* now a somewhat successfull call */
+        gle = 0xdeadbeef;
+        gflag_initmenupopup = gflag_entermenuloop = gflag_initmenu = 0;
+        ret = MyTrackPopupMenu( Ex, hmenu, 0x100, 100,100, hwnd, NULL);
+        gle = GetLastError();
+        ok( ret == 0, "TrackPopupMenu%s returned %d expected zero\n", Ex ? "Ex" : "", ret);
+        ok( gle == NO_ERROR
+            || gle == ERROR_INVALID_MENU_HANDLE /* NT4, win2k */
+            || broken (gle == 0xdeadbeef) /* win95 */
+            ,"TrackPopupMenu%s error got %u expected %u or %u\n",
+            Ex ? "Ex" : "", gle, NO_ERROR, ERROR_INVALID_MENU_HANDLE);
+        ok( gflag_initmenupopup && gflag_entermenuloop && gflag_initmenu,
+                "missed expected message(s)%s%s%s\n",
+                !gflag_initmenupopup ? " WM_INITMENUPOPUP ": " ",
+                !gflag_entermenuloop ? "WM_INITMENULOOP ": "",
+                !gflag_initmenu ? "WM_INITMENU": "");
+        /* and another */
+        ret = AppendMenuA( hmenu, MF_STRING, 1, "winetest");
+        ok( ret, "AppendMenA has failed!\n");
+        gle = 0xdeadbeef;
+        gflag_initmenupopup = gflag_entermenuloop = gflag_initmenu = 0;
+        ret = MyTrackPopupMenu( Ex, hmenu, 0x100, 100,100, hwnd, NULL);
+        gle = GetLastError();
+        ok( ret == 0, "TrackPopupMenu%s returned %d expected zero\n", Ex ? "Ex" : "", ret);
+        ok( gle == NO_ERROR
+            || gle == ERROR_INVALID_MENU_HANDLE /* NT4, win2k and Vista in the TrackPopupMenuEx case */
+            || broken (gle == 0xdeadbeef) /* win95 */
+            ,"TrackPopupMenu%s error got %u expected %u or %u\n",
+            Ex ? "Ex" : "", gle, NO_ERROR, ERROR_INVALID_MENU_HANDLE);
+        ok( gflag_initmenupopup && gflag_entermenuloop && gflag_initmenu,
+                "missed expected message(s)%s%s%s\n",
+                !gflag_initmenupopup ? " WM_INITMENUPOPUP ": " ",
+                !gflag_entermenuloop ? "WM_INITMENULOOP ": "",
+                !gflag_initmenu ? "WM_INITMENU": "");
+        DestroyMenu(hmenu);
+    }
+    /* clean up */
+    DestroyWindow(hwnd);
+}
+
 START_TEST(menu)
 {
     init_function_pointers();
@@ -2663,4 +2783,5 @@ START_TEST(menu)
     test_menu_flags();
 
     test_menu_hilitemenuitem();
+    test_menu_trackpopupmenu();
 }
