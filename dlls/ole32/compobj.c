@@ -934,6 +934,7 @@ static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, OpenDll **ret)
         }
         else
         {
+            HeapFree(GetProcessHeap(), 0, entry);
             hr = E_OUTOFMEMORY;
             FreeLibrary(hLibrary);
         }
