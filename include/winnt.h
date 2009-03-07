@@ -3603,7 +3603,21 @@ typedef enum _TOKEN_INFORMATION_CLASS {
   TokenSessionId,
   TokenGroupsAndPrivileges,
   TokenSessionReference,
-  TokenSandBoxInert
+  TokenSandBoxInert,
+  TokenAuditPolicy,
+  TokenOrigin,
+  TokenElevationType,
+  TokenLinkedToken,
+  TokenElevation,
+  TokenHasRestrictions,
+  TokenAccessInformation,
+  TokenVirtualizationAllowed,
+  TokenVirtualizationEnabled,
+  TokenIntegrityLevel,
+  TokenUIAccess,
+  TokenMandatoryPolicy,
+  TokenLogonSid,
+  MaxTokenInfoClass
 } TOKEN_INFORMATION_CLASS;
 
 #define TOKEN_TOKEN_ADJUST_DEFAULT   0x0080
