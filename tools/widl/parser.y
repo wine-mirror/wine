@@ -65,7 +65,7 @@
 
 #define YYERROR_VERBOSE
 
-unsigned char pointer_default = RPC_FC_UP;
+static unsigned char pointer_default = RPC_FC_UP;
 static int is_object_interface = FALSE;
 
 typedef struct list typelist_t;
@@ -928,7 +928,7 @@ decl_spec_no_type:
 
 declarator:
 	  '*' m_type_qual_list declarator %prec PPTR
-						{ $$ = $3; $$->type = append_ptrchain_type($$->type, type_new_pointer(NULL, $2)); }
+						{ $$ = $3; $$->type = append_ptrchain_type($$->type, type_new_pointer(pointer_default, NULL, $2)); }
 	| callconv declarator			{ $$ = $2; $$->type->attrs = append_attr($$->type->attrs, make_attrp(ATTR_CALLCONV, $1)); }
 	| direct_declarator
 	;
@@ -1278,9 +1278,8 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
   v->type = append_ptrchain_type(decl ? decl->type : NULL, type);
   v->stgclass = decl_spec->stgclass;
 
-  /* the highest level of pointer specified should default to the var's ptr attr
-   * or (RPC_FC_RP if not specified and it's a top level ptr), not
-   * pointer_default so we need to fix that up here */
+  /* check for pointer attribute being applied to non-pointer, non-array
+   * type */
   if (!arr)
   {
     int ptr_attr = get_attrv(v->attrs, ATTR_POINTERTYPE);
@@ -1296,25 +1295,20 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
       else
         break;
     }
-    if (ptr && is_ptr(ptr) && (ptr_attr || top))
+    if (is_ptr(ptr))
     {
       if (ptr_attr && ptr_attr != RPC_FC_UP &&
           type_get_type(type_pointer_get_ref(ptr)) == TYPE_INTERFACE)
           warning_loc_info(&v->loc_info,
                            "%s: pointer attribute applied to interface "
                            "pointer type has no effect\n", v->name);
-      if (top && !ptr_attr)
-        ptr_attr = RPC_FC_RP;
-      if (ptr_attr != (*pt)->details.pointer.fc)
+      if (!ptr_attr && top && (*pt)->details.pointer.def_fc != RPC_FC_RP)
       {
-        /* create new type to avoid changing original type */
-        /* FIXME: this is a horrible hack - we might be changing the pointer
-         * type of an alias here, so we also need corresponding hacks in
-         * get_pointer_fc to handle this. The type of pointer that the type
-         * ends up having is context sensitive and so we shouldn't be
-         * setting it here, but rather determining it when it is used. */
+        /* FIXME: this is a horrible hack to cope with the issue that we
+         * store an offset to the typeformat string in the type object, but
+         * two typeformat strings may be written depending on whether the
+         * pointer is a toplevel parameter or not */
         *pt = duptype(*pt, 1);
-        (*pt)->details.pointer.fc = ptr_attr;
       }
     }
     else if (ptr_attr)
@@ -1358,7 +1352,8 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
 
     *ptype = type_new_array(NULL, *ptype, FALSE,
                             dim->is_const ? dim->cval : 0,
-                            dim->is_const ? NULL : dim, NULL);
+                            dim->is_const ? NULL : dim, NULL,
+                            pointer_default);
   }
 
   ptype = &v->type;
@@ -1373,11 +1368,11 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
         else
           *ptype = type_new_array((*ptype)->name,
                                   type_array_get_element(*ptype), FALSE,
-                                  0, dim, NULL);
+                                  0, dim, NULL, 0);
       }
       else if (is_ptr(*ptype))
         *ptype = type_new_array((*ptype)->name, type_pointer_get_ref(*ptype), TRUE,
-                                0, dim, NULL);
+                                0, dim, NULL, pointer_default);
       else
         error_loc("%s: size_is attribute applied to illegal type\n", v->name);
     }
@@ -1402,7 +1397,7 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
                                 type_array_is_decl_as_ptr(*ptype),
                                 type_array_get_dim(*ptype),
                                 type_array_get_conformance(*ptype),
-                                dim);
+                                dim, type_array_get_ptr_default_fc(*ptype));
       }
       else
         error_loc("%s: length_is attribute applied to illegal type\n", v->name);
@@ -1563,7 +1558,8 @@ static func_t *make_func(var_t *def)
 
 static type_t *make_safearray(type_t *type)
 {
-  return type_new_array(NULL, type_new_alias(type, "SAFEARRAY"), TRUE, 0, NULL, NULL);
+  return type_new_array(NULL, type_new_alias(type, "SAFEARRAY"), TRUE, 0,
+                        NULL, NULL, RPC_FC_RP);
 }
 
 static typelib_t *make_library(const char *name, const attr_list_t *attrs)

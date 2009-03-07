@@ -88,6 +88,6 @@ expr_t *get_size_is_expr(const type_t *t, const char *name);
 int is_full_pointer_function(const var_t *func);
 void write_full_pointer_init(FILE *file, int indent, const var_t *func, int is_server);
 void write_full_pointer_free(FILE *file, int indent, const var_t *func);
-unsigned char get_pointer_fc(const type_t *type);
+unsigned char get_pointer_fc(const type_t *type, const attr_list_t *attrs, int toplevel_param);
 unsigned char get_struct_fc(const type_t *type);
 enum typegen_type typegen_detect_type(const type_t *type, const attr_list_t *attrs, unsigned int flags);

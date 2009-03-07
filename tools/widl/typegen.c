@@ -65,7 +65,7 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
                                 const char *name, int write_ptr, unsigned int *tfsoff);
 static const var_t *find_array_or_string_in_struct(const type_t *type);
 static unsigned int write_string_tfs(FILE *file, const attr_list_t *attrs,
-                               type_t *type,
+                               type_t *type, int toplevel_param,
                                const char *name, unsigned int *typestring_offset);
 
 const char *string_of_type(unsigned char type)
@@ -120,13 +120,30 @@ const char *string_of_type(unsigned char type)
     }
 }
 
-unsigned char get_pointer_fc(const type_t *type)
+unsigned char get_pointer_fc(const type_t *type, const attr_list_t *attrs, int toplevel_param)
 {
-    assert(is_ptr(type));
-    /* FIXME: see corresponding hack in set_type - we shouldn't be getting
-     * the pointer type from an alias, rather determining it from the
-     * position */
-    return type->details.pointer.fc;
+    const type_t *t;
+    int pointer_type;
+
+    assert(is_ptr(type) || is_array(type));
+
+    pointer_type = get_attrv(attrs, ATTR_POINTERTYPE);
+    if (pointer_type)
+        return pointer_type;
+
+    for (t = type; type_is_alias(t); t = type_alias_get_aliasee(t))
+    {
+        pointer_type = get_attrv(t->attrs, ATTR_POINTERTYPE);
+        if (pointer_type)
+            return pointer_type;
+    }
+
+    if (toplevel_param)
+        return RPC_FC_RP;
+    else if (is_ptr(type))
+        return type_pointer_get_default_fc(type);
+    else
+        return type_array_get_ptr_default_fc(type);
 }
 
 static unsigned char get_enum_fc(const type_t *type)
@@ -240,20 +257,11 @@ unsigned char get_struct_fc(const type_t *type)
             return RPC_FC_BOGUS_STRUCT;
         break;
     case TGT_POINTER:
-        if (get_pointer_fc(t) == RPC_FC_RP || pointer_size != 4)
-            return RPC_FC_BOGUS_STRUCT;
-        has_pointer = 1;
-        break;
     case TGT_ARRAY:
-    {
-        unsigned int ptr_type = get_attrv(field->attrs, ATTR_POINTERTYPE);
-        if (!ptr_type || ptr_type == RPC_FC_RP)
-            return RPC_FC_BOGUS_STRUCT;
-        else if (pointer_size != 4)
+        if (get_pointer_fc(t, field->attrs, FALSE) == RPC_FC_RP || pointer_size != 4)
             return RPC_FC_BOGUS_STRUCT;
         has_pointer = 1;
         break;
-    }
     case TGT_UNION:
         return RPC_FC_BOGUS_STRUCT;
     case TGT_STRUCT:
@@ -383,7 +391,7 @@ unsigned char get_array_fc(const type_t *type)
         /* ref pointers cannot just be block copied. unique pointers to
          * interfaces need special treatment. either case means the array is
          * complex */
-        if (get_pointer_fc(elem_type) == RPC_FC_RP)
+        if (get_pointer_fc(elem_type, NULL, FALSE) == RPC_FC_RP)
             fc = RPC_FC_BOGUS_ARRAY;
         break;
     case TGT_BASIC:
@@ -468,27 +476,30 @@ static int type_has_pointers(const type_t *type)
     return FALSE;
 }
 
-static int type_has_full_pointer(const type_t *type)
+static int type_has_full_pointer(const type_t *type, const attr_list_t *attrs,
+                                 int toplevel_param)
 {
     switch (typegen_detect_type(type, NULL, TDT_IGNORE_STRINGS))
     {
     case TGT_USER_TYPE:
         return FALSE;
     case TGT_POINTER:
-        if (get_pointer_fc(type) == RPC_FC_FP)
+        if (get_pointer_fc(type, attrs, toplevel_param) == RPC_FC_FP)
             return TRUE;
         else
             return FALSE;
     case TGT_ARRAY:
-        /* FIXME: array can be full pointer */
-        return type_has_full_pointer(type_array_get_element(type));
+        if (get_pointer_fc(type, attrs, toplevel_param) == RPC_FC_FP)
+            return TRUE;
+        else
+            return type_has_full_pointer(type_array_get_element(type), NULL, FALSE);
     case TGT_STRUCT:
     {
         var_list_t *fields = type_struct_get_fields(type);
         const var_t *field;
         if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
         {
-            if (type_has_full_pointer(field->type))
+            if (type_has_full_pointer(field->type, field->attrs, FALSE))
                 return TRUE;
         }
         break;
@@ -500,7 +511,7 @@ static int type_has_full_pointer(const type_t *type)
         fields = type_union_get_cases(type);
         if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
         {
-            if (field->type && type_has_full_pointer(field->type))
+            if (field->type && type_has_full_pointer(field->type, field->attrs, FALSE))
                 return TRUE;
         }
         break;
@@ -1222,12 +1233,12 @@ unsigned int type_memsize(const type_t *t, unsigned int *align)
 int is_full_pointer_function(const var_t *func)
 {
     const var_t *var;
-    if (type_has_full_pointer(type_function_get_rettype(func->type)))
+    if (type_has_full_pointer(type_function_get_rettype(func->type), func->attrs, TRUE))
         return TRUE;
     if (!type_get_function_args(func->type))
         return FALSE;
     LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
-        if (type_has_full_pointer( var->type ))
+        if (type_has_full_pointer( var->type, var->attrs, TRUE ))
             return TRUE;
     return FALSE;
 }
@@ -1247,7 +1258,7 @@ void write_full_pointer_free(FILE *file, int indent, const var_t *func)
 
 static unsigned int write_nonsimple_pointer(FILE *file, const attr_list_t *attrs,
                                             const type_t *type,
-                                            unsigned char pointer_default,
+                                            int toplevel_param,
                                             unsigned int offset,
                                             unsigned int *typeformat_offset)
 {
@@ -1257,14 +1268,7 @@ static unsigned int write_nonsimple_pointer(FILE *file, const attr_list_t *attrs
     int pointer_type;
     unsigned char flags = 0;
 
-    if (is_ptr(type))
-        pointer_type = get_pointer_fc(type);
-    else
-    {
-        pointer_type = get_attrv(attrs, ATTR_POINTERTYPE);
-        if (!pointer_type)
-            pointer_type = pointer_default;
-    }
+    pointer_type = get_pointer_fc(type, attrs, toplevel_param);
 
     in_attr = is_attr(attrs, ATTR_IN);
     out_attr = is_attr(attrs, ATTR_OUT);
@@ -1295,7 +1299,7 @@ static unsigned int write_nonsimple_pointer(FILE *file, const attr_list_t *attrs
     return start_offset;
 }
 
-static unsigned int write_simple_pointer(FILE *file, const attr_list_t *attrs, const type_t *type)
+static unsigned int write_simple_pointer(FILE *file, const attr_list_t *attrs, const type_t *type, int toplevel_param)
 {
     unsigned char fc;
     unsigned char pointer_fc;
@@ -1306,7 +1310,7 @@ static unsigned int write_simple_pointer(FILE *file, const attr_list_t *attrs, c
     if (is_string_type(attrs, type))
         error("write_simple_pointer: can't handle type %s which is a string type\n", type->name);
 
-    pointer_fc = get_pointer_fc(type);
+    pointer_fc = get_pointer_fc(type, attrs, toplevel_param);
 
     ref = type_pointer_get_ref(type);
     if (type_get_type(ref) == TYPE_ENUM)
@@ -1328,7 +1332,9 @@ static void print_start_tfs_comment(FILE *file, type_t *t, unsigned int tfsoff)
     print_file(file, 0, ") */\n");
 }
 
-static unsigned int write_pointer_tfs(FILE *file, const attr_list_t *attrs, type_t *type, unsigned int *typestring_offset)
+static unsigned int write_pointer_tfs(FILE *file, const attr_list_t *attrs,
+                                      type_t *type, int toplevel_param,
+                                      unsigned int *typestring_offset)
 {
     unsigned int offset = *typestring_offset;
     type_t *ref = type_pointer_get_ref(type);
@@ -1338,12 +1344,13 @@ static unsigned int write_pointer_tfs(FILE *file, const attr_list_t *attrs, type
 
     if (ref->typestring_offset)
         write_nonsimple_pointer(file, attrs, type,
-                                RPC_FC_RP,
+                                toplevel_param,
                                 type_pointer_get_ref(type)->typestring_offset,
                                 typestring_offset);
     else if (type_get_type(ref) == TYPE_BASIC ||
              type_get_type(ref) == TYPE_ENUM)
-        *typestring_offset += write_simple_pointer(file, attrs, type);
+        *typestring_offset += write_simple_pointer(file, attrs, type,
+                                                   toplevel_param);
 
     return offset;
 }
@@ -1409,9 +1416,9 @@ static void write_user_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
         absoff = utype->typestring_offset;
     }
 
-    if (type_get_type(utype) == TYPE_POINTER && get_pointer_fc(utype) == RPC_FC_RP)
+    if (type_get_type(utype) == TYPE_POINTER && get_pointer_fc(utype, NULL, FALSE) == RPC_FC_RP)
         flags = 0x40;
-    else if (type_get_type(utype) == TYPE_POINTER && get_pointer_fc(utype) == RPC_FC_UP)
+    else if (type_get_type(utype) == TYPE_POINTER && get_pointer_fc(utype, NULL, FALSE) == RPC_FC_UP)
         flags = 0x80;
     else
         flags = 0;
@@ -1533,13 +1540,13 @@ static int write_no_repeat_pointer_descriptions(
         if (is_ptr(type))
         {
             if (is_string_type(attrs, type))
-                write_string_tfs(file, attrs, type, NULL, typestring_offset);
+                write_string_tfs(file, attrs, type, FALSE, NULL, typestring_offset);
             else
-                write_pointer_tfs(file, attrs, type, typestring_offset);
+                write_pointer_tfs(file, attrs, type, FALSE, typestring_offset);
         }
         else
         {
-            write_nonsimple_pointer(file, attrs, type, RPC_FC_RP, type->typestring_offset, typestring_offset);
+            write_nonsimple_pointer(file, attrs, type, FALSE, type->typestring_offset, typestring_offset);
         }
 
         align = 0;
@@ -1616,9 +1623,9 @@ static int write_pointer_description_offsets(
         *typestring_offset += 4;
 
         if (is_string_type(attrs, type))
-            write_string_tfs(file, attrs, type, NULL, typestring_offset);
+            write_string_tfs(file, attrs, type, FALSE, NULL, typestring_offset);
         else if (processed(ref) || type_get_type(ref) == TYPE_BASIC || type_get_type(ref) == TYPE_ENUM)
-            write_pointer_tfs(file, attrs, type, typestring_offset);
+            write_pointer_tfs(file, attrs, type, FALSE, typestring_offset);
         else
             error("write_pointer_description_offsets: type format string unknown\n");
 
@@ -1927,7 +1934,7 @@ int is_declptr(const type_t *t)
 }
 
 static unsigned int write_string_tfs(FILE *file, const attr_list_t *attrs,
-                                     type_t *type,
+                                     type_t *type, int toplevel_param,
                                      const char *name, unsigned int *typestring_offset)
 {
     unsigned int start_offset;
@@ -1937,7 +1944,7 @@ static unsigned int write_string_tfs(FILE *file, const attr_list_t *attrs,
     if (is_declptr(type))
     {
         unsigned char flag = is_conformant_array(type) ? 0 : RPC_FC_P_SIMPLEPOINTER;
-        int pointer_type = is_ptr(type) ? get_pointer_fc(type) : get_attrv(attrs, ATTR_POINTERTYPE);
+        int pointer_type = get_pointer_fc(type, attrs, toplevel_param);
         if (!pointer_type)
             pointer_type = RPC_FC_RP;
         print_start_tfs_comment(file, type, *typestring_offset);
@@ -2246,7 +2253,7 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
     if (array && !processed(array->type))
         array_offset
             = is_string_type(array->attrs, array->type)
-            ? write_string_tfs(file, array->attrs, array->type, array->name, tfsoff)
+            ? write_string_tfs(file, array->attrs, array->type, FALSE, array->name, tfsoff)
             : write_array_tfs(file, array->attrs, array->type, array->name, tfsoff);
 
     corroff = *tfsoff;
@@ -2313,14 +2320,14 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
             if (is_ptr(ft))
             {
                 if (is_string_type(f->attrs, ft))
-                    write_string_tfs(file, f->attrs, ft, f->name, tfsoff);
+                    write_string_tfs(file, f->attrs, ft, FALSE, f->name, tfsoff);
                 else
-                    write_pointer_tfs(file, f->attrs, ft, tfsoff);
+                    write_pointer_tfs(file, f->attrs, ft, FALSE, tfsoff);
             }
             else if (type_get_type(ft) == TYPE_ARRAY && type_array_is_decl_as_ptr(ft))
             {
                 print_file(file, 0, "/* %d */\n", *tfsoff);
-                write_nonsimple_pointer(file, f->attrs, ft, RPC_FC_UP, ft->typestring_offset, tfsoff);
+                write_nonsimple_pointer(file, f->attrs, ft, FALSE, ft->typestring_offset, tfsoff);
             }
         }
         if (type_get_real_type(type)->ptrdesc == *tfsoff)
@@ -2606,6 +2613,7 @@ static unsigned int write_contexthandle_tfs(FILE *file, const type_t *type,
 
 static unsigned int write_typeformatstring_var(FILE *file, int indent, const var_t *func,
                                                type_t *type, const var_t *var,
+                                               int toplevel_param,
                                                unsigned int *typeformat_offset)
 {
     unsigned int offset;
@@ -2619,7 +2627,7 @@ static unsigned int write_typeformatstring_var(FILE *file, int indent, const var
         write_user_tfs(file, type, typeformat_offset);
         return type->typestring_offset;
     case TGT_STRING:
-        return write_string_tfs(file, var->attrs, type, var->name, typeformat_offset);
+        return write_string_tfs(file, var->attrs, type, toplevel_param, var->name, typeformat_offset);
     case TGT_ARRAY:
     {
         int ptr_type;
@@ -2682,9 +2690,9 @@ static unsigned int write_typeformatstring_var(FILE *file, int indent, const var
                     fc = type_basic_get_fc(ref);
 
                 print_file(file, indent, "0x%x, 0x%x,    /* %s %s[simple_pointer] */\n",
-                           get_pointer_fc(type),
+                           get_pointer_fc(type, var->attrs, toplevel_param),
                            (!in_attr && out_attr) ? 0x0C : 0x08,
-                           string_of_type(get_pointer_fc(type)),
+                           string_of_type(get_pointer_fc(type, var->attrs, toplevel_param)),
                            (!in_attr && out_attr) ? "[allocated_on_stack] " : "");
                 print_file(file, indent, "0x%02x,    /* %s */\n",
                            fc, string_of_type(fc));
@@ -2699,11 +2707,11 @@ static unsigned int write_typeformatstring_var(FILE *file, int indent, const var
 
         offset = write_typeformatstring_var(file, indent, func,
                                             type_pointer_get_ref(type), var,
-                                            typeformat_offset);
+                                            FALSE, typeformat_offset);
         if (file)
             fprintf(file, "/* %2u */\n", *typeformat_offset);
         return write_nonsimple_pointer(file, var->attrs, type,
-                                       RPC_FC_RP,
+                                       toplevel_param,
                                        offset, typeformat_offset);
     case TGT_INVALID:
         break;
@@ -2723,7 +2731,7 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
         write_user_tfs(file, type, tfsoff);
         break;
     case TGT_STRING:
-        write_string_tfs(file, attrs, type, name, tfsoff);
+        write_string_tfs(file, attrs, type, FALSE, name, tfsoff);
         break;
     case TGT_IFACE_POINTER:
         write_ip_tfs(file, attrs, type, tfsoff);
@@ -2736,7 +2744,7 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
             retmask |= write_embedded_types(file, NULL, ref, name, TRUE, tfsoff);
 
         if (write_ptr)
-            write_pointer_tfs(file, attrs, type, tfsoff);
+            write_pointer_tfs(file, attrs, type, FALSE, tfsoff);
 
         retmask |= 1;
         break;
@@ -2809,7 +2817,7 @@ static unsigned int process_tfs_stmts(FILE *file, const statement_list_t *stmts,
                                   write_typeformatstring_var(
                                       file, 2, NULL,
                                       type_function_get_rettype(func->type),
-                                      &v, typeformat_offset),
+                                      &v, TRUE, typeformat_offset),
                                   file);
                 }
 
@@ -2820,7 +2828,7 @@ static unsigned int process_tfs_stmts(FILE *file, const statement_list_t *stmts,
                             var->type,
                             write_typeformatstring_var(
                                 file, 2, func, var->type, var,
-                                typeformat_offset),
+                                TRUE, typeformat_offset),
                             file);
         }
     }
@@ -2860,7 +2868,7 @@ void write_typeformatstring(FILE *file, const statement_list_t *stmts, type_pred
 }
 
 static unsigned int get_required_buffer_size_type(
-    const type_t *type, const char *name, unsigned int *alignment)
+    const type_t *type, const char *name, const attr_list_t *attrs, int toplevel_param, unsigned int *alignment)
 {
     *alignment = 0;
     switch (typegen_detect_type(type, NULL, TDT_IGNORE_STRINGS))
@@ -2869,7 +2877,7 @@ static unsigned int get_required_buffer_size_type(
     {
         const char *uname;
         const type_t *utype = get_user_type(type, &uname);
-        return get_required_buffer_size_type(utype, uname, alignment);
+        return get_required_buffer_size_type(utype, uname, NULL, FALSE, alignment);
     }
     case TGT_BASIC:
         switch (type_basic_get_fc(type))
@@ -2931,17 +2939,17 @@ static unsigned int get_required_buffer_size_type(
         break;
 
     case TGT_POINTER:
-        if (get_pointer_fc(type) == RPC_FC_RP)
+        if (get_pointer_fc(type, attrs, toplevel_param) == RPC_FC_RP)
         {
             const type_t *ref = type_pointer_get_ref(type);
             switch (typegen_detect_type(ref, NULL, TDT_ALL_TYPES))
             {
             case TGT_BASIC:
             case TGT_ENUM:
-                return get_required_buffer_size_type( ref, name, alignment );
+                return get_required_buffer_size_type( ref, name, NULL, FALSE, alignment );
             case TGT_STRUCT:
                 if (get_struct_fc(ref) == RPC_FC_STRUCT)
-                    return get_required_buffer_size_type( ref, name, alignment );
+                    return get_required_buffer_size_type( ref, name, NULL, FALSE, alignment );
                 break;
             case TGT_USER_TYPE:
             case TGT_CTXT_HANDLE:
@@ -2960,7 +2968,7 @@ static unsigned int get_required_buffer_size_type(
     case TGT_ARRAY:
         /* FIXME: depends on pointer type */
         return type_array_get_dim(type) *
-            get_required_buffer_size_type(type_array_get_element(type), name, alignment);
+            get_required_buffer_size_type(type_array_get_element(type), name, NULL, FALSE, alignment);
 
     default:
         break;
@@ -2989,7 +2997,7 @@ static unsigned int get_required_buffer_size(const var_t *var, unsigned int *ali
 
         if (!is_string_type(var->attrs, var->type))
             return get_required_buffer_size_type(var->type, var->name,
-                                                 alignment);
+                                                 var->attrs, TRUE, alignment);
     }
     return 0;
 }
@@ -3264,9 +3272,10 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
     const type_t *type = var->type;
     unsigned int start_offset = type->typestring_offset;
 
-    pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
-    if (!pointer_type)
-        pointer_type = RPC_FC_RP;
+    if (is_ptr(type) || is_array(type))
+        pointer_type = get_pointer_fc(type, var->attrs, pass != PASS_RETURN);
+    else
+        pointer_type = 0;
 
     in_attr = is_attr(var->attrs, ATTR_IN);
     out_attr = is_attr(var->attrs, ATTR_OUT);
@@ -3457,7 +3466,7 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
     case TGT_POINTER:
     {
         const type_t *ref = type_pointer_get_ref(type);
-        if (get_pointer_fc(type) == RPC_FC_RP && !is_user_type(ref)) switch (type_get_type(ref))
+        if (pointer_type == RPC_FC_RP && !is_user_type(ref)) switch (type_get_type(ref))
         {
         case TYPE_BASIC:
             /* base types have known sizes, so don't need a sizing pass

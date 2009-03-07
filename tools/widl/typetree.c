@@ -72,10 +72,10 @@ type_t *type_new_function(var_list_t *args)
     return t;
 }
 
-type_t *type_new_pointer(type_t *ref, attr_list_t *attrs)
+type_t *type_new_pointer(unsigned char pointer_default, type_t *ref, attr_list_t *attrs)
 {
     type_t *t = make_type(TYPE_POINTER);
-    t->details.pointer.fc = pointer_default;
+    t->details.pointer.def_fc = pointer_default;
     t->details.pointer.ref = ref;
     t->attrs = attrs;
     return t;
@@ -118,7 +118,8 @@ type_t *type_new_coclass(char *name)
 
 
 type_t *type_new_array(const char *name, type_t *element, int declptr,
-                       unsigned int dim, expr_t *size_is, expr_t *length_is)
+                       unsigned int dim, expr_t *size_is, expr_t *length_is,
+                       unsigned char ptr_default_fc)
 {
     type_t *t = make_type(TYPE_ARRAY);
     if (name) t->name = xstrdup(name);
@@ -129,6 +130,7 @@ type_t *type_new_array(const char *name, type_t *element, int declptr,
     else
         t->details.array.dim = dim;
     t->details.array.elem = element;
+    t->details.array.ptr_def_fc = ptr_default_fc;
     return t;
 }
 

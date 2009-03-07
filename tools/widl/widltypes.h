@@ -319,7 +319,8 @@ struct array_details
   expr_t *length_is;
   struct _type_t *elem;
   unsigned int dim;
-  unsigned int declptr; /* if declared as a pointer */
+  unsigned char ptr_def_fc;
+  unsigned char declptr; /* if declared as a pointer */
 };
 
 struct coclass_details
@@ -336,7 +337,7 @@ struct basic_details
 struct pointer_details
 {
   struct _type_t *ref;
-  unsigned char fc;
+  unsigned char def_fc;
 };
 
 enum type_type
@@ -485,8 +486,6 @@ struct _statement_t {
         type_list_t *type_list;
     } u;
 };
-
-extern unsigned char pointer_default;
 
 extern user_type_list_t user_type_list;
 void check_for_additional_prototype_types(const var_list_t *list);

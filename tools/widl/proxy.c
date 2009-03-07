@@ -156,10 +156,8 @@ int cant_be_null(const var_t *v)
     switch (typegen_detect_type(v->type, v->attrs, TDT_IGNORE_STRINGS))
     {
     case TGT_ARRAY:
-        /* FIXME: work out pointer type */
-        return 0;
     case TGT_POINTER:
-        return (get_pointer_fc(v->type) == RPC_FC_RP);
+        return (get_pointer_fc(v->type, v->attrs, TRUE) == RPC_FC_RP);
     case TGT_CTXT_HANDLE_POINTER:
         return TRUE;
     default:
@@ -248,7 +246,7 @@ static void free_variable( const var_t *arg, const char *local_var_prefix )
     }
     /* fall through */
   case TGT_POINTER:
-    if (get_pointer_fc(type) == RPC_FC_FP)
+    if (get_pointer_fc(type, arg->attrs, TRUE) == RPC_FC_FP)
     {
       print_proxy( "NdrClearOutParameters( &__frame->_StubMsg, ");
       fprintf(proxy, "&__MIDL_TypeFormatString.Format[%u], ", type_offset );
