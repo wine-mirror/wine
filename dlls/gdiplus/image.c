@@ -249,6 +249,14 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipCloneBitmapAreaI(INT x, INT y, INT width, INT height,
+    PixelFormat format, GpBitmap* srcBitmap, GpBitmap** dstBitmap)
+{
+    FIXME("(%i,%i,%i,%i,%i,%p,%p)\n", x, y, width, height, format, srcBitmap, dstBitmap);
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipCloneImage(GpImage *image, GpImage **cloneImage)
 {
     IStream* stream;
