@@ -416,7 +416,7 @@ void check_for_additional_prototype_types(const var_list_t *list)
         break;
       }
       if ((type_get_type(type) != TYPE_BASIC ||
-           type_basic_get_fc(type) != RPC_FC_BIND_PRIMITIVE) &&
+           type_basic_get_type(type) != TYPE_BASIC_HANDLE) &&
           is_attr(type->attrs, ATTR_HANDLE)) {
         if (!generic_handle_registered(name))
         {
@@ -576,7 +576,7 @@ const var_t* get_explicit_handle_var(const var_t *func)
     LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
     {
         const type_t *type = var->type;
-        if (type_get_type(type) == TYPE_BASIC && type_basic_get_fc(type) == RPC_FC_BIND_PRIMITIVE)
+        if (type_get_type(type) == TYPE_BASIC && type_basic_get_type(type) == TYPE_BASIC_HANDLE)
             return var;
     }
 
@@ -589,7 +589,7 @@ const type_t* get_explicit_generic_handle_type(const var_t* var)
     for (t = var->type;
          is_ptr(t) || type_is_alias(t);
          t = type_is_alias(t) ? type_alias_get_aliasee(t) : type_pointer_get_ref(t))
-        if ((type_get_type_detect_alias(t) != TYPE_BASIC || type_basic_get_fc(t) != RPC_FC_BIND_PRIMITIVE) &&
+        if ((type_get_type_detect_alias(t) != TYPE_BASIC || type_basic_get_type(t) != TYPE_BASIC_HANDLE) &&
             is_attr(t->attrs, ATTR_HANDLE))
             return t;
     return NULL;

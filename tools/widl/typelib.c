@@ -116,10 +116,10 @@ static unsigned short builtin_vt(const type_t *t)
       elem_type = type_pointer_get_ref(t);
     if (type_get_type(elem_type) == TYPE_BASIC)
     {
-      switch (type_basic_get_fc(elem_type))
+      switch (type_basic_get_type(elem_type))
       {
-      case RPC_FC_CHAR: return VT_LPSTR;
-      case RPC_FC_WCHAR: return VT_LPWSTR;
+      case TYPE_BASIC_CHAR: return VT_LPSTR;
+      case TYPE_BASIC_WCHAR: return VT_LPWSTR;
       default: break;
       }
     }

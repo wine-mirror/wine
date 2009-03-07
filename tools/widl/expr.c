@@ -290,20 +290,18 @@ static int is_integer_type(const type_t *type)
     case TYPE_ENUM:
         return TRUE;
     case TYPE_BASIC:
-        switch (type_basic_get_fc(type))
+        switch (type_basic_get_type(type))
         {
-        case RPC_FC_BYTE:
-        case RPC_FC_CHAR:
-        case RPC_FC_SMALL:
-        case RPC_FC_USMALL:
-        case RPC_FC_WCHAR:
-        case RPC_FC_SHORT:
-        case RPC_FC_USHORT:
-        case RPC_FC_LONG:
-        case RPC_FC_ULONG:
-        case RPC_FC_INT3264:
-        case RPC_FC_UINT3264:
-        case RPC_FC_HYPER:
+        case TYPE_BASIC_INT8:
+        case TYPE_BASIC_INT16:
+        case TYPE_BASIC_INT32:
+        case TYPE_BASIC_INT64:
+        case TYPE_BASIC_INT:
+        case TYPE_BASIC_CHAR:
+        case TYPE_BASIC_HYPER:
+        case TYPE_BASIC_BYTE:
+        case TYPE_BASIC_WCHAR:
+        case TYPE_BASIC_ERROR_STATUS_T:
             return TRUE;
         default:
             return FALSE;
@@ -316,8 +314,8 @@ static int is_integer_type(const type_t *type)
 static int is_float_type(const type_t *type)
 {
     return (type_get_type(type) == TYPE_BASIC &&
-        (type_basic_get_fc(type) == RPC_FC_FLOAT ||
-         type_basic_get_fc(type) == RPC_FC_DOUBLE));
+        (type_basic_get_type(type) == TYPE_BASIC_FLOAT ||
+         type_basic_get_type(type) == TYPE_BASIC_DOUBLE));
 }
 
 static void check_scalar_type(const struct expr_loc *expr_loc,

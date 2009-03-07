@@ -120,6 +120,28 @@ const char *string_of_type(unsigned char type)
     }
 }
 
+unsigned char get_basic_fc(const type_t *type)
+{
+    int sign = type_basic_get_sign(type);
+    switch (type_basic_get_type(type))
+    {
+    case TYPE_BASIC_INT8: return (sign <= 0 ? RPC_FC_SMALL : RPC_FC_USMALL);
+    case TYPE_BASIC_INT16: return (sign <= 0 ? RPC_FC_SHORT : RPC_FC_USHORT);
+    case TYPE_BASIC_INT32: return (sign <= 0 ? RPC_FC_LONG : RPC_FC_ULONG);
+    case TYPE_BASIC_INT64: return RPC_FC_HYPER;
+    case TYPE_BASIC_INT: return (sign <= 0 ? RPC_FC_LONG : RPC_FC_ULONG);
+    case TYPE_BASIC_BYTE: return RPC_FC_BYTE;
+    case TYPE_BASIC_CHAR: return RPC_FC_CHAR;
+    case TYPE_BASIC_WCHAR: return RPC_FC_WCHAR;
+    case TYPE_BASIC_HYPER: return RPC_FC_HYPER;
+    case TYPE_BASIC_FLOAT: return RPC_FC_FLOAT;
+    case TYPE_BASIC_DOUBLE: return RPC_FC_DOUBLE;
+    case TYPE_BASIC_ERROR_STATUS_T: return RPC_FC_ERROR_STATUS_T;
+    case TYPE_BASIC_HANDLE: return RPC_FC_BIND_PRIMITIVE;
+    default: return 0;
+    }
+}
+
 unsigned char get_pointer_fc(const type_t *type, const attr_list_t *attrs, int toplevel_param)
 {
     const type_t *t;
@@ -736,7 +758,7 @@ static unsigned int write_procformatstring_type(FILE *file, int indent,
         }
         else
         {
-            fc = type_basic_get_fc(type);
+            fc = get_basic_fc(type);
 
             if (fc == RPC_FC_BIND_PRIMITIVE)
                 fc = RPC_FC_IGNORE;
@@ -827,7 +849,7 @@ static int write_base_type(FILE *file, const type_t *type, int convert_to_signed
     unsigned char fc;
 
     if (type_get_type(type) == TYPE_BASIC)
-        fc = type_basic_get_fc(type);
+        fc = get_basic_fc(type);
     else if (type_get_type(type) == TYPE_ENUM)
         fc = get_enum_fc(type);
     else
@@ -975,7 +997,7 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *structure,
 
         if (type_get_type(correlation_variable) == TYPE_BASIC)
         {
-            switch (type_basic_get_fc(correlation_variable))
+            switch (get_basic_fc(correlation_variable))
             {
             case RPC_FC_CHAR:
             case RPC_FC_SMALL:
@@ -1000,7 +1022,7 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *structure,
                 break;
             default:
                 error("write_conf_or_var_desc: conformance variable type not supported 0x%x\n",
-                      type_basic_get_fc(correlation_variable));
+                      get_basic_fc(correlation_variable));
             }
         }
         else if (type_get_type(correlation_variable) == TYPE_ENUM)
@@ -1133,7 +1155,7 @@ unsigned int type_memsize(const type_t *t, unsigned int *align)
     switch (type_get_type(t))
     {
     case TYPE_BASIC:
-        switch (type_basic_get_fc(t))
+        switch (get_basic_fc(t))
         {
         case RPC_FC_BYTE:
         case RPC_FC_CHAR:
@@ -1161,7 +1183,7 @@ unsigned int type_memsize(const type_t *t, unsigned int *align)
             if (size > *align) *align = size;
             break;
         default:
-            error("type_memsize: Unknown type 0x%x\n", type_basic_get_fc(t));
+            error("type_memsize: Unknown type 0x%x\n", get_basic_fc(t));
             size = 0;
         }
         break;
@@ -1316,7 +1338,7 @@ static unsigned int write_simple_pointer(FILE *file, const attr_list_t *attrs, c
     if (type_get_type(ref) == TYPE_ENUM)
         fc = get_enum_fc(ref);
     else
-        fc = type_basic_get_fc(ref);
+        fc = get_basic_fc(ref);
 
     print_file(file, 2, "0x%02x, 0x%x,\t/* %s [simple_pointer] */\n",
                pointer_fc, RPC_FC_P_SIMPLEPOINTER, string_of_type(pointer_fc));
@@ -1401,7 +1423,7 @@ static void write_user_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
         if (type_get_type(utype) == TYPE_ENUM)
             fc = get_enum_fc(utype);
         else
-            fc = type_basic_get_fc(utype);
+            fc = get_basic_fc(utype);
 
         absoff = *tfsoff;
         print_start_tfs_comment(file, utype, absoff);
@@ -1978,7 +2000,7 @@ static unsigned int write_string_tfs(FILE *file, const attr_list_t *attrs,
         return start_offset;
     }
 
-    rtype = type_basic_get_fc(elem_type);
+    rtype = get_basic_fc(elem_type);
     if ((rtype != RPC_FC_BYTE) && (rtype != RPC_FC_CHAR) && (rtype != RPC_FC_WCHAR))
     {
         error("write_string_tfs: Unimplemented for type 0x%x of name: %s\n", rtype, name);
@@ -2363,7 +2385,7 @@ static void write_branch_type(FILE *file, const type_t *t, unsigned int *tfsoff)
         {
             unsigned char fc;
             if (type_get_type(t) == TYPE_BASIC)
-                fc = type_basic_get_fc(t);
+                fc = get_basic_fc(t);
             else
                 fc = get_enum_fc(t);
             print_file(file, 2, "NdrFcShort(0x80%02x),\t/* Simple arm type: %s */\n",
@@ -2420,7 +2442,7 @@ static unsigned int write_union_tfs(FILE *file, type_t *type, unsigned int *tfso
 
         if (type_get_type(st) == TYPE_BASIC)
         {
-            switch (type_basic_get_fc(st))
+            switch (get_basic_fc(st))
             {
             case RPC_FC_CHAR:
             case RPC_FC_SMALL:
@@ -2431,7 +2453,7 @@ static unsigned int write_union_tfs(FILE *file, type_t *type, unsigned int *tfso
             case RPC_FC_USHORT:
             case RPC_FC_LONG:
             case RPC_FC_ULONG:
-                fc = type_basic_get_fc(st);
+                fc = get_basic_fc(st);
                 break;
             default:
                 fc = 0;
@@ -2456,7 +2478,7 @@ static unsigned int write_union_tfs(FILE *file, type_t *type, unsigned int *tfso
 
         if (type_get_type(st) == TYPE_BASIC)
         {
-            switch (type_basic_get_fc(st))
+            switch (get_basic_fc(st))
             {
             case RPC_FC_CHAR:
             case RPC_FC_SMALL:
@@ -2467,7 +2489,7 @@ static unsigned int write_union_tfs(FILE *file, type_t *type, unsigned int *tfso
             case RPC_FC_ULONG:
             case RPC_FC_ENUM16:
             case RPC_FC_ENUM32:
-                fc = type_basic_get_fc(st);
+                fc = get_basic_fc(st);
                 break;
             default:
                 fc = 0;
@@ -2692,7 +2714,7 @@ static unsigned int write_typeformatstring_var(FILE *file, int indent, const var
                 if (type_get_type(ref) == TYPE_ENUM)
                     fc = get_enum_fc(ref);
                 else
-                    fc = type_basic_get_fc(ref);
+                    fc = get_basic_fc(ref);
 
                 print_file(file, indent, "0x%x, 0x%x,    /* %s %s[simple_pointer] */\n",
                            get_pointer_fc(type, var->attrs, toplevel_param),
@@ -2885,7 +2907,7 @@ static unsigned int get_required_buffer_size_type(
         return get_required_buffer_size_type(utype, uname, NULL, FALSE, alignment);
     }
     case TGT_BASIC:
-        switch (type_basic_get_fc(type))
+        switch (get_basic_fc(type))
         {
         case RPC_FC_BYTE:
         case RPC_FC_CHAR:
@@ -2918,7 +2940,7 @@ static unsigned int get_required_buffer_size_type(
 
         default:
             error("get_required_buffer_size: unknown basic type 0x%02x\n",
-                  type_basic_get_fc(type));
+                  get_basic_fc(type));
             return 0;
         }
         break;
@@ -3100,7 +3122,7 @@ void print_phase_basetype(FILE *file, int indent, const char *local_var_prefix,
     }
     else
     {
-        switch (type_basic_get_fc(ref))
+        switch (get_basic_fc(ref))
         {
         case RPC_FC_BYTE:
         case RPC_FC_CHAR:
@@ -3138,7 +3160,7 @@ void print_phase_basetype(FILE *file, int indent, const char *local_var_prefix,
 
         default:
             error("print_phase_basetype: Unsupported type: %s (0x%02x, ptr_level: 0)\n",
-                  var->name, type_basic_get_fc(ref));
+                  var->name, get_basic_fc(ref));
             size = 0;
         }
     }

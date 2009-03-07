@@ -1685,9 +1685,9 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
       t = type_pointer_get_ref(t);
 
     if (type_get_type(t) != TYPE_BASIC &&
-        (type_basic_get_fc(t) != RPC_FC_CHAR &&
-         type_basic_get_fc(t) != RPC_FC_BYTE &&
-         type_basic_get_fc(t) != RPC_FC_WCHAR))
+        (get_basic_fc(t) != RPC_FC_CHAR &&
+         get_basic_fc(t) != RPC_FC_BYTE &&
+         get_basic_fc(t) != RPC_FC_WCHAR))
     {
       decl = LIST_ENTRY( list_head( decls ), const declarator_t, entry );
       error_loc("'%s': [string] attribute is only valid on 'char', 'byte', or 'wchar_t' pointers and arrays\n",
@@ -2118,18 +2118,18 @@ static int is_allowed_conf_type(const type_t *type)
     case TYPE_ENUM:
         return TRUE;
     case TYPE_BASIC:
-        switch (type_basic_get_fc(type))
+        switch (type_basic_get_type(type))
         {
-        case RPC_FC_CHAR:
-        case RPC_FC_SMALL:
-        case RPC_FC_BYTE:
-        case RPC_FC_USMALL:
-        case RPC_FC_WCHAR:
-        case RPC_FC_SHORT:
-        case RPC_FC_USHORT:
-        case RPC_FC_LONG:
-        case RPC_FC_ULONG:
-        case RPC_FC_ERROR_STATUS_T:
+        case TYPE_BASIC_INT8:
+        case TYPE_BASIC_INT16:
+        case TYPE_BASIC_INT32:
+        case TYPE_BASIC_INT64:
+        case TYPE_BASIC_INT:
+        case TYPE_BASIC_CHAR:
+        case TYPE_BASIC_HYPER:
+        case TYPE_BASIC_BYTE:
+        case TYPE_BASIC_WCHAR:
+        case TYPE_BASIC_ERROR_STATUS_T:
             return TRUE;
         default:
             return FALSE;

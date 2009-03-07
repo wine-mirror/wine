@@ -63,31 +63,6 @@ static inline enum type_type type_get_type(const type_t *type)
     return type_get_type_detect_alias(type_get_real_type(type));
 }
 
-static inline unsigned char type_basic_get_fc(const type_t *type)
-{
-    int sign;
-    type = type_get_real_type(type);
-    assert(type_get_type(type) == TYPE_BASIC);
-    sign = type->details.basic.sign;
-    switch (type->details.basic.type)
-    {
-    case TYPE_BASIC_INT8: return (sign <= 0 ? RPC_FC_SMALL : RPC_FC_USMALL);
-    case TYPE_BASIC_INT16: return (sign <= 0 ? RPC_FC_SHORT : RPC_FC_USHORT);
-    case TYPE_BASIC_INT32: return (sign <= 0 ? RPC_FC_LONG : RPC_FC_ULONG);
-    case TYPE_BASIC_INT64: return RPC_FC_HYPER;
-    case TYPE_BASIC_INT: return (sign <= 0 ? RPC_FC_LONG : RPC_FC_ULONG);
-    case TYPE_BASIC_BYTE: return RPC_FC_BYTE;
-    case TYPE_BASIC_CHAR: return RPC_FC_CHAR;
-    case TYPE_BASIC_WCHAR: return RPC_FC_WCHAR;
-    case TYPE_BASIC_HYPER: return RPC_FC_HYPER;
-    case TYPE_BASIC_FLOAT: return RPC_FC_FLOAT;
-    case TYPE_BASIC_DOUBLE: return RPC_FC_DOUBLE;
-    case TYPE_BASIC_ERROR_STATUS_T: return RPC_FC_ERROR_STATUS_T;
-    case TYPE_BASIC_HANDLE: return RPC_FC_BIND_PRIMITIVE;
-    default: return 0;
-    }
-}
-
 static inline enum type_basic_type type_basic_get_type(const type_t *type)
 {
     type = type_get_real_type(type);
