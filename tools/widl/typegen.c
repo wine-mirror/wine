@@ -1245,21 +1245,57 @@ void write_full_pointer_free(FILE *file, int indent, const var_t *func)
     fprintf(file, "\n");
 }
 
-static unsigned int write_nonsimple_pointer(FILE *file, const type_t *type, unsigned int offset)
+static unsigned int write_nonsimple_pointer(FILE *file, const attr_list_t *attrs,
+                                            const type_t *type,
+                                            unsigned char pointer_default,
+                                            unsigned int offset,
+                                            unsigned int *typeformat_offset)
 {
-    short absoff = type_pointer_get_ref(type)->typestring_offset;
-    short reloff = absoff - (offset + 2);
-    int ptr_attr = is_ptr(type_pointer_get_ref(type)) ? 0x10 : 0x0;
-    unsigned char pointer_fc = get_pointer_fc(type);
+    unsigned int start_offset = *typeformat_offset;
+    short reloff = offset - (*typeformat_offset + 2);
+    int in_attr, out_attr;
+    int pointer_type;
+    unsigned char flags = 0;
 
-    print_file(file, 2, "0x%02x, 0x%x,\t/* %s */\n",
-               pointer_fc, ptr_attr, string_of_type(pointer_fc));
-    print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%hd) */\n",
-               reloff, reloff, absoff);
-    return 4;
+    if (is_ptr(type))
+        pointer_type = get_pointer_fc(type);
+    else
+    {
+        pointer_type = get_attrv(attrs, ATTR_POINTERTYPE);
+        if (!pointer_type)
+            pointer_type = pointer_default;
+    }
+
+    in_attr = is_attr(attrs, ATTR_IN);
+    out_attr = is_attr(attrs, ATTR_OUT);
+    if (!in_attr && !out_attr) in_attr = 1;
+
+    if (out_attr && !in_attr && pointer_type == RPC_FC_RP)
+        flags |= RPC_FC_P_ONSTACK;
+
+    if (is_ptr(type) && !last_ptr(type))
+        flags |= RPC_FC_P_DEREF;
+
+    print_file(file, 2, "0x%x, 0x%x,\t\t/* %s",
+               pointer_type,
+               flags,
+               string_of_type(pointer_type));
+    if (file)
+    {
+        if (flags & RPC_FC_P_ONSTACK)
+            fprintf(file, " [allocated_on_stack]");
+        if (flags & RPC_FC_P_DEREF)
+            fprintf(file, " [pointer_deref]");
+        fprintf(file, " */\n");
+    }
+
+    print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n", reloff, reloff, offset);
+    *typeformat_offset += 4;
+
+    return start_offset;
 }
 
-static unsigned int write_simple_pointer(FILE *file, const type_t *type)
+static unsigned int write_simple_pointer(FILE *file, const attr_list_t *attrs, const type_t *type)
 {
     unsigned char fc;
     unsigned char pointer_fc;
@@ -1267,7 +1303,7 @@ static unsigned int write_simple_pointer(FILE *file, const type_t *type)
 
     /* for historical reasons, write_simple_pointer also handled string types,
      * but no longer does. catch bad uses of the function with this check */
-    if (is_string_type(type->attrs, type))
+    if (is_string_type(attrs, type))
         error("write_simple_pointer: can't handle type %s which is a string type\n", type->name);
 
     pointer_fc = get_pointer_fc(type);
@@ -1278,8 +1314,8 @@ static unsigned int write_simple_pointer(FILE *file, const type_t *type)
     else
         fc = type_basic_get_fc(ref);
 
-    print_file(file, 2, "0x%02x, 0x8,\t/* %s [simple_pointer] */\n",
-               pointer_fc, string_of_type(pointer_fc));
+    print_file(file, 2, "0x%02x, 0x%x,\t/* %s [simple_pointer] */\n",
+               pointer_fc, RPC_FC_P_SIMPLEPOINTER, string_of_type(pointer_fc));
     print_file(file, 2, "0x%02x,\t/* %s */\n", fc, string_of_type(fc));
     print_file(file, 2, "0x5c,\t/* FC_PAD */\n");
     return 4;
@@ -1292,7 +1328,7 @@ static void print_start_tfs_comment(FILE *file, type_t *t, unsigned int tfsoff)
     print_file(file, 0, ") */\n");
 }
 
-static unsigned int write_pointer_tfs(FILE *file, type_t *type, unsigned int *typestring_offset)
+static unsigned int write_pointer_tfs(FILE *file, const attr_list_t *attrs, type_t *type, unsigned int *typestring_offset)
 {
     unsigned int offset = *typestring_offset;
     type_t *ref = type_pointer_get_ref(type);
@@ -1301,10 +1337,13 @@ static unsigned int write_pointer_tfs(FILE *file, type_t *type, unsigned int *ty
     update_tfsoff(type, offset, file);
 
     if (ref->typestring_offset)
-        *typestring_offset += write_nonsimple_pointer(file, type, offset);
+        write_nonsimple_pointer(file, attrs, type,
+                                RPC_FC_RP,
+                                type_pointer_get_ref(type)->typestring_offset,
+                                typestring_offset);
     else if (type_get_type(ref) == TYPE_BASIC ||
              type_get_type(ref) == TYPE_ENUM)
-        *typestring_offset += write_simple_pointer(file, type);
+        *typestring_offset += write_simple_pointer(file, attrs, type);
 
     return offset;
 }
@@ -1494,19 +1533,13 @@ static int write_no_repeat_pointer_descriptions(
         if (is_ptr(type))
         {
             if (is_string_type(attrs, type))
-                write_string_tfs(file, NULL, type, NULL, typestring_offset);
+                write_string_tfs(file, attrs, type, NULL, typestring_offset);
             else
-                write_pointer_tfs(file, type, typestring_offset);
+                write_pointer_tfs(file, attrs, type, typestring_offset);
         }
         else
         {
-            unsigned absoff = type->typestring_offset;
-            short reloff = absoff - (*typestring_offset + 2);
-            /* FIXME: get pointer attributes from field */
-            print_file(file, 2, "0x%02x, 0x0,\t/* %s */\n", RPC_FC_UP, "FC_UP");
-            print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n",
-                       reloff, reloff, absoff);
-            *typestring_offset += 4;
+            write_nonsimple_pointer(file, attrs, type, RPC_FC_RP, type->typestring_offset, typestring_offset);
         }
 
         align = 0;
@@ -1583,9 +1616,9 @@ static int write_pointer_description_offsets(
         *typestring_offset += 4;
 
         if (is_string_type(attrs, type))
-            write_string_tfs(file, NULL, type, NULL, typestring_offset);
+            write_string_tfs(file, attrs, type, NULL, typestring_offset);
         else if (processed(ref) || type_get_type(ref) == TYPE_BASIC || type_get_type(ref) == TYPE_ENUM)
-            write_pointer_tfs(file, type, typestring_offset);
+            write_pointer_tfs(file, attrs, type, typestring_offset);
         else
             error("write_pointer_description_offsets: type format string unknown\n");
 
@@ -2282,23 +2315,12 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
                 if (is_string_type(f->attrs, ft))
                     write_string_tfs(file, f->attrs, ft, f->name, tfsoff);
                 else
-                    write_pointer_tfs(file, ft, tfsoff);
+                    write_pointer_tfs(file, f->attrs, ft, tfsoff);
             }
             else if (type_get_type(ft) == TYPE_ARRAY && type_array_is_decl_as_ptr(ft))
             {
-                unsigned int absoff = ft->typestring_offset;
-                short reloff = absoff - (*tfsoff + 2);
-                int ptr_type = get_attrv(f->attrs, ATTR_POINTERTYPE);
-                /* FIXME: We need to store pointer attributes for arrays
-                   so we don't lose pointer_default info.  */
-                if (ptr_type == 0)
-                    ptr_type = RPC_FC_UP;
                 print_file(file, 0, "/* %d */\n", *tfsoff);
-                print_file(file, 2, "0x%x, 0x0,\t/* %s */\n", ptr_type,
-                           string_of_type(ptr_type));
-                print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n",
-                           reloff, reloff, absoff);
-                *tfsoff += 4;
+                write_nonsimple_pointer(file, f->attrs, ft, RPC_FC_UP, ft->typestring_offset, tfsoff);
             }
         }
         if (type_get_real_type(type)->ptrdesc == *tfsoff)
@@ -2306,39 +2328,6 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
     }
 
     current_structure = save_current_structure;
-    return start_offset;
-}
-
-static unsigned int write_pointer_only_tfs(FILE *file, const attr_list_t *attrs, int pointer_type,
-                                           unsigned char flags, unsigned int offset,
-                                           unsigned int *typeformat_offset)
-{
-    unsigned int start_offset = *typeformat_offset;
-    short reloff = offset - (*typeformat_offset + 2);
-    int in_attr, out_attr;
-    in_attr = is_attr(attrs, ATTR_IN);
-    out_attr = is_attr(attrs, ATTR_OUT);
-    if (!in_attr && !out_attr) in_attr = 1;
-
-    if (out_attr && !in_attr && pointer_type == RPC_FC_RP)
-        flags |= 0x04;
-
-    print_file(file, 2, "0x%x, 0x%x,\t\t/* %s",
-               pointer_type,
-               flags,
-               string_of_type(pointer_type));
-    if (file)
-    {
-        if (flags & 0x04)
-            fprintf(file, " [allocated_on_stack]");
-        if (flags & 0x10)
-            fprintf(file, " [pointer_deref]");
-        fprintf(file, " */\n");
-    }
-
-    print_file(file, 2, "NdrFcShort(0x%hx),\t/* %d */\n", reloff, offset);
-    *typeformat_offset += 4;
-
     return start_offset;
 }
 
@@ -2713,9 +2702,9 @@ static unsigned int write_typeformatstring_var(FILE *file, int indent, const var
                                             typeformat_offset);
         if (file)
             fprintf(file, "/* %2u */\n", *typeformat_offset);
-        return write_pointer_only_tfs(file, var->attrs, get_pointer_fc(type),
-                               !last_ptr(type) ? 0x10 : 0,
-                               offset, typeformat_offset);
+        return write_nonsimple_pointer(file, var->attrs, type,
+                                       RPC_FC_RP,
+                                       offset, typeformat_offset);
     case TGT_INVALID:
         break;
     }
@@ -2747,7 +2736,7 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
             retmask |= write_embedded_types(file, NULL, ref, name, TRUE, tfsoff);
 
         if (write_ptr)
-            write_pointer_tfs(file, type, tfsoff);
+            write_pointer_tfs(file, attrs, type, tfsoff);
 
         retmask |= 1;
         break;
