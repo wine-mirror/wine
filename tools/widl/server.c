@@ -80,6 +80,9 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         indent++;
         write_remoting_arguments(server, indent, func, "__frame->", PASS_OUT, PHASE_FREE);
 
+        if (!is_void(type_function_get_rettype(func->type)))
+            write_remoting_arguments(server, indent, func, "__frame->", PASS_RETURN, PHASE_FREE);
+
         if (has_full_pointer)
             write_full_pointer_free(server, indent, func);
 

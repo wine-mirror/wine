@@ -3349,9 +3349,14 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
         if (phase == PHASE_FREE || pass == PASS_RETURN ||
             pointer_type != RPC_FC_RP)
         {
-            unsigned int ptr_start_offset = (start_offset - (is_conformant_array(type) ? 4 : 2));
-            print_phase_function(file, indent, "Pointer", local_var_prefix,
-                                 phase, var, ptr_start_offset);
+            /* strings returned are assumed to be global and hence don't
+             * need freeing */
+            if (phase != PHASE_FREE || pass != PASS_RETURN)
+            {
+                unsigned int ptr_start_offset = (start_offset - (is_conformant_array(type) ? 4 : 2));
+                print_phase_function(file, indent, "Pointer", local_var_prefix,
+                                     phase, var, ptr_start_offset);
+            }
         }
         else
         {
@@ -3493,6 +3498,13 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
                  * need a freeing pass */
                 if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
                     struct_type = "SimpleStruct";
+                else if (phase == PHASE_FREE && pass == PASS_RETURN)
+                {
+                    print_file(file, indent, "if (%s%s)\n", local_var_prefix, var->name);
+                    indent++;
+                    print_file(file, indent, "__frame->_StubMsg.pfnFree(%s%s);\n", local_var_prefix, var->name);
+                    indent--;
+                }
                 break;
             case RPC_FC_PSTRUCT:
                 struct_type = "SimpleStruct";
