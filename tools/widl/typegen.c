@@ -1546,7 +1546,12 @@ static int write_no_repeat_pointer_descriptions(
         }
         else
         {
-            write_nonsimple_pointer(file, attrs, type, FALSE, type->typestring_offset, typestring_offset);
+            unsigned int offset = type->typestring_offset;
+            /* skip over the pointer that is written for strings, since a
+             * pointer has to be written in-place here */
+            if (is_string_type(attrs, type))
+                offset += 4;
+            write_nonsimple_pointer(file, attrs, type, FALSE, offset, typestring_offset);
         }
 
         align = 0;
@@ -1941,6 +1946,9 @@ static unsigned int write_string_tfs(FILE *file, const attr_list_t *attrs,
     unsigned char rtype;
     type_t *elem_type;
 
+    start_offset = *typestring_offset;
+    update_tfsoff(type, start_offset, file);
+
     if (is_declptr(type))
     {
         unsigned char flag = is_conformant_array(type) ? 0 : RPC_FC_P_SIMPLEPOINTER;
@@ -1958,9 +1966,6 @@ static unsigned int write_string_tfs(FILE *file, const attr_list_t *attrs,
             *typestring_offset += 2;
         }
     }
-
-    start_offset = *typestring_offset;
-    update_tfsoff(type, start_offset, file);
 
     if (is_array(type))
         elem_type = type_array_get_element(type);
@@ -2326,8 +2331,16 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
             }
             else if (type_get_type(ft) == TYPE_ARRAY && type_array_is_decl_as_ptr(ft))
             {
+                unsigned int offset;
+
                 print_file(file, 0, "/* %d */\n", *tfsoff);
-                write_nonsimple_pointer(file, f->attrs, ft, FALSE, ft->typestring_offset, tfsoff);
+
+                offset = ft->typestring_offset;
+                /* skip over the pointer that is written for strings, since a
+                 * pointer has to be written in-place here */
+                if (is_string_type(f->attrs, ft))
+                    offset += 4;
+                write_nonsimple_pointer(file, f->attrs, ft, FALSE, offset, tfsoff);
             }
         }
         if (type_get_real_type(type)->ptrdesc == *tfsoff)
@@ -2633,16 +2646,8 @@ static unsigned int write_typeformatstring_var(FILE *file, int indent, const var
         int ptr_type;
         unsigned int off;
         off = write_array_tfs(file, var->attrs, type, var->name, typeformat_offset);
-        ptr_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
-        /* Top level pointers to conformant arrays may be handled specially
-           since we can bypass the pointer, but if the array is buried
-           beneath another pointer (e.g., "[size_is(,n)] int **p" then we
-           always need to write the pointer.  */
-        if (!ptr_type && var->type != type)
-          /* FIXME:  This should use pointer_default, but the information
-             isn't kept around for arrays.  */
-          ptr_type = RPC_FC_UP;
-        if (ptr_type && ptr_type != RPC_FC_RP)
+        ptr_type = get_pointer_fc(type, var->attrs, toplevel_param);
+        if (ptr_type != RPC_FC_RP)
         {
             unsigned int absoff = type->typestring_offset;
             short reloff = absoff - (*typeformat_offset + 2);
@@ -3352,21 +3357,27 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
             /* strings returned are assumed to be global and hence don't
              * need freeing */
             if (phase != PHASE_FREE || pass != PASS_RETURN)
-            {
-                unsigned int ptr_start_offset = (start_offset - (is_conformant_array(type) ? 4 : 2));
                 print_phase_function(file, indent, "Pointer", local_var_prefix,
-                                     phase, var, ptr_start_offset);
-            }
+                                     phase, var, start_offset);
         }
         else
         {
+            unsigned int real_start_offset = start_offset;
+            /* skip over pointer description straight to string description */
+            if (is_declptr(type))
+            {
+                if (is_conformant_array(type))
+                    real_start_offset += 4;
+                else
+                    real_start_offset += 2;
+            }
             if (is_array(type) && !is_conformant_array(type))
                 print_phase_function(file, indent, "NonConformantString",
                                      local_var_prefix, phase, var,
-                                     start_offset);
+                                     real_start_offset);
             else
                 print_phase_function(file, indent, "ConformantString", local_var_prefix,
-                                     phase, var, start_offset);
+                                     phase, var, real_start_offset);
         }
         break;
     case TGT_ARRAY:
