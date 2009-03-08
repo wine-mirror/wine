@@ -27,6 +27,8 @@
 
 #include "wine/test.h"
 
+static BOOL (WINAPI *pCreateUrlCacheContainerA)(DWORD, DWORD, DWORD, DWORD,
+                                                DWORD, DWORD, DWORD, DWORD);
 static BOOL (WINAPI *pInternetTimeFromSystemTimeA)(CONST SYSTEMTIME *,DWORD ,LPSTR ,DWORD);
 static BOOL (WINAPI *pInternetTimeFromSystemTimeW)(CONST SYSTEMTIME *,DWORD ,LPWSTR ,DWORD);
 static BOOL (WINAPI *pInternetTimeToSystemTimeA)(LPCSTR ,SYSTEMTIME *,DWORD);
@@ -770,6 +772,7 @@ START_TEST(internet)
 {
     HMODULE hdll;
     hdll = GetModuleHandleA("wininet.dll");
+    pCreateUrlCacheContainerA = (void*)GetProcAddress(hdll, "CreateUrlCacheContainerA");
     pInternetTimeFromSystemTimeA = (void*)GetProcAddress(hdll, "InternetTimeFromSystemTimeA");
     pInternetTimeFromSystemTimeW = (void*)GetProcAddress(hdll, "InternetTimeFromSystemTimeW");
     pInternetTimeToSystemTimeA = (void*)GetProcAddress(hdll, "InternetTimeToSystemTimeA");
@@ -784,7 +787,7 @@ START_TEST(internet)
     test_null();
 
     if (!pInternetTimeFromSystemTimeA)
-        skip("skipping the InternetTime tests\n");
+        win_skip("skipping the InternetTime tests\n");
     else
     {
         InternetTimeFromSystemTimeA_test();
@@ -792,8 +795,10 @@ START_TEST(internet)
         InternetTimeToSystemTimeA_test();
         InternetTimeToSystemTimeW_test();
     }
-    if (!pIsDomainLegalCookieDomainW)
-        skip("skipping IsDomainLegalCookieDomainW tests\n");
+    if (pIsDomainLegalCookieDomainW && (void*)pIsDomainLegalCookieDomainW == (void*)pCreateUrlCacheContainerA)
+        win_skip("IsDomainLegalCookieDomainW is not available on systems with IE5\n");
+    else if (!pIsDomainLegalCookieDomainW)
+        win_skip("IsDomainLegalCookieDomainW (or ordinal 117) is not available\n");
     else
         test_IsDomainLegalCookieDomainW();
 }
