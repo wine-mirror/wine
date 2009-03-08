@@ -592,7 +592,7 @@ static void dump_sizes(HWND hToolbar)
         SendMessageA(hToolbar, TB_GETITEMRECT, i, &r);
         printf("%s{%3d, %3d, %3d, %3d}, ", (i%3==0 ? "\n    " : ""), r.left, r.top, r.right, r.bottom);
     }
-    printf("\n  }, }, \n");
+    printf("\n  }, },\n");
 }
 
 #define check_sizes() dump_sizes(hToolbar);

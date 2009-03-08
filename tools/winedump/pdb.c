@@ -334,7 +334,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
             lineno_size = sym_file->lineno_size;
             printf("\t--------symbol file----------- %s\n", file_name);
             printf("\tgot symbol_file\n"
-                   "\t\tunknown1:   %08x \n"
+                   "\t\tunknown1:   %08x\n"
                    "\t\trange\n"
                    "\t\t\tsegment:         %04x\n"
                    "\t\t\tpad1:            %04x\n"
@@ -374,7 +374,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
             symbol_size = sym_file->symbol_size;
             lineno_size = sym_file->lineno_size;
             printf("\t--------symbol file----------- %s\n", file_name);
-            printf("\t\tunknown1:   %08x \n"
+            printf("\t\tunknown1:   %08x\n"
                    "\t\trange\n"
                    "\t\t\tsegment:         %04x\n"
                    "\t\t\tpad1:            %04x\n"

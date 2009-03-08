@@ -918,7 +918,7 @@ void break_restart_execution(int count)
     if (mode == dbg_exec_step_into_line && 
         symbol_get_function_line_status(&addr) == dbg_no_line_info)
     {
-        dbg_printf("Single stepping until exit from function, \n"
+        dbg_printf("Single stepping until exit from function,\n"
                    "which has no line number information.\n");
         ret_mode = mode = dbg_exec_finish;
     }

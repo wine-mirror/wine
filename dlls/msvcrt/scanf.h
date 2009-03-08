@@ -79,7 +79,7 @@ _FUNCTION_ {
     if (!*format) return 0;
 #ifndef WIDE_SCANF
 #ifdef CONSOLE
-    TRACE("(%s): \n", debugstr_a(format));
+    TRACE("(%s):\n", debugstr_a(format));
 #else /* CONSOLE */
 #ifdef STRING
     TRACE("%s (%s)\n", file, debugstr_a(format));

@@ -148,7 +148,7 @@ void  output_header_preamble (void)
 
   fprintf (hfile,
            "/*\n * %s.dll\n *\n * Generated from %s.dll by winedump.\n *\n"
-           " * DO NOT SEND GENERATED DLLS FOR INCLUSION INTO WINE !\n * \n */"
+           " * DO NOT SEND GENERATED DLLS FOR INCLUSION INTO WINE !\n *\n */"
            "\n#ifndef __WINE_%s_DLL_H\n#define __WINE_%s_DLL_H\n\n"
            "#include \"windef.h\"\n#include \"wine/debug.h\"\n"
            "#include \"winbase.h\"\n#include \"winnt.h\"\n\n\n",

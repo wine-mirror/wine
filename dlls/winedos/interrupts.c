@@ -262,7 +262,7 @@ BOOL WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
 {
     TRACE_(relay)("Call DOS int 0x%02x ret=%04x:%08x\n"
                   "  eax=%08x ebx=%08x ecx=%08x edx=%08x\n"
-                  "  esi=%08x edi=%08x ebp=%08x esp=%08x \n"
+                  "  esi=%08x edi=%08x ebp=%08x esp=%08x\n"
                   "  ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x\n",
                   intnum, context->SegCs, context->Eip,
                   context->Eax, context->Ebx, context->Ecx, context->Edx,
@@ -449,7 +449,7 @@ BOOL WINAPI DOSVM_EmulateInterruptRM( CONTEXT86 *context, BYTE intnum )
 {
     TRACE_(relay)("Call DOS int 0x%02x ret=%04x:%08x\n"
                   "  eax=%08x ebx=%08x ecx=%08x edx=%08x\n"
-                  "  esi=%08x edi=%08x ebp=%08x esp=%08x \n"
+                  "  esi=%08x edi=%08x ebp=%08x esp=%08x\n"
                   "  ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x\n",
                   intnum, context->SegCs, context->Eip,
                   context->Eax, context->Ebx, context->Ecx, context->Edx,

@@ -3282,7 +3282,7 @@ static void test_WM_SETTEXT(void)
   memset(buf, 0, sizeof(buf));
   SendMessage(hwndRichEdit, EM_STREAMOUT,
               (WPARAM)(SF_RTF), (LPARAM)&es);
-  trace("EM_STREAMOUT produced: \n%s\n", buf);
+  trace("EM_STREAMOUT produced:\n%s\n", buf);
   TEST_SETTEXT(buf, TestItem1)
 
 #undef TEST_SETTEXT
@@ -3618,7 +3618,7 @@ static void test_EM_SETTEXTEX(void)
   memset(buf, 0, sizeof(buf));
   SendMessage(hwndRichEdit, EM_STREAMOUT,
               (WPARAM)(SF_RTF), (LPARAM)&es);
-  trace("EM_STREAMOUT produced: \n%s\n", (char *)buf);
+  trace("EM_STREAMOUT produced:\n%s\n", (char *)buf);
 
   /* !ST_SELECTION && !Unicode && \rtf */
   setText.codepage = CP_ACP;/* EM_STREAMOUT saved as ANSI string */
@@ -3659,7 +3659,7 @@ static void test_EM_SETTEXTEX(void)
   memset(buf, 0, sizeof(buf));
   SendMessage(hwndRichEdit, EM_STREAMOUT,
               (WPARAM)(SF_RTF), (LPARAM)&es);
-  trace("EM_STREAMOUT produced: \n%s\n", (char *)buf);
+  trace("EM_STREAMOUT produced:\n%s\n", (char *)buf);
 
   /* select some text */
   cr.cpMax = 1;

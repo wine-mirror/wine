@@ -641,7 +641,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTST
 																		DMUS_IO_CONTAINED_OBJECT_HEADER tmpObjectHeader;
 																		TRACE_(dmfile)(": contained object header chunk\n");
 																		IStream_Read (pStm, &tmpObjectHeader, Chunk.dwSize, NULL);
-																		TRACE_(dmdump)(": contained object header: \n%s\n", debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER(&tmpObjectHeader));
+																		TRACE_(dmdump)(": contained object header:\n%s\n", debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER(&tmpObjectHeader));
 																		/* copy guidClass */
 																		pNewEntry->Desc.dwValidData |= DMUS_OBJ_CLASS;
 																		pNewEntry->Desc.guidClass = tmpObjectHeader.guidClassID;

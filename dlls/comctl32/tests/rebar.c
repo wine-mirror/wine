@@ -157,7 +157,7 @@ static void dump_sizes(HWND hRebar)
         printf("%s{ {%3d, %3d, %3d, %3d}, 0x%02x, %d}, ", (i%2==0 ? "\n    " : ""), r.left, r.top, r.right, r.bottom,
             rbi.fStyle, rbi.cx);
     }
-    printf("\n  }, }, \n");
+    printf("\n  }, },\n");
 }
 
 #define check_sizes() dump_sizes(hRebar);

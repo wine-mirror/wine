@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
     {
         fprintf( stderr, "Usage:\n" );
         fprintf( stderr, "\t%s infile outfile\n", argv[0] );
-        fprintf( stderr, "\t%s /r infile \n", argv[0] );
+        fprintf( stderr, "\t%s /r infile\n", argv[0] );
         return 1;
     }
 

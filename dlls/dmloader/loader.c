@@ -26,7 +26,7 @@ static HRESULT DMUSIC_GetLoaderSettings (LPDIRECTMUSICLOADER8 iface, REFGUID pCl
 static HRESULT DMUSIC_SetLoaderSettings (LPDIRECTMUSICLOADER8 iface, REFGUID pClassID, WCHAR* wszSearchPath, LPBOOL pbCache);
 
 static HRESULT DMUSIC_CopyDescriptor (LPDMUS_OBJECTDESC pDst, LPDMUS_OBJECTDESC pSrc) {
-	TRACE(": copy \n%s\n", debugstr_DMUS_OBJECTDESC(pSrc));
+	TRACE(": copy\n%s\n", debugstr_DMUS_OBJECTDESC(pSrc));
 	/* copy field by field */
 	if (pSrc->dwValidData & DMUS_OBJ_CLASS) pDst->guidClass = pSrc->guidClass;
 	if (pSrc->dwValidData & DMUS_OBJ_OBJECT) pDst->guidObject = pSrc->guidObject;
@@ -482,7 +482,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_SetObject (LPDIR
 	}		
 	
 	/* add new entry */
-	TRACE(": adding alias entry with following info: \n%s\n", debugstr_DMUS_OBJECTDESC(pDesc));
+	TRACE(": adding alias entry with following info:\n%s\n", debugstr_DMUS_OBJECTDESC(pDesc));
 	pNewEntry = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(WINE_LOADER_ENTRY));
 	/* use this function instead of pure memcpy due to streams (memcpy just copies pointer), 
 	   which is basically used further by app that called SetDescriptor... better safety than exception */
@@ -694,7 +694,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_ReleaseObject (L
 		}
 	}
 	if (result == S_OK) {
-		/*TRACE(": releasing: \n%s  - bInvalidDefaultDLS = %i\n  - pObject = %p\n", debugstr_DMUS_OBJECTDESC(&pObjectEntry->Desc), pObjectEntry->bInvalidDefaultDLS, pObjectEntry->pObject); */
+		/*TRACE(": releasing:\n%s  - bInvalidDefaultDLS = %i\n  - pObject = %p\n", debugstr_DMUS_OBJECTDESC(&pObjectEntry->Desc), pObjectEntry->bInvalidDefaultDLS, pObjectEntry->pObject); */
 		IDirectMusicObject_Release (pObjectEntry->pObject);
 		pObjectEntry->pObject = NULL;
 		pObjectEntry->Desc.dwValidData &= ~DMUS_OBJ_LOADED;
