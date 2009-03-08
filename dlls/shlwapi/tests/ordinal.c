@@ -380,7 +380,9 @@ static void test_GetShellSecurityDescriptor(void)
     }
 
     psd = pGetShellSecurityDescriptor(NULL, 2);
-    ok(psd==NULL, "GetShellSecurityDescriptor should fail\n");
+    ok(psd==NULL ||
+       broken(psd==INVALID_HANDLE_VALUE), /* IE5 */
+       "GetShellSecurityDescriptor should fail\n");
     psd = pGetShellSecurityDescriptor(rgsup, 0);
     ok(psd==NULL, "GetShellSecurityDescriptor should fail\n");
 
@@ -390,6 +392,11 @@ static void test_GetShellSecurityDescriptor(void)
     {
         /* The previous calls to GetShellSecurityDescriptor don't set the last error */
         win_skip("GetShellSecurityDescriptor is not implemented\n");
+        return;
+    }
+    if (psd==INVALID_HANDLE_VALUE)
+    {
+        win_skip("GetShellSecurityDescriptor is broken on IE5\n");
         return;
     }
     ok(psd!=NULL, "GetShellSecurityDescriptor failed\n");
