@@ -226,13 +226,13 @@ static int dump_bdf( fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
 
 	l_span = (int) (cpe_font_struct->dfCharTable[ic].charWidth-1)/8;
 
-	fprintf(fp, "STARTCHAR %d  \n", ic);
+	fprintf(fp, "STARTCHAR %d\n", ic);
 	fprintf(fp, "ENCODING %d\n",   l_fchar);
-	fprintf(fp, "SWIDTH    %d    %d \n",
+	fprintf(fp, "SWIDTH    %d    %d\n",
 		cpe_font_struct->dfCharTable[ic].charWidth*1000,
 		0);
 
-	fprintf(fp, "DWIDTH    %d    %d \n",
+	fprintf(fp, "DWIDTH    %d    %d\n",
 		cpe_font_struct->dfCharTable[ic].charWidth, 0);
 
 	fprintf(fp, "BBX  %d  %d  %d   %d\n",
