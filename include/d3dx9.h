@@ -21,6 +21,12 @@
 
 #include <limits.h>
 
+#define D3DX_DEFAULT         ((UINT)-1)
+#define D3DX_DEFAULT_NONPOW2 ((UINT)-2)
+#define D3DX_DEFAULT_FLOAT   FLT_MAX
+#define D3DX_FROM_FILE       ((UINT)-3)
+#define D3DFMT_FROM_FILE     ((D3DFORMAT)-3)
+
 #include "d3d9.h"
 #include "d3dx9math.h"
 #include "d3dx9core.h"
