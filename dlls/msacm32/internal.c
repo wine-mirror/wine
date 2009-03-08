@@ -72,7 +72,7 @@ PWINE_ACMDRIVERID MSACM_RegisterDriverFromRegistry(LPCWSTR pszRegEntry)
     /* The requested registry entry must have the format msacm.XXXXX in order to
        be recognized in any future sessions of msacm
      */
-    if (0 == strncmpiW(buf, msacmW, sizeof(msacmW)/sizeof(WCHAR))) {
+    if (0 == strncmpiW(pszRegEntry, msacmW, sizeof(msacmW)/sizeof(WCHAR))) {
         lRet = RegOpenKeyExW(HKEY_LOCAL_MACHINE, drvkey, 0, KEY_QUERY_VALUE, &hKey);
         if (lRet != ERROR_SUCCESS) {
             WARN("unable to open registry key - 0x%08x\n", lRet);
