@@ -732,12 +732,14 @@ static void processRegLinesW(FILE *in)
     ULONG lineSize       = REG_VAL_BUF_SIZE;
     size_t CharsInBuf = -1;
 
-    WCHAR* s; /* The pointer into line for where the current fgets should read */
+    WCHAR* s; /* The pointer into buf for where the current fgets should read */
+    WCHAR* line; /* The start of the current line */
 
     buf = HeapAlloc(GetProcessHeap(), 0, lineSize * sizeof(WCHAR));
     CHECK_ENOUGH_MEMORY(buf);
 
     s = buf;
+    line = buf;
 
     while(!feof(in)) {
         size_t size_remaining;
@@ -757,6 +759,7 @@ static void processRegLinesW(FILE *in)
                 new_buffer = NULL;
             CHECK_ENOUGH_MEMORY(new_buffer);
             buf = new_buffer;
+            line = buf;
             s = buf + lineSize - size_remaining;
             lineSize = new_size;
             size_remaining = lineSize - (s-buf);
@@ -787,14 +790,21 @@ static void processRegLinesW(FILE *in)
         /* If we didn't read the eol nor the eof go around for the rest */
         while(1)
         {
-            s_eol = strchrW(s, '\n');
+            s_eol = strchrW(line, '\n');
 
-            if(!s_eol)
+            if(!s_eol) {
+                /* Move the stub of the line to the start of the buffer so
+                 * we get the maximum space to read into, and so we don't
+                 * have to recalculate 'line' if the buffer expands */
+                MoveMemory(buf, line, (strlenW(line)+1) * sizeof(WCHAR));
+                line = buf;
+                s = strchrW(line, '\0');
                 break;
+            }
 
             /* If it is a comment line then discard it and go around again */
-            if (*s == '#') {
-                s = s_eol + 1;
+            if (*line == '#') {
+                line = s_eol + 1;
                 continue;
             }
 
@@ -811,7 +821,7 @@ static void processRegLinesW(FILE *in)
                 if(*(s_eol-1) == '\r')
                     s_eol--;
 
-                MoveMemory(s_eol - 1, NextLine, (CharsInBuf - (NextLine - buf) + 1)*sizeof(WCHAR));
+                MoveMemory(s_eol - 1, NextLine, (CharsInBuf - (NextLine - s) + 1)*sizeof(WCHAR));
                 CharsInBuf -= NextLine - s_eol + 1;
                 s_eol = 0;
                 continue;
@@ -827,8 +837,8 @@ static void processRegLinesW(FILE *in)
             if(!s_eol)
                 break;
 
-            processRegEntry(s, TRUE);
-            s = s_eol + 1;
+            processRegEntry(line, TRUE);
+            line = s_eol + 1;
             s_eol = 0;
             continue; /* That is the full virtual line */
         }
