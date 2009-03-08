@@ -242,7 +242,7 @@ void* interlocked_xchg_ptr( void** dest, void* val )
     __asm__ __volatile__(
         "0:    lwarx %0,0,%1\n"
         "      stwcx. %2,0,%1\n"
-        "      bne- 0b \n"
+        "      bne- 0b\n"
         "      isync\n"
         : "=&r"(ret)
         : "r"(dest), "r"(val)
