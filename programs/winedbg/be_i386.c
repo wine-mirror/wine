@@ -173,10 +173,11 @@ static void be_i386_all_print_context(HANDLE hThread, const CONTEXT* ctx)
     dbg_printf(")\n");
     
     /* Here are the rest of the registers */
-    dbg_printf(" FLES:%08x ", (unsigned int) ctx->FloatSave.ErrorSelector);
-    dbg_printf(" FLDO:%08x ", (unsigned int) ctx->FloatSave.DataOffset);
-    dbg_printf(" FLDS:%08x ", (unsigned int) ctx->FloatSave.DataSelector);
-    dbg_printf(" FLCNS:%08x \n", (unsigned int) ctx->FloatSave.Cr0NpxState);
+    dbg_printf(" FLES:%08x  FLDO:%08x  FLDS:%08x  FLCNS:%08x\n",
+               ctx->FloatSave.ErrorSelector,
+               ctx->FloatSave.DataOffset,
+               ctx->FloatSave.DataSelector,
+               ctx->FloatSave.Cr0NpxState);
 
     /* Now for the floating point registers */
     dbg_printf("Floating Point Registers:\n");
