@@ -299,6 +299,11 @@ static void InternetCrackUrlW_test(void)
     SetLastError(0xdeadbeef);
     r = InternetCrackUrlW(NULL, 0, 0, &comp );
     error = GetLastError();
+    if (!r && error == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("InternetCrackUrlW is not implemented\n");
+        return;
+    }
     ok( !r, "InternetCrackUrlW succeeded unexpectedly\n");
     ok( error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got %u\n", error);
 
