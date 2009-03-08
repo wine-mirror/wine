@@ -243,7 +243,7 @@ static inline int mmap_reserve( void *addr, size_t size )
  *
  * Reserve as much memory as possible in the given area.
  */
-#if defined(__i386__) && !defined(__FreeBSD__) && !defined(__FreeBSD_kernel__)  /* commented out until FreeBSD gets fixed */
+#ifdef __i386__
 static void reserve_area( void *addr, void *end )
 {
     size_t size = (char *)end - (char *)addr;
@@ -343,7 +343,7 @@ void mmap_init(void)
 {
     struct reserved_area *area;
     struct list *ptr;
-#if defined(__i386__) && !defined(__FreeBSD__) && !defined(__FreeBSD_kernel__)  /* commented out until FreeBSD gets fixed */
+#ifdef __i386__
     char stack;
     char * const stack_ptr = &stack;
     char *user_space_limit = (char *)0x7ffe0000;
@@ -369,8 +369,8 @@ void mmap_init(void)
         char *base = stack_ptr - ((unsigned int)stack_ptr & granularity_mask) - (granularity_mask + 1);
         if (base > user_space_limit) reserve_area( user_space_limit, base );
         base = stack_ptr - ((unsigned int)stack_ptr & granularity_mask) + (granularity_mask + 1);
-#ifdef linux
-        /* Linux heuristic: assume the stack is near the end of the address */
+#if defined(linux) || defined(__FreeBSD__)
+        /* Heuristic: assume the stack is near the end of the address */
         /* space, this avoids a lot of futile allocation attempts */
         end = (char *)(((unsigned long)base + 0x0fffffff) & 0xf0000000);
 #endif
