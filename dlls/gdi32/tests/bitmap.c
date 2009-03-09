@@ -1564,7 +1564,9 @@ static void test_GetDIBits(void)
     lines = GetDIBits(hdc, hbmp, 0, bm.bmHeight, buf, bi, DIB_RGB_COLORS);
     ok(lines == bm.bmHeight, "GetDIBits copied %d lines of %d, error %u\n",
        lines, bm.bmHeight, GetLastError());
-    ok(bi->bmiHeader.biSizeImage == sizeof(dib_bits_1), "expected 16*4, got %u\n", bi->bmiHeader.biSizeImage);
+    ok(bi->bmiHeader.biSizeImage == sizeof(dib_bits_1) ||
+       broken(bi->bmiHeader.biSizeImage == 0), /* win9x */
+       "expected 16*4, got %u\n", bi->bmiHeader.biSizeImage);
 
     /* the color table consists of black and white */
     ok(bi->bmiColors[0].rgbRed == 0 && bi->bmiColors[0].rgbGreen == 0 &&
@@ -1614,7 +1616,9 @@ static void test_GetDIBits(void)
     lines = GetDIBits(hdc, hbmp, 0, bm.bmHeight, buf, bi, DIB_RGB_COLORS);
     ok(lines == bm.bmHeight, "GetDIBits copied %d lines of %d, error %u\n",
        lines, bm.bmHeight, GetLastError());
-    ok(bi->bmiHeader.biSizeImage == sizeof(dib_bits_24), "expected 16*16*3, got %u\n", bi->bmiHeader.biSizeImage);
+    ok(bi->bmiHeader.biSizeImage == sizeof(dib_bits_24) ||
+       broken(bi->bmiHeader.biSizeImage == 0), /* win9x */
+       "expected 16*16*3, got %u\n", bi->bmiHeader.biSizeImage);
 
     /* the color table doesn't exist for 24-bit images */
     for (i = 0; i < 256; i++)
@@ -1675,7 +1679,9 @@ static void test_GetDIBits(void)
     lines = GetDIBits(hdc, hbmp, 0, bm.bmHeight, buf, bi, DIB_RGB_COLORS);
     ok(lines == bm.bmHeight, "GetDIBits copied %d lines of %d, error %u\n",
        lines, bm.bmHeight, GetLastError());
-    ok(bi->bmiHeader.biSizeImage == sizeof(dib_bits_1), "expected 16*4, got %u\n", bi->bmiHeader.biSizeImage);
+    ok(bi->bmiHeader.biSizeImage == sizeof(dib_bits_1) ||
+       broken(bi->bmiHeader.biSizeImage == 0), /* win9x */
+       "expected 16*4, got %u\n", bi->bmiHeader.biSizeImage);
 
     /* the color table consists of black and white */
     ok(bi->bmiColors[0].rgbRed == 0 && bi->bmiColors[0].rgbGreen == 0 &&
@@ -1726,7 +1732,9 @@ todo_wine
     lines = GetDIBits(hdc, hbmp, 0, bm.bmHeight, buf, bi, DIB_RGB_COLORS);
     ok(lines == bm.bmHeight, "GetDIBits copied %d lines of %d, error %u\n",
        lines, bm.bmHeight, GetLastError());
-    ok(bi->bmiHeader.biSizeImage == sizeof(dib_bits_24), "expected 16*16*3, got %u\n", bi->bmiHeader.biSizeImage);
+    ok(bi->bmiHeader.biSizeImage == sizeof(dib_bits_24) ||
+       broken(bi->bmiHeader.biSizeImage == 0), /* win9x */
+       "expected 16*16*3, got %u\n", bi->bmiHeader.biSizeImage);
 
     /* the color table doesn't exist for 24-bit images */
     for (i = 0; i < 256; i++)
