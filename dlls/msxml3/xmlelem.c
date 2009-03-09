@@ -333,7 +333,7 @@ static HRESULT WINAPI xmlelem_get_children(IXMLElement *iface, IXMLElementCollec
     return XMLElementCollection_create((IUnknown *)iface, This->node->children, (LPVOID *)p);
 }
 
-static long type_libxml_to_msxml(xmlElementType type)
+static LONG type_libxml_to_msxml(xmlElementType type)
 {
     switch (type)
     {

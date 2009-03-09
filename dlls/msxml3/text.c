@@ -524,7 +524,7 @@ static HRESULT WINAPI domtext_get_length(
     domtext *This = impl_from_IXMLDOMText( iface );
     xmlnode *pDOMNode = impl_from_IXMLDOMNode( This->node );
     xmlChar *pContent;
-    long nLength = 0;
+    LONG nLength = 0;
 
     TRACE("%p\n", iface);
 
@@ -550,7 +550,7 @@ static HRESULT WINAPI domtext_substringData(
     domtext *This = impl_from_IXMLDOMText( iface );
     xmlnode *pDOMNode = impl_from_IXMLDOMNode( This->node );
     xmlChar *pContent;
-    long nLength = 0;
+    LONG nLength = 0;
     HRESULT hr = S_FALSE;
 
     TRACE("%p\n", iface);
@@ -627,7 +627,7 @@ static HRESULT WINAPI domtext_insertData(
     xmlChar *pXmlContent;
     BSTR sNewString;
     HRESULT hr = S_FALSE;
-    long nLength = 0, nLengthP = 0;
+    LONG nLength = 0, nLengthP = 0;
     xmlChar *str = NULL;
 
     TRACE("%p\n", This);

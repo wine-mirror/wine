@@ -203,7 +203,7 @@ static HRESULT WINAPI xmlnodelist_get_item(
 {
     xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
     xmlNodePtr curr;
-    long nodeIndex = 0;
+    LONG nodeIndex = 0;
 
     TRACE("%p %d\n", This, index);
 
@@ -234,7 +234,7 @@ static HRESULT WINAPI xmlnodelist_get_length(
 {
 
     xmlNodePtr curr;
-    long nodeCount = 0;
+    LONG nodeCount = 0;
 
     xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
 
