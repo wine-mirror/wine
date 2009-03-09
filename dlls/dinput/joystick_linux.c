@@ -602,7 +602,7 @@ const struct dinput_device joystick_linux_device = {
 /******************************************************************************
   *     Acquire : gets exclusive control of the joystick
   */
-static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
+static HRESULT WINAPI JoystickLinuxAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 {
     JoystickImpl *This = (JoystickImpl *)iface;
 
@@ -632,7 +632,7 @@ static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 /******************************************************************************
   *     Unacquire : frees the joystick
   */
-static HRESULT WINAPI JoystickAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
+static HRESULT WINAPI JoystickLinuxAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
 {
     JoystickImpl *This = (JoystickImpl *)iface;
     HRESULT res;
@@ -735,8 +735,8 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
         IDirectInputDevice2AImpl_EnumObjects,
 	JoystickAGenericImpl_GetProperty,
 	JoystickAGenericImpl_SetProperty,
-	JoystickAImpl_Acquire,
-	JoystickAImpl_Unacquire,
+	JoystickLinuxAImpl_Acquire,
+	JoystickLinuxAImpl_Unacquire,
 	JoystickAGenericImpl_GetDeviceState,
 	IDirectInputDevice2AImpl_GetDeviceData,
 	IDirectInputDevice2AImpl_SetDataFormat,
@@ -777,8 +777,8 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
         IDirectInputDevice2WImpl_EnumObjects,
 	XCAST(GetProperty)JoystickAGenericImpl_GetProperty,
 	XCAST(SetProperty)JoystickAGenericImpl_SetProperty,
-	XCAST(Acquire)JoystickAImpl_Acquire,
-	XCAST(Unacquire)JoystickAImpl_Unacquire,
+	XCAST(Acquire)JoystickLinuxAImpl_Acquire,
+	XCAST(Unacquire)JoystickLinuxAImpl_Unacquire,
 	XCAST(GetDeviceState)JoystickAGenericImpl_GetDeviceState,
 	XCAST(GetDeviceData)IDirectInputDevice2AImpl_GetDeviceData,
 	XCAST(SetDataFormat)IDirectInputDevice2AImpl_SetDataFormat,
