@@ -2197,7 +2197,9 @@ static void test_get16dibits(void)
     info->bmiHeader.biCompression = BI_RGB;
 
     ret = GetDIBits(screen_dc, hbmp, 0, 0, NULL, info, 0);
-    ok(ret != 0, "GetDIBits failed got %d\n", ret);
+    ok(ret != 0 ||
+       broken(ret == 0), /* win9x */
+       "GetDIBits failed got %d\n", ret);
 
     for (p = ((BYTE *) info) + sizeof(info->bmiHeader); (p - ((BYTE *) info)) < info_len; p++)
         if (*p != '!')
