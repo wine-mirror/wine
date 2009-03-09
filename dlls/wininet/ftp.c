@@ -1092,8 +1092,6 @@ static void FTPFILE_Destroy(WININETHANDLEHEADER *hdr)
 
     TRACE("\n");
 
-    WININET_Release(&lpwh->lpFtpSession->hdr);
-
     if (!lpwh->session_deleted)
         lpwfs->download_in_progress = NULL;
 
@@ -1102,6 +1100,8 @@ static void FTPFILE_Destroy(WININETHANDLEHEADER *hdr)
 
     nResCode = FTP_ReceiveResponse(lpwfs, lpwfs->hdr.dwContext);
     if (nResCode > 0 && nResCode != 226) WARN("server reports failed transfer\n");
+
+    WININET_Release(&lpwh->lpFtpSession->hdr);
 
     HeapFree(GetProcessHeap(), 0, lpwh);
 }
