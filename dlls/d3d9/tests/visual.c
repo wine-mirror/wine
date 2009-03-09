@@ -9101,11 +9101,11 @@ static void stream_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_SetStreamSourceFreq(device, 1, (D3DSTREAMSOURCE_INSTANCEDATA | 0));
     ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSourceFreq failed with %08x\n", hr);
     hr = IDirect3DDevice9_GetStreamSourceFreq(device, 1, &ind);
-    ok(hr == D3D_OK && ind == (0 | D3DSTREAMSOURCE_INSTANCEDATA), "IDirect3DDevice9_GetStreamSourceFreq failed with %08x\n", hr);
+    ok(hr == D3D_OK && ind == (0U | D3DSTREAMSOURCE_INSTANCEDATA), "IDirect3DDevice9_GetStreamSourceFreq failed with %08x\n", hr);
     hr = IDirect3DDevice9_SetStreamSourceFreq(device, 1, (D3DSTREAMSOURCE_INSTANCEDATA | D3DSTREAMSOURCE_INDEXEDDATA | 0));
     ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_SetStreamSourceFreq failed with %08x\n", hr);
     hr = IDirect3DDevice9_GetStreamSourceFreq(device, 1, &ind);
-    ok(hr == D3D_OK && ind == (0 | D3DSTREAMSOURCE_INSTANCEDATA), "IDirect3DDevice9_GetStreamSourceFreq failed with %08x\n", hr);
+    ok(hr == D3D_OK && ind == (0U | D3DSTREAMSOURCE_INSTANCEDATA), "IDirect3DDevice9_GetStreamSourceFreq failed with %08x\n", hr);
 
     /* set the default value back */
     hr = IDirect3DDevice9_SetStreamSourceFreq(device, 1, 1);

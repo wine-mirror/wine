@@ -750,7 +750,7 @@ static void test_vertex_declaration_alignment(
 
     HRESULT hr;
     IDirect3DVertexDeclaration9* result_decl = NULL;
-    int i;
+    unsigned int i;
 
     CONST D3DVERTEXELEMENT9 test_elements[5][3] =
     {
@@ -796,7 +796,7 @@ static void test_unused_type(
 
     HRESULT hr;
     IDirect3DVertexDeclaration9* result_decl = NULL;
-    int i;
+    unsigned int i;
 
     static const D3DVERTEXELEMENT9 test_elements[][3] =
     {

@@ -83,7 +83,7 @@ static void test_query_support(IDirect3D9 *pD3d, HWND hwnd)
     IDirect3DDevice9      *pDevice = NULL;
     D3DPRESENT_PARAMETERS d3dpp;
     D3DDISPLAYMODE        d3ddm;
-    int                   i;
+    unsigned int i;
     IDirect3DQuery9       *pQuery = NULL;
     BOOL supported;
 

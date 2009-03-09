@@ -79,11 +79,8 @@ static int get_refcount(IUnknown *object)
         if (container_ptr && container_ptr != (void *)0x1337c0d3) IUnknown_Release((IUnknown *)container_ptr); \
     }
 
-static void check_mipmap_levels(
-    IDirect3DDevice9* device, 
-    int width, int height, int count) 
+static void check_mipmap_levels(IDirect3DDevice9 *device, UINT width, UINT height, UINT count)
 {
-
     IDirect3DBaseTexture9* texture = NULL;
     HRESULT hr = IDirect3DDevice9_CreateTexture( device, width, height, 0, 0, 
         D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, (IDirect3DTexture9**) &texture, NULL );
@@ -2049,7 +2046,7 @@ static void test_display_formats(void)
 static void test_scissor_size(void)
 {
     IDirect3D9 *d3d9_ptr = 0;
-    int i;
+    unsigned int i;
     static const struct {
         int winx; int winy; int backx; int backy; BOOL window;
     } scts[] = { /* scissor tests */
