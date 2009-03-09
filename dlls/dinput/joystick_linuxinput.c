@@ -1069,52 +1069,6 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
     return DI_OK;
 }
 
-/******************************************************************************
-  *     GetObjectInfo : get information about a device object such as a button
-  *                     or axis
-  */
-static HRESULT WINAPI JoystickWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
-        LPDIDEVICEOBJECTINSTANCEW pdidoi, DWORD dwObj, DWORD dwHow)
-{
-    static const WCHAR axisW[] = {'A','x','i','s',' ','%','d',0};
-    static const WCHAR povW[] = {'P','O','V',' ','%','d',0};
-    static const WCHAR buttonW[] = {'B','u','t','t','o','n',' ','%','d',0};
-    HRESULT res;
-
-    res = IDirectInputDevice2WImpl_GetObjectInfo(iface, pdidoi, dwObj, dwHow);
-    if (res != DI_OK) return res;
-
-    if      (pdidoi->dwType & DIDFT_AXIS)
-        sprintfW(pdidoi->tszName, axisW, DIDFT_GETINSTANCE(pdidoi->dwType));
-    else if (pdidoi->dwType & DIDFT_POV)
-        sprintfW(pdidoi->tszName, povW, DIDFT_GETINSTANCE(pdidoi->dwType));
-    else if (pdidoi->dwType & DIDFT_BUTTON)
-        sprintfW(pdidoi->tszName, buttonW, DIDFT_GETINSTANCE(pdidoi->dwType));
-
-    _dump_OBJECTINSTANCEW(pdidoi);
-    return res;
-}
-
-static HRESULT WINAPI JoystickAImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8A iface,
-        LPDIDEVICEOBJECTINSTANCEA pdidoi, DWORD dwObj, DWORD dwHow)
-{
-    HRESULT res;
-    DIDEVICEOBJECTINSTANCEW didoiW;
-    DWORD dwSize = pdidoi->dwSize;
-
-    didoiW.dwSize = sizeof(didoiW);
-    res = JoystickWImpl_GetObjectInfo((LPDIRECTINPUTDEVICE8W)iface, &didoiW, dwObj, dwHow);
-    if (res != DI_OK) return res;
-
-    memset(pdidoi, 0, pdidoi->dwSize);
-    memcpy(pdidoi, &didoiW, FIELD_OFFSET(DIDEVICEOBJECTINSTANCEW, tszName));
-    pdidoi->dwSize = dwSize;
-    WideCharToMultiByte(CP_ACP, 0, didoiW.tszName, -1, pdidoi->tszName,
-                        sizeof(pdidoi->tszName), NULL, NULL);
-
-    return res;
-}
-
 /****************************************************************************** 
   *	CreateEffect - Create a new FF effect with the specified params
   */
@@ -1516,7 +1470,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
         IDirectInputDevice2AImpl_SetDataFormat,
 	IDirectInputDevice2AImpl_SetEventNotification,
 	IDirectInputDevice2AImpl_SetCooperativeLevel,
-        JoystickAImpl_GetObjectInfo,
+        JoystickAGenericImpl_GetObjectInfo,
 	JoystickAImpl_GetDeviceInfo,
 	IDirectInputDevice2AImpl_RunControlPanel,
 	IDirectInputDevice2AImpl_Initialize,
@@ -1558,7 +1512,7 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
         XCAST(SetDataFormat)IDirectInputDevice2AImpl_SetDataFormat,
 	XCAST(SetEventNotification)IDirectInputDevice2AImpl_SetEventNotification,
 	XCAST(SetCooperativeLevel)IDirectInputDevice2AImpl_SetCooperativeLevel,
-        JoystickWImpl_GetObjectInfo,
+        JoystickWGenericImpl_GetObjectInfo,
 	JoystickWImpl_GetDeviceInfo,
 	XCAST(RunControlPanel)IDirectInputDevice2AImpl_RunControlPanel,
 	XCAST(Initialize)IDirectInputDevice2AImpl_Initialize,
