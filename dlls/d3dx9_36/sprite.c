@@ -222,7 +222,6 @@ D3DXSPRITE_OBJECTSPACE: do not change device transforms
 D3DXSPRITE_SORT_DEPTH_BACKTOFRONT: sort by position
 D3DXSPRITE_SORT_DEPTH_FRONTTOBACK: sort by position
 D3DXSPRITE_SORT_TEXTURE: sort by texture (so that it doesn't change too often)
-D3DXSPRITE_DO_NOT_ADDREF_TEXTURE: don't call AddRef/Release on every Draw/Flush call
 */
     if(This->vdecl==NULL) {
         static const D3DVERTEXELEMENT9 elements[] =
@@ -283,7 +282,8 @@ static HRESULT WINAPI ID3DXSpriteImpl_Draw(LPD3DXSPRITE iface, LPDIRECT3DTEXTURE
         This->sprites=HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->sprites, This->allocated_sprites*sizeof(SPRITE));
     }
     This->sprites[This->sprite_count].texture=texture;
-    IUnknown_AddRef(texture);
+    if(!(This->flags & D3DXSPRITE_DO_NOT_ADDREF_TEXTURE))
+        IDirect3DTexture9_AddRef(texture);
 
     /* Reuse the texture desc if possible */
     if(This->sprite_count) {
@@ -381,8 +381,8 @@ static HRESULT WINAPI ID3DXSpriteImpl_Flush(LPD3DXSPRITE iface)
     }
     HeapFree(GetProcessHeap(), 0, vertices);
 
-    for(i=0;i<This->sprite_count;i++)
-        if(This->sprites[i].texture)
+    if(!(This->flags & D3DXSPRITE_DO_NOT_ADDREF_TEXTURE))
+        for(i=0;i<This->sprite_count;i++)
             IDirect3DTexture9_Release(This->sprites[i].texture);
 
     This->sprite_count=0;
