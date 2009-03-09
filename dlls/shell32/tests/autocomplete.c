@@ -33,7 +33,7 @@ static HWND hMainWnd, hEdit;
 static HINSTANCE hinst;
 static int killfocus_count;
 
-static void test_init(void) {
+static BOOL test_init(void) {
     HRESULT r;
     IAutoComplete* ac;
     IUnknown *acSource;
@@ -41,16 +41,28 @@ static void test_init(void) {
     /* AutoComplete instance */
     r = CoCreateInstance(&CLSID_AutoComplete, NULL, CLSCTX_INPROC_SERVER,
                          &IID_IAutoComplete, (LPVOID*)&ac);
+    if (r == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("CLSID_AutoComplete is not registered\n");
+        return FALSE;
+    }
     ok(SUCCEEDED(r), "no IID_IAutoComplete (0x%08x)\n", r);
 
     /* AutoComplete source */
     r = CoCreateInstance(&CLSID_ACLMulti, NULL, CLSCTX_INPROC_SERVER,
                         &IID_IACList, (LPVOID*)&acSource);
+    if (r == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("CLSID_ACLMulti is not registered\n");
+        return FALSE;
+    }
     ok(SUCCEEDED(r), "no IID_IACList (0x%08x)\n", r);
 
     /* bind to edit control */
     r = IAutoComplete_Init(ac, hEdit, acSource, NULL, NULL);
     ok(SUCCEEDED(r), "Init failed (0x%08x)\n", r);
+
+    return TRUE;
 }
 static void test_killfocus(void) {
     /* Test if WM_KILLFOCUS messages are handled properly by checking if
@@ -106,7 +118,8 @@ START_TEST(autocomplete) {
     if(!ok(hMainWnd != NULL, "Failed to create parent window. Tests aborted.\n"))
         return;
 
-    test_init();
+    if (!test_init())
+        goto cleanup;
     test_killfocus();
 
     PostQuitMessage(0);
@@ -115,6 +128,7 @@ START_TEST(autocomplete) {
         DispatchMessageA(&msg);
     }
 
+cleanup:
     DestroyWindow(hEdit);
     DestroyWindow(hMainWnd);
 
