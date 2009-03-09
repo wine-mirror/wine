@@ -1776,13 +1776,13 @@ static void add_message_(int line, const struct recvd_message *msg)
             };
             const char *code_name = (msg->message <= HCBT_SETFOCUS) ? CBT_code_name[msg->message] : "Unknown";
 
-            snprintf( seq->output, sizeof(seq->output), "%s: hook %d (%s) wp %08lx lp %08lx",
-                      msg->descr, msg->message, code_name, msg->wParam, msg->lParam );
+            sprintf( seq->output, "%s: hook %d (%s) wp %08lx lp %08lx",
+                     msg->descr, msg->message, code_name, msg->wParam, msg->lParam );
         }
         else if (msg->flags & winevent_hook)
         {
-            snprintf( seq->output, sizeof(seq->output), "%s: winevent %p %08x %08lx %08lx",
-                      msg->descr, msg->hwnd, msg->message, msg->wParam, msg->lParam );
+            sprintf( seq->output, "%s: winevent %p %08x %08lx %08lx",
+                     msg->descr, msg->hwnd, msg->message, msg->wParam, msg->lParam );
         }
         else
         {
@@ -1793,8 +1793,7 @@ static void add_message_(int line, const struct recvd_message *msg)
             {
                 WINDOWPOS *winpos = (WINDOWPOS *)msg->lParam;
 
-                snprintf( seq->output, sizeof(seq->output),
-                          "%s: %p WM_WINDOWPOS%s wp %08lx lp %08lx after %p x %d y %d cx %d cy %d flags %s",
+                sprintf( seq->output, "%s: %p WM_WINDOWPOS%s wp %08lx lp %08lx after %p x %d y %d cx %d cy %d flags %s",
                           msg->descr, msg->hwnd,
                           (msg->message == WM_WINDOWPOSCHANGING) ? "CHANGING" : "CHANGED",
                           msg->wParam, msg->lParam, winpos->hwndInsertAfter,
@@ -1815,10 +1814,9 @@ static void add_message_(int line, const struct recvd_message *msg)
                 DRAW_ITEM_STRUCT di;
                 DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT *)msg->lParam;
 
-                snprintf( seq->output, sizeof(seq->output),
-                          "%s: %p WM_DRAWITEM: type %x, ctl_id %x, item_id %x, action %x, state %x",
-                          msg->descr, msg->hwnd, dis->CtlType, dis->CtlID,
-                          dis->itemID, dis->itemAction, dis->itemState);
+                sprintf( seq->output, "%s: %p WM_DRAWITEM: type %x, ctl_id %x, item_id %x, action %x, state %x",
+                         msg->descr, msg->hwnd, dis->CtlType, dis->CtlID,
+                         dis->itemID, dis->itemAction, dis->itemState);
 
                 di.u.lp = 0;
                 di.u.item.type = dis->CtlType;
@@ -1832,8 +1830,8 @@ static void add_message_(int line, const struct recvd_message *msg)
             }
             default:
                 if (msg->message >= 0xc000) return;  /* ignore registered messages */
-                snprintf( seq->output, sizeof(seq->output), "%s: %p %04x wp %08lx lp %08lx",
-                          msg->descr, msg->hwnd, msg->message, msg->wParam, msg->lParam );
+                sprintf( seq->output, "%s: %p %04x wp %08lx lp %08lx",
+                         msg->descr, msg->hwnd, msg->message, msg->wParam, msg->lParam );
             }
         }
     }
