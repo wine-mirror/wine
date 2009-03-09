@@ -1132,6 +1132,39 @@ static void _test_elem_set_innertext(unsigned line, IHTMLElement *elem, const ch
 
 }
 
+#define test_elem_innerhtml(e,t) _test_elem_innerhtml(__LINE__,e,t)
+static void _test_elem_innerhtml(unsigned line, IUnknown *unk, const char *inner_html)
+{
+    IHTMLElement *elem = _get_elem_iface(line, unk);
+    BSTR html;
+    HRESULT hres;
+
+    hres = IHTMLElement_get_innerHTML(elem, &html);
+    ok_(__FILE__,line)(hres == S_OK, "get_innerHTML failed: %08x\n", hres);
+    if(inner_html)
+        ok_(__FILE__,line)(!strcmp_wa(html, inner_html), "unexpected innerHTML: %s\n", dbgstr_w(html));
+    else
+        ok_(__FILE__,line)(!html, "innerHTML = %s\n", dbgstr_w(html));
+
+    IHTMLElement_Release(elem);
+    SysFreeString(html);
+}
+
+#define test_elem_set_innerhtml(e,t) _test_elem_set_innerhtml(__LINE__,e,t)
+static void _test_elem_set_innerhtml(unsigned line, IUnknown *unk, const char *inner_html)
+{
+    IHTMLElement *elem = _get_elem_iface(line, unk);
+    BSTR html;
+    HRESULT hres;
+
+    html = a2bstr(inner_html);
+    hres = IHTMLElement_put_innerHTML(elem, html);
+    ok_(__FILE__,line)(hres == S_OK, "put_innerHTML failed: %08x\n", hres);
+
+    IHTMLElement_Release(elem);
+    SysFreeString(html);
+}
+
 #define get_first_child(n) _get_first_child(__LINE__,n)
 static IHTMLDOMNode *_get_first_child(unsigned line, IUnknown *unk)
 {
@@ -4051,6 +4084,7 @@ static void test_elems(IHTMLDocument2 *doc)
     static const WCHAR imgidW[] = {'i','m','g','i','d',0};
     static const WCHAR inW[] = {'i','n',0};
     static const WCHAR xW[] = {'x',0};
+    static const WCHAR yW[] = {'y',0};
     static const WCHAR sW[] = {'s',0};
     static const WCHAR scW[] = {'s','c',0};
     static const WCHAR xxxW[] = {'x','x','x',0};
@@ -4449,6 +4483,13 @@ static void test_elems(IHTMLDocument2 *doc)
         IHTMLElementCollection_Release(col);
     }
 
+    elem = get_doc_elem_by_id(doc, yW);
+    test_elem_set_innerhtml((IUnknown*)elem, "inner html");
+    test_elem_innerhtml((IUnknown*)elem, "inner html");
+    test_elem_set_innerhtml((IUnknown*)elem, "");
+    test_elem_innerhtml((IUnknown*)elem, NULL);
+    IHTMLElement_Release(elem);
+
     IHTMLDocument3_Release(doc3);
 }
 
@@ -4515,6 +4556,7 @@ static void test_create_elems(IHTMLDocument2 *doc)
     IHTMLDOMNode_Release(node3);
 
     test_elem_innertext(body, "insert test");
+    test_elem_innerhtml((IUnknown*)body, "insert test");
 
     hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument5, (void**)&doc5);
     if(hres == S_OK)
