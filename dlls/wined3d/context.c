@@ -919,31 +919,50 @@ out:
  *
  *****************************************************************************/
 static void RemoveContextFromArray(IWineD3DDeviceImpl *This, WineD3DContext *context) {
-    UINT t, s;
-    WineD3DContext **oldArray = This->contexts;
+    WineD3DContext **new_array;
+    BOOL found = FALSE;
+    UINT i;
 
     TRACE("Removing ctx %p\n", context);
 
-    This->numContexts--;
-
-    if(This->numContexts) {
-        This->contexts = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->contexts) * This->numContexts);
-        if(!This->contexts) {
-            ERR("Cannot allocate a new context array, PANIC!!!\n");
+    for (i = 0; i < This->numContexts; ++i)
+    {
+        if (This->contexts[i] == context)
+        {
+            HeapFree(GetProcessHeap(), 0, context);
+            found = TRUE;
+            break;
         }
-        t = 0;
-        /* Note that we decreased numContexts a few lines up, so use '<=' instead of '<' */
-        for(s = 0; s <= This->numContexts; s++) {
-            if(oldArray[s] == context) continue;
-            This->contexts[t] = oldArray[s];
-            t++;
-        }
-    } else {
-        This->contexts = NULL;
     }
 
-    HeapFree(GetProcessHeap(), 0, context);
-    HeapFree(GetProcessHeap(), 0, oldArray);
+    if (!found)
+    {
+        ERR("Context %p doesn't exist in context array\n", context);
+        return;
+    }
+
+    while (i < This->numContexts - 1)
+    {
+        This->contexts[i] = This->contexts[i + 1];
+        ++i;
+    }
+
+    --This->numContexts;
+    if (!This->numContexts)
+    {
+        HeapFree(GetProcessHeap(), 0, This->contexts);
+        This->contexts = NULL;
+        return;
+    }
+
+    new_array = HeapReAlloc(GetProcessHeap(), 0, This->contexts, This->numContexts * sizeof(*This->contexts));
+    if (!new_array)
+    {
+        ERR("Failed to shrink context array. Oh well.\n");
+        return;
+    }
+
+    This->contexts = new_array;
 }
 
 /*****************************************************************************
