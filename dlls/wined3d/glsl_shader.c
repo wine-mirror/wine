@@ -189,8 +189,9 @@ static void shader_glsl_load_psamplers(const WineD3D_GL_Info *gl_info, IWineD3DS
         snprintf(sampler_name, sizeof(sampler_name), "Psampler%d", i);
         name_loc = GL_EXTCALL(glGetUniformLocationARB(programId, sampler_name));
         if (name_loc != -1) {
-            int mapped_unit = stateBlock->wineD3DDevice->texUnitMap[i];
-            if (mapped_unit != -1 && mapped_unit < GL_LIMITS(fragment_samplers)) {
+            DWORD mapped_unit = stateBlock->wineD3DDevice->texUnitMap[i];
+            if (mapped_unit != WINED3D_UNMAPPED_STAGE && mapped_unit < GL_LIMITS(fragment_samplers))
+            {
                 TRACE("Loading %s for texture %d\n", sampler_name, mapped_unit);
                 GL_EXTCALL(glUniform1iARB(name_loc, mapped_unit));
                 checkGLcall("glUniform1iARB");
@@ -212,8 +213,9 @@ static void shader_glsl_load_vsamplers(const WineD3D_GL_Info *gl_info, IWineD3DS
         snprintf(sampler_name, sizeof(sampler_name), "Vsampler%d", i);
         name_loc = GL_EXTCALL(glGetUniformLocationARB(programId, sampler_name));
         if (name_loc != -1) {
-            int mapped_unit = stateBlock->wineD3DDevice->texUnitMap[MAX_FRAGMENT_SAMPLERS + i];
-            if (mapped_unit != -1 && mapped_unit < GL_LIMITS(combined_samplers)) {
+            DWORD mapped_unit = stateBlock->wineD3DDevice->texUnitMap[MAX_FRAGMENT_SAMPLERS + i];
+            if (mapped_unit != WINED3D_UNMAPPED_STAGE && mapped_unit < GL_LIMITS(combined_samplers))
+            {
                 TRACE("Loading %s for texture %d\n", sampler_name, mapped_unit);
                 GL_EXTCALL(glUniform1iARB(name_loc, mapped_unit));
                 checkGLcall("glUniform1iARB");

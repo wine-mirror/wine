@@ -834,7 +834,8 @@ static void set_tex_op_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, Wi
      */
     for(i = 0; i < desc->num_textures_used; i++) {
         mapped_stage = This->texUnitMap[i];
-        if(mapped_stage != -1) {
+        if (mapped_stage != WINED3D_UNMAPPED_STAGE)
+        {
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
             checkGLcall("glActiveTextureARB");
             texture_activate_dimensions(i, stateblock, context);

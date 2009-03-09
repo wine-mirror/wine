@@ -1039,6 +1039,8 @@ void dumpResources(struct list *list);
 /*****************************************************************************
  * IWineD3DDevice implementation structure
  */
+#define WINED3D_UNMAPPED_STAGE ~0U
+
 struct IWineD3DDeviceImpl
 {
     /* IUnknown fields      */

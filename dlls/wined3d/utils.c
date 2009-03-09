@@ -2385,7 +2385,7 @@ void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
     * handler takes care. Also no action is needed with pixel shaders, or if tex_colorop
     * will take care of this business
     */
-    if(mapped_stage == -1 || mapped_stage >= GL_LIMITS(textures)) return;
+    if(mapped_stage == WINED3D_UNMAPPED_STAGE || mapped_stage >= GL_LIMITS(textures)) return;
     if(sampler >= stateblock->lowest_disabled_stage) return;
     if(isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) return;
 

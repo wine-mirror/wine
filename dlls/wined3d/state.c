@@ -2852,7 +2852,8 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 
     if (stage != mapped_stage) WARN("Using non 1:1 mapping: %d -> %d!\n", stage, mapped_stage);
 
-    if (mapped_stage != -1) {
+    if (mapped_stage != WINED3D_UNMAPPED_STAGE)
+    {
         if (tex_used && mapped_stage >= GL_LIMITS(textures)) {
             FIXME("Attempt to enable unsupported stage!\n");
             return;
@@ -2863,7 +2864,8 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 
     if(stage >= stateblock->lowest_disabled_stage) {
         TRACE("Stage disabled\n");
-        if (mapped_stage != -1) {
+        if (mapped_stage != WINED3D_UNMAPPED_STAGE)
+        {
             /* Disable everything here */
             glDisable(GL_TEXTURE_2D);
             checkGLcall("glDisable(GL_TEXTURE_2D)");
@@ -2904,7 +2906,8 @@ void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext
 
     TRACE("Setting alpha op for stage %d\n", stage);
     /* Do not care for enabled / disabled stages, just assign the settings. colorop disables / enables required stuff */
-    if (mapped_stage != -1) {
+    if (mapped_stage != WINED3D_UNMAPPED_STAGE)
+    {
         if (tex_used && mapped_stage >= GL_LIMITS(textures)) {
             FIXME("Attempt to enable unsupported stage!\n");
             return;
@@ -3008,7 +3011,7 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         return;
     }
 
-    if (mapped_stage == -1) return;
+    if (mapped_stage == WINED3D_UNMAPPED_STAGE) return;
 
     if(mapped_stage >= GL_LIMITS(textures)) {
         return;
@@ -3057,7 +3060,7 @@ static void loadTexCoords(IWineD3DStateBlockImpl *stateblock, const WineDirect3D
         int coordIdx = stateblock->textureState[textureNo][WINED3DTSS_TEXCOORDINDEX];
 
         mapped_stage = stateblock->wineD3DDevice->texUnitMap[textureNo];
-        if (mapped_stage == -1) continue;
+        if (mapped_stage == WINED3D_UNMAPPED_STAGE) continue;
 
         if (coordIdx < MAX_TEXTURES && (sd->u.s.texCoords[coordIdx].lpData || sd->u.s.texCoords[coordIdx].VBO)) {
             TRACE("Setting up texture %u, idx %d, cordindx %u, data %p\n",
@@ -3101,7 +3104,8 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     static const GLfloat r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
     static const GLfloat q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
 
-    if (mapped_stage == -1) {
+    if (mapped_stage == WINED3D_UNMAPPED_STAGE)
+    {
         TRACE("No texture unit mapped to stage %d. Skipping texture coordinates.\n", stage);
         return;
     }
@@ -3341,7 +3345,8 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
      * only has to bind textures and set the per texture states
      */
 
-    if (mapped_stage == -1) {
+    if (mapped_stage == WINED3D_UNMAPPED_STAGE)
+    {
         TRACE("No sampler mapped to stage %d. Returning.\n", sampler);
         return;
     }

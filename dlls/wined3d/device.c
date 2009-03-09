@@ -4059,7 +4059,8 @@ static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps) {
     for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i) {
         int vsampler_idx = i + MAX_FRAGMENT_SAMPLERS;
         if (vshader_sampler_tokens[i]) {
-            if (This->texUnitMap[vsampler_idx] != -1) {
+            if (This->texUnitMap[vsampler_idx] != WINED3D_UNMAPPED_STAGE)
+            {
                 /* Already mapped somewhere */
                 continue;
             }
