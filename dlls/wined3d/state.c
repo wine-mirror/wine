@@ -3047,7 +3047,7 @@ static void unloadTexCoords(IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
-static void loadTexCoords(IWineD3DStateBlockImpl *stateblock, const WineDirect3DVertexStridedData *sd, GLint *curVBO)
+static void loadTexCoords(IWineD3DStateBlockImpl *stateblock, const WineDirect3DVertexStridedData *sd, GLuint *curVBO)
 {
     const UINT *offset = stateblock->streamOffset;
     unsigned int mapped_stage = 0;
@@ -3251,7 +3251,7 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
          * and do all the things linked to it
          * TODO: Tidy that up to reload only the arrays of the changed unit
          */
-        GLint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? -1 : 0;
+        GLuint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? ~0U : 0;
 
         unloadTexCoords(stateblock);
         loadTexCoords(stateblock, &stateblock->wineD3DDevice->strided_streams, &curVBO);
@@ -3839,7 +3839,7 @@ static inline void unloadNumberedArrays(IWineD3DStateBlockImpl *stateblock, Wine
 static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock,
         const WineDirect3DVertexStridedData *strided, WineD3DContext *context)
 {
-    GLint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? -1 : 0;
+    GLuint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? ~0U : 0;
     int i;
     const UINT *offset = stateblock->streamOffset;
     struct wined3d_buffer *vb;
@@ -4014,7 +4014,7 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock,
 static void loadVertexData(IWineD3DStateBlockImpl *stateblock, const WineDirect3DVertexStridedData *sd)
 {
     const UINT *offset = stateblock->streamOffset;
-    GLint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? -1 : 0;
+    GLuint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? ~0U : 0;
 
     TRACE("Using fast vertex array code\n");
 
