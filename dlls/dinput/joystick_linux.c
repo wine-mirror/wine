@@ -605,13 +605,13 @@ const struct dinput_device joystick_linux_device = {
 static HRESULT WINAPI JoystickLinuxAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 {
     JoystickImpl *This = (JoystickImpl *)iface;
+    HRESULT res;
 
     TRACE("(%p)\n",This);
 
-    if (This->generic.base.acquired) {
-        WARN("already acquired\n");
-        return S_FALSE;
-    }
+    res = JoystickAGenericImpl_Acquire(iface);
+    if (res != DI_OK)
+        return res;
 
     /* open the joystick device */
     if (This->joyfd==-1) {
@@ -620,11 +620,10 @@ static HRESULT WINAPI JoystickLinuxAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
         This->joyfd=open(This->dev,O_RDONLY);
         if (This->joyfd==-1) {
             ERR("open(%s) failed: %s\n", This->dev, strerror(errno));
+            JoystickAGenericImpl_Unacquire(iface);
             return DIERR_NOTFOUND;
         }
     }
-
-    This->generic.base.acquired = 1;
 
     return DI_OK;
 }
@@ -639,7 +638,10 @@ static HRESULT WINAPI JoystickLinuxAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
 
     TRACE("(%p)\n",This);
 
-    if ((res = IDirectInputDevice2AImpl_Unacquire(iface)) != DI_OK) return res;
+    res = JoystickAGenericImpl_Unacquire(iface);
+
+    if (res != DI_OK)
+        return res;
 
     if (This->joyfd!=-1) {
         TRACE("closing joystick device\n");

@@ -78,4 +78,8 @@ HRESULT WINAPI JoystickAGenericImpl_Poll(LPDIRECTINPUTDEVICE8A iface);
 HRESULT WINAPI JoystickAGenericImpl_GetDeviceState( LPDIRECTINPUTDEVICE8A iface,
     DWORD len, LPVOID ptr);
 
+HRESULT WINAPI JoystickAGenericImpl_Acquire(LPDIRECTINPUTDEVICE8A iface);
+
+HRESULT WINAPI JoystickAGenericImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface);
+
 #endif /* __WINE_DLLS_DINPUT_JOYSTICK_PRIVATE_H */
