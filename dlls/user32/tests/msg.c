@@ -181,6 +181,7 @@ static const struct message WmSWP_ShowOverlappedSeq[] = {
     { WM_ERASEBKGND, sent|optional },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { WM_SYNCPAINT, sent|optional },
+    { WM_GETTITLEBARINFOEX, sent|optional },
     { WM_PAINT, sent|optional },
     { WM_NCPAINT, sent|beginpaint|optional },
     { WM_GETTEXT, sent|defwinproc|optional },
@@ -498,6 +499,7 @@ static const struct message WmShowMaxOverlappedSeq[] = {
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { WM_SYNCPAINT, sent|optional },
+    { WM_GETTITLEBARINFOEX, sent|optional },
     { WM_PAINT, sent|optional },
     { WM_NCPAINT, sent|beginpaint|optional },
     { WM_ERASEBKGND, sent|beginpaint|optional },
@@ -520,6 +522,7 @@ static const struct message WmShowRestoreMaxOverlappedSeq[] = {
     { WM_NCPAINT, sent|optional },
     { WM_ERASEBKGND, sent|optional },
     { WM_PAINT, sent|optional },
+    { WM_GETTITLEBARINFOEX, sent|optional },
     { WM_NCPAINT, sent|beginpaint|optional },
     { WM_ERASEBKGND, sent|beginpaint|optional },
     { 0 }
@@ -556,6 +559,7 @@ static const struct message WmShowRestoreMinOverlappedSeq[] = {
     { WM_ACTIVATE, sent|wparam, 1 },
     { WM_GETTEXT, sent|optional },
     { WM_PAINT, sent|optional },
+    { WM_GETTITLEBARINFOEX, sent|optional },
     { WM_NCPAINT, sent|beginpaint|optional },
     { WM_ERASEBKGND, sent|beginpaint|optional },
     { 0 }
@@ -1274,6 +1278,7 @@ static const struct message WmEndCustomDialogSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
     { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_NOACTIVATE|SWP_NOREDRAW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { WM_GETTEXT, sent|optional|defwinproc },
+    { WM_GETTEXT, sent|optional|defwinproc },
     { HCBT_SETFOCUS, hook },
     { WM_KILLFOCUS, sent },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
@@ -1352,6 +1357,7 @@ static const struct message WmModalDialogSeq[] = {
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { WM_PAINT, sent|optional },
     { WM_CTLCOLORBTN, sent|optional },
+    { WM_GETTITLEBARINFOEX, sent|optional },
     { WM_ENTERIDLE, sent|parent|optional },
     { WM_ENTERIDLE, sent|parent|optional },
     { WM_ENTERIDLE, sent|parent|optional },
@@ -8208,8 +8214,8 @@ static const struct message ScrollWindowPaint1[] = {
     { WM_GETTEXT, sent|optional },
     { WM_GETTEXT, sent|optional },
     { WM_GETTEXT, sent|optional },
-    { WM_GETTEXT, sent|optional },
-    { WM_GETTEXT, sent|optional },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
     { 0 }
 };
@@ -10449,13 +10455,8 @@ static const struct message SetActiveWindowSeq0[] =
     { WM_KILLFOCUS, sent|defwinproc|optional },
     { WM_IME_SETCONTEXT, sent|defwinproc|optional },
     { WM_IME_SETCONTEXT, sent|defwinproc|optional },
-    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
-    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
-    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
-    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
-    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
-    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
-    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
+    { WM_IME_SETCONTEXT, sent|optional },
+    { WM_IME_SETCONTEXT, sent|optional },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 1 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
     { WM_SETFOCUS, sent|defwinproc|optional },
@@ -11324,6 +11325,12 @@ static void test_menu_messages(void)
     if (!sequence_cnt)  /* we didn't get any message */
     {
         skip( "queuing key events not supported\n" );
+        goto done;
+    }
+    /* win98 queues only a WM_KEYUP and doesn't start menu tracking */
+    if (sequence[0].message == WM_KEYUP && sequence[0].wParam == VK_MENU)
+    {
+        win_skip( "menu tracking through VK_MENU not supported\n" );
         goto done;
     }
     ok_sequence(wm_popup_menu_1, "popup menu command", FALSE);
