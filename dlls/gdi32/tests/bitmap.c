@@ -430,7 +430,9 @@ static void test_dib_bits_access( HBITMAP hdib, void *bits )
     pbmi->bmiHeader.biCompression = BI_RGB;
 
     ret = SetDIBits( hdc, hdib, 0, 16, data, pbmi, DIB_RGB_COLORS );
-    ok(ret == 16, "SetDIBits failed: expected 16 got %d\n", ret);
+    ok(ret == 16 ||
+       broken(ret == 0), /* win9x */
+       "SetDIBits failed: expected 16 got %d\n", ret);
 
     ok(VirtualQuery(bits, &info, sizeof(info)) == sizeof(info),
         "VirtualQuery failed\n");
