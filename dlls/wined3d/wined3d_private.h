@@ -2099,7 +2099,6 @@ BOOL getDepthStencilBits(WINED3DFORMAT fmt, short *depthSize, short *stencilSize
 
 /* Math utils */
 void multiply_matrix(WINED3DMATRIX *dest, const WINED3DMATRIX *src1, const WINED3DMATRIX *src2);
-unsigned int count_bits(unsigned int mask);
 UINT wined3d_log2i(UINT32 x);
 
 /* TODO: Make this dynamic, based on shader limits ? */

@@ -2492,6 +2492,7 @@ static void pshader_glsl_texdp3tex(const SHADER_OPCODE_ARG *arg)
     DWORD sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     DWORD sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
+    UINT mask_size;
 
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src_mask, &src0_param);
 
@@ -2501,8 +2502,10 @@ static void pshader_glsl_texdp3tex(const SHADER_OPCODE_ARG *arg)
      * It is a dependent read - not valid with conditional NP2 textures
      */
     shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
+    mask_size = shader_glsl_get_write_mask_size(sample_function.coord_mask);
 
-    switch(count_bits(sample_function.coord_mask)) {
+    switch(mask_size)
+    {
         case 1:
             sprintf(coord_param, "dot(gl_TexCoord[%u].xyz, %s)",
                     sampler_idx, src0_param.param_str);
@@ -2517,8 +2520,10 @@ static void pshader_glsl_texdp3tex(const SHADER_OPCODE_ARG *arg)
             sprintf(coord_param, "vec3(dot(gl_TexCoord[%u].xyz, %s), 0.0, 0.0)",
                     sampler_idx, src0_param.param_str);
             break;
+
         default:
-            FIXME("Unexpected mask bitcount %d\n", count_bits(sample_function.coord_mask));
+            FIXME("Unexpected mask size %u\n", mask_size);
+            break;
     }
     shader_glsl_gen_sample_code(arg, sampler_idx, coord_param,
                                 &sample_function, WINED3DVS_NOSWIZZLE,
