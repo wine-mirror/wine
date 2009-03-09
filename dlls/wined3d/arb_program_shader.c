@@ -212,7 +212,8 @@ static void shader_arb_load_constants(
             GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->bumpenvmatconst[i].const_num, data));
             deviceImpl->activeContext->pshader_const_dirty[psi->bumpenvmatconst[i].const_num] = 1;
 
-            if(psi->luminanceconst[i].const_num != -1) {
+            if (psi->luminanceconst[i].const_num != WINED3D_CONST_NUM_UNUSED)
+            {
                 /* WINED3DTSS_BUMPENVLSCALE and WINED3DTSS_BUMPENVLOFFSET are next to each other.
                  * point gl to the scale, and load 4 floats. x = scale, y = offset, z and w are junk, we
                  * don't care about them. The pointers are valid for sure because the stateblock is bigger.
@@ -777,7 +778,9 @@ static void pshader_hw_bem(const SHADER_OPCODE_ARG *arg)
     int i;
 
     for(i = 0; i < This->numbumpenvmatconsts; i++) {
-        if(This->bumpenvmatconst[i].const_num != -1 && This->bumpenvmatconst[i].texunit == sampler_code) {
+        if (This->bumpenvmatconst[i].const_num != WINED3D_CONST_NUM_UNUSED
+                && This->bumpenvmatconst[i].texunit == sampler_code)
+        {
             has_bumpmat = TRUE;
             break;
         }
@@ -1232,13 +1235,17 @@ static void pshader_hw_texbem(const SHADER_OPCODE_ARG *arg)
     pshader_get_register_name(arg->shader, dst, reg_coord);
 
     for(i = 0; i < This->numbumpenvmatconsts; i++) {
-        if(This->bumpenvmatconst[i].const_num != -1 && reg_dest_code == This->bumpenvmatconst[i].texunit) {
+        if (This->bumpenvmatconst[i].const_num != WINED3D_CONST_NUM_UNUSED
+                && reg_dest_code == This->bumpenvmatconst[i].texunit)
+        {
             has_bumpmat = TRUE;
             break;
         }
     }
     for(i = 0; i < This->numbumpenvmatconsts; i++) {
-        if(This->luminanceconst[i].const_num != -1 && reg_dest_code == This->luminanceconst[i].texunit) {
+        if (This->luminanceconst[i].const_num != WINED3D_CONST_NUM_UNUSED
+                && reg_dest_code == This->luminanceconst[i].texunit)
+        {
             has_luminance = TRUE;
             break;
         }
