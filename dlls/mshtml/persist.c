@@ -131,11 +131,15 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
 
         static const char content_length[] = "Content-Length: %u\r\n\r\n";
 
-        data = heap_alloc(headers_len+post_len+sizeof(content_length)+8);
+        data = heap_alloc(headers_len+post_len+sizeof(content_length)+10);
 
         if(headers_len) {
             WideCharToMultiByte(CP_ACP, 0, headers, -1, data, headers_len, NULL, NULL);
             len = fix_headers(data, post_len);
+            if(len >= 2 && (data[len-1] != '\n' || data[len-2] != '\r')) {
+                data[len++] = '\r';
+                data[len++] = '\n';
+            }
         }
 
         if(post_len) {
