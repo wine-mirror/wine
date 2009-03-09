@@ -223,7 +223,6 @@ D3DXSPRITE_SORT_DEPTH_BACKTOFRONT: sort by position
 D3DXSPRITE_SORT_DEPTH_FRONTTOBACK: sort by position
 D3DXSPRITE_SORT_TEXTURE: sort by texture (so that it doesn't change too often)
 D3DXSPRITE_DO_NOT_ADDREF_TEXTURE: don't call AddRef/Release on every Draw/Flush call
-D3DXSPRITE_DONOTSAVESTATE: don't restore the current device state on ID3DXSprite_End
 */
     if(This->vdecl==NULL) {
         static const D3DVERTEXELEMENT9 elements[] =
@@ -236,22 +235,23 @@ D3DXSPRITE_DONOTSAVESTATE: don't restore the current device state on ID3DXSprite
         IDirect3DDevice9_CreateVertexDeclaration(This->device, elements, &This->vdecl);
     }
 
-    if(This->stateblock==NULL) {
-        /* Tell our state block what it must store */
-        hr=IDirect3DDevice9_BeginStateBlock(This->device);
-        if(hr!=D3D_OK) return hr;
+    if(!(flags & D3DXSPRITE_DONOTSAVESTATE)) {
+        if(This->stateblock==NULL) {
+            /* Tell our state block what it must store */
+            hr=IDirect3DDevice9_BeginStateBlock(This->device);
+            if(hr!=D3D_OK) return hr;
 
-        set_states(This);
+            set_states(This);
 
-        IDirect3DDevice9_SetVertexDeclaration(This->device, This->vdecl);
-        IDirect3DDevice9_SetStreamSource(This->device, 0, NULL, 0, sizeof(SPRITEVERTEX));
-        IDirect3DDevice9_SetIndices(This->device, NULL);
-        IDirect3DDevice9_SetTexture(This->device, 0, NULL);
+            IDirect3DDevice9_SetVertexDeclaration(This->device, This->vdecl);
+            IDirect3DDevice9_SetStreamSource(This->device, 0, NULL, 0, sizeof(SPRITEVERTEX));
+            IDirect3DDevice9_SetIndices(This->device, NULL);
+            IDirect3DDevice9_SetTexture(This->device, 0, NULL);
 
-        IDirect3DDevice9_EndStateBlock(This->device, &This->stateblock);
+            IDirect3DDevice9_EndStateBlock(This->device, &This->stateblock);
+        }
+        IDirect3DStateBlock9_Capture(This->stateblock); /* Save current state */
     }
-    /* Save current state */
-    IDirect3DStateBlock9_Capture(This->stateblock);
 
     /* Apply device state */
     set_states(This);
@@ -400,7 +400,9 @@ static HRESULT WINAPI ID3DXSpriteImpl_End(LPD3DXSPRITE iface)
     if(!This->ready) return D3DERR_INVALIDCALL;
 
     ID3DXSprite_Flush(iface);
-    if(This->stateblock) IDirect3DStateBlock9_Apply(This->stateblock); /* Restore old state */
+
+    if(!(This->flags & D3DXSPRITE_DONOTSAVESTATE))
+        if(This->stateblock) IDirect3DStateBlock9_Apply(This->stateblock); /* Restore old state */
 
     This->ready=FALSE;
 
