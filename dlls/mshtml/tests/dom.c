@@ -1943,6 +1943,18 @@ static void _test_style_csstext(unsigned line, IHTMLStyle *style, const char *ex
     SysFreeString(text);
 }
 
+#define test_style_set_csstext(s,t) _test_style_set_csstext(__LINE__,s,t)
+static void _test_style_set_csstext(unsigned line, IHTMLStyle *style, const char *text)
+{
+    BSTR tmp;
+    HRESULT hres;
+
+    tmp = a2bstr(text);
+    hres = IHTMLStyle_put_cssText(style, tmp);
+    ok_(__FILE__,line)(hres == S_OK, "put_cssText failed: %08x\n", hres);
+    SysFreeString(tmp);
+}
+
 static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
         const elem_type_t *elem_types, long len)
 {
@@ -3590,6 +3602,20 @@ static void test_default_style(IHTMLStyle *style)
     }
 }
 
+static void test_set_csstext(IHTMLStyle *style)
+{
+    VARIANT v;
+    HRESULT hres;
+
+    test_style_set_csstext(style, "background-color: black;");
+
+    hres = IHTMLStyle_get_backgroundColor(style, &v);
+    ok(hres == S_OK, "get_backgroundColor: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "type failed: %d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "black"), "str=%s\n", dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+}
+
 static void test_default_selection(IHTMLDocument2 *doc)
 {
     IHTMLSelectionObject *selection;
@@ -3830,8 +3856,6 @@ static void test_defaults(IHTMLDocument2 *doc)
     test_location(doc);
     test_navigator(doc);
 
-    IHTMLStyle_Release(style);
-
     elem2 = get_elem2_iface((IUnknown*)elem);
     hres = IHTMLElement2_get_currentStyle(elem2, &cstyle);
     ok(hres == S_OK, "get_currentStyle failed: %08x\n", hres);
@@ -3842,6 +3866,9 @@ static void test_defaults(IHTMLDocument2 *doc)
     IHTMLElement2_Release(elem2);
 
     IHTMLElement_Release(elem);
+
+    test_set_csstext(style);
+    IHTMLStyle_Release(style);
 
     hres = IHTMLDocument2_get_styleSheets(doc, &stylesheetcol);
     ok(hres == S_OK, "get_styleSheets failed: %08x\n", hres);
