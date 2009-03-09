@@ -274,3 +274,74 @@ HRESULT WINAPI JoystickAGenericImpl_GetProperty(
 
     return DI_OK;
 }
+
+/******************************************************************************
+  *     GetDeviceInfo : get information about a device's identity
+  */
+HRESULT WINAPI JoystickAGenericImpl_GetDeviceInfo(
+    LPDIRECTINPUTDEVICE8A iface,
+    LPDIDEVICEINSTANCEA pdidi)
+{
+    JoystickGenericImpl *This = (JoystickGenericImpl *)iface;
+
+    TRACE("(%p,%p)\n", iface, pdidi);
+
+    if (pdidi == NULL) {
+        WARN("invalid pointer\n");
+        return E_POINTER;
+    }
+
+    if ((pdidi->dwSize != sizeof(DIDEVICEINSTANCE_DX3A)) &&
+        (pdidi->dwSize != sizeof(DIDEVICEINSTANCEA))) {
+        WARN("invalid parameter: pdidi->dwSize = %d\n", pdidi->dwSize);
+        return DIERR_INVALIDPARAM;
+    }
+
+    /* Return joystick */
+    pdidi->guidInstance = GUID_Joystick;
+    pdidi->guidProduct = This->guidProduct;
+    /* we only support traditional joysticks for now */
+    pdidi->dwDevType = This->devcaps.dwDevType;
+    strcpy(pdidi->tszInstanceName, "Joystick");
+    strcpy(pdidi->tszProductName, This->name);
+    if (pdidi->dwSize > sizeof(DIDEVICEINSTANCE_DX3A)) {
+        pdidi->guidFFDriver = GUID_NULL;
+        pdidi->wUsagePage = 0;
+        pdidi->wUsage = 0;
+    }
+
+    return DI_OK;
+}
+
+/******************************************************************************
+  *     GetDeviceInfo : get information about a device's identity
+  */
+HRESULT WINAPI JoystickWGenericImpl_GetDeviceInfo(
+    LPDIRECTINPUTDEVICE8W iface,
+    LPDIDEVICEINSTANCEW pdidi)
+{
+    JoystickGenericImpl *This = (JoystickGenericImpl *)iface;
+
+    TRACE("(%p,%p)\n", iface, pdidi);
+
+    if ((pdidi->dwSize != sizeof(DIDEVICEINSTANCE_DX3W)) &&
+        (pdidi->dwSize != sizeof(DIDEVICEINSTANCEW))) {
+        WARN("invalid parameter: pdidi->dwSize = %d\n", pdidi->dwSize);
+        return DIERR_INVALIDPARAM;
+    }
+
+    /* Return joystick */
+    pdidi->guidInstance = GUID_Joystick;
+    pdidi->guidProduct = This->guidProduct;
+    /* we only support traditional joysticks for now */
+    pdidi->dwDevType = This->devcaps.dwDevType;
+    MultiByteToWideChar(CP_ACP, 0, "Joystick", -1, pdidi->tszInstanceName, MAX_PATH);
+    MultiByteToWideChar(CP_ACP, 0, This->name, -1, pdidi->tszProductName, MAX_PATH);
+    if (pdidi->dwSize > sizeof(DIDEVICEINSTANCE_DX3W)) {
+        pdidi->guidFFDriver = GUID_NULL;
+        pdidi->wUsagePage = 0;
+        pdidi->wUsage = 0;
+    }
+
+    return DI_OK;
+}

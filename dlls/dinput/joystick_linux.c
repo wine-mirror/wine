@@ -88,7 +88,6 @@ struct JoystickImpl
 	/* joystick private */
 	int				joyfd;
 	DIJOYSTATE2			js;		/* wine data */
-	char				*name;
 	LONG				deadzone;
 	int				*axis_map;
 	int				axes;
@@ -264,13 +263,13 @@ static HRESULT setup_dinput_options(JoystickImpl * device)
     device->axis_map = HeapAlloc(GetProcessHeap(), 0, device->axes * sizeof(int));
     if (!device->axis_map) return DIERR_OUTOFMEMORY;
 
-    if (!get_config_key( hkey, appkey, device->name, buffer, MAX_PATH )) {
+    if (!get_config_key( hkey, appkey, device->generic.name, buffer, MAX_PATH )) {
         static const char *axis_names[] = {"X", "Y", "Z", "Rx", "Ry", "Rz",
                                            "Slider1", "Slider2",
                                            "POV1", "POV2", "POV3", "POV4"};
         const char *delim = ",";
         char * ptr;
-        TRACE("\"%s\" = \"%s\"\n", device->name, buffer);
+        TRACE("\"%s\" = \"%s\"\n", device->generic.name, buffer);
 
         if ((ptr = strtok(buffer, delim)) != NULL) {
             do {
@@ -379,6 +378,8 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
         return DIERR_DEVICENOTREG;
     }
 
+    newDevice->generic.guidProduct = DInput_Wine_Joystick_GUID;
+
     /* get the device name */
 #if defined(JSIOCGNAME)
     if (ioctl(newDevice->joyfd,JSIOCGNAME(MAX_PATH),name) < 0) {
@@ -390,8 +391,8 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
 #endif
 
     /* copy the device name */
-    newDevice->name = HeapAlloc(GetProcessHeap(),0,strlen(name) + 1);
-    strcpy(newDevice->name, name);
+    newDevice->generic.name = HeapAlloc(GetProcessHeap(),0,strlen(name) + 1);
+    strcpy(newDevice->generic.name, name);
 
 #ifdef JSIOCGAXES
     if (ioctl(newDevice->joyfd,JSIOCGAXES,&newDevice->axes) < 0) {
@@ -504,7 +505,7 @@ FAILED1:
     HeapFree(GetProcessHeap(), 0, df);
     release_DataFormat(&newDevice->generic.base.data_format);
     HeapFree(GetProcessHeap(),0,newDevice->axis_map);
-    HeapFree(GetProcessHeap(),0,newDevice->name);
+    HeapFree(GetProcessHeap(),0,newDevice->generic.name);
     HeapFree(GetProcessHeap(),0,newDevice->generic.props);
     HeapFree(GetProcessHeap(),0,newDevice);
     *pdev = 0;
@@ -763,78 +764,6 @@ static HRESULT WINAPI JoystickAImpl_Poll(LPDIRECTINPUTDEVICE8A iface)
     return DI_OK;
 }
 
-
-/******************************************************************************
-  *     GetDeviceInfo : get information about a device's identity
-  */
-static HRESULT WINAPI JoystickAImpl_GetDeviceInfo(
-    LPDIRECTINPUTDEVICE8A iface,
-    LPDIDEVICEINSTANCEA pdidi)
-{
-    JoystickImpl *This = (JoystickImpl *)iface;
-
-    TRACE("(%p,%p)\n", iface, pdidi);
-
-    if (pdidi == NULL) {
-        WARN("invalid pointer\n");
-        return E_POINTER;
-    }
-
-    if ((pdidi->dwSize != sizeof(DIDEVICEINSTANCE_DX3A)) &&
-        (pdidi->dwSize != sizeof(DIDEVICEINSTANCEA))) {
-        WARN("invalid parameter: pdidi->dwSize = %d\n", pdidi->dwSize);
-        return DIERR_INVALIDPARAM;
-    }
-
-    /* Return joystick */
-    pdidi->guidInstance = GUID_Joystick;
-    pdidi->guidProduct = DInput_Wine_Joystick_GUID;
-    /* we only support traditional joysticks for now */
-    pdidi->dwDevType = This->generic.devcaps.dwDevType;
-    strcpy(pdidi->tszInstanceName, "Joystick");
-    strcpy(pdidi->tszProductName, This->name);
-    if (pdidi->dwSize > sizeof(DIDEVICEINSTANCE_DX3A)) {
-        pdidi->guidFFDriver = GUID_NULL;
-        pdidi->wUsagePage = 0;
-        pdidi->wUsage = 0;
-    }
-
-    return DI_OK;
-}
-
-/******************************************************************************
-  *     GetDeviceInfo : get information about a device's identity
-  */
-static HRESULT WINAPI JoystickWImpl_GetDeviceInfo(
-    LPDIRECTINPUTDEVICE8W iface,
-    LPDIDEVICEINSTANCEW pdidi)
-{
-    JoystickImpl *This = (JoystickImpl *)iface;
-
-    TRACE("(%p,%p)\n", iface, pdidi);
-
-    if ((pdidi->dwSize != sizeof(DIDEVICEINSTANCE_DX3W)) &&
-        (pdidi->dwSize != sizeof(DIDEVICEINSTANCEW))) {
-        WARN("invalid parameter: pdidi->dwSize = %d\n", pdidi->dwSize);
-        return DIERR_INVALIDPARAM;
-    }
-
-    /* Return joystick */
-    pdidi->guidInstance = GUID_Joystick;
-    pdidi->guidProduct = DInput_Wine_Joystick_GUID;
-    /* we only support traditional joysticks for now */
-    pdidi->dwDevType = This->generic.devcaps.dwDevType;
-    MultiByteToWideChar(CP_ACP, 0, "Joystick", -1, pdidi->tszInstanceName, MAX_PATH);
-    MultiByteToWideChar(CP_ACP, 0, This->name, -1, pdidi->tszProductName, MAX_PATH);
-    if (pdidi->dwSize > sizeof(DIDEVICEINSTANCE_DX3W)) {
-        pdidi->guidFFDriver = GUID_NULL;
-        pdidi->wUsagePage = 0;
-        pdidi->wUsage = 0;
-    }
-
-    return DI_OK;
-}
-
 static const IDirectInputDevice8AVtbl JoystickAvt =
 {
 	IDirectInputDevice2AImpl_QueryInterface,
@@ -852,7 +781,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 	IDirectInputDevice2AImpl_SetEventNotification,
 	IDirectInputDevice2AImpl_SetCooperativeLevel,
 	JoystickAGenericImpl_GetObjectInfo,
-	JoystickAImpl_GetDeviceInfo,
+	JoystickAGenericImpl_GetDeviceInfo,
 	IDirectInputDevice2AImpl_RunControlPanel,
 	IDirectInputDevice2AImpl_Initialize,
 	IDirectInputDevice2AImpl_CreateEffect,
@@ -894,7 +823,7 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
 	XCAST(SetEventNotification)IDirectInputDevice2AImpl_SetEventNotification,
 	XCAST(SetCooperativeLevel)IDirectInputDevice2AImpl_SetCooperativeLevel,
         JoystickWGenericImpl_GetObjectInfo,
-	JoystickWImpl_GetDeviceInfo,
+	JoystickWGenericImpl_GetDeviceInfo,
 	XCAST(RunControlPanel)IDirectInputDevice2AImpl_RunControlPanel,
 	XCAST(Initialize)IDirectInputDevice2AImpl_Initialize,
 	XCAST(CreateEffect)IDirectInputDevice2AImpl_CreateEffect,

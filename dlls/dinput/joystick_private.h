@@ -35,6 +35,8 @@ typedef struct JoystickGenericImpl
 
     ObjProps    *props;
     DIDEVCAPS   devcaps;
+    GUID        guidProduct;
+    char        *name;
 } JoystickGenericImpl;
 
 
@@ -55,5 +57,10 @@ void _dump_DIDEVCAPS(const DIDEVCAPS *lpDIDevCaps);
 HRESULT WINAPI JoystickAGenericImpl_SetProperty( LPDIRECTINPUTDEVICE8A iface,
     REFGUID rguid, LPCDIPROPHEADER ph);
 
+HRESULT WINAPI JoystickAGenericImpl_GetDeviceInfo( LPDIRECTINPUTDEVICE8A iface,
+    LPDIDEVICEINSTANCEA pdidi);
+
+HRESULT WINAPI JoystickWGenericImpl_GetDeviceInfo( LPDIRECTINPUTDEVICE8W iface,
+    LPDIDEVICEINSTANCEW pdidi);
 
 #endif /* __WINE_DLLS_DINPUT_JOYSTICK_PRIVATE_H */
