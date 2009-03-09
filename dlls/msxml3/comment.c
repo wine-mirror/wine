@@ -511,7 +511,7 @@ static HRESULT WINAPI domcomment_put_data(
 
 static HRESULT WINAPI domcomment_get_length(
     IXMLDOMComment *iface,
-    long *len)
+    LONG *len)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
     xmlnode *pDOMNode = impl_from_IXMLDOMNode( This->node );
@@ -537,7 +537,7 @@ static HRESULT WINAPI domcomment_get_length(
 
 static HRESULT WINAPI domcomment_substringData(
     IXMLDOMComment *iface,
-    long offset, long count, BSTR *p)
+    LONG offset, LONG count, BSTR *p)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
     xmlnode *pDOMNode = impl_from_IXMLDOMNode( This->node );
@@ -626,7 +626,7 @@ static HRESULT WINAPI domcomment_appendData(
 
 static HRESULT WINAPI domcomment_insertData(
     IXMLDOMComment *iface,
-    long offset, BSTR p)
+    LONG offset, BSTR p)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
     xmlnode *pDOMNode = impl_from_IXMLDOMNode( This->node );
@@ -696,7 +696,7 @@ static HRESULT WINAPI domcomment_insertData(
 
 static HRESULT WINAPI domcomment_deleteData(
     IXMLDOMComment *iface,
-    long offset, long count)
+    LONG offset, LONG count)
 {
     FIXME("\n");
     return E_NOTIMPL;
@@ -704,7 +704,7 @@ static HRESULT WINAPI domcomment_deleteData(
 
 static HRESULT WINAPI domcomment_replaceData(
     IXMLDOMComment *iface,
-    long offset, long count, BSTR p)
+    LONG offset, LONG count, BSTR p)
 {
     FIXME("\n");
     return E_NOTIMPL;

@@ -329,7 +329,7 @@ static HRESULT WINAPI xmlnodemap_removeNamedItem(
 
 static HRESULT WINAPI xmlnodemap_get_item(
     IXMLDOMNamedNodeMap *iface,
-    long index,
+    LONG index,
     IXMLDOMNode** listItem)
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
@@ -337,7 +337,7 @@ static HRESULT WINAPI xmlnodemap_get_item(
     xmlAttrPtr curr;
     long attrIndex;
 
-    TRACE("%p %ld\n", This, index);
+    TRACE("%p %d\n", This, index);
 
     *listItem = NULL;
 
@@ -361,7 +361,7 @@ static HRESULT WINAPI xmlnodemap_get_item(
 
 static HRESULT WINAPI xmlnodemap_get_length(
     IXMLDOMNamedNodeMap *iface,
-    long* listLength)
+    LONG *listLength)
 {
     xmlNodePtr node;
     xmlAttrPtr first;

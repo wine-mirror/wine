@@ -517,7 +517,7 @@ static HRESULT WINAPI domcdata_put_data(
 
 static HRESULT WINAPI domcdata_get_length(
     IXMLDOMCDATASection *iface,
-    long *len)
+    LONG *len)
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
     xmlnode *pDOMNode = impl_from_IXMLDOMNode( This->node );
@@ -543,7 +543,7 @@ static HRESULT WINAPI domcdata_get_length(
 
 static HRESULT WINAPI domcdata_substringData(
     IXMLDOMCDATASection *iface,
-    long offset, long count, BSTR *p)
+    LONG offset, LONG count, BSTR *p)
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
     xmlnode *pDOMNode = impl_from_IXMLDOMNode( This->node );
@@ -618,7 +618,7 @@ static HRESULT WINAPI domcdata_appendData(
 
 static HRESULT WINAPI domcdata_insertData(
     IXMLDOMCDATASection *iface,
-    long offset, BSTR p)
+    LONG offset, BSTR p)
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
     xmlnode *pDOMNode = impl_from_IXMLDOMNode( This->node );
@@ -688,7 +688,7 @@ static HRESULT WINAPI domcdata_insertData(
 
 static HRESULT WINAPI domcdata_deleteData(
     IXMLDOMCDATASection *iface,
-    long offset, long count)
+    LONG offset, LONG count)
 {
     FIXME("\n");
     return E_NOTIMPL;
@@ -696,7 +696,7 @@ static HRESULT WINAPI domcdata_deleteData(
 
 static HRESULT WINAPI domcdata_replaceData(
     IXMLDOMCDATASection *iface,
-    long offset, long count, BSTR p)
+    LONG offset, LONG count, BSTR p)
 {
     FIXME("\n");
     return E_NOTIMPL;
@@ -704,7 +704,7 @@ static HRESULT WINAPI domcdata_replaceData(
 
 static HRESULT WINAPI domcdata_splitText(
     IXMLDOMCDATASection *iface,
-    long offset, IXMLDOMText **txtNode)
+    LONG offset, IXMLDOMText **txtNode)
 {
     FIXME("\n");
     return E_NOTIMPL;
