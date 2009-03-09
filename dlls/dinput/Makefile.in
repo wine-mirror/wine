@@ -11,6 +11,7 @@ C_SRCS = \
 	device.c \
 	dinput_main.c \
 	effect_linuxinput.c \
+	joystick.c \
 	joystick_linux.c \
 	joystick_linuxinput.c \
 	keyboard.c \
