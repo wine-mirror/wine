@@ -1927,6 +1927,22 @@ static void _test_border_styles(unsigned line, IHTMLStyle *pStyle, BSTR Name)
     }
 }
 
+#define test_style_csstext(s,t) _test_style_csstext(__LINE__,s,t)
+static void _test_style_csstext(unsigned line, IHTMLStyle *style, const char *extext)
+{
+    BSTR text = (void*)0xdeadbeef;
+    HRESULT hres;
+
+    hres = IHTMLStyle_get_cssText(style, &text);
+    ok_(__FILE__,line)(hres == S_OK, "get_cssText failed: %08x\n", hres);
+    if(extext)
+        ok_(__FILE__,line)(!strcmp_wa(text, extext), "cssText = %s\n", dbgstr_w(text));
+    else
+        ok_(__FILE__,line)(!text, "cssText = %s\n", dbgstr_w(text));
+
+    SysFreeString(text);
+}
+
 static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
         const elem_type_t *elem_types, long len)
 {
@@ -2607,6 +2623,8 @@ static void test_default_style(IHTMLStyle *style)
 
     test_disp((IUnknown*)style, &DIID_DispHTMLStyle);
     test_ifaces((IUnknown*)style, style_iids);
+
+    test_style_csstext(style, NULL);
 
     hres = IHTMLStyle_get_position(style, &str);
     ok(hres == S_OK, "get_position failed: %08x\n", hres);

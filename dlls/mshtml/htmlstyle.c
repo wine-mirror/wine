@@ -2063,8 +2063,26 @@ static HRESULT WINAPI HTMLStyle_put_cssText(IHTMLStyle *iface, BSTR v)
 static HRESULT WINAPI HTMLStyle_get_cssText(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString text_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    /* FIXME: Gecko style formatting is different than IE (uppercase). */
+    nsAString_Init(&text_str, NULL);
+    nsres = nsIDOMCSSStyleDeclaration_GetCssText(This->nsstyle, &text_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *text;
+
+        nsAString_GetData(&text_str, &text);
+        *p = *text ? SysAllocString(text) : NULL;
+    }else {
+        FIXME("GetCssStyle failed: %08x\n", nsres);
+        *p = NULL;
+    }
+
+    nsAString_Finish(&text_str);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle_put_pixelTop(IHTMLStyle *iface, long v)
