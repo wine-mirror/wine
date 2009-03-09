@@ -721,7 +721,8 @@ static void test_dibsections(void)
     hdib = CreateDIBSection(hdc, pbmi, DIB_PAL_COLORS, (void**)&bits, NULL, 0);
     ok(hdib != NULL, "CreateDIBSection failed\n");
     ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
-    ok(dibsec.dsBmih.biClrUsed == 2,
+    ok(dibsec.dsBmih.biClrUsed == 2 ||
+       broken(dibsec.dsBmih.biClrUsed == 0), /* win9x */
         "created DIBSection: wrong biClrUsed field: %u, should be: %u\n", dibsec.dsBmih.biClrUsed, 2);
 
     /* The colour table has already been grabbed from the dc, so we select back the
@@ -813,7 +814,8 @@ static void test_dibsections(void)
     hdib = CreateDIBSection(hdc, pbmi, DIB_PAL_COLORS, (void**)&bits, NULL, 0);
     ok(hdib != NULL, "CreateDIBSection failed\n");
     ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
-    ok(dibsec.dsBmih.biClrUsed == 256,
+    ok(dibsec.dsBmih.biClrUsed == 256 ||
+       broken(dibsec.dsBmih.biClrUsed == 0), /* win9x */
         "created DIBSection: wrong biClrUsed field: %u, should be: %u\n", dibsec.dsBmih.biClrUsed, 256);
 
     test_dib_info(hdib, bits, &pbmi->bmiHeader);
