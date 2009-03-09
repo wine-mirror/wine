@@ -345,3 +345,45 @@ HRESULT WINAPI JoystickWGenericImpl_GetDeviceInfo(
 
     return DI_OK;
 }
+
+HRESULT WINAPI JoystickAGenericImpl_Poll(LPDIRECTINPUTDEVICE8A iface)
+{
+    JoystickGenericImpl *This = (JoystickGenericImpl *)iface;
+
+    TRACE("(%p)\n",This);
+
+    if (!This->base.acquired) {
+        WARN("not acquired\n");
+        return DIERR_NOTACQUIRED;
+    }
+
+    This->joy_polldev(This);
+    return DI_OK;
+}
+
+/******************************************************************************
+  *     GetDeviceState : returns the "state" of the joystick.
+  *
+  */
+HRESULT WINAPI JoystickAGenericImpl_GetDeviceState(
+    LPDIRECTINPUTDEVICE8A iface,
+    DWORD len,
+    LPVOID ptr)
+{
+    JoystickGenericImpl *This = (JoystickGenericImpl *)iface;
+
+    TRACE("(%p,0x%08x,%p)\n", This, len, ptr);
+
+    if (!This->base.acquired) {
+        WARN("not acquired\n");
+        return DIERR_NOTACQUIRED;
+    }
+
+    /* update joystick state */
+    This->joy_polldev(This);
+
+    /* convert and copy data to user supplied buffer */
+    fill_DataFormat(ptr, len, &This->js, &This->base.data_format);
+
+    return DI_OK;
+}

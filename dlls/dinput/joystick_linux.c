@@ -87,7 +87,6 @@ struct JoystickImpl
 
 	/* joystick private */
 	int				joyfd;
-	DIJOYSTATE2			js;		/* wine data */
 	LONG				deadzone;
 	int				*axis_map;
 	int				axes;
@@ -104,6 +103,8 @@ static const GUID DInput_Wine_Joystick_GUID = { /* 9e573ed9-7734-11d2-8d4a-23903
 #define MAX_JOYSTICKS 64
 static INT joystick_devices_count = -1;
 static LPSTR joystick_devices[MAX_JOYSTICKS];
+
+static void joy_polldev(JoystickGenericImpl *This);
 
 static INT find_joystick_devices(void)
 {
@@ -379,6 +380,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     }
 
     newDevice->generic.guidProduct = DInput_Wine_Joystick_GUID;
+    newDevice->generic.joy_polldev = joy_polldev;
 
     /* get the device name */
 #if defined(JSIOCGNAME)
@@ -649,9 +651,11 @@ static HRESULT WINAPI JoystickAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
     return DI_NOEFFECT;
 }
 
-static void joy_polldev(JoystickImpl *This) {
+static void joy_polldev(JoystickGenericImpl *This_in) {
     struct pollfd plfd;
     struct	js_event jse;
+    JoystickImpl *This = (JoystickImpl*) This_in;
+
     TRACE("(%p)\n", This);
 
     if (This->joyfd==-1) {
@@ -678,7 +682,7 @@ static void joy_polldev(JoystickImpl *This) {
             if (jse.number >= This->generic.devcaps.dwButtons) return;
 
             inst_id = DIDFT_MAKEINSTANCE(jse.number) | DIDFT_PSHBUTTON;
-            This->js.rgbButtons[jse.number] = value = jse.value ? 0x80 : 0x00;
+            This->generic.js.rgbButtons[jse.number] = value = jse.value ? 0x80 : 0x00;
         }
         else if (jse.type & JS_EVENT_AXIS)
         {
@@ -691,14 +695,14 @@ static void joy_polldev(JoystickImpl *This) {
             TRACE("changing axis %d => %d\n", jse.number, number);
             switch (number)
             {
-                case 0: This->js.lX  = value; break;
-                case 1: This->js.lY  = value; break;
-                case 2: This->js.lZ  = value; break;
-                case 3: This->js.lRx = value; break;
-                case 4: This->js.lRy = value; break;
-                case 5: This->js.lRz = value; break;
-                case 6: This->js.rglSlider[0] = value; break;
-                case 7: This->js.rglSlider[1] = value; break;
+                case 0: This->generic.js.lX  = value; break;
+                case 1: This->generic.js.lY  = value; break;
+                case 2: This->generic.js.lZ  = value; break;
+                case 3: This->generic.js.lRx = value; break;
+                case 4: This->generic.js.lRy = value; break;
+                case 5: This->generic.js.lRz = value; break;
+                case 6: This->generic.js.rglSlider[0] = value; break;
+                case 7: This->generic.js.rglSlider[1] = value; break;
                 case 8: case 9: case 10: case 11:
                 {
                     int idx = number - 8;
@@ -708,7 +712,7 @@ static void joy_polldev(JoystickImpl *This) {
                     else
                         This->povs[idx].x = jse.value;
 
-                    This->js.rgdwPOV[idx] = value = joystick_map_pov(&This->povs[idx]);
+                    This->generic.js.rgdwPOV[idx] = value = joystick_map_pov(&This->povs[idx]);
                     break;
                 }
                 default:
@@ -722,48 +726,6 @@ static void joy_polldev(JoystickImpl *This) {
     }
 }
 
-/******************************************************************************
-  *     GetDeviceState : returns the "state" of the joystick.
-  *
-  */
-static HRESULT WINAPI JoystickAImpl_GetDeviceState(
-    LPDIRECTINPUTDEVICE8A iface,
-    DWORD len,
-    LPVOID ptr)
-{
-    JoystickImpl *This = (JoystickImpl *)iface;
-
-    TRACE("(%p,0x%08x,%p)\n", This, len, ptr);
-
-    if (!This->generic.base.acquired) {
-        WARN("not acquired\n");
-        return DIERR_NOTACQUIRED;
-    }
-
-    /* update joystick state */
-    joy_polldev(This);
-
-    /* convert and copy data to user supplied buffer */
-    fill_DataFormat(ptr, len, &This->js, &This->generic.base.data_format);
-
-    return DI_OK;
-}
-
-static HRESULT WINAPI JoystickAImpl_Poll(LPDIRECTINPUTDEVICE8A iface)
-{
-    JoystickImpl *This = (JoystickImpl *)iface;
-
-    TRACE("(%p)\n",This);
-
-    if (!This->generic.base.acquired) {
-        WARN("not acquired\n");
-        return DIERR_NOTACQUIRED;
-    }
-
-    joy_polldev(This);
-    return DI_OK;
-}
-
 static const IDirectInputDevice8AVtbl JoystickAvt =
 {
 	IDirectInputDevice2AImpl_QueryInterface,
@@ -775,7 +737,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 	JoystickAGenericImpl_SetProperty,
 	JoystickAImpl_Acquire,
 	JoystickAImpl_Unacquire,
-	JoystickAImpl_GetDeviceState,
+	JoystickAGenericImpl_GetDeviceState,
 	IDirectInputDevice2AImpl_GetDeviceData,
 	IDirectInputDevice2AImpl_SetDataFormat,
 	IDirectInputDevice2AImpl_SetEventNotification,
@@ -791,7 +753,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 	IDirectInputDevice2AImpl_SendForceFeedbackCommand,
 	IDirectInputDevice2AImpl_EnumCreatedEffectObjects,
 	IDirectInputDevice2AImpl_Escape,
-	JoystickAImpl_Poll,
+	JoystickAGenericImpl_Poll,
 	IDirectInputDevice2AImpl_SendDeviceData,
 	IDirectInputDevice7AImpl_EnumEffectsInFile,
 	IDirectInputDevice7AImpl_WriteEffectToFile,
@@ -817,7 +779,7 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
 	XCAST(SetProperty)JoystickAGenericImpl_SetProperty,
 	XCAST(Acquire)JoystickAImpl_Acquire,
 	XCAST(Unacquire)JoystickAImpl_Unacquire,
-	XCAST(GetDeviceState)JoystickAImpl_GetDeviceState,
+	XCAST(GetDeviceState)JoystickAGenericImpl_GetDeviceState,
 	XCAST(GetDeviceData)IDirectInputDevice2AImpl_GetDeviceData,
 	XCAST(SetDataFormat)IDirectInputDevice2AImpl_SetDataFormat,
 	XCAST(SetEventNotification)IDirectInputDevice2AImpl_SetEventNotification,
@@ -833,7 +795,7 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
 	XCAST(SendForceFeedbackCommand)IDirectInputDevice2AImpl_SendForceFeedbackCommand,
 	XCAST(EnumCreatedEffectObjects)IDirectInputDevice2AImpl_EnumCreatedEffectObjects,
 	XCAST(Escape)IDirectInputDevice2AImpl_Escape,
-	XCAST(Poll)JoystickAImpl_Poll,
+	XCAST(Poll)JoystickAGenericImpl_Poll,
 	XCAST(SendDeviceData)IDirectInputDevice2AImpl_SendDeviceData,
         IDirectInputDevice7WImpl_EnumEffectsInFile,
         IDirectInputDevice7WImpl_WriteEffectToFile,

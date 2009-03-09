@@ -29,14 +29,21 @@
 #include "dinput_private.h"
 #include "device_private.h"
 
+struct JoystickGenericImpl;
+
+typedef void joy_polldev_handler(struct JoystickGenericImpl *This);
+
 typedef struct JoystickGenericImpl
 {
     struct IDirectInputDevice2AImpl base;
 
     ObjProps    *props;
     DIDEVCAPS   devcaps;
+    DIJOYSTATE2 js;     /* wine data */
     GUID        guidProduct;
     char        *name;
+
+    joy_polldev_handler *joy_polldev;
 } JoystickGenericImpl;
 
 
@@ -62,5 +69,10 @@ HRESULT WINAPI JoystickAGenericImpl_GetDeviceInfo( LPDIRECTINPUTDEVICE8A iface,
 
 HRESULT WINAPI JoystickWGenericImpl_GetDeviceInfo( LPDIRECTINPUTDEVICE8W iface,
     LPDIDEVICEINSTANCEW pdidi);
+
+HRESULT WINAPI JoystickAGenericImpl_Poll(LPDIRECTINPUTDEVICE8A iface);
+
+HRESULT WINAPI JoystickAGenericImpl_GetDeviceState( LPDIRECTINPUTDEVICE8A iface,
+    DWORD len, LPVOID ptr);
 
 #endif /* __WINE_DLLS_DINPUT_JOYSTICK_PRIVATE_H */
