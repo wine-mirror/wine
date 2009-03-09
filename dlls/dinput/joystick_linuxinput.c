@@ -64,64 +64,9 @@
 
 #include "dinput_private.h"
 #include "device_private.h"
+#include "joystick_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
-
-
-/*
- * Maps POV x & y event values to a DX "clock" position:
- *         0
- *   31500    4500
- * 27000  -1    9000
- *   22500   13500
- *       18000
- */
-DWORD joystick_map_pov(POINTL *p)
-{
-    if (p->x > 0)
-        return p->y < 0 ?  4500 : !p->y ?  9000 : 13500;
-    else if (p->x < 0)
-        return p->y < 0 ? 31500 : !p->y ? 27000 : 22500;
-    else
-        return p->y < 0 ?     0 : !p->y ?    -1 : 18000;
-}
-
-/*
- * This maps the read value (from the input event) to a value in the
- * 'wanted' range.
- * Notes:
- *   Dead zone is in % multiplied by a 100 (range 0..10000)
- */
-LONG joystick_map_axis(ObjProps *props, int val)
-{
-    LONG ret;
-    LONG dead_zone = MulDiv( props->lDeadZone, props->lDevMax - props->lDevMin, 10000 );
-    LONG dev_range = props->lDevMax - props->lDevMin - dead_zone;
-
-    /* Center input */
-    val -= (props->lDevMin + props->lDevMax) / 2;
-
-    /* Remove dead zone */
-    if (abs( val ) <= dead_zone / 2)
-        val = 0;
-    else
-        val = val < 0 ? val + dead_zone / 2 : val - dead_zone / 2;
-
-    /* Scale and map the value from the device range into the required range */
-    ret = MulDiv( val, props->lMax - props->lMin, dev_range ) +
-          (props->lMin + props->lMax) / 2;
-
-    /* Clamp in case or rounding errors */
-    if      (ret > props->lMax) ret = props->lMax;
-    else if (ret < props->lMin) ret = props->lMin;
-
-    TRACE( "(%d <%d> %d) -> (%d <%d> %d): val=%d ret=%d\n",
-           props->lDevMin, dead_zone, props->lDevMax,
-           props->lMin, props->lDeadZone, props->lMax,
-           val, ret );
-
-    return ret;
-}
 
 #ifdef HAVE_CORRECT_LINUXINPUT_H
 

@@ -46,6 +46,9 @@ typedef struct JoystickGenericImpl
     joy_polldev_handler *joy_polldev;
 } JoystickGenericImpl;
 
+LONG joystick_map_axis(ObjProps *props, int val);
+
+DWORD joystick_map_pov(POINTL *p);
 
 HRESULT WINAPI JoystickWGenericImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
         LPDIDEVICEOBJECTINSTANCEW pdidoi, DWORD dwObj, DWORD dwHow);
