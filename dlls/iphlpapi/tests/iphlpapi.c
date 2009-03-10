@@ -35,6 +35,7 @@
  */
 
 #include <stdarg.h>
+#include "winsock2.h"
 #include "windef.h"
 #include "winbase.h"
 #include "iphlpapi.h"
@@ -143,6 +144,16 @@ static void freeIPHlpApi(void)
     FreeLibrary(hLibrary);
     hLibrary = NULL;
   }
+}
+
+/* replacement for inet_ntoa */
+static const char *ntoa( DWORD ip )
+{
+    static char buffer[40];
+
+    ip = htonl(ip);
+    sprintf( buffer, "%u.%u.%u.%u", (ip >> 24) & 0xff, (ip >> 16) & 0xff, (ip >> 8) & 0xff, ip & 0xff );
+    return buffer;
 }
 
 /*
@@ -263,6 +274,30 @@ static void testGetIfTable(void)
       ok(apiReturn == NO_ERROR,
        "GetIfTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n\n",
        apiReturn);
+
+      if (apiReturn == NO_ERROR && winetest_debug > 1)
+      {
+          DWORD i, j;
+          char name[MAX_INTERFACE_NAME_LEN];
+
+          trace( "interface table: %u entries\n", buf->dwNumEntries );
+          for (i = 0; i < buf->dwNumEntries; i++)
+          {
+              MIB_IFROW *row = &buf->table[i];
+              WideCharToMultiByte( CP_ACP, 0, row->wszName, -1, name, MAX_INTERFACE_NAME_LEN, NULL, NULL );
+              trace( "%u: '%s' type %u mtu %u speed %u phys",
+                     row->dwIndex, name, row->dwType, row->dwMtu, row->dwSpeed );
+              for (j = 0; j < row->dwPhysAddrLen; j++)
+                  printf( " %02x", row->bPhysAddr[j] );
+              printf( "\n" );
+              trace( "        in: bytes %u upkts %u nupkts %u disc %u err %u unk %u\n",
+                     row->dwInOctets, row->dwInUcastPkts, row->dwInNUcastPkts,
+                     row->dwInDiscards, row->dwInErrors, row->dwInUnknownProtos );
+              trace( "        out: bytes %u upkts %u nupkts %u disc %u err %u\n",
+                     row->dwOutOctets, row->dwOutUcastPkts, row->dwOutNUcastPkts,
+                     row->dwOutDiscards, row->dwOutErrors );
+          }
+      }
       HeapFree(GetProcessHeap(), 0, buf);
     }
   }
@@ -293,6 +328,22 @@ static void testGetIpForwardTable(void)
       ok(apiReturn == NO_ERROR,
        "GetIpForwardTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n",
        apiReturn);
+
+      if (apiReturn == NO_ERROR && winetest_debug > 1)
+      {
+          DWORD i;
+
+          trace( "IP forward table: %u entries\n", buf->dwNumEntries );
+          for (i = 0; i < buf->dwNumEntries; i++)
+          {
+              char buffer[40];
+              sprintf( buffer, "dest %s", ntoa( buf->table[i].dwForwardDest ));
+              sprintf( buffer + strlen(buffer), " mask %s", ntoa( buf->table[i].dwForwardMask ));
+              trace( "%u: %s gw %s if %u type %u\n", i, buffer,
+                     ntoa( buf->table[i].dwForwardNextHop ),
+                     buf->table[i].dwForwardIfIndex, buf->table[i].dwForwardType );
+          }
+      }
       HeapFree(GetProcessHeap(), 0, buf);
     }
   }
@@ -326,6 +377,21 @@ static void testGetIpNetTable(void)
          apiReturn == ERROR_NO_DATA, /* empty ARP table's okay */
        "GetIpNetTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n",
        apiReturn);
+
+      if (apiReturn == NO_ERROR && winetest_debug > 1)
+      {
+          DWORD i, j;
+
+          trace( "IP net table: %u entries\n", buf->dwNumEntries );
+          for (i = 0; i < buf->dwNumEntries; i++)
+          {
+              trace( "%u: idx %u type %u addr %s phys",
+                     i, buf->table[i].dwIndex, buf->table[i].dwType, ntoa( buf->table[i].dwAddr ));
+              for (j = 0; j < buf->table[i].dwPhysAddrLen; j++)
+                  printf( " %02x", buf->table[i].bPhysAddr[j] );
+              printf( "\n" );
+          }
+      }
       HeapFree(GetProcessHeap(), 0, buf);
     }
   }
@@ -355,6 +421,23 @@ static void testGetIcmpStatistics(void)
     }
     ok(apiReturn == NO_ERROR,
      "GetIcmpStatistics returned %d, expected NO_ERROR\n", apiReturn);
+    if (apiReturn == NO_ERROR && winetest_debug > 1)
+    {
+        trace( "ICMP stats:          %8s %8s\n", "in", "out" );
+        trace( "    dwMsgs:          %8u %8u\n", stats.stats.icmpInStats.dwMsgs, stats.stats.icmpOutStats.dwMsgs );
+        trace( "    dwErrors:        %8u %8u\n", stats.stats.icmpInStats.dwErrors, stats.stats.icmpOutStats.dwErrors );
+        trace( "    dwDestUnreachs:  %8u %8u\n", stats.stats.icmpInStats.dwDestUnreachs, stats.stats.icmpOutStats.dwDestUnreachs );
+        trace( "    dwTimeExcds:     %8u %8u\n", stats.stats.icmpInStats.dwTimeExcds, stats.stats.icmpOutStats.dwTimeExcds );
+        trace( "    dwParmProbs:     %8u %8u\n", stats.stats.icmpInStats.dwParmProbs, stats.stats.icmpOutStats.dwParmProbs );
+        trace( "    dwSrcQuenchs:    %8u %8u\n", stats.stats.icmpInStats.dwSrcQuenchs, stats.stats.icmpOutStats.dwSrcQuenchs );
+        trace( "    dwRedirects:     %8u %8u\n", stats.stats.icmpInStats.dwRedirects, stats.stats.icmpOutStats.dwRedirects );
+        trace( "    dwEchos:         %8u %8u\n", stats.stats.icmpInStats.dwEchos, stats.stats.icmpOutStats.dwEchos );
+        trace( "    dwEchoReps:      %8u %8u\n", stats.stats.icmpInStats.dwEchoReps, stats.stats.icmpOutStats.dwEchoReps );
+        trace( "    dwTimestamps:    %8u %8u\n", stats.stats.icmpInStats.dwTimestamps, stats.stats.icmpOutStats.dwTimestamps );
+        trace( "    dwTimestampReps: %8u %8u\n", stats.stats.icmpInStats.dwTimestampReps, stats.stats.icmpOutStats.dwTimestampReps );
+        trace( "    dwAddrMasks:     %8u %8u\n", stats.stats.icmpInStats.dwAddrMasks, stats.stats.icmpOutStats.dwAddrMasks );
+        trace( "    dwAddrMaskReps:  %8u %8u\n", stats.stats.icmpInStats.dwAddrMaskReps, stats.stats.icmpOutStats.dwAddrMaskReps );
+    }
   }
 }
 
@@ -375,6 +458,33 @@ static void testGetIpStatistics(void)
     apiReturn = gGetIpStatistics(&stats);
     ok(apiReturn == NO_ERROR,
       "GetIpStatistics returned %d, expected NO_ERROR\n", apiReturn);
+    if (apiReturn == NO_ERROR && winetest_debug > 1)
+    {
+        trace( "IP stats:\n" );
+        trace( "    dwForwarding:      %u\n", stats.dwForwarding );
+        trace( "    dwDefaultTTL:      %u\n", stats.dwDefaultTTL );
+        trace( "    dwInReceives:      %u\n", stats.dwInReceives );
+        trace( "    dwInHdrErrors:     %u\n", stats.dwInHdrErrors );
+        trace( "    dwInAddrErrors:    %u\n", stats.dwInAddrErrors );
+        trace( "    dwForwDatagrams:   %u\n", stats.dwForwDatagrams );
+        trace( "    dwInUnknownProtos: %u\n", stats.dwInUnknownProtos );
+        trace( "    dwInDiscards:      %u\n", stats.dwInDiscards );
+        trace( "    dwInDelivers:      %u\n", stats.dwInDelivers );
+        trace( "    dwOutRequests:     %u\n", stats.dwOutRequests );
+        trace( "    dwRoutingDiscards: %u\n", stats.dwRoutingDiscards );
+        trace( "    dwOutDiscards:     %u\n", stats.dwOutDiscards );
+        trace( "    dwOutNoRoutes:     %u\n", stats.dwOutNoRoutes );
+        trace( "    dwReasmTimeout:    %u\n", stats.dwReasmTimeout );
+        trace( "    dwReasmReqds:      %u\n", stats.dwReasmReqds );
+        trace( "    dwReasmOks:        %u\n", stats.dwReasmOks );
+        trace( "    dwReasmFails:      %u\n", stats.dwReasmFails );
+        trace( "    dwFragOks:         %u\n", stats.dwFragOks );
+        trace( "    dwFragFails:       %u\n", stats.dwFragFails );
+        trace( "    dwFragCreates:     %u\n", stats.dwFragCreates );
+        trace( "    dwNumIf:           %u\n", stats.dwNumIf );
+        trace( "    dwNumAddr:         %u\n", stats.dwNumAddr );
+        trace( "    dwNumRoutes:       %u\n", stats.dwNumRoutes );
+    }
   }
 }
 
@@ -395,6 +505,25 @@ static void testGetTcpStatistics(void)
     apiReturn = gGetTcpStatistics(&stats);
     ok(apiReturn == NO_ERROR,
       "GetTcpStatistics returned %d, expected NO_ERROR\n", apiReturn);
+    if (apiReturn == NO_ERROR && winetest_debug > 1)
+    {
+        trace( "TCP stats:\n" );
+        trace( "    dwRtoAlgorithm: %u\n", stats.dwRtoAlgorithm );
+        trace( "    dwRtoMin:       %u\n", stats.dwRtoMin );
+        trace( "    dwRtoMax:       %u\n", stats.dwRtoMax );
+        trace( "    dwMaxConn:      %u\n", stats.dwMaxConn );
+        trace( "    dwActiveOpens:  %u\n", stats.dwActiveOpens );
+        trace( "    dwPassiveOpens: %u\n", stats.dwPassiveOpens );
+        trace( "    dwAttemptFails: %u\n", stats.dwAttemptFails );
+        trace( "    dwEstabResets:  %u\n", stats.dwEstabResets );
+        trace( "    dwCurrEstab:    %u\n", stats.dwCurrEstab );
+        trace( "    dwInSegs:       %u\n", stats.dwInSegs );
+        trace( "    dwOutSegs:      %u\n", stats.dwOutSegs );
+        trace( "    dwRetransSegs:  %u\n", stats.dwRetransSegs );
+        trace( "    dwInErrs:       %u\n", stats.dwInErrs );
+        trace( "    dwOutRsts:      %u\n", stats.dwOutRsts );
+        trace( "    dwNumConns:     %u\n", stats.dwNumConns );
+    }
   }
 }
 
@@ -415,6 +544,15 @@ static void testGetUdpStatistics(void)
     apiReturn = gGetUdpStatistics(&stats);
     ok(apiReturn == NO_ERROR,
      "GetUdpStatistics returned %d, expected NO_ERROR\n", apiReturn);
+    if (apiReturn == NO_ERROR && winetest_debug > 1)
+    {
+        trace( "UDP stats:\n" );
+        trace( "    dwInDatagrams:  %u\n", stats.dwInDatagrams );
+        trace( "    dwNoPorts:      %u\n", stats.dwNoPorts );
+        trace( "    dwInErrors:     %u\n", stats.dwInErrors );
+        trace( "    dwOutDatagrams: %u\n", stats.dwOutDatagrams );
+        trace( "    dwNumAddrs:     %u\n", stats.dwNumAddrs );
+    }
   }
 }
 
@@ -440,6 +578,21 @@ static void testGetTcpTable(void)
       ok(apiReturn == NO_ERROR,
        "GetTcpTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n",
        apiReturn);
+
+      if (apiReturn == NO_ERROR && winetest_debug > 1)
+      {
+          DWORD i;
+          trace( "TCP table: %u entries\n", buf->dwNumEntries );
+          for (i = 0; i < buf->dwNumEntries; i++)
+          {
+              char buffer[40];
+              sprintf( buffer, "local %s:%u",
+                       ntoa(buf->table[i].dwLocalAddr), ntohs(buf->table[i].dwLocalPort) );
+              trace( "%u: %s remote %s:%u state %u\n",
+                     i, buffer, ntoa( buf->table[i].dwRemoteAddr ),
+                     ntohs(buf->table[i].dwRemotePort), buf->table[i].dwState );
+          }
+      }
       HeapFree(GetProcessHeap(), 0, buf);
     }
   }
@@ -459,13 +612,22 @@ static void testGetUdpTable(void)
     ok(apiReturn == ERROR_INSUFFICIENT_BUFFER,
      "GetUdpTable(NULL, &dwSize, FALSE) returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
      apiReturn);
-    if (apiReturn != ERROR_INSUFFICIENT_BUFFER) {
+    if (apiReturn == ERROR_INSUFFICIENT_BUFFER) {
       PMIB_UDPTABLE buf = HeapAlloc(GetProcessHeap(), 0, dwSize);
 
       apiReturn = gGetUdpTable(buf, &dwSize, FALSE);
       ok(apiReturn == NO_ERROR,
        "GetUdpTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n",
        apiReturn);
+
+      if (apiReturn == NO_ERROR && winetest_debug > 1)
+      {
+          DWORD i;
+          trace( "UDP table: %u entries\n", buf->dwNumEntries );
+          for (i = 0; i < buf->dwNumEntries; i++)
+              trace( "%u: %s:%u\n",
+                     i, ntoa( buf->table[i].dwLocalAddr ), ntohs(buf->table[i].dwLocalPort) );
+      }
       HeapFree(GetProcessHeap(), 0, buf);
     }
   }
