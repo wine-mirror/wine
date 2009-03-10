@@ -323,8 +323,9 @@ static HRESULT WINAPI IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adapte
     object->lpVtbl = &Direct3DDevice8_Vtbl;
     object->device_parent_vtbl = &d3d8_wined3d_device_parent_vtbl;
     object->ref = 1;
-    object->shader_handles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, INITIAL_SHADER_HANDLE_TABLE_SIZE * sizeof(shader_handle));
-    object->shader_handle_table_size = INITIAL_SHADER_HANDLE_TABLE_SIZE;
+    object->handle_table.entries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            D3D8_INITIAL_HANDLE_TABLE_SIZE * sizeof(*object->handle_table.entries));
+    object->handle_table.table_size = D3D8_INITIAL_HANDLE_TABLE_SIZE;
     *ppReturnedDeviceInterface = (IDirect3DDevice8 *)object;
 
     /* Allocate an associated WineD3DDevice object */
