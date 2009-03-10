@@ -354,7 +354,13 @@ static void test_null(void)
   BOOL r;
   DWORD sz;
 
+  SetLastError(0xdeadbeef);
   hi = InternetOpenW(NULL, 0, NULL, NULL, 0);
+  if (hi == NULL && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+  {
+    win_skip("Internet*W functions are not implemented\n");
+    return;
+  }
   ok(hi != NULL, "open failed\n");
 
   hc = InternetConnectW(hi, NULL, 0, NULL, NULL, 0, 0, 0);
@@ -644,6 +650,11 @@ static void test_IsDomainLegalCookieDomainW(void)
     SetLastError(0xdeadbeef);
     ret = pIsDomainLegalCookieDomainW(NULL, NULL);
     error = GetLastError();
+    if (!ret && error == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("IsDomainLegalCookieDomainW is not implemented\n");
+        return;
+    }
     ok(!ret ||
         broken(ret), /* IE6 */
         "IsDomainLegalCookieDomainW succeeded\n");
