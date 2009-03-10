@@ -425,7 +425,7 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *, INT, BOOL);
 static LRESULT LISTVIEW_Command(const LISTVIEW_INFO *, WPARAM, LPARAM);
 static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *, PFNLVCOMPARE, LPARAM);
 static INT LISTVIEW_GetStringWidthT(const LISTVIEW_INFO *, LPCWSTR, BOOL);
-static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *, INT);
+static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *, INT, BOOL);
 static UINT LISTVIEW_GetItemState(const LISTVIEW_INFO *, INT, UINT);
 static BOOL LISTVIEW_SetItemState(LISTVIEW_INFO *, INT, const LVITEMW *);
 static LRESULT LISTVIEW_VScroll(LISTVIEW_INFO *, INT, INT, HWND);
@@ -1590,7 +1590,7 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
         nItem = notify_hdr(infoPtr, LVN_ODFINDITEMW, (LPNMHDR)&nmlv.hdr);
 
         if (nItem != -1)
-            LISTVIEW_KeySelection(infoPtr, nItem);
+            LISTVIEW_KeySelection(infoPtr, nItem, FALSE);
 
         return 0;
     }
@@ -1623,7 +1623,7 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
     } while (idx != endidx);
 
     if (nItem != -1)
-        LISTVIEW_KeySelection(infoPtr, nItem);
+        LISTVIEW_KeySelection(infoPtr, nItem, FALSE);
 
     return 0;
 }
@@ -3220,12 +3220,13 @@ static void LISTVIEW_SetSelection(LISTVIEW_INFO *infoPtr, INT nItem)
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
  * [I] nItem : item index
+ * [I] space : VK_SPACE code sent
  *
  * RETURN:
  *   SUCCESS : TRUE (needs to be repainted)
  *   FAILURE : FALSE (nothing has changed)
  */
-static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *infoPtr, INT nItem)
+static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *infoPtr, INT nItem, BOOL space)
 {
   /* FIXME: pass in the state */
   WORD wShift = HIWORD(GetKeyState(VK_SHIFT));
@@ -3252,11 +3253,12 @@ static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *infoPtr, INT nItem)
         LVITEMW lvItem;
         lvItem.state = ~LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED);
         lvItem.stateMask = LVIS_SELECTED;
-        LISTVIEW_SetItemState(infoPtr, nItem, &lvItem);
-
-        if (lvItem.state & LVIS_SELECTED)
-            infoPtr->nSelectionMark = nItem;
-
+        if (space)
+        {
+            LISTVIEW_SetItemState(infoPtr, nItem, &lvItem);
+            if (lvItem.state & LVIS_SELECTED)
+                infoPtr->nSelectionMark = nItem;
+        }
         bResult = LISTVIEW_SetItemFocus(infoPtr, nItem);
       }
       else
@@ -8560,7 +8562,7 @@ static LRESULT LISTVIEW_KeyDown(LISTVIEW_INFO *infoPtr, INT nVirtualKey, LONG lK
   }
 
   if ((nItem != -1) && (nItem != infoPtr->nFocusedItem || nVirtualKey == VK_SPACE))
-      LISTVIEW_KeySelection(infoPtr, nItem);
+      LISTVIEW_KeySelection(infoPtr, nItem, nVirtualKey == VK_SPACE);
 
   return 0;
 }
