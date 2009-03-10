@@ -650,7 +650,7 @@ static void IMLangFontLink_Test(IMLangFontLink* iMLFL)
     DWORD dwCmpCodePages;
     UINT CodePage;
     static const WCHAR str[3] = { 'd', 0x0436, 0xff90 };
-    long processed;
+    LONG processed;
     HRESULT ret;
 
     dwCodePages = ~0u;
@@ -704,7 +704,7 @@ static void IMLangFontLink_Test(IMLangFontLink* iMLFL)
     ret = IMLangFontLink_GetStrCodePages(iMLFL, &str[0], 1, 0, &dwCodePages, &processed);
     ok(ret == S_OK, "IMLangFontLink_GetStrCodePages error %x\n", ret);
     ok(dwCodePages == dwCmpCodePages, "expected %x, got %x\n", dwCmpCodePages, dwCodePages);
-    ok(processed == 1, "expected 1, got %ld\n", processed);
+    ok(processed == 1, "expected 1, got %d\n", processed);
 
     /* Cyrillic */
     dwCmpCodePages = FS_CYRILLIC | FS_JISJAPAN | FS_CHINESESIMP | FS_WANSUNG;
@@ -717,7 +717,7 @@ static void IMLangFontLink_Test(IMLangFontLink* iMLFL)
     ret = IMLangFontLink_GetStrCodePages(iMLFL, &str[1], 1, 0, &dwCodePages, &processed);
     ok(ret == S_OK, "IMLangFontLink_GetStrCodePages error %x\n", ret);
     ok(dwCodePages == dwCmpCodePages, "expected %x, got %x\n", dwCmpCodePages, dwCodePages);
-    ok(processed == 1, "expected 1, got %ld\n", processed);
+    ok(processed == 1, "expected 1, got %d\n", processed);
 
     /* Japanese */
     dwCmpCodePages =  FS_JISJAPAN;
@@ -730,7 +730,7 @@ static void IMLangFontLink_Test(IMLangFontLink* iMLFL)
     ret = IMLangFontLink_GetStrCodePages(iMLFL, &str[2], 1, 0, &dwCodePages, &processed);
     ok(ret == S_OK, "IMLangFontLink_GetStrCodePages error %x\n", ret);
     ok(dwCodePages == dwCmpCodePages, "expected %x, got %x\n", dwCmpCodePages, dwCodePages);
-    ok(processed == 1, "expected 1, got %ld\n", processed);
+    ok(processed == 1, "expected 1, got %d\n", processed);
 
     dwCmpCodePages = FS_CYRILLIC | FS_JISJAPAN | FS_CHINESESIMP | FS_WANSUNG;
     dwCodePages = 0;
@@ -738,7 +738,7 @@ static void IMLangFontLink_Test(IMLangFontLink* iMLFL)
     ret = IMLangFontLink_GetStrCodePages(iMLFL, str, 2, 0, &dwCodePages, &processed);
     ok(ret == S_OK, "IMLangFontLink_GetStrCodePages error %x\n", ret);
     ok(dwCodePages == dwCmpCodePages, "expected %x, got %x\n", dwCmpCodePages, dwCodePages);
-    ok(processed == 2, "expected 2, got %ld\n", processed);
+    ok(processed == 2, "expected 2, got %d\n", processed);
 
     dwCmpCodePages = FS_JISJAPAN;
     dwCodePages = 0;
@@ -746,14 +746,14 @@ static void IMLangFontLink_Test(IMLangFontLink* iMLFL)
     ret = IMLangFontLink_GetStrCodePages(iMLFL, str, 3, 0, &dwCodePages, &processed);
     ok(ret == S_OK, "IMLangFontLink_GetStrCodePages error %x\n", ret);
     ok(dwCodePages == dwCmpCodePages, "expected %x, got %x\n", dwCmpCodePages, dwCodePages);
-    ok(processed == 3, "expected 3, got %ld\n", processed);
+    ok(processed == 3, "expected 3, got %d\n", processed);
 
     dwCodePages = 0xffff;
     processed = -1;
     ret = IMLangFontLink_GetStrCodePages(iMLFL, &str[2], 1, 0, &dwCodePages, &processed);
     ok(ret == S_OK, "IMLangFontLink_GetStrCodePages error %x\n", ret);
     ok(dwCodePages == dwCmpCodePages, "expected %x, got %x\n", dwCmpCodePages, dwCodePages);
-    ok(processed == 1, "expected 0, got %ld\n", processed);
+    ok(processed == 1, "expected 0, got %d\n", processed);
 
     ret = IMLangFontLink_GetStrCodePages(iMLFL, &str[2], 1, 0, NULL, NULL);
     ok(ret == S_OK, "IMLangFontLink_GetStrCodePages error %x\n", ret);
@@ -763,21 +763,21 @@ static void IMLangFontLink_Test(IMLangFontLink* iMLFL)
     ret = IMLangFontLink_GetStrCodePages(iMLFL, str, -1, 0, &dwCodePages, &processed);
     ok(ret == E_INVALIDARG, "IMLangFontLink_GetStrCodePages should fail: %x\n", ret);
     ok(dwCodePages == 0, "expected %x, got %x\n", dwCmpCodePages, dwCodePages);
-    ok(processed == 0, "expected 0, got %ld\n", processed);
+    ok(processed == 0, "expected 0, got %d\n", processed);
 
     dwCodePages = 0xffff;
     processed = -1;
     ret = IMLangFontLink_GetStrCodePages(iMLFL, NULL, 1, 0, &dwCodePages, &processed);
     ok(ret == E_INVALIDARG, "IMLangFontLink_GetStrCodePages should fail: %x\n", ret);
     ok(dwCodePages == 0, "expected %x, got %x\n", dwCmpCodePages, dwCodePages);
-    ok(processed == 0, "expected 0, got %ld\n", processed);
+    ok(processed == 0, "expected 0, got %d\n", processed);
 
     dwCodePages = 0xffff;
     processed = -1;
     ret = IMLangFontLink_GetStrCodePages(iMLFL, str, 0, 0, &dwCodePages, &processed);
     ok(ret == E_INVALIDARG, "IMLangFontLink_GetStrCodePages should fail: %x\n", ret);
     ok(dwCodePages == 0, "expected %x, got %x\n", dwCmpCodePages, dwCodePages);
-    ok(processed == 0, "expected 0, got %ld\n", processed);
+    ok(processed == 0, "expected 0, got %d\n", processed);
 }
 
 /* copied from libs/wine/string.c */
