@@ -1280,6 +1280,35 @@ DWORD WINAPI AllocateAndGetIpNetTableFromStack(PMIB_IPNETTABLE *ppIpNetTable, BO
         }
         else ret = ERROR_NOT_SUPPORTED;
     }
+#elif defined(HAVE_SYS_TIHDR_H) && defined(T_OPTMGMT_ACK)
+    {
+        void *data;
+        int fd, len, namelen;
+        mib2_ipNetToMediaEntry_t *entry;
+        char name[64];
+
+        if ((fd = open_streams_mib( NULL )) != -1)
+        {
+            if ((data = read_mib_entry( fd, MIB2_IP, MIB2_IP_MEDIA, &len )))
+            {
+                for (entry = data; (char *)(entry + 1) <= (char *)data + len; entry++)
+                {
+                    row.dwPhysAddrLen = min( entry->ipNetToMediaPhysAddress.o_length, MAXLEN_PHYSADDR );
+                    memcpy( row.bPhysAddr, entry->ipNetToMediaPhysAddress.o_bytes, row.dwPhysAddrLen );
+                    row.dwAddr = entry->ipNetToMediaNetAddress;
+                    row.dwType = entry->ipNetToMediaType;
+                    namelen = min( sizeof(name) - 1, entry->ipNetToMediaIfIndex.o_length );
+                    memcpy( name, entry->ipNetToMediaIfIndex.o_bytes, namelen );
+                    name[namelen] = 0;
+                    getInterfaceIndexByName( name, &row.dwIndex );
+                    if (!(table = append_ipnet_row( heap, flags, table, &count, &row ))) break;
+                }
+                HeapFree( GetProcessHeap(), 0, data );
+            }
+            close( fd );
+        }
+        else ret = ERROR_NOT_SUPPORTED;
+    }
 #elif defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_DUMP)
     {
       int mib[] = {CTL_NET, PF_ROUTE, 0, AF_INET, NET_RT_FLAGS, RTF_LLINFO};
