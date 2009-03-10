@@ -234,6 +234,8 @@ SANE_Status sane_option_probe_scan_area(SANE_Handle h, const char *option_name, 
 SANE_Status sane_option_get_bool(SANE_Handle h, const char *option_name, SANE_Bool *val, SANE_Int *status);
 SANE_Status sane_option_set_bool(SANE_Handle h, const char *option_name, SANE_Bool val, SANE_Int *status);
 SANE_Status sane_option_set_fixed(SANE_Handle h, const char *option_name, SANE_Fixed val, SANE_Int *status);
+TW_UINT16 sane_status_to_twcc(SANE_Status rc);
+BOOL convert_sane_res_to_twain(double sane_res, SANE_Unit unit, TW_FIX32 *twain_res, TW_UINT16 twtype);
 #endif
 
 

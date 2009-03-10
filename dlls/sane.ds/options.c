@@ -218,4 +218,53 @@ SANE_Status sane_option_probe_scan_area(SANE_Handle h, const char *option_name, 
 
     return rc;
 }
+
+TW_UINT16 sane_status_to_twcc(SANE_Status rc)
+{
+    switch (rc)
+    {
+        case SANE_STATUS_GOOD:
+            return TWCC_SUCCESS;
+        case SANE_STATUS_UNSUPPORTED:
+            return TWCC_CAPUNSUPPORTED;
+        case SANE_STATUS_JAMMED:
+            return TWCC_PAPERJAM;
+        case SANE_STATUS_NO_MEM:
+            return TWCC_LOWMEMORY;
+        case SANE_STATUS_ACCESS_DENIED:
+            return TWCC_DENIED;
+
+        case SANE_STATUS_IO_ERROR:
+        case SANE_STATUS_NO_DOCS:
+        case SANE_STATUS_COVER_OPEN:
+        case SANE_STATUS_EOF:
+        case SANE_STATUS_INVAL:
+        case SANE_STATUS_CANCELLED:
+        case SANE_STATUS_DEVICE_BUSY:
+        default:
+            return TWCC_BUMMER;
+    }
+}
+static void convert_double_fix32(double d, TW_FIX32 *fix32)
+{
+    TW_INT32 value = (TW_INT32) (d * 65536.0 + 0.5);
+    fix32->Whole = value >> 16;
+    fix32->Frac = value & 0x0000ffffL;
+}
+
+BOOL convert_sane_res_to_twain(double sane_res, SANE_Unit unit, TW_FIX32 *twain_res, TW_UINT16 twtype)
+{
+    double d;
+
+    if (unit != SANE_UNIT_MM)
+        return FALSE;
+
+    if (twtype != TWUN_INCHES)
+        return FALSE;
+
+    d = (sane_res / 10.0) / 2.54;
+    convert_double_fix32((sane_res / 10.0) / 2.54, twain_res);
+
+    return TRUE;
+}
 #endif
