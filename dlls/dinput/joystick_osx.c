@@ -343,6 +343,14 @@ static void get_osx_device_elements(JoystickImpl *device)
                             povs++;
                             break;
                         }
+                        case kHIDUsage_GD_X:
+                        case kHIDUsage_GD_Y:
+                        case kHIDUsage_GD_Z:
+                        {
+                            CFArrayInsertValueAtIndex(device->elementCFArrayRef, axes, tIOHIDElementRef);
+                            axes++;
+                            break;
+                        }
                         default:
                             FIXME("Unhandled usage %i\n",usage);
                     }
@@ -435,6 +443,26 @@ static void poll_osx_device_state(JoystickGenericImpl *device_in)
                             else
                                 device->generic.js.rgdwPOV[pov_idx] = val * 4500;
                             pov_idx ++;
+                            break;
+                        }
+                        case kHIDUsage_GD_X:
+                        case kHIDUsage_GD_Y:
+                        case kHIDUsage_GD_Z:
+                        {
+                            IOHIDDeviceGetValue(tIOHIDDeviceRef, tIOHIDElementRef, &valueRef);
+                            val = IOHIDValueGetIntegerValue(valueRef);
+                            switch (usage)
+                            {
+                            case kHIDUsage_GD_X:
+                                device->generic.js.lX = joystick_map_axis(&device->generic.props[idx], val);
+                                break;
+                            case kHIDUsage_GD_Y:
+                                device->generic.js.lY = joystick_map_axis(&device->generic.props[idx], val);
+                                break;
+                            case kHIDUsage_GD_Z:
+                                device->generic.js.lZ = joystick_map_axis(&device->generic.props[idx], val);
+                                break;
+                            }
                             break;
                         }
                         default:
