@@ -93,11 +93,8 @@ static int get_refcount(IUnknown *object)
         if (container_ptr && container_ptr != (void *)0x1337c0d3) IUnknown_Release((IUnknown *)container_ptr); \
     }
 
-static void check_mipmap_levels(
-    IDirect3DDevice8* device, 
-    int width, int height, int count) 
+static void check_mipmap_levels(IDirect3DDevice8 *device, UINT width, UINT height, UINT count)
 {
-
     IDirect3DBaseTexture8* texture = NULL;
     HRESULT hr = IDirect3DDevice8_CreateTexture( device, width, height, 0, 0, 
         D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, (IDirect3DTexture8**) &texture );
@@ -587,8 +584,8 @@ cleanup:
     CHECK_RELEASE(pVertexBuffer,        pDevice, --refcount);
     CHECK_RELEASE(pIndexBuffer,         pDevice, --refcount);
     /* Shaders */
-    if (dVertexShader != -1)  IDirect3DDevice8_DeleteVertexShader( pDevice, dVertexShader );
-    if (dPixelShader != -1)   IDirect3DDevice8_DeletePixelShader( pDevice, dPixelShader );
+    if (dVertexShader != ~0U) IDirect3DDevice8_DeleteVertexShader( pDevice, dVertexShader );
+    if (dPixelShader != ~0U) IDirect3DDevice8_DeletePixelShader( pDevice, dPixelShader );
     /* Textures */
     CHECK_RELEASE(pTexture,             pDevice, --refcount);
     CHECK_RELEASE(pCubeTexture,         pDevice, --refcount);
@@ -598,7 +595,7 @@ cleanup:
     CHECK_RELEASE(pImageSurface,        pDevice, --refcount);
     CHECK_RELEASE(pRenderTarget3,       pDevice, --refcount);
     /* Misc */
-    if (dStateBlock != -1)    IDirect3DDevice8_DeleteStateBlock( pDevice, dStateBlock );
+    if (dStateBlock != ~0U) IDirect3DDevice8_DeleteStateBlock( pDevice, dStateBlock );
     /* This will destroy device - cannot check the refcount here */
     if (pSwapChain)           CHECK_RELEASE_REFCOUNT( pSwapChain, 0);
 

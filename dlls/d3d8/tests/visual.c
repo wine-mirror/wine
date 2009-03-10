@@ -1156,7 +1156,7 @@ static void texop_test(IDirect3DDevice8 *device)
     D3DCOLOR color;
     D3DCAPS8 caps;
     HRESULT hr;
-    int i;
+    unsigned int i;
 
     static const struct {
         float x, y, z;
