@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/types.h>
 #ifdef HAVE_ALIAS_H
 #include <alias.h>
@@ -110,6 +111,15 @@
 #ifdef HAVE_KSTAT_H
 #include <kstat.h>
 #endif
+#ifdef HAVE_INET_MIB2_H
+#include <inet/mib2.h>
+#endif
+#ifdef HAVE_STROPTS_H
+#include <stropts.h>
+#endif
+#ifdef HAVE_SYS_TIHDR_H
+#include <sys/tihdr.h>
+#endif
 
 #ifndef ROUNDUP
 #define ROUNDUP(a) \
@@ -172,6 +182,81 @@ static ULONGLONG kstat_get_ui64( kstat_t *ksp, const char *name )
     return 0;
 }
 #endif
+
+#if defined(HAVE_SYS_TIHDR_H) && defined(T_OPTMGMT_ACK)
+static int open_streams_mib( const char *proto )
+{
+    int fd;
+    struct strbuf buf;
+    struct request
+    {
+        struct T_optmgmt_req req_header;
+        struct opthdr        opt_header;
+    } request;
+
+    if ((fd = open( "/dev/arp", O_RDWR )) == -1)
+    {
+        WARN( "could not open /dev/arp: %s\n", strerror(errno) );
+        return -1;
+    }
+    if (proto) ioctl( fd, I_PUSH, proto );
+
+    request.req_header.PRIM_type  = T_SVR4_OPTMGMT_REQ;
+    request.req_header.OPT_length = sizeof(request.opt_header);
+    request.req_header.OPT_offset = FIELD_OFFSET( struct request, opt_header );
+    request.req_header.MGMT_flags = T_CURRENT;
+    request.opt_header.level      = MIB2_IP;
+    request.opt_header.name       = 0;
+    request.opt_header.len        = 0;
+
+    buf.len = sizeof(request);
+    buf.buf = (caddr_t)&request;
+    if (putmsg( fd, &buf, NULL, 0 ) == -1)
+    {
+        WARN( "putmsg: %s\n", strerror(errno) );
+        close( fd );
+        fd = -1;
+    }
+    return fd;
+}
+
+static void *read_mib_entry( int fd, int level, int name, int *len )
+{
+    struct strbuf buf;
+    void *data;
+    int ret, flags = 0;
+
+    struct reply
+    {
+        struct T_optmgmt_ack ack_header;
+        struct opthdr        opt_header;
+    } reply;
+
+    for (;;)
+    {
+        buf.maxlen = sizeof(reply);
+        buf.buf = (caddr_t)&reply;
+        if ((ret = getmsg( fd, &buf, NULL, &flags )) < 0) return NULL;
+        if (!(ret & MOREDATA)) return NULL;
+        if (reply.ack_header.PRIM_type != T_OPTMGMT_ACK) return NULL;
+        if (buf.len < sizeof(reply.ack_header)) return NULL;
+        if (reply.ack_header.OPT_length < sizeof(reply.opt_header)) return NULL;
+
+        if (!(data = HeapAlloc( GetProcessHeap(), 0, reply.opt_header.len ))) return NULL;
+        buf.maxlen = reply.opt_header.len;
+        buf.buf = (caddr_t)data;
+        flags = 0;
+        if (getmsg( fd, NULL, &buf, &flags ) >= 0 &&
+            reply.opt_header.level == level &&
+            reply.opt_header.name == name)
+        {
+            *len = buf.len;
+            return data;
+        }
+        HeapFree( GetProcessHeap(), 0, data );
+    }
+}
+#endif /* HAVE_SYS_TIHDR_H && T_OPTMGMT_ACK */
 
 DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
 {
@@ -1398,7 +1483,7 @@ static MIB_TCPTABLE *append_tcp_row( HANDLE heap, DWORD flags, MIB_TCPTABLE *tab
 
 /* Why not a lookup table? Because the TCPS_* constants are different
    on different platforms */
-static DWORD TCPStateToMIBState (int state)
+static inline DWORD TCPStateToMIBState (int state)
 {
    switch (state)
    {
@@ -1488,6 +1573,31 @@ DWORD WINAPI AllocateAndGetTcpTableFromStack( PMIB_TCPTABLE *ppTcpTable, BOOL bO
                     break;
             }
             fclose( fp );
+        }
+        else ret = ERROR_NOT_SUPPORTED;
+    }
+#elif defined(HAVE_SYS_TIHDR_H) && defined(T_OPTMGMT_ACK)
+    {
+        void *data;
+        int fd, len;
+        mib2_tcpConnEntry_t *entry;
+
+        if ((fd = open_streams_mib( "tcp" )) != -1)
+        {
+            if ((data = read_mib_entry( fd, MIB2_TCP, MIB2_TCP_CONN, &len )))
+            {
+                for (entry = data; (char *)(entry + 1) <= (char *)data + len; entry++)
+                {
+                    row.dwLocalAddr = entry->tcpConnLocalAddress;
+                    row.dwLocalPort = htons( entry->tcpConnLocalPort );
+                    row.dwRemoteAddr = entry->tcpConnRemAddress;
+                    row.dwRemotePort = htons( entry->tcpConnRemPort );
+                    row.dwState = entry->tcpConnState;
+                    if (!(table = append_tcp_row( heap, flags, table, &count, &row ))) break;
+                }
+                HeapFree( GetProcessHeap(), 0, data );
+            }
+            close( fd );
         }
         else ret = ERROR_NOT_SUPPORTED;
     }

@@ -6076,6 +6076,9 @@ done
 
 
 
+
+
+
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
@@ -6098,6 +6101,7 @@ for ac_header in \
 	getopt.h \
 	grp.h \
 	ieeefp.h \
+	inet/mib2.h \
 	io.h \
 	jack/jack.h \
 	jpeglib.h \
@@ -6146,6 +6150,7 @@ for ac_header in \
 	soundcard.h \
 	stdint.h \
 	strings.h \
+	stropts.h \
 	sys/asoundlib.h \
 	sys/cdio.h \
 	sys/elf32.h \
@@ -6180,6 +6185,7 @@ for ac_header in \
 	sys/statvfs.h \
 	sys/strtio.h \
 	sys/syscall.h \
+	sys/tihdr.h \
 	sys/time.h \
 	sys/timeout.h \
 	sys/times.h \

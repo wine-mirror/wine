@@ -279,6 +279,7 @@ AC_CHECK_HEADERS(\
 	getopt.h \
 	grp.h \
 	ieeefp.h \
+	inet/mib2.h \
 	io.h \
 	jack/jack.h \
 	jpeglib.h \
@@ -327,6 +328,7 @@ AC_CHECK_HEADERS(\
 	soundcard.h \
 	stdint.h \
 	strings.h \
+	stropts.h \
 	sys/asoundlib.h \
 	sys/cdio.h \
 	sys/elf32.h \
@@ -361,6 +363,7 @@ AC_CHECK_HEADERS(\
 	sys/statvfs.h \
 	sys/strtio.h \
 	sys/syscall.h \
+	sys/tihdr.h \
 	sys/time.h \
 	sys/timeout.h \
 	sys/times.h \

@@ -240,6 +240,9 @@
 /* Define to 1 if you have the <ieeefp.h> header file. */
 #undef HAVE_IEEEFP_H
 
+/* Define to 1 if you have the <inet/mib2.h> header file. */
+#undef HAVE_INET_MIB2_H
+
 /* Define to 1 if you have the `inet_network' function. */
 #undef HAVE_INET_NETWORK
 
@@ -708,6 +711,9 @@
 /* Define to 1 if you have the `strncasecmp' function. */
 #undef HAVE_STRNCASECMP
 
+/* Define to 1 if you have the <stropts.h> header file. */
+#undef HAVE_STROPTS_H
+
 /* Define to 1 if you have the `strtold' function. */
 #undef HAVE_STRTOLD
 
@@ -905,6 +911,9 @@
 
 /* Define to 1 if you have the <sys/thr.h> header file. */
 #undef HAVE_SYS_THR_H
+
+/* Define to 1 if you have the <sys/tihdr.h> header file. */
+#undef HAVE_SYS_TIHDR_H
 
 /* Define to 1 if you have the <sys/timeout.h> header file. */
 #undef HAVE_SYS_TIMEOUT_H
