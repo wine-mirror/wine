@@ -2410,8 +2410,6 @@ static void shader_glsl_texldl(const SHADER_OPCODE_ARG *arg)
     DWORD sampler_idx;
     DWORD swizzle = arg->src[1] & WINED3DSP_SWIZZLE_MASK;
 
-    shader_glsl_append_dst(arg->buffer, arg);
-
     sampler_idx = arg->src[1] & WINED3DSP_REGNUM_MASK;
     sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
     if(deviceImpl->stateBlock->textures[sampler_idx] &&
