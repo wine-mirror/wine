@@ -346,6 +346,9 @@ static void get_osx_device_elements(JoystickImpl *device)
                         case kHIDUsage_GD_X:
                         case kHIDUsage_GD_Y:
                         case kHIDUsage_GD_Z:
+                        case kHIDUsage_GD_Rx:
+                        case kHIDUsage_GD_Ry:
+                        case kHIDUsage_GD_Rz:
                         {
                             CFArrayInsertValueAtIndex(device->elementCFArrayRef, axes, tIOHIDElementRef);
                             axes++;
@@ -448,6 +451,9 @@ static void poll_osx_device_state(JoystickGenericImpl *device_in)
                         case kHIDUsage_GD_X:
                         case kHIDUsage_GD_Y:
                         case kHIDUsage_GD_Z:
+                        case kHIDUsage_GD_Rx:
+                        case kHIDUsage_GD_Ry:
+                        case kHIDUsage_GD_Rz:
                         {
                             IOHIDDeviceGetValue(tIOHIDDeviceRef, tIOHIDElementRef, &valueRef);
                             val = IOHIDValueGetIntegerValue(valueRef);
@@ -461,6 +467,15 @@ static void poll_osx_device_state(JoystickGenericImpl *device_in)
                                 break;
                             case kHIDUsage_GD_Z:
                                 device->generic.js.lZ = joystick_map_axis(&device->generic.props[idx], val);
+                                break;
+                            case kHIDUsage_GD_Rx:
+                                device->generic.js.lRx = joystick_map_axis(&device->generic.props[idx], val);
+                                break;
+                            case kHIDUsage_GD_Ry:
+                                device->generic.js.lRy = joystick_map_axis(&device->generic.props[idx], val);
+                                break;
+                            case kHIDUsage_GD_Rz:
+                                device->generic.js.lRz = joystick_map_axis(&device->generic.props[idx], val);
                                 break;
                             }
                             break;
