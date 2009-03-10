@@ -2219,6 +2219,7 @@ typedef struct SHADER_PARSE_STATE {
 extern int shader_addline(
     SHADER_BUFFER* buffer,
     const char* fmt, ...) PRINTF_ATTR(2,3);
+int shader_vaddline(SHADER_BUFFER *buffer, const char *fmt, va_list args);
 
 const SHADER_OPCODE *shader_get_opcode(const SHADER_OPCODE *shader_ins, DWORD shader_version, DWORD code);
 

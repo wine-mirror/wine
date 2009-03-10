@@ -52,17 +52,12 @@ void shader_buffer_free(struct SHADER_BUFFER *buffer)
     HeapFree(GetProcessHeap(), 0, buffer->buffer);
 }
 
-int shader_addline(
-    SHADER_BUFFER* buffer,  
-    const char *format, ...) {
-
+int shader_vaddline(SHADER_BUFFER* buffer, const char *format, va_list args)
+{
     char* base = buffer->buffer + buffer->bsize;
     int rc;
 
-    va_list args;
-    va_start(args, format);
     rc = vsnprintf(base, SHADER_PGMSIZE - 1 - buffer->bsize, format, args);
-    va_end(args);
 
     if (rc < 0 ||                                   /* C89 */ 
         rc > SHADER_PGMSIZE - 1 - buffer->bsize) {  /* C99 */
@@ -86,6 +81,18 @@ int shader_addline(
         buffer->newline = TRUE;
     }
     return 0;
+}
+
+int shader_addline(SHADER_BUFFER* buffer, const char *format, ...)
+{
+    int ret;
+    va_list args;
+
+    va_start(args, format);
+    ret = shader_vaddline(buffer, format, args);
+    va_end(args);
+
+    return ret;
 }
 
 void shader_init(struct IWineD3DBaseShaderClass *shader,
