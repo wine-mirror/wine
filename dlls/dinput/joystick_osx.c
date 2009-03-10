@@ -332,6 +332,22 @@ static void get_osx_device_elements(JoystickImpl *device)
                     axes++;
                     break;
                 }
+                case kIOHIDElementTypeInput_Misc:
+                {
+                    uint32_t usage = IOHIDElementGetUsage( tIOHIDElementRef );
+                    switch(usage)
+                    {
+                        case kHIDUsage_GD_Hatswitch:
+                        {
+                            CFArrayInsertValueAtIndex(device->elementCFArrayRef, (axes+povs), tIOHIDElementRef);
+                            povs++;
+                            break;
+                        }
+                        default:
+                            FIXME("Unhandled usage %i\n",usage);
+                    }
+                    break;
+                }
                 default:
                     FIXME("Unhandled type %i\n",eleType);
             }
@@ -384,6 +400,7 @@ static void poll_osx_device_state(JoystickGenericImpl *device_in)
     if (gElementCFArrayRef)
     {
         int button_idx = 0;
+        int pov_idx = 0;
         CFIndex idx, cnt = CFArrayGetCount( gElementCFArrayRef );
 
         for ( idx = 0; idx < cnt; idx++ )
@@ -404,6 +421,27 @@ static void poll_osx_device_state(JoystickGenericImpl *device_in)
                         button_idx ++;
                     }
                     break;
+                case kIOHIDElementTypeInput_Misc:
+                {
+                    uint32_t usage = IOHIDElementGetUsage( tIOHIDElementRef );
+                    switch(usage)
+                    {
+                        case kHIDUsage_GD_Hatswitch:
+                        {
+                            IOHIDDeviceGetValue(tIOHIDDeviceRef, tIOHIDElementRef, &valueRef);
+                            val = IOHIDValueGetIntegerValue(valueRef);
+                            if (val >= 8)
+                                device->generic.js.rgdwPOV[pov_idx] = -1;
+                            else
+                                device->generic.js.rgdwPOV[pov_idx] = val * 4500;
+                            pov_idx ++;
+                            break;
+                        }
+                        default:
+                            FIXME("unhandled usage %i\n",usage);
+                    }
+                    break;
+                }
                 default:
                     FIXME("Unhandled type %i\n",eleType);
             }
