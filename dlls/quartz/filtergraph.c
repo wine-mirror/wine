@@ -2852,12 +2852,12 @@ static HRESULT WINAPI BasicAudio_Invoke(IBasicAudio *iface,
 
 /*** IBasicAudio methods ***/
 static HRESULT WINAPI BasicAudio_put_Volume(IBasicAudio *iface,
-					    long lVolume) {
+                                            LONG lVolume) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
     IBasicAudio* pBasicAudio;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, lVolume);
+    TRACE("(%p/%p)->(%d)\n", This, iface, lVolume);
 
     EnterCriticalSection(&This->cs);
 
@@ -2872,7 +2872,7 @@ static HRESULT WINAPI BasicAudio_put_Volume(IBasicAudio *iface,
 }
 
 static HRESULT WINAPI BasicAudio_get_Volume(IBasicAudio *iface,
-					    long *plVolume) {
+                                            LONG *plVolume) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
     IBasicAudio* pBasicAudio;
     HRESULT hr;
@@ -2892,12 +2892,12 @@ static HRESULT WINAPI BasicAudio_get_Volume(IBasicAudio *iface,
 }
 
 static HRESULT WINAPI BasicAudio_put_Balance(IBasicAudio *iface,
-					     long lBalance) {
+                                             LONG lBalance) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
     IBasicAudio* pBasicAudio;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, lBalance);
+    TRACE("(%p/%p)->(%d)\n", This, iface, lBalance);
 
     EnterCriticalSection(&This->cs);
 
@@ -2912,7 +2912,7 @@ static HRESULT WINAPI BasicAudio_put_Balance(IBasicAudio *iface,
 }
 
 static HRESULT WINAPI BasicAudio_get_Balance(IBasicAudio *iface,
-					     long *plBalance) {
+                                             LONG *plBalance) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
     IBasicAudio* pBasicAudio;
     HRESULT hr;
@@ -3089,7 +3089,7 @@ static HRESULT WINAPI BasicVideo_get_AvgTimePerFrame(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_get_BitRate(IBasicVideo2 *iface,
-					     long *pBitRate) {
+                                             LONG *pBitRate) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -3109,7 +3109,7 @@ static HRESULT WINAPI BasicVideo_get_BitRate(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_get_BitErrorRate(IBasicVideo2 *iface,
-						  long *pBitErrorRate) {
+                                                  LONG *pBitErrorRate) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -3129,7 +3129,7 @@ static HRESULT WINAPI BasicVideo_get_BitErrorRate(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_get_VideoWidth(IBasicVideo2 *iface,
-						long *pVideoWidth) {
+                                                LONG *pVideoWidth) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -3149,7 +3149,7 @@ static HRESULT WINAPI BasicVideo_get_VideoWidth(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_get_VideoHeight(IBasicVideo2 *iface,
-						 long *pVideoHeight) {
+                                                 LONG *pVideoHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -3169,12 +3169,12 @@ static HRESULT WINAPI BasicVideo_get_VideoHeight(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_put_SourceLeft(IBasicVideo2 *iface,
-						long SourceLeft) {
+                                                LONG SourceLeft) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, SourceLeft);
+    TRACE("(%p/%p)->(%d)\n", This, iface, SourceLeft);
 
     EnterCriticalSection(&This->cs);
 
@@ -3189,7 +3189,7 @@ static HRESULT WINAPI BasicVideo_put_SourceLeft(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_get_SourceLeft(IBasicVideo2 *iface,
-						long *pSourceLeft) {
+                                                LONG *pSourceLeft) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -3209,12 +3209,12 @@ static HRESULT WINAPI BasicVideo_get_SourceLeft(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_put_SourceWidth(IBasicVideo2 *iface,
-						 long SourceWidth) {
+                                                 LONG SourceWidth) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, SourceWidth);
+    TRACE("(%p/%p)->(%d)\n", This, iface, SourceWidth);
 
     EnterCriticalSection(&This->cs);
 
@@ -3229,7 +3229,7 @@ static HRESULT WINAPI BasicVideo_put_SourceWidth(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_get_SourceWidth(IBasicVideo2 *iface,
-						 long *pSourceWidth) {
+                                                 LONG *pSourceWidth) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -3249,12 +3249,12 @@ static HRESULT WINAPI BasicVideo_get_SourceWidth(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_put_SourceTop(IBasicVideo2 *iface,
-					       long SourceTop) {
+                                               LONG SourceTop) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, SourceTop);
+    TRACE("(%p/%p)->(%d)\n", This, iface, SourceTop);
 
     EnterCriticalSection(&This->cs);
 
@@ -3269,7 +3269,7 @@ static HRESULT WINAPI BasicVideo_put_SourceTop(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_get_SourceTop(IBasicVideo2 *iface,
-					       long *pSourceTop) {
+                                               LONG *pSourceTop) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -3289,12 +3289,12 @@ static HRESULT WINAPI BasicVideo_get_SourceTop(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_put_SourceHeight(IBasicVideo2 *iface,
-						  long SourceHeight) {
+                                                  LONG SourceHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, SourceHeight);
+    TRACE("(%p/%p)->(%d)\n", This, iface, SourceHeight);
 
     EnterCriticalSection(&This->cs);
 
@@ -3309,7 +3309,7 @@ static HRESULT WINAPI BasicVideo_put_SourceHeight(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_get_SourceHeight(IBasicVideo2 *iface,
-						  long *pSourceHeight) {
+                                                  LONG *pSourceHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -3329,12 +3329,12 @@ static HRESULT WINAPI BasicVideo_get_SourceHeight(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_put_DestinationLeft(IBasicVideo2 *iface,
-						     long DestinationLeft) {
+                                                     LONG DestinationLeft) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, DestinationLeft);
+    TRACE("(%p/%p)->(%d)\n", This, iface, DestinationLeft);
 
     EnterCriticalSection(&This->cs);
 
@@ -3349,7 +3349,7 @@ static HRESULT WINAPI BasicVideo_put_DestinationLeft(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_get_DestinationLeft(IBasicVideo2 *iface,
-						     long *pDestinationLeft) {
+                                                     LONG *pDestinationLeft) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -3369,12 +3369,12 @@ static HRESULT WINAPI BasicVideo_get_DestinationLeft(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_put_DestinationWidth(IBasicVideo2 *iface,
-						      long DestinationWidth) {
+                                                      LONG DestinationWidth) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, DestinationWidth);
+    TRACE("(%p/%p)->(%d)\n", This, iface, DestinationWidth);
 
     EnterCriticalSection(&This->cs);
 
@@ -3389,7 +3389,7 @@ static HRESULT WINAPI BasicVideo_put_DestinationWidth(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_get_DestinationWidth(IBasicVideo2 *iface,
-						      long *pDestinationWidth) {
+                                                      LONG *pDestinationWidth) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -3409,12 +3409,12 @@ static HRESULT WINAPI BasicVideo_get_DestinationWidth(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_put_DestinationTop(IBasicVideo2 *iface,
-						    long DestinationTop) {
+                                                    LONG DestinationTop) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, DestinationTop);
+    TRACE("(%p/%p)->(%d)\n", This, iface, DestinationTop);
 
     EnterCriticalSection(&This->cs);
 
@@ -3429,7 +3429,7 @@ static HRESULT WINAPI BasicVideo_put_DestinationTop(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_get_DestinationTop(IBasicVideo2 *iface,
-						    long *pDestinationTop) {
+                                                    LONG *pDestinationTop) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -3449,12 +3449,12 @@ static HRESULT WINAPI BasicVideo_get_DestinationTop(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_put_DestinationHeight(IBasicVideo2 *iface,
-						       long DestinationHeight) {
+                                                       LONG DestinationHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, DestinationHeight);
+    TRACE("(%p/%p)->(%d)\n", This, iface, DestinationHeight);
 
     EnterCriticalSection(&This->cs);
 
@@ -3469,7 +3469,7 @@ static HRESULT WINAPI BasicVideo_put_DestinationHeight(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_get_DestinationHeight(IBasicVideo2 *iface,
-						       long *pDestinationHeight) {
+                                                       LONG *pDestinationHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -3489,15 +3489,15 @@ static HRESULT WINAPI BasicVideo_get_DestinationHeight(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_SetSourcePosition(IBasicVideo2 *iface,
-						   long Left,
-						   long Top,
-						   long Width,
-						   long Height) {
+                                                   LONG Left,
+                                                   LONG Top,
+                                                   LONG Width,
+                                                   LONG Height) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld, %ld, %ld, %ld)\n", This, iface, Left, Top, Width, Height);
+    TRACE("(%p/%p)->(%d, %d, %d, %d)\n", This, iface, Left, Top, Width, Height);
 
     EnterCriticalSection(&This->cs);
 
@@ -3512,10 +3512,10 @@ static HRESULT WINAPI BasicVideo_SetSourcePosition(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_GetSourcePosition(IBasicVideo2 *iface,
-						   long *pLeft,
-						   long *pTop,
-						   long *pWidth,
-						   long *pHeight) {
+                                                   LONG *pLeft,
+                                                   LONG *pTop,
+                                                   LONG *pWidth,
+                                                   LONG *pHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -3554,15 +3554,15 @@ static HRESULT WINAPI BasicVideo_SetDefaultSourcePosition(IBasicVideo2 *iface) {
 }
 
 static HRESULT WINAPI BasicVideo_SetDestinationPosition(IBasicVideo2 *iface,
-							long Left,
-							long Top,
-							long Width,
-							long Height) {
+                                                        LONG Left,
+                                                        LONG Top,
+                                                        LONG Width,
+                                                        LONG Height) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld, %ld, %ld, %ld)\n", This, iface, Left, Top, Width, Height);
+    TRACE("(%p/%p)->(%d, %d, %d, %d)\n", This, iface, Left, Top, Width, Height);
 
     EnterCriticalSection(&This->cs);
 
@@ -3577,10 +3577,10 @@ static HRESULT WINAPI BasicVideo_SetDestinationPosition(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_GetDestinationPosition(IBasicVideo2 *iface,
-							long *pLeft,
-							long *pTop,
-							long *pWidth,
-							long *pHeight) {
+                                                        LONG *pLeft,
+                                                        LONG *pTop,
+                                                        LONG *pWidth,
+                                                        LONG *pHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -3619,8 +3619,8 @@ static HRESULT WINAPI BasicVideo_SetDefaultDestinationPosition(IBasicVideo2 *ifa
 }
 
 static HRESULT WINAPI BasicVideo_GetVideoSize(IBasicVideo2 *iface,
-					      long *pWidth,
-					      long *pHeight) {
+                                              LONG *pWidth,
+                                              LONG *pHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -3640,15 +3640,15 @@ static HRESULT WINAPI BasicVideo_GetVideoSize(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_GetVideoPaletteEntries(IBasicVideo2 *iface,
-							long StartIndex,
-							long Entries,
-							long *pRetrieved,
-							long *pPalette) {
+                                                        LONG StartIndex,
+                                                        LONG Entries,
+                                                        LONG *pRetrieved,
+                                                        LONG *pPalette) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld, %ld, %p, %p)\n", This, iface, StartIndex, Entries, pRetrieved, pPalette);
+    TRACE("(%p/%p)->(%d, %d, %p, %p)\n", This, iface, StartIndex, Entries, pRetrieved, pPalette);
 
     EnterCriticalSection(&This->cs);
 
@@ -3663,8 +3663,8 @@ static HRESULT WINAPI BasicVideo_GetVideoPaletteEntries(IBasicVideo2 *iface,
 }
 
 static HRESULT WINAPI BasicVideo_GetCurrentImage(IBasicVideo2 *iface,
-						 long *pBufferSize,
-						 long *pDIBImage) {
+                                                 LONG *pBufferSize,
+                                                 LONG *pDIBImage) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IBasicVideo_vtbl, iface);
     IBasicVideo* pBasicVideo;
     HRESULT hr;
@@ -3949,12 +3949,12 @@ static HRESULT WINAPI VideoWindow_get_Caption(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_put_WindowStyle(IVideoWindow *iface,
-						  long WindowStyle) {
+                                                  LONG WindowStyle) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, WindowStyle);
+    TRACE("(%p/%p)->(%d)\n", This, iface, WindowStyle);
 
     EnterCriticalSection(&This->cs);
 
@@ -3969,7 +3969,7 @@ static HRESULT WINAPI VideoWindow_put_WindowStyle(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_get_WindowStyle(IVideoWindow *iface,
-						  long *WindowStyle) {
+                                                  LONG *WindowStyle) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
@@ -3989,12 +3989,12 @@ static HRESULT WINAPI VideoWindow_get_WindowStyle(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_put_WindowStyleEx(IVideoWindow *iface,
-						    long WindowStyleEx) {
+                                                    LONG WindowStyleEx) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, WindowStyleEx);
+    TRACE("(%p/%p)->(%d)\n", This, iface, WindowStyleEx);
 
     EnterCriticalSection(&This->cs);
 
@@ -4009,7 +4009,7 @@ static HRESULT WINAPI VideoWindow_put_WindowStyleEx(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_get_WindowStyleEx(IVideoWindow *iface,
-						    long *WindowStyleEx) {
+                                                    LONG *WindowStyleEx) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
@@ -4029,12 +4029,12 @@ static HRESULT WINAPI VideoWindow_get_WindowStyleEx(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_put_AutoShow(IVideoWindow *iface,
-					       long AutoShow) {
+                                               LONG AutoShow) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, AutoShow);
+    TRACE("(%p/%p)->(%d)\n", This, iface, AutoShow);
 
     EnterCriticalSection(&This->cs);
 
@@ -4049,7 +4049,7 @@ static HRESULT WINAPI VideoWindow_put_AutoShow(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_get_AutoShow(IVideoWindow *iface,
-					       long *AutoShow) {
+                                               LONG *AutoShow) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
@@ -4069,12 +4069,12 @@ static HRESULT WINAPI VideoWindow_get_AutoShow(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_put_WindowState(IVideoWindow *iface,
-						  long WindowState) {
+                                                  LONG WindowState) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, WindowState);
+    TRACE("(%p/%p)->(%d)\n", This, iface, WindowState);
 
     EnterCriticalSection(&This->cs);
 
@@ -4089,7 +4089,7 @@ static HRESULT WINAPI VideoWindow_put_WindowState(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_get_WindowState(IVideoWindow *iface,
-						  long *WindowState) {
+                                                  LONG *WindowState) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
@@ -4109,12 +4109,12 @@ static HRESULT WINAPI VideoWindow_get_WindowState(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_put_BackgroundPalette(IVideoWindow *iface,
-							long BackgroundPalette) {
+                                                        LONG BackgroundPalette) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, BackgroundPalette);
+    TRACE("(%p/%p)->(%d)\n", This, iface, BackgroundPalette);
 
     EnterCriticalSection(&This->cs);
 
@@ -4129,7 +4129,7 @@ static HRESULT WINAPI VideoWindow_put_BackgroundPalette(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_get_BackgroundPalette(IVideoWindow *iface,
-							long *pBackgroundPalette) {
+                                                        LONG *pBackgroundPalette) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
@@ -4149,12 +4149,12 @@ static HRESULT WINAPI VideoWindow_get_BackgroundPalette(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_put_Visible(IVideoWindow *iface,
-					      long Visible) {
+                                              LONG Visible) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, Visible);
+    TRACE("(%p/%p)->(%d)\n", This, iface, Visible);
 
     EnterCriticalSection(&This->cs);
 
@@ -4169,7 +4169,7 @@ static HRESULT WINAPI VideoWindow_put_Visible(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_get_Visible(IVideoWindow *iface,
-					      long *pVisible) {
+                                              LONG *pVisible) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
@@ -4189,12 +4189,12 @@ static HRESULT WINAPI VideoWindow_get_Visible(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_put_Left(IVideoWindow *iface,
-					   long Left) {
+                                           LONG Left) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, Left);
+    TRACE("(%p/%p)->(%d)\n", This, iface, Left);
 
     EnterCriticalSection(&This->cs);
 
@@ -4209,7 +4209,7 @@ static HRESULT WINAPI VideoWindow_put_Left(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_get_Left(IVideoWindow *iface,
-					   long *pLeft) {
+                                           LONG *pLeft) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
@@ -4229,12 +4229,12 @@ static HRESULT WINAPI VideoWindow_get_Left(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_put_Width(IVideoWindow *iface,
-					    long Width) {
+                                            LONG Width) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, Width);
+    TRACE("(%p/%p)->(%d)\n", This, iface, Width);
 
     EnterCriticalSection(&This->cs);
 
@@ -4249,7 +4249,7 @@ static HRESULT WINAPI VideoWindow_put_Width(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_get_Width(IVideoWindow *iface,
-					    long *pWidth) {
+                                            LONG *pWidth) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
@@ -4269,12 +4269,12 @@ static HRESULT WINAPI VideoWindow_get_Width(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_put_Top(IVideoWindow *iface,
-					  long Top) {
+                                          LONG Top) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, Top);
+    TRACE("(%p/%p)->(%d)\n", This, iface, Top);
 
     EnterCriticalSection(&This->cs);
 
@@ -4289,7 +4289,7 @@ static HRESULT WINAPI VideoWindow_put_Top(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_get_Top(IVideoWindow *iface,
-					  long *pTop) {
+                                          LONG *pTop) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
@@ -4309,12 +4309,12 @@ static HRESULT WINAPI VideoWindow_get_Top(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_put_Height(IVideoWindow *iface,
-					     long Height) {
+                                             LONG Height) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, Height);
+    TRACE("(%p/%p)->(%d)\n", This, iface, Height);
 
     EnterCriticalSection(&This->cs);
 
@@ -4329,7 +4329,7 @@ static HRESULT WINAPI VideoWindow_put_Height(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_get_Height(IVideoWindow *iface,
-					     long *pHeight) {
+                                             LONG *pHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
@@ -4429,7 +4429,7 @@ static HRESULT WINAPI VideoWindow_get_MessageDrain(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_get_BorderColor(IVideoWindow *iface,
-						  long *Color) {
+                                                  LONG *Color) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
@@ -4449,12 +4449,12 @@ static HRESULT WINAPI VideoWindow_get_BorderColor(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_put_BorderColor(IVideoWindow *iface,
-						  long Color) {
+                                                  LONG Color) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, Color);
+    TRACE("(%p/%p)->(%d)\n", This, iface, Color);
 
     EnterCriticalSection(&This->cs);
 
@@ -4469,7 +4469,7 @@ static HRESULT WINAPI VideoWindow_put_BorderColor(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_get_FullScreenMode(IVideoWindow *iface,
-						     long *FullScreenMode) {
+                                                     LONG *FullScreenMode) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
@@ -4489,12 +4489,12 @@ static HRESULT WINAPI VideoWindow_get_FullScreenMode(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_put_FullScreenMode(IVideoWindow *iface,
-						     long FullScreenMode) {
+                                                     LONG FullScreenMode) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, FullScreenMode);
+    TRACE("(%p/%p)->(%d)\n", This, iface, FullScreenMode);
 
     EnterCriticalSection(&This->cs);
 
@@ -4509,12 +4509,12 @@ static HRESULT WINAPI VideoWindow_put_FullScreenMode(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_SetWindowForeground(IVideoWindow *iface,
-						      long Focus) {
+                                                      LONG Focus) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, Focus);
+    TRACE("(%p/%p)->(%d)\n", This, iface, Focus);
 
     EnterCriticalSection(&This->cs);
 
@@ -4530,14 +4530,14 @@ static HRESULT WINAPI VideoWindow_SetWindowForeground(IVideoWindow *iface,
 
 static HRESULT WINAPI VideoWindow_NotifyOwnerMessage(IVideoWindow *iface,
 						     OAHWND hwnd,
-						     long uMsg,
+                                                     LONG uMsg,
 						     LONG_PTR wParam,
 						     LONG_PTR lParam) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%08x, %ld, %08lx, %08lx)\n", This, iface, (DWORD) hwnd, uMsg, wParam, lParam);
+    TRACE("(%p/%p)->(%08lx, %d, %08lx, %08lx)\n", This, iface, hwnd, uMsg, wParam, lParam);
 
     EnterCriticalSection(&This->cs);
 
@@ -4552,15 +4552,15 @@ static HRESULT WINAPI VideoWindow_NotifyOwnerMessage(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_SetWindowPosition(IVideoWindow *iface,
-						    long Left,
-						    long Top,
-						    long Width,
-						    long Height) {
+                                                    LONG Left,
+                                                    LONG Top,
+                                                    LONG Width,
+                                                    LONG Height) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
-    
-    TRACE("(%p/%p)->(%ld, %ld, %ld, %ld)\n", This, iface, Left, Top, Width, Height);
+
+    TRACE("(%p/%p)->(%d, %d, %d, %d)\n", This, iface, Left, Top, Width, Height);
 
     EnterCriticalSection(&This->cs);
 
@@ -4575,10 +4575,10 @@ static HRESULT WINAPI VideoWindow_SetWindowPosition(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_GetWindowPosition(IVideoWindow *iface,
-						    long *pLeft,
-						    long *pTop,
-						    long *pWidth,
-						    long *pHeight) {
+                                                    LONG *pLeft,
+                                                    LONG *pTop,
+                                                    LONG *pWidth,
+                                                    LONG *pHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
@@ -4598,8 +4598,8 @@ static HRESULT WINAPI VideoWindow_GetWindowPosition(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_GetMinIdealImageSize(IVideoWindow *iface,
-						       long *pWidth,
-						       long *pHeight) {
+                                                       LONG *pWidth,
+                                                       LONG *pHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
@@ -4619,8 +4619,8 @@ static HRESULT WINAPI VideoWindow_GetMinIdealImageSize(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_GetMaxIdealImageSize(IVideoWindow *iface,
-						       long *pWidth,
-						       long *pHeight) {
+                                                       LONG *pWidth,
+                                                       LONG *pHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
@@ -4640,10 +4640,10 @@ static HRESULT WINAPI VideoWindow_GetMaxIdealImageSize(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_GetRestorePosition(IVideoWindow *iface,
-						     long *pLeft,
-						     long *pTop,
-						     long *pWidth,
-						     long *pHeight) {
+                                                     LONG *pLeft,
+                                                     LONG *pTop,
+                                                     LONG *pWidth,
+                                                     LONG *pHeight) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
@@ -4663,12 +4663,12 @@ static HRESULT WINAPI VideoWindow_GetRestorePosition(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_HideCursor(IVideoWindow *iface,
-					     long HideCursor) {
+                                             LONG HideCursor) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, HideCursor);
+    TRACE("(%p/%p)->(%d)\n", This, iface, HideCursor);
 
     EnterCriticalSection(&This->cs);
 
@@ -4683,7 +4683,7 @@ static HRESULT WINAPI VideoWindow_HideCursor(IVideoWindow *iface,
 }
 
 static HRESULT WINAPI VideoWindow_IsCursorHidden(IVideoWindow *iface,
-						 long *CursorHidden) {
+                                                 LONG *CursorHidden) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IVideoWindow_vtbl, iface);
     IVideoWindow* pVideoWindow;
     HRESULT hr;
@@ -4844,14 +4844,14 @@ static HRESULT WINAPI MediaEvent_GetEventHandle(IMediaEventEx *iface,
 }
 
 static HRESULT WINAPI MediaEvent_GetEvent(IMediaEventEx *iface,
-					  long *lEventCode,
+                                          LONG *lEventCode,
 					  LONG_PTR *lParam1,
 					  LONG_PTR *lParam2,
-					  long msTimeout) {
+                                          LONG msTimeout) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
     Event evt;
 
-    TRACE("(%p/%p)->(%p, %p, %p, %ld)\n", This, iface, lEventCode, lParam1, lParam2, msTimeout);
+    TRACE("(%p/%p)->(%p, %p, %p, %d)\n", This, iface, lEventCode, lParam1, lParam2, msTimeout);
 
     if (EventsQueue_GetEvent(&This->evqueue, &evt, msTimeout))
     {
@@ -4866,11 +4866,11 @@ static HRESULT WINAPI MediaEvent_GetEvent(IMediaEventEx *iface,
 }
 
 static HRESULT WINAPI MediaEvent_WaitForCompletion(IMediaEventEx *iface,
-						   long msTimeout,
-						   long *pEvCode) {
+                                                   LONG msTimeout,
+                                                   LONG *pEvCode) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
-    TRACE("(%p/%p)->(%ld, %p)\n", This, iface, msTimeout, pEvCode);
+    TRACE("(%p/%p)->(%d, %p)\n", This, iface, msTimeout, pEvCode);
 
     if (WaitForSingleObject(This->hEventCompletion, msTimeout) == WAIT_OBJECT_0)
     {
@@ -4883,10 +4883,10 @@ static HRESULT WINAPI MediaEvent_WaitForCompletion(IMediaEventEx *iface,
 }
 
 static HRESULT WINAPI MediaEvent_CancelDefaultHandling(IMediaEventEx *iface,
-						       long lEvCode) {
+                                                       LONG lEvCode) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, lEvCode);
+    TRACE("(%p/%p)->(%d)\n", This, iface, lEvCode);
 
     if (lEvCode == EC_COMPLETE)
 	This->HandleEcComplete = FALSE;
@@ -4901,10 +4901,10 @@ static HRESULT WINAPI MediaEvent_CancelDefaultHandling(IMediaEventEx *iface,
 }
 
 static HRESULT WINAPI MediaEvent_RestoreDefaultHandling(IMediaEventEx *iface,
-							long lEvCode) {
+                                                        LONG lEvCode) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, lEvCode);
+    TRACE("(%p/%p)->(%d)\n", This, iface, lEvCode);
 
     if (lEvCode == EC_COMPLETE)
 	This->HandleEcComplete = TRUE;
@@ -4919,12 +4919,12 @@ static HRESULT WINAPI MediaEvent_RestoreDefaultHandling(IMediaEventEx *iface,
 }
 
 static HRESULT WINAPI MediaEvent_FreeEventParams(IMediaEventEx *iface,
-						 long lEvCode,
+                                                 LONG lEvCode,
 						 LONG_PTR lParam1,
 						 LONG_PTR lParam2) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
-    TRACE("(%p/%p)->(%ld, %08lx, %08lx): stub !!!\n", This, iface, lEvCode, lParam1, lParam2);
+    TRACE("(%p/%p)->(%d, %08lx, %08lx): stub !!!\n", This, iface, lEvCode, lParam1, lParam2);
 
     return S_OK;
 }
@@ -4932,11 +4932,11 @@ static HRESULT WINAPI MediaEvent_FreeEventParams(IMediaEventEx *iface,
 /*** IMediaEventEx methods ***/
 static HRESULT WINAPI MediaEvent_SetNotifyWindow(IMediaEventEx *iface,
 						 OAHWND hwnd,
-						 long lMsg,
+                                                 LONG lMsg,
 						 LONG_PTR lInstanceData) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
-    TRACE("(%p/%p)->(%08x, %ld, %08lx)\n", This, iface, (DWORD) hwnd, lMsg, lInstanceData);
+    TRACE("(%p/%p)->(%08lx, %d, %08lx)\n", This, iface, hwnd, lMsg, lInstanceData);
 
     This->notif.hWnd = (HWND)hwnd;
     This->notif.msg = lMsg;
@@ -4946,10 +4946,10 @@ static HRESULT WINAPI MediaEvent_SetNotifyWindow(IMediaEventEx *iface,
 }
 
 static HRESULT WINAPI MediaEvent_SetNotifyFlags(IMediaEventEx *iface,
-						long lNoNotifyFlags) {
+                                                LONG lNoNotifyFlags) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, lNoNotifyFlags);
+    TRACE("(%p/%p)->(%d)\n", This, iface, lNoNotifyFlags);
 
     if ((lNoNotifyFlags != 0) && (lNoNotifyFlags != 1))
 	return E_INVALIDARG;
@@ -4960,7 +4960,7 @@ static HRESULT WINAPI MediaEvent_SetNotifyFlags(IMediaEventEx *iface,
 }
 
 static HRESULT WINAPI MediaEvent_GetNotifyFlags(IMediaEventEx *iface,
-						long *lplNoNotifyFlags) {
+                                                LONG *lplNoNotifyFlags) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, lplNoNotifyFlags);

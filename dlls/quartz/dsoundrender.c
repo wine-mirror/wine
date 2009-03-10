@@ -1107,10 +1107,10 @@ static HRESULT WINAPI Basicaudio_Invoke(IBasicAudio *iface,
 
 /*** IBasicAudio methods ***/
 static HRESULT WINAPI Basicaudio_put_Volume(IBasicAudio *iface,
-					    long lVolume) {
+                                            LONG lVolume) {
     ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, lVolume);
+    TRACE("(%p/%p)->(%d)\n", This, iface, lVolume);
 
     if (lVolume > DSBVOLUME_MAX || lVolume < DSBVOLUME_MIN)
         return E_INVALIDARG;
@@ -1125,7 +1125,7 @@ static HRESULT WINAPI Basicaudio_put_Volume(IBasicAudio *iface,
 }
 
 static HRESULT WINAPI Basicaudio_get_Volume(IBasicAudio *iface,
-					    long *plVolume) {
+                                            LONG *plVolume) {
     ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, plVolume);
@@ -1138,10 +1138,10 @@ static HRESULT WINAPI Basicaudio_get_Volume(IBasicAudio *iface,
 }
 
 static HRESULT WINAPI Basicaudio_put_Balance(IBasicAudio *iface,
-					     long lBalance) {
+                                             LONG lBalance) {
     ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
 
-    TRACE("(%p/%p)->(%ld)\n", This, iface, lBalance);
+    TRACE("(%p/%p)->(%d)\n", This, iface, lBalance);
 
     if (lBalance < DSBPAN_LEFT || lBalance > DSBPAN_RIGHT)
         return E_INVALIDARG;
@@ -1156,7 +1156,7 @@ static HRESULT WINAPI Basicaudio_put_Balance(IBasicAudio *iface,
 }
 
 static HRESULT WINAPI Basicaudio_get_Balance(IBasicAudio *iface,
-					     long *plBalance) {
+                                             LONG *plBalance) {
     ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, plBalance);
