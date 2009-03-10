@@ -326,6 +326,12 @@ static void get_osx_device_elements(JoystickImpl *device)
                     }
                     break;
                 }
+                case kIOHIDElementTypeInput_Axis:
+                {
+                    CFArrayInsertValueAtIndex(device->elementCFArrayRef, axes, tIOHIDElementRef);
+                    axes++;
+                    break;
+                }
                 default:
                     FIXME("Unhandled type %i\n",eleType);
             }
