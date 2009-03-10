@@ -1442,6 +1442,28 @@ DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable, BOOL bOr
         }
         else ret = ERROR_NOT_SUPPORTED;
     }
+#elif defined(HAVE_SYS_TIHDR_H) && defined(T_OPTMGMT_ACK)
+    {
+        void *data;
+        int fd, len;
+        mib2_udpEntry_t *entry;
+
+        if ((fd = open_streams_mib( "udp" )) != -1)
+        {
+            if ((data = read_mib_entry( fd, MIB2_UDP, MIB2_UDP_ENTRY, &len )))
+            {
+                for (entry = data; (char *)(entry + 1) <= (char *)data + len; entry++)
+                {
+                    row.dwLocalAddr = entry->udpLocalAddress;
+                    row.dwLocalPort = htons( entry->udpLocalPort );
+                    if (!(table = append_udp_row( heap, flags, table, &count, &row ))) break;
+                }
+                HeapFree( GetProcessHeap(), 0, data );
+            }
+            close( fd );
+        }
+        else ret = ERROR_NOT_SUPPORTED;
+    }
 #else
     FIXME( "not implemented\n" );
     ret = ERROR_NOT_SUPPORTED;
