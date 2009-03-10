@@ -289,6 +289,7 @@ static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
     IOHIDDeviceRef  tIOHIDDeviceRef;
     CFArrayRef      gElementCFArrayRef;
     DWORD           axes = 0;
+    DWORD           sliders = 0;
     DWORD           buttons = 0;
     DWORD           povs = 0;
 
@@ -343,6 +344,11 @@ static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
                             povs++;
                             break;
                         }
+                        case kHIDUsage_GD_Slider:
+                            sliders ++;
+                            if (sliders > 2)
+                                break;
+                            /* fallthrough, sliders are axis */
                         case kHIDUsage_GD_X:
                         case kHIDUsage_GD_Y:
                         case kHIDUsage_GD_Z:
@@ -413,6 +419,7 @@ static void poll_osx_device_state(JoystickGenericImpl *device_in)
     {
         int button_idx = 0;
         int pov_idx = 0;
+        int slider_idx = 0;
         CFIndex idx, cnt = CFArrayGetCount( gElementCFArrayRef );
 
         for ( idx = 0; idx < cnt; idx++ )
@@ -455,6 +462,7 @@ static void poll_osx_device_state(JoystickGenericImpl *device_in)
                         case kHIDUsage_GD_Rx:
                         case kHIDUsage_GD_Ry:
                         case kHIDUsage_GD_Rz:
+                        case kHIDUsage_GD_Slider:
                         {
                             IOHIDDeviceGetValue(tIOHIDDeviceRef, tIOHIDElementRef, &valueRef);
                             val = IOHIDValueGetIntegerValue(valueRef);
@@ -477,6 +485,10 @@ static void poll_osx_device_state(JoystickGenericImpl *device_in)
                                 break;
                             case kHIDUsage_GD_Rz:
                                 device->generic.js.lRz = joystick_map_axis(&device->generic.props[idx], val);
+                                break;
+                            case kHIDUsage_GD_Slider:
+                                device->generic.js.rglSlider[slider_idx] = joystick_map_axis(&device->generic.props[idx], val);
+                                slider_idx ++;
                                 break;
                             }
                             break;
@@ -585,6 +597,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     LPDIDATAFORMAT df = NULL;
     int idx = 0;
     int axis_map[8]; /* max axes */
+    int slider_count = 0;
 
     TRACE("%s %p %p %p %hu\n", debugstr_guid(rguid), jvt, dinput, pdev, index);
 
@@ -644,6 +657,10 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
             case kHIDUsage_GD_Rx: wine_obj = 3; break;
             case kHIDUsage_GD_Ry: wine_obj = 4; break;
             case kHIDUsage_GD_Rz: wine_obj = 5; break;
+            case kHIDUsage_GD_Slider:
+                wine_obj = 6 + slider_count;
+                slider_count++;
+                break;
         }
         if (wine_obj < 0 ) continue;
 
