@@ -1500,18 +1500,28 @@ unsigned char * WINAPI NdrPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
   TRACE("(%p,%p,%p,%d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
 
-  /* Increment the buffer here instead of in PointerUnmarshall,
-   * as that is used by embedded pointers which already handle the incrementing
-   * the buffer, and shouldn't read any additional pointer data from the
-   * buffer */
-  if (*pFormat != RPC_FC_RP)
+  if (*pFormat == RPC_FC_RP)
   {
+    Buffer = pStubMsg->Buffer;
+    /* Do the NULL ref pointer check here because embedded pointers can be
+     * NULL if the type the pointer is embedded in was allocated rather than
+     * being passed in by the client */
+    if (pStubMsg->IsClient && !*ppMemory)
+    {
+      ERR("NULL ref pointer is not allowed\n");
+      RpcRaiseException(RPC_X_NULL_REF_POINTER);
+    }
+  }
+  else
+  {
+    /* Increment the buffer here instead of in PointerUnmarshall,
+     * as that is used by embedded pointers which already handle the incrementing
+     * the buffer, and shouldn't read any additional pointer data from the
+     * buffer */
     ALIGN_POINTER(pStubMsg->Buffer, 4);
     Buffer = pStubMsg->Buffer;
     safe_buffer_increment(pStubMsg, 4);
   }
-  else
-    Buffer = pStubMsg->Buffer;
 
   PointerUnmarshall(pStubMsg, Buffer, ppMemory, *ppMemory, pFormat, fMustAlloc);
 
