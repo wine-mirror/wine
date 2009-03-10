@@ -5213,6 +5213,17 @@ static void test_button_messages(void)
     DWORD dlg_code;
     HFONT zfont;
 
+    /* selection with VK_SPACE should capture button window */
+    hwnd = CreateWindowExA(0, "button", "test", BS_CHECKBOX | WS_VISIBLE | WS_POPUP,
+                           0, 0, 50, 14, 0, 0, 0, NULL);
+    ok(hwnd != 0, "Failed to create button window\n");
+    ReleaseCapture();
+    SetFocus(hwnd);
+    SendMessageA(hwnd, WM_KEYDOWN, VK_SPACE, 0);
+    ok(GetCapture() == hwnd, "Should be captured on VK_SPACE WM_KEYDOWN\n");
+    SendMessageA(hwnd, WM_KEYUP, VK_SPACE, 0);
+    DestroyWindow(hwnd);
+
     subclass_button();
 
     for (i = 0; i < sizeof(button)/sizeof(button[0]); i++)
