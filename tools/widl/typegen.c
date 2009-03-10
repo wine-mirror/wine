@@ -2844,7 +2844,7 @@ static unsigned int process_tfs_stmts(FILE *file, const statement_list_t *stmts,
                                   write_typeformatstring_var(
                                       file, 2, NULL,
                                       type_function_get_rettype(func->type),
-                                      &v, TRUE, typeformat_offset),
+                                      &v, FALSE, typeformat_offset),
                                   file);
                 }
 
