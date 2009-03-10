@@ -31,14 +31,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-typedef struct {
+struct HTMLTable {
     HTMLElement element;
 
     const IHTMLTableVtbl  *lpHTMLTableVtbl;
 
     ConnectionPoint cp;
     nsIDOMHTMLTableElement *nstable;
-} HTMLTable;
+};
 
 #define HTMLTABLE(x)  (&(x)->lpHTMLTableVtbl)
 
