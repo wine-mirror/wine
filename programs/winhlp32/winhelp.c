@@ -581,6 +581,64 @@ static void WINHELP_RememberPage(WINHELP_WINDOW* win, WINHELP_WNDPAGE* wpage)
 
 /***********************************************************************
  *
+ *           WINHELP_FindLink
+ */
+static HLPFILE_LINK* WINHELP_FindLink(WINHELP_WINDOW* win, LPARAM pos)
+{
+    HLPFILE_LINK*           link;
+    POINTL                  mouse_ptl, char_ptl, char_next_ptl;
+    DWORD                   cp;
+
+    if (!win->page) return NULL;
+
+    mouse_ptl.x = (short)LOWORD(pos);
+    mouse_ptl.y = (short)HIWORD(pos);
+    cp = SendMessageW(GetDlgItem(win->hMainWnd, CTL_ID_TEXT), EM_CHARFROMPOS,
+                      0, (LPARAM)&mouse_ptl);
+
+    for (link = win->page->first_link; link; link = link->next)
+    {
+        if (link->cpMin <= cp && cp <= link->cpMax)
+        {
+            /* check whether we're at end of line */
+            SendMessageW(GetDlgItem(win->hMainWnd, CTL_ID_TEXT), EM_POSFROMCHAR,
+                         (LPARAM)&char_ptl, cp);
+            SendMessageW(GetDlgItem(win->hMainWnd, CTL_ID_TEXT), EM_POSFROMCHAR,
+                         (LPARAM)&char_next_ptl, cp + 1);
+            if (char_next_ptl.y != char_ptl.y || mouse_ptl.x >= char_next_ptl.x)
+                link = NULL;
+            break;
+        }
+    }
+    return link;
+}
+
+static LRESULT CALLBACK WINHELP_RicheditWndProc(HWND hWnd, UINT msg,
+                                                WPARAM wParam, LPARAM lParam)
+{
+    WINHELP_WINDOW *win = (WINHELP_WINDOW*) GetWindowLongPtr(GetParent(hWnd), 0);
+    DWORD messagePos;
+    POINT pt;
+    switch(msg)
+    {
+        case WM_SETCURSOR:
+            messagePos = GetMessagePos();
+            pt.x = (short)LOWORD(messagePos);
+            pt.y = (short)HIWORD(messagePos);
+            ScreenToClient(hWnd, &pt);
+            if (win->page && WINHELP_FindLink(win, MAKELPARAM(pt.x, pt.y)))
+            {
+                SetCursor(win->hHandCur);
+                return 0;
+            }
+            /* fall through */
+        default:
+            return CallWindowProcA(win->origRicheditWndProc, hWnd, msg, wParam, lParam);
+    }
+}
+
+/***********************************************************************
+ *
  *           WINHELP_CreateHelpWindow
  */
 BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remember)
@@ -701,6 +759,8 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
                                 0, 0, 0, 0, win->hMainWnd, (HMENU)CTL_ID_TEXT, Globals.hInstance, NULL);
         SendMessage(hTextWnd, EM_SETEVENTMASK, 0,
                     SendMessage(hTextWnd, EM_GETEVENTMASK, 0, 0) | ENM_MOUSEEVENTS);
+        win->origRicheditWndProc = (WNDPROC)SetWindowLongPtr(hTextWnd, GWLP_WNDPROC,
+                                                             (LONG_PTR)WINHELP_RicheditWndProc);
     }
 
     hIcon = (wpage->page) ? wpage->page->file->hIcon : NULL;
@@ -769,40 +829,6 @@ BOOL WINHELP_OpenHelpWindow(HLPFILE_PAGE* (*lookup)(HLPFILE*, LONG, ULONG*),
     return WINHELP_CreateHelpWindow(&wpage, nCmdShow, TRUE);
 }
 
-/***********************************************************************
- *
- *           WINHELP_FindLink
- */
-static HLPFILE_LINK* WINHELP_FindLink(WINHELP_WINDOW* win, LPARAM pos)
-{
-    HLPFILE_LINK*           link;
-    POINTL                  mouse_ptl, char_ptl, char_next_ptl;
-    DWORD                   cp;
-
-    if (!win->page) return NULL;
-
-    mouse_ptl.x = (short)LOWORD(pos);
-    mouse_ptl.y = (short)HIWORD(pos);
-    cp = SendMessageW(GetDlgItem(win->hMainWnd, CTL_ID_TEXT), EM_CHARFROMPOS,
-                      0, (LPARAM)&mouse_ptl);
-
-    for (link = win->page->first_link; link; link = link->next)
-    {
-        if (link->cpMin <= cp && cp <= link->cpMax)
-        {
-            /* check whether we're at end of line */
-            SendMessageW(GetDlgItem(win->hMainWnd, CTL_ID_TEXT), EM_POSFROMCHAR,
-                         (LPARAM)&char_ptl, cp);
-            SendMessageW(GetDlgItem(win->hMainWnd, CTL_ID_TEXT), EM_POSFROMCHAR,
-                         (LPARAM)&char_next_ptl, cp + 1);
-            if (char_next_ptl.y != char_ptl.y || mouse_ptl.x >= char_next_ptl.x)
-                link = NULL;
-            break;
-        }
-    }
-    return link;
-}
-
 /******************************************************************
  *             WINHELP_HandleTextMouse
  *
@@ -815,14 +841,7 @@ static BOOL WINHELP_HandleTextMouse(WINHELP_WINDOW* win, UINT msg, LPARAM lParam
 
     switch (msg)
     {
-    case WM_MOUSEMOVE:
-        if (WINHELP_FindLink(win, lParam))
-            SetCursor(win->hHandCur);
-        else
-            SetCursor(LoadCursor(0, IDC_ARROW));
-        break;
-
-     case WM_LBUTTONDOWN:
+    case WM_LBUTTONDOWN:
          if ((win->current_link = WINHELP_FindLink(win, lParam)))
              ret = TRUE;
          break;

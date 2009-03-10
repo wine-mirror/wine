@@ -80,6 +80,8 @@ typedef struct tagWinHelp
     HWND                hShadowWnd;
     HWND                hHistoryWnd;
 
+    WNDPROC             origRicheditWndProc;
+
     HFONT*              fonts;
     UINT                fonts_len;
 
