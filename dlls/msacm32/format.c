@@ -443,41 +443,85 @@ static BOOL MSACM_FormatEnumHelper(PWINE_ACMDRIVERID padid, HACMDRIVER had,
     ACMFORMATTAGDETAILSW	aftd;
     unsigned int			i, j;
 
-    for (i = 0; i < padid->cFormatTags; i++) {
-	memset(&aftd, 0, sizeof(aftd));
-	aftd.cbStruct = sizeof(aftd);
-	aftd.dwFormatTagIndex = i;
-	if (acmFormatTagDetailsW(had, &aftd, ACM_FORMATTAGDETAILSF_INDEX) != MMSYSERR_NOERROR)
-	    continue;
+    if (fdwEnum & ACM_FORMATENUMF_SUGGEST) {
+        HDRVR hdrvr;
+        ACMDRVFORMATSUGGEST adfs;
+        pafd->dwFormatIndex = 0;
+        memset(&aftd, 0, sizeof(aftd));
+        aftd.cbStruct = sizeof(aftd);
+        memset(&adfs, 0, sizeof(adfs));
+        adfs.cbStruct = sizeof(adfs);
 
-	if ((fdwEnum & ACM_FORMATENUMF_WFORMATTAG) && aftd.dwFormatTag != pwfxRef->wFormatTag)
-	    continue;
+        for (i = 0; i < padid->cFormatTags; i++) {
+            aftd.dwFormatTag = i;
+            pafd->dwFormatTag = aftd.dwFormatTag;
+            pafd->pwfx->wFormatTag = pafd->dwFormatTag;
 
-	for (j = 0; j < aftd.cStandardFormats; j++) {
-	    pafd->dwFormatIndex = j;
-	    pafd->dwFormatTag = aftd.dwFormatTag;
-	    if (acmFormatDetailsW(had, pafd, ACM_FORMATDETAILSF_INDEX) != MMSYSERR_NOERROR)
-		continue;
+            if (acmFormatTagDetailsW(had, &aftd, ACM_FORMATTAGDETAILSF_INDEX) != MMSYSERR_NOERROR)
+                continue;
 
-	    if ((fdwEnum & ACM_FORMATENUMF_NCHANNELS) &&
-		pafd->pwfx->nChannels != pwfxRef->nChannels)
-		continue;
-	    if ((fdwEnum & ACM_FORMATENUMF_NSAMPLESPERSEC) &&
-		pafd->pwfx->nSamplesPerSec != pwfxRef->nSamplesPerSec)
-		continue;
-	    if ((fdwEnum & ACM_FORMATENUMF_WBITSPERSAMPLE) &&
-		pafd->pwfx->wBitsPerSample != pwfxRef->wBitsPerSample)
-		continue;
-	    if ((fdwEnum & ACM_FORMATENUMF_HARDWARE) &&
-		!(pafd->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_HARDWARE))
-		continue;
+            adfs.cbwfxSrc = aftd.cbFormatSize;
+            adfs.cbwfxDst = aftd.cbFormatSize;
+            adfs.pwfxSrc = pwfxRef;
+            adfs.pwfxDst = pafd->pwfx;
+            pafd->fdwSupport = padid->fdwSupport;
 
-	    /* more checks to be done on fdwEnum */
+            if ((fdwEnum & ACM_FORMATENUMF_WFORMATTAG) &&
+                aftd.dwFormatTag != pwfxRef->wFormatTag)
+                continue;
 
-	    if (!(fnCallback)((HACMDRIVERID)padid, pafd, dwInstance, padid->fdwSupport))
-		return FALSE;
-	}
-	/* the "formats" used by the filters are also reported */
+            if ((fdwEnum & ACM_FORMATENUMF_HARDWARE) &&
+                !(pafd->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_HARDWARE))
+                continue;
+
+            hdrvr = OpenDriver(padid->pszFileName,0,0);
+            SendDriverMessage(hdrvr,ACMDM_FORMAT_SUGGEST,(DWORD)&adfs,(fdwEnum & 0x000000FFL));
+
+            if (acmFormatDetailsW(had, pafd, ACM_FORMATDETAILSF_FORMAT) != MMSYSERR_NOERROR)
+                continue;
+
+            pafd->cbwfx = sizeof(*(pafd->pwfx));
+
+            if (!(fnCallback)((HACMDRIVERID)padid, pafd, dwInstance, padid->fdwSupport))
+                return FALSE;
+        }
+    } else {
+        for (i = 0; i < padid->cFormatTags; i++) {
+            memset(&aftd, 0, sizeof(aftd));
+            aftd.cbStruct = sizeof(aftd);
+            aftd.dwFormatTagIndex = i;
+            if (acmFormatTagDetailsW(had, &aftd, ACM_FORMATTAGDETAILSF_INDEX) != MMSYSERR_NOERROR)
+                continue;
+
+            if ((fdwEnum & ACM_FORMATENUMF_WFORMATTAG) && aftd.dwFormatTag != pwfxRef->wFormatTag)
+                continue;
+
+            for (j = 0; j < aftd.cStandardFormats; j++) {
+                pafd->dwFormatIndex = j;
+                pafd->dwFormatTag = aftd.dwFormatTag;
+                if (acmFormatDetailsW(had, pafd, ACM_FORMATDETAILSF_INDEX) != MMSYSERR_NOERROR)
+                    continue;
+
+                if ((fdwEnum & ACM_FORMATENUMF_NCHANNELS) &&
+                    pafd->pwfx->nChannels != pwfxRef->nChannels)
+                    continue;
+                if ((fdwEnum & ACM_FORMATENUMF_NSAMPLESPERSEC) &&
+                    pafd->pwfx->nSamplesPerSec != pwfxRef->nSamplesPerSec)
+                    continue;
+                if ((fdwEnum & ACM_FORMATENUMF_WBITSPERSAMPLE) &&
+                    pafd->pwfx->wBitsPerSample != pwfxRef->wBitsPerSample)
+                    continue;
+                if ((fdwEnum & ACM_FORMATENUMF_HARDWARE) &&
+                    !(pafd->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_HARDWARE))
+                    continue;
+
+            /* more checks to be done on fdwEnum */
+
+                if (!(fnCallback)((HACMDRIVERID)padid, pafd, dwInstance, padid->fdwSupport))
+                    return FALSE;
+            }
+        /* the "formats" used by the filters are also reported */
+        }
     }
     return TRUE;
 }
@@ -514,8 +558,7 @@ MMRESULT WINAPI acmFormatEnumW(HACMDRIVER had, PACMFORMATDETAILSW pafd,
 	(pafd->dwFormatTag != pafd->pwfx->wFormatTag))
 	return MMSYSERR_INVALPARAM;
 
-    if (fdwEnum & (ACM_FORMATENUMF_CONVERT|ACM_FORMATENUMF_SUGGEST|
-		   ACM_FORMATENUMF_INPUT|ACM_FORMATENUMF_OUTPUT))
+    if (fdwEnum & (ACM_FORMATENUMF_CONVERT|ACM_FORMATENUMF_INPUT|ACM_FORMATENUMF_OUTPUT))
 	FIXME("Unsupported fdwEnum values %08x\n", fdwEnum);
 
     if (had) {
