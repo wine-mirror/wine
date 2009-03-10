@@ -1431,16 +1431,11 @@ case $host_os in
     ;;
 esac
 
-AC_SUBST(MAIN_BINARY,"wine-pthread")  dnl Default value
 case $host_cpu in
   *i[[3456789]]86*)
     case $host_os in
       linux* | k*bsd*-gnu)
-        AC_SUBST(MAIN_BINARY,"wine-glibc")
-        AC_SUBST(EXTRA_BINARIES,"wine-pthread wine-preloader") ;;
-      freebsd*)
-        AC_SUBST(MAIN_BINARY,"wine-freebsd")
-        AC_SUBST(EXTRA_BINARIES,"wine-pthread") ;;
+        AC_SUBST(EXTRA_BINARIES,"wine-preloader") ;;
     esac
     ;;
 esac

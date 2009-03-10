@@ -655,7 +655,6 @@ LDAPLIBS
 LIBPOLL
 LIBDL
 EXTRA_BINARIES
-MAIN_BINARY
 SOCKETLIBS
 CRTLIBS
 LDPATH
@@ -17995,19 +17994,11 @@ case $host_os in
     ;;
 esac
 
-MAIN_BINARY="wine-pthread"
-  case $host_cpu in
+case $host_cpu in
   *i[3456789]86*)
     case $host_os in
       linux* | k*bsd*-gnu)
-        MAIN_BINARY="wine-glibc"
-
-        EXTRA_BINARIES="wine-pthread wine-preloader"
- ;;
-      freebsd*)
-        MAIN_BINARY="wine-freebsd"
-
-        EXTRA_BINARIES="wine-pthread"
+        EXTRA_BINARIES="wine-preloader"
  ;;
     esac
     ;;

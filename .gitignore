@@ -203,14 +203,8 @@ libs/wpp/ppl.yy.c
 libs/wpp/ppy.tab.c
 libs/wpp/ppy.tab.h
 loader/wine
-loader/wine-freebsd
-loader/wine-freebsd-installed
-loader/wine-glibc
-loader/wine-glibc-installed
+loader/wine-installed
 loader/wine-preloader
-loader/wine-preloader-installed
-loader/wine-pthread
-loader/wine-pthread-installed
 loader/wine.de.man
 loader/wine.fr.man
 loader/wine.man

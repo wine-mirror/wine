@@ -1242,6 +1242,7 @@ static char **build_envp( const WCHAR *envW )
         {
             if (*p == '=') continue;  /* skip drive curdirs, this crashes some unix apps */
             if (!strncmp( p, "WINEPRELOADRESERVE=", sizeof("WINEPRELOADRESERVE=")-1 )) continue;
+            if (!strncmp( p, "WINELOADERNOEXEC=", sizeof("WINELOADERNOEXEC=")-1 )) continue;
             if (!strncmp( p, "WINESERVERSOCKET=", sizeof("WINESERVERSOCKET=")-1 )) continue;
             if (is_special_env_var( p ))  /* prefix it with "WINE" */
             {

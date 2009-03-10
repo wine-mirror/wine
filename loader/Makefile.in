@@ -5,28 +5,18 @@ VPATH     = @srcdir@
 MODULE    = wine
 
 C_SRCS = \
-	freebsd.c \
-	glibc.c \
 	main.c \
 	preloader.c \
 	pthread.c
 
-PTHREAD_OBJS = pthread.o main.o
+MAIN_OBJS = pthread.o main.o
 
-MAIN_BINARY    = @MAIN_BINARY@
 EXTRA_BINARIES = @EXTRA_BINARIES@
-WINE_BINARIES  = $(MAIN_BINARY) $(EXTRA_BINARIES)
 
 PROGRAMS = \
 	wine \
-	wine-freebsd \
-	wine-freebsd-installed \
-	wine-glibc \
-	wine-glibc-installed \
-	wine-preloader \
-	wine-preloader-installed \
-	wine-pthread \
-	wine-pthread-installed
+	wine-installed \
+	wine-preloader
 
 MANPAGES = \
 	wine.man \
@@ -39,50 +29,31 @@ INSTALLDIRS = \
 	$(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext) \
 	$(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)
 
-all: $(WINE_BINARIES) $(WINE_BINARIES:%=%-installed) $(MODULE) $(MANPAGES)
+all: wine wine-installed $(EXTRA_BINARIES) $(MANPAGES)
 
 @MAKE_RULES@
 
 LIBPTHREAD  = @LIBPTHREAD@
 LDEXECFLAGS = @LDEXECFLAGS@
 
-wine-freebsd: freebsd.o Makefile.in
-	$(CC) -o $@ freebsd.o $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_LOCAL)
-
-wine-freebsd-installed: freebsd.o Makefile.in
-	$(CC) -o $@ freebsd.o $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
-
-wine-glibc: glibc.o Makefile.in
-	$(CC) -o $@ glibc.o $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_LOCAL)
-
-wine-glibc-installed: glibc.o Makefile.in
-	$(CC) -o $@ glibc.o $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
-
-wine-preloader wine-preloader-installed: preloader.o Makefile.in
+wine-preloader: preloader.o Makefile.in
 	$(CC) -o $@ -static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7c000000 preloader.o $(LIBPORT) $(LDFLAGS)
 
-wine-pthread: $(PTHREAD_OBJS) Makefile.in
-	$(CC) -o $@ $(LDEXECFLAGS) $(PTHREAD_OBJS) $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_LOCAL)
+wine: $(MAIN_OBJS) Makefile.in
+	$(CC) -o $@ $(LDEXECFLAGS) $(MAIN_OBJS) $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_LOCAL)
 
-wine-pthread-installed: $(PTHREAD_OBJS) Makefile.in
-	$(CC) -o $@ $(LDEXECFLAGS) $(PTHREAD_OBJS) $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
+wine-installed: $(MAIN_OBJS) Makefile.in
+	$(CC) -o $@ $(LDEXECFLAGS) $(MAIN_OBJS) $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
 
-$(MODULE): $(MAIN_BINARY)
-	$(RM) $(MODULE) && $(LN_S) $(MAIN_BINARY) $(MODULE)
-
-install install-lib:: $(WINE_BINARIES:%=%-installed) $(MANPAGES) $(INSTALLDIRS)
-	for f in $(WINE_BINARIES); do \
-	  if [ "$(MAIN_BINARY)" = "$$f" ]; \
-	  then $(INSTALL_PROGRAM) $$f-installed $(DESTDIR)$(bindir)/$(MODULE); \
-	  else $(INSTALL_PROGRAM) $$f-installed $(DESTDIR)$(bindir)/$$f; \
-	  fi; \
-	done
+install install-lib:: wine-installed $(EXTRA_BINARIES) $(MANPAGES) $(INSTALLDIRS)
+	$(INSTALL_PROGRAM) wine-installed $(DESTDIR)$(bindir)/$(MODULE)
+	for f in $(EXTRA_BINARIES); do $(INSTALL_PROGRAM) $$f $(DESTDIR)$(bindir)/$$f; done
 	$(INSTALL_DATA) wine.man $(DESTDIR)$(mandir)/man$(prog_manext)/wine.$(prog_manext)
 	$(INSTALL_DATA) wine.de.man $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/wine.$(prog_manext)
 	$(INSTALL_DATA) wine.fr.man $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wine.$(prog_manext)
 
 uninstall::
-	-cd $(DESTDIR)$(bindir) && $(RM) $(WINE_BINARIES) $(MODULE)
+	-cd $(DESTDIR)$(bindir) && $(RM) $(EXTRA_BINARIES) $(MODULE)
 	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/wine.$(prog_manext)
 	$(RM) $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/wine.$(prog_manext)
 	$(RM) $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wine.$(prog_manext)
