@@ -1492,9 +1492,7 @@ static BOOL elf_search_loader(struct process* pcs, struct elf_info* elf_info)
     const char*         ptr;
 
     /* All binaries are loaded with WINELOADER (if run from tree) or by the
-     * main executable (either wine-kthread or wine-pthread)
-     * FIXME: the heuristic used to know whether we need to load wine-pthread
-     * or wine-kthread is not 100% safe
+     * main executable
      */
     if ((ptr = getenv("WINELOADER")))
     {
@@ -1504,8 +1502,7 @@ static BOOL elf_search_loader(struct process* pcs, struct elf_info* elf_info)
     }
     else
     {
-        ret = elf_search_and_load_file(pcs, S_WineKThreadW, 0, elf_info) ||
-            elf_search_and_load_file(pcs, S_WinePThreadW, 0, elf_info);
+        ret = elf_search_and_load_file(pcs, S_WineW, 0, elf_info);
     }
     return ret;
 }
