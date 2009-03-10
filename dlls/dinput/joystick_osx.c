@@ -1,0 +1,787 @@
+/*  DirectInput Joystick device for Mac OS/X
+ *
+ * Copyright 1998 Marcus Meissner
+ * Copyright 1998,1999 Lionel Ulmer
+ * Copyright 2000-2001 TransGaming Technologies Inc.
+ * Copyright 2009 CodeWeavers, Aric Stewart
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "config.h"
+#include "wine/port.h"
+
+#if defined(HAVE_CARBON_CARBON_H) && defined(HAVE_IOKIT_HID_IOHIDLIB_H)
+#define LoadResource __carbon_LoadResource
+#define CompareString __carbon_CompareString
+#define GetCurrentThread __carbon_GetCurrentThread
+#define GetCurrentProcess __carbon_GetCurrentProcess
+#define AnimatePalette __carbon_AnimatePalette
+#define EqualRgn __carbon_EqualRgn
+#define FillRgn __carbon_FillRgn
+#define FrameRgn __carbon_FrameRgn
+#define GetPixel __carbon_GetPixel
+#define InvertRgn __carbon_InvertRgn
+#define LineTo __carbon_LineTo
+#define OffsetRgn __carbon_OffsetRgn
+#define PaintRgn __carbon_PaintRgn
+#define Polygon __carbon_Polygon
+#define ResizePalette __carbon_ResizePalette
+#define SetRectRgn __carbon_SetRectRgn
+#define ULONG __carbon_ULONG
+#define E_INVALIDARG __carbon_E_INVALIDARG
+#define E_OUTOFMEMORY __carbon_E_OUTOFMEMORY
+#define E_HANDLE __carbon_E_HANDLE
+#define E_ACCESSDENIED __carbon_E_ACCESSDENIED
+#define E_UNEXPECTED __carbon_E_UNEXPECTED
+#define E_FAIL __carbon_E_FAIL
+#define E_ABORT __carbon_E_ABORT
+#define E_POINTER __carbon_E_POINTER
+#define E_NOINTERFACE __carbon_E_NOINTERFACE
+#define E_NOTIMPL __carbon_E_NOTIMPL
+#define S_FALSE __carbon_S_FALSE
+#define S_OK __carbon_S_OK
+#define HRESULT_FACILITY __carbon_HRESULT_FACILITY
+#define IS_ERROR __carbon_IS_ERROR
+#define FAILED __carbon_FAILED
+#define SUCCEEDED __carbon_SUCCEEDED
+#define MAKE_HRESULT __carbon_MAKE_HRESULT
+#define HRESULT __carbon_HRESULT
+#define STDMETHODCALLTYPE __carbon_STDMETHODCALLTYPE
+#include <Carbon/Carbon.h>
+#include <IOKit/hid/IOHIDLib.h>
+#undef LoadResource
+#undef CompareString
+#undef GetCurrentThread
+#undef _CDECL
+#undef DPRINTF
+#undef GetCurrentProcess
+#undef AnimatePalette
+#undef EqualRgn
+#undef FillRgn
+#undef FrameRgn
+#undef GetPixel
+#undef InvertRgn
+#undef LineTo
+#undef OffsetRgn
+#undef PaintRgn
+#undef Polygon
+#undef ResizePalette
+#undef SetRectRgn
+#undef ULONG
+#undef E_INVALIDARG
+#undef E_OUTOFMEMORY
+#undef E_HANDLE
+#undef E_ACCESSDENIED
+#undef E_UNEXPECTED
+#undef E_FAIL
+#undef E_ABORT
+#undef E_POINTER
+#undef E_NOINTERFACE
+#undef E_NOTIMPL
+#undef S_FALSE
+#undef S_OK
+#undef HRESULT_FACILITY
+#undef IS_ERROR
+#undef FAILED
+#undef SUCCEEDED
+#undef MAKE_HRESULT
+#undef HRESULT
+#undef STDMETHODCALLTYPE
+#endif /* HAVE_CARBON_CARBON_H */
+
+#include "wine/debug.h"
+#include "wine/unicode.h"
+#include "windef.h"
+#include "winbase.h"
+#include "winerror.h"
+#include "winreg.h"
+#include "dinput.h"
+
+#include "dinput_private.h"
+#include "device_private.h"
+#include "joystick_private.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(dinput);
+
+#ifdef HAVE_IOKIT_HID_IOHIDLIB_H
+
+static IOHIDManagerRef gIOHIDManagerRef = NULL;
+static CFArrayRef gDevices = NULL;
+
+typedef struct JoystickImpl JoystickImpl;
+static const IDirectInputDevice8AVtbl JoystickAvt;
+static const IDirectInputDevice8WVtbl JoystickWvt;
+
+struct JoystickImpl
+{
+    struct JoystickGenericImpl generic;
+
+    /* osx private */
+    int                    id;
+    CFMutableArrayRef      elementCFArrayRef;
+    ObjProps               **propmap;
+};
+
+static const GUID DInput_Wine_OsX_Joystick_GUID = { /* 59CAD8F6-E617-41E2-8EB7-47B23EEEDC5A */
+  0x59CAD8F6, 0xE617, 0x41E2, {0x8E, 0xB7, 0x47, 0xB2, 0x3E, 0xEE, 0xDC, 0x5A}
+};
+
+static void CFSetApplierFunctionCopyToCFArray(const void *value, void *context)
+{
+    CFArrayAppendValue( ( CFMutableArrayRef ) context, value );
+}
+
+static CFMutableDictionaryRef creates_osx_device_match(int usage)
+{
+    CFMutableDictionaryRef result;
+
+    result = CFDictionaryCreateMutable( kCFAllocatorDefault, 0,
+            &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks );
+
+    if ( result )
+    {
+        int number = kHIDPage_GenericDesktop;
+        CFNumberRef pageCFNumberRef = CFNumberCreate( kCFAllocatorDefault,
+                          kCFNumberIntType, &number);
+
+        if ( pageCFNumberRef )
+        {
+            CFNumberRef usageCFNumberRef;
+
+            CFDictionarySetValue( result, CFSTR( kIOHIDDeviceUsagePageKey ),
+                pageCFNumberRef );
+            CFRelease( pageCFNumberRef );
+
+            usageCFNumberRef = CFNumberCreate( kCFAllocatorDefault,
+                        kCFNumberIntType, &usage);
+            if ( usageCFNumberRef )
+            {
+                CFDictionarySetValue( result, CFSTR( kIOHIDDeviceUsageKey ),
+                    usageCFNumberRef );
+                CFRelease( usageCFNumberRef );
+            }
+            else
+            {
+                ERR("CFNumberCreate() failed.");
+                return NULL;
+            }
+        }
+        else
+        {
+            ERR("CFNumberCreate failed.");
+            return NULL;
+        }
+    }
+    else
+    {
+        ERR("CFDictionaryCreateMutable failed.");
+        return NULL;
+    }
+
+    return result;
+}
+
+static int find_osx_devices(void)
+{
+    IOReturn tIOReturn;
+    CFMutableDictionaryRef result;
+    CFSetRef devset;
+    CFArrayRef matching;
+
+    gIOHIDManagerRef = IOHIDManagerCreate( kCFAllocatorDefault, 0L );
+    tIOReturn = IOHIDManagerOpen( gIOHIDManagerRef, 0L);
+    if ( kIOReturnSuccess != tIOReturn )
+    {
+        ERR("Couldn’t open IOHIDManager.");
+        return 0;
+    }
+
+     matching = CFArrayCreateMutable( kCFAllocatorDefault, 0,
+                        &kCFTypeArrayCallBacks );
+
+    /* build matching dictionary */
+    result = creates_osx_device_match(kHIDPage_Sport);
+    if (!result)
+    {
+        CFRelease(matching);
+        return 0;
+    }
+    CFArrayAppendValue( ( CFMutableArrayRef )matching, result );
+    result = creates_osx_device_match(kHIDPage_Game);
+    if (!result)
+    {
+        CFRelease(matching);
+        return 0;
+    }
+    CFArrayAppendValue( ( CFMutableArrayRef )matching, result );
+
+    IOHIDManagerSetDeviceMatchingMultiple( gIOHIDManagerRef, matching);
+    devset = IOHIDManagerCopyDevices( gIOHIDManagerRef );
+    if (devset)
+    {
+        CFIndex count;
+        gDevices = CFArrayCreateMutable( kCFAllocatorDefault, 0,
+                        &kCFTypeArrayCallBacks );
+        CFSetApplyFunction(devset, CFSetApplierFunctionCopyToCFArray, (void*)gDevices);
+        count = CFArrayGetCount( gDevices);
+        CFRelease( devset);
+        count = CFArrayGetCount( gDevices);
+
+        TRACE("found %i device(s)\n",(int)count);
+        return count;
+
+    }
+    return 0;
+}
+
+static int get_osx_device_name(int id, char *name, int length)
+{
+    CFStringRef str;
+    IOHIDDeviceRef tIOHIDDeviceRef;
+
+    if (!gDevices)
+        return 0;
+
+    tIOHIDDeviceRef = ( IOHIDDeviceRef ) CFArrayGetValueAtIndex( gDevices, id );
+
+    if (!tIOHIDDeviceRef)
+        return 0;
+
+    if (name)
+        name[0] = 0;
+
+    if (!tIOHIDDeviceRef)
+    {
+        ERR("Invalid Device requested %i\n",id);
+        return 0;
+    }
+
+    str = IOHIDDeviceGetProperty(tIOHIDDeviceRef, CFSTR( kIOHIDProductKey ));
+    if (str)
+    {
+        CFIndex len = CFStringGetLength(str);
+        if (length >= len)
+        {
+            CFStringGetCString(str,name,length,kCFStringEncodingASCII);
+            return len;
+        }
+        else
+            return (len+1);
+    }
+    return 0;
+}
+
+static void get_osx_device_elements(JoystickImpl *device)
+{
+    IOHIDDeviceRef  tIOHIDDeviceRef;
+    CFArrayRef      gElementCFArrayRef;
+    DWORD           axes = 0;
+    DWORD           buttons = 0;
+    DWORD           povs = 0;
+
+    device->elementCFArrayRef = NULL;
+
+    if (!gDevices)
+        return;
+
+    tIOHIDDeviceRef = ( IOHIDDeviceRef ) CFArrayGetValueAtIndex( gDevices, device->id );
+
+    if (!tIOHIDDeviceRef)
+        return;
+
+    gElementCFArrayRef = IOHIDDeviceCopyMatchingElements( tIOHIDDeviceRef,
+                                NULL, 0 );
+
+    if (gElementCFArrayRef)
+    {
+        CFIndex idx, cnt = CFArrayGetCount( gElementCFArrayRef );
+        /* build our element array in the order that dinput expects */
+        device->elementCFArrayRef = CFArrayCreateMutable(NULL,0,NULL);
+
+        for ( idx = 0; idx < cnt; idx++ )
+        {
+            IOHIDElementRef tIOHIDElementRef = ( IOHIDElementRef ) CFArrayGetValueAtIndex( gElementCFArrayRef, idx );
+            int eleType = IOHIDElementGetType( tIOHIDElementRef );
+            switch(eleType)
+            {
+                case kIOHIDElementTypeInput_Button:
+                {
+                    if (buttons < 128)
+                    {
+                        CFArrayInsertValueAtIndex(device->elementCFArrayRef, (axes+povs+buttons), tIOHIDElementRef);
+                        buttons++;
+                    }
+                    break;
+                }
+                default:
+                    FIXME("Unhandled type %i\n",eleType);
+            }
+        }
+    }
+
+    device->generic.devcaps.dwAxes = axes;
+    device->generic.devcaps.dwButtons = buttons;
+    device->generic.devcaps.dwPOVs = povs;
+}
+
+static void get_osx_device_elements_props(JoystickImpl *device)
+{
+    CFArrayRef gElementCFArrayRef = device->elementCFArrayRef;
+
+    if (gElementCFArrayRef)
+    {
+        CFIndex idx, cnt = CFArrayGetCount( gElementCFArrayRef );
+
+        for ( idx = 0; idx < cnt; idx++ )
+        {
+            IOHIDElementRef tIOHIDElementRef = ( IOHIDElementRef ) CFArrayGetValueAtIndex( gElementCFArrayRef, idx );
+
+            device->generic.props[idx].lDevMin = IOHIDElementGetLogicalMin(tIOHIDElementRef);
+            device->generic.props[idx].lDevMax = IOHIDElementGetLogicalMax(tIOHIDElementRef);
+            device->generic.props[idx].lMin =  0;
+            device->generic.props[idx].lMax =  0xffff;
+            device->generic.props[idx].lDeadZone = 0;
+            device->generic.props[idx].lSaturation = 0;
+        }
+    }
+}
+
+static void poll_osx_device_state(JoystickGenericImpl *device_in)
+{
+    JoystickImpl *device = (JoystickImpl*)device_in;
+    IOHIDDeviceRef tIOHIDDeviceRef;
+    CFArrayRef gElementCFArrayRef = device->elementCFArrayRef;
+
+    TRACE("polling device %i\n",device->id);
+
+    if (!gDevices)
+        return;
+
+    tIOHIDDeviceRef = ( IOHIDDeviceRef ) CFArrayGetValueAtIndex( gDevices, device->id );
+
+    if (!tIOHIDDeviceRef)
+        return;
+
+    if (gElementCFArrayRef)
+    {
+        int button_idx = 0;
+        CFIndex idx, cnt = CFArrayGetCount( gElementCFArrayRef );
+
+        for ( idx = 0; idx < cnt; idx++ )
+        {
+            IOHIDValueRef valueRef;
+            int val;
+            IOHIDElementRef tIOHIDElementRef = ( IOHIDElementRef ) CFArrayGetValueAtIndex( gElementCFArrayRef, idx );
+            int eleType = IOHIDElementGetType( tIOHIDElementRef );
+
+            switch(eleType)
+            {
+                case kIOHIDElementTypeInput_Button:
+                    if(button_idx < 128)
+                    {
+                        IOHIDDeviceGetValue(tIOHIDDeviceRef, tIOHIDElementRef, &valueRef);
+                        val = IOHIDValueGetIntegerValue(valueRef);
+                        device->generic.js.rgbButtons[button_idx] = val ? 0x80 : 0x00;
+                        button_idx ++;
+                    }
+                    break;
+                default:
+                    FIXME("Unhandled type %i\n",eleType);
+            }
+        }
+    }
+}
+
+static INT find_joystick_devices(void)
+{
+    static INT joystick_devices_count = -1;
+
+    if (joystick_devices_count != -1) return joystick_devices_count;
+
+    joystick_devices_count = find_osx_devices();
+
+    return  joystick_devices_count;
+}
+
+static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
+{
+    if (id >= find_joystick_devices()) return FALSE;
+
+    if (dwFlags & DIEDFL_FORCEFEEDBACK) {
+        WARN("force feedback not supported\n");
+        return FALSE;
+    }
+
+    if ((dwDevType == 0) ||
+    ((dwDevType == DIDEVTYPE_JOYSTICK) && (version > 0x0300 && version < 0x0800)) ||
+    (((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 0x0800)))
+    {
+        /* Return joystick */
+        lpddi->guidInstance = DInput_Wine_OsX_Joystick_GUID;
+        lpddi->guidInstance.Data3 = id;
+        lpddi->guidProduct = DInput_Wine_OsX_Joystick_GUID;
+        /* we only support traditional joysticks for now */
+        if (version >= 0x0800)
+            lpddi->dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
+        else
+            lpddi->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
+        sprintf(lpddi->tszInstanceName, "Joystick %d", id);
+
+        /* get the device name */
+        get_osx_device_name(id, lpddi->tszProductName, MAX_PATH);
+
+        lpddi->guidFFDriver = GUID_NULL;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, DWORD version, int id)
+{
+    char name[MAX_PATH];
+    char friendly[32];
+
+    if (id >= find_joystick_devices()) return FALSE;
+
+    if (dwFlags & DIEDFL_FORCEFEEDBACK) {
+        WARN("force feedback not supported\n");
+        return FALSE;
+    }
+
+    if ((dwDevType == 0) ||
+    ((dwDevType == DIDEVTYPE_JOYSTICK) && (version > 0x0300 && version < 0x0800)) ||
+    (((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 0x0800))) {
+        /* Return joystick */
+        lpddi->guidInstance = DInput_Wine_OsX_Joystick_GUID;
+        lpddi->guidInstance.Data3 = id;
+        lpddi->guidProduct = DInput_Wine_OsX_Joystick_GUID;
+        /* we only support traditional joysticks for now */
+        if (version >= 0x0800)
+            lpddi->dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
+        else
+            lpddi->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
+        sprintf(friendly, "Joystick %d", id);
+        MultiByteToWideChar(CP_ACP, 0, friendly, -1, lpddi->tszInstanceName, MAX_PATH);
+        /* get the device name */
+        get_osx_device_name(id, name, MAX_PATH);
+
+        MultiByteToWideChar(CP_ACP, 0, name, -1, lpddi->tszProductName, MAX_PATH);
+        lpddi->guidFFDriver = GUID_NULL;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *dinput,
+    LPDIRECTINPUTDEVICEA* pdev, unsigned short index)
+{
+    DWORD i;
+    JoystickImpl* newDevice;
+    char name[MAX_PATH];
+    HRESULT hr;
+    LPDIDATAFORMAT df = NULL;
+    int idx = 0;
+
+    TRACE("%s %p %p %p %hu\n", debugstr_guid(rguid), jvt, dinput, pdev, index);
+
+    newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(JoystickImpl));
+    if (newDevice == 0) {
+        WARN("out of memory\n");
+        *pdev = 0;
+        return DIERR_OUTOFMEMORY;
+    }
+
+    newDevice->id = index;
+
+    newDevice->generic.guidProduct = DInput_Wine_OsX_Joystick_GUID;
+    newDevice->generic.joy_polldev = poll_osx_device_state;
+
+    /* get the device name */
+    get_osx_device_name(index, name, MAX_PATH);
+    TRACE("Name %s\n",name);
+
+    /* copy the device name */
+    newDevice->generic.name = HeapAlloc(GetProcessHeap(),0,strlen(name) + 1);
+    strcpy(newDevice->generic.name, name);
+
+    get_osx_device_elements(newDevice);
+
+    TRACE("%i axes %i buttons %i povs\n",newDevice->generic.devcaps.dwAxes,newDevice->generic.devcaps.dwButtons,newDevice->generic.devcaps.dwPOVs);
+
+    if (newDevice->generic.devcaps.dwButtons > 128)
+    {
+        WARN("Can't support %d buttons. Clamping down to 128\n", newDevice->generic.devcaps.dwButtons);
+        newDevice->generic.devcaps.dwButtons = 128;
+    }
+
+    newDevice->generic.base.lpVtbl = jvt;
+    newDevice->generic.base.ref = 1;
+    newDevice->generic.base.dinput = dinput;
+    newDevice->generic.base.guid = *rguid;
+    InitializeCriticalSection(&newDevice->generic.base.crit);
+    newDevice->generic.base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JoystickImpl*->generic.base.crit");
+
+    /* Create copy of default data format */
+    if (!(df = HeapAlloc(GetProcessHeap(), 0, c_dfDIJoystick2.dwSize))) goto FAILED;
+    memcpy(df, &c_dfDIJoystick2, c_dfDIJoystick2.dwSize);
+
+    df->dwNumObjs = newDevice->generic.devcaps.dwAxes + newDevice->generic.devcaps.dwPOVs + newDevice->generic.devcaps.dwButtons;
+    if (!(df->rgodf = HeapAlloc(GetProcessHeap(), 0, df->dwNumObjs * df->dwObjSize))) goto FAILED;
+
+    for (i = 0; i < newDevice->generic.devcaps.dwAxes; i++)
+    {
+        memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[i], df->dwObjSize);
+        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(i) | DIDFT_ABSAXIS;
+    }
+
+    for (i = 0; i < newDevice->generic.devcaps.dwPOVs; i++)
+    {
+        memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[i + 8], df->dwObjSize);
+        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(i) | DIDFT_POV;
+    }
+
+    for (i = 0; i < newDevice->generic.devcaps.dwButtons; i++)
+    {
+        memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[i + 12], df->dwObjSize);
+        df->rgodf[idx  ].pguid = &GUID_Button;
+        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(i) | DIDFT_PSHBUTTON;
+    }
+    newDevice->generic.base.data_format.wine_df = df;
+
+    /* create default properties */
+    newDevice->generic.props = HeapAlloc(GetProcessHeap(),0,c_dfDIJoystick2.dwNumObjs*sizeof(ObjProps));
+    if (newDevice->generic.props == 0)
+        goto FAILED;
+
+    /* initialize default properties */
+    get_osx_device_elements_props(newDevice);
+
+    IDirectInput_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->generic.base.dinput);
+
+    newDevice->generic.devcaps.dwSize = sizeof(newDevice->generic.devcaps);
+    newDevice->generic.devcaps.dwFlags = DIDC_ATTACHED;
+    if (newDevice->generic.base.dinput->dwVersion >= 0x0800)
+        newDevice->generic.devcaps.dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
+    else
+        newDevice->generic.devcaps.dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
+    newDevice->generic.devcaps.dwFFSamplePeriod = 0;
+    newDevice->generic.devcaps.dwFFMinTimeResolution = 0;
+    newDevice->generic.devcaps.dwFirmwareRevision = 0;
+    newDevice->generic.devcaps.dwHardwareRevision = 0;
+    newDevice->generic.devcaps.dwFFDriverVersion = 0;
+
+    if (TRACE_ON(dinput)) {
+        _dump_DIDATAFORMAT(newDevice->generic.base.data_format.wine_df);
+        _dump_DIDEVCAPS(&newDevice->generic.devcaps);
+    }
+
+    *pdev = (LPDIRECTINPUTDEVICEA)newDevice;
+
+    return DI_OK;
+
+FAILED:
+    hr = DIERR_OUTOFMEMORY;
+    if (df) HeapFree(GetProcessHeap(), 0, df->rgodf);
+    HeapFree(GetProcessHeap(), 0, df);
+    release_DataFormat(&newDevice->generic.base.data_format);
+    HeapFree(GetProcessHeap(),0,newDevice->generic.name);
+    HeapFree(GetProcessHeap(),0,newDevice->generic.props);
+    HeapFree(GetProcessHeap(),0,newDevice);
+    *pdev = 0;
+
+    return hr;
+}
+
+/******************************************************************************
+  *     get_joystick_index : Get the joystick index from a given GUID
+  */
+static unsigned short get_joystick_index(REFGUID guid)
+{
+    GUID wine_joystick = DInput_Wine_OsX_Joystick_GUID;
+    GUID dev_guid = *guid;
+
+    wine_joystick.Data3 = 0;
+    dev_guid.Data3 = 0;
+
+    /* for the standard joystick GUID use index 0 */
+    if(IsEqualGUID(&GUID_Joystick,guid)) return 0;
+
+    /* for the wine joystick GUIDs use the index stored in Data3 */
+    if(IsEqualGUID(&wine_joystick, &dev_guid)) return guid->Data3;
+
+    return 0xffff;
+}
+
+static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEA* pdev)
+{
+    unsigned short index;
+    int joystick_devices_count;
+
+    TRACE("%p %s %p %p\n",dinput, debugstr_guid(rguid), riid, pdev);
+    *pdev = NULL;
+
+    if ((joystick_devices_count = find_joystick_devices()) == 0)
+        return DIERR_DEVICENOTREG;
+
+    if ((index = get_joystick_index(rguid)) < 0xffff &&
+        joystick_devices_count && index < joystick_devices_count)
+    {
+        if ((riid == NULL) ||
+        IsEqualGUID(&IID_IDirectInputDeviceA,  riid) ||
+        IsEqualGUID(&IID_IDirectInputDevice2A, riid) ||
+        IsEqualGUID(&IID_IDirectInputDevice7A, riid) ||
+        IsEqualGUID(&IID_IDirectInputDevice8A, riid))
+        {
+            return alloc_device(rguid, &JoystickAvt, dinput, pdev, index);
+        }
+
+        WARN("no interface\n");
+        return DIERR_NOINTERFACE;
+    }
+
+    return DIERR_DEVICENOTREG;
+}
+
+static HRESULT joydev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEW* pdev)
+{
+    unsigned short index;
+    int joystick_devices_count;
+
+    TRACE("%p %s %p %p\n",dinput, debugstr_guid(rguid), riid, pdev);
+    *pdev = NULL;
+
+    if ((joystick_devices_count = find_joystick_devices()) == 0)
+        return DIERR_DEVICENOTREG;
+
+    if ((index = get_joystick_index(rguid)) < 0xffff &&
+        joystick_devices_count && index < joystick_devices_count)
+    {
+        if ((riid == NULL) ||
+        IsEqualGUID(&IID_IDirectInputDeviceW,  riid) ||
+        IsEqualGUID(&IID_IDirectInputDevice2W, riid) ||
+        IsEqualGUID(&IID_IDirectInputDevice7W, riid) ||
+        IsEqualGUID(&IID_IDirectInputDevice8W, riid))
+        {
+            return alloc_device(rguid, &JoystickWvt, dinput, (LPDIRECTINPUTDEVICEA *)pdev, index);
+        }
+        WARN("no interface\n");
+        return DIERR_NOINTERFACE;
+    }
+
+    WARN("invalid device GUID %s\n",debugstr_guid(rguid));
+    return DIERR_DEVICENOTREG;
+}
+
+const struct dinput_device joystick_osx_device = {
+  "Wine OS X joystick driver",
+  joydev_enum_deviceA,
+  joydev_enum_deviceW,
+  joydev_create_deviceA,
+  joydev_create_deviceW
+};
+
+static const IDirectInputDevice8AVtbl JoystickAvt =
+{
+    IDirectInputDevice2AImpl_QueryInterface,
+    IDirectInputDevice2AImpl_AddRef,
+    IDirectInputDevice2AImpl_Release,
+    JoystickAGenericImpl_GetCapabilities,
+    IDirectInputDevice2AImpl_EnumObjects,
+    JoystickAGenericImpl_GetProperty,
+    JoystickAGenericImpl_SetProperty,
+    JoystickAGenericImpl_Acquire,
+    JoystickAGenericImpl_Unacquire,
+    JoystickAGenericImpl_GetDeviceState,
+    IDirectInputDevice2AImpl_GetDeviceData,
+    IDirectInputDevice2AImpl_SetDataFormat,
+    IDirectInputDevice2AImpl_SetEventNotification,
+    IDirectInputDevice2AImpl_SetCooperativeLevel,
+    JoystickAGenericImpl_GetObjectInfo,
+    JoystickAGenericImpl_GetDeviceInfo,
+    IDirectInputDevice2AImpl_RunControlPanel,
+    IDirectInputDevice2AImpl_Initialize,
+    IDirectInputDevice2AImpl_CreateEffect,
+    IDirectInputDevice2AImpl_EnumEffects,
+    IDirectInputDevice2AImpl_GetEffectInfo,
+    IDirectInputDevice2AImpl_GetForceFeedbackState,
+    IDirectInputDevice2AImpl_SendForceFeedbackCommand,
+    IDirectInputDevice2AImpl_EnumCreatedEffectObjects,
+    IDirectInputDevice2AImpl_Escape,
+    JoystickAGenericImpl_Poll,
+    IDirectInputDevice2AImpl_SendDeviceData,
+    IDirectInputDevice7AImpl_EnumEffectsInFile,
+    IDirectInputDevice7AImpl_WriteEffectToFile,
+    IDirectInputDevice8AImpl_BuildActionMap,
+    IDirectInputDevice8AImpl_SetActionMap,
+    IDirectInputDevice8AImpl_GetImageInfo
+};
+
+#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
+# define XCAST(fun) (typeof(JoystickWvt.fun))
+#else
+# define XCAST(fun) (void*)
+#endif
+
+static const IDirectInputDevice8WVtbl JoystickWvt =
+{
+    IDirectInputDevice2WImpl_QueryInterface,
+    XCAST(AddRef)IDirectInputDevice2AImpl_AddRef,
+    XCAST(Release)IDirectInputDevice2AImpl_Release,
+    XCAST(GetCapabilities)JoystickAGenericImpl_GetCapabilities,
+    IDirectInputDevice2WImpl_EnumObjects,
+    XCAST(GetProperty)JoystickAGenericImpl_GetProperty,
+    XCAST(SetProperty)JoystickAGenericImpl_SetProperty,
+    XCAST(Acquire)JoystickAGenericImpl_Acquire,
+    XCAST(Unacquire)JoystickAGenericImpl_Unacquire,
+    XCAST(GetDeviceState)JoystickAGenericImpl_GetDeviceState,
+    XCAST(GetDeviceData)IDirectInputDevice2AImpl_GetDeviceData,
+    XCAST(SetDataFormat)IDirectInputDevice2AImpl_SetDataFormat,
+    XCAST(SetEventNotification)IDirectInputDevice2AImpl_SetEventNotification,
+    XCAST(SetCooperativeLevel)IDirectInputDevice2AImpl_SetCooperativeLevel,
+    JoystickWGenericImpl_GetObjectInfo,
+    JoystickWGenericImpl_GetDeviceInfo,
+    XCAST(RunControlPanel)IDirectInputDevice2AImpl_RunControlPanel,
+    XCAST(Initialize)IDirectInputDevice2AImpl_Initialize,
+    XCAST(CreateEffect)IDirectInputDevice2AImpl_CreateEffect,
+    IDirectInputDevice2WImpl_EnumEffects,
+    IDirectInputDevice2WImpl_GetEffectInfo,
+    XCAST(GetForceFeedbackState)IDirectInputDevice2AImpl_GetForceFeedbackState,
+    XCAST(SendForceFeedbackCommand)IDirectInputDevice2AImpl_SendForceFeedbackCommand,
+    XCAST(EnumCreatedEffectObjects)IDirectInputDevice2AImpl_EnumCreatedEffectObjects,
+    XCAST(Escape)IDirectInputDevice2AImpl_Escape,
+    XCAST(Poll)JoystickAGenericImpl_Poll,
+    XCAST(SendDeviceData)IDirectInputDevice2AImpl_SendDeviceData,
+    IDirectInputDevice7WImpl_EnumEffectsInFile,
+    IDirectInputDevice7WImpl_WriteEffectToFile,
+    IDirectInputDevice8WImpl_BuildActionMap,
+    IDirectInputDevice8WImpl_SetActionMap,
+    IDirectInputDevice8WImpl_GetImageInfo
+};
+#undef XCAST
+
+#else /* HAVE_IOKIT_HID_IOHIDLIB_H */
+
+const struct dinput_device joystick_osx_device = {
+  "Wine OS X joystick driver",
+  NULL,
+  NULL,
+  NULL,
+  NULL
+};
+
+#endif /* HAVE_IOKIT_HID_IOHIDLIB_H */

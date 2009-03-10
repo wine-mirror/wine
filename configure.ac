@@ -263,6 +263,7 @@ AC_CHECK_HEADERS(\
 	CoreAudio/CoreAudio.h \
 	DiskArbitration/DiskArbitration.h \
 	IOKit/IOKitLib.h \
+	IOKit/hid/IOHIDLib.h \
 	alias.h \
 	alsa/asoundlib.h \
 	arpa/inet.h \

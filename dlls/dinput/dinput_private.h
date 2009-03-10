@@ -58,6 +58,7 @@ extern const struct dinput_device mouse_device;
 extern const struct dinput_device keyboard_device;
 extern const struct dinput_device joystick_linux_device;
 extern const struct dinput_device joystick_linuxinput_device;
+extern const struct dinput_device joystick_osx_device;
 
 extern void check_dinput_hooks(LPDIRECTINPUTDEVICE8A);
 typedef int (*DI_EVENT_PROC)(LPDIRECTINPUTDEVICE8A, WPARAM, LPARAM);

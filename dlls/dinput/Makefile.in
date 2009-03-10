@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = dinput.dll
 IMPORTLIB = dinput
 IMPORTS   = dxguid uuid ole32 user32 advapi32 kernel32
+EXTRALIBS = @CARBONLIB@ @IOKITLIB@
 
 C_SRCS = \
 	data_formats.c \
@@ -14,6 +15,7 @@ C_SRCS = \
 	joystick.c \
 	joystick_linux.c \
 	joystick_linuxinput.c \
+	joystick_osx.c \
 	keyboard.c \
 	mouse.c \
 	regsvr.c
