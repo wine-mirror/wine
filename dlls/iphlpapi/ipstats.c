@@ -1054,6 +1054,44 @@ DWORD WINAPI AllocateAndGetIpForwardTableFromStack(PMIB_IPFORWARDTABLE *ppIpForw
         }
         else ret = ERROR_NOT_SUPPORTED;
     }
+#elif defined(HAVE_SYS_TIHDR_H) && defined(T_OPTMGMT_ACK)
+    {
+        void *data;
+        int fd, len, namelen;
+        mib2_ipRouteEntry_t *entry;
+        char name[64];
+
+        if ((fd = open_streams_mib( NULL )) != -1)
+        {
+            if ((data = read_mib_entry( fd, MIB2_IP, MIB2_IP_ROUTE, &len )))
+            {
+                for (entry = data; (char *)(entry + 1) <= (char *)data + len; entry++)
+                {
+                    row.dwForwardDest      = entry->ipRouteDest;
+                    row.dwForwardMask      = entry->ipRouteMask;
+                    row.dwForwardPolicy    = 0;
+                    row.dwForwardNextHop   = entry->ipRouteNextHop;
+                    row.dwForwardType      = entry->ipRouteType;
+                    row.dwForwardProto     = entry->ipRouteProto;
+                    row.dwForwardAge       = entry->ipRouteAge;
+                    row.dwForwardNextHopAS = 0;
+                    row.dwForwardMetric1   = entry->ipRouteMetric1;
+                    row.dwForwardMetric2   = entry->ipRouteMetric2;
+                    row.dwForwardMetric3   = entry->ipRouteMetric3;
+                    row.dwForwardMetric4   = entry->ipRouteMetric4;
+                    row.dwForwardMetric5   = entry->ipRouteMetric5;
+                    namelen = min( sizeof(name) - 1, entry->ipRouteIfIndex.o_length );
+                    memcpy( name, entry->ipRouteIfIndex.o_bytes, namelen );
+                    name[namelen] = 0;
+                    getInterfaceIndexByName( name, &row.dwForwardIfIndex );
+                    if (!(table = append_ipforward_row( heap, flags, table, &count, &row ))) break;
+                }
+                HeapFree( GetProcessHeap(), 0, data );
+            }
+            close( fd );
+        }
+        else ret = ERROR_NOT_SUPPORTED;
+    }
 #elif defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_DUMP)
     {
        int mib[6] = {CTL_NET, PF_ROUTE, 0, PF_INET, NET_RT_DUMP, 0};
