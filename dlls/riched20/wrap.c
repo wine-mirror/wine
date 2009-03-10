@@ -115,7 +115,8 @@ static void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
           WCHAR *text = p->member.run.strText->szData + len - 1;
 
           assert (len);
-          while (len && *(text--) == ' ')
+          if (~p->member.run.nFlags & MERF_GRAPHICS)
+            while (len && *(text--) == ' ')
               len--;
           if (len)
           {
