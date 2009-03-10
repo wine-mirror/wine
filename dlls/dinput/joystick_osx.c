@@ -284,7 +284,7 @@ static int get_osx_device_name(int id, char *name, int length)
     return 0;
 }
 
-static void get_osx_device_elements(JoystickImpl *device)
+static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
 {
     IOHIDDeviceRef  tIOHIDDeviceRef;
     CFArrayRef      gElementCFArrayRef;
@@ -351,6 +351,7 @@ static void get_osx_device_elements(JoystickImpl *device)
                         case kHIDUsage_GD_Rz:
                         {
                             CFArrayInsertValueAtIndex(device->elementCFArrayRef, axes, tIOHIDElementRef);
+                            axis_map[axes]=usage;
                             axes++;
                             break;
                         }
@@ -583,6 +584,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     HRESULT hr;
     LPDIDATAFORMAT df = NULL;
     int idx = 0;
+    int axis_map[8]; /* max axes */
 
     TRACE("%s %p %p %p %hu\n", debugstr_guid(rguid), jvt, dinput, pdev, index);
 
@@ -606,7 +608,8 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     newDevice->generic.name = HeapAlloc(GetProcessHeap(),0,strlen(name) + 1);
     strcpy(newDevice->generic.name, name);
 
-    get_osx_device_elements(newDevice);
+    memset(axis_map, 0, sizeof(axis_map));
+    get_osx_device_elements(newDevice, axis_map);
 
     TRACE("%i axes %i buttons %i povs\n",newDevice->generic.devcaps.dwAxes,newDevice->generic.devcaps.dwButtons,newDevice->generic.devcaps.dwPOVs);
 
@@ -632,8 +635,20 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
 
     for (i = 0; i < newDevice->generic.devcaps.dwAxes; i++)
     {
-        memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[i], df->dwObjSize);
-        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(i) | DIDFT_ABSAXIS;
+        int wine_obj = -1;
+        switch (axis_map[i])
+        {
+            case kHIDUsage_GD_X: wine_obj = 0; break;
+            case kHIDUsage_GD_Y: wine_obj = 1; break;
+            case kHIDUsage_GD_Z: wine_obj = 2; break;
+            case kHIDUsage_GD_Rx: wine_obj = 3; break;
+            case kHIDUsage_GD_Ry: wine_obj = 4; break;
+            case kHIDUsage_GD_Rz: wine_obj = 5; break;
+        }
+        if (wine_obj < 0 ) continue;
+
+        memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[wine_obj], df->dwObjSize);
+        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(wine_obj) | DIDFT_ABSAXIS;
     }
 
     for (i = 0; i < newDevice->generic.devcaps.dwPOVs; i++)
