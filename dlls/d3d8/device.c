@@ -1302,7 +1302,12 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DeleteStateBlock(LPDIRECT3DDEVICE8 if
     TRACE("(%p) Relay\n", This);
 
     EnterCriticalSection(&d3d8_cs);
-    while(IUnknown_Release((IUnknown *)pSB));
+
+    if (IUnknown_Release((IUnknown *)pSB))
+    {
+        ERR("Stateblock %p has references left, this shouldn't happen.\n", pSB);
+    }
+
     LeaveCriticalSection(&d3d8_cs);
 
     return D3D_OK;
@@ -1910,7 +1915,11 @@ static HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteVertexShader(LPDIRECT3DDEVICE
             IWineD3DVertexShader_Release(cur);
         }
 
-        while(IUnknown_Release((IUnknown *)shader));
+        if (IUnknown_Release((IUnknown *)shader))
+        {
+            ERR("Shader %p has references left, this shouldn't happen.\n", shader);
+        }
+
         free_shader_handle(This, handle);
     }
     LeaveCriticalSection(&d3d8_cs);
@@ -2164,7 +2173,11 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DeletePixelShader(LPDIRECT3DDEVICE8 i
             IWineD3DPixelShader_Release(cur);
         }
 
-        while(IUnknown_Release((IUnknown *)shader));
+        if (IUnknown_Release((IUnknown *)shader))
+        {
+            ERR("Shader %p has references left, this shouldn't happen.\n", shader);
+        }
+
         free_shader_handle(This, handle);
     }
     LeaveCriticalSection(&d3d8_cs);
