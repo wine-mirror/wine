@@ -360,6 +360,7 @@ BEGIN
     ID_EDIT_COPYKEYNAME     "Copies the name of the selected key to the clipboard"
     ID_EDIT_FIND            "Finds a text string in a key, value or data"
     ID_EDIT_FINDNEXT        "Finds next occurrence of text specified in previous search"
+    ID_EDIT_EXPORT          "Exports selected branch of the registry to a text file"
 END
 
 STRINGTABLE DISCARDABLE
