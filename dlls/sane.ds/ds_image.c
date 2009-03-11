@@ -116,12 +116,49 @@ TW_UINT16 SANE_ImageInfoGet (pTW_IDENTITY pOrigin,
 }
 
 /* DG_IMAGE/DAT_IMAGELAYOUT/MSG_GET */
-TW_UINT16 SANE_ImageLayoutGet (pTW_IDENTITY pOrigin, 
+TW_UINT16 SANE_ImageLayoutGet (pTW_IDENTITY pOrigin,
                                 TW_MEMREF pData)
 {
-    FIXME ("stub!\n");
-
+#ifndef SONAME_LIBSANE
     return TWRC_FAILURE;
+#else
+    TW_IMAGELAYOUT *img = (TW_IMAGELAYOUT *) pData;
+    SANE_Fixed tlx_current;
+    SANE_Fixed tly_current;
+    SANE_Fixed brx_current;
+    SANE_Fixed bry_current;
+    SANE_Status status;
+
+    TRACE("DG_IMAGE/DAT_IMAGELAYOUT/MSG_GET\n");
+
+    status = sane_option_probe_scan_area(activeDS.deviceHandle, "tl-x", &tlx_current, NULL, NULL, NULL, NULL);
+    if (status == SANE_STATUS_GOOD)
+        status = sane_option_probe_scan_area(activeDS.deviceHandle, "tl-y", &tly_current, NULL, NULL, NULL, NULL);
+
+    if (status == SANE_STATUS_GOOD)
+        status = sane_option_probe_scan_area(activeDS.deviceHandle, "br-x", &brx_current, NULL, NULL, NULL, NULL);
+
+    if (status == SANE_STATUS_GOOD)
+        status = sane_option_probe_scan_area(activeDS.deviceHandle, "br-y", &bry_current, NULL, NULL, NULL, NULL);
+
+    if (status != SANE_STATUS_GOOD)
+    {
+        activeDS.twCC = sane_status_to_twcc(status);
+        return TWRC_FAILURE;
+    }
+
+    convert_sane_res_to_twain(SANE_UNFIX(tlx_current), SANE_UNIT_MM, &img->Frame.Left, TWUN_INCHES);
+    convert_sane_res_to_twain(SANE_UNFIX(tly_current), SANE_UNIT_MM, &img->Frame.Top, TWUN_INCHES);
+    convert_sane_res_to_twain(SANE_UNFIX(brx_current), SANE_UNIT_MM, &img->Frame.Right, TWUN_INCHES);
+    convert_sane_res_to_twain(SANE_UNFIX(bry_current), SANE_UNIT_MM, &img->Frame.Bottom, TWUN_INCHES);
+
+    img->DocumentNumber = 1;
+    img->PageNumber = 1;
+    img->FrameNumber = 1;
+
+    activeDS.twCC = TWCC_SUCCESS;
+    return TWRC_SUCCESS;
+#endif
 }
 
 /* DG_IMAGE/DAT_IMAGELAYOUT/MSG_GETDEFAULT */
@@ -142,13 +179,62 @@ TW_UINT16 SANE_ImageLayoutReset (pTW_IDENTITY pOrigin,
     return TWRC_FAILURE;
 }
 
+#ifdef SONAME_LIBSANE
+static TW_UINT16 set_one_imagecoord(const char *option_name, TW_FIX32 val, BOOL *changed)
+{
+    double d = val.Whole + ((double) val.Frac / 65536.0);
+    int set_status = 0;
+    SANE_Status status;
+    status = sane_option_set_fixed(activeDS.deviceHandle, option_name,
+             SANE_FIX((d * 254) / 10), &set_status);
+    if (status != SANE_STATUS_GOOD)
+    {
+        activeDS.twCC = sane_status_to_twcc(status);
+        return TWRC_FAILURE;
+    }
+    if (set_status & SANE_INFO_INEXACT)
+        *changed = TRUE;
+    return TWRC_SUCCESS;
+}
+#endif
+
 /* DG_IMAGE/DAT_IMAGELAYOUT/MSG_SET */
-TW_UINT16 SANE_ImageLayoutSet (pTW_IDENTITY pOrigin, 
+TW_UINT16 SANE_ImageLayoutSet (pTW_IDENTITY pOrigin,
                                 TW_MEMREF pData)
 {
-    FIXME ("stub!\n");
-
+#ifndef SONAME_LIBSANE
     return TWRC_FAILURE;
+#else
+    TW_IMAGELAYOUT *img = (TW_IMAGELAYOUT *) pData;
+    BOOL changed = FALSE;
+    TW_UINT16 twrc;
+
+    TRACE("DG_IMAGE/DAT_IMAGELAYOUT/MSG_SET\n");
+    TRACE("Frame: [Left %x.%x|Top %x.%x|Right %x.%x|Bottom %x.%x]\n",
+            img->Frame.Left.Whole, img->Frame.Left.Frac,
+            img->Frame.Top.Whole, img->Frame.Top.Frac,
+            img->Frame.Right.Whole, img->Frame.Right.Frac,
+            img->Frame.Bottom.Whole, img->Frame.Bottom.Frac);
+
+    twrc = set_one_imagecoord("tl-x", img->Frame.Left, &changed);
+    if (twrc != TWRC_SUCCESS)
+        return (twrc);
+
+    twrc = set_one_imagecoord("tl-y", img->Frame.Top, &changed);
+    if (twrc != TWRC_SUCCESS)
+        return (twrc);
+
+    twrc = set_one_imagecoord("br-x", img->Frame.Right, &changed);
+    if (twrc != TWRC_SUCCESS)
+        return (twrc);
+
+    twrc = set_one_imagecoord("br-y", img->Frame.Bottom, &changed);
+    if (twrc != TWRC_SUCCESS)
+        return (twrc);
+
+    activeDS.twCC = TWCC_SUCCESS;
+    return changed ? TWRC_CHECKSTATUS : TWRC_SUCCESS;
+#endif
 }
 
 /* DG_IMAGE/DAT_IMAGEMEMXFER/MSG_GET */

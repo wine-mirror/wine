@@ -583,6 +583,51 @@ static void test_supported_sizes(TW_IDENTITY *appid, TW_IDENTITY *source, TW_INT
     }
 }
 
+static void test_imagelayout(TW_IDENTITY *appid, TW_IDENTITY *source)
+{
+    TW_UINT16 rc;
+    TW_STATUS status;
+    TW_IMAGELAYOUT layout;
+
+    rc = pDSM_Entry(appid, source, DG_IMAGE, DAT_IMAGELAYOUT, MSG_GET, &layout);
+    get_condition_code(appid, source, &status);
+    ok(rc == TWRC_SUCCESS && status.ConditionCode == TWCC_SUCCESS,
+            "Error [rc %d|cc %d] doing MSG_GET for DG_IMAGE/DAT_IMAGELAYOUT\n", rc, status.ConditionCode);
+    if (rc != TWRC_SUCCESS)
+        return;
+    trace("ImageLayout [Left %x.%x|Top %x.%x|Right %x.%x|Bottom %x.%x|Document %d|Page %d|Frame %d]\n",
+            layout.Frame.Left.Whole, layout.Frame.Left.Frac,
+            layout.Frame.Top.Whole, layout.Frame.Top.Frac,
+            layout.Frame.Right.Whole, layout.Frame.Right.Frac,
+            layout.Frame.Bottom.Whole, layout.Frame.Bottom.Frac,
+            layout.DocumentNumber, layout.PageNumber, layout.FrameNumber);
+
+    memset(&layout, 0, sizeof(layout));
+    layout.Frame.Left.Whole = 1;
+    layout.Frame.Right.Whole = 2;
+    layout.Frame.Top.Whole = 1;
+    layout.Frame.Bottom.Whole = 2;
+    rc = pDSM_Entry(appid, source, DG_IMAGE, DAT_IMAGELAYOUT, MSG_SET, &layout);
+    get_condition_code(appid, source, &status);
+    ok(rc == TWRC_SUCCESS && status.ConditionCode == TWCC_SUCCESS,
+            "Error [rc %d|cc %d] doing MSG_SET for DG_IMAGE/DAT_IMAGELAYOUT\n", rc, status.ConditionCode);
+    if (rc != TWRC_SUCCESS)
+        return;
+
+    rc = pDSM_Entry(appid, source, DG_IMAGE, DAT_IMAGELAYOUT, MSG_GET, &layout);
+    get_condition_code(appid, source, &status);
+    ok(rc == TWRC_SUCCESS && status.ConditionCode == TWCC_SUCCESS,
+            "Error [rc %d|cc %d] doing MSG_GET for DG_IMAGE/DAT_IMAGELAYOUT\n", rc, status.ConditionCode);
+    if (rc != TWRC_SUCCESS)
+        return;
+    trace("ImageLayout after set [Left %x.%x|Top %x.%x|Right %x.%x|Bottom %x.%x|Document %d|Page %d|Frame %d]\n",
+            layout.Frame.Left.Whole, layout.Frame.Left.Frac,
+            layout.Frame.Top.Whole, layout.Frame.Top.Frac,
+            layout.Frame.Right.Whole, layout.Frame.Right.Frac,
+            layout.Frame.Bottom.Whole, layout.Frame.Bottom.Frac,
+            layout.DocumentNumber, layout.PageNumber, layout.FrameNumber);
+}
+
 
 static void test_single_source(TW_IDENTITY *appid, TW_IDENTITY *source)
 {
@@ -699,6 +744,8 @@ static void test_single_source(TW_IDENTITY *appid, TW_IDENTITY *source)
         if (capabilities[ICAP_SUPPORTEDSIZES])
             test_supported_sizes(appid, source,
                 TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET);
+
+        test_imagelayout(appid, source);
 
     }
 }
