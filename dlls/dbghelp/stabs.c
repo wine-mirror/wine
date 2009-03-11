@@ -1265,7 +1265,8 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
     unsigned                    incl[32];
     int                         incl_stk = -1;
     int                         source_idx = -1;
-    struct pending_list         pending;
+    struct pending_list         pending_block;
+    struct pending_list         pending_func;
     BOOL                        ret = TRUE;
     struct location             loc;
     unsigned char               type;
@@ -1275,7 +1276,8 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
 
     memset(srcpath, 0, sizeof(srcpath));
     memset(stabs_basic, 0, sizeof(stabs_basic));
-    memset(&pending, 0, sizeof(pending));
+    memset(&pending_block, 0, sizeof(pending_block));
+    memset(&pending_func, 0, sizeof(pending_func));
 
     /*
      * Allocate a buffer into which we can build stab strings for cases
@@ -1381,7 +1383,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             {
                 block = symt_open_func_block(module, curr_func, block,
                                              stab_ptr->n_value, 0);
-                pending_flush(&pending, module, curr_func, block);
+                pending_flush(&pending_block, module, curr_func, block);
             }
             break;
         case N_RBRAC:
@@ -1465,7 +1467,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
                                                           param_type);
                 }
                 else
-                    pending_add_var(&pending, ptr, DataIsLocal, &loc);
+                    pending_add_var(&pending_block, ptr, DataIsLocal, &loc);
             }
             break;
         case N_LSYM:
@@ -1473,19 +1475,21 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             loc.kind = loc_regrel;
             loc.reg = 0; /* FIXME */
             loc.offset = stab_ptr->n_value;
-            if (curr_func != NULL) pending_add_var(&pending, ptr, DataIsLocal, &loc);
+            if (curr_func != NULL) pending_add_var(&pending_block, ptr, DataIsLocal, &loc);
             break;
         case N_SLINE:
             /*
              * This is a line number.  These are always relative to the start
              * of the function (N_FUN), and this makes the lookup easier.
              */
+            assert(source_idx >= 0);
             if (curr_func != NULL)
             {
-                assert(source_idx >= 0);
                 symt_add_func_line(module, curr_func, source_idx, 
                                    stab_ptr->n_desc, stab_ptr->n_value);
             }
+            else pending_add_line(&pending_func, source_idx, stab_ptr->n_desc,
+                                  stab_ptr->n_value);
             break;
         case N_FUN:
             /*
@@ -1520,6 +1524,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
                 curr_func = symt_new_function(module, compiland, symname, 
                                               load_offset + stab_ptr->n_value, 0,
                                               &func_type->symt);
+                pending_flush(&pending_func, module, curr_func, NULL);
             }
             else
             {
@@ -1649,7 +1654,8 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
 done:
     HeapFree(GetProcessHeap(), 0, stabbuff);
     stabs_free_includes();
-    HeapFree(GetProcessHeap(), 0, pending.objs);
+    HeapFree(GetProcessHeap(), 0, pending_block.objs);
+    HeapFree(GetProcessHeap(), 0, pending_func.objs);
 
     return ret;
 }
