@@ -29,12 +29,6 @@ C_SRCS = \
 	variant.c \
 	vartype.c
 
-C_SRCS16 = \
-	ole2disp.c
-
-SPEC_SRCS16 = \
-	ole2disp.spec
-
 RC_SRCS = oleaut32.rc
 
 IDL_P_SRCS = \

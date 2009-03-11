@@ -28,7 +28,6 @@ WIN16_FILES = \
 	krnl386.exe16 \
 	mmsystem.dll16 \
 	msvideo.dll16 \
-	ole2disp.dll16 \
 	rasapi16.dll16 \
 	setupx.dll16 \
 	shell.dll16 \
@@ -76,9 +75,6 @@ krnl386.exe16 system.drv16 toolhelp.dll16:
 
 msvideo.dll16:
 	echo "msvfw32.dll" >$@
-
-ole2disp.dll16:
-	echo "oleaut32.dll" >$@
 
 rasapi16.dll16:
 	echo "rasapi32.dll" >$@
