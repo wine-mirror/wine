@@ -46,12 +46,6 @@ C_SRCS = \
 	stubmanager.c \
 	usrmarshal.c
 
-C_SRCS16 = \
-	ole16.c
-
-SPEC_SRCS16 = \
-	compobj.spec
-
 RC_SRCS = ole32res.rc
 
 IDL_C_SRCS = \

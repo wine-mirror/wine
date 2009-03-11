@@ -1,0 +1,15 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = compobj.dll16
+IMPORTS   = uuid ole32 advapi32 kernel32
+EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,ole32.dll
+
+SPEC_SRCS = compobj.dll16.spec
+
+C_SRCS = compobj.c
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

@@ -20,7 +20,6 @@ DOCSUBDIRS     = $(DLLSUBDIRS)
 WIN16_FILES = \
 	avifile.dll16 \
 	commdlg.dll16 \
-	compobj.dll16 \
 	ctl3d.dll16 \
 	ctl3dv2.dll16 \
 	ddeml.dll16 \
@@ -78,9 +77,6 @@ krnl386.exe16 system.drv16 toolhelp.dll16:
 
 msvideo.dll16:
 	echo "msvfw32.dll" >$@
-
-compobj.dll16:
-	echo "ole32.dll" >$@
 
 ole2disp.dll16 typelib.dll16:
 	echo "oleaut32.dll" >$@

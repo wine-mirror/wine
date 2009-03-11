@@ -3902,6 +3902,7 @@ then
     WIN16_FILES=""
     WIN16_INSTALL=""
     enable_comm_drv16=${enable_comm_drv16:-no}
+    enable_compobj_dll16=${enable_compobj_dll16:-no}
     enable_dispdib_dll16=${enable_dispdib_dll16:-no}
     enable_display_drv16=${enable_display_drv16:-no}
     enable_ifsmgr_vxd=${enable_ifsmgr_vxd:-no}
@@ -24769,6 +24770,14 @@ dlls/comm.drv16/Makefile: dlls/comm.drv16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/comm.drv16/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/compobj.dll16/Makefile"
+test "x$enable_compobj_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	compobj.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/compobj.dll16/Makefile: dlls/compobj.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/compobj.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/compstui/Makefile"
 test "x$enable_compstui" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	compstui"
@@ -29021,6 +29030,7 @@ do
     "dlls/comdlg32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/comdlg32/Makefile" ;;
     "dlls/comdlg32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/comdlg32/tests/Makefile" ;;
     "dlls/comm.drv16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/comm.drv16/Makefile" ;;
+    "dlls/compobj.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/compobj.dll16/Makefile" ;;
     "dlls/compstui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/compstui/Makefile" ;;
     "dlls/credui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/credui/Makefile" ;;
     "dlls/credui/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/credui/tests/Makefile" ;;

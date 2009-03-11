@@ -999,7 +999,6 @@ static void COMPOBJ_DllList_Free(void)
 
 /******************************************************************************
  *           CoBuildVersion [OLE32.@]
- *           CoBuildVersion [COMPOBJ.1]
  *
  * Gets the build version of the DLL.
  *
@@ -1318,7 +1317,6 @@ HRESULT WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
 
 /******************************************************************************
  *		CoCreateGuid [OLE32.@]
- *		CoCreateGuid [COMPOBJ.73]
  *
  * Simply forwards to UuidCreate in RPCRT4.
  *
@@ -1504,7 +1502,6 @@ HRESULT WINAPI StringFromCLSID(REFCLSID id, LPOLESTR *idstr)
 
 /******************************************************************************
  *		StringFromGUID2	[OLE32.@]
- *		StringFromGUID2	[COMPOBJ.76]
  *
  * Modified version of StringFromCLSID that allows you to specify max
  * buffer size.
@@ -2684,7 +2681,6 @@ void WINAPI CoFreeUnusedLibrariesEx(DWORD dwUnloadDelay, DWORD dwReserved)
 
 /***********************************************************************
  *           CoFreeUnusedLibraries [OLE32.@]
- *           CoFreeUnusedLibraries [COMPOBJ.17]
  *
  * Frees any unused libraries. Unused are identified as those that return
  * S_OK from their DllCanUnloadNow function.
@@ -2702,7 +2698,6 @@ void WINAPI CoFreeUnusedLibraries(void)
 
 /***********************************************************************
  *           CoFileTimeNow [OLE32.@]
- *           CoFileTimeNow [COMPOBJ.82]
  *
  * Retrieves the current time in FILETIME format.
  *
@@ -2980,7 +2975,6 @@ done:
 
 /******************************************************************************
  *		CoGetCurrentProcess	[OLE32.@]
- *		CoGetCurrentProcess	[COMPOBJ.34]
  *
  * Gets the current process ID.
  *

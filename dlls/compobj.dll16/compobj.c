@@ -42,7 +42,6 @@
 #include "wtypes.h"
 #include "wine/unicode.h"
 #include "wine/winbase16.h"
-#include "compobj_private.h"
 
 #include "wine/debug.h"
 
@@ -158,7 +157,7 @@ SEGPTR CDECL IMalloc16_fnRealloc(IMalloc16* iface,SEGPTR pv,DWORD cb)
     SEGPTR ret;
     IMalloc16Impl *This = (IMalloc16Impl *)iface;
     TRACE("(%p)->Realloc(%08x,%d)\n",This,pv,cb);
-    if (!pv) 
+    if (!pv)
 	ret = IMalloc16_fnAlloc(iface, cb);
     else if (cb) {
         ret = MapLS( HeapReAlloc( GetProcessHeap(), 0, MapSL(pv), cb ) );
@@ -231,6 +230,14 @@ IMalloc16_Constructor(void)
 }
 
 
+/******************************************************************************
+ *           CoBuildVersion [COMPOBJ.1]
+ */
+DWORD WINAPI CoBuildVersion16(void)
+{
+    return CoBuildVersion();
+}
+
 /***********************************************************************
  *           CoGetMalloc    [COMPOBJ.4]
  *
@@ -282,6 +289,14 @@ void WINAPI CoUninitialize16(void)
 {
   TRACE("()\n");
   CoFreeAllLibraries();
+}
+
+/***********************************************************************
+ *           CoFreeUnusedLibraries [COMPOBJ.17]
+ */
+void WINAPI CoFreeUnusedLibraries16(void)
+{
+    return CoFreeUnusedLibraries();
 }
 
 /***********************************************************************
@@ -417,15 +432,17 @@ _xmalloc16(DWORD size, SEGPTR *ptr) {
 
 HRESULT WINAPI StringFromCLSID16(
   REFCLSID id,		/* [in] the GUID to be converted */
-  LPOLESTR16 *idstr	/* [out] a pointer to a to-be-allocated segmented pointer pointing to the resulting string */
+  LPOLESTR16 *idstr )	/* [out] a pointer to a to-be-allocated segmented pointer pointing to the resulting string */
+{
+    WCHAR buffer[40];
+    HRESULT ret;
 
-) {
-  HRESULT ret;
-
-  ret = _xmalloc16(40,(SEGPTR*)idstr);
-  if (ret != S_OK)
+    ret = _xmalloc16(40,(SEGPTR*)idstr);
+    if (ret != S_OK)
+        return ret;
+    StringFromGUID2( id, buffer, 40 );
+    WideCharToMultiByte( CP_ACP, 0, buffer, -1, MapSL((SEGPTR)*idstr), 40, NULL, NULL );
     return ret;
-  return WINE_StringFromCLSID(id,MapSL((SEGPTR)*idstr));
 }
 
 /******************************************************************************
@@ -439,37 +456,21 @@ HRESULT WINAPI StringFromCLSID16(
  */
 HRESULT WINAPI ProgIDFromCLSID16(
   REFCLSID clsid, /* [in] class id as found in registry */
-  LPOLESTR16 *lplpszProgID/* [out] associated Program ID */
-) {
-  static const WCHAR wszProgID[] = {'P','r','o','g','I','D',0};
-  HKEY     hkey;
-  HRESULT  ret;
-  LONG     len;
-  char    *buffer;
+  LPOLESTR16 *lplpszProgID )/* [out] associated Program ID */
+{
+    LPOLESTR progid;
+    HRESULT ret;
 
-  ret = COM_OpenKeyForCLSID(clsid, wszProgID, KEY_READ, &hkey);
-  if (FAILED(ret))
-    return ret;
-  
-  if (RegQueryValueA(hkey, NULL, NULL, &len))
-    ret = REGDB_E_READREGDB;
-
-  if (ret == S_OK)
-  {
-    buffer = HeapAlloc(GetProcessHeap(), 0, len);
-    if (RegQueryValueA(hkey, NULL, buffer, &len))
-      ret = REGDB_E_READREGDB;
-
+    ret = ProgIDFromCLSID( clsid, &progid );
     if (ret == S_OK)
     {
-      ret = _xmalloc16(len, (SEGPTR*)lplpszProgID);
-      if (ret == S_OK)
-        strcpy(MapSL((SEGPTR)*lplpszProgID),buffer);
+        INT len = WideCharToMultiByte( CP_ACP, 0, progid, -1, NULL, 0, NULL, NULL );
+        ret = _xmalloc16(len, (SEGPTR*)lplpszProgID);
+        if (ret == S_OK)
+            WideCharToMultiByte( CP_ACP, 0, progid, -1, MapSL((SEGPTR)*lplpszProgID), len, NULL, NULL );
+        CoTaskMemFree( progid );
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
-  }
-  RegCloseKey(hkey);
-  return ret;
+    return ret;
 }
 
 /***********************************************************************
@@ -571,6 +572,14 @@ BOOL16 WINAPI CoDosDateTimeToFileTime16(WORD wDosDate, WORD wDosTime, FILETIME *
 }
 
 /******************************************************************************
+ *		CoGetCurrentProcess	[COMPOBJ.34]
+ */
+DWORD WINAPI CoGetCurrentProcess16(void)
+{
+    return CoGetCurrentProcess();
+}
+
+/******************************************************************************
  *		CoRegisterMessageFilter	[COMPOBJ.27]
  */
 HRESULT WINAPI CoRegisterMessageFilter16(
@@ -668,6 +677,23 @@ HRESULT WINAPI CLSIDFromProgID16(LPCOLESTR16 progid, LPCLSID riid)
 	return CLSIDFromString16(buf2,riid);
 }
 
+/******************************************************************************
+ *		StringFromGUID2	[COMPOBJ.76]
+ */
+INT WINAPI StringFromGUID216(REFGUID id, LPOLESTR str, INT cmax)
+{
+    return StringFromGUID2( id, str, cmax );
+}
+
+
+/***********************************************************************
+ *           CoFileTimeNow [COMPOBJ.82]
+ */
+HRESULT WINAPI CoFileTimeNow16( FILETIME *lpFileTime )
+{
+    return CoFileTimeNow( lpFileTime );
+}
+
 /***********************************************************************
  *           CoGetClassObject [COMPOBJ.7]
  *
@@ -683,6 +709,14 @@ HRESULT WINAPI CoGetClassObject16(
 	FIXME("\t\tpAuthInfo=%p\n",pServerInfo->pAuthInfo);
     }
     return E_NOTIMPL;
+}
+
+/******************************************************************************
+ *		CoCreateGuid [COMPOBJ.73]
+ */
+HRESULT WINAPI CoCreateGuid16(GUID *pguid)
+{
+    return CoCreateGuid( pguid );
 }
 
 /***********************************************************************

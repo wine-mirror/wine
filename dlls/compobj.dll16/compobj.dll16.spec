@@ -1,4 +1,4 @@
-1 pascal CoBuildVersion() CoBuildVersion
+1 pascal CoBuildVersion() CoBuildVersion16
 2 pascal CoInitialize(long) CoInitialize16
 3 pascal CoUninitialize() CoUninitialize16
 4 pascal CoGetMalloc(long ptr) CoGetMalloc16
@@ -14,7 +14,7 @@
 14 stub STRINGFROMIID
 15 pascal CoDisconnectObject(ptr long) CoDisconnectObject16
 16 stub CORELEASEMARSHALDATA
-17 pascal -ret16 CoFreeUnusedLibraries() CoFreeUnusedLibraries
+17 pascal -ret16 CoFreeUnusedLibraries() CoFreeUnusedLibraries16
 18 pascal -ret16 IsEqualGUID(ptr ptr) IsEqualGUID16
 19 pascal StringFromCLSID(ptr ptr) StringFromCLSID16
 20 pascal CLSIDFromString(str ptr) CLSIDFromString16
@@ -31,7 +31,7 @@
 31 pascal -ret16 CoDosDateTimeToFileTime(word word ptr) CoDosDateTimeToFileTime16
 32 stub COMARSHALHRESULT
 33 stub COUNMARSHALHRESULT
-34 pascal CoGetCurrentProcess() CoGetCurrentProcess
+34 pascal CoGetCurrentProcess() CoGetCurrentProcess16
 35 stub SHRCREATE
 36 stub COISOLE1CLASS
 37 stub _GUID_NULL
@@ -70,15 +70,15 @@
 70 stub _IID_ISTDMARSHALINFO
 71 pascal CoCreateStandardMalloc(long ptr) CoCreateStandardMalloc16
 72 stub _IID_IEXTERNALCONNECTION
-73 pascal CoCreateGuid(ptr) CoCreateGuid
+73 pascal CoCreateGuid(ptr) CoCreateGuid16
 75 stub FNASSERT
-76 pascal StringFromGUID2(ptr ptr word) StringFromGUID2
+76 pascal StringFromGUID2(ptr ptr word) StringFromGUID216
 77 stub COGETCLASSEXT
 78 stub OLE1CLASSFROMCLSID2
 79 stub CLSIDFROMOLE1CLASS
 80 stub COOPENCLASSKEY
 81 stub GUIDFROMSTRING
-82 pascal CoFileTimeNow(ptr) CoFileTimeNow
+82 pascal CoFileTimeNow(ptr) CoFileTimeNow16
 83 stub REMALLOCOID
 84 stub REMFREEOID
 85 stub REMCREATEREMOTEHANDLER
