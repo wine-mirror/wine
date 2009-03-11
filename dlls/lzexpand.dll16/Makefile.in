@@ -2,11 +2,13 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = lz32.dll
-IMPORTLIB = lz32
-IMPORTS   = kernel32
+MODULE    = lzexpand.dll16
+IMPORTS   = lz32 kernel32
+EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,lz32.dll
 
-RC_SRCS  = version.rc
+SPEC_SRCS = lzexpand.dll16.spec
+
+C_SRCS = lzexpand.c
 
 @MAKE_DLL_RULES@
 

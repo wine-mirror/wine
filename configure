@@ -3906,6 +3906,7 @@ then
     enable_display_drv16=${enable_display_drv16:-no}
     enable_ifsmgr_vxd=${enable_ifsmgr_vxd:-no}
     enable_keyboard_drv16=${enable_keyboard_drv16:-no}
+    enable_lzexpand_dll16=${enable_lzexpand_dll16:-no}
     enable_mmdevldr_vxd=${enable_mmdevldr_vxd:-no}
     enable_monodebg_vxd=${enable_monodebg_vxd:-no}
     enable_mouse_drv16=${enable_mouse_drv16:-no}
@@ -25871,6 +25872,14 @@ dlls/lz32/tests/Makefile: dlls/lz32/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/lz32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/lzexpand.dll16/Makefile"
+test "x$enable_lzexpand_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	lzexpand.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/lzexpand.dll16/Makefile: dlls/lzexpand.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/lzexpand.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mapi32/Makefile"
 test "x$enable_mapi32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	mapi32"
@@ -29070,6 +29079,7 @@ do
     "dlls/localui/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/localui/tests/Makefile" ;;
     "dlls/lz32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/lz32/Makefile" ;;
     "dlls/lz32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/lz32/tests/Makefile" ;;
+    "dlls/lzexpand.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/lzexpand.dll16/Makefile" ;;
     "dlls/mapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mapi32/Makefile" ;;
     "dlls/mapi32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mapi32/tests/Makefile" ;;
     "dlls/mciavi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mciavi32/Makefile" ;;

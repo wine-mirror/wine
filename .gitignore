@@ -45,7 +45,6 @@ dlls/krnl386.exe16
 dlls/libd3dx9.def
 dlls/libwinspool.def
 dlls/libxinput.def
-dlls/lzexpand.dll16
 dlls/mmsystem.dll16
 dlls/msacm.dll16
 dlls/mshtml.tlb/mshtml_tlb.tlb
