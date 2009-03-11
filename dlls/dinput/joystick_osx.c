@@ -320,6 +320,13 @@ static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
             {
                 case kIOHIDElementTypeInput_Button:
                 {
+                    int usagePage = IOHIDElementGetUsagePage( tIOHIDElementRef );
+                    if (usagePage != kHIDPage_Button)
+                    {
+                        /* avoid strange elements found on the 360 controler */
+                        continue;
+                    }
+
                     if (buttons < 128)
                     {
                         CFArrayInsertValueAtIndex(device->elementCFArrayRef, (axes+povs+buttons), tIOHIDElementRef);
