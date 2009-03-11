@@ -1649,7 +1649,6 @@ static void test_GetDIBits(void)
     ok(bm.bmType == 0 ||
        broken(bm.bmType == 21072), /* win9x */
        "wrong bmType %d\n", bm.bmType);
-    ok(bm.bmType == 0, "wrong bmType %d\n", bm.bmType);
     ok(bm.bmWidth == 16, "wrong bmWidth %d\n", bm.bmWidth);
     ok(bm.bmHeight == 16, "wrong bmHeight %d\n", bm.bmHeight);
     ok(bm.bmWidthBytes == BITMAP_GetWidthBytes(bm.bmWidth, bm.bmBitsPixel), "wrong bmWidthBytes %d\n", bm.bmWidthBytes);
