@@ -370,6 +370,12 @@ static ULONG WINAPI IWineD3DImpl_Release(IWineD3D *iface) {
     TRACE("(%p) : Releasing from %d\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
+        unsigned int i;
+
+        for (i = 0; i < This->adapter_count; ++i)
+        {
+            HeapFree(GetProcessHeap(), 0, This->adapters[i].cfgs);
+        }
         HeapFree(GetProcessHeap(), 0, This);
     }
 
