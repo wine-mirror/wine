@@ -480,7 +480,7 @@ static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, char *szXPMFileName)
         sEnumRes.nIndex = nIndex;
         if (!EnumResourceNamesW(hModule, (LPCWSTR)RT_GROUP_ICON,
                                 EnumResNameProc, (LONG_PTR)&sEnumRes) &&
-            sEnumRes.nIndex != 0)
+            sEnumRes.nIndex != -1)
         {
             WINE_TRACE("EnumResourceNamesW failed, error %d\n", GetLastError());
         }
