@@ -52,6 +52,48 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 #define HICON_32(h16)		((HICON)(ULONG_PTR)(h16))
 #define HINSTANCE_32(h16)	((HINSTANCE)(ULONG_PTR)(h16))
 
+/******************************************************************************
+ *		OleBuildVersion	(OLE2.1)
+ */
+DWORD WINAPI OleBuildVersion16(void)
+{
+    return OleBuildVersion();
+}
+
+/***********************************************************************
+ *           OleInitialize       (OLE2.2)
+ */
+HRESULT WINAPI OleInitialize16(LPVOID reserved)
+{
+    return OleInitialize( reserved );
+}
+
+/******************************************************************************
+ *		OleUninitialize	(OLE2.3)
+ */
+void WINAPI OleUninitialize16(void)
+{
+    return OleUninitialize();
+}
+
+/***********************************************************************
+ *           DllGetClassObject (OLE2.4)
+ */
+HRESULT WINAPI DllGetClassObject16(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
+{
+  FIXME("(%s, %s, %p): stub\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);
+  return E_NOTIMPL;
+}
+
+/******************************************************************************
+ *		GetRunningObjectTable (OLE2.30)
+ */
+HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot)
+{
+    FIXME("(%d,%p),stub!\n",reserved,pprot);
+    return E_NOTIMPL;
+}
+
 /***********************************************************************
  *           RegisterDragDrop (OLE2.35)
  */
@@ -105,7 +147,7 @@ HGLOBAL16 WINAPI OleMetaFilePictFromIconAndLabel16(
 	    return 0;
     }
 
-    FIXME("(%04x, '%s', '%s', %d): incorrect metrics, please try to correct them !\n", 
+    FIXME("(%04x, '%s', '%s', %d): incorrect metrics, please try to correct them !\n",
           hIcon, lpszLabel, lpszSourceFile, iIconIndex);
 
     hdc = CreateMetaFileW(NULL);
@@ -164,32 +206,6 @@ HRESULT WINAPI OleSetMenuDescriptor16(
 {
     FIXME("(%p, %x, %x, %p, %p), stub!\n", hOleMenu, hwndFrame, hwndActiveObject, lpFrame, lpActiveObject);
     return E_NOTIMPL;
-}
-
-/******************************************************************************
- *              IsValidInterface        [COMPOBJ.23]
- *
- * Determines whether a pointer is a valid interface.
- *
- * PARAMS
- *  punk [I] Interface to be tested.
- *
- * RETURNS
- *  TRUE, if the passed pointer is a valid interface, or FALSE otherwise.
- */
-BOOL WINAPI IsValidInterface16(SEGPTR punk)
-{
-	DWORD **ptr;
-
-	if (IsBadReadPtr16(punk,4))
-		return FALSE;
-	ptr = MapSL(punk);
-	if (IsBadReadPtr16((SEGPTR)ptr[0],4))	/* check vtable ptr */
-		return FALSE;
-	ptr = MapSL((SEGPTR)ptr[0]);		/* ptr to first method */
-	if (IsBadReadPtr16((SEGPTR)ptr[0],2))
-		return FALSE;
-	return TRUE;
 }
 
 /******************************************************************************

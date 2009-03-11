@@ -47,13 +47,10 @@ C_SRCS = \
 	usrmarshal.c
 
 C_SRCS16 = \
-	memlockbytes16.c \
-	ole16.c \
-	ole2_16.c
+	ole16.c
 
 SPEC_SRCS16 = \
-	compobj.spec \
-	ole2.spec
+	compobj.spec
 
 RC_SRCS = ole32res.rc
 

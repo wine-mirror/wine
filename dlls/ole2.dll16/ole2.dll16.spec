@@ -1,6 +1,6 @@
-1 pascal OleBuildVersion() OleBuildVersion
-2 pascal OleInitialize(ptr) OleInitialize
-3 pascal OleUninitialize() OleUninitialize
+1 pascal OleBuildVersion() OleBuildVersion16
+2 pascal OleInitialize(ptr) OleInitialize16
+3 pascal OleUninitialize() OleUninitialize16
 4 pascal DllGetClassObject(ptr ptr ptr) DllGetClassObject16
 #5 WEP
 6 stub OLEQUERYLINKFROMDATA

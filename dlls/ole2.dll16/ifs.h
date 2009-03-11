@@ -33,30 +33,6 @@ typedef LPCSTR LPCOLESTR16;
 #define STDMETHOD16(m) HRESULT (STDMETHOD16CALLTYPE *m)
 #define STDMETHOD16_(t,m) t (STDMETHOD16CALLTYPE *m)
 
-
-/***********************************************************************
- * IMalloc16 interface
- */
-
-typedef struct IMalloc16 *LPMALLOC16;
-
-#define INTERFACE IMalloc16
-DECLARE_INTERFACE_(IMalloc16,IUnknown)
-{
-    /*** IUnknown methods ***/
-    STDMETHOD16_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
-    STDMETHOD16_(ULONG,AddRef)(THIS) PURE;
-    STDMETHOD16_(ULONG,Release)(THIS) PURE;
-    /*** IMalloc16 methods ***/
-    STDMETHOD16_(LPVOID,Alloc)(THIS_ DWORD   cb) PURE;
-    STDMETHOD16_(LPVOID,Realloc)(THIS_ LPVOID  pv, DWORD  cb) PURE;
-    STDMETHOD16_(void,Free)(THIS_ LPVOID  pv) PURE;
-    STDMETHOD16_(DWORD,GetSize)(THIS_ LPVOID  pv) PURE;
-    STDMETHOD16_(INT16,DidAlloc)(THIS_ LPVOID  pv) PURE;
-    STDMETHOD16_(LPVOID,HeapMinimize)(THIS) PURE;
-};
-#undef INTERFACE
-
 /**********************************************************************/
 
 typedef struct ILockBytes16 *LPLOCKBYTES16;
