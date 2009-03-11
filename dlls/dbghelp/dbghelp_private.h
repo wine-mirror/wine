@@ -487,9 +487,14 @@ extern unsigned     source_new(struct module* module, const char* basedir, const
 extern const char*  source_get(const struct module* module, unsigned idx);
 
 /* stabs.c */
+typedef void (*stabs_def_cb)(struct module* module, unsigned long load_offset,
+                                const char* name, unsigned long offset,
+                                BOOL is_public, BOOL is_global, unsigned char other,
+                                struct symt_compiland* compiland, void* user);
 extern BOOL         stabs_parse(struct module* module, unsigned long load_offset,
                                 const void* stabs, int stablen,
-                                const char* strs, int strtablen);
+                                const char* strs, int strtablen,
+                                stabs_def_cb callback, void* user);
 
 /* dwarf.c */
 extern BOOL         dwarf2_parse(struct module* module, unsigned long load_offset,

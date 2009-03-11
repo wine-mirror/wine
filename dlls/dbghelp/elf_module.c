@@ -1039,7 +1039,8 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
                 /* OK, now just parse all of the stabs. */
                 lret = stabs_parse(module, module->elf_info->elf_addr,
                                    stab, elf_get_map_size(&stab_sect),
-                                   stabstr, elf_get_map_size(&stabstr_sect));
+                                   stabstr, elf_get_map_size(&stabstr_sect),
+                                   NULL, NULL);
                 if (lret)
                     /* and fill in the missing information for stabs */
                     elf_finish_stabs_info(module, ht_symtab);

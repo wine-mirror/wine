@@ -72,7 +72,8 @@ static BOOL pe_load_stabs(const struct process* pcs, struct module* module,
                           RtlImageRvaToVa(nth, mapping, stabs, NULL),
                           stabsize,
                           RtlImageRvaToVa(nth, mapping, stabstr, NULL),
-                          stabstrsize);
+                          stabstrsize,
+                          NULL, NULL);
     }
 
     TRACE("%s the STABS debug info\n", ret ? "successfully loaded" : "failed to load");

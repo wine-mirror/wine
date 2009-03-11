@@ -1191,7 +1191,8 @@ static void stabs_finalize_function(struct module* module, struct symt_function*
 
 BOOL stabs_parse(struct module* module, unsigned long load_offset, 
                  const void* pv_stab_ptr, int stablen,
-                 const char* strs, int strtablen)
+                 const char* strs, int strtablen,
+                 stabs_def_cb callback, void* user)
 {
     struct symt_function*       curr_func = NULL;
     struct symt_block*          block = NULL;
@@ -1546,6 +1547,20 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
         case N_ENSYM:
         case N_OSO:
             /* Always ignore these, they seem to be used only on Darwin. */
+            break;
+        case N_ABS:
+            /* FIXME: Other definition types (N_TEXT, N_DATA, N_BSS, ...)? */
+            if (callback)
+            {
+                BOOL is_public = (stab_ptr->n_type & N_EXT);
+                BOOL is_global = is_public;
+
+                if (*ptr == '_') ptr++;
+                stab_strcpy(symname, sizeof(symname), ptr);
+
+                callback(module, load_offset, symname, stab_ptr->n_value,
+                         is_public, is_global, stab_ptr->n_other, compiland, user);
+            }
             break;
         default:
             ERR("Unknown stab type 0x%02x\n", type);
