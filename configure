@@ -3910,6 +3910,7 @@ then
     enable_mmdevldr_vxd=${enable_mmdevldr_vxd:-no}
     enable_monodebg_vxd=${enable_monodebg_vxd:-no}
     enable_mouse_drv16=${enable_mouse_drv16:-no}
+    enable_msacm_dll16=${enable_msacm_dll16:-no}
     enable_stress_dll16=${enable_stress_dll16:-no}
     enable_vdhcp_vxd=${enable_vdhcp_vxd:-no}
     enable_vmm_vxd=${enable_vmm_vxd:-no}
@@ -26008,6 +26009,14 @@ dlls/mprapi/Makefile: dlls/mprapi/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/mprapi/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/msacm.dll16/Makefile"
+test "x$enable_msacm_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	msacm.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/msacm.dll16/Makefile: dlls/msacm.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/msacm.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msacm32.drv/Makefile"
 test "x$enable_msacm32_drv" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	msacm32.drv"
@@ -29096,6 +29105,7 @@ do
     "dlls/mouse.drv16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mouse.drv16/Makefile" ;;
     "dlls/mpr/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mpr/Makefile" ;;
     "dlls/mprapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mprapi/Makefile" ;;
+    "dlls/msacm.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msacm.dll16/Makefile" ;;
     "dlls/msacm32.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msacm32.drv/Makefile" ;;
     "dlls/msacm32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msacm32/Makefile" ;;
     "dlls/msacm32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msacm32/tests/Makefile" ;;

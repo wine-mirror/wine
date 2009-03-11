@@ -15,11 +15,6 @@ C_SRCS = \
 	pcmconverter.c \
 	stream.c
 
-C_SRCS16 = \
-	msacm_main.c
-
-SPEC_SRCS16 = msacm.spec
-
 RC_SRCS = msacm.rc
 
 @MAKE_DLL_RULES@

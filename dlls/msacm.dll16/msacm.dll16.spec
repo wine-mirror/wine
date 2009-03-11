@@ -1,6 +1,6 @@
 # 1 stub     WEP
   2 stub     DRIVERPROC
-  3 pascal   DllEntryPoint(long word word word long word) MSACM_DllEntryPoint
+  3 pascal   DllEntryPoint(long word word word long word) DllEntryPoint16
   4 stub     ___EXPORTEDSTUB
   7 pascal   acmGetVersion() acmGetVersion16
   8 pascal -ret16 acmMetrics(word word ptr) acmMetrics16

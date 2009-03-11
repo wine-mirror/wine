@@ -39,8 +39,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msacm);
  * MSACM DLL entry point
  *
  */
-BOOL WINAPI MSACM_DllEntryPoint(DWORD fdwReason, HINSTANCE16 hinstDLL, WORD ds,
-				WORD wHeapSize, DWORD dwReserved1, WORD wReserved2)
+BOOL WINAPI DllEntryPoint16(DWORD fdwReason, HINSTANCE16 hinstDLL, WORD ds,
+                            WORD wHeapSize, DWORD dwReserved1, WORD wReserved2)
 {
     return TRUE;
 }

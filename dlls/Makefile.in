@@ -28,7 +28,6 @@ WIN16_FILES = \
 	imm.dll16 \
 	krnl386.exe16 \
 	mmsystem.dll16 \
-	msacm.dll16 \
 	msvideo.dll16 \
 	ole2.dll16 \
 	ole2conv.dll16 \
@@ -84,9 +83,6 @@ imm.dll16:
 
 krnl386.exe16 system.drv16 toolhelp.dll16:
 	echo "kernel32.dll" >$@
-
-msacm.dll16:
-	echo "msacm32.dll" >$@
 
 msvideo.dll16:
 	echo "msvfw32.dll" >$@
