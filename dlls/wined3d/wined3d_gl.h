@@ -1911,6 +1911,7 @@ typedef void (WINE_GLAPI * PGLFNRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC)(GLenum ta
 typedef void (WINE_GLAPI * PGLFNGLSECONDARYCOLOR3FEXTPROC) (GLfloat red, GLfloat green, GLfloat blue);
 typedef void (WINE_GLAPI * PGLFNGLSECONDARYCOLOR3FVEXTPROC) (const GLfloat *v);
 typedef void (WINE_GLAPI * PGLFNGLSECONDARYCOLOR3UBEXTPROC) (GLubyte red, GLubyte green, GLubyte blue);
+typedef void (WINE_GLAPI * PGLFNGLSECONDARYCOLOR3UBVEXTPROC) (const GLubyte *v);
 typedef void (WINE_GLAPI * PGLFNGLSECONDARYCOLORPOINTEREXTPROC) (GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
 /* GL_EXT_paletted_texture */
 #ifndef GL_EXT_paletted_texture
@@ -3578,6 +3579,7 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNGLPOINTPARAMETERFVEXTPROC,                     glPointParameterfvEXT,                      EXT_POINT_PARAMETERS,   NULL )\
     /* GL_EXT_secondary_color */ \
     USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3UBEXTPROC,                    glSecondaryColor3ubEXT,                     EXT_SECONDARY_COLOR,    NULL )\
+    USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3UBVEXTPROC,                   glSecondaryColor3ubvEXT,                    EXT_SECONDARY_COLOR,    NULL )\
     USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3FEXTPROC,                     glSecondaryColor3fEXT,                      EXT_SECONDARY_COLOR,    NULL )\
     USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3FVEXTPROC,                    glSecondaryColor3fvEXT,                     EXT_SECONDARY_COLOR,    NULL )\
     USE_GL_FUNC(PGLFNGLSECONDARYCOLORPOINTEREXTPROC,                glSecondaryColorPointerEXT,                 EXT_SECONDARY_COLOR,    NULL )\

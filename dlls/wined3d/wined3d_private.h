@@ -670,6 +670,7 @@ typedef void (WINE_GLAPI *glAttribFunc)(const void *data);
 typedef void (WINE_GLAPI *glMultiTexCoordFunc)(GLenum unit, const void *data);
 extern glAttribFunc position_funcs[WINED3DDECLTYPE_UNUSED];
 extern glAttribFunc diffuse_funcs[WINED3DDECLTYPE_UNUSED];
+extern glAttribFunc specular_func_3ubv;
 extern glAttribFunc specular_funcs[WINED3DDECLTYPE_UNUSED];
 extern glAttribFunc normal_funcs[WINED3DDECLTYPE_UNUSED];
 extern glMultiTexCoordFunc multi_texcoord_funcs[WINED3DDECLTYPE_UNUSED];
@@ -937,7 +938,6 @@ struct WineD3DAdapter
     unsigned int            UsedTextureRam;
 };
 
-extern BOOL InitAdapters(void);
 extern BOOL initPixelFormats(WineD3D_GL_Info *gl_info);
 extern long WineD3DAdapterChangeGLRam(IWineD3DDeviceImpl *D3DDevice, long glram);
 extern void add_gl_compat_wrappers(WineD3D_GL_Info *gl_info);
@@ -1025,9 +1025,14 @@ typedef struct IWineD3DImpl
     /* WineD3D Information */
     IUnknown               *parent;
     UINT                    dxVersion;
+
+    UINT adapter_count;
+    struct WineD3DAdapter adapters[1];
 } IWineD3DImpl;
 
 extern const IWineD3DVtbl IWineD3D_Vtbl;
+
+BOOL InitAdapters(IWineD3DImpl *This);
 
 /* TODO: setup some flags in the registry to enable, disable pbuffer support
 (since it will break quite a few things until contexts are managed properly!) */
