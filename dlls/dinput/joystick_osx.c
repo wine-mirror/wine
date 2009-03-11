@@ -116,7 +116,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
-#ifdef HAVE_IOKIT_HID_IOHIDLIB_H
+#ifdef HAVE_IOHIDMANAGERCREATE
 
 static IOHIDManagerRef gIOHIDManagerRef = NULL;
 static CFArrayRef gDevices = NULL;
@@ -893,7 +893,7 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
 };
 #undef XCAST
 
-#else /* HAVE_IOKIT_HID_IOHIDLIB_H */
+#else /* HAVE_IOHIDMANAGERCREATE */
 
 const struct dinput_device joystick_osx_device = {
   "Wine OS X joystick driver",
@@ -903,4 +903,4 @@ const struct dinput_device joystick_osx_device = {
   NULL
 };
 
-#endif /* HAVE_IOKIT_HID_IOHIDLIB_H */
+#endif /* HAVE_IOHIDMANAGERCREATE */

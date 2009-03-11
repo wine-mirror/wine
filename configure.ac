@@ -578,6 +578,13 @@ case $host_os in
         dnl CoreServices needed by AudioUnit
         AC_SUBST(COREAUDIO,"-framework CoreAudio -framework AudioUnit -framework CoreServices -framework AudioToolbox -framework CoreMIDI")
     fi
+    if test "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes"
+    then
+        ac_save_LIBS="$LIBS"
+        LIBS="$LIBS $IOKITLIB"
+        AC_CHECK_FUNCS(IOHIDManagerCreate)
+        LIBS="$ac_save_LIBS"
+    fi
     case $host_cpu in
       *powerpc*)
         LDDLLFLAGS="$LDDLLFLAGS -read_only_relocs warning"  dnl FIXME
