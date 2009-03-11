@@ -60,7 +60,6 @@ dlls/mstask/mstask_local_i.c
 dlls/msvideo.dll16
 dlls/msxml3/msxml3_v1.tlb
 dlls/ole2.dll16
-dlls/ole2conv.dll16
 dlls/ole2disp.dll16
 dlls/ole2nls.dll16
 dlls/ole2prox.dll16

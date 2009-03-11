@@ -30,7 +30,6 @@ WIN16_FILES = \
 	mmsystem.dll16 \
 	msvideo.dll16 \
 	ole2.dll16 \
-	ole2conv.dll16 \
 	ole2disp.dll16 \
 	ole2nls.dll16 \
 	ole2prox.dll16 \
@@ -85,7 +84,7 @@ krnl386.exe16 system.drv16 toolhelp.dll16:
 msvideo.dll16:
 	echo "msvfw32.dll" >$@
 
-compobj.dll16 ole2.dll16 ole2conv.dll16 ole2nls.dll16 ole2prox.dll16 ole2thk.dll16 storage.dll16:
+compobj.dll16 ole2.dll16 ole2nls.dll16 ole2prox.dll16 ole2thk.dll16 storage.dll16:
 	echo "ole32.dll" >$@
 
 ole2disp.dll16 typelib.dll16:

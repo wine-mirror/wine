@@ -3911,6 +3911,7 @@ then
     enable_monodebg_vxd=${enable_monodebg_vxd:-no}
     enable_mouse_drv16=${enable_mouse_drv16:-no}
     enable_msacm_dll16=${enable_msacm_dll16:-no}
+    enable_ole2conv_dll16=${enable_ole2conv_dll16:-no}
     enable_olecli_dll16=${enable_olecli_dll16:-no}
     enable_olesvr_dll16=${enable_olesvr_dll16:-no}
     enable_stress_dll16=${enable_stress_dll16:-no}
@@ -26475,6 +26476,14 @@ dlls/odbccp32/tests/Makefile: dlls/odbccp32/tests/Makefile.in dlls/Maketest.rule
 ac_config_files="$ac_config_files dlls/odbccp32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/ole2conv.dll16/Makefile"
+test "x$enable_ole2conv_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	ole2conv.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/ole2conv.dll16/Makefile: dlls/ole2conv.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/ole2conv.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ole32/Makefile"
 test "x$enable_ole32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	ole32"
@@ -29181,6 +29190,7 @@ do
     "dlls/odbc32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/odbc32/Makefile" ;;
     "dlls/odbccp32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/odbccp32/Makefile" ;;
     "dlls/odbccp32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/odbccp32/tests/Makefile" ;;
+    "dlls/ole2conv.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ole2conv.dll16/Makefile" ;;
     "dlls/ole32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ole32/Makefile" ;;
     "dlls/ole32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ole32/tests/Makefile" ;;
     "dlls/oleacc/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/oleacc/Makefile" ;;
