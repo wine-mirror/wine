@@ -1112,6 +1112,12 @@ static struct symt* stabs_parse_type(const char* stab)
     return *stabs_read_type_enum(&c);
 }
 
+enum pending_obj_kind
+{
+    PENDING_VAR,
+    PENDING_LINE,
+};
+
 struct pending_loc_var
 {
     char                name[256];
@@ -1120,9 +1126,25 @@ struct pending_loc_var
     struct location     loc;
 };
 
-struct pending_block
+struct pending_line
 {
-    struct pending_loc_var*     vars;
+    int                 source_idx;
+    int                 line_num;
+    unsigned long       offset;
+};
+
+struct pending_object
+{
+    enum pending_obj_kind               tag;
+    union {
+        struct pending_loc_var  var;
+        struct pending_line     line;
+    }                                   u;
+};
+
+struct pending_list
+{
+    struct pending_object*      objs;
     unsigned                    num;
     unsigned                    allocated;
 };
@@ -1132,37 +1154,61 @@ static inline void pending_make_room(struct pending_list* pending)
     if (pending->num == pending->allocated)
     {
         pending->allocated += 8;
-        if (!pending->vars)
-            pending->vars = HeapAlloc(GetProcessHeap(), 0, 
-                                     pending->allocated * sizeof(pending->vars[0]));
+        if (!pending->objs)
+            pending->objs = HeapAlloc(GetProcessHeap(), 0,
+                                     pending->allocated * sizeof(pending->objs[0]));
         else    
-            pending->vars = HeapReAlloc(GetProcessHeap(), 0, pending->vars,
-                                       pending->allocated * sizeof(pending->vars[0]));
+            pending->objs = HeapReAlloc(GetProcessHeap(), 0, pending->objs,
+                                       pending->allocated * sizeof(pending->objs[0]));
     }
 }
 
-static inline void pending_add(struct pending_block* pending, const char* name,
-                               enum DataKind dt, const struct location* loc)
+static inline void pending_add_var(struct pending_list* pending, const char* name,
+                                   enum DataKind dt, const struct location* loc)
 {
     pending_make_room(pending);
-    stab_strcpy(pending->vars[pending->num].name, 
-                sizeof(pending->vars[pending->num].name), name);
-    pending->vars[pending->num].type   = stabs_parse_type(name);
-    pending->vars[pending->num].kind   = dt;
-    pending->vars[pending->num].loc    = *loc;
+    pending->objs[pending->num].tag = PENDING_VAR;
+    stab_strcpy(pending->objs[pending->num].u.var.name,
+                sizeof(pending->objs[pending->num].u.var.name), name);
+    pending->objs[pending->num].u.var.type  = stabs_parse_type(name);
+    pending->objs[pending->num].u.var.kind  = dt;
+    pending->objs[pending->num].u.var.loc   = *loc;
     pending->num++;
 }
 
-static void pending_flush(struct pending_block* pending, struct module* module, 
+static inline void pending_add_line(struct pending_list* pending, int source_idx,
+                                    int line_num, unsigned long offset)
+{
+    pending_make_room(pending);
+    pending->objs[pending->num].tag = PENDING_LINE;
+    pending->objs[pending->num].u.line.source_idx   = source_idx;
+    pending->objs[pending->num].u.line.line_num     = line_num;
+    pending->objs[pending->num].u.line.offset       = offset;
+    pending->num++;
+}
+
+static void pending_flush(struct pending_list* pending, struct module* module,
                           struct symt_function* func, struct symt_block* block)
 {
     unsigned int i;
 
     for (i = 0; i < pending->num; i++)
     {
-        symt_add_func_local(module, func, 
-                            pending->vars[i].kind, &pending->vars[i].loc,
-                            block, pending->vars[i].type, pending->vars[i].name);
+        switch (pending->objs[i].tag)
+        {
+        case PENDING_VAR:
+            symt_add_func_local(module, func,
+                                pending->objs[i].u.var.kind, &pending->objs[i].u.var.loc,
+                                block, pending->objs[i].u.var.type, pending->objs[i].u.var.name);
+            break;
+        case PENDING_LINE:
+            symt_add_func_line(module, func, pending->objs[i].u.line.source_idx,
+                               pending->objs[i].u.line.line_num, pending->objs[i].u.line.offset);
+            break;
+        default:
+            ERR("Unknown pending object tag %u\n", (unsigned)pending->objs[i].tag);
+            break;
+        }
     }
     pending->num = 0;
 }
@@ -1219,7 +1265,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
     unsigned                    incl[32];
     int                         incl_stk = -1;
     int                         source_idx = -1;
-    struct pending_block        pending;
+    struct pending_list         pending;
     BOOL                        ret = TRUE;
     struct location             loc;
     unsigned char               type;
@@ -1419,7 +1465,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
                                                           param_type);
                 }
                 else
-                    pending_add(&pending, ptr, DataIsLocal, &loc);
+                    pending_add_var(&pending, ptr, DataIsLocal, &loc);
             }
             break;
         case N_LSYM:
@@ -1427,7 +1473,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             loc.kind = loc_regrel;
             loc.reg = 0; /* FIXME */
             loc.offset = stab_ptr->n_value;
-            if (curr_func != NULL) pending_add(&pending, ptr, DataIsLocal, &loc);
+            if (curr_func != NULL) pending_add_var(&pending, ptr, DataIsLocal, &loc);
             break;
         case N_SLINE:
             /*
@@ -1603,7 +1649,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
 done:
     HeapFree(GetProcessHeap(), 0, stabbuff);
     stabs_free_includes();
-    HeapFree(GetProcessHeap(), 0, pending.vars);
+    HeapFree(GetProcessHeap(), 0, pending.objs);
 
     return ret;
 }
