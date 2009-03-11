@@ -37,13 +37,13 @@ MAIN_MENU MENU
   MENUITEM SEPARATOR
   MENUITEM "Iš&eiti",                  CMD_EXIT
  }
-POPUP "&Keisti" {
+POPUP "&Taisa" {
   MENUITEM "&Atšaukti\tCtrl+Z",       CMD_UNDO
   MENUITEM SEPARATOR
   MENUITEM "&Iškirpti\tCtrl+X",       CMD_CUT
   MENUITEM "&Kopijuoti\tCtrl+C",      CMD_COPY
   MENUITEM "Į&dėti\tCtrl+V",          CMD_PASTE
-  MENUITEM "Iš&valyti\tDel",          CMD_DELETE
+  MENUITEM "&Šalinti\tDel",           CMD_DELETE
   MENUITEM SEPARATOR
   MENUITEM "&Pažymėti viską\tCtrl+A", CMD_SELECT_ALL
   MENUITEM "&Laikas/Data\tF5",        CMD_TIME_DATE
@@ -52,8 +52,8 @@ POPUP "&Keisti" {
   MENUITEM "Š&riftas...",             CMD_FONT
  }
 POPUP "&Paieška" {
-  MENUITEM "&Rasti...\tCtrl+F", CMD_SEARCH
-  MENUITEM "Rasti k&itą\tF3",   CMD_SEARCH_NEXT
+  MENUITEM "&Ieškoti...\tCtrl+F",  CMD_SEARCH
+  MENUITEM "Ieškoti k&ito\tF3",    CMD_SEARCH_NEXT
  }
 POPUP "&Žinynas" {
   MENUITEM "&Turinys",             CMD_HELP_CONTENTS
