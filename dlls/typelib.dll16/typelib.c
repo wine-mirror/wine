@@ -33,11 +33,11 @@
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
+#include "wine/winbase16.h"
 #include "winreg.h"
 #include "winuser.h"
-
 #include "objbase.h"
-#include "ole2disp.h"
+#include "oleauto.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -75,13 +75,14 @@ QueryPathOfRegTypeLib16(
 	WORD wMaj,	/* [in] Major version */
 	WORD wMin,	/* [in] Minor version */
 	LCID lcid,	/* [in] Locale Id */
-	LPBSTR16 path)	/* [out] Destination for the registry key name */
+	SEGPTR *path)	/* [out] Destination for the registry key name */
 {
 	char	xguid[80];
 	char	typelibkey[100],pathname[260];
 	LONG	plen;
+        char   *ret;
 
-       	TRACE("\n");
+	TRACE("\n");
 
 	if (HIWORD(guid)) {
             sprintf( typelibkey, "SOFTWARE\\Classes\\Typelib\\{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\\%d.%d\\%x\\win16",
@@ -102,7 +103,10 @@ QueryPathOfRegTypeLib16(
 		FIXME("key %s not found\n",typelibkey);
 		return E_FAIL;
 	}
-	*path = SysAllocString16(pathname);
+        ret = HeapAlloc( GetProcessHeap(), 0, strlen(pathname) + 1 );
+        if (!ret) return E_FAIL;
+        strcpy( ret, pathname );
+	*path = MapLS(ret);
 	return S_OK;
 }
 
@@ -128,6 +132,14 @@ HRESULT WINAPI LoadTypeLib16(
       *pptLib=0;
 
     return E_FAIL;
+}
+
+/***********************************************************************
+ *              LHashValOfNameSys  (TYPELIB.4)
+ */
+ULONG WINAPI LHashValOfNameSys16( SYSKIND skind, LCID lcid, LPCSTR lpStr)
+{
+    return LHashValOfNameSysA( skind, lcid, lpStr );
 }
 
 /****************************************************************************

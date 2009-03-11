@@ -30,12 +30,10 @@ C_SRCS = \
 	vartype.c
 
 C_SRCS16 = \
-	ole2disp.c \
-	typelib16.c
+	ole2disp.c
 
 SPEC_SRCS16 = \
-	ole2disp.spec \
-	typelib.spec
+	ole2disp.spec
 
 RC_SRCS = oleaut32.rc
 

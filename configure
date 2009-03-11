@@ -3921,6 +3921,7 @@ then
     enable_olesvr_dll16=${enable_olesvr_dll16:-no}
     enable_storage_dll16=${enable_storage_dll16:-no}
     enable_stress_dll16=${enable_stress_dll16:-no}
+    enable_typelib_dll16=${enable_typelib_dll16:-no}
     enable_vdhcp_vxd=${enable_vdhcp_vxd:-no}
     enable_vmm_vxd=${enable_vmm_vxd:-no}
     enable_vnbt_vxd=${enable_vnbt_vxd:-no}
@@ -27226,6 +27227,14 @@ dlls/twain_32/tests/Makefile: dlls/twain_32/tests/Makefile.in dlls/Maketest.rule
 ac_config_files="$ac_config_files dlls/twain_32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/typelib.dll16/Makefile"
+test "x$enable_typelib_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	typelib.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/typelib.dll16/Makefile: dlls/typelib.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/typelib.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/unicows/Makefile"
 test "x$enable_unicows" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	unicows"
@@ -29337,6 +29346,7 @@ do
     "dlls/traffic/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/traffic/Makefile" ;;
     "dlls/twain_32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/twain_32/Makefile" ;;
     "dlls/twain_32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/twain_32/tests/Makefile" ;;
+    "dlls/typelib.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/typelib.dll16/Makefile" ;;
     "dlls/unicows/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/unicows/Makefile" ;;
     "dlls/updspapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/updspapi/Makefile" ;;
     "dlls/url/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/url/Makefile" ;;
