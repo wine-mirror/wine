@@ -4221,7 +4221,6 @@ static void fillGLAttribFuncs(const WineD3D_GL_Info *gl_info)
     }
 }
 
-#define PUSH1(att)        attribs[nAttribs++] = (att);
 BOOL InitAdapters(IWineD3DImpl *This)
 {
     static HMODULE mod_gl;
@@ -4346,16 +4345,16 @@ BOOL InitAdapters(IWineD3DImpl *This)
 
         adapter->cfgs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, adapter->nCfgs *sizeof(WineD3D_PixelFormat));
         cfgs = adapter->cfgs;
-        PUSH1(WGL_RED_BITS_ARB)
-        PUSH1(WGL_GREEN_BITS_ARB)
-        PUSH1(WGL_BLUE_BITS_ARB)
-        PUSH1(WGL_ALPHA_BITS_ARB)
-        PUSH1(WGL_DEPTH_BITS_ARB)
-        PUSH1(WGL_STENCIL_BITS_ARB)
-        PUSH1(WGL_DRAW_TO_WINDOW_ARB)
-        PUSH1(WGL_PIXEL_TYPE_ARB)
-        PUSH1(WGL_DOUBLE_BUFFER_ARB)
-        PUSH1(WGL_AUX_BUFFERS_ARB)
+        attribs[nAttribs++] = WGL_RED_BITS_ARB;
+        attribs[nAttribs++] = WGL_GREEN_BITS_ARB;
+        attribs[nAttribs++] = WGL_BLUE_BITS_ARB;
+        attribs[nAttribs++] = WGL_ALPHA_BITS_ARB;
+        attribs[nAttribs++] = WGL_DEPTH_BITS_ARB;
+        attribs[nAttribs++] = WGL_STENCIL_BITS_ARB;
+        attribs[nAttribs++] = WGL_DRAW_TO_WINDOW_ARB;
+        attribs[nAttribs++] = WGL_PIXEL_TYPE_ARB;
+        attribs[nAttribs++] = WGL_DOUBLE_BUFFER_ARB;
+        attribs[nAttribs++] = WGL_AUX_BUFFERS_ARB;
 
         for (iPixelFormat=1; iPixelFormat <= adapter->nCfgs; ++iPixelFormat)
         {
@@ -4457,7 +4456,6 @@ nogl_adapter:
     This->adapter_count = 1;
     return FALSE;
 }
-#undef PUSH1
 
 /**********************************************************
  * IWineD3D VTbl follows
