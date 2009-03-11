@@ -2,12 +2,13 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = olesvr32.dll
-IMPORTLIB = olesvr32
-IMPORTS   = kernel32
+MODULE    = olesvr.dll16
+IMPORTS   = gdi32 kernel32
+EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,olesvr32.dll
 
-C_SRCS = \
-	olesvr_main.c
+SPEC_SRCS = olesvr.dll16.spec
+
+C_SRCS = olesvr.c
 
 @MAKE_DLL_RULES@
 

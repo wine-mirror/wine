@@ -3912,6 +3912,7 @@ then
     enable_mouse_drv16=${enable_mouse_drv16:-no}
     enable_msacm_dll16=${enable_msacm_dll16:-no}
     enable_olecli_dll16=${enable_olecli_dll16:-no}
+    enable_olesvr_dll16=${enable_olesvr_dll16:-no}
     enable_stress_dll16=${enable_stress_dll16:-no}
     enable_vdhcp_vxd=${enable_vdhcp_vxd:-no}
     enable_vmm_vxd=${enable_vmm_vxd:-no}
@@ -26554,6 +26555,14 @@ dlls/olepro32/Makefile: dlls/olepro32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/olepro32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/olesvr.dll16/Makefile"
+test "x$enable_olesvr_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	olesvr.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/olesvr.dll16/Makefile: dlls/olesvr.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/olesvr.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/olesvr32/Makefile"
 test "x$enable_olesvr32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	olesvr32"
@@ -29182,6 +29191,7 @@ do
     "dlls/olecli32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/olecli32/Makefile" ;;
     "dlls/oledlg/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/oledlg/Makefile" ;;
     "dlls/olepro32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/olepro32/Makefile" ;;
+    "dlls/olesvr.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/olesvr.dll16/Makefile" ;;
     "dlls/olesvr32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/olesvr32/Makefile" ;;
     "dlls/olethk32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/olethk32/Makefile" ;;
     "dlls/opengl32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/opengl32/Makefile" ;;

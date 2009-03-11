@@ -35,7 +35,6 @@ WIN16_FILES = \
 	ole2nls.dll16 \
 	ole2prox.dll16 \
 	ole2thk.dll16 \
-	olesvr.dll16 \
 	rasapi16.dll16 \
 	setupx.dll16 \
 	shell.dll16 \
@@ -91,9 +90,6 @@ compobj.dll16 ole2.dll16 ole2conv.dll16 ole2nls.dll16 ole2prox.dll16 ole2thk.dll
 
 ole2disp.dll16 typelib.dll16:
 	echo "oleaut32.dll" >$@
-
-olesvr.dll16:
-	echo "olesvr32.dll" >$@
 
 rasapi16.dll16:
 	echo "rasapi32.dll" >$@

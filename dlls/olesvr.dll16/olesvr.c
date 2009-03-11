@@ -27,6 +27,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wine/windef16.h"
 #include "objbase.h"
 #include "wine/debug.h"
 
@@ -132,18 +133,40 @@ typedef struct _OLESERVER
 static LONG OLE_current_handle;
 
 /******************************************************************************
- *		OleBlockServer	[OLESVR32.4]
+ *		OleRegisterServer	[OLESVR.2]
  */
-OLESTATUS WINAPI OleBlockServer(LHSERVER hServer)
+OLESTATUS WINAPI OleRegisterServer16( LPCSTR name, LPOLESERVER serverStruct,
+                                      LHSERVER *hRet, HINSTANCE16 hServer,
+                                      OLE_SERVER_USE use )
+{
+    FIXME("(%s,...): stub\n",name);
+    *hRet=++OLE_current_handle;
+    /* return OLE_ERROR_MEMORY, OLE_ERROR_PROTECT_ONLY if you want it fail*/
+    return OLE_OK;
+}
+
+/******************************************************************************
+ *		OleRevokeServer	[OLESVR.3]
+ */
+OLESTATUS WINAPI OleRevokeServer16(LHSERVER hServer)
+{
+    FIXME("%d - stub\n",hServer);
+    return OLE_OK;
+}
+
+/******************************************************************************
+ *		OleBlockServer	[OLESVR.4]
+ */
+OLESTATUS WINAPI OleBlockServer16(LHSERVER hServer)
 {
     FIXME("(%d): stub\n",hServer);
     return OLE_OK;
 }
 
 /******************************************************************************
- *		OleUnblockServer	[OLESVR32.5]
+ *		OleUnblockServer	[OLESVR.5]
  */
-OLESTATUS WINAPI OleUnblockServer(LHSERVER hServer, BOOL *block)
+OLESTATUS WINAPI OleUnblockServer16(LHSERVER hServer, BOOL16 *block)
 {
     FIXME("(%d): stub\n",hServer);
     /* no more blocked messages :) */
@@ -151,61 +174,52 @@ OLESTATUS WINAPI OleUnblockServer(LHSERVER hServer, BOOL *block)
     return OLE_OK;
 }
 
-/******************************************************************************
- *		OleRevokeServerDoc	[OLESVR32.7]
+/***********************************************************************
+ *		OleRegisterServerDoc	[OLESVR.6]
  */
-OLESTATUS WINAPI OleRevokeServerDoc(LHSERVERDOC hServerDoc)
-{
-    FIXME("(%d): stub\n",hServerDoc);
-    return OLE_OK;
-}
-
-/******************************************************************************
- * OleRegisterServer [OLESVR32.2]
- */
-OLESTATUS WINAPI OleRegisterServer(LPCSTR svrname,LPOLESERVER olesvr,LHSERVER* hRet,HINSTANCE hinst,OLE_SERVER_USE osu) {
-	FIXME("(%s,%p,%p,%p,%d): stub!\n",svrname,olesvr,hRet,hinst,osu);
-    	*hRet=++OLE_current_handle;
-	return OLE_OK;
-}
-
-/******************************************************************************
- * OleRegisterServerDoc [OLESVR32.6]
- */
-OLESTATUS WINAPI OleRegisterServerDoc( LHSERVER hServer, LPCSTR docname,
+OLESTATUS WINAPI OleRegisterServerDoc16( LHSERVER hServer, LPCSTR docname,
                                          LPOLESERVERDOC document,
                                          LHSERVERDOC *hRet)
 {
-    FIXME("(%d,%s): stub\n", hServer, docname);
+    FIXME("(%d,%s): stub\n",hServer, docname);
     *hRet=++OLE_current_handle;
     return OLE_OK;
 }
 
 /******************************************************************************
- *		OleRenameServerDoc	[OLESVR32.8]
- *
+ *		OleRevokeServerDoc	[OLESVR.7]
  */
-OLESTATUS WINAPI OleRenameServerDoc(LHSERVERDOC hDoc, LPCSTR newName)
+OLESTATUS WINAPI OleRevokeServerDoc16(LHSERVERDOC hServerDoc)
 {
-    FIXME("(%d,%s): stub.\n",hDoc, newName);
+    FIXME("%d  - stub\n",hServerDoc);
     return OLE_OK;
 }
 
 /******************************************************************************
- *		OleRevertServerDoc	[OLESVR32.9]
+ *		OleRenameServerDoc	[OLESVR.8]
  *
  */
-OLESTATUS WINAPI OleRevertServerDoc(LHSERVERDOC hDoc)
+OLESTATUS WINAPI OleRenameServerDoc16(LHSERVERDOC hDoc, LPCSTR newName)
+{
+    FIXME("(%d,%s): stub.\n", hDoc, newName);
+    return OLE_OK;
+}
+
+/******************************************************************************
+ *		OleRevertServerDoc	[OLESVR.9]
+ *
+ */
+OLESTATUS WINAPI OleRevertServerDoc16(LHSERVERDOC hDoc)
 {
     FIXME("(%d): stub.\n", hDoc);
     return OLE_OK;
 }
 
 /******************************************************************************
- *		OleSavedServerDoc	[OLESVR32.10]
+ *		OleSavedServerDoc	[OLESVR.10]
  *
  */
-OLESTATUS WINAPI OleSavedServerDoc(LHSERVERDOC hDoc)
+OLESTATUS WINAPI OleSavedServerDoc16(LHSERVERDOC hDoc)
 {
     FIXME("(%d): stub.\n", hDoc);
     return OLE_OK;
