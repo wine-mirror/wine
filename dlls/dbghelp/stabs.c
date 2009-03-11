@@ -1354,6 +1354,22 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
                 case 17:
                 case 18:
                 case 19: loc.reg = CV_REG_ST0 + stab_ptr->n_value - 12; break;
+                case 21:
+                case 22:
+                case 23:
+                case 24:
+                case 25:
+                case 26:
+                case 27:
+                case 28: loc.reg = CV_REG_XMM0 + stab_ptr->n_value - 21; break;
+                case 29:
+                case 30:
+                case 31:
+                case 32:
+                case 33:
+                case 34:
+                case 35:
+                case 36: loc.reg = CV_REG_MM0 + stab_ptr->n_value - 29; break;
                 default:
                     FIXME("Unknown register value (%lu)\n", stab_ptr->n_value);
                     loc.reg = CV_REG_NONE;
