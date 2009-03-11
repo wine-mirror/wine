@@ -53,6 +53,10 @@
 #include <assert.h>
 #include <stdarg.h>
 
+#ifdef HAVE_MACH_O_NLIST_H
+# include <mach-o/nlist.h>
+#endif
+
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -1549,11 +1553,24 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             /* Always ignore these, they seem to be used only on Darwin. */
             break;
         case N_ABS:
+#ifdef N_SECT
+        case N_SECT:
+#endif
             /* FIXME: Other definition types (N_TEXT, N_DATA, N_BSS, ...)? */
             if (callback)
             {
                 BOOL is_public = (stab_ptr->n_type & N_EXT);
                 BOOL is_global = is_public;
+
+#ifdef N_PEXT
+                /* "private extern"; shared among compilation units in a shared
+                 * library, but not accessible from outside the library. */
+                if (stab_ptr->n_type & N_PEXT)
+                {
+                    is_public = FALSE;
+                    is_global = TRUE;
+                }
+#endif
 
                 if (*ptr == '_') ptr++;
                 stab_strcpy(symname, sizeof(symname), ptr);
