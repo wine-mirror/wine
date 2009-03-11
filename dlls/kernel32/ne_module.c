@@ -224,7 +224,7 @@ void __wine_dll_unregister_16( const IMAGE_DOS_HEADER *header )
  */
 NE_MODULE *NE_GetPtr( HMODULE16 hModule )
 {
-    return (NE_MODULE *)GlobalLock16( GetExePtr(hModule) );
+    return GlobalLock16( GetExePtr(hModule) );
 }
 
 
@@ -1250,7 +1250,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
      *  in the meantime), or else to a stub module which contains only header
      *  information.
      */
-    params = (LOADPARAMS16 *)paramBlock;
+    params = paramBlock;
     if (params->showCmd)
         cmdShow = ((WORD *)MapSL( params->showCmd ))[1];
     cmdline = MapSL( params->cmdLine );

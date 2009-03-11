@@ -1161,7 +1161,7 @@ static void  test_WaitRx(HANDLE hcom)
 */
 static DWORD CALLBACK toggle_ctlLine(LPVOID arg)
 {
-    DWORD_PTR *args = (DWORD_PTR *) arg;
+    DWORD_PTR *args = arg;
     DWORD timeout = args[0];
     DWORD ctl     = args[1];
     HANDLE hcom   = (HANDLE) args[2];
@@ -1264,7 +1264,7 @@ static void  test_WaitCts(HANDLE hcom)
 */
 static DWORD CALLBACK reset_CommMask(LPVOID arg)
 {
-    DWORD_PTR *args = (DWORD_PTR *) arg;
+    DWORD_PTR *args = arg;
     DWORD timeout = args[0];
     HANDLE hcom   = (HANDLE) args[1];
 
@@ -1565,7 +1565,7 @@ static void  test_WaitDcd(HANDLE hcom)
 */
 static DWORD CALLBACK set_CommBreak(LPVOID arg)
 {
-    DWORD_PTR *args = (DWORD_PTR *) arg;
+    DWORD_PTR *args = arg;
     DWORD timeout = args[0];
     HANDLE hcom   = (HANDLE) args[1];
 

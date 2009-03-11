@@ -1859,7 +1859,7 @@ HANDLE WINAPI Local32Init16( WORD segment, DWORD tableSize,
         HeapFree( GetProcessHeap(), 0, oldBase );
     }
 
-    return (HANDLE)header;
+    return header;
 }
 
 /***********************************************************************
@@ -1957,7 +1957,7 @@ static VOID Local32_FromHandle( LOCAL32HEADER *header, INT16 type,
  */
 DWORD WINAPI Local32Alloc16( HANDLE heap, DWORD size, INT16 type, DWORD flags )
 {
-    LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
+    LOCAL32HEADER *header = heap;
     LPDWORD handle;
     LPBYTE ptr;
     DWORD addr;
@@ -2036,7 +2036,7 @@ DWORD WINAPI Local32Alloc16( HANDLE heap, DWORD size, INT16 type, DWORD flags )
 DWORD WINAPI Local32ReAlloc16( HANDLE heap, DWORD addr, INT16 type,
                              DWORD size, DWORD flags )
 {
-    LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
+    LOCAL32HEADER *header = heap;
     LPDWORD handle;
     LPBYTE ptr;
 
@@ -2069,7 +2069,7 @@ DWORD WINAPI Local32ReAlloc16( HANDLE heap, DWORD addr, INT16 type,
  */
 BOOL WINAPI Local32Free16( HANDLE heap, DWORD addr, INT16 type )
 {
-    LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
+    LOCAL32HEADER *header = heap;
     LPDWORD handle;
     LPBYTE ptr;
 
@@ -2115,7 +2115,7 @@ BOOL WINAPI Local32Free16( HANDLE heap, DWORD addr, INT16 type )
  */
 DWORD WINAPI Local32Translate16( HANDLE heap, DWORD addr, INT16 type1, INT16 type2 )
 {
-    LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
+    LOCAL32HEADER *header = heap;
     LPDWORD handle;
     LPBYTE ptr;
 
@@ -2131,7 +2131,7 @@ DWORD WINAPI Local32Translate16( HANDLE heap, DWORD addr, INT16 type1, INT16 typ
  */
 DWORD WINAPI Local32Size16( HANDLE heap, DWORD addr, INT16 type )
 {
-    LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
+    LOCAL32HEADER *header = heap;
     LPDWORD handle;
     LPBYTE ptr;
 
@@ -2146,7 +2146,7 @@ DWORD WINAPI Local32Size16( HANDLE heap, DWORD addr, INT16 type )
  */
 BOOL WINAPI Local32ValidHandle16( HANDLE heap, WORD addr )
 {
-    LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
+    LOCAL32HEADER *header = heap;
     LPDWORD handle;
     LPBYTE ptr;
 
@@ -2159,7 +2159,7 @@ BOOL WINAPI Local32ValidHandle16( HANDLE heap, WORD addr )
  */
 WORD WINAPI Local32GetSegment16( HANDLE heap )
 {
-    LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
+    LOCAL32HEADER *header = heap;
     return header->segment;
 }
 

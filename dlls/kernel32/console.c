@@ -1338,7 +1338,7 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
 			 DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID lpReserved)
 {
     DWORD	charsread;
-    LPWSTR	xbuf = (LPWSTR)lpBuffer;
+    LPWSTR	xbuf = lpBuffer;
     DWORD	mode;
 
     TRACE("(%p,%p,%d,%p,%p)\n",

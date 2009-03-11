@@ -38,7 +38,7 @@
 
 static DWORD CALLBACK NotificationThread(LPVOID arg)
 {
-    HANDLE change = (HANDLE) arg;
+    HANDLE change = arg;
     BOOL notified = FALSE;
     BOOL ret = FALSE;
     DWORD status;
@@ -65,8 +65,7 @@ static HANDLE StartNotificationThread(LPCSTR path, BOOL subtree, DWORD flags)
     change = FindFirstChangeNotificationA(path, subtree, flags);
     ok(change != INVALID_HANDLE_VALUE, "FindFirstChangeNotification error: %d\n", GetLastError());
 
-    thread = CreateThread(NULL, 0, NotificationThread, (LPVOID)change,
-                          0, &threadId);
+    thread = CreateThread(NULL, 0, NotificationThread, change, 0, &threadId);
     ok(thread != NULL, "CreateThread error: %d\n", GetLastError());
 
     return thread;
@@ -356,8 +355,8 @@ static void test_ffcnMultipleThreads(void)
      * directory object with an empty wine user APC queue for this thread (bug #7286) */
 
     /* Create our notification thread */
-    handles[1] = CreateThread(NULL, 0, NotificationThread, (LPVOID)handles[0],
-                              0, &threadId);
+    handles[1] = CreateThread(NULL, 0, NotificationThread, handles[0], 0,
+                              &threadId);
     ok(handles[1] != NULL, "CreateThread error: %d\n", GetLastError());
 
     status = WaitForMultipleObjects(2, handles, FALSE, 5000);
@@ -848,8 +847,8 @@ static void test_ffcn_directory_overlap(void)
     ret = FindCloseChangeNotification(parent_watch);
     ok(ret, "FindCloseChangeNotification error: %d\n", GetLastError());
 
-    child_thread = CreateThread(NULL, 0, NotificationThread,
-                                (LPVOID)child_watch, 0, &threadId);
+    child_thread = CreateThread(NULL, 0, NotificationThread, child_watch, 0,
+                                &threadId);
     ok(child_thread != NULL, "CreateThread error: %d\n", GetLastError());
 
     /* Create a file in child */

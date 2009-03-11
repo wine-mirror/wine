@@ -92,7 +92,7 @@ BOOL load_winedos(void)
     if (hRunOnce == 0)
     {
 	HANDLE hEvent = CreateEventW( NULL, TRUE, FALSE, NULL );
-	if (InterlockedCompareExchangePointer( (PVOID)&hRunOnce, hEvent, 0 ) == 0)
+        if (InterlockedCompareExchangePointer( &hRunOnce, hEvent, 0 ) == 0)
 	{
             HMODULE hModule;
 

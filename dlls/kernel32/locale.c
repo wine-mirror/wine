@@ -241,8 +241,8 @@ static const union cptable *get_codepage_table( unsigned int codepage )
  */
 static int charset_cmp( const void *name, const void *entry )
 {
-    const struct charset_entry *charset = (const struct charset_entry *)entry;
-    return strcasecmp( (const char *)name, charset->charset_name );
+    const struct charset_entry *charset = entry;
+    return strcasecmp( name, charset->charset_name );
 }
 
 /***********************************************************************
@@ -621,7 +621,7 @@ static BOOL locale_update_registry( HKEY hkey, const WCHAR *name, LCID lcid,
 
     RtlInitUnicodeString( &nameW, name );
     count = sizeof(bufferW);
-    if (!NtQueryValueKey(hkey, &nameW, KeyValuePartialInformation, (LPBYTE)bufferW, count, &count))
+    if (!NtQueryValueKey(hkey, &nameW, KeyValuePartialInformation, bufferW, count, &count))
     {
         const KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)bufferW;
         LPCWSTR text = (LPCWSTR)info->Data;
@@ -3538,7 +3538,7 @@ GEOID WINAPI GetUserGeoID( GEOCLASS GeoClass )
         if ((hSubkey = NLS_RegOpenKey(hkey, geoW)))
         {
             if((NtQueryValueKey(hSubkey, &keyW, KeyValuePartialInformation,
-                                (LPBYTE)bufferW, count, &count) == STATUS_SUCCESS ) && info->DataLength)
+                                bufferW, count, &count) == STATUS_SUCCESS ) && info->DataLength)
                 ret = strtolW((LPCWSTR)info->Data, &end, 10);
         }
         break;

@@ -347,7 +347,7 @@ static void FILE_InitProcessDosHandles( void )
  */
 static void WINAPI FILE_ReadWriteApc(void* apc_user, PIO_STATUS_BLOCK io_status, ULONG reserved)
 {
-    LPOVERLAPPED_COMPLETION_ROUTINE  cr = (LPOVERLAPPED_COMPLETION_ROUTINE)apc_user;
+    LPOVERLAPPED_COMPLETION_ROUTINE  cr = apc_user;
 
     cr(RtlNtStatusToDosError(io_status->u.Status), io_status->Information, (LPOVERLAPPED)io_status);
 }
@@ -1953,7 +1953,7 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
         SetLastError( ERROR_INVALID_HANDLE );
         return ret;
     }
-    info = (FIND_FIRST_INFO *)handle;
+    info = handle;
     if (info->magic != FIND_FIRST_MAGIC)
     {
         SetLastError( ERROR_INVALID_HANDLE );
@@ -2037,7 +2037,7 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
  */
 BOOL WINAPI FindClose( HANDLE handle )
 {
-    FIND_FIRST_INFO *info = (FIND_FIRST_INFO *)handle;
+    FIND_FIRST_INFO *info = handle;
 
     if (!handle || handle == INVALID_HANDLE_VALUE)
     {
@@ -2105,7 +2105,7 @@ HANDLE WINAPI FindFirstFileExA( LPCSTR lpFileName, FINDEX_INFO_LEVELS fInfoLevel
     handle = FindFirstFileExW(nameW, fInfoLevelId, &dataW, fSearchOp, lpSearchFilter, dwAdditionalFlags);
     if (handle == INVALID_HANDLE_VALUE) return handle;
 
-    dataA = (WIN32_FIND_DATAA *) lpFindFileData;
+    dataA = lpFindFileData;
     dataA->dwFileAttributes = dataW.dwFileAttributes;
     dataA->ftCreationTime   = dataW.ftCreationTime;
     dataA->ftLastAccessTime = dataW.ftLastAccessTime;

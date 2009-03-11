@@ -1304,7 +1304,7 @@ void WINAPI __regs_K32Thk1632Prolog( CONTEXT86 *context )
       DWORD argSize = context->Ebp - context->Esp;
       char *stack16 = (char *)context->Esp - 4;
       STACK16FRAME *frame16 = (STACK16FRAME *)stack16 - 1;
-      STACK32FRAME *frame32 = (STACK32FRAME *)NtCurrentTeb()->WOW32Reserved;
+      STACK32FRAME *frame32 = NtCurrentTeb()->WOW32Reserved;
       char *stack32 = (char *)frame32 - argSize;
       WORD  stackSel  = SELECTOROF(frame32->frame16);
       DWORD stackBase = GetSelectorBase(stackSel);

@@ -343,8 +343,8 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, LPCSTR cmdline, BYT
 
       /* Allocate a code segment alias for the TDB */
 
-    pTask->hCSAlias = GLOBAL_CreateBlock( GMEM_FIXED, (void *)pTask,
-                                          sizeof(TDB), pTask->hPDB, WINE_LDT_FLAGS_CODE );
+    pTask->hCSAlias = GLOBAL_CreateBlock( GMEM_FIXED, pTask, sizeof(TDB),
+                                          pTask->hPDB, WINE_LDT_FLAGS_CODE );
 
       /* Default DTA overwrites command line */
 

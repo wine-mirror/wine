@@ -122,7 +122,7 @@ static void PROFILE_CopyEntry( LPWSTR buffer, LPCWSTR value, int len,
 static inline void PROFILE_ByteSwapShortBuffer(WCHAR * buffer, int len)
 {
     int i;
-    USHORT * shortbuffer = (USHORT *)buffer;
+    USHORT * shortbuffer = buffer;
     for (i = 0; i < len; i++)
         shortbuffer[i] = RtlUshortByteSwap(shortbuffer[i]);
 }
@@ -345,37 +345,37 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
     case ENCODING_ANSI:
         TRACE("ANSI encoding\n");
 
-        len = MultiByteToWideChar(CP_ACP, 0, (char *)pBuffer, dwFileSize, NULL, 0);
+        len = MultiByteToWideChar(CP_ACP, 0, pBuffer, dwFileSize, NULL, 0);
         szFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         if (!szFile)
         {
             HeapFree(GetProcessHeap(), 0, buffer_base);
             return NULL;
         }
-        MultiByteToWideChar(CP_ACP, 0, (char *)pBuffer, dwFileSize, szFile, len);
+        MultiByteToWideChar(CP_ACP, 0, pBuffer, dwFileSize, szFile, len);
         szEnd = szFile + len;
         break;
     case ENCODING_UTF8:
         TRACE("UTF8 encoding\n");
-        
-        len = MultiByteToWideChar(CP_UTF8, 0, (char *)pBuffer, dwFileSize, NULL, 0);
+
+        len = MultiByteToWideChar(CP_UTF8, 0, pBuffer, dwFileSize, NULL, 0);
         szFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         if (!szFile)
         {
             HeapFree(GetProcessHeap(), 0, buffer_base);
             return NULL;
         }
-        MultiByteToWideChar(CP_UTF8, 0, (char *)pBuffer, dwFileSize, szFile, len);
+        MultiByteToWideChar(CP_UTF8, 0, pBuffer, dwFileSize, szFile, len);
         szEnd = szFile + len;
         break;
     case ENCODING_UTF16LE:
         TRACE("UTF16 Little Endian encoding\n");
-        szFile = (WCHAR *)pBuffer;
+        szFile = pBuffer;
         szEnd = (WCHAR *)((char *)pBuffer + dwFileSize);
         break;
     case ENCODING_UTF16BE:
         TRACE("UTF16 Big Endian encoding\n");
-        szFile = (WCHAR *)pBuffer;
+        szFile = pBuffer;
         szEnd = (WCHAR *)((char *)pBuffer + dwFileSize);
         PROFILE_ByteSwapShortBuffer(szFile, dwFileSize / sizeof(WCHAR));
         break;
@@ -1708,7 +1708,7 @@ BOOL WINAPI GetPrivateProfileStructW (LPCWSTR section, LPCWSTR key,
 		{
 		    BOOL highnibble = TRUE;
 		    BYTE b = 0, val;
-		    LPBYTE binbuf = (LPBYTE)buf;
+                    LPBYTE binbuf = buf;
 
 	            end -= 2; /* don't include checksum in output data */
 	            /* translate ASCII hex format into binary data */

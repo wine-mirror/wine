@@ -946,7 +946,7 @@ struct named_pipe_client_params
 
 static DWORD CALLBACK named_pipe_client_func(LPVOID p)
 {
-    struct named_pipe_client_params *params = (struct named_pipe_client_params *)p;
+    struct named_pipe_client_params *params = p;
     HANDLE pipe;
     BOOL ret;
     const char message[] = "Test";
@@ -1391,7 +1391,7 @@ static DWORD CALLBACK overlapped_server(LPVOID arg)
     OVERLAPPED ol;
     HANDLE pipe;
     int ret, err;
-    struct overlapped_server_args *a = (struct overlapped_server_args*)arg;
+    struct overlapped_server_args *a = arg;
     DWORD num;
     char buf[100];
 

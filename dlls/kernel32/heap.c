@@ -311,7 +311,7 @@ BOOL WINAPI HeapSetInformation( HANDLE heap, HEAP_INFORMATION_CLASS infoclass, P
 
 #define MAGIC_GLOBAL_USED 0x5342
 #define HANDLE_TO_INTERN(h)  ((PGLOBAL32_INTERN)(((char *)(h))-2))
-#define INTERN_TO_HANDLE(i)  ((HGLOBAL) &((i)->Pointer))
+#define INTERN_TO_HANDLE(i)  (&((i)->Pointer))
 #define POINTER_TO_HANDLE(p) (*(((const HGLOBAL *)(p))-2))
 #define ISHANDLE(h)          (((ULONG_PTR)(h)&2)!=0)
 #define ISPOINTER(h)         (((ULONG_PTR)(h)&2)==0)

@@ -160,9 +160,9 @@ static void fill_module( struct snapshot* snap, ULONG* offset, ULONG process,
         mod->th32ProcessID = process ? process : GetCurrentProcessId();
         mod->GlblcntUsage = 0xFFFF; /* FIXME */
         mod->ProccntUsage = 0xFFFF; /* FIXME */
-        mod->modBaseAddr = (BYTE*)ldr_mod[i].BaseAddress;
+        mod->modBaseAddr = ldr_mod[i].BaseAddress;
         mod->modBaseSize = ldr_mod[i].SizeOfImage;
-        mod->hModule = (HMODULE)ldr_mod[i].BaseAddress;
+        mod->hModule = ldr_mod[i].BaseAddress;
 
         l = min(ldr_mod[i].BaseDllName.Length, sizeof(mod->szModule) - sizeof(WCHAR));
         memcpy(mod->szModule, ldr_mod[i].BaseDllName.Buffer, l);
@@ -264,7 +264,7 @@ static void fill_thread( struct snapshot* snap, ULONG* offset, LPVOID info, ULON
 
     thd_entry = (THREADENTRY32*)&snap->data[*offset];
 
-    spi = (SYSTEM_PROCESS_INFORMATION*)info;
+    spi = info;
     do
     {
         spi = (SYSTEM_PROCESS_INFORMATION*)((char*)spi + poff);

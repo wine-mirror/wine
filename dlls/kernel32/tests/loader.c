@@ -402,7 +402,7 @@ static void test_Loader(void)
                     "%d: VirtualQuery error %d\n", i, GetLastError());
                 if (nt_header.OptionalHeader.SectionAlignment < si.dwPageSize)
                 {
-                    ok(info.BaseAddress == (char *)hlib, "%d: got %p != expected %p\n", i, info.BaseAddress, (char *)hlib);
+                    ok(info.BaseAddress == hlib, "%d: got %p != expected %p\n", i, info.BaseAddress, hlib);
                     ok(info.RegionSize == ALIGN_SIZE(nt_header.OptionalHeader.SizeOfImage, si.dwPageSize), "%d: got %lx != expected %x\n",
                        i, info.RegionSize, ALIGN_SIZE(nt_header.OptionalHeader.SizeOfImage, si.dwPageSize));
                     ok(info.Protect == PAGE_EXECUTE_WRITECOPY, "%d: %x != PAGE_EXECUTE_WRITECOPY\n", i, info.Protect);

@@ -366,7 +366,7 @@ static	int	start_debugger_atomic(PEXCEPTION_POINTERS epointers)
 	/* ask for manual reset, so that once the debugger is started,
 	 * every thread will know it */
 	NtCreateEvent( &hEvent, EVENT_ALL_ACCESS, &attr, TRUE, FALSE );
-	if (InterlockedCompareExchangePointer( (PVOID)&hRunOnce, hEvent, 0 ) == 0)
+        if (InterlockedCompareExchangePointer( &hRunOnce, hEvent, 0 ) == 0)
 	{
 	    /* ok, our event has been set... we're the winning thread */
 	    BOOL	ret = start_debugger( epointers, hRunOnce );
@@ -408,7 +408,7 @@ static inline BOOL check_resource_write( void *addr )
 
     if (!VirtualQuery( addr, &info, sizeof(info) )) return FALSE;
     if (info.State == MEM_FREE || !(info.Type & MEM_IMAGE)) return FALSE;
-    if (!(rsrc = RtlImageDirectoryEntryToData( (HMODULE)info.AllocationBase, TRUE,
+    if (!(rsrc = RtlImageDirectoryEntryToData( info.AllocationBase, TRUE,
                                               IMAGE_DIRECTORY_ENTRY_RESOURCE, &size )))
         return FALSE;
     if (addr < rsrc || (char *)addr >= (char *)rsrc + size) return FALSE;

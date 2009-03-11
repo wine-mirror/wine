@@ -44,7 +44,7 @@ static BOOL (WINAPI *pThread32Next)(HANDLE, LPTHREADENTRY32);
 
 static DWORD WINAPI sub_thread(void* pmt)
 {
-    DWORD w = WaitForSingleObject((HANDLE)pmt, WAIT_TIME);
+    DWORD w = WaitForSingleObject(pmt, WAIT_TIME);
     return w;
 }
 

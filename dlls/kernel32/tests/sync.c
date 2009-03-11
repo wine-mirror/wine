@@ -490,7 +490,7 @@ static void test_iocp_callback(void)
     ok(retb == TRUE, "BindIoCompletionCallback failed\n");
 
     memset(&overlapped, 0, sizeof(overlapped));
-    retb = WriteFile(hFile, (const void *) buffer, 4, &bytesWritten, &overlapped);
+    retb = WriteFile(hFile, buffer, 4, &bytesWritten, &overlapped);
     ok(retb == TRUE || GetLastError() == ERROR_IO_PENDING, "WriteFile failed, lastError = %d\n", GetLastError());
 
     ret = WaitForSingleObject(sem, 5000);
@@ -534,7 +534,7 @@ static void test_iocp_callback(void)
 
 static void CALLBACK timer_queue_cb1(PVOID p, BOOLEAN timedOut)
 {
-    int *pn = (int *) p;
+    int *pn = p;
     ok(timedOut, "Timer callbacks should always time out\n");
     ++*pn;
 }

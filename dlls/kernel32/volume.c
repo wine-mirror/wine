@@ -1479,7 +1479,7 @@ HANDLE WINAPI FindFirstVolumeW( LPWSTR volume, DWORD len )
             HeapFree( GetProcessHeap(), 0, output );
             return INVALID_HANDLE_VALUE;
         }
-        return (HANDLE)output;
+        return output;
     }
     CloseHandle( mgr );
     return INVALID_HANDLE_VALUE;
