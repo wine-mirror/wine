@@ -63,8 +63,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_stabs);
 
+/* Masks for n_type field */
+#ifndef N_STAB
+#define N_STAB		0xe0
+#endif
+#ifndef N_TYPE
+#define N_TYPE		0x1e
+#endif
+#ifndef N_EXT
+#define N_EXT		0x01
+#endif
+
+/* Values for (n_type & N_TYPE) */
 #ifndef N_UNDF
 #define N_UNDF		0x00
+#endif
+#ifndef N_ABS
+#define N_ABS		0x02
 #endif
 
 #define N_GSYM		0x20
@@ -1197,6 +1212,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
     struct pending_block        pending;
     BOOL                        ret = TRUE;
     struct location             loc;
+    unsigned char               type;
 
     nstab = stablen / sizeof(struct stab_nlist);
     strs_end = strs + strtablen;
@@ -1244,8 +1260,13 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             ptr = stabbuff;
         }
 
+        if (stab_ptr->n_type & N_STAB)
+            type = stab_ptr->n_type;
+        else
+            type = (stab_ptr->n_type & N_TYPE);
+
         /* only symbol entries contain a typedef */
-        switch (stab_ptr->n_type)
+        switch (type)
         {
         case N_GSYM:
         case N_LCSYM:
@@ -1275,7 +1296,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             }
         }
 
-        switch (stab_ptr->n_type)
+        switch (type)
         {
         case N_GSYM:
             /*
@@ -1527,7 +1548,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             /* Always ignore these, they seem to be used only on Darwin. */
             break;
         default:
-            ERR("Unknown stab type 0x%02x\n", stab_ptr->n_type);
+            ERR("Unknown stab type 0x%02x\n", type);
             break;
         }
         stabbuff[0] = '\0';
