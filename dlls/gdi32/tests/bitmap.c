@@ -1816,7 +1816,9 @@ static void test_GetDIBits_BI_BITFIELDS(void)
         ok( bitmasks[0] != 0, "red mask is not set\n" );
         ok( bitmasks[1] != 0, "green mask is not set\n" );
         ok( bitmasks[2] != 0, "blue mask is not set\n" );
-        ok( dibinfo->bmiHeader.biSizeImage != 0xdeadbeef, "size image not set\n" );
+        ok( dibinfo->bmiHeader.biSizeImage != 0xdeadbeef ||
+            broken(dibinfo->bmiHeader.biSizeImage == 0xdeadbeef), /* win9x */
+            "size image not set\n" );
 
         /* now with bits and 0 lines */
         memset(dibinfo, 0, sizeof(dibinfo_buf));
