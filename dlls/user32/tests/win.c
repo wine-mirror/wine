@@ -2430,9 +2430,9 @@ static void test_SetForegroundWindow(HWND hwnd)
 
     /*trace("testing SetForegroundWindow on an invisible window %p\n", hwnd);*/
     ret = SetForegroundWindow(hwnd);
-    ok(ret, "SetForegroundWindow returned FALSE instead of TRUE\n");
+    ok(ret || broken(!ret), /* win98 */ "SetForegroundWindow returned FALSE instead of TRUE\n");
     check_wnd_state(hwnd, hwnd, hwnd, 0);
-    
+
     ShowWindow(hwnd, SW_SHOW);
     check_wnd_state(hwnd, hwnd, hwnd, 0);
 
