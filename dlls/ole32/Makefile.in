@@ -57,7 +57,6 @@ SPEC_SRCS16 = \
 	compobj.spec \
 	ole2.spec \
 	ole2nls.spec \
-	ole2prox.spec \
 	ole2thk.spec \
 	storage.spec
 
