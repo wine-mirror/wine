@@ -315,6 +315,8 @@ AC_CHECK_HEADERS(\
 	linux/serial.h \
 	linux/types.h \
 	linux/ucdrom.h \
+	mach-o/dyld_images.h \
+	mach-o/nlist.h \
 	mach/mach.h \
 	mach/machine.h \
 	machine/cpu.h \

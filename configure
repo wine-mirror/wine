@@ -6092,6 +6092,8 @@ done
 
 
 
+
+
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
@@ -6137,6 +6139,8 @@ for ac_header in \
 	linux/serial.h \
 	linux/types.h \
 	linux/ucdrom.h \
+	mach-o/dyld_images.h \
+	mach-o/nlist.h \
 	mach/mach.h \
 	mach/machine.h \
 	machine/cpu.h \
