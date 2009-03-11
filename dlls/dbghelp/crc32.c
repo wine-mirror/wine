@@ -136,7 +136,7 @@ DWORD calc_crc32(int fd)
         0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
     };
     int                 i, r;
-    unsigned char       buffer[256];
+    unsigned char       buffer[8192];
     DWORD               crc = ~0;
 
     lseek(fd, 0, SEEK_SET);
