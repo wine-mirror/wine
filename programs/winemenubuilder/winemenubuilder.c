@@ -1589,6 +1589,10 @@ static BOOL Process_Link( LPCWSTR linkname, BOOL bWait )
             InvokeShellLinker( sl, fullname, FALSE );
         }
     }
+    else
+    {
+        WINE_ERR("unable to load %s\n", wine_dbgstr_w(linkname));
+    }
 
     IPersistFile_Release( pf );
     IShellLinkW_Release( sl );
