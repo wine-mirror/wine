@@ -1429,40 +1429,6 @@ HRESULT WINAPI CLSIDFromString(LPOLESTR idstr, CLSID *id )
     return ret;
 }
 
-/* Converts a GUID into the respective string representation. */
-HRESULT WINE_StringFromCLSID(
-	const CLSID *id,	/* [in] GUID to be converted */
-	LPSTR idstr		/* [out] pointer to buffer to contain converted guid */
-) {
-  static const char hex[] = "0123456789ABCDEF";
-  char *s;
-  int	i;
-
-  if (!id)
-	{ ERR("called with id=Null\n");
-	  *idstr = 0x00;
-	  return E_FAIL;
-	}
-
-  sprintf(idstr, "{%08X-%04X-%04X-%02X%02X-",
-	  id->Data1, id->Data2, id->Data3,
-	  id->Data4[0], id->Data4[1]);
-  s = &idstr[25];
-
-  /* 6 hex bytes */
-  for (i = 2; i < 8; i++) {
-    *s++ = hex[id->Data4[i]>>4];
-    *s++ = hex[id->Data4[i] & 0xf];
-  }
-
-  *s++ = '}';
-  *s++ = '\0';
-
-  TRACE("%p->%s\n", id, idstr);
-
-  return S_OK;
-}
-
 
 /******************************************************************************
  *		StringFromCLSID	[OLE32.@]
@@ -1484,20 +1450,13 @@ HRESULT WINE_StringFromCLSID(
  */
 HRESULT WINAPI StringFromCLSID(REFCLSID id, LPOLESTR *idstr)
 {
-	char            buf[80];
-	HRESULT       ret;
-	LPMALLOC	mllc;
+    HRESULT ret;
+    LPMALLOC mllc;
 
-	if ((ret = CoGetMalloc(0,&mllc)))
-		return ret;
-
-	ret=WINE_StringFromCLSID(id,buf);
-	if (ret == S_OK) {
-            DWORD len = MultiByteToWideChar( CP_ACP, 0, buf, -1, NULL, 0 );
-            *idstr = IMalloc_Alloc( mllc, len * sizeof(WCHAR) );
-            MultiByteToWideChar( CP_ACP, 0, buf, -1, *idstr, len );
-	}
-	return ret;
+    if ((ret = CoGetMalloc(0,&mllc))) return ret;
+    if (!(*idstr = IMalloc_Alloc( mllc, CHARS_IN_GUID * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+    StringFromGUID2( id, *idstr, CHARS_IN_GUID );
+    return S_OK;
 }
 
 /******************************************************************************
@@ -1517,11 +1476,15 @@ HRESULT WINAPI StringFromCLSID(REFCLSID id, LPOLESTR *idstr)
  */
 INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax)
 {
-  char		xguid[80];
-
-  if (WINE_StringFromCLSID(id,xguid))
-  	return 0;
-  return MultiByteToWideChar( CP_ACP, 0, xguid, -1, str, cmax );
+    static const WCHAR formatW[] = { '{','%','0','8','X','-','%','0','4','X','-',
+                                     '%','0','4','X','-','%','0','2','X','%','0','2','X','-',
+                                     '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X',
+                                     '%','0','2','X','%','0','2','X','}',0 };
+    if (cmax < CHARS_IN_GUID) return 0;
+    sprintfW( str, formatW, id->Data1, id->Data2, id->Data3,
+              id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
+              id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
+    return CHARS_IN_GUID;
 }
 
 /* open HKCR\\CLSID\\{string form of clsid}\\{keyname} key */
