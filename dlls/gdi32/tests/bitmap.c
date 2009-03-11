@@ -1660,8 +1660,9 @@ static void test_GetDIBits(void)
     ok(!bm.bmBits, "wrong bmBits %p\n", bm.bmBits);
 
     bytes = GetBitmapBits(hbmp, 0, NULL);
-    ok(bytes == bm.bmWidthBytes * bm.bmHeight, "expected %d got %d bytes\n",
-       bm.bmWidthBytes * bm.bmHeight, bytes);
+    ok(bytes == bm.bmWidthBytes * bm.bmHeight ||
+       broken(bytes == 0), /* win9x */
+       "expected %d got %d bytes\n", bm.bmWidthBytes * bm.bmHeight, bytes);
     bytes = GetBitmapBits(hbmp, sizeof(buf), buf);
     ok(bytes == bm.bmWidthBytes * bm.bmHeight, "expected %d got %d bytes\n",
        bm.bmWidthBytes * bm.bmHeight, bytes);
