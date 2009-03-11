@@ -6850,12 +6850,17 @@ static void test_accelerators(void)
     GetCursorPos(&pt);
     if (pt.x == rc.left && pt.y == rc.top)
     {
+        int i;
         keybd_event(VK_SHIFT, 0, 0, 0);
         mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
         mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
         keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
         pump_msg_loop(hwnd, 0);
-        ok_sequence(WmShiftMouseButton, "Shift+MouseButton press/release", FALSE);
+        for (i = 0; i < sequence_cnt; i++) if (sequence[i].message == WM_LBUTTONDOWN) break;
+        if (i < sequence_cnt)
+            ok_sequence(WmShiftMouseButton, "Shift+MouseButton press/release", FALSE);
+        else
+            skip( "Shift+MouseButton event didn't get to the window\n" );
     }
 
 done:
@@ -8222,12 +8227,9 @@ static const struct message ScrollWindowPaint1[] = {
     { WM_GETTEXTLENGTH, sent|optional },
     { WM_PAINT, sent|optional },
     { WM_NCPAINT, sent|beginpaint|optional },
-    { WM_GETTEXT, sent|optional },
-    { WM_GETTEXT, sent|optional },
-    { WM_GETTEXT, sent|optional },
-    { WM_GETTEXT, sent|defwinproc|optional },
-    { WM_GETTEXT, sent|defwinproc|optional },
-    { WM_ERASEBKGND, sent|optional },
+    { WM_GETTEXT, sent|beginpaint|optional },
+    { WM_GETTEXT, sent|beginpaint|optional },
+    { WM_ERASEBKGND, sent|beginpaint|optional },
     { 0 }
 };
 
