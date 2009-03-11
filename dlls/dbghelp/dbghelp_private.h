@@ -111,7 +111,7 @@ void*    hash_table_iter_up(struct hash_table_iter* hti);
 
 extern unsigned dbghelp_options;
 /* some more Wine extensions */
-#define SYMOPT_WINE_WITH_ELF_MODULES 0x40000000
+#define SYMOPT_WINE_WITH_NATIVE_MODULES 0x40000000
 
 enum location_kind {loc_error,          /* reg is the error code */
                     loc_absolute,       /* offset is the location */
@@ -413,10 +413,11 @@ extern BOOL         validate_addr64(DWORD64 addr);
 extern BOOL         pcs_callback(const struct process* pcs, ULONG action, void* data);
 extern void*        fetch_buffer(struct process* pcs, unsigned size);
 
+typedef BOOL (*enum_modules_cb)(const WCHAR*, unsigned long addr, void* user);
+
 /* elf_module.c */
 #define ELF_NO_MAP      ((const void*)0xffffffff)
-typedef BOOL (*elf_enum_modules_cb)(const WCHAR*, unsigned long addr, void* user);
-extern BOOL         elf_enum_modules(HANDLE hProc, elf_enum_modules_cb, void*);
+extern BOOL         elf_enum_modules(HANDLE hProc, enum_modules_cb, void*);
 extern BOOL         elf_fetch_file_info(const WCHAR* name, DWORD* base, DWORD* size, DWORD* checksum);
 struct elf_file_map;
 extern BOOL         elf_load_debug_info(struct module* module, struct elf_file_map* fmap);

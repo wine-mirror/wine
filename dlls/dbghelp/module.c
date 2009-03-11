@@ -358,13 +358,13 @@ struct module* module_find_by_addr(const struct process* pcs, unsigned long addr
 }
 
 /******************************************************************
- *		module_is_elf_container_loaded
+ *		module_is_container_loaded
  *
- * checks whether the ELF container, for a (supposed) PE builtin is
+ * checks whether the native container, for a (supposed) PE builtin is
  * already loaded
  */
-static BOOL module_is_elf_container_loaded(const struct process* pcs,
-                                           const WCHAR* ImageName, DWORD base)
+static BOOL module_is_container_loaded(const struct process* pcs,
+                                       const WCHAR* ImageName, DWORD base)
 {
     size_t              len;
     struct module*      module;
@@ -525,7 +525,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     if (wImageName)
     {
         module = module_is_already_loaded(pcs, wImageName);
-        if (!module && module_is_elf_container_loaded(pcs, wImageName, BaseOfDll))
+        if (!module && module_is_container_loaded(pcs, wImageName, BaseOfDll))
         {
             /* force the loading of DLL as builtin */
             module = pe_load_builtin_module(pcs, wImageName, BaseOfDll, SizeOfDll);
@@ -709,7 +709,7 @@ BOOL  WINAPI SymEnumerateModulesW64(HANDLE hProcess,
     
     for (module = pcs->lmodules; module; module = module->next)
     {
-        if (!(dbghelp_options & SYMOPT_WINE_WITH_ELF_MODULES) && module->type == DMT_ELF)
+        if (!(dbghelp_options & SYMOPT_WINE_WITH_NATIVE_MODULES) && module->type == DMT_ELF)
             continue;
         if (!EnumModulesCallback(module->module.ModuleName,
                                  module->module.BaseOfImage, UserContext))

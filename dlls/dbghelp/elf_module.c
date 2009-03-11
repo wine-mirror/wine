@@ -1390,7 +1390,7 @@ static BOOL elf_search_and_load_file(struct process* pcs, const WCHAR* filename,
  */
 static BOOL elf_enum_modules_internal(const struct process* pcs,
                                       const WCHAR* main_name,
-                                      elf_enum_modules_cb cb, void* user)
+                                      enum_modules_cb cb, void* user)
 {
     struct r_debug      dbg_hdr;
     void*               lm_addr;
@@ -1531,7 +1531,7 @@ BOOL elf_read_wine_loader_dbg_info(struct process* pcs)
  * This function doesn't require that someone has called SymInitialize
  * on this very process.
  */
-BOOL elf_enum_modules(HANDLE hProc, elf_enum_modules_cb cb, void* user)
+BOOL elf_enum_modules(HANDLE hProc, enum_modules_cb cb, void* user)
 {
     struct process      pcs;
     struct elf_info     elf_info;
@@ -1636,7 +1636,7 @@ BOOL elf_read_wine_loader_dbg_info(struct process* pcs)
     return FALSE;
 }
 
-BOOL elf_enum_modules(HANDLE hProc, elf_enum_modules_cb cb, void* user)
+BOOL elf_enum_modules(HANDLE hProc, enum_modules_cb cb, void* user)
 {
     return FALSE;
 }
