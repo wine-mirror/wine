@@ -1127,8 +1127,7 @@ struct pending_block
     unsigned                    allocated;
 };
 
-static inline void pending_add(struct pending_block* pending, const char* name,
-                               enum DataKind dt, const struct location* loc)
+static inline void pending_make_room(struct pending_list* pending)
 {
     if (pending->num == pending->allocated)
     {
@@ -1140,6 +1139,12 @@ static inline void pending_add(struct pending_block* pending, const char* name,
             pending->vars = HeapReAlloc(GetProcessHeap(), 0, pending->vars,
                                        pending->allocated * sizeof(pending->vars[0]));
     }
+}
+
+static inline void pending_add(struct pending_block* pending, const char* name,
+                               enum DataKind dt, const struct location* loc)
+{
+    pending_make_room(pending);
     stab_strcpy(pending->vars[pending->num].name, 
                 sizeof(pending->vars[pending->num].name), name);
     pending->vars[pending->num].type   = stabs_parse_type(name);
