@@ -1046,7 +1046,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
     const IMAGE_DOS_HEADER *descr = NULL;
     const char *file_name = NULL;
     char dllname[32], owner[20], *p;
-    const char *basename;
+    const char *basename, *main_module;
     int owner_exists = FALSE;
 
     /* strip path information */
@@ -1075,11 +1075,33 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
             {
                 TRACE( "found %s with embedded 16-bit module\n", debugstr_a(dllname) );
                 file_name = basename;
+
+                /* if module has a 32-bit owner, match the load order of the owner */
+                if ((main_module = (void *)GetProcAddress( mod32, "__wine_spec_main_module" )))
+                {
+                    LDR_MODULE *ldr;
+                    HMODULE main_owner = LoadLibraryA( main_module );
+
+                    if (!main_owner)
+                    {
+                        WARN( "couldn't load owner %s for 16-bit dll %s\n", main_module, dllname );
+                        FreeLibrary( mod32 );
+                        return ERROR_FILE_NOT_FOUND;
+                    }
+                    /* check if module was loaded native */
+                    if (LdrFindEntryForAddress( main_owner, &ldr ) || !(ldr->Flags & LDR_WINE_INTERNAL))
+                    {
+                        FreeLibrary( mod32 );
+                        descr = NULL;
+                    }
+                    FreeLibrary( main_owner );
+                }
             }
         }
         *p = 0;
 
-        if (!descr && wine_dll_get_owner( dllname, owner, sizeof(owner), &owner_exists ) != -1)
+        /* old-style 16-bit placeholders support, to be removed at some point */
+        if (!mod32 && wine_dll_get_owner( dllname, owner, sizeof(owner), &owner_exists ) != -1)
         {
             mod32 = LoadLibraryA( owner );
             if (mod32)
