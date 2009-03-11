@@ -36,9 +36,9 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 /***********************************************************************
  *           PSDRV_ExtTextOut
  */
-BOOL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
-		       const RECT *lprect, LPCWSTR str, UINT count,
-		       const INT *lpDx )
+BOOL CDECL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
+                             const RECT *lprect, LPCWSTR str, UINT count,
+                             const INT *lpDx )
 {
     BOOL bResult = TRUE;
     BOOL bClipped = FALSE;

@@ -296,8 +296,8 @@ static LPDEVMODEA DEVMODEdupWtoA(HANDLE heap, const DEVMODEW *dmW)
 /**********************************************************************
  *	     PSDRV_CreateDC
  */
-BOOL PSDRV_CreateDC( HDC hdc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR device,
-                     LPCWSTR output, const DEVMODEW* initData )
+BOOL CDECL PSDRV_CreateDC( HDC hdc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR device,
+                           LPCWSTR output, const DEVMODEW* initData )
 {
     PSDRV_PDEVICE *physDev;
     PRINTERINFO *pi;
@@ -381,7 +381,7 @@ BOOL PSDRV_CreateDC( HDC hdc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR devi
 /**********************************************************************
  *	     PSDRV_DeleteDC
  */
-BOOL PSDRV_DeleteDC( PSDRV_PDEVICE *physDev )
+BOOL CDECL PSDRV_DeleteDC( PSDRV_PDEVICE *physDev )
 {
     TRACE("\n");
 
@@ -396,7 +396,7 @@ BOOL PSDRV_DeleteDC( PSDRV_PDEVICE *physDev )
 /**********************************************************************
  *	     ResetDC   (WINEPS.@)
  */
-HDC PSDRV_ResetDC( PSDRV_PDEVICE *physDev, const DEVMODEW *lpInitData )
+HDC CDECL PSDRV_ResetDC( PSDRV_PDEVICE *physDev, const DEVMODEW *lpInitData )
 {
     if(lpInitData) {
         HRGN hrgn;
@@ -414,7 +414,7 @@ HDC PSDRV_ResetDC( PSDRV_PDEVICE *physDev, const DEVMODEW *lpInitData )
 /***********************************************************************
  *           GetDeviceCaps    (WINEPS.@)
  */
-INT PSDRV_GetDeviceCaps( PSDRV_PDEVICE *physDev, INT cap )
+INT CDECL PSDRV_GetDeviceCaps( PSDRV_PDEVICE *physDev, INT cap )
 {
     switch(cap)
     {

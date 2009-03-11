@@ -37,7 +37,7 @@ static const char PEN_alternate[]  = "1";
 /***********************************************************************
  *           SelectPen   (WINEPS.@)
  */
-HPEN PSDRV_SelectPen( PSDRV_PDEVICE *physDev, HPEN hpen )
+HPEN CDECL PSDRV_SelectPen( PSDRV_PDEVICE *physDev, HPEN hpen )
 {
     LOGPEN logpen;
 

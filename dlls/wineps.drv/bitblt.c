@@ -28,7 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
  *
  *                    PSDRV_PatBlt
  */
-BOOL PSDRV_PatBlt(PSDRV_PDEVICE *physDev, INT x, INT y, INT width, INT height, DWORD dwRop)
+BOOL CDECL PSDRV_PatBlt(PSDRV_PDEVICE *physDev, INT x, INT y, INT width, INT height, DWORD dwRop)
 {
     POINT pt[2];
 

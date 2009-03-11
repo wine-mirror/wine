@@ -117,7 +117,7 @@ void PSDRV_CreateColor( PSDRV_PDEVICE *physDev, PSCOLOR *pscolor,
 /***********************************************************************
  *           PSDRV_SetBkColor
  */
-COLORREF PSDRV_SetBkColor( PSDRV_PDEVICE *physDev, COLORREF color )
+COLORREF CDECL PSDRV_SetBkColor( PSDRV_PDEVICE *physDev, COLORREF color )
 {
     PSDRV_CreateColor(physDev, &physDev->bkColor, color);
     return color;
@@ -127,7 +127,7 @@ COLORREF PSDRV_SetBkColor( PSDRV_PDEVICE *physDev, COLORREF color )
 /***********************************************************************
  *           PSDRV_SetTextColor
  */
-COLORREF PSDRV_SetTextColor( PSDRV_PDEVICE *physDev, COLORREF color )
+COLORREF CDECL PSDRV_SetTextColor( PSDRV_PDEVICE *physDev, COLORREF color )
 {
     PSDRV_CreateColor(physDev, &physDev->font.color, color);
     physDev->font.set = FALSE;

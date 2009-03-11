@@ -254,7 +254,7 @@ BOOL PSDRV_WriteBuiltinGlyphShow(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count)
 /***********************************************************************
  *           PSDRV_GetTextMetrics
  */
-BOOL PSDRV_GetTextMetrics(PSDRV_PDEVICE *physDev, TEXTMETRICW *metrics)
+BOOL CDECL PSDRV_GetTextMetrics(PSDRV_PDEVICE *physDev, TEXTMETRICW *metrics)
 {
     assert(physDev->font.fontloc == Builtin);
 
@@ -305,8 +305,8 @@ const AFMMETRICS *PSDRV_UVMetrics(LONG UV, const AFM *afm)
 /***********************************************************************
  *           PSDRV_GetTextExtentExPoint
  */
-BOOL PSDRV_GetTextExtentExPoint(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count,
-                                INT maxExt, LPINT lpnFit, LPINT alpDx, LPSIZE size)
+BOOL CDECL PSDRV_GetTextExtentExPoint(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count,
+                                      INT maxExt, LPINT lpnFit, LPINT alpDx, LPSIZE size)
 {
     int     	    nfit = 0;
     int     	    i;
@@ -343,7 +343,7 @@ BOOL PSDRV_GetTextExtentExPoint(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count,
 /***********************************************************************
  *           PSDRV_GetCharWidth
  */
-BOOL PSDRV_GetCharWidth(PSDRV_PDEVICE *physDev, UINT firstChar, UINT lastChar, LPINT buffer)
+BOOL CDECL PSDRV_GetCharWidth(PSDRV_PDEVICE *physDev, UINT firstChar, UINT lastChar, LPINT buffer)
 {
     UINT    	    i;
 
@@ -403,8 +403,8 @@ static UINT PSDRV_GetFontMetric(HDC hdc, const AFM *afm,
 /***********************************************************************
  *           PSDRV_EnumDeviceFonts
  */
-BOOL PSDRV_EnumDeviceFonts( PSDRV_PDEVICE *physDev, LPLOGFONTW plf,
-			    FONTENUMPROCW proc, LPARAM lp )
+BOOL CDECL PSDRV_EnumDeviceFonts( PSDRV_PDEVICE *physDev, LPLOGFONTW plf,
+                                  FONTENUMPROCW proc, LPARAM lp )
 {
     ENUMLOGFONTEXW	lf;
     NEWTEXTMETRICEXW	tm;

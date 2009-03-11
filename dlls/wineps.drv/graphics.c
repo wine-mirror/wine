@@ -85,7 +85,7 @@ static void PSDRV_DrawLine( PSDRV_PDEVICE *physDev )
 /***********************************************************************
  *           PSDRV_LineTo
  */
-BOOL PSDRV_LineTo(PSDRV_PDEVICE *physDev, INT x, INT y)
+BOOL CDECL PSDRV_LineTo(PSDRV_PDEVICE *physDev, INT x, INT y)
 {
     POINT pt[2];
 
@@ -111,7 +111,7 @@ BOOL PSDRV_LineTo(PSDRV_PDEVICE *physDev, INT x, INT y)
 /***********************************************************************
  *           PSDRV_Rectangle
  */
-BOOL PSDRV_Rectangle( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom )
+BOOL CDECL PSDRV_Rectangle( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom )
 {
     RECT rect;
 
@@ -149,8 +149,8 @@ BOOL PSDRV_Rectangle( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT 
 /***********************************************************************
  *           PSDRV_RoundRect
  */
-BOOL PSDRV_RoundRect( PSDRV_PDEVICE *physDev, INT left, INT top, INT right,
-                      INT bottom, INT ell_width, INT ell_height )
+BOOL CDECL PSDRV_RoundRect( PSDRV_PDEVICE *physDev, INT left, INT top, INT right,
+                            INT bottom, INT ell_width, INT ell_height )
 {
     RECT rect[2];
 
@@ -268,8 +268,8 @@ static BOOL PSDRV_DrawArc( PSDRV_PDEVICE *physDev, INT left, INT top,
 /***********************************************************************
  *           PSDRV_Arc
  */
-BOOL PSDRV_Arc( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom,
-                INT xstart, INT ystart, INT xend, INT yend )
+BOOL CDECL PSDRV_Arc( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom,
+                      INT xstart, INT ystart, INT xend, INT yend )
 {
     return PSDRV_DrawArc( physDev, left, top, right, bottom, xstart, ystart, xend, yend, 0 );
 }
@@ -277,8 +277,8 @@ BOOL PSDRV_Arc( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom
 /***********************************************************************
  *           PSDRV_Chord
  */
-BOOL PSDRV_Chord( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom,
-                  INT xstart, INT ystart, INT xend, INT yend )
+BOOL CDECL PSDRV_Chord( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom,
+                        INT xstart, INT ystart, INT xend, INT yend )
 {
     return PSDRV_DrawArc( physDev, left, top, right, bottom, xstart, ystart, xend, yend, 1 );
 }
@@ -287,8 +287,8 @@ BOOL PSDRV_Chord( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bott
 /***********************************************************************
  *           PSDRV_Pie
  */
-BOOL PSDRV_Pie( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom,
-                INT xstart, INT ystart, INT xend, INT yend )
+BOOL CDECL PSDRV_Pie( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom,
+                      INT xstart, INT ystart, INT xend, INT yend )
 {
     return PSDRV_DrawArc( physDev, left, top, right, bottom, xstart, ystart, xend, yend, 2 );
 }
@@ -297,7 +297,7 @@ BOOL PSDRV_Pie( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom
 /***********************************************************************
  *           PSDRV_Ellipse
  */
-BOOL PSDRV_Ellipse( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom)
+BOOL CDECL PSDRV_Ellipse( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom)
 {
     INT x, y, w, h;
     RECT rect;
@@ -332,8 +332,8 @@ BOOL PSDRV_Ellipse( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bo
 /***********************************************************************
  *           PSDRV_PolyPolyline
  */
-BOOL PSDRV_PolyPolyline( PSDRV_PDEVICE *physDev, const POINT* pts, const DWORD* counts,
-                         DWORD polylines )
+BOOL CDECL PSDRV_PolyPolyline( PSDRV_PDEVICE *physDev, const POINT* pts, const DWORD* counts,
+                               DWORD polylines )
 {
     DWORD polyline, line, total;
     POINT *dev_pts, *pt;
@@ -368,7 +368,7 @@ BOOL PSDRV_PolyPolyline( PSDRV_PDEVICE *physDev, const POINT* pts, const DWORD* 
 /***********************************************************************
  *           PSDRV_Polyline
  */
-BOOL PSDRV_Polyline( PSDRV_PDEVICE *physDev, const POINT* pt, INT count )
+BOOL CDECL PSDRV_Polyline( PSDRV_PDEVICE *physDev, const POINT* pt, INT count )
 {
     return PSDRV_PolyPolyline( physDev, pt, (LPDWORD) &count, 1 );
 }
@@ -377,8 +377,8 @@ BOOL PSDRV_Polyline( PSDRV_PDEVICE *physDev, const POINT* pt, INT count )
 /***********************************************************************
  *           PSDRV_PolyPolygon
  */
-BOOL PSDRV_PolyPolygon( PSDRV_PDEVICE *physDev, const POINT* pts, const INT* counts,
-                        UINT polygons )
+BOOL CDECL PSDRV_PolyPolygon( PSDRV_PDEVICE *physDev, const POINT* pts, const INT* counts,
+                              UINT polygons )
 {
     DWORD polygon, total;
     INT line;
@@ -420,7 +420,7 @@ BOOL PSDRV_PolyPolygon( PSDRV_PDEVICE *physDev, const POINT* pts, const INT* cou
 /***********************************************************************
  *           PSDRV_Polygon
  */
-BOOL PSDRV_Polygon( PSDRV_PDEVICE *physDev, const POINT* pt, INT count )
+BOOL CDECL PSDRV_Polygon( PSDRV_PDEVICE *physDev, const POINT* pt, INT count )
 {
      return PSDRV_PolyPolygon( physDev, pt, &count, 1 );
 }
@@ -429,7 +429,7 @@ BOOL PSDRV_Polygon( PSDRV_PDEVICE *physDev, const POINT* pt, INT count )
 /***********************************************************************
  *           PSDRV_SetPixel
  */
-COLORREF PSDRV_SetPixel( PSDRV_PDEVICE *physDev, INT x, INT y, COLORREF color )
+COLORREF CDECL PSDRV_SetPixel( PSDRV_PDEVICE *physDev, INT x, INT y, COLORREF color )
 {
     PSCOLOR pscolor;
     POINT pt;
@@ -454,7 +454,7 @@ COLORREF PSDRV_SetPixel( PSDRV_PDEVICE *physDev, INT x, INT y, COLORREF color )
 /***********************************************************************
  *           PSDRV_PaintRgn
  */
-BOOL PSDRV_PaintRgn( PSDRV_PDEVICE *physDev, HRGN hrgn )
+BOOL CDECL PSDRV_PaintRgn( PSDRV_PDEVICE *physDev, HRGN hrgn )
 {
     
     RGNDATA *rgndata = NULL;

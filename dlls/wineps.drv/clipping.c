@@ -27,7 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 /***********************************************************************
  *           PSDRV_SetDeviceClipping
  */
-void PSDRV_SetDeviceClipping( PSDRV_PDEVICE *physDev, HRGN vis_rgn, HRGN clip_rgn )
+void CDECL PSDRV_SetDeviceClipping( PSDRV_PDEVICE *physDev, HRGN vis_rgn, HRGN clip_rgn )
 {
     /* We could set a dirty flag here to speed up PSDRV_SetClip */
     return;

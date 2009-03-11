@@ -27,7 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 /***********************************************************************
  *           SelectBrush   (WINEPS.@)
  */
-HBRUSH PSDRV_SelectBrush( PSDRV_PDEVICE *physDev, HBRUSH hbrush )
+HBRUSH CDECL PSDRV_SelectBrush( PSDRV_PDEVICE *physDev, HBRUSH hbrush )
 {
     LOGBRUSH logbrush;
 

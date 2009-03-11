@@ -36,8 +36,8 @@ static const char psbegindocument[] =
 /**********************************************************************
  *           ExtEscape  (WINEPS.@)
  */
-INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID in_data,
-                     INT cbOutput, LPVOID out_data )
+INT CDECL PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID in_data,
+                           INT cbOutput, LPVOID out_data )
 {
     switch(nEscape)
     {
@@ -341,7 +341,7 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 /************************************************************************
  *           PSDRV_StartPage
  */
-INT PSDRV_StartPage( PSDRV_PDEVICE *physDev )
+INT CDECL PSDRV_StartPage( PSDRV_PDEVICE *physDev )
 {
     if(!physDev->job.OutOfPage) {
         FIXME("Already started a page?\n");
@@ -363,7 +363,7 @@ INT PSDRV_StartPage( PSDRV_PDEVICE *physDev )
 /************************************************************************
  *           PSDRV_EndPage
  */
-INT PSDRV_EndPage( PSDRV_PDEVICE *physDev )
+INT CDECL PSDRV_EndPage( PSDRV_PDEVICE *physDev )
 {
     if(physDev->job.OutOfPage) {
         FIXME("Already ended a page?\n");
@@ -429,7 +429,7 @@ static INT PSDRV_StartDocA( PSDRV_PDEVICE *physDev, const DOCINFOA *doc )
 /************************************************************************
  *           PSDRV_StartDoc
  */
-INT PSDRV_StartDoc( PSDRV_PDEVICE *physDev, const DOCINFOW *doc )
+INT CDECL PSDRV_StartDoc( PSDRV_PDEVICE *physDev, const DOCINFOW *doc )
 {
     DOCINFOA docA;
     INT ret, len;
@@ -471,7 +471,7 @@ INT PSDRV_StartDoc( PSDRV_PDEVICE *physDev, const DOCINFOW *doc )
 /************************************************************************
  *           PSDRV_EndDoc
  */
-INT PSDRV_EndDoc( PSDRV_PDEVICE *physDev )
+INT CDECL PSDRV_EndDoc( PSDRV_PDEVICE *physDev )
 {
     INT ret = 1;
     if(!physDev->job.hJob) {
