@@ -79,6 +79,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_stabs);
 #define N_SLINE		0x44
 #define N_ENSYM		0x4e
 #define N_SO		0x64
+#define N_OSO		0x66
 #define N_LSYM		0x80
 #define N_BINCL		0x82
 #define N_SOL		0x84
@@ -1522,6 +1523,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             break;
         case N_BNSYM:
         case N_ENSYM:
+        case N_OSO:
             /* Always ignore these, they seem to be used only on Darwin. */
             break;
         default:
