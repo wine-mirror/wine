@@ -1,0 +1,331 @@
+/*
+ * Regedit resources
+ *
+ * Copyright 2009 Aurimas Fišeras <aurimas@gmail.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+/* UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
+
+/*
+ * Menu
+ */
+
+IDR_REGEDIT_MENU MENU DISCARDABLE
+BEGIN
+    POPUP "R&egistras"
+    BEGIN
+        MENUITEM "&Importuoti registro failą...",  ID_REGISTRY_IMPORTREGISTRYFILE
+        MENUITEM "E&ksportuoti registro failą...", ID_REGISTRY_EXPORTREGISTRYFILE
+        MENUITEM SEPARATOR
+        MENUITEM "Pri&jungti registrą tinkle...",  ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "&Atjungti registrą tinkle...",   ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "S&pausdinti\tCtrl+P",            ID_REGISTRY_PRINT, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Iš&eiti",                        ID_REGISTRY_EXIT
+    END
+    POPUP "&Taisa"
+    BEGIN
+        MENUITEM "&Modifikuoti",                   ID_EDIT_MODIFY
+        MENUITEM SEPARATOR
+        POPUP "&Naujas"
+        BEGIN
+            MENUITEM "&Raktas",                    ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "&Eilutės reikšmė",           ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "D&vejetainė reikšmė",        ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD reikšmė",             ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Kelių eilučių reikšmė",     ID_EDIT_NEW_MULTI_STRINGVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Šalinti\tDel",                  ID_EDIT_DELETE
+        MENUITEM "&Pervadinti\tF2",                ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "Kopijuoti rakto &vardą",         ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Ieškoti\tCtrl+F",               ID_EDIT_FIND, GRAYED
+        MENUITEM "Ieškoti &kito\tF3",              ID_EDIT_FINDNEXT, GRAYED
+    END
+    POPUP "&Rodymas"
+    BEGIN
+        MENUITEM "&Būsenos juosta",                ID_VIEW_STATUSBAR
+        MENUITEM SEPARATOR
+        MENUITEM "&Polangių skirtukas",            ID_VIEW_SPLIT
+        MENUITEM SEPARATOR
+        MENUITEM "&Atnaujinti\tF5",                ID_VIEW_REFRESH
+    END
+    POPUP "&Adresynas"
+    BEGIN
+        MENUITEM "Pri&dėti į adresyną...",         ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "&Pašalinti iš adresyno...",      ID_FAVORITES_REMOVEFAVORITE
+    END
+    POPUP "&Žinynas"
+    BEGIN
+        MENUITEM "&Žinyno temos\tF1",              ID_HELP_HELPTOPICS
+        MENUITEM SEPARATOR
+        MENUITEM "&Apie Registro tvarkytuvę",      ID_HELP_ABOUT
+    END
+END
+
+IDR_POPUP_MENUS MENU DISCARDABLE
+BEGIN
+  POPUP ""
+  BEGIN
+	MENUITEM "&Modifikuoti",                      ID_EDIT_MODIFY
+	MENUITEM "Modifikuoti dvejetainius duomenis", ID_EDIT_MODIFY_BIN
+	MENUITEM SEPARATOR
+	MENUITEM "&Šalinti\tDel",                     ID_EDIT_DELETE
+	MENUITEM "&Pervadinti",                       ID_EDIT_RENAME
+  END
+  POPUP ""
+  BEGIN
+        POPUP "&Naujas"
+        BEGIN
+            MENUITEM "&Raktas",                   ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "&Eilutės reikšmė",          ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "D&vejetainė reikšmė",       ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD reikšmė",            ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Kelių eilučių reikšmė",    ID_EDIT_NEW_MULTI_STRINGVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Šalinti\tDel",                 ID_EDIT_DELETE
+        MENUITEM "&Pervadinti\tF2",               ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Eksportuoti...",               ID_EDIT_EXPORT
+        MENUITEM "&Kopijuoti rakto vardą",        ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Ieškoti\tCtrl+F",              ID_EDIT_FIND, GRAYED
+  END
+END
+
+
+/*
+ * Dialog
+ */
+
+IDD_EXPORT_TEMPLATE DIALOG DISCARDABLE  50, 50, 278, 54
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
+    WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX "Eksportuoti registrą", IDC_EXPORT_BASE, 6, 6, 266, 42, WS_GROUP
+    AUTORADIOBUTTON "&Visą", IDC_EXPORT_ALL, 12, 15, 244, 12
+    AUTORADIOBUTTON "&Išrinktą šaką:", IDC_EXPORT_SELECTED, 12, 30, 70, 12
+    EDITTEXT IDC_EXPORT_PATH, 82, 30, 184, 12
+END
+
+IDD_FIND DIALOG DISCARDABLE  22, 17, 220, 85
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Ieškoti"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Ko ieškoti:",IDC_STATIC,5,7,119,8
+    EDITTEXT        IDC_VALUE_NAME,40,5,125,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    LTEXT           "Kur ieškoti:",IDC_STATIC,5, 22, 119, 8
+    CHECKBOX        "Raktuose", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX        "Reikšmių varduose", IDC_FIND_VALUES, 5, 46, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Reikšmėse", IDC_FIND_CONTENT, 5, 58, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Tenkina tik visas žodis", IDC_FIND_WHOLE, 5, 70, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    DEFPUSHBUTTON   "Ieškoti",IDOK,175,5,40,15,WS_GROUP
+    PUSHBUTTON      "Atsisakyti",IDCANCEL,175,24,40,15, WS_GROUP
+END
+
+IDD_ADDFAVORITE DIALOG DISCARDABLE  22, 17, 210, 55
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Pridėti adresyno įrašą"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Vardas:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "Gerai",IDOK,120,36,40,15,WS_GROUP
+    PUSHBUTTON      "Atsisakyti",IDCANCEL,165,36,40,15,WS_GROUP
+END
+
+IDD_DELFAVORITE DIALOG DISCARDABLE  22, 17, 210, 90
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Pašalinti adresyno įrašą"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Vardas:",IDC_STATIC,5,5,119,8
+    LISTBOX         IDC_NAME_LIST,5,15,200,52, WS_BORDER | WS_TABSTOP | LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL
+    DEFPUSHBUTTON   "Gerai",IDOK,120,72,40,15,WS_GROUP
+    PUSHBUTTON      "Atsisakyti",IDCANCEL,165,72,40,15,WS_GROUP
+END
+
+IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Redaguoti eilutės reikšmę"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Reikšmės vardas:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Reikšmės duomenys:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "Gerai",IDOK,120,56,40,15,WS_GROUP
+    PUSHBUTTON      "Atsisakyti",IDCANCEL,165,56,40,15,WS_GROUP
+END
+
+IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Redaguoti DWORD reikšmę"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Reikšmės vardas:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Reikšmės duomenys:",IDC_STATIC,5,30,90,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
+    GROUPBOX        "Bazė", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
+    AUTORADIOBUTTON "Šešioliktainė", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
+    AUTORADIOBUTTON "Dešimtainė", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
+    DEFPUSHBUTTON   "Gerai",IDOK,120,78,40,15,WS_GROUP
+    PUSHBUTTON      "Atsisakyti",IDCANCEL,165,78,40,15,WS_GROUP
+END
+
+IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 170, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Redaguoti dvejetainę reikšmę"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Reikšmės vardas:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,160,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Reikšmės duomenys:",IDC_STATIC,5,30,90,8
+    CONTROL         "",IDC_VALUE_DATA,"HexEdit",WS_TABSTOP,5,40,160,40
+    DEFPUSHBUTTON   "Gerai",IDOK,80,83,40,15,WS_GROUP
+    PUSHBUTTON      "Atsisakyti",IDCANCEL,125,83,40,15,WS_GROUP
+END
+
+IDD_EDIT_MULTI_STRING DIALOG DISCARDABLE  22, 17, 210, 175
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Redaguoti kelių eilučių reikšmę"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Reikšmės vardas:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Reikšmės duomenys:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,112, WS_BORDER | WS_TABSTOP | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_WANTRETURN
+    DEFPUSHBUTTON   "Gerai",IDOK,120,156,40,15,WS_GROUP
+    PUSHBUTTON      "Atsisakyti",IDCANCEL,165,156,40,15,WS_GROUP
+END
+
+/*
+ * String Table
+ */
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_LIST_COLUMN_NAME    "Vardas"
+    IDS_LIST_COLUMN_TYPE    "Tipas"
+    IDS_LIST_COLUMN_DATA    "Duomenys"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_APP_TITLE           "Registro tvarkytuvė"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_MENU        "Pateikiamos komandos darbui su visu registru"
+    ID_EDIT_MENU            "Pateikiamos komandos raktų ir reikšmių redagavimui"
+    ID_VIEW_MENU            "Pateikiamos komandos registro lango adaptavimui"
+    ID_FAVORITES_MENU       "Pateikiamos komandos dažnai naudojamų raktų prieigai"
+    ID_HELP_MENU            "Pateikiamos komandos žinyno ir informacijos apie registro tvarkytuvę rodymui"
+    ID_EDIT_NEW_MENU        "Pateikiamos komandos naujų raktų ir reikšmių kūrimui"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_EDIT_MODIFY          "Modifikuoja reikšmės duomenis"
+    ID_EDIT_NEW_KEY         "Prideda naują raktą"
+    ID_EDIT_NEW_STRINGVALUE "Prideda naują eilutės reikšmę"
+    ID_EDIT_NEW_BINARYVALUE "Prideda naują dvejeteinę reikšmę"
+    ID_EDIT_NEW_DWORDVALUE  "Prideda naują dvigubojo žodžio reikšmę"
+    ID_EDIT_NEW_MULTI_STRINGVALUE "Prideda naują kelių eilučių reikšmę"
+    ID_REGISTRY_IMPORTREGISTRYFILE "Importuoja tekstinį failą į registrą"
+    ID_REGISTRY_EXPORTREGISTRYFILE
+                            "Eksportuoja visą ar dalį registro į tekstinį failą"
+    ID_REGISTRY_CONNECTNETWORKREGISTRY
+                            "Prisijungia prie nuotolinio kompiuterio registro"
+    ID_REGISTRY_DISCONNECTNETWORKREGISTRY
+                            "Atsijungia nuo nuotolinio kompiuterio registro"
+    ID_REGISTRY_PRINT       "Atspausdina visą ar dalį registro"
+    ID_HELP_ABOUT           "Parodo informaciją apie programą, versijos numerį ir autoriaus teises"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_EXIT        "Išeina iš registro tvarkytuvės"
+    ID_FAVORITES_ADDTOFAVORITES "Prideda pasirinktą raktą į adresyną"
+    ID_FAVORITES_REMOVEFAVORITE "Pašalina nurodytus raktus iš adresyno"
+    ID_VIEW_STATUSBAR       "Parodo arba paslėpia būsenos juostą"
+    ID_VIEW_SPLIT           "Pakeičia polangių skirtuko poziciją tarp polangių"
+    ID_VIEW_REFRESH         "Atnaujina langą"
+    ID_EDIT_DELETE          "Šalina atranką"
+    ID_EDIT_RENAME          "Pervadina atranką"
+    ID_EDIT_COPYKEYNAME     "Kopijuoja pasirinkto rakto vardą į iškarpinę"
+    ID_EDIT_FIND            "Ieško teksto eilutės raktuose, reikšmių varduose ar duomenyse"
+    ID_EDIT_FINDNEXT        "Ieško ankstesnėje paieškoje nurodyto teksto kitos buvimo vietos"
+    ID_EDIT_EXPORT          "Eksportuoja pasirinktą registro šaką į tekstinį failą"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ERROR               "Klaida"
+    IDS_BAD_KEY             "Nepavyko perskaityti rakto '%s'"
+    IDS_BAD_VALUE           "Nepavyko perskaityti reikšmės '%s'"
+    IDS_UNSUPPORTED_TYPE    "Šio tipo raktų redaguoti negalima (%u)"
+    IDS_TOO_BIG_VALUE       "Reikšmė per didelė (%u)"
+    IDS_DELETE_BOX_TITLE    "Reikšmės šalinimo patvirtinimas"
+    IDS_DELETE_BOX_TEXT     "Ar tikrai norite pašalinti reikšmę '%s'?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "Ar tikrai norite pašalinti šias reikšmes?"
+    IDS_NEWKEY              "Naujas raktas #%d"
+    IDS_NEWVALUE            "Nauja reikšmė #%d"
+    IDS_NOTFOUND            "Ieškoma eilutė '%s' nerasta"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_FILEDIALOG_IMPORT_TITLE   "Importuoti registro failą"
+    IDS_FILEDIALOG_EXPORT_TITLE   "Eksportuoti registro failą"
+    IDS_FILEDIALOG_FILTER         "Registro failai\0*.reg\0Win9x/NT4 registro failai (REGEDIT4)\0*.reg\0Visi failai (*.*)\0*.*\0\0"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_REGISTRY_ROOT_NAME           "Kompiuteris"
+    IDS_REGISTRY_DEFAULT_VALUE       "(Numatytoji)"
+    IDS_REGISTRY_VALUE_NOT_SET       "(reikšmė nenustatyta)"
+    IDS_REGISTRY_VALUE_CANT_DISPLAY  "(negalima parodyti reikšmės)"
+    IDS_REGISTRY_UNKNOWN_TYPE        "(nežinomas %d)"
+END
+
+/*****************************************************************/
+
+/*
+ * TEXTINCLUDE
+ */
+
+1 TEXTINCLUDE DISCARDABLE
+BEGIN
+    "resource.h\0"
+END
+
+#pragma code_page(default)
