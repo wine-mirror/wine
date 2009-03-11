@@ -101,10 +101,9 @@ static void test_bitmap_info(HBITMAP hbm, INT expected_depth, const BITMAPINFOHE
     memset(buf, 0xAA, sizeof(buf));
     ret = GetBitmapBits(hbm, sizeof(buf), buf);
     ok(ret == bm.bmWidthBytes * bm.bmHeight, "%d != %d\n", ret, bm.bmWidthBytes * bm.bmHeight);
-    if(bm.bmType == 21072)
-        win_skip("win9x does not initialize the bitmap\n");
-    else
-        ok(!memcmp(buf, buf_cmp, sizeof(buf)), "buffers do not match, depth %d\n", bmih->biBitCount);
+    ok(!memcmp(buf, buf_cmp, sizeof(buf)) ||
+       broken(memcmp(buf, buf_cmp, sizeof(buf))), /* win9x doesn't init the bitmap bits */
+        "buffers do not match, depth %d\n", bmih->biBitCount);
 
     /* test various buffer sizes for GetObject */
     ret = GetObject(hbm, sizeof(*bma) * 2, bma);
@@ -1117,7 +1116,9 @@ static void test_bitmap(void)
     memset(buf, 0xAA, sizeof(buf));
     ret = GetBitmapBits(hbmp, sizeof(buf), buf);
     ok(ret == bm.bmWidthBytes * bm.bmHeight, "%d != %d\n", ret, bm.bmWidthBytes * bm.bmHeight);
-    ok(!memcmp(buf, buf_cmp, sizeof(buf)), "buffers do not match\n");
+    ok(!memcmp(buf, buf_cmp, sizeof(buf)) ||
+       broken(memcmp(buf, buf_cmp, sizeof(buf))), /* win9x doesn't init the bitmap bits */
+       "buffers do not match\n");
 
     hbmp_old = SelectObject(hdc, hbmp);
 
@@ -1135,7 +1136,9 @@ static void test_bitmap(void)
     memset(buf, 0xAA, sizeof(buf));
     ret = GetBitmapBits(hbmp, sizeof(buf), buf);
     ok(ret == bm.bmWidthBytes * bm.bmHeight, "%d != %d\n", ret, bm.bmWidthBytes * bm.bmHeight);
-    ok(!memcmp(buf, buf_cmp, sizeof(buf)), "buffers do not match\n");
+    ok(!memcmp(buf, buf_cmp, sizeof(buf)) ||
+       broken(memcmp(buf, buf_cmp, sizeof(buf))), /* win9x doesn't init the bitmap bits */
+       "buffers do not match\n");
 
     hbmp_old = SelectObject(hdc, hbmp_old);
     ok(hbmp_old == hbmp, "wrong old bitmap %p\n", hbmp_old);
