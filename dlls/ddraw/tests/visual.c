@@ -566,7 +566,12 @@ static void offscreen_test(IDirect3DDevice7 *device)
     hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState returned hr = %08x\n", hr);
 
-    if(IDirect3DDevice7_BeginScene(device) == D3D_OK && !refdevice) {
+    if (refdevice) {
+        win_skip("Tests would crash on W2K with a refdevice\n");
+        goto out;
+    }
+
+    if(IDirect3DDevice7_BeginScene(device) == D3D_OK) {
         hr = IDirect3DDevice7_SetRenderTarget(device, offscreen, 0);
         ok(hr == D3D_OK, "SetRenderTarget failed, hr = %08x\n", hr);
         hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
@@ -687,6 +692,12 @@ static void alpha_test(IDirect3DDevice7 *device)
 
     hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
     ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState failed, hr = %08x\n", hr);
+
+    if (refdevice) {
+        win_skip("Tests would crash on W2K with a refdevice\n");
+        goto out;
+    }
+
     if(IDirect3DDevice7_BeginScene(device) == D3D_OK) {
 
         /* Draw two quads, one with src alpha blending, one with dest alpha blending. The
