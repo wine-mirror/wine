@@ -49,13 +49,11 @@ C_SRCS = \
 C_SRCS16 = \
 	memlockbytes16.c \
 	ole16.c \
-	ole2_16.c \
-	storage.c
+	ole2_16.c
 
 SPEC_SRCS16 = \
 	compobj.spec \
-	ole2.spec \
-	storage.spec
+	ole2.spec
 
 RC_SRCS = ole32res.rc
 

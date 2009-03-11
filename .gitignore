@@ -96,7 +96,6 @@ dlls/shell.dll16
 dlls/sound.drv16
 dlls/stdole2.tlb/std_ole_v2.tlb
 dlls/stdole32.tlb/std_ole_v1.tlb
-dlls/storage.dll16
 dlls/system.drv16
 dlls/toolhelp.dll16
 dlls/twain.dll16

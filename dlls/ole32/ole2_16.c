@@ -35,6 +35,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "wownt32.h"
 #include "ole2.h"
 #include "winerror.h"
 
@@ -242,4 +243,67 @@ HRESULT WINAPI OleGetClipboard16(IDataObject** ppDataObj)
 HRESULT WINAPI OleFlushClipboard16(void)
 {
   return OleFlushClipboard();
+}
+
+/***********************************************************************
+ *    ReadClassStg (OLE2.18)
+ *
+ * This method reads the CLSID previously written to a storage object with
+ * the WriteClassStg.
+ *
+ * PARAMS
+ *  pstg    [I] Segmented LPSTORAGE pointer.
+ *  pclsid  [O] Pointer to where the CLSID is written
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
+ */
+HRESULT WINAPI ReadClassStg16(SEGPTR pstg, CLSID *pclsid)
+{
+	STATSTG16 statstg;
+	HANDLE16 hstatstg;
+	HRESULT	hres;
+	DWORD args[3];
+
+	TRACE("(%x, %p)\n", pstg, pclsid);
+
+	if(pclsid==NULL)
+		return E_POINTER;
+	/*
+	 * read a STATSTG structure (contains the clsid) from the storage
+	 */
+	args[0] = (DWORD)pstg;	/* iface */
+	args[1] = WOWGlobalAllocLock16( 0, sizeof(STATSTG16), &hstatstg );
+	args[2] = STATFLAG_DEFAULT;
+
+	if (!WOWCallback16Ex(
+	    (DWORD)((const IStorage16Vtbl*)MapSL(
+			(SEGPTR)((LPSTORAGE16)MapSL(pstg))->lpVtbl)
+	    )->Stat,
+	    WCB16_PASCAL,
+	    3*sizeof(DWORD),
+	    (LPVOID)args,
+	    (LPDWORD)&hres
+	)) {
+	    WOWGlobalUnlockFree16(args[1]);
+            ERR("CallTo16 IStorage16::Stat() failed, hres %x\n",hres);
+	    return hres;
+	}
+	memcpy(&statstg, MapSL(args[1]), sizeof(STATSTG16));
+	WOWGlobalUnlockFree16(args[1]);
+
+	if(SUCCEEDED(hres)) {
+		*pclsid=statstg.clsid;
+		TRACE("clsid is %s\n", debugstr_guid(&statstg.clsid));
+	}
+	return hres;
+}
+
+/***********************************************************************
+ *              GetConvertStg (OLE2.82)
+ */
+HRESULT WINAPI GetConvertStg16(LPSTORAGE stg) {
+    FIXME("unimplemented stub!\n");
+    return E_FAIL;
 }
