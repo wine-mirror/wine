@@ -413,6 +413,9 @@ extern BOOL         validate_addr64(DWORD64 addr);
 extern BOOL         pcs_callback(const struct process* pcs, ULONG action, void* data);
 extern void*        fetch_buffer(struct process* pcs, unsigned size);
 
+/* crc32.c */
+extern DWORD calc_crc32(int fd);
+
 typedef BOOL (*enum_modules_cb)(const WCHAR*, unsigned long addr, void* user);
 
 /* elf_module.c */
