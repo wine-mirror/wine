@@ -83,7 +83,6 @@ dlls/oleaut32/tests/test_tlb.tlb
 dlls/oleaut32/tests/tmarshal.h
 dlls/oleaut32/tests/tmarshal.tlb
 dlls/oleaut32/tests/tmarshal_i.c
-dlls/olecli.dll16
 dlls/olesvr.dll16
 dlls/qmgr/qmgr_local.h
 dlls/qmgr/qmgr_local_i.c

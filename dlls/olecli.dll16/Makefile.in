@@ -2,12 +2,13 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = olecli32.dll
-IMPORTLIB = olecli32
-IMPORTS   = ole32 gdi32 kernel32
+MODULE    = olecli.dll16
+IMPORTS   = gdi32 kernel32
+EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,olecli32.dll
 
-C_SRCS = \
-	olecli_main.c
+SPEC_SRCS = olecli.dll16.spec
+
+C_SRCS = olecli.c
 
 @MAKE_DLL_RULES@
 

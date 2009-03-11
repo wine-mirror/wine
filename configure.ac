@@ -148,6 +148,7 @@ then
     enable_monodebg_vxd=${enable_monodebg_vxd:-no}
     enable_mouse_drv16=${enable_mouse_drv16:-no}
     enable_msacm_dll16=${enable_msacm_dll16:-no}
+    enable_olecli_dll16=${enable_olecli_dll16:-no}
     enable_stress_dll16=${enable_stress_dll16:-no}
     enable_vdhcp_vxd=${enable_vdhcp_vxd:-no}
     enable_vmm_vxd=${enable_vmm_vxd:-no}
@@ -2146,6 +2147,7 @@ WINE_CONFIG_MAKEFILE([dlls/oleacc/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL
 WINE_CONFIG_MAKEFILE([dlls/oleacc/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
 WINE_CONFIG_MAKEFILE([dlls/oleaut32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/oleaut32/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
+WINE_CONFIG_MAKEFILE([dlls/olecli.dll16/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/olecli32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/oledlg/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/olepro32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
