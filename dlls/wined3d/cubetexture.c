@@ -231,9 +231,9 @@ static HRESULT WINAPI IWineD3DCubeTextureImpl_BindTexture(IWineD3DCubeTexture *i
         for (i = 0; i < This->baseTexture.levels; ++i) {
             for (j = WINED3DCUBEMAP_FACE_POSITIVE_X; j <= WINED3DCUBEMAP_FACE_NEGATIVE_Z; ++j) {
                 if(This->baseTexture.is_srgb) {
-                    surface_set_texture_name(This->surfaces[j][i], This->baseTexture.textureName, TRUE);
+                    surface_set_texture_name(This->surfaces[j][i], This->baseTexture.srgbTextureName, TRUE);
                 } else {
-                    surface_set_texture_name(This->surfaces[j][i], This->baseTexture.srgbTextureName, FALSE);
+                    surface_set_texture_name(This->surfaces[j][i], This->baseTexture.textureName, FALSE);
                 }
             }
         }
