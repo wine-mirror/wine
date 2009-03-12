@@ -241,7 +241,7 @@ HKCR,MIME\Database\Charset\koi8-ru,"InternetEncoding",0x10003,21866
 HKCR,MIME\Database\Charset\ks_c_5601-1987,"Codepage",0x10003,949
 HKCR,MIME\Database\Charset\ks_c_5601-1987,"InternetEncoding",0x10003,949
 HKCR,MIME\Database\Charset\shift_jis,"Codepage",0x10003,932
-HKCR,MIME\Database\Charset\shift_jis,"InternetEncoding",0x1003,932
+HKCR,MIME\Database\Charset\shift_jis,"InternetEncoding",0x10003,932
 HKCR,MIME\Database\Charset\unicode,"Codepage",0x10003,1200
 HKCR,MIME\Database\Charset\unicode,"InternetEncoding",0x10003,1200
 HKCR,MIME\Database\Charset\unicodeFFFE,"Codepage",0x10003,1200
