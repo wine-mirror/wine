@@ -1223,7 +1223,9 @@ static void test_SetMetaFileBits(void)
     SetLastError(0xdeadbeef);
     hmf = SetMetaFileBitsEx(0, MF_GRAPHICS_BITS);
     ok(!hmf, "SetMetaFileBitsEx should fail\n");
-    ok(GetLastError() == ERROR_INVALID_DATA, "wrong error %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_DATA ||
+       broken(GetLastError() == ERROR_INVALID_PARAMETER), /* Win9x */
+       "wrong error %d\n", GetLastError());
 
     /* Now with not even size */
     SetLastError(0xdeadbeef);
@@ -1242,7 +1244,9 @@ static void test_SetMetaFileBits(void)
     SetLastError(0xdeadbeef);
     hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), buf);
     ok(!hmf, "SetMetaFileBitsEx should fail\n");
-    ok(GetLastError() == ERROR_INVALID_DATA, "wrong error %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_DATA ||
+       broken(GetLastError() == ERROR_INVALID_PARAMETER), /* Win9x */
+       "wrong error %d\n", GetLastError());
 
     /* Now with corrupted mtSize field */
     memcpy(buf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS));
