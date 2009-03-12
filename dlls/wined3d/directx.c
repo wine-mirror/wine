@@ -4236,7 +4236,6 @@ BOOL InitAdapters(IWineD3DImpl *This)
     /* No need to hold any lock. The calling library makes sure only one thread calls
      * wined3d simultaneously
      */
-    if (This->adapter_count) return This->adapters[0].opengl;
 
     TRACE("Initializing adapters\n");
 
