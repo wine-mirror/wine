@@ -2111,8 +2111,8 @@ static void test_scissor_size(void)
         ok(scissorrect.right == scts[i].backx && scissorrect.bottom == scts[i].backy && scissorrect.top == 0 && scissorrect.left == 0, "Scissorrect missmatch (%d, %d) should be (%d, %d)\n", scissorrect.right, scissorrect.bottom, scts[i].backx, scts[i].backy);
 
         /* check the scissorrect values after a reset */
-        present_parameters.BackBufferWidth = 1024;
-        present_parameters.BackBufferHeight = 768;
+        present_parameters.BackBufferWidth = 800;
+        present_parameters.BackBufferHeight = 600;
         hr = IDirect3DDevice9_Reset(device_ptr, &present_parameters);
         ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
         hr = IDirect3DDevice9_TestCooperativeLevel(device_ptr);
@@ -2120,7 +2120,7 @@ static void test_scissor_size(void)
 
         hr = IDirect3DDevice9_GetScissorRect(device_ptr, &scissorrect);
         ok(hr == D3D_OK, "IDirect3DDevice9_GetScissorRect failed with: %08x\n", hr);
-        ok(scissorrect.right == 1024 && scissorrect.bottom == 768 && scissorrect.top == 0 && scissorrect.left == 0, "Scissorrect missmatch (%d, %d) should be (%d, %d)\n", scissorrect.right, scissorrect.bottom, 1024, 768);
+        ok(scissorrect.right == 800 && scissorrect.bottom == 600 && scissorrect.top == 0 && scissorrect.left == 0, "Scissorrect missmatch (%d, %d) should be (%d, %d)\n", scissorrect.right, scissorrect.bottom, 800, 600);
 
         if(device_ptr) {
             ULONG ref;
