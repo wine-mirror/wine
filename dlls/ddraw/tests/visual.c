@@ -2608,6 +2608,14 @@ static void cubemap_test(IDirect3DDevice7 *device)
     if(SUCCEEDED(hr))
     {
         hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_TEXCOORDSIZE3(0) | D3DFVF_TEX1, quad + 0 * 6, 4, 0);
+        if (hr == E_NOTIMPL)
+        {
+            /* VMware */
+            win_skip("IDirect3DDevice7_DrawPrimitive is not completely implemented, colors won't be tested\n");
+            hr = IDirect3DDevice7_EndScene(device);
+            ok(hr == DD_OK, "IDirect3DDevice7_EndScene returned %08x\n", hr);
+            goto out;
+        }
         ok(hr == DD_OK, "IDirect3DDevice7_DrawPrimitive returned %08x\n", hr);
         hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_TEXCOORDSIZE3(0) | D3DFVF_TEX1, quad + 4 * 6, 4, 0);
         ok(hr == DD_OK, "IDirect3DDevice7_DrawPrimitive returned %08x\n", hr);
@@ -2630,6 +2638,8 @@ static void cubemap_test(IDirect3DDevice7 *device)
     ok(color == 0x00ff00ff, "DDSCAPS2_CUBEMAP_POSITIVEY has color 0x%08x, expected 0x00ff00ff\n", color);
     color = getPixelColor(device, 480, 120); /* upper right quad - positivez */
     ok(color == 0x000000ff, "DDSCAPS2_CUBEMAP_POSITIVEZ has color 0x%08x, expected 0x000000ff\n", color);
+
+out:
     hr = IDirect3DDevice7_SetTexture(device, 0, NULL);
     ok(hr == DD_OK, "IDirect3DDevice7_SetTexture returned %08x\n", hr);
     IDirectDrawSurface7_Release(cubemap);
