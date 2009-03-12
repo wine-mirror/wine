@@ -4193,8 +4193,8 @@ static void test_transformprop(void)
 static void test_currentworkingdir(void)
 {
     UINT r;
-    CHAR path[MAX_PATH];
-    LPSTR ptr, ptr2;
+    CHAR drive[MAX_PATH], path[MAX_PATH];
+    LPSTR ptr;
 
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\augustus", 500);
@@ -4221,18 +4221,17 @@ static void test_currentworkingdir(void)
     ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
-    lstrcpyA(path, CURR_DIR);
+    lstrcpyA(drive, CURR_DIR);
+    drive[2] = '\\';
+    drive[3] = '\0';
+    SetCurrentDirectoryA(drive);
+
+    lstrcpy(path, CURR_DIR);
     if (path[lstrlenA(path) - 1] != '\\')
         lstrcatA(path, "\\");
-    lstrcatA(path, "msitest.msi");
-
-    ptr2 = strrchr(path, '\\');
-    *ptr2 = '\0';
-    ptr = strrchr(path, '\\');
-    *ptr2 = '\\';
-    *(ptr++) = '\0';
-
-    SetCurrentDirectoryA(path);
+    lstrcatA(path, msifile);
+    ptr = strchr(path, ':');
+    ptr +=2;
 
     r = MsiInstallProductA(ptr, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
