@@ -445,12 +445,10 @@ void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int wi
     }
 
     if (!renderbuffer) {
-        const struct GlPixelFormatDesc *glDesc;
-        getFormatDescEntry(This->resource.format, &GLINFO_LOCATION, &glDesc);
-
         GL_EXTCALL(glGenRenderbuffersEXT(1, &renderbuffer));
         GL_EXTCALL(glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, renderbuffer));
-        GL_EXTCALL(glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, glDesc->glInternal, width, height));
+        GL_EXTCALL(glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT,
+                This->resource.format_desc->glInternal, width, height));
 
         entry = HeapAlloc(GetProcessHeap(), 0, sizeof(renderbuffer_entry_t));
         entry->width = width;
@@ -1604,9 +1602,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC 
 
 HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_texturing, GLenum *format, GLenum *internal, GLenum *type, CONVERT_TYPES *convert, int *target_bpp, BOOL srgb_mode) {
     BOOL colorkey_active = need_alpha_ck && (This->CKeyFlags & WINEDDSD_CKSRCBLT);
-    const struct GlPixelFormatDesc *glDesc;
+    const struct GlPixelFormatDesc *glDesc = This->resource.format_desc;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-    getFormatDescEntry(This->resource.format, &GLINFO_LOCATION, &glDesc);
 
     /* Default values: From the surface */
     *format = glDesc->glFormat;
@@ -3838,10 +3835,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface)
 static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     /** Check against the maximum texture sizes supported by the video card **/
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    const struct GlPixelFormatDesc *glDesc = This->resource.format_desc;
     unsigned int pow2Width, pow2Height;
-    const struct GlPixelFormatDesc *glDesc;
 
-    getFormatDescEntry(This->resource.format, &GLINFO_LOCATION, &glDesc);
     /* Setup some glformat defaults */
     This->glDescription.glFormat         = glDesc->glFormat;
     This->glDescription.glFormatInternal = glDesc->glInternal;

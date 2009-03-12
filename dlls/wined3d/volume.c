@@ -301,9 +301,8 @@ static HRESULT WINAPI IWineD3DVolumeImpl_SetContainer(IWineD3DVolume *iface, IWi
 
 static HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, int gl_level, BOOL srgb_mode) {
     IWineD3DVolumeImpl *This     = (IWineD3DVolumeImpl *)iface;
+    const struct GlPixelFormatDesc *glDesc = This->resource.format_desc;
     WINED3DFORMAT format = This->resource.format;
-    const struct GlPixelFormatDesc *glDesc;
-    getFormatDescEntry(format, &GLINFO_LOCATION, &glDesc);
 
     TRACE("(%p) : level %u, format %s (0x%08x)\n", This, gl_level, debug_d3dformat(format), format);
 

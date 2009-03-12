@@ -911,8 +911,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
     HRESULT hr;
     unsigned int pow2Width;
     unsigned int pow2Height;
-    const struct GlPixelFormatDesc *glDesc;
-    getFormatDescEntry(Format, &GLINFO_LOCATION, &glDesc);
 
     TRACE("(%p) : Width %d, Height %d, Levels %d, Usage %#x\n", This, Width, Height, Levels, Usage);
     TRACE("Format %#x (%s), Pool %#x, ppTexture %p, pSharedHandle %p, parent %p\n",
@@ -1000,7 +998,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
     object->width  = Width;
     object->height = Height;
 
-    if(glDesc->Flags & WINED3DFMT_FLAG_FILTERING) {
+    if (object->resource.format_desc->Flags & WINED3DFMT_FLAG_FILTERING)
+    {
         object->baseTexture.minMipLookup = minMipLookup;
         object->baseTexture.magLookup    = magLookup;
     } else {
@@ -1068,7 +1067,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
         tmpW = max(1, tmpW >> 1);
         tmpH = max(1, tmpH >> 1);
     }
-    object->baseTexture.shader_color_fixup = glDesc->color_fixup;
+    object->baseTexture.shader_color_fixup = object->resource.format_desc->color_fixup;
     object->baseTexture.internal_preload = texture_internal_preload;
 
     TRACE("(%p) : Created  texture %p\n", This, object);
@@ -1085,10 +1084,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     UINT                       tmpW;
     UINT                       tmpH;
     UINT                       tmpD;
-    const struct GlPixelFormatDesc *glDesc;
     HRESULT hr;
-
-    getFormatDescEntry(Format, &GLINFO_LOCATION, &glDesc);
 
     /* TODO: It should only be possible to create textures for formats 
              that are reported as supported */
@@ -1157,7 +1153,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     object->baseTexture.pow2Matrix[10] = 1.0;
     object->baseTexture.pow2Matrix[15] = 1.0;
 
-    if(glDesc->Flags & WINED3DFMT_FLAG_FILTERING) {
+    if (object->resource.format_desc->Flags & WINED3DFMT_FLAG_FILTERING)
+    {
         object->baseTexture.minMipLookup = minMipLookup;
         object->baseTexture.magLookup    = magLookup;
     } else {
@@ -1191,7 +1188,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
         tmpH = max(1, tmpH >> 1);
         tmpD = max(1, tmpD >> 1);
     }
-    object->baseTexture.shader_color_fixup = glDesc->color_fixup;
+    object->baseTexture.shader_color_fixup = object->resource.format_desc->color_fixup;
     object->baseTexture.internal_preload = volumetexture_internal_preload;
 
     *ppVolumeTexture = (IWineD3DVolumeTexture *) object;
@@ -1270,8 +1267,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     UINT                     tmpW;
     HRESULT                  hr;
     unsigned int pow2EdgeLength;
-    const struct GlPixelFormatDesc *glDesc;
-    getFormatDescEntry(Format, &GLINFO_LOCATION, &glDesc);
 
     /* TODO: It should only be possible to create textures for formats 
              that are reported as supported */
@@ -1352,7 +1347,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
         object->baseTexture.pow2Matrix[15] = 1.0;
     }
 
-    if(glDesc->Flags & WINED3DFMT_FLAG_FILTERING) {
+    if (object->resource.format_desc->Flags & WINED3DFMT_FLAG_FILTERING)
+    {
         object->baseTexture.minMipLookup = minMipLookup;
         object->baseTexture.magLookup    = magLookup;
     } else {
@@ -1390,7 +1386,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
         }
         tmpW = max(1, tmpW >> 1);
     }
-    object->baseTexture.shader_color_fixup = glDesc->color_fixup;
+    object->baseTexture.shader_color_fixup = object->resource.format_desc->color_fixup;
     object->baseTexture.internal_preload = cubetexture_internal_preload;
 
     TRACE("(%p) : Created Cube Texture %p\n", This, object);
@@ -5806,7 +5802,6 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetFrontBufferData(IWineD3DDevice *if
 static HRESULT  WINAPI  IWineD3DDeviceImpl_ValidateDevice(IWineD3DDevice *iface, DWORD* pNumPasses) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DBaseTextureImpl *texture;
-    const struct GlPixelFormatDesc *gl_info;
     DWORD i;
 
     TRACE("(%p) : %p\n", This, pNumPasses);
@@ -5822,9 +5817,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_ValidateDevice(IWineD3DDevice *iface,
         }
 
         texture = (IWineD3DBaseTextureImpl *) This->stateBlock->textures[i];
-        if(!texture) continue;
-        getFormatDescEntry(texture->resource.format, &GLINFO_LOCATION, &gl_info);
-        if(gl_info->Flags & WINED3DFMT_FLAG_FILTERING) continue;
+        if (!texture || texture->resource.format_desc->Flags & WINED3DFMT_FLAG_FILTERING) continue;
 
         if(This->stateBlock->samplerState[i][WINED3DSAMP_MAGFILTER] != WINED3DTEXF_POINT) {
             WARN("Non-filterable texture and mag filter enabled on samper %u, returning E_FAIL\n", i);
