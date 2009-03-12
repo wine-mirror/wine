@@ -235,9 +235,9 @@ static HRESULT WINAPI MediaStreamFilterImpl_GetMediaStream(IMediaStreamFilter* i
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MediaStreamFilterImpl_EnumMediaStreams(IMediaStreamFilter* iface, long Index, IMediaStream **ppMediaStream)
+static HRESULT WINAPI MediaStreamFilterImpl_EnumMediaStreams(IMediaStreamFilter* iface, LONG Index, IMediaStream **ppMediaStream)
 {
-    FIXME("(%p)->(%ld,%p): Stub!\n", iface, Index, ppMediaStream);
+    FIXME("(%p)->(%d,%p): Stub!\n", iface, Index, ppMediaStream);
 
     return E_NOTIMPL;
 }

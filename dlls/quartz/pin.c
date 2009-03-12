@@ -620,12 +620,12 @@ static HRESULT WINAPI MemInputPin_Receive(IMemInputPin * iface, IMediaSample * p
     return hr;
 }
 
-static HRESULT WINAPI MemInputPin_ReceiveMultiple(IMemInputPin * iface, IMediaSample ** pSamples, long nSamples, long *nSamplesProcessed)
+static HRESULT WINAPI MemInputPin_ReceiveMultiple(IMemInputPin * iface, IMediaSample ** pSamples, LONG nSamples, LONG *nSamplesProcessed)
 {
     HRESULT hr = S_OK;
     InputPin *This = impl_from_IMemInputPin(iface);
 
-    TRACE("(%p/%p)->(%p, %ld, %p)\n", This, iface, pSamples, nSamples, nSamplesProcessed);
+    TRACE("(%p/%p)->(%p, %d, %p)\n", This, iface, pSamples, nSamples, nSamplesProcessed);
 
     for (*nSamplesProcessed = 0; *nSamplesProcessed < nSamples; (*nSamplesProcessed)++)
     {

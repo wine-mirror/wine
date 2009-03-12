@@ -145,11 +145,11 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_GetMediaStream(IAMMultiMediaStream
     return MS_E_NOSTREAM;
 }
 
-static HRESULT WINAPI IAMMultiMediaStreamImpl_EnumMediaStreams(IAMMultiMediaStream* iface, long Index, IMediaStream** ppMediaStream)
+static HRESULT WINAPI IAMMultiMediaStreamImpl_EnumMediaStreams(IAMMultiMediaStream* iface, LONG Index, IMediaStream** ppMediaStream)
 {
     IAMMultiMediaStreamImpl *This = (IAMMultiMediaStreamImpl *)iface;
 
-    FIXME("(%p/%p)->(%ld,%p) stub!\n", This, iface, Index, ppMediaStream);
+    FIXME("(%p/%p)->(%d,%p) stub!\n", This, iface, Index, ppMediaStream);
 
     return E_NOTIMPL;
 }

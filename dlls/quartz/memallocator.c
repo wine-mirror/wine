@@ -501,7 +501,7 @@ static HRESULT WINAPI StdMediaSample2_GetPointer(IMediaSample2 * iface, BYTE ** 
     return S_OK;
 }
 
-static long WINAPI StdMediaSample2_GetSize(IMediaSample2 * iface)
+static LONG WINAPI StdMediaSample2_GetSize(IMediaSample2 * iface)
 {
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
 

@@ -1063,7 +1063,7 @@ static HRESULT PropertyStorage_ReadProperty(PropertyStorage_impl *This,
     case VT_INT:
     case VT_I4:
         StorageUtl_ReadDWord(data, 0, (DWORD*)&prop->u.lVal);
-        TRACE("Read long %ld\n", prop->u.lVal);
+        TRACE("Read long %d\n", prop->u.lVal);
         break;
     case VT_UINT:
     case VT_UI4:

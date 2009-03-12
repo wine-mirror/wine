@@ -141,8 +141,8 @@ s_square_half_float(float x, float *y)
   return x * x;
 }
 
-long
-s_square_half_long(long x, long *y)
+LONG
+s_square_half_long(LONG x, LONG *y)
 {
   *y = x / 2;
   return x * x;
@@ -741,7 +741,7 @@ basic_tests(void)
   int i1, i2, i3, *pi2, *pi3, **ppi3;
   double u, v;
   float s, t;
-  long q, r;
+  LONG q, r;
   short h;
   char c;
   int x;

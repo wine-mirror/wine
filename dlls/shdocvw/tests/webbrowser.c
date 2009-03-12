@@ -1570,7 +1570,7 @@ static void test_ie_funcs(IUnknown *unk)
     IDispatch *disp;
     VARIANT_BOOL b;
     int i;
-    long hwnd;
+    LONG hwnd;
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
@@ -1583,7 +1583,7 @@ static void test_ie_funcs(IUnknown *unk)
     hwnd = 0xdeadbeef;
     hres = IWebBrowser2_get_HWND(wb, &hwnd);
     ok(hres == E_FAIL, "get_HWND failed: %08x, expected E_FAIL\n", hres);
-    ok(hwnd == 0, "unexpected hwnd %lx\n", hwnd);
+    ok(hwnd == 0, "unexpected hwnd %x\n", hwnd);
 
     /* MenuBar */
 

@@ -80,14 +80,14 @@ static HRESULT WINAPI InkCollector_Invoke(
 }
 
 static HRESULT WINAPI InkCollector_get_hWnd(
-    IInkCollector* This, long* CurrentWindow)
+    IInkCollector* This, LONG* CurrentWindow)
 {
     FIXME("stub!\n");
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI InkCollector_put_hWnd(
-    IInkCollector* This, long CurrentWindow)
+    IInkCollector* This, LONG CurrentWindow)
 {
     FIXME("stub!\n");
     return E_NOTIMPL;
@@ -255,28 +255,28 @@ static HRESULT WINAPI InkCollector_get_Cursors(
 }
 
 static HRESULT WINAPI InkCollector_get_MarginX(
-    IInkCollector* This, long* MarginX)
+    IInkCollector* This, LONG* MarginX)
 {
     FIXME("stub!\n");
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI InkCollector_put_MarginX(
-    IInkCollector* This, long MarginX)
+    IInkCollector* This, LONG MarginX)
 {
     FIXME("stub!\n");
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI InkCollector_get_MarginY(
-    IInkCollector* This, long* MarginY)
+    IInkCollector* This, LONG* MarginY)
 {
     FIXME("stub!\n");
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI InkCollector_put_MarginY(
-    IInkCollector* This, long MarginY)
+    IInkCollector* This, LONG MarginY)
 {
     FIXME("stub!\n");
     return E_NOTIMPL;
