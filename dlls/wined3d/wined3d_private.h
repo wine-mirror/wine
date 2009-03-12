@@ -2266,8 +2266,6 @@ typedef struct IWineD3DBaseShaderClass
     struct list constantsI;
     shader_reg_maps reg_maps;
 
-    UINT recompile_count;
-
     /* Pointer to the parent device */
     IWineD3DDevice *device;
     struct list     shader_list_entry;
