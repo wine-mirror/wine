@@ -468,7 +468,7 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImp
             args->color_fixup[i] = COLOR_FIXUP_IDENTITY;
             continue;
         }
-        args->color_fixup[i] = tex->baseTexture.shader_color_fixup;
+        args->color_fixup[i] = tex->resource.format_desc->color_fixup;
     }
     if (shader->baseShader.reg_maps.shader_version >= WINED3DPS_VERSION(3,0))
     {

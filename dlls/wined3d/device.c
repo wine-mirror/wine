@@ -1067,7 +1067,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
         tmpW = max(1, tmpW >> 1);
         tmpH = max(1, tmpH >> 1);
     }
-    object->baseTexture.shader_color_fixup = object->resource.format_desc->color_fixup;
     object->baseTexture.internal_preload = texture_internal_preload;
 
     TRACE("(%p) : Created  texture %p\n", This, object);
@@ -1188,7 +1187,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
         tmpH = max(1, tmpH >> 1);
         tmpD = max(1, tmpD >> 1);
     }
-    object->baseTexture.shader_color_fixup = object->resource.format_desc->color_fixup;
     object->baseTexture.internal_preload = volumetexture_internal_preload;
 
     *ppVolumeTexture = (IWineD3DVolumeTexture *) object;
@@ -1386,7 +1384,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
         }
         tmpW = max(1, tmpW >> 1);
     }
-    object->baseTexture.shader_color_fixup = object->resource.format_desc->color_fixup;
     object->baseTexture.internal_preload = cubetexture_internal_preload;
 
     TRACE("(%p) : Created Cube Texture %p\n", This, object);

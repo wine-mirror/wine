@@ -1336,7 +1336,6 @@ typedef struct IWineD3DBaseTextureClass
     BOOL                    is_srgb;
     const struct min_lookup *minMipLookup;
     const GLenum            *magLookup;
-    struct color_fixup_desc shader_color_fixup;
     void                    (*internal_preload)(IWineD3DBaseTexture *iface, enum WINED3DSRGB srgb);
 } IWineD3DBaseTextureClass;
 

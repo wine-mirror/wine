@@ -2105,7 +2105,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
 
         texture = (IWineD3DBaseTextureImpl *) stateblock->textures[i];
         if(texture) {
-            settings->op[i].color_fixup = texture->baseTexture.shader_color_fixup;
+            settings->op[i].color_fixup = texture->resource.format_desc->color_fixup;
             if(ignore_textype) {
                 settings->op[i].tex_type = tex_1d;
             } else {
