@@ -175,19 +175,19 @@ static CFMutableDictionaryRef creates_osx_device_match(int usage)
             }
             else
             {
-                ERR("CFNumberCreate() failed.");
+                ERR("CFNumberCreate() failed.\n");
                 return NULL;
             }
         }
         else
         {
-            ERR("CFNumberCreate failed.");
+            ERR("CFNumberCreate failed.\n");
             return NULL;
         }
     }
     else
     {
-        ERR("CFDictionaryCreateMutable failed.");
+        ERR("CFDictionaryCreateMutable failed.\n");
         return NULL;
     }
 
@@ -205,7 +205,7 @@ static int find_osx_devices(void)
     tIOReturn = IOHIDManagerOpen( gIOHIDManagerRef, 0L);
     if ( kIOReturnSuccess != tIOReturn )
     {
-        ERR("Couldn’t open IOHIDManager.");
+        ERR("Couldn't open IOHIDManager.");
         return 0;
     }
 
