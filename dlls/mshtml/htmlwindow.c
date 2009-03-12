@@ -230,12 +230,93 @@ static HRESULT WINAPI HTMLWindow2_confirm(IHTMLWindow2 *iface, BSTR message,
     return E_NOTIMPL;
 }
 
+typedef struct
+{
+    BSTR message;
+    BSTR dststr;
+    VARIANT *textdata;
+}prompt_arg;
+
+static INT_PTR CALLBACK prompt_dlgproc(HWND hwnd, UINT msg,
+        WPARAM wparam, LPARAM lparam)
+{
+    switch(msg)
+    {
+        case WM_INITDIALOG:
+        {
+            prompt_arg *arg = (prompt_arg*)lparam;
+            WCHAR wszTitle[100];
+
+            if(!LoadStringW(get_shdoclc(), IDS_MESSAGE_BOX_TITLE, wszTitle,
+                        sizeof(wszTitle)/sizeof(WCHAR))) {
+                WARN("Could not load message box title: %d\n", GetLastError());
+                EndDialog(hwnd, wparam);
+                return FALSE;
+            }
+
+            SetWindowLongPtrW(hwnd, DWLP_USER, lparam);
+            SetWindowTextW(hwnd, wszTitle);
+            SetWindowTextW(GetDlgItem(hwnd, ID_PROMPT_PROMPT), arg->message);
+            SetWindowTextW(GetDlgItem(hwnd, ID_PROMPT_EDIT), arg->dststr);
+            return FALSE;
+        }
+        case WM_COMMAND:
+            switch(wparam)
+            {
+                case MAKEWPARAM(IDCANCEL, BN_CLICKED):
+                    EndDialog(hwnd, wparam);
+                    return TRUE;
+                case MAKEWPARAM(IDOK, BN_CLICKED):
+                {
+                    prompt_arg *arg =
+                        (prompt_arg*)GetWindowLongPtrW(hwnd, DWLP_USER);
+                    HWND hwndPrompt = GetDlgItem(hwnd, ID_PROMPT_EDIT);
+                    INT len = GetWindowTextLengthW(hwndPrompt);
+
+                    if(!arg->textdata)
+                    {
+                        EndDialog(hwnd, wparam);
+                        return TRUE;
+                    }
+
+                    V_VT(arg->textdata) = VT_BSTR;
+                    if(!len && !arg->dststr)
+                        V_BSTR(arg->textdata) = NULL;
+                    else
+                    {
+                        V_BSTR(arg->textdata) = SysAllocStringLen(NULL, len);
+                        GetWindowTextW(hwndPrompt, V_BSTR(arg->textdata), len+1);
+                    }
+                    EndDialog(hwnd, wparam);
+                    return TRUE;
+                }
+            }
+            return FALSE;
+        case WM_CLOSE:
+            EndDialog(hwnd, IDCANCEL);
+            return TRUE;
+        default:
+            return FALSE;
+    }
+}
+
 static HRESULT WINAPI HTMLWindow2_prompt(IHTMLWindow2 *iface, BSTR message,
         BSTR dststr, VARIANT *textdata)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%s %s %p)\n", This, debugstr_w(message), debugstr_w(dststr), textdata);
-    return E_NOTIMPL;
+    prompt_arg arg;
+
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_w(message), debugstr_w(dststr), textdata);
+
+    if(textdata) V_VT(textdata) = VT_NULL;
+
+    arg.message = message;
+    arg.dststr = dststr;
+    arg.textdata = textdata;
+
+    DialogBoxParamW(hInst, MAKEINTRESOURCEW(ID_PROMPT_DIALOG),
+            This->doc->hwnd, prompt_dlgproc, (LPARAM)&arg);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_get_Image(IHTMLWindow2 *iface, IHTMLImageElementFactory **p)
