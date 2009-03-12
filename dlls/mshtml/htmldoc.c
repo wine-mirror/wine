@@ -1366,11 +1366,11 @@ static HRESULT WINAPI HTMLDocument_get_onselectstart(IHTMLDocument2 *iface, VARI
     return get_doc_event(This, EVENTID_SELECTSTART, p);
 }
 
-static HRESULT WINAPI HTMLDocument_elementFromPoint(IHTMLDocument2 *iface, long x, long y,
+static HRESULT WINAPI HTMLDocument_elementFromPoint(IHTMLDocument2 *iface, LONG x, LONG y,
                                                         IHTMLElement **elementHit)
 {
     HTMLDocument *This = HTMLDOC_THIS(iface);
-    FIXME("(%p)->(%ld %ld %p)\n", This, x, y, elementHit);
+    FIXME("(%p)->(%d %d %p)\n", This, x, y, elementHit);
     return E_NOTIMPL;
 }
 
@@ -1452,11 +1452,11 @@ static HRESULT WINAPI HTMLDocument_toString(IHTMLDocument2 *iface, BSTR *String)
 }
 
 static HRESULT WINAPI HTMLDocument_createStyleSheet(IHTMLDocument2 *iface, BSTR bstrHref,
-                                            long lIndex, IHTMLStyleSheet **ppnewStyleSheet)
+                                            LONG lIndex, IHTMLStyleSheet **ppnewStyleSheet)
 {
     HTMLDocument *This = HTMLDOC_THIS(iface);
 
-    FIXME("(%p)->(%s %ld %p) semi-stub\n", This, debugstr_w(bstrHref), lIndex, ppnewStyleSheet);
+    FIXME("(%p)->(%s %d %p) semi-stub\n", This, debugstr_w(bstrHref), lIndex, ppnewStyleSheet);
 
     *ppnewStyleSheet = HTMLStyleSheet_Create(NULL);
     return S_OK;

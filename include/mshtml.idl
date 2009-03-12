@@ -599,28 +599,28 @@ interface IHTMLStyle : IDispatch
     HRESULT cssText([retval, out] BSTR *p);
 
     [propput, id(DISPID_IHTMLSTYLE_PIXELTOP), bindable, displaybind, hidden]
-    HRESULT pixelTop([in] long v);
+    HRESULT pixelTop([in] LONG v);
 
     [propget, id(DISPID_IHTMLSTYLE_PIXELTOP), bindable, displaybind, hidden]
-    HRESULT pixelTop([retval, out] long *p);
+    HRESULT pixelTop([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLSTYLE_PIXELLEFT), bindable, displaybind, hidden]
-    HRESULT pixelLeft([in] long v);
+    HRESULT pixelLeft([in] LONG v);
 
     [propget, id(DISPID_IHTMLSTYLE_PIXELLEFT), bindable, displaybind, hidden]
-    HRESULT pixelLeft([retval, out] long *p);
+    HRESULT pixelLeft([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLSTYLE_PIXELWIDTH), bindable, displaybind, hidden]
-    HRESULT pixelWidth([in] long v);
+    HRESULT pixelWidth([in] LONG v);
 
     [propget, id(DISPID_IHTMLSTYLE_PIXELWIDTH), bindable, displaybind, hidden]
-    HRESULT pixelWidth([retval, out] long *p);
+    HRESULT pixelWidth([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLSTYLE_PIXELHEIGHT), bindable, displaybind, hidden]
-    HRESULT pixelHeight([in] long v);
+    HRESULT pixelHeight([in] LONG v);
 
     [propget, id(DISPID_IHTMLSTYLE_PIXELHEIGHT), bindable, displaybind, hidden]
-    HRESULT pixelHeight([retval, out] long *p);
+    HRESULT pixelHeight([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLSTYLE_POSTOP), bindable, displaybind]
     HRESULT posTop([in] float v);
@@ -763,16 +763,16 @@ interface IHTMLStyle2 : IDispatch
     HRESULT right([out, retval] VARIANT *p);
 
     [propput, id(DISPID_IHTMLSTYLE2_PIXELBOTTOM), displaybind, bindable, hidden]
-    HRESULT pixelBottom([in] long v);
+    HRESULT pixelBottom([in] LONG v);
 
     [propget, id(DISPID_IHTMLSTYLE2_PIXELBOTTOM), displaybind, bindable, hidden]
-    HRESULT pixelBottom([out, retval] long *p);
+    HRESULT pixelBottom([out, retval] LONG *p);
 
     [propput, id(DISPID_IHTMLSTYLE2_PIXELRIGHT), displaybind, bindable, hidden]
-    HRESULT pixelRight([in] long v);
+    HRESULT pixelRight([in] LONG v);
 
     [propget, id(DISPID_IHTMLSTYLE2_PIXELRIGHT), displaybind, bindable, hidden]
-    HRESULT pixelRight([out, retval] long *p);
+    HRESULT pixelRight([out, retval] LONG *p);
 
     [propput, id(DISPID_IHTMLSTYLE2_POSBOTTOM), displaybind, bindable]
     HRESULT posBottom([in] float v);
@@ -3303,7 +3303,7 @@ interface IHTMLRectCollection : IDispatch
 interface IHTMLDOMNode : IDispatch
 {
     [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
-    HRESULT nodeType([retval, out] long *p);
+    HRESULT nodeType([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLDOMNODE_PARENTNODE)]
     HRESULT parentNode([retval, out] IHTMLDOMNode **p);
@@ -3441,11 +3441,11 @@ interface IHTMLDOMTextNode : IDispatch
     HRESULT toString([out, retval] BSTR *String);
 
     [propget, id(DISPID_IHTMLDOMTEXTNODE_LENGTH)]
-    HRESULT length([out, retval] long *p);
+    HRESULT length([out, retval] LONG *p);
 
     [id(DISPID_IHTMLDOMTEXTNODE_SPLITTEXT)]
     HRESULT splitText(
-            [in] long offset,
+            [in] LONG offset,
             [out, retval] IHTMLDOMNode **pRetNode);
 }
 
@@ -3461,19 +3461,19 @@ interface IHTMLDOMTextNode : IDispatch
 interface IHTMLDOMTextNode2 : IDispatch
 {
     [id(DISPID_IHTMLDOMTEXTNODE2_SUBSTRINGDATA)]
-    HRESULT substringData([in] long offset,[in] long Count,[retval, out] BSTR* pbstrsubString);
+    HRESULT substringData([in] LONG offset,[in] LONG Count,[retval, out] BSTR* pbstrsubString);
 
     [id(DISPID_IHTMLDOMTEXTNODE2_APPENDDATA)]
     HRESULT appendData([in] BSTR bstrstring);
 
     [id(DISPID_IHTMLDOMTEXTNODE2_INSERTDATA)]
-    HRESULT insertData([in] long offset,[in] BSTR bstrstring);
+    HRESULT insertData([in] LONG offset,[in] BSTR bstrstring);
 
     [id(DISPID_IHTMLDOMTEXTNODE2_DELETEDATA)]
-    HRESULT deleteData([in] long offset,[in] long Count);
+    HRESULT deleteData([in] LONG offset,[in] LONG Count);
 
     [id(DISPID_IHTMLDOMTEXTNODE2_REPLACEDATA)]
-    HRESULT replaceData([in] long offset,[in] long Count,[in] BSTR bstrstring);
+    HRESULT replaceData([in] LONG offset,[in] LONG Count,[in] BSTR bstrstring);
 }
 
 [
@@ -3528,37 +3528,37 @@ methods:
     BSTR toString();
 
     [propget, id(DISPID_IHTMLDOMTEXTNODE_LENGTH)]
-    long length();
+    LONG length();
 
     [id(DISPID_IHTMLDOMTEXTNODE_SPLITTEXT)]
-    IHTMLDOMNode *splitText([in] long offset);
+    IHTMLDOMNode *splitText([in] LONG offset);
 
     [id(DISPID_IHTMLDOMTEXTNODE2_SUBSTRINGDATA)]
     BSTR substringData(
-            [in] long offset,
-            [in] long Count);
+            [in] LONG offset,
+            [in] LONG Count);
 
     [id(DISPID_IHTMLDOMTEXTNODE2_APPENDDATA)]
     void appendData([in] BSTR bstrstring);
 
     [id(DISPID_IHTMLDOMTEXTNODE2_INSERTDATA)]
     void insertData(
-            [in] long offset,
+            [in] LONG offset,
             [in] BSTR bstrstring);
 
     [id(DISPID_IHTMLDOMTEXTNODE2_DELETEDATA)]
     void deleteData(
-            [in] long offset,
-            [in] long Count);
+            [in] LONG offset,
+            [in] LONG Count);
 
     [id(DISPID_IHTMLDOMTEXTNODE2_REPLACEDATA)]
     void replaceData(
-            [in] long offset,
-            [in] long Count,
+            [in] LONG offset,
+            [in] LONG Count,
             [in] BSTR bstrstring);
 
     [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
-    long nodeType();
+    LONG nodeType();
 
     [propget, id(DISPID_IHTMLDOMNODE_PARENTNODE)]
     IHTMLDOMNode *parentNode();
@@ -3637,14 +3637,14 @@ methods:
 interface IHTMLDOMChildrenCollection : IDispatch
 {
     [propget, id(DISPID_IHTMLDOMCHILDRENCOLLECTION_LENGTH)]
-    HRESULT length([out, retval] long *p);
+    HRESULT length([out, retval] LONG *p);
 
     [propget, id(DISPID_IHTMLDOMCHILDRENCOLLECTION__NEWENUM), hidden, restricted]
     HRESULT _newEnum([out, retval] IUnknown **p);
 
     [id(DISPID_IHTMLDOMCHILDRENCOLLECTION_ITEM)]
     HRESULT item(
-            [in] long index,
+            [in] LONG index,
             [out, retval] IDispatch **ppItem);
 }
 
@@ -3660,13 +3660,13 @@ dispinterface DispDOMChildrenCollection
 properties:
 methods:
     [propget, id(DISPID_IHTMLDOMCHILDRENCOLLECTION_LENGTH)]
-    long length();
+    LONG length();
 
     [propget, id(DISPID_IHTMLDOMCHILDRENCOLLECTION__NEWENUM), hidden, restricted]
     IUnknown *_newEnum();
 
     [id(DISPID_IHTMLDOMCHILDRENCOLLECTION_ITEM)]
-    IDispatch *item([in] long index);
+    IDispatch *item([in] LONG index);
 }
 
 interface IHTMLElementCollection;
@@ -5389,11 +5389,11 @@ interface IHTMLStyleSheetRule : IDispatch
 interface IHTMLStyleSheetRulesCollection : IDispatch
 {
     [propget, id(DISPID_IHTMLSTYLESHEETRULESCOLLECTION_LENGTH)]
-    HRESULT length([retval, out] long *p);
+    HRESULT length([retval, out] LONG *p);
 
     [id(DISPID_IHTMLSTYLESHEETRULESCOLLECTION_ITEM)]
     HRESULT item(
-        [in] long index,
+        [in] LONG index,
         [retval, out] IHTMLStyleSheetRule **ppHTMLStyleSheetRule);
 }
 
@@ -5479,21 +5479,21 @@ interface IHTMLStyleSheet : IDispatch
     [id(DISPID_IHTMLSTYLESHEET_ADDIMPORT)]
     HRESULT addImport(
         [in] BSTR bstrURL,
-        [defaultvalue(-1), in] long lIndex,
-        [retval, out] long *plIndex);
+        [defaultvalue(-1), in] LONG lIndex,
+        [retval, out] LONG *plIndex);
 
     [id(DISPID_IHTMLSTYLESHEET_ADDRULE)]
     HRESULT addRule(
         [in] BSTR bstrSelector,
         [in] BSTR bstrStyle,
-        [defaultvalue(-1), in] long lIndex,
-        [retval, out] long *plNewIndex);
+        [defaultvalue(-1), in] LONG lIndex,
+        [retval, out] LONG *plNewIndex);
 
     [id(DISPID_IHTMLSTYLESHEET_REMOVEIMPORT)]
-    HRESULT removeImport([in] long lIndex);
+    HRESULT removeImport([in] LONG lIndex);
 
     [id(DISPID_IHTMLSTYLESHEET_REMOVERULE)]
-    HRESULT removeRule([in] long lIndex);
+    HRESULT removeRule([in] LONG lIndex);
 
     [propput, id(DISPID_IHTMLSTYLESHEET_MEDIA)]
     HRESULT media([in] BSTR v);
@@ -5642,7 +5642,7 @@ coclass HTMLStyleSheet
 interface IHTMLStyleSheetsCollection : IDispatch
 {
     [propget, id(DISPID_IHTMLSTYLESHEETSCOLLECTION_LENGTH)]
-    HRESULT length([retval, out] long *p);
+    HRESULT length([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLSTYLESHEETSCOLLECTION__NEWENUM)]
     HRESULT _newEnum([retval, out] IUnknown **p);
@@ -5703,20 +5703,20 @@ interface IHTMLTxtRange : IDispatch
     [id(DISPID_IHTMLTXTRANGE_MOVE)]
     HRESULT move(
         [in] BSTR Unit,
-        [defaultvalue(1), in] long Count,
-        [retval, out] long *ActualCount);
+        [defaultvalue(1), in] LONG Count,
+        [retval, out] LONG *ActualCount);
 
     [id(DISPID_IHTMLTXTRANGE_MOVESTART)]
     HRESULT moveStart(
         [in] BSTR Unit,
-        [defaultvalue(1), in] long Count,
-        [retval, out] long *ActualCount);
+        [defaultvalue(1), in] LONG Count,
+        [retval, out] LONG *ActualCount);
 
     [id(DISPID_IHTMLTXTRANGE_MOVEEND)]
     HRESULT moveEnd(
         [in] BSTR Unit,
-        [defaultvalue(1), in] long Count,
-        [retval, out] long *ActualCount);
+        [defaultvalue(1), in] LONG Count,
+        [retval, out] LONG *ActualCount);
 
     [id(DISPID_IHTMLTXTRANGE_SELECT)]
     HRESULT select();
@@ -5736,19 +5736,19 @@ interface IHTMLTxtRange : IDispatch
     HRESULT compareEndPoints(
         [in] BSTR how,
         [in] IHTMLTxtRange *SourceRange,
-        [retval, out] long *ret);
+        [retval, out] LONG *ret);
 
     [id(DISPID_IHTMLTXTRANGE_FINDTEXT)]
     HRESULT findText(
         [in] BSTR String,
-        [defaultvalue(1073741823), in] long count,
-        [defaultvalue(0), in] long Flags,
+        [defaultvalue(1073741823), in] LONG count,
+        [defaultvalue(0), in] LONG Flags,
         [retval, out] VARIANT_BOOL *Success);
 
     [id(DISPID_IHTMLTXTRANGE_MOVETOPOINT)]
     HRESULT moveToPoint(
-        [in] long x,
-        [in] long y);
+        [in] LONG x,
+        [in] LONG y);
 
     [id(DISPID_IHTMLTXTRANGE_GETBOOKMARK)]
     HRESULT getBookmark([retval, out] BSTR *Boolmark);
@@ -13008,7 +13008,7 @@ interface IOmNavigator : IDispatch
     HRESULT appMinorVersion([retval, out] BSTR *p);
 
     [propget, id(DISPID_IOMNAVIGATOR_CONNECTIONSPEED)]
-    HRESULT connectionSpeed([retval, out] long *p);
+    HRESULT connectionSpeed([retval, out] LONG *p);
 
     [propget, id(DISPID_IOMNAVIGATOR_ONLINE)]
     HRESULT onLine([retval, out] VARIANT_BOOL *p);
@@ -13209,13 +13209,13 @@ interface IHTMLEventObj : IDispatch
     HRESULT toElement([retval, out] IHTMLElement **p);
 
     [propput, id(DISPID_IHTMLEVENTOBJ_KEYCODE)]
-    HRESULT keyCode([in] long v);
+    HRESULT keyCode([in] LONG v);
 
     [propget, id(DISPID_IHTMLEVENTOBJ_KEYCODE)]
-    HRESULT keyCode([retval, out] long *p);
+    HRESULT keyCode([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLEVENTOBJ_BUTTON)]
-    HRESULT button([retval, out] long *p);
+    HRESULT button([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLEVENTOBJ_TYPE)]
     HRESULT type([retval, out] BSTR *p);
@@ -13224,31 +13224,31 @@ interface IHTMLEventObj : IDispatch
     HRESULT qualifier([retval, out] BSTR *p);
 
     [propget, id(DISPID_IHTMLEVENTOBJ_REASON)]
-    HRESULT reason([retval, out] long *p);
+    HRESULT reason([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLEVENTOBJ_X)]
-    HRESULT x([retval, out] long *p);
+    HRESULT x([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLEVENTOBJ_Y)]
-    HRESULT y([retval, out] long *p);
+    HRESULT y([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLEVENTOBJ_CLIENTX)]
-    HRESULT clientX([retval, out] long *p);
+    HRESULT clientX([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLEVENTOBJ_CLIENTY)]
-    HRESULT clientY([retval, out] long *p);
+    HRESULT clientY([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLEVENTOBJ_OFFSETX)]
-    HRESULT offsetX([retval, out] long *p);
+    HRESULT offsetX([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLEVENTOBJ_OFFSETY)]
-    HRESULT offsetY([retval, out] long *p);
+    HRESULT offsetY([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLEVENTOBJ_SCREENX)]
-    HRESULT screenX([retval, out] long *p);
+    HRESULT screenX([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLEVENTOBJ_SCREENY)]
-    HRESULT screenY([retval, out] long *p);
+    HRESULT screenY([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLEVENTOBJ_SRCFILTER)]
     HRESULT srcFilter([retval, out] IDispatch **p);
@@ -15182,8 +15182,8 @@ interface IHTMLDocument2 : IHTMLDocument
 
     [id(DISPID_IHTMLDOCUMENT2_ELEMENTFROMPOINT)]
     HRESULT elementFromPoint(
-        [in] long x,
-        [in] long y,
+        [in] LONG x,
+        [in] LONG y,
         [retval, out] IHTMLElement **elementHit);
 
     [propget, id(DISPID_IHTMLDOCUMENT2_PARENTWINDOW)]
@@ -15210,7 +15210,7 @@ interface IHTMLDocument2 : IHTMLDocument
     [id(DISPID_IHTMLDOCUMENT2_CREATESTYLESHEET)]
     HRESULT createStyleSheet(
         [defaultvalue(""), in] BSTR bstrHref,
-        [defaultvalue(-1), in] long lIndex,
+        [defaultvalue(-1), in] LONG lIndex,
         [retval, out] IHTMLStyleSheet **ppnewStyleSheet);
 }
 
@@ -16180,10 +16180,10 @@ interface IHTMLCommentElement : IDispatch
     HRESULT text([out, retval] BSTR *p);
 
     [propput, id(DISPID_IHTMLCOMMENTELEMENT_ATOMIC), displaybind, bindable]
-    HRESULT atomic([in] long v);
+    HRESULT atomic([in] LONG v);
 
     [propget, id(DISPID_IHTMLCOMMENTELEMENT_ATOMIC), displaybind, bindable]
-    HRESULT atomic([out, retval] long *p);
+    HRESULT atomic([out, retval] LONG *p);
 }
 
 /*****************************************************************************
@@ -17958,10 +17958,10 @@ interface IHTMLTableSection;
 interface IHTMLTable : IDispatch
 {
     [propput, id(DISPID_IHTMLTABLE_COLS)]
-    HRESULT cols([in] long v);
+    HRESULT cols([in] LONG v);
 
     [propget, id(DISPID_IHTMLTABLE_COLS)]
-    HRESULT cols([retval, out] long *p);
+    HRESULT cols([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLTABLE_BORDER)]
     HRESULT border([in] VARIANT v);
@@ -18048,10 +18048,10 @@ interface IHTMLTable : IDispatch
     HRESULT height([retval, out] VARIANT *p);
 
     [propput, id(DISPID_IHTMLTABLE_DATAPAGESIZE)]
-    HRESULT dataPageSize([in] long v);
+    HRESULT dataPageSize([in] LONG v);
 
     [propget, id(DISPID_IHTMLTABLE_DATAPAGESIZE)]
-    HRESULT dataPageSize([retval, out] long *p);
+    HRESULT dataPageSize([retval, out] LONG *p);
 
     [id(DISPID_IHTMLTABLE_NEXTPAGE)]
     HRESULT nextPage();
@@ -18091,11 +18091,11 @@ interface IHTMLTable : IDispatch
 
     [id(DISPID_IHTMLTABLE_INSERTROW)]
     HRESULT insertRow(
-            [defaultvalue(-1), in] long index,
+            [defaultvalue(-1), in] LONG index,
             [retval, out] IDispatch **row);
 
     [id(DISPID_IHTMLTABLE_DELETEROW)]
-    HRESULT deleteRow([defaultvalue(-1), in] long index);
+    HRESULT deleteRow([defaultvalue(-1), in] LONG index);
 
     [propget, id(DISPID_IHTMLTABLE_READYSTATE)]
     HRESULT readyState([retval, out] BSTR *p);
@@ -18254,21 +18254,21 @@ interface IHTMLTableRow : IDispatch
     HRESULT borderColorDark([out, retval] VARIANT *p);
 
     [propget, id(DISPID_IHTMLTABLEROW_ROWINDEX)]
-    HRESULT rowIndex([out, retval] long *p);
+    HRESULT rowIndex([out, retval] LONG *p);
 
     [propget, id(DISPID_IHTMLTABLEROW_SECTIONROWINDEX)]
-    HRESULT sectionRowIndex([out, retval] long *p);
+    HRESULT sectionRowIndex([out, retval] LONG *p);
 
     [propget, id(DISPID_IHTMLTABLEROW_CELLS)]
     HRESULT cells([out, retval] IHTMLElementCollection **p);
 
     [id(DISPID_IHTMLTABLEROW_INSERTCELL)]
     HRESULT insertCell(
-            [in, defaultvalue(-1)] long index,
+            [in, defaultvalue(-1)] LONG index,
             [out, retval] IDispatch **row);
 
     [id(DISPID_IHTMLTABLEROW_DELETECELL)]
-    HRESULT deleteCell([in, defaultvalue(-1)] long index);
+    HRESULT deleteCell([in, defaultvalue(-1)] LONG index);
 }
 
 /*****************************************************************************

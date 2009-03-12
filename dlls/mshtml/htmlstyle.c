@@ -2097,56 +2097,56 @@ static HRESULT WINAPI HTMLStyle_get_cssText(IHTMLStyle *iface, BSTR *p)
     return S_OK;
 }
 
-static HRESULT WINAPI HTMLStyle_put_pixelTop(IHTMLStyle *iface, long v)
+static HRESULT WINAPI HTMLStyle_put_pixelTop(IHTMLStyle *iface, LONG v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLStyle_get_pixelTop(IHTMLStyle *iface, long *p)
+static HRESULT WINAPI HTMLStyle_get_pixelTop(IHTMLStyle *iface, LONG *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLStyle_put_pixelLeft(IHTMLStyle *iface, long v)
+static HRESULT WINAPI HTMLStyle_put_pixelLeft(IHTMLStyle *iface, LONG v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLStyle_get_pixelLeft(IHTMLStyle *iface, long *p)
+static HRESULT WINAPI HTMLStyle_get_pixelLeft(IHTMLStyle *iface, LONG *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLStyle_put_pixelWidth(IHTMLStyle *iface, long v)
+static HRESULT WINAPI HTMLStyle_put_pixelWidth(IHTMLStyle *iface, LONG v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLStyle_get_pixelWidth(IHTMLStyle *iface, long *p)
+static HRESULT WINAPI HTMLStyle_get_pixelWidth(IHTMLStyle *iface, LONG *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLStyle_put_pixelHeight(IHTMLStyle *iface, long v)
+static HRESULT WINAPI HTMLStyle_put_pixelHeight(IHTMLStyle *iface, LONG v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLStyle_get_pixelHeight(IHTMLStyle *iface, long *p)
+static HRESULT WINAPI HTMLStyle_get_pixelHeight(IHTMLStyle *iface, LONG *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
     FIXME("(%p)->()\n", This);

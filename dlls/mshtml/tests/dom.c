@@ -576,7 +576,7 @@ static void _test_elem_type(unsigned line, IUnknown *unk, elem_type_t type)
 static long _get_node_type(unsigned line, IUnknown *unk)
 {
     IHTMLDOMNode *node = _get_node_iface(line, unk);
-    long type = -1;
+    LONG type = -1;
     HRESULT hres;
 
     hres = IHTMLDOMNode_get_nodeType(node, &type);
@@ -905,12 +905,12 @@ static void _test_range_expand(unsigned line, IHTMLTxtRange *range, LPWSTR unit,
 #define test_range_move(r,u,c,e) _test_range_move(__LINE__,r,u,c,e)
 static void _test_range_move(unsigned line, IHTMLTxtRange *range, LPWSTR unit, long cnt, long excnt)
 {
-    long c = 0xdeadbeef;
+    LONG c = 0xdeadbeef;
     HRESULT hres;
 
     hres = IHTMLTxtRange_move(range, unit, cnt, &c);
     ok_(__FILE__,line) (hres == S_OK, "move failed: %08x\n", hres);
-    ok_(__FILE__,line) (c == excnt, "count=%ld, expected %ld\n", c, excnt);
+    ok_(__FILE__,line) (c == excnt, "count=%d, expected %ld\n", c, excnt);
     _test_range_text(line, range, NULL);
 }
 
@@ -918,23 +918,23 @@ static void _test_range_move(unsigned line, IHTMLTxtRange *range, LPWSTR unit, l
 static void _test_range_movestart(unsigned line, IHTMLTxtRange *range,
         LPWSTR unit, long cnt, long excnt)
 {
-    long c = 0xdeadbeef;
+    LONG c = 0xdeadbeef;
     HRESULT hres;
 
     hres = IHTMLTxtRange_moveStart(range, unit, cnt, &c);
     ok_(__FILE__,line) (hres == S_OK, "move failed: %08x\n", hres);
-    ok_(__FILE__,line) (c == excnt, "count=%ld, expected %ld\n", c, excnt);
+    ok_(__FILE__,line) (c == excnt, "count=%d, expected %ld\n", c, excnt);
 }
 
 #define test_range_moveend(r,u,c,e) _test_range_moveend(__LINE__,r,u,c,e)
 static void _test_range_moveend(unsigned line, IHTMLTxtRange *range, LPWSTR unit, long cnt, long excnt)
 {
-    long c = 0xdeadbeef;
+    LONG c = 0xdeadbeef;
     HRESULT hres;
 
     hres = IHTMLTxtRange_moveEnd(range, unit, cnt, &c);
     ok_(__FILE__,line) (hres == S_OK, "move failed: %08x\n", hres);
-    ok_(__FILE__,line) (c == excnt, "count=%ld, expected %ld\n", c, excnt);
+    ok_(__FILE__,line) (c == excnt, "count=%d, expected %ld\n", c, excnt);
 }
 
 #define test_range_put_text(r,t) _test_range_put_text(__LINE__,r,t)
@@ -1110,18 +1110,18 @@ static void _test_elem_set_innertext(unsigned line, IHTMLElement *elem, const ch
     col = _get_child_nodes(line, (IUnknown*)elem);
     ok(col != NULL, "col == NULL\n");
     if(col) {
-        long length = 0, type;
+        LONG length = 0, type;
         IHTMLDOMNode *node;
 
         hres = IHTMLDOMChildrenCollection_get_length(col, &length);
         ok(hres == S_OK, "get_length failed: %08x\n", hres);
-        ok(length == 1, "length = %ld\n", length);
+        ok(length == 1, "length = %d\n", length);
 
         node = _get_child_item(line, col, 0);
         ok(node != NULL, "node == NULL\n");
         if(node) {
             type = _get_node_type(line, (IUnknown*)node);
-            ok(type == 3, "type=%ld\n", type);
+            ok(type == 3, "type=%d\n", type);
             IHTMLDOMNode_Release(node);
         }
 
@@ -3777,7 +3777,7 @@ static void test_defaults(IHTMLDocument2 *doc)
     IHTMLElement2 *elem2;
     IHTMLElement *elem;
     IHTMLStyle *style;
-    long l;
+    LONG l;
     HRESULT hres;
     IHTMLElementCollection *collection;
 
@@ -3874,7 +3874,7 @@ static void test_defaults(IHTMLDocument2 *doc)
     l = 0xdeadbeef;
     hres = IHTMLStyleSheetsCollection_get_length(stylesheetcol, &l);
     ok(hres == S_OK, "get_length failed: %08x\n", hres);
-    ok(l == 0, "length = %ld\n", l);
+    ok(l == 0, "length = %d\n", l);
 
     IHTMLStyleSheetsCollection_Release(stylesheetcol);
 
@@ -4032,7 +4032,7 @@ static void test_stylesheets(IHTMLDocument2 *doc)
 {
     IHTMLStyleSheetsCollection *col = NULL;
     VARIANT idx, res;
-    long len = 0;
+    LONG len = 0;
     HRESULT hres;
 
     hres = IHTMLDocument2_get_styleSheets(doc, &col);
@@ -4041,7 +4041,7 @@ static void test_stylesheets(IHTMLDocument2 *doc)
 
     hres = IHTMLStyleSheetsCollection_get_length(col, &len);
     ok(hres == S_OK, "get_length failed: %08x\n", hres);
-    ok(len == 1, "len=%ld\n", len);
+    ok(len == 1, "len=%d\n", len);
 
     VariantInit(&res);
     V_VT(&idx) = VT_I4;
@@ -4420,7 +4420,7 @@ static void test_elems(IHTMLDocument2 *doc)
     child_col = get_child_nodes((IUnknown*)elem);
     ok(child_col != NULL, "child_coll == NULL\n");
     if(child_col) {
-        long length = 0;
+        LONG length = 0;
 
         test_disp((IUnknown*)child_col, &DIID_DispDOMChildrenCollection);
 
