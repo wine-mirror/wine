@@ -686,7 +686,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetData(IDirectXFileData* iface, LPCS
   }
 
   *pcbSize = This->pobj->size;
-  *ppvData = This->pobj->pdata;
+  *ppvData = This->pobj->root->pdata + This->pobj->pos_data;
 
   return DXFILE_OK;
 }
@@ -1063,7 +1063,8 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
     hr = DXFILEERR_BADALLOC;
     goto error;
   }
-  This->buf.cur_pdata = This->buf.pdata = object->pdata = pdata;
+  This->buf.pxo->pdata = This->buf.pdata = object->pdata = pdata;
+  This->buf.cur_pos_data = 0;
 
   pstrings = HeapAlloc(GetProcessHeap(), 0, MAX_STRINGS_BUFFER);
   if (!pstrings)

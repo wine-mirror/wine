@@ -66,7 +66,7 @@ typedef struct {
 
 typedef struct {
     char* name;
-    LPBYTE start;
+    ULONG start;
     ULONG size;
 } xobject_member;
 
@@ -77,12 +77,14 @@ struct _xobject {
    GUID class_id;
    GUID type;
    LPBYTE pdata;
+   ULONG pos_data;
    DWORD size;
    ULONG nb_members;
    xobject_member members[MAX_MEMBERS];
    ULONG nb_childs;
    ULONG nb_subobjects;
    struct _xobject * childs[MAX_CHILDS];
+   struct _xobject * root;
 };
 
 typedef struct _xobject xobject;
@@ -130,7 +132,7 @@ typedef struct {
   BOOL token_present;
   BOOL txt;
   ULONG cur_subobject;
-  LPBYTE cur_pdata;
+  ULONG cur_pos_data;
   LPBYTE cur_pstrings;
   BYTE value[100];
   xobject** pxo_globals;
