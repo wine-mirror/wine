@@ -442,8 +442,7 @@ static void test_enumerate_name(void)
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpA(disp, exp[0]) ||
-       !lstrcmpA(disp, exp[1]),
+    ok(!lstrcmpA(disp, exp[0]),
        "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[0], exp[1], disp);
 
     IAssemblyName_Release(next);
@@ -458,7 +457,7 @@ static void test_enumerate_name(void)
     to_multibyte(disp, buf);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(!lstrcmpA(disp, exp[1]) ||
-       !lstrcmpA(disp, exp[2]),
+       !lstrcmpA(disp, exp[2]), /* Win98 */
        "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[1], exp[2], disp);
 
     IAssemblyName_Release(next);
@@ -472,7 +471,9 @@ static void test_enumerate_name(void)
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpA(disp, exp[2]), "Expected \"%s\", got \"%s\"\n", exp[2], disp);
+    ok(!lstrcmpA(disp, exp[2]) ||
+       !lstrcmpA(disp, exp[1]), /* Win98 */
+       "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[2], exp[1], disp);
 
     IAssemblyName_Release(next);
 
@@ -506,7 +507,9 @@ static void test_enumerate_name(void)
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpA(disp, exp[4]), "Expected \"%s\", got \"%s\"\n", exp[4], disp);
+    ok(!lstrcmpA(disp, exp[4]) ||
+       !lstrcmpA(disp, exp[5]), /* Win98 */
+       "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[4], exp[5], disp);
 
     IAssemblyName_Release(next);
 
@@ -519,7 +522,9 @@ static void test_enumerate_name(void)
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpA(disp, exp[5]), "Expected \"%s\", got \"%s\"\n", exp[5], disp);
+    ok(!lstrcmpA(disp, exp[5]) ||
+       !lstrcmpA(disp, exp[4]), /* Win98 */
+       "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[5], exp[4], disp);
 
     IAssemblyName_Release(next);
 
@@ -614,7 +619,7 @@ static void test_enumerate_name(void)
     to_multibyte(disp, buf);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(!lstrcmpA(disp, exp[1]) ||
-       !lstrcmpA(disp, exp[2]),
+       !lstrcmpA(disp, exp[2]), /* Win98 */
        "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[1], exp[2], disp);
 
     IAssemblyName_Release(next);
@@ -628,9 +633,9 @@ static void test_enumerate_name(void)
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpA(disp, exp[1]) ||
-       !lstrcmpA(disp, exp[2]),
-       "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[1], exp[2], disp);
+    ok(!lstrcmpA(disp, exp[2]) ||
+       !lstrcmpA(disp, exp[1]), /* Win98 */
+       "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[2], exp[1], disp);
 
     IAssemblyName_Release(next);
 
