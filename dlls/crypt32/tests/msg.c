@@ -840,7 +840,8 @@ static void test_hash_msg_get_param(void)
     ok(!ret &&
        (GetLastError() == NTE_BAD_HASH_STATE /* NT */ ||
         GetLastError() == NTE_BAD_ALGID /* 9x */ ||
-        GetLastError() == CRYPT_E_MSG_ERROR /* Vista */),
+        GetLastError() == CRYPT_E_MSG_ERROR /* Vista */ ||
+        broken(GetLastError() == ERROR_SUCCESS) /* Some Win9x */),
        "Expected NTE_BAD_HASH_STATE or NTE_BAD_ALGID or CRYPT_E_MSG_ERROR, got 0x%x\n", GetLastError());
 
     /* Even after a final update, the hash data aren't available */
@@ -894,7 +895,8 @@ static void test_hash_msg_get_param(void)
     ok(!ret &&
        (GetLastError() == NTE_BAD_HASH_STATE /* NT */ ||
         GetLastError() == NTE_BAD_ALGID /* 9x */ ||
-        GetLastError() == CRYPT_E_MSG_ERROR /* Vista */),
+        GetLastError() == CRYPT_E_MSG_ERROR /* Vista */ ||
+        broken(GetLastError() == ERROR_SUCCESS) /* Some Win9x */),
        "Expected NTE_BAD_HASH_STATE or NTE_BAD_ALGID or CRYPT_E_MSG_ERROR, got 0x%x\n", GetLastError());
 
     CryptMsgClose(msg);
@@ -1240,8 +1242,10 @@ static void test_signed_msg_update(void)
      */
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
-    ok(!ret && (GetLastError() == NTE_BAD_KEYSET ||
-     GetLastError() == NTE_NO_KEY),
+    ok(!ret &&
+       (GetLastError() == NTE_BAD_KEYSET ||
+        GetLastError() == NTE_NO_KEY ||
+        broken(GetLastError() == ERROR_SUCCESS)), /* Some Win9x */
      "Expected NTE_BAD_KEYSET or NTE_NO_KEY, got %x\n", GetLastError());
     ret = CryptImportKey(signer.hCryptProv, privKey, sizeof(privKey),
      0, 0, &key);
