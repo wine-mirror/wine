@@ -678,7 +678,7 @@ static HRESULT WINAPI HTMLElement_contains(IHTMLElement *iface, IHTMLElement *pC
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLElement_get_sourceIndex(IHTMLElement *iface, long *p)
+static HRESULT WINAPI HTMLElement_get_sourceIndex(IHTMLElement *iface, LONG *p)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
     FIXME("(%p)->(%p)\n", This, p);
@@ -706,14 +706,14 @@ static HRESULT WINAPI HTMLElement_get_lang(IHTMLElement *iface, BSTR *p)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLElement_get_offsetLeft(IHTMLElement *iface, long *p)
+static HRESULT WINAPI HTMLElement_get_offsetLeft(IHTMLElement *iface, LONG *p)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLElement_get_offsetTop(IHTMLElement *iface, long *p)
+static HRESULT WINAPI HTMLElement_get_offsetTop(IHTMLElement *iface, LONG *p)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
     nsIDOMNSHTMLElement *nselem;
@@ -739,7 +739,7 @@ static HRESULT WINAPI HTMLElement_get_offsetTop(IHTMLElement *iface, long *p)
     return S_OK;
 }
 
-static HRESULT WINAPI HTMLElement_get_offsetWidth(IHTMLElement *iface, long *p)
+static HRESULT WINAPI HTMLElement_get_offsetWidth(IHTMLElement *iface, LONG *p)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
     nsIDOMNSHTMLElement *nselem;
@@ -765,7 +765,7 @@ static HRESULT WINAPI HTMLElement_get_offsetWidth(IHTMLElement *iface, long *p)
     return S_OK;
 }
 
-static HRESULT WINAPI HTMLElement_get_offsetHeight(IHTMLElement *iface, long *p)
+static HRESULT WINAPI HTMLElement_get_offsetHeight(IHTMLElement *iface, LONG *p)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
     nsIDOMNSHTMLElement *nselem;

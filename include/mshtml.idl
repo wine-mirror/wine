@@ -3817,7 +3817,7 @@ interface IHTMLElement : IDispatch
         [retval, out] VARIANT_BOOL *pfResult);
 
     [propget, id(DISPID_IHTMLELEMENT_SOURCEINDEX)]
-    HRESULT sourceIndex([retval, out] long *p);
+    HRESULT sourceIndex([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLELEMENT_RECORDNUMBER)]
     HRESULT recordNumber([retval, out] VARIANT *p);
@@ -3829,16 +3829,16 @@ interface IHTMLElement : IDispatch
     HRESULT lang([retval, out] BSTR *p);
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETLEFT)]
-    HRESULT offsetLeft([retval, out] long *p);
+    HRESULT offsetLeft([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETTOP)]
-    HRESULT offsetTop([retval, out] long *p);
+    HRESULT offsetTop([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETWIDTH)]
-    HRESULT offsetWidth([retval, out] long *p);
+    HRESULT offsetWidth([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETHEIGHT)]
-    HRESULT offsetHeight([retval, out] long *p);
+    HRESULT offsetHeight([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETPARENT)]
     HRESULT offsetParent([retval, out] IHTMLElement **p);
@@ -3983,8 +3983,8 @@ interface IHTMLElement2 : IDispatch
 
     [id(DISPID_IHTMLELEMENT2_COMPONENTFROMPOINT)]
     HRESULT componentFromPoint(
-        [in] long x,
-        [in] long y,
+        [in] LONG x,
+        [in] LONG y,
         [retval, out] BSTR *component);
 
     [id(DISPID_IHTMLELEMENT2_DOSCROLL)]
@@ -4142,16 +4142,16 @@ interface IHTMLElement2 : IDispatch
     HRESULT removeFilter([in] IUnknown *pUnk);
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTHEIGHT), displaybind, bindable]
-    HRESULT clientHeight([retval, out] long *p);
+    HRESULT clientHeight([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTWIDTH), displaybind, bindable]
-    HRESULT clientWidth([retval, out] long *p);
+    HRESULT clientWidth([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTTOP), displaybind, bindable]
-    HRESULT clientTop([retval, out] long *p);
+    HRESULT clientTop([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTLEFT), displaybind, bindable]
-    HRESULT clientLeft([retval, out] long *p);
+    HRESULT clientLeft([retval, out] LONG *p);
 
     [id(DISPID_IHTMLELEMENT2_ATTACHEVENT)]
     HRESULT attachEvent(
@@ -4201,22 +4201,22 @@ interface IHTMLElement2 : IDispatch
     HRESULT createControlRange([retval, out] IDispatch **range);
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLHEIGHT), displaybind, bindable]
-    HRESULT scrollHeight([retval, out] long *p);
+    HRESULT scrollHeight([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLWIDTH), displaybind, bindable]
-    HRESULT scrollWidth([retval, out] long *p);
+    HRESULT scrollWidth([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLELEMENT2_SCROLLTOP), displaybind, bindable]
-    HRESULT scrollTop([in] long v);
+    HRESULT scrollTop([in] LONG v);
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLTOP), displaybind, bindable]
-    HRESULT scrollTop([retval, out] long *p);
+    HRESULT scrollTop([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLELEMENT2_SCROLLLEFT), displaybind, bindable]
-    HRESULT scrollLeft([in] long v);
+    HRESULT scrollLeft([in] LONG v);
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLLEFT), displaybind, bindable]
-    HRESULT scrollLeft([retval, out] long *p);
+    HRESULT scrollLeft([retval, out] LONG *p);
 
     [id(DISPID_IHTMLELEMENT2_CLEARATTRIBUTES)]
     HRESULT clearAttributes();
@@ -4260,11 +4260,11 @@ interface IHTMLElement2 : IDispatch
     HRESULT addBehavior(
         [in] BSTR bstrUrl,
         [optional, in] VARIANT *pvarFactory,
-        [retval, out] long *pCookie);
+        [retval, out] LONG *pCookie);
 
     [id(DISPID_IHTMLELEMENT2_REMOVEBEHAVIOR)]
     HRESULT removeBehavior(
-        [in] long cookie,
+        [in] LONG cookie,
         [retval, out] VARIANT_BOOL *pfResult);
 
     [propget, id(DISPID_IHTMLELEMENT2_RUNTIMESTYLE), nonbrowsable]
@@ -4286,7 +4286,7 @@ interface IHTMLElement2 : IDispatch
     HRESULT onbeforeeditfocus([retval, out] VARIANT *p);
 
     [propget, id(DISPID_IHTMLELEMENT2_READYSTATEVALUE), hidden, restricted]
-    HRESULT readyStateValue([retval, out] long *p);
+    HRESULT readyStateValue([retval, out] LONG *p);
 
     [id(DISPID_IHTMLELEMENT2_GETELEMENTSBYTAGNAME)]
     HRESULT getElementsByTagName(
@@ -4653,7 +4653,7 @@ methods:
     VARIANT_BOOL contains([in] IHTMLElement *pChild);
 
     [propget, id(DISPID_IHTMLELEMENT_SOURCEINDEX), bindable]
-    long sourceIndex();
+    LONG sourceIndex();
 
     [propget, id(DISPID_IHTMLELEMENT_RECORDNUMBER)]
     VARIANT recordNumber();
@@ -4665,16 +4665,16 @@ methods:
     BSTR lang();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETLEFT)]
-    long offsetLeft();
+    LONG offsetLeft();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETTOP)]
-    long offsetTop();
+    LONG offsetTop();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETWIDTH)]
-    long offsetWidth();
+    LONG offsetWidth();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETHEIGHT)]
-    long offsetHeight();
+    LONG offsetHeight();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETPARENT)]
     IHTMLElement *offsetParent();
@@ -4811,8 +4811,8 @@ methods:
 
     [id(DISPID_IHTMLELEMENT2_COMPONENTFROMPOINT)]
     BSTR componentFromPoint(
-            [in] long x,
-            [in] long y);
+            [in] LONG x,
+            [in] LONG y);
 
     [id(DISPID_IHTMLELEMENT2_DOSCROLL)]
     void doScroll([in, optional] VARIANT component);
@@ -4965,16 +4965,16 @@ methods:
     void removeFilter([in] IUnknown *pUnk);
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTHEIGHT), displaybind, bindable]
-    long clientHeight();
+    LONG clientHeight();
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTWIDTH), displaybind, bindable]
-    long clientWidth();
+    LONG clientWidth();
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTTOP), displaybind, bindable]
-    long clientTop();
+    LONG clientTop();
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTLEFT), displaybind, bindable]
-    long clientLeft();
+    LONG clientLeft();
 
     [id(DISPID_IHTMLELEMENT2_ATTACHEVENT)]
     VARIANT_BOOL attachEvent(
@@ -5023,22 +5023,22 @@ methods:
     IDispatch *createControlRange();
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLHEIGHT), displaybind, bindable]
-    long scrollHeight();
+    LONG scrollHeight();
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLWIDTH), displaybind, bindable]
-    long scrollWidth();
+    LONG scrollWidth();
 
     [propput, id(DISPID_IHTMLELEMENT2_SCROLLTOP), displaybind, bindable]
-    void scrollTop(long v);
+    void scrollTop(LONG v);
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLTOP), displaybind, bindable]
-    long scrollTop();
+    LONG scrollTop();
 
     [propput, id(DISPID_IHTMLELEMENT2_SCROLLLEFT), displaybind, bindable]
-    void scrollLeft(long v);
+    void scrollLeft(LONG v);
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLLEFT), displaybind, bindable]
-    long scrollLeft();
+    LONG scrollLeft();
 
     [id(DISPID_IHTMLELEMENT2_CLEARATTRIBUTES)]
     void clearAttributes();
@@ -5071,12 +5071,12 @@ methods:
     VARIANT_BOOL canHaveChildren();
 
     [id(DISPID_IHTMLELEMENT2_ADDBEHAVIOR)]
-    long addBehavior(
+    LONG addBehavior(
             [in] BSTR bstrUrl,
             [in, optional] VARIANT *pvarFactory);
 
     [id(DISPID_IHTMLELEMENT2_REMOVEBEHAVIOR)]
-    VARIANT_BOOL removeBehavior([in] long cookie);
+    VARIANT_BOOL removeBehavior([in] LONG cookie);
 
     [propget, id(DISPID_IHTMLELEMENT2_RUNTIMESTYLE), nonbrowsable]
     IHTMLStyle *runtimeStyle();
@@ -5097,7 +5097,7 @@ methods:
     VARIANT onbeforeeditfocus();
 
     [propget, id(DISPID_IHTMLELEMENT2_READYSTATEVALUE), hidden, restricted]
-    long readyStateValue();
+    LONG readyStateValue();
 
     [id(DISPID_IHTMLELEMENT2_GETELEMENTSBYTAGNAME)]
     IHTMLElementCollection *getElementsByTagName([in] BSTR v);
@@ -5272,13 +5272,13 @@ methods:
     VARIANT onfocusout();
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
-    long uniqueNumber();
+    LONG uniqueNumber();
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
     BSTR uniqueID();
 
     [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
-    long nodeType();
+    LONG nodeType();
 
     [propget, id(DISPID_IHTMLDOMNODE_PARENTNODE)]
     IHTMLDOMNode *parentNode();
@@ -5879,10 +5879,10 @@ interface IHTMLFormElement : IDispatch
     HRESULT reset();
 
     [propput, id(DISPID_IHTMLFORMELEMENT_LENGTH)]
-    HRESULT length([in] long v);
+    HRESULT length([in] LONG v);
 
     [propget, id(DISPID_IHTMLFORMELEMENT_LENGTH)]
-    HRESULT length([retval, out] long *p);
+    HRESULT length([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLFORMELEMENT__NEWENUM)]
     HRESULT _newEnum([retval, out] IUnknown **p);
@@ -5914,22 +5914,22 @@ interface IHTMLTextContainer : IDispatch
     HRESULT createControlRange([retval, out] IDispatch **range);
 
     [propget, id(DISPID_IHTMLTEXTCONTAINER_SCROLLHEIGHT), displaybind, bindable]
-    HRESULT scrollHeight([retval, out] long *p);
+    HRESULT scrollHeight([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLTEXTCONTAINER_SCROLLWIDTH), displaybind, bindable]
-    HRESULT scrollWidth([retval, out] long *p);
+    HRESULT scrollWidth([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLTEXTCONTAINER_SCROLLTOP), displaybind, bindable]
-    HRESULT scrollTop([in] long v);
+    HRESULT scrollTop([in] LONG v);
 
     [propget, id(DISPID_IHTMLTEXTCONTAINER_SCROLLTOP), displaybind, bindable]
-    HRESULT scrollTop([retval, out] long *p);
+    HRESULT scrollTop([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLTEXTCONTAINER_SCROLLLEFT), displaybind, bindable]
-    HRESULT scrollLeft([in] long v);
+    HRESULT scrollLeft([in] LONG v);
 
     [propget, id(DISPID_IHTMLTEXTCONTAINER_SCROLLLEFT), displaybind, bindable]
-    HRESULT scrollLeft([retval, out] long *p);
+    HRESULT scrollLeft([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLTEXTCONTAINER_ONSCROLL), displaybind, bindable]
     HRESULT onscroll([in] VARIANT v);
@@ -5992,16 +5992,16 @@ interface IHTMLImgElement : IDispatch
     HRESULT border([retval, out] VARIANT *p);
 
     [propput, id(DISPID_IHTMLIMGELEMENT_VSPACE)]
-    HRESULT vspace([in] long v);
+    HRESULT vspace([in] LONG v);
 
     [propget, id(DISPID_IHTMLIMGELEMENT_VSPACE)]
-    HRESULT vspace([retval, out] long *p);
+    HRESULT vspace([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLIMGELEMENT_HSPACE)]
-    HRESULT hspace([in] long v);
+    HRESULT hspace([in] LONG v);
 
     [propget, id(DISPID_IHTMLIMGELEMENT_HSPACE)]
-    HRESULT hspace([retval, out] long *p);
+    HRESULT hspace([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLIMGELEMENT_ALT)]
     HRESULT alt([in] BSTR v);
@@ -6076,16 +6076,16 @@ interface IHTMLImgElement : IDispatch
     HRESULT name([retval, out] BSTR *p);
 
     [propput, id(DISPID_IHTMLIMGELEMENT_WIDTH)]
-    HRESULT width([in] long v);
+    HRESULT width([in] LONG v);
 
     [propget, id(DISPID_IHTMLIMGELEMENT_WIDTH)]
-    HRESULT width([retval, out] long *p);
+    HRESULT width([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLIMGELEMENT_HEIGHT)]
-    HRESULT height([in] long v);
+    HRESULT height([in] LONG v);
 
     [propget, id(DISPID_IHTMLIMGELEMENT_HEIGHT)]
-    HRESULT height([retval, out] long *p);
+    HRESULT height([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLIMGELEMENT_START)]
     HRESULT start([in] BSTR v);
@@ -7210,16 +7210,16 @@ interface IHTMLControlElement : IDispatch
     HRESULT removeFilter([in] IUnknown* pUnk);
 
     [propget, id(DISPID_IHTMLCONTROLELEMENT_CLIENTHEIGHT), displaybind, bindable]
-    HRESULT clientHeight([retval, out] long * p);
+    HRESULT clientHeight([retval, out] LONG * p);
 
     [propget, id(DISPID_IHTMLCONTROLELEMENT_CLIENTWIDTH), displaybind, bindable]
-    HRESULT clientWidth([retval, out] long * p);
+    HRESULT clientWidth([retval, out] LONG * p);
 
     [propget, id(DISPID_IHTMLCONTROLELEMENT_CLIENTTOP), displaybind, bindable]
-    HRESULT clientTop([retval, out] long * p);
+    HRESULT clientTop([retval, out] LONG * p);
 
     [propget, id(DISPID_IHTMLCONTROLELEMENT_CLIENTLEFT), displaybind, bindable]
-    HRESULT clientLeft([retval, out] long * p);
+    HRESULT clientLeft([retval, out] LONG * p);
 };
 
 /*****************************************************************************
@@ -8469,10 +8469,10 @@ interface IHTMLElementCollection : IDispatch
     HRESULT toString([retval, out] BSTR *String);
 
     [propput, id(DISPID_IHTMLELEMENTCOLLECTION_LENGTH)]
-    HRESULT length([in] long v);
+    HRESULT length([in] LONG v);
 
     [propget, id(DISPID_IHTMLELEMENTCOLLECTION_LENGTH)]
-    HRESULT length([retval, out] long *p);
+    HRESULT length([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLELEMENTCOLLECTION__NEWENUM)]
     HRESULT _newEnum([retval, out] IUnknown **p);
@@ -8504,10 +8504,10 @@ methods:
     BSTR toString();
 
     [propput, id(DISPID_IHTMLELEMENTCOLLECTION_LENGTH)]
-    void length(long v);
+    void length(LONG v);
 
     [propget, id(DISPID_IHTMLELEMENTCOLLECTION_LENGTH)]
-    long length();
+    LONG length();
 
     [propget, id(DISPID_IHTMLELEMENTCOLLECTION__NEWENUM), hidden, restricted]
     IUnknown *_newEnum();
@@ -8540,10 +8540,10 @@ methods:
 interface IHTMLSelectElement : IDispatch
 {
     [propput, id(DISPID_IHTMLSELECTELEMENT_SIZE), displaybind, bindable]
-    HRESULT size([in] long v);
+    HRESULT size([in] LONG v);
 
     [propget, id(DISPID_IHTMLSELECTELEMENT_SIZE), displaybind, bindable]
-    HRESULT size([retval, out] long *p);
+    HRESULT size([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLSELECTELEMENT_MULTIPLE), displaybind, bindable]
     HRESULT multiple([in] VARIANT_BOOL v);
@@ -8567,10 +8567,10 @@ interface IHTMLSelectElement : IDispatch
     HRESULT onchange([retval, out] VARIANT *p);
 
     [propput, id(DISPID_IHTMLSELECTELEMENT_SELECTEDINDEX)]
-    HRESULT selectedIndex([in] long v);
+    HRESULT selectedIndex([in] LONG v);
 
     [propget, id(DISPID_IHTMLSELECTELEMENT_SELECTEDINDEX)]
-    HRESULT selectedIndex([retval, out] long *p);
+    HRESULT selectedIndex([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLSELECTELEMENT_TYPE), displaybind, bindable]
     HRESULT type([retval, out] BSTR *p);
@@ -8596,13 +8596,13 @@ interface IHTMLSelectElement : IDispatch
         [optional, in] VARIANT before);
 
     [id(DISPID_IHTMLSELECTELEMENT_REMOVE)]
-    HRESULT remove([defaultvalue(-1), in] long index);
+    HRESULT remove([defaultvalue(-1), in] LONG index);
 
     [propput, id(DISPID_IHTMLSELECTELEMENT_LENGTH)]
-    HRESULT length([in] long v);
+    HRESULT length([in] LONG v);
 
     [propget, id(DISPID_IHTMLSELECTELEMENT_LENGTH)]
-    HRESULT length([retval, out] long *p);
+    HRESULT length([retval, out] LONG *p);
 
     [propget, id(DISPID_IHTMLSELECTELEMENT__NEWENUM), hidden, restricted]
     HRESULT _newEnum([retval, out] IUnknown **p);
@@ -8761,7 +8761,7 @@ methods:
     VARIANT_BOOL contains([in] IHTMLElement *pChild);
 
     [propget, id(DISPID_IHTMLELEMENT_SOURCEINDEX), bindable]
-    long sourceIndex();
+    LONG sourceIndex();
 
     [propget, id(DISPID_IHTMLELEMENT_RECORDNUMBER)]
     VARIANT recordNumber();
@@ -8773,16 +8773,16 @@ methods:
     BSTR lang();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETLEFT)]
-    long offsetLeft();
+    LONG offsetLeft();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETTOP)]
-    long offsetTop();
+    LONG offsetTop();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETWIDTH)]
-    long offsetWidth();
+    LONG offsetWidth();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETHEIGHT)]
-    long offsetHeight();
+    LONG offsetHeight();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETPARENT)]
     IHTMLElement *offsetParent();
@@ -8919,8 +8919,8 @@ methods:
 
     [id(DISPID_IHTMLELEMENT2_COMPONENTFROMPOINT)]
     BSTR componentFromPoint(
-            [in] long x,
-            [in] long y);
+            [in] LONG x,
+            [in] LONG y);
 
     [id(DISPID_IHTMLELEMENT2_DOSCROLL)]
     void doScroll([in, optional] VARIANT component);
@@ -9073,16 +9073,16 @@ methods:
     void removeFilter([in] IUnknown *pUnk);
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTHEIGHT), displaybind, bindable]
-    long clientHeight();
+    LONG clientHeight();
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTWIDTH), displaybind, bindable]
-    long clientWidth();
+    LONG clientWidth();
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTTOP), displaybind, bindable]
-    long clientTop();
+    LONG clientTop();
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTLEFT), displaybind, bindable]
-    long clientLeft();
+    LONG clientLeft();
 
     [id(DISPID_IHTMLELEMENT2_ATTACHEVENT)]
     VARIANT_BOOL attachEvent(
@@ -9131,22 +9131,22 @@ methods:
     IDispatch *createControlRange();
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLHEIGHT), displaybind, bindable]
-    long scrollHeight();
+    LONG scrollHeight();
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLWIDTH), displaybind, bindable]
-    long scrollWidth();
+    LONG scrollWidth();
 
     [propput, id(DISPID_IHTMLELEMENT2_SCROLLTOP), displaybind, bindable]
-    void scrollTop(long v);
+    void scrollTop(LONG v);
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLTOP), displaybind, bindable]
-    long scrollTop();
+    LONG scrollTop();
 
     [propput, id(DISPID_IHTMLELEMENT2_SCROLLLEFT), displaybind, bindable]
-    void scrollLeft(long v);
+    void scrollLeft(LONG v);
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLLEFT), displaybind, bindable]
-    long scrollLeft();
+    LONG scrollLeft();
 
     [id(DISPID_IHTMLELEMENT2_CLEARATTRIBUTES)]
     void clearAttributes();
@@ -9179,12 +9179,12 @@ methods:
     VARIANT_BOOL canHaveChildren();
 
     [id(DISPID_IHTMLELEMENT2_ADDBEHAVIOR)]
-    long addBehavior(
+    LONG addBehavior(
             [in] BSTR bstrUrl,
             [in, optional] VARIANT *pvarFactory);
 
     [id(DISPID_IHTMLELEMENT2_REMOVEBEHAVIOR)]
-    VARIANT_BOOL removeBehavior([in] long cookie);
+    VARIANT_BOOL removeBehavior([in] LONG cookie);
 
     [propget, id(DISPID_IHTMLELEMENT2_RUNTIMESTYLE), nonbrowsable]
     IHTMLStyle *runtimeStyle();
@@ -9205,7 +9205,7 @@ methods:
     VARIANT onbeforeeditfocus();
 
     [propget, id(DISPID_IHTMLELEMENT2_READYSTATEVALUE), hidden, restricted]
-    long readyStateValue();
+    LONG readyStateValue();
 
     [id(DISPID_IHTMLELEMENT2_GETELEMENTSBYTAGNAME)]
     IHTMLElementCollection *getElementsByTagName([in] BSTR v);
@@ -9380,13 +9380,13 @@ methods:
     VARIANT onfocusout();
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
-    long uniqueNumber();
+    LONG uniqueNumber();
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
     BSTR uniqueID();
 
     [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
-    long nodeType();
+    LONG nodeType();
 
     [propget, id(DISPID_IHTMLDOMNODE_PARENTNODE)]
     IHTMLDOMNode *parentNode();
@@ -9471,10 +9471,10 @@ methods:
     BSTR dataFormatAs();
 
     [propput, id(DISPID_IHTMLSELECTELEMENT_SIZE), displaybind, bindable]
-    void size(long v);
+    void size(LONG v);
 
     [propget, id(DISPID_IHTMLSELECTELEMENT_SIZE), displaybind, bindable]
-    long size();
+    LONG size();
 
     [propput, id(DISPID_IHTMLSELECTELEMENT_MULTIPLE), displaybind, bindable]
     void multiple(VARIANT_BOOL v);
@@ -9498,10 +9498,10 @@ methods:
     VARIANT onchange();
 
     [propput, id(DISPID_IHTMLSELECTELEMENT_SELECTEDINDEX)]
-    void selectedIndex(long v);
+    void selectedIndex(LONG v);
 
     [propget, id(DISPID_IHTMLSELECTELEMENT_SELECTEDINDEX)]
-    long selectedIndex();
+    LONG selectedIndex();
 
     [propget, id(DISPID_IHTMLSELECTELEMENT_TYPE), displaybind, bindable]
     BSTR type();
@@ -9521,13 +9521,13 @@ methods:
             [in, optional] VARIANT before);
 
     [id(DISPID_IHTMLSELECTELEMENT_REMOVE)]
-    void remove([in, defaultvalue(-1)] long index);
+    void remove([in, defaultvalue(-1)] LONG index);
 
     [propput, id(DISPID_IHTMLSELECTELEMENT_LENGTH)]
-    void length(long v);
+    void length(LONG v);
 
     [propget, id(DISPID_IHTMLSELECTELEMENT_LENGTH)]
-    long length();
+    LONG length();
 
     [propget, id(DISPID_IHTMLSELECTELEMENT__NEWENUM), hidden, restricted]
     IUnknown *_newEnum();
@@ -9778,7 +9778,7 @@ methods:
     VARIANT_BOOL contains([in] IHTMLElement *pChild);
 
     [propget, id(DISPID_IHTMLELEMENT_SOURCEINDEX), bindable]
-    long sourceIndex();
+    LONG sourceIndex();
 
     [propget, id(DISPID_IHTMLELEMENT_RECORDNUMBER)]
     VARIANT recordNumber();
@@ -9790,16 +9790,16 @@ methods:
     BSTR lang();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETLEFT)]
-    long offsetLeft();
+    LONG offsetLeft();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETTOP)]
-    long offsetTop();
+    LONG offsetTop();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETWIDTH)]
-    long offsetWidth();
+    LONG offsetWidth();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETHEIGHT)]
-    long offsetHeight();
+    LONG offsetHeight();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETPARENT)]
     IHTMLElement *offsetParent();
@@ -9936,8 +9936,8 @@ methods:
 
     [id(DISPID_IHTMLELEMENT2_COMPONENTFROMPOINT)]
     BSTR componentFromPoint(
-            [in] long x,
-            [in] long y);
+            [in] LONG x,
+            [in] LONG y);
 
     [id(DISPID_IHTMLELEMENT2_DOSCROLL)]
     void doScroll([in, optional] VARIANT component);
@@ -10090,16 +10090,16 @@ methods:
     void removeFilter([in] IUnknown *pUnk);
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTHEIGHT), displaybind, bindable]
-    long clientHeight();
+    LONG clientHeight();
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTWIDTH), displaybind, bindable]
-    long clientWidth();
+    LONG clientWidth();
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTTOP), displaybind, bindable]
-    long clientTop();
+    LONG clientTop();
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTLEFT), displaybind, bindable]
-    long clientLeft();
+    LONG clientLeft();
 
     [id(DISPID_IHTMLELEMENT2_ATTACHEVENT)]
     VARIANT_BOOL attachEvent(
@@ -10148,22 +10148,22 @@ methods:
     IDispatch *createControlRange();
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLHEIGHT), displaybind, bindable]
-    long scrollHeight();
+    LONG scrollHeight();
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLWIDTH), displaybind, bindable]
-    long scrollWidth();
+    LONG scrollWidth();
 
     [propput, id(DISPID_IHTMLELEMENT2_SCROLLTOP), displaybind, bindable]
-    void scrollTop(long v);
+    void scrollTop(LONG v);
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLTOP), displaybind, bindable]
-    long scrollTop();
+    LONG scrollTop();
 
     [propput, id(DISPID_IHTMLELEMENT2_SCROLLLEFT), displaybind, bindable]
-    void scrollLeft(long v);
+    void scrollLeft(LONG v);
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLLEFT), displaybind, bindable]
-    long scrollLeft();
+    LONG scrollLeft();
 
     [id(DISPID_IHTMLELEMENT2_CLEARATTRIBUTES)]
     void clearAttributes();
@@ -10196,12 +10196,12 @@ methods:
     VARIANT_BOOL canHaveChildren();
 
     [id(DISPID_IHTMLELEMENT2_ADDBEHAVIOR)]
-    long addBehavior(
+    LONG addBehavior(
             [in] BSTR bstrUrl,
             [in, optional] VARIANT *pvarFactory);
 
     [id(DISPID_IHTMLELEMENT2_REMOVEBEHAVIOR)]
-    VARIANT_BOOL removeBehavior([in] long cookie);
+    VARIANT_BOOL removeBehavior([in] LONG cookie);
 
     [propget, id(DISPID_IHTMLELEMENT2_RUNTIMESTYLE), nonbrowsable]
     IHTMLStyle *runtimeStyle();
@@ -10222,7 +10222,7 @@ methods:
     VARIANT onbeforeeditfocus();
 
     [propget, id(DISPID_IHTMLELEMENT2_READYSTATEVALUE), hidden, restricted]
-    long readyStateValue();
+    LONG readyStateValue();
 
     [id(DISPID_IHTMLELEMENT2_GETELEMENTSBYTAGNAME)]
     IHTMLElementCollection *getElementsByTagName([in] BSTR v);
@@ -10397,13 +10397,13 @@ methods:
     VARIANT onfocusout();
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
-    long uniqueNumber();
+    LONG uniqueNumber();
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
     BSTR uniqueID();
 
     [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
-    long nodeType();
+    LONG nodeType();
 
     [propget, id(DISPID_IHTMLDOMNODE_PARENTNODE)]
     IHTMLDOMNode *parentNode();
@@ -10572,16 +10572,16 @@ interface IHTMLInputElement : IDispatch
     HRESULT form([retval, out] IHTMLFormElement **p);
 
     [propput, id(DISPID_IHTMLINPUTELEMENT_SIZE), displaybind, bindable]
-    HRESULT size([in] long v);
+    HRESULT size([in] LONG v);
 
     [propget, id(DISPID_IHTMLINPUTELEMENT_SIZE), displaybind, bindable]
-    HRESULT size([retval, out] long *p);
+    HRESULT size([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLINPUTELEMENT_MAXLENGTH), displaybind, bindable]
-    HRESULT maxLength([in] long v);
+    HRESULT maxLength([in] LONG v);
 
     [propget, id(DISPID_IHTMLINPUTELEMENT_MAXLENGTH), displaybind, bindable]
-    HRESULT maxLength([retval, out] long *p);
+    HRESULT maxLength([retval, out] LONG *p);
 
     [id(DISPID_IHTMLINPUTELEMENT_SELECT)]
     HRESULT select();
@@ -10638,16 +10638,16 @@ interface IHTMLInputElement : IDispatch
     HRESULT border([retval, out] VARIANT *p);
 
     [propput, id(DISPID_IHTMLINPUTELEMENT_VSPACE), displaybind, bindable]
-    HRESULT vspace([in] long v);
+    HRESULT vspace([in] LONG v);
 
     [propget, id(DISPID_IHTMLINPUTELEMENT_VSPACE), displaybind, bindable]
-    HRESULT vspace([retval, out] long *p);
+    HRESULT vspace([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLINPUTELEMENT_HSPACE), displaybind, bindable]
-    HRESULT hspace([in] long v);
+    HRESULT hspace([in] LONG v);
 
     [propget, id(DISPID_IHTMLINPUTELEMENT_HSPACE), displaybind, bindable]
-    HRESULT hspace([retval, out] long *p);
+    HRESULT hspace([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLINPUTELEMENT_ALT), displaybind, bindable]
     HRESULT alt([in] BSTR v);
@@ -10716,16 +10716,16 @@ interface IHTMLInputElement : IDispatch
     HRESULT onabort([retval, out] VARIANT *p);
 
     [propput, id(DISPID_IHTMLINPUTELEMENT_WIDTH)]
-    HRESULT width([in] long v);
+    HRESULT width([in] LONG v);
 
     [propget, id(DISPID_IHTMLINPUTELEMENT_WIDTH)]
-    HRESULT width([retval, out] long *p);
+    HRESULT width([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLINPUTELEMENT_HEIGHT)]
-    HRESULT height([in] long v);
+    HRESULT height([in] LONG v);
 
     [propget, id(DISPID_IHTMLINPUTELEMENT_HEIGHT)]
-    HRESULT height([retval, out] long *p);
+    HRESULT height([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLINPUTELEMENT_START), displaybind, bindable]
     HRESULT start([in] BSTR v);
@@ -10782,16 +10782,16 @@ interface IHTMLInputTextElement : IDispatch
     HRESULT defaultValue([retval, out] BSTR *p);
 
     [propput, id(DISPID_IHTMLINPUTTEXTELEMENT_SIZE), displaybind, bindable]
-    HRESULT size([in] long v);
+    HRESULT size([in] LONG v);
 
     [propget, id(DISPID_IHTMLINPUTTEXTELEMENT_SIZE), displaybind, bindable]
-    HRESULT size([retval, out] long *p);
+    HRESULT size([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLINPUTTEXTELEMENT_MAXLENGTH), displaybind, bindable]
-    HRESULT maxLength([in] long v);
+    HRESULT maxLength([in] LONG v);
 
     [propget, id(DISPID_IHTMLINPUTTEXTELEMENT_MAXLENGTH), displaybind, bindable]
-    HRESULT maxLength([retval, out] long *p);
+    HRESULT maxLength([retval, out] LONG *p);
 
     [id(DISPID_IHTMLINPUTTEXTELEMENT_SELECT)]
     HRESULT select();
@@ -10957,7 +10957,7 @@ methods:
     VARIANT_BOOL contains([in] IHTMLElement *pChild);
 
     [propget, id(DISPID_IHTMLELEMENT_SOURCEINDEX), bindable]
-    long sourceIndex();
+    LONG sourceIndex();
 
     [propget, id(DISPID_IHTMLELEMENT_RECORDNUMBER)]
     VARIANT recordNumber();
@@ -10969,16 +10969,16 @@ methods:
     BSTR lang();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETLEFT)]
-    long offsetLeft();
+    LONG offsetLeft();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETTOP)]
-    long offsetTop();
+    LONG offsetTop();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETWIDTH)]
-    long offsetWidth();
+    LONG offsetWidth();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETHEIGHT)]
-    long offsetHeight();
+    LONG offsetHeight();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETPARENT)]
     IHTMLElement *offsetParent();
@@ -11115,8 +11115,8 @@ methods:
 
     [id(DISPID_IHTMLELEMENT2_COMPONENTFROMPOINT)]
     BSTR componentFromPoint(
-            [in] long x,
-            [in] long y);
+            [in] LONG x,
+            [in] LONG y);
 
     [id(DISPID_IHTMLELEMENT2_DOSCROLL)]
     void doScroll([in, optional] VARIANT component);
@@ -11269,16 +11269,16 @@ methods:
     void removeFilter([in] IUnknown *pUnk);
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTHEIGHT), displaybind, bindable]
-    long clientHeight();
+    LONG clientHeight();
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTWIDTH), displaybind, bindable]
-    long clientWidth();
+    LONG clientWidth();
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTTOP), displaybind, bindable]
-    long clientTop();
+    LONG clientTop();
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTLEFT), displaybind, bindable]
-    long clientLeft();
+    LONG clientLeft();
 
     [id(DISPID_IHTMLELEMENT2_ATTACHEVENT)]
     VARIANT_BOOL attachEvent(
@@ -11327,22 +11327,22 @@ methods:
     IDispatch *createControlRange();
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLHEIGHT), displaybind, bindable]
-    long scrollHeight();
+    LONG scrollHeight();
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLWIDTH), displaybind, bindable]
-    long scrollWidth();
+    LONG scrollWidth();
 
     [propput, id(DISPID_IHTMLELEMENT2_SCROLLTOP), displaybind, bindable]
-    void scrollTop(long v);
+    void scrollTop(LONG v);
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLTOP), displaybind, bindable]
-    long scrollTop();
+    LONG scrollTop();
 
     [propput, id(DISPID_IHTMLELEMENT2_SCROLLLEFT), displaybind, bindable]
-    void scrollLeft(long v);
+    void scrollLeft(LONG v);
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLLEFT), displaybind, bindable]
-    long scrollLeft();
+    LONG scrollLeft();
 
     [id(DISPID_IHTMLELEMENT2_CLEARATTRIBUTES)]
     void clearAttributes();
@@ -11375,12 +11375,12 @@ methods:
     VARIANT_BOOL canHaveChildren();
 
     [id(DISPID_IHTMLELEMENT2_ADDBEHAVIOR)]
-    long addBehavior(
+    LONG addBehavior(
             [in] BSTR bstrUrl,
             [in, optional] VARIANT *pvarFactory);
 
     [id(DISPID_IHTMLELEMENT2_REMOVEBEHAVIOR)]
-    VARIANT_BOOL removeBehavior([in] long cookie);
+    VARIANT_BOOL removeBehavior([in] LONG cookie);
 
     [propget, id(DISPID_IHTMLELEMENT2_RUNTIMESTYLE), nonbrowsable]
     IHTMLStyle *runtimeStyle();
@@ -11401,7 +11401,7 @@ methods:
     VARIANT onbeforeeditfocus();
 
     [propget, id(DISPID_IHTMLELEMENT2_READYSTATEVALUE), hidden, restricted]
-    long readyStateValue();
+    LONG readyStateValue();
 
     [id(DISPID_IHTMLELEMENT2_GETELEMENTSBYTAGNAME)]
     IHTMLElementCollection *getElementsByTagName([in] BSTR v);
@@ -11576,13 +11576,13 @@ methods:
     VARIANT onfocusout();
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
-    long uniqueNumber();
+    LONG uniqueNumber();
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
     BSTR uniqueID();
 
     [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
-    long nodeType();
+    LONG nodeType();
 
     [propget, id(DISPID_IHTMLDOMNODE_PARENTNODE)]
     IHTMLDOMNode *parentNode();
@@ -11694,16 +11694,16 @@ methods:
     IHTMLFormElement *form();
 
     [propput, id(DISPID_IHTMLINPUTELEMENT_SIZE), displaybind, bindable]
-    void size(long v);
+    void size(LONG v);
 
     [propget, id(DISPID_IHTMLINPUTELEMENT_SIZE), displaybind, bindable]
-    long size();
+    LONG size();
 
     [propput, id(DISPID_IHTMLINPUTELEMENT_MAXLENGTH), displaybind, bindable]
-    void maxLength(long v);
+    void maxLength(LONG v);
 
     [propget, id(DISPID_IHTMLINPUTELEMENT_MAXLENGTH), displaybind, bindable]
-    long maxLength();
+    LONG maxLength();
 
     [id(DISPID_IHTMLINPUTELEMENT_SELECT)]
     void select();
@@ -11760,16 +11760,16 @@ methods:
     VARIANT border();
 
     [propput, id(DISPID_IHTMLINPUTELEMENT_VSPACE), displaybind, bindable]
-    void vspace(long v);
+    void vspace(LONG v);
 
     [propget, id(DISPID_IHTMLINPUTELEMENT_VSPACE), displaybind, bindable]
-    long vspace();
+    LONG vspace();
 
     [propput, id(DISPID_IHTMLINPUTELEMENT_HSPACE), displaybind, bindable]
-    void hspace(long v);
+    void hspace(LONG v);
 
     [propget, id(DISPID_IHTMLINPUTELEMENT_HSPACE), displaybind, bindable]
-    long hspace();
+    LONG hspace();
 
     [propput, id(DISPID_IHTMLINPUTELEMENT_ALT), displaybind, bindable]
     void alt(BSTR v);
@@ -11835,16 +11835,16 @@ methods:
     VARIANT onabort();
 
     [propput, id(DISPID_IHTMLINPUTELEMENT_WIDTH)]
-    void width(long v);
+    void width(LONG v);
 
     [propget, id(DISPID_IHTMLINPUTELEMENT_WIDTH)]
-    long width();
+    LONG width();
 
     [propput, id(DISPID_IHTMLINPUTELEMENT_HEIGHT)]
-    void height(long v);
+    void height(LONG v);
 
     [propget, id(DISPID_IHTMLINPUTELEMENT_HEIGHT)]
-    long height();
+    LONG height();
 
     [propput, id(DISPID_IHTMLINPUTELEMENT_START), displaybind, bindable]
     void start(BSTR v);
@@ -11934,16 +11934,16 @@ interface IHTMLTextAreaElement : IDispatch
     HRESULT readOnly([retval, out] VARIANT_BOOL *p);
 
     [propput, id(DISPID_IHTMLTEXTAREAELEMENT_ROWS), displaybind, bindable]
-    HRESULT rows([in] long v);
+    HRESULT rows([in] LONG v);
 
     [propget, id(DISPID_IHTMLTEXTAREAELEMENT_ROWS), displaybind, bindable]
-    HRESULT rows([retval, out] long *p);
+    HRESULT rows([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLTEXTAREAELEMENT_COLS), displaybind, bindable]
-    HRESULT cols([in] long v);
+    HRESULT cols([in] LONG v);
 
     [propget, id(DISPID_IHTMLTEXTAREAELEMENT_COLS), displaybind, bindable]
-    HRESULT cols([retval, out] long *p);
+    HRESULT cols([retval, out] LONG *p);
 
     [propput, id(DISPID_IHTMLTEXTAREAELEMENT_WRAP), displaybind, bindable]
     HRESULT wrap([in] BSTR v);
@@ -12097,7 +12097,7 @@ methods:
     VARIANT_BOOL contains([in] IHTMLElement *pChild);
 
     [propget, id(DISPID_IHTMLELEMENT_SOURCEINDEX), bindable]
-    long sourceIndex();
+    LONG sourceIndex();
 
     [propget, id(DISPID_IHTMLELEMENT_RECORDNUMBER)]
     VARIANT recordNumber();
@@ -12109,16 +12109,16 @@ methods:
     BSTR lang();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETLEFT)]
-    long offsetLeft();
+    LONG offsetLeft();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETTOP)]
-    long offsetTop();
+    LONG offsetTop();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETWIDTH)]
-    long offsetWidth();
+    LONG offsetWidth();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETHEIGHT)]
-    long offsetHeight();
+    LONG offsetHeight();
 
     [propget, id(DISPID_IHTMLELEMENT_OFFSETPARENT)]
     IHTMLElement *offsetParent();
@@ -12255,8 +12255,8 @@ methods:
 
     [id(DISPID_IHTMLELEMENT2_COMPONENTFROMPOINT)]
     BSTR componentFromPoint(
-            [in] long x,
-            [in] long y);
+            [in] LONG x,
+            [in] LONG y);
 
     [id(DISPID_IHTMLELEMENT2_DOSCROLL)]
     void doScroll([in, optional] VARIANT component);
@@ -12409,16 +12409,16 @@ methods:
     void removeFilter([in] IUnknown *pUnk);
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTHEIGHT), displaybind, bindable]
-    long clientHeight();
+    LONG clientHeight();
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTWIDTH), displaybind, bindable]
-    long clientWidth();
+    LONG clientWidth();
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTTOP), displaybind, bindable]
-    long clientTop();
+    LONG clientTop();
 
     [propget, id(DISPID_IHTMLELEMENT2_CLIENTLEFT), displaybind, bindable]
-    long clientLeft();
+    LONG clientLeft();
 
     [id(DISPID_IHTMLELEMENT2_ATTACHEVENT)]
     VARIANT_BOOL attachEvent(
@@ -12467,22 +12467,22 @@ methods:
     IDispatch *createControlRange();
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLHEIGHT), displaybind, bindable]
-    long scrollHeight();
+    LONG scrollHeight();
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLWIDTH), displaybind, bindable]
-    long scrollWidth();
+    LONG scrollWidth();
 
     [propput, id(DISPID_IHTMLELEMENT2_SCROLLTOP), displaybind, bindable]
-    void scrollTop(long v);
+    void scrollTop(LONG v);
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLTOP), displaybind, bindable]
-    long scrollTop();
+    LONG scrollTop();
 
     [propput, id(DISPID_IHTMLELEMENT2_SCROLLLEFT), displaybind, bindable]
-    void scrollLeft(long v);
+    void scrollLeft(LONG v);
 
     [propget, id(DISPID_IHTMLELEMENT2_SCROLLLEFT), displaybind, bindable]
-    long scrollLeft();
+    LONG scrollLeft();
 
     [id(DISPID_IHTMLELEMENT2_CLEARATTRIBUTES)]
     void clearAttributes();
@@ -12515,12 +12515,12 @@ methods:
     VARIANT_BOOL canHaveChildren();
 
     [id(DISPID_IHTMLELEMENT2_ADDBEHAVIOR)]
-    long addBehavior(
+    LONG addBehavior(
             [in] BSTR bstrUrl,
             [in, optional] VARIANT *pvarFactory);
 
     [id(DISPID_IHTMLELEMENT2_REMOVEBEHAVIOR)]
-    VARIANT_BOOL removeBehavior([in] long cookie);
+    VARIANT_BOOL removeBehavior([in] LONG cookie);
 
     [propget, id(DISPID_IHTMLELEMENT2_RUNTIMESTYLE), nonbrowsable]
     IHTMLStyle *runtimeStyle();
@@ -12541,7 +12541,7 @@ methods:
     VARIANT onbeforeeditfocus();
 
     [propget, id(DISPID_IHTMLELEMENT2_READYSTATEVALUE), hidden, restricted]
-    long readyStateValue();
+    LONG readyStateValue();
 
     [id(DISPID_IHTMLELEMENT2_GETELEMENTSBYTAGNAME)]
     IHTMLElementCollection *getElementsByTagName([in] BSTR v);
@@ -12716,13 +12716,13 @@ methods:
     VARIANT onfocusout();
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
-    long uniqueNumber();
+    LONG uniqueNumber();
 
     [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
     BSTR uniqueID();
 
     [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
-    long nodeType();
+    LONG nodeType();
 
     [propget, id(DISPID_IHTMLDOMNODE_PARENTNODE)]
     IHTMLDOMNode *parentNode();

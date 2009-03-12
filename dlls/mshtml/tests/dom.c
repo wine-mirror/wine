@@ -652,7 +652,7 @@ static void _test_elem_attr(unsigned line, IHTMLElement *elem, const char *name,
 static void _test_elem_offset(unsigned line, IUnknown *unk)
 {
     IHTMLElement *elem = _get_elem_iface(line, unk);
-    long l;
+    LONG l;
     HRESULT hres;
 
     hres = IHTMLElement_get_offsetTop(elem, &l);
@@ -793,23 +793,23 @@ static IHTMLOptionElement *_create_option_elem(unsigned line, IHTMLDocument2 *do
 #define test_select_length(s,l) _test_select_length(__LINE__,s,l)
 static void _test_select_length(unsigned line, IHTMLSelectElement *select, long length)
 {
-    long len = 0xdeadbeef;
+    LONG len = 0xdeadbeef;
     HRESULT hres;
 
     hres = IHTMLSelectElement_get_length(select, &len);
     ok_(__FILE__,line) (hres == S_OK, "get_length failed: %08x\n", hres);
-    ok_(__FILE__,line) (len == length, "len=%ld, expected %ld\n", len, length);
+    ok_(__FILE__,line) (len == length, "len=%d, expected %ld\n", len, length);
 }
 
 #define test_select_selidx(s,i) _test_select_selidx(__LINE__,s,i)
 static void _test_select_selidx(unsigned line, IHTMLSelectElement *select, long index)
 {
-    long idx = 0xdeadbeef;
+    LONG idx = 0xdeadbeef;
     HRESULT hres;
 
     hres = IHTMLSelectElement_get_selectedIndex(select, &idx);
     ok_(__FILE__,line) (hres == S_OK, "get_selectedIndex failed: %08x\n", hres);
-    ok_(__FILE__,line) (idx == index, "idx=%ld, expected %ld\n", idx, index);
+    ok_(__FILE__,line) (idx == index, "idx=%d, expected %ld\n", idx, index);
 }
 
 #define test_select_put_selidx(s,i) _test_select_put_selidx(__LINE__,s,i)
@@ -1002,7 +1002,7 @@ static void _test_elem_collection(unsigned line, IUnknown *unk,
         const elem_type_t *elem_types, long exlen)
 {
     IHTMLElementCollection *col;
-    long len;
+    LONG len;
     DWORD i;
     VARIANT name, index;
     IDispatch *disp;
@@ -1015,7 +1015,7 @@ static void _test_elem_collection(unsigned line, IUnknown *unk,
 
     hres = IHTMLElementCollection_get_length(col, &len);
     ok_(__FILE__,line) (hres == S_OK, "get_length failed: %08x\n", hres);
-    ok_(__FILE__,line) (len == exlen, "len=%ld, expected %ld\n", len, exlen);
+    ok_(__FILE__,line) (len == exlen, "len=%d, expected %ld\n", len, exlen);
 
     if(len > exlen)
         len = exlen;
@@ -1276,7 +1276,7 @@ static long _elem_get_scroll_height(unsigned line, IUnknown *unk)
 {
     IHTMLElement2 *elem = _get_elem2_iface(line, unk);
     IHTMLTextContainer *txtcont;
-    long l = -1, l2 = -1;
+    LONG l = -1, l2 = -1;
     HRESULT hres;
 
     hres = IHTMLElement2_get_scrollHeight(elem, &l);
@@ -1288,8 +1288,8 @@ static long _elem_get_scroll_height(unsigned line, IUnknown *unk)
 
     hres = IHTMLTextContainer_get_scrollHeight(txtcont, &l2);
     IHTMLTextContainer_Release(txtcont);
-    ok_(__FILE__,line) (hres == S_OK, "IHTMLTextContainer::get_scrollHeight failed: %ld\n", l2);
-    ok_(__FILE__,line) (l == l2, "unexpected height %ld, expected %ld\n", l2, l);
+    ok_(__FILE__,line) (hres == S_OK, "IHTMLTextContainer::get_scrollHeight failed: %d\n", l2);
+    ok_(__FILE__,line) (l == l2, "unexpected height %d, expected %d\n", l2, l);
 
     return l;
 }
@@ -1299,7 +1299,7 @@ static long _elem_get_scroll_width(unsigned line, IUnknown *unk)
 {
     IHTMLElement2 *elem = _get_elem2_iface(line, unk);
     IHTMLTextContainer *txtcont;
-    long l = -1, l2 = -1;
+    LONG l = -1, l2 = -1;
     HRESULT hres;
 
     hres = IHTMLElement2_get_scrollWidth(elem, &l);
@@ -1311,8 +1311,8 @@ static long _elem_get_scroll_width(unsigned line, IUnknown *unk)
 
     hres = IHTMLTextContainer_get_scrollWidth(txtcont, &l2);
     IHTMLTextContainer_Release(txtcont);
-    ok_(__FILE__,line) (hres == S_OK, "IHTMLTextContainer::get_scrollWidth failed: %ld\n", l2);
-    ok_(__FILE__,line) (l == l2, "unexpected width %ld, expected %ld\n", l2, l);
+    ok_(__FILE__,line) (hres == S_OK, "IHTMLTextContainer::get_scrollWidth failed: %d\n", l2);
+    ok_(__FILE__,line) (l == l2, "unexpected width %d, expected %d\n", l2, l);
 
     return l;
 }
@@ -1322,7 +1322,7 @@ static long _elem_get_scroll_top(unsigned line, IUnknown *unk)
 {
     IHTMLElement2 *elem = _get_elem2_iface(line, unk);
     IHTMLTextContainer *txtcont;
-    long l = -1, l2 = -1;
+    LONG l = -1, l2 = -1;
     HRESULT hres;
 
     hres = IHTMLElement2_get_scrollTop(elem, &l);
@@ -1334,8 +1334,8 @@ static long _elem_get_scroll_top(unsigned line, IUnknown *unk)
 
     hres = IHTMLTextContainer_get_scrollTop(txtcont, &l2);
     IHTMLTextContainer_Release(txtcont);
-    ok_(__FILE__,line) (hres == S_OK, "IHTMLTextContainer::get_scrollTop failed: %ld\n", l2);
-    ok_(__FILE__,line) (l == l2, "unexpected top %ld, expected %ld\n", l2, l);
+    ok_(__FILE__,line) (hres == S_OK, "IHTMLTextContainer::get_scrollTop failed: %d\n", l2);
+    ok_(__FILE__,line) (l == l2, "unexpected top %d, expected %d\n", l2, l);
 
     return l;
 }
@@ -1345,7 +1345,7 @@ static void _elem_get_scroll_left(unsigned line, IUnknown *unk)
 {
     IHTMLElement2 *elem = _get_elem2_iface(line, unk);
     IHTMLTextContainer *txtcont;
-    long l = -1, l2 = -1;
+    LONG l = -1, l2 = -1;
     HRESULT hres;
 
     hres = IHTMLElement2_get_scrollLeft(elem, NULL);
@@ -1360,8 +1360,8 @@ static void _elem_get_scroll_left(unsigned line, IUnknown *unk)
 
     hres = IHTMLTextContainer_get_scrollLeft(txtcont, &l2);
     IHTMLTextContainer_Release(txtcont);
-    ok(hres == S_OK, "IHTMLTextContainer::get_scrollLeft failed: %ld\n", l2);
-    ok(l == l2, "unexpected left %ld, expected %ld\n", l2, l);
+    ok(hres == S_OK, "IHTMLTextContainer::get_scrollLeft failed: %d\n", l2);
+    ok(l == l2, "unexpected left %d, expected %d\n", l2, l);
 }
 
 #define test_img_src(i,s) _test_img_src(__LINE__,i,s)
@@ -1701,7 +1701,7 @@ static void _test_node_put_value_str(unsigned line, IUnknown *unk, const char *v
 static void _test_elem_client_size(unsigned line, IUnknown *unk)
 {
     IHTMLElement2 *elem = _get_elem2_iface(line, unk);
-    long l;
+    LONG l;
     HRESULT hres;
 
     hres = IHTMLElement2_get_clientWidth(elem, &l);
