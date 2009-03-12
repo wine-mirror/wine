@@ -226,8 +226,25 @@ static HRESULT WINAPI HTMLWindow2_confirm(IHTMLWindow2 *iface, BSTR message,
         VARIANT_BOOL *confirmed)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(message), confirmed);
-    return E_NOTIMPL;
+    WCHAR wszTitle[100];
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(message), confirmed);
+
+    if(!confirmed) return E_INVALIDARG;
+
+    if(!LoadStringW(get_shdoclc(), IDS_MESSAGE_BOX_TITLE, wszTitle,
+                sizeof(wszTitle)/sizeof(WCHAR))) {
+        WARN("Could not load message box title: %d\n", GetLastError());
+        *confirmed = VARIANT_TRUE;
+        return S_OK;
+    }
+
+    if(MessageBoxW(This->doc->hwnd, message, wszTitle,
+                MB_OKCANCEL|MB_ICONQUESTION)==IDOK)
+        *confirmed = VARIANT_TRUE;
+    else *confirmed = VARIANT_FALSE;
+
+    return S_OK;
 }
 
 typedef struct
