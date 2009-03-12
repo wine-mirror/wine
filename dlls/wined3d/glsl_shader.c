@@ -178,9 +178,8 @@ static void print_glsl_info_log(const WineD3D_GL_Info *gl_info, GLhandleARB obj)
 /**
  * Loads (pixel shader) samplers
  */
-static void shader_glsl_load_psamplers(const WineD3D_GL_Info *gl_info, IWineD3DStateBlock *iface, GLhandleARB programId)
+static void shader_glsl_load_psamplers(const WineD3D_GL_Info *gl_info, DWORD *tex_unit_map, GLhandleARB programId)
 {
-    IWineD3DStateBlockImpl* stateBlock = (IWineD3DStateBlockImpl*) iface;
     GLhandleARB name_loc;
     int i;
     char sampler_name[20];
@@ -189,7 +188,7 @@ static void shader_glsl_load_psamplers(const WineD3D_GL_Info *gl_info, IWineD3DS
         snprintf(sampler_name, sizeof(sampler_name), "Psampler%d", i);
         name_loc = GL_EXTCALL(glGetUniformLocationARB(programId, sampler_name));
         if (name_loc != -1) {
-            DWORD mapped_unit = stateBlock->wineD3DDevice->texUnitMap[i];
+            DWORD mapped_unit = tex_unit_map[i];
             if (mapped_unit != WINED3D_UNMAPPED_STAGE && mapped_unit < GL_LIMITS(fragment_samplers))
             {
                 TRACE("Loading %s for texture %d\n", sampler_name, mapped_unit);
@@ -202,9 +201,8 @@ static void shader_glsl_load_psamplers(const WineD3D_GL_Info *gl_info, IWineD3DS
     }
 }
 
-static void shader_glsl_load_vsamplers(const WineD3D_GL_Info *gl_info, IWineD3DStateBlock *iface, GLhandleARB programId)
+static void shader_glsl_load_vsamplers(const WineD3D_GL_Info *gl_info, DWORD *tex_unit_map, GLhandleARB programId)
 {
-    IWineD3DStateBlockImpl* stateBlock = (IWineD3DStateBlockImpl*) iface;
     GLhandleARB name_loc;
     char sampler_name[20];
     int i;
@@ -213,7 +211,7 @@ static void shader_glsl_load_vsamplers(const WineD3D_GL_Info *gl_info, IWineD3DS
         snprintf(sampler_name, sizeof(sampler_name), "Vsampler%d", i);
         name_loc = GL_EXTCALL(glGetUniformLocationARB(programId, sampler_name));
         if (name_loc != -1) {
-            DWORD mapped_unit = stateBlock->wineD3DDevice->texUnitMap[MAX_FRAGMENT_SAMPLERS + i];
+            DWORD mapped_unit = tex_unit_map[MAX_FRAGMENT_SAMPLERS + i];
             if (mapped_unit != WINED3D_UNMAPPED_STAGE && mapped_unit < GL_LIMITS(combined_samplers))
             {
                 TRACE("Loading %s for texture %d\n", sampler_name, mapped_unit);
@@ -3508,11 +3506,11 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
      */
     if(vshader_id) {
         /* Load vertex shader samplers */
-        shader_glsl_load_vsamplers(gl_info, (IWineD3DStateBlock*)This->stateBlock, programId);
+        shader_glsl_load_vsamplers(gl_info, This->texUnitMap, programId);
     }
     if(pshader_id) {
         /* Load pixel shader samplers */
-        shader_glsl_load_psamplers(gl_info, (IWineD3DStateBlock*)This->stateBlock, programId);
+        shader_glsl_load_psamplers(gl_info, This->texUnitMap, programId);
     }
 
     /* If the local constants do not have to be loaded with the environment constants,
