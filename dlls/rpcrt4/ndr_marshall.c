@@ -3278,13 +3278,13 @@ unsigned char * WINAPI NdrComplexStructMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
     /* get the buffer pointer after complex array data, but before
      * pointer data */
-    pStubMsg->BufferLength = pStubMsg->Buffer - pStubMsg->BufferStart;
+    pStubMsg->BufferLength = pStubMsg->Buffer - (unsigned char *)pStubMsg->RpcMsg->Buffer;
     pStubMsg->IgnoreEmbeddedPointers = 1;
     NdrComplexStructBufferSize(pStubMsg, pMemory, pFormat);
     pStubMsg->IgnoreEmbeddedPointers = saved_ignore_embedded;
 
     /* save it for use by embedded pointer code later */
-    pStubMsg->PointerBufferMark = pStubMsg->BufferStart + pStubMsg->BufferLength;
+    pStubMsg->PointerBufferMark = (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength;
     TRACE("difference = 0x%x\n", pStubMsg->PointerBufferMark - pStubMsg->Buffer);
     pointer_buffer_mark_set = 1;
 
@@ -3840,14 +3840,14 @@ unsigned char * WINAPI NdrComplexArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
     /* get the buffer pointer after complex array data, but before
      * pointer data */
-    pStubMsg->BufferLength = pStubMsg->Buffer - pStubMsg->BufferStart;
+    pStubMsg->BufferLength = pStubMsg->Buffer - (unsigned char *)pStubMsg->RpcMsg->Buffer;
     pStubMsg->IgnoreEmbeddedPointers = 1;
     NdrComplexArrayBufferSize(pStubMsg, pMemory, pFormat);
     pStubMsg->IgnoreEmbeddedPointers = saved_ignore_embedded;
 
     /* save it for use by embedded pointer code later */
-    pStubMsg->PointerBufferMark = pStubMsg->BufferStart + pStubMsg->BufferLength;
-    TRACE("difference = 0x%x\n", pStubMsg->Buffer - pStubMsg->BufferStart);
+    pStubMsg->PointerBufferMark = (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength;
+    TRACE("difference = 0x%x\n", pStubMsg->Buffer - (unsigned char *)pStubMsg->RpcMsg->Buffer);
     pointer_buffer_mark_set = 1;
 
     /* restore fields */
