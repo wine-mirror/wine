@@ -757,7 +757,10 @@ static void test_GetAttributesOf(void)
     if (FAILED(hr)) return;
 
     hr = IShellFolder_GetAttributesOf(psfMyComputer, 1, &pidlEmpty, &dwFlags);
-    todo_wine {ok (hr == E_INVALIDARG, "MyComputer->GetAttributesOf(emtpy pidl) should fail! hr = %08x\n", hr); }
+    todo_wine
+    ok (hr == E_INVALIDARG ||
+        broken(SUCCEEDED(hr)), /* W2K and earlier */
+        "MyComputer->GetAttributesOf(emtpy pidl) should fail! hr = %08x\n", hr);
 
     dwFlags = 0xffffffff;
     hr = IShellFolder_GetAttributesOf(psfMyComputer, 0, NULL, &dwFlags);
