@@ -1026,21 +1026,21 @@ static void fog_test(IDirect3DDevice9 *device)
         }
         IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
         color = getPixelColor(device, 160, 360);
-        ok(color == 0x0000FF00 || color == 0x0000FE00, "Reversed %s fog: z=0.1 has color 0x%08x, expected 0x0000ff00\n", mode, color);
+        ok(color == 0x0000FF00 || color == 0x0000FE00, "Reversed %s fog: z=0.1 has color 0x%08x, expected 0x0000ff00 or 0x0000fe00\n", mode, color);
 
         color = getPixelColor(device, 160, 120);
         r = (color & 0x00ff0000) >> 16;
         g = (color & 0x0000ff00) >>  8;
         b = (color & 0x000000ff);
         ok(r == 0x00 && g >= 0x29 && g <= 0x2d && b >= 0xd2 && b <= 0xd6,
-           "Reversed %s fog: z=0.7 has color 0x%08x, expected\n", mode, color);
+           "Reversed %s fog: z=0.7 has color 0x%08x\n", mode, color);
 
         color = getPixelColor(device, 480, 120);
         r = (color & 0x00ff0000) >> 16;
         g = (color & 0x0000ff00) >>  8;
         b = (color & 0x000000ff);
         ok(r == 0x00 && g >= 0xa8 && g <= 0xac && b >= 0x53 && b <= 0x57,
-           "Reversed %s fog: z=0.4 has color 0x%08x, expected\n", mode, color);
+           "Reversed %s fog: z=0.4 has color 0x%08x\n", mode, color);
 
         color = getPixelColor(device, 480, 360);
         ok(color == 0x000000ff, "Reversed %s fog: z=0.9 has color 0x%08x, expected 0x000000ff\n", mode, color);
