@@ -66,8 +66,6 @@ static WCHAR wordW[] = {'w','o','r','d',0};
 
 static const WCHAR text_javascriptW[] = {'t','e','x','t','/','j','a','v','a','s','c','r','i','p','t',0};
 
-static const WCHAR idW[] = {'i','d',0};
-
 typedef enum {
     ET_NONE,
     ET_HTML,
@@ -627,7 +625,7 @@ static IHTMLDOMNode *_get_child_item(unsigned line, IHTMLDOMChildrenCollection *
 }
 
 #define test_elem_attr(e,n,v) _test_elem_attr(__LINE__,e,n,v)
-static void _test_elem_attr(unsigned line, IHTMLElement *elem, LPCWSTR name, LPCWSTR exval)
+static void _test_elem_attr(unsigned line, IHTMLElement *elem, const char *name, const char *exval)
 {
     VARIANT value;
     BSTR tmp;
@@ -635,14 +633,14 @@ static void _test_elem_attr(unsigned line, IHTMLElement *elem, LPCWSTR name, LPC
 
     VariantInit(&value);
 
-    tmp = SysAllocString(name);
+    tmp = a2bstr(name);
     hres = IHTMLElement_getAttribute(elem, tmp, 0, &value);
     SysFreeString(tmp);
     ok_(__FILE__,line) (hres == S_OK, "getAttribute failed: %08x\n", hres);
 
     if(exval) {
         ok_(__FILE__,line) (V_VT(&value) == VT_BSTR, "vt=%d\n", V_VT(&value));
-        ok_(__FILE__,line) (!lstrcmpW(exval, V_BSTR(&value)), "unexpected value %s\n", dbgstr_w(V_BSTR(&value)));
+        ok_(__FILE__,line) (!strcmp_wa(V_BSTR(&value), exval), "unexpected value %s\n", dbgstr_w(V_BSTR(&value)));
     }else {
         ok_(__FILE__,line) (V_VT(&value) == VT_NULL, "vt=%d\n", V_VT(&value));
     }
@@ -1955,7 +1953,7 @@ static void _test_style_set_csstext(unsigned line, IHTMLStyle *style, const char
     SysFreeString(tmp);
 }
 
-static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
+static void test_elem_col_item(IHTMLElementCollection *col, const char *n,
         const elem_type_t *elem_types, long len)
 {
     IDispatch *disp;
@@ -1965,7 +1963,7 @@ static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
 
     V_VT(&index) = VT_EMPTY;
     V_VT(&name) = VT_BSTR;
-    V_BSTR(&name) = SysAllocString(n);
+    V_BSTR(&name) = a2bstr(n);
 
     hres = IHTMLElementCollection_item(col, name, index, &disp);
     ok(hres == S_OK, "item failed: %08x\n", hres);
@@ -2008,7 +2006,7 @@ cleanup:
     SysFreeString(V_BSTR(&name));
 }
 
-static IHTMLElement *get_elem_by_id(IHTMLDocument2 *doc, LPCWSTR id, BOOL expect_success)
+static IHTMLElement *get_elem_by_id(IHTMLDocument2 *doc, const char *id, BOOL expect_success)
 {
     IHTMLElementCollection *col;
     IHTMLElement *elem;
@@ -2024,7 +2022,7 @@ static IHTMLElement *get_elem_by_id(IHTMLDocument2 *doc, LPCWSTR id, BOOL expect
 
     V_VT(&index) = VT_EMPTY;
     V_VT(&name) = VT_BSTR;
-    V_BSTR(&name) = SysAllocString(id);
+    V_BSTR(&name) = a2bstr(id);
 
     hres = IHTMLElementCollection_item(col, name, index, &disp);
     IHTMLElementCollection_Release(col);
@@ -2045,7 +2043,7 @@ static IHTMLElement *get_elem_by_id(IHTMLDocument2 *doc, LPCWSTR id, BOOL expect
     return elem;
 }
 
-static IHTMLElement *get_doc_elem_by_id(IHTMLDocument2 *doc, LPCWSTR id)
+static IHTMLElement *get_doc_elem_by_id(IHTMLDocument2 *doc, const char *id)
 {
     IHTMLDocument3 *doc3;
     IHTMLElement *elem;
@@ -2055,10 +2053,10 @@ static IHTMLElement *get_doc_elem_by_id(IHTMLDocument2 *doc, LPCWSTR id)
     hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3);
     ok(hres == S_OK, "Could not get IHTMLDocument3 iface: %08x\n", hres);
 
-    tmp = SysAllocString(id);
+    tmp = a2bstr(id);
     hres = IHTMLDocument3_getElementById(doc3, tmp, &elem);
     SysFreeString(tmp);
-    ok(hres == S_OK, "getElementById(%s) failed: %08x\n", dbgstr_w(id), hres);
+    ok(hres == S_OK, "getElementById(%s) failed: %08x\n", id, hres);
 
     IHTMLDocument3_Release(doc3);
 
@@ -4126,17 +4124,6 @@ static void test_elems(IHTMLDocument2 *doc)
     IHTMLDocument3 *doc3;
     BSTR str;
 
-    static const WCHAR imgidW[] = {'i','m','g','i','d',0};
-    static const WCHAR inW[] = {'i','n',0};
-    static const WCHAR xW[] = {'x',0};
-    static const WCHAR yW[] = {'y',0};
-    static const WCHAR sW[] = {'s',0};
-    static const WCHAR scW[] = {'s','c',0};
-    static const WCHAR xxxW[] = {'x','x','x',0};
-    static const WCHAR tblW[] = {'t','b','l',0};
-    static const WCHAR row2W[] = {'r','o','w','2',0};
-    static const WCHAR ifrW[] = {'i','f','r',0};
-
     static const elem_type_t all_types[] = {
         ET_HTML,
         ET_HEAD,
@@ -4171,7 +4158,7 @@ static void test_elems(IHTMLDocument2 *doc)
     hres = IHTMLDocument2_get_all(doc, &col);
     ok(hres == S_OK, "get_all failed: %08x\n", hres);
     test_elem_collection((IUnknown*)col, all_types, sizeof(all_types)/sizeof(all_types[0]));
-    test_elem_col_item(col, xW, item_types, sizeof(item_types)/sizeof(item_types[0]));
+    test_elem_col_item(col, "x", item_types, sizeof(item_types)/sizeof(item_types[0]));
     IHTMLElementCollection_Release(col);
 
     hres = IHTMLDocument2_get_images(doc, &collection);
@@ -4216,16 +4203,16 @@ static void test_elems(IHTMLDocument2 *doc)
     test_elem_collection((IUnknown*)col, all_types+1, sizeof(all_types)/sizeof(all_types[0])-1);
     IHTMLElementCollection_Release(col);
 
-    get_elem_by_id(doc, xxxW, FALSE);
-    elem = get_doc_elem_by_id(doc, xxxW);
+    get_elem_by_id(doc, "xxx", FALSE);
+    elem = get_doc_elem_by_id(doc, "xxx");
     ok(!elem, "elem != NULL\n");
 
-    elem = get_doc_elem_by_id(doc, sW);
+    elem = get_doc_elem_by_id(doc, "s");
     ok(elem != NULL, "elem == NULL\n");
     if(elem) {
         test_elem_type((IUnknown*)elem, ET_SELECT);
-        test_elem_attr(elem, xxxW, NULL);
-        test_elem_attr(elem, idW, sW);
+        test_elem_attr(elem, "xxx", NULL);
+        test_elem_attr(elem, "id", "s");
         test_elem_class((IUnknown*)elem, NULL);
         test_elem_set_class((IUnknown*)elem, "cl");
         test_elem_set_class((IUnknown*)elem, NULL);
@@ -4272,7 +4259,7 @@ static void test_elems(IHTMLDocument2 *doc)
         IHTMLElement_Release(elem);
     }
 
-    elem = get_elem_by_id(doc, sW, TRUE);
+    elem = get_elem_by_id(doc, "s", TRUE);
     if(elem) {
         IHTMLSelectElement *select;
 
@@ -4305,7 +4292,7 @@ static void test_elems(IHTMLDocument2 *doc)
         IHTMLElement_Release(elem);
     }
 
-    elem = get_elem_by_id(doc, scW, TRUE);
+    elem = get_elem_by_id(doc, "sc", TRUE);
     if(elem) {
         IHTMLScriptElement *script;
         BSTR type;
@@ -4337,7 +4324,7 @@ static void test_elems(IHTMLDocument2 *doc)
         IHTMLScriptElement_Release(script);
     }
 
-    elem = get_elem_by_id(doc, inW, TRUE);
+    elem = get_elem_by_id(doc, "in", TRUE);
     if(elem) {
         IHTMLInputElement *input;
 
@@ -4378,7 +4365,7 @@ static void test_elems(IHTMLDocument2 *doc)
         IHTMLElement_Release(elem);
     }
 
-    elem = get_elem_by_id(doc, imgidW, TRUE);
+    elem = get_elem_by_id(doc, "imgid", TRUE);
     if(elem) {
         test_img_src((IUnknown*)elem, "");
         test_img_set_src((IUnknown*)elem, "about:blank");
@@ -4387,21 +4374,21 @@ static void test_elems(IHTMLDocument2 *doc)
         IHTMLElement_Release(elem);
     }
 
-    elem = get_doc_elem_by_id(doc, tblW);
+    elem = get_doc_elem_by_id(doc, "tbl");
     ok(elem != NULL, "elem == NULL\n");
     if(elem) {
         test_table_elem(elem);
         IHTMLElement_Release(elem);
     }
 
-    elem = get_doc_elem_by_id(doc, row2W);
+    elem = get_doc_elem_by_id(doc, "row2");
     ok(elem != NULL, "elem == NULL\n");
     if(elem) {
         test_tr_elem(elem);
         IHTMLElement_Release(elem);
     }
 
-    elem = get_doc_elem_by_id(doc, ifrW);
+    elem = get_doc_elem_by_id(doc, "ifr");
     ok(elem != NULL, "elem == NULL\n");
     if(elem) {
         test_iframe_elem(elem);
@@ -4483,7 +4470,7 @@ static void test_elems(IHTMLDocument2 *doc)
     test_stylesheets(doc);
     test_create_option_elem(doc);
 
-    elem = get_doc_elem_by_id(doc, tblW);
+    elem = get_doc_elem_by_id(doc, "tbl");
     ok(elem != NULL, "elem = NULL\n");
     test_elem_set_innertext(elem, "inner text");
     IHTMLElement_Release(elem);
@@ -4528,7 +4515,7 @@ static void test_elems(IHTMLDocument2 *doc)
         IHTMLElementCollection_Release(col);
     }
 
-    elem = get_doc_elem_by_id(doc, yW);
+    elem = get_doc_elem_by_id(doc, "y");
     test_elem_set_innerhtml((IUnknown*)elem, "inner html");
     test_elem_innerhtml((IUnknown*)elem, "inner html");
     test_elem_set_innerhtml((IUnknown*)elem, "");
