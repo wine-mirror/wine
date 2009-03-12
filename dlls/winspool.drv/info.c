@@ -1509,7 +1509,7 @@ static LPDEVMODEA DEVMODEdupWtoA(const DEVMODEW *dmW)
     size = dmW->dmSize - CCHDEVICENAME -
                         ((dmW->dmSize > FIELD_OFFSET(DEVMODEW, dmFormName)) ? CCHFORMNAME : 0);
 
-    dmA = HeapAlloc(GetProcessHeap(), 0, size + dmW->dmDriverExtra);
+    dmA = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size + dmW->dmDriverExtra);
     if (!dmA) return NULL;
 
     WideCharToMultiByte(CP_ACP, 0, dmW->dmDeviceName, -1,
