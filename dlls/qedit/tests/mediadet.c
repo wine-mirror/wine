@@ -94,8 +94,8 @@ static void test_mediadet(void)
     HRESULT hr;
     IMediaDet *pM = NULL;
     BSTR filename = NULL;
-    long nstrms = 0;
-    long strm;
+    LONG nstrms = 0;
+    LONG strm;
     AM_MEDIA_TYPE mt;
     double fps;
     int flags;
