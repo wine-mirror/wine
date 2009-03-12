@@ -140,7 +140,7 @@ static HRESULT WINAPI HTMLWindow2_item(IHTMLWindow2 *iface, VARIANT *pvarIndex, 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLWindow2_get_length(IHTMLWindow2 *iface, long *p)
+static HRESULT WINAPI HTMLWindow2_get_length(IHTMLWindow2 *iface, LONG *p)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
     FIXME("(%p)->(%p)\n", This, p);
@@ -183,12 +183,12 @@ static HRESULT WINAPI HTMLWindow2_get_status(IHTMLWindow2 *iface, BSTR *p)
 }
 
 static HRESULT WINAPI HTMLWindow2_setTimeout(IHTMLWindow2 *iface, BSTR expression,
-        long msec, VARIANT *language, long *timerID)
+        LONG msec, VARIANT *language, LONG *timerID)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
     VARIANT expr_var;
 
-    TRACE("(%p)->(%s %ld %p %p)\n", This, debugstr_w(expression), msec, language, timerID);
+    TRACE("(%p)->(%s %d %p %p)\n", This, debugstr_w(expression), msec, language, timerID);
 
     V_VT(&expr_var) = VT_BSTR;
     V_BSTR(&expr_var) = expression;
@@ -196,11 +196,11 @@ static HRESULT WINAPI HTMLWindow2_setTimeout(IHTMLWindow2 *iface, BSTR expressio
     return IHTMLWindow3_setTimeout(HTMLWINDOW3(This), &expr_var, msec, language, timerID);
 }
 
-static HRESULT WINAPI HTMLWindow2_clearTimeout(IHTMLWindow2 *iface, long timerID)
+static HRESULT WINAPI HTMLWindow2_clearTimeout(IHTMLWindow2 *iface, LONG timerID)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
 
-    TRACE("(%p)->(%ld)\n", This, timerID);
+    TRACE("(%p)->(%d)\n", This, timerID);
 
     return clear_task_timer(This->doc, FALSE, timerID);
 }
@@ -586,10 +586,10 @@ static HRESULT WINAPI HTMLWindow2_blur(IHTMLWindow2 *iface)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLWindow2_scroll(IHTMLWindow2 *iface, long x, long y)
+static HRESULT WINAPI HTMLWindow2_scroll(IHTMLWindow2 *iface, LONG x, LONG y)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%ld %ld)\n", This, x, y);
+    FIXME("(%p)->(%d %d)\n", This, x, y);
     return E_NOTIMPL;
 }
 
@@ -601,23 +601,23 @@ static HRESULT WINAPI HTMLWindow2_get_clientInformation(IHTMLWindow2 *iface, IOm
 }
 
 static HRESULT WINAPI HTMLWindow2_setInterval(IHTMLWindow2 *iface, BSTR expression,
-        long msec, VARIANT *language, long *timerID)
+        LONG msec, VARIANT *language, LONG *timerID)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
     VARIANT expr;
 
-    TRACE("(%p)->(%s %ld %p %p)\n", This, debugstr_w(expression), msec, language, timerID);
+    TRACE("(%p)->(%s %d %p %p)\n", This, debugstr_w(expression), msec, language, timerID);
 
     V_VT(&expr) = VT_BSTR;
     V_BSTR(&expr) = expression;
     return IHTMLWindow3_setInterval(HTMLWINDOW3(This), &expr, msec, language, timerID);
 }
 
-static HRESULT WINAPI HTMLWindow2_clearInterval(IHTMLWindow2 *iface, long timerID)
+static HRESULT WINAPI HTMLWindow2_clearInterval(IHTMLWindow2 *iface, LONG timerID)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
 
-    TRACE("(%p)->(%ld)\n", This, timerID);
+    TRACE("(%p)->(%d)\n", This, timerID);
 
     return clear_task_timer(This->doc, TRUE, timerID);
 }
@@ -651,12 +651,12 @@ static HRESULT WINAPI HTMLWindow2_toString(IHTMLWindow2 *iface, BSTR *String)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLWindow2_scrollBy(IHTMLWindow2 *iface, long x, long y)
+static HRESULT WINAPI HTMLWindow2_scrollBy(IHTMLWindow2 *iface, LONG x, LONG y)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
     nsresult nsres;
 
-    TRACE("(%p)->(%ld %ld)\n", This, x, y);
+    TRACE("(%p)->(%d %d)\n", This, x, y);
 
     nsres = nsIDOMWindow_ScrollBy(This->nswindow, x, y);
     if(NS_FAILED(nsres))
@@ -665,12 +665,12 @@ static HRESULT WINAPI HTMLWindow2_scrollBy(IHTMLWindow2 *iface, long x, long y)
     return S_OK;
 }
 
-static HRESULT WINAPI HTMLWindow2_scrollTo(IHTMLWindow2 *iface, long x, long y)
+static HRESULT WINAPI HTMLWindow2_scrollTo(IHTMLWindow2 *iface, LONG x, LONG y)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
     nsresult nsres;
 
-    TRACE("(%p)->(%ld %ld)\n", This, x, y);
+    TRACE("(%p)->(%d %d)\n", This, x, y);
 
     nsres = nsIDOMWindow_ScrollTo(This->nswindow, x, y);
     if(NS_FAILED(nsres))
@@ -679,31 +679,31 @@ static HRESULT WINAPI HTMLWindow2_scrollTo(IHTMLWindow2 *iface, long x, long y)
     return S_OK;
 }
 
-static HRESULT WINAPI HTMLWindow2_moveTo(IHTMLWindow2 *iface, long x, long y)
+static HRESULT WINAPI HTMLWindow2_moveTo(IHTMLWindow2 *iface, LONG x, LONG y)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%ld %ld)\n", This, x, y);
+    FIXME("(%p)->(%d %d)\n", This, x, y);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLWindow2_moveBy(IHTMLWindow2 *iface, long x, long y)
+static HRESULT WINAPI HTMLWindow2_moveBy(IHTMLWindow2 *iface, LONG x, LONG y)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%ld %ld)\n", This, x, y);
+    FIXME("(%p)->(%d %d)\n", This, x, y);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLWindow2_resizeTo(IHTMLWindow2 *iface, long x, long y)
+static HRESULT WINAPI HTMLWindow2_resizeTo(IHTMLWindow2 *iface, LONG x, LONG y)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%ld %ld)\n", This, x, y);
+    FIXME("(%p)->(%d %d)\n", This, x, y);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLWindow2_resizeBy(IHTMLWindow2 *iface, long x, long y)
+static HRESULT WINAPI HTMLWindow2_resizeBy(IHTMLWindow2 *iface, LONG x, LONG y)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%ld %ld)\n", This, x, y);
+    FIXME("(%p)->(%d %d)\n", This, x, y);
     return E_NOTIMPL;
 }
 
@@ -860,14 +860,14 @@ static HRESULT WINAPI HTMLWindow3_Invoke(IHTMLWindow3 *iface, DISPID dispIdMembe
             pVarResult, pExcepInfo, puArgErr);
 }
 
-static HRESULT WINAPI HTMLWindow3_get_screenLeft(IHTMLWindow3 *iface, long *p)
+static HRESULT WINAPI HTMLWindow3_get_screenLeft(IHTMLWindow3 *iface, LONG *p)
 {
     HTMLWindow *This = HTMLWINDOW3_THIS(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLWindow3_get_screenTop(IHTMLWindow3 *iface, long *p)
+static HRESULT WINAPI HTMLWindow3_get_screenTop(IHTMLWindow3 *iface, LONG *p)
 {
     HTMLWindow *This = HTMLWINDOW3_THIS(iface);
     FIXME("(%p)->(%p)\n", This, p);
@@ -888,8 +888,8 @@ static HRESULT WINAPI HTMLWindow3_detachEvent(IHTMLWindow3 *iface, BSTR event, I
     return E_NOTIMPL;
 }
 
-static HRESULT window_set_timer(HTMLWindow *This, VARIANT *expr, long msec, VARIANT *language,
-        BOOL interval, long *timer_id)
+static HRESULT window_set_timer(HTMLWindow *This, VARIANT *expr, LONG msec, VARIANT *language,
+        BOOL interval, LONG *timer_id)
 {
     IDispatch *disp = NULL;
 
@@ -917,22 +917,22 @@ static HRESULT window_set_timer(HTMLWindow *This, VARIANT *expr, long msec, VARI
     return S_OK;
 }
 
-static HRESULT WINAPI HTMLWindow3_setTimeout(IHTMLWindow3 *iface, VARIANT *expression, long msec,
-        VARIANT *language, long *timerID)
+static HRESULT WINAPI HTMLWindow3_setTimeout(IHTMLWindow3 *iface, VARIANT *expression, LONG msec,
+        VARIANT *language, LONG *timerID)
 {
     HTMLWindow *This = HTMLWINDOW3_THIS(iface);
 
-    TRACE("(%p)->(%p(%d) %ld %p %p)\n", This, expression, V_VT(expression), msec, language, timerID);
+    TRACE("(%p)->(%p(%d) %d %p %p)\n", This, expression, V_VT(expression), msec, language, timerID);
 
     return window_set_timer(This, expression, msec, language, FALSE, timerID);
 }
 
-static HRESULT WINAPI HTMLWindow3_setInterval(IHTMLWindow3 *iface, VARIANT *expression, long msec,
-        VARIANT *language, long *timerID)
+static HRESULT WINAPI HTMLWindow3_setInterval(IHTMLWindow3 *iface, VARIANT *expression, LONG msec,
+        VARIANT *language, LONG *timerID)
 {
     HTMLWindow *This = HTMLWINDOW3_THIS(iface);
 
-    TRACE("(%p)->(%p %ld %p %p)\n", This, expression, msec, language, timerID);
+    TRACE("(%p)->(%p %d %p %p)\n", This, expression, msec, language, timerID);
 
     return window_set_timer(This, expression, msec, language, TRUE, timerID);
 }

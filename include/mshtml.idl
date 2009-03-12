@@ -13526,7 +13526,7 @@ interface IHTMLFramesCollection2 : IDispatch
         [retval, out] VARIANT *pvarResult);
 
     [propget, id(DISPID_IHTMLFRAMESCOLLECTION2_LENGTH)]
-    HRESULT length([retval, out] long *p);
+    HRESULT length([retval, out] LONG *p);
 }
 
 /*****************************************************************************
@@ -13600,12 +13600,12 @@ interface IHTMLWindow2 : IHTMLFramesCollection2
     [id(DISPID_IHTMLWINDOW2_SETTIMEOUT)]
     HRESULT setTimeout(
         [in] BSTR expression,
-        [in] long msec,
+        [in] LONG msec,
         [optional, in] VARIANT *language,
-        [retval, out] long *timerID);
+        [retval, out] LONG *timerID);
 
     [id(DISPID_IHTMLWINDOW2_CLEARTIMEOUT)]
-    HRESULT clearTimeout([in] long timerID);
+    HRESULT clearTimeout([in] LONG timerID);
 
     [id(DISPID_IHTMLWINDOW2_ALERT)]
     HRESULT alert([defaultvalue(""), in] BSTR message);
@@ -13763,7 +13763,7 @@ interface IHTMLWindow2 : IHTMLFramesCollection2
     HRESULT blur();
 
     [id(DISPID_IHTMLWINDOW2_SCROLL)]
-    HRESULT scroll([in] long x, [in] long y);
+    HRESULT scroll([in] LONG x, [in] LONG y);
 
     [propget, id(DISPID_IHTMLWINDOW2_CLIENTINFORMATION)]
     HRESULT clientInformation([retval, out] IOmNavigator **p);
@@ -13771,12 +13771,12 @@ interface IHTMLWindow2 : IHTMLFramesCollection2
     [id(DISPID_IHTMLWINDOW2_SETINTERVAL)]
     HRESULT setInterval([
         in] BSTR expression,
-        [in] long msec,
+        [in] LONG msec,
         [optional, in] VARIANT *language,
-        [retval, out] long *timerID);
+        [retval, out] LONG *timerID);
 
     [id(DISPID_IHTMLWINDOW2_CLEARINTERVAL)]
-    HRESULT clearInterval([in] long timerID);
+    HRESULT clearInterval([in] LONG timerID);
 
     [propput, id(DISPID_IHTMLWINDOW2_OFFSCREENBUFFERING)]
     HRESULT offscreenBuffering([in] VARIANT v);
@@ -13794,22 +13794,22 @@ interface IHTMLWindow2 : IHTMLFramesCollection2
     HRESULT toString([retval, out] BSTR *String);
 
     [id(DISPID_IHTMLWINDOW2_SCROLLBY)]
-    HRESULT scrollBy([in] long x, [in] long y);
+    HRESULT scrollBy([in] LONG x, [in] LONG y);
 
     [id(DISPID_IHTMLWINDOW2_SCROLLTO)]
-    HRESULT scrollTo([in] long x, [in] long y);
+    HRESULT scrollTo([in] LONG x, [in] LONG y);
 
     [id(DISPID_IHTMLWINDOW2_MOVETO)]
-    HRESULT moveTo([in] long x, [in] long y);
+    HRESULT moveTo([in] LONG x, [in] LONG y);
 
     [id(DISPID_IHTMLWINDOW2_MOVEBY)]
-    HRESULT moveBy([in] long x, [in] long y);
+    HRESULT moveBy([in] LONG x, [in] LONG y);
 
     [id(DISPID_IHTMLWINDOW2_RESIZETO)]
-    HRESULT resizeTo([in] long x, [in] long y);
+    HRESULT resizeTo([in] LONG x, [in] LONG y);
 
     [id(DISPID_IHTMLWINDOW2_RESIZEBY)]
-    HRESULT resizeBy([in] long x, [in] long y);
+    HRESULT resizeBy([in] LONG x, [in] LONG y);
 
     [propget, id(DISPID_IHTMLWINDOW2_EXTERNAL)]
     HRESULT external([retval, out] IDispatch **p);
@@ -13827,10 +13827,10 @@ interface IHTMLWindow2 : IHTMLFramesCollection2
 interface IHTMLWindow3 : IDispatch
 {
     [propget, id(DISPID_IHTMLWINDOW3_SCREENLEFT)]
-    HRESULT screenLeft([out, retval] long *p);
+    HRESULT screenLeft([out, retval] LONG *p);
 
     [propget, id(DISPID_IHTMLWINDOW3_SCREENTOP)]
-    HRESULT screenTop([out, retval] long *p);
+    HRESULT screenTop([out, retval] LONG *p);
 
     [id(DISPID_IHTMLWINDOW3_ATTACHEVENT)]
     HRESULT attachEvent(
@@ -13846,16 +13846,16 @@ interface IHTMLWindow3 : IDispatch
     [id(DISPID_IHTMLWINDOW3_SETTIMEOUT)]
     HRESULT setTimeout(
             [in] VARIANT *expression,
-            [in] long msec,
+            [in] LONG msec,
             [in, optional] VARIANT *language,
-            [out, retval] long *timerID);
+            [out, retval] LONG *timerID);
 
     [id(DISPID_IHTMLWINDOW3_SETINTERVAL)]
     HRESULT setInterval(
             [in] VARIANT *expression,
-            [in] long msec,
+            [in] LONG msec,
             [in, optional] VARIANT *language,
-            [out, retval] long *timerID);
+            [out, retval] LONG *timerID);
 
     [id(DISPID_IHTMLWINDOW3_PRINT)]
     HRESULT print();
@@ -13898,7 +13898,7 @@ methods:
     VARIANT item([in] VARIANT *pvarIndex);
 
     [propget, id(DISPID_IHTMLFRAMESCOLLECTION2_LENGTH)]
-    long length();
+    LONG length();
 
     [propget, id(DISPID_IHTMLWINDOW2_FRAMES)]
     IHTMLFramesCollection2 *frames();
@@ -13916,7 +13916,7 @@ methods:
     BSTR status();
 
     [id(DISPID_IHTMLWINDOW2_CLEARTIMEOUT)]
-    void clearTimeout([in] long timerID);
+    void clearTimeout([in] LONG timerID);
 
     [id(DISPID_IHTMLWINDOW2_ALERT)]
     void alert([in, defaultvalue("")] BSTR message);
@@ -14066,13 +14066,13 @@ methods:
     void blur();
 
     [id(DISPID_IHTMLWINDOW2_SCROLL)]
-    void scroll([in] long x, [in] long y);
+    void scroll([in] LONG x, [in] LONG y);
 
     [propget, id(DISPID_IHTMLWINDOW2_CLIENTINFORMATION)]
     IOmNavigator *clientInformation();
 
     [id(DISPID_IHTMLWINDOW2_CLEARINTERVAL)]
-    void clearInterval([in] long timerID);
+    void clearInterval([in] LONG timerID);
 
     [propput, id(DISPID_IHTMLWINDOW2_OFFSCREENBUFFERING)]
     void offscreenBuffering(VARIANT v);
@@ -14089,31 +14089,31 @@ methods:
     BSTR toString();
 
     [id(DISPID_IHTMLWINDOW2_SCROLLBY)]
-    void scrollBy([in] long x, [in] long y);
+    void scrollBy([in] LONG x, [in] LONG y);
 
     [id(DISPID_IHTMLWINDOW2_SCROLLTO)]
-    void scrollTo([in] long x, [in] long y);
+    void scrollTo([in] LONG x, [in] LONG y);
 
     [id(DISPID_IHTMLWINDOW2_MOVETO)]
-    void moveTo([in] long x, [in] long y);
+    void moveTo([in] LONG x, [in] LONG y);
 
     [id(DISPID_IHTMLWINDOW2_MOVEBY)]
-    void moveBy([in] long x, [in] long y);
+    void moveBy([in] LONG x, [in] LONG y);
 
     [id(DISPID_IHTMLWINDOW2_RESIZETO)]
-    void resizeTo([in] long x, [in] long y);
+    void resizeTo([in] LONG x, [in] LONG y);
 
     [id(DISPID_IHTMLWINDOW2_RESIZEBY)]
-    void resizeBy([in] long x, [in] long y);
+    void resizeBy([in] LONG x, [in] LONG y);
 
     [propget, id(DISPID_IHTMLWINDOW2_EXTERNAL)]
     IDispatch *external();
 
     [propget, id(DISPID_IHTMLWINDOW3_SCREENLEFT)]
-    long screenLeft();
+    LONG screenLeft();
 
     [propget, id(DISPID_IHTMLWINDOW3_SCREENTOP)]
-    long screenTop();
+    LONG screenTop();
 
     [id(DISPID_IHTMLWINDOW3_ATTACHEVENT)]
     VARIANT_BOOL attachEvent(
@@ -14126,15 +14126,15 @@ methods:
             [in] IDispatch *pDisp);
 
     [id(DISPID_IHTMLWINDOW3_SETTIMEOUT)]
-    long setTimeout(
+    LONG setTimeout(
             [in] VARIANT *expression,
-            [in] long msec,
+            [in] LONG msec,
             [in, optional] VARIANT *language);
 
     [id(DISPID_IHTMLWINDOW3_SETINTERVAL)]
-    long setInterval(
+    LONG setInterval(
             [in] VARIANT *expression,
-            [in] long msec,
+            [in] LONG msec,
             [in, optional] VARIANT *language);
 
     [id(DISPID_IHTMLWINDOW3_PRINT)]
