@@ -324,10 +324,10 @@ HRESULT qcap_driver_get_format(const Capture *capBox, AM_MEDIA_TYPE ** mT)
     return S_OK;
 }
 
-HRESULT qcap_driver_get_prop_range( Capture *capBox, long Property, long *pMin,
-            long *pMax, long *pSteppingDelta, long *pDefault, long *pCapsFlags )
+HRESULT qcap_driver_get_prop_range( Capture *capBox, LONG Property, LONG *pMin,
+            LONG *pMax, LONG *pSteppingDelta, LONG *pDefault, LONG *pCapsFlags )
 {
-    TRACE("%p -> %ld %p %p %p %p %p\n", capBox, Property,
+    TRACE("%p -> %d %p %p %p %p %p\n", capBox, Property,
           pMin, pMax, pSteppingDelta, pDefault, pCapsFlags);
 
     switch (Property)
@@ -345,7 +345,7 @@ HRESULT qcap_driver_get_prop_range( Capture *capBox, long Property, long *pMin,
         *pDefault = capBox->dcolour;
         break;
     default:
-        FIXME("Not implemented %ld\n", Property);
+        FIXME("Not implemented %d\n", Property);
         return E_NOTIMPL;
     }
     *pMin = 0;
@@ -355,9 +355,9 @@ HRESULT qcap_driver_get_prop_range( Capture *capBox, long Property, long *pMin,
     return S_OK;
 }
 
-HRESULT qcap_driver_get_prop( Capture *capBox, long Property, long *lValue, long *Flags )
+HRESULT qcap_driver_get_prop( Capture *capBox, LONG Property, LONG *lValue, LONG *Flags )
 {
-    TRACE("%p -> %ld %p %p\n", capBox, Property, lValue, Flags);
+    TRACE("%p -> %d %p %p\n", capBox, Property, lValue, Flags);
 
     switch (Property)
     {
@@ -374,7 +374,7 @@ HRESULT qcap_driver_get_prop( Capture *capBox, long Property, long *lValue, long
         *lValue = capBox->pict.colour;
         break;
     default:
-        FIXME("Not implemented %ld\n", Property);
+        FIXME("Not implemented %d\n", Property);
         return E_NOTIMPL;
     }
     *Flags = VideoProcAmp_Flags_Manual;
@@ -932,13 +932,13 @@ HRESULT qcap_driver_get_format(const Capture *capBox, AM_MEDIA_TYPE ** mT)
     FAIL_WITH_ERR;
 }
 
-HRESULT qcap_driver_get_prop_range( Capture *capBox, long Property, long *pMin,
-          long *pMax, long *pSteppingDelta, long *pDefault, long *pCapsFlags )
+HRESULT qcap_driver_get_prop_range( Capture *capBox, LONG Property, LONG *pMin,
+          LONG *pMax, LONG *pSteppingDelta, LONG *pDefault, LONG *pCapsFlags )
 {
     FAIL_WITH_ERR;
 }
 
-HRESULT qcap_driver_get_prop(Capture *capBox, long Property, long *lValue, long *Flags)
+HRESULT qcap_driver_get_prop(Capture *capBox, LONG Property, LONG *lValue, LONG *Flags)
 {
     FAIL_WITH_ERR;
 }

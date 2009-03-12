@@ -5155,12 +5155,12 @@ static ULONG WINAPI MediaEventSink_Release(IMediaEventSink *iface)
     return Filtergraph_Release(This);
 }
 
-static HRESULT WINAPI MediaEventSink_Notify(IMediaEventSink *iface, long EventCode, LONG_PTR EventParam1, LONG_PTR EventParam2)
+static HRESULT WINAPI MediaEventSink_Notify(IMediaEventSink *iface, LONG EventCode, LONG_PTR EventParam1, LONG_PTR EventParam2)
 {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventSink_vtbl, iface);
     Event evt;
 
-    TRACE("(%p/%p)->(%ld, %ld, %ld)\n", This, iface, EventCode, EventParam1, EventParam2);
+    TRACE("(%p/%p)->(%d, %ld, %ld)\n", This, iface, EventCode, EventParam1, EventParam2);
 
     /* We need thread safety here, let's use the events queue's one */
     EnterCriticalSection(&This->evqueue.msg_crst);

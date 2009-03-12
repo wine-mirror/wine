@@ -503,8 +503,8 @@ static ULONG WINAPI AMVideoProcAmp_Release(IAMVideoProcAmp * iface)
 }
 
 static HRESULT WINAPI
-AMVideoProcAmp_GetRange( IAMVideoProcAmp * iface, long Property, long *pMin,
-        long *pMax, long *pSteppingDelta, long *pDefault, long *pCapsFlags )
+AMVideoProcAmp_GetRange( IAMVideoProcAmp * iface, LONG Property, LONG *pMin,
+        LONG *pMax, LONG *pSteppingDelta, LONG *pDefault, LONG *pCapsFlags )
 {
     ICOM_THIS_MULTI(VfwCapture, IAMVideoProcAmp_vtbl, iface);
 
@@ -513,8 +513,8 @@ AMVideoProcAmp_GetRange( IAMVideoProcAmp * iface, long Property, long *pMin,
 }
 
 static HRESULT WINAPI
-AMVideoProcAmp_Set( IAMVideoProcAmp * iface, long Property, long lValue,
-                    long Flags )
+AMVideoProcAmp_Set( IAMVideoProcAmp * iface, LONG Property, LONG lValue,
+                    LONG Flags )
 {
     ICOM_THIS_MULTI(VfwCapture, IAMVideoProcAmp_vtbl, iface);
 
@@ -522,8 +522,8 @@ AMVideoProcAmp_Set( IAMVideoProcAmp * iface, long Property, long lValue,
 }
 
 static HRESULT WINAPI
-AMVideoProcAmp_Get( IAMVideoProcAmp * iface, long Property, long *lValue,
-                    long *Flags )
+AMVideoProcAmp_Get( IAMVideoProcAmp * iface, LONG Property, LONG *lValue,
+                    LONG *Flags )
 {
     ICOM_THIS_MULTI(VfwCapture, IAMVideoProcAmp_vtbl, iface);
 
