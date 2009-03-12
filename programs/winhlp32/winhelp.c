@@ -842,12 +842,7 @@ static BOOL WINHELP_HandleTextMouse(WINHELP_WINDOW* win, UINT msg, LPARAM lParam
     switch (msg)
     {
     case WM_LBUTTONDOWN:
-         if ((win->current_link = WINHELP_FindLink(win, lParam)))
-             ret = TRUE;
-         break;
-
-    case WM_LBUTTONUP:
-        if ((link = WINHELP_FindLink(win, lParam)) && link == win->current_link)
+        if ((link = WINHELP_FindLink(win, lParam)))
         {
             HLPFILE_WINDOWINFO*     wi;
 
@@ -882,7 +877,6 @@ static BOOL WINHELP_HandleTextMouse(WINHELP_WINDOW* win, UINT msg, LPARAM lParam
             }
             ret = TRUE;
         }
-        win->current_link = NULL;
         break;
     }
     return ret;
@@ -917,11 +911,11 @@ static BOOL WINHELP_CheckPopup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
             (HWND)lParam == Globals.active_popup->hMainWnd ||
             GetWindow((HWND)lParam, GW_OWNER) == Globals.active_win->hMainWnd)
             break;
-    case WM_LBUTTONUP:
     case WM_LBUTTONDOWN:
-        if (WINHELP_HandleTextMouse(Globals.active_popup, msg, lParam) && msg == WM_LBUTTONDOWN)
+        if (WINHELP_HandleTextMouse(Globals.active_popup, msg, lParam))
             return FALSE;
         /* fall through */
+    case WM_LBUTTONUP:
     case WM_MBUTTONDOWN:
     case WM_RBUTTONDOWN:
     case WM_NCLBUTTONDOWN:
