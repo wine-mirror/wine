@@ -284,6 +284,27 @@ static int get_osx_device_name(int id, char *name, int length)
     return 0;
 }
 
+static void insert_sort_button(int header, IOHIDElementRef tIOHIDElementRef,
+                                CFMutableArrayRef elementCFArrayRef, int index,
+                                int target)
+{
+    IOHIDElementRef targetElement;
+    int usage;
+
+    CFArraySetValueAtIndex(elementCFArrayRef, header+index, NULL);
+    targetElement = ( IOHIDElementRef ) CFArrayGetValueAtIndex( elementCFArrayRef, header+target);
+    if (targetElement == NULL)
+    {
+        CFArraySetValueAtIndex(elementCFArrayRef, header+target,tIOHIDElementRef);
+        return;
+    }
+    usage = IOHIDElementGetUsage( targetElement );
+    usage --; /* usage 1 based index */
+
+    insert_sort_button(header, targetElement, elementCFArrayRef, target, usage);
+    CFArraySetValueAtIndex(elementCFArrayRef, header+target,tIOHIDElementRef);
+}
+
 static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
 {
     IOHIDDeviceRef  tIOHIDDeviceRef;
@@ -382,6 +403,18 @@ static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
     device->generic.devcaps.dwAxes = axes;
     device->generic.devcaps.dwButtons = buttons;
     device->generic.devcaps.dwPOVs = povs;
+
+    /* Sort buttons into correct order */
+    for (buttons = 0; buttons < device->generic.devcaps.dwButtons; buttons++)
+    {
+        IOHIDElementRef tIOHIDElementRef = ( IOHIDElementRef ) CFArrayGetValueAtIndex( device->elementCFArrayRef, axes+povs+buttons);
+        uint32_t usage = IOHIDElementGetUsage( tIOHIDElementRef );
+        usage --; /* usage is 1 indexed we need 0 indexed */
+        if (usage == buttons)
+            continue;
+
+        insert_sort_button(axes+povs, tIOHIDElementRef, device->elementCFArrayRef,buttons,usage);
+    }
 }
 
 static void get_osx_device_elements_props(JoystickImpl *device)
