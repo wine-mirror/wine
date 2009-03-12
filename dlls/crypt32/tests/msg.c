@@ -2977,12 +2977,14 @@ static void test_msg_control(void)
      "expected NTE_BAD_SIGNATURE or OSS_DATA_ERROR, got %08x\n",
      GetLastError());
     /* Now that the signature's been checked, can't do the final update */
+    SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     todo_wine
-    ok(!ret &&
+    ok((!ret &&
      (GetLastError() == NTE_BAD_HASH_STATE ||
       GetLastError() == NTE_BAD_ALGID ||    /* Win9x */
-      GetLastError() == CRYPT_E_MSG_ERROR), /* Vista */
+      GetLastError() == CRYPT_E_MSG_ERROR)) || /* Vista */
+      broken(ret), /* Win9x */
      "expected NTE_BAD_HASH_STATE or NTE_BAD_ALGID or CRYPT_E_MSG_ERROR, "
      "got %08x\n", GetLastError());
     CryptMsgClose(msg);
