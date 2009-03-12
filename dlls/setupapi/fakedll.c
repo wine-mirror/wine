@@ -193,7 +193,7 @@ static BOOL build_fake_dll( HANDLE file, HMODULE module )
     memcpy( dos + 1, fakedll_signature, sizeof(fakedll_signature) );
 
     nt = info.nt = (IMAGE_NT_HEADERS *)(buffer + lfanew);
-    src_nt = RtlImageNtHeader( module );
+    if (module) src_nt = RtlImageNtHeader( module );
     /* some fields are copied from the source dll */
 #define SET(field,def) nt->field = src_nt ? src_nt->field : def
     SET( FileHeader.Machine, IMAGE_FILE_MACHINE_I386 );
