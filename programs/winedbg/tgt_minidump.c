@@ -79,7 +79,7 @@ struct tgt_process_minidump_data
     HANDLE      hMap;
 };
 
-static inline struct tgt_process_minidump_data* PRIVATE(struct dbg_process* pcs)
+static inline struct tgt_process_minidump_data* private_data(struct dbg_process* pcs)
 {
     return (struct tgt_process_minidump_data*)pcs->pio_data;
 }
@@ -91,8 +91,8 @@ static BOOL WINAPI tgt_process_minidump_read(HANDLE hProcess, const void* addr,
     MINIDUMP_DIRECTORY* dir;
     void*               stream;
 
-    if (!PRIVATE(dbg_curr_process)->mapping) return FALSE;
-    if (MiniDumpReadDumpStream(PRIVATE(dbg_curr_process)->mapping,
+    if (!private_data(dbg_curr_process)->mapping) return FALSE;
+    if (MiniDumpReadDumpStream(private_data(dbg_curr_process)->mapping,
                                MemoryListStream, &dir, &stream, &size))
     {
         MINIDUMP_MEMORY_LIST*   mml = (MINIDUMP_MEMORY_LIST*)stream;
@@ -107,7 +107,7 @@ static BOOL WINAPI tgt_process_minidump_read(HANDLE hProcess, const void* addr,
                 len = min(len,
                           get_addr64(mmd->StartOfMemoryRange) + mmd->Memory.DataSize - (DWORD_PTR)addr);
                 memcpy(buffer,
-                       (char*)PRIVATE(dbg_curr_process)->mapping + mmd->Memory.Rva + (DWORD_PTR)addr - get_addr64(mmd->StartOfMemoryRange),
+                       (char*)private_data(dbg_curr_process)->mapping + mmd->Memory.Rva + (DWORD_PTR)addr - get_addr64(mmd->StartOfMemoryRange),
                        len);
                 if (rlen) *rlen = len;
                 return TRUE;
@@ -444,7 +444,7 @@ enum dbg_start minidump_reload(int argc, char* argv[])
 
 static BOOL tgt_process_minidump_close_process(struct dbg_process* pcs, BOOL kill)
 {
-    struct tgt_process_minidump_data*    data = PRIVATE(pcs);
+    struct tgt_process_minidump_data*    data = private_data(pcs);
 
     cleanup(data);
     pcs->pio_data = NULL;
