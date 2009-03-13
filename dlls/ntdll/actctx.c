@@ -1390,37 +1390,6 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
              assembly->no_inherit)
         return FALSE;
 
-    if (xmlstr_cmp(&elem, assemblyIdentityW))
-    {
-        if (!parse_assembly_identity_elem(xmlbuf, acl->actctx, &assembly->id)) return FALSE;
-        ret = next_xml_elem(xmlbuf, &elem);
-
-        if (expected_ai)
-        {
-            /* FIXME: more tests */
-            if (assembly->type == ASSEMBLY_MANIFEST &&
-                memcmp(&assembly->id.version, &expected_ai->version, sizeof(assembly->id.version)))
-            {
-                FIXME("wrong version for assembly manifest: %u.%u.%u.%u / %u.%u.%u.%u\n",
-                      expected_ai->version.major, expected_ai->version.minor,
-                      expected_ai->version.build, expected_ai->version.revision,
-                      assembly->id.version.major, assembly->id.version.minor,
-                      assembly->id.version.build, assembly->id.version.revision);
-                return FALSE;
-            }
-            else if (assembly->type == ASSEMBLY_SHARED_MANIFEST &&
-                (assembly->id.version.major != expected_ai->version.major ||
-                 assembly->id.version.minor != expected_ai->version.minor ||
-                 assembly->id.version.build < expected_ai->version.build ||
-                 (assembly->id.version.build == expected_ai->version.build &&
-                  assembly->id.version.revision < expected_ai->version.revision)))
-            {
-                FIXME("wrong version for shared assembly manifest\n");
-                return FALSE;
-            }
-        }
-    }
-
     while (ret)
     {
         if (xmlstr_cmp_end(&elem, assemblyW))
@@ -1451,6 +1420,35 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
         else if (xmlstr_cmp(&elem, clrSurrogateW))
         {
             ret = parse_clr_surrogate_elem(xmlbuf, assembly);
+        }
+        else if (xmlstr_cmp(&elem, assemblyIdentityW))
+        {
+            if (!parse_assembly_identity_elem(xmlbuf, acl->actctx, &assembly->id)) return FALSE;
+
+            if (expected_ai)
+            {
+                /* FIXME: more tests */
+                if (assembly->type == ASSEMBLY_MANIFEST &&
+                    memcmp(&assembly->id.version, &expected_ai->version, sizeof(assembly->id.version)))
+                {
+                    FIXME("wrong version for assembly manifest: %u.%u.%u.%u / %u.%u.%u.%u\n",
+                          expected_ai->version.major, expected_ai->version.minor,
+                          expected_ai->version.build, expected_ai->version.revision,
+                          assembly->id.version.major, assembly->id.version.minor,
+                          assembly->id.version.build, assembly->id.version.revision);
+                    ret = FALSE;
+                }
+                else if (assembly->type == ASSEMBLY_SHARED_MANIFEST &&
+                         (assembly->id.version.major != expected_ai->version.major ||
+                          assembly->id.version.minor != expected_ai->version.minor ||
+                          assembly->id.version.build < expected_ai->version.build ||
+                          (assembly->id.version.build == expected_ai->version.build &&
+                           assembly->id.version.revision < expected_ai->version.revision)))
+                {
+                    FIXME("wrong version for shared assembly manifest\n");
+                    ret = FALSE;
+                }
+            }
         }
         else
         {
