@@ -1385,9 +1385,6 @@ typedef struct IWineD3DTextureImpl
 
     /* IWineD3DTexture */
     IWineD3DSurface          *surfaces[MAX_LEVELS];
-    
-    UINT                      width;
-    UINT                      height;
     UINT                      target;
     BOOL                      cond_np2;
 

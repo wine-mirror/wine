@@ -994,8 +994,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
     *ppTexture = (IWineD3DTexture *)object;
 
     basetexture_init(&object->baseTexture, Levels, Usage);
-    object->width  = Width;
-    object->height = Height;
 
     if (object->resource.format_desc->Flags & WINED3DFMT_FLAG_FILTERING)
     {
