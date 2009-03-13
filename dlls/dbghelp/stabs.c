@@ -1202,6 +1202,8 @@ static void pending_flush(struct pending_list* pending, struct module* module,
                                 block, pending->objs[i].u.var.type, pending->objs[i].u.var.name);
             break;
         case PENDING_LINE:
+            if (module->type == DMT_MACHO)
+                pending->objs[i].u.line.offset -= func->address;
             symt_add_func_line(module, func, pending->objs[i].u.line.source_idx,
                                pending->objs[i].u.line.line_num, pending->objs[i].u.line.offset);
             break;
@@ -1485,8 +1487,11 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             assert(source_idx >= 0);
             if (curr_func != NULL)
             {
+                unsigned long offset = stab_ptr->n_value;
+                if (module->type == DMT_MACHO)
+                    offset -= curr_func->address;
                 symt_add_func_line(module, curr_func, source_idx, 
-                                   stab_ptr->n_desc, stab_ptr->n_value);
+                                   stab_ptr->n_desc, offset);
             }
             else pending_add_line(&pending_func, source_idx, stab_ptr->n_desc,
                                   stab_ptr->n_value);
