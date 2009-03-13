@@ -802,7 +802,6 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     object->currentDesc.MultiSampleType    = MultiSample;
     object->currentDesc.MultiSampleQuality = MultisampleQuality;
     object->glDescription.level            = Level;
-    object->heightscale                    = glDesc->heightscale != 0.0 ? glDesc->heightscale : 1.0;
     list_init(&object->overlays);
 
     /* Flags */
